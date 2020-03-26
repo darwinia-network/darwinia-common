@@ -13,7 +13,8 @@ mod tests;
 // --- third-party ---
 use codec::{Decode, Encode};
 use frame_support::{
-	decl_error, decl_event, decl_module, decl_storage, ensure, traits::Get, weights::SimpleDispatchInfo,
+	decl_error, decl_event, decl_module, decl_storage, ensure, traits::Get,
+	weights::SimpleDispatchInfo,
 };
 use frame_system::{self as system, ensure_root, ensure_signed};
 use sp_runtime::{DispatchError, DispatchResult, RuntimeDebug};
@@ -21,7 +22,8 @@ use sp_std::prelude::*;
 
 // --- custom ---
 use eth_primitives::{
-	header::EthHeader, pow::EthashPartial, pow::EthashSeal, receipt::Receipt, EthBlockNumber, H256, U256,
+	header::EthHeader, pow::EthashPartial, pow::EthashSeal, receipt::Receipt, EthBlockNumber, H256,
+	U256,
 };
 use ethash::{EthereumPatch, LightDAG};
 use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
@@ -316,7 +318,10 @@ impl<T: Trait> Module<T> {
 	pub fn init_genesis_header(header: &EthHeader, genesis_difficulty: u64) -> DispatchResult {
 		let header_hash = header.hash();
 
-		ensure!(header_hash == header.re_compute_hash(), <Error<T>>::HeaderHashMis);
+		ensure!(
+			header_hash == header.re_compute_hash(),
+			<Error<T>>::HeaderHashMis
+		);
 
 		let block_number = header.number;
 
@@ -338,7 +343,10 @@ impl<T: Trait> Module<T> {
 		CanonicalHeaderHashOf::insert(block_number, header_hash);
 
 		// Removing headers with larger numbers, if there are.
-		for number in block_number.checked_add(1).ok_or(<Error<T>>::BlockNumberOF)?..u64::max_value() {
+		for number in block_number
+			.checked_add(1)
+			.ok_or(<Error<T>>::BlockNumberOF)?..u64::max_value()
+		{
 			// If the current block hash is 0 (unlikely), or the previous hash matches the
 			// current hash, then we chains converged and can stop now.
 			if !CanonicalHeaderHashOf::contains_key(&number) {
@@ -357,9 +365,14 @@ impl<T: Trait> Module<T> {
 	/// 2. proof of pow (mixhash)
 	/// 3. challenge
 	fn verify_header(header: &EthHeader) -> DispatchResult {
-		ensure!(header.hash() == header.re_compute_hash(), <Error<T>>::HeaderHashMis);
+		ensure!(
+			header.hash() == header.re_compute_hash(),
+			<Error<T>>::HeaderHashMis
+		);
 
-		let begin_header_number = Self::begin_header().ok_or(<Error<T>>::BeginHeaderNE)?.number;
+		let begin_header_number = Self::begin_header()
+			.ok_or(<Error<T>>::BeginHeaderNE)?
+			.number;
 		ensure!(header.number >= begin_header_number, <Error<T>>::HeaderTE);
 
 		frame_support::debug::trace!(target: "er-rl", "[eth-relay] Parent Header Hash: {:?}", header.parent_hash);
@@ -367,7 +380,11 @@ impl<T: Trait> Module<T> {
 		// There must be a corresponding parent hash
 		let prev_header = Self::header_of(header.parent_hash).ok_or(<Error<T>>::HeaderNE)?;
 		ensure!(
-			header.number == prev_header.number.checked_add(1).ok_or(<Error<T>>::BlockNumberOF)?,
+			header.number
+				== prev_header
+					.number
+					.checked_add(1)
+					.ok_or(<Error<T>>::BlockNumberOF)?,
 			<Error<T>>::BlockNumberMis,
 		);
 
@@ -405,7 +422,8 @@ impl<T: Trait> Module<T> {
 	}
 
 	fn maybe_store_header(header: &EthHeader) -> DispatchResult {
-		let best_header_info = Self::header_info_of(Self::best_header_hash()).ok_or(<Error<T>>::HeaderInfoNE)?;
+		let best_header_info =
+			Self::header_info_of(Self::best_header_hash()).ok_or(<Error<T>>::HeaderInfoNE)?;
 
 		ensure!(
 			best_header_info.number
@@ -440,8 +458,10 @@ impl<T: Trait> Module<T> {
 			// If the new header has a lower number than the previous header, we need to cleaning
 			// it going forward.
 			if best_header_info.number > header_info.number {
-				for number in
-					header_info.number.checked_add(1).ok_or(<Error<T>>::BlockNumberOF)?..=best_header_info.number
+				for number in header_info
+					.number
+					.checked_add(1)
+					.ok_or(<Error<T>>::BlockNumberOF)?..=best_header_info.number
 				{
 					CanonicalHeaderHashOf::remove(&number);
 				}
@@ -454,7 +474,12 @@ impl<T: Trait> Module<T> {
 			// Replacing past hashes until we converge into the same parent.
 			// Starting from the parent hash.
 			let mut current_hash = header_info.parent_hash;
-			for number in (0..=header.number.checked_sub(1).ok_or(<Error<T>>::BlockNumberUF)?).rev() {
+			for number in (0..=header
+				.number
+				.checked_sub(1)
+				.ok_or(<Error<T>>::BlockNumberUF)?)
+				.rev()
+			{
 				let prev_value = CanonicalHeaderHashOf::get(number);
 				// If the current block hash is 0 (unlikely), or the previous hash matches the
 				// current hash, then we chains converged and can stop now.
@@ -495,12 +520,17 @@ impl<T: Trait> VerifyEthReceipts for Module<T> {
 	/// get the receipt MPT trie root from the block header
 	/// Using receipt MPT trie root to verify the proof and index etc.
 	fn verify_receipt(proof_record: &EthReceiptProof) -> Result<Receipt, DispatchError> {
-		let info = Self::header_info_of(&proof_record.header_hash).ok_or(<Error<T>>::HeaderInfoNE)?;
+		let info =
+			Self::header_info_of(&proof_record.header_hash).ok_or(<Error<T>>::HeaderInfoNE)?;
 
 		let canonical_hash = Self::canonical_header_hash_of(info.number);
-		ensure!(canonical_hash == proof_record.header_hash, <Error<T>>::HeaderNC);
+		ensure!(
+			canonical_hash == proof_record.header_hash,
+			<Error<T>>::HeaderNC
+		);
 
-		let best_info = Self::header_info_of(Self::best_header_hash()).ok_or(<Error<T>>::HeaderInfoNE)?;
+		let best_info =
+			Self::header_info_of(Self::best_header_hash()).ok_or(<Error<T>>::HeaderInfoNE)?;
 
 		ensure!(
 			best_info.number
@@ -514,9 +544,10 @@ impl<T: Trait> VerifyEthReceipts for Module<T> {
 		let header = Self::header_of(&proof_record.header_hash).ok_or(<Error<T>>::HeaderNE)?;
 		let proof: Proof = rlp::decode(&proof_record.proof).map_err(|_| <Error<T>>::RlpDcF)?;
 		let key = rlp::encode(&proof_record.index);
-		let value = MerklePatriciaTrie::verify_proof(header.receipts_root().0.to_vec(), &key, proof)
-			.map_err(|_| <Error<T>>::ProofVF)?
-			.ok_or(<Error<T>>::TrieKeyNE)?;
+		let value =
+			MerklePatriciaTrie::verify_proof(header.receipts_root().0.to_vec(), &key, proof)
+				.map_err(|_| <Error<T>>::ProofVF)?
+				.ok_or(<Error<T>>::TrieKeyNE)?;
 		let receipt = rlp::decode(&value).map_err(|_| <Error<T>>::ReceiptDsF)?;
 
 		Ok(receipt)

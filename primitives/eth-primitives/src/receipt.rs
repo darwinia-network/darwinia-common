@@ -30,12 +30,13 @@ pub struct LogEntry {
 impl LogEntry {
 	/// Calculates the bloom of this log entry.
 	pub fn bloom(&self) -> Bloom {
-		self.topics
-			.iter()
-			.fold(Bloom::from(BloomInput::Raw(self.address.as_bytes())), |mut b, t| {
+		self.topics.iter().fold(
+			Bloom::from(BloomInput::Raw(self.address.as_bytes())),
+			|mut b, t| {
 				b.accrue(BloomInput::Raw(t.as_bytes()));
 				b
-			})
+			},
+		)
 	}
 }
 
@@ -179,7 +180,9 @@ mod tests {
 	/// receipts_root in block#13376543: 0xc789eb8b7f5876f4df4f8ae16f95c9881eabfb700ee7d8a00a51fb4a71afbac9
 	/// to check if receipts_root in block-header can be pre-computed.
 	fn check_receipts() {
-		let expected_root = H256::from(hex!("c789eb8b7f5876f4df4f8ae16f95c9881eabfb700ee7d8a00a51fb4a71afbac9"));
+		let expected_root = H256::from(hex!(
+			"c789eb8b7f5876f4df4f8ae16f95c9881eabfb700ee7d8a00a51fb4a71afbac9"
+		));
 		let log_entries = vec![LogEntry {
 			address: EthAddress::from_str("a24df0420de1f3b8d740a52aaeb9d55d6d64478e").unwrap(),
 			topics: vec![H256::from(hex!("f36406321d51f9ba55d04e900c1d56caac28601524e09d53e9010e03f83d7d00"))],

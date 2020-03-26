@@ -10,7 +10,10 @@ use crate::{mock::*, mock_headers::*, *};
 fn verify_receipt_proof() {
 	new_test_ext().execute_with(|| {
 		System::inc_account_nonce(&2);
-		assert_ok!(EthRelay::set_number_of_blocks_safe(RawOrigin::Root.into(), 0));
+		assert_ok!(EthRelay::set_number_of_blocks_safe(
+			RawOrigin::Root.into(),
+			0
+		));
 
 		// mock header and proof
 		let [_, header, _, _, _] = mock_canonical_relationship().unwrap();
@@ -26,10 +29,17 @@ fn verify_receipt_proof() {
 		logs.reverse();
 
 		// mock receipt
-		let receipt = Receipt::new(TransactionOutcome::StatusCode(1), U256::from(U128::from(1371263)), logs);
+		let receipt = Receipt::new(
+			TransactionOutcome::StatusCode(1),
+			U256::from(U128::from(1371263)),
+			logs,
+		);
 
 		// verify receipt
-		assert_ok!(EthRelay::init_genesis_header(&header.unwrap(), 0x624c22d93f8e59_u64));
+		assert_ok!(EthRelay::init_genesis_header(
+			&header.unwrap(),
+			0x624c22d93f8e59_u64
+		));
 		assert_eq!(EthRelay::verify_receipt(&proof_record), Ok(receipt));
 	});
 }
@@ -87,7 +97,10 @@ fn build_genesis_header() {
 fn check_receipt_safety() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(EthRelay::add_authority(RawOrigin::Root.into(), 0));
-		assert_ok!(EthRelay::set_number_of_blocks_safe(RawOrigin::Root.into(), 0));
+		assert_ok!(EthRelay::set_number_of_blocks_safe(
+			RawOrigin::Root.into(),
+			0
+		));
 
 		// family tree
 		let [o, g, u, _p, _c] = mock_canonical_relationship().unwrap();
@@ -116,7 +129,10 @@ fn check_receipt_safety() {
 fn canonical_reorg_uncle_should_succeed() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(EthRelay::add_authority(RawOrigin::Root.into(), 0));
-		assert_ok!(EthRelay::set_number_of_blocks_safe(RawOrigin::Root.into(), 0));
+		assert_ok!(EthRelay::set_number_of_blocks_safe(
+			RawOrigin::Root.into(),
+			0
+		));
 
 		let [o, g, u, _p, _c] = mock_canonical_relationship().unwrap();
 		let [origin, grandpa, uncle] = [o.unwrap(), g.unwrap(), u.unwrap()];
@@ -143,11 +159,15 @@ fn canonical_reorg_uncle_should_succeed() {
 fn test_safety_block() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(EthRelay::add_authority(RawOrigin::Root.into(), 0));
-		assert_ok!(EthRelay::set_number_of_blocks_safe(RawOrigin::Root.into(), 2));
+		assert_ok!(EthRelay::set_number_of_blocks_safe(
+			RawOrigin::Root.into(),
+			2
+		));
 
 		// family tree
 		let [o, g, p, u, c] = mock_canonical_relationship().unwrap();
-		let [origin, grandpa, parent, uncle, current] = [o.unwrap(), g.unwrap(), p.unwrap(), u.unwrap(), c.unwrap()];
+		let [origin, grandpa, parent, uncle, current] =
+			[o.unwrap(), g.unwrap(), p.unwrap(), u.unwrap(), c.unwrap()];
 
 		let receipt = mock_canonical_receipt().unwrap();
 

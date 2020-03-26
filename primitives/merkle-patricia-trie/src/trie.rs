@@ -121,7 +121,8 @@ impl Trie for MerklePatriciaTrie {
 
 	/// Removes any existing value for key from the trie.
 	fn remove(&mut self, key: &[u8]) -> TrieResult<bool> {
-		let (n, removed) = self.delete_at(self.root.clone(), &Nibbles::from_raw(key.to_vec(), true))?;
+		let (n, removed) =
+			self.delete_at(self.root.clone(), &Nibbles::from_raw(key.to_vec(), true))?;
 		self.root = n;
 		Ok(removed)
 	}
@@ -140,7 +141,8 @@ impl Trie for MerklePatriciaTrie {
 	/// nodes of the longest existing prefix of the key (at least the root node), ending
 	/// with the node that proves the absence of the key.
 	fn get_proof(&self, key: &[u8]) -> TrieResult<Proof> {
-		let mut path = self.get_path_at(self.root.clone(), &Nibbles::from_raw(key.to_vec(), true))?;
+		let mut path =
+			self.get_path_at(self.root.clone(), &Nibbles::from_raw(key.to_vec(), true))?;
 		match self.root {
 			Node::Empty => {}
 			_ => path.push(self.root.clone()),
@@ -239,7 +241,10 @@ impl MerklePatriciaTrie {
 					value: None,
 				};
 
-				let n = Node::from_leaf(old_partial.offset(match_index + 1), borrow_leaf.value.clone());
+				let n = Node::from_leaf(
+					old_partial.offset(match_index + 1),
+					borrow_leaf.value.clone(),
+				);
 				branch.insert(old_partial.at(match_index), n);
 
 				let n = Node::from_leaf(partial.offset(match_index + 1), value);
@@ -307,7 +312,9 @@ impl MerklePatriciaTrie {
 			Node::Hash(hash_node) => {
 				let borrow_hash_node = hash_node.borrow();
 
-				self.passing_keys.borrow_mut().insert(borrow_hash_node.hash.to_vec());
+				self.passing_keys
+					.borrow_mut()
+					.insert(borrow_hash_node.hash.to_vec());
 				let n = self.recover_from_db(&borrow_hash_node.hash)?;
 				self.insert_at(n, partial, value)
 			}
@@ -350,7 +357,8 @@ impl MerklePatriciaTrie {
 				let match_len = partial.common_prefix(prefix);
 
 				if match_len == prefix.len() {
-					let (new_n, deleted) = self.delete_at(borrow_ext.node.clone(), &partial.offset(match_len))?;
+					let (new_n, deleted) =
+						self.delete_at(borrow_ext.node.clone(), &partial.offset(match_len))?;
 
 					if deleted {
 						borrow_ext.node = new_n;
@@ -400,7 +408,8 @@ impl MerklePatriciaTrie {
 					let used_index = used_indexs[0];
 					let n = borrow_branch.children[used_index].clone();
 
-					let new_node = Node::from_extension(Nibbles::from_hex(vec![used_index as u8]), n);
+					let new_node =
+						Node::from_extension(Nibbles::from_hex(vec![used_index as u8]), n);
 					self.degenerate(new_node)
 				} else {
 					Ok(Node::Branch(branch.clone()))
@@ -750,7 +759,8 @@ impl<'a> Iterator for TrieIterator<'a> {
 							self.nibble.pop();
 							self.nibble.push(i);
 						}
-						self.nodes.push((branch.borrow().children[i as usize].clone()).into());
+						self.nodes
+							.push((branch.borrow().children[i as usize].clone()).into());
 					}
 
 					(_, Node::Empty) => {
@@ -919,15 +929,18 @@ mod tests {
 		let root1 = {
 			let memdb = Rc::new(MemoryDB::new());
 			let mut trie = MerklePatriciaTrie::new(memdb);
-			trie.insert(k0.as_bytes().to_vec(), v.as_bytes().to_vec()).unwrap();
+			trie.insert(k0.as_bytes().to_vec(), v.as_bytes().to_vec())
+				.unwrap();
 			trie.root().unwrap()
 		};
 
 		let root2 = {
 			let memdb = Rc::new(MemoryDB::new());
 			let mut trie = MerklePatriciaTrie::new(memdb);
-			trie.insert(k0.as_bytes().to_vec(), v.as_bytes().to_vec()).unwrap();
-			trie.insert(k1.as_bytes().to_vec(), v.as_bytes().to_vec()).unwrap();
+			trie.insert(k0.as_bytes().to_vec(), v.as_bytes().to_vec())
+				.unwrap();
+			trie.insert(k1.as_bytes().to_vec(), v.as_bytes().to_vec())
+				.unwrap();
 			trie.root().unwrap();
 			trie.remove(k1.as_ref()).unwrap();
 			trie.root().unwrap()
@@ -936,8 +949,12 @@ mod tests {
 		let root3 = {
 			let memdb = Rc::new(MemoryDB::new());
 			let mut trie1 = MerklePatriciaTrie::new(memdb.clone());
-			trie1.insert(k0.as_bytes().to_vec(), v.as_bytes().to_vec()).unwrap();
-			trie1.insert(k1.as_bytes().to_vec(), v.as_bytes().to_vec()).unwrap();
+			trie1
+				.insert(k0.as_bytes().to_vec(), v.as_bytes().to_vec())
+				.unwrap();
+			trie1
+				.insert(k1.as_bytes().to_vec(), v.as_bytes().to_vec())
+				.unwrap();
 			trie1.root().unwrap();
 			let root = trie1.root().unwrap();
 			let mut trie2 = MerklePatriciaTrie::from(Rc::clone(&memdb), &root).unwrap();
@@ -957,8 +974,11 @@ mod tests {
 		let mut rng = rand::thread_rng();
 		let mut keys = vec![];
 		for _ in 0..100 {
-			let random_bytes: Vec<u8> = (0..rng.gen_range(2, 30)).map(|_| rand::random::<u8>()).collect();
-			trie.insert(random_bytes.clone(), random_bytes.clone()).unwrap();
+			let random_bytes: Vec<u8> = (0..rng.gen_range(2, 30))
+				.map(|_| rand::random::<u8>())
+				.collect();
+			trie.insert(random_bytes.clone(), random_bytes.clone())
+				.unwrap();
 			keys.push(random_bytes.clone());
 		}
 		trie.commit().unwrap();
@@ -1016,7 +1036,8 @@ mod tests {
 			});
 			root1 = trie.root().unwrap();
 
-			trie.iter().for_each(|(k, v)| assert_eq!(kv.remove(&k).unwrap(), v));
+			trie.iter()
+				.for_each(|(k, v)| assert_eq!(kv.remove(&k).unwrap(), v));
 			assert!(kv.is_empty());
 		}
 
@@ -1048,12 +1069,14 @@ mod tests {
 			kv2.retain(|k, _| !kv_delete.contains(k));
 
 			trie.root().unwrap();
-			trie.iter().for_each(|(k, v)| assert_eq!(kv2.remove(&k).unwrap(), v));
+			trie.iter()
+				.for_each(|(k, v)| assert_eq!(kv2.remove(&k).unwrap(), v));
 			assert!(kv2.is_empty());
 		}
 
 		let trie = MerklePatriciaTrie::from(Rc::clone(&memdb), &root1).unwrap();
-		trie.iter().for_each(|(k, v)| assert_eq!(kv.remove(&k).unwrap(), v));
+		trie.iter()
+			.for_each(|(k, v)| assert_eq!(kv.remove(&k).unwrap(), v));
 		assert!(kv.is_empty());
 	}
 }

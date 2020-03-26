@@ -228,7 +228,8 @@ impl EthHeader {
 
 	/// Get the hash of this header (keccak of the RLP with seal).
 	pub fn hash(&self) -> H256 {
-		self.hash.unwrap_or_else(|| keccak_hash::keccak(self.rlp(Seal::With)))
+		self.hash
+			.unwrap_or_else(|| keccak_hash::keccak(self.rlp(Seal::With)))
 	}
 
 	/// Get the hash of the header excluding the seal
@@ -289,7 +290,9 @@ mod tests {
 
 	#[inline]
 	fn sequential_header() -> (EthHeader, EthHeader) {
-		let mixh1 = H256::from(hex!("543bc0769f7d5df30e7633f4a01552c2cee7baace8a6da37fddaa19e49e81209"));
+		let mixh1 = H256::from(hex!(
+			"543bc0769f7d5df30e7633f4a01552c2cee7baace8a6da37fddaa19e49e81209"
+		));
 		let nonce1 = H64::from(hex!("a5d3d0ccc8bb8a29"));
 		// #8996777
 		let header1 = EthHeader {
@@ -311,7 +314,9 @@ mod tests {
 		};
 
 		// # 8996778
-		let mixh2 = H256::from(hex!("0ea8027f96c18f474e9bc74ff71d29aacd3f485d5825be0a8dde529eb82a47ed"));
+		let mixh2 = H256::from(hex!(
+			"0ea8027f96c18f474e9bc74ff71d29aacd3f485d5825be0a8dde529eb82a47ed"
+		));
 		let nonce2 = H64::from(hex!("55859dc00728f99a"));
 		let header2 = EthHeader {
 			parent_hash: H256::from(hex!("b80bf91d6f459227a9c617c5d9823ff0b07f1098ea16788676f0b804ecd42f3b")),
@@ -335,7 +340,9 @@ mod tests {
 	}
 
 	fn ropsten_sequential_header() -> (EthHeader, EthHeader) {
-		let mixh1 = H256::from(hex!("c4b28f4b671b2e675634f596840d3115ce3df0ab38b6608a69371da16a3455aa"));
+		let mixh1 = H256::from(hex!(
+			"c4b28f4b671b2e675634f596840d3115ce3df0ab38b6608a69371da16a3455aa"
+		));
 		let nonce1 = H64::from(hex!("7afbefa403b138fa"));
 		// #6890091
 		// https://api-ropsten.etherscan.io/api?module=proxy&action=eth_getBlockByNumber&tag=0x69226b&boolean=true&apikey=YourApiKeyToken
@@ -359,7 +366,9 @@ mod tests {
 		};
 
 		// # 6890092
-		let mixh2 = H256::from(hex!("5a85e328a8bb041a386ffb25db029b7f0df4665a8a55b331b30a576761404fa6"));
+		let mixh2 = H256::from(hex!(
+			"5a85e328a8bb041a386ffb25db029b7f0df4665a8a55b331b30a576761404fa6"
+		));
 		let nonce2 = H64::from(hex!("650ea83006bb108d"));
 		let header2 = EthHeader {
 			parent_hash: H256::from(hex!("1dafbf6a9825241ea5dfa7c3a54781c0784428f2ef3b588748521f83209d3caa")),
@@ -385,7 +394,9 @@ mod tests {
 	#[test]
 	fn test_mainet_header_bare_hash() {
 		// 8996777
-		let mixh2 = H256::from(hex!("543bc0769f7d5df30e7633f4a01552c2cee7baace8a6da37fddaa19e49e81209"));
+		let mixh2 = H256::from(hex!(
+			"543bc0769f7d5df30e7633f4a01552c2cee7baace8a6da37fddaa19e49e81209"
+		));
 		let nonce2 = H64::from(hex!("a5d3d0ccc8bb8a29"));
 
 		let header2 = EthHeader {
@@ -410,7 +421,9 @@ mod tests {
 
 		assert_eq!(
 			header2.hash(),
-			H256::from(hex!("b80bf91d6f459227a9c617c5d9823ff0b07f1098ea16788676f0b804ecd42f3b"))
+			H256::from(hex!(
+				"b80bf91d6f459227a9c617c5d9823ff0b07f1098ea16788676f0b804ecd42f3b"
+			))
 		);
 
 		//	println!("partial_header_hash2: {:?}", partial_header_hash2);
@@ -418,14 +431,18 @@ mod tests {
 		assert_eq!(
 			//		H256::from_slice(Keccak256::digest(&rlp::encode(&header2).to_vec()).as_slice()),
 			partial_header_hash2,
-			H256::from(hex!("3c2e6623b1de8862a927eeeef2b6b25dea6e1d9dad88dca3c239be3959dc384a"))
+			H256::from(hex!(
+				"3c2e6623b1de8862a927eeeef2b6b25dea6e1d9dad88dca3c239be3959dc384a"
+			))
 		);
 	}
 
 	#[test]
 	fn test_ropsten_header_bare_hash() {
 		// 70000
-		let mixh2 = H256::from(hex!("341e3bcf01c921963933253e0cf937020db69206f633e31e0d1c959cdd1188f5"));
+		let mixh2 = H256::from(hex!(
+			"341e3bcf01c921963933253e0cf937020db69206f633e31e0d1c959cdd1188f5"
+		));
 		let nonce2 = H64::from(hex!("475ddd90b151f305"));
 
 		let header2 = EthHeader {
@@ -450,7 +467,9 @@ mod tests {
 
 		assert_eq!(
 			partial_header_hash2,
-			H256::from(hex!("bb698ea6e304a7a88a6cd8238f0e766b4f7bf70dc0869bd2e4a76a8e93fffc80"))
+			H256::from(hex!(
+				"bb698ea6e304a7a88a6cd8238f0e766b4f7bf70dc0869bd2e4a76a8e93fffc80"
+			))
 		);
 	}
 
@@ -459,7 +478,8 @@ mod tests {
 		let mut header: EthHeader = EthHeader::default();
 		header.set_seal(vec![rlp::encode(&H256::zero()), rlp::encode(&H64::zero())]);
 		header.set_difficulty(
-			U256::from_str("ffffffffffffffffffffffffffffffffffffffffffffaaaaaaaaaaaaaaaaaaaa").unwrap(),
+			U256::from_str("ffffffffffffffffffffffffffffffffffffffffffffaaaaaaaaaaaaaaaaaaaa")
+				.unwrap(),
 		);
 
 		let ethash_params = EthashPartial::expanse();
@@ -468,7 +488,10 @@ mod tests {
 		match verify_result {
 			Err(BlockError::InvalidProofOfWork(_)) => {}
 			Err(_) => {
-				panic!("should be invalid proof of work error (got {:?})", verify_result);
+				panic!(
+					"should be invalid proof of work error (got {:?})",
+					verify_result
+				);
 			}
 			_ => {
 				panic!("Should be error, got Ok");
@@ -489,7 +512,10 @@ mod tests {
 		let expected = U256::from_str("f3c49f25").unwrap();
 		let ethash_params = EthashPartial::ropsten_testnet();
 		//		ethash_params.set_difficulty_bomb_delays(0xc3500, 5000000);
-		assert_eq!(ethash_params.calculate_difficulty(&header2, &header1), expected);
+		assert_eq!(
+			ethash_params.calculate_difficulty(&header2, &header1),
+			expected
+		);
 	}
 
 	#[test]
@@ -497,7 +523,10 @@ mod tests {
 		let (header1, header2) = sequential_header();
 		let expected = U256::from_str("92c07e50de0b9").unwrap();
 		let ethash_params = EthashPartial::production();
-		assert_eq!(ethash_params.calculate_difficulty(&header2, &header1), expected);
+		assert_eq!(
+			ethash_params.calculate_difficulty(&header2, &header1),
+			expected
+		);
 	}
 
 	#[test]

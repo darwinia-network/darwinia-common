@@ -198,7 +198,8 @@ impl EthashPartial {
 			let diff_inc = (header.timestamp() - parent.timestamp()) / increment_divisor;
 			if diff_inc <= threshold {
 				*parent.difficulty()
-					+ *parent.difficulty() / difficulty_bound_divisor * U256::from(threshold - diff_inc)
+					+ *parent.difficulty() / difficulty_bound_divisor
+						* U256::from(threshold - diff_inc)
 			} else {
 				let multiplier: U256 = cmp::min(diff_inc - threshold, 99).into();
 				parent
@@ -221,13 +222,17 @@ impl EthashPartial {
 					target = cmp::max(min_difficulty, target + (U256::from(1) << (period - 2)));
 				}
 			} else if header.number() < self.ecip1010_continue_transition {
-				let fixed_difficulty = ((self.ecip1010_pause_transition / EXP_DIFF_PERIOD) - 2) as usize;
+				let fixed_difficulty =
+					((self.ecip1010_pause_transition / EXP_DIFF_PERIOD) - 2) as usize;
 				target = cmp::max(min_difficulty, target + (U256::from(1) << fixed_difficulty));
 			} else {
 				let period = ((parent.number() + 1) / EXP_DIFF_PERIOD) as usize;
-				let delay =
-					((self.ecip1010_continue_transition - self.ecip1010_pause_transition) / EXP_DIFF_PERIOD) as usize;
-				target = cmp::max(min_difficulty, target + (U256::from(1) << (period - delay - 2)));
+				let delay = ((self.ecip1010_continue_transition - self.ecip1010_pause_transition)
+					/ EXP_DIFF_PERIOD) as usize;
+				target = cmp::max(
+					min_difficulty,
+					target + (U256::from(1) << (period - delay - 2)),
+				);
 			}
 		}
 		target
@@ -282,7 +287,12 @@ fn difficulty_to_boundary_aux<T: Into<U512>>(difficulty: T) -> ethereum_types::U
 	}
 }
 
-fn quick_get_difficulty(header_hash: &[u8; 32], nonce: u64, mix_hash: &[u8; 32], _progpow: bool) -> [u8; 32] {
+fn quick_get_difficulty(
+	header_hash: &[u8; 32],
+	nonce: u64,
+	mix_hash: &[u8; 32],
+	_progpow: bool,
+) -> [u8; 32] {
 	let mut first_buf = [0u8; 40];
 	let mut buf = [0u8; 64 + 32];
 

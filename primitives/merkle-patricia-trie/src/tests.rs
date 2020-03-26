@@ -32,7 +32,11 @@ mod trie_tests {
 			"0xd23786fb4a010da3ce639d66d5e904a11dbc02746d1ce25029e53290cabf28ab",
 		);
 		assert_root(
-			vec![(b"doe", b"reindeer"), (b"dog", b"puppy"), (b"dogglesworth", b"cat")],
+			vec![
+				(b"doe", b"reindeer"),
+				(b"dog", b"puppy"),
+				(b"dogglesworth", b"cat"),
+			],
 			"0x8aad789dff2f538bca5d8ea56e8abe10f4c7ba3a5dea95fea4cd6e7c3a1168d3",
 		);
 		assert_root(
@@ -404,85 +408,115 @@ mod trie_tests {
 		assert_root(
 			vec![
 				(
-					Vec::from_hex("0000000000000000000000000000000000000000000000000000000000000045")
-						.unwrap()
-						.as_slice(),
+					Vec::from_hex(
+						"0000000000000000000000000000000000000000000000000000000000000045",
+					)
+					.unwrap()
+					.as_slice(),
 					Vec::from_hex("22b224a1420a802ab51d326e29fa98e34c4f24ea")
 						.unwrap()
 						.as_slice(),
 				),
 				(
-					Vec::from_hex("0000000000000000000000000000000000000000000000000000000000000046")
-						.unwrap()
-						.as_slice(),
-					Vec::from_hex("67706c2076330000000000000000000000000000000000000000000000000000")
-						.unwrap()
-						.as_slice(),
+					Vec::from_hex(
+						"0000000000000000000000000000000000000000000000000000000000000046",
+					)
+					.unwrap()
+					.as_slice(),
+					Vec::from_hex(
+						"67706c2076330000000000000000000000000000000000000000000000000000",
+					)
+					.unwrap()
+					.as_slice(),
 				),
 				(
-					Vec::from_hex("0000000000000000000000000000000000000000000000000000001234567890")
-						.unwrap()
-						.as_slice(),
+					Vec::from_hex(
+						"0000000000000000000000000000000000000000000000000000001234567890",
+					)
+					.unwrap()
+					.as_slice(),
 					Vec::from_hex("697c7b8c961b56f675d570498424ac8de1a918f6")
 						.unwrap()
 						.as_slice(),
 				),
 				(
-					Vec::from_hex("000000000000000000000000697c7b8c961b56f675d570498424ac8de1a918f6")
-						.unwrap()
-						.as_slice(),
+					Vec::from_hex(
+						"000000000000000000000000697c7b8c961b56f675d570498424ac8de1a918f6",
+					)
+					.unwrap()
+					.as_slice(),
 					Vec::from_hex("1234567890").unwrap().as_slice(),
 				),
 				(
-					Vec::from_hex("0000000000000000000000007ef9e639e2733cb34e4dfc576d4b23f72db776b2")
-						.unwrap()
-						.as_slice(),
-					Vec::from_hex("4655474156000000000000000000000000000000000000000000000000000000")
-						.unwrap()
-						.as_slice(),
+					Vec::from_hex(
+						"0000000000000000000000007ef9e639e2733cb34e4dfc576d4b23f72db776b2",
+					)
+					.unwrap()
+					.as_slice(),
+					Vec::from_hex(
+						"4655474156000000000000000000000000000000000000000000000000000000",
+					)
+					.unwrap()
+					.as_slice(),
 				),
 				(
-					Vec::from_hex("000000000000000000000000ec4f34c97e43fbb2816cfd95e388353c7181dab1")
-						.unwrap()
-						.as_slice(),
-					Vec::from_hex("4e616d6552656700000000000000000000000000000000000000000000000000")
-						.unwrap()
-						.as_slice(),
+					Vec::from_hex(
+						"000000000000000000000000ec4f34c97e43fbb2816cfd95e388353c7181dab1",
+					)
+					.unwrap()
+					.as_slice(),
+					Vec::from_hex(
+						"4e616d6552656700000000000000000000000000000000000000000000000000",
+					)
+					.unwrap()
+					.as_slice(),
 				),
 				(
-					Vec::from_hex("4655474156000000000000000000000000000000000000000000000000000000")
-						.unwrap()
-						.as_slice(),
+					Vec::from_hex(
+						"4655474156000000000000000000000000000000000000000000000000000000",
+					)
+					.unwrap()
+					.as_slice(),
 					Vec::from_hex("7ef9e639e2733cb34e4dfc576d4b23f72db776b2")
 						.unwrap()
 						.as_slice(),
 				),
 				(
-					Vec::from_hex("4e616d6552656700000000000000000000000000000000000000000000000000")
-						.unwrap()
-						.as_slice(),
+					Vec::from_hex(
+						"4e616d6552656700000000000000000000000000000000000000000000000000",
+					)
+					.unwrap()
+					.as_slice(),
 					Vec::from_hex("ec4f34c97e43fbb2816cfd95e388353c7181dab1")
 						.unwrap()
 						.as_slice(),
 				),
 				(
-					Vec::from_hex("0000000000000000000000000000000000000000000000000000001234567890")
-						.unwrap()
-						.as_slice(),
+					Vec::from_hex(
+						"0000000000000000000000000000000000000000000000000000001234567890",
+					)
+					.unwrap()
+					.as_slice(),
 					Vec::from_hex("").unwrap().as_slice(),
 				),
 				(
-					Vec::from_hex("000000000000000000000000697c7b8c961b56f675d570498424ac8de1a918f6")
-						.unwrap()
-						.as_slice(),
-					Vec::from_hex("6f6f6f6820736f2067726561742c207265616c6c6c793f000000000000000000")
-						.unwrap()
-						.as_slice(),
+					Vec::from_hex(
+						"000000000000000000000000697c7b8c961b56f675d570498424ac8de1a918f6",
+					)
+					.unwrap()
+					.as_slice(),
+					Vec::from_hex(
+						"6f6f6f6820736f2067726561742c207265616c6c6c793f000000000000000000",
+					)
+					.unwrap()
+					.as_slice(),
 				),
 				(
-					Vec::from_hex("6f6f6f6820736f2067726561742c207265616c6c6c793f000000000000000000")
-						.unwrap()
-						.as_slice(),
+					Vec::from_hex(
+						"6f6f6f6820736f2067726561742c207265616c6c6c793f000000000000000000",
+					)
+					.unwrap()
+					.as_slice(),
 					Vec::from_hex("697c7b8c961b56f675d570498424ac8de1a918f6")
 						.unwrap()
 						.as_slice(),
@@ -493,7 +527,10 @@ mod trie_tests {
 		assert_root(
 			vec![
 				(b"key1aa", b"0123456789012345678901234567890123456789xxx"),
-				(b"key1", b"0123456789012345678901234567890123456789Very_Long"),
+				(
+					b"key1",
+					b"0123456789012345678901234567890123456789Very_Long",
+				),
 				(b"key2bb", b"aval3"),
 				(b"key2", b"short"),
 				(b"key3cc", b"aval3"),
@@ -516,7 +553,8 @@ mod trie_tests {
 		let mut trie = MerklePatriciaTrie::new(Rc::clone(&memdb));
 		trie.insert(b"doe".to_vec(), b"reindeer".to_vec()).unwrap();
 		trie.insert(b"dog".to_vec(), b"puppy".to_vec()).unwrap();
-		trie.insert(b"dogglesworth".to_vec(), b"cat".to_vec()).unwrap();
+		trie.insert(b"dogglesworth".to_vec(), b"cat".to_vec())
+			.unwrap();
 		let root = trie.root().unwrap();
 		let r = format!("0x{}", hex::encode(trie.root().unwrap()));
 		assert_eq!(
@@ -531,7 +569,12 @@ mod trie_tests {
 			"f83b8080808080ca20887265696e6465657280a037efd11993cb04a54048c25320e9f29c50a432d28afdf01598b2978ce1ca3068808080808080808080",
 		];
 		assert_eq!(
-			proof.clone().nodes.into_iter().map(hex::encode).collect::<Vec<_>>(),
+			proof
+				.clone()
+				.nodes
+				.into_iter()
+				.map(hex::encode)
+				.collect::<Vec<_>>(),
 			expected
 		);
 		let value = MerklePatriciaTrie::verify_proof(root.clone(), b"doe", proof).unwrap();
@@ -545,7 +588,12 @@ mod trie_tests {
 			"e4808080808080ce89376c6573776f72746883636174808080808080808080857075707079",
 		];
 		assert_eq!(
-			proof.clone().nodes.into_iter().map(hex::encode).collect::<Vec<_>>(),
+			proof
+				.clone()
+				.nodes
+				.into_iter()
+				.map(hex::encode)
+				.collect::<Vec<_>>(),
 			expected
 		);
 		let value = MerklePatriciaTrie::verify_proof(root.clone(), b"dogg", proof).unwrap();
@@ -569,8 +617,11 @@ mod trie_tests {
 		let mut rng = rand::thread_rng();
 		let mut keys = vec![];
 		for _ in 0..100 {
-			let random_bytes: Vec<u8> = (0..rng.gen_range(2, 30)).map(|_| rand::random::<u8>()).collect();
-			trie.insert(random_bytes.to_vec(), random_bytes.clone()).unwrap();
+			let random_bytes: Vec<u8> = (0..rng.gen_range(2, 30))
+				.map(|_| rand::random::<u8>())
+				.collect();
+			trie.insert(random_bytes.to_vec(), random_bytes.clone())
+				.unwrap();
 			keys.push(random_bytes.clone());
 		}
 		for k in keys.clone().into_iter() {
@@ -617,7 +668,9 @@ mod trie_tests {
 	fn test_ethereum_receipts_proof() {
 		let rlp_proof: Vec<u8> = Vec::from_hex("f9016ef9016bb853f851a009b67a67265063da0dd6a7abad695edb2c439f6b458f2a2ee48a21442fef8a2680808080808080a0a7d4f8b974d21b7244014729b07e9c9f19fdc445da2ceddc089d90cead74be618080808080808080b90113f9011031b9010cf9010901835cdb6eb9010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0").unwrap();
 		let expected: Vec<u8> = Vec::from_hex("f9010901835cdb6eb9010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0").unwrap();
-		let root = Vec::from_hex("7fa081e3e33e53c4d09ae691af3853bb73a7e02c856104fe843172abab85df7b").unwrap();
+		let root =
+			Vec::from_hex("7fa081e3e33e53c4d09ae691af3853bb73a7e02c856104fe843172abab85df7b")
+				.unwrap();
 
 		let proof: Proof = rlp::decode(&rlp_proof).unwrap();
 		let key = rlp::encode(&1usize);
@@ -638,7 +691,12 @@ mod trie_tests {
 
 		let memdb = Rc::new(MemoryDB::new());
 		let mut trie = MerklePatriciaTrie::new(Rc::clone(&memdb));
-		for (k, v) in data.clone().into_iter().enumerate().map(|(i, v)| (rlp::encode(&i), v)) {
+		for (k, v) in data
+			.clone()
+			.into_iter()
+			.enumerate()
+			.map(|(i, v)| (rlp::encode(&i), v))
+		{
 			trie.insert(k.to_vec(), v.to_vec()).unwrap();
 		}
 		let r = trie.root().unwrap();
