@@ -3,7 +3,7 @@ pub use frame_support::traits::{LockIdentifier, VestingSchedule, WithdrawReason,
 use frame_support::traits::{Currency, TryDrop};
 use sp_runtime::DispatchResult;
 
-use crate::balance::lock::LockFor;
+use crate::balance::{FrozenBalance, lock::{LockFor, LockReasons}};
 
 /// A currency whose accounts can have liquidity restrictions.
 pub trait LockableCurrency<AccountId>: Currency<AccountId> {
@@ -104,4 +104,21 @@ impl<Imbalance: TryDrop> OnUnbalancedKton<Imbalance> for () {
 	fn on_nonzero_unbalanced(amount: Imbalance) {
 		drop(amount);
 	}
+}
+
+// TODO: Move to balances module after mering ring and kton
+pub trait AccountBalanceData<Balance, Module> {
+	fn free(&self) -> Balance;
+
+	fn reserved(&self) -> Balance;
+
+	fn mutate_free(&mut self, free: Balance);
+
+	fn mutate_reserved(&mut self, reserved: Balance);
+
+	/// How much this account's balance can be reduced for the given `reasons`.
+	fn usable(&self, reasons: LockReasons, frozen_balance: FrozenBalance<Balance>) -> Balance ;
+
+	/// The total balance in this account including any that is reserved and ignoring any frozen.
+	fn total(&self) -> Balance;
 }

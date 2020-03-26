@@ -39,6 +39,23 @@ pub struct AccountData<Balance> {
 	pub reserved_kton: Balance,
 }
 
+
+//runtime
+//impl AccountBalanceData<Balance, Module> for AccountData<Balance> {
+////	type Module = Ring;
+//
+//	fn get_free<Module>() -> Balance {
+//		return free_ring;
+//	}
+//
+//	fn get_reserve<Module>() -> Balance {
+//		return reserve_ring;
+//	}
+//
+//}
+
+
+// TOOD: Remove this, this is only for kton compile through
 impl<Balance> AccountData<Balance>
 where
 	Balance: Copy + Ord + Saturating + Zero,
