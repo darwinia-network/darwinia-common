@@ -1,0 +1,71 @@
+language: rust
+rust: nightly-2020-02-07
+
+branches:
+    only:
+        - master
+        - develop
+
+env:
+    global:
+        - RUST_BACKTRACE=1
+
+before_install:
+    # Check how much space we've got on this machine.
+    - df -h
+    - rustup target add wasm32-unknown-unknown --toolchain nightly-2020-02-07
+
+
+jobs:
+  include:
+    - stage: Check & Prepare
+      script: .maintain/ci/fmt_script.sh
+
+    - stage: Build
+      env: RUST_TOOLCHAIN=nightly-2020-02-07 TARGET=native
+      script: .maintain/ci/build_script.sh
+
+    - stage: Build
+      env: RUST_TOOLCHAIN=nightly-2020-02-07 TARGET=wasm
+      script: .maintain/ci/build_script.sh
+
+    - stage: Darwinia Test
+      env:  KTON RUST_TOOLCHAIN=nightly-2020-02-07 TARGET=native
+      script: .maintain/ci/darwinia_test_script.sh kton
+
+    - stage: Darwinia Test
+      env: RING RUST_TOOLCHAIN=nightly-2020-02-07 TARGET=native
+      script: .maintain/ci/darwinia_test_script.sh ring
+
+    - stage: Darwinia Test
+      env: STAKING RUST_TOOLCHAIN=nightly-2020-02-07 TARGET=native
+      script: .maintain/ci/darwinia_test_script.sh staking
+
+    - stage: Darwinia Test
+      env: TREASURY RUST_TOOLCHAIN=nightly-2020-02-07 TARGET=native
+      script: .maintain/ci/darwinia_test_script.sh treasury
+
+    - stage: Darwinia Test
+      env: ETHRELAY RUST_TOOLCHAIN=nightly-2020-02-07 TARGET=native
+      script: .maintain/ci/darwinia_test_script.sh eth-relay
+
+    - stage: Darwinia Test
+      env: ETHBACKING RUST_TOOLCHAIN=nightly-2020-02-07 TARGET=native
+      script: .maintain/ci/darwinia_test_script.sh eth-backing
+
+    - stage: Darwinia Test
+      env: HEADERMMR RUST_TOOLCHAIN=nightly-2020-02-07 TARGET=native
+      script: .maintain/ci/darwinia_test_script.sh header-mmr
+
+    - stage: Darwinia Test
+      env: ETHOFFCHAIN RUST_TOOLCHAIN=nightly-2020-02-07 TARGET=native
+      script: .maintain/ci/darwinia_test_script.sh eth-offchain
+
+    # over the time limitation, so we comment this
+    # - stage: Overall Test 
+    #   env: RUST_TOOLCHAIN=nightly-2020-02-07 TARGET=native
+    #   script: .maintain/ci/test_script.sh
+
+after_script:
+    # Check how much free disk space left after the build
+    - df -h
