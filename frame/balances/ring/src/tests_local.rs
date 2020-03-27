@@ -91,9 +91,7 @@ impl Trait for Test {
 	type TryDropKton = ();
 }
 
-//runtime
 impl AccountBalanceData<u64, DefaultInstance> for super::AccountData<u64> {
-//	type Module = Ring;
 	fn free(&self) -> u64{
 		self.free_ring
 	}
@@ -110,13 +108,11 @@ impl AccountBalanceData<u64, DefaultInstance> for super::AccountData<u64> {
 		self.reserved_ring = new_reserved;
 	}
 
-	/// How much this account's balance can be reduced for the given `reasons`.
 	fn usable(&self, reasons: LockReasons, frozen_balance: FrozenBalance<u64>) -> u64 {
 		self.free_ring
 			.saturating_sub(FrozenBalance::frozen_for(reasons, frozen_balance))
 	}
 
-	/// The total balance in this account including any that is reserved and ignoring any frozen.
 	fn total(&self) -> u64{
 		self.free_ring.saturating_add(self.reserved_ring)
 	}

@@ -56,6 +56,14 @@ pub const COIN: Balance = 1_000 * MILLI;
 pub const CAP: Balance = 10_000_000_000 * COIN;
 pub const TOTAL_POWER: Power = 1_000_000_000;
 
+#[derive(Encode, Decode, Clone, PartialEq, Eq, Default, RuntimeDebug)]
+pub struct AccountData<Balance> {
+	pub free_ring: Balance,
+	pub free_kton: Balance,
+	pub reserved_ring: Balance,
+	pub reserved_kton: Balance,
+}
+
 thread_local! {
 	static SESSION: RefCell<(Vec<AccountId>, HashSet<AccountId>)> = RefCell::new(Default::default());
 	static EXISTENTIAL_DEPOSIT: RefCell<Balance> = RefCell::new(0);
@@ -146,7 +154,7 @@ impl frame_system::Trait for Test {
 	type AvailableBlockRatio = AvailableBlockRatio;
 	type Version = ();
 	type ModuleToIndex = ();
-	type AccountData = darwinia_support::balance::AccountData<Balance>;
+	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type MigrateAccount = ();
@@ -203,8 +211,36 @@ impl pallet_ring::Trait for Test {
 	type DustRemoval = ();
 	type Event = ();
 	type ExistentialDeposit = ExistentialDeposit;
+	type AccountBalanceData = AccountData<Balance>;
 	type AccountStore = System;
 	type TryDropKton = ();
+}
+
+impl<Balance> darwinia_support::balance::AccountBalanceData<Balance, pallet_ring::DefaultInstance> for AccountData<Balance> {
+	fn free(&self) -> Balance{
+		self.free_ring
+	}
+
+	fn reserved(&self) -> Balance {
+		self.reserved_ring
+	}
+
+	fn mutate_free(&mut self, new_free: Balance) {
+		self.free_ring = new_free;
+	}
+
+	fn mutate_reserved(&mut self, new_reserved: Balance) {
+		self.reserved_ring = new_reserved;
+	}
+
+	fn usable(&self, reasons: LockReasons, frozen_balance: darwinia_support::balance::FrozenBalance<Balance>) -> Balance {
+		self.free_ring
+			.saturating_sub(darwinia_support::balance::FrozenBalance::frozen_for(reasons, frozen_balance))
+	}
+
+	fn total(&self) -> Balance {
+		self.free_ring.saturating_add(self.reserved_ring)
+	}
 }
 
 parameter_types! {
