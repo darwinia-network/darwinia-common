@@ -9,33 +9,33 @@ homepage = "https://darwinia.network/"
 repository = "https://github.com/darwinia-network/darwinia/"
 
 [dependencies]
-# crates.io
+# crates
 codec = { package = "parity-scale-codec", version = "1.2.0", default-features = false }
-merkle-mountain-range = { package = "ckb-merkle-mountain-range", default-features = false, git = "https://github.com/nervosnetwork/merkle-mountain-range.git" }
 serde = { version = "1.0.101", optional = true }
-
-# github.com
+# github
+merkle-mountain-range = { package = "ckb-merkle-mountain-range", default-features = false, git = "https://github.com/nervosnetwork/merkle-mountain-range.git" }
+# substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
 frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
-
 sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
 sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
 
 [dev-dependencies]
+# substrate
 sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
 sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
-
 
 [features]
 default = ["std"]
 std = [
+	# crates
 	"codec/std",
-	"merkle-mountain-range/std",
 	"serde",
-
+	# github
+	"merkle-mountain-range/std",
+	# substrate
 	"frame-support/std",
 	"frame-system/std",
-	
 	"sp-runtime/std",
 	"sp-std/std",
 ]

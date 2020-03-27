@@ -86,7 +86,10 @@ pub type PhragmenAssignment<AccountId, T> = (AccountId, T);
 
 /// Particular `AccountId` was backed by `Votes` of a nominator's stake.
 #[derive(RuntimeDebug)]
-#[cfg_attr(feature = "std", derive(Eq, PartialEq, serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+	feature = "std",
+	derive(Eq, PartialEq, serde::Serialize, serde::Deserialize)
+)]
 pub struct PhragmenStakedAssignment<AccountId, RingBalance, KtonBalance> {
 	pub account_id: AccountId,
 	pub ring_balance: RingBalance,
@@ -113,7 +116,10 @@ pub struct PhragmenResult<AccountId, T: PerThing> {
 /// This, at the current version, resembles the `Exposure` defined in the Staking pallet, yet
 /// they do not necessarily have to be the same.
 #[derive(Default, RuntimeDebug)]
-#[cfg_attr(feature = "std", derive(Eq, PartialEq, serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+	feature = "std",
+	derive(Eq, PartialEq, serde::Serialize, serde::Deserialize)
+)]
 pub struct Support<AccountId, RingBalance, KtonBalance> {
 	/// The amount of support as the effect of self-vote.
 	pub own_ring_balance: RingBalance,
@@ -196,7 +202,9 @@ where
 		for v in votes {
 			if let Some(idx) = c_idx_cache.get(&v) {
 				// This candidate is valid + already cached.
-				candidates[*idx].approval_stake = candidates[*idx].approval_stake.saturating_add(to_votes(voter_stake));
+				candidates[*idx].approval_stake = candidates[*idx]
+					.approval_stake
+					.saturating_add(to_votes(voter_stake));
 				edges.push(Edge {
 					who: v.clone(),
 					candidate_index: *idx,
@@ -238,7 +246,11 @@ where
 			for e in &n.edges {
 				let c = &mut candidates[e.candidate_index];
 				if !c.elected && !c.approval_stake.is_zero() {
-					let temp_n = Rational64::multiply_by_rational(n.load.n(), n.budget as _, c.approval_stake as _);
+					let temp_n = Rational64::multiply_by_rational(
+						n.load.n(),
+						n.budget as _,
+						c.approval_stake as _,
+					);
 					let temp_d = n.load.d();
 					let temp = Rational64::from(temp_n, temp_d);
 					c.score = c.score.lazy_saturating_add(temp);
@@ -247,7 +259,11 @@ where
 		}
 
 		// loop 3: find the best
-		if let Some(winner) = candidates.iter_mut().filter(|c| !c.elected).min_by_key(|c| c.score) {
+		if let Some(winner) = candidates
+			.iter_mut()
+			.filter(|c| !c.elected)
+			.min_by_key(|c| c.score)
+		{
 			// loop 3: update voter and edge load
 			winner.elected = true;
 			for n in &mut voters {
@@ -269,7 +285,11 @@ where
 	for n in &mut voters {
 		let mut assignment = (n.who.clone(), vec![]);
 		for e in &mut n.edges {
-			if elected_candidates.iter().position(|(ref c, _)| *c == e.who).is_some() {
+			if elected_candidates
+				.iter()
+				.position(|(ref c, _)| *c == e.who)
+				.is_some()
+			{
 				let per_bill_parts: R::Inner = {
 					if n.load == e.load {
 						// Full support. No need to calculate.
@@ -278,7 +298,11 @@ where
 						if e.load.d() == n.load.d() {
 							// return e.load / n.load.
 							let desired_scale = R::ACCURACY.saturated_into() as _;
-							let parts = Rational64::multiply_by_rational(desired_scale, e.load.n(), n.load.n());
+							let parts = Rational64::multiply_by_rational(
+								desired_scale,
+								e.load.n(),
+								n.load.n(),
+							);
 
 							TryFrom::try_from(parts)
 								// If the result cannot fit into R::Inner. Defensive only. This can
@@ -458,7 +482,9 @@ where
 		return 0;
 	}
 
-	let stake_used = elected_edges.iter().fold(0 as Votes, |s, e| s.saturating_add(e.votes));
+	let stake_used = elected_edges
+		.iter()
+		.fold(0 as Votes, |s, e| s.saturating_add(e.votes));
 
 	let backed_stakes_iter = elected_edges
 		.iter()
@@ -495,7 +521,9 @@ where
 	elected_edges.iter_mut().for_each(|e| {
 		if let Some(support) = support_map.get_mut(&e.account_id) {
 			support.total_votes = support.total_votes.saturating_sub(e.votes);
-			support.voters.retain(|i_support| i_support.account_id != *voter);
+			support
+				.voters
+				.retain(|i_support| i_support.account_id != *voter);
 		}
 		e.votes = 0;
 	});
@@ -535,12 +563,14 @@ where
 			let votes = (excess / split_ways as Votes)
 				.saturating_add(last_votes)
 				.saturating_sub(support.total_votes);
-			e.ring_balance = multiply_by_rational(e.ring_balance.saturated_into(), votes as _, e.votes as _)
-				.unwrap_or(0)
-				.saturated_into();
-			e.kton_balance = multiply_by_rational(e.kton_balance.saturated_into(), votes as _, e.votes as _)
-				.unwrap_or(0)
-				.saturated_into();
+			e.ring_balance =
+				multiply_by_rational(e.ring_balance.saturated_into(), votes as _, e.votes as _)
+					.unwrap_or(0)
+					.saturated_into();
+			e.kton_balance =
+				multiply_by_rational(e.kton_balance.saturated_into(), votes as _, e.votes as _)
+					.unwrap_or(0)
+					.saturated_into();
 			e.votes = votes;
 
 			support.total_votes = support.total_votes.saturating_add(e.votes);

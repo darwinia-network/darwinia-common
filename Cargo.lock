@@ -464,7 +464,6 @@ name = "darwinia-eth-backing"
 version = "0.5.0"
 dependencies = [
  "darwinia-eth-relay",
- "darwinia-kton",
  "darwinia-ring",
  "darwinia-staking",
  "darwinia-support",
@@ -541,21 +540,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-kton"
-version = "0.5.0"
-dependencies = [
- "darwinia-support",
- "frame-support",
- "frame-system",
- "pallet-transaction-payment",
- "parity-scale-codec",
- "serde",
- "sp-core",
- "sp-runtime",
- "sp-std 2.0.0-alpha.3 (git+https://github.com/darwinia-network/substrate.git?tag=v2.0.0-alpha.darwinia.2)",
-]
-
-[[package]]
 name = "darwinia-phragmen"
 version = "0.5.0"
 dependencies = [
@@ -589,7 +573,6 @@ dependencies = [
 name = "darwinia-staking"
 version = "0.5.0"
 dependencies = [
- "darwinia-kton",
  "darwinia-phragmen",
  "darwinia-ring",
  "darwinia-support",
@@ -623,7 +606,6 @@ dependencies = [
 name = "darwinia-treasury"
 version = "0.5.0"
 dependencies = [
- "darwinia-kton",
  "darwinia-ring",
  "darwinia-support",
  "frame-support",

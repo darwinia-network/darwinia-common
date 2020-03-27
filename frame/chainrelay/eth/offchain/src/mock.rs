@@ -47,7 +47,8 @@ impl frame_system::Trait for Test {
 }
 
 type Extrinsic = TestXt<Call<Test>, ()>;
-type SubmitTransaction = frame_system::offchain::TransactionSubmitter<crypto::Public, Test, Extrinsic>;
+type SubmitTransaction =
+	frame_system::offchain::TransactionSubmitter<crypto::Public, Test, Extrinsic>;
 
 impl frame_system::offchain::CreateTransaction<Test, Extrinsic> for Test {
 	type Public = sp_core::sr25519::Public;

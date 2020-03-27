@@ -45,12 +45,20 @@ where
 	Balance: Copy + Ord + Saturating + Zero,
 {
 	/// How much this account's balance can be reduced for the given `reasons`.
-	pub fn usable_ring(&self, reasons: LockReasons, frozen_balance: FrozenBalance<Balance>) -> Balance {
+	pub fn usable_ring(
+		&self,
+		reasons: LockReasons,
+		frozen_balance: FrozenBalance<Balance>,
+	) -> Balance {
 		self.free_ring
 			.saturating_sub(FrozenBalance::frozen_for(reasons, frozen_balance))
 	}
 	/// How much this account's balance can be reduced for the given `reasons`.
-	pub fn usable_kton(&self, reasons: LockReasons, frozen_balance: FrozenBalance<Balance>) -> Balance {
+	pub fn usable_kton(
+		&self,
+		reasons: LockReasons,
+		frozen_balance: FrozenBalance<Balance>,
+	) -> Balance {
 		self.free_kton
 			.saturating_sub(FrozenBalance::frozen_for(reasons, frozen_balance))
 	}
@@ -151,9 +159,8 @@ where
 	pub fn locked_amount(&self, at: Option<Moment>) -> Balance {
 		match &self.lock_for {
 			LockFor::Common { amount } => *amount,
-			LockFor::Staking(staking_lock) => {
-				staking_lock.locked_amount(at.expect("This's a `StakingLock`, please specify the `Moment`."))
-			}
+			LockFor::Staking(staking_lock) => staking_lock
+				.locked_amount(at.expect("This's a `StakingLock`, please specify the `Moment`.")),
 		}
 	}
 }
@@ -178,13 +185,15 @@ where
 {
 	#[inline]
 	pub fn locked_amount(&self, at: Moment) -> Balance {
-		self.unbondings.iter().fold(self.staking_amount, |acc, unbonding| {
-			if unbonding.valid_at(at) {
-				acc.saturating_add(unbonding.amount)
-			} else {
-				acc
-			}
-		})
+		self.unbondings
+			.iter()
+			.fold(self.staking_amount, |acc, unbonding| {
+				if unbonding.valid_at(at) {
+					acc.saturating_add(unbonding.amount)
+				} else {
+					acc
+				}
+			})
 	}
 
 	#[inline]

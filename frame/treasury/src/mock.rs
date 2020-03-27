@@ -118,7 +118,9 @@ impl Trait for Test {
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	let mut t = frame_system::GenesisConfig::default()
+		.build_storage::<Test>()
+		.unwrap();
 
 	pallet_ring::GenesisConfig::<Test> {
 		// Total issuance will be 200 with treasury account initialized at ED.
@@ -132,7 +134,9 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
-	GenesisConfig::default().assimilate_storage::<Test>(&mut t).unwrap();
+	GenesisConfig::default()
+		.assimilate_storage::<Test>(&mut t)
+		.unwrap();
 
 	t.into()
 }

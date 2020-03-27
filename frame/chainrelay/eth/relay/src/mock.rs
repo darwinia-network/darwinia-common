@@ -63,7 +63,9 @@ impl Trait for Test {
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	let mut t = system::GenesisConfig::default()
+		.build_storage::<Test>()
+		.unwrap();
 
 	GenesisConfig::<Test> {
 		number_of_blocks_finality: 30,

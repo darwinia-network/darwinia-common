@@ -17,11 +17,13 @@ mod types {
 
 	pub type MomentT<T> = <TimeT<T> as Time>::Moment;
 
-	pub type RingBalance<T> = <<T as Trait>::Ring as Currency<<T as system::Trait>::AccountId>>::Balance;
+	pub type RingBalance<T> =
+		<<T as Trait>::Ring as Currency<<T as system::Trait>::AccountId>>::Balance;
 	pub type RingPositiveImbalance<T> =
 		<<T as Trait>::Ring as Currency<<T as system::Trait>::AccountId>>::PositiveImbalance;
 
-	pub type KtonBalance<T> = <<T as Trait>::Kton as Currency<<T as system::Trait>::AccountId>>::Balance;
+	pub type KtonBalance<T> =
+		<<T as Trait>::Kton as Currency<<T as system::Trait>::AccountId>>::Balance;
 	pub type KtonPositiveImbalance<T> =
 		<<T as Trait>::Kton as Currency<<T as system::Trait>::AccountId>>::PositiveImbalance;
 
@@ -62,7 +64,11 @@ pub trait Trait: system::Trait {
 
 	type EthRelay: VerifyEthReceipts;
 
-	type OnDepositRedeem: OnDepositRedeem<Self::AccountId, Balance = RingBalance<Self>, Moment = MomentT<Self>>;
+	type OnDepositRedeem: OnDepositRedeem<
+		Self::AccountId,
+		Balance = RingBalance<Self>,
+		Moment = MomentT<Self>,
+	>;
 
 	type Ring: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 	type RingReward: OnUnbalanced<RingPositiveImbalance<Self>>;
@@ -209,10 +215,16 @@ impl<T: Trait> Module<T> {
 			let log_entry = verified_receipt
 				.logs
 				.into_iter()
-				.find(|x| x.address == Self::ring_redeem_address() && x.topics[0] == eth_event.signature())
+				.find(|x| {
+					x.address == Self::ring_redeem_address() && x.topics[0] == eth_event.signature()
+				})
 				.ok_or(<Error<T>>::LogEntryNE)?;
 			let log = RawLog {
-				topics: vec![log_entry.topics[0], log_entry.topics[1], log_entry.topics[2]],
+				topics: vec![
+					log_entry.topics[0],
+					log_entry.topics[1],
+					log_entry.topics[2],
+				],
 				data: log_entry.data.clone(),
 			};
 
@@ -230,7 +242,11 @@ impl<T: Trait> Module<T> {
 			Balance::try_from(amount)?
 		};
 		let darwinia_account = {
-			let raw_sub_key = result.params[3].value.clone().to_bytes().ok_or(<Error<T>>::BytesCF)?;
+			let raw_sub_key = result.params[3]
+				.value
+				.clone()
+				.to_bytes()
+				.ok_or(<Error<T>>::BytesCF)?;
 
 			//			let decoded_sub_key = hex::decode(&raw_sub_key).map_err(|_| "Decode Address - FAILED")?;
 
@@ -242,7 +258,16 @@ impl<T: Trait> Module<T> {
 
 	fn parse_deposit_redeem_proof(
 		proof_record: &EthReceiptProof,
-	) -> Result<(DepositId, MomentT<T>, MomentT<T>, RingBalance<T>, T::AccountId), DispatchError> {
+	) -> Result<
+		(
+			DepositId,
+			MomentT<T>,
+			MomentT<T>,
+			RingBalance<T>,
+			T::AccountId,
+		),
+		DispatchError,
+	> {
 		let result = {
 			let verified_receipt = T::EthRelay::verify_receipt(proof_record)?;
 			let eth_event = EthEvent {
@@ -289,7 +314,10 @@ impl<T: Trait> Module<T> {
 			let log_entry = verified_receipt
 				.logs
 				.iter()
-				.find(|&x| x.address == Self::deposit_redeem_address() && x.topics[0] == eth_event.signature())
+				.find(|&x| {
+					x.address == Self::deposit_redeem_address()
+						&& x.topics[0] == eth_event.signature()
+				})
 				.ok_or(<Error<T>>::LogEntryNE)?;
 			let log = RawLog {
 				topics: vec![log_entry.topics[0], log_entry.topics[1]],
@@ -298,16 +326,28 @@ impl<T: Trait> Module<T> {
 
 			eth_event.parse_log(log).map_err(|_| <Error<T>>::EthLogPF)?
 		};
-		let deposit_id = result.params[0].value.clone().to_uint().ok_or(<Error<T>>::IntCF)?;
+		let deposit_id = result.params[0]
+			.value
+			.clone()
+			.to_uint()
+			.ok_or(<Error<T>>::IntCF)?;
 		let month = {
-			let month = result.params[2].value.clone().to_uint().ok_or(<Error<T>>::IntCF)?;
+			let month = result.params[2]
+				.value
+				.clone()
+				.to_uint()
+				.ok_or(<Error<T>>::IntCF)?;
 
 			<MomentT<T>>::saturated_from(month.saturated_into())
 		};
 		// https://github.com/evolutionlandorg/bank/blob/master/contracts/GringottsBankV2.sol#L178
 		// The start_at here is in seconds, will be converted to milliseconds later in on_deposit_redeem
 		let start_at = {
-			let start_at = result.params[3].value.clone().to_uint().ok_or(<Error<T>>::IntCF)?;
+			let start_at = result.params[3]
+				.value
+				.clone()
+				.to_uint()
+				.ok_or(<Error<T>>::IntCF)?;
 
 			<MomentT<T>>::saturated_from(start_at.saturated_into())
 		};
@@ -324,7 +364,11 @@ impl<T: Trait> Module<T> {
 			<RingBalance<T>>::saturated_from(redeemed_ring.saturated_into())
 		};
 		let darwinia_account = {
-			let raw_sub_key = result.params[6].value.clone().to_bytes().ok_or(<Error<T>>::BytesCF)?;
+			let raw_sub_key = result.params[6]
+				.value
+				.clone()
+				.to_bytes()
+				.ok_or(<Error<T>>::BytesCF)?;
 			//				let decoded_sub_key = hex::decode(&raw_sub_key).map_err(|_| "Decode Address - FAILED")?;
 
 			T::DetermineAccountId::account_id_for(&raw_sub_key)?
@@ -343,15 +387,20 @@ impl<T: Trait> Module<T> {
 			<Error<T>>::RingAR,
 		);
 
-		let (redeemed_ring, darwinia_account) = Self::parse_token_redeem_proof(&proof_record, "RingBurndropTokens")?;
+		let (redeemed_ring, darwinia_account) =
+			Self::parse_token_redeem_proof(&proof_record, "RingBurndropTokens")?;
 		let redeemed_ring = redeemed_ring.saturated_into();
 		let new_ring_locked = Self::ring_locked()
 			.checked_sub(&redeemed_ring)
 			.ok_or(<Error<T>>::RingLockedNSBA)?;
-		let redeemed_positive_imbalance_ring = T::Ring::deposit_into_existing(&darwinia_account, redeemed_ring)?;
+		let redeemed_positive_imbalance_ring =
+			T::Ring::deposit_into_existing(&darwinia_account, redeemed_ring)?;
 
 		T::RingReward::on_unbalanced(redeemed_positive_imbalance_ring);
-		RingProofVerified::insert((proof_record.header_hash, proof_record.index), &proof_record);
+		RingProofVerified::insert(
+			(proof_record.header_hash, proof_record.index),
+			&proof_record,
+		);
 		<RingLocked<T>>::put(new_ring_locked);
 		<Module<T>>::deposit_event(RawEvent::RedeemRing(
 			darwinia_account,
@@ -370,15 +419,20 @@ impl<T: Trait> Module<T> {
 			<Error<T>>::KtonAR,
 		);
 
-		let (redeemed_kton, darwinia_account) = Self::parse_token_redeem_proof(&proof_record, "KtonBurndropTokens")?;
+		let (redeemed_kton, darwinia_account) =
+			Self::parse_token_redeem_proof(&proof_record, "KtonBurndropTokens")?;
 		let redeemed_kton = redeemed_kton.saturated_into();
 		let new_kton_locked = Self::kton_locked()
 			.checked_sub(&redeemed_kton)
 			.ok_or(<Error<T>>::KtonLockedNSBA)?;
-		let redeemed_positive_imbalance_kton = T::Kton::deposit_into_existing(&darwinia_account, redeemed_kton)?;
+		let redeemed_positive_imbalance_kton =
+			T::Kton::deposit_into_existing(&darwinia_account, redeemed_kton)?;
 
 		T::KtonReward::on_unbalanced(redeemed_positive_imbalance_kton);
-		KtonProofVerified::insert((proof_record.header_hash, proof_record.index), &proof_record);
+		KtonProofVerified::insert(
+			(proof_record.header_hash, proof_record.index),
+			&proof_record,
+		);
 		<KtonLocked<T>>::put(new_kton_locked);
 		<Module<T>>::deposit_event(RawEvent::RedeemKton(
 			darwinia_account,
@@ -406,7 +460,10 @@ impl<T: Trait> Module<T> {
 		T::OnDepositRedeem::on_deposit_redeem(start_at, month, redeemed_ring, &darwinia_account)?;
 		// TODO: check deposit_id duplication
 		// TODO: Ignore Unit Interest for now
-		DepositProofVerified::insert((proof_record.header_hash, proof_record.index), &proof_record);
+		DepositProofVerified::insert(
+			(proof_record.header_hash, proof_record.index),
+			&proof_record,
+		);
 		<RingLocked<T>>::put(new_ring_locked);
 		<Module<T>>::deposit_event(RawEvent::RedeemDeposit(
 			darwinia_account,

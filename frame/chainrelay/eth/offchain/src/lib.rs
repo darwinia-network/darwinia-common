@@ -158,7 +158,9 @@ impl<T: Trait> Module<T> {
 		let block_info = Self::json_request(&raw_url)?;
 		let eth_header = Self::build_eth_header(next_block_number, block_info)?;
 
-		let results = T::SubmitSignedTransaction::submit_signed(pallet_eth_relay::Call::relay_header(eth_header));
+		let results = T::SubmitSignedTransaction::submit_signed(
+			pallet_eth_relay::Call::relay_header(eth_header),
+		);
 		for (account, result) in &results {
 			debug::trace!(
 				target: "eoc-fc",
@@ -211,7 +213,8 @@ impl<T: Trait> Module<T> {
 		remove_trascation_and_uncle(&mut resp_body);
 		// get the result part
 		Ok(simple_json::parse_json(
-			&core::str::from_utf8(&resp_body[33..resp_body.len() - 1]).map_err(|_| <Error<T>>::StrCF)?,
+			&core::str::from_utf8(&resp_body[33..resp_body.len() - 1])
+				.map_err(|_| <Error<T>>::StrCF)?,
 		)
 		.map_err(|_| <Error<T>>::JsonPF)?)
 	}
@@ -241,24 +244,42 @@ impl<T: Trait> Module<T> {
 				.into(),
 			timestamp: u64::from_str_radix(&timestamp_hex, 16).map_err(|_| <Error<T>>::U64CF)?,
 			number,
-			author: <[u8; 20]>::from_hex(author).map_err(|_| <Error<T>>::EthAddrCF)?.into(),
+			author: <[u8; 20]>::from_hex(author)
+				.map_err(|_| <Error<T>>::EthAddrCF)?
+				.into(),
 			transactions_root: <[u8; 32]>::from_hex(transactions_root)
 				.map_err(|_| <Error<T>>::H256CF)?
 				.into(),
 			uncles_hash: <[u8; 32]>::from_hex(uncles_hash)
 				.map_err(|_| <Error<T>>::H256CF)?
 				.into(),
-			extra_data: <Vec<u8>>::from_hex(extra_data).map_err(|_| <Error<T>>::BytesCF)?.into(),
-			state_root: <[u8; 32]>::from_hex(state_root).map_err(|_| <Error<T>>::H256CF)?.into(),
+			extra_data: <Vec<u8>>::from_hex(extra_data)
+				.map_err(|_| <Error<T>>::BytesCF)?
+				.into(),
+			state_root: <[u8; 32]>::from_hex(state_root)
+				.map_err(|_| <Error<T>>::H256CF)?
+				.into(),
 			receipts_root: <[u8; 32]>::from_hex(receipts_root)
 				.map_err(|_| <Error<T>>::H256CF)?
 				.into(),
-			log_bloom: <[u8; 256]>::from_hex(bloom).map_err(|_| <Error<T>>::BloomCF)?.into(),
-			gas_used: <[u8; 32]>::from_hex(gas_used).map_err(|_| <Error<T>>::U256CF)?.into(),
-			gas_limit: <[u8; 32]>::from_hex(gas_limit).map_err(|_| <Error<T>>::U256CF)?.into(),
-			difficulty: <[u8; 32]>::from_hex(difficulty).map_err(|_| <Error<T>>::U256CF)?.into(),
+			log_bloom: <[u8; 256]>::from_hex(bloom)
+				.map_err(|_| <Error<T>>::BloomCF)?
+				.into(),
+			gas_used: <[u8; 32]>::from_hex(gas_used)
+				.map_err(|_| <Error<T>>::U256CF)?
+				.into(),
+			gas_limit: <[u8; 32]>::from_hex(gas_limit)
+				.map_err(|_| <Error<T>>::U256CF)?
+				.into(),
+			difficulty: <[u8; 32]>::from_hex(difficulty)
+				.map_err(|_| <Error<T>>::U256CF)?
+				.into(),
 			seal: vec![rlp::encode(&seal.mix_hash), rlp::encode(&seal.nonce)],
-			hash: Some(<[u8; 32]>::from_hex(hash).map_err(|_| <Error<T>>::H256CF)?.into()),
+			hash: Some(
+				<[u8; 32]>::from_hex(hash)
+					.map_err(|_| <Error<T>>::H256CF)?
+					.into(),
+			),
 		};
 
 		Ok(h)
@@ -267,19 +288,27 @@ impl<T: Trait> Module<T> {
 	fn hex_padding<A: AsRef<[u8]>>(width: usize, content: A) -> Result<Vec<u8>, DispatchError> {
 		let content = content.as_ref();
 		let mut output = vec![48; width];
-		output[width.checked_sub(content.len()).ok_or(<Error<T>>::PaddingLenMis)?..].copy_from_slice(content);
+		output[width
+			.checked_sub(content.len())
+			.ok_or(<Error<T>>::PaddingLenMis)?..]
+			.copy_from_slice(content);
 
 		Ok(output)
 	}
 
-	fn build_eth_seal<A: AsRef<[u8]>>(mix_hash_hex: A, nonce_hex: A) -> Result<EthashSeal, DispatchError> {
+	fn build_eth_seal<A: AsRef<[u8]>>(
+		mix_hash_hex: A,
+		nonce_hex: A,
+	) -> Result<EthashSeal, DispatchError> {
 		let mix_hash_hex = mix_hash_hex.as_ref();
 		let nonce_hex = nonce_hex.as_ref();
 		let s = EthashSeal {
 			mix_hash: <[u8; 32]>::from_hex(mix_hash_hex)
 				.map_err(|_| <Error<T>>::H256CF)?
 				.into(),
-			nonce: <[u8; 8]>::from_hex(nonce_hex).map_err(|_| <Error<T>>::H64CF)?.into(),
+			nonce: <[u8; 8]>::from_hex(nonce_hex)
+				.map_err(|_| <Error<T>>::H64CF)?
+				.into(),
 		};
 
 		Ok(s)

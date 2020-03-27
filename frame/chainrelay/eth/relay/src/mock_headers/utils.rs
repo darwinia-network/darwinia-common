@@ -25,7 +25,12 @@ pub fn mock_header_from_source<'m>(o: &'m Object) -> Option<EthHeader> {
 		log_bloom: Bloom::from_str(&o.get("logsBloom")?.as_str()?[2..]).unwrap(),
 		gas_used: o.get("gasUsed")?.as_i32()?.into(),
 		gas_limit: o.get("gasLimit")?.as_i32()?.into(),
-		difficulty: o.get("difficulty")?.as_str()?.parse::<u64>().unwrap_or(0).into(),
+		difficulty: o
+			.get("difficulty")?
+			.as_str()?
+			.parse::<u64>()
+			.unwrap_or(0)
+			.into(),
 		seal: vec![rlp::encode(&mixh), rlp::encode(&nonce)],
 		hash: Some(H256::from(bytes!(&o.get("hash")?, 32))),
 	})
