@@ -390,6 +390,8 @@ mod tests {
 	};
 	use tiny_keccak::keccak256;
 
+	use pallet_support::balance::{FrozenBalance, AccountBalanceData, lock::LockReasons};
+
 	// --- custom ---
 	use crate::*;
 
@@ -397,7 +399,7 @@ mod tests {
 	type System = frame_system::Module<Test>;
 
 	// --- darwinia ---
-	type Ring = pallet_ring::Module<Test>;
+	type Ring = pallet_balances::Module<Test>;
 
 	// --- current ---
 	type Claims = Module<Test>;
@@ -407,6 +409,12 @@ mod tests {
 
 	impl_outer_origin! {
 		pub enum Origin for Test {}
+	}
+
+	#[derive(Encode, Decode, Clone, PartialEq, Eq, Default, RuntimeDebug)]
+	pub struct AccountData<Balance> {
+		pub free: Balance,
+		pub reserved: Balance,
 	}
 
 	#[derive(Clone, Eq, PartialEq)]
@@ -437,7 +445,7 @@ mod tests {
 		type AvailableBlockRatio = AvailableBlockRatio;
 		type Version = ();
 		type ModuleToIndex = ();
-		type AccountData = pallet_support::balance::AccountData<u64>;
+		type AccountData = AccountData<u64>;
 		type OnNewAccount = ();
 		type OnKilledAccount = ();
 		type MigrateAccount = ();
@@ -447,13 +455,41 @@ mod tests {
 		pub const ExistentialDeposit: u64 = 1;
 		pub const CreationFee: u64 = 0;
 	}
-	impl pallet_ring::Trait for Test {
+	impl pallet_balances::Trait for Test {
 		type Balance = u64;
 		type DustRemoval = ();
 		type Event = ();
 		type ExistentialDeposit = ExistentialDeposit;
+		type AccountBalanceData = AccountData<u64>;
 		type AccountStore = System;
 		type TryDropKton = ();
+	}
+
+	impl AccountBalanceData<u64, pallet_balances::DefaultInstance> for AccountData<u64> {
+		fn free(&self) -> u64{
+			self.free
+		}
+
+		fn reserved(&self) -> u64 {
+			self.reserved
+		}
+
+		fn mutate_free(&mut self, new_free: u64) {
+			self.free = new_free;
+		}
+
+		fn mutate_reserved(&mut self, new_reserved: u64) {
+			self.reserved = new_reserved;
+		}
+
+		fn usable(&self, reasons: LockReasons, frozen_balance: FrozenBalance<u64>) -> u64 {
+			self.free
+				.saturating_sub(FrozenBalance::frozen_for(reasons, frozen_balance))
+		}
+
+		fn total(&self) -> u64{
+			self.free.saturating_add(self.reserved)
+		}
 	}
 
 	parameter_types! {
@@ -528,7 +564,7 @@ mod tests {
 			.build_storage::<Test>()
 			.unwrap();
 		// We use default for brevity, but you can configure as desired if needed.
-		pallet_ring::GenesisConfig::<Test>::default()
+		pallet_balances::GenesisConfig::<Test>::default()
 			.assimilate_storage(&mut t)
 			.unwrap();
 		GenesisConfig {
