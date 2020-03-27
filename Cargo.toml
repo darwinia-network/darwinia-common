@@ -1,6 +1,6 @@
 [workspace]
 members = [
-	"frame/balances/ring",
+	"frame/balances",
 	"frame/claims",
 	"frame/chainrelay/eth/backing",
 	"frame/chainrelay/eth/relay",

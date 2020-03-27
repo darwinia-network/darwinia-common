@@ -273,7 +273,7 @@ decl_error! {
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait<I>, I: Instance = DefaultInstance> as Ring {
+	trait Store for Module<T: Trait<I>, I: Instance = DefaultInstance> as DarwiniaBalances {
 		/// The total units issued in the system.
 		pub TotalIssuance get(fn total_issuance) build(|config: &GenesisConfig<T, I>| {
 			config
