@@ -10,10 +10,13 @@ use frame_support::{
 use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
+	RuntimeDebug,
 	testing::Header,
 	traits::{ConvertInto, IdentityLookup},
 	Perbill,
 };
+
+use codec::{Encode, Decode};
 
 use crate::{decl_tests, GenesisConfig, Module, Trait};
 
@@ -30,6 +33,14 @@ impl Get<u64> for ExistentialDeposit {
 	fn get() -> u64 {
 		EXISTENTIAL_DEPOSIT.with(|v| *v.borrow())
 	}
+}
+
+#[derive(Encode, Decode, Clone, PartialEq, Eq, Default, RuntimeDebug)]
+pub struct AccountData<Balance> {
+	pub free_ring: Balance,
+	pub free_kton: Balance,
+	pub reserved_ring: Balance,
+	pub reserved_kton: Balance,
 }
 
 // Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
@@ -58,7 +69,7 @@ impl frame_system::Trait for Test {
 	type AvailableBlockRatio = AvailableBlockRatio;
 	type Version = ();
 	type ModuleToIndex = ();
-	type AccountData = super::AccountData<u64>;
+	type AccountData = AccountData<u64>;
 	type OnNewAccount = ();
 	type OnKilledAccount = Module<Test>;
 	type MigrateAccount = ();
@@ -80,18 +91,18 @@ impl Trait for Test {
 	type DustRemoval = ();
 	type Event = ();
 	type ExistentialDeposit = ExistentialDeposit;
-	type AccountBalanceData = super::AccountData<u64>;
+	type AccountBalanceData = AccountData<u64>;
 	type AccountStore = StorageMapShim<
 		super::Account<Test>,
 		system::CallOnCreatedAccount<Test>,
 		system::CallKillAccount<Test>,
 		u64,
-		super::AccountData<u64>,
+		AccountData<u64>,
 	>;
 	type TryDropKton = ();
 }
 
-impl AccountBalanceData<u64, DefaultInstance> for super::AccountData<u64> {
+impl AccountBalanceData<u64, DefaultInstance> for AccountData<u64> {
 	fn free(&self) -> u64{
 		self.free_ring
 	}

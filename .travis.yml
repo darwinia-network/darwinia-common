@@ -4,7 +4,6 @@ rust: nightly-2020-02-07
 branches:
   only:
     - master
-    - develop
 
 env:
   global:
@@ -29,8 +28,8 @@ jobs:
       script: .maintain/ci/build_script.sh
 
     - stage: Darwinia Test
-      env: RING RUST_TOOLCHAIN=nightly-2020-02-07 TARGET=native
-      script: .maintain/ci/darwinia_test_script.sh ring
+      env: Balances RUST_TOOLCHAIN=nightly-2020-02-07 TARGET=native
+      script: .maintain/ci/darwinia_test_script.sh balances
 
     - stage: Darwinia Test
       env: STAKING RUST_TOOLCHAIN=nightly-2020-02-07 TARGET=native

@@ -1,7 +1,7 @@
 use codec::{Decode, Encode};
 use num_traits::Zero;
 use sp_runtime::{
-	traits::{AtLeast32Bit, Saturating},
+	traits::AtLeast32Bit,
 	RuntimeDebug,
 };
 use sp_std::{cmp::Ordering, ops::BitOr, prelude::*};

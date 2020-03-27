@@ -34,10 +34,12 @@ pub type Session = pallet_session::Module<Test>;
 pub type Timestamp = pallet_timestamp::Module<Test>;
 
 // --- custom ---
-pub type Kton = pallet_kton::Module<Test>;
-pub type Ring = pallet_ring::Module<Test>;
+pub type KtonInstance = pallet_balances::Instance1;
+pub type RingInstance = pallet_balances::Instance2;
+pub type Kton = pallet_balances::Module<Test, KtonInstance>;
+pub type Ring = pallet_balances::Module<Test, RingInstance>;
 
-pub type RingError = pallet_ring::Error<Test, pallet_ring::DefaultInstance>;
+pub type RingError = pallet_balances::Error<Test, RingInstance>;
 // pub type KtonError = pallet_kton::Error<Test, pallet_kton::DefaultInstance>;
 pub type StakingError = crate::Error<Test>;
 
@@ -62,6 +64,60 @@ pub struct AccountData<Balance> {
 	pub free_kton: Balance,
 	pub reserved_ring: Balance,
 	pub reserved_kton: Balance,
+}
+
+impl darwinia_support::balance::AccountBalanceData<Balance, KtonInstance> for AccountData<Balance> {
+	fn free(&self) -> Balance{
+		self.free_kton
+	}
+
+	fn reserved(&self) -> Balance {
+		self.reserved_kton
+	}
+
+	fn mutate_free(&mut self, new_free: Balance) {
+		self.free_kton = new_free;
+	}
+
+	fn mutate_reserved(&mut self, new_reserved: Balance) {
+		self.reserved_kton = new_reserved;
+	}
+
+	fn usable(&self, reasons: darwinia_support::balance::lock::LockReasons, frozen_balance: darwinia_support::balance::FrozenBalance<Balance>) -> Balance {
+		self.free_kton
+			.saturating_sub(darwinia_support::balance::FrozenBalance::frozen_for(reasons, frozen_balance))
+	}
+
+	fn total(&self) -> Balance {
+		self.free_kton.saturating_add(self.reserved_kton)
+	}
+}
+
+impl darwinia_support::balance::AccountBalanceData<Balance, RingInstance> for AccountData<Balance> {
+	fn free(&self) -> Balance{
+		self.free_ring
+	}
+
+	fn reserved(&self) -> Balance {
+		self.reserved_ring
+	}
+
+	fn mutate_free(&mut self, new_free: Balance) {
+		self.free_ring = new_free;
+	}
+
+	fn mutate_reserved(&mut self, new_reserved: Balance) {
+		self.reserved_ring = new_reserved;
+	}
+
+	fn usable(&self, reasons: darwinia_support::balance::lock::LockReasons, frozen_balance: darwinia_support::balance::FrozenBalance<Balance>) -> Balance {
+		self.free_ring
+			.saturating_sub(darwinia_support::balance::FrozenBalance::frozen_for(reasons, frozen_balance))
+	}
+
+	fn total(&self) -> Balance {
+		self.free_ring.saturating_add(self.reserved_ring)
+	}
 }
 
 thread_local! {
@@ -203,15 +259,7 @@ impl pallet_timestamp::Trait for Test {
 	type MinimumPeriod = MinimumPeriod;
 }
 
-impl pallet_kton::Trait for Test {
-	type Balance = Balance;
-	type DustRemoval = ();
-	type Event = ();
-	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
-	type TryDropRing = ();
-}
-impl pallet_ring::Trait for Test {
+impl pallet_balances::Trait<KtonInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = ();
@@ -220,32 +268,14 @@ impl pallet_ring::Trait for Test {
 	type AccountStore = System;
 	type TryDropKton = ();
 }
-
-impl darwinia_support::balance::AccountBalanceData<Balance, pallet_ring::DefaultInstance> for AccountData<Balance> {
-	fn free(&self) -> Balance{
-		self.free_ring
-	}
-
-	fn reserved(&self) -> Balance {
-		self.reserved_ring
-	}
-
-	fn mutate_free(&mut self, new_free: Balance) {
-		self.free_ring = new_free;
-	}
-
-	fn mutate_reserved(&mut self, new_reserved: Balance) {
-		self.reserved_ring = new_reserved;
-	}
-
-	fn usable(&self, reasons: LockReasons, frozen_balance: darwinia_support::balance::FrozenBalance<Balance>) -> Balance {
-		self.free_ring
-			.saturating_sub(darwinia_support::balance::FrozenBalance::frozen_for(reasons, frozen_balance))
-	}
-
-	fn total(&self) -> Balance {
-		self.free_ring.saturating_add(self.reserved_ring)
-	}
+impl pallet_balances::Trait<RingInstance> for Test {
+	type Balance = Balance;
+	type DustRemoval = ();
+	type Event = ();
+	type ExistentialDeposit = ExistentialDeposit;
+	type AccountBalanceData = AccountData<Balance>;
+	type AccountStore = System;
+	type TryDropKton = ();
 }
 
 parameter_types! {
@@ -359,7 +389,7 @@ impl ExtBuilder {
 			.map(|x| ((x + 1) * 10 + 1) as u64)
 			.collect::<Vec<_>>();
 
-		let _ = pallet_ring::GenesisConfig::<Test> {
+		let _ = pallet_balances::GenesisConfig::<Test, RingInstance> {
 			balances: vec![
 				(1, 10 * balance_factor),
 				(2, 20 * balance_factor),
@@ -380,7 +410,7 @@ impl ExtBuilder {
 			],
 		}
 		.assimilate_storage(&mut storage);
-		let _ = pallet_kton::GenesisConfig::<Test> {
+		let _ = pallet_balances::GenesisConfig::<Test, KtonInstance> {
 			balances: vec![
 				(1, 10 * balance_factor),
 				(2, 20 * balance_factor),

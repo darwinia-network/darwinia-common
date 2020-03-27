@@ -1,6 +1,5 @@
 readonly TEST_CRATES=(
-    'kton'
-    'ring'
+    'balances'
     'staking'
     'treasury'
     'eth-relay'
