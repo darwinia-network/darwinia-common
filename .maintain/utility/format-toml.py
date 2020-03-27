@@ -165,6 +165,9 @@ under_deps = False
 dev_deps = []
 under_dev_deps = False
 
+build_deps = []
+under_build_deps = False
+
 feats = {}
 curr_feat = None
 under_feats = False
@@ -186,6 +189,7 @@ with open(toml_path, 'r') as file:
             under_pkg = True
             under_deps = False
             under_dev_deps = False
+            under_build_deps = False
             under_feats = False
             under_bench = False
             continue
@@ -194,6 +198,7 @@ with open(toml_path, 'r') as file:
             under_pkg = False
             under_deps = True
             under_dev_deps = False
+            under_build_deps = False
             under_feats = False
             under_bench = False
             continue
@@ -202,6 +207,16 @@ with open(toml_path, 'r') as file:
             under_pkg = False
             under_deps = False
             under_dev_deps = True
+            under_build_deps = False
+            under_feats = False
+            under_bench = False
+            continue
+
+        elif line == '[build-dependencies]':
+            under_pkg = False
+            under_deps = False
+            under_dev_deps = False
+            under_build_deps = True
             under_feats = False
             under_bench = False
             continue
@@ -210,6 +225,7 @@ with open(toml_path, 'r') as file:
             under_pkg = False
             under_deps = False
             under_dev_deps = False
+            under_build_deps = False
             under_feats = True
             under_bench = False
             continue
@@ -218,6 +234,7 @@ with open(toml_path, 'r') as file:
             under_pkg = False
             under_deps = False
             under_dev_deps = False
+            under_build_deps = False
             under_feats = False
             under_bench = True
 
@@ -231,6 +248,10 @@ with open(toml_path, 'r') as file:
         elif under_dev_deps:
             dep = Dep.from_str(line)
             dev_deps.append(dep)
+
+        elif under_build_deps:
+            dep = Dep.from_str(line)
+            build_deps.append(dep)
 
         elif under_feats:
             if not is_multi_line_feat:
@@ -297,6 +318,16 @@ with open(toml_path, 'w+') as f:
         print(c)
 
         write_deps(f, *sort_deps(dev_deps))
+
+    if build_deps:
+        f.write('\n\n')
+        print()
+
+        c = '[build-dependencies]'
+        f.write(c)
+        print(c)
+
+        write_deps(f, *sort_deps(build_deps))
 
     if feats:
         f.write('\n\n')
