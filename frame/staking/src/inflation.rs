@@ -21,7 +21,8 @@ pub fn compute_total_payout<T: Trait>(
 	let maximum = {
 		let maximum = {
 			let era_duration = era_duration.saturated_into::<Moment>();
-			let portion = Perquintill::from_rational_approximation(era_duration, MILLISECONDS_PER_YEAR);
+			let portion =
+				Perquintill::from_rational_approximation(era_duration, MILLISECONDS_PER_YEAR);
 			let total_left = total_left.saturated_into::<Balance>();
 
 			portion * total_left
@@ -52,7 +53,8 @@ pub fn compute_kton_return<T: Trait>(value: RingBalance<T>, months: Moment) -> K
 
 	let quotient = no / de;
 	let remainder = no % de;
-	let res = U256::from(value) * (U256::from(1000) * (quotient - 1) + U256::from(1000) * remainder / de)
+	let res = U256::from(value)
+		* (U256::from(1000) * (quotient - 1) + U256::from(1000) * remainder / de)
 		/ U256::from(1_970_000);
 	res.as_u128().try_into().unwrap_or_default()
 }

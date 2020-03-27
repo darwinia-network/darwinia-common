@@ -111,7 +111,10 @@ fn fnv64(a: [u8; 64], b: [u8; 64]) -> [u8; 64] {
 
 		LittleEndian::write_u32(
 			&mut r[j..],
-			fnv(LittleEndian::read_u32(&a[j..]), LittleEndian::read_u32(&b[j..])),
+			fnv(
+				LittleEndian::read_u32(&a[j..]),
+				LittleEndian::read_u32(&b[j..]),
+			),
 		);
 	}
 	r
@@ -124,7 +127,10 @@ fn fnv128(a: [u8; 128], b: [u8; 128]) -> [u8; 128] {
 
 		LittleEndian::write_u32(
 			&mut r[j..],
-			fnv(LittleEndian::read_u32(&a[j..]), LittleEndian::read_u32(&b[j..])),
+			fnv(
+				LittleEndian::read_u32(&a[j..]),
+				LittleEndian::read_u32(&b[j..]),
+			),
 		);
 	}
 	r
@@ -179,7 +185,12 @@ pub fn make_dataset(dataset: &mut [u8], cache: &[u8]) {
 
 /// "Main" function of Ethash, calculating the mix digest and result given the
 /// header and nonce.
-pub fn hashimoto<F: Fn(usize) -> H512>(header_hash: H256, nonce: H64, full_size: usize, lookup: F) -> (H256, H256) {
+pub fn hashimoto<F: Fn(usize) -> H512>(
+	header_hash: H256,
+	nonce: H64,
+	full_size: usize,
+	lookup: F,
+) -> (H256, H256) {
 	let n = full_size / HASH_BYTES;
 	let w = MIX_BYTES / WORD_BYTES;
 	const MIXHASHES: usize = MIX_BYTES / HASH_BYTES;
@@ -241,12 +252,24 @@ pub fn hashimoto<F: Fn(usize) -> H512>(header_hash: H256, nonce: H64, full_size:
 
 /// Ethash used by a light client. Only stores the 16MB cache rather than the
 /// full dataset.
-pub fn hashimoto_light(header_hash: H256, nonce: H64, full_size: usize, cache: &[u8]) -> (H256, H256) {
-	hashimoto(header_hash, nonce, full_size, |i| calc_dataset_item(cache, i))
+pub fn hashimoto_light(
+	header_hash: H256,
+	nonce: H64,
+	full_size: usize,
+	cache: &[u8],
+) -> (H256, H256) {
+	hashimoto(header_hash, nonce, full_size, |i| {
+		calc_dataset_item(cache, i)
+	})
 }
 
 /// Ethash used by a full client. Stores the whole dataset in memory.
-pub fn hashimoto_full(header_hash: H256, nonce: H64, full_size: usize, dataset: &[u8]) -> (H256, H256) {
+pub fn hashimoto_full(
+	header_hash: H256,
+	nonce: H64,
+	full_size: usize,
+	dataset: &[u8],
+) -> (H256, H256) {
 	hashimoto(header_hash, nonce, full_size, |i| {
 		let mut r = [0u8; 64];
 		for j in 0..64 {
@@ -323,19 +346,29 @@ mod tests {
 		let start = SystemTime::now();
 		type DAG = LightDAG<EthereumPatch>;
 		let light_dag = DAG::new(0x8947a9.into());
-		println!("{:?} ms", SystemTime::now().duration_since(start).unwrap().as_millis());
+		println!(
+			"{:?} ms",
+			SystemTime::now().duration_since(start).unwrap().as_millis()
+		);
 
 		let start = SystemTime::now();
 		// bare_hash of block#8996777 on ethereum mainnet
-		let partial_header_hash = H256::from(hex!("3c2e6623b1de8862a927eeeef2b6b25dea6e1d9dad88dca3c239be3959dc384a"));
+		let partial_header_hash = H256::from(hex!(
+			"3c2e6623b1de8862a927eeeef2b6b25dea6e1d9dad88dca3c239be3959dc384a"
+		));
 		let mixh = light_dag
 			.hashimoto(partial_header_hash, H64::from(hex!("a5d3d0ccc8bb8a29")))
 			.0;
-		println!("{:?} ms", SystemTime::now().duration_since(start).unwrap().as_millis());
+		println!(
+			"{:?} ms",
+			SystemTime::now().duration_since(start).unwrap().as_millis()
+		);
 
 		assert_eq!(
 			mixh,
-			H256::from(hex!("543bc0769f7d5df30e7633f4a01552c2cee7baace8a6da37fddaa19e49e81209"))
+			H256::from(hex!(
+				"543bc0769f7d5df30e7633f4a01552c2cee7baace8a6da37fddaa19e49e81209"
+			))
 		);
 	}
 

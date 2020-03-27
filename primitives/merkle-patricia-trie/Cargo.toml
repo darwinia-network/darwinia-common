@@ -9,27 +9,30 @@ homepage = "https://darwinia.network/"
 repository = "https://github.com/darwinia-network/darwinia/"
 
 [dependencies]
-# crates.io
+# crates
 hashbrown = { version = "0.6.0" }
-
-# github.com
+# github
 hash = { package = "keccak-hash", default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 rlp = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
-
+# substrate
 sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
 
 [dev-dependencies]
-criterion = "0.2.10"
-ethereum-types = "0.5.2"
-hex = "0.3.2"
-rand = "0.6.3"
+# crates
+criterion = { version = "0.2.10" }
+ethereum-types = { version = "0.5.2" }
+hex = { version = "0.3.2" }
+rand = { version = "0.6.3" }
 uuid = { version = "0.7", features = ["serde", "v4"] }
 
 [features]
 default = ["std"]
 std = [
+	# github
 	"hash/std",
 	"rlp/std",
+	# substrate
+	"sp-std/std",
 ]
 
 [[bench]]

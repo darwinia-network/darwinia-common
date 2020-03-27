@@ -253,7 +253,10 @@ impl SlashingSpans {
 		let old_idx = self
 			.iter()
 			.skip(1) // skip ongoing span.
-			.position(|span| span.length.map_or(false, |len| span.start + len <= window_start));
+			.position(|span| {
+				span.length
+					.map_or(false, |len| span.start + len <= window_start)
+			});
 
 		let earliest_span_index = self.span_index - self.prior.len() as SpanIndex;
 		let pruned = match old_idx {
@@ -341,7 +344,8 @@ pub(crate) fn compute_slash<T: Trait>(
 	}
 
 	let (prior_slash_p, _era_slash) =
-		<Module<T> as Store>::ValidatorSlashInEra::get(&slash_era, stash).unwrap_or((Perbill::zero(), Zero::zero()));
+		<Module<T> as Store>::ValidatorSlashInEra::get(&slash_era, stash)
+			.unwrap_or((Perbill::zero(), Zero::zero()));
 
 	// compare slash proportions rather than slash values to avoid issues due to rounding
 	// error.
@@ -463,8 +467,8 @@ fn slash_nominators<T: Trait>(
 			};
 			let own_slash_difference = own_slash_by_validator.saturating_sub(own_slash_prior);
 
-			let mut era_slash =
-				<Module<T> as Store>::NominatorSlashInEra::get(&slash_era, stash).unwrap_or(Zero::zero());
+			let mut era_slash = <Module<T> as Store>::NominatorSlashInEra::get(&slash_era, stash)
+				.unwrap_or(Zero::zero());
 
 			era_slash += own_slash_difference;
 
@@ -568,7 +572,11 @@ impl<'a, T: 'a + Trait> InspectingSpans<'a, T> {
 	// if it's higher, applies the difference of the slashes and then updates the span on disk.
 	//
 	// returns the span index of the era where the slash occurred, if any.
-	fn compare_and_update_span_slash(&mut self, slash_era: EraIndex, slash: RKT<T>) -> Option<SpanIndex> {
+	fn compare_and_update_span_slash(
+		&mut self,
+		slash_era: EraIndex,
+		slash: RKT<T>,
+	) -> Option<SpanIndex> {
 		let target_span = self.era_span(slash_era)?;
 		let span_slash_key = (self.stash.clone(), target_span.index);
 		let mut span_record = <Module<T> as Store>::SpanSlash::get(&span_slash_key);
@@ -723,7 +731,9 @@ fn do_slash<T: Trait>(
 }
 
 /// Apply a previously-unapplied slash.
-pub(crate) fn apply_slash<T: Trait>(unapplied_slash: UnappliedSlash<T::AccountId, RingBalance<T>, KtonBalance<T>>) {
+pub(crate) fn apply_slash<T: Trait>(
+	unapplied_slash: UnappliedSlash<T::AccountId, RingBalance<T>, KtonBalance<T>>,
+) {
 	let mut slashed_ring = <RingNegativeImbalance<T>>::zero();
 	let mut slashed_kton = <KtonNegativeImbalance<T>>::zero();
 	let mut reward_payout = unapplied_slash.payout;
@@ -746,7 +756,12 @@ pub(crate) fn apply_slash<T: Trait>(unapplied_slash: UnappliedSlash<T::AccountId
 		);
 	}
 
-	pay_reporters::<T>(reward_payout, slashed_ring, slashed_kton, &unapplied_slash.reporters);
+	pay_reporters::<T>(
+		reward_payout,
+		slashed_ring,
+		slashed_kton,
+		&unapplied_slash.reporters,
+	);
 }
 
 /// Apply a reward payout to some reporters, paying the rewards out of the slashed imbalance.

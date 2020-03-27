@@ -357,7 +357,12 @@ fn treasury_account_doesnt_get_deleted() {
 		assert_eq!(Treasury::pot::<Ring>(), 100);
 
 		let treasury_balance = Ring::free_balance(&Treasury::account_id());
-		assert_ok!(Treasury::propose_spend(Origin::signed(0), treasury_balance, 0, 3));
+		assert_ok!(Treasury::propose_spend(
+			Origin::signed(0),
+			treasury_balance,
+			0,
+			3
+		));
 		assert_ok!(Treasury::approve_proposal(Origin::ROOT, 0));
 
 		<Treasury as OnFinalize<u64>>::on_finalize(2);
@@ -381,7 +386,9 @@ fn treasury_account_doesnt_get_deleted() {
 // This is useful for chain that will just update runtime.
 #[test]
 fn inexistent_account_works() {
-	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	let mut t = frame_system::GenesisConfig::default()
+		.build_storage::<Test>()
+		.unwrap();
 	pallet_ring::GenesisConfig::<Test> {
 		balances: vec![(0, 100), (1, 99), (2, 1)],
 	}

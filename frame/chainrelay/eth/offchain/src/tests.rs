@@ -17,7 +17,8 @@ static FAKE_ETH_API_RESONSE_W_BIG_DATA: &'static str = r#"{"jsonrpc":"2.0","id":
 fn test_hex_padding() {
 	assert_eq!(
 		Vec::from_hex("00000000000000000000000000000000000000000000031636269e79627d57c9").unwrap(),
-		Vec::from_hex(EthOffchain::hex_padding(64, "31636269e79627d57c9".as_bytes()).unwrap()).unwrap(),
+		Vec::from_hex(EthOffchain::hex_padding(64, "31636269e79627d57c9".as_bytes()).unwrap())
+			.unwrap(),
 	);
 }
 
@@ -40,7 +41,8 @@ fn test_build_eth_header_info() {
 	// 2020-03-17 10:38:57 [eth-offchain] total difficulty: "0x31636269e79627d57c9"
 	// 2020-03-17 10:38:57 [eth-offchain] parent hash "0xa0aa7515b248430c5edd9e58b475acedfe09d9ddcf0e7351aaaa0d31311de8fd"
 
-	let total_difficulty = "00000000000000000000000000000000000000000000031636269e79627d57c9".as_bytes();
+	let total_difficulty =
+		"00000000000000000000000000000000000000000000031636269e79627d57c9".as_bytes();
 	assert_eq!(total_difficulty.len(), 64);
 	let total_difficulty = <[u8; 32]>::from_hex(total_difficulty).unwrap().into();
 
@@ -63,7 +65,8 @@ fn test_build_eth_header_info() {
 
 #[test]
 fn test_build_eth_seal() {
-	let mix_hash_hex = "efe7ec97ca708ad6b369e4d98239eea75ba23dd18165d018e74535aaa0e11397".as_bytes();
+	let mix_hash_hex =
+		"efe7ec97ca708ad6b369e4d98239eea75ba23dd18165d018e74535aaa0e11397".as_bytes();
 	assert_eq!(mix_hash_hex.len(), 64);
 	let mix_hash = <[u8; 32]>::from_hex(mix_hash_hex).unwrap().into();
 

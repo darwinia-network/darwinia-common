@@ -56,10 +56,15 @@ pub(crate) fn create_power_of(stakes: &[(AccountId, Power)]) -> Box<dyn Fn(&Acco
 }
 
 pub(crate) fn auto_generate_self_voters<A: Clone>(candidates: &[A]) -> Vec<(A, Vec<A>)> {
-	candidates.iter().map(|c| (c.clone(), vec![c.clone()])).collect()
+	candidates
+		.iter()
+		.map(|c| (c.clone(), vec![c.clone()]))
+		.collect()
 }
 
-pub(crate) fn check_assignments(assignments: Vec<(AccountId, Vec<PhragmenAssignment<AccountId, Perbill>>)>) {
+pub(crate) fn check_assignments(
+	assignments: Vec<(AccountId, Vec<PhragmenAssignment<AccountId, Perbill>>)>,
+) {
 	for (_, a) in assignments {
 		let sum: u32 = a.iter().map(|(_, p)| p.deconstruct()).sum();
 		assert_eq_error_rate!(sum, Perbill::ACCURACY, 5);
@@ -74,8 +79,17 @@ pub(crate) fn run_and_compare(
 	min_to_elect: usize,
 ) {
 	// run fixed point code.
-	let PhragmenResult { winners, assignments } =
-		elect::<_, Perbill, _>(to_elect, min_to_elect, candidates.clone(), voters.clone(), &power_of).unwrap();
+	let PhragmenResult {
+		winners,
+		assignments,
+	} = elect::<_, Perbill, _>(
+		to_elect,
+		min_to_elect,
+		candidates.clone(),
+		voters.clone(),
+		&power_of,
+	)
+	.unwrap();
 
 	// run float poc code.
 	let truth_value = elect_float(to_elect, min_to_elect, candidates, voters, &power_of).unwrap();
@@ -85,7 +99,9 @@ pub(crate) fn run_and_compare(
 	for (nominator, assigned) in assignments.clone() {
 		if let Some(float_assignments) = truth_value.assignments.iter().find(|x| x.0 == nominator) {
 			for (candidate, per_thingy) in assigned {
-				if let Some(float_assignment) = float_assignments.1.iter().find(|x| x.0 == candidate) {
+				if let Some(float_assignment) =
+					float_assignments.1.iter().find(|x| x.0 == candidate)
+				{
 					assert_eq_error_rate!(
 						Perbill::from_fraction(float_assignment.1).deconstruct(),
 						per_thingy.deconstruct(),
@@ -176,11 +192,11 @@ where
 			}
 		}
 
-		if let Some(winner) = candidates
-			.iter_mut()
-			.filter(|c| !c.elected)
-			.min_by(|x, y| x.score.partial_cmp(&y.score).unwrap_or(sp_std::cmp::Ordering::Equal))
-		{
+		if let Some(winner) = candidates.iter_mut().filter(|c| !c.elected).min_by(|x, y| {
+			x.score
+				.partial_cmp(&y.score)
+				.unwrap_or(sp_std::cmp::Ordering::Equal)
+		}) {
 			winner.elected = true;
 			for n in &mut voters {
 				for e in &mut n.edges {
@@ -200,7 +216,12 @@ where
 	for n in &mut voters {
 		let mut assignment = (n.who.clone(), vec![]);
 		for e in &mut n.edges {
-			if let Some(c) = elected_candidates.iter().cloned().map(|(c, _)| c).find(|c| *c == e.who) {
+			if let Some(c) = elected_candidates
+				.iter()
+				.cloned()
+				.map(|(c, _)| c)
+				.find(|c| *c == e.who)
+			{
 				if c != n.who {
 					let ratio = e.load / n.load;
 					assignment.1.push((e.who.clone(), ratio));
@@ -339,7 +360,11 @@ where
 	elected_edges.sort_unstable_by(|x, y| {
 		support_map
 			.get(&x.0)
-			.and_then(|x| support_map.get(&y.0).and_then(|y| x.total.partial_cmp(&y.total)))
+			.and_then(|x| {
+				support_map
+					.get(&y.0)
+					.and_then(|y| x.total.partial_cmp(&y.total))
+			})
 			.unwrap_or(sp_std::cmp::Ordering::Equal)
 	});
 

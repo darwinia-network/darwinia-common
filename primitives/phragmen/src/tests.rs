@@ -45,7 +45,13 @@ fn float_phragmen_poc_works() {
 		}
 	);
 
-	equalize_float(phragmen_result.assignments, &mut support_map, 0.0, 2, power_of);
+	equalize_float(
+		phragmen_result.assignments,
+		&mut support_map,
+		0.0,
+		2,
+		power_of,
+	);
 
 	assert_eq!(
 		support_map.get(&2).unwrap(),
@@ -70,7 +76,10 @@ fn phragmen_poc_works() {
 	let candidates = vec![1, 2, 3];
 	let voters = vec![(10, vec![1, 2]), (20, vec![1, 3]), (30, vec![2, 3])];
 
-	let PhragmenResult { winners, assignments } = elect::<_, Output, _>(
+	let PhragmenResult {
+		winners,
+		assignments,
+	} = elect::<_, Output, _>(
 		2,
 		2,
 		candidates,
@@ -87,7 +96,10 @@ fn phragmen_poc_works() {
 			(20, vec![(3, Perbill::from_percent(100))]),
 			(
 				30,
-				vec![(2, Perbill::from_percent(100 / 2)), (3, Perbill::from_percent(100 / 2))]
+				vec![
+					(2, Perbill::from_percent(100 / 2)),
+					(3, Perbill::from_percent(100 / 2))
+				]
 			),
 		]
 	);
@@ -97,7 +109,14 @@ fn phragmen_poc_works() {
 fn phragmen_poc_2_works() {
 	let candidates = vec![10, 20, 30];
 	let voters = vec![(2, vec![10, 20, 30]), (4, vec![10, 20, 40])];
-	let power_of = create_power_of(&[(10, 1_000), (20, 1_000), (30, 1_000), (40, 1_000), (2, 500), (4, 500)]);
+	let power_of = create_power_of(&[
+		(10, 1_000),
+		(20, 1_000),
+		(30, 1_000),
+		(40, 1_000),
+		(2, 500),
+		(4, 500),
+	]);
 
 	run_and_compare(candidates, voters, power_of, 2, 2);
 }
@@ -124,7 +143,10 @@ fn phragmen_accuracy_on_large_scale_only_validators() {
 		(5, (u32::max_value() - 2).into()),
 	]);
 
-	let PhragmenResult { winners, assignments } = elect::<_, Output, _>(
+	let PhragmenResult {
+		winners,
+		assignments,
+	} = elect::<_, Output, _>(
 		2,
 		2,
 		candidates.clone(),
@@ -133,7 +155,10 @@ fn phragmen_accuracy_on_large_scale_only_validators() {
 	)
 	.unwrap();
 
-	assert_eq_uvec!(winners, vec![(1, 4_294_967_294_u64), (5, 4_294_967_293_u64)]);
+	assert_eq_uvec!(
+		winners,
+		vec![(1, 4_294_967_294_u64), (5, 4_294_967_293_u64)]
+	);
 	assert_eq!(assignments.len(), 2);
 	check_assignments(assignments);
 }
@@ -153,9 +178,15 @@ fn phragmen_accuracy_on_large_scale_validators_and_nominators() {
 		(14, u32::max_value().into()),
 	]);
 
-	let PhragmenResult { winners, assignments } = elect::<_, Output, _>(2, 2, candidates, voters, power_of).unwrap();
+	let PhragmenResult {
+		winners,
+		assignments,
+	} = elect::<_, Output, _>(2, 2, candidates, voters, power_of).unwrap();
 
-	assert_eq_uvec!(winners, vec![(2, 8_589_934_586_u64), (1, 8_589_934_579_u64)]);
+	assert_eq_uvec!(
+		winners,
+		vec![(2, 8_589_934_586_u64), (1, 8_589_934_579_u64)]
+	);
 	assert_eq!(
 		assignments,
 		vec![
@@ -226,7 +257,10 @@ fn phragmen_large_scale_test() {
 		(50, 99_000_000),
 	]);
 
-	let PhragmenResult { winners, assignments } = elect::<_, Output, _>(2, 2, candidates, voters, power_of).unwrap();
+	let PhragmenResult {
+		winners,
+		assignments,
+	} = elect::<_, Output, _>(2, 2, candidates, voters, power_of).unwrap();
 
 	assert_eq_uvec!(winners, vec![(24, 149_200_000_u64), (22, 149_100_000_u64)]);
 	check_assignments(assignments);
@@ -241,9 +275,16 @@ fn phragmen_large_scale_test_2() {
 	let mut voters = vec![(50, vec![2, 4])];
 	voters.extend(auto_generate_self_voters(&candidates));
 
-	let power_of = create_power_of(&[(2, c_budget as _), (4, c_budget as _), (50, nom_budget as _)]);
+	let power_of = create_power_of(&[
+		(2, c_budget as _),
+		(4, c_budget as _),
+		(50, nom_budget as _),
+	]);
 
-	let PhragmenResult { winners, assignments } = elect::<_, Output, _>(2, 2, candidates, voters, power_of).unwrap();
+	let PhragmenResult {
+		winners,
+		assignments,
+	} = elect::<_, Output, _>(2, 2, candidates, voters, power_of).unwrap();
 
 	assert_eq_uvec!(winners, vec![(2, 999_999_991_u64), (4, 999_999_991_u64)]);
 	assert_eq!(

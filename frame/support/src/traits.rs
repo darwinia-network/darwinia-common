@@ -92,7 +92,9 @@ pub trait OnDepositRedeem<AccountId> {
 pub trait OnUnbalancedKton<Imbalance: TryDrop> {
 	/// Handler for some imbalance. Infallible.
 	fn on_unbalanced(amount: Imbalance) {
-		amount.try_drop().unwrap_or_else(Self::on_nonzero_unbalanced)
+		amount
+			.try_drop()
+			.unwrap_or_else(Self::on_nonzero_unbalanced)
 	}
 
 	/// Actually handle a non-zero imbalance. You probably want to implement this rather than

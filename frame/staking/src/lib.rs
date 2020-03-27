@@ -261,12 +261,16 @@ mod types {
 	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
 
 	pub type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
-	pub type RingPositiveImbalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::PositiveImbalance;
-	pub type RingNegativeImbalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::NegativeImbalance;
+	pub type RingPositiveImbalance<T> =
+		<RingCurrency<T> as Currency<AccountId<T>>>::PositiveImbalance;
+	pub type RingNegativeImbalance<T> =
+		<RingCurrency<T> as Currency<AccountId<T>>>::NegativeImbalance;
 
 	pub type KtonBalance<T> = <KtonCurrency<T> as Currency<AccountId<T>>>::Balance;
-	pub type KtonPositiveImbalance<T> = <KtonCurrency<T> as Currency<AccountId<T>>>::PositiveImbalance;
-	pub type KtonNegativeImbalance<T> = <KtonCurrency<T> as Currency<AccountId<T>>>::NegativeImbalance;
+	pub type KtonPositiveImbalance<T> =
+		<KtonCurrency<T> as Currency<AccountId<T>>>::PositiveImbalance;
+	pub type KtonNegativeImbalance<T> =
+		<KtonCurrency<T> as Currency<AccountId<T>>>::NegativeImbalance;
 
 	pub type StakingLedgerT<T> =
 		StakingLedger<AccountId<T>, RingBalance<T>, KtonBalance<T>, BlockNumber<T>, MomentT<T>>;
@@ -296,7 +300,10 @@ use frame_support::{
 };
 use frame_system::{self as system, ensure_root, ensure_signed};
 use sp_runtime::{
-	traits::{AtLeast32Bit, CheckedSub, Convert, EnsureOrigin, SaturatedConversion, Saturating, StaticLookup, Zero},
+	traits::{
+		AtLeast32Bit, CheckedSub, Convert, EnsureOrigin, SaturatedConversion, Saturating,
+		StaticLookup, Zero,
+	},
 	DispatchResult, PerThing, Perbill, Perquintill, RuntimeDebug,
 };
 #[cfg(feature = "std")]
@@ -503,7 +510,9 @@ where
 
 			if !slashable_active_ring.is_zero() {
 				let slashable_normal_ring = *active_ring - *active_deposit_ring;
-				if let Some(mut slashable_deposit_ring) = slashable_active_ring.checked_sub(&slashable_normal_ring) {
+				if let Some(mut slashable_deposit_ring) =
+					slashable_active_ring.checked_sub(&slashable_normal_ring)
+				{
 					deposit_item.drain_filter(|item| {
 						if ts >= item.expire_time {
 							true
@@ -517,7 +526,10 @@ where
 									slashable_deposit_ring = new_slashable_deposit_ring;
 									true
 								} else {
-									item.value -= sp_std::mem::replace(&mut slashable_deposit_ring, Zero::zero());
+									item.value -= sp_std::mem::replace(
+										&mut slashable_deposit_ring,
+										Zero::zero(),
+									);
 									false
 								}
 							}
@@ -566,7 +578,8 @@ where
 							apply_slash_ring -= lock.amount;
 							true
 						} else {
-							lock.amount -= sp_std::mem::replace(&mut apply_slash_ring, Zero::zero());
+							lock.amount -=
+								sp_std::mem::replace(&mut apply_slash_ring, Zero::zero());
 							false
 						}
 					}
@@ -586,7 +599,8 @@ where
 
 							true
 						} else {
-							lock.amount -= sp_std::mem::replace(&mut apply_slash_kton, Zero::zero());
+							lock.amount -=
+								sp_std::mem::replace(&mut apply_slash_kton, Zero::zero());
 							false
 						}
 					}
@@ -1865,7 +1879,8 @@ impl<T: Trait> Module<T> {
 		// there will be extra reward, kton, which
 		// can also be use to stake.
 		if promise_month >= 3 {
-			expire_time += <MomentT<T>>::saturated_from((promise_month * MONTH_IN_MILLISECONDS).into());
+			expire_time +=
+				<MomentT<T>>::saturated_from((promise_month * MONTH_IN_MILLISECONDS).into());
 			ledger.active_deposit_ring += value;
 			// for now, kton_return is free
 			// mint kton
@@ -1893,7 +1908,8 @@ impl<T: Trait> Module<T> {
 		mut ledger: StakingLedgerT<T>,
 	) -> (MomentT<T>, MomentT<T>) {
 		let start_time = <MomentT<T>>::saturated_from(start.into());
-		let expire_time = start_time + <MomentT<T>>::saturated_from((promise_month * MONTH_IN_MILLISECONDS).into());
+		let expire_time = start_time
+			+ <MomentT<T>>::saturated_from((promise_month * MONTH_IN_MILLISECONDS).into());
 
 		ledger.active_ring = ledger.active_ring.saturating_add(value);
 		ledger.active_deposit_ring = ledger.active_deposit_ring.saturating_add(value);
@@ -1937,7 +1953,11 @@ impl<T: Trait> Module<T> {
 
 	// MUTABLES (DANGEROUS)
 
-	fn do_payout_nominator(who: T::AccountId, era: EraIndex, validators: Vec<(T::AccountId, u32)>) -> DispatchResult {
+	fn do_payout_nominator(
+		who: T::AccountId,
+		era: EraIndex,
+		validators: Vec<(T::AccountId, u32)>,
+	) -> DispatchResult {
 		// validators len must not exceed `MAX_NOMINATIONS` to avoid querying more validator
 		// exposure than necessary.
 		ensure!(
@@ -1947,9 +1967,11 @@ impl<T: Trait> Module<T> {
 
 		// Note: if era has no reward to be claimed, era may be future. better not to update
 		// `nominator_ledger.last_reward` in this case.
-		let era_payout = <ErasValidatorReward<T>>::get(&era).ok_or_else(|| <Error<T>>::InvalidEraToReward)?;
+		let era_payout =
+			<ErasValidatorReward<T>>::get(&era).ok_or_else(|| <Error<T>>::InvalidEraToReward)?;
 
-		let mut nominator_ledger = <Ledger<T>>::get(&who).ok_or_else(|| <Error<T>>::NotController)?;
+		let mut nominator_ledger =
+			<Ledger<T>>::get(&who).ok_or_else(|| <Error<T>>::NotController)?;
 
 		if nominator_ledger
 			.last_reward
@@ -1969,13 +1991,17 @@ impl<T: Trait> Module<T> {
 			let commission = Self::eras_validator_prefs(&era, &validator).commission;
 			let validator_exposure = <ErasStakersClipped<T>>::get(&era, &validator);
 
-			if let Some(nominator_exposure) = validator_exposure.others.get(nominator_index as usize) {
+			if let Some(nominator_exposure) =
+				validator_exposure.others.get(nominator_index as usize)
+			{
 				if nominator_exposure.who != nominator_ledger.stash {
 					continue;
 				}
 
-				let nominator_exposure_part =
-					Perbill::from_rational_approximation(nominator_exposure.power, validator_exposure.total_power);
+				let nominator_exposure_part = Perbill::from_rational_approximation(
+					nominator_exposure.power,
+					validator_exposure.total_power,
+				);
 				let validator_point = era_reward_points
 					.individual
 					.get(&validator)
@@ -2001,7 +2027,8 @@ impl<T: Trait> Module<T> {
 	fn do_payout_validator(who: T::AccountId, era: EraIndex) -> DispatchResult {
 		// Note: if era has no reward to be claimed, era may be future. better not to update
 		// `ledger.last_reward` in this case.
-		let era_payout = <ErasValidatorReward<T>>::get(&era).ok_or_else(|| <Error<T>>::InvalidEraToReward)?;
+		let era_payout =
+			<ErasValidatorReward<T>>::get(&era).ok_or_else(|| <Error<T>>::InvalidEraToReward)?;
 
 		let mut ledger = <Ledger<T>>::get(&who).ok_or_else(|| <Error<T>>::NotController)?;
 		if ledger
@@ -2019,15 +2046,21 @@ impl<T: Trait> Module<T> {
 		let commission = Self::eras_validator_prefs(&era, &ledger.stash).commission;
 		let exposure = <ErasStakers<T>>::get(&era, &ledger.stash);
 
-		let exposure_part = Perbill::from_rational_approximation(exposure.own_power, exposure.total_power);
+		let exposure_part =
+			Perbill::from_rational_approximation(exposure.own_power, exposure.total_power);
 		let validator_point = era_reward_points
 			.individual
 			.get(&ledger.stash)
 			.map(|points| *points)
 			.unwrap_or_else(|| Zero::zero());
-		let validator_point_part = Perbill::from_rational_approximation(validator_point, era_reward_points.total);
+		let validator_point_part =
+			Perbill::from_rational_approximation(validator_point, era_reward_points.total);
 		let reward = validator_point_part.saturating_mul(
-			commission.saturating_add(Perbill::one().saturating_sub(commission).saturating_mul(exposure_part)),
+			commission.saturating_add(
+				Perbill::one()
+					.saturating_sub(commission)
+					.saturating_mul(exposure_part),
+			),
 		);
 
 		if let Some(imbalance) = Self::make_payout(&ledger.stash, reward * era_payout) {
@@ -2081,11 +2114,15 @@ impl<T: Trait> Module<T> {
 
 	/// Actually make a payment to a staker. This uses the currency's reward function
 	/// to pay the right payee for the given staker account.
-	fn make_payout(stash: &T::AccountId, amount: RingBalance<T>) -> Option<RingPositiveImbalance<T>> {
+	fn make_payout(
+		stash: &T::AccountId,
+		amount: RingBalance<T>,
+	) -> Option<RingPositiveImbalance<T>> {
 		let dest = Self::payee(stash);
 		match dest {
-			RewardDestination::Controller => Self::bonded(stash)
-				.and_then(|controller| T::RingCurrency::deposit_into_existing(&controller, amount).ok()),
+			RewardDestination::Controller => Self::bonded(stash).and_then(|controller| {
+				T::RingCurrency::deposit_into_existing(&controller, amount).ok()
+			}),
 			RewardDestination::Stash => T::RingCurrency::deposit_into_existing(stash, amount).ok(),
 			// TODO month
 			RewardDestination::Staked { promise_month: _ } => Self::bonded(stash)
@@ -2105,12 +2142,15 @@ impl<T: Trait> Module<T> {
 		if let Some(current_era) = Self::current_era() {
 			// Initial era has been set.
 
-			let current_era_start_session_index = Self::eras_start_session_index(current_era).unwrap_or_else(|| {
-				frame_support::print("Error: start_session_index must be set for current_era");
-				0
-			});
+			let current_era_start_session_index = Self::eras_start_session_index(current_era)
+				.unwrap_or_else(|| {
+					frame_support::print("Error: start_session_index must be set for current_era");
+					0
+				});
 
-			let era_length = session_index.checked_sub(current_era_start_session_index).unwrap_or(0); // Must never happen.
+			let era_length = session_index
+				.checked_sub(current_era_start_session_index)
+				.unwrap_or(0); // Must never happen.
 
 			match ForceEra::get() {
 				Forcing::ForceNew => ForceEra::kill(),
@@ -2128,7 +2168,9 @@ impl<T: Trait> Module<T> {
 	/// Start a session potentially starting an era.
 	fn start_session(start_session: SessionIndex) {
 		let next_active_era = Self::active_era().map(|e| e.index + 1).unwrap_or(0);
-		if let Some(next_active_era_start_session_index) = Self::eras_start_session_index(next_active_era) {
+		if let Some(next_active_era_start_session_index) =
+			Self::eras_start_session_index(next_active_era)
+		{
 			if next_active_era_start_session_index == start_session {
 				Self::start_era(start_session);
 			} else if next_active_era_start_session_index < start_session {
@@ -2143,9 +2185,11 @@ impl<T: Trait> Module<T> {
 	/// End a session potentially ending an era.
 	fn end_session(session_index: SessionIndex) {
 		if let Some(active_era) = Self::active_era() {
-			let next_active_era_start_session_index = Self::eras_start_session_index(active_era.index + 1)
-				.unwrap_or_else(|| {
-					frame_support::print("Error: start_session_index must be set for active_era + 1");
+			let next_active_era_start_session_index =
+				Self::eras_start_session_index(active_era.index + 1).unwrap_or_else(|| {
+					frame_support::print(
+						"Error: start_session_index must be set for active_era + 1",
+					);
 					0
 				});
 
@@ -2178,7 +2222,10 @@ impl<T: Trait> Module<T> {
 				let first_kept = active_era - bonding_duration;
 
 				// prune out everything that's from before the first-kept index.
-				let n_to_prune = bonded.iter().take_while(|&&(era_idx, _)| era_idx < first_kept).count();
+				let n_to_prune = bonded
+					.iter()
+					.take_while(|&&(era_idx, _)| era_idx < first_kept)
+					.count();
 
 				// kill slashing metadata.
 				for (pruned_era, _) in bonded.drain(..n_to_prune) {
@@ -2477,12 +2524,19 @@ impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
 /// This implementation has the same constrains as the implementation of
 /// `pallet_session::SessionManager`.
 impl<T: Trait>
-	pallet_session::historical::SessionManager<T::AccountId, Exposure<T::AccountId, RingBalance<T>, KtonBalance<T>>>
-	for Module<T>
+	pallet_session::historical::SessionManager<
+		T::AccountId,
+		Exposure<T::AccountId, RingBalance<T>, KtonBalance<T>>,
+	> for Module<T>
 {
 	fn new_session(
 		new_index: SessionIndex,
-	) -> Option<Vec<(T::AccountId, Exposure<T::AccountId, RingBalance<T>, KtonBalance<T>>)>> {
+	) -> Option<
+		Vec<(
+			T::AccountId,
+			Exposure<T::AccountId, RingBalance<T>, KtonBalance<T>>,
+		)>,
+	> {
 		<Self as pallet_session::SessionManager<_>>::new_session(new_index).map(|validators| {
 			let current_era = Self::current_era()
 				// Must be some as a new era has been created.
@@ -2517,7 +2571,10 @@ where
 		Self::reward_by_ids(vec![(author, 20)]);
 	}
 	fn note_uncle(author: T::AccountId, _age: T::BlockNumber) {
-		Self::reward_by_ids(vec![(<pallet_authorship::Module<T>>::author(), 2), (author, 1)]);
+		Self::reward_by_ids(vec![
+			(<pallet_authorship::Module<T>>::author(), 2),
+			(author, 1),
+		]);
 	}
 }
 
@@ -2538,8 +2595,12 @@ impl<T: Trait> Convert<T::AccountId, Option<T::AccountId>> for StashOf<T> {
 /// `active_era`. It can differ from the latest planned exposure in `current_era`.
 pub struct ExposureOf<T>(PhantomData<T>);
 
-impl<T: Trait> Convert<T::AccountId, Option<Exposure<T::AccountId, RingBalance<T>, KtonBalance<T>>>> for ExposureOf<T> {
-	fn convert(validator: T::AccountId) -> Option<Exposure<T::AccountId, RingBalance<T>, KtonBalance<T>>> {
+impl<T: Trait> Convert<T::AccountId, Option<Exposure<T::AccountId, RingBalance<T>, KtonBalance<T>>>>
+	for ExposureOf<T>
+{
+	fn convert(
+		validator: T::AccountId,
+	) -> Option<Exposure<T::AccountId, RingBalance<T>, KtonBalance<T>>> {
 		if let Some(active_era) = <Module<T>>::active_era() {
 			Some(<Module<T>>::eras_stakers(active_era.index, &validator))
 		} else {
@@ -2549,19 +2610,30 @@ impl<T: Trait> Convert<T::AccountId, Option<Exposure<T::AccountId, RingBalance<T
 }
 
 /// This is intended to be used with `FilterHistoricalOffences`.
-impl<T: Trait> OnOffenceHandler<T::AccountId, pallet_session::historical::IdentificationTuple<T>> for Module<T>
+impl<T: Trait> OnOffenceHandler<T::AccountId, pallet_session::historical::IdentificationTuple<T>>
+	for Module<T>
 where
 	T: pallet_session::Trait<ValidatorId = AccountId<T>>,
 	T: pallet_session::historical::Trait<
-		FullIdentification = Exposure<<T as frame_system::Trait>::AccountId, RingBalance<T>, KtonBalance<T>>,
+		FullIdentification = Exposure<
+			<T as frame_system::Trait>::AccountId,
+			RingBalance<T>,
+			KtonBalance<T>,
+		>,
 		FullIdentificationOf = ExposureOf<T>,
 	>,
 	T::SessionHandler: pallet_session::SessionHandler<<T as frame_system::Trait>::AccountId>,
 	T::SessionManager: pallet_session::SessionManager<<T as frame_system::Trait>::AccountId>,
-	T::ValidatorIdOf: Convert<<T as frame_system::Trait>::AccountId, Option<<T as frame_system::Trait>::AccountId>>,
+	T::ValidatorIdOf: Convert<
+		<T as frame_system::Trait>::AccountId,
+		Option<<T as frame_system::Trait>::AccountId>,
+	>,
 {
 	fn on_offence(
-		offenders: &[OffenceDetails<T::AccountId, pallet_session::historical::IdentificationTuple<T>>],
+		offenders: &[OffenceDetails<
+			T::AccountId,
+			pallet_session::historical::IdentificationTuple<T>,
+		>],
 		slash_fraction: &[Perbill],
 		slash_session: SessionIndex,
 	) {
@@ -2574,10 +2646,11 @@ where
 			}
 			active_era.unwrap().index
 		};
-		let active_era_start_session_index = Self::eras_start_session_index(active_era).unwrap_or_else(|| {
-			frame_support::print("Error: start_session_index must be set for current_era");
-			0
-		});
+		let active_era_start_session_index = Self::eras_start_session_index(active_era)
+			.unwrap_or_else(|| {
+				frame_support::print("Error: start_session_index must be set for current_era");
+				0
+			});
 
 		let window_start = active_era.saturating_sub(T::BondingDurationInEra::get());
 
@@ -2632,7 +2705,9 @@ where
 					slashing::apply_slash::<T>(unapplied);
 				} else {
 					// defer to end of some `slash_defer_duration` from now.
-					<Self as Store>::UnappliedSlashes::mutate(active_era, move |for_later| for_later.push(unapplied));
+					<Self as Store>::UnappliedSlashes::mutate(active_era, move |for_later| {
+						for_later.push(unapplied)
+					});
 				}
 			}
 		}
@@ -2644,7 +2719,8 @@ pub struct FilterHistoricalOffences<T, R> {
 	_inner: PhantomData<(T, R)>,
 }
 
-impl<T, Reporter, Offender, R, O> ReportOffence<Reporter, Offender, O> for FilterHistoricalOffences<Module<T>, R>
+impl<T, Reporter, Offender, R, O> ReportOffence<Reporter, Offender, O>
+	for FilterHistoricalOffences<Module<T>, R>
 where
 	T: Trait,
 	R: ReportOffence<Reporter, Offender, O>,
@@ -2690,12 +2766,18 @@ impl<T: Trait> OnDepositRedeem<T::AccountId> for Module<T> {
 		// TODO: Lock but no kton reward because this is a deposit redeem
 		//		let extra = extra.min(r);
 
-		let redeemed_positive_imbalance_ring = T::RingCurrency::deposit_into_existing(&stash, amount)?;
+		let redeemed_positive_imbalance_ring =
+			T::RingCurrency::deposit_into_existing(&stash, amount)?;
 
 		T::RingReward::on_unbalanced(redeemed_positive_imbalance_ring);
 
-		let (start_time, expire_time) =
-			Self::bond_ring_for_deposit_redeem(&controller, amount, start_time, promise_month, ledger);
+		let (start_time, expire_time) = Self::bond_ring_for_deposit_redeem(
+			&controller,
+			amount,
+			start_time,
+			promise_month,
+			ledger,
+		);
 
 		<RingPool<T>>::mutate(|r| *r += amount);
 		// TODO: Should we deposit an different event?

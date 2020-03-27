@@ -2,19 +2,18 @@ language: rust
 rust: nightly-2020-02-07
 
 branches:
-    only:
-        - master
-        - develop
+  only:
+    - master
+    - develop
 
 env:
-    global:
-        - RUST_BACKTRACE=1
+  global:
+    - RUST_BACKTRACE=1
 
 before_install:
-    # Check how much space we've got on this machine.
-    - df -h
-    - rustup target add wasm32-unknown-unknown --toolchain nightly-2020-02-07
-
+  # Check how much space we've got on this machine.
+  - df -h
+  - rustup target add wasm32-unknown-unknown --toolchain nightly-2020-02-07
 
 jobs:
   include:
@@ -30,7 +29,7 @@ jobs:
       script: .maintain/ci/build_script.sh
 
     - stage: Darwinia Test
-      env:  KTON RUST_TOOLCHAIN=nightly-2020-02-07 TARGET=native
+      env: KTON RUST_TOOLCHAIN=nightly-2020-02-07 TARGET=native
       script: .maintain/ci/darwinia_test_script.sh kton
 
     - stage: Darwinia Test
@@ -62,10 +61,10 @@ jobs:
       script: .maintain/ci/darwinia_test_script.sh eth-offchain
 
     # over the time limitation, so we comment this
-    # - stage: Overall Test 
+    # - stage: Overall Test
     #   env: RUST_TOOLCHAIN=nightly-2020-02-07 TARGET=native
     #   script: .maintain/ci/test_script.sh
 
 after_script:
-    # Check how much free disk space left after the build
-    - df -h
+  # Check how much free disk space left after the build
+  - df -h

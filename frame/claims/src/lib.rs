@@ -30,7 +30,9 @@ use serde::{Deserialize, Serialize};
 use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};
 use sp_runtime::{
 	traits::{CheckedSub, SaturatedConversion, Zero},
-	transaction_validity::{InvalidTransaction, TransactionLongevity, TransactionValidity, ValidTransaction},
+	transaction_validity::{
+		InvalidTransaction, TransactionLongevity, TransactionValidity, ValidTransaction,
+	},
 	RuntimeDebug,
 };
 use sp_std::prelude::*;
@@ -279,7 +281,10 @@ impl<T: Trait> Module<T> {
 	// Attempts to recover the Ethereum address from a message signature signed by using
 	// the Ethereum RPC's `personal_sign` and `eth_sign`.
 	fn eth_recover(s: &EcdsaSignature, what: &[u8]) -> Option<EthereumAddress> {
-		let msg = keccak_256(&Self::eth_signable_message(what, b"\x19Ethereum Signed Message:\n"));
+		let msg = keccak_256(&Self::eth_signable_message(
+			what,
+			b"\x19Ethereum Signed Message:\n",
+		));
 		let mut res = EthereumAddress::default();
 		res.0
 			.copy_from_slice(&keccak_256(&secp256k1_ecdsa_recover(&s.0, &msg).ok()?[..])[12..]);
@@ -289,7 +294,10 @@ impl<T: Trait> Module<T> {
 	// Attempts to recover the Tron address from a message signature signed by using
 	// the Tron RPC's `personal_sign` and `tron_sign`.
 	fn tron_recover(s: &EcdsaSignature, what: &[u8]) -> Option<TronAddress> {
-		let msg = keccak_256(&Self::tron_signable_message(what, b"\x19TRON Signed Message:\n"));
+		let msg = keccak_256(&Self::tron_signable_message(
+			what,
+			b"\x19TRON Signed Message:\n",
+		));
 		let mut res = TronAddress::default();
 		res.0
 			.copy_from_slice(&keccak_256(&secp256k1_ecdsa_recover(&s.0, &msg).ok()?[..])[12..]);
@@ -314,11 +322,17 @@ impl<T: Trait> sp_runtime::traits::ValidateUnsigned for Module<T> {
 						let signer = if let Some(s) = maybe_signer {
 							s
 						} else {
-							return InvalidTransaction::Custom(ValidityError::InvalidSignature as _).into();
+							return InvalidTransaction::Custom(
+								ValidityError::InvalidSignature as _,
+							)
+							.into();
 						};
 
 						if !<ClaimsFromEth<T>>::contains_key(&signer) {
-							return Err(InvalidTransaction::Custom(ValidityError::SignerHasNoClaim as _).into());
+							return Err(InvalidTransaction::Custom(
+								ValidityError::SignerHasNoClaim as _,
+							)
+							.into());
 						}
 
 						Ok(ValidTransaction {
@@ -334,11 +348,17 @@ impl<T: Trait> sp_runtime::traits::ValidateUnsigned for Module<T> {
 						let signer = if let Some(s) = maybe_signer {
 							s
 						} else {
-							return InvalidTransaction::Custom(ValidityError::InvalidSignature as _).into();
+							return InvalidTransaction::Custom(
+								ValidityError::InvalidSignature as _,
+							)
+							.into();
 						};
 
 						if !<ClaimsFromTron<T>>::contains_key(&signer) {
-							return Err(InvalidTransaction::Custom(ValidityError::SignerHasNoClaim as _).into());
+							return Err(InvalidTransaction::Custom(
+								ValidityError::SignerHasNoClaim as _,
+							)
+							.into());
 						}
 
 						Ok(ValidTransaction {
@@ -469,8 +489,15 @@ mod tests {
 			.copy_from_slice(&keccak256(&public(secret).serialize()[1..65])[12..]);
 		res
 	}
-	fn eth_sig(secret: &secp256k1::SecretKey, what: &[u8], signed_message: &[u8]) -> EcdsaSignature {
-		let msg = keccak256(&Claims::eth_signable_message(&to_ascii_hex(what)[..], signed_message));
+	fn eth_sig(
+		secret: &secp256k1::SecretKey,
+		what: &[u8],
+		signed_message: &[u8],
+	) -> EcdsaSignature {
+		let msg = keccak256(&Claims::eth_signable_message(
+			&to_ascii_hex(what)[..],
+			signed_message,
+		));
 		let (sig, recovery_id) = secp256k1::sign(&secp256k1::Message::parse(&msg), secret);
 		let mut r = [0u8; 65];
 		r[0..64].copy_from_slice(&sig.serialize()[..]);
@@ -478,8 +505,15 @@ mod tests {
 		EcdsaSignature(r)
 	}
 
-	fn tron_sig(secret: &secp256k1::SecretKey, what: &[u8], signed_message: &[u8]) -> EcdsaSignature {
-		let msg = keccak256(&Claims::tron_signable_message(&to_ascii_hex(what)[..], signed_message));
+	fn tron_sig(
+		secret: &secp256k1::SecretKey,
+		what: &[u8],
+		signed_message: &[u8],
+	) -> EcdsaSignature {
+		let msg = keccak256(&Claims::tron_signable_message(
+			&to_ascii_hex(what)[..],
+			signed_message,
+		));
 		let (sig, recovery_id) = secp256k1::sign(&secp256k1::Message::parse(&msg), secret);
 		let mut r = [0u8; 65];
 		r[0..64].copy_from_slice(&sig.serialize()[..]);
@@ -490,7 +524,9 @@ mod tests {
 	// This function basically just builds a genesis storage key/value store according to
 	// our desired mockup.
 	fn new_test_ext() -> sp_io::TestExternalities {
-		let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+		let mut t = frame_system::GenesisConfig::default()
+			.build_storage::<Test>()
+			.unwrap();
 		// We use default for brevity, but you can configure as desired if needed.
 		pallet_ring::GenesisConfig::<Test>::default()
 			.assimilate_storage(&mut t)
@@ -591,11 +627,19 @@ mod tests {
 				Claims::claim(
 					Origin::NONE,
 					69,
-					OtherSignature::Eth(eth_sig(&carol(), &69u64.encode(), ETHEREUM_SIGNED_MESSAGE)),
+					OtherSignature::Eth(eth_sig(
+						&carol(),
+						&69u64.encode(),
+						ETHEREUM_SIGNED_MESSAGE
+					)),
 				),
 				<Error<Test>>::SignerHasNoClaim,
 			);
-			assert_ok!(Claims::mint_claim(Origin::ROOT, OtherAddress::Eth(eth(&carol())), 200));
+			assert_ok!(Claims::mint_claim(
+				Origin::ROOT,
+				OtherAddress::Eth(eth(&carol())),
+				200
+			));
 			assert_eq!(Claims::total(), 800);
 			assert_ok!(Claims::claim(
 				Origin::NONE,
@@ -615,7 +659,11 @@ mod tests {
 				Claims::claim(
 					Origin::signed(42),
 					42,
-					OtherSignature::Eth(eth_sig(&alice(), &42u64.encode(), ETHEREUM_SIGNED_MESSAGE)),
+					OtherSignature::Eth(eth_sig(
+						&alice(),
+						&42u64.encode(),
+						ETHEREUM_SIGNED_MESSAGE
+					)),
 				),
 				sp_runtime::traits::BadOrigin,
 			);
@@ -635,7 +683,11 @@ mod tests {
 				Claims::claim(
 					Origin::NONE,
 					42,
-					OtherSignature::Eth(eth_sig(&alice(), &42u64.encode(), ETHEREUM_SIGNED_MESSAGE)),
+					OtherSignature::Eth(eth_sig(
+						&alice(),
+						&42u64.encode(),
+						ETHEREUM_SIGNED_MESSAGE
+					)),
 				),
 				<Error<Test>>::SignerHasNoClaim,
 			);
@@ -650,7 +702,11 @@ mod tests {
 				Claims::claim(
 					Origin::NONE,
 					42,
-					OtherSignature::Eth(eth_sig(&alice(), &69u64.encode(), ETHEREUM_SIGNED_MESSAGE)),
+					OtherSignature::Eth(eth_sig(
+						&alice(),
+						&69u64.encode(),
+						ETHEREUM_SIGNED_MESSAGE
+					)),
 				),
 				<Error<Test>>::SignerHasNoClaim,
 			);
@@ -665,7 +721,11 @@ mod tests {
 				Claims::claim(
 					Origin::NONE,
 					42,
-					OtherSignature::Eth(eth_sig(&carol(), &69u64.encode(), ETHEREUM_SIGNED_MESSAGE)),
+					OtherSignature::Eth(eth_sig(
+						&carol(),
+						&69u64.encode(),
+						ETHEREUM_SIGNED_MESSAGE
+					)),
 				),
 				<Error<Test>>::SignerHasNoClaim,
 			);
@@ -716,7 +776,10 @@ mod tests {
 				})
 			);
 			assert_eq!(
-				Claims::validate_unsigned(&Call::claim(0, OtherSignature::Eth(EcdsaSignature([0; 65])))),
+				Claims::validate_unsigned(&Call::claim(
+					0,
+					OtherSignature::Eth(EcdsaSignature([0; 65]))
+				)),
 				InvalidTransaction::Custom(ValidityError::InvalidSignature as _).into(),
 			);
 			assert_eq!(

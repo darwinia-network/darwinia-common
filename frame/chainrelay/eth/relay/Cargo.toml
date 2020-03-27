@@ -9,46 +9,44 @@ homepage = "https://darwinia.network/"
 repository = "https://github.com/darwinia-network/darwinia/"
 
 [dependencies]
-# crates.io
+# crates
 codec = { package = "parity-scale-codec", version = "1.0.0", default-features = false, features = ["derive"] }
 serde = { version = "1.0.101", optional = true }
-
-# github.com
+# darwinia
+eth-primitives = { default-features = false, path = "../../../../primitives/eth-primitives" }
+ethash = { default-features = false, path = "../../../../primitives/ethash" }
+merkle-patricia-trie = { default-features = false, path = "../../../../primitives/merkle-patricia-trie" }
+# github
+rlp = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
+# substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
 frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
-
 sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
 sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
 
-rlp = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
-
-# darwinia
-ethash = { default-features = false, path = "../../../../primitives/ethash" }
-eth-primitives = { default-features = false, path = "../../../../primitives/eth-primitives" }
-merkle-patricia-trie = { default-features = false, path = "../../../../primitives/merkle-patricia-trie" }
-
 [dev-dependencies]
-json = "0.12.4"
-keccak-hasher = "0.15.2"
-
+# crates
+json = { version = "0.12.4" }
+keccak-hasher = { version = "0.15.2" }
+# substrate
 sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
 sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
 
 [features]
 default = ["std"]
 std = [
+	# crates
 	"codec/std",
-	"serde/std",
-
+	"serde",
+	# darwinia
+	"eth-primitives/std",
+	"ethash/std",
+	"merkle-patricia-trie/std",
+	# github
+	"rlp/std",
+	# substrate
 	"frame-support/std",
 	"frame-system/std",
-
 	"sp-runtime/std",
 	"sp-std/std",
-
-	"rlp/std",
-
-	"ethash/std",
-	"eth-primitives/std",
-	"merkle-patricia-trie/std",
 ]

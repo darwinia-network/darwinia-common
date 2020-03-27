@@ -73,7 +73,12 @@ impl pallet_session::SessionHandler<AccountId> for TestSessionHandler {
 		validators: &[(AccountId, Ks)],
 		_queued_validators: &[(AccountId, Ks)],
 	) {
-		SESSION.with(|x| *x.borrow_mut() = (validators.iter().map(|x| x.0.clone()).collect(), HashSet::new()));
+		SESSION.with(|x| {
+			*x.borrow_mut() = (
+				validators.iter().map(|x| x.0.clone()).collect(),
+				HashSet::new(),
+			)
+		});
 	}
 
 	fn on_disabled(validator_index: usize) {
@@ -308,7 +313,9 @@ impl ExtBuilder {
 	}
 	pub fn build(self) -> sp_io::TestExternalities {
 		self.set_associated_consts();
-		let mut storage = system::GenesisConfig::default().build_storage::<Test>().unwrap();
+		let mut storage = system::GenesisConfig::default()
+			.build_storage::<Test>()
+			.unwrap();
 		let balance_factor = if self.existential_deposit > 1 { 256 } else { 1 };
 
 		let num_validators = self.num_validators.unwrap_or(self.validator_count);
@@ -360,7 +367,11 @@ impl ExtBuilder {
 		.assimilate_storage(&mut storage);
 
 		let stake_21 = if self.fair { 1000 } else { 2000 };
-		let stake_31 = if self.validator_pool { balance_factor * 1000 } else { 1 };
+		let stake_31 = if self.validator_pool {
+			balance_factor * 1000
+		} else {
+			1
+		};
 		let status_41 = if self.validator_pool {
 			StakerStatus::<AccountId>::Validator
 		} else {
@@ -370,7 +381,12 @@ impl ExtBuilder {
 		let _ = GenesisConfig::<Test> {
 			stakers: vec![
 				// (stash, controller, staked_amount, status)
-				(11, 10, balance_factor * 1000, StakerStatus::<AccountId>::Validator),
+				(
+					11,
+					10,
+					balance_factor * 1000,
+					StakerStatus::<AccountId>::Validator,
+				),
 				(21, 20, stake_21, StakerStatus::<AccountId>::Validator),
 				(31, 30, stake_31, StakerStatus::<AccountId>::Validator),
 				(41, 40, balance_factor * 1000, status_41),
@@ -393,7 +409,10 @@ impl ExtBuilder {
 		.assimilate_storage(&mut storage);
 
 		let _ = pallet_session::GenesisConfig::<Test> {
-			keys: validators.iter().map(|x| (*x, *x, UintAuthorityId(*x))).collect(),
+			keys: validators
+				.iter()
+				.map(|x| (*x, *x, UintAuthorityId(*x)))
+				.collect(),
 		}
 		.assimilate_storage(&mut storage);
 
@@ -481,7 +500,10 @@ pub fn bond(acc: AccountId, val: StakingBalanceT<Test>) {
 
 pub fn bond_validator(acc: AccountId, val: StakingBalanceT<Test>) {
 	bond(acc, val);
-	assert_ok!(Staking::validate(Origin::signed(acc), ValidatorPrefs::default()));
+	assert_ok!(Staking::validate(
+		Origin::signed(acc),
+		ValidatorPrefs::default()
+	));
 }
 
 pub fn bond_nominator(acc: AccountId, val: StakingBalanceT<Test>, target: Vec<AccountId>) {
@@ -536,7 +558,10 @@ pub fn validator_controllers() -> Vec<AccountId> {
 }
 
 pub fn on_offence_in_era(
-	offenders: &[OffenceDetails<AccountId, pallet_session::historical::IdentificationTuple<Test>>],
+	offenders: &[OffenceDetails<
+		AccountId,
+		pallet_session::historical::IdentificationTuple<Test>,
+	>],
 	slash_fraction: &[Perbill],
 	era: EraIndex,
 ) {
@@ -562,7 +587,10 @@ pub fn on_offence_in_era(
 }
 
 pub fn on_offence_now(
-	offenders: &[OffenceDetails<AccountId, pallet_session::historical::IdentificationTuple<Test>>],
+	offenders: &[OffenceDetails<
+		AccountId,
+		pallet_session::historical::IdentificationTuple<Test>,
+	>],
 	slash_fraction: &[Perbill],
 ) {
 	let now = Staking::active_era().unwrap().index;
@@ -600,6 +628,9 @@ pub fn make_all_reward_payment(era: EraIndex) {
 
 	// reward validators
 	for validator_controller in validators_with_reward.iter().filter_map(Staking::bonded) {
-		assert_ok!(Staking::payout_validator(Origin::signed(validator_controller), era));
+		assert_ok!(Staking::payout_validator(
+			Origin::signed(validator_controller),
+			era
+		));
 	}
 }

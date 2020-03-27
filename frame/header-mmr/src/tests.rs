@@ -71,7 +71,9 @@ fn test_insert_header() {
 
 		let proof = HeaderMMR::_gen_proof(h1, h2).expect("gen proof");
 
-		let result = proof.verify(mmr_root, vec![(pos, prove_elem)]).expect("verify");
+		let result = proof
+			.verify(mmr_root, vec![(pos, prove_elem)])
+			.expect("verify");
 		assert!(result);
 	});
 }

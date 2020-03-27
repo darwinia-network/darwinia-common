@@ -83,11 +83,15 @@ mod types {
 	pub type ProposalIndex = u32;
 
 	pub type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
-	pub type RingPositiveImbalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::PositiveImbalance;
-	pub type RingNegativeImbalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::NegativeImbalance;
+	pub type RingPositiveImbalance<T> =
+		<RingCurrency<T> as Currency<AccountId<T>>>::PositiveImbalance;
+	pub type RingNegativeImbalance<T> =
+		<RingCurrency<T> as Currency<AccountId<T>>>::NegativeImbalance;
 	pub type KtonBalance<T> = <KtonCurrency<T> as Currency<AccountId<T>>>::Balance;
-	pub type KtonPositiveImbalance<T> = <KtonCurrency<T> as Currency<AccountId<T>>>::PositiveImbalance;
-	pub type KtonNegativeImbalance<T> = <KtonCurrency<T> as Currency<AccountId<T>>>::NegativeImbalance;
+	pub type KtonPositiveImbalance<T> =
+		<KtonCurrency<T> as Currency<AccountId<T>>>::PositiveImbalance;
+	pub type KtonNegativeImbalance<T> =
+		<KtonCurrency<T> as Currency<AccountId<T>>>::NegativeImbalance;
 
 	type AccountId<T> = <T as system::Trait>::AccountId;
 	type RingCurrency<T> = <T as Trait>::RingCurrency;
@@ -99,7 +103,8 @@ use codec::{Decode, Encode};
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure, print,
 	traits::{
-		Contains, Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced, ReservableCurrency, WithdrawReason,
+		Contains, Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced, ReservableCurrency,
+		WithdrawReason,
 	},
 	weights::SimpleDispatchInfo,
 	Parameter,
@@ -108,7 +113,10 @@ use frame_system::{self as system, ensure_signed};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 use sp_runtime::{
-	traits::{AccountIdConversion, AtLeast32Bit, BadOrigin, EnsureOrigin, Hash, Saturating, StaticLookup, Zero},
+	traits::{
+		AccountIdConversion, AtLeast32Bit, BadOrigin, EnsureOrigin, Hash, Saturating, StaticLookup,
+		Zero,
+	},
 	ModuleId, Percent, Permill, RuntimeDebug,
 };
 use sp_std::prelude::*;
@@ -193,7 +201,12 @@ pub struct Proposal<AccountId, RingBalance, KtonBalance> {
 /// An open tipping "motion". Retains all details of a tip including information on the finder
 /// and the members who have voted.
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug)]
-pub struct OpenTip<AccountId: Parameter, RingBalance: Parameter, BlockNumber: Parameter, Hash: Parameter> {
+pub struct OpenTip<
+	AccountId: Parameter,
+	RingBalance: Parameter,
+	BlockNumber: Parameter,
+	Hash: Parameter,
+> {
 	/// The hash of the reason for the tip. The reason should be a human-readable UTF-8 encoded string. A URL would be
 	/// sensible.
 	reason: Hash,
@@ -672,11 +685,21 @@ impl<T: Trait> Module<T> {
 				payout -= finders_fee;
 				// this should go through given we checked it's at most the free balance, but still
 				// we only make a best-effort.
-				let _ = T::RingCurrency::transfer(&treasury, &finder, finders_fee, ExistenceRequirement::AllowDeath);
+				let _ = T::RingCurrency::transfer(
+					&treasury,
+					&finder,
+					finders_fee,
+					ExistenceRequirement::AllowDeath,
+				);
 			}
 		}
 		// same as above: best-effort only.
-		let _ = T::RingCurrency::transfer(&treasury, &tip.who, payout, ExistenceRequirement::AllowDeath);
+		let _ = T::RingCurrency::transfer(
+			&treasury,
+			&tip.who,
+			payout,
+			ExistenceRequirement::AllowDeath,
+		);
 	}
 
 	// Spend some money!
@@ -684,7 +707,10 @@ impl<T: Trait> Module<T> {
 		let mut budget_remaining_ring = Self::pot::<T::RingCurrency>();
 		let mut budget_remaining_kton = Self::pot::<T::KtonCurrency>();
 
-		Self::deposit_event(RawEvent::Spending(budget_remaining_ring, budget_remaining_kton));
+		Self::deposit_event(RawEvent::Spending(
+			budget_remaining_ring,
+			budget_remaining_kton,
+		));
 
 		let mut miss_any_ring = false;
 		let mut imbalance_ring = <RingPositiveImbalance<T>>::zero();
@@ -696,7 +722,8 @@ impl<T: Trait> Module<T> {
 			v.retain(|&index| {
 				// Should always be true, but shouldn't panic if false or we're screwed.
 				if let Some(p) = Self::proposals(index) {
-					if p.ring_value > budget_remaining_ring || p.kton_value > budget_remaining_kton {
+					if p.ring_value > budget_remaining_ring || p.kton_value > budget_remaining_kton
+					{
 						if p.ring_value > budget_remaining_ring {
 							miss_any_ring = true;
 						}
@@ -715,7 +742,10 @@ impl<T: Trait> Module<T> {
 						let _ = T::RingCurrency::unreserve(&p.proposer, p.ring_bond);
 
 						// provide the allocation.
-						imbalance_ring.subsume(T::RingCurrency::deposit_creating(&p.beneficiary, p.ring_value));
+						imbalance_ring.subsume(T::RingCurrency::deposit_creating(
+							&p.beneficiary,
+							p.ring_value,
+						));
 					}
 					if p.kton_value <= budget_remaining_kton {
 						budget_remaining_kton -= p.kton_value;
@@ -724,11 +754,19 @@ impl<T: Trait> Module<T> {
 						let _ = T::KtonCurrency::unreserve(&p.proposer, p.kton_bond);
 
 						// provide the allocation.
-						imbalance_kton.subsume(T::KtonCurrency::deposit_creating(&p.beneficiary, p.kton_value));
+						imbalance_kton.subsume(T::KtonCurrency::deposit_creating(
+							&p.beneficiary,
+							p.kton_value,
+						));
 					}
 
 					<Proposals<T>>::remove(index);
-					Self::deposit_event(RawEvent::Awarded(index, p.ring_value, p.kton_value, p.beneficiary));
+					Self::deposit_event(RawEvent::Awarded(
+						index,
+						p.ring_value,
+						p.kton_value,
+						p.beneficiary,
+					));
 					false
 				} else {
 					false
@@ -786,7 +824,10 @@ impl<T: Trait> Module<T> {
 			drop(problem);
 		}
 
-		Self::deposit_event(RawEvent::Rollover(budget_remaining_ring, budget_remaining_kton));
+		Self::deposit_event(RawEvent::Rollover(
+			budget_remaining_ring,
+			budget_remaining_kton,
+		));
 	}
 
 	/// Return the amount of money in the pot.
