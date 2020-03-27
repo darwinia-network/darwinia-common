@@ -112,12 +112,12 @@ pub trait AccountBalanceData<Balance, Module> {
 
 	fn reserved(&self) -> Balance;
 
-	fn mutate_free(&mut self, free: Balance);
+	fn mutate_free(&mut self, new_free: Balance);
 
-	fn mutate_reserved(&mut self, reserved: Balance);
+	fn mutate_reserved(&mut self, new_reserved: Balance);
 
 	/// How much this account's balance can be reduced for the given `reasons`.
-	fn usable(&self, reasons: LockReasons, frozen_balance: FrozenBalance<Balance>) -> Balance ;
+	fn usable(&self, reasons: LockReasons, frozen_balance: FrozenBalance<Balance>) -> Balance;
 
 	/// The total balance in this account including any that is reserved and ignoring any frozen.
 	fn total(&self) -> Balance;
