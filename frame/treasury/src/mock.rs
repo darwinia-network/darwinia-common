@@ -14,8 +14,11 @@ use crate::*;
 pub type System = frame_system::Module<Test>;
 
 // --- custom ---
-pub type Kton = pallet_kton::Module<Test>;
-pub type Ring = pallet_ring::Module<Test>;
+pub type KtonInstance = pallet_balances::Instance1;
+pub type RingInstance = pallet_balances::Instance2;
+pub type Kton = pallet_balances::Module<Test, KtonInstance>;
+pub type Ring = pallet_balances::Module<Test, RingInstance>;
+pub type Balance = u64;
 
 // --- current ---
 pub type Treasury = Module<Test>;
@@ -50,7 +53,7 @@ impl frame_system::Trait for Test {
 	type AvailableBlockRatio = AvailableBlockRatio;
 	type Version = ();
 	type ModuleToIndex = ();
-	type AccountData = darwinia_support::balance::AccountData<u64>;
+	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type MigrateAccount = ();
@@ -69,19 +72,85 @@ impl Contains<u64> for TenToFourteen {
 parameter_types! {
 		pub const ExistentialDeposit: u64 = 1;
 }
-impl pallet_kton::Trait for Test {
-	type Balance = u64;
-	type DustRemoval = ();
-	type Event = ();
-	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
-	type TryDropRing = ();
+
+
+#[derive(Encode, Decode, Clone, PartialEq, Eq, Default, RuntimeDebug)]
+pub struct AccountData<Balance> {
+	pub free_ring: Balance,
+	pub free_kton: Balance,
+	pub reserved_ring: Balance,
+	pub reserved_kton: Balance,
 }
-impl pallet_ring::Trait for Test {
+
+impl darwinia_support::balance::AccountBalanceData<Balance, KtonInstance> for AccountData<Balance> {
+	fn free(&self) -> Balance{
+		self.free_kton
+	}
+
+	fn reserved(&self) -> Balance {
+		self.reserved_kton
+	}
+
+	fn mutate_free(&mut self, new_free: Balance) {
+		self.free_kton = new_free;
+	}
+
+	fn mutate_reserved(&mut self, new_reserved: Balance) {
+		self.reserved_kton = new_reserved;
+	}
+
+	fn usable(&self, reasons: darwinia_support::balance::lock::LockReasons, frozen_balance: darwinia_support::balance::FrozenBalance<Balance>) -> Balance {
+		self.free_kton
+			.saturating_sub(darwinia_support::balance::FrozenBalance::frozen_for(reasons, frozen_balance))
+	}
+
+	fn total(&self) -> Balance {
+		self.free_kton.saturating_add(self.reserved_kton)
+	}
+}
+
+impl darwinia_support::balance::AccountBalanceData<Balance, RingInstance> for AccountData<Balance> {
+	fn free(&self) -> Balance{
+		self.free_ring
+	}
+
+	fn reserved(&self) -> Balance {
+		self.reserved_ring
+	}
+
+	fn mutate_free(&mut self, new_free: Balance) {
+		self.free_ring = new_free;
+	}
+
+	fn mutate_reserved(&mut self, new_reserved: Balance) {
+		self.reserved_ring = new_reserved;
+	}
+
+	fn usable(&self, reasons: darwinia_support::balance::lock::LockReasons, frozen_balance: darwinia_support::balance::FrozenBalance<Balance>) -> Balance {
+		self.free_ring
+			.saturating_sub(darwinia_support::balance::FrozenBalance::frozen_for(reasons, frozen_balance))
+	}
+
+	fn total(&self) -> Balance {
+		self.free_ring.saturating_add(self.reserved_ring)
+	}
+}
+
+impl pallet_balances::Trait<KtonInstance> for Test {
 	type Balance = u64;
 	type DustRemoval = ();
 	type Event = ();
 	type ExistentialDeposit = ExistentialDeposit;
+	type AccountBalanceData = AccountData<Balance>;
+	type AccountStore = System;
+	type TryDropKton = ();
+}
+impl pallet_balances::Trait<RingInstance> for Test {
+	type Balance = u64;
+	type DustRemoval = ();
+	type Event = ();
+	type ExistentialDeposit = ExistentialDeposit;
+	type AccountBalanceData = AccountData<Balance>;
 	type AccountStore = System;
 	type TryDropKton = ();
 }
@@ -122,13 +191,13 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		.build_storage::<Test>()
 		.unwrap();
 
-	pallet_ring::GenesisConfig::<Test> {
+	pallet_balances::GenesisConfig::<Test, RingInstance> {
 		// Total issuance will be 200 with treasury account initialized at ED.
 		balances: vec![(0, 100), (1, 98), (2, 1)],
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
-	pallet_kton::GenesisConfig::<Test> {
+	pallet_balances::GenesisConfig::<Test, KtonInstance> {
 		// Total issuance will be 200 with treasury account initialized at ED.
 		balances: vec![(0, 100), (1, 98), (2, 1)],
 	}

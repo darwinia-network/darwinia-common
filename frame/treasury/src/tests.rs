@@ -389,12 +389,12 @@ fn inexistent_account_works() {
 	let mut t = frame_system::GenesisConfig::default()
 		.build_storage::<Test>()
 		.unwrap();
-	pallet_ring::GenesisConfig::<Test> {
+	pallet_balances::GenesisConfig::<Test, RingInstance> {
 		balances: vec![(0, 100), (1, 99), (2, 1)],
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
-	pallet_kton::GenesisConfig::<Test> {
+	pallet_balances::GenesisConfig::<Test, KtonInstance> {
 		balances: vec![(0, 100), (1, 99), (2, 1)],
 	}
 	.assimilate_storage(&mut t)

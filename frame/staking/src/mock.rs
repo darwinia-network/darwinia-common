@@ -221,7 +221,7 @@ impl pallet_ring::Trait for Test {
 	type TryDropKton = ();
 }
 
-impl<Balance> darwinia_support::balance::AccountBalanceData<Balance, pallet_ring::DefaultInstance> for AccountData<Balance> {
+impl darwinia_support::balance::AccountBalanceData<Balance, pallet_ring::DefaultInstance> for AccountData<Balance> {
 	fn free(&self) -> Balance{
 		self.free_ring
 	}
