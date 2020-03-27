@@ -9,11 +9,10 @@ homepage = "https://darwinia.network/"
 repository = "https://github.com/darwinia-network/darwinia/"
 
 [dependencies]
-# crates.io
+# crates
 codec = { package = "parity-scale-codec", version = "1.0.0", default-features = false, features = ["derive"] }
 num-traits = { version = "0.2.8", default-features = false }
-
-# github.com
+# substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
 sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
 sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
@@ -22,9 +21,10 @@ sp-std = { default-features = false, git = "https://github.com/darwinia-network/
 default = ["std"]
 easy-testing = ["std"]
 std = [
+	# crates
 	"codec/std",
 	"num-traits/std",
-
+	# substrate
 	"frame-support/std",
 	"sp-runtime/std",
 	"sp-std/std",

@@ -7,25 +7,26 @@ edition = "2018"
 license = "Apache-2.0"
 
 [dependencies]
-# crates.io
+# crates
 byteorder = { version = "1", default-features = false }
 rlp = { version = "0.4", default-features = false }
 sha3 = { version = "0.8", default-features = false }
-
-# github.com
+# github
 ethereum-types = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 primitive-types = { default-features = false, features = ["rlp"], git = "https://github.com/darwinia-network/parity-common.git" }
 
 [dev-dependencies]
-hex-literal = "0.2.1"
+# crates
+hex-literal = { version = "0.2.1" }
 
 [features]
 default = ["std"]
 std = [
+	# crates
 	"byteorder/std",
 	"rlp/std",
 	"sha3/std",
-
+	# github
 	"ethereum-types/std",
 	"primitive-types/std",
 ]
