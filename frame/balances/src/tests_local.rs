@@ -99,7 +99,7 @@ impl Trait for Test {
 		u64,
 		AccountData<u64>,
 	>;
-	type TryDropKton = ();
+	type TryDropOther = ();
 }
 
 impl AccountBalanceData<u64, DefaultInstance> for AccountData<u64> {

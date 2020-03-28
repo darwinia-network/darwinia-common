@@ -525,7 +525,7 @@ impl pallet_balances::Trait<KtonInstance> for Runtime {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountBalanceData = AccountData<Balance>;
 	type AccountStore = frame_system::Module<Runtime>;
-	type TryDropKton = Ring;
+	type TryDropOther = Ring;
 }
 impl pallet_balances::Trait<RingInstance> for Runtime {
 	type Balance = Balance;
@@ -534,7 +534,7 @@ impl pallet_balances::Trait<RingInstance> for Runtime {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountBalanceData = AccountData<Balance>;
 	type AccountStore = frame_system::Module<Runtime>;
-	type TryDropKton = Kton;
+	type TryDropOther = Kton;
 }
 
 parameter_types! {

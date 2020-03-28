@@ -840,7 +840,7 @@ mod tests {
 		type ExistentialDeposit = ExistentialDeposit;
 		type AccountBalanceData = AccountData<u64>;
 		type AccountStore = frame_system::Module<Test>;
-		type TryDropKton = ();
+		type TryDropOther = ();
 	}
 
 	#[derive(Encode, Decode, Clone, PartialEq, Eq, Default, RuntimeDebug)]

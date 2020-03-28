@@ -143,7 +143,7 @@ impl pallet_balances::Trait<KtonInstance> for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountBalanceData = AccountData<Balance>;
 	type AccountStore = System;
-	type TryDropKton = ();
+	type TryDropOther = ();
 }
 impl pallet_balances::Trait<RingInstance> for Test {
 	type Balance = u64;
@@ -152,7 +152,7 @@ impl pallet_balances::Trait<RingInstance> for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountBalanceData = AccountData<Balance>;
 	type AccountStore = System;
-	type TryDropKton = ();
+	type TryDropOther = ();
 }
 
 parameter_types! {

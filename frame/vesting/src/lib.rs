@@ -399,7 +399,7 @@ mod tests {
 		type ExistentialDeposit = ExistentialDeposit;
 		type AccountBalanceData = AccountData<u64>;
 		type AccountStore = System;
-		type TryDropKton = ();
+		type TryDropOther = ();
 	}
 
 	impl AccountBalanceData<u64, pallet_balances::DefaultInstance> for AccountData<u64> {

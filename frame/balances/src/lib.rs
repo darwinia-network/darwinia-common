@@ -190,7 +190,7 @@ pub trait Subtrait<I: Instance = DefaultInstance>: frame_system::Trait {
 	type AccountStore: StoredMap<Self::AccountId, Self::AccountBalanceData>;
 
 	// TODO: doc
-	type TryDropKton: ExistentialCheck<Self::AccountId, Self::Balance>;
+	type TryDropOther: ExistentialCheck<Self::AccountId, Self::Balance>;
 }
 
 pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
@@ -219,7 +219,7 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	type AccountStore: StoredMap<Self::AccountId, Self::AccountBalanceData>;
 
 	// TODO: doc
-	type TryDropKton: ExistentialCheck<Self::AccountId, Self::Balance>;
+	type TryDropOther: ExistentialCheck<Self::AccountId, Self::Balance>;
 }
 
 impl<T: Trait<I>, I: Instance> Subtrait<I> for T {
@@ -228,7 +228,7 @@ impl<T: Trait<I>, I: Instance> Subtrait<I> for T {
 	type AccountBalanceData = T::AccountBalanceData;
 	type AccountStore = T::AccountStore;
 
-	type TryDropKton = T::TryDropKton;
+	type TryDropOther = T::TryDropOther;
 }
 
 decl_event!(
@@ -501,7 +501,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	) -> Option<T::AccountBalanceData> {
 		let total = <dyn AccountBalanceData<T::Balance, I>>::total(&new);
 		if total < T::ExistentialDeposit::get() {
-			let (dropped, dropped_kton) = T::TryDropKton::try_drop(who);
+			let (dropped, dropped_kton) = T::TryDropOther::try_drop(who);
 			if dropped {
 				if !total.is_zero() {
 					T::DustRemoval::on_unbalanced(NegativeImbalance::new(total));
@@ -785,7 +785,7 @@ impl<T: Subtrait<I>, I: Instance> Trait<I> for ElevatedTrait<T, I> {
 
 	type AccountStore = T::AccountStore;
 
-	type TryDropKton = T::TryDropKton;
+	type TryDropOther = T::TryDropOther;
 }
 
 impl<T: Trait<I>, I: Instance> Currency<T::AccountId> for Module<T, I>
