@@ -1,5 +1,7 @@
 [workspace]
 members = [
+	"bin/node-template/node",
+	"bin/node-template/runtime",
 	"frame/balances",
 	"frame/claims",
 	"frame/chainrelay/eth/backing",
