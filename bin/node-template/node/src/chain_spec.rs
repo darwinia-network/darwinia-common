@@ -151,7 +151,7 @@ fn testnet_genesis(
 			changes_trie_config: Default::default(),
 		}),
 		pallet_aura: Some(AuraConfig {
-			authorities: initial_authorities.iter().map(|x| (x.2.clone())).collect(),
+			authorities: vec![],
 		}),
 		pallet_indices: Some(Default::default()),
 		pallet_session: Some(SessionConfig {
@@ -176,16 +176,10 @@ fn testnet_genesis(
 		}),
 		pallet_sudo: Some(SudoConfig { key: root_key }),
 		pallet_grandpa: Some(GrandpaConfig {
-			authorities: initial_authorities
-				.iter()
-				.map(|x| (x.3.clone(), 1))
-				.collect(),
+			authorities: vec![],
 		}),
 		pallet_im_online: Some(ImOnlineConfig {
-			keys: initial_authorities
-				.iter()
-				.map(|x| x.4.clone())
-				.collect::<Vec<_>>(),
+			keys: vec![],
 		}),
 		// Custom Module
 		pallet_claims: Some(Default::default()),
