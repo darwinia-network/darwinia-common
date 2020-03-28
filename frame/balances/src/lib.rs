@@ -912,13 +912,13 @@ where
 					transactor,
 					value,
 					WithdrawReason::Transfer.into(),
-					<dyn AccountBalanceData<T::Balance, I>>::free(from_account),
+					from_account.free(),
 				)?;
 
 				let allow_death = existence_requirement == ExistenceRequirement::AllowDeath;
 				let allow_death = allow_death && <frame_system::Module<T>>::allow_death(transactor);
 
-				ensure!(allow_death || <dyn AccountBalanceData<T::Balance, I>>::free(from_account) >= ed, Error::<T, I>::KeepAlive);
+				ensure!(allow_death || from_account.free() >= ed, Error::<T, I>::KeepAlive);
 
 				Ok(())
 			})

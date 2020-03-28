@@ -184,6 +184,8 @@ pub struct AccountData<Balance> {
 pub type KtonInstance = pallet_balances::Instance1;
 pub type RingInstance = pallet_balances::Instance2;
 
+pub type Ring = Balances;
+
 impl pallet_support::balance::AccountBalanceData<Balance, KtonInstance> for AccountData<Balance> {
 	fn free(&self) -> Balance{
 		self.free_kton
@@ -641,7 +643,7 @@ construct_runtime!(
 		EthOffchain: pallet_eth_offchain::{Module, Call, Storage, Event<T>},
 		HeaderMMR: pallet_header_mmr::{Module, Call, Storage},
 		Kton: pallet_balances::<Instance1>::{Module, Call, Storage, Config<T>, Event<T>},
-		Ring: pallet_balances::<Instance2>::{Module, Call, Storage, Config<T>, Event<T>},
+		Balances: pallet_balances::<Instance2>::{Module, Call, Storage, Config<T>, Event<T>},
 		Staking: pallet_staking::{Module, Call, Storage, Config<T>, Event<T>},
 		Treasury: pallet_treasury::{Module, Call, Storage, Config, Event<T>},
 		Vesting: pallet_vesting::{Module, Call, Storage, Config<T>, Event<T>},

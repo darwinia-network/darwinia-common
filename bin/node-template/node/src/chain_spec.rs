@@ -9,7 +9,7 @@ use sp_runtime::{
 
 use node_template_runtime::{
 	AccountId, AuraConfig, CouncilConfig, GenesisConfig, GrandpaConfig, ImOnlineConfig, KtonConfig,
-	RingConfig, SessionConfig, SessionKeys, Signature, StakerStatus, StakingConfig, SudoConfig,
+	BalancesConfig, SessionConfig, SessionKeys, Signature, StakerStatus, StakingConfig, SudoConfig,
 	SystemConfig, WASM_BINARY,
 };
 
@@ -193,7 +193,7 @@ fn testnet_genesis(
 				.map(|k| (k, 1 << 60))
 				.collect(),
 		}),
-		pallet_balances_Instance2: Some(RingConfig {
+		pallet_balances_Instance2: Some(BalancesConfig {
 			balances: endowed_accounts
 				.iter()
 				.cloned()
