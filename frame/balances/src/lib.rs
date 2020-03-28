@@ -396,22 +396,22 @@ decl_module! {
 			let new_reserved = if wipeout { Zero::zero() } else { new_reserved };
 
 			let (free, reserved) = Self::mutate_account(&who, |account| {
-				if new_free > <dyn AccountBalanceData<T::Balance, I>>::free(account) {
-					mem::drop(PositiveImbalance::<T, I>::new(new_free - <dyn AccountBalanceData<T::Balance, I>>::free(account)));
-				} else if new_free < <dyn AccountBalanceData<T::Balance, I>>::free(account) {
-					mem::drop(NegativeImbalance::<T, I>::new(<dyn AccountBalanceData<T::Balance, I>>::free(account) - new_free));
+				if new_free > account.free() {
+					mem::drop(PositiveImbalance::<T, I>::new(new_free - account.free()));
+				} else if new_free < account.free() {
+					mem::drop(NegativeImbalance::<T, I>::new(account.free() - new_free));
 				}
 
-				if new_reserved > <dyn AccountBalanceData<T::Balance, I>>::reserved(account) {
-					mem::drop(PositiveImbalance::<T, I>::new(new_reserved - <dyn AccountBalanceData<T::Balance, I>>::reserved(account)));
-				} else if new_reserved < <dyn AccountBalanceData<T::Balance, I>>::reserved(account) {
-					mem::drop(NegativeImbalance::<T, I>::new(<dyn AccountBalanceData<T::Balance, I>>::reserved(account) - new_reserved));
+				if new_reserved > account.reserved() {
+					mem::drop(PositiveImbalance::<T, I>::new(new_reserved - account.reserved()));
+				} else if new_reserved < account.reserved() {
+					mem::drop(NegativeImbalance::<T, I>::new(account.reserved() - new_reserved));
 				}
 
 				account.mutate_free(new_free);
 				account.mutate_reserved(new_reserved);
 
-				(<dyn AccountBalanceData<T::Balance, I>>::free(account), <dyn AccountBalanceData<T::Balance, I>>::reserved(account))
+				(account.free(), account.reserved())
 			});
 			Self::deposit_event(RawEvent::BalanceSet(who, free, reserved));
 		}
@@ -481,7 +481,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	/// Get the reserved balance of an account.
 	pub fn reserved_balance(who: impl Borrow<T::AccountId>) -> T::Balance {
 		let account = Self::account(who.borrow());
-		<dyn AccountBalanceData<T::Balance, I>>::reserved(&account)
+		account.reserved()
 	}
 
 	/// Get both the free and reserved balances of an account.
@@ -499,7 +499,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		who: &T::AccountId,
 		new: T::AccountBalanceData,
 	) -> Option<T::AccountBalanceData> {
-		let total = <dyn AccountBalanceData<T::Balance, I>>::total(&new);
+		let total = new.total();
 		if total < T::ExistentialDeposit::get() {
 			let (dropped, dropped_kton) = T::TryDropOther::try_drop(who);
 			if dropped {
@@ -546,7 +546,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 			let mut account = maybe_account.take().unwrap_or_default();
 			let was_zero = account.total().is_zero();
 			f(&mut account).map(move |result| {
-				let maybe_endowed = if was_zero { Some(<dyn AccountBalanceData<T::Balance, I>>::free(&account)) } else { None };
+				let maybe_endowed = if was_zero { Some(account.free()) } else { None };
 				*maybe_account = Self::post_mutation(who, account);
 				(maybe_endowed, result)
 			})
@@ -798,7 +798,7 @@ where
 
 	fn total_balance(who: &T::AccountId) -> Self::Balance {
 		let account = Self::account(who);
-		<dyn AccountBalanceData<T::Balance, I>>::total(&account)
+		account.total()
 	}
 
 	// Check if `value` amount of free balance can be slashed from `who`.
@@ -945,17 +945,17 @@ where
 		}
 
 		Self::mutate_account(who, |account| {
-			let free_slash = cmp::min(<dyn AccountBalanceData<T::Balance, I>>::free(account), value);
+			let free_slash = cmp::min(account.free(), value);
 			account.mutate_free(
-				<dyn AccountBalanceData<T::Balance, I>>::free(account) - free_slash
+				account.free() - free_slash
 			);
 
 			let remaining_slash = value - free_slash;
 			if !remaining_slash.is_zero() {
-				let reserved_slash = cmp::min(<dyn AccountBalanceData<T::Balance, I>>::reserved(account), remaining_slash);
+				let reserved_slash = cmp::min(account.reserved(), remaining_slash);
 
-				let new_reserved = <dyn AccountBalanceData<T::Balance, I>>::reserved(account) - reserved_slash;
-				<dyn AccountBalanceData<T::Balance, I>>::mutate_reserved(account, new_reserved);
+				let new_reserved = account.reserved() - reserved_slash;
+				account.mutate_reserved(new_reserved);
 				(
 					NegativeImbalance::new(free_slash + reserved_slash),
 					remaining_slash - reserved_slash,
@@ -978,8 +978,8 @@ where
 		}
 
 		Self::try_mutate_account(who, |account| -> Result<Self::PositiveImbalance, DispatchError> {
-			ensure!(!<dyn AccountBalanceData<T::Balance, I>>::total(account).is_zero(), Error::<T, I>::DeadAccount);
-			account.mutate_free(<dyn AccountBalanceData<T::Balance, I>>::free(account).checked_add(&value).ok_or(Error::<T, I>::Overflow)?);
+			ensure!(!account.total().is_zero(), Error::<T, I>::DeadAccount);
+			account.mutate_free(account.free().checked_add(&value).ok_or(Error::<T, I>::Overflow)?);
 			Ok(PositiveImbalance::new(value))
 		})
 	}
@@ -1001,7 +1001,7 @@ where
 				// bail if not yet created and this operation wouldn't be enough to create it.
 				let ed = T::ExistentialDeposit::get();
 				ensure!(
-					value >= ed || !<dyn AccountBalanceData<T::Balance, I>>::total(account).is_zero(),
+					value >= ed || !account.total().is_zero(),
 					Self::PositiveImbalance::zero()
 				);
 
@@ -1039,8 +1039,8 @@ where
 
 				// bail if we need to keep the account alive and this would kill it.
 				let ed = T::ExistentialDeposit::get();
-				let would_be_dead = new_free_account + <dyn AccountBalanceData<T::Balance, I>>::reserved(account) < ed;
-				let would_kill = would_be_dead && <dyn AccountBalanceData<T::Balance, I>>::free(account) + <dyn AccountBalanceData<T::Balance, I>>::reserved(account) >= ed;
+				let would_be_dead = new_free_account + account.reserved() < ed;
+				let would_kill = would_be_dead && account.free() + account.reserved() >= ed;
 				ensure!(liveness == AllowDeath || !would_kill, Error::<T, I>::KeepAlive);
 
 				Self::ensure_can_withdraw(who, value, reasons, new_free_account)?;
@@ -1069,14 +1069,14 @@ where
 				// instance that there's no other accounts on the system at all, we might
 				// underflow the issuance and our arithmetic will be off.
 				ensure!(
-					value + <dyn AccountBalanceData<T::Balance, I>>::reserved(account) >= ed || !<dyn AccountBalanceData<T::Balance, I>>::total(account).is_zero(),
+					value + account.reserved() >= ed || !account.total().is_zero(),
 					()
 				);
 
-				let imbalance = if <dyn AccountBalanceData<T::Balance, I>>::free(account) <= value {
-					SignedImbalance::Positive(PositiveImbalance::new(value - <dyn AccountBalanceData<T::Balance, I>>::free(account)))
+				let imbalance = if account.free() <= value {
+					SignedImbalance::Positive(PositiveImbalance::new(value - account.free()))
 				} else {
-					SignedImbalance::Negative(NegativeImbalance::new(<dyn AccountBalanceData<T::Balance, I>>::free(account) - value))
+					SignedImbalance::Negative(NegativeImbalance::new(account.free() - value))
 				};
 				account.mutate_free(value);
 				Ok(imbalance)
@@ -1120,16 +1120,16 @@ where
 
 		Self::mutate_account(who, |account| {
 			// underflow should never happen, but it if does, there's nothing to be done here.
-			let actual = cmp::min(<dyn AccountBalanceData<T::Balance, I>>::reserved(account), value);
-			let new_reserve = <dyn AccountBalanceData<T::Balance, I>>::reserved(account) - actual;
-			<dyn AccountBalanceData<T::Balance, I>>::mutate_reserved(account, new_reserve);
+			let actual = cmp::min(account.reserved(), value);
+			let new_reserve = account.reserved() - actual;
+			account.mutate_reserved(new_reserve);
 			(NegativeImbalance::new(actual), value - actual)
 		})
 	}
 
 	fn reserved_balance(who: &T::AccountId) -> Self::Balance {
 		let account = Self::account(who);
-		<dyn AccountBalanceData<T::Balance, I>>::reserved(&account)
+		account.reserved()
 	}
 
 	/// Move `value` from the free balance from `who` to their reserved balance.
@@ -1141,16 +1141,16 @@ where
 		}
 
 		Self::try_mutate_account(who, |account| -> DispatchResult {
-			let new_free = <dyn AccountBalanceData<T::Balance, I>>::free(account)
+			let new_free = account.free()
 				.checked_sub(&value)
 				.ok_or(Error::<T, I>::InsufficientBalance)?;
-			<dyn AccountBalanceData<T::Balance, I>>::mutate_free(account, new_free);
+			account.mutate_free(new_free);
 
-			let new_reserved = <dyn AccountBalanceData<T::Balance, I>>::reserved(account)
+			let new_reserved = account.reserved()
 				.checked_add(&value)
 				.ok_or(Error::<T, I>::Overflow)?;
-			<dyn AccountBalanceData<T::Balance, I>>::mutate_reserved(account, new_reserved);
-			Self::ensure_can_withdraw(who, value, WithdrawReason::Reserve.into(), <dyn AccountBalanceData<T::Balance, I>>::free(account))
+			account.mutate_reserved(new_reserved);
+			Self::ensure_can_withdraw(who, value, WithdrawReason::Reserve.into(), account.free())
 		})
 	}
 
@@ -1163,12 +1163,12 @@ where
 		}
 
 		Self::mutate_account(who, |account| {
-			let actual = cmp::min(<dyn AccountBalanceData<T::Balance, I>>::reserved(account), value);
-			let new_reserved = <dyn AccountBalanceData<T::Balance, I>>::reserved(account) - actual;
-			<dyn AccountBalanceData<T::Balance, I>>::mutate_reserved(account, new_reserved);
+			let actual = cmp::min(account.reserved(), value);
+			let new_reserved = account.reserved() - actual;
+			account.mutate_reserved(new_reserved);
 			// defensive only: this can never fail since total issuance which is at least free+reserved
 			// fits into the same data type.
-			account.mutate_free(<dyn AccountBalanceData<T::Balance, I>>::free(account).saturating_add(actual));
+			account.mutate_free(account.free().saturating_add(actual));
 			value - actual
 		})
 	}
@@ -1196,9 +1196,9 @@ where
 		}
 
 		Self::try_mutate_account(beneficiary, |to_account| -> Result<Self::Balance, DispatchError> {
-			ensure!(!<dyn AccountBalanceData<T::Balance, I>>::total(to_account).is_zero(), Error::<T, I>::DeadAccount);
+			ensure!(!to_account.total().is_zero(), Error::<T, I>::DeadAccount);
 			Self::try_mutate_account(slashed, |from_account| -> Result<Self::Balance, DispatchError> {
-				let actual = cmp::min(<dyn AccountBalanceData<T::Balance, I>>::reserved(from_account), value);
+				let actual = cmp::min(from_account.reserved(), value);
 				match status {
 					Status::Free => {
 						to_account.mutate_free(to_account
@@ -1213,8 +1213,8 @@ where
 							.ok_or(Error::<T, I>::Overflow)?)
 					}
 				}
-				let new_reserved = <dyn AccountBalanceData<T::Balance, I>>::reserved(from_account) - actual;
-				<dyn AccountBalanceData<T::Balance, I>>::mutate_reserved(from_account, new_reserved);
+				let new_reserved = from_account.reserved() - actual;
+				from_account.mutate_reserved(new_reserved);
 				Ok(value - actual)
 			})
 		})
@@ -1313,14 +1313,14 @@ where
 	/// non-locking, non-transaction-fee activity. Will be at most `free_balance`.
 	fn usable_balance(who: &T::AccountId) -> Self::Balance {
 		let account = Self::account(who);
-		<dyn AccountBalanceData<T::Balance, I>>::usable(&account, LockReasons::Misc, Self::frozen_balance(who))
+		account.usable( LockReasons::Misc, Self::frozen_balance(who))
 	}
 
 	/// Get the balance of an account that can be used for paying transaction fees (not tipping,
 	/// or any other kind of fees, though). Will be at most `free_balance`.
 	fn usable_balance_for_fees(who: &T::AccountId) -> Self::Balance {
 		let account = Self::account(who);
-		<dyn AccountBalanceData<T::Balance, I>>::usable(&account, LockReasons::Fee, Self::frozen_balance(who))
+		account.usable(LockReasons::Fee, Self::frozen_balance(who))
 	}
 }
 
