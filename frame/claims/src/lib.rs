@@ -390,7 +390,7 @@ mod tests {
 	};
 	use tiny_keccak::keccak256;
 
-	use pallet_support::balance::{FrozenBalance, AccountBalanceData, lock::LockReasons};
+	use pallet_support::balance::{lock::LockReasons, BalanceInfo, FrozenBalance};
 
 	// --- custom ---
 	use crate::*;
@@ -460,13 +460,13 @@ mod tests {
 		type DustRemoval = ();
 		type Event = ();
 		type ExistentialDeposit = ExistentialDeposit;
-		type AccountBalanceData = AccountData<u64>;
+		type BalanceInfo = AccountData<u64>;
 		type AccountStore = System;
 		type TryDropOther = ();
 	}
 
-	impl AccountBalanceData<u64, pallet_balances::DefaultInstance> for AccountData<u64> {
-		fn free(&self) -> u64{
+	impl BalanceInfo<u64, pallet_balances::DefaultInstance> for AccountData<u64> {
+		fn free(&self) -> u64 {
 			self.free
 		}
 
@@ -474,20 +474,19 @@ mod tests {
 			self.reserved
 		}
 
-		fn mutate_free(&mut self, new_free: u64) {
+		fn set_free(&mut self, new_free: u64) {
 			self.free = new_free;
 		}
 
-		fn mutate_reserved(&mut self, new_reserved: u64) {
+		fn set_reserved(&mut self, new_reserved: u64) {
 			self.reserved = new_reserved;
 		}
 
 		fn usable(&self, reasons: LockReasons, frozen_balance: FrozenBalance<u64>) -> u64 {
-			self.free
-				.saturating_sub(FrozenBalance::frozen_for(reasons, frozen_balance))
+			self.free.saturating_sub(frozen_balance.frozen_for(reasons))
 		}
 
-		fn total(&self) -> u64{
+		fn total(&self) -> u64 {
 			self.free.saturating_add(self.reserved)
 		}
 	}

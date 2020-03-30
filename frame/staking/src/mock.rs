@@ -66,8 +66,8 @@ pub struct AccountData<Balance> {
 	pub reserved_kton: Balance,
 }
 
-impl darwinia_support::balance::AccountBalanceData<Balance, KtonInstance> for AccountData<Balance> {
-	fn free(&self) -> Balance{
+impl darwinia_support::balance::BalanceInfo<Balance, KtonInstance> for AccountData<Balance> {
+	fn free(&self) -> Balance {
 		self.free_kton
 	}
 
@@ -75,17 +75,21 @@ impl darwinia_support::balance::AccountBalanceData<Balance, KtonInstance> for Ac
 		self.reserved_kton
 	}
 
-	fn mutate_free(&mut self, new_free: Balance) {
+	fn set_free(&mut self, new_free: Balance) {
 		self.free_kton = new_free;
 	}
 
-	fn mutate_reserved(&mut self, new_reserved: Balance) {
+	fn set_reserved(&mut self, new_reserved: Balance) {
 		self.reserved_kton = new_reserved;
 	}
 
-	fn usable(&self, reasons: darwinia_support::balance::lock::LockReasons, frozen_balance: darwinia_support::balance::FrozenBalance<Balance>) -> Balance {
+	fn usable(
+		&self,
+		reasons: darwinia_support::balance::lock::LockReasons,
+		frozen_balance: darwinia_support::balance::FrozenBalance<Balance>,
+	) -> Balance {
 		self.free_kton
-			.saturating_sub(darwinia_support::balance::FrozenBalance::frozen_for(reasons, frozen_balance))
+			.saturating_sub(frozen_balance.frozen_for(reasons))
 	}
 
 	fn total(&self) -> Balance {
@@ -93,8 +97,8 @@ impl darwinia_support::balance::AccountBalanceData<Balance, KtonInstance> for Ac
 	}
 }
 
-impl darwinia_support::balance::AccountBalanceData<Balance, RingInstance> for AccountData<Balance> {
-	fn free(&self) -> Balance{
+impl darwinia_support::balance::BalanceInfo<Balance, RingInstance> for AccountData<Balance> {
+	fn free(&self) -> Balance {
 		self.free_ring
 	}
 
@@ -102,17 +106,21 @@ impl darwinia_support::balance::AccountBalanceData<Balance, RingInstance> for Ac
 		self.reserved_ring
 	}
 
-	fn mutate_free(&mut self, new_free: Balance) {
+	fn set_free(&mut self, new_free: Balance) {
 		self.free_ring = new_free;
 	}
 
-	fn mutate_reserved(&mut self, new_reserved: Balance) {
+	fn set_reserved(&mut self, new_reserved: Balance) {
 		self.reserved_ring = new_reserved;
 	}
 
-	fn usable(&self, reasons: darwinia_support::balance::lock::LockReasons, frozen_balance: darwinia_support::balance::FrozenBalance<Balance>) -> Balance {
+	fn usable(
+		&self,
+		reasons: darwinia_support::balance::lock::LockReasons,
+		frozen_balance: darwinia_support::balance::FrozenBalance<Balance>,
+	) -> Balance {
 		self.free_ring
-			.saturating_sub(darwinia_support::balance::FrozenBalance::frozen_for(reasons, frozen_balance))
+			.saturating_sub(frozen_balance.frozen_for(reasons))
 	}
 
 	fn total(&self) -> Balance {
@@ -264,7 +272,7 @@ impl pallet_balances::Trait<KtonInstance> for Test {
 	type DustRemoval = ();
 	type Event = ();
 	type ExistentialDeposit = ExistentialDeposit;
-	type AccountBalanceData = AccountData<Balance>;
+	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
 	type TryDropOther = ();
 }
@@ -273,7 +281,7 @@ impl pallet_balances::Trait<RingInstance> for Test {
 	type DustRemoval = ();
 	type Event = ();
 	type ExistentialDeposit = ExistentialDeposit;
-	type AccountBalanceData = AccountData<Balance>;
+	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
 	type TryDropOther = ();
 }

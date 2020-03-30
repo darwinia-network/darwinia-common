@@ -10,13 +10,12 @@ use frame_support::{
 use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
-	RuntimeDebug,
 	testing::Header,
 	traits::{ConvertInto, IdentityLookup},
-	Perbill,
+	Perbill, RuntimeDebug,
 };
 
-use codec::{Encode, Decode};
+use codec::{Decode, Encode};
 
 use crate::{decl_tests, GenesisConfig, Module, Trait};
 
@@ -91,7 +90,7 @@ impl Trait for Test {
 	type DustRemoval = ();
 	type Event = ();
 	type ExistentialDeposit = ExistentialDeposit;
-	type AccountBalanceData = AccountData<u64>;
+	type BalanceInfo = AccountData<u64>;
 	type AccountStore = StorageMapShim<
 		super::Account<Test>,
 		system::CallOnCreatedAccount<Test>,
@@ -102,8 +101,8 @@ impl Trait for Test {
 	type TryDropOther = ();
 }
 
-impl AccountBalanceData<u64, DefaultInstance> for AccountData<u64> {
-	fn free(&self) -> u64{
+impl BalanceInfo<u64, DefaultInstance> for AccountData<u64> {
+	fn free(&self) -> u64 {
 		self.free_ring
 	}
 
@@ -111,20 +110,20 @@ impl AccountBalanceData<u64, DefaultInstance> for AccountData<u64> {
 		self.reserved_ring
 	}
 
-	fn mutate_free(&mut self, new_free: u64) {
+	fn set_free(&mut self, new_free: u64) {
 		self.free_ring = new_free;
 	}
 
-	fn mutate_reserved(&mut self, new_reserved: u64) {
+	fn set_reserved(&mut self, new_reserved: u64) {
 		self.reserved_ring = new_reserved;
 	}
 
 	fn usable(&self, reasons: LockReasons, frozen_balance: FrozenBalance<u64>) -> u64 {
 		self.free_ring
-			.saturating_sub(FrozenBalance::frozen_for(reasons, frozen_balance))
+			.saturating_sub(frozen_balance.frozen_for(reasons))
 	}
 
-	fn total(&self) -> u64{
+	fn total(&self) -> u64 {
 		self.free_ring.saturating_add(self.reserved_ring)
 	}
 }
