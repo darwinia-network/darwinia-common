@@ -391,8 +391,8 @@ impl pallet_balances::Trait<RingInstance> for Runtime {
 	type DustRemoval = ();
 	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
-	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = frame_system::Module<Runtime>;
+	type BalanceInfo = AccountData<Balance>;
 	type TryDropOther = Kton;
 }
 type KtonInstance = pallet_balances::Instance1;
@@ -401,8 +401,8 @@ impl pallet_balances::Trait<KtonInstance> for Runtime {
 	type DustRemoval = ();
 	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
-	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = frame_system::Module<Runtime>;
+	type BalanceInfo = AccountData<Balance>;
 	type TryDropOther = Ring;
 }
 

@@ -184,6 +184,9 @@ pub trait Subtrait<I: Instance = DefaultInstance>: frame_system::Trait {
 	/// The minimum amount required to keep an account open.
 	type ExistentialDeposit: Get<Self::Balance>;
 
+	/// The means of storing the balances of an account.
+	type AccountStore: StoredMap<Self::AccountId, Self::BalanceInfo>;
+
 	type BalanceInfo: BalanceInfo<Self::Balance, I>
 		+ Into<<Self as frame_system::Trait>::AccountData>
 		+ Member
@@ -191,9 +194,6 @@ pub trait Subtrait<I: Instance = DefaultInstance>: frame_system::Trait {
 		+ Clone
 		+ Default
 		+ EncodeLike;
-
-	/// The means of storing the balances of an account.
-	type AccountStore: StoredMap<Self::AccountId, Self::BalanceInfo>;
 
 	// TODO: doc
 	type TryDropOther: ExistentialCheck<Self::AccountId, Self::Balance>;
