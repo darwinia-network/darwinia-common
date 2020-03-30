@@ -8,9 +8,9 @@ use sp_runtime::{
 };
 
 use node_template_runtime::{
-	AccountId, AuraConfig, CouncilConfig, GenesisConfig, GrandpaConfig, ImOnlineConfig, KtonConfig,
-	BalancesConfig, SessionConfig, SessionKeys, Signature, StakerStatus, StakingConfig, SudoConfig,
-	SystemConfig, WASM_BINARY,
+	AccountId, AuraConfig, BalancesConfig, CouncilConfig, GenesisConfig, GrandpaConfig,
+	ImOnlineConfig, KtonConfig, SessionConfig, SessionKeys, Signature, StakerStatus, StakingConfig,
+	SudoConfig, SystemConfig, WASM_BINARY,
 };
 
 // Note this is the URL for the telemetry server
@@ -178,9 +178,7 @@ fn testnet_genesis(
 		pallet_grandpa: Some(GrandpaConfig {
 			authorities: vec![],
 		}),
-		pallet_im_online: Some(ImOnlineConfig {
-			keys: vec![],
-		}),
+		pallet_im_online: Some(ImOnlineConfig { keys: vec![] }),
 		// Custom Module
 		pallet_claims: Some(Default::default()),
 		pallet_eth_backing: Some(Default::default()),

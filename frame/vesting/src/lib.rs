@@ -347,7 +347,7 @@ mod tests {
 	};
 
 	use crate::*;
-	use darwinia_support::balance::{FrozenBalance, BalanceInfo, lock::LockReasons};
+	use darwinia_support::balance::{lock::LockReasons, BalanceInfo, FrozenBalance};
 
 	impl_outer_origin! {
 		pub enum Origin for Test  where system = frame_system {}
@@ -403,7 +403,7 @@ mod tests {
 	}
 
 	impl BalanceInfo<u64, pallet_balances::DefaultInstance> for AccountData<u64> {
-		fn free(&self) -> u64{
+		fn free(&self) -> u64 {
 			self.free
 		}
 
@@ -424,7 +424,7 @@ mod tests {
 				.saturating_sub(FrozenBalance::frozen_for(reasons, frozen_balance))
 		}
 
-		fn total(&self) -> u64{
+		fn total(&self) -> u64 {
 			self.free.saturating_add(self.reserved)
 		}
 	}

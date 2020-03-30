@@ -82,17 +82,16 @@ use sp_core::{
 	OpaqueMetadata,
 };
 use sp_runtime::{
-	RuntimeDebug,
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
 		self, BlakeTwo256, Block as BlockT, ConvertInto, IdentifyAccount, SaturatedConversion,
 		StaticLookup, Verify,
 	},
 	transaction_validity::TransactionValidity,
-	ApplyExtrinsicResult, MultiSignature,
+	ApplyExtrinsicResult, MultiSignature, RuntimeDebug,
 };
 
-use codec::{Encode, Decode};
+use codec::{Decode, Encode};
 
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -187,7 +186,7 @@ pub type RingInstance = pallet_balances::Instance2;
 pub type Ring = Balances;
 
 impl pallet_support::balance::BalanceInfo<Balance, KtonInstance> for AccountData<Balance> {
-	fn free(&self) -> Balance{
+	fn free(&self) -> Balance {
 		self.free_kton
 	}
 
@@ -203,9 +202,16 @@ impl pallet_support::balance::BalanceInfo<Balance, KtonInstance> for AccountData
 		self.reserved_kton = new_reserved;
 	}
 
-	fn usable(&self, reasons: pallet_support::balance::lock::LockReasons, frozen_balance: pallet_support::balance::FrozenBalance<Balance>) -> Balance {
+	fn usable(
+		&self,
+		reasons: pallet_support::balance::lock::LockReasons,
+		frozen_balance: pallet_support::balance::FrozenBalance<Balance>,
+	) -> Balance {
 		self.free_kton
-			.saturating_sub(pallet_support::balance::FrozenBalance::frozen_for(reasons, frozen_balance))
+			.saturating_sub(pallet_support::balance::FrozenBalance::frozen_for(
+				reasons,
+				frozen_balance,
+			))
 	}
 
 	fn total(&self) -> Balance {
@@ -214,7 +220,7 @@ impl pallet_support::balance::BalanceInfo<Balance, KtonInstance> for AccountData
 }
 
 impl pallet_support::balance::BalanceInfo<Balance, RingInstance> for AccountData<Balance> {
-	fn free(&self) -> Balance{
+	fn free(&self) -> Balance {
 		self.free_ring
 	}
 
@@ -230,9 +236,16 @@ impl pallet_support::balance::BalanceInfo<Balance, RingInstance> for AccountData
 		self.reserved_ring = new_reserved;
 	}
 
-	fn usable(&self, reasons: pallet_support::balance::lock::LockReasons, frozen_balance: pallet_support::balance::FrozenBalance<Balance>) -> Balance {
+	fn usable(
+		&self,
+		reasons: pallet_support::balance::lock::LockReasons,
+		frozen_balance: pallet_support::balance::FrozenBalance<Balance>,
+	) -> Balance {
 		self.free_ring
-			.saturating_sub(pallet_support::balance::FrozenBalance::frozen_for(reasons, frozen_balance))
+			.saturating_sub(pallet_support::balance::FrozenBalance::frozen_for(
+				reasons,
+				frozen_balance,
+			))
 	}
 
 	fn total(&self) -> Balance {

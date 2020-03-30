@@ -10,13 +10,12 @@ use frame_support::{
 use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
-	RuntimeDebug,
 	testing::Header,
 	traits::{ConvertInto, IdentityLookup},
-	Perbill,
+	Perbill, RuntimeDebug,
 };
 
-use codec::{Encode, Decode};
+use codec::{Decode, Encode};
 
 use crate::{decl_tests, GenesisConfig, Module, Trait};
 
@@ -103,7 +102,7 @@ impl Trait for Test {
 }
 
 impl BalanceInfo<u64, DefaultInstance> for AccountData<u64> {
-	fn free(&self) -> u64{
+	fn free(&self) -> u64 {
 		self.free_ring
 	}
 
@@ -124,7 +123,7 @@ impl BalanceInfo<u64, DefaultInstance> for AccountData<u64> {
 			.saturating_sub(FrozenBalance::frozen_for(reasons, frozen_balance))
 	}
 
-	fn total(&self) -> u64{
+	fn total(&self) -> u64 {
 		self.free_ring.saturating_add(self.reserved_ring)
 	}
 }

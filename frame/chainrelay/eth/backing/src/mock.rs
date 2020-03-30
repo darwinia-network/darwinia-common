@@ -50,7 +50,6 @@ pub const COIN: Balance = 1_000 * MILLI;
 pub const CAP: Balance = 10_000_000_000 * COIN;
 pub const TOTAL_POWER: Power = 1_000_000_000;
 
-
 #[derive(Encode, Decode, Clone, PartialEq, Eq, Default, RuntimeDebug)]
 pub struct AccountData<Balance> {
 	pub free_ring: Balance,
@@ -60,7 +59,7 @@ pub struct AccountData<Balance> {
 }
 
 impl darwinia_support::balance::BalanceInfo<Balance, KtonInstance> for AccountData<Balance> {
-	fn free(&self) -> Balance{
+	fn free(&self) -> Balance {
 		self.free_kton
 	}
 
@@ -76,9 +75,16 @@ impl darwinia_support::balance::BalanceInfo<Balance, KtonInstance> for AccountDa
 		self.reserved_kton = new_reserved;
 	}
 
-	fn usable(&self, reasons: darwinia_support::balance::lock::LockReasons, frozen_balance: darwinia_support::balance::FrozenBalance<Balance>) -> Balance {
+	fn usable(
+		&self,
+		reasons: darwinia_support::balance::lock::LockReasons,
+		frozen_balance: darwinia_support::balance::FrozenBalance<Balance>,
+	) -> Balance {
 		self.free_kton
-			.saturating_sub(darwinia_support::balance::FrozenBalance::frozen_for(reasons, frozen_balance))
+			.saturating_sub(darwinia_support::balance::FrozenBalance::frozen_for(
+				reasons,
+				frozen_balance,
+			))
 	}
 
 	fn total(&self) -> Balance {
@@ -87,7 +93,7 @@ impl darwinia_support::balance::BalanceInfo<Balance, KtonInstance> for AccountDa
 }
 
 impl darwinia_support::balance::BalanceInfo<Balance, RingInstance> for AccountData<Balance> {
-	fn free(&self) -> Balance{
+	fn free(&self) -> Balance {
 		self.free_ring
 	}
 
@@ -103,9 +109,16 @@ impl darwinia_support::balance::BalanceInfo<Balance, RingInstance> for AccountDa
 		self.reserved_ring = new_reserved;
 	}
 
-	fn usable(&self, reasons: darwinia_support::balance::lock::LockReasons, frozen_balance: darwinia_support::balance::FrozenBalance<Balance>) -> Balance {
+	fn usable(
+		&self,
+		reasons: darwinia_support::balance::lock::LockReasons,
+		frozen_balance: darwinia_support::balance::FrozenBalance<Balance>,
+	) -> Balance {
 		self.free_ring
-			.saturating_sub(darwinia_support::balance::FrozenBalance::frozen_for(reasons, frozen_balance))
+			.saturating_sub(darwinia_support::balance::FrozenBalance::frozen_for(
+				reasons,
+				frozen_balance,
+			))
 	}
 
 	fn total(&self) -> Balance {

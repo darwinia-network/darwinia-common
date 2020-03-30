@@ -390,7 +390,7 @@ mod tests {
 	};
 	use tiny_keccak::keccak256;
 
-	use pallet_support::balance::{FrozenBalance, BalanceInfo, lock::LockReasons};
+	use pallet_support::balance::{lock::LockReasons, BalanceInfo, FrozenBalance};
 
 	// --- custom ---
 	use crate::*;
@@ -466,7 +466,7 @@ mod tests {
 	}
 
 	impl BalanceInfo<u64, pallet_balances::DefaultInstance> for AccountData<u64> {
-		fn free(&self) -> u64{
+		fn free(&self) -> u64 {
 			self.free
 		}
 
@@ -487,7 +487,7 @@ mod tests {
 				.saturating_sub(FrozenBalance::frozen_for(reasons, frozen_balance))
 		}
 
-		fn total(&self) -> u64{
+		fn total(&self) -> u64 {
 			self.free.saturating_add(self.reserved)
 		}
 	}

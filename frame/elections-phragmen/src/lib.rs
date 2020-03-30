@@ -787,16 +787,15 @@ mod tests {
 	use frame_support::{assert_noop, assert_ok, parameter_types, weights::Weight};
 	use sp_core::H256;
 	use sp_runtime::{
-		RuntimeDebug,
 		testing::Header,
 		traits::{BlakeTwo256, Block as BlockT, IdentityLookup},
-		BuildStorage, Perbill,
+		BuildStorage, Perbill, RuntimeDebug,
 	};
 	use substrate_test_utils::assert_eq_uvec;
 
 	use crate as elections;
-	use darwinia_support::balance::{FrozenBalance, BalanceInfo, lock::LockReasons};
-	use codec::{Encode, Decode};
+	use codec::{Decode, Encode};
+	use darwinia_support::balance::{lock::LockReasons, BalanceInfo, FrozenBalance};
 	use elections::*;
 
 	parameter_types! {
@@ -850,7 +849,7 @@ mod tests {
 	}
 
 	impl BalanceInfo<u64, pallet_balances::DefaultInstance> for AccountData<u64> {
-		fn free(&self) -> u64{
+		fn free(&self) -> u64 {
 			self.free
 		}
 
@@ -871,7 +870,7 @@ mod tests {
 				.saturating_sub(FrozenBalance::frozen_for(reasons, frozen_balance))
 		}
 
-		fn total(&self) -> u64{
+		fn total(&self) -> u64 {
 			self.free.saturating_add(self.reserved)
 		}
 	}
