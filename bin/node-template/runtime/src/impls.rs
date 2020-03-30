@@ -3,29 +3,29 @@ use pallet_support::balance::*;
 
 #[derive(Encode, Decode, Clone, PartialEq, Eq, Default, RuntimeDebug)]
 pub struct AccountData<Balance> {
-	pub free_ring: Balance,
+	pub free: Balance,
+	pub reserved: Balance,
 	pub free_kton: Balance,
-	pub reserved_ring: Balance,
 	pub reserved_kton: Balance,
 }
 
 impl BalanceInfo<Balance, RingInstance> for AccountData<Balance> {
 	fn free(&self) -> Balance {
-		self.free_ring
+		self.free
 	}
 	fn set_free(&mut self, new_free: Balance) {
-		self.free_ring = new_free;
+		self.free = new_free;
 	}
 
 	fn reserved(&self) -> Balance {
-		self.reserved_ring
+		self.reserved
 	}
 	fn set_reserved(&mut self, new_reserved: Balance) {
-		self.reserved_ring = new_reserved;
+		self.reserved = new_reserved;
 	}
 
 	fn total(&self) -> Balance {
-		self.free_ring.saturating_add(self.reserved_ring)
+		self.free.saturating_add(self.reserved)
 	}
 
 	fn usable(
@@ -33,7 +33,7 @@ impl BalanceInfo<Balance, RingInstance> for AccountData<Balance> {
 		reasons: lock::LockReasons,
 		frozen_balance: FrozenBalance<Balance>,
 	) -> Balance {
-		self.free_ring
+		self.free
 			.saturating_sub(frozen_balance.frozen_for(reasons))
 	}
 }
