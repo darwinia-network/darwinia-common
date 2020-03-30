@@ -510,12 +510,12 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	fn post_mutation(who: &T::AccountId, new: T::BalanceInfo) -> Option<T::BalanceInfo> {
 		let total = new.total();
 		if total < T::ExistentialDeposit::get() {
-			let (dropped, dropped_kton) = T::TryDropOther::try_drop(who);
+			let (dropped, dropped_other) = T::TryDropOther::try_drop(who);
 			if dropped {
 				if !total.is_zero() {
 					T::DustRemoval::on_unbalanced(NegativeImbalance::new(total));
 				}
-				Self::deposit_event(RawEvent::DustLost(who.clone(), total, dropped_kton));
+				Self::deposit_event(RawEvent::DustLost(who.clone(), total, dropped_other));
 
 				None
 			} else {
@@ -1366,7 +1366,7 @@ where
 	T::Balance: MaybeSerializeDeserialize + Debug,
 {
 	fn is_dead_account(who: &T::AccountId) -> bool {
-		// this should always be exactly equivalent to `Self::account(who).total_ring().is_zero()`
+		// this should always be exactly equivalent to `Self::account(who).total().is_zero()`
 		!T::AccountStore::is_explicit(who)
 	}
 }
@@ -1376,12 +1376,12 @@ where
 	T::Balance: MaybeSerializeDeserialize + Debug,
 {
 	fn try_drop(who: &T::AccountId) -> (bool, T::Balance) {
-		let dropped_ring = Self::total_balance(who);
-		let dropped = !dropped_ring.is_zero() && dropped_ring < T::ExistentialDeposit::get();
+		let dropped_balance = Self::total_balance(who);
+		let dropped = !dropped_balance.is_zero() && dropped_balance < T::ExistentialDeposit::get();
 		if dropped {
-			T::DustRemoval::on_unbalanced(NegativeImbalance::new(dropped_ring));
+			T::DustRemoval::on_unbalanced(NegativeImbalance::new(dropped_balance));
 		}
 
-		(dropped, dropped_ring)
+		(dropped, dropped_balance)
 	}
 }
