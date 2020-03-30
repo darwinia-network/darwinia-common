@@ -347,10 +347,16 @@ mod tests {
 	};
 
 	use crate::*;
-	use darwinia_support::balance::AccountData;
+	use darwinia_support::balance::{lock::LockReasons, BalanceInfo, FrozenBalance};
 
 	impl_outer_origin! {
 		pub enum Origin for Test  where system = frame_system {}
+	}
+
+	#[derive(Encode, Decode, Clone, PartialEq, Eq, Default, RuntimeDebug)]
+	pub struct AccountData<Balance> {
+		pub free: Balance,
+		pub reserved: Balance,
 	}
 
 	// For testing the pallet, we construct most of a mock runtime. This means
@@ -391,9 +397,37 @@ mod tests {
 		type DustRemoval = ();
 		type Event = ();
 		type ExistentialDeposit = ExistentialDeposit;
+		type BalanceInfo = AccountData<u64>;
 		type AccountStore = System;
-		type TryDropKton = ();
+		type TryDropOther = ();
 	}
+
+	impl BalanceInfo<u64, pallet_balances::DefaultInstance> for AccountData<u64> {
+		fn free(&self) -> u64 {
+			self.free
+		}
+
+		fn reserved(&self) -> u64 {
+			self.reserved
+		}
+
+		fn set_free(&mut self, new_free: u64) {
+			self.free = new_free;
+		}
+
+		fn set_reserved(&mut self, new_reserved: u64) {
+			self.reserved = new_reserved;
+		}
+
+		fn usable(&self, reasons: LockReasons, frozen_balance: FrozenBalance<u64>) -> u64 {
+			self.free.saturating_sub(frozen_balance.frozen_for(reasons))
+		}
+
+		fn total(&self) -> u64 {
+			self.free.saturating_add(self.reserved)
+		}
+	}
+
 	parameter_types! {
 		pub const MinVestedTransfer: u64 = 256 * 2;
 	}

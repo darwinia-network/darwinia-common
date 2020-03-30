@@ -794,10 +794,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-balances"
+version = "0.5.0"
+dependencies = [
+ "darwinia-support",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-transaction-payment",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 2.0.0-alpha.3 (git+https://github.com/darwinia-network/substrate.git?tag=v2.0.0-alpha.darwinia.2)",
+]
+
+[[package]]
 name = "darwinia-claims"
 version = "0.5.0"
 dependencies = [
- "darwinia-ring",
+ "darwinia-balances",
  "darwinia-support",
  "darwinia-vesting",
  "frame-support",
@@ -819,7 +836,7 @@ dependencies = [
 name = "darwinia-elections-phragmen"
 version = "0.5.0"
 dependencies = [
- "darwinia-ring",
+ "darwinia-balances",
  "darwinia-support",
  "frame-support",
  "frame-system",
@@ -838,9 +855,8 @@ dependencies = [
 name = "darwinia-eth-backing"
 version = "0.5.0"
 dependencies = [
+ "darwinia-balances",
  "darwinia-eth-relay",
- "darwinia-kton",
- "darwinia-ring",
  "darwinia-staking",
  "darwinia-support",
  "eth-primitives",
@@ -916,21 +932,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-kton"
-version = "0.5.0"
-dependencies = [
- "darwinia-support",
- "frame-support",
- "frame-system",
- "pallet-transaction-payment",
- "parity-scale-codec",
- "serde",
- "sp-core",
- "sp-runtime",
- "sp-std 2.0.0-alpha.3 (git+https://github.com/darwinia-network/substrate.git?tag=v2.0.0-alpha.darwinia.2)",
-]
-
-[[package]]
 name = "darwinia-phragmen"
 version = "0.5.0"
 dependencies = [
@@ -944,29 +945,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-ring"
-version = "0.5.0"
-dependencies = [
- "darwinia-support",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "pallet-transaction-payment",
- "parity-scale-codec",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std 2.0.0-alpha.3 (git+https://github.com/darwinia-network/substrate.git?tag=v2.0.0-alpha.darwinia.2)",
-]
-
-[[package]]
 name = "darwinia-staking"
 version = "0.5.0"
 dependencies = [
- "darwinia-kton",
+ "darwinia-balances",
  "darwinia-phragmen",
- "darwinia-ring",
  "darwinia-support",
  "frame-support",
  "frame-system",
@@ -998,8 +981,7 @@ dependencies = [
 name = "darwinia-treasury"
 version = "0.5.0"
 dependencies = [
- "darwinia-kton",
- "darwinia-ring",
+ "darwinia-balances",
  "darwinia-support",
  "frame-support",
  "frame-system",
@@ -1015,7 +997,7 @@ dependencies = [
 name = "darwinia-vesting"
 version = "0.5.0"
 dependencies = [
- "darwinia-ring",
+ "darwinia-balances",
  "darwinia-support",
  "frame-support",
  "frame-system",
@@ -3142,14 +3124,13 @@ dependencies = [
 name = "node-template-runtime"
 version = "0.5.0"
 dependencies = [
+ "darwinia-balances",
  "darwinia-claims",
  "darwinia-elections-phragmen",
  "darwinia-eth-backing",
  "darwinia-eth-offchain",
  "darwinia-eth-relay",
  "darwinia-header-mmr",
- "darwinia-kton",
- "darwinia-ring",
  "darwinia-staking",
  "darwinia-support",
  "darwinia-treasury",

@@ -22,8 +22,7 @@ sp-std = { default-features = false, git = "https://github.com/darwinia-network/
 
 [dev-dependencies]
 # darwinia
-pallet-kton = { package = "darwinia-kton", path = "../balances/kton" }
-pallet-ring = { package = "darwinia-ring", path = "../balances/ring" }
+pallet-balances = { package = "darwinia-balances", path = "../balances" }
 # substrate
 sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
 sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }

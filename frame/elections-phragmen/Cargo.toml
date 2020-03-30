@@ -25,7 +25,7 @@ sp-std = { default-features = false, git = "https://github.com/darwinia-network/
 hex-literal = { version = "0.2.1" }
 serde = { version = "1.0.101" }
 # darwinia
-pallet-ring = { package = "darwinia-ring", path = "../balances/ring" }
+pallet-balances = { package = "darwinia-balances", path = "../balances" }
 # substrate
 sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
 sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }

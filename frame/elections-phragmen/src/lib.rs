@@ -789,12 +789,13 @@ mod tests {
 	use sp_runtime::{
 		testing::Header,
 		traits::{BlakeTwo256, Block as BlockT, IdentityLookup},
-		BuildStorage, Perbill,
+		BuildStorage, Perbill, RuntimeDebug,
 	};
 	use substrate_test_utils::assert_eq_uvec;
 
 	use crate as elections;
-	use darwinia_support::balance::{lock::LockFor, AccountData};
+	use codec::{Decode, Encode};
+	use darwinia_support::balance::{lock::LockReasons, BalanceInfo, FrozenBalance};
 	use elections::*;
 
 	parameter_types! {
@@ -831,13 +832,46 @@ mod tests {
 			pub const ExistentialDeposit: u64 = 1;
 	}
 
-	impl pallet_ring::Trait for Test {
+	impl pallet_balances::Trait for Test {
 		type Balance = u64;
 		type DustRemoval = ();
 		type Event = Event;
 		type ExistentialDeposit = ExistentialDeposit;
+		type BalanceInfo = AccountData<u64>;
 		type AccountStore = frame_system::Module<Test>;
-		type TryDropKton = ();
+		type TryDropOther = ();
+	}
+
+	#[derive(Encode, Decode, Clone, PartialEq, Eq, Default, RuntimeDebug)]
+	pub struct AccountData<Balance> {
+		pub free: Balance,
+		pub reserved: Balance,
+	}
+
+	impl BalanceInfo<u64, pallet_balances::DefaultInstance> for AccountData<u64> {
+		fn free(&self) -> u64 {
+			self.free
+		}
+
+		fn reserved(&self) -> u64 {
+			self.reserved
+		}
+
+		fn set_free(&mut self, new_free: u64) {
+			self.free = new_free;
+		}
+
+		fn set_reserved(&mut self, new_reserved: u64) {
+			self.reserved = new_reserved;
+		}
+
+		fn usable(&self, reasons: LockReasons, frozen_balance: FrozenBalance<u64>) -> u64 {
+			self.free.saturating_sub(frozen_balance.frozen_for(reasons))
+		}
+
+		fn total(&self) -> u64 {
+			self.free.saturating_add(self.reserved)
+		}
 	}
 
 	parameter_types! {
@@ -962,7 +996,7 @@ mod tests {
 			UncheckedExtrinsic = UncheckedExtrinsic
 		{
 			System: frame_system::{Module, Call, Event<T>},
-			Balances: pallet_ring::{Module, Call, Event<T>, Config<T>},
+			Balances: pallet_balances::{Module, Call, Event<T>, Config<T>},
 			Elections: elections::{Module, Call, Event<T>},
 		}
 	);
@@ -1003,7 +1037,7 @@ mod tests {
 			TERM_DURATION.with(|v| *v.borrow_mut() = self.term_duration);
 			DESIRED_RUNNERS_UP.with(|v| *v.borrow_mut() = self.desired_runners_up);
 			GenesisConfig {
-				pallet_ring: Some(pallet_ring::GenesisConfig::<Test> {
+				pallet_balances: Some(pallet_balances::GenesisConfig::<Test> {
 					balances: vec![
 						(1, 10 * self.balance_factor),
 						(2, 20 * self.balance_factor),

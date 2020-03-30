@@ -3,7 +3,24 @@ pub use frame_support::traits::{LockIdentifier, VestingSchedule, WithdrawReason,
 use frame_support::traits::{Currency, TryDrop};
 use sp_runtime::DispatchResult;
 
-use crate::balance::lock::LockFor;
+use crate::balance::{
+	lock::{LockFor, LockReasons},
+	FrozenBalance,
+};
+
+pub trait BalanceInfo<Balance, Module> {
+	fn free(&self) -> Balance;
+	fn set_free(&mut self, new_free: Balance);
+
+	fn reserved(&self) -> Balance;
+	fn set_reserved(&mut self, new_reserved: Balance);
+
+	/// The total balance in this account including any that is reserved and ignoring any frozen.
+	fn total(&self) -> Balance;
+
+	/// How much this account's balance can be reduced for the given `reasons`.
+	fn usable(&self, reasons: LockReasons, frozen_balance: FrozenBalance<Balance>) -> Balance;
+}
 
 /// A currency whose accounts can have liquidity restrictions.
 pub trait LockableCurrency<AccountId>: Currency<AccountId> {

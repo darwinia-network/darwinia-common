@@ -8,8 +8,8 @@ use sp_runtime::{
 };
 
 use node_template_runtime::{
-	AccountId, AuraConfig, CouncilConfig, GenesisConfig, GrandpaConfig, ImOnlineConfig, KtonConfig,
-	RingConfig, SessionConfig, SessionKeys, Signature, StakerStatus, StakingConfig, SudoConfig,
+	AccountId, Balances1Config as KtonConfig, BalancesConfig as RingConfig, CouncilConfig,
+	GenesisConfig, SessionConfig, SessionKeys, Signature, StakerStatus, StakingConfig, SudoConfig,
 	SystemConfig, WASM_BINARY,
 };
 
@@ -150,9 +150,7 @@ fn testnet_genesis(
 			code: WASM_BINARY.to_vec(),
 			changes_trie_config: Default::default(),
 		}),
-		pallet_aura: Some(AuraConfig {
-			authorities: initial_authorities.iter().map(|x| (x.2.clone())).collect(),
-		}),
+		pallet_aura: Some(Default::default()),
 		pallet_indices: Some(Default::default()),
 		pallet_session: Some(SessionConfig {
 			keys: initial_authorities
@@ -175,31 +173,20 @@ fn testnet_genesis(
 			phantom: Default::default(),
 		}),
 		pallet_sudo: Some(SudoConfig { key: root_key }),
-		pallet_grandpa: Some(GrandpaConfig {
-			authorities: initial_authorities
-				.iter()
-				.map(|x| (x.3.clone(), 1))
-				.collect(),
-		}),
-		pallet_im_online: Some(ImOnlineConfig {
-			keys: initial_authorities
-				.iter()
-				.map(|x| x.4.clone())
-				.collect::<Vec<_>>(),
-		}),
+		pallet_grandpa: Some(Default::default()),
+		pallet_im_online: Some(Default::default()),
 		// Custom Module
 		pallet_claims: Some(Default::default()),
 		pallet_eth_backing: Some(Default::default()),
 		pallet_eth_relay: Some(Default::default()),
-		// pallet_eth_backing: Some(Default::default()),
-		pallet_kton: Some(KtonConfig {
+		pallet_balances_Instance0: Some(RingConfig {
 			balances: endowed_accounts
 				.iter()
 				.cloned()
 				.map(|k| (k, 1 << 60))
 				.collect(),
 		}),
-		pallet_ring: Some(RingConfig {
+		pallet_balances_Instance1: Some(KtonConfig {
 			balances: endowed_accounts
 				.iter()
 				.cloned()
