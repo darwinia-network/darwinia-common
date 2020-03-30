@@ -30,8 +30,7 @@ sp-std = { default-features = false, git = "https://github.com/darwinia-network/
 hex-literal = { version = "0.2.1" }
 rustc-hex = { version = "2.0" }
 # darwinia
-pallet-kton = { package = "darwinia-kton", path = "../../../../frame/balances/kton" }
-pallet-ring = { package = "darwinia-ring", path = "../../../../frame/balances/ring" }
+pallet-balances = { package = "darwinia-balances", path = "../../../../frame/balances" }
 pallet-staking = { package = "darwinia-staking", path = "../../../../frame/staking" }
 # github
 rlp = { package = "rlp", git = "https://github.com/darwinia-network/parity-common.git" }

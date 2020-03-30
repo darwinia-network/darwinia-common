@@ -1,75 +1,9 @@
 use codec::{Decode, Encode};
 use num_traits::Zero;
-use sp_runtime::{
-	traits::{AtLeast32Bit, Saturating},
-	RuntimeDebug,
-};
+use sp_runtime::{traits::AtLeast32Bit, RuntimeDebug};
 use sp_std::{cmp::Ordering, ops::BitOr, prelude::*};
 
 use crate::balance::lock::{LockIdentifier, WithdrawReason, WithdrawReasons};
-
-/// Active balance information for an account.
-#[derive(Encode, Decode, Clone, PartialEq, Eq, Default, RuntimeDebug)]
-pub struct AccountData<Balance> {
-	/// Non-reserved part of the balance. There may still be restrictions on this, but it is the
-	/// total pool what may in principle be transferred, reserved and used for tipping.
-	///
-	/// This is the only balance that matters in terms of most operations on tokens. It
-	/// alone is used to determine the balance when in the contract execution environment.
-	pub free_ring: Balance,
-	/// Non-reserved part of the balance. There may still be restrictions on this, but it is the
-	/// total pool what may in principle be transferred, reserved and used for tipping.
-	///
-	/// This is the only balance that matters in terms of most operations on tokens. It
-	/// alone is used to determine the balance when in the contract execution environment.
-	pub free_kton: Balance,
-	/// Balance which is reserved and may not be used at all.
-	///
-	/// This can still get slashed, but gets slashed last of all.
-	///
-	/// This balance is a 'reserve' balance that other subsystems use in order to set aside tokens
-	/// that are still 'owned' by the account holder, but which are suspendable.
-	pub reserved_ring: Balance,
-	/// Balance which is reserved and may not be used at all.
-	///
-	/// This can still get slashed, but gets slashed last of all.
-	///
-	/// This balance is a 'reserve' balance that other subsystems use in order to set aside tokens
-	/// that are still 'owned' by the account holder, but which are suspendable.
-	pub reserved_kton: Balance,
-}
-
-impl<Balance> AccountData<Balance>
-where
-	Balance: Copy + Ord + Saturating + Zero,
-{
-	/// How much this account's balance can be reduced for the given `reasons`.
-	pub fn usable_ring(
-		&self,
-		reasons: LockReasons,
-		frozen_balance: FrozenBalance<Balance>,
-	) -> Balance {
-		self.free_ring
-			.saturating_sub(FrozenBalance::frozen_for(reasons, frozen_balance))
-	}
-	/// How much this account's balance can be reduced for the given `reasons`.
-	pub fn usable_kton(
-		&self,
-		reasons: LockReasons,
-		frozen_balance: FrozenBalance<Balance>,
-	) -> Balance {
-		self.free_kton
-			.saturating_sub(FrozenBalance::frozen_for(reasons, frozen_balance))
-	}
-	/// The total balance in this account including any that is reserved and ignoring any frozen.
-	pub fn total_ring(&self) -> Balance {
-		self.free_ring.saturating_add(self.reserved_ring)
-	}
-	/// The total balance in this account including any that is reserved and ignoring any frozen.
-	pub fn total_kton(&self) -> Balance {
-		self.free_kton.saturating_add(self.reserved_kton)
-	}
-}
 
 /// Frozen balance information for an account.
 pub struct FrozenBalance<Balance> {
@@ -94,11 +28,11 @@ where
 
 	/// The amount that this account's free balance may not be reduced beyond for the given
 	/// `reasons`.
-	pub fn frozen_for(reasons: LockReasons, frozen_balance: Self) -> Balance {
+	pub fn frozen_for(self, reasons: LockReasons) -> Balance {
 		match reasons {
-			LockReasons::All => frozen_balance.misc.max(frozen_balance.fee),
-			LockReasons::Misc => frozen_balance.misc,
-			LockReasons::Fee => frozen_balance.fee,
+			LockReasons::All => self.misc.max(self.fee),
+			LockReasons::Misc => self.misc,
+			LockReasons::Fee => self.fee,
 		}
 	}
 }

@@ -110,7 +110,7 @@ fn verify_redeem_ring() {
 			// If expect_account_id doesn't exist, redeem should fail, "beneficiary account must pre-exist"
 			assert_err!(
 				EthBacking::redeem(Origin::signed(id1.clone()), RedeemFor::Ring(proof_record.clone())),
-				<pallet_ring::Error<Test, _>>::DeadAccount,
+				<pallet_balances::Error<Test, RingInstance>>::DeadAccount,
 			);
 
 			let ring_locked_before = EthBacking::ring_locked();
@@ -190,7 +190,7 @@ fn verify_redeem_kton() {
 			// If expect_account_id doesn't exist, redeem should fail
 			assert_err!(
 				EthBacking::redeem(Origin::signed(id1.clone()), RedeemFor::Kton(proof_record.clone())),
-				<pallet_kton::Error<Test, _>>::DeadAccount,
+				<pallet_balances::Error<Test, KtonInstance>>::DeadAccount,
 			);
 
 			let kton_locked_before = EthBacking::kton_locked();
