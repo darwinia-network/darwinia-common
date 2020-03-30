@@ -168,7 +168,7 @@ use sp_runtime::{
 use sp_std::{borrow::Borrow, cmp, convert::Infallible, fmt::Debug, mem, prelude::*};
 
 use darwinia_support::balance::{lock::*, *};
-use darwinia_support::traits::AccountBalanceData;
+use darwinia_support::traits::BalanceInfo;
 
 pub trait Subtrait<I: Instance = DefaultInstance>: frame_system::Trait {
 	/// The balance of an account.
@@ -184,10 +184,10 @@ pub trait Subtrait<I: Instance = DefaultInstance>: frame_system::Trait {
 	/// The minimum amount required to keep an account open.
 	type ExistentialDeposit: Get<Self::Balance>;
 
-	type AccountBalanceData: AccountBalanceData<Self::Balance, I> + Into<<Self as frame_system::Trait>::AccountData> + Member + Codec + Clone + Default + EncodeLike;
+	type BalanceInfo: BalanceInfo<Self::Balance, I> + Into<<Self as frame_system::Trait>::AccountData> + Member + Codec + Clone + Default + EncodeLike;
 
 	/// The means of storing the balances of an account.
-	type AccountStore: StoredMap<Self::AccountId, Self::AccountBalanceData>;
+	type AccountStore: StoredMap<Self::AccountId, Self::BalanceInfo>;
 
 	// TODO: doc
 	type TryDropOther: ExistentialCheck<Self::AccountId, Self::Balance>;
@@ -213,10 +213,10 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	/// The minimum amount required to keep an account open.
 	type ExistentialDeposit: Get<Self::Balance>;
 
-	type AccountBalanceData: AccountBalanceData<Self::Balance, I> + Into<<Self as frame_system::Trait>::AccountData> + Member + Codec + Clone + Default + EncodeLike;
+	type BalanceInfo: BalanceInfo<Self::Balance, I> + Into<<Self as frame_system::Trait>::AccountData> + Member + Codec + Clone + Default + EncodeLike;
 
 	/// The means of storing the balances of an account.
-	type AccountStore: StoredMap<Self::AccountId, Self::AccountBalanceData>;
+	type AccountStore: StoredMap<Self::AccountId, Self::BalanceInfo>;
 
 	// TODO: doc
 	type TryDropOther: ExistentialCheck<Self::AccountId, Self::Balance>;
@@ -225,7 +225,7 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 impl<T: Trait<I>, I: Instance> Subtrait<I> for T {
 	type Balance = T::Balance;
 	type ExistentialDeposit = T::ExistentialDeposit;
-	type AccountBalanceData = T::AccountBalanceData;
+	type BalanceInfo = T::BalanceInfo;
 	type AccountStore = T::AccountStore;
 
 	type TryDropOther = T::TryDropOther;
@@ -288,7 +288,7 @@ decl_storage! {
 		/// is ever zero, then the entry *MUST* be removed.
 		///
 		/// NOTE: This is only used in the case that this module is used to store balances.
-		pub Account: map hasher(blake2_128_concat) T::AccountId => T::AccountBalanceData;
+		pub Account: map hasher(blake2_128_concat) T::AccountId => T::BalanceInfo;
 
 		/// Any liquidity locks on some account balances.
 		/// NOTE: Should only be accessed when setting, changing and freeing a lock.
@@ -485,7 +485,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	}
 
 	/// Get both the free and reserved balances of an account.
-	fn account(who: &T::AccountId) -> T::AccountBalanceData {
+	fn account(who: &T::AccountId) -> T::BalanceInfo {
 		T::AccountStore::get(&who)
 	}
 
@@ -497,8 +497,8 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	/// as its "endowment".
 	fn post_mutation(
 		who: &T::AccountId,
-		new: T::AccountBalanceData,
-	) -> Option<T::AccountBalanceData> {
+		new: T::BalanceInfo,
+	) -> Option<T::BalanceInfo> {
 		let total = new.total();
 		if total < T::ExistentialDeposit::get() {
 			let (dropped, dropped_kton) = T::TryDropOther::try_drop(who);
@@ -525,7 +525,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	///
 	/// NOTE: LOW-LEVEL: This will not attempt to maintain total issuance. It is expected that
 	/// the caller will do this.
-	fn mutate_account<R>(who: &T::AccountId, f: impl FnOnce(&mut T::AccountBalanceData) -> R) -> R {
+	fn mutate_account<R>(who: &T::AccountId, f: impl FnOnce(&mut T::BalanceInfo) -> R) -> R {
 		Self::try_mutate_account(who, |a| -> Result<R, Infallible> { Ok(f(a)) }).expect("Error is infallible; qed")
 	}
 
@@ -540,7 +540,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	/// the caller will do this.
 	fn try_mutate_account<R, E>(
 		who: &T::AccountId,
-		f: impl FnOnce(&mut T::AccountBalanceData) -> Result<R, E>,
+		f: impl FnOnce(&mut T::BalanceInfo) -> Result<R, E>,
 	) -> Result<R, E> {
 		T::AccountStore::try_mutate_exists(who, |maybe_account| {
 			let mut account = maybe_account.take().unwrap_or_default();
@@ -781,7 +781,7 @@ impl<T: Subtrait<I>, I: Instance> Trait<I> for ElevatedTrait<T, I> {
 	type Event = ();
 	type ExistentialDeposit = T::ExistentialDeposit;
 
-	type AccountBalanceData = T::AccountBalanceData;
+	type BalanceInfo = T::BalanceInfo;
 
 	type AccountStore = T::AccountStore;
 

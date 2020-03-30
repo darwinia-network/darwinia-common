@@ -186,7 +186,7 @@ pub type RingInstance = pallet_balances::Instance2;
 
 pub type Ring = Balances;
 
-impl pallet_support::balance::AccountBalanceData<Balance, KtonInstance> for AccountData<Balance> {
+impl pallet_support::balance::BalanceInfo<Balance, KtonInstance> for AccountData<Balance> {
 	fn free(&self) -> Balance{
 		self.free_kton
 	}
@@ -213,7 +213,7 @@ impl pallet_support::balance::AccountBalanceData<Balance, KtonInstance> for Acco
 	}
 }
 
-impl pallet_support::balance::AccountBalanceData<Balance, RingInstance> for AccountData<Balance> {
+impl pallet_support::balance::BalanceInfo<Balance, RingInstance> for AccountData<Balance> {
 	fn free(&self) -> Balance{
 		self.free_ring
 	}
@@ -525,7 +525,7 @@ impl pallet_balances::Trait<KtonInstance> for Runtime {
 	type DustRemoval = ();
 	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
-	type AccountBalanceData = AccountData<Balance>;
+	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = frame_system::Module<Runtime>;
 	type TryDropOther = Ring;
 }
@@ -534,7 +534,7 @@ impl pallet_balances::Trait<RingInstance> for Runtime {
 	type DustRemoval = ();
 	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
-	type AccountBalanceData = AccountData<Balance>;
+	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = frame_system::Module<Runtime>;
 	type TryDropOther = Kton;
 }

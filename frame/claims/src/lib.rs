@@ -390,7 +390,7 @@ mod tests {
 	};
 	use tiny_keccak::keccak256;
 
-	use pallet_support::balance::{FrozenBalance, AccountBalanceData, lock::LockReasons};
+	use pallet_support::balance::{FrozenBalance, BalanceInfo, lock::LockReasons};
 
 	// --- custom ---
 	use crate::*;
@@ -460,12 +460,12 @@ mod tests {
 		type DustRemoval = ();
 		type Event = ();
 		type ExistentialDeposit = ExistentialDeposit;
-		type AccountBalanceData = AccountData<u64>;
+		type BalanceInfo = AccountData<u64>;
 		type AccountStore = System;
 		type TryDropOther = ();
 	}
 
-	impl AccountBalanceData<u64, pallet_balances::DefaultInstance> for AccountData<u64> {
+	impl BalanceInfo<u64, pallet_balances::DefaultInstance> for AccountData<u64> {
 		fn free(&self) -> u64{
 			self.free
 		}

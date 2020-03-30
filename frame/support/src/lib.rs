@@ -15,7 +15,7 @@ pub mod balance {
 	}
 
 	pub use structs::FrozenBalance;
-	pub use traits::{ExistentialCheck, AccountBalanceData};
+	pub use traits::{BalanceInfo, ExistentialCheck};
 
 	use crate::*;
 }

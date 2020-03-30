@@ -91,7 +91,7 @@ impl Trait for Test {
 	type DustRemoval = ();
 	type Event = ();
 	type ExistentialDeposit = ExistentialDeposit;
-	type AccountBalanceData = AccountData<u64>;
+	type BalanceInfo = AccountData<u64>;
 	type AccountStore = StorageMapShim<
 		super::Account<Test>,
 		system::CallOnCreatedAccount<Test>,
@@ -102,7 +102,7 @@ impl Trait for Test {
 	type TryDropOther = ();
 }
 
-impl AccountBalanceData<u64, DefaultInstance> for AccountData<u64> {
+impl BalanceInfo<u64, DefaultInstance> for AccountData<u64> {
 	fn free(&self) -> u64{
 		self.free_ring
 	}

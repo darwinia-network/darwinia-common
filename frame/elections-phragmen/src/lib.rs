@@ -795,7 +795,7 @@ mod tests {
 	use substrate_test_utils::assert_eq_uvec;
 
 	use crate as elections;
-	use darwinia_support::balance::{FrozenBalance, AccountBalanceData, lock::LockReasons};
+	use darwinia_support::balance::{FrozenBalance, BalanceInfo, lock::LockReasons};
 	use codec::{Encode, Decode};
 	use elections::*;
 
@@ -838,7 +838,7 @@ mod tests {
 		type DustRemoval = ();
 		type Event = Event;
 		type ExistentialDeposit = ExistentialDeposit;
-		type AccountBalanceData = AccountData<u64>;
+		type BalanceInfo = AccountData<u64>;
 		type AccountStore = frame_system::Module<Test>;
 		type TryDropOther = ();
 	}
@@ -849,7 +849,7 @@ mod tests {
 		pub reserved: Balance,
 	}
 
-	impl AccountBalanceData<u64, pallet_balances::DefaultInstance> for AccountData<u64> {
+	impl BalanceInfo<u64, pallet_balances::DefaultInstance> for AccountData<u64> {
 		fn free(&self) -> u64{
 			self.free
 		}

@@ -347,7 +347,7 @@ mod tests {
 	};
 
 	use crate::*;
-	use darwinia_support::balance::{FrozenBalance, AccountBalanceData, lock::LockReasons};
+	use darwinia_support::balance::{FrozenBalance, BalanceInfo, lock::LockReasons};
 
 	impl_outer_origin! {
 		pub enum Origin for Test  where system = frame_system {}
@@ -397,12 +397,12 @@ mod tests {
 		type DustRemoval = ();
 		type Event = ();
 		type ExistentialDeposit = ExistentialDeposit;
-		type AccountBalanceData = AccountData<u64>;
+		type BalanceInfo = AccountData<u64>;
 		type AccountStore = System;
 		type TryDropOther = ();
 	}
 
-	impl AccountBalanceData<u64, pallet_balances::DefaultInstance> for AccountData<u64> {
+	impl BalanceInfo<u64, pallet_balances::DefaultInstance> for AccountData<u64> {
 		fn free(&self) -> u64{
 			self.free
 		}

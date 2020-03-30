@@ -59,7 +59,7 @@ pub struct AccountData<Balance> {
 	pub reserved_kton: Balance,
 }
 
-impl darwinia_support::balance::AccountBalanceData<Balance, KtonInstance> for AccountData<Balance> {
+impl darwinia_support::balance::BalanceInfo<Balance, KtonInstance> for AccountData<Balance> {
 	fn free(&self) -> Balance{
 		self.free_kton
 	}
@@ -86,7 +86,7 @@ impl darwinia_support::balance::AccountBalanceData<Balance, KtonInstance> for Ac
 	}
 }
 
-impl darwinia_support::balance::AccountBalanceData<Balance, RingInstance> for AccountData<Balance> {
+impl darwinia_support::balance::BalanceInfo<Balance, RingInstance> for AccountData<Balance> {
 	fn free(&self) -> Balance{
 		self.free_ring
 	}
@@ -217,7 +217,7 @@ impl pallet_balances::Trait<KtonInstance> for Test {
 	type DustRemoval = ();
 	type Event = ();
 	type ExistentialDeposit = ();
-	type AccountBalanceData = AccountData<Balance>;
+	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
 	type TryDropOther = ();
 }
@@ -226,7 +226,7 @@ impl pallet_balances::Trait<RingInstance> for Test {
 	type DustRemoval = ();
 	type Event = ();
 	type ExistentialDeposit = ();
-	type AccountBalanceData = AccountData<Balance>;
+	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
 	type TryDropOther = ();
 }
