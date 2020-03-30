@@ -28,11 +28,11 @@ where
 
 	/// The amount that this account's free balance may not be reduced beyond for the given
 	/// `reasons`.
-	pub fn frozen_for(reasons: LockReasons, frozen_balance: Self) -> Balance {
+	pub fn frozen_for(self, reasons: LockReasons) -> Balance {
 		match reasons {
-			LockReasons::All => frozen_balance.misc.max(frozen_balance.fee),
-			LockReasons::Misc => frozen_balance.misc,
-			LockReasons::Fee => frozen_balance.fee,
+			LockReasons::All => self.misc.max(self.fee),
+			LockReasons::Misc => self.misc,
+			LockReasons::Fee => self.fee,
 		}
 	}
 }

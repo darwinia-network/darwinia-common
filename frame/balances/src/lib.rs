@@ -879,8 +879,7 @@ where
 		if amount.is_zero() {
 			return Ok(());
 		}
-		let min_balance =
-			FrozenBalance::frozen_for(reasons.into(), Self::frozen_balance(who.borrow()));
+		let min_balance = Self::frozen_balance(who.borrow()).frozen_for(reasons.into());
 		ensure!(
 			new_balance >= min_balance,
 			Error::<T, I>::LiquidityRestrictions

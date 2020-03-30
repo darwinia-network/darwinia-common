@@ -34,7 +34,7 @@ impl BalanceInfo<Balance, RingInstance> for AccountData<Balance> {
 		frozen_balance: FrozenBalance<Balance>,
 	) -> Balance {
 		self.free_ring
-			.saturating_sub(FrozenBalance::frozen_for(reasons, frozen_balance))
+			.saturating_sub(frozen_balance.frozen_for(reasons))
 	}
 }
 
@@ -63,6 +63,6 @@ impl BalanceInfo<Balance, KtonInstance> for AccountData<Balance> {
 		frozen_balance: FrozenBalance<Balance>,
 	) -> Balance {
 		self.free_kton
-			.saturating_sub(FrozenBalance::frozen_for(reasons, frozen_balance))
+			.saturating_sub(frozen_balance.frozen_for(reasons))
 	}
 }

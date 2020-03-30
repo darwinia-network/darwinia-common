@@ -420,8 +420,7 @@ mod tests {
 		}
 
 		fn usable(&self, reasons: LockReasons, frozen_balance: FrozenBalance<u64>) -> u64 {
-			self.free
-				.saturating_sub(FrozenBalance::frozen_for(reasons, frozen_balance))
+			self.free.saturating_sub(frozen_balance.frozen_for(reasons))
 		}
 
 		fn total(&self) -> u64 {
