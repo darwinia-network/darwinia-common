@@ -134,7 +134,8 @@ impl darwinia_support::balance::BalanceInfo<Balance, RingInstance> for AccountDa
 		reasons: darwinia_support::balance::lock::LockReasons,
 		frozen_balance: darwinia_support::balance::FrozenBalance<Balance>,
 	) -> Balance {
-		self.free_ring.saturating_sub(frozen_balance.frozen_for())
+		self.free_ring
+			.saturating_sub(frozen_balance.frozen_for(reasons))
 	}
 
 	fn total(&self) -> Balance {
