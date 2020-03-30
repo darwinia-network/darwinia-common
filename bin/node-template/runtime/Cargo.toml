@@ -12,13 +12,13 @@ repository = "https://github.com/darwinia-network/darwinia/"
 codec = { package = "parity-scale-codec", version = "1.2.0", default-features = false, features = ["derive"] }
 serde = { version = "1.0.101", optional = true, features = ["derive"] }
 # darwinia
+pallet-balances = { package = "darwinia-balances", default-features = false, path = "../../../frame/balances" }
 pallet-claims = { package = "darwinia-claims", default-features = false, path = "../../../frame/claims" }
 pallet-elections-phragmen = { package = "darwinia-elections-phragmen", default-features = false, path = "../../../frame/elections-phragmen" }
 pallet-eth-relay = { package = "darwinia-eth-relay", default-features = false, path = "../../../frame/chainrelay/eth/relay" }
 pallet-eth-backing = { package = "darwinia-eth-backing", default-features = false, path = "../../../frame/chainrelay/eth/backing" }
 pallet-eth-offchain = { package = "darwinia-eth-offchain", default-features = false, path = "../../../frame/chainrelay/eth/offchain" }
 pallet-header-mmr = { package = "darwinia-header-mmr", default-features = false, path = "../../../frame/header-mmr" }
-pallet-balances = { package = "darwinia-balances", default-features = false, path = "../../../frame/balances" }
 pallet-staking = { package = "darwinia-staking", default-features = false, path = "../../../frame/staking" }
 pallet-support = { package = "darwinia-support", default-features = false, path = "../../../frame/support" }
 pallet-vesting = { package = "darwinia-vesting", default-features = false, path = "../../../frame/vesting" }
