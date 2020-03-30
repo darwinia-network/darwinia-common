@@ -110,11 +110,11 @@ impl BalanceInfo<u64, DefaultInstance> for AccountData<u64> {
 		self.reserved_ring
 	}
 
-	fn mutate_free(&mut self, new_free: u64) {
+	fn set_free(&mut self, new_free: u64) {
 		self.free_ring = new_free;
 	}
 
-	fn mutate_reserved(&mut self, new_reserved: u64) {
+	fn set_reserved(&mut self, new_reserved: u64) {
 		self.reserved_ring = new_reserved;
 	}
 

@@ -325,7 +325,7 @@ decl_storage! {
 			}
 			for &(ref who, free) in config.balances.iter() {
 				let mut account_data = T::AccountStore::get(who);
-				account_data.mutate_free(free);
+				account_data.set_free(free);
 				T::AccountStore::insert(who, account_data);
 			}
 		});
@@ -420,8 +420,8 @@ decl_module! {
 					mem::drop(NegativeImbalance::<T, I>::new(account.reserved() - new_reserved));
 				}
 
-				account.mutate_free(new_free);
-				account.mutate_reserved(new_reserved);
+				account.set_free(new_free);
+				account.set_reserved(new_reserved);
 
 				(account.free(), account.reserved())
 			});
@@ -902,7 +902,7 @@ where
 
 		Self::try_mutate_account(dest, |to_account| -> DispatchResult {
 			Self::try_mutate_account(transactor, |from_account| -> DispatchResult {
-				from_account.mutate_free(
+				from_account.set_free(
 					from_account
 						.free()
 						.checked_sub(&value)
@@ -911,7 +911,7 @@ where
 
 				// NOTE: total stake being stored in the same type means that this could never overflow
 				// but better to be safe than sorry.
-				to_account.mutate_free(
+				to_account.set_free(
 					to_account
 						.free()
 						.checked_add(&value)
@@ -963,14 +963,14 @@ where
 
 		Self::mutate_account(who, |account| {
 			let free_slash = cmp::min(account.free(), value);
-			account.mutate_free(account.free() - free_slash);
+			account.set_free(account.free() - free_slash);
 
 			let remaining_slash = value - free_slash;
 			if !remaining_slash.is_zero() {
 				let reserved_slash = cmp::min(account.reserved(), remaining_slash);
 
 				let new_reserved = account.reserved() - reserved_slash;
-				account.mutate_reserved(new_reserved);
+				account.set_reserved(new_reserved);
 				(
 					NegativeImbalance::new(free_slash + reserved_slash),
 					remaining_slash - reserved_slash,
@@ -996,7 +996,7 @@ where
 			who,
 			|account| -> Result<Self::PositiveImbalance, DispatchError> {
 				ensure!(!account.total().is_zero(), Error::<T, I>::DeadAccount);
-				account.mutate_free(
+				account.set_free(
 					account
 						.free()
 						.checked_add(&value)
@@ -1030,7 +1030,7 @@ where
 
 				// defensive only: overflow should never happen, however in case it does, then this
 				// operation is a no-op.
-				account.mutate_free(
+				account.set_free(
 					account
 						.free()
 						.checked_add(&value)
@@ -1075,7 +1075,7 @@ where
 
 				Self::ensure_can_withdraw(who, value, reasons, new_free_account)?;
 
-				account.mutate_free(new_free_account);
+				account.set_free(new_free_account);
 
 				Ok(NegativeImbalance::new(value))
 			},
@@ -1108,7 +1108,7 @@ where
 				} else {
 					SignedImbalance::Negative(NegativeImbalance::new(account.free() - value))
 				};
-				account.mutate_free(value);
+				account.set_free(value);
 				Ok(imbalance)
 			},
 		)
@@ -1152,7 +1152,7 @@ where
 			// underflow should never happen, but it if does, there's nothing to be done here.
 			let actual = cmp::min(account.reserved(), value);
 			let new_reserve = account.reserved() - actual;
-			account.mutate_reserved(new_reserve);
+			account.set_reserved(new_reserve);
 			(NegativeImbalance::new(actual), value - actual)
 		})
 	}
@@ -1175,13 +1175,13 @@ where
 				.free()
 				.checked_sub(&value)
 				.ok_or(Error::<T, I>::InsufficientBalance)?;
-			account.mutate_free(new_free);
+			account.set_free(new_free);
 
 			let new_reserved = account
 				.reserved()
 				.checked_add(&value)
 				.ok_or(Error::<T, I>::Overflow)?;
-			account.mutate_reserved(new_reserved);
+			account.set_reserved(new_reserved);
 			Self::ensure_can_withdraw(who, value, WithdrawReason::Reserve.into(), account.free())
 		})
 	}
@@ -1197,10 +1197,10 @@ where
 		Self::mutate_account(who, |account| {
 			let actual = cmp::min(account.reserved(), value);
 			let new_reserved = account.reserved() - actual;
-			account.mutate_reserved(new_reserved);
+			account.set_reserved(new_reserved);
 			// defensive only: this can never fail since total issuance which is at least free+reserved
 			// fits into the same data type.
-			account.mutate_free(account.free().saturating_add(actual));
+			account.set_free(account.free().saturating_add(actual));
 			value - actual
 		})
 	}
@@ -1236,13 +1236,13 @@ where
 					|from_account| -> Result<Self::Balance, DispatchError> {
 						let actual = cmp::min(from_account.reserved(), value);
 						match status {
-							Status::Free => to_account.mutate_free(
+							Status::Free => to_account.set_free(
 								to_account
 									.free()
 									.checked_add(&actual)
 									.ok_or(Error::<T, I>::Overflow)?,
 							),
-							Status::Reserved => to_account.mutate_reserved(
+							Status::Reserved => to_account.set_reserved(
 								to_account
 									.reserved()
 									.checked_add(&actual)
@@ -1250,7 +1250,7 @@ where
 							),
 						}
 						let new_reserved = from_account.reserved() - actual;
-						from_account.mutate_reserved(new_reserved);
+						from_account.set_reserved(new_reserved);
 						Ok(value - actual)
 					},
 				)

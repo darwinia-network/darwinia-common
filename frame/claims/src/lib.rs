@@ -474,11 +474,11 @@ mod tests {
 			self.reserved
 		}
 
-		fn mutate_free(&mut self, new_free: u64) {
+		fn set_free(&mut self, new_free: u64) {
 			self.free = new_free;
 		}
 
-		fn mutate_reserved(&mut self, new_reserved: u64) {
+		fn set_reserved(&mut self, new_reserved: u64) {
 			self.reserved = new_reserved;
 		}
 

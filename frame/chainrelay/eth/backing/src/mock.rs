@@ -67,11 +67,11 @@ impl darwinia_support::balance::BalanceInfo<Balance, KtonInstance> for AccountDa
 		self.reserved_kton
 	}
 
-	fn mutate_free(&mut self, new_free: Balance) {
+	fn set_free(&mut self, new_free: Balance) {
 		self.free_kton = new_free;
 	}
 
-	fn mutate_reserved(&mut self, new_reserved: Balance) {
+	fn set_reserved(&mut self, new_reserved: Balance) {
 		self.reserved_kton = new_reserved;
 	}
 
@@ -101,11 +101,11 @@ impl darwinia_support::balance::BalanceInfo<Balance, RingInstance> for AccountDa
 		self.reserved_ring
 	}
 
-	fn mutate_free(&mut self, new_free: Balance) {
+	fn set_free(&mut self, new_free: Balance) {
 		self.free_ring = new_free;
 	}
 
-	fn mutate_reserved(&mut self, new_reserved: Balance) {
+	fn set_reserved(&mut self, new_reserved: Balance) {
 		self.reserved_ring = new_reserved;
 	}
 
