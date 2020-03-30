@@ -60,6 +60,8 @@ pub mod support_kton_in_the_future {
 	}
 }
 
+mod impls;
+
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
 	construct_runtime, parameter_types, traits::Randomness, weights::Weight, StorageValue,
@@ -71,6 +73,7 @@ pub use sp_runtime::{traits::OpaqueKeys, Perbill, Percent, Permill};
 
 pub use pallet_staking::StakerStatus;
 
+use codec::{Decode, Encode};
 use frame_support::debug;
 use frame_system::offchain::TransactionSubmitter;
 use pallet_grandpa::{fg_primitives, AuthorityList as GrandpaAuthorityList};
@@ -90,13 +93,12 @@ use sp_runtime::{
 	transaction_validity::TransactionValidity,
 	ApplyExtrinsicResult, MultiSignature, RuntimeDebug,
 };
-
-use codec::{Decode, Encode};
-
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
+
+use impls::*;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -126,6 +128,12 @@ pub type DigestItem = generic::DigestItem<Hash>;
 
 /// Power of an account.
 pub type Power = u32;
+
+/// Alias Balances Module as Ring Module.
+pub type Ring = Balances;
+
+/// Alias Balances1 Module as Kton Module.
+pub type Kton = Balances1;
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
@@ -169,87 +177,6 @@ pub fn native_version() -> NativeVersion {
 	NativeVersion {
 		runtime_version: VERSION,
 		can_author_with: Default::default(),
-	}
-}
-
-#[derive(Encode, Decode, Clone, PartialEq, Eq, Default, RuntimeDebug)]
-pub struct AccountData<Balance> {
-	pub free_ring: Balance,
-	pub free_kton: Balance,
-	pub reserved_ring: Balance,
-	pub reserved_kton: Balance,
-}
-
-pub type KtonInstance = pallet_balances::Instance1;
-pub type RingInstance = pallet_balances::Instance2;
-
-pub type Ring = Balances;
-
-impl pallet_support::balance::BalanceInfo<Balance, KtonInstance> for AccountData<Balance> {
-	fn free(&self) -> Balance {
-		self.free_kton
-	}
-
-	fn reserved(&self) -> Balance {
-		self.reserved_kton
-	}
-
-	fn mutate_free(&mut self, new_free: Balance) {
-		self.free_kton = new_free;
-	}
-
-	fn mutate_reserved(&mut self, new_reserved: Balance) {
-		self.reserved_kton = new_reserved;
-	}
-
-	fn usable(
-		&self,
-		reasons: pallet_support::balance::lock::LockReasons,
-		frozen_balance: pallet_support::balance::FrozenBalance<Balance>,
-	) -> Balance {
-		self.free_kton
-			.saturating_sub(pallet_support::balance::FrozenBalance::frozen_for(
-				reasons,
-				frozen_balance,
-			))
-	}
-
-	fn total(&self) -> Balance {
-		self.free_kton.saturating_add(self.reserved_kton)
-	}
-}
-
-impl pallet_support::balance::BalanceInfo<Balance, RingInstance> for AccountData<Balance> {
-	fn free(&self) -> Balance {
-		self.free_ring
-	}
-
-	fn reserved(&self) -> Balance {
-		self.reserved_ring
-	}
-
-	fn mutate_free(&mut self, new_free: Balance) {
-		self.free_ring = new_free;
-	}
-
-	fn mutate_reserved(&mut self, new_reserved: Balance) {
-		self.reserved_ring = new_reserved;
-	}
-
-	fn usable(
-		&self,
-		reasons: pallet_support::balance::lock::LockReasons,
-		frozen_balance: pallet_support::balance::FrozenBalance<Balance>,
-	) -> Balance {
-		self.free_ring
-			.saturating_sub(pallet_support::balance::FrozenBalance::frozen_for(
-				reasons,
-				frozen_balance,
-			))
-	}
-
-	fn total(&self) -> Balance {
-		self.free_ring.saturating_add(self.reserved_ring)
 	}
 }
 
@@ -456,6 +383,30 @@ impl pallet_sudo::Trait for Runtime {
 }
 
 parameter_types! {
+	pub const ExistentialDeposit: Balance = 1 * COIN;
+}
+type RingInstance = pallet_balances::Instance0;
+impl pallet_balances::Trait<RingInstance> for Runtime {
+	type Balance = Balance;
+	type DustRemoval = ();
+	type Event = Event;
+	type ExistentialDeposit = ExistentialDeposit;
+	type BalanceInfo = AccountData<Balance>;
+	type AccountStore = frame_system::Module<Runtime>;
+	type TryDropOther = Kton;
+}
+type KtonInstance = pallet_balances::Instance1;
+impl pallet_balances::Trait<KtonInstance> for Runtime {
+	type Balance = Balance;
+	type DustRemoval = ();
+	type Event = Event;
+	type ExistentialDeposit = ExistentialDeposit;
+	type BalanceInfo = AccountData<Balance>;
+	type AccountStore = frame_system::Module<Runtime>;
+	type TryDropOther = Ring;
+}
+
+parameter_types! {
 	pub const Prefix: &'static [u8] = b"Pay RUSTs to the TEST account:";
 }
 impl pallet_claims::Trait for Runtime {
@@ -529,28 +480,6 @@ impl pallet_eth_offchain::Trait for Runtime {
 }
 
 impl pallet_header_mmr::Trait for Runtime {}
-
-parameter_types! {
-	pub const ExistentialDeposit: Balance = 1 * COIN;
-}
-impl pallet_balances::Trait<KtonInstance> for Runtime {
-	type Balance = Balance;
-	type DustRemoval = ();
-	type Event = Event;
-	type ExistentialDeposit = ExistentialDeposit;
-	type BalanceInfo = AccountData<Balance>;
-	type AccountStore = frame_system::Module<Runtime>;
-	type TryDropOther = Ring;
-}
-impl pallet_balances::Trait<RingInstance> for Runtime {
-	type Balance = Balance;
-	type DustRemoval = ();
-	type Event = Event;
-	type ExistentialDeposit = ExistentialDeposit;
-	type BalanceInfo = AccountData<Balance>;
-	type AccountStore = frame_system::Module<Runtime>;
-	type TryDropOther = Kton;
-}
 
 parameter_types! {
 	pub const SessionsPerEra: sp_staking::SessionIndex = SESSIONS_PER_ERA;
@@ -649,14 +578,14 @@ construct_runtime!(
 		ImOnline: pallet_im_online::{Module, Call, Storage, Config<T>, Event<T>, ValidateUnsigned},
 		Offences: pallet_offences::{Module, Call, Storage, Event},
 		// Custom Module
+		Balances: pallet_balances::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
+		Balances1: pallet_balances::<Instance1>::{Module, Call, Storage, Config<T>, Event<T>},
 		Claims: pallet_claims::{Module, Call, Storage, Config, Event<T>, ValidateUnsigned},
 		Elections: pallet_elections_phragmen::{Module, Call, Storage, Event<T>},
 		EthBacking: pallet_eth_backing::{Module, Call, Storage, Config<T>, Event<T>},
 		EthRelay: pallet_eth_relay::{Module, Call, Storage, Config<T>, Event<T>},
 		EthOffchain: pallet_eth_offchain::{Module, Call, Storage, Event<T>},
 		HeaderMMR: pallet_header_mmr::{Module, Call, Storage},
-		Kton: pallet_balances::<Instance1>::{Module, Call, Storage, Config<T>, Event<T>},
-		Balances: pallet_balances::<Instance2>::{Module, Call, Storage, Config<T>, Event<T>},
 		Staking: pallet_staking::{Module, Call, Storage, Config<T>, Event<T>},
 		Treasury: pallet_treasury::{Module, Call, Storage, Config, Event<T>},
 		Vesting: pallet_vesting::{Module, Call, Storage, Config<T>, Event<T>},

@@ -8,8 +8,9 @@ use sp_runtime::{
 };
 
 use node_template_runtime::{
-	AccountId, BalancesConfig, CouncilConfig, GenesisConfig, KtonConfig, SessionConfig,
-	SessionKeys, Signature, StakerStatus, StakingConfig, SudoConfig, SystemConfig, WASM_BINARY,
+	AccountId, Balances1Config as KtonConfig, BalancesConfig as RingConfig, CouncilConfig,
+	GenesisConfig, SessionConfig, SessionKeys, Signature, StakerStatus, StakingConfig, SudoConfig,
+	SystemConfig, WASM_BINARY,
 };
 
 // Note this is the URL for the telemetry server
@@ -178,15 +179,14 @@ fn testnet_genesis(
 		pallet_claims: Some(Default::default()),
 		pallet_eth_backing: Some(Default::default()),
 		pallet_eth_relay: Some(Default::default()),
-		// pallet_eth_backing: Some(Default::default()),
-		pallet_balances_Instance1: Some(KtonConfig {
+		pallet_balances_Instance0: Some(RingConfig {
 			balances: endowed_accounts
 				.iter()
 				.cloned()
 				.map(|k| (k, 1 << 60))
 				.collect(),
 		}),
-		pallet_balances_Instance2: Some(BalancesConfig {
+		pallet_balances_Instance1: Some(KtonConfig {
 			balances: endowed_accounts
 				.iter()
 				.cloned()
