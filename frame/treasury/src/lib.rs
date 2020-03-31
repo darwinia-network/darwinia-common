@@ -162,7 +162,7 @@ pub trait Trait: frame_system::Trait {
 	/// Handler for the unbalanced decrease when slashing for a rejected proposal.
 	type RingProposalRejection: OnUnbalanced<RingNegativeImbalance<Self>>;
 	/// Handler for the unbalanced decrease when slashing for a rejected proposal.
-	type KtonProposalRejection: OnUnbalanced<KtonNegativeImbalance<Self>>;
+	type KtonProposalRejection: OnUnbalancedKton<KtonNegativeImbalance<Self>>;
 
 	/// Fraction of a proposal's value that should be bonded in order to place the proposal.
 	/// An accepted proposal gets these back. A rejected proposal does not.
