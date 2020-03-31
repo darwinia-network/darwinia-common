@@ -14,6 +14,8 @@ macro_rules! impl_account_data {
 			$($($oname:ident: $otype:ty),+)?
 		}
 	) => {
+		use darwinia_support::balance::BalanceInfo;
+
 		$(#[$attr:meta])*
 		#[derive(Clone, Default, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
 		pub struct $sname<Balance$(, $gtype),*> {
@@ -43,7 +45,11 @@ macro_rules! impl_account_data {
 				self.free.saturating_add(self.reserved)
 			}
 
-			fn usable(&self, reasons: LockReasons, frozen_balance: FrozenBalance<$btype>) -> $btype {
+			fn usable(
+				&self,
+				reasons: darwinia_support::balance::lock::LockReasons,
+				frozen_balance: darwinia_support::balance::FrozenBalance<$btype>,
+			) -> $btype {
 				self.free.saturating_sub(frozen_balance.frozen_for(reasons))
 			}
 		}
@@ -67,7 +73,11 @@ macro_rules! impl_account_data {
 				self.free_kton.saturating_add(self.reserved_kton)
 			}
 
-			fn usable(&self, reasons: LockReasons, frozen_balance: FrozenBalance<$btype>) -> $btype {
+			fn usable(
+				&self,
+				reasons: darwinia_support::balance::lock::LockReasons,
+				frozen_balance: darwinia_support::balance::FrozenBalance<$btype>,
+			) -> $btype {
 				self.free_kton.saturating_sub(frozen_balance.frozen_for(reasons))
 			}
 		}
