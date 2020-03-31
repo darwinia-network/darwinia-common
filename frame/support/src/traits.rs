@@ -1,8 +1,9 @@
+// --- third-party ---
 pub use frame_support::traits::{LockIdentifier, VestingSchedule, WithdrawReason, WithdrawReasons};
-
+// --- third-party ---
 use frame_support::traits::{Currency, TryDrop};
 use sp_runtime::DispatchResult;
-
+// --- custom ---
 use crate::balance::{
 	lock::{LockFor, LockReasons},
 	FrozenBalance,
