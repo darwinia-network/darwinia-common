@@ -2,6 +2,7 @@
 #[macro_export]
 macro_rules! impl_account_data {
 	(
+		$(#[$attr:meta])*
 		pub struct $sname:ident<Balance$(, $gtype:ident),*>
 		for
 			$ring_instance:ident,
@@ -13,6 +14,7 @@ macro_rules! impl_account_data {
 			$($($oname:ident: $otype:ty),+)?
 		}
 	) => {
+		$(#[$attr:meta])*
 		#[derive(Clone, Default, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
 		pub struct $sname<Balance$(, $gtype),*> {
 			free: Balance,
