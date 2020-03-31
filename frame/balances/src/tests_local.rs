@@ -1,7 +1,9 @@
 //! Test utilities
 
+// --- std ---
 use std::cell::RefCell;
-
+// --- third-party ---
+use codec::{Decode, Encode};
 use frame_support::{
 	impl_outer_origin, parameter_types,
 	traits::{Get, StorageMapShim},
@@ -14,39 +16,52 @@ use sp_runtime::{
 	traits::{ConvertInto, IdentityLookup},
 	Perbill, RuntimeDebug,
 };
+// --- custom ---
+use crate::*;
+use darwinia_support::impl_account_data;
 
-use codec::{Decode, Encode};
+type Balance = u64;
 
-use crate::{decl_tests, GenesisConfig, Module, Trait};
+type RingInstance = Instance0;
+type RingError = Error<Test, RingInstance>;
+type Ring = Module<Test, RingInstance>;
+
+type KtonInstance = Instance1;
+type KtonError = Error<Test, KtonInstance>;
+type Kton = Module<Test, KtonInstance>;
+
+impl_account_data! {
+	pub struct AccountData<Balance>
+	for
+		RingInstance,
+		KtonInstance
+	where
+		Balance = Balance
+	{
+		// other data
+	}
+}
 
 impl_outer_origin! {
 	pub enum Origin for Test {}
 }
 
 thread_local! {
-	static EXISTENTIAL_DEPOSIT: RefCell<u64> = RefCell::new(0);
+	static EXISTENTIAL_DEPOSIT: RefCell<Balance> = RefCell::new(0);
 }
 
 pub struct ExistentialDeposit;
-impl Get<u64> for ExistentialDeposit {
-	fn get() -> u64 {
+impl Get<Balance> for ExistentialDeposit {
+	fn get() -> Balance {
 		EXISTENTIAL_DEPOSIT.with(|v| *v.borrow())
 	}
-}
-
-#[derive(Encode, Decode, Clone, PartialEq, Eq, Default, RuntimeDebug)]
-pub struct AccountData<Balance> {
-	pub free_ring: Balance,
-	pub free_kton: Balance,
-	pub reserved_ring: Balance,
-	pub reserved_kton: Balance,
 }
 
 // Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Test;
 parameter_types! {
-	pub const BlockHashCount: u64 = 250;
+	pub const BlockHashCount: Balance = 250;
 	pub const MaximumBlockWeight: Weight = 1024;
 	pub const MaximumBlockLength: u32 = 2 * 1024;
 	pub const AvailableBlockRatio: Perbill = Perbill::one();
@@ -54,11 +69,11 @@ parameter_types! {
 impl frame_system::Trait for Test {
 	type Origin = Origin;
 	type Call = ();
-	type Index = u64;
-	type BlockNumber = u64;
+	type Index = Balance;
+	type BlockNumber = Balance;
 	type Hash = H256;
 	type Hashing = ::sp_runtime::traits::BlakeTwo256;
-	type AccountId = u64;
+	type AccountId = Balance;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = ();
@@ -68,68 +83,41 @@ impl frame_system::Trait for Test {
 	type AvailableBlockRatio = AvailableBlockRatio;
 	type Version = ();
 	type ModuleToIndex = ();
-	type AccountData = AccountData<u64>;
+	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
-	type OnKilledAccount = Module<Test>;
+	type OnKilledAccount = Ring;
 	type MigrateAccount = ();
 }
 parameter_types! {
-	pub const TransactionBaseFee: u64 = 0;
-	pub const TransactionByteFee: u64 = 1;
+	pub const TransactionBaseFee: Balance = 0;
+	pub const TransactionByteFee: Balance = 1;
 }
 impl pallet_transaction_payment::Trait for Test {
-	type Currency = Module<Test>;
+	type Currency = Ring;
 	type OnTransactionPayment = ();
 	type TransactionBaseFee = TransactionBaseFee;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = ConvertInto;
 	type FeeMultiplierUpdate = ();
 }
-impl Trait for Test {
-	type Balance = u64;
+impl Trait<RingInstance> for Test {
+	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = ();
 	type ExistentialDeposit = ExistentialDeposit;
-	type BalanceInfo = AccountData<u64>;
+	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = StorageMapShim<
-		super::Account<Test>,
+		Account<Test, RingInstance>,
 		system::CallOnCreatedAccount<Test>,
 		system::CallKillAccount<Test>,
-		u64,
-		AccountData<u64>,
+		Balance,
+		AccountData<Balance>,
 	>;
 	type TryDropOther = ();
 }
 
-impl BalanceInfo<u64, DefaultInstance> for AccountData<u64> {
-	fn free(&self) -> u64 {
-		self.free_ring
-	}
-
-	fn reserved(&self) -> u64 {
-		self.reserved_ring
-	}
-
-	fn set_free(&mut self, new_free: u64) {
-		self.free_ring = new_free;
-	}
-
-	fn set_reserved(&mut self, new_reserved: u64) {
-		self.reserved_ring = new_reserved;
-	}
-
-	fn usable(&self, reasons: LockReasons, frozen_balance: FrozenBalance<u64>) -> u64 {
-		self.free_ring
-			.saturating_sub(frozen_balance.frozen_for(reasons))
-	}
-
-	fn total(&self) -> u64 {
-		self.free_ring.saturating_add(self.reserved_ring)
-	}
-}
-
 pub struct ExtBuilder {
-	existential_deposit: u64,
+	existential_deposit: Balance,
 	monied: bool,
 }
 impl Default for ExtBuilder {
@@ -141,7 +129,7 @@ impl Default for ExtBuilder {
 	}
 }
 impl ExtBuilder {
-	pub fn existential_deposit(mut self, existential_deposit: u64) -> Self {
+	pub fn existential_deposit(mut self, existential_deposit: Balance) -> Self {
 		self.existential_deposit = existential_deposit;
 		self
 	}
@@ -160,7 +148,7 @@ impl ExtBuilder {
 		let mut t = frame_system::GenesisConfig::default()
 			.build_storage::<Test>()
 			.unwrap();
-		GenesisConfig::<Test> {
+		GenesisConfig::<Test, RingInstance> {
 			balances: if self.monied {
 				vec![
 					(1, 10 * self.existential_deposit),

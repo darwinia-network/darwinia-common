@@ -132,20 +132,20 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(test)]
-#[macro_use]
-mod tests;
-
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
 #[cfg(test)]
-mod tests_local;
+#[macro_use]
+mod tests;
 // #[cfg(test)]
 // mod tests_composite;
+#[cfg(test)]
+mod tests_local;
 
+// --- custom ---
 pub use imbalances::{NegativeImbalance, PositiveImbalance};
-
+// --- third-party---
 use codec::{Codec, EncodeLike};
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
@@ -166,9 +166,11 @@ use sp_runtime::{
 	DispatchError, DispatchResult,
 };
 use sp_std::{borrow::Borrow, cmp, convert::Infallible, fmt::Debug, mem, prelude::*};
-
-use darwinia_support::balance::{lock::*, *};
-use darwinia_support::traits::BalanceInfo;
+// --- custom ---
+use darwinia_support::{
+	balance::{lock::*, *},
+	traits::BalanceInfo,
+};
 
 pub trait Subtrait<I: Instance = DefaultInstance>: frame_system::Trait {
 	/// The balance of an account.
