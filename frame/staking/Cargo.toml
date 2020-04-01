@@ -16,23 +16,23 @@ serde = { version = "1.0.105", optional = true }
 darwinia-phragmen = { default-features = false, path = "../../primitives/phragmen" }
 darwinia-support = { default-features = false, path = "../support" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
-frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
-pallet-authorship = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
-pallet-session = { default-features = false, features = ["historical"], git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
-sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
-sp-io = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
-sp-staking = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
+frame-support = { default-features = false, git = "https://github.com/yanganto/substrate.git", branch = "offchain-insert-key" }
+frame-system = { default-features = false, git = "https://github.com/yanganto/substrate.git", branch = "offchain-insert-key" }
+pallet-authorship = { default-features = false, git = "https://github.com/yanganto/substrate.git", branch = "offchain-insert-key" }
+pallet-session = { default-features = false, features = ["historical"], git = "https://github.com/yanganto/substrate.git", branch = "offchain-insert-key" }
+sp-core = { default-features = false, git = "https://github.com/yanganto/substrate.git", branch = "offchain-insert-key" }
+sp-io = { default-features = false, git = "https://github.com/yanganto/substrate.git", branch = "offchain-insert-key" }
+sp-runtime = { default-features = false, git = "https://github.com/yanganto/substrate.git", branch = "offchain-insert-key" }
+sp-staking = { default-features = false, git = "https://github.com/yanganto/substrate.git", branch = "offchain-insert-key" }
+sp-std = { default-features = false, git = "https://github.com/yanganto/substrate.git", branch = "offchain-insert-key" }
 
 [dev-dependencies]
 # darwinia
 darwinia-balances = { path = "../../frame/balances" }
 darwinia-support = { features = ["easy-testing"], path = "../support" }
 # substrate
-pallet-timestamp = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
-substrate-test-utils = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
+pallet-timestamp = { git = "https://github.com/yanganto/substrate.git", branch = "offchain-insert-key" }
+substrate-test-utils = { git = "https://github.com/yanganto/substrate.git", branch = "offchain-insert-key" }
 
 [features]
 default = ["equalize", "std"]

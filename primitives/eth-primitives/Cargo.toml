@@ -23,8 +23,8 @@ primitive-types = { default-features = false, features = ["codec", "rlp"], git =
 rlp = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 rlp-derive = { git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
+sp-runtime = { default-features = false, git = "https://github.com/yanganto/substrate.git", branch = "offchain-insert-key" }
+sp-std = { default-features = false, git = "https://github.com/yanganto/substrate.git", branch = "offchain-insert-key" }
 
 [dev-dependencies]
 # crates
@@ -34,7 +34,7 @@ rustc-hex = { version = "2.0" }
 # github
 triehash = { git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
-frame-support = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
+frame-support = { git = "https://github.com/yanganto/substrate.git", branch = "offchain-insert-key" }
 
 [features]
 default = ["std"]
