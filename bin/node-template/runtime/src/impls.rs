@@ -1,10 +1,7 @@
+// --- darwinia ---
 use crate::*;
-use pallet_support::{
-	balance::{lock::*, *},
-	impl_account_data,
-};
 
-impl_account_data! {
+darwinia_support::impl_account_data! {
 	pub struct AccountData<Balance>
 	for
 		RingInstance,
