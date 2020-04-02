@@ -21,6 +21,7 @@ sp-runtime = { default-features = false, git = "https://github.com/darwinia-netw
 sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.4" }
 
 [dev-dependencies]
+serde_json = "1.0.41"
 # substrate
 sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.4" }
 sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.4" }

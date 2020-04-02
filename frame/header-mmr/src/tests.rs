@@ -8,6 +8,9 @@ use sp_runtime::{
 	traits::{Header, OnFinalize},
 };
 
+//#[cfg(feature = "std")]
+//use serde::{Deserialize, Serialize};
+
 // --- custom ---
 use crate::{mock::*, *};
 
@@ -59,9 +62,7 @@ fn test_insert_header() {
 		assert_eq!(pos, HeaderMMR::position_of(h1));
 		assert_eq!(prove_elem, HeaderMMR::mmr_node_list(pos));
 
-		let mmr_root = headers[h2 as usize - 1]
-			.digest
-			.convert_first(|l| l.as_merkle_mountain_range_root().cloned())
+		let mmr_root = HeaderMMR::_find_mmr_root(headers[h2 as usize - 1].clone())
 			.expect("Header mmr get failed");
 
 		let store = ModuleMMRStore::<Test>::default();
@@ -76,4 +77,36 @@ fn test_insert_header() {
 			.expect("verify");
 		assert!(result);
 	});
+}
+
+#[test]
+fn should_serialize_mmr_digest() {
+	let digest = Digest {
+		logs: vec![header_mmr_log(Default::default())],
+	};
+
+	assert_eq!(
+		serde_json::to_string(&digest).unwrap(),
+		// 0x90 is compact codec of the length 36, 0x4d4d5252 is prefix "MMRR"
+		r#"{"logs":["0x00904d4d52520000000000000000000000000000000000000000000000000000000000000000"]}"#
+	);
+}
+
+#[test]
+fn non_system_mmr_digest_item_encoding() {
+	let item = header_mmr_log(Default::default());
+	let encoded = item.encode();
+	assert_eq!(
+		encoded,
+		vec![
+			0,    // type = DigestItemType::Other
+			0x90, // vec length
+			77, 77, 82, 82, // Prefix, *b"MMRR"
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, // mmr root
+		]
+	);
+
+	let decoded: DigestItem<H256> = Decode::decode(&mut &encoded[..]).unwrap();
+	assert_eq!(item, decoded);
 }
