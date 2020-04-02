@@ -1,10 +1,11 @@
 //! Tests for eth-relay.
 
-use eth_primitives::{receipt::TransactionOutcome, U128};
+// --- substrate ---
 use frame_support::{assert_err, assert_ok};
 use frame_system::RawOrigin;
-
+// --- darwinia ---
 use crate::{mock::*, mock_headers::*, *};
+use eth_primitives::{receipt::TransactionOutcome, U128};
 
 #[test]
 fn verify_receipt_proof() {

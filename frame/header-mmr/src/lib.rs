@@ -45,9 +45,10 @@
 mod mock;
 mod tests;
 
-// --- third-party ---
-use frame_support::{decl_error, decl_module, decl_storage, ensure};
+// --- github ---
 use merkle_mountain_range::{MMRStore, MerkleProof, MMR};
+// --- substrate ---
+use frame_support::{decl_error, decl_module, decl_storage, ensure};
 use sp_runtime::{generic::DigestItem, traits::Hash, DispatchError};
 use sp_std::{marker::PhantomData, prelude::*};
 

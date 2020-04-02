@@ -20,36 +20,36 @@ mod mock;
 #[cfg(all(feature = "std", test))]
 mod tests;
 
-// --- third-party ---
+// --- crates ---
+use hex::FromHex;
+// --- substrate ---
 use frame_support::{
 	debug, decl_error, decl_event, decl_module, decl_storage,
 	traits::{Get, Time},
 };
 use frame_system::{self as system, offchain::SubmitSignedTransaction};
-use hex::FromHex;
 use simple_json::{self, json::JsonValue};
 use sp_runtime::{offchain::http::Request, DispatchError, DispatchResult, KeyTypeId};
 use sp_std::prelude::*;
-
-// --- custom ---
+// --- darwinia ---
+use darwinia_eth_relay::HeaderInfo;
 use eth_primitives::{header::EthHeader, pow::EthashSeal};
-use pallet_eth_relay::HeaderInfo;
 
 type EtherScanAPIKey = Option<Vec<u8>>;
 
-type EthRelay<T> = pallet_eth_relay::Module<T>;
+type EthRelay<T> = darwinia_eth_relay::Module<T>;
 
 pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"rlwk");
 
 const MAX_RETRY: u8 = 3;
 const RETRY_INTERVAL: u64 = 1;
 
-pub trait Trait: pallet_eth_relay::Trait {
+pub trait Trait: darwinia_eth_relay::Trait {
 	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 
 	type Time: Time;
 
-	type Call: From<pallet_eth_relay::Call<Self>>;
+	type Call: From<darwinia_eth_relay::Call<Self>>;
 
 	type SubmitSignedTransaction: SubmitSignedTransaction<Self, <Self as Trait>::Call>;
 
@@ -159,7 +159,7 @@ impl<T: Trait> Module<T> {
 		let eth_header = Self::build_eth_header(next_block_number, block_info)?;
 
 		let results = T::SubmitSignedTransaction::submit_signed(
-			pallet_eth_relay::Call::relay_header(eth_header),
+			darwinia_eth_relay::Call::relay_header(eth_header),
 		);
 		for (account, result) in &results {
 			debug::trace!(

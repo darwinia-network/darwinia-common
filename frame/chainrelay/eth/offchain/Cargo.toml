@@ -10,11 +10,11 @@ repository = "https://github.com/darwinia-network/darwinia/"
 
 [dependencies]
 # crates
-codec = { package = "parity-scale-codec", version = "1.0.0", default-features = false, features = ["derive"] }
+codec = { package = "parity-scale-codec", version = "1.3.0", default-features = false, features = ["derive"] }
 hex = { version = "0.4.2", default-features = false }
 # darwinia
+darwinia-eth-relay = { default-features = false, path = "../relay" }
 eth-primitives = { default-features = false, path = "../../../../primitives/eth-primitives" }
-pallet-eth-relay = { package = "darwinia-eth-relay", default-features = false, path = "../relay" }
 # github
 rlp = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 simple-json = { version = "0.1.5", default-features = false, git = "https://github.com/jimmychu0807/simple-json" }
@@ -26,8 +26,7 @@ sp-std = { default-features = false, git = "https://github.com/darwinia-network/
 
 [dev-dependencies]
 # darwinia
-pallet-eth-relay = { package = "darwinia-eth-relay", path = "../relay" }
-pallet-support = { package = "darwinia-support", path = "../../../../frame/support" }
+darwinia-support = { package = "darwinia-support", path = "../../../../frame/support" }
 # substrate
 pallet-timestamp = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
 sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
@@ -39,8 +38,8 @@ std = [
 	"codec/std",
 	"hex/std",
 	# darwinia
+	"darwinia-eth-relay/std",
 	"eth-primitives/std",
-	"pallet-eth-relay/std",
 	# github
 	"rlp/std",
 	"simple-json/std",

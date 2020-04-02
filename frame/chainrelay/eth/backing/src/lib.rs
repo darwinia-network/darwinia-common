@@ -32,9 +32,11 @@ mod types {
 	type TimeT<T> = <T as Trait>::Time;
 }
 
-// --- third-party ---
+// --- crates ---
 use codec::{Decode, Encode};
+// --- github ---
 use ethabi::{Event as EthEvent, EventParam as EthEventParam, ParamType, RawLog};
+// --- substrate ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
 	traits::{Currency, OnUnbalanced, Time},
@@ -48,8 +50,7 @@ use sp_runtime::{
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
 use sp_std::{convert::TryFrom, marker::PhantomData, vec};
-
-// --- custom ---
+// --- darwinia ---
 use darwinia_eth_relay::{EthReceiptProof, VerifyEthReceipts};
 use darwinia_support::traits::{LockableCurrency, OnDepositRedeem};
 use eth_primitives::{EthAddress, H256, U256};

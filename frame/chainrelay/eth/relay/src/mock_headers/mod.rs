@@ -1,11 +1,13 @@
 mod check_receipt;
 mod utils;
 
+// --- darwinia ---
+pub use utils::LogEntry;
+
+// --- darwinia ---
 use crate::*;
 use check_receipt::{EVENT_LOGS, JSON, RECEIPT};
 use utils::*;
-
-pub use utils::LogEntry;
 
 /// To help reward miners for when duplicate block solutions are found
 /// because of the shorter block times of Ethereum (compared to other cryptocurrency).

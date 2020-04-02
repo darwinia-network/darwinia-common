@@ -1,3 +1,4 @@
+// --- substrate ---
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
@@ -6,7 +7,7 @@ use sp_runtime::{
 	traits::{IdentifyAccount, Verify},
 	Perbill,
 };
-
+// --- darwinia ---
 use node_template_runtime::{
 	AccountId, Balances1Config as KtonConfig, BalancesConfig as RingConfig, CouncilConfig,
 	GenesisConfig, SessionConfig, SessionKeys, Signature, StakerStatus, StakingConfig, SudoConfig,
@@ -176,24 +177,24 @@ fn testnet_genesis(
 		pallet_grandpa: Some(Default::default()),
 		pallet_im_online: Some(Default::default()),
 		// Custom Module
-		pallet_claims: Some(Default::default()),
-		pallet_eth_backing: Some(Default::default()),
-		pallet_eth_relay: Some(Default::default()),
-		pallet_balances_Instance0: Some(RingConfig {
+		darwinia_claims: Some(Default::default()),
+		darwinia_eth_backing: Some(Default::default()),
+		darwinia_eth_relay: Some(Default::default()),
+		darwinia_balances_Instance0: Some(RingConfig {
 			balances: endowed_accounts
 				.iter()
 				.cloned()
 				.map(|k| (k, 1 << 60))
 				.collect(),
 		}),
-		pallet_balances_Instance1: Some(KtonConfig {
+		darwinia_balances_Instance1: Some(KtonConfig {
 			balances: endowed_accounts
 				.iter()
 				.cloned()
 				.map(|k| (k, 1 << 60))
 				.collect(),
 		}),
-		pallet_staking: Some(StakingConfig {
+		darwinia_staking: Some(StakingConfig {
 			validator_count: initial_authorities.len() as u32 * 2,
 			minimum_validator_count: initial_authorities.len() as u32,
 			stakers: initial_authorities
@@ -206,8 +207,7 @@ fn testnet_genesis(
 			payout_fraction: Perbill::from_percent(50),
 			..Default::default()
 		}),
-		pallet_treasury: Some(Default::default()),
-		pallet_vesting: Some(Default::default()),
+		darwinia_vesting: Some(Default::default()),
 	}
 }
 

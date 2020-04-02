@@ -62,6 +62,7 @@ pub mod support_kton_in_the_future {
 
 mod impls;
 
+// --- substrate ---
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
 	construct_runtime, parameter_types, traits::Randomness, weights::Weight, StorageValue,
@@ -70,10 +71,12 @@ pub use pallet_timestamp::Call as TimestampCall;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{traits::OpaqueKeys, Perbill, Percent, Permill};
+// --- darwinia ---
+pub use darwinia_staking::StakerStatus;
 
-pub use pallet_staking::StakerStatus;
-
+// --- crates ---
 use codec::{Decode, Encode};
+// --- substrate ---
 use frame_support::debug;
 use frame_system::offchain::TransactionSubmitter;
 use pallet_grandpa::{fg_primitives, AuthorityList as GrandpaAuthorityList};
@@ -97,7 +100,7 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-
+// --- darwinia ---
 use impls::*;
 
 /// An index to a block.
@@ -264,7 +267,7 @@ parameter_types! {
 	pub const TransactionByteFee: Balance = 1;
 }
 impl pallet_transaction_payment::Trait for Runtime {
-	type Currency = pallet_balances::Module<Runtime, RingInstance>;
+	type Currency = Ring;
 	type OnTransactionPayment = ();
 	type TransactionBaseFee = TransactionBaseFee;
 	type TransactionByteFee = TransactionByteFee;
@@ -287,7 +290,7 @@ parameter_types! {
 impl pallet_session::Trait for Runtime {
 	type Event = Event;
 	type ValidatorId = <Self as frame_system::Trait>::AccountId;
-	type ValidatorIdOf = pallet_staking::StashOf<Self>;
+	type ValidatorIdOf = darwinia_staking::StashOf<Self>;
 	type ShouldEndSession = pallet_session::PeriodicSessions<PERIOD, OFFSET>;
 	type SessionManager = Staking;
 	type SessionHandler = <SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
@@ -373,8 +376,8 @@ impl pallet_offences::Trait for Runtime {
 }
 
 impl pallet_session::historical::Trait for Runtime {
-	type FullIdentification = pallet_staking::Exposure<AccountId, Balance, Balance>;
-	type FullIdentificationOf = pallet_staking::ExposureOf<Runtime>;
+	type FullIdentification = darwinia_staking::Exposure<AccountId, Balance, Balance>;
+	type FullIdentificationOf = darwinia_staking::ExposureOf<Runtime>;
 }
 
 impl pallet_sudo::Trait for Runtime {
@@ -385,8 +388,8 @@ impl pallet_sudo::Trait for Runtime {
 parameter_types! {
 	pub const ExistentialDeposit: Balance = 1 * COIN;
 }
-type RingInstance = pallet_balances::Instance0;
-impl pallet_balances::Trait<RingInstance> for Runtime {
+type RingInstance = darwinia_balances::Instance0;
+impl darwinia_balances::Trait<RingInstance> for Runtime {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = Event;
@@ -395,8 +398,8 @@ impl pallet_balances::Trait<RingInstance> for Runtime {
 	type BalanceInfo = AccountData<Balance>;
 	type TryDropOther = Kton;
 }
-type KtonInstance = pallet_balances::Instance1;
-impl pallet_balances::Trait<KtonInstance> for Runtime {
+type KtonInstance = darwinia_balances::Instance1;
+impl darwinia_balances::Trait<KtonInstance> for Runtime {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = Event;
@@ -409,7 +412,7 @@ impl pallet_balances::Trait<KtonInstance> for Runtime {
 parameter_types! {
 	pub const Prefix: &'static [u8] = b"Pay RUSTs to the TEST account:";
 }
-impl pallet_claims::Trait for Runtime {
+impl darwinia_claims::Trait for Runtime {
 	type Event = Event;
 	type Prefix = Prefix;
 	type RingCurrency = Ring;
@@ -422,7 +425,7 @@ parameter_types! {
 	pub const DesiredMembers: u32 = 13;
 	pub const DesiredRunnersUp: u32 = 7;
 }
-impl pallet_elections_phragmen::Trait for Runtime {
+impl darwinia_elections_phragmen::Trait for Runtime {
 	type Event = Event;
 	type Currency = Ring;
 	type ChangeMembers = Council;
@@ -441,15 +444,15 @@ parameter_types! {
 	pub const EthMainet: u64 = 0;
 	pub const EthRopsten: u64 = 1;
 }
-impl pallet_eth_relay::Trait for Runtime {
+impl darwinia_eth_relay::Trait for Runtime {
 	type Event = Event;
 	type EthNetwork = EthRopsten;
 }
 
-impl pallet_eth_backing::Trait for Runtime {
+impl darwinia_eth_backing::Trait for Runtime {
 	type Event = Event;
 	type Time = Timestamp;
-	type DetermineAccountId = pallet_eth_backing::AccountIdDeterminator<Runtime>;
+	type DetermineAccountId = darwinia_eth_backing::AccountIdDeterminator<Runtime>;
 	type EthRelay = EthRelay;
 	type OnDepositRedeem = Staking;
 	type Ring = Ring;
@@ -459,7 +462,7 @@ impl pallet_eth_backing::Trait for Runtime {
 }
 
 type SubmitPFTransaction =
-	TransactionSubmitter<pallet_eth_offchain::crypto::Public, Runtime, UncheckedExtrinsic>;
+	TransactionSubmitter<darwinia_eth_offchain::crypto::Public, Runtime, UncheckedExtrinsic>;
 parameter_types! {
 	pub const FetchInterval: BlockNumber = 3;
 	// TODO: pass this from command line
@@ -470,7 +473,7 @@ parameter_types! {
 		None => None,
 	};
 }
-impl pallet_eth_offchain::Trait for Runtime {
+impl darwinia_eth_offchain::Trait for Runtime {
 	type Event = Event;
 	type Time = Timestamp;
 	type Call = Call;
@@ -479,19 +482,19 @@ impl pallet_eth_offchain::Trait for Runtime {
 	type EtherScanAPIKey = EtherScanAPIKey;
 }
 
-impl pallet_header_mmr::Trait for Runtime {}
+impl darwinia_header_mmr::Trait for Runtime {}
 
 parameter_types! {
 	pub const SessionsPerEra: sp_staking::SessionIndex = SESSIONS_PER_ERA;
-	pub const BondingDurationInEra: pallet_staking::EraIndex = 14 * 24 * (HOURS / (SESSIONS_PER_ERA * BLOCKS_PER_SESSION));
+	pub const BondingDurationInEra: darwinia_staking::EraIndex = 14 * 24 * (HOURS / (SESSIONS_PER_ERA * BLOCKS_PER_SESSION));
 	pub const BondingDurationInBlockNumber: BlockNumber = 14 * DAYS;
-	pub const SlashDeferDuration: pallet_staking::EraIndex = 7 * 24; // 1/4 the bonding duration.
+	pub const SlashDeferDuration: darwinia_staking::EraIndex = 7 * 24; // 1/4 the bonding duration.
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
 	// --- custom ---
 	pub const Cap: Balance = CAP;
 	pub const TotalPower: Power = TOTAL_POWER;
 }
-impl pallet_staking::Trait for Runtime {
+impl darwinia_staking::Trait for Runtime {
 	type Time = Timestamp;
 	type Event = Event;
 	type SessionsPerEra = SessionsPerEra;
@@ -529,7 +532,7 @@ parameter_types! {
 	pub const TipReportDepositBase: Balance = 1 * COIN;
 	pub const TipReportDepositPerByte: Balance = 1 * MILLI;
 }
-impl pallet_treasury::Trait for Runtime {
+impl darwinia_treasury::Trait for Runtime {
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 	type ApproveOrigin = pallet_collective::EnsureMembers<_4, AccountId, CouncilCollective>;
@@ -552,7 +555,7 @@ impl pallet_treasury::Trait for Runtime {
 parameter_types! {
 	pub const MinVestedTransfer: Balance = 100 * COIN;
 }
-impl pallet_vesting::Trait for Runtime {
+impl darwinia_vesting::Trait for Runtime {
 	type Event = Event;
 	type Currency = Ring;
 	type BlockNumberToBalance = ConvertInto;
@@ -578,17 +581,17 @@ construct_runtime!(
 		ImOnline: pallet_im_online::{Module, Call, Storage, Config<T>, Event<T>, ValidateUnsigned},
 		Offences: pallet_offences::{Module, Call, Storage, Event},
 		// Custom Module
-		Balances: pallet_balances::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
-		Balances1: pallet_balances::<Instance1>::{Module, Call, Storage, Config<T>, Event<T>},
-		Claims: pallet_claims::{Module, Call, Storage, Config, Event<T>, ValidateUnsigned},
-		Elections: pallet_elections_phragmen::{Module, Call, Storage, Event<T>},
-		EthBacking: pallet_eth_backing::{Module, Call, Storage, Config<T>, Event<T>},
-		EthRelay: pallet_eth_relay::{Module, Call, Storage, Config<T>, Event<T>},
-		EthOffchain: pallet_eth_offchain::{Module, Call, Storage, Event<T>},
-		HeaderMMR: pallet_header_mmr::{Module, Call, Storage},
-		Staking: pallet_staking::{Module, Call, Storage, Config<T>, Event<T>},
-		Treasury: pallet_treasury::{Module, Call, Storage, Config, Event<T>},
-		Vesting: pallet_vesting::{Module, Call, Storage, Config<T>, Event<T>},
+		Balances: darwinia_balances::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
+		Balances1: darwinia_balances::<Instance1>::{Module, Call, Storage, Config<T>, Event<T>},
+		Claims: darwinia_claims::{Module, Call, Storage, Config, Event<T>, ValidateUnsigned},
+		Elections: darwinia_elections_phragmen::{Module, Call, Storage, Event<T>},
+		EthBacking: darwinia_eth_backing::{Module, Call, Storage, Config<T>, Event<T>},
+		EthRelay: darwinia_eth_relay::{Module, Call, Storage, Config<T>, Event<T>},
+		EthOffchain: darwinia_eth_offchain::{Module, Call, Storage, Event<T>},
+		HeaderMMR: darwinia_header_mmr::{Module, Call, Storage},
+		Staking: darwinia_staking::{Module, Call, Storage, Config<T>, Event<T>},
+		Treasury: darwinia_treasury::{Module, Call, Storage, Event<T>},
+		Vesting: darwinia_vesting::{Module, Call, Storage, Config<T>, Event<T>},
 	}
 );
 

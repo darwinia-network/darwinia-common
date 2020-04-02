@@ -1,3 +1,4 @@
+// --- substrate ---
 use wasm_builder_runner::WasmBuilder;
 
 fn main() {
