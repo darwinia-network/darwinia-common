@@ -32,7 +32,9 @@
 //!
 //! Based on research at https://research.web3.foundation/en/latest/polkadot/slashing/npos/
 
+// --- crates ---
 use codec::{Decode, Encode};
+// --- substrate ---
 use frame_support::{
 	traits::{Currency, Imbalance, OnUnbalanced, Time},
 	StorageDoubleMap, StorageMap,
@@ -45,7 +47,7 @@ use sp_std::{
 	ops::{Add, AddAssign, Sub},
 	prelude::*,
 };
-
+// --- darwinia ---
 use crate::*;
 
 /// The proportion of the slashing reward to be paid out on the first slashing detection.

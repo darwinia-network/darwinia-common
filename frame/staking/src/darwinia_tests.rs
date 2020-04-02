@@ -1,5 +1,6 @@
 //! Tests for the module.
 
+// --- substrate ---
 use frame_support::{assert_err, assert_noop, assert_ok, traits::ReservableCurrency};
 use sp_runtime::{
 	assert_eq_error_rate,
@@ -7,7 +8,7 @@ use sp_runtime::{
 	DispatchError,
 };
 use substrate_test_utils::assert_eq_uvec;
-
+// --- darwinia ---
 use crate::{mock::*, *};
 use darwinia_support::balance::lock::*;
 
@@ -424,7 +425,10 @@ fn transform_to_deposited_ring_should_work() {
 			expire_time: 12 * MONTH_IN_MILLISECONDS,
 		});
 		assert_eq!(Staking::ledger(controller).unwrap(), ledger);
-		assert_eq!(Kton::free_balance(&stash), kton_free_balance + (COIN / 10000));
+		assert_eq!(
+			Kton::free_balance(&stash),
+			kton_free_balance + (COIN / 10000)
+		);
 	});
 }
 
@@ -446,7 +450,11 @@ fn expired_ring_should_capable_to_promise_again() {
 
 		Timestamp::set_timestamp(ts);
 
-		assert_ok!(Staking::deposit_extra(Origin::signed(stash), promise_extra_value, 13,));
+		assert_ok!(Staking::deposit_extra(
+			Origin::signed(stash),
+			promise_extra_value,
+			13,
+		));
 		ledger.active_deposit_ring = promise_extra_value;
 
 		// old deposit_item with 12 months promised removed
@@ -551,7 +559,10 @@ fn slash_should_not_touch_unbondings() {
 		assert_ok!(Staking::deposit_extra(Origin::signed(stash), 1000, 12));
 		let ledger = Staking::ledger(controller).unwrap();
 		// Only deposit_ring, no normal_ring.
-		assert_eq!((ledger.active_ring, ledger.active_deposit_ring), (1000, 1000));
+		assert_eq!(
+			(ledger.active_ring, ledger.active_deposit_ring),
+			(1000, 1000)
+		);
 
 		let _ = Ring::deposit_creating(&stash, 1000);
 		assert_ok!(Staking::bond_extra(
@@ -775,18 +786,30 @@ fn promise_extra_should_not_remove_unexpired_items() {
 			0,
 		));
 		for _ in 0..expired_items_len {
-			assert_ok!(Staking::deposit_extra(Origin::signed(stash), COIN, promise_month));
+			assert_ok!(Staking::deposit_extra(
+				Origin::signed(stash),
+				COIN,
+				promise_month
+			));
 		}
 
 		Timestamp::set_timestamp(expiry_date - 1);
-		assert_ok!(Staking::deposit_extra(Origin::signed(stash), 2 * COIN, promise_month,));
+		assert_ok!(Staking::deposit_extra(
+			Origin::signed(stash),
+			2 * COIN,
+			promise_month,
+		));
 		assert_eq!(
 			Staking::ledger(controller).unwrap().deposit_items.len(),
 			2 + expired_items_len,
 		);
 
 		Timestamp::set_timestamp(expiry_date);
-		assert_ok!(Staking::deposit_extra(Origin::signed(stash), 2 * COIN, promise_month,));
+		assert_ok!(Staking::deposit_extra(
+			Origin::signed(stash),
+			2 * COIN,
+			promise_month,
+		));
 		assert_eq!(Staking::ledger(controller).unwrap().deposit_items.len(), 2);
 	});
 }
@@ -798,8 +821,14 @@ fn unbond_zero() {
 		let ledger = Staking::ledger(controller).unwrap();
 
 		Timestamp::set_timestamp(promise_month * MONTH_IN_MILLISECONDS);
-		assert_ok!(Staking::unbond(Origin::signed(10), StakingBalance::RingBalance(0)));
-		assert_ok!(Staking::unbond(Origin::signed(10), StakingBalance::KtonBalance(0)));
+		assert_ok!(Staking::unbond(
+			Origin::signed(10),
+			StakingBalance::RingBalance(0)
+		));
+		assert_ok!(Staking::unbond(
+			Origin::signed(10),
+			StakingBalance::KtonBalance(0)
+		));
 		assert_eq!(Staking::ledger(controller).unwrap(), ledger);
 	});
 }
@@ -844,7 +873,10 @@ fn two_different_bond_then_unbond_specific_one() {
 		assert_eq!(Staking::ledger(controller).unwrap().active_kton, 1);
 
 		// Become a nominator
-		assert_ok!(Staking::nominate(Origin::signed(controller), vec![controller]));
+		assert_ok!(Staking::nominate(
+			Origin::signed(controller),
+			vec![controller]
+		));
 
 		// Then unbond the the first 12 months part,
 		// this behavior should be punished 3 times Kton according to the remaining times
