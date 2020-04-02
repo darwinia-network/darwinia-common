@@ -46,10 +46,28 @@ mod mock;
 mod tests;
 
 // --- third-party ---
+use codec::{Decode, Encode};
 use frame_support::{decl_error, decl_module, decl_storage, ensure};
 use merkle_mountain_range::{MMRStore, MerkleProof, MMR};
-use sp_runtime::{generic::DigestItem, traits::Hash, DispatchError};
+#[cfg(feature = "std")]
+use serde::Serialize;
+use sp_runtime::{
+	generic::{DigestItem, OpaqueDigestItemId},
+	traits::{Hash, Header},
+	DispatchError, RuntimeDebug,
+};
 use sp_std::{marker::PhantomData, prelude::*};
+
+pub const MRR_ROOT_LOG_ID: [u8; 4] = *b"MMRR";
+
+#[cfg_attr(feature = "std", derive(Serialize))]
+#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug)]
+pub struct MerkleMountainRangeRootLog<Hash> {
+	/// The new authorities after the change, along with their respective weights.
+	pub prefix: [u8; 4],
+	/// The number of blocks to delay.
+	pub mmr_root: Hash,
+}
 
 pub trait Trait: frame_system::Trait {}
 
@@ -99,7 +117,12 @@ decl_module! {
 			let mmr_root = mmr.get_root().expect("Failed to calculate merkle mountain range; qed");
 			mmr.commit().expect("Failed to push parent hash to mmr.");
 
-			let mmr_item = DigestItem::MerkleMountainRangeRoot(mmr_root.into());
+			let mmr_root_log = MerkleMountainRangeRootLog::<T::Hash> {
+				prefix : MRR_ROOT_LOG_ID,
+				mmr_root : mmr_root.into()
+			};
+
+			let mmr_item = DigestItem::Other(mmr_root_log.encode());
 
 			<frame_system::Module<T>>::deposit_log(mmr_item.into());
 		}
@@ -166,5 +189,27 @@ impl<T: Trait> Module<T> {
 		let proof = mmr.gen_proof(vec![pos]).map_err(|_| <Error<T>>::ProofGF)?;
 
 		Ok(proof)
+	}
+
+	// TODO: For future rpc calls
+	fn _find_mmr_root(header: T::Header) -> Option<T::Hash> {
+		let id = OpaqueDigestItemId::Other;
+
+		let filter_log = |log: MerkleMountainRangeRootLog<T::Hash>| match log {
+			MerkleMountainRangeRootLog { prefix, mmr_root } => {
+				if prefix == MRR_ROOT_LOG_ID {
+					Some(mmr_root)
+				} else {
+					None
+				}
+			}
+			_ => None,
+		};
+
+		// find the first consensus digest with the right ID which converts to
+		// the right kind of consensus log.
+		header
+			.digest()
+			.convert_first(|l| l.try_to(id).and_then(filter_log))
 	}
 }
