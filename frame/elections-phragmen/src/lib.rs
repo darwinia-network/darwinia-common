@@ -1029,7 +1029,10 @@ mod tests {
 			TERM_DURATION.with(|v| *v.borrow_mut() = self.term_duration);
 			DESIRED_RUNNERS_UP.with(|v| *v.borrow_mut() = self.desired_runners_up);
 			GenesisConfig {
-				darwinia_balances: Some(darwinia_balances::GenesisConfig::<Test, RingInstance> {
+				darwinia_balances_Instance0: Some(darwinia_balances::GenesisConfig::<
+					Test,
+					RingInstance,
+				> {
 					balances: vec![
 						(1, 10 * self.balance_factor),
 						(2, 20 * self.balance_factor),
