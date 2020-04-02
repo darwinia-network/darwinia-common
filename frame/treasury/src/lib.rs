@@ -77,6 +77,7 @@ mod mock;
 mod tests;
 
 mod types {
+	// --- darwinia ---
 	use crate::*;
 
 	/// An index of a proposal. Just a `u32`.
@@ -98,8 +99,11 @@ mod types {
 	type KtonCurrency<T> = <T as Trait>::KtonCurrency;
 }
 
-// third-parity
+// --- crates ---
 use codec::{Decode, Encode};
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
+// --- substrate ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure, print,
 	traits::{
@@ -110,8 +114,6 @@ use frame_support::{
 	Parameter,
 };
 use frame_system::{self as system, ensure_signed};
-#[cfg(feature = "std")]
-use serde::{Deserialize, Serialize};
 use sp_runtime::{
 	traits::{
 		AccountIdConversion, AtLeast32Bit, BadOrigin, EnsureOrigin, Hash, Saturating, StaticLookup,
@@ -120,8 +122,7 @@ use sp_runtime::{
 	ModuleId, Percent, Permill, RuntimeDebug,
 };
 use sp_std::prelude::*;
-
-// custom
+// --- darwinia ---
 use darwinia_support::traits::OnUnbalancedKton;
 use types::*;
 

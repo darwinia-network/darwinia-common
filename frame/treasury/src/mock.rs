@@ -1,5 +1,6 @@
 //! Mock file for treasury.
 
+// --- substrate ---
 use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
 use sp_core::H256;
 use sp_runtime::{
@@ -7,21 +8,33 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	Perbill,
 };
-
+// --- darwinia ---
 use crate::*;
 
-// --- substrate ---
+type Balance = u64;
+
+pub type RingInstance = darwinia_balances::Instance0;
+pub type _RingError = darwinia_balances::Error<Test, RingInstance>;
+pub type Ring = darwinia_balances::Module<Test, RingInstance>;
+
+pub type KtonInstance = darwinia_balances::Instance1;
+pub type _KtonError = darwinia_balances::Error<Test, KtonInstance>;
+pub type Kton = darwinia_balances::Module<Test, KtonInstance>;
+
 pub type System = frame_system::Module<Test>;
-
-// --- custom ---
-pub type KtonInstance = pallet_balances::Instance1;
-pub type RingInstance = pallet_balances::Instance2;
-pub type Kton = pallet_balances::Module<Test, KtonInstance>;
-pub type Ring = pallet_balances::Module<Test, RingInstance>;
-pub type Balance = u64;
-
-// --- current ---
 pub type Treasury = Module<Test>;
+
+darwinia_support::impl_account_data! {
+	pub struct AccountData<Balance>
+	for
+		RingInstance,
+		KtonInstance
+	where
+		Balance = Balance
+	{
+		// other data
+	}
+}
 
 impl_outer_origin! {
 	pub enum Origin for Test  where system = frame_system {}
@@ -73,78 +86,8 @@ parameter_types! {
 		pub const ExistentialDeposit: u64 = 1;
 }
 
-#[derive(Encode, Decode, Clone, PartialEq, Eq, Default, RuntimeDebug)]
-pub struct AccountData<Balance> {
-	pub free_ring: Balance,
-	pub free_kton: Balance,
-	pub reserved_ring: Balance,
-	pub reserved_kton: Balance,
-}
-
-impl darwinia_support::balance::BalanceInfo<Balance, KtonInstance> for AccountData<Balance> {
-	fn free(&self) -> Balance {
-		self.free_kton
-	}
-
-	fn reserved(&self) -> Balance {
-		self.reserved_kton
-	}
-
-	fn set_free(&mut self, new_free: Balance) {
-		self.free_kton = new_free;
-	}
-
-	fn set_reserved(&mut self, new_reserved: Balance) {
-		self.reserved_kton = new_reserved;
-	}
-
-	fn usable(
-		&self,
-		reasons: darwinia_support::balance::lock::LockReasons,
-		frozen_balance: darwinia_support::balance::FrozenBalance<Balance>,
-	) -> Balance {
-		self.free_kton
-			.saturating_sub(frozen_balance.frozen_for(reasons))
-	}
-
-	fn total(&self) -> Balance {
-		self.free_kton.saturating_add(self.reserved_kton)
-	}
-}
-
-impl darwinia_support::balance::BalanceInfo<Balance, RingInstance> for AccountData<Balance> {
-	fn free(&self) -> Balance {
-		self.free_ring
-	}
-
-	fn reserved(&self) -> Balance {
-		self.reserved_ring
-	}
-
-	fn set_free(&mut self, new_free: Balance) {
-		self.free_ring = new_free;
-	}
-
-	fn set_reserved(&mut self, new_reserved: Balance) {
-		self.reserved_ring = new_reserved;
-	}
-
-	fn usable(
-		&self,
-		reasons: darwinia_support::balance::lock::LockReasons,
-		frozen_balance: darwinia_support::balance::FrozenBalance<Balance>,
-	) -> Balance {
-		self.free_ring
-			.saturating_sub(frozen_balance.frozen_for(reasons))
-	}
-
-	fn total(&self) -> Balance {
-		self.free_ring.saturating_add(self.reserved_ring)
-	}
-}
-
-impl pallet_balances::Trait<KtonInstance> for Test {
-	type Balance = u64;
+impl darwinia_balances::Trait<KtonInstance> for Test {
+	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = ();
 	type ExistentialDeposit = ExistentialDeposit;
@@ -152,8 +95,8 @@ impl pallet_balances::Trait<KtonInstance> for Test {
 	type AccountStore = System;
 	type TryDropOther = ();
 }
-impl pallet_balances::Trait<RingInstance> for Test {
-	type Balance = u64;
+impl darwinia_balances::Trait<RingInstance> for Test {
+	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = ();
 	type ExistentialDeposit = ExistentialDeposit;
@@ -164,14 +107,14 @@ impl pallet_balances::Trait<RingInstance> for Test {
 
 parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
-	pub const RingProposalBondMinimum: u64 = 1;
-	pub const KtonProposalBondMinimum: u64 = 1;
+	pub const RingProposalBondMinimum: Balance = 1;
+	pub const KtonProposalBondMinimum: Balance = 1;
 	pub const SpendPeriod: u64 = 2;
 	pub const Burn: Permill = Permill::from_percent(50);
 	pub const TipCountdown: u64 = 1;
 	pub const TipFindersFee: Percent = Percent::from_percent(20);
-	pub const TipReportDepositBase: u64 = 1;
-	pub const TipReportDepositPerByte: u64 = 1;
+	pub const TipReportDepositBase: Balance = 1;
+	pub const TipReportDepositPerByte: Balance = 1;
 }
 impl Trait for Test {
 	type RingCurrency = Ring;
@@ -198,13 +141,13 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		.build_storage::<Test>()
 		.unwrap();
 
-	pallet_balances::GenesisConfig::<Test, RingInstance> {
+	darwinia_balances::GenesisConfig::<Test, RingInstance> {
 		// Total issuance will be 200 with treasury account initialized at ED.
 		balances: vec![(0, 100), (1, 98), (2, 1)],
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
-	pallet_balances::GenesisConfig::<Test, KtonInstance> {
+	darwinia_balances::GenesisConfig::<Test, KtonInstance> {
 		// Total issuance will be 200 with treasury account initialized at ED.
 		balances: vec![(0, 100), (1, 98), (2, 1)],
 	}
