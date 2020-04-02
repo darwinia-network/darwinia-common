@@ -16,9 +16,12 @@ mod types {
 	// type KtonCurrency<T> = <T as Trait>::KtonCurrency;
 }
 
+// --- darwinia ---
 pub use address::{EthereumAddress, TronAddress};
 
+// --- crates ---
 use codec::{Decode, Encode};
+// --- substrate ---
 use frame_support::{
 	traits::{Currency, Get},
 	weights::SimpleDispatchInfo,
@@ -36,7 +39,7 @@ use sp_runtime::{
 	RuntimeDebug,
 };
 use sp_std::prelude::*;
-
+// --- darwinia ---
 use address::AddressT;
 use types::*;
 
@@ -378,43 +381,51 @@ impl<T: Trait> sp_runtime::traits::ValidateUnsigned for Module<T> {
 
 #[cfg(test)]
 mod tests {
-	// --- third-party ---
+	// --- crates ---
 	use codec::Encode;
-	use frame_support::{assert_err, assert_noop, assert_ok, impl_outer_origin, parameter_types};
 	use hex_literal::hex;
+	use tiny_keccak::keccak256;
+	// --- substrate ---
+	use frame_support::{assert_err, assert_noop, assert_ok, impl_outer_origin, parameter_types};
 	use sp_core::H256;
 	use sp_runtime::{
 		testing::Header,
 		traits::{BlakeTwo256, IdentityLookup},
 		Perbill,
 	};
-	use tiny_keccak::keccak256;
-
-	use pallet_support::balance::{lock::LockReasons, BalanceInfo, FrozenBalance};
-
-	// --- custom ---
+	// --- darwinia ---
 	use crate::*;
 
-	// --- substrate ---
+	type Balance = u64;
+
+	type RingInstance = darwinia_balances::Instance0;
+	type _RingError = darwinia_balances::Error<Test, RingInstance>;
+	type Ring = darwinia_balances::Module<Test, RingInstance>;
+
+	type KtonInstance = darwinia_balances::Instance1;
+	type _KtonError = darwinia_balances::Error<Test, KtonInstance>;
+	type _Kton = darwinia_balances::Module<Test, KtonInstance>;
+
 	type System = frame_system::Module<Test>;
-
-	// --- darwinia ---
-	type Ring = pallet_balances::Module<Test>;
-
-	// --- current ---
 	type Claims = Module<Test>;
+
+	darwinia_support::impl_account_data! {
+		pub struct AccountData<Balance>
+		for
+			RingInstance,
+			KtonInstance
+		where
+			Balance = Balance
+		{
+			// other data
+		}
+	}
 
 	const ETHEREUM_SIGNED_MESSAGE: &'static [u8] = b"\x19Ethereum Signed Message:\n";
 	const TRON_SIGNED_MESSAGE: &'static [u8] = b"\x19TRON Signed Message:\n";
 
 	impl_outer_origin! {
 		pub enum Origin for Test {}
-	}
-
-	#[derive(Encode, Decode, Clone, PartialEq, Eq, Default, RuntimeDebug)]
-	pub struct AccountData<Balance> {
-		pub free: Balance,
-		pub reserved: Balance,
 	}
 
 	#[derive(Clone, Eq, PartialEq)]
@@ -445,50 +456,24 @@ mod tests {
 		type AvailableBlockRatio = AvailableBlockRatio;
 		type Version = ();
 		type ModuleToIndex = ();
-		type AccountData = AccountData<u64>;
+		type AccountData = AccountData<Balance>;
 		type OnNewAccount = ();
 		type OnKilledAccount = ();
 		type MigrateAccount = ();
 	}
 
 	parameter_types! {
-		pub const ExistentialDeposit: u64 = 1;
-		pub const CreationFee: u64 = 0;
+		pub const ExistentialDeposit: Balance = 1;
+		pub const CreationFee: Balance = 0;
 	}
-	impl pallet_balances::Trait for Test {
-		type Balance = u64;
+	impl darwinia_balances::Trait<RingInstance> for Test {
+		type Balance = Balance;
 		type DustRemoval = ();
 		type Event = ();
 		type ExistentialDeposit = ExistentialDeposit;
-		type BalanceInfo = AccountData<u64>;
+		type BalanceInfo = AccountData<Balance>;
 		type AccountStore = System;
 		type TryDropOther = ();
-	}
-
-	impl BalanceInfo<u64, pallet_balances::DefaultInstance> for AccountData<u64> {
-		fn free(&self) -> u64 {
-			self.free
-		}
-
-		fn reserved(&self) -> u64 {
-			self.reserved
-		}
-
-		fn set_free(&mut self, new_free: u64) {
-			self.free = new_free;
-		}
-
-		fn set_reserved(&mut self, new_reserved: u64) {
-			self.reserved = new_reserved;
-		}
-
-		fn usable(&self, reasons: LockReasons, frozen_balance: FrozenBalance<u64>) -> u64 {
-			self.free.saturating_sub(frozen_balance.frozen_for(reasons))
-		}
-
-		fn total(&self) -> u64 {
-			self.free.saturating_add(self.reserved)
-		}
 	}
 
 	parameter_types! {
@@ -563,7 +548,7 @@ mod tests {
 			.build_storage::<Test>()
 			.unwrap();
 		// We use default for brevity, but you can configure as desired if needed.
-		pallet_balances::GenesisConfig::<Test>::default()
+		darwinia_balances::GenesisConfig::<Test, RingInstance>::default()
 			.assimilate_storage(&mut t)
 			.unwrap();
 		GenesisConfig {
