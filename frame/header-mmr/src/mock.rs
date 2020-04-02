@@ -2,13 +2,13 @@
 
 #![cfg(test)]
 
-// --- third-party ---
+// --- crates ---
 use codec::{Decode, Encode};
+// --- substrate ---
 use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
 use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, DigestItem, Perbill};
-
-// --- custom ---
+// --- darwinia ---
 use crate::*;
 
 impl_outer_origin! {

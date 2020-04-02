@@ -17,7 +17,7 @@ node-template-runtime = { path = "../runtime" }
 # crates
 futures = "0.3.4"
 log = "0.4.8"
-structopt = "0.3.8"
+structopt = "0.3.12"
 # substrate
 pallet-im-online = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
 sc-cli = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
@@ -40,6 +40,6 @@ sc-basic-authorship = { git = "https://github.com/darwinia-network/substrate.git
 
 [build-dependencies]
 # crates
-vergen = "3.0.4"
+vergen = "3.1.0"
 # substrate
 build-script-utils = { package = "substrate-build-script-utils", git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }

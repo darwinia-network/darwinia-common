@@ -10,8 +10,8 @@ repository = "https://github.com/darwinia-network/darwinia/"
 
 [dependencies]
 # crates
-codec = { package = "parity-scale-codec", version = "1.0.0", default-features = false, features = ["derive"] }
-serde = { version = "1.0.101", optional = true }
+codec = { package = "parity-scale-codec", version = "1.3.0", default-features = false, features = ["derive"] }
+serde = { version = "1.0.105", optional = true }
 # darwinia
 darwinia-support = { default-features = false, path = "../support" }
 # substrate
@@ -25,7 +25,7 @@ sp-std = { default-features = false, git = "https://github.com/darwinia-network/
 # crates
 hex-literal = { version = "0.2.1" }
 # darwinia
-pallet-balances = { package = "darwinia-balances", path = "../balances" }
+darwinia-balances = { path = "../balances" }
 # substrate
 sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
 sp-storage = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }

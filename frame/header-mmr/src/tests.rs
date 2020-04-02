@@ -2,16 +2,13 @@
 
 #![cfg(test)]
 
-// --- third-party ---
+// --- substrate ---
 use sp_runtime::{
 	testing::{Digest, H256},
 	traits::{Header, OnFinalize},
 };
 
-//#[cfg(feature = "std")]
-//use serde::{Deserialize, Serialize};
-
-// --- custom ---
+// --- darwinia ---
 use crate::{mock::*, *};
 
 #[test]

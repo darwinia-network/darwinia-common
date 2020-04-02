@@ -45,12 +45,14 @@
 mod mock;
 mod tests;
 
-// --- third-party ---
-use codec::{Decode, Encode};
-use frame_support::{decl_error, decl_module, decl_storage, ensure};
-use merkle_mountain_range::{MMRStore, MerkleProof, MMR};
 #[cfg(feature = "std")]
 use serde::Serialize;
+
+// --- github ---
+use merkle_mountain_range::{MMRStore, MerkleProof, MMR};
+// --- substrate ---
+use codec::{Decode, Encode};
+use frame_support::{decl_error, decl_module, decl_storage, ensure};
 use sp_runtime::{
 	generic::{DigestItem, OpaqueDigestItemId},
 	traits::{Hash, Header},

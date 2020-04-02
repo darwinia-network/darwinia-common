@@ -66,6 +66,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+// --- substrate ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
 	storage::{IterableStorageMap, StorageMap},
@@ -82,7 +83,7 @@ use sp_runtime::{
 	DispatchError, DispatchResult, Perbill,
 };
 use sp_std::prelude::*;
-
+// --- darwinia ---
 use darwinia_support::balance::lock::*;
 
 const MODULE_ID: LockIdentifier = *b"phrelect";
@@ -782,8 +783,11 @@ impl<T: Trait> Contains<T::AccountId> for Module<T> {
 
 #[cfg(test)]
 mod tests {
+	// --- std ---
 	use std::cell::RefCell;
-
+	// --- crates ---
+	use codec::{Decode, Encode};
+	// --- substrate ---
 	use frame_support::{assert_noop, assert_ok, parameter_types, weights::Weight};
 	use sp_core::H256;
 	use sp_runtime::{
@@ -792,11 +796,31 @@ mod tests {
 		BuildStorage, Perbill, RuntimeDebug,
 	};
 	use substrate_test_utils::assert_eq_uvec;
-
+	// --- darwinia ---
 	use crate as elections;
-	use codec::{Decode, Encode};
-	use darwinia_support::balance::{lock::LockReasons, BalanceInfo, FrozenBalance};
 	use elections::*;
+
+	type Balance = u64;
+
+	type RingInstance = darwinia_balances::Instance0;
+	type _RingError = darwinia_balances::Error<Test, RingInstance>;
+	type _Ring = darwinia_balances::Module<Test, RingInstance>;
+
+	type KtonInstance = darwinia_balances::Instance1;
+	type _KtonError = darwinia_balances::Error<Test, KtonInstance>;
+	type _Kton = darwinia_balances::Module<Test, KtonInstance>;
+
+	darwinia_support::impl_account_data! {
+		pub struct AccountData<Balance>
+		for
+			RingInstance,
+			KtonInstance
+		where
+			Balance = Balance
+		{
+			// other data
+		}
+	}
 
 	parameter_types! {
 		pub const BlockHashCount: u64 = 250;
@@ -822,72 +846,40 @@ mod tests {
 		type AvailableBlockRatio = AvailableBlockRatio;
 		type Version = ();
 		type ModuleToIndex = ();
-		type AccountData = AccountData<u64>;
+		type AccountData = AccountData<Balance>;
 		type OnNewAccount = ();
 		type OnKilledAccount = ();
 		type MigrateAccount = ();
 	}
 
 	parameter_types! {
-			pub const ExistentialDeposit: u64 = 1;
+			pub const ExistentialDeposit: Balance = 1;
 	}
 
-	impl pallet_balances::Trait for Test {
-		type Balance = u64;
+	impl darwinia_balances::Trait<RingInstance> for Test {
+		type Balance = Balance;
 		type DustRemoval = ();
 		type Event = Event;
 		type ExistentialDeposit = ExistentialDeposit;
-		type BalanceInfo = AccountData<u64>;
+		type BalanceInfo = AccountData<Balance>;
 		type AccountStore = frame_system::Module<Test>;
 		type TryDropOther = ();
 	}
 
-	#[derive(Encode, Decode, Clone, PartialEq, Eq, Default, RuntimeDebug)]
-	pub struct AccountData<Balance> {
-		pub free: Balance,
-		pub reserved: Balance,
-	}
-
-	impl BalanceInfo<u64, pallet_balances::DefaultInstance> for AccountData<u64> {
-		fn free(&self) -> u64 {
-			self.free
-		}
-
-		fn reserved(&self) -> u64 {
-			self.reserved
-		}
-
-		fn set_free(&mut self, new_free: u64) {
-			self.free = new_free;
-		}
-
-		fn set_reserved(&mut self, new_reserved: u64) {
-			self.reserved = new_reserved;
-		}
-
-		fn usable(&self, reasons: LockReasons, frozen_balance: FrozenBalance<u64>) -> u64 {
-			self.free.saturating_sub(frozen_balance.frozen_for(reasons))
-		}
-
-		fn total(&self) -> u64 {
-			self.free.saturating_add(self.reserved)
-		}
-	}
-
 	parameter_types! {
-		pub const CandidacyBond: u64 = 3;
+		pub const CandidacyBond: Balance = 3;
 	}
 
 	thread_local! {
-		static VOTING_BOND: RefCell<u64> = RefCell::new(2);
+		static VOTING_BOND: RefCell<Balance> = RefCell::new(2);
 		static DESIRED_MEMBERS: RefCell<u32> = RefCell::new(2);
 		static DESIRED_RUNNERS_UP: RefCell<u32> = RefCell::new(2);
 		static TERM_DURATION: RefCell<u64> = RefCell::new(5);
 	}
 
 	pub struct VotingBond;
-	impl Get<u64> for VotingBond {
-		fn get() -> u64 {
+	impl Get<Balance> for VotingBond {
+		fn get() -> Balance {
 			VOTING_BOND.with(|v| *v.borrow())
 		}
 	}
@@ -996,7 +988,7 @@ mod tests {
 			UncheckedExtrinsic = UncheckedExtrinsic
 		{
 			System: frame_system::{Module, Call, Event<T>},
-			Balances: pallet_balances::{Module, Call, Event<T>, Config<T>},
+			Balances: darwinia_balances::<Instance0>::{Module, Call, Event<T>, Config<T>},
 			Elections: elections::{Module, Call, Event<T>},
 		}
 	);
@@ -1037,7 +1029,7 @@ mod tests {
 			TERM_DURATION.with(|v| *v.borrow_mut() = self.term_duration);
 			DESIRED_RUNNERS_UP.with(|v| *v.borrow_mut() = self.desired_runners_up);
 			GenesisConfig {
-				pallet_balances: Some(pallet_balances::GenesisConfig::<Test> {
+				darwinia_balances: Some(darwinia_balances::GenesisConfig::<Test, RingInstance> {
 					balances: vec![
 						(1, 10 * self.balance_factor),
 						(2, 20 * self.balance_factor),

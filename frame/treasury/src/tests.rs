@@ -1,9 +1,10 @@
 //! Tests for treasury.
 
+// --- substrate ---
 use frame_support::{assert_noop, assert_ok};
 use sp_core::H256;
 use sp_runtime::traits::{BlakeTwo256, OnFinalize};
-
+// --- darwinia ---
 use crate::{mock::*, *};
 
 #[test]
@@ -389,12 +390,12 @@ fn inexistent_account_works() {
 	let mut t = frame_system::GenesisConfig::default()
 		.build_storage::<Test>()
 		.unwrap();
-	pallet_balances::GenesisConfig::<Test, RingInstance> {
+	darwinia_balances::GenesisConfig::<Test, RingInstance> {
 		balances: vec![(0, 100), (1, 99), (2, 1)],
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
-	pallet_balances::GenesisConfig::<Test, KtonInstance> {
+	darwinia_balances::GenesisConfig::<Test, KtonInstance> {
 		balances: vec![(0, 100), (1, 99), (2, 1)],
 	}
 	.assimilate_storage(&mut t)

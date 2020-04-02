@@ -10,8 +10,9 @@ mod mock_headers;
 #[cfg(all(feature = "std", test))]
 mod tests;
 
-// --- third-party ---
+// --- crates ---
 use codec::{Decode, Encode};
+// --- substrate ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure, traits::Get,
 	weights::SimpleDispatchInfo,
@@ -19,8 +20,7 @@ use frame_support::{
 use frame_system::{self as system, ensure_root, ensure_signed};
 use sp_runtime::{DispatchError, DispatchResult, RuntimeDebug};
 use sp_std::prelude::*;
-
-// --- custom ---
+// --- darwinia ---
 use eth_primitives::{
 	header::EthHeader, pow::EthashPartial, pow::EthashSeal, receipt::Receipt, EthBlockNumber, H256,
 	U256,

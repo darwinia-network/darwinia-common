@@ -1,12 +1,11 @@
 //! Balances pallet benchmarking.
 
-use super::*;
-
+// --- substrate ---
 use frame_benchmarking::{account, benchmarks};
 use frame_system::RawOrigin;
 use sp_runtime::traits::{Bounded, Dispatchable};
-
-use crate::Module as Balances;
+// --- darwinia ---
+use crate::{Module as Balances, *};
 
 const SEED: u32 = 0;
 const MAX_EXISTENTIAL_DEPOSIT: u32 = 1000;

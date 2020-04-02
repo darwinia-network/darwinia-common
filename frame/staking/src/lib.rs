@@ -246,6 +246,7 @@ mod inflation;
 mod slashing;
 
 mod types {
+	// --- darwinia ---
 	use crate::*;
 
 	/// Counter for the number of eras that have passed.
@@ -289,9 +290,12 @@ mod types {
 	type KtonCurrency<T> = <T as Trait>::KtonCurrency;
 }
 
+// --- darwinia ---
 pub use types::EraIndex;
 
+// --- crates ---
 use codec::{Decode, Encode, HasCompact};
+// --- substrate ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
 	storage::IterableStorageMap,
@@ -313,7 +317,7 @@ use sp_staking::{
 	SessionIndex,
 };
 use sp_std::{collections::btree_map::BTreeMap, convert::TryInto, marker::PhantomData, prelude::*};
-
+// --- darwinia ---
 use darwinia_phragmen::{PhragmenStakedAssignment, Power, Votes};
 use darwinia_support::{
 	balance::lock::*,

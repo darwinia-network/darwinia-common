@@ -1,12 +1,11 @@
-// --- third-party ---
+// --- substrate ---
 use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
 use sp_runtime::{
 	testing::{Header, TestXt},
 	traits::{BlakeTwo256, Extrinsic as ExtrinsicsT, IdentityLookup},
 	Perbill,
 };
-
-// --- custom ---
+// --- darwinia ---
 use crate::*;
 
 impl_outer_origin! {
@@ -79,13 +78,13 @@ impl pallet_timestamp::Trait for Test {
 parameter_types! {
 	pub const EthRopsten: u64 = 1;
 }
-impl pallet_eth_relay::Trait for Test {
+impl darwinia_eth_relay::Trait for Test {
 	type Event = ();
 	type EthNetwork = EthRopsten;
 }
 
-impl From<pallet_eth_relay::Call<Test>> for Call<Test> {
-	fn from(_: pallet_eth_relay::Call<Test>) -> Self {
+impl From<darwinia_eth_relay::Call<Test>> for Call<Test> {
+	fn from(_: darwinia_eth_relay::Call<Test>) -> Self {
 		unimplemented!()
 	}
 }

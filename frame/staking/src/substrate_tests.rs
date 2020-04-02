@@ -10,7 +10,7 @@
 //! + If you want to delete some functions, please left some comments
 //! explaining why you delete them.
 
-// --- third-party ---
+// --- substrate ---
 use frame_support::{
 	assert_noop, assert_ok,
 	traits::{Currency, ReservableCurrency},
@@ -22,8 +22,7 @@ use sp_runtime::{
 };
 use sp_staking::offence::OffenceDetails;
 use substrate_test_utils::assert_eq_uvec;
-
-// --- custom ---
+// --- darwinia ---
 use crate::{
 	mock::{AccountId, Balance, *},
 	*,
