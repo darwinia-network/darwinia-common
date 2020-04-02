@@ -1,19 +1,17 @@
 //! Mock file for eth-relay.
 
+// --- substrate ---
 use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
 use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill};
-
+// --- darwinia ---
 use crate::*;
-
-// --- substrate ---
-pub type System = frame_system::Module<Test>;
-
-// --- current ---
-pub type EthRelay = Module<Test>;
 
 type AccountId = u64;
 type BlockNumber = u64;
+
+pub type System = frame_system::Module<Test>;
+pub type EthRelay = Module<Test>;
 
 impl_outer_origin! {
 	pub enum Origin for Test {}
