@@ -63,9 +63,9 @@ pub const MRR_ROOT_LOG_ID: [u8; 4] = *b"MMRR";
 #[cfg_attr(feature = "std", derive(Serialize))]
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug)]
 pub struct MerkleMountainRangeRootLog<Hash> {
-	/// The new authorities after the change, along with their respective weights.
+	/// Specific prefix to identify the mmr root log in the digest items with Other type.
 	pub prefix: [u8; 4],
-	/// The number of blocks to delay.
+	/// The merkle mountain range root hash.
 	pub mmr_root: Hash,
 }
 
@@ -170,7 +170,7 @@ impl<T: Trait> MMRStore<T::Hash> for ModuleMMRStore<T> {
 }
 
 impl<T: Trait> Module<T> {
-	// TODO: Add rpc call for this
+	// TODO: For future rpc calls
 	fn _gen_proof(
 		block_number: T::BlockNumber,
 		mmr_block_number: T::BlockNumber,
@@ -195,19 +195,16 @@ impl<T: Trait> Module<T> {
 	fn _find_mmr_root(header: T::Header) -> Option<T::Hash> {
 		let id = OpaqueDigestItemId::Other;
 
-		let filter_log = |log: MerkleMountainRangeRootLog<T::Hash>| match log {
-			MerkleMountainRangeRootLog { prefix, mmr_root } => {
-				if prefix == MRR_ROOT_LOG_ID {
-					Some(mmr_root)
-				} else {
-					None
-				}
-			}
-			_ => None,
-		};
+		let filter_log =
+			|MerkleMountainRangeRootLog { prefix, mmr_root }: MerkleMountainRangeRootLog<
+				T::Hash,
+			>| match prefix {
+				MRR_ROOT_LOG_ID => Some(mmr_root),
+				_ => None,
+			};
 
-		// find the first consensus digest with the right ID which converts to
-		// the right kind of consensus log.
+		// find the first other digest with the right prefix which converts to
+		// the right kind of mmr root log.
 		header
 			.digest()
 			.convert_first(|l| l.try_to(id).and_then(filter_log))
