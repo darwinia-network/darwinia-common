@@ -2,8 +2,9 @@
 
 // --- std ---
 use std::cell::RefCell;
-// --- third-party ---
+// --- crates ---
 use codec::{Decode, Encode};
+// --- substrate ---
 use frame_support::{
 	impl_outer_origin, parameter_types,
 	traits::{Get, StorageMapShim},
@@ -16,9 +17,8 @@ use sp_runtime::{
 	traits::{ConvertInto, IdentityLookup},
 	Perbill, RuntimeDebug,
 };
-// --- custom ---
+// --- darwinia ---
 use crate::*;
-use darwinia_support::impl_account_data;
 
 type Balance = u64;
 
@@ -27,10 +27,10 @@ type RingError = Error<Test, RingInstance>;
 type Ring = Module<Test, RingInstance>;
 
 type KtonInstance = Instance1;
-type KtonError = Error<Test, KtonInstance>;
-type Kton = Module<Test, KtonInstance>;
+type _KtonError = Error<Test, KtonInstance>;
+type _Kton = Module<Test, KtonInstance>;
 
-impl_account_data! {
+darwinia_support::impl_account_data! {
 	pub struct AccountData<Balance>
 	for
 		RingInstance,

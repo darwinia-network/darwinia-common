@@ -1,10 +1,10 @@
 //! Balances pallet benchmarking.
 
-// --- third-party ---
+// --- substrate ---
 use frame_benchmarking::{account, benchmarks};
 use frame_system::RawOrigin;
 use sp_runtime::traits::{Bounded, Dispatchable};
-// --- custom ---
+// --- darwinia ---
 use crate::{Module as Balances, *};
 
 const SEED: u32 = 0;

@@ -145,8 +145,10 @@ mod tests_local;
 
 // --- custom ---
 pub use imbalances::{NegativeImbalance, PositiveImbalance};
-// --- third-party---
+
+// --- crates ---
 use codec::{Codec, EncodeLike};
+// --- substrate ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
 	traits::{
@@ -166,7 +168,7 @@ use sp_runtime::{
 	DispatchError, DispatchResult,
 };
 use sp_std::{borrow::Borrow, cmp, convert::Infallible, fmt::Debug, mem, prelude::*};
-// --- custom ---
+// --- darwinia ---
 use darwinia_support::{
 	balance::{lock::*, *},
 	traits::BalanceInfo,
