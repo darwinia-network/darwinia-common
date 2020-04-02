@@ -1,17 +1,19 @@
 //! Tests for eth-backing.
 
+// --- std ---
 use std::str::FromStr;
-
-use frame_support::{assert_err, assert_ok};
-use frame_system::RawOrigin;
+// --- crates ---
 use hex_literal::hex;
 use rustc_hex::FromHex;
+// --- substrate ---
+use frame_support::{assert_err, assert_ok};
+use frame_system::RawOrigin;
 use sp_runtime::{traits::Dispatchable, AccountId32};
-
+// --- darwinia ---
 use crate::{mock::*, *};
+use darwinia_staking::{RewardDestination, StakingBalance, StakingLedger, TimeDepositItem};
 use darwinia_support::balance::lock::StakingLock;
 use eth_primitives::{header::EthHeader, Bloom, EthAddress, H64};
-use pallet_staking::{RewardDestination, StakingBalance, StakingLedger, TimeDepositItem};
 
 #[test]
 fn verify_parse_token_redeem_proof() {
@@ -110,7 +112,7 @@ fn verify_redeem_ring() {
 			// If expect_account_id doesn't exist, redeem should fail, "beneficiary account must pre-exist"
 			assert_err!(
 				EthBacking::redeem(Origin::signed(id1.clone()), RedeemFor::Ring(proof_record.clone())),
-				<pallet_balances::Error<Test, RingInstance>>::DeadAccount,
+				<darwinia_balances::Error<Test, RingInstance>>::DeadAccount,
 			);
 
 			let ring_locked_before = EthBacking::ring_locked();
@@ -190,7 +192,7 @@ fn verify_redeem_kton() {
 			// If expect_account_id doesn't exist, redeem should fail
 			assert_err!(
 				EthBacking::redeem(Origin::signed(id1.clone()), RedeemFor::Kton(proof_record.clone())),
-				<pallet_balances::Error<Test, KtonInstance>>::DeadAccount,
+				<darwinia_balances::Error<Test, KtonInstance>>::DeadAccount,
 			);
 
 			let kton_locked_before = EthBacking::kton_locked();
@@ -273,7 +275,7 @@ fn verify_redeem_deposit() {
 			let controller = AccountId32::from([1; 32]);
 
 			let _ = Ring::deposit_creating(&expect_account_id, 1);
-			assert_ok!(<pallet_staking::Call<Test>>::bond(
+			assert_ok!(<darwinia_staking::Call<Test>>::bond(
 				controller.clone(),
 				StakingBalance::RingBalance(1),
 				RewardDestination::Controller,
