@@ -30,7 +30,9 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+// --- crates ---
 use codec::{Decode, Encode};
+// --- substrate ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
 	traits::{Currency, ExistenceRequirement, Get},
@@ -42,7 +44,7 @@ use sp_runtime::{
 	DispatchResult, RuntimeDebug,
 };
 use sp_std::{fmt::Debug, prelude::*};
-
+// --- darwinia ---
 use darwinia_support::balance::lock::*;
 
 type BalanceOf<T> =
@@ -332,8 +334,9 @@ where
 
 #[cfg(test)]
 mod tests {
+	// --- std ---
 	use std::cell::RefCell;
-
+	// --- substrate ---
 	use frame_support::{
 		assert_noop, assert_ok, impl_outer_origin, parameter_types, traits::Get, weights::Weight,
 	};
@@ -345,18 +348,36 @@ mod tests {
 		traits::{BlakeTwo256, Identity, IdentityLookup},
 		Perbill,
 	};
-
+	// --- darwinia ---
 	use crate::*;
-	use darwinia_support::balance::{lock::LockReasons, BalanceInfo, FrozenBalance};
 
 	impl_outer_origin! {
 		pub enum Origin for Test  where system = frame_system {}
 	}
 
-	#[derive(Encode, Decode, Clone, PartialEq, Eq, Default, RuntimeDebug)]
-	pub struct AccountData<Balance> {
-		pub free: Balance,
-		pub reserved: Balance,
+	type Balance = u64;
+
+	type RingInstance = darwinia_balances::Instance0;
+	type _RingError = darwinia_balances::Error<Test, RingInstance>;
+	type Ring = darwinia_balances::Module<Test, RingInstance>;
+
+	type KtonInstance = darwinia_balances::Instance1;
+	type _KtonError = darwinia_balances::Error<Test, KtonInstance>;
+	type _Kton = darwinia_balances::Module<Test, KtonInstance>;
+
+	type System = frame_system::Module<Test>;
+	type Vesting = Module<Test>;
+
+	darwinia_support::impl_account_data! {
+		pub struct AccountData<Balance>
+		for
+			RingInstance,
+			KtonInstance
+		where
+			Balance = Balance
+		{
+			// other data
+		}
 	}
 
 	// For testing the pallet, we construct most of a mock runtime. This means
@@ -387,72 +408,43 @@ mod tests {
 		type AvailableBlockRatio = AvailableBlockRatio;
 		type Version = ();
 		type ModuleToIndex = ();
-		type AccountData = AccountData<u64>;
+		type AccountData = AccountData<Balance>;
 		type OnNewAccount = ();
 		type OnKilledAccount = ();
 		type MigrateAccount = ();
 	}
-	impl pallet_balances::Trait for Test {
-		type Balance = u64;
+	impl darwinia_balances::Trait<RingInstance> for Test {
+		type Balance = Balance;
 		type DustRemoval = ();
 		type Event = ();
 		type ExistentialDeposit = ExistentialDeposit;
-		type BalanceInfo = AccountData<u64>;
+		type BalanceInfo = AccountData<Balance>;
 		type AccountStore = System;
 		type TryDropOther = ();
 	}
 
-	impl BalanceInfo<u64, pallet_balances::DefaultInstance> for AccountData<u64> {
-		fn free(&self) -> u64 {
-			self.free
-		}
-
-		fn reserved(&self) -> u64 {
-			self.reserved
-		}
-
-		fn set_free(&mut self, new_free: u64) {
-			self.free = new_free;
-		}
-
-		fn set_reserved(&mut self, new_reserved: u64) {
-			self.reserved = new_reserved;
-		}
-
-		fn usable(&self, reasons: LockReasons, frozen_balance: FrozenBalance<u64>) -> u64 {
-			self.free.saturating_sub(frozen_balance.frozen_for(reasons))
-		}
-
-		fn total(&self) -> u64 {
-			self.free.saturating_add(self.reserved)
-		}
-	}
-
 	parameter_types! {
-		pub const MinVestedTransfer: u64 = 256 * 2;
+		pub const MinVestedTransfer: Balance = 256 * 2;
 	}
 	impl Trait for Test {
 		type Event = ();
-		type Currency = Balances;
+		type Currency = Ring;
 		type BlockNumberToBalance = Identity;
 		type MinVestedTransfer = MinVestedTransfer;
 	}
-	type System = frame_system::Module<Test>;
-	type Balances = pallet_balances::Module<Test>;
-	type Vesting = Module<Test>;
 
 	thread_local! {
-		static EXISTENTIAL_DEPOSIT: RefCell<u64> = RefCell::new(0);
+		static EXISTENTIAL_DEPOSIT: RefCell<Balance> = RefCell::new(0);
 	}
 	pub struct ExistentialDeposit;
-	impl Get<u64> for ExistentialDeposit {
-		fn get() -> u64 {
+	impl Get<Balance> for ExistentialDeposit {
+		fn get() -> Balance {
 			EXISTENTIAL_DEPOSIT.with(|v| *v.borrow())
 		}
 	}
 
 	pub struct ExtBuilder {
-		existential_deposit: u64,
+		existential_deposit: Balance,
 	}
 	impl Default for ExtBuilder {
 		fn default() -> Self {
@@ -462,7 +454,7 @@ mod tests {
 		}
 	}
 	impl ExtBuilder {
-		pub fn existential_deposit(mut self, existential_deposit: u64) -> Self {
+		pub fn existential_deposit(mut self, existential_deposit: Balance) -> Self {
 			self.existential_deposit = existential_deposit;
 			self
 		}
@@ -471,7 +463,7 @@ mod tests {
 			let mut t = frame_system::GenesisConfig::default()
 				.build_storage::<Test>()
 				.unwrap();
-			pallet_balances::GenesisConfig::<Test> {
+			darwinia_balances::GenesisConfig::<Test, RingInstance> {
 				balances: vec![
 					(1, 10 * self.existential_deposit),
 					(2, 20 * self.existential_deposit),
@@ -502,9 +494,9 @@ mod tests {
 			.build()
 			.execute_with(|| {
 				assert_eq!(System::block_number(), 1);
-				let user1_free_balance = Balances::free_balance(&1);
-				let user2_free_balance = Balances::free_balance(&2);
-				let user12_free_balance = Balances::free_balance(&12);
+				let user1_free_balance = Ring::free_balance(&1);
+				let user2_free_balance = Ring::free_balance(&2);
+				let user12_free_balance = Ring::free_balance(&12);
 				assert_eq!(user1_free_balance, 256 * 10); // Account 1 has free balance
 				assert_eq!(user2_free_balance, 256 * 20); // Account 2 has free balance
 				assert_eq!(user12_free_balance, 256 * 10); // Account 12 has free balance
@@ -566,13 +558,13 @@ mod tests {
 			.build()
 			.execute_with(|| {
 				assert_eq!(System::block_number(), 1);
-				let user1_free_balance = Balances::free_balance(&1);
+				let user1_free_balance = Ring::free_balance(&1);
 				assert_eq!(user1_free_balance, 100); // Account 1 has free balance
 									 // Account 1 has only 5 units vested at block 1 (plus 50 unvested)
 				assert_eq!(Vesting::vesting_balance(&1), Some(45));
 				assert_noop!(
-					Balances::transfer(Some(1).into(), 2, 56),
-					pallet_balances::Error::<Test, _>::LiquidityRestrictions,
+					Ring::transfer(Some(1).into(), 2, 56),
+					darwinia_balances::Error::<Test, _>::LiquidityRestrictions,
 				); // Account 1 cannot send more than vested amount
 			});
 	}
@@ -584,12 +576,12 @@ mod tests {
 			.build()
 			.execute_with(|| {
 				assert_eq!(System::block_number(), 1);
-				let user1_free_balance = Balances::free_balance(&1);
+				let user1_free_balance = Ring::free_balance(&1);
 				assert_eq!(user1_free_balance, 100); // Account 1 has free balance
 									 // Account 1 has only 5 units vested at block 1 (plus 50 unvested)
 				assert_eq!(Vesting::vesting_balance(&1), Some(45));
 				assert_ok!(Vesting::vest(Some(1).into()));
-				assert_ok!(Balances::transfer(Some(1).into(), 2, 55));
+				assert_ok!(Ring::transfer(Some(1).into(), 2, 55));
 			});
 	}
 
@@ -600,12 +592,12 @@ mod tests {
 			.build()
 			.execute_with(|| {
 				assert_eq!(System::block_number(), 1);
-				let user1_free_balance = Balances::free_balance(&1);
+				let user1_free_balance = Ring::free_balance(&1);
 				assert_eq!(user1_free_balance, 100); // Account 1 has free balance
 									 // Account 1 has only 5 units vested at block 1 (plus 50 unvested)
 				assert_eq!(Vesting::vesting_balance(&1), Some(45));
 				assert_ok!(Vesting::vest_other(Some(2).into(), 1));
-				assert_ok!(Balances::transfer(Some(1).into(), 2, 55));
+				assert_ok!(Ring::transfer(Some(1).into(), 2, 55));
 			});
 	}
 
@@ -616,24 +608,24 @@ mod tests {
 			.build()
 			.execute_with(|| {
 				assert_eq!(System::block_number(), 1);
-				assert_ok!(Balances::transfer(Some(3).into(), 1, 100));
-				assert_ok!(Balances::transfer(Some(3).into(), 2, 100));
+				assert_ok!(Ring::transfer(Some(3).into(), 1, 100));
+				assert_ok!(Ring::transfer(Some(3).into(), 2, 100));
 
-				let user1_free_balance = Balances::free_balance(&1);
+				let user1_free_balance = Ring::free_balance(&1);
 				assert_eq!(user1_free_balance, 200); // Account 1 has 100 more free balance than normal
 
-				let user2_free_balance = Balances::free_balance(&2);
+				let user2_free_balance = Ring::free_balance(&2);
 				assert_eq!(user2_free_balance, 300); // Account 2 has 100 more free balance than normal
 
 				// Account 1 has only 5 units vested at block 1 (plus 150 unvested)
 				assert_eq!(Vesting::vesting_balance(&1), Some(45));
 				assert_ok!(Vesting::vest(Some(1).into()));
-				assert_ok!(Balances::transfer(Some(1).into(), 3, 155)); // Account 1 can send extra units gained
+				assert_ok!(Ring::transfer(Some(1).into(), 3, 155)); // Account 1 can send extra units gained
 
 				// Account 2 has no units vested at block 1, but gained 100
 				assert_eq!(Vesting::vesting_balance(&2), Some(200));
 				assert_ok!(Vesting::vest(Some(2).into()));
-				assert_ok!(Balances::transfer(Some(2).into(), 3, 100)); // Account 2 can send extra units gained
+				assert_ok!(Ring::transfer(Some(2).into(), 3, 100)); // Account 2 can send extra units gained
 			});
 	}
 
@@ -644,7 +636,7 @@ mod tests {
 			.build()
 			.execute_with(|| {
 				assert_eq!(System::block_number(), 1);
-				let user12_free_balance = Balances::free_balance(&12);
+				let user12_free_balance = Ring::free_balance(&12);
 
 				assert_eq!(user12_free_balance, 2560); // Account 12 has free balance
 									   // Account 12 has liquid funds
@@ -662,7 +654,7 @@ mod tests {
 				assert_eq!(Vesting::vesting(&12), Some(user12_vesting_schedule));
 
 				// Account 12 can still send liquid funds
-				assert_ok!(Balances::transfer(Some(12).into(), 3, 256 * 5));
+				assert_ok!(Ring::transfer(Some(12).into(), 3, 256 * 5));
 			});
 	}
 
@@ -673,8 +665,8 @@ mod tests {
 			.build()
 			.execute_with(|| {
 				assert_eq!(System::block_number(), 1);
-				let user3_free_balance = Balances::free_balance(&3);
-				let user4_free_balance = Balances::free_balance(&4);
+				let user3_free_balance = Ring::free_balance(&3);
+				let user4_free_balance = Ring::free_balance(&4);
 				assert_eq!(user3_free_balance, 256 * 30);
 				assert_eq!(user4_free_balance, 256 * 40);
 				// Account 4 should not have any vesting yet.
@@ -693,9 +685,9 @@ mod tests {
 				// Now account 4 should have vesting.
 				assert_eq!(Vesting::vesting(&4), Some(new_vesting_schedule));
 				// Ensure the transfer happened correctly.
-				let user3_free_balance_updated = Balances::free_balance(&3);
+				let user3_free_balance_updated = Ring::free_balance(&3);
 				assert_eq!(user3_free_balance_updated, 256 * 25);
-				let user4_free_balance_updated = Balances::free_balance(&4);
+				let user4_free_balance_updated = Ring::free_balance(&4);
 				assert_eq!(user4_free_balance_updated, 256 * 45);
 				// Account 4 has 5 * 256 locked.
 				assert_eq!(Vesting::vesting_balance(&4), Some(256 * 5));
@@ -721,8 +713,8 @@ mod tests {
 			.build()
 			.execute_with(|| {
 				assert_eq!(System::block_number(), 1);
-				let user2_free_balance = Balances::free_balance(&2);
-				let user4_free_balance = Balances::free_balance(&4);
+				let user2_free_balance = Ring::free_balance(&2);
+				let user4_free_balance = Ring::free_balance(&4);
 				assert_eq!(user2_free_balance, 256 * 20);
 				assert_eq!(user4_free_balance, 256 * 40);
 				// Account 2 should already have a vesting schedule.
