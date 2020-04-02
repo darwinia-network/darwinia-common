@@ -1,9 +1,10 @@
-// --- third-party ---
+// --- substrate ---
 pub use frame_support::traits::{LockIdentifier, VestingSchedule, WithdrawReason, WithdrawReasons};
-// --- third-party ---
+
+// --- substrate ---
 use frame_support::traits::{Currency, TryDrop};
 use sp_runtime::DispatchResult;
-// --- custom ---
+// --- darwinia ---
 use crate::balance::{
 	lock::{LockFor, LockReasons},
 	FrozenBalance,
