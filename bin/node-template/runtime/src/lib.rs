@@ -443,7 +443,6 @@ impl darwinia_elections_phragmen::Trait for Runtime {
 parameter_types! {
 	pub const EthNetwork: darwinia_eth_relay::EthNetworkType = darwinia_eth_relay::EthNetworkType::Ropsten;
 }
-
 impl darwinia_eth_relay::Trait for Runtime {
 	type Event = Event;
 	type EthNetwork = EthNetwork;
@@ -452,7 +451,6 @@ impl darwinia_eth_relay::Trait for Runtime {
 parameter_types! {
 	pub const SubKeyPrefix: u8 = 42;
 }
-
 impl darwinia_eth_backing::Trait for Runtime {
 	type Event = Event;
 	type Time = Timestamp;
