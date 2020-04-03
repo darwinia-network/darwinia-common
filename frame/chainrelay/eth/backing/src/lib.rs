@@ -42,7 +42,7 @@ use frame_support::{
 	traits::{Currency, Get, OnUnbalanced, Time},
 	weights::SimpleDispatchInfo,
 };
-use frame_system::{self as system, ensure_signed};
+use frame_system::{self as system, ensure_root, ensure_signed};
 use sp_runtime::{
 	traits::{CheckedSub, SaturatedConversion},
 	DispatchError, DispatchResult, RuntimeDebug,
@@ -179,11 +179,58 @@ decl_module! {
 				RedeemFor::Deposit(proof_record) => Self::redeem_deposit(proof_record)?,
 			}
 		}
+
+		// --- Root Call ---
+		
+		/// Set a new ring redeem address.
+		///
+		/// The dispatch origin of this call must be _Root_.
+		///
+		/// - `new`: The new ring redeem address.
+		///
+		/// # <weight>
+		/// - `O(1)`.
+		/// # </weight>
+		#[weight = SimpleDispatchInfo::FixedNormal(10_000)]
+		pub fn set_ring_redeem_address(origin, new: EthAddress) {
+			ensure_root(origin)?;
+			RingRedeemAddress::put(new);
+		}
+
+		/// Set a new kton redeem address.
+		///
+		/// The dispatch origin of this call must be _Root_.
+		///
+		/// - `new`: The new kton redeem address.
+		///
+		/// # <weight>
+		/// - `O(1)`.
+		/// # </weight>
+		#[weight = SimpleDispatchInfo::FixedNormal(10_000)]
+		pub fn set_kton_redeem_address(origin, new: EthAddress) {
+			ensure_root(origin)?;
+			KtonRedeemAddress::put(new);
+		}
+
+		/// Set a new deposit redeem address.
+		///
+		/// The dispatch origin of this call must be _Root_.
+		///
+		/// - `new`: The new deposit redeem address.
+		///
+		/// # <weight>
+		/// - `O(1)`.
+		/// # </weight>
+		#[weight = SimpleDispatchInfo::FixedNormal(10_000)]
+		pub fn set_deposit_redeem_address(origin, new: EthAddress) {
+			ensure_root(origin)?;
+			DepositRedeemAddress::put(new);
+		}
 	}
 }
 
 impl<T: Trait> Module<T> {
-	// --- immutable ---
+	// --- Immutable ---
 
 	fn parse_token_redeem_proof(
 		proof_record: &EthReceiptProof,
@@ -387,7 +434,7 @@ impl<T: Trait> Module<T> {
 		Ok((deposit_id, month, start_at, redeemed_ring, darwinia_account))
 	}
 
-	// --- mutable ---
+	// --- Mutable ---
 
 	// event RingBurndropTokens(address indexed token, address indexed owner, uint amount, bytes data)
 	// https://ropsten.etherscan.io/tx/0x81f699c93b00ab0b7db701f87b6f6045c1e0692862fcaaf8f06755abb0536800
