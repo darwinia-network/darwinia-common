@@ -39,7 +39,7 @@ use ethabi::{Event as EthEvent, EventParam as EthEventParam, ParamType, RawLog};
 // --- substrate ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
-	traits::{Currency, OnUnbalanced, Time},
+	traits::{Currency, Get, OnUnbalanced, Time},
 	weights::SimpleDispatchInfo,
 };
 use frame_system::{self as system, ensure_signed};
@@ -76,6 +76,8 @@ pub trait Trait: system::Trait {
 
 	type Kton: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 	type KtonReward: OnUnbalanced<KtonPositiveImbalance<Self>>;
+
+	type SubKeyPrefix: Get<u8>;
 }
 
 #[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
@@ -397,6 +399,7 @@ impl<T: Trait> Module<T> {
 		let redeemed_positive_imbalance_ring =
 			T::Ring::deposit_into_existing(&darwinia_account, redeemed_ring)?;
 
+		// RingReward should be set to (), cause nothing special need to be done for on_unbalanced
 		T::RingReward::on_unbalanced(redeemed_positive_imbalance_ring);
 		RingProofVerified::insert(
 			(proof_record.header_hash, proof_record.index),
@@ -429,6 +432,7 @@ impl<T: Trait> Module<T> {
 		let redeemed_positive_imbalance_kton =
 			T::Kton::deposit_into_existing(&darwinia_account, redeemed_kton)?;
 
+		// KtonReward should be set to (), cause nothing special need to be done for on_unbalanced
 		T::KtonReward::on_unbalanced(redeemed_positive_imbalance_kton);
 		KtonProofVerified::insert(
 			(proof_record.header_hash, proof_record.index),
@@ -489,7 +493,10 @@ where
 {
 	fn account_id_for(decoded_sub_key: &[u8]) -> Result<T::AccountId, DispatchError> {
 		ensure!(decoded_sub_key.len() == 33, <Error<T>>::AddrLenMis);
-		ensure!(decoded_sub_key[0] == 42, <Error<T>>::PubkeyPrefixMis);
+		ensure!(
+			decoded_sub_key[0] == T::SubKeyPrefix::get(),
+			<Error<T>>::PubkeyPrefixMis
+		);
 
 		let mut raw_account = [0u8; 32];
 		raw_account.copy_from_slice(&decoded_sub_key[1..]);

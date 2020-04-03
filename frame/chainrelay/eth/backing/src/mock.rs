@@ -152,13 +152,13 @@ impl pallet_session::historical::Trait for Test {
 }
 
 // --- custom ---
-
 parameter_types! {
-	pub const EthRopsten: u64 = 1;
+	pub const EthNetwork: darwinia_eth_relay::EthNetworkType = darwinia_eth_relay::EthNetworkType::Ropsten;
 }
+
 impl darwinia_eth_relay::Trait for Test {
 	type Event = ();
-	type EthNetwork = EthRopsten;
+	type EthNetwork = EthNetwork;
 }
 
 impl darwinia_balances::Trait<KtonInstance> for Test {

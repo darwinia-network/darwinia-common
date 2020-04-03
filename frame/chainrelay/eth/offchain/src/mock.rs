@@ -76,11 +76,12 @@ impl pallet_timestamp::Trait for Test {
 }
 
 parameter_types! {
-	pub const EthRopsten: u64 = 1;
+	pub const EthNetwork: darwinia_eth_relay::EthNetworkType = darwinia_eth_relay::EthNetworkType::Ropsten;
 }
+
 impl darwinia_eth_relay::Trait for Test {
 	type Event = ();
-	type EthNetwork = EthRopsten;
+	type EthNetwork = EthNetwork;
 }
 
 impl From<darwinia_eth_relay::Call<Test>> for Call<Test> {
