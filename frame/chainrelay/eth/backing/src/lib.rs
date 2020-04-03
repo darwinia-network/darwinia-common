@@ -158,6 +158,8 @@ decl_module! {
 	where
 		origin: T::Origin
 	{
+		const SubKeyPrefix: u8 = T::SubKeyPrefix::get();
+
 		type Error = Error<T>;
 
 		fn deposit_event() = default;
