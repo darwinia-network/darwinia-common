@@ -60,7 +60,7 @@ use sp_runtime::{
 };
 use sp_std::{marker::PhantomData, prelude::*};
 
-pub const MRR_ROOT_LOG_ID: [u8; 4] = *b"MMRR";
+pub const MMR_ROOT_LOG_ID: [u8; 4] = *b"MMRR";
 
 #[cfg_attr(feature = "std", derive(Serialize))]
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug)]
@@ -120,7 +120,7 @@ decl_module! {
 			mmr.commit().expect("Failed to push parent hash to mmr.");
 
 			let mmr_root_log = MerkleMountainRangeRootLog::<T::Hash> {
-				prefix : MRR_ROOT_LOG_ID,
+				prefix : MMR_ROOT_LOG_ID,
 				mmr_root : mmr_root.into()
 			};
 
@@ -201,7 +201,7 @@ impl<T: Trait> Module<T> {
 			|MerkleMountainRangeRootLog { prefix, mmr_root }: MerkleMountainRangeRootLog<
 				T::Hash,
 			>| match prefix {
-				MRR_ROOT_LOG_ID => Some(mmr_root),
+				MMR_ROOT_LOG_ID => Some(mmr_root),
 				_ => None,
 			};
 
