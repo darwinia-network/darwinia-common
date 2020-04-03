@@ -19,27 +19,27 @@ futures = "0.3.4"
 log = "0.4.8"
 structopt = "0.3.12"
 # substrate
-pallet-im-online = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
-sc-cli = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
-sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
-sc-executor = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
-sc-service = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
-sp-inherents = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
-sc-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
-sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
-sc-network = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
-sc-consensus-aura = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
-sp-consensus-aura = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
-sp-consensus = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
-sc-finality-grandpa = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
-sp-finality-grandpa = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
-sc-client = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
-sc-client-api = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
-sp-runtime = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
-sc-basic-authorship = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
+pallet-im-online = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
+sc-cli = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
+sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
+sc-executor = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
+sc-service = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
+sp-inherents = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
+sc-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
+sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
+sc-network = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
+sc-consensus-aura = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
+sp-consensus-aura = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
+sp-consensus = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
+sc-finality-grandpa = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
+sp-finality-grandpa = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
+sc-client = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
+sc-client-api = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
+sp-runtime = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
+sc-basic-authorship = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
 
 [build-dependencies]
 # crates
 vergen = "3.1.0"
 # substrate
-build-script-utils = { package = "substrate-build-script-utils", git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.2" }
+build-script-utils = { package = "substrate-build-script-utils", git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
