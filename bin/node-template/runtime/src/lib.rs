@@ -443,7 +443,6 @@ impl darwinia_elections_phragmen::Trait for Runtime {
 parameter_types! {
 	pub const EthNetwork: darwinia_eth_relay::EthNetworkType = darwinia_eth_relay::EthNetworkType::Ropsten;
 }
-
 impl darwinia_eth_relay::Trait for Runtime {
 	type Event = Event;
 	type EthNetwork = EthNetwork;
