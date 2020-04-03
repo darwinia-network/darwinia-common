@@ -38,7 +38,7 @@ use codec::{Decode, Encode};
 use ethabi::{Event as EthEvent, EventParam as EthEventParam, ParamType, RawLog};
 // --- substrate ---
 use frame_support::{
-	decl_error, decl_event, decl_module, decl_storage, ensure,
+	debug, decl_error, decl_event, decl_module, decl_storage, ensure,
 	traits::{Currency, Get, OnUnbalanced, Time},
 	weights::SimpleDispatchInfo,
 };
@@ -159,6 +159,8 @@ decl_module! {
 		origin: T::Origin
 	{
 		type Error = Error<T>;
+
+		const SubKeyPrefix: u8 = T::SubKeyPrefix::get();
 
 		fn deposit_event() = default;
 
@@ -290,16 +292,18 @@ impl<T: Trait> Module<T> {
 			Balance::try_from(amount)?
 		};
 		let darwinia_account = {
-			let raw_sub_key = result.params[3]
+			let raw_subkey = result.params[3]
 				.value
 				.clone()
 				.to_bytes()
 				.ok_or(<Error<T>>::BytesCF)?;
+			debug::trace!(target: "ebk-acct", "[eth-backing] Raw Subkey: {:?}", raw_subkey);
 
-			//			let decoded_sub_key = hex::decode(&raw_sub_key).map_err(|_| "Decode Address - FAILED")?;
+			//			let decoded_sub_key = hex::decode(&raw_subkey).map_err(|_| "Decode Address - FAILED")?;
 
-			T::DetermineAccountId::account_id_for(&raw_sub_key)?
+			T::DetermineAccountId::account_id_for(&raw_subkey)?
 		};
+		debug::trace!(target: "ebk-acct", "[eth-backing] Darwinia Account: {:?}", darwinia_account);
 
 		Ok((redeemed_amount, darwinia_account))
 	}
@@ -412,15 +416,18 @@ impl<T: Trait> Module<T> {
 			<RingBalance<T>>::saturated_from(redeemed_ring.saturated_into())
 		};
 		let darwinia_account = {
-			let raw_sub_key = result.params[6]
+			let raw_subkey = result.params[6]
 				.value
 				.clone()
 				.to_bytes()
 				.ok_or(<Error<T>>::BytesCF)?;
-			//				let decoded_sub_key = hex::decode(&raw_sub_key).map_err(|_| "Decode Address - FAILED")?;
+			debug::trace!(target: "ebk-acct", "[eth-backing] Raw Subkey: {:?}", raw_subkey);
 
-			T::DetermineAccountId::account_id_for(&raw_sub_key)?
+			//				let decoded_sub_key = hex::decode(&raw_subkey).map_err(|_| "Decode Address - FAILED")?;
+
+			T::DetermineAccountId::account_id_for(&raw_subkey)?
 		};
+		debug::trace!(target: "ebk-acct", "[eth-backing] Darwinia Account: {:?}", darwinia_account);
 
 		Ok((deposit_id, month, start_at, redeemed_ring, darwinia_account))
 	}

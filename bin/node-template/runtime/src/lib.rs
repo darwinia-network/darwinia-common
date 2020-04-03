@@ -452,7 +452,6 @@ impl darwinia_eth_relay::Trait for Runtime {
 parameter_types! {
 	pub const SubKeyPrefix: u8 = 42;
 }
-
 impl darwinia_eth_backing::Trait for Runtime {
 	type Event = Event;
 	type Time = Timestamp;

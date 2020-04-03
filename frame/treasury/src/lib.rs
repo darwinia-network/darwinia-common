@@ -317,6 +317,8 @@ decl_error! {
 
 decl_module! {
 	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+		type Error = Error<T>;
+
 		/// Fraction of a proposal's value that should be bonded in order to place the proposal.
 		/// An accepted proposal gets these back. A rejected proposal does not.
 		const ProposalBond: Permill = T::ProposalBond::get();
@@ -343,8 +345,6 @@ decl_module! {
 
 		/// The amount held on deposit per byte within the tip report reason.
 		const TipReportDepositPerByte: RingBalance<T> = T::TipReportDepositPerByte::get();
-
-		type Error = Error<T>;
 
 		fn deposit_event() = default;
 
