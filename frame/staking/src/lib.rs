@@ -1075,6 +1075,8 @@ decl_error! {
 
 decl_module! {
 	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+		type Error = Error<T>;
+
 		/// Number of sessions per era.
 		const SessionsPerEra: SessionIndex = T::SessionsPerEra::get();
 
@@ -1088,8 +1090,6 @@ decl_module! {
 
 		// TODO: doc
 		const TotalPower: Power = T::TotalPower::get();
-
-		type Error = Error<T>;
 
 		fn deposit_event() = default;
 

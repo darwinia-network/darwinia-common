@@ -441,14 +441,16 @@ impl darwinia_elections_phragmen::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const EthMainet: u64 = 0;
-	pub const EthRopsten: u64 = 1;
+	pub const EthNetwork: darwinia_eth_relay::EthNetworkType = darwinia_eth_relay::EthNetworkType::Ropsten;
 }
 impl darwinia_eth_relay::Trait for Runtime {
 	type Event = Event;
-	type EthNetwork = EthRopsten;
+	type EthNetwork = EthNetwork;
 }
 
+parameter_types! {
+	pub const SubKeyPrefix: u8 = 42;
+}
 impl darwinia_eth_backing::Trait for Runtime {
 	type Event = Event;
 	type Time = Timestamp;
@@ -459,6 +461,7 @@ impl darwinia_eth_backing::Trait for Runtime {
 	type RingReward = ();
 	type Kton = Kton;
 	type KtonReward = ();
+	type SubKeyPrefix = SubKeyPrefix;
 }
 
 type SubmitPFTransaction =
