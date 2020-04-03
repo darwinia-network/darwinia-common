@@ -180,6 +180,8 @@ decl_module! {
 			}
 		}
 
+		// --- Root Call ---
+		
 		/// Set a new ring redeem address.
 		///
 		/// The dispatch origin of this call must be _Root_.
@@ -228,7 +230,7 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
-	// --- immutable ---
+	// --- Immutable ---
 
 	fn parse_token_redeem_proof(
 		proof_record: &EthReceiptProof,
@@ -432,7 +434,7 @@ impl<T: Trait> Module<T> {
 		Ok((deposit_id, month, start_at, redeemed_ring, darwinia_account))
 	}
 
-	// --- mutable ---
+	// --- Mutable ---
 
 	// event RingBurndropTokens(address indexed token, address indexed owner, uint amount, bytes data)
 	// https://ropsten.etherscan.io/tx/0x81f699c93b00ab0b7db701f87b6f6045c1e0692862fcaaf8f06755abb0536800
