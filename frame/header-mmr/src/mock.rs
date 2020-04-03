@@ -64,7 +64,12 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 }
 
 pub fn header_mmr_log(hash: H256) -> DigestItem<H256> {
-	DigestItem::MerkleMountainRangeRoot(hash)
+	let mmr_root_log = MerkleMountainRangeRootLog::<H256> {
+		prefix: MMR_ROOT_LOG_ID,
+		mmr_root: hash,
+	};
+
+	DigestItem::Other(mmr_root_log.encode())
 }
 
 pub fn initialize_block(number: u64, parent_hash: H256) {
