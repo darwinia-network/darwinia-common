@@ -211,6 +211,9 @@ impl darwinia_staking::Trait for Test {
 	type TotalPower = TotalPower;
 }
 
+parameter_types! {
+	pub const SubKeyPrefix: u8 = 42;
+}
 impl Trait for Test {
 	type Event = ();
 	type Time = Timestamp;
@@ -221,6 +224,7 @@ impl Trait for Test {
 	type RingReward = ();
 	type Kton = Kton;
 	type KtonReward = ();
+	type SubKeyPrefix = SubKeyPrefix;
 }
 
 pub struct ExtBuilder;
