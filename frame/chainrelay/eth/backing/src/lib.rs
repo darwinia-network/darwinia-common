@@ -42,7 +42,7 @@ use frame_support::{
 	traits::{Currency, Get, OnUnbalanced, Time},
 	weights::SimpleDispatchInfo,
 };
-use frame_system::{self as system, ensure_signed};
+use frame_system::{self as system, ensure_root, ensure_signed};
 use sp_runtime::{
 	traits::{CheckedSub, SaturatedConversion},
 	DispatchError, DispatchResult, RuntimeDebug,
@@ -176,6 +176,51 @@ decl_module! {
 				RedeemFor::Kton(proof_record) => Self::redeem_kton(proof_record)?,
 				RedeemFor::Deposit(proof_record) => Self::redeem_deposit(proof_record)?,
 			}
+		}
+
+		/// Set a new ring redeem address.
+		///
+		/// The dispatch origin of this call must be _Root_.
+		///
+		/// - `new`: The new ring redeem address.
+		///
+		/// # <weight>
+		/// - `O(1)`.
+		/// # </weight>
+		#[weight = SimpleDispatchInfo::FixedNormal(10_000)]
+		pub fn set_ring_redeem_address(origin, new: EthAddress) {
+			ensure_root(origin)?;
+			RingRedeemAddress::put(new);
+		}
+
+		/// Set a new kton redeem address.
+		///
+		/// The dispatch origin of this call must be _Root_.
+		///
+		/// - `new`: The new kton redeem address.
+		///
+		/// # <weight>
+		/// - `O(1)`.
+		/// # </weight>
+		#[weight = SimpleDispatchInfo::FixedNormal(10_000)]
+		pub fn set_kton_redeem_address(origin, new: EthAddress) {
+			ensure_root(origin)?;
+			KtonRedeemAddress::put(new);
+		}
+
+		/// Set a new deposit redeem address.
+		///
+		/// The dispatch origin of this call must be _Root_.
+		///
+		/// - `new`: The new deposit redeem address.
+		///
+		/// # <weight>
+		/// - `O(1)`.
+		/// # </weight>
+		#[weight = SimpleDispatchInfo::FixedNormal(10_000)]
+		pub fn set_deposit_redeem_address(origin, new: EthAddress) {
+			ensure_root(origin)?;
+			DepositRedeemAddress::put(new);
 		}
 	}
 }
