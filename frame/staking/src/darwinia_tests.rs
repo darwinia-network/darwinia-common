@@ -12,6 +12,31 @@ use substrate_test_utils::assert_eq_uvec;
 use crate::{mock::*, *};
 use darwinia_support::balance::lock::*;
 
+#[test]
+fn kton_should_reward_even_does_not_own_kton_before() {
+	// Tests that validator storage items are cleaned up when stash is empty
+	// Tests that storage items are untouched when controller is empty
+	ExtBuilder::default()
+		.existential_deposit(10000)
+		.nominate(false)
+		.init_ring(false)
+		.init_staker(false)
+		.build()
+		.execute_with(|| {
+			let acct = 777;
+			let _ = Ring::deposit_creating(&acct, 10000);
+			assert!(Kton::free_balance(&acct).is_zero());
+			assert_ok!(Staking::bond(
+				Origin::signed(acct),
+				acct,
+				StakingBalance::RingBalance(10000),
+				RewardDestination::Stash,
+				36,
+			));
+			assert_eq!(Kton::free_balance(&acct), 3);
+		});
+}
+
 #[cfg(feature = "backup")]
 mod backup {
 	/// gen_paired_account!(a(1), b(2), m(12));

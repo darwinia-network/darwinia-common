@@ -263,6 +263,9 @@ pub struct ExtBuilder {
 	fair: bool,
 	num_validators: Option<u32>,
 	invulnerables: Vec<AccountId>,
+	init_ring: bool,
+	init_kton: bool,
+	init_staker: bool,
 }
 
 impl Default for ExtBuilder {
@@ -277,6 +280,9 @@ impl Default for ExtBuilder {
 			fair: true,
 			num_validators: None,
 			invulnerables: vec![],
+			init_ring: true,
+			init_kton: false,
+			init_staker: true,
 		}
 	}
 }
@@ -318,6 +324,18 @@ impl ExtBuilder {
 		self.invulnerables = invulnerables;
 		self
 	}
+	pub fn init_ring(mut self, init_ring: bool) -> Self {
+		self.init_ring = init_ring;
+		self
+	}
+	pub fn init_kton(mut self, init_kton: bool) -> Self {
+		self.init_kton = init_kton;
+		self
+	}
+	pub fn init_staker(mut self, init_staker: bool) -> Self {
+		self.init_staker = init_staker;
+		self
+	}
 	pub fn set_associated_consts(&self) {
 		EXISTENTIAL_DEPOSIT.with(|v| *v.borrow_mut() = self.existential_deposit);
 		SLASH_DEFER_DURATION.with(|v| *v.borrow_mut() = self.slash_defer_duration);
@@ -334,48 +352,52 @@ impl ExtBuilder {
 			.map(|x| ((x + 1) * 10 + 1) as u64)
 			.collect::<Vec<_>>();
 
-		let _ = darwinia_balances::GenesisConfig::<Test, RingInstance> {
-			balances: vec![
-				(1, 10 * balance_factor),
-				(2, 20 * balance_factor),
-				(3, 300 * balance_factor),
-				(4, 400 * balance_factor),
-				(10, balance_factor),
-				(11, balance_factor * 1000),
-				(20, balance_factor),
-				(21, balance_factor * 2000),
-				(30, balance_factor),
-				(31, balance_factor * 2000),
-				(40, balance_factor),
-				(41, balance_factor * 2000),
-				(100, 2000 * balance_factor),
-				(101, 2000 * balance_factor),
-				// This allow us to have a total_payout different from 0.
-				(999, 1_000_000_000_000),
-			],
+		if self.init_ring {
+			let _ = darwinia_balances::GenesisConfig::<Test, RingInstance> {
+				balances: vec![
+					(1, 10 * balance_factor),
+					(2, 20 * balance_factor),
+					(3, 300 * balance_factor),
+					(4, 400 * balance_factor),
+					(10, balance_factor),
+					(11, balance_factor * 1000),
+					(20, balance_factor),
+					(21, balance_factor * 2000),
+					(30, balance_factor),
+					(31, balance_factor * 2000),
+					(40, balance_factor),
+					(41, balance_factor * 2000),
+					(100, 2000 * balance_factor),
+					(101, 2000 * balance_factor),
+					// This allow us to have a total_payout different from 0.
+					(999, 1_000_000_000_000),
+				],
+			}
+			.assimilate_storage(&mut storage);
 		}
-		.assimilate_storage(&mut storage);
-		let _ = darwinia_balances::GenesisConfig::<Test, KtonInstance> {
-			balances: vec![
-				(1, 10 * balance_factor),
-				(2, 20 * balance_factor),
-				(3, 300 * balance_factor),
-				(4, 400 * balance_factor),
-				(10, balance_factor),
-				(11, balance_factor * 1000),
-				(20, balance_factor),
-				(21, balance_factor * 2000),
-				(30, balance_factor),
-				(31, balance_factor * 2000),
-				(40, balance_factor),
-				(41, balance_factor * 2000),
-				(100, 2000 * balance_factor),
-				(101, 2000 * balance_factor),
-				// This allow us to have a total_payout different from 0.
-				(999, 1_000_000_000_000),
-			],
+		if self.init_kton {
+			let _ = darwinia_balances::GenesisConfig::<Test, KtonInstance> {
+				balances: vec![
+					(1, 10 * balance_factor),
+					(2, 20 * balance_factor),
+					(3, 300 * balance_factor),
+					(4, 400 * balance_factor),
+					(10, balance_factor),
+					(11, balance_factor * 1000),
+					(20, balance_factor),
+					(21, balance_factor * 2000),
+					(30, balance_factor),
+					(31, balance_factor * 2000),
+					(40, balance_factor),
+					(41, balance_factor * 2000),
+					(100, 2000 * balance_factor),
+					(101, 2000 * balance_factor),
+					// This allow us to have a total_payout different from 0.
+					(999, 1_000_000_000_000),
+				],
+			}
+			.assimilate_storage(&mut storage);
 		}
-		.assimilate_storage(&mut storage);
 
 		let stake_21 = if self.fair { 1000 } else { 2000 };
 		let stake_31 = if self.validator_pool {
@@ -390,25 +412,29 @@ impl ExtBuilder {
 		};
 		let nominated = if self.nominate { vec![11, 21] } else { vec![] };
 		let _ = GenesisConfig::<Test> {
-			stakers: vec![
-				// (stash, controller, staked_amount, status)
-				(
-					11,
-					10,
-					balance_factor * 1000,
-					StakerStatus::<AccountId>::Validator,
-				),
-				(21, 20, stake_21, StakerStatus::<AccountId>::Validator),
-				(31, 30, stake_31, StakerStatus::<AccountId>::Validator),
-				(41, 40, balance_factor * 1000, status_41),
-				// nominator
-				(
-					101,
-					100,
-					balance_factor * 500,
-					StakerStatus::<AccountId>::Nominator(nominated),
-				),
-			],
+			stakers: if self.init_staker {
+				vec![
+					// (stash, controller, staked_amount, status)
+					(
+						11,
+						10,
+						balance_factor * 1000,
+						StakerStatus::<AccountId>::Validator,
+					),
+					(21, 20, stake_21, StakerStatus::<AccountId>::Validator),
+					(31, 30, stake_31, StakerStatus::<AccountId>::Validator),
+					(41, 40, balance_factor * 1000, status_41),
+					// nominator
+					(
+						101,
+						100,
+						balance_factor * 500,
+						StakerStatus::<AccountId>::Nominator(nominated),
+					),
+				]
+			} else {
+				vec![]
+			},
 			validator_count: self.validator_count,
 			minimum_validator_count: self.minimum_validator_count,
 			invulnerables: self.invulnerables,
