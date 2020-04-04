@@ -1,6 +1,8 @@
 // --- substrate ---
 pub use frame_support::traits::{LockIdentifier, VestingSchedule, WithdrawReason, WithdrawReasons};
 
+// --- crates ---
+use impl_trait_for_tuples::impl_for_tuples;
 // --- substrate ---
 use frame_support::traits::{Currency, TryDrop};
 use sp_runtime::DispatchResult;
@@ -70,17 +72,21 @@ pub trait LockableCurrency<AccountId>: Currency<AccountId> {
 	fn usable_balance_for_fees(who: &AccountId) -> Self::Balance;
 }
 
-pub trait ExistentialCheck<AccountId, Balance> {
-	fn try_drop(who: &AccountId) -> (bool, Balance);
+pub trait DustCollector<AccountId> {
+	fn check(who: &AccountId) -> Result<(), ()>;
+
+	fn collect(who: &AccountId);
 }
 
-impl<AccountId, Balance> ExistentialCheck<AccountId, Balance> for ()
-where
-	Balance: Default,
-{
-	fn try_drop(_: &AccountId) -> (bool, Balance) {
-		// only for tests
-		(true, Default::default())
+#[impl_for_tuples(15)]
+impl<AccountId> DustCollector<AccountId> for Balances {
+	fn check(who: &AccountId) -> Result<(), ()> {
+		for_tuples!( #( Balances::check(who)?; )* );
+		Ok(())
+	}
+
+	fn collect(who: &AccountId) {
+		for_tuples!( #( Balances::collect(who); )* );
 	}
 }
 

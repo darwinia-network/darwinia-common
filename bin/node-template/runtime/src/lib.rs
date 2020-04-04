@@ -396,7 +396,7 @@ impl darwinia_balances::Trait<RingInstance> for Runtime {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = frame_system::Module<Runtime>;
 	type BalanceInfo = AccountData<Balance>;
-	type TryDropOther = Kton;
+	type DustCollector = (Kton,);
 }
 type KtonInstance = darwinia_balances::Instance1;
 impl darwinia_balances::Trait<KtonInstance> for Runtime {
@@ -406,7 +406,7 @@ impl darwinia_balances::Trait<KtonInstance> for Runtime {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = frame_system::Module<Runtime>;
 	type BalanceInfo = AccountData<Balance>;
-	type TryDropOther = Ring;
+	type DustCollector = (Ring,);
 }
 
 parameter_types! {

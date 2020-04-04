@@ -18,7 +18,7 @@ pub mod balance {
 
 	// --- darwinia ---
 	pub use structs::FrozenBalance;
-	pub use traits::{BalanceInfo, ExistentialCheck};
+	pub use traits::{BalanceInfo, DustCollector};
 
 	// --- darwinia ---
 	use crate::*;

@@ -976,6 +976,7 @@ name = "darwinia-support"
 version = "0.5.0"
 dependencies = [
  "frame-support",
+ "impl-trait-for-tuples",
  "num-traits",
  "parity-scale-codec",
  "sp-runtime",
