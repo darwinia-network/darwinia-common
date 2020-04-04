@@ -863,7 +863,7 @@ mod tests {
 		type ExistentialDeposit = ExistentialDeposit;
 		type BalanceInfo = AccountData<Balance>;
 		type AccountStore = frame_system::Module<Test>;
-		type TryDropOther = ();
+		type DustCollector = ();
 	}
 
 	parameter_types! {

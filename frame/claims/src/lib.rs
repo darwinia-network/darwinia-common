@@ -473,7 +473,7 @@ mod tests {
 		type ExistentialDeposit = ExistentialDeposit;
 		type BalanceInfo = AccountData<Balance>;
 		type AccountStore = System;
-		type TryDropOther = ();
+		type DustCollector = ();
 	}
 
 	parameter_types! {
