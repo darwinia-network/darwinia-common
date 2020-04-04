@@ -167,7 +167,14 @@ use sp_runtime::{
 	},
 	DispatchError, DispatchResult,
 };
-use sp_std::{borrow::Borrow, cmp, convert::Infallible, fmt::Debug, mem, prelude::*};
+use sp_std::{
+	borrow::{Borrow, ToOwned},
+	cmp,
+	convert::Infallible,
+	fmt::Debug,
+	mem,
+	prelude::*,
+};
 // --- darwinia ---
 use darwinia_support::{
 	balance::{lock::*, *},
@@ -200,7 +207,7 @@ pub trait Subtrait<I: Instance = DefaultInstance>: frame_system::Trait {
 		+ EncodeLike;
 
 	// TODO: doc
-	type TryDropOther: ExistentialCheck<Self::AccountId, Self::Balance>;
+	type DustCollector: DustCollector<Self::AccountId>;
 }
 
 pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
@@ -235,7 +242,7 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	type AccountStore: StoredMap<Self::AccountId, Self::BalanceInfo>;
 
 	// TODO: doc
-	type TryDropOther: ExistentialCheck<Self::AccountId, Self::Balance>;
+	type DustCollector: DustCollector<Self::AccountId>;
 }
 
 impl<T: Trait<I>, I: Instance> Subtrait<I> for T {
@@ -243,8 +250,7 @@ impl<T: Trait<I>, I: Instance> Subtrait<I> for T {
 	type ExistentialDeposit = T::ExistentialDeposit;
 	type BalanceInfo = T::BalanceInfo;
 	type AccountStore = T::AccountStore;
-
-	type TryDropOther = T::TryDropOther;
+	type DustCollector = T::DustCollector;
 }
 
 decl_event!(
@@ -257,7 +263,7 @@ decl_event!(
 		Endowed(AccountId, Balance),
 		/// An account was removed whose balance was non-zero but below ExistentialDeposit,
 		/// resulting in an outright loss.
-		DustLost(AccountId, Balance, Balance),
+		DustLost(AccountId, Balance),
 		/// Transfer succeeded (from, to, value).
 		Transfer(AccountId, AccountId, Balance),
 		/// A balance was set by root (who, free, reserved).
@@ -407,7 +413,10 @@ decl_module! {
 			let who = T::Lookup::lookup(who)?;
 			let existential_deposit = T::ExistentialDeposit::get();
 
-			let wipeout = new_free + new_reserved < existential_deposit;
+			let wipeout = {
+				let new_total = new_free + new_reserved;
+				new_total < existential_deposit && T::DustCollector::check(&who).is_ok()
+			};
 			let new_free = if wipeout { Zero::zero() } else { new_free };
 			let new_reserved = if wipeout { Zero::zero() } else { new_reserved };
 
@@ -514,20 +523,18 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	fn post_mutation(who: &T::AccountId, new: T::BalanceInfo) -> Option<T::BalanceInfo> {
 		let total = new.total();
 		if total < T::ExistentialDeposit::get() {
-			let (dropped, dropped_other) = T::TryDropOther::try_drop(who);
-			if dropped {
+			if T::DustCollector::check(who).is_ok() {
+				T::DustCollector::collect(who);
 				if !total.is_zero() {
 					T::DustRemoval::on_unbalanced(NegativeImbalance::new(total));
+					Self::deposit_event(RawEvent::DustLost(who.to_owned(), total));
 				}
-				Self::deposit_event(RawEvent::DustLost(who.clone(), total, dropped_other));
 
-				None
-			} else {
-				Some(new)
+				return None;
 			}
-		} else {
-			Some(new)
 		}
+
+		Some(new)
 	}
 
 	/// Mutate an account to some new value, or delete it entirely with `None`. Will enforce
@@ -794,12 +801,9 @@ impl<T: Subtrait<I>, I: Instance> Trait<I> for ElevatedTrait<T, I> {
 	type DustRemoval = ();
 	type Event = ();
 	type ExistentialDeposit = T::ExistentialDeposit;
-
 	type BalanceInfo = T::BalanceInfo;
-
 	type AccountStore = T::AccountStore;
-
-	type TryDropOther = T::TryDropOther;
+	type DustCollector = T::DustCollector;
 }
 
 impl<T: Trait<I>, I: Instance> Currency<T::AccountId> for Module<T, I>
@@ -923,7 +927,10 @@ where
 
 				let ed = T::ExistentialDeposit::get();
 
-				ensure!(to_account.total() >= ed, Error::<T, I>::ExistentialDeposit);
+				ensure!(
+					to_account.total() >= ed || T::DustCollector::check(dest).is_err(),
+					Error::<T, I>::ExistentialDeposit
+				);
 
 				Self::ensure_can_withdraw(
 					transactor,
@@ -936,7 +943,9 @@ where
 				let allow_death = allow_death && <frame_system::Module<T>>::allow_death(transactor);
 
 				ensure!(
-					allow_death || from_account.free() >= ed,
+					allow_death
+						|| from_account.free() >= ed
+						|| T::DustCollector::check(transactor).is_err(),
 					Error::<T, I>::KeepAlive
 				);
 
@@ -1027,7 +1036,9 @@ where
 				// bail if not yet created and this operation wouldn't be enough to create it.
 				let ed = T::ExistentialDeposit::get();
 				ensure!(
-					value >= ed || !account.total().is_zero(),
+					value >= ed
+						|| !account.total().is_zero()
+						|| T::DustCollector::check(who).is_err(),
 					Self::PositiveImbalance::zero()
 				);
 
@@ -1069,8 +1080,15 @@ where
 
 				// bail if we need to keep the account alive and this would kill it.
 				let ed = T::ExistentialDeposit::get();
-				let would_be_dead = new_free_account + account.reserved() < ed;
-				let would_kill = would_be_dead && account.free() + account.reserved() >= ed;
+				let safe_to_collect_in_others = T::DustCollector::check(who).is_ok();
+				let would_be_dead = {
+					let new_total = new_free_account + account.reserved();
+					new_total < ed && safe_to_collect_in_others
+				};
+				let would_kill = {
+					let old_total = account.free() + account.reserved();
+					would_be_dead && (old_total >= ed || !safe_to_collect_in_others)
+				};
 				ensure!(
 					liveness == AllowDeath || !would_kill,
 					Error::<T, I>::KeepAlive
@@ -1101,10 +1119,15 @@ where
 				// equal and opposite cause (returned as an Imbalance), then in the
 				// instance that there's no other accounts on the system at all, we might
 				// underflow the issuance and our arithmetic will be off.
-				ensure!(
-					value + account.reserved() >= ed || !account.total().is_zero(),
-					()
-				);
+				{
+					let new_total = value + account.reserved();
+					ensure!(
+						new_total >= ed
+							|| !account.total().is_zero()
+							|| T::DustCollector::check(who).is_err(),
+						()
+					);
+				}
 
 				let imbalance = if account.free() <= value {
 					SignedImbalance::Positive(PositiveImbalance::new(value - account.free()))
@@ -1375,17 +1398,20 @@ where
 	}
 }
 
-impl<T: Trait<I>, I: Instance> ExistentialCheck<T::AccountId, T::Balance> for Module<T, I>
-where
-	T::Balance: MaybeSerializeDeserialize + Debug,
-{
-	fn try_drop(who: &T::AccountId) -> (bool, T::Balance) {
-		let dropped_balance = Self::total_balance(who);
-		let dropped = !dropped_balance.is_zero() && dropped_balance < T::ExistentialDeposit::get();
-		if dropped {
-			T::DustRemoval::on_unbalanced(NegativeImbalance::new(dropped_balance));
+impl<T: Trait<I>, I: Instance> DustCollector<T::AccountId> for Module<T, I> {
+	fn check(who: &T::AccountId) -> Result<(), ()> {
+		if Self::total_balance(who) < T::ExistentialDeposit::get() {
+			Ok(())
+		} else {
+			Err(())
 		}
+	}
 
-		(dropped, dropped_balance)
+	fn collect(who: &T::AccountId) {
+		let dropped_balance = Self::total_balance(who);
+		if !dropped_balance.is_zero() {
+			T::DustRemoval::on_unbalanced(NegativeImbalance::new(dropped_balance));
+			Self::deposit_event(RawEvent::DustLost(who.to_owned(), dropped_balance));
+		}
 	}
 }

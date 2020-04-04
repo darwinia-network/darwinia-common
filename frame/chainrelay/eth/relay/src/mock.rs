@@ -51,13 +51,12 @@ impl frame_system::Trait for Test {
 }
 
 parameter_types! {
-//	pub const EthMainnet: u64 = 0;
-	pub const EthRopsten: u64 = 1;
+	pub const EthNetwork: crate::EthNetworkType = crate::EthNetworkType::Ropsten;
 }
 
 impl Trait for Test {
 	type Event = ();
-	type EthNetwork = EthRopsten;
+	type EthNetwork = EthNetwork;
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {

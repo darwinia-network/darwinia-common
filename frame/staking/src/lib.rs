@@ -237,8 +237,8 @@
 #[cfg(test)]
 mod mock;
 
-// #[cfg(test)]
-// mod darwinia_tests;
+#[cfg(test)]
+mod darwinia_tests;
 #[cfg(test)]
 mod substrate_tests;
 
@@ -974,17 +974,22 @@ decl_storage! {
 		pub KtonPool get(fn kton_pool): KtonBalance<T>;
 	}
 	add_extra_genesis {
-		config(stakers): Vec<(T::AccountId, T::AccountId, RingBalance<T>, StakerStatus<T::AccountId>)>;
+		config(stakers): Vec<(
+			T::AccountId,
+			T::AccountId,
+			RingBalance<T>,
+			StakerStatus<T::AccountId>
+		)>;
 		build(|config: &GenesisConfig<T>| {
-			for &(ref stash, ref controller, r, ref status) in &config.stakers {
+			for &(ref stash, ref controller, ring_to_be_bonded, ref status) in &config.stakers {
 				assert!(
-					T::RingCurrency::free_balance(&stash) >= r,
+					T::RingCurrency::free_balance(&stash) >= ring_to_be_bonded,
 					"Stash does not have enough balance to bond.",
 				);
 				let _ = <Module<T>>::bond(
 					T::Origin::from(Some(stash.to_owned()).into()),
 					T::Lookup::unlookup(controller.to_owned()),
-					StakingBalance::RingBalance(r),
+					StakingBalance::RingBalance(ring_to_be_bonded),
 					RewardDestination::Staked { promise_month: 0 },
 					0,
 				);
@@ -1075,6 +1080,8 @@ decl_error! {
 
 decl_module! {
 	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+		type Error = Error<T>;
+
 		/// Number of sessions per era.
 		const SessionsPerEra: SessionIndex = T::SessionsPerEra::get();
 
@@ -1088,8 +1095,6 @@ decl_module! {
 
 		// TODO: doc
 		const TotalPower: Power = T::TotalPower::get();
-
-		type Error = Error<T>;
 
 		fn deposit_event() = default;
 
@@ -1259,7 +1264,7 @@ decl_module! {
 			} = &mut ledger;
 			let value = value.min(*active_ring - *active_deposit_ring);
 			let kton_return = inflation::compute_kton_return::<T>(value, promise_month);
-			let kton_positive_imbalance = T::KtonCurrency::deposit_creating(stash, kton_return);
+			let kton_positive_imbalance = T::KtonCurrency::deposit_creating(&stash, kton_return);
 
 			T::KtonReward::on_unbalanced(kton_positive_imbalance);
 			*active_deposit_ring += value;

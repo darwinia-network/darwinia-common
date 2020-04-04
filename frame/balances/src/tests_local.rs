@@ -28,7 +28,7 @@ type Ring = Module<Test, RingInstance>;
 
 type KtonInstance = Instance1;
 type _KtonError = Error<Test, KtonInstance>;
-type _Kton = Module<Test, KtonInstance>;
+type Kton = Module<Test, KtonInstance>;
 
 darwinia_support::impl_account_data! {
 	pub struct AccountData<Balance>
@@ -113,7 +113,22 @@ impl Trait<RingInstance> for Test {
 		Balance,
 		AccountData<Balance>,
 	>;
-	type TryDropOther = ();
+	type DustCollector = (Kton,);
+}
+impl Trait<KtonInstance> for Test {
+	type Balance = Balance;
+	type DustRemoval = ();
+	type Event = ();
+	type ExistentialDeposit = ExistentialDeposit;
+	type BalanceInfo = AccountData<Balance>;
+	type AccountStore = StorageMapShim<
+		Account<Test, KtonInstance>,
+		system::CallOnCreatedAccount<Test>,
+		system::CallKillAccount<Test>,
+		Balance,
+		AccountData<Balance>,
+	>;
+	type DustCollector = (Ring,);
 }
 
 pub struct ExtBuilder {

@@ -33,7 +33,19 @@ type DAG = LightDAG<EthereumPatch>;
 pub trait Trait: frame_system::Trait {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
-	type EthNetwork: Get<u64>;
+	type EthNetwork: Get<EthNetworkType>;
+}
+
+#[derive(Clone, PartialEq, Encode, Decode)]
+pub enum EthNetworkType {
+	Mainet,
+	Ropsten,
+}
+
+impl Default for EthNetworkType {
+	fn default() -> EthNetworkType {
+		EthNetworkType::Mainet
+	}
 }
 
 /// Familial details concerning a block
@@ -390,9 +402,8 @@ impl<T: Trait> Module<T> {
 
 		// check difficulty
 		let ethash_params = match T::EthNetwork::get() {
-			0 => EthashPartial::production(),
-			1 => EthashPartial::ropsten_testnet(),
-			_ => EthashPartial::production(), // others
+			EthNetworkType::Mainet => EthashPartial::production(),
+			EthNetworkType::Ropsten => EthashPartial::ropsten_testnet(),
 		};
 		ethash_params
 			.verify_block_basic(header)
@@ -404,10 +415,10 @@ impl<T: Trait> Module<T> {
 
 		// verify mixhash
 		match T::EthNetwork::get() {
-			1 => {
+			EthNetworkType::Ropsten => {
 				// TODO: Ropsten have issues, do not verify mixhash
 			}
-			_ => {
+			EthNetworkType::Mainet => {
 				let seal = EthashSeal::parse_seal(header.seal()).map_err(|_| <Error<T>>::SealPF)?;
 
 				let light_dag = DAG::new(header.number.into());

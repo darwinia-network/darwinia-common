@@ -396,7 +396,7 @@ impl darwinia_balances::Trait<RingInstance> for Runtime {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = frame_system::Module<Runtime>;
 	type BalanceInfo = AccountData<Balance>;
-	type TryDropOther = Kton;
+	type DustCollector = (Kton,);
 }
 type KtonInstance = darwinia_balances::Instance1;
 impl darwinia_balances::Trait<KtonInstance> for Runtime {
@@ -406,7 +406,7 @@ impl darwinia_balances::Trait<KtonInstance> for Runtime {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = frame_system::Module<Runtime>;
 	type BalanceInfo = AccountData<Balance>;
-	type TryDropOther = Ring;
+	type DustCollector = (Ring,);
 }
 
 parameter_types! {
@@ -441,14 +441,16 @@ impl darwinia_elections_phragmen::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const EthMainet: u64 = 0;
-	pub const EthRopsten: u64 = 1;
+	pub const EthNetwork: darwinia_eth_relay::EthNetworkType = darwinia_eth_relay::EthNetworkType::Ropsten;
 }
 impl darwinia_eth_relay::Trait for Runtime {
 	type Event = Event;
-	type EthNetwork = EthRopsten;
+	type EthNetwork = EthNetwork;
 }
 
+parameter_types! {
+	pub const SubKeyPrefix: u8 = 42;
+}
 impl darwinia_eth_backing::Trait for Runtime {
 	type Event = Event;
 	type Time = Timestamp;
@@ -459,6 +461,7 @@ impl darwinia_eth_backing::Trait for Runtime {
 	type RingReward = ();
 	type Kton = Kton;
 	type KtonReward = ();
+	type SubKeyPrefix = SubKeyPrefix;
 }
 
 type SubmitPFTransaction =
