@@ -799,7 +799,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-balances"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "darwinia-support",
  "frame-benchmarking",
@@ -816,7 +816,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-claims"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "darwinia-balances",
  "darwinia-support",
@@ -838,7 +838,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-elections-phragmen"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "darwinia-balances",
  "darwinia-support",
@@ -857,7 +857,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-eth-backing"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "darwinia-balances",
  "darwinia-eth-relay",
@@ -902,7 +902,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-eth-relay"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "eth-primitives",
  "ethash",
@@ -938,7 +938,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-phragmen"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "darwinia-support",
  "rand 0.7.3",
@@ -951,7 +951,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-staking"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "darwinia-balances",
  "darwinia-phragmen",
@@ -973,7 +973,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-support"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
@@ -985,7 +985,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-treasury"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "darwinia-balances",
  "darwinia-support",
@@ -1001,7 +1001,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-vesting"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "darwinia-balances",
  "darwinia-support",
@@ -1107,7 +1107,7 @@ dependencies = [
 
 [[package]]
 name = "eth-primitives"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "ethbloom 0.8.1 (git+https://github.com/darwinia-network/parity-common.git)",
  "ethereum-types 0.8.0 (git+https://github.com/darwinia-network/parity-common.git)",
@@ -2968,7 +2968,7 @@ checksum = "71d96e3f3c0b6325d8ccd83c33b28acb183edcb6c67938ba104ec546854b0882"
 
 [[package]]
 name = "merkle-patricia-trie"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "criterion",
  "ethereum-types 0.5.2",
@@ -3098,7 +3098,7 @@ dependencies = [
 
 [[package]]
 name = "node-template"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "futures 0.3.4",
  "log",
@@ -3128,7 +3128,7 @@ dependencies = [
 
 [[package]]
 name = "node-template-runtime"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "darwinia-balances",
  "darwinia-claims",
