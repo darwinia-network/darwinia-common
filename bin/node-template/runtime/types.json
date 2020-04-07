@@ -1,4 +1,5 @@
 {
+	"Address": "AccountId",
 	"RingBalance": "Balance",
 	"KtonBalance": "Balance",
 	"MomentT": "Moment",
@@ -98,7 +99,7 @@
 	"AccountData": {
 		"free": "Balance",
 		"reserved": "Balance",
-		"reserved_ring": "Balance",
+		"free_kton": "Balance",
 		"reserved_kton": "Balance",
 		"misc_frozen": "Balance",
 		"fee_frozen": "Balance"

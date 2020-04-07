@@ -152,7 +152,6 @@ fn testnet_genesis(
 			changes_trie_config: Default::default(),
 		}),
 		pallet_aura: Some(Default::default()),
-		pallet_indices: Some(Default::default()),
 		pallet_session: Some(SessionConfig {
 			keys: initial_authorities
 				.iter()
