@@ -1007,7 +1007,10 @@ where
 		Self::try_mutate_account(
 			who,
 			|account| -> Result<Self::PositiveImbalance, DispatchError> {
-				ensure!(!account.total().is_zero(), Error::<T, I>::DeadAccount);
+				ensure!(
+					!account.total().is_zero() || T::DustCollector::check(who).is_err(),
+					Error::<T, I>::DeadAccount
+				);
 				account.set_free(
 					account
 						.free()
@@ -1256,7 +1259,10 @@ where
 		Self::try_mutate_account(
 			beneficiary,
 			|to_account| -> Result<Self::Balance, DispatchError> {
-				ensure!(!to_account.total().is_zero(), Error::<T, I>::DeadAccount);
+				ensure!(
+					!to_account.total().is_zero() || T::DustCollector::check(beneficiary).is_err(),
+					Error::<T, I>::DeadAccount
+				);
 				Self::try_mutate_account(
 					slashed,
 					|from_account| -> Result<Self::Balance, DispatchError> {

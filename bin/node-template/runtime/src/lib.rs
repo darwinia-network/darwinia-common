@@ -90,8 +90,8 @@ use sp_core::{
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		self, BlakeTwo256, Block as BlockT, ConvertInto, IdentifyAccount, SaturatedConversion,
-		StaticLookup, Verify,
+		BlakeTwo256, Block as BlockT, ConvertInto, IdentifyAccount, IdentityLookup,
+		SaturatedConversion, Verify,
 	},
 	transaction_validity::TransactionValidity,
 	ApplyExtrinsicResult, MultiSignature, RuntimeDebug,
@@ -196,7 +196,7 @@ impl frame_system::Trait for Runtime {
 	/// The aggregated dispatch type that is available for extrinsics.
 	type Call = Call;
 	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
-	type Lookup = Indices;
+	type Lookup = IdentityLookup<Self::AccountId>;
 	/// The index type for storing how many extrinsics an account has signed.
 	type Index = Index;
 	/// The index type for blocks.
@@ -238,16 +238,6 @@ impl pallet_aura::Trait for Runtime {
 	type AuthorityId = AuraId;
 }
 
-parameter_types! {
-	pub const IndexDeposit: Balance = 1 * COIN;
-}
-impl pallet_indices::Trait for Runtime {
-	type AccountIndex = AccountIndex;
-	type Currency = Ring;
-	type Deposit = IndexDeposit;
-	type Event = Event;
-}
-
 impl pallet_grandpa::Trait for Runtime {
 	type Event = Event;
 }
@@ -260,19 +250,6 @@ impl pallet_timestamp::Trait for Runtime {
 	type Moment = u64;
 	type OnTimestampSet = Aura;
 	type MinimumPeriod = MinimumPeriod;
-}
-
-parameter_types! {
-	pub const TransactionBaseFee: Balance = 0;
-	pub const TransactionByteFee: Balance = 1;
-}
-impl pallet_transaction_payment::Trait for Runtime {
-	type Currency = Ring;
-	type OnTransactionPayment = ();
-	type TransactionBaseFee = TransactionBaseFee;
-	type TransactionByteFee = TransactionByteFee;
-	type WeightToFee = ConvertInto;
-	type FeeMultiplierUpdate = ();
 }
 
 impl_opaque_keys! {
@@ -307,52 +284,6 @@ impl pallet_collective::Trait<CouncilCollective> for Runtime {
 	type Proposal = Call;
 	type Event = Event;
 	type MotionDuration = CouncilMotionDuration;
-}
-
-impl frame_system::offchain::CreateTransaction<Runtime, UncheckedExtrinsic> for Runtime {
-	type Public = <Signature as traits::Verify>::Signer;
-	type Signature = Signature;
-
-	fn create_transaction<
-		TSigner: frame_system::offchain::Signer<Self::Public, Self::Signature>,
-	>(
-		call: Call,
-		public: Self::Public,
-		account: AccountId,
-		index: Index,
-	) -> Option<(
-		Call,
-		<UncheckedExtrinsic as traits::Extrinsic>::SignaturePayload,
-	)> {
-		// take the biggest period possible.
-		let period = BlockHashCount::get()
-			.checked_next_power_of_two()
-			.map(|c| c / 2)
-			.unwrap_or(2) as u64;
-		let current_block = System::block_number()
-			.saturated_into::<u64>()
-			// The `System::block_number` is initialized with `n+1`,
-			// so the actual block number is `n`.
-			.saturating_sub(1);
-		let tip = 0;
-		let extra: SignedExtra = (
-			frame_system::CheckVersion::<Runtime>::new(),
-			frame_system::CheckGenesis::<Runtime>::new(),
-			frame_system::CheckEra::<Runtime>::from(generic::Era::mortal(period, current_block)),
-			frame_system::CheckNonce::<Runtime>::from(index),
-			frame_system::CheckWeight::<Runtime>::new(),
-			pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
-		);
-		let raw_payload = SignedPayload::new(call, extra)
-			.map_err(|e| {
-				debug::warn!("Unable to create signed payload: {:?}", e);
-			})
-			.ok()?;
-		let signature = TSigner::sign(public, &raw_payload)?;
-		let address = Indices::unlookup(account);
-		let (call, extra, _) = raw_payload.deconstruct();
-		Some((call, (address, signature, extra)))
-	}
 }
 
 /// A runtime transaction submitter.
@@ -464,6 +395,48 @@ impl darwinia_eth_backing::Trait for Runtime {
 	type SubKeyPrefix = SubKeyPrefix;
 }
 
+impl frame_system::offchain::CreateTransaction<Runtime, UncheckedExtrinsic> for Runtime {
+	type Public = <Signature as sp_runtime::traits::Verify>::Signer;
+	type Signature = Signature;
+
+	fn create_transaction<
+		TSigner: frame_system::offchain::Signer<Self::Public, Self::Signature>,
+	>(
+		call: Call,
+		public: Self::Public,
+		account: AccountId,
+		index: Index,
+	) -> Option<(
+		Call,
+		<UncheckedExtrinsic as sp_runtime::traits::Extrinsic>::SignaturePayload,
+	)> {
+		// take the biggest period possible.
+		let period = BlockHashCount::get()
+			.checked_next_power_of_two()
+			.map(|c| c / 2)
+			.unwrap_or(2) as u64;
+		let current_block = System::block_number()
+			.saturated_into::<u64>()
+			// The `System::block_number` is initialized with `n+1`,
+			// so the actual block number is `n`.
+			.saturating_sub(1);
+		let extra: SignedExtra = (
+			frame_system::CheckVersion::<Runtime>::new(),
+			frame_system::CheckGenesis::<Runtime>::new(),
+			frame_system::CheckEra::<Runtime>::from(generic::Era::mortal(period, current_block)),
+			frame_system::CheckNonce::<Runtime>::from(index),
+			frame_system::CheckWeight::<Runtime>::new(),
+		);
+		let raw_payload = SignedPayload::new(call, extra)
+			.map_err(|e| {
+				debug::warn!("Unable to create signed payload: {:?}", e);
+			})
+			.ok()?;
+		let signature = TSigner::sign(public, &raw_payload)?;
+		let (call, extra, _) = raw_payload.deconstruct();
+		Some((call, (account, signature, extra)))
+	}
+}
 type SubmitPFTransaction =
 	TransactionSubmitter<darwinia_eth_offchain::crypto::Public, Runtime, UncheckedExtrinsic>;
 parameter_types! {
@@ -566,7 +539,8 @@ impl darwinia_vesting::Trait for Runtime {
 }
 
 construct_runtime!(
-	pub enum Runtime where
+	pub enum Runtime
+	where
 		Block = Block,
 		NodeBlock = opaque::Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
@@ -575,9 +549,7 @@ construct_runtime!(
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
 		Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
 		Aura: pallet_aura::{Module, Config<T>, Inherent(Timestamp)},
-		Indices: pallet_indices::{Module, Call, Storage, Config<T>, Event<T>},
 		Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
-		TransactionPayment: pallet_transaction_payment::{Module, Storage},
 		Session: pallet_session::{Module, Call, Storage, Config<T>, Event},
 		Council: pallet_collective::<Instance1>::{Module, Call, Storage, Origin<T>, Config<T>, Event<T>},
 		Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
@@ -599,7 +571,7 @@ construct_runtime!(
 );
 
 /// The address format for describing accounts.
-pub type Address = <Indices as StaticLookup>::Source;
+pub type Address = AccountId;
 /// Block header type as expected by this runtime.
 pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 /// Block type as expected by this runtime.
@@ -615,14 +587,13 @@ pub type SignedExtra = (
 	frame_system::CheckEra<Runtime>,
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
-	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
 /// The payload being signed in transactions.
 pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 /// Extrinsic type that has already been checked.
-pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, Call, SignedExtra>;
+pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, Index, Call>;
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
 	Runtime,
