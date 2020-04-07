@@ -38,13 +38,13 @@ pub trait Trait: frame_system::Trait {
 
 #[derive(Clone, PartialEq, Encode, Decode)]
 pub enum EthNetworkType {
-	Mainet,
+	Mainnet,
 	Ropsten,
 }
 
 impl Default for EthNetworkType {
 	fn default() -> EthNetworkType {
-		EthNetworkType::Mainet
+		EthNetworkType::Mainnet
 	}
 }
 
@@ -402,7 +402,7 @@ impl<T: Trait> Module<T> {
 
 		// check difficulty
 		let ethash_params = match T::EthNetwork::get() {
-			EthNetworkType::Mainet => EthashPartial::production(),
+			EthNetworkType::Mainnet => EthashPartial::production(),
 			EthNetworkType::Ropsten => EthashPartial::ropsten_testnet(),
 		};
 		ethash_params
@@ -418,7 +418,7 @@ impl<T: Trait> Module<T> {
 			EthNetworkType::Ropsten => {
 				// TODO: Ropsten have issues, do not verify mixhash
 			}
-			EthNetworkType::Mainet => {
+			EthNetworkType::Mainnet => {
 				let seal = EthashSeal::parse_seal(header.seal()).map_err(|_| <Error<T>>::SealPF)?;
 
 				let light_dag = DAG::new(header.number.into());
