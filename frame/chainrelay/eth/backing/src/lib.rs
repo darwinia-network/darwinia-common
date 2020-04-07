@@ -181,7 +181,7 @@ decl_module! {
 		}
 
 		// --- Root Call ---
-		
+
 		/// Set a new ring redeem address.
 		///
 		/// The dispatch origin of this call must be _Root_.
