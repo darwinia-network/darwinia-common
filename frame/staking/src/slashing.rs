@@ -677,7 +677,7 @@ pub(crate) fn clear_stash_metadata<T: Trait>(stash: &T::AccountId) {
 // apply the slash to a stash account, deducting any missing funds from the reward
 // payout, saturating at 0. this is mildly unfair but also an edge-case that
 // can only occur when overlapping locked funds have been slashed.
-fn do_slash<T: Trait>(
+pub fn do_slash<T: Trait>(
 	stash: &T::AccountId,
 	value: RKT<T>,
 	reward_payout: &mut RKT<T>,

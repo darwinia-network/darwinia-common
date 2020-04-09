@@ -90,8 +90,7 @@ use sp_core::{
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		BlakeTwo256, Block as BlockT, ConvertInto, IdentifyAccount, IdentityLookup,
-		SaturatedConversion, Verify,
+		BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, SaturatedConversion, Verify,
 	},
 	transaction_validity::TransactionValidity,
 	ApplyExtrinsicResult, MultiSignature, RuntimeDebug,
@@ -674,6 +673,41 @@ impl_runtime_apis! {
 	impl fg_primitives::GrandpaApi<Block> for Runtime {
 		fn grandpa_authorities() -> GrandpaAuthorityList {
 			Grandpa::grandpa_authorities()
+		}
+	}
+
+#[cfg(feature = "runtime-benchmarks")]
+	impl frame_benchmarking::Benchmark<Block> for Runtime {
+		fn dispatch_benchmark(
+			module: Vec<u8>,
+			extrinsic: Vec<u8>,
+			lowest_range_values: Vec<u32>,
+			highest_range_values: Vec<u32>,
+			steps: Vec<u32>,
+			repeat: u32,
+		) -> Result<Vec<frame_benchmarking::BenchmarkResults>, sp_runtime::RuntimeString> {
+			use frame_benchmarking::Benchmarking;
+			// Trying to add benchmarks directly to the Session Pallet caused cyclic dependency issues.
+			// To get around that, we separated the Session benchmarks into its own crate, which is why
+			// we need these two lines below.
+			// TODO: benchmark
+			// use darwinia_session_benchmarking::Module as SessionBench;
+			// impl darwinia_session_benchmarking::Trait for Runtime {}
+			//
+			// let result = match module.as_slice() {
+			// 	b"darwinia-staking" | b"staking" => Staking::run_benchmark(
+			// 		extrinsic,
+			// 		lowest_range_values,
+			// 		highest_range_values,
+			// 		steps,
+			// 		repeat,
+			// 	),
+			// 	_ => Err("Benchmark not found for this pallet."),
+			// };
+			//
+			// result.map_err(|e| e.into())
+
+			unimplemented!()
 		}
 	}
 }

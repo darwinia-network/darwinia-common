@@ -19,6 +19,7 @@ futures = "0.3.4"
 log = "0.4.8"
 structopt = "0.3.12"
 # substrate
+frame-benchmarking-cli = { git = "https://github.com/darwinia-network/substrate.git", tag = "ci-release-2.0.0-alpha.5+6" }
 pallet-im-online = { git = "https://github.com/darwinia-network/substrate.git", tag = "ci-release-2.0.0-alpha.5+6" }
 sc-cli = { git = "https://github.com/darwinia-network/substrate.git", tag = "ci-release-2.0.0-alpha.5+6" }
 sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "ci-release-2.0.0-alpha.5+6" }
@@ -43,3 +44,10 @@ sc-basic-authorship = { git = "https://github.com/darwinia-network/substrate.git
 vergen = "3.1.0"
 # substrate
 build-script-utils = { package = "substrate-build-script-utils", git = "https://github.com/darwinia-network/substrate.git", tag = "ci-release-2.0.0-alpha.5+6" }
+frame-benchmarking-cli = { git = "https://github.com/darwinia-network/substrate.git", tag = "ci-release-2.0.0-alpha.5+6" }
+
+[features]
+runtime-benchmarks = [
+	# darwinia
+	"node-template-runtime/runtime-benchmarks"
+]

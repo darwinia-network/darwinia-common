@@ -18,6 +18,8 @@ darwinia-elections-phragmen = { default-features = false, path = "../../../frame
 darwinia-eth-relay = { default-features = false, path = "../../../frame/chainrelay/eth/relay" }
 darwinia-eth-backing = { default-features = false, path = "../../../frame/chainrelay/eth/backing" }
 darwinia-eth-offchain = { default-features = false, path = "../../../frame/chainrelay/eth/offchain" }
+# TODO: benchmark
+# darwinia-session-benchmarking = { default-features = false, optional = true, path = "" }
 darwinia-header-mmr = { default-features = false, path = "../../../frame/header-mmr" }
 darwinia-staking = { default-features = false, path = "../../../frame/staking" }
 darwinia-support = { default-features = false, path = "../../../frame/support" }
@@ -61,13 +63,15 @@ std = [
 	"codec/std",
 	"serde",
 	# darwinia
+	"darwinia-balances/std",
 	"darwinia-claims/std",
 	"darwinia-elections-phragmen/std",
 	"darwinia-eth-relay/std",
 	"darwinia-eth-backing/std",
 	"darwinia-eth-offchain/std",
 	"darwinia-header-mmr/std",
-	"darwinia-balances/std",
+	# TODO: benchmark
+	# "darwinia-session-benchmarking/std",
 	"darwinia-staking/std",
 	"darwinia-support/std",
 	"darwinia-treasury/std",
@@ -100,7 +104,12 @@ std = [
 ]
 runtime-benchmarks = [
 	# darwinia
+	# "darwinia-balances/runtime-benchmarks",
+	"darwinia-elections-phragmen/runtime-benchmarks",
+	# TODO: benchmark
+	# "pallet-session-benchmarking",
 	"darwinia-staking/runtime-benchmarks",
+	# "darwinia-tresury/runtime-benchmarks",
 	# substrate
 	"frame-benchmarking",
 	"frame-support/runtime-benchmarks",
