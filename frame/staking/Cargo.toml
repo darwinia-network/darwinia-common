@@ -1,6 +1,6 @@
 [package]
 name = "darwinia-staking"
-version = "0.5.1"
+version = "0.5.2"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "FRAME pallet staking"
 edition = "2018"

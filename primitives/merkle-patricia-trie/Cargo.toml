@@ -1,6 +1,6 @@
 [package]
 name = "merkle-patricia-trie"
-version = "0.5.1"
+version = "0.5.2"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "Merkle-Patricia Trie (Ethereum Style)"
 edition = "2018"
