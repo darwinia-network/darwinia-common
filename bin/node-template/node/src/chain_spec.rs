@@ -206,7 +206,6 @@ fn testnet_genesis(
 			payout_fraction: Perbill::from_percent(50),
 			..Default::default()
 		}),
-		darwinia_vesting: Some(Default::default()),
 	}
 }
 

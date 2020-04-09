@@ -528,16 +528,6 @@ impl darwinia_treasury::Trait for Runtime {
 	type Burn = Burn;
 }
 
-parameter_types! {
-	pub const MinVestedTransfer: Balance = 100 * COIN;
-}
-impl darwinia_vesting::Trait for Runtime {
-	type Event = Event;
-	type Currency = Ring;
-	type BlockNumberToBalance = ConvertInto;
-	type MinVestedTransfer = MinVestedTransfer;
-}
-
 construct_runtime!(
 	pub enum Runtime
 	where
@@ -566,7 +556,6 @@ construct_runtime!(
 		HeaderMMR: darwinia_header_mmr::{Module, Call, Storage},
 		Staking: darwinia_staking::{Module, Call, Storage, Config<T>, Event<T>},
 		Treasury: darwinia_treasury::{Module, Call, Storage, Event<T>},
-		Vesting: darwinia_vesting::{Module, Call, Storage, Config<T>, Event<T>},
 	}
 );
 

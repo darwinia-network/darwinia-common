@@ -21,7 +21,6 @@ darwinia-eth-offchain = { default-features = false, path = "../../../frame/chain
 darwinia-header-mmr = { default-features = false, path = "../../../frame/header-mmr" }
 darwinia-staking = { default-features = false, path = "../../../frame/staking" }
 darwinia-support = { default-features = false, path = "../../../frame/support" }
-darwinia-vesting = { default-features = false, path = "../../../frame/vesting" }
 darwinia-treasury = { default-features = false, path = "../../../frame/treasury" }
 # substrate
 frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/darwinia-network/substrate.git", tag = "ci-release-2.0.0-alpha.5+6" }
@@ -71,7 +70,6 @@ std = [
 	"darwinia-balances/std",
 	"darwinia-staking/std",
 	"darwinia-support/std",
-	"darwinia-vesting/std",
 	"darwinia-treasury/std",
 	# substrate
 	"frame-executive/std",
