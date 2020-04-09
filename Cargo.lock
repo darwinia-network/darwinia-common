@@ -820,7 +820,6 @@ version = "0.5.1"
 dependencies = [
  "darwinia-balances",
  "darwinia-support",
- "darwinia-vesting",
  "frame-support",
  "frame-system",
  "hex-literal",
