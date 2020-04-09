@@ -86,7 +86,6 @@ impl frame_system::Trait for Test {
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = Ring;
-	type MigrateAccount = ();
 }
 parameter_types! {
 	pub const TransactionBaseFee: Balance = 0;

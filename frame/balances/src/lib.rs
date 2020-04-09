@@ -794,7 +794,6 @@ impl<T: Subtrait<I>, I: Instance> frame_system::Trait for ElevatedTrait<T, I> {
 	type AccountData = T::AccountData;
 	type OnNewAccount = T::OnNewAccount;
 	type OnKilledAccount = T::OnKilledAccount;
-	type MigrateAccount = ();
 }
 impl<T: Subtrait<I>, I: Instance> Trait<I> for ElevatedTrait<T, I> {
 	type Balance = T::Balance;

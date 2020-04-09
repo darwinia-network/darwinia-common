@@ -51,7 +51,6 @@ impl frame_system::Trait for Test {
 	type Version = ();
 	type ModuleToIndex = ();
 	type AccountData = ();
-	type MigrateAccount = ();
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 }
