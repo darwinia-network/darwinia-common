@@ -86,7 +86,7 @@ use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_support::balance::lock::*;
 
-const MODULE_ID: LockIdentifier = *b"phrelect";
+const MODULE_ID: LockIdentifier = *b"da/phrel";
 
 /// The maximum votes allowed per voter.
 pub const MAXIMUM_VOTE: usize = 16;

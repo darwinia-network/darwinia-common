@@ -331,7 +331,7 @@ const MONTH_IN_MINUTES: Moment = 30 * 24 * 60;
 const MONTH_IN_MILLISECONDS: Moment = MONTH_IN_MINUTES * 60 * 1000;
 pub const MAX_NOMINATIONS: usize = 16;
 const MAX_UNLOCKING_CHUNKS: usize = 32;
-const STAKING_ID: LockIdentifier = *b"staking ";
+const STAKING_ID: LockIdentifier = *b"da/staki";
 
 // --- enum ---
 
