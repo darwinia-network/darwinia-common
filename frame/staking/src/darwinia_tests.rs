@@ -1,16 +1,9 @@
 //! Tests for the module.
 
 // --- substrate ---
-use frame_support::{assert_err, assert_noop, assert_ok, traits::ReservableCurrency};
-use sp_runtime::{
-	assert_eq_error_rate,
-	traits::{BadOrigin, OnInitialize},
-	DispatchError,
-};
-use substrate_test_utils::assert_eq_uvec;
+use frame_support::assert_ok;
 // --- darwinia ---
 use crate::{mock::*, *};
-use darwinia_support::balance::lock::*;
 
 #[test]
 fn kton_should_reward_even_does_not_own_kton_before() {
@@ -19,8 +12,8 @@ fn kton_should_reward_even_does_not_own_kton_before() {
 	ExtBuilder::default()
 		.existential_deposit(10000)
 		.nominate(false)
+		.stakers(false)
 		.init_ring(false)
-		.init_staker(false)
 		.build()
 		.execute_with(|| {
 			let acct = 777;

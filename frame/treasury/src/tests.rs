@@ -3,7 +3,7 @@
 // --- substrate ---
 use frame_support::{assert_noop, assert_ok};
 use sp_core::H256;
-use sp_runtime::traits::{BlakeTwo256, OnFinalize};
+use sp_runtime::traits::{BlakeTwo256, OnInitialize};
 // --- darwinia ---
 use crate::{mock::*, *};
 
@@ -240,7 +240,7 @@ fn accepted_spend_proposal_ignored_outside_spend_period() {
 		assert_ok!(Treasury::propose_spend(Origin::signed(0), 100, 0, 3));
 		assert_ok!(Treasury::approve_proposal(Origin::ROOT, 0));
 
-		<Treasury as OnFinalize<u64>>::on_finalize(1);
+		<Treasury as OnInitialize<u64>>::on_initialize(1);
 		assert_eq!(Ring::free_balance(3), 0);
 		assert_eq!(Treasury::pot::<Ring>(), 100);
 	});
@@ -253,7 +253,7 @@ fn unused_pot_should_diminish() {
 		Ring::make_free_balance_be(&Treasury::account_id(), 101);
 		assert_eq!(Ring::total_issuance(), init_total_issuance + 100);
 
-		<Treasury as OnFinalize<u64>>::on_finalize(2);
+		<Treasury as OnInitialize<u64>>::on_initialize(2);
 		assert_eq!(Treasury::pot::<Ring>(), 50);
 		assert_eq!(Ring::total_issuance(), init_total_issuance + 50);
 	});
@@ -265,7 +265,7 @@ fn rejected_spend_proposal_ignored_on_spend_period() {
 		Ring::make_free_balance_be(&Treasury::account_id(), 101);
 		assert_ok!(Treasury::propose_spend(Origin::signed(0), 100, 0, 3));
 		assert_ok!(Treasury::reject_proposal(Origin::ROOT, 0));
-		<Treasury as OnFinalize<u64>>::on_finalize(2);
+		<Treasury as OnInitialize<u64>>::on_initialize(2);
 		assert_eq!(Ring::free_balance(3), 0);
 		assert_eq!(Treasury::pot::<Ring>(), 50);
 	});
@@ -325,7 +325,7 @@ fn accepted_spend_proposal_enacted_on_spend_period() {
 		assert_ok!(Treasury::propose_spend(Origin::signed(0), 100, 0, 3));
 		assert_ok!(Treasury::approve_proposal(Origin::ROOT, 0));
 
-		<Treasury as OnFinalize<u64>>::on_finalize(2);
+		<Treasury as OnInitialize<u64>>::on_initialize(2);
 		assert_eq!(Ring::free_balance(3), 100);
 		assert_eq!(Treasury::pot::<Ring>(), 0);
 	});
@@ -339,11 +339,11 @@ fn pot_underflow_should_not_diminish() {
 		assert_ok!(Treasury::propose_spend(Origin::signed(0), 150, 0, 3));
 		assert_ok!(Treasury::approve_proposal(Origin::ROOT, 0));
 
-		<Treasury as OnFinalize<u64>>::on_finalize(2);
+		<Treasury as OnInitialize<u64>>::on_initialize(2);
 		assert_eq!(Treasury::pot::<Ring>(), 100); // Pot hasn't changed
 
 		let _ = Ring::deposit_into_existing(&Treasury::account_id(), 100).unwrap();
-		<Treasury as OnFinalize<u64>>::on_finalize(4);
+		<Treasury as OnInitialize<u64>>::on_initialize(4);
 		assert_eq!(Ring::free_balance(3), 150); // Fund has been spent
 		assert_eq!(Treasury::pot::<Ring>(), 25); // Pot has finally changed
 	});
@@ -366,7 +366,7 @@ fn treasury_account_doesnt_get_deleted() {
 		));
 		assert_ok!(Treasury::approve_proposal(Origin::ROOT, 0));
 
-		<Treasury as OnFinalize<u64>>::on_finalize(2);
+		<Treasury as OnInitialize<u64>>::on_initialize(2);
 		assert_eq!(Treasury::pot::<Ring>(), 100); // Pot hasn't changed
 
 		assert_ok!(Treasury::propose_spend(
@@ -377,7 +377,7 @@ fn treasury_account_doesnt_get_deleted() {
 		));
 		assert_ok!(Treasury::approve_proposal(Origin::ROOT, 1));
 
-		<Treasury as OnFinalize<u64>>::on_finalize(4);
+		<Treasury as OnInitialize<u64>>::on_initialize(4);
 		assert_eq!(Treasury::pot::<Ring>(), 0); // Pot is emptied
 		assert_eq!(Ring::free_balance(Treasury::account_id()), 1); // but the account is still there
 	});
@@ -412,14 +412,14 @@ fn inexistent_account_works() {
 		assert_ok!(Treasury::approve_proposal(Origin::ROOT, 0));
 		assert_ok!(Treasury::propose_spend(Origin::signed(0), 1, 0, 3));
 		assert_ok!(Treasury::approve_proposal(Origin::ROOT, 1));
-		<Treasury as OnFinalize<u64>>::on_finalize(2);
+		<Treasury as OnInitialize<u64>>::on_initialize(2);
 		assert_eq!(Treasury::pot::<Ring>(), 0); // Pot hasn't changed
 		assert_eq!(Ring::free_balance(3), 0); // Balance of `3` hasn't changed
 
 		Ring::make_free_balance_be(&Treasury::account_id(), 100);
 		assert_eq!(Treasury::pot::<Ring>(), 99); // Pot now contains funds
 		assert_eq!(Ring::free_balance(Treasury::account_id()), 100); // Account does exist
-		<Treasury as OnFinalize<u64>>::on_finalize(4);
+		<Treasury as OnInitialize<u64>>::on_initialize(4);
 		assert_eq!(Treasury::pot::<Ring>(), 0); // Pot has changed
 		assert_eq!(Ring::free_balance(3), 99); // Balance of `3` has changed
 	});
@@ -460,7 +460,7 @@ fn approve_proposal_no_keep_burning() {
 		assert_ok!(Treasury::approve_proposal(Origin::ROOT, 0)); // Accept proposal
 
 		// @0-1: Check balances after `propose_spend`
-		<Treasury as OnFinalize<u64>>::on_finalize(1);
+		<Treasury as OnInitialize<u64>>::on_initialize(1);
 		assert_eq!(Ring::free_balance(&0), 95); // ProposalBond: Permill::from_percent(5);
 		assert_eq!(Kton::free_balance(&0), 95); // ProposalBond: Permill::from_percent(5);
 		assert_eq!(Ring::free_balance(&1), 98); // No changes
@@ -473,7 +473,7 @@ fn approve_proposal_no_keep_burning() {
 		assert_eq!(Treasury::pot::<Kton>(), 100); // No changes
 
 		// @2: On the first spend perid
-		<Treasury as OnFinalize<u64>>::on_finalize(2); // SpendPeriod: u64 = 2;
+		<Treasury as OnInitialize<u64>>::on_initialize(2); // SpendPeriod: u64 = 2;
 		assert_eq!(Ring::free_balance(&0), 100); // ProposalBond: Permill::from_percent(5); **return bond**
 		assert_eq!(Kton::free_balance(&0), 100); // ProposalBond: Permill::from_percent(5); **return bond**
 		assert_eq!(Ring::free_balance(&1), 98); // No changes
@@ -486,7 +486,7 @@ fn approve_proposal_no_keep_burning() {
 		assert_eq!(Treasury::pot::<Kton>(), 0); // Burn: Permill::from_percent(50); **Burn 100 if approve**
 
 		// @3: Check balances on the perid after spend perid
-		<Treasury as OnFinalize<u64>>::on_finalize(3);
+		<Treasury as OnInitialize<u64>>::on_initialize(3);
 		assert_eq!(Ring::free_balance(&0), 100); // No changes from last perid
 		assert_eq!(Kton::free_balance(&0), 100); // No changes from last perid
 		assert_eq!(Ring::free_balance(&1), 98); // No changes
@@ -499,7 +499,7 @@ fn approve_proposal_no_keep_burning() {
 		assert_eq!(Treasury::pot::<Kton>(), 0); // No changes from last perid
 
 		// @4: The second spend perid
-		<Treasury as OnFinalize<u64>>::on_finalize(4);
+		<Treasury as OnInitialize<u64>>::on_initialize(4);
 		assert_eq!(Ring::free_balance(&0), 100); // No changes from last perid
 		assert_eq!(Kton::free_balance(&0), 100); // No changes from last perid
 		assert_eq!(Ring::free_balance(&1), 98); // No changes
@@ -541,7 +541,7 @@ fn reject_proposal_keep_burning() {
 		assert_ok!(Treasury::reject_proposal(Origin::ROOT, 0));
 
 		// @0-1: Check balances after `propose_spend`
-		<Treasury as OnFinalize<u64>>::on_finalize(1);
+		<Treasury as OnInitialize<u64>>::on_initialize(1);
 		assert_eq!(Ring::free_balance(&0), 95); // ProposalBond: Permill::from_percent(5);
 		assert_eq!(Kton::free_balance(&0), 95); // ProposalBond: Permill::from_percent(5);
 		assert_eq!(Ring::free_balance(&1), 98); // No changes
@@ -554,7 +554,7 @@ fn reject_proposal_keep_burning() {
 		assert_eq!(Treasury::pot::<Kton>(), 100); // No changes
 
 		// @2: On the first spend perid
-		<Treasury as OnFinalize<u64>>::on_finalize(2); // SpendPeriod: u64 = 2;
+		<Treasury as OnInitialize<u64>>::on_initialize(2); // SpendPeriod: u64 = 2;
 		assert_eq!(Ring::free_balance(&0), 95); // ProposalBond: Permill::from_percent(5);
 		assert_eq!(Kton::free_balance(&0), 95); // ProposalBond: Permill::from_percent(5);
 		assert_eq!(Ring::free_balance(&1), 98); // No changes
@@ -567,7 +567,7 @@ fn reject_proposal_keep_burning() {
 		assert_eq!(Treasury::pot::<Kton>(), 50); // Burn: Permill::from_percent(50); **The Burned Balances just burned?**
 
 		// @3: Check balances on the perid after spend perid
-		<Treasury as OnFinalize<u64>>::on_finalize(3);
+		<Treasury as OnInitialize<u64>>::on_initialize(3);
 		assert_eq!(Ring::free_balance(&0), 95); // No changes from last perid
 		assert_eq!(Kton::free_balance(&0), 95); // No changes from last perid
 		assert_eq!(Ring::free_balance(&1), 98); // No changes
@@ -580,7 +580,7 @@ fn reject_proposal_keep_burning() {
 		assert_eq!(Treasury::pot::<Kton>(), 50); // No changes from last perid
 
 		// @4: The second spend perid
-		<Treasury as OnFinalize<u64>>::on_finalize(4);
+		<Treasury as OnInitialize<u64>>::on_initialize(4);
 		assert_eq!(Ring::free_balance(&0), 95); // No changes from last perid
 		assert_eq!(Kton::free_balance(&0), 95); // No changes from last perid
 		assert_eq!(Ring::free_balance(&1), 98); // No changes
@@ -621,7 +621,7 @@ fn no_accept_no_reject_keep_burning() {
 		assert_ok!(Treasury::propose_spend(Origin::signed(0), 100, 100, 3));
 
 		// @0-1: Check balances after `propose_spend`
-		<Treasury as OnFinalize<u64>>::on_finalize(1);
+		<Treasury as OnInitialize<u64>>::on_initialize(1);
 		assert_eq!(Ring::free_balance(&0), 95); // ProposalBond: Permill::from_percent(5);
 		assert_eq!(Kton::free_balance(&0), 95); // ProposalBond: Permill::from_percent(5);
 		assert_eq!(Ring::free_balance(&1), 98); // No changes
@@ -634,7 +634,7 @@ fn no_accept_no_reject_keep_burning() {
 		assert_eq!(Treasury::pot::<Kton>(), 100); // No changes
 
 		// @2: On the first spend perid
-		<Treasury as OnFinalize<u64>>::on_finalize(2); // SpendPeriod: u64 = 2;
+		<Treasury as OnInitialize<u64>>::on_initialize(2); // SpendPeriod: u64 = 2;
 		assert_eq!(Ring::free_balance(&0), 95); // ProposalBond: Permill::from_percent(5);
 		assert_eq!(Kton::free_balance(&0), 95); // ProposalBond: Permill::from_percent(5);
 		assert_eq!(Ring::free_balance(&1), 98); // No changes
@@ -647,7 +647,7 @@ fn no_accept_no_reject_keep_burning() {
 		assert_eq!(Treasury::pot::<Kton>(), 50); // Burn: Permill::from_percent(50); **The Burned Balances just burned?**
 
 		// @3: Check balances on the perid after spend perid
-		<Treasury as OnFinalize<u64>>::on_finalize(3);
+		<Treasury as OnInitialize<u64>>::on_initialize(3);
 		assert_eq!(Ring::free_balance(&0), 95); // No changes from last perid
 		assert_eq!(Kton::free_balance(&0), 95); // No changes from last perid
 		assert_eq!(Ring::free_balance(&1), 98); // No changes
@@ -660,7 +660,7 @@ fn no_accept_no_reject_keep_burning() {
 		assert_eq!(Treasury::pot::<Kton>(), 50); // No changes from last perid
 
 		// @4: The second spend perid
-		<Treasury as OnFinalize<u64>>::on_finalize(4);
+		<Treasury as OnInitialize<u64>>::on_initialize(4);
 		assert_eq!(Ring::free_balance(&0), 95); // No changes from last perid
 		assert_eq!(Kton::free_balance(&0), 95); // No changes from last perid
 		assert_eq!(Ring::free_balance(&1), 98); // No changes

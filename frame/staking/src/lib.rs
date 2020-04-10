@@ -234,11 +234,12 @@
 #![feature(drain_filter)]
 #![recursion_limit = "128"]
 
-#[cfg(test)]
-mod mock;
-
+#[cfg(any(feature = "runtime-benchmarks", test))]
+mod benchmarking;
 #[cfg(test)]
 mod darwinia_tests;
+#[cfg(test)]
+mod mock;
 #[cfg(test)]
 mod substrate_tests;
 
@@ -328,7 +329,7 @@ use types::*;
 const DEFAULT_MINIMUM_VALIDATOR_COUNT: u32 = 4;
 const MONTH_IN_MINUTES: Moment = 30 * 24 * 60;
 const MONTH_IN_MILLISECONDS: Moment = MONTH_IN_MINUTES * 60 * 1000;
-const MAX_NOMINATIONS: usize = 16;
+pub const MAX_NOMINATIONS: usize = 16;
 const MAX_UNLOCKING_CHUNKS: usize = 32;
 const STAKING_ID: LockIdentifier = *b"staking ";
 
@@ -954,9 +955,7 @@ decl_storage! {
 		/// The earliest era for which we have a pending, unapplied slash.
 		EarliestUnappliedSlash: Option<EraIndex>;
 
-		// --- custom ---
-
-		// --- immutable ---
+		// --- darwinia ---
 
 		// TODO: doc
 		pub LivingTime get(fn living_time): MomentT<T>;
@@ -965,8 +964,6 @@ decl_storage! {
 		///
 		/// The reset might go to Treasury or something else.
 		pub PayoutFraction get(fn payout_fraction) config(): Perbill;
-
-		// --- mutable ---
 
 		/// Total *Ring* in pool.
 		pub RingPool get(fn ring_pool): RingBalance<T>;
@@ -1736,7 +1733,7 @@ decl_module! {
 				.or_else(ensure_root)?;
 
 			ensure!(!slash_indices.is_empty(), <Error<T>>::EmptyTargets);
-			ensure!(Self::is_sorted_and_unique(&slash_indices), <Error<T>>::NotSortedAndUnique);
+			ensure!(is_sorted_and_unique(&slash_indices), <Error<T>>::NotSortedAndUnique);
 
 			let mut unapplied = <Self as Store>::UnappliedSlashes::get(&era);
 			let last_item = slash_indices[slash_indices.len() - 1];
@@ -1865,11 +1862,6 @@ impl<T: Trait> Module<T> {
 			.and_then(Self::ledger)
 			.map(|l| (l.active_ring, l.active_kton))
 			.unwrap_or_default()
-	}
-
-	/// Check that list is sorted and has no duplicates.
-	fn is_sorted_and_unique(list: &Vec<u32>) -> bool {
-		list.windows(2).all(|w| w[0] < w[1])
 	}
 
 	// Update the ledger while bonding ring and compute the kton should return.
@@ -2331,11 +2323,15 @@ impl<T: Trait> Module<T> {
 	///
 	/// Assumes storage is coherent with the declaration.
 	fn select_validators(current_era: EraIndex) -> Option<Vec<T::AccountId>> {
-		let mut all_nominators: Vec<(T::AccountId, Vec<T::AccountId>)> = vec![];
+		let mut all_nominators: Vec<(T::AccountId, Power, Vec<T::AccountId>)> = vec![];
 		let mut all_validators_and_prefs = BTreeMap::new();
 		let mut all_validators = Vec::new();
 		for (validator, preference) in <Validators<T>>::iter() {
-			let self_vote = (validator.clone(), vec![validator.clone()]);
+			let self_vote = (
+				validator.clone(),
+				Self::power_of(&validator),
+				vec![validator.clone()],
+			);
 			all_nominators.push(self_vote);
 			all_validators_and_prefs.insert(validator.clone(), preference);
 			all_validators.push(validator);
@@ -2356,14 +2352,16 @@ impl<T: Trait> Module<T> {
 
 			(nominator, targets)
 		});
-		all_nominators.extend(nominator_votes);
+		all_nominators.extend(nominator_votes.map(|(n, ns)| {
+			let s = Self::power_of(&n);
+			(n, s, ns)
+		}));
 
-		let maybe_phragmen_result = darwinia_phragmen::elect::<_, Perbill, _>(
+		let maybe_phragmen_result = darwinia_phragmen::elect::<_, Perbill>(
 			Self::validator_count() as usize,
 			Self::minimum_validator_count().max(1) as usize,
 			all_validators,
 			all_nominators,
-			Self::power_of,
 		);
 
 		if let Some(phragmen_result) = maybe_phragmen_result {
@@ -2794,4 +2792,9 @@ impl<T: Trait> OnDepositRedeem<T::AccountId> for Module<T> {
 
 		Ok(())
 	}
+}
+
+/// Check that list is sorted and has no duplicates.
+fn is_sorted_and_unique(list: &Vec<u32>) -> bool {
+	list.windows(2).all(|w| w[0] < w[1])
 }

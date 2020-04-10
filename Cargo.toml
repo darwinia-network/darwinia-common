@@ -12,7 +12,6 @@ members = [
 	"frame/staking",
 	"frame/support",
 	"frame/treasury",
-	"frame/vesting",
 	"primitives/ethash",
 	"primitives/eth-primitives",
 	"primitives/merkle-patricia-trie",

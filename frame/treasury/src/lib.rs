@@ -71,6 +71,9 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+// TODO: benchmark
+// #[cfg(feature = "runtime-benchmarks")]
+// mod benchmarking;
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
@@ -107,13 +110,13 @@ use serde::{Deserialize, Serialize};
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure, print,
 	traits::{
-		Contains, Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced, ReservableCurrency,
-		WithdrawReason,
+		Contains, Currency, ExistenceRequirement::KeepAlive, Get, Imbalance, OnUnbalanced,
+		ReservableCurrency, WithdrawReason,
 	},
 	weights::SimpleDispatchInfo,
 	Parameter,
 };
-use frame_system::{self as system, ensure_signed};
+use frame_system::{self as system, ensure_root, ensure_signed};
 use sp_runtime::{
 	traits::{
 		AccountIdConversion, AtLeast32Bit, BadOrigin, EnsureOrigin, Hash, Saturating, StaticLookup,
@@ -398,7 +401,9 @@ decl_module! {
 		/// # </weight>
 		#[weight = SimpleDispatchInfo::FixedOperational(100_000)]
 		fn reject_proposal(origin, #[compact] proposal_id: ProposalIndex) {
-			T::RejectOrigin::ensure_origin(origin)?;
+			T::RejectOrigin::try_origin(origin)
+				.map(|_| ())
+				.or_else(ensure_root)?;
 
 			let proposal = <Proposals<T>>::take(&proposal_id).ok_or(<Error<T>>::InvalidProposalIndex)?;
 
@@ -423,7 +428,10 @@ decl_module! {
 		/// # </weight>
 		#[weight = SimpleDispatchInfo::FixedOperational(100_000)]
 		fn approve_proposal(origin, #[compact] proposal_id: ProposalIndex) {
-			T::ApproveOrigin::ensure_origin(origin)?;
+			T::RejectOrigin::try_origin(origin)
+				.map(|_| ())
+				.or_else(ensure_root)?;
+
 			ensure!(<Proposals<T>>::contains_key(proposal_id), <Error<T>>::InvalidProposalIndex);
 			Approvals::mutate(|v| v.push(proposal_id));
 		}
@@ -594,8 +602,7 @@ decl_module! {
 			Self::payout_tip(tip);
 		}
 
-		fn on_finalize(n: T::BlockNumber) {
-			// Check to see if we should spend some funds!
+		fn on_initialize(n: T::BlockNumber) {			// Check to see if we should spend some funds!
 			if (n % T::SpendPeriod::get()).is_zero() {
 				Self::spend_funds();
 			}
@@ -676,7 +683,7 @@ impl<T: Trait> Module<T> {
 		Self::retain_active_tips(&mut tips);
 		tips.sort_by_key(|i| i.1);
 		let treasury = Self::account_id();
-		let max_payout = T::RingCurrency::free_balance(&treasury);
+		let max_payout = Self::pot::<T::RingCurrency>();
 		let mut payout = tips[tips.len() / 2].1.min(max_payout);
 		if let Some((finder, deposit)) = tip.finder {
 			let _ = T::RingCurrency::unreserve(&finder, deposit);
@@ -686,21 +693,11 @@ impl<T: Trait> Module<T> {
 				payout -= finders_fee;
 				// this should go through given we checked it's at most the free balance, but still
 				// we only make a best-effort.
-				let _ = T::RingCurrency::transfer(
-					&treasury,
-					&finder,
-					finders_fee,
-					ExistenceRequirement::AllowDeath,
-				);
+				let _ = T::RingCurrency::transfer(&treasury, &finder, finders_fee, KeepAlive);
 			}
 		}
 		// same as above: best-effort only.
-		let _ = T::RingCurrency::transfer(
-			&treasury,
-			&tip.who,
-			payout,
-			ExistenceRequirement::AllowDeath,
-		);
+		let _ = T::RingCurrency::transfer(&treasury, &tip.who, payout, KeepAlive);
 	}
 
 	// Spend some money!
@@ -807,7 +804,7 @@ impl<T: Trait> Module<T> {
 			&Self::account_id(),
 			imbalance_ring,
 			WithdrawReason::Transfer.into(),
-			ExistenceRequirement::KeepAlive,
+			KeepAlive,
 		) {
 			print("Inconsistent state - couldn't settle imbalance for funds spent by treasury");
 			// Nothing else to do here.
@@ -818,7 +815,7 @@ impl<T: Trait> Module<T> {
 			&Self::account_id(),
 			imbalance_kton,
 			WithdrawReason::Transfer.into(),
-			ExistenceRequirement::KeepAlive,
+			KeepAlive,
 		) {
 			print("Inconsistent state - couldn't settle imbalance for funds spent by treasury");
 			// Nothing else to do here.

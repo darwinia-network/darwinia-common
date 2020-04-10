@@ -144,23 +144,20 @@ pub type SupportMap<A, R, K> = BTreeMap<A, Support<A, R, K>>;
 ///   `None` is returned.
 /// * `initial_candidates`: candidates list to be elected from.
 /// * `initial_voters`: voters list.
-/// * `power_of`: something that can return the stake stake of a particular candidate or voter.
 ///
 /// This function does not strip out candidates who do not have any backing stake. It is the
 /// responsibility of the caller to make sure only those candidates who have a sensible economic
 /// value are passed in. From the perspective of this function, a candidate can easily be among the
 /// winner with no backing stake.
-pub fn elect<AccountId, R, FS>(
+pub fn elect<AccountId, R>(
 	candidate_count: usize,
 	minimum_candidate_count: usize,
 	initial_candidates: Vec<AccountId>,
-	initial_voters: Vec<(AccountId, Vec<AccountId>)>,
-	power_of: FS,
+	initial_voters: Vec<(AccountId, Power, Vec<AccountId>)>,
 ) -> Option<PhragmenResult<AccountId, R>>
 where
 	AccountId: Default + Ord + Member,
 	R: PerThing,
-	for<'r> FS: Fn(&'r AccountId) -> Power,
 {
 	let to_votes = |p: Power| p as Votes;
 
@@ -196,8 +193,7 @@ where
 
 	// collect voters. use `c_idx_cache` for fast access and aggregate `approval_stake` of
 	// candidates.
-	voters.extend(initial_voters.into_iter().map(|(who, votes)| {
-		let voter_stake = power_of(&who);
+	voters.extend(initial_voters.into_iter().map(|(who, voter_stake, votes)| {
 		let mut edges: Vec<Edge<AccountId>> = Vec::with_capacity(votes.len());
 		for v in votes {
 			if let Some(idx) = c_idx_cache.get(&v) {
