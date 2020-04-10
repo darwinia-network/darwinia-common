@@ -86,13 +86,11 @@ pub enum RedeemFor {
 
 decl_storage! {
 	trait Store for Module<T: Trait> as DarwiniaEthBacking {
-//		pub RingLocked get(fn ring_locked) config(): RingBalance<T>;
 		pub RingProofVerified
 			get(fn ring_proof_verfied)
 			: map hasher(blake2_128_concat) EthTransactionIndex => Option<EthReceiptProof>;
 		pub RingRedeemAddress get(fn ring_redeem_address) config(): EthAddress;
 
-//		pub KtonLocked get(fn kton_locked) config(): KtonBalance<T>;
 		pub KtonProofVerified
 			get(fn kton_proof_verfied)
 			: map hasher(blake2_128_concat) EthTransactionIndex => Option<EthReceiptProof>;
@@ -486,12 +484,11 @@ impl<T: Trait> Module<T> {
 
 		T::Ring::transfer(&backing, &darwinia_account, redeemed_ring, KeepAlive)?;
 
-		// RingReward should be set to (), cause nothing special need to be done for on_unbalanced
 		RingProofVerified::insert(
 			(proof_record.header_hash, proof_record.index),
 			&proof_record,
 		);
-		//		<RingLocked<T>>::put(new_ring_locked);
+
 		<Module<T>>::deposit_event(RawEvent::RedeemRing(
 			darwinia_account,
 			redeemed_ring,
@@ -522,12 +519,11 @@ impl<T: Trait> Module<T> {
 
 		T::Kton::transfer(&backing, &darwinia_account, redeemed_kton, KeepAlive)?;
 
-		// KtonReward should be set to (), cause nothing special need to be done for on_unbalanced
 		KtonProofVerified::insert(
 			(proof_record.header_hash, proof_record.index),
 			&proof_record,
 		);
-		//		<KtonLocked<T>>::put(new_kton_locked);
+
 		<Module<T>>::deposit_event(RawEvent::RedeemKton(
 			darwinia_account,
 			redeemed_kton,
@@ -562,13 +558,14 @@ impl<T: Trait> Module<T> {
 			redeemed_ring,
 			&darwinia_account,
 		)?;
+
 		// TODO: check deposit_id duplication
 		// TODO: Ignore Unit Interest for now
 		DepositProofVerified::insert(
 			(proof_record.header_hash, proof_record.index),
 			&proof_record,
 		);
-		//		<RingLocked<T>>::put(new_ring_locked);
+
 		<Module<T>>::deposit_event(RawEvent::RedeemDeposit(
 			darwinia_account,
 			deposit_id,
