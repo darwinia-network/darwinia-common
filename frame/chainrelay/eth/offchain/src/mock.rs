@@ -80,10 +80,12 @@ impl From<darwinia_eth_relay::Call<Test>> for Call<Test> {
 	}
 }
 
+parameter_types! {
+	pub const FetchInterval: u64 = 3;
+}
 impl Trait for Test {
 	type Event = ();
 	type Call = Call<Self>;
 	type SubmitSignedTransaction = SubmitTransaction;
-	type FetchInterval = ();
-	type EtherScanAPIKey = ();
+	type FetchInterval = FetchInterval;
 }
