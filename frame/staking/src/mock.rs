@@ -9,14 +9,14 @@ use std::{
 use frame_support::{
 	assert_ok, impl_outer_origin, parameter_types,
 	storage::IterableStorageMap,
-	traits::{Currency, FindAuthor, Get},
+	traits::{Currency, FindAuthor, Get, OnFinalize, OnInitialize},
 	weights::Weight,
 	StorageValue,
 };
 use sp_core::{crypto::key_types, H256};
 use sp_runtime::{
 	testing::{Header, UintAuthorityId},
-	traits::{IdentityLookup, OnFinalize, OnInitialize, OpaqueKeys},
+	traits::{IdentityLookup, OpaqueKeys},
 	{KeyTypeId, Perbill},
 };
 use sp_staking::{
