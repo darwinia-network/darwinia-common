@@ -112,7 +112,7 @@ decl_error! {
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait> as EthOffchain {
+	trait Store for Module<T: Trait> as DarwiniaEthOffchain {
 	}
 }
 

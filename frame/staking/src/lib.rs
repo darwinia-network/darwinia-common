@@ -794,7 +794,7 @@ pub trait Trait: frame_system::Trait {
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait> as Staking {
+	trait Store for Module<T: Trait> as DarwiniaStaking {
 		/// Number of era to keep in history.
 		///
 		/// Information is kept for eras in `[current_era - history_depth; current_era]

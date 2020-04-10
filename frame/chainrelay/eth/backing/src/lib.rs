@@ -88,7 +88,7 @@ pub enum RedeemFor {
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait> as EthBacking {
+	trait Store for Module<T: Trait> as DarwiniaEthBacking {
 		pub RingLocked get(fn ring_locked) config(): RingBalance<T>;
 		pub RingProofVerified
 			get(fn ring_proof_verfied)

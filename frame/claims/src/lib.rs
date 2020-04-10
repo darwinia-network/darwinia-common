@@ -126,7 +126,7 @@ decl_error! {
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait> as Claims {
+	trait Store for Module<T: Trait> as DarwiniaClaims {
 		ClaimsFromEth
 			get(claims_from_eth)
 			: map hasher(identity) EthereumAddress => Option<RingBalance<T>>;
