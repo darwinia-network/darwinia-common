@@ -28,7 +28,6 @@ sp-std = { default-features = false, git = "https://github.com/darwinia-network/
 # darwinia
 darwinia-support = { package = "darwinia-support", path = "../../../../frame/support" }
 # substrate
-pallet-timestamp = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 
 [features]

@@ -23,10 +23,7 @@ mod tests;
 // --- crates ---
 use hex::FromHex;
 // --- substrate ---
-use frame_support::{
-	debug, decl_error, decl_event, decl_module, decl_storage,
-	traits::{Get, Time},
-};
+use frame_support::{debug, decl_error, decl_event, decl_module, decl_storage, traits::Get};
 use frame_system::{self as system, offchain::SubmitSignedTransaction};
 use simple_json::{self, json::JsonValue};
 use sp_runtime::{offchain::http::Request, DispatchError, DispatchResult, KeyTypeId};
@@ -46,8 +43,6 @@ const RETRY_INTERVAL: u64 = 1;
 
 pub trait Trait: darwinia_eth_relay::Trait {
 	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
-
-	type Time: Time;
 
 	type Call: From<darwinia_eth_relay::Call<Self>>;
 

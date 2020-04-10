@@ -232,7 +232,7 @@ parameter_types! {
 	pub const TotalPower: Power = TOTAL_POWER;
 }
 impl Trait for Test {
-	type Time = pallet_timestamp::Module<Self>;
+	type UnixTime = pallet_timestamp::Module<Self>;
 	type Event = ();
 	type SessionsPerEra = SessionsPerEra;
 	type BondingDurationInEra = BondingDurationInEra;
@@ -569,7 +569,7 @@ pub fn start_era(era_index: EraIndex) {
 	assert_eq!(Staking::active_era().unwrap().index, era_index);
 }
 
-pub fn current_total_payout_for_duration(era_duration: Moment) -> Balance {
+pub fn current_total_payout_for_duration(era_duration: TsInMs) -> Balance {
 	inflation::compute_total_payout::<Test>(
 		era_duration,
 		<Module<Test>>::living_time(),

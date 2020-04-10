@@ -382,7 +382,6 @@ parameter_types! {
 }
 impl darwinia_eth_backing::Trait for Runtime {
 	type Event = Event;
-	type Time = Timestamp;
 	type DetermineAccountId = darwinia_eth_backing::AccountIdDeterminator<Runtime>;
 	type EthRelay = EthRelay;
 	type OnDepositRedeem = Staking;
@@ -449,7 +448,6 @@ parameter_types! {
 }
 impl darwinia_eth_offchain::Trait for Runtime {
 	type Event = Event;
-	type Time = Timestamp;
 	type Call = Call;
 	type SubmitSignedTransaction = SubmitPFTransaction;
 	type FetchInterval = FetchInterval;
@@ -464,12 +462,12 @@ parameter_types! {
 	pub const BondingDurationInBlockNumber: BlockNumber = 14 * DAYS;
 	pub const SlashDeferDuration: darwinia_staking::EraIndex = 7 * 24; // 1/4 the bonding duration.
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
-	// --- custom ---
+	// --- darwinia ---
 	pub const Cap: Balance = CAP;
 	pub const TotalPower: Power = TOTAL_POWER;
 }
 impl darwinia_staking::Trait for Runtime {
-	type Time = Timestamp;
+	type UnixTime = Timestamp;
 	type Event = Event;
 	type SessionsPerEra = SessionsPerEra;
 	type BondingDurationInEra = BondingDurationInEra;
