@@ -96,6 +96,7 @@ pub trait OnDepositRedeem<AccountId> {
 	type Moment;
 
 	fn on_deposit_redeem(
+		backing: &AccountId,
 		start_at: Self::Moment,
 		months: Self::Moment,
 		amount: Self::Balance,
