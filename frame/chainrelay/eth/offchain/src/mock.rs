@@ -95,5 +95,4 @@ impl Trait for Test {
 	type Call = Call<Self>;
 	type SubmitSignedTransaction = SubmitTransaction;
 	type FetchInterval = ();
-	type EtherScanAPIKey = ();
 }

@@ -24,18 +24,19 @@ mod tests;
 use hex::FromHex;
 // --- substrate ---
 use frame_support::{
-	debug, decl_error, decl_event, decl_module, decl_storage,
+	debug, decl_error, decl_event, decl_module, decl_storage, dispatch,
 	traits::{Get, Time},
 };
 use frame_system::{self as system, offchain::SubmitSignedTransaction};
 use simple_json::{self, json::JsonValue};
-use sp_runtime::{offchain::http::Request, DispatchError, DispatchResult, KeyTypeId};
+use sp_runtime::{
+	offchain::{http::Request, storage::StorageValueRef},
+	DispatchError, KeyTypeId,
+};
 use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_eth_relay::HeaderInfo;
 use eth_primitives::{header::EthHeader, pow::EthashSeal};
-
-type EtherScanAPIKey = Option<Vec<u8>>;
 
 type EthRelay<T> = darwinia_eth_relay::Module<T>;
 
@@ -49,13 +50,11 @@ pub trait Trait: darwinia_eth_relay::Trait {
 
 	type Time: Time;
 
-	type Call: From<darwinia_eth_relay::Call<Self>>;
+	type Call: From<Call<Self>>;
 
 	type SubmitSignedTransaction: SubmitSignedTransaction<Self, <Self as Trait>::Call>;
 
 	type FetchInterval: Get<Self::BlockNumber>;
-
-	type EtherScanAPIKey: Get<EtherScanAPIKey>;
 }
 
 decl_event! {
@@ -125,18 +124,32 @@ decl_module! {
 
 		fn deposit_event() = default;
 
+
+		pub fn relay_header(
+			origin,
+			_block: T::BlockNumber,
+			token: Vec<u8>,
+		) -> dispatch::DispatchResult {
+			let eth_header = Self::fetch_eth_header(token)?;
+			return <darwinia_eth_relay::Module<T>>::relay_header(origin, eth_header)
+		}
+
 		fn offchain_worker(block: T::BlockNumber) {
 			let fetch_interval = T::FetchInterval::get();
-			if fetch_interval > 0.into() && block % fetch_interval == 0.into() && T::EtherScanAPIKey::get().is_some() {
-				let result = Self::fetch_eth_header();
-				debug::trace!(target: "eoc-fc", "[eth-offchain] Fetch Eth Header: {:?}", result);
+			let token: Option<[u8;34]> = StorageValueRef::persistent(b"eapi").get().unwrap_or(None);
+			if fetch_interval > 0.into() && block % fetch_interval == 0.into() && token.is_some()
+			{
+				debug::trace!(target: "eoc-ow", "[eth-offchain] Token: {:?}",
+					token.unwrap().to_vec());
+				let call = Call::relay_header(block, token.unwrap().to_vec());
+				let _ = T::SubmitSignedTransaction::submit_signed(call);
 			}
 		}
 	}
 }
 
 impl<T: Trait> Module<T> {
-	fn fetch_eth_header() -> DispatchResult {
+	fn fetch_eth_header(mut token: Vec<u8>) -> Result<EthHeader, DispatchError> {
 		if !T::SubmitSignedTransaction::can_sign() {
 			Err(<Error<T>>::AccountUnavail)?;
 		}
@@ -151,26 +164,12 @@ impl<T: Trait> Module<T> {
 			let mut v = ethscan_url::GTE_BLOCK.to_vec();
 			v.append(&mut base_n_bytes(next_block_number, 16));
 			v.append(&mut "&boolean=true&apikey=".as_bytes().to_vec());
-			v.append(&mut T::EtherScanAPIKey::get().unwrap());
-
+			v.append(&mut token);
 			v
 		};
 		let block_info = Self::json_request(&raw_url)?;
 		let eth_header = Self::build_eth_header(next_block_number, block_info)?;
-
-		let results = T::SubmitSignedTransaction::submit_signed(
-			darwinia_eth_relay::Call::relay_header(eth_header),
-		);
-		for (account, result) in &results {
-			debug::trace!(
-				target: "eoc-fc",
-				"[eth-offchain] Account: {:?}, Relay: {:?}",
-				account,
-				result,
-			);
-		}
-
-		Ok(())
+		Ok(eth_header)
 	}
 
 	fn json_request<A: AsRef<[u8]>>(raw_url: A) -> Result<JsonValue, DispatchError> {
