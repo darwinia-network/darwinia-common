@@ -36,6 +36,7 @@ darwinia-staking = { path = "../../../../frame/staking" }
 rlp = { package = "rlp", git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
 pallet-session = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+pallet-timestamp = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 sp-staking = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 

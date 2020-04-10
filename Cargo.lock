@@ -875,6 +875,7 @@ dependencies = [
  "frame-system",
  "hex-literal",
  "pallet-session",
+ "pallet-timestamp",
  "parity-scale-codec",
  "rlp 0.4.4",
  "rustc-hex",
