@@ -74,7 +74,7 @@ pub struct MerkleMountainRangeRootLog<Hash> {
 pub trait Trait: frame_system::Trait {}
 
 decl_storage! {
-	trait Store for Module<T: Trait> as HeaderMMR {
+	trait Store for Module<T: Trait> as DarwiniaHeaderMMR {
 		/// MMR struct of the previous blocks, from first(genesis) to parent hash.
 		pub MMRNodeList get(fn mmr_node_list): map hasher(identity) u64 => T::Hash;
 

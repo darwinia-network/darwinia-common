@@ -226,7 +226,7 @@ pub struct OpenTip<
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait> as Treasury {
+	trait Store for Module<T: Trait> as DarwiniaTreasury {
 		/// Number of proposals that have been made.
 		ProposalCount get(fn proposal_count): ProposalIndex;
 
