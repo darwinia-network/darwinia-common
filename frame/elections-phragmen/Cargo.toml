@@ -23,7 +23,7 @@ sp-std = { default-features = false, git = "https://github.com/darwinia-network/
 [dev-dependencies]
 # crates
 hex-literal = { version = "0.2.1" }
-serde = { version = "1.0.105" }
+serde = { version = "1.0.106" }
 # darwinia
 darwinia-balances = { path = "../balances" }
 # substrate
