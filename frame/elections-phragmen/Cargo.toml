@@ -14,11 +14,11 @@ codec = { package = "parity-scale-codec", version = "1.3.0", default-features = 
 # darwinia
 darwinia-support = { default-features = false, path = "../support" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "ci-release-2.0.0-alpha.5+6" }
-frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "ci-release-2.0.0-alpha.5+6" }
-sp-phragmen = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "ci-release-2.0.0-alpha.5+6" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "ci-release-2.0.0-alpha.5+6" }
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "ci-release-2.0.0-alpha.5+6" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+sp-phragmen = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 
 [dev-dependencies]
 # crates
@@ -27,9 +27,9 @@ serde = { version = "1.0.105" }
 # darwinia
 darwinia-balances = { path = "../balances" }
 # substrate
-sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "ci-release-2.0.0-alpha.5+6" }
-sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "ci-release-2.0.0-alpha.5+6" }
-substrate-test-utils = { git = "https://github.com/darwinia-network/substrate.git", tag = "ci-release-2.0.0-alpha.5+6" }
+sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+substrate-test-utils = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 
 [features]
 default = ["std"]
