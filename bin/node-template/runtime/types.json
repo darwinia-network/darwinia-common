@@ -2,7 +2,7 @@
 	"Address": "AccountId",
 	"RingBalance": "Balance",
 	"KtonBalance": "Balance",
-	"MomentT": "Moment",
+	"TsInMs": "u64",
 	"Power": "u32",
 	"DepositId": "U256",
 	"StakingBalanceT": "StakingBalance",
@@ -28,8 +28,8 @@
 	},
 	"TimeDepositItem": {
 		"value": "Compact<Balance>",
-		"start_time": "Compact<Moment>",
-		"expire_time": "Compact<Moment>"
+		"start_time": "Compact<TsInMs>",
+		"expire_time": "Compact<TsInMs>"
 	},
 	"RewardDestination": {
 		"_enum": {
@@ -39,20 +39,24 @@
 		}
 	},
 	"Staked": {
-		"promise_month": "Moment"
+		"promise_month": "u8"
 	},
+	"ExposureT": "Exposure",
 	"Exposure": {
 		"own_ring_balance": "Compact<Balance>",
 		"own_kton_balance": "Compact<Balance>",
 		"own_power": "Power",
 		"total_power": "Power",
-		"others": "Vec<IndividualExposure>"
+		"others": "Vec<IndividualExposure>",
+		"total": "Compact<Balance>",
+		"own": "Compact<Balance>"
 	},
 	"IndividualExposure": {
 		"who": "AccountId",
 		"ring_balance": "Compact<Balance>",
 		"kton_balance": "Compact<Balance>",
-		"power": "Power"
+		"power": "Power",
+		"value": "Compact<Balance>"
 	},
 	"ValidatorReward": {
 		"who": "AccountId",
@@ -71,7 +75,9 @@
 	"BalanceLock": {
 		"id": "LockIdentifier",
 		"lock_for": "LockFor",
-		"lock_reasons": "LockReasons"
+		"lock_reasons": "LockReasons",
+		"amount": "Balance",
+		"reasons": "Reasons"
 	},
 	"LockFor": {
 		"_enum": {
