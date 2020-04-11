@@ -23,13 +23,6 @@ pub mod opaque {
 	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 	/// Opaque block identifier type.
 	pub type BlockId = generic::BlockId<Block>;
-
-	impl_opaque_keys! {
-		pub struct SessionKeys {
-			pub pallet_aura: Aura,
-			pub pallet_grandpa: Grandpa,
-		}
-	}
 }
 
 pub mod support_kton_in_the_future {
@@ -82,7 +75,6 @@ use frame_system::offchain::TransactionSubmitter;
 use pallet_grandpa::{fg_primitives, AuthorityList as GrandpaAuthorityList};
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sp_api::impl_runtime_apis;
-use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{
 	u32_trait::{_2, _3, _4},
 	OpaqueMetadata,
@@ -92,7 +84,7 @@ use sp_runtime::{
 	traits::{
 		BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, SaturatedConversion, Verify,
 	},
-	transaction_validity::TransactionValidity,
+	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiSignature, RuntimeDebug,
 };
 use sp_std::prelude::*;
@@ -104,6 +96,9 @@ use impls::*;
 
 /// An index to a block.
 pub type BlockNumber = u32;
+
+/// An instant or duration in time.
+pub type Moment = u64;
 
 /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
 pub type Signature = MultiSignature;
@@ -152,23 +147,26 @@ pub const MICRO: Balance = 1_000 * NANO;
 pub const MILLI: Balance = 1_000 * MICRO;
 pub const COIN: Balance = 1_000 * MILLI;
 
-pub const MILLISECS_PER_BLOCK: u64 = 6000;
+pub const MILLISECS_PER_BLOCK: u64 = 1000;
 
 pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
+
+// 1 in 4 blocks (on average, not counting collisions) will be primary BABE blocks.
+pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
 
 // These time units are defined in number of blocks.
 pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
 
-pub const BLOCKS_PER_SESSION: BlockNumber = 10 * MINUTES;
+pub const BLOCKS_PER_SESSION: BlockNumber = MINUTES / 6;
 pub const EPOCH_DURATION_IN_SLOTS: u64 = {
 	const SLOT_FILL_RATE: f64 = MILLISECS_PER_BLOCK as f64 / SLOT_DURATION as f64;
 
 	(BLOCKS_PER_SESSION as f64 * SLOT_FILL_RATE) as u64
 };
 pub const SESSION_DURATION: BlockNumber = EPOCH_DURATION_IN_SLOTS as _;
-pub const SESSIONS_PER_ERA: sp_staking::SessionIndex = 6;
+pub const SESSIONS_PER_ERA: sp_staking::SessionIndex = 3;
 
 pub const CAP: Balance = 1_000_000_000 * COIN;
 pub const TOTAL_POWER: Power = 1_000_000_000;
@@ -232,8 +230,15 @@ impl frame_system::Trait for Runtime {
 	type AccountData = AccountData<Balance>;
 }
 
-impl pallet_aura::Trait for Runtime {
-	type AuthorityId = AuraId;
+parameter_types! {
+	pub const EpochDuration: u64 = EPOCH_DURATION_IN_SLOTS;
+	pub const ExpectedBlockTime: Moment = MILLISECS_PER_BLOCK;
+}
+impl pallet_babe::Trait for Runtime {
+	type EpochDuration = EpochDuration;
+	type ExpectedBlockTime = ExpectedBlockTime;
+	// session module is the trigger
+	type EpochChangeTrigger = pallet_babe::ExternalTrigger;
 }
 
 impl pallet_grandpa::Trait for Runtime {
@@ -246,27 +251,25 @@ parameter_types! {
 impl pallet_timestamp::Trait for Runtime {
 	/// A pallet_timestamp: milliseconds since the unix epoch.
 	type Moment = u64;
-	type OnTimestampSet = Aura;
+	type OnTimestampSet = Babe;
 	type MinimumPeriod = MinimumPeriod;
 }
 
 impl_opaque_keys! {
 	pub struct SessionKeys {
+		pub babe: Babe,
 		pub grandpa: Grandpa,
-		pub aura: Aura,
 		pub im_online: ImOnline,
 	}
 }
 parameter_types! {
 	pub const DisabledValidatorsThreshold: Perbill = Perbill::from_percent(17);
-	pub const PERIOD: BlockNumber = BLOCKS_PER_SESSION;
-	pub const OFFSET: BlockNumber = BLOCKS_PER_SESSION;
 }
 impl pallet_session::Trait for Runtime {
 	type Event = Event;
 	type ValidatorId = <Self as frame_system::Trait>::AccountId;
 	type ValidatorIdOf = darwinia_staking::StashOf<Self>;
-	type ShouldEndSession = pallet_session::PeriodicSessions<PERIOD, OFFSET>;
+	type ShouldEndSession = Babe;
 	type SessionManager = Staking;
 	type SessionHandler = <SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = SessionKeys;
@@ -382,7 +385,6 @@ parameter_types! {
 }
 impl darwinia_eth_backing::Trait for Runtime {
 	type Event = Event;
-	type Time = Timestamp;
 	type DetermineAccountId = darwinia_eth_backing::AccountIdDeterminator<Runtime>;
 	type EthRelay = EthRelay;
 	type OnDepositRedeem = Staking;
@@ -442,7 +444,6 @@ parameter_types! {
 }
 impl darwinia_eth_offchain::Trait for Runtime {
 	type Event = Event;
-	type Time = Timestamp;
 	type Call = Call;
 	type SubmitSignedTransaction = SubmitPFTransaction;
 	type FetchInterval = FetchInterval;
@@ -456,12 +457,12 @@ parameter_types! {
 	pub const BondingDurationInBlockNumber: BlockNumber = 14 * DAYS;
 	pub const SlashDeferDuration: darwinia_staking::EraIndex = 7 * 24; // 1/4 the bonding duration.
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
-	// --- custom ---
+	// --- darwinia ---
 	pub const Cap: Balance = CAP;
 	pub const TotalPower: Power = TOTAL_POWER;
 }
 impl darwinia_staking::Trait for Runtime {
-	type Time = Timestamp;
+	type UnixTime = Timestamp;
 	type Event = Event;
 	type SessionsPerEra = SessionsPerEra;
 	type BondingDurationInEra = BondingDurationInEra;
@@ -528,7 +529,7 @@ construct_runtime!(
 		System: frame_system::{Module, Call, Config, Storage, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
 		Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
-		Aura: pallet_aura::{Module, Config<T>, Inherent(Timestamp)},
+		Babe: pallet_babe::{Module, Call, Storage, Config, Inherent(Timestamp)},
 		Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
 		Session: pallet_session::{Module, Call, Storage, Config<T>, Event},
 		Council: pallet_collective::<Instance1>::{Module, Call, Storage, Origin<T>, Config<T>, Event<T>},
@@ -542,7 +543,7 @@ construct_runtime!(
 		Elections: darwinia_elections_phragmen::{Module, Call, Storage, Event<T>},
 		EthBacking: darwinia_eth_backing::{Module, Call, Storage, Config<T>, Event<T>},
 		EthRelay: darwinia_eth_relay::{Module, Call, Storage, Config<T>, Event<T>},
-		EthOffchain: darwinia_eth_offchain::{Module, Call, Storage, Event<T>},
+		EthOffchain: darwinia_eth_offchain::{Module, Call, Event<T>},
 		HeaderMMR: darwinia_header_mmr::{Module, Call, Storage},
 		Staking: darwinia_staking::{Module, Call, Storage, Config<T>, Event<T>},
 		Treasury: darwinia_treasury::{Module, Call, Storage, Event<T>},
@@ -629,8 +630,11 @@ impl_runtime_apis! {
 	}
 
 	impl sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block> for Runtime {
-		fn validate_transaction(tx: <Block as BlockT>::Extrinsic) -> TransactionValidity {
-			Executive::validate_transaction(tx)
+		fn validate_transaction(
+			source: TransactionSource,
+			tx: <Block as BlockT>::Extrinsic,
+		) -> TransactionValidity {
+			Executive::validate_transaction(source, tx)
 		}
 	}
 
@@ -640,25 +644,37 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
-		fn slot_duration() -> u64 {
-			Aura::slot_duration()
+	impl sp_consensus_babe::BabeApi<Block> for Runtime {
+		fn configuration() -> sp_consensus_babe::BabeConfiguration {
+			// The choice of `c` parameter (where `1 - c` represents the
+			// probability of a slot being empty), is done in accordance to the
+			// slot duration and expected target block time, for safely
+			// resisting network delays of maximum two seconds.
+			// <https://research.web3.foundation/en/latest/polkadot/BABE/Babe/#6-practical-results>
+			sp_consensus_babe::BabeConfiguration {
+				slot_duration: Babe::slot_duration(),
+				epoch_length: EpochDuration::get(),
+				c: PRIMARY_PROBABILITY,
+				genesis_authorities: Babe::authorities(),
+				randomness: Babe::randomness(),
+				secondary_slots: true,
+			}
 		}
 
-		fn authorities() -> Vec<AuraId> {
-			Aura::authorities()
+		fn current_epoch_start() -> sp_consensus_babe::SlotNumber {
+			Babe::current_epoch_start()
 		}
 	}
 
 	impl sp_session::SessionKeys<Block> for Runtime {
 		fn generate_session_keys(seed: Option<Vec<u8>>) -> Vec<u8> {
-			opaque::SessionKeys::generate(seed)
+			SessionKeys::generate(seed)
 		}
 
 		fn decode_session_keys(
 			encoded: Vec<u8>,
 		) -> Option<Vec<(Vec<u8>, sp_core::crypto::KeyTypeId)>> {
-			opaque::SessionKeys::decode_into_raw_public_keys(&encoded)
+			SessionKeys::decode_into_raw_public_keys(&encoded)
 		}
 	}
 

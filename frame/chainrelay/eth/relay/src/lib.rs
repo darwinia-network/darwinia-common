@@ -177,6 +177,7 @@ decl_module! {
 		fn deposit_event() = default;
 
 		// TODO: Just for easy testing.
+		#[weight = SimpleDispatchInfo::FixedNormal(100_000)]
 		pub fn reset_genesis_header(origin, header: EthHeader, genesis_difficulty: u64) {
 			let relayer = ensure_signed(origin)?;
 			if Self::check_authorities() {

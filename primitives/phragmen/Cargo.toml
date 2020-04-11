@@ -14,15 +14,15 @@ serde = { version = "1.0.101", optional = true, features = ["derive"] }
 # darwinia
 darwinia-support = { default-features = false, path = "../../frame/support" }
 # substrate
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "ci-release-2.0.0-alpha.5+6" }
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "ci-release-2.0.0-alpha.5+6" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 
 [dev-dependencies]
 # crates
 rand = { version = "0.7.2" }
 # substrate
-sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "ci-release-2.0.0-alpha.5+6" }
-substrate-test-utils = { git = "https://github.com/darwinia-network/substrate.git", tag = "ci-release-2.0.0-alpha.5+6" }
+sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+substrate-test-utils = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 
 [features]
 default = ["std"]

@@ -9,14 +9,14 @@ use std::{
 use frame_support::{
 	assert_ok, impl_outer_origin, parameter_types,
 	storage::IterableStorageMap,
-	traits::{Currency, FindAuthor, Get},
+	traits::{Currency, FindAuthor, Get, OnFinalize, OnInitialize},
 	weights::Weight,
 	StorageValue,
 };
 use sp_core::{crypto::key_types, H256};
 use sp_runtime::{
 	testing::{Header, UintAuthorityId},
-	traits::{IdentityLookup, OnFinalize, OnInitialize, OpaqueKeys},
+	traits::{IdentityLookup, OpaqueKeys},
 	{KeyTypeId, Perbill},
 };
 use sp_staking::{
@@ -232,7 +232,7 @@ parameter_types! {
 	pub const TotalPower: Power = TOTAL_POWER;
 }
 impl Trait for Test {
-	type Time = pallet_timestamp::Module<Self>;
+	type UnixTime = pallet_timestamp::Module<Self>;
 	type Event = ();
 	type SessionsPerEra = SessionsPerEra;
 	type BondingDurationInEra = BondingDurationInEra;
@@ -569,7 +569,7 @@ pub fn start_era(era_index: EraIndex) {
 	assert_eq!(Staking::active_era().unwrap().index, era_index);
 }
 
-pub fn current_total_payout_for_duration(era_duration: Moment) -> Balance {
+pub fn current_total_payout_for_duration(era_duration: TsInMs) -> Balance {
 	inflation::compute_total_payout::<Test>(
 		era_duration,
 		<Module<Test>>::living_time(),

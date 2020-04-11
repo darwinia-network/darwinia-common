@@ -15,8 +15,6 @@ mod types {
 	pub type Balance = u128;
 	pub type DepositId = U256;
 
-	pub type MomentT<T> = <TimeT<T> as Time>::Moment;
-
 	pub type RingBalance<T> =
 		<<T as Trait>::Ring as Currency<<T as system::Trait>::AccountId>>::Balance;
 	pub type RingPositiveImbalance<T> =
@@ -28,8 +26,6 @@ mod types {
 		<<T as Trait>::Kton as Currency<<T as system::Trait>::AccountId>>::PositiveImbalance;
 
 	pub type EthTransactionIndex = (H256, u64);
-
-	type TimeT<T> = <T as Trait>::Time;
 }
 
 // --- crates ---
@@ -39,7 +35,7 @@ use ethabi::{Event as EthEvent, EventParam as EthEventParam, ParamType, RawLog};
 // --- substrate ---
 use frame_support::{
 	debug, decl_error, decl_event, decl_module, decl_storage, ensure,
-	traits::{Currency, Get, OnUnbalanced, Time},
+	traits::{Currency, Get, OnUnbalanced},
 	weights::SimpleDispatchInfo,
 };
 use frame_system::{self as system, ensure_root, ensure_signed};
@@ -59,17 +55,11 @@ use types::*;
 pub trait Trait: system::Trait {
 	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 
-	type Time: Time;
-
 	type DetermineAccountId: AccountIdFor<Self::AccountId>;
 
 	type EthRelay: VerifyEthReceipts;
 
-	type OnDepositRedeem: OnDepositRedeem<
-		Self::AccountId,
-		Balance = RingBalance<Self>,
-		Moment = MomentT<Self>,
-	>;
+	type OnDepositRedeem: OnDepositRedeem<Self::AccountId, Balance = RingBalance<Self>>;
 
 	type Ring: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 	type RingReward: OnUnbalanced<RingPositiveImbalance<Self>>;
@@ -312,16 +302,7 @@ impl<T: Trait> Module<T> {
 
 	fn parse_deposit_redeem_proof(
 		proof_record: &EthReceiptProof,
-	) -> Result<
-		(
-			DepositId,
-			MomentT<T>,
-			MomentT<T>,
-			RingBalance<T>,
-			T::AccountId,
-		),
-		DispatchError,
-	> {
+	) -> Result<(DepositId, u8, u64, RingBalance<T>, T::AccountId), DispatchError> {
 		let result = {
 			let verified_receipt = T::EthRelay::verify_receipt(proof_record)?;
 			let eth_event = EthEvent {
@@ -392,7 +373,7 @@ impl<T: Trait> Module<T> {
 				.to_uint()
 				.ok_or(<Error<T>>::IntCF)?;
 
-			<MomentT<T>>::saturated_from(month.saturated_into())
+			month.saturated_into()
 		};
 		// https://github.com/evolutionlandorg/bank/blob/master/contracts/GringottsBankV2.sol#L178
 		// The start_at here is in seconds, will be converted to milliseconds later in on_deposit_redeem
@@ -403,7 +384,7 @@ impl<T: Trait> Module<T> {
 				.to_uint()
 				.ok_or(<Error<T>>::IntCF)?;
 
-			<MomentT<T>>::saturated_from(start_at.saturated_into())
+			start_at.saturated_into()
 		};
 		let redeemed_ring = {
 			// The decimal in Ethereum is 10**18, and the decimal in Darwinia is 10**9,
@@ -556,11 +537,5 @@ where
 		raw_account.copy_from_slice(&decoded_sub_key[1..]);
 
 		Ok(raw_account.into())
-	}
-}
-
-impl<T: Trait> Module<T> {
-	pub fn adjust_deposit_value() {
-		unimplemented!()
 	}
 }

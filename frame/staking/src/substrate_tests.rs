@@ -13,13 +13,10 @@
 // --- substrate ---
 use frame_support::{
 	assert_noop, assert_ok,
-	traits::{Currency, ReservableCurrency},
+	traits::{Currency, OnInitialize, ReservableCurrency},
 	StorageMap,
 };
-use sp_runtime::{
-	assert_eq_error_rate,
-	traits::{BadOrigin, OnInitialize},
-};
+use sp_runtime::{assert_eq_error_rate, traits::BadOrigin};
 use sp_staking::offence::OffenceDetails;
 use substrate_test_utils::assert_eq_uvec;
 // --- darwinia ---

@@ -113,7 +113,7 @@ use frame_support::{
 		Contains, Currency, ExistenceRequirement::KeepAlive, Get, Imbalance, OnUnbalanced,
 		ReservableCurrency, WithdrawReason,
 	},
-	weights::SimpleDispatchInfo,
+	weights::{SimpleDispatchInfo, WeighData, Weight},
 	Parameter,
 };
 use frame_system::{self as system, ensure_root, ensure_signed};
@@ -602,10 +602,12 @@ decl_module! {
 			Self::payout_tip(tip);
 		}
 
-		fn on_initialize(n: T::BlockNumber) {			// Check to see if we should spend some funds!
+		fn on_initialize(n: T::BlockNumber) -> Weight {			// Check to see if we should spend some funds!
 			if (n % T::SpendPeriod::get()).is_zero() {
 				Self::spend_funds();
 			}
+
+			SimpleDispatchInfo::default().weigh_data(())
 		}
 	}
 }
