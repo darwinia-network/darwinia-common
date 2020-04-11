@@ -17,7 +17,9 @@ node-template-runtime = { path = "../runtime" }
 # crates
 futures = "0.3.4"
 log = "0.4.8"
-structopt = "0.3.12"
+structopt = "0.3.13"
+# darwinia
+darwinia-staking = { path = "../../../frame/staking" }
 # substrate
 frame-benchmarking-cli = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 pallet-im-online = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
@@ -29,8 +31,8 @@ sp-inherents = { git = "https://github.com/darwinia-network/substrate.git", tag 
 sc-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 sc-network = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-sc-consensus-aura = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-sp-consensus-aura = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+sc-consensus-babe = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+sp-consensus-babe = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 sp-consensus = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 sc-finality-grandpa = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 sp-finality-grandpa = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
