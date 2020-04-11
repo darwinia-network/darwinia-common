@@ -1,13 +1,33 @@
+// --- crates ---
 use codec::{Decode, Encode};
+// --- github ---
 use ethbloom::Bloom;
 use keccak_hash::{keccak, KECCAK_EMPTY_LIST_RLP, KECCAK_NULL_RLP};
 use rlp::{Decodable, DecoderError, Encodable, Rlp, RlpStream};
+// --- substrate ---
 use sp_runtime::RuntimeDebug;
-use sp_std::prelude::*;
-
+use sp_std::{prelude::*, str::FromStr};
+// --- darwinia ---
 use crate::*;
 
-#[derive(PartialEq, Eq, Clone, Encode, Decode, Copy, RuntimeDebug)]
+macro_rules! bytes_unchecked {
+	($str:expr, $len: tt) => {{
+		let mut bytes: [u8; $len] = [0; $len];
+		bytes.copy_from_slice(&hex_unchecked($str));
+		bytes
+		}};
+}
+
+/// convert hex string to byte array
+pub fn hex_unchecked(s: &str) -> Vec<u8> {
+	(2..s.len())
+		.step_by(2)
+		.map(|i| u8::from_str_radix(&s[i..i + 2], 16))
+		.collect::<Result<Vec<u8>, _>>()
+		.unwrap_or_default()
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
 enum Seal {
 	/// The seal/signature is included.
 	With,
@@ -15,7 +35,7 @@ enum Seal {
 	Without,
 }
 
-#[derive(Eq, Clone, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, Eq, Encode, Decode, RuntimeDebug)]
 pub struct EthHeader {
 	pub parent_hash: H256,
 	pub timestamp: u64,
@@ -32,6 +52,109 @@ pub struct EthHeader {
 	pub difficulty: U256,
 	pub seal: Vec<Bytes>,
 	pub hash: Option<H256>,
+}
+
+impl EthHeader {
+	pub fn from_str_unchecked(s: &str) -> Self {
+		fn parse_value_unchecked(s: &str) -> &str {
+			s.splitn(2, ':')
+				.skip(1)
+				.next()
+				.unwrap_or_default()
+				.trim()
+				.trim_matches('"')
+		}
+
+		let mut s = s
+			.trim()
+			.trim_start_matches('{')
+			.trim_end_matches('}')
+			.split(',');
+		let mut unused_feild = false;
+		let mut eth_header = Self::default();
+		let mut mix_hash = H256::default();
+		let mut nonce = H64::default();
+		while let Some(s) = s.next() {
+			if unused_feild {
+				continue;
+			}
+
+			let s = s.trim();
+			if s.starts_with("\"difficulty") {
+				eth_header.difficulty = u64::from_str_radix(&parse_value_unchecked(s)[2..], 16)
+					.unwrap_or_default()
+					.into()
+			} else if s.starts_with("\"extraData") {
+				eth_header.extra_data = hex_unchecked(parse_value_unchecked(s))
+			} else if s.starts_with("\"gasLimit") {
+				eth_header.gas_limit = u64::from_str_radix(&parse_value_unchecked(s)[2..], 16)
+					.unwrap_or_default()
+					.into()
+			} else if s.starts_with("\"gasUsed") {
+				eth_header.gas_used = u64::from_str_radix(&parse_value_unchecked(s)[2..], 16)
+					.unwrap_or_default()
+					.into()
+			} else if s.starts_with("\"hash") {
+				eth_header.hash = Some(bytes_unchecked!(parse_value_unchecked(s), 32).into())
+			} else if s.starts_with("\"logsBloom") {
+				eth_header.log_bloom =
+					Bloom::from_str(&parse_value_unchecked(s)[2..]).unwrap_or_default()
+			} else if s.starts_with("\"miner") {
+				eth_header.author = bytes_unchecked!(parse_value_unchecked(s), 20).into()
+			} else if s.starts_with("\"mixHash") {
+				mix_hash = bytes_unchecked!(parse_value_unchecked(s), 32).into()
+			} else if s.starts_with("\"nonce") {
+				nonce = bytes_unchecked!(parse_value_unchecked(s), 8).into()
+			} else if s.starts_with("\"number") {
+				eth_header.number =
+					u64::from_str_radix(&parse_value_unchecked(s)[2..], 16).unwrap_or_default()
+			} else if s.starts_with("\"parentHash") {
+				eth_header.parent_hash = bytes_unchecked!(parse_value_unchecked(s), 32).into()
+			} else if s.starts_with("\"receiptsRoot") {
+				eth_header.receipts_root = bytes_unchecked!(parse_value_unchecked(s), 32).into()
+			} else if s.starts_with("\"sha3Uncles") {
+				eth_header.uncles_hash = bytes_unchecked!(parse_value_unchecked(s), 32).into()
+			} else if s.starts_with("\"stateRoot") {
+				eth_header.state_root = bytes_unchecked!(parse_value_unchecked(s), 32).into()
+			} else if s.starts_with("\"timestamp") {
+				eth_header.timestamp =
+					u64::from_str_radix(&parse_value_unchecked(s)[2..], 16).unwrap_or_default()
+			} else if s.starts_with("\"transactionsRoot") {
+				eth_header.transactions_root = bytes_unchecked!(parse_value_unchecked(s), 32).into()
+			} else if (s.starts_with("\"transaction") || s.starts_with("\"uncles"))
+				&& (!s.ends_with(']') || !s.ends_with("],"))
+			{
+				unused_feild = true;
+			} else if !s.ends_with(']') || !s.ends_with("],") {
+				unused_feild = false;
+			}
+		}
+		eth_header.seal = vec![rlp::encode(&mix_hash), rlp::encode(&nonce)];
+
+		eth_header
+	}
+}
+
+impl Default for EthHeader {
+	fn default() -> Self {
+		EthHeader {
+			parent_hash: H256::zero(),
+			timestamp: 0,
+			number: 0,
+			author: EthAddress::zero(),
+			transactions_root: KECCAK_NULL_RLP,
+			uncles_hash: KECCAK_EMPTY_LIST_RLP,
+			extra_data: vec![],
+			state_root: KECCAK_NULL_RLP,
+			receipts_root: KECCAK_NULL_RLP,
+			log_bloom: Bloom::default(),
+			gas_used: U256::default(),
+			gas_limit: U256::default(),
+			difficulty: U256::default(),
+			seal: vec![],
+			hash: None,
+		}
+	}
 }
 
 impl PartialEq for EthHeader {
@@ -56,31 +179,6 @@ impl PartialEq for EthHeader {
 			&& self.gas_limit == c.gas_limit
 			&& self.difficulty == c.difficulty
 			&& self.seal == c.seal
-	}
-}
-
-impl Default for EthHeader {
-	fn default() -> Self {
-		EthHeader {
-			parent_hash: H256::zero(),
-			timestamp: 0,
-			number: 0,
-			author: EthAddress::zero(),
-
-			transactions_root: KECCAK_NULL_RLP,
-			uncles_hash: KECCAK_EMPTY_LIST_RLP,
-			extra_data: vec![],
-
-			state_root: KECCAK_NULL_RLP,
-			receipts_root: KECCAK_NULL_RLP,
-			log_bloom: Bloom::default(),
-			gas_used: U256::default(),
-			gas_limit: U256::default(),
-
-			difficulty: U256::default(),
-			seal: vec![],
-			hash: None,
-		}
 	}
 }
 
