@@ -66,15 +66,6 @@ impl frame_system::offchain::CreateTransaction<Test, Extrinsic> for Test {
 }
 
 parameter_types! {
-	pub const MinimumPeriod: u64 = 5;
-}
-impl pallet_timestamp::Trait for Test {
-	type Moment = u64;
-	type OnTimestampSet = ();
-	type MinimumPeriod = MinimumPeriod;
-}
-
-parameter_types! {
 	pub const EthNetwork: darwinia_eth_relay::EthNetworkType = darwinia_eth_relay::EthNetworkType::Ropsten;
 }
 
@@ -89,10 +80,12 @@ impl From<darwinia_eth_relay::Call<Test>> for Call<Test> {
 	}
 }
 
+parameter_types! {
+	pub const FetchInterval: u64 = 3;
+}
 impl Trait for Test {
 	type Event = ();
-	type Time = pallet_timestamp::Module<Self>;
 	type Call = Call<Self>;
 	type SubmitSignedTransaction = SubmitTransaction;
-	type FetchInterval = ();
+	type FetchInterval = FetchInterval;
 }

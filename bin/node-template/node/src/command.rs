@@ -1,6 +1,5 @@
 // --- substrate ---
 use sc_cli::VersionInfo;
-use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 // --- darwinia ---
 use crate::{
 	chain_spec,

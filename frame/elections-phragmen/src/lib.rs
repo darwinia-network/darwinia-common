@@ -73,7 +73,7 @@ use frame_support::{
 	traits::{
 		BalanceStatus, ChangeMembers, Contains, Currency, Get, OnUnbalanced, ReservableCurrency,
 	},
-	weights::SimpleDispatchInfo,
+	weights::{SimpleDispatchInfo, WeighData, Weight},
 };
 use frame_system::{self as system, ensure_root, ensure_signed};
 use sp_phragmen::ExtendedBalance;
@@ -431,11 +431,13 @@ decl_module! {
 		}
 
 		/// What to do at the end of each block. Checks if an election needs to happen or not.
-		fn on_initialize(n: T::BlockNumber) {
+		fn on_initialize(n: T::BlockNumber) -> Weight {
 			if let Err(e) = Self::end_block(n) {
 				print("Guru meditation");
 				print(e);
 			}
+
+			SimpleDispatchInfo::default().weigh_data(())
 		}
 	}
 }

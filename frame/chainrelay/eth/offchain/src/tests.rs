@@ -119,7 +119,7 @@ fn test_build_eth_header() {
 	let s = std::str::from_utf8(&response).unwrap();
 	let s2 = &s[33..s.len() - 1];
 	let block_info = simple_json::parse_json(s2).unwrap();
-	let eth_header = EthOffchain::build_eth_header(9_644_464, block_info).unwrap();
+	let eth_header = EthOffchain::build_header(9_644_464, block_info).unwrap();
 	assert_eq!(eth_header.number, 9_644_464);
 	assert_eq!(eth_header.timestamp, 1_454_795_393);
 }

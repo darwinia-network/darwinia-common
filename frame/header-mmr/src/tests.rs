@@ -3,9 +3,10 @@
 #![cfg(test)]
 
 // --- substrate ---
+use frame_support::traits::OnFinalize;
 use sp_runtime::{
 	testing::{Digest, H256},
-	traits::{Header, OnFinalize},
+	traits::Header,
 };
 
 // --- darwinia ---

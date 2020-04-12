@@ -23,14 +23,12 @@ mod tests;
 // --- crates ---
 use hex::FromHex;
 // --- substrate ---
-use frame_support::{
-	debug, decl_error, decl_event, decl_module, decl_storage, dispatch,
-	traits::{Get, Time},
-};
+use frame_support::{debug, decl_error, decl_event, decl_module, traits::Get};
 use frame_system::{self as system, offchain::SubmitSignedTransaction};
 use simple_json::{self, json::JsonValue};
 use sp_runtime::{
 	offchain::{http::Request, storage::StorageValueRef},
+	traits::Zero,
 	DispatchError, KeyTypeId,
 };
 use sp_std::prelude::*;
@@ -38,7 +36,10 @@ use sp_std::prelude::*;
 use darwinia_eth_relay::HeaderInfo;
 use eth_primitives::{header::EthHeader, pow::EthashSeal};
 
+type ApiKey = [u8; 34];
+
 type EthRelay<T> = darwinia_eth_relay::Module<T>;
+type EthRelayCall<T> = darwinia_eth_relay::Call<T>;
 
 pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"rlwk");
 
@@ -48,9 +49,7 @@ const RETRY_INTERVAL: u64 = 1;
 pub trait Trait: darwinia_eth_relay::Trait {
 	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 
-	type Time: Time;
-
-	type Call: From<Call<Self>>;
+	type Call: From<EthRelayCall<Self>>;
 
 	type SubmitSignedTransaction: SubmitSignedTransaction<Self, <Self as Trait>::Call>;
 
@@ -110,11 +109,6 @@ decl_error! {
 	}
 }
 
-decl_storage! {
-	trait Store for Module<T: Trait> as DarwiniaEthOffchain {
-	}
-}
-
 decl_module! {
 	pub struct Module<T: Trait> for enum Call
 	where
@@ -122,34 +116,37 @@ decl_module! {
 	{
 		type Error = Error<T>;
 
+		const FetchInterval: T::BlockNumber = T::FetchInterval::get();
+
 		fn deposit_event() = default;
 
-
-		pub fn relay_header(
-			origin,
-			_block: T::BlockNumber,
-			token: Vec<u8>,
-		) -> dispatch::DispatchResult {
-			let eth_header = Self::fetch_eth_header(token)?;
-			return <darwinia_eth_relay::Module<T>>::relay_header(origin, eth_header)
-		}
-
 		fn offchain_worker(block: T::BlockNumber) {
-			let fetch_interval = T::FetchInterval::get();
-			let token: Option<[u8;34]> = StorageValueRef::persistent(b"eapi").get().unwrap_or(None);
-			if fetch_interval > 0.into() && block % fetch_interval == 0.into() && token.is_some()
-			{
-				debug::trace!(target: "eoc-ow", "[eth-offchain] Token: {:?}",
-					token.unwrap().to_vec());
-				let call = Call::relay_header(block, token.unwrap().to_vec());
-				let _ = T::SubmitSignedTransaction::submit_signed(call);
+			if let Some(maybe_key) = StorageValueRef::persistent(b"eapi").get::<ApiKey>() {
+				if let Some(key) = maybe_key {
+					let fetch_interval = T::FetchInterval::get().max(1.into());
+					if (block % fetch_interval).is_zero() {
+						let key = key.to_vec();
+						debug::trace!(
+							target: "eoc-key",
+							"[eth-offchain] EtherScan API Key: {:?}",
+							key,
+						);
+
+						let header = Self::fetch_header(key);
+						debug::trace!(target: "eoc-fc", "[eth-offchain] Fetch Header: {:?}", header);
+
+						if let Ok(header) = header {
+							Self::submit_header(header);
+						}
+					}
+				}
 			}
 		}
 	}
 }
 
 impl<T: Trait> Module<T> {
-	fn fetch_eth_header(mut token: Vec<u8>) -> Result<EthHeader, DispatchError> {
+	fn fetch_header(mut key: Vec<u8>) -> Result<EthHeader, DispatchError> {
 		if !T::SubmitSignedTransaction::can_sign() {
 			Err(<Error<T>>::AccountUnavail)?;
 		}
@@ -164,12 +161,26 @@ impl<T: Trait> Module<T> {
 			let mut v = ethscan_url::GTE_BLOCK.to_vec();
 			v.append(&mut base_n_bytes(next_block_number, 16));
 			v.append(&mut "&boolean=true&apikey=".as_bytes().to_vec());
-			v.append(&mut token);
+			v.append(&mut key);
 			v
 		};
 		let block_info = Self::json_request(&raw_url)?;
-		let eth_header = Self::build_eth_header(next_block_number, block_info)?;
+		let eth_header = Self::build_header(next_block_number, block_info)?;
+
 		Ok(eth_header)
+	}
+
+	fn submit_header(header: EthHeader) {
+		let results =
+			T::SubmitSignedTransaction::submit_signed(<EthRelayCall<T>>::relay_header(header));
+		for (account, result) in &results {
+			debug::trace!(
+				target: "eoc-sm",
+				"[eth-offchain] Account: {:?}, Relay: {:?}",
+				account,
+				result,
+			);
+		}
 	}
 
 	fn json_request<A: AsRef<[u8]>>(raw_url: A) -> Result<JsonValue, DispatchError> {
@@ -218,7 +229,7 @@ impl<T: Trait> Module<T> {
 		.map_err(|_| <Error<T>>::JsonPF)?)
 	}
 
-	fn build_eth_header(number: u64, block_info: JsonValue) -> Result<EthHeader, DispatchError> {
+	fn build_header(number: u64, block_info: JsonValue) -> Result<EthHeader, DispatchError> {
 		let parent_hash = &block_info.get_object()[10].1.get_bytes()[2..];
 		let timestamp_hex = &block_info.get_object()[15].1.get_string()[2..];
 		let author = &block_info.get_object()[6].1.get_bytes()[2..];

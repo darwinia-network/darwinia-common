@@ -36,7 +36,7 @@
 use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
-	traits::{Currency, Imbalance, OnUnbalanced, Time},
+	traits::{Currency, Imbalance, OnUnbalanced},
 	StorageDoubleMap, StorageMap,
 };
 use sp_runtime::{
@@ -698,7 +698,7 @@ pub fn do_slash<T: Trait>(
 		value.r,
 		value.k,
 		<frame_system::Module<T>>::block_number(),
-		T::Time::now(),
+		T::UnixTime::now().as_millis().saturated_into(),
 	);
 	let mut slashed = false;
 
