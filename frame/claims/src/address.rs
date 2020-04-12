@@ -1,5 +1,6 @@
 // --- crates ---
 use codec::{Decode, Encode};
+#[cfg(feature = "std")]
 use rustc_hex::{FromHex, ToHex};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
