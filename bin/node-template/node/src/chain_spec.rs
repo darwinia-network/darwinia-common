@@ -1,5 +1,6 @@
 // --- substrate ---
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
+use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::AuthorityId as BabeId;
 use sp_core::{sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
@@ -9,8 +10,9 @@ use sp_runtime::{
 };
 // --- darwinia ---
 use node_template_runtime::{
-	AccountId, Balances1Config, BalancesConfig, EthRelayConfig, GenesisConfig, SessionConfig,
-	SessionKeys, Signature, StakerStatus, StakingConfig, SudoConfig, SystemConfig, WASM_BINARY,
+	AccountId, BalancesConfig as RingConfig, EthRelayConfig, GenesisConfig, KtonConfig,
+	SessionConfig, SessionKeys, Signature, StakerStatus, StakingConfig, SudoConfig, SystemConfig,
+	WASM_BINARY,
 };
 
 // Note this is the URL for the telemetry server
@@ -30,11 +32,17 @@ pub enum Alternative {
 	LocalTestnet,
 }
 
-fn session_keys(babe: BabeId, grandpa: GrandpaId, im_online: ImOnlineId) -> SessionKeys {
+fn session_keys(
+	babe: BabeId,
+	grandpa: GrandpaId,
+	im_online: ImOnlineId,
+	authority_discovery: AuthorityDiscoveryId,
+) -> SessionKeys {
 	SessionKeys {
 		babe,
 		grandpa,
 		im_online,
+		authority_discovery,
 	}
 }
 
@@ -58,13 +66,21 @@ where
 /// Helper function to generate an authority key for Babe
 pub fn get_authority_keys_from_seed(
 	s: &str,
-) -> (AccountId, AccountId, BabeId, GrandpaId, ImOnlineId) {
+) -> (
+	AccountId,
+	AccountId,
+	BabeId,
+	GrandpaId,
+	ImOnlineId,
+	AuthorityDiscoveryId,
+) {
 	(
 		get_account_id_from_seed::<sr25519::Public>(&format!("{}//stash", s)),
 		get_account_id_from_seed::<sr25519::Public>(s),
 		get_from_seed::<BabeId>(s),
 		get_from_seed::<GrandpaId>(s),
 		get_from_seed::<ImOnlineId>(s),
+		get_from_seed::<AuthorityDiscoveryId>(s),
 	)
 }
 
@@ -140,12 +156,20 @@ impl Alternative {
 }
 
 fn testnet_genesis(
-	initial_authorities: Vec<(AccountId, AccountId, BabeId, GrandpaId, ImOnlineId)>,
+	initial_authorities: Vec<(
+		AccountId,
+		AccountId,
+		BabeId,
+		GrandpaId,
+		ImOnlineId,
+		AuthorityDiscoveryId,
+	)>,
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
 	_enable_println: bool,
 ) -> GenesisConfig {
 	GenesisConfig {
+		// --- substrate ---
 		frame_system: Some(SystemConfig {
 			code: WASM_BINARY.to_vec(),
 			changes_trie_config: Default::default(),
@@ -158,16 +182,44 @@ fn testnet_genesis(
 					(
 						x.0.clone(),
 						x.0.clone(),
-						session_keys(x.2.clone(), x.3.clone(), x.4.clone()),
+						session_keys(x.2.clone(), x.3.clone(), x.4.clone(), x.5.clone()),
 					)
 				})
-				.collect::<Vec<_>>(),
+				.collect(),
 		}),
-		pallet_collective_Instance1: Some(Default::default()),
-		pallet_sudo: Some(SudoConfig { key: root_key }),
 		pallet_grandpa: Some(Default::default()),
 		pallet_im_online: Some(Default::default()),
-		// Custom Module
+		pallet_authority_discovery: Some(Default::default()),
+		pallet_collective_Instance1: Some(Default::default()),
+		pallet_sudo: Some(SudoConfig { key: root_key }),
+		// --- darwinia ---
+		darwinia_balances_Instance0: Some(RingConfig {
+			balances: endowed_accounts
+				.iter()
+				.cloned()
+				.map(|k| (k, 1 << 60))
+				.collect(),
+		}),
+		darwinia_balances_Instance1: Some(KtonConfig {
+			balances: endowed_accounts
+				.iter()
+				.cloned()
+				.map(|k| (k, 1 << 60))
+				.collect(),
+		}),
+		darwinia_staking: Some(StakingConfig {
+			minimum_validator_count: 1,
+			validator_count: 2,
+			stakers: initial_authorities
+				.iter()
+				.map(|x| (x.0.clone(), x.1.clone(), 1 << 60, StakerStatus::Validator))
+				.collect(),
+			invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect(),
+			force_era: darwinia_staking::Forcing::NotForcing,
+			slash_reward_fraction: Perbill::from_percent(10),
+			payout_fraction: Perbill::from_percent(50),
+			..Default::default()
+		}),
 		darwinia_claims: Some(Default::default()),
 		darwinia_eth_backing: Some(Default::default()),
 		darwinia_eth_relay: Some(EthRelayConfig {
@@ -200,34 +252,7 @@ fn testnet_genesis(
 					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 136, 0, 0, 0, 0, 0, 0, 0, 66,
 				],
 			)),
-			..Default::default()
-		}),
-		darwinia_balances_Instance0: Some(BalancesConfig {
-			balances: endowed_accounts
-				.iter()
-				.cloned()
-				.map(|k| (k, 1 << 60))
-				.collect(),
-		}),
-		darwinia_balances_Instance1: Some(Balances1Config {
-			balances: endowed_accounts
-				.iter()
-				.cloned()
-				.map(|k| (k, 1 << 60))
-				.collect(),
-		}),
-		darwinia_staking: Some(StakingConfig {
-			validator_count: 1,
-			minimum_validator_count: 2,
-			stakers: initial_authorities
-				.iter()
-				.map(|x| (x.0.clone(), x.1.clone(), 1 << 60, StakerStatus::Validator))
-				.collect(),
-			invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect(),
-			force_era: darwinia_staking::Forcing::NotForcing,
-			slash_reward_fraction: Perbill::from_percent(10),
-			// --- custom ---
-			payout_fraction: Perbill::from_percent(50),
+			check_authorities: false,
 			..Default::default()
 		}),
 	}
