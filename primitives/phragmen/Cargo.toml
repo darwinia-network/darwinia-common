@@ -10,7 +10,7 @@ repository = "https://github.com/darwinia-network/darwinia/"
 
 [dependencies]
 # crates
-serde = { version = "1.0.101", optional = true, features = ["derive"] }
+serde = { version = "1.0.106", optional = true, features = ["derive"] }
 # darwinia
 darwinia-support = { default-features = false, path = "../../frame/support" }
 # substrate
@@ -19,7 +19,7 @@ sp-std = { default-features = false, git = "https://github.com/darwinia-network/
 
 [dev-dependencies]
 # crates
-rand = { version = "0.7.2" }
+rand = { version = "0.7.3" }
 # substrate
 sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 substrate-test-utils = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
