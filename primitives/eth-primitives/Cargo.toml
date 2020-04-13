@@ -35,6 +35,7 @@ rustc-hex = { version = "2.0" }
 triehash = { git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
 frame-support = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+ethash = { git = "https://github.com/darwinia-network/rust-ethash" }
 
 [features]
 default = ["std"]

@@ -14,7 +14,7 @@ codec = { package = "parity-scale-codec", version = "1.3.0", default-features = 
 serde = { version = "1.0.106", optional = true }
 # darwinia
 eth-primitives = { default-features = false, path = "../../../../primitives/eth-primitives" }
-ethash = { default-features = false, path = "../../../../primitives/ethash" }
+ethash = { default-features = false, git = "https://github.com/darwinia-network/rust-ethash" }
 merkle-patricia-trie = { default-features = false, path = "../../../../primitives/merkle-patricia-trie" }
 # github
 rlp = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }

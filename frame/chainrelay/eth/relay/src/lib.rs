@@ -414,21 +414,13 @@ impl<T: Trait> Module<T> {
 		let difficulty = ethash_params.calculate_difficulty(header, &prev_header);
 		ensure!(difficulty == *header.difficulty(), <Error<T>>::DifficultyVF);
 
-		// verify mixhash
-		match T::EthNetwork::get() {
-			EthNetworkType::Ropsten => {
-				// TODO: Ropsten have issues, do not verify mixhash
-			}
-			EthNetworkType::Mainnet => {
-				let seal = EthashSeal::parse_seal(header.seal()).map_err(|_| <Error<T>>::SealPF)?;
+		let seal = EthashSeal::parse_seal(header.seal()).map_err(|_| <Error<T>>::SealPF)?;
 
-				let light_dag = DAG::new(header.number.into());
-				let partial_header_hash = header.bare_hash();
-				let mix_hash = light_dag.hashimoto(partial_header_hash, seal.nonce).0;
+		let light_dag = DAG::new(header.number.into());
+		let partial_header_hash = header.bare_hash();
+		let mix_hash = light_dag.hashimoto(partial_header_hash, seal.nonce).0;
 
-				ensure!(mix_hash == seal.mix_hash, <Error<T>>::MixhashMis);
-			}
-		};
+		ensure!(mix_hash == seal.mix_hash, <Error<T>>::MixhashMis);
 
 		Ok(())
 	}
