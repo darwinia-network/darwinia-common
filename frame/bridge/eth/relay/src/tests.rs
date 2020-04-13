@@ -4,8 +4,8 @@
 use frame_support::{assert_err, assert_ok};
 use frame_system::RawOrigin;
 // --- darwinia ---
-use crate::{mock::*, mock_headers::*, *};
-use eth_primitives::{receipt::TransactionOutcome, U128};
+use crate::{mock::*, *};
+use eth_primitives::receipt::TransactionOutcome;
 
 #[test]
 fn verify_receipt_proof() {
@@ -17,30 +17,23 @@ fn verify_receipt_proof() {
 		));
 
 		// mock header and proof
-		let [_, header, _, _, _] = mock_canonical_relationship().unwrap();
-		let proof_record = mock_canonical_receipt().unwrap();
+		let [_, header, _, _, _] = mock_canonical_relationship();
+		let proof_record = mock_canonical_receipt();
 
 		// mock logs
-		let mut logs: Vec<LogEntry> = vec![];
-		let mut log_entries = mock_receipt_logs().unwrap();
+		let mut logs = vec![];
+		let mut log_entries = mock_receipt_logs();
 		for _ in 0..log_entries.len() {
-			logs.push(log_entries.pop().unwrap().unwrap());
+			logs.push(log_entries.pop().unwrap());
 		}
 
 		logs.reverse();
 
 		// mock receipt
-		let receipt = Receipt::new(
-			TransactionOutcome::StatusCode(1),
-			U256::from(U128::from(1371263)),
-			logs,
-		);
+		let receipt = Receipt::new(TransactionOutcome::StatusCode(1), 1371263.into(), logs);
 
 		// verify receipt
-		assert_ok!(EthRelay::init_genesis_header(
-			&header.unwrap(),
-			0x624c22d93f8e59_u64
-		));
+		assert_ok!(EthRelay::init_genesis_header(&header, 0x234ac172));
 		assert_eq!(EthRelay::verify_receipt(&proof_record), Ok(receipt));
 	});
 }
@@ -48,9 +41,8 @@ fn verify_receipt_proof() {
 #[test]
 fn relay_header() {
 	new_test_ext().execute_with(|| {
-		let [o, g, _, p, c] = mock_canonical_relationship().unwrap();
-		let [origin, grandpa, parent, current] = [o.unwrap(), g.unwrap(), p.unwrap(), c.unwrap()];
-		assert_ok!(EthRelay::init_genesis_header(&origin, 0x624c22d93f8e59_u64));
+		let [origin, grandpa, _, parent, current] = mock_canonical_relationship();
+		assert_ok!(EthRelay::init_genesis_header(&origin, 0x234ac172));
 
 		// relay grandpa
 		assert_ok!(EthRelay::verify_header(&grandpa));
@@ -68,9 +60,9 @@ fn relay_header() {
 
 #[test]
 fn build_genesis_header() {
-	let [genesis, _, _, _, _] = mock_canonical_relationship().unwrap();
-
-	println!("{:?}", rlp::encode(&genesis.unwrap()));
+	let genesis_header = EthHeader::from_str_unchecked(MAINNET_GENESIS_HEADER);
+	assert_eq!(genesis_header.hash(), genesis_header.re_compute_hash());
+	println!("{:?}", rlp::encode(&genesis_header));
 }
 
 /// # Check Receipt Safety
@@ -104,11 +96,10 @@ fn check_receipt_safety() {
 		));
 
 		// family tree
-		let [o, g, u, _p, _c] = mock_canonical_relationship().unwrap();
-		let [origin, grandpa, uncle] = [o.unwrap(), g.unwrap(), u.unwrap()];
-		assert_ok!(EthRelay::init_genesis_header(&origin, 0x624c22d93f8e59_u64));
+		let [origin, grandpa, uncle, _, _] = mock_canonical_relationship();
+		assert_ok!(EthRelay::init_genesis_header(&origin, 0x234ac172));
 
-		let receipt = mock_canonical_receipt().unwrap();
+		let receipt = mock_canonical_receipt();
 		assert_ne!(grandpa.hash, uncle.hash);
 		assert_eq!(grandpa.number, uncle.number);
 
@@ -135,9 +126,8 @@ fn canonical_reorg_uncle_should_succeed() {
 			0
 		));
 
-		let [o, g, u, _p, _c] = mock_canonical_relationship().unwrap();
-		let [origin, grandpa, uncle] = [o.unwrap(), g.unwrap(), u.unwrap()];
-		assert_ok!(EthRelay::init_genesis_header(&origin, 0x624c22d93f8e59_u64));
+		let [origin, grandpa, uncle, _, _] = mock_canonical_relationship();
+		assert_ok!(EthRelay::init_genesis_header(&origin, 0x234ac172));
 
 		// check relationship
 		assert_ne!(grandpa.hash, uncle.hash);
@@ -166,14 +156,12 @@ fn test_safety_block() {
 		));
 
 		// family tree
-		let [o, g, p, u, c] = mock_canonical_relationship().unwrap();
-		let [origin, grandpa, parent, uncle, current] =
-			[o.unwrap(), g.unwrap(), p.unwrap(), u.unwrap(), c.unwrap()];
+		let [origin, grandpa, parent, uncle, current] = mock_canonical_relationship();
 
-		let receipt = mock_canonical_receipt().unwrap();
+		let receipt = mock_canonical_receipt();
 
 		// not safety after 0 block
-		assert_ok!(EthRelay::init_genesis_header(&origin, 0x624c22d93f8e59_u64));
+		assert_ok!(EthRelay::init_genesis_header(&origin, 0x234ac172));
 		assert_ok!(EthRelay::relay_header(Origin::signed(0), grandpa));
 		assert_err!(
 			EthRelay::check_receipt(Origin::signed(0), receipt.clone()),

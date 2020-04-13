@@ -117,7 +117,6 @@ impl frame_system::Trait for Test {
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
-	type MigrateAccount = ();
 }
 
 parameter_types! {
@@ -191,7 +190,7 @@ parameter_types! {
 	pub const TotalPower: Power = TOTAL_POWER;
 }
 impl darwinia_staking::Trait for Test {
-	type Time = Timestamp;
+	type UnixTime = Timestamp;
 	type Event = ();
 	type SessionsPerEra = SessionsPerEra;
 	type BondingDurationInEra = BondingDurationInEra;
@@ -216,14 +215,11 @@ parameter_types! {
 }
 impl Trait for Test {
 	type Event = ();
-	type Time = Timestamp;
 	type DetermineAccountId = AccountIdDeterminator<Test>;
 	type EthRelay = EthRelay;
 	type OnDepositRedeem = Staking;
 	type Ring = Ring;
-	type RingReward = ();
 	type Kton = Kton;
-	type KtonReward = ();
 	type SubKeyPrefix = SubKeyPrefix;
 }
 

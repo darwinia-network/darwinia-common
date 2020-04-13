@@ -36,7 +36,7 @@
 use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
-	traits::{Currency, Imbalance, OnUnbalanced, Time},
+	traits::{Currency, Imbalance, OnUnbalanced},
 	StorageDoubleMap, StorageMap,
 };
 use sp_runtime::{
@@ -677,7 +677,7 @@ pub(crate) fn clear_stash_metadata<T: Trait>(stash: &T::AccountId) {
 // apply the slash to a stash account, deducting any missing funds from the reward
 // payout, saturating at 0. this is mildly unfair but also an edge-case that
 // can only occur when overlapping locked funds have been slashed.
-fn do_slash<T: Trait>(
+pub fn do_slash<T: Trait>(
 	stash: &T::AccountId,
 	value: RKT<T>,
 	reward_payout: &mut RKT<T>,
@@ -698,7 +698,7 @@ fn do_slash<T: Trait>(
 		value.r,
 		value.k,
 		<frame_system::Module<T>>::block_number(),
-		T::Time::now(),
+		T::UnixTime::now().as_millis().saturated_into(),
 	);
 	let mut slashed = false;
 

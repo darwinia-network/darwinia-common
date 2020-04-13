@@ -9,14 +9,14 @@ use std::{
 use frame_support::{
 	assert_ok, impl_outer_origin, parameter_types,
 	storage::IterableStorageMap,
-	traits::{Currency, FindAuthor, Get},
+	traits::{Currency, FindAuthor, Get, OnFinalize, OnInitialize},
 	weights::Weight,
 	StorageValue,
 };
 use sp_core::{crypto::key_types, H256};
 use sp_runtime::{
 	testing::{Header, UintAuthorityId},
-	traits::{IdentityLookup, OnFinalize, OnInitialize, OpaqueKeys},
+	traits::{IdentityLookup, OpaqueKeys},
 	{KeyTypeId, Perbill},
 };
 use sp_staking::{
@@ -163,7 +163,6 @@ impl frame_system::Trait for Test {
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
-	type MigrateAccount = ();
 }
 
 parameter_types! {
@@ -233,7 +232,7 @@ parameter_types! {
 	pub const TotalPower: Power = TOTAL_POWER;
 }
 impl Trait for Test {
-	type Time = pallet_timestamp::Module<Self>;
+	type UnixTime = pallet_timestamp::Module<Self>;
 	type Event = ();
 	type SessionsPerEra = SessionsPerEra;
 	type BondingDurationInEra = BondingDurationInEra;
@@ -263,9 +262,9 @@ pub struct ExtBuilder {
 	fair: bool,
 	num_validators: Option<u32>,
 	invulnerables: Vec<AccountId>,
+	stakers: bool,
 	init_ring: bool,
 	init_kton: bool,
-	init_staker: bool,
 }
 
 impl Default for ExtBuilder {
@@ -280,13 +279,14 @@ impl Default for ExtBuilder {
 			fair: true,
 			num_validators: None,
 			invulnerables: vec![],
+			stakers: true,
 			init_ring: true,
 			init_kton: false,
-			init_staker: true,
 		}
 	}
 }
 
+#[allow(unused)]
 impl ExtBuilder {
 	pub fn existential_deposit(mut self, existential_deposit: Balance) -> Self {
 		self.existential_deposit = existential_deposit;
@@ -324,16 +324,16 @@ impl ExtBuilder {
 		self.invulnerables = invulnerables;
 		self
 	}
+	pub fn stakers(mut self, has_stakers: bool) -> Self {
+		self.stakers = has_stakers;
+		self
+	}
 	pub fn init_ring(mut self, init_ring: bool) -> Self {
 		self.init_ring = init_ring;
 		self
 	}
 	pub fn init_kton(mut self, init_kton: bool) -> Self {
 		self.init_kton = init_kton;
-		self
-	}
-	pub fn init_staker(mut self, init_staker: bool) -> Self {
-		self.init_staker = init_staker;
 		self
 	}
 	pub fn set_associated_consts(&self) {
@@ -399,42 +399,42 @@ impl ExtBuilder {
 			.assimilate_storage(&mut storage);
 		}
 
-		let stake_21 = if self.fair { 1000 } else { 2000 };
-		let stake_31 = if self.validator_pool {
-			balance_factor * 1000
-		} else {
-			1
-		};
-		let status_41 = if self.validator_pool {
-			StakerStatus::<AccountId>::Validator
-		} else {
-			StakerStatus::<AccountId>::Idle
-		};
-		let nominated = if self.nominate { vec![11, 21] } else { vec![] };
-		let _ = GenesisConfig::<Test> {
-			stakers: if self.init_staker {
-				vec![
-					// (stash, controller, staked_amount, status)
-					(
-						11,
-						10,
-						balance_factor * 1000,
-						StakerStatus::<AccountId>::Validator,
-					),
-					(21, 20, stake_21, StakerStatus::<AccountId>::Validator),
-					(31, 30, stake_31, StakerStatus::<AccountId>::Validator),
-					(41, 40, balance_factor * 1000, status_41),
-					// nominator
-					(
-						101,
-						100,
-						balance_factor * 500,
-						StakerStatus::<AccountId>::Nominator(nominated),
-					),
-				]
+		let mut stakers = vec![];
+		if self.stakers {
+			let stake_21 = if self.fair { 1000 } else { 2000 };
+			let stake_31 = if self.validator_pool {
+				balance_factor * 1000
 			} else {
-				vec![]
-			},
+				1
+			};
+			let status_41 = if self.validator_pool {
+				StakerStatus::<AccountId>::Validator
+			} else {
+				StakerStatus::<AccountId>::Idle
+			};
+			let nominated = if self.nominate { vec![11, 21] } else { vec![] };
+			stakers = vec![
+				// (stash, controller, staked_amount, status)
+				(
+					11,
+					10,
+					balance_factor * 1000,
+					StakerStatus::<AccountId>::Validator,
+				),
+				(21, 20, stake_21, StakerStatus::<AccountId>::Validator),
+				(31, 30, stake_31, StakerStatus::<AccountId>::Validator),
+				(41, 40, balance_factor * 1000, status_41),
+				// nominator
+				(
+					101,
+					100,
+					balance_factor * 500,
+					StakerStatus::<AccountId>::Nominator(nominated),
+				),
+			];
+		}
+		let _ = GenesisConfig::<Test> {
+			stakers,
 			validator_count: self.validator_count,
 			minimum_validator_count: self.minimum_validator_count,
 			invulnerables: self.invulnerables,
@@ -569,7 +569,7 @@ pub fn start_era(era_index: EraIndex) {
 	assert_eq!(Staking::active_era().unwrap().index, era_index);
 }
 
-pub fn current_total_payout_for_duration(era_duration: Moment) -> Balance {
+pub fn current_total_payout_for_duration(era_duration: TsInMs) -> Balance {
 	inflation::compute_total_payout::<Test>(
 		era_duration,
 		<Module<Test>>::living_time(),

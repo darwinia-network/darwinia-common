@@ -13,7 +13,6 @@ use sc_finality_grandpa::{
 	self, FinalityProofProvider as GrandpaFinalityProofProvider, StorageAndProofProvider,
 };
 use sc_service::{error::Error as ServiceError, AbstractService, Configuration, ServiceBuilder};
-use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use sp_inherents::InherentDataProviders;
 // --- darwinia ---
 use node_template_runtime::{self, opaque::Block, RuntimeApi};
@@ -45,7 +44,7 @@ macro_rules! new_full_start {
 			let pool_api = sc_transaction_pool::FullChainApi::new(client.clone());
 			Ok(sc_transaction_pool::BasicPool::new(
 				config,
-				std::sync::Arc::new(pool_api),
+				Arc::new(pool_api),
 			))
 		})?
 		.with_import_queue(|_config, client, mut select_chain, _transaction_pool| {
@@ -59,21 +58,24 @@ macro_rules! new_full_start {
 				select_chain,
 			)?;
 
-			let aura_block_import = sc_consensus_aura::AuraBlockImport::<_, _, _, AuraPair>::new(
-				grandpa_block_import.clone(),
-				client.clone(),
-			);
+			let justification_import = grandpa_block_import.clone();
 
-			let import_queue = sc_consensus_aura::import_queue::<_, _, _, AuraPair>(
-				sc_consensus_aura::slot_duration(&*client)?,
-				aura_block_import,
-				Some(Box::new(grandpa_block_import.clone())),
+			let (block_import, babe_link) = sc_consensus_babe::block_import(
+				sc_consensus_babe::Config::get_or_compute(&*client)?,
+				grandpa_block_import,
+				client.clone(),
+			)?;
+
+			let import_queue = sc_consensus_babe::import_queue(
+				babe_link.clone(),
+				block_import.clone(),
+				Some(Box::new(justification_import)),
 				None,
 				client,
 				inherent_data_providers.clone(),
 			)?;
 
-			import_setup = Some((grandpa_block_import, grandpa_link));
+			import_setup = Some((block_import, grandpa_link, babe_link));
 
 			Ok(import_queue)
 		})?;
@@ -96,7 +98,7 @@ pub fn new_full(config: Configuration) -> Result<impl AbstractService, ServiceEr
 
 	let (builder, mut import_setup, inherent_data_providers) = new_full_start!(config);
 
-	let (block_import, grandpa_link) = import_setup.take().expect(
+	let (block_import, grandpa_link, babe_link) = import_setup.take().expect(
 		"Link Half and Block Import are present for Full Services or setup failed before. qed",
 	);
 
@@ -120,22 +122,21 @@ pub fn new_full(config: Configuration) -> Result<impl AbstractService, ServiceEr
 		let can_author_with =
 			sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone());
 
-		let aura = sc_consensus_aura::start_aura::<_, _, _, _, _, AuraPair, _, _, _>(
-			sc_consensus_aura::slot_duration(&*client)?,
+		let babe_config = sc_consensus_babe::BabeParams {
+			keystore: service.keystore(),
 			client,
 			select_chain,
+			env: proposer,
 			block_import,
-			proposer,
-			service.network(),
-			inherent_data_providers.clone(),
+			sync_oracle: service.network(),
+			inherent_data_providers: inherent_data_providers.clone(),
 			force_authoring,
-			service.keystore(),
+			babe_link,
 			can_author_with,
-		)?;
+		};
 
-		// the AURA authoring task is considered essential, i.e. if it
-		// fails we take down the service with it.
-		service.spawn_essential_task("aura", aura);
+		let babe = sc_consensus_babe::start_babe(babe_config)?;
+		service.spawn_essential_task("babe-proposer", babe);
 	}
 
 	// if the node isn't actively participating in consensus then it doesn't
@@ -226,9 +227,16 @@ pub fn new_light(config: Configuration) -> Result<impl AbstractService, ServiceE
 				let finality_proof_request_builder =
 					finality_proof_import.create_finality_proof_request_builder();
 
-				let import_queue = sc_consensus_aura::import_queue::<_, _, _, AuraPair>(
-					sc_consensus_aura::slot_duration(&*client)?,
+				let (babe_block_import, babe_link) = sc_consensus_babe::block_import(
+					sc_consensus_babe::Config::get_or_compute(&*client)?,
 					grandpa_block_import,
+					client.clone(),
+				)?;
+
+				// FIXME: pruning task isn't started since light client doesn't do `AuthoritySetup`.
+				let import_queue = sc_consensus_babe::import_queue(
+					babe_link,
+					babe_block_import,
 					None,
 					Some(Box::new(finality_proof_import)),
 					client,

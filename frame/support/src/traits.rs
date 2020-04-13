@@ -93,11 +93,11 @@ impl<AccountId> DustCollector<AccountId> for Balances {
 /// Callback on eth-backing module
 pub trait OnDepositRedeem<AccountId> {
 	type Balance;
-	type Moment;
 
 	fn on_deposit_redeem(
-		start_at: Self::Moment,
-		months: Self::Moment,
+		backing: &AccountId,
+		start_at: u64,
+		months: u8,
 		amount: Self::Balance,
 		stash: &AccountId,
 	) -> DispatchResult;

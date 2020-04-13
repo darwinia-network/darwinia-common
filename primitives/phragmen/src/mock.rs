@@ -82,12 +82,15 @@ pub(crate) fn run_and_compare(
 	let PhragmenResult {
 		winners,
 		assignments,
-	} = elect::<_, Perbill, _>(
+	} = elect::<_, Perbill>(
 		to_elect,
 		min_to_elect,
 		candidates.clone(),
-		voters.clone(),
-		&power_of,
+		voters
+			.iter()
+			.cloned()
+			.map(|(v, vs)| (v, power_of(&v), vs))
+			.collect(),
 	)
 	.unwrap();
 

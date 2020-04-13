@@ -1,6 +1,7 @@
 // --- substrate ---
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
-use sp_consensus_aura::sr25519::AuthorityId as AuraId;
+use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
+use sp_consensus_babe::AuthorityId as BabeId;
 use sp_core::{sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::{
@@ -9,9 +10,9 @@ use sp_runtime::{
 };
 // --- darwinia ---
 use node_template_runtime::{
-	AccountId, Balances1Config as KtonConfig, BalancesConfig as RingConfig, CouncilConfig,
-	GenesisConfig, SessionConfig, SessionKeys, Signature, StakerStatus, StakingConfig, SudoConfig,
-	SystemConfig, WASM_BINARY,
+	AccountId, BalancesConfig as RingConfig, EthRelayConfig, GenesisConfig, KtonConfig,
+	SessionConfig, SessionKeys, Signature, StakerStatus, StakingConfig, SudoConfig, SystemConfig,
+	WASM_BINARY,
 };
 
 // Note this is the URL for the telemetry server
@@ -31,11 +32,17 @@ pub enum Alternative {
 	LocalTestnet,
 }
 
-fn session_keys(aura: AuraId, grandpa: GrandpaId, im_online: ImOnlineId) -> SessionKeys {
+fn session_keys(
+	babe: BabeId,
+	grandpa: GrandpaId,
+	im_online: ImOnlineId,
+	authority_discovery: AuthorityDiscoveryId,
+) -> SessionKeys {
 	SessionKeys {
-		aura,
+		babe,
 		grandpa,
 		im_online,
+		authority_discovery,
 	}
 }
 
@@ -56,16 +63,24 @@ where
 	AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
 }
 
-/// Helper function to generate an authority key for Aura
+/// Helper function to generate an authority key for Babe
 pub fn get_authority_keys_from_seed(
 	s: &str,
-) -> (AccountId, AccountId, AuraId, GrandpaId, ImOnlineId) {
+) -> (
+	AccountId,
+	AccountId,
+	BabeId,
+	GrandpaId,
+	ImOnlineId,
+	AuthorityDiscoveryId,
+) {
 	(
 		get_account_id_from_seed::<sr25519::Public>(&format!("{}//stash", s)),
 		get_account_id_from_seed::<sr25519::Public>(s),
-		get_from_seed::<AuraId>(s),
+		get_from_seed::<BabeId>(s),
 		get_from_seed::<GrandpaId>(s),
 		get_from_seed::<ImOnlineId>(s),
+		get_from_seed::<AuthorityDiscoveryId>(s),
 	)
 }
 
@@ -141,44 +156,43 @@ impl Alternative {
 }
 
 fn testnet_genesis(
-	initial_authorities: Vec<(AccountId, AccountId, AuraId, GrandpaId, ImOnlineId)>,
+	initial_authorities: Vec<(
+		AccountId,
+		AccountId,
+		BabeId,
+		GrandpaId,
+		ImOnlineId,
+		AuthorityDiscoveryId,
+	)>,
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
 	_enable_println: bool,
 ) -> GenesisConfig {
 	GenesisConfig {
+		// --- substrate ---
 		frame_system: Some(SystemConfig {
 			code: WASM_BINARY.to_vec(),
 			changes_trie_config: Default::default(),
 		}),
-		pallet_aura: Some(Default::default()),
+		pallet_babe: Some(Default::default()),
 		pallet_session: Some(SessionConfig {
 			keys: initial_authorities
 				.iter()
 				.map(|x| {
 					(
 						x.0.clone(),
-						x.1.clone(),
-						session_keys(x.2.clone(), x.3.clone(), x.4.clone()),
+						x.0.clone(),
+						session_keys(x.2.clone(), x.3.clone(), x.4.clone(), x.5.clone()),
 					)
 				})
-				.collect::<Vec<_>>(),
-		}),
-		pallet_collective_Instance1: Some(CouncilConfig {
-			members: endowed_accounts
-				.iter()
-				.take((endowed_accounts.len() + 1) / 2)
-				.cloned()
 				.collect(),
-			phantom: Default::default(),
 		}),
-		pallet_sudo: Some(SudoConfig { key: root_key }),
 		pallet_grandpa: Some(Default::default()),
 		pallet_im_online: Some(Default::default()),
-		// Custom Module
-		darwinia_claims: Some(Default::default()),
-		darwinia_eth_backing: Some(Default::default()),
-		darwinia_eth_relay: Some(Default::default()),
+		pallet_authority_discovery: Some(Default::default()),
+		pallet_collective_Instance1: Some(Default::default()),
+		pallet_sudo: Some(SudoConfig { key: root_key }),
+		// --- darwinia ---
 		darwinia_balances_Instance0: Some(RingConfig {
 			balances: endowed_accounts
 				.iter()
@@ -194,19 +208,54 @@ fn testnet_genesis(
 				.collect(),
 		}),
 		darwinia_staking: Some(StakingConfig {
-			validator_count: initial_authorities.len() as u32 * 2,
-			minimum_validator_count: initial_authorities.len() as u32,
+			minimum_validator_count: 1,
+			validator_count: 2,
 			stakers: initial_authorities
 				.iter()
 				.map(|x| (x.0.clone(), x.1.clone(), 1 << 60, StakerStatus::Validator))
 				.collect(),
 			invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect(),
+			force_era: darwinia_staking::Forcing::NotForcing,
 			slash_reward_fraction: Perbill::from_percent(10),
-			// --- custom ---
 			payout_fraction: Perbill::from_percent(50),
 			..Default::default()
 		}),
-		darwinia_vesting: Some(Default::default()),
+		darwinia_claims: Some(Default::default()),
+		darwinia_eth_backing: Some(Default::default()),
+		darwinia_eth_relay: Some(EthRelayConfig {
+			genesis_header: Some((
+				0x400000000,
+				vec![
+					249, 2, 20, 160, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 160, 29, 204, 77, 232, 222, 199, 93, 122, 171,
+					133, 181, 103, 182, 204, 212, 26, 211, 18, 69, 27, 148, 138, 116, 19, 240, 161,
+					66, 253, 64, 212, 147, 71, 148, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 160, 215, 248, 151, 79, 181, 172, 120, 217, 172, 9, 155, 154, 213,
+					1, 139, 237, 194, 206, 10, 114, 218, 209, 130, 122, 23, 9, 218, 48, 88, 15, 5,
+					68, 160, 86, 232, 31, 23, 27, 204, 85, 166, 255, 131, 69, 230, 146, 192, 248,
+					110, 91, 72, 224, 27, 153, 108, 173, 192, 1, 98, 47, 181, 227, 99, 180, 33,
+					160, 86, 232, 31, 23, 27, 204, 85, 166, 255, 131, 69, 230, 146, 192, 248, 110,
+					91, 72, 224, 27, 153, 108, 173, 192, 1, 98, 47, 181, 227, 99, 180, 33, 185, 1,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 133, 4, 0,
+					0, 0, 0, 128, 130, 19, 136, 128, 128, 160, 17, 187, 232, 219, 78, 52, 123, 78,
+					140, 147, 124, 28, 131, 112, 228, 181, 237, 51, 173, 179, 219, 105, 203, 219,
+					122, 56, 225, 229, 11, 27, 130, 250, 160, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 136, 0, 0, 0, 0, 0,
+					0, 0, 66,
+				],
+			)),
+			check_authorities: false,
+			..Default::default()
+		}),
 	}
 }
 

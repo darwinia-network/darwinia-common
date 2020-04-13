@@ -1,6 +1,6 @@
 [package]
 name = "darwinia-header-mmr"
-version = "0.1.0"
+version = "0.5.2"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "Pallet for logging MMR into header digest"
 edition = "2018"
@@ -11,20 +11,20 @@ repository = "https://github.com/darwinia-network/darwinia/"
 [dependencies]
 # crates
 codec = { package = "parity-scale-codec", version = "1.3.0", default-features = false }
-serde = { version = "1.0.105", optional = true }
+serde = { version = "1.0.106", optional = true }
 # github
 merkle-mountain-range = { package = "ckb-merkle-mountain-range", default-features = false, git = "https://github.com/nervosnetwork/merkle-mountain-range.git" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
-frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 
 [dev-dependencies]
 serde_json = "1.0.41"
 # substrate
-sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
-sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
+sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 
 [features]
 default = ["std"]

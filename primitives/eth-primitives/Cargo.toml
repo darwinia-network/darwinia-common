@@ -1,6 +1,6 @@
 [package]
 name = "eth-primitives"
-version = "0.5.1"
+version = "0.5.2"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "Ethereum primitives for Darwinia Relay"
 edition = "2018"
@@ -10,8 +10,10 @@ repository = "https://github.com/darwinia-network/darwinia/"
 
 [dependencies]
 # crates
-codec = { package = "parity-scale-codec", version = "1.0.0", default-features = false, features = ["derive"] }
-serde = { version = "1.0.101", optional = true, features = ["derive"] }
+codec = { package = "parity-scale-codec", version = "1.3.0", default-features = false, features = ["derive"] }
+serde = { version = "1.0.106", optional = true, features = ["derive"] }
+# darwinia
+darwinia-support = { default-features = false, path = "../../frame/support" }
 # github
 ethbloom = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 ethereum-types = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
@@ -23,25 +25,26 @@ primitive-types = { default-features = false, features = ["codec", "rlp"], git =
 rlp = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 rlp-derive = { git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 
 [dev-dependencies]
 # crates
-hex-literal = { version = "0.2.1" }
 keccak-hasher = { version = "0.15.2" }
-rustc-hex = { version = "2.0" }
 # github
+ethash = { git = "https://github.com/darwinia-network/rust-ethash" }
 triehash = { git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
-frame-support = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.1" }
+frame-support = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 
 [features]
 default = ["std"]
 std = [
 	# crates
 	"codec/std",
-	"serde/std",
+	"serde",
+	# darwinia
+	"darwinia-support/std",
 	# github
 	"ethbloom/std",
 	"ethereum-types/std",

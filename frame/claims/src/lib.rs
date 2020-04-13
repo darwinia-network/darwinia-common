@@ -31,10 +31,13 @@ use frame_system::{self as system, ensure_none, ensure_root};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};
+#[cfg(feature = "std")]
+use sp_runtime::traits::{SaturatedConversion, Zero};
 use sp_runtime::{
-	traits::{CheckedSub, SaturatedConversion, Zero},
+	traits::CheckedSub,
 	transaction_validity::{
-		InvalidTransaction, TransactionLongevity, TransactionValidity, ValidTransaction,
+		InvalidTransaction, TransactionLongevity, TransactionSource, TransactionValidity,
+		ValidTransaction,
 	},
 	RuntimeDebug,
 };
@@ -126,7 +129,7 @@ decl_error! {
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait> as Claims {
+	trait Store for Module<T: Trait> as DarwiniaClaims {
 		ClaimsFromEth
 			get(claims_from_eth)
 			: map hasher(identity) EthereumAddress => Option<RingBalance<T>>;
@@ -308,11 +311,10 @@ impl<T: Trait> Module<T> {
 	}
 }
 
-#[allow(deprecated)] // Allow `ValidateUnsigned`
 impl<T: Trait> sp_runtime::traits::ValidateUnsigned for Module<T> {
 	type Call = Call<T>;
 
-	fn validate_unsigned(call: &Self::Call) -> TransactionValidity {
+	fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
 		const PRIORITY: u64 = 100;
 
 		match call {
@@ -459,7 +461,6 @@ mod tests {
 		type AccountData = AccountData<Balance>;
 		type OnNewAccount = ();
 		type OnKilledAccount = ();
-		type MigrateAccount = ();
 	}
 
 	parameter_types! {
@@ -778,15 +779,24 @@ mod tests {
 
 	#[test]
 	fn validate_unsigned_works() {
-		#![allow(deprecated)] // Allow `ValidateUnsigned`
+		// --- substrate ---
 		use sp_runtime::traits::ValidateUnsigned;
+
+		let source = sp_runtime::transaction_validity::TransactionSource::External;
 
 		new_test_ext().execute_with(|| {
 			assert_eq!(
-				Claims::validate_unsigned(&Call::claim(
-					1,
-					OtherSignature::Eth(eth_sig(&alice(), &1u64.encode(), ETHEREUM_SIGNED_MESSAGE)),
-				)),
+				Claims::validate_unsigned(
+					source,
+					&Call::claim(
+						1,
+						OtherSignature::Eth(eth_sig(
+							&alice(),
+							&1u64.encode(),
+							ETHEREUM_SIGNED_MESSAGE
+						)),
+					)
+				),
 				Ok(ValidTransaction {
 					priority: 100,
 					requires: vec![],
@@ -796,24 +806,38 @@ mod tests {
 				})
 			);
 			assert_eq!(
-				Claims::validate_unsigned(&Call::claim(
-					0,
-					OtherSignature::Eth(EcdsaSignature([0; 65]))
-				)),
+				Claims::validate_unsigned(
+					source,
+					&Call::claim(0, OtherSignature::Eth(EcdsaSignature([0; 65])))
+				),
 				InvalidTransaction::Custom(ValidityError::InvalidSignature as _).into(),
 			);
 			assert_eq!(
-				Claims::validate_unsigned(&Call::claim(
-					1,
-					OtherSignature::Eth(eth_sig(&carol(), &1u64.encode(), ETHEREUM_SIGNED_MESSAGE)),
-				)),
+				Claims::validate_unsigned(
+					source,
+					&Call::claim(
+						1,
+						OtherSignature::Eth(eth_sig(
+							&carol(),
+							&1u64.encode(),
+							ETHEREUM_SIGNED_MESSAGE
+						)),
+					)
+				),
 				InvalidTransaction::Custom(ValidityError::SignerHasNoClaim as _).into(),
 			);
 			assert_eq!(
-				Claims::validate_unsigned(&Call::claim(
-					0,
-					OtherSignature::Eth(eth_sig(&carol(), &1u64.encode(), ETHEREUM_SIGNED_MESSAGE)),
-				)),
+				Claims::validate_unsigned(
+					source,
+					&Call::claim(
+						0,
+						OtherSignature::Eth(eth_sig(
+							&carol(),
+							&1u64.encode(),
+							ETHEREUM_SIGNED_MESSAGE
+						)),
+					)
+				),
 				InvalidTransaction::Custom(ValidityError::SignerHasNoClaim as _).into(),
 			);
 		});

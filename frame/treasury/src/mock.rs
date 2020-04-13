@@ -69,7 +69,6 @@ impl frame_system::Trait for Test {
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
-	type MigrateAccount = ();
 }
 
 pub struct TenToFourteen;
