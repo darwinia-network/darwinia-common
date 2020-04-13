@@ -20,12 +20,15 @@ use sp_runtime::{DispatchError, DispatchResult, RuntimeDebug};
 use sp_std::prelude::*;
 // --- darwinia ---
 use eth_primitives::{
-	header::EthHeader, pow::EthashPartial, receipt::Receipt, EthBlockNumber, H256, U256,
+	header::EthHeader,
+	pow::{EthashPartial, EthashSeal},
+	receipt::Receipt,
+	EthBlockNumber, H256, U256,
 };
 use ethash::{EthereumPatch, LightDAG};
 use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
 
-type _DAG = LightDAG<EthereumPatch>;
+type DAG = LightDAG<EthereumPatch>;
 
 pub trait Trait: frame_system::Trait {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
@@ -417,7 +420,7 @@ impl<T: Trait> Module<T> {
 		let partial_header_hash = header.bare_hash();
 		let mix_hash = light_dag.hashimoto(partial_header_hash, seal.nonce).0;
 
-		ensure!(mix_hash == seal.mix_hash, <Error<T>>::MixhashMis);
+		ensure!(mix_hash == seal.mix_hash, <Error<T>>::MixHashMis);
 		frame_support::debug::trace!(target: "er-rl", "MixHash OK");
 
 		Ok(())
