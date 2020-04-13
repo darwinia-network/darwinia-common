@@ -44,7 +44,7 @@ macro_rules! new_full_start {
 			let pool_api = sc_transaction_pool::FullChainApi::new(client.clone());
 			Ok(sc_transaction_pool::BasicPool::new(
 				config,
-				std::sync::Arc::new(pool_api),
+				Arc::new(pool_api),
 			))
 		})?
 		.with_import_queue(|_config, client, mut select_chain, _transaction_pool| {

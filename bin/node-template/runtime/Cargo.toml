@@ -29,8 +29,12 @@ frame-benchmarking = { default-features = false, optional = true, git = "https:/
 frame-executive = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+frame-system-rpc-runtime-api = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+pallet-authority-discovery = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+pallet-authorship = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 pallet-babe = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 pallet-collective = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+pallet-finality-tracker = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 pallet-grandpa = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 pallet-im-online = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 pallet-offences = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
@@ -39,6 +43,7 @@ pallet-session = { default-features = false, git = "https://github.com/darwinia-
 pallet-sudo = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 sp-api = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+sp-authority-discovery = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 sp-block-builder = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 sp-consensus-babe = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
@@ -79,8 +84,12 @@ std = [
 	"frame-executive/std",
 	"frame-support/std",
 	"frame-system/std",
+	"frame-system-rpc-runtime-api/std",
+	"pallet-authority-discovery/std",
+	"pallet-authorship/std",
 	"pallet-babe/std",
 	"pallet-collective/std",
+	"pallet-finality-tracker/std",
 	"pallet-grandpa/std",
 	"pallet-im-online/std",
 	"pallet-randomness-collective-flip/std",
@@ -89,6 +98,7 @@ std = [
 	"pallet-sudo/std",
 	"pallet-timestamp/std",
 	"sp-api/std",
+	"sp-authority-discovery/std",
 	"sp-block-builder/std",
 	"sp-consensus-babe/std",
 	"sp-core/std",

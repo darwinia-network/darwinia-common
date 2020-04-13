@@ -31,8 +31,10 @@ use frame_system::{self as system, ensure_none, ensure_root};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};
+#[cfg(feature = "std")]
+use sp_runtime::traits::{SaturatedConversion, Zero};
 use sp_runtime::{
-	traits::{CheckedSub, SaturatedConversion, Zero},
+	traits::CheckedSub,
 	transaction_validity::{
 		InvalidTransaction, TransactionLongevity, TransactionSource, TransactionValidity,
 		ValidTransaction,

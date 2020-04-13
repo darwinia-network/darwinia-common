@@ -12,7 +12,7 @@ impl_outer_origin! {
 	pub enum Origin for Test where system = frame_system {}
 }
 
-pub type EthOffchain = Module<Test>;
+pub type _EthOffchain = Module<Test>;
 
 #[derive(Clone, Eq, PartialEq)]
 pub struct Test;

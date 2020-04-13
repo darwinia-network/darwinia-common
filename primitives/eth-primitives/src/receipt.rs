@@ -1,13 +1,15 @@
+// --- crates ---
 use codec::{Decode, Encode};
+// --- github ---
 use ethbloom::{Bloom, Input as BloomInput};
 use primitive_types::{H256, U256};
 use rlp::*;
 use sp_runtime::RuntimeDebug;
 use sp_std::prelude::*;
-
+// --- darwinia ---
 use crate::*;
 
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
 pub enum TransactionOutcome {
 	/// Status and state root are unknown under EIP-98 rules.
 	Unknown,
@@ -17,7 +19,7 @@ pub enum TransactionOutcome {
 	StatusCode(u8),
 }
 
-#[derive(PartialEq, Eq, Clone, RlpEncodable, RlpDecodable, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, RlpEncodable, RlpDecodable, RuntimeDebug)]
 pub struct LogEntry {
 	/// The address of the contract executing at the point of the `LOG` operation.
 	pub address: EthAddress,
@@ -40,7 +42,7 @@ impl LogEntry {
 	}
 }
 
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
 pub struct Receipt {
 	/// The total gas used in the block following execution of the transaction.
 	pub gas_used: U256,
@@ -117,13 +119,13 @@ impl Decodable for Receipt {
 
 #[cfg(test)]
 mod tests {
+	// --- std ---
 	use std::str::FromStr;
-
-	use hex_literal::*;
+	// --- crates ---
 	use keccak_hasher::KeccakHasher;
-	use rustc_hex::FromHex;
-
+	// --- darwinia ---
 	use super::*;
+	use darwinia_support::{fixed_hex_bytes_unchecked, hex_bytes_unchecked};
 
 	#[inline]
 	fn construct_receipts(
@@ -143,50 +145,61 @@ mod tests {
 		)
 	}
 
-	#[test]
 	/// ropsten tx hash: 0xce62c3d1d2a43cfcc39707b98de53e61a7ef7b7f8853e943d85e511b3451aa7e
+	#[test]
 	fn test_basic() {
 		// https://ropsten.etherscan.io/tx/0xce62c3d1d2a43cfcc39707b98de53e61a7ef7b7f8853e943d85e511b3451aa7e#eventlog
 		let log_entries = vec![LogEntry {
 			address: EthAddress::from_str("ad52e0f67b6f44cd5b9a6f4fbc7c0f78f37e094b").unwrap(),
 			topics: vec![
-				H256::from(hex!("6775ce244ff81f0a82f87d6fd2cf885affb38416e3a04355f713c6f008dd126a")),
-				H256::from(hex!("0000000000000000000000000000000000000000000000000000000000000006")),
-				H256::from(hex!("0000000000000000000000000000000000000000000000000000000000000000")),
+				fixed_hex_bytes_unchecked!(
+					"0x6775ce244ff81f0a82f87d6fd2cf885affb38416e3a04355f713c6f008dd126a",
+					32
+				)
+				.into(),
+				fixed_hex_bytes_unchecked!(
+					"0x0000000000000000000000000000000000000000000000000000000000000006",
+					32
+				)
+				.into(),
+				fixed_hex_bytes_unchecked!(
+					"0x0000000000000000000000000000000000000000000000000000000000000000",
+					32
+				)
+				.into(),
 			],
-			data: "00000000000000000000000074241db5f3ebaeecf9506e4ae9881860933416048eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48000000000000000000000000000000000000000000000000002386f26fc10000".from_hex().unwrap(),
+			data: hex_bytes_unchecked("0x00000000000000000000000074241db5f3ebaeecf9506e4ae9881860933416048eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48000000000000000000000000000000000000000000000000002386f26fc10000"),
 		}];
 
-		//		let receipt = Receipt::new(
-		//			TransactionOutcome::StatusCode(1),
-		//			//				TransactionOutcome::StateRoot(H256::from(hex!("a21cdf375ebef58f606c298d6211f4edee58f2dd6430edbdd0ed3cd886a16863"))),
-		//			U256::from(U128::from(1123401)),
-		//			log_entries,
-		//		);
-
 		let r = construct_receipts(None, U256::from(U128::from(1123401)), Some(1), log_entries);
-		//		let rs = &rlp::encode(&r)[..];
 		// TODO: Check the log bloom generation logic
 		assert_eq!(r.log_bloom, Bloom::from_str(
 			"00000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000820000000000000020000000000000000000800000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000200000000020000000000000000000000000000080000000000000800000000000000000000000"
 		).unwrap());
 	}
 
-	#[test]
 	/// kovan tx hash: 0xaaf52845694258509cbdd30ea21894b4e685eb4cdbb13dd298f925fe6e51db35
 	/// block number: 13376543 (only a tx in this block, which is above)
 	/// from: 0x4aea6cfc5bd14f2308954d544e1dc905268357db
 	/// to: 0xa24df0420de1f3b8d740a52aaeb9d55d6d64478e (a contract)
 	/// receipts_root in block#13376543: 0xc789eb8b7f5876f4df4f8ae16f95c9881eabfb700ee7d8a00a51fb4a71afbac9
 	/// to check if receipts_root in block-header can be pre-computed.
+	#[test]
 	fn check_receipts() {
-		let expected_root = H256::from(hex!(
-			"c789eb8b7f5876f4df4f8ae16f95c9881eabfb700ee7d8a00a51fb4a71afbac9"
-		));
+		let expected_root = fixed_hex_bytes_unchecked!(
+			"0xc789eb8b7f5876f4df4f8ae16f95c9881eabfb700ee7d8a00a51fb4a71afbac9",
+			32
+		)
+		.into();
+
 		let log_entries = vec![LogEntry {
 			address: EthAddress::from_str("a24df0420de1f3b8d740a52aaeb9d55d6d64478e").unwrap(),
-			topics: vec![H256::from(hex!("f36406321d51f9ba55d04e900c1d56caac28601524e09d53e9010e03f83d7d00"))],
-			data: "0000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000363384a3868b9000000000000000000000000000000000000000000000000000000005d75f54f0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000e53504f5450582f4241542d455448000000000000000000000000000000000000".from_hex().unwrap(),
+			topics: vec![fixed_hex_bytes_unchecked!(
+				"0xf36406321d51f9ba55d04e900c1d56caac28601524e09d53e9010e03f83d7d00",
+				32
+			)
+			.into()],
+			data: hex_bytes_unchecked("0000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000363384a3868b9000000000000000000000000000000000000000000000000000000005d75f54f0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000e53504f5450582f4241542d455448000000000000000000000000000000000000"),
 		}];
 		let receipts = vec![Receipt::new(
 			TransactionOutcome::StatusCode(1),
@@ -197,8 +210,6 @@ mod tests {
 		let receipts_root: H256 = H256(triehash::ordered_trie_root::<KeccakHasher, _>(
 			receipts.iter().map(|x| ::rlp::encode(x)),
 		));
-
-		//		let receipts_root: H256 = triehash_ethereum::ordered_trie_root<KeccakHasher, _>();
 
 		assert_eq!(receipts_root, expected_root);
 	}
