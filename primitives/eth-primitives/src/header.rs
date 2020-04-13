@@ -380,10 +380,14 @@ impl EthHeader {
 mod tests {
 	//  --- std ---
 	use std::str::FromStr;
+	// --- github ---
+	use ethash::{EthereumPatch, LightDAG};
 	// --- darwinia ---
 	use super::*;
 	use error::BlockError;
-	use pow::EthashPartial;
+	use pow::{EthashPartial, EthashSeal};
+
+	type DAG = LightDAG<EthereumPatch>;
 
 	#[inline]
 	fn sequential_header() -> (EthHeader, EthHeader) {
@@ -603,6 +607,82 @@ mod tests {
 			)
 			.into()
 		);
+	}
+
+	#[test]
+	fn mix_hash_should_work_for_mainnet_block_0x1() {
+		let header = EthHeader::from_str_unchecked(
+			r#"
+			{
+				"difficulty": "0x3ff800000",
+				"extraData": "0x476574682f76312e302e302f6c696e75782f676f312e342e32",
+				"gasLimit": "0x1388",
+				"gasUsed": "0x0",
+				"hash": "0x88e96d4537bea4d9c05d12549907b32561d3bf31f45aae734cdc119f13406cb6",
+				"logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+				"miner": "0x05a56e2d52c817161883f50c441c3228cfe54d9f",
+				"mixHash": "0x969b900de27b6ac6a67742365dd65f55a0526c41fd18e1b16f1a1215c2e66f59",
+				"nonce": "0x539bd4979fef1ec4",
+				"number": "0x1",
+				"parentHash": "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3",
+				"receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+				"sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+				"size": "0x219",
+				"stateRoot": "0xd67e4d450343046425ae4271474353857ab860dbc0a1dde64b41b5cd3a532bf3",
+				"timestamp": "0x55ba4224",
+				"totalDifficulty": "0x7ff800000",
+				"transactions": [omitted],
+				"transactionsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+				"uncles": [omitted]
+			}
+			"#,
+		);
+
+		let seal = EthashSeal::parse_seal(header.seal()).unwrap();
+
+		let light_dag = DAG::new(header.number.into());
+		let partial_header_hash = header.bare_hash();
+		let mix_hash = light_dag.hashimoto(partial_header_hash, seal.nonce).0;
+
+		assert_eq!(mix_hash, seal.mix_hash);
+	}
+
+	#[test]
+	fn mix_hash_should_work_for_mainnet_block_0x93806d() {
+		let header = EthHeader::from_str_unchecked(
+			r#"
+			{
+				"difficulty": "0x7db1e47bc4cb4",
+				"extraData": "0x505059452d65746865726d696e652d6575312d32",
+				"gasLimit": "0x9895d1",
+				"gasUsed": "0x989042",
+				"hash": "0x5eccf3a95d2ae352a05ced7de02b6b41b99a780c680af67162f7673b9bc9a00f",
+				"logsBloom": "0x0002000005400020000004000040100000000020000010080280a000800008100000100100000000000040021000010100000000005000000000000000001000000000000000400048100008004000000006000801040000010000001000000009000004082200000001c0002000000900000020100000000000001040020000008440000080001108100000000000000000012801000080040004002010001000002401400020002000089200000002000000020080000001100000000100000400010200400410800010200000000400000820000002000100000000004280400040001060000400000080a001280008002000000140004800120000000022",
+				"miner": "0xea674fdde714fd979de3edf0f56aa9716b898ec8",
+				"mixHash": "0x7daba05fcefc814682e0caf337800780de3f9737fac71826d90eddcedd89b1da",
+				"nonce": "0x726446620418cc02",
+				"number": "0x93806d",
+				"parentHash": "0x6ec166e9a9700acaa59573d5a4874f5a28c6665938a7ca824abd6e011cf73c38",
+				"receiptsRoot": "0xf4e94c772cddfea2e94eea2eb3381385b1477ca887adf4da6d1b7b92fdac68cc",
+				"sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+				"size": "0x1580",
+				"stateRoot": "0x63a7b415d8f67152fa7fcf25e919638bd44083c7e8c95497f15b9819ea8acb81",
+				"timestamp": "0x5e6c35d2",
+				"totalDifficulty": "0x313df92f05f4c80afcf",
+				"transactions": [omitted],
+				"transactionsRoot": "0xd252a961e83513313ea0b51ee1937e75c3bb31e6290de1fc1a4e0d22eeaa58e9",
+				"uncles": [omitted]
+			}
+			"#,
+		);
+
+		let seal = EthashSeal::parse_seal(header.seal()).unwrap();
+
+		let light_dag = DAG::new(header.number.into());
+		let partial_header_hash = header.bare_hash();
+		let mix_hash = light_dag.hashimoto(partial_header_hash, seal.nonce).0;
+
+		assert_eq!(mix_hash, seal.mix_hash);
 	}
 
 	#[test]

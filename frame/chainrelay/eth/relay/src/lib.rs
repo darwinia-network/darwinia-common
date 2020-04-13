@@ -171,6 +171,8 @@ decl_module! {
 	{
 		type Error = Error<T>;
 
+		const EthNetwork: EthNetworkType = T::EthNetwork::get();
+
 		fn deposit_event() = default;
 
 		#[weight = SimpleDispatchInfo::FixedNormal(100_000)]
@@ -408,21 +410,15 @@ impl<T: Trait> Module<T> {
 		ensure!(difficulty == *header.difficulty(), <Error<T>>::DifficultyVF);
 		frame_support::debug::trace!(target: "er-rl", "Difficulty OK");
 
-		// FIXME: verify mixhash
-		// match T::EthNetwork::get() {
-		// 	EthNetworkType::Ropsten => {}
-		// 	EthNetworkType::Mainnet => {
-		// 		let seal = EthashSeal::parse_seal(header.seal()).map_err(|_| <Error<T>>::SealPF)?;
-		// 		frame_support::debug::trace!(target: "er-rl", "Seal OK");
+		let seal = EthashSeal::parse_seal(header.seal()).map_err(|_| <Error<T>>::SealPF)?;
+		frame_support::debug::trace!(target: "er-rl", "Seal OK");
 
-		// 		let light_dag = DAG::new(header.number.into());
-		// 		let partial_header_hash = header.bare_hash();
-		// 		let mix_hash = light_dag.hashimoto(partial_header_hash, seal.nonce).0;
+		let light_dag = DAG::new(header.number.into());
+		let partial_header_hash = header.bare_hash();
+		let mix_hash = light_dag.hashimoto(partial_header_hash, seal.nonce).0;
 
-		// 		ensure!(mix_hash == seal.mix_hash, <Error<T>>::MixHashMis);
-		// 		frame_support::debug::trace!(target: "er-rl", "MixHash OK");
-		// 	}
-		// };
+		ensure!(mix_hash == seal.mix_hash, <Error<T>>::MixhashMis);
+		frame_support::debug::trace!(target: "er-rl", "MixHash OK");
 
 		Ok(())
 	}
