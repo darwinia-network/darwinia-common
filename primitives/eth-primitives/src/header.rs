@@ -441,6 +441,50 @@ mod tests {
 	}
 
 	#[test]
+	fn test_mainet_header_ethash_one() {
+		// 9666669
+		let mixh2 = H256::from(hex!(
+			"969b900de27b6ac6a67742365dd65f55a0526c41fd18e1b16f1a1215c2e66f59"
+		));
+		let nonce2 = H64::from(hex!("539bd4979fef1ec4"));
+
+		let header2 = EthHeader {
+			parent_hash: H256::from(hex!("d4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3")),
+			timestamp: 1438269988,
+			number: 1,
+			author: EthAddress::from(hex!("05a56E2D52c817161883f50c441c3228CFe54d9f")),
+			transactions_root: H256::from(hex!("56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421")),
+			uncles_hash: H256::from(hex!("1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347")),
+			extra_data: "476574682f76312e302e302f6c696e75782f676f312e342e32".from_hex().unwrap(),
+			state_root: H256::from(hex!("d67e4d450343046425ae4271474353857ab860dbc0a1dde64b41b5cd3a532bf3")),
+			receipts_root: H256::from(hex!("56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421")),
+			log_bloom: Bloom::from_str("00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000").unwrap(),
+			gas_used: 0x0.into(),
+			gas_limit: 5000.into(),
+			difficulty: 17171480576_u64.into(),
+			seal: vec![rlp::encode(&mixh2), rlp::encode(&nonce2)],
+			hash: None,
+		};
+
+		let partial_header_hash2 = header2.bare_hash();
+
+		//		assert_eq!(
+		//			partial_header_hash2,
+		//			H256::from(hex!(
+		//				"6063429cc9580b4c437d7547cdbf07df0c4bf7ab0cb6e0d6f74ab00f949f174c"
+		//			))
+		//		);
+
+		let seal = EthashSeal::parse_seal(header2.seal()).unwrap();
+
+		let light_dag = DAG::new(header2.number.into());
+		let partial_header_hash = header2.bare_hash();
+		let mix_hash = light_dag.hashimoto(partial_header_hash, seal.nonce).0;
+
+		assert_eq!(mix_hash, seal.mix_hash);
+	}
+
+	#[test]
 	fn test_mainet_header_ethash_latest() {
 		// 9666669
 		let mixh2 = H256::from(hex!(
