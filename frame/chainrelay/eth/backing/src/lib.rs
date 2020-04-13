@@ -17,13 +17,9 @@ mod types {
 
 	pub type RingBalance<T> =
 		<<T as Trait>::Ring as Currency<<T as system::Trait>::AccountId>>::Balance;
-	pub type RingPositiveImbalance<T> =
-		<<T as Trait>::Ring as Currency<<T as system::Trait>::AccountId>>::PositiveImbalance;
 
 	pub type KtonBalance<T> =
 		<<T as Trait>::Kton as Currency<<T as system::Trait>::AccountId>>::Balance;
-	pub type KtonPositiveImbalance<T> =
-		<<T as Trait>::Kton as Currency<<T as system::Trait>::AccountId>>::PositiveImbalance;
 
 	pub type EthTransactionIndex = (H256, u64);
 }
@@ -35,22 +31,25 @@ use ethabi::{Event as EthEvent, EventParam as EthEventParam, ParamType, RawLog};
 // --- substrate ---
 use frame_support::{
 	debug, decl_error, decl_event, decl_module, decl_storage, ensure,
-	traits::{Currency, Get, OnUnbalanced},
+	traits::{Currency, ExistenceRequirement::KeepAlive, Get, ReservableCurrency},
 	weights::SimpleDispatchInfo,
 };
 use frame_system::{self as system, ensure_root, ensure_signed};
 use sp_runtime::{
-	traits::{CheckedSub, SaturatedConversion},
-	DispatchError, DispatchResult, RuntimeDebug,
+	traits::{AccountIdConversion, SaturatedConversion, Saturating},
+	DispatchError, DispatchResult, ModuleId, RuntimeDebug,
 };
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
 use sp_std::{convert::TryFrom, marker::PhantomData, vec};
 // --- darwinia ---
 use darwinia_eth_relay::{EthReceiptProof, VerifyEthReceipts};
-use darwinia_support::traits::{LockableCurrency, OnDepositRedeem};
+use darwinia_support::traits::OnDepositRedeem;
 use eth_primitives::{EthAddress, H256, U256};
 use types::*;
+
+/// The backing's module id, used for deriving its sovereign account ID.
+const MODULE_ID: ModuleId = ModuleId(*b"da/backi");
 
 pub trait Trait: system::Trait {
 	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
@@ -61,11 +60,9 @@ pub trait Trait: system::Trait {
 
 	type OnDepositRedeem: OnDepositRedeem<Self::AccountId, Balance = RingBalance<Self>>;
 
-	type Ring: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
-	type RingReward: OnUnbalanced<RingPositiveImbalance<Self>>;
+	type Ring: Currency<Self::AccountId> + ReservableCurrency<Self::AccountId>;
 
-	type Kton: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
-	type KtonReward: OnUnbalanced<KtonPositiveImbalance<Self>>;
+	type Kton: Currency<Self::AccountId> + ReservableCurrency<Self::AccountId>;
 
 	type SubKeyPrefix: Get<u8>;
 }
@@ -79,13 +76,11 @@ pub enum RedeemFor {
 
 decl_storage! {
 	trait Store for Module<T: Trait> as DarwiniaEthBacking {
-		pub RingLocked get(fn ring_locked) config(): RingBalance<T>;
 		pub RingProofVerified
 			get(fn ring_proof_verfied)
 			: map hasher(blake2_128_concat) EthTransactionIndex => Option<EthReceiptProof>;
 		pub RingRedeemAddress get(fn ring_redeem_address) config(): EthAddress;
 
-		pub KtonLocked get(fn kton_locked) config(): KtonBalance<T>;
 		pub KtonProofVerified
 			get(fn kton_proof_verfied)
 			: map hasher(blake2_128_concat) EthTransactionIndex => Option<EthReceiptProof>;
@@ -95,6 +90,22 @@ decl_storage! {
 			 get(fn deposit_proof_verfied)
 			 : map hasher(blake2_128_concat) EthTransactionIndex => Option<EthReceiptProof>;
 		pub DepositRedeemAddress get(fn deposit_redeem_address) config(): EthAddress;
+	}
+	add_extra_genesis {
+		config(ring_locked): RingBalance<T>;
+		config(kton_locked): KtonBalance<T>;
+		build(|config: &GenesisConfig<T>| {
+			// Create Backing account
+			let _ = T::Ring::make_free_balance_be(
+				&<Module<T>>::account_id(),
+				T::Ring::minimum_balance().max(config.ring_locked),
+			);
+
+			let _ = T::Kton::make_free_balance_be(
+				&<Module<T>>::account_id(),
+				T::Kton::minimum_balance().max(config.kton_locked),
+			);
+		});
 	}
 }
 
@@ -221,6 +232,22 @@ decl_module! {
 
 impl<T: Trait> Module<T> {
 	// --- Immutable ---
+
+	/// The account ID of the backing pot.
+	///
+	/// This actually does computation. If you need to keep using it, then make sure you cache the
+	/// value and only call this once.
+	pub fn account_id() -> T::AccountId {
+		MODULE_ID.into_account()
+	}
+
+	/// Return the amount of money in the pot.
+	// The existential deposit is not part of the pot so backing account never gets deleted.
+	fn pot<C: Currency<T::AccountId>>() -> C::Balance {
+		C::free_balance(&Self::account_id())
+			// Must never be less than 0 but better be safe.
+			.saturating_sub(C::minimum_balance())
+	}
 
 	fn parse_token_redeem_proof(
 		proof_record: &EthReceiptProof,
@@ -428,19 +455,21 @@ impl<T: Trait> Module<T> {
 		let (redeemed_ring, darwinia_account) =
 			Self::parse_token_redeem_proof(&proof_record, "RingBurndropTokens")?;
 		let redeemed_ring = redeemed_ring.saturated_into();
-		let new_ring_locked = Self::ring_locked()
-			.checked_sub(&redeemed_ring)
-			.ok_or(<Error<T>>::RingLockedNSBA)?;
-		let redeemed_positive_imbalance_ring =
-			T::Ring::deposit_into_existing(&darwinia_account, redeemed_ring)?;
 
-		// RingReward should be set to (), cause nothing special need to be done for on_unbalanced
-		T::RingReward::on_unbalanced(redeemed_positive_imbalance_ring);
+		let backing = Self::account_id();
+
+		ensure!(
+			Self::pot::<T::Ring>() >= redeemed_ring,
+			<Error<T>>::RingLockedNSBA
+		);
+
+		T::Ring::transfer(&backing, &darwinia_account, redeemed_ring, KeepAlive)?;
+
 		RingProofVerified::insert(
 			(proof_record.header_hash, proof_record.index),
 			&proof_record,
 		);
-		<RingLocked<T>>::put(new_ring_locked);
+
 		<Module<T>>::deposit_event(RawEvent::RedeemRing(
 			darwinia_account,
 			redeemed_ring,
@@ -461,19 +490,21 @@ impl<T: Trait> Module<T> {
 		let (redeemed_kton, darwinia_account) =
 			Self::parse_token_redeem_proof(&proof_record, "KtonBurndropTokens")?;
 		let redeemed_kton = redeemed_kton.saturated_into();
-		let new_kton_locked = Self::kton_locked()
-			.checked_sub(&redeemed_kton)
-			.ok_or(<Error<T>>::KtonLockedNSBA)?;
-		let redeemed_positive_imbalance_kton =
-			T::Kton::deposit_into_existing(&darwinia_account, redeemed_kton)?;
 
-		// KtonReward should be set to (), cause nothing special need to be done for on_unbalanced
-		T::KtonReward::on_unbalanced(redeemed_positive_imbalance_kton);
+		let backing = Self::account_id();
+
+		ensure!(
+			Self::pot::<T::Kton>() >= redeemed_kton,
+			<Error<T>>::KtonLockedNSBA
+		);
+
+		T::Kton::transfer(&backing, &darwinia_account, redeemed_kton, KeepAlive)?;
+
 		KtonProofVerified::insert(
 			(proof_record.header_hash, proof_record.index),
 			&proof_record,
 		);
-		<KtonLocked<T>>::put(new_kton_locked);
+
 		<Module<T>>::deposit_event(RawEvent::RedeemKton(
 			darwinia_account,
 			redeemed_kton,
@@ -493,18 +524,29 @@ impl<T: Trait> Module<T> {
 
 		let (deposit_id, month, start_at, redeemed_ring, darwinia_account) =
 			Self::parse_deposit_redeem_proof(&proof_record)?;
-		let new_ring_locked = Self::ring_locked()
-			.checked_sub(&redeemed_ring)
-			.ok_or(<Error<T>>::RingLockedNSBA)?;
 
-		T::OnDepositRedeem::on_deposit_redeem(start_at, month, redeemed_ring, &darwinia_account)?;
+		let backing = Self::account_id();
+
+		ensure!(
+			Self::pot::<T::Ring>() >= redeemed_ring,
+			<Error<T>>::RingLockedNSBA
+		);
+
+		T::OnDepositRedeem::on_deposit_redeem(
+			&backing,
+			start_at,
+			month,
+			redeemed_ring,
+			&darwinia_account,
+		)?;
+
 		// TODO: check deposit_id duplication
 		// TODO: Ignore Unit Interest for now
 		DepositProofVerified::insert(
 			(proof_record.header_hash, proof_record.index),
 			&proof_record,
 		);
-		<RingLocked<T>>::put(new_ring_locked);
+
 		<Module<T>>::deposit_event(RawEvent::RedeemDeposit(
 			darwinia_account,
 			deposit_id,

@@ -130,7 +130,7 @@ use darwinia_support::traits::OnUnbalancedKton;
 use types::*;
 
 /// The treasury's module id, used for deriving its sovereign account ID.
-const MODULE_ID: ModuleId = ModuleId(*b"py/trsry");
+const MODULE_ID: ModuleId = ModuleId(*b"da/trsry");
 
 pub trait Trait: frame_system::Trait {
 	/// The staking *RING*.

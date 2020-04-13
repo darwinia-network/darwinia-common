@@ -297,7 +297,7 @@ use codec::{Decode, Encode, HasCompact};
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
 	storage::IterableStorageMap,
-	traits::{Currency, Get, Imbalance, OnUnbalanced, UnixTime},
+	traits::{Currency, ExistenceRequirement::KeepAlive, Get, Imbalance, OnUnbalanced, UnixTime},
 	weights::SimpleDispatchInfo,
 };
 use frame_system::{self as system, ensure_root, ensure_signed};
@@ -328,7 +328,7 @@ const MONTH_IN_MINUTES: TsInMs = 30 * 24 * 60;
 const MONTH_IN_MILLISECONDS: TsInMs = MONTH_IN_MINUTES * 60 * 1000;
 pub const MAX_NOMINATIONS: usize = 16;
 const MAX_UNLOCKING_CHUNKS: usize = 32;
-const STAKING_ID: LockIdentifier = *b"staking ";
+const STAKING_ID: LockIdentifier = *b"da/staki";
 
 // --- enum ---
 
@@ -2736,6 +2736,7 @@ impl<T: Trait> OnDepositRedeem<T::AccountId> for Module<T> {
 	type Balance = RingBalance<T>;
 
 	fn on_deposit_redeem(
+		backing: &T::AccountId,
 		start_time: u64,
 		months: u8,
 		amount: Self::Balance,
@@ -2753,10 +2754,7 @@ impl<T: Trait> OnDepositRedeem<T::AccountId> for Module<T> {
 		// TODO: Lock but no kton reward because this is a deposit redeem
 		//		let extra = extra.min(r);
 
-		let redeemed_positive_imbalance_ring =
-			T::RingCurrency::deposit_into_existing(&stash, amount)?;
-
-		T::RingReward::on_unbalanced(redeemed_positive_imbalance_ring);
+		T::RingCurrency::transfer(&backing, &stash, amount, KeepAlive)?;
 
 		let (start_time, expire_time) = Self::bond_ring_for_deposit_redeem(
 			&controller,

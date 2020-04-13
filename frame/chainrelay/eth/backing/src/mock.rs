@@ -219,9 +219,7 @@ impl Trait for Test {
 	type EthRelay = EthRelay;
 	type OnDepositRedeem = Staking;
 	type Ring = Ring;
-	type RingReward = ();
 	type Kton = Kton;
-	type KtonReward = ();
 	type SubKeyPrefix = SubKeyPrefix;
 }
 
