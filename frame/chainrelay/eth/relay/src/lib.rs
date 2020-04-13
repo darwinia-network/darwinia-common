@@ -3,11 +3,9 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "128"]
 
-#[cfg(all(feature = "std", test))]
+#[cfg(test)]
 mod mock;
-#[cfg(all(feature = "std", test))]
-mod mock_headers;
-#[cfg(all(feature = "std", test))]
+#[cfg(test)]
 mod tests;
 
 // --- crates ---
@@ -22,13 +20,12 @@ use sp_runtime::{DispatchError, DispatchResult, RuntimeDebug};
 use sp_std::prelude::*;
 // --- darwinia ---
 use eth_primitives::{
-	header::EthHeader, pow::EthashPartial, pow::EthashSeal, receipt::Receipt, EthBlockNumber, H256,
-	U256,
+	header::EthHeader, pow::EthashPartial, receipt::Receipt, EthBlockNumber, H256, U256,
 };
 use ethash::{EthereumPatch, LightDAG};
 use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
 
-type DAG = LightDAG<EthereumPatch>;
+type _DAG = LightDAG<EthereumPatch>;
 
 pub trait Trait: frame_system::Trait {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
@@ -89,9 +86,9 @@ decl_storage! {
 	}
 	add_extra_genesis {
 		// genesis: Option<Header, Difficulty>
-		config(genesis): Option<(Vec<u8>, u64)>;
+		config(genesis_header): Option<(u64, Vec<u8>)>;
 		build(|config| {
-			if let Some((header, difficulty)) = &config.genesis {
+			if let Some((difficulty, header)) = &config.genesis_header {
 				let header: EthHeader = rlp::decode(&header).expect(<Error<T>>::RlpDcF.into());
 				<Module<T>>::init_genesis_header(&header, *difficulty).expect(<Error<T>>::GenesisHeaderIF.into());
 			}
@@ -128,7 +125,7 @@ decl_error! {
 		/// Header Hash - MISMATCHED
 		HeaderHashMis,
 		/// Mixhash - MISMATCHED
-		MixhashMis,
+		MixHashMis,
 
 		/// Begin Header - NOT EXISTED
 		BeginHeaderNE,
@@ -201,16 +198,14 @@ decl_module! {
 		/// # </weight>
 		#[weight = SimpleDispatchInfo::FixedNormal(100_000)]
 		pub fn relay_header(origin, header: EthHeader) {
+			frame_support::debug::trace!(target: "er-rl", "{:?}", header);
 			let relayer = ensure_signed(origin)?;
-			frame_support::debug::trace!(target: "er-rl", "[eth-relay] Relayer: {:?}", relayer);
 
 			if Self::check_authorities() {
 				ensure!(Self::authorities().contains(&relayer), <Error<T>>::AccountNP);
 			}
 
-
 			let header_hash = header.hash();
-			frame_support::debug::trace!(target: "er-rl", "[eth-relay] Header Hash: {:?}", header_hash);
 
 			ensure!(HeaderInfoOf::get(&header_hash).is_none(), <Error<T>>::HeaderAE);
 
@@ -382,13 +377,13 @@ impl<T: Trait> Module<T> {
 			header.hash() == header.re_compute_hash(),
 			<Error<T>>::HeaderHashMis
 		);
+		frame_support::debug::trace!(target: "er-rl", "Hash OK");
 
 		let begin_header_number = Self::begin_header()
 			.ok_or(<Error<T>>::BeginHeaderNE)?
 			.number;
 		ensure!(header.number >= begin_header_number, <Error<T>>::HeaderTE);
-
-		frame_support::debug::trace!(target: "er-rl", "[eth-relay] Parent Header Hash: {:?}", header.parent_hash);
+		frame_support::debug::trace!(target: "er-rl", "Number1 OK");
 
 		// There must be a corresponding parent hash
 		let prev_header = Self::header_of(header.parent_hash).ok_or(<Error<T>>::HeaderNE)?;
@@ -400,6 +395,7 @@ impl<T: Trait> Module<T> {
 					.ok_or(<Error<T>>::BlockNumberOF)?,
 			<Error<T>>::BlockNumberMis,
 		);
+		frame_support::debug::trace!(target: "er-rl", "Number2 OK");
 
 		// check difficulty
 		let ethash_params = match T::EthNetwork::get() {
@@ -409,26 +405,28 @@ impl<T: Trait> Module<T> {
 		ethash_params
 			.verify_block_basic(header)
 			.map_err(|_| <Error<T>>::BlockBasicVF)?;
+		frame_support::debug::trace!(target: "er-rl", "Basic OK");
 
 		// verify difficulty
 		let difficulty = ethash_params.calculate_difficulty(header, &prev_header);
 		ensure!(difficulty == *header.difficulty(), <Error<T>>::DifficultyVF);
+		frame_support::debug::trace!(target: "er-rl", "Difficulty OK");
 
-		// verify mixhash
-		match T::EthNetwork::get() {
-			EthNetworkType::Ropsten => {
-				// TODO: Ropsten have issues, do not verify mixhash
-			}
-			EthNetworkType::Mainnet => {
-				let seal = EthashSeal::parse_seal(header.seal()).map_err(|_| <Error<T>>::SealPF)?;
+		// FIXME: verify mixhash
+		// match T::EthNetwork::get() {
+		// 	EthNetworkType::Ropsten => {}
+		// 	EthNetworkType::Mainnet => {
+		// 		let seal = EthashSeal::parse_seal(header.seal()).map_err(|_| <Error<T>>::SealPF)?;
+		// 		frame_support::debug::trace!(target: "er-rl", "Seal OK");
 
-				let light_dag = DAG::new(header.number.into());
-				let partial_header_hash = header.bare_hash();
-				let mix_hash = light_dag.hashimoto(partial_header_hash, seal.nonce).0;
+		// 		let light_dag = DAG::new(header.number.into());
+		// 		let partial_header_hash = header.bare_hash();
+		// 		let mix_hash = light_dag.hashimoto(partial_header_hash, seal.nonce).0;
 
-				ensure!(mix_hash == seal.mix_hash, <Error<T>>::MixhashMis);
-			}
-		};
+		// 		ensure!(mix_hash == seal.mix_hash, <Error<T>>::MixHashMis);
+		// 		frame_support::debug::trace!(target: "er-rl", "MixHash OK");
+		// 	}
+		// };
 
 		Ok(())
 	}

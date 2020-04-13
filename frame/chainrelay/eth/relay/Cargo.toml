@@ -26,8 +26,10 @@ sp-std = { default-features = false, git = "https://github.com/darwinia-network/
 
 [dev-dependencies]
 # crates
-json = { version = "0.12.4" }
 keccak-hasher = { version = "0.15.2" }
+serde_json = { version = "1.0.51" }
+# darwinia
+darwinia-support = { path = "../../../support" }
 # substrate
 sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
