@@ -19,15 +19,17 @@ use frame_system::{self as system, ensure_root, ensure_signed};
 use sp_runtime::{DispatchError, DispatchResult, RuntimeDebug};
 use sp_std::prelude::*;
 // --- darwinia ---
+
+#[cfg(not(test))]
+use eth_primitives::pow::EthashSeal;
 use eth_primitives::{
-	header::EthHeader,
-	pow::{EthashPartial, EthashSeal},
-	receipt::Receipt,
-	EthBlockNumber, H256, U256,
+	header::EthHeader, pow::EthashPartial, receipt::Receipt, EthBlockNumber, H256, U256,
 };
+#[cfg(not(test))]
 use ethash::{EthereumPatch, LightDAG};
 use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
 
+#[cfg(not(test))]
 type DAG = LightDAG<EthereumPatch>;
 
 pub trait Trait: frame_system::Trait {
@@ -414,7 +416,7 @@ impl<T: Trait> Module<T> {
 		frame_support::debug::trace!(target: "er-rl", "Difficulty OK");
 
 		// TODO: Travis test takes too long, disable ethash pow verify in tests temporarily
-		#[cfg(not(feature = "test"))]
+		#[cfg(not(test))]
 		{
 			let seal = EthashSeal::parse_seal(header.seal()).map_err(|_| <Error<T>>::SealPF)?;
 			frame_support::debug::trace!(target: "er-rl", "Seal OK");
