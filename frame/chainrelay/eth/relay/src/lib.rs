@@ -101,7 +101,7 @@ decl_event! {
 	where
 		<T as frame_system::Trait>::AccountId
 	{
-		SetGenesisHeader(AccountId, EthHeader, u64),
+		SetGenesisHeader(EthHeader, u64),
 		RelayHeader(AccountId, EthHeader),
 		VerifyProof(AccountId, Receipt, EthReceiptProof),
 		AddAuthority(AccountId),
@@ -173,17 +173,13 @@ decl_module! {
 
 		fn deposit_event() = default;
 
-		// TODO: Just for easy testing.
 		#[weight = SimpleDispatchInfo::FixedNormal(100_000)]
 		pub fn reset_genesis_header(origin, header: EthHeader, genesis_difficulty: u64) {
-			let relayer = ensure_signed(origin)?;
-			if Self::check_authorities() {
-				ensure!(Self::authorities().contains(&relayer), <Error<T>>::AccountNP);
-			}
+			let _ = ensure_root(origin)?;
 
 			Self::init_genesis_header(&header, genesis_difficulty)?;
 
-			<Module<T>>::deposit_event(RawEvent::SetGenesisHeader(relayer, header, genesis_difficulty));
+			<Module<T>>::deposit_event(RawEvent::SetGenesisHeader(header, genesis_difficulty));
 		}
 
 		/// Relay header of eth block, store the passing header
