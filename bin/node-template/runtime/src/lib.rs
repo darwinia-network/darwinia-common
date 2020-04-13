@@ -30,24 +30,37 @@ pub mod support_kton_in_the_future {
 
 	use crate::*;
 
-	/// Struct that handles the conversion of Balance -> `u64`. This is used for staking's election
-	/// calculation.
-	pub struct CurrencyToVoteHandler;
+	/// Converter for currencies to votes.
+	pub struct CurrencyToVoteHandler<R>(sp_std::marker::PhantomData<R>);
 
-	impl CurrencyToVoteHandler {
-		fn factor() -> Balance {
-			(Ring::total_issuance() / u64::max_value() as Balance).max(1)
+	impl<R> CurrencyToVoteHandler<R>
+	where
+		R: darwinia_balances::Trait<RingInstance>,
+		R::Balance: Into<u128>,
+	{
+		fn factor() -> u128 {
+			let issuance: u128 =
+				<darwinia_balances::Module<R, RingInstance>>::total_issuance().into();
+			(issuance / u64::max_value() as u128).max(1)
 		}
 	}
 
-	impl Convert<Balance, u64> for CurrencyToVoteHandler {
-		fn convert(x: Balance) -> u64 {
+	impl<R> Convert<u128, u64> for CurrencyToVoteHandler<R>
+	where
+		R: darwinia_balances::Trait<RingInstance>,
+		R::Balance: Into<u128>,
+	{
+		fn convert(x: u128) -> u64 {
 			(x / Self::factor()) as u64
 		}
 	}
 
-	impl Convert<u128, Balance> for CurrencyToVoteHandler {
-		fn convert(x: u128) -> Balance {
+	impl<R> Convert<u128, u128> for CurrencyToVoteHandler<R>
+	where
+		R: darwinia_balances::Trait<RingInstance>,
+		R::Balance: Into<u128>,
+	{
+		fn convert(x: u128) -> u128 {
 			x * Self::factor()
 		}
 	}
@@ -400,7 +413,7 @@ impl darwinia_elections_phragmen::Trait for Runtime {
 	type Event = Event;
 	type Currency = Ring;
 	type ChangeMembers = Council;
-	type CurrencyToVote = support_kton_in_the_future::CurrencyToVoteHandler;
+	type CurrencyToVote = support_kton_in_the_future::CurrencyToVoteHandler<Self>;
 	type CandidacyBond = CandidacyBond;
 	type VotingBond = VotingBond;
 	type LoserCandidate = Treasury;
