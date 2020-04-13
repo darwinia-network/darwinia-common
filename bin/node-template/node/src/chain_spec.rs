@@ -178,13 +178,8 @@ fn testnet_genesis(
 		pallet_session: Some(SessionConfig {
 			keys: initial_authorities
 				.iter()
-				.map(|x| {
-					(
-						x.0.clone(),
-						x.0.clone(),
-						session_keys(x.2.clone(), x.3.clone(), x.4.clone(), x.5.clone()),
-					)
-				})
+				.cloned()
+				.map(|x| (x.0.clone(), x.0, session_keys(x.2, x.3, x.4, x.5)))
 				.collect(),
 		}),
 		pallet_grandpa: Some(Default::default()),
@@ -212,9 +207,10 @@ fn testnet_genesis(
 			validator_count: 2,
 			stakers: initial_authorities
 				.iter()
-				.map(|x| (x.0.clone(), x.1.clone(), 1 << 60, StakerStatus::Validator))
+				.cloned()
+				.map(|x| (x.0, x.1, 1 << 60, StakerStatus::Validator))
 				.collect(),
-			invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect(),
+			invulnerables: initial_authorities.iter().cloned().map(|x| x.0).collect(),
 			force_era: darwinia_staking::Forcing::NotForcing,
 			slash_reward_fraction: Perbill::from_percent(10),
 			payout_fraction: Perbill::from_percent(50),

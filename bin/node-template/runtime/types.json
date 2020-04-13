@@ -150,6 +150,12 @@
 		"proof": "Bytes",
 		"header_hash": "H256"
 	},
+	"EthNetworkType": {
+		"_enum": {
+			"Mainnet": null,
+			"Ropsten": null
+		}
+	},
 	"RedeemFor": {
 		"_enum": {
 			"Ring": "EthReceiptProof",
