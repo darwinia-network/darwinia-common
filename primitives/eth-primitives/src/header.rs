@@ -283,10 +283,13 @@ impl EthHeader {
 mod tests {
 	use super::*;
 	use error::BlockError;
+	use ethash::{EthereumPatch, LightDAG};
 	use hex_literal::*;
-	use pow::EthashPartial;
+	use pow::{EthashPartial, EthashSeal};
 	use rustc_hex::FromHex;
 	use std::str::FromStr;
+
+	type DAG = LightDAG<EthereumPatch>;
 
 	#[inline]
 	fn sequential_header() -> (EthHeader, EthHeader) {
@@ -435,6 +438,50 @@ mod tests {
 				"3c2e6623b1de8862a927eeeef2b6b25dea6e1d9dad88dca3c239be3959dc384a"
 			))
 		);
+	}
+
+	#[test]
+	fn test_mainet_header_ethash_latest() {
+		// 9666669
+		let mixh2 = H256::from(hex!(
+			"7daba05fcefc814682e0caf337800780de3f9737fac71826d90eddcedd89b1da"
+		));
+		let nonce2 = H64::from(hex!("726446620418cc02"));
+
+		let header2 = EthHeader {
+			parent_hash: H256::from(hex!("6ec166e9a9700acaa59573d5a4874f5a28c6665938a7ca824abd6e011cf73c38")),
+			timestamp: 0x5e6c35d2,
+			number: 0x93806d,
+			author: EthAddress::from(hex!("ea674fdde714fd979de3edf0f56aa9716b898ec8")),
+			transactions_root: H256::from(hex!("d252a961e83513313ea0b51ee1937e75c3bb31e6290de1fc1a4e0d22eeaa58e9")),
+			uncles_hash: H256::from(hex!("1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347")),
+			extra_data: "505059452d65746865726d696e652d6575312d32".from_hex().unwrap(),
+			state_root: H256::from(hex!("63a7b415d8f67152fa7fcf25e919638bd44083c7e8c95497f15b9819ea8acb81")),
+			receipts_root: H256::from(hex!("f4e94c772cddfea2e94eea2eb3381385b1477ca887adf4da6d1b7b92fdac68cc")),
+			log_bloom: Bloom::from_str("0002000005400020000004000040100000000020000010080280a000800008100000100100000000000040021000010100000000005000000000000000001000000000000000400048100008004000000006000801040000010000001000000009000004082200000001c0002000000900000020100000000000001040020000008440000080001108100000000000000000012801000080040004002010001000002401400020002000089200000002000000020080000001100000000100000400010200400410800010200000000400000820000002000100000000004280400040001060000400000080a001280008002000000140004800120000000022").unwrap(),
+			gas_used: 0x989042.into(),
+			gas_limit: 0x9895d1.into(),
+			difficulty: 0x7db1e47bc4cb4_u64.into(),
+			seal: vec![rlp::encode(&mixh2), rlp::encode(&nonce2)],
+			hash: None,
+		};
+
+		let partial_header_hash2 = header2.bare_hash();
+
+		assert_eq!(
+			partial_header_hash2,
+			H256::from(hex!(
+				"6063429cc9580b4c437d7547cdbf07df0c4bf7ab0cb6e0d6f74ab00f949f174c"
+			))
+		);
+
+		let seal = EthashSeal::parse_seal(header2.seal()).unwrap();
+
+		let light_dag = DAG::new(header2.number.into());
+		let partial_header_hash = header2.bare_hash();
+		let mix_hash = light_dag.hashimoto(partial_header_hash, seal.nonce).0;
+
+		assert_eq!(mix_hash, seal.mix_hash);
 	}
 
 	#[test]
