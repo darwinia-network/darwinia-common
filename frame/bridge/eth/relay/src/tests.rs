@@ -45,15 +45,15 @@ fn relay_header() {
 		assert_ok!(EthRelay::init_genesis_header(&origin, 0x234ac172));
 
 		// relay grandpa
-		assert_ok!(EthRelay::verify_header(&grandpa));
+		assert_ok!(EthRelay::verify_header(&grandpa, &vec![]));
 		assert_ok!(EthRelay::maybe_store_header(&grandpa));
 
 		// relay parent
-		assert_ok!(EthRelay::verify_header(&parent));
+		assert_ok!(EthRelay::verify_header(&parent, &vec![]));
 		assert_ok!(EthRelay::maybe_store_header(&parent));
 
 		// relay current
-		assert_ok!(EthRelay::verify_header(&current));
+		assert_ok!(EthRelay::verify_header(&current, &vec![]));
 		assert_ok!(EthRelay::maybe_store_header(&current));
 	});
 }
@@ -104,12 +104,16 @@ fn check_receipt_safety() {
 		assert_eq!(grandpa.number, uncle.number);
 
 		// check receipt should succeed when we relayed the correct header
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), grandpa.clone()));
+		assert_ok!(EthRelay::relay_header(
+			Origin::signed(0),
+			grandpa.clone(),
+			vec![]
+		));
 		assert_ok!(EthRelay::check_receipt(Origin::signed(0), receipt.clone()));
 
 		// check should fail when canonical hash was re-orged by
 		// the block which contains our tx's brother block
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), uncle));
+		assert_ok!(EthRelay::relay_header(Origin::signed(0), uncle, vec![]));
 		assert_err!(
 			EthRelay::check_receipt(Origin::signed(0), receipt.clone()),
 			<Error<Test>>::HeaderNC
@@ -137,11 +141,11 @@ fn canonical_reorg_uncle_should_succeed() {
 		let number = grandpa.number;
 
 		// relay uncle header
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), uncle));
+		assert_ok!(EthRelay::relay_header(Origin::signed(0), uncle, vec![]));
 		assert_eq!(EthRelay::canonical_header_hash_of(number), uh.unwrap());
 
 		// relay grandpa and re-org uncle
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), grandpa));
+		assert_ok!(EthRelay::relay_header(Origin::signed(0), grandpa, vec![]));
 		assert_eq!(EthRelay::canonical_header_hash_of(number), gh.unwrap());
 	});
 }
@@ -162,22 +166,22 @@ fn test_safety_block() {
 
 		// not safety after 0 block
 		assert_ok!(EthRelay::init_genesis_header(&origin, 0x234ac172));
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), grandpa));
+		assert_ok!(EthRelay::relay_header(Origin::signed(0), grandpa, vec![]));
 		assert_err!(
 			EthRelay::check_receipt(Origin::signed(0), receipt.clone()),
 			<Error<Test>>::HeaderNS
 		);
 
 		// not safety after 2 blocks
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), parent));
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), uncle));
+		assert_ok!(EthRelay::relay_header(Origin::signed(0), parent, vec![]));
+		assert_ok!(EthRelay::relay_header(Origin::signed(0), uncle, vec![]));
 		assert_err!(
 			EthRelay::check_receipt(Origin::signed(0), receipt.clone()),
 			<Error<Test>>::HeaderNS
 		);
 
 		// safety after 3 blocks
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), current));
+		assert_ok!(EthRelay::relay_header(Origin::signed(0), current, vec![]));
 		assert_ok!(EthRelay::check_receipt(Origin::signed(0), receipt));
 	});
 }

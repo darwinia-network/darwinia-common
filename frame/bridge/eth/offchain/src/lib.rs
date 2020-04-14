@@ -189,17 +189,19 @@ impl<T: Trait> Module<T> {
 	}
 
 	fn submit_header(header: EthHeader) {
-		// FIXME: disable the submmit header
-		//		let results =
-		//			T::SubmitSignedTransaction::submit_signed(<EthRelayCall<T>>::relay_header(header));
-		//		for (account, result) in &results {
-		//			debug::trace!(
-		//				target: "eoc-rl",
-		//				"[eth-offchain] Account: {:?}, Relay: {:?}",
-		//				account,
-		//				result,
-		//			);
-		//		}
+		// FIXME: passing empty proof vec to the relay_header call for now
+		let results = T::SubmitSignedTransaction::submit_signed(<EthRelayCall<T>>::relay_header(
+			header,
+			vec![],
+		));
+		for (account, result) in &results {
+			debug::trace!(
+				target: "eoc-rl",
+				"[eth-offchain] Account: {:?}, Relay: {:?}",
+				account,
+				result,
+			);
+		}
 	}
 }
 

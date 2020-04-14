@@ -575,6 +575,7 @@ impl<T: Trait> Module<T> {
 		Ok(())
 	}
 
+	// FXIME: Check the nodes to avoid panics in the hashimoto.
 	fn hashimoto_merkle(
 		header_hash: &H256,
 		nonce: &H64,
