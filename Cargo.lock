@@ -918,6 +918,7 @@ dependencies = [
  "darwinia-support",
  "eth-primitives",
  "ethash",
+ "ethereum-types 0.8.0",
  "frame-support",
  "frame-system",
  "keccak-hasher",

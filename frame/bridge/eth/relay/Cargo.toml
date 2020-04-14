@@ -18,11 +18,13 @@ eth-primitives = { default-features = false, path = "../../../../primitives/eth-
 merkle-patricia-trie = { default-features = false, path = "../../../../primitives/merkle-patricia-trie" }
 # github
 rlp = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
+ethereum-types = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+sp-io = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 
 [dev-dependencies]
 # crates
@@ -32,7 +34,6 @@ serde_json = { version = "1.0.51" }
 darwinia-support = { path = "../../../support" }
 # substrate
 sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 
 [features]
 default = ["std"]
@@ -46,9 +47,12 @@ std = [
 	"merkle-patricia-trie/std",
 	# github
 	"rlp/std",
+	"ethereum-types/std",
+    "ethereum-types/serialize",
 	# substrate
 	"frame-support/std",
 	"frame-system/std",
 	"sp-runtime/std",
 	"sp-std/std",
+	"sp-io/std",
 ]

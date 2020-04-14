@@ -10,12 +10,14 @@ mod tests;
 
 // --- crates ---
 use codec::{Decode, Encode};
+use ethereum_types::{H128, H512};
 // --- substrate ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure, traits::Get,
 	weights::SimpleDispatchInfo,
 };
 use frame_system::{self as system, ensure_root, ensure_signed};
+use sp_io::hashing::keccak_256;
 use sp_runtime::{DispatchError, DispatchResult, RuntimeDebug};
 use sp_std::prelude::*;
 // --- darwinia ---
@@ -50,6 +52,44 @@ impl Default for EthNetworkType {
 	}
 }
 
+#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
+pub struct DoubleNodeWithMerkleProof {
+	pub dag_nodes: Vec<H512>, // [H512; 2]
+	pub proof: Vec<H128>,
+}
+
+impl DoubleNodeWithMerkleProof {
+	fn truncate_to_h128(arr: H256) -> H128 {
+		let mut data = [0u8; 16];
+		data.copy_from_slice(&(arr.0)[16..]);
+		H128(data.into())
+	}
+
+	fn hash_h128(l: H128, r: H128) -> H128 {
+		let mut data = [0u8; 64];
+		data[16..32].copy_from_slice(&(l.0));
+		data[48..64].copy_from_slice(&(r.0));
+		Self::truncate_to_h128(keccak_256(&data).into())
+	}
+
+	pub fn apply_merkle_proof(&self, index: u64) -> H128 {
+		let mut data = [0u8; 128];
+		data[..64].copy_from_slice(&(self.dag_nodes[0].0));
+		data[64..].copy_from_slice(&(self.dag_nodes[1].0));
+
+		let mut leaf = Self::truncate_to_h128(keccak_256(&data).into());
+
+		for i in 0..self.proof.len() {
+			if (index >> i as u64) % 2 == 0 {
+				leaf = Self::hash_h128(leaf, self.proof[i]);
+			} else {
+				leaf = Self::hash_h128(self.proof[i], leaf);
+			}
+		}
+		leaf
+	}
+}
+
 /// Familial details concerning a block
 #[derive(Clone, Default, PartialEq, Encode, Decode)]
 pub struct HeaderInfo {
@@ -73,6 +113,9 @@ decl_storage! {
 		/// Anchor block that works as genesis block
 		pub GenesisHeader get(fn begin_header): Option<EthHeader>;
 
+		/// Dags merkle roots of ethereum epoch (each epoch is 30000)
+		pub DagsMerkleRootOf get(fn dags_merkle_root_of): map hasher(identity) u64 => H128;
+
 		/// Hash of best block header
 		pub BestHeaderHash get(fn best_header_hash): H256;
 
@@ -92,6 +135,7 @@ decl_storage! {
 	add_extra_genesis {
 		// genesis: Option<Header, Difficulty>
 		config(genesis_header): Option<(u64, Vec<u8>)>;
+		config(dags_merkle_roots): Vec<H128>;
 		build(|config| {
 			if let Some((difficulty, header)) = &config.genesis_header {
 				let header: EthHeader = rlp::decode(&header).expect(<Error<T>>::RlpDcF.into());
@@ -193,14 +237,14 @@ decl_module! {
 		/// if it is verified.
 		///
 		/// # <weight>
-		/// - `O(1)`.
+		/// - `O(1)`, but takes a lot of computation works
 		/// - Limited Storage reads
 		/// - One storage read
 		/// - One storage write
 		/// - Up to one event
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(100_000)]
-		pub fn relay_header(origin, header: EthHeader) {
+		#[weight = SimpleDispatchInfo::FixedNormal(200_000)]
+		pub fn relay_header(origin, header: EthHeader, dag_nodes: Vec<DoubleNodeWithMerkleProof>) {
 			frame_support::debug::trace!(target: "er-rl", "{:?}", header);
 			let relayer = ensure_signed(origin)?;
 
@@ -217,7 +261,7 @@ decl_module! {
 //				Self::maybe_store_header(&header)?;
 //			}
 
-			Self::verify_header(&header)?;
+			Self::verify_header(&header, &dag_nodes)?;
 			Self::maybe_store_header(&header)?;
 
 			<Module<T>>::deposit_event(RawEvent::RelayHeader(relayer, header));
@@ -375,7 +419,10 @@ impl<T: Trait> Module<T> {
 	/// 1. proof of difficulty
 	/// 2. proof of pow (mixhash)
 	/// 3. challenge
-	fn verify_header(header: &EthHeader) -> DispatchResult {
+	fn verify_header(
+		header: &EthHeader,
+		dag_nodes: &[DoubleNodeWithMerkleProof],
+	) -> DispatchResult {
 		ensure!(
 			header.hash() == header.re_compute_hash(),
 			<Error<T>>::HeaderHashMis
