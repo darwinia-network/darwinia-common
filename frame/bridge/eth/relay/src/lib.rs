@@ -10,7 +10,7 @@ mod tests;
 
 // --- crates ---
 use codec::{Decode, Encode};
-use ethereum_types::{H128, H512};
+use ethereum_types::{H128, H512, H64};
 // --- substrate ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure, traits::Get,
@@ -22,17 +22,12 @@ use sp_runtime::{DispatchError, DispatchResult, RuntimeDebug};
 use sp_std::prelude::*;
 // --- darwinia ---
 
-#[cfg(not(test))]
 use eth_primitives::pow::EthashSeal;
 use eth_primitives::{
 	header::EthHeader, pow::EthashPartial, receipt::Receipt, EthBlockNumber, H256, U256,
 };
-#[cfg(not(test))]
-use ethash::{EthereumPatch, LightDAG};
-use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
 
-#[cfg(not(test))]
-type DAG = LightDAG<EthereumPatch>;
+use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
 
 pub trait Trait: frame_system::Trait {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
@@ -114,7 +109,7 @@ decl_storage! {
 		pub GenesisHeader get(fn begin_header): Option<EthHeader>;
 
 		/// Dags merkle roots of ethereum epoch (each epoch is 30000)
-		pub DagsMerkleRootOf get(fn dags_merkle_root_of): map hasher(identity) u64 => H128;
+		pub DagsMerkleRoots get(fn dag_merkle_root): map hasher(identity) u64 => H128;
 
 		/// Hash of best block header
 		pub BestHeaderHash get(fn best_header_hash): H256;
@@ -462,19 +457,37 @@ impl<T: Trait> Module<T> {
 		ensure!(difficulty == *header.difficulty(), <Error<T>>::DifficultyVF);
 		frame_support::debug::trace!(target: "er-rl", "Difficulty OK");
 
-		// TODO: Travis test takes too long, disable ethash pow verify in tests temporarily
-		#[cfg(not(test))]
-		{
-			let seal = EthashSeal::parse_seal(header.seal()).map_err(|_| <Error<T>>::SealPF)?;
-			frame_support::debug::trace!(target: "er-rl", "Seal OK");
+		let seal = EthashSeal::parse_seal(header.seal()).map_err(|_| <Error<T>>::SealPF)?;
+		frame_support::debug::trace!(target: "er-rl", "Seal OK");
 
-			let light_dag = DAG::new(header.number.into());
-			let partial_header_hash = header.bare_hash();
-			let mix_hash = light_dag.hashimoto(partial_header_hash, seal.nonce).0;
+		let partial_header_hash = header.bare_hash();
 
-			ensure!(mix_hash == seal.mix_hash, <Error<T>>::MixHashMis);
-			frame_support::debug::trace!(target: "er-rl", "MixHash OK");
-		}
+		let (mix_hash, _result) =
+			Self::hashimoto_merkle(&partial_header_hash, &seal.nonce, header.number, dag_nodes);
+
+		ensure!(mix_hash == seal.mix_hash, <Error<T>>::MixHashMis);
+		frame_support::debug::trace!(target: "er-rl", "MixHash OK");
+
+		// TODO:
+		// See YellowPaper formula (50) in section 4.3.4
+		// 1. Simplified difficulty check to conform adjusting difficulty bomb
+		// 2. Added condition: header.parent_hash() == prev.hash()
+		//
+		//			ethereum_types::U256::from((result.0).0) < ethash::cross_boundary(header.difficulty.0)
+		//				&& (
+		//				!self.validate_ethash
+		//					|| (
+		//					header.difficulty < header.difficulty * 101 / 100
+		//						&& header.difficulty > header.difficulty * 99 / 100
+		//				)
+		//			)
+		//				&& header.gas_used <= header.gas_limit
+		//				&& header.gas_limit < prev.gas_limit * 1025 / 1024
+		//				&& header.gas_limit > prev.gas_limit * 1023 / 1024
+		//				&& header.gas_limit >= U256(5000.into())
+		//				&& header.timestamp > prev.timestamp
+		//				&& header.number == prev.number + 1
+		//				&& header.parent_hash == prev.hash.unwrap()
 
 		Ok(())
 	}
@@ -562,9 +575,42 @@ impl<T: Trait> Module<T> {
 		Ok(())
 	}
 
-	// TODO: Economic model design required for the relay
-	fn _punish(_who: &T::AccountId) -> DispatchResult {
-		unimplemented!()
+	fn hashimoto_merkle(
+		header_hash: &H256,
+		nonce: &H64,
+		block_number: u64,
+		nodes: &[DoubleNodeWithMerkleProof],
+	) -> (H256, H256) {
+		// Boxed index since ethash::hashimoto gets Fn, but not FnMut
+		let index = sp_std::cell::RefCell::new(0);
+
+		// Reuse single Merkle root across all the proofs
+		let merkle_root = Self::dag_merkle_root((block_number as usize / 30000) as u64);
+
+		let pair = ethash::hashimoto(
+			header_hash.clone(),
+			nonce.clone(),
+			ethash::get_full_size(block_number as usize / 30000),
+			|offset| {
+				let idx = *index.borrow_mut();
+				*index.borrow_mut() += 1;
+
+				// Each two nodes are packed into single 128 bytes with Merkle proof
+				let node = &nodes[idx / 2];
+				if idx % 2 == 0 {
+					// Divide by 2 to adjust offset for 64-byte words instead of 128-byte
+					assert_eq!(merkle_root, node.apply_merkle_proof((offset / 2) as u64));
+				};
+
+				// Reverse each 32 bytes for ETHASH compatibility
+				let mut data = node.dag_nodes[idx % 2].0;
+				data[..32].reverse();
+				data[32..].reverse();
+				data.into()
+			},
+		);
+
+		pair
 	}
 }
 
