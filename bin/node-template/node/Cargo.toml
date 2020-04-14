@@ -12,6 +12,9 @@ repository = "https://github.com/darwinia-network/darwinia/"
 name = "node-template"
 
 [dependencies]
+serde = { version = "1.0.105", features = ["derive"] }
+serde_json = { version = "1.0.50" }
+
 # anonymous
 node-template-runtime = { path = "../runtime" }
 # crates
@@ -41,6 +44,8 @@ sp-inherents = { git = "https://github.com/darwinia-network/substrate.git", tag 
 sp-finality-grandpa = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 sp-runtime = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+
+ethereum-types = { git = "https://github.com/darwinia-network/parity-common.git" }
 
 [build-dependencies]
 # crates

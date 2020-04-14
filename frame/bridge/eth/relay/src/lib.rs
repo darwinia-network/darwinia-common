@@ -136,6 +136,10 @@ decl_storage! {
 				let header: EthHeader = rlp::decode(&header).expect(<Error<T>>::RlpDcF.into());
 				<Module<T>>::init_genesis_header(&header, *difficulty).expect(<Error<T>>::GenesisHeaderIF.into());
 			}
+
+			for i in 0..config.dags_merkle_roots.len() {
+				<DagsMerkleRoots>::insert(i as u64, config.dags_merkle_roots[i]);
+			}
 		});
 	}
 }

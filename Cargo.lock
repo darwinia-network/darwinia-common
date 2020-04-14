@@ -3167,6 +3167,7 @@ name = "node-template"
 version = "0.5.2"
 dependencies = [
  "darwinia-staking",
+ "ethereum-types 0.8.0",
  "frame-benchmarking-cli",
  "futures 0.3.4",
  "log",
@@ -3182,6 +3183,8 @@ dependencies = [
  "sc-network",
  "sc-service",
  "sc-transaction-pool",
+ "serde",
+ "serde_json",
  "sp-authority-discovery",
  "sp-consensus",
  "sp-consensus-babe",

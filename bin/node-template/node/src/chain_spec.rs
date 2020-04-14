@@ -1,3 +1,9 @@
+// --- std ---
+use std::{env, fs::File, path::Path};
+
+// --- third-party ---
+use serde::{Deserialize, Serialize};
+
 // --- substrate ---
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
@@ -14,6 +20,8 @@ use node_template_runtime::{
 	SessionConfig, SessionKeys, Signature, StakerStatus, StakingConfig, SudoConfig, SystemConfig,
 	WASM_BINARY,
 };
+
+use ethereum_types::H128;
 
 // Note this is the URL for the telemetry server
 //const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -43,6 +51,22 @@ fn session_keys(
 		grandpa,
 		im_online,
 		authority_discovery,
+	}
+}
+
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct DagMerkleRootJSON {
+	pub dag_merkle_roots: Vec<H128>,
+}
+
+fn load_dag_merkle_roots(path: &str) -> DagMerkleRootJSON {
+	if !Path::new(&path).is_file() && env::var("DAG_MERKLE_ROOTS_PATH").is_err() {
+		Default::default()
+	} else {
+		serde_json::from_reader(
+			File::open(env::var("DAG_MERKLE_ROOTS_PATH").unwrap_or(path.to_owned())).unwrap(),
+		)
+		.unwrap()
 	}
 }
 
@@ -250,6 +274,10 @@ fn testnet_genesis(
 				],
 			)),
 			check_authorities: false,
+			dags_merkle_roots: load_dag_merkle_roots(
+				"./bin/node-template/node/src/data/dag_merkle_roots.json",
+			)
+			.dag_merkle_roots,
 			..Default::default()
 		}),
 	}
