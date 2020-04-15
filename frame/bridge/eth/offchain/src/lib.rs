@@ -214,7 +214,7 @@ impl<T: Trait> Module<T> {
 			let block_info_url = Self::build_url(vec![
 				ethscan_url::GET_BLOCK.to_vec(),
 				base_n_bytes(target_number, 16),
-				"&boolean=true&apikey=".as_bytes().to_vec(),
+				"&boolean=false&apikey=".as_bytes().to_vec(),
 				key.to_vec(),
 			])?;
 			Self::fetch_header(block_info_url, None)?
@@ -224,7 +224,7 @@ impl<T: Trait> Module<T> {
 				.as_bytes()
 				.to_vec();
 			payload.append(&mut base_n_bytes(target_number, 16));
-			payload.append(&mut r#"",true],"id":1}"#.as_bytes().to_vec());
+			payload.append(&mut r#"",false],"id":1}"#.as_bytes().to_vec());
 			Self::fetch_header(block_info_url, Some(payload))?
 		};
 
