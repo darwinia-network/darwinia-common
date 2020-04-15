@@ -166,7 +166,7 @@ fn read_block_raw(filename: String) -> BlockWithProofsRaw {
 	serde_json::from_reader(std::fs::File::open(std::path::Path::new(&filename)).unwrap()).unwrap()
 }
 
-pub type System = frame_system::Module<TestMainnet>;
+//pub type System = frame_system::Module<TestMainnet>;
 pub type EthRelay = Module<TestMainnet>;
 
 impl_outer_origin! {

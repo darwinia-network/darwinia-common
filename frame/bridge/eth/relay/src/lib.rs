@@ -3,12 +3,12 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "128"]
 
-//#[cfg(test)]
-//mod mock;
-//#[cfg(test)]
-//mod tests;
+#[cfg(test)]
+mod mock;
 #[cfg(test)]
 mod mock_mainnet;
+#[cfg(test)]
+mod tests;
 #[cfg(test)]
 mod tests_mainnet;
 
@@ -26,12 +26,17 @@ use sp_runtime::{DispatchError, DispatchResult, RuntimeDebug};
 use sp_std::prelude::*;
 // --- darwinia ---
 
-use eth_primitives::pow::EthashSeal;
 use eth_primitives::{
-	header::EthHeader, pow::EthashPartial, receipt::Receipt, EthBlockNumber, H256, U256,
+	header::EthHeader,
+	pow::{EthashPartial, EthashSeal},
+	receipt::Receipt,
+	EthBlockNumber, H256, U256,
 };
 
+use ethash::{EthereumPatch, LightDAG};
 use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
+
+type DAG = LightDAG<EthereumPatch>;
 
 pub trait Trait: frame_system::Trait {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
@@ -236,6 +241,7 @@ decl_module! {
 			<Module<T>>::deposit_event(RawEvent::SetGenesisHeader(header, genesis_difficulty));
 		}
 
+		/// Deprecated, this dispatch call will be removed later in next release
 		/// Relay header of eth block, store the passing header
 		/// if it is verified.
 		///
@@ -247,7 +253,36 @@ decl_module! {
 		/// - Up to one event
 		/// # </weight>
 		#[weight = SimpleDispatchInfo::FixedNormal(200_000)]
-		pub fn relay_header(origin, header: EthHeader, dag_nodes: Vec<DoubleNodeWithMerkleProof>) {
+		pub fn relay_header(origin, header: EthHeader) {
+			frame_support::debug::trace!(target: "er-rl", "{:?}", header);
+			let relayer = ensure_signed(origin)?;
+
+			if Self::check_authorities() {
+				ensure!(Self::authorities().contains(&relayer), <Error<T>>::AccountNP);
+			}
+
+			let header_hash = header.hash();
+
+			ensure!(HeaderInfoOf::get(&header_hash).is_none(), <Error<T>>::HeaderAE);
+
+			Self::verify_header(&header)?;
+			Self::maybe_store_header(&header)?;
+
+			<Module<T>>::deposit_event(RawEvent::RelayHeader(relayer, header));
+		}
+
+		/// Relay header of eth block, store the passing header
+		/// if it is verified.
+		///
+		/// # <weight>
+		/// - `O(1)`, but takes a lot of computation works
+		/// - Limited Storage reads
+		/// - One storage read
+		/// - One storage write
+		/// - Up to one event
+		/// # </weight>
+		#[weight = SimpleDispatchInfo::FixedNormal(200_000)]
+		pub fn relay_header_with_proof(origin, header: EthHeader, ethash_proof: Vec<DoubleNodeWithMerkleProof>) {
 			frame_support::debug::trace!(target: "er-rl", "{:?}", header);
 			let relayer = ensure_signed(origin)?;
 
@@ -264,7 +299,7 @@ decl_module! {
 //				Self::maybe_store_header(&header)?;
 //			}
 
-			Self::verify_header(&header, &dag_nodes)?;
+			Self::verify_header_with_proof(&header, &ethash_proof)?;
 			Self::maybe_store_header(&header)?;
 
 			<Module<T>>::deposit_event(RawEvent::RelayHeader(relayer, header));
@@ -419,13 +454,7 @@ impl<T: Trait> Module<T> {
 		Ok(())
 	}
 
-	/// 1. proof of difficulty
-	/// 2. proof of pow (mixhash)
-	/// 3. challenge
-	fn verify_header(
-		header: &EthHeader,
-		dag_nodes: &[DoubleNodeWithMerkleProof],
-	) -> DispatchResult {
+	fn verify_header_basic(header: &EthHeader) -> DispatchResult {
 		ensure!(
 			header.hash() == header.re_compute_hash(),
 			<Error<T>>::HeaderHashMis
@@ -465,13 +494,49 @@ impl<T: Trait> Module<T> {
 		ensure!(difficulty == *header.difficulty(), <Error<T>>::DifficultyVF);
 		frame_support::debug::trace!(target: "er-rl", "Difficulty OK");
 
+		Ok(())
+	}
+
+	/// Deprecated, will be removed later
+	/// 1. proof of difficulty
+	/// 2. proof of pow (mixhash)
+	/// 3. challenge
+	fn verify_header(header: &EthHeader) -> DispatchResult {
+		Self::verify_header_basic(&header)?;
+
+		let seal = EthashSeal::parse_seal(header.seal()).map_err(|_| <Error<T>>::SealPF)?;
+		frame_support::debug::trace!(target: "er-rl", "Seal OK");
+
+		let light_dag = DAG::new(header.number.into());
+		let partial_header_hash = header.bare_hash();
+		let mix_hash = light_dag.hashimoto(partial_header_hash, seal.nonce).0;
+
+		ensure!(mix_hash == seal.mix_hash, <Error<T>>::MixHashMis);
+		frame_support::debug::trace!(target: "er-rl", "MixHash OK");
+
+		Ok(())
+	}
+
+	/// 1. proof of difficulty
+	/// 2. proof of pow (mixhash)
+	/// 3. challenge
+	fn verify_header_with_proof(
+		header: &EthHeader,
+		ethash_proof: &[DoubleNodeWithMerkleProof],
+	) -> DispatchResult {
+		Self::verify_header_basic(&header)?;
+
 		let seal = EthashSeal::parse_seal(header.seal()).map_err(|_| <Error<T>>::SealPF)?;
 		frame_support::debug::trace!(target: "er-rl", "Seal OK");
 
 		let partial_header_hash = header.bare_hash();
 
-		let (mix_hash, _result) =
-			Self::hashimoto_merkle(&partial_header_hash, &seal.nonce, header.number, dag_nodes);
+		let (mix_hash, _result) = Self::hashimoto_merkle(
+			&partial_header_hash,
+			&seal.nonce,
+			header.number,
+			ethash_proof,
+		);
 
 		#[cfg(feature = "std")]
 		println!("{:?}", mix_hash);

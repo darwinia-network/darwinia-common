@@ -189,11 +189,9 @@ impl<T: Trait> Module<T> {
 	}
 
 	fn submit_header(header: EthHeader) {
-		// FIXME: passing empty proof vec to the relay_header call for now
-		let results = T::SubmitSignedTransaction::submit_signed(<EthRelayCall<T>>::relay_header(
-			header,
-			vec![],
-		));
+		// FIXME: relay_header is deprecated, using relay_header_with_proof instead
+		let results =
+			T::SubmitSignedTransaction::submit_signed(<EthRelayCall<T>>::relay_header(header));
 		for (account, result) in &results {
 			debug::trace!(
 				target: "eoc-rl",

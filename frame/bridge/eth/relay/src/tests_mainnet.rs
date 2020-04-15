@@ -31,7 +31,7 @@ fn relay_mainet_header() {
 		println!("{:?}", &header_8996777);
 
 		// relay
-		assert_ok!(EthRelay::verify_header(
+		assert_ok!(EthRelay::verify_header_with_proof(
 			&header_8996777,
 			&blocks_with_proofs[1].to_double_node_with_merkle_proof_vec()
 		));
@@ -43,7 +43,7 @@ fn relay_mainet_header() {
 		println!("{:?}", &header_8996778);
 
 		// relay
-		assert_ok!(EthRelay::verify_header(
+		assert_ok!(EthRelay::verify_header_with_proof(
 			&header_8996778,
 			&blocks_with_proofs[2].to_double_node_with_merkle_proof_vec()
 		));
