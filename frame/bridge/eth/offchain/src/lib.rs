@@ -87,18 +87,18 @@ impl OffchainRequest {
 						return Some(resp_body);
 					} else if resp.code == 301 || resp.code == 302 {
 						self.redirect_times += 1;
-						debug::trace!(target: "eoc-req", "[eth-offchain] redirect header: {:?}", resp.headers());
+						debug::trace!(target: "eoc-req", "[eth-offchain] redirect({}) header: {:?}", self.redirect_times, resp.headers());
 						let headers = resp.headers();
 						if let Some(cookie) = headers.find("set-cookie") {
 							self.cookie = Some(cookie.as_bytes().to_vec());
 						}
 						if let Some(location) = headers.find("location") {
 							self.location = location.as_bytes().to_vec();
-							debug::trace!(target: "eoc-req", "[eth-offchain] redirect location: {:?}", self.location);
+							debug::trace!(target: "eoc-req", "[eth-offchain] redirect({}) location: {:?}", self.redirect_times, self.location);
 						}
 					} else {
-						debug::trace!(target: "eoc-req", "[eth-offchain] Status Code: {}", resp.code);
-						debug::trace!(target: "eoc-req", "[eth-offchain] Response: {:?}", resp.body().collect::<Vec<u8>>());
+						debug::info!(target: "eoc-req", "[eth-offchain] Status Code: {}", resp.code);
+						debug::info!(target: "eoc-req", "[eth-offchain] Response: {:?}", resp.body().collect::<Vec<u8>>());
 						return None;
 					}
 				}
@@ -241,10 +241,12 @@ impl<T: Trait> Module<T> {
 				from_utf8(&resp_body).unwrap_or_default(),
 			);
 			if resp_body[0] != 123u8 || resp_body.len() < 1362 {
+				debug::info!(target: "eoc-vr", "[eth-offchain] malresponse:");
 				Err(<Error<T>>::APIRespUnexp)?;
 			}
 			Ok(resp_body)
 		} else {
+			debug::info!(target: "eoc-vr", "[eth-offchain] lack response");
 			Err(<Error<T>>::APIRespUnexp)?
 		}
 	}
