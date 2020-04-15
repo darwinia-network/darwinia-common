@@ -921,7 +921,7 @@ dependencies = [
  "ethereum-types 0.8.0",
  "frame-support",
  "frame-system",
- "keccak-hasher",
+ "hex",
  "merkle-patricia-trie",
  "parity-scale-codec",
  "rlp 0.4.4",

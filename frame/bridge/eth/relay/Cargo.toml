@@ -28,8 +28,9 @@ sp-io = { default-features = false, git = "https://github.com/darwinia-network/s
 
 [dev-dependencies]
 # crates
-keccak-hasher = { version = "0.15.2" }
+#keccak-hasher = { version = "0.15.2" }
 serde_json = { version = "1.0.51" }
+hex = "0.4.0"
 # darwinia
 darwinia-support = { path = "../../../support" }
 # substrate

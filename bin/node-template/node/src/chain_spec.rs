@@ -274,7 +274,7 @@ fn testnet_genesis(
 				],
 			)),
 			check_authorities: false,
-			dags_merkle_roots: load_dag_merkle_roots(
+			dag_merkle_roots: load_dag_merkle_roots(
 				"./bin/node-template/node/src/data/dag_merkle_roots.json",
 			)
 			.dag_merkle_roots,
