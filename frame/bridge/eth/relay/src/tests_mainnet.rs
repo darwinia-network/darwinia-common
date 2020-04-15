@@ -8,8 +8,6 @@ use crate::{mock_mainnet::*, *};
 #[test]
 fn relay_mainet_header() {
 	new_mainnet_test_ext().execute_with(|| {
-		//		let (blocks, hashes) = get_blocks(&WEB3RS, 8996776, 8996777);
-
 		let blocks_with_proofs: Vec<BlockWithProofs> = [
 			"./src/data/8996776.json",
 			"./src/data/8996777.json",
@@ -48,9 +46,5 @@ fn relay_mainet_header() {
 			&blocks_with_proofs[2].to_double_node_with_merkle_proof_vec()
 		));
 		assert_ok!(EthRelay::maybe_store_header(&header_8996778));
-
-		//		for (block, proof) in blocks.into_iter().zip(blocks_with_proofs.into_iter()) {
-		//			contract.add_block_header(block, proof.to_double_node_with_merkle_proof_vec());
-		//		}
 	});
 }

@@ -265,7 +265,9 @@ decl_module! {
 
 			ensure!(HeaderInfoOf::get(&header_hash).is_none(), <Error<T>>::HeaderAE);
 
-			Self::verify_header(&header)?;
+			#[cfg(not(test))]
+			Self::verify_header_with_new_dag(&header)?;
+
 			Self::maybe_store_header(&header)?;
 
 			<Module<T>>::deposit_event(RawEvent::RelayHeader(relayer, header));
@@ -293,11 +295,6 @@ decl_module! {
 			let header_hash = header.hash();
 
 			ensure!(HeaderInfoOf::get(&header_hash).is_none(), <Error<T>>::HeaderAE);
-
-//			let best_header_hash = Self::best_header_hash();
-//			if self.best_header_hash == Default::default() {
-//				Self::maybe_store_header(&header)?;
-//			}
 
 			Self::verify_header_with_proof(&header, &ethash_proof)?;
 			Self::maybe_store_header(&header)?;
@@ -501,7 +498,7 @@ impl<T: Trait> Module<T> {
 	/// 1. proof of difficulty
 	/// 2. proof of pow (mixhash)
 	/// 3. challenge
-	fn verify_header(header: &EthHeader) -> DispatchResult {
+	fn verify_header_with_new_dag(header: &EthHeader) -> DispatchResult {
 		Self::verify_header_basic(&header)?;
 
 		let seal = EthashSeal::parse_seal(header.seal()).map_err(|_| <Error<T>>::SealPF)?;
@@ -544,7 +541,7 @@ impl<T: Trait> Module<T> {
 		ensure!(mix_hash == seal.mix_hash, <Error<T>>::MixHashMis);
 		frame_support::debug::trace!(target: "er-rl", "MixHash OK");
 
-		// TODO:
+		// TODO: Check other verification condition
 		// See YellowPaper formula (50) in section 4.3.4
 		// 1. Simplified difficulty check to conform adjusting difficulty bomb
 		// 2. Added condition: header.parent_hash() == prev.hash()
