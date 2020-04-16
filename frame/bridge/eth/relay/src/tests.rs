@@ -7,9 +7,11 @@ use frame_system::RawOrigin;
 use crate::{mock::*, *};
 use eth_primitives::receipt::TransactionOutcome;
 
+// --- ropsten test ---
+
 #[test]
 fn verify_receipt_proof() {
-	new_test_ext().execute_with(|| {
+	ExtBuilder::default().build().execute_with(|| {
 		System::inc_account_nonce(&2);
 		assert_ok!(EthRelay::set_number_of_blocks_safe(
 			RawOrigin::Root.into(),
@@ -40,7 +42,7 @@ fn verify_receipt_proof() {
 
 #[test]
 fn relay_header() {
-	new_test_ext().execute_with(|| {
+	ExtBuilder::default().build().execute_with(|| {
 		let [origin, grandpa, _, parent, current] = mock_canonical_relationship();
 		assert_ok!(EthRelay::init_genesis_header(&origin, 0x234ac172));
 
@@ -56,13 +58,6 @@ fn relay_header() {
 		assert_ok!(EthRelay::verify_header_basic(&current));
 		assert_ok!(EthRelay::maybe_store_header(&current));
 	});
-}
-
-#[test]
-fn build_genesis_header() {
-	let genesis_header = EthHeader::from_str_unchecked(MAINNET_GENESIS_HEADER);
-	assert_eq!(genesis_header.hash(), genesis_header.re_compute_hash());
-	println!("{:?}", rlp::encode(&genesis_header));
 }
 
 /// # Check Receipt Safety
@@ -88,7 +83,7 @@ fn build_genesis_header() {
 /// - failed when canonical hash was re-orged by the block which contains our tx's brother block
 #[test]
 fn check_receipt_safety() {
-	new_test_ext().execute_with(|| {
+	ExtBuilder::default().build().execute_with(|| {
 		assert_ok!(EthRelay::add_authority(RawOrigin::Root.into(), 0));
 		assert_ok!(EthRelay::set_number_of_blocks_safe(
 			RawOrigin::Root.into(),
@@ -104,12 +99,16 @@ fn check_receipt_safety() {
 		assert_eq!(grandpa.number, uncle.number);
 
 		// check receipt should succeed when we relayed the correct header
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), grandpa.clone()));
-		assert_ok!(EthRelay::check_receipt(Origin::signed(0), receipt.clone()));
+		assert_ok!(EthRelay::relay_header(
+			Origin::signed(0),
+			grandpa.clone(),
+			vec![]
+		));
+		assert_ok!(EthRelay::check_receipt(Origin::signed(0), receipt.clone(),));
 
 		// check should fail when canonical hash was re-orged by
 		// the block which contains our tx's brother block
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), uncle));
+		assert_ok!(EthRelay::relay_header(Origin::signed(0), uncle, vec![]));
 		assert_err!(
 			EthRelay::check_receipt(Origin::signed(0), receipt.clone()),
 			<Error<Test>>::HeaderNC
@@ -119,7 +118,7 @@ fn check_receipt_safety() {
 
 #[test]
 fn canonical_reorg_uncle_should_succeed() {
-	new_test_ext().execute_with(|| {
+	ExtBuilder::default().build().execute_with(|| {
 		assert_ok!(EthRelay::add_authority(RawOrigin::Root.into(), 0));
 		assert_ok!(EthRelay::set_number_of_blocks_safe(
 			RawOrigin::Root.into(),
@@ -137,18 +136,18 @@ fn canonical_reorg_uncle_should_succeed() {
 		let number = grandpa.number;
 
 		// relay uncle header
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), uncle));
-		assert_eq!(EthRelay::canonical_header_hash_of(number), uh.unwrap());
+		assert_ok!(EthRelay::relay_header(Origin::signed(0), uncle, vec![]));
+		assert_eq!(EthRelay::canonical_header_hash(number), uh.unwrap());
 
 		// relay grandpa and re-org uncle
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), grandpa));
-		assert_eq!(EthRelay::canonical_header_hash_of(number), gh.unwrap());
+		assert_ok!(EthRelay::relay_header(Origin::signed(0), grandpa, vec![]));
+		assert_eq!(EthRelay::canonical_header_hash(number), gh.unwrap());
 	});
 }
 
 #[test]
 fn test_safety_block() {
-	new_test_ext().execute_with(|| {
+	ExtBuilder::default().build().execute_with(|| {
 		assert_ok!(EthRelay::add_authority(RawOrigin::Root.into(), 0));
 		assert_ok!(EthRelay::set_number_of_blocks_safe(
 			RawOrigin::Root.into(),
@@ -162,22 +161,79 @@ fn test_safety_block() {
 
 		// not safety after 0 block
 		assert_ok!(EthRelay::init_genesis_header(&origin, 0x234ac172));
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), grandpa));
+		assert_ok!(EthRelay::relay_header(Origin::signed(0), grandpa, vec![]));
 		assert_err!(
 			EthRelay::check_receipt(Origin::signed(0), receipt.clone()),
 			<Error<Test>>::HeaderNS
 		);
 
 		// not safety after 2 blocks
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), parent));
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), uncle));
+		assert_ok!(EthRelay::relay_header(Origin::signed(0), parent, vec![]));
+		assert_ok!(EthRelay::relay_header(Origin::signed(0), uncle, vec![]));
 		assert_err!(
 			EthRelay::check_receipt(Origin::signed(0), receipt.clone()),
 			<Error<Test>>::HeaderNS
 		);
 
 		// safety after 3 blocks
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), current));
+		assert_ok!(EthRelay::relay_header(Origin::signed(0), current, vec![]));
 		assert_ok!(EthRelay::check_receipt(Origin::signed(0), receipt));
 	});
+}
+
+// --- mainnet test ---
+
+#[test]
+fn build_genesis_header() {
+	let genesis_header = EthHeader::from_str_unchecked(MAINNET_GENESIS_HEADER);
+	assert_eq!(genesis_header.hash(), genesis_header.re_compute_hash());
+	// println!("{:?}", rlp::encode(&genesis_header));
+}
+
+#[test]
+fn relay_mainet_header() {
+	ExtBuilder::default()
+		.eth_network(EthNetworkType::Mainnet)
+		.build()
+		.execute_with(|| {
+			// block 8996776
+			{
+				let blocks_with_proofs = BlockWithProofs::from_file("./src/test-data/8996776.json");
+				// println!("{:?}", blocks_with_proofs);
+				let header: EthHeader =
+					rlp::decode(&blocks_with_proofs.header_rlp.to_vec()).unwrap();
+				assert_ok!(EthRelay::init_genesis_header(&header, 0x234ac172));
+				// println!("{:?}", &header);
+			}
+
+			// block 8996777
+			{
+				let blocks_with_proofs = BlockWithProofs::from_file("./src/test-data/8996777.json");
+				println!("{:#?}", blocks_with_proofs);
+				let header: EthHeader =
+					rlp::decode(&blocks_with_proofs.header_rlp.to_vec()).unwrap();
+				// println!("{:?}", &header);
+
+				assert_ok!(EthRelay::verify_header_pow(
+					&header,
+					&blocks_with_proofs.to_double_node_with_merkle_proof_vec()
+				));
+				assert_ok!(EthRelay::maybe_store_header(&header));
+			}
+
+			// block 8996778
+			{
+				let blocks_with_proofs = BlockWithProofs::from_file("./src/test-data/8996778.json");
+				// println!("{:?}", blocks_with_proofs);
+				let header: EthHeader =
+					rlp::decode(&blocks_with_proofs.header_rlp.to_vec()).unwrap();
+				// println!("{:?}", &header);
+
+				assert_ok!(EthRelay::verify_header_pow(
+					&header,
+					&blocks_with_proofs.to_double_node_with_merkle_proof_vec()
+				));
+				assert_ok!(EthRelay::maybe_store_header(&header));
+			}
+		});
 }

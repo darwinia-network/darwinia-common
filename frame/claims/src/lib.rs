@@ -44,6 +44,7 @@ use sp_runtime::{
 use sp_std::prelude::*;
 // --- darwinia ---
 use address::AddressT;
+use darwinia_support::impl_genesis;
 use types::*;
 
 #[repr(u8)]
@@ -67,16 +68,18 @@ pub enum OtherAddress {
 }
 
 #[cfg_attr(feature = "std", derive(Debug, Default, Serialize, Deserialize))]
-pub struct ClaimsList {
-	pub dot: Vec<Account<EthereumAddress>>,
-	pub eth: Vec<Account<EthereumAddress>>,
-	pub tron: Vec<Account<TronAddress>>,
-}
-
-#[cfg_attr(feature = "std", derive(Debug, Default, Serialize, Deserialize))]
 pub struct Account<Address> {
 	pub address: Address,
 	pub backed_ring: u128,
+}
+
+#[cfg(feature = "std")]
+impl_genesis! {
+	struct ClaimsList {
+		dot: Vec<Account<EthereumAddress>>,
+		eth: Vec<Account<EthereumAddress>>,
+		tron: Vec<Account<TronAddress>>
+	}
 }
 
 #[derive(Clone, Encode, Decode)]
