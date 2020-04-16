@@ -21,10 +21,7 @@
 		"deposit_items": "Vec<TimeDepositItem>",
 		"ring_staking_lock": "StakingLock",
 		"kton_staking_lock": "StakingLock",
-		"last_reward": "Option<EraIndex>",
-		"total": "Compact<Balance>",
-		"active": "Compact<Balance>",
-		"unlocking": "Vec<UnlockChunk>"
+		"last_reward": "Option<EraIndex>"
 	},
 	"TimeDepositItem": {
 		"value": "Compact<Balance>",
@@ -47,25 +44,13 @@
 		"own_kton_balance": "Compact<Balance>",
 		"own_power": "Power",
 		"total_power": "Power",
-		"others": "Vec<IndividualExposure>",
-		"total": "Compact<Balance>",
-		"own": "Compact<Balance>"
+		"others": "Vec<IndividualExposure>"
 	},
 	"IndividualExposure": {
 		"who": "AccountId",
 		"ring_balance": "Compact<Balance>",
 		"kton_balance": "Compact<Balance>",
-		"power": "Power",
-		"value": "Compact<Balance>"
-	},
-	"ValidatorReward": {
-		"who": "AccountId",
-		"amount": "Compact<Balance>",
-		"nominators_reward": "Vec<NominatorReward>"
-	},
-	"NominatorReward": {
-		"who": "AccountId",
-		"amount": "Compact<Balance>"
+		"power": "Power"
 	},
 	"RKT": "RK",
 	"RK": {
@@ -75,9 +60,7 @@
 	"BalanceLock": {
 		"id": "LockIdentifier",
 		"lock_for": "LockFor",
-		"lock_reasons": "LockReasons",
-		"amount": "Balance",
-		"reasons": "Reasons"
+		"lock_reasons": "LockReasons"
 	},
 	"LockFor": {
 		"_enum": {
@@ -107,14 +90,12 @@
 		"free": "Balance",
 		"reserved": "Balance",
 		"free_kton": "Balance",
-		"reserved_kton": "Balance",
-		"misc_frozen": "Balance",
-		"fee_frozen": "Balance"
+		"reserved_kton": "Balance"
 	},
 	"EthBlockNumber": "u64",
 	"EthAddress": "H160",
 	"EthTransactionIndex": "(H256, u64)",
-	"HeaderInfo": {
+	"EthHeaderBrief": {
 		"total_difficulty": "U256",
 		"parent_hash": "H256",
 		"number": "EthBlockNumber"
