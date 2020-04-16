@@ -57,6 +57,7 @@
 		"r": "Balance",
 		"k": "Balance"
 	},
+	"BalanceInfo": null,
 	"BalanceLock": {
 		"id": "LockIdentifier",
 		"lock_for": "LockFor",
@@ -119,6 +120,16 @@
 	},
 	"Bloom": {
 		"_struct": "[u8; 256]"
+	},
+	"H128": {
+		"_struct": "[u8; 16]"
+	},
+	"H512": {
+		"_struct": "[u8; 64]"
+	},
+	"DoubleNodeWithMerkleProof": {
+		"dag_nodes": "[H512; 2]",
+		"proof": "Vec<H128>"
 	},
 	"Receipt": {
 		"gas_used": "U256",
