@@ -921,7 +921,6 @@ dependencies = [
  "ethereum-types 0.8.0",
  "frame-support",
  "frame-system",
- "hex",
  "merkle-patricia-trie",
  "parity-scale-codec",
  "rlp 0.4.4",
@@ -1883,9 +1882,9 @@ dependencies = [
 
 [[package]]
 name = "hermit-abi"
-version = "0.1.10"
+version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "725cf19794cf90aa94e65050cb4191ff5d8fa87a498383774c47b332e3af952e"
+checksum = "8a0d737e0f947a1864e93d33fdef4af8445a00d1ed8dc0c8ddb73139ea6abf15"
 dependencies = [
  "libc",
 ]
@@ -2231,9 +2230,9 @@ dependencies = [
 
 [[package]]
 name = "jsonrpc-client-transports"
-version = "14.0.5"
+version = "14.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0a9ae166c4d1f702d297cd76d4b55758ace80272ffc6dbb139fdc1bf810de40b"
+checksum = "2307a7e78cf969759e390a8a2151ea12e783849a45bb00aa871b468ba58ea79e"
 dependencies = [
  "failure",
  "futures 0.1.29",
@@ -2247,9 +2246,9 @@ dependencies = [
 
 [[package]]
 name = "jsonrpc-core"
-version = "14.0.5"
+version = "14.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fe3b688648f1ef5d5072229e2d672ecb92cbff7d1c79bcf3fd5898f3f3df0970"
+checksum = "25525f6002338fb4debb5167a89a0b47f727a5a48418417545ad3429758b7fec"
 dependencies = [
  "futures 0.1.29",
  "log",
@@ -2260,9 +2259,9 @@ dependencies = [
 
 [[package]]
 name = "jsonrpc-core-client"
-version = "14.0.5"
+version = "14.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "080dc110be17701097df238fad3c816d4a478a1899dfbcf8ec8957dd40ec7304"
+checksum = "87f9382e831a6d630c658df103aac3f971da096deb57c136ea2b760d3b4e3f9f"
 dependencies = [
  "jsonrpc-client-transports",
 ]
@@ -2281,9 +2280,9 @@ dependencies = [
 
 [[package]]
 name = "jsonrpc-http-server"
-version = "14.0.6"
+version = "14.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "816d63997ea45d3634608edbef83ddb35e661f7c0b27b5b72f237e321f0e9807"
+checksum = "d52860f0549694aa4abb12766856f56952ab46d3fb9f0815131b2db3d9cc2f29"
 dependencies = [
  "hyper 0.12.35",
  "jsonrpc-core",
@@ -2296,9 +2295,9 @@ dependencies = [
 
 [[package]]
 name = "jsonrpc-pubsub"
-version = "14.0.6"
+version = "14.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b31c9b90731276fdd24d896f31bb10aecf2e5151733364ae81123186643d939"
+checksum = "c4ca5e391d6c6a2261d4adca029f427fe63ea546ad6cef2957c654c08495ec16"
 dependencies = [
  "jsonrpc-core",
  "log",
@@ -2308,9 +2307,9 @@ dependencies = [
 
 [[package]]
 name = "jsonrpc-server-utils"
-version = "14.0.5"
+version = "14.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95b7635e618a0edbbe0d2a2bbbc69874277c49383fcf6c3c0414491cfb517d22"
+checksum = "1f06add502b48351e05dd95814835327fb115e4e9f834ca42fd522d3b769d4d2"
 dependencies = [
  "bytes 0.4.12",
  "globset",
@@ -2324,9 +2323,9 @@ dependencies = [
 
 [[package]]
 name = "jsonrpc-ws-server"
-version = "14.0.6"
+version = "14.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b94e5773b2ae66e0e02c80775ce6bbba6f15d5bb47c14ec36a36fcf94f8df851"
+checksum = "017a7dd5083d9ed62c5e1dd3e317975c33c3115dac5447f4480fe05a8c354754"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-server-utils",
@@ -2435,9 +2434,9 @@ checksum = "b294d6fa9ee409a054354afc4352b0b9ef7ca222c69b8812cbea9e7d2bf3783f"
 
 [[package]]
 name = "libc"
-version = "0.2.68"
+version = "0.2.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dea0c0405123bba743ee3f91f49b1c7cfb684eef0da0a50110f758ccf24cdff0"
+checksum = "99e85c08494b21a9054e7fe1374a732aeadaff3980b6990b94bfd3a70f690005"
 
 [[package]]
 name = "libloading"
@@ -2999,9 +2998,9 @@ dependencies = [
 
 [[package]]
 name = "memory-db"
-version = "0.20.0"
+version = "0.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f58381b20ebe2c578e75dececd9da411414903415349548ccc46aac3209cdfbc"
+checksum = "be512cb2ccb4ecbdca937fdd4a62ea5f09f8e7195466a85e4632b3d5bcce82e6"
 dependencies = [
  "ahash 0.2.18",
  "hash-db",
@@ -3166,8 +3165,9 @@ dependencies = [
 name = "node-template"
 version = "0.5.2"
 dependencies = [
+ "darwinia-claims",
+ "darwinia-eth-relay",
  "darwinia-staking",
- "ethereum-types 0.8.0",
  "frame-benchmarking-cli",
  "futures 0.3.4",
  "log",
@@ -3183,8 +3183,6 @@ dependencies = [
  "sc-network",
  "sc-service",
  "sc-transaction-pool",
- "serde",
- "serde_json",
  "sp-authority-discovery",
  "sp-consensus",
  "sp-consensus-babe",
@@ -3334,9 +3332,9 @@ dependencies = [
 
 [[package]]
 name = "num_cpus"
-version = "1.12.0"
+version = "1.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46203554f085ff89c235cd12f7075f3233af9b11ed7c9e16dfe2560d03313ce6"
+checksum = "05499f3756671c15885fee9034446956fff3f243d6077b91e5767df161f766b3"
 dependencies = [
  "hermit-abi",
  "libc",
@@ -3697,9 +3695,9 @@ checksum = "aa9777aa91b8ad9dd5aaa04a9b6bcb02c7f1deb952fca5a66034d5e63afc5c6f"
 
 [[package]]
 name = "parity-util-mem"
-version = "0.6.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e42755f26e5ea21a6a819d9e63cbd70713e9867a2b767ec2cc65ca7659532c5"
+checksum = "2c6e2583649a3ca84894d1d71da249abcfda54d5aca24733d72ca10d0f02361c"
 dependencies = [
  "cfg-if",
  "ethereum-types 0.9.0",
@@ -3848,18 +3846,18 @@ dependencies = [
 
 [[package]]
 name = "pin-project"
-version = "0.4.8"
+version = "0.4.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7804a463a8d9572f13453c516a5faea534a2403d7ced2f0c7e100eeff072772c"
+checksum = "6f6a7f5eee6292c559c793430c55c00aea9d3b3d1905e855806ca4d7253426a2"
 dependencies = [
  "pin-project-internal",
 ]
 
 [[package]]
 name = "pin-project-internal"
-version = "0.4.8"
+version = "0.4.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "385322a45f2ecf3410c68d2a549a4a2685e8051d0f278e39743ff4e451cb9b3f"
+checksum = "8988430ce790d8682672117bc06dda364c0be32d3abd738234f19f3240bad99a"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -6718,9 +6716,9 @@ dependencies = [
 
 [[package]]
 name = "trie-db"
-version = "0.20.0"
+version = "0.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "de9222c50cc325855621271157c973da27a0dcd26fa06f8edf81020bd2333df0"
+checksum = "bcc309f34008563989045a4c4dbcc5770467f3a3785ee80a9b5cc0d83362475f"
 dependencies = [
  "hash-db",
  "hashbrown 0.6.3",
@@ -6775,9 +6773,9 @@ dependencies = [
 
 [[package]]
 name = "typenum"
-version = "1.11.2"
+version = "1.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d2783fe2d6b8c1101136184eb41be8b1ad379e4657050b8aaff0c79ee7575f9"
+checksum = "373c8a200f9e67a0c95e62a4f52fbf80c23b4381c05a17845531982fa99e6b33"
 
 [[package]]
 name = "uint"
@@ -6861,9 +6859,9 @@ checksum = "826e7639553986605ec5979c7dd957c7895e93eabed50ab2ffa7f6128a75097c"
 
 [[package]]
 name = "unsigned-varint"
-version = "0.3.2"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f38e01ad4b98f042e166c1bf9a13f9873a99d79eaa171ce7ca81e6dd0f895d8a"
+checksum = "f67332660eb59a6f1eb24ff1220c9e8d01738a8503c6002e30bcfe4bd9f2b4a9"
 dependencies = [
  "bytes 0.5.4",
  "futures-io",
