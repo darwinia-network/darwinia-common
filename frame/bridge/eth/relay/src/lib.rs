@@ -142,9 +142,9 @@ decl_storage! {
 				..
 			} = config;
 
-			if let Some((difficulty, header)) = genesis_header {
+			if let Some((total_difficulty, header)) = genesis_header {
 				if let Ok(header) = rlp::decode(&header) {
-					<Module<T>>::init_genesis_header(&header, *difficulty).unwrap();
+					<Module<T>>::init_genesis_header(&header, *total_difficulty).unwrap();
 				} else {
 					panic!(<&str>::from(<Error<T>>::RlpDcF));
 				}
@@ -201,8 +201,8 @@ decl_error! {
 		BeginHeaderNE,
 		/// Header - NOT EXISTED
 		HeaderNE,
-		/// Header Info - NOT EXISTED
-		HeaderInfoNE,
+		/// Header Brief - NOT EXISTED
+		HeaderBriefNE,
 		/// Trie Key - NOT EXISTED
 		TrieKeyNE,
 
@@ -396,7 +396,10 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
-	pub fn init_genesis_header(header: &EthHeader, genesis_difficulty: u64) -> DispatchResult {
+	pub fn init_genesis_header(
+		header: &EthHeader,
+		genesis_total_difficulty: u64,
+	) -> DispatchResult {
 		let header_hash = header.hash();
 
 		ensure!(
@@ -413,7 +416,7 @@ impl<T: Trait> Module<T> {
 			&header_hash,
 			EthHeaderBrief {
 				parent_hash: header.parent_hash,
-				total_difficulty: genesis_difficulty.into(),
+				total_difficulty: genesis_total_difficulty.into(),
 				number: block_number,
 			},
 		);
@@ -590,7 +593,7 @@ impl<T: Trait> Module<T> {
 
 	fn maybe_store_header(header: &EthHeader) -> DispatchResult {
 		let best_header_info =
-			Self::header_brief(Self::best_header_hash()).ok_or(<Error<T>>::HeaderInfoNE)?;
+			Self::header_brief(Self::best_header_hash()).ok_or(<Error<T>>::HeaderBriefNE)?;
 
 		ensure!(
 			best_header_info.number
@@ -602,11 +605,11 @@ impl<T: Trait> Module<T> {
 		);
 
 		let parent_total_difficulty = Self::header_brief(header.parent_hash)
-			.ok_or(<Error<T>>::HeaderInfoNE)?
+			.ok_or(<Error<T>>::HeaderBriefNE)?
 			.total_difficulty;
 
 		let header_hash = header.hash();
-		let header_info = EthHeaderBrief {
+		let header_brief = EthHeaderBrief {
 			number: header.number,
 			parent_hash: header.parent_hash,
 			total_difficulty: parent_total_difficulty
@@ -615,8 +618,8 @@ impl<T: Trait> Module<T> {
 		};
 
 		// Check total difficulty and re-org if necessary.
-		if header_info.total_difficulty > best_header_info.total_difficulty
-			|| (header_info.total_difficulty == best_header_info.total_difficulty
+		if header_brief.total_difficulty > best_header_info.total_difficulty
+			|| (header_brief.total_difficulty == best_header_info.total_difficulty
 				&& header.difficulty % 2 == U256::zero())
 		{
 			// The new header is the tip of the new canonical chain.
@@ -624,8 +627,8 @@ impl<T: Trait> Module<T> {
 
 			// If the new header has a lower number than the previous header, we need to cleaning
 			// it going forward.
-			if best_header_info.number > header_info.number {
-				for number in header_info
+			if best_header_info.number > header_brief.number {
+				for number in header_brief
 					.number
 					.checked_add(1)
 					.ok_or(<Error<T>>::BlockNumberOF)?..=best_header_info.number
@@ -636,11 +639,11 @@ impl<T: Trait> Module<T> {
 			// Replacing the global best header hash.
 			BestHeaderHash::put(header_hash);
 
-			CanonicalHeaderHashes::insert(header_info.number, header_hash);
+			CanonicalHeaderHashes::insert(header_brief.number, header_hash);
 
 			// Replacing past hashes until we converge into the same parent.
 			// Starting from the parent hash.
-			let mut current_hash = header_info.parent_hash;
+			let mut current_hash = header_brief.parent_hash;
 			for number in (0..=header
 				.number
 				.checked_sub(1)
@@ -666,7 +669,7 @@ impl<T: Trait> Module<T> {
 		}
 
 		Headers::insert(header_hash, header);
-		HeaderBriefs::insert(header_hash, header_info.clone());
+		HeaderBriefs::insert(header_hash, header_brief.clone());
 
 		Ok(())
 	}
@@ -682,7 +685,8 @@ impl<T: Trait> VerifyEthReceipts for Module<T> {
 	/// get the receipt MPT trie root from the block header
 	/// Using receipt MPT trie root to verify the proof and index etc.
 	fn verify_receipt(proof_record: &EthReceiptProof) -> Result<Receipt, DispatchError> {
-		let info = Self::header_brief(&proof_record.header_hash).ok_or(<Error<T>>::HeaderInfoNE)?;
+		let info =
+			Self::header_brief(&proof_record.header_hash).ok_or(<Error<T>>::HeaderBriefNE)?;
 
 		let canonical_hash = Self::canonical_header_hash(info.number);
 		ensure!(
@@ -691,7 +695,7 @@ impl<T: Trait> VerifyEthReceipts for Module<T> {
 		);
 
 		let best_info =
-			Self::header_brief(Self::best_header_hash()).ok_or(<Error<T>>::HeaderInfoNE)?;
+			Self::header_brief(Self::best_header_hash()).ok_or(<Error<T>>::HeaderBriefNE)?;
 
 		ensure!(
 			best_info.number
