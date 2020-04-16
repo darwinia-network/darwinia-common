@@ -4,7 +4,6 @@
 use std::cell::RefCell;
 // --- substrate ---
 use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
-use hex_literal::hex;
 use sp_core::{crypto::key_types, H256};
 use sp_io;
 use sp_runtime::{
@@ -15,6 +14,7 @@ use sp_runtime::{
 use sp_staking::SessionIndex;
 // --- darwinai ---
 use darwinia_staking::{EraIndex, Exposure, ExposureOf};
+use darwinia_support::fixed_hex_bytes_unchecked;
 
 use crate::*;
 
@@ -237,9 +237,21 @@ impl ExtBuilder {
 			.unwrap();
 
 		GenesisConfig::<Test> {
-			ring_redeem_address: hex!["dbc888d701167cbfb86486c516aafbefc3a4de6e"].into(),
-			kton_redeem_address: hex!["dbc888d701167cbfb86486c516aafbefc3a4de6e"].into(),
-			deposit_redeem_address: hex!["6ef538314829efa8386fc43386cb13b4e0a67d1e"].into(),
+			ring_redeem_address: fixed_hex_bytes_unchecked!(
+				"0xdbc888d701167cbfb86486c516aafbefc3a4de6e",
+				20
+			)
+			.into(),
+			kton_redeem_address: fixed_hex_bytes_unchecked!(
+				"0xdbc888d701167cbfb86486c516aafbefc3a4de6e",
+				20
+			)
+			.into(),
+			deposit_redeem_address: fixed_hex_bytes_unchecked!(
+				"0x6ef538314829efa8386fc43386cb13b4e0a67d1e",
+				20
+			)
+			.into(),
 			ring_locked: 20000000000000,
 			kton_locked: 5000000000000,
 		}

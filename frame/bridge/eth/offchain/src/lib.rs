@@ -26,10 +26,9 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod crypto {
-	// --- third-party ---
+	// --- substrate ---
 	use sp_runtime::app_crypto::{app_crypto, sr25519};
-
-	// --- custom ---
+	// --- darwinia ---
 	use crate::KEY_TYPE;
 
 	app_crypto!(sr25519, KEY_TYPE);
@@ -234,7 +233,7 @@ impl<T: Trait> Module<T> {
 
 	/// Get the last relayed block number, and return the blocknumber of next one as target
 	fn get_target_number() -> Result<u64, DispatchError> {
-		let target_number = <EthRelay<T>>::header_of(<EthRelay<T>>::best_header_hash())
+		let target_number = <EthRelay<T>>::header(<EthRelay<T>>::best_header_hash())
 			.ok_or(<Error<T>>::BestHeaderNE)?
 			.number
 			.checked_add(1)
@@ -290,8 +289,11 @@ impl<T: Trait> Module<T> {
 
 	/// Submit and record the valid header on Darwinia network
 	fn submit_header(header: EthHeader) {
-		let results =
-			T::SubmitSignedTransaction::submit_signed(<EthRelayCall<T>>::relay_header(header));
+		// FIXME: add proof
+		let results = T::SubmitSignedTransaction::submit_signed(<EthRelayCall<T>>::relay_header(
+			header,
+			vec![],
+		));
 		for (account, result) in &results {
 			debug::trace!(
 				target: "eoc-rl",

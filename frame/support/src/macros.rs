@@ -16,7 +16,7 @@ macro_rules! impl_account_data {
 	) => {
 		use darwinia_support::balance::BalanceInfo;
 
-		$(#[$attr:meta])*
+		$(#[$attr])*
 		#[derive(Clone, Default, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
 		pub struct $sname<Balance$(, $gtype),*> {
 			free: Balance,
@@ -85,13 +85,50 @@ macro_rules! impl_account_data {
 }
 
 #[macro_export]
+macro_rules! impl_genesis {
+	(
+		$(#[$attr:meta])*
+		$(pub)? struct $sname:ident {
+			$($(pub)? $fname:ident: $ftype:ty),+
+		}
+	) => {
+		$(#[$attr])*
+		#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
+		pub struct $sname {
+			$(pub $fname: $ftype),+
+		}
+
+		impl $sname {
+			pub fn load_genesis(path: &str, env_name: &str) -> Self {
+				if !std::path::Path::new(path).is_file() && std::env::var(env_name).is_err() {
+					Default::default()
+				} else {
+					serde_json::from_reader(
+						std::fs::File::open(std::env::var(env_name).unwrap_or(path.to_owned()))
+							.unwrap(),
+					)
+					.unwrap()
+				}
+			}
+		}
+	};
+}
+
+#[macro_export]
 macro_rules! fixed_hex_bytes_unchecked {
-	($str:expr, $len: expr) => {{
+	($str:expr, $len:expr) => {{
 		let mut bytes: [u8; $len] = [0; $len];
 		let slice = darwinia_support::hex_bytes_unchecked($str);
 		if slice.len() == $len {
 			bytes.copy_from_slice(&slice);
 			};
 		bytes
+		}};
+}
+
+#[macro_export]
+macro_rules! array_unchecked {
+	($source:expr, $offset:expr, $len:expr) => {{
+		unsafe { (*($source[$offset..$offset + $len].as_ptr() as *const [_; $len])) }
 		}};
 }

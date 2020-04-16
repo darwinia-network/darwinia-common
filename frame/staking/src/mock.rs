@@ -45,18 +45,6 @@ pub type Timestamp = pallet_timestamp::Module<Test>;
 pub type StakingError = Error<Test>;
 pub type Staking = Module<Test>;
 
-darwinia_support::impl_account_data! {
-	pub struct AccountData<Balance>
-	for
-		RingInstance,
-		KtonInstance
-	where
-		Balance = Balance
-	{
-		// other data
-	}
-}
-
 pub const NANO: Balance = 1;
 pub const MICRO: Balance = 1_000 * NANO;
 pub const MILLI: Balance = 1_000 * MICRO;
@@ -69,6 +57,18 @@ thread_local! {
 	static SESSION: RefCell<(Vec<AccountId>, HashSet<AccountId>)> = RefCell::new(Default::default());
 	static EXISTENTIAL_DEPOSIT: RefCell<Balance> = RefCell::new(0);
 	static SLASH_DEFER_DURATION: RefCell<EraIndex> = RefCell::new(0);
+}
+
+darwinia_support::impl_account_data! {
+	pub struct AccountData<Balance>
+	for
+		RingInstance,
+		KtonInstance
+	where
+		Balance = Balance
+	{
+		// other data
+	}
 }
 
 pub struct TestSessionHandler;
@@ -342,6 +342,7 @@ impl ExtBuilder {
 	}
 	pub fn build(self) -> sp_io::TestExternalities {
 		self.set_associated_consts();
+
 		let mut storage = system::GenesisConfig::default()
 			.build_storage::<Test>()
 			.unwrap();
