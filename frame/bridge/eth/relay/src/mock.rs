@@ -27,7 +27,7 @@ thread_local! {
 	static ETH_NETWORK: RefCell<EthNetworkType> = RefCell::new(EthNetworkType::Ropsten);
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub struct BlockWithProofs {
 	pub proof_length: u64,
 	pub merkle_root: H128,
