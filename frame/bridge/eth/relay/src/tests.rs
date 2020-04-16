@@ -35,7 +35,7 @@ fn verify_receipt_proof() {
 		let receipt = Receipt::new(TransactionOutcome::StatusCode(1), 1371263.into(), logs);
 
 		// verify receipt
-		assert_ok!(EthRelay::init_genesis_header(&header, 0x234ac172));
+		assert_ok!(EthRelay::init_genesis_header(&header, 0x6b2dd4a2c4f47d));
 		assert_eq!(EthRelay::verify_receipt(&proof_record), Ok(receipt));
 	});
 }
@@ -44,7 +44,7 @@ fn verify_receipt_proof() {
 fn relay_header() {
 	ExtBuilder::default().build().execute_with(|| {
 		let [origin, grandpa, _, parent, current] = mock_canonical_relationship();
-		assert_ok!(EthRelay::init_genesis_header(&origin, 0x234ac172));
+		assert_ok!(EthRelay::init_genesis_header(&origin, 0x6b2dd4a2c4f47d));
 
 		// relay grandpa
 		assert_ok!(EthRelay::verify_header_basic(&grandpa));
@@ -92,7 +92,7 @@ fn check_receipt_safety() {
 
 		// family tree
 		let [origin, grandpa, uncle, _, _] = mock_canonical_relationship();
-		assert_ok!(EthRelay::init_genesis_header(&origin, 0x234ac172));
+		assert_ok!(EthRelay::init_genesis_header(&origin, 0x6b2dd4a2c4f47d));
 
 		let receipt = mock_canonical_receipt();
 		assert_ne!(grandpa.hash, uncle.hash);
@@ -126,7 +126,7 @@ fn canonical_reorg_uncle_should_succeed() {
 		));
 
 		let [origin, grandpa, uncle, _, _] = mock_canonical_relationship();
-		assert_ok!(EthRelay::init_genesis_header(&origin, 0x234ac172));
+		assert_ok!(EthRelay::init_genesis_header(&origin, 0x6b2dd4a2c4f47d));
 
 		// check relationship
 		assert_ne!(grandpa.hash, uncle.hash);
@@ -160,7 +160,7 @@ fn test_safety_block() {
 		let receipt = mock_canonical_receipt();
 
 		// not safety after 0 block
-		assert_ok!(EthRelay::init_genesis_header(&origin, 0x234ac172));
+		assert_ok!(EthRelay::init_genesis_header(&origin, 0x6b2dd4a2c4f47d));
 		assert_ok!(EthRelay::relay_header(Origin::signed(0), grandpa, vec![]));
 		assert_err!(
 			EthRelay::check_receipt(Origin::signed(0), receipt.clone()),
@@ -202,7 +202,7 @@ fn relay_mainet_header() {
 				// println!("{:?}", blocks_with_proofs);
 				let header: EthHeader =
 					rlp::decode(&blocks_with_proofs.header_rlp.to_vec()).unwrap();
-				assert_ok!(EthRelay::init_genesis_header(&header, 0x234ac172));
+				assert_ok!(EthRelay::init_genesis_header(&header, 0x6b2dd4a2c4f47d));
 				// println!("{:?}", &header);
 			}
 
