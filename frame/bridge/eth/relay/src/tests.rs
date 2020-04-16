@@ -209,7 +209,7 @@ fn relay_mainet_header() {
 			// block 8996777
 			{
 				let blocks_with_proofs = BlockWithProofs::from_file("./src/test-data/8996777.json");
-				println!("{:#?}", blocks_with_proofs);
+				// println!("{:#?}", blocks_with_proofs);
 				let header: EthHeader =
 					rlp::decode(&blocks_with_proofs.header_rlp.to_vec()).unwrap();
 				// println!("{:?}", &header);
