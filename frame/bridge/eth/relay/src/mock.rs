@@ -1,5 +1,9 @@
 //! Mock file for eth-relay.
 
+// --- std ---
+use std::{cell::RefCell, fs::File};
+// --- crates ---
+use serde::Deserialize;
 // --- substrate ---
 use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
 use sp_core::H256;
@@ -17,6 +21,115 @@ pub type EthRelay = Module<Test>;
 
 impl_outer_origin! {
 	pub enum Origin for Test {}
+}
+
+thread_local! {
+	static ETH_NETWORK: RefCell<EthNetworkType> = RefCell::new(EthNetworkType::Ropsten);
+}
+
+#[derive(Debug)]
+pub struct BlockWithProofs {
+	pub proof_length: u64,
+	pub merkle_root: H128,
+	pub header_rlp: Vec<u8>,
+	pub merkle_proofs: Vec<H128>,
+	pub elements: Vec<H256>,
+}
+impl BlockWithProofs {
+	pub fn from_file(path: &str) -> Self {
+		#[derive(Deserialize)]
+		struct RawBlockWithProofs {
+			proof_length: u64,
+			merkle_root: String,
+			header_rlp: String,
+			merkle_proofs: Vec<String>,
+			elements: Vec<String>,
+		}
+
+		fn zero_padding(mut s: String, hex_len: usize) -> String {
+			let len = hex_len << 1;
+			if s.starts_with("0x") {
+				let missing_zeros = len + 2 - s.len();
+				if missing_zeros != 0 {
+					for _ in 0..missing_zeros {
+						s.insert(2, '0');
+					}
+				}
+			} else {
+				let missing_zeros = len - s.len();
+				if missing_zeros != 0 {
+					for _ in 0..missing_zeros {
+						s.insert(0, '0');
+					}
+				}
+			}
+
+			s
+		}
+
+		let raw_block_with_proofs: RawBlockWithProofs =
+			serde_json::from_reader(File::open(path).unwrap()).unwrap();
+
+		BlockWithProofs {
+			proof_length: raw_block_with_proofs.proof_length,
+			merkle_root: fixed_hex_bytes_unchecked!(&raw_block_with_proofs.merkle_root, 16).into(),
+			header_rlp: hex_bytes_unchecked(&raw_block_with_proofs.header_rlp),
+			merkle_proofs: raw_block_with_proofs
+				.merkle_proofs
+				.iter()
+				.cloned()
+				.map(|raw_merkle_proof| {
+					fixed_hex_bytes_unchecked!(&zero_padding(raw_merkle_proof, 16), 16).into()
+				})
+				.collect(),
+			elements: raw_block_with_proofs
+				.elements
+				.iter()
+				.cloned()
+				.map(|raw_element| {
+					fixed_hex_bytes_unchecked!(&zero_padding(raw_element, 32), 32).into()
+				})
+				.collect(),
+		}
+	}
+
+	pub fn to_double_node_with_merkle_proof_vec(&self) -> Vec<DoubleNodeWithMerkleProof> {
+		fn combine_dag_h256_to_h512(elements: Vec<H256>) -> Vec<H512> {
+			elements
+				.iter()
+				.zip(elements.iter().skip(1))
+				.enumerate()
+				.filter(|(i, _)| i % 2 == 0)
+				.map(|(_, (a, b))| {
+					let mut buffer = [0u8; 64];
+					buffer[..32].copy_from_slice(&(a.0));
+					buffer[32..].copy_from_slice(&(b.0));
+					H512(buffer.into())
+				})
+				.collect()
+		}
+
+		let h512s = combine_dag_h256_to_h512(self.elements.clone());
+		h512s
+			.iter()
+			.zip(h512s.iter().skip(1))
+			.enumerate()
+			.filter(|(i, _)| i % 2 == 0)
+			.map(|(i, (a, b))| DoubleNodeWithMerkleProof {
+				dag_nodes: [*a, *b],
+				proof: self.merkle_proofs
+					[i / 2 * self.proof_length as usize..(i / 2 + 1) * self.proof_length as usize]
+					.to_vec(),
+			})
+			.collect()
+	}
+}
+
+pub struct EthNetwork;
+impl Get<EthNetworkType> for EthNetwork {
+	fn get() -> EthNetworkType {
+		ETH_NETWORK.with(|v| v.borrow().to_owned())
+	}
 }
 
 // Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
@@ -51,28 +164,53 @@ impl frame_system::Trait for Test {
 	type OnKilledAccount = ();
 }
 
-parameter_types! {
-	pub const EthNetwork: crate::EthNetworkType = crate::EthNetworkType::Ropsten;
-}
 impl Trait for Test {
 	type Event = ();
 	type EthNetwork = EthNetwork;
 }
 
-pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut t = system::GenesisConfig::default()
-		.build_storage::<Test>()
+pub struct ExtBuilder {
+	eth_network: EthNetworkType,
+}
+
+impl Default for ExtBuilder {
+	fn default() -> Self {
+		Self {
+			eth_network: EthNetworkType::Ropsten,
+		}
+	}
+}
+
+impl ExtBuilder {
+	pub fn eth_network(mut self, eth_network: EthNetworkType) -> Self {
+		self.eth_network = eth_network;
+		self
+	}
+	pub fn set_associated_consts(&self) {
+		ETH_NETWORK.with(|v| v.replace(self.eth_network.clone()));
+	}
+
+	pub fn build(self) -> sp_io::TestExternalities {
+		self.set_associated_consts();
+
+		let mut storage = system::GenesisConfig::default()
+			.build_storage::<Test>()
+			.unwrap();
+
+		GenesisConfig::<Test> {
+			number_of_blocks_finality: 30,
+			number_of_blocks_safe: 10,
+			dag_merkle_roots: DagMerkleRoots::load_genesis(
+				"../../../../bin/node-template/node/src/res/dag_merkle_roots.json",
+				"DAG_MERKLE_ROOTS_PATH",
+			),
+			..Default::default()
+		}
+		.assimilate_storage(&mut storage)
 		.unwrap();
 
-	GenesisConfig::<Test> {
-		number_of_blocks_finality: 30,
-		number_of_blocks_safe: 10,
-		..Default::default()
+		storage.into()
 	}
-	.assimilate_storage(&mut t)
-	.unwrap();
-
-	t.into()
 }
 
 /// To help reward miners for when duplicate block solutions are found

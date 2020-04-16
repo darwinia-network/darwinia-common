@@ -12,9 +12,6 @@ repository = "https://github.com/darwinia-network/darwinia/"
 name = "node-template"
 
 [dependencies]
-serde = { version = "1.0.105", features = ["derive"] }
-serde_json = { version = "1.0.50" }
-
 # anonymous
 node-template-runtime = { path = "../runtime" }
 # crates
@@ -22,6 +19,8 @@ futures = "0.3.4"
 log = "0.4.8"
 structopt = "0.3.13"
 # darwinia
+darwinia-claims = { path = "../../../frame/claims" }
+darwinia-eth-relay = { path = "../../../frame/bridge/eth/relay" }
 darwinia-staking = { path = "../../../frame/staking" }
 # substrate
 frame-benchmarking-cli = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
@@ -44,8 +43,6 @@ sp-inherents = { git = "https://github.com/darwinia-network/substrate.git", tag 
 sp-finality-grandpa = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 sp-runtime = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-
-ethereum-types = { git = "https://github.com/darwinia-network/parity-common.git" }
 
 [build-dependencies]
 # crates

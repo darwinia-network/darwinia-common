@@ -1,9 +1,3 @@
-// --- std ---
-use std::{env, fs::File, path::Path};
-
-// --- third-party ---
-use serde::{Deserialize, Serialize};
-
 // --- substrate ---
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
@@ -15,13 +9,13 @@ use sp_runtime::{
 	Perbill,
 };
 // --- darwinia ---
+use darwinia_claims::ClaimsList;
+use darwinia_eth_relay::DagMerkleRoots;
 use node_template_runtime::{
-	AccountId, BalancesConfig as RingConfig, EthRelayConfig, GenesisConfig, KtonConfig,
-	SessionConfig, SessionKeys, Signature, StakerStatus, StakingConfig, SudoConfig, SystemConfig,
-	WASM_BINARY,
+	AccountId, BalancesConfig as RingConfig, ClaimsConfig, EthRelayConfig, GenesisConfig,
+	KtonConfig, SessionConfig, SessionKeys, Signature, StakerStatus, StakingConfig, SudoConfig,
+	SystemConfig, WASM_BINARY,
 };
-
-use ethereum_types::H128;
 
 // Note this is the URL for the telemetry server
 //const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -51,22 +45,6 @@ fn session_keys(
 		grandpa,
 		im_online,
 		authority_discovery,
-	}
-}
-
-#[derive(Debug, Default, Serialize, Deserialize)]
-pub struct DagMerkleRootJSON {
-	pub dag_merkle_roots: Vec<H128>,
-}
-
-fn load_dag_merkle_roots(path: &str) -> DagMerkleRootJSON {
-	if !Path::new(&path).is_file() && env::var("DAG_MERKLE_ROOTS_PATH").is_err() {
-		Default::default()
-	} else {
-		serde_json::from_reader(
-			File::open(env::var("DAG_MERKLE_ROOTS_PATH").unwrap_or(path.to_owned())).unwrap(),
-		)
-		.unwrap()
 	}
 }
 
@@ -240,7 +218,12 @@ fn testnet_genesis(
 			payout_fraction: Perbill::from_percent(50),
 			..Default::default()
 		}),
-		darwinia_claims: Some(Default::default()),
+		darwinia_claims: Some(ClaimsConfig {
+			claims_list: ClaimsList::load_genesis(
+				"bin/node-template/node/src/res/claims_list.json",
+				"CLAIMS_LIST_PATH",
+			),
+		}),
 		darwinia_eth_backing: Some(Default::default()),
 		darwinia_eth_relay: Some(EthRelayConfig {
 			genesis_header: Some((
@@ -273,11 +256,11 @@ fn testnet_genesis(
 					0, 0, 66,
 				],
 			)),
-			check_authorities: false,
-			dag_merkle_roots: load_dag_merkle_roots(
-				"./bin/node-template/node/src/data/dag_merkle_roots.json",
-			)
-			.dag_merkle_roots,
+			check_authority: false,
+			dag_merkle_roots: DagMerkleRoots::load_genesis(
+				"bin/node-template/node/src/res/dag_merkle_roots.json",
+				"DAG_MERKLE_ROOTS_PATH",
+			),
 			..Default::default()
 		}),
 	}
