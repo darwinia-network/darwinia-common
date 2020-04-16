@@ -3,7 +3,7 @@ use crate::*;
 
 #[test]
 fn url_decode() {
-	let mut raw_url = ethscan_url::GTE_BLOCK.to_vec();
+	let mut raw_url = ethscan_url::GET_BLOCK.to_vec();
 	raw_url.append(&mut base_n_bytes(9725369, 16));
 	raw_url.append(&mut "&boolean=true&apikey=".as_bytes().to_vec());
 	let url = core::str::from_utf8(&raw_url).unwrap();
