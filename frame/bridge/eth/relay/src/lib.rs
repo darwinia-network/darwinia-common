@@ -545,6 +545,10 @@ impl<T: Trait> Module<T> {
 			nonce.clone(),
 			ethash::get_full_size(block_number as usize / 30000),
 			|offset| {
+				if *err.borrow() != 0 {
+					return Default::default();
+				}
+
 				let index = index.replace_with(|&mut old| old + 1);
 
 				// Each two nodes are packed into single 128 bytes with Merkle proof
