@@ -2,18 +2,6 @@
 use crate::*;
 
 #[test]
-fn url_decode() {
-	let mut raw_url = ethscan_url::GET_BLOCK.to_vec();
-	raw_url.append(&mut base_n_bytes(9725369, 16));
-	raw_url.append(&mut "&boolean=true&apikey=".as_bytes().to_vec());
-	let url = core::str::from_utf8(&raw_url).unwrap();
-	assert_eq!(
-		url,
-		"https://api.etherscan.io/api?module=proxy&action=eth_getBlockByNumber&tag=0x9465B9&boolean=true&apikey=",
-	);
-}
-
-#[test]
 fn test_build_eth_header_from_response() {
 	for resp in [REAL_ETHER_SCAN_API_RESPONSE1, REAL_ETHER_SCAN_API_RESPONSE2].iter() {
 		let raw_header = from_utf8(&resp[33..resp.len() - 1]).unwrap_or_default();
