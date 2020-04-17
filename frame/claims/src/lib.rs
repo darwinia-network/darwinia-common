@@ -604,7 +604,7 @@ mod tests {
 		assert_eq!(x, z);
 
 		let x = TronAddress(fixed_hex_bytes_unchecked!(
-			"0123456789abcdef0123456789abcdef01234567",
+			"0x0123456789abcdef0123456789abcdef01234567",
 			20
 		));
 		let y = serde_json::to_string(&x).unwrap();
@@ -766,11 +766,11 @@ mod tests {
 	fn real_eth_sig_works() {
 		new_test_ext().execute_with(|| {
 				// "Pay RUSTs to the TEST account:2a00000000000000"
-				let sig = fixed_hex_bytes_unchecked!("444023e89b67e67c0562ed0305d252a5dd12b2af5ac51d6d3cb69a0b486bc4b3191401802dc29d26d586221f7256cd3329fe82174bdf659baea149a40e1c495d1c", 65);
+				let sig = fixed_hex_bytes_unchecked!("0x444023e89b67e67c0562ed0305d252a5dd12b2af5ac51d6d3cb69a0b486bc4b3191401802dc29d26d586221f7256cd3329fe82174bdf659baea149a40e1c495d1c", 65);
 				let sig = EcdsaSignature(sig);
 				let who = 42u64.using_encoded(to_ascii_hex);
 				let signer = Claims::eth_recover(&sig, &who).unwrap();
-				assert_eq!(signer.0, fixed_hex_bytes_unchecked!("6d31165d5d932d571f3b44695653b46dcc327e84", 20));
+				assert_eq!(signer.0, fixed_hex_bytes_unchecked!("0x6d31165d5d932d571f3b44695653b46dcc327e84", 20));
 			});
 	}
 

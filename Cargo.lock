@@ -1104,7 +1104,6 @@ name = "eth-primitives"
 version = "0.5.2"
 dependencies = [
  "darwinia-support",
- "ethash",
  "ethbloom 0.8.1",
  "ethereum-types 0.8.0",
  "fixed-hash 0.5.2",

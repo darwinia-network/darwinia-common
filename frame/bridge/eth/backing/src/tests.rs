@@ -283,7 +283,7 @@ fn verify_redeem_deposit() {
 
 			let ring_locked_before = EthBacking::pot::<Ring>();
 			let expect_account_id = <Test as Trait>::DetermineAccountId::account_id_for(
-				&hex_bytes_unchecked("2a92ae5b41feba5ee68a61449c557efa9e3b894a6461c058ec2de45429adb44546"),
+				&hex_bytes_unchecked("0x2a92ae5b41feba5ee68a61449c557efa9e3b894a6461c058ec2de45429adb44546"),
 			).unwrap();
 			let id1 = AccountId32::from([0; 32]);
 			let controller = AccountId32::from([1; 32]);
