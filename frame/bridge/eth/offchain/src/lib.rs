@@ -156,9 +156,6 @@ decl_event! {
 
 decl_error! {
 	pub enum Error for Module<T: Trait> {
-		/// Local accounts - UNAVAILABLE (Consider adding one via `author_insertKey` RPC)
-		AccountUnavail,
-
 		/// API Response - UNEXPECTED
 		APIRespUnexp,
 
@@ -204,7 +201,8 @@ impl<T: Trait> Module<T> {
 	/// else the blocks will be got from Cloudflare Ethereum Gateway
 	fn relay_header(maybe_key: Option<ApiKey>) -> Result<(), DispatchError> {
 		if !T::SubmitSignedTransaction::can_sign() {
-			Err(<Error<T>>::AccountUnavail)?;
+			debug::info!(target: "eoc-ow", "[eth-offchain] Not initialize, please provide key for ``rlwk`");
+			return Ok(());
 		}
 
 		let target_number = Self::get_target_number()?;
