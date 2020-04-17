@@ -54,5 +54,9 @@ frame-benchmarking-cli = { git = "https://github.com/darwinia-network/substrate.
 [features]
 runtime-benchmarks = [
 	# darwinia
-	"node-template-runtime/runtime-benchmarks"
+	"node-template-runtime/runtime-benchmarks",
+]
+build-spec = [
+	# darwinia
+	"node-template-runtime/build-spec",
 ]
