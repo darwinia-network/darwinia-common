@@ -2,18 +2,16 @@
 //!
 //! In this module,
 //! the offchain worker will keep fetch the next block info and relay to Darwinia Network
-//!
-//! The ethscan apikey may or may not be inserted by following js command
-//! `api.rpc.offchain.localStorageSet(1,"eapi","XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")`
-//!
-//! Request on this web site to get your ethsacn apikey
-//! https://etherscan.io/apis
+//! worker will fetch blocks from a nonexistent domain, ie http://eth-resource/,
+//! such that it can be proxy to any source and do any reprocessing or cache on the node.
+//! Now the source may be EtherScan, Cloudflare Ethereum Gateway, or a Ethereum full node.
+//! Please our anothre project, darwinia.js.
+//! https://github.com/darwinia-network/darwinia.js
 //!
 //! Here is the basic flow.
 //! The starting point is the `offchain_worker`
 //! - base on block schedule, the `relay_header` will be called
-//! - then base on the `ApiKey`, the `relay_header` will get ethereum blocks from EthScan or
-//!   Cloudflare Ethereum Gateway
+//! - then the `relay_header` will get ethereum blocks from from http://eth-resource/
 //! - After the http response corrected fetched, we will validate not only the format of http
 //!   response but also the correct the Ethereum header as the light client do
 //! - After all, the corrected Ethereum header will be recorded on Darwinia Network by
@@ -34,15 +32,6 @@ pub mod crypto {
 	app_crypto!(sr25519, KEY_TYPE);
 }
 
-mod ethscan_url {
-	pub const GET_BLOCK: &'static [u8] =
-		b"https://api.etherscan.io/api?module=proxy&action=eth_getBlockByNumber&tag=0x";
-}
-
-mod ethgateway_url {
-	pub const GET_BLOCK: &'static [u8] = b"https://cloudflare-eth.com/";
-}
-
 #[cfg(all(feature = "std", test))]
 mod mock;
 #[cfg(all(feature = "std", test))]
@@ -53,16 +42,10 @@ use core::str::from_utf8;
 // --- substrate ---
 use frame_support::{debug, decl_error, decl_event, decl_module, traits::Get};
 use frame_system::{self as system, offchain::SubmitSignedTransaction};
-use sp_runtime::{
-	offchain::{http::Request, storage::StorageValueRef},
-	traits::Zero,
-	DispatchError, KeyTypeId,
-};
+use sp_runtime::{offchain::http::Request, traits::Zero, DispatchError, KeyTypeId};
 use sp_std::prelude::*;
 // --- darwinia ---
 use eth_primitives::header::EthHeader;
-
-type ApiKey = [u8; 34];
 
 type EthRelay<T> = darwinia_eth_relay::Module<T>;
 type EthRelayCall<T> = darwinia_eth_relay::Call<T>;
@@ -74,7 +57,7 @@ const MAX_REDIRECT_TIMES: u8 = 3;
 #[derive(Default)]
 struct OffchainRequest {
 	location: Vec<u8>,
-	may_payload: Option<Vec<u8>>,
+	payload: Vec<u8>,
 	redirect_times: u8,
 	cookie: Option<Vec<u8>>,
 }
@@ -83,30 +66,20 @@ struct OffchainRequest {
 /// - set cookie if returns
 /// - handle the redirect actions if happends
 impl OffchainRequest {
-	pub fn new(url: Vec<u8>, may_payload: Option<Vec<u8>>) -> Self {
+	pub fn new(url: Vec<u8>, payload: Vec<u8>) -> Self {
 		OffchainRequest {
 			location: url.clone(),
-			may_payload,
+			payload,
 			..Default::default()
 		}
 	}
 
 	pub fn send(mut self) -> Option<Vec<u8>> {
 		for _ in 0..=MAX_REDIRECT_TIMES {
-			let payload;
-			let mut request = if self.may_payload.is_some() {
-				payload = self.may_payload.clone().unwrap();
-				Request::post(
-					from_utf8(&self.location).unwrap_or_default(),
-					vec![&payload[..]],
-				)
-				.add_header("Content-Type", "application/json")
-			} else {
-				Request::get(from_utf8(&self.location).unwrap_or_default())
-			};
-			if let Some(cookie) = self.cookie.clone() {
-				request = request.add_header("cookie", from_utf8(&cookie).unwrap_or_default());
-			}
+			let p = self.payload.clone();
+			let request =
+				Request::post(from_utf8(&self.location).unwrap_or_default(), vec![&p[..]])
+					.add_header("Content-Type", "application/json");
 			if let Ok(pending) = request.send() {
 				if let Ok(mut resp) = pending.wait() {
 					if resp.code == 200 {
@@ -188,8 +161,7 @@ decl_module! {
 		fn offchain_worker(block: T::BlockNumber) {
 			let fetch_interval = T::FetchInterval::get().max(1.into());
 			if (block % fetch_interval).is_zero() {
-				let maybe_key = StorageValueRef::persistent(b"eapi").get::<ApiKey>().unwrap_or(None);
-				if let Err(e) = Self::relay_header(maybe_key){
+				if let Err(e) = Self::relay_header(){
 					debug::error!(target: "eoc-ow", "[eth-offchain] Error: {:?}", e);
 				}
 			}
@@ -202,30 +174,19 @@ impl<T: Trait> Module<T> {
 	/// and this will dependence on the ApiKey to fetch the blocks from differe Ethereum
 	/// infrastructures. If the EthScan ApiKey is present, we will get the blocks from EthScan,
 	/// else the blocks will be got from Cloudflare Ethereum Gateway
-	fn relay_header(maybe_key: Option<ApiKey>) -> Result<(), DispatchError> {
+	fn relay_header() -> Result<(), DispatchError> {
 		if !T::SubmitSignedTransaction::can_sign() {
 			Err(<Error<T>>::AccountUnavail)?;
 		}
 
 		let target_number = Self::get_target_number()?;
 
-		let header = if let Some(key) = maybe_key {
-			let block_info_url = Self::build_url(vec![
-				ethscan_url::GET_BLOCK.to_vec(),
-				base_n_bytes(target_number, 16),
-				"&boolean=false&apikey=".as_bytes().to_vec(),
-				key.to_vec(),
-			])?;
-			Self::fetch_header(block_info_url, None)?
-		} else {
-			let block_info_url = Self::build_url(vec![ethgateway_url::GET_BLOCK.to_vec()])?;
-			let mut payload = r#"{"jsonrpc":"2.0","method":"eth_getBlockByNumber","params":["0x"#
-				.as_bytes()
-				.to_vec();
-			payload.append(&mut base_n_bytes(target_number, 16));
-			payload.append(&mut r#"",false],"id":1}"#.as_bytes().to_vec());
-			Self::fetch_header(block_info_url, Some(payload))?
-		};
+		let mut payload = r#"{"jsonrpc":"2.0","method":"eth_getBlockByNumber","params":["0x"#
+			.as_bytes()
+			.to_vec();
+		payload.append(&mut base_n_bytes(target_number, 16));
+		payload.append(&mut r#"",false],"id":1}"#.as_bytes().to_vec());
+		let header = Self::fetch_header("http://eth-resource".as_bytes().to_vec(), payload)?;
 
 		Self::submit_header(header);
 		Ok(())
@@ -243,21 +204,9 @@ impl<T: Trait> Module<T> {
 		Ok(target_number)
 	}
 
-	fn build_url(params: Vec<Vec<u8>>) -> Result<Vec<u8>, DispatchError> {
-		let mut url = vec![];
-		for mut param in params {
-			url.append(&mut param);
-		}
-		debug::trace!(target: "eoc-bu", "[eth-offchain] Block Info Url: {}", from_utf8(&url).unwrap_or_default());
-		Ok(url)
-	}
-
 	/// Build the response as EthHeader struct after validating
-	fn fetch_header(
-		url: Vec<u8>,
-		may_payload: Option<Vec<u8>>,
-	) -> Result<EthHeader, DispatchError> {
-		let maybe_resp_body = OffchainRequest::new(url, may_payload).send();
+	fn fetch_header(url: Vec<u8>, payload: Vec<u8>) -> Result<EthHeader, DispatchError> {
+		let maybe_resp_body = OffchainRequest::new(url, payload).send();
 
 		let resp_body = Self::validate_response(maybe_resp_body)?;
 		let raw_header = from_utf8(&resp_body[33..resp_body.len() - 1]).unwrap_or_default();
