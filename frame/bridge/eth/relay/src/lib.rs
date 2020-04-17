@@ -8,13 +8,53 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+mod migration {
+	// --- substrate ---
+	use frame_support::migration::*;
+	// --- darwinia ---
+	use crate::*;
+
+	pub fn migrate<T: Trait>() {
+		sp_runtime::print("Migrating DarwiniaEthRelay...");
+
+		for (hash, canonical_header_hash) in
+			<StorageIterator<H256>>::new(b"DarwiniaEthRelay", b"CanonicalHeaderHashOf").drain()
+		{
+			put_storage_value(
+				b"DarwiniaEthRelay",
+				b"CanonicalHeaderHashes",
+				&hash,
+				canonical_header_hash,
+			);
+		}
+
+		for (hash, header) in
+			<StorageIterator<EthHeader>>::new(b"DarwiniaEthRelay", b"HeaderOf").drain()
+		{
+			put_storage_value(b"DarwiniaEthRelay", b"Headers", &hash, header);
+		}
+
+		for (hash, header_brief) in
+			<StorageIterator<EthHeaderBrief>>::new(b"DarwiniaEthRelay", b"HeaderInfoOf").drain()
+		{
+			put_storage_value(b"DarwiniaEthRelay", b"HeaderBriefs", &hash, header_brief);
+		}
+
+		if let Some(check_authority) =
+			take_storage_value::<bool>(b"DarwiniaEthRelay", b"CheckAuthorities", &[])
+		{
+			put_storage_value(b"DarwiniaEthRelay", b"CheckAuthority", &[], check_authority);
+		}
+	}
+}
+
 // --- crates ---
 use codec::{Decode, Encode};
 use ethereum_types::{H128, H512, H64};
 // --- substrate ---
 use frame_support::{
-	decl_error, decl_event, decl_module, decl_storage, ensure, traits::Get,
-	weights::SimpleDispatchInfo,
+	debug::trace, decl_error, decl_event, decl_module, decl_storage, ensure, traits::Get,
+	weights::SimpleDispatchInfo, weights::Weight,
 };
 use frame_system::{self as system, ensure_root, ensure_signed};
 use sp_io::hashing::sha2_256;
@@ -243,6 +283,11 @@ decl_module! {
 
 		fn deposit_event() = default;
 
+		fn on_runtime_upgrade() -> Weight {
+			migration::migrate::<T>();
+			0
+		}
+
 		/// Relay header of eth block, store the passing header
 		/// if it is verified.
 		///
@@ -255,7 +300,7 @@ decl_module! {
 		/// # </weight>
 		#[weight = SimpleDispatchInfo::FixedNormal(200_000)]
 		pub fn relay_header(origin, header: EthHeader, ethash_proof: Vec<DoubleNodeWithMerkleProof>) {
-			frame_support::debug::trace!(target: "er-rl", "{:?}", header);
+			trace!(target: "er-rl", "{:?}", header);
 			let relayer = ensure_signed(origin)?;
 
 			if Self::check_authority() {
@@ -450,13 +495,13 @@ impl<T: Trait> Module<T> {
 			header.hash() == header.re_compute_hash(),
 			<Error<T>>::HeaderHashMis
 		);
-		frame_support::debug::trace!(target: "er-rl", "Hash OK");
+		trace!(target: "er-rl", "Hash OK");
 
 		let begin_header_number = Self::begin_header()
 			.ok_or(<Error<T>>::BeginHeaderNE)?
 			.number;
 		ensure!(header.number >= begin_header_number, <Error<T>>::HeaderTE);
-		frame_support::debug::trace!(target: "er-rl", "Number1 OK");
+		trace!(target: "er-rl", "Number1 OK");
 
 		// There must be a corresponding parent hash
 		let prev_header = Self::header(header.parent_hash).ok_or(<Error<T>>::HeaderNE)?;
@@ -465,7 +510,7 @@ impl<T: Trait> Module<T> {
 			header.number == prev_header.number + 1,
 			<Error<T>>::BlockNumberMis
 		);
-		frame_support::debug::trace!(target: "er-rl", "Number2 OK");
+		trace!(target: "er-rl", "Number2 OK");
 
 		// check difficulty
 		let ethash_params = match T::EthNetwork::get() {
@@ -475,12 +520,12 @@ impl<T: Trait> Module<T> {
 		ethash_params
 			.verify_block_basic(header)
 			.map_err(|_| <Error<T>>::BlockBasicVF)?;
-		frame_support::debug::trace!(target: "er-rl", "Basic OK");
+		trace!(target: "er-rl", "Basic OK");
 
 		// verify difficulty
 		let difficulty = ethash_params.calculate_difficulty(header, &prev_header);
 		ensure!(difficulty == *header.difficulty(), <Error<T>>::DifficultyVF);
-		frame_support::debug::trace!(target: "er-rl", "Difficulty OK");
+		trace!(target: "er-rl", "Difficulty OK");
 
 		Ok(())
 	}
@@ -492,7 +537,7 @@ impl<T: Trait> Module<T> {
 		Self::verify_header_basic(&header)?;
 
 		let seal = EthashSeal::parse_seal(header.seal()).map_err(|_| <Error<T>>::SealPF)?;
-		frame_support::debug::trace!(target: "er-rl", "Seal OK");
+		trace!(target: "er-rl", "Seal OK");
 
 		let partial_header_hash = header.bare_hash();
 
@@ -504,7 +549,7 @@ impl<T: Trait> Module<T> {
 		)?;
 
 		ensure!(mix_hash == seal.mix_hash, <Error<T>>::MixHashMis);
-		frame_support::debug::trace!(target: "er-rl", "MixHash OK");
+		trace!(target: "er-rl", "MixHash OK");
 
 		// TODO: Check other verification condition
 		// See YellowPaper formula (50) in section 4.3.4

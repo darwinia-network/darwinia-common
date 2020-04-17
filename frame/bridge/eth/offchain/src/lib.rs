@@ -36,15 +36,11 @@ pub mod crypto {
 mod mock;
 #[cfg(all(feature = "std", test))]
 mod tests;
-#[cfg(feature = "easy-testing")]
-static ETHRESOURCE: &'static [u8] = b"https://cloudflare-eth.com/";
-#[cfg(not(feature = "easy-testing"))]
-static ETHRESOURCE: &'static [u8] = b"http://eth-resource";
 
 // --- core ---
 use core::str::from_utf8;
 // --- substrate ---
-use frame_support::{debug, decl_error, decl_event, decl_module, traits::Get};
+use frame_support::{debug::trace, decl_error, decl_event, decl_module, traits::Get};
 use frame_system::{self as system, offchain::SubmitSignedTransaction};
 use sp_runtime::{offchain::http::Request, traits::Zero, DispatchError, KeyTypeId};
 use sp_std::prelude::*;
@@ -57,6 +53,11 @@ type EthRelayCall<T> = darwinia_eth_relay::Call<T>;
 pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"rlwk");
 
 const MAX_REDIRECT_TIMES: u8 = 3;
+
+#[cfg(feature = "easy-testing")]
+const ETHRESOURCE: &'static [u8] = b"https://cloudflare-eth.com";
+#[cfg(not(feature = "easy-testing"))]
+const ETHRESOURCE: &'static [u8] = b"http://eth-resource";
 
 #[derive(Default)]
 struct OffchainRequest {
@@ -87,27 +88,42 @@ impl OffchainRequest {
 			if let Ok(pending) = request.send() {
 				if let Ok(mut resp) = pending.wait() {
 					if resp.code == 200 {
-						let resp_body = resp.body().collect::<Vec<u8>>();
-						return Some(resp_body);
+						return Some(resp.body().collect::<Vec<_>>());
 					} else if resp.code == 301 || resp.code == 302 {
 						self.redirect_times += 1;
-						debug::trace!(target: "eoc-req", "[eth-offchain] redirect({}) header: {:?}", self.redirect_times, resp.headers());
+						trace!(
+							target: "eoc-req",
+							"[eth-offchain] Redirect({}), Request Header: {:?}",
+							self.redirect_times, resp.headers(),
+						);
+
 						let headers = resp.headers();
 						if let Some(cookie) = headers.find("set-cookie") {
 							self.cookie = Some(cookie.as_bytes().to_vec());
 						}
 						if let Some(location) = headers.find("location") {
 							self.location = location.as_bytes().to_vec();
-							debug::trace!(target: "eoc-req", "[eth-offchain] redirect({}) location: {:?}", self.redirect_times, self.location);
+							trace!(
+								target: "eoc-req",
+								"[eth-offchain] Redirect({}), Location: {:?}",
+								self.redirect_times,
+								self.location,
+							);
 						}
 					} else {
-						debug::info!(target: "eoc-req", "[eth-offchain] Status Code: {}", resp.code);
-						debug::info!(target: "eoc-req", "[eth-offchain] Response: {:?}", resp.body().collect::<Vec<u8>>());
+						trace!(target: "eoc-req", "[eth-offchain] Status Code: {}", resp.code);
+						trace!(
+							target: "eoc-req",
+							"[eth-offchain] Response: {}",
+							from_utf8(&resp.body().collect::<Vec<_>>()).unwrap_or_default(),
+						);
+
 						return None;
 					}
 				}
 			}
 		}
+
 		None
 	}
 }
@@ -166,7 +182,7 @@ decl_module! {
 			let fetch_interval = T::FetchInterval::get().max(1.into());
 			if (block % fetch_interval).is_zero() {
 				if let Err(e) = Self::relay_header(){
-					debug::error!(target: "eoc-ow", "[eth-offchain] Error: {:?}", e);
+					trace!(target: "eoc-wk", "[eth-offchain] Error: {:?}", e);
 				}
 			}
 		}
@@ -203,7 +219,7 @@ impl<T: Trait> Module<T> {
 			.number
 			.checked_add(1)
 			.ok_or(<Error<T>>::BlockNumberOF)?;
-		debug::trace!(target: "eoc-gtn", "[eth-offchain] Target Number: {}", target_number);
+		trace!(target: "eoc-rl", "[eth-offchain] Target Number: {}", target_number);
 
 		Ok(target_number)
 	}
@@ -216,7 +232,7 @@ impl<T: Trait> Module<T> {
 		let raw_header = from_utf8(&resp_body[33..resp_body.len() - 1]).unwrap_or_default();
 
 		let header = EthHeader::from_str_unchecked(raw_header);
-		debug::trace!(target: "eoc-fh", "[eth-offchain] Relay: {:?}", header);
+		trace!(target: "eoc-rl", "[eth-offchain] Eth Header: {:?}", header);
 
 		Ok(header)
 	}
@@ -224,18 +240,18 @@ impl<T: Trait> Module<T> {
 	/// Validate the response is a JSON with enough data not simple error message
 	fn validate_response(maybe_resp_body: Option<Vec<u8>>) -> Result<Vec<u8>, DispatchError> {
 		if let Some(resp_body) = maybe_resp_body {
-			debug::trace!(
-				target: "eoc-vr",
+			trace!(
+				target: "eoc-rl",
 				"[eth-offchain] Response: {}",
 				from_utf8(&resp_body).unwrap_or_default(),
 			);
 			if resp_body[0] != 123u8 || resp_body.len() < 1362 {
-				debug::info!(target: "eoc-vr", "[eth-offchain] malresponse:");
+				trace!(target: "eoc-rl", "[eth-offchain] Malresponse");
 				Err(<Error<T>>::APIRespUnexp)?;
 			}
 			Ok(resp_body)
 		} else {
-			debug::info!(target: "eoc-vr", "[eth-offchain] lack response");
+			trace!(target: "eoc-rl", "[eth-offchain] Lack Response");
 			Err(<Error<T>>::APIRespUnexp)?
 		}
 	}
@@ -248,7 +264,7 @@ impl<T: Trait> Module<T> {
 			vec![],
 		));
 		for (account, result) in &results {
-			debug::trace!(
+			trace!(
 				target: "eoc-rl",
 				"[eth-offchain] Account: {:?}, Relay: {:?}",
 				account,
