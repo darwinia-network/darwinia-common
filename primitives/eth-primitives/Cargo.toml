@@ -30,6 +30,7 @@ sp-std = { default-features = false, git = "https://github.com/darwinia-network/
 
 [dev-dependencies]
 # crates
+ethash = { git = "https://github.com/darwinia-network/rust-ethash" }
 keccak-hasher = { version = "0.15.2" }
 # github
 triehash = { git = "https://github.com/darwinia-network/parity-common.git" }
@@ -58,3 +59,4 @@ std = [
 	"sp-runtime/std",
 	"sp-std/std",
 ]
+with-new-dag = ["default"]
