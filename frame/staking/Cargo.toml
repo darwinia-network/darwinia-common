@@ -68,3 +68,4 @@ runtime-benchmarks = [
 	# substrate
 	"frame-benchmarking",
 ]
+build-spec = ["default"]

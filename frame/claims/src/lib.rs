@@ -44,6 +44,7 @@ use sp_runtime::{
 use sp_std::prelude::*;
 // --- darwinia ---
 use address::AddressT;
+use darwinia_support::impl_genesis;
 use types::*;
 
 #[repr(u8)]
@@ -67,16 +68,18 @@ pub enum OtherAddress {
 }
 
 #[cfg_attr(feature = "std", derive(Debug, Default, Serialize, Deserialize))]
-pub struct ClaimsList {
-	pub dot: Vec<Account<EthereumAddress>>,
-	pub eth: Vec<Account<EthereumAddress>>,
-	pub tron: Vec<Account<TronAddress>>,
-}
-
-#[cfg_attr(feature = "std", derive(Debug, Default, Serialize, Deserialize))]
 pub struct Account<Address> {
 	pub address: Address,
 	pub backed_ring: u128,
+}
+
+#[cfg(feature = "std")]
+impl_genesis! {
+	struct ClaimsList {
+		dot: Vec<Account<EthereumAddress>>,
+		eth: Vec<Account<EthereumAddress>>,
+		tron: Vec<Account<TronAddress>>
+	}
 }
 
 #[derive(Clone, Encode, Decode)]
@@ -385,7 +388,6 @@ impl<T: Trait> sp_runtime::traits::ValidateUnsigned for Module<T> {
 mod tests {
 	// --- crates ---
 	use codec::Encode;
-	use hex_literal::hex;
 	use tiny_keccak::keccak256;
 	// --- substrate ---
 	use frame_support::{assert_err, assert_noop, assert_ok, impl_outer_origin, parameter_types};
@@ -397,6 +399,7 @@ mod tests {
 	};
 	// --- darwinia ---
 	use crate::*;
+	use darwinia_support::fixed_hex_bytes_unchecked;
 
 	type Balance = u64;
 
@@ -591,13 +594,19 @@ mod tests {
 
 	#[test]
 	fn serde_works() {
-		let x = EthereumAddress(hex!["0123456789abcdef0123456789abcdef01234567"]);
+		let x = EthereumAddress(fixed_hex_bytes_unchecked!(
+			"0x0123456789abcdef0123456789abcdef01234567",
+			20
+		));
 		let y = serde_json::to_string(&x).unwrap();
 		assert_eq!(y, "\"0x0123456789abcdef0123456789abcdef01234567\"");
 		let z: EthereumAddress = serde_json::from_str(&y).unwrap();
 		assert_eq!(x, z);
 
-		let x = TronAddress(hex!["0123456789abcdef0123456789abcdef01234567"]);
+		let x = TronAddress(fixed_hex_bytes_unchecked!(
+			"0x0123456789abcdef0123456789abcdef01234567",
+			20
+		));
 		let y = serde_json::to_string(&x).unwrap();
 		assert_eq!(y, "\"410123456789abcdef0123456789abcdef01234567\"");
 		let z: TronAddress = serde_json::from_str(&y).unwrap();
@@ -757,11 +766,11 @@ mod tests {
 	fn real_eth_sig_works() {
 		new_test_ext().execute_with(|| {
 				// "Pay RUSTs to the TEST account:2a00000000000000"
-				let sig = hex!["444023e89b67e67c0562ed0305d252a5dd12b2af5ac51d6d3cb69a0b486bc4b3191401802dc29d26d586221f7256cd3329fe82174bdf659baea149a40e1c495d1c"];
+				let sig = fixed_hex_bytes_unchecked!("0x444023e89b67e67c0562ed0305d252a5dd12b2af5ac51d6d3cb69a0b486bc4b3191401802dc29d26d586221f7256cd3329fe82174bdf659baea149a40e1c495d1c", 65);
 				let sig = EcdsaSignature(sig);
 				let who = 42u64.using_encoded(to_ascii_hex);
 				let signer = Claims::eth_recover(&sig, &who).unwrap();
-				assert_eq!(signer.0, hex!["6d31165d5d932d571f3b44695653b46dcc327e84"]);
+				assert_eq!(signer.0, fixed_hex_bytes_unchecked!("0x6d31165d5d932d571f3b44695653b46dcc327e84", 20));
 			});
 	}
 
@@ -769,11 +778,11 @@ mod tests {
 	fn real_tron_sig_works() {
 		new_test_ext().execute_with(|| {
 			// "Pay RUSTs to the TEST account:0c0529c66a44e1861e5e1502b4a87009f23c792518a7a2091363f5a0e38abd57"
-			let sig = hex!["34c3d5afc7f8fa08f9d00a1ec4ac274c63ebce99460b556de85258c94f41ab2f52ad5188bd9fc51251cf5dcdd53751b1bd577828db3f2e8fe8ef77907d7f3f6a1b"];
+			let sig = fixed_hex_bytes_unchecked!("0x34c3d5afc7f8fa08f9d00a1ec4ac274c63ebce99460b556de85258c94f41ab2f52ad5188bd9fc51251cf5dcdd53751b1bd577828db3f2e8fe8ef77907d7f3f6a1b", 65);
 			let sig = EcdsaSignature(sig);
-			let who = hex!["0c0529c66a44e1861e5e1502b4a87009f23c792518a7a2091363f5a0e38abd57"].using_encoded(to_ascii_hex);
+			let who = fixed_hex_bytes_unchecked!("0x0c0529c66a44e1861e5e1502b4a87009f23c792518a7a2091363f5a0e38abd57", 32).using_encoded(to_ascii_hex);
 			let signer = Claims::tron_recover(&sig, &who).unwrap();
-			assert_eq!(signer.0, hex!["11974bce18a43243ede78beec2fd8e0ba4fe17ae"]);
+			assert_eq!(signer.0, fixed_hex_bytes_unchecked!("0x11974bce18a43243ede78beec2fd8e0ba4fe17ae", 20));
 		});
 	}
 

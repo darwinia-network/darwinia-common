@@ -26,9 +26,6 @@ sp-runtime = { default-features = false, git = "https://github.com/darwinia-netw
 sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
 
 [dev-dependencies]
-# crates
-hex-literal = { version = "0.2.1" }
-rustc-hex = { version = "2.1.0" }
 # darwinia
 darwinia-balances = { path = "../../../../frame/balances" }
 darwinia-staking = { path = "../../../../frame/staking" }

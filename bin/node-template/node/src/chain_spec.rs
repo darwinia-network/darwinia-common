@@ -9,10 +9,12 @@ use sp_runtime::{
 	Perbill,
 };
 // --- darwinia ---
+use darwinia_claims::ClaimsList;
+use darwinia_eth_relay::DagMerkleRoots;
 use node_template_runtime::{
-	AccountId, BalancesConfig as RingConfig, EthRelayConfig, GenesisConfig, KtonConfig,
-	SessionConfig, SessionKeys, Signature, StakerStatus, StakingConfig, SudoConfig, SystemConfig,
-	WASM_BINARY,
+	AccountId, BalancesConfig as RingConfig, ClaimsConfig, EthRelayConfig, GenesisConfig,
+	KtonConfig, SessionConfig, SessionKeys, Signature, StakerStatus, StakingConfig, SudoConfig,
+	SystemConfig, WASM_BINARY,
 };
 
 // Note this is the URL for the telemetry server
@@ -216,7 +218,12 @@ fn testnet_genesis(
 			payout_fraction: Perbill::from_percent(50),
 			..Default::default()
 		}),
-		darwinia_claims: Some(Default::default()),
+		darwinia_claims: Some(ClaimsConfig {
+			claims_list: ClaimsList::load_genesis(
+				"bin/node-template/node/src/res/claims_list.json",
+				"CLAIMS_LIST_PATH",
+			),
+		}),
 		darwinia_eth_backing: Some(Default::default()),
 		darwinia_eth_relay: Some(EthRelayConfig {
 			genesis_header: Some((
@@ -249,7 +256,11 @@ fn testnet_genesis(
 					0, 0, 66,
 				],
 			)),
-			check_authorities: false,
+			check_authority: false,
+			dag_merkle_roots: DagMerkleRoots::load_genesis(
+				"bin/node-template/node/src/res/dag_merkle_roots.json",
+				"DAG_MERKLE_ROOTS_PATH",
+			),
 			..Default::default()
 		}),
 	}

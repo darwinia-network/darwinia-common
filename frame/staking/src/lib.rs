@@ -1870,7 +1870,18 @@ impl<T: Trait> Module<T> {
 		promise_month: u8,
 		mut ledger: StakingLedgerT<T>,
 	) -> (TsInMs, TsInMs) {
+		#[cfg(feature = "build-spec")]
+		let start_time = {
+			use std::time::{SystemTime, UNIX_EPOCH};
+			SystemTime::now()
+				.duration_since(UNIX_EPOCH)
+				.expect("`now` always greater than `UNIX_EPOCH`, never get panic; qed")
+				.as_millis()
+				.saturated_into()
+		};
+		#[cfg(not(feature = "build-spec"))]
 		let start_time = T::UnixTime::now().as_millis().saturated_into();
+
 		let mut expire_time = start_time;
 
 		ledger.active_ring = ledger.active_ring.saturating_add(value);
