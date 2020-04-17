@@ -20,7 +20,7 @@ sp-std = { default-features = false, git = "https://github.com/darwinia-network/
 
 [features]
 default = ["std"]
-easy-testing = ["std"]
+easy-testing = ["default"]
 std = [
 	# crates
 	"codec/std",

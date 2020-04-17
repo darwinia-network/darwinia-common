@@ -125,6 +125,7 @@ runtime-benchmarks = [
 	"frame-support/runtime-benchmarks",
 ]
 build-spec = [
+	"default",
 	# darwinia
 	"darwinia-staking/build-spec",
 ]
