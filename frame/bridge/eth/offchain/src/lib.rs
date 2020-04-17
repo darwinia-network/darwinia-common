@@ -1,8 +1,8 @@
 //! Module to relay blocks from Ethereum Network
 //!
 //! In this module,
-//! the offchain worker will keep fetch the next block info and relay to Darwinia Network
-//! worker will fetch blocks from a nonexistent domain, ie http://eth-resource/,
+//! the offchain worker will keep fetch the next block info and relay to Darwinia Network.
+//! The worker will fetch blocks from a nonexistent domain, ie http://eth-resource/,
 //! such that it can be proxy to any source and do any reprocessing or cache on the node.
 //! Now the source may be EtherScan, Cloudflare Ethereum Gateway, or a Ethereum full node.
 //! Please our anothre project, darwinia.js.
