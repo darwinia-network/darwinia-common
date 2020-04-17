@@ -36,6 +36,10 @@ pub mod crypto {
 mod mock;
 #[cfg(all(feature = "std", test))]
 mod tests;
+#[cfg(feature = "easy-testing")]
+static ETHRESOUTCE: &'static [u8] = b"https://cloudflare-eth.com/";
+#[cfg(not(feature = "easy-testing"))]
+static ETHRESOUTCE: &'static [u8] = b"http://eth-resource";
 
 // --- core ---
 use core::str::from_utf8;
@@ -186,7 +190,7 @@ impl<T: Trait> Module<T> {
 			.to_vec();
 		payload.append(&mut base_n_bytes(target_number, 16));
 		payload.append(&mut r#"",false],"id":1}"#.as_bytes().to_vec());
-		let header = Self::fetch_header("http://eth-resource".as_bytes().to_vec(), payload)?;
+		let header = Self::fetch_header(ETHRESOUTCE.to_vec(), payload)?;
 
 		Self::submit_header(header);
 		Ok(())
