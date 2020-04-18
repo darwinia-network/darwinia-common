@@ -8,53 +8,13 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-mod migration {
-	// --- substrate ---
-	use frame_support::migration::*;
-	// --- darwinia ---
-	use crate::*;
-
-	pub fn migrate<T: Trait>() {
-		sp_runtime::print("Migrating DarwiniaEthRelay...");
-
-		for (hash, canonical_header_hash) in
-			<StorageIterator<H256>>::new(b"DarwiniaEthRelay", b"CanonicalHeaderHashOf").drain()
-		{
-			put_storage_value(
-				b"DarwiniaEthRelay",
-				b"CanonicalHeaderHashes",
-				&hash,
-				canonical_header_hash,
-			);
-		}
-
-		for (hash, header) in
-			<StorageIterator<EthHeader>>::new(b"DarwiniaEthRelay", b"HeaderOf").drain()
-		{
-			put_storage_value(b"DarwiniaEthRelay", b"Headers", &hash, header);
-		}
-
-		for (hash, header_brief) in
-			<StorageIterator<EthHeaderBrief>>::new(b"DarwiniaEthRelay", b"HeaderInfoOf").drain()
-		{
-			put_storage_value(b"DarwiniaEthRelay", b"HeaderBriefs", &hash, header_brief);
-		}
-
-		if let Some(check_authority) =
-			take_storage_value::<bool>(b"DarwiniaEthRelay", b"CheckAuthorities", &[])
-		{
-			put_storage_value(b"DarwiniaEthRelay", b"CheckAuthority", &[], check_authority);
-		}
-	}
-}
-
 // --- crates ---
 use codec::{Decode, Encode};
 use ethereum_types::{H128, H512, H64};
 // --- substrate ---
 use frame_support::{
 	debug::trace, decl_error, decl_event, decl_module, decl_storage, ensure, traits::Get,
-	weights::SimpleDispatchInfo, weights::Weight,
+	weights::SimpleDispatchInfo,
 };
 use frame_system::{self as system, ensure_root, ensure_signed};
 use sp_io::hashing::sha2_256;
@@ -282,11 +242,6 @@ decl_module! {
 		const EthNetwork: EthNetworkType = T::EthNetwork::get();
 
 		fn deposit_event() = default;
-
-		fn on_runtime_upgrade() -> Weight {
-			migration::migrate::<T>();
-			0
-		}
 
 		/// Relay header of eth block, store the passing header
 		/// if it is verified.
