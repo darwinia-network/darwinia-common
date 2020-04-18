@@ -746,8 +746,12 @@ impl_runtime_apis! {
 	}
 
 	impl darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance> for Runtime {
-		fn usable_balance(account: AccountId) -> RuntimeDispatchInfo<Balance> {
-			Balances::usable_balance_rpc(account)
+		fn usable_balance(instance: u8, account: AccountId) -> RuntimeDispatchInfo<Balance> {
+			match instance {
+				0 => Ring::usable_balance_rpc(account),
+				1 => Kton::usable_balance_rpc(account),
+				_ => Default::default()
+			}
 		}
 	}
 

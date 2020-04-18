@@ -24,7 +24,7 @@ const RUNTIME_ERROR: i64 = -1;
 #[rpc]
 pub trait BalancesApi<AccountId, Balance, Response> {
 	#[rpc(name = "balances_usableBalance")]
-	fn usable_balance(&self, who: AccountId) -> Result<Response>;
+	fn usable_balance(&self, instance: u8, who: AccountId) -> Result<Response>;
 }
 
 pub struct Balances<Client, Block> {
@@ -50,12 +50,12 @@ where
 	AccountId: Codec,
 	Balance: Codec + MaybeDisplay + MaybeFromStr,
 {
-	fn usable_balance(&self, who: AccountId) -> Result<RuntimeDispatchInfo<Balance>> {
+	fn usable_balance(&self, instance: u8, who: AccountId) -> Result<RuntimeDispatchInfo<Balance>> {
 		let api = self.client.runtime_api();
 		let best = self.client.info().best_hash;
 		let at = BlockId::hash(best);
 
-		api.usable_balance(&at, who).map_err(|e| Error {
+		api.usable_balance(&at, instance, who).map_err(|e| Error {
 			code: ErrorCode::ServerError(RUNTIME_ERROR),
 			message: "Unable to query usable balance.".into(),
 			data: Some(format!("{:?}", e).into()),

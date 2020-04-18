@@ -54,6 +54,6 @@ decl_runtime_apis! {
 		AccountId: Codec,
 		Balance: Codec + MaybeDisplay + MaybeFromStr,
 	{
-		fn usable_balance(who: AccountId) -> RuntimeDispatchInfo<Balance>;
+		fn usable_balance(instance: u8, who: AccountId) -> RuntimeDispatchInfo<Balance>;
 	}
 }
