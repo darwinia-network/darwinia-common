@@ -220,7 +220,7 @@ fn testnet_genesis(
 		}),
 		darwinia_claims: Some(ClaimsConfig {
 			claims_list: ClaimsList::load_genesis(
-				"bin/node-template/node/src/res/claims_list.json",
+				"bin/node-template/node/res/claims_list.json",
 				"CLAIMS_LIST_PATH",
 			),
 		}),
@@ -258,7 +258,7 @@ fn testnet_genesis(
 			)),
 			check_authority: false,
 			dag_merkle_roots: DagMerkleRoots::load_genesis(
-				"bin/node-template/node/src/res/dag_merkle_roots.json",
+				"bin/node-template/node/res/dag_merkle_roots.json",
 				"DAG_MERKLE_ROOTS_PATH",
 			),
 			..Default::default()
