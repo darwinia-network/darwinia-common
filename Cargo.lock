@@ -812,7 +812,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-balances"
-version = "0.5.2"
+version = "0.5.3"
 dependencies = [
  "darwinia-support",
  "frame-benchmarking",
@@ -828,8 +828,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-balances-rpc"
+version = "0.5.3"
+
+[[package]]
+name = "darwinia-balances-rpc-runtime-api"
+version = "0.5.3"
+
+[[package]]
 name = "darwinia-claims"
-version = "0.5.2"
+version = "0.5.3"
 dependencies = [
  "darwinia-balances",
  "darwinia-support",
@@ -849,7 +857,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-elections-phragmen"
-version = "0.5.2"
+version = "0.5.3"
 dependencies = [
  "darwinia-balances",
  "darwinia-support",
@@ -868,7 +876,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-eth-backing"
-version = "0.5.2"
+version = "0.5.3"
 dependencies = [
  "darwinia-balances",
  "darwinia-eth-relay",
@@ -892,7 +900,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-eth-offchain"
-version = "0.5.2"
+version = "0.5.3"
 dependencies = [
  "darwinia-eth-relay",
  "darwinia-support",
@@ -902,7 +910,6 @@ dependencies = [
  "hex",
  "parity-scale-codec",
  "rlp 0.4.4",
- "simple-json",
  "sp-core",
  "sp-runtime",
  "sp-std 2.0.0-alpha.5",
@@ -910,7 +917,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-eth-relay"
-version = "0.5.2"
+version = "0.5.3"
 dependencies = [
  "darwinia-support",
  "eth-primitives",
@@ -931,7 +938,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-header-mmr"
-version = "0.5.2"
+version = "0.5.3"
 dependencies = [
  "ckb-merkle-mountain-range",
  "frame-support",
@@ -947,7 +954,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-phragmen"
-version = "0.5.2"
+version = "0.5.3"
 dependencies = [
  "darwinia-support",
  "rand 0.7.3",
@@ -960,7 +967,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-staking"
-version = "0.5.2"
+version = "0.5.3"
 dependencies = [
  "darwinia-balances",
  "darwinia-phragmen",
@@ -985,7 +992,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-support"
-version = "0.5.2"
+version = "0.5.3"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
@@ -997,7 +1004,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-treasury"
-version = "0.5.2"
+version = "0.5.3"
 dependencies = [
  "darwinia-balances",
  "darwinia-support",
@@ -1101,7 +1108,7 @@ dependencies = [
 
 [[package]]
 name = "eth-primitives"
-version = "0.5.2"
+version = "0.5.3"
 dependencies = [
  "darwinia-support",
  "ethash",
@@ -2023,9 +2030,9 @@ dependencies = [
 
 [[package]]
 name = "hyper"
-version = "0.13.4"
+version = "0.13.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed6081100e960d9d74734659ffc9cc91daf1c0fc7aceb8eaa94ee1a3f5046f2e"
+checksum = "96816e1d921eca64d208a85aab4f7798455a8e34229ee5a88c935bdee1b78b14"
 dependencies = [
  "bytes 0.5.4",
  "futures-channel",
@@ -2054,7 +2061,7 @@ dependencies = [
  "bytes 0.5.4",
  "ct-logs",
  "futures-util",
- "hyper 0.13.4",
+ "hyper 0.13.5",
  "log",
  "rustls 0.17.0",
  "rustls-native-certs",
@@ -3013,7 +3020,7 @@ checksum = "71d96e3f3c0b6325d8ccd83c33b28acb183edcb6c67938ba104ec546854b0882"
 
 [[package]]
 name = "merkle-patricia-trie"
-version = "0.5.2"
+version = "0.5.3"
 dependencies = [
  "criterion",
  "ethereum-types 0.5.2",
@@ -3160,7 +3167,7 @@ dependencies = [
 
 [[package]]
 name = "node-template"
-version = "0.5.2"
+version = "0.5.3"
 dependencies = [
  "darwinia-claims",
  "darwinia-eth-relay",
@@ -3195,7 +3202,7 @@ dependencies = [
 
 [[package]]
 name = "node-template-runtime"
-version = "0.5.2"
+version = "0.5.3"
 dependencies = [
  "darwinia-balances",
  "darwinia-claims",
@@ -4311,9 +4318,9 @@ checksum = "2439c63f3f6139d1b57529d16bc3b8bb855230c8efcc5d3a896c8bea7c3b1e84"
 
 [[package]]
 name = "regex"
-version = "1.3.6"
+version = "1.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f6946991529684867e47d86474e3a6d0c0ab9b82d5821e314b1ede31fa3a4b3"
+checksum = "a6020f034922e3194c711b82a627453881bc4682166cabb07134a10c26ba7692"
 dependencies = [
  "aho-corasick",
  "memchr",
@@ -5014,7 +5021,7 @@ dependencies = [
  "fnv",
  "futures 0.3.4",
  "futures-timer 3.0.2",
- "hyper 0.13.4",
+ "hyper 0.13.5",
  "hyper-rustls",
  "log",
  "num_cpus",
@@ -5440,15 +5447,6 @@ checksum = "94f478ede9f64724c5d173d7bb56099ec3e2d9fc2774aac65d34b8b890405f41"
 dependencies = [
  "arc-swap",
  "libc",
-]
-
-[[package]]
-name = "simple-json"
-version = "0.1.6"
-source = "git+https://github.com/jimmychu0807/simple-json#c7eb1f04da91f673f21867862a013f912e7eb226"
-dependencies = [
- "num-traits",
- "paste",
 ]
 
 [[package]]
@@ -6189,7 +6187,7 @@ dependencies = [
  "async-std",
  "derive_more",
  "futures-util",
- "hyper 0.13.4",
+ "hyper 0.13.5",
  "log",
  "prometheus",
  "tokio 0.2.18",
