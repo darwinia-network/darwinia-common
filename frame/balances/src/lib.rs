@@ -176,6 +176,7 @@ use sp_std::{
 	prelude::*,
 };
 // --- darwinia ---
+use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo;
 use darwinia_support::{
 	balance::{lock::*, *},
 	traits::BalanceInfo,
@@ -501,6 +502,12 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		}
 
 		frozen_balance
+	}
+
+	pub fn usable_balance_rpc(who: impl Borrow<T::AccountId>) -> RuntimeDispatchInfo<T::Balance> {
+		RuntimeDispatchInfo {
+			usable_balance: Self::usable_balance(who.borrow()),
+		}
 	}
 
 	/// Get the reserved balance of an account.
@@ -1381,6 +1388,7 @@ where
 	/// Get the balance of an account that can be used for transfers, reservations, or any other
 	/// non-locking, non-transaction-fee activity. Will be at most `free_balance`.
 	fn usable_balance(who: &T::AccountId) -> Self::Balance {
+		let who = who.borrow();
 		let account = Self::account(who);
 		account.usable(LockReasons::Misc, Self::frozen_balance(who))
 	}
