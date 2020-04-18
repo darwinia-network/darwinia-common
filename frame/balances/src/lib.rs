@@ -1388,7 +1388,6 @@ where
 	/// Get the balance of an account that can be used for transfers, reservations, or any other
 	/// non-locking, non-transaction-fee activity. Will be at most `free_balance`.
 	fn usable_balance(who: &T::AccountId) -> Self::Balance {
-		let who = who.borrow();
 		let account = Self::account(who);
 		account.usable(LockReasons::Misc, Self::frozen_balance(who))
 	}
