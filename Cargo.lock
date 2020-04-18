@@ -814,6 +814,7 @@ dependencies = [
 name = "darwinia-balances"
 version = "0.5.3"
 dependencies = [
+ "darwinia-balances-rpc-runtime-api",
  "darwinia-support",
  "frame-benchmarking",
  "frame-support",
@@ -830,10 +831,26 @@ dependencies = [
 [[package]]
 name = "darwinia-balances-rpc"
 version = "0.5.3"
+dependencies = [
+ "darwinia-balances-rpc-runtime-api",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "parity-scale-codec",
+ "sp-api",
+ "sp-blockchain",
+ "sp-runtime",
+]
 
 [[package]]
 name = "darwinia-balances-rpc-runtime-api"
 version = "0.5.3"
+dependencies = [
+ "parity-scale-codec",
+ "serde",
+ "sp-api",
+ "sp-runtime",
+]
 
 [[package]]
 name = "darwinia-claims"
@@ -1505,15 +1522,6 @@ dependencies = [
  "sp-runtime",
  "sp-std 2.0.0-alpha.5",
  "sp-version",
-]
-
-[[package]]
-name = "frame-system-rpc-runtime-api"
-version = "2.0.0-alpha.5"
-source = "git+https://github.com/darwinia-network/substrate.git?tag=v2.0.0-alpha.darwinia.3#93bfd26db6782416ed22eab351a760892063a855"
-dependencies = [
- "parity-scale-codec",
- "sp-api",
 ]
 
 [[package]]
@@ -3169,11 +3177,13 @@ dependencies = [
 name = "node-template"
 version = "0.5.3"
 dependencies = [
+ "darwinia-balances-rpc",
  "darwinia-claims",
  "darwinia-eth-relay",
  "darwinia-staking",
  "frame-benchmarking-cli",
  "futures 0.3.4",
+ "jsonrpc-core",
  "log",
  "node-template-runtime",
  "pallet-im-online",
@@ -3185,8 +3195,10 @@ dependencies = [
  "sc-executor",
  "sc-finality-grandpa",
  "sc-network",
+ "sc-rpc",
  "sc-service",
  "sc-transaction-pool",
+ "sp-api",
  "sp-authority-discovery",
  "sp-consensus",
  "sp-consensus-babe",
@@ -3205,6 +3217,7 @@ name = "node-template-runtime"
 version = "0.5.3"
 dependencies = [
  "darwinia-balances",
+ "darwinia-balances-rpc-runtime-api",
  "darwinia-claims",
  "darwinia-elections-phragmen",
  "darwinia-eth-backing",
@@ -3218,7 +3231,6 @@ dependencies = [
  "frame-executive",
  "frame-support",
  "frame-system",
- "frame-system-rpc-runtime-api",
  "pallet-authority-discovery",
  "pallet-authorship",
  "pallet-babe",
