@@ -61,7 +61,7 @@ use sp_io::hashing::sha2_256;
 use sp_runtime::{DispatchError, DispatchResult, RuntimeDebug};
 use sp_std::{cell::RefCell, prelude::*};
 // --- darwinia ---
-use darwinia_support::{array_unchecked, impl_genesis};
+use darwinia_support::array_unchecked;
 use eth_primitives::{
 	header::EthHeader,
 	pow::{EthashPartial, EthashSeal},
@@ -89,7 +89,7 @@ impl Default for EthNetworkType {
 }
 
 #[cfg(feature = "std")]
-impl_genesis! {
+darwinia_support::impl_genesis! {
 	struct DagMerkleRoots {
 		dag_merkle_roots: Vec<H128>
 	}
