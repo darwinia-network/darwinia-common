@@ -106,6 +106,7 @@ use sp_std::prelude::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia ---
+use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo;
 use darwinia_eth_relay::EthNetworkType;
 
 /// An index to a block.
@@ -744,9 +745,13 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce> for Runtime {
-		fn account_nonce(account: AccountId) -> Nonce {
-			System::account_nonce(account)
+	impl darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance> for Runtime {
+		fn usable_balance(instance: u8, account: AccountId) -> RuntimeDispatchInfo<Balance> {
+			match instance {
+				0 => Ring::usable_balance_rpc(account),
+				1 => Kton::usable_balance_rpc(account),
+				_ => Default::default()
+			}
 		}
 	}
 

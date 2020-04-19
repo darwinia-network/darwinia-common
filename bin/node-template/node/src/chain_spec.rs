@@ -1,5 +1,6 @@
 // --- substrate ---
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
+use sc_service::Properties;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::AuthorityId as BabeId;
 use sp_core::{sr25519, Pair, Public};
@@ -46,6 +47,19 @@ fn session_keys(
 		im_online,
 		authority_discovery,
 	}
+}
+
+/// Properties for Darwinia.
+pub fn properties() -> Properties {
+	let mut properties = Properties::new();
+
+	properties.insert("ss58Format".into(), 42.into());
+	properties.insert("tokenDecimals".into(), 9.into());
+	properties.insert("tokenSymbol".into(), "CRING".into());
+	properties.insert("ktonTokenDecimals".into(), 9.into());
+	properties.insert("ktonTokenSymbol".into(), "CKTON".into());
+
+	properties
 }
 
 /// Helper function to generate a crypto pair from seed
@@ -109,7 +123,7 @@ impl Alternative {
 				vec![],
 				None,
 				None,
-				None,
+				Some(properties()),
 				None,
 			),
 			Alternative::LocalTestnet => ChainSpec::from_genesis(
@@ -142,7 +156,7 @@ impl Alternative {
 				vec![],
 				None,
 				None,
-				None,
+				Some(properties()),
 				None,
 			),
 		})
@@ -220,7 +234,7 @@ fn testnet_genesis(
 		}),
 		darwinia_claims: Some(ClaimsConfig {
 			claims_list: ClaimsList::load_genesis(
-				"bin/node-template/node/src/res/claims_list.json",
+				"bin/node-template/node/res/claims_list.json",
 				"CLAIMS_LIST_PATH",
 			),
 		}),
@@ -258,7 +272,7 @@ fn testnet_genesis(
 			)),
 			check_authority: false,
 			dag_merkle_roots: DagMerkleRoots::load_genesis(
-				"bin/node-template/node/src/res/dag_merkle_roots.json",
+				"bin/node-template/node/res/dag_merkle_roots.json",
 				"DAG_MERKLE_ROOTS_PATH",
 			),
 			..Default::default()

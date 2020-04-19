@@ -78,6 +78,9 @@ macro_rules! new_full_start {
 			import_setup = Some((block_import, grandpa_link, babe_link));
 
 			Ok(import_queue)
+		})?
+		.with_rpc_extensions(|builder| -> Result<crate::rpc::RpcExtension, _> {
+			Ok(crate::rpc::create(builder.client().clone()))
 		})?;
 
 		(builder, import_setup, inherent_data_providers)
