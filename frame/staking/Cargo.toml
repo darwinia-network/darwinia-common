@@ -18,16 +18,16 @@ serde = { version = "1.0.106", optional = true }
 darwinia-phragmen = { default-features = false, path = "../../primitives/phragmen" }
 darwinia-support = { default-features = false, path = "../support" }
 # substrate
-frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-pallet-authorship = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-pallet-session = { default-features = false, features = ["historical"], git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-sp-io = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-sp-staking = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
+frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
+pallet-authorship = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
+pallet-session = { default-features = false, features = ["historical"], git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
+sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
+sp-io = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
+sp-staking = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
 
 [dev-dependencies]
 # crates
@@ -36,9 +36,9 @@ rand_chacha = { version = "0.2" }
 darwinia-balances = { path = "../../frame/balances" }
 darwinia-support = { features = ["easy-testing"], path = "../support" }
 # substrate
-frame-benchmarking = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-pallet-timestamp = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-substrate-test-utils = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+frame-benchmarking = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
+pallet-timestamp = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
+substrate-test-utils = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
 
 [features]
 default = ["equalize", "std"]

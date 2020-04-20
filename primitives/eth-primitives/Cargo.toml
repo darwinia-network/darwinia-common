@@ -25,8 +25,8 @@ primitive-types = { default-features = false, features = ["codec", "rlp"], git =
 rlp = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 rlp-derive = { git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
 
 [dev-dependencies]
 # crates
@@ -35,7 +35,7 @@ keccak-hasher = { version = "0.15.2" }
 # github
 triehash = { git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
-frame-support = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+frame-support = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
 
 [features]
 default = ["std"]

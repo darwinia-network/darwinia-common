@@ -14,15 +14,15 @@ serde = { version = "1.0.106", optional = true, features = ["derive"] }
 # darwinia
 darwinia-support = { default-features = false, path = "../../frame/support" }
 # substrate
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
 
 [dev-dependencies]
 # crates
 rand = { version = "0.7.3" }
 # substrate
-sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-substrate-test-utils = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+sp-io = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
+substrate-test-utils = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
 
 [features]
 default = ["std"]
