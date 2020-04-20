@@ -45,6 +45,7 @@ use frame_system::{self as system, offchain::SubmitSignedTransaction};
 use sp_runtime::{offchain::http::Request, traits::Zero, DispatchError, KeyTypeId};
 use sp_std::prelude::*;
 // --- darwinia ---
+use darwinia_support::base_n_bytes_unchecked;
 use eth_primitives::header::EthHeader;
 
 type EthRelay<T> = darwinia_eth_relay::Module<T>;
@@ -204,7 +205,7 @@ impl<T: Trait> Module<T> {
 		let mut payload = r#"{"jsonrpc":"2.0","method":"eth_getBlockByNumber","params":["0x"#
 			.as_bytes()
 			.to_vec();
-		payload.append(&mut base_n_bytes(target_number, 16));
+		payload.append(&mut base_n_bytes_unchecked(target_number, 16));
 		payload.append(&mut r#"",false],"id":1}"#.as_bytes().to_vec());
 		let header = Self::fetch_header(ETHRESOURCE.to_vec(), payload)?;
 
@@ -272,25 +273,4 @@ impl<T: Trait> Module<T> {
 			);
 		}
 	}
-}
-
-/// Transfer digitals into hex form
-fn base_n_bytes(mut x: u64, radix: u64) -> Vec<u8> {
-	if radix > 41 {
-		return vec![];
-	}
-
-	let mut buf = vec![];
-	while x > 0 {
-		let rem = (x % radix) as u8;
-		if rem < 10 {
-			buf.push(48 + rem);
-		} else {
-			buf.push(55 + rem);
-		}
-		x /= radix;
-	}
-
-	buf.reverse();
-	buf
 }
