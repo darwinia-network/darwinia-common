@@ -44,7 +44,6 @@ use sp_runtime::{
 use sp_std::prelude::*;
 // --- darwinia ---
 use address::AddressT;
-use darwinia_support::impl_genesis;
 use types::*;
 
 #[repr(u8)]
@@ -74,7 +73,7 @@ pub struct Account<Address> {
 }
 
 #[cfg(feature = "std")]
-impl_genesis! {
+darwinia_support::impl_genesis! {
 	struct ClaimsList {
 		dot: Vec<Account<EthereumAddress>>,
 		eth: Vec<Account<EthereumAddress>>,

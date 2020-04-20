@@ -201,7 +201,7 @@ impl ExtBuilder {
 			number_of_blocks_finality: 30,
 			number_of_blocks_safe: 10,
 			dag_merkle_roots: DagMerkleRoots::load_genesis(
-				"../../../../bin/node-template/node/src/res/dag_merkle_roots.json",
+				"../../../../bin/node-template/node/res/dag_merkle_roots.json",
 				"DAG_MERKLE_ROOTS_PATH",
 			),
 			..Default::default()
