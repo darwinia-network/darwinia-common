@@ -18,6 +18,7 @@
 //!   `submit_header`
 //!
 //! More details can get in these PRs
+//! https://github.com/darwinia-network/darwinia-common/issues/86
 //! https://github.com/darwinia-network/darwinia/pull/335
 //! https://github.com/darwinia-network/darwinia-common/pull/43
 //! https://github.com/darwinia-network/darwinia-common/pull/63
@@ -38,6 +39,7 @@ mod mock;
 mod tests;
 
 // --- core ---
+use codec::Decode;
 use core::str::from_utf8;
 // --- substrate ---
 use frame_support::{debug::trace, decl_error, decl_event, decl_module, traits::Get};
@@ -201,13 +203,15 @@ impl<T: Trait> Module<T> {
 		}
 
 		let target_number = Self::get_target_number()?;
-
-		let mut payload = r#"{"jsonrpc":"2.0","method":"eth_getBlockByNumber","params":["0x"#
-			.as_bytes()
-			.to_vec();
-		payload.append(&mut base_n_bytes_unchecked(target_number, 16));
-		payload.append(&mut r#"",false],"id":1}"#.as_bytes().to_vec());
-		let header = Self::fetch_header(ETHRESOURCE.to_vec(), payload)?;
+		let header_without_option = Self::fetch_header(ETHRESOURCE.to_vec(), target_number, false);
+		let header = match header_without_option {
+			Ok(h) => h,
+			Err(e) => {
+				trace!(target: "eoc-rh", "[eth-offchain] request without option fail: {:?}", e);
+				trace!(target: "eoc-rh", "[eth-offchain] request fail back wth option");
+				Self::fetch_header(ETHRESOURCE.to_vec(), target_number, true)?
+			}
+		};
 
 		Self::submit_header(header);
 		Ok(())
@@ -226,27 +230,59 @@ impl<T: Trait> Module<T> {
 	}
 
 	/// Build the response as EthHeader struct after validating
-	fn fetch_header(url: Vec<u8>, payload: Vec<u8>) -> Result<EthHeader, DispatchError> {
+	fn fetch_header(
+		url: Vec<u8>,
+		target_number: u64,
+		option: bool,
+	) -> Result<EthHeader, DispatchError> {
+		let mut payload =
+			r#"{"jsonrpc":"2.0","method":"shadow_getEthHeaderWithProofByNumber","params":{"block_num":"#
+				.as_bytes()
+				.to_vec();
+		payload.append(&mut base_n_bytes_unchecked(target_number, 10));
+		payload.append(&mut r#","transcation":false"#.as_bytes().to_vec());
+		if option {
+			payload.append(&mut r#","options":{"format":"json"}"#.as_bytes().to_vec());
+		}
+		payload.append(&mut r#"},"id":1}"#.as_bytes().to_vec());
 		let maybe_resp_body = OffchainRequest::new(url, payload).send();
 
-		let resp_body = Self::validate_response(maybe_resp_body)?;
-		let raw_header = from_utf8(&resp_body[33..resp_body.len() - 1]).unwrap_or_default();
-
-		let header = EthHeader::from_str_unchecked(raw_header);
+		let resp_body = Self::validate_response(maybe_resp_body, option)?;
+		let header = if option {
+			let raw_header = from_utf8(&resp_body[47..resp_body.len() - 1]).unwrap_or_default();
+			EthHeader::from_str_unchecked(raw_header)
+		} else {
+			let scale_bytes: Vec<u8> = (50..1353)
+				.step_by(2)
+				.map(|i| {
+					u8::from_str_radix(from_utf8(&resp_body[i..i + 2]).unwrap_or_default(), 16)
+						.unwrap_or_default()
+				})
+				.collect();
+			let may_decoded_header: Option<EthHeader> =
+				Decode::decode::<&[u8]>(&mut &scale_bytes[..]).ok();
+			may_decoded_header.unwrap_or_default()
+		};
 		trace!(target: "eoc-rl", "[eth-offchain] Eth Header: {:?}", header);
 
 		Ok(header)
 	}
 
 	/// Validate the response is a JSON with enough data not simple error message
-	fn validate_response(maybe_resp_body: Option<Vec<u8>>) -> Result<Vec<u8>, DispatchError> {
+	fn validate_response(
+		maybe_resp_body: Option<Vec<u8>>,
+		with_option: bool,
+	) -> Result<Vec<u8>, DispatchError> {
 		if let Some(resp_body) = maybe_resp_body {
 			trace!(
 				target: "eoc-rl",
 				"[eth-offchain] Response: {}",
 				from_utf8(&resp_body).unwrap_or_default(),
 			);
-			if resp_body[0] != 123u8 || resp_body.len() < 1362 {
+			if resp_body[0] != 123u8
+				|| (with_option && resp_body.len() < 1362)
+				|| (!with_option && resp_body.len() < 1353)
+			{
 				trace!(target: "eoc-rl", "[eth-offchain] Malresponse");
 				Err(<Error<T>>::APIRespUnexp)?;
 			}
