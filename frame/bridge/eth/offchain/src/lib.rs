@@ -2,23 +2,27 @@
 //!
 //! In this module,
 //! the offchain worker will keep fetch the next block info and relay to Darwinia Network.
-//! The worker will fetch blocks from a nonexistent domain, ie http://eth-resource/,
-//! such that it can be proxy to any source and do any reprocessing or cache on the node.
-//! Now the source may be EtherScan, Cloudflare Ethereum Gateway, or a Ethereum full node.
-//! Please our anothre project, darwinia.js.
+//! The worker will fetch the header and the Merkle proof information for blocks from a nonexistent domain,
+//! ie http://eth-resource/, such that it can be connected with shadow service.
+//! Now the shadow service is provided by our anothre project, darwinia.js.
 //! https://github.com/darwinia-network/darwinia.js
+//!
 //!
 //! Here is the basic flow.
 //! The starting point is the `offchain_worker`
 //! - base on block schedule, the `relay_header` will be called
-//! - then the `relay_header` will get ethereum blocks from from http://eth-resource/
-//! - After the http response corrected fetched, we will validate not only the format of http
-//!   response but also the correct the Ethereum header as the light client do
-//! - After all, the corrected Ethereum header will be recorded on Darwinia Network by
+//! - then the `relay_header` will get ethereum blocks and Merkle proof information from from http://eth-resource/
+//! - After the http response corrected fetched, we will simple validate the format of http response,
+//!   and parse and build Ethereum header and Merkle Proofs.
+//! - After all, the corrected Ethereum header with the proofs will be submit and validate on chain of Darwinia Network by
 //!   `submit_header`
 //!
-//! More details can get in these PRs
+//! The protocol of shadow service and offchain worker can be scale encoded format or json format,
+//! and the worker will use json format as fail back, such that it may be easiler to debug.
+//! If you want to build your own shadow service please refer
 //! https://github.com/darwinia-network/darwinia-common/issues/86
+//!
+//! More details about offchain workers in following PRs
 //! https://github.com/darwinia-network/darwinia/pull/335
 //! https://github.com/darwinia-network/darwinia-common/pull/43
 //! https://github.com/darwinia-network/darwinia-common/pull/63
@@ -194,10 +198,10 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
-	/// The `relay_header` is try to get Ethereum blocks from ethereum network,
-	/// and this will dependence on the ApiKey to fetch the blocks from differe Ethereum
-	/// infrastructures. If the EthScan ApiKey is present, we will get the blocks from EthScan,
-	/// else the blocks will be got from Cloudflare Ethereum Gateway
+	/// The `relay_header` is try to get Ethereum blocks with merkle proofs from shadow service
+	/// The default communication will transfer data with scale encoding,
+	/// if there are issue to communicate with scale encoding, the failback communication will
+	/// be performed with json format(use option: `true`)
 	fn relay_header() -> Result<(), DispatchError> {
 		if !T::SubmitSignedTransaction::can_sign() {
 			Err(<Error<T>>::AccountUnavail)?;
@@ -296,6 +300,8 @@ impl<T: Trait> Module<T> {
 			);
 		}
 	}
+
+	/// Build a payload to request the json response or scaled encoded response depence on option
 	fn build_payload(target_number: u64, option: bool) -> Vec<u8> {
 		let mut payload =
 			r#"{"jsonrpc":"2.0","method":"shadow_getEthHeaderWithProofByNumber","params":{"block_num":"#
@@ -310,6 +316,7 @@ impl<T: Trait> Module<T> {
 		payload
 	}
 
+	/// Extract the proof no mater the response is scale encoded format or json format
 	fn extract_proof(r: &mut Vec<u8>, option: bool) {
 		let (hint, left_offset, right_offset) = if option { (125, 11, 5) } else { (44, 12, 3) };
 		let mut pr = 47;
@@ -324,18 +331,20 @@ impl<T: Trait> Module<T> {
 		r.truncate(r.len() - right_offset);
 	}
 
+	/// Build the merkle proof information from json format response
 	fn parse_double_node_with_proof_list_from_json_str(
 		json_str: &[u8],
 	) -> Vec<DoubleNodeWithMerkleProof> {
 		let raw_str = from_utf8(json_str).unwrap_or_default();
 		let mut proof_list: Vec<DoubleNodeWithMerkleProof> = Vec::new();
-		// TODO: check that 256 is enought or not
+		// The proof list is 64 length, and we use 256 just in case.
 		for p in raw_str.splitn(256, '}') {
 			proof_list.push(DoubleNodeWithMerkleProof::from_str_unchecked(p));
 		}
 		proof_list
 	}
 
+	/// Build the merkle proof information from scale encoded response
 	fn parse_double_node_with_proof_list_from_scale_str(
 		scale_str: &[u8],
 	) -> Vec<DoubleNodeWithMerkleProof> {
@@ -351,6 +360,7 @@ impl<T: Trait> Module<T> {
 		may_decoded_double_node_with_proof.unwrap_or_default()
 	}
 
+	/// Build the ethereum header information from scale encoded response
 	fn parse_ethheader_from_scale_str(resp_body: &[u8]) -> EthHeader {
 		let scale_bytes: Vec<u8> = (50..resp_body.len())
 			.step_by(2)
