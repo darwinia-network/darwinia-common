@@ -236,16 +236,7 @@ impl<T: Trait> Module<T> {
 		target_number: u64,
 		option: bool,
 	) -> Result<(EthHeader, Vec<DoubleNodeWithMerkleProof>), DispatchError> {
-		let mut payload =
-			r#"{"jsonrpc":"2.0","method":"shadow_getEthHeaderWithProofByNumber","params":{"block_num":"#
-				.as_bytes()
-				.to_vec();
-		payload.append(&mut base_n_bytes_unchecked(target_number, 10));
-		payload.append(&mut r#","transcation":false"#.as_bytes().to_vec());
-		if option {
-			payload.append(&mut r#","options":{"format":"json"}"#.as_bytes().to_vec());
-		}
-		payload.append(&mut r#"},"id":1}"#.as_bytes().to_vec());
+		let payload = Self::build_payload(target_number, option);
 		let maybe_resp_body = OffchainRequest::new(url, payload).send();
 
 		let mut resp_body = Self::validate_response(maybe_resp_body, option)?;
@@ -253,31 +244,13 @@ impl<T: Trait> Module<T> {
 			let raw_header = from_utf8(&resp_body[47..resp_body.len() - 1]).unwrap_or_default();
 			EthHeader::from_str_unchecked(raw_header)
 		} else {
-			let scale_bytes: Vec<u8> = (50..1353)
-				.step_by(2)
-				.map(|i| {
-					u8::from_str_radix(from_utf8(&resp_body[i..i + 2]).unwrap_or_default(), 16)
-						.unwrap_or_default()
-				})
-				.collect();
-			let may_decoded_header: Option<EthHeader> =
-				Decode::decode::<&[u8]>(&mut &scale_bytes[..]).ok();
-			may_decoded_header.unwrap_or_default()
+			Self::parse_ethheader_from_scale_str(&resp_body[..])
 		};
-		extract_proof(&mut resp_body, option);
+		Self::extract_proof(&mut resp_body, option);
 		let proof_list = if option {
-			parse_double_node_with_proof_list(&resp_body[..])
+			Self::parse_double_node_with_proof_list_from_json_str(&resp_body[..])
 		} else {
-			let proof_scale_bytes: Vec<u8> = (0..resp_body.len())
-				.step_by(2)
-				.map(|i| {
-					u8::from_str_radix(from_utf8(&resp_body[i..i + 2]).unwrap_or_default(), 16)
-						.unwrap_or_default()
-				})
-				.collect();
-			let may_decoded_double_node_with_proof: Option<Vec<DoubleNodeWithMerkleProof>> =
-				Decode::decode::<&[u8]>(&mut &proof_scale_bytes[..]).ok();
-			may_decoded_double_node_with_proof.unwrap_or_default()
+			Self::parse_double_node_with_proof_list_from_scale_str(&resp_body[..])
 		};
 		trace!(target: "eoc-rl", "[eth-offchain] Eth Header: {:?}", header);
 
@@ -323,28 +296,71 @@ impl<T: Trait> Module<T> {
 			);
 		}
 	}
-}
-// TODO: will refactor in https://github.com/darwinia-network/darwinia-common/issues/69
-fn extract_proof(r: &mut Vec<u8>, option: bool) {
-	let (hint, left_offset, right_offset) = if option { (125, 11, 5) } else { (44, 12, 3) };
-	let mut pr = 47;
-	for i in 47..r.len() {
-		// TODO: figure out the best strating point, for performance
-		if r[i] == hint {
-			pr = i;
-			break;
+	fn build_payload(target_number: u64, option: bool) -> Vec<u8> {
+		let mut payload =
+			r#"{"jsonrpc":"2.0","method":"shadow_getEthHeaderWithProofByNumber","params":{"block_num":"#
+				.as_bytes()
+				.to_vec();
+		payload.append(&mut base_n_bytes_unchecked(target_number, 10));
+		payload.append(&mut r#","transcation":false"#.as_bytes().to_vec());
+		if option {
+			payload.append(&mut r#","options":{"format":"json"}"#.as_bytes().to_vec());
 		}
+		payload.append(&mut r#"},"id":1}"#.as_bytes().to_vec());
+		payload
 	}
-	*r = r.split_off(pr + left_offset);
-	r.truncate(r.len() - right_offset);
-}
 
-fn parse_double_node_with_proof_list(json_str: &[u8]) -> Vec<DoubleNodeWithMerkleProof> {
-	let raw_str = from_utf8(json_str).unwrap_or_default();
-	let mut proof_list: Vec<DoubleNodeWithMerkleProof> = Vec::new();
-	// TODO: check that 256 is enought or not
-	for p in raw_str.splitn(256, '}') {
-		proof_list.push(DoubleNodeWithMerkleProof::from_str_unchecked(p));
+	fn extract_proof(r: &mut Vec<u8>, option: bool) {
+		let (hint, left_offset, right_offset) = if option { (125, 11, 5) } else { (44, 12, 3) };
+		let mut pr = 47;
+		for i in 47..r.len() {
+			// TODO: figure out the best strating point, for performance
+			if r[i] == hint {
+				pr = i;
+				break;
+			}
+		}
+		*r = r.split_off(pr + left_offset);
+		r.truncate(r.len() - right_offset);
 	}
-	proof_list
+
+	fn parse_double_node_with_proof_list_from_json_str(
+		json_str: &[u8],
+	) -> Vec<DoubleNodeWithMerkleProof> {
+		let raw_str = from_utf8(json_str).unwrap_or_default();
+		let mut proof_list: Vec<DoubleNodeWithMerkleProof> = Vec::new();
+		// TODO: check that 256 is enought or not
+		for p in raw_str.splitn(256, '}') {
+			proof_list.push(DoubleNodeWithMerkleProof::from_str_unchecked(p));
+		}
+		proof_list
+	}
+
+	fn parse_double_node_with_proof_list_from_scale_str(
+		scale_str: &[u8],
+	) -> Vec<DoubleNodeWithMerkleProof> {
+		let proof_scale_bytes: Vec<u8> = (0..scale_str.len())
+			.step_by(2)
+			.map(|i| {
+				u8::from_str_radix(from_utf8(&scale_str[i..i + 2]).unwrap_or_default(), 16)
+					.unwrap_or_default()
+			})
+			.collect();
+		let may_decoded_double_node_with_proof: Option<Vec<DoubleNodeWithMerkleProof>> =
+			Decode::decode::<&[u8]>(&mut &proof_scale_bytes[..]).ok();
+		may_decoded_double_node_with_proof.unwrap_or_default()
+	}
+
+	fn parse_ethheader_from_scale_str(resp_body: &[u8]) -> EthHeader {
+		let scale_bytes: Vec<u8> = (50..resp_body.len())
+			.step_by(2)
+			.map(|i| {
+				u8::from_str_radix(from_utf8(&resp_body[i..i + 2]).unwrap_or_default(), 16)
+					.unwrap_or_default()
+			})
+			.collect();
+		let may_decoded_header: Option<EthHeader> =
+			Decode::decode::<&[u8]>(&mut &scale_bytes[..]).ok();
+		may_decoded_header.unwrap_or_default()
+	}
 }

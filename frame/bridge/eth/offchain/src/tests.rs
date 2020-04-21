@@ -1,5 +1,5 @@
 // --- darwinia ---
-use crate::*;
+use crate::{mock::*, *};
 
 #[test]
 fn test_build_eth_header_from_json_response() {
@@ -11,9 +11,10 @@ fn test_build_eth_header_from_json_response() {
 	assert_eq!(header.hash.unwrap(), header.re_compute_hash());
 
 	let mut response = SUPPOSED_SHADOW_JSON_RESPONSE.to_vec();
-	extract_proof(&mut response, true);
+	EthOffchain::extract_proof(&mut response, true);
 	// println!("{:?}", response);
-	let double_node_with_proof_list = parse_double_node_with_proof_list(&response[..]);
+	let double_node_with_proof_list =
+		EthOffchain::parse_double_node_with_proof_list_from_json_str(&response[..]);
 	assert_eq!(1, double_node_with_proof_list.len());
 }
 
@@ -21,38 +22,21 @@ const SUPPOSED_SHADOW_JSON_RESPONSE: &'static [u8] = br#"{"jsonrpc":"2.0","id":1
 
 #[test]
 fn test_build_eth_header_from_scale_response() {
-	let header_scale_bytes: Vec<u8> = (50..1353)
-		.step_by(2)
-		.map(|i| {
-			u8::from_str_radix(
-				from_utf8(&SUPPOSED_SHADOW_SCALE_RESPONSE[i..i + 2]).unwrap_or_default(),
-				16,
-			)
-			.unwrap_or_default()
-		})
-		.collect();
-	let may_decoded_header: Option<EthHeader> =
-		Decode::decode::<&[u8]>(&mut &header_scale_bytes[..]).ok();
-	assert!(may_decoded_header.is_some());
+	let scale_decode_header =
+		EthOffchain::parse_ethheader_from_scale_str(&SUPPOSED_SHADOW_SCALE_RESPONSE[..]);
 	let header = EthHeader::from_str_unchecked(SUPPOSED_ETHHEADER);
-	assert_eq!(may_decoded_header.unwrap_or_default(), header);
+	assert_eq!(scale_decode_header, header);
 
 	let mut response = SUPPOSED_SHADOW_SCALE_RESPONSE.to_vec();
-	extract_proof(&mut response, false);
+	EthOffchain::extract_proof(&mut response, false);
 	assert_eq!(260, response.len()); // 260 = (129 + 1) * 2
 
-	let proof_scale_bytes: Vec<u8> = (0..response.len())
-		.step_by(2)
-		.map(|i| {
-			u8::from_str_radix(from_utf8(&response[i..i + 2]).unwrap_or_default(), 16)
-				.unwrap_or_default()
-		})
-		.collect();
-	let may_decoded_double_node_with_proof: Option<Vec<DoubleNodeWithMerkleProof>> =
-		Decode::decode::<&[u8]>(&mut &proof_scale_bytes[..]).ok();
+	let decoded_double_node_with_proof =
+		EthOffchain::parse_double_node_with_proof_list_from_scale_str(&response[..]);
+
 	assert_eq!(
 		vec![DoubleNodeWithMerkleProof::default()],
-		may_decoded_double_node_with_proof.unwrap()
+		decoded_double_node_with_proof
 	);
 }
 
