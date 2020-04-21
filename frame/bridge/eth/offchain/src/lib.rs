@@ -264,9 +264,9 @@ impl<T: Trait> Module<T> {
 				Decode::decode::<&[u8]>(&mut &scale_bytes[..]).ok();
 			may_decoded_header.unwrap_or_default()
 		};
-		extract_proof(&mut resp_body);
+		extract_proof(&mut resp_body, option);
 		let proof_list = if option {
-			Vec::new()
+			parse_double_node_with_proof_list(&resp_body[..])
 		} else {
 			let proof_scale_bytes: Vec<u8> = (0..resp_body.len())
 				.step_by(2)
@@ -325,15 +325,26 @@ impl<T: Trait> Module<T> {
 	}
 }
 // TODO: will refactor in https://github.com/darwinia-network/darwinia-common/issues/69
-fn extract_proof(r: &mut Vec<u8>) {
-	let mut pr = 1350;
-	for i in 1350..1360 {
-		// TODO: figure out an aceptable range
-		if r[i] == 44u8 {
+fn extract_proof(r: &mut Vec<u8>, option: bool) {
+	let (hint, left_offset, right_offset) = if option { (125, 11, 5) } else { (44, 12, 3) };
+	let mut pr = 47;
+	for i in 47..r.len() {
+		// TODO: figure out the best strating point, for performance
+		if r[i] == hint {
 			pr = i;
 			break;
 		}
 	}
-	*r = r.split_off(pr + 12);
-	r.truncate(r.len() - 3);
+	*r = r.split_off(pr + left_offset);
+	r.truncate(r.len() - right_offset);
+}
+
+fn parse_double_node_with_proof_list(json_str: &[u8]) -> Vec<DoubleNodeWithMerkleProof> {
+	let raw_str = from_utf8(json_str).unwrap_or_default();
+	let mut proof_list: Vec<DoubleNodeWithMerkleProof> = Vec::new();
+	// TODO: check that 256 is enought or not
+	for p in raw_str.splitn(256, '}') {
+		proof_list.push(DoubleNodeWithMerkleProof::from_str_unchecked(p));
+	}
+	proof_list
 }
