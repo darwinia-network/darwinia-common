@@ -61,6 +61,15 @@ pub struct DoubleNodeWithMerkleProof {
 	pub proof: Vec<H128>,
 }
 
+impl Default for DoubleNodeWithMerkleProof {
+	fn default() -> DoubleNodeWithMerkleProof {
+		DoubleNodeWithMerkleProof {
+			dag_nodes: <[H512; 2]>::default(),
+			proof: Vec::new(),
+		}
+	}
+}
+
 impl DoubleNodeWithMerkleProof {
 	pub fn apply_merkle_proof(&self, index: u64) -> H128 {
 		fn hash_h128(l: H128, r: H128) -> H128 {
