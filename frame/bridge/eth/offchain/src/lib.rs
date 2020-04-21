@@ -47,6 +47,7 @@ use frame_system::{self as system, offchain::SubmitSignedTransaction};
 use sp_runtime::{offchain::http::Request, traits::Zero, DispatchError, KeyTypeId};
 use sp_std::prelude::*;
 // --- darwinia ---
+use darwinia_eth_relay::DoubleNodeWithMerkleProof;
 use darwinia_support::base_n_bytes_unchecked;
 use eth_primitives::header::EthHeader;
 
@@ -204,8 +205,8 @@ impl<T: Trait> Module<T> {
 
 		let target_number = Self::get_target_number()?;
 		let header_without_option = Self::fetch_header(ETHRESOURCE.to_vec(), target_number, false);
-		let header = match header_without_option {
-			Ok(h) => h,
+		let (header, proof_list) = match header_without_option {
+			Ok(r) => r,
 			Err(e) => {
 				trace!(target: "eoc-rh", "[eth-offchain] request without option fail: {:?}", e);
 				trace!(target: "eoc-rh", "[eth-offchain] request fail back wth option");
@@ -213,7 +214,7 @@ impl<T: Trait> Module<T> {
 			}
 		};
 
-		Self::submit_header(header);
+		Self::submit_header(header, proof_list);
 		Ok(())
 	}
 
@@ -234,7 +235,7 @@ impl<T: Trait> Module<T> {
 		url: Vec<u8>,
 		target_number: u64,
 		option: bool,
-	) -> Result<EthHeader, DispatchError> {
+	) -> Result<(EthHeader, Vec<DoubleNodeWithMerkleProof>), DispatchError> {
 		let mut payload =
 			r#"{"jsonrpc":"2.0","method":"shadow_getEthHeaderWithProofByNumber","params":{"block_num":"#
 				.as_bytes()
@@ -247,7 +248,7 @@ impl<T: Trait> Module<T> {
 		payload.append(&mut r#"},"id":1}"#.as_bytes().to_vec());
 		let maybe_resp_body = OffchainRequest::new(url, payload).send();
 
-		let resp_body = Self::validate_response(maybe_resp_body, option)?;
+		let mut resp_body = Self::validate_response(maybe_resp_body, option)?;
 		let header = if option {
 			let raw_header = from_utf8(&resp_body[47..resp_body.len() - 1]).unwrap_or_default();
 			EthHeader::from_str_unchecked(raw_header)
@@ -263,9 +264,24 @@ impl<T: Trait> Module<T> {
 				Decode::decode::<&[u8]>(&mut &scale_bytes[..]).ok();
 			may_decoded_header.unwrap_or_default()
 		};
+		extract_proof(&mut resp_body);
+		let proof_list = if option {
+			Vec::new()
+		} else {
+			let proof_scale_bytes: Vec<u8> = (0..resp_body.len())
+				.step_by(2)
+				.map(|i| {
+					u8::from_str_radix(from_utf8(&resp_body[i..i + 2]).unwrap_or_default(), 16)
+						.unwrap_or_default()
+				})
+				.collect();
+			let may_decoded_double_node_with_proof: Option<Vec<DoubleNodeWithMerkleProof>> =
+				Decode::decode::<&[u8]>(&mut &proof_scale_bytes[..]).ok();
+			may_decoded_double_node_with_proof.unwrap_or_default()
+		};
 		trace!(target: "eoc-rl", "[eth-offchain] Eth Header: {:?}", header);
 
-		Ok(header)
+		Ok((header, proof_list))
 	}
 
 	/// Validate the response is a JSON with enough data not simple error message
@@ -294,11 +310,9 @@ impl<T: Trait> Module<T> {
 	}
 
 	/// Submit and record the valid header on Darwinia network
-	fn submit_header(header: EthHeader) {
-		// FIXME: add proof
+	fn submit_header(header: EthHeader, proof_list: Vec<DoubleNodeWithMerkleProof>) {
 		let results = T::SubmitSignedTransaction::submit_signed(<EthRelayCall<T>>::relay_header(
-			header,
-			vec![],
+			header, proof_list,
 		));
 		for (account, result) in &results {
 			trace!(
@@ -309,4 +323,17 @@ impl<T: Trait> Module<T> {
 			);
 		}
 	}
+}
+// TODO: will refactor in https://github.com/darwinia-network/darwinia-common/issues/69
+fn extract_proof(r: &mut Vec<u8>) {
+	let mut pr = 1350;
+	for i in 1350..1360 {
+		// TODO: figure out an aceptable range
+		if r[i] == 44u8 {
+			pr = i;
+			break;
+		}
+	}
+	*r = r.split_off(pr + 12);
+	r.truncate(r.len() - 3);
 }
