@@ -45,13 +45,19 @@ pub fn base_n_bytes_unchecked(mut x: u64, radix: u64) -> Vec<u8> {
 /// convert bytes to hex string
 pub fn hex_string_unchecked<B: AsRef<[u8]>>(b: B, prefix: &str) -> Vec<char> {
 	let b = b.as_ref();
-	prefix
-		.chars()
-		.chain(
-			b.iter()
-				.map(|&x| core::char::from_digit(x as _, 16).unwrap_or_default()),
-		)
-		.collect()
+
+	let mut vec = Vec::with_capacity(b.len() * 2 + prefix.len());
+
+	for x in prefix.chars() {
+		vec.push(x);
+	}
+
+	for x in b.iter() {
+		vec.push(core::char::from_digit((x >> 4) as _, 16).unwrap_or_default());
+		vec.push(core::char::from_digit((x & 0xf) as _, 16).unwrap_or_default());
+	}
+
+	vec
 }
 
 /// convert hex string to bytes
