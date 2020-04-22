@@ -52,7 +52,7 @@ use sp_runtime::{offchain::http::Request, traits::Zero, DispatchError, KeyTypeId
 use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_eth_relay::DoubleNodeWithMerkleProof;
-use darwinia_support::bytes_thing::base_n_bytes_unchecked;
+use darwinia_support::bytes_thing::{base_n_bytes_unchecked, hex_bytes_unchecked};
 use eth_primitives::header::EthHeader;
 
 type EthRelay<T> = darwinia_eth_relay::Module<T>;
@@ -368,13 +368,7 @@ impl<T: Trait> Module<T> {
 		if scale_str.len() < 2 {
 			return Err(<Error<T>>::ProofSE)?;
 		};
-		let proof_scale_bytes: Vec<u8> = (0..scale_str.len())
-			.step_by(2)
-			.map(|i| {
-				u8::from_str_radix(from_utf8(&scale_str[i..i + 2]).unwrap_or_default(), 16)
-					.unwrap_or_default()
-			})
-			.collect();
+		let proof_scale_bytes = hex_bytes_unchecked(from_utf8(scale_str).unwrap_or_default());
 		Ok(Decode::decode::<&[u8]>(&mut &proof_scale_bytes[..]).unwrap_or_default())
 	}
 
@@ -382,13 +376,12 @@ impl<T: Trait> Module<T> {
 	fn parse_ethheader_from_scale_str(resp_body: &[u8]) -> EthHeader {
 		// Note the size is checked in `validate_response`, so there is no check here
 
-		let scale_bytes: Vec<u8> = (50..resp_body.len())
-			.step_by(2)
-			.map(|i| {
-				u8::from_str_radix(from_utf8(&resp_body[i..i + 2]).unwrap_or_default(), 16)
-					.unwrap_or_default()
-			})
-			.collect();
+		let i = resp_body[50..]
+			.iter()
+			.position(|&x| x == b'"')
+			.unwrap_or_default();
+		let s = from_utf8(&resp_body[50..i + 50]).unwrap_or_default();
+		let scale_bytes = hex_bytes_unchecked(s);
 		Decode::decode::<&[u8]>(&mut &scale_bytes[..]).unwrap_or_default()
 	}
 }
