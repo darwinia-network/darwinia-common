@@ -9,7 +9,7 @@ use sp_runtime::RuntimeDebug;
 use sp_std::{prelude::*, str::FromStr};
 // --- darwinia ---
 use crate::*;
-use darwinia_support::{fixed_hex_bytes_unchecked, hex_bytes_unchecked};
+use darwinia_support::bytes_thing::{fixed_hex_bytes_unchecked, hex_bytes_unchecked};
 
 #[derive(Clone, Copy, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
 enum Seal {

@@ -52,7 +52,7 @@ use sp_runtime::{offchain::http::Request, traits::Zero, DispatchError, KeyTypeId
 use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_eth_relay::DoubleNodeWithMerkleProof;
-use darwinia_support::base_n_bytes_unchecked;
+use darwinia_support::bytes_thing::base_n_bytes_unchecked;
 use eth_primitives::header::EthHeader;
 
 type EthRelay<T> = darwinia_eth_relay::Module<T>;

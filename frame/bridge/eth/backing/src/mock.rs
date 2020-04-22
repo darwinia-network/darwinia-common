@@ -14,7 +14,7 @@ use sp_runtime::{
 use sp_staking::SessionIndex;
 // --- darwinai ---
 use darwinia_staking::{EraIndex, Exposure, ExposureOf};
-use darwinia_support::fixed_hex_bytes_unchecked;
+use darwinia_support::bytes_thing::fixed_hex_bytes_unchecked;
 
 use crate::*;
 
