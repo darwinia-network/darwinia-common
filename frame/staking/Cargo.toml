@@ -15,7 +15,6 @@ num-integer = { version = "0.1.42", default-features = false }
 rand_chacha = { version = "0.2", default-features = false, optional = true }
 serde = { version = "1.0.106", optional = true }
 # darwinia
-darwinia-phragmen = { default-features = false, path = "../../primitives/phragmen" }
 darwinia-support = { default-features = false, path = "../support" }
 # substrate
 frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
@@ -25,6 +24,7 @@ pallet-authorship = { default-features = false, git = "https://github.com/darwin
 pallet-session = { default-features = false, features = ["historical"], git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
 sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
 sp-io = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
+sp-phragmen = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
 sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
 sp-staking = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
 sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
@@ -49,7 +49,6 @@ std = [
 	"num-integer/std",
 	"serde",
 	# darwinia
-	"darwinia-phragmen/std",
 	"darwinia-support/std",
 	# substrate
 	"frame-support/std",
@@ -58,6 +57,7 @@ std = [
 	"pallet-session/std",
 	"sp-core/std",
 	"sp-io/std",
+	"sp-phragmen/std",
 	"sp-runtime/std",
 	"sp-staking/std",
 	"sp-std/std",

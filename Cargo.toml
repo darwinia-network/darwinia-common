@@ -16,7 +16,6 @@ members = [
 	"frame/treasury",
 	"primitives/eth-primitives",
 	"primitives/merkle-patricia-trie",
-	"primitives/phragmen",
 ]
 
 [profile.release]
