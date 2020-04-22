@@ -377,9 +377,7 @@ impl<T: Trait> Module<T> {
 					.unwrap_or_default()
 			})
 			.collect();
-		Ok(Decode::decode::<&[u8]>(&mut &proof_scale_bytes[..])
-			.ok()
-			.unwrap_or_default())
+		Ok(Decode::decode::<&[u8]>(&mut &proof_scale_bytes[..]).unwrap_or_default())
 	}
 
 	/// Build the ethereum header information from scale encoded response
@@ -393,8 +391,6 @@ impl<T: Trait> Module<T> {
 					.unwrap_or_default()
 			})
 			.collect();
-		Decode::decode::<&[u8]>(&mut &scale_bytes[..])
-			.ok()
-			.unwrap_or_default()
+		Decode::decode::<&[u8]>(&mut &scale_bytes[..]).unwrap_or_default()
 	}
 }
