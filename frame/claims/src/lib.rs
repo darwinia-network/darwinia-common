@@ -567,26 +567,26 @@ mod tests {
 		});
 	}
 
-	#[test]
-	fn serde_works() {
-		let x = EthereumAddress(fixed_hex_bytes_unchecked!(
-			"0x0123456789abcdef0123456789abcdef01234567",
-			20
-		));
-		let y = serde_json::to_string(&x).unwrap();
-		assert_eq!(y, "\"0x0123456789abcdef0123456789abcdef01234567\"");
-		let z: EthereumAddress = serde_json::from_str(&y).unwrap();
-		assert_eq!(x.0, z.0);
-
-		let x = TronAddress(fixed_hex_bytes_unchecked!(
-			"0x0123456789abcdef0123456789abcdef01234567",
-			20
-		));
-		let y = serde_json::to_string(&x).unwrap();
-		assert_eq!(y, "\"410123456789abcdef0123456789abcdef01234567\"");
-		let z: TronAddress = serde_json::from_str(&y).unwrap();
-		assert_eq!(x.0, z.0);
-	}
+	//	#[test]
+	//	fn serde_works() {
+	//		let x = EthereumAddress(fixed_hex_bytes_unchecked!(
+	//			"0x0123456789abcdef0123456789abcdef01234567",
+	//			20
+	//		));
+	//		let y = serde_json::to_string(&x).unwrap();
+	//		assert_eq!(y, "\"0x0123456789abcdef0123456789abcdef01234567\"");
+	//		let z: EthereumAddress = serde_json::from_str(&y).unwrap();
+	//		assert_eq!(x.0, z.0);
+	//
+	//		let x = TronAddress(fixed_hex_bytes_unchecked!(
+	//			"0x0123456789abcdef0123456789abcdef01234567",
+	//			20
+	//		));
+	//		let y = serde_json::to_string(&x).unwrap();
+	//		assert_eq!(y, "\"410123456789abcdef0123456789abcdef01234567\"");
+	//		let z: TronAddress = serde_json::from_str(&y).unwrap();
+	//		assert_eq!(x.0, z.0);
+	//	}
 
 	#[test]
 	fn claiming_works() {

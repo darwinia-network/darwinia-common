@@ -3,7 +3,7 @@
 // --- std ---
 use std::cell::RefCell;
 // --- substrate ---
-use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
+use frame_support::{impl_outer_dispatch, impl_outer_origin, parameter_types, weights::Weight};
 use sp_core::{crypto::key_types, H256};
 use sp_io;
 use sp_runtime::{
@@ -84,7 +84,13 @@ impl pallet_session::SessionHandler<AccountId> for TestSessionHandler {
 }
 
 impl_outer_origin! {
-	pub enum Origin for Test  where system = system {}
+	pub enum Origin for Test  where system = frame_system {}
+}
+
+impl_outer_dispatch! {
+	pub enum Call for Test where origin: Origin {
+		darwinia_eth_relay::EthRelay,
+	}
 }
 
 // Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
@@ -158,6 +164,7 @@ parameter_types! {
 impl darwinia_eth_relay::Trait for Test {
 	type Event = ();
 	type EthNetwork = EthNetwork;
+	type Call = Call;
 }
 
 impl darwinia_balances::Trait<KtonInstance> for Test {

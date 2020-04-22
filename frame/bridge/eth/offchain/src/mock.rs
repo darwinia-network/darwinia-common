@@ -1,5 +1,5 @@
 // --- substrate ---
-use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
+use frame_support::{impl_outer_dispatch, impl_outer_origin, parameter_types, weights::Weight};
 use sp_runtime::{
 	testing::{Header, TestXt},
 	traits::{BlakeTwo256, Extrinsic as ExtrinsicsT, IdentityLookup},
@@ -12,7 +12,15 @@ impl_outer_origin! {
 	pub enum Origin for Test where system = frame_system {}
 }
 
-pub type _EthOffchain = Module<Test>;
+impl_outer_dispatch! {
+	pub enum Call for Test where origin: Origin {
+		darwinia_eth_relay::EthRelay,
+		darwinia_eth_offchain::EthOffchain,
+	}
+}
+
+pub type EthOffchain = Module<Test>;
+pub type EthRelay = darwinia_eth_relay::Module<Test>;
 
 #[derive(Clone, Eq, PartialEq)]
 pub struct Test;
@@ -44,7 +52,7 @@ impl frame_system::Trait for Test {
 	type OnKilledAccount = ();
 }
 
-type Extrinsic = TestXt<Call<Test>, ()>;
+type Extrinsic = TestXt<Call, ()>;
 type SubmitTransaction =
 	frame_system::offchain::TransactionSubmitter<crypto::Public, Test, Extrinsic>;
 
@@ -72,20 +80,21 @@ parameter_types! {
 impl darwinia_eth_relay::Trait for Test {
 	type Event = ();
 	type EthNetwork = EthNetwork;
+	type Call = Call;
 }
 
-impl From<darwinia_eth_relay::Call<Test>> for Call<Test> {
-	fn from(_: darwinia_eth_relay::Call<Test>) -> Self {
-		unimplemented!()
-	}
-}
+//impl From<darwinia_eth_relay::Call<Test>> for Call<Test> {
+//	fn from(_: darwinia_eth_relay::Call<Test>) -> Self {
+//		unimplemented!()
+//	}
+//}
 
 parameter_types! {
 	pub const FetchInterval: u64 = 3;
 }
 impl Trait for Test {
 	type Event = ();
-	type Call = Call<Self>;
+	type Call = Call;
 	type SubmitSignedTransaction = SubmitTransaction;
 	type FetchInterval = FetchInterval;
 }
