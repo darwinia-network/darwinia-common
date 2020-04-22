@@ -170,6 +170,11 @@ decl_error! {
 
 		/// Request - REACH MAX RETRY
 		ReqRMR,
+
+		/// Proof - SCALE DECODE ERROR
+		ProofSE,
+		/// Proof - JSON DECODE ERROR
+		ProofJE,
 	}
 }
 
@@ -250,11 +255,12 @@ impl<T: Trait> Module<T> {
 		} else {
 			Self::parse_ethheader_from_scale_str(&resp_body[..])
 		};
+
 		Self::extract_proof(&mut resp_body, option);
 		let proof_list = if option {
-			Self::parse_double_node_with_proof_list_from_json_str(&resp_body[..])
+			Self::parse_double_node_with_proof_list_from_json_str(&resp_body[..])?
 		} else {
-			Self::parse_double_node_with_proof_list_from_scale_str(&resp_body[..])
+			Self::parse_double_node_with_proof_list_from_scale_str(&resp_body[..])?
 		};
 		trace!(target: "eoc-rl", "[eth-offchain] Eth Header: {:?}", header);
 
@@ -303,21 +309,30 @@ impl<T: Trait> Module<T> {
 
 	/// Build a payload to request the json response or scaled encoded response depence on option
 	fn build_payload(target_number: u64, option: bool) -> Vec<u8> {
-		let mut payload =
-			r#"{"jsonrpc":"2.0","method":"shadow_getEthHeaderWithProofByNumber","params":{"block_num":"#
-				.as_bytes()
-				.to_vec();
-		payload.append(&mut base_n_bytes_unchecked(target_number, 10));
-		payload.append(&mut r#","transcation":false"#.as_bytes().to_vec());
+		let header_part: &[u8] = br#"{"jsonrpc":"2.0","method":"shadow_getEthHeaderWithProofByNumber","params":{"block_num":"#;
+		let number_part: &[u8] = &base_n_bytes_unchecked(target_number, 10)[..];
+		let transcation_part: &[u8] = br#","transcation":false"#;
+		let option_part: &[u8] = br#","options":{"format":"json"}"#;
+		let tail: &[u8] = br#"},"id":1}"#;
+
 		if option {
-			payload.append(&mut r#","options":{"format":"json"}"#.as_bytes().to_vec());
+			[
+				header_part,
+				number_part,
+				transcation_part,
+				option_part,
+				tail,
+			]
+			.concat()
+		} else {
+			[header_part, number_part, transcation_part, tail].concat()
 		}
-		payload.append(&mut r#"},"id":1}"#.as_bytes().to_vec());
-		payload
 	}
 
 	/// Extract the proof no mater the response is scale encoded format or json format
 	fn extract_proof(r: &mut Vec<u8>, option: bool) {
+		// Note the size is checked in `validate_response`, so there is no check here
+
 		let (hint, left_offset, right_offset) = if option { (125, 11, 5) } else { (44, 12, 3) };
 		let mut pr = 47;
 		for i in 47..r.len() {
@@ -334,20 +349,27 @@ impl<T: Trait> Module<T> {
 	/// Build the merkle proof information from json format response
 	fn parse_double_node_with_proof_list_from_json_str(
 		json_str: &[u8],
-	) -> Vec<DoubleNodeWithMerkleProof> {
-		let raw_str = from_utf8(json_str).unwrap_or_default();
+	) -> Result<Vec<DoubleNodeWithMerkleProof>, DispatchError> {
+		let raw_str = match from_utf8(json_str) {
+			Ok(r) => r,
+			Err(_) => return Err(<Error<T>>::ProofJE)?,
+		};
+
 		let mut proof_list: Vec<DoubleNodeWithMerkleProof> = Vec::new();
 		// The proof list is 64 length, and we use 256 just in case.
 		for p in raw_str.splitn(256, '}') {
 			proof_list.push(DoubleNodeWithMerkleProof::from_str_unchecked(p));
 		}
-		proof_list
+		Ok(proof_list)
 	}
 
 	/// Build the merkle proof information from scale encoded response
 	fn parse_double_node_with_proof_list_from_scale_str(
 		scale_str: &[u8],
-	) -> Vec<DoubleNodeWithMerkleProof> {
+	) -> Result<Vec<DoubleNodeWithMerkleProof>, DispatchError> {
+		if scale_str.len() < 2 {
+			return Err(<Error<T>>::ProofSE)?;
+		};
 		let proof_scale_bytes: Vec<u8> = (0..scale_str.len())
 			.step_by(2)
 			.map(|i| {
@@ -355,13 +377,15 @@ impl<T: Trait> Module<T> {
 					.unwrap_or_default()
 			})
 			.collect();
-		let may_decoded_double_node_with_proof: Option<Vec<DoubleNodeWithMerkleProof>> =
-			Decode::decode::<&[u8]>(&mut &proof_scale_bytes[..]).ok();
-		may_decoded_double_node_with_proof.unwrap_or_default()
+		Ok(Decode::decode::<&[u8]>(&mut &proof_scale_bytes[..])
+			.ok()
+			.unwrap_or_default())
 	}
 
 	/// Build the ethereum header information from scale encoded response
 	fn parse_ethheader_from_scale_str(resp_body: &[u8]) -> EthHeader {
+		// Note the size is checked in `validate_response`, so there is no check here
+
 		let scale_bytes: Vec<u8> = (50..resp_body.len())
 			.step_by(2)
 			.map(|i| {
@@ -369,8 +393,8 @@ impl<T: Trait> Module<T> {
 					.unwrap_or_default()
 			})
 			.collect();
-		let may_decoded_header: Option<EthHeader> =
-			Decode::decode::<&[u8]>(&mut &scale_bytes[..]).ok();
-		may_decoded_header.unwrap_or_default()
+		Decode::decode::<&[u8]>(&mut &scale_bytes[..])
+			.ok()
+			.unwrap_or_default()
 	}
 }

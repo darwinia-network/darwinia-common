@@ -14,7 +14,7 @@ fn test_build_eth_header_from_json_response() {
 	EthOffchain::extract_proof(&mut response, true);
 	// println!("{:?}", response);
 	let double_node_with_proof_list =
-		EthOffchain::parse_double_node_with_proof_list_from_json_str(&response[..]);
+		EthOffchain::parse_double_node_with_proof_list_from_json_str(&response[..]).unwrap();
 	assert_eq!(1, double_node_with_proof_list.len());
 }
 
@@ -32,7 +32,7 @@ fn test_build_eth_header_from_scale_response() {
 	assert_eq!(260, response.len()); // 260 = (129 + 1) * 2
 
 	let decoded_double_node_with_proof =
-		EthOffchain::parse_double_node_with_proof_list_from_scale_str(&response[..]);
+		EthOffchain::parse_double_node_with_proof_list_from_scale_str(&response[..]).unwrap();
 
 	assert_eq!(
 		vec![DoubleNodeWithMerkleProof::default()],
