@@ -21,7 +21,7 @@ use sp_io::hashing::sha2_256;
 use sp_runtime::{DispatchError, DispatchResult, RuntimeDebug};
 use sp_std::{cell::RefCell, prelude::*};
 // --- darwinia ---
-use darwinia_support::array_unchecked;
+use darwinia_support::{array_unchecked, fixed_hex_bytes_unchecked};
 use eth_primitives::{
 	header::EthHeader,
 	pow::{EthashPartial, EthashSeal},
@@ -59,6 +59,37 @@ darwinia_support::impl_genesis! {
 pub struct DoubleNodeWithMerkleProof {
 	pub dag_nodes: [H512; 2],
 	pub proof: Vec<H128>,
+}
+
+impl Default for DoubleNodeWithMerkleProof {
+	fn default() -> DoubleNodeWithMerkleProof {
+		DoubleNodeWithMerkleProof {
+			dag_nodes: <[H512; 2]>::default(),
+			proof: Vec::new(),
+		}
+	}
+}
+
+impl DoubleNodeWithMerkleProof {
+	pub fn from_str_unchecked(s: &str) -> Self {
+		let mut dag_nodes: Vec<H512> = Vec::new();
+		let mut proofs: Vec<H128> = Vec::new();
+		for e in s.splitn(60, '"') {
+			let l = e.len();
+			if l == 34 {
+				proofs.push(fixed_hex_bytes_unchecked!(e, 16).into());
+			} else if l == 130 {
+				dag_nodes.push(fixed_hex_bytes_unchecked!(e, 64).into());
+			} else if l > 34 {
+				// should not be here
+				panic!("the proofs are longer than 25");
+			}
+		}
+		DoubleNodeWithMerkleProof {
+			dag_nodes: [dag_nodes[0], dag_nodes[1]],
+			proof: proofs,
+		}
+	}
 }
 
 impl DoubleNodeWithMerkleProof {
