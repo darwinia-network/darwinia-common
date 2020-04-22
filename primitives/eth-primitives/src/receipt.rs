@@ -125,7 +125,7 @@ mod tests {
 	use keccak_hasher::KeccakHasher;
 	// --- darwinia ---
 	use super::*;
-	use darwinia_support::{fixed_hex_bytes_unchecked, hex_bytes_unchecked};
+	use darwinia_support::bytes_thing::{fixed_hex_bytes_unchecked, hex_bytes_unchecked};
 
 	#[inline]
 	fn construct_receipts(
