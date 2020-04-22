@@ -21,7 +21,7 @@ use sp_io::hashing::sha2_256;
 use sp_runtime::{DispatchError, DispatchResult, RuntimeDebug};
 use sp_std::{cell::RefCell, prelude::*};
 // --- darwinia ---
-use darwinia_support::{array_unchecked, fixed_hex_bytes_unchecked};
+use darwinia_support::bytes_thing::{array_unchecked, fixed_hex_bytes_unchecked};
 use eth_primitives::{
 	header::EthHeader,
 	pow::{EthashPartial, EthashSeal},

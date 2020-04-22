@@ -8,7 +8,8 @@ use sp_runtime::{traits::Dispatchable, AccountId32};
 use crate::{mock::*, *};
 use darwinia_staking::{RewardDestination, StakingBalance, StakingLedger, TimeDepositItem};
 use darwinia_support::{
-	balance::lock::StakingLock, fixed_hex_bytes_unchecked, hex_bytes_unchecked,
+	balance::lock::StakingLock,
+	bytes_thing::{fixed_hex_bytes_unchecked, hex_bytes_unchecked},
 };
 use eth_primitives::header::EthHeader;
 

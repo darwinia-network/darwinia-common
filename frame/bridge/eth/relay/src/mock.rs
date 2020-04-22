@@ -10,7 +10,7 @@ use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill};
 // --- darwinia ---
 use crate::*;
-use darwinia_support::{fixed_hex_bytes_unchecked, hex_bytes_unchecked};
+use darwinia_support::bytes_thing::{fixed_hex_bytes_unchecked, hex_bytes_unchecked};
 use eth_primitives::receipt::LogEntry;
 
 type AccountId = u64;
