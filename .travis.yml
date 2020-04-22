@@ -55,6 +55,10 @@ jobs:
       env: ETHOFFCHAIN RUST_TOOLCHAIN=nightly TARGET=native
       script: .maintain/ci/darwinia_test_script.sh eth-offchain
 
+    - stage: Darwinia Test
+      env: CLAIMS RUST_TOOLCHAIN=nightly TARGET=native
+      script: .maintain/ci/darwinia_test_script.sh claims
+
     # over the time limitation, so we comment this
     # - stage: Overall Test
     #   env: RUST_TOOLCHAIN=nightly TARGET=native
