@@ -237,3 +237,43 @@ fn relay_mainet_header() {
 			}
 		});
 }
+
+#[test]
+fn test_scale_coding_of_default_double_node_with_proof() {
+	let default_double_node_with_proof = DoubleNodeWithMerkleProof::default();
+	let mut scale_encode_str: &[u8] = b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"; // len 129
+	let may_decoded_double_node_with_proof: Option<DoubleNodeWithMerkleProof> =
+		Decode::decode::<&[u8]>(&mut scale_encode_str).ok();
+	assert_eq!(
+		default_double_node_with_proof,
+		may_decoded_double_node_with_proof.unwrap()
+	);
+}
+#[test]
+fn test_scale_coding_of_double_node_with_two_proof() {
+	let mut scale_encode_str: &[u8] = b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"; // len 129 + 16 + 16
+	let may_decoded_double_node_with_proof: Option<DoubleNodeWithMerkleProof> =
+		Decode::decode::<&[u8]>(&mut scale_encode_str).ok();
+	assert_eq!(2, may_decoded_double_node_with_proof.unwrap().proof.len());
+}
+#[test]
+fn test_scale_coding_of_default_double_node_with_proof_vector() {
+	let default_double_node_with_proof = DoubleNodeWithMerkleProof::default();
+	let vector = vec![default_double_node_with_proof];
+	let mut scale_encode_str: &[u8] = b"\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"; // len 1 + 129
+	let may_decoded_double_node_with_proof: Option<Vec<DoubleNodeWithMerkleProof>> =
+		Decode::decode::<&[u8]>(&mut scale_encode_str).ok();
+	assert_eq!(vector, may_decoded_double_node_with_proof.unwrap());
+}
+
+#[test]
+fn test_build_double_node_with_proof_from_str() {
+	let s = r#"{"dag_nodes":["0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000""],"proof":["0x00000000000000000000000000000000","0x00000000000000000000000000000000","0x00000000000000000000000000000000","0x00000000000000000000000000000000","0x00000000000000000000000000000000","0x00000000000000000000000000000000","0x00000000000000000000000000000000","0x00000000000000000000000000000000","0x00000000000000000000000000000000","0x00000000000000000000000000000000","0x00000000000000000000000000000000","0x00000000000000000000000000000000","0x00000000000000000000000000000000","0x00000000000000000000000000000000","0x00000000000000000000000000000000","0x00000000000000000000000000000000","0x00000000000000000000000000000000","0x00000000000000000000000000000000","0x00000000000000000000000000000000","0x00000000000000000000000000000000","0x00000000000000000000000000000000","0x00000000000000000000000000000000","0x00000000000000000000000000000000","0x00000000000000000000000000000000","0x00000000000000000000000000000000"]}"#;
+
+	let istance = DoubleNodeWithMerkleProof::from_str_unchecked(s);
+	assert_eq!(
+		istance.dag_nodes,
+		DoubleNodeWithMerkleProof::default().dag_nodes
+	);
+	assert_eq!(istance.proof.len(), 25);
+}
