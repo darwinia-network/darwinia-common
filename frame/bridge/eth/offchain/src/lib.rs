@@ -62,9 +62,7 @@ pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"rlwk");
 
 const MAX_REDIRECT_TIMES: u8 = 3;
 
-#[cfg(feature = "easy-testing")]
-const ETHRESOURCE: &'static [u8] = b"https://cloudflare-eth.com";
-#[cfg(not(feature = "easy-testing"))]
+// A dummy endpoint, point this to shadow service
 const ETHRESOURCE: &'static [u8] = b"http://eth-resource";
 
 #[derive(Default)]
