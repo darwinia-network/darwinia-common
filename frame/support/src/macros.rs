@@ -118,7 +118,7 @@ macro_rules! impl_genesis {
 macro_rules! fixed_hex_bytes_unchecked {
 	($str:expr, $len:expr) => {{
 		let mut bytes: [u8; $len] = [0; $len];
-		let slice = darwinia_support::hex_bytes_unchecked($str);
+		let slice = darwinia_support::bytes_thing::hex_bytes_unchecked($str);
 		if slice.len() == $len {
 			bytes.copy_from_slice(&slice);
 			};
