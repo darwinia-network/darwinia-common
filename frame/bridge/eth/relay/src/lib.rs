@@ -30,7 +30,7 @@ use sp_runtime::{
 };
 use sp_std::{cell::RefCell, fmt::Debug, marker::PhantomData, prelude::*};
 // --- darwinia ---
-use darwinia_support::{array_unchecked, fixed_hex_bytes_unchecked};
+use darwinia_support::bytes_thing::{array_unchecked, fixed_hex_bytes_unchecked};
 use eth_primitives::{
 	header::EthHeader,
 	pow::{EthashPartial, EthashSeal},

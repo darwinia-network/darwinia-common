@@ -2,7 +2,7 @@
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 // --- darwinia ---
 use crate::AddressT;
-use darwinia_support::{fixed_hex_bytes_unchecked, hex_string_unchecked};
+use darwinia_support::bytes_thing::{fixed_hex_bytes_unchecked, hex_string_unchecked};
 
 macro_rules! impl_address {
 	($name:ident, $sname:expr, $prefix:expr) => {
