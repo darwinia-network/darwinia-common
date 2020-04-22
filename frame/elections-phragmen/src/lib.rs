@@ -76,7 +76,7 @@ use frame_support::{
 	weights::{SimpleDispatchInfo, WeighData, Weight},
 };
 use frame_system::{self as system, ensure_root, ensure_signed};
-use sp_phragmen::ExtendedBalance;
+use sp_phragmen::{build_support_map, ExtendedBalance};
 use sp_runtime::{
 	print,
 	traits::{Convert, StaticLookup, Zero},
@@ -676,11 +676,15 @@ impl<T: Trait> Module<T> {
 				.filter_map(|(m, a)| if a.is_zero() { None } else { Some(m) })
 				.collect::<Vec<T::AccountId>>();
 
-			let support_map = sp_phragmen::build_support_map::<_, _, _, T::CurrencyToVote, Perbill>(
-				&new_set,
-				&phragmen_result.assignments,
-				Self::locked_stake_of,
-			);
+			let stake_of = |who: &T::AccountId| -> ExtendedBalance {
+				<T::CurrencyToVote as Convert<BalanceOf<T>, u64>>::convert(Self::locked_stake_of(
+					who,
+				)) as ExtendedBalance
+			};
+			let staked_assignments =
+				sp_phragmen::assignment_ratio_to_staked(phragmen_result.assignments, stake_of);
+
+			let (support_map, _) = build_support_map::<T::AccountId>(&new_set, &staked_assignments);
 
 			let to_balance = |e: ExtendedBalance| {
 				<T::CurrencyToVote as Convert<ExtendedBalance, BalanceOf<T>>>::convert(e)
