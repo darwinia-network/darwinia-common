@@ -85,7 +85,10 @@ pub use frame_support::{
 pub use pallet_timestamp::Call as TimestampCall;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-pub use sp_runtime::{traits::OpaqueKeys, Perbill, Percent, Permill};
+pub use sp_runtime::{
+	traits::{ConvertInto, OpaqueKeys},
+	Perbill, Percent, Permill,
+};
 // --- darwinia ---
 pub use darwinia_staking::StakerStatus;
 
@@ -177,6 +180,8 @@ pub type SignedExtra = (
 	frame_system::CheckEra<Runtime>,
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
+	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
+	darwinia_eth_relay::CheckEthRelayHeaderHash<Runtime>,
 	darwinia_staking::LockStakingStatus<Runtime>,
 );
 
@@ -297,6 +302,19 @@ impl pallet_timestamp::Trait for Runtime {
 	type Moment = Moment;
 	type OnTimestampSet = Babe;
 	type MinimumPeriod = MinimumPeriod;
+}
+
+parameter_types! {
+	pub const TransactionBaseFee: Balance = 0;
+	pub const TransactionByteFee: Balance = 1;
+}
+impl pallet_transaction_payment::Trait for Runtime {
+	type Currency = Balances;
+	type OnTransactionPayment = ();
+	type TransactionBaseFee = TransactionBaseFee;
+	type TransactionByteFee = TransactionByteFee;
+	type WeightToFee = ConvertInto;
+	type FeeMultiplierUpdate = ();
 }
 
 parameter_types! {
@@ -550,6 +568,7 @@ parameter_types! {
 impl darwinia_eth_relay::Trait for Runtime {
 	type Event = Event;
 	type EthNetwork = EthNetwork;
+	type Call = Call;
 }
 
 type SubmitPFTransaction =
@@ -582,6 +601,7 @@ construct_runtime!(
 		Babe: pallet_babe::{Module, Call, Storage, Config, Inherent(Timestamp)},
 
 		Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
+		TransactionPayment: pallet_transaction_payment::{Module, Storage},
 
 		// Consensus support.
 		Authorship: pallet_authorship::{Module, Call, Storage, Inherent},
@@ -649,12 +669,15 @@ impl frame_system::offchain::CreateTransaction<Runtime, UncheckedExtrinsic> for 
 			// The `System::block_number` is initialized with `n+1`,
 			// so the actual block number is `n`.
 			.saturating_sub(1);
+		let tip = 0;
 		let extra: SignedExtra = (
 			frame_system::CheckVersion::<Runtime>::new(),
 			frame_system::CheckGenesis::<Runtime>::new(),
 			frame_system::CheckEra::<Runtime>::from(generic::Era::mortal(period, current_block)),
 			frame_system::CheckNonce::<Runtime>::from(index),
 			frame_system::CheckWeight::<Runtime>::new(),
+			pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
+			Default::default(),
 			Default::default(),
 		);
 		let raw_payload = SignedPayload::new(call, extra)

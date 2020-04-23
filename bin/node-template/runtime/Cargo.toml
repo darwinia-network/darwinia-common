@@ -42,6 +42,7 @@ pallet-randomness-collective-flip = { default-features = false, git = "https://g
 pallet-session = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
 pallet-sudo = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
 pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
+pallet-transaction-payment = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
 sp-api = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
 sp-authority-discovery = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
 sp-block-builder = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
@@ -97,6 +98,7 @@ std = [
 	"pallet-session/std",
 	"pallet-sudo/std",
 	"pallet-timestamp/std",
+	"pallet-transaction-payment/std",
 	"sp-api/std",
 	"sp-authority-discovery/std",
 	"sp-block-builder/std",
