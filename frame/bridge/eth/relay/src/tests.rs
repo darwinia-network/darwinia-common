@@ -1,7 +1,7 @@
 //! Tests for eth-relay.
 
 // --- substrate ---
-use frame_support::{assert_err, assert_ok};
+use frame_support::{assert_err, assert_ok, weights::DispatchClass};
 use frame_system::RawOrigin;
 // --- darwinia ---
 use crate::{mock::*, *};
@@ -234,6 +234,65 @@ fn relay_mainet_header() {
 					&blocks_with_proofs.to_double_node_with_merkle_proof_vec()
 				));
 				assert_ok!(EthRelay::maybe_store_header(&header));
+			}
+		});
+}
+
+#[test]
+fn check_eth_relay_header_hash_works() {
+	ExtBuilder::default()
+		.eth_network(EthNetworkType::Mainnet)
+		.build()
+		.execute_with(|| {
+			// block 8996776
+			{
+				let blocks_with_proofs = BlockWithProofs::from_file("./src/test-data/8996776.json");
+				// println!("{:?}", blocks_with_proofs);
+				let header: EthHeader =
+					rlp::decode(&blocks_with_proofs.header_rlp.to_vec()).unwrap();
+				assert_ok!(EthRelay::init_genesis_header(&header, 0x6b2dd4a2c4f47d));
+
+				let blocks_with_proofs = BlockWithProofs::from_file("./src/test-data/8996776.json");
+				let header: EthHeader =
+					rlp::decode(&blocks_with_proofs.header_rlp.to_vec()).unwrap();
+
+				let info = DispatchInfo {
+					weight: 100,
+					class: DispatchClass::Normal,
+					pays_fee: true,
+				};
+				let check = CheckEthRelayHeaderHash::<Test>(Default::default());
+				let call: mock::Call = crate::Call::relay_header(
+					header,
+					blocks_with_proofs.to_double_node_with_merkle_proof_vec(),
+				)
+				.into();
+
+				assert_eq!(
+					check.validate(&0, &call, info, 0),
+					InvalidTransaction::Custom(<Error<Test>>::HeaderAE.as_u8()).into(),
+				);
+			}
+
+			// block 8996777
+			{
+				let blocks_with_proofs = BlockWithProofs::from_file("./src/test-data/8996777.json");
+				let header: EthHeader =
+					rlp::decode(&blocks_with_proofs.header_rlp.to_vec()).unwrap();
+
+				let info = DispatchInfo {
+					weight: 100,
+					class: DispatchClass::Normal,
+					pays_fee: true,
+				};
+				let check = CheckEthRelayHeaderHash::<Test>(Default::default());
+				let call: mock::Call = crate::Call::relay_header(
+					header,
+					blocks_with_proofs.to_double_node_with_merkle_proof_vec(),
+				)
+				.into();
+
+				assert_eq!(check.validate(&0, &call, info, 0), Ok(Default::default()));
 			}
 		});
 }

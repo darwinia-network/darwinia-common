@@ -166,6 +166,7 @@ impl_outer_origin! {
 
 impl_outer_dispatch! {
 	pub enum Call for Test where origin: Origin {
+		frame_system::System,
 		pallet_eth_relay::EthRelay,
 	}
 }
