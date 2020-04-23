@@ -25,14 +25,15 @@ pub mod opaque {
 	pub type BlockId = generic::BlockId<Block>;
 }
 
-pub mod support_kton_in_the_future {
+pub mod converter {
+	// --- substrate ---
 	use sp_runtime::traits::Convert;
+	// --- darwinia ---
 
 	use crate::*;
 
 	/// Converter for currencies to votes.
 	pub struct CurrencyToVoteHandler<R>(sp_std::marker::PhantomData<R>);
-
 	impl<R> CurrencyToVoteHandler<R>
 	where
 		R: darwinia_balances::Trait<RingInstance>,
@@ -44,7 +45,6 @@ pub mod support_kton_in_the_future {
 			(issuance / u64::max_value() as u128).max(1)
 		}
 	}
-
 	impl<R> Convert<u128, u64> for CurrencyToVoteHandler<R>
 	where
 		R: darwinia_balances::Trait<RingInstance>,
@@ -54,7 +54,6 @@ pub mod support_kton_in_the_future {
 			(x / Self::factor()) as u64
 		}
 	}
-
 	impl<R> Convert<u128, u128> for CurrencyToVoteHandler<R>
 	where
 		R: darwinia_balances::Trait<RingInstance>,
@@ -62,6 +61,18 @@ pub mod support_kton_in_the_future {
 	{
 		fn convert(x: u128) -> u128 {
 			x * Self::factor()
+		}
+	}
+
+	pub struct Bypass;
+	impl Convert<u32, u64> for Bypass {
+		fn convert(x: u32) -> u64 {
+			x as _
+		}
+	}
+	impl Convert<u128, u32> for Bypass {
+		fn convert(x: u128) -> u32 {
+			x as _
 		}
 	}
 }
@@ -143,6 +154,53 @@ pub type Power = u32;
 
 /// Alias Balances Module as Ring Module.
 pub type Ring = Balances;
+
+/// The address format for describing accounts.
+pub type Address = AccountId;
+
+/// Block header type as expected by this runtime.
+pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
+
+/// Block type as expected by this runtime.
+pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+
+/// A Block signed with a Justification
+pub type SignedBlock = generic::SignedBlock<Block>;
+
+/// BlockId type as expected by this runtime.
+pub type BlockId = generic::BlockId<Block>;
+
+/// The SignedExtension to the basic transaction logic.
+pub type SignedExtra = (
+	frame_system::CheckVersion<Runtime>,
+	frame_system::CheckGenesis<Runtime>,
+	frame_system::CheckEra<Runtime>,
+	frame_system::CheckNonce<Runtime>,
+	frame_system::CheckWeight<Runtime>,
+	darwinia_staking::LockStakingStatus<Runtime>,
+);
+
+/// Unchecked extrinsic type as expected by this runtime.
+pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+
+/// The payload being signed in transactions.
+pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
+
+/// Extrinsic type that has already been checked.
+pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, Nonce, Call>;
+
+/// Executive: handles dispatch to the various modules.
+pub type Executive = frame_executive::Executive<
+	Runtime,
+	Block,
+	frame_system::ChainContext<Runtime>,
+	Runtime,
+	AllModules,
+>;
+
+/// A transaction submitter with the given key type.
+pub type TransactionSubmitterOf<KeyType> =
+	TransactionSubmitter<KeyType, Runtime, UncheckedExtrinsic>;
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
@@ -278,6 +336,7 @@ impl pallet_session::Trait for Runtime {
 	type ValidatorId = AccountId;
 	type ValidatorIdOf = darwinia_staking::StashOf<Self>;
 	type ShouldEndSession = Babe;
+	type NextSessionRotation = Babe;
 	type SessionManager = Staking;
 	type SessionHandler = <SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = SessionKeys;
@@ -298,8 +357,6 @@ impl pallet_grandpa::Trait for Runtime {
 	type Event = Event;
 }
 
-/// A runtime transaction submitter.
-type SubmitTransaction = TransactionSubmitter<ImOnlineId, Runtime, UncheckedExtrinsic>;
 parameter_types! {
 	pub const SessionDuration: BlockNumber = SESSION_DURATION;
 }
@@ -307,7 +364,7 @@ impl pallet_im_online::Trait for Runtime {
 	type AuthorityId = ImOnlineId;
 	type Event = Event;
 	type Call = Call;
-	type SubmitTransaction = SubmitTransaction;
+	type SubmitTransaction = TransactionSubmitterOf<Self::AuthorityId>;
 	type SessionDuration = SessionDuration;
 	type ReportUnresponsiveness = Offences;
 }
@@ -351,8 +408,8 @@ impl darwinia_balances::Trait<RingInstance> for Runtime {
 	type DustRemoval = ();
 	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
 	type BalanceInfo = AccountData<Balance>;
+	type AccountStore = System;
 	type DustCollector = (Kton,);
 }
 impl darwinia_balances::Trait<KtonInstance> for Runtime {
@@ -360,8 +417,8 @@ impl darwinia_balances::Trait<KtonInstance> for Runtime {
 	type DustRemoval = ();
 	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
 	type BalanceInfo = AccountData<Balance>;
+	type AccountStore = System;
 	type DustCollector = (Ring,);
 }
 
@@ -370,14 +427,16 @@ parameter_types! {
 	pub const BondingDurationInEra: darwinia_staking::EraIndex = 14 * 24 * (HOURS / (SESSIONS_PER_ERA * BLOCKS_PER_SESSION));
 	pub const BondingDurationInBlockNumber: BlockNumber = 14 * DAYS;
 	pub const SlashDeferDuration: darwinia_staking::EraIndex = 7 * 24; // 1/4 the bonding duration.
+	pub const ElectionLookahead: BlockNumber = 25; // 10 minutes per session => 100 block.
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
 	// --- custom ---
 	pub const Cap: Balance = CAP;
 	pub const TotalPower: Power = TOTAL_POWER;
 }
 impl darwinia_staking::Trait for Runtime {
-	type UnixTime = Timestamp;
 	type Event = Event;
+	type UnixTime = Timestamp;
+	type BypassConverter = converter::Bypass;
 	type SessionsPerEra = SessionsPerEra;
 	type BondingDurationInEra = BondingDurationInEra;
 	type BondingDurationInBlockNumber = BondingDurationInBlockNumber;
@@ -386,6 +445,10 @@ impl darwinia_staking::Trait for Runtime {
 	type SlashCancelOrigin =
 		pallet_collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilCollective>;
 	type SessionInterface = Self;
+	type NextNewSession = Session;
+	type ElectionLookahead = ElectionLookahead;
+	type Call = Call;
+	type SubmitTransaction = TransactionSubmitterOf<()>;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
 	type RingCurrency = Ring;
 	type RingRewardRemainder = Treasury;
@@ -414,7 +477,7 @@ impl darwinia_elections_phragmen::Trait for Runtime {
 	type Event = Event;
 	type Currency = Ring;
 	type ChangeMembers = Council;
-	type CurrencyToVote = support_kton_in_the_future::CurrencyToVoteHandler<Self>;
+	type CurrencyToVote = converter::CurrencyToVoteHandler<Self>;
 	type CandidacyBond = CandidacyBond;
 	type VotingBond = VotingBond;
 	type LoserCandidate = Treasury;
@@ -489,48 +552,6 @@ impl darwinia_eth_relay::Trait for Runtime {
 	type EthNetwork = EthNetwork;
 }
 
-impl frame_system::offchain::CreateTransaction<Runtime, UncheckedExtrinsic> for Runtime {
-	type Public = <Signature as sp_runtime::traits::Verify>::Signer;
-	type Signature = Signature;
-
-	fn create_transaction<
-		TSigner: frame_system::offchain::Signer<Self::Public, Self::Signature>,
-	>(
-		call: Call,
-		public: Self::Public,
-		account: AccountId,
-		index: Nonce,
-	) -> Option<(
-		Call,
-		<UncheckedExtrinsic as sp_runtime::traits::Extrinsic>::SignaturePayload,
-	)> {
-		// take the biggest period possible.
-		let period = BlockHashCount::get()
-			.checked_next_power_of_two()
-			.map(|c| c / 2)
-			.unwrap_or(2) as u64;
-		let current_block = System::block_number()
-			.saturated_into::<u64>()
-			// The `System::block_number` is initialized with `n+1`,
-			// so the actual block number is `n`.
-			.saturating_sub(1);
-		let extra: SignedExtra = (
-			frame_system::CheckVersion::<Runtime>::new(),
-			frame_system::CheckGenesis::<Runtime>::new(),
-			frame_system::CheckEra::<Runtime>::from(generic::Era::mortal(period, current_block)),
-			frame_system::CheckNonce::<Runtime>::from(index),
-			frame_system::CheckWeight::<Runtime>::new(),
-		);
-		let raw_payload = SignedPayload::new(call, extra)
-			.map_err(|e| {
-				debug::warn!("Unable to create signed payload: {:?}", e);
-			})
-			.ok()?;
-		let signature = TSigner::sign(public, &raw_payload)?;
-		let (call, extra, _) = raw_payload.deconstruct();
-		Some((call, (account, signature, extra)))
-	}
-}
 type SubmitPFTransaction =
 	TransactionSubmitter<darwinia_eth_offchain::crypto::Public, Runtime, UncheckedExtrinsic>;
 parameter_types! {
@@ -584,7 +605,7 @@ construct_runtime!(
 		Kton: darwinia_balances::<Instance1>::{Module, Call, Storage, Config<T>, Event<T>},
 
 		// Consensus support.
-		Staking: darwinia_staking::{Module, Call, Storage, Config<T>, Event<T>},
+		Staking: darwinia_staking::{Module, Call, Storage, Config<T>, Event<T>, ValidateUnsigned},
 
 		// Governance stuff; uncallable initially.
 		ElectionsPhragmen: darwinia_elections_phragmen::{Module, Call, Storage, Event<T>},
@@ -603,38 +624,49 @@ construct_runtime!(
 	}
 );
 
-/// The address format for describing accounts.
-pub type Address = AccountId;
-/// Block header type as expected by this runtime.
-pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
-/// Block type as expected by this runtime.
-pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-/// A Block signed with a Justification
-pub type SignedBlock = generic::SignedBlock<Block>;
-/// BlockId type as expected by this runtime.
-pub type BlockId = generic::BlockId<Block>;
-/// The SignedExtension to the basic transaction logic.
-pub type SignedExtra = (
-	frame_system::CheckVersion<Runtime>,
-	frame_system::CheckGenesis<Runtime>,
-	frame_system::CheckEra<Runtime>,
-	frame_system::CheckNonce<Runtime>,
-	frame_system::CheckWeight<Runtime>,
-);
-/// Unchecked extrinsic type as expected by this runtime.
-pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
-/// The payload being signed in transactions.
-pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
-/// Extrinsic type that has already been checked.
-pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, Nonce, Call>;
-/// Executive: handles dispatch to the various modules.
-pub type Executive = frame_executive::Executive<
-	Runtime,
-	Block,
-	frame_system::ChainContext<Runtime>,
-	Runtime,
-	AllModules,
->;
+impl frame_system::offchain::CreateTransaction<Runtime, UncheckedExtrinsic> for Runtime {
+	type Public = <Signature as sp_runtime::traits::Verify>::Signer;
+	type Signature = Signature;
+
+	fn create_transaction<
+		TSigner: frame_system::offchain::Signer<Self::Public, Self::Signature>,
+	>(
+		call: Call,
+		public: Self::Public,
+		account: AccountId,
+		index: Nonce,
+	) -> Option<(
+		Call,
+		<UncheckedExtrinsic as sp_runtime::traits::Extrinsic>::SignaturePayload,
+	)> {
+		// take the biggest period possible.
+		let period = BlockHashCount::get()
+			.checked_next_power_of_two()
+			.map(|c| c / 2)
+			.unwrap_or(2) as u64;
+		let current_block = System::block_number()
+			.saturated_into::<u64>()
+			// The `System::block_number` is initialized with `n+1`,
+			// so the actual block number is `n`.
+			.saturating_sub(1);
+		let extra: SignedExtra = (
+			frame_system::CheckVersion::<Runtime>::new(),
+			frame_system::CheckGenesis::<Runtime>::new(),
+			frame_system::CheckEra::<Runtime>::from(generic::Era::mortal(period, current_block)),
+			frame_system::CheckNonce::<Runtime>::from(index),
+			frame_system::CheckWeight::<Runtime>::new(),
+			Default::default(),
+		);
+		let raw_payload = SignedPayload::new(call, extra)
+			.map_err(|e| {
+				debug::warn!("Unable to create signed payload: {:?}", e);
+			})
+			.ok()?;
+		let signature = TSigner::sign(public, &raw_payload)?;
+		let (call, extra, _) = raw_payload.deconstruct();
+		Some((call, (account, signature, extra)))
+	}
+}
 
 impl_runtime_apis! {
 	impl sp_api::Core<Block> for Runtime {
