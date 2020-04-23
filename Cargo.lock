@@ -3242,6 +3242,7 @@ dependencies = [
  "pallet-session",
  "pallet-sudo",
  "pallet-timestamp",
+ "pallet-transaction-payment",
  "parity-scale-codec",
  "serde",
  "sp-api",

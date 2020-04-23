@@ -5,7 +5,7 @@ use std::{cell::RefCell, fs::File};
 // --- crates ---
 use serde::Deserialize;
 // --- substrate ---
-use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
+use frame_support::{impl_outer_dispatch, impl_outer_origin, parameter_types, weights::Weight};
 use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill};
 // --- darwinia ---
@@ -18,10 +18,6 @@ type BlockNumber = u64;
 
 pub type System = frame_system::Module<Test>;
 pub type EthRelay = Module<Test>;
-
-impl_outer_origin! {
-	pub enum Origin for Test {}
-}
 
 thread_local! {
 	static ETH_NETWORK: RefCell<EthNetworkType> = RefCell::new(EthNetworkType::Ropsten);
@@ -144,7 +140,7 @@ parameter_types! {
 }
 impl frame_system::Trait for Test {
 	type Origin = Origin;
-	type Call = ();
+	type Call = Call;
 	type Index = u64;
 	type BlockNumber = BlockNumber;
 	type Hash = H256;
@@ -164,9 +160,21 @@ impl frame_system::Trait for Test {
 	type OnKilledAccount = ();
 }
 
+impl_outer_origin! {
+	pub enum Origin for Test  where system = frame_system {}
+}
+
+impl_outer_dispatch! {
+	pub enum Call for Test where origin: Origin {
+		frame_system::System,
+		pallet_eth_relay::EthRelay,
+	}
+}
+
 impl Trait for Test {
 	type Event = ();
 	type EthNetwork = EthNetwork;
+	type Call = Call;
 }
 
 pub struct ExtBuilder {

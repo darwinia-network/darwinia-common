@@ -21,8 +21,8 @@ macro_rules! impl_address {
 			where
 				S: Serializer,
 			{
-				let hex: String = hex_string_unchecked(&self.0, "0x").into_iter().collect();
-				serializer.serialize_str(&format!(concat!($prefix, "{}"), hex))
+				let hex: String = hex_string_unchecked(&self.0, $prefix).into_iter().collect();
+				serializer.serialize_str(&hex)
 			}
 		}
 
