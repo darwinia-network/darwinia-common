@@ -46,7 +46,9 @@ mod tests;
 use codec::Decode;
 use core::str::from_utf8;
 // --- substrate ---
-use frame_support::{debug::trace, decl_error, decl_event, decl_module, traits::Get};
+use frame_support::{
+	debug::error, debug::info, debug::trace, decl_error, decl_event, decl_module, traits::Get,
+};
 use frame_system::{self as system, offchain::SubmitSignedTransaction};
 use sp_runtime::{offchain::http::Request, traits::Zero, DispatchError, KeyTypeId};
 use sp_std::prelude::*;
@@ -66,26 +68,33 @@ const MAX_REDIRECT_TIMES: u8 = 3;
 const ETHRESOURCE: &'static [u8] = b"http://eth-resource";
 
 #[derive(Default)]
-struct OffchainRequest {
+pub struct OffchainRequest {
 	location: Vec<u8>,
 	payload: Vec<u8>,
 	redirect_times: u8,
 	cookie: Option<Vec<u8>>,
 }
 
-/// The OffhcainRequest handle the request session
-/// - set cookie if returns
-/// - handle the redirect actions if happends
+pub trait OffchainRequestTrait {
+	fn send(&mut self) -> Option<Vec<u8>>;
+}
+
 impl OffchainRequest {
-	pub fn new(url: Vec<u8>, payload: Vec<u8>) -> Self {
+	fn new(url: Vec<u8>, payload: Vec<u8>) -> Self {
 		OffchainRequest {
 			location: url.clone(),
 			payload,
 			..Default::default()
 		}
 	}
+}
 
-	pub fn send(mut self) -> Option<Vec<u8>> {
+/// The OffchainRequest handle the request session
+/// - set cookie if returns
+/// - handle the redirect actions if happends
+#[cfg(not(test))]
+impl OffchainRequestTrait for OffchainRequest {
+	fn send(&mut self) -> Option<Vec<u8>> {
 		for _ in 0..=MAX_REDIRECT_TIMES {
 			let p = self.payload.clone();
 			let request =
@@ -155,9 +164,6 @@ decl_event! {
 
 decl_error! {
 	pub enum Error for Module<T: Trait> {
-		/// Local accounts - UNAVAILABLE (Consider adding one via `author_insertKey` RPC)
-		AccountUnavail,
-
 		/// API Response - UNEXPECTED
 		APIRespUnexp,
 
@@ -192,8 +198,12 @@ decl_module! {
 		fn offchain_worker(block: T::BlockNumber) {
 			let fetch_interval = T::FetchInterval::get().max(1.into());
 			if (block % fetch_interval).is_zero() {
-				if let Err(e) = Self::relay_header(){
-					trace!(target: "eoc-wk", "[eth-offchain] Error: {:?}", e);
+				if T::SubmitSignedTransaction::can_sign() {
+					if let Err(e) = Self::relay_header(){
+						error!(target: "eoc-wk", "[eth-offchain] Error: {:?}", e);
+					}
+				} else {
+					trace!(target: "eoc-wk", "[eth-offchain] use `author_insertKey` rpc to inscert `rlwk` key to enable worker");
 				}
 			}
 		}
@@ -206,21 +216,20 @@ impl<T: Trait> Module<T> {
 	/// if there are issue to communicate with scale encoding, the failback communication will
 	/// be performed with json format(use option: `true`)
 	fn relay_header() -> Result<(), DispatchError> {
-		if !T::SubmitSignedTransaction::can_sign() {
-			Err(<Error<T>>::AccountUnavail)?;
-		}
-
 		let target_number = Self::get_target_number()?;
 		let header_without_option = Self::fetch_header(ETHRESOURCE.to_vec(), target_number, false);
 		let (header, proof_list) = match header_without_option {
 			Ok(r) => r,
 			Err(e) => {
-				trace!(target: "eoc-rh", "[eth-offchain] request without option fail: {:?}", e);
-				trace!(target: "eoc-rh", "[eth-offchain] request fail back wth option");
+				info!(target: "eoc-rh", "[eth-offchain] request without option fail: {:?}", e);
+				info!(target: "eoc-rh", "[eth-offchain] request fail back wth option");
 				Self::fetch_header(ETHRESOURCE.to_vec(), target_number, true)?
 			}
 		};
 
+		// The `submit_header` will call event out of eth-offchain pallet,
+		// so this function is skiped in the test of pallet
+		#[cfg(not(test))]
 		Self::submit_header(header, proof_list);
 		Ok(())
 	}
@@ -237,6 +246,10 @@ impl<T: Trait> Module<T> {
 		Ok(target_number)
 	}
 
+	fn build_request_client(url: Vec<u8>, payload: Vec<u8>) -> impl OffchainRequestTrait {
+		OffchainRequest::new(url, payload)
+	}
+
 	/// Build the response as EthHeader struct after validating
 	fn fetch_header(
 		url: Vec<u8>,
@@ -244,7 +257,8 @@ impl<T: Trait> Module<T> {
 		option: bool,
 	) -> Result<(EthHeader, Vec<DoubleNodeWithMerkleProof>), DispatchError> {
 		let payload = Self::build_payload(target_number, option);
-		let maybe_resp_body = OffchainRequest::new(url, payload).send();
+		let mut client = Self::build_request_client(url, payload);
+		let maybe_resp_body = client.send();
 
 		let mut resp_body = Self::validate_response(maybe_resp_body, option)?;
 		let header = if option {

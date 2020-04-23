@@ -927,6 +927,7 @@ dependencies = [
  "parity-scale-codec",
  "rlp 0.4.4",
  "sp-core",
+ "sp-io",
  "sp-runtime",
  "sp-std 2.0.0-alpha.5 (git+https://github.com/darwinia-network/substrate.git?rev=d1238423a3093eb64df90c0eebdbf504c8df56dd)",
 ]
