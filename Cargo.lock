@@ -969,24 +969,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-phragmen"
-version = "0.5.3"
-dependencies = [
- "darwinia-support",
- "rand 0.7.3",
- "serde",
- "sp-io",
- "sp-runtime",
- "sp-std 2.0.0-alpha.5",
- "substrate-test-utils",
-]
-
-[[package]]
 name = "darwinia-staking"
 version = "0.5.3"
 dependencies = [
  "darwinia-balances",
- "darwinia-phragmen",
  "darwinia-support",
  "frame-benchmarking",
  "frame-support",
@@ -1000,9 +986,11 @@ dependencies = [
  "serde",
  "sp-core",
  "sp-io",
+ "sp-phragmen",
  "sp-runtime",
  "sp-staking",
  "sp-std 2.0.0-alpha.5",
+ "static_assertions 1.1.0",
  "substrate-test-utils",
 ]
 
