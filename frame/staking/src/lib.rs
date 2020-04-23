@@ -340,6 +340,7 @@ use sp_phragmen::{
 	Assignment, ExtendedBalance, PhragmenResult, PhragmenScore, SupportMap, VotingLimit,
 };
 use sp_runtime::{
+	helpers_128bit::multiply_by_rational,
 	traits::{
 		AtLeast32Bit, CheckedSub, Convert, EnsureOrigin, SaturatedConversion, Saturating,
 		SignedExtension, StaticLookup, Zero,
@@ -848,8 +849,10 @@ pub trait Trait: frame_system::Trait {
 	/// is not used.
 	type UnixTime: UnixTime;
 
-	/// Total `Power` is `1_000_000_000`, never get overflow; qed
 	/// Just provide a workaround for `sp_phragmen`.
+	///
+	/// Total `Power` is `1_000_000_000 < u32::max_value()`
+	/// never get overflow; qed
 	type BypassConverter: Convert<Power, u64> + Convert<u128, Power>;
 
 	/// Number of sessions per era.
@@ -2919,7 +2922,7 @@ impl<T: Trait> Module<T> {
 			// We have chosen the new validator set. Submission is no longer allowed.
 			<EraElectionStatus<T>>::put(ElectionStatus::Closed);
 
-			// kill the snapshots.
+			// Kill the snapshots.
 			Self::kill_stakers_snapshot();
 
 			// Populate Stakers and write slot stake.
@@ -3092,26 +3095,58 @@ impl<T: Trait> Module<T> {
 				let mut own_power = 0;
 				let mut total_power = 0;
 				let mut others = vec![];
-				// FIXME: calculate ring and kton from power
-				support
-					.voters
-					.into_iter()
-					.map(|(nominator, weight)| (nominator, |w: ExtendedBalance| w as Power))
-					.for_each(|(nominator, stake)| {
-						if nominator == validator {
-							// own_ring_balance = own_ring_balance.saturating_add(ring_balance);
-							// own_kton_balance = own_kton_balance.saturating_add(kton_balance);
-							// own_power += power;
-						} else {
-							// others.push(IndividualExposure {
-							// 	who: account_id,
-							// 	ring_balance,
-							// 	kton_balance,
-							// 	power,
-							// });
-						}
-						// total_power += power;
-					});
+				support.voters.into_iter().for_each(|(nominator, weight)| {
+					let origin_weight = Self::power_of(&nominator) as ExtendedBalance;
+					let (origin_ring_balance, origin_kton_balance) = Self::stake_of(&nominator);
+
+					let ring_balance = if let Ok(ring_balance) = multiply_by_rational(
+						origin_ring_balance.saturated_into(),
+						weight,
+						origin_weight,
+					) {
+						ring_balance.saturated_into()
+					} else {
+						debug::error!(
+							target: "staking",
+							"[staking] Origin RING: {:?}, Weight: {:?}, Origin Weight: {:?}",
+							origin_ring_balance,
+							weight,
+							origin_weight
+						);
+						Zero::zero()
+					};
+					let kton_balance = if let Ok(kton_balance) = multiply_by_rational(
+						origin_kton_balance.saturated_into(),
+						weight,
+						origin_weight,
+					) {
+						kton_balance.saturated_into()
+					} else {
+						debug::error!(
+							target: "staking",
+							"[staking] Origin KTON: {:?}, Weight: {:?}, Origin Weight: {:?}",
+							origin_kton_balance,
+							weight,
+							origin_weight
+						);
+						Zero::zero()
+					};
+					let power = weight as Power;
+
+					if nominator == validator {
+						own_ring_balance = own_ring_balance.saturating_add(ring_balance);
+						own_kton_balance = own_kton_balance.saturating_add(kton_balance);
+						own_power = own_power.saturating_add(power);
+					} else {
+						others.push(IndividualExposure {
+							who: nominator,
+							ring_balance,
+							kton_balance,
+							power,
+						});
+					}
+					total_power = total_power.saturating_add(power);
+				});
 
 				let exposure = Exposure {
 					own_ring_balance,
