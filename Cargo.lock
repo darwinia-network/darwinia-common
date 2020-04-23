@@ -926,6 +926,7 @@ dependencies = [
  "hex",
  "parity-scale-codec",
  "rlp 0.4.4",
+ "serde_json",
  "sp-core",
  "sp-io",
  "sp-runtime",
