@@ -1,3 +1,4 @@
+use serde_json;
 // --- darwinia ---
 use crate::{mock::*, *};
 use frame_support::{assert_noop, assert_ok};
@@ -39,6 +40,22 @@ fn test_build_eth_header_from_scale_response() {
 		vec![DoubleNodeWithMerkleProof::default()],
 		decoded_double_node_with_proof
 	);
+}
+
+/// Request format should be json
+#[test]
+fn test_request_payload_format() {
+	let payload_without_option = EthOffchain::build_payload(1, false);
+	assert!(serde_json::from_str::<serde_json::value::Value>(
+		from_utf8(&payload_without_option[..]).unwrap()
+	)
+	.is_ok());
+
+	let payload_with_option = EthOffchain::build_payload(1, true);
+	assert!(serde_json::from_str::<serde_json::value::Value>(
+		from_utf8(&payload_with_option[..]).unwrap()
+	)
+	.is_ok());
 }
 
 /// Test offchain worker before any header relayed

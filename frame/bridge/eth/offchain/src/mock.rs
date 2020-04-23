@@ -91,7 +91,7 @@ impl darwinia_eth_relay::Trait for Test {
 //	}
 //}
 
-static mut shadow_service: Option<ShadowService> = None;
+static mut SHADOW_SERVICE: Option<ShadowService> = None;
 
 pub enum ShadowService {
 	SCALE,
@@ -101,7 +101,7 @@ pub enum ShadowService {
 impl OffchainRequestTrait for OffchainRequest {
 	fn send(&mut self) -> Option<Vec<u8>> {
 		unsafe {
-			match shadow_service {
+			match SHADOW_SERVICE {
 				Some(ShadowService::SCALE) => Some(SUPPOSED_SHADOW_SCALE_RESPONSE.to_vec()),
 				Some(ShadowService::JSON) => Some(SUPPOSED_SHADOW_JSON_RESPONSE.to_vec()),
 				_ => None,
@@ -112,7 +112,7 @@ impl OffchainRequestTrait for OffchainRequest {
 
 pub(crate) fn set_shadow_service(s: Option<ShadowService>) {
 	unsafe {
-		shadow_service = s;
+		SHADOW_SERVICE = s;
 	}
 }
 

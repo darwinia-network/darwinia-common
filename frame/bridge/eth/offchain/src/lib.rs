@@ -172,9 +172,6 @@ decl_error! {
 		/// Block Number - OVERFLOW
 		BlockNumberOF,
 
-		/// Request - REACH MAX RETRY
-		ReqRMR,
-
 		/// Proof - SCALE DECODE ERROR
 		ProofSE,
 		/// Proof - JSON DECODE ERROR
@@ -346,8 +343,8 @@ impl<T: Trait> Module<T> {
 		// Note the size is checked in `validate_response`, so there is no check here
 
 		let (hint, left_offset, right_offset) = if option { (125, 11, 5) } else { (44, 12, 3) };
-		let mut pr = 47;
-		for i in 47..r.len() {
+		let mut pr = 1355;
+		for i in 1355..r.len() {
 			// TODO: figure out the best strating point, for performance
 			if r[i] == hint {
 				pr = i;
