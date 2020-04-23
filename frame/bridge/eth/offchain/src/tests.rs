@@ -2,6 +2,7 @@
 use crate::{mock::*, *};
 use frame_support::{assert_noop, assert_ok};
 
+/// Basice JSON response handle
 #[test]
 fn test_build_eth_header_from_json_response() {
 	let raw_header =
@@ -19,6 +20,7 @@ fn test_build_eth_header_from_json_response() {
 	assert_eq!(1, double_node_with_proof_list.len());
 }
 
+/// Basice SCALE response handle
 #[test]
 fn test_build_eth_header_from_scale_response() {
 	let scale_decode_header =
@@ -39,6 +41,7 @@ fn test_build_eth_header_from_scale_response() {
 	);
 }
 
+/// Test offchain worker before any header relayed
 #[test]
 fn test_should_error_when_best_header_not_set() {
 	ExtBuilder::default().build().execute_with(|| {
@@ -47,10 +50,12 @@ fn test_should_error_when_best_header_not_set() {
 }
 
 /// Test offchain worker with different shadow service
-/// `set_shadow_service` is unsafe
-/// Keep this test run in a single theread
 #[test]
 fn test_should_handle_different_shadow_service() {
+	// NOTE:`set_shadow_service` is unsafe
+	// Keep this test run in a single theread
+
+	// should error when shadow service is non exsist
 	set_shadow_service(None);
 	ExtBuilder::default()
 		.set_genesis_header()
@@ -59,6 +64,7 @@ fn test_should_handle_different_shadow_service() {
 			assert_noop!(EthOffchain::relay_header(), OffchainError::APIRespUnexp);
 		});
 
+	// handle the scale response from shadow service
 	set_shadow_service(Some(ShadowService::SCALE));
 	ExtBuilder::default()
 		.set_genesis_header()
@@ -67,6 +73,7 @@ fn test_should_handle_different_shadow_service() {
 			assert_ok!(EthOffchain::relay_header());
 		});
 
+	// handle the json response from shadow service
 	set_shadow_service(Some(ShadowService::JSON));
 	ExtBuilder::default()
 		.set_genesis_header()
