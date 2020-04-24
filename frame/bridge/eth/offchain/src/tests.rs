@@ -3,43 +3,55 @@ use serde_json;
 use crate::{mock::*, *};
 use frame_support::{assert_noop, assert_ok};
 
+/// Extract value from JSON response
+#[test]
+fn test_extract_value_from_json_response() {
+	let result_part = EthOffchain::extract_from_json_str(&SUPPOSED_SHADOW_FAKE_RESPONSE[..], b"result" as &[u8]).unwrap();
+	assert_eq!(result_part, br#""eth_header":{eth-content},"proof":[proof-content]"# as &[u8]);
+	let eth_header_part = EthOffchain::extract_from_json_str(result_part, b"eth_header" as &[u8]).unwrap();
+	assert_eq!(eth_header_part , br#"eth-content"# as &[u8]);
+	let proof_header_part = EthOffchain::extract_from_json_str(result_part, b"proof" as &[u8]).unwrap();
+	assert_eq!(proof_header_part , br#"proof-content"# as &[u8]);
+}
+
+/// Extract value from JSON response with not alphabetical order
+#[test]
+fn test_extract_value_from_non_order_json_response() {
+	let result_part = EthOffchain::extract_from_json_str(&SUPPOSED_SHADOW_NON_ORDER_RESPONSE[..], b"result" as &[u8]).unwrap();
+	assert_eq!(result_part, br#""proof":[proof-content],"eth_header":{eth-content}"# as &[u8]);
+	let eth_header_part = EthOffchain::extract_from_json_str(result_part, b"eth_header" as &[u8]).unwrap();
+	assert_eq!(eth_header_part , br#"eth-content"# as &[u8]);
+	let proof_header_part = EthOffchain::extract_from_json_str(result_part, b"proof" as &[u8]).unwrap();
+	assert_eq!(proof_header_part , br#"proof-content"# as &[u8]);
+}
+
 /// Basice JSON response handle
 #[test]
 fn test_build_eth_header_from_json_response() {
-	let raw_header =
-		from_utf8(&SUPPOSED_SHADOW_JSON_RESPONSE[47..SUPPOSED_SHADOW_JSON_RESPONSE.len() - 1])
-			.unwrap_or_default();
-	let header = EthHeader::from_str_unchecked(raw_header);
-	// println!("{:?}", header);
+	let eth_header_part = EthOffchain::extract_from_json_str(&SUPPOSED_SHADOW_JSON_RESPONSE[..], b"eth_header" as &[u8]).unwrap_or_default();
+	let header = EthHeader::from_str_unchecked(from_utf8(eth_header_part).unwrap_or_default());
 	assert_eq!(header.hash.unwrap(), header.re_compute_hash());
 
-	let mut response = SUPPOSED_SHADOW_JSON_RESPONSE.to_vec();
-	EthOffchain::extract_proof(&mut response, true);
-	// println!("{:?}", response);
+	let proof_part = EthOffchain::extract_from_json_str(&SUPPOSED_SHADOW_JSON_RESPONSE[..], b"proof" as &[u8]).unwrap_or_default();
 	let double_node_with_proof_list =
-		EthOffchain::parse_double_node_with_proof_list_from_json_str(&response[..]).unwrap();
+		EthOffchain::parse_double_node_with_proof_list_from_json_str(proof_part).unwrap();
 	assert_eq!(1, double_node_with_proof_list.len());
 }
 
 /// Basice SCALE response handle
 #[test]
 fn test_build_eth_header_from_scale_response() {
-	let scale_decode_header =
-		EthOffchain::parse_ethheader_from_scale_str(&SUPPOSED_SHADOW_SCALE_RESPONSE[..]);
+	let eth_header_part = EthOffchain::extract_from_json_str(&SUPPOSED_SHADOW_SCALE_RESPONSE[..], b"eth_header" as &[u8]).unwrap_or_default();
+	let scale_bytes = hex_bytes_unchecked(from_utf8(eth_header_part).unwrap_or_default());
+	let scale_decode_header: EthHeader = Decode::decode::<&[u8]>(&mut &scale_bytes[..]).unwrap_or_default();
+
 	let header = EthHeader::from_str_unchecked(SUPPOSED_ETHHEADER);
 	assert_eq!(scale_decode_header, header);
 
-	let mut response = SUPPOSED_SHADOW_SCALE_RESPONSE.to_vec();
-	EthOffchain::extract_proof(&mut response, false);
-	assert_eq!(260, response.len()); // 260 = (129 + 1) * 2
+	let proof_part = EthOffchain::extract_from_json_str(&SUPPOSED_SHADOW_SCALE_RESPONSE[..], b"proof" as &[u8]).unwrap_or_default();
+	let decoded_double_node_with_proof = EthOffchain::parse_double_node_with_proof_list_from_scale_str(proof_part).unwrap();
 
-	let decoded_double_node_with_proof =
-		EthOffchain::parse_double_node_with_proof_list_from_scale_str(&response[..]).unwrap();
-
-	assert_eq!(
-		vec![DoubleNodeWithMerkleProof::default()],
-		decoded_double_node_with_proof
-	);
+	assert_eq!(vec![DoubleNodeWithMerkleProof::default()], decoded_double_node_with_proof);
 }
 
 /// Request format should be json
