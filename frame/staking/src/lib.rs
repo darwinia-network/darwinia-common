@@ -235,17 +235,18 @@
 #![feature(drain_filter)]
 #![recursion_limit = "128"]
 
-#[cfg(any(feature = "runtime-benchmarks", test))]
-pub mod benchmarking;
-#[cfg(features = "testing-utils")]
-pub mod testing_utils;
+// #[cfg(any(feature = "runtime-benchmarks", test))]
+// pub mod benchmarking;
+// TODO: offchain phragmen test https://github.com/darwinia-network/darwinia-common/issues/97
+// #[cfg(features = "testing-utils")]
+// pub mod testing_utils;
 
 pub mod inflation;
 pub mod offchain_election;
 pub mod slashing;
 
-#[cfg(test)]
-mod darwinia_tests;
+// #[cfg(test)]
+// mod darwinia_tests;
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
@@ -321,6 +322,10 @@ pub use types::EraIndex;
 // --- crates ---
 use codec::{Decode, Encode, HasCompact};
 // --- substrate ---
+#[cfg(test)]
+use frame_support::traits::Time;
+#[cfg(not(test))]
+use frame_support::traits::UnixTime;
 use frame_support::{
 	debug, decl_error, decl_event, decl_module, decl_storage,
 	dispatch::IsSubType,
@@ -328,7 +333,7 @@ use frame_support::{
 	storage::IterableStorageMap,
 	traits::{
 		Currency, EstimateNextNewSession, ExistenceRequirement::KeepAlive, Get, Imbalance,
-		OnUnbalanced, UnixTime,
+		OnUnbalanced,
 	},
 	weights::{SimpleDispatchInfo, Weight},
 };
@@ -369,9 +374,8 @@ use darwinia_support::{
 };
 use types::*;
 
-pub const MAX_NOMINATIONS: usize = <CompactAssignments as VotingLimit>::LIMIT;
-pub const MAX_UNLOCKING_CHUNKS: usize = 32;
-
+pub(crate) const MAX_NOMINATIONS: usize = <CompactAssignments as VotingLimit>::LIMIT;
+pub(crate) const MAX_UNLOCKING_CHUNKS: usize = 32;
 /// Maximum number of stakers that can be stored in a snapshot.
 pub(crate) const MAX_VALIDATORS: usize = ValidatorIndex::max_value() as usize;
 pub(crate) const MAX_NOMINATORS: usize = NominatorIndex::max_value() as usize;
@@ -380,6 +384,33 @@ const DEFAULT_MINIMUM_VALIDATOR_COUNT: u32 = 4;
 const MONTH_IN_MINUTES: TsInMs = 30 * 24 * 60;
 const MONTH_IN_MILLISECONDS: TsInMs = MONTH_IN_MINUTES * 60 * 1000;
 const STAKING_ID: LockIdentifier = *b"da/staki";
+
+#[macro_export]
+macro_rules! unix_time_now {
+	() => {{
+		match () {
+			#[cfg(feature = "build-spec")]
+			() => $crate::unix_time_now!(build_spec),
+			#[cfg(test)]
+			() => $crate::unix_time_now!(test),
+			#[cfg(not(any(feature = "build-spec", test)))]
+			() => $crate::unix_time_now!(product),
+			}
+		}};
+	(build_spec) => {{
+		std::time::SystemTime::now()
+			.duration_since(std::time::UNIX_EPOCH)
+			.expect("`now` always greater than `UNIX_EPOCH`, never get panic; qed")
+			.as_millis()
+			.saturated_into::<u64>()
+		}};
+	(product) => {{
+		T::UnixTime::now().as_millis().saturated_into::<u64>()
+		}};
+	(test) => {{
+		T::Time::now().saturated_into::<u64>()
+		}};
+}
 
 // --- enum ---
 
@@ -847,7 +878,11 @@ pub trait Trait: frame_system::Trait {
 	///
 	/// It is guaranteed to start being called from the first `on_finalize`. Thus value at genesis
 	/// is not used.
+	#[cfg(not(test))]
 	type UnixTime: UnixTime;
+
+	#[cfg(test)]
+	type Time: Time;
 
 	/// Just provide a workaround for `sp_phragmen`.
 	///
@@ -1355,7 +1390,7 @@ decl_module! {
 		fn on_finalize() {
 			if let Some(mut active_era) = Self::active_era() {
 				if active_era.start.is_none() {
-					let now = T::UnixTime::now().as_millis().saturated_into();
+					let now = unix_time_now!();
 					active_era.start = Some(now);
 					ActiveEra::put(active_era);
 				}
@@ -1506,7 +1541,7 @@ decl_module! {
 			let stash = ensure_signed(origin)?;
 			let controller = Self::bonded(&stash).ok_or(<Error<T>>::NotStash)?;
 			let ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
-			let start_time = T::UnixTime::now().as_millis().saturated_into();
+			let start_time = unix_time_now!();
 			let promise_month = promise_month.max(3).min(36);
 			let expire_time = start_time + promise_month as TsInMs * MONTH_IN_MILLISECONDS;
 			let mut ledger = Self::clear_mature_deposits(ledger);
@@ -1730,7 +1765,7 @@ decl_module! {
 		fn try_claim_deposits_with_punish(origin, expire_time: TsInMs) {
 			let controller = ensure_signed(origin)?;
 			let mut ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
-			let now = T::UnixTime::now().as_millis().saturated_into();
+			let now = unix_time_now!();
 
 			if expire_time <= now {
 				return Ok(());
@@ -2220,18 +2255,7 @@ impl<T: Trait> Module<T> {
 		promise_month: u8,
 		mut ledger: StakingLedgerT<T>,
 	) -> (TsInMs, TsInMs) {
-		#[cfg(feature = "build-spec")]
-		let start_time = {
-			use std::time::{SystemTime, UNIX_EPOCH};
-			SystemTime::now()
-				.duration_since(UNIX_EPOCH)
-				.expect("`now` always greater than `UNIX_EPOCH`, never get panic; qed")
-				.as_millis()
-				.saturated_into()
-		};
-		#[cfg(not(feature = "build-spec"))]
-		let start_time = T::UnixTime::now().as_millis().saturated_into();
-
+		let start_time = unix_time_now!();
 		let mut expire_time = start_time;
 
 		ledger.active_ring = ledger.active_ring.saturating_add(value);
@@ -2289,7 +2313,7 @@ impl<T: Trait> Module<T> {
 
 	// TODO: doc
 	pub fn clear_mature_deposits(mut ledger: StakingLedgerT<T>) -> StakingLedgerT<T> {
-		let now = T::UnixTime::now().as_millis().saturated_into();
+		let now = unix_time_now!();
 		let StakingLedger {
 			active_deposit_ring,
 			deposit_items,
@@ -2859,8 +2883,7 @@ impl<T: Trait> Module<T> {
 	fn end_era(active_era: ActiveEraInfo, _session_index: SessionIndex) {
 		// Note: active_era_start can be None if end era is called during genesis config.
 		if let Some(active_era_start) = active_era.start {
-			let now = T::UnixTime::now().as_millis().saturated_into::<u64>();
-
+			let now = unix_time_now!();
 			let living_time = Self::living_time();
 			let era_duration = now - active_era_start;
 

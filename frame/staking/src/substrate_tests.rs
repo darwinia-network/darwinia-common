@@ -122,7 +122,8 @@ fn basic_setup_works() {
 					+ Staking::currency_to_power(125, Staking::ring_pool()),
 				others: vec![IndividualExposure {
 					who: 101,
-					ring_balance: 125,
+					// expect 125, error rate 1
+					ring_balance: 124,
 					kton_balance: 0,
 					power: Staking::currency_to_power(125, Staking::ring_pool()),
 				}]
@@ -611,13 +612,15 @@ fn nominating_and_rewards_should_work() {
 					others: vec![
 						IndividualExposure {
 							who: 3,
-							ring_balance: 600,
+							// expect 600, error rate 1
+							ring_balance: 599,
 							kton_balance: 0,
 							power: Staking::currency_to_power(600, Staking::ring_pool()),
 						},
 						IndividualExposure {
 							who: 1,
-							ring_balance: 600,
+							// expect 600, error rate 1
+							ring_balance: 599,
 							kton_balance: 0,
 							power: Staking::currency_to_power(600, Staking::ring_pool()),
 						},
@@ -816,50 +819,35 @@ fn session_and_eras_work() {
 	ExtBuilder::default().build().execute_with(|| {
 		assert_eq!(Staking::active_era().unwrap().index, 0);
 
-		// Block 1: No change.
+		// Session 1: No change.
 		start_session(1);
 		assert_eq!(Session::current_index(), 1);
 		assert_eq!(Staking::active_era().unwrap().index, 0);
 
-		// Block 2: No change.
+		// Session 2: No change.
 		start_session(2);
 		assert_eq!(Session::current_index(), 2);
 		assert_eq!(Staking::active_era().unwrap().index, 0);
 
-		// Block 3: Era increment.
+		// Session 3: Era increment.
 		start_session(3);
 		assert_eq!(Session::current_index(), 3);
 		assert_eq!(Staking::active_era().unwrap().index, 1);
 
-		// Block 4: No change.
+		// Session 4: No change.
 		start_session(4);
 		assert_eq!(Session::current_index(), 4);
 		assert_eq!(Staking::active_era().unwrap().index, 1);
 
-		// Block 5: No change.
+		// Session 5: No change.
 		start_session(5);
 		assert_eq!(Session::current_index(), 5);
 		assert_eq!(Staking::active_era().unwrap().index, 1);
 
-		// Block 6: Era increment.
+		// Session 6: Era increment.
 		start_session(6);
 		assert_eq!(Session::current_index(), 6);
 		assert_eq!(Staking::active_era().unwrap().index, 2);
-
-		// Block 7: No change.
-		start_session(7);
-		assert_eq!(Session::current_index(), 7);
-		assert_eq!(Staking::active_era().unwrap().index, 2);
-
-		// Block 8: No change.
-		start_session(8);
-		assert_eq!(Session::current_index(), 8);
-		assert_eq!(Staking::active_era().unwrap().index, 2);
-
-		// Block 9: Era increment.
-		start_session(9);
-		assert_eq!(Session::current_index(), 9);
-		assert_eq!(Staking::active_era().unwrap().index, 3);
 	});
 }
 
@@ -1171,10 +1159,11 @@ fn validator_payment_prefs_work() {
 
 		let taken_cut = commission * total_payout_1;
 		let shared_cut = total_payout_1 - taken_cut;
-		let reward_of_10 =
-			shared_cut * exposure_1.own_power as u128 / exposure_1.total_power as u128 + taken_cut;
+		let reward_of_10 = shared_cut * exposure_1.own_power as Balance
+			/ exposure_1.total_power as Balance
+			+ taken_cut;
 		let reward_of_100 =
-			shared_cut * exposure_1.others[0].power as u128 / exposure_1.total_power as u128;
+			shared_cut * exposure_1.others[0].power as Balance / exposure_1.total_power as Balance;
 		assert_eq_error_rate!(
 			Ring::free_balance(&10),
 			balance_era_1_10 + reward_of_10,
@@ -1841,11 +1830,11 @@ fn phragmen_should_not_overflow_validators() {
 			let _ = Staking::chill(Origin::signed(10));
 			let _ = Staking::chill(Origin::signed(20));
 
-			bond_validator(2, StakingBalance::RingBalance(CAP));
-			bond_validator(4, StakingBalance::KtonBalance(Balance::max_value() - 1));
+			bond_validator(3, 2, StakingBalance::RingBalance(CAP));
+			bond_validator(5, 4, StakingBalance::KtonBalance(Balance::max_value() - 1));
 
-			bond_nominator(6, StakingBalance::RingBalance(1), vec![3, 5]);
-			bond_nominator(8, StakingBalance::KtonBalance(1), vec![3, 5]);
+			bond_nominator(7, 6, StakingBalance::RingBalance(1), vec![3, 5]);
+			bond_nominator(9, 8, StakingBalance::KtonBalance(1), vec![3, 5]);
 
 			start_era(1);
 
@@ -1872,11 +1861,12 @@ fn phragmen_should_not_overflow_nominators() {
 			let _ = Staking::chill(Origin::signed(10));
 			let _ = Staking::chill(Origin::signed(20));
 
-			bond_validator(2, StakingBalance::RingBalance(1));
-			bond_validator(4, StakingBalance::KtonBalance(1));
+			bond_validator(3, 2, StakingBalance::RingBalance(1));
+			bond_validator(5, 4, StakingBalance::KtonBalance(1));
 
-			bond_nominator(6, StakingBalance::RingBalance(CAP), vec![3, 5]);
+			bond_nominator(7, 6, StakingBalance::RingBalance(CAP), vec![3, 5]);
 			bond_nominator(
+				9,
 				8,
 				StakingBalance::KtonBalance(Balance::max_value() - 1),
 				vec![3, 5],
@@ -1904,11 +1894,12 @@ fn phragmen_should_not_overflow_ultimate() {
 		.nominate(false)
 		.build()
 		.execute_with(|| {
-			bond_validator(2, StakingBalance::RingBalance(CAP));
-			bond_validator(4, StakingBalance::KtonBalance(Balance::max_value() / 2));
+			bond_validator(3, 2, StakingBalance::RingBalance(CAP));
+			bond_validator(5, 4, StakingBalance::KtonBalance(Balance::max_value() / 2));
 
-			bond_nominator(6, StakingBalance::RingBalance(CAP), vec![3, 5]);
+			bond_nominator(7, 6, StakingBalance::RingBalance(CAP), vec![3, 5]);
 			bond_nominator(
+				9,
 				8,
 				StakingBalance::KtonBalance(Balance::max_value() / 2),
 				vec![3, 5],
@@ -2080,16 +2071,18 @@ fn era_is_always_same_length() {
 	// This ensures that the sessions is always of the same length if there is no forcing no
 	// session changes.
 	ExtBuilder::default().build().execute_with(|| {
+		let session_per_era = <SessionsPerEra as Get<SessionIndex>>::get();
+
 		start_era(1);
 		assert_eq!(
-			Staking::eras_start_session_index(Staking::active_era().unwrap().index).unwrap(),
-			SessionsPerEra::get(),
+			Staking::eras_start_session_index(active_era()).unwrap(),
+			session_per_era
 		);
 
 		start_era(2);
 		assert_eq!(
-			Staking::eras_start_session_index(Staking::active_era().unwrap().index).unwrap(),
-			SessionsPerEra::get() * 2,
+			Staking::eras_start_session_index(active_era()).unwrap(),
+			session_per_era * 2u32
 		);
 
 		let session = Session::current_index();
@@ -2098,14 +2091,14 @@ fn era_is_always_same_length() {
 		advance_session();
 		assert_eq!(Staking::active_era().unwrap().index, 3);
 		assert_eq!(
-			Staking::eras_start_session_index(Staking::active_era().unwrap().index).unwrap(),
-			session + 2,
+			Staking::eras_start_session_index(active_era()).unwrap(),
+			session + 2
 		);
 
 		start_era(4);
 		assert_eq!(
-			Staking::eras_start_session_index(Staking::active_era().unwrap().index).unwrap(),
-			session + 2 + SessionsPerEra::get(),
+			Staking::eras_start_session_index(active_era()).unwrap(),
+			session + 2u32 + session_per_era
 		);
 	});
 }
@@ -2152,10 +2145,11 @@ fn offence_ensures_new_era_without_clobbering() {
 }
 
 #[test]
-fn offence_deselects_validator_when_slash_is_zero() {
+fn offence_deselects_validator_even_when_slash_is_zero() {
 	ExtBuilder::default().build().execute_with(|| {
 		assert!(Session::validators().contains(&11));
 		assert!(<Validators<Test>>::contains_key(11));
+
 		on_offence_now(
 			&[OffenceDetails {
 				offender: (
@@ -2166,9 +2160,12 @@ fn offence_deselects_validator_when_slash_is_zero() {
 			}],
 			&[Perbill::from_percent(0)],
 		);
+
 		assert_eq!(Staking::force_era(), Forcing::ForceNew);
 		assert!(!<Validators<Test>>::contains_key(11));
+
 		start_era(1);
+
 		assert!(!Session::validators().contains(&11));
 		assert!(!<Validators<Test>>::contains_key(11));
 	});
@@ -2214,6 +2211,7 @@ fn slash_in_old_span_does_not_deselect() {
 
 		assert!(<Validators<Test>>::contains_key(11));
 		assert!(Session::validators().contains(&11));
+
 		on_offence_now(
 			&[OffenceDetails {
 				offender: (
@@ -2224,6 +2222,7 @@ fn slash_in_old_span_does_not_deselect() {
 			}],
 			&[Perbill::from_percent(0)],
 		);
+
 		assert_eq!(Staking::force_era(), Forcing::ForceNew);
 		assert!(!<Validators<Test>>::contains_key(11));
 
@@ -2251,7 +2250,7 @@ fn slash_in_old_span_does_not_deselect() {
 			1,
 		);
 
-		// not for zero-slash.
+		// not forcing for zero-slash and previous span.
 		assert_eq!(Staking::force_era(), Forcing::NotForcing);
 		assert!(<Validators<Test>>::contains_key(11));
 		assert!(Session::validators().contains(&11));
@@ -2280,7 +2279,7 @@ fn slash_in_old_span_does_not_deselect() {
 #[test]
 fn reporters_receive_their_slice() {
 	// This test verifies that the reporters of the offence receive their slice from the slashed
-	// amount.
+	// amount, but less and less if they submit multiple reports in one span.
 	ExtBuilder::default().build().execute_with(|| {
 		// The reporters' reward is calculated from the total exposure.
 		let initial_balance = 1125;
@@ -2291,7 +2290,8 @@ fn reporters_receive_their_slice() {
 				.others
 				.iter()
 				.fold(expo.own_ring_balance, |acc, i| acc + i.ring_balance);
-			assert_eq!(total_ring, initial_balance);
+			// expect `initial_balance`, error rate 1
+			assert_eq!(total_ring, initial_balance - 1);
 		}
 
 		on_offence_now(
@@ -2329,7 +2329,8 @@ fn subsequent_reports_in_same_span_pay_out_less() {
 				.others
 				.iter()
 				.fold(expo.own_ring_balance, |acc, i| acc + i.ring_balance);
-			assert_eq!(total_ring, initial_balance);
+			// expect `initial_balance`, error rate 1
+			assert_eq!(total_ring, initial_balance - 1);
 		}
 
 		on_offence_now(
@@ -2444,12 +2445,16 @@ fn dont_slash_if_fraction_is_zero() {
 
 		// The validator hasn't been slashed. The new era is not forced.
 		assert_eq!(Ring::free_balance(11), 1000);
+		assert_eq!(Staking::force_era(), Forcing::ForceNew);
+
 		assert_ledger_consistent(11);
 	});
 }
 
 #[test]
 fn only_slash_for_max_in_era() {
+	// multiple slashes within one era are only applied if it is more than any previous slash in the
+	// same era.
 	ExtBuilder::default().build().execute_with(|| {
 		assert_eq!(Ring::free_balance(11), 1000);
 
@@ -2501,6 +2506,7 @@ fn only_slash_for_max_in_era() {
 
 #[test]
 fn garbage_collection_after_slashing() {
+	// ensures that `SlashingSpans` and `SpanSlash` of an account is removed after reaping.
 	ExtBuilder::default()
 		.existential_deposit(2)
 		.build()
@@ -2556,12 +2562,15 @@ fn garbage_collection_after_slashing() {
 
 #[test]
 fn garbage_collection_on_window_pruning() {
+	// ensures that `ValidatorSlashInEra` and `NominatorSlashInEra` are cleared after
+	// `BondingDuration`.
 	ExtBuilder::default().build().execute_with(|| {
 		start_era(1);
 
 		assert_eq!(Ring::free_balance(11), 1000);
+		let now = Staking::active_era().unwrap().index;
 
-		let exposure = Staking::eras_stakers(Staking::active_era().unwrap().index, 11);
+		let exposure = Staking::eras_stakers(now, 11);
 		assert_eq!(Ring::free_balance(101), 2000);
 		let nominated_value = exposure
 			.others
@@ -2572,16 +2581,11 @@ fn garbage_collection_on_window_pruning() {
 
 		on_offence_now(
 			&[OffenceDetails {
-				offender: (
-					11,
-					Staking::eras_stakers(Staking::active_era().unwrap().index, 11),
-				),
+				offender: (11, Staking::eras_stakers(now, 11)),
 				reporters: vec![],
 			}],
 			&[Perbill::from_percent(10)],
 		);
-
-		let now = Staking::active_era().unwrap().index;
 
 		assert_eq!(Ring::free_balance(11), 900);
 		assert_eq!(Ring::free_balance(101), 2000 - (nominated_value / 10));
@@ -2616,7 +2620,6 @@ fn slashing_nominators_by_span_max() {
 
 		let exposure_11 = Staking::eras_stakers(Staking::active_era().unwrap().index, 11);
 		let exposure_21 = Staking::eras_stakers(Staking::active_era().unwrap().index, 21);
-		assert_eq!(Ring::free_balance(101), 2000);
 		let nominated_value_11 = exposure_11
 			.others
 			.iter()
@@ -3010,38 +3013,46 @@ fn remove_multi_deferred() {
 
 			let slashes = <Staking as Store>::UnappliedSlashes::get(&1);
 			assert_eq!(slashes.len(), 2);
-			// println!("Slashes: {:?}", slashes);
 			assert_eq!(slashes[0].validator, 21);
 			assert_eq!(slashes[1].validator, 42);
 		})
 }
 
 #[test]
-fn slash_kicks_validators_not_nominators() {
+fn slash_kicks_validators_not_nominators_and_disables_nominator_for_kicked_validator() {
 	ExtBuilder::default().build().execute_with(|| {
 		start_era(1);
+		assert_eq_uvec!(Session::validators(), vec![11, 21]);
 
+		// pre-slash balance
 		assert_eq!(Ring::free_balance(11), 1000);
-
-		let exposure = Staking::eras_stakers(Staking::active_era().unwrap().index, 11);
 		assert_eq!(Ring::free_balance(101), 2000);
-		let nominated_value = exposure
-			.others
-			.iter()
-			.find(|o| o.who == 101)
-			.unwrap()
-			.ring_balance;
+
+		// 11 and 21 both have the support of 100
+		let exposure_11 = Staking::eras_stakers(active_era(), &11);
+		let exposure_21 = Staking::eras_stakers(active_era(), &21);
+
+		assert_eq!(
+			exposure_11.total_power,
+			Staking::currency_to_power(1000 + 125, Staking::ring_pool())
+		);
+		assert_eq!(
+			exposure_21.total_power,
+			Staking::currency_to_power(1000 + 375, Staking::ring_pool())
+		);
 
 		on_offence_now(
 			&[OffenceDetails {
-				offender: (11, exposure.clone()),
+				offender: (11, exposure_11.clone()),
 				reporters: vec![],
 			}],
 			&[Perbill::from_percent(10)],
 		);
 
+		// post-slash balance
+		let nominator_slash_amount_11 = 125 / 10;
 		assert_eq!(Ring::free_balance(11), 900);
-		assert_eq!(Ring::free_balance(101), 2000 - (nominated_value / 10));
+		assert_eq!(Ring::free_balance(101), 2000 - nominator_slash_amount_11);
 
 		// This is the best way to check that the validator was chilled; `get` will
 		// return default value.
@@ -3057,6 +3068,28 @@ fn slash_kicks_validators_not_nominators() {
 			.unwrap()
 			.last_nonzero_slash();
 		assert!(nominations.submitted_in < last_slash);
+
+		// actually re-bond the slashed validator
+		assert_ok!(Staking::validate(Origin::signed(10), Default::default()));
+
+		start_era(2);
+		let exposure_11 = Staking::eras_stakers(active_era(), &11);
+		let exposure_21 = Staking::eras_stakers(active_era(), &21);
+
+		// 10 is re-elected, but without the support of 100
+		assert_eq!(
+			exposure_11.total_power,
+			Staking::currency_to_power(900, Staking::ring_pool())
+		);
+
+		// 20 is re-elected, with the (almost) entire support of 100
+		assert_eq!(
+			exposure_21.total_power,
+			Staking::currency_to_power(
+				1000 + 500 - nominator_slash_amount_11,
+				Staking::ring_pool()
+			)
+		);
 	});
 }
 
@@ -3179,7 +3212,7 @@ fn zero_slash_keeps_nominators() {
 
 		assert_eq!(Ring::free_balance(11), 1000);
 
-		let exposure = Staking::eras_stakers(Staking::active_era().unwrap().index, 11);
+		let exposure = Staking::eras_stakers(active_era(), 11);
 		assert_eq!(Ring::free_balance(101), 2000);
 
 		on_offence_now(

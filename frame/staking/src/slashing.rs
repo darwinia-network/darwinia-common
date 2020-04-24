@@ -1,10 +1,10 @@
 //! A slashing implementation for NPoS systems.
 //!
-//! For the purposes of the economic model, it is easiest to think of each validator
-//! of a nominator which nominates only its own identity.
+//! For the purposes of the economic model, it is easiest to think of each validator as a nominator
+//! which nominates only its own identity.
 //!
-//! The act of nomination signals intent to unify economic identity with the validator - to take part in the
-//! rewards of a job well done, and to take part in the punishment of a job done badly.
+//! The act of nomination signals intent to unify economic identity with the validator - to take
+//! part in the rewards of a job well done, and to take part in the punishment of a job done badly.
 //!
 //! There are 3 main difficulties to account for with slashing in NPoS:
 //!   - A nominator can nominate multiple validators and be slashed via any of them.
@@ -55,7 +55,7 @@ use crate::*;
 const REWARD_F1: Perbill = Perbill::from_percent(50);
 
 /// The index of a slashing span - unique to each stash.
-pub(crate) type SpanIndex = u32;
+pub type SpanIndex = u32;
 
 // TODO doc
 pub(crate) type RKT<T> = RK<RingBalance<T>, KtonBalance<T>>;
@@ -173,7 +173,7 @@ impl SlashingSpan {
 }
 
 /// An encoding of all of a nominator's slashing spans.
-#[derive(Encode, Decode)]
+#[derive(Encode, Decode, RuntimeDebug)]
 pub struct SlashingSpans {
 	// the index of the current slashing span of the nominator. different for
 	// every stash, resets when the account hits free balance 0.
@@ -243,7 +243,7 @@ impl SlashingSpans {
 	}
 
 	/// Yields the era index where the most recent non-zero slash occurred.
-	pub(crate) fn last_nonzero_slash(&self) -> EraIndex {
+	pub fn last_nonzero_slash(&self) -> EraIndex {
 		self.last_nonzero_slash
 	}
 
@@ -698,7 +698,7 @@ pub fn do_slash<T: Trait>(
 		value.r,
 		value.k,
 		<frame_system::Module<T>>::block_number(),
-		T::UnixTime::now().as_millis().saturated_into(),
+		unix_time_now!(),
 	);
 	let mut slashed = false;
 
