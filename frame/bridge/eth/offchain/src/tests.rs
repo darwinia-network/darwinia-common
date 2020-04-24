@@ -1,67 +1,113 @@
+use serde_json;
 // --- darwinia ---
 use crate::{mock::*, *};
+use frame_support::{assert_noop, assert_ok};
 
+/// Extract value from JSON response
+#[test]
+fn test_extract_value_from_json_response() {
+	let result_part = EthOffchain::extract_from_json_str(&SUPPOSED_SHADOW_FAKE_RESPONSE[..], b"result" as &[u8]).unwrap();
+	assert_eq!(result_part, br#""eth_header":{eth-content},"proof":[proof-content]"# as &[u8]);
+	let eth_header_part = EthOffchain::extract_from_json_str(result_part, b"eth_header" as &[u8]).unwrap();
+	assert_eq!(eth_header_part , br#"eth-content"# as &[u8]);
+	let proof_header_part = EthOffchain::extract_from_json_str(result_part, b"proof" as &[u8]).unwrap();
+	assert_eq!(proof_header_part , br#"proof-content"# as &[u8]);
+}
+
+/// Extract value from JSON response with not alphabetical order
+#[test]
+fn test_extract_value_from_non_order_json_response() {
+	let result_part = EthOffchain::extract_from_json_str(&SUPPOSED_SHADOW_NON_ORDER_RESPONSE[..], b"result" as &[u8]).unwrap();
+	assert_eq!(result_part, br#""proof":[proof-content],"eth_header":{eth-content}"# as &[u8]);
+	let eth_header_part = EthOffchain::extract_from_json_str(result_part, b"eth_header" as &[u8]).unwrap();
+	assert_eq!(eth_header_part , br#"eth-content"# as &[u8]);
+	let proof_header_part = EthOffchain::extract_from_json_str(result_part, b"proof" as &[u8]).unwrap();
+	assert_eq!(proof_header_part , br#"proof-content"# as &[u8]);
+}
+
+/// Basice JSON response handle
 #[test]
 fn test_build_eth_header_from_json_response() {
-	let raw_header =
-		from_utf8(&SUPPOSED_SHADOW_JSON_RESPONSE[47..SUPPOSED_SHADOW_JSON_RESPONSE.len() - 1])
-			.unwrap_or_default();
-	let header = EthHeader::from_str_unchecked(raw_header);
-	// println!("{:?}", header);
+	let eth_header_part = EthOffchain::extract_from_json_str(&SUPPOSED_SHADOW_JSON_RESPONSE[..], b"eth_header" as &[u8]).unwrap_or_default();
+	let header = EthHeader::from_str_unchecked(from_utf8(eth_header_part).unwrap_or_default());
 	assert_eq!(header.hash.unwrap(), header.re_compute_hash());
 
-	let mut response = SUPPOSED_SHADOW_JSON_RESPONSE.to_vec();
-	EthOffchain::extract_proof(&mut response, true);
-	// println!("{:?}", response);
+	let proof_part = EthOffchain::extract_from_json_str(&SUPPOSED_SHADOW_JSON_RESPONSE[..], b"proof" as &[u8]).unwrap_or_default();
 	let double_node_with_proof_list =
-		EthOffchain::parse_double_node_with_proof_list_from_json_str(&response[..]).unwrap();
+		EthOffchain::parse_double_node_with_proof_list_from_json_str(proof_part).unwrap();
 	assert_eq!(1, double_node_with_proof_list.len());
 }
 
-const SUPPOSED_SHADOW_JSON_RESPONSE: &'static [u8] = br#"{"jsonrpc":"2.0","id":1,"result":{"eth_header":{"difficulty":"0x9fa52dbdada","extraData":"0xd783010302844765746887676f312e352e31856c696e7578","gasLimit":"0x2fefd8","gasUsed":"0x37881","hash":"0x26f10bfb3c09f1e1eadf856a8d75f5dbd2f88bd8eb4da8488f131835fa4a6ae3","logsBloom":"0x000000000000000000000000000000000000000000000000000000000000000000000000000000000c00000000000000000000020000000000000004000000000000000000000000000000020000000000000000000000000001000000000000004000000200000000000000000008020000020000000000000000001000000000000000000000004000040000000000000000000000000000000000000000000000000000000004001000000000000000000000000004080008000000000120000000000000000000000400000000000800000000000000000000000000200000000000001000000000000a0008000040000000000000000000000000000000","miner":"0x738db714c08b8a32a29e0e68af00215079aa9c5c","mixHash":"0xcb63ce95a3043c0f846ad6e1c3c25ec7a8cd8e09dccf02c7078669f2496f02c2","nonce":"0xfc2c4055195dac95","number":"0xeb770","parentHash":"0x28e9cc57847a0a1efd2920115ba94530ba7d29d7a7ffb15fc933302a97c73e49","receiptsRoot":"0xba124ff4744d7f59fd4f829be59f727fe17f468b34344759d4dd2ed10d6260d2","sha3Uncles":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","size":"0x792","stateRoot":"0x46f9f3d17b9bba9d551ab85a6aa6686a51590a184f5d42b98b6d8518303da470","timestamp":"0x56b66a81","totalDifficulty":"0x5d4fe4695aed3d42","transactions":[],"transactionsRoot":"0x5e7f4d048b09e832ccdb062c655def06f532ebdf02b3c0c423a65c6566220523","uncles":[]},"proof":[{"dag_nodes":["0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000""],"proof":["0x00000000000000000000000000000000","0x00000000000000000000000000000000"]}]}}"#;
-
+/// Basice SCALE response handle
 #[test]
 fn test_build_eth_header_from_scale_response() {
-	let scale_decode_header =
-		EthOffchain::parse_ethheader_from_scale_str(&SUPPOSED_SHADOW_SCALE_RESPONSE[..]);
+	let eth_header_part = EthOffchain::extract_from_json_str(&SUPPOSED_SHADOW_SCALE_RESPONSE[..], b"eth_header" as &[u8]).unwrap_or_default();
+	let scale_bytes = hex_bytes_unchecked(from_utf8(eth_header_part).unwrap_or_default());
+	let scale_decode_header: EthHeader = Decode::decode::<&[u8]>(&mut &scale_bytes[..]).unwrap_or_default();
+
 	let header = EthHeader::from_str_unchecked(SUPPOSED_ETHHEADER);
 	assert_eq!(scale_decode_header, header);
 
-	let mut response = SUPPOSED_SHADOW_SCALE_RESPONSE.to_vec();
-	EthOffchain::extract_proof(&mut response, false);
-	assert_eq!(260, response.len()); // 260 = (129 + 1) * 2
+	let proof_part = EthOffchain::extract_from_json_str(&SUPPOSED_SHADOW_SCALE_RESPONSE[..], b"proof" as &[u8]).unwrap_or_default();
+	let decoded_double_node_with_proof = EthOffchain::parse_double_node_with_proof_list_from_scale_str(proof_part).unwrap();
 
-	let decoded_double_node_with_proof =
-		EthOffchain::parse_double_node_with_proof_list_from_scale_str(&response[..]).unwrap();
-
-	assert_eq!(
-		vec![DoubleNodeWithMerkleProof::default()],
-		decoded_double_node_with_proof
-	);
+	assert_eq!(vec![DoubleNodeWithMerkleProof::default()], decoded_double_node_with_proof);
 }
 
-const SUPPOSED_SHADOW_SCALE_RESPONSE: &'static [u8] = br#"{"jsonrpc":"2.0","id":1,"result":{"eth_header":"0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa32442ba5500000000010000000000000005a56e2d52c817161883f50c441c3228cfe54d9f56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b4211dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d4934764476574682f76312e302e302f6c696e75782f676f312e342e32d67e4d450343046425ae4271474353857ab860dbc0a1dde64b41b5cd3a532bf356e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b4210000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008813000000000000000000000000000000000000000000000000000000000000000080ff030000000000000000000000000000000000000000000000000000000884a0969b900de27b6ac6a67742365dd65f55a0526c41fd18e1b16f1a1215c2e66f592488539bd4979fef1ec40188e96d4537bea4d9c05d12549907b32561d3bf31f45aae734cdc119f13406cb6","proof":"0x04000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"}}"#;
-const SUPPOSED_ETHHEADER: &'static str = r#"
-			{
-				"difficulty": "0x3ff800000",
-				"extraData": "0x476574682f76312e302e302f6c696e75782f676f312e342e32",
-				"gasLimit": "0x1388",
-				"gasUsed": "0x0",
-				"hash": "0x88e96d4537bea4d9c05d12549907b32561d3bf31f45aae734cdc119f13406cb6",
-				"logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-				"miner": "0x05a56e2d52c817161883f50c441c3228cfe54d9f",
-				"mixHash": "0x969b900de27b6ac6a67742365dd65f55a0526c41fd18e1b16f1a1215c2e66f59",
-				"nonce": "0x539bd4979fef1ec4",
-				"number": "0x1",
-				"parentHash": "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3",
-				"receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
-				"sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-				"size": "0x219",
-				"stateRoot": "0xd67e4d450343046425ae4271474353857ab860dbc0a1dde64b41b5cd3a532bf3",
-				"timestamp": "0x55ba4224",
-				"totalDifficulty": "0x7ff800000",
-				"transactions": [],
-				"transactionsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
-				"uncles": []
-			}
-			"#;
+/// Request format should be json
+#[test]
+fn test_request_payload_format() {
+	let payload_without_option = EthOffchain::build_payload(1, false);
+	assert!(serde_json::from_str::<serde_json::value::Value>(
+		from_utf8(&payload_without_option[..]).unwrap()
+	)
+	.is_ok());
+
+	let payload_with_option = EthOffchain::build_payload(1, true);
+	assert!(serde_json::from_str::<serde_json::value::Value>(
+		from_utf8(&payload_with_option[..]).unwrap()
+	)
+	.is_ok());
+}
+
+/// Test offchain worker before any header relayed
+#[test]
+fn test_should_error_when_best_header_not_set() {
+	ExtBuilder::default().build().execute_with(|| {
+		assert_noop!(EthOffchain::relay_header(), OffchainError::BestHeaderNE);
+	});
+}
+
+/// Test offchain worker with different shadow service
+#[test]
+fn test_should_handle_different_shadow_service() {
+	// NOTE:`set_shadow_service` is unsafe
+	// Keep this test run in a single theread
+
+	// should error when shadow service is non exsist
+	set_shadow_service(None);
+	ExtBuilder::default()
+		.set_genesis_header()
+		.build()
+		.execute_with(|| {
+			assert_noop!(EthOffchain::relay_header(), OffchainError::APIRespUnexp);
+		});
+
+	// handle the scale response from shadow service
+	set_shadow_service(Some(ShadowService::SCALE));
+	ExtBuilder::default()
+		.set_genesis_header()
+		.build()
+		.execute_with(|| {
+			assert_ok!(EthOffchain::relay_header());
+		});
+
+	// handle the json response from shadow service
+	set_shadow_service(Some(ShadowService::JSON));
+	ExtBuilder::default()
+		.set_genesis_header()
+		.build()
+		.execute_with(|| {
+			assert_ok!(EthOffchain::relay_header());
+		});
+}

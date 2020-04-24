@@ -27,6 +27,8 @@ sp-std = { default-features = false, git = "https://github.com/darwinia-network/
 [dev-dependencies]
 # substrate
 sp-core = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
+sp-io = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
+serde_json = { version = "1.0.51" }
 
 [features]
 default = ["std"]
