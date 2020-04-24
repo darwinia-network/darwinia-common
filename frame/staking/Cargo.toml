@@ -18,17 +18,17 @@ static_assertions = { version = "1.1.0" }
 # darwinia
 darwinia-support = { default-features = false, path = "../support" }
 # substrate
-frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-pallet-authorship = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-pallet-session = { default-features = false, features = ["historical"], git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-sp-io = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-sp-phragmen = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-sp-staking = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
+frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+pallet-authorship = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+pallet-session = { default-features = false, features = ["historical"], git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+sp-io = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+sp-phragmen = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+sp-staking = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
 
 [dev-dependencies]
 # crates
@@ -38,9 +38,9 @@ rand_chacha = { version = "0.2" }
 darwinia-balances = { path = "../../frame/balances" }
 darwinia-support = { features = ["easy-testing"], path = "../support" }
 # substrate
-frame-benchmarking = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-pallet-timestamp = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-substrate-test-utils = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
+frame-benchmarking = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+pallet-timestamp = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+substrate-test-utils = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
 
 [features]
 default = ["std"]
