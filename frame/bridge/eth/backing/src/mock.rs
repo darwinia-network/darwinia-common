@@ -4,15 +4,15 @@
 use std::cell::RefCell;
 // --- substrate ---
 use frame_support::{impl_outer_dispatch, impl_outer_origin, parameter_types, weights::Weight};
+use frame_system::offchain::TransactionSubmitter;
 use sp_core::{crypto::key_types, H256};
-use sp_io;
 use sp_runtime::{
-	testing::{Header, UintAuthorityId},
+	testing::{Header, TestXt, UintAuthorityId},
 	traits::{IdentifyAccount, IdentityLookup, OpaqueKeys, Verify},
 	{KeyTypeId, MultiSignature, Perbill},
 };
 use sp_staking::SessionIndex;
-// --- darwinai ---
+// --- darwinia ---
 use darwinia_staking::{EraIndex, Exposure, ExposureOf};
 use darwinia_support::bytes_thing::fixed_hex_bytes_unchecked;
 
@@ -28,6 +28,9 @@ type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 /// to the public key of our transaction signing scheme.
 type Signature = MultiSignature;
 
+type Extrinsic = TestXt<Call, ()>;
+type SubmitTransaction = TransactionSubmitter<(), Test, Extrinsic>;
+
 pub type RingInstance = darwinia_balances::Instance0;
 type _RingError = darwinia_balances::Error<Test, RingInstance>;
 pub type Ring = darwinia_balances::Module<Test, RingInstance>;
@@ -36,6 +39,7 @@ pub type KtonInstance = darwinia_balances::Instance1;
 type _KtonError = darwinia_balances::Error<Test, KtonInstance>;
 pub type Kton = darwinia_balances::Module<Test, KtonInstance>;
 
+type Session = pallet_session::Module<Test>;
 type System = frame_system::Module<Test>;
 type Timestamp = pallet_timestamp::Module<Test>;
 pub type EthRelay = darwinia_eth_relay::Module<Test>;
@@ -54,6 +58,22 @@ darwinia_support::impl_account_data! {
 	}
 }
 
+impl_outer_origin! {
+	pub enum Origin for Test  where system = frame_system {}
+}
+
+impl_outer_dispatch! {
+	pub enum Call for Test where origin: Origin {
+		darwinia_eth_relay::EthRelay,
+		darwinia_staking::Staking,
+	}
+}
+
+thread_local! {
+	static EXISTENTIAL_DEPOSIT: RefCell<Balance> = RefCell::new(0);
+	static SLASH_DEFER_DURATION: RefCell<EraIndex> = RefCell::new(0);
+}
+
 pub const NANO: Balance = 1;
 pub const MICRO: Balance = 1_000 * NANO;
 pub const MILLI: Balance = 1_000 * MICRO;
@@ -61,11 +81,6 @@ pub const COIN: Balance = 1_000 * MILLI;
 
 pub const CAP: Balance = 10_000_000_000 * COIN;
 pub const TOTAL_POWER: Power = 1_000_000_000;
-
-thread_local! {
-	static EXISTENTIAL_DEPOSIT: RefCell<Balance> = RefCell::new(0);
-	static SLASH_DEFER_DURATION: RefCell<EraIndex> = RefCell::new(0);
-}
 
 pub struct TestSessionHandler;
 impl pallet_session::SessionHandler<AccountId> for TestSessionHandler {
@@ -81,16 +96,6 @@ impl pallet_session::SessionHandler<AccountId> for TestSessionHandler {
 	}
 
 	fn on_disabled(_validator_index: usize) {}
-}
-
-impl_outer_origin! {
-	pub enum Origin for Test  where system = frame_system {}
-}
-
-impl_outer_dispatch! {
-	pub enum Call for Test where origin: Origin {
-		darwinia_eth_relay::EthRelay,
-	}
 }
 
 // Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
@@ -145,6 +150,7 @@ impl pallet_session::Trait for Test {
 	type ValidatorId = AccountId;
 	type ValidatorIdOf = ();
 	type ShouldEndSession = pallet_session::PeriodicSessions<Period, Offset>;
+	type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
 	type SessionManager = pallet_session::historical::NoteHistoricalRoot<Test, Staking>;
 	type SessionHandler = TestSessionHandler;
 	type Keys = UintAuthorityId;
@@ -192,19 +198,23 @@ parameter_types! {
 	// assume 60 blocks per session
 	pub const BondingDurationInBlockNumber: BlockNumber = 3 * 3 * 60;
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
-
 	pub const Cap: Balance = CAP;
 	pub const TotalPower: Power = TOTAL_POWER;
 }
 impl darwinia_staking::Trait for Test {
-	type UnixTime = Timestamp;
 	type Event = ();
+	type UnixTime = Timestamp;
+	type BypassConverter = ();
 	type SessionsPerEra = SessionsPerEra;
 	type BondingDurationInEra = BondingDurationInEra;
 	type BondingDurationInBlockNumber = BondingDurationInBlockNumber;
 	type SlashDeferDuration = ();
 	type SlashCancelOrigin = system::EnsureRoot<Self::AccountId>;
 	type SessionInterface = Self;
+	type NextNewSession = Session;
+	type ElectionLookahead = ();
+	type Call = Call;
+	type SubmitTransaction = SubmitTransaction;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
 	type RingCurrency = Ring;
 	type RingRewardRemainder = ();
