@@ -25,14 +25,15 @@ pub mod opaque {
 	pub type BlockId = generic::BlockId<Block>;
 }
 
-pub mod support_kton_in_the_future {
+pub mod converter {
+	// --- substrate ---
 	use sp_runtime::traits::Convert;
+	// --- darwinia ---
 
 	use crate::*;
 
 	/// Converter for currencies to votes.
 	pub struct CurrencyToVoteHandler<R>(sp_std::marker::PhantomData<R>);
-
 	impl<R> CurrencyToVoteHandler<R>
 	where
 		R: darwinia_balances::Trait<RingInstance>,
@@ -44,7 +45,6 @@ pub mod support_kton_in_the_future {
 			(issuance / u64::max_value() as u128).max(1)
 		}
 	}
-
 	impl<R> Convert<u128, u64> for CurrencyToVoteHandler<R>
 	where
 		R: darwinia_balances::Trait<RingInstance>,
@@ -54,7 +54,6 @@ pub mod support_kton_in_the_future {
 			(x / Self::factor()) as u64
 		}
 	}
-
 	impl<R> Convert<u128, u128> for CurrencyToVoteHandler<R>
 	where
 		R: darwinia_balances::Trait<RingInstance>,
@@ -111,6 +110,7 @@ use sp_version::RuntimeVersion;
 // --- darwinia ---
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo;
 use darwinia_eth_relay::EthNetworkType;
+use darwinia_support::structs::BypassConverter;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -146,6 +146,55 @@ pub type Power = u32;
 
 /// Alias Balances Module as Ring Module.
 pub type Ring = Balances;
+
+/// The address format for describing accounts.
+pub type Address = AccountId;
+
+/// Block header type as expected by this runtime.
+pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
+
+/// Block type as expected by this runtime.
+pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+
+/// A Block signed with a Justification
+pub type SignedBlock = generic::SignedBlock<Block>;
+
+/// BlockId type as expected by this runtime.
+pub type BlockId = generic::BlockId<Block>;
+
+/// The SignedExtension to the basic transaction logic.
+pub type SignedExtra = (
+	frame_system::CheckVersion<Runtime>,
+	frame_system::CheckGenesis<Runtime>,
+	frame_system::CheckEra<Runtime>,
+	frame_system::CheckNonce<Runtime>,
+	frame_system::CheckWeight<Runtime>,
+	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
+	darwinia_eth_relay::CheckEthRelayHeaderHash<Runtime>,
+	darwinia_staking::LockStakingStatus<Runtime>,
+);
+
+/// Unchecked extrinsic type as expected by this runtime.
+pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+
+/// The payload being signed in transactions.
+pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
+
+/// Extrinsic type that has already been checked.
+pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, Nonce, Call>;
+
+/// Executive: handles dispatch to the various modules.
+pub type Executive = frame_executive::Executive<
+	Runtime,
+	Block,
+	frame_system::ChainContext<Runtime>,
+	Runtime,
+	AllModules,
+>;
+
+/// A transaction submitter with the given key type.
+pub type TransactionSubmitterOf<KeyType> =
+	TransactionSubmitter<KeyType, Runtime, UncheckedExtrinsic>;
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
@@ -245,6 +294,19 @@ impl pallet_timestamp::Trait for Runtime {
 }
 
 parameter_types! {
+	pub const TransactionBaseFee: Balance = 0;
+	pub const TransactionByteFee: Balance = 1;
+}
+impl pallet_transaction_payment::Trait for Runtime {
+	type Currency = Balances;
+	type OnTransactionPayment = ();
+	type TransactionBaseFee = TransactionBaseFee;
+	type TransactionByteFee = TransactionByteFee;
+	type WeightToFee = ConvertInto;
+	type FeeMultiplierUpdate = ();
+}
+
+parameter_types! {
 	pub const UncleGenerations: BlockNumber = 5;
 }
 impl pallet_authorship::Trait for Runtime {
@@ -281,6 +343,7 @@ impl pallet_session::Trait for Runtime {
 	type ValidatorId = AccountId;
 	type ValidatorIdOf = darwinia_staking::StashOf<Self>;
 	type ShouldEndSession = Babe;
+	type NextSessionRotation = Babe;
 	type SessionManager = Staking;
 	type SessionHandler = <SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = SessionKeys;
@@ -301,8 +364,6 @@ impl pallet_grandpa::Trait for Runtime {
 	type Event = Event;
 }
 
-/// A runtime transaction submitter.
-type SubmitTransaction = TransactionSubmitter<ImOnlineId, Runtime, UncheckedExtrinsic>;
 parameter_types! {
 	pub const SessionDuration: BlockNumber = SESSION_DURATION;
 }
@@ -310,7 +371,7 @@ impl pallet_im_online::Trait for Runtime {
 	type AuthorityId = ImOnlineId;
 	type Event = Event;
 	type Call = Call;
-	type SubmitTransaction = SubmitTransaction;
+	type SubmitTransaction = TransactionSubmitterOf<Self::AuthorityId>;
 	type SessionDuration = SessionDuration;
 	type ReportUnresponsiveness = Offences;
 }
@@ -354,8 +415,8 @@ impl darwinia_balances::Trait<RingInstance> for Runtime {
 	type DustRemoval = ();
 	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
 	type BalanceInfo = AccountData<Balance>;
+	type AccountStore = System;
 	type DustCollector = (Kton,);
 }
 impl darwinia_balances::Trait<KtonInstance> for Runtime {
@@ -363,23 +424,9 @@ impl darwinia_balances::Trait<KtonInstance> for Runtime {
 	type DustRemoval = ();
 	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
 	type BalanceInfo = AccountData<Balance>;
+	type AccountStore = System;
 	type DustCollector = (Ring,);
-}
-
-parameter_types! {
-	pub const TransactionBaseFee: Balance = 0;
-	pub const TransactionByteFee: Balance = 1;
-}
-
-impl pallet_transaction_payment::Trait for Runtime {
-	type Currency = Balances;
-	type OnTransactionPayment = ();
-	type TransactionBaseFee = TransactionBaseFee;
-	type TransactionByteFee = TransactionByteFee;
-	type WeightToFee = ConvertInto;
-	type FeeMultiplierUpdate = ();
 }
 
 parameter_types! {
@@ -387,14 +434,15 @@ parameter_types! {
 	pub const BondingDurationInEra: darwinia_staking::EraIndex = 14 * 24 * (HOURS / (SESSIONS_PER_ERA * BLOCKS_PER_SESSION));
 	pub const BondingDurationInBlockNumber: BlockNumber = 14 * DAYS;
 	pub const SlashDeferDuration: darwinia_staking::EraIndex = 7 * 24; // 1/4 the bonding duration.
+	pub const ElectionLookahead: BlockNumber = 2;
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
-	// --- custom ---
 	pub const Cap: Balance = CAP;
 	pub const TotalPower: Power = TOTAL_POWER;
 }
 impl darwinia_staking::Trait for Runtime {
-	type UnixTime = Timestamp;
 	type Event = Event;
+	type UnixTime = Timestamp;
+	type BypassConverter = BypassConverter;
 	type SessionsPerEra = SessionsPerEra;
 	type BondingDurationInEra = BondingDurationInEra;
 	type BondingDurationInBlockNumber = BondingDurationInBlockNumber;
@@ -403,6 +451,10 @@ impl darwinia_staking::Trait for Runtime {
 	type SlashCancelOrigin =
 		pallet_collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilCollective>;
 	type SessionInterface = Self;
+	type NextNewSession = Session;
+	type ElectionLookahead = ElectionLookahead;
+	type Call = Call;
+	type SubmitTransaction = TransactionSubmitterOf<()>;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
 	type RingCurrency = Ring;
 	type RingRewardRemainder = Treasury;
@@ -431,7 +483,7 @@ impl darwinia_elections_phragmen::Trait for Runtime {
 	type Event = Event;
 	type Currency = Ring;
 	type ChangeMembers = Council;
-	type CurrencyToVote = support_kton_in_the_future::CurrencyToVoteHandler<Self>;
+	type CurrencyToVote = converter::CurrencyToVoteHandler<Self>;
 	type CandidacyBond = CandidacyBond;
 	type VotingBond = VotingBond;
 	type LoserCandidate = Treasury;
@@ -507,6 +559,79 @@ impl darwinia_eth_relay::Trait for Runtime {
 	type Call = Call;
 }
 
+type SubmitPFTransaction =
+	TransactionSubmitter<darwinia_eth_offchain::crypto::Public, Runtime, UncheckedExtrinsic>;
+parameter_types! {
+	pub const FetchInterval: BlockNumber = 3;
+}
+impl darwinia_eth_offchain::Trait for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type SubmitSignedTransaction = SubmitPFTransaction;
+	type FetchInterval = FetchInterval;
+}
+
+impl darwinia_header_mmr::Trait for Runtime {}
+
+construct_runtime!(
+	pub enum Runtime
+	where
+		Block = Block,
+		NodeBlock = opaque::Block,
+		UncheckedExtrinsic = UncheckedExtrinsic
+	{
+		// --- substrate ---
+		// Basic stuff; balances is uncallable initially.
+		System: frame_system::{Module, Call, Storage, Config, Event<T>},
+		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
+
+		// Must be before session.
+		Babe: pallet_babe::{Module, Call, Storage, Config, Inherent(Timestamp)},
+
+		Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
+		TransactionPayment: pallet_transaction_payment::{Module, Storage},
+
+		// Consensus support.
+		Authorship: pallet_authorship::{Module, Call, Storage, Inherent},
+		Offences: pallet_offences::{Module, Call, Storage, Event},
+		Historical: pallet_session_historical::{Module},
+		Session: pallet_session::{Module, Call, Storage, Config<T>, Event},
+		FinalityTracker: pallet_finality_tracker::{Module, Call, Storage, Inherent},
+		Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
+		ImOnline: pallet_im_online::{Module, Call, Storage, Config<T>, Event<T>, ValidateUnsigned},
+		AuthorityDiscovery: pallet_authority_discovery::{Module, Call, Config},
+
+		// Governance stuff; uncallable initially.
+		// Democracy: pallet_democracy::{Module, Call, Storage, Config, Event<T>},
+		Council: pallet_collective::<Instance1>::{Module, Call, Storage, Origin<T>, Config<T>, Event<T>},
+
+		Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>},
+
+		// --- darwinia ---
+		// Basic stuff; balances is uncallable initially.
+		Balances: darwinia_balances::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
+		Kton: darwinia_balances::<Instance1>::{Module, Call, Storage, Config<T>, Event<T>},
+
+		// Consensus support.
+		Staking: darwinia_staking::{Module, Call, Storage, Config<T>, Event<T>, ValidateUnsigned},
+
+		// Governance stuff; uncallable initially.
+		ElectionsPhragmen: darwinia_elections_phragmen::{Module, Call, Storage, Event<T>},
+
+		// Claims. Usable initially.
+		Claims: darwinia_claims::{Module, Call, Storage, Config, Event<T>, ValidateUnsigned},
+
+		EthBacking: darwinia_eth_backing::{Module, Call, Storage, Config<T>, Event<T>},
+		EthRelay: darwinia_eth_relay::{Module, Call, Storage, Config<T>, Event<T>},
+		EthOffchain: darwinia_eth_offchain::{Module, Call, Event<T>},
+
+		HeaderMMR: darwinia_header_mmr::{Module, Call, Storage},
+
+		// Governance stuff; uncallable initially.
+		Treasury: darwinia_treasury::{Module, Call, Storage, Event<T>},
+	}
+);
+
 impl frame_system::offchain::CreateTransaction<Runtime, UncheckedExtrinsic> for Runtime {
 	type Public = <Signature as sp_runtime::traits::Verify>::Signer;
 	type Signature = Signature;
@@ -541,6 +666,7 @@ impl frame_system::offchain::CreateTransaction<Runtime, UncheckedExtrinsic> for 
 			frame_system::CheckWeight::<Runtime>::new(),
 			pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
 			Default::default(),
+			Default::default(),
 		);
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|e| {
@@ -552,114 +678,6 @@ impl frame_system::offchain::CreateTransaction<Runtime, UncheckedExtrinsic> for 
 		Some((call, (account, signature, extra)))
 	}
 }
-type SubmitPFTransaction =
-	TransactionSubmitter<darwinia_eth_offchain::crypto::Public, Runtime, UncheckedExtrinsic>;
-parameter_types! {
-	pub const FetchInterval: BlockNumber = 3;
-}
-impl darwinia_eth_offchain::Trait for Runtime {
-	type Event = Event;
-	type Call = Call;
-	type SubmitSignedTransaction = SubmitPFTransaction;
-	type FetchInterval = FetchInterval;
-}
-
-impl darwinia_header_mmr::Trait for Runtime {}
-
-construct_runtime!(
-	pub enum Runtime
-	where
-		Block = Block,
-		NodeBlock = opaque::Block,
-		UncheckedExtrinsic = UncheckedExtrinsic
-	{
-		// --- substrate ---
-		// Basic stuff; balances is uncallable initially.
-		System: frame_system::{Module, Call, Storage, Config, Event<T>},
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
-
-		// Must be before session.
-		Babe: pallet_babe::{Module, Call, Storage, Config, Inherent(Timestamp)},
-
-		Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
-
-		TransactionPayment: pallet_transaction_payment::{Module, Storage},
-
-		// Consensus support.
-		Authorship: pallet_authorship::{Module, Call, Storage, Inherent},
-		Offences: pallet_offences::{Module, Call, Storage, Event},
-		Historical: pallet_session_historical::{Module},
-		Session: pallet_session::{Module, Call, Storage, Config<T>, Event},
-		FinalityTracker: pallet_finality_tracker::{Module, Call, Storage, Inherent},
-		Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
-		ImOnline: pallet_im_online::{Module, Call, Storage, Config<T>, Event<T>, ValidateUnsigned},
-		AuthorityDiscovery: pallet_authority_discovery::{Module, Call, Config},
-
-		// Governance stuff; uncallable initially.
-		// Democracy: pallet_democracy::{Module, Call, Storage, Config, Event<T>},
-		Council: pallet_collective::<Instance1>::{Module, Call, Storage, Origin<T>, Config<T>, Event<T>},
-
-		Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>},
-
-		// --- darwinia ---
-		// Basic stuff; balances is uncallable initially.
-		Balances: darwinia_balances::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
-		Kton: darwinia_balances::<Instance1>::{Module, Call, Storage, Config<T>, Event<T>},
-
-		// Consensus support.
-		Staking: darwinia_staking::{Module, Call, Storage, Config<T>, Event<T>},
-
-		// Governance stuff; uncallable initially.
-		ElectionsPhragmen: darwinia_elections_phragmen::{Module, Call, Storage, Event<T>},
-
-		// Claims. Usable initially.
-		Claims: darwinia_claims::{Module, Call, Storage, Config, Event<T>, ValidateUnsigned},
-
-		EthBacking: darwinia_eth_backing::{Module, Call, Storage, Config<T>, Event<T>},
-		EthRelay: darwinia_eth_relay::{Module, Call, Storage, Config<T>, Event<T>},
-		EthOffchain: darwinia_eth_offchain::{Module, Call, Event<T>},
-
-		HeaderMMR: darwinia_header_mmr::{Module, Call, Storage},
-
-		// Governance stuff; uncallable initially.
-		Treasury: darwinia_treasury::{Module, Call, Storage, Event<T>},
-	}
-);
-
-/// The address format for describing accounts.
-pub type Address = AccountId;
-/// Block header type as expected by this runtime.
-pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
-/// Block type as expected by this runtime.
-pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-/// A Block signed with a Justification
-pub type SignedBlock = generic::SignedBlock<Block>;
-/// BlockId type as expected by this runtime.
-pub type BlockId = generic::BlockId<Block>;
-/// The SignedExtension to the basic transaction logic.
-pub type SignedExtra = (
-	frame_system::CheckVersion<Runtime>,
-	frame_system::CheckGenesis<Runtime>,
-	frame_system::CheckEra<Runtime>,
-	frame_system::CheckNonce<Runtime>,
-	frame_system::CheckWeight<Runtime>,
-	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
-	darwinia_eth_relay::CheckEthRelayHeaderHash<Runtime>,
-);
-/// Unchecked extrinsic type as expected by this runtime.
-pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
-/// The payload being signed in transactions.
-pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
-/// Extrinsic type that has already been checked.
-pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, Nonce, Call>;
-/// Executive: handles dispatch to the various modules.
-pub type Executive = frame_executive::Executive<
-	Runtime,
-	Block,
-	frame_system::ChainContext<Runtime>,
-	Runtime,
-	AllModules,
->;
 
 impl_runtime_apis! {
 	impl sp_api::Core<Block> for Runtime {

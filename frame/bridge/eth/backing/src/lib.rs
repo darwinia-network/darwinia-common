@@ -3,9 +3,9 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "128"]
 
-#[cfg(all(feature = "std", test))]
+#[cfg(test)]
 mod mock;
-#[cfg(all(feature = "std", test))]
+#[cfg(test)]
 mod tests;
 
 mod types {
@@ -318,7 +318,8 @@ impl<T: Trait> Module<T> {
 				.ok_or(<Error<T>>::BytesCF)?;
 			debug::trace!(target: "ebk-acct", "[eth-backing] Raw Subkey: {:?}", raw_subkey);
 
-			//			let decoded_sub_key = hex::decode(&raw_subkey).map_err(|_| "Decode Address - FAILED")?;
+			// let decoded_sub_key =
+			// 	hex::decode(&raw_subkey).map_err(|_| "Decode Address - FAILED")?;
 
 			T::DetermineAccountId::account_id_for(&raw_subkey)?
 		};
@@ -433,7 +434,8 @@ impl<T: Trait> Module<T> {
 				.ok_or(<Error<T>>::BytesCF)?;
 			debug::trace!(target: "ebk-acct", "[eth-backing] Raw Subkey: {:?}", raw_subkey);
 
-			//				let decoded_sub_key = hex::decode(&raw_subkey).map_err(|_| "Decode Address - FAILED")?;
+			// let decoded_sub_key =
+			// 	hex::decode(&raw_subkey).map_err(|_| "Decode Address - FAILED")?;
 
 			T::DetermineAccountId::account_id_for(&raw_subkey)?
 		};

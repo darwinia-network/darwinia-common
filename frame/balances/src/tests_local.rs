@@ -154,11 +154,11 @@ impl ExtBuilder {
 		}
 		self
 	}
-	pub fn set_associated_consts(&self) {
+	pub fn set_associated_constants(&self) {
 		EXISTENTIAL_DEPOSIT.with(|v| *v.borrow_mut() = self.existential_deposit);
 	}
 	pub fn build(self) -> sp_io::TestExternalities {
-		self.set_associated_consts();
+		self.set_associated_constants();
 		let mut t = frame_system::GenesisConfig::default()
 			.build_storage::<Test>()
 			.unwrap();
