@@ -13,9 +13,9 @@ use sp_runtime::{
 use darwinia_claims::ClaimsList;
 use darwinia_eth_relay::DagMerkleRoots;
 use node_template_runtime::{
-	AccountId, BalancesConfig as RingConfig, ClaimsConfig, EthRelayConfig, GenesisConfig,
-	KtonConfig, SessionConfig, SessionKeys, Signature, StakerStatus, StakingConfig, SudoConfig,
-	SystemConfig, WASM_BINARY,
+	AccountId, BalancesConfig as RingConfig, ClaimsConfig, ElectionsPhragmenConfig, EthRelayConfig,
+	GenesisConfig, KtonConfig, SessionConfig, SessionKeys, Signature, StakerStatus, StakingConfig,
+	SudoConfig, SystemConfig, WASM_BINARY,
 };
 
 // Note this is the URL for the telemetry server
@@ -231,6 +231,14 @@ fn testnet_genesis(
 			slash_reward_fraction: Perbill::from_percent(10),
 			payout_fraction: Perbill::from_percent(50),
 			..Default::default()
+		}),
+		darwinia_elections_phragmen: Some(ElectionsPhragmenConfig {
+			members: endowed_accounts
+				.iter()
+				.take((endowed_accounts.len() + 1) / 2)
+				.cloned()
+				.map(|member| (member, STASH))
+				.collect(),
 		}),
 		darwinia_claims: Some(ClaimsConfig {
 			claims_list: ClaimsList::load_genesis(
