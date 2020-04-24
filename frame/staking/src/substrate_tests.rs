@@ -323,8 +323,6 @@ fn staking_should_work() {
 			// --- Block 1:
 			start_session(1);
 
-			Timestamp::set_timestamp(1); // Initialize time.
-
 			// remember + compare this along with the test.
 			assert_eq_uvec!(validator_controllers(), vec![20, 10]);
 

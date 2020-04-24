@@ -322,10 +322,6 @@ pub use types::EraIndex;
 // --- crates ---
 use codec::{Decode, Encode, HasCompact};
 // --- substrate ---
-#[cfg(test)]
-use frame_support::traits::Time;
-#[cfg(not(test))]
-use frame_support::traits::UnixTime;
 use frame_support::{
 	debug, decl_error, decl_event, decl_module, decl_storage,
 	dispatch::IsSubType,
@@ -333,7 +329,7 @@ use frame_support::{
 	storage::IterableStorageMap,
 	traits::{
 		Currency, EstimateNextNewSession, ExistenceRequirement::KeepAlive, Get, Imbalance,
-		OnUnbalanced,
+		OnUnbalanced, UnixTime,
 	},
 	weights::{SimpleDispatchInfo, Weight},
 };
@@ -391,9 +387,7 @@ macro_rules! unix_time_now {
 		match () {
 			#[cfg(feature = "build-spec")]
 			_ => $crate::unix_time_now!(build_spec),
-			#[cfg(test)]
-			_ => $crate::unix_time_now!(test),
-			#[cfg(not(any(feature = "build-spec", test)))]
+			#[cfg(not(feature = "build-spec"))]
 			_ => $crate::unix_time_now!(product),
 			}
 		}};
@@ -402,13 +396,10 @@ macro_rules! unix_time_now {
 			.duration_since(std::time::UNIX_EPOCH)
 			.expect("`now` always greater than `UNIX_EPOCH`, never get panic; qed")
 			.as_millis()
-			.saturated_into::<u64>()
+			.saturated_into::<TsInMs>()
 		}};
 	(product) => {{
-		T::UnixTime::now().as_millis().saturated_into::<u64>()
-		}};
-	(test) => {{
-		T::Time::now().saturated_into::<u64>()
+		T::UnixTime::now().as_millis().saturated_into::<TsInMs>()
 		}};
 }
 
@@ -878,11 +869,7 @@ pub trait Trait: frame_system::Trait {
 	///
 	/// It is guaranteed to start being called from the first `on_finalize`. Thus value at genesis
 	/// is not used.
-	#[cfg(not(test))]
 	type UnixTime: UnixTime;
-
-	#[cfg(test)]
-	type Time: Time;
 
 	/// Just provide a workaround for `sp_phragmen`.
 	///
@@ -3500,7 +3487,7 @@ impl<T: Trait> OnDepositRedeem<T::AccountId> for Module<T> {
 
 	fn on_deposit_redeem(
 		backing: &T::AccountId,
-		start_time: u64,
+		start_time: TsInMs,
 		months: u8,
 		amount: Self::Balance,
 		stash: &T::AccountId,

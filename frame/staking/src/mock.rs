@@ -74,6 +74,8 @@ pub(crate) const COIN: Balance = 1_000 * MILLI;
 pub(crate) const CAP: Balance = 10_000_000_000 * COIN;
 pub(crate) const TOTAL_POWER: Power = 1_000_000_000;
 
+const INIT_TIMESTAMP: TsInMs = 30_000;
+
 thread_local! {
 	static SESSION: RefCell<(Vec<AccountId>, HashSet<AccountId>)> = RefCell::new(Default::default());
 	static SESSION_PER_ERA: RefCell<SessionIndex> = RefCell::new(3);
@@ -309,7 +311,7 @@ parameter_types! {
 }
 impl Trait for Test {
 	type Event = MetaEvent;
-	type Time = Timestamp;
+	type UnixTime = Timestamp;
 	type BypassConverter = BypassConverter;
 	type SessionsPerEra = SessionsPerEra;
 	type BondingDurationInEra = BondingDurationInEra;
@@ -574,6 +576,13 @@ impl ExtBuilder {
 			let validators = Session::validators();
 			SESSION.with(|x| *x.borrow_mut() = (validators.clone(), HashSet::new()));
 		});
+		// We consider all test to start after timestamp is initialized
+		// This must be ensured by having `timestamp::on_initialize` called before
+		// `staking::on_initialize`
+		ext.execute_with(|| {
+			Timestamp::set_timestamp(INIT_TIMESTAMP);
+		});
+
 		ext
 	}
 }
@@ -697,7 +706,7 @@ pub fn start_session(session_index: SessionIndex) {
 	for i in Session::current_index()..session_index {
 		Staking::on_finalize(System::block_number());
 		System::set_block_number((i + 1).into());
-		Timestamp::set_timestamp(System::block_number() * 1000);
+		Timestamp::set_timestamp(System::block_number() * 1000 + INIT_TIMESTAMP);
 		Session::on_initialize(System::block_number());
 		Staking::on_initialize(System::block_number());
 	}
