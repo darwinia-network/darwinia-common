@@ -149,7 +149,7 @@
 //! 		}
 //! 	}
 //! }
-//! # fn main() { }
+//! # fn main() {}
 //! ```
 //!
 //! ## Implementation Details
@@ -390,11 +390,11 @@ macro_rules! unix_time_now {
 	() => {{
 		match () {
 			#[cfg(feature = "build-spec")]
-			() => $crate::unix_time_now!(build_spec),
+			_ => $crate::unix_time_now!(build_spec),
 			#[cfg(test)]
-			() => $crate::unix_time_now!(test),
+			_ => $crate::unix_time_now!(test),
 			#[cfg(not(any(feature = "build-spec", test)))]
-			() => $crate::unix_time_now!(product),
+			_ => $crate::unix_time_now!(product),
 			}
 		}};
 	(build_spec) => {{
@@ -1308,7 +1308,7 @@ decl_module! {
 
 		fn deposit_event() = default;
 
-				/// sets `ElectionStatus` to `Open(now)` where `now` is the block number at which the
+		/// sets `ElectionStatus` to `Open(now)` where `now` is the block number at which the
 		/// election window has opened, if we are at the last session and less blocks than
 		/// `T::ElectionLookahead` is remaining until the next new session schedule. The offchain
 		/// worker, if applicable, will execute at the end of the current block, and solutions may
@@ -3602,6 +3602,7 @@ impl<T: Trait + Send + Sync> SignedExtension for LockStakingStatus<T> {
 		Ok(Default::default())
 	}
 }
+
 impl<T: Trait> From<Error<T>> for InvalidTransaction {
 	fn from(e: Error<T>) -> Self {
 		match e {

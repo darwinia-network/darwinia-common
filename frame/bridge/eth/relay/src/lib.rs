@@ -28,7 +28,7 @@ use sp_runtime::{
 	},
 	DispatchError, DispatchResult, RuntimeDebug,
 };
-use sp_std::{cell::RefCell, fmt::Debug, marker::PhantomData, prelude::*};
+use sp_std::{cell::RefCell, prelude::*};
 // --- darwinia ---
 use darwinia_support::bytes_thing::{array_unchecked, fixed_hex_bytes_unchecked};
 use eth_primitives::{
@@ -763,16 +763,15 @@ impl<T: Trait> VerifyEthReceipts for Module<T> {
 	}
 }
 
-/// `SignedExtension` that checks if a transaction has duplicate header hash to avoid coincidence header between several relayers
+/// `SignedExtension` that checks if a transaction has duplicate header hash to avoid coincidence
+/// header between several relayers
 #[derive(Encode, Decode, Clone, Eq, PartialEq)]
-pub struct CheckEthRelayHeaderHash<T: Trait + Send + Sync>(PhantomData<T>);
-
+pub struct CheckEthRelayHeaderHash<T: Trait + Send + Sync>(sp_std::marker::PhantomData<T>);
 impl<T: Trait + Send + Sync> Default for CheckEthRelayHeaderHash<T> {
 	fn default() -> Self {
-		Self(PhantomData)
+		Self(sp_std::marker::PhantomData)
 	}
 }
-
 impl<T: Trait + Send + Sync> sp_std::fmt::Debug for CheckEthRelayHeaderHash<T> {
 	#[cfg(feature = "std")]
 	fn fmt(&self, f: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
@@ -784,7 +783,6 @@ impl<T: Trait + Send + Sync> sp_std::fmt::Debug for CheckEthRelayHeaderHash<T> {
 		Ok(())
 	}
 }
-
 impl<T: Trait + Send + Sync> SignedExtension for CheckEthRelayHeaderHash<T> {
 	const IDENTIFIER: &'static str = "CheckEthRelayHeaderHash";
 	type AccountId = T::AccountId;
