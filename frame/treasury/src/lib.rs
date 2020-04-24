@@ -110,18 +110,15 @@ use serde::{Deserialize, Serialize};
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure, print,
 	traits::{
-		Contains, Currency, ExistenceRequirement::KeepAlive, Get, Imbalance, OnUnbalanced,
-		ReservableCurrency, WithdrawReason,
+		Contains, Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, Get, Imbalance,
+		OnUnbalanced, ReservableCurrency, WithdrawReason,
 	},
 	weights::{SimpleDispatchInfo, WeighData, Weight},
 	Parameter,
 };
 use frame_system::{self as system, ensure_root, ensure_signed};
 use sp_runtime::{
-	traits::{
-		AccountIdConversion, AtLeast32Bit, BadOrigin, EnsureOrigin, Hash, Saturating, StaticLookup,
-		Zero,
-	},
+	traits::{AccountIdConversion, AtLeast32Bit, BadOrigin, Hash, Saturating, StaticLookup, Zero},
 	ModuleId, Percent, Permill, RuntimeDebug,
 };
 use sp_std::prelude::*;
