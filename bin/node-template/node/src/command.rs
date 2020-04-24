@@ -7,9 +7,16 @@ use crate::{
 	service,
 };
 
-/// Parse and run command line arguments
-pub fn run(version: VersionInfo) -> sc_cli::Result<()> {
-	let opt = sc_cli::from_args::<Cli>(&version);
+/// Parse command line arguments into service configuration.
+pub fn run<I, T>(args: I, version: VersionInfo) -> sc_cli::Result<()>
+where
+	I: Iterator<Item = T>,
+	T: Into<std::ffi::OsString> + Clone,
+{
+	sc_cli::reset_signal_pipe_handler()?;
+
+	let args: Vec<_> = args.collect();
+	let opt = sc_cli::from_iter::<Cli, _>(args.clone(), &version);
 
 	let mut config = sc_service::Configuration::from_version(&version);
 
