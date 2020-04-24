@@ -341,7 +341,6 @@ fn staking_should_work() {
 				RewardDestination::Controller,
 				0,
 			));
-			let current_era_at_bond = Staking::current_era();
 			assert_ok!(Staking::validate(
 				Origin::signed(4),
 				ValidatorPrefs::default()
@@ -392,7 +391,7 @@ fn staking_should_work() {
 						staking_amount: 1500,
 						unbondings: vec![]
 					},
-					last_reward: current_era_at_bond,
+					claimed_rewards: vec![0],
 					..Default::default()
 				})
 			);
@@ -1045,7 +1044,7 @@ fn reward_destination_works() {
 						staking_amount: 1000 + total_payout_0,
 						unbondings: vec![],
 					},
-					last_reward: Some(0),
+					claimed_rewards: vec![0],
 					..Default::default()
 				}),
 			);
@@ -1080,7 +1079,7 @@ fn reward_destination_works() {
 						staking_amount: 1000 + total_payout_0,
 						unbondings: vec![],
 					},
-					last_reward: Some(1),
+					claimed_rewards: vec![0, 1],
 					..Default::default()
 				}),
 			);
@@ -1113,7 +1112,7 @@ fn reward_destination_works() {
 						staking_amount: 1000 + total_payout_0,
 						unbondings: vec![],
 					},
-					last_reward: Some(2),
+					claimed_rewards: vec![0, 1, 2],
 					..Default::default()
 				}),
 			);
@@ -1947,7 +1946,7 @@ fn reward_validator_slashing_validator_doesnt_overflow() {
 		<ErasStakers<Test>>::insert(0, 11, &exposure);
 		<ErasStakersClipped<Test>>::insert(0, 11, exposure);
 		<ErasValidatorReward<Test>>::insert(0, stake);
-		assert_ok!(Staking::payout_validator(Origin::signed(10), 0));
+		assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11, 0));
 		assert_eq!(Ring::free_balance(&11), stake * 2);
 
 		// Set staker
@@ -3143,45 +3142,19 @@ fn claim_reward_at_the_last_era_and_no_double_claim_and_invalid_claim() {
 			// Last kept is 1:
 			assert!(current_era - Staking::history_depth() == 1);
 			assert_noop!(
-				Staking::payout_validator(Origin::signed(10), 0),
+				Staking::payout_stakers(Origin::signed(1337), 11, 0),
 				// Fail: Era out of history
 				StakingError::InvalidEraToReward,
 			);
-			assert_ok!(Staking::payout_validator(Origin::signed(10), 1));
-			assert_ok!(Staking::payout_validator(Origin::signed(10), 2));
+			assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11, 1));
+			assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11, 2));
 			assert_noop!(
-				Staking::payout_validator(Origin::signed(10), 2),
+				Staking::payout_stakers(Origin::signed(1337), 11, 2),
 				// Fail: Double claim
-				StakingError::InvalidEraToReward,
+				StakingError::AlreadyClaimed
 			);
 			assert_noop!(
-				Staking::payout_validator(Origin::signed(10), active_era),
-				// Fail: Era not finished yet
-				StakingError::InvalidEraToReward,
-			);
-
-			assert_noop!(
-				Staking::payout_nominator(Origin::signed(100), 0, vec![(11, 0)]),
-				// Fail: Era out of history
-				StakingError::InvalidEraToReward,
-			);
-			assert_ok!(Staking::payout_nominator(
-				Origin::signed(100),
-				1,
-				vec![(11, 0)]
-			));
-			assert_ok!(Staking::payout_nominator(
-				Origin::signed(100),
-				2,
-				vec![(11, 0)]
-			));
-			assert_noop!(
-				Staking::payout_nominator(Origin::signed(100), 2, vec![(11, 0)]),
-				// Fail: Double claim
-				StakingError::InvalidEraToReward,
-			);
-			assert_noop!(
-				Staking::payout_nominator(Origin::signed(100), active_era, vec![(11, 0)]),
+				Staking::payout_stakers(Origin::signed(1337), 11, active_era),
 				// Fail: Era not finished yet
 				StakingError::InvalidEraToReward,
 			);
@@ -3336,14 +3309,6 @@ fn test_max_nominator_rewarded_per_validator_and_cant_steal_someone_else_reward(
 		start_era(2);
 		make_all_reward_payment(1);
 
-		// nominator 10_000 can't get its reward because exposure is clipped. However it will try
-		// to query other people reward.
-		assert_ok!(Staking::payout_nominator(
-			Origin::signed(20_000),
-			1,
-			vec![(11, 0)]
-		));
-
 		// Assert only nominators from 1 to Max are rewarded
 		for i in 0..=<Test as Trait>::MaxNominatorRewardedPerValidator::get() {
 			let stash = 10_000 + i as AccountId;
@@ -3374,4 +3339,253 @@ fn set_history_depth_works() {
 		assert!(!<Staking as Store>::ErasTotalStake::contains_key(10 - 4));
 		assert!(!<Staking as Store>::ErasTotalStake::contains_key(10 - 5));
 	});
+}
+
+#[test]
+fn test_payout_stakers() {
+	// Here we will test validator can set `max_nominators_payout` and it works.
+	// We also test that `payout_extra_nominators` works.
+	ExtBuilder::default()
+		.has_stakers(false)
+		.build()
+		.execute_with(|| {
+			let balance = 1000;
+			// Create three validators:
+			bond_validator(11, 10, StakingBalance::RingBalance(balance)); // Default(64)
+
+			// Create nominators, targeting stash of validators
+			for i in 0..100 {
+				bond_nominator(
+					1000 + i,
+					100 + i,
+					StakingBalance::RingBalance(balance + i),
+					vec![11],
+				);
+			}
+
+			mock::start_era(1);
+			Staking::reward_by_ids(vec![(11, 1)]);
+			// Compute total payout now for whole duration as other parameter won't change
+			let total_payout_0 = current_total_payout_for_duration(3 * 1000);
+			assert!(total_payout_0 > 100); // Test is meaningful if reward something
+			mock::start_era(2);
+			assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11, 1));
+
+			// Top 64 nominators of validator 11 automatically paid out, including the validator
+			// Validator payout goes to controller.
+			assert!(Balances::free_balance(&10) > balance);
+			for i in 36..100 {
+				assert!(Balances::free_balance(&(100 + i)) > balance + i);
+			}
+			// The bottom 36 do not
+			for i in 0..36 {
+				assert_eq!(Balances::free_balance(&(100 + i)), balance + i);
+			}
+
+			// We track rewards in `claimed_rewards` vec
+			assert_eq!(
+				Staking::ledger(&10),
+				Some(StakingLedger {
+					stash: 11,
+					active_ring: 1000,
+					ring_staking_lock: StakingLock {
+						staking_amount: 1000,
+						unbondings: vec![]
+					},
+					claimed_rewards: vec![1],
+					..Default::default()
+				})
+			);
+
+			for i in 3..16 {
+				Staking::reward_by_ids(vec![(11, 1)]);
+				// Compute total payout now for whole duration as other parameter won't change
+				let total_payout_0 = current_total_payout_for_duration(3 * 1000);
+				assert!(total_payout_0 > 100); // Test is meaningful if reward something
+				mock::start_era(i);
+				assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11, i - 1));
+			}
+
+			// We track rewards in `claimed_rewards` vec
+			assert_eq!(
+				Staking::ledger(&10),
+				Some(StakingLedger {
+					stash: 11,
+					active_ring: 1000,
+					ring_staking_lock: StakingLock {
+						staking_amount: 1000,
+						unbondings: vec![]
+					},
+					claimed_rewards: (1..=14).collect(),
+					..Default::default()
+				})
+			);
+
+			for i in 16..100 {
+				Staking::reward_by_ids(vec![(11, 1)]);
+				// Compute total payout now for whole duration as other parameter won't change
+				let total_payout_0 = current_total_payout_for_duration(3 * 1000);
+				assert!(total_payout_0 > 100); // Test is meaningful if reward something
+				mock::start_era(i);
+			}
+
+			// We clean it up as history passes
+			assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11, 15));
+			assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11, 98));
+			assert_eq!(
+				Staking::ledger(&10),
+				Some(StakingLedger {
+					stash: 11,
+					active_ring: 1000,
+					ring_staking_lock: StakingLock {
+						staking_amount: 1000,
+						unbondings: vec![]
+					},
+					claimed_rewards: vec![15, 98],
+					..Default::default()
+				})
+			);
+
+			// Out of order claims works.
+			assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11, 69));
+			assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11, 23));
+			assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11, 42));
+			assert_eq!(
+				Staking::ledger(&10),
+				Some(StakingLedger {
+					stash: 11,
+					active_ring: 1000,
+					ring_staking_lock: StakingLock {
+						staking_amount: 1000,
+						unbondings: vec![]
+					},
+					claimed_rewards: vec![15, 23, 42, 69, 98],
+					..Default::default()
+				})
+			);
+		});
+}
+
+#[test]
+fn payout_stakers_handles_basic_errors() {
+	// Here we will test payouts handle all errors.
+	ExtBuilder::default()
+		.has_stakers(false)
+		.build()
+		.execute_with(|| {
+			// Same setup as the test above
+			let balance = 1000;
+			bond_validator(11, 10, StakingBalance::RingBalance(balance)); // Default(64)
+
+			// Create nominators, targeting stash
+			for i in 0..100 {
+				bond_nominator(
+					1000 + i,
+					100 + i,
+					StakingBalance::RingBalance(balance + i),
+					vec![11],
+				);
+			}
+
+			mock::start_era(1);
+			Staking::reward_by_ids(vec![(11, 1)]);
+			// Compute total payout now for whole duration as other parameter won't change
+			let total_payout_0 = current_total_payout_for_duration(3 * 1000);
+			assert!(total_payout_0 > 100); // Test is meaningful if reward something
+			mock::start_era(2);
+
+			// Wrong Era, too big
+			assert_noop!(
+				Staking::payout_stakers(Origin::signed(1337), 11, 2),
+				StakingError::InvalidEraToReward
+			);
+			// Wrong Staker
+			assert_noop!(
+				Staking::payout_stakers(Origin::signed(1337), 10, 1),
+				StakingError::NotStash
+			);
+
+			for i in 3..100 {
+				Staking::reward_by_ids(vec![(11, 1)]);
+				// Compute total payout now for whole duration as other parameter won't change
+				let total_payout_0 = current_total_payout_for_duration(3 * 1000);
+				assert!(total_payout_0 > 100); // Test is meaningful if reward something
+				mock::start_era(i);
+			}
+			// We are at era 99, with history depth of 84
+			// We should be able to payout era 15 through 98 (84 total eras), but not 14 or 99.
+			assert_noop!(
+				Staking::payout_stakers(Origin::signed(1337), 11, 14),
+				StakingError::InvalidEraToReward
+			);
+			assert_noop!(
+				Staking::payout_stakers(Origin::signed(1337), 11, 99),
+				StakingError::InvalidEraToReward
+			);
+			assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11, 15));
+			assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11, 98));
+
+			// Can't claim again
+			assert_noop!(
+				Staking::payout_stakers(Origin::signed(1337), 11, 15),
+				StakingError::AlreadyClaimed
+			);
+			assert_noop!(
+				Staking::payout_stakers(Origin::signed(1337), 11, 98),
+				StakingError::AlreadyClaimed
+			);
+		});
+}
+
+#[test]
+fn bond_during_era_correctly_populates_claimed_rewards() {
+	ExtBuilder::default()
+		.has_stakers(false)
+		.build()
+		.execute_with(|| {
+			// Era = None
+			bond_validator(9, 8, StakingBalance::RingBalance(1000));
+			assert_eq!(
+				Staking::ledger(&8),
+				Some(StakingLedger {
+					stash: 9,
+					active_ring: 1000,
+					ring_staking_lock: StakingLock {
+						staking_amount: 1000,
+						unbondings: vec![]
+					},
+					..Default::default()
+				})
+			);
+			start_era(5);
+			bond_validator(11, 10, StakingBalance::RingBalance(1000));
+			assert_eq!(
+				Staking::ledger(&10),
+				Some(StakingLedger {
+					stash: 11,
+					active_ring: 1000,
+					ring_staking_lock: StakingLock {
+						staking_amount: 1000,
+						unbondings: vec![]
+					},
+					claimed_rewards: (0..5).collect(),
+					..Default::default()
+				})
+			);
+			start_era(99);
+			bond_validator(13, 12, StakingBalance::RingBalance(1000));
+			assert_eq!(
+				Staking::ledger(&12),
+				Some(StakingLedger {
+					stash: 13,
+					active_ring: 1000,
+					ring_staking_lock: StakingLock {
+						staking_amount: 1000,
+						unbondings: vec![]
+					},
+					claimed_rewards: (15..99).collect(),
+					..Default::default()
+				})
+			);
+		});
 }

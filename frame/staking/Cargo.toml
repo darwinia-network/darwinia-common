@@ -40,6 +40,7 @@ darwinia-support = { features = ["easy-testing"], path = "../support" }
 # substrate
 frame-benchmarking = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
 pallet-timestamp = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+sp-storage = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
 substrate-test-utils = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
 
 [features]

@@ -648,10 +648,10 @@ pub fn assert_ledger_consistent(stash: AccountId) {
 pub fn bond(stash: AccountId, controller: AccountId, val: StakingBalanceT<Test>) {
 	match val {
 		StakingBalance::RingBalance(r) => {
-			let _ = Ring::make_free_balance_be(&(stash), r);
+			let _ = Ring::make_free_balance_be(&(controller), r);
 		}
 		StakingBalance::KtonBalance(k) => {
-			let _ = Kton::make_free_balance_be(&(stash), k);
+			let _ = Kton::make_free_balance_be(&(controller), k);
 		}
 	}
 	assert_ok!(Staking::bond(
@@ -982,37 +982,19 @@ pub fn prepare_submission_with(
 
 /// Make all validator and nominator request their payment
 pub fn make_all_reward_payment(era: EraIndex) {
-	let validators_with_reward = <ErasRewardPoints<Test>>::get(era)
+	let validators_with_reward = ErasRewardPoints::<Test>::get(era)
 		.individual
 		.keys()
 		.cloned()
 		.collect::<Vec<_>>();
 
-	// reward nominators
-	let mut nominator_controllers = HashMap::new();
-	for validator in Staking::eras_reward_points(era).individual.keys() {
-		let validator_exposure = Staking::eras_stakers_clipped(era, validator);
-		for (nom_index, nom) in validator_exposure.others.iter().enumerate() {
-			if let Some(nom_ctrl) = Staking::bonded(nom.who) {
-				nominator_controllers
-					.entry(nom_ctrl)
-					.or_insert(vec![])
-					.push((validator.clone(), nom_index as u32));
-			}
-		}
-	}
-	for (nominator_controller, validators_with_nom_index) in nominator_controllers {
-		assert_ok!(Staking::payout_nominator(
-			Origin::signed(nominator_controller),
-			era,
-			validators_with_nom_index,
-		));
-	}
-
 	// reward validators
 	for validator_controller in validators_with_reward.iter().filter_map(Staking::bonded) {
-		assert_ok!(Staking::payout_validator(
-			Origin::signed(validator_controller),
+		let ledger = <Ledger<Test>>::get(&validator_controller).unwrap();
+
+		assert_ok!(Staking::payout_stakers(
+			Origin::signed(1337),
+			ledger.stash,
 			era
 		));
 	}
