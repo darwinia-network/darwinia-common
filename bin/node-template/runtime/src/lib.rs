@@ -63,18 +63,6 @@ pub mod converter {
 			x * Self::factor()
 		}
 	}
-
-	pub struct Bypass;
-	impl Convert<u32, u64> for Bypass {
-		fn convert(x: u32) -> u64 {
-			x as _
-		}
-	}
-	impl Convert<u128, u32> for Bypass {
-		fn convert(x: u128) -> u32 {
-			x as _
-		}
-	}
 }
 
 // --- substrate ---
@@ -122,6 +110,7 @@ use sp_version::RuntimeVersion;
 // --- darwinia ---
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo;
 use darwinia_eth_relay::EthNetworkType;
+use darwinia_support::structs::BypassConverter;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -445,16 +434,15 @@ parameter_types! {
 	pub const BondingDurationInEra: darwinia_staking::EraIndex = 14 * 24 * (HOURS / (SESSIONS_PER_ERA * BLOCKS_PER_SESSION));
 	pub const BondingDurationInBlockNumber: BlockNumber = 14 * DAYS;
 	pub const SlashDeferDuration: darwinia_staking::EraIndex = 7 * 24; // 1/4 the bonding duration.
-	pub const ElectionLookahead: BlockNumber = 25; // 10 minutes per session => 100 block.
+	pub const ElectionLookahead: BlockNumber = 2;
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
-	// --- custom ---
 	pub const Cap: Balance = CAP;
 	pub const TotalPower: Power = TOTAL_POWER;
 }
 impl darwinia_staking::Trait for Runtime {
 	type Event = Event;
 	type UnixTime = Timestamp;
-	type BypassConverter = converter::Bypass;
+	type BypassConverter = BypassConverter;
 	type SessionsPerEra = SessionsPerEra;
 	type BondingDurationInEra = BondingDurationInEra;
 	type BondingDurationInBlockNumber = BondingDurationInBlockNumber;

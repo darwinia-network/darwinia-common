@@ -2,7 +2,10 @@
 use codec::{Decode, Encode};
 use num_traits::Zero;
 // --- substrate ---
-use sp_runtime::{traits::AtLeast32Bit, RuntimeDebug};
+use sp_runtime::{
+	traits::{AtLeast32Bit, Convert},
+	RuntimeDebug,
+};
 use sp_std::{ops::BitOr, prelude::*};
 // --- darwinia ---
 use crate::balance::lock::{LockIdentifier, WithdrawReason, WithdrawReasons};
@@ -170,5 +173,17 @@ where
 		} else {
 			Zero::zero()
 		}
+	}
+}
+
+pub struct BypassConverter;
+impl Convert<u32, u64> for BypassConverter {
+	fn convert(x: u32) -> u64 {
+		x as _
+	}
+}
+impl Convert<u128, u32> for BypassConverter {
+	fn convert(x: u128) -> u32 {
+		x as _
 	}
 }

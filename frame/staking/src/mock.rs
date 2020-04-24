@@ -41,6 +41,7 @@ use sp_staking::{
 // --- darwinia ---
 use crate::*;
 use alias::*;
+use darwinia_support::structs::BypassConverter;
 
 pub(crate) type AccountId = u64;
 pub(crate) type AccountIndex = u64;
@@ -91,18 +92,6 @@ darwinia_support::impl_account_data! {
 		Balance = Balance
 	{
 		// other data
-	}
-}
-
-pub struct BypassConverter;
-impl Convert<u32, u64> for BypassConverter {
-	fn convert(x: u32) -> u64 {
-		x as _
-	}
-}
-impl Convert<u128, u32> for BypassConverter {
-	fn convert(x: u128) -> u32 {
-		x as _
 	}
 }
 
