@@ -58,8 +58,8 @@ fn create_validators<T: Trait>(
 	Ok(validators)
 }
 
-// This function generates one validator being nominated by n nominators.
-// It starts an era and creates pending payouts.
+// This function generates one validator being nominated by n nominators, and returns
+//the validator stash account. It also starts an era and creates pending payouts.
 pub fn create_validator_with_nominators<T: Trait>(
 	n: u32,
 	upper_bound: u32,
@@ -80,7 +80,7 @@ pub fn create_validator_with_nominators<T: Trait>(
 	let stash_lookup: <T::Lookup as StaticLookup>::Source = T::Lookup::unlookup(v_stash.clone());
 
 	points_total += 10;
-	points_individual.push((v_stash, 10));
+	points_individual.push((v_stash.clone(), 10));
 
 	// Give the validator n nominators, but keep total users in the system the same.
 	for i in 0..upper_bound {
@@ -113,7 +113,7 @@ pub fn create_validator_with_nominators<T: Trait>(
 	let total_payout = T::RingCurrency::minimum_balance() * 1000.into();
 	<ErasValidatorReward<T>>::insert(current_era, total_payout);
 
-	Ok(v_controller)
+	Ok(v_stash)
 }
 
 // This function generates one nominator nominating v validators.
@@ -393,14 +393,11 @@ benchmarks! {
 
 #[cfg(test)]
 mod tests {
-	use crate::mock::*;
-	use crate::*;
+	// --- substrate ---
 	use frame_support::assert_ok;
-
-	use crate::benchmarking::{
-		create_validator_with_nominators, create_validators_with_nominators_for_era,
-		SelectedBenchmark,
-	};
+	// --- darwinia ---
+	use super::*;
+	use crate::mock::{Balances, ExtBuilder, Origin, Staking, Test};
 
 	#[test]
 	fn create_validators_with_nominators_for_era_works() {
@@ -429,21 +426,18 @@ mod tests {
 			.execute_with(|| {
 				let n = 10;
 
-				let validator =
+				let validator_stash =
 					create_validator_with_nominators::<Test>(n, MAX_NOMINATIONS as u32).unwrap();
 
 				let current_era = CurrentEra::get().unwrap();
-				let controller = validator;
-				let ledger = Staking::ledger(&controller).unwrap();
-				let stash = ledger.stash;
 
-				let original_free_balance = Ring::free_balance(&stash);
+				let original_free_balance = Balances::free_balance(&validator_stash);
 				assert_ok!(Staking::payout_stakers(
 					Origin::signed(1337),
-					stash,
+					validator_stash,
 					current_era
 				));
-				let new_free_balance = Ring::free_balance(&stash);
+				let new_free_balance = Balances::free_balance(&validator_stash);
 
 				assert!(original_free_balance < new_free_balance);
 			});
@@ -471,6 +465,38 @@ mod tests {
 					.unwrap();
 
 				assert_ok!(closure_to_benchmark());
+			});
+	}
+
+	#[test]
+	fn test_benchmarks() {
+		ExtBuilder::default()
+			.has_stakers(false)
+			.build()
+			.execute_with(|| {
+				assert_ok!(test_benchmark_bond::<Test>());
+				assert_ok!(test_benchmark_bond_extra::<Test>());
+				assert_ok!(test_benchmark_unbond::<Test>());
+				assert_ok!(test_benchmark_withdraw_unbonded::<Test>());
+				assert_ok!(test_benchmark_validate::<Test>());
+				assert_ok!(test_benchmark_nominate::<Test>());
+				assert_ok!(test_benchmark_chill::<Test>());
+				assert_ok!(test_benchmark_set_payee::<Test>());
+				assert_ok!(test_benchmark_set_controller::<Test>());
+				assert_ok!(test_benchmark_set_validator_count::<Test>());
+				assert_ok!(test_benchmark_force_no_eras::<Test>());
+				assert_ok!(test_benchmark_force_new_era::<Test>());
+				assert_ok!(test_benchmark_force_new_era_always::<Test>());
+				assert_ok!(test_benchmark_set_invulnerables::<Test>());
+				assert_ok!(test_benchmark_force_unstake::<Test>());
+				assert_ok!(test_benchmark_cancel_deferred_slash::<Test>());
+				assert_ok!(test_benchmark_payout_stakers::<Test>());
+				assert_ok!(test_benchmark_rebond::<Test>());
+				assert_ok!(test_benchmark_set_history_depth::<Test>());
+				assert_ok!(test_benchmark_reap_stash::<Test>());
+				assert_ok!(test_benchmark_new_era::<Test>());
+				assert_ok!(test_benchmark_do_slash::<Test>());
+				assert_ok!(test_benchmark_payout_all::<Test>());
 			});
 	}
 }

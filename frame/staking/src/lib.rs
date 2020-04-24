@@ -363,7 +363,6 @@ use sp_std::{
 	collections::btree_map::BTreeMap, convert::TryInto, marker::PhantomData, mem::size_of,
 	prelude::*,
 };
-
 // --- darwinia ---
 use darwinia_support::{
 	balance::lock::*,

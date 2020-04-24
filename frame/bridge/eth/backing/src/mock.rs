@@ -46,6 +46,11 @@ pub type EthRelay = darwinia_eth_relay::Module<Test>;
 pub type Staking = darwinia_staking::Module<Test>;
 pub type EthBacking = Module<Test>;
 
+thread_local! {
+	static EXISTENTIAL_DEPOSIT: RefCell<Balance> = RefCell::new(0);
+	static SLASH_DEFER_DURATION: RefCell<EraIndex> = RefCell::new(0);
+}
+
 darwinia_support::impl_account_data! {
 	pub struct AccountData<Balance>
 	for
@@ -67,11 +72,6 @@ impl_outer_dispatch! {
 		darwinia_eth_relay::EthRelay,
 		darwinia_staking::Staking,
 	}
-}
-
-thread_local! {
-	static EXISTENTIAL_DEPOSIT: RefCell<Balance> = RefCell::new(0);
-	static SLASH_DEFER_DURATION: RefCell<EraIndex> = RefCell::new(0);
 }
 
 pub const NANO: Balance = 1;
