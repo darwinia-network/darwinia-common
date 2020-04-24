@@ -1065,7 +1065,7 @@ mod tests {
 			VOTING_BOND.with(|v| *v.borrow_mut() = self.voter_bond);
 			TERM_DURATION.with(|v| *v.borrow_mut() = self.term_duration);
 			DESIRED_RUNNERS_UP.with(|v| *v.borrow_mut() = self.desired_runners_up);
-			GenesisConfig {
+			let mut ext: sp_io::TestExternalities = GenesisConfig {
 				darwinia_balances_Instance0: Some(darwinia_balances::GenesisConfig::<
 					Test,
 					RingInstance,
@@ -1082,7 +1082,9 @@ mod tests {
 			}
 			.build_storage()
 			.unwrap()
-			.into()
+			.into();
+			ext.execute_with(|| System::set_block_number(1));
+			ext
 		}
 	}
 
@@ -1106,7 +1108,6 @@ mod tests {
 	#[test]
 	fn params_should_work() {
 		ExtBuilder::default().build().execute_with(|| {
-			System::set_block_number(1);
 			assert_eq!(Elections::desired_members(), 2);
 			assert_eq!(Elections::term_duration(), 5);
 			assert_eq!(Elections::election_rounds(), 0);
@@ -1129,7 +1130,6 @@ mod tests {
 			.term_duration(0)
 			.build()
 			.execute_with(|| {
-				System::set_block_number(1);
 				assert_eq!(Elections::term_duration(), 0);
 				assert_eq!(Elections::desired_members(), 2);
 				assert_eq!(Elections::election_rounds(), 0);
@@ -1584,10 +1584,9 @@ mod tests {
 			assert_eq!(balances(&5), (45, 5));
 
 			assert_ok!(Elections::report_defunct_voter(Origin::signed(5), 3));
-			assert_eq!(
-				System::events()[7].event,
-				Event::elections(RawEvent::VoterReported(3, 5, true))
-			);
+			assert!(System::events().iter().any(|event| {
+				event.event == Event::elections(RawEvent::VoterReported(3, 5, true))
+			}));
 
 			assert_eq!(balances(&3), (28, 0));
 			assert_eq!(balances(&5), (47, 5));
@@ -1613,10 +1612,9 @@ mod tests {
 			assert_eq!(balances(&5), (45, 5));
 
 			assert_ok!(Elections::report_defunct_voter(Origin::signed(5), 4));
-			assert_eq!(
-				System::events()[7].event,
-				Event::elections(RawEvent::VoterReported(4, 5, false))
-			);
+			assert!(System::events().iter().any(|event| {
+				event.event == Event::elections(RawEvent::VoterReported(4, 5, false))
+			}));
 
 			assert_eq!(balances(&4), (35, 5));
 			assert_eq!(balances(&5), (45, 3));
@@ -2035,10 +2033,9 @@ mod tests {
 			// 5 is an outgoing loser. will also get slashed.
 			assert_eq!(balances(&5), (45, 2));
 
-			assert_eq!(
-				System::events()[6].event,
-				Event::elections(RawEvent::NewTerm(vec![(4, 40), (5, 50)])),
-			);
+			assert!(System::events().iter().any(|event| {
+				event.event == Event::elections(RawEvent::NewTerm(vec![(4, 40), (5, 50)]))
+			}));
 		})
 	}
 
