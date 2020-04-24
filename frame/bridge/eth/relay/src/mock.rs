@@ -194,12 +194,12 @@ impl ExtBuilder {
 		self.eth_network = eth_network;
 		self
 	}
-	pub fn set_associated_consts(&self) {
+	pub fn set_associated_constants(&self) {
 		ETH_NETWORK.with(|v| v.replace(self.eth_network.clone()));
 	}
 
 	pub fn build(self) -> sp_io::TestExternalities {
-		self.set_associated_consts();
+		self.set_associated_constants();
 
 		let mut storage = system::GenesisConfig::default()
 			.build_storage::<Test>()
