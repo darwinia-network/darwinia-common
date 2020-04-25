@@ -63,7 +63,7 @@ fn test_insert_header() {
 		let mmr_root = HeaderMMR::_find_mmr_root(headers[h2 as usize - 1].clone())
 			.expect("Header mmr get failed");
 
-		let store = ModuleMMRStore::<Test>::default();
+		let store = <ModuleMMRStore<Test>>::default();
 		let mmr = MMR::<_, MMRMerge<Test>, _>::new(HeaderMMR::position_of(h2), store);
 
 		assert_eq!(mmr.get_root().expect("Get Root Failed"), mmr_root);

@@ -171,7 +171,7 @@ pub fn create_nominator_with_validators<T: Trait>(
 	};
 
 	let current_era = CurrentEra::get().unwrap();
-	ErasRewardPoints::<T>::insert(current_era, reward);
+	<ErasRewardPoints<T>>::insert(current_era, reward);
 
 	// Create reward pool
 	let total_payout = T::RingCurrency::minimum_balance() * 1000.into();
@@ -304,8 +304,8 @@ benchmarks! {
 				Exposure::<T::AccountId, RingBalance<T>, KtonBalance<T>>::default(),
 			);
 			<ErasValidatorPrefs<T>>::insert(i, T::AccountId::default(), ValidatorPrefs::default());
-			<ErasValidatorReward<T>>::insert(i, RingBalance::<T>::one());
-			<ErasRewardPoints<T>>::insert(i, EraRewardPoints::<T::AccountId>::default());
+			<ErasValidatorReward<T>>::insert(i, <RingBalance<T>>::one());
+			<ErasRewardPoints<T>>::insert(i, <EraRewardPoints<T::AccountId>>::default());
 			ErasTotalStake::insert(i, Power::one());
 			ErasStartSessionIndex::insert(i, i);
 		}
@@ -410,8 +410,8 @@ mod tests {
 
 				create_validators_with_nominators_for_era::<Test>(v, n).unwrap();
 
-				let count_validators = Validators::<Test>::iter().count();
-				let count_nominators = Nominators::<Test>::iter().count();
+				let count_validators = <Validators<Test>>::iter().count();
+				let count_nominators = <Nominators<Test>>::iter().count();
 
 				assert_eq!(count_validators, v as usize);
 				assert_eq!(count_nominators, n as usize);
