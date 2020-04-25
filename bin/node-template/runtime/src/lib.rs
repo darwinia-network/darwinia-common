@@ -99,7 +99,7 @@ use sp_runtime::{
 	traits::{
 		BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, SaturatedConversion, Verify,
 	},
-	transaction_validity::{TransactionSource, TransactionValidity},
+	transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiSignature, RuntimeDebug,
 };
 use sp_staking::SessionIndex;
@@ -366,6 +366,7 @@ impl pallet_grandpa::Trait for Runtime {
 
 parameter_types! {
 	pub const SessionDuration: BlockNumber = SESSION_DURATION;
+	pub const ImOnlineUnsignedPriority: TransactionPriority = TransactionPriority::max_value();
 }
 impl pallet_im_online::Trait for Runtime {
 	type AuthorityId = ImOnlineId;
@@ -374,6 +375,7 @@ impl pallet_im_online::Trait for Runtime {
 	type SubmitTransaction = TransactionSubmitterOf<Self::AuthorityId>;
 	type SessionDuration = SessionDuration;
 	type ReportUnresponsiveness = Offences;
+	type UnsignedPriority = ImOnlineUnsignedPriority;
 }
 
 impl pallet_authority_discovery::Trait for Runtime {}
@@ -436,6 +438,8 @@ parameter_types! {
 	pub const SlashDeferDuration: darwinia_staking::EraIndex = 7 * 24; // 1/4 the bonding duration.
 	pub const ElectionLookahead: BlockNumber = 2;
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
+	/// We prioritize im-online heartbeats over phragmen solution submission.
+	pub const StakingUnsignedPriority: TransactionPriority = TransactionPriority::max_value() / 2;
 	pub const Cap: Balance = CAP;
 	pub const TotalPower: Power = TOTAL_POWER;
 }
@@ -456,6 +460,7 @@ impl darwinia_staking::Trait for Runtime {
 	type Call = Call;
 	type SubmitTransaction = TransactionSubmitterOf<()>;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
+	type UnsignedPriority = StakingUnsignedPriority;
 	type RingCurrency = Ring;
 	type RingRewardRemainder = Treasury;
 	// send the slashed funds to the treasury.

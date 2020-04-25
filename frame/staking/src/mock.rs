@@ -305,7 +305,7 @@ parameter_types! {
 	pub const BondingDurationInEra: EraIndex = 3;
 	pub const BondingDurationInBlockNumber: BlockNumber = 9;
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
-
+	pub const UnsignedPriority: u64 = 1 << 20;
 	pub const Cap: Balance = CAP;
 	pub const TotalPower: Power = TOTAL_POWER;
 }
@@ -324,6 +324,7 @@ impl Trait for Test {
 	type Call = Call;
 	type SubmitTransaction = SubmitTransaction;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
+	type UnsignedPriority = UnsignedPriority;
 	type RingCurrency = Ring;
 	type RingRewardRemainder = ();
 	type RingSlash = ();
