@@ -58,6 +58,8 @@ substrate-build-script-utils = { git = "https://github.com/darwinia-network/subs
 runtime-benchmarks = [
 	# darwinia
 	"node-template-runtime/runtime-benchmarks",
+	# substrate
+	"frame-benchmarking-cli",
 ]
 build-spec = [
 	# darwinia
