@@ -1500,7 +1500,7 @@ decl_module! {
 		/// # </weight>
 		#[weight = SimpleDispatchInfo::FixedNormal(500_000)]
 		fn bond_extra(origin, max_additional: StakingBalanceT<T>, promise_month: u8) {
-			ensure!(Self::era_election_status().is_closed(), Error::<T>::CallNotAllowed);
+			ensure!(Self::era_election_status().is_closed(), <Error<T>>::CallNotAllowed);
 
 			let stash = ensure_signed(origin)?;
 			let controller = Self::bonded(&stash).ok_or(<Error<T>>::NotStash)?;
@@ -1604,7 +1604,7 @@ decl_module! {
 		/// Only active normal ring can be unbond
 		#[weight = SimpleDispatchInfo::FixedNormal(500_000)]
 		fn unbond(origin, value: StakingBalanceT<T>) {
-			ensure!(Self::era_election_status().is_closed(), Error::<T>::CallNotAllowed);
+			ensure!(Self::era_election_status().is_closed(), <Error<T>>::CallNotAllowed);
 
 			let controller = ensure_signed(origin)?;
 			let mut ledger = Self::clear_mature_deposits(Self::ledger(&controller).ok_or(<Error<T>>::NotController)?);
@@ -1852,7 +1852,7 @@ decl_module! {
 		/// # </weight>
 		#[weight = SimpleDispatchInfo::FixedNormal(750_000)]
 		fn validate(origin, prefs: ValidatorPrefs) {
-			ensure!(Self::era_election_status().is_closed(), Error::<T>::CallNotAllowed);
+			ensure!(Self::era_election_status().is_closed(), <Error<T>>::CallNotAllowed);
 
 			let controller = ensure_signed(origin)?;
 			let ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
@@ -1877,7 +1877,7 @@ decl_module! {
 		/// # </weight>
 		#[weight = SimpleDispatchInfo::FixedNormal(750_000)]
 		fn nominate(origin, targets: Vec<<T::Lookup as StaticLookup>::Source>) {
-			ensure!(Self::era_election_status().is_closed(), Error::<T>::CallNotAllowed);
+			ensure!(Self::era_election_status().is_closed(), <Error<T>>::CallNotAllowed);
 
 			let controller = ensure_signed(origin)?;
 			let ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
@@ -1914,7 +1914,7 @@ decl_module! {
 		/// # </weight>
 		#[weight = SimpleDispatchInfo::FixedNormal(500_000)]
 		fn chill(origin) {
-			ensure!(Self::era_election_status().is_closed(), Error::<T>::CallNotAllowed);
+			ensure!(Self::era_election_status().is_closed(), <Error<T>>::CallNotAllowed);
 
 			let controller = ensure_signed(origin)?;
 			let ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
@@ -2077,7 +2077,7 @@ decl_module! {
 		/// # </weight>
 		#[weight = SimpleDispatchInfo::FixedNormal(500_000)]
 		fn payout_stakers(origin, validator_stash: T::AccountId, era: EraIndex) -> DispatchResult {
-			ensure!(Self::era_election_status().is_closed(), Error::<T>::CallNotAllowed);
+			ensure!(Self::era_election_status().is_closed(), <Error<T>>::CallNotAllowed);
 
 			ensure_signed(origin)?;
 			Self::do_payout_stakers(validator_stash, era)
@@ -3344,17 +3344,14 @@ impl<T: Trait> Convert<T::AccountId, Option<ExposureT<T>>> for ExposureOf<T> {
 impl<T: Trait> OnOffenceHandler<T::AccountId, pallet_session::historical::IdentificationTuple<T>>
 	for Module<T>
 where
-	T: pallet_session::Trait<ValidatorId = <T as frame_system::Trait>::AccountId>,
+	T: pallet_session::Trait<ValidatorId = AccountId<T>>,
 	T: pallet_session::historical::Trait<
 		FullIdentification = ExposureT<T>,
 		FullIdentificationOf = ExposureOf<T>,
 	>,
-	T::SessionHandler: pallet_session::SessionHandler<<T as frame_system::Trait>::AccountId>,
-	T::SessionManager: pallet_session::SessionManager<<T as frame_system::Trait>::AccountId>,
-	T::ValidatorIdOf: Convert<
-		<T as frame_system::Trait>::AccountId,
-		Option<<T as frame_system::Trait>::AccountId>,
-	>,
+	T::SessionHandler: pallet_session::SessionHandler<AccountId<T>>,
+	T::SessionManager: pallet_session::SessionManager<AccountId<T>>,
+	T::ValidatorIdOf: Convert<AccountId<T>, Option<AccountId<T>>>,
 {
 	fn on_offence(
 		offenders: &[OffenceDetails<
