@@ -92,7 +92,7 @@ pub fn new_full(config: Configuration) -> Result<impl AbstractService, ServiceEr
 	let (role, force_authoring, name, disable_grandpa) = (
 		config.role.clone(),
 		config.force_authoring,
-		config.name.clone(),
+		config.network.node_name.clone(),
 		config.disable_grandpa,
 	);
 

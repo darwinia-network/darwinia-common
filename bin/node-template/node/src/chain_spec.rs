@@ -1,6 +1,6 @@
 // --- substrate ---
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
-use sc_service::Properties;
+use sc_service::{ChainType, Properties};
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::AuthorityId as BabeId;
 use sp_core::{sr25519, Pair, Public};
@@ -23,17 +23,6 @@ use node_template_runtime::{
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
-
-/// The chain specification option. This is expected to come in from the CLI and
-/// is little more than one of a number of alternatives which can easily be converted
-/// from a string (`--chain=...`) into a `ChainSpec`.
-#[derive(Clone, Debug)]
-pub enum Alternative {
-	/// Whatever the current runtime is, with just Alice as an auth.
-	Development,
-	/// Whatever the current runtime is, with simple Alice/Bob auths.
-	LocalTestnet,
-}
 
 fn session_keys(
 	babe: BabeId,
@@ -100,75 +89,67 @@ pub fn get_authority_keys_from_seed(
 	)
 }
 
-impl Alternative {
-	/// Get an actual chain config from one of the alternatives.
-	pub(crate) fn load(self) -> Result<ChainSpec, String> {
-		Ok(match self {
-			Alternative::Development => ChainSpec::from_genesis(
-				"Development",
-				"dev",
-				|| {
-					testnet_genesis(
-						vec![get_authority_keys_from_seed("Alice")],
-						get_account_id_from_seed::<sr25519::Public>("Alice"),
-						vec![
-							get_account_id_from_seed::<sr25519::Public>("Alice"),
-							get_account_id_from_seed::<sr25519::Public>("Bob"),
-							get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-							get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-						],
-						true,
-					)
-				},
-				vec![],
-				None,
-				None,
-				Some(properties()),
-				None,
-			),
-			Alternative::LocalTestnet => ChainSpec::from_genesis(
-				"Local Testnet",
-				"local_testnet",
-				|| {
-					testnet_genesis(
-						vec![
-							get_authority_keys_from_seed("Alice"),
-							get_authority_keys_from_seed("Bob"),
-						],
-						get_account_id_from_seed::<sr25519::Public>("Alice"),
-						vec![
-							get_account_id_from_seed::<sr25519::Public>("Alice"),
-							get_account_id_from_seed::<sr25519::Public>("Bob"),
-							get_account_id_from_seed::<sr25519::Public>("Charlie"),
-							get_account_id_from_seed::<sr25519::Public>("Dave"),
-							get_account_id_from_seed::<sr25519::Public>("Eve"),
-							get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-							get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-							get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-							get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-							get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-							get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-							get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
-						],
-						true,
-					)
-				},
-				vec![],
-				None,
-				None,
-				Some(properties()),
-				None,
-			),
-		})
-	}
+pub fn development_config() -> ChainSpec {
+	ChainSpec::from_genesis(
+		"Development",
+		"dev",
+		ChainType::Development,
+		|| {
+			testnet_genesis(
+				vec![get_authority_keys_from_seed("Alice")],
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				vec![
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					get_account_id_from_seed::<sr25519::Public>("Bob"),
+					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+				],
+				true,
+			)
+		},
+		vec![],
+		None,
+		None,
+		Some(properties()),
+		None,
+	)
+}
 
-	pub(crate) fn from(s: &str) -> Option<Self> {
-		match s {
-			"dev" => Some(Alternative::Development),
-			"" | "local" => Some(Alternative::LocalTestnet),
-			_ => None,
-		}
-	}
+pub fn local_testnet_config() -> ChainSpec {
+	ChainSpec::from_genesis(
+		"Local Testnet",
+		"local_testnet",
+		ChainType::Local,
+		|| {
+			testnet_genesis(
+				vec![
+					get_authority_keys_from_seed("Alice"),
+					get_authority_keys_from_seed("Bob"),
+				],
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				vec![
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					get_account_id_from_seed::<sr25519::Public>("Bob"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie"),
+					get_account_id_from_seed::<sr25519::Public>("Dave"),
+					get_account_id_from_seed::<sr25519::Public>("Eve"),
+					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+				],
+				true,
+			)
+		},
+		vec![],
+		None,
+		None,
+		Some(properties()),
+		None,
+	)
 }
 
 fn testnet_genesis(

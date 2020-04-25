@@ -2,6 +2,7 @@
 name = "node-template"
 version = "0.5.3"
 authors = ["Anonymous"]
+description = "Darwinia Node template"
 edition = "2018"
 license = "Unlicense"
 build = "build.rs"
@@ -49,11 +50,9 @@ sp-runtime = { git = "https://github.com/darwinia-network/substrate.git", branch
 sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
 
 [build-dependencies]
-# crates
-vergen = "3.1.0"
 # substrate
-build-script-utils = { package = "substrate-build-script-utils", git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
 frame-benchmarking-cli = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+substrate-build-script-utils = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
 
 [features]
 runtime-benchmarks = [
