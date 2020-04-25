@@ -3225,7 +3225,7 @@ fn test_payout_stakers() {
 				bond_nominator(
 					1000 + i,
 					100 + i,
-					StakingBalance::RingBalance(balance + i),
+					StakingBalance::RingBalance(balance + i as Balance),
 					vec![11],
 				);
 			}
@@ -3240,13 +3240,13 @@ fn test_payout_stakers() {
 
 			// Top 64 nominators of validator 11 automatically paid out, including the validator
 			// Validator payout goes to controller.
-			assert!(Balances::free_balance(&10) > balance);
+			assert!(Ring::free_balance(&10) > balance);
 			for i in 36..100 {
-				assert!(Balances::free_balance(&(100 + i)) > balance + i);
+				assert!(Ring::free_balance(&(100 + i)) > balance + i as Balance);
 			}
 			// The bottom 36 do not
 			for i in 0..36 {
-				assert_eq!(Balances::free_balance(&(100 + i)), balance + i);
+				assert_eq!(Ring::free_balance(&(100 + i)), balance + i as Balance);
 			}
 
 			// We track rewards in `claimed_rewards` vec
@@ -3348,7 +3348,7 @@ fn payout_stakers_handles_basic_errors() {
 				bond_nominator(
 					1000 + i,
 					100 + i,
-					StakingBalance::RingBalance(balance + i),
+					StakingBalance::RingBalance(balance + i as Balance),
 					vec![11],
 				);
 			}

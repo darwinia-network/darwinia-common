@@ -14,10 +14,7 @@ mod alias {
 }
 
 // --- std ---
-use std::{
-	cell::RefCell,
-	collections::{HashMap, HashSet},
-};
+use std::{cell::RefCell, collections::HashSet};
 // --- substrate ---
 use frame_support::{
 	assert_ok, impl_outer_dispatch, impl_outer_event, impl_outer_origin, parameter_types,
@@ -545,12 +542,12 @@ impl ExtBuilder {
 			];
 		}
 		let _ = GenesisConfig::<Test> {
+			history_depth: 84,
 			stakers,
 			validator_count: self.validator_count,
 			minimum_validator_count: self.minimum_validator_count,
 			invulnerables: self.invulnerables,
 			slash_reward_fraction: Perbill::from_percent(10),
-			// --- custom ---
 			payout_fraction: Perbill::from_percent(50),
 			..Default::default()
 		}
@@ -587,7 +584,6 @@ impl ExtBuilder {
 
 		ext
 	}
-
 	pub fn build_and_execute(self, test: impl FnOnce() -> ()) {
 		let mut ext = self.build();
 		ext.execute_with(test);
@@ -687,9 +683,11 @@ pub fn assert_ledger_consistent(controller: AccountId) {
 fn bond(stash: AccountId, controller: AccountId, val: StakingBalanceT<Test>) {
 	match val {
 		StakingBalance::RingBalance(r) => {
+			let _ = Ring::make_free_balance_be(&(stash), r);
 			let _ = Ring::make_free_balance_be(&(controller), r);
 		}
 		StakingBalance::KtonBalance(k) => {
+			let _ = Kton::make_free_balance_be(&(stash), k);
 			let _ = Kton::make_free_balance_be(&(controller), k);
 		}
 	}
