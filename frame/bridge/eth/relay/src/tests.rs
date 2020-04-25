@@ -1,7 +1,10 @@
 //! Tests for eth-relay.
 
 // --- substrate ---
-use frame_support::{assert_err, assert_ok, weights::DispatchClass};
+use frame_support::{
+	assert_err, assert_ok,
+	weights::{DispatchClass, DispatchInfo},
+};
 use frame_system::RawOrigin;
 // --- darwinia ---
 use crate::{mock::*, *};
@@ -269,7 +272,7 @@ fn check_eth_relay_header_hash_works() {
 				.into();
 
 				assert_eq!(
-					check.validate(&0, &call, info, 0),
+					check.validate(&0, &call, &info, 0),
 					InvalidTransaction::Custom(<Error<Test>>::HeaderAE.as_u8()).into(),
 				);
 			}
@@ -292,7 +295,7 @@ fn check_eth_relay_header_hash_works() {
 				)
 				.into();
 
-				assert_eq!(check.validate(&0, &call, info, 0), Ok(Default::default()));
+				assert_eq!(check.validate(&0, &call, &info, 0), Ok(Default::default()));
 			}
 		});
 }
