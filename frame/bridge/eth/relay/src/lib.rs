@@ -13,11 +13,8 @@ use codec::{Decode, Encode};
 use ethereum_types::{H128, H512, H64};
 // --- substrate ---
 use frame_support::{
-	debug::trace,
-	decl_error, decl_event, decl_module, decl_storage, ensure,
-	traits::Get,
-	weights::{DispatchInfo, SimpleDispatchInfo},
-	IsSubType, Parameter,
+	debug::trace, decl_error, decl_event, decl_module, decl_storage, ensure, traits::Get,
+	weights::SimpleDispatchInfo, IsSubType,
 };
 use frame_system::{self as system, ensure_root, ensure_signed};
 use sp_io::hashing::sha2_256;
