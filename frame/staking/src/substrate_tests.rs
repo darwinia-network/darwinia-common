@@ -1955,13 +1955,13 @@ fn era_is_always_same_length() {
 
 		start_era(1);
 		assert_eq!(
-			Staking::eras_start_session_index(active_era()).unwrap(),
+			Staking::eras_start_session_index(current_era()).unwrap(),
 			session_per_era
 		);
 
 		start_era(2);
 		assert_eq!(
-			Staking::eras_start_session_index(active_era()).unwrap(),
+			Staking::eras_start_session_index(current_era()).unwrap(),
 			session_per_era * 2u32
 		);
 
@@ -1969,9 +1969,9 @@ fn era_is_always_same_length() {
 		ForceEra::put(Forcing::ForceNew);
 		advance_session();
 		advance_session();
-		assert_eq!(Staking::active_era().unwrap().index, 3);
+		assert_eq!(current_era(), 3);
 		assert_eq!(
-			Staking::eras_start_session_index(active_era()).unwrap(),
+			Staking::eras_start_session_index(current_era()).unwrap(),
 			session + 2
 		);
 

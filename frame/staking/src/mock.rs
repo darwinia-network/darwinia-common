@@ -601,6 +601,10 @@ fn post_conditions() {
 	check_ledgers();
 }
 
+pub(crate) fn current_era() -> EraIndex {
+	Staking::current_era().unwrap()
+}
+
 pub(crate) fn active_era() -> EraIndex {
 	Staking::active_era().unwrap().index
 }
