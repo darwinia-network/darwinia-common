@@ -110,7 +110,7 @@ pub fn new_full(config: Configuration) -> Result<impl AbstractService, ServiceEr
 		})?
 		.build()?;
 
-	if let sc_service::config::Role::Authority { sentry_nodes } = &role {
+	if let sc_service::config::Role::Authority { .. } = &role {
 		let proposer =
 			sc_basic_authorship::ProposerFactory::new(service.client(), service.transaction_pool());
 

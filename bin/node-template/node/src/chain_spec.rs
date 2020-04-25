@@ -218,7 +218,7 @@ fn testnet_genesis(
 				.iter()
 				.take((endowed_accounts.len() + 1) / 2)
 				.cloned()
-				.map(|member| (member, STASH))
+				.map(|member| (member, 1 << 60))
 				.collect(),
 		}),
 		darwinia_claims: Some(ClaimsConfig {
