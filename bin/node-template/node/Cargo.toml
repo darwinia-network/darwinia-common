@@ -26,7 +26,7 @@ darwinia-eth-relay = { path = "../../../frame/bridge/eth/relay" }
 darwinia-staking = { path = "../../../frame/staking" }
 darwinia-balances-rpc = { path = "../../../frame/balances/rpc" }
 # substrate
-frame-benchmarking-cli = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+frame-benchmarking-cli = { optional = true, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
 pallet-im-online = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
 sc-basic-authorship = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
 sc-cli = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
