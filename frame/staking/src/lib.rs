@@ -1140,7 +1140,8 @@ decl_storage! {
 		/// solutions to be submitted.
 		pub EraElectionStatus get(fn era_election_status): ElectionStatus<T::BlockNumber>;
 
-		/// True if the current planned session is final.
+		/// True if the current **planned** session is final. Note that this does not take era
+		/// forcing into account.
 		pub IsCurrentSessionFinal get(fn is_current_session_final): bool = false;
 
 		// --- darwinia ---
@@ -1327,7 +1328,8 @@ decl_module! {
 			if
 				// if we don't have any ongoing offchain compute.
 				Self::era_election_status().is_closed() &&
-				Self::is_current_session_final()
+				// either current session final based on the plan, or we're forcing.
+				(Self::is_current_session_final() || Self::will_era_be_forced())
 			{
 				if let Some(next_session_change) = T::NextNewSession::estimate_next_new_session(now){
 					if let Some(remaining) = next_session_change.checked_sub(&now) {
@@ -3230,6 +3232,27 @@ impl<T: Trait> Module<T> {
 			Forcing::ForceAlways | Forcing::ForceNew => (),
 			_ => ForceEra::put(Forcing::ForceNew),
 		}
+	}
+
+	fn will_era_be_forced() -> bool {
+		match ForceEra::get() {
+			Forcing::ForceAlways | Forcing::ForceNew => true,
+			Forcing::ForceNone | Forcing::NotForcing => false,
+		}
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	pub fn add_era_stakers(
+		current_era: EraIndex,
+		controller: T::AccountId,
+		exposure: ExposureT<T>,
+	) {
+		<ErasStakers<T>>::insert(&current_era, &controller, &exposure);
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	pub fn put_election_status(status: ElectionStatus<T::BlockNumber>) {
+		<EraElectionStatus<T>>::put(status);
 	}
 }
 
