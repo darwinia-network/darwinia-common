@@ -198,6 +198,7 @@ parameter_types! {
 	// assume 60 blocks per session
 	pub const BondingDurationInBlockNumber: BlockNumber = 3 * 3 * 60;
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
+	pub const UnsignedPriority: u64 = 1 << 20;
 	pub const Cap: Balance = CAP;
 	pub const TotalPower: Power = TOTAL_POWER;
 }
@@ -216,6 +217,7 @@ impl darwinia_staking::Trait for Test {
 	type Call = Call;
 	type SubmitTransaction = SubmitTransaction;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
+	type UnsignedPriority = UnsignedPriority;
 	type RingCurrency = Ring;
 	type RingRewardRemainder = ();
 	type RingSlash = ();
