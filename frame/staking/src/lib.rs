@@ -382,7 +382,6 @@ macro_rules! log {
 	};
 }
 
-pub(crate) const MAX_NOMINATIONS: usize = <CompactAssignments as VotingLimit>::LIMIT;
 pub(crate) const MAX_UNLOCKING_CHUNKS: usize = 32;
 /// Maximum number of stakers that can be stored in a snapshot.
 pub(crate) const MAX_VALIDATORS: usize = ValidatorIndex::max_value() as usize;
@@ -1425,7 +1424,7 @@ decl_module! {
 
 			let ledger = StakingLedger {
 				stash: stash.clone(),
-				last_reward: {
+				claimed_rewards: {
 					let current_era = CurrentEra::get().unwrap_or(0);
 					let last_reward_era = current_era.saturating_sub(Self::history_depth());
 					(last_reward_era..current_era).collect()
@@ -2458,7 +2457,7 @@ impl<T: Trait> Module<T> {
 		let validator_leftover_payout = validator_total_payout - validator_commission_payout;
 		// Now let's calculate how this is split to the validator.
 		let validator_exposure_part =
-			Perbill::from_rational_approximation(exposure.own, exposure.total);
+			Perbill::from_rational_approximation(exposure.own_power, exposure.total_power);
 		let validator_staking_payout = validator_exposure_part * validator_leftover_payout;
 
 		// We can now make total validator payout:
@@ -2473,7 +2472,7 @@ impl<T: Trait> Module<T> {
 		// Sort nominators by highest to lowest exposure, but only keep `max_nominator_payouts` of them.
 		for nominator in exposure.others.iter() {
 			let nominator_exposure_part =
-				Perbill::from_rational_approximation(nominator.value, exposure.total);
+				Perbill::from_rational_approximation(nominator.power, exposure.total_power);
 
 			let nominator_reward: RingBalance<T> =
 				nominator_exposure_part * validator_leftover_payout;
