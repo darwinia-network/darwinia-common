@@ -13,7 +13,11 @@ impl SubstrateCli for Cli {
 	}
 
 	fn impl_version() -> &'static str {
-		env!("DARWINIA_CLI_IMPL_VERSION")
+		env!("SUBSTRATE_CLI_IMPL_VERSION")
+	}
+
+	fn executable_name() -> &'static str {
+		env!("CARGO_PKG_NAME")
 	}
 
 	fn description() -> &'static str {
@@ -30,10 +34,6 @@ impl SubstrateCli for Cli {
 
 	fn copyright_start_year() -> i32 {
 		2018
-	}
-
-	fn executable_name() -> &'static str {
-		env!("CARGO_PKG_NAME")
 	}
 
 	fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
