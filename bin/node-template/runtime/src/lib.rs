@@ -171,7 +171,6 @@ pub type SignedExtra = (
 	frame_system::CheckWeight<Runtime>,
 	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 	darwinia_eth_relay::CheckEthRelayHeaderHash<Runtime>,
-	darwinia_staking::LockStakingStatus<Runtime>,
 );
 
 /// Unchecked extrinsic type as expected by this runtime.
@@ -673,7 +672,6 @@ impl frame_system::offchain::CreateTransaction<Runtime, UncheckedExtrinsic> for 
 			frame_system::CheckNonce::<Runtime>::from(index),
 			frame_system::CheckWeight::<Runtime>::new(),
 			pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
-			Default::default(),
 			Default::default(),
 		);
 		let raw_payload = SignedPayload::new(call, extra)
