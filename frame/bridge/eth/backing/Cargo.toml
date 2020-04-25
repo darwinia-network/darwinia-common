@@ -1,6 +1,6 @@
 [package]
 name = "darwinia-eth-backing"
-version = "0.5.3"
+version = "0.5.4"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "FRAME pallet to backing Ethereum assets"
 edition = "2018"
