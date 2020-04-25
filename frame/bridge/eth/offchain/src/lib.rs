@@ -46,7 +46,9 @@ mod tests;
 use codec::Decode;
 use core::str::from_utf8;
 // --- substrate ---
-use frame_support::{debug::trace, decl_error, decl_event, decl_module, traits::Get};
+use frame_support::{
+	debug::error, debug::info, debug::trace, decl_error, decl_event, decl_module, traits::Get,
+};
 use frame_system::{self as system, offchain::SubmitSignedTransaction};
 use sp_runtime::{offchain::http::Request, traits::Zero, DispatchError, KeyTypeId};
 use sp_std::prelude::*;
@@ -66,26 +68,33 @@ const MAX_REDIRECT_TIMES: u8 = 3;
 const ETHRESOURCE: &'static [u8] = b"http://eth-resource";
 
 #[derive(Default)]
-struct OffchainRequest {
+pub struct OffchainRequest {
 	location: Vec<u8>,
 	payload: Vec<u8>,
 	redirect_times: u8,
 	cookie: Option<Vec<u8>>,
 }
 
-/// The OffhcainRequest handle the request session
-/// - set cookie if returns
-/// - handle the redirect actions if happends
+pub trait OffchainRequestTrait {
+	fn send(&mut self) -> Option<Vec<u8>>;
+}
+
 impl OffchainRequest {
-	pub fn new(url: Vec<u8>, payload: Vec<u8>) -> Self {
+	fn new(url: Vec<u8>, payload: Vec<u8>) -> Self {
 		OffchainRequest {
 			location: url.clone(),
 			payload,
 			..Default::default()
 		}
 	}
+}
 
-	pub fn send(mut self) -> Option<Vec<u8>> {
+/// The OffchainRequest handle the request session
+/// - set cookie if returns
+/// - handle the redirect actions if happends
+#[cfg(not(test))]
+impl OffchainRequestTrait for OffchainRequest {
+	fn send(&mut self) -> Option<Vec<u8>> {
 		for _ in 0..=MAX_REDIRECT_TIMES {
 			let p = self.payload.clone();
 			let request =
@@ -155,9 +164,6 @@ decl_event! {
 
 decl_error! {
 	pub enum Error for Module<T: Trait> {
-		/// Local accounts - UNAVAILABLE (Consider adding one via `author_insertKey` RPC)
-		AccountUnavail,
-
 		/// API Response - UNEXPECTED
 		APIRespUnexp,
 
@@ -165,9 +171,6 @@ decl_error! {
 		BestHeaderNE,
 		/// Block Number - OVERFLOW
 		BlockNumberOF,
-
-		/// Request - REACH MAX RETRY
-		ReqRMR,
 
 		/// Proof - SCALE DECODE ERROR
 		ProofSE,
@@ -192,8 +195,12 @@ decl_module! {
 		fn offchain_worker(block: T::BlockNumber) {
 			let fetch_interval = T::FetchInterval::get().max(1.into());
 			if (block % fetch_interval).is_zero() {
-				if let Err(e) = Self::relay_header(){
-					trace!(target: "eoc-wk", "[eth-offchain] Error: {:?}", e);
+				if T::SubmitSignedTransaction::can_sign() {
+					if let Err(e) = Self::relay_header(){
+						error!(target: "eoc-wk", "[eth-offchain] Error: {:?}", e);
+					}
+				} else {
+					trace!(target: "eoc-wk", "[eth-offchain] use `author_insertKey` rpc to inscert `rlwk` key to enable worker");
 				}
 			}
 		}
@@ -206,21 +213,20 @@ impl<T: Trait> Module<T> {
 	/// if there are issue to communicate with scale encoding, the failback communication will
 	/// be performed with json format(use option: `true`)
 	fn relay_header() -> Result<(), DispatchError> {
-		if !T::SubmitSignedTransaction::can_sign() {
-			Err(<Error<T>>::AccountUnavail)?;
-		}
-
 		let target_number = Self::get_target_number()?;
 		let header_without_option = Self::fetch_header(ETHRESOURCE.to_vec(), target_number, false);
 		let (header, proof_list) = match header_without_option {
 			Ok(r) => r,
 			Err(e) => {
-				trace!(target: "eoc-rh", "[eth-offchain] request without option fail: {:?}", e);
-				trace!(target: "eoc-rh", "[eth-offchain] request fail back wth option");
+				info!(target: "eoc-rh", "[eth-offchain] request without option fail: {:?}", e);
+				info!(target: "eoc-rh", "[eth-offchain] request fail back wth option");
 				Self::fetch_header(ETHRESOURCE.to_vec(), target_number, true)?
 			}
 		};
 
+		// The `submit_header` will call event out of eth-offchain pallet,
+		// so this function is skiped in the test of pallet
+		#[cfg(not(test))]
 		Self::submit_header(header, proof_list);
 		Ok(())
 	}
@@ -237,6 +243,10 @@ impl<T: Trait> Module<T> {
 		Ok(target_number)
 	}
 
+	fn build_request_client(url: Vec<u8>, payload: Vec<u8>) -> impl OffchainRequestTrait {
+		OffchainRequest::new(url, payload)
+	}
+
 	/// Build the response as EthHeader struct after validating
 	fn fetch_header(
 		url: Vec<u8>,
@@ -244,21 +254,26 @@ impl<T: Trait> Module<T> {
 		option: bool,
 	) -> Result<(EthHeader, Vec<DoubleNodeWithMerkleProof>), DispatchError> {
 		let payload = Self::build_payload(target_number, option);
-		let maybe_resp_body = OffchainRequest::new(url, payload).send();
+		let mut client = Self::build_request_client(url, payload);
+		let maybe_resp_body = client.send();
 
-		let mut resp_body = Self::validate_response(maybe_resp_body, option)?;
+		let resp_body = Self::validate_response(maybe_resp_body, option)?;
+
+		let eth_header_part = Self::extract_from_json_str(&resp_body[..], b"eth_header" as
+			&[u8]).unwrap_or_default();
 		let header = if option {
-			let raw_header = from_utf8(&resp_body[47..resp_body.len() - 1]).unwrap_or_default();
-			EthHeader::from_str_unchecked(raw_header)
+			EthHeader::from_str_unchecked(from_utf8(eth_header_part).unwrap_or_default())
 		} else {
-			Self::parse_ethheader_from_scale_str(&resp_body[..])
+			let scale_bytes = hex_bytes_unchecked(from_utf8(eth_header_part).unwrap_or_default());
+			Decode::decode::<&[u8]>(&mut &scale_bytes[..]).unwrap_or_default()
 		};
 
-		Self::extract_proof(&mut resp_body, option);
+		let proof_part = Self::extract_from_json_str(&resp_body[..], b"proof" as
+			&[u8]).unwrap_or_default();
 		let proof_list = if option {
-			Self::parse_double_node_with_proof_list_from_json_str(&resp_body[..])?
+			Self::parse_double_node_with_proof_list_from_json_str(proof_part)?
 		} else {
-			Self::parse_double_node_with_proof_list_from_scale_str(&resp_body[..])?
+			Self::parse_double_node_with_proof_list_from_scale_str(proof_part)?
 		};
 		trace!(target: "eoc-rl", "[eth-offchain] Eth Header: {:?}", header);
 
@@ -327,23 +342,6 @@ impl<T: Trait> Module<T> {
 		}
 	}
 
-	/// Extract the proof no mater the response is scale encoded format or json format
-	fn extract_proof(r: &mut Vec<u8>, option: bool) {
-		// Note the size is checked in `validate_response`, so there is no check here
-
-		let (hint, left_offset, right_offset) = if option { (125, 11, 5) } else { (44, 12, 3) };
-		let mut pr = 47;
-		for i in 47..r.len() {
-			// TODO: figure out the best strating point, for performance
-			if r[i] == hint {
-				pr = i;
-				break;
-			}
-		}
-		*r = r.split_off(pr + left_offset);
-		r.truncate(r.len() - right_offset);
-	}
-
 	/// Build the merkle proof information from json format response
 	fn parse_double_node_with_proof_list_from_json_str(
 		json_str: &[u8],
@@ -356,7 +354,9 @@ impl<T: Trait> Module<T> {
 		let mut proof_list: Vec<DoubleNodeWithMerkleProof> = Vec::new();
 		// The proof list is 64 length, and we use 256 just in case.
 		for p in raw_str.splitn(256, '}') {
-			proof_list.push(DoubleNodeWithMerkleProof::from_str_unchecked(p));
+			if p.len() > 0 {
+				proof_list.push(DoubleNodeWithMerkleProof::from_str_unchecked(p));
+			}
 		}
 		Ok(proof_list)
 	}
@@ -372,16 +372,45 @@ impl<T: Trait> Module<T> {
 		Ok(Decode::decode::<&[u8]>(&mut &proof_scale_bytes[..]).unwrap_or_default())
 	}
 
-	/// Build the ethereum header information from scale encoded response
-	fn parse_ethheader_from_scale_str(resp_body: &[u8]) -> EthHeader {
-		// Note the size is checked in `validate_response`, so there is no check here
-
-		let i = resp_body[50..]
-			.iter()
-			.position(|&x| x == b'"')
-			.unwrap_or_default();
-		let s = from_utf8(&resp_body[50..i + 50]).unwrap_or_default();
-		let scale_bytes = hex_bytes_unchecked(s);
-		Decode::decode::<&[u8]>(&mut &scale_bytes[..]).unwrap_or_default()
+	/// Extract the inner value from json str with specific field
+	fn extract_from_json_str<'a>(json_str: &'a[u8], field_name: &'static [u8]) -> Option<&'a[u8]> {
+		let mut start=0;
+		let mut open_part_count = 0;
+		let mut open_part = b'\0';
+		let mut close_part = b'\0';
+		let field_length = field_name.len();
+		let mut match_pos = 0;
+		let mut has_colon = false;
+		for i in 0..json_str.len() {
+			if open_part_count > 0 {
+				if json_str[i] == close_part {
+					open_part_count -= 1;
+					if 0 == open_part_count {
+							return Some(&json_str[start+1..i])
+					}
+				} else if json_str[i] == open_part {
+					open_part_count += 1;
+				}
+			} else if has_colon {
+				if json_str[i] == b'"' || json_str[i] == b'[' || json_str[i] == b'{' {
+					start = i;
+					open_part_count += 1;
+					open_part =json_str[i];
+					close_part = match json_str[i] {
+						b'"' => b'"',
+						b'[' => b']',
+						b'{' => b'}',
+						_ => panic!("never here")
+					}
+				}
+			} else if match_pos > 0 && i > match_pos {
+				if json_str[i] == b':' {
+					has_colon = true;
+				}
+			} else if json_str[i] == field_name[0] && (json_str.len() - i) >= field_length && json_str[i..i + field_length]  == *field_name {
+				match_pos = i + field_length;
+			}
+		}
+		None
 	}
 }
