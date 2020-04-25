@@ -198,8 +198,8 @@ impl_outer_event! {
 
 /// Author of block is always 11
 pub struct Author11;
-impl FindAuthor<u64> for Author11 {
-	fn find_author<'a, I>(_digests: I) -> Option<u64>
+impl FindAuthor<AccountId> for Author11 {
+	fn find_author<'a, I>(_digests: I) -> Option<AccountId>
 	where
 		I: 'a + IntoIterator<Item = (frame_support::ConsensusEngineId, &'a [u8])>,
 	{
@@ -460,7 +460,7 @@ impl ExtBuilder {
 
 		let num_validators = self.num_validators.unwrap_or(self.validator_count);
 		let validators = (0..num_validators)
-			.map(|x| ((x + 1) * 10 + 1) as u64)
+			.map(|x| ((x + 1) * 10 + 1) as AccountId)
 			.collect::<Vec<_>>();
 
 		if self.init_ring {
@@ -564,7 +564,7 @@ impl ExtBuilder {
 						*x,
 						*x,
 						SessionKeys {
-							other: UintAuthorityId(*x),
+							other: UintAuthorityId(*x as u64),
 						},
 					)
 				})
@@ -587,66 +587,100 @@ impl ExtBuilder {
 
 		ext
 	}
+
+	pub fn build_and_execute(self, test: impl FnOnce() -> ()) {
+		let mut ext = self.build();
+		ext.execute_with(test);
+		ext.execute_with(post_conditions);
+	}
 }
 
-pub fn active_era() -> EraIndex {
+fn post_conditions() {
+	check_nominators();
+	check_exposures();
+	check_ledgers();
+}
+
+pub(crate) fn active_era() -> EraIndex {
 	Staking::active_era().unwrap().index
 }
 
-pub fn check_exposure_all(era: EraIndex) {
-	<ErasStakers<Test>>::iter_prefix(era).for_each(check_exposure)
+fn check_ledgers() {
+	// check the ledger of all stakers.
+	<Bonded<Test>>::iter().for_each(|(_, controller)| assert_ledger_consistent(controller))
 }
 
-pub fn check_nominator_all(era: EraIndex) {
-	<Nominators<Test>>::iter().for_each(|(acc, _)| check_nominator_exposure(era, acc));
+fn check_exposures() {
+	// a check per validator to ensure the exposure struct is always sane.
+	let era = active_era();
+	<ErasStakers<Test>>::iter_prefix(era).for_each(|expo| {
+		assert_eq!(
+			expo.total_power,
+			expo.own_power + expo.others.iter().map(|e| e.power).sum::<Power>(),
+			"wrong total exposure.",
+		);
+	})
 }
 
-/// Check for each selected validator: expo.total = Sum(expo.other) + expo.own
-pub fn check_exposure(expo: Exposure<AccountId, Balance, Balance>) {
-	assert_eq!(
-		expo.total_power,
-		expo.own_power + expo.others.iter().map(|e| e.power).sum::<Power>(),
-	);
-}
-
-/// Check that for each nominator: slashable_balance > sum(used_balance)
-/// Note: we might not consume all of a nominator's balance, but we MUST NOT over spend it.
-pub fn check_nominator_exposure(era: EraIndex, stash: AccountId) {
-	assert_is_stash(stash);
-	let mut sum = 0;
-	Session::validators()
-		.iter()
-		.map(|v| Staking::eras_stakers(era, v))
-		.for_each(|e| {
-			e.others
+fn check_nominators() {
+	// a check per nominator to ensure their entire stake is correctly distributed. Will only kick-
+	// in if the nomination was submitted before the current era.
+	let era = active_era();
+	<Nominators<Test>>::iter()
+		.filter_map(|(nominator, nomination)| {
+			if nomination.submitted_in > era {
+				Some(nominator)
+			} else {
+				None
+			}
+		})
+		.for_each(|nominator| {
+			// must be bonded.
+			assert_is_stash(nominator);
+			let mut sum = 0;
+			Session::validators()
 				.iter()
-				.filter(|i| i.who == stash)
-				.for_each(|i| sum += i.power)
+				.map(|v| Staking::eras_stakers(era, v))
+				.for_each(|e| {
+					let individual = e
+						.others
+						.iter()
+						.filter(|e| e.who == nominator)
+						.collect::<Vec<_>>();
+					let len = individual.len();
+					match len {
+						0 => { /* not supporting this validator at all. */ }
+						1 => sum += individual[0].power,
+						_ => panic!("nominator cannot back a validator more than once."),
+					};
+				});
+
+			let nominator_stake = Staking::power_of(&nominator);
+			// a nominator cannot over-spend.
+			assert!(
+				nominator_stake >= sum,
+				"failed: Nominator({}) stake({}) >= sum divided({})",
+				nominator,
+				nominator_stake,
+				sum,
+			);
+
+			let diff = nominator_stake - sum;
+			assert!(diff < 100);
 		});
-	let nominator_power = Staking::power_of(&stash);
-	// a nominator cannot over-spend.
-	assert!(
-		nominator_power >= sum,
-		"failed: Nominator({}) stake({}) >= sum divided({})",
-		stash,
-		nominator_power,
-		sum,
-	);
 }
 
-pub fn assert_is_stash(acc: AccountId) {
+fn assert_is_stash(acc: AccountId) {
 	assert!(Staking::bonded(&acc).is_some(), "Not a stash.");
 }
 
-pub fn assert_ledger_consistent(stash: AccountId) {
-	assert_is_stash(stash);
-	let ledger = Staking::ledger(stash - 1).unwrap();
-
+pub fn assert_ledger_consistent(controller: AccountId) {
+	let ledger = Staking::ledger(controller).unwrap();
 	assert_eq!(ledger.active_ring, ledger.ring_staking_lock.staking_amount);
 	assert_eq!(ledger.active_kton, ledger.kton_staking_lock.staking_amount);
 }
 
-pub fn bond(stash: AccountId, controller: AccountId, val: StakingBalanceT<Test>) {
+fn bond(stash: AccountId, controller: AccountId, val: StakingBalanceT<Test>) {
 	match val {
 		StakingBalance::RingBalance(r) => {
 			let _ = Ring::make_free_balance_be(&(controller), r);
@@ -664,7 +698,7 @@ pub fn bond(stash: AccountId, controller: AccountId, val: StakingBalanceT<Test>)
 	));
 }
 
-pub fn bond_validator(stash: AccountId, controller: AccountId, val: StakingBalanceT<Test>) {
+pub(crate) fn bond_validator(stash: AccountId, controller: AccountId, val: StakingBalanceT<Test>) {
 	bond(stash, controller, val);
 	assert_ok!(Staking::validate(
 		Origin::signed(controller),
@@ -672,7 +706,7 @@ pub fn bond_validator(stash: AccountId, controller: AccountId, val: StakingBalan
 	));
 }
 
-pub fn bond_nominator(
+pub(crate) fn bond_nominator(
 	stash: AccountId,
 	controller: AccountId,
 	val: StakingBalanceT<Test>,
@@ -682,7 +716,7 @@ pub fn bond_nominator(
 	assert_ok!(Staking::nominate(Origin::signed(controller), target));
 }
 
-pub fn run_to_block(n: BlockNumber) {
+pub(crate) fn run_to_block(n: BlockNumber) {
 	Staking::on_finalize(System::block_number());
 	for b in System::block_number() + 1..=n {
 		System::set_block_number(b);
@@ -694,12 +728,12 @@ pub fn run_to_block(n: BlockNumber) {
 	}
 }
 
-pub fn advance_session() {
+pub(crate) fn advance_session() {
 	let current_index = Session::current_index();
 	start_session(current_index + 1);
 }
 
-pub fn start_session(session_index: SessionIndex) {
+pub(crate) fn start_session(session_index: SessionIndex) {
 	assert_eq!(
 		<Period as Get<BlockNumber>>::get(),
 		1,
@@ -716,12 +750,12 @@ pub fn start_session(session_index: SessionIndex) {
 	assert_eq!(Session::current_index(), session_index);
 }
 
-pub fn start_era(era_index: EraIndex) {
+pub(crate) fn start_era(era_index: EraIndex) {
 	start_session((era_index * <SessionsPerEra as Get<u32>>::get()).into());
 	assert_eq!(Staking::current_era().unwrap(), era_index);
 }
 
-pub fn current_total_payout_for_duration(era_duration: TsInMs) -> Balance {
+pub(crate) fn current_total_payout_for_duration(era_duration: TsInMs) -> Balance {
 	inflation::compute_total_payout::<Test>(
 		era_duration,
 		Staking::living_time(),
@@ -731,7 +765,7 @@ pub fn current_total_payout_for_duration(era_duration: TsInMs) -> Balance {
 	.0
 }
 
-pub fn reward_all_elected() {
+pub(crate) fn reward_all_elected() {
 	let rewards = <Test as Trait>::SessionInterface::validators()
 		.into_iter()
 		.map(|v| (v, 1));
@@ -739,14 +773,14 @@ pub fn reward_all_elected() {
 	Staking::reward_by_ids(rewards)
 }
 
-pub fn validator_controllers() -> Vec<AccountId> {
+pub(crate) fn validator_controllers() -> Vec<AccountId> {
 	Session::validators()
 		.into_iter()
 		.map(|s| Staking::bonded(&s).expect("no controller for validator"))
 		.collect()
 }
 
-pub fn on_offence_in_era(
+pub(crate) fn on_offence_in_era(
 	offenders: &[OffenceDetails<
 		AccountId,
 		pallet_session::historical::IdentificationTuple<Test>,
@@ -776,7 +810,7 @@ pub fn on_offence_in_era(
 	}
 }
 
-pub fn on_offence_now(
+pub(crate) fn on_offence_now(
 	offenders: &[OffenceDetails<
 		AccountId,
 		pallet_session::historical::IdentificationTuple<Test>,
@@ -789,7 +823,7 @@ pub fn on_offence_now(
 
 // winners will be chosen by simply their unweighted total backing stake. Nominator stake is
 // distributed evenly.
-pub fn horrible_phragmen_with_post_processing(
+pub(crate) fn horrible_phragmen_with_post_processing(
 	do_reduce: bool,
 ) -> (CompactAssignments, Vec<ValidatorIndex>, PhragmenScore) {
 	let mut backing_stake_of: BTreeMap<AccountId, Balance> = BTreeMap::new();
@@ -905,7 +939,7 @@ pub fn horrible_phragmen_with_post_processing(
 
 // Note: this should always logically reproduce [`offchain_election::prepare_submission`], yet we
 // cannot do it since we want to have `tweak` injected into the process.
-pub fn prepare_submission_with(
+pub(crate) fn prepare_submission_with(
 	do_reduce: bool,
 	tweak: impl FnOnce(&mut Vec<StakedAssignment<AccountId>>),
 ) -> (CompactAssignments, Vec<ValidatorIndex>, PhragmenScore) {
@@ -982,8 +1016,8 @@ pub fn prepare_submission_with(
 }
 
 /// Make all validator and nominator request their payment
-pub fn make_all_reward_payment(era: EraIndex) {
-	let validators_with_reward = ErasRewardPoints::<Test>::get(era)
+pub(crate) fn make_all_reward_payment(era: EraIndex) {
+	let validators_with_reward = <ErasRewardPoints<Test>>::get(era)
 		.individual
 		.keys()
 		.cloned()
