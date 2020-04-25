@@ -344,8 +344,8 @@ use sp_phragmen::{
 use sp_runtime::{
 	helpers_128bit::multiply_by_rational,
 	traits::{
-		AtLeast32Bit, CheckedSub, Convert, SaturatedConversion, Saturating, SignedExtension,
-		StaticLookup, Zero,
+		AtLeast32Bit, CheckedSub, Convert, DispatchInfoOf, Dispatchable, SaturatedConversion,
+		Saturating, SignedExtension, StaticLookup, Zero,
 	},
 	transaction_validity::{
 		InvalidTransaction, TransactionSource, TransactionValidity, TransactionValidityError,
@@ -906,7 +906,7 @@ pub trait Trait: frame_system::Trait {
 	type ElectionLookahead: Get<Self::BlockNumber>;
 
 	/// The overarching call type.
-	type Call: From<Call<Self>> + IsSubType<Module<Self>, Self> + Clone;
+	type Call: Dispatchable + From<Call<Self>> + IsSubType<Module<Self>, Self> + Clone;
 
 	/// A transaction submitter.
 	type SubmitTransaction: SubmitUnsignedTransaction<Self, <Self as Trait>::Call>;
@@ -3503,7 +3503,6 @@ impl<T: Trait + Send + Sync> SignedExtension for LockStakingStatus<T> {
 	type Call = <T as Trait>::Call;
 	type AdditionalSigned = ();
 	type Pre = ();
-	type DispatchInfo = frame_support::weights::DispatchInfo;
 
 	fn additional_signed(&self) -> Result<(), TransactionValidityError> {
 		Ok(())
@@ -3513,7 +3512,7 @@ impl<T: Trait + Send + Sync> SignedExtension for LockStakingStatus<T> {
 		&self,
 		_who: &Self::AccountId,
 		call: &Self::Call,
-		_info: Self::DispatchInfo,
+		_info: &DispatchInfoOf<Self::Call>,
 		_len: usize,
 	) -> TransactionValidity {
 		if let Some(inner_call) = call.is_sub_type() {

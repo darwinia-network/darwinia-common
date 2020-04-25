@@ -18,7 +18,7 @@ use sp_runtime::{
 	Perbill, RuntimeDebug,
 };
 // --- darwinia ---
-use crate::*;
+use crate::{tests::*, *};
 
 type Balance = u64;
 
@@ -68,7 +68,7 @@ parameter_types! {
 }
 impl frame_system::Trait for Test {
 	type Origin = Origin;
-	type Call = ();
+	type Call = CallWithDispatchInfo;
 	type Index = Balance;
 	type BlockNumber = Balance;
 	type Hash = H256;
