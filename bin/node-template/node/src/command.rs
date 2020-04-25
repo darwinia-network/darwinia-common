@@ -56,7 +56,11 @@ pub fn run() -> sc_cli::Result<()> {
 	match &cli.subcommand {
 		None => {
 			let runner = cli.create_runner(&cli.run)?;
-			runner.run_node(service::new_light, service::new_full, node_runtime::VERSION)
+			runner.run_node(
+				service::new_light,
+				service::new_full,
+				node_template_runtime::VERSION,
+			)
 		}
 		Some(Subcommand::Benchmark(cmd)) => {
 			if cfg!(feature = "runtime-benchmarks") {
