@@ -155,6 +155,13 @@ where
 			k: self.k.saturating_mul(o.k),
 		}
 	}
+
+	fn saturating_pow(self, exp: usize) -> Self {
+		Self {
+			r: self.r.saturating_pow(exp),
+			k: self.k.saturating_pow(exp),
+		}
+	}
 }
 
 // A range of start..end eras for a slashing span.
