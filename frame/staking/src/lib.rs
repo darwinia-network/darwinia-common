@@ -156,6 +156,22 @@
 //!
 //! ## Implementation Details
 //!
+//! ### Era payout
+//!
+//! The era payout is computed using yearly inflation curve defined at
+//! [`T::RewardCurve`](./trait.Trait.html#associatedtype.RewardCurve) as such:
+//!
+//! ```nocompile
+//! staker_payout = yearly_inflation(npos_token_staked / total_tokens) * total_tokens / era_per_year
+//! ```
+//! This payout is used to reward stakers as defined in next section
+//!
+//! ```nocompile
+//! remaining_payout = max_yearly_inflation * total_tokens / era_per_year - staker_payout
+//! ```
+//! The remaining reward is send to the configurable end-point
+//! [`T::RewardRemainder`](./trait.Trait.html#associatedtype.RewardRemainder).
+//!
 //! ### Reward Calculation
 //!
 //! Validators and nominators are rewarded at the end of each era. The total reward of an era is
@@ -933,6 +949,7 @@ pub trait Trait: frame_system::Trait {
 	/// The *RING* currency.
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 	/// Tokens have been minted and are unused for validator-reward.
+	/// See [Era payout](./index.html#era-payout).
 	type RingRewardRemainder: OnUnbalanced<RingNegativeImbalance<Self>>;
 	/// Handler for the unbalanced *RING* reduction when slashing a staker.
 	type RingSlash: OnUnbalanced<RingNegativeImbalance<Self>>;
@@ -1201,7 +1218,10 @@ decl_event!(
 		RingBalance = RingBalance<T>,
 		KtonBalance = KtonBalance<T>,
 	{
-		// --- substrate ---
+		/// The era payout has been set; the first balance is the validator-payout; the second is
+		/// the remainder from the maximum amount of reward.
+		EraPayout(EraIndex, RingBalance, RingBalance),
+
 		/// The staker has been rewarded by this amount. `AccountId` is the stash account.
 		Reward(AccountId, RingBalance),
 
@@ -1214,7 +1234,6 @@ decl_event!(
 		/// A new set of stakers was elected with the given computation method.
 		StakingElection(ElectionCompute),
 
-		// --- darwinia ---
 		/// Bond succeed.
 		/// `amount` in `RingBalance<T>`, `start_time` in `TsInMs`, `expired_time` in `TsInMs`
 		BondRing(RingBalance, TsInMs, TsInMs),
@@ -2849,16 +2868,24 @@ impl<T: Trait> Module<T> {
 			let living_time = Self::living_time();
 			let era_duration = now - active_era_start;
 
-			let (total_payout, _max_payout) = inflation::compute_total_payout::<T>(
+			let (validator_payout, max_payout) = inflation::compute_total_payout(
 				era_duration,
 				Self::living_time(),
 				T::Cap::get().saturating_sub(T::RingCurrency::total_issuance()),
 				PayoutFraction::get(),
 			);
+			let rest = max_payout.saturating_sub(validator_payout);
+
+			Self::deposit_event(RawEvent::EraPayout(
+				active_era.index,
+				validator_payout,
+				rest,
+			));
 
 			LivingTime::put(living_time + era_duration);
 			// Set ending era reward.
-			<ErasValidatorReward<T>>::insert(&active_era.index, total_payout);
+			<ErasValidatorReward<T>>::insert(&active_era.index, validator_payout);
+			T::RingRewardRemainder::on_unbalanced(T::RingCurrency::issue(rest));
 		}
 	}
 

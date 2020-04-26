@@ -79,6 +79,7 @@ thread_local! {
 	static SLASH_DEFER_DURATION: RefCell<EraIndex> = RefCell::new(0);
 	static ELECTION_LOOKAHEAD: RefCell<BlockNumber> = RefCell::new(0);
 	static PERIOD: RefCell<BlockNumber> = RefCell::new(1);
+	pub static RING_REWARD_REMAINDER_UNBALANCED: RefCell<Balance> = RefCell::new(0);
 }
 
 darwinia_support::impl_account_data! {
@@ -203,6 +204,16 @@ impl FindAuthor<AccountId> for Author11 {
 	}
 }
 
+pub struct RingRewardRemainderMock;
+impl OnUnbalanced<RingNegativeImbalance<Test>> for RingRewardRemainderMock {
+	fn on_nonzero_unbalanced(amount: RingNegativeImbalance<Test>) {
+		RING_REWARD_REMAINDER_UNBALANCED.with(|v| {
+			*v.borrow_mut() += amount.peek();
+		});
+		drop(amount);
+	}
+}
+
 // Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Test;
@@ -322,7 +333,7 @@ impl Trait for Test {
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
 	type UnsignedPriority = UnsignedPriority;
 	type RingCurrency = Ring;
-	type RingRewardRemainder = ();
+	type RingRewardRemainder = RingRewardRemainderMock;
 	type RingSlash = ();
 	type RingReward = ();
 	type KtonCurrency = Kton;
@@ -1034,6 +1045,20 @@ pub(crate) fn make_all_reward_payment(era: EraIndex) {
 			era
 		));
 	}
+}
+
+pub(crate) fn staking_events() -> Vec<Event<Test>> {
+	System::events()
+		.into_iter()
+		.map(|r| r.event)
+		.filter_map(|e| {
+			if let MetaEvent::staking(inner) = e {
+				Some(inner)
+			} else {
+				None
+			}
+		})
+		.collect()
 }
 
 #[macro_export]

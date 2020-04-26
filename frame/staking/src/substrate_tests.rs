@@ -198,6 +198,7 @@ fn rewards_should_work() {
 	// should check that:
 	// * rewards get recorded per session
 	// * rewards get paid per Era
+	// * `RewardRemainder::on_unbalanced` is called
 	// * Check that nominators are also rewarded
 	ExtBuilder::default().nominate(true).build_and_execute(|| {
 		let init_balance_10 = Ring::free_balance(&10);
@@ -246,6 +247,17 @@ fn rewards_should_work() {
 		start_session(3);
 
 		assert_eq!(Staking::active_era().unwrap().index, 1);
+		assert!(RING_REWARD_REMAINDER_UNBALANCED.with(|v| *v.borrow()) > 0);
+		assert!({
+			let is_era_payout_event_ok = |e| {
+				if let Some(RawEvent::EraPayout(0, _, _)) = e {
+					true
+				} else {
+					false
+				}
+			};
+			is_era_payout_event_ok(*staking_events().last().unwrap())
+		});
 		make_all_reward_payment(0);
 
 		assert_eq_error_rate!(
@@ -277,6 +289,17 @@ fn rewards_should_work() {
 		assert!(total_payout_1 > 10); // Test is meaningful if reward something
 
 		start_era(2);
+		assert!(RING_REWARD_REMAINDER_UNBALANCED.with(|v| *v.borrow()) > 0);
+		assert!({
+			let is_era_payout_event_ok = |e| {
+				if let Some(RawEvent::EraPayout(1, _, _)) = e {
+					true
+				} else {
+					false
+				}
+			};
+			is_era_payout_event_ok(*staking_events().last().unwrap())
+		});
 		make_all_reward_payment(1);
 
 		assert_eq_error_rate!(
