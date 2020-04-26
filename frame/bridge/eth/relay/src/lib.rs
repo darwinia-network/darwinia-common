@@ -1,4 +1,4 @@
-//! prototype module for bridging in ethereum pow blockchain, including mainnet and ropsten.
+//! Prototype module for bridging in Ethereum pow blockchain, including Mainnet and Ropsten.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "128"]
@@ -13,16 +13,13 @@ use codec::{Decode, Encode};
 use ethereum_types::{H128, H512, H64};
 // --- substrate ---
 use frame_support::{
-	debug::trace,
-	decl_error, decl_event, decl_module, decl_storage, ensure,
-	traits::Get,
-	weights::{DispatchInfo, SimpleDispatchInfo},
-	IsSubType, Parameter,
+	debug::trace, decl_error, decl_event, decl_module, decl_storage, ensure, traits::Get,
+	weights::SimpleDispatchInfo, IsSubType,
 };
 use frame_system::{self as system, ensure_root, ensure_signed};
 use sp_io::hashing::sha2_256;
 use sp_runtime::{
-	traits::{Dispatchable, SignedExtension},
+	traits::{DispatchInfoOf, Dispatchable, SignedExtension},
 	transaction_validity::{
 		InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
 	},
@@ -44,9 +41,7 @@ pub trait Trait: frame_system::Trait {
 
 	type EthNetwork: Get<EthNetworkType>;
 
-	type Call: Parameter
-		+ Dispatchable<Origin = <Self as frame_system::Trait>::Origin>
-		+ IsSubType<Module<Self>, Self>;
+	type Call: Dispatchable + From<Call<Self>> + IsSubType<Module<Self>, Self> + Clone;
 }
 
 #[derive(Clone, PartialEq, Encode, Decode)]
@@ -789,7 +784,6 @@ impl<T: Trait + Send + Sync> SignedExtension for CheckEthRelayHeaderHash<T> {
 	type Call = <T as Trait>::Call;
 	type AdditionalSigned = ();
 	type Pre = ();
-	type DispatchInfo = DispatchInfo;
 
 	fn additional_signed(&self) -> sp_std::result::Result<(), TransactionValidityError> {
 		Ok(())
@@ -797,10 +791,10 @@ impl<T: Trait + Send + Sync> SignedExtension for CheckEthRelayHeaderHash<T> {
 
 	fn validate(
 		&self,
-		_: &Self::AccountId,
+		_who: &Self::AccountId,
 		call: &Self::Call,
-		_: Self::DispatchInfo,
-		_: usize,
+		_info: &DispatchInfoOf<Self::Call>,
+		_len: usize,
 	) -> TransactionValidity {
 		let call = match call.is_sub_type() {
 			Some(call) => call,

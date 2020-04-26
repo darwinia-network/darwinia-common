@@ -1,5 +1,7 @@
 //! Mock file for treasury.
 
+// --- std ---
+use std::cell::RefCell;
 // --- substrate ---
 use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
 use sp_core::H256;
@@ -34,6 +36,10 @@ darwinia_support::impl_account_data! {
 	{
 		// other data
 	}
+}
+
+thread_local! {
+	static TEN_TO_FOURTEEN: RefCell<Vec<u64>> = RefCell::new(vec![10, 11, 12, 13, 14]);
 }
 
 impl_outer_origin! {
@@ -73,11 +79,16 @@ impl frame_system::Trait for Test {
 
 pub struct TenToFourteen;
 impl Contains<u64> for TenToFourteen {
-	fn contains(n: &u64) -> bool {
-		*n >= 10 && *n <= 14
-	}
 	fn sorted_members() -> Vec<u64> {
-		vec![10, 11, 12, 13, 14]
+		TEN_TO_FOURTEEN.with(|v| v.borrow().clone())
+	}
+	#[cfg(feature = "runtime-benchmarks")]
+	fn add(new: &u64) {
+		TEN_TO_FOURTEEN.with(|v| {
+			let mut members = v.borrow_mut();
+			members.push(*new);
+			members.sort();
+		})
 	}
 }
 

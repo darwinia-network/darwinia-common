@@ -99,7 +99,7 @@ use sp_runtime::{
 	traits::{
 		BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, SaturatedConversion, Verify,
 	},
-	transaction_validity::{TransactionSource, TransactionValidity},
+	transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiSignature, RuntimeDebug,
 };
 use sp_staking::SessionIndex;
@@ -171,7 +171,6 @@ pub type SignedExtra = (
 	frame_system::CheckWeight<Runtime>,
 	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 	darwinia_eth_relay::CheckEthRelayHeaderHash<Runtime>,
-	darwinia_staking::LockStakingStatus<Runtime>,
 );
 
 /// Unchecked extrinsic type as expected by this runtime.
@@ -366,6 +365,7 @@ impl pallet_grandpa::Trait for Runtime {
 
 parameter_types! {
 	pub const SessionDuration: BlockNumber = SESSION_DURATION;
+	pub const ImOnlineUnsignedPriority: TransactionPriority = TransactionPriority::max_value();
 }
 impl pallet_im_online::Trait for Runtime {
 	type AuthorityId = ImOnlineId;
@@ -374,6 +374,7 @@ impl pallet_im_online::Trait for Runtime {
 	type SubmitTransaction = TransactionSubmitterOf<Self::AuthorityId>;
 	type SessionDuration = SessionDuration;
 	type ReportUnresponsiveness = Offences;
+	type UnsignedPriority = ImOnlineUnsignedPriority;
 }
 
 impl pallet_authority_discovery::Trait for Runtime {}
@@ -436,6 +437,8 @@ parameter_types! {
 	pub const SlashDeferDuration: darwinia_staking::EraIndex = 7 * 24; // 1/4 the bonding duration.
 	pub const ElectionLookahead: BlockNumber = 2;
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
+	/// We prioritize im-online heartbeats over phragmen solution submission.
+	pub const StakingUnsignedPriority: TransactionPriority = TransactionPriority::max_value() / 2;
 	pub const Cap: Balance = CAP;
 	pub const TotalPower: Power = TOTAL_POWER;
 }
@@ -456,6 +459,7 @@ impl darwinia_staking::Trait for Runtime {
 	type Call = Call;
 	type SubmitTransaction = TransactionSubmitterOf<()>;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
+	type UnsignedPriority = StakingUnsignedPriority;
 	type RingCurrency = Ring;
 	type RingRewardRemainder = Treasury;
 	// send the slashed funds to the treasury.
@@ -483,6 +487,9 @@ impl darwinia_elections_phragmen::Trait for Runtime {
 	type Event = Event;
 	type Currency = Ring;
 	type ChangeMembers = Council;
+	// NOTE: this implies that council's genesis members cannot be set directly and must come from
+	// this module.
+	type InitializeMembers = Council;
 	type CurrencyToVote = converter::CurrencyToVoteHandler<Self>;
 	type CandidacyBond = CandidacyBond;
 	type VotingBond = VotingBond;
@@ -616,7 +623,7 @@ construct_runtime!(
 		Staking: darwinia_staking::{Module, Call, Storage, Config<T>, Event<T>, ValidateUnsigned},
 
 		// Governance stuff; uncallable initially.
-		ElectionsPhragmen: darwinia_elections_phragmen::{Module, Call, Storage, Event<T>},
+		ElectionsPhragmen: darwinia_elections_phragmen::{Module, Call, Storage, Config<T>, Event<T>},
 
 		// Claims. Usable initially.
 		Claims: darwinia_claims::{Module, Call, Storage, Config, Event<T>, ValidateUnsigned},
@@ -665,7 +672,6 @@ impl frame_system::offchain::CreateTransaction<Runtime, UncheckedExtrinsic> for 
 			frame_system::CheckNonce::<Runtime>::from(index),
 			frame_system::CheckWeight::<Runtime>::new(),
 			pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
-			Default::default(),
 			Default::default(),
 		);
 		let raw_payload = SignedPayload::new(call, extra)
@@ -801,14 +807,14 @@ impl_runtime_apis! {
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
 		fn dispatch_benchmark(
-			module: Vec<u8>,
-			extrinsic: Vec<u8>,
+			pallet: Vec<u8>,
+			benchmark: Vec<u8>,
 			lowest_range_values: Vec<u32>,
 			highest_range_values: Vec<u32>,
 			steps: Vec<u32>,
 			repeat: u32,
-		) -> Result<Vec<frame_benchmarking::BenchmarkResults>, sp_runtime::RuntimeString> {
-			use frame_benchmarking::Benchmarking;
+		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
+			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark};
 			// Trying to add benchmarks directly to the Session Pallet caused cyclic dependency issues.
 			// To get around that, we separated the Session benchmarks into its own crate, which is why
 			// we need these two lines below.
@@ -816,18 +822,20 @@ impl_runtime_apis! {
 			// use darwinia_session_benchmarking::Module as SessionBench;
 			// impl darwinia_session_benchmarking::Trait for Runtime {}
 			//
-			// let result = match module.as_slice() {
-			// 	b"darwinia-staking" | b"staking" => Staking::run_benchmark(
-			// 		extrinsic,
-			// 		lowest_range_values,
-			// 		highest_range_values,
-			// 		steps,
-			// 		repeat,
-			// 	),
-			// 	_ => Err("Benchmark not found for this pallet."),
-			// };
-			//
-			// result.map_err(|e| e.into())
+			// let mut batches = Vec::<BenchmarkBatch>::new();
+			// let params = (&pallet, &benchmark, &lowest_range_values, &highest_range_values, &steps, repeat);
+			// add_benchmark!(params, batches, b"balances", Balances);
+			// add_benchmark!(params, batches, b"im-online", ImOnline);
+			// add_benchmark!(params, batches, b"identity", Identity);
+			// add_benchmark!(params, batches, b"session", SessionBench::<Runtime>);
+			// add_benchmark!(params, batches, b"staking", Staking);
+			// add_benchmark!(params, batches, b"timestamp", Timestamp);
+			// add_benchmark!(params, batches, b"treasury", Treasury);
+			// add_benchmark!(params, batches, b"vesting", Vesting);
+			// add_benchmark!(params, batches, b"democracy", Democracy);
+			// add_benchmark!(params, batches, b"collective", Council);
+			// if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
+			// Ok(batches)
 
 			unimplemented!()
 		}

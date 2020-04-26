@@ -31,7 +31,7 @@ fn tip_new_cannot_be_used_twice() {
 		));
 		assert_noop!(
 			Treasury::tip_new(Origin::signed(11), b"awesome.darwinia".to_vec(), 3, 10),
-			Error::<Test>::AlreadyKnown
+			<Error<Test>>::AlreadyKnown
 		);
 	});
 }
@@ -51,7 +51,7 @@ fn report_awesome_and_tip_works() {
 		// other reports don't count.
 		assert_noop!(
 			Treasury::report_awesome(Origin::signed(1), b"awesome.darwinia".to_vec(), 3),
-			Error::<Test>::AlreadyKnown
+			<Error<Test>>::AlreadyKnown
 		);
 
 		let h = tip_hash();
@@ -105,13 +105,13 @@ fn close_tip_works() {
 		assert_ok!(Treasury::tip(Origin::signed(11), h.clone(), 10));
 		assert_noop!(
 			Treasury::close_tip(Origin::signed(0), h.into()),
-			Error::<Test>::StillOpen
+			<Error<Test>>::StillOpen
 		);
 
 		assert_ok!(Treasury::tip(Origin::signed(12), h.clone(), 10));
 		assert_noop!(
 			Treasury::close_tip(Origin::signed(0), h.into()),
-			Error::<Test>::Premature
+			<Error<Test>>::Premature
 		);
 
 		System::set_block_number(2);
@@ -121,7 +121,7 @@ fn close_tip_works() {
 
 		assert_noop!(
 			Treasury::close_tip(Origin::signed(100), h.into()),
-			Error::<Test>::UnknownTip
+			<Error<Test>>::UnknownTip
 		);
 	});
 }
@@ -141,13 +141,13 @@ fn retract_tip_works() {
 		assert_ok!(Treasury::tip(Origin::signed(12), h.clone(), 10));
 		assert_noop!(
 			Treasury::retract_tip(Origin::signed(10), h.clone()),
-			Error::<Test>::NotFinder
+			<Error<Test>>::NotFinder
 		);
 		assert_ok!(Treasury::retract_tip(Origin::signed(0), h.clone()));
 		System::set_block_number(2);
 		assert_noop!(
 			Treasury::close_tip(Origin::signed(0), h.into()),
-			Error::<Test>::UnknownTip
+			<Error<Test>>::UnknownTip
 		);
 	});
 }
@@ -227,7 +227,7 @@ fn spend_proposal_fails_when_proposer_poor() {
 	new_test_ext().execute_with(|| {
 		assert_noop!(
 			Treasury::propose_spend(Origin::signed(2), 100, 0, 3),
-			Error::<Test>::InsufficientProposersBalance,
+			<Error<Test>>::InsufficientProposersBalance,
 		);
 	});
 }
@@ -279,7 +279,7 @@ fn reject_already_rejected_spend_proposal_fails() {
 		assert_ok!(Treasury::reject_proposal(Origin::ROOT, 0));
 		assert_noop!(
 			Treasury::reject_proposal(Origin::ROOT, 0),
-			Error::<Test>::InvalidProposalIndex
+			<Error<Test>>::InvalidProposalIndex
 		);
 	});
 }
@@ -289,7 +289,7 @@ fn reject_non_existent_spend_proposal_fails() {
 	new_test_ext().execute_with(|| {
 		assert_noop!(
 			Treasury::reject_proposal(Origin::ROOT, 0),
-			Error::<Test>::InvalidProposalIndex
+			<Error<Test>>::InvalidProposalIndex
 		);
 	});
 }
@@ -299,7 +299,7 @@ fn accept_non_existent_spend_proposal_fails() {
 	new_test_ext().execute_with(|| {
 		assert_noop!(
 			Treasury::approve_proposal(Origin::ROOT, 0),
-			Error::<Test>::InvalidProposalIndex
+			<Error<Test>>::InvalidProposalIndex
 		);
 	});
 }
@@ -312,7 +312,7 @@ fn accept_already_rejected_spend_proposal_fails() {
 		assert_ok!(Treasury::reject_proposal(Origin::ROOT, 0));
 		assert_noop!(
 			Treasury::approve_proposal(Origin::ROOT, 0),
-			Error::<Test>::InvalidProposalIndex
+			<Error<Test>>::InvalidProposalIndex
 		);
 	});
 }

@@ -1,7 +1,8 @@
 [package]
 name = "node-template"
-version = "0.5.3"
+version = "0.5.4"
 authors = ["Anonymous"]
+description = "Darwinia Node template"
 edition = "2018"
 license = "Unlicense"
 build = "build.rs"
@@ -25,42 +26,57 @@ darwinia-eth-relay = { path = "../../../frame/bridge/eth/relay" }
 darwinia-staking = { path = "../../../frame/staking" }
 darwinia-balances-rpc = { path = "../../../frame/balances/rpc" }
 # substrate
-frame-benchmarking-cli = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-pallet-im-online = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-sc-basic-authorship = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-sc-cli = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-sc-client = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-sc-client-api = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-sc-consensus-babe = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-sc-executor = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-sc-finality-grandpa = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-sc-network = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-sc-rpc = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-sc-service = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-sc-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-sp-api = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-sp-authority-discovery = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-sp-consensus = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-sp-consensus-babe = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-sp-core = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-sp-inherents = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-sp-finality-grandpa = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-sp-runtime = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
+frame-benchmarking-cli = { optional = true, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+pallet-im-online = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+sc-basic-authorship = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+sc-cli = { optional = true, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+sc-client = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+sc-client-api = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+sc-consensus-babe = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+sc-executor = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+sc-finality-grandpa = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+sc-network = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+sc-rpc = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+sc-service = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+sc-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+sp-api = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+sp-authority-discovery = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+sp-consensus = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+sp-consensus-babe = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+sp-core = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+sp-inherents = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+sp-finality-grandpa = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+sp-runtime = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
 
 [build-dependencies]
-# crates
-vergen = "3.1.0"
 # substrate
-build-script-utils = { package = "substrate-build-script-utils", git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
-frame-benchmarking-cli = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
+structopt = { version = "0.3.14", optional = true }
+frame-benchmarking-cli = { optional = true, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+substrate-build-script-utils = { optional = true, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
 
 [features]
+default = [
+	# darwinia
+	"cli",
+]
+cli = [
+	# crates
+	"structopt",
+	# substrate
+	"frame-benchmarking-cli",
+	"sc-cli",
+	"sc-service/rocksdb",
+	"substrate-build-script-utils",
+]
 runtime-benchmarks = [
 	# darwinia
 	"node-template-runtime/runtime-benchmarks",
+	# substrate
+	"frame-benchmarking-cli",
 ]
 build-spec = [
 	# darwinia
+	"default",
 	"node-template-runtime/build-spec",
 ]
