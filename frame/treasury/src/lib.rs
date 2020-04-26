@@ -596,7 +596,7 @@ decl_module! {
 			// closed.
 			<Reasons<T>>::remove(&tip.reason);
 			<Tips<T>>::remove(hash);
-			Self::payout_tip(tip);
+			Self::payout_tip(hash, tip);
 		}
 
 		fn on_initialize(n: T::BlockNumber) -> Weight {			// Check to see if we should spend some funds!
@@ -677,7 +677,10 @@ impl<T: Trait> Module<T> {
 	///
 	/// Up to three balance operations.
 	/// Plus `O(T)` (`T` is Tippers length).
-	fn payout_tip(tip: OpenTip<T::AccountId, RingBalance<T>, T::BlockNumber, T::Hash>) {
+	fn payout_tip(
+		hash: T::Hash,
+		tip: OpenTip<T::AccountId, RingBalance<T>, T::BlockNumber, T::Hash>,
+	) {
 		let mut tips = tip.tips;
 		Self::retain_active_tips(&mut tips);
 		tips.sort_by_key(|i| i.1);
@@ -697,6 +700,7 @@ impl<T: Trait> Module<T> {
 		}
 		// same as above: best-effort only.
 		let _ = T::RingCurrency::transfer(&treasury, &tip.who, payout, KeepAlive);
+		Self::deposit_event(RawEvent::TipClosed(hash, tip.who, payout));
 	}
 
 	// Spend some money!

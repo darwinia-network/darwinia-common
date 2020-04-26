@@ -1,9 +1,15 @@
 //! Mock file for treasury.
 
+mod treasury {
+	// --- darwinia ---
+	// Re-export needed for `impl_outer_event!`.
+	pub use super::super::*;
+}
+
 // --- std ---
 use std::cell::RefCell;
 // --- substrate ---
-use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
+use frame_support::{impl_outer_event, impl_outer_origin, parameter_types, weights::Weight};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -42,6 +48,15 @@ thread_local! {
 	static TEN_TO_FOURTEEN: RefCell<Vec<u64>> = RefCell::new(vec![10, 11, 12, 13, 14]);
 }
 
+impl_outer_event! {
+	pub enum Event for Test {
+		system<T>,
+		darwinia_balances Instance0<T>,
+		darwinia_balances Instance1<T>,,
+		treasury<T>,
+	}
+}
+
 impl_outer_origin! {
 	pub enum Origin for Test  where system = frame_system {}
 }
@@ -65,7 +80,7 @@ impl frame_system::Trait for Test {
 	type AccountId = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = ();
+	type Event = Event;
 	type BlockHashCount = BlockHashCount;
 	type MaximumBlockWeight = MaximumBlockWeight;
 	type DbWeight = ();
@@ -100,7 +115,7 @@ parameter_types! {
 impl darwinia_balances::Trait<KtonInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
-	type Event = ();
+	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
@@ -109,7 +124,7 @@ impl darwinia_balances::Trait<KtonInstance> for Test {
 impl darwinia_balances::Trait<RingInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
-	type Event = ();
+	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
@@ -137,7 +152,7 @@ impl Trait for Test {
 	type TipFindersFee = TipFindersFee;
 	type TipReportDepositBase = TipReportDepositBase;
 	type TipReportDepositPerByte = TipReportDepositPerByte;
-	type Event = ();
+	type Event = Event;
 	type RingProposalRejection = ();
 	type KtonProposalRejection = ();
 	type ProposalBond = ProposalBond;
