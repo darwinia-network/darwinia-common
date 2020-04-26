@@ -613,7 +613,7 @@ fn check_ledgers() {
 fn check_exposures() {
 	// a check per validator to ensure the exposure struct is always sane.
 	let era = active_era();
-	<ErasStakers<Test>>::iter_prefix(era).for_each(|expo| {
+	<ErasStakers<Test>>::iter_prefix_values(era).for_each(|expo| {
 		assert_eq!(
 			expo.total_power,
 			expo.own_power + expo.others.iter().map(|e| e.power).sum::<Power>(),
