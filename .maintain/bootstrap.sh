@@ -53,8 +53,8 @@ if [[ "$1" != "--fast" ]]; then
     fi
 fi
 
-# Setup git hooks
-cp .hooks/* .git/hooks
+# Setup git hooks, if the source code download by git clone
+cp .hooks/* .git/hooks || echo 'githook is not installed'
 
 # Install nightly Rust
 curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain=nightly -y
