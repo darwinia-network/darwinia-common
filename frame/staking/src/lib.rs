@@ -340,7 +340,8 @@ use frame_system::{
 };
 use sp_phragmen::{
 	build_support_map, elect, evaluate_support, generate_compact_solution_type, is_score_better,
-	Assignment, ExtendedBalance, PhragmenResult, PhragmenScore, SupportMap, VotingLimit,
+	Assignment, ExtendedBalance, PhragmenResult, PhragmenScore, SupportMap, VoteWeight,
+	VotingLimit,
 };
 use sp_runtime::{
 	helpers_128bit::multiply_by_rational,
@@ -883,12 +884,6 @@ pub trait Trait: frame_system::Trait {
 	/// It is guaranteed to start being called from the first `on_finalize`. Thus value at genesis
 	/// is not used.
 	type UnixTime: UnixTime;
-
-	/// Just provide a workaround for `sp_phragmen`.
-	///
-	/// Total `Power` is `1_000_000_000 < u32::max_value()`
-	/// never get overflow; qed
-	type BypassConverter: Convert<Power, u64> + Convert<u128, Power>;
 
 	/// Number of sessions per era.
 	type SessionsPerEra: Get<SessionIndex>;
@@ -2181,7 +2176,7 @@ decl_module! {
 		/// - Memory: O(n + m) reads to map index to `AccountId` for un-compact.
 		///
 		/// - Storage: O(e) accountid reads from `Nomination` to read correct nominations.
-		/// - Storage: O(e) calls into `slashable_balance_of_extended` to convert ratio to staked.
+		/// - Storage: O(e) calls into `slashable_balance_of_vote_weight` to convert ratio to staked.
 		///
 		/// - Memory: build_support_map. O(e).
 		/// - Memory: evaluate_support: O(E).
@@ -3032,13 +3027,13 @@ impl<T: Trait> Module<T> {
 	///
 	/// No storage item is updated.
 	fn do_phragmen<Accuracy: PerThing>() -> Option<PhragmenResult<T::AccountId, Accuracy>> {
-		let mut all_nominators: Vec<(T::AccountId, Power, Vec<T::AccountId>)> = vec![];
+		let mut all_nominators: Vec<(T::AccountId, VoteWeight, Vec<T::AccountId>)> = vec![];
 		let mut all_validators = vec![];
 		for (validator, _) in <Validators<T>>::iter() {
 			// append self vote
 			let self_vote = (
 				validator.clone(),
-				Self::power_of(&validator),
+				Self::power_of(&validator) as _,
 				vec![validator.clone()],
 			);
 			all_nominators.push(self_vote);
@@ -3066,7 +3061,7 @@ impl<T: Trait> Module<T> {
 			(n, s, ns)
 		}));
 
-		elect::<_, _, T::BypassConverter, Accuracy>(
+		elect::<_, Accuracy>(
 			Self::validator_count() as usize,
 			Self::minimum_validator_count().max(1) as usize,
 			all_validators,

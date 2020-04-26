@@ -206,7 +206,6 @@ parameter_types! {
 impl darwinia_staking::Trait for Test {
 	type Event = ();
 	type UnixTime = Timestamp;
-	type BypassConverter = ();
 	type SessionsPerEra = SessionsPerEra;
 	type BondingDurationInEra = BondingDurationInEra;
 	type BondingDurationInBlockNumber = BondingDurationInBlockNumber;

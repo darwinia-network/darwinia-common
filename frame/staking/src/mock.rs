@@ -38,7 +38,6 @@ use sp_staking::{
 // --- darwinia ---
 use crate::*;
 use alias::*;
-use darwinia_support::structs::BypassConverter;
 
 pub(crate) type AccountId = u64;
 pub(crate) type AccountIndex = u64;
@@ -310,7 +309,6 @@ parameter_types! {
 impl Trait for Test {
 	type Event = MetaEvent;
 	type UnixTime = Timestamp;
-	type BypassConverter = BypassConverter;
 	type SessionsPerEra = SessionsPerEra;
 	type BondingDurationInEra = BondingDurationInEra;
 	type BondingDurationInBlockNumber = BondingDurationInBlockNumber;
@@ -956,7 +954,7 @@ pub(crate) fn prepare_submission_with(
 		.map(|(w, _)| w)
 		.collect::<Vec<AccountId>>();
 
-	let stake_of = |who: &AccountId| -> ExtendedBalance { Staking::power_of(&who) as _ };
+	let stake_of = |who: &AccountId| -> VoteWeight { Staking::power_of(&who) as _ };
 	let mut staked = sp_phragmen::assignment_ratio_to_staked(assignments, stake_of);
 
 	// apply custom tweaks. awesome for testing.

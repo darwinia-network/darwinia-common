@@ -291,7 +291,6 @@ use sp_version::RuntimeVersion;
 // --- darwinia ---
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo;
 use darwinia_eth_relay::EthNetworkType;
-use darwinia_support::structs::BypassConverter;
 use impls::*;
 use primitives::*;
 
@@ -539,7 +538,6 @@ parameter_types! {
 impl darwinia_staking::Trait for Runtime {
 	type Event = Event;
 	type UnixTime = Timestamp;
-	type BypassConverter = BypassConverter;
 	type SessionsPerEra = SessionsPerEra;
 	type BondingDurationInEra = BondingDurationInEra;
 	type BondingDurationInBlockNumber = BondingDurationInBlockNumber;
