@@ -374,12 +374,7 @@ decl_module! {
 			// 3. challenge
 			{
 				Self::verify_header_basic(&header)?;
-				// FIXME:
-				// waiting offchain-tool's update
-				// pass empty `ethash_proof` to skip this verify
-				if !ethash_proof.is_empty() {
-					Self::verify_header_pow(&header, &ethash_proof)?;
-				}
+				Self::verify_header_pow(&header, &ethash_proof)?;
 			}
 
 			Self::maybe_store_header(&relayer, &header)?;
