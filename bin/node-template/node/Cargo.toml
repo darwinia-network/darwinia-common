@@ -66,7 +66,7 @@ cli = [
 	# substrate
 	"frame-benchmarking-cli",
 	"sc-cli",
-	"sc-service/rocksdb",
+	"sc-service/db",
 	"substrate-build-script-utils",
 ]
 runtime-benchmarks = [
