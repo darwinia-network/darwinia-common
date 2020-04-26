@@ -113,7 +113,7 @@ use frame_support::{
 		Contains, Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, Get, Imbalance,
 		OnUnbalanced, ReservableCurrency, WithdrawReason,
 	},
-	weights::{SimpleDispatchInfo, WeighData, Weight},
+	weights::{SimpleDispatchInfo, Weight, MINIMUM_WEIGHT},
 	Parameter,
 };
 use frame_system::{self as system, ensure_root, ensure_signed};
@@ -357,7 +357,7 @@ decl_module! {
 		/// - Limited storage reads.
 		/// - One DB change, one extra DB entry.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(500_000)]
+		#[weight = SimpleDispatchInfo::FixedNormal(500_000_000)]
 		fn propose_spend(
 			origin,
 			#[compact] ring_value: RingBalance<T>,
@@ -396,7 +396,7 @@ decl_module! {
 		/// - Limited storage reads.
 		/// - One DB clear.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedOperational(100_000)]
+		#[weight = SimpleDispatchInfo::FixedOperational(100_000_000)]
 		fn reject_proposal(origin, #[compact] proposal_id: ProposalIndex) {
 			T::RejectOrigin::try_origin(origin)
 				.map(|_| ())
@@ -423,7 +423,7 @@ decl_module! {
 		/// - Limited storage reads.
 		/// - One DB change.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedOperational(100_000)]
+		#[weight = SimpleDispatchInfo::FixedOperational(100_000_000)]
 		fn approve_proposal(origin, #[compact] proposal_id: ProposalIndex) {
 			T::RejectOrigin::try_origin(origin)
 				.map(|_| ())
@@ -452,7 +452,7 @@ decl_module! {
 		/// - One storage mutation (codec `O(R)`).
 		/// - One event.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(100_000)]
+		#[weight = SimpleDispatchInfo::FixedNormal(100_000_000)]
 		fn report_awesome(origin, reason: Vec<u8>, who: T::AccountId) {
 			let finder = ensure_signed(origin)?;
 
@@ -494,7 +494,7 @@ decl_module! {
 		/// - Two storage removals (one read, codec `O(T)`).
 		/// - One event.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(50_000)]
+		#[weight = SimpleDispatchInfo::FixedNormal(50_000_000)]
 		fn retract_tip(origin, hash: T::Hash) {
 			let who = ensure_signed(origin)?;
 			let tip = <Tips<T>>::get(&hash).ok_or(<Error<T>>::UnknownTip)?;
@@ -526,7 +526,7 @@ decl_module! {
 		/// - Two storage insertions (codecs `O(R)`, `O(T)`), one read `O(1)`.
 		/// - One event.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(150_000)]
+		#[weight = SimpleDispatchInfo::FixedNormal(150_000_000)]
 		fn tip_new(origin, reason: Vec<u8>, who: T::AccountId, tip_value: RingBalance<T>) {
 			let tipper = ensure_signed(origin)?;
 			ensure!(T::Tippers::contains(&tipper), BadOrigin);
@@ -560,7 +560,7 @@ decl_module! {
 		/// - One storage mutation (codec `O(T)`), one storage read `O(1)`.
 		/// - Up to one event.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(50_000)]
+		#[weight = SimpleDispatchInfo::FixedNormal(50_000_000)]
 		fn tip(origin, hash: T::Hash, tip_value: RingBalance<T>) {
 			let tipper = ensure_signed(origin)?;
 			ensure!(T::Tippers::contains(&tipper), BadOrigin);
@@ -586,7 +586,7 @@ decl_module! {
 		/// - One storage retrieval (codec `O(T)`) and two removals.
 		/// - Up to three balance operations.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(50_000)]
+		#[weight = SimpleDispatchInfo::FixedNormal(50_000_000)]
 		fn close_tip(origin, hash: T::Hash) {
 			ensure_signed(origin)?;
 
@@ -604,7 +604,7 @@ decl_module! {
 				Self::spend_funds();
 			}
 
-			SimpleDispatchInfo::default().weigh_data(())
+			MINIMUM_WEIGHT
 		}
 	}
 }

@@ -170,7 +170,7 @@ decl_module! {
 		/// # <weight>
 		/// - `O(1)`
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(10_000)]
+		#[weight = SimpleDispatchInfo::FixedNormal(10_000_000)]
 		pub fn redeem(origin, r#for: RedeemFor) {
 			let _relayer = ensure_signed(origin)?;
 
@@ -192,7 +192,7 @@ decl_module! {
 		/// # <weight>
 		/// - `O(1)`.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(10_000)]
+		#[weight = SimpleDispatchInfo::FixedNormal(10_000_000)]
 		pub fn set_ring_redeem_address(origin, new: EthAddress) {
 			ensure_root(origin)?;
 			RingRedeemAddress::put(new);
@@ -207,7 +207,7 @@ decl_module! {
 		/// # <weight>
 		/// - `O(1)`.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(10_000)]
+		#[weight = SimpleDispatchInfo::FixedNormal(10_000_000)]
 		pub fn set_kton_redeem_address(origin, new: EthAddress) {
 			ensure_root(origin)?;
 			KtonRedeemAddress::put(new);
@@ -222,7 +222,7 @@ decl_module! {
 		/// # <weight>
 		/// - `O(1)`.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(10_000)]
+		#[weight = SimpleDispatchInfo::FixedNormal(10_000_000)]
 		pub fn set_deposit_redeem_address(origin, new: EthAddress) {
 			ensure_root(origin)?;
 			DepositRedeemAddress::put(new);

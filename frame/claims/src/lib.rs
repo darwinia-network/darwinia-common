@@ -167,7 +167,7 @@ decl_module! {
 		fn deposit_event() = default;
 
 		/// Make a claim.
-		#[weight = SimpleDispatchInfo::FixedNormal(1_000_000)]
+		#[weight = SimpleDispatchInfo::FixedNormal(1_000_000_000)]
 		fn claim(origin, dest: T::AccountId, signature: OtherSignature) {
 			ensure_none(origin)?;
 
@@ -208,7 +208,7 @@ decl_module! {
 		}
 
 		/// Add a new claim, if you are root.
-		#[weight = SimpleDispatchInfo::FixedNormal(30_000)]
+		#[weight = SimpleDispatchInfo::FixedNormal(30_000_000)]
 		fn mint_claim(origin, who: OtherAddress, value: RingBalance<T>) {
 			ensure_root(origin)?;
 
@@ -439,6 +439,7 @@ mod tests {
 		type Event = ();
 		type BlockHashCount = BlockHashCount;
 		type MaximumBlockWeight = MaximumBlockWeight;
+		type DbWeight = ();
 		type MaximumBlockLength = MaximumBlockLength;
 		type AvailableBlockRatio = AvailableBlockRatio;
 		type Version = ();

@@ -23,7 +23,7 @@ macro_rules! decl_tests {
 		use pallet_transaction_payment::ChargeTransactionPayment;
 		use sp_runtime::{
 			traits::{BadOrigin, SignedExtension},
-			Fixed64,
+			Fixed128,
 		};
 
 		pub type System = frame_system::Module<$test>;
@@ -191,7 +191,7 @@ macro_rules! decl_tests {
 				.monied(true)
 				.build()
 				.execute_with(|| {
-					pallet_transaction_payment::NextFeeMultiplier::put(Fixed64::from_natural(1));
+					pallet_transaction_payment::NextFeeMultiplier::put(Fixed128::from_natural(1));
 					Ring::set_lock(
 						ID_1,
 						&1,

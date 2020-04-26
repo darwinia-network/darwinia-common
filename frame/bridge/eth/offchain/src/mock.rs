@@ -45,6 +45,7 @@ impl frame_system::Trait for Test {
 	type Event = ();
 	type BlockHashCount = BlockHashCount;
 	type MaximumBlockWeight = MaximumBlockWeight;
+	type DbWeight = ();
 	type MaximumBlockLength = MaximumBlockLength;
 	type AvailableBlockRatio = AvailableBlockRatio;
 	type Version = ();
@@ -186,5 +187,7 @@ pub const SUPPOSED_ETHHEADER: &'static str = r#"
 
 pub const SUPPOSED_SHADOW_JSON_RESPONSE: &'static [u8] = br#"{"jsonrpc":"2.0","id":1,"result":{"eth_header":{"difficulty":"0x9fa52dbdada","extraData":"0xd783010302844765746887676f312e352e31856c696e7578","gasLimit":"0x2fefd8","gasUsed":"0x37881","hash":"0x26f10bfb3c09f1e1eadf856a8d75f5dbd2f88bd8eb4da8488f131835fa4a6ae3","logsBloom":"0x000000000000000000000000000000000000000000000000000000000000000000000000000000000c00000000000000000000020000000000000004000000000000000000000000000000020000000000000000000000000001000000000000004000000200000000000000000008020000020000000000000000001000000000000000000000004000040000000000000000000000000000000000000000000000000000000004001000000000000000000000000004080008000000000120000000000000000000000400000000000800000000000000000000000000200000000000001000000000000a0008000040000000000000000000000000000000","miner":"0x738db714c08b8a32a29e0e68af00215079aa9c5c","mixHash":"0xcb63ce95a3043c0f846ad6e1c3c25ec7a8cd8e09dccf02c7078669f2496f02c2","nonce":"0xfc2c4055195dac95","number":"0xeb770","parentHash":"0x28e9cc57847a0a1efd2920115ba94530ba7d29d7a7ffb15fc933302a97c73e49","receiptsRoot":"0xba124ff4744d7f59fd4f829be59f727fe17f468b34344759d4dd2ed10d6260d2","sha3Uncles":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","size":"0x792","stateRoot":"0x46f9f3d17b9bba9d551ab85a6aa6686a51590a184f5d42b98b6d8518303da470","timestamp":"0x56b66a81","totalDifficulty":"0x5d4fe4695aed3d42","transactions":[],"transactionsRoot":"0x5e7f4d048b09e832ccdb062c655def06f532ebdf02b3c0c423a65c6566220523","uncles":[]},"proof":[{"dag_nodes":["0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"],"proof":["0x00000000000000000000000000000000","0x00000000000000000000000000000000"]}]}}"#;
 
-pub const SUPPOSED_SHADOW_FAKE_RESPONSE: &'static [u8] = br#"{"jsonrpc":"2.0","id":1,"result":{"eth_header":{eth-content},"proof":[proof-content]}}"#;
-pub const SUPPOSED_SHADOW_NON_ORDER_RESPONSE: &'static [u8] = br#"{"id":1,"result":{"proof":[proof-content],"eth_header":{eth-content}},"jsonrpc":"2.0"}"#;
+pub const SUPPOSED_SHADOW_FAKE_RESPONSE: &'static [u8] =
+	br#"{"jsonrpc":"2.0","id":1,"result":{"eth_header":{eth-content},"proof":[proof-content]}}"#;
+pub const SUPPOSED_SHADOW_NON_ORDER_RESPONSE: &'static [u8] =
+	br#"{"id":1,"result":{"proof":[proof-content],"eth_header":{eth-content}},"jsonrpc":"2.0"}"#;
