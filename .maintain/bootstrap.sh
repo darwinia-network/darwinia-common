@@ -57,10 +57,4 @@ fi
 cp .hooks/* .git/hooks || echo 'githook is not installed'
 
 # Install nightly Rust
-curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain=nightly -y
-
-# Install wasm toolchain
-rustup target add wasm32-unknown-unknown
-
-# Install rustfmt for coding style checking
-rustup component add rustfmt --toolchain nightly
+curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain=nightly -t wasm32-unknown-unknown -c rustfmt -y
