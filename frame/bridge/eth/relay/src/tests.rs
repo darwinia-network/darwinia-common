@@ -399,3 +399,13 @@ fn test_build_double_node_with_proof_from_str() {
 	);
 	assert_eq!(double_node_with_merkle_proof.proof.len(), 25);
 }
+
+#[test]
+fn test_verify_header_pow_of_ropsten_newwork() {
+	unimplemented!();
+}
+
+#[test]
+fn test_verify_header_pow_of_ethereum_newwork() {
+	unimplemented!();
+}
