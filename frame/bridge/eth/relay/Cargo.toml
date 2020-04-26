@@ -29,6 +29,8 @@ sp-runtime = { default-features = false, git = "https://github.com/darwinia-netw
 sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
 
 [dev-dependencies]
+# darwinia
+darwinia-balances = { path = "../../../../frame/balances" }
 # substrate
 sp-core = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
 

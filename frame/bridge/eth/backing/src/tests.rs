@@ -72,7 +72,7 @@ fn verify_parse_token_redeem_proof() {
 			).unwrap();
 			assert_eq!(
 				EthBacking::parse_token_redeem_proof(&proof_record, "RingBurndropTokens"), 
-				Ok((1234567891, expect_account_id)),
+				Ok((1234567891, expect_account_id, Default::default())),
 			);
 		});
 }
@@ -203,7 +203,7 @@ fn verify_redeem_kton() {
 			// 0.123456789123456789 KTON
 			assert_eq!(
 				EthBacking::parse_token_redeem_proof(&proof_record, "KtonBurndropTokens"), 
-				Ok((123456789, expect_account_id.clone())),
+				Ok((123456789, expect_account_id.clone(), Default::default())),
 			);
 
 			let id1 = AccountId32::from([0; 32]);

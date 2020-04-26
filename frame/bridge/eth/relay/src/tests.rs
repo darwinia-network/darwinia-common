@@ -39,7 +39,10 @@ fn verify_receipt_proof() {
 
 		// verify receipt
 		assert_ok!(EthRelay::init_genesis_header(&header, 0x6b2dd4a2c4f47d));
-		assert_eq!(EthRelay::verify_receipt(&proof_record), Ok(receipt));
+		assert_eq!(
+			EthRelay::verify_receipt(&proof_record),
+			Ok((receipt, Default::default()))
+		);
 	});
 }
 
@@ -51,15 +54,15 @@ fn relay_header() {
 
 		// relay grandpa
 		assert_ok!(EthRelay::verify_header_basic(&grandpa));
-		assert_ok!(EthRelay::maybe_store_header(&grandpa));
+		assert_ok!(EthRelay::maybe_store_header(&0, &grandpa));
 
 		// relay parent
 		assert_ok!(EthRelay::verify_header_basic(&parent));
-		assert_ok!(EthRelay::maybe_store_header(&parent));
+		assert_ok!(EthRelay::maybe_store_header(&0, &parent));
 
 		// relay current
 		assert_ok!(EthRelay::verify_header_basic(&current));
-		assert_ok!(EthRelay::maybe_store_header(&current));
+		assert_ok!(EthRelay::maybe_store_header(&0, &current));
 	});
 }
 
@@ -221,7 +224,7 @@ fn relay_mainet_header() {
 					&header,
 					&blocks_with_proofs.to_double_node_with_merkle_proof_vec()
 				));
-				assert_ok!(EthRelay::maybe_store_header(&header));
+				assert_ok!(EthRelay::maybe_store_header(&0, &header));
 			}
 
 			// block 8996778
@@ -236,7 +239,7 @@ fn relay_mainet_header() {
 					&header,
 					&blocks_with_proofs.to_double_node_with_merkle_proof_vec()
 				));
-				assert_ok!(EthRelay::maybe_store_header(&header));
+				assert_ok!(EthRelay::maybe_store_header(&0, &header));
 			}
 		});
 }

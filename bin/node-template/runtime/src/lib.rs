@@ -564,6 +564,7 @@ impl darwinia_eth_relay::Trait for Runtime {
 	type Event = Event;
 	type EthNetwork = EthNetwork;
 	type Call = Call;
+	type Currency = Ring;
 }
 
 type SubmitPFTransaction =

@@ -104,10 +104,11 @@
 	},
 	"__[pallet.bridge.eth]__": {},
 	"EthTransactionIndex": "(H256, u64)",
-	"EthHeaderBrief": {
+	"EthHeaderBriefT": {
 		"total_difficulty": "U256",
 		"parent_hash": "H256",
-		"number": "EthBlockNumber"
+		"number": "EthBlockNumber",
+		"relayer": "AccountId"
 	},
 	"EthBlockNumber": "u64",
 	"EthHeader": {

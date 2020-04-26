@@ -15,9 +15,26 @@ use eth_primitives::receipt::LogEntry;
 
 type AccountId = u64;
 type BlockNumber = u64;
+type Balance = u128;
+
+pub type RingInstance = darwinia_balances::Instance0;
+pub type KtonInstance = darwinia_balances::Instance1;
 
 pub type System = frame_system::Module<Test>;
 pub type EthRelay = Module<Test>;
+pub type Ring = darwinia_balances::Module<Test, RingInstance>;
+
+darwinia_support::impl_account_data! {
+	pub struct AccountData<Balance>
+	for
+		RingInstance,
+		KtonInstance
+	where
+		Balance = Balance
+	{
+		// other data
+	}
+}
 
 thread_local! {
 	static ETH_NETWORK: RefCell<EthNetworkType> = RefCell::new(EthNetworkType::Ropsten);
@@ -155,9 +172,19 @@ impl frame_system::Trait for Test {
 	type AvailableBlockRatio = AvailableBlockRatio;
 	type Version = ();
 	type ModuleToIndex = ();
-	type AccountData = ();
+	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
+}
+
+impl darwinia_balances::Trait<RingInstance> for Test {
+	type Balance = Balance;
+	type DustRemoval = ();
+	type Event = ();
+	type ExistentialDeposit = ();
+	type BalanceInfo = AccountData<Balance>;
+	type AccountStore = System;
+	type DustCollector = ();
 }
 
 impl_outer_origin! {
@@ -175,6 +202,7 @@ impl Trait for Test {
 	type Event = ();
 	type EthNetwork = EthNetwork;
 	type Call = Call;
+	type Currency = Ring;
 }
 
 pub struct ExtBuilder {

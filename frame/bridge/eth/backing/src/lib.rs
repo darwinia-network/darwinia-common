@@ -56,7 +56,7 @@ pub trait Trait: system::Trait {
 
 	type DetermineAccountId: AccountIdFor<Self::AccountId>;
 
-	type EthRelay: VerifyEthReceipts;
+	type EthRelay: VerifyEthReceipts<RingBalance<Self>>;
 
 	type OnDepositRedeem: OnDepositRedeem<Self::AccountId, Balance = RingBalance<Self>>;
 
@@ -252,9 +252,9 @@ impl<T: Trait> Module<T> {
 	fn parse_token_redeem_proof(
 		proof_record: &EthReceiptProof,
 		event_name: &str,
-	) -> Result<(Balance, T::AccountId), DispatchError> {
+	) -> Result<(Balance, T::AccountId, RingBalance<T>), DispatchError> {
+		let (verified_receipt, fee) = T::EthRelay::verify_receipt(proof_record)?;
 		let result = {
-			let verified_receipt = T::EthRelay::verify_receipt(proof_record)?;
 			let eth_event = EthEvent {
 				name: event_name.to_owned(),
 				inputs: vec![
@@ -325,14 +325,24 @@ impl<T: Trait> Module<T> {
 		};
 		debug::trace!(target: "ebk-acct", "[eth-backing] Darwinia Account: {:?}", darwinia_account);
 
-		Ok((redeemed_amount, darwinia_account))
+		Ok((redeemed_amount, darwinia_account, fee))
 	}
 
 	fn parse_deposit_redeem_proof(
 		proof_record: &EthReceiptProof,
-	) -> Result<(DepositId, u8, u64, RingBalance<T>, T::AccountId), DispatchError> {
+	) -> Result<
+		(
+			DepositId,
+			u8,
+			u64,
+			RingBalance<T>,
+			T::AccountId,
+			RingBalance<T>,
+		),
+		DispatchError,
+	> {
+		let (verified_receipt, fee) = T::EthRelay::verify_receipt(proof_record)?;
 		let result = {
-			let verified_receipt = T::EthRelay::verify_receipt(proof_record)?;
 			let eth_event = EthEvent {
 				name: "Burndrop".to_owned(),
 				inputs: vec![
@@ -441,7 +451,14 @@ impl<T: Trait> Module<T> {
 		};
 		debug::trace!(target: "ebk-acct", "[eth-backing] Darwinia Account: {:?}", darwinia_account);
 
-		Ok((deposit_id, month, start_at, redeemed_ring, darwinia_account))
+		Ok((
+			deposit_id,
+			month,
+			start_at,
+			redeemed_ring,
+			darwinia_account,
+			fee,
+		))
 	}
 
 	// --- Mutable ---
@@ -454,7 +471,7 @@ impl<T: Trait> Module<T> {
 			<Error<T>>::RingAR,
 		);
 
-		let (redeemed_ring, darwinia_account) =
+		let (redeemed_ring, darwinia_account, fee) =
 			Self::parse_token_redeem_proof(&proof_record, "RingBurndropTokens")?;
 		let redeemed_ring = redeemed_ring.saturated_into();
 
@@ -464,6 +481,8 @@ impl<T: Trait> Module<T> {
 			Self::pot::<T::Ring>() >= redeemed_ring,
 			<Error<T>>::RingLockedNSBA
 		);
+
+		// TODO: checking and transfer fee to relay module
 
 		T::Ring::transfer(&backing, &darwinia_account, redeemed_ring, KeepAlive)?;
 
@@ -489,7 +508,7 @@ impl<T: Trait> Module<T> {
 			<Error<T>>::KtonAR,
 		);
 
-		let (redeemed_kton, darwinia_account) =
+		let (redeemed_kton, darwinia_account, fee) =
 			Self::parse_token_redeem_proof(&proof_record, "KtonBurndropTokens")?;
 		let redeemed_kton = redeemed_kton.saturated_into();
 
@@ -499,6 +518,8 @@ impl<T: Trait> Module<T> {
 			Self::pot::<T::Kton>() >= redeemed_kton,
 			<Error<T>>::KtonLockedNSBA
 		);
+
+		// TODO: checking and transfer fee to relay module
 
 		T::Kton::transfer(&backing, &darwinia_account, redeemed_kton, KeepAlive)?;
 
@@ -524,7 +545,7 @@ impl<T: Trait> Module<T> {
 			<Error<T>>::DepositAR,
 		);
 
-		let (deposit_id, month, start_at, redeemed_ring, darwinia_account) =
+		let (deposit_id, month, start_at, redeemed_ring, darwinia_account, fee) =
 			Self::parse_deposit_redeem_proof(&proof_record)?;
 
 		let backing = Self::account_id();
@@ -541,6 +562,8 @@ impl<T: Trait> Module<T> {
 			redeemed_ring,
 			&darwinia_account,
 		)?;
+
+		// TODO: checking and transfer fee to relay module
 
 		// TODO: check deposit_id duplication
 		// TODO: Ignore Unit Interest for now

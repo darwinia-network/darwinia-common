@@ -171,6 +171,7 @@ impl darwinia_eth_relay::Trait for Test {
 	type Event = ();
 	type EthNetwork = EthNetwork;
 	type Call = Call;
+	type Currency = Ring;
 }
 
 impl darwinia_balances::Trait<KtonInstance> for Test {
