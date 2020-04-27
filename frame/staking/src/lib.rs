@@ -142,7 +142,7 @@
 //! decl_module! {
 //! 	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
 //!			/// Reward a validator.
-//! 		#[weight = frame_support::weights::SimpleDispatchInfo::default()]
+//! 		#[weight = 0]
 //! 		pub fn reward_myself(origin) -> dispatch::DispatchResult {
 //! 			let reported = ensure_signed(origin)?;
 //! 			<staking::Module<T>>::reward_by_ids(vec![(reported, 10)]);
@@ -154,6 +154,22 @@
 //! ```
 //!
 //! ## Implementation Details
+//!
+//! ### Era payout
+//!
+//! The era payout is computed using yearly inflation curve defined at
+//! [`T::RewardCurve`](./trait.Trait.html#associatedtype.RewardCurve) as such:
+//!
+//! ```nocompile
+//! staker_payout = yearly_inflation(npos_token_staked / total_tokens) * total_tokens / era_per_year
+//! ```
+//! This payout is used to reward stakers as defined in next section
+//!
+//! ```nocompile
+//! remaining_payout = max_yearly_inflation * total_tokens / era_per_year - staker_payout
+//! ```
+//! The remaining reward is send to the configurable end-point
+//! [`T::RewardRemainder`](./trait.Trait.html#associatedtype.RewardRemainder).
 //!
 //! ### Reward Calculation
 //!
@@ -332,14 +348,15 @@ use frame_support::{
 		Currency, EnsureOrigin, EstimateNextNewSession, ExistenceRequirement::KeepAlive, Get,
 		Imbalance, OnUnbalanced, UnixTime,
 	},
-	weights::{SimpleDispatchInfo, Weight},
+	weights::{DispatchClass, Weight},
 };
 use frame_system::{
-	self as system, ensure_none, ensure_root, ensure_signed, offchain::SubmitUnsignedTransaction,
+	self as system, ensure_none, ensure_root, ensure_signed, offchain::SendTransactionTypes,
 };
 use sp_phragmen::{
 	build_support_map, elect, evaluate_support, generate_compact_solution_type, is_score_better,
-	Assignment, ExtendedBalance, PhragmenResult, PhragmenScore, SupportMap, VotingLimit,
+	Assignment, ExtendedBalance, PhragmenResult, PhragmenScore, SupportMap, VoteWeight,
+	VotingLimit,
 };
 use sp_runtime::{
 	helpers_128bit::multiply_by_rational,
@@ -873,7 +890,7 @@ where
 	}
 }
 
-pub trait Trait: frame_system::Trait {
+pub trait Trait: frame_system::Trait + SendTransactionTypes<Call<Self>> {
 	/// The overarching event type.
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
@@ -882,12 +899,6 @@ pub trait Trait: frame_system::Trait {
 	/// It is guaranteed to start being called from the first `on_finalize`. Thus value at genesis
 	/// is not used.
 	type UnixTime: UnixTime;
-
-	/// Just provide a workaround for `sp_phragmen`.
-	///
-	/// Total `Power` is `1_000_000_000 < u32::max_value()`
-	/// never get overflow; qed
-	type BypassConverter: Convert<Power, u64> + Convert<u128, Power>;
 
 	/// Number of sessions per era.
 	type SessionsPerEra: Get<SessionIndex>;
@@ -919,10 +930,7 @@ pub trait Trait: frame_system::Trait {
 	/// The overarching call type.
 	type Call: Dispatchable + From<Call<Self>> + IsSubType<Module<Self>, Self> + Clone;
 
-	/// A transaction submitter.
-	type SubmitTransaction: SubmitUnsignedTransaction<Self, <Self as Trait>::Call>;
-
-	/// The maximum number of nominators rewarded for each validator.
+	/// The maximum number of nominator rewarded for each validator.
 	///
 	/// For each validator only the `$MaxNominatorRewardedPerValidator` biggest stakers can claim
 	/// their reward. This used to limit the i/o cost for the nominator payout.
@@ -937,6 +945,7 @@ pub trait Trait: frame_system::Trait {
 	/// The *RING* currency.
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 	/// Tokens have been minted and are unused for validator-reward.
+	/// See [Era payout](./index.html#era-payout).
 	type RingRewardRemainder: OnUnbalanced<RingNegativeImbalance<Self>>;
 	/// Handler for the unbalanced *RING* reduction when slashing a staker.
 	type RingSlash: OnUnbalanced<RingNegativeImbalance<Self>>;
@@ -1205,7 +1214,10 @@ decl_event!(
 		RingBalance = RingBalance<T>,
 		KtonBalance = KtonBalance<T>,
 	{
-		// --- substrate ---
+		/// The era payout has been set; the first balance is the validator-payout; the second is
+		/// the remainder from the maximum amount of reward.
+		EraPayout(EraIndex, RingBalance, RingBalance),
+
 		/// The staker has been rewarded by this amount. `AccountId` is the stash account.
 		Reward(AccountId, RingBalance),
 
@@ -1218,7 +1230,6 @@ decl_event!(
 		/// A new set of stakers was elected with the given computation method.
 		StakingElection(ElectionCompute),
 
-		// --- darwinia ---
 		/// Bond succeed.
 		/// `amount` in `RingBalance<T>`, `start_time` in `TsInMs`, `expired_time` in `TsInMs`
 		BondRing(RingBalance, TsInMs, TsInMs),
@@ -1408,7 +1419,7 @@ decl_module! {
 		/// NOTE: Two of the storage writes (`Self::bonded`, `Self::payee`) are _never_ cleaned
 		/// unless the `origin` falls below _existential deposit_ and gets removed as dust.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(500_000)]
+		#[weight = 500_000_000]
 		fn bond(
 			origin,
 			controller: <T::Lookup as StaticLookup>::Source,
@@ -1496,7 +1507,7 @@ decl_module! {
 		/// - O(1).
 		/// - One DB entry.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(500_000)]
+		#[weight = 500_000_000]
 		fn bond_extra(origin, max_additional: StakingBalanceT<T>, promise_month: u8) {
 			ensure!(Self::era_election_status().is_closed(), <Error<T>>::CallNotAllowed);
 
@@ -1541,7 +1552,7 @@ decl_module! {
 		/// - O(1).
 		/// - One DB entry.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(500_000)]
+		#[weight = 500_000_000]
 		fn deposit_extra(origin, value: RingBalance<T>, promise_month: u8) {
 			let stash = ensure_signed(origin)?;
 			let controller = Self::bonded(&stash).ok_or(<Error<T>>::NotStash)?;
@@ -1600,7 +1611,7 @@ decl_module! {
 		/// </weight>
 		///
 		/// Only active normal ring can be unbond
-		#[weight = SimpleDispatchInfo::FixedNormal(500_000)]
+		#[weight = 500_000_000]
 		fn unbond(origin, value: StakingBalanceT<T>) {
 			ensure!(Self::era_election_status().is_closed(), <Error<T>>::CallNotAllowed);
 
@@ -1621,10 +1632,10 @@ decl_module! {
 
 			// Due to the macro parser, we've to add a bracket.
 			// Actually, this's totally wrong:
-			//     `a as u32 + b as u32 < c`
+			//	 `a as u32 + b as u32 < c`
 			// Workaround:
-			//     1. `(a as u32 + b as u32) < c`
-			//     2. `let c_ = a as u32 + b as u32; c_ < c`
+			//	 1. `(a as u32 + b as u32) < c`
+			//	 2. `let c_ = a as u32 + b as u32; c_ < c`
 			ensure!(
 				(ring_staking_lock.unbondings.len() + kton_staking_lock.unbondings.len()) < MAX_UNLOCKING_CHUNKS,
 				<Error<T>>::NoMoreChunks,
@@ -1750,7 +1761,7 @@ decl_module! {
 		/// - One storage write.
 		/// - Writes are limited to the `origin` account key.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(500_000)]
+		#[weight = 500_000_000]
 		fn claim_mature_deposits(origin) {
 			let controller = ensure_signed(origin)?;
 			let ledger = Self::clear_mature_deposits(Self::ledger(&controller).ok_or(<Error<T>>::NotController)?);
@@ -1769,7 +1780,7 @@ decl_module! {
 		/// - One storage write.
 		/// - Writes are limited to the `origin` account key.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(750_000)]
+		#[weight = 750_000_000]
 		fn try_claim_deposits_with_punish(origin, expire_time: TsInMs) {
 			let controller = ensure_signed(origin)?;
 			let mut ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
@@ -1848,7 +1859,7 @@ decl_module! {
 		/// - Contains a limited number of reads.
 		/// - Writes are limited to the `origin` account key.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(750_000)]
+		#[weight = 750_000_000]
 		fn validate(origin, prefs: ValidatorPrefs) {
 			ensure!(Self::era_election_status().is_closed(), <Error<T>>::CallNotAllowed);
 
@@ -1873,7 +1884,7 @@ decl_module! {
 		/// which is capped at CompactAssignments::LIMIT.
 		/// - Both the reads and writes follow a similar pattern.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(750_000)]
+		#[weight = 750_000_000]
 		fn nominate(origin, targets: Vec<<T::Lookup as StaticLookup>::Source>) {
 			ensure!(Self::era_election_status().is_closed(), <Error<T>>::CallNotAllowed);
 
@@ -1910,7 +1921,7 @@ decl_module! {
 		/// - Contains one read.
 		/// - Writes are limited to the `origin` account key.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(500_000)]
+		#[weight = 500_000_000]
 		fn chill(origin) {
 			ensure!(Self::era_election_status().is_closed(), <Error<T>>::CallNotAllowed);
 
@@ -1931,7 +1942,7 @@ decl_module! {
 		/// - Contains a limited number of reads.
 		/// - Writes are limited to the `origin` account key.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(500_000)]
+		#[weight = 500_000_000]
 		fn set_payee(origin, payee: RewardDestination) {
 			let controller = ensure_signed(origin)?;
 			let ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
@@ -1951,7 +1962,7 @@ decl_module! {
 		/// - Contains a limited number of reads.
 		/// - Writes are limited to the `origin` account key.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(750_000)]
+		#[weight = 750_000_000]
 		fn set_controller(origin, controller: <T::Lookup as StaticLookup>::Source) {
 			let stash = ensure_signed(origin)?;
 			let old_controller = Self::bonded(&stash).ok_or(<Error<T>>::NotStash)?;
@@ -1970,7 +1981,7 @@ decl_module! {
 		// --- root call ---
 
 		/// The ideal number of validators.
-		#[weight = SimpleDispatchInfo::FixedNormal(5_000)]
+		#[weight = 5_000_000]
 		fn set_validator_count(origin, #[compact] new: u32) {
 			ensure_root(origin)?;
 			ValidatorCount::put(new);
@@ -1981,7 +1992,7 @@ decl_module! {
 		/// # <weight>
 		/// - No arguments.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(5_000)]
+		#[weight = 5_000_000]
 		fn force_no_eras(origin) {
 			ensure_root(origin)?;
 			ForceEra::put(Forcing::ForceNone);
@@ -1993,21 +2004,21 @@ decl_module! {
 		/// # <weight>
 		/// - No arguments.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(5_000)]
+		#[weight = 5_000_000]
 		fn force_new_era(origin) {
 			ensure_root(origin)?;
 			ForceEra::put(Forcing::ForceNew);
 		}
 
 		/// Set the validators who cannot be slashed (if any).
-		#[weight = SimpleDispatchInfo::FixedNormal(10_000)]
+		#[weight = 5_000_000]
 		fn set_invulnerables(origin, validators: Vec<T::AccountId>) {
 			ensure_root(origin)?;
 			<Invulnerables<T>>::put(validators);
 		}
 
 		/// Force a current staker to become completely unstaked, immediately.
-		#[weight = SimpleDispatchInfo::FixedNormal(10_000)]
+		#[weight = 0]
 		fn force_unstake(origin, stash: T::AccountId) {
 			ensure_root(origin)?;
 
@@ -2024,7 +2035,7 @@ decl_module! {
 		/// # <weight>
 		/// - One storage write
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(5_000)]
+		#[weight = 5_000_000]
 		fn force_new_era_always(origin) {
 			ensure_root(origin)?;
 			ForceEra::put(Forcing::ForceAlways);
@@ -2037,7 +2048,7 @@ decl_module! {
 		/// # <weight>
 		/// - One storage write.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(1_000_000)]
+		#[weight = 1_000_000_000]
 		fn cancel_deferred_slash(origin, era: EraIndex, slash_indices: Vec<u32>) {
 			T::SlashCancelOrigin::try_origin(origin)
 				.map(|_| ())
@@ -2073,7 +2084,7 @@ decl_module! {
 		/// - Time complexity: at most O(MaxNominatorRewardedPerValidator).
 		/// - Contains a limited number of reads and writes.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(500_000)]
+		#[weight = 500_000_000]
 		fn payout_stakers(origin, validator_stash: T::AccountId, era: EraIndex) -> DispatchResult {
 			ensure!(Self::era_election_status().is_closed(), <Error<T>>::CallNotAllowed);
 
@@ -2084,7 +2095,7 @@ decl_module! {
 		/// Set history_depth value.
 		///
 		/// Origin must be root.
-		#[weight = SimpleDispatchInfo::FixedOperational(500_000)]
+		#[weight = (500_000_000, DispatchClass::Operational)]
 		fn set_history_depth(origin, #[compact] new_history_depth: EraIndex) {
 			ensure_root(origin)?;
 			if let Some(current_era) = Self::current_era() {
@@ -2106,7 +2117,7 @@ decl_module! {
 		/// This can be called from any origin.
 		///
 		/// - `stash`: The stash account to reap. Its balance must be zero.
-		#[weight = frame_support::weights::SimpleDispatchInfo::default()]
+		#[weight = 0]
 		fn reap_stash(_origin, stash: T::AccountId) {
 			ensure!(T::RingCurrency::total_balance(&stash).is_zero(), <Error<T>>::FundedTarget);
 			ensure!(T::KtonCurrency::total_balance(&stash).is_zero(), <Error<T>>::FundedTarget);
@@ -2127,7 +2138,7 @@ decl_module! {
 		///
 		/// 1. `winners`: a flat vector of all the winners of the round.
 		/// 2. `assignments`: the compact version of an assignment vector that encodes the edge
-		///    weights.
+		///	weights.
 		///
 		/// Both of which may be computed using [`phragmen`], or any other algorithm.
 		///
@@ -2148,8 +2159,8 @@ decl_module! {
 		/// 1. Its claimed score is equal to the score computed on-chain.
 		/// 2. Presents the correct number of winners.
 		/// 3. All indexes must be value according to the snapshot vectors. All edge values must
-		///    also be correct and should not overflow the granularity of the ratio type (i.e. 256
-		///    or billion).
+		///	also be correct and should not overflow the granularity of the ratio type (i.e. 256
+		///	or billion).
 		/// 4. For each edge, all targets are actually nominated by the voter.
 		/// 5. Has correct self-votes.
 		///
@@ -2158,7 +2169,7 @@ decl_module! {
 		/// 1. `min { support.total }` for each support of a winner. This value should be maximized.
 		/// 2. `sum { support.total }` for each support of a winner. This value should be minimized.
 		/// 3. `sum { support.total^2 }` for each support of a winner. This value should be
-		///    minimized (to ensure less variance)
+		///	minimized (to ensure less variance)
 		///
 		/// # <weight>
 		/// E: number of edges. m: size of winner committee. n: number of nominators. d: edge degree
@@ -2180,7 +2191,7 @@ decl_module! {
 		/// - Memory: O(n + m) reads to map index to `AccountId` for un-compact.
 		///
 		/// - Storage: O(e) accountid reads from `Nomination` to read correct nominations.
-		/// - Storage: O(e) calls into `slashable_balance_of_extended` to convert ratio to staked.
+		/// - Storage: O(e) calls into `slashable_balance_of_vote_weight` to convert ratio to staked.
 		///
 		/// - Memory: build_support_map. O(e).
 		/// - Memory: evaluate_support: O(E).
@@ -2190,7 +2201,7 @@ decl_module! {
 		///
 		/// The weight of this call is 1/10th of the blocks total weight.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(100_000_000)]
+		#[weight = 100_000_000_000]
 		pub fn submit_election_solution(
 			origin,
 			winners: Vec<ValidatorIndex>,
@@ -2213,7 +2224,7 @@ decl_module! {
 		/// Note that this must pass the [`ValidateUnsigned`] check which only allows transactions
 		/// from the local node to be included. In other words, only the block author can include a
 		/// transaction in the block.
-		#[weight = SimpleDispatchInfo::FixedNormal(100_000_000)]
+		#[weight = 100_000_000_000]
 		pub fn submit_election_solution_unsigned(
 			origin,
 			winners: Vec<ValidatorIndex>,
@@ -2853,16 +2864,24 @@ impl<T: Trait> Module<T> {
 			let living_time = Self::living_time();
 			let era_duration = now - active_era_start;
 
-			let (total_payout, _max_payout) = inflation::compute_total_payout::<T>(
+			let (validator_payout, max_payout) = inflation::compute_total_payout::<T>(
 				era_duration,
 				Self::living_time(),
 				T::Cap::get().saturating_sub(T::RingCurrency::total_issuance()),
 				PayoutFraction::get(),
 			);
+			let rest = max_payout.saturating_sub(validator_payout);
+
+			Self::deposit_event(RawEvent::EraPayout(
+				active_era.index,
+				validator_payout,
+				rest,
+			));
 
 			LivingTime::put(living_time + era_duration);
 			// Set ending era reward.
-			<ErasValidatorReward<T>>::insert(&active_era.index, total_payout);
+			<ErasValidatorReward<T>>::insert(&active_era.index, validator_payout);
+			T::RingRewardRemainder::on_unbalanced(T::RingCurrency::issue(rest));
 		}
 	}
 
@@ -3031,13 +3050,13 @@ impl<T: Trait> Module<T> {
 	///
 	/// No storage item is updated.
 	fn do_phragmen<Accuracy: PerThing>() -> Option<PhragmenResult<T::AccountId, Accuracy>> {
-		let mut all_nominators: Vec<(T::AccountId, Power, Vec<T::AccountId>)> = vec![];
+		let mut all_nominators: Vec<(T::AccountId, VoteWeight, Vec<T::AccountId>)> = vec![];
 		let mut all_validators = vec![];
 		for (validator, _) in <Validators<T>>::iter() {
 			// append self vote
 			let self_vote = (
 				validator.clone(),
-				Self::power_of(&validator),
+				Self::power_of(&validator) as _,
 				vec![validator.clone()],
 			);
 			all_nominators.push(self_vote);
@@ -3061,11 +3080,11 @@ impl<T: Trait> Module<T> {
 			(nominator, targets)
 		});
 		all_nominators.extend(nominator_votes.map(|(n, ns)| {
-			let s = Self::power_of(&n);
+			let s = Self::power_of(&n) as _;
 			(n, s, ns)
 		}));
 
-		elect::<_, _, T::BypassConverter, Accuracy>(
+		elect::<_, Accuracy>(
 			Self::validator_count() as usize,
 			Self::minimum_validator_count().max(1) as usize,
 			all_validators,

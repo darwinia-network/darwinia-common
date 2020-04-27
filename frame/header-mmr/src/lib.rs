@@ -9,7 +9,7 @@
 //!
 //! ## Terminology
 //!
-//! ### Merkle Moutain Range
+//! ### Merkle Mountain Range
 //! For more details about the MMR struct, refer https://github.com/mimblewimble/grin/blob/master/doc/mmr.md#structure
 //!
 //! ### MMR Proof
@@ -88,7 +88,7 @@ decl_storage! {
 
 decl_error! {
 	pub enum Error for Module<T: Trait> {
-		/// Proof block nubmer TOO LARGE
+		/// Proof Block Number - TOO LARGE
 		ProofBlockNumberTL,
 		/// Proof - GET FAILED
 		ProofGF,

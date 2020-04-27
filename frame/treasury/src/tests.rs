@@ -92,6 +92,8 @@ fn report_awesome_from_beneficiary_and_tip_works() {
 #[test]
 fn close_tip_works() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+
 		Ring::make_free_balance_be(&Treasury::account_id(), 101);
 		assert_eq!(Treasury::pot::<Ring>(), 100);
 
@@ -101,14 +103,50 @@ fn close_tip_works() {
 			3,
 			10
 		));
+
 		let h = tip_hash();
+
+		assert_eq!(
+			System::events()
+				.into_iter()
+				.map(|r| r.event)
+				.filter_map(|e| {
+					if let MockEvent::treasury(inner) = e {
+						Some(inner)
+					} else {
+						None
+					}
+				})
+				.last()
+				.unwrap(),
+			RawEvent::NewTip(h),
+		);
+
 		assert_ok!(Treasury::tip(Origin::signed(11), h.clone(), 10));
+
 		assert_noop!(
 			Treasury::close_tip(Origin::signed(0), h.into()),
 			<Error<Test>>::StillOpen
 		);
 
 		assert_ok!(Treasury::tip(Origin::signed(12), h.clone(), 10));
+
+		assert_eq!(
+			System::events()
+				.into_iter()
+				.map(|r| r.event)
+				.filter_map(|e| {
+					if let MockEvent::treasury(inner) = e {
+						Some(inner)
+					} else {
+						None
+					}
+				})
+				.last()
+				.unwrap(),
+			RawEvent::TipClosing(h),
+		);
+
 		assert_noop!(
 			Treasury::close_tip(Origin::signed(0), h.into()),
 			<Error<Test>>::Premature
@@ -118,6 +156,22 @@ fn close_tip_works() {
 		assert_noop!(Treasury::close_tip(Origin::NONE, h.into()), BadOrigin);
 		assert_ok!(Treasury::close_tip(Origin::signed(0), h.into()));
 		assert_eq!(Ring::free_balance(3), 10);
+
+		assert_eq!(
+			System::events()
+				.into_iter()
+				.map(|r| r.event)
+				.filter_map(|e| {
+					if let MockEvent::treasury(inner) = e {
+						Some(inner)
+					} else {
+						None
+					}
+				})
+				.last()
+				.unwrap(),
+			RawEvent::TipClosed(h, 3, 10),
+		);
 
 		assert_noop!(
 			Treasury::close_tip(Origin::signed(100), h.into()),

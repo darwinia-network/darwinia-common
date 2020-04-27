@@ -27,7 +27,6 @@ use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
 	traits::{Currency, Get},
-	weights::SimpleDispatchInfo,
 	{decl_error, decl_event, decl_module, decl_storage},
 };
 use frame_system::{self as system, ensure_none, ensure_root};
@@ -118,13 +117,13 @@ decl_error! {
 decl_storage! {
 	trait Store for Module<T: Trait> as DarwiniaClaims {
 		ClaimsFromEth
-			get(claims_from_eth)
+			get(fn claims_from_eth)
 			: map hasher(identity) AddressT => Option<RingBalance<T>>;
 		ClaimsFromTron
-			get(claims_from_tron)
+			get(fn claims_from_tron)
 			: map hasher(identity) AddressT => Option<RingBalance<T>>;
 
-		Total get(total): RingBalance<T>;
+		Total get(fn total): RingBalance<T>;
 	}
 	add_extra_genesis {
 		config(claims_list): ClaimsList;
@@ -167,7 +166,7 @@ decl_module! {
 		fn deposit_event() = default;
 
 		/// Make a claim.
-		#[weight = SimpleDispatchInfo::FixedNormal(1_000_000)]
+		#[weight = 1_000_000_000]
 		fn claim(origin, dest: T::AccountId, signature: OtherSignature) {
 			ensure_none(origin)?;
 
@@ -208,7 +207,7 @@ decl_module! {
 		}
 
 		/// Add a new claim, if you are root.
-		#[weight = SimpleDispatchInfo::FixedNormal(30_000)]
+		#[weight = 30_000_000]
 		fn mint_claim(origin, who: OtherAddress, value: RingBalance<T>) {
 			ensure_root(origin)?;
 
@@ -396,8 +395,15 @@ mod tests {
 	type System = frame_system::Module<Test>;
 	type Claims = Module<Test>;
 
+	const ETHEREUM_SIGNED_MESSAGE: &'static [u8] = b"\x19Ethereum Signed Message:\n";
+	const TRON_SIGNED_MESSAGE: &'static [u8] = b"\x19TRON Signed Message:\n";
+
+	impl_outer_origin! {
+		pub enum Origin for Test {}
+	}
+
 	darwinia_support::impl_account_data! {
-		pub struct AccountData<Balance>
+		struct AccountData<Balance>
 		for
 			RingInstance,
 			KtonInstance
@@ -406,13 +412,6 @@ mod tests {
 		{
 			// other data
 		}
-	}
-
-	const ETHEREUM_SIGNED_MESSAGE: &'static [u8] = b"\x19Ethereum Signed Message:\n";
-	const TRON_SIGNED_MESSAGE: &'static [u8] = b"\x19TRON Signed Message:\n";
-
-	impl_outer_origin! {
-		pub enum Origin for Test {}
 	}
 
 	#[derive(Clone, Eq, PartialEq)]
@@ -439,6 +438,9 @@ mod tests {
 		type Event = ();
 		type BlockHashCount = BlockHashCount;
 		type MaximumBlockWeight = MaximumBlockWeight;
+		type DbWeight = ();
+		type BlockExecutionWeight = ();
+		type ExtrinsicBaseWeight = ();
 		type MaximumBlockLength = MaximumBlockLength;
 		type AvailableBlockRatio = AvailableBlockRatio;
 		type Version = ();
@@ -450,7 +452,6 @@ mod tests {
 
 	parameter_types! {
 		pub const ExistentialDeposit: Balance = 1;
-		pub const CreationFee: Balance = 0;
 	}
 	impl darwinia_balances::Trait<RingInstance> for Test {
 		type Balance = Balance;

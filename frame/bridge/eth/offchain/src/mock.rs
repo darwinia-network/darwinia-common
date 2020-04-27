@@ -2,13 +2,14 @@
 use frame_support::{impl_outer_dispatch, impl_outer_origin, parameter_types, weights::Weight};
 use sp_runtime::{
 	testing::{Header, TestXt},
-	traits::{BlakeTwo256, Extrinsic as ExtrinsicsT, IdentityLookup},
-	Perbill, RuntimeDebug,
+	traits::{BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
+	MultiSignature, Perbill, RuntimeDebug,
 };
 
 use codec::Encode;
 // --- darwinia ---
 use crate::*;
+use darwinia_eth_relay::EthNetworkType;
 
 impl_outer_origin! {
 	pub enum Origin for Test where system = frame_system {}
@@ -38,11 +39,21 @@ darwinia_support::impl_account_data! {
 pub type RingInstance = darwinia_balances::Instance0;
 pub type KtonInstance = darwinia_balances::Instance1;
 
+type AccountId = <<MultiSignature as Verify>::Signer as IdentifyAccount>::AccountId;
+type Extrinsic = TestXt<Call, ()>;
+
 pub type System = frame_system::Module<Test>;
 pub type EthOffchain = Module<Test>;
 pub type EthRelay = darwinia_eth_relay::Module<Test>;
 pub type Ring = darwinia_balances::Module<Test, RingInstance>;
 pub type OffchainError = Error<Test>;
+
+static mut SHADOW_SERVICE: Option<ShadowService> = None;
+
+pub enum ShadowService {
+	Scale,
+	Json,
+}
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct Test;
@@ -59,12 +70,15 @@ impl frame_system::Trait for Test {
 	type BlockNumber = u64;
 	type Hash = sp_core::H256;
 	type Hashing = BlakeTwo256;
-	type AccountId = sp_core::sr25519::Public;
+	type AccountId = <<MultiSignature as Verify>::Signer as IdentifyAccount>::AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = ();
 	type BlockHashCount = BlockHashCount;
 	type MaximumBlockWeight = MaximumBlockWeight;
+	type DbWeight = ();
+	type BlockExecutionWeight = ();
+	type ExtrinsicBaseWeight = ();
 	type MaximumBlockLength = MaximumBlockLength;
 	type AvailableBlockRatio = AvailableBlockRatio;
 	type Version = ();
@@ -72,27 +86,6 @@ impl frame_system::Trait for Test {
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
-}
-
-type Extrinsic = TestXt<Call, ()>;
-type SubmitTransaction =
-	frame_system::offchain::TransactionSubmitter<crypto::Public, Test, Extrinsic>;
-
-impl frame_system::offchain::CreateTransaction<Test, Extrinsic> for Test {
-	type Public = sp_core::sr25519::Public;
-	type Signature = sp_core::sr25519::Signature;
-
-	fn create_transaction<F: frame_system::offchain::Signer<Self::Public, Self::Signature>>(
-		call: <Extrinsic as ExtrinsicsT>::Call,
-		_public: Self::Public,
-		_account: <Test as frame_system::Trait>::AccountId,
-		nonce: <Test as frame_system::Trait>::Index,
-	) -> Option<(
-		<Extrinsic as ExtrinsicsT>::Call,
-		<Extrinsic as ExtrinsicsT>::SignaturePayload,
-	)> {
-		Some((call, (nonce, ())))
-	}
 }
 
 impl darwinia_balances::Trait<RingInstance> for Test {
@@ -106,9 +99,8 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 }
 
 parameter_types! {
-	pub const EthNetwork: darwinia_eth_relay::EthNetworkType = darwinia_eth_relay::EthNetworkType::Ropsten;
+	pub const EthNetwork: EthNetworkType = EthNetworkType::Ropsten;
 }
-
 impl darwinia_eth_relay::Trait for Test {
 	type Event = ();
 	type EthNetwork = EthNetwork;
@@ -116,45 +108,39 @@ impl darwinia_eth_relay::Trait for Test {
 	type Currency = Ring;
 }
 
-//impl From<darwinia_eth_relay::Call<Test>> for Call<Test> {
-//	fn from(_: darwinia_eth_relay::Call<Test>) -> Self {
-//		unimplemented!()
-//	}
-//}
-
-static mut SHADOW_SERVICE: Option<ShadowService> = None;
-
-pub enum ShadowService {
-	SCALE,
-	JSON,
-}
-
-impl OffchainRequestTrait for OffchainRequest {
-	fn send(&mut self) -> Option<Vec<u8>> {
-		unsafe {
-			match SHADOW_SERVICE {
-				Some(ShadowService::SCALE) => Some(SUPPOSED_SHADOW_SCALE_RESPONSE.to_vec()),
-				Some(ShadowService::JSON) => Some(SUPPOSED_SHADOW_JSON_RESPONSE.to_vec()),
-				_ => None,
-			}
-		}
-	}
-}
-
-pub(crate) fn set_shadow_service(s: Option<ShadowService>) {
-	unsafe {
-		SHADOW_SERVICE = s;
-	}
-}
-
 parameter_types! {
 	pub const FetchInterval: u64 = 3;
 }
 impl Trait for Test {
-	type Event = ();
-	type Call = Call;
-	type SubmitSignedTransaction = SubmitTransaction;
+	type AuthorityId = crypto::AuthorityId;
 	type FetchInterval = FetchInterval;
+}
+
+impl frame_system::offchain::SigningTypes for Test {
+	type Public = <MultiSignature as Verify>::Signer;
+	type Signature = MultiSignature;
+}
+
+impl<LocalCall> frame_system::offchain::SendTransactionTypes<LocalCall> for Test
+where
+	Call: From<LocalCall>,
+{
+	type Extrinsic = Extrinsic;
+	type OverarchingCall = Call;
+}
+
+impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Test
+where
+	Call: From<LocalCall>,
+{
+	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
+		call: Call,
+		_public: <MultiSignature as Verify>::Signer,
+		_account: AccountId,
+		nonce: u64,
+	) -> Option<(Call, <Extrinsic as ExtrinsicT>::SignaturePayload)> {
+		Some((call, (nonce, ())))
+	}
 }
 
 pub struct ExtBuilder {
@@ -171,12 +157,12 @@ impl Default for ExtBuilder {
 
 impl ExtBuilder {
 	pub fn set_genesis_header(mut self) -> Self {
-		let genesis_header = EthHeader::from_str_unchecked(SUPPOSED_ETHHEADER);
+		let genesis_header = EthHeader::from_str_unchecked(SUPPOSED_ETH_HEADER);
 		self.genesis_header = Some((1, rlp::encode(&genesis_header)));
 		self
 	}
 	pub fn build(self) -> sp_io::TestExternalities {
-		let mut storage = system::GenesisConfig::default()
+		let mut storage = frame_system::GenesisConfig::default()
 			.build_storage::<Test>()
 			.unwrap();
 
@@ -189,8 +175,27 @@ impl ExtBuilder {
 		storage.into()
 	}
 }
+
+impl OffchainRequestTrait for OffchainRequest {
+	fn send(&mut self) -> Option<Vec<u8>> {
+		unsafe {
+			match SHADOW_SERVICE {
+				Some(ShadowService::Scale) => Some(SUPPOSED_SHADOW_SCALE_RESPONSE.to_vec()),
+				Some(ShadowService::Json) => Some(SUPPOSED_SHADOW_JSON_RESPONSE.to_vec()),
+				_ => None,
+			}
+		}
+	}
+}
+
+pub(crate) fn set_shadow_service(s: Option<ShadowService>) {
+	unsafe {
+		SHADOW_SERVICE = s;
+	}
+}
+
 pub const SUPPOSED_SHADOW_SCALE_RESPONSE: &'static [u8] = br#"{"jsonrpc":"2.0","id":1,"result":{"eth_header":"0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa32442ba5500000000010000000000000005a56e2d52c817161883f50c441c3228cfe54d9f56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b4211dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d4934764476574682f76312e302e302f6c696e75782f676f312e342e32d67e4d450343046425ae4271474353857ab860dbc0a1dde64b41b5cd3a532bf356e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b4210000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008813000000000000000000000000000000000000000000000000000000000000000080ff030000000000000000000000000000000000000000000000000000000884a0969b900de27b6ac6a67742365dd65f55a0526c41fd18e1b16f1a1215c2e66f592488539bd4979fef1ec40188e96d4537bea4d9c05d12549907b32561d3bf31f45aae734cdc119f13406cb6","proof":"0x04000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"}}"#;
-pub const SUPPOSED_ETHHEADER: &'static str = r#"
+pub const SUPPOSED_ETH_HEADER: &'static str = r#"
 			{
 				"difficulty": "0x3ff800000",
 				"extraData": "0x476574682f76312e302e302f6c696e75782f676f312e342e32",

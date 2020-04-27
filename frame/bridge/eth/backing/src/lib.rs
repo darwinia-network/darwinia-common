@@ -32,7 +32,6 @@ use ethabi::{Event as EthEvent, EventParam as EthEventParam, ParamType, RawLog};
 use frame_support::{
 	debug, decl_error, decl_event, decl_module, decl_storage, ensure,
 	traits::{Currency, ExistenceRequirement::KeepAlive, Get},
-	weights::SimpleDispatchInfo,
 };
 use frame_system::{self as system, ensure_root, ensure_signed};
 use sp_runtime::{
@@ -51,10 +50,10 @@ use types::*;
 // --- darwinia ---
 use darwinia_support::balance::lock::*;
 
-/// The backing's module id, used for deriving its sovereign account ID.
-const MODULE_ID: ModuleId = ModuleId(*b"da/backi");
+pub trait Trait: frame_system::Trait {
+	/// The backing's module id, used for deriving its sovereign account ID.
+	type ModuleId: Get<ModuleId>;
 
-pub trait Trait: system::Trait {
 	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 
 	type DetermineAccountId: AccountIdFor<Self::AccountId>;
@@ -167,6 +166,9 @@ decl_module! {
 	{
 		type Error = Error<T>;
 
+		/// The treasury's module id, used for deriving its sovereign account ID.
+		const ModuleId: ModuleId = T::ModuleId::get();
+
 		const SubKeyPrefix: u8 = T::SubKeyPrefix::get();
 
 		fn deposit_event() = default;
@@ -176,7 +178,7 @@ decl_module! {
 		/// # <weight>
 		/// - `O(1)`
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(10_000)]
+		#[weight = 10_000_000]
 		pub fn redeem(origin, r#for: RedeemFor) {
 			let redeemer = ensure_signed(origin)?;
 
@@ -198,7 +200,7 @@ decl_module! {
 		/// # <weight>
 		/// - `O(1)`.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(10_000)]
+		#[weight = 10_000_000]
 		pub fn set_ring_redeem_address(origin, new: EthAddress) {
 			ensure_root(origin)?;
 			RingRedeemAddress::put(new);
@@ -213,7 +215,7 @@ decl_module! {
 		/// # <weight>
 		/// - `O(1)`.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(10_000)]
+		#[weight = 10_000_000]
 		pub fn set_kton_redeem_address(origin, new: EthAddress) {
 			ensure_root(origin)?;
 			KtonRedeemAddress::put(new);
@@ -228,7 +230,7 @@ decl_module! {
 		/// # <weight>
 		/// - `O(1)`.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(10_000)]
+		#[weight = 10_000_000]
 		pub fn set_deposit_redeem_address(origin, new: EthAddress) {
 			ensure_root(origin)?;
 			DepositRedeemAddress::put(new);
@@ -244,7 +246,7 @@ impl<T: Trait> Module<T> {
 	/// This actually does computation. If you need to keep using it, then make sure you cache the
 	/// value and only call this once.
 	pub fn account_id() -> T::AccountId {
-		MODULE_ID.into_account()
+		T::ModuleId::get().into_account()
 	}
 
 	/// Return the amount of money in the pot.
