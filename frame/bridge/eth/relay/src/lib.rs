@@ -425,12 +425,16 @@ decl_module! {
 
 			let max_payout = Self::pot::<T::Currency>().saturated_into();
 
-			ensure!(total_points > 0 && points > 0 && max_payout > 0, <Error<T>>::PayoutNPF);
+			ensure!(total_points > 0 && points > 0 && max_payout > 0 && total_points >= points, <Error<T>>::PayoutNPF);
 
 			let payout : types::Balance<T> = (points as u128 * max_payout / (total_points  as u128)).saturated_into();
 			let module_account = Self::account_id();
 
 			T::Currency::transfer(&module_account, &relayer, payout, KeepAlive)?;
+
+			<RelayerPoints<T>>::remove(&relayer);
+
+			TotalRelayerPoints::mutate(|p| *p -= points);
 
 			<Module<T>>::deposit_event(RawEvent::ClaimReward(relayer, payout));
 		}
