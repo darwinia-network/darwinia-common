@@ -117,13 +117,13 @@ decl_error! {
 decl_storage! {
 	trait Store for Module<T: Trait> as DarwiniaClaims {
 		ClaimsFromEth
-			get(claims_from_eth)
+			get(fn claims_from_eth)
 			: map hasher(identity) AddressT => Option<RingBalance<T>>;
 		ClaimsFromTron
-			get(claims_from_tron)
+			get(fn claims_from_tron)
 			: map hasher(identity) AddressT => Option<RingBalance<T>>;
 
-		Total get(total): RingBalance<T>;
+		Total get(fn total): RingBalance<T>;
 	}
 	add_extra_genesis {
 		config(claims_list): ClaimsList;
