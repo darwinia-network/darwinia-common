@@ -249,14 +249,14 @@ fn rewards_should_work() {
 		assert_eq!(Staking::active_era().unwrap().index, 1);
 		assert!(RING_REWARD_REMAINDER_UNBALANCED.with(|v| *v.borrow()) > 0);
 		assert!({
-			let is_era_payout_event_ok = |e| {
-				if let Some(RawEvent::EraPayout(0, _, _)) = e {
-					true
+			let is_era_payout_event_ok = |e: &RawEvent<_, _, _, _>| {
+				if let RawEvent::EraPayout(era_index, _, _) = e {
+					*era_index == 0
 				} else {
 					false
 				}
 			};
-			is_era_payout_event_ok(*staking_events().last().unwrap())
+			is_era_payout_event_ok(staking_events().last().unwrap())
 		});
 		make_all_reward_payment(0);
 
@@ -291,14 +291,14 @@ fn rewards_should_work() {
 		start_era(2);
 		assert!(RING_REWARD_REMAINDER_UNBALANCED.with(|v| *v.borrow()) > 0);
 		assert!({
-			let is_era_payout_event_ok = |e| {
-				if let Some(RawEvent::EraPayout(1, _, _)) = e {
-					true
+			let is_era_payout_event_ok = |e: &RawEvent<_, _, _, _>| {
+				if let RawEvent::EraPayout(era_index, _, _) = e {
+					*era_index == 1
 				} else {
 					false
 				}
 			};
-			is_era_payout_event_ok(*staking_events().last().unwrap())
+			is_era_payout_event_ok(staking_events().last().unwrap())
 		});
 		make_all_reward_payment(1);
 
