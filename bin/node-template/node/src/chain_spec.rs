@@ -12,11 +12,7 @@ use sp_runtime::{
 // --- darwinia ---
 use darwinia_claims::ClaimsList;
 use darwinia_eth_relay::DagMerkleRoots;
-use node_template_runtime::{
-	AccountId, BalancesConfig as RingConfig, ClaimsConfig, ElectionsPhragmenConfig, EthRelayConfig,
-	GenesisConfig, KtonConfig, SessionConfig, SessionKeys, Signature, StakerStatus, StakingConfig,
-	SudoConfig, SystemConfig, WASM_BINARY,
-};
+use node_template_runtime::{BalancesConfig as RingConfig, *};
 
 // Note this is the URL for the telemetry server
 //const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
