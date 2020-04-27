@@ -19,8 +19,6 @@ if [[ "$1" != "--fast" ]]; then
         elif [ -f /etc/arch-release ]; then
             echo "Arch Linux detected."
             sudo pacman -Syu --needed --noconfirm cmake gcc openssl clang llvm rocksdb curl grep
-            export OPENSSL_LIB_DIR="/usr/lib/openssl-1.0";
-            export OPENSSL_INCLUDE_DIR="/usr/include/openssl-1.0"
         elif [ -f /etc/mandrake-release ]; then
             echo "Mandrake Linux detected, but current not support sorry."
             echo "Contribution is always welcome."
