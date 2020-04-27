@@ -111,9 +111,8 @@ impl Contains<u64> for TenToFourteen {
 }
 
 parameter_types! {
-		pub const ExistentialDeposit: u64 = 1;
+	pub const ExistentialDeposit: u64 = 1;
 }
-
 impl darwinia_balances::Trait<KtonInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
@@ -135,15 +134,15 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 
 parameter_types! {
 	pub const TreasuryModuleId: ModuleId = ModuleId(*b"da/trsry");
+	pub const TipCountdown: u64 = 1;
+	pub const TipFindersFee: Percent = Percent::from_percent(20);
+	pub const TipReportDepositBase: Balance = 1;
+	pub const TipReportDepositPerByte: Balance = 1;
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub const RingProposalBondMinimum: Balance = 1;
 	pub const KtonProposalBondMinimum: Balance = 1;
 	pub const SpendPeriod: u64 = 2;
 	pub const Burn: Permill = Permill::from_percent(50);
-	pub const TipCountdown: u64 = 1;
-	pub const TipFindersFee: Percent = Percent::from_percent(20);
-	pub const TipReportDepositBase: Balance = 1;
-	pub const TipReportDepositPerByte: Balance = 1;
 }
 impl Trait for Test {
 	type ModuleId = TreasuryModuleId;

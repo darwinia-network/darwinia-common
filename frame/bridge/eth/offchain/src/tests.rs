@@ -127,7 +127,7 @@ fn test_should_handle_different_shadow_service() {
 		});
 
 	// handle the scale response from shadow service
-	set_shadow_service(Some(ShadowService::SCALE));
+	set_shadow_service(Some(ShadowService::Scale));
 	ExtBuilder::default()
 		.set_genesis_header()
 		.build()
@@ -136,7 +136,7 @@ fn test_should_handle_different_shadow_service() {
 		});
 
 	// handle the json response from shadow service
-	set_shadow_service(Some(ShadowService::JSON));
+	set_shadow_service(Some(ShadowService::Json));
 	ExtBuilder::default()
 		.set_genesis_header()
 		.build()

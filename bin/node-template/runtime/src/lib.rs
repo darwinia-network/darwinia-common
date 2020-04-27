@@ -581,14 +581,14 @@ parameter_types! {
 	pub const ElectionsPhragmenModuleId: LockIdentifier = *b"da/phrel";
 	pub const CandidacyBond: Balance = 1 * COIN;
 	pub const VotingBond: Balance = 5 * MILLI;
-	/// Daily council elections.
-	pub const TermDuration: BlockNumber = 24 * HOURS;
 	pub const DesiredMembers: u32 = 13;
 	pub const DesiredRunnersUp: u32 = 7;
+	/// Daily council elections.
+	pub const TermDuration: BlockNumber = 24 * HOURS;
 }
 impl darwinia_elections_phragmen::Trait for Runtime {
-	type Event = Event;
 	type ModuleId = ElectionsPhragmenModuleId;
+	type Event = Event;
 	type Currency = Ring;
 	type ChangeMembers = Council;
 	// NOTE: this implies that council's genesis members cannot be set directly and must come from
@@ -607,15 +607,15 @@ impl darwinia_elections_phragmen::Trait for Runtime {
 
 parameter_types! {
 	pub const TreasuryModuleId: ModuleId = ModuleId(*b"da/trsry");
+	pub const TipCountdown: BlockNumber = 1 * DAYS;
+	pub const TipFindersFee: Percent = Percent::from_percent(20);
+	pub const TipReportDepositBase: Balance = 1 * COIN;
+	pub const TipReportDepositPerByte: Balance = 1 * MILLI;
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub const RingProposalBondMinimum: Balance = 20 * COIN;
 	pub const KtonProposalBondMinimum: Balance = 20 * COIN;
 	pub const SpendPeriod: BlockNumber = 6 * DAYS;
 	pub const Burn: Permill = Permill::from_percent(0);
-	pub const TipCountdown: BlockNumber = 1 * DAYS;
-	pub const TipFindersFee: Percent = Percent::from_percent(20);
-	pub const TipReportDepositBase: Balance = 1 * COIN;
-	pub const TipReportDepositPerByte: Balance = 1 * MILLI;
 }
 impl darwinia_treasury::Trait for Runtime {
 	type ModuleId = TreasuryModuleId;

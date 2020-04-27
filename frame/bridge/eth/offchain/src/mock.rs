@@ -27,6 +27,13 @@ pub type EthRelay = darwinia_eth_relay::Module<Test>;
 pub type EthOffchain = Module<Test>;
 pub type EthOffchainError = Error<Test>;
 
+static mut SHADOW_SERVICE: Option<ShadowService> = None;
+
+pub enum ShadowService {
+	Scale,
+	Json,
+}
+
 #[derive(Clone, Eq, PartialEq)]
 pub struct Test;
 parameter_types! {
@@ -69,6 +76,14 @@ impl darwinia_eth_relay::Trait for Test {
 	type Call = Call;
 }
 
+parameter_types! {
+	pub const FetchInterval: u64 = 3;
+}
+impl Trait for Test {
+	type AuthorityId = crypto::AuthorityId;
+	type FetchInterval = FetchInterval;
+}
+
 impl frame_system::offchain::SigningTypes for Test {
 	type Public = <MultiSignature as Verify>::Signer;
 	type Signature = MultiSignature;
@@ -94,39 +109,6 @@ where
 	) -> Option<(Call, <Extrinsic as ExtrinsicT>::SignaturePayload)> {
 		Some((call, (nonce, ())))
 	}
-}
-
-static mut SHADOW_SERVICE: Option<ShadowService> = None;
-
-pub enum ShadowService {
-	SCALE,
-	JSON,
-}
-
-impl OffchainRequestTrait for OffchainRequest {
-	fn send(&mut self) -> Option<Vec<u8>> {
-		unsafe {
-			match SHADOW_SERVICE {
-				Some(ShadowService::SCALE) => Some(SUPPOSED_SHADOW_SCALE_RESPONSE.to_vec()),
-				Some(ShadowService::JSON) => Some(SUPPOSED_SHADOW_JSON_RESPONSE.to_vec()),
-				_ => None,
-			}
-		}
-	}
-}
-
-pub(crate) fn set_shadow_service(s: Option<ShadowService>) {
-	unsafe {
-		SHADOW_SERVICE = s;
-	}
-}
-
-parameter_types! {
-	pub const FetchInterval: u64 = 3;
-}
-impl Trait for Test {
-	type AuthorityId = crypto::AuthorityId;
-	type FetchInterval = FetchInterval;
 }
 
 pub struct ExtBuilder {
@@ -161,6 +143,25 @@ impl ExtBuilder {
 		storage.into()
 	}
 }
+
+impl OffchainRequestTrait for OffchainRequest {
+	fn send(&mut self) -> Option<Vec<u8>> {
+		unsafe {
+			match SHADOW_SERVICE {
+				Some(ShadowService::Scale) => Some(SUPPOSED_SHADOW_SCALE_RESPONSE.to_vec()),
+				Some(ShadowService::Json) => Some(SUPPOSED_SHADOW_JSON_RESPONSE.to_vec()),
+				_ => None,
+			}
+		}
+	}
+}
+
+pub(crate) fn set_shadow_service(s: Option<ShadowService>) {
+	unsafe {
+		SHADOW_SERVICE = s;
+	}
+}
+
 pub const SUPPOSED_SHADOW_SCALE_RESPONSE: &'static [u8] = br#"{"jsonrpc":"2.0","id":1,"result":{"eth_header":"0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa32442ba5500000000010000000000000005a56e2d52c817161883f50c441c3228cfe54d9f56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b4211dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d4934764476574682f76312e302e302f6c696e75782f676f312e342e32d67e4d450343046425ae4271474353857ab860dbc0a1dde64b41b5cd3a532bf356e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b4210000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008813000000000000000000000000000000000000000000000000000000000000000080ff030000000000000000000000000000000000000000000000000000000884a0969b900de27b6ac6a67742365dd65f55a0526c41fd18e1b16f1a1215c2e66f592488539bd4979fef1ec40188e96d4537bea4d9c05d12549907b32561d3bf31f45aae734cdc119f13406cb6","proof":"0x04000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"}}"#;
 pub const SUPPOSED_ETH_HEADER: &'static str = r#"
 			{

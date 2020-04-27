@@ -96,11 +96,11 @@ type NegativeImbalanceOf<T> =
 	<<T as Trait>::Currency as Currency<<T as frame_system::Trait>::AccountId>>::NegativeImbalance;
 
 pub trait Trait: frame_system::Trait {
-	/// The overarching event type.c
-	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
-
 	/// Identifier for the elections-phragmen pallet's lock
 	type ModuleId: Get<LockIdentifier>;
+
+	/// The overarching event type.c
+	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
 	/// The currency that people are electing with.
 	type Currency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
@@ -1051,8 +1051,8 @@ mod tests {
 		pub const CandidacyBond: Balance = 3;
 	}
 	impl Trait for Test {
-		type Event = Event;
 		type ModuleId = ElectionsPhragmenModuleId;
+		type Event = Event;
 		type Currency = Balances;
 		type ChangeMembers = TestChangeMembers;
 		type InitializeMembers = ();

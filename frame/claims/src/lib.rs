@@ -395,6 +395,13 @@ mod tests {
 	type System = frame_system::Module<Test>;
 	type Claims = Module<Test>;
 
+	const ETHEREUM_SIGNED_MESSAGE: &'static [u8] = b"\x19Ethereum Signed Message:\n";
+	const TRON_SIGNED_MESSAGE: &'static [u8] = b"\x19TRON Signed Message:\n";
+
+	impl_outer_origin! {
+		pub enum Origin for Test {}
+	}
+
 	darwinia_support::impl_account_data! {
 		struct AccountData<Balance>
 		for
@@ -405,13 +412,6 @@ mod tests {
 		{
 			// other data
 		}
-	}
-
-	const ETHEREUM_SIGNED_MESSAGE: &'static [u8] = b"\x19Ethereum Signed Message:\n";
-	const TRON_SIGNED_MESSAGE: &'static [u8] = b"\x19TRON Signed Message:\n";
-
-	impl_outer_origin! {
-		pub enum Origin for Test {}
 	}
 
 	#[derive(Clone, Eq, PartialEq)]
@@ -452,7 +452,6 @@ mod tests {
 
 	parameter_types! {
 		pub const ExistentialDeposit: Balance = 1;
-		pub const CreationFee: Balance = 0;
 	}
 	impl darwinia_balances::Trait<RingInstance> for Test {
 		type Balance = Balance;

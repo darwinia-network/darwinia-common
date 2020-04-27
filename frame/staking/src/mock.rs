@@ -256,7 +256,6 @@ sp_runtime::impl_opaque_keys! {
 }
 parameter_types! {
 	pub const Offset: BlockNumber = 0;
-	pub const UncleGenerations: u64 = 0;
 	pub const DisabledValidatorsThreshold: Perbill = Perbill::from_percent(25);
 }
 impl pallet_session::Trait for Test {
@@ -276,6 +275,9 @@ impl pallet_session::historical::Trait for Test {
 	type FullIdentificationOf = ExposureOf<Test>;
 }
 
+parameter_types! {
+	pub const UncleGenerations: u64 = 0;
+}
 impl pallet_authorship::Trait for Test {
 	type FindAuthor = Author11;
 	type UncleGenerations = UncleGenerations;

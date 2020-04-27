@@ -12,6 +12,7 @@ use sp_runtime::{
 };
 use sp_staking::SessionIndex;
 // --- darwinia ---
+use darwinia_eth_relay::EthNetworkType;
 use darwinia_staking::{EraIndex, Exposure, ExposureOf};
 use darwinia_support::bytes_thing::fixed_hex_bytes_unchecked;
 
@@ -19,7 +20,6 @@ use crate::*;
 
 type Balance = u128;
 type BlockNumber = u64;
-type Power = u32;
 
 /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
 type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
@@ -49,18 +49,6 @@ thread_local! {
 	static SLASH_DEFER_DURATION: RefCell<EraIndex> = RefCell::new(0);
 }
 
-darwinia_support::impl_account_data! {
-	struct AccountData<Balance>
-	for
-		RingInstance,
-		KtonInstance
-	where
-		Balance = Balance
-	{
-		// other data
-	}
-}
-
 impl_outer_origin! {
 	pub enum Origin for Test  where system = frame_system {}
 }
@@ -72,13 +60,17 @@ impl_outer_dispatch! {
 	}
 }
 
-pub const NANO: Balance = 1;
-pub const MICRO: Balance = 1_000 * NANO;
-pub const MILLI: Balance = 1_000 * MICRO;
-pub const COIN: Balance = 1_000 * MILLI;
-
-pub const CAP: Balance = 10_000_000_000 * COIN;
-pub const TOTAL_POWER: Power = 1_000_000_000;
+darwinia_support::impl_account_data! {
+	struct AccountData<Balance>
+	for
+		RingInstance,
+		KtonInstance
+	where
+		Balance = Balance
+	{
+		// other data
+	}
+}
 
 pub struct TestSessionHandler;
 impl pallet_session::SessionHandler<AccountId> for TestSessionHandler {
@@ -131,20 +123,15 @@ impl frame_system::Trait for Test {
 	type OnKilledAccount = ();
 }
 
-parameter_types! {
-	pub const MinimumPeriod: u64 = 5;
-}
 impl pallet_timestamp::Trait for Test {
 	type Moment = u64;
 	type OnTimestampSet = ();
-	type MinimumPeriod = MinimumPeriod;
+	type MinimumPeriod = ();
 }
 
 parameter_types! {
 	pub const Period: BlockNumber = 1;
 	pub const Offset: BlockNumber = 0;
-	pub const UncleGenerations: u64 = 0;
-	pub const DisabledValidatorsThreshold: Perbill = Perbill::from_percent(25);
 }
 impl pallet_session::Trait for Test {
 	type Event = ();
@@ -163,11 +150,9 @@ impl pallet_session::historical::Trait for Test {
 	type FullIdentificationOf = ExposureOf<Test>;
 }
 
-// --- custom ---
 parameter_types! {
-	pub const EthNetwork: darwinia_eth_relay::EthNetworkType = darwinia_eth_relay::EthNetworkType::Ropsten;
+	pub const EthNetwork: EthNetworkType = EthNetworkType::Ropsten;
 }
-
 impl darwinia_eth_relay::Trait for Test {
 	type Event = ();
 	type EthNetwork = EthNetwork;
@@ -193,30 +178,20 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 	type DustCollector = ();
 }
 
-parameter_types! {
-	pub const SessionsPerEra: SessionIndex = 3;
-	pub const BondingDurationInEra: EraIndex = 3;
-	// assume 60 blocks per session
-	pub const BondingDurationInBlockNumber: BlockNumber = 3 * 3 * 60;
-	pub const MaxNominatorRewardedPerValidator: u32 = 64;
-	pub const UnsignedPriority: u64 = 1 << 20;
-	pub const Cap: Balance = CAP;
-	pub const TotalPower: Power = TOTAL_POWER;
-}
 impl darwinia_staking::Trait for Test {
 	type Event = ();
 	type UnixTime = Timestamp;
-	type SessionsPerEra = SessionsPerEra;
-	type BondingDurationInEra = BondingDurationInEra;
-	type BondingDurationInBlockNumber = BondingDurationInBlockNumber;
+	type SessionsPerEra = ();
+	type BondingDurationInEra = ();
+	type BondingDurationInBlockNumber = ();
 	type SlashDeferDuration = ();
 	type SlashCancelOrigin = system::EnsureRoot<Self::AccountId>;
 	type SessionInterface = Self;
 	type NextNewSession = Session;
 	type ElectionLookahead = ();
 	type Call = Call;
-	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
-	type UnsignedPriority = UnsignedPriority;
+	type MaxNominatorRewardedPerValidator = ();
+	type UnsignedPriority = ();
 	type RingCurrency = Ring;
 	type RingRewardRemainder = ();
 	type RingSlash = ();
@@ -224,8 +199,8 @@ impl darwinia_staking::Trait for Test {
 	type KtonCurrency = Kton;
 	type KtonSlash = ();
 	type KtonReward = ();
-	type Cap = Cap;
-	type TotalPower = TotalPower;
+	type Cap = ();
+	type TotalPower = ();
 }
 
 parameter_types! {

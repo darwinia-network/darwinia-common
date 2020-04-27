@@ -30,6 +30,14 @@ type KtonInstance = Instance1;
 type _KtonError = Error<Test, KtonInstance>;
 type Kton = Module<Test, KtonInstance>;
 
+thread_local! {
+	static EXISTENTIAL_DEPOSIT: RefCell<Balance> = RefCell::new(0);
+}
+
+impl_outer_origin! {
+	pub enum Origin for Test {}
+}
+
 darwinia_support::impl_account_data! {
 	struct AccountData<Balance>
 	for
@@ -40,14 +48,6 @@ darwinia_support::impl_account_data! {
 	{
 		// other data
 	}
-}
-
-impl_outer_origin! {
-	pub enum Origin for Test {}
-}
-
-thread_local! {
-	static EXISTENTIAL_DEPOSIT: RefCell<Balance> = RefCell::new(0);
 }
 
 pub struct ExistentialDeposit;
