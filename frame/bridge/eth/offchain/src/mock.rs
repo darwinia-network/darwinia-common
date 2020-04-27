@@ -1,10 +1,9 @@
 // --- substrate ---
 use frame_support::{impl_outer_dispatch, impl_outer_origin, parameter_types, weights::Weight};
-use sp_core::sr25519::Signature;
 use sp_runtime::{
-	testing::{Header, TestXt, UintAuthorityId},
-	traits::{BlakeTwo256, Extrinsic as ExtrinsicsT, IdentifyAccount, IdentityLookup, Verify},
-	Perbill,
+	testing::{Header, TestXt},
+	traits::{BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
+	MultiSignature, Perbill,
 };
 // --- darwinia ---
 use crate::*;
@@ -21,7 +20,7 @@ impl_outer_origin! {
 	pub enum Origin for Test where system = frame_system {}
 }
 
-type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+type AccountId = <<MultiSignature as Verify>::Signer as IdentifyAccount>::AccountId;
 type Extrinsic = TestXt<Call, ()>;
 
 pub type EthRelay = darwinia_eth_relay::Module<Test>;
@@ -43,7 +42,7 @@ impl frame_system::Trait for Test {
 	type BlockNumber = u64;
 	type Hash = sp_core::H256;
 	type Hashing = BlakeTwo256;
-	type AccountId = sp_core::sr25519::Public;
+	type AccountId = <<MultiSignature as Verify>::Signer as IdentifyAccount>::AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = ();
@@ -71,8 +70,8 @@ impl darwinia_eth_relay::Trait for Test {
 }
 
 impl frame_system::offchain::SigningTypes for Test {
-	type Public = <Signature as Verify>::Signer;
-	type Signature = Signature;
+	type Public = <MultiSignature as Verify>::Signer;
+	type Signature = MultiSignature;
 }
 
 impl<LocalCall> frame_system::offchain::SendTransactionTypes<LocalCall> for Test
@@ -89,7 +88,7 @@ where
 {
 	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
 		call: Call,
-		_public: <Signature as Verify>::Signer,
+		_public: <MultiSignature as Verify>::Signer,
 		_account: AccountId,
 		nonce: u64,
 	) -> Option<(Call, <Extrinsic as ExtrinsicT>::SignaturePayload)> {
@@ -126,7 +125,7 @@ parameter_types! {
 	pub const FetchInterval: u64 = 3;
 }
 impl Trait for Test {
-	type AuthorityId = UintAuthorityId;
+	type AuthorityId = crypto::AuthorityId;
 	type FetchInterval = FetchInterval;
 }
 
@@ -149,7 +148,7 @@ impl ExtBuilder {
 		self
 	}
 	pub fn build(self) -> sp_io::TestExternalities {
-		let mut storage = system::GenesisConfig::default()
+		let mut storage = frame_system::GenesisConfig::default()
 			.build_storage::<Test>()
 			.unwrap();
 
