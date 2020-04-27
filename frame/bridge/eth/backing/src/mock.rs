@@ -4,7 +4,6 @@
 use std::cell::RefCell;
 // --- substrate ---
 use frame_support::{impl_outer_dispatch, impl_outer_origin, parameter_types, weights::Weight};
-use frame_system::offchain::TransactionSubmitter;
 use sp_core::{crypto::key_types, H256};
 use sp_runtime::{
 	testing::{Header, TestXt, UintAuthorityId},
@@ -29,7 +28,6 @@ type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 type Signature = MultiSignature;
 
 type Extrinsic = TestXt<Call, ()>;
-type SubmitTransaction = TransactionSubmitter<(), Test, Extrinsic>;
 
 pub type RingInstance = darwinia_balances::Instance0;
 type _RingError = darwinia_balances::Error<Test, RingInstance>;
@@ -243,6 +241,14 @@ impl Trait for Test {
 	type Ring = Ring;
 	type Kton = Kton;
 	type SubKeyPrefix = SubKeyPrefix;
+}
+
+impl<LocalCall> frame_system::offchain::SendTransactionTypes<LocalCall> for Test
+where
+	Call: From<LocalCall>,
+{
+	type Extrinsic = Extrinsic;
+	type OverarchingCall = Call;
 }
 
 pub struct ExtBuilder;
