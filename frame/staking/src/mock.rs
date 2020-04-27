@@ -1,5 +1,7 @@
 //! Test utilities
 
+#![allow(unused)]
+
 mod alias {
 	pub mod staking {
 		// Re-export needed for `impl_outer_event!`.
@@ -23,7 +25,6 @@ use frame_support::{
 	weights::Weight,
 	StorageValue,
 };
-use frame_system::offchain::TransactionSubmitter;
 use sp_core::H256;
 use sp_phragmen::{reduce, StakedAssignment};
 use sp_runtime::{
@@ -38,7 +39,6 @@ use sp_staking::{
 // --- darwinia ---
 use crate::*;
 use alias::*;
-use darwinia_support::structs::BypassConverter;
 
 pub(crate) type AccountId = u64;
 pub(crate) type AccountIndex = u64;
@@ -46,7 +46,6 @@ pub(crate) type BlockNumber = u64;
 pub(crate) type Balance = u128;
 
 pub(crate) type Extrinsic = TestXt<Call, ()>;
-type SubmitTransaction = TransactionSubmitter<(), Test, Extrinsic>;
 
 pub(crate) type RingInstance = darwinia_balances::Instance0;
 pub(crate) type RingError = darwinia_balances::Error<Test, RingInstance>;
@@ -80,10 +79,11 @@ thread_local! {
 	static SLASH_DEFER_DURATION: RefCell<EraIndex> = RefCell::new(0);
 	static ELECTION_LOOKAHEAD: RefCell<BlockNumber> = RefCell::new(0);
 	static PERIOD: RefCell<BlockNumber> = RefCell::new(1);
+	pub static RING_REWARD_REMAINDER_UNBALANCED: RefCell<Balance> = RefCell::new(0);
 }
 
 darwinia_support::impl_account_data! {
-	pub struct AccountData<Balance>
+	struct AccountData<Balance>
 	for
 		RingInstance,
 		KtonInstance
@@ -204,6 +204,16 @@ impl FindAuthor<AccountId> for Author11 {
 	}
 }
 
+pub struct RingRewardRemainderMock;
+impl OnUnbalanced<RingNegativeImbalance<Test>> for RingRewardRemainderMock {
+	fn on_nonzero_unbalanced(amount: RingNegativeImbalance<Test>) {
+		RING_REWARD_REMAINDER_UNBALANCED.with(|v| {
+			*v.borrow_mut() += amount.peek();
+		});
+		drop(amount);
+	}
+}
+
 // Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Test;
@@ -227,6 +237,9 @@ impl frame_system::Trait for Test {
 	type Event = MetaEvent;
 	type BlockHashCount = BlockHashCount;
 	type MaximumBlockWeight = MaximumBlockWeight;
+	type DbWeight = ();
+	type BlockExecutionWeight = ();
+	type ExtrinsicBaseWeight = ();
 	type MaximumBlockLength = MaximumBlockLength;
 	type AvailableBlockRatio = AvailableBlockRatio;
 	type Version = ();
@@ -243,7 +256,6 @@ sp_runtime::impl_opaque_keys! {
 }
 parameter_types! {
 	pub const Offset: BlockNumber = 0;
-	pub const UncleGenerations: u64 = 0;
 	pub const DisabledValidatorsThreshold: Perbill = Perbill::from_percent(25);
 }
 impl pallet_session::Trait for Test {
@@ -263,6 +275,9 @@ impl pallet_session::historical::Trait for Test {
 	type FullIdentificationOf = ExposureOf<Test>;
 }
 
+parameter_types! {
+	pub const UncleGenerations: u64 = 0;
+}
 impl pallet_authorship::Trait for Test {
 	type FindAuthor = Author11;
 	type UncleGenerations = UncleGenerations;
@@ -309,7 +324,6 @@ parameter_types! {
 impl Trait for Test {
 	type Event = MetaEvent;
 	type UnixTime = Timestamp;
-	type BypassConverter = BypassConverter;
 	type SessionsPerEra = SessionsPerEra;
 	type BondingDurationInEra = BondingDurationInEra;
 	type BondingDurationInBlockNumber = BondingDurationInBlockNumber;
@@ -319,11 +333,10 @@ impl Trait for Test {
 	type NextNewSession = Session;
 	type ElectionLookahead = ElectionLookahead;
 	type Call = Call;
-	type SubmitTransaction = SubmitTransaction;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
 	type UnsignedPriority = UnsignedPriority;
 	type RingCurrency = Ring;
-	type RingRewardRemainder = ();
+	type RingRewardRemainder = RingRewardRemainderMock;
 	type RingSlash = ();
 	type RingReward = ();
 	type KtonCurrency = Kton;
@@ -331,6 +344,14 @@ impl Trait for Test {
 	type KtonReward = ();
 	type Cap = Cap;
 	type TotalPower = TotalPower;
+}
+
+impl<LocalCall> frame_system::offchain::SendTransactionTypes<LocalCall> for Test
+where
+	Call: From<LocalCall>,
+{
+	type Extrinsic = Extrinsic;
+	type OverarchingCall = Call;
 }
 
 pub struct ExtBuilder {
@@ -613,7 +634,7 @@ fn check_ledgers() {
 fn check_exposures() {
 	// a check per validator to ensure the exposure struct is always sane.
 	let era = active_era();
-	<ErasStakers<Test>>::iter_prefix(era).for_each(|expo| {
+	<ErasStakers<Test>>::iter_prefix_values(era).for_each(|expo| {
 		assert_eq!(
 			expo.total_power,
 			expo.own_power + expo.others.iter().map(|e| e.power).sum::<Power>(),
@@ -955,7 +976,7 @@ pub(crate) fn prepare_submission_with(
 		.map(|(w, _)| w)
 		.collect::<Vec<AccountId>>();
 
-	let stake_of = |who: &AccountId| -> ExtendedBalance { Staking::power_of(&who) as _ };
+	let stake_of = |who: &AccountId| -> VoteWeight { Staking::power_of(&who) as _ };
 	let mut staked = sp_phragmen::assignment_ratio_to_staked(assignments, stake_of);
 
 	// apply custom tweaks. awesome for testing.
@@ -1035,6 +1056,20 @@ pub(crate) fn make_all_reward_payment(era: EraIndex) {
 			era
 		));
 	}
+}
+
+pub(crate) fn staking_events() -> Vec<Event<Test>> {
+	System::events()
+		.into_iter()
+		.map(|r| r.event)
+		.filter_map(|e| {
+			if let MetaEvent::staking(inner) = e {
+				Some(inner)
+			} else {
+				None
+			}
+		})
+		.collect()
 }
 
 #[macro_export]

@@ -22,15 +22,15 @@ merkle-patricia-trie = { default-features = false, path = "../../../../primitive
 ethereum-types = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 rlp = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
-frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
-sp-io = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.5" }
+frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.5" }
+sp-io = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.5" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.5" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.5" }
 
 [dev-dependencies]
 # substrate
-sp-core = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop" }
+sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.5" }
 
 [features]
 default = ["std"]

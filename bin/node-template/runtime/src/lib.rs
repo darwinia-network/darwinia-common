@@ -8,14 +8,156 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-/// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
-/// the specifics of the runtime. They can then be made to be agnostic over specific formats
-/// of data like extrinsics, allowing for them to continue syncing the network through upgrades
-/// to even the core data structures.
-pub mod opaque {
-	use super::*;
+pub mod impls {
+	//! Some configurable implementations as associated type for the substrate runtime.
 
-	pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
+	// --- core ---
+	use core::num::NonZeroI128;
+	// --- substrate ---
+	use frame_support::{
+		traits::{Currency, Get, Imbalance, OnUnbalanced},
+		weights::Weight,
+	};
+	use sp_runtime::{
+		traits::{Convert, Saturating},
+		Fixed128, Perquintill,
+	};
+	// --- darwinia ---
+	use crate::{primitives::*, *};
+
+	pub type RingInstance = darwinia_balances::Instance0;
+	pub type KtonInstance = darwinia_balances::Instance1;
+	darwinia_support::impl_account_data! {
+		struct AccountData<Balance>
+		for
+			RingInstance,
+			KtonInstance
+		where
+			Balance = u128
+		{
+			// other data
+		}
+	}
+
+	pub struct Author;
+	impl OnUnbalanced<NegativeImbalance> for Author {
+		fn on_nonzero_unbalanced(amount: NegativeImbalance) {
+			Ring::resolve_creating(&Authorship::author(), amount);
+		}
+	}
+
+	/// Struct that handles the conversion of Balance -> `u64`. This is used for staking's election
+	/// calculation.
+	pub struct CurrencyToVoteHandler;
+	impl CurrencyToVoteHandler {
+		fn factor() -> Balance {
+			(Balances::total_issuance() / u64::max_value() as Balance).max(1)
+		}
+	}
+	impl Convert<Balance, u64> for CurrencyToVoteHandler {
+		fn convert(x: Balance) -> u64 {
+			(x / Self::factor()) as u64
+		}
+	}
+	impl Convert<u128, Balance> for CurrencyToVoteHandler {
+		fn convert(x: u128) -> Balance {
+			x * Self::factor()
+		}
+	}
+
+	/// Convert from weight to balance via a simple coefficient multiplication
+	/// The associated type C encapsulates a constant in units of balance per weight
+	pub struct LinearWeightToFee<C>(sp_std::marker::PhantomData<C>);
+	impl<C: Get<Balance>> Convert<Weight, Balance> for LinearWeightToFee<C> {
+		fn convert(w: Weight) -> Balance {
+			// setting this to zero will disable the weight fee.
+			let coefficient = C::get();
+			Balance::from(w).saturating_mul(coefficient)
+		}
+	}
+
+	/// Update the given multiplier based on the following formula
+	///
+	///   diff = (previous_block_weight - target_weight)/max_weight
+	///   v = 0.00004
+	///   next_weight = weight * (1 + (v * diff) + (v * diff)^2 / 2)
+	///
+	/// Where `target_weight` must be given as the `Get` implementation of the `T` generic type.
+	/// https://research.web3.foundation/en/latest/polkadot/Token%20Economics/#relay-chain-transaction-fees
+	pub struct TargetedFeeAdjustment<T>(sp_std::marker::PhantomData<T>);
+	impl<T: Get<Perquintill>> Convert<Fixed128, Fixed128> for TargetedFeeAdjustment<T> {
+		fn convert(multiplier: Fixed128) -> Fixed128 {
+			let block_weight = System::all_extrinsics_weight();
+			let max_weight = MaximumBlockWeight::get();
+			let target_weight = (T::get() * max_weight) as u128;
+			let block_weight = block_weight as u128;
+
+			// determines if the first_term is positive
+			let positive = block_weight >= target_weight;
+			let diff_abs = block_weight.max(target_weight) - block_weight.min(target_weight);
+			// safe, diff_abs cannot exceed u64 and it can always be computed safely even with the lossy
+			// `Fixed128::from_rational`.
+			let diff = Fixed128::from_rational(
+				diff_abs as i128,
+				NonZeroI128::new(max_weight.max(1) as i128).unwrap(),
+			);
+			let diff_squared = diff.saturating_mul(diff);
+
+			// 0.00004 = 4/100_000 = 40_000/10^9
+			let v = Fixed128::from_rational(4, NonZeroI128::new(100_000).unwrap());
+			// 0.00004^2 = 16/10^10 Taking the future /2 into account... 8/10^10
+			let v_squared_2 = Fixed128::from_rational(8, NonZeroI128::new(10_000_000_000).unwrap());
+
+			let first_term = v.saturating_mul(diff);
+			let second_term = v_squared_2.saturating_mul(diff_squared);
+
+			if positive {
+				// Note: this is merely bounded by how big the multiplier and the inner value can go,
+				// not by any economical reasoning.
+				let excess = first_term.saturating_add(second_term);
+				multiplier.saturating_add(excess)
+			} else {
+				// Defensive-only: first_term > second_term. Safe subtraction.
+				let negative = first_term.saturating_sub(second_term);
+				multiplier
+					.saturating_sub(negative)
+					// despite the fact that apply_to saturates weight (final fee cannot go below 0)
+					// it is crucially important to stop here and don't further reduce the weight fee
+					// multiplier. While at -1, it means that the network is so un-congested that all
+					// transactions have no weight fee. We stop here and only increase if the network
+					// became more busy.
+					.max(Fixed128::from_natural(-1))
+			}
+		}
+	}
+
+	pub struct DealWithFees;
+	impl OnUnbalanced<NegativeImbalance> for DealWithFees {
+		fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance>) {
+			if let Some(fees) = fees_then_tips.next() {
+				// for fees, 80% to treasury, 20% to author
+				let mut split = fees.ration(80, 20);
+				if let Some(tips) = fees_then_tips.next() {
+					// for tips, if any, 80% to treasury, 20% to author (though this can be anything)
+					tips.ration_merge_into(80, 20, &mut split);
+				}
+				Treasury::on_unbalanced(split.0);
+				Author::on_unbalanced(split.1);
+			}
+		}
+	}
+}
+
+pub mod opaque {
+	//! Opaque types. These are used by the CLI to instantiate machinery that don't need to know
+	//! the specifics of the runtime. They can then be made to be agnostic over specific formats
+	//! of data like extrinsics, allowing for them to continue syncing the network through upgrades
+	//! to even the core data structures.
+
+	// --- substrate ---
+	pub use sp_runtime::{generic, traits::BlakeTwo256, OpaqueExtrinsic as UncheckedExtrinsic};
+	// --- darwinia ---
+	use crate::primitives::*;
 
 	/// Opaque block header type.
 	pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
@@ -25,66 +167,112 @@ pub mod opaque {
 	pub type BlockId = generic::BlockId<Block>;
 }
 
-pub mod converter {
+pub mod primitives {
 	// --- substrate ---
-	use sp_runtime::traits::Convert;
+	use frame_support::traits::Currency;
+	use sp_runtime::{
+		generic,
+		traits::{BlakeTwo256, IdentifyAccount, Verify},
+		MultiSignature,
+	};
 	// --- darwinia ---
-
 	use crate::*;
 
-	/// Converter for currencies to votes.
-	pub struct CurrencyToVoteHandler<R>(sp_std::marker::PhantomData<R>);
-	impl<R> CurrencyToVoteHandler<R>
-	where
-		R: darwinia_balances::Trait<RingInstance>,
-		R::Balance: Into<u128>,
-	{
-		fn factor() -> u128 {
-			let issuance: u128 =
-				<darwinia_balances::Module<R, RingInstance>>::total_issuance().into();
-			(issuance / u64::max_value() as u128).max(1)
-		}
-	}
-	impl<R> Convert<u128, u64> for CurrencyToVoteHandler<R>
-	where
-		R: darwinia_balances::Trait<RingInstance>,
-		R::Balance: Into<u128>,
-	{
-		fn convert(x: u128) -> u64 {
-			(x / Self::factor()) as u64
-		}
-	}
-	impl<R> Convert<u128, u128> for CurrencyToVoteHandler<R>
-	where
-		R: darwinia_balances::Trait<RingInstance>,
-		R::Balance: Into<u128>,
-	{
-		fn convert(x: u128) -> u128 {
-			x * Self::factor()
-		}
-	}
+	/// An index to a block.
+	pub type BlockNumber = u32;
+
+	/// An instant or duration in time.
+	pub type Moment = u64;
+
+	/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
+	pub type Signature = MultiSignature;
+
+	/// Some way of identifying an account on the chain. We intentionally make it equivalent
+	/// to the public key of our transaction signing scheme.
+	pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+
+	/// The type for looking up accounts. We don't expect more than 4 billion of them, but you
+	/// never know...
+	pub type AccountIndex = u32;
+
+	/// Balance of an account.
+	pub type Balance = u128;
+
+	/// Index of a transaction in the chain.
+	pub type Nonce = u32;
+
+	/// A hash of some data used by the chain.
+	pub type Hash = sp_core::H256;
+
+	/// Digest item type.
+	pub type DigestItem = generic::DigestItem<Hash>;
+
+	/// Power of an account.
+	pub type Power = u32;
+
+	/// Alias Balances Module as Ring Module.
+	pub type Ring = Balances;
+
+	pub type NegativeImbalance = <Ring as Currency<AccountId>>::NegativeImbalance;
+
+	/// The address format for describing accounts.
+	pub type Address = AccountId;
+
+	/// Block header type as expected by this runtime.
+	pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
+
+	/// Block type as expected by this runtime.
+	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+
+	/// A Block signed with a Justification
+	pub type SignedBlock = generic::SignedBlock<Block>;
+
+	/// BlockId type as expected by this runtime.
+	pub type BlockId = generic::BlockId<Block>;
+
+	/// The SignedExtension to the basic transaction logic.
+	pub type SignedExtra = (
+		frame_system::CheckVersion<Runtime>,
+		frame_system::CheckGenesis<Runtime>,
+		frame_system::CheckEra<Runtime>,
+		frame_system::CheckNonce<Runtime>,
+		frame_system::CheckWeight<Runtime>,
+		pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
+		darwinia_eth_relay::CheckEthRelayHeaderHash<Runtime>,
+	);
+
+	/// Unchecked extrinsic type as expected by this runtime.
+	pub type UncheckedExtrinsic =
+		generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+
+	/// The payload being signed in transactions.
+	pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
+
+	/// Extrinsic type that has already been checked.
+	pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, Nonce, Call>;
+
+	/// Executive: handles dispatch to the various modules.
+	pub type Executive = frame_executive::Executive<
+		Runtime,
+		Block,
+		frame_system::ChainContext<Runtime>,
+		Runtime,
+		AllModules,
+	>;
 }
 
-// --- substrate ---
-// A few exports that help ease life for downstream crates.
-pub use frame_support::{
-	construct_runtime, parameter_types, traits::Randomness, weights::Weight, StorageValue,
-};
-pub use pallet_timestamp::Call as TimestampCall;
-#[cfg(any(feature = "std", test))]
-pub use sp_runtime::BuildStorage;
-pub use sp_runtime::{
-	traits::{ConvertInto, OpaqueKeys},
-	Perbill, Percent, Permill,
-};
 // --- darwinia ---
 pub use darwinia_staking::StakerStatus;
+pub use primitives::*;
 
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
-use frame_support::debug;
-use frame_system::offchain::TransactionSubmitter;
+use frame_support::{
+	construct_runtime, debug, parameter_types,
+	traits::{LockIdentifier, Randomness},
+	weights::{RuntimeDbWeight, Weight},
+};
 use pallet_grandpa::{fg_primitives, AuthorityList as GrandpaAuthorityList};
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use pallet_session::historical as pallet_session_historical;
@@ -96,11 +284,9 @@ use sp_core::{
 };
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{
-		BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, SaturatedConversion, Verify,
-	},
+	traits::{BlakeTwo256, Block as BlockT, IdentityLookup, OpaqueKeys, SaturatedConversion},
 	transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, MultiSignature, RuntimeDebug,
+	ApplyExtrinsicResult, ModuleId, Perbill, Percent, Permill, Perquintill, RuntimeDebug,
 };
 use sp_staking::SessionIndex;
 use sp_std::prelude::*;
@@ -109,91 +295,9 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia ---
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo;
+use darwinia_eth_offchain::crypto::AuthorityId as EthOffchainId;
 use darwinia_eth_relay::EthNetworkType;
-use darwinia_support::structs::BypassConverter;
-
-/// An index to a block.
-pub type BlockNumber = u32;
-
-/// An instant or duration in time.
-pub type Moment = u64;
-
-/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
-pub type Signature = MultiSignature;
-
-/// Some way of identifying an account on the chain. We intentionally make it equivalent
-/// to the public key of our transaction signing scheme.
-pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-
-/// The type for looking up accounts. We don't expect more than 4 billion of them, but you
-/// never know...
-pub type AccountIndex = u32;
-
-/// Balance of an account.
-pub type Balance = u128;
-
-/// Index of a transaction in the chain.
-pub type Nonce = u32;
-
-/// A hash of some data used by the chain.
-pub type Hash = sp_core::H256;
-
-/// Digest item type.
-pub type DigestItem = generic::DigestItem<Hash>;
-
-/// Power of an account.
-pub type Power = u32;
-
-/// Alias Balances Module as Ring Module.
-pub type Ring = Balances;
-
-/// The address format for describing accounts.
-pub type Address = AccountId;
-
-/// Block header type as expected by this runtime.
-pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
-
-/// Block type as expected by this runtime.
-pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-
-/// A Block signed with a Justification
-pub type SignedBlock = generic::SignedBlock<Block>;
-
-/// BlockId type as expected by this runtime.
-pub type BlockId = generic::BlockId<Block>;
-
-/// The SignedExtension to the basic transaction logic.
-pub type SignedExtra = (
-	frame_system::CheckVersion<Runtime>,
-	frame_system::CheckGenesis<Runtime>,
-	frame_system::CheckEra<Runtime>,
-	frame_system::CheckNonce<Runtime>,
-	frame_system::CheckWeight<Runtime>,
-	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
-	darwinia_eth_relay::CheckEthRelayHeaderHash<Runtime>,
-);
-
-/// Unchecked extrinsic type as expected by this runtime.
-pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
-
-/// The payload being signed in transactions.
-pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
-
-/// Extrinsic type that has already been checked.
-pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, Nonce, Call>;
-
-/// Executive: handles dispatch to the various modules.
-pub type Executive = frame_executive::Executive<
-	Runtime,
-	Block,
-	frame_system::ChainContext<Runtime>,
-	Runtime,
-	AllModules,
->;
-
-/// A transaction submitter with the given key type.
-pub type TransactionSubmitterOf<KeyType> =
-	TransactionSubmitter<KeyType, Runtime, UncheckedExtrinsic>;
+use impls::*;
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
@@ -203,6 +307,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_version: 1,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
+	transaction_version: 1,
 };
 
 pub const NANO: Balance = 1;
@@ -245,9 +350,17 @@ pub fn native_version() -> NativeVersion {
 
 parameter_types! {
 	pub const BlockHashCount: BlockNumber = 250;
-	pub const MaximumBlockWeight: Weight = 1_000_000_000;
-	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
+	/// We allow for 2 seconds of compute with a 6 second average block time.
+	pub const MaximumBlockWeight: Weight = 2_000_000_000_000;
+	/// This probably should not be changed unless you have specific
+	/// disk i/o conditions for the node.
+	pub const DbWeight: RuntimeDbWeight = RuntimeDbWeight {
+		read: 60_000_000, // ~0.06 ms = ~60 µs
+		write: 200_000_000, // ~0.2 ms = 200 µs
+	};
+	pub const ExtrinsicBaseWeight: Weight = 10_000_000;
 	pub const MaximumBlockLength: u32 = 5 * 1024 * 1024;
+	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
 	pub const Version: RuntimeVersion = VERSION;
 }
 impl frame_system::Trait for Runtime {
@@ -263,6 +376,9 @@ impl frame_system::Trait for Runtime {
 	type Event = Event;
 	type BlockHashCount = BlockHashCount;
 	type MaximumBlockWeight = MaximumBlockWeight;
+	type DbWeight = DbWeight;
+	type BlockExecutionWeight = ();
+	type ExtrinsicBaseWeight = ExtrinsicBaseWeight;
 	type MaximumBlockLength = MaximumBlockLength;
 	type AvailableBlockRatio = AvailableBlockRatio;
 	type Version = Version;
@@ -293,16 +409,19 @@ impl pallet_timestamp::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const TransactionBaseFee: Balance = 0;
-	pub const TransactionByteFee: Balance = 1;
+	pub const TransactionByteFee: Balance = 10 * MICRO;
+	// In the Substrate node, a weight of 10_000_000 (smallest non-zero weight)
+	// is mapped to 10_000_000 units of fees, hence:
+	pub const WeightFeeCoefficient: Balance = 1;
+	// for a sane configuration, this should always be less than `AvailableBlockRatio`.
+	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
 }
 impl pallet_transaction_payment::Trait for Runtime {
-	type Currency = Balances;
-	type OnTransactionPayment = ();
-	type TransactionBaseFee = TransactionBaseFee;
+	type Currency = Ring;
+	type OnTransactionPayment = DealWithFees;
 	type TransactionByteFee = TransactionByteFee;
-	type WeightToFee = ConvertInto;
-	type FeeMultiplierUpdate = ();
+	type WeightToFee = LinearWeightToFee<WeightFeeCoefficient>;
+	type FeeMultiplierUpdate = TargetedFeeAdjustment<TargetBlockFullness>;
 }
 
 parameter_types! {
@@ -370,8 +489,6 @@ parameter_types! {
 impl pallet_im_online::Trait for Runtime {
 	type AuthorityId = ImOnlineId;
 	type Event = Event;
-	type Call = Call;
-	type SubmitTransaction = TransactionSubmitterOf<Self::AuthorityId>;
 	type SessionDuration = SessionDuration;
 	type ReportUnresponsiveness = Offences;
 	type UnsignedPriority = ImOnlineUnsignedPriority;
@@ -395,19 +512,6 @@ impl pallet_sudo::Trait for Runtime {
 	type Call = Call;
 }
 
-type RingInstance = darwinia_balances::Instance0;
-type KtonInstance = darwinia_balances::Instance1;
-darwinia_support::impl_account_data! {
-	pub struct AccountData<Balance>
-	for
-		RingInstance,
-		KtonInstance
-	where
-		Balance = u128
-	{
-		// other data
-	}
-}
 parameter_types! {
 	pub const ExistentialDeposit: Balance = 1 * COIN;
 }
@@ -445,7 +549,6 @@ parameter_types! {
 impl darwinia_staking::Trait for Runtime {
 	type Event = Event;
 	type UnixTime = Timestamp;
-	type BypassConverter = BypassConverter;
 	type SessionsPerEra = SessionsPerEra;
 	type BondingDurationInEra = BondingDurationInEra;
 	type BondingDurationInBlockNumber = BondingDurationInBlockNumber;
@@ -457,7 +560,6 @@ impl darwinia_staking::Trait for Runtime {
 	type NextNewSession = Session;
 	type ElectionLookahead = ElectionLookahead;
 	type Call = Call;
-	type SubmitTransaction = TransactionSubmitterOf<()>;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
 	type UnsignedPriority = StakingUnsignedPriority;
 	type RingCurrency = Ring;
@@ -476,21 +578,23 @@ impl darwinia_staking::Trait for Runtime {
 }
 
 parameter_types! {
+	pub const ElectionsPhragmenModuleId: LockIdentifier = *b"da/phrel";
 	pub const CandidacyBond: Balance = 1 * COIN;
 	pub const VotingBond: Balance = 5 * MILLI;
-	/// Daily council elections.
-	pub const TermDuration: BlockNumber = 24 * HOURS;
 	pub const DesiredMembers: u32 = 13;
 	pub const DesiredRunnersUp: u32 = 7;
+	/// Daily council elections.
+	pub const TermDuration: BlockNumber = 24 * HOURS;
 }
 impl darwinia_elections_phragmen::Trait for Runtime {
+	type ModuleId = ElectionsPhragmenModuleId;
 	type Event = Event;
 	type Currency = Ring;
 	type ChangeMembers = Council;
 	// NOTE: this implies that council's genesis members cannot be set directly and must come from
 	// this module.
 	type InitializeMembers = Council;
-	type CurrencyToVote = converter::CurrencyToVoteHandler<Self>;
+	type CurrencyToVote = CurrencyToVoteHandler;
 	type CandidacyBond = CandidacyBond;
 	type VotingBond = VotingBond;
 	type LoserCandidate = Treasury;
@@ -502,18 +606,19 @@ impl darwinia_elections_phragmen::Trait for Runtime {
 }
 
 parameter_types! {
+	pub const TreasuryModuleId: ModuleId = ModuleId(*b"da/trsry");
+	pub const TipCountdown: BlockNumber = 1 * DAYS;
+	pub const TipFindersFee: Percent = Percent::from_percent(20);
+	pub const TipReportDepositBase: Balance = 1 * COIN;
+	pub const TipReportDepositPerByte: Balance = 1 * MILLI;
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub const RingProposalBondMinimum: Balance = 20 * COIN;
 	pub const KtonProposalBondMinimum: Balance = 20 * COIN;
 	pub const SpendPeriod: BlockNumber = 6 * DAYS;
 	pub const Burn: Permill = Permill::from_percent(0);
-
-	pub const TipCountdown: BlockNumber = 1 * DAYS;
-	pub const TipFindersFee: Percent = Percent::from_percent(20);
-	pub const TipReportDepositBase: Balance = 1 * COIN;
-	pub const TipReportDepositPerByte: Balance = 1 * MILLI;
 }
 impl darwinia_treasury::Trait for Runtime {
+	type ModuleId = TreasuryModuleId;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 	type ApproveOrigin =
@@ -545,9 +650,11 @@ impl darwinia_claims::Trait for Runtime {
 }
 
 parameter_types! {
+	pub const EthBackingModuleId: ModuleId = ModuleId(*b"da/backi");
 	pub const SubKeyPrefix: u8 = 42;
 }
 impl darwinia_eth_backing::Trait for Runtime {
+	type ModuleId = EthBackingModuleId;
 	type Event = Event;
 	type DetermineAccountId = darwinia_eth_backing::AccountIdDeterminator<Runtime>;
 	type EthRelay = EthRelay;
@@ -566,15 +673,11 @@ impl darwinia_eth_relay::Trait for Runtime {
 	type Call = Call;
 }
 
-type SubmitPFTransaction =
-	TransactionSubmitter<darwinia_eth_offchain::crypto::Public, Runtime, UncheckedExtrinsic>;
 parameter_types! {
 	pub const FetchInterval: BlockNumber = 3;
 }
 impl darwinia_eth_offchain::Trait for Runtime {
-	type Event = Event;
-	type Call = Call;
-	type SubmitSignedTransaction = SubmitPFTransaction;
+	type AuthorityId = EthOffchainId;
 	type FetchInterval = FetchInterval;
 }
 
@@ -630,7 +733,7 @@ construct_runtime!(
 
 		EthBacking: darwinia_eth_backing::{Module, Call, Storage, Config<T>, Event<T>},
 		EthRelay: darwinia_eth_relay::{Module, Call, Storage, Config<T>, Event<T>},
-		EthOffchain: darwinia_eth_offchain::{Module, Call, Event<T>},
+		EthOffchain: darwinia_eth_offchain::{Module, Call},
 
 		HeaderMMR: darwinia_header_mmr::{Module, Call, Storage},
 
@@ -639,17 +742,28 @@ construct_runtime!(
 	}
 );
 
-impl frame_system::offchain::CreateTransaction<Runtime, UncheckedExtrinsic> for Runtime {
+impl frame_system::offchain::SigningTypes for Runtime {
 	type Public = <Signature as sp_runtime::traits::Verify>::Signer;
 	type Signature = Signature;
+}
 
-	fn create_transaction<
-		TSigner: frame_system::offchain::Signer<Self::Public, Self::Signature>,
-	>(
+impl<C> frame_system::offchain::SendTransactionTypes<C> for Runtime
+where
+	Call: From<C>,
+{
+	type Extrinsic = UncheckedExtrinsic;
+	type OverarchingCall = Call;
+}
+
+impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
+where
+	Call: From<LocalCall>,
+{
+	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
 		call: Call,
-		public: Self::Public,
+		public: <Signature as sp_runtime::traits::Verify>::Signer,
 		account: AccountId,
-		index: Nonce,
+		nonce: Nonce,
 	) -> Option<(
 		Call,
 		<UncheckedExtrinsic as sp_runtime::traits::Extrinsic>::SignaturePayload,
@@ -669,7 +783,7 @@ impl frame_system::offchain::CreateTransaction<Runtime, UncheckedExtrinsic> for 
 			frame_system::CheckVersion::<Runtime>::new(),
 			frame_system::CheckGenesis::<Runtime>::new(),
 			frame_system::CheckEra::<Runtime>::from(generic::Era::mortal(period, current_block)),
-			frame_system::CheckNonce::<Runtime>::from(index),
+			frame_system::CheckNonce::<Runtime>::from(nonce),
 			frame_system::CheckWeight::<Runtime>::new(),
 			pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
 			Default::default(),
@@ -679,7 +793,7 @@ impl frame_system::offchain::CreateTransaction<Runtime, UncheckedExtrinsic> for 
 				debug::warn!("Unable to create signed payload: {:?}", e);
 			})
 			.ok()?;
-		let signature = TSigner::sign(public, &raw_payload)?;
+		let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;
 		let (call, extra, _) = raw_payload.deconstruct();
 		Some((call, (account, signature, extra)))
 	}
@@ -755,19 +869,19 @@ impl_runtime_apis! {
 	}
 
 	impl sp_consensus_babe::BabeApi<Block> for Runtime {
-		fn configuration() -> sp_consensus_babe::BabeConfiguration {
+		fn configuration() -> sp_consensus_babe::BabeGenesisConfiguration {
 			// The choice of `c` parameter (where `1 - c` represents the
 			// probability of a slot being empty), is done in accordance to the
 			// slot duration and expected target block time, for safely
 			// resisting network delays of maximum two seconds.
 			// <https://research.web3.foundation/en/latest/polkadot/BABE/Babe/#6-practical-results>
-			sp_consensus_babe::BabeConfiguration {
+			sp_consensus_babe::BabeGenesisConfiguration {
 				slot_duration: Babe::slot_duration(),
 				epoch_length: EpochDuration::get(),
 				c: PRIMARY_PROBABILITY,
 				genesis_authorities: Babe::authorities(),
 				randomness: Babe::randomness(),
-				secondary_slots: true,
+				allowed_slots: sp_consensus_babe::AllowedSlots::PrimaryAndSecondaryPlainSlots,
 			}
 		}
 

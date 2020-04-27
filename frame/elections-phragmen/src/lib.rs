@@ -74,10 +74,10 @@ use frame_support::{
 		BalanceStatus, ChangeMembers, Contains, Currency, Get, InitializeMembers, OnUnbalanced,
 		ReservableCurrency,
 	},
-	weights::{SimpleDispatchInfo, WeighData, Weight},
+	weights::{DispatchClass, Weight},
 };
 use frame_system::{self as system, ensure_root, ensure_signed};
-use sp_phragmen::{build_support_map, ExtendedBalance};
+use sp_phragmen::{build_support_map, ExtendedBalance, PhragmenResult, VoteWeight};
 use sp_runtime::{
 	print,
 	traits::{Convert, StaticLookup, Zero},
@@ -86,8 +86,6 @@ use sp_runtime::{
 use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_support::balance::lock::*;
-
-const MODULE_ID: LockIdentifier = *b"da/phrel";
 
 /// The maximum votes allowed per voter.
 pub const MAXIMUM_VOTE: usize = 16;
@@ -98,6 +96,9 @@ type NegativeImbalanceOf<T> =
 	<<T as Trait>::Currency as Currency<<T as frame_system::Trait>::AccountId>>::NegativeImbalance;
 
 pub trait Trait: frame_system::Trait {
+	/// Identifier for the elections-phragmen pallet's lock
+	type ModuleId: Get<LockIdentifier>;
+
 	/// The overarching event type.c
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
@@ -113,7 +114,8 @@ pub trait Trait: frame_system::Trait {
 
 	/// Convert a balance into a number used for election calculation.
 	/// This must fit into a `u64` but is allowed to be sensibly lossy.
-	type CurrencyToVote: Convert<BalanceOf<Self>, u64> + Convert<u128, BalanceOf<Self>>;
+	type CurrencyToVote: Convert<BalanceOf<Self>, VoteWeight>
+		+ Convert<ExtendedBalance, BalanceOf<Self>>;
 
 	/// How much should be locked up in order to submit one's candidacy.
 	type CandidacyBond: Get<BalanceOf<Self>>;
@@ -239,6 +241,7 @@ decl_module! {
 
 		fn deposit_event() = default;
 
+		const ModuleId: LockIdentifier  = T::ModuleId::get();
 		const CandidacyBond: BalanceOf<T> = T::CandidacyBond::get();
 		const VotingBond: BalanceOf<T> = T::VotingBond::get();
 		const DesiredMembers: u32 = T::DesiredMembers::get();
@@ -260,7 +263,7 @@ decl_module! {
 		/// Reads: O(1)
 		/// Writes: O(V) given `V` votes. V is bounded by 16.
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(100_000)]
+		#[weight = 100_000_000]
 		fn vote(origin, votes: Vec<T::AccountId>, #[compact] value: BalanceOf<T>) {
 			let who = ensure_signed(origin)?;
 
@@ -289,7 +292,7 @@ decl_module! {
 
 			// lock
 			T::Currency::set_lock(
-				MODULE_ID,
+				T::ModuleId::get(),
 				&who,
 				LockFor::Common { amount: locked_balance },
 				WithdrawReasons::except(WithdrawReason::TransactionPayment),
@@ -305,7 +308,7 @@ decl_module! {
 		/// Reads: O(1)
 		/// Writes: O(1)
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(10_000)]
+		#[weight = 0]
 		fn remove_voter(origin) {
 			let who = ensure_signed(origin)?;
 
@@ -327,7 +330,7 @@ decl_module! {
 		/// Reads: O(NLogM) given M current candidates and N votes for `target`.
 		/// Writes: O(1)
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(1_000_000)]
+		#[weight = 1_000_000_000]
 		fn report_defunct_voter(origin, target: <T::Lookup as StaticLookup>::Source) {
 			let reporter = ensure_signed(origin)?;
 			let target = T::Lookup::lookup(target)?;
@@ -370,7 +373,7 @@ decl_module! {
 		/// Reads: O(LogN) Given N candidates.
 		/// Writes: O(1)
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(500_000)]
+		#[weight = 500_000_000]
 		fn submit_candidacy(origin) {
 			let who = ensure_signed(origin)?;
 
@@ -397,7 +400,7 @@ decl_module! {
 		/// - `origin` is a current member. In this case, the bond is unreserved and origin is
 		///   removed as a member, consequently not being a candidate for the next round anymore.
 		///   Similar to [`remove_voter`], if replacement runners exists, they are immediately used.
-		#[weight = SimpleDispatchInfo::FixedOperational(2_000_000)]
+		#[weight = 2_000_000_000]
 		fn renounce_candidacy(origin) {
 			let who = ensure_signed(origin)?;
 
@@ -456,7 +459,7 @@ decl_module! {
 		/// Reads: O(do_phragmen)
 		/// Writes: O(do_phragmen)
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedOperational(2_000_000)]
+		#[weight = (2_000_000_000, DispatchClass::Operational)]
 		fn remove_member(origin, who: <T::Lookup as StaticLookup>::Source) -> DispatchResult {
 			ensure_root(origin)?;
 			let who = T::Lookup::lookup(who)?;
@@ -479,7 +482,7 @@ decl_module! {
 				print(e);
 			}
 
-			SimpleDispatchInfo::default().weigh_data(())
+			0
 		}
 	}
 }
@@ -633,7 +636,7 @@ impl<T: Trait> Module<T> {
 	fn do_remove_voter(who: &T::AccountId, unreserve: bool) {
 		// remove storage and lock.
 		<Voting<T>>::remove(who);
-		T::Currency::remove_lock(MODULE_ID, who);
+		T::Currency::remove_lock(T::ModuleId::get(), who);
 
 		if unreserve {
 			T::Currency::unreserve(who, T::VotingBond::get());
@@ -687,17 +690,30 @@ impl<T: Trait> Module<T> {
 		// previous runners_up are also always candidates for the next round.
 		candidates.append(&mut Self::runners_up_ids());
 
-		let voters_and_votes = <Voting<T>>::iter()
-			.map(|(voter, (stake, targets))| (voter, stake, targets))
+		// helper closures to deal with balance/stake.
+		let to_votes = |b: BalanceOf<T>| -> VoteWeight {
+			<T::CurrencyToVote as Convert<BalanceOf<T>, VoteWeight>>::convert(b)
+		};
+		let to_balance = |e: ExtendedBalance| -> BalanceOf<T> {
+			<T::CurrencyToVote as Convert<ExtendedBalance, BalanceOf<T>>>::convert(e)
+		};
+		let stake_of = |who: &T::AccountId| -> VoteWeight { to_votes(Self::locked_stake_of(who)) };
+
+		let voters_and_votes = Voting::<T>::iter()
+			.map(|(voter, (stake, targets))| (voter, to_votes(stake), targets))
 			.collect::<Vec<_>>();
-		let maybe_phragmen_result = sp_phragmen::elect::<_, _, T::CurrencyToVote, Perbill>(
+		let maybe_phragmen_result = sp_phragmen::elect::<T::AccountId, Perbill>(
 			num_to_elect,
 			0,
 			candidates,
 			voters_and_votes.clone(),
 		);
 
-		if let Some(phragmen_result) = maybe_phragmen_result {
+		if let Some(PhragmenResult {
+			winners,
+			assignments,
+		}) = maybe_phragmen_result
+		{
 			let old_members_ids = <Members<T>>::take()
 				.into_iter()
 				.map(|(m, _)| m)
@@ -712,25 +728,16 @@ impl<T: Trait> Module<T> {
 			// vote are still considered by phragmen and when good candidates are scarce, then these
 			// cheap ones might get elected. We might actually want to remove the filter and allow
 			// zero-voted candidates to also make it to the membership set.
-			let new_set_with_approval = phragmen_result.winners;
+			let new_set_with_approval = winners;
 			let new_set = new_set_with_approval
 				.into_iter()
 				.filter_map(|(m, a)| if a.is_zero() { None } else { Some(m) })
 				.collect::<Vec<T::AccountId>>();
 
-			let stake_of = |who: &T::AccountId| -> ExtendedBalance {
-				<T::CurrencyToVote as Convert<BalanceOf<T>, u64>>::convert(Self::locked_stake_of(
-					who,
-				)) as ExtendedBalance
-			};
-			let staked_assignments =
-				sp_phragmen::assignment_ratio_to_staked(phragmen_result.assignments, stake_of);
+			let staked_assignments = sp_phragmen::assignment_ratio_to_staked(assignments, stake_of);
 
 			let (support_map, _) = build_support_map::<T::AccountId>(&new_set, &staked_assignments);
 
-			let to_balance = |e: ExtendedBalance| {
-				<T::CurrencyToVote as Convert<ExtendedBalance, BalanceOf<T>>>::convert(e)
-			};
 			let new_set_with_stake = new_set
 				.into_iter()
 				.map(|ref m| {
@@ -752,7 +759,7 @@ impl<T: Trait> Module<T> {
 
 			let mut prime_votes: Vec<_> = new_members
 				.iter()
-				.map(|c| (&c.0, <BalanceOf<T>>::zero()))
+				.map(|c| (&c.0, VoteWeight::zero()))
 				.collect();
 			for (_, stake, targets) in voters_and_votes.into_iter() {
 				for (votes, who) in targets
@@ -761,7 +768,7 @@ impl<T: Trait> Module<T> {
 					.map(|(votes, who)| ((MAXIMUM_VOTE - votes) as u32, who))
 				{
 					if let Ok(i) = prime_votes.binary_search_by_key(&who, |k| k.0) {
-						prime_votes[i].1 += stake * votes.into();
+						prime_votes[i].1 += stake * votes as VoteWeight;
 					}
 				}
 			}
@@ -891,7 +898,7 @@ mod tests {
 	type _Kton = darwinia_balances::Module<Test, KtonInstance>;
 
 	darwinia_support::impl_account_data! {
-		pub struct AccountData<Balance>
+		struct AccountData<Balance>
 		for
 			RingInstance,
 			KtonInstance
@@ -908,7 +915,6 @@ mod tests {
 		pub const MaximumBlockLength: u32 = 2 * 1024;
 		pub const AvailableBlockRatio: Perbill = Perbill::one();
 	}
-
 	impl frame_system::Trait for Test {
 		type Origin = Origin;
 		type Call = ();
@@ -922,6 +928,9 @@ mod tests {
 		type Event = Event;
 		type BlockHashCount = BlockHashCount;
 		type MaximumBlockWeight = MaximumBlockWeight;
+		type DbWeight = ();
+		type BlockExecutionWeight = ();
+		type ExtrinsicBaseWeight = ();
 		type MaximumBlockLength = MaximumBlockLength;
 		type AvailableBlockRatio = AvailableBlockRatio;
 		type Version = ();
@@ -932,9 +941,8 @@ mod tests {
 	}
 
 	parameter_types! {
-			pub const ExistentialDeposit: Balance = 1;
+		pub const ExistentialDeposit: Balance = 1;
 	}
-
 	impl darwinia_balances::Trait<RingInstance> for Test {
 		type Balance = Balance;
 		type DustRemoval = ();
@@ -943,10 +951,6 @@ mod tests {
 		type BalanceInfo = AccountData<Balance>;
 		type AccountStore = frame_system::Module<Test>;
 		type DustCollector = ();
-	}
-
-	parameter_types! {
-		pub const CandidacyBond: Balance = 3;
 	}
 
 	thread_local! {
@@ -1042,7 +1046,12 @@ mod tests {
 		}
 	}
 
+	parameter_types! {
+		pub const ElectionsPhragmenModuleId: LockIdentifier = *b"da/phrel";
+		pub const CandidacyBond: Balance = 3;
+	}
 	impl Trait for Test {
+		type ModuleId = ElectionsPhragmenModuleId;
 		type Event = Event;
 		type Currency = Balances;
 		type ChangeMembers = TestChangeMembers;
@@ -1158,7 +1167,7 @@ mod tests {
 
 	fn has_lock(who: &u64) -> u64 {
 		let lock = Balances::locks(who)[0].clone();
-		assert_eq!(lock.id, MODULE_ID);
+		assert_eq!(lock.id, ElectionsPhragmenModuleId::get());
 		match &lock.lock_for {
 			LockFor::Common { amount } => *amount,
 			_ => unreachable!(),

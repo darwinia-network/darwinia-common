@@ -7,8 +7,16 @@ use sp_std::convert::TryInto;
 // --- darwinia ---
 use crate::*;
 
-//  1 - (99 / 100) ^ sqrt(year)
-// <T: Trait + 'static>() -> RingBalance<T>
+/// The total payout to all validators (and their nominators) per era and maximum payout.
+///
+/// Defined as such:
+/// `staker-payout = yearly_inflation(npos_token_staked / total_tokens) * total_tokens / era_per_year`
+/// `maximum-payout = max_yearly_inflation * total_tokens / era_per_year`
+///
+/// `era_duration` is expressed in millisecond.
+///
+/// Formula:
+///.  1 - (99 / 100) ^ sqrt(year)
 pub fn compute_total_payout<T: Trait>(
 	era_duration: TsInMs,
 	living_time: TsInMs,

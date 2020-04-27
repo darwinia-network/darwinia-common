@@ -40,11 +40,12 @@ macro_rules! new_full_start {
 			crate::service::Executor,
 		>($config)?
 		.with_select_chain(|_config, backend| Ok(sc_client::LongestChain::new(backend.clone())))?
-		.with_transaction_pool(|config, client, _fetcher| {
+		.with_transaction_pool(|config, client, _fetcher, prometheus_registry| {
 			let pool_api = sc_transaction_pool::FullChainApi::new(client.clone());
 			Ok(sc_transaction_pool::BasicPool::new(
 				config,
-				Arc::new(pool_api),
+				std::sync::Arc::new(pool_api),
+				prometheus_registry,
 			))
 		})?
 		.with_import_queue(|_config, client, mut select_chain, _transaction_pool| {
@@ -198,7 +199,7 @@ pub fn new_light(config: Configuration) -> Result<impl AbstractService, ServiceE
 
 	ServiceBuilder::new_light::<Block, RuntimeApi, Executor>(config)?
 		.with_select_chain(|_config, backend| Ok(LongestChain::new(backend.clone())))?
-		.with_transaction_pool(|config, client, fetcher| {
+		.with_transaction_pool(|config, client, fetcher, prometheus_registry| {
 			let fetcher = fetcher
 				.ok_or_else(|| "Trying to start light transaction pool without active fetcher")?;
 
@@ -206,6 +207,7 @@ pub fn new_light(config: Configuration) -> Result<impl AbstractService, ServiceE
 			let pool = sc_transaction_pool::BasicPool::with_revalidation_type(
 				config,
 				Arc::new(pool_api),
+				prometheus_registry,
 				sc_transaction_pool::RevalidationType::Light,
 			);
 			Ok(pool)

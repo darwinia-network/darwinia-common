@@ -4,15 +4,14 @@
 use std::cell::RefCell;
 // --- substrate ---
 use frame_support::{impl_outer_dispatch, impl_outer_origin, parameter_types, weights::Weight};
-use frame_system::offchain::TransactionSubmitter;
 use sp_core::{crypto::key_types, H256};
 use sp_runtime::{
 	testing::{Header, TestXt, UintAuthorityId},
 	traits::{IdentifyAccount, IdentityLookup, OpaqueKeys, Verify},
-	{KeyTypeId, MultiSignature, Perbill},
+	ModuleId, {KeyTypeId, MultiSignature, Perbill},
 };
-use sp_staking::SessionIndex;
 // --- darwinia ---
+use darwinia_eth_relay::EthNetworkType;
 use darwinia_staking::{EraIndex, Exposure, ExposureOf};
 use darwinia_support::bytes_thing::fixed_hex_bytes_unchecked;
 
@@ -20,7 +19,6 @@ use crate::*;
 
 type Balance = u128;
 type BlockNumber = u64;
-type Power = u32;
 
 /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
 type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
@@ -29,7 +27,6 @@ type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 type Signature = MultiSignature;
 
 type Extrinsic = TestXt<Call, ()>;
-type SubmitTransaction = TransactionSubmitter<(), Test, Extrinsic>;
 
 pub type RingInstance = darwinia_balances::Instance0;
 type _RingError = darwinia_balances::Error<Test, RingInstance>;
@@ -51,18 +48,6 @@ thread_local! {
 	static SLASH_DEFER_DURATION: RefCell<EraIndex> = RefCell::new(0);
 }
 
-darwinia_support::impl_account_data! {
-	pub struct AccountData<Balance>
-	for
-		RingInstance,
-		KtonInstance
-	where
-		Balance = Balance
-	{
-		// other data
-	}
-}
-
 impl_outer_origin! {
 	pub enum Origin for Test  where system = frame_system {}
 }
@@ -74,13 +59,17 @@ impl_outer_dispatch! {
 	}
 }
 
-pub const NANO: Balance = 1;
-pub const MICRO: Balance = 1_000 * NANO;
-pub const MILLI: Balance = 1_000 * MICRO;
-pub const COIN: Balance = 1_000 * MILLI;
-
-pub const CAP: Balance = 10_000_000_000 * COIN;
-pub const TOTAL_POWER: Power = 1_000_000_000;
+darwinia_support::impl_account_data! {
+	struct AccountData<Balance>
+	for
+		RingInstance,
+		KtonInstance
+	where
+		Balance = Balance
+	{
+		// other data
+	}
+}
 
 pub struct TestSessionHandler;
 impl pallet_session::SessionHandler<AccountId> for TestSessionHandler {
@@ -121,6 +110,9 @@ impl frame_system::Trait for Test {
 	type Event = ();
 	type BlockHashCount = BlockHashCount;
 	type MaximumBlockWeight = MaximumBlockWeight;
+	type DbWeight = ();
+	type BlockExecutionWeight = ();
+	type ExtrinsicBaseWeight = ();
 	type MaximumBlockLength = MaximumBlockLength;
 	type AvailableBlockRatio = AvailableBlockRatio;
 	type Version = ();
@@ -130,20 +122,15 @@ impl frame_system::Trait for Test {
 	type OnKilledAccount = ();
 }
 
-parameter_types! {
-	pub const MinimumPeriod: u64 = 5;
-}
 impl pallet_timestamp::Trait for Test {
 	type Moment = u64;
 	type OnTimestampSet = ();
-	type MinimumPeriod = MinimumPeriod;
+	type MinimumPeriod = ();
 }
 
 parameter_types! {
 	pub const Period: BlockNumber = 1;
 	pub const Offset: BlockNumber = 0;
-	pub const UncleGenerations: u64 = 0;
-	pub const DisabledValidatorsThreshold: Perbill = Perbill::from_percent(25);
 }
 impl pallet_session::Trait for Test {
 	type Event = ();
@@ -162,11 +149,9 @@ impl pallet_session::historical::Trait for Test {
 	type FullIdentificationOf = ExposureOf<Test>;
 }
 
-// --- custom ---
 parameter_types! {
-	pub const EthNetwork: darwinia_eth_relay::EthNetworkType = darwinia_eth_relay::EthNetworkType::Ropsten;
+	pub const EthNetwork: EthNetworkType = EthNetworkType::Ropsten;
 }
-
 impl darwinia_eth_relay::Trait for Test {
 	type Event = ();
 	type EthNetwork = EthNetwork;
@@ -192,32 +177,20 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 	type DustCollector = ();
 }
 
-parameter_types! {
-	pub const SessionsPerEra: SessionIndex = 3;
-	pub const BondingDurationInEra: EraIndex = 3;
-	// assume 60 blocks per session
-	pub const BondingDurationInBlockNumber: BlockNumber = 3 * 3 * 60;
-	pub const MaxNominatorRewardedPerValidator: u32 = 64;
-	pub const UnsignedPriority: u64 = 1 << 20;
-	pub const Cap: Balance = CAP;
-	pub const TotalPower: Power = TOTAL_POWER;
-}
 impl darwinia_staking::Trait for Test {
 	type Event = ();
 	type UnixTime = Timestamp;
-	type BypassConverter = ();
-	type SessionsPerEra = SessionsPerEra;
-	type BondingDurationInEra = BondingDurationInEra;
-	type BondingDurationInBlockNumber = BondingDurationInBlockNumber;
+	type SessionsPerEra = ();
+	type BondingDurationInEra = ();
+	type BondingDurationInBlockNumber = ();
 	type SlashDeferDuration = ();
 	type SlashCancelOrigin = system::EnsureRoot<Self::AccountId>;
 	type SessionInterface = Self;
 	type NextNewSession = Session;
 	type ElectionLookahead = ();
 	type Call = Call;
-	type SubmitTransaction = SubmitTransaction;
-	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
-	type UnsignedPriority = UnsignedPriority;
+	type MaxNominatorRewardedPerValidator = ();
+	type UnsignedPriority = ();
 	type RingCurrency = Ring;
 	type RingRewardRemainder = ();
 	type RingSlash = ();
@@ -225,14 +198,16 @@ impl darwinia_staking::Trait for Test {
 	type KtonCurrency = Kton;
 	type KtonSlash = ();
 	type KtonReward = ();
-	type Cap = Cap;
-	type TotalPower = TotalPower;
+	type Cap = ();
+	type TotalPower = ();
 }
 
 parameter_types! {
+	pub const EthBackingModuleId: ModuleId = ModuleId(*b"da/backi");
 	pub const SubKeyPrefix: u8 = 42;
 }
 impl Trait for Test {
+	type ModuleId = EthBackingModuleId;
 	type Event = ();
 	type DetermineAccountId = AccountIdDeterminator<Test>;
 	type EthRelay = EthRelay;
@@ -240,6 +215,14 @@ impl Trait for Test {
 	type Ring = Ring;
 	type Kton = Kton;
 	type SubKeyPrefix = SubKeyPrefix;
+}
+
+impl<LocalCall> frame_system::offchain::SendTransactionTypes<LocalCall> for Test
+where
+	Call: From<LocalCall>,
+{
+	type Extrinsic = Extrinsic;
+	type OverarchingCall = Call;
 }
 
 pub struct ExtBuilder;

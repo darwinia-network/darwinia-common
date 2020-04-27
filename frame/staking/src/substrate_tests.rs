@@ -198,6 +198,7 @@ fn rewards_should_work() {
 	// should check that:
 	// * rewards get recorded per session
 	// * rewards get paid per Era
+	// * `RewardRemainder::on_unbalanced` is called
 	// * Check that nominators are also rewarded
 	ExtBuilder::default().nominate(true).build_and_execute(|| {
 		let init_balance_10 = Ring::free_balance(&10);
@@ -246,6 +247,17 @@ fn rewards_should_work() {
 		start_session(3);
 
 		assert_eq!(Staking::active_era().unwrap().index, 1);
+		assert!(RING_REWARD_REMAINDER_UNBALANCED.with(|v| *v.borrow()) > 0);
+		assert!({
+			let is_era_payout_event_ok = |e: &RawEvent<_, _, _, _>| {
+				if let RawEvent::EraPayout(era_index, _, _) = e {
+					*era_index == 0
+				} else {
+					false
+				}
+			};
+			is_era_payout_event_ok(staking_events().last().unwrap())
+		});
 		make_all_reward_payment(0);
 
 		assert_eq_error_rate!(
@@ -277,6 +289,17 @@ fn rewards_should_work() {
 		assert!(total_payout_1 > 10); // Test is meaningful if reward something
 
 		start_era(2);
+		assert!(RING_REWARD_REMAINDER_UNBALANCED.with(|v| *v.borrow()) > 0);
+		assert!({
+			let is_era_payout_event_ok = |e: &RawEvent<_, _, _, _>| {
+				if let RawEvent::EraPayout(era_index, _, _) = e {
+					*era_index == 1
+				} else {
+					false
+				}
+			};
+			is_era_payout_event_ok(staking_events().last().unwrap())
+		});
 		make_all_reward_payment(1);
 
 		assert_eq_error_rate!(
@@ -415,7 +438,7 @@ fn less_than_needed_candidates_works() {
 			// But the exposure is updated in a simple way. No external votes exists.
 			// This is purely self-vote.
 			assert!(
-				<ErasStakers<Test>>::iter_prefix(Staking::active_era().unwrap().index)
+				<ErasStakers<Test>>::iter_prefix_values(Staking::active_era().unwrap().index)
 					.all(|exposure| exposure.others.is_empty())
 			);
 		});
@@ -562,7 +585,8 @@ fn nominating_and_rewards_should_work() {
 
 			// 30 and 40 are not chosen anymore
 			assert_eq!(
-				<ErasStakers<Test>>::iter_prefix(Staking::active_era().unwrap().index).count(),
+				<ErasStakers<Test>>::iter_prefix_values(Staking::active_era().unwrap().index)
+					.count(),
 				2,
 			);
 			assert_eq!(
