@@ -203,7 +203,12 @@ impl_outer_dispatch! {
 	}
 }
 
+parameter_types! {
+	pub const EthRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
+}
+
 impl Trait for Test {
+	type ModuleId = EthRelayModuleId;
 	type Event = ();
 	type EthNetwork = EthNetwork;
 	type Call = Call;

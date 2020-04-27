@@ -78,10 +78,10 @@ use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
 
 use types::*;
 
-/// The eth-relay's module id, used for deriving its sovereign account ID.
-const MODULE_ID: ModuleId = ModuleId(*b"da/ethrl");
-
 pub trait Trait: frame_system::Trait {
+	/// The eth-relay's module id, used for deriving its sovereign account ID.
+	type ModuleId: Get<ModuleId>;
+
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
 	type EthNetwork: Get<EthNetworkType>;
@@ -921,7 +921,7 @@ impl<T: Trait> VerifyEthReceipts<Balance<T>, T::AccountId> for Module<T> {
 	/// This actually does computation. If you need to keep using it, then make sure you cache the
 	/// value and only call this once.
 	fn account_id() -> T::AccountId {
-		MODULE_ID.into_account()
+		T::ModuleId::get().into_account()
 	}
 }
 

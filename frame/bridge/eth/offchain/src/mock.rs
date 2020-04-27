@@ -3,7 +3,7 @@ use frame_support::{impl_outer_dispatch, impl_outer_origin, parameter_types, wei
 use sp_runtime::{
 	testing::{Header, TestXt},
 	traits::{BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
-	MultiSignature, Perbill, RuntimeDebug,
+	ModuleId, MultiSignature, Perbill, RuntimeDebug,
 };
 
 use codec::Encode;
@@ -99,9 +99,11 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 }
 
 parameter_types! {
+	pub const EthRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
 	pub const EthNetwork: EthNetworkType = EthNetworkType::Ropsten;
 }
 impl darwinia_eth_relay::Trait for Test {
+	type ModuleId = EthRelayModuleId;
 	type Event = ();
 	type EthNetwork = EthNetwork;
 	type Call = Call;

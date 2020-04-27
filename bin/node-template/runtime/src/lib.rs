@@ -641,7 +641,7 @@ impl darwinia_treasury::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const Prefix: &'static [u8] = b"Pay RINGs to the Crab account:";
+	pub const Prefix: &'static [u8] = b"Pay RINGs to the template account:";
 }
 impl darwinia_claims::Trait for Runtime {
 	type Event = Event;
@@ -665,9 +665,11 @@ impl darwinia_eth_backing::Trait for Runtime {
 }
 
 parameter_types! {
+	pub const EthRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
 	pub const EthNetwork: EthNetworkType = EthNetworkType::Mainnet;
 }
 impl darwinia_eth_relay::Trait for Runtime {
+	type ModuleId = EthRelayModuleId;
 	type Event = Event;
 	type EthNetwork = EthNetwork;
 	type Call = Call;
