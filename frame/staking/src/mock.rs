@@ -1,5 +1,7 @@
 //! Test utilities
 
+#![allow(unused)]
+
 mod alias {
 	pub mod staking {
 		// Re-export needed for `impl_outer_event!`.
