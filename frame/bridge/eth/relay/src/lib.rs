@@ -552,14 +552,6 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
-	/// The account ID of the eth relay pot.
-	///
-	/// This actually does computation. If you need to keep using it, then make sure you cache the
-	/// value and only call this once.
-	pub fn account_id() -> T::AccountId {
-		MODULE_ID.into_account()
-	}
-
 	pub fn init_genesis_header(
 		header: &EthHeader,
 		genesis_total_difficulty: u64,
@@ -863,11 +855,13 @@ impl<T: Trait> Module<T> {
 }
 
 /// Handler for selecting the genesis validator set.
-pub trait VerifyEthReceipts<Balance> {
+pub trait VerifyEthReceipts<Balance, AccountId> {
 	fn verify_receipt(proof_record: &EthReceiptProof) -> Result<(Receipt, Balance), DispatchError>;
+
+	fn account_id() -> AccountId;
 }
 
-impl<T: Trait> VerifyEthReceipts<types::Balance<T>> for Module<T> {
+impl<T: Trait> VerifyEthReceipts<types::Balance<T>, T::AccountId> for Module<T> {
 	/// confirm that the block hash is right
 	/// get the receipt MPT trie root from the block header
 	/// Using receipt MPT trie root to verify the proof and index etc.
@@ -905,6 +899,14 @@ impl<T: Trait> VerifyEthReceipts<types::Balance<T>> for Module<T> {
 		let receipt = rlp::decode(&value).map_err(|_| <Error<T>>::ReceiptDsF)?;
 
 		Ok((receipt, Self::receipt_verify_fee()))
+	}
+
+	/// The account ID of the eth relay pot.
+	///
+	/// This actually does computation. If you need to keep using it, then make sure you cache the
+	/// value and only call this once.
+	fn account_id() -> T::AccountId {
+		MODULE_ID.into_account()
 	}
 }
 
