@@ -4,7 +4,7 @@
 //! the offchain worker will keep fetch the next block info and relay to Darwinia Network.
 //! The worker will fetch the header and the Merkle proof information for blocks from a nonexistent domain,
 //! ie http://eth-resource/, such that it can be connected with shadow service.
-//! Now the shadow service is provided by our anothre project, darwinia.js.
+//! Now the shadow service is provided by our another project, darwinia.js.
 //! https://github.com/darwinia-network/darwinia.js
 //!
 //!
@@ -18,7 +18,7 @@
 //!   `submit_header`
 //!
 //! The protocol of shadow service and offchain worker can be scale encoded format or json format,
-//! and the worker will use json format as fail back, such that it may be easiler to debug.
+//! and the worker will use json format as fail back, such that it may be easier to debug.
 //! If you want to build your own shadow service please refer
 //! https://github.com/darwinia-network/darwinia-common/issues/86
 //!
@@ -28,13 +28,17 @@
 //! https://github.com/darwinia-network/darwinia-common/pull/63
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub mod crypto {
-	// --- substrate ---
-	use sp_runtime::app_crypto::{app_crypto, sr25519};
-	// --- darwinia ---
-	use crate::KEY_TYPE;
+pub mod sr25519 {
+	mod app_sr25519 {
+		// --- substrate ---
+		use sp_runtime::app_crypto::{app_crypto, sr25519};
+		// --- darwinia ---
+		use crate::ETH_OFFCHAIN;
 
-	app_crypto!(sr25519, KEY_TYPE);
+		app_crypto!(sr25519, ETH_OFFCHAIN);
+	}
+
+	pub type AuthorityId = app_sr25519::Public;
 }
 
 #[cfg(all(feature = "std", test))]
@@ -43,13 +47,17 @@ mod mock;
 mod tests;
 
 // --- core ---
-use codec::Decode;
 use core::str::from_utf8;
+// --- crates ---
+use codec::Decode;
 // --- substrate ---
-use frame_support::{
-	debug::error, debug::info, debug::trace, decl_error, decl_event, decl_module, traits::Get,
+use frame_support::{debug::trace, decl_error, decl_event, decl_module, traits::Get};
+use frame_system::{
+	self as system,
+	offchain::{
+		AppCrypto, CreateSignedTransaction, SendSignedTransaction, Signer, SubmitTransaction,
+	},
 };
-use frame_system::{self as system, offchain::SubmitSignedTransaction};
 use sp_runtime::{offchain::http::Request, traits::Zero, DispatchError, KeyTypeId};
 use sp_std::prelude::*;
 // --- darwinia ---
@@ -60,12 +68,10 @@ use eth_primitives::header::EthHeader;
 type EthRelay<T> = darwinia_eth_relay::Module<T>;
 type EthRelayCall<T> = darwinia_eth_relay::Call<T>;
 
-pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"rlwk");
-
+pub const ETH_OFFCHAIN: KeyTypeId = KeyTypeId(*b"etho");
 const MAX_REDIRECT_TIMES: u8 = 3;
-
-// A dummy endpoint, point this to shadow service
-const ETHRESOURCE: &'static [u8] = b"http://eth-resource";
+/// A dummy endpoint, point this to shadow service
+const ETH_RESOURCE: &'static [u8] = b"http://eth-resource";
 
 #[derive(Default)]
 pub struct OffchainRequest {
@@ -107,7 +113,7 @@ impl OffchainRequestTrait for OffchainRequest {
 					} else if resp.code == 301 || resp.code == 302 {
 						self.redirect_times += 1;
 						trace!(
-							target: "eoc-req",
+							target: "eth-offchain",
 							"[eth-offchain] Redirect({}), Request Header: {:?}",
 							self.redirect_times, resp.headers(),
 						);
@@ -119,16 +125,16 @@ impl OffchainRequestTrait for OffchainRequest {
 						if let Some(location) = headers.find("location") {
 							self.location = location.as_bytes().to_vec();
 							trace!(
-								target: "eoc-req",
+								target: "eth-offchain",
 								"[eth-offchain] Redirect({}), Location: {:?}",
 								self.redirect_times,
 								self.location,
 							);
 						}
 					} else {
-						trace!(target: "eoc-req", "[eth-offchain] Status Code: {}", resp.code);
+						trace!(target: "eth-offchain", "[eth-offchain] Status Code: {}", resp.code);
 						trace!(
-							target: "eoc-req",
+							target: "eth-offchain",
 							"[eth-offchain] Response: {}",
 							from_utf8(&resp.body().collect::<Vec<_>>()).unwrap_or_default(),
 						);
@@ -143,12 +149,12 @@ impl OffchainRequestTrait for OffchainRequest {
 	}
 }
 
-pub trait Trait: darwinia_eth_relay::Trait {
+pub trait Trait: CreateSignedTransaction<Call<Self>> + darwinia_eth_relay::Trait {
+	type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
+
 	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 
 	type Call: From<EthRelayCall<Self>>;
-
-	type SubmitSignedTransaction: SubmitSignedTransaction<Self, <Self as Trait>::Call>;
 
 	type FetchInterval: Get<Self::BlockNumber>;
 }
@@ -195,12 +201,13 @@ decl_module! {
 		fn offchain_worker(block: T::BlockNumber) {
 			let fetch_interval = T::FetchInterval::get().max(1.into());
 			if (block % fetch_interval).is_zero() {
-				if T::SubmitSignedTransaction::can_sign() {
-					if let Err(e) = Self::relay_header(){
-						error!(target: "eoc-wk", "[eth-offchain] Error: {:?}", e);
+				let signer = <Signer<T, T::AuthorityId>>::all_accounts();
+				if signer.can_sign() {
+					if let Err(e) = Self::relay_header(&signer){
+						trace!(target: "eth-offchain", "[eth-offchain] Error: {:?}", e);
 					}
 				} else {
-					trace!(target: "eoc-wk", "[eth-offchain] use `author_insertKey` rpc to inscert `rlwk` key to enable worker");
+					trace!(target: "eth-offchain", "[eth-offchain] use `author_insertKey` rpc to inscert `rlwk` key to enable worker");
 				}
 			}
 		}
@@ -212,22 +219,22 @@ impl<T: Trait> Module<T> {
 	/// The default communication will transfer data with scale encoding,
 	/// if there are issue to communicate with scale encoding, the failback communication will
 	/// be performed with json format(use option: `true`)
-	fn relay_header() -> Result<(), DispatchError> {
+	fn relay_header(signer: &Signer<T, T::AuthorityId>) -> Result<(), DispatchError> {
 		let target_number = Self::get_target_number()?;
-		let header_without_option = Self::fetch_header(ETHRESOURCE.to_vec(), target_number, false);
+		let header_without_option = Self::fetch_header(ETH_RESOURCE.to_vec(), target_number, false);
 		let (header, proof_list) = match header_without_option {
 			Ok(r) => r,
 			Err(e) => {
-				info!(target: "eoc-rh", "[eth-offchain] request without option fail: {:?}", e);
-				info!(target: "eoc-rh", "[eth-offchain] request fail back wth option");
-				Self::fetch_header(ETHRESOURCE.to_vec(), target_number, true)?
+				trace!(target: "eth-offchain", "[eth-offchain] request without option fail: {:?}", e);
+				trace!(target: "eth-offchain", "[eth-offchain] request fail back wth option");
+				Self::fetch_header(ETH_RESOURCE.to_vec(), target_number, true)?
 			}
 		};
 
 		// The `submit_header` will call event out of eth-offchain pallet,
 		// so this function is skiped in the test of pallet
 		#[cfg(not(test))]
-		Self::submit_header(header, proof_list);
+		Self::submit_header(signer, header, proof_list);
 		Ok(())
 	}
 
@@ -238,7 +245,7 @@ impl<T: Trait> Module<T> {
 			.number
 			.checked_add(1)
 			.ok_or(<Error<T>>::BlockNumberOF)?;
-		trace!(target: "eoc-rl", "[eth-offchain] Target Number: {}", target_number);
+		trace!(target: "eth-offchain", "[eth-offchain] Target Number: {}", target_number);
 
 		Ok(target_number)
 	}
@@ -259,8 +266,8 @@ impl<T: Trait> Module<T> {
 
 		let resp_body = Self::validate_response(maybe_resp_body, option)?;
 
-		let eth_header_part = Self::extract_from_json_str(&resp_body[..], b"eth_header" as
-			&[u8]).unwrap_or_default();
+		let eth_header_part =
+			Self::extract_from_json_str(&resp_body[..], b"eth_header" as &[u8]).unwrap_or_default();
 		let header = if option {
 			EthHeader::from_str_unchecked(from_utf8(eth_header_part).unwrap_or_default())
 		} else {
@@ -268,14 +275,14 @@ impl<T: Trait> Module<T> {
 			Decode::decode::<&[u8]>(&mut &scale_bytes[..]).unwrap_or_default()
 		};
 
-		let proof_part = Self::extract_from_json_str(&resp_body[..], b"proof" as
-			&[u8]).unwrap_or_default();
+		let proof_part =
+			Self::extract_from_json_str(&resp_body[..], b"proof" as &[u8]).unwrap_or_default();
 		let proof_list = if option {
 			Self::parse_double_node_with_proof_list_from_json_str(proof_part)?
 		} else {
 			Self::parse_double_node_with_proof_list_from_scale_str(proof_part)?
 		};
-		trace!(target: "eoc-rl", "[eth-offchain] Eth Header: {:?}", header);
+		trace!(target: "eth-offchain", "[eth-offchain] Eth Header: {:?}", header);
 
 		Ok((header, proof_list))
 	}
@@ -287,7 +294,7 @@ impl<T: Trait> Module<T> {
 	) -> Result<Vec<u8>, DispatchError> {
 		if let Some(resp_body) = maybe_resp_body {
 			trace!(
-				target: "eoc-rl",
+				target: "eth-offchain",
 				"[eth-offchain] Response: {}",
 				from_utf8(&resp_body).unwrap_or_default(),
 			);
@@ -295,24 +302,27 @@ impl<T: Trait> Module<T> {
 				|| (with_option && resp_body.len() < 1362)
 				|| (!with_option && resp_body.len() < 1353)
 			{
-				trace!(target: "eoc-rl", "[eth-offchain] Malresponse");
+				trace!(target: "eth-offchain", "[eth-offchain] Malresponse");
 				Err(<Error<T>>::APIRespUnexp)?;
 			}
 			Ok(resp_body)
 		} else {
-			trace!(target: "eoc-rl", "[eth-offchain] Lack Response");
+			trace!(target: "eth-offchain", "[eth-offchain] Lack Response");
 			Err(<Error<T>>::APIRespUnexp)?
 		}
 	}
 
 	/// Submit and record the valid header on Darwinia network
-	fn submit_header(header: EthHeader, proof_list: Vec<DoubleNodeWithMerkleProof>) {
-		let results = T::SubmitSignedTransaction::submit_signed(<EthRelayCall<T>>::relay_header(
-			header, proof_list,
-		));
+	fn submit_header(
+		signer: &Signer<T, T::AuthorityId>,
+		header: EthHeader,
+		proof_list: Vec<DoubleNodeWithMerkleProof>,
+	) {
+		let results =
+			signer.send_signed_transaction(|_| <EthRelayCall<T>>::relay_header(header, proof_list));
 		for (account, result) in &results {
 			trace!(
-				target: "eoc-rl",
+				target: "eth-offchain",
 				"[eth-offchain] Account: {:?}, Relay: {:?}",
 				account,
 				result,
@@ -324,7 +334,7 @@ impl<T: Trait> Module<T> {
 	fn build_payload(target_number: u64, option: bool) -> Vec<u8> {
 		let header_part: &[u8] = br#"{"jsonrpc":"2.0","method":"shadow_getEthHeaderWithProofByNumber","params":{"block_num":"#;
 		let number_part: &[u8] = &base_n_bytes_unchecked(target_number, 10)[..];
-		let transcation_part: &[u8] = br#","transcation":false"#;
+		let transaction_part: &[u8] = br#","transaction":false"#;
 		let option_part: &[u8] = br#","options":{"format":"json"}"#;
 		let tail: &[u8] = br#"},"id":1}"#;
 
@@ -332,13 +342,13 @@ impl<T: Trait> Module<T> {
 			[
 				header_part,
 				number_part,
-				transcation_part,
+				transaction_part,
 				option_part,
 				tail,
 			]
 			.concat()
 		} else {
-			[header_part, number_part, transcation_part, tail].concat()
+			[header_part, number_part, transaction_part, tail].concat()
 		}
 	}
 
@@ -373,8 +383,11 @@ impl<T: Trait> Module<T> {
 	}
 
 	/// Extract the inner value from json str with specific field
-	fn extract_from_json_str<'a>(json_str: &'a[u8], field_name: &'static [u8]) -> Option<&'a[u8]> {
-		let mut start=0;
+	fn extract_from_json_str<'a>(
+		json_str: &'a [u8],
+		field_name: &'static [u8],
+	) -> Option<&'a [u8]> {
+		let mut start = 0;
 		let mut open_part_count = 0;
 		let mut open_part = b'\0';
 		let mut close_part = b'\0';
@@ -386,7 +399,7 @@ impl<T: Trait> Module<T> {
 				if json_str[i] == close_part {
 					open_part_count -= 1;
 					if 0 == open_part_count {
-							return Some(&json_str[start+1..i])
+						return Some(&json_str[start + 1..i]);
 					}
 				} else if json_str[i] == open_part {
 					open_part_count += 1;
@@ -395,19 +408,22 @@ impl<T: Trait> Module<T> {
 				if json_str[i] == b'"' || json_str[i] == b'[' || json_str[i] == b'{' {
 					start = i;
 					open_part_count += 1;
-					open_part =json_str[i];
+					open_part = json_str[i];
 					close_part = match json_str[i] {
 						b'"' => b'"',
 						b'[' => b']',
 						b'{' => b'}',
-						_ => panic!("never here")
+						_ => panic!("never here"),
 					}
 				}
 			} else if match_pos > 0 && i > match_pos {
 				if json_str[i] == b':' {
 					has_colon = true;
 				}
-			} else if json_str[i] == field_name[0] && (json_str.len() - i) >= field_length && json_str[i..i + field_length]  == *field_name {
+			} else if json_str[i] == field_name[0]
+				&& (json_str.len() - i) >= field_length
+				&& json_str[i..i + field_length] == *field_name
+			{
 				match_pos = i + field_length;
 			}
 		}

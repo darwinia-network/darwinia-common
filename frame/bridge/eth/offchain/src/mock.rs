@@ -1,17 +1,14 @@
 // --- substrate ---
 use frame_support::{impl_outer_dispatch, impl_outer_origin, parameter_types, weights::Weight};
+use sp_core::sr25519::Signature;
 use sp_runtime::{
-	testing::{Header, TestXt},
-	traits::{BlakeTwo256, Extrinsic as ExtrinsicsT, IdentityLookup},
+	testing::{Header, TestXt, UintAuthorityId},
+	traits::{BlakeTwo256, Extrinsic as ExtrinsicsT, IdentifyAccount, IdentityLookup, Verify},
 	Perbill,
 };
 // --- darwinia ---
 use crate::*;
-use darwinia_eth_relay;
-
-impl_outer_origin! {
-	pub enum Origin for Test where system = frame_system {}
-}
+use darwinia_eth_relay::EthNetworkType;
 
 impl_outer_dispatch! {
 	pub enum Call for Test where origin: Origin {
@@ -20,9 +17,16 @@ impl_outer_dispatch! {
 	}
 }
 
-pub type EthOffchain = Module<Test>;
+impl_outer_origin! {
+	pub enum Origin for Test where system = frame_system {}
+}
+
+type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+type Extrinsic = TestXt<Call, ()>;
+
 pub type EthRelay = darwinia_eth_relay::Module<Test>;
-pub type OffchainError = Error<Test>;
+pub type EthOffchain = Module<Test>;
+pub type EthOffchainError = Error<Test>;
 
 #[derive(Clone, Eq, PartialEq)]
 pub struct Test;
@@ -55,42 +59,41 @@ impl frame_system::Trait for Test {
 	type OnKilledAccount = ();
 }
 
-type Extrinsic = TestXt<Call, ()>;
-type SubmitTransaction =
-	frame_system::offchain::TransactionSubmitter<crypto::Public, Test, Extrinsic>;
-
-impl frame_system::offchain::CreateTransaction<Test, Extrinsic> for Test {
-	type Public = sp_core::sr25519::Public;
-	type Signature = sp_core::sr25519::Signature;
-
-	fn create_transaction<F: frame_system::offchain::Signer<Self::Public, Self::Signature>>(
-		call: <Extrinsic as ExtrinsicsT>::Call,
-		_public: Self::Public,
-		_account: <Test as frame_system::Trait>::AccountId,
-		nonce: <Test as frame_system::Trait>::Index,
-	) -> Option<(
-		<Extrinsic as ExtrinsicsT>::Call,
-		<Extrinsic as ExtrinsicsT>::SignaturePayload,
-	)> {
-		Some((call, (nonce, ())))
-	}
-}
-
 parameter_types! {
-	pub const EthNetwork: darwinia_eth_relay::EthNetworkType = darwinia_eth_relay::EthNetworkType::Ropsten;
+	pub const EthNetwork: EthNetworkType = EthNetworkType::Ropsten;
 }
-
 impl darwinia_eth_relay::Trait for Test {
 	type Event = ();
 	type EthNetwork = EthNetwork;
 	type Call = Call;
 }
 
-//impl From<darwinia_eth_relay::Call<Test>> for Call<Test> {
-//	fn from(_: darwinia_eth_relay::Call<Test>) -> Self {
-//		unimplemented!()
-//	}
-//}
+impl frame_system::offchain::SigningTypes for Test {
+	type Public = <Signature as Verify>::Signer;
+	type Signature = Signature;
+}
+
+impl<LocalCall> frame_system::offchain::SendTransactionTypes<LocalCall> for Test
+where
+	Call: From<LocalCall>,
+{
+	type Extrinsic = Extrinsic;
+	type OverarchingCall = Call;
+}
+
+impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Test
+where
+	Call: From<LocalCall>,
+{
+	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
+		call: Call,
+		_public: <Signature as Verify>::Signer,
+		_account: AccountId,
+		nonce: u64,
+	) -> Option<(Call, <Extrinsic as ExtrinsicT>::SignaturePayload)> {
+		Some((call, (nonce, ())))
+	}
+}
 
 static mut SHADOW_SERVICE: Option<ShadowService> = None;
 
@@ -121,9 +124,9 @@ parameter_types! {
 	pub const FetchInterval: u64 = 3;
 }
 impl Trait for Test {
+	type AuthorityId = UintAuthorityId;
 	type Event = ();
 	type Call = Call;
-	type SubmitSignedTransaction = SubmitTransaction;
 	type FetchInterval = FetchInterval;
 }
 
@@ -141,7 +144,7 @@ impl Default for ExtBuilder {
 
 impl ExtBuilder {
 	pub fn set_genesis_header(mut self) -> Self {
-		let genesis_header = EthHeader::from_str_unchecked(SUPPOSED_ETHHEADER);
+		let genesis_header = EthHeader::from_str_unchecked(SUPPOSED_ETH_HEADER);
 		self.genesis_header = Some((1, rlp::encode(&genesis_header)));
 		self
 	}
@@ -160,7 +163,7 @@ impl ExtBuilder {
 	}
 }
 pub const SUPPOSED_SHADOW_SCALE_RESPONSE: &'static [u8] = br#"{"jsonrpc":"2.0","id":1,"result":{"eth_header":"0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa32442ba5500000000010000000000000005a56e2d52c817161883f50c441c3228cfe54d9f56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b4211dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d4934764476574682f76312e302e302f6c696e75782f676f312e342e32d67e4d450343046425ae4271474353857ab860dbc0a1dde64b41b5cd3a532bf356e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b4210000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008813000000000000000000000000000000000000000000000000000000000000000080ff030000000000000000000000000000000000000000000000000000000884a0969b900de27b6ac6a67742365dd65f55a0526c41fd18e1b16f1a1215c2e66f592488539bd4979fef1ec40188e96d4537bea4d9c05d12549907b32561d3bf31f45aae734cdc119f13406cb6","proof":"0x04000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"}}"#;
-pub const SUPPOSED_ETHHEADER: &'static str = r#"
+pub const SUPPOSED_ETH_HEADER: &'static str = r#"
 			{
 				"difficulty": "0x3ff800000",
 				"extraData": "0x476574682f76312e302e302f6c696e75782f676f312e342e32",

@@ -352,7 +352,7 @@ use frame_support::{
 	weights::{SimpleDispatchInfo, Weight, MINIMUM_WEIGHT},
 };
 use frame_system::{
-	self as system, ensure_none, ensure_root, ensure_signed, offchain::SubmitUnsignedTransaction,
+	self as system, ensure_none, ensure_root, ensure_signed, offchain::SendTransactionTypes,
 };
 use sp_phragmen::{
 	build_support_map, elect, evaluate_support, generate_compact_solution_type, is_score_better,
@@ -891,7 +891,7 @@ where
 	}
 }
 
-pub trait Trait: frame_system::Trait {
+pub trait Trait: frame_system::Trait + SendTransactionTypes<Call<Self>> {
 	/// The overarching event type.
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
@@ -931,10 +931,7 @@ pub trait Trait: frame_system::Trait {
 	/// The overarching call type.
 	type Call: Dispatchable + From<Call<Self>> + IsSubType<Module<Self>, Self> + Clone;
 
-	/// A transaction submitter.
-	type SubmitTransaction: SubmitUnsignedTransaction<Self, <Self as Trait>::Call>;
-
-	/// The maximum number of nominators rewarded for each validator.
+	/// The maximum number of nominator rewarded for each validator.
 	///
 	/// For each validator only the `$MaxNominatorRewardedPerValidator` biggest stakers can claim
 	/// their reward. This used to limit the i/o cost for the nominator payout.

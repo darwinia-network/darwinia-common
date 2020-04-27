@@ -294,7 +294,7 @@ decl_module! {
 		/// # </weight>
 		#[weight = SimpleDispatchInfo::FixedNormal(200_000_000)]
 		pub fn relay_header(origin, header: EthHeader, ethash_proof: Vec<DoubleNodeWithMerkleProof>) {
-			trace!(target: "er-rl", "{:?}", header);
+			trace!(target: "eth-relay", "{:?}", header);
 			let relayer = ensure_signed(origin)?;
 
 			if Self::check_authority() {
@@ -489,13 +489,13 @@ impl<T: Trait> Module<T> {
 			header.hash() == header.re_compute_hash(),
 			<Error<T>>::HeaderHashMis
 		);
-		trace!(target: "er-rl", "Hash OK");
+		trace!(target: "eth-relay", "Hash OK");
 
 		let begin_header_number = Self::begin_header()
 			.ok_or(<Error<T>>::BeginHeaderNE)?
 			.number;
 		ensure!(header.number >= begin_header_number, <Error<T>>::HeaderTE);
-		trace!(target: "er-rl", "Number1 OK");
+		trace!(target: "eth-relay", "Number1 OK");
 
 		// There must be a corresponding parent hash
 		let prev_header = Self::header(header.parent_hash).ok_or(<Error<T>>::HeaderNE)?;
@@ -504,7 +504,7 @@ impl<T: Trait> Module<T> {
 			header.number == prev_header.number + 1,
 			<Error<T>>::BlockNumberMis
 		);
-		trace!(target: "er-rl", "Number2 OK");
+		trace!(target: "eth-relay", "Number2 OK");
 
 		// check difficulty
 		let ethash_params = match T::EthNetwork::get() {
@@ -514,12 +514,12 @@ impl<T: Trait> Module<T> {
 		ethash_params
 			.verify_block_basic(header)
 			.map_err(|_| <Error<T>>::BlockBasicVF)?;
-		trace!(target: "er-rl", "Basic OK");
+		trace!(target: "eth-relay", "Basic OK");
 
 		// verify difficulty
 		let difficulty = ethash_params.calculate_difficulty(header, &prev_header);
 		ensure!(difficulty == *header.difficulty(), <Error<T>>::DifficultyVF);
-		trace!(target: "er-rl", "Difficulty OK");
+		trace!(target: "eth-relay", "Difficulty OK");
 
 		Ok(())
 	}
@@ -531,7 +531,7 @@ impl<T: Trait> Module<T> {
 		Self::verify_header_basic(&header)?;
 
 		let seal = EthashSeal::parse_seal(header.seal()).map_err(|_| <Error<T>>::SealPF)?;
-		trace!(target: "er-rl", "Seal OK");
+		trace!(target: "eth-relay", "Seal OK");
 
 		let partial_header_hash = header.bare_hash();
 
@@ -543,7 +543,7 @@ impl<T: Trait> Module<T> {
 		)?;
 
 		ensure!(mix_hash == seal.mix_hash, <Error<T>>::MixHashMis);
-		trace!(target: "er-rl", "MixHash OK");
+		trace!(target: "eth-relay", "MixHash OK");
 
 		// TODO: Check other verification condition
 		// See YellowPaper formula (50) in section 4.3.4

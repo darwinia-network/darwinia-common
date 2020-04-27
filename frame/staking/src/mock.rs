@@ -23,7 +23,6 @@ use frame_support::{
 	weights::Weight,
 	StorageValue,
 };
-use frame_system::offchain::TransactionSubmitter;
 use sp_core::H256;
 use sp_phragmen::{reduce, StakedAssignment};
 use sp_runtime::{
@@ -45,7 +44,6 @@ pub(crate) type BlockNumber = u64;
 pub(crate) type Balance = u128;
 
 pub(crate) type Extrinsic = TestXt<Call, ()>;
-type SubmitTransaction = TransactionSubmitter<(), Test, Extrinsic>;
 
 pub(crate) type RingInstance = darwinia_balances::Instance0;
 pub(crate) type RingError = darwinia_balances::Error<Test, RingInstance>;
@@ -329,7 +327,6 @@ impl Trait for Test {
 	type NextNewSession = Session;
 	type ElectionLookahead = ElectionLookahead;
 	type Call = Call;
-	type SubmitTransaction = SubmitTransaction;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
 	type UnsignedPriority = UnsignedPriority;
 	type RingCurrency = Ring;
@@ -341,6 +338,14 @@ impl Trait for Test {
 	type KtonReward = ();
 	type Cap = Cap;
 	type TotalPower = TotalPower;
+}
+
+impl<LocalCall> frame_system::offchain::SendTransactionTypes<LocalCall> for Test
+where
+	Call: From<LocalCall>,
+{
+	type Extrinsic = Extrinsic;
+	type OverarchingCall = Call;
 }
 
 pub struct ExtBuilder {

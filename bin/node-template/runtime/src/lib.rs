@@ -290,6 +290,7 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia ---
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo;
+use darwinia_eth_offchain::sr25519::AuthorityId as EthOffchainId;
 use darwinia_eth_relay::EthNetworkType;
 use impls::*;
 use primitives::*;
@@ -477,8 +478,6 @@ parameter_types! {
 impl pallet_im_online::Trait for Runtime {
 	type AuthorityId = ImOnlineId;
 	type Event = Event;
-	type Call = Call;
-	type SubmitTransaction = TransactionSubmitterOf<Self::AuthorityId>;
 	type SessionDuration = SessionDuration;
 	type ReportUnresponsiveness = Offences;
 	type UnsignedPriority = ImOnlineUnsignedPriority;
@@ -583,7 +582,7 @@ impl darwinia_elections_phragmen::Trait for Runtime {
 	// NOTE: this implies that council's genesis members cannot be set directly and must come from
 	// this module.
 	type InitializeMembers = Council;
-	type CurrencyToVote = CurrencyToVoteHandler<Self>;
+	type CurrencyToVote = CurrencyToVoteHandler;
 	type CandidacyBond = CandidacyBond;
 	type VotingBond = VotingBond;
 	type LoserCandidate = Treasury;
@@ -659,15 +658,13 @@ impl darwinia_eth_relay::Trait for Runtime {
 	type Call = Call;
 }
 
-type SubmitPFTransaction =
-	TransactionSubmitter<darwinia_eth_offchain::crypto::Public, Runtime, UncheckedExtrinsic>;
 parameter_types! {
 	pub const FetchInterval: BlockNumber = 3;
 }
 impl darwinia_eth_offchain::Trait for Runtime {
+	type AuthorityId = EthOffchainId;
 	type Event = Event;
 	type Call = Call;
-	type SubmitSignedTransaction = SubmitPFTransaction;
 	type FetchInterval = FetchInterval;
 }
 
@@ -732,17 +729,15 @@ construct_runtime!(
 	}
 );
 
-impl frame_system::offchain::CreateTransaction<Runtime, UncheckedExtrinsic> for Runtime {
-	type Public = <Signature as sp_runtime::traits::Verify>::Signer;
-	type Signature = Signature;
-
-	fn create_transaction<
-		TSigner: frame_system::offchain::Signer<Self::Public, Self::Signature>,
-	>(
+impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
+where
+	Call: From<LocalCall>,
+{
+	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
 		call: Call,
-		public: Self::Public,
+		public: <Signature as sp_runtime::traits::Verify>::Signer,
 		account: AccountId,
-		index: Nonce,
+		nonce: Nonce,
 	) -> Option<(
 		Call,
 		<UncheckedExtrinsic as sp_runtime::traits::Extrinsic>::SignaturePayload,
@@ -772,10 +767,23 @@ impl frame_system::offchain::CreateTransaction<Runtime, UncheckedExtrinsic> for 
 				debug::warn!("Unable to create signed payload: {:?}", e);
 			})
 			.ok()?;
-		let signature = TSigner::sign(public, &raw_payload)?;
+		let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;
 		let (call, extra, _) = raw_payload.deconstruct();
 		Some((call, (account, signature, extra)))
 	}
+}
+
+impl frame_system::offchain::SigningTypes for Runtime {
+	type Public = <Signature as sp_runtime::traits::Verify>::Signer;
+	type Signature = Signature;
+}
+
+impl<C> frame_system::offchain::SendTransactionTypes<C> for Runtime
+where
+	Call: From<C>,
+{
+	type Extrinsic = UncheckedExtrinsic;
+	type OverarchingCall = Call;
 }
 
 impl_runtime_apis! {
