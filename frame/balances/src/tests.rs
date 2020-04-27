@@ -37,7 +37,6 @@ macro_rules! decl_tests {
 		pub fn info_from_weight(w: Weight) -> DispatchInfo {
 			DispatchInfo {
 				weight: w,
-				pays_fee: true,
 				..Default::default()
 			}
 		}

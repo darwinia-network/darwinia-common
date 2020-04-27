@@ -262,7 +262,7 @@ fn check_eth_relay_header_hash_works() {
 				let info = DispatchInfo {
 					weight: 100,
 					class: DispatchClass::Normal,
-					pays_fee: true,
+					..Default::default()
 				};
 				let check = CheckEthRelayHeaderHash::<Test>(Default::default());
 				let call: mock::Call = crate::Call::relay_header(
@@ -286,7 +286,7 @@ fn check_eth_relay_header_hash_works() {
 				let info = DispatchInfo {
 					weight: 100,
 					class: DispatchClass::Normal,
-					pays_fee: true,
+					..Default::default()
 				};
 				let check = CheckEthRelayHeaderHash::<Test>(Default::default());
 				let call: mock::Call = crate::Call::relay_header(
