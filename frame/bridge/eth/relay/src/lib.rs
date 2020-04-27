@@ -13,8 +13,7 @@ use codec::{Decode, Encode};
 use ethereum_types::{H128, H512, H64};
 // --- substrate ---
 use frame_support::{
-	debug::trace, decl_error, decl_event, decl_module, decl_storage, ensure, traits::Get,
-	weights::SimpleDispatchInfo, IsSubType,
+	debug::trace, decl_error, decl_event, decl_module, decl_storage, ensure, traits::Get, IsSubType,
 };
 use frame_system::{self as system, ensure_root, ensure_signed};
 use sp_io::hashing::sha2_256;
@@ -292,7 +291,7 @@ decl_module! {
 		/// - One storage write
 		/// - Up to one event
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(200_000_000)]
+		#[weight = 200_000_000]
 		pub fn relay_header(origin, header: EthHeader, ethash_proof: Vec<DoubleNodeWithMerkleProof>) {
 			trace!(target: "eth-relay", "{:?}", header);
 			let relayer = ensure_signed(origin)?;
@@ -330,7 +329,7 @@ decl_module! {
 		/// - Limited Storage reads
 		/// - Up to one event
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(100_000_000)]
+		#[weight = 100_000_000]
 		pub fn check_receipt(origin, proof_record: EthReceiptProof) {
 			let relayer = ensure_signed(origin)?;
 			if Self::check_authority() {
@@ -344,7 +343,7 @@ decl_module! {
 
 		// --- root call ---
 
-		#[weight = SimpleDispatchInfo::FixedNormal(100_000_000)]
+		#[weight = 100_000_000]
 		pub fn reset_genesis_header(origin, header: EthHeader, genesis_difficulty: u64) {
 			let _ = ensure_root(origin)?;
 
@@ -360,7 +359,7 @@ decl_module! {
 		/// - One storage mutation (codec `O(A)`).
 		/// - Up to one event
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(50_000_000)]
+		#[weight = 50_000_000]
 		pub fn add_authority(origin, who: T::AccountId) {
 			ensure_root(origin)?;
 
@@ -378,7 +377,7 @@ decl_module! {
 		/// - One storage mutation (codec `O(A)`).
 		/// - Up to one event
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(50_000)]
+		#[weight = 50_000]
 		pub fn remove_authority(origin, who: T::AccountId) {
 			ensure_root(origin)?;
 
@@ -398,7 +397,7 @@ decl_module! {
 		/// - One storage write
 		/// - Up to one event
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(10_000_000)]
+		#[weight = 10_000_000]
 		pub fn toggle_check_authorities(origin) {
 			ensure_root(origin)?;
 
@@ -413,7 +412,7 @@ decl_module! {
 		/// - `O(1)`.
 		/// - One storage write
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(10_000_000)]
+		#[weight = 10_000_000]
 		pub fn set_number_of_blocks_finality(origin, #[compact] new: u64) {
 			ensure_root(origin)?;
 			NumberOfBlocksFinality::put(new);
@@ -425,7 +424,7 @@ decl_module! {
 		/// - `O(1)`.
 		/// - One storage write
 		/// # </weight>
-		#[weight = SimpleDispatchInfo::FixedNormal(10_000_000)]
+		#[weight = 10_000_000]
 		pub fn set_number_of_blocks_safe(origin, #[compact] new: u64) {
 			ensure_root(origin)?;
 			NumberOfBlocksSafe::put(new);

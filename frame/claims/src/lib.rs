@@ -27,7 +27,6 @@ use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
 	traits::{Currency, Get},
-	weights::SimpleDispatchInfo,
 	{decl_error, decl_event, decl_module, decl_storage},
 };
 use frame_system::{self as system, ensure_none, ensure_root};
@@ -167,7 +166,7 @@ decl_module! {
 		fn deposit_event() = default;
 
 		/// Make a claim.
-		#[weight = SimpleDispatchInfo::FixedNormal(1_000_000_000)]
+		#[weight = 1_000_000_000]
 		fn claim(origin, dest: T::AccountId, signature: OtherSignature) {
 			ensure_none(origin)?;
 
@@ -208,7 +207,7 @@ decl_module! {
 		}
 
 		/// Add a new claim, if you are root.
-		#[weight = SimpleDispatchInfo::FixedNormal(30_000_000)]
+		#[weight = 30_000_000]
 		fn mint_claim(origin, who: OtherAddress, value: RingBalance<T>) {
 			ensure_root(origin)?;
 
