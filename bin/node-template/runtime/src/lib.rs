@@ -248,25 +248,15 @@ pub mod primitives {
 		TransactionSubmitter<KeyType, Runtime, UncheckedExtrinsic>;
 }
 
-// --- substrate ---
-// A few exports that help ease life for downstream crates.
-pub use frame_support::{
-	construct_runtime, parameter_types, traits::Randomness, weights::Weight, StorageValue,
-};
-pub use pallet_timestamp::Call as TimestampCall;
-#[cfg(any(feature = "std", test))]
-pub use sp_runtime::BuildStorage;
-pub use sp_runtime::{
-	traits::{ConvertInto, OpaqueKeys},
-	Perbill, Percent, Permill,
-};
-// --- darwinia ---
-pub use darwinia_staking::StakerStatus;
-
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
-use frame_support::debug;
+use frame_support::{
+	construct_runtime, debug, parameter_types,
+	traits::Randomness,
+	weights::{RuntimeDbWeight, Weight},
+	StorageValue,
+};
 use frame_system::offchain::TransactionSubmitter;
 use pallet_grandpa::{fg_primitives, AuthorityList as GrandpaAuthorityList};
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
@@ -277,11 +267,15 @@ use sp_core::{
 	u32_trait::{_1, _2, _3, _5},
 	OpaqueMetadata,
 };
+#[cfg(any(feature = "std", test))]
+use sp_runtime::BuildStorage;
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{BlakeTwo256, Block as BlockT, IdentityLookup, SaturatedConversion},
+	traits::{
+		BlakeTwo256, Block as BlockT, ConvertInto, IdentityLookup, OpaqueKeys, SaturatedConversion,
+	},
 	transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, Perquintill, RuntimeDebug,
+	ApplyExtrinsicResult, Perbill, Percent, Permill, Perquintill, RuntimeDebug,
 };
 use sp_staking::SessionIndex;
 use sp_std::prelude::*;
@@ -348,8 +342,14 @@ parameter_types! {
 	pub const BlockHashCount: BlockNumber = 250;
 	/// We allow for 2 seconds of compute with a 6 second average block time.
 	pub const MaximumBlockWeight: Weight = 2_000_000_000_000;
-	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
+	/// This probably should not be changed unless you have specific
+	/// disk i/o conditions for the node.
+	pub const DbWeight: RuntimeDbWeight = RuntimeDbWeight {
+		read: 60_000_000, // ~0.06 ms = ~60 µs
+		write: 200_000_000, // ~0.2 ms = 200 µs
+	};
 	pub const MaximumBlockLength: u32 = 5 * 1024 * 1024;
+	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
 	pub const Version: RuntimeVersion = VERSION;
 }
 impl frame_system::Trait for Runtime {
@@ -365,7 +365,7 @@ impl frame_system::Trait for Runtime {
 	type Event = Event;
 	type BlockHashCount = BlockHashCount;
 	type MaximumBlockWeight = MaximumBlockWeight;
-	type DbWeight = ();
+	type DbWeight = DbWeight;
 	type MaximumBlockLength = MaximumBlockLength;
 	type AvailableBlockRatio = AvailableBlockRatio;
 	type Version = Version;
