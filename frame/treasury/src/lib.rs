@@ -126,10 +126,10 @@ use sp_std::prelude::*;
 use darwinia_support::traits::OnUnbalancedKton;
 use types::*;
 
-/// The treasury's module id, used for deriving its sovereign account ID.
-const MODULE_ID: ModuleId = ModuleId(*b"da/trsry");
-
 pub trait Trait: frame_system::Trait {
+	/// The treasury's module id, used for deriving its sovereign account ID.
+	type ModuleId: Get<ModuleId>;
+
 	/// The staking *RING*.
 	type RingCurrency: Currency<Self::AccountId> + ReservableCurrency<Self::AccountId>;
 
@@ -345,6 +345,9 @@ decl_module! {
 
 		/// The amount held on deposit per byte within the tip report reason.
 		const TipReportDepositPerByte: RingBalance<T> = T::TipReportDepositPerByte::get();
+
+		/// The treasury's module id, used for deriving its sovereign account ID.
+		const ModuleId: ModuleId = T::ModuleId::get();
 
 		fn deposit_event() = default;
 
@@ -617,7 +620,7 @@ impl<T: Trait> Module<T> {
 	/// This actually does computation. If you need to keep using it, then make sure you cache the
 	/// value and only call this once.
 	pub fn account_id() -> T::AccountId {
-		MODULE_ID.into_account()
+		T::ModuleId::get().into_account()
 	}
 
 	/// The needed bond for a proposal whose spend is `value`.

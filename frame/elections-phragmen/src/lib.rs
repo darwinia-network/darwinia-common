@@ -87,8 +87,6 @@ use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_support::balance::lock::*;
 
-const MODULE_ID: LockIdentifier = *b"da/phrel";
-
 /// The maximum votes allowed per voter.
 pub const MAXIMUM_VOTE: usize = 16;
 
@@ -100,6 +98,9 @@ type NegativeImbalanceOf<T> =
 pub trait Trait: frame_system::Trait {
 	/// The overarching event type.c
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+
+	/// Identifier for the elections-phragmen pallet's lock
+	type ModuleId: Get<LockIdentifier>;
 
 	/// The currency that people are electing with.
 	type Currency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
@@ -240,6 +241,7 @@ decl_module! {
 
 		fn deposit_event() = default;
 
+		const ModuleId: LockIdentifier  = T::ModuleId::get();
 		const CandidacyBond: BalanceOf<T> = T::CandidacyBond::get();
 		const VotingBond: BalanceOf<T> = T::VotingBond::get();
 		const DesiredMembers: u32 = T::DesiredMembers::get();
@@ -290,7 +292,7 @@ decl_module! {
 
 			// lock
 			T::Currency::set_lock(
-				MODULE_ID,
+				T::ModuleId::get(),
 				&who,
 				LockFor::Common { amount: locked_balance },
 				WithdrawReasons::except(WithdrawReason::TransactionPayment),
@@ -634,7 +636,7 @@ impl<T: Trait> Module<T> {
 	fn do_remove_voter(who: &T::AccountId, unreserve: bool) {
 		// remove storage and lock.
 		<Voting<T>>::remove(who);
-		T::Currency::remove_lock(MODULE_ID, who);
+		T::Currency::remove_lock(T::ModuleId::get(), who);
 
 		if unreserve {
 			T::Currency::unreserve(who, T::VotingBond::get());
@@ -913,7 +915,6 @@ mod tests {
 		pub const MaximumBlockLength: u32 = 2 * 1024;
 		pub const AvailableBlockRatio: Perbill = Perbill::one();
 	}
-
 	impl frame_system::Trait for Test {
 		type Origin = Origin;
 		type Call = ();
@@ -938,9 +939,8 @@ mod tests {
 	}
 
 	parameter_types! {
-			pub const ExistentialDeposit: Balance = 1;
+		pub const ExistentialDeposit: Balance = 1;
 	}
-
 	impl darwinia_balances::Trait<RingInstance> for Test {
 		type Balance = Balance;
 		type DustRemoval = ();
@@ -949,10 +949,6 @@ mod tests {
 		type BalanceInfo = AccountData<Balance>;
 		type AccountStore = frame_system::Module<Test>;
 		type DustCollector = ();
-	}
-
-	parameter_types! {
-		pub const CandidacyBond: Balance = 3;
 	}
 
 	thread_local! {
@@ -1048,8 +1044,13 @@ mod tests {
 		}
 	}
 
+	parameter_types! {
+		pub const ElectionsPhragmenModuleId: LockIdentifier = *b"da/phrel";
+		pub const CandidacyBond: Balance = 3;
+	}
 	impl Trait for Test {
 		type Event = Event;
+		type ModuleId = ElectionsPhragmenModuleId;
 		type Currency = Balances;
 		type ChangeMembers = TestChangeMembers;
 		type InitializeMembers = ();
@@ -1164,7 +1165,7 @@ mod tests {
 
 	fn has_lock(who: &u64) -> u64 {
 		let lock = Balances::locks(who)[0].clone();
-		assert_eq!(lock.id, MODULE_ID);
+		assert_eq!(lock.id, ElectionsPhragmenModuleId::get());
 		match &lock.lock_for {
 			LockFor::Common { amount } => *amount,
 			_ => unreachable!(),

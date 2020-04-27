@@ -9,7 +9,7 @@ use sp_core::{crypto::key_types, H256};
 use sp_runtime::{
 	testing::{Header, TestXt, UintAuthorityId},
 	traits::{IdentifyAccount, IdentityLookup, OpaqueKeys, Verify},
-	{KeyTypeId, MultiSignature, Perbill},
+	ModuleId, {KeyTypeId, MultiSignature, Perbill},
 };
 use sp_staking::SessionIndex;
 // --- darwinia ---
@@ -215,7 +215,6 @@ impl darwinia_staking::Trait for Test {
 	type NextNewSession = Session;
 	type ElectionLookahead = ();
 	type Call = Call;
-	type SubmitTransaction = SubmitTransaction;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
 	type UnsignedPriority = UnsignedPriority;
 	type RingCurrency = Ring;
@@ -230,9 +229,11 @@ impl darwinia_staking::Trait for Test {
 }
 
 parameter_types! {
+	pub const EthBackingModuleId: ModuleId = ModuleId(*b"da/backi");
 	pub const SubKeyPrefix: u8 = 42;
 }
 impl Trait for Test {
+	type ModuleId = EthBackingModuleId;
 	type Event = ();
 	type DetermineAccountId = AccountIdDeterminator<Test>;
 	type EthRelay = EthRelay;

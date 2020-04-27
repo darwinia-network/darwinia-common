@@ -253,7 +253,7 @@ use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
 	construct_runtime, debug, parameter_types,
-	traits::Randomness,
+	traits::{LockIdentifier, Randomness},
 	weights::{RuntimeDbWeight, Weight},
 	StorageValue,
 };
@@ -275,7 +275,7 @@ use sp_runtime::{
 		BlakeTwo256, Block as BlockT, ConvertInto, IdentityLookup, OpaqueKeys, SaturatedConversion,
 	},
 	transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, Perbill, Percent, Permill, Perquintill, RuntimeDebug,
+	ApplyExtrinsicResult, ModuleId, Perbill, Percent, Permill, Perquintill, RuntimeDebug,
 };
 use sp_staking::SessionIndex;
 use sp_std::prelude::*;
@@ -568,6 +568,7 @@ impl darwinia_staking::Trait for Runtime {
 }
 
 parameter_types! {
+	pub const ElectionsPhragmenModuleId: LockIdentifier = *b"da/phrel";
 	pub const CandidacyBond: Balance = 1 * COIN;
 	pub const VotingBond: Balance = 5 * MILLI;
 	/// Daily council elections.
@@ -577,6 +578,7 @@ parameter_types! {
 }
 impl darwinia_elections_phragmen::Trait for Runtime {
 	type Event = Event;
+	type ModuleId = ElectionsPhragmenModuleId;
 	type Currency = Ring;
 	type ChangeMembers = Council;
 	// NOTE: this implies that council's genesis members cannot be set directly and must come from
@@ -594,18 +596,19 @@ impl darwinia_elections_phragmen::Trait for Runtime {
 }
 
 parameter_types! {
+	pub const TreasuryModuleId: ModuleId = ModuleId(*b"da/trsry")
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub const RingProposalBondMinimum: Balance = 20 * COIN;
 	pub const KtonProposalBondMinimum: Balance = 20 * COIN;
 	pub const SpendPeriod: BlockNumber = 6 * DAYS;
 	pub const Burn: Permill = Permill::from_percent(0);
-
 	pub const TipCountdown: BlockNumber = 1 * DAYS;
 	pub const TipFindersFee: Percent = Percent::from_percent(20);
 	pub const TipReportDepositBase: Balance = 1 * COIN;
 	pub const TipReportDepositPerByte: Balance = 1 * MILLI;
 }
 impl darwinia_treasury::Trait for Runtime {
+	type ModuleId = TreasuryModuleId;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 	type ApproveOrigin =
@@ -637,9 +640,11 @@ impl darwinia_claims::Trait for Runtime {
 }
 
 parameter_types! {
+	pub const EthBackingModuleId: ModuleId = ModuleId(*b"da/backi");
 	pub const SubKeyPrefix: u8 = 42;
 }
 impl darwinia_eth_backing::Trait for Runtime {
+	type ModuleId = EthBackingModuleId;
 	type Event = Event;
 	type DetermineAccountId = darwinia_eth_backing::AccountIdDeterminator<Runtime>;
 	type EthRelay = EthRelay;

@@ -14,7 +14,7 @@ use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	Perbill,
+	ModuleId, Perbill,
 };
 // --- darwinia ---
 use crate::*;
@@ -132,6 +132,7 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 }
 
 parameter_types! {
+	pub const TreasuryModuleId: ModuleId = ModuleId(*b"da/trsry");
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub const RingProposalBondMinimum: Balance = 1;
 	pub const KtonProposalBondMinimum: Balance = 1;
@@ -143,6 +144,7 @@ parameter_types! {
 	pub const TipReportDepositPerByte: Balance = 1;
 }
 impl Trait for Test {
+	type ModuleId = TreasuryModuleId;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 	type ApproveOrigin = frame_system::EnsureRoot<u64>;
