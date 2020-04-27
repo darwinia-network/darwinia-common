@@ -111,7 +111,7 @@ fn close_tip_works() {
 				.into_iter()
 				.map(|r| r.event)
 				.filter_map(|e| {
-					if let Event::treasury(inner) = e {
+					if let MockEvent::treasury(inner) = e {
 						Some(inner)
 					} else {
 						None
@@ -136,7 +136,7 @@ fn close_tip_works() {
 				.into_iter()
 				.map(|r| r.event)
 				.filter_map(|e| {
-					if let Event::treasury(inner) = e {
+					if let MockEvent::treasury(inner) = e {
 						Some(inner)
 					} else {
 						None
@@ -162,7 +162,7 @@ fn close_tip_works() {
 				.into_iter()
 				.map(|r| r.event)
 				.filter_map(|e| {
-					if let Event::treasury(inner) = e {
+					if let MockEvent::treasury(inner) = e {
 						Some(inner)
 					} else {
 						None

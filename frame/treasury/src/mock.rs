@@ -49,10 +49,10 @@ thread_local! {
 }
 
 impl_outer_event! {
-	pub enum Event for Test {
+	pub enum MockEvent for Test {
 		system<T>,
 		darwinia_balances Instance0<T>,
-		darwinia_balances Instance1<T>,,
+		darwinia_balances Instance1<T>,
 		treasury<T>,
 	}
 }
@@ -80,7 +80,7 @@ impl frame_system::Trait for Test {
 	type AccountId = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = Event;
+	type Event = MockEvent;
 	type BlockHashCount = BlockHashCount;
 	type MaximumBlockWeight = MaximumBlockWeight;
 	type DbWeight = ();
@@ -117,7 +117,7 @@ parameter_types! {
 impl darwinia_balances::Trait<KtonInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
-	type Event = Event;
+	type Event = MockEvent;
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
@@ -126,7 +126,7 @@ impl darwinia_balances::Trait<KtonInstance> for Test {
 impl darwinia_balances::Trait<RingInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
-	type Event = Event;
+	type Event = MockEvent;
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
@@ -156,7 +156,7 @@ impl Trait for Test {
 	type TipFindersFee = TipFindersFee;
 	type TipReportDepositBase = TipReportDepositBase;
 	type TipReportDepositPerByte = TipReportDepositPerByte;
-	type Event = Event;
+	type Event = MockEvent;
 	type RingProposalRejection = ();
 	type KtonProposalRejection = ();
 	type ProposalBond = ProposalBond;
