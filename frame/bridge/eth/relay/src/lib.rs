@@ -375,7 +375,7 @@ decl_module! {
 			{
 				Self::verify_header_basic(&header)?;
 
-				// The `verify_header_pow` takes much computing time and a lot of testing data.
+				// The `verify_header_pow` takes a lot of testing data.
 				// We skipt this in all of the scenario test cases,
 				// such that it is skiped when doing relay_header.
 				//
