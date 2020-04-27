@@ -28,8 +28,13 @@
 //! https://github.com/darwinia-network/darwinia-common/pull/63
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub mod sr25519 {
-	mod app_sr25519 {
+pub mod crypto {
+	// --- substrate ---
+	use frame_system::offchain::AppCrypto;
+	use sp_core::sr25519::{Public, Signature};
+	use sp_runtime::{traits::Verify, MultiSignature};
+
+	mod app {
 		// --- substrate ---
 		use sp_runtime::app_crypto::{app_crypto, sr25519};
 		// --- darwinia ---
@@ -38,7 +43,12 @@ pub mod sr25519 {
 		app_crypto!(sr25519, ETH_OFFCHAIN);
 	}
 
-	pub type AuthorityId = app_sr25519::Public;
+	pub struct AuthorityId;
+	impl AppCrypto<<MultiSignature as Verify>::Signer, MultiSignature> for AuthorityId {
+		type RuntimeAppPublic = app::Public;
+		type GenericPublic = Public;
+		type GenericSignature = Signature;
+	}
 }
 
 #[cfg(all(feature = "std", test))]

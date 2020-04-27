@@ -15,17 +15,15 @@ pub mod impls {
 	use core::num::NonZeroI128;
 	// --- substrate ---
 	use frame_support::{
-		traits::{Currency, Get, OnUnbalanced},
+		traits::{Currency, Get, Imbalance, OnUnbalanced},
 		weights::Weight,
 	};
-	use node_primitives::Balance;
 	use sp_runtime::{
 		traits::{Convert, Saturating},
 		Fixed128, Perquintill,
 	};
 	// --- darwinia ---
-	use crate::*;
-	use darwinia_balances::NegativeImbalance;
+	use crate::{primitives::*, *};
 
 	pub type RingInstance = darwinia_balances::Instance0;
 	pub type KtonInstance = darwinia_balances::Instance1;
@@ -42,8 +40,8 @@ pub mod impls {
 	}
 
 	pub struct Author;
-	impl OnUnbalanced<NegativeImbalance<RingInstance>> for Author {
-		fn on_nonzero_unbalanced(amount: NegativeImbalance<RingInstance>) {
+	impl OnUnbalanced<NegativeImbalance> for Author {
+		fn on_nonzero_unbalanced(amount: NegativeImbalance) {
 			Ring::resolve_creating(&Authorship::author(), amount);
 		}
 	}
@@ -132,6 +130,22 @@ pub mod impls {
 			}
 		}
 	}
+
+	pub struct DealWithFees;
+	impl OnUnbalanced<NegativeImbalance> for DealWithFees {
+		fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance>) {
+			if let Some(fees) = fees_then_tips.next() {
+				// for fees, 80% to treasury, 20% to author
+				let mut split = fees.ration(80, 20);
+				if let Some(tips) = fees_then_tips.next() {
+					// for tips, if any, 80% to treasury, 20% to author (though this can be anything)
+					tips.ration_merge_into(80, 20, &mut split);
+				}
+				Treasury::on_unbalanced(split.0);
+				Author::on_unbalanced(split.1);
+			}
+		}
+	}
 }
 
 pub mod opaque {
@@ -155,6 +169,7 @@ pub mod opaque {
 
 pub mod primitives {
 	// --- substrate ---
+	use frame_support::traits::Currency;
 	use sp_runtime::{
 		generic,
 		traits::{BlakeTwo256, IdentifyAccount, Verify},
@@ -197,6 +212,8 @@ pub mod primitives {
 
 	/// Alias Balances Module as Ring Module.
 	pub type Ring = Balances;
+
+	pub type NegativeImbalance = <Ring as Currency<AccountId>>::NegativeImbalance;
 
 	/// The address format for describing accounts.
 	pub type Address = AccountId;
@@ -242,11 +259,11 @@ pub mod primitives {
 		Runtime,
 		AllModules,
 	>;
-
-	/// A transaction submitter with the given key type.
-	pub type TransactionSubmitterOf<KeyType> =
-		TransactionSubmitter<KeyType, Runtime, UncheckedExtrinsic>;
 }
+
+// --- darwinia ---
+pub use darwinia_staking::StakerStatus;
+pub use primitives::*;
 
 // --- crates ---
 use codec::{Decode, Encode};
@@ -255,9 +272,7 @@ use frame_support::{
 	construct_runtime, debug, parameter_types,
 	traits::{LockIdentifier, Randomness},
 	weights::{RuntimeDbWeight, Weight},
-	StorageValue,
 };
-use frame_system::offchain::TransactionSubmitter;
 use pallet_grandpa::{fg_primitives, AuthorityList as GrandpaAuthorityList};
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use pallet_session::historical as pallet_session_historical;
@@ -267,13 +282,9 @@ use sp_core::{
 	u32_trait::{_1, _2, _3, _5},
 	OpaqueMetadata,
 };
-#[cfg(any(feature = "std", test))]
-use sp_runtime::BuildStorage;
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{
-		BlakeTwo256, Block as BlockT, ConvertInto, IdentityLookup, OpaqueKeys, SaturatedConversion,
-	},
+	traits::{BlakeTwo256, Block as BlockT, IdentityLookup, OpaqueKeys, SaturatedConversion},
 	transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, ModuleId, Perbill, Percent, Permill, Perquintill, RuntimeDebug,
 };
@@ -284,10 +295,9 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia ---
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo;
-use darwinia_eth_offchain::sr25519::AuthorityId as EthOffchainId;
+use darwinia_eth_offchain::crypto::AuthorityId as EthOffchainId;
 use darwinia_eth_relay::EthNetworkType;
 use impls::*;
-use primitives::*;
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
@@ -550,7 +560,6 @@ impl darwinia_staking::Trait for Runtime {
 	type NextNewSession = Session;
 	type ElectionLookahead = ElectionLookahead;
 	type Call = Call;
-	type SubmitTransaction = TransactionSubmitterOf<()>;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
 	type UnsignedPriority = StakingUnsignedPriority;
 	type RingCurrency = Ring;
@@ -597,7 +606,7 @@ impl darwinia_elections_phragmen::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const TreasuryModuleId: ModuleId = ModuleId(*b"da/trsry")
+	pub const TreasuryModuleId: ModuleId = ModuleId(*b"da/trsry");
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub const RingProposalBondMinimum: Balance = 20 * COIN;
 	pub const KtonProposalBondMinimum: Balance = 20 * COIN;
@@ -669,8 +678,6 @@ parameter_types! {
 }
 impl darwinia_eth_offchain::Trait for Runtime {
 	type AuthorityId = EthOffchainId;
-	type Event = Event;
-	type Call = Call;
 	type FetchInterval = FetchInterval;
 }
 
@@ -763,7 +770,7 @@ where
 			frame_system::CheckVersion::<Runtime>::new(),
 			frame_system::CheckGenesis::<Runtime>::new(),
 			frame_system::CheckEra::<Runtime>::from(generic::Era::mortal(period, current_block)),
-			frame_system::CheckNonce::<Runtime>::from(index),
+			frame_system::CheckNonce::<Runtime>::from(nonce),
 			frame_system::CheckWeight::<Runtime>::new(),
 			pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
 			Default::default(),

@@ -20,6 +20,7 @@ rlp = { default-features = false, git = "https://github.com/darwinia-network/par
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.5" }
 frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.5" }
+sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.5" }
 sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.5" }
 sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.5" }
 
@@ -44,6 +45,7 @@ std = [
 	# substrate
 	"frame-support/std",
 	"frame-system/std",
+	"sp-core/std",
 	"sp-runtime/std",
 	"sp-std/std",
 ]
