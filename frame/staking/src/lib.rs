@@ -2095,7 +2095,7 @@ decl_module! {
 		/// Set history_depth value.
 		///
 		/// Origin must be root.
-		#[weight = 500_000_000]
+		#[weight = (500_000_000, DispatchClass::Operational)]
 		fn set_history_depth(origin, #[compact] new_history_depth: EraIndex) {
 			ensure_root(origin)?;
 			if let Some(current_era) = Self::current_era() {
@@ -2864,7 +2864,7 @@ impl<T: Trait> Module<T> {
 			let living_time = Self::living_time();
 			let era_duration = now - active_era_start;
 
-			let (validator_payout, max_payout) = inflation::compute_total_payout(
+			let (validator_payout, max_payout) = inflation::compute_total_payout::<T>(
 				era_duration,
 				Self::living_time(),
 				T::Cap::get().saturating_sub(T::RingCurrency::total_issuance()),
@@ -3080,7 +3080,7 @@ impl<T: Trait> Module<T> {
 			(nominator, targets)
 		});
 		all_nominators.extend(nominator_votes.map(|(n, ns)| {
-			let s = Self::power_of(&n);
+			let s = Self::power_of(&n) as _;
 			(n, s, ns)
 		}));
 
