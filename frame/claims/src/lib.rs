@@ -396,7 +396,7 @@ mod tests {
 	type Claims = Module<Test>;
 
 	darwinia_support::impl_account_data! {
-		pub struct AccountData<Balance>
+		struct AccountData<Balance>
 		for
 			RingInstance,
 			KtonInstance

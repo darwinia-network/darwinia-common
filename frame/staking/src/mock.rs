@@ -83,7 +83,7 @@ thread_local! {
 }
 
 darwinia_support::impl_account_data! {
-	pub struct AccountData<Balance>
+	struct AccountData<Balance>
 	for
 		RingInstance,
 		KtonInstance

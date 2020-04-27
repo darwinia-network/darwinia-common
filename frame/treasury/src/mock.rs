@@ -33,7 +33,7 @@ pub type System = frame_system::Module<Test>;
 pub type Treasury = Module<Test>;
 
 darwinia_support::impl_account_data! {
-	pub struct AccountData<Balance>
+	struct AccountData<Balance>
 	for
 		RingInstance,
 		KtonInstance

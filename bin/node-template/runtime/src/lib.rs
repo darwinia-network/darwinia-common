@@ -28,7 +28,7 @@ pub mod impls {
 	pub type RingInstance = darwinia_balances::Instance0;
 	pub type KtonInstance = darwinia_balances::Instance1;
 	darwinia_support::impl_account_data! {
-		pub struct AccountData<Balance>
+		struct AccountData<Balance>
 		for
 			RingInstance,
 			KtonInstance
