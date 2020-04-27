@@ -74,7 +74,7 @@ use frame_support::{
 		BalanceStatus, ChangeMembers, Contains, Currency, Get, InitializeMembers, OnUnbalanced,
 		ReservableCurrency,
 	},
-	weights::{DispatchClass, Weight, MINIMUM_WEIGHT},
+	weights::{DispatchClass, Weight},
 };
 use frame_system::{self as system, ensure_root, ensure_signed};
 use sp_phragmen::{build_support_map, ExtendedBalance, PhragmenResult, VoteWeight};
@@ -308,7 +308,7 @@ decl_module! {
 		/// Reads: O(1)
 		/// Writes: O(1)
 		/// # </weight>
-		#[weight = MINIMUM_WEIGHT]
+		#[weight = 0]
 		fn remove_voter(origin) {
 			let who = ensure_signed(origin)?;
 
@@ -482,7 +482,7 @@ decl_module! {
 				print(e);
 			}
 
-			MINIMUM_WEIGHT
+			0
 		}
 	}
 }
@@ -929,6 +929,8 @@ mod tests {
 		type BlockHashCount = BlockHashCount;
 		type MaximumBlockWeight = MaximumBlockWeight;
 		type DbWeight = ();
+		type BlockExecutionWeight = ();
+		type ExtrinsicBaseWeight = ();
 		type MaximumBlockLength = MaximumBlockLength;
 		type AvailableBlockRatio = AvailableBlockRatio;
 		type Version = ();

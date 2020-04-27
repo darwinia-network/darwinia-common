@@ -80,6 +80,8 @@ impl frame_system::Trait for Test {
 	type BlockHashCount = BlockHashCount;
 	type MaximumBlockWeight = MaximumBlockWeight;
 	type DbWeight = ();
+	type BlockExecutionWeight = ();
+	type ExtrinsicBaseWeight = ();
 	type MaximumBlockLength = MaximumBlockLength;
 	type AvailableBlockRatio = AvailableBlockRatio;
 	type Version = ();
@@ -89,13 +91,11 @@ impl frame_system::Trait for Test {
 	type OnKilledAccount = Ring;
 }
 parameter_types! {
-	pub const TransactionBaseFee: Balance = 0;
 	pub const TransactionByteFee: Balance = 1;
 }
 impl pallet_transaction_payment::Trait for Test {
 	type Currency = Ring;
 	type OnTransactionPayment = ();
-	type TransactionBaseFee = TransactionBaseFee;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = ConvertInto;
 	type FeeMultiplierUpdate = ();

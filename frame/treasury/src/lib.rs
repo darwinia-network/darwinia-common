@@ -113,7 +113,7 @@ use frame_support::{
 		Contains, Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, Get, Imbalance,
 		OnUnbalanced, ReservableCurrency, WithdrawReason,
 	},
-	weights::{DispatchClass, Weight, MINIMUM_WEIGHT},
+	weights::{DispatchClass, Weight},
 	Parameter,
 };
 use frame_system::{self as system, ensure_root, ensure_signed};
@@ -607,7 +607,7 @@ decl_module! {
 				Self::spend_funds();
 			}
 
-			MINIMUM_WEIGHT
+			0
 		}
 	}
 }

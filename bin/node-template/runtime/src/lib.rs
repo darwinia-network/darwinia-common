@@ -348,6 +348,7 @@ parameter_types! {
 		read: 60_000_000, // ~0.06 ms = ~60 µs
 		write: 200_000_000, // ~0.2 ms = 200 µs
 	};
+	pub const ExtrinsicBaseWeight: Weight = 10_000_000;
 	pub const MaximumBlockLength: u32 = 5 * 1024 * 1024;
 	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
 	pub const Version: RuntimeVersion = VERSION;
@@ -366,6 +367,8 @@ impl frame_system::Trait for Runtime {
 	type BlockHashCount = BlockHashCount;
 	type MaximumBlockWeight = MaximumBlockWeight;
 	type DbWeight = DbWeight;
+	type BlockExecutionWeight = ();
+	type ExtrinsicBaseWeight = ExtrinsicBaseWeight;
 	type MaximumBlockLength = MaximumBlockLength;
 	type AvailableBlockRatio = AvailableBlockRatio;
 	type Version = Version;
@@ -396,7 +399,6 @@ impl pallet_timestamp::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const TransactionBaseFee: Balance = 1 * MILLI;
 	pub const TransactionByteFee: Balance = 10 * MICRO;
 	// In the Substrate node, a weight of 10_000_000 (smallest non-zero weight)
 	// is mapped to 10_000_000 units of fees, hence:
@@ -407,7 +409,6 @@ parameter_types! {
 impl pallet_transaction_payment::Trait for Runtime {
 	type Currency = Ring;
 	type OnTransactionPayment = DealWithFees;
-	type TransactionBaseFee = TransactionBaseFee;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = LinearWeightToFee<WeightFeeCoefficient>;
 	type FeeMultiplierUpdate = TargetedFeeAdjustment<TargetBlockFullness>;
