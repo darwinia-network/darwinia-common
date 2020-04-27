@@ -1132,7 +1132,7 @@ where
 				// instance that there's no other accounts on the system at all, we might
 				// underflow the issuance and our arithmetic will be off.
 				{
-					let new_total = value + account.reserved();
+					let new_total = value.saturating_add(account.reserved());
 					ensure!(
 						new_total >= ed
 							|| !account.total().is_zero()
