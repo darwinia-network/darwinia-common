@@ -526,7 +526,6 @@ struct InspectingSpans<'a, T: Trait + 'a> {
 	paid_out: &'a mut RKT<T>,
 	slash_of: &'a mut RKT<T>,
 	reward_proportion: Perbill,
-	_marker: sp_std::marker::PhantomData<T>,
 }
 
 // fetches the slashing spans record for a stash account, initializing it if necessary.
@@ -551,7 +550,6 @@ fn fetch_spans<'a, T: Trait + 'a>(
 		slash_of,
 		paid_out,
 		reward_proportion,
-		_marker: sp_std::marker::PhantomData,
 	}
 }
 
