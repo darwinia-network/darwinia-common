@@ -374,16 +374,6 @@ decl_module! {
 			// 3. challenge
 			{
 				Self::verify_header_basic(&header)?;
-
-				// The `verify_header_pow` takes a lot of testing data.
-				// We skipt this in all of the scenario test cases,
-				// such that it is skiped when doing relay_header.
-				//
-				// Then, the `verify_header_pow` is still covered with tested by
-				// - `test_verify_header_pow_of_ropsten_newwork`
-				// - `test_verify_header_pow_of_ethereum_newwork`
-				// with two real testing data
-				#[cfg(not(test))]
 				Self::verify_header_pow(&header, &ethash_proof)?;
 			}
 

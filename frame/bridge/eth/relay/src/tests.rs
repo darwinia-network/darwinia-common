@@ -38,11 +38,8 @@ fn verify_receipt_proof() {
 		let receipt = Receipt::new(TransactionOutcome::StatusCode(1), 1371263.into(), logs);
 
 		// verify receipt
-		assert_ok!(EthRelay::init_genesis_header(&header, 0x6b2dd4a2c4f47d));
-		assert_eq!(
-			EthRelay::verify_receipt(&proof_record),
-			Ok((receipt, Default::default()))
-		);
+		assert_ok!(EthRelay::init_genesis_header(&header.0, 0x6b2dd4a2c4f47d));
+		assert_eq!(EthRelay::verify_receipt(&proof_record), Ok(receipt));
 	});
 }
 
@@ -50,19 +47,19 @@ fn verify_receipt_proof() {
 fn relay_header() {
 	ExtBuilder::default().build().execute_with(|| {
 		let [origin, grandpa, _, parent, current] = mock_canonical_relationship();
-		assert_ok!(EthRelay::init_genesis_header(&origin, 0x6b2dd4a2c4f47d));
+		assert_ok!(EthRelay::init_genesis_header(&origin.0, 0x6b2dd4a2c4f47d));
 
 		// relay grandpa
-		assert_ok!(EthRelay::verify_header_basic(&grandpa));
-		assert_ok!(EthRelay::maybe_store_header(&0, &grandpa));
+		assert_ok!(EthRelay::verify_header_basic(&grandpa.0));
+		assert_ok!(EthRelay::maybe_store_header(&grandpa.0));
 
 		// relay parent
-		assert_ok!(EthRelay::verify_header_basic(&parent));
-		assert_ok!(EthRelay::maybe_store_header(&0, &parent));
+		assert_ok!(EthRelay::verify_header_basic(&parent.0));
+		assert_ok!(EthRelay::maybe_store_header(&parent.0));
 
 		// relay current
-		assert_ok!(EthRelay::verify_header_basic(&current));
-		assert_ok!(EthRelay::maybe_store_header(&0, &current));
+		assert_ok!(EthRelay::verify_header_basic(&current.0));
+		assert_ok!(EthRelay::maybe_store_header(&current.0));
 	});
 }
 
@@ -98,23 +95,23 @@ fn check_receipt_safety() {
 
 		// family tree
 		let [origin, grandpa, uncle, _, _] = mock_canonical_relationship();
-		assert_ok!(EthRelay::init_genesis_header(&origin, 0x6b2dd4a2c4f47d));
+		assert_ok!(EthRelay::init_genesis_header(&origin.0, 0x6b2dd4a2c4f47d));
 
 		let receipt = mock_canonical_receipt();
-		assert_ne!(grandpa.hash, uncle.hash);
-		assert_eq!(grandpa.number, uncle.number);
+		assert_ne!(grandpa.0.hash, uncle.0.hash);
+		assert_eq!(grandpa.0.number, uncle.0.number);
 
 		// check receipt should succeed when we relayed the correct header
 		assert_ok!(EthRelay::relay_header(
 			Origin::signed(0),
-			grandpa.clone(),
-			vec![]
+			grandpa.0.clone(),
+			grandpa.1
 		));
 		assert_ok!(EthRelay::check_receipt(Origin::signed(0), receipt.clone(),));
 
 		// check should fail when canonical hash was re-orged by
 		// the block which contains our tx's brother block
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), uncle, vec![]));
+		assert_ok!(EthRelay::relay_header(Origin::signed(0), uncle.0, uncle.1));
 		assert_err!(
 			EthRelay::check_receipt(Origin::signed(0), receipt.clone()),
 			<Error<Test>>::HeaderNC
@@ -132,21 +129,21 @@ fn canonical_reorg_uncle_should_succeed() {
 		));
 
 		let [origin, grandpa, uncle, _, _] = mock_canonical_relationship();
-		assert_ok!(EthRelay::init_genesis_header(&origin, 0x6b2dd4a2c4f47d));
+		assert_ok!(EthRelay::init_genesis_header(&origin.0, 0x6b2dd4a2c4f47d));
 
 		// check relationship
-		assert_ne!(grandpa.hash, uncle.hash);
-		assert_eq!(grandpa.number, uncle.number);
+		assert_ne!(grandpa.0.hash, uncle.0.hash);
+		assert_eq!(grandpa.0.number, uncle.0.number);
 
-		let (gh, uh) = (grandpa.hash, uncle.hash);
-		let number = grandpa.number;
+		let (gh, uh) = (grandpa.0.hash, uncle.0.hash);
+		let number = grandpa.0.number;
 
 		// relay uncle header
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), uncle, vec![]));
+		assert_ok!(EthRelay::relay_header(Origin::signed(0), uncle.0, uncle.1));
 		assert_eq!(EthRelay::canonical_header_hash(number), uh.unwrap());
 
 		// relay grandpa and re-org uncle
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), grandpa, vec![]));
+		assert_ok!(EthRelay::relay_header(Origin::signed(0), grandpa.0, grandpa.1));
 		assert_eq!(EthRelay::canonical_header_hash(number), gh.unwrap());
 	});
 }
@@ -166,23 +163,23 @@ fn test_safety_block() {
 		let receipt = mock_canonical_receipt();
 
 		// not safety after 0 block
-		assert_ok!(EthRelay::init_genesis_header(&origin, 0x6b2dd4a2c4f47d));
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), grandpa, vec![]));
+		assert_ok!(EthRelay::init_genesis_header(&origin.0, 0x6b2dd4a2c4f47d));
+		assert_ok!(EthRelay::relay_header(Origin::signed(0), grandpa.0, grandpa.1));
 		assert_err!(
 			EthRelay::check_receipt(Origin::signed(0), receipt.clone()),
 			<Error<Test>>::HeaderNS
 		);
 
 		// not safety after 2 blocks
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), uncle, vec![]));
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), parent, vec![]));
+		assert_ok!(EthRelay::relay_header(Origin::signed(0), parent.0, parent.1));
+		assert_ok!(EthRelay::relay_header(Origin::signed(0), uncle.0, uncle.1));
 		assert_err!(
 			EthRelay::check_receipt(Origin::signed(0), receipt.clone()),
 			<Error<Test>>::HeaderNS
 		);
 
 		// safety after 3 blocks
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), current, vec![]));
+		assert_ok!(EthRelay::relay_header(Origin::signed(0), current.0, current.1));
 		assert_ok!(EthRelay::check_receipt(Origin::signed(0), receipt));
 	});
 }
@@ -398,14 +395,4 @@ fn test_build_double_node_with_proof_from_str() {
 		DoubleNodeWithMerkleProof::default().dag_nodes
 	);
 	assert_eq!(double_node_with_merkle_proof.proof.len(), 25);
-}
-
-#[test]
-fn test_verify_header_pow_of_ropsten_newwork() {
-	unimplemented!();
-}
-
-#[test]
-fn test_verify_header_pow_of_ethereum_newwork() {
-	unimplemented!();
 }
