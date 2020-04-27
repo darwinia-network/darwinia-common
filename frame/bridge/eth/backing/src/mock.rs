@@ -10,7 +10,6 @@ use sp_runtime::{
 	traits::{IdentifyAccount, IdentityLookup, OpaqueKeys, Verify},
 	ModuleId, {KeyTypeId, MultiSignature, Perbill},
 };
-use sp_staking::SessionIndex;
 // --- darwinia ---
 use darwinia_eth_relay::EthNetworkType;
 use darwinia_staking::{EraIndex, Exposure, ExposureOf};
