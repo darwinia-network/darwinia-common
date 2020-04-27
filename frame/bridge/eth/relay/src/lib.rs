@@ -34,6 +34,17 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+mod types {
+	// --- darwinia ---
+	use crate::*;
+
+	pub type Balance<T> = <CurrencyT<T> as Currency<AccountId<T>>>::Balance;
+
+	type AccountId<T> = <T as system::Trait>::AccountId;
+
+	type CurrencyT<T> = <T as Trait>::Currency;
+}
+
 // --- crates ---
 use codec::{Decode, Encode};
 use ethereum_types::{H128, H512, H64};
@@ -66,16 +77,7 @@ use eth_primitives::{
 };
 use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
 
-mod types {
-	// --- darwinia ---
-	use crate::*;
-
-	pub type Balance<T> = <CurrencyT<T> as Currency<AccountId<T>>>::Balance;
-
-	type AccountId<T> = <T as system::Trait>::AccountId;
-
-	type CurrencyT<T> = <T as Trait>::Currency;
-}
+use types::*;
 
 /// The eth-relay's module id, used for deriving its sovereign account ID.
 const MODULE_ID: ModuleId = ModuleId(*b"da/ethrl");
@@ -218,7 +220,7 @@ decl_storage! {
 		pub CheckAuthority get(fn check_authority) config(): bool = true;
 		pub Authorities get(fn authorities) config(): Vec<T::AccountId>;
 
-		pub ReceiptVerifyFee get(fn receipt_verify_fee) config(): types::Balance<T>;
+		pub ReceiptVerifyFee get(fn receipt_verify_fee) config(): Balance<T>;
 
 		pub RelayerPoints get(fn relayer_points): map hasher(blake2_128_concat) T::AccountId => u64;
 		pub TotalRelayerPoints get(fn total_points): u64 = 0;
@@ -263,7 +265,7 @@ decl_event! {
 	pub enum Event<T>
 	where
 		<T as frame_system::Trait>::AccountId,
-		Balance = types::Balance<T>,
+		Balance = Balance<T>,
 	{
 		SetGenesisHeader(EthHeader, u64),
 		RelayHeader(AccountId, EthHeader),
@@ -396,9 +398,6 @@ decl_module! {
 		#[weight = SimpleDispatchInfo::FixedNormal(100_000)]
 		pub fn check_receipt(origin, proof_record: EthReceiptProof) {
 			let relayer = ensure_signed(origin)?;
-			if Self::check_authority() {
-				ensure!(Self::authorities().contains(&relayer), <Error<T>>::AccountNP);
-			}
 
 			let (verified_receipt, fee) = Self::verify_receipt(&proof_record)?;
 
@@ -409,7 +408,7 @@ decl_module! {
 			<Module<T>>::deposit_event(RawEvent::VerifyProof(relayer, verified_receipt, proof_record));
 		}
 
-		/// Check receipt
+		/// Claim Reward for Relayers
 		///
 		/// # <weight>
 		/// - `O(1)`.
@@ -427,7 +426,7 @@ decl_module! {
 
 			ensure!(total_points > 0 && points > 0 && max_payout > 0 && total_points >= points, <Error<T>>::PayoutNPF);
 
-			let payout : types::Balance<T> = (points as u128 * max_payout / (total_points  as u128)).saturated_into();
+			let payout : Balance<T> = (points as u128 * max_payout / (total_points  as u128)).saturated_into();
 			let module_account = Self::account_id();
 
 			T::Currency::transfer(&module_account, &relayer, payout, KeepAlive)?;
@@ -515,13 +514,14 @@ decl_module! {
 			ensure_root(origin)?;
 
 			let old_number = NumberOfBlocksFinality::get();
-			if new < old_number {
-				let best_header_info = Self::header_brief(Self::best_header_hash()).ok_or(<Error<T>>::HeaderBriefNE)?;
+			let best_header_info = Self::header_brief(Self::best_header_hash()).ok_or(<Error<T>>::HeaderBriefNE);
+			if new < old_number && best_header_info.is_ok() {
+				let best_header_info_number = best_header_info.unwrap().number;
 
 				for i in 0..(old_number - new) {
 					// Adding reward points to the relayer of finalized block
-					if best_header_info.number > Self::number_of_blocks_finality() + i + 1 {
-						let finalized_block_number = best_header_info.number - Self::number_of_blocks_finality() - i - 1;
+					if best_header_info_number > Self::number_of_blocks_finality() + i + 1 {
+						let finalized_block_number = best_header_info_number - Self::number_of_blocks_finality() - i - 1;
 						let finalized_block_hash = CanonicalHeaderHashes::get(finalized_block_number);
 						if let Some(info) = <HeaderBriefs<T>>::get(finalized_block_hash) {
 							let points: u64 = Self::relayer_points(&info.relayer);
@@ -550,6 +550,18 @@ decl_module! {
 		pub fn set_number_of_blocks_safe(origin, #[compact] new: u64) {
 			ensure_root(origin)?;
 			NumberOfBlocksSafe::put(new);
+		}
+
+		/// Set verify receipt fee
+		///
+		/// # <weight>
+		/// - `O(1)`.
+		/// - One storage write
+		/// # </weight>
+		#[weight = SimpleDispatchInfo::FixedNormal(10_000)]
+		pub fn set_receipt_verify_fee(origin, #[compact] new: Balance<T>) {
+			ensure_root(origin)?;
+			<ReceiptVerifyFee<T>>::put(new);
 		}
 
 	}
@@ -865,13 +877,13 @@ pub trait VerifyEthReceipts<Balance, AccountId> {
 	fn account_id() -> AccountId;
 }
 
-impl<T: Trait> VerifyEthReceipts<types::Balance<T>, T::AccountId> for Module<T> {
+impl<T: Trait> VerifyEthReceipts<Balance<T>, T::AccountId> for Module<T> {
 	/// confirm that the block hash is right
 	/// get the receipt MPT trie root from the block header
 	/// Using receipt MPT trie root to verify the proof and index etc.
 	fn verify_receipt(
 		proof_record: &EthReceiptProof,
-	) -> Result<(Receipt, types::Balance<T>), DispatchError> {
+	) -> Result<(Receipt, Balance<T>), DispatchError> {
 		let info =
 			Self::header_brief(&proof_record.header_hash).ok_or(<Error<T>>::HeaderBriefNE)?;
 

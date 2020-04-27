@@ -24,6 +24,8 @@ pub type System = frame_system::Module<Test>;
 pub type EthRelay = Module<Test>;
 pub type Ring = darwinia_balances::Module<Test, RingInstance>;
 
+pub(crate) type RingError = darwinia_balances::Error<Test, RingInstance>;
+
 darwinia_support::impl_account_data! {
 	pub struct AccountData<Balance>
 	for
