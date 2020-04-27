@@ -128,7 +128,6 @@ parameter_types! {
 impl Trait for Test {
 	type AuthorityId = UintAuthorityId;
 	type Event = ();
-	type Call = Call;
 	type FetchInterval = FetchInterval;
 }
 

@@ -51,12 +51,9 @@ use core::str::from_utf8;
 // --- crates ---
 use codec::Decode;
 // --- substrate ---
-use frame_support::{debug::trace, decl_error, decl_event, decl_module, traits::Get};
-use frame_system::{
-	self as system,
-	offchain::{
-		AppCrypto, CreateSignedTransaction, SendSignedTransaction, Signer, SubmitTransaction,
-	},
+use frame_support::{debug::trace, decl_error, decl_module, traits::Get};
+use frame_system::offchain::{
+	AppCrypto, CreateSignedTransaction, ForAll, SendSignedTransaction, Signer,
 };
 use sp_runtime::{offchain::http::Request, traits::Zero, DispatchError, KeyTypeId};
 use sp_std::prelude::*;
@@ -149,23 +146,10 @@ impl OffchainRequestTrait for OffchainRequest {
 	}
 }
 
-pub trait Trait: CreateSignedTransaction<Call<Self>> + darwinia_eth_relay::Trait {
+pub trait Trait: CreateSignedTransaction<EthRelayCall<Self>> + darwinia_eth_relay::Trait {
 	type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
 
-	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
-
-	type Call: From<EthRelayCall<Self>>;
-
 	type FetchInterval: Get<Self::BlockNumber>;
-}
-
-decl_event! {
-	pub enum Event<T>
-	where
-		AccountId = <T as system::Trait>::AccountId
-	{
-		OffchainRelayChainApiKey(AccountId), // currently not use, implement someday not now
-	}
 }
 
 decl_error! {
@@ -194,8 +178,6 @@ decl_module! {
 
 		const FetchInterval: T::BlockNumber = T::FetchInterval::get();
 
-		fn deposit_event() = default;
-
 		/// The offchain worker which will be called in a regular block schedule
 		/// The relay_header is called when the block meet the schedule timing
 		fn offchain_worker(block: T::BlockNumber) {
@@ -219,7 +201,7 @@ impl<T: Trait> Module<T> {
 	/// The default communication will transfer data with scale encoding,
 	/// if there are issue to communicate with scale encoding, the failback communication will
 	/// be performed with json format(use option: `true`)
-	fn relay_header(signer: &Signer<T, T::AuthorityId>) -> Result<(), DispatchError> {
+	fn relay_header(signer: &Signer<T, T::AuthorityId, ForAll>) -> Result<(), DispatchError> {
 		let target_number = Self::get_target_number()?;
 		let header_without_option = Self::fetch_header(ETH_RESOURCE.to_vec(), target_number, false);
 		let (header, proof_list) = match header_without_option {
@@ -314,17 +296,17 @@ impl<T: Trait> Module<T> {
 
 	/// Submit and record the valid header on Darwinia network
 	fn submit_header(
-		signer: &Signer<T, T::AuthorityId>,
+		signer: &Signer<T, T::AuthorityId, ForAll>,
 		header: EthHeader,
 		proof_list: Vec<DoubleNodeWithMerkleProof>,
 	) {
-		let results =
-			signer.send_signed_transaction(|_| <EthRelayCall<T>>::relay_header(header, proof_list));
-		for (account, result) in &results {
+		let results = signer.send_signed_transaction(|_| {
+			<EthRelayCall<T>>::relay_header(header.clone(), proof_list.clone())
+		});
+		for (_, result) in &results {
 			trace!(
 				target: "eth-offchain",
-				"[eth-offchain] Account: {:?}, Relay: {:?}",
-				account,
+				"[eth-offchain] Relay: {:?}",
 				result,
 			);
 		}

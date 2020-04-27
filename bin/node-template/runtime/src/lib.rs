@@ -726,7 +726,7 @@ construct_runtime!(
 
 		EthBacking: darwinia_eth_backing::{Module, Call, Storage, Config<T>, Event<T>},
 		EthRelay: darwinia_eth_relay::{Module, Call, Storage, Config<T>, Event<T>},
-		EthOffchain: darwinia_eth_offchain::{Module, Call, Event<T>},
+		EthOffchain: darwinia_eth_offchain::{Module, Call},
 
 		HeaderMMR: darwinia_header_mmr::{Module, Call, Storage},
 
