@@ -1,4 +1,30 @@
+//! # Darwinia-eth-relay Module
+//!
 //! Prototype module for bridging in Ethereum pow blockchain, including Mainnet and Ropsten.
+//!
+//! ## Overview
+//!
+//! The darwinia eth relay module itself is a chain relay targeting Ethereum networks to
+//! Darwinia networks. This module follows the basic linear chain relay design which
+//! requires relayers to relay the headers one by one.
+//!
+//! ### Relayer Incentive Model
+//!
+//! There is a points pool recording contribution of relayers, for each finalized and
+//! relayed block header, the relayer(origin) will get one unit of contribution point.
+//! The income of the points pool come from two parts:
+//! 	- The first part comes from clients who use chain relay to verify receipts, they
+//!       might need to pay for the check_receipt service, although currently the chain
+//!       relay didn't charge service fees, but in future, customers module/call should
+//!       pay for this.
+//!     - The second part comes from the compensate budget/proposal from system or governance,
+//!       for example, someone may submit a proposal from treasury module to compensate the
+//!       relay module account (points pool).
+//!
+//! The points owners can claim their incomes any time(block), the income is calculated according
+//! to his points proportion of total points, and after paying to him, the points will be destroyed
+//! from the points pool.
+//!
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "128"]
@@ -23,11 +49,11 @@ use frame_support::{
 use frame_system::{self as system, ensure_root, ensure_signed};
 use sp_io::hashing::sha2_256;
 use sp_runtime::{
-	traits::{AccountIdConversion, DispatchInfoOf, Dispatchable, SignedExtension},
+	traits::{AccountIdConversion, DispatchInfoOf, Dispatchable, Saturating, SignedExtension},
 	transaction_validity::{
 		InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
 	},
-	DispatchError, DispatchResult, ModuleId, RuntimeDebug,
+	DispatchError, DispatchResult, ModuleId, RuntimeDebug, SaturatedConversion,
 };
 use sp_std::{cell::RefCell, prelude::*};
 // --- darwinia ---
@@ -158,6 +184,7 @@ pub struct EthHeaderBrief<T> {
 	pub parent_hash: H256,
 	/// Block number
 	pub number: EthBlockNumber,
+	/// Relayer of the block header
 	pub relayer: T,
 }
 
@@ -235,7 +262,8 @@ decl_storage! {
 decl_event! {
 	pub enum Event<T>
 	where
-		<T as frame_system::Trait>::AccountId
+		<T as frame_system::Trait>::AccountId,
+		Balance = types::Balance<T>,
 	{
 		SetGenesisHeader(EthHeader, u64),
 		RelayHeader(AccountId, EthHeader),
@@ -243,6 +271,7 @@ decl_event! {
 		AddAuthority(AccountId),
 		RemoveAuthority(AccountId),
 		ToggleCheckAuthorities(bool),
+		ClaimReward(AccountId, Balance),
 	}
 }
 
@@ -299,6 +328,9 @@ decl_error! {
 		DifficultyVF,
 		/// Proof - VERIFICATION FAILED
 		ProofVF,
+
+		/// Payout - NO POINTS OR FUNDS
+		PayoutNPF,
 	}
 }
 
@@ -375,6 +407,32 @@ decl_module! {
 			T::Currency::transfer(&relayer, &module_account, fee, KeepAlive)?;
 
 			<Module<T>>::deposit_event(RawEvent::VerifyProof(relayer, verified_receipt, proof_record));
+		}
+
+		/// Check receipt
+		///
+		/// # <weight>
+		/// - `O(1)`.
+		/// - Limited Storage reads
+		/// - Up to one event
+		/// # </weight>
+		#[weight = SimpleDispatchInfo::FixedNormal(100_000)]
+		pub fn claim_reward(origin) {
+			let relayer = ensure_signed(origin)?;
+
+			let points = Self::relayer_points(&relayer);
+			let total_points = Self::total_points();
+
+			let max_payout = Self::pot::<T::Currency>().saturated_into();
+
+			ensure!(total_points > 0 && points > 0 && max_payout > 0, <Error<T>>::PayoutNPF);
+
+			let payout : types::Balance<T> = (points as u128 * max_payout / (total_points  as u128)).saturated_into();
+			let module_account = Self::account_id();
+
+			T::Currency::transfer(&module_account, &relayer, payout, KeepAlive)?;
+
+			<Module<T>>::deposit_event(RawEvent::ClaimReward(relayer, payout));
 		}
 
 		// --- root call ---
@@ -793,6 +851,14 @@ impl<T: Trait> Module<T> {
 		<HeaderBriefs<T>>::insert(header_hash, header_brief.clone());
 
 		Ok(())
+	}
+
+	/// Return the amount of money in the pot.
+	// The existential deposit is not part of the pot so eth-relay account never gets deleted.
+	fn pot<C: Currency<T::AccountId>>() -> C::Balance {
+		C::free_balance(&Self::account_id())
+			// Must never be less than 0 but better be safe.
+			.saturating_sub(C::minimum_balance())
 	}
 }
 
