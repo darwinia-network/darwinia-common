@@ -39,7 +39,7 @@ fn verify_receipt_proof() {
 
 		// verify receipt
 		assert_ok!(EthRelay::init_genesis_header(&header.0, 0x6b2dd4a2c4f47d));
-		assert_eq!(EthRelay::verify_receipt(&proof_record), Ok(receipt));
+		assert_eq!(EthRelay::verify_receipt(&proof_record).unwrap().0, receipt);
 	});
 }
 
@@ -51,15 +51,15 @@ fn relay_header() {
 
 		// relay grandpa
 		assert_ok!(EthRelay::verify_header_basic(&grandpa.0));
-		assert_ok!(EthRelay::maybe_store_header(&grandpa.0));
+		assert_ok!(EthRelay::maybe_store_header(&0, &grandpa.0));
 
 		// relay parent
 		assert_ok!(EthRelay::verify_header_basic(&parent.0));
-		assert_ok!(EthRelay::maybe_store_header(&parent.0));
+		assert_ok!(EthRelay::maybe_store_header(&0, &parent.0));
 
 		// relay current
 		assert_ok!(EthRelay::verify_header_basic(&current.0));
-		assert_ok!(EthRelay::maybe_store_header(&current.0));
+		assert_ok!(EthRelay::maybe_store_header(&0, &current.0));
 	});
 }
 
@@ -269,11 +269,11 @@ fn receipt_verify_fees_and_relayer_claim_reward() {
 		let receipt = mock_canonical_receipt();
 
 		// not safety after 0 block
-		assert_ok!(EthRelay::init_genesis_header(&origin, 0x6b2dd4a2c4f47d));
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), grandpa, vec![]));
+		assert_ok!(EthRelay::init_genesis_header(&origin.0, 0x6b2dd4a2c4f47d));
+		assert_ok!(EthRelay::relay_header(Origin::signed(0), grandpa.0, vec![]));
 
 		// not safety after 2 blocks
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), parent, vec![]));
+		assert_ok!(EthRelay::relay_header(Origin::signed(0), parent.0, vec![]));
 
 		assert_ok!(EthRelay::check_receipt(Origin::signed(1), receipt.clone()));
 
