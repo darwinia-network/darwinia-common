@@ -32,6 +32,7 @@ sp-std = { default-features = false, git = "https://github.com/darwinia-network/
 # crates
 ethash = { git = "https://github.com/darwinia-network/rust-ethash" }
 keccak-hasher = { version = "0.15.2" }
+serde_json = { version = "1.0.51" }
 # github
 triehash = { git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
@@ -60,3 +61,4 @@ std = [
 	"sp-std/std",
 ]
 with-new-dag = ["default"]
+easy-testing = ["default"]
