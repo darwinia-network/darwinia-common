@@ -178,7 +178,7 @@ impl DoubleNodeWithMerkleProof {
 
 /// Familial details concerning a block
 #[derive(Clone, Default, PartialEq, Encode, Decode)]
-pub struct EthHeaderBrief<T> {
+pub struct EthHeaderBrief<AccountId> {
 	/// Total difficulty of the block and all its parents
 	pub total_difficulty: U256,
 	/// Parent hash of the header
@@ -186,7 +186,7 @@ pub struct EthHeaderBrief<T> {
 	/// Block number
 	pub number: EthBlockNumber,
 	/// Relayer of the block header
-	pub relayer: T,
+	pub relayer: AccountId,
 }
 
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
@@ -416,7 +416,7 @@ decl_module! {
 			let points = Self::relayer_points(&relayer);
 			let total_points = Self::total_points();
 
-			let max_payout = Self::pot::<T::Currency>().saturated_into();
+			let max_payout = Self::pot().saturated_into();
 
 			ensure!(total_points > 0 && points > 0 && max_payout > 0 && total_points >= points, <Error<T>>::PayoutNPF);
 
@@ -857,10 +857,10 @@ impl<T: Trait> Module<T> {
 
 	/// Return the amount of money in the pot.
 	// The existential deposit is not part of the pot so eth-relay account never gets deleted.
-	fn pot<C: Currency<T::AccountId>>() -> C::Balance {
-		C::free_balance(&Self::account_id())
+	fn pot() -> Balance<T> {
+		T::Currency::free_balance(&Self::account_id())
 			// Must never be less than 0 but better be safe.
-			.saturating_sub(C::minimum_balance())
+			.saturating_sub(T::Currency::minimum_balance())
 	}
 }
 
