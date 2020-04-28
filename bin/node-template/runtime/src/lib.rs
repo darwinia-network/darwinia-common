@@ -539,7 +539,8 @@ parameter_types! {
 	pub const BondingDurationInEra: darwinia_staking::EraIndex = 14 * 24 * (HOURS / (SESSIONS_PER_ERA * BLOCKS_PER_SESSION));
 	pub const BondingDurationInBlockNumber: BlockNumber = 14 * DAYS;
 	pub const SlashDeferDuration: darwinia_staking::EraIndex = 7 * 24; // 1/4 the bonding duration.
-	pub const ElectionLookahead: BlockNumber = 2;
+	pub const ElectionLookahead: BlockNumber = BLOCKS_PER_SESSION / 4;
+	pub const MaxIterations: u32 = 5;
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
 	/// We prioritize im-online heartbeats over phragmen solution submission.
 	pub const StakingUnsignedPriority: TransactionPriority = TransactionPriority::max_value() / 2;
@@ -560,6 +561,7 @@ impl darwinia_staking::Trait for Runtime {
 	type NextNewSession = Session;
 	type ElectionLookahead = ElectionLookahead;
 	type Call = Call;
+	type MaxIterations = MaxIterations;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
 	type UnsignedPriority = StakingUnsignedPriority;
 	type RingCurrency = Ring;
