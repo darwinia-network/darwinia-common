@@ -261,7 +261,8 @@ impl<T: Trait> Module<T> {
 		let eth_header_part =
 			Self::extract_from_json_str(&resp_body[..], b"eth_header" as &[u8]).unwrap_or_default();
 		let header = if option {
-			EthHeader::from_str_unchecked(from_utf8(eth_header_part).unwrap_or_default())
+			panic!("FIXME")
+		// EthHeader::from_str_unchecked(from_utf8(eth_header_part).unwrap_or_default())
 		} else {
 			let scale_bytes = hex_bytes_unchecked(from_utf8(eth_header_part).unwrap_or_default());
 			Decode::decode::<&[u8]>(&mut &scale_bytes[..]).unwrap_or_default()
