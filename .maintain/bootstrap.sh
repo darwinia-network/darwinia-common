@@ -18,9 +18,7 @@ if [[ "$1" != "--fast" ]]; then
             exit 1
         elif [ -f /etc/arch-release ]; then
             echo "Arch Linux detected."
-            sudo pacman -Syu --needed --noconfirm cmake gcc openssl-1.0 clang llvm rocksdb curl
-            export OPENSSL_LIB_DIR="/usr/lib/openssl-1.0";
-            export OPENSSL_INCLUDE_DIR="/usr/include/openssl-1.0"
+            sudo pacman -Syu --needed --noconfirm cmake gcc openssl clang llvm rocksdb curl grep awk jemalloc make
         elif [ -f /etc/mandrake-release ]; then
             echo "Mandrake Linux detected, but current not support sorry."
             echo "Contribution is always welcome."
@@ -53,14 +51,8 @@ if [[ "$1" != "--fast" ]]; then
     fi
 fi
 
-# Setup git hooks
-cp .hooks/* .git/hooks
+# Setup git hooks, if the source code download by git clone
+cp .hooks/* .git/hooks || echo 'githook is not installed'
 
 # Install nightly Rust
-curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain=nightly -y
-
-# Install wasm toolchain
-rustup target add wasm32-unknown-unknown
-
-# Install rustfmt for coding style checking
-rustup component add rustfmt --toolchain nightly
+curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain=nightly -t wasm32-unknown-unknown -c rustfmt -y
