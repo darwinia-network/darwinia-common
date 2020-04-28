@@ -270,10 +270,10 @@ fn receipt_verify_fees_and_relayer_claim_reward() {
 
 		// not safety after 0 block
 		assert_ok!(EthRelay::init_genesis_header(&origin.0, 0x6b2dd4a2c4f47d));
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), grandpa.0, vec![]));
+		assert_ok!(EthRelay::relay_header(Origin::signed(0), grandpa.0, grandpa.1));
 
 		// not safety after 2 blocks
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), parent.0, vec![]));
+		assert_ok!(EthRelay::relay_header(Origin::signed(0), parent.0, parent.1));
 
 		assert_ok!(EthRelay::check_receipt(Origin::signed(1), receipt.clone()));
 
