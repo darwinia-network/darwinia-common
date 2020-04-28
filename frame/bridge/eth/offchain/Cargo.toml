@@ -31,8 +31,13 @@ eth-primitives = { features = ["easy-testing"], path = "../../../../primitives/e
 # crates
 serde_json = { version = "1.0.51" }
 # substrate
+<<<<<<< HEAD
 sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.5" }
 sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.5" }
+=======
+sp-core = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
+sp-io = { git = "https://github.com/darwinia-network/substrate.git", rev = "d1238423a3093eb64df90c0eebdbf504c8df56dd" }
+>>>>>>> 2983ac7... fix deps
 
 [features]
 default = ["std"]
