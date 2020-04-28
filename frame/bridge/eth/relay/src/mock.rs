@@ -12,7 +12,7 @@ use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill};
 // --- darwinia ---
 use crate::*;
-use darwinia_support::{bytes_thing::{base_n_bytes_unchecked, hex_bytes_unchecked}, literal_procesor::extract_from_json_str};
+use darwinia_support::{bytes_thing:: hex_bytes_unchecked, literal_procesor::extract_from_json_str};
 use eth_primitives::receipt::LogEntry;
 
 type AccountId = u64;
@@ -295,11 +295,11 @@ pub fn mock_canonical_relationship() -> [(EthHeader, Vec<DoubleNodeWithMerklePro
 	// | parent  | 7575767 |                                                                    |
 	// | current | 7575768 | 0xfc836bf547f1e035e837bf0a8d26e432aa26da9659db5bf6ba69b0341d818778 |
 	[
-		load_ethheader_with_proof("./src/test-data/7575765_scale.json"),
-		load_ethheader_with_proof("./src/test-data/7575766_scale.json"),
-		load_ethheader_with_proof("./src/test-data/7575767_scale.json"),
-		load_ethheader_with_proof("./src/test-data/7575768_scale.json"),
-		load_ethheader_with_proof("./src/test-data/7575769_scale.json"),
+		load_ethheader_with_proof("./src/test-data/ropsten_origin_7575765_scale.json"),
+		load_ethheader_with_proof("./src/test-data/ropsten_grandpa_7575766_scale.json"),
+		load_ethheader_with_proof("./src/test-data/ropsten_uncle_7575766_scale.json"),
+		load_ethheader_with_proof("./src/test-data/ropsten_parent_7575767_scale.json"),
+		load_ethheader_with_proof("./src/test-data/ropsten_current_7575768_scale.json"),
 	]
 }
 
@@ -350,13 +350,13 @@ pub fn mock_receipt_logs() -> Vec<LogEntry> {
 // TODO: make this correct
 pub const MAINNET_GENESIS_HEADER: &'static str = r#"
 {
-	"difficulty": "0x400000000",
-	"extraData": "0x11bbe8db4e347b4e8c937c1c8370e4b5ed33adb3db69cbdb7a38e1e50b1b82fa",
+	"difficulty": "0x592101746",
+	"extraData": "0xde830207028f5061726974792d457468657265756d86312e34312e30826c69",
 	"gasLimit": "0x1388",
 	"gasUsed": "0x0",
 	"hash": "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3",
 	"logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-	"miner": "0x0000000000000000000000000000000000000000",
+	"miner": "0x05FC5a079e0583B8A07526023A16E2022c4C6296",
 	"mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
 	"nonce": "0x0000000000000042",
 	"number": "0x0",
