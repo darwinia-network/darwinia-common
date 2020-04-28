@@ -2,6 +2,8 @@
 
 // --- std ---
 use std::{cell::RefCell, fs::File};
+use std::str::from_utf8;
+use std::io::Read;
 // --- crates ---
 use serde::Deserialize;
 // --- substrate ---
@@ -10,7 +12,7 @@ use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill};
 // --- darwinia ---
 use crate::*;
-use darwinia_support::bytes_thing::{fixed_hex_bytes_unchecked, hex_bytes_unchecked};
+use darwinia_support::{bytes_thing:: hex_bytes_unchecked, literal_procesor::extract_from_json_str};
 use eth_primitives::receipt::LogEntry;
 
 type AccountId = u64;
@@ -259,6 +261,22 @@ impl ExtBuilder {
 	}
 }
 
+fn load_ethheader_with_proof(path: &'static str) -> (EthHeader, Vec<DoubleNodeWithMerkleProof>) {
+	let mut buffer = Vec::new();
+	let mut f = File::open(path).unwrap();
+	f.read_to_end(&mut buffer).unwrap_or_default();
+
+	let eth_header_part = extract_from_json_str(&buffer[..], b"eth_header" as &[u8]).unwrap_or_default();
+	let header_scale_bytes = hex_bytes_unchecked(from_utf8(eth_header_part).unwrap_or_default());
+	let header: EthHeader = Decode::decode::<&[u8]>(&mut &header_scale_bytes[..]).unwrap_or_default();
+
+	let proof_part = extract_from_json_str(&buffer[..], b"proof" as &[u8]).unwrap_or_default();
+	let proof_scale_bytes = hex_bytes_unchecked(from_utf8(proof_part).unwrap_or_default());
+	let double_node_with_proof_list = Decode::decode::<&[u8]>(&mut &proof_scale_bytes[..]).unwrap_or_default();
+
+	(header, double_node_with_proof_list)
+}
+
 /// To help reward miners for when duplicate block solutions are found
 /// because of the shorter block times of Ethereum (compared to other cryptocurrency).
 /// An uncle is a smaller reward than a full block.
@@ -266,14 +284,22 @@ impl ExtBuilder {
 /// stackoverflow: https://ethereum.stackexchange.com/questions/34/what-is-an-uncle-ommer-block
 ///
 /// returns: [origin, grandpa, uncle, parent, current]
-pub fn mock_canonical_relationship() -> [EthHeader; 5] {
-	let mut headers = HEADERS.split("@next");
+pub fn mock_canonical_relationship() -> [(EthHeader, Vec<DoubleNodeWithMerkleProof>); 5] {
+
+	// The block we loads
+	// | pos     | height  | tx                                                                 |
+	// |---------|---------|--------------------------------------------------------------------|
+	// | origin  | 7575765 |                                                                    |
+	// | grandpa | 7575766 | 0xc56be493f656f1c8222006eda5cd3392be5f0c096e8b7fb1c5542088c0f0c889 |
+	// | uncle   | 7575766 |                                                                    |
+	// | parent  | 7575767 |                                                                    |
+	// | current | 7575768 | 0xfc836bf547f1e035e837bf0a8d26e432aa26da9659db5bf6ba69b0341d818778 |
 	[
-		EthHeader::from_str_unchecked(headers.next().unwrap()),
-		EthHeader::from_str_unchecked(headers.next().unwrap()),
-		EthHeader::from_str_unchecked(headers.next().unwrap()),
-		EthHeader::from_str_unchecked(headers.next().unwrap()),
-		EthHeader::from_str_unchecked(headers.next().unwrap()),
+		load_ethheader_with_proof("./src/test-data/ropsten_origin_7575765_scale.json"),
+		load_ethheader_with_proof("./src/test-data/ropsten_grandpa_7575766_scale.json"),
+		load_ethheader_with_proof("./src/test-data/ropsten_uncle_7575766_scale.json"),
+		load_ethheader_with_proof("./src/test-data/ropsten_parent_7575767_scale.json"),
+		load_ethheader_with_proof("./src/test-data/ropsten_current_7575768_scale.json"),
 	]
 }
 
@@ -321,6 +347,7 @@ pub fn mock_receipt_logs() -> Vec<LogEntry> {
 		.collect()
 }
 
+// TODO: make this correct
 pub const MAINNET_GENESIS_HEADER: &'static str = r#"
 {
 	"difficulty": "0x400000000",
@@ -329,7 +356,7 @@ pub const MAINNET_GENESIS_HEADER: &'static str = r#"
 	"gasUsed": "0x0",
 	"hash": "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3",
 	"logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-	"miner": "0x0000000000000000000000000000000000000000",
+	"miner": "0x11bbe8db4e347b4e8c937c1c8370e4b5ed33adb3db69cbdb7a38e1e50b1b82fa",
 	"mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
 	"nonce": "0x0000000000000042",
 	"number": "0x0",
@@ -342,132 +369,6 @@ pub const MAINNET_GENESIS_HEADER: &'static str = r#"
 	"totalDifficulty": "0x400000000",
 	"transactions": [omitted],
 	"transactionsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
-	"uncles": [omitted]
-}
-"#;
-
-/// # Genealogical Tree
-///
-/// | pos     | height  | tx                                                                 |
-/// |---------|---------|--------------------------------------------------------------------|
-/// | origin  | 7575765 |                                                                    |
-/// | grandpa | 7575766 | 0xc56be493f656f1c8222006eda5cd3392be5f0c096e8b7fb1c5542088c0f0c889 |
-/// | uncle   | 7575766 |                                                                    |
-/// | parent  | 7575767 |                                                                    |
-/// | current | 7575768 | 0xfc836bf547f1e035e837bf0a8d26e432aa26da9659db5bf6ba69b0341d818778 |
-pub const HEADERS: &'static str = r#"
-{
-	"difficulty": "0x234ac172",
-	"extraData": "0xde830207028f5061726974792d457468657265756d86312e34312e30826c69",
-	"gasLimit": "0x7a121d",
-	"gasUsed": "0x1b8855",
-	"hash": "0x253c1f8ed3051930949251bcf786d4ecfe379c001202d07aeb8a68ba15588f1d",
-	"logsBloom": "0x0006000000400004000000000800000ac000000200208000040000100084410200017001004000090100600000002800000041020002400000000000200000c81080602800004000000200080020000828200000110320001000000008008420000000400200a0008c0000380410084040200201040001000014045011001010000408000000a80000000010020002000000049000000000800a5000080000000000008010000000820041040014000100000004000000000040000002000000000000221000404028000002048200080000000000000000000001000108204002000200000012000000808000008200a0020000001000800000000080000000",
-	"miner": "0x05fc5a079e0583b8a07526023a16e2022c4c6296",
-	"mixHash": "0xe582018f215ce844c7e0b9bd10ee8ab89cad57dc01f3aec080bff11134cc5573",
-	"nonce": "0xe55fdb2d73c14cee",
-	"number": "0x7398d5",
-	"parentHash": "0xccd3a54b1bb11a8fa7eb82c6885c3bdcc9884cb0229cb9a70683d58bfe78e80c",
-	"receiptsRoot": "0x6c57de9ea8a275b131b344d60bbdef1ea1465753cba5924be631116fc9994d8b",
-	"sha3Uncles": "0xec428257d3daf5aa3a394665c7ab79e14a51116178653038fd2d5c23bb011833",
-	"size": "0x1b0b",
-	"stateRoot": "0xbd3b97632b55686763748c69dec192fa2b5067c92cc0e3b5e19afad6bf43ed04",
-	"timestamp": "0x5e78f257",
-	"totalDifficulty": "0x6b2dd4a2c4f47d",
-	"transactions": [omitted],
-	"transactionsRoot": "0x1d096373d65213a55a03f1edd066091ef245054ddbd827a4679f19983b2d8ae6",
-	"uncles": [omitted]
-}
-@next
-{
-	"difficulty": "592679970",
-	"extraData": "0xde830207028f5061726974792d457468657265756d86312e34312e30826c69",
-	"gasLimit": 8000029,
-	"gasUsed": 1673785,
-	"hash": "0xb49cc783d8da7896e5dc50fc2a927b80dcef6ebb36738a3f0aeaf3b4f970e768",
-	"logsBloom": "0x00000000000000000000002040000000c000000000202010080002100084400000401001000000020000400040002000000000000002c040000809000000004010800020000040000000020a1002000040000000800100000000000000000000000000000200a0008000000800000804482000010400000000000010100010000000080000000001000000000000000000000480004004000008000000200000000000002200000000000000000000000000000000000200000000000000000002000002100000012000200000040008080001000000000800200000000060000108000080001000000002000000000000000000001000020010000000000000",
-	"miner": "0x05FC5a079e0583B8A07526023A16E2022c4C6296",
-	"mixHash": "0xd1716ffbdb6b77a6a1a76bca2e4b5c6c5079689c4402cc0df583c08737a3957e",
-	"nonce": "0x1a711f7039202c30",
-	"number": 7575766,
-	"parentHash": "0x253c1f8ed3051930949251bcf786d4ecfe379c001202d07aeb8a68ba15588f1d",
-	"receiptsRoot": "0xa4d62fe6b519fe3e2fbeb4862bb7151340c638f59dc5865974a4064d97d30b36",
-	"sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-	"size": 5099,
-	"stateRoot": "0x9a1a18d30c00565b3f3c4a13829c9ca4adabb3c0080bf707cf738e35c46cc4db",
-	"timestamp": 1584984668,
-	"totalDifficulty": "30168214387853471",
-	"transactions": [omitted],
-	"transactionsRoot": "0x770bedcea35a614a3bc56e5047c5731215a989380cef38bfc017ec8459d9af72",
-	"uncles": [omitted]
-}
-@next
-{
-	"difficulty": "592679970",
-	"extraData": "0xde830207028f5061726974792d457468657265756d86312e34312e30826c69",
-	"gasLimit": 8000029,
-	"gasUsed": 1673785,
-	"hash": "0x44a9de57eb3fde9e2f11491bde0f6292ca533cd015d72a6ae877890c63c3c62f",
-	"logsBloom": "0x00000000000000000000002040000000c000000000202010080002100084400000401001000000020000400040002000000000000002c040000809000000004010800020000040000000020a1002000040000000800100000000000000000000000000000200a0008000000800000804482000010400000000000010100010000000080000000001000000000000000000000480004004000008000000200000000000002200000000000000000000000000000000000200000000000000000002000002100000012000200000040008080001000000000800200000000060000108000080001000000002000000000000000000001000020010000000000000",
-	"miner": "0x05FC5a079e0583B8A07526023A16E2022c4C6296",
-	"mixHash": "0xff7a54c198bd9dd3fc363020e550dbfc633fccdad934eff4ff84850b3e39ed48",
-	"nonce": "0x1a711f703aa5d304",
-	"number": 7575766,
-	"parentHash": "0x253c1f8ed3051930949251bcf786d4ecfe379c001202d07aeb8a68ba15588f1d",
-	"receiptsRoot": "0xa4d62fe6b519fe3e2fbeb4862bb7151340c638f59dc5865974a4064d97d30b36",
-	"sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-	"size": 549,
-	"stateRoot": "0x9a1a18d30c00565b3f3c4a13829c9ca4adabb3c0080bf707cf738e35c46cc4db",
-	"timestamp": 1584984668,
-	"totalDifficulty": "30168214387853471",
-	"transactions": [omitted],
-	"transactionsRoot": "0x770bedcea35a614a3bc56e5047c5731215a989380cef38bfc017ec8459d9af72",
-	"uncles": [omitted]
-}
-@next
-{
-	"difficulty": "592679970",
-	"extraData": "0xde8302050d8f5061726974792d457468657265756d86312e33382e30826c69",
-	"gasLimit": 8000029,
-	"gasUsed": 3006750,
-	"hash": "0x05f153ee818d06794a0fb0443bfc428e3cf68a96a30c24e88325f2aa1659294d",
-	"logsBloom": "0x800400000200040000001040000004008000002200000000000000000584010000030009000000010800200000000000004008008002000000000000060000f0508020080200000000000908000000080800000000000400908000000000801000000000020060000c00002400000800402002000401000000142010510010000014080000008000000000000200020004000480010000008000000108010000000000000008100000004560001400010004000c0000000008000000000000000008010610000004a0a0010010000008000000000000000000000020090820400000000004000010000080000000000140000001000000002000000880000000",
-	"miner": "0x635B4764D1939DfAcD3a8014726159abC277BecC",
-	"mixHash": "0x8f99e71c2111c2cd241c29d2bddfbb5899a09fb9a6e453fe0aee22f939eb6b95",
-	"nonce": "0x6ba0ad07a53bf14d",
-	"number": 7575767,
-	"parentHash": "0xb49cc783d8da7896e5dc50fc2a927b80dcef6ebb36738a3f0aeaf3b4f970e768",
-	"receiptsRoot": "0x371ffbfd85a76511d9d6b1162f93cfe70e9d31aaa2773e035d84b94a2c6d4699",
-	"sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-	"size": 9558,
-	"stateRoot": "0x5df70e19f157bc2804aff4e17f752e3b57a77cb8ffa967e50ee9709a1f73a459",
-	"timestamp": 1584984682,
-	"totalDifficulty": "30168214980533441",
-	"transactions": [omitted],
-	"transactionsRoot": "0x6d42a354ae9d5d9d103f640042889f06bc98217bf0d635fb39dd531120efe836",
-	"uncles": [omitted]
-}
-@next
-{
-	"difficulty": "592969364",
-	"extraData": "0xde830207028f5061726974792d457468657265756d86312e34312e30826c69",
-	"gasLimit": 8000029,
-	"gasUsed": 1933244,
-	"hash": "0xda6db2ef04f5f7ba97b16de78b3706b174926168e3e6b83d4923b19188a07e4f",
-	"logsBloom": "0x080040000000000000000020080000004000000000202010080000100004400000400001000000020000400040000000000000000000804000000900000000000000000000004000000003081000080000000000000000000000000000000000000000000200a0008010008800000804082000010000800000000010004000000080080000000001000000000000000000000000004004000008000040200000000000000200000000000000000000000000000000000200000000000000000002000002080000010002000000040008000001000000010800200000000060000000000000001080000000100000000000000000001000020000808000000000",
-	"miner": "0x05FC5a079e0583B8A07526023A16E2022c4C6296",
-	"mixHash": "0x9a39a843c6dd051877c97c90fada4f50976bbd33adb6cc341aadb0131e418731",
-	"nonce": "0x6a8de7b9f4efeb04",
-	"number": 7575768,
-	"parentHash": "0x05f153ee818d06794a0fb0443bfc428e3cf68a96a30c24e88325f2aa1659294d",
-	"receiptsRoot": "0xa190cfab34c8a3519edca74aeb813751e4af6863c8bdb4afb8c692872fa6c031",
-	"sha3Uncles": "0x805fc9304943c784d4b9ed2c20383bc334a7ea4c8d046031d1fb986b224a7e2f",
-	"size": 5809,
-	"stateRoot": "0x7a9892ed9ab322eb44e564184377610645715f576ecc22706e7265e28ca870c8",
-	"timestamp": 1584984686,
-	"totalDifficulty": "30168215573502805",
-	"transactions": [omitted],
-	"transactionsRoot": "0xba329c4119380c14d9fbc91dcbef180d5b184514760e4fb70a35ba720958029c",
 	"uncles": [omitted]
 }
 "#;

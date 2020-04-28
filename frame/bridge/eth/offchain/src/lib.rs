@@ -69,7 +69,7 @@ use sp_runtime::{offchain::http::Request, traits::Zero, DispatchError, KeyTypeId
 use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_eth_relay::DoubleNodeWithMerkleProof;
-use darwinia_support::bytes_thing::{base_n_bytes_unchecked, hex_bytes_unchecked};
+use darwinia_support::{bytes_thing::{hex_bytes_unchecked, base_n_bytes_unchecked}, literal_procesor::extract_from_json_str};
 use eth_primitives::header::EthHeader;
 
 type EthRelay<T> = darwinia_eth_relay::Module<T>;
@@ -258,8 +258,8 @@ impl<T: Trait> Module<T> {
 
 		let resp_body = Self::validate_response(maybe_resp_body, option)?;
 
-		let eth_header_part =
-			Self::extract_from_json_str(&resp_body[..], b"eth_header" as &[u8]).unwrap_or_default();
+		let eth_header_part = extract_from_json_str(&resp_body[..], b"eth_header" as
+			&[u8]).unwrap_or_default();
 		let header = if option {
 			panic!("FIXME")
 		// EthHeader::from_str_unchecked(from_utf8(eth_header_part).unwrap_or_default())
@@ -268,8 +268,8 @@ impl<T: Trait> Module<T> {
 			Decode::decode::<&[u8]>(&mut &scale_bytes[..]).unwrap_or_default()
 		};
 
-		let proof_part =
-			Self::extract_from_json_str(&resp_body[..], b"proof" as &[u8]).unwrap_or_default();
+		let proof_part = extract_from_json_str(&resp_body[..], b"proof" as
+			&[u8]).unwrap_or_default();
 		let proof_list = if option {
 			Self::parse_double_node_with_proof_list_from_json_str(proof_part)?
 		} else {
@@ -373,53 +373,5 @@ impl<T: Trait> Module<T> {
 		};
 		let proof_scale_bytes = hex_bytes_unchecked(from_utf8(scale_str).unwrap_or_default());
 		Ok(Decode::decode::<&[u8]>(&mut &proof_scale_bytes[..]).unwrap_or_default())
-	}
-
-	/// Extract the inner value from json str with specific field
-	fn extract_from_json_str<'a>(
-		json_str: &'a [u8],
-		field_name: &'static [u8],
-	) -> Option<&'a [u8]> {
-		let mut start = 0;
-		let mut open_part_count = 0;
-		let mut open_part = b'\0';
-		let mut close_part = b'\0';
-		let field_length = field_name.len();
-		let mut match_pos = 0;
-		let mut has_colon = false;
-		for i in 0..json_str.len() {
-			if open_part_count > 0 {
-				if json_str[i] == close_part {
-					open_part_count -= 1;
-					if 0 == open_part_count {
-						return Some(&json_str[start + 1..i]);
-					}
-				} else if json_str[i] == open_part {
-					open_part_count += 1;
-				}
-			} else if has_colon {
-				if json_str[i] == b'"' || json_str[i] == b'[' || json_str[i] == b'{' {
-					start = i;
-					open_part_count += 1;
-					open_part = json_str[i];
-					close_part = match json_str[i] {
-						b'"' => b'"',
-						b'[' => b']',
-						b'{' => b'}',
-						_ => panic!("never here"),
-					}
-				}
-			} else if match_pos > 0 && i > match_pos {
-				if json_str[i] == b':' {
-					has_colon = true;
-				}
-			} else if json_str[i] == field_name[0]
-				&& (json_str.len() - i) >= field_length
-				&& json_str[i..i + field_length] == *field_name
-			{
-				match_pos = i + field_length;
-			}
-		}
-		None
 	}
 }
