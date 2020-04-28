@@ -25,11 +25,11 @@ sp-runtime = { default-features = false, git = "https://github.com/darwinia-netw
 sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.5" }
 
 [dev-dependencies]
+# crates
+serde_json = { version = "1.0.51" }
 # darwinia
 darwinia-balances = { path = "../../../../frame/balances" }
 eth-primitives = { features = ["easy-testing"], path = "../../../../primitives/eth-primitives" }
-# crates
-serde_json = { version = "1.0.51" }
 # substrate
 sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.5" }
 sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.5" }

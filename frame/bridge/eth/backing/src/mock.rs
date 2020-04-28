@@ -215,8 +215,8 @@ impl Trait for Test {
 	type DetermineAccountId = AccountIdDeterminator<Test>;
 	type EthRelay = EthRelay;
 	type OnDepositRedeem = Staking;
-	type Ring = Ring;
-	type Kton = Kton;
+	type RingCurrency = Ring;
+	type KtonCurrency = Kton;
 	type SubKeyPrefix = SubKeyPrefix;
 }
 

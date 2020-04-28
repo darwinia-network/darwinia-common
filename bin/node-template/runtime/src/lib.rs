@@ -659,8 +659,8 @@ impl darwinia_eth_backing::Trait for Runtime {
 	type DetermineAccountId = darwinia_eth_backing::AccountIdDeterminator<Runtime>;
 	type EthRelay = EthRelay;
 	type OnDepositRedeem = Staking;
-	type Ring = Ring;
-	type Kton = Kton;
+	type RingCurrency = Ring;
+	type KtonCurrency = Kton;
 	type SubKeyPrefix = SubKeyPrefix;
 }
 

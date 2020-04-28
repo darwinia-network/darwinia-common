@@ -16,10 +16,10 @@ mod types {
 	pub type DepositId = U256;
 
 	pub type RingBalance<T> =
-		<<T as Trait>::Ring as Currency<<T as system::Trait>::AccountId>>::Balance;
+		<<T as Trait>::RingCurrency as Currency<<T as system::Trait>::AccountId>>::Balance;
 
 	pub type KtonBalance<T> =
-		<<T as Trait>::Kton as Currency<<T as system::Trait>::AccountId>>::Balance;
+		<<T as Trait>::KtonCurrency as Currency<<T as system::Trait>::AccountId>>::Balance;
 
 	pub type EthTransactionIndex = (H256, u64);
 }
@@ -43,12 +43,9 @@ use sp_std::borrow::ToOwned;
 use sp_std::{convert::TryFrom, marker::PhantomData, vec};
 // --- darwinia ---
 use darwinia_eth_relay::{EthReceiptProof, VerifyEthReceipts};
-use darwinia_support::traits::OnDepositRedeem;
+use darwinia_support::{balance::lock::*, traits::OnDepositRedeem};
 use eth_primitives::{EthAddress, H256, U256};
 use types::*;
-
-// --- darwinia ---
-use darwinia_support::balance::lock::*;
 
 pub trait Trait: frame_system::Trait {
 	/// The backing's module id, used for deriving its sovereign account ID.
@@ -62,9 +59,9 @@ pub trait Trait: frame_system::Trait {
 
 	type OnDepositRedeem: OnDepositRedeem<Self::AccountId, Balance = RingBalance<Self>>;
 
-	type Ring: Currency<Self::AccountId> + LockableCurrency<Self::AccountId>;
+	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
-	type Kton: Currency<Self::AccountId> + LockableCurrency<Self::AccountId>;
+	type KtonCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
 	type SubKeyPrefix: Get<u8>;
 }
@@ -98,14 +95,14 @@ decl_storage! {
 		config(kton_locked): KtonBalance<T>;
 		build(|config: &GenesisConfig<T>| {
 			// Create Backing account
-			let _ = T::Ring::make_free_balance_be(
+			let _ = T::RingCurrency::make_free_balance_be(
 				&<Module<T>>::account_id(),
-				T::Ring::minimum_balance().max(config.ring_locked),
+				T::RingCurrency::minimum_balance().max(config.ring_locked),
 			);
 
-			let _ = T::Kton::make_free_balance_be(
+			let _ = T::KtonCurrency::make_free_balance_be(
 				&<Module<T>>::account_id(),
-				T::Kton::minimum_balance().max(config.kton_locked),
+				T::KtonCurrency::minimum_balance().max(config.kton_locked),
 			);
 		});
 	}
@@ -154,7 +151,7 @@ decl_error! {
 		/// Log Entry - NOT EXISTED
 		LogEntryNE,
 
-		/// No enough usable balance for paying redeem fee
+		/// Usable Balance for Paying Redeem Fee - NOT ENOUGH
 		FeeNE,
 	}
 }
@@ -324,14 +321,14 @@ impl<T: Trait> Module<T> {
 				.clone()
 				.to_bytes()
 				.ok_or(<Error<T>>::BytesCF)?;
-			debug::trace!(target: "ebk-acct", "[eth-backing] Raw Subkey: {:?}", raw_subkey);
+			debug::trace!(target: "eth-backing", "[eth-backing] Raw Subkey: {:?}", raw_subkey);
 
 			// let decoded_sub_key =
 			// 	hex::decode(&raw_subkey).map_err(|_| "Decode Address - FAILED")?;
 
 			T::DetermineAccountId::account_id_for(&raw_subkey)?
 		};
-		debug::trace!(target: "ebk-acct", "[eth-backing] Darwinia Account: {:?}", darwinia_account);
+		debug::trace!(target: "eth-backing", "[eth-backing] Darwinia Account: {:?}", darwinia_account);
 
 		Ok((redeemed_amount, darwinia_account, fee))
 	}
@@ -450,14 +447,14 @@ impl<T: Trait> Module<T> {
 				.clone()
 				.to_bytes()
 				.ok_or(<Error<T>>::BytesCF)?;
-			debug::trace!(target: "ebk-acct", "[eth-backing] Raw Subkey: {:?}", raw_subkey);
+			debug::trace!(target: "eth-backing", "[eth-backing] Raw Subkey: {:?}", raw_subkey);
 
 			// let decoded_sub_key =
 			// 	hex::decode(&raw_subkey).map_err(|_| "Decode Address - FAILED")?;
 
 			T::DetermineAccountId::account_id_for(&raw_subkey)?
 		};
-		debug::trace!(target: "ebk-acct", "[eth-backing] Darwinia Account: {:?}", darwinia_account);
+		debug::trace!(target: "eth-backing", "[eth-backing] Darwinia Account: {:?}", darwinia_account);
 
 		Ok((
 			deposit_id,
@@ -483,20 +480,24 @@ impl<T: Trait> Module<T> {
 			Self::parse_token_redeem_proof(&proof_record, "RingBurndropTokens")?;
 		let redeemed_ring = redeemed_ring.saturated_into();
 
-		let backing = Self::account_id();
-
 		ensure!(
-			Self::pot::<T::Ring>() >= redeemed_ring,
+			Self::pot::<T::RingCurrency>() >= redeemed_ring,
 			<Error<T>>::RingLockedNSBA
 		);
-
 		// Checking redeemer have enough of balance to pay fee, make sure follow up transfer will success.
-		ensure!(T::Ring::usable_balance(redeemer) >= fee, <Error<T>>::FeeNE);
+		ensure!(
+			T::RingCurrency::usable_balance(redeemer) >= fee,
+			<Error<T>>::FeeNE
+		);
 
-		T::Ring::transfer(&backing, &darwinia_account, redeemed_ring, KeepAlive)?;
-
+		T::RingCurrency::transfer(
+			&Self::account_id(),
+			&darwinia_account,
+			redeemed_ring,
+			KeepAlive,
+		)?;
 		// Transfer the fee from redeemer.
-		T::Ring::transfer(redeemer, &T::EthRelay::account_id(), fee, KeepAlive)?;
+		T::RingCurrency::transfer(redeemer, &T::EthRelay::account_id(), fee, KeepAlive)?;
 
 		RingProofVerified::insert(
 			(proof_record.header_hash, proof_record.index),
@@ -524,20 +525,24 @@ impl<T: Trait> Module<T> {
 			Self::parse_token_redeem_proof(&proof_record, "KtonBurndropTokens")?;
 		let redeemed_kton = redeemed_kton.saturated_into();
 
-		let backing = Self::account_id();
-
 		ensure!(
-			Self::pot::<T::Kton>() >= redeemed_kton,
+			Self::pot::<T::KtonCurrency>() >= redeemed_kton,
 			<Error<T>>::KtonLockedNSBA
 		);
-
 		// Checking redeemer have enough of balance to pay fee, make sure follow up fee transfer will success.
-		ensure!(T::Ring::usable_balance(redeemer) >= fee, <Error<T>>::FeeNE);
+		ensure!(
+			T::RingCurrency::usable_balance(redeemer) >= fee,
+			<Error<T>>::FeeNE
+		);
 
-		T::Kton::transfer(&backing, &darwinia_account, redeemed_kton, KeepAlive)?;
-
+		T::KtonCurrency::transfer(
+			&Self::account_id(),
+			&darwinia_account,
+			redeemed_kton,
+			KeepAlive,
+		)?;
 		// Transfer the fee from redeemer.
-		T::Ring::transfer(redeemer, &T::EthRelay::account_id(), fee, KeepAlive)?;
+		T::RingCurrency::transfer(redeemer, &T::EthRelay::account_id(), fee, KeepAlive)?;
 
 		KtonProofVerified::insert(
 			(proof_record.header_hash, proof_record.index),
@@ -564,26 +569,25 @@ impl<T: Trait> Module<T> {
 		let (deposit_id, month, start_at, redeemed_ring, darwinia_account, fee) =
 			Self::parse_deposit_redeem_proof(&proof_record)?;
 
-		let backing = Self::account_id();
-
 		ensure!(
-			Self::pot::<T::Ring>() >= redeemed_ring,
+			Self::pot::<T::RingCurrency>() >= redeemed_ring,
 			<Error<T>>::RingLockedNSBA
 		);
-
 		// Checking redeemer have enough of balance to pay fee, make sure follow up fee transfer will success.
-		ensure!(T::Ring::usable_balance(redeemer) >= fee, <Error<T>>::FeeNE);
+		ensure!(
+			T::RingCurrency::usable_balance(redeemer) >= fee,
+			<Error<T>>::FeeNE
+		);
 
 		T::OnDepositRedeem::on_deposit_redeem(
-			&backing,
+			&Self::account_id(),
 			start_at,
 			month,
 			redeemed_ring,
 			&darwinia_account,
 		)?;
-
 		// Transfer the fee from redeemer.
-		T::Ring::transfer(redeemer, &T::EthRelay::account_id(), fee, KeepAlive)?;
+		T::RingCurrency::transfer(redeemer, &T::EthRelay::account_id(), fee, KeepAlive)?;
 
 		// TODO: check deposit_id duplication
 		// TODO: Ignore Unit Interest for now
