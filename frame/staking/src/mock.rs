@@ -79,7 +79,28 @@ thread_local! {
 	static SLASH_DEFER_DURATION: RefCell<EraIndex> = RefCell::new(0);
 	static ELECTION_LOOKAHEAD: RefCell<BlockNumber> = RefCell::new(0);
 	static PERIOD: RefCell<BlockNumber> = RefCell::new(1);
+	static MAX_ITERATIONS: RefCell<u32> = RefCell::new(0);
 	pub static RING_REWARD_REMAINDER_UNBALANCED: RefCell<Balance> = RefCell::new(0);
+}
+
+impl_outer_dispatch! {
+	pub enum Call for Test where origin: Origin {
+		staking::Staking,
+	}
+}
+
+impl_outer_event! {
+	pub enum MetaEvent for Test {
+		system<T>,
+		session,
+		balances Instance0<T>,
+		balances Instance1<T>,
+		staking<T>,
+	}
+}
+
+impl_outer_origin! {
+	pub enum Origin for Test  where system = system {}
 }
 
 darwinia_support::impl_account_data! {
@@ -173,23 +194,10 @@ impl Get<EraIndex> for SlashDeferDuration {
 	}
 }
 
-impl_outer_origin! {
-	pub enum Origin for Test  where system = system {}
-}
-
-impl_outer_dispatch! {
-	pub enum Call for Test where origin: Origin {
-		staking::Staking,
-	}
-}
-
-impl_outer_event! {
-	pub enum MetaEvent for Test {
-		system<T>,
-		session,
-		balances Instance0<T>,
-		balances Instance1<T>,
-		staking<T>,
+pub struct MaxIterations;
+impl Get<u32> for MaxIterations {
+	fn get() -> u32 {
+		MAX_ITERATIONS.with(|v| *v.borrow())
 	}
 }
 
@@ -333,6 +341,7 @@ impl Trait for Test {
 	type NextNewSession = Session;
 	type ElectionLookahead = ElectionLookahead;
 	type Call = Call;
+	type MaxIterations = MaxIterations;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
 	type UnsignedPriority = UnsignedPriority;
 	type RingCurrency = Ring;
@@ -368,6 +377,7 @@ pub struct ExtBuilder {
 	num_validators: Option<u32>,
 	invulnerables: Vec<AccountId>,
 	has_stakers: bool,
+	max_offchain_iterations: u32,
 	init_ring: bool,
 	init_kton: bool,
 }
@@ -388,6 +398,7 @@ impl Default for ExtBuilder {
 			num_validators: None,
 			invulnerables: vec![],
 			has_stakers: true,
+			max_offchain_iterations: 0,
 			init_ring: true,
 			init_kton: false,
 		}
@@ -447,6 +458,10 @@ impl ExtBuilder {
 		self.has_stakers = has;
 		self
 	}
+	pub fn max_offchain_iterations(mut self, iterations: u32) -> Self {
+		self.max_offchain_iterations = iterations;
+		self
+	}
 	pub fn init_ring(mut self, init_ring: bool) -> Self {
 		self.init_ring = init_ring;
 		self
@@ -466,6 +481,7 @@ impl ExtBuilder {
 		SESSION_PER_ERA.with(|v| *v.borrow_mut() = self.session_per_era);
 		ELECTION_LOOKAHEAD.with(|v| *v.borrow_mut() = self.election_lookahead);
 		PERIOD.with(|v| *v.borrow_mut() = self.session_length);
+		MAX_ITERATIONS.with(|v| *v.borrow_mut() = self.max_offchain_iterations);
 	}
 	pub fn build(self) -> sp_io::TestExternalities {
 		let _ = env_logger::try_init();

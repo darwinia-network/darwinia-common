@@ -1,12 +1,19 @@
 //! Helpers for offchain worker election.
 
+// --- crates ---
+use codec::Decode;
 // --- substrate ---
+use frame_support::{debug, traits::Get};
 use frame_system::offchain::SubmitTransaction;
 use sp_phragmen::{
-	build_support_map, evaluate_support, reduce, Assignment, ExtendedBalance, PhragmenResult,
-	PhragmenScore,
+	build_support_map, equalize, evaluate_support, reduce, Assignment, ExtendedBalance,
+	PhragmenResult, PhragmenScore,
 };
-use sp_runtime::{offchain::storage::StorageValueRef, PerThing, RuntimeDebug};
+use sp_runtime::{
+	offchain::storage::StorageValueRef,
+	traits::{TrailingZeroInput, Zero},
+	PerThing, RuntimeDebug,
+};
 use sp_std::{convert::TryInto, prelude::*};
 // --- darwinia ---
 use crate::{
@@ -138,18 +145,38 @@ where
 	};
 
 	// Clean winners.
-	let winners = winners
-		.into_iter()
-		.map(|(w, _)| w)
-		.collect::<Vec<T::AccountId>>();
+	let winners = sp_phragmen::to_without_backing(winners);
 
 	// convert into absolute value and to obtain the reduced version.
 	let mut staked =
 		sp_phragmen::assignment_ratio_to_staked(assignments, |s| <Module<T>>::power_of(s) as _);
 
+	// reduce
 	if do_reduce {
 		reduce(&mut staked);
 	}
+
+	let (mut support_map, _) = build_support_map::<T::AccountId>(&winners, &staked);
+
+	// equalize a random number of times.
+	let iterations_executed = match T::MaxIterations::get() {
+		0 => {
+			// Don't run equalize at all
+			0
+		}
+		iterations @ _ => {
+			let seed = sp_io::offchain::random_seed();
+			let iterations = <u32>::decode(&mut TrailingZeroInput::new(seed.as_ref()))
+				.expect("input is padded with zeroes; qed")
+				% iterations.saturating_add(1);
+			equalize(
+				&mut staked,
+				&mut support_map,
+				Zero::zero(),
+				iterations as usize,
+			)
+		}
+	};
 
 	// Convert back to ratio assignment. This takes less space.
 	let low_accuracy_assignment = sp_phragmen::assignment_staked_to_ratio(staked);
@@ -192,6 +219,13 @@ where
 			return Err(OffchainElectionError::InvalidWinner);
 		}
 	}
+
+	debug::native::debug!(
+		target: "staking",
+		"prepared solution after {} equalization iterations with score {:?}",
+		iterations_executed,
+		score,
+	);
 
 	Ok((winners_indexed, compact, score))
 }

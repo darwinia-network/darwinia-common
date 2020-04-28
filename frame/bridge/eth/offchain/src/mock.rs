@@ -11,10 +11,6 @@ use codec::Encode;
 use crate::*;
 use darwinia_eth_relay::EthNetworkType;
 
-impl_outer_origin! {
-	pub enum Origin for Test where system = frame_system {}
-}
-
 impl_outer_dispatch! {
 	pub enum Call for Test where origin: Origin {
 		darwinia_eth_relay::EthRelay,
@@ -22,7 +18,9 @@ impl_outer_dispatch! {
 	}
 }
 
-type Balance = u128;
+impl_outer_origin! {
+	pub enum Origin for Test where system = frame_system {}
+}
 
 darwinia_support::impl_account_data! {
 	pub struct AccountData<Balance>
@@ -36,16 +34,22 @@ darwinia_support::impl_account_data! {
 	}
 }
 
-pub type RingInstance = darwinia_balances::Instance0;
-pub type KtonInstance = darwinia_balances::Instance1;
-
 type AccountId = <<MultiSignature as Verify>::Signer as IdentifyAccount>::AccountId;
+type Balance = u128;
 type Extrinsic = TestXt<Call, ()>;
 
-pub type System = frame_system::Module<Test>;
-pub type EthOffchain = Module<Test>;
-pub type EthRelay = darwinia_eth_relay::Module<Test>;
+pub type RingInstance = darwinia_balances::Instance0;
+pub type _RingError = darwinia_balances::Error<Test, RingInstance>;
 pub type Ring = darwinia_balances::Module<Test, RingInstance>;
+
+pub type KtonInstance = darwinia_balances::Instance1;
+pub type _KtonError = darwinia_balances::Error<Test, KtonInstance>;
+pub type _Kton = darwinia_balances::Module<Test, KtonInstance>;
+
+pub type System = frame_system::Module<Test>;
+pub type EthRelay = darwinia_eth_relay::Module<Test>;
+
+pub type EthOffchain = Module<Test>;
 pub type OffchainError = Error<Test>;
 
 static mut SHADOW_SERVICE: Option<ShadowService> = None;
@@ -55,7 +59,7 @@ pub enum ShadowService {
 	Json,
 }
 
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Test;
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
