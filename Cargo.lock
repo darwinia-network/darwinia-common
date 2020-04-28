@@ -1086,6 +1086,7 @@ dependencies = [
  "rlp 0.4.4",
  "rlp-derive",
  "serde",
+ "serde_json",
  "sp-runtime",
  "sp-std 2.0.0-dev",
  "triehash",
