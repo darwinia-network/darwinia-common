@@ -66,6 +66,7 @@ impl EthHeader {
 		let mut eth_header = Self::default();
 		let mut mix_hash = H256::default();
 		let mut nonce = H64::default();
+		let mut array_fields = Vec::new();
 		while let Some(s) = s.next() {
 			if s.is_empty() {
 				continue;
@@ -82,10 +83,12 @@ impl EthHeader {
 			}
 
 			if nested_array != 0 {
+				array_fields.push(s);
 				continue;
 			}
 
 			let s = s.trim();
+
 			if s.starts_with("\"difficulty") {
 				eth_header.difficulty = str_to_u64(parse_value_unchecked(s)).into();
 			} else if s.starts_with("\"extra_data") {
@@ -103,22 +106,30 @@ impl EthHeader {
 				eth_header.log_bloom = Bloom::from_str(s).unwrap_or_default();
 			} else if s.starts_with("\"miner") {
 				eth_header.author = fixed_hex_bytes_unchecked!(parse_value_unchecked(s), 20).into();
-			// } else if s.starts_with("\"mix_hash") {
-			// 	mix_hash = fixed_hex_bytes_unchecked!(parse_value_unchecked(s), 32).into();
-			// } else if s.starts_with("\"nonce") {
-			// 	nonce = fixed_hex_bytes_unchecked!(parse_value_unchecked(s), 8).into();
-			} else if s.starts_with("\"seal") {
+			// FIXME: dirty but quick at this moment
+			} else if array_fields.len() > 0 {
+				for e in array_fields[0].splitn(60, '"') {
+					let l = e.len();
+					if l == 68 {
+						println!("parse mix_hash: {:?}", e);
+						mix_hash = fixed_hex_bytes_unchecked!(parse_value_unchecked(e), 32).into();
+					} else if l > 68 {
+						// should not be here
+						panic!("there is no field in seal not 20 or 68");
+					}
+				}
+
 				for e in s.splitn(60, '"') {
 					let l = e.len();
 					if l == 20 {
+						println!("parse nonce: {:?}", e);
 						nonce = fixed_hex_bytes_unchecked!(parse_value_unchecked(e), 8).into();
-					} else if l == 68 {
-						mix_hash = fixed_hex_bytes_unchecked!(parse_value_unchecked(s), 32).into();
 					} else if l > 20 {
 						// should not be here
-						panic!("the proofs are longer than 25");
+						panic!("there is no field in seal not 20 or 68");
 					}
 				}
+				array_fields = Vec::new();
 			} else if s.starts_with("\"number") {
 				eth_header.number = str_to_u64(parse_value_unchecked(s));
 			} else if s.starts_with("\"parent_hash") {
@@ -684,33 +695,6 @@ mod tests {
 				"uncles_hash": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
 			}
 			"#,
-			// {
-			// 	"author": "0x1ad857f27200aec56ebb68283f91e6ac1086ad62",
-			// 	"difficulty": "0x6648e9e",
-			// 	"extraData": "0xd783010503846765746887676f312e372e33856c696e7578",
-			// 	"gasLimit": "0x47d629",
-			// 	"gasUsed": "0x182a8",
-			// 	"hash": "0xa83130084c3570d9e0432bbfd656b0fe6088d8837967ef552974de5e8dc1fad5",
-			// 	"logsBloom": "0x00000100000000100000000000000000000000000000000000000000000000000000008000000000000000000000000004000000000000000000000000000000000000000000000400400000000000000000000000000000000000000010000000000000000000000000000000000000200000000000010000000000000000000000000000000000000000000008000000000000000000000000800000000000000000000000000000000000000000000200000000000000000000000000000000000040000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000002000000000000000000000",
-			// 	"miner": "0x1ad857f27200aec56ebb68283f91e6ac1086ad62",
-			// 	"mixHash": "0x341e3bcf01c921963933253e0cf937020db69206f633e31e0d1c959cdd1188f5",
-			// 	"nonce": "0x475ddd90b151f305",
-			// 	"number": "0x11170",
-			// 	"parentHash": "0xe7a8c03a03f7c055599def00f21686d3b9179d272c8110162f012c191d303dad",
-			// 	"receiptsRoot": "0xfbbc5695aac7a42699da58878f0a8bb8c096ed95a9b087989c0903114650ca70",
-			// 	"sealFields": [
-			// 		"0xa0341e3bcf01c921963933253e0cf937020db69206f633e31e0d1c959cdd1188f5",
-			// 		"0x88475ddd90b151f305"
-			// 	],
-			// 	"sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-			// 	"size": "0x35d",
-			// 	"stateRoot": "0x76565e67622936b6b9eac50f3a9ad940270f1c6d1d9f203fc6af4e0eb67b20fa",
-			// 	"timestamp": "0x583f2778",
-			// 	"totalDifficulty": "0x69708a12010",
-			// 	"transactions": [omitted],
-			// 	"transactionsRoot": "0x35ecd6e29d0b8d161bd7863cfa3198e979b451fa637834b96b0da3d8d5d081cf",
-			// 	"uncles": [omitted]
-			// }
 		);
 
 		let partial_header_hash = header.bare_hash();
