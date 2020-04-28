@@ -288,12 +288,12 @@ fn receipt_verify_fees_and_relayer_claim_reward() {
 
 		assert_ok!(EthRelay::check_receipt(Origin::signed(1), receipt.clone()));
 
-		assert_eq!(EthRelay::pot::<Ring>(), 10);
+		assert_eq!(EthRelay::pot(), 10);
 		assert_eq!(Ring::free_balance(&1), 990);
 
 		assert_ok!(EthRelay::claim_reward(Origin::signed(0)));
 
-		assert_eq!(EthRelay::pot::<Ring>(), 0);
+		assert_eq!(EthRelay::pot(), 0);
 		assert_eq!(Ring::free_balance(&0), 10);
 	});
 }

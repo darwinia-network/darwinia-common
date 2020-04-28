@@ -192,6 +192,7 @@ impl darwinia_staking::Trait for Test {
 	type NextNewSession = Session;
 	type ElectionLookahead = ();
 	type Call = Call;
+	type MaxIterations = ();
 	type MaxNominatorRewardedPerValidator = ();
 	type UnsignedPriority = ();
 	type RingCurrency = Ring;
@@ -215,8 +216,8 @@ impl Trait for Test {
 	type DetermineAccountId = AccountIdDeterminator<Test>;
 	type EthRelay = EthRelay;
 	type OnDepositRedeem = Staking;
-	type Ring = Ring;
-	type Kton = Kton;
+	type RingCurrency = Ring;
+	type KtonCurrency = Kton;
 	type SubKeyPrefix = SubKeyPrefix;
 }
 
