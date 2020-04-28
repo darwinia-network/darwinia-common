@@ -39,7 +39,10 @@ fn verify_receipt_proof() {
 
 		// verify receipt
 		assert_ok!(EthRelay::init_genesis_header(&header, 0x6b2dd4a2c4f47d));
-		assert_eq!(EthRelay::verify_receipt(&proof_record), Ok(receipt));
+		assert_eq!(
+			EthRelay::verify_receipt(&proof_record),
+			Ok((receipt, Default::default()))
+		);
 	});
 }
 
@@ -51,15 +54,15 @@ fn relay_header() {
 
 		// relay grandpa
 		assert_ok!(EthRelay::verify_header_basic(&grandpa));
-		assert_ok!(EthRelay::maybe_store_header(&grandpa));
+		assert_ok!(EthRelay::maybe_store_header(&0, &grandpa));
 
 		// relay parent
 		assert_ok!(EthRelay::verify_header_basic(&parent));
-		assert_ok!(EthRelay::maybe_store_header(&parent));
+		assert_ok!(EthRelay::maybe_store_header(&0, &parent));
 
 		// relay current
 		assert_ok!(EthRelay::verify_header_basic(&current));
-		assert_ok!(EthRelay::maybe_store_header(&current));
+		assert_ok!(EthRelay::maybe_store_header(&0, &current));
 	});
 }
 
@@ -158,7 +161,7 @@ fn test_safety_block() {
 		));
 
 		// family tree
-		let [origin, grandpa, parent, uncle, current] = mock_canonical_relationship();
+		let [origin, grandpa, uncle, parent, current] = mock_canonical_relationship();
 
 		let receipt = mock_canonical_receipt();
 
@@ -171,8 +174,8 @@ fn test_safety_block() {
 		);
 
 		// not safety after 2 blocks
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), parent, vec![]));
 		assert_ok!(EthRelay::relay_header(Origin::signed(0), uncle, vec![]));
+		assert_ok!(EthRelay::relay_header(Origin::signed(0), parent, vec![]));
 		assert_err!(
 			EthRelay::check_receipt(Origin::signed(0), receipt.clone()),
 			<Error<Test>>::HeaderNS
@@ -199,6 +202,12 @@ fn relay_mainet_header() {
 		.eth_network(EthNetworkType::Mainnet)
 		.build()
 		.execute_with(|| {
+			assert_ok!(EthRelay::add_authority(RawOrigin::Root.into(), 0));
+			assert_ok!(EthRelay::set_number_of_blocks_safe(
+				RawOrigin::Root.into(),
+				0
+			));
+
 			// block 8996776
 			{
 				let blocks_with_proofs = BlockWithProofs::from_file("./src/test-data/8996776.json");
@@ -221,7 +230,7 @@ fn relay_mainet_header() {
 					&header,
 					&blocks_with_proofs.to_double_node_with_merkle_proof_vec()
 				));
-				assert_ok!(EthRelay::maybe_store_header(&header));
+				assert_ok!(EthRelay::maybe_store_header(&0, &header));
 			}
 
 			// block 8996778
@@ -236,9 +245,60 @@ fn relay_mainet_header() {
 					&header,
 					&blocks_with_proofs.to_double_node_with_merkle_proof_vec()
 				));
-				assert_ok!(EthRelay::maybe_store_header(&header));
+				assert_ok!(EthRelay::maybe_store_header(&0, &header));
 			}
 		});
+}
+
+#[test]
+fn receipt_verify_fees_and_relayer_claim_reward() {
+	ExtBuilder::default().build().execute_with(|| {
+		assert_ok!(EthRelay::add_authority(RawOrigin::Root.into(), 0));
+		assert_ok!(EthRelay::set_number_of_blocks_safe(
+			RawOrigin::Root.into(),
+			0
+		));
+
+		assert_ok!(EthRelay::set_number_of_blocks_finality(
+			RawOrigin::Root.into(),
+			0
+		));
+
+		assert_ok!(EthRelay::set_receipt_verify_fee(RawOrigin::Root.into(), 0));
+
+		// family tree
+		let [origin, grandpa, _, parent, _] = mock_canonical_relationship();
+
+		let receipt = mock_canonical_receipt();
+
+		// not safety after 0 block
+		assert_ok!(EthRelay::init_genesis_header(&origin, 0x6b2dd4a2c4f47d));
+		assert_ok!(EthRelay::relay_header(Origin::signed(0), grandpa, vec![]));
+
+		// not safety after 2 blocks
+		assert_ok!(EthRelay::relay_header(Origin::signed(0), parent, vec![]));
+
+		assert_ok!(EthRelay::check_receipt(Origin::signed(1), receipt.clone()));
+
+		assert_ok!(EthRelay::set_receipt_verify_fee(RawOrigin::Root.into(), 10));
+
+		assert_err!(
+			EthRelay::check_receipt(Origin::signed(1), receipt.clone()),
+			RingError::InsufficientBalance,
+		);
+
+		let _ = Ring::deposit_creating(&1, 1000);
+
+		assert_ok!(EthRelay::check_receipt(Origin::signed(1), receipt.clone()));
+
+		assert_eq!(EthRelay::pot::<Ring>(), 10);
+		assert_eq!(Ring::free_balance(&1), 990);
+
+		assert_ok!(EthRelay::claim_reward(Origin::signed(0)));
+
+		assert_eq!(EthRelay::pot::<Ring>(), 0);
+		assert_eq!(Ring::free_balance(&0), 10);
+	});
 }
 
 #[test]

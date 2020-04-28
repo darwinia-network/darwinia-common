@@ -150,12 +150,15 @@ impl pallet_session::historical::Trait for Test {
 }
 
 parameter_types! {
+	pub const EthRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
 	pub const EthNetwork: EthNetworkType = EthNetworkType::Ropsten;
 }
 impl darwinia_eth_relay::Trait for Test {
+	type ModuleId = EthRelayModuleId;
 	type Event = ();
 	type EthNetwork = EthNetwork;
 	type Call = Call;
+	type Currency = Ring;
 }
 
 impl darwinia_balances::Trait<KtonInstance> for Test {

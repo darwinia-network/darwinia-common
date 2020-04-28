@@ -3,11 +3,17 @@ use frame_support::{impl_outer_dispatch, impl_outer_origin, parameter_types, wei
 use sp_runtime::{
 	testing::{Header, TestXt},
 	traits::{BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
-	MultiSignature, Perbill,
+	ModuleId, MultiSignature, Perbill, RuntimeDebug,
 };
+
+use codec::Encode;
 // --- darwinia ---
 use crate::*;
 use darwinia_eth_relay::EthNetworkType;
+
+impl_outer_origin! {
+	pub enum Origin for Test where system = frame_system {}
+}
 
 impl_outer_dispatch! {
 	pub enum Call for Test where origin: Origin {
@@ -16,16 +22,31 @@ impl_outer_dispatch! {
 	}
 }
 
-impl_outer_origin! {
-	pub enum Origin for Test where system = frame_system {}
+type Balance = u128;
+
+darwinia_support::impl_account_data! {
+	pub struct AccountData<Balance>
+	for
+		RingInstance,
+		KtonInstance
+	where
+		Balance = Balance
+	{
+		// other data
+	}
 }
+
+pub type RingInstance = darwinia_balances::Instance0;
+pub type KtonInstance = darwinia_balances::Instance1;
 
 type AccountId = <<MultiSignature as Verify>::Signer as IdentifyAccount>::AccountId;
 type Extrinsic = TestXt<Call, ()>;
 
-pub type EthRelay = darwinia_eth_relay::Module<Test>;
+pub type System = frame_system::Module<Test>;
 pub type EthOffchain = Module<Test>;
-pub type EthOffchainError = Error<Test>;
+pub type EthRelay = darwinia_eth_relay::Module<Test>;
+pub type Ring = darwinia_balances::Module<Test, RingInstance>;
+pub type OffchainError = Error<Test>;
 
 static mut SHADOW_SERVICE: Option<ShadowService> = None;
 
@@ -34,7 +55,7 @@ pub enum ShadowService {
 	Json,
 }
 
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub struct Test;
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
@@ -62,18 +83,31 @@ impl frame_system::Trait for Test {
 	type AvailableBlockRatio = AvailableBlockRatio;
 	type Version = ();
 	type ModuleToIndex = ();
-	type AccountData = ();
+	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 }
 
+impl darwinia_balances::Trait<RingInstance> for Test {
+	type Balance = Balance;
+	type DustRemoval = ();
+	type Event = ();
+	type ExistentialDeposit = ();
+	type BalanceInfo = AccountData<Balance>;
+	type AccountStore = System;
+	type DustCollector = ();
+}
+
 parameter_types! {
+	pub const EthRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
 	pub const EthNetwork: EthNetworkType = EthNetworkType::Ropsten;
 }
 impl darwinia_eth_relay::Trait for Test {
+	type ModuleId = EthRelayModuleId;
 	type Event = ();
 	type EthNetwork = EthNetwork;
 	type Call = Call;
+	type Currency = Ring;
 }
 
 parameter_types! {

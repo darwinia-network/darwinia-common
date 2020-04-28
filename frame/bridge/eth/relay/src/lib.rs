@@ -1,4 +1,30 @@
+//! # Darwinia-eth-relay Module
+//!
 //! Prototype module for bridging in Ethereum pow blockchain, including Mainnet and Ropsten.
+//!
+//! ## Overview
+//!
+//! The darwinia eth relay module itself is a chain relay targeting Ethereum networks to
+//! Darwinia networks. This module follows the basic linear chain relay design which
+//! requires relayers to relay the headers one by one.
+//!
+//! ### Relayer Incentive Model
+//!
+//! There is a points pool recording contribution of relayers, for each finalized and
+//! relayed block header, the relayer(origin) will get one unit of contribution point.
+//! The income of the points pool come from two parts:
+//! 	- The first part comes from clients who use chain relay to verify receipts, they
+//!       might need to pay for the check_receipt service, although currently the chain
+//!       relay didn't charge service fees, but in future, customers module/call should
+//!       pay for this.
+//!     - The second part comes from the compensate budget/proposal from system or governance,
+//!       for example, someone may submit a proposal from treasury module to compensate the
+//!       relay module account (points pool).
+//!
+//! The points owners can claim their incomes any time(block), the income is calculated according
+//! to his points proportion of total points, and after paying to him, the points will be destroyed
+//! from the points pool.
+//!
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "128"]
@@ -8,21 +34,36 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+mod types {
+	// --- darwinia ---
+	use crate::*;
+
+	pub type Balance<T> = <CurrencyT<T> as Currency<AccountId<T>>>::Balance;
+
+	type AccountId<T> = <T as system::Trait>::AccountId;
+
+	type CurrencyT<T> = <T as Trait>::Currency;
+}
+
 // --- crates ---
 use codec::{Decode, Encode};
 use ethereum_types::{H128, H512, H64};
 // --- substrate ---
 use frame_support::{
-	debug::trace, decl_error, decl_event, decl_module, decl_storage, ensure, traits::Get, IsSubType,
+	debug::trace,
+	decl_error, decl_event, decl_module, decl_storage, ensure,
+	traits::Get,
+	traits::{Currency, ExistenceRequirement::KeepAlive, ReservableCurrency},
+	IsSubType,
 };
 use frame_system::{self as system, ensure_root, ensure_signed};
 use sp_io::hashing::sha2_256;
 use sp_runtime::{
-	traits::{DispatchInfoOf, Dispatchable, SignedExtension},
+	traits::{AccountIdConversion, DispatchInfoOf, Dispatchable, Saturating, SignedExtension},
 	transaction_validity::{
 		InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
 	},
-	DispatchError, DispatchResult, RuntimeDebug,
+	DispatchError, DispatchResult, ModuleId, RuntimeDebug, SaturatedConversion,
 };
 use sp_std::{cell::RefCell, prelude::*};
 // --- darwinia ---
@@ -35,12 +76,19 @@ use eth_primitives::{
 };
 use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
 
+use types::*;
+
 pub trait Trait: frame_system::Trait {
+	/// The eth-relay's module id, used for deriving its sovereign account ID.
+	type ModuleId: Get<ModuleId>;
+
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
 	type EthNetwork: Get<EthNetworkType>;
 
 	type Call: Dispatchable + From<Call<Self>> + IsSubType<Module<Self>, Self> + Clone;
+
+	type Currency: Currency<Self::AccountId> + ReservableCurrency<Self::AccountId>;
 }
 
 #[derive(Clone, PartialEq, Encode, Decode)]
@@ -130,13 +178,15 @@ impl DoubleNodeWithMerkleProof {
 
 /// Familial details concerning a block
 #[derive(Clone, Default, PartialEq, Encode, Decode)]
-pub struct EthHeaderBrief {
+pub struct EthHeaderBrief<T> {
 	/// Total difficulty of the block and all its parents
 	pub total_difficulty: U256,
 	/// Parent hash of the header
 	pub parent_hash: H256,
 	/// Block number
 	pub number: EthBlockNumber,
+	/// Relayer of the block header
+	pub relayer: T,
 }
 
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
@@ -160,7 +210,7 @@ decl_storage! {
 		pub CanonicalHeaderHashes get(fn canonical_header_hash): map hasher(identity) u64 => H256;
 
 		pub Headers get(fn header): map hasher(identity) H256 => Option<EthHeader>;
-		pub HeaderBriefs get(fn header_brief): map hasher(identity) H256 => Option<EthHeaderBrief>;
+		pub HeaderBriefs get(fn header_brief): map hasher(identity) H256 => Option<EthHeaderBrief::<T::AccountId>>;
 
 		/// Number of blocks finality
 		pub NumberOfBlocksFinality get(fn number_of_blocks_finality) config(): u64;
@@ -168,6 +218,11 @@ decl_storage! {
 
 		pub CheckAuthority get(fn check_authority) config(): bool = true;
 		pub Authorities get(fn authorities) config(): Vec<T::AccountId>;
+
+		pub ReceiptVerifyFee get(fn receipt_verify_fee) config(): Balance<T>;
+
+		pub RelayerPoints get(fn relayer_points): map hasher(blake2_128_concat) T::AccountId => u64;
+		pub TotalRelayerPoints get(fn total_points): u64 = 0;
 	}
 	add_extra_genesis {
 		// genesis: Option<Header, Difficulty>
@@ -196,6 +251,11 @@ decl_storage! {
 			{
 				DagsMerkleRoots::insert(i as u64, dag_merkle_root);
 			}
+
+			let _ = T::Currency::make_free_balance_be(
+				&<Module<T>>::account_id(),
+				T::Currency::minimum_balance(),
+			);
 		});
 	}
 }
@@ -203,7 +263,8 @@ decl_storage! {
 decl_event! {
 	pub enum Event<T>
 	where
-		<T as frame_system::Trait>::AccountId
+		<T as frame_system::Trait>::AccountId,
+		Balance = Balance<T>,
 	{
 		SetGenesisHeader(EthHeader, u64),
 		RelayHeader(AccountId, EthHeader),
@@ -211,6 +272,7 @@ decl_event! {
 		AddAuthority(AccountId),
 		RemoveAuthority(AccountId),
 		ToggleCheckAuthorities(bool),
+		ClaimReward(AccountId, Balance),
 	}
 }
 
@@ -267,6 +329,9 @@ decl_error! {
 		DifficultyVF,
 		/// Proof - VERIFICATION FAILED
 		ProofVF,
+
+		/// Payout - NO POINTS OR FUNDS
+		PayoutNPF,
 	}
 }
 
@@ -302,7 +367,7 @@ decl_module! {
 
 			let header_hash = header.hash();
 
-			ensure!(HeaderBriefs::get(&header_hash).is_none(), <Error<T>>::HeaderAE);
+			ensure!(<HeaderBriefs<T>>::get(&header_hash).is_none(), <Error<T>>::HeaderAE);
 
 			// 1. proof of difficulty
 			// 2. proof of pow (mixhash)
@@ -317,7 +382,7 @@ decl_module! {
 				}
 			}
 
-			Self::maybe_store_header(&header)?;
+			Self::maybe_store_header(&relayer, &header)?;
 
 			<Module<T>>::deposit_event(RawEvent::RelayHeader(relayer, header));
 		}
@@ -332,13 +397,44 @@ decl_module! {
 		#[weight = 100_000_000]
 		pub fn check_receipt(origin, proof_record: EthReceiptProof) {
 			let relayer = ensure_signed(origin)?;
-			if Self::check_authority() {
-				ensure!(Self::authorities().contains(&relayer), <Error<T>>::AccountNP);
-			}
 
-			let verified_receipt = Self::verify_receipt(&proof_record)?;
+			let (verified_receipt, fee) = Self::verify_receipt(&proof_record)?;
+
+			let module_account = Self::account_id();
+
+			T::Currency::transfer(&relayer, &module_account, fee, KeepAlive)?;
 
 			<Module<T>>::deposit_event(RawEvent::VerifyProof(relayer, verified_receipt, proof_record));
+		}
+
+		/// Claim Reward for Relayers
+		///
+		/// # <weight>
+		/// - `O(1)`.
+		/// - Limited Storage reads
+		/// - Up to one event
+		/// # </weight>
+		#[weight = 10_000_000]
+		pub fn claim_reward(origin) {
+			let relayer = ensure_signed(origin)?;
+
+			let points = Self::relayer_points(&relayer);
+			let total_points = Self::total_points();
+
+			let max_payout = Self::pot::<T::Currency>().saturated_into();
+
+			ensure!(total_points > 0 && points > 0 && max_payout > 0 && total_points >= points, <Error<T>>::PayoutNPF);
+
+			let payout : Balance<T> = (points as u128 * max_payout / (total_points  as u128)).saturated_into();
+			let module_account = Self::account_id();
+
+			T::Currency::transfer(&module_account, &relayer, payout, KeepAlive)?;
+
+			<RelayerPoints<T>>::remove(&relayer);
+
+			TotalRelayerPoints::mutate(|p| *p -= points);
+
+			<Module<T>>::deposit_event(RawEvent::ClaimReward(relayer, payout));
 		}
 
 		// --- root call ---
@@ -415,6 +511,31 @@ decl_module! {
 		#[weight = 10_000_000]
 		pub fn set_number_of_blocks_finality(origin, #[compact] new: u64) {
 			ensure_root(origin)?;
+
+			let old_number = NumberOfBlocksFinality::get();
+			let best_header_info = Self::header_brief(Self::best_header_hash()).ok_or(<Error<T>>::HeaderBriefNE);
+			if new < old_number && best_header_info.is_ok() {
+				let best_header_info_number = best_header_info.unwrap().number;
+
+				for i in 0..(old_number - new) {
+					// Adding reward points to the relayer of finalized block
+					if best_header_info_number > Self::number_of_blocks_finality() + i + 1 {
+						let finalized_block_number = best_header_info_number - Self::number_of_blocks_finality() - i - 1;
+						let finalized_block_hash = CanonicalHeaderHashes::get(finalized_block_number);
+						if let Some(info) = <HeaderBriefs<T>>::get(finalized_block_hash) {
+							let points: u64 = Self::relayer_points(&info.relayer);
+
+							<RelayerPoints<T>>::insert(info.relayer, points + 1);
+
+							TotalRelayerPoints::put(Self::total_points() + 1);
+						}
+					}
+				}
+			} else {
+				// Finality interval becomes larger, some points might already been claimed.
+				// But we just ignore possible double claimed in future here.
+			}
+
 			NumberOfBlocksFinality::put(new);
 		}
 
@@ -428,6 +549,18 @@ decl_module! {
 		pub fn set_number_of_blocks_safe(origin, #[compact] new: u64) {
 			ensure_root(origin)?;
 			NumberOfBlocksSafe::put(new);
+		}
+
+		/// Set verify receipt fee
+		///
+		/// # <weight>
+		/// - `O(1)`.
+		/// - One storage write
+		/// # </weight>
+		#[weight = 10_000_000]
+		pub fn set_receipt_verify_fee(origin, #[compact] new: Balance<T>) {
+			ensure_root(origin)?;
+			<ReceiptVerifyFee<T>>::put(new);
 		}
 
 	}
@@ -450,12 +583,13 @@ impl<T: Trait> Module<T> {
 		Headers::insert(&header_hash, header);
 
 		// initialize header info, including total difficulty.
-		HeaderBriefs::insert(
+		<HeaderBriefs<T>>::insert(
 			&header_hash,
-			EthHeaderBrief {
+			EthHeaderBrief::<T::AccountId> {
 				parent_hash: header.parent_hash,
 				total_difficulty: genesis_total_difficulty.into(),
 				number: block_number,
+				relayer: Default::default(),
 			},
 		);
 
@@ -629,7 +763,7 @@ impl<T: Trait> Module<T> {
 		}
 	}
 
-	fn maybe_store_header(header: &EthHeader) -> DispatchResult {
+	fn maybe_store_header(relayer: &T::AccountId, header: &EthHeader) -> DispatchResult {
 		let best_header_info =
 			Self::header_brief(Self::best_header_hash()).ok_or(<Error<T>>::HeaderBriefNE)?;
 
@@ -647,12 +781,13 @@ impl<T: Trait> Module<T> {
 			.total_difficulty;
 
 		let header_hash = header.hash();
-		let header_brief = EthHeaderBrief {
+		let header_brief = EthHeaderBrief::<T::AccountId> {
 			number: header.number,
 			parent_hash: header.parent_hash,
 			total_difficulty: parent_total_difficulty
 				.checked_add(header.difficulty)
 				.ok_or(<Error<T>>::BlockNumberOF)?,
+			relayer: relayer.clone(),
 		};
 
 		// Check total difficulty and re-org if necessary.
@@ -698,7 +833,7 @@ impl<T: Trait> Module<T> {
 				CanonicalHeaderHashes::insert(number, current_hash);
 
 				// Check if there is an info to get the parent hash
-				if let Some(info) = HeaderBriefs::get(current_hash) {
+				if let Some(info) = <HeaderBriefs<T>>::get(current_hash) {
 					current_hash = info.parent_hash;
 				} else {
 					break;
@@ -706,23 +841,48 @@ impl<T: Trait> Module<T> {
 			}
 		}
 
+		// Adding reward points to the relayer of finalized block
+		if header.number > Self::number_of_blocks_finality() {
+			let finalized_block_number = header.number - Self::number_of_blocks_finality() - 1;
+			let finalized_block_hash = CanonicalHeaderHashes::get(finalized_block_number);
+			if let Some(info) = <HeaderBriefs<T>>::get(finalized_block_hash) {
+				let points: u64 = Self::relayer_points(&info.relayer);
+
+				<RelayerPoints<T>>::insert(info.relayer, points + 1);
+
+				TotalRelayerPoints::put(Self::total_points() + 1);
+			}
+		}
+
 		Headers::insert(header_hash, header);
-		HeaderBriefs::insert(header_hash, header_brief.clone());
+		<HeaderBriefs<T>>::insert(header_hash, header_brief.clone());
 
 		Ok(())
+	}
+
+	/// Return the amount of money in the pot.
+	// The existential deposit is not part of the pot so eth-relay account never gets deleted.
+	fn pot<C: Currency<T::AccountId>>() -> C::Balance {
+		C::free_balance(&Self::account_id())
+			// Must never be less than 0 but better be safe.
+			.saturating_sub(C::minimum_balance())
 	}
 }
 
 /// Handler for selecting the genesis validator set.
-pub trait VerifyEthReceipts {
-	fn verify_receipt(proof_record: &EthReceiptProof) -> Result<Receipt, DispatchError>;
+pub trait VerifyEthReceipts<Balance, AccountId> {
+	fn verify_receipt(proof_record: &EthReceiptProof) -> Result<(Receipt, Balance), DispatchError>;
+
+	fn account_id() -> AccountId;
 }
 
-impl<T: Trait> VerifyEthReceipts for Module<T> {
+impl<T: Trait> VerifyEthReceipts<Balance<T>, T::AccountId> for Module<T> {
 	/// confirm that the block hash is right
 	/// get the receipt MPT trie root from the block header
 	/// Using receipt MPT trie root to verify the proof and index etc.
-	fn verify_receipt(proof_record: &EthReceiptProof) -> Result<Receipt, DispatchError> {
+	fn verify_receipt(
+		proof_record: &EthReceiptProof,
+	) -> Result<(Receipt, Balance<T>), DispatchError> {
 		let info =
 			Self::header_brief(&proof_record.header_hash).ok_or(<Error<T>>::HeaderBriefNE)?;
 
@@ -753,7 +913,15 @@ impl<T: Trait> VerifyEthReceipts for Module<T> {
 				.ok_or(<Error<T>>::TrieKeyNE)?;
 		let receipt = rlp::decode(&value).map_err(|_| <Error<T>>::ReceiptDsF)?;
 
-		Ok(receipt)
+		Ok((receipt, Self::receipt_verify_fee()))
+	}
+
+	/// The account ID of the eth relay pot.
+	///
+	/// This actually does computation. If you need to keep using it, then make sure you cache the
+	/// value and only call this once.
+	fn account_id() -> T::AccountId {
+		T::ModuleId::get().into_account()
 	}
 }
 
@@ -805,7 +973,7 @@ impl<T: Trait + Send + Sync> SignedExtension for CheckEthRelayHeaderHash<T> {
 				sp_runtime::print("check eth-relay header hash was received.");
 				let header_hash = header.hash();
 
-				if HeaderBriefs::get(&header_hash).is_none() {
+				if <HeaderBriefs<T>>::get(&header_hash).is_none() {
 					Ok(ValidTransaction::default())
 				} else {
 					InvalidTransaction::Custom(<Error<T>>::HeaderAE.as_u8()).into()

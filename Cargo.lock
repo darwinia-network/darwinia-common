@@ -859,6 +859,7 @@ dependencies = [
 name = "darwinia-eth-offchain"
 version = "0.5.4"
 dependencies = [
+ "darwinia-balances",
  "darwinia-eth-relay",
  "darwinia-support",
  "eth-primitives",
@@ -877,6 +878,7 @@ dependencies = [
 name = "darwinia-eth-relay"
 version = "0.5.4"
 dependencies = [
+ "darwinia-balances",
  "darwinia-support",
  "eth-primitives",
  "ethash",
