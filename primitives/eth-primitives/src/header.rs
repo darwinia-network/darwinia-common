@@ -1,15 +1,17 @@
 // --- crates ---
 use codec::{Decode, Encode};
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
 // --- github ---
 use ethbloom::Bloom;
 use keccak_hash::{keccak, KECCAK_EMPTY_LIST_RLP, KECCAK_NULL_RLP};
 use rlp::{Decodable, DecoderError, Encodable, Rlp, RlpStream};
 // --- substrate ---
 use sp_runtime::RuntimeDebug;
-use sp_std::{prelude::*, str::FromStr};
+use sp_std::prelude::*;
 // --- darwinia ---
 use crate::*;
-use darwinia_support::{fixed_hex_bytes_unchecked, hex_bytes_unchecked};
+use darwinia_support::bytes_thing::hex_bytes_unchecked;
 
 #[derive(Clone, Copy, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
 enum Seal {
@@ -19,6 +21,7 @@ enum Seal {
 	Without,
 }
 
+#[cfg_attr(feature = "easy-testing", derive(Serialize, Deserialize))]
 #[derive(Clone, Eq, Encode, Decode, RuntimeDebug)]
 pub struct EthHeader {
 	pub parent_hash: H256,
@@ -39,7 +42,22 @@ pub struct EthHeader {
 }
 
 impl EthHeader {
+	pub fn from_scale_codec_str<S: AsRef<str>>(s: S) -> Option<Self> {
+		if let Ok(eth_header) = <Self as Decode>::decode(&mut &hex_bytes_unchecked(s.as_ref())[..])
+		{
+			Some(eth_header)
+		} else {
+			None
+		}
+	}
+
+	#[cfg(any(feature = "easy-testing", test))]
 	pub fn from_str_unchecked(s: &str) -> Self {
+		// --- std ---
+		use std::str::FromStr;
+		// --- darwinia ---
+		use darwinia_support::bytes_thing::fixed_hex_bytes_unchecked;
+
 		fn parse_value_unchecked(s: &str) -> &str {
 			s.splitn(2, ':')
 				.skip(1)
@@ -159,8 +177,11 @@ impl Default for EthHeader {
 impl PartialEq for EthHeader {
 	fn eq(&self, c: &EthHeader) -> bool {
 		if let (&Some(ref h1), &Some(ref h2)) = (&self.hash, &c.hash) {
-			if h1 == h2 {
-				return true;
+			// More strict check even if hashes equal since EthHeader could be decoded from dispatch call by external
+			// Note that this is different implementation compared to Open Ethereum
+			// Refer: https://github.com/openethereum/openethereum/blob/v3.0.0-alpha.1/ethcore/types/src/header.rs#L93
+			if h1 != h2 {
+				return false;
 			}
 		}
 
@@ -464,8 +485,11 @@ mod tests {
 		}
 	}
 
+	// --- std ---
+	use std::str::FromStr;
 	// --- darwinia ---
 	use super::*;
+	use darwinia_support::bytes_thing::fixed_hex_bytes_unchecked;
 	use error::BlockError;
 	use pow::EthashPartial;
 
@@ -750,5 +774,74 @@ mod tests {
 		let header = sequential_header().0;
 		let ethash_params = EthashPartial::production();
 		assert_eq!(ethash_params.verify_block_basic(&header), Ok(()));
+	}
+
+	#[test]
+	fn test_scale_codec_of_eth_header() {
+		let header = EthHeader::from_str_unchecked(
+			r#"
+			{
+				"difficulty": "0x3ff800000",
+				"extraData": "0x476574682f76312e302e302f6c696e75782f676f312e342e32",
+				"gasLimit": "0x1388",
+				"gasUsed": "0x0",
+				"hash": "0x88e96d4537bea4d9c05d12549907b32561d3bf31f45aae734cdc119f13406cb6",
+				"logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+				"miner": "0x05a56e2d52c817161883f50c441c3228cfe54d9f",
+				"mixHash": "0x969b900de27b6ac6a67742365dd65f55a0526c41fd18e1b16f1a1215c2e66f59",
+				"nonce": "0x539bd4979fef1ec4",
+				"number": "0x1",
+				"parentHash": "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3",
+				"receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+				"sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+				"size": "0x219",
+				"stateRoot": "0xd67e4d450343046425ae4271474353857ab860dbc0a1dde64b41b5cd3a532bf3",
+				"timestamp": "0x55ba4224",
+				"totalDifficulty": "0x7ff800000",
+				"transactions": [],
+				"transactionsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+				"uncles": []
+			}
+			"#,
+		);
+
+		let mut scale_encoded: &[u8] = b"\xd4\xe5g@\xf8v\xae\xf8\xc0\x10\xb8j@\xd5\xf5gE\xa1\x18\xd0\x90j4\xe6\x9a\xec\x8c\r\xb1\xcb\x8f\xa3$B\xbaU\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x05\xa5n-R\xc8\x17\x16\x18\x83\xf5\x0cD\x1c2(\xcf\xe5M\x9fV\xe8\x1f\x17\x1b\xccU\xa6\xff\x83E\xe6\x92\xc0\xf8n[H\xe0\x1b\x99l\xad\xc0\x01b/\xb5\xe3c\xb4!\x1d\xccM\xe8\xde\xc7]z\xab\x85\xb5g\xb6\xcc\xd4\x1a\xd3\x12E\x1b\x94\x8at\x13\xf0\xa1B\xfd@\xd4\x93GdGeth/v1.0.0/linux/go1.4.2\xd6~ME\x03C\x04d%\xaeBqGCS\x85z\xb8`\xdb\xc0\xa1\xdd\xe6KA\xb5\xcd:S+\xf3V\xe8\x1f\x17\x1b\xccU\xa6\xff\x83E\xe6\x92\xc0\xf8n[H\xe0\x1b\x99l\xad\xc0\x01b/\xb5\xe3c\xb4!\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x88\x13\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\xff\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x84\xa0\x96\x9b\x90\r\xe2{j\xc6\xa6wB6]\xd6_U\xa0RlA\xfd\x18\xe1\xb1o\x1a\x12\x15\xc2\xe6oY$\x88S\x9b\xd4\x97\x9f\xef\x1e\xc4\x01\x88\xe9mE7\xbe\xa4\xd9\xc0]\x12T\x99\x07\xb3%a\xd3\xbf1\xf4Z\xaesL\xdc\x11\x9f\x13@l\xb6";
+		let decoded_header: EthHeader = Decode::decode::<&[u8]>(&mut scale_encoded).ok().unwrap();
+		assert_eq!(header, decoded_header);
+	}
+
+	#[test]
+	fn deserialize_should_work() {
+		let header = EthHeader::from_str_unchecked(
+			r#"
+			{
+				"difficulty": "0x234ac172",
+				"extraData": "0xde830207028f5061726974792d457468657265756d86312e34312e30826c69",
+				"gasLimit": "0x7a121d",
+				"gasUsed": "0x1b8855",
+				"hash": "0x253c1f8ed3051930949251bcf786d4ecfe379c001202d07aeb8a68ba15588f1d",
+				"logsBloom": "0x0006000000400004000000000800000ac000000200208000040000100084410200017001004000090100600000002800000041020002400000000000200000c81080602800004000000200080020000828200000110320001000000008008420000000400200a0008c0000380410084040200201040001000014045011001010000408000000a80000000010020002000000049000000000800a5000080000000000008010000000820041040014000100000004000000000040000002000000000000221000404028000002048200080000000000000000000001000108204002000200000012000000808000008200a0020000001000800000000080000000",
+				"miner": "0x05fc5a079e0583b8a07526023a16e2022c4c6296",
+				"mixHash": "0xe582018f215ce844c7e0b9bd10ee8ab89cad57dc01f3aec080bff11134cc5573",
+				"nonce": "0xe55fdb2d73c14cee",
+				"number": "0x7398d5",
+				"parentHash": "0xccd3a54b1bb11a8fa7eb82c6885c3bdcc9884cb0229cb9a70683d58bfe78e80c",
+				"receiptsRoot": "0x6c57de9ea8a275b131b344d60bbdef1ea1465753cba5924be631116fc9994d8b",
+				"sha3Uncles": "0xec428257d3daf5aa3a394665c7ab79e14a51116178653038fd2d5c23bb011833",
+				"size": "0x1b0b",
+				"stateRoot": "0xbd3b97632b55686763748c69dec192fa2b5067c92cc0e3b5e19afad6bf43ed04",
+				"timestamp": "0x5e78f257",
+				"totalDifficulty": "0x6b2dd4a2c4f47d",
+				"transactions": [omitted],
+				"transactionsRoot": "0x1d096373d65213a55a03f1edd066091ef245054ddbd827a4679f19983b2d8ae6",
+				"uncles": [omitted]
+			}
+			"#,
+		);
+		let encoded_header = hex_bytes_unchecked("ccd3a54b1bb11a8fa7eb82c6885c3bdcc9884cb0229cb9a70683d58bfe78e80c57f2785e00000000d59873000000000005fc5a079e0583b8a07526023a16e2022c4c62961d096373d65213a55a03f1edd066091ef245054ddbd827a4679f19983b2d8ae6ec428257d3daf5aa3a394665c7ab79e14a51116178653038fd2d5c23bb0118337cde830207028f5061726974792d457468657265756d86312e34312e30826c69bd3b97632b55686763748c69dec192fa2b5067c92cc0e3b5e19afad6bf43ed046c57de9ea8a275b131b344d60bbdef1ea1465753cba5924be631116fc9994d8b0006000000400004000000000800000ac000000200208000040000100084410200017001004000090100600000002800000041020002400000000000200000c81080602800004000000200080020000828200000110320001000000008008420000000400200a0008c0000380410084040200201040001000014045011001010000408000000a80000000010020002000000049000000000800a5000080000000000008010000000820041040014000100000004000000000040000002000000000000221000404028000002048200080000000000000000000001000108204002000200000012000000808000008200a002000000100080000000008000000055881b00000000000000000000000000000000000000000000000000000000001d127a000000000000000000000000000000000000000000000000000000000072c14a23000000000000000000000000000000000000000000000000000000000884a0e582018f215ce844c7e0b9bd10ee8ab89cad57dc01f3aec080bff11134cc55732488e55fdb2d73c14cee01253c1f8ed3051930949251bcf786d4ecfe379c001202d07aeb8a68ba15588f1d");
+		assert_eq!(
+			<EthHeader as Decode>::decode(&mut &encoded_header[..]).unwrap(),
+			header
+		);
 	}
 }

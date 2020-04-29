@@ -2,22 +2,27 @@
 //!
 //! In this module,
 //! the offchain worker will keep fetch the next block info and relay to Darwinia Network.
-//! The worker will fetch blocks from a nonexistent domain, ie http://eth-resource/,
-//! such that it can be proxy to any source and do any reprocessing or cache on the node.
-//! Now the source may be EtherScan, Cloudflare Ethereum Gateway, or a Ethereum full node.
-//! Please our anothre project, darwinia.js.
+//! The worker will fetch the header and the Merkle proof information for blocks from a nonexistent domain,
+//! ie http://eth-resource/, such that it can be connected with shadow service.
+//! Now the shadow service is provided by our another project, darwinia.js.
 //! https://github.com/darwinia-network/darwinia.js
+//!
 //!
 //! Here is the basic flow.
 //! The starting point is the `offchain_worker`
 //! - base on block schedule, the `relay_header` will be called
-//! - then the `relay_header` will get ethereum blocks from from http://eth-resource/
-//! - After the http response corrected fetched, we will validate not only the format of http
-//!   response but also the correct the Ethereum header as the light client do
-//! - After all, the corrected Ethereum header will be recorded on Darwinia Network by
+//! - then the `relay_header` will get ethereum blocks and Merkle proof information from from http://eth-resource/
+//! - After the http response corrected fetched, we will simple validate the format of http response,
+//!   and parse and build Ethereum header and Merkle Proofs.
+//! - After all, the corrected Ethereum header with the proofs will be submit and validate on chain of Darwinia Network by
 //!   `submit_header`
 //!
-//! More details can get in these PRs
+//! The protocol of shadow service and offchain worker can be scale encoded format or json format,
+//! and the worker will use json format as fail back, such that it may be easier to debug.
+//! If you want to build your own shadow service please refer
+//! https://github.com/darwinia-network/darwinia-common/issues/86
+//!
+//! More details about offchain workers in following PRs
 //! https://github.com/darwinia-network/darwinia/pull/335
 //! https://github.com/darwinia-network/darwinia-common/pull/43
 //! https://github.com/darwinia-network/darwinia-common/pull/63
@@ -25,11 +30,25 @@
 
 pub mod crypto {
 	// --- substrate ---
-	use sp_runtime::app_crypto::{app_crypto, sr25519};
-	// --- darwinia ---
-	use crate::KEY_TYPE;
+	use frame_system::offchain::AppCrypto;
+	use sp_core::sr25519::{Public, Signature};
+	use sp_runtime::{traits::Verify, MultiSignature};
 
-	app_crypto!(sr25519, KEY_TYPE);
+	mod app {
+		// --- substrate ---
+		use sp_runtime::app_crypto::{app_crypto, sr25519};
+		// --- darwinia ---
+		use crate::ETH_OFFCHAIN;
+
+		app_crypto!(sr25519, ETH_OFFCHAIN);
+	}
+
+	pub struct AuthorityId;
+	impl AppCrypto<<MultiSignature as Verify>::Signer, MultiSignature> for AuthorityId {
+		type RuntimeAppPublic = app::Public;
+		type GenericPublic = Public;
+		type GenericSignature = Signature;
+	}
 }
 
 #[cfg(all(feature = "std", test))]
@@ -39,47 +58,56 @@ mod tests;
 
 // --- core ---
 use core::str::from_utf8;
+// --- crates ---
+use codec::Decode;
 // --- substrate ---
-use frame_support::{debug::trace, decl_error, decl_event, decl_module, traits::Get};
-use frame_system::{self as system, offchain::SubmitSignedTransaction};
+use frame_support::{debug::trace, decl_error, decl_module, traits::Get};
+use frame_system::offchain::{
+	AppCrypto, CreateSignedTransaction, ForAll, SendSignedTransaction, Signer,
+};
 use sp_runtime::{offchain::http::Request, traits::Zero, DispatchError, KeyTypeId};
 use sp_std::prelude::*;
 // --- darwinia ---
+use darwinia_eth_relay::DoubleNodeWithMerkleProof;
+use darwinia_support::{bytes_thing::{hex_bytes_unchecked, base_n_bytes_unchecked}, literal_procesor::extract_from_json_str};
 use eth_primitives::header::EthHeader;
 
 type EthRelay<T> = darwinia_eth_relay::Module<T>;
 type EthRelayCall<T> = darwinia_eth_relay::Call<T>;
 
-pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"rlwk");
-
+pub const ETH_OFFCHAIN: KeyTypeId = KeyTypeId(*b"etho");
 const MAX_REDIRECT_TIMES: u8 = 3;
-
-#[cfg(feature = "easy-testing")]
-const ETHRESOURCE: &'static [u8] = b"https://cloudflare-eth.com";
-#[cfg(not(feature = "easy-testing"))]
-const ETHRESOURCE: &'static [u8] = b"http://eth-resource";
+/// A dummy endpoint, point this to shadow service
+const ETH_RESOURCE: &'static [u8] = b"http://eth-resource";
 
 #[derive(Default)]
-struct OffchainRequest {
+pub struct OffchainRequest {
 	location: Vec<u8>,
 	payload: Vec<u8>,
 	redirect_times: u8,
 	cookie: Option<Vec<u8>>,
 }
 
-/// The OffhcainRequest handle the request session
-/// - set cookie if returns
-/// - handle the redirect actions if happends
+pub trait OffchainRequestTrait {
+	fn send(&mut self) -> Option<Vec<u8>>;
+}
+
 impl OffchainRequest {
-	pub fn new(url: Vec<u8>, payload: Vec<u8>) -> Self {
+	fn new(url: Vec<u8>, payload: Vec<u8>) -> Self {
 		OffchainRequest {
 			location: url.clone(),
 			payload,
 			..Default::default()
 		}
 	}
+}
 
-	pub fn send(mut self) -> Option<Vec<u8>> {
+/// The OffchainRequest handle the request session
+/// - set cookie if returns
+/// - handle the redirect actions if happends
+#[cfg(not(test))]
+impl OffchainRequestTrait for OffchainRequest {
+	fn send(&mut self) -> Option<Vec<u8>> {
 		for _ in 0..=MAX_REDIRECT_TIMES {
 			let p = self.payload.clone();
 			let request =
@@ -92,7 +120,7 @@ impl OffchainRequest {
 					} else if resp.code == 301 || resp.code == 302 {
 						self.redirect_times += 1;
 						trace!(
-							target: "eoc-req",
+							target: "eth-offchain",
 							"[eth-offchain] Redirect({}), Request Header: {:?}",
 							self.redirect_times, resp.headers(),
 						);
@@ -104,16 +132,16 @@ impl OffchainRequest {
 						if let Some(location) = headers.find("location") {
 							self.location = location.as_bytes().to_vec();
 							trace!(
-								target: "eoc-req",
+								target: "eth-offchain",
 								"[eth-offchain] Redirect({}), Location: {:?}",
 								self.redirect_times,
 								self.location,
 							);
 						}
 					} else {
-						trace!(target: "eoc-req", "[eth-offchain] Status Code: {}", resp.code);
+						trace!(target: "eth-offchain", "[eth-offchain] Status Code: {}", resp.code);
 						trace!(
-							target: "eoc-req",
+							target: "eth-offchain",
 							"[eth-offchain] Response: {}",
 							from_utf8(&resp.body().collect::<Vec<_>>()).unwrap_or_default(),
 						);
@@ -128,30 +156,14 @@ impl OffchainRequest {
 	}
 }
 
-pub trait Trait: darwinia_eth_relay::Trait {
-	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
-
-	type Call: From<EthRelayCall<Self>>;
-
-	type SubmitSignedTransaction: SubmitSignedTransaction<Self, <Self as Trait>::Call>;
+pub trait Trait: CreateSignedTransaction<EthRelayCall<Self>> + darwinia_eth_relay::Trait {
+	type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
 
 	type FetchInterval: Get<Self::BlockNumber>;
 }
 
-decl_event! {
-	pub enum Event<T>
-	where
-		AccountId = <T as system::Trait>::AccountId
-	{
-		OffchainRelayChainApiKey(AccountId), // currently not use, implement someday not now
-	}
-}
-
 decl_error! {
 	pub enum Error for Module<T: Trait> {
-		/// Local accounts - UNAVAILABLE (Consider adding one via `author_insertKey` RPC)
-		AccountUnavail,
-
 		/// API Response - UNEXPECTED
 		APIRespUnexp,
 
@@ -160,8 +172,10 @@ decl_error! {
 		/// Block Number - OVERFLOW
 		BlockNumberOF,
 
-		/// Request - REACH MAX RETRY
-		ReqRMR,
+		/// Proof - SCALE DECODE ERROR
+		ProofSE,
+		/// Proof - JSON DECODE ERROR
+		ProofJE,
 	}
 }
 
@@ -174,15 +188,18 @@ decl_module! {
 
 		const FetchInterval: T::BlockNumber = T::FetchInterval::get();
 
-		fn deposit_event() = default;
-
 		/// The offchain worker which will be called in a regular block schedule
 		/// The relay_header is called when the block meet the schedule timing
 		fn offchain_worker(block: T::BlockNumber) {
 			let fetch_interval = T::FetchInterval::get().max(1.into());
 			if (block % fetch_interval).is_zero() {
-				if let Err(e) = Self::relay_header(){
-					trace!(target: "eoc-wk", "[eth-offchain] Error: {:?}", e);
+				let signer = <Signer<T, T::AuthorityId>>::all_accounts();
+				if signer.can_sign() {
+					if let Err(e) = Self::relay_header(&signer){
+						trace!(target: "eth-offchain", "[eth-offchain] Error: {:?}", e);
+					}
+				} else {
+					trace!(target: "eth-offchain", "[eth-offchain] use `author_insertKey` rpc to inscert `rlwk` key to enable worker");
 				}
 			}
 		}
@@ -190,25 +207,26 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
-	/// The `relay_header` is try to get Ethereum blocks from ethereum network,
-	/// and this will dependence on the ApiKey to fetch the blocks from differe Ethereum
-	/// infrastructures. If the EthScan ApiKey is present, we will get the blocks from EthScan,
-	/// else the blocks will be got from Cloudflare Ethereum Gateway
-	fn relay_header() -> Result<(), DispatchError> {
-		if !T::SubmitSignedTransaction::can_sign() {
-			Err(<Error<T>>::AccountUnavail)?;
-		}
-
+	/// The `relay_header` is try to get Ethereum blocks with merkle proofs from shadow service
+	/// The default communication will transfer data with scale encoding,
+	/// if there are issue to communicate with scale encoding, the failback communication will
+	/// be performed with json format(use option: `true`)
+	fn relay_header(signer: &Signer<T, T::AuthorityId, ForAll>) -> Result<(), DispatchError> {
 		let target_number = Self::get_target_number()?;
+		let header_without_option = Self::fetch_header(ETH_RESOURCE.to_vec(), target_number, false);
+		let (header, proof_list) = match header_without_option {
+			Ok(r) => r,
+			Err(e) => {
+				trace!(target: "eth-offchain", "[eth-offchain] request without option fail: {:?}", e);
+				trace!(target: "eth-offchain", "[eth-offchain] request fail back wth option");
+				Self::fetch_header(ETH_RESOURCE.to_vec(), target_number, true)?
+			}
+		};
 
-		let mut payload = r#"{"jsonrpc":"2.0","method":"eth_getBlockByNumber","params":["0x"#
-			.as_bytes()
-			.to_vec();
-		payload.append(&mut base_n_bytes(target_number, 16));
-		payload.append(&mut r#"",false],"id":1}"#.as_bytes().to_vec());
-		let header = Self::fetch_header(ETHRESOURCE.to_vec(), payload)?;
-
-		Self::submit_header(header);
+		// The `submit_header` will call event out of eth-offchain pallet,
+		// so this function is skiped in the test of pallet
+		#[cfg(not(test))]
+		Self::submit_header(signer, header, proof_list);
 		Ok(())
 	}
 
@@ -219,78 +237,141 @@ impl<T: Trait> Module<T> {
 			.number
 			.checked_add(1)
 			.ok_or(<Error<T>>::BlockNumberOF)?;
-		trace!(target: "eoc-rl", "[eth-offchain] Target Number: {}", target_number);
+		trace!(target: "eth-offchain", "[eth-offchain] Target Number: {}", target_number);
 
 		Ok(target_number)
 	}
 
+	fn build_request_client(url: Vec<u8>, payload: Vec<u8>) -> impl OffchainRequestTrait {
+		OffchainRequest::new(url, payload)
+	}
+
 	/// Build the response as EthHeader struct after validating
-	fn fetch_header(url: Vec<u8>, payload: Vec<u8>) -> Result<EthHeader, DispatchError> {
-		let maybe_resp_body = OffchainRequest::new(url, payload).send();
+	fn fetch_header(
+		url: Vec<u8>,
+		target_number: u64,
+		option: bool,
+	) -> Result<(EthHeader, Vec<DoubleNodeWithMerkleProof>), DispatchError> {
+		let payload = Self::build_payload(target_number, option);
+		let mut client = Self::build_request_client(url, payload);
+		let maybe_resp_body = client.send();
 
-		let resp_body = Self::validate_response(maybe_resp_body)?;
-		let raw_header = from_utf8(&resp_body[33..resp_body.len() - 1]).unwrap_or_default();
+		let resp_body = Self::validate_response(maybe_resp_body, option)?;
 
-		let header = EthHeader::from_str_unchecked(raw_header);
-		trace!(target: "eoc-rl", "[eth-offchain] Eth Header: {:?}", header);
+		let eth_header_part = extract_from_json_str(&resp_body[..], b"eth_header" as
+			&[u8]).unwrap_or_default();
+		let header = if option {
+			panic!("FIXME")
+		// EthHeader::from_str_unchecked(from_utf8(eth_header_part).unwrap_or_default())
+		} else {
+			let scale_bytes = hex_bytes_unchecked(from_utf8(eth_header_part).unwrap_or_default());
+			Decode::decode::<&[u8]>(&mut &scale_bytes[..]).unwrap_or_default()
+		};
 
-		Ok(header)
+		let proof_part = extract_from_json_str(&resp_body[..], b"proof" as
+			&[u8]).unwrap_or_default();
+		let proof_list = if option {
+			Self::parse_double_node_with_proof_list_from_json_str(proof_part)?
+		} else {
+			Self::parse_double_node_with_proof_list_from_scale_str(proof_part)?
+		};
+		trace!(target: "eth-offchain", "[eth-offchain] Eth Header: {:?}", header);
+
+		Ok((header, proof_list))
 	}
 
 	/// Validate the response is a JSON with enough data not simple error message
-	fn validate_response(maybe_resp_body: Option<Vec<u8>>) -> Result<Vec<u8>, DispatchError> {
+	fn validate_response(
+		maybe_resp_body: Option<Vec<u8>>,
+		with_option: bool,
+	) -> Result<Vec<u8>, DispatchError> {
 		if let Some(resp_body) = maybe_resp_body {
 			trace!(
-				target: "eoc-rl",
+				target: "eth-offchain",
 				"[eth-offchain] Response: {}",
 				from_utf8(&resp_body).unwrap_or_default(),
 			);
-			if resp_body[0] != 123u8 || resp_body.len() < 1362 {
-				trace!(target: "eoc-rl", "[eth-offchain] Malresponse");
+			if resp_body[0] != 123u8
+				|| (with_option && resp_body.len() < 1362)
+				|| (!with_option && resp_body.len() < 1353)
+			{
+				trace!(target: "eth-offchain", "[eth-offchain] Malresponse");
 				Err(<Error<T>>::APIRespUnexp)?;
 			}
 			Ok(resp_body)
 		} else {
-			trace!(target: "eoc-rl", "[eth-offchain] Lack Response");
+			trace!(target: "eth-offchain", "[eth-offchain] Lack Response");
 			Err(<Error<T>>::APIRespUnexp)?
 		}
 	}
 
 	/// Submit and record the valid header on Darwinia network
-	fn submit_header(header: EthHeader) {
-		// FIXME: add proof
-		let results = T::SubmitSignedTransaction::submit_signed(<EthRelayCall<T>>::relay_header(
-			header,
-			vec![],
-		));
-		for (account, result) in &results {
+	fn submit_header(
+		signer: &Signer<T, T::AuthorityId, ForAll>,
+		header: EthHeader,
+		proof_list: Vec<DoubleNodeWithMerkleProof>,
+	) {
+		let results = signer.send_signed_transaction(|_| {
+			<EthRelayCall<T>>::relay_header(header.clone(), proof_list.clone())
+		});
+		for (_, result) in &results {
 			trace!(
-				target: "eoc-rl",
-				"[eth-offchain] Account: {:?}, Relay: {:?}",
-				account,
+				target: "eth-offchain",
+				"[eth-offchain] Relay: {:?}",
 				result,
 			);
 		}
 	}
-}
 
-/// Transfer digitals into hex form
-fn base_n_bytes(mut x: u64, radix: u64) -> Vec<u8> {
-	if radix > 41 {
-		return vec![];
-	}
+	/// Build a payload to request the json response or scaled encoded response depence on option
+	fn build_payload(target_number: u64, option: bool) -> Vec<u8> {
+		let header_part: &[u8] = br#"{"jsonrpc":"2.0","method":"shadow_getEthHeaderWithProofByNumber","params":{"block_num":"#;
+		let number_part: &[u8] = &base_n_bytes_unchecked(target_number, 10)[..];
+		let transaction_part: &[u8] = br#","transaction":false"#;
+		let option_part: &[u8] = br#","options":{"format":"json"}"#;
+		let tail: &[u8] = br#"},"id":1}"#;
 
-	let mut buf = vec![];
-	while x > 0 {
-		let rem = (x % radix) as u8;
-		if rem < 10 {
-			buf.push(48 + rem);
+		if option {
+			[
+				header_part,
+				number_part,
+				transaction_part,
+				option_part,
+				tail,
+			]
+			.concat()
 		} else {
-			buf.push(55 + rem);
+			[header_part, number_part, transaction_part, tail].concat()
 		}
-		x /= radix;
 	}
 
-	buf.reverse();
-	buf
+	/// Build the merkle proof information from json format response
+	fn parse_double_node_with_proof_list_from_json_str(
+		json_str: &[u8],
+	) -> Result<Vec<DoubleNodeWithMerkleProof>, DispatchError> {
+		let raw_str = match from_utf8(json_str) {
+			Ok(r) => r,
+			Err(_) => return Err(<Error<T>>::ProofJE)?,
+		};
+
+		let mut proof_list: Vec<DoubleNodeWithMerkleProof> = Vec::new();
+		// The proof list is 64 length, and we use 256 just in case.
+		for p in raw_str.splitn(256, '}') {
+			if p.len() > 0 {
+				proof_list.push(DoubleNodeWithMerkleProof::from_str_unchecked(p));
+			}
+		}
+		Ok(proof_list)
+	}
+
+	/// Build the merkle proof information from scale encoded response
+	fn parse_double_node_with_proof_list_from_scale_str(
+		scale_str: &[u8],
+	) -> Result<Vec<DoubleNodeWithMerkleProof>, DispatchError> {
+		if scale_str.len() < 2 {
+			return Err(<Error<T>>::ProofSE)?;
+		};
+		let proof_scale_bytes = hex_bytes_unchecked(from_utf8(scale_str).unwrap_or_default());
+		Ok(Decode::decode::<&[u8]>(&mut &proof_scale_bytes[..]).unwrap_or_default())
+	}
 }

@@ -1,6 +1,6 @@
 [package]
 name = "darwinia-staking"
-version = "0.5.3"
+version = "0.5.4"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "FRAME pallet staking"
 edition = "2018"
@@ -14,42 +14,43 @@ codec = { package = "parity-scale-codec", version = "1.3.0", default-features = 
 num-integer = { version = "0.1.42", default-features = false }
 rand_chacha = { version = "0.2", default-features = false, optional = true }
 serde = { version = "1.0.106", optional = true }
+static_assertions = { version = "1.1.0" }
 # darwinia
-darwinia-phragmen = { default-features = false, path = "../../primitives/phragmen" }
 darwinia-support = { default-features = false, path = "../support" }
 # substrate
-frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-pallet-authorship = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-pallet-session = { default-features = false, features = ["historical"], git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-sp-io = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-sp-staking = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+pallet-authorship = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+pallet-session = { default-features = false, features = ["historical"], git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+sp-io = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+sp-phragmen = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+sp-staking = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
 
 [dev-dependencies]
 # crates
+env_logger = "0.7.1"
 rand_chacha = { version = "0.2" }
 # darwinia
 darwinia-balances = { path = "../../frame/balances" }
 darwinia-support = { features = ["easy-testing"], path = "../support" }
 # substrate
-frame-benchmarking = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-pallet-timestamp = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-substrate-test-utils = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+frame-benchmarking = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+pallet-timestamp = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+sp-storage = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+substrate-test-utils = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
 
 [features]
-default = ["equalize", "std"]
-equalize = []
+default = ["std"]
 std = [
 	# crates
 	"codec/std",
 	"num-integer/std",
 	"serde",
 	# darwinia
-	"darwinia-phragmen/std",
 	"darwinia-support/std",
 	# substrate
 	"frame-support/std",
@@ -58,6 +59,7 @@ std = [
 	"pallet-session/std",
 	"sp-core/std",
 	"sp-io/std",
+	"sp-phragmen/std",
 	"sp-runtime/std",
 	"sp-staking/std",
 	"sp-std/std",

@@ -1,6 +1,6 @@
 [package]
 name = "darwinia-treasury"
-version = "0.5.3"
+version = "0.5.4"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "FRAME pallet to manage treasury"
 edition = "2018"
@@ -16,18 +16,18 @@ serde = { version = "1.0.106", optional = true, features = ["derive"] }
 darwinia-support = { default-features = false, path = "../support" }
 # substrate
 # TODO: benchmark
-# frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+# frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
 
 [dev-dependencies]
 # darwinia
 darwinia-balances = { path = "../balances" }
 # substrate
-sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
 
 [features]
 default = ["std"]

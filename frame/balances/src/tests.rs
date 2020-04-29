@@ -1,5 +1,17 @@
 //! Macro for creating the tests for the module.
 
+#[derive(Debug)]
+pub struct CallWithDispatchInfo;
+impl sp_runtime::traits::Dispatchable for CallWithDispatchInfo {
+	type Origin = ();
+	type Trait = ();
+	type Info = frame_support::weights::DispatchInfo;
+	type PostInfo = frame_support::weights::PostDispatchInfo;
+	fn dispatch(self, _origin: Self::Origin) -> sp_runtime::DispatchResultWithInfo<Self::PostInfo> {
+		panic!("Do not use dummy implementation for dispatch.");
+	}
+}
+
 #[macro_export]
 macro_rules! decl_tests {
 	($test:ty, $ext_builder:ty, $existential_deposit:expr) => {
@@ -11,12 +23,12 @@ macro_rules! decl_tests {
 		use pallet_transaction_payment::ChargeTransactionPayment;
 		use sp_runtime::{
 			traits::{BadOrigin, SignedExtension},
-			Fixed64,
+			Fixed128,
 		};
 
 		pub type System = frame_system::Module<$test>;
 
-		pub const CALL: &<$test as frame_system::Trait>::Call = &();
+		pub const CALL: &<$test as frame_system::Trait>::Call = &$crate::tests::CallWithDispatchInfo;
 
 		const ID_1: LockIdentifier = *b"1       ";
 		const ID_2: LockIdentifier = *b"2       ";
@@ -25,7 +37,6 @@ macro_rules! decl_tests {
 		pub fn info_from_weight(w: Weight) -> DispatchInfo {
 			DispatchInfo {
 				weight: w,
-				pays_fee: true,
 				..Default::default()
 			}
 		}
@@ -179,7 +190,7 @@ macro_rules! decl_tests {
 				.monied(true)
 				.build()
 				.execute_with(|| {
-					pallet_transaction_payment::NextFeeMultiplier::put(Fixed64::from_natural(1));
+					pallet_transaction_payment::NextFeeMultiplier::put(Fixed128::from_natural(1));
 					Ring::set_lock(
 						ID_1,
 						&1,
@@ -199,7 +210,7 @@ macro_rules! decl_tests {
 							ChargeTransactionPayment::from(1),
 							&1,
 							CALL,
-							info_from_weight(1),
+							&info_from_weight(1),
 							1,
 						)
 						.is_err()
@@ -209,7 +220,7 @@ macro_rules! decl_tests {
 							ChargeTransactionPayment::from(0),
 							&1,
 							CALL,
-							info_from_weight(1),
+							&info_from_weight(1),
 							1,
 						)
 						.is_ok()
@@ -228,7 +239,7 @@ macro_rules! decl_tests {
 							ChargeTransactionPayment::from(1),
 							&1,
 							CALL,
-							info_from_weight(1),
+							&info_from_weight(1),
 							1,
 						)
 						.is_err()
@@ -238,7 +249,7 @@ macro_rules! decl_tests {
 							ChargeTransactionPayment::from(0),
 							&1,
 							CALL,
-							info_from_weight(1),
+							&info_from_weight(1),
 							1,
 						)
 						.is_err()

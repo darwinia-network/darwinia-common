@@ -86,7 +86,7 @@ pub fn start_session(session_index: SessionIndex) {
 
 ```rust
 // 1. Insert stash account into Payment map.
-Payee::<Test>::insert(11, RewardDestination::Controller);
+<Payee<Test>>::insert(11, RewardDestination::Controller);
 // 2. Add reward points to validators using their stash account ID.
 Staking::reward_by_ids(vec![(11, 50)]);
 // 3. Make all validator and nominator request their payment

@@ -1,6 +1,6 @@
 [package]
 name = "darwinia-eth-relay"
-version = "0.5.3"
+version = "0.5.4"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "FRAME pallet to relay Ethereum headers"
 edition = "2018"
@@ -22,15 +22,18 @@ merkle-patricia-trie = { default-features = false, path = "../../../../primitive
 ethereum-types = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 rlp = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-sp-io = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+sp-io = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
 
 [dev-dependencies]
+# darwinia
+darwinia-balances = { path = "../../../../frame/balances" }
+eth-primitives = { features = ["easy-testing"], path = "../../../../primitives/eth-primitives" }
 # substrate
-sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
 
 [features]
 default = ["std"]

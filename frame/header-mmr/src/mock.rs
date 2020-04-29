@@ -35,9 +35,9 @@ parameter_types! {
 }
 impl frame_system::Trait for Test {
 	type Origin = Origin;
+	type Call = ();
 	type Index = u64;
 	type BlockNumber = u64;
-	type Call = ();
 	type Hash = H256;
 	type Hashing = sp_runtime::traits::BlakeTwo256;
 	type AccountId = u64;
@@ -46,6 +46,9 @@ impl frame_system::Trait for Test {
 	type Event = ();
 	type BlockHashCount = BlockHashCount;
 	type MaximumBlockWeight = MaximumBlockWeight;
+	type DbWeight = ();
+	type BlockExecutionWeight = ();
+	type ExtrinsicBaseWeight = ();
 	type MaximumBlockLength = MaximumBlockLength;
 	type AvailableBlockRatio = AvailableBlockRatio;
 	type Version = ();

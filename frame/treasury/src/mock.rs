@@ -1,12 +1,20 @@
 //! Mock file for treasury.
 
+mod treasury {
+	// --- darwinia ---
+	// Re-export needed for `impl_outer_event!`.
+	pub use super::super::*;
+}
+
+// --- std ---
+use std::cell::RefCell;
 // --- substrate ---
-use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
+use frame_support::{impl_outer_event, impl_outer_origin, parameter_types, weights::Weight};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	Perbill,
+	ModuleId, Perbill,
 };
 // --- darwinia ---
 use crate::*;
@@ -25,7 +33,7 @@ pub type System = frame_system::Module<Test>;
 pub type Treasury = Module<Test>;
 
 darwinia_support::impl_account_data! {
-	pub struct AccountData<Balance>
+	struct AccountData<Balance>
 	for
 		RingInstance,
 		KtonInstance
@@ -33,6 +41,19 @@ darwinia_support::impl_account_data! {
 		Balance = Balance
 	{
 		// other data
+	}
+}
+
+thread_local! {
+	static TEN_TO_FOURTEEN: RefCell<Vec<u64>> = RefCell::new(vec![10, 11, 12, 13, 14]);
+}
+
+impl_outer_event! {
+	pub enum MockEvent for Test {
+		system<T>,
+		darwinia_balances Instance0<T>,
+		darwinia_balances Instance1<T>,
+		treasury<T>,
 	}
 }
 
@@ -59,9 +80,12 @@ impl frame_system::Trait for Test {
 	type AccountId = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = ();
+	type Event = MockEvent;
 	type BlockHashCount = BlockHashCount;
 	type MaximumBlockWeight = MaximumBlockWeight;
+	type DbWeight = ();
+	type BlockExecutionWeight = ();
+	type ExtrinsicBaseWeight = ();
 	type MaximumBlockLength = MaximumBlockLength;
 	type AvailableBlockRatio = AvailableBlockRatio;
 	type Version = ();
@@ -73,22 +97,26 @@ impl frame_system::Trait for Test {
 
 pub struct TenToFourteen;
 impl Contains<u64> for TenToFourteen {
-	fn contains(n: &u64) -> bool {
-		*n >= 10 && *n <= 14
-	}
 	fn sorted_members() -> Vec<u64> {
-		vec![10, 11, 12, 13, 14]
+		TEN_TO_FOURTEEN.with(|v| v.borrow().clone())
+	}
+	#[cfg(feature = "runtime-benchmarks")]
+	fn add(new: &u64) {
+		TEN_TO_FOURTEEN.with(|v| {
+			let mut members = v.borrow_mut();
+			members.push(*new);
+			members.sort();
+		})
 	}
 }
 
 parameter_types! {
-		pub const ExistentialDeposit: u64 = 1;
+	pub const ExistentialDeposit: u64 = 1;
 }
-
 impl darwinia_balances::Trait<KtonInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
-	type Event = ();
+	type Event = MockEvent;
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
@@ -97,7 +125,7 @@ impl darwinia_balances::Trait<KtonInstance> for Test {
 impl darwinia_balances::Trait<RingInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
-	type Event = ();
+	type Event = MockEvent;
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
@@ -105,17 +133,19 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 }
 
 parameter_types! {
+	pub const TreasuryModuleId: ModuleId = ModuleId(*b"da/trsry");
+	pub const TipCountdown: u64 = 1;
+	pub const TipFindersFee: Percent = Percent::from_percent(20);
+	pub const TipReportDepositBase: Balance = 1;
+	pub const TipReportDepositPerByte: Balance = 1;
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub const RingProposalBondMinimum: Balance = 1;
 	pub const KtonProposalBondMinimum: Balance = 1;
 	pub const SpendPeriod: u64 = 2;
 	pub const Burn: Permill = Permill::from_percent(50);
-	pub const TipCountdown: u64 = 1;
-	pub const TipFindersFee: Percent = Percent::from_percent(20);
-	pub const TipReportDepositBase: Balance = 1;
-	pub const TipReportDepositPerByte: Balance = 1;
 }
 impl Trait for Test {
+	type ModuleId = TreasuryModuleId;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 	type ApproveOrigin = frame_system::EnsureRoot<u64>;
@@ -125,7 +155,7 @@ impl Trait for Test {
 	type TipFindersFee = TipFindersFee;
 	type TipReportDepositBase = TipReportDepositBase;
 	type TipReportDepositPerByte = TipReportDepositPerByte;
-	type Event = ();
+	type Event = MockEvent;
 	type RingProposalRejection = ();
 	type KtonProposalRejection = ();
 	type ProposalBond = ProposalBond;

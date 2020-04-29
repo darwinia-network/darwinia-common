@@ -2,9 +2,15 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(feature = "std")]
 mod address;
+#[cfg(feature = "std")]
+pub use address::*;
+
 mod types {
 	use crate::*;
+
+	pub type AddressT = [u8; 20];
 
 	pub type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
 	// TODO: support *KTON*
@@ -16,20 +22,14 @@ mod types {
 	// type KtonCurrency<T> = <T as Trait>::KtonCurrency;
 }
 
-// --- darwinia ---
-pub use address::{EthereumAddress, TronAddress};
-
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
 	traits::{Currency, Get},
-	weights::SimpleDispatchInfo,
 	{decl_error, decl_event, decl_module, decl_storage},
 };
 use frame_system::{self as system, ensure_none, ensure_root};
-#[cfg(feature = "std")]
-use serde::{Deserialize, Serialize};
 use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};
 #[cfg(feature = "std")]
 use sp_runtime::traits::{SaturatedConversion, Zero};
@@ -43,7 +43,6 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 // --- darwinia ---
-use address::AddressT;
 use types::*;
 
 #[repr(u8)]
@@ -62,23 +61,8 @@ pub enum OtherSignature {
 
 #[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
 pub enum OtherAddress {
-	Eth(EthereumAddress),
-	Tron(TronAddress),
-}
-
-#[cfg_attr(feature = "std", derive(Debug, Default, Serialize, Deserialize))]
-pub struct Account<Address> {
-	pub address: Address,
-	pub backed_ring: u128,
-}
-
-#[cfg(feature = "std")]
-darwinia_support::impl_genesis! {
-	struct ClaimsList {
-		dot: Vec<Account<EthereumAddress>>,
-		eth: Vec<Account<EthereumAddress>>,
-		tron: Vec<Account<TronAddress>>
-	}
+	Eth(AddressT),
+	Tron(AddressT),
 }
 
 #[derive(Clone, Encode, Decode)]
@@ -133,13 +117,13 @@ decl_error! {
 decl_storage! {
 	trait Store for Module<T: Trait> as DarwiniaClaims {
 		ClaimsFromEth
-			get(claims_from_eth)
-			: map hasher(identity) EthereumAddress => Option<RingBalance<T>>;
+			get(fn claims_from_eth)
+			: map hasher(identity) AddressT => Option<RingBalance<T>>;
 		ClaimsFromTron
-			get(claims_from_tron)
-			: map hasher(identity) TronAddress => Option<RingBalance<T>>;
+			get(fn claims_from_tron)
+			: map hasher(identity) AddressT => Option<RingBalance<T>>;
 
-		Total get(total): RingBalance<T>;
+		Total get(fn total): RingBalance<T>;
 	}
 	add_extra_genesis {
 		config(claims_list): ClaimsList;
@@ -150,19 +134,19 @@ decl_storage! {
 			for Account { address, backed_ring } in &config.claims_list.dot {
 				// DOT:RING = 1:50
 				let backed_ring = (*backed_ring).saturated_into();
-				<ClaimsFromEth<T>>::insert(address, backed_ring);
+				<ClaimsFromEth<T>>::insert(address.0, backed_ring);
 				total += backed_ring;
 			}
 			for Account { address, backed_ring } in &config.claims_list.eth {
 				let backed_ring = (*backed_ring).saturated_into();
-				<ClaimsFromEth<T>>::insert(address, backed_ring);
+				<ClaimsFromEth<T>>::insert(address.0, backed_ring);
 				total += backed_ring;
 			}
 
 			// Tron Address
 			for Account { address, backed_ring } in &config.claims_list.tron {
 				let backed_ring = (*backed_ring).saturated_into();
-				<ClaimsFromTron<T>>::insert(address, backed_ring);
+				<ClaimsFromTron<T>>::insert(address.0, backed_ring);
 				total += backed_ring;
 			}
 
@@ -182,7 +166,7 @@ decl_module! {
 		fn deposit_event() = default;
 
 		/// Make a claim.
-		#[weight = SimpleDispatchInfo::FixedNormal(1_000_000)]
+		#[weight = 1_000_000_000]
 		fn claim(origin, dest: T::AccountId, signature: OtherSignature) {
 			ensure_none(origin)?;
 
@@ -202,7 +186,7 @@ decl_module! {
 					<ClaimsFromEth<T>>::remove(&signer);
 					<Total<T>>::put(new_total);
 
-					Self::deposit_event(RawEvent::Claimed(dest, signer.0, balance_due));
+					Self::deposit_event(RawEvent::Claimed(dest, signer, balance_due));
 				}
 				OtherSignature::Tron(signature) => {
 					let signer = Self::tron_recover(&signature, &data)
@@ -217,13 +201,13 @@ decl_module! {
 					<ClaimsFromTron<T>>::remove(&signer);
 					<Total<T>>::put(new_total);
 
-					Self::deposit_event(RawEvent::Claimed(dest, signer.0, balance_due));
+					Self::deposit_event(RawEvent::Claimed(dest, signer, balance_due));
 				}
 			}
 		}
 
 		/// Add a new claim, if you are root.
-		#[weight = SimpleDispatchInfo::FixedNormal(30_000)]
+		#[weight = 30_000_000]
 		fn mint_claim(origin, who: OtherAddress, value: RingBalance<T>) {
 			ensure_root(origin)?;
 
@@ -288,27 +272,25 @@ impl<T: Trait> Module<T> {
 
 	// Attempts to recover the Ethereum address from a message signature signed by using
 	// the Ethereum RPC's `personal_sign` and `eth_sign`.
-	fn eth_recover(s: &EcdsaSignature, what: &[u8]) -> Option<EthereumAddress> {
+	fn eth_recover(s: &EcdsaSignature, what: &[u8]) -> Option<AddressT> {
 		let msg = keccak_256(&Self::eth_signable_message(
 			what,
 			b"\x19Ethereum Signed Message:\n",
 		));
-		let mut res = EthereumAddress::default();
-		res.0
-			.copy_from_slice(&keccak_256(&secp256k1_ecdsa_recover(&s.0, &msg).ok()?[..])[12..]);
+		let mut res = AddressT::default();
+		res.copy_from_slice(&keccak_256(&secp256k1_ecdsa_recover(&s.0, &msg).ok()?[..])[12..]);
 		Some(res)
 	}
 
 	// Attempts to recover the Tron address from a message signature signed by using
 	// the Tron RPC's `personal_sign` and `tron_sign`.
-	fn tron_recover(s: &EcdsaSignature, what: &[u8]) -> Option<TronAddress> {
+	fn tron_recover(s: &EcdsaSignature, what: &[u8]) -> Option<AddressT> {
 		let msg = keccak_256(&Self::tron_signable_message(
 			what,
 			b"\x19TRON Signed Message:\n",
 		));
-		let mut res = TronAddress::default();
-		res.0
-			.copy_from_slice(&keccak_256(&secp256k1_ecdsa_recover(&s.0, &msg).ok()?[..])[12..]);
+		let mut res = AddressT::default();
+		res.copy_from_slice(&keccak_256(&secp256k1_ecdsa_recover(&s.0, &msg).ok()?[..])[12..]);
 		Some(res)
 	}
 }
@@ -398,7 +380,7 @@ mod tests {
 	};
 	// --- darwinia ---
 	use crate::*;
-	use darwinia_support::fixed_hex_bytes_unchecked;
+	use darwinia_support::bytes_thing::fixed_hex_bytes_unchecked;
 
 	type Balance = u64;
 
@@ -413,8 +395,15 @@ mod tests {
 	type System = frame_system::Module<Test>;
 	type Claims = Module<Test>;
 
+	const ETHEREUM_SIGNED_MESSAGE: &'static [u8] = b"\x19Ethereum Signed Message:\n";
+	const TRON_SIGNED_MESSAGE: &'static [u8] = b"\x19TRON Signed Message:\n";
+
+	impl_outer_origin! {
+		pub enum Origin for Test {}
+	}
+
 	darwinia_support::impl_account_data! {
-		pub struct AccountData<Balance>
+		struct AccountData<Balance>
 		for
 			RingInstance,
 			KtonInstance
@@ -423,13 +412,6 @@ mod tests {
 		{
 			// other data
 		}
-	}
-
-	const ETHEREUM_SIGNED_MESSAGE: &'static [u8] = b"\x19Ethereum Signed Message:\n";
-	const TRON_SIGNED_MESSAGE: &'static [u8] = b"\x19TRON Signed Message:\n";
-
-	impl_outer_origin! {
-		pub enum Origin for Test {}
 	}
 
 	#[derive(Clone, Eq, PartialEq)]
@@ -456,6 +438,9 @@ mod tests {
 		type Event = ();
 		type BlockHashCount = BlockHashCount;
 		type MaximumBlockWeight = MaximumBlockWeight;
+		type DbWeight = ();
+		type BlockExecutionWeight = ();
+		type ExtrinsicBaseWeight = ();
 		type MaximumBlockLength = MaximumBlockLength;
 		type AvailableBlockRatio = AvailableBlockRatio;
 		type Version = ();
@@ -467,7 +452,6 @@ mod tests {
 
 	parameter_types! {
 		pub const ExistentialDeposit: Balance = 1;
-		pub const CreationFee: Balance = 0;
 	}
 	impl darwinia_balances::Trait<RingInstance> for Test {
 		type Balance = Balance;
@@ -500,16 +484,9 @@ mod tests {
 	fn public(secret: &secp256k1::SecretKey) -> secp256k1::PublicKey {
 		secp256k1::PublicKey::from_secret_key(secret)
 	}
-	fn eth(secret: &secp256k1::SecretKey) -> EthereumAddress {
-		let mut res = EthereumAddress::default();
-		res.0
-			.copy_from_slice(&keccak256(&public(secret).serialize()[1..65])[12..]);
-		res
-	}
-	fn tron(secret: &secp256k1::SecretKey) -> TronAddress {
-		let mut res = TronAddress::default();
-		res.0
-			.copy_from_slice(&keccak256(&public(secret).serialize()[1..65])[12..]);
+	fn addr(secret: &secp256k1::SecretKey) -> AddressT {
+		let mut res = AddressT::default();
+		res.copy_from_slice(&keccak256(&public(secret).serialize()[1..65])[12..]);
 		res
 	}
 	fn eth_sig(
@@ -557,15 +534,15 @@ mod tests {
 		GenesisConfig {
 			claims_list: ClaimsList {
 				dot: vec![Account {
-					address: eth(&alice()),
+					address: EthereumAddress(addr(&alice())),
 					backed_ring: 100,
 				}],
 				eth: vec![Account {
-					address: eth(&bob()),
+					address: EthereumAddress(addr(&bob())),
 					backed_ring: 200,
 				}],
 				tron: vec![Account {
-					address: tron(&carol()),
+					address: TronAddress(addr(&carol())),
 					backed_ring: 300,
 				}],
 			},
@@ -580,14 +557,14 @@ mod tests {
 		new_test_ext().execute_with(|| {
 			assert_eq!(Claims::total(), 600);
 
-			assert_eq!(Claims::claims_from_eth(&eth(&alice())), Some(100));
-			assert_eq!(Claims::claims_from_tron(&tron(&alice())), None);
+			assert_eq!(Claims::claims_from_eth(&addr(&alice())), Some(100));
+			assert_eq!(Claims::claims_from_tron(&addr(&alice())), None);
 
-			assert_eq!(Claims::claims_from_eth(&eth(&bob())), Some(200));
-			assert_eq!(Claims::claims_from_tron(&tron(&bob())), None);
+			assert_eq!(Claims::claims_from_eth(&addr(&bob())), Some(200));
+			assert_eq!(Claims::claims_from_tron(&addr(&bob())), None);
 
-			assert_eq!(Claims::claims_from_eth(&eth(&carol())), None);
-			assert_eq!(Claims::claims_from_tron(&tron(&carol())), Some(300));
+			assert_eq!(Claims::claims_from_eth(&addr(&carol())), None);
+			assert_eq!(Claims::claims_from_tron(&addr(&carol())), Some(300));
 		});
 	}
 
@@ -600,7 +577,7 @@ mod tests {
 		let y = serde_json::to_string(&x).unwrap();
 		assert_eq!(y, "\"0x0123456789abcdef0123456789abcdef01234567\"");
 		let z: EthereumAddress = serde_json::from_str(&y).unwrap();
-		assert_eq!(x, z);
+		assert_eq!(x.0, z.0);
 
 		let x = TronAddress(fixed_hex_bytes_unchecked!(
 			"0x0123456789abcdef0123456789abcdef01234567",
@@ -609,7 +586,7 @@ mod tests {
 		let y = serde_json::to_string(&x).unwrap();
 		assert_eq!(y, "\"410123456789abcdef0123456789abcdef01234567\"");
 		let z: TronAddress = serde_json::from_str(&y).unwrap();
-		assert_eq!(x, z);
+		assert_eq!(x.0, z.0);
 	}
 
 	#[test]
@@ -648,7 +625,7 @@ mod tests {
 	fn add_claim_works() {
 		new_test_ext().execute_with(|| {
 			assert_noop!(
-				Claims::mint_claim(Origin::signed(42), OtherAddress::Eth(eth(&carol())), 200),
+				Claims::mint_claim(Origin::signed(42), OtherAddress::Eth(addr(&carol())), 200),
 				sp_runtime::traits::BadOrigin,
 			);
 			assert_eq!(Ring::free_balance(42), 0);
@@ -666,7 +643,7 @@ mod tests {
 			);
 			assert_ok!(Claims::mint_claim(
 				Origin::ROOT,
-				OtherAddress::Eth(eth(&carol())),
+				OtherAddress::Eth(addr(&carol())),
 				200
 			));
 			assert_eq!(Claims::total(), 800);
@@ -769,7 +746,7 @@ mod tests {
 				let sig = EcdsaSignature(sig);
 				let who = 42u64.using_encoded(to_ascii_hex);
 				let signer = Claims::eth_recover(&sig, &who).unwrap();
-				assert_eq!(signer.0, fixed_hex_bytes_unchecked!("0x6d31165d5d932d571f3b44695653b46dcc327e84", 20));
+				assert_eq!(signer, fixed_hex_bytes_unchecked!("0x6d31165d5d932d571f3b44695653b46dcc327e84", 20));
 			});
 	}
 
@@ -781,7 +758,7 @@ mod tests {
 			let sig = EcdsaSignature(sig);
 			let who = fixed_hex_bytes_unchecked!("0x0c0529c66a44e1861e5e1502b4a87009f23c792518a7a2091363f5a0e38abd57", 32).using_encoded(to_ascii_hex);
 			let signer = Claims::tron_recover(&sig, &who).unwrap();
-			assert_eq!(signer.0, fixed_hex_bytes_unchecked!("0x11974bce18a43243ede78beec2fd8e0ba4fe17ae", 20));
+			assert_eq!(signer, fixed_hex_bytes_unchecked!("0x11974bce18a43243ede78beec2fd8e0ba4fe17ae", 20));
 		});
 	}
 
@@ -808,7 +785,7 @@ mod tests {
 				Ok(ValidTransaction {
 					priority: 100,
 					requires: vec![],
-					provides: vec![("claims", eth(&alice())).encode()],
+					provides: vec![("claims", addr(&alice())).encode()],
 					longevity: TransactionLongevity::max_value(),
 					propagate: true,
 				})

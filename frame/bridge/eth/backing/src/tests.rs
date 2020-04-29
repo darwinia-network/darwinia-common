@@ -8,7 +8,8 @@ use sp_runtime::{traits::Dispatchable, AccountId32};
 use crate::{mock::*, *};
 use darwinia_staking::{RewardDestination, StakingBalance, StakingLedger, TimeDepositItem};
 use darwinia_support::{
-	balance::lock::StakingLock, fixed_hex_bytes_unchecked, hex_bytes_unchecked,
+	balance::lock::StakingLock,
+	bytes_thing::{fixed_hex_bytes_unchecked, hex_bytes_unchecked},
 };
 use eth_primitives::header::EthHeader;
 
@@ -35,7 +36,7 @@ fn verify_parse_token_redeem_proof() {
 			};
 			let header = EthHeader::from_str_unchecked(
 				r#"
-				{	
+				{
 					"author": "0xd34912efb0e7fedaedb9390990d7ef623e01f4fa",
 					"difficulty": "0x75e5a3ef",
 					"extraData": "0x706f6f6c696e2e636f6d",
@@ -70,8 +71,8 @@ fn verify_parse_token_redeem_proof() {
 				&hex_bytes_unchecked("0x2a92ae5b41feba5ee68a61449c557efa9e3b894a6461c058ec2de45429adb44546"),
 			).unwrap();
 			assert_eq!(
-				EthBacking::parse_token_redeem_proof(&proof_record, "RingBurndropTokens"), 
-				Ok((1234567891, expect_account_id)),
+				EthBacking::parse_token_redeem_proof(&proof_record, "RingBurndropTokens"),
+				Ok((1234567891, expect_account_id, 0)),
 			);
 		});
 }
@@ -201,8 +202,8 @@ fn verify_redeem_kton() {
 			).unwrap();
 			// 0.123456789123456789 KTON
 			assert_eq!(
-				EthBacking::parse_token_redeem_proof(&proof_record, "KtonBurndropTokens"), 
-				Ok((123456789, expect_account_id.clone())),
+				EthBacking::parse_token_redeem_proof(&proof_record, "KtonBurndropTokens"),
+				Ok((123456789, expect_account_id.clone(), 0)),
 			);
 
 			let id1 = AccountId32::from([0; 32]);

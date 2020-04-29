@@ -3,7 +3,7 @@
 macro_rules! impl_account_data {
 	(
 		$(#[$attr:meta])*
-		pub struct $sname:ident<Balance$(, $gtype:ident),*>
+		$(pub)? struct $sname:ident<Balance$(, $gtype:ident),*>
 		for
 			$ring_instance:ident,
 			$kton_instance:ident
@@ -11,7 +11,7 @@ macro_rules! impl_account_data {
 			Balance = $btype:ty
 			$(, $gtype_:ident: $gtypebound:ty),*
 		{
-			$($($oname:ident: $otype:ty),+)?
+			$($($(pub)? $fname:ident: $ftype:ty),+)?
 		}
 	) => {
 		use darwinia_support::balance::BalanceInfo;
@@ -19,11 +19,11 @@ macro_rules! impl_account_data {
 		$(#[$attr])*
 		#[derive(Clone, Default, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
 		pub struct $sname<Balance$(, $gtype),*> {
-			free: Balance,
-			reserved: Balance,
-			free_kton: Balance,
-			reserved_kton: Balance
-			$(, $($oname: $otype),+)?
+			pub free: Balance,
+			pub reserved: Balance,
+			pub free_kton: Balance,
+			pub reserved_kton: Balance
+			$(, $(pub $fname: $ftype),+)?
 		}
 
 		impl BalanceInfo<$btype, $ring_instance> for AccountData<$btype> {
@@ -118,7 +118,7 @@ macro_rules! impl_genesis {
 macro_rules! fixed_hex_bytes_unchecked {
 	($str:expr, $len:expr) => {{
 		let mut bytes: [u8; $len] = [0; $len];
-		let slice = darwinia_support::hex_bytes_unchecked($str);
+		let slice = darwinia_support::bytes_thing::hex_bytes_unchecked($str);
 		if slice.len() == $len {
 			bytes.copy_from_slice(&slice);
 			};

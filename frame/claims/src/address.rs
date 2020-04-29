@@ -1,13 +1,8 @@
 // --- crates ---
-use codec::{Decode, Encode};
-#[cfg(feature = "std")]
-use rustc_hex::{FromHex, ToHex};
-#[cfg(feature = "std")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-// --- substrate ---
-use sp_runtime::RuntimeDebug;
-
-pub type AddressT = [u8; 20];
+// --- darwinia ---
+use crate::AddressT;
+use darwinia_support::bytes_thing::{fixed_hex_bytes_unchecked, hex_string_unchecked};
 
 macro_rules! impl_address {
 	($name:ident, $sname:expr, $prefix:expr) => {
@@ -18,21 +13,19 @@ macro_rules! impl_address {
 		#[doc = ".\n\nThis gets serialized to the "]
 		#[doc = $prefix]
 		#[doc = "-prefixed hex representation."]
-		#[derive(Clone, Copy, Default, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
+		#[derive(Debug, Default)]
 		pub struct $name(pub AddressT);
 
-		#[cfg(feature = "std")]
 		impl Serialize for $name {
 			fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
 			where
 				S: Serializer,
 			{
-				let hex: String = ToHex::to_hex(&self.0[..]);
-				serializer.serialize_str(&format!(concat!($prefix, "{}"), hex))
+				let hex: String = hex_string_unchecked(&self.0, $prefix).into_iter().collect();
+				serializer.serialize_str(&hex)
 			}
 		}
 
-		#[cfg(feature = "std")]
 		impl<'de> Deserialize<'de> for $name {
 			fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
 			where
@@ -46,13 +39,25 @@ macro_rules! impl_address {
 						concat!("Bad length of ", $sname, " address (should be 42 including '", $prefix, "')"),
 					))?;
 				}
-				let raw: Vec<u8> = FromHex::from_hex(s).map_err(|e| serde::de::Error::custom(format!("{:?}", e)))?;
-				let mut r = Self::default();
-				r.0.copy_from_slice(&raw);
-				Ok(r)
+
+				Ok($name(fixed_hex_bytes_unchecked!(s, 20)))
 			}
 		}
 	};
+}
+
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct Account<Address> {
+	pub address: Address,
+	pub backed_ring: u128,
+}
+
+darwinia_support::impl_genesis! {
+	struct ClaimsList {
+		dot: Vec<Account<EthereumAddress>>,
+		eth: Vec<Account<EthereumAddress>>,
+		tron: Vec<Account<TronAddress>>
+	}
 }
 
 impl_address!(EthereumAddress, "Ethereum", "0x");

@@ -1,6 +1,6 @@
 [package]
 name = "darwinia-elections-phragmen"
-version = "0.5.3"
+version = "0.5.4"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "FRAME election pallet for PHRAGMEN"
 edition = "2018"
@@ -10,32 +10,33 @@ repository = "https://github.com/darwinia-network/darwinia/"
 
 [dependencies]
 # crates
-codec = { package = "parity-scale-codec", version = "1.3.0", default-features = false, features = ["derive"] }
+codec = { package = "parity-scale-codec", version = "1.3.0", default-features = false }
+serde = { version = "1.0.106", optional = true }
 # darwinia
 darwinia-support = { default-features = false, path = "../support" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-sp-phragmen = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+sp-phragmen = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
 
 [dev-dependencies]
 # crates
 hex-literal = { version = "0.2.1" }
-serde = { version = "1.0.106" }
 # darwinia
 darwinia-balances = { path = "../balances" }
 # substrate
-sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
-substrate-test-utils = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.3" }
+sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+substrate-test-utils = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
 
 [features]
 default = ["std"]
 std = [
 	# crates
 	"codec/std",
+	"serde",
 	# darwinia
 	"darwinia-support/std",
 	# substrate

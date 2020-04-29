@@ -18,7 +18,7 @@ use sp_runtime::{
 	Perbill, RuntimeDebug,
 };
 // --- darwinia ---
-use crate::*;
+use crate::{tests::*, *};
 
 type Balance = u64;
 
@@ -30,8 +30,16 @@ type KtonInstance = Instance1;
 type _KtonError = Error<Test, KtonInstance>;
 type Kton = Module<Test, KtonInstance>;
 
+thread_local! {
+	static EXISTENTIAL_DEPOSIT: RefCell<Balance> = RefCell::new(0);
+}
+
+impl_outer_origin! {
+	pub enum Origin for Test {}
+}
+
 darwinia_support::impl_account_data! {
-	pub struct AccountData<Balance>
+	struct AccountData<Balance>
 	for
 		RingInstance,
 		KtonInstance
@@ -40,14 +48,6 @@ darwinia_support::impl_account_data! {
 	{
 		// other data
 	}
-}
-
-impl_outer_origin! {
-	pub enum Origin for Test {}
-}
-
-thread_local! {
-	static EXISTENTIAL_DEPOSIT: RefCell<Balance> = RefCell::new(0);
 }
 
 pub struct ExistentialDeposit;
@@ -68,7 +68,7 @@ parameter_types! {
 }
 impl frame_system::Trait for Test {
 	type Origin = Origin;
-	type Call = ();
+	type Call = CallWithDispatchInfo;
 	type Index = Balance;
 	type BlockNumber = Balance;
 	type Hash = H256;
@@ -79,6 +79,9 @@ impl frame_system::Trait for Test {
 	type Event = ();
 	type BlockHashCount = BlockHashCount;
 	type MaximumBlockWeight = MaximumBlockWeight;
+	type DbWeight = ();
+	type BlockExecutionWeight = ();
+	type ExtrinsicBaseWeight = ();
 	type MaximumBlockLength = MaximumBlockLength;
 	type AvailableBlockRatio = AvailableBlockRatio;
 	type Version = ();
@@ -88,13 +91,11 @@ impl frame_system::Trait for Test {
 	type OnKilledAccount = Ring;
 }
 parameter_types! {
-	pub const TransactionBaseFee: Balance = 0;
 	pub const TransactionByteFee: Balance = 1;
 }
 impl pallet_transaction_payment::Trait for Test {
 	type Currency = Ring;
 	type OnTransactionPayment = ();
-	type TransactionBaseFee = TransactionBaseFee;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = ConvertInto;
 	type FeeMultiplierUpdate = ();
@@ -154,11 +155,11 @@ impl ExtBuilder {
 		}
 		self
 	}
-	pub fn set_associated_consts(&self) {
+	pub fn set_associated_constants(&self) {
 		EXISTENTIAL_DEPOSIT.with(|v| *v.borrow_mut() = self.existential_deposit);
 	}
 	pub fn build(self) -> sp_io::TestExternalities {
-		self.set_associated_consts();
+		self.set_associated_constants();
 		let mut t = frame_system::GenesisConfig::default()
 			.build_storage::<Test>()
 			.unwrap();

@@ -1,16 +1,117 @@
+use serde_json;
 // --- darwinia ---
-use crate::*;
+use crate::{mock::*, *};
+use frame_support::{assert_noop, assert_ok};
 
+/// Extract value from JSON response
 #[test]
-fn test_build_eth_header_from_response() {
-	for resp in [REAL_ETHER_SCAN_API_RESPONSE1, REAL_ETHER_SCAN_API_RESPONSE2].iter() {
-		let raw_header = from_utf8(&resp[33..resp.len() - 1]).unwrap_or_default();
-		let header = EthHeader::from_str_unchecked(raw_header);
-		// println!("{:?}", header);
-		assert_eq!(header.hash.unwrap(), header.re_compute_hash());
-	}
+fn test_extract_value_from_json_response() {
+	let result_part = extract_from_json_str(&SUPPOSED_SHADOW_FAKE_RESPONSE[..], b"result" as &[u8]).unwrap();
+	assert_eq!(result_part, br#""eth_header":{eth-content},"proof":[proof-content]"# as &[u8]);
+	let eth_header_part = extract_from_json_str(result_part, b"eth_header" as &[u8]).unwrap();
+	assert_eq!(eth_header_part , br#"eth-content"# as &[u8]);
+	let proof_header_part = extract_from_json_str(result_part, b"proof" as &[u8]).unwrap();
+	assert_eq!(proof_header_part , br#"proof-content"# as &[u8]);
 }
 
-const REAL_ETHER_SCAN_API_RESPONSE1: &'static [u8] = br#"{"jsonrpc":"2.0","id":1,"result":{"difficulty":"0x9fa52dbdada","extraData":"0xd783010302844765746887676f312e352e31856c696e7578","gasLimit":"0x2fefd8","gasUsed":"0x37881","hash":"0x26f10bfb3c09f1e1eadf856a8d75f5dbd2f88bd8eb4da8488f131835fa4a6ae3","logsBloom":"0x000000000000000000000000000000000000000000000000000000000000000000000000000000000c00000000000000000000020000000000000004000000000000000000000000000000020000000000000000000000000001000000000000004000000200000000000000000008020000020000000000000000001000000000000000000000004000040000000000000000000000000000000000000000000000000000000004001000000000000000000000000004080008000000000120000000000000000000000400000000000800000000000000000000000000200000000000001000000000000a0008000040000000000000000000000000000000","miner":"0x738db714c08b8a32a29e0e68af00215079aa9c5c","mixHash":"0xcb63ce95a3043c0f846ad6e1c3c25ec7a8cd8e09dccf02c7078669f2496f02c2","nonce":"0xfc2c4055195dac95","number":"0xeb770","parentHash":"0x28e9cc57847a0a1efd2920115ba94530ba7d29d7a7ffb15fc933302a97c73e49","receiptsRoot":"0xba124ff4744d7f59fd4f829be59f727fe17f468b34344759d4dd2ed10d6260d2","sha3Uncles":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","size":"0x792","stateRoot":"0x46f9f3d17b9bba9d551ab85a6aa6686a51590a184f5d42b98b6d8518303da470","timestamp":"0x56b66a81","totalDifficulty":"0x5d4fe4695aed3d42","transactions":[omitted],"transactionsRoot":"0x5e7f4d048b09e832ccdb062c655def06f532ebdf02b3c0c423a65c6566220523","uncles":[omitted]}}"#;
+/// Extract value from JSON response with not alphabetical order
+#[test]
+fn test_extract_value_from_non_order_json_response() {
+	let result_part = extract_from_json_str(&SUPPOSED_SHADOW_NON_ORDER_RESPONSE[..], b"result" as &[u8]).unwrap();
+	assert_eq!(result_part, br#""proof":[proof-content],"eth_header":{eth-content}"# as &[u8]);
+	let eth_header_part = extract_from_json_str(result_part, b"eth_header" as &[u8]).unwrap();
+	assert_eq!(eth_header_part , br#"eth-content"# as &[u8]);
+	let proof_header_part = extract_from_json_str(result_part, b"proof" as &[u8]).unwrap();
+	assert_eq!(proof_header_part , br#"proof-content"# as &[u8]);
+}
 
-const REAL_ETHER_SCAN_API_RESPONSE2: &'static [u8] = br#"{"jsonrpc":"2.0","id":1,"result":{"difficulty":"0x7ce8991d420d2","extraData":"0x686976656f6e2d6574682d7275","gasLimit":"0x97eb08","gasUsed":"0x97bb9a","hash":"0x434269fc7e0fe0491b9086d8f48944e0cc3d148065660f5257ca7f4812262dd2","logsBloom":"0x090a16107891c21aa5c40f264a10903d0af2c0a1040884d0942000c0a1a8b43c0d0806914191850324046866120a05839ac090832baf9629053752b0044c08024705142a82209068d84c81dc4382d402240aba9030446810a342413e88607718824410a1060074060b01c89494260c30082512728f3c37805140a0747291015505c288c42266023640f105000085c51126256ecd43219400107425814074405984758e48428e35450c0c0b9a1210c11202411005a15009a10c21626a584438614708248280042819d0aaba001d3042148a41510c47981814213822c274122248301220b072e5132029021212401560048c0ca481420242d04041301c0010c544","miner":"0x4c549990a7ef3fea8784406c1eecc98bf4211fa5","mixHash":"0xe75eca1d003eeac908ea108d982a0f09e84dcbc65a2c96ddae470debaacf7f7d","nonce":"0xfad443b8052b9438","number":"0x93ee34","parentHash":"0xcdf21cfbcc23511f7f5c3390402291d778f2dcf40e6ef4f6d02f80ea0e3d6316","receiptsRoot":"0x751234a70f4f986a2bc7c5692871ea39b76572fefd95f36f3a4a98e51f5b236f","sha3Uncles":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","size":"0x9a76","stateRoot":"0x71143f5d4f3099fe8401840024789c093be417c75298cbb6b0b1017f8b5fa65d","timestamp":"0x5e71e8d2","totalDifficulty":"0x3172f496fa54cbfe0a9","transactions":[omitted],"transactionsRoot":"0x1ae36a5a761c4d00ab86d5cff217f817dafaa8a687a6ac491ba360281a45782b","uncles":[omitted]}}"#;
+/// Basice JSON response handle
+#[test]
+fn test_build_eth_header_from_json_response() {
+	let eth_header_part = extract_from_json_str(&SUPPOSED_SHADOW_JSON_RESPONSE[..], b"eth_header" as &[u8]).unwrap_or_default();
+	let header = EthHeader::from_str_unchecked(from_utf8(eth_header_part).unwrap_or_default());
+	assert_eq!(header.hash.unwrap(), header.re_compute_hash());
+
+	let proof_part = extract_from_json_str(&SUPPOSED_SHADOW_JSON_RESPONSE[..], b"proof" as &[u8]).unwrap_or_default();
+	let double_node_with_proof_list =
+		EthOffchain::parse_double_node_with_proof_list_from_json_str(proof_part).unwrap();
+	assert_eq!(1, double_node_with_proof_list.len());
+}
+
+/// Basice SCALE response handle
+#[test]
+fn test_build_eth_header_from_scale_response() {
+	let eth_header_part = extract_from_json_str(&SUPPOSED_SHADOW_SCALE_RESPONSE[..], b"eth_header" as &[u8]).unwrap_or_default();
+	let scale_bytes = hex_bytes_unchecked(from_utf8(eth_header_part).unwrap_or_default());
+	let scale_decode_header: EthHeader =
+		Decode::decode::<&[u8]>(&mut &scale_bytes[..]).unwrap_or_default();
+
+	let header = EthHeader::from_str_unchecked(SUPPOSED_ETH_HEADER);
+	assert_eq!(scale_decode_header, header);
+
+	let proof_part = extract_from_json_str(&SUPPOSED_SHADOW_SCALE_RESPONSE[..], b"proof" as &[u8]).unwrap_or_default();
+	let decoded_double_node_with_proof = EthOffchain::parse_double_node_with_proof_list_from_scale_str(proof_part).unwrap();
+
+	assert_eq!(
+		vec![DoubleNodeWithMerkleProof::default()],
+		decoded_double_node_with_proof
+	);
+}
+
+/// Request format should be json
+#[test]
+fn test_request_payload_format() {
+	let payload_without_option = EthOffchain::build_payload(1, false);
+	assert!(serde_json::from_str::<serde_json::value::Value>(
+		from_utf8(&payload_without_option[..]).unwrap()
+	)
+	.is_ok());
+
+	let payload_with_option = EthOffchain::build_payload(1, true);
+	assert!(serde_json::from_str::<serde_json::value::Value>(
+		from_utf8(&payload_with_option[..]).unwrap()
+	)
+	.is_ok());
+}
+
+/// Test offchain worker before any header relayed
+#[test]
+fn test_should_error_when_best_header_not_set() {
+	ExtBuilder::default().build().execute_with(|| {
+		// assert_noop!(EthOffchain::relay_header(), EthOffchainError::BestHeaderNE);
+	});
+}
+
+/// Test offchain worker with different shadow service
+#[test]
+fn test_should_handle_different_shadow_service() {
+	// NOTE:`set_shadow_service` is unsafe
+	// Keep this test run in a single thread
+
+	// should error when shadow service is non exists
+	set_shadow_service(None);
+	ExtBuilder::default()
+		.set_genesis_header()
+		.build()
+		.execute_with(|| {
+			// assert_noop!(EthOffchain::relay_header(), EthOffchainError::APIRespUnexp);
+		});
+
+	// handle the scale response from shadow service
+	set_shadow_service(Some(ShadowService::Scale));
+	ExtBuilder::default()
+		.set_genesis_header()
+		.build()
+		.execute_with(|| {
+			// assert_ok!(EthOffchain::relay_header());
+		});
+
+	// handle the json response from shadow service
+	set_shadow_service(Some(ShadowService::Json));
+	ExtBuilder::default()
+		.set_genesis_header()
+		.build()
+		.execute_with(|| {
+			// assert_ok!(EthOffchain::relay_header());
+		});
+}
