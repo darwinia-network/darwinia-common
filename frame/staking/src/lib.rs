@@ -1737,6 +1737,7 @@ decl_module! {
 			// All bonded *RING* and *KTON* is withdrawing, then remove Ledger to save storage
 			if active_ring.is_zero() && active_kton.is_zero() {
 				// TODO: https://github.com/darwinia-network/darwinia-common/issues/96
+				// FIXME: https://github.com/darwinia-network/darwinia-common/issues/121
 				//
 				// `OnKilledAccount` would be a method to collect the locks.
 				//
@@ -1752,7 +1753,7 @@ decl_module! {
 				//
 				// T::Ring::remove_lock(STAKING_ID, &stash);
 				// T::Kton::remove_lock(STAKING_ID, &stash);
-				Self::kill_stash(&stash)?;
+				// Self::kill_stash(&stash)?;
 			}
 		}
 
