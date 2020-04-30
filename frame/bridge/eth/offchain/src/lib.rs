@@ -69,7 +69,10 @@ use sp_runtime::{offchain::http::Request, traits::Zero, DispatchError, KeyTypeId
 use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_eth_relay::DoubleNodeWithMerkleProof;
-use darwinia_support::{bytes_thing::{hex_bytes_unchecked, base_n_bytes_unchecked}, literal_procesor::extract_from_json_str};
+use darwinia_support::{
+	bytes_thing::{base_n_bytes_unchecked, hex_bytes_unchecked},
+	literal_procesor::extract_from_json_str,
+};
 use eth_primitives::header::EthHeader;
 
 type EthRelay<T> = darwinia_eth_relay::Module<T>;
@@ -78,7 +81,7 @@ type EthRelayCall<T> = darwinia_eth_relay::Call<T>;
 pub const ETH_OFFCHAIN: KeyTypeId = KeyTypeId(*b"etho");
 const MAX_REDIRECT_TIMES: u8 = 3;
 /// A dummy endpoint, point this to shadow service
-const ETH_RESOURCE: &'static [u8] = b"http://eth-resource";
+const ETH_RESOURCE: &'static [u8] = b"http://shadow.darwinia.network/";
 
 #[derive(Default)]
 pub struct OffchainRequest {
@@ -199,7 +202,7 @@ decl_module! {
 						trace!(target: "eth-offchain", "[eth-offchain] Error: {:?}", e);
 					}
 				} else {
-					trace!(target: "eth-offchain", "[eth-offchain] use `author_insertKey` rpc to inscert `rlwk` key to enable worker");
+					trace!(target: "eth-offchain", "[eth-offchain] use `author_insertKey` rpc to inscert key to enable worker");
 				}
 			}
 		}
@@ -258,8 +261,8 @@ impl<T: Trait> Module<T> {
 
 		let resp_body = Self::validate_response(maybe_resp_body, option)?;
 
-		let eth_header_part = extract_from_json_str(&resp_body[..], b"eth_header" as
-			&[u8]).unwrap_or_default();
+		let eth_header_part =
+			extract_from_json_str(&resp_body[..], b"eth_header" as &[u8]).unwrap_or_default();
 		let header = if option {
 			panic!("FIXME")
 		// EthHeader::from_str_unchecked(from_utf8(eth_header_part).unwrap_or_default())
@@ -268,8 +271,8 @@ impl<T: Trait> Module<T> {
 			Decode::decode::<&[u8]>(&mut &scale_bytes[..]).unwrap_or_default()
 		};
 
-		let proof_part = extract_from_json_str(&resp_body[..], b"proof" as
-			&[u8]).unwrap_or_default();
+		let proof_part =
+			extract_from_json_str(&resp_body[..], b"proof" as &[u8]).unwrap_or_default();
 		let proof_list = if option {
 			Self::parse_double_node_with_proof_list_from_json_str(proof_part)?
 		} else {
