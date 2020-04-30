@@ -65,7 +65,7 @@ use frame_support::{debug::trace, decl_error, decl_module, traits::Get};
 use frame_system::offchain::{
 	AppCrypto, CreateSignedTransaction, ForAll, SendSignedTransaction, Signer,
 };
-use sp_runtime::{offchain::http::Request, traits::Zero, DispatchError, KeyTypeId};
+use sp_runtime::{traits::Zero, DispatchError, KeyTypeId};
 use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_eth_relay::DoubleNodeWithMerkleProof;
@@ -113,9 +113,11 @@ impl OffchainRequestTrait for OffchainRequest {
 	fn send(&mut self) -> Option<Vec<u8>> {
 		for _ in 0..=MAX_REDIRECT_TIMES {
 			let p = self.payload.clone();
-			let request =
-				Request::post(from_utf8(&self.location).unwrap_or_default(), vec![&p[..]])
-					.add_header("Content-Type", "application/json");
+			let request = sp_runtime::offchain::http::Request::post(
+				from_utf8(&self.location).unwrap_or_default(),
+				vec![&p[..]],
+			)
+			.add_header("Content-Type", "application/json");
 			if let Ok(pending) = request.send() {
 				if let Ok(mut resp) = pending.wait() {
 					if resp.code == 200 {

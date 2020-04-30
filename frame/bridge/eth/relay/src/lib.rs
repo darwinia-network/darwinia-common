@@ -75,7 +75,6 @@ use eth_primitives::{
 	EthBlockNumber, H256, U256,
 };
 use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
-
 use types::*;
 
 pub trait Trait: frame_system::Trait {
@@ -128,11 +127,11 @@ impl Default for DoubleNodeWithMerkleProof {
 impl DoubleNodeWithMerkleProof {
 	pub fn from_str_unchecked(s: &str) -> Self {
 		let mut dag_nodes: Vec<H512> = Vec::new();
-		let mut proofs: Vec<H128> = Vec::new();
+		let mut proof: Vec<H128> = Vec::new();
 		for e in s.splitn(60, '"') {
 			let l = e.len();
 			if l == 34 {
-				proofs.push(fixed_hex_bytes_unchecked!(e, 16).into());
+				proof.push(fixed_hex_bytes_unchecked!(e, 16).into());
 			} else if l == 130 {
 				dag_nodes.push(fixed_hex_bytes_unchecked!(e, 64).into());
 			} else if l > 34 {
@@ -142,7 +141,7 @@ impl DoubleNodeWithMerkleProof {
 		}
 		DoubleNodeWithMerkleProof {
 			dag_nodes: [dag_nodes[0], dag_nodes[1]],
-			proof: proofs,
+			proof,
 		}
 	}
 }
@@ -285,7 +284,7 @@ decl_error! {
 		BlockNumberOF,
 		/// Block Number - UNDERFLOW
 		BlockNumberUF,
-		/// Index - OUT OF RNAGE
+		/// Index - OUT OF RANGE
 		IndexOFR,
 
 		/// Block Number - MISMATCHED

@@ -1,7 +1,6 @@
 use serde_json;
 // --- darwinia ---
 use crate::{mock::*, *};
-use frame_support::{assert_noop, assert_ok};
 
 /// Extract value from JSON response
 #[test]
