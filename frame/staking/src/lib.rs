@@ -1728,7 +1728,6 @@ decl_module! {
 			Self::update_ledger(&controller, &mut ledger);
 
 			let StakingLedger {
-				stash,
 				active_ring,
 				active_kton,
 				..
