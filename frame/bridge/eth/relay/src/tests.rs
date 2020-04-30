@@ -143,7 +143,11 @@ fn canonical_reorg_uncle_should_succeed() {
 		assert_eq!(EthRelay::canonical_header_hash(number), uh.unwrap());
 
 		// relay grandpa and re-org uncle
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), grandpa.0, grandpa.1));
+		assert_ok!(EthRelay::relay_header(
+			Origin::signed(0),
+			grandpa.0,
+			grandpa.1
+		));
 		assert_eq!(EthRelay::canonical_header_hash(number), gh.unwrap());
 	});
 }
@@ -164,14 +168,22 @@ fn test_safety_block() {
 
 		// not safety after 0 block
 		assert_ok!(EthRelay::init_genesis_header(&origin.0, 0x6b2dd4a2c4f47d));
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), grandpa.0, grandpa.1));
+		assert_ok!(EthRelay::relay_header(
+			Origin::signed(0),
+			grandpa.0,
+			grandpa.1
+		));
 		assert_err!(
 			EthRelay::check_receipt(Origin::signed(0), receipt.clone()),
 			<Error<Test>>::HeaderNS
 		);
 
 		// not safety after 2 blocks
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), parent.0, parent.1));
+		assert_ok!(EthRelay::relay_header(
+			Origin::signed(0),
+			parent.0,
+			parent.1
+		));
 		assert_ok!(EthRelay::relay_header(Origin::signed(0), uncle.0, uncle.1));
 		assert_err!(
 			EthRelay::check_receipt(Origin::signed(0), receipt.clone()),
@@ -179,7 +191,11 @@ fn test_safety_block() {
 		);
 
 		// safety after 3 blocks
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), current.0, current.1));
+		assert_ok!(EthRelay::relay_header(
+			Origin::signed(0),
+			current.0,
+			current.1
+		));
 		assert_ok!(EthRelay::check_receipt(Origin::signed(0), receipt));
 	});
 }
@@ -270,10 +286,18 @@ fn receipt_verify_fees_and_relayer_claim_reward() {
 
 		// not safety after 0 block
 		assert_ok!(EthRelay::init_genesis_header(&origin.0, 0x6b2dd4a2c4f47d));
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), grandpa.0, grandpa.1));
+		assert_ok!(EthRelay::relay_header(
+			Origin::signed(0),
+			grandpa.0,
+			grandpa.1
+		));
 
 		// not safety after 2 blocks
-		assert_ok!(EthRelay::relay_header(Origin::signed(0), parent.0, parent.1));
+		assert_ok!(EthRelay::relay_header(
+			Origin::signed(0),
+			parent.0,
+			parent.1
+		));
 
 		assert_ok!(EthRelay::check_receipt(Origin::signed(1), receipt.clone()));
 

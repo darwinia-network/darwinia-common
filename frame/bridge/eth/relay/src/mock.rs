@@ -1,9 +1,9 @@
 //! Mock file for eth-relay.
 
 // --- std ---
-use std::{cell::RefCell, fs::File};
-use std::str::from_utf8;
 use std::io::Read;
+use std::str::from_utf8;
+use std::{cell::RefCell, fs::File};
 // --- crates ---
 use serde::Deserialize;
 // --- substrate ---
@@ -12,7 +12,7 @@ use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill};
 // --- darwinia ---
 use crate::*;
-use darwinia_support::{bytes_thing:: hex_bytes_unchecked, literal_procesor::extract_from_json_str};
+use darwinia_support::{bytes_thing::hex_bytes_unchecked, literal_procesor::extract_from_json_str};
 use eth_primitives::receipt::LogEntry;
 
 type AccountId = u64;
@@ -266,13 +266,16 @@ fn load_ethheader_with_proof(path: &'static str) -> (EthHeader, Vec<DoubleNodeWi
 	let mut f = File::open(path).unwrap();
 	f.read_to_end(&mut buffer).unwrap_or_default();
 
-	let eth_header_part = extract_from_json_str(&buffer[..], b"eth_header" as &[u8]).unwrap_or_default();
+	let eth_header_part =
+		extract_from_json_str(&buffer[..], b"eth_header" as &[u8]).unwrap_or_default();
 	let header_scale_bytes = hex_bytes_unchecked(from_utf8(eth_header_part).unwrap_or_default());
-	let header: EthHeader = Decode::decode::<&[u8]>(&mut &header_scale_bytes[..]).unwrap_or_default();
+	let header: EthHeader =
+		Decode::decode::<&[u8]>(&mut &header_scale_bytes[..]).unwrap_or_default();
 
 	let proof_part = extract_from_json_str(&buffer[..], b"proof" as &[u8]).unwrap_or_default();
 	let proof_scale_bytes = hex_bytes_unchecked(from_utf8(proof_part).unwrap_or_default());
-	let double_node_with_proof_list = Decode::decode::<&[u8]>(&mut &proof_scale_bytes[..]).unwrap_or_default();
+	let double_node_with_proof_list =
+		Decode::decode::<&[u8]>(&mut &proof_scale_bytes[..]).unwrap_or_default();
 
 	(header, double_node_with_proof_list)
 }
@@ -285,7 +288,6 @@ fn load_ethheader_with_proof(path: &'static str) -> (EthHeader, Vec<DoubleNodeWi
 ///
 /// returns: [origin, grandpa, uncle, parent, current]
 pub fn mock_canonical_relationship() -> [(EthHeader, Vec<DoubleNodeWithMerkleProof>); 5] {
-
 	// The block we loads
 	// | pos     | height  | tx                                                                 |
 	// |---------|---------|--------------------------------------------------------------------|
