@@ -1,7 +1,5 @@
 // --- crates ---
 use codec::{Decode, Encode};
-#[cfg(feature = "std")]
-use serde::{Deserialize, Serialize};
 // --- github ---
 use ethbloom::Bloom;
 use keccak_hash::{keccak, KECCAK_EMPTY_LIST_RLP, KECCAK_NULL_RLP};
@@ -21,7 +19,7 @@ enum Seal {
 	Without,
 }
 
-#[cfg_attr(feature = "easy-testing", derive(Serialize, Deserialize))]
+#[cfg_attr(any(feature = "easy-testing", test), derive(serde::Deserialize))]
 #[derive(Clone, Eq, Encode, Decode, RuntimeDebug)]
 pub struct EthHeader {
 	pub parent_hash: H256,

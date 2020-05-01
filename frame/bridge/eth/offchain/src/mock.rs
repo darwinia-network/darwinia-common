@@ -1,3 +1,5 @@
+// --- crates ---
+use codec::Encode;
 // --- substrate ---
 use frame_support::{impl_outer_dispatch, impl_outer_origin, parameter_types, weights::Weight};
 use sp_runtime::{
@@ -5,8 +7,6 @@ use sp_runtime::{
 	traits::{BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
 	ModuleId, MultiSignature, Perbill, RuntimeDebug,
 };
-
-use codec::Encode;
 // --- darwinia ---
 use crate::*;
 use darwinia_eth_relay::EthNetworkType;
@@ -50,7 +50,7 @@ pub type System = frame_system::Module<Test>;
 pub type EthRelay = darwinia_eth_relay::Module<Test>;
 
 pub type EthOffchain = Module<Test>;
-pub type OffchainError = Error<Test>;
+pub type _OffchainError = Error<Test>;
 
 static mut SHADOW_SERVICE: Option<ShadowService> = None;
 
