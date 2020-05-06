@@ -2,8 +2,6 @@
 
 // --- std ---
 use std::{cell::RefCell, fs::File};
-use std::str::from_utf8;
-use std::io::Read;
 // --- crates ---
 use serde::Deserialize;
 // --- substrate ---
@@ -12,7 +10,7 @@ use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill};
 // --- darwinia ---
 use crate::*;
-use darwinia_support::{bytes_thing:: hex_bytes_unchecked, literal_procesor::extract_from_json_str};
+use darwinia_support::bytes_thing::hex_bytes_unchecked;
 use eth_primitives::receipt::LogEntry;
 
 type AccountId = u64;
@@ -45,17 +43,17 @@ thread_local! {
 }
 
 #[derive(Debug)]
-pub struct BlockWithProofs {
+pub struct BlockWithProof {
 	pub proof_length: u64,
 	pub merkle_root: H128,
 	pub header_rlp: Vec<u8>,
 	pub merkle_proofs: Vec<H128>,
 	pub elements: Vec<H256>,
 }
-impl BlockWithProofs {
+impl BlockWithProof {
 	pub fn from_file(path: &str) -> Self {
 		#[derive(Deserialize)]
-		struct RawBlockWithProofs {
+		struct RawBlockWithProof {
 			proof_length: u64,
 			merkle_root: String,
 			header_rlp: String,
@@ -84,14 +82,14 @@ impl BlockWithProofs {
 			s
 		}
 
-		let raw_block_with_proofs: RawBlockWithProofs =
+		let raw_block_with_proof: RawBlockWithProof =
 			serde_json::from_reader(File::open(path).unwrap()).unwrap();
 
-		BlockWithProofs {
-			proof_length: raw_block_with_proofs.proof_length,
-			merkle_root: fixed_hex_bytes_unchecked!(&raw_block_with_proofs.merkle_root, 16).into(),
-			header_rlp: hex_bytes_unchecked(&raw_block_with_proofs.header_rlp),
-			merkle_proofs: raw_block_with_proofs
+		BlockWithProof {
+			proof_length: raw_block_with_proof.proof_length,
+			merkle_root: fixed_hex_bytes_unchecked!(&raw_block_with_proof.merkle_root, 16).into(),
+			header_rlp: hex_bytes_unchecked(&raw_block_with_proof.header_rlp),
+			merkle_proofs: raw_block_with_proof
 				.merkle_proofs
 				.iter()
 				.cloned()
@@ -99,7 +97,7 @@ impl BlockWithProofs {
 					fixed_hex_bytes_unchecked!(&zero_padding(raw_merkle_proof, 16), 16).into()
 				})
 				.collect(),
-			elements: raw_block_with_proofs
+			elements: raw_block_with_proof
 				.elements
 				.iter()
 				.cloned()
@@ -139,6 +137,37 @@ impl BlockWithProofs {
 					.to_vec(),
 			})
 			.collect()
+	}
+}
+
+pub struct HeaderWithProof {
+	pub header: EthHeader,
+	pub proof: Vec<DoubleNodeWithMerkleProof>,
+}
+impl HeaderWithProof {
+	fn from_file(path: &str) -> Self {
+		#[derive(Deserialize)]
+		struct RawShadowServiceResponse {
+			result: RawHeaderWithProof,
+		}
+		#[derive(Deserialize)]
+		struct RawHeaderWithProof {
+			eth_header: String,
+			proof: String,
+		}
+
+		let raw_shadow_service_response: RawShadowServiceResponse =
+			serde_json::from_reader(File::open(path).unwrap()).unwrap();
+		Self {
+			header: Decode::decode::<&[u8]>(
+				&mut &hex_bytes_unchecked(raw_shadow_service_response.result.eth_header)[..],
+			)
+			.unwrap(),
+			proof: Decode::decode::<&[u8]>(
+				&mut &hex_bytes_unchecked(raw_shadow_service_response.result.proof)[..],
+			)
+			.unwrap(),
+		}
 	}
 }
 
@@ -261,31 +290,14 @@ impl ExtBuilder {
 	}
 }
 
-fn load_ethheader_with_proof(path: &'static str) -> (EthHeader, Vec<DoubleNodeWithMerkleProof>) {
-	let mut buffer = Vec::new();
-	let mut f = File::open(path).unwrap();
-	f.read_to_end(&mut buffer).unwrap_or_default();
-
-	let eth_header_part = extract_from_json_str(&buffer[..], b"eth_header" as &[u8]).unwrap_or_default();
-	let header_scale_bytes = hex_bytes_unchecked(from_utf8(eth_header_part).unwrap_or_default());
-	let header: EthHeader = Decode::decode::<&[u8]>(&mut &header_scale_bytes[..]).unwrap_or_default();
-
-	let proof_part = extract_from_json_str(&buffer[..], b"proof" as &[u8]).unwrap_or_default();
-	let proof_scale_bytes = hex_bytes_unchecked(from_utf8(proof_part).unwrap_or_default());
-	let double_node_with_proof_list = Decode::decode::<&[u8]>(&mut &proof_scale_bytes[..]).unwrap_or_default();
-
-	(header, double_node_with_proof_list)
-}
-
 /// To help reward miners for when duplicate block solutions are found
-/// because of the shorter block times of Ethereum (compared to other cryptocurrency).
+/// because of the shorter block times of Ethereum (compared to other crypto currency).
 /// An uncle is a smaller reward than a full block.
 ///
 /// stackoverflow: https://ethereum.stackexchange.com/questions/34/what-is-an-uncle-ommer-block
 ///
 /// returns: [origin, grandpa, uncle, parent, current]
-pub fn mock_canonical_relationship() -> [(EthHeader, Vec<DoubleNodeWithMerkleProof>); 5] {
-
+pub fn mock_canonical_relationship() -> [HeaderWithProof; 5] {
 	// The block we loads
 	// | pos     | height  | tx                                                                 |
 	// |---------|---------|--------------------------------------------------------------------|
@@ -295,11 +307,11 @@ pub fn mock_canonical_relationship() -> [(EthHeader, Vec<DoubleNodeWithMerklePro
 	// | parent  | 7575767 |                                                                    |
 	// | current | 7575768 | 0xfc836bf547f1e035e837bf0a8d26e432aa26da9659db5bf6ba69b0341d818778 |
 	[
-		load_ethheader_with_proof("./src/test-data/ropsten_origin_7575765_scale.json"),
-		load_ethheader_with_proof("./src/test-data/ropsten_grandpa_7575766_scale.json"),
-		load_ethheader_with_proof("./src/test-data/ropsten_uncle_7575766_scale.json"),
-		load_ethheader_with_proof("./src/test-data/ropsten_parent_7575767_scale.json"),
-		load_ethheader_with_proof("./src/test-data/ropsten_current_7575768_scale.json"),
+		HeaderWithProof::from_file("./src/test-data/ropsten_origin_7575765_scale.json"),
+		HeaderWithProof::from_file("./src/test-data/ropsten_grandpa_7575766_scale.json"),
+		HeaderWithProof::from_file("./src/test-data/ropsten_uncle_7575766_scale.json"),
+		HeaderWithProof::from_file("./src/test-data/ropsten_parent_7575767_scale.json"),
+		HeaderWithProof::from_file("./src/test-data/ropsten_current_7575768_scale.json"),
 	]
 }
 

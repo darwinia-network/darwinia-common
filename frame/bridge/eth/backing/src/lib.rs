@@ -176,10 +176,10 @@ decl_module! {
 		/// - `O(1)`
 		/// # </weight>
 		#[weight = 10_000_000]
-		pub fn redeem(origin, r#for: RedeemFor) {
+		pub fn redeem(origin, act: RedeemFor) {
 			let redeemer = ensure_signed(origin)?;
 
-			match r#for {
+			match act {
 				RedeemFor::Ring(proof_record) => Self::redeem_ring(&redeemer, proof_record)?,
 				RedeemFor::Kton(proof_record) => Self::redeem_kton(&redeemer, proof_record)?,
 				RedeemFor::Deposit(proof_record) => Self::redeem_deposit(&redeemer, proof_record)?,
