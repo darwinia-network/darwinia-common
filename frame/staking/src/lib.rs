@@ -526,7 +526,7 @@ impl<BlockNumber> Default for ElectionStatus<BlockNumber> {
 	}
 }
 
-/// To unify *Ring* and *Kton* balances.
+/// To unify *RING* and *KTON* balances.
 #[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
 pub enum StakingBalance<RingBalance, KtonBalance>
 where
@@ -760,7 +760,7 @@ where
 	}
 }
 
-/// The *Ring* under deposit.
+/// The *RING* under deposit.
 #[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
 pub struct TimeDepositItem<RingBalance: HasCompact> {
 	#[codec(compact)]
@@ -1166,9 +1166,9 @@ decl_storage! {
 		/// The reset might go to Treasury or something else.
 		pub PayoutFraction get(fn payout_fraction) config(): Perbill;
 
-		/// Total *Ring* in pool.
+		/// Total *RING* in pool.
 		pub RingPool get(fn ring_pool): RingBalance<T>;
-		/// Total *Kton* in pool.
+		/// Total *KTON* in pool.
 		pub KtonPool get(fn kton_pool): KtonBalance<T>;
 	}
 	add_extra_genesis {

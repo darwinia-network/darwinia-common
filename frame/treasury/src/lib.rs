@@ -133,7 +133,7 @@ pub trait Trait: frame_system::Trait {
 	/// The staking *RING*.
 	type RingCurrency: Currency<Self::AccountId> + ReservableCurrency<Self::AccountId>;
 
-	/// The staking *Kton*.
+	/// The staking *KTON*.
 	type KtonCurrency: Currency<Self::AccountId> + ReservableCurrency<Self::AccountId>;
 
 	/// Origin from which approvals must come.
@@ -278,9 +278,9 @@ decl_event!(
 		Burnt(RingBalance, KtonBalance),
 		/// Spending has finished; this is the amount that rolls over until next spend.
 		Rollover(RingBalance, KtonBalance),
-		/// Some *Ring* have been deposited.
+		/// Some *RING* have been deposited.
 		DepositRing(RingBalance),
-		/// Some *Kton* have been deposited.
+		/// Some *KTON* have been deposited.
 		DepositKton(KtonBalance),
 		/// A new tip suggestion has been opened.
 		NewTip(Hash),
