@@ -1453,14 +1453,15 @@ decl_module! {
 
 			match value {
 				StakingBalance::RingBalance(r) => {
+					let usable_balance = T::RingCurrency::usable_balance(&stash);
+					let value = r.min(usable_balance);
+
 					// reject a bond which is considered to be _dust_.
 					ensure!(
-						r >= T::RingCurrency::minimum_balance(),
+						value >= T::RingCurrency::minimum_balance(),
 						<Error<T>>::InsufficientValue,
 					);
 
-					let usable_balance = T::RingCurrency::usable_balance(&stash);
-					let value = r.min(usable_balance);
 					let (start_time, expire_time) = Self::bond_ring(
 						&stash,
 						&controller,
@@ -1473,14 +1474,14 @@ decl_module! {
 					Self::deposit_event(RawEvent::BondRing(value, start_time, expire_time));
 				},
 				StakingBalance::KtonBalance(k) => {
-					// reject a bond which is considered to be _dust_.
-					ensure!(
-						k >= T::KtonCurrency::minimum_balance(),
-						<Error<T>>::InsufficientValue,
-					);
-
 					let usable_balance = T::KtonCurrency::usable_balance(&stash);
 					let value = k.min(usable_balance);
+
+					// reject a bond which is considered to be _dust_.
+					ensure!(
+						value >= T::KtonCurrency::minimum_balance(),
+						<Error<T>>::InsufficientValue,
+					);
 
 					Self::bond_kton(&controller, value, ledger);
 
