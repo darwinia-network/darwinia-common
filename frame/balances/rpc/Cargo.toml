@@ -1,6 +1,6 @@
 [package]
 name = "darwinia-balances-rpc"
-version = "0.5.5"
+version = "0.5.6"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "Node-specific RPC methods for interaction with balances."
 edition = "2018"
