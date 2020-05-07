@@ -1,6 +1,6 @@
 [package]
 name = "darwinia-header-mmr"
-version = "0.5.4"
+version = "0.5.6"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "Pallet for logging MMR into header digest"
 edition = "2018"

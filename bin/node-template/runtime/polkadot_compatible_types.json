@@ -62,7 +62,7 @@
 		"deposit_items": "Vec<TimeDepositItem>",
 		"ring_staking_lock": "StakingLock",
 		"kton_staking_lock": "StakingLock",
-		"last_reward": "Option<EraIndex>",
+		"claimed_rewards": "Vec<EraIndex>",
 		"total": "Compact<Balance>",
 		"active": "Compact<Balance>",
 		"unlocking": "Vec<UnlockChunk>"
