@@ -51,8 +51,10 @@ jobs:
       env: HEADERMMR RUST_TOOLCHAIN=nightly TARGET=native
       script: .maintain/ci/darwinia_test_script.sh header-mmr
 
+    # There are some dead code caused by conditional compilation in test,
+    # so the warning is suppresed
     - stage: Darwinia Test
-      env: ETHOFFCHAIN RUST_TOOLCHAIN=nightly TARGET=native
+      env: ETHOFFCHAIN RUST_TOOLCHAIN=nightly TARGET=native RUSTFLAGS=-Awarnings
       script: .maintain/ci/darwinia_test_script.sh eth-offchain
 
     - stage: Darwinia Test
