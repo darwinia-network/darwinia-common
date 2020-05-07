@@ -59,15 +59,13 @@ mod tests;
 // --- core ---
 use core::str::from_utf8;
 // --- crates ---
-use codec::Decode;
 use cfg_if::cfg_if;
+use codec::Decode;
 // --- substrate ---
 use frame_support::{debug::trace, decl_error, decl_module, traits::Get};
-use frame_system::offchain::{
-	AppCrypto, CreateSignedTransaction, ForAll, Signer,
-};
 #[cfg(not(test))]
 use frame_system::offchain::SendSignedTransaction;
+use frame_system::offchain::{AppCrypto, CreateSignedTransaction, ForAll, Signer};
 
 use sp_runtime::{traits::Zero, DispatchError, KeyTypeId};
 use sp_std::prelude::*;
@@ -318,7 +316,6 @@ impl<T: Trait> Module<T> {
 		header: EthHeader,
 		proof_list: Vec<DoubleNodeWithMerkleProof>,
 	) {
-
 		// The `submit_header` will call event out of eth-offchain pallet,
 		// so this function is skiped in the test of pallet
 		cfg_if! {
