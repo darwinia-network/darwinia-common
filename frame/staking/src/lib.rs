@@ -1247,6 +1247,9 @@ decl_event!(
 		/// Unbond succeed.
 		/// `amount` om `KtonBalance<T>`, `now` in `BlockNumber`
 		UnbondKton(KtonBalance, BlockNumber),
+
+		/// Someone claimed his deposits with some *KTON*s punishment
+		ClaimDepositsWithPunish(AccountId, KtonBalance),
 	}
 );
 
@@ -1778,6 +1781,8 @@ decl_module! {
 		///
 		/// Refer to https://talk.darwinia.network/topics/55
 		///
+		/// Assume the `expire_time` is a unique ID for the deposit
+		///
 		/// # <weight>
 		/// - Independent of the arguments. Insignificant complexity.
 		/// - One storage read.
@@ -1794,61 +1799,75 @@ decl_module! {
 				return Ok(());
 			}
 
-			let StakingLedger {
-				stash,
-				active_deposit_ring,
-				deposit_items,
-				..
-			} = &mut ledger;
+			let mut claim_deposits_with_punish = (false, Zero::zero());
 
-			deposit_items.retain(|item| {
-				if item.expire_time != expire_time {
-					return true;
-				}
+			{
+				let StakingLedger {
+					stash,
+					active_deposit_ring,
+					deposit_items,
+					..
+				} = &mut ledger;
 
-				let kton_slash = {
-					let plan_duration_in_months = {
-						let plan_duration_in_milliseconds = item.expire_time.saturating_sub(item.start_time);
-						plan_duration_in_milliseconds / MONTH_IN_MILLISECONDS
+				deposit_items.retain(|item| {
+					if item.expire_time != expire_time {
+						return true;
+					}
+
+					let kton_slash = {
+						let plan_duration_in_months = {
+							let plan_duration_in_milliseconds = item.expire_time.saturating_sub(item.start_time);
+							plan_duration_in_milliseconds / MONTH_IN_MILLISECONDS
+						};
+						let passed_duration_in_months = {
+							let passed_duration_in_milliseconds = now.saturating_sub(item.start_time);
+							passed_duration_in_milliseconds / MONTH_IN_MILLISECONDS
+						};
+
+						(
+							inflation::compute_kton_return::<T>(item.value, plan_duration_in_months)
+							-
+							inflation::compute_kton_return::<T>(item.value, passed_duration_in_months)
+						).max(1.into()) * 3.into()
 					};
-					let passed_duration_in_months = {
-						let passed_duration_in_milliseconds = now.saturating_sub(item.start_time);
-						passed_duration_in_milliseconds / MONTH_IN_MILLISECONDS
-					};
 
-					(
-						inflation::compute_kton_return::<T>(item.value, plan_duration_in_months)
-						-
-						inflation::compute_kton_return::<T>(item.value, passed_duration_in_months)
-					).max(1.into()) * 3.into()
-				};
+					// check total free balance and locked one
+					// strict on punishing in kton
+					if T::KtonCurrency::free_balance(stash)
+						.checked_sub(&kton_slash)
+						.and_then(|new_balance| {
+							T::KtonCurrency::ensure_can_withdraw(
+								stash,
+								kton_slash,
+								WithdrawReason::Transfer.into(),
+								new_balance
+							).ok()
+						})
+						.is_some()
+					{
+						*active_deposit_ring = active_deposit_ring.saturating_sub(item.value);
 
-				// check total free balance and locked one
-				// strict on punishing in kton
-				if T::KtonCurrency::free_balance(stash)
-					.checked_sub(&kton_slash)
-					.and_then(|new_balance| {
-						T::KtonCurrency::ensure_can_withdraw(
-							stash,
-							kton_slash,
-							WithdrawReason::Transfer.into(),
-							new_balance
-						).ok()
-					})
-					.is_some()
-				{
-					*active_deposit_ring = active_deposit_ring.saturating_sub(item.value);
+						let imbalance = T::KtonCurrency::slash(stash, kton_slash).0;
+						T::KtonSlash::on_unbalanced(imbalance);
 
-					let imbalance = T::KtonCurrency::slash(stash, kton_slash).0;
-					T::KtonSlash::on_unbalanced(imbalance);
+						claim_deposits_with_punish = (true, kton_slash);
 
-					false
-				} else {
-					true
-				}
-			});
+						false
+					} else {
+						true
+					}
+				});
+			}
 
-			<Ledger<T>>::insert(&controller, ledger);
+			<Ledger<T>>::insert(&controller, &ledger);
+
+			if claim_deposits_with_punish.0 {
+				Self::deposit_event(
+					RawEvent::ClaimDepositsWithPunish(
+						ledger.stash.clone(),
+						claim_deposits_with_punish.1,
+					));
+			}
 		}
 
 		/// Declare the desire to validate for the origin controller.
