@@ -184,6 +184,10 @@ impl ExtBuilder {
 
 impl OffchainRequestTrait for OffchainRequest {
 	fn send(&mut self) -> Option<Vec<u8>> {
+		let _ = self.location;
+		let _ = self.payload;
+		let _ = self.redirect_times;
+		let _ = self.cookie;
 		unsafe {
 			match SHADOW_SERVICE {
 				Some(ShadowService::Scale) => Some(SUPPOSED_SHADOW_SCALE_RESPONSE.to_vec()),

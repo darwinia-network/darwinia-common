@@ -60,11 +60,15 @@ mod tests;
 use core::str::from_utf8;
 // --- crates ---
 use codec::Decode;
+use cfg_if::cfg_if;
 // --- substrate ---
 use frame_support::{debug::trace, decl_error, decl_module, traits::Get};
 use frame_system::offchain::{
-	AppCrypto, CreateSignedTransaction, ForAll, SendSignedTransaction, Signer,
+	AppCrypto, CreateSignedTransaction, ForAll, Signer,
 };
+#[cfg(not(test))]
+use frame_system::offchain::SendSignedTransaction;
+
 use sp_runtime::{traits::Zero, DispatchError, KeyTypeId};
 use sp_std::prelude::*;
 // --- darwinia ---
@@ -79,7 +83,7 @@ type EthRelay<T> = darwinia_eth_relay::Module<T>;
 type EthRelayCall<T> = darwinia_eth_relay::Call<T>;
 
 pub const ETH_OFFCHAIN: KeyTypeId = KeyTypeId(*b"etho");
-const MAX_REDIRECT_TIMES: u8 = 3;
+
 /// A dummy endpoint, point this to shadow service
 const ETH_RESOURCE: &'static [u8] = b"http://shadow.darwinia.network/";
 
@@ -111,7 +115,7 @@ impl OffchainRequest {
 #[cfg(not(test))]
 impl OffchainRequestTrait for OffchainRequest {
 	fn send(&mut self) -> Option<Vec<u8>> {
-		for _ in 0..=MAX_REDIRECT_TIMES {
+		for _ in 0..=3 {
 			let p = self.payload.clone();
 			let request = sp_runtime::offchain::http::Request::post(
 				from_utf8(&self.location).unwrap_or_default(),
@@ -228,10 +232,8 @@ impl<T: Trait> Module<T> {
 			}
 		};
 
-		// The `submit_header` will call event out of eth-offchain pallet,
-		// so this function is skiped in the test of pallet
-		#[cfg(not(test))]
 		Self::submit_header(signer, header, proof_list);
+
 		Ok(())
 	}
 
@@ -316,9 +318,20 @@ impl<T: Trait> Module<T> {
 		header: EthHeader,
 		proof_list: Vec<DoubleNodeWithMerkleProof>,
 	) {
-		let results = signer.send_signed_transaction(|_| {
-			<EthRelayCall<T>>::relay_header(header.clone(), proof_list.clone())
-		});
+
+		// The `submit_header` will call event out of eth-offchain pallet,
+		// so this function is skiped in the test of pallet
+		cfg_if! {
+			if #[cfg(test)] {
+				let _ = signer;
+				let results = vec![((), format!("header: {:?}, proof_list: {:?}", header, proof_list))];
+			} else {
+				let results = signer.send_signed_transaction(|_| {
+					<EthRelayCall<T>>::relay_header(header.clone(), proof_list.clone())
+				});
+			}
+		}
+
 		for (_, result) in &results {
 			trace!(
 				target: "eth-offchain",
