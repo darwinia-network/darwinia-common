@@ -248,8 +248,8 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 impl<T: Trait<I>, I: Instance> Subtrait<I> for T {
 	type Balance = T::Balance;
 	type ExistentialDeposit = T::ExistentialDeposit;
-	type BalanceInfo = T::BalanceInfo;
 	type AccountStore = T::AccountStore;
+	type BalanceInfo = T::BalanceInfo;
 	type DustCollector = T::DustCollector;
 }
 
