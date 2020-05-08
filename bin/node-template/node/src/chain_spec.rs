@@ -11,7 +11,7 @@ use sp_runtime::{
 };
 // --- darwinia ---
 use darwinia_claims::ClaimsList;
-use darwinia_eth_relay::DagMerkleRoots;
+use darwinia_eth_relay::DagsMerkleRootsLoader;
 use node_template_runtime::{BalancesConfig as RingConfig, *};
 
 // Note this is the URL for the telemetry server
@@ -218,7 +218,7 @@ fn testnet_genesis(
 				.collect(),
 		}),
 		darwinia_claims: Some(ClaimsConfig {
-			claims_list: ClaimsList::load_genesis(
+			claims_list: ClaimsList::from_file(
 				"bin/node-template/node/res/claims_list.json",
 				"CLAIMS_LIST_PATH",
 			),
@@ -256,8 +256,8 @@ fn testnet_genesis(
 				],
 			)),
 			check_authority: false,
-			dag_merkle_roots: DagMerkleRoots::load_genesis(
-				"bin/node-template/node/res/dag_merkle_roots.json",
+			dags_merkle_roots_loader: DagsMerkleRootsLoader::from_file(
+				"bin/node-template/node/res/dags_merkle_roots.json",
 				"DAG_MERKLE_ROOTS_PATH",
 			),
 			..Default::default()

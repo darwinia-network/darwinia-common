@@ -25,6 +25,8 @@ mod types {
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
+#[cfg(feature = "std")]
+use frame_support::debug::error;
 use frame_support::{
 	traits::{Currency, Get},
 	{decl_error, decl_event, decl_module, decl_storage},
@@ -128,26 +130,35 @@ decl_storage! {
 	add_extra_genesis {
 		config(claims_list): ClaimsList;
 		build(|config| {
+			let ClaimsList {
+				dot,
+				eth,
+				tron,
+			} = &config.claims_list;
 			let mut total = <RingBalance<T>>::zero();
 
-			// Eth Address
-			for Account { address, backed_ring } in &config.claims_list.dot {
-				// DOT:RING = 1:50
-				let backed_ring = (*backed_ring).saturated_into();
-				<ClaimsFromEth<T>>::insert(address.0, backed_ring);
-				total += backed_ring;
-			}
-			for Account { address, backed_ring } in &config.claims_list.eth {
-				let backed_ring = (*backed_ring).saturated_into();
-				<ClaimsFromEth<T>>::insert(address.0, backed_ring);
-				total += backed_ring;
-			}
+			if dot.is_empty() && eth.is_empty() && tron.is_empty() {
+				error!("[darwinia-claims] Genesis Claims List is Set to EMPTY");
+			} else {
+				// Eth Address
+				for Account { address, backed_ring } in dot {
+					// DOT:RING = 1:50
+					let backed_ring = (*backed_ring).saturated_into();
+					<ClaimsFromEth<T>>::insert(address.0, backed_ring);
+					total += backed_ring;
+				}
+				for Account { address, backed_ring } in eth {
+					let backed_ring = (*backed_ring).saturated_into();
+					<ClaimsFromEth<T>>::insert(address.0, backed_ring);
+					total += backed_ring;
+				}
 
-			// Tron Address
-			for Account { address, backed_ring } in &config.claims_list.tron {
-				let backed_ring = (*backed_ring).saturated_into();
-				<ClaimsFromTron<T>>::insert(address.0, backed_ring);
-				total += backed_ring;
+				// Tron Address
+				for Account { address, backed_ring } in tron {
+					let backed_ring = (*backed_ring).saturated_into();
+					<ClaimsFromTron<T>>::insert(address.0, backed_ring);
+					total += backed_ring;
+				}
 			}
 
 			<Total<T>>::put(total);

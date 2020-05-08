@@ -99,7 +99,7 @@ macro_rules! impl_genesis {
 		}
 
 		impl $sname {
-			pub fn load_genesis(path: &str, env_name: &str) -> Self {
+			pub fn from_file(path: &str, env_name: &str) -> Self {
 				if !std::path::Path::new(path).is_file() && std::env::var(env_name).is_err() {
 					Default::default()
 				} else {
@@ -109,6 +109,10 @@ macro_rules! impl_genesis {
 					)
 					.unwrap()
 				}
+			}
+
+			pub fn from_str(data: &str) -> Self {
+				serde_json::from_str(data).unwrap()
 			}
 		}
 	};
