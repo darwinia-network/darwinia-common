@@ -753,7 +753,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-balances"
-version = "0.5.6"
+version = "0.5.7"
 dependencies = [
  "darwinia-balances-rpc-runtime-api",
  "darwinia-support",
@@ -771,7 +771,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-balances-rpc"
-version = "0.5.6"
+version = "0.5.7"
 dependencies = [
  "darwinia-balances-rpc-runtime-api",
  "jsonrpc-core",
@@ -785,7 +785,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-balances-rpc-runtime-api"
-version = "0.5.6"
+version = "0.5.7"
 dependencies = [
  "parity-scale-codec",
  "serde",
@@ -795,7 +795,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-claims"
-version = "0.5.6"
+version = "0.5.7"
 dependencies = [
  "darwinia-balances",
  "darwinia-support",
@@ -814,7 +814,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-elections-phragmen"
-version = "0.5.6"
+version = "0.5.7"
 dependencies = [
  "darwinia-balances",
  "darwinia-support",
@@ -833,7 +833,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-eth-backing"
-version = "0.5.6"
+version = "0.5.7"
 dependencies = [
  "darwinia-balances",
  "darwinia-eth-relay",
@@ -857,7 +857,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-eth-offchain"
-version = "0.5.6"
+version = "0.5.7"
 dependencies = [
  "darwinia-balances",
  "darwinia-eth-relay",
@@ -876,7 +876,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-eth-relay"
-version = "0.5.6"
+version = "0.5.7"
 dependencies = [
  "darwinia-balances",
  "darwinia-support",
@@ -898,7 +898,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-header-mmr"
-version = "0.5.6"
+version = "0.5.7"
 dependencies = [
  "ckb-merkle-mountain-range",
  "frame-support",
@@ -914,7 +914,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-staking"
-version = "0.5.6"
+version = "0.5.7"
 dependencies = [
  "darwinia-balances",
  "darwinia-support",
@@ -942,7 +942,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-support"
-version = "0.5.6"
+version = "0.5.7"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
@@ -954,7 +954,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-treasury"
-version = "0.5.6"
+version = "0.5.7"
 dependencies = [
  "darwinia-balances",
  "darwinia-support",
@@ -1069,7 +1069,7 @@ dependencies = [
 
 [[package]]
 name = "eth-primitives"
-version = "0.5.6"
+version = "0.5.7"
 dependencies = [
  "darwinia-support",
  "ethash",
@@ -2863,7 +2863,7 @@ checksum = "71d96e3f3c0b6325d8ccd83c33b28acb183edcb6c67938ba104ec546854b0882"
 
 [[package]]
 name = "merkle-patricia-trie"
-version = "0.5.6"
+version = "0.5.7"
 dependencies = [
  "criterion",
  "ethereum-types 0.5.2",
@@ -3052,7 +3052,7 @@ dependencies = [
 
 [[package]]
 name = "node-template"
-version = "0.5.6"
+version = "0.5.7"
 dependencies = [
  "darwinia-balances-rpc",
  "darwinia-claims",
@@ -3090,7 +3090,7 @@ dependencies = [
 
 [[package]]
 name = "node-template-runtime"
-version = "0.5.6"
+version = "0.5.7"
 dependencies = [
  "darwinia-balances",
  "darwinia-balances-rpc-runtime-api",

@@ -1,6 +1,6 @@
 [package]
 name = "darwinia-eth-relay"
-version = "0.5.6"
+version = "0.5.7"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "FRAME pallet to relay Ethereum headers"
 edition = "2018"
