@@ -1,6 +1,6 @@
 [package]
 name = "darwinia-elections-phragmen"
-version = "0.5.6"
+version = "0.5.7"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "FRAME election pallet for PHRAGMEN"
 edition = "2018"

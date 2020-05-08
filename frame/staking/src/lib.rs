@@ -409,28 +409,6 @@ const MONTH_IN_MINUTES: TsInMs = 30 * 24 * 60;
 const MONTH_IN_MILLISECONDS: TsInMs = MONTH_IN_MINUTES * 60 * 1000;
 const STAKING_ID: LockIdentifier = *b"da/staki";
 
-#[macro_export]
-macro_rules! unix_time_now {
-	() => {{
-		match () {
-			#[cfg(feature = "build-spec")]
-			_ => $crate::unix_time_now!(build_spec),
-			#[cfg(not(feature = "build-spec"))]
-			_ => $crate::unix_time_now!(product),
-			}
-		}};
-	(build_spec) => {{
-		std::time::SystemTime::now()
-			.duration_since(std::time::UNIX_EPOCH)
-			.expect("`now` always greater than `UNIX_EPOCH`, never get panic; qed")
-			.as_millis()
-			.saturated_into::<TsInMs>()
-		}};
-	(product) => {{
-		T::UnixTime::now().as_millis().saturated_into::<TsInMs>()
-		}};
-}
-
 // --- enum ---
 
 /// Indicates the initial status of the staker.
@@ -1404,7 +1382,7 @@ decl_module! {
 		fn on_finalize() {
 			if let Some(mut active_era) = Self::active_era() {
 				if active_era.start.is_none() {
-					let now = unix_time_now!();
+					let now = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
 					active_era.start = Some(now);
 					ActiveEra::put(active_era);
 				}
@@ -1565,7 +1543,7 @@ decl_module! {
 			let stash = ensure_signed(origin)?;
 			let controller = Self::bonded(&stash).ok_or(<Error<T>>::NotStash)?;
 			let ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
-			let start_time = unix_time_now!();
+			let start_time = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
 			let promise_month = promise_month.max(3).min(36);
 			let expire_time = start_time + promise_month as TsInMs * MONTH_IN_MILLISECONDS;
 			let mut ledger = Self::clear_mature_deposits(ledger);
@@ -1794,7 +1772,7 @@ decl_module! {
 		fn try_claim_deposits_with_punish(origin, expire_time: TsInMs) {
 			let controller = ensure_signed(origin)?;
 			let mut ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
-			let now = unix_time_now!();
+			let now = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
 
 			if expire_time <= now {
 				return Ok(());
@@ -2281,7 +2259,7 @@ impl<T: Trait> Module<T> {
 		promise_month: u8,
 		mut ledger: StakingLedgerT<T>,
 	) -> (TsInMs, TsInMs) {
-		let start_time = unix_time_now!();
+		let start_time = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
 		let mut expire_time = start_time;
 
 		ledger.active_ring = ledger.active_ring.saturating_add(value);
@@ -2339,7 +2317,7 @@ impl<T: Trait> Module<T> {
 
 	// TODO: doc
 	pub fn clear_mature_deposits(mut ledger: StakingLedgerT<T>) -> StakingLedgerT<T> {
-		let now = unix_time_now!();
+		let now = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
 		let StakingLedger {
 			active_deposit_ring,
 			deposit_items,
@@ -2884,7 +2862,7 @@ impl<T: Trait> Module<T> {
 	fn end_era(active_era: ActiveEraInfo, _session_index: SessionIndex) {
 		// Note: active_era_start can be None if end era is called during genesis config.
 		if let Some(active_era_start) = active_era.start {
-			let now = unix_time_now!();
+			let now = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
 			let living_time = Self::living_time();
 			let era_duration = now - active_era_start;
 
