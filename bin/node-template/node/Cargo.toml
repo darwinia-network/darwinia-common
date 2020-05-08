@@ -5,9 +5,9 @@ authors = ["Anonymous"]
 description = "Darwinia Node template"
 edition = "2018"
 license = "Unlicense"
-build = "build.rs"
 homepage = "https://darwinia.network/"
 repository = "https://github.com/darwinia-network/darwinia/"
+build = "build.rs"
 
 [[bin]]
 name = "node-template"
@@ -74,9 +74,4 @@ runtime-benchmarks = [
 	"node-template-runtime/runtime-benchmarks",
 	# substrate
 	"frame-benchmarking-cli",
-]
-build-spec = [
-	# darwinia
-	"default",
-	"node-template-runtime/build-spec",
 ]

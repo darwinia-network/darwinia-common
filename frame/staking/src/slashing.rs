@@ -703,7 +703,7 @@ pub fn do_slash<T: Trait>(
 		value.r,
 		value.k,
 		<frame_system::Module<T>>::block_number(),
-		unix_time_now!(),
+		T::UnixTime::now().as_millis().saturated_into::<TsInMs>(),
 	);
 	let mut slashed = false;
 
