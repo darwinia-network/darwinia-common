@@ -77,6 +77,8 @@ use eth_primitives::{
 use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
 use types::*;
 
+include!(concat!(env!("OUT_DIR"), "/dags_merkle_roots.rs"));
+
 pub trait Trait: frame_system::Trait {
 	/// The eth-relay's module id, used for deriving its sovereign account ID.
 	type ModuleId: Get<ModuleId>;
@@ -104,8 +106,8 @@ impl Default for EthNetworkType {
 
 #[cfg(feature = "std")]
 darwinia_support::impl_genesis! {
-	struct DagMerkleRoots {
-		dag_merkle_roots: Vec<H128>
+	struct DagsMerkleRootsLoader {
+		dags_merkle_roots: Vec<H128>
 	}
 }
 
@@ -226,11 +228,11 @@ decl_storage! {
 	add_extra_genesis {
 		// genesis: Option<Header, Difficulty>
 		config(genesis_header): Option<(u64, Vec<u8>)>;
-		config(dag_merkle_roots): DagMerkleRoots;
+		config(dags_merkle_roots_loader): DagsMerkleRootsLoader;
 		build(|config| {
 			let GenesisConfig {
 				genesis_header,
-				dag_merkle_roots,
+				dags_merkle_roots_loader,
 				..
 			} = config;
 
@@ -242,12 +244,12 @@ decl_storage! {
 				}
 			}
 
-			for (i, dag_merkle_root) in dag_merkle_roots
-				.dag_merkle_roots
-				.iter()
-				.cloned()
-				.enumerate()
-			{
+			let dags_merkle_roots = if dags_merkle_roots_loader.dags_merkle_roots.is_empty() {
+				DagsMerkleRootsLoader::from_str(DAGS_MERKLE_ROOTS_STR).dags_merkle_roots.clone()
+			} else {
+				dags_merkle_roots_loader.dags_merkle_roots.clone()
+			};
+			for (i, dag_merkle_root) in dags_merkle_roots.into_iter().enumerate() {
 				DagsMerkleRoots::insert(i as u64, dag_merkle_root);
 			}
 

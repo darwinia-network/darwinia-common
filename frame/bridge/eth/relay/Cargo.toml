@@ -7,6 +7,7 @@ edition = "2018"
 license = "GPL-3.0"
 homepage = "https://darwinia.network/"
 repository = "https://github.com/darwinia-network/darwinia/"
+build = "build.rs"
 
 [dependencies]
 # crates

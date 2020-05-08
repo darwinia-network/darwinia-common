@@ -277,8 +277,8 @@ impl ExtBuilder {
 		GenesisConfig::<Test> {
 			number_of_blocks_finality: 30,
 			number_of_blocks_safe: 10,
-			dag_merkle_roots: DagMerkleRoots::load_genesis(
-				"../../../../bin/node-template/node/res/dag_merkle_roots.json",
+			dags_merkle_roots: DagsMerkleRootsLoader::from_file(
+				"../../../../bin/node-template/node/res/dags_merkle_roots.json",
 				"DAG_MERKLE_ROOTS_PATH",
 			),
 			..Default::default()
