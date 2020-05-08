@@ -77,6 +77,7 @@ use eth_primitives::{
 use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
 use types::*;
 
+#[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/dags_merkle_roots.rs"));
 
 pub trait Trait: frame_system::Trait {
