@@ -14,6 +14,7 @@ members = [
 	"frame/staking",
 	"frame/support",
 	"frame/treasury",
+	"primitives/array-bytes",
 	"primitives/eth-primitives",
 	"primitives/merkle-patricia-trie",
 ]

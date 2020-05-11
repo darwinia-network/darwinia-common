@@ -1,0 +1,20 @@
+[package]
+name = "array-bytes"
+version = "0.5.7"
+authors = ["Darwinia Network <hello@darwinia.network>"]
+description = "Minimal array/bytes operation for runtime"
+edition = "2018"
+license = "GPL-3.0"
+homepage = "https://darwinia.network/"
+repository = "https://github.com/darwinia-network/darwinia/"
+
+[dependencies]
+# substrate
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+
+[features]
+default = ["std"]
+std = [
+	# substrate
+	"sp-std/std",
+]
