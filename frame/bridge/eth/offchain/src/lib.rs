@@ -59,7 +59,6 @@ mod tests;
 // --- core ---
 use core::str::from_utf8;
 // --- crates ---
-use cfg_if::cfg_if;
 use codec::Decode;
 // --- substrate ---
 use frame_support::{debug::trace, decl_error, decl_module, traits::Get};
@@ -316,18 +315,24 @@ impl<T: Trait> Module<T> {
 		header: EthHeader,
 		proof_list: Vec<DoubleNodeWithMerkleProof>,
 	) {
-		// The `submit_header` will call event out of eth-offchain pallet,
-		// so this function is skiped in the test of pallet
-		cfg_if! {
-			if #[cfg(test)] {
+		// TODO: test support call eth-relay
+		// https://github.com/darwinia-network/darwinia-common/issues/137
+		let result = {
+			#[cfg(test)]
+			{
 				let _ = signer;
-				let results = vec![((), format!("header: {:?}, proof_list: {:?}", header, proof_list))];
-			} else {
-				let results = signer.send_signed_transaction(|_| {
-					<EthRelayCall<T>>::relay_header(header.clone(), proof_list.clone())
-				});
+				vec![(
+					(),
+					format!("header: {:?}, proof_list: {:?}", header, proof_list),
+				)]
 			}
-		}
+			#[cfg(not(test))]
+			{
+				signer.send_signed_transaction(|_| {
+					<EthRelayCall<T>>::relay_header(header.clone(), proof_list.clone())
+				})
+			}
+		};
 
 		for (_, result) in &results {
 			trace!(
