@@ -52,7 +52,7 @@ use serde::Serialize;
 use merkle_mountain_range::{MMRStore, MerkleProof, MMR};
 // --- substrate ---
 use codec::{Decode, Encode};
-use frame_support::{decl_error, decl_module, decl_storage, ensure};
+use frame_support::{debug::error, decl_error, decl_module, decl_storage, ensure};
 use sp_runtime::{
 	generic::{DigestItem, OpaqueDigestItemId},
 	traits::{Hash, Header},
@@ -104,29 +104,35 @@ decl_module! {
 
 		fn on_finalize(block_number: T::BlockNumber) {
 			let store = <ModuleMMRStore<T>>::default();
+			let parent_hash = <frame_system::Module<T>>::parent_hash();
 			let mut mmr = <MMR<_, MMRMerge<T>, _>>::new(<MMRCounter>::get(), store);
 
-			let parent_hash = <frame_system::Module<T>>::parent_hash();
 			// Update MMR and add mmr root to digest of block header
-			let pos = mmr.push(parent_hash).expect("Failed to push parent hash to mmr.");
-
-			// The first block number should start with 1 and parent block should be (T::BlockNumber::zero(), hash69())
-			// Checking just in case custom changes in system gensis config
-			if block_number >= 1.into() {
-				<Positions<T>>::insert(block_number - 1.into(), pos);
+			if let Ok(pos) = mmr.push(parent_hash) {
+				// The first block number should start with 1 and parent block should be (T::BlockNumber::zero(), hash69())
+				// Checking just in case custom changes in system genesis config
+				if block_number >= 1.into() {
+					<Positions<T>>::insert(block_number - 1.into(), pos);
+				}
+			} else {
+				error!("FAILED to Push Parent Hash to MMR");
 			}
 
-			let mmr_root = mmr.get_root().expect("Failed to calculate merkle mountain range; qed");
-			mmr.commit().expect("Failed to push parent hash to mmr.");
+			if let Ok(mmr_root) = mmr.get_root() {
+				if mmr.commit().is_ok() {
+					let mmr_root_log = MerkleMountainRangeRootLog::<T::Hash> {
+						prefix : MMR_ROOT_LOG_ID,
+						mmr_root : mmr_root.into()
+					};
+					let mmr_item = DigestItem::Other(mmr_root_log.encode());
 
-			let mmr_root_log = MerkleMountainRangeRootLog::<T::Hash> {
-				prefix : MMR_ROOT_LOG_ID,
-				mmr_root : mmr_root.into()
-			};
-
-			let mmr_item = DigestItem::Other(mmr_root_log.encode());
-
-			<frame_system::Module<T>>::deposit_log(mmr_item.into());
+					<frame_system::Module<T>>::deposit_log(mmr_item.into());
+				} else {
+					error!("FAILED to Commit MMR");
+				}
+			} else {
+				error!("[darwinia-header-mmr] FAILED to Calculate MMR");
+			}
 		}
 	}
 }

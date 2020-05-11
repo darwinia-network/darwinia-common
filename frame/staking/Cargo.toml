@@ -1,6 +1,6 @@
 [package]
 name = "darwinia-staking"
-version = "0.5.5"
+version = "0.5.7"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "FRAME pallet staking"
 edition = "2018"
@@ -70,4 +70,3 @@ runtime-benchmarks = [
 	# substrate
 	"frame-benchmarking",
 ]
-build-spec = ["default"]

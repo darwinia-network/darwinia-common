@@ -1,6 +1,6 @@
 [package]
 name = "darwinia-balances"
-version = "0.5.5"
+version = "0.5.7"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "FRAME pallet to manage RING"
 edition = "2018"

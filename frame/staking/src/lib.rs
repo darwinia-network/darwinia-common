@@ -409,28 +409,6 @@ const MONTH_IN_MINUTES: TsInMs = 30 * 24 * 60;
 const MONTH_IN_MILLISECONDS: TsInMs = MONTH_IN_MINUTES * 60 * 1000;
 const STAKING_ID: LockIdentifier = *b"da/staki";
 
-#[macro_export]
-macro_rules! unix_time_now {
-	() => {{
-		match () {
-			#[cfg(feature = "build-spec")]
-			_ => $crate::unix_time_now!(build_spec),
-			#[cfg(not(feature = "build-spec"))]
-			_ => $crate::unix_time_now!(product),
-			}
-		}};
-	(build_spec) => {{
-		std::time::SystemTime::now()
-			.duration_since(std::time::UNIX_EPOCH)
-			.expect("`now` always greater than `UNIX_EPOCH`, never get panic; qed")
-			.as_millis()
-			.saturated_into::<TsInMs>()
-		}};
-	(product) => {{
-		T::UnixTime::now().as_millis().saturated_into::<TsInMs>()
-		}};
-}
-
 // --- enum ---
 
 /// Indicates the initial status of the staker.
@@ -526,7 +504,7 @@ impl<BlockNumber> Default for ElectionStatus<BlockNumber> {
 	}
 }
 
-/// To unify *Ring* and *Kton* balances.
+/// To unify *RING* and *KTON* balances.
 #[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
 pub enum StakingBalance<RingBalance, KtonBalance>
 where
@@ -760,7 +738,7 @@ where
 	}
 }
 
-/// The *Ring* under deposit.
+/// The *RING* under deposit.
 #[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
 pub struct TimeDepositItem<RingBalance: HasCompact> {
 	#[codec(compact)]
@@ -1166,9 +1144,9 @@ decl_storage! {
 		/// The reset might go to Treasury or something else.
 		pub PayoutFraction get(fn payout_fraction) config(): Perbill;
 
-		/// Total *Ring* in pool.
+		/// Total *RING* in pool.
 		pub RingPool get(fn ring_pool): RingBalance<T>;
-		/// Total *Kton* in pool.
+		/// Total *KTON* in pool.
 		pub KtonPool get(fn kton_pool): KtonBalance<T>;
 	}
 	add_extra_genesis {
@@ -1247,6 +1225,9 @@ decl_event!(
 		/// Unbond succeed.
 		/// `amount` om `KtonBalance<T>`, `now` in `BlockNumber`
 		UnbondKton(KtonBalance, BlockNumber),
+
+		/// Someone claimed his deposits with some *KTON*s punishment
+		ClaimDepositsWithPunish(AccountId, KtonBalance),
 	}
 );
 
@@ -1401,7 +1382,7 @@ decl_module! {
 		fn on_finalize() {
 			if let Some(mut active_era) = Self::active_era() {
 				if active_era.start.is_none() {
-					let now = unix_time_now!();
+					let now = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
 					active_era.start = Some(now);
 					ActiveEra::put(active_era);
 				}
@@ -1450,14 +1431,15 @@ decl_module! {
 
 			match value {
 				StakingBalance::RingBalance(r) => {
+					let usable_balance = T::RingCurrency::usable_balance(&stash);
+					let value = r.min(usable_balance);
+
 					// reject a bond which is considered to be _dust_.
 					ensure!(
-						r >= T::RingCurrency::minimum_balance(),
+						value >= T::RingCurrency::minimum_balance(),
 						<Error<T>>::InsufficientValue,
 					);
 
-					let usable_balance = T::RingCurrency::usable_balance(&stash);
-					let value = r.min(usable_balance);
 					let (start_time, expire_time) = Self::bond_ring(
 						&stash,
 						&controller,
@@ -1470,14 +1452,14 @@ decl_module! {
 					Self::deposit_event(RawEvent::BondRing(value, start_time, expire_time));
 				},
 				StakingBalance::KtonBalance(k) => {
-					// reject a bond which is considered to be _dust_.
-					ensure!(
-						k >= T::KtonCurrency::minimum_balance(),
-						<Error<T>>::InsufficientValue,
-					);
-
 					let usable_balance = T::KtonCurrency::usable_balance(&stash);
 					let value = k.min(usable_balance);
+
+					// reject a bond which is considered to be _dust_.
+					ensure!(
+						value >= T::KtonCurrency::minimum_balance(),
+						<Error<T>>::InsufficientValue,
+					);
 
 					Self::bond_kton(&controller, value, ledger);
 
@@ -1561,7 +1543,7 @@ decl_module! {
 			let stash = ensure_signed(origin)?;
 			let controller = Self::bonded(&stash).ok_or(<Error<T>>::NotStash)?;
 			let ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
-			let start_time = unix_time_now!();
+			let start_time = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
 			let promise_month = promise_month.max(3).min(36);
 			let expire_time = start_time + promise_month as TsInMs * MONTH_IN_MILLISECONDS;
 			let mut ledger = Self::clear_mature_deposits(ledger);
@@ -1778,6 +1760,8 @@ decl_module! {
 		///
 		/// Refer to https://talk.darwinia.network/topics/55
 		///
+		/// Assume the `expire_time` is a unique ID for the deposit
+		///
 		/// # <weight>
 		/// - Independent of the arguments. Insignificant complexity.
 		/// - One storage read.
@@ -1788,67 +1772,81 @@ decl_module! {
 		fn try_claim_deposits_with_punish(origin, expire_time: TsInMs) {
 			let controller = ensure_signed(origin)?;
 			let mut ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
-			let now = unix_time_now!();
+			let now = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
 
 			if expire_time <= now {
 				return Ok(());
 			}
 
-			let StakingLedger {
-				stash,
-				active_deposit_ring,
-				deposit_items,
-				..
-			} = &mut ledger;
+			let mut claim_deposits_with_punish = (false, Zero::zero());
 
-			deposit_items.retain(|item| {
-				if item.expire_time != expire_time {
-					return true;
-				}
+			{
+				let StakingLedger {
+					stash,
+					active_deposit_ring,
+					deposit_items,
+					..
+				} = &mut ledger;
 
-				let kton_slash = {
-					let plan_duration_in_months = {
-						let plan_duration_in_milliseconds = item.expire_time.saturating_sub(item.start_time);
-						plan_duration_in_milliseconds / MONTH_IN_MILLISECONDS
+				deposit_items.retain(|item| {
+					if item.expire_time != expire_time {
+						return true;
+					}
+
+					let kton_slash = {
+						let plan_duration_in_months = {
+							let plan_duration_in_milliseconds = item.expire_time.saturating_sub(item.start_time);
+							plan_duration_in_milliseconds / MONTH_IN_MILLISECONDS
+						};
+						let passed_duration_in_months = {
+							let passed_duration_in_milliseconds = now.saturating_sub(item.start_time);
+							passed_duration_in_milliseconds / MONTH_IN_MILLISECONDS
+						};
+
+						(
+							inflation::compute_kton_return::<T>(item.value, plan_duration_in_months)
+							-
+							inflation::compute_kton_return::<T>(item.value, passed_duration_in_months)
+						).max(1.into()) * 3.into()
 					};
-					let passed_duration_in_months = {
-						let passed_duration_in_milliseconds = now.saturating_sub(item.start_time);
-						passed_duration_in_milliseconds / MONTH_IN_MILLISECONDS
-					};
 
-					(
-						inflation::compute_kton_return::<T>(item.value, plan_duration_in_months)
-						-
-						inflation::compute_kton_return::<T>(item.value, passed_duration_in_months)
-					).max(1.into()) * 3.into()
-				};
+					// check total free balance and locked one
+					// strict on punishing in kton
+					if T::KtonCurrency::free_balance(stash)
+						.checked_sub(&kton_slash)
+						.and_then(|new_balance| {
+							T::KtonCurrency::ensure_can_withdraw(
+								stash,
+								kton_slash,
+								WithdrawReason::Transfer.into(),
+								new_balance
+							).ok()
+						})
+						.is_some()
+					{
+						*active_deposit_ring = active_deposit_ring.saturating_sub(item.value);
 
-				// check total free balance and locked one
-				// strict on punishing in kton
-				if T::KtonCurrency::free_balance(stash)
-					.checked_sub(&kton_slash)
-					.and_then(|new_balance| {
-						T::KtonCurrency::ensure_can_withdraw(
-							stash,
-							kton_slash,
-							WithdrawReason::Transfer.into(),
-							new_balance
-						).ok()
-					})
-					.is_some()
-				{
-					*active_deposit_ring = active_deposit_ring.saturating_sub(item.value);
+						let imbalance = T::KtonCurrency::slash(stash, kton_slash).0;
+						T::KtonSlash::on_unbalanced(imbalance);
 
-					let imbalance = T::KtonCurrency::slash(stash, kton_slash).0;
-					T::KtonSlash::on_unbalanced(imbalance);
+						claim_deposits_with_punish = (true, kton_slash);
 
-					false
-				} else {
-					true
-				}
-			});
+						false
+					} else {
+						true
+					}
+				});
+			}
 
-			<Ledger<T>>::insert(&controller, ledger);
+			<Ledger<T>>::insert(&controller, &ledger);
+
+			if claim_deposits_with_punish.0 {
+				Self::deposit_event(
+					RawEvent::ClaimDepositsWithPunish(
+						ledger.stash.clone(),
+						claim_deposits_with_punish.1,
+					));
+			}
 		}
 
 		/// Declare the desire to validate for the origin controller.
@@ -2261,7 +2259,7 @@ impl<T: Trait> Module<T> {
 		promise_month: u8,
 		mut ledger: StakingLedgerT<T>,
 	) -> (TsInMs, TsInMs) {
-		let start_time = unix_time_now!();
+		let start_time = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
 		let mut expire_time = start_time;
 
 		ledger.active_ring = ledger.active_ring.saturating_add(value);
@@ -2319,7 +2317,7 @@ impl<T: Trait> Module<T> {
 
 	// TODO: doc
 	pub fn clear_mature_deposits(mut ledger: StakingLedgerT<T>) -> StakingLedgerT<T> {
-		let now = unix_time_now!();
+		let now = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
 		let StakingLedger {
 			active_deposit_ring,
 			deposit_items,
@@ -2864,7 +2862,7 @@ impl<T: Trait> Module<T> {
 	fn end_era(active_era: ActiveEraInfo, _session_index: SessionIndex) {
 		// Note: active_era_start can be None if end era is called during genesis config.
 		if let Some(active_era_start) = active_era.start {
-			let now = unix_time_now!();
+			let now = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
 			let living_time = Self::living_time();
 			let era_duration = now - active_era_start;
 

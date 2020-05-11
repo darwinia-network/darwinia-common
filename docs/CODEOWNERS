@@ -24,11 +24,11 @@
 
 /frame/balances/ @AurevoirXavier @HackFisher
 /frame/balances/rpc/ @AurevoirXavier
-/frame/balances/rpc/runtime-api @AurevoirXavier
+/frame/balances/rpc/runtime-api/ @AurevoirXavier
 
-/frame/bridge/eth/relay @AurevoirXavier @clearloop @HackFisher
-/frame/bridge/eth/backing @AurevoirXavier @HackFisher
-/frame/bridge/eth/offchain @AurevoirXavier @yanganto
+/frame/bridge/eth/relay/ @AurevoirXavier @clearloop @HackFisher
+/frame/bridge/eth/backing/ @AurevoirXavier @HackFisher
+/frame/bridge/eth/offchain/ @AurevoirXavier @yanganto
 
 /frame/claims/ @AurevoirXavier @HackFisher
 

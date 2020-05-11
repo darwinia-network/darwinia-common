@@ -1,6 +1,6 @@
 [package]
 name = "darwinia-eth-offchain"
-version = "0.5.5"
+version = "0.5.7"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "FRAME pallet to relay Ethereum header automactically"
 edition = "2018"
