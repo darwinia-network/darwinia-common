@@ -317,7 +317,7 @@ impl<T: Trait> Module<T> {
 	) {
 		// TODO: test support call eth-relay
 		// https://github.com/darwinia-network/darwinia-common/issues/137
-		let result = {
+		let results = {
 			#[cfg(test)]
 			{
 				let _ = signer;
