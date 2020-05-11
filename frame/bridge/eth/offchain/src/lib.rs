@@ -108,7 +108,7 @@ impl OffchainRequest {
 
 /// The OffchainRequest handle the request session
 /// - set cookie if returns
-/// - handle the redirect actions if happends
+/// - handle the redirect actions if happened
 #[cfg(not(test))]
 impl OffchainRequestTrait for OffchainRequest {
 	fn send(&mut self) -> Option<Vec<u8>> {
