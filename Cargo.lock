@@ -804,6 +804,7 @@ dependencies = [
 name = "darwinia-claims"
 version = "0.5.7"
 dependencies = [
+ "array-bytes",
  "darwinia-balances",
  "darwinia-support",
  "frame-support",
@@ -842,6 +843,7 @@ dependencies = [
 name = "darwinia-eth-backing"
 version = "0.5.7"
 dependencies = [
+ "array-bytes",
  "darwinia-balances",
  "darwinia-eth-relay",
  "darwinia-staking",
@@ -866,6 +868,7 @@ dependencies = [
 name = "darwinia-eth-offchain"
 version = "0.5.7"
 dependencies = [
+ "array-bytes",
  "darwinia-balances",
  "darwinia-eth-relay",
  "darwinia-support",
@@ -885,6 +888,7 @@ dependencies = [
 name = "darwinia-eth-relay"
 version = "0.5.7"
 dependencies = [
+ "array-bytes",
  "darwinia-balances",
  "darwinia-support",
  "eth-primitives",
@@ -1078,7 +1082,7 @@ dependencies = [
 name = "eth-primitives"
 version = "0.5.7"
 dependencies = [
- "darwinia-support",
+ "array-bytes",
  "ethash",
  "ethbloom 0.8.1",
  "ethereum-types 0.8.0",

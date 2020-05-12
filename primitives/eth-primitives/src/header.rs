@@ -9,7 +9,7 @@ use sp_runtime::RuntimeDebug;
 use sp_std::prelude::*;
 // --- darwinia ---
 use crate::*;
-use darwinia_support::bytes_thing::hex_bytes_unchecked;
+use array_bytes::hex_bytes_unchecked;
 
 #[derive(Clone, Copy, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
 enum Seal {
@@ -54,7 +54,7 @@ impl EthHeader {
 		// --- std ---
 		use std::str::FromStr;
 		// --- darwinia ---
-		use darwinia_support::bytes_thing::fixed_hex_bytes_unchecked;
+		use array_bytes::fixed_hex_bytes_unchecked;
 
 		fn parse_value_unchecked(s: &str) -> &str {
 			s.splitn(2, ':')
@@ -487,7 +487,7 @@ mod tests {
 	use std::str::FromStr;
 	// --- darwinia ---
 	use super::*;
-	use darwinia_support::bytes_thing::fixed_hex_bytes_unchecked;
+	use array_bytes::fixed_hex_bytes_unchecked;
 	use error::BlockError;
 	use pow::EthashPartial;
 
