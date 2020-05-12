@@ -117,22 +117,3 @@ macro_rules! impl_genesis {
 		}
 	};
 }
-
-#[macro_export]
-macro_rules! fixed_hex_bytes_unchecked {
-	($str:expr, $len:expr) => {{
-		let mut bytes: [u8; $len] = [0; $len];
-		let slice = darwinia_support::bytes_thing::hex_bytes_unchecked($str);
-		if slice.len() == $len {
-			bytes.copy_from_slice(&slice);
-			};
-		bytes
-		}};
-}
-
-#[macro_export]
-macro_rules! array_unchecked {
-	($source:expr, $offset:expr, $len:expr) => {{
-		unsafe { (*($source[$offset..$offset + $len].as_ptr() as *const [_; $len])) }
-		}};
-}

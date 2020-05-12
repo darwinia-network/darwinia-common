@@ -391,7 +391,7 @@ mod tests {
 	};
 	// --- darwinia ---
 	use crate::*;
-	use darwinia_support::bytes_thing::fixed_hex_bytes_unchecked;
+	use array_bytes::fixed_hex_bytes_unchecked;
 
 	type Balance = u64;
 

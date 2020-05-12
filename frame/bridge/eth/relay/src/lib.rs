@@ -67,7 +67,7 @@ use sp_runtime::{
 };
 use sp_std::{cell::RefCell, prelude::*};
 // --- darwinia ---
-use darwinia_support::bytes_thing::{array_unchecked, fixed_hex_bytes_unchecked};
+use array_bytes::{array_unchecked, fixed_hex_bytes_unchecked};
 use eth_primitives::{
 	header::EthHeader,
 	pow::{EthashPartial, EthashSeal},

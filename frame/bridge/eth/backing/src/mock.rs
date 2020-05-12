@@ -11,9 +11,9 @@ use sp_runtime::{
 	ModuleId, {KeyTypeId, MultiSignature, Perbill},
 };
 // --- darwinia ---
+use array_bytes::fixed_hex_bytes_unchecked;
 use darwinia_eth_relay::EthNetworkType;
 use darwinia_staking::{EraIndex, Exposure, ExposureOf};
-use darwinia_support::bytes_thing::fixed_hex_bytes_unchecked;
 
 use crate::*;
 

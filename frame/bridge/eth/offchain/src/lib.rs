@@ -69,11 +69,9 @@ use frame_system::offchain::{AppCrypto, CreateSignedTransaction, ForAll, Signer}
 use sp_runtime::{traits::Zero, DispatchError, KeyTypeId};
 use sp_std::prelude::*;
 // --- darwinia ---
+use array_bytes::{base_n_bytes_unchecked, hex_bytes_unchecked};
 use darwinia_eth_relay::DoubleNodeWithMerkleProof;
-use darwinia_support::{
-	bytes_thing::{base_n_bytes_unchecked, hex_bytes_unchecked},
-	literal_procesor::extract_from_json_str,
-};
+use darwinia_support::literal_procesor::extract_from_json_str;
 use eth_primitives::header::EthHeader;
 
 type EthRelay<T> = darwinia_eth_relay::Module<T>;
