@@ -381,8 +381,10 @@ use sp_std::{
 	prelude::*,
 };
 // --- darwinia ---
+use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo;
 use darwinia_support::{
 	balance::lock::*,
+	impl_rpc,
 	traits::{OnDepositRedeem, OnUnbalancedKton},
 };
 use types::*;
@@ -2355,6 +2357,22 @@ impl<T: Trait> Module<T> {
 					+ Self::currency_to_power::<_>(l.active_kton, Self::kton_pool())
 			})
 			.unwrap_or_default()
+	}
+
+	impl_rpc! {
+		pub fn power_of_rpc(
+			stash: impl sp_std::borrow::Borrow<T::AccountId>,
+		) -> RuntimeDispatchInfo<Power> {
+			RuntimeDispatchInfo {
+				power: Self::bonded(stash.borrow())
+					.and_then(Self::ledger)
+					.map(|l| {
+						Self::currency_to_power::<_>(l.active_ring, Self::ring_pool())
+							+ Self::currency_to_power::<_>(l.active_kton, Self::kton_pool())
+					})
+					.unwrap_or_default(),
+			}
+		}
 	}
 
 	pub fn stake_of(stash: &T::AccountId) -> (RingBalance<T>, KtonBalance<T>) {
