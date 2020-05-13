@@ -18,7 +18,7 @@ use std::sync::Arc;
 // --- substrate ---
 use sp_api::ProvideRuntimeApi;
 // --- darwinia ---
-use node_template_runtime::{opaque::Block, AccountId, Balance};
+use node_template_runtime::{opaque::Block, AccountId, Balance, Power};
 
 /// A type representing all RPC extensions.
 pub type RpcExtension = jsonrpc_core::IoHandler<sc_rpc::Metadata>;
@@ -29,12 +29,15 @@ where
 	C: sc_client::blockchain::HeaderBackend<Block>,
 	C: 'static + Send + Sync,
 	C::Api: darwinia_balances_rpc::BalancesRuntimeApi<Block, AccountId, Balance>,
+	C::Api: darwinia_staking_rpc::StakingRuntimeApi<Block, AccountId, Power>,
 {
 	// --- darwinia ---
 	use darwinia_balances_rpc::{Balances, BalancesApi};
+	use darwinia_staking_rpc::{Staking, StakingApi};
 
 	let mut io = jsonrpc_core::IoHandler::default();
-	io.extend_with(BalancesApi::to_delegate(Balances::new(client)));
+	io.extend_with(BalancesApi::to_delegate(Balances::new(client.clone())));
+	io.extend_with(StakingApi::to_delegate(Staking::new(client)));
 
 	io
 }
