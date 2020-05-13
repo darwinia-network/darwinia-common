@@ -3,27 +3,32 @@
 macro_rules! impl_account_data {
 	(
 		$(#[$attr:meta])*
-		$(pub)? struct $sname:ident<Balance$(, $gtype:ident),*>
+		$(pub)? struct $sname:ident<Balance$(, $($gtype:tt)*)?>
 		for
 			$ring_instance:ident,
 			$kton_instance:ident
 		where
 			Balance = $btype:ty
-			$(, $gtype_:ident: $gtypebound:ty),*
+			$(, $($gtypebound:tt)*)?
 		{
-			$($($(pub)? $fname:ident: $ftype:ty),+)?
+			$($(pub)? $fname:ident: $ftype:ty),*
 		}
 	) => {
 		use darwinia_support::balance::BalanceInfo;
 
 		$(#[$attr])*
 		#[derive(Clone, Default, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
-		pub struct $sname<Balance$(, $gtype),*> {
+		pub struct $sname<Balance$(, $($gtype)*)?>
+		$(
+		where
+			$($gtypebound)*
+		)?
+		{
 			pub free: Balance,
 			pub reserved: Balance,
 			pub free_kton: Balance,
-			pub reserved_kton: Balance
-			$(, $(pub $fname: $ftype),+)?
+			pub reserved_kton: Balance,
+			$(pub $fname: $ftype),*
 		}
 
 		impl BalanceInfo<$btype, $ring_instance> for AccountData<$btype> {
@@ -116,4 +121,86 @@ macro_rules! impl_genesis {
 			}
 		}
 	};
+}
+
+// TODO: https://github.com/serde-rs/serde/issues/1634
+// serde(bound(serialize = concat!(stringify!($ftype), ": std::fmt::Display")))
+// serde(bound(deserialize = concat!(stringify!($ftype), ": std::str::FromStr")))
+#[macro_export]
+macro_rules! impl_runtime_dispatch_info {
+	(
+		$(pub)? struct $sname:ident$(<$($gtype:ident),+>)? {
+			$($(pub)? $fname:ident: $ftype:ty),+
+		}
+	) => {
+		#[cfg(feature = "std")]
+		use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+		#[cfg(not(feature = "std"))]
+		#[derive(Default, Eq, PartialEq, Encode, Decode)]
+		pub struct $sname$(<$($gtype),+>)? {
+			$(
+				pub $fname: $ftype
+			),+
+		}
+
+		#[cfg(feature = "std")]
+		#[derive(Default, Eq, PartialEq, Encode, Decode)]
+		#[derive(Debug, Serialize, Deserialize)]
+		#[serde(rename_all = "camelCase")]
+		pub struct $sname$(<$($gtype),+>)?
+		$(
+		where
+			$($gtype: std::fmt::Display + std::str::FromStr),+
+		)?
+		{
+			$(
+				#[serde(serialize_with = "serialize_as_string")]
+				#[serde(deserialize_with = "deserialize_from_string")]
+				pub $fname: $ftype
+			),+
+		}
+
+		#[cfg(feature = "std")]
+		fn serialize_as_string<S: Serializer, T: std::fmt::Display>(
+			t: &T,
+			serializer: S,
+		) -> Result<S::Ok, S::Error> {
+			serializer.serialize_str(&t.to_string())
+		}
+
+		#[cfg(feature = "std")]
+		fn deserialize_from_string<'de, D: Deserializer<'de>, T: std::str::FromStr>(
+			deserializer: D,
+		) -> Result<T, D::Error> {
+			let s = String::deserialize(deserializer)?;
+			s.parse::<T>()
+				.map_err(|_| serde::de::Error::custom("Parse from string failed"))
+		}
+	};
+}
+
+// TODO: https://github.com/serde-rs/serde/issues/1634
+#[macro_export]
+macro_rules! impl_rpc {
+    (
+    	$(pub)? fn $fnname:ident($($params:tt)*) -> $respname:ident$(<$($gtype:ty),+>)? {
+    		$($fnbody:tt)*
+    	}
+    ) => {
+    	#[cfg(feature = "std")]
+    	pub fn $fnname($($params)*) -> $respname$(<$($gtype),+>)?
+    	$(
+    	where
+    		$($gtype: std::fmt::Display + std::str::FromStr),+
+    	)?
+    	{
+    		$($fnbody)*
+		}
+
+    	#[cfg(not(feature = "std"))]
+    	pub fn $fnname($($params)*) -> $respname$(<$($gtype),+>)? {
+    		$($fnbody)*
+    	}
+    };
 }
