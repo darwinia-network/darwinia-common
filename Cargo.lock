@@ -794,6 +794,7 @@ dependencies = [
 name = "darwinia-balances-rpc-runtime-api"
 version = "0.5.7"
 dependencies = [
+ "darwinia-support",
  "parity-scale-codec",
  "serde",
  "sp-api",
@@ -928,6 +929,7 @@ name = "darwinia-staking"
 version = "0.5.7"
 dependencies = [
  "darwinia-balances",
+ "darwinia-staking-rpc-runtime-api",
  "darwinia-support",
  "env_logger",
  "frame-benchmarking",
@@ -949,6 +951,31 @@ dependencies = [
  "sp-storage",
  "static_assertions 1.1.0",
  "substrate-test-utils",
+]
+
+[[package]]
+name = "darwinia-staking-rpc"
+version = "0.5.7"
+dependencies = [
+ "darwinia-staking-rpc-runtime-api",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "parity-scale-codec",
+ "sp-api",
+ "sp-blockchain",
+ "sp-runtime",
+]
+
+[[package]]
+name = "darwinia-staking-rpc-runtime-api"
+version = "0.5.7"
+dependencies = [
+ "darwinia-support",
+ "parity-scale-codec",
+ "serde",
+ "sp-api",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -3069,6 +3096,7 @@ dependencies = [
  "darwinia-claims",
  "darwinia-eth-relay",
  "darwinia-staking",
+ "darwinia-staking-rpc",
  "frame-benchmarking-cli",
  "futures 0.3.4",
  "jsonrpc-core",
@@ -3112,6 +3140,7 @@ dependencies = [
  "darwinia-eth-relay",
  "darwinia-header-mmr",
  "darwinia-staking",
+ "darwinia-staking-rpc-runtime-api",
  "darwinia-support",
  "darwinia-treasury",
  "frame-benchmarking",

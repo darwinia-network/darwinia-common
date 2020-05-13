@@ -21,10 +21,11 @@ futures = "0.3.4"
 log = "0.4.8"
 structopt = "0.3.13"
 # darwinia
+darwinia-balances-rpc = { path = "../../../frame/balances/rpc" }
 darwinia-claims = { path = "../../../frame/claims" }
 darwinia-eth-relay = { path = "../../../frame/bridge/eth/relay" }
 darwinia-staking = { path = "../../../frame/staking" }
-darwinia-balances-rpc = { path = "../../../frame/balances/rpc" }
+darwinia-staking-rpc = { path = "../../../frame/staking/rpc" }
 # substrate
 frame-benchmarking-cli = { optional = true, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
 pallet-im-online = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }

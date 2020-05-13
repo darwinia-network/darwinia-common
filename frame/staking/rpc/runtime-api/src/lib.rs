@@ -13,17 +13,17 @@ use sp_api::decl_runtime_apis;
 use sp_runtime::traits::{MaybeDisplay, MaybeFromStr};
 
 darwinia_support::impl_runtime_dispatch_info! {
-	struct RuntimeDispatchInfo<Balance> {
-		usable_balance: Balance
+	struct RuntimeDispatchInfo<Power> {
+		power: Power
 	}
 }
 
 decl_runtime_apis! {
-	pub trait BalancesApi<AccountId, Balance>
+	pub trait StakingApi<AccountId, Power>
 	where
 		AccountId: Codec,
-		Balance: Codec + MaybeDisplay + MaybeFromStr,
+		Power: Codec + MaybeDisplay + MaybeFromStr,
 	{
-		fn usable_balance(instance: u8, who: AccountId) -> RuntimeDispatchInfo<Balance>;
+		fn power_of(who: AccountId) -> RuntimeDispatchInfo<Power>;
 	}
 }
