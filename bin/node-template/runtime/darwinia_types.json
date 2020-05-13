@@ -168,5 +168,12 @@
 	"MerkleMountainRangeRootLog": {
 		"prefix": "[u8; 4; Prefix]",
 		"mmr_root": "Hash"
+	},
+	"__[node.rpc]__": {},
+	"BalancesRuntimeDispatchInfo": {
+		"usable_balance": "Balance"
+	},
+	"StakingRuntimeDispatchInfo": {
+		"power": "Power"
 	}
 }
