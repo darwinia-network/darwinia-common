@@ -183,24 +183,24 @@ macro_rules! impl_runtime_dispatch_info {
 // TODO: https://github.com/serde-rs/serde/issues/1634
 #[macro_export]
 macro_rules! impl_rpc {
-    (
-    	$(pub)? fn $fnname:ident($($params:tt)*) -> $respname:ident$(<$($gtype:ty),+>)? {
-    		$($fnbody:tt)*
-    	}
-    ) => {
-    	#[cfg(feature = "std")]
-    	pub fn $fnname($($params)*) -> $respname$(<$($gtype),+>)?
-    	$(
-    	where
-    		$($gtype: std::fmt::Display + std::str::FromStr),+
-    	)?
-    	{
-    		$($fnbody)*
+	(
+		$(pub)? fn $fnname:ident($($params:tt)*) -> $respname:ident$(<$($gtype:ty),+>)? {
+			$($fnbody:tt)*
+		}
+	) => {
+		#[cfg(feature = "std")]
+		pub fn $fnname($($params)*) -> $respname$(<$($gtype),+>)?
+		$(
+		where
+			$($gtype: std::fmt::Display + std::str::FromStr),+
+		)?
+		{
+			$($fnbody)*
 		}
 
-    	#[cfg(not(feature = "std"))]
-    	pub fn $fnname($($params)*) -> $respname$(<$($gtype),+>)? {
-    		$($fnbody)*
-    	}
-    };
+		#[cfg(not(feature = "std"))]
+		pub fn $fnname($($params)*) -> $respname$(<$($gtype),+>)? {
+			$($fnbody)*
+		}
+	};
 }
