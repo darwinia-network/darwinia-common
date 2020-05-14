@@ -102,6 +102,10 @@
 		"r": "Balance",
 		"k": "Balance"
 	},
+	"SpanRecord": {
+		"slashed": "RKT",
+		"paid_out": "RKT"
+	},
 	"__[pallet.bridge.eth]__": {},
 	"EthTransactionIndex": "(H256, u64)",
 	"EthHeaderBrief": {
