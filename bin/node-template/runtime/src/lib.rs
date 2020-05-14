@@ -539,7 +539,7 @@ parameter_types! {
 	pub const SessionsPerEra: SessionIndex = SESSIONS_PER_ERA;
 	pub const BondingDurationInEra: darwinia_staking::EraIndex = 14 * 24 * (HOURS / (SESSIONS_PER_ERA * BLOCKS_PER_SESSION));
 	pub const BondingDurationInBlockNumber: BlockNumber = 14 * DAYS;
-	pub const SlashDeferDuration: darwinia_staking::EraIndex = 7 * 24; // 1/4 the bonding duration.
+	pub const SlashDeferDuration: darwinia_staking::EraIndex = 0;
 	pub const ElectionLookahead: BlockNumber = BLOCKS_PER_SESSION / 4;
 	pub const MaxIterations: u32 = 5;
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
