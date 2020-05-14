@@ -337,7 +337,7 @@ pub const EPOCH_DURATION_IN_SLOTS: u64 = {
 pub const SESSION_DURATION: BlockNumber = EPOCH_DURATION_IN_SLOTS as _;
 pub const SESSIONS_PER_ERA: SessionIndex = 3;
 
-pub const CAP: Balance = 1_000_000_000 * COIN;
+pub const CAP: Balance = 10_000_000_000 * COIN;
 pub const TOTAL_POWER: Power = 1_000_000_000;
 
 /// The version information used to identify this runtime when compiled natively.
