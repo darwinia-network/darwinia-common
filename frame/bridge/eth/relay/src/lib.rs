@@ -879,6 +879,8 @@ impl<T: Trait> Module<T> {
 /// Handler for selecting the genesis validator set.
 pub trait VerifyEthReceipts<Balance, AccountId> {
 	fn verify_receipt(proof_record: &EthReceiptProof) -> Result<(Receipt, Balance), DispatchError>;
+
+	fn module_id() -> AccountId;
 }
 
 impl<T: Trait> VerifyEthReceipts<Balance<T>, T::AccountId> for Module<T> {
@@ -919,6 +921,10 @@ impl<T: Trait> VerifyEthReceipts<Balance<T>, T::AccountId> for Module<T> {
 		let receipt = rlp::decode(&value).map_err(|_| <Error<T>>::ReceiptDsF)?;
 
 		Ok((receipt, Self::receipt_verify_fee()))
+	}
+
+	fn module_id() -> T::AccountId {
+		Self::account_id()
 	}
 }
 
