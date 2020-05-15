@@ -7,7 +7,27 @@ mod address;
 #[cfg(feature = "std")]
 pub use address::*;
 
+#[cfg(feature = "init-supply")]
+mod migration {
+	// --- substrate ---
+	use frame_support::migration::*;
+	// --- darwinia ---
+	use crate::*;
+
+	pub fn migrate<T: Trait>() {
+		sp_runtime::print("Migrating DarwiniaClaims...");
+
+		if let Some(_) = take_storage_value::<RingBalance<T>>(b"DarwiniaClaims", b"Total", &[]) {
+			// item unhashed
+		}
+
+		// item prefix unhashed
+		remove_storage_prefix(b"DarwiniaClaims", b"Total", &[]);
+	}
+}
+
 mod types {
+	// --- darwinia ---
 	use crate::*;
 
 	pub type AddressT = [u8; 20];
@@ -194,6 +214,12 @@ decl_module! {
 
 		/// Deposit one of this module's events by using the default implementation.
 		fn deposit_event() = default;
+
+		fn on_runtime_upgrade() -> frame_support::weights::Weight {
+			#[cfg(feature = "init-supply")]
+			migration::migrate::<T>();
+			0
+		}
 
 		/// Make a claim.
 		#[weight = 1_000_000_000]
