@@ -155,7 +155,6 @@ decl_storage! {
 			get(fn claims_from_tron)
 			: map hasher(identity) AddressT => Option<RingBalance<T>>;
 
-		#[cfg(not(feature = "init-supply"))]
 		Total get(fn total): RingBalance<T>;
 	}
 	add_extra_genesis {
@@ -305,10 +304,16 @@ decl_module! {
 
 			match who {
 				OtherAddress::Eth(who) => {
+					#[cfg(feature = "init-supply")]
+					T::RingCurrency::deposit_creating(&Self::account_id(), value);
+					#[cfg(not(feature = "init-supply"))]
 					<Total<T>>::mutate(|t| *t += value);
 					<ClaimsFromEth<T>>::insert(who, value);
 				}
 				OtherAddress::Tron(who) => {
+					#[cfg(feature = "init-supply")]
+					T::RingCurrency::deposit_creating(&Self::account_id(), value);
+					#[cfg(not(feature = "init-supply"))]
 					<Total<T>>::mutate(|t| *t += value);
 					<ClaimsFromTron<T>>::insert(who, value);
 				}
