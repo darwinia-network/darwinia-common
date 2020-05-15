@@ -248,8 +248,8 @@ impl<T: Trait> Module<T> {
 
 	/// Return the amount of money in the pot.
 	// The existential deposit is not part of the pot so backing account never gets deleted.
-	fn pot<C: Currency<T::AccountId>>() -> C::Balance {
-		C::free_balance(&Self::account_id())
+	fn pot<C: LockableCurrency<T::AccountId>>() -> C::Balance {
+		C::usable_balance(&Self::account_id())
 			// Must never be less than 0 but better be safe.
 			.saturating_sub(C::minimum_balance())
 	}

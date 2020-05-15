@@ -41,10 +41,11 @@ use sp_runtime::{
 		InvalidTransaction, TransactionLongevity, TransactionSource, TransactionValidity,
 		ValidTransaction,
 	},
-	RuntimeDebug,
+	ModuleId, RuntimeDebug,
 };
 use sp_std::prelude::*;
 // --- darwinia ---
+use darwinia_support::balance::lock::LockableCurrency;
 use types::*;
 
 #[repr(u8)]
@@ -84,10 +85,14 @@ impl sp_std::fmt::Debug for EcdsaSignature {
 
 pub trait Trait: frame_system::Trait {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+
+	type ModuleId: Get<ModuleId>;
+
 	type Prefix: Get<&'static [u8]>;
 
 	/// The *RING* currency.
-	type RingCurrency: Currency<Self::AccountId>;
+	type RingCurrency: LockableCurrency<Self::AccountId>;
+
 	// TODO: support *KTON*
 	// /// The *KTON* currency.
 	// type KtonCurrency: Currency<Self::AccountId>;
@@ -124,8 +129,6 @@ decl_storage! {
 		ClaimsFromTron
 			get(fn claims_from_tron)
 			: map hasher(identity) AddressT => Option<RingBalance<T>>;
-
-		Total get(fn total): RingBalance<T>;
 	}
 	add_extra_genesis {
 		config(claims_list): ClaimsList;
@@ -161,7 +164,10 @@ decl_storage! {
 				}
 			}
 
-			<Total<T>>::put(total);
+			let _ = T::RingCurrency::make_free_balance_be(
+				&<Module<T>>::account_id(),
+				T::RingCurrency::minimum_balance().max(total),
+			);
 		});
 	}
 }
@@ -169,6 +175,8 @@ decl_storage! {
 decl_module! {
 	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
 		type Error = Error<T>;
+
+		const ModuleId: ModuleId = T::ModuleId::get();
 
 		/// The Prefix that is used in signed Ethereum messages for this network
 		const Prefix: &[u8] = T::Prefix::get();
@@ -189,13 +197,14 @@ decl_module! {
 						.ok_or(<Error<T>>::InvalidSignature)?;
 					let balance_due = <ClaimsFromEth<T>>::get(&signer)
 						.ok_or(<Error<T>>::SignerHasNoClaim)?;
-					let new_total = Self::total()
-						.checked_sub(&balance_due)
-						.ok_or(<Error<T>>::PotUnderflow)?;
+
+					ensure!(
+						Self::pot::<T::RingCurrency>() >= balance_due,
+						<Error<T>>::PotUnderflow,
+					);
 
 					T::RingCurrency::deposit_creating(&dest, balance_due);
 					<ClaimsFromEth<T>>::remove(&signer);
-					<Total<T>>::put(new_total);
 
 					Self::deposit_event(RawEvent::Claimed(dest, signer, balance_due));
 				}
@@ -204,13 +213,14 @@ decl_module! {
 						.ok_or(<Error<T>>::InvalidSignature)?;
 					let balance_due = <ClaimsFromTron<T>>::get(&signer)
 						.ok_or(<Error<T>>::SignerHasNoClaim)?;
-					let new_total = Self::total()
-						.checked_sub(&balance_due)
-						.ok_or(<Error<T>>::PotUnderflow)?;
+
+					ensure!(
+						Self::pot::<T::RingCurrency>() >= balance_due,
+						<Error<T>>::PotUnderflow,
+					);
 
 					T::RingCurrency::deposit_creating(&dest, balance_due);
 					<ClaimsFromTron<T>>::remove(&signer);
-					<Total<T>>::put(new_total);
 
 					Self::deposit_event(RawEvent::Claimed(dest, signer, balance_due));
 				}
@@ -236,18 +246,17 @@ decl_module! {
 	}
 }
 
-/// Converts the given binary data into ASCII-encoded hex. It will be twice the length.
-fn to_ascii_hex(data: &[u8]) -> Vec<u8> {
-	let mut r = Vec::with_capacity(data.len() * 2);
-	let mut push_nibble = |n| r.push(if n < 10 { b'0' + n } else { b'a' - 10 + n });
-	for &b in data.iter() {
-		push_nibble(b / 16);
-		push_nibble(b % 16);
-	}
-	r
-}
-
 impl<T: Trait> Module<T> {
+	fn account_id() -> T::AccountId {
+		T::ModuleId::get().into_account()
+	}
+
+	fn pot<C: LockableCurrency<T::AccountId>>() -> C::Balance {
+		C::usable_balance(&Self::account_id())
+			// Must never be less than 0 but better be safe.
+			.saturating_sub(C::minimum_balance())
+	}
+
 	// Constructs the message that RPC's `personal_sign` and `sign` would sign.
 	fn eth_signable_message(what: &[u8], signed_message: &[u8]) -> Vec<u8> {
 		let prefix = T::Prefix::get();
@@ -374,6 +383,17 @@ impl<T: Trait> sp_runtime::traits::ValidateUnsigned for Module<T> {
 			_ => Err(InvalidTransaction::Call.into()),
 		}
 	}
+}
+
+/// Converts the given binary data into ASCII-encoded hex. It will be twice the length.
+fn to_ascii_hex(data: &[u8]) -> Vec<u8> {
+	let mut r = Vec::with_capacity(data.len() * 2);
+	let mut push_nibble = |n| r.push(if n < 10 { b'0' + n } else { b'a' - 10 + n });
+	for &b in data.iter() {
+		push_nibble(b / 16);
+		push_nibble(b % 16);
+	}
+	r
 }
 
 #[cfg(test)]
