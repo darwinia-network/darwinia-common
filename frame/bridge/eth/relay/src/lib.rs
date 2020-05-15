@@ -91,7 +91,7 @@ pub trait Trait: frame_system::Trait {
 
 	type Call: Dispatchable + From<Call<Self>> + IsSubType<Module<Self>, Self> + Clone;
 
-	type Currency: LockableCurrency<Self::AccountId, Moment = Self::Moment>
+	type Currency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
 		+ ReservableCurrency<Self::AccountId>;
 }
 
