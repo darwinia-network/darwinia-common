@@ -27,16 +27,21 @@ use codec::{Decode, Encode};
 // --- substrate ---
 #[cfg(feature = "std")]
 use frame_support::debug::error;
+#[cfg(feature = "init-supply")]
+use frame_support::{ensure, traits::ExistenceRequirement::KeepAlive};
 use frame_support::{
 	traits::{Currency, Get},
 	{decl_error, decl_event, decl_module, decl_storage},
 };
 use frame_system::{self as system, ensure_none, ensure_root};
 use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};
+#[cfg(not(feature = "init-supply"))]
+use sp_runtime::traits::CheckedSub;
+#[cfg(feature = "init-supply")]
+use sp_runtime::traits::{AccountIdConversion, Saturating};
 #[cfg(feature = "std")]
 use sp_runtime::traits::{SaturatedConversion, Zero};
 use sp_runtime::{
-	traits::CheckedSub,
 	transaction_validity::{
 		InvalidTransaction, TransactionLongevity, TransactionSource, TransactionValidity,
 		ValidTransaction,
@@ -129,6 +134,9 @@ decl_storage! {
 		ClaimsFromTron
 			get(fn claims_from_tron)
 			: map hasher(identity) AddressT => Option<RingBalance<T>>;
+
+		#[cfg(not(feature = "init-supply"))]
+		Total get(fn total): RingBalance<T>;
 	}
 	add_extra_genesis {
 		config(claims_list): ClaimsList;
@@ -164,6 +172,9 @@ decl_storage! {
 				}
 			}
 
+			#[cfg(not(feature = "init-supply"))]
+			<Total<T>>::put(total);
+			#[cfg(feature = "init-supply")]
 			let _ = T::RingCurrency::make_free_balance_be(
 				&<Module<T>>::account_id(),
 				T::RingCurrency::minimum_balance().max(total),
@@ -198,12 +209,29 @@ decl_module! {
 					let balance_due = <ClaimsFromEth<T>>::get(&signer)
 						.ok_or(<Error<T>>::SignerHasNoClaim)?;
 
-					ensure!(
-						Self::pot::<T::RingCurrency>() >= balance_due,
-						<Error<T>>::PotUnderflow,
-					);
+					#[cfg(feature = "init-supply")]
+					{
+						ensure!(
+							Self::pot::<T::RingCurrency>() >= balance_due,
+							<Error<T>>::PotUnderflow,
+						);
+						T::RingCurrency::transfer(
+							&Self::account_id(),
+							&dest,
+							balance_due,
+							KeepAlive,
+						)?;
+					}
 
-					T::RingCurrency::deposit_creating(&dest, balance_due);
+					#[cfg(not(feature = "init-supply"))]
+					{
+						let new_total = Self::total()
+							.checked_sub(&balance_due)
+							.ok_or(<Error<T>>::PotUnderflow)?;
+						T::RingCurrency::deposit_creating(&dest, balance_due);
+						<Total<T>>::put(new_total);
+					}
+
 					<ClaimsFromEth<T>>::remove(&signer);
 
 					Self::deposit_event(RawEvent::Claimed(dest, signer, balance_due));
@@ -214,12 +242,29 @@ decl_module! {
 					let balance_due = <ClaimsFromTron<T>>::get(&signer)
 						.ok_or(<Error<T>>::SignerHasNoClaim)?;
 
-					ensure!(
-						Self::pot::<T::RingCurrency>() >= balance_due,
-						<Error<T>>::PotUnderflow,
-					);
+					#[cfg(feature = "init-supply")]
+					{
+						ensure!(
+							Self::pot::<T::RingCurrency>() >= balance_due,
+							<Error<T>>::PotUnderflow,
+						);
+						T::RingCurrency::transfer(
+							&Self::account_id(),
+							&dest,
+							balance_due,
+							KeepAlive,
+						)?;
+					}
 
-					T::RingCurrency::deposit_creating(&dest, balance_due);
+					#[cfg(not(feature = "init-supply"))]
+					{
+						let new_total = Self::total()
+							.checked_sub(&balance_due)
+							.ok_or(<Error<T>>::PotUnderflow)?;
+						T::RingCurrency::deposit_creating(&dest, balance_due);
+						<Total<T>>::put(new_total);
+					}
+
 					<ClaimsFromTron<T>>::remove(&signer);
 
 					Self::deposit_event(RawEvent::Claimed(dest, signer, balance_due));
@@ -247,10 +292,12 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
+	#[cfg(feature = "init-supply")]
 	fn account_id() -> T::AccountId {
 		T::ModuleId::get().into_account()
 	}
 
+	#[cfg(feature = "init-supply")]
 	fn pot<C: LockableCurrency<T::AccountId>>() -> C::Balance {
 		C::usable_balance(&Self::account_id())
 			// Must never be less than 0 but better be safe.
@@ -495,10 +542,12 @@ mod tests {
 	}
 
 	parameter_types! {
+		pub const ClaimsModuleId: ModuleId = ModuleId(*b"da/claim");
 		pub const Prefix: &'static [u8] = b"Pay RUSTs to the TEST account:";
 	}
 	impl Trait for Test {
 		type Event = ();
+		type ModuleId = ClaimsModuleId;
 		type Prefix = Prefix;
 		type RingCurrency = Ring;
 	}
