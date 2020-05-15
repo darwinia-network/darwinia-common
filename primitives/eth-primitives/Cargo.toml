@@ -60,5 +60,5 @@ std = [
 	"sp-runtime/std",
 	"sp-std/std",
 ]
-with-new-dag = ["default"]
-easy-testing = ["default"]
+with-new-dag = []
+easy-testing = []
