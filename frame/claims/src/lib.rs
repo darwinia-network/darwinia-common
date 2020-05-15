@@ -469,7 +469,7 @@ fn to_ascii_hex(data: &[u8]) -> Vec<u8> {
 	r
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(feature = "init-supply")))]
 mod tests {
 	// --- crates ---
 	use codec::Encode;
