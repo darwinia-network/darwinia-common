@@ -880,7 +880,7 @@ impl<T: Trait> Module<T> {
 pub trait VerifyEthReceipts<Balance, AccountId> {
 	fn verify_receipt(proof_record: &EthReceiptProof) -> Result<(Receipt, Balance), DispatchError>;
 
-	fn module_id() -> AccountId;
+	fn account_id() -> AccountId;
 }
 
 impl<T: Trait> VerifyEthReceipts<Balance<T>, T::AccountId> for Module<T> {
@@ -923,8 +923,8 @@ impl<T: Trait> VerifyEthReceipts<Balance<T>, T::AccountId> for Module<T> {
 		Ok((receipt, Self::receipt_verify_fee()))
 	}
 
-	fn module_id() -> T::AccountId {
-		Self::account_id()
+	fn account_id() -> T::AccountId {
+		<Module<T>>::account_id()
 	}
 }
 

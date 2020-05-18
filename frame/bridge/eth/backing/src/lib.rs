@@ -497,7 +497,7 @@ impl<T: Trait> Module<T> {
 			KeepAlive,
 		)?;
 		// Transfer the fee from redeemer.
-		T::RingCurrency::transfer(redeemer, &T::EthRelay::module_id(), fee, KeepAlive)?;
+		T::RingCurrency::transfer(redeemer, &T::EthRelay::account_id(), fee, KeepAlive)?;
 
 		RingProofVerified::insert(
 			(proof_record.header_hash, proof_record.index),
@@ -542,7 +542,7 @@ impl<T: Trait> Module<T> {
 			KeepAlive,
 		)?;
 		// Transfer the fee from redeemer.
-		T::RingCurrency::transfer(redeemer, &T::EthRelay::module_id(), fee, KeepAlive)?;
+		T::RingCurrency::transfer(redeemer, &T::EthRelay::account_id(), fee, KeepAlive)?;
 
 		KtonProofVerified::insert(
 			(proof_record.header_hash, proof_record.index),
@@ -587,7 +587,7 @@ impl<T: Trait> Module<T> {
 			&darwinia_account,
 		)?;
 		// Transfer the fee from redeemer.
-		T::RingCurrency::transfer(redeemer, &T::EthRelay::module_id(), fee, KeepAlive)?;
+		T::RingCurrency::transfer(redeemer, &T::EthRelay::account_id(), fee, KeepAlive)?;
 
 		// TODO: check deposit_id duplication
 		// TODO: Ignore Unit Interest for now
