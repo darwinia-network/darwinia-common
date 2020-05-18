@@ -22,7 +22,7 @@ log = "0.4.8"
 structopt = "0.3.13"
 # darwinia
 darwinia-balances-rpc = { path = "../../../frame/balances/rpc" }
-darwinia-claims = { features = ["init-supply"], path = "../../../frame/claims" }
+darwinia-claims = { path = "../../../frame/claims" }
 darwinia-eth-relay = { path = "../../../frame/bridge/eth/relay" }
 darwinia-staking = { path = "../../../frame/staking" }
 darwinia-staking-rpc = { path = "../../../frame/staking/rpc" }

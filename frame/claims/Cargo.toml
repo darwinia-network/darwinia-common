@@ -49,4 +49,3 @@ std = [
 	"sp-runtime/std",
 	"sp-std/std",
 ]
-init-supply = []
