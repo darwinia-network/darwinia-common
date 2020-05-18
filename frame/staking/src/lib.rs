@@ -1814,18 +1814,7 @@ decl_module! {
 
 					// check total free balance and locked one
 					// strict on punishing in kton
-					if T::KtonCurrency::free_balance(stash)
-						.checked_sub(&kton_slash)
-						.and_then(|new_balance| {
-							T::KtonCurrency::ensure_can_withdraw(
-								stash,
-								kton_slash,
-								WithdrawReason::Transfer.into(),
-								new_balance
-							).ok()
-						})
-						.is_some()
-					{
+					if T::KtonCurrency::usable_balance(stash) >= kton_slash {
 						*active_deposit_ring = active_deposit_ring.saturating_sub(item.value);
 
 						let imbalance = T::KtonCurrency::slash(stash, kton_slash).0;

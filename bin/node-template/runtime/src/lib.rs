@@ -337,7 +337,7 @@ pub const EPOCH_DURATION_IN_SLOTS: u64 = {
 pub const SESSION_DURATION: BlockNumber = EPOCH_DURATION_IN_SLOTS as _;
 pub const SESSIONS_PER_ERA: SessionIndex = 3;
 
-pub const CAP: Balance = 1_000_000_000 * COIN;
+pub const CAP: Balance = 10_000_000_000 * COIN;
 pub const TOTAL_POWER: Power = 1_000_000_000;
 
 /// The version information used to identify this runtime when compiled natively.
@@ -539,7 +539,7 @@ parameter_types! {
 	pub const SessionsPerEra: SessionIndex = SESSIONS_PER_ERA;
 	pub const BondingDurationInEra: darwinia_staking::EraIndex = 14 * 24 * (HOURS / (SESSIONS_PER_ERA * BLOCKS_PER_SESSION));
 	pub const BondingDurationInBlockNumber: BlockNumber = 14 * DAYS;
-	pub const SlashDeferDuration: darwinia_staking::EraIndex = 7 * 24; // 1/4 the bonding duration.
+	pub const SlashDeferDuration: darwinia_staking::EraIndex = 0;
 	pub const ElectionLookahead: BlockNumber = BLOCKS_PER_SESSION / 4;
 	pub const MaxIterations: u32 = 5;
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
@@ -644,10 +644,12 @@ impl darwinia_treasury::Trait for Runtime {
 }
 
 parameter_types! {
+	pub const ClaimsModuleId: ModuleId = ModuleId(*b"da/claim");
 	pub const Prefix: &'static [u8] = b"Pay RINGs to the template account:";
 }
 impl darwinia_claims::Trait for Runtime {
 	type Event = Event;
+	type ModuleId = ClaimsModuleId;
 	type Prefix = Prefix;
 	type RingCurrency = Ring;
 }

@@ -1,6 +1,6 @@
 [package]
 name = "darwinia-support"
-version = "0.5.7"
+version = "0.5.8"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "Support code for Darwinia runtime"
 edition = "2018"
@@ -20,7 +20,7 @@ sp-std = { default-features = false, git = "https://github.com/darwinia-network/
 
 [features]
 default = ["std"]
-easy-testing = ["default"]
+easy-testing = []
 std = [
 	# crates
 	"codec/std",

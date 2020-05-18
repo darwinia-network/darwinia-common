@@ -15,7 +15,7 @@ pub mod balance {
 
 	// --- darwinia ---
 	pub use crate::structs::FrozenBalance;
-	pub use crate::traits::{BalanceInfo, DustCollector};
+	pub use crate::traits::{BalanceInfo, DustCollector, OnUnbalancedKton};
 }
 
 pub mod literal_procesor {

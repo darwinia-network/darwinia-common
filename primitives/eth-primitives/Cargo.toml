@@ -1,6 +1,6 @@
 [package]
 name = "eth-primitives"
-version = "0.5.7"
+version = "0.5.8"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "Ethereum primitives for Darwinia Relay"
 edition = "2018"
@@ -60,5 +60,5 @@ std = [
 	"sp-runtime/std",
 	"sp-std/std",
 ]
-with-new-dag = ["default"]
-easy-testing = ["default"]
+with-new-dag = []
+easy-testing = []

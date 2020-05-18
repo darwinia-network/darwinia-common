@@ -7,7 +7,39 @@ mod address;
 #[cfg(feature = "std")]
 pub use address::*;
 
+mod migration {
+	// --- substrate ---
+	use frame_support::migration::*;
+	// --- darwinia ---
+	use crate::*;
+
+	pub fn migrate<T: Trait>() {
+		sp_runtime::print("Migrating DarwiniaClaims...");
+
+		if let Some(total) = take_storage_value::<RingBalance<T>>(b"DarwiniaClaims", b"Total", &[])
+		{
+			let minimum_balance = T::RingCurrency::minimum_balance();
+			let _ = T::RingCurrency::make_free_balance_be(
+				&<Module<T>>::account_id(),
+				total + minimum_balance,
+			);
+			T::RingCurrency::set_lock(
+				T::ModuleId::get().0,
+				&<Module<T>>::account_id(),
+				LockFor::Common {
+					amount: minimum_balance,
+				},
+				WithdrawReasons::all(),
+			);
+		}
+
+		// item prefix unhashed
+		remove_storage_prefix(b"DarwiniaClaims", b"Total", &[]);
+	}
+}
+
 mod types {
+	// --- darwinia ---
 	use crate::*;
 
 	pub type AddressT = [u8; 20];
@@ -28,7 +60,8 @@ use codec::{Decode, Encode};
 #[cfg(feature = "std")]
 use frame_support::debug::error;
 use frame_support::{
-	traits::{Currency, Get},
+	ensure,
+	traits::{Currency, ExistenceRequirement::KeepAlive, Get, WithdrawReasons},
 	{decl_error, decl_event, decl_module, decl_storage},
 };
 use frame_system::{self as system, ensure_none, ensure_root};
@@ -36,15 +69,16 @@ use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};
 #[cfg(feature = "std")]
 use sp_runtime::traits::{SaturatedConversion, Zero};
 use sp_runtime::{
-	traits::CheckedSub,
+	traits::AccountIdConversion,
 	transaction_validity::{
 		InvalidTransaction, TransactionLongevity, TransactionSource, TransactionValidity,
 		ValidTransaction,
 	},
-	RuntimeDebug,
+	ModuleId, RuntimeDebug,
 };
 use sp_std::prelude::*;
 // --- darwinia ---
+use darwinia_support::balance::lock::*;
 use types::*;
 
 #[repr(u8)]
@@ -84,10 +118,14 @@ impl sp_std::fmt::Debug for EcdsaSignature {
 
 pub trait Trait: frame_system::Trait {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+
+	type ModuleId: Get<ModuleId>;
+
 	type Prefix: Get<&'static [u8]>;
 
 	/// The *RING* currency.
-	type RingCurrency: Currency<Self::AccountId>;
+	type RingCurrency: LockableCurrency<Self::AccountId>;
+
 	// TODO: support *KTON*
 	// /// The *KTON* currency.
 	// type KtonCurrency: Currency<Self::AccountId>;
@@ -124,8 +162,6 @@ decl_storage! {
 		ClaimsFromTron
 			get(fn claims_from_tron)
 			: map hasher(identity) AddressT => Option<RingBalance<T>>;
-
-		Total get(fn total): RingBalance<T>;
 	}
 	add_extra_genesis {
 		config(claims_list): ClaimsList;
@@ -161,7 +197,17 @@ decl_storage! {
 				}
 			}
 
-			<Total<T>>::put(total);
+			let minimum_balance = T::RingCurrency::minimum_balance();
+			let _ = T::RingCurrency::make_free_balance_be(
+				&<Module<T>>::account_id(),
+				total + minimum_balance,
+			);
+			T::RingCurrency::set_lock(
+				T::ModuleId::get().0,
+				&<Module<T>>::account_id(),
+				LockFor::Common { amount: minimum_balance },
+				WithdrawReasons::all(),
+			);
 		});
 	}
 }
@@ -170,11 +216,18 @@ decl_module! {
 	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
 		type Error = Error<T>;
 
+		const ModuleId: ModuleId = T::ModuleId::get();
+
 		/// The Prefix that is used in signed Ethereum messages for this network
 		const Prefix: &[u8] = T::Prefix::get();
 
 		/// Deposit one of this module's events by using the default implementation.
 		fn deposit_event() = default;
+
+		fn on_runtime_upgrade() -> frame_support::weights::Weight {
+			migration::migrate::<T>();
+			0
+		}
 
 		/// Make a claim.
 		#[weight = 1_000_000_000]
@@ -189,13 +242,19 @@ decl_module! {
 						.ok_or(<Error<T>>::InvalidSignature)?;
 					let balance_due = <ClaimsFromEth<T>>::get(&signer)
 						.ok_or(<Error<T>>::SignerHasNoClaim)?;
-					let new_total = Self::total()
-						.checked_sub(&balance_due)
-						.ok_or(<Error<T>>::PotUnderflow)?;
 
-					T::RingCurrency::deposit_creating(&dest, balance_due);
+					ensure!(
+						Self::pot::<T::RingCurrency>() >= balance_due,
+						<Error<T>>::PotUnderflow,
+					);
+					T::RingCurrency::transfer(
+						&Self::account_id(),
+						&dest,
+						balance_due,
+						KeepAlive,
+					)?;
+
 					<ClaimsFromEth<T>>::remove(&signer);
-					<Total<T>>::put(new_total);
 
 					Self::deposit_event(RawEvent::Claimed(dest, signer, balance_due));
 				}
@@ -204,13 +263,19 @@ decl_module! {
 						.ok_or(<Error<T>>::InvalidSignature)?;
 					let balance_due = <ClaimsFromTron<T>>::get(&signer)
 						.ok_or(<Error<T>>::SignerHasNoClaim)?;
-					let new_total = Self::total()
-						.checked_sub(&balance_due)
-						.ok_or(<Error<T>>::PotUnderflow)?;
 
-					T::RingCurrency::deposit_creating(&dest, balance_due);
+					ensure!(
+						Self::pot::<T::RingCurrency>() >= balance_due,
+						<Error<T>>::PotUnderflow,
+					);
+					T::RingCurrency::transfer(
+						&Self::account_id(),
+						&dest,
+						balance_due,
+						KeepAlive,
+					)?;
+
 					<ClaimsFromTron<T>>::remove(&signer);
-					<Total<T>>::put(new_total);
 
 					Self::deposit_event(RawEvent::Claimed(dest, signer, balance_due));
 				}
@@ -224,11 +289,11 @@ decl_module! {
 
 			match who {
 				OtherAddress::Eth(who) => {
-					<Total<T>>::mutate(|t| *t += value);
+					T::RingCurrency::deposit_creating(&Self::account_id(), value);
 					<ClaimsFromEth<T>>::insert(who, value);
 				}
 				OtherAddress::Tron(who) => {
-					<Total<T>>::mutate(|t| *t += value);
+					T::RingCurrency::deposit_creating(&Self::account_id(), value);
 					<ClaimsFromTron<T>>::insert(who, value);
 				}
 			}
@@ -236,18 +301,16 @@ decl_module! {
 	}
 }
 
-/// Converts the given binary data into ASCII-encoded hex. It will be twice the length.
-fn to_ascii_hex(data: &[u8]) -> Vec<u8> {
-	let mut r = Vec::with_capacity(data.len() * 2);
-	let mut push_nibble = |n| r.push(if n < 10 { b'0' + n } else { b'a' - 10 + n });
-	for &b in data.iter() {
-		push_nibble(b / 16);
-		push_nibble(b % 16);
-	}
-	r
-}
-
 impl<T: Trait> Module<T> {
+	fn account_id() -> T::AccountId {
+		T::ModuleId::get().into_account()
+	}
+
+	fn pot<C: LockableCurrency<T::AccountId>>() -> C::Balance {
+		// Already lock minimal balance in the account, no need to worry about to be 0.
+		C::usable_balance(&Self::account_id())
+	}
+
 	// Constructs the message that RPC's `personal_sign` and `sign` would sign.
 	fn eth_signable_message(what: &[u8], signed_message: &[u8]) -> Vec<u8> {
 		let prefix = T::Prefix::get();
@@ -376,6 +439,17 @@ impl<T: Trait> sp_runtime::traits::ValidateUnsigned for Module<T> {
 	}
 }
 
+/// Converts the given binary data into ASCII-encoded hex. It will be twice the length.
+fn to_ascii_hex(data: &[u8]) -> Vec<u8> {
+	let mut r = Vec::with_capacity(data.len() * 2);
+	let mut push_nibble = |n| r.push(if n < 10 { b'0' + n } else { b'a' - 10 + n });
+	for &b in data.iter() {
+		push_nibble(b / 16);
+		push_nibble(b % 16);
+	}
+	r
+}
+
 #[cfg(test)]
 mod tests {
 	// --- crates ---
@@ -475,10 +549,12 @@ mod tests {
 	}
 
 	parameter_types! {
+		pub const ClaimsModuleId: ModuleId = ModuleId(*b"da/claim");
 		pub const Prefix: &'static [u8] = b"Pay RUSTs to the TEST account:";
 	}
 	impl Trait for Test {
 		type Event = ();
+		type ModuleId = ClaimsModuleId;
 		type Prefix = Prefix;
 		type RingCurrency = Ring;
 	}
@@ -566,7 +642,7 @@ mod tests {
 	#[test]
 	fn basic_setup_works() {
 		new_test_ext().execute_with(|| {
-			assert_eq!(Claims::total(), 600);
+			assert_eq!(Ring::usable_balance(&Claims::account_id()), 600);
 
 			assert_eq!(Claims::claims_from_eth(&addr(&alice())), Some(100));
 			assert_eq!(Claims::claims_from_tron(&addr(&alice())), None);
@@ -610,7 +686,7 @@ mod tests {
 				OtherSignature::Eth(eth_sig(&alice(), &1u64.encode(), ETHEREUM_SIGNED_MESSAGE)),
 			));
 			assert_eq!(Ring::free_balance(&1), 100);
-			assert_eq!(Claims::total(), 500);
+			assert_eq!(Ring::usable_balance(&Claims::account_id()), 500);
 
 			assert_eq!(Ring::free_balance(2), 0);
 			assert_ok!(Claims::claim(
@@ -619,7 +695,7 @@ mod tests {
 				OtherSignature::Eth(eth_sig(&bob(), &2u64.encode(), ETHEREUM_SIGNED_MESSAGE)),
 			));
 			assert_eq!(Ring::free_balance(&2), 200);
-			assert_eq!(Claims::total(), 300);
+			assert_eq!(Ring::usable_balance(&Claims::account_id()), 300);
 
 			assert_eq!(Ring::free_balance(3), 0);
 			assert_ok!(Claims::claim(
@@ -628,7 +704,7 @@ mod tests {
 				OtherSignature::Tron(tron_sig(&carol(), &3u64.encode(), TRON_SIGNED_MESSAGE)),
 			));
 			assert_eq!(Ring::free_balance(&3), 300);
-			assert_eq!(Claims::total(), 0);
+			assert_eq!(Ring::usable_balance(&Claims::account_id()), 0);
 		});
 	}
 
@@ -657,14 +733,14 @@ mod tests {
 				OtherAddress::Eth(addr(&carol())),
 				200
 			));
-			assert_eq!(Claims::total(), 800);
+			assert_eq!(Ring::usable_balance(&Claims::account_id()), 800);
 			assert_ok!(Claims::claim(
 				Origin::NONE,
 				69,
 				OtherSignature::Eth(eth_sig(&carol(), &69u64.encode(), ETHEREUM_SIGNED_MESSAGE)),
 			));
 			assert_eq!(Ring::free_balance(&69), 200);
-			assert_eq!(Claims::total(), 600);
+			assert_eq!(Ring::usable_balance(&Claims::account_id()), 600);
 		});
 	}
 
