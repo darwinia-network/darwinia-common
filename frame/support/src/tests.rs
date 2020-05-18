@@ -1,4 +1,4 @@
-use super::*;
+use crate::*;
 
 /// Extract value from JSON response
 #[test]

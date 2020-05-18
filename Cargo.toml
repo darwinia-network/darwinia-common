@@ -12,8 +12,11 @@ members = [
 	"frame/elections-phragmen",
 	"frame/header-mmr",
 	"frame/staking",
+	"frame/staking/rpc",
+	"frame/staking/rpc/runtime-api",
 	"frame/support",
 	"frame/treasury",
+	"primitives/array-bytes",
 	"primitives/eth-primitives",
 	"primitives/merkle-patricia-trie",
 ]

@@ -67,7 +67,8 @@ use sp_runtime::{
 };
 use sp_std::{cell::RefCell, prelude::*};
 // --- darwinia ---
-use darwinia_support::bytes_thing::{array_unchecked, fixed_hex_bytes_unchecked};
+use array_bytes::{array_unchecked, fixed_hex_bytes_unchecked};
+use darwinia_support::balance::lock::LockableCurrency;
 use eth_primitives::{
 	header::EthHeader,
 	pow::{EthashPartial, EthashSeal},
@@ -90,7 +91,8 @@ pub trait Trait: frame_system::Trait {
 
 	type Call: Dispatchable + From<Call<Self>> + IsSubType<Module<Self>, Self> + Clone;
 
-	type Currency: Currency<Self::AccountId> + ReservableCurrency<Self::AccountId>;
+	type Currency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
+		+ ReservableCurrency<Self::AccountId>;
 }
 
 #[derive(Clone, PartialEq, Encode, Decode)]
@@ -564,6 +566,22 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
+	/// The account ID of the eth relay pot.
+	///
+	/// This actually does computation. If you need to keep using it, then make sure you cache the
+	/// value and only call this once.
+	fn account_id() -> T::AccountId {
+		T::ModuleId::get().into_account()
+	}
+
+	/// Return the amount of money in the pot.
+	// The existential deposit is not part of the pot so eth-relay account never gets deleted.
+	fn pot() -> Balance<T> {
+		T::Currency::usable_balance(&Self::account_id())
+			// Must never be less than 0 but better be safe.
+			.saturating_sub(T::Currency::minimum_balance())
+	}
+
 	pub fn init_genesis_header(
 		header: &EthHeader,
 		genesis_total_difficulty: u64,
@@ -856,14 +874,6 @@ impl<T: Trait> Module<T> {
 
 		Ok(())
 	}
-
-	/// Return the amount of money in the pot.
-	// The existential deposit is not part of the pot so eth-relay account never gets deleted.
-	fn pot() -> Balance<T> {
-		T::Currency::free_balance(&Self::account_id())
-			// Must never be less than 0 but better be safe.
-			.saturating_sub(T::Currency::minimum_balance())
-	}
 }
 
 /// Handler for selecting the genesis validator set.
@@ -913,12 +923,8 @@ impl<T: Trait> VerifyEthReceipts<Balance<T>, T::AccountId> for Module<T> {
 		Ok((receipt, Self::receipt_verify_fee()))
 	}
 
-	/// The account ID of the eth relay pot.
-	///
-	/// This actually does computation. If you need to keep using it, then make sure you cache the
-	/// value and only call this once.
 	fn account_id() -> T::AccountId {
-		T::ModuleId::get().into_account()
+		<Module<T>>::account_id()
 	}
 }
 

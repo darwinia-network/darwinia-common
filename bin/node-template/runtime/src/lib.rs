@@ -294,9 +294,10 @@ use sp_std::prelude::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia ---
-use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo;
+use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
 use darwinia_eth_offchain::crypto::AuthorityId as EthOffchainId;
 use darwinia_eth_relay::EthNetworkType;
+use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
 use impls::*;
 
 /// This runtime version.
@@ -336,7 +337,7 @@ pub const EPOCH_DURATION_IN_SLOTS: u64 = {
 pub const SESSION_DURATION: BlockNumber = EPOCH_DURATION_IN_SLOTS as _;
 pub const SESSIONS_PER_ERA: SessionIndex = 3;
 
-pub const CAP: Balance = 1_000_000_000 * COIN;
+pub const CAP: Balance = 10_000_000_000 * COIN;
 pub const TOTAL_POWER: Power = 1_000_000_000;
 
 /// The version information used to identify this runtime when compiled natively.
@@ -538,7 +539,7 @@ parameter_types! {
 	pub const SessionsPerEra: SessionIndex = SESSIONS_PER_ERA;
 	pub const BondingDurationInEra: darwinia_staking::EraIndex = 14 * 24 * (HOURS / (SESSIONS_PER_ERA * BLOCKS_PER_SESSION));
 	pub const BondingDurationInBlockNumber: BlockNumber = 14 * DAYS;
-	pub const SlashDeferDuration: darwinia_staking::EraIndex = 7 * 24; // 1/4 the bonding duration.
+	pub const SlashDeferDuration: darwinia_staking::EraIndex = 0;
 	pub const ElectionLookahead: BlockNumber = BLOCKS_PER_SESSION / 4;
 	pub const MaxIterations: u32 = 5;
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
@@ -643,10 +644,12 @@ impl darwinia_treasury::Trait for Runtime {
 }
 
 parameter_types! {
+	pub const ClaimsModuleId: ModuleId = ModuleId(*b"da/claim");
 	pub const Prefix: &'static [u8] = b"Pay RINGs to the template account:";
 }
 impl darwinia_claims::Trait for Runtime {
 	type Event = Event;
+	type ModuleId = ClaimsModuleId;
 	type Prefix = Prefix;
 	type RingCurrency = Ring;
 }
@@ -914,12 +917,18 @@ impl_runtime_apis! {
 	}
 
 	impl darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance> for Runtime {
-		fn usable_balance(instance: u8, account: AccountId) -> RuntimeDispatchInfo<Balance> {
+		fn usable_balance(instance: u8, account: AccountId) -> BalancesRuntimeDispatchInfo<Balance> {
 			match instance {
 				0 => Ring::usable_balance_rpc(account),
 				1 => Kton::usable_balance_rpc(account),
 				_ => Default::default()
 			}
+		}
+	}
+
+	impl darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power> for Runtime {
+		fn power_of(account: AccountId) -> StakingRuntimeDispatchInfo<Power> {
+			Staking::power_of_rpc(account)
 		}
 	}
 

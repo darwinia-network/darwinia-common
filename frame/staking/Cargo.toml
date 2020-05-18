@@ -1,6 +1,6 @@
 [package]
 name = "darwinia-staking"
-version = "0.5.7"
+version = "0.5.8"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "FRAME pallet staking"
 edition = "2018"
@@ -16,6 +16,7 @@ rand_chacha = { version = "0.2", default-features = false, optional = true }
 serde = { version = "1.0.106", optional = true }
 static_assertions = { version = "1.1.0" }
 # darwinia
+darwinia-staking-rpc-runtime-api = { default-features = false, path = "./rpc/runtime-api" }
 darwinia-support = { default-features = false, path = "../support" }
 # substrate
 frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
@@ -51,6 +52,7 @@ std = [
 	"num-integer/std",
 	"serde",
 	# darwinia
+	"darwinia-staking-rpc-runtime-api/std",
 	"darwinia-support/std",
 	# substrate
 	"frame-support/std",

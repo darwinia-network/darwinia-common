@@ -178,6 +178,7 @@ use sp_std::{
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo;
 use darwinia_support::{
 	balance::{lock::*, *},
+	impl_rpc,
 	traits::BalanceInfo,
 };
 
@@ -507,9 +508,11 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		frozen_balance
 	}
 
-	pub fn usable_balance_rpc(who: impl Borrow<T::AccountId>) -> RuntimeDispatchInfo<T::Balance> {
-		RuntimeDispatchInfo {
-			usable_balance: Self::usable_balance(who.borrow()),
+	impl_rpc! {
+		fn usable_balance_rpc(who: impl Borrow<T::AccountId>) -> RuntimeDispatchInfo<T::Balance> {
+			RuntimeDispatchInfo {
+				usable_balance: Self::usable_balance(who.borrow()),
+			}
 		}
 	}
 

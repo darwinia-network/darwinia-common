@@ -123,7 +123,7 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 // --- darwinia ---
-use darwinia_support::traits::OnUnbalancedKton;
+use darwinia_support::balance::{lock::LockableCurrency, OnUnbalancedKton};
 use types::*;
 
 pub trait Trait: frame_system::Trait {
@@ -131,10 +131,12 @@ pub trait Trait: frame_system::Trait {
 	type ModuleId: Get<ModuleId>;
 
 	/// The staking *RING*.
-	type RingCurrency: Currency<Self::AccountId> + ReservableCurrency<Self::AccountId>;
+	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
+		+ ReservableCurrency<Self::AccountId>;
 
 	/// The staking *KTON*.
-	type KtonCurrency: Currency<Self::AccountId> + ReservableCurrency<Self::AccountId>;
+	type KtonCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
+		+ ReservableCurrency<Self::AccountId>;
 
 	/// Origin from which approvals must come.
 	type ApproveOrigin: EnsureOrigin<Self::Origin>;
@@ -623,6 +625,14 @@ impl<T: Trait> Module<T> {
 		T::ModuleId::get().into_account()
 	}
 
+	/// Return the amount of money in the pot.
+	// The existential deposit is not part of the pot so treasury account never gets deleted.
+	fn pot<C: LockableCurrency<T::AccountId>>() -> C::Balance {
+		C::usable_balance(&Self::account_id())
+			// Must never be less than 0 but better be safe.
+			.saturating_sub(C::minimum_balance())
+	}
+
 	/// The needed bond for a proposal whose spend is `value`.
 	fn calculate_bond<Balance, ProposalBondMinimum>(value: Balance) -> Balance
 	where
@@ -832,14 +842,6 @@ impl<T: Trait> Module<T> {
 			budget_remaining_ring,
 			budget_remaining_kton,
 		));
-	}
-
-	/// Return the amount of money in the pot.
-	// The existential deposit is not part of the pot so treasury account never gets deleted.
-	fn pot<C: Currency<T::AccountId>>() -> C::Balance {
-		C::free_balance(&Self::account_id())
-			// Must never be less than 0 but better be safe.
-			.saturating_sub(C::minimum_balance())
 	}
 }
 

@@ -1,6 +1,6 @@
 [package]
 name = "darwinia-claims"
-version = "0.5.7"
+version = "0.5.8"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "FRAME to claim airdrop"
 edition = "2018"
@@ -14,6 +14,7 @@ codec = { package = "parity-scale-codec", version = "1.3.0", default-features = 
 serde = { version = "1.0.106", optional = true }
 serde_json = { version = "1.0.51", optional = true }
 # darwinia
+array-bytes = { default-features = false, path = "../../primitives/array-bytes" }
 darwinia-support = { default-features = false, path = "../support" }
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
@@ -39,6 +40,7 @@ std = [
 	"serde",
 	"serde_json",
 	# darwinia
+	"array-bytes/std",
 	"darwinia-support/std",
 	# substrate
 	"frame-support/std",

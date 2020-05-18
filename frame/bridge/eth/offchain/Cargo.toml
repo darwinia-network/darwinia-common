@@ -1,6 +1,6 @@
 [package]
 name = "darwinia-eth-offchain"
-version = "0.5.7"
+version = "0.5.8"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "FRAME pallet to relay Ethereum header automactically"
 edition = "2018"
@@ -12,6 +12,7 @@ repository = "https://github.com/darwinia-network/darwinia/"
 # crates
 codec = { package = "parity-scale-codec", version = "1.3.0", default-features = false }
 # darwinia
+array-bytes = { default-features = false, path = "../../../../primitives/array-bytes" }
 darwinia-eth-relay = { default-features = false, path = "../relay" }
 darwinia-support = { default-features = false, path = "../../../../frame/support" }
 eth-primitives = { default-features = false, path = "../../../../primitives/eth-primitives" }
@@ -40,6 +41,7 @@ std = [
 	# crates
 	"codec/std",
 	# darwinia
+	"array-bytes/std",
 	"darwinia-eth-relay/std",
 	"darwinia-support/std",
 	"eth-primitives/std",

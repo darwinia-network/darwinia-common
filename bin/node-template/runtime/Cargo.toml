@@ -1,6 +1,6 @@
 [package]
 name = "node-template-runtime"
-version = "0.5.7"
+version = "0.5.8"
 authors = ["Anonymous"]
 edition = "2018"
 license = "Unlicense"
@@ -23,6 +23,7 @@ darwinia-eth-offchain = { default-features = false, path = "../../../frame/bridg
 # darwinia-session-benchmarking = { default-features = false, optional = true, path = "" }
 darwinia-header-mmr = { default-features = false, path = "../../../frame/header-mmr" }
 darwinia-staking = { default-features = false, path = "../../../frame/staking" }
+darwinia-staking-rpc-runtime-api = { default-features = false, path = "../../../frame/staking/rpc/runtime-api" }
 darwinia-support = { default-features = false, path = "../../../frame/support" }
 darwinia-treasury = { default-features = false, path = "../../../frame/treasury" }
 # substrate
@@ -60,7 +61,7 @@ sp-version = { default-features = false, git = "https://github.com/darwinia-netw
 
 [build-dependencies]
 # substrate
-wasm-builder-runner = { package = "substrate-wasm-builder-runner", version = "1.0.5", git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
+wasm-builder-runner = { package = "substrate-wasm-builder-runner", git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.6" }
 
 [features]
 default = ["std"]
@@ -80,6 +81,7 @@ std = [
 	# TODO: benchmark
 	# "darwinia-session-benchmarking/std",
 	"darwinia-staking/std",
+	"darwinia-staking-rpc-runtime-api/std",
 	"darwinia-support/std",
 	"darwinia-treasury/std",
 	# substrate
