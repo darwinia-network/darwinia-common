@@ -26,7 +26,7 @@ pub type RpcExtension = jsonrpc_core::IoHandler<sc_rpc::Metadata>;
 pub fn create<C>(client: Arc<C>) -> RpcExtension
 where
 	C: ProvideRuntimeApi<Block>,
-	C: sc_client::blockchain::HeaderBackend<Block>,
+	C: sp_blockchain::HeaderBackend<Block>,
 	C: 'static + Send + Sync,
 	C::Api: darwinia_balances_rpc::BalancesRuntimeApi<Block, AccountId, Balance>,
 	C::Api: darwinia_staking_rpc::StakingRuntimeApi<Block, AccountId, Power>,

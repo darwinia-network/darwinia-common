@@ -6,8 +6,8 @@ pub use sc_executor::NativeExecutor;
 // --- std ---
 use std::{sync::Arc, time::Duration};
 // --- substrate ---
-use sc_client::LongestChain;
 use sc_client_api::ExecutorProvider;
+use sc_consensus::LongestChain;
 use sc_executor::native_executor_instance;
 use sc_finality_grandpa::{
 	self, FinalityProofProvider as GrandpaFinalityProofProvider, StorageAndProofProvider,
@@ -39,7 +39,7 @@ macro_rules! new_full_start {
 			node_template_runtime::RuntimeApi,
 			crate::service::Executor,
 		>($config)?
-		.with_select_chain(|_config, backend| Ok(sc_client::LongestChain::new(backend.clone())))?
+		.with_select_chain(|_config, backend| Ok(sc_consensus::LongestChain::new(backend.clone())))?
 		.with_transaction_pool(|config, client, _fetcher, prometheus_registry| {
 			let pool_api = sc_transaction_pool::FullChainApi::new(client.clone());
 			Ok(sc_transaction_pool::BasicPool::new(
