@@ -1,6 +1,6 @@
 [package]
 name = "array-bytes"
-version = "0.5.8"
+version = "0.5.9"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "Minimal array/bytes operation for runtime"
 edition = "2018"
