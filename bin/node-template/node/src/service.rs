@@ -48,38 +48,44 @@ macro_rules! new_full_start {
 				prometheus_registry,
 			))
 		})?
-		.with_import_queue(|_config, client, mut select_chain, _transaction_pool| {
-			let select_chain = select_chain
-				.take()
-				.ok_or_else(|| sc_service::Error::SelectChainRequired)?;
+		.with_import_queue(
+			|_config, client, mut select_chain, _transaction_pool, spawn_task_handle| {
+				let select_chain = select_chain
+					.take()
+					.ok_or_else(|| sc_service::Error::SelectChainRequired)?;
 
-			let (grandpa_block_import, grandpa_link) = sc_finality_grandpa::block_import(
-				client.clone(),
-				&(client.clone() as Arc<_>),
-				select_chain,
-			)?;
+				let (grandpa_block_import, grandpa_link) = sc_finality_grandpa::block_import(
+					client.clone(),
+					&(client.clone() as Arc<_>),
+					select_chain,
+				)?;
 
-			let justification_import = grandpa_block_import.clone();
+				let justification_import = grandpa_block_import.clone();
 
-			let (block_import, babe_link) = sc_consensus_babe::block_import(
-				sc_consensus_babe::Config::get_or_compute(&*client)?,
-				grandpa_block_import,
-				client.clone(),
-			)?;
+				let (block_import, babe_link) = sc_consensus_babe::block_import(
+					sc_consensus_babe::Config::get_or_compute(&*client)?,
+					grandpa_block_import,
+					client.clone(),
+				)?;
 
-			let import_queue = sc_consensus_babe::import_queue(
-				babe_link.clone(),
-				block_import.clone(),
-				Some(Box::new(justification_import)),
-				None,
-				client,
-				inherent_data_providers.clone(),
-			)?;
+				let spawner =
+					|future| spawn_task_handle.spawn_blocking("import-queue-worker", future);
 
-			import_setup = Some((block_import, grandpa_link, babe_link));
+				let import_queue = sc_consensus_babe::import_queue(
+					babe_link.clone(),
+					block_import.clone(),
+					Some(Box::new(justification_import)),
+					None,
+					client,
+					inherent_data_providers.clone(),
+					spawner,
+				)?;
 
-			Ok(import_queue)
-		})?
+				import_setup = Some((block_import, grandpa_link, babe_link));
+
+				Ok(import_queue)
+			},
+			)?
 		.with_rpc_extensions(|builder| -> Result<crate::rpc::RpcExtension, _> {
 			Ok(crate::rpc::create(builder.client().clone()))
 		})?;
@@ -213,7 +219,7 @@ pub fn new_light(config: Configuration) -> Result<impl AbstractService, ServiceE
 			Ok(pool)
 		})?
 		.with_import_queue_and_fprb(
-			|_config, client, backend, fetcher, _select_chain, _tx_pool| {
+			|_config, client, backend, fetcher, _select_chain, _tx_pool, spawn_task_handle| {
 				let fetch_checker = fetcher
 					.map(|fetcher| fetcher.checker().clone())
 					.ok_or_else(|| {
@@ -235,7 +241,9 @@ pub fn new_light(config: Configuration) -> Result<impl AbstractService, ServiceE
 					client.clone(),
 				)?;
 
-				// FIXME: pruning task isn't started since light client doesn't do `AuthoritySetup`.
+				let spawner =
+					|future| spawn_task_handle.spawn_blocking("import-queue-worker", future);
+
 				let import_queue = sc_consensus_babe::import_queue(
 					babe_link,
 					babe_block_import,
@@ -243,6 +251,7 @@ pub fn new_light(config: Configuration) -> Result<impl AbstractService, ServiceE
 					Some(Box::new(finality_proof_import)),
 					client,
 					inherent_data_providers.clone(),
+					spawner,
 				)?;
 
 				Ok((import_queue, finality_proof_request_builder))
