@@ -109,6 +109,14 @@ impl Contains<u64> for TenToFourteen {
 		})
 	}
 }
+impl ContainsLengthBound for TenToFourteen {
+	fn min_len() -> usize {
+		0
+	}
+	fn max_len() -> usize {
+		TEN_TO_FOURTEEN.with(|v| v.borrow().len())
+	}
+}
 
 parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;

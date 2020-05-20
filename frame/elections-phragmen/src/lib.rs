@@ -71,8 +71,8 @@ use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
 	storage::{IterableStorageMap, StorageMap},
 	traits::{
-		BalanceStatus, ChangeMembers, Contains, Currency, Get, InitializeMembers, OnUnbalanced,
-		ReservableCurrency,
+		BalanceStatus, ChangeMembers, Contains, ContainsLengthBound, Currency, Get,
+		InitializeMembers, OnUnbalanced, ReservableCurrency,
 	},
 	weights::{DispatchClass, Weight},
 };
@@ -865,6 +865,17 @@ impl<T: Trait> Contains<T::AccountId> for Module<T> {
 				Err(pos) => members.insert(pos, (who.clone(), <BalanceOf<T>>::default())),
 			},
 		)
+	}
+}
+
+impl<T: Trait> ContainsLengthBound for Module<T> {
+	fn min_len() -> usize {
+		0
+	}
+
+	/// Implementation uses a parameter type so calling is cost-free.
+	fn max_len() -> usize {
+		Self::desired_members() as usize
 	}
 }
 
