@@ -151,11 +151,6 @@ where
 	let mut staked =
 		sp_phragmen::assignment_ratio_to_staked(assignments, |s| <Module<T>>::power_of(s) as _);
 
-	// reduce
-	if do_reduce {
-		reduce(&mut staked);
-	}
-
 	let (mut support_map, _) = build_support_map::<T::AccountId>(&winners, &staked);
 
 	// equalize a random number of times.
@@ -177,6 +172,11 @@ where
 			)
 		}
 	};
+
+	// reduce
+	if do_reduce {
+		reduce(&mut staked);
+	}
 
 	// Convert back to ratio assignment. This takes less space.
 	let low_accuracy_assignment = sp_phragmen::assignment_staked_to_ratio(staked);
