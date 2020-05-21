@@ -7,37 +7,6 @@ mod address;
 #[cfg(feature = "std")]
 pub use address::*;
 
-mod migration {
-	// --- substrate ---
-	use frame_support::migration::*;
-	// --- darwinia ---
-	use crate::*;
-
-	pub fn migrate<T: Trait>() {
-		sp_runtime::print("Migrating DarwiniaClaims...");
-
-		if let Some(total) = take_storage_value::<RingBalance<T>>(b"DarwiniaClaims", b"Total", &[])
-		{
-			let minimum_balance = T::RingCurrency::minimum_balance();
-			let _ = T::RingCurrency::make_free_balance_be(
-				&<Module<T>>::account_id(),
-				total + minimum_balance,
-			);
-			T::RingCurrency::set_lock(
-				T::ModuleId::get().0,
-				&<Module<T>>::account_id(),
-				LockFor::Common {
-					amount: minimum_balance,
-				},
-				WithdrawReasons::all(),
-			);
-		}
-
-		// item prefix unhashed
-		remove_storage_prefix(b"DarwiniaClaims", b"Total", &[]);
-	}
-}
-
 mod types {
 	// --- darwinia ---
 	use crate::*;
@@ -223,11 +192,6 @@ decl_module! {
 
 		/// Deposit one of this module's events by using the default implementation.
 		fn deposit_event() = default;
-
-		fn on_runtime_upgrade() -> frame_support::weights::Weight {
-			migration::migrate::<T>();
-			0
-		}
 
 		/// Make a claim.
 		#[weight = 1_000_000_000]

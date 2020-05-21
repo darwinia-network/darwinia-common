@@ -356,10 +356,13 @@ parameter_types! {
 	/// This probably should not be changed unless you have specific
 	/// disk i/o conditions for the node.
 	pub const DbWeight: RuntimeDbWeight = RuntimeDbWeight {
-		read: 60_000_000, // ~0.06 ms = ~60 µs
-		write: 200_000_000, // ~0.2 ms = 200 µs
+		read: 25_000_000, // ~25 µs @ 200,000 items
+		write: 100_000_000, // ~100 µs @ 200,000 items
 	};
-	pub const ExtrinsicBaseWeight: Weight = 10_000_000;
+	/// Importing a block with 0 txs takes ~5 ms
+	pub const BlockExecutionWeight: Weight = 5_000_000_000;
+	/// Executing 10,000 System remarks (no-op) txs takes ~1.26 seconds -> ~125 µs per tx
+	pub const ExtrinsicBaseWeight: Weight = 125_000_000;
 	pub const MaximumBlockLength: u32 = 5 * 1024 * 1024;
 	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
 	pub const Version: RuntimeVersion = VERSION;
@@ -378,7 +381,7 @@ impl frame_system::Trait for Runtime {
 	type BlockHashCount = BlockHashCount;
 	type MaximumBlockWeight = MaximumBlockWeight;
 	type DbWeight = DbWeight;
-	type BlockExecutionWeight = ();
+	type BlockExecutionWeight = BlockExecutionWeight;
 	type ExtrinsicBaseWeight = ExtrinsicBaseWeight;
 	type MaximumBlockLength = MaximumBlockLength;
 	type AvailableBlockRatio = AvailableBlockRatio;

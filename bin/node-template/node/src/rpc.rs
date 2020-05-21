@@ -16,26 +16,56 @@
 // --- std ---
 use std::sync::Arc;
 // --- substrate ---
+use sc_finality_grandpa::{SharedAuthoritySet, SharedVoterState};
 use sp_api::ProvideRuntimeApi;
 // --- darwinia ---
-use node_template_runtime::{opaque::Block, AccountId, Balance, Power};
+use node_template_runtime::{opaque::Block, AccountId, Balance, BlockNumber, Hash, Power};
 
 /// A type representing all RPC extensions.
 pub type RpcExtension = jsonrpc_core::IoHandler<sc_rpc::Metadata>;
 
-pub fn create<C>(client: Arc<C>) -> RpcExtension
+/// Extra dependencies for GRANDPA
+pub struct GrandpaDeps {
+	/// Voting round info.
+	pub shared_voter_state: SharedVoterState,
+	/// Authority set info.
+	pub shared_authority_set: SharedAuthoritySet<Hash, BlockNumber>,
+}
+
+/// Full client dependencies.
+pub struct FullDeps<C> {
+	/// The client instance to use.
+	pub client: Arc<C>,
+	/// GRANDPA specific dependencies.
+	pub grandpa: GrandpaDeps,
+}
+
+pub fn create<C>(deps: FullDeps<C>) -> RpcExtension
 where
 	C: ProvideRuntimeApi<Block>,
-	C: sc_client::blockchain::HeaderBackend<Block>,
+	C: sp_blockchain::HeaderBackend<Block>,
 	C: 'static + Send + Sync,
 	C::Api: darwinia_balances_rpc::BalancesRuntimeApi<Block, AccountId, Balance>,
 	C::Api: darwinia_staking_rpc::StakingRuntimeApi<Block, AccountId, Power>,
 {
+	// --- substrate ---
+	use sc_finality_grandpa_rpc::GrandpaRpcHandler;
 	// --- darwinia ---
 	use darwinia_balances_rpc::{Balances, BalancesApi};
 	use darwinia_staking_rpc::{Staking, StakingApi};
 
+	let FullDeps { client, grandpa } = deps;
+
 	let mut io = jsonrpc_core::IoHandler::default();
+	{
+		let GrandpaDeps {
+			shared_voter_state,
+			shared_authority_set,
+		} = grandpa;
+		io.extend_with(sc_finality_grandpa_rpc::GrandpaApi::to_delegate(
+			GrandpaRpcHandler::new(shared_authority_set, shared_voter_state),
+		));
+	}
 	io.extend_with(BalancesApi::to_delegate(Balances::new(client.clone())));
 	io.extend_with(StakingApi::to_delegate(Staking::new(client)));
 
