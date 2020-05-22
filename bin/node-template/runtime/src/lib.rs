@@ -302,6 +302,7 @@ pub use primitives::*;
 
 // --- crates ---
 use codec::{Decode, Encode};
+use static_assertions::const_assert;
 // --- substrate ---
 use frame_support::{
 	construct_runtime, debug, parameter_types,
@@ -549,6 +550,7 @@ impl pallet_authority_discovery::Trait for Runtime {}
 
 parameter_types! {
 	pub const CouncilMotionDuration: BlockNumber = 3 * DAYS;
+	pub const CouncilMaxProposals: u32 = 100;
 }
 type CouncilCollective = pallet_collective::Instance1;
 impl pallet_collective::Trait<CouncilCollective> for Runtime {
@@ -556,6 +558,7 @@ impl pallet_collective::Trait<CouncilCollective> for Runtime {
 	type Proposal = Call;
 	type Event = Event;
 	type MotionDuration = CouncilMotionDuration;
+	type MaxProposals = CouncilMaxProposals;
 }
 
 impl pallet_sudo::Trait for Runtime {
@@ -630,11 +633,14 @@ impl darwinia_staking::Trait for Runtime {
 	type TotalPower = TotalPower;
 }
 
+const DESIRED_MEMBERS: u32 = 13;
+// Make sure that there are no more than `MAX_MEMBERS` members elected via phragmen.
+const_assert!(DESIRED_MEMBERS <= pallet_collective::MAX_MEMBERS);
 parameter_types! {
 	pub const ElectionsPhragmenModuleId: LockIdentifier = *b"da/phrel";
 	pub const CandidacyBond: Balance = 1 * COIN;
 	pub const VotingBond: Balance = 5 * MILLI;
-	pub const DesiredMembers: u32 = 13;
+	pub const DesiredMembers: u32 = DESIRED_MEMBERS;
 	pub const DesiredRunnersUp: u32 = 7;
 	/// Daily council elections.
 	pub const TermDuration: BlockNumber = 24 * HOURS;
