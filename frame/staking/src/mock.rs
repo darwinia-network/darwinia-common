@@ -514,7 +514,7 @@ impl ExtBuilder {
 					(41, balance_factor * 2000),
 					(100, 2000 * balance_factor),
 					(101, 2000 * balance_factor),
-					// This allow us to have a total_payout different from 0.
+					// This allows us to have a total_payout different from 0.
 					(999, 1_000_000_000_000),
 				],
 			}
@@ -537,7 +537,7 @@ impl ExtBuilder {
 					(41, balance_factor * 2000),
 					(100, 2000 * balance_factor),
 					(101, 2000 * balance_factor),
-					// This allow us to have a total_payout different from 0.
+					// This allows us to have a total_payout different from 0.
 					(999, 1_000_000_000_000),
 				],
 			}
@@ -1090,6 +1090,13 @@ pub(crate) fn staking_events() -> Vec<Event<Test>> {
 			}
 		})
 		.collect()
+}
+
+pub(crate) fn ring_balances(who: &AccountId) -> (Balance, Balance) {
+	(Ring::free_balance(who), Ring::reserved_balance(who))
+}
+pub(crate) fn kton_balances(who: &AccountId) -> (Balance, Balance) {
+	(Kton::free_balance(who), Kton::reserved_balance(who))
 }
 
 #[macro_export]

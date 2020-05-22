@@ -28,7 +28,6 @@ use darwinia_support::balance::lock::*;
 
 #[test]
 fn force_unstake_works() {
-	// Verifies initial conditions of mock
 	ExtBuilder::default().build_and_execute(|| {
 		// Account 11 is stashed and locked, and account 10 is the controller
 		assert_eq!(Staking::bonded(&11), Some(10));
@@ -171,17 +170,19 @@ fn basic_setup_works() {
 #[test]
 fn change_controller_works() {
 	ExtBuilder::default().build_and_execute(|| {
+		// 10 and 11 are bonded as stash controller.
 		assert_eq!(Staking::bonded(&11), Some(10));
 
-		assert!(Session::validators().contains(&11));
 		// 10 can control 11 who is initially a validator.
 		assert_ok!(Staking::chill(Origin::signed(10)));
-		assert!(Session::validators().contains(&11));
 
+		// change controller
 		assert_ok!(Staking::set_controller(Origin::signed(11), 5));
 
+		assert_eq!(Staking::bonded(&11), Some(5));
 		start_era(1);
 
+		// 10 is no longer in control.
 		assert_noop!(
 			Staking::validate(Origin::signed(10), ValidatorPrefs::default()),
 			StakingError::NotController,
@@ -682,73 +683,73 @@ fn nominating_and_rewards_should_work() {
 }
 
 #[test]
-fn nominators_also_get_slashed() {
-	// A nominator should be slashed if the validator they nominated is slashed
-	// Here is the breakdown of roles:
-	// 10 - is the controller of 11
-	// 11 - is the stash.
-	// 2 - is the nominator of 20, 10
-	ExtBuilder::default().nominate(false).build_and_execute(|| {
-		assert_eq!(Staking::validator_count(), 2);
-
-		// Set payee to controller
-		assert_ok!(Staking::set_payee(
-			Origin::signed(10),
-			RewardDestination::Controller
-		));
-
-		// give the man some money.
-		let initial_balance = 1000;
-		for i in [1, 2, 3, 10].iter() {
-			let _ = Ring::make_free_balance_be(i, initial_balance);
-		}
-
-		// 2 will nominate for 10, 20
-		let nominator_stake = 500;
-		assert_ok!(Staking::bond(
-			Origin::signed(1),
-			2,
-			StakingBalance::RingBalance(nominator_stake),
-			RewardDestination::default(),
-			0,
-		));
-		assert_ok!(Staking::nominate(Origin::signed(2), vec![20, 10]));
-
-		let total_payout = current_total_payout_for_duration(3000);
-		assert!(total_payout > 100); // Test is meaningful if reward something
-		Staking::reward_by_ids(vec![(11, 1)]);
-
-		// new era, pay rewards,
+fn nominators_also_get_slashed_pro_rata() {
+	ExtBuilder::default().build_and_execute(|| {
 		start_era(1);
 
-		// Nominator stash didn't collect any.
-		assert_eq!(Ring::free_balance(&2), initial_balance);
+		let slash_percent = Perbill::from_percent(5);
+		let initial_exposure = Staking::eras_stakers(active_era(), 11);
+		// 101 is a nominator for 11
+		assert_eq!(initial_exposure.others.first().unwrap().who, 101);
 
-		// 10 goes offline
+		// staked values;
+		let nominator_stake = Staking::ledger(100).unwrap().active_ring;
+		let nominator_balance = ring_balances(&101).0;
+		let validator_stake = Staking::ledger(10).unwrap().active_ring;
+		let validator_balance = ring_balances(&11).0;
+		let exposed_stake = initial_exposure.total_power;
+		let exposed_validator = initial_exposure.own_power;
+		let exposed_nominator = initial_exposure.others.first().unwrap().power;
+
+		// 11 goes offline
 		on_offence_now(
 			&[OffenceDetails {
-				offender: (
-					11,
-					Staking::eras_stakers(Staking::active_era().unwrap().index, 11),
-				),
+				offender: (11, initial_exposure.clone()),
 				reporters: vec![],
 			}],
-			&[Perbill::from_percent(5)],
+			&[slash_percent],
 		);
-		let expo = Staking::eras_stakers(Staking::active_era().unwrap().index, 11);
-		let slash_value = 50;
-		let total_slash = expo
-			.others
-			.iter()
-			.fold(expo.own_ring_balance, |acc, i| acc + i.ring_balance)
-			.min(slash_value);
-		let validator_slash = expo.own_ring_balance.min(total_slash);
-		let nominator_slash = nominator_stake.min(total_slash - validator_slash);
 
-		// initial + first era reward + slash
-		assert_eq!(Ring::free_balance(&11), initial_balance - validator_slash);
-		assert_eq!(Ring::free_balance(&2), initial_balance - nominator_slash);
+		// both stakes must have been decreased.
+		assert!(Staking::ledger(100).unwrap().active_ring < nominator_stake);
+		assert!(Staking::ledger(10).unwrap().active_ring < validator_stake);
 
+		let slash_amount = slash_percent * exposed_stake;
+		let validator_share =
+			Perbill::from_rational_approximation(exposed_validator, exposed_stake) * slash_amount;
+		let nominator_share =
+			Perbill::from_rational_approximation(exposed_nominator, exposed_stake) * slash_amount;
+
+		// both slash amounts need to be positive for the test to make sense.
+		assert!(validator_share > 0);
+		assert!(nominator_share > 0);
+
+		// both stakes must have been decreased pro-rata.
+		let nominator_share =
+			Perbill::from_rational_approximation(nominator_share, exposed_stake) * nominator_stake;
+		let validator_share =
+			Perbill::from_rational_approximation(validator_share, exposed_stake) * validator_stake;
+
+		assert_eq_error_rate!(
+			Staking::ledger(100).unwrap().active_ring,
+			nominator_stake - nominator_share,
+			10,
+		);
+		assert_eq_error_rate!(
+			Staking::ledger(10).unwrap().active_ring,
+			validator_stake - validator_share,
+			10,
+		);
+		assert_eq_error_rate!(
+			ring_balances(&101).0, // free balance
+			nominator_balance - nominator_share,
+			10,
+		);
+		assert_eq_error_rate!(
+			ring_balances(&11).0, // free balance
+			validator_balance - validator_share,
+			10,
+		);
 		// Because slashing happened.
 		assert!(is_disabled(10));
 	});
