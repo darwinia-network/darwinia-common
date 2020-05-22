@@ -85,10 +85,11 @@ pub mod impls {
 	/// Where `target_weight` must be given as the `Get` implementation of the `T` generic type.
 	/// https://research.web3.foundation/en/latest/polkadot/Token%20Economics/#relay-chain-transaction-fees
 	pub struct TargetedFeeAdjustment<T>(sp_std::marker::PhantomData<T>);
+
 	impl<T: Get<Perquintill>> Convert<Fixed128, Fixed128> for TargetedFeeAdjustment<T> {
 		fn convert(multiplier: Fixed128) -> Fixed128 {
-			let block_weight = System::all_extrinsics_weight();
 			let max_weight = MaximumBlockWeight::get();
+			let block_weight = System::all_extrinsics_weight().total().min(max_weight);
 			let target_weight = (T::get() * max_weight) as u128;
 			let block_weight = block_weight as u128;
 
