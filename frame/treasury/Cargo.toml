@@ -1,6 +1,6 @@
 [package]
 name = "darwinia-treasury"
-version = "0.5.9"
+version = "0.6.0"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "FRAME pallet to manage treasury"
 edition = "2018"

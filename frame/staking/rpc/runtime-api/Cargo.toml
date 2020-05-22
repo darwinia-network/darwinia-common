@@ -1,6 +1,6 @@
 [package]
 name = "darwinia-staking-rpc-runtime-api"
-version = "0.5.9"
+version = "0.6.0"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "Runtime API definition required by staking RPC extensions."
 edition = "2018"
