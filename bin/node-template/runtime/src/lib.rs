@@ -175,13 +175,13 @@ pub mod primitives {
 	pub mod report {
 		// --- substrate ---
 		use frame_system::offchain::AppCrypto;
-		use sp_core::crypto::KeyTypeId;
+		use sp_core::crypto::{key_types, KeyTypeId};
 		// --- crates ---
 		use super::{Signature, Verify};
 
 		/// Key type for the reporting module. Used for reporting BABE and GRANDPA
 		/// equivocations.
-		pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"fish");
+		pub const KEY_TYPE: KeyTypeId = key_types::REPORTING;
 
 		mod app {
 			use sp_application_crypto::{app_crypto, sr25519};
