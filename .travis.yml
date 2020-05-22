@@ -1,5 +1,5 @@
 language: rust
-rust: nightly
+rust: nightly-2020-05-14
 
 branches:
   only:
@@ -12,7 +12,7 @@ env:
 before_install:
   # Check how much space we've got on this machine.
   - df -h
-  - rustup target add wasm32-unknown-unknown --toolchain nightly
+  - rustup target add wasm32-unknown-unknown --toolchain nightly-2020-05-14
 
 jobs:
   include:
@@ -20,48 +20,48 @@ jobs:
       script: .maintain/ci/fmt_script.sh
 
     - stage: Build
-      env: RUST_TOOLCHAIN=nightly TARGET=native
+      env: RUST_TOOLCHAIN=nightly-2020-05-14 TARGET=native
       script: .maintain/ci/build_script.sh
 
     - stage: Build
-      env: RUST_TOOLCHAIN=nightly TARGET=wasm
+      env: RUST_TOOLCHAIN=nightly-2020-05-14 TARGET=wasm
       script: .maintain/ci/build_script.sh
 
     - stage: Darwinia Test
-      env: Balances RUST_TOOLCHAIN=nightly TARGET=native
+      env: Balances RUST_TOOLCHAIN=nightly-2020-05-14 TARGET=native
       script: .maintain/ci/darwinia_test_script.sh balances
 
     - stage: Darwinia Test
-      env: STAKING RUST_TOOLCHAIN=nightly TARGET=native
+      env: STAKING RUST_TOOLCHAIN=nightly-2020-05-14 TARGET=native
       script: .maintain/ci/darwinia_test_script.sh staking
 
     - stage: Darwinia Test
-      env: TREASURY RUST_TOOLCHAIN=nightly TARGET=native
+      env: TREASURY RUST_TOOLCHAIN=nightly-2020-05-14 TARGET=native
       script: .maintain/ci/darwinia_test_script.sh treasury
 
     - stage: Darwinia Test
-      env: ETHRELAY RUST_TOOLCHAIN=nightly TARGET=native
+      env: ETHRELAY RUST_TOOLCHAIN=nightly-2020-05-14 TARGET=native
       script: .maintain/ci/darwinia_test_script.sh eth-relay
 
     - stage: Darwinia Test
-      env: ETHBACKING RUST_TOOLCHAIN=nightly TARGET=native
+      env: ETHBACKING RUST_TOOLCHAIN=nightly-2020-05-14 TARGET=native
       script: .maintain/ci/darwinia_test_script.sh eth-backing
 
     - stage: Darwinia Test
-      env: HEADERMMR RUST_TOOLCHAIN=nightly TARGET=native
+      env: HEADERMMR RUST_TOOLCHAIN=nightly-2020-05-14 TARGET=native
       script: .maintain/ci/darwinia_test_script.sh header-mmr
 
     - stage: Darwinia Test
-      env: ETHOFFCHAIN RUST_TOOLCHAIN=nightly TARGET=native
+      env: ETHOFFCHAIN RUST_TOOLCHAIN=nightly-2020-05-14 TARGET=native
       script: .maintain/ci/darwinia_test_script.sh eth-offchain
 
     - stage: Darwinia Test
-      env: CLAIMS RUST_TOOLCHAIN=nightly TARGET=native
+      env: CLAIMS RUST_TOOLCHAIN=nightly-2020-05-14 TARGET=native
       script: .maintain/ci/darwinia_test_script.sh claims
 
     # over the time limitation, so we comment this
     # - stage: Overall Test
-    #   env: RUST_TOOLCHAIN=nightly TARGET=native
+    #   env: RUST_TOOLCHAIN=nightly-2020-05-14 TARGET=native
     #   script: .maintain/ci/test_script.sh
 
 after_script:

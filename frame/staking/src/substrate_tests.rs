@@ -10,10 +10,60 @@
 //! + If you want to delete some functions, please left some comments
 //! explaining why you delete them.
 
+mod offchain_phragmen {
+	// --- custom ---
+	use crate::{mock::*, *};
+
+	pub fn build_offchain_phragmen_test_ext() {
+		for i in (10..=40).step_by(10) {
+			// Note: we respect the convention of the mock (10, 11 pairs etc.) since these accounts
+			// have corresponding keys in session which makes everything more ergonomic and
+			// realistic.
+			bond_validator(i + 1, i, StakingBalance::RingBalance(100));
+		}
+
+		let mut voter = 1;
+		bond_nominator(
+			voter,
+			1000 + voter,
+			StakingBalance::RingBalance(100),
+			vec![11],
+		);
+		voter = 2;
+		bond_nominator(
+			voter,
+			1000 + voter,
+			StakingBalance::RingBalance(100),
+			vec![11, 11],
+		);
+		voter = 3;
+		bond_nominator(
+			voter,
+			1000 + voter,
+			StakingBalance::RingBalance(100),
+			vec![21, 41],
+		);
+		voter = 4;
+		bond_nominator(
+			voter,
+			1000 + voter,
+			StakingBalance::RingBalance(100),
+			vec![21, 31, 41],
+		);
+		voter = 5;
+		bond_nominator(
+			voter,
+			1000 + voter,
+			StakingBalance::RingBalance(100),
+			vec![21, 31, 41],
+		);
+	}
+}
+
 // --- substrate ---
 use frame_support::{
 	assert_noop, assert_ok,
-	traits::{Currency, OnInitialize, ReservableCurrency},
+	traits::{Currency, OnFinalize, OnInitialize, ReservableCurrency},
 	StorageMap,
 };
 use sp_runtime::{assert_eq_error_rate, traits::BadOrigin};
@@ -28,23 +78,47 @@ use darwinia_support::balance::lock::*;
 
 #[test]
 fn force_unstake_works() {
-	// Verifies initial conditions of mock
 	ExtBuilder::default().build_and_execute(|| {
 		// Account 11 is stashed and locked, and account 10 is the controller
 		assert_eq!(Staking::bonded(&11), Some(10));
+		// Adds 2 slashing spans
+		add_slash(&11);
 		// Cant transfer
 		assert_noop!(
 			Ring::transfer(Origin::signed(11), 1, 10),
 			RingError::LiquidityRestrictions,
 		);
 		// Force unstake requires root.
-		assert_noop!(Staking::force_unstake(Origin::signed(11), 11), BadOrigin);
+		assert_noop!(Staking::force_unstake(Origin::signed(11), 11, 2), BadOrigin);
+		// Force unstake needs correct number of slashing spans (for weight calculation)
+		assert_noop!(Staking::force_unstake(Origin::signed(11), 11, 0), BadOrigin);
 		// We now force them to unstake
-		assert_ok!(Staking::force_unstake(Origin::ROOT, 11));
+		assert_ok!(Staking::force_unstake(Origin::ROOT, 11, 2));
 		// No longer bonded.
 		assert_eq!(Staking::bonded(&11), None);
 		// Transfer works.
 		assert_ok!(Ring::transfer(Origin::signed(11), 1, 10));
+	});
+}
+
+#[test]
+fn kill_stash_works() {
+	ExtBuilder::default().build_and_execute(|| {
+		// Account 11 is stashed and locked, and account 10 is the controller
+		assert_eq!(Staking::bonded(&11), Some(10));
+		// Adds 2 slashing spans
+		add_slash(&11);
+		// Only can kill a stash account
+		assert_noop!(Staking::kill_stash(&12, 0), StakingError::NotStash);
+		// Respects slashing span count
+		assert_noop!(
+			Staking::kill_stash(&11, 0),
+			StakingError::IncorrectSlashingSpans
+		);
+		// Correct inputs, everything works
+		assert_ok!(Staking::kill_stash(&11, 2));
+		// No longer bonded.
+		assert_eq!(Staking::bonded(&11), None);
 	});
 }
 
@@ -171,17 +245,19 @@ fn basic_setup_works() {
 #[test]
 fn change_controller_works() {
 	ExtBuilder::default().build_and_execute(|| {
+		// 10 and 11 are bonded as stash controller.
 		assert_eq!(Staking::bonded(&11), Some(10));
 
-		assert!(Session::validators().contains(&11));
 		// 10 can control 11 who is initially a validator.
 		assert_ok!(Staking::chill(Origin::signed(10)));
-		assert!(Session::validators().contains(&11));
 
+		// change controller
 		assert_ok!(Staking::set_controller(Origin::signed(11), 5));
 
+		assert_eq!(Staking::bonded(&11), Some(5));
 		start_era(1);
 
+		// 10 is no longer in control.
 		assert_noop!(
 			Staking::validate(Origin::signed(10), ValidatorPrefs::default()),
 			StakingError::NotController,
@@ -682,73 +758,73 @@ fn nominating_and_rewards_should_work() {
 }
 
 #[test]
-fn nominators_also_get_slashed() {
-	// A nominator should be slashed if the validator they nominated is slashed
-	// Here is the breakdown of roles:
-	// 10 - is the controller of 11
-	// 11 - is the stash.
-	// 2 - is the nominator of 20, 10
-	ExtBuilder::default().nominate(false).build_and_execute(|| {
-		assert_eq!(Staking::validator_count(), 2);
-
-		// Set payee to controller
-		assert_ok!(Staking::set_payee(
-			Origin::signed(10),
-			RewardDestination::Controller
-		));
-
-		// give the man some money.
-		let initial_balance = 1000;
-		for i in [1, 2, 3, 10].iter() {
-			let _ = Ring::make_free_balance_be(i, initial_balance);
-		}
-
-		// 2 will nominate for 10, 20
-		let nominator_stake = 500;
-		assert_ok!(Staking::bond(
-			Origin::signed(1),
-			2,
-			StakingBalance::RingBalance(nominator_stake),
-			RewardDestination::default(),
-			0,
-		));
-		assert_ok!(Staking::nominate(Origin::signed(2), vec![20, 10]));
-
-		let total_payout = current_total_payout_for_duration(3000);
-		assert!(total_payout > 100); // Test is meaningful if reward something
-		Staking::reward_by_ids(vec![(11, 1)]);
-
-		// new era, pay rewards,
+fn nominators_also_get_slashed_pro_rata() {
+	ExtBuilder::default().build_and_execute(|| {
 		start_era(1);
 
-		// Nominator stash didn't collect any.
-		assert_eq!(Ring::free_balance(&2), initial_balance);
+		let slash_percent = Perbill::from_percent(5);
+		let initial_exposure = Staking::eras_stakers(active_era(), 11);
+		// 101 is a nominator for 11
+		assert_eq!(initial_exposure.others.first().unwrap().who, 101);
 
-		// 10 goes offline
+		// staked values;
+		let nominator_stake = Staking::ledger(100).unwrap().active_ring;
+		let nominator_balance = ring_balances(&101).0;
+		let validator_stake = Staking::ledger(10).unwrap().active_ring;
+		let validator_balance = ring_balances(&11).0;
+		let exposed_stake = initial_exposure.total_power;
+		let exposed_validator = initial_exposure.own_power;
+		let exposed_nominator = initial_exposure.others.first().unwrap().power;
+
+		// 11 goes offline
 		on_offence_now(
 			&[OffenceDetails {
-				offender: (
-					11,
-					Staking::eras_stakers(Staking::active_era().unwrap().index, 11),
-				),
+				offender: (11, initial_exposure.clone()),
 				reporters: vec![],
 			}],
-			&[Perbill::from_percent(5)],
+			&[slash_percent],
 		);
-		let expo = Staking::eras_stakers(Staking::active_era().unwrap().index, 11);
-		let slash_value = 50;
-		let total_slash = expo
-			.others
-			.iter()
-			.fold(expo.own_ring_balance, |acc, i| acc + i.ring_balance)
-			.min(slash_value);
-		let validator_slash = expo.own_ring_balance.min(total_slash);
-		let nominator_slash = nominator_stake.min(total_slash - validator_slash);
 
-		// initial + first era reward + slash
-		assert_eq!(Ring::free_balance(&11), initial_balance - validator_slash);
-		assert_eq!(Ring::free_balance(&2), initial_balance - nominator_slash);
+		// both stakes must have been decreased.
+		assert!(Staking::ledger(100).unwrap().active_ring < nominator_stake);
+		assert!(Staking::ledger(10).unwrap().active_ring < validator_stake);
 
+		let slash_amount = slash_percent * exposed_stake;
+		let validator_share =
+			Perbill::from_rational_approximation(exposed_validator, exposed_stake) * slash_amount;
+		let nominator_share =
+			Perbill::from_rational_approximation(exposed_nominator, exposed_stake) * slash_amount;
+
+		// both slash amounts need to be positive for the test to make sense.
+		assert!(validator_share > 0);
+		assert!(nominator_share > 0);
+
+		// both stakes must have been decreased pro-rata.
+		let nominator_share =
+			Perbill::from_rational_approximation(nominator_share, exposed_stake) * nominator_stake;
+		let validator_share =
+			Perbill::from_rational_approximation(validator_share, exposed_stake) * validator_stake;
+
+		assert_eq_error_rate!(
+			Staking::ledger(100).unwrap().active_ring,
+			nominator_stake - nominator_share,
+			10,
+		);
+		assert_eq_error_rate!(
+			Staking::ledger(10).unwrap().active_ring,
+			validator_stake - validator_share,
+			10,
+		);
+		assert_eq_error_rate!(
+			ring_balances(&101).0, // free balance
+			nominator_balance - nominator_share,
+			10,
+		);
+		assert_eq_error_rate!(
+			ring_balances(&11).0, // free balance
+			validator_balance - validator_share,
+			10,
+		);
 		// Because slashing happened.
 		assert!(is_disabled(10));
 	});
@@ -1463,7 +1539,7 @@ fn on_free_balance_zero_stash_removes_validator() {
 			assert_eq!(Ring::free_balance(&11), 0);
 
 			// Reap the stash
-			assert_ok!(Staking::reap_stash(Origin::NONE, 11));
+			assert_ok!(Staking::reap_stash(Origin::NONE, 11, 0));
 
 			// Check storage items do not exist
 			assert!(!<Ledger<Test>>::contains_key(&10));
@@ -1524,7 +1600,7 @@ fn on_free_balance_zero_stash_removes_nominator() {
 			assert_eq!(Ring::free_balance(&11), 0);
 
 			// Reap the stash
-			assert_ok!(Staking::reap_stash(Origin::NONE, 11));
+			assert_ok!(Staking::reap_stash(Origin::NONE, 11, 0));
 
 			// Check storage items do not exist
 			assert!(!<Ledger<Test>>::contains_key(&10));
@@ -2445,7 +2521,15 @@ fn garbage_collection_after_slashing() {
 			assert_eq!(Ring::free_balance(11), 0);
 			assert_eq!(Ring::total_balance(&11), 0);
 
-			assert_ok!(Staking::reap_stash(Origin::NONE, 11));
+			let slashing_spans = <Staking as crate::Store>::SlashingSpans::get(&11).unwrap();
+			assert_eq!(slashing_spans.iter().count(), 2);
+
+			// reap_stash respects num_slashing_spans so that weight is accurate
+			assert_noop!(
+				Staking::reap_stash(Origin::NONE, 11, 0),
+				StakingError::IncorrectSlashingSpans
+			);
+			assert_ok!(Staking::reap_stash(Origin::NONE, 11, 2));
 
 			assert!(<Staking as Store>::SlashingSpans::get(&11).is_none());
 			assert_eq!(
@@ -3218,17 +3302,17 @@ fn test_max_nominator_rewarded_per_validator_and_cant_steal_someone_else_reward(
 #[test]
 fn set_history_depth_works() {
 	ExtBuilder::default().build_and_execute(|| {
-		start_era(10);
-		Staking::set_history_depth(Origin::ROOT, 20).unwrap();
+		mock::start_era(10);
+		Staking::set_history_depth(Origin::ROOT, 20, 0).unwrap();
 		assert!(<Staking as Store>::ErasTotalStake::contains_key(10 - 4));
 		assert!(<Staking as Store>::ErasTotalStake::contains_key(10 - 5));
-		Staking::set_history_depth(Origin::ROOT, 4).unwrap();
+		Staking::set_history_depth(Origin::ROOT, 4, 0).unwrap();
 		assert!(<Staking as Store>::ErasTotalStake::contains_key(10 - 4));
 		assert!(!<Staking as Store>::ErasTotalStake::contains_key(10 - 5));
-		Staking::set_history_depth(Origin::ROOT, 3).unwrap();
+		Staking::set_history_depth(Origin::ROOT, 3, 0).unwrap();
 		assert!(!<Staking as Store>::ErasTotalStake::contains_key(10 - 4));
 		assert!(!<Staking as Store>::ErasTotalStake::contains_key(10 - 5));
-		Staking::set_history_depth(Origin::ROOT, 8).unwrap();
+		Staking::set_history_depth(Origin::ROOT, 8, 0).unwrap();
 		assert!(!<Staking as Store>::ErasTotalStake::contains_key(10 - 4));
 		assert!(!<Staking as Store>::ErasTotalStake::contains_key(10 - 5));
 	});
@@ -3477,5 +3561,41 @@ fn bond_during_era_correctly_populates_claimed_rewards() {
 					..Default::default()
 				})
 			);
+		});
+}
+
+#[test]
+fn on_initialize_weight_is_correct() {
+	ExtBuilder::default()
+		.has_stakers(false)
+		.build_and_execute(|| {
+			assert_eq!(<Validators<Test>>::iter().count(), 0);
+			assert_eq!(<Nominators<Test>>::iter().count(), 0);
+			// When this pallet has nothing, we do 4 reads each block
+			let base_weight = <Test as frame_system::Trait>::DbWeight::get().reads(4);
+			assert_eq!(base_weight, Staking::on_initialize(0));
+		});
+
+	ExtBuilder::default()
+		.offchain_phragmen_ext()
+		.validator_count(4)
+		.has_stakers(false)
+		.build()
+		.execute_with(|| {
+			crate::substrate_tests::offchain_phragmen::build_offchain_phragmen_test_ext();
+			run_to_block(11);
+			Staking::on_finalize(System::block_number());
+			System::set_block_number((System::block_number() + 1).into());
+			Timestamp::set_timestamp(System::block_number() * 1000 + INIT_TIMESTAMP);
+			Session::on_initialize(System::block_number());
+
+			assert_eq!(<Validators<Test>>::iter().count(), 4);
+			assert_eq!(<Nominators<Test>>::iter().count(), 5);
+			// With 4 validators and 5 nominator, we should increase weight by:
+			// - (4 + 5) reads
+			// - 3 Writes
+			let final_weight =
+				<Test as frame_system::Trait>::DbWeight::get().reads_writes(4 + 9, 3);
+			assert_eq!(final_weight, Staking::on_initialize(System::block_number()));
 		});
 }

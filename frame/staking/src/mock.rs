@@ -22,7 +22,7 @@ use frame_support::{
 	assert_ok, impl_outer_dispatch, impl_outer_event, impl_outer_origin, parameter_types,
 	storage::IterableStorageMap,
 	traits::{Currency, FindAuthor, Get, OnFinalize, OnInitialize},
-	weights::Weight,
+	weights::{constants::RocksDbWeight, Weight},
 	StorageValue,
 };
 use sp_core::H256;
@@ -70,7 +70,7 @@ pub(crate) const COIN: Balance = 1_000 * MILLI;
 pub(crate) const CAP: Balance = 10_000_000_000 * COIN;
 pub(crate) const TOTAL_POWER: Power = 1_000_000_000;
 
-const INIT_TIMESTAMP: TsInMs = 30_000;
+pub const INIT_TIMESTAMP: TsInMs = 30_000;
 
 thread_local! {
 	static SESSION: RefCell<(Vec<AccountId>, HashSet<AccountId>)> = RefCell::new(Default::default());
@@ -245,7 +245,7 @@ impl frame_system::Trait for Test {
 	type Event = MetaEvent;
 	type BlockHashCount = BlockHashCount;
 	type MaximumBlockWeight = MaximumBlockWeight;
-	type DbWeight = ();
+	type DbWeight = RocksDbWeight;
 	type BlockExecutionWeight = ();
 	type ExtrinsicBaseWeight = ();
 	type MaximumBlockLength = MaximumBlockLength;
@@ -514,7 +514,7 @@ impl ExtBuilder {
 					(41, balance_factor * 2000),
 					(100, 2000 * balance_factor),
 					(101, 2000 * balance_factor),
-					// This allow us to have a total_payout different from 0.
+					// This allows us to have a total_payout different from 0.
 					(999, 1_000_000_000_000),
 				],
 			}
@@ -537,7 +537,7 @@ impl ExtBuilder {
 					(41, balance_factor * 2000),
 					(100, 2000 * balance_factor),
 					(101, 2000 * balance_factor),
-					// This allow us to have a total_payout different from 0.
+					// This allows us to have a total_payout different from 0.
 					(999, 1_000_000_000_000),
 				],
 			}
@@ -860,6 +860,19 @@ pub(crate) fn on_offence_now(
 	on_offence_in_era(offenders, slash_fraction, now)
 }
 
+pub(crate) fn add_slash(who: &AccountId) {
+	on_offence_now(
+		&[OffenceDetails {
+			offender: (
+				who.clone(),
+				Staking::eras_stakers(Staking::active_era().unwrap().index, who.clone()),
+			),
+			reporters: vec![],
+		}],
+		&[Perbill::from_percent(10)],
+	);
+}
+
 // winners will be chosen by simply their unweighted total backing stake. Nominator stake is
 // distributed evenly.
 pub(crate) fn horrible_phragmen_with_post_processing(
@@ -1090,6 +1103,13 @@ pub(crate) fn staking_events() -> Vec<Event<Test>> {
 			}
 		})
 		.collect()
+}
+
+pub(crate) fn ring_balances(who: &AccountId) -> (Balance, Balance) {
+	(Ring::free_balance(who), Ring::reserved_balance(who))
+}
+pub(crate) fn kton_balances(who: &AccountId) -> (Balance, Balance) {
+	(Kton::free_balance(who), Kton::reserved_balance(who))
 }
 
 #[macro_export]

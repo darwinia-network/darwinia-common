@@ -36,12 +36,13 @@
 use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
+	ensure,
 	traits::{Currency, Imbalance, OnUnbalanced},
 	StorageDoubleMap, StorageMap,
 };
 use sp_runtime::{
 	traits::{Saturating, Zero},
-	Perbill, RuntimeDebug,
+	DispatchResult, Perbill, RuntimeDebug,
 };
 use sp_std::{
 	ops::{Add, AddAssign, Sub},
@@ -197,7 +198,7 @@ pub struct SlashingSpans {
 impl SlashingSpans {
 	// creates a new record of slashing spans for a stash, starting at the beginning
 	// of the bonding period, relative to now.
-	fn new(window_start: EraIndex) -> Self {
+	pub(crate) fn new(window_start: EraIndex) -> Self {
 		SlashingSpans {
 			span_index: 0,
 			last_start: window_start,
@@ -212,7 +213,7 @@ impl SlashingSpans {
 	// update the slashing spans to reflect the start of a new span at the era after `now`
 	// returns `true` if a new span was started, `false` otherwise. `false` indicates
 	// that internal state is unchanged.
-	fn end_span(&mut self, now: EraIndex) -> bool {
+	pub(crate) fn end_span(&mut self, now: EraIndex) -> bool {
 		let next_start = now + 1;
 		if next_start <= self.last_start {
 			return false;
@@ -663,11 +664,21 @@ pub(crate) fn clear_era_metadata<T: Trait>(obsolete_era: EraIndex) {
 }
 
 /// Clear slashing metadata for a dead account.
-pub(crate) fn clear_stash_metadata<T: Trait>(stash: &T::AccountId) {
-	let spans = match <Module<T> as Store>::SlashingSpans::take(stash) {
-		None => return,
+pub(crate) fn clear_stash_metadata<T: Trait>(
+	stash: &T::AccountId,
+	num_slashing_spans: u32,
+) -> DispatchResult {
+	let spans = match <Module<T> as Store>::SlashingSpans::get(stash) {
+		None => return Ok(()),
 		Some(s) => s,
 	};
+
+	ensure!(
+		num_slashing_spans as usize >= spans.iter().count(),
+		<Error<T>>::IncorrectSlashingSpans
+	);
+
+	<Module<T> as Store>::SlashingSpans::remove(stash);
 
 	// kill slashing-span metadata for account.
 	//
@@ -677,6 +688,8 @@ pub(crate) fn clear_stash_metadata<T: Trait>(stash: &T::AccountId) {
 	for span in spans.iter() {
 		<Module<T> as Store>::SpanSlash::remove(&(stash.clone(), span.index));
 	}
+
+	Ok(())
 }
 
 // apply the slash to a stash account, deducting any missing funds from the reward

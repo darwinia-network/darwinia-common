@@ -85,10 +85,11 @@ pub mod impls {
 	/// Where `target_weight` must be given as the `Get` implementation of the `T` generic type.
 	/// https://research.web3.foundation/en/latest/polkadot/Token%20Economics/#relay-chain-transaction-fees
 	pub struct TargetedFeeAdjustment<T>(sp_std::marker::PhantomData<T>);
+
 	impl<T: Get<Perquintill>> Convert<Fixed128, Fixed128> for TargetedFeeAdjustment<T> {
 		fn convert(multiplier: Fixed128) -> Fixed128 {
-			let block_weight = System::all_extrinsics_weight();
 			let max_weight = MaximumBlockWeight::get();
+			let block_weight = System::all_extrinsics_weight().total().min(max_weight);
 			let target_weight = (T::get() * max_weight) as u128;
 			let block_weight = block_weight as u128;
 
@@ -168,6 +169,39 @@ pub mod opaque {
 }
 
 pub mod primitives {
+	/// App-specific crypto used for reporting equivocation/misbehavior in BABE and
+	/// GRANDPA. Any rewards for misbehavior reporting will be paid out to this
+	/// account.
+	pub mod report {
+		// --- substrate ---
+		use frame_system::offchain::AppCrypto;
+		use sp_core::crypto::{key_types, KeyTypeId};
+		// --- crates ---
+		use super::{Signature, Verify};
+
+		/// Key type for the reporting module. Used for reporting BABE and GRANDPA
+		/// equivocations.
+		pub const KEY_TYPE: KeyTypeId = key_types::REPORTING;
+
+		mod app {
+			use sp_application_crypto::{app_crypto, sr25519};
+			app_crypto!(sr25519, super::KEY_TYPE);
+		}
+
+		/// Identity of the equivocation/misbehavior reporter.
+		pub type ReporterId = app::Public;
+
+		/// An `AppCrypto` type to allow submitting signed transactions using the reporting
+		/// application key as signer.
+		pub struct ReporterAppCrypto;
+
+		impl AppCrypto<<Signature as Verify>::Signer, Signature> for ReporterAppCrypto {
+			type RuntimeAppPublic = ReporterId;
+			type GenericPublic = sp_core::sr25519::Public;
+			type GenericSignature = sp_core::sr25519::Signature;
+		}
+	}
+
 	// --- substrate ---
 	use frame_support::traits::Currency;
 	use sp_runtime::{
@@ -232,12 +266,14 @@ pub mod primitives {
 
 	/// The SignedExtension to the basic transaction logic.
 	pub type SignedExtra = (
-		frame_system::CheckVersion<Runtime>,
+		frame_system::CheckSpecVersion<Runtime>,
+		frame_system::CheckTxVersion<Runtime>,
 		frame_system::CheckGenesis<Runtime>,
 		frame_system::CheckEra<Runtime>,
 		frame_system::CheckNonce<Runtime>,
 		frame_system::CheckWeight<Runtime>,
 		pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
+		pallet_grandpa::ValidateEquivocationReport<Runtime>,
 		darwinia_eth_relay::CheckEthRelayHeaderHash<Runtime>,
 	);
 
@@ -267,24 +303,33 @@ pub use primitives::*;
 
 // --- crates ---
 use codec::{Decode, Encode};
+use static_assertions::const_assert;
 // --- substrate ---
 use frame_support::{
 	construct_runtime, debug, parameter_types,
-	traits::{LockIdentifier, Randomness},
-	weights::{RuntimeDbWeight, Weight},
+	traits::{KeyOwnerProofSystem, LockIdentifier, Randomness},
+	weights::{
+		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
+		Weight,
+	},
 };
-use pallet_grandpa::{fg_primitives, AuthorityList as GrandpaAuthorityList};
+use pallet_grandpa::{
+	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
+};
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use pallet_session::historical as pallet_session_historical;
 use sp_api::impl_runtime_apis;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_core::{
+	crypto::KeyTypeId,
 	u32_trait::{_1, _2, _3, _5},
 	OpaqueMetadata,
 };
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{BlakeTwo256, Block as BlockT, IdentityLookup, OpaqueKeys, SaturatedConversion},
+	traits::{
+		BlakeTwo256, Block as BlockT, IdentityLookup, NumberFor, OpaqueKeys, SaturatedConversion,
+	},
 	transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, ModuleId, Perbill, Percent, Permill, Perquintill, RuntimeDebug,
 };
@@ -352,17 +397,7 @@ pub fn native_version() -> NativeVersion {
 parameter_types! {
 	pub const BlockHashCount: BlockNumber = 250;
 	/// We allow for 2 seconds of compute with a 6 second average block time.
-	pub const MaximumBlockWeight: Weight = 2_000_000_000_000;
-	/// This probably should not be changed unless you have specific
-	/// disk i/o conditions for the node.
-	pub const DbWeight: RuntimeDbWeight = RuntimeDbWeight {
-		read: 25_000_000, // ~25 µs @ 200,000 items
-		write: 100_000_000, // ~100 µs @ 200,000 items
-	};
-	/// Importing a block with 0 txs takes ~5 ms
-	pub const BlockExecutionWeight: Weight = 5_000_000_000;
-	/// Executing 10,000 System remarks (no-op) txs takes ~1.26 seconds -> ~125 µs per tx
-	pub const ExtrinsicBaseWeight: Weight = 125_000_000;
+	pub const MaximumBlockWeight: Weight = 2 * WEIGHT_PER_SECOND;
 	pub const MaximumBlockLength: u32 = 5 * 1024 * 1024;
 	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
 	pub const Version: RuntimeVersion = VERSION;
@@ -380,7 +415,7 @@ impl frame_system::Trait for Runtime {
 	type Event = Event;
 	type BlockHashCount = BlockHashCount;
 	type MaximumBlockWeight = MaximumBlockWeight;
-	type DbWeight = DbWeight;
+	type DbWeight = RocksDbWeight;
 	type BlockExecutionWeight = BlockExecutionWeight;
 	type ExtrinsicBaseWeight = ExtrinsicBaseWeight;
 	type MaximumBlockLength = MaximumBlockLength;
@@ -466,7 +501,7 @@ impl pallet_session::Trait for Runtime {
 	type ValidatorIdOf = darwinia_staking::StashOf<Self>;
 	type ShouldEndSession = Babe;
 	type NextSessionRotation = Babe;
-	type SessionManager = Staking;
+	type SessionManager = pallet_session::historical::NoteHistoricalRoot<Self, Staking>;
 	type SessionHandler = <SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = SessionKeys;
 	type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
@@ -484,6 +519,20 @@ impl pallet_finality_tracker::Trait for Runtime {
 
 impl pallet_grandpa::Trait for Runtime {
 	type Event = Event;
+	type Call = Call;
+	type KeyOwnerProof =
+		<Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(KeyTypeId, GrandpaId)>>::Proof;
+	type KeyOwnerIdentification = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
+		KeyTypeId,
+		GrandpaId,
+	)>>::IdentificationTuple;
+	type KeyOwnerProofSystem = Historical;
+	type HandleEquivocation = pallet_grandpa::EquivocationHandler<
+		Self::KeyOwnerIdentification,
+		primitives::report::ReporterAppCrypto,
+		Runtime,
+		Offences,
+	>;
 }
 
 parameter_types! {
@@ -502,6 +551,7 @@ impl pallet_authority_discovery::Trait for Runtime {}
 
 parameter_types! {
 	pub const CouncilMotionDuration: BlockNumber = 3 * DAYS;
+	pub const CouncilMaxProposals: u32 = 100;
 }
 type CouncilCollective = pallet_collective::Instance1;
 impl pallet_collective::Trait<CouncilCollective> for Runtime {
@@ -509,6 +559,7 @@ impl pallet_collective::Trait<CouncilCollective> for Runtime {
 	type Proposal = Call;
 	type Event = Event;
 	type MotionDuration = CouncilMotionDuration;
+	type MaxProposals = CouncilMaxProposals;
 }
 
 impl pallet_sudo::Trait for Runtime {
@@ -583,11 +634,14 @@ impl darwinia_staking::Trait for Runtime {
 	type TotalPower = TotalPower;
 }
 
+const DESIRED_MEMBERS: u32 = 13;
+// Make sure that there are no more than `MAX_MEMBERS` members elected via phragmen.
+const_assert!(DESIRED_MEMBERS <= pallet_collective::MAX_MEMBERS);
 parameter_types! {
 	pub const ElectionsPhragmenModuleId: LockIdentifier = *b"da/phrel";
 	pub const CandidacyBond: Balance = 1 * COIN;
 	pub const VotingBond: Balance = 5 * MILLI;
-	pub const DesiredMembers: u32 = 13;
+	pub const DesiredMembers: u32 = DESIRED_MEMBERS;
 	pub const DesiredRunnersUp: u32 = 7;
 	/// Daily council elections.
 	pub const TermDuration: BlockNumber = 24 * HOURS;
@@ -791,12 +845,14 @@ where
 			.saturating_sub(1);
 		let tip = 0;
 		let extra: SignedExtra = (
-			frame_system::CheckVersion::<Runtime>::new(),
+			frame_system::CheckSpecVersion::<Runtime>::new(),
+			frame_system::CheckTxVersion::<Runtime>::new(),
 			frame_system::CheckGenesis::<Runtime>::new(),
 			frame_system::CheckEra::<Runtime>::from(generic::Era::mortal(period, current_block)),
 			frame_system::CheckNonce::<Runtime>::from(nonce),
 			frame_system::CheckWeight::<Runtime>::new(),
 			pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
+			pallet_grandpa::ValidateEquivocationReport::<Runtime>::new(),
 			Default::default(),
 		);
 		let raw_payload = SignedPayload::new(call, extra)
@@ -877,6 +933,32 @@ impl_runtime_apis! {
 		fn grandpa_authorities() -> GrandpaAuthorityList {
 			Grandpa::grandpa_authorities()
 		}
+
+		fn submit_report_equivocation_extrinsic(
+			equivocation_proof: fg_primitives::EquivocationProof<
+				<Block as BlockT>::Hash,
+				NumberFor<Block>,
+			>,
+			key_owner_proof: fg_primitives::OpaqueKeyOwnershipProof,
+		) -> Option<()> {
+			let key_owner_proof = key_owner_proof.decode()?;
+
+			Grandpa::submit_report_equivocation_extrinsic(
+				equivocation_proof,
+				key_owner_proof,
+			)
+		}
+
+		fn generate_key_ownership_proof(
+			_set_id: fg_primitives::SetId,
+			authority_id: GrandpaId,
+		) -> Option<fg_primitives::OpaqueKeyOwnershipProof> {
+			use codec::Encode;
+
+			Historical::prove((fg_primitives::KEY_TYPE, authority_id))
+				.map(|p| p.encode())
+				.map(fg_primitives::OpaqueKeyOwnershipProof::new)
+		}
 	}
 
 	impl sp_consensus_babe::BabeApi<Block> for Runtime {
@@ -914,7 +996,7 @@ impl_runtime_apis! {
 
 		fn decode_session_keys(
 			encoded: Vec<u8>,
-		) -> Option<Vec<(Vec<u8>, sp_core::crypto::KeyTypeId)>> {
+		) -> Option<Vec<(Vec<u8>, KeyTypeId)>> {
 			SessionKeys::decode_into_raw_public_keys(&encoded)
 		}
 	}

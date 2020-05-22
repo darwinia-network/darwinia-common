@@ -27,10 +27,10 @@ mod types {
 use codec::{Decode, Encode};
 // --- substrate ---
 #[cfg(feature = "std")]
-use frame_support::debug::error;
+use frame_support::{debug::error, traits::WithdrawReasons};
 use frame_support::{
 	ensure,
-	traits::{Currency, ExistenceRequirement::KeepAlive, Get, WithdrawReasons},
+	traits::{Currency, ExistenceRequirement::KeepAlive, Get},
 	{decl_error, decl_event, decl_module, decl_storage},
 };
 use frame_system::{self as system, ensure_none, ensure_root};
