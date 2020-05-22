@@ -3283,6 +3283,11 @@ impl<T: Trait> Module<T> {
 	pub fn put_election_status(status: ElectionStatus<T::BlockNumber>) {
 		<EraElectionStatus<T>>::put(status);
 	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	pub fn set_slash_reward_fraction(fraction: Perbill) {
+		SlashRewardFraction::put(fraction);
+	}
 }
 
 impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
