@@ -266,8 +266,8 @@ pub mod primitives {
 
 	/// The SignedExtension to the basic transaction logic.
 	pub type SignedExtra = (
-		frame_system::CheckSpecVersion<Runtime>::new(),
-		frame_system::CheckTxVersion<Runtime>::new(),
+		frame_system::CheckSpecVersion<Runtime>,
+		frame_system::CheckTxVersion<Runtime>,
 		frame_system::CheckGenesis<Runtime>,
 		frame_system::CheckEra<Runtime>,
 		frame_system::CheckNonce<Runtime>,
