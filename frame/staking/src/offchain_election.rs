@@ -17,7 +17,8 @@ use sp_runtime::{
 use sp_std::{convert::TryInto, prelude::*};
 // --- darwinia ---
 use crate::{
-	Call, CompactAssignments, Module, NominatorIndex, OffchainAccuracy, Trait, ValidatorIndex,
+	Call, CompactAssignments, ElectionSize, Module, NominatorIndex, OffchainAccuracy, Trait,
+	ValidatorIndex,
 };
 
 /// Error types related to the offchain election machinery.
@@ -101,13 +102,14 @@ pub(crate) fn compute_offchain_election<T: Trait>() -> Result<(), OffchainElecti
 	} = <Module<T>>::do_phragmen::<OffchainAccuracy>().ok_or(OffchainElectionError::ElectionFailed)?;
 
 	// process and prepare it for submission.
-	let (winners, compact, score) = prepare_submission::<T>(assignments, winners, true)?;
+	let (winners, compact, score, size) = prepare_submission::<T>(assignments, winners, true)?;
 
 	// defensive-only: current era can never be none except genesis.
 	let current_era = <Module<T>>::current_era().unwrap_or_default();
 
 	// send it.
-	let call = Call::submit_election_solution_unsigned(winners, compact, score, current_era).into();
+	let call =
+		Call::submit_election_solution_unsigned(winners, compact, score, current_era, size).into();
 
 	<SubmitTransaction<T, Call<T>>>::submit_unsigned_transaction(call)
 		.map_err(|_| OffchainElectionError::PoolSubmissionFailed)
@@ -120,7 +122,15 @@ pub fn prepare_submission<T: Trait>(
 	assignments: Vec<Assignment<T::AccountId, OffchainAccuracy>>,
 	winners: Vec<(T::AccountId, ExtendedBalance)>,
 	do_reduce: bool,
-) -> Result<(Vec<ValidatorIndex>, CompactAssignments, PhragmenScore), OffchainElectionError>
+) -> Result<
+	(
+		Vec<ValidatorIndex>,
+		CompactAssignments,
+		PhragmenScore,
+		ElectionSize,
+	),
+	OffchainElectionError,
+>
 where
 	ExtendedBalance: From<<OffchainAccuracy as PerThing>::Inner>,
 {
@@ -220,6 +230,12 @@ where
 		}
 	}
 
+	// both conversions are safe; snapshots are not created if they exceed.
+	let size = ElectionSize {
+		validators: snapshot_validators.len() as ValidatorIndex,
+		nominators: snapshot_nominators.len() as NominatorIndex,
+	};
+
 	debug::native::debug!(
 		target: "staking",
 		"prepared solution after {} equalization iterations with score {:?}",
@@ -227,5 +243,5 @@ where
 		score,
 	);
 
-	Ok((winners_indexed, compact, score))
+	Ok((winners_indexed, compact, score, size))
 }
