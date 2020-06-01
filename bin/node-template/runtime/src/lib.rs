@@ -647,8 +647,8 @@ parameter_types! {
 	pub const TermDuration: BlockNumber = 24 * HOURS;
 }
 impl darwinia_elections_phragmen::Trait for Runtime {
-	type ModuleId = ElectionsPhragmenModuleId;
 	type Event = Event;
+	type ModuleId = ElectionsPhragmenModuleId;
 	type Currency = Ring;
 	type ChangeMembers = Council;
 	// NOTE: this implies that council's genesis members cannot be set directly and must come from
