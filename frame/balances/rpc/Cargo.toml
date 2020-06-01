@@ -1,6 +1,6 @@
 [package]
 name = "darwinia-balances-rpc"
-version = "0.6.0"
+version = "0.6.1"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "Node-specific RPC methods for interaction with balances."
 edition = "2018"
@@ -17,6 +17,6 @@ jsonrpc-derive = "14.0.3"
 # darwinia
 darwinia-balances-rpc-runtime-api = { path = "./runtime-api" }
 # substrate
-sp-api = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.8" }
-sp-blockchain = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.8" }
-sp-runtime = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.8" }
+sp-api = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
+sp-blockchain = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
+sp-runtime = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }

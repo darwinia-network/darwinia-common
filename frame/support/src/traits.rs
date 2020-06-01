@@ -79,14 +79,14 @@ pub trait DustCollector<AccountId> {
 }
 
 #[impl_for_tuples(15)]
-impl<AccountId> DustCollector<AccountId> for Balances {
+impl<AccountId> DustCollector<AccountId> for Currencies {
 	fn check(who: &AccountId) -> Result<(), ()> {
-		for_tuples!( #( Balances::check(who)?; )* );
+		for_tuples!( #( Currencies::check(who)?; )* );
 		Ok(())
 	}
 
 	fn collect(who: &AccountId) {
-		for_tuples!( #( Balances::collect(who); )* );
+		for_tuples!( #( Currencies::collect(who); )* );
 	}
 }
 
