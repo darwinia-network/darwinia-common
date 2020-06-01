@@ -3440,8 +3440,8 @@ impl<T: Trait> Module<T> {
 					) {
 						ring_balance.saturated_into()
 					} else {
-						debug::error!(
-							target: "staking",
+						log!(
+							error,
 							"[staking] Origin RING: {:?}, Weight: {:?}, Origin Weight: {:?}",
 							origin_ring_balance,
 							weight,
@@ -3456,8 +3456,8 @@ impl<T: Trait> Module<T> {
 					) {
 						kton_balance.saturated_into()
 					} else {
-						debug::error!(
-							target: "staking",
+						log!(
+							error,
 							"[staking] Origin KTON: {:?}, Weight: {:?}, Origin Weight: {:?}",
 							origin_kton_balance,
 							weight,
