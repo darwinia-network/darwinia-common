@@ -14,10 +14,7 @@ pub mod impls {
 	// --- core ---
 	use core::num::NonZeroI128;
 	// --- substrate ---
-	use frame_support::{
-		traits::{Currency, Get, Imbalance, OnUnbalanced},
-		weights::Weight,
-	};
+	use frame_support::traits::{Currency, Get, Imbalance, OnUnbalanced};
 	use sp_runtime::{
 		traits::{Convert, Saturating},
 		Fixed128, Perquintill,
@@ -62,17 +59,6 @@ pub mod impls {
 	impl Convert<u128, Balance> for CurrencyToVoteHandler {
 		fn convert(x: u128) -> Balance {
 			x * Self::factor()
-		}
-	}
-
-	/// Convert from weight to balance via a simple coefficient multiplication
-	/// The associated type C encapsulates a constant in units of balance per weight
-	pub struct LinearWeightToFee<C>(sp_std::marker::PhantomData<C>);
-	impl<C: Get<Balance>> Convert<Weight, Balance> for LinearWeightToFee<C> {
-		fn convert(w: Weight) -> Balance {
-			// setting this to zero will disable the weight fee.
-			let coefficient = C::get();
-			Balance::from(w).saturating_mul(coefficient)
 		}
 	}
 
@@ -310,7 +296,7 @@ use frame_support::{
 	traits::{KeyOwnerProofSystem, LockIdentifier, Randomness},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		Weight,
+		IdentityFee, Weight,
 	},
 };
 use pallet_grandpa::{
@@ -454,9 +440,6 @@ impl pallet_timestamp::Trait for Runtime {
 
 parameter_types! {
 	pub const TransactionByteFee: Balance = 10 * MICRO;
-	// In the Substrate node, a weight of 10_000_000 (smallest non-zero weight)
-	// is mapped to 10_000_000 units of fees, hence:
-	pub const WeightFeeCoefficient: Balance = 1;
 	// for a sane configuration, this should always be less than `AvailableBlockRatio`.
 	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
 }
@@ -464,7 +447,7 @@ impl pallet_transaction_payment::Trait for Runtime {
 	type Currency = Ring;
 	type OnTransactionPayment = DealWithFees;
 	type TransactionByteFee = TransactionByteFee;
-	type WeightToFee = LinearWeightToFee<WeightFeeCoefficient>;
+	type WeightToFee = IdentityFee<Balance>;
 	type FeeMultiplierUpdate = TargetedFeeAdjustment<TargetBlockFullness>;
 }
 

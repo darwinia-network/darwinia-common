@@ -8,15 +8,11 @@ use codec::{Decode, Encode};
 use frame_support::{
 	impl_outer_origin, parameter_types,
 	traits::{Get, StorageMapShim},
-	weights::{DispatchInfo, Weight},
+	weights::{DispatchInfo, IdentityFee, Weight},
 };
 use frame_system as system;
 use sp_core::H256;
-use sp_runtime::{
-	testing::Header,
-	traits::{ConvertInto, IdentityLookup},
-	Perbill, RuntimeDebug,
-};
+use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill, RuntimeDebug};
 // --- darwinia ---
 use crate::{tests::*, *};
 
@@ -98,7 +94,7 @@ impl pallet_transaction_payment::Trait for Test {
 	type Currency = Ring;
 	type OnTransactionPayment = ();
 	type TransactionByteFee = TransactionByteFee;
-	type WeightToFee = ConvertInto;
+	type WeightToFee = IdentityFee<u64>;
 	type FeeMultiplierUpdate = ();
 }
 impl Trait<RingInstance> for Test {
