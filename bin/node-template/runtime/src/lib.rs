@@ -11,14 +11,9 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 pub mod impls {
 	//! Some configurable implementations as associated type for the substrate runtime.
 
-	// --- core ---
-	use core::num::NonZeroI128;
 	// --- substrate ---
 	use frame_support::traits::{Currency, Get, Imbalance, OnUnbalanced};
-	use sp_runtime::{
-		traits::{Convert, Saturating},
-		Fixed128, Perquintill,
-	};
+	use sp_runtime::{Fixed128, FixedPointNumber, Perquintill};
 	// --- darwinia ---
 	use crate::{primitives::*, *};
 
@@ -75,25 +70,21 @@ pub mod impls {
 	impl<T: Get<Perquintill>> Convert<Fixed128, Fixed128> for TargetedFeeAdjustment<T> {
 		fn convert(multiplier: Fixed128) -> Fixed128 {
 			let max_weight = MaximumBlockWeight::get();
-			let block_weight = System::all_extrinsics_weight().total().min(max_weight);
+			let block_weight = System::block_weight().total().min(max_weight);
 			let target_weight = (T::get() * max_weight) as u128;
 			let block_weight = block_weight as u128;
 
 			// determines if the first_term is positive
 			let positive = block_weight >= target_weight;
 			let diff_abs = block_weight.max(target_weight) - block_weight.min(target_weight);
-			// safe, diff_abs cannot exceed u64 and it can always be computed safely even with the lossy
-			// `Fixed128::from_rational`.
-			let diff = Fixed128::from_rational(
-				diff_abs as i128,
-				NonZeroI128::new(max_weight.max(1) as i128).unwrap(),
-			);
+			// safe, diff_abs cannot exceed u64.
+			let diff = Fixed128::saturating_from_rational(diff_abs, max_weight.max(1));
 			let diff_squared = diff.saturating_mul(diff);
 
 			// 0.00004 = 4/100_000 = 40_000/10^9
-			let v = Fixed128::from_rational(4, NonZeroI128::new(100_000).unwrap());
+			let v = Fixed128::saturating_from_rational(4, 100_000);
 			// 0.00004^2 = 16/10^10 Taking the future /2 into account... 8/10^10
-			let v_squared_2 = Fixed128::from_rational(8, NonZeroI128::new(10_000_000_000).unwrap());
+			let v_squared_2 = Fixed128::saturating_from_rational(8, 10_000_000_000u64);
 
 			let first_term = v.saturating_mul(diff);
 			let second_term = v_squared_2.saturating_mul(diff_squared);
@@ -113,7 +104,7 @@ pub mod impls {
 					// multiplier. While at -1, it means that the network is so un-congested that all
 					// transactions have no weight fee. We stop here and only increase if the network
 					// became more busy.
-					.max(Fixed128::from_natural(-1))
+					.max(Fixed128::saturating_from_integer(-1))
 			}
 		}
 	}
