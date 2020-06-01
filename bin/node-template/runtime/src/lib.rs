@@ -13,7 +13,7 @@ pub mod impls {
 
 	// --- substrate ---
 	use frame_support::traits::{Currency, Get, Imbalance, OnUnbalanced};
-	use sp_runtime::{Fixed128, FixedPointNumber, Perquintill};
+	use sp_runtime::{traits::Convert, Fixed128, FixedPointNumber, Perquintill};
 	// --- darwinia ---
 	use crate::{primitives::*, *};
 
