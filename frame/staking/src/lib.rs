@@ -411,7 +411,7 @@ pub use types::EraIndex;
 use codec::{Decode, Encode, HasCompact};
 // --- substrate ---
 use frame_support::{
-	debug, decl_error, decl_event, decl_module, decl_storage,
+	decl_error, decl_event, decl_module, decl_storage,
 	dispatch::{DispatchResultWithPostInfo, IsSubType, WithPostDispatchInfo},
 	ensure,
 	storage::IterableStorageMap,
@@ -463,13 +463,14 @@ use darwinia_support::{
 };
 use types::*;
 
-// syntactic sugar for logging
-#[cfg(feature = "std")]
-const LOG_TARGET: &'static str = "staking";
+pub(crate) const LOG_TARGET: &'static str = "staking";
+
+// syntactic sugar for logging.
+#[macro_export]
 macro_rules! log {
 	($level:tt, $patter:expr $(, $values:expr)* $(,)?) => {
-		debug::native::$level!(
-			target: LOG_TARGET,
+		frame_support::debug::$level!(
+			target: crate::LOG_TARGET,
 			$patter $(, $values)*
 		)
 	};
@@ -610,7 +611,7 @@ where
 pub struct ActiveEraInfo {
 	/// Index of era.
 	pub index: EraIndex,
-	/// Moment of start expresed as millisecond from `$UNIX_EPOCH`.
+	/// Moment of start expressed as millisecond from `$UNIX_EPOCH`.
 	///
 	/// Start can be none if start hasn't been set for the era yet,
 	/// Start is set on the first on_finalize of the era to guarantee usage of `Time`.
@@ -1305,6 +1306,9 @@ decl_event!(
 		/// A new set of stakers was elected with the given computation method.
 		StakingElection(ElectionCompute),
 
+		/// A new solution for the upcoming election has been stored.
+		SolutionStored(ElectionCompute),
+
 		/// Bond succeed.
 		/// `amount` in `RingBalance<T>`, `start_time` in `TsInMs`, `expired_time` in `TsInMs`
 		BondRing(RingBalance, TsInMs, TsInMs),
@@ -1481,7 +1485,7 @@ decl_module! {
 					);
 				} else {
 					if let Err(e) = compute_offchain_election::<T>() {
-						log!(warn, "💸 Error in phragmen offchain worker: {:?}", e);
+						log!(error, "💸 Error in phragmen offchain worker: {:?}", e);
 					} else {
 						log!(debug, "Executed offchain worker thread without errors.");
 					}
@@ -3095,6 +3099,9 @@ impl<T: Trait> Module<T> {
 			exposures,
 		});
 		QueuedScore::put(submitted_score);
+
+		// emit event.
+		Self::deposit_event(RawEvent::SolutionStored(compute));
 
 		Ok(Some(adjusted_weight).into())
 	}

@@ -3,7 +3,7 @@
 // --- crates ---
 use codec::Decode;
 // --- substrate ---
-use frame_support::{debug, traits::Get};
+use frame_support::traits::Get;
 use frame_system::offchain::SubmitTransaction;
 use sp_phragmen::{
 	build_support_map, equalize, evaluate_support, reduce, Assignment, ExtendedBalance,
@@ -236,8 +236,8 @@ where
 		nominators: snapshot_nominators.len() as NominatorIndex,
 	};
 
-	debug::native::debug!(
-		target: "staking",
+	crate::log!(
+		info,
 		"prepared solution after {} equalization iterations with score {:?}",
 		iterations_executed,
 		score,
