@@ -1,6 +1,6 @@
 [package]
 name = "eth-primitives"
-version = "0.6.0"
+version = "0.6.1"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "Ethereum primitives for Darwinia Relay"
 edition = "2018"
@@ -25,8 +25,8 @@ primitive-types = { default-features = false, features = ["codec", "rlp"], git =
 rlp = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 rlp-derive = { git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.8" }
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.8" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
 
 [dev-dependencies]
 # crates
@@ -36,7 +36,7 @@ serde_json = { version = "1.0.51" }
 # github
 triehash = { git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
-frame-support = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-alpha.darwinia.8" }
+frame-support = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
 
 [features]
 default = ["std"]

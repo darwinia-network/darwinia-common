@@ -11,17 +11,9 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 pub mod impls {
 	//! Some configurable implementations as associated type for the substrate runtime.
 
-	// --- core ---
-	use core::num::NonZeroI128;
 	// --- substrate ---
-	use frame_support::{
-		traits::{Currency, Get, Imbalance, OnUnbalanced},
-		weights::Weight,
-	};
-	use sp_runtime::{
-		traits::{Convert, Saturating},
-		Fixed128, Perquintill,
-	};
+	use frame_support::traits::{Currency, Get, Imbalance, OnUnbalanced};
+	use sp_runtime::{traits::Convert, Fixed128, FixedPointNumber, Perquintill};
 	// --- darwinia ---
 	use crate::{primitives::*, *};
 
@@ -65,17 +57,6 @@ pub mod impls {
 		}
 	}
 
-	/// Convert from weight to balance via a simple coefficient multiplication
-	/// The associated type C encapsulates a constant in units of balance per weight
-	pub struct LinearWeightToFee<C>(sp_std::marker::PhantomData<C>);
-	impl<C: Get<Balance>> Convert<Weight, Balance> for LinearWeightToFee<C> {
-		fn convert(w: Weight) -> Balance {
-			// setting this to zero will disable the weight fee.
-			let coefficient = C::get();
-			Balance::from(w).saturating_mul(coefficient)
-		}
-	}
-
 	/// Update the given multiplier based on the following formula
 	///
 	///   diff = (previous_block_weight - target_weight)/max_weight
@@ -89,25 +70,21 @@ pub mod impls {
 	impl<T: Get<Perquintill>> Convert<Fixed128, Fixed128> for TargetedFeeAdjustment<T> {
 		fn convert(multiplier: Fixed128) -> Fixed128 {
 			let max_weight = MaximumBlockWeight::get();
-			let block_weight = System::all_extrinsics_weight().total().min(max_weight);
+			let block_weight = System::block_weight().total().min(max_weight);
 			let target_weight = (T::get() * max_weight) as u128;
 			let block_weight = block_weight as u128;
 
 			// determines if the first_term is positive
 			let positive = block_weight >= target_weight;
 			let diff_abs = block_weight.max(target_weight) - block_weight.min(target_weight);
-			// safe, diff_abs cannot exceed u64 and it can always be computed safely even with the lossy
-			// `Fixed128::from_rational`.
-			let diff = Fixed128::from_rational(
-				diff_abs as i128,
-				NonZeroI128::new(max_weight.max(1) as i128).unwrap(),
-			);
+			// safe, diff_abs cannot exceed u64.
+			let diff = Fixed128::saturating_from_rational(diff_abs, max_weight.max(1));
 			let diff_squared = diff.saturating_mul(diff);
 
 			// 0.00004 = 4/100_000 = 40_000/10^9
-			let v = Fixed128::from_rational(4, NonZeroI128::new(100_000).unwrap());
+			let v = Fixed128::saturating_from_rational(4, 100_000);
 			// 0.00004^2 = 16/10^10 Taking the future /2 into account... 8/10^10
-			let v_squared_2 = Fixed128::from_rational(8, NonZeroI128::new(10_000_000_000).unwrap());
+			let v_squared_2 = Fixed128::saturating_from_rational(8, 10_000_000_000u64);
 
 			let first_term = v.saturating_mul(diff);
 			let second_term = v_squared_2.saturating_mul(diff_squared);
@@ -127,7 +104,7 @@ pub mod impls {
 					// multiplier. While at -1, it means that the network is so un-congested that all
 					// transactions have no weight fee. We stop here and only increase if the network
 					// became more busy.
-					.max(Fixed128::from_natural(-1))
+					.max(Fixed128::saturating_from_integer(-1))
 			}
 		}
 	}
@@ -310,7 +287,7 @@ use frame_support::{
 	traits::{KeyOwnerProofSystem, LockIdentifier, Randomness},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		Weight,
+		IdentityFee, Weight,
 	},
 };
 use pallet_grandpa::{
@@ -318,6 +295,7 @@ use pallet_grandpa::{
 };
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use pallet_session::historical as pallet_session_historical;
+use pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo as TransactionPaymentRuntimeDispatchInfo;
 use sp_api::impl_runtime_apis;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_core::{
@@ -329,6 +307,7 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
 		BlakeTwo256, Block as BlockT, IdentityLookup, NumberFor, OpaqueKeys, SaturatedConversion,
+		Saturating,
 	},
 	transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, ModuleId, Perbill, Percent, Permill, Perquintill, RuntimeDebug,
@@ -395,9 +374,12 @@ pub fn native_version() -> NativeVersion {
 }
 
 parameter_types! {
-	pub const BlockHashCount: BlockNumber = 250;
+	pub const BlockHashCount: BlockNumber = 2400;
 	/// We allow for 2 seconds of compute with a 6 second average block time.
 	pub const MaximumBlockWeight: Weight = 2 * WEIGHT_PER_SECOND;
+	/// Assume 10% of weight for average on_initialize calls.
+	pub const MaximumExtrinsicWeight: Weight = AvailableBlockRatio::get()
+		.saturating_sub(Perbill::from_percent(10)) * MaximumBlockWeight::get();
 	pub const MaximumBlockLength: u32 = 5 * 1024 * 1024;
 	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
 	pub const Version: RuntimeVersion = VERSION;
@@ -418,6 +400,7 @@ impl frame_system::Trait for Runtime {
 	type DbWeight = RocksDbWeight;
 	type BlockExecutionWeight = BlockExecutionWeight;
 	type ExtrinsicBaseWeight = ExtrinsicBaseWeight;
+	type MaximumExtrinsicWeight = MaximumExtrinsicWeight;
 	type MaximumBlockLength = MaximumBlockLength;
 	type AvailableBlockRatio = AvailableBlockRatio;
 	type Version = Version;
@@ -449,9 +432,6 @@ impl pallet_timestamp::Trait for Runtime {
 
 parameter_types! {
 	pub const TransactionByteFee: Balance = 10 * MICRO;
-	// In the Substrate node, a weight of 10_000_000 (smallest non-zero weight)
-	// is mapped to 10_000_000 units of fees, hence:
-	pub const WeightFeeCoefficient: Balance = 1;
 	// for a sane configuration, this should always be less than `AvailableBlockRatio`.
 	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
 }
@@ -459,7 +439,7 @@ impl pallet_transaction_payment::Trait for Runtime {
 	type Currency = Ring;
 	type OnTransactionPayment = DealWithFees;
 	type TransactionByteFee = TransactionByteFee;
-	type WeightToFee = LinearWeightToFee<WeightFeeCoefficient>;
+	type WeightToFee = IdentityFee<Balance>;
 	type FeeMultiplierUpdate = TargetedFeeAdjustment<TargetBlockFullness>;
 }
 
@@ -473,10 +453,14 @@ impl pallet_authorship::Trait for Runtime {
 	type EventHandler = (Staking, ImOnline);
 }
 
+parameter_types! {
+	pub const OffencesWeightSoftLimit: Weight = Perbill::from_percent(60) * MaximumBlockWeight::get();
+}
 impl pallet_offences::Trait for Runtime {
 	type Event = Event;
 	type IdentificationTuple = pallet_session::historical::IdentificationTuple<Self>;
 	type OnOffenceHandler = Staking;
+	type WeightSoftLimit = OffencesWeightSoftLimit;
 }
 
 impl pallet_session::historical::Trait for Runtime {
@@ -647,8 +631,8 @@ parameter_types! {
 	pub const TermDuration: BlockNumber = 24 * HOURS;
 }
 impl darwinia_elections_phragmen::Trait for Runtime {
-	type ModuleId = ElectionsPhragmenModuleId;
 	type Event = Event;
+	type ModuleId = ElectionsPhragmenModuleId;
 	type Currency = Ring;
 	type ChangeMembers = Council;
 	// NOTE: this implies that council's genesis members cannot be set directly and must come from
@@ -998,6 +982,22 @@ impl_runtime_apis! {
 			encoded: Vec<u8>,
 		) -> Option<Vec<(Vec<u8>, KeyTypeId)>> {
 			SessionKeys::decode_into_raw_public_keys(&encoded)
+		}
+	}
+
+	impl frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce> for Runtime {
+		fn account_nonce(account: AccountId) -> Nonce {
+			System::account_nonce(account)
+		}
+	}
+
+	impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<
+		Block,
+		Balance,
+		UncheckedExtrinsic,
+	> for Runtime {
+		fn query_info(uxt: UncheckedExtrinsic, len: u32) -> TransactionPaymentRuntimeDispatchInfo<Balance> {
+			TransactionPayment::query_info(uxt, len)
 		}
 	}
 
