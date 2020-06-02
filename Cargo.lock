@@ -1554,6 +1554,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "frame-system-rpc-runtime-api"
+version = "2.0.0-rc2"
+source = "git+https://github.com/darwinia-network/substrate.git?tag=v2.0.0-rc.darwinia.1#45b9f0a9cbf901abaa9f1fca5fe8baeed029133d"
+dependencies = [
+ "parity-scale-codec",
+ "sp-api",
+]
+
+[[package]]
 name = "fs-swap"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3210,16 +3219,22 @@ dependencies = [
  "log",
  "node-template-runtime",
  "pallet-im-online",
+ "pallet-transaction-payment-rpc",
+ "parity-scale-codec",
  "sc-basic-authorship",
  "sc-cli",
  "sc-client-api",
  "sc-consensus",
  "sc-consensus-babe",
+ "sc-consensus-babe-rpc",
+ "sc-consensus-epochs",
  "sc-executor",
  "sc-finality-grandpa",
  "sc-finality-grandpa-rpc",
+ "sc-keystore",
  "sc-network",
  "sc-rpc",
+ "sc-rpc-api",
  "sc-service",
  "sc-transaction-pool",
  "sp-api",
@@ -3234,6 +3249,7 @@ dependencies = [
  "sp-transaction-pool",
  "structopt",
  "substrate-build-script-utils",
+ "substrate-frame-rpc-system",
 ]
 
 [[package]]
@@ -3256,6 +3272,7 @@ dependencies = [
  "frame-executive",
  "frame-support",
  "frame-system",
+ "frame-system-rpc-runtime-api",
  "pallet-authority-discovery",
  "pallet-authorship",
  "pallet-babe",
@@ -3269,6 +3286,7 @@ dependencies = [
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
+ "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec",
  "serde",
  "sp-api",
@@ -3661,6 +3679,24 @@ dependencies = [
  "smallvec 1.4.0",
  "sp-runtime",
  "sp-std 2.0.0-rc2",
+]
+
+[[package]]
+name = "pallet-transaction-payment-rpc"
+version = "2.0.0-rc2"
+source = "git+https://github.com/darwinia-network/substrate.git?tag=v2.0.0-rc.darwinia.1#45b9f0a9cbf901abaa9f1fca5fe8baeed029133d"
+dependencies = [
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "pallet-transaction-payment-rpc-runtime-api",
+ "parity-scale-codec",
+ "serde",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-rpc",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -4894,6 +4930,29 @@ dependencies = [
  "sp-timestamp",
  "sp-version",
  "substrate-prometheus-endpoint",
+]
+
+[[package]]
+name = "sc-consensus-babe-rpc"
+version = "0.8.0-rc2"
+source = "git+https://github.com/darwinia-network/substrate.git?tag=v2.0.0-rc.darwinia.1#45b9f0a9cbf901abaa9f1fca5fe8baeed029133d"
+dependencies = [
+ "derive_more",
+ "futures 0.3.5",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "sc-consensus-babe",
+ "sc-consensus-epochs",
+ "sc-keystore",
+ "sc-rpc-api",
+ "serde",
+ "sp-api",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-consensus-babe",
+ "sp-core",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -6441,6 +6500,27 @@ version = "2.0.0-rc2"
 source = "git+https://github.com/darwinia-network/substrate.git?tag=v2.0.0-rc.darwinia.1#45b9f0a9cbf901abaa9f1fca5fe8baeed029133d"
 dependencies = [
  "platforms",
+]
+
+[[package]]
+name = "substrate-frame-rpc-system"
+version = "2.0.0-rc2"
+source = "git+https://github.com/darwinia-network/substrate.git?tag=v2.0.0-rc.darwinia.1#45b9f0a9cbf901abaa9f1fca5fe8baeed029133d"
+dependencies = [
+ "frame-system-rpc-runtime-api",
+ "futures 0.3.5",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "log",
+ "parity-scale-codec",
+ "sc-client-api",
+ "serde",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-runtime",
+ "sp-transaction-pool",
 ]
 
 [[package]]
