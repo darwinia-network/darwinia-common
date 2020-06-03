@@ -2,6 +2,7 @@
 members = [
 	"bin/node-template/node",
 	"bin/node-template/runtime",
+	"client/cli",
 	"frame/balances",
 	"frame/balances/rpc",
 	"frame/balances/rpc/runtime-api",
