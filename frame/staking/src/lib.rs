@@ -335,7 +335,7 @@ mod types {
 }
 
 pub mod weight {
-	// --- custom ---
+	// --- darwinia ---
 	use super::*;
 
 	/// All weight notes are pertaining to the case of a better solution, in which we execute

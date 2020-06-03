@@ -11,7 +11,7 @@
 //! explaining why you delete them.
 
 mod offchain_phragmen {
-	// --- custom ---
+	// --- darwinia ---
 	use crate::{mock::*, *};
 
 	pub fn build_offchain_phragmen_test_ext() {

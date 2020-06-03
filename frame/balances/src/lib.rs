@@ -143,7 +143,7 @@ mod tests;
 #[cfg(test)]
 mod tests_local;
 
-// --- custom ---
+// --- darwinia ---
 pub use imbalances::{NegativeImbalance, PositiveImbalance};
 
 // --- crates ---

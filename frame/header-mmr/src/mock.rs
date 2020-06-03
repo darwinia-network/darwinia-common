@@ -18,7 +18,7 @@ impl_outer_origin! {
 // --- substrate ---
 pub type System = frame_system::Module<Test>;
 
-// --- custom ---
+// --- darwinia ---
 pub type HeaderMMR = Module<Test>;
 
 // Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
