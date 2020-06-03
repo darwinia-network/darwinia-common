@@ -869,6 +869,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-cli"
+version = "0.6.1"
+dependencies = [
+ "sc-cli",
+ "sc-client-api",
+ "sc-service",
+ "sc-tracing",
+ "serde",
+ "toml",
+]
+
+[[package]]
 name = "darwinia-elections-phragmen"
 version = "0.6.1"
 dependencies = [
@@ -3210,6 +3222,7 @@ version = "0.6.1"
 dependencies = [
  "darwinia-balances-rpc",
  "darwinia-claims",
+ "darwinia-cli",
  "darwinia-eth-relay",
  "darwinia-staking",
  "darwinia-staking-rpc",
