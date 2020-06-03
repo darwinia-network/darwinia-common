@@ -10,6 +10,7 @@ members = [
 	"frame/bridge/eth/backing",
 	"frame/bridge/eth/relay",
 	"frame/bridge/eth/offchain",
+	"frame/bridge/relayer-game",
 	"frame/elections-phragmen",
 	"frame/header-mmr",
 	"frame/staking",

@@ -984,6 +984,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-relayer-game"
+version = "0.6.1"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+]
+
+[[package]]
 name = "darwinia-staking"
 version = "0.6.1"
 dependencies = [
