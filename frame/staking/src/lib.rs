@@ -1111,7 +1111,7 @@ decl_storage! {
 		pub ErasStakers
 			get(fn eras_stakers)
 			: double_map hasher(twox_64_concat) EraIndex, hasher(twox_64_concat) T::AccountId
-				=> ExposureT<T>;
+			=> ExposureT<T>;
 
 		/// Clipped Exposure of validator at era.
 		///
@@ -1126,7 +1126,7 @@ decl_storage! {
 		pub ErasStakersClipped
 			get(fn eras_stakers_clipped)
 			: double_map hasher(twox_64_concat) EraIndex, hasher(twox_64_concat) T::AccountId
-				=> ExposureT<T>;
+			=> ExposureT<T>;
 
 		/// Similar to `ErasStakers`, this holds the preferences of validators.
 		///
@@ -1137,7 +1137,7 @@ decl_storage! {
 		pub ErasValidatorPrefs
 			get(fn eras_validator_prefs)
 			: double_map hasher(twox_64_concat) EraIndex, hasher(twox_64_concat) T::AccountId
-				=> ValidatorPrefs;
+			=> ValidatorPrefs;
 
 		/// The total validator era payout for the last `HISTORY_DEPTH` eras.
 		///
@@ -1173,7 +1173,7 @@ decl_storage! {
 		/// All unapplied slashes that are queued for later.
 		pub UnappliedSlashes
 			: map hasher(twox_64_concat) EraIndex
-				=> Vec<UnappliedSlash<T::AccountId, RingBalance<T>, KtonBalance<T>>>;
+			=> Vec<UnappliedSlash<T::AccountId, RingBalance<T>, KtonBalance<T>>>;
 
 		/// A mapping from still-bonded eras to the first session index of that era.
 		///
@@ -1185,12 +1185,12 @@ decl_storage! {
 		/// and slash value of the era.
 		ValidatorSlashInEra
 			: double_map hasher(twox_64_concat) EraIndex, hasher(twox_64_concat) T::AccountId
-				=> Option<(Perbill, slashing::RKT<T>)>;
+			=> Option<(Perbill, slashing::RKT<T>)>;
 
 		/// All slashing events on nominators, mapped by era to the highest slash value of the era.
 		NominatorSlashInEra
 			: double_map hasher(twox_64_concat) EraIndex, hasher(twox_64_concat) T::AccountId
-				=> Option<slashing::RKT<T>>;
+			=> Option<slashing::RKT<T>>;
 
 		/// Slashing spans for stash accounts.
 		SlashingSpans: map hasher(twox_64_concat) T::AccountId => Option<slashing::SlashingSpans>;
@@ -1199,7 +1199,7 @@ decl_storage! {
 		/// as well as how much reward has been paid out.
 		SpanSlash
 			: map hasher(twox_64_concat) (T::AccountId, slashing::SpanIndex)
-				=> slashing::SpanRecord<RingBalance<T>, KtonBalance<T>>;
+			=> slashing::SpanRecord<RingBalance<T>, KtonBalance<T>>;
 
 		/// The earliest era for which we have a pending, unapplied slash.
 		EarliestUnappliedSlash: Option<EraIndex>;
