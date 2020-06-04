@@ -68,5 +68,9 @@ pub mod literal_procesor {
 	}
 }
 
+pub mod relay {
+	pub use crate::traits::{Relayable, RelayerGameRegulator};
+}
+
 #[cfg(test)]
 mod tests;

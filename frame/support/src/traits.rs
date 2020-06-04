@@ -2,6 +2,7 @@
 pub use frame_support::traits::{LockIdentifier, VestingSchedule, WithdrawReason, WithdrawReasons};
 
 // --- crates ---
+use codec::{Decode, Encode, EncodeLike};
 use impl_trait_for_tuples::impl_for_tuples;
 // --- substrate ---
 use frame_support::traits::{Currency, TryDrop};
@@ -131,4 +132,23 @@ impl<Imbalance: TryDrop> OnUnbalancedKton<Imbalance> for () {
 	fn on_nonzero_unbalanced(amount: Imbalance) {
 		drop(amount);
 	}
+}
+
+pub trait RelayerGameRegulator {
+	type BlockNumber;
+	type Moment;
+	type Balance;
+
+	fn challenge_time() -> Self::Moment;
+
+	fn sampling_targets() -> Vec<Self::BlockNumber>;
+
+	fn target_bond_adjust() -> Self::Balance;
+
+	fn confirmed_reserved_size() -> u32;
+}
+
+pub trait Relayable {
+	type BlockNumber: Clone + Default + Eq + PartialEq + Encode + EncodeLike + Decode;
+	type HeaderHash: Clone + Default + Eq + PartialEq + Encode + EncodeLike + Decode;
 }
