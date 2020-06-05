@@ -1,6 +1,6 @@
 //! # Relayer Game Module
 //!
-//! ## Assume
+//! ## Assumption
 //! 1. At least **one** honest relayer
 //! 2. Each proposal's header hash is unique at a certain block height
 //!
@@ -150,10 +150,10 @@ pub struct Proposal<AccountId, BlockNumber, Balance, TcBlockNumber, TcHeaderHash
 	// The person who support this proposal with some bonds
 	nominators: Vec<(AccountId, Balance)>,
 
-	// If `challenge_at` is not `None`
+	// If this field is not `None`
 	// That means we are in a sub-proposal or you can call this a round
 	//
-	// This filed could be
+	// This field could be
 	// 	1. Brother, at current proposal depth/level
 	// 		Same `TcBlockNumber` but with different `TcHeaderHash`
 	// 		`TcHeader 3` challenge at `TcHeader 2`
@@ -177,7 +177,7 @@ pub struct Proposal<AccountId, BlockNumber, Balance, TcBlockNumber, TcHeaderHash
 	// 		Proposal 3
 	// 			HighestConfirmedTcHeaderId----TcHeader 4----TcHeader 2----TcHeader 1
 	challenge_at: Option<TcHeaderId<TcBlockNumber, TcHeaderHash>>,
-	// This filed **MUST** be
+	// This field **MUST** be
 	// 	1. Parents or previous proposal
 	take_over_from: Option<TcHeaderId<TcBlockNumber, TcHeaderHash>>,
 }
