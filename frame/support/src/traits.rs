@@ -134,6 +134,8 @@ impl<Imbalance: TryDrop> OnUnbalancedKton<Imbalance> for () {
 	}
 }
 
+// A regulator to adjust relay args for a specific chain
+// Implement this in runtime's impls
 pub trait RelayerGameRegulator {
 	type BlockNumber;
 	type Moment;
@@ -148,6 +150,8 @@ pub trait RelayerGameRegulator {
 	fn confirmed_reserved_size() -> u32;
 }
 
+// Implement this for target chain's relay module's
+// to expose some necessary APIs for relayer game
 pub trait Relayable {
 	type BlockNumber: Clone + Default + Eq + PartialEq + Encode + EncodeLike + Decode;
 	type HeaderHash: Clone + Default + Eq + PartialEq + Encode + EncodeLike + Decode;
