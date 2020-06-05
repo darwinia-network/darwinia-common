@@ -20,15 +20,14 @@ mod types {
 	pub type BlockNumber<T> = <T as frame_system::Trait>::BlockNumber;
 	pub type RingBalance<T, I> = <RingCurrency<T, I> as Currency<AccountId<T>>>::Balance;
 
-	pub type TCBlockNumber<T, I> = <TC<T, I> as Relayable>::BlockNumber;
-	pub type TCHeaderHash<T, I> = <TC<T, I> as Relayable>::HeaderHash;
+	pub type TcBlockNumber<T, I> = <Tc<T, I> as Relayable>::BlockNumber;
+	pub type TcHeaderHash<T, I> = <Tc<T, I> as Relayable>::HeaderHash;
 
-	// pub type ProposalId<HeaderNumber, HeaderHash> = (HeaderNumber, HeaderHash);
-	pub type TCHeaderId<HeaderNumber, HeaderHash> = (HeaderNumber, HeaderHash);
+	pub type TcHeaderId<HeaderNumber, HeaderHash> = (HeaderNumber, HeaderHash);
 
 	type RingCurrency<T, I> = <T as Trait<I>>::RingCurrency;
 
-	type TC<T, I> = <T as Trait<I>>::TargetChain;
+	type Tc<T, I> = <T as Trait<I>>::TargetChain;
 }
 
 // --- crates ---
@@ -76,26 +75,29 @@ decl_storage! {
 		pub Proposals
 			get(fn proposal)
 			: double_map
-				hasher(blake2_128_concat) TCBlockNumber<T, I>,
-				hasher(identity) TCHeaderHash<T, I>
+				hasher(blake2_128_concat) TcBlockNumber<T, I>,
+				hasher(identity) TcHeaderHash<T, I>
 			=> Proposal<
 				AccountId<T>,
 				BlockNumber<T>,
 				RingBalance<T, I>,
-				TCBlockNumber<T, I>,
-				TCHeaderHash<T, I>
+				TcBlockNumber<T, I>,
+				TcHeaderHash<T, I>
 			>;
 
-		pub TCHeaderPool
+		pub TcHeaders
 			get(fn tc_header)
 			: double_map
-				hasher(blake2_128_concat) TCBlockNumber<T, I>,
-				hasher(identity) TCHeaderHash<T, I>
-			=> RefTCHeader;
+				hasher(blake2_128_concat) TcBlockNumber<T, I>,
+				hasher(identity) TcHeaderHash<T, I>
+			=> RefTcHeader;
 
+		pub ConfirmedTcHeaders
+			get(fn confirmed_tc_header)
+			: TcHeaderId<TcBlockNumber<T, I>, TcHeaderHash<T, I>>;
 		pub LastConfirmed
 			get(fn last_confirmed)
-			: TCHeaderId<TCBlockNumber<T, I>, TCHeaderHash<T, I>>;
+			: TcHeaderId<TcBlockNumber<T, I>, TcHeaderHash<T, I>>;
 	}
 }
 
@@ -122,29 +124,29 @@ impl Default for RelayStatus {
 }
 
 #[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug)]
-pub struct Proposal<AccountId, BlockNumber, Balance, TCBlockNumber, TCHeaderHash> {
-	id: TCHeaderId<TCBlockNumber, TCHeaderHash>,
+pub struct Proposal<AccountId, BlockNumber, Balance, TcBlockNumber, TcHeaderHash> {
+	id: TcHeaderId<TcBlockNumber, TcHeaderHash>,
 	// Will be confirmed automatically at this moment
 	confirm_at: BlockNumber,
 	// The person who support this proposal with some bonds
-	voters: Vec<(AccountId, Balance)>,
+	nominators: Vec<(AccountId, Balance)>,
 
 	// If `challenge_at` is not `None`
 	// That means we are in a sub-proposal or you can call this a round
 	//
 	// This filed could be
-	// 	1. Same `TCBlockNumber` but with different `TCHeaderHash`
+	// 	1. Same `TcBlockNumber` but with different `TcHeaderHash`
 	// 	2. Parents or previous proposal
-	challenge_at: Option<TCHeaderId<TCBlockNumber, TCHeaderHash>>,
+	challenge_at: Option<TcHeaderId<TcBlockNumber, TcHeaderHash>>,
 	// This filed could be
 	// 	1. Parents or previous proposal
-	take_over_from: Option<TCHeaderId<TCBlockNumber, TCHeaderHash>>,
+	take_over_from: Option<TcHeaderId<TcBlockNumber, TcHeaderHash>>,
 }
 
 /// Maybe two or more proposals are using the same `Header`
-/// Drop it while the `ref_count` is zero
+/// Drop it while the `ref_count` is zero but not in `ConfirmedTcHeaders` list
 #[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug)]
-pub struct RefTCHeader {
+pub struct RefTcHeader {
 	// Codec style `Header` or `HeaderWithProofs` or ...
 	// That you defined in *TargetChain* Module
 	header_thing: Vec<u8>,
