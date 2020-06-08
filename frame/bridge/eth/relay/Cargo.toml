@@ -18,6 +18,7 @@ eth-primitives = { default-features = false, path = "../../../../primitives/eth-
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
 frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
 
 [features]
 default = ["std"]
@@ -31,4 +32,5 @@ std = [
 	# substrate
 	"frame-support/std",
 	"frame-system/std",
+	"sp-runtime/std",
 ]

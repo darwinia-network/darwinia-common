@@ -23,7 +23,7 @@ mod types {
 	pub type TcBlockNumber<T, I> = <Tc<T, I> as Relayable>::BlockNumber;
 	pub type TcHeaderHash<T, I> = <Tc<T, I> as Relayable>::HeaderHash;
 
-	pub type TcHeaderId<HeaderNumber, HeaderHash> = (HeaderNumber, HeaderHash);
+	pub type Round = u32;
 
 	type RingCurrency<T, I> = <T as Trait<I>>::RingCurrency;
 
@@ -34,7 +34,7 @@ mod types {
 use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{decl_error, decl_event, decl_module, decl_storage, traits::Currency};
-use frame_system as system;
+use frame_system::{self as system, ensure_signed};
 use sp_runtime::RuntimeDebug;
 use sp_std::prelude::*;
 // --- darwinia ---
@@ -48,7 +48,7 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
 	// A regulator to adjust relay args for a specific chain
-	type RelayerGameRegulator: RelayerGameRegulator;
+	type RelayerGameAdjustment: RelayerGameAdjustable;
 
 	// The target chain's relay module's API
 	type TargetChain: Relayable;
@@ -94,6 +94,13 @@ decl_storage! {
 				hasher(identity) TcHeaderHash<T, I>
 			=> RefTcHeader;
 
+		pub ChallengeTimes
+			get(fn challenge_time)
+			: double_map
+				hasher(blake2_128_concat) Round,
+				hasher(blake2_128_concat) TcBlockNumber<T, I>
+			=> T::BlockNumber;
+
 		// The finalize blocks' header's record id in darwinia
 		pub ConfirmedTcHeaderIds
 			get(fn confirmed_tc_header_id)
@@ -109,6 +116,14 @@ decl_module! {
 		type Error = Error<T, I>;
 
 		fn deposit_event() = default;
+
+		#[weight = 0]
+		fn submit(origin, tc_header_thing: Vec<u8>) {
+			let relayer = ensure_signed(origin)?;
+			let tc_header_id = T::TargetChain::verify(&tc_header_thing)?;
+
+			// TcHeaders::insert(tc_header_id.0, tc_header_id.1, tc_header_thing);
+		}
 	}
 }
 
@@ -138,9 +153,11 @@ pub struct Proposal<AccountId, BlockNumber, Balance, TcBlockNumber, TcHeaderHash
 	confirm_at: BlockNumber,
 	// The person who support this proposal with some bonds
 	nominators: Vec<(AccountId, Balance)>,
-	// This field **MUST** be
 	// Parents (previous proposal)
-	take_over_from: Option<TcHeaderId<TcBlockNumber, TcHeaderHash>>,
+	//
+	// If this field is `None` that means this proposal is the main proposal
+	// which is the head of a proposal link list
+	extend_from: Option<TcHeaderId<TcBlockNumber, TcHeaderHash>>,
 }
 
 #[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug)]

@@ -6,7 +6,7 @@ use codec::{Decode, Encode, EncodeLike};
 use impl_trait_for_tuples::impl_for_tuples;
 // --- substrate ---
 use frame_support::traits::{Currency, TryDrop};
-use sp_runtime::DispatchResult;
+use sp_runtime::{DispatchError, DispatchResult};
 use sp_std::prelude::*;
 // --- darwinia ---
 use crate::balance::{
@@ -137,7 +137,7 @@ impl<Imbalance: TryDrop> OnUnbalancedKton<Imbalance> for () {
 
 // A regulator to adjust relay args for a specific chain
 // Implement this in runtime's impls
-pub trait RelayerGameRegulator {
+pub trait RelayerGameAdjustable {
 	type Moment;
 	type Balance;
 	type TcBlockNumber;
@@ -156,5 +156,11 @@ pub trait Relayable {
 	type HeaderHash: Clone + Default + PartialEq + Encode + EncodeLike + Decode;
 
 	// The latest finalize block's header's record id in darwinia
-	fn highest_confirmed_tc_header_id() -> (Self::BlockNumber, Self::HeaderHash);
+	fn highest_confirmed_tc_header_id(
+	) -> crate::relay::TcHeaderId<Self::BlockNumber, Self::HeaderHash>;
+
+	// Verify the codec style header thing then return the id which come from the un-codec header
+	fn verify<S: AsRef<[u8]>>(
+		header_thing: S,
+	) -> Result<crate::relay::TcHeaderId<Self::BlockNumber, Self::HeaderHash>, DispatchError>;
 }

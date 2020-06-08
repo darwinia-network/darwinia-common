@@ -5,6 +5,7 @@
 // --- substrate ---
 use frame_support::{decl_error, decl_event, decl_module, decl_storage};
 use frame_system as system;
+use sp_runtime::DispatchError;
 // --- darwinia ---
 use darwinia_support::relay::Relayable;
 use eth_primitives::{EthBlockNumber, H256};
@@ -49,6 +50,12 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 	type HeaderHash = H256;
 
 	fn highest_confirmed_tc_header_id() -> (Self::BlockNumber, Self::HeaderHash) {
+		unimplemented!()
+	}
+
+	fn verify<S: AsRef<[u8]>>(
+		header_thing: S,
+	) -> Result<(Self::BlockNumber, Self::HeaderHash), DispatchError> {
 		unimplemented!()
 	}
 }

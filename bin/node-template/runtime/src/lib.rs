@@ -14,10 +14,10 @@ pub mod impls {
 	pub mod bridge {
 		// --- darwinia ---
 		use crate::*;
-		use darwinia_support::relay::RelayerGameRegulator;
+		use darwinia_support::relay::RelayerGameAdjustable;
 
 		pub struct EthRelayerGameRegulator;
-		impl RelayerGameRegulator for EthRelayerGameRegulator {
+		impl RelayerGameAdjustable for EthRelayerGameRegulator {
 			type Moment = BlockNumber;
 			type Balance = Balance;
 			type TcBlockNumber = <EthRelay as darwinia_support::relay::Relayable>::BlockNumber;
@@ -764,7 +764,7 @@ impl darwinia_header_mmr::Trait for Runtime {}
 impl darwinia_relayer_game::Trait for Runtime {
 	type Event = Event;
 	type RingCurrency = Ring;
-	type RelayerGameRegulator = bridge::EthRelayerGameRegulator;
+	type RelayerGameAdjustment = bridge::EthRelayerGameRegulator;
 	type TargetChain = EthRelay;
 }
 
