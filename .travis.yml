@@ -41,7 +41,7 @@ jobs:
 
     - stage: Darwinia Test
       env: ETHRELAY RUST_TOOLCHAIN=nightly-2020-05-14 TARGET=native
-      script: .maintain/ci/darwinia_test_script.sh eth-relay
+      script: .maintain/ci/darwinia_test_script.sh eth-linear-relay
 
     - stage: Darwinia Test
       env: ETHBACKING RUST_TOOLCHAIN=nightly-2020-05-14 TARGET=native

@@ -17,7 +17,7 @@ darwinia-balances = { default-features = false, path = "../../../frame/balances"
 darwinia-balances-rpc-runtime-api = { default-features = false, path = "../../../frame/balances/rpc/runtime-api" }
 darwinia-claims = { default-features = false, path = "../../../frame/claims" }
 darwinia-elections-phragmen = { default-features = false, path = "../../../frame/elections-phragmen" }
-darwinia-eth-relay = { default-features = false, path = "../../../frame/bridge/eth/relay" }
+darwinia-eth-linear-relay = { default-features = false, path = "../../../frame/bridge/eth/linear-relay" }
 darwinia-eth-backing = { default-features = false, path = "../../../frame/bridge/eth/backing" }
 darwinia-eth-offchain = { default-features = false, path = "../../../frame/bridge/eth/offchain" }
 # TODO: benchmark
@@ -78,7 +78,7 @@ std = [
 	"darwinia-balances-rpc-runtime-api/std",
 	"darwinia-claims/std",
 	"darwinia-elections-phragmen/std",
-	"darwinia-eth-relay/std",
+	"darwinia-eth-linear-relay/std",
 	"darwinia-eth-backing/std",
 	"darwinia-eth-offchain/std",
 	"darwinia-header-mmr/std",

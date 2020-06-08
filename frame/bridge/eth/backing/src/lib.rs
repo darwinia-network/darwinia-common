@@ -42,7 +42,7 @@ use sp_runtime::{
 use sp_std::borrow::ToOwned;
 use sp_std::{convert::TryFrom, marker::PhantomData, vec};
 // --- darwinia ---
-use darwinia_eth_relay::{EthReceiptProof, VerifyEthReceipts};
+use darwinia_eth_linear_relay::{EthReceiptProof, VerifyEthReceipts};
 use darwinia_support::{balance::lock::*, traits::OnDepositRedeem};
 use eth_primitives::{EthAddress, H256, U256};
 use types::*;

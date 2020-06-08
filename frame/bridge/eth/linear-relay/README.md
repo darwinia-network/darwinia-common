@@ -1,4 +1,4 @@
-# darwinia-eth-relay
+# darwinia-eth-linear-relay
 
 ## Weights
 

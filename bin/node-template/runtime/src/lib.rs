@@ -251,7 +251,7 @@ pub mod primitives {
 		frame_system::CheckWeight<Runtime>,
 		pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 		pallet_grandpa::ValidateEquivocationReport<Runtime>,
-		darwinia_eth_relay::CheckEthRelayHeaderHash<Runtime>,
+		darwinia_eth_linear_relay::CheckEthRelayHeaderHash<Runtime>,
 	);
 
 	/// Unchecked extrinsic type as expected by this runtime.
@@ -319,8 +319,8 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia ---
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
+use darwinia_eth_linear_relay::EthNetworkType;
 use darwinia_eth_offchain::crypto::AuthorityId as EthOffchainId;
-use darwinia_eth_relay::EthNetworkType;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
 use impls::*;
 
@@ -714,7 +714,7 @@ parameter_types! {
 	pub const EthRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
 	pub const EthNetwork: EthNetworkType = EthNetworkType::Mainnet;
 }
-impl darwinia_eth_relay::Trait for Runtime {
+impl darwinia_eth_linear_relay::Trait for Runtime {
 	type ModuleId = EthRelayModuleId;
 	type Event = Event;
 	type EthNetwork = EthNetwork;
@@ -781,7 +781,7 @@ construct_runtime!(
 		Claims: darwinia_claims::{Module, Call, Storage, Config, Event<T>, ValidateUnsigned},
 
 		EthBacking: darwinia_eth_backing::{Module, Call, Storage, Config<T>, Event<T>},
-		EthRelay: darwinia_eth_relay::{Module, Call, Storage, Config<T>, Event<T>},
+		EthRelay: darwinia_eth_linear_relay::{Module, Call, Storage, Config<T>, Event<T>},
 		EthOffchain: darwinia_eth_offchain::{Module, Call},
 
 		HeaderMMR: darwinia_header_mmr::{Module, Call, Storage},
