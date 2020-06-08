@@ -11,6 +11,31 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 pub mod impls {
 	//! Some configurable implementations as associated type for the substrate runtime.
 
+	pub mod bridge {
+		// --- darwinia ---
+		use crate::*;
+		use darwinia_support::relay::RelayerGameRegulator;
+
+		pub struct EthRelayerGameRegulator;
+		impl RelayerGameRegulator for EthRelayerGameRegulator {
+			type Moment = BlockNumber;
+			type Balance = Balance;
+			type TcBlockNumber = <EthRelay as darwinia_support::relay::Relayable>::BlockNumber;
+
+			fn challenge_time() -> Self::Moment {
+				unimplemented!()
+			}
+
+			fn sampling_targets() -> Vec<Self::TcBlockNumber> {
+				unimplemented!()
+			}
+
+			fn estimate_bond() -> Self::Balance {
+				unimplemented!()
+			}
+		}
+	}
+
 	// --- substrate ---
 	use frame_support::traits::{Currency, Get, Imbalance, OnUnbalanced};
 	use sp_runtime::{traits::Convert, Fixed128, FixedPointNumber, Perquintill};
@@ -154,7 +179,7 @@ pub mod primitives {
 		use frame_system::offchain::AppCrypto;
 		use sp_core::crypto::{key_types, KeyTypeId};
 		// --- crates ---
-		use super::{Signature, Verify};
+		use crate::primitives::{Signature, Verify};
 
 		/// Key type for the reporting module. Used for reporting BABE and GRANDPA
 		/// equivocations.
@@ -703,7 +728,7 @@ impl darwinia_eth_backing::Trait for Runtime {
 	type ModuleId = EthBackingModuleId;
 	type Event = Event;
 	type DetermineAccountId = darwinia_eth_backing::AccountIdDeterminator<Runtime>;
-	type EthRelay = EthRelay;
+	type EthRelay = EthLinearRelay;
 	type OnDepositRedeem = Staking;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
@@ -722,6 +747,10 @@ impl darwinia_eth_linear_relay::Trait for Runtime {
 	type Currency = Ring;
 }
 
+impl darwinia_eth_relay::Trait for Runtime {
+	type Event = Event;
+}
+
 parameter_types! {
 	pub const FetchInterval: BlockNumber = 3;
 }
@@ -731,6 +760,13 @@ impl darwinia_eth_offchain::Trait for Runtime {
 }
 
 impl darwinia_header_mmr::Trait for Runtime {}
+
+impl darwinia_relayer_game::Trait for Runtime {
+	type Event = Event;
+	type RingCurrency = Ring;
+	type RelayerGameRegulator = bridge::EthRelayerGameRegulator;
+	type TargetChain = EthRelay;
+}
 
 construct_runtime!(
 	pub enum Runtime
@@ -781,10 +817,13 @@ construct_runtime!(
 		Claims: darwinia_claims::{Module, Call, Storage, Config, Event<T>, ValidateUnsigned},
 
 		EthBacking: darwinia_eth_backing::{Module, Call, Storage, Config<T>, Event<T>},
-		EthRelay: darwinia_eth_linear_relay::{Module, Call, Storage, Config<T>, Event<T>},
+		EthLinearRelay: darwinia_eth_linear_relay::{Module, Call, Storage, Config<T>, Event<T>},
 		EthOffchain: darwinia_eth_offchain::{Module, Call},
+		EthRelay: darwinia_eth_relay::{Module, Call, Storage, Event<T>},
 
 		HeaderMMR: darwinia_header_mmr::{Module, Call, Storage},
+
+		RelayerGame: darwinia_relayer_game::{Module, Call, Storage, Event<T>},
 
 		// Governance stuff; uncallable initially.
 		Treasury: darwinia_treasury::{Module, Call, Storage, Event<T>},

@@ -33,9 +33,7 @@ mod types {
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
-use frame_support::{
-	decl_error, decl_event, decl_module, decl_storage, traits::Currency, traits::Get,
-};
+use frame_support::{decl_error, decl_event, decl_module, decl_storage, traits::Currency};
 use frame_system as system;
 use sp_runtime::RuntimeDebug;
 use sp_std::prelude::*;
@@ -49,12 +47,8 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	// The currency use for bond
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
-	// The period for finalizing a incoming header in darwinia
-	// if no one challenge that header during this time
-	type ChallengeTime: Get<Self::BlockNumber>;
-
 	// A regulator to adjust relay args for a specific chain
-	type RelayRegulator: RelayerGameRegulator;
+	type RelayerGameRegulator: RelayerGameRegulator;
 
 	// The target chain's relay module's API
 	type TargetChain: Relayable;
@@ -92,8 +86,6 @@ decl_storage! {
 				TcHeaderHash<T, I>
 			>;
 
-		// TODO: All the things below should finally move to target chain's relay module
-
 		// All the `TcHeader`s store here, **NON-DUPLICATIVE**
 		pub TcHeaders
 			get(fn tc_header)
@@ -105,10 +97,6 @@ decl_storage! {
 		// The finalize blocks' header's record id in darwinia
 		pub ConfirmedTcHeaderIds
 			get(fn confirmed_tc_header_id)
-			: TcHeaderId<TcBlockNumber<T, I>, TcHeaderHash<T, I>>;
-		// The latest finalize block's header's record id in darwinia
-		pub HighestConfirmedTcHeaderId
-			get(fn highest_confirmed_tc_header_id)
 			: TcHeaderId<TcBlockNumber<T, I>, TcHeaderHash<T, I>>;
 	}
 }
@@ -144,41 +132,14 @@ impl Default for TcHeaderStatus {
 
 #[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug)]
 pub struct Proposal<AccountId, BlockNumber, Balance, TcBlockNumber, TcHeaderHash> {
+	// Current target chain's header id
 	id: TcHeaderId<TcBlockNumber, TcHeaderHash>,
 	// Will be confirmed automatically at this moment
 	confirm_at: BlockNumber,
 	// The person who support this proposal with some bonds
 	nominators: Vec<(AccountId, Balance)>,
-
-	// If this field is not `None`
-	// That means we are in a sub-proposal or you can call this a round
-	//
-	// This field could be
-	// 	1. Brother, at current proposal depth/level
-	// 		Same `TcBlockNumber` but with different `TcHeaderHash`
-	// 		`TcHeader 3` challenge at `TcHeader 2`
-	//
-	// 		Proposal 1
-	// 			HighestConfirmedTcHeaderId--------TcHeader 2----TcHeader 1
-	// 		Proposal 2
-	// 			HighestConfirmedTcHeaderId--------TcHeader 3----TcHeader 1
-	//
-	// 	2. Parents, at previous proposal depth/level
-	// 		Different `TcBlockNumber` and different `TcHeaderHash`
-	// 		`TcHeader 4` take over from `TcHeader 2`
-	//
-	// 		Different `TcBlockNumber` and different `TcHeaderHash`
-	// 		`TcHeader 4` challenge at `TcHeader 3`
-	//
-	// 		Proposal 1
-	// 			HighestConfirmedTcHeaderId------------------TcHeader 2----TcHeader 1
-	// 		Proposal 2
-	// 			HighestConfirmedTcHeaderId------------------TcHeader 3----TcHeader 1
-	// 		Proposal 3
-	// 			HighestConfirmedTcHeaderId----TcHeader 4----TcHeader 2----TcHeader 1
-	challenge_at: Option<TcHeaderId<TcBlockNumber, TcHeaderHash>>,
 	// This field **MUST** be
-	// 	1. Parents or previous proposal
+	// Parents (previous proposal)
 	take_over_from: Option<TcHeaderId<TcBlockNumber, TcHeaderHash>>,
 }
 

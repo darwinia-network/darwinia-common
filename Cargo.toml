@@ -9,7 +9,7 @@ members = [
 	"frame/claims",
 	"frame/bridge/eth/backing",
 	"frame/bridge/eth/linear-relay",
-#	"frame/bridge/eth/relay",
+	"frame/bridge/eth/relay",
 	"frame/bridge/eth/offchain",
 	"frame/bridge/relayer-game",
 	"frame/elections-phragmen",

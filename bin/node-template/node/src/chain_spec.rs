@@ -224,7 +224,7 @@ fn testnet_genesis(
 			),
 		}),
 		darwinia_eth_backing: Some(Default::default()),
-		darwinia_eth_linear_relay: Some(EthRelayConfig {
+		darwinia_eth_linear_relay: Some(EthLinearRelayConfig {
 			genesis_header: Some((
 				0x400000000,
 				vec![

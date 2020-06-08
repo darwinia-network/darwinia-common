@@ -17,12 +17,14 @@ darwinia-balances = { default-features = false, path = "../../../frame/balances"
 darwinia-balances-rpc-runtime-api = { default-features = false, path = "../../../frame/balances/rpc/runtime-api" }
 darwinia-claims = { default-features = false, path = "../../../frame/claims" }
 darwinia-elections-phragmen = { default-features = false, path = "../../../frame/elections-phragmen" }
-darwinia-eth-linear-relay = { default-features = false, path = "../../../frame/bridge/eth/linear-relay" }
 darwinia-eth-backing = { default-features = false, path = "../../../frame/bridge/eth/backing" }
+darwinia-eth-linear-relay = { default-features = false, path = "../../../frame/bridge/eth/linear-relay" }
+darwinia-eth-relay = { default-features = false, path = "../../../frame/bridge/eth/relay" }
 darwinia-eth-offchain = { default-features = false, path = "../../../frame/bridge/eth/offchain" }
+darwinia-header-mmr = { default-features = false, path = "../../../frame/header-mmr" }
+darwinia-relayer-game = { default-features = false, path = "../../../frame/bridge/relayer-game" }
 # TODO: benchmark
 # darwinia-session-benchmarking = { default-features = false, optional = true, path = "" }
-darwinia-header-mmr = { default-features = false, path = "../../../frame/header-mmr" }
 darwinia-staking = { default-features = false, path = "../../../frame/staking" }
 darwinia-staking-rpc-runtime-api = { default-features = false, path = "../../../frame/staking/rpc/runtime-api" }
 darwinia-support = { default-features = false, path = "../../../frame/support" }
@@ -78,10 +80,12 @@ std = [
 	"darwinia-balances-rpc-runtime-api/std",
 	"darwinia-claims/std",
 	"darwinia-elections-phragmen/std",
-	"darwinia-eth-linear-relay/std",
 	"darwinia-eth-backing/std",
+	"darwinia-eth-linear-relay/std",
 	"darwinia-eth-offchain/std",
+	"darwinia-eth-relay/std",
 	"darwinia-header-mmr/std",
+	"darwinia-relayer-game/std",
 	# TODO: benchmark
 	# "darwinia-session-benchmarking/std",
 	"darwinia-staking/std",

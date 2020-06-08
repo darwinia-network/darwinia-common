@@ -7,6 +7,7 @@ use impl_trait_for_tuples::impl_for_tuples;
 // --- substrate ---
 use frame_support::traits::{Currency, TryDrop};
 use sp_runtime::DispatchResult;
+use sp_std::prelude::*;
 // --- darwinia ---
 use crate::balance::{
 	lock::{LockFor, LockReasons},
@@ -137,22 +138,23 @@ impl<Imbalance: TryDrop> OnUnbalancedKton<Imbalance> for () {
 // A regulator to adjust relay args for a specific chain
 // Implement this in runtime's impls
 pub trait RelayerGameRegulator {
-	type BlockNumber;
 	type Moment;
 	type Balance;
+	type TcBlockNumber;
 
 	fn challenge_time() -> Self::Moment;
 
-	fn sampling_targets() -> Vec<Self::BlockNumber>;
+	fn sampling_targets() -> Vec<Self::TcBlockNumber>;
 
-	fn target_bond_adjust() -> Self::Balance;
-
-	fn confirmed_reserved_size() -> u32;
+	fn estimate_bond() -> Self::Balance;
 }
 
 // Implement this for target chain's relay module's
 // to expose some necessary APIs for relayer game
 pub trait Relayable {
-	type BlockNumber: Clone + Default + Eq + PartialEq + Encode + EncodeLike + Decode;
-	type HeaderHash: Clone + Default + Eq + PartialEq + Encode + EncodeLike + Decode;
+	type BlockNumber: Clone + Default + PartialEq + Encode + EncodeLike + Decode;
+	type HeaderHash: Clone + Default + PartialEq + Encode + EncodeLike + Decode;
+
+	// The latest finalize block's header's record id in darwinia
+	fn highest_confirmed_tc_header_id() -> (Self::BlockNumber, Self::HeaderHash);
 }
