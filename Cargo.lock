@@ -905,7 +905,7 @@ version = "0.6.1"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
- "darwinia-eth-relay",
+ "darwinia-eth-linear-relay",
  "darwinia-staking",
  "darwinia-support",
  "eth-primitives",
@@ -925,27 +925,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-eth-offchain"
-version = "0.6.1"
-dependencies = [
- "array-bytes",
- "darwinia-balances",
- "darwinia-eth-relay",
- "darwinia-support",
- "eth-primitives",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "rlp 0.4.4",
- "serde_json",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std 2.0.0-rc2",
-]
-
-[[package]]
-name = "darwinia-eth-relay"
+name = "darwinia-eth-linear-relay"
 version = "0.6.1"
 dependencies = [
  "array-bytes",
@@ -965,6 +945,38 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std 2.0.0-rc2",
+]
+
+[[package]]
+name = "darwinia-eth-offchain"
+version = "0.6.1"
+dependencies = [
+ "array-bytes",
+ "darwinia-balances",
+ "darwinia-eth-linear-relay",
+ "darwinia-support",
+ "eth-primitives",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "rlp 0.4.4",
+ "serde_json",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 2.0.0-rc2",
+]
+
+[[package]]
+name = "darwinia-eth-relay"
+version = "0.6.1"
+dependencies = [
+ "darwinia-support",
+ "eth-primitives",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
 ]
 
 [[package]]
@@ -3236,7 +3248,7 @@ dependencies = [
  "darwinia-balances-rpc",
  "darwinia-claims",
  "darwinia-cli",
- "darwinia-eth-relay",
+ "darwinia-eth-linear-relay",
  "darwinia-staking",
  "darwinia-staking-rpc",
  "frame-benchmarking-cli",
@@ -3287,9 +3299,11 @@ dependencies = [
  "darwinia-claims",
  "darwinia-elections-phragmen",
  "darwinia-eth-backing",
+ "darwinia-eth-linear-relay",
  "darwinia-eth-offchain",
  "darwinia-eth-relay",
  "darwinia-header-mmr",
+ "darwinia-relayer-game",
  "darwinia-staking",
  "darwinia-staking-rpc-runtime-api",
  "darwinia-support",
