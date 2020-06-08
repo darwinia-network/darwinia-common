@@ -115,7 +115,7 @@ decl_module! {
 					<Positions<T>>::insert(block_number - 1.into(), pos);
 				}
 			} else {
-				error!("FAILED to Push Parent Hash to MMR");
+				error!("[darwinia-header-mmr] FAILED to Push Parent Hash to MMR");
 			}
 
 			if let Ok(mmr_root) = mmr.get_root() {
@@ -128,7 +128,7 @@ decl_module! {
 
 					<frame_system::Module<T>>::deposit_log(mmr_item.into());
 				} else {
-					error!("FAILED to Commit MMR");
+					error!("[darwinia-header-mmr] FAILED to Commit MMR");
 				}
 			} else {
 				error!("[darwinia-header-mmr] FAILED to Calculate MMR");
