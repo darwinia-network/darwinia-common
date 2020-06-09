@@ -59,6 +59,9 @@ use sp_runtime::{
 	DispatchError, RuntimeDebug,
 };
 use sp_std::{marker::PhantomData, prelude::*};
+// --- darwinia ---
+use darwinia_header_mmr_rpc_runtime_api::{Proof, RuntimeDispatchInfo};
+use darwinia_support::impl_rpc;
 
 pub const MMR_ROOT_LOG_ID: [u8; 4] = *b"MMRR";
 
@@ -178,7 +181,6 @@ impl<T: Trait> MMRStore<T::Hash> for ModuleMMRStore<T> {
 }
 
 impl<T: Trait> Module<T> {
-	// TODO: For future rpc calls
 	fn _gen_proof(
 		block_number: T::BlockNumber,
 		mmr_block_number: T::BlockNumber,
@@ -197,6 +199,31 @@ impl<T: Trait> Module<T> {
 		let proof = mmr.gen_proof(vec![pos]).map_err(|_| <Error<T>>::ProofGF)?;
 
 		Ok(proof)
+	}
+
+	impl_rpc! {
+		pub fn gen_proof_rpc(
+			block_number: T::BlockNumber,
+			mmr_block_number: T::BlockNumber,
+		) -> RuntimeDispatchInfo<T::Hash> {
+			let pos = Self::position_of(block_number);
+			let mmr_header_pos = Self::position_of(mmr_block_number);
+
+			let store = <ModuleMMRStore<T>>::default();
+			let mmr = <MMR<_, MMRMerge<T>, _>>::new(mmr_header_pos, store);
+
+			if let Ok(merkle_proof) = mmr.gen_proof(vec![pos]) {
+				RuntimeDispatchInfo {
+					mmr_size: merkle_proof.mmr_size(),
+					proof: Proof(merkle_proof.proof_items().to_vec()),
+				}
+			} else {
+				RuntimeDispatchInfo {
+					mmr_size: 0,
+					proof: Proof(vec![]),
+				}
+			}
+		}
 	}
 
 	// TODO: For future rpc calls
