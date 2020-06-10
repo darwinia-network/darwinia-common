@@ -108,3 +108,17 @@ fn non_system_mmr_digest_item_encoding() {
 	let decoded: DigestItem<H256> = Decode::decode(&mut &encoded[..]).unwrap();
 	assert_eq!(item, decoded);
 }
+
+#[test]
+fn test_mmr_root() {
+	let store = <ModuleMMRStore<Test>>::default();
+	let mut mmr = <MMR<_, MMRMerge<Test>, _>>::new(0, store);
+	(0..10).for_each(|i| {
+		let cur = HEADERS_N_ROOTS[i];
+		mmr.push(hh(cur.0)).unwrap();
+		assert_eq!(
+			&format!("{:?}", mmr.get_root().expect("get root failed"))[2..],
+			cur.1
+		);
+	});
+}
