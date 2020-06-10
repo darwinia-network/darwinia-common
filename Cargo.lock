@@ -971,6 +971,7 @@ dependencies = [
 name = "darwinia-header-mmr"
 version = "0.6.1"
 dependencies = [
+ "array-bytes",
  "ckb-merkle-mountain-range",
  "darwinia-header-mmr-rpc-runtime-api",
  "darwinia-support",
