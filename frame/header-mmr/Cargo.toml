@@ -14,8 +14,6 @@ codec = { package = "parity-scale-codec", version = "1.3.0", default-features = 
 serde = { version = "1.0.106", optional = true }
 # github
 merkle-mountain-range = { package = "ckb-merkle-mountain-range", default-features = false, git = "https://github.com/nervosnetwork/merkle-mountain-range.git" }
-# darwinia
-array-bytes = { default-features = false, path = "../../primitives/array-bytes" }
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
 frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
@@ -25,6 +23,8 @@ sp-std = { default-features = false, git = "https://github.com/darwinia-network/
 [dev-dependencies]
 # crates
 serde_json = { version = "1.0.51" }
+# darwinia
+array-bytes = { default-features = true, path = "../../primitives/array-bytes" }
 # substrate
 sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
 sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
@@ -35,8 +35,6 @@ std = [
 	# crates
 	"codec/std",
 	"serde",
-    # darwinia
-	"array-bytes/std",
 	# github
 	"merkle-mountain-range/std",
 	# substrate
