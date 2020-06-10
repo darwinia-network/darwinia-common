@@ -12,8 +12,10 @@ use codec::{Codec, Decode, Encode};
 use sp_api::decl_runtime_apis;
 use sp_runtime::traits::{MaybeDisplay, MaybeFromStr};
 use sp_std::prelude::*;
+// --- darwinia ---
+use darwinia_support::impl_runtime_dispatch_info;
 
-darwinia_support::impl_runtime_dispatch_info! {
+impl_runtime_dispatch_info! {
 	struct RuntimeDispatchInfo<Hash> {
 		mmr_size: u64,
 		proof: Proof<Hash>
