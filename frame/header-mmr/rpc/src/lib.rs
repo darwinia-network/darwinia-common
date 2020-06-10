@@ -52,7 +52,7 @@ where
 	Client::Api: HeaderMMRRuntimeApi<Block, BlockNumber, Hash>,
 	Block: BlockT,
 	BlockNumber: Codec,
-	Hash: Codec + MaybeDisplay + MaybeFromStr,
+	Hash: core::fmt::Debug + Codec + MaybeDisplay + MaybeFromStr,
 {
 	fn gen_proof(
 		&self,
