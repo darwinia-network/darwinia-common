@@ -12,6 +12,7 @@ use sp_runtime::{
 // --- darwinia ---
 use crate::{mock::*, *};
 use array_bytes::fixed_hex_bytes_unchecked as hh;
+use merkle_mountain_range::Merge;
 
 #[test]
 fn first_header_mmr() {
@@ -122,4 +123,16 @@ fn test_mmr_root() {
 			cur.1
 		);
 	});
+}
+
+#[test]
+fn test_mmr_merge() {
+	let res = MMRMerge::<Test>::merge(
+		&hh!(HEADERS_N_ROOTS[0].0, 32).into(),
+		&hh!(HEADERS_N_ROOTS[1].0, 32).into(),
+	);
+	assert_eq!(
+		format!("{:?}", res),
+		"0x3aafcc7fe12cb8fad62c261458f1c19dba0a3756647fa4e8bff6e248883938be"
+	);
 }
