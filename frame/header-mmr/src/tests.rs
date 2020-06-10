@@ -68,7 +68,7 @@ fn test_insert_header() {
 
 		assert_eq!(mmr.get_root().expect("Get Root Failed"), mmr_root);
 
-		let proof = HeaderMMR::_gen_proof(h1, h2).expect("gen proof");
+		let proof = mmr.gen_proof(vec![pos]).expect("gen proof");
 
 		let result = proof
 			.verify(mmr_root, vec![(pos, prove_elem)])
