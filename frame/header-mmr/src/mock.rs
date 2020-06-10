@@ -128,15 +128,3 @@ pub const HEADERS_N_ROOTS: [(&str, &str); 10] = [
 		"a94bf2a4e0437c236c68675403d980697cf7c9b0f818a622cb40199db5e12cf8",
 	),
 ];
-
-/// Convert hex string to H256
-pub fn hh(s: &str) -> H256 {
-	let mut hash = [0_u8; 32];
-	let bytes = (0..s.len())
-		.step_by(2)
-		.map(|i| u8::from_str_radix(&s[i..i + 2], 16))
-		.collect::<Result<Vec<u8>, _>>()
-		.unwrap_or_default();
-	hash.copy_from_slice(&bytes);
-	hash.into()
-}

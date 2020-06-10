@@ -11,6 +11,7 @@ use sp_runtime::{
 
 // --- darwinia ---
 use crate::{mock::*, *};
+use array_bytes::fixed_hex_bytes_unchecked as hh;
 
 #[test]
 fn first_header_mmr() {
@@ -115,7 +116,7 @@ fn test_mmr_root() {
 	let mut mmr = <MMR<_, MMRMerge<Test>, _>>::new(0, store);
 	(0..10).for_each(|i| {
 		let cur = HEADERS_N_ROOTS[i];
-		mmr.push(hh(cur.0)).unwrap();
+		mmr.push(hh!(cur.0, 32).into()).unwrap();
 		assert_eq!(
 			&format!("{:?}", mmr.get_root().expect("get root failed"))[2..],
 			cur.1
