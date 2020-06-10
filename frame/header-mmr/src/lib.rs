@@ -49,14 +49,14 @@ mod tests;
 use serde::Serialize;
 
 // --- github ---
-use merkle_mountain_range::{MMRStore, MerkleProof, MMR};
+use merkle_mountain_range::{MMRStore, MMR};
 // --- substrate ---
 use codec::{Decode, Encode};
-use frame_support::{debug::error, decl_error, decl_module, decl_storage, ensure};
+use frame_support::{debug::error, decl_module, decl_storage};
 use sp_runtime::{
 	generic::{DigestItem, OpaqueDigestItemId},
 	traits::{Hash, Header},
-	DispatchError, RuntimeDebug,
+	RuntimeDebug,
 };
 use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia ---
@@ -89,22 +89,11 @@ decl_storage! {
 	}
 }
 
-decl_error! {
-	pub enum Error for Module<T: Trait> {
-		/// Proof Block Number - TOO LARGE
-		ProofBlockNumberTL,
-		/// Proof - GET FAILED
-		ProofGF,
-	}
-}
-
 decl_module! {
 	pub struct Module<T: Trait> for enum Call
 	where
 		origin: T::Origin
 	{
-		type Error = Error<T>;
-
 		fn on_finalize(block_number: T::BlockNumber) {
 			let store = <ModuleMMRStore<T>>::default();
 			let parent_hash = <frame_system::Module<T>>::parent_hash();
@@ -181,26 +170,6 @@ impl<T: Trait> MMRStore<T::Hash> for ModuleMMRStore<T> {
 }
 
 impl<T: Trait> Module<T> {
-	fn _gen_proof(
-		block_number: T::BlockNumber,
-		mmr_block_number: T::BlockNumber,
-	) -> Result<MerkleProof<T::Hash, MMRMerge<T>>, DispatchError> {
-		ensure!(
-			block_number < mmr_block_number,
-			<Error<T>>::ProofBlockNumberTL
-		);
-
-		let pos = Self::position_of(block_number);
-		let mmr_header_pos = Self::position_of(mmr_block_number);
-
-		let store = <ModuleMMRStore<T>>::default();
-		let mmr = <MMR<_, MMRMerge<T>, _>>::new(mmr_header_pos, store);
-
-		let proof = mmr.gen_proof(vec![pos]).map_err(|_| <Error<T>>::ProofGF)?;
-
-		Ok(proof)
-	}
-
 	impl_rpc! {
 		pub fn gen_proof_rpc(
 			block_number: T::BlockNumber,
