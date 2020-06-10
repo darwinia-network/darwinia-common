@@ -69,7 +69,7 @@ pub mod literal_procesor {
 }
 
 pub mod relay {
-	pub use crate::traits::{Relayable, RelayerGameAdjustable};
+	pub use crate::traits::{AdjustableRelayerGame, Relayable};
 
 	pub type TcHeaderId<HeaderNumber, HeaderHash> = (HeaderNumber, HeaderHash);
 }

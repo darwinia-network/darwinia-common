@@ -14,10 +14,10 @@ pub mod impls {
 	pub mod bridge {
 		// --- darwinia ---
 		use crate::*;
-		use darwinia_support::relay::RelayerGameAdjustable;
+		use darwinia_support::relay::AdjustableRelayerGame;
 
 		pub struct EthRelayerGameRegulator;
-		impl RelayerGameAdjustable for EthRelayerGameRegulator {
+		impl AdjustableRelayerGame for EthRelayerGameRegulator {
 			type Moment = BlockNumber;
 			type Balance = Balance;
 			type TcBlockNumber = <EthRelay as darwinia_support::relay::Relayable>::BlockNumber;

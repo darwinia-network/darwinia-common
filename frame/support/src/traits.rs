@@ -1,17 +1,22 @@
 // --- substrate ---
 pub use frame_support::traits::{LockIdentifier, VestingSchedule, WithdrawReason, WithdrawReasons};
 
+// --- core ---
+use core::fmt::Debug;
 // --- crates ---
-use codec::{Decode, Encode, EncodeLike};
+use codec::FullCodec;
 use impl_trait_for_tuples::impl_for_tuples;
 // --- substrate ---
 use frame_support::traits::{Currency, TryDrop};
-use sp_runtime::{DispatchError, DispatchResult};
+use sp_runtime::DispatchResult;
 use sp_std::prelude::*;
 // --- darwinia ---
-use crate::balance::{
-	lock::{LockFor, LockReasons},
-	FrozenBalance,
+use crate::{
+	balance::{
+		lock::{LockFor, LockReasons},
+		FrozenBalance,
+	},
+	relay::TcHeaderId,
 };
 
 pub trait BalanceInfo<Balance, Module> {
@@ -137,7 +142,7 @@ impl<Imbalance: TryDrop> OnUnbalancedKton<Imbalance> for () {
 
 // A regulator to adjust relay args for a specific chain
 // Implement this in runtime's impls
-pub trait RelayerGameAdjustable {
+pub trait AdjustableRelayerGame {
 	type Moment;
 	type Balance;
 	type TcBlockNumber;
@@ -152,15 +157,14 @@ pub trait RelayerGameAdjustable {
 // Implement this for target chain's relay module's
 // to expose some necessary APIs for relayer game
 pub trait Relayable {
-	type BlockNumber: Clone + Default + PartialEq + Encode + EncodeLike + Decode;
-	type HeaderHash: Clone + Default + PartialEq + Encode + EncodeLike + Decode;
+	type BlockNumber: Clone + Copy + Debug + Default + PartialEq + FullCodec;
+	type HeaderHash: Clone + Debug + Default + PartialEq + FullCodec;
 
 	// The latest finalize block's header's record id in darwinia
-	fn highest_confirmed_tc_header_id(
-	) -> crate::relay::TcHeaderId<Self::BlockNumber, Self::HeaderHash>;
+	fn highest_confirmed_tc_header_id() -> TcHeaderId<Self::BlockNumber, Self::HeaderHash>;
 
 	// Verify the codec style header thing then return the id which come from the un-codec header
-	fn verify<S: AsRef<[u8]>>(
-		header_thing: S,
-	) -> Result<crate::relay::TcHeaderId<Self::BlockNumber, Self::HeaderHash>, DispatchError>;
+	fn verify<S: AsRef<[u8]>>(header_thing: S) -> DispatchResult;
+
+	fn header_existed(block_number: Self::BlockNumber) -> bool;
 }
