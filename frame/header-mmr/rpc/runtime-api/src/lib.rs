@@ -14,10 +14,20 @@ use sp_runtime::traits::{MaybeDisplay, MaybeFromStr};
 use sp_std::prelude::*;
 
 darwinia_support::impl_runtime_dispatch_info! {
-	#[serde_with_debug]
 	struct RuntimeDispatchInfo<Hash> {
 		mmr_size: u64,
 		proof: Proof<Hash>
+	}
+
+	fn custom_serializer() -> closure {
+		|t| {
+			let s = format!("{:?}", t);
+			if s.len() > 6 {
+				(&s[6..s.len() - 1]).to_owned()
+			} else {
+				s
+			}
+		}
 	}
 }
 

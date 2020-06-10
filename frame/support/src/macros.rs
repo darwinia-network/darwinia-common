@@ -129,9 +129,12 @@ macro_rules! impl_genesis {
 #[macro_export]
 macro_rules! impl_runtime_dispatch_info {
 	(
-		#[serde_with_debug]
 		$(pub)? struct $sname:ident$(<$($gtype:ident),+>)? {
 			$($(pub)? $fname:ident: $ftype:ty),+
+		}
+
+		fn custom_serializer() -> closure {
+			$($custom_serializer:tt)*
 		}
 	) => {
 		#[cfg(feature = "std")]
@@ -171,7 +174,7 @@ macro_rules! impl_runtime_dispatch_info {
 			t: &T,
 			serializer: S,
 		) -> Result<S::Ok, S::Error> {
-			serializer.serialize_str(&format!("{:?}", t))
+			serializer.serialize_str(&($($custom_serializer)*)(t))
 		}
 	};
 	(
