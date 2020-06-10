@@ -206,22 +206,24 @@ impl<T: Trait> Module<T> {
 			block_number: T::BlockNumber,
 			mmr_block_number: T::BlockNumber,
 		) -> RuntimeDispatchInfo<T::Hash> {
-			let pos = Self::position_of(block_number);
-			let mmr_header_pos = Self::position_of(mmr_block_number);
+			if block_number < mmr_block_number {
+				let pos = Self::position_of(block_number);
+				let mmr_header_pos = Self::position_of(mmr_block_number);
 
-			let store = <ModuleMMRStore<T>>::default();
-			let mmr = <MMR<_, MMRMerge<T>, _>>::new(mmr_header_pos, store);
+				let store = <ModuleMMRStore<T>>::default();
+				let mmr = <MMR<_, MMRMerge<T>, _>>::new(mmr_header_pos, store);
 
-			if let Ok(merkle_proof) = mmr.gen_proof(vec![pos]) {
-				RuntimeDispatchInfo {
-					mmr_size: merkle_proof.mmr_size(),
-					proof: Proof(merkle_proof.proof_items().to_vec()),
+				if let Ok(merkle_proof) = mmr.gen_proof(vec![pos]) {
+					return RuntimeDispatchInfo {
+						mmr_size: merkle_proof.mmr_size(),
+						proof: Proof(merkle_proof.proof_items().to_vec()),
+					};
 				}
-			} else {
-				RuntimeDispatchInfo {
-					mmr_size: 0,
-					proof: Proof(vec![]),
-				}
+			}
+
+			RuntimeDispatchInfo {
+				mmr_size: 0,
+				proof: Proof(vec![]),
 			}
 		}
 	}
