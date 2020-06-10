@@ -23,6 +23,7 @@ darwinia-eth-offchain = { default-features = false, path = "../../../frame/bridg
 # TODO: benchmark
 # darwinia-session-benchmarking = { default-features = false, optional = true, path = "" }
 darwinia-header-mmr = { default-features = false, path = "../../../frame/header-mmr" }
+darwinia-header-mmr-rpc-runtime-api = { default-features = false, path = "../../../frame/header-mmr/rpc/runtime-api" }
 darwinia-staking = { default-features = false, path = "../../../frame/staking" }
 darwinia-staking-rpc-runtime-api = { default-features = false, path = "../../../frame/staking/rpc/runtime-api" }
 darwinia-support = { default-features = false, path = "../../../frame/support" }
@@ -82,6 +83,7 @@ std = [
 	"darwinia-eth-backing/std",
 	"darwinia-eth-offchain/std",
 	"darwinia-header-mmr/std",
+	"darwinia-header-mmr-rpc-runtime-api/std",
 	# TODO: benchmark
 	# "darwinia-session-benchmarking/std",
 	"darwinia-staking/std",

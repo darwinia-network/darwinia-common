@@ -11,8 +11,10 @@ use codec::{Codec, Decode, Encode};
 // --- substrate ---
 use sp_api::decl_runtime_apis;
 use sp_runtime::traits::{MaybeDisplay, MaybeFromStr};
+// --- darwinia ---
+use darwinia_support::impl_runtime_dispatch_info;
 
-darwinia_support::impl_runtime_dispatch_info! {
+impl_runtime_dispatch_info! {
 	struct RuntimeDispatchInfo<Balance> {
 		usable_balance: Balance
 	}

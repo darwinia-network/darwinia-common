@@ -71,6 +71,7 @@ where
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance, UE>,
 	C::Api: sc_consensus_babe::BabeApi<Block>,
 	C::Api: darwinia_balances_rpc::BalancesRuntimeApi<Block, AccountId, Balance>,
+	C::Api: darwinia_header_mmr_rpc::HeaderMMRRuntimeApi<Block, BlockNumber, Hash>,
 	C::Api: darwinia_staking_rpc::StakingRuntimeApi<Block, AccountId, Power>,
 	P: 'static + sp_transaction_pool::TransactionPool,
 	SC: 'static + sp_consensus::SelectChain<Block>,
@@ -83,6 +84,7 @@ where
 	use substrate_frame_rpc_system::{FullSystem, SystemApi};
 	// --- darwinia ---
 	use darwinia_balances_rpc::{Balances, BalancesApi};
+	use darwinia_header_mmr_rpc::{HeaderMMR, HeaderMMRApi};
 	use darwinia_staking_rpc::{Staking, StakingApi};
 
 	let FullDeps {
@@ -127,6 +129,7 @@ where
 		));
 	}
 	io.extend_with(BalancesApi::to_delegate(Balances::new(client.clone())));
+	io.extend_with(HeaderMMRApi::to_delegate(HeaderMMR::new(client.clone())));
 	io.extend_with(StakingApi::to_delegate(Staking::new(client)));
 
 	io
