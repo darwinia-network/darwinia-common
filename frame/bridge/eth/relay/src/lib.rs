@@ -5,9 +5,9 @@
 // --- substrate ---
 use frame_support::{decl_error, decl_event, decl_module, decl_storage};
 use frame_system as system;
-use sp_runtime::DispatchResult;
+use sp_runtime::DispatchError;
 // --- darwinia ---
-use darwinia_support::relay::Relayable;
+use darwinia_support::relay::{Relayable, TcHeaderId};
 use eth_primitives::{EthBlockNumber, H256};
 
 pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
@@ -46,18 +46,20 @@ decl_module! {
 }
 
 impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
-	type BlockNumber = EthBlockNumber;
-	type HeaderHash = H256;
+	type TcBlockNumber = EthBlockNumber;
+	type TcHeaderHash = H256;
 
-	fn highest_confirmed_tc_header_id() -> (Self::BlockNumber, Self::HeaderHash) {
+	fn highest_confirmed_tc_header_id() -> (Self::TcBlockNumber, Self::TcHeaderHash) {
 		unimplemented!()
 	}
 
-	fn verify<S: AsRef<[u8]>>(header_thing: S) -> DispatchResult {
+	fn verify_header_chain(
+		raw_header_chain: &[Vec<u8>],
+	) -> Result<Vec<TcHeaderId<Self::TcBlockNumber, Self::TcHeaderHash>>, DispatchError> {
 		unimplemented!()
 	}
 
-	fn header_existed(block_number: Self::BlockNumber) -> bool {
+	fn header_existed(block_number: Self::TcBlockNumber) -> bool {
 		unimplemented!()
 	}
 }

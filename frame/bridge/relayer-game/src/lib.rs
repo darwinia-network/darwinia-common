@@ -20,8 +20,8 @@ mod types {
 	pub type BlockNumber<T> = <T as frame_system::Trait>::BlockNumber;
 	pub type RingBalance<T, I> = <RingCurrency<T, I> as Currency<AccountId<T>>>::Balance;
 
-	pub type TcBlockNumber<T, I> = <Tc<T, I> as Relayable>::BlockNumber;
-	pub type TcHeaderHash<T, I> = <Tc<T, I> as Relayable>::HeaderHash;
+	pub type TcBlockNumber<T, I> = <Tc<T, I> as Relayable>::TcBlockNumber;
+	pub type TcHeaderHash<T, I> = <Tc<T, I> as Relayable>::TcHeaderHash;
 
 	pub type GameId<TcBlockNumber> = TcBlockNumber;
 	pub type ProposalId<TcBlockNumber, TcHeaderHash> = TcHeaderId<TcBlockNumber, TcHeaderHash>;
@@ -38,7 +38,7 @@ use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{decl_error, decl_event, decl_module, decl_storage, ensure, traits::Currency};
 use frame_system::{self as system, ensure_signed};
-use sp_runtime::RuntimeDebug;
+use sp_runtime::{DispatchError, RuntimeDebug};
 use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_support::{balance::lock::*, relay::*};
@@ -51,7 +51,7 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
 	/// A regulator to adjust relay args for a specific chain
-	type RelayerGameAdjustment: AdjustableRelayerGame;
+	type RelayerGameAdjustor: AdjustableRelayerGame<Balance = RingBalance<Self, I>>;
 
 	/// The target chain's relay module's API
 	type TargetChain: Relayable;
@@ -61,9 +61,10 @@ decl_event! {
 	pub enum Event<T, I: Instance = DefaultInstance>
 	where
 		AccountId = AccountId<T>,
+		BlockNumber = BlockNumber<T>,
 	{
 		/// TODO
-		TODO(AccountId),
+		TODO(AccountId, BlockNumber),
 	}
 }
 
@@ -73,24 +74,26 @@ decl_error! {
 		ProposalAE,
 		/// Target Header - ALREADY EXISTED
 		TargetHeaderAE,
+
+		/// Round - MISMATCHED
+		RoundMis,
+
+		/// Challenge - NOT HAPPENED
+		ChallengeNH,
 	}
 }
 
 decl_storage! {
 	trait Store for Module<T: Trait<I>, I: Instance = DefaultInstance> as DarwiniaRelayerGame {
-		/// Each `TcHeaderId` is a `Proposal`
-		/// A `Proposal` can spawn many sub-proposals
-		pub Proposals
-			get(fn proposal)
-			: double_map
-				hasher(blake2_128_concat) GameId<TcBlockNumber<T, I>>,
-				hasher(blake2_128_concat) ProposalId<TcBlockNumber<T, I>, TcHeaderHash<T, I>>
-			=> Proposal<
-				AccountId<T>,
+		pub Games
+			get(fn proposals_of_game)
+			: map hasher(blake2_128_concat) GameId<TcBlockNumber<T, I>>
+			=> Vec<Proposal<
+				T::AccountId,
 				RingBalance<T, I>,
 				TcBlockNumber<T, I>,
 				TcHeaderHash<T, I>
-			>;
+			>>;
 
 		/// The closed rounds which had passed the challenge time at this moment
 		pub ClosedRounds
@@ -120,26 +123,72 @@ decl_module! {
 
 		fn deposit_event() = default;
 
+		// TODO:
+		//	the `header_thing_chain` could be very large,
+		//	the bond should relate to the bytes fee
+		//	that we slash the evil relayer(s) to reward the honest relayer(s)
 		#[weight = 0]
 		fn submit_proposal(
 			origin,
-			proposal_id: ProposalId<TcBlockNumber<T, I>, TcHeaderHash<T, I>>,
-			header_thing: Vec<u8>,
-			extend_from: Option<ProposalId<TcBlockNumber<T, I>, TcHeaderHash<T, I>>>
+			target_block_number: TcBlockNumber<T, I>,
+			header_thing_chain: Vec<Vec<u8>>
 		) {
 			let relayer = ensure_signed(origin)?;
-			T::TargetChain::verify(&header_thing)?;
+			let game_id = target_block_number;
+			let other_proposals = Self::proposals_of_game(game_id);
+			let other_proposals_len = other_proposals.len();
+			let build_from_raw_header_chain = |raw_header_chain, other_proposals_len| -> Result<
+				Vec<(TcHeaderId<TcBlockNumber<T, I>, TcHeaderHash<T, I>>, RingBalance<T, I>)>,
+				DispatchError
+			> {
+				Ok(T::TargetChain::verify_header_chain(raw_header_chain)?
+					.into_iter()
+					.enumerate()
+					.map(|(round, header_id)| (header_id, T::RelayerGameAdjustor::estimate_bond(
+						round as _,
+						other_proposals_len
+					)))
+					.collect())
+			};
 
-			if extend_from.is_none() {
+			if other_proposals_len == 0 {
 				ensure!(
-					!T::TargetChain::header_existed(proposal_id.0),
-					<Error<T, I>>::ProposalAE,
+					!T::TargetChain::header_existed(game_id),
+					<Error<T, I>>::ProposalAE
 				);
-				ensure!(
-					<Proposals<T, I>>::iter_prefix_values(&proposal_id.0).size_hint().0 == 0,
-					<Error<T, I>>::TargetHeaderAE,
-				);
+				ensure!(header_thing_chain.len() == 1, <Error<T, I>>::RoundMis);
+
+				<Games<T, I>>::insert(game_id, vec![Proposal {
+					relayer,
+					chain: build_from_raw_header_chain(
+						&header_thing_chain,
+						other_proposals_len as _
+					)?,
+					extend_from: None
+				}]);
+			} else {
+				// ensure!(header_thing_chain.len() == 1, <Error<T, I>>::RoundMis);
+
+				let mut proposal = Proposal {
+					relayer,
+					chain: build_from_raw_header_chain(
+						&header_thing_chain,
+						other_proposals_len as _
+					)?,
+					extend_from: None
+				};
+				for proposal_ in other_proposals {
+
+				}
+
 			}
+
+			// 	<Proposals<T, I>>::insert(game_id, proposal_id, Proposal {
+			// 		relayer:,
+			// 		chain:,
+			// 		extend_from:,
+			// 	});
+			// 	ensure!(rounds_proposals_count > 1, <Error<T, I>>::ChallengeNH);
 		}
 	}
 }
@@ -170,11 +219,12 @@ impl Default for TcHeaderStatus {
 #[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug)]
 pub struct Proposal<AccountId, Balance, TcBlockNumber, TcHeaderHash> {
 	// TODO: Can this proposal submit by other relayers?
+	/// The relayer of these series of headers
 	/// The proposer of this proposal
 	/// The person who support this proposal with some bonds
-	relayer: (AccountId, Balance),
-	/// A series of target chain's header id
-	chain: Vec<TcHeaderId<TcBlockNumber, TcHeaderHash>>,
+	relayer: AccountId,
+	/// A series of target chain's header ids and the value that relayer had bonded for it
+	chain: Vec<(TcHeaderId<TcBlockNumber, TcHeaderHash>, Balance)>,
 	/// Parents (previous proposal)
 	///
 	/// If this field is `None` that means this proposal is the main proposal

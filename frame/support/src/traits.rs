@@ -8,7 +8,7 @@ use codec::FullCodec;
 use impl_trait_for_tuples::impl_for_tuples;
 // --- substrate ---
 use frame_support::traits::{Currency, TryDrop};
-use sp_runtime::DispatchResult;
+use sp_runtime::{DispatchError, DispatchResult};
 use sp_std::prelude::*;
 // --- darwinia ---
 use crate::{
@@ -151,20 +151,23 @@ pub trait AdjustableRelayerGame {
 
 	fn sampling_targets() -> Vec<Self::TcBlockNumber>;
 
-	fn estimate_bond() -> Self::Balance;
+	fn estimate_bond(round: u32, proposals_count: u32) -> Self::Balance;
 }
 
-// Implement this for target chain's relay module's
-// to expose some necessary APIs for relayer game
+/// Implement this for target chain's relay module's
+/// to expose some necessary APIs for relayer game
 pub trait Relayable {
-	type BlockNumber: Clone + Copy + Debug + Default + PartialEq + FullCodec;
-	type HeaderHash: Clone + Debug + Default + PartialEq + FullCodec;
+	type TcBlockNumber: Clone + Copy + Debug + Default + PartialEq + FullCodec;
+	type TcHeaderHash: Clone + Debug + Default + PartialEq + FullCodec;
 
-	// The latest finalize block's header's record id in darwinia
-	fn highest_confirmed_tc_header_id() -> TcHeaderId<Self::BlockNumber, Self::HeaderHash>;
+	/// The latest finalize block's header's record id in darwinia
+	fn highest_confirmed_tc_header_id() -> TcHeaderId<Self::TcBlockNumber, Self::TcHeaderHash>;
 
-	// Verify the codec style header thing then return the id which come from the un-codec header
-	fn verify<S: AsRef<[u8]>>(header_thing: S) -> DispatchResult;
+	/// Verify the codec style header chain
+	fn verify_header_chain(
+		raw_header_chain: &[Vec<u8>],
+	) -> Result<Vec<TcHeaderId<Self::TcBlockNumber, Self::TcHeaderHash>>, DispatchError>;
 
-	fn header_existed(block_number: Self::BlockNumber) -> bool;
+	/// Check the header if it's already existed
+	fn header_existed(block_number: Self::TcBlockNumber) -> bool;
 }
