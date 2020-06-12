@@ -6,6 +6,7 @@
 use frame_support::{decl_error, decl_event, decl_module, decl_storage};
 use frame_system as system;
 use sp_runtime::DispatchError;
+use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_support::relay::{Relayable, TcHeaderId};
 use eth_primitives::{EthBlockNumber, H256};

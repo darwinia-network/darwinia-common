@@ -16,11 +16,11 @@ pub mod impls {
 		use crate::*;
 		use darwinia_support::relay::AdjustableRelayerGame;
 
-		pub struct EthRelayerGameRegulator;
-		impl AdjustableRelayerGame for EthRelayerGameRegulator {
+		pub struct EthRelayerGameAdjustor;
+		impl AdjustableRelayerGame for EthRelayerGameAdjustor {
 			type Moment = BlockNumber;
 			type Balance = Balance;
-			type TcBlockNumber = <EthRelay as darwinia_support::relay::Relayable>::BlockNumber;
+			type TcBlockNumber = <EthRelay as darwinia_support::relay::Relayable>::TcBlockNumber;
 
 			fn challenge_time() -> Self::Moment {
 				unimplemented!()
@@ -30,7 +30,7 @@ pub mod impls {
 				unimplemented!()
 			}
 
-			fn estimate_bond() -> Self::Balance {
+			fn estimate_bond(round: u32, proposals_count: u32) -> Self::Balance {
 				unimplemented!()
 			}
 		}
@@ -764,7 +764,7 @@ impl darwinia_header_mmr::Trait for Runtime {}
 impl darwinia_relayer_game::Trait for Runtime {
 	type Event = Event;
 	type RingCurrency = Ring;
-	type RelayerGameAdjustment = bridge::EthRelayerGameRegulator;
+	type RelayerGameAdjustor = bridge::EthRelayerGameAdjustor;
 	type TargetChain = EthRelay;
 }
 

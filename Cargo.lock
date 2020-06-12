@@ -978,6 +978,7 @@ dependencies = [
  "parity-scale-codec",
  "serde",
  "sp-runtime",
+ "sp-std 2.0.0-rc2",
 ]
 
 [[package]]
