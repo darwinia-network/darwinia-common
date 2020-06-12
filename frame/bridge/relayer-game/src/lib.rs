@@ -137,16 +137,13 @@ decl_module! {
 			let game_id = target_block_number;
 			let other_proposals = Self::proposals_of_game(game_id);
 			let other_proposals_len = other_proposals.len();
-			let build_from_raw_header_chain = |raw_header_chain, other_proposals_len| -> Result<
-				Vec<(TcHeaderId<TcBlockNumber<T, I>, TcHeaderHash<T, I>>, RingBalance<T, I>)>,
-				DispatchError
-			> {
-				Ok(T::TargetChain::verify_header_chain(raw_header_chain)?
+			let build_from_raw_header_chain = || -> Result<_, DispatchError> {
+				Ok(T::TargetChain::verify_header_chain(&header_thing_chain)?
 					.into_iter()
 					.enumerate()
 					.map(|(round, header_id)| (header_id, T::RelayerGameAdjustor::estimate_bond(
 						round as _,
-						other_proposals_len
+						other_proposals_len as _
 					)))
 					.collect())
 			};
@@ -160,10 +157,7 @@ decl_module! {
 
 				<Games<T, I>>::insert(game_id, vec![Proposal {
 					relayer,
-					chain: build_from_raw_header_chain(
-						&header_thing_chain,
-						other_proposals_len as _
-					)?,
+					chain: build_from_raw_header_chain()?,
 					extend_from: None
 				}]);
 			} else {
@@ -171,14 +165,15 @@ decl_module! {
 
 				let mut proposal = Proposal {
 					relayer,
-					chain: build_from_raw_header_chain(
-						&header_thing_chain,
-						other_proposals_len as _
-					)?,
+					chain: build_from_raw_header_chain()?,
 					extend_from: None
 				};
-				for proposal_ in other_proposals {
 
+				{
+					let previous_round_index = proposal.chain.len() - 2;
+					for proposal_ in other_proposals {
+						// let round =
+					}
 				}
 
 			}
