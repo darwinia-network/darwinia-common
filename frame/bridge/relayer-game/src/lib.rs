@@ -24,9 +24,7 @@ mod types {
 	pub type TcHeaderHash<T, I> = <Tc<T, I> as Relayable>::TcHeaderHash;
 
 	pub type GameId<TcBlockNumber> = TcBlockNumber;
-	pub type ProposalId<TcBlockNumber, TcHeaderHash> = TcHeaderId<TcBlockNumber, TcHeaderHash>;
-
-	pub type Round = u32;
+	pub type RoundIndex = u32;
 
 	type RingCurrency<T, I> = <T as Trait<I>>::RingCurrency;
 
@@ -38,7 +36,7 @@ use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{decl_error, decl_event, decl_module, decl_storage, ensure, traits::Currency};
 use frame_system::{self as system, ensure_signed};
-use sp_runtime::{DispatchError, RuntimeDebug};
+use sp_runtime::{traits::Convert, DispatchError, RuntimeDebug};
 use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_support::{balance::lock::*, relay::*};
@@ -51,7 +49,13 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
 	/// A regulator to adjust relay args for a specific chain
-	type RelayerGameAdjustor: AdjustableRelayerGame<Balance = RingBalance<Self, I>>;
+	type RelayerGameAdjustor: AdjustableRelayerGame<
+		Balance = RingBalance<Self, I>,
+		Moment = Self::BlockNumber,
+		TcBlockNumber = TcBlockNumber<Self, I>,
+		Sampler = Self::Sampler,
+	>;
+	type Sampler: Convert<Round, Vec<TcBlockNumber<Self, I>>> + Convert<u32, Round>;
 
 	/// The target chain's relay module's API
 	type TargetChain: Relayable;
@@ -97,7 +101,7 @@ decl_storage! {
 
 		/// The closed rounds which had passed the challenge time at this moment
 		pub ClosedRounds
-			get(fn closed_rounds)
+			get(fn closed_rounds_at)
 			: map hasher(blake2_128_concat) T::BlockNumber
 			=>  Vec<(GameId<TcBlockNumber<T, I>>, Round)>;
 
@@ -105,7 +109,7 @@ decl_storage! {
 		pub TcHeaders
 			get(fn tc_header)
 			: map hasher(blake2_128_concat) TcHeaderId<TcBlockNumber<T, I>, TcHeaderHash<T, I>>
-			=> Option<RefTcHeader>;
+			=> RefTcHeader;
 
 		/// The finalize blocks' header's id which is recorded in darwinia
 		pub ConfirmedTcHeaderIds
@@ -131,14 +135,14 @@ decl_module! {
 		fn submit_proposal(
 			origin,
 			target_block_number: TcBlockNumber<T, I>,
-			header_thing_chain: Vec<Vec<u8>>
+			raw_header_thing_chain: Vec<Vec<u8>>
 		) {
 			let relayer = ensure_signed(origin)?;
 			let game_id = target_block_number;
 			let other_proposals = Self::proposals_of_game(game_id);
 			let other_proposals_len = other_proposals.len();
-			let build_from_raw_header_chain = || -> Result<_, DispatchError> {
-				Ok(T::TargetChain::verify_header_chain(&header_thing_chain)?
+			let build_from_raw_header_chain = || -> Result<Vec<_>, DispatchError> {
+				Ok(T::TargetChain::verify_header_chain(&raw_header_thing_chain)?
 					.into_iter()
 					.enumerate()
 					.map(|(round, header_id)| (header_id, T::RelayerGameAdjustor::estimate_bond(
@@ -153,29 +157,61 @@ decl_module! {
 					!T::TargetChain::header_existed(game_id),
 					<Error<T, I>>::ProposalAE
 				);
-				ensure!(header_thing_chain.len() == 1, <Error<T, I>>::RoundMis);
+				ensure!(raw_header_thing_chain.len() == 1, <Error<T, I>>::RoundMis);
 
+				let chain = build_from_raw_header_chain()?;
+
+				for ((tc_header_id, _), raw_header_thing) in chain
+					.iter()
+					.cloned()
+					.zip(raw_header_thing_chain.into_iter())
+				{
+					<TcHeaders<T, I>>::mutate(tc_header_id, |ref_tc_header| {
+						if ref_tc_header.ref_count == 0 {
+							*ref_tc_header = RefTcHeader {
+								raw_header_thing,
+								ref_count: 1,
+								status: TcHeaderStatus::Unknown,
+							};
+						} else {
+							ref_tc_header.ref_count += 1;
+						}
+					});
+				}
 				<Games<T, I>>::insert(game_id, vec![Proposal {
 					relayer,
-					chain: build_from_raw_header_chain()?,
+					chain,
 					extend_from: None
 				}]);
+				<ClosedRounds<T, I>>::mutate(
+					<frame_system::Module<T>>::block_number(),
+					|closed_rounds| closed_rounds.push((game_id, 0))
+				);
 			} else {
-				// ensure!(header_thing_chain.len() == 1, <Error<T, I>>::RoundMis);
+				let next_round =
+					T::RelayerGameAdjustor::round_from_chain_len(raw_header_thing_chain.len() as _);
+				let extend_from = other_proposals
+					.into_iter()
+					.position(|proposal| {
+						T::RelayerGameAdjustor::round_from_chain_len(proposal.chain.len() as _) + 1
+							== next_round
+					})
+					.map(|i| i as _);
+				if extend_from.is_some() {
+					let chain = build_from_raw_header_chain()?;
 
-				let mut proposal = Proposal {
-					relayer,
-					chain: build_from_raw_header_chain()?,
-					extend_from: None
-				};
-
-				{
-					let previous_round_index = proposal.chain.len() - 2;
-					for proposal_ in other_proposals {
-						// let round =
-					}
+					<Games<T, I>>::mutate(game_id, |proposals| proposals.push(Proposal {
+						relayer,
+						chain,
+						extend_from,
+					}));
+					<ClosedRounds<T, I>>::mutate(
+						<frame_system::Module<T>>::block_number(),
+						|closed_rounds| closed_rounds.push((game_id, 0))
+					);
+				} else {
+					Err(<Error<T, I>>::RoundMis)?;
 				}
-
 			}
 
 			// 	<Proposals<T, I>>::insert(game_id, proposal_id, Proposal {
@@ -222,16 +258,15 @@ pub struct Proposal<AccountId, Balance, TcBlockNumber, TcHeaderHash> {
 	chain: Vec<(TcHeaderId<TcBlockNumber, TcHeaderHash>, Balance)>,
 	/// Parents (previous proposal)
 	///
-	/// If this field is `None` that means this proposal is the main proposal
-	/// which is the head of a proposal link list
-	extend_from: Option<ProposalId<TcBlockNumber, TcHeaderHash>>,
+	/// If this field is `None` that means this proposal is the first proposal
+	extend_from: Option<RoundIndex>,
 }
 
 #[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug)]
 pub struct RefTcHeader {
 	/// Codec style `Header` or `HeaderWithProofs` or ...
 	/// That you defined in target chain's relay module use for verifying
-	header_thing: Vec<u8>,
+	raw_header_thing: Vec<u8>,
 	/// Maybe two or more proposals are using the same `Header`
 	/// Drop it while the `ref_count` is zero but **NOT** in `ConfirmedTcHeaders` list
 	ref_count: u32,

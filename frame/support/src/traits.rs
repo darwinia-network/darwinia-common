@@ -8,7 +8,7 @@ use codec::FullCodec;
 use impl_trait_for_tuples::impl_for_tuples;
 // --- substrate ---
 use frame_support::traits::{Currency, TryDrop};
-use sp_runtime::{DispatchError, DispatchResult};
+use sp_runtime::{traits::Convert, DispatchError, DispatchResult};
 use sp_std::prelude::*;
 // --- darwinia ---
 use crate::{
@@ -16,7 +16,7 @@ use crate::{
 		lock::{LockFor, LockReasons},
 		FrozenBalance,
 	},
-	relay::TcHeaderId,
+	relay::{RawHeaderThing, Round, TcHeaderId},
 };
 
 pub trait BalanceInfo<Balance, Module> {
@@ -146,12 +146,15 @@ pub trait AdjustableRelayerGame {
 	type Moment;
 	type Balance;
 	type TcBlockNumber;
+	type Sampler: Convert<Round, Vec<Self::TcBlockNumber>> + Convert<u32, Round>;
 
 	fn challenge_time() -> Self::Moment;
 
-	fn sampling_targets() -> Vec<Self::TcBlockNumber>;
+	fn round_from_chain_len(chain_len: u32) -> Round;
 
-	fn estimate_bond(round: u32, proposals_count: u32) -> Self::Balance;
+	fn samples_from_round(round: Round) -> Vec<Self::TcBlockNumber>;
+
+	fn estimate_bond(round: Round, proposals_count: u32) -> Self::Balance;
 }
 
 /// Implement this for target chain's relay module's
@@ -163,9 +166,9 @@ pub trait Relayable {
 	/// The latest finalize block's header's record id in darwinia
 	fn highest_confirmed_tc_header_id() -> TcHeaderId<Self::TcBlockNumber, Self::TcHeaderHash>;
 
-	/// Verify the codec style header chain
+	/// Verify the codec style header thing chain
 	fn verify_header_chain(
-		raw_header_chain: &[Vec<u8>],
+		raw_header_thing_chain: &[RawHeaderThing],
 	) -> Result<Vec<TcHeaderId<Self::TcBlockNumber, Self::TcHeaderHash>>, DispatchError>;
 
 	/// Check the header if it's already existed

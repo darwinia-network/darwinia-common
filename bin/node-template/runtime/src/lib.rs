@@ -14,19 +14,24 @@ pub mod impls {
 	pub mod bridge {
 		// --- darwinia ---
 		use crate::*;
-		use darwinia_support::relay::AdjustableRelayerGame;
+		use darwinia_support::relay::*;
 
 		pub struct EthRelayerGameAdjustor;
 		impl AdjustableRelayerGame for EthRelayerGameAdjustor {
 			type Moment = BlockNumber;
 			type Balance = Balance;
 			type TcBlockNumber = <EthRelay as darwinia_support::relay::Relayable>::TcBlockNumber;
+			// type Sampler = EthRelayerGameSampler;
 
 			fn challenge_time() -> Self::Moment {
 				unimplemented!()
 			}
 
-			fn sampling_targets() -> Vec<Self::TcBlockNumber> {
+			fn round_from_chain_len(chain_len: u32) -> Round {
+				unimplemented!()
+			}
+
+			fn samples_from_round(round: Round) -> Vec<Self::TcBlockNumber> {
 				unimplemented!()
 			}
 
@@ -34,6 +39,10 @@ pub mod impls {
 				unimplemented!()
 			}
 		}
+
+		// pub struct EthRelayerGameSampler;
+		// impl Convert for EthRelayerGameSampler {}
+		// impl Convert for EthRelayerGameSampler {}
 	}
 
 	// --- substrate ---
