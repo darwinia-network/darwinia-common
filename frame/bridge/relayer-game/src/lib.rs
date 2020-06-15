@@ -103,14 +103,14 @@ decl_storage! {
 		/// The allow samples for each game
 		pub Samples
 			get(fn samples_of_game)
-			: map hasher(blake2_128_concat)  TcBlockNumber<T, I>
+			: map hasher(blake2_128_concat) TcBlockNumber<T, I>
 			=> Vec<TcBlockNumber<T, I>>;
 
 		/// The closed rounds which had passed the challenge time at this moment
 		pub ClosedRounds
 			get(fn closed_rounds_at)
 			: map hasher(blake2_128_concat) BlockNumber<T>
-			=>  Vec<(GameId<TcBlockNumber<T, I>>, Round)>;
+			=> Vec<(GameId<TcBlockNumber<T, I>>, Round)>;
 
 		/// All the `TcHeader`s store here, **NON-DUPLICATIVE**
 		pub TcHeaders
@@ -142,7 +142,7 @@ decl_module! {
 					for (game_id, round) in proposals {
 						let mut proposals = Self::proposals_of_game(game_id)
 							.into_iter()
-							.filter(|proposal| Self::round_of_proposal(proposal.chain.len() as _)
+							.filter(|proposal| Self::round_of_chain(proposal.chain.len() as _)
 								== round)
 							.collect::<Vec<_>>();
 
@@ -150,16 +150,11 @@ decl_module! {
 							0 => (),
 							1 => {
 								// chain's len is always great than 1 under this match pattern; qed
-								let proposal = proposals.pop().unwrap();
-								for round in (0..Self::round_of_proposal(proposal.chain.len() as _))
-									.rev()
-								{
-									if proposal.extend_from.is_none() {
-										break;
-									}
+								let mut proposal = proposals.pop().unwrap();
+								while let Some(extend_from) = proposal.extend_from {
+									<Games<T, I>>::mutate(extend_from, |proposals| {
 
-									let extend_from = proposal.extend_from.unwrap();
-
+									});
 								}
 							}
 							_ => {}
@@ -187,10 +182,13 @@ decl_module! {
 				Ok(T::TargetChain::verify_header_chain(&raw_header_thing_chain)?
 					.into_iter()
 					.enumerate()
-					.map(|(round, header_id)| (header_id, T::RelayerGameAdjustor::estimate_bond(
-						round as _,
-						other_proposals_len as _
-					)))
+					.map(|(round, header_id)| TcHeaderIdWithBond {
+						id: header_id,
+						bond: T::RelayerGameAdjustor::estimate_bond(
+							round as _,
+							other_proposals_len as _
+						)
+					})
 					.collect())
 			};
 			let add_ref_tc_header = |tc_header_id, raw_header_thing| {
@@ -216,12 +214,12 @@ decl_module! {
 
 					let chain = build_from_raw_header_chain()?;
 
-					for ((tc_header_id, _), raw_header_thing) in chain
+					for (tc_header_id_with_bond, raw_header_thing) in chain
 						.iter()
 						.cloned()
 						.zip(raw_header_thing_chain.into_iter())
 					{
-						add_ref_tc_header(tc_header_id, raw_header_thing);
+						add_ref_tc_header(tc_header_id_with_bond.id, raw_header_thing);
 					}
 					<Games<T, I>>::insert(game_id, vec![Proposal {
 						relayer,
@@ -235,13 +233,13 @@ decl_module! {
 					);
 				}
 				_ => {
-					let round = Self::round_of_proposal(raw_header_thing_chain.len() as _)
+					let round = Self::round_of_chain(raw_header_thing_chain.len() as _)
 						.checked_sub(1)
 						.ok_or(<Error<T, I>>::RoundMis)?;
 					let chain = build_from_raw_header_chain()?;
 					let samples = {
 						// chain's len is always great than 1 under this match pattern; qed
-						let ((game_id, _), _) = chain[0];
+						let TcHeaderIdWithBond { id: (game_id, _), .. } = chain[0];
 						Self::samples_of_game(game_id)
 					};
 
@@ -253,23 +251,24 @@ decl_module! {
 						chain
 							.iter()
 							.zip(samples.iter())
-							.all(|(((block_number, _), _), sample_block_number)|
-								block_number == sample_block_number),
+							.all(|(TcHeaderIdWithBond { id: (block_number, _), .. },
+								sample_block_number)| block_number == sample_block_number),
 						<Error<T, I>>::RoundMis
 					);
 
 					let extend_from = other_proposals
 						.into_iter()
-						.position(|proposal|
-							(Self::round_of_proposal(proposal.chain.len() as _) == round) && chain
+						.find(|proposal|
+							(Self::round_of_chain(proposal.chain.len() as _) == round) && chain
 								.iter()
 								.zip(proposal.chain.iter())
 								.all(|(a, b)| a == b))
-						.map(|i| i as _);
+						// each proposal must contains a NOT empty chain; qed
+						.map(|proposal| (proposal.chain[0].id.0));
 					if extend_from.is_some() {
 						{
 							// chain's len is always great than 1 under this match pattern; qed
-							let (tc_header_id, _) = chain
+							let TcHeaderIdWithBond { id: tc_header_id, .. } = chain
 								.last()
 								.unwrap()
 								.clone();
@@ -302,7 +301,7 @@ decl_module! {
 }
 
 impl<T: Trait<I>, I: Instance> Module<T, I> {
-	fn round_of_proposal(chain_len: u32) -> Round {
+	fn round_of_chain(chain_len: u32) -> Round {
 		T::RelayerGameAdjustor::round_from_chain_len(chain_len)
 	}
 }
@@ -333,11 +332,17 @@ pub struct Proposal<AccountId, Balance, TcBlockNumber, TcHeaderHash> {
 	/// The person who support this proposal with some bonds
 	relayer: AccountId,
 	/// A series of target chain's header ids and the value that relayer had bonded for it
-	chain: Vec<(TcHeaderId<TcBlockNumber, TcHeaderHash>, Balance)>,
-	/// Parents (previous proposal)
+	chain: Vec<TcHeaderIdWithBond<Balance, TcBlockNumber, TcHeaderHash>>,
+	/// Parents (previous block number)
 	///
 	/// If this field is `None` that means this proposal is the first proposal
-	extend_from: Option<RoundIndex>,
+	extend_from: Option<TcBlockNumber>,
+}
+
+#[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug)]
+pub struct TcHeaderIdWithBond<Balance, TcBlockNumber, TcHeaderHash> {
+	id: TcHeaderId<TcBlockNumber, TcHeaderHash>,
+	bond: Balance,
 }
 
 #[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug)]
