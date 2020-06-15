@@ -148,7 +148,7 @@ pub trait AdjustableRelayerGame {
 	type TcBlockNumber;
 	type Sampler: Convert<Round, Vec<Self::TcBlockNumber>> + Convert<u32, Round>;
 
-	fn challenge_time() -> Self::Moment;
+	fn challenge_time(round: Round) -> Self::Moment;
 
 	fn round_from_chain_len(chain_len: u32) -> Round;
 

@@ -29,6 +29,7 @@ darwinia-staking = { default-features = false, path = "../../../frame/staking" }
 darwinia-staking-rpc-runtime-api = { default-features = false, path = "../../../frame/staking/rpc/runtime-api" }
 darwinia-support = { default-features = false, path = "../../../frame/support" }
 darwinia-treasury = { default-features = false, path = "../../../frame/treasury" }
+eth-primitives = { default-features = false, path = "../../../primitives/eth-primitives" }
 # substrate
 frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
 frame-executive = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
@@ -92,6 +93,7 @@ std = [
 	"darwinia-staking-rpc-runtime-api/std",
 	"darwinia-support/std",
 	"darwinia-treasury/std",
+	"eth-primitives/std",
 	# substrate
 	"frame-executive/std",
 	"frame-support/std",

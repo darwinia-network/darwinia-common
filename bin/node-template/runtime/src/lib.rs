@@ -13,7 +13,7 @@ pub mod impls {
 
 	pub mod bridge {
 		// --- darwinia ---
-		use crate::*;
+		use crate::{impls::*, *};
 		use darwinia_support::relay::*;
 
 		pub struct EthRelayerGameAdjustor;
@@ -21,9 +21,9 @@ pub mod impls {
 			type Moment = BlockNumber;
 			type Balance = Balance;
 			type TcBlockNumber = <EthRelay as darwinia_support::relay::Relayable>::TcBlockNumber;
-			// type Sampler = EthRelayerGameSampler;
+			type Sampler = EthRelayerGameSampler<Self::TcBlockNumber>;
 
-			fn challenge_time() -> Self::Moment {
+			fn challenge_time(round: Round) -> Self::Moment {
 				unimplemented!()
 			}
 
@@ -40,9 +40,17 @@ pub mod impls {
 			}
 		}
 
-		// pub struct EthRelayerGameSampler;
-		// impl Convert for EthRelayerGameSampler {}
-		// impl Convert for EthRelayerGameSampler {}
+		pub struct EthRelayerGameSampler<TcBlockNumber>(sp_std::marker::PhantomData<TcBlockNumber>);
+		impl<TcBlockNumber> Convert<Round, Vec<TcBlockNumber>> for EthRelayerGameSampler<TcBlockNumber> {
+			fn convert(round: Round) -> Vec<TcBlockNumber> {
+				unimplemented!()
+			}
+		}
+		impl<TcBlockNumber> Convert<u32, Round> for EthRelayerGameSampler<TcBlockNumber> {
+			fn convert(chain_len: u32) -> Round {
+				unimplemented!()
+			}
+		}
 	}
 
 	// --- substrate ---
@@ -774,6 +782,7 @@ impl darwinia_relayer_game::Trait for Runtime {
 	type Event = Event;
 	type RingCurrency = Ring;
 	type RelayerGameAdjustor = bridge::EthRelayerGameAdjustor;
+	type Sampler = bridge::EthRelayerGameSampler<eth_primitives::EthBlockNumber>;
 	type TargetChain = EthRelay;
 }
 
