@@ -148,8 +148,9 @@ decl_module! {
 						let proposals = Self::proposals_of_game(game_id)
 							.into_iter()
 							.filter(|proposal|
-								Self::round_from_chain_len(proposal.chain.len() as _)
-									== round
+								T::RelayerGameAdjustor
+									::round_from_chain_len(proposal.chain.len() as _)
+										== round
 							)
 							.collect::<Vec<_>>();
 
@@ -170,7 +171,7 @@ decl_module! {
 										|proposals|
 											proposals
 												.drain_filter(|proposal|
-													Self::round_from_chain_len(
+													T::RelayerGameAdjustor::round_from_chain_len(
 														proposal.chain.len() as _
 													) != round
 												)
@@ -198,10 +199,21 @@ decl_module! {
 											Within a Round"),
 									}
 								}
-
 								// TODO: reward
 							}
-							_ => {}
+							_ => {
+								<Samples<T, I>>::mutate(proposals[0].chain[0].id.0, |samples| {
+									T::RelayerGameAdjustor::update_samples(
+										T::RelayerGameAdjustor::round_from_chain_len(
+											proposals[0]
+												.chain
+												.len() as _
+										),
+										T::TargetChain::highest_confirmed_at(),
+										samples
+									);
+								});
+							}
 						}
 					}
 				}
@@ -222,8 +234,8 @@ decl_module! {
 			let game_id = target_block_number;
 			let other_proposals = Self::proposals_of_game(game_id);
 			let other_proposals_len = other_proposals.len();
-			let build_from_raw_header_chain = || -> Result<Vec<_>, DispatchError> {
-				Ok(T::TargetChain::verify_header_chain(&raw_header_thing_chain)?
+			let build_chain = || -> Result<Vec<_>, DispatchError> {
+				Ok(T::TargetChain::verify_raw_header_thing_chain(&raw_header_thing_chain)?
 					.into_iter()
 					.enumerate()
 					.map(|(round, header_id)| BondedTcHeader {
@@ -256,7 +268,7 @@ decl_module! {
 						<Error<T, I>>::TargetHeaderAE
 					);
 
-					let chain = build_from_raw_header_chain()?;
+					let chain = build_chain()?;
 
 					add_ref_tc_header(&chain[0].id, &raw_header_thing_chain[0]);
 					<Games<T, I>>::insert(game_id, vec![Proposal {
@@ -269,24 +281,35 @@ decl_module! {
 							+ T::RelayerGameAdjustor::challenge_time(0),
 						|closed_rounds| closed_rounds.push((game_id, 0))
 					);
+					<Samples<T, I>>::insert(game_id, vec![game_id]);
 				}
 				(_, 1) => {
-					let chain = build_from_raw_header_chain()?;
-
-					for proposal in other_proposals.into_iter() {
-						if proposal.chain.len() != 1 {
-							Err(<Error<T, I>>::RoundMis)?;
-						}
-
-						if &proposal.chain[0].id == &chain[0].id {
-							Err(<Error<T, I>>::ProposalAE)?;
-						}
+					if other_proposals.iter().any(|proposal| proposal.chain.len() != 1) {
+						Err(<Error<T, I>>::RoundMis)?;
 					}
+
+					let chain = build_chain()?;
+
+					if other_proposals
+						.into_iter()
+						.any(|proposal| &proposal.chain[0].id == &chain[0].id)
+					{
+						Err(<Error<T, I>>::ProposalAE)?;
+					}
+
+					add_ref_tc_header(&chain[0].id, &raw_header_thing_chain[0]);
+					<Games<T, I>>::insert(game_id, vec![Proposal {
+						relayer,
+						chain,
+						extend_from: None
+					}]);
+
 				}
 				(_, raw_header_thing_chain_len) => {
-					let round = Self::round_from_chain_len(raw_header_thing_chain_len as _);
+					let round = T::RelayerGameAdjustor
+						::round_from_chain_len(raw_header_thing_chain_len as _);
 					let prev_round = round.checked_sub(1).ok_or(<Error<T, I>>::RoundMis)?;
-					let chain = build_from_raw_header_chain()?;
+					let chain = build_chain()?;
 					let samples = {
 						// chain's len is always great than 1 under this match pattern; qed
 						let BondedTcHeader { id: (game_id, _), .. } = chain[0];
@@ -312,7 +335,9 @@ decl_module! {
 					let mut extend_at = 0;
 
 					for proposal in other_proposals {
-						match Self::round_from_chain_len(proposal.chain.len() as _) {
+						match T::RelayerGameAdjustor
+							::round_from_chain_len(proposal.chain.len() as _)
+						{
 							proposal_round if proposal_round == prev_round => {
 								extend_at = proposal.chain.len();
 								if all_headers_equal(&chain, &proposal.chain) {
@@ -366,11 +391,7 @@ decl_module! {
 	}
 }
 
-impl<T: Trait<I>, I: Instance> Module<T, I> {
-	fn round_from_chain_len(chain_len: u32) -> Round {
-		T::RelayerGameAdjustor::round_from_chain_len(chain_len)
-	}
-}
+impl<T: Trait<I>, I: Instance> Module<T, I> {}
 
 #[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
 pub enum TcHeaderStatus {
@@ -403,12 +424,6 @@ pub struct Proposal<AccountId, Balance, TcHeaderId, ProposalId> {
 	///
 	/// If this field is `None` that means this proposal is the first proposal
 	extend_from: Option<ProposalId>,
-}
-
-#[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug)]
-pub struct SubmittedTcHeader<TcHeaderId> {
-	id: TcHeaderId,
-	raw_header_thing: Vec<u8>,
 }
 
 #[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug)]

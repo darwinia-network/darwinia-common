@@ -50,12 +50,12 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 	type TcBlockNumber = EthBlockNumber;
 	type TcHeaderHash = H256;
 
-	fn highest_confirmed_tc_header_id() -> (Self::TcBlockNumber, Self::TcHeaderHash) {
+	fn highest_confirmed_at() -> Self::TcBlockNumber {
 		unimplemented!()
 	}
 
-	fn verify_header_chain(
-		raw_header_chain: &[Vec<u8>],
+	fn verify_raw_header_thing_chain(
+		raw_header_thing_chain: &[Vec<u8>],
 	) -> Result<Vec<TcHeaderId<Self::TcBlockNumber, Self::TcHeaderHash>>, DispatchError> {
 		unimplemented!()
 	}

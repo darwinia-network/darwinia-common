@@ -152,10 +152,11 @@ pub trait AdjustableRelayerGame {
 
 	fn round_from_chain_len(chain_len: u32) -> Round;
 
-	fn samples_from_round(
-		challenge_at: Self::TcBlockNumber,
+	fn update_samples(
 		round: Round,
-	) -> Vec<Self::TcBlockNumber>;
+		highest_confirmed_at: Self::TcBlockNumber,
+		samples: &mut Vec<Self::TcBlockNumber>,
+	);
 
 	fn estimate_bond(round: Round, proposals_count: u32) -> Self::Balance;
 }
@@ -167,10 +168,10 @@ pub trait Relayable {
 	type TcHeaderHash: Clone + Debug + Default + PartialEq + FullCodec;
 
 	/// The latest finalize block's header's record id in darwinia
-	fn highest_confirmed_tc_header_id() -> TcHeaderId<Self::TcBlockNumber, Self::TcHeaderHash>;
+	fn highest_confirmed_at() -> Self::TcBlockNumber;
 
 	/// Verify the codec style header thing chain
-	fn verify_header_chain(
+	fn verify_raw_header_thing_chain(
 		raw_header_thing_chain: &[RawHeaderThing],
 	) -> Result<Vec<TcHeaderId<Self::TcBlockNumber, Self::TcHeaderHash>>, DispatchError>;
 

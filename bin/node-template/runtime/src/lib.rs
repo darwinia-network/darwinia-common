@@ -31,10 +31,11 @@ pub mod impls {
 				unimplemented!()
 			}
 
-			fn samples_from_round(
-				challenge_at: Self::TcBlockNumber,
+			fn update_samples(
 				round: Round,
-			) -> Vec<Self::TcBlockNumber> {
+				highest_confirmed_at: Self::TcBlockNumber,
+				samples: &mut Vec<Self::TcBlockNumber>,
+			) {
 				unimplemented!()
 			}
 
