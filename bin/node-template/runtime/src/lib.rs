@@ -31,7 +31,10 @@ pub mod impls {
 				unimplemented!()
 			}
 
-			fn samples_from_round(round: Round) -> Vec<Self::TcBlockNumber> {
+			fn samples_from_round(
+				challenge_at: Self::TcBlockNumber,
+				round: Round,
+			) -> Vec<Self::TcBlockNumber> {
 				unimplemented!()
 			}
 
