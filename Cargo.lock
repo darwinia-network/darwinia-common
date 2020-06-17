@@ -973,6 +973,7 @@ version = "0.6.1"
 dependencies = [
  "darwinia-support",
  "eth-primitives",
+ "ethereum-types 0.8.0",
  "frame-support",
  "frame-system",
  "parity-scale-codec",

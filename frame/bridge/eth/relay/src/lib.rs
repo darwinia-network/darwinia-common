@@ -2,6 +2,10 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+// --- crates ---
+use codec::{Decode, Encode};
+// --- github ---
+use ethereum_types::{H128, H512};
 // --- substrate ---
 use frame_support::{decl_error, decl_event, decl_module, decl_storage};
 use frame_system as system;
@@ -9,7 +13,7 @@ use sp_runtime::DispatchError;
 use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_support::relay::{RawHeaderThing, Relayable, TcHeaderId};
-use eth_primitives::{EthBlockNumber, H256};
+use eth_primitives::{header::EthHeader, EthBlockNumber, H256};
 
 pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	type Event: From<Event<Self, I>> + Into<<Self as frame_system::Trait>::Event>;
@@ -63,4 +67,17 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 	fn header_existed(block_number: Self::TcBlockNumber) -> bool {
 		unimplemented!()
 	}
+}
+
+#[derive(Encode, Decode)]
+pub struct EthHeaderThing {
+	header: EthHeader,
+	ethash_proof: Vec<DoubleNodeWithMerkleProof>,
+	// mmr: ?,
+}
+
+#[derive(Encode, Decode)]
+pub struct DoubleNodeWithMerkleProof {
+	dag_nodes: [H512; 2],
+	proof: Vec<H128>,
 }

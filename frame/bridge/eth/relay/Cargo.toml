@@ -15,6 +15,8 @@ serde = { version = "1.0.106", optional = true }
 # darwinia
 darwinia-support = { default-features = false, path = "../../../support" }
 eth-primitives = { default-features = false, path = "../../../../primitives/eth-primitives" }
+# github
+ethereum-types = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
 frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
@@ -30,6 +32,8 @@ std = [
 	# darwinia
 	"darwinia-support/std",
 	"eth-primitives/std",
+	# github
+	"ethereum-types/std",
 	# substrate
 	"frame-support/std",
 	"frame-system/std",
