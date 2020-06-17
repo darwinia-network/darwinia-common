@@ -8,7 +8,7 @@ use frame_system as system;
 use sp_runtime::DispatchError;
 use sp_std::prelude::*;
 // --- darwinia ---
-use darwinia_support::relay::{Relayable, TcHeaderId};
+use darwinia_support::relay::{RawHeaderThing, Relayable, TcHeaderId};
 use eth_primitives::{EthBlockNumber, H256};
 
 pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
@@ -54,9 +54,9 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 		unimplemented!()
 	}
 
-	fn verify_raw_header_thing_chain(
-		raw_header_thing_chain: &[Vec<u8>],
-	) -> Result<Vec<TcHeaderId<Self::TcBlockNumber, Self::TcHeaderHash>>, DispatchError> {
+	fn verify_raw_header_thing<R: AsRef<RawHeaderThing>>(
+		raw_header_thing: R,
+	) -> Result<TcHeaderId<Self::TcBlockNumber, Self::TcHeaderHash>, DispatchError> {
 		unimplemented!()
 	}
 

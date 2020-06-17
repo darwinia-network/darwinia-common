@@ -158,7 +158,7 @@ decl_module! {
 						match proposals.len() {
 							0 => (),
 							1 => {
-								// chain's len is ALWAYS great than 1 under this match pattern; qed
+								// Chain's len is ALWAYS great than 1 under this match pattern; qed
 								let proposal = proposals[0].clone();
 								let mut extend_from = proposal.extend_from.clone();
 								while let
@@ -222,17 +222,14 @@ decl_module! {
 		}
 
 		// TODO:
-		//	the `header_thing_chain` could be very large,
+		//	The `header_thing_chain` could be very large,
 		//	the bond should relate to the bytes fee
 		//	that we slash the evil relayer(s) to reward the honest relayer(s)
 		#[weight = 0]
-		fn submit_proposal(
-			origin,
-			target_block_number: TcBlockNumber<T, I>,
-			raw_header_thing_chain: Vec<Vec<u8>>
-		) {
+		fn submit_proposal(origin, raw_header_thing_chain: Vec<RawHeaderThing>) {
 			let relayer = ensure_signed(origin)?;
-			let game_id = target_block_number;
+			let (game_id, _) = T::TargetChain
+				::verify_raw_header_thing(&raw_header_thing_chain[0])?;
 			let other_proposals = Self::proposals_of_game(game_id);
 			let other_proposals_len = other_proposals.len();
 			let build_chain = || -> Result<Vec<_>, DispatchError> {
@@ -262,7 +259,7 @@ decl_module! {
 			};
 
 			match (other_proposals_len, raw_header_thing_chain.len()) {
-				// new `Game`
+				// New `Game`
 				(0, raw_header_thing_chain_len) => {
 					ensure!(raw_header_thing_chain_len == 1, <Error<T, I>>::RoundMis);
 					ensure!(
@@ -285,7 +282,7 @@ decl_module! {
 					);
 					<Samples<T, I>>::insert(game_id, vec![game_id]);
 				}
-				// first round
+				// First round
 				(_, 1) => {
 					if other_proposals.iter().any(|proposal| proposal.chain.len() != 1) {
 						Err(<Error<T, I>>::RoundMis)?;
@@ -314,7 +311,7 @@ decl_module! {
 					let prev_round = round.checked_sub(1).ok_or(<Error<T, I>>::RoundMis)?;
 					let chain = build_chain()?;
 					let samples = {
-						// chain's len is ALWAYS great than 1 under this match pattern; qed
+						// Chain's len is ALWAYS great than 1 under this match pattern; qed
 						let BondedTcHeader { id: (game_id, _), .. } = chain[0];
 						Self::samples_of_game(game_id)
 					};
@@ -335,8 +332,8 @@ decl_module! {
 						a.iter().zip(b.iter()).all(|(a, b)| a == b)
 					};
 					let mut extend_from_proposal = None;
-					// an optimize here, to skip the checking of extended headers
-					// the shorter chain is ALWAYS at the head of `other_proposals`
+					// An optimize here, to skip the checking of extended headers
+					// The shorter chain is ALWAYS at the head of `other_proposals`
 					let mut extend_at = 0;
 
 					for proposal in other_proposals {
@@ -351,7 +348,7 @@ decl_module! {
 							}
 							proposal_round if proposal_round == round => {
 								if all_headers_equal(
-									// a chain MUST longer than the chain which it extend from; qed
+									// A chain MUST longer than the chain which it extend from; qed
 									&chain[extend_at..],
 									&proposal.chain[extend_at..]
 								) {
@@ -363,7 +360,7 @@ decl_module! {
 					}
 
 					if let Some(Proposal { chain: extend_from_chain, ..}) = extend_from_proposal {
-						// a chain MUST longer than the chain which it extend from; qed
+						// A chain MUST longer than the chain which it extend from; qed
 						for i in extend_at..chain.len() {
 							add_ref_tc_header(&chain[i].id, &raw_header_thing_chain[i]);
 						}
@@ -373,7 +370,7 @@ decl_module! {
 								proposals.push(Proposal {
 									relayer,
 									chain,
-									// each proposal MUST contains a NOT empty chain; qed
+									// Each proposal MUST contains a NOT empty chain; qed
 									extend_from: Some(extend_from_chain[0].id.clone())
 								})
 						);
@@ -441,7 +438,7 @@ pub struct BondedTcHeader<Balance, TcHeaderId> {
 pub struct RefTcHeader {
 	/// Codec style `Header` or `HeaderWithProofs` or ...
 	/// That you defined in target chain's relay module use for verifying
-	raw_header_thing: Vec<u8>,
+	raw_header_thing: RawHeaderThing,
 	/// Maybe two or more proposals are using the same `Header`
 	/// Drop it while the `ref_count` is zero but **NOT** in `ConfirmedTcHeaders` list
 	ref_count: u32,

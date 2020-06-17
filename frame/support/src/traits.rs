@@ -170,10 +170,20 @@ pub trait Relayable {
 	/// The latest finalize block's header's record id in darwinia
 	fn highest_confirmed_at() -> Self::TcBlockNumber;
 
+	/// Verify the codec style header thing
+	fn verify_raw_header_thing<R: AsRef<RawHeaderThing>>(
+		raw_header_thing: R,
+	) -> Result<TcHeaderId<Self::TcBlockNumber, Self::TcHeaderHash>, DispatchError>;
+
 	/// Verify the codec style header thing chain
 	fn verify_raw_header_thing_chain(
 		raw_header_thing_chain: &[RawHeaderThing],
-	) -> Result<Vec<TcHeaderId<Self::TcBlockNumber, Self::TcHeaderHash>>, DispatchError>;
+	) -> Result<Vec<TcHeaderId<Self::TcBlockNumber, Self::TcHeaderHash>>, DispatchError> {
+		raw_header_thing_chain
+			.iter()
+			.map(<Self as Relayable>::verify_raw_header_thing)
+			.collect()
+	}
 
 	/// Check the header if it's already existed
 	fn header_existed(block_number: Self::TcBlockNumber) -> bool;
