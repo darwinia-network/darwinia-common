@@ -19,7 +19,10 @@ mod types {
 
 	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
 	pub type BlockNumber<T> = <T as frame_system::Trait>::BlockNumber;
+
 	pub type RingBalance<T, I> = <RingCurrency<T, I> as Currency<AccountId<T>>>::Balance;
+	pub type RingNegativeImbalance<T, I> =
+		<RingCurrency<T, I> as Currency<AccountId<T>>>::NegativeImbalance;
 
 	pub type TcBlockNumber<T, I> = <Tc<T, I> as Relayable>::TcBlockNumber;
 	pub type TcHeaderHash<T, I> = <Tc<T, I> as Relayable>::TcHeaderHash;
@@ -36,7 +39,9 @@ mod types {
 use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
-	debug::error, decl_error, decl_event, decl_module, decl_storage, ensure, traits::Currency,
+	debug::error,
+	decl_error, decl_event, decl_module, decl_storage, ensure,
+	traits::{Currency, OnUnbalanced},
 };
 use frame_system::{self as system, ensure_signed};
 use sp_runtime::{
@@ -57,6 +62,9 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 
 	/// The currency use for bond
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+
+	/// Handler for the unbalanced *RING* reduction when slashing a staker.
+	type RingSlash: OnUnbalanced<RingNegativeImbalance<Self, I>>;
 
 	/// A regulator to adjust relay args for a specific chain
 	type RelayerGameAdjustor: AdjustableRelayerGame<
@@ -188,7 +196,7 @@ decl_module! {
 												)
 												.collect::<Vec<_>>()
 									) {
-										if let Some(BondedTcHeader { id: (_, header_hash), .. })
+										if let Some(BondedTcHeader { id: (_, header_hash), bond })
 											= proposal.chain.last()
 										{
 											if header_hash == &extend_from_header_hash {
@@ -196,7 +204,10 @@ decl_module! {
 												extend_from = proposal.extend_from.clone();
 												// TODO: reward
 											} else {
-												// TODO: punish
+												// TODO: modify `Bonds`
+												let (imbalance, _) =
+													T::RingCurrency::slash(&proposal.relayer, *bond);
+												T::RingSlash::on_unbalanced(imbalance);
 											}
 										} else {
 											error!("[relayer-game] Proposal Is EMPTY");
@@ -259,6 +270,7 @@ decl_module! {
 				bonded_headers: &[_],
 				raw_header_thing_chain: Vec<RawHeaderThing>
 			| {
+				// TODO: modify `Bonds`
 				let amount = bonded_headers
 					.iter()
 					.cloned()
