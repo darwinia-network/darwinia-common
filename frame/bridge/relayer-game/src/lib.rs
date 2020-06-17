@@ -39,13 +39,18 @@ use frame_support::{
 	debug::error, decl_error, decl_event, decl_module, decl_storage, ensure, traits::Currency,
 };
 use frame_system::{self as system, ensure_signed};
-use sp_runtime::{traits::Convert, DispatchError, RuntimeDebug};
+use sp_runtime::{
+	traits::{Convert, Zero},
+	DispatchError, RuntimeDebug,
+};
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
 use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_support::{balance::lock::*, relay::*};
 use types::*;
+
+const RELAYER_GAME_ID: LockIdentifier = *b"da/staki";
 
 pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	type Event: From<Event<Self, I>> + Into<<Self as frame_system::Trait>::Event>;
@@ -127,6 +132,11 @@ decl_storage! {
 		pub ConfirmedTcHeaderIds
 			get(fn confirmed_tc_header_id)
 			: TcHeaderId<TcBlockNumber<T, I>, TcHeaderHash<T, I>>;
+
+		pub Bonds
+			get(fn bond_of_relayer)
+			: map hasher(blake2_128_concat) AccountId<T>
+			=> RingBalance<T, I>;
 	}
 }
 
@@ -245,17 +255,38 @@ decl_module! {
 					})
 					.collect())
 			};
-			let add_ref_tc_header = |header_id, raw_header_thing: &[_]| {
-				<TcHeaders<T, I>>::mutate(header_id, |header|
-					match header.ref_count {
-						0 => *header = RefTcHeader {
-							raw_header_thing: raw_header_thing.to_owned(),
-							ref_count: 1,
-							status: TcHeaderStatus::Unknown,
-						},
-						_ => header.ref_count += 1,
-					}
-				)
+			let add_boned_headers = |
+				bonded_headers: &[_],
+				raw_header_thing_chain: Vec<RawHeaderThing>
+			| {
+				let amount = bonded_headers
+					.iter()
+					.cloned()
+					.zip(raw_header_thing_chain.into_iter())
+					.fold(
+						Zero::zero(),
+						|acc, (BondedTcHeader { id, bond }, raw_header_thing)| {
+							<TcHeaders<T, I>>::mutate(id, |header|
+								match header.ref_count {
+									0 => *header = RefTcHeader {
+										raw_header_thing: raw_header_thing.to_owned(),
+										ref_count: 1,
+										status: TcHeaderStatus::Unknown,
+									},
+									_ => header.ref_count += 1,
+								}
+							);
+
+							acc + bond
+						}
+					);
+
+				T::RingCurrency::set_lock(
+					RELAYER_GAME_ID,
+					&relayer,
+					LockFor::Common { amount },
+					WithdrawReasons::all(),
+				);
 			};
 
 			match (other_proposals_len, raw_header_thing_chain.len()) {
@@ -269,7 +300,7 @@ decl_module! {
 
 					let chain = build_chain()?;
 
-					add_ref_tc_header(&chain[0].id, &raw_header_thing_chain[0]);
+					add_boned_headers(&chain, raw_header_thing_chain);
 					<Proposals<T, I>>::insert(game_id, vec![Proposal {
 						relayer,
 						chain,
@@ -297,7 +328,7 @@ decl_module! {
 						Err(<Error<T, I>>::ProposalAE)?;
 					}
 
-					add_ref_tc_header(&chain[0].id, &raw_header_thing_chain[0]);
+					add_boned_headers(&chain, raw_header_thing_chain);
 					<Proposals<T, I>>::insert(game_id, vec![Proposal {
 						relayer,
 						chain,
@@ -361,9 +392,10 @@ decl_module! {
 
 					if let Some(Proposal { chain: extend_from_chain, ..}) = extend_from_proposal {
 						// A chain MUST longer than the chain which it extend from; qed
-						for i in extend_at..chain.len() {
-							add_ref_tc_header(&chain[i].id, &raw_header_thing_chain[i]);
-						}
+						add_boned_headers(
+							&chain[extend_at..],
+							raw_header_thing_chain[extend_at..].to_vec()
+						);
 						<Proposals<T, I>>::mutate(
 							game_id,
 							|proposals|
