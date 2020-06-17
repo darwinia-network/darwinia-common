@@ -95,7 +95,7 @@ decl_error! {
 decl_storage! {
 	trait Store for Module<T: Trait<I>, I: Instance = DefaultInstance> as DarwiniaRelayerGame {
 		/// Each target chain's header relay can open a game
-		pub Games
+		pub Proposals
 			get(fn proposals_of_game)
 			: map hasher(blake2_128_concat) GameId<TcBlockNumber<T, I>>
 			=> Vec<Proposal<
@@ -139,6 +139,7 @@ decl_module! {
 
 		fn deposit_event() = default;
 
+		// TODO: too many db operations? move to `offchain_worker`?
 		fn on_finalize(block_number: BlockNumber<T>) {
 			let proposals = <ClosedRounds<T, I>>::take(block_number);
 			match proposals.len() {
@@ -157,7 +158,7 @@ decl_module! {
 						match proposals.len() {
 							0 => (),
 							1 => {
-								// chain's len is always great than 1 under this match pattern; qed
+								// chain's len is ALWAYS great than 1 under this match pattern; qed
 								let proposal = proposals[0].clone();
 								let mut extend_from = proposal.extend_from.clone();
 								while let
@@ -166,7 +167,7 @@ decl_module! {
 								{
 									let mut reward = 0;
 
-									for proposal in <Games<T, I>>::mutate(
+									for proposal in <Proposals<T, I>>::mutate(
 										extend_from_block_number,
 										|proposals|
 											proposals
@@ -261,6 +262,7 @@ decl_module! {
 			};
 
 			match (other_proposals_len, raw_header_thing_chain.len()) {
+				// new `Game`
 				(0, raw_header_thing_chain_len) => {
 					ensure!(raw_header_thing_chain_len == 1, <Error<T, I>>::RoundMis);
 					ensure!(
@@ -271,7 +273,7 @@ decl_module! {
 					let chain = build_chain()?;
 
 					add_ref_tc_header(&chain[0].id, &raw_header_thing_chain[0]);
-					<Games<T, I>>::insert(game_id, vec![Proposal {
+					<Proposals<T, I>>::insert(game_id, vec![Proposal {
 						relayer,
 						chain,
 						extend_from: None
@@ -283,6 +285,7 @@ decl_module! {
 					);
 					<Samples<T, I>>::insert(game_id, vec![game_id]);
 				}
+				// first round
 				(_, 1) => {
 					if other_proposals.iter().any(|proposal| proposal.chain.len() != 1) {
 						Err(<Error<T, I>>::RoundMis)?;
@@ -298,7 +301,7 @@ decl_module! {
 					}
 
 					add_ref_tc_header(&chain[0].id, &raw_header_thing_chain[0]);
-					<Games<T, I>>::insert(game_id, vec![Proposal {
+					<Proposals<T, I>>::insert(game_id, vec![Proposal {
 						relayer,
 						chain,
 						extend_from: None
@@ -311,7 +314,7 @@ decl_module! {
 					let prev_round = round.checked_sub(1).ok_or(<Error<T, I>>::RoundMis)?;
 					let chain = build_chain()?;
 					let samples = {
-						// chain's len is always great than 1 under this match pattern; qed
+						// chain's len is ALWAYS great than 1 under this match pattern; qed
 						let BondedTcHeader { id: (game_id, _), .. } = chain[0];
 						Self::samples_of_game(game_id)
 					};
@@ -332,6 +335,8 @@ decl_module! {
 						a.iter().zip(b.iter()).all(|(a, b)| a == b)
 					};
 					let mut extend_from_proposal = None;
+					// an optimize here, to skip the checking of extended headers
+					// the shorter chain is ALWAYS at the head of `other_proposals`
 					let mut extend_at = 0;
 
 					for proposal in other_proposals {
@@ -346,7 +351,7 @@ decl_module! {
 							}
 							proposal_round if proposal_round == round => {
 								if all_headers_equal(
-									// a chain must longer than the chain which it extend from; qed
+									// a chain MUST longer than the chain which it extend from; qed
 									&chain[extend_at..],
 									&proposal.chain[extend_at..]
 								) {
@@ -358,17 +363,17 @@ decl_module! {
 					}
 
 					if let Some(Proposal { chain: extend_from_chain, ..}) = extend_from_proposal {
-						// a chain must longer than the chain which it extend from; qed
+						// a chain MUST longer than the chain which it extend from; qed
 						for i in extend_at..chain.len() {
 							add_ref_tc_header(&chain[i].id, &raw_header_thing_chain[i]);
 						}
-						<Games<T, I>>::mutate(
+						<Proposals<T, I>>::mutate(
 							game_id,
 							|proposals|
 								proposals.push(Proposal {
 									relayer,
 									chain,
-									// each proposal must contains a NOT empty chain; qed
+									// each proposal MUST contains a NOT empty chain; qed
 									extend_from: Some(extend_from_chain[0].id.clone())
 								})
 						);
