@@ -367,6 +367,7 @@ use sp_version::RuntimeVersion;
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
 use darwinia_eth_linear_relay::EthNetworkType;
 use darwinia_eth_offchain::crypto::AuthorityId as EthOffchainId;
+use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
 use impls::*;
 
@@ -1069,6 +1070,12 @@ impl_runtime_apis! {
 				1 => Kton::usable_balance_rpc(account),
 				_ => Default::default()
 			}
+		}
+	}
+
+	impl darwinia_header_mmr_rpc_runtime_api::HeaderMMRApi<Block, BlockNumber, Hash> for Runtime {
+		fn gen_proof(block_number: BlockNumber, mmr_block_number: BlockNumber) -> HeaderMMRRuntimeDispatchInfo<Hash> {
+			HeaderMMR::gen_proof_rpc(block_number, mmr_block_number)
 		}
 	}
 

@@ -132,26 +132,34 @@ macro_rules! impl_runtime_dispatch_info {
 		$(pub)? struct $sname:ident$(<$($gtype:ident),+>)? {
 			$($(pub)? $fname:ident: $ftype:ty),+
 		}
+
+		fn custom_serializer() -> closure {
+			$($custom_serializer:tt)*
+		}
 	) => {
 		#[cfg(feature = "std")]
-		use serde::{Deserialize, Deserializer, Serialize, Serializer};
+		use serde::{Serialize, Serializer};
 
 		#[cfg(not(feature = "std"))]
-		#[derive(Default, Eq, PartialEq, Encode, Decode)]
-		pub struct $sname$(<$($gtype),+>)? {
+		#[derive(Debug, Default, Eq, PartialEq, Encode, Decode)]
+		pub struct $sname$(<$($gtype),+>)?
+		$(
+		where
+			$($gtype: core::fmt::Debug),+
+		)?
+		{
 			$(
 				pub $fname: $ftype
 			),+
 		}
 
 		#[cfg(feature = "std")]
-		#[derive(Default, Eq, PartialEq, Encode, Decode)]
-		#[derive(Debug, Serialize, Deserialize)]
+		#[derive(Debug, Default, Eq, PartialEq, Encode, Decode, Serialize)]
 		#[serde(rename_all = "camelCase")]
 		pub struct $sname$(<$($gtype),+>)?
 		$(
 		where
-			$($gtype: std::fmt::Display + std::str::FromStr),+
+			$($gtype: core::fmt::Debug),+
 		)?
 		{
 			$(
@@ -162,20 +170,50 @@ macro_rules! impl_runtime_dispatch_info {
 		}
 
 		#[cfg(feature = "std")]
+		fn serialize_as_string<S: Serializer, T: std::fmt::Debug>(
+			t: &T,
+			serializer: S,
+		) -> Result<S::Ok, S::Error> {
+			serializer.serialize_str(&($($custom_serializer)*)(t))
+		}
+	};
+	(
+		$(pub)? struct $sname:ident$(<$($gtype:ident),+>)? {
+			$($(pub)? $fname:ident: $ftype:ty),+
+		}
+	) => {
+		#[cfg(feature = "std")]
+		use serde::{Serialize, Serializer};
+
+		#[cfg(not(feature = "std"))]
+		#[derive(Default, Eq, PartialEq, Encode, Decode)]
+		pub struct $sname$(<$($gtype),+>)? {
+			$(
+				pub $fname: $ftype
+			),+
+		}
+
+		#[cfg(feature = "std")]
+		#[derive(Debug, Default, Eq, PartialEq, Encode, Decode, Serialize)]
+		#[serde(rename_all = "camelCase")]
+		pub struct $sname$(<$($gtype),+>)?
+		$(
+		where
+			$($gtype: std::fmt::Display),+
+		)?
+		{
+			$(
+				#[serde(serialize_with = "serialize_as_string")]
+				pub $fname: $ftype
+			),+
+		}
+
+		#[cfg(feature = "std")]
 		fn serialize_as_string<S: Serializer, T: std::fmt::Display>(
 			t: &T,
 			serializer: S,
 		) -> Result<S::Ok, S::Error> {
 			serializer.serialize_str(&t.to_string())
-		}
-
-		#[cfg(feature = "std")]
-		fn deserialize_from_string<'de, D: Deserializer<'de>, T: std::str::FromStr>(
-			deserializer: D,
-		) -> Result<T, D::Error> {
-			let s = String::deserialize(deserializer)?;
-			s.parse::<T>()
-				.map_err(|_| serde::de::Error::custom("Parse from string failed"))
 		}
 	};
 }

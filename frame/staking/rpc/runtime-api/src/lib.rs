@@ -1,8 +1,8 @@
-//! Runtime API definition required by balances RPC extensions.
+//! Runtime API definition required by staking RPC extensions.
 //!
 //! This API should be imported and implemented by the runtime,
 //! of a node that wants to use the custom RPC extension
-//! adding balances access methods.
+//! adding staking access methods.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -11,8 +11,10 @@ use codec::{Codec, Decode, Encode};
 // --- substrate ---
 use sp_api::decl_runtime_apis;
 use sp_runtime::traits::{MaybeDisplay, MaybeFromStr};
+// --- darwinia ---
+use darwinia_support::impl_runtime_dispatch_info;
 
-darwinia_support::impl_runtime_dispatch_info! {
+impl_runtime_dispatch_info! {
 	struct RuntimeDispatchInfo<Power> {
 		power: Power
 	}

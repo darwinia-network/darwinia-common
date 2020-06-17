@@ -14,6 +14,8 @@ members = [
 	"frame/bridge/relayer-game",
 	"frame/elections-phragmen",
 	"frame/header-mmr",
+	"frame/header-mmr/rpc",
+	"frame/header-mmr/rpc/runtime-api",
 	"frame/staking",
 	"frame/staking/rpc",
 	"frame/staking/rpc/runtime-api",

@@ -985,7 +985,10 @@ dependencies = [
 name = "darwinia-header-mmr"
 version = "0.6.1"
 dependencies = [
+ "array-bytes",
  "ckb-merkle-mountain-range",
+ "darwinia-header-mmr-rpc-runtime-api",
+ "darwinia-support",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
@@ -993,6 +996,32 @@ dependencies = [
  "serde_json",
  "sp-core",
  "sp-io",
+ "sp-runtime",
+ "sp-std 2.0.0-rc2",
+]
+
+[[package]]
+name = "darwinia-header-mmr-rpc"
+version = "0.6.1"
+dependencies = [
+ "darwinia-header-mmr-rpc-runtime-api",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "parity-scale-codec",
+ "sp-api",
+ "sp-blockchain",
+ "sp-runtime",
+]
+
+[[package]]
+name = "darwinia-header-mmr-rpc-runtime-api"
+version = "0.6.1"
+dependencies = [
+ "darwinia-support",
+ "parity-scale-codec",
+ "serde",
+ "sp-api",
  "sp-runtime",
  "sp-std 2.0.0-rc2",
 ]
@@ -3251,6 +3280,8 @@ dependencies = [
  "darwinia-claims",
  "darwinia-cli",
  "darwinia-eth-linear-relay",
+ "darwinia-eth-relay",
+ "darwinia-header-mmr-rpc",
  "darwinia-staking",
  "darwinia-staking-rpc",
  "frame-benchmarking-cli",
@@ -3305,6 +3336,7 @@ dependencies = [
  "darwinia-eth-offchain",
  "darwinia-eth-relay",
  "darwinia-header-mmr",
+ "darwinia-header-mmr-rpc-runtime-api",
  "darwinia-relayer-game",
  "darwinia-staking",
  "darwinia-staking-rpc-runtime-api",

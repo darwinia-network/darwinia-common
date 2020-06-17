@@ -49,16 +49,19 @@ mod tests;
 use serde::Serialize;
 
 // --- github ---
-use merkle_mountain_range::{MMRStore, MerkleProof, MMR};
+use merkle_mountain_range::{MMRStore, MMR};
 // --- substrate ---
 use codec::{Decode, Encode};
-use frame_support::{debug::error, decl_error, decl_module, decl_storage, ensure};
+use frame_support::{debug::error, decl_module, decl_storage};
 use sp_runtime::{
 	generic::{DigestItem, OpaqueDigestItemId},
 	traits::{Hash, Header},
-	DispatchError, RuntimeDebug,
+	RuntimeDebug,
 };
 use sp_std::{marker::PhantomData, prelude::*};
+// --- darwinia ---
+use darwinia_header_mmr_rpc_runtime_api::{Proof, RuntimeDispatchInfo};
+use darwinia_support::impl_rpc;
 
 pub const MMR_ROOT_LOG_ID: [u8; 4] = *b"MMRR";
 
@@ -86,22 +89,11 @@ decl_storage! {
 	}
 }
 
-decl_error! {
-	pub enum Error for Module<T: Trait> {
-		/// Proof Block Number - TOO LARGE
-		ProofBlockNumberTL,
-		/// Proof - GET FAILED
-		ProofGF,
-	}
-}
-
 decl_module! {
 	pub struct Module<T: Trait> for enum Call
 	where
 		origin: T::Origin
 	{
-		type Error = Error<T>;
-
 		fn on_finalize(block_number: T::BlockNumber) {
 			let store = <ModuleMMRStore<T>>::default();
 			let parent_hash = <frame_system::Module<T>>::parent_hash();
@@ -178,25 +170,31 @@ impl<T: Trait> MMRStore<T::Hash> for ModuleMMRStore<T> {
 }
 
 impl<T: Trait> Module<T> {
-	// TODO: For future rpc calls
-	fn _gen_proof(
-		block_number: T::BlockNumber,
-		mmr_block_number: T::BlockNumber,
-	) -> Result<MerkleProof<T::Hash, MMRMerge<T>>, DispatchError> {
-		ensure!(
-			block_number < mmr_block_number,
-			<Error<T>>::ProofBlockNumberTL
-		);
+	impl_rpc! {
+		pub fn gen_proof_rpc(
+			block_number: T::BlockNumber,
+			mmr_block_number: T::BlockNumber,
+		) -> RuntimeDispatchInfo<T::Hash> {
+			if block_number < mmr_block_number {
+				let pos = Self::position_of(block_number);
+				let mmr_header_pos = Self::position_of(mmr_block_number);
 
-		let pos = Self::position_of(block_number);
-		let mmr_header_pos = Self::position_of(mmr_block_number);
+				let store = <ModuleMMRStore<T>>::default();
+				let mmr = <MMR<_, MMRMerge<T>, _>>::new(mmr_header_pos, store);
 
-		let store = <ModuleMMRStore<T>>::default();
-		let mmr = <MMR<_, MMRMerge<T>, _>>::new(mmr_header_pos, store);
+				if let Ok(merkle_proof) = mmr.gen_proof(vec![pos]) {
+					return RuntimeDispatchInfo {
+						mmr_size: merkle_proof.mmr_size(),
+						proof: Proof(merkle_proof.proof_items().to_vec()),
+					};
+				}
+			}
 
-		let proof = mmr.gen_proof(vec![pos]).map_err(|_| <Error<T>>::ProofGF)?;
-
-		Ok(proof)
+			RuntimeDispatchInfo {
+				mmr_size: 0,
+				proof: Proof(vec![]),
+			}
+		}
 	}
 
 	// TODO: For future rpc calls

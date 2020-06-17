@@ -26,6 +26,8 @@ darwinia-balances-rpc = { path = "../../../frame/balances/rpc" }
 darwinia-claims = { path = "../../../frame/claims" }
 darwinia-cli = { optional = true, path = "../../../client/cli" }
 darwinia-eth-linear-relay = { path = "../../../frame/bridge/eth/linear-relay" }
+darwinia-eth-relay = { path = "../../../frame/bridge/eth/relay" }
+darwinia-header-mmr-rpc = { path = "../../../frame/header-mmr/rpc" }
 darwinia-staking = { path = "../../../frame/staking" }
 darwinia-staking-rpc = { path = "../../../frame/staking/rpc" }
 # substrate

@@ -22,6 +22,7 @@ darwinia-eth-linear-relay = { default-features = false, path = "../../../frame/b
 darwinia-eth-relay = { default-features = false, path = "../../../frame/bridge/eth/relay" }
 darwinia-eth-offchain = { default-features = false, path = "../../../frame/bridge/eth/offchain" }
 darwinia-header-mmr = { default-features = false, path = "../../../frame/header-mmr" }
+darwinia-header-mmr-rpc-runtime-api = { default-features = false, path = "../../../frame/header-mmr/rpc/runtime-api" }
 darwinia-relayer-game = { default-features = false, path = "../../../frame/bridge/relayer-game" }
 # TODO: benchmark
 # darwinia-session-benchmarking = { default-features = false, optional = true, path = "" }
@@ -86,7 +87,7 @@ std = [
 	"darwinia-eth-offchain/std",
 	"darwinia-eth-relay/std",
 	"darwinia-header-mmr/std",
-	"darwinia-relayer-game/std",
+	"darwinia-header-mmr-rpc-runtime-api/std",
 	# TODO: benchmark
 	# "darwinia-session-benchmarking/std",
 	"darwinia-staking/std",
