@@ -160,7 +160,7 @@ decl_module! {
 
 		fn deposit_event() = default;
 
-		// TODO: too many db operations? move to `offchain_worker`?
+		// TODO: too many db operations and calc need to move to `offchain_worker`
 		fn on_finalize(block_number: BlockNumber<T>) {
 			let proposals = <ClosedRounds<T, I>>::take(block_number);
 
@@ -261,6 +261,7 @@ decl_module! {
 					// TODO: reward if no challenge
 				} else {
 					<Samples<T, I>>::mutate(proposals[0].chain[0].id.0, |samples| {
+						// TODO: if reach genesis/confirmed
 						T::RelayerGameAdjustor::update_samples(
 							T::RelayerGameAdjustor
 								::round_from_chain_len(proposals[0].chain.len() as _),
