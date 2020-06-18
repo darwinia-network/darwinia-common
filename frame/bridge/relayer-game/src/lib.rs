@@ -404,6 +404,7 @@ decl_module! {
 					}]);
 
 				}
+				// Extend
 				(_, raw_header_thing_chain_len) => {
 					let round = T::RelayerGameAdjustor
 						::round_from_chain_len(raw_header_thing_chain_len as _);
@@ -472,7 +473,11 @@ decl_module! {
 									relayer,
 									chain,
 									// Each proposal MUST contains a NOT empty chain; qed
-									extend_from: Some(extend_from_chain[0].id.clone())
+									extend_from: Some(extend_from_chain
+										.last()
+										.unwrap()
+										.id
+										.clone())
 								})
 						);
 						{
