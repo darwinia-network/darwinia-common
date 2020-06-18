@@ -41,7 +41,7 @@ use codec::{Decode, Encode};
 use frame_support::{
 	debug::error,
 	decl_error, decl_event, decl_module, decl_storage, ensure,
-	traits::{Currency, OnUnbalanced},
+	traits::{Currency, ExistenceRequirement, OnUnbalanced},
 };
 use frame_system::{self as system, ensure_signed};
 use sp_runtime::{
@@ -63,7 +63,7 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	/// The currency use for bond
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
-	/// Handler for the unbalanced *RING* reduction when slashing a staker.
+	/// Handler for the unbalanced *RING* reduction when slashing a relayer.
 	type RingSlash: OnUnbalanced<RingNegativeImbalance<Self, I>>;
 
 	/// A regulator to adjust relay args for a specific chain
@@ -92,6 +92,9 @@ decl_event! {
 
 decl_error! {
 	pub enum Error for Module<T: Trait<I>, I: Instance> {
+		/// Challenge - NOT HAPPENED
+		ChallengeNH,
+
 		/// Proposal - ALREADY EXISTED
 		ProposalAE,
 		/// Target Header - ALREADY EXISTED
@@ -100,8 +103,8 @@ decl_error! {
 		/// Round - MISMATCHED
 		RoundMis,
 
-		/// Challenge - NOT HAPPENED
-		ChallengeNH,
+		/// Can not bond with value less than usable balance.
+		InsufficientValue,
 	}
 }
 
@@ -183,10 +186,12 @@ decl_module! {
 					// Chain's len is ALWAYS great than 1 under this match pattern; qed
 					let proposal = proposals[0].clone();
 					let mut extend_from = proposal.extend_from.clone();
+
 					while let Some((extend_from_block_number, extend_from_header_hash))
 						= extend_from.clone()
 					{
-						let mut reward = 0u32;
+						let mut relayer = None;
+						let mut evils = vec![];
 
 						for proposal in <Proposals<T, I>>::mutate(
 							extend_from_block_number,
@@ -203,14 +208,15 @@ decl_module! {
 								let mut header = <TcHeaders<T, I>>::take(id);
 
 								if header_hash == &extend_from_header_hash {
-									// Even we miss
-									// *only one honest relayer each round*
-									// `u32` WON NOT overflow
-									// target chain's block number; qed
-									reward += 1;
+									if relayer.is_none() {
+										relayer = Some(proposal.relayer);
+									} else {
+										error!("[relayer-game] \
+											Honest Relayer MORE THAN 1 Within a Round");
+									}
+
 									extend_from = proposal.extend_from.clone();
 									header.status = TcHeaderStatus::Confirmed;
-									// TODO: reward
 								} else {
 									if let Some(ref_count) = header.ref_count.checked_sub(1) {
 										header.ref_count = ref_count;
@@ -218,11 +224,8 @@ decl_module! {
 										error!("[relayer-game] `RefTcHeader.ref_count` BELOW 0");
 									}
 
-									// TODO: modify `Bonds`
+									evils.push((proposal.relayer, *bond));
 									header.status = TcHeaderStatus::Invalid;
-									let (imbalance, _) =
-										T::RingCurrency::slash(&proposal.relayer, *bond);
-									T::RingSlash::on_unbalanced(imbalance);
 								}
 
 								if header.ref_count != 1 {
@@ -233,13 +236,29 @@ decl_module! {
 							}
 						}
 
-						if reward == 0 {
+						// TODO: modify `Bonds`
+						if let Some(relayer) = relayer {
+							for (evil, bond) in evils {
+								let _ = T::RingCurrency::transfer(
+									&evil,
+									&relayer,
+									bond,
+									ExistenceRequirement::KeepAlive
+								);
+							}
+						} else {
+							// Should NEVER enter this condition
+							for (_, bond) in evils {
+								let (imbalance, _) = T::RingCurrency
+									::slash(&proposal.relayer, bond);
+								T::RingSlash::on_unbalanced(imbalance);
+							}
+
 							error!("[relayer-game] NO Honest Relayer");
-						} else if reward > 1 {
-							error!("[relayer-game] Honest Relayer MORE THAN 1 Within a Round");
 						}
 					}
-					// TODO: reward
+
+					// TODO: reward if no challenge
 				} else {
 					<Samples<T, I>>::mutate(proposals[0].chain[0].id.0, |samples| {
 						T::RelayerGameAdjustor::update_samples(
@@ -307,12 +326,18 @@ decl_module! {
 							.ref_count
 							.checked_sub(1)
 							.ok_or("`RefTcHeader.ref_count` Overflow \
-								But I Don't Think This Could Be Happened")?;
+								But I Think That's IMPOSSIABLE")?;
 					}
 
 					headers.push((id, header));
 					bond += bonded_header.bond;
 				}
+
+				// TODO: estimate the bond at the beginning to save resources(calc)
+				ensure!(
+					T::RingCurrency::usable_balance(&relayer) >= bond,
+					<Error<T, I>>::InsufficientValue
+				);
 
 				for (k, v) in headers {
 					<TcHeaders<T, I>>::insert(k, v);
@@ -362,12 +387,12 @@ decl_module! {
 					let id_chain = T::TargetChain
 						::verify_raw_header_thing_chain(&raw_header_thing_chain)?;
 
-					if other_proposals
-						.into_iter()
-						.any(|proposal| &proposal.chain[0].id == &id_chain[0])
-					{
-						Err(<Error<T, I>>::ProposalAE)?;
-					}
+					ensure!(
+						!other_proposals
+							.into_iter()
+							.any(|proposal| &proposal.chain[0].id == &id_chain[0]),
+						<Error<T, I>>::ProposalAE
+					);
 
 					let chain = build_bonded_chain(id_chain);
 
@@ -423,13 +448,14 @@ decl_module! {
 								extend_from_proposal = Some(proposal);
 							}
 						} else if proposal_round == round {
-							if all_headers_equal(
-								// A chain MUST longer than the chain which it extend from; qed
-								&chain[extend_at..],
-								&proposal.chain[extend_at..]
-							) {
-								Err(<Error<T, I>>::ProposalAE)?;
-							}
+							ensure!(
+								all_headers_equal(
+									// A chain MUST longer than the chain which it extend from; qed
+									&chain[extend_at..],
+									&proposal.chain[extend_at..]
+								),
+								<Error<T, I>>::ProposalAE
+							);
 						}
 					}
 
