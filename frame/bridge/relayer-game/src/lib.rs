@@ -55,7 +55,7 @@ use sp_std::prelude::*;
 use darwinia_support::{balance::lock::*, relay::*};
 use types::*;
 
-const RELAYER_GAME_ID: LockIdentifier = *b"da/staki";
+const RELAYER_GAME_ID: LockIdentifier = *b"da/rgame";
 
 pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	type Event: From<Event<Self, I>> + Into<<Self as frame_system::Trait>::Event>;

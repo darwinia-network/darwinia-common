@@ -32,11 +32,11 @@ pub mod impls {
 			}
 
 			fn update_samples(
-				round: Round,
-				highest_confirmed_at: Self::TcBlockNumber,
+				_round: Round,
+				_highest_confirmed_at: Self::TcBlockNumber,
 				samples: &mut Vec<Self::TcBlockNumber>,
 			) {
-				unimplemented!()
+				samples.push(samples.last().unwrap() - 1);
 			}
 
 			fn estimate_bond(round: u32, proposals_count: u32) -> Self::Balance {
@@ -786,6 +786,7 @@ impl darwinia_header_mmr::Trait for Runtime {}
 impl darwinia_relayer_game::Trait for Runtime {
 	type Event = Event;
 	type RingCurrency = Ring;
+	type RingSlash = Treasury;
 	type RelayerGameAdjustor = bridge::EthRelayerGameAdjustor;
 	type Sampler = bridge::EthRelayerGameSampler<eth_primitives::EthBlockNumber>;
 	type TargetChain = EthRelay;
