@@ -371,10 +371,10 @@ decl_module! {
 						chain,
 						extend_from: None
 					}]);
-					<ClosedRounds<T, I>>::mutate(
+					<ClosedRounds<T, I>>::append(
 						<frame_system::Module<T>>::block_number()
 							+ T::RelayerGameAdjustor::challenge_time(0),
-						|closed_rounds| closed_rounds.push((game_id, 0))
+						(game_id, 0)
 					);
 					<Samples<T, I>>::insert(game_id, vec![game_id]);
 				}
@@ -466,19 +466,18 @@ decl_module! {
 							&chain[extend_at..],
 							raw_header_thing_chain[extend_at..].to_vec()
 						)?;
-						<Proposals<T, I>>::mutate(
+						<Proposals<T, I>>::append(
 							game_id,
-							|proposals|
-								proposals.push(Proposal {
-									relayer,
-									chain,
-									// Each proposal MUST contains a NOT empty chain; qed
-									extend_from: Some(extend_from_chain
-										.last()
-										.unwrap()
-										.id
-										.clone())
-								})
+							Proposal {
+								relayer,
+								chain,
+								// Each proposal MUST contains a NOT empty chain; qed
+								extend_from: Some(extend_from_chain
+									.last()
+									.unwrap()
+									.id
+									.clone())
+							}
 						);
 						{
 							let closed_at = <frame_system::Module<T>>::block_number()
