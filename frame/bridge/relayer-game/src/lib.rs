@@ -46,7 +46,7 @@ use frame_support::{
 use frame_system::{self as system, ensure_signed};
 use sp_runtime::{
 	traits::{Convert, Zero},
-	DispatchError, DispatchResult, RuntimeDebug,
+	DispatchResult, RuntimeDebug,
 };
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
@@ -264,18 +264,20 @@ decl_module! {
 				::verify_raw_header_thing(&raw_header_thing_chain[0])?;
 			let other_proposals = Self::proposals_of_game(game_id);
 			let other_proposals_len = other_proposals.len();
-			let build_chain = || -> Result<Vec<_>, DispatchError> {
-				Ok(T::TargetChain::verify_raw_header_thing_chain(&raw_header_thing_chain)?
+			let build_bonded_chain = |chain: Vec<_>| {
+				chain
 					.into_iter()
 					.enumerate()
-					.map(|(round, header_id)| BondedTcHeader {
-						id: header_id,
-						bond: T::RelayerGameAdjustor::estimate_bond(
-							round as _,
-							other_proposals_len as _
-						)
+					.map(|(round, id)| {
+						BondedTcHeader {
+							id,
+							bond: T::RelayerGameAdjustor::estimate_bond(
+								round as _,
+								other_proposals_len as _
+							)
+						}
 					})
-					.collect())
+					.collect::<Vec<_>>()
 			};
 			// Always `add_bonded_header` first, this could cause an err
 			let add_boned_headers = |
@@ -334,7 +336,9 @@ decl_module! {
 						<Error<T, I>>::TargetHeaderAE
 					);
 
-					let chain = build_chain()?;
+					let id_chain = T::TargetChain
+						::verify_raw_header_thing_chain(&raw_header_thing_chain)?;
+					let chain = build_bonded_chain(id_chain);
 
 					add_boned_headers(&chain, raw_header_thing_chain)?;
 					<Proposals<T, I>>::insert(game_id, vec![Proposal {
@@ -355,14 +359,17 @@ decl_module! {
 						Err(<Error<T, I>>::RoundMis)?;
 					}
 
-					let chain = build_chain()?;
+					let id_chain = T::TargetChain
+						::verify_raw_header_thing_chain(&raw_header_thing_chain)?;
 
 					if other_proposals
 						.into_iter()
-						.any(|proposal| &proposal.chain[0].id == &chain[0].id)
+						.any(|proposal| &proposal.chain[0].id == &id_chain[0])
 					{
 						Err(<Error<T, I>>::ProposalAE)?;
 					}
+
+					let chain = build_bonded_chain(id_chain);
 
 					add_boned_headers(&chain, raw_header_thing_chain)?;
 					<Proposals<T, I>>::insert(game_id, vec![Proposal {
@@ -376,27 +383,30 @@ decl_module! {
 					let round = T::RelayerGameAdjustor
 						::round_from_chain_len(raw_header_thing_chain_len as _);
 					let prev_round = round.checked_sub(1).ok_or(<Error<T, I>>::RoundMis)?;
-					let chain = build_chain()?;
+					let id_chain = T::TargetChain
+						::verify_raw_header_thing_chain(&raw_header_thing_chain)?;
 					let samples = {
 						// Chain's len is ALWAYS great than 1 under this match pattern; qed
-						let BondedTcHeader { id: (game_id, _), .. } = chain[0];
+						let (game_id, _) = id_chain[0];
 						Self::samples_of_game(game_id)
 					};
 
-					ensure!(chain.len() == samples.len(), <Error<T, I>>::RoundMis);
+					ensure!(id_chain.len() == samples.len(), <Error<T, I>>::RoundMis);
 					ensure!(
-						chain
+						id_chain
 							.iter()
 							.zip(samples.iter())
-							.all(|(BondedTcHeader { id: (block_number, _), .. },
-								sample_block_number)|
-									block_number == sample_block_number
-							),
+							.all(|((block_number, _), sample_block_number)| block_number
+								== sample_block_number),
 						<Error<T, I>>::RoundMis
 					);
 
-					let all_headers_equal = |a: &[_], b: &[_]| {
-						a.iter().zip(b.iter()).all(|(a, b)| a == b)
+					let chain = build_bonded_chain(id_chain);
+					let all_headers_equal = |
+						a: &[BondedTcHeader<_, _>],
+						b: &[BondedTcHeader<_, _>]
+					| {
+						a.iter().zip(b.iter()).all(|(a, b)| a.id == b.id)
 					};
 					let mut extend_from_proposal = None;
 					// An optimize here, to skip the checking of extended headers
