@@ -45,7 +45,7 @@ use frame_support::{
 };
 use frame_system::{self as system, ensure_signed};
 use sp_runtime::{
-	traits::{Convert, Zero},
+	traits::{Convert, Saturating, Zero},
 	DispatchResult, RuntimeDebug,
 };
 #[cfg(not(feature = "std"))]
@@ -182,6 +182,7 @@ decl_module! {
 					return;
 				}
 
+				// TODO: if chain.len() == chain[0].block_number - genesis/confirmed.block_number
 				if proposals_len == 1 {
 					// Chain's len is ALWAYS great than 1 under this match pattern; qed
 					let proposal = proposals[0].clone();
@@ -236,7 +237,6 @@ decl_module! {
 							}
 						}
 
-						// TODO: modify `Bonds`
 						if let Some(relayer) = relayer {
 							for (evil, bond) in evils {
 								let _ = T::RingCurrency::transfer(
@@ -245,13 +245,19 @@ decl_module! {
 									bond,
 									ExistenceRequirement::KeepAlive
 								);
+
+								<Bonds<T, I>>::mutate(evil, |bonds|
+									*bonds = bond.saturating_sub(bond));
 							}
 						} else {
 							// Should NEVER enter this condition
-							for (_, bond) in evils {
+							for (evil, bond) in evils {
 								let (imbalance, _) = T::RingCurrency
 									::slash(&proposal.relayer, bond);
 								T::RingSlash::on_unbalanced(imbalance);
+
+								<Bonds<T, I>>::mutate(evil, |bonds|
+									*bonds = bond.saturating_sub(bond));
 							}
 
 							error!("[relayer-game] NO Honest Relayer");
@@ -262,6 +268,7 @@ decl_module! {
 				} else {
 					<Samples<T, I>>::mutate(proposals[0].chain[0].id.0, |samples| {
 						// TODO: if reach genesis/confirmed
+						// TODO: beware fork
 						T::RelayerGameAdjustor::update_samples(
 							T::RelayerGameAdjustor
 								::round_from_chain_len(proposals[0].chain.len() as _),
@@ -304,7 +311,6 @@ decl_module! {
 				bonded_headers: &[BondedTcHeader<_, _>],
 				raw_header_thing_chain: Vec<RawHeaderThing>
 			| -> DispatchResult {
-				// TODO: modify `Bonds`
 				let mut headers = vec![];
 				let mut bond = Zero::zero();
 
@@ -340,15 +346,17 @@ decl_module! {
 					<Error<T, I>>::InsufficientValue
 				);
 
-				for (k, v) in headers {
-					<TcHeaders<T, I>>::insert(k, v);
-				}
+				<Bonds<T, I>>::mutate(&relayer, |bonds| *bonds = bonds.saturating_add(bond));
+
 				T::RingCurrency::set_lock(
 					RELAYER_GAME_ID,
 					&relayer,
 					LockFor::Common { amount: bond },
 					WithdrawReasons::all(),
 				);
+				for (k, v) in headers {
+					<TcHeaders<T, I>>::insert(k, v);
+				}
 
 				Ok(())
 			};
@@ -540,6 +548,7 @@ pub struct BondedTcHeader<Balance, TcHeaderId> {
 	bond: Balance,
 }
 
+// TODO: remove `ref_count`
 #[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug)]
 pub struct RefTcHeader {
 	/// Codec style `Header` or `HeaderWithProofs` or ...
