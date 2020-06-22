@@ -133,16 +133,16 @@ decl_storage! {
 			: map hasher(blake2_128_concat) BlockNumber<T>
 			=> Vec<(GameId<TcBlockNumber<T, I>>, Round)>;
 
-		/// All the `TcHeader`s store here, **NON-DUPLICATIVE**
+		/// All the `TcHeader`s store here
 		pub TcHeaders
 			get(fn tc_header)
 			: map hasher(blake2_128_concat) TcHeaderId<TcBlockNumber<T, I>, TcHeaderHash<T, I>>
-			=> RefTcHeader;
+			=> Option<TcHeader>;
 
-		/// The finalize blocks' header's id which is recorded in darwinia
-		pub ConfirmedTcHeaderIds
-			get(fn confirmed_tc_header_id)
-			: TcHeaderId<TcBlockNumber<T, I>, TcHeaderHash<T, I>>;
+		// /// The finalize blocks' header's id which is recorded in darwinia
+		// pub ConfirmedTcHeaderIds
+		// 	get(fn confirmed_tc_header_id)
+		// 	: TcHeaderId<TcBlockNumber<T, I>, TcHeaderHash<T, I>>;
 
 		pub Bonds
 			get(fn bond_of_relayer)
@@ -206,31 +206,27 @@ decl_module! {
 						) {
 							if let Some(BondedTcHeader { id, bond }) = proposal.chain.last() {
 								let (_, header_hash) = id;
-								let mut header = <TcHeaders<T, I>>::take(id);
 
-								if header_hash == &extend_from_header_hash {
-									if relayer.is_none() {
-										relayer = Some(proposal.relayer);
+								if let Some(mut header) = <TcHeaders<T, I>>::get(id) {
+									if header_hash == &extend_from_header_hash {
+										if relayer.is_none() {
+											relayer = Some(proposal.relayer);
+										} else {
+											error!("[relayer-game] \
+												Honest Relayer MORE THAN 1 Within a Round");
+										}
+
+										extend_from = proposal.extend_from.clone();
+										header.status = TcHeaderStatus::Confirmed;
+
+										<TcHeaders<T, I>>::insert(id, header);
 									} else {
-										error!("[relayer-game] \
-											Honest Relayer MORE THAN 1 Within a Round");
-									}
+										<TcHeaders<T, I>>::take(id);
 
-									extend_from = proposal.extend_from.clone();
-									header.status = TcHeaderStatus::Confirmed;
+										evils.push((proposal.relayer, *bond));
+									}
 								} else {
-									if let Some(ref_count) = header.ref_count.checked_sub(1) {
-										header.ref_count = ref_count;
-									} else {
-										error!("[relayer-game] `RefTcHeader.ref_count` BELOW 0");
-									}
-
 									evils.push((proposal.relayer, *bond));
-									header.status = TcHeaderStatus::Invalid;
-								}
-
-								if header.ref_count != 1 {
-									<TcHeaders<T, I>>::insert(id, header);
 								}
 							} else {
 								error!("[relayer-game] Proposal Is EMPTY");
@@ -284,6 +280,7 @@ decl_module! {
 		//	The `header_thing_chain` could be very large,
 		//	the bond should relate to the bytes fee
 		//	that we slash the evil relayer(s) to reward the honest relayer(s)
+		// TODO: compact prams?
 		#[weight = 0]
 		fn submit_proposal(origin, raw_header_thing_chain: Vec<RawHeaderThing>) {
 			let relayer = ensure_signed(origin)?;
@@ -320,23 +317,15 @@ decl_module! {
 					.zip(raw_header_thing_chain.into_iter())
 				{
 					let id = bonded_header.id;
-					let mut header = Self::tc_header(&id);
 
-					if header.ref_count == 0 {
-						header = RefTcHeader {
+					// TODO: check confirmed here?
+					if !<TcHeaders<T, I>>::contains_key(&id) {
+						headers.push((id, TcHeader {
 							raw_header_thing: raw_header_thing.to_owned(),
-							ref_count: 1,
 							status: TcHeaderStatus::Unknown,
-						};
-					} else {
-						header.ref_count = header
-							.ref_count
-							.checked_sub(1)
-							.ok_or("`RefTcHeader.ref_count` Overflow \
-								But I Think That's IMPOSSIABLE")?;
+						}));
 					}
 
-					headers.push((id, header));
 					bond += bonded_header.bond;
 				}
 
@@ -375,17 +364,17 @@ decl_module! {
 					let chain = build_bonded_chain(id_chain);
 
 					add_boned_headers(&chain, raw_header_thing_chain)?;
-					<Proposals<T, I>>::insert(game_id, vec![Proposal {
+					<Proposals<T, I>>::append(game_id, Proposal {
 						relayer,
 						chain,
 						extend_from: None
-					}]);
+					});
 					<ClosedRounds<T, I>>::append(
 						<frame_system::Module<T>>::block_number()
 							+ T::RelayerGameAdjustor::challenge_time(0),
 						(game_id, 0)
 					);
-					<Samples<T, I>>::insert(game_id, vec![game_id]);
+					<Samples<T, I>>::append(game_id, game_id);
 				}
 				// First round
 				(_, 1) => {
@@ -406,11 +395,11 @@ decl_module! {
 					let chain = build_bonded_chain(id_chain);
 
 					add_boned_headers(&chain, raw_header_thing_chain)?;
-					<Proposals<T, I>>::insert(game_id, vec![Proposal {
+					<Proposals<T, I>>::append(game_id, Proposal {
 						relayer,
 						chain,
 						extend_from: None
-					}]);
+					});
 
 				}
 				// Extend
@@ -491,11 +480,9 @@ decl_module! {
 						{
 							let closed_at = <frame_system::Module<T>>::block_number()
 								+ T::RelayerGameAdjustor::challenge_time(round);
-							let	mut closed_rounds = Self::closed_rounds_at(closed_at);
 
-							if !closed_rounds.contains(&(game_id, round)) {
-								closed_rounds.push((game_id, round));
-								<ClosedRounds<T, I>>::insert(closed_at, closed_rounds);
+							if !Self::closed_rounds_at(closed_at).contains(&(game_id, round)) {
+								<ClosedRounds<T, I>>::append(closed_at, (game_id, round));
 							}
 						}
 					} else {
@@ -509,7 +496,7 @@ decl_module! {
 
 impl<T: Trait<I>, I: Instance> Module<T, I> {}
 
-#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, Encode, Decode, RuntimeDebug)]
 pub enum TcHeaderStatus {
 	/// The header has not been judged yet
 	Unknown,
@@ -521,13 +508,8 @@ pub enum TcHeaderStatus {
 	/// The header is invalid
 	Invalid,
 }
-impl Default for TcHeaderStatus {
-	fn default() -> Self {
-		Self::Unknown
-	}
-}
 
-#[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, Encode, Decode, RuntimeDebug)]
 pub struct Proposal<AccountId, Balance, TcHeaderId, ProposalId> {
 	// TODO: Can this proposal submit by other relayers?
 	/// The relayer of these series of headers
@@ -542,21 +524,17 @@ pub struct Proposal<AccountId, Balance, TcHeaderId, ProposalId> {
 	extend_from: Option<ProposalId>,
 }
 
-#[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, Encode, Decode, RuntimeDebug)]
 pub struct BondedTcHeader<Balance, TcHeaderId> {
 	id: TcHeaderId,
 	bond: Balance,
 }
 
-// TODO: remove `ref_count`
-#[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug)]
-pub struct RefTcHeader {
+#[derive(Clone, Encode, Decode, RuntimeDebug)]
+pub struct TcHeader {
 	/// Codec style `Header` or `HeaderWithProofs` or ...
 	/// That you defined in target chain's relay module use for verifying
 	raw_header_thing: RawHeaderThing,
-	/// Maybe two or more proposals are using the same `Header`
-	/// Drop it while the `ref_count` is zero but **NOT** in `ConfirmedTcHeaders` list
-	ref_count: u32,
 	/// Help chain to end a round quickly
 	status: TcHeaderStatus,
 }
