@@ -139,10 +139,12 @@ decl_storage! {
 			: map hasher(blake2_128_concat) TcHeaderId<TcBlockNumber<T, I>, TcHeaderHash<T, I>>
 			=> Option<TcHeader>;
 
-		// /// The finalize blocks' header's id which is recorded in darwinia
-		// pub ConfirmedTcHeaderIds
-		// 	get(fn confirmed_tc_header_id)
-		// 	: TcHeaderId<TcBlockNumber<T, I>, TcHeaderHash<T, I>>;
+		/// The finalize blocks' header's id which is recorded in darwinia
+		///
+		/// Use for cleaning the `TcHeaders` storage
+		pub ConfirmedTcHeaderIds
+			get(fn confirmed_tc_header_id)
+			: Vec<TcHeaderId<TcBlockNumber<T, I>, TcHeaderHash<T, I>>>;
 
 		pub Bonds
 			get(fn bond_of_relayer)
@@ -184,7 +186,7 @@ decl_module! {
 
 				// TODO: if chain.len() == chain[0].block_number - genesis/confirmed.block_number
 				if proposals_len == 1 {
-					// Chain's len is ALWAYS great than 1 under this match pattern; qed
+					// Chain's len is ALWAYS equals 1 under this match pattern; qed
 					let proposal = proposals[0].clone();
 					let mut extend_from = proposal.extend_from.clone();
 
@@ -216,10 +218,14 @@ decl_module! {
 												Honest Relayer MORE THAN 1 Within a Round");
 										}
 
-										extend_from = proposal.extend_from.clone();
-										header.status = TcHeaderStatus::Confirmed;
+										if header.status != TcHeaderStatus::Confirmed {
+											header.status = TcHeaderStatus::Confirmed;
 
-										<TcHeaders<T, I>>::insert(id, header);
+											<TcHeaders<T, I>>::insert(id, header);
+											<ConfirmedTcHeaderIds<T, I>>::append(id);
+										}
+
+										extend_from = proposal.extend_from.clone();
 									} else {
 										<TcHeaders<T, I>>::take(id);
 
@@ -280,7 +286,7 @@ decl_module! {
 		//	The `header_thing_chain` could be very large,
 		//	the bond should relate to the bytes fee
 		//	that we slash the evil relayer(s) to reward the honest relayer(s)
-		// TODO: compact prams?
+		// TODO: compact params?
 		#[weight = 0]
 		fn submit_proposal(origin, raw_header_thing_chain: Vec<RawHeaderThing>) {
 			let relayer = ensure_signed(origin)?;
@@ -496,7 +502,7 @@ decl_module! {
 
 impl<T: Trait<I>, I: Instance> Module<T, I> {}
 
-#[derive(Clone, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
 pub enum TcHeaderStatus {
 	/// The header has not been judged yet
 	Unknown,
