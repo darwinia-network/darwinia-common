@@ -95,6 +95,9 @@ decl_error! {
 		/// Challenge - NOT HAPPENED
 		ChallengeNH,
 
+		/// Target Header - ALREADY CONFIRMED
+		TargetHeaderAC,
+
 		/// Proposal - ALREADY EXISTED
 		ProposalAE,
 		/// Target Header - ALREADY EXISTED
@@ -274,7 +277,7 @@ decl_module! {
 						T::RelayerGameAdjustor::update_samples(
 							T::RelayerGameAdjustor
 								::round_from_chain_len(proposals[0].chain.len() as _),
-							T::TargetChain::highest_confirmed_at(),
+							T::TargetChain::last_confirmed(),
 							samples
 						);
 					});
@@ -292,6 +295,9 @@ decl_module! {
 			let relayer = ensure_signed(origin)?;
 			let (game_id, _) = T::TargetChain
 				::verify_raw_header_thing(&raw_header_thing_chain[0])?;
+
+			ensure!(game_id > T::TargetChain::last_confirmed(), <Error<T, I>>::TargetHeaderAC);
+
 			let other_proposals = Self::proposals_of_game(game_id);
 			let other_proposals_len = other_proposals.len();
 			let build_bonded_chain = |chain: Vec<_>| {
@@ -464,7 +470,7 @@ decl_module! {
 						}
 					}
 
-					if let Some(Proposal { chain: extend_from_chain, ..}) = extend_from_proposal {
+					if let Some(Proposal { chain: extend_from_chain, .. }) = extend_from_proposal {
 						// A chain MUST longer than the chain which it extend from; qed
 						add_boned_headers(
 							&chain[extend_at..],

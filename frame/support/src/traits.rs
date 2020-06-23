@@ -8,7 +8,10 @@ use codec::FullCodec;
 use impl_trait_for_tuples::impl_for_tuples;
 // --- substrate ---
 use frame_support::traits::{Currency, TryDrop};
-use sp_runtime::{traits::Convert, DispatchError, DispatchResult};
+use sp_runtime::{
+	traits::{AtLeast32Bit, Convert},
+	DispatchError, DispatchResult,
+};
 use sp_std::prelude::*;
 // --- darwinia ---
 use crate::{
@@ -154,7 +157,7 @@ pub trait AdjustableRelayerGame {
 
 	fn update_samples(
 		round: Round,
-		highest_confirmed_at: Self::TcBlockNumber,
+		last_confirmed: Self::TcBlockNumber,
 		samples: &mut Vec<Self::TcBlockNumber>,
 	);
 
@@ -164,11 +167,11 @@ pub trait AdjustableRelayerGame {
 /// Implement this for target chain's relay module's
 /// to expose some necessary APIs for relayer game
 pub trait Relayable {
-	type TcBlockNumber: Clone + Copy + Debug + Default + PartialEq + FullCodec;
+	type TcBlockNumber: Clone + Copy + Debug + Default + AtLeast32Bit + FullCodec;
 	type TcHeaderHash: Clone + Debug + Default + PartialEq + FullCodec;
 
 	/// The latest finalize block's header's record id in darwinia
-	fn highest_confirmed_at() -> Self::TcBlockNumber;
+	fn last_confirmed() -> Self::TcBlockNumber;
 
 	/// Verify the codec style header thing
 	fn verify_raw_header_thing<R: AsRef<RawHeaderThing>>(

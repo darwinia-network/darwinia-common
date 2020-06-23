@@ -54,7 +54,7 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 	type TcBlockNumber = EthBlockNumber;
 	type TcHeaderHash = H256;
 
-	fn highest_confirmed_at() -> Self::TcBlockNumber {
+	fn last_confirmed() -> Self::TcBlockNumber {
 		unimplemented!()
 	}
 
