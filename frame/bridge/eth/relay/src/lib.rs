@@ -9,10 +9,10 @@ use ethereum_types::{H128, H512};
 // --- substrate ---
 use frame_support::{decl_error, decl_event, decl_module, decl_storage};
 use frame_system as system;
-use sp_runtime::DispatchError;
+use sp_runtime::{DispatchError, DispatchResult};
 use sp_std::prelude::*;
 // --- darwinia ---
-use darwinia_support::relay::{RawHeaderThing, Relayable, TcHeaderId};
+use darwinia_support::relay::*;
 use eth_primitives::{header::EthHeader, EthBlockNumber, H256};
 
 pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
@@ -53,18 +53,45 @@ decl_module! {
 impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 	type TcBlockNumber = EthBlockNumber;
 	type TcHeaderHash = H256;
+	// TODO: MMR type
+	type TcHeaderMMR = ();
 
 	fn last_confirmed() -> Self::TcBlockNumber {
 		unimplemented!()
 	}
 
-	fn verify_raw_header_thing<R: AsRef<RawHeaderThing>>(
-		raw_header_thing: R,
-	) -> Result<TcHeaderId<Self::TcBlockNumber, Self::TcHeaderHash>, DispatchError> {
+	fn header_existed(block_number: Self::TcBlockNumber) -> bool {
 		unimplemented!()
 	}
 
-	fn header_existed(block_number: Self::TcBlockNumber) -> bool {
+	fn verify_raw_header_thing(
+		raw_header_thing: RawHeaderThing,
+	) -> Result<
+		TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
+		DispatchError,
+	> {
+		unimplemented!()
+	}
+
+	/// Eth additional `Other` fileds in `Vec<TcHeaderBrief>`:
+	/// 	[
+	///			...,
+	/// 		Difficulty (shoule be in addition field `Other`, bytes style),
+	/// 		Total Difficulty (shoule be in addition field `Other`, bytes style),
+	/// 	]
+	fn verify_raw_header_thing_chain(
+		raw_header_thing_chain: Vec<RawHeaderThing>,
+	) -> Result<
+		Vec<TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>>,
+		DispatchError,
+	> {
+		// TODO: also verify continuous here for eth
+		unimplemented!()
+	}
+
+	fn on_chain_arbitrate(
+		raw_header_thing_brief_chain: &[darwinia_support::relay::RawHeaderThingBrief],
+	) -> DispatchResult {
 		unimplemented!()
 	}
 }

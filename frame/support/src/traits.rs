@@ -8,10 +8,7 @@ use codec::FullCodec;
 use impl_trait_for_tuples::impl_for_tuples;
 // --- substrate ---
 use frame_support::traits::{Currency, TryDrop};
-use sp_runtime::{
-	traits::{AtLeast32Bit, Convert},
-	DispatchError, DispatchResult,
-};
+use sp_runtime::{traits::AtLeast32Bit, DispatchError, DispatchResult};
 use sp_std::prelude::*;
 // --- darwinia ---
 use crate::{
@@ -19,7 +16,7 @@ use crate::{
 		lock::{LockFor, LockReasons},
 		FrozenBalance,
 	},
-	relay::{RawHeaderThing, Round, TcHeaderId},
+	relay::{RawHeaderThing, RawHeaderThingBrief, Round, TcHeaderBrief},
 };
 
 pub trait BalanceInfo<Balance, Module> {
@@ -149,11 +146,14 @@ pub trait AdjustableRelayerGame {
 	type Moment;
 	type Balance;
 	type TcBlockNumber;
-	type Sampler: Convert<Round, Vec<Self::TcBlockNumber>> + Convert<u32, Round>;
+	// TODO: trait `Sampler`
+	type Sampler;
 
 	fn challenge_time(round: Round) -> Self::Moment;
 
-	fn round_from_chain_len(chain_len: u32) -> Round;
+	fn round_from_chain_len(chain_len: u64) -> Round;
+
+	fn chain_len_from_round(round: Round) -> u64;
 
 	fn update_samples(
 		round: Round,
@@ -169,25 +169,35 @@ pub trait AdjustableRelayerGame {
 pub trait Relayable {
 	type TcBlockNumber: Clone + Copy + Debug + Default + AtLeast32Bit + FullCodec;
 	type TcHeaderHash: Clone + Debug + Default + PartialEq + FullCodec;
+	type TcHeaderMMR: Clone + Debug + Default + PartialEq + FullCodec;
 
 	/// The latest finalize block's header's record id in darwinia
 	fn last_confirmed() -> Self::TcBlockNumber;
 
+	/// Check the header if it's already existed
+	fn header_existed(block_number: Self::TcBlockNumber) -> bool;
+
 	/// Verify the codec style header thing
-	fn verify_raw_header_thing<R: AsRef<RawHeaderThing>>(
-		raw_header_thing: R,
-	) -> Result<TcHeaderId<Self::TcBlockNumber, Self::TcHeaderHash>, DispatchError>;
+	fn verify_raw_header_thing(
+		raw_header_thing: RawHeaderThing,
+	) -> Result<
+		TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
+		DispatchError,
+	>;
 
 	/// Verify the codec style header thing chain
 	fn verify_raw_header_thing_chain(
-		raw_header_thing_chain: &[RawHeaderThing],
-	) -> Result<Vec<TcHeaderId<Self::TcBlockNumber, Self::TcHeaderHash>>, DispatchError> {
+		raw_header_thing_chain: Vec<RawHeaderThing>,
+	) -> Result<
+		Vec<TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>>,
+		DispatchError,
+	> {
 		raw_header_thing_chain
-			.iter()
+			.into_iter()
 			.map(<Self as Relayable>::verify_raw_header_thing)
 			.collect()
 	}
 
-	/// Check the header if it's already existed
-	fn header_existed(block_number: Self::TcBlockNumber) -> bool;
+	/// On chain arbitrate, to confirmed the header with 100% sure
+	fn on_chain_arbitrate(raw_header_thing_brief_chain: &[RawHeaderThingBrief]) -> DispatchResult;
 }

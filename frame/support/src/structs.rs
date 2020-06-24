@@ -2,6 +2,7 @@
 use codec::{Decode, Encode};
 use num_traits::Zero;
 // --- substrate ---
+use frame_support::debug::error;
 use sp_runtime::{traits::AtLeast32Bit, RuntimeDebug};
 use sp_std::{ops::BitOr, prelude::*};
 // --- darwinia ---
@@ -169,6 +170,41 @@ where
 			self.amount
 		} else {
 			Zero::zero()
+		}
+	}
+}
+
+// TODO: spec
+#[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug)]
+pub enum TcHeaderThing<TcBlockNumber, TcHeaderHash, TcHeaderMMR> {
+	BlockNumber(TcBlockNumber),
+	Hash(TcHeaderHash),
+	ParentHash(TcHeaderHash),
+	MMR(TcHeaderMMR),
+	Other(Vec<u8>),
+}
+
+impl<TcBlockNumber, TcHeaderHash, TcHeaderMMR>
+	TcHeaderThing<TcBlockNumber, TcHeaderHash, TcHeaderMMR>
+where
+	TcBlockNumber: Clone + Copy + Zero,
+	TcHeaderHash: Clone + Default,
+{
+	pub fn as_block_number(&self) -> TcBlockNumber {
+		if let Self::BlockNumber(block_number) = self {
+			*block_number
+		} else {
+			error!("Should Be `unreachable!()`, Please Follow the Spec");
+			Zero::zero()
+		}
+	}
+
+	pub fn as_hash(&self) -> TcHeaderHash {
+		if let Self::Hash(hash) = self {
+			hash.to_owned()
+		} else {
+			error!("Should Be `unreachable!()`, Please Follow the Spec");
+			Default::default()
 		}
 	}
 }

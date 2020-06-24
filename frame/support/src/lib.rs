@@ -71,15 +71,19 @@ pub mod literal_procesor {
 // TODO: move to `darwinia-relay-primitives`?
 pub mod relay {
 	// --- darwinia ---
-	pub use crate::traits::{AdjustableRelayerGame, Relayable};
+	pub use crate::{
+		structs::TcHeaderThing,
+		traits::{AdjustableRelayerGame, Relayable},
+	};
 
 	// --- substrate ---
 	use sp_std::prelude::*;
 
-	pub type Round = u32;
+	pub type Round = u64;
 	pub type RawHeaderThing = Vec<u8>;
-
-	pub type TcHeaderId<HeaderNumber, HeaderHash> = (HeaderNumber, HeaderHash);
+	pub type RawHeaderThingBrief = Vec<u8>;
+	pub type TcHeaderBrief<TcBlockNumber, TcHeaderHash, TcHeaderMMR> =
+		Vec<TcHeaderThing<TcBlockNumber, TcHeaderHash, TcHeaderMMR>>;
 }
 
 #[cfg(test)]
