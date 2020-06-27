@@ -90,7 +90,13 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 	}
 
 	fn on_chain_arbitrate(
-		raw_header_thing_brief_chain: &[darwinia_support::relay::RawHeaderThingBrief],
+		header_thing_brief_chain: Vec<
+			darwinia_support::relay::TcHeaderBrief<
+				Self::TcBlockNumber,
+				Self::TcHeaderHash,
+				Self::TcHeaderMMR,
+			>,
+		>,
 	) -> DispatchResult {
 		unimplemented!()
 	}

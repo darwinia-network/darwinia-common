@@ -81,7 +81,6 @@ pub mod relay {
 
 	pub type Round = u64;
 	pub type RawHeaderThing = Vec<u8>;
-	pub type RawHeaderThingBrief = Vec<u8>;
 	pub type TcHeaderBrief<TcBlockNumber, TcHeaderHash, TcHeaderMMR> =
 		Vec<TcHeaderThing<TcBlockNumber, TcHeaderHash, TcHeaderMMR>>;
 }

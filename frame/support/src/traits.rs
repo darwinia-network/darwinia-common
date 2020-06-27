@@ -16,7 +16,7 @@ use crate::{
 		lock::{LockFor, LockReasons},
 		FrozenBalance,
 	},
-	relay::{RawHeaderThing, RawHeaderThingBrief, Round, TcHeaderBrief},
+	relay::{RawHeaderThing, Round, TcHeaderBrief},
 };
 
 pub trait BalanceInfo<Balance, Module> {
@@ -146,8 +146,6 @@ pub trait AdjustableRelayerGame {
 	type Moment;
 	type Balance;
 	type TcBlockNumber;
-	// TODO: trait `Sampler`
-	type Sampler;
 
 	fn challenge_time(round: Round) -> Self::Moment;
 
@@ -155,13 +153,9 @@ pub trait AdjustableRelayerGame {
 
 	fn chain_len_from_round(round: Round) -> u64;
 
-	fn update_samples(
-		round: Round,
-		last_confirmed: Self::TcBlockNumber,
-		samples: &mut Vec<Self::TcBlockNumber>,
-	);
+	fn update_samples(round: Round, samples: &mut Vec<Self::TcBlockNumber>);
 
-	fn estimate_bond(round: Round, proposals_count: u32) -> Self::Balance;
+	fn estimate_bond(round: Round, proposals_count: u64) -> Self::Balance;
 }
 
 /// Implement this for target chain's relay module's
@@ -199,5 +193,9 @@ pub trait Relayable {
 	}
 
 	/// On chain arbitrate, to confirmed the header with 100% sure
-	fn on_chain_arbitrate(raw_header_thing_brief_chain: &[RawHeaderThingBrief]) -> DispatchResult;
+	fn on_chain_arbitrate(
+		header_thing_brief_chain: Vec<
+			TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
+		>,
+	) -> DispatchResult;
 }

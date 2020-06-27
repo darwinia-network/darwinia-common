@@ -21,37 +21,24 @@ pub mod impls {
 			type Moment = BlockNumber;
 			type Balance = Balance;
 			type TcBlockNumber = <EthRelay as darwinia_support::relay::Relayable>::TcBlockNumber;
-			type Sampler = EthRelayerGameSampler<Self::TcBlockNumber>;
 
 			fn challenge_time(round: Round) -> Self::Moment {
 				unimplemented!()
 			}
 
-			fn round_from_chain_len(chain_len: u32) -> Round {
+			fn round_from_chain_len(chain_len: u64) -> Round {
 				unimplemented!()
 			}
 
-			fn update_samples(
-				_round: Round,
-				_highest_confirmed_at: Self::TcBlockNumber,
-				samples: &mut Vec<Self::TcBlockNumber>,
-			) {
+			fn chain_len_from_round(round: Round) -> u64 {
+				unimplemented!()
+			}
+
+			fn update_samples(_round: Round, samples: &mut Vec<Self::TcBlockNumber>) {
 				samples.push(samples.last().unwrap() - 1);
 			}
 
-			fn estimate_bond(round: u32, proposals_count: u32) -> Self::Balance {
-				unimplemented!()
-			}
-		}
-
-		pub struct EthRelayerGameSampler<TcBlockNumber>(sp_std::marker::PhantomData<TcBlockNumber>);
-		impl<TcBlockNumber> Convert<Round, Vec<TcBlockNumber>> for EthRelayerGameSampler<TcBlockNumber> {
-			fn convert(round: Round) -> Vec<TcBlockNumber> {
-				unimplemented!()
-			}
-		}
-		impl<TcBlockNumber> Convert<u32, Round> for EthRelayerGameSampler<TcBlockNumber> {
-			fn convert(chain_len: u32) -> Round {
+			fn estimate_bond(round: Round, proposals_count: u64) -> Self::Balance {
 				unimplemented!()
 			}
 		}
@@ -788,7 +775,6 @@ impl darwinia_relayer_game::Trait for Runtime {
 	type RingCurrency = Ring;
 	type RingSlash = Treasury;
 	type RelayerGameAdjustor = bridge::EthRelayerGameAdjustor;
-	type Sampler = bridge::EthRelayerGameSampler<eth_primitives::EthBlockNumber>;
 	type TargetChain = EthRelay;
 }
 
