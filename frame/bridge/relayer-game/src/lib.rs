@@ -13,6 +13,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![feature(drain_filter)]
 
+// FIXME: separate long function into several functions
+
 mod types {
 	// --- darwinia ---
 	use crate::*;
@@ -186,7 +188,22 @@ decl_module! {
 				}
 
 				if proposals.len() == 1 {
+					let proposal = proposals.pop().unwrap();
+					let BondedTcHeader { header_brief, bond } = &proposal.bonded_chain[0];
+
 					// TODO: reward if no challenge
+
+					Self::update_bonds(
+						&proposal.relayer,
+						|old_bonds| old_bonds.saturating_sub(*bond)
+					);
+
+					<ConfirmedTcHeaderIds<T, I>>::append((
+						header_brief[0].as_block_number(),
+						header_brief[1].as_hash()
+					));
+					<Proposals<T, I>>::take(game_id);
+					<Samples<T, I>>::take(game_id);
 
 					continue;
 				}
@@ -238,12 +255,13 @@ decl_module! {
 						} else {
 							// Should NEVER enter this condition
 							for (evil, bond) in evils {
-								let (imbalance, _) = T::RingCurrency
-									::slash(&evil, bond);
-								T::RingSlash::on_unbalanced(imbalance);
+								Self::update_bonds(
+									&evil,
+									|old_bonds| old_bonds.saturating_sub(bond)
+								);
 
-								<Bonds<T, I>>::mutate(evil, |bonds|
-									*bonds = bond.saturating_sub(bond));
+								let (imbalance, _) = T::RingCurrency::slash(&evil, bond);
+								T::RingSlash::on_unbalanced(imbalance);
 							}
 
 							error!("[relayer-game] NO Honest Relayer");
@@ -268,7 +286,7 @@ decl_module! {
 								// The first item means total bonds
 								// which use for updating bonds and locks with just 2 DB writes
 								//
-								// The second item use for reward relayers
+								// The second item use for rewarding relayers
 								(evil_bond, relayers_map)
 							});
 
@@ -278,33 +296,17 @@ decl_module! {
 					}
 
 					for (relayer, relayer_bonds) in relayers_map {
-						<Bonds<T, I>>::mutate(&relayer, |old_bonds| {
-							let new_bonds = old_bonds.saturating_sub(relayer_bonds);
-
-							T::RingCurrency::set_lock(
-								RELAYER_GAME_ID,
-								&relayer,
-								LockFor::Common { amount: new_bonds },
-								WithdrawReasons::all(),
-							);
-
-							*old_bonds = new_bonds;
-						});
+						Self::update_bonds(
+							&relayer,
+							|old_bonds| old_bonds.saturating_sub(relayer_bonds)
+						);
 					}
 
 					for (evil, (evil_bonds, relayers_map)) in evils_map {
-						<Bonds<T, I>>::mutate(&evil, |old_bonds| {
-							let new_bonds = old_bonds.saturating_sub(evil_bonds);
-
-							T::RingCurrency::set_lock(
-								RELAYER_GAME_ID,
-								&evil,
-								LockFor::Common { amount: new_bonds },
-								WithdrawReasons::all(),
-							);
-
-							*old_bonds = new_bonds;
-						});
+						Self::update_bonds(
+							&evil,
+							|old_bonds| old_bonds.saturating_sub(evil_bonds)
+						);
 
 						for (relayer, evil_bonds) in relayers_map {
 							let _ = T::RingCurrency::transfer(
@@ -419,18 +421,8 @@ decl_module! {
 						<Error<T, I>>::InsufficientValue
 					);
 
-					<Bonds<T, I>>::mutate(&relayer, |old_bonds| {
-						let new_bonds = old_bonds.saturating_add(bonds);
+					Self::update_bonds(&relayer, |old_bonds| old_bonds.saturating_add(bonds));
 
-						T::RingCurrency::set_lock(
-							RELAYER_GAME_ID,
-							&relayer,
-							LockFor::Common { amount: new_bonds },
-							WithdrawReasons::all(),
-						);
-
-						*old_bonds = new_bonds;
-					});
 					<Proposals<T, I>>::append(game_id, Proposal {
 						relayer,
 						bonded_chain,
@@ -470,18 +462,8 @@ decl_module! {
 						<Error<T, I>>::InsufficientValue
 					);
 
-					<Bonds<T, I>>::mutate(&relayer, |old_bonds| {
-						let new_bonds = old_bonds.saturating_add(bonds);
+					Self::update_bonds(&relayer, |old_bonds| old_bonds.saturating_add(bonds));
 
-						T::RingCurrency::set_lock(
-							RELAYER_GAME_ID,
-							&relayer,
-							LockFor::Common { amount: new_bonds },
-							WithdrawReasons::all(),
-						);
-
-						*old_bonds = new_bonds;
-					});
 					<Proposals<T, I>>::append(game_id, Proposal {
 						relayer,
 						bonded_chain,
@@ -555,18 +537,8 @@ decl_module! {
 						let mut bonded_chain = extend_from_chain;
 						bonded_chain.append(&mut extend_chain);
 
-						<Bonds<T, I>>::mutate(&relayer, |old_bonds| {
-							let new_bonds = old_bonds.saturating_add(bonds);
+						Self::update_bonds(&relayer, |old_bonds| old_bonds.saturating_add(bonds));
 
-							T::RingCurrency::set_lock(
-								RELAYER_GAME_ID,
-								&relayer,
-								LockFor::Common { amount: new_bonds },
-								WithdrawReasons::all(),
-							);
-
-							*old_bonds = new_bonds;
-						});
 						<Proposals<T, I>>::append(
 							game_id,
 							Proposal {
@@ -593,7 +565,25 @@ decl_module! {
 	}
 }
 
-impl<T: Trait<I>, I: Instance> Module<T, I> {}
+impl<T: Trait<I>, I: Instance> Module<T, I> {
+	fn update_bonds<F>(relayer: &AccountId<T>, calc_new_bond: F)
+	where
+		F: FnOnce(RingBalance<T, I>) -> RingBalance<T, I>,
+	{
+		<Bonds<T, I>>::mutate(relayer, |old_bonds| {
+			let new_bonds = calc_new_bond(*old_bonds);
+
+			T::RingCurrency::set_lock(
+				RELAYER_GAME_ID,
+				relayer,
+				LockFor::Common { amount: new_bonds },
+				WithdrawReasons::all(),
+			);
+
+			*old_bonds = new_bonds;
+		});
+	}
+}
 
 #[derive(Clone, Encode, Decode, RuntimeDebug)]
 pub struct Proposal<AccountId, BondedTcHeader, TcHeaderHash> {
