@@ -198,4 +198,7 @@ pub trait Relayable {
 			TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
 		>,
 	) -> DispatchResult;
+
+	// TODO:
+	// fn store_header() {}
 }
