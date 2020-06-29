@@ -127,7 +127,7 @@ decl_storage! {
 			>>;
 
 		/// The last confirmed block number record of a game when it start
-		pub LastConfirmed
+		pub LastConfirmeds
 			get(fn last_confirmed_of_game)
 			: map hasher(blake2_128_concat) GameId<TcBlockNumber<T, I>>
 			=> TcBlockNumber<T, I>;
@@ -454,17 +454,17 @@ decl_module! {
 			ensure!(game_id > last_confirmed, <Error<T, I>>::TargetHeaderAC);
 
 			let other_proposals = Self::proposals_of_game(game_id);
-			let other_proposals_len = other_proposals.len() as _;
+			let other_proposals_len = other_proposals.len();
 			let extend_bonded_chain = |chain: &[_], extend_at| {
 				let mut bonds = <RingBalance<T, I>>::zero();
 				let extend_chain = chain
 					.iter()
 					.cloned()
 					.enumerate()
-					.map(|(round, header_brief)| {
+					.map(|(round_offset, header_brief)| {
 						let bond = T::RelayerGameAdjustor::estimate_bond(
-							round as Round + extend_at,
-							other_proposals_len
+							extend_at + round_offset as Round,
+							other_proposals_len as _
 						);
 
 						bonds = bonds.saturating_add(bond);
@@ -497,7 +497,7 @@ decl_module! {
 
 					Self::update_bonds(&relayer, |old_bonds| old_bonds.saturating_add(bonds));
 
-					<LastConfirmed<T, I>>::insert(game_id, last_confirmed);
+					<LastConfirmeds<T, I>>::insert(game_id, last_confirmed);
 					<Proposals<T, I>>::append(game_id, Proposal {
 						relayer,
 						bonded_chain,
@@ -640,22 +640,26 @@ decl_module! {
 }
 
 impl<T: Trait<I>, I: Instance> Module<T, I> {
-	fn update_bonds<F>(relayer: &AccountId<T>, calc_new_bond: F)
+	fn update_bonds<F>(relayer: &AccountId<T>, calc_bonds: F)
 	where
 		F: FnOnce(RingBalance<T, I>) -> RingBalance<T, I>,
 	{
-		<Bonds<T, I>>::mutate(relayer, |old_bonds| {
-			let new_bonds = calc_new_bond(*old_bonds);
+		let bonds = calc_bonds(Self::bond_of_relayer(relayer));
 
+		if bonds.is_zero() {
+			T::RingCurrency::remove_lock(RELAYER_GAME_ID, relayer);
+
+			<Bonds<T, I>>::take(relayer);
+		} else {
 			T::RingCurrency::set_lock(
 				RELAYER_GAME_ID,
 				relayer,
-				LockFor::Common { amount: new_bonds },
+				LockFor::Common { amount: bonds },
 				WithdrawReasons::all(),
 			);
 
-			*old_bonds = new_bonds;
-		});
+			<Bonds<T, I>>::insert(relayer, bonds);
+		}
 	}
 }
 
