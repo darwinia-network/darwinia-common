@@ -202,7 +202,7 @@ pub struct EthReceiptProof {
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait> as DarwiniaEthLinearRelay {
+	trait Store for Module<T: Trait> as DarwiniaEthereumLinearRelay {
 		/// Anchor block that works as genesis block
 		pub GenesisHeader get(fn begin_header): Option<EthHeader>;
 

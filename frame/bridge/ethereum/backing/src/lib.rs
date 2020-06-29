@@ -74,7 +74,7 @@ pub enum RedeemFor {
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait> as DarwiniaEthBacking {
+	trait Store for Module<T: Trait> as DarwiniaEthereumBacking {
 		pub RingProofVerified
 			get(fn ring_proof_verfied)
 			: map hasher(blake2_128_concat) EthTransactionIndex => Option<EthReceiptProof>;
