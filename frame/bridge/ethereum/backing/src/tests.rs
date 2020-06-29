@@ -1,4 +1,4 @@
-//! Tests for eth-backing.
+//! Tests for ethereum-backing.
 
 // --- substrate ---
 use frame_support::{assert_err, assert_ok};

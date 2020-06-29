@@ -41,11 +41,11 @@ jobs:
 
     - stage: Darwinia Test
       env: ETHRELAY RUST_TOOLCHAIN=nightly-2020-05-14 TARGET=native
-      script: .maintain/ci/darwinia_test_script.sh eth-linear-relay
+      script: .maintain/ci/darwinia_test_script.sh ethereum-linear-relay
 
     - stage: Darwinia Test
       env: ETHBACKING RUST_TOOLCHAIN=nightly-2020-05-14 TARGET=native
-      script: .maintain/ci/darwinia_test_script.sh eth-backing
+      script: .maintain/ci/darwinia_test_script.sh ethereum-backing
 
     - stage: Darwinia Test
       env: HEADERMMR RUST_TOOLCHAIN=nightly-2020-05-14 TARGET=native
@@ -53,7 +53,7 @@ jobs:
 
     - stage: Darwinia Test
       env: ETHOFFCHAIN RUST_TOOLCHAIN=nightly-2020-05-14 TARGET=native
-      script: .maintain/ci/darwinia_test_script.sh eth-offchain
+      script: .maintain/ci/darwinia_test_script.sh ethereum-offchain
 
     - stage: Darwinia Test
       env: CLAIMS RUST_TOOLCHAIN=nightly-2020-05-14 TARGET=native

@@ -1,4 +1,4 @@
-//! Tests for eth-linear-relay.
+//! Tests for ethereum-linear-relay.
 
 // --- substrate ---
 use frame_support::{

@@ -97,7 +97,7 @@ impl<AccountId> DustCollector<AccountId> for Currencies {
 	}
 }
 
-/// Callback on eth-backing module
+/// Callback on ethereum-backing module
 pub trait OnDepositRedeem<AccountId> {
 	type Balance;
 

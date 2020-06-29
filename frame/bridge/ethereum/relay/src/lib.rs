@@ -1,4 +1,4 @@
-//! # Darwinia-eth-linear-relay Module
+//! # Darwinia-ethereum-linear-relay Module
 
 #![cfg_attr(not(feature = "std"), no_std)]
 

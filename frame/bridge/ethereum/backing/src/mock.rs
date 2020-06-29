@@ -1,4 +1,4 @@
-//! Mock file for eth-backing.
+//! Mock file for ethereum-backing.
 
 // --- std ---
 use std::cell::RefCell;

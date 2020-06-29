@@ -321,14 +321,14 @@ impl<T: Trait> Module<T> {
 				.clone()
 				.to_bytes()
 				.ok_or(<Error<T>>::BytesCF)?;
-			debug::trace!(target: "eth-backing", "[eth-backing] Raw Subkey: {:?}", raw_subkey);
+			debug::trace!(target: "ethereum-backing", "[ethereum-backing] Raw Subkey: {:?}", raw_subkey);
 
 			// let decoded_sub_key =
 			// 	hex::decode(&raw_subkey).map_err(|_| "Decode Address - FAILED")?;
 
 			T::DetermineAccountId::account_id_for(&raw_subkey)?
 		};
-		debug::trace!(target: "eth-backing", "[eth-backing] Darwinia Account: {:?}", darwinia_account);
+		debug::trace!(target: "ethereum-backing", "[ethereum-backing] Darwinia Account: {:?}", darwinia_account);
 
 		Ok((redeemed_amount, darwinia_account, fee))
 	}
@@ -447,14 +447,14 @@ impl<T: Trait> Module<T> {
 				.clone()
 				.to_bytes()
 				.ok_or(<Error<T>>::BytesCF)?;
-			debug::trace!(target: "eth-backing", "[eth-backing] Raw Subkey: {:?}", raw_subkey);
+			debug::trace!(target: "ethereum-backing", "[ethereum-backing] Raw Subkey: {:?}", raw_subkey);
 
 			// let decoded_sub_key =
 			// 	hex::decode(&raw_subkey).map_err(|_| "Decode Address - FAILED")?;
 
 			T::DetermineAccountId::account_id_for(&raw_subkey)?
 		};
-		debug::trace!(target: "eth-backing", "[eth-backing] Darwinia Account: {:?}", darwinia_account);
+		debug::trace!(target: "ethereum-backing", "[ethereum-backing] Darwinia Account: {:?}", darwinia_account);
 
 		Ok((
 			deposit_id,

@@ -1,4 +1,4 @@
-//! Mock file for eth-linear-relay.
+//! Mock file for ethereum-linear-relay.
 
 // --- std ---
 use std::{cell::RefCell, fs::File};
