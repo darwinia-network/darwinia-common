@@ -1,15 +1,22 @@
 // --- substrate ---
 pub use frame_support::traits::{LockIdentifier, VestingSchedule, WithdrawReason, WithdrawReasons};
 
+// --- core ---
+use core::fmt::Debug;
 // --- crates ---
+use codec::FullCodec;
 use impl_trait_for_tuples::impl_for_tuples;
 // --- substrate ---
 use frame_support::traits::{Currency, TryDrop};
-use sp_runtime::DispatchResult;
+use sp_runtime::{traits::AtLeast32Bit, DispatchError, DispatchResult};
+use sp_std::prelude::*;
 // --- darwinia ---
-use crate::balance::{
-	lock::{LockFor, LockReasons},
-	FrozenBalance,
+use crate::{
+	balance::{
+		lock::{LockFor, LockReasons},
+		FrozenBalance,
+	},
+	relay::{RawHeaderThing, Round, TcHeaderBrief},
 };
 
 pub trait BalanceInfo<Balance, Module> {
@@ -90,7 +97,7 @@ impl<AccountId> DustCollector<AccountId> for Currencies {
 	}
 }
 
-/// Callback on eth-backing module
+/// Callback on ethereum-backing module
 pub trait OnDepositRedeem<AccountId> {
 	type Balance;
 
@@ -131,4 +138,67 @@ impl<Imbalance: TryDrop> OnUnbalancedKton<Imbalance> for () {
 	fn on_nonzero_unbalanced(amount: Imbalance) {
 		drop(amount);
 	}
+}
+
+// A regulator to adjust relay args for a specific chain
+// Implement this in runtime's impls
+pub trait AdjustableRelayerGame {
+	type Moment;
+	type Balance;
+	type TcBlockNumber;
+
+	fn challenge_time(round: Round) -> Self::Moment;
+
+	fn round_from_chain_len(chain_len: u64) -> Round;
+
+	fn chain_len_from_round(round: Round) -> u64;
+
+	fn update_samples(round: Round, samples: &mut Vec<Self::TcBlockNumber>);
+
+	fn estimate_bond(round: Round, proposals_count: u64) -> Self::Balance;
+}
+
+/// Implement this for target chain's relay module's
+/// to expose some necessary APIs for relayer game
+pub trait Relayable {
+	type TcBlockNumber: Clone + Copy + Debug + Default + AtLeast32Bit + FullCodec;
+	type TcHeaderHash: Clone + Debug + Default + PartialEq + FullCodec;
+	type TcHeaderMMR: Clone + Debug + Default + PartialEq + FullCodec;
+
+	/// The latest finalize block's header's record id in darwinia
+	fn last_confirmed() -> Self::TcBlockNumber;
+
+	/// Check the header if it's already existed
+	fn header_existed(block_number: Self::TcBlockNumber) -> bool;
+
+	/// Verify the codec style header thing
+	fn verify_raw_header_thing(
+		raw_header_thing: RawHeaderThing,
+	) -> Result<
+		TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
+		DispatchError,
+	>;
+
+	/// Verify the codec style header thing chain
+	fn verify_raw_header_thing_chain(
+		raw_header_thing_chain: Vec<RawHeaderThing>,
+	) -> Result<
+		Vec<TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>>,
+		DispatchError,
+	> {
+		raw_header_thing_chain
+			.into_iter()
+			.map(<Self as Relayable>::verify_raw_header_thing)
+			.collect()
+	}
+
+	/// On chain arbitrate, to confirmed the header with 100% sure
+	fn on_chain_arbitrate(
+		header_thing_brief_chain: Vec<
+			TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
+		>,
+	) -> DispatchResult;
+
+	// TODO:
+	// fn store_header() {}
 }

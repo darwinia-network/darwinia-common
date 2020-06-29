@@ -1,5 +1,5 @@
 [package]
-name = "darwinia-eth-backing"
+name = "darwinia-ethereum-backing"
 version = "0.6.1"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "FRAME pallet to backing Ethereum assets"
@@ -14,9 +14,9 @@ codec = { package = "parity-scale-codec", version = "1.3.0", default-features = 
 serde = { version = "1.0.106", optional = true }
 # darwinia
 array-bytes = { default-features = false, path = "../../../../primitives/array-bytes" }
-darwinia-eth-relay = { default-features = false, path = "../relay" }
+darwinia-ethereum-linear-relay = { default-features = false, path = "../linear-relay" }
 darwinia-support = { default-features = false, path = "../../../support" }
-eth-primitives = { default-features = false, path = "../../../../primitives/eth-primitives" }
+ethereum-primitives = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
 # github
 ethabi = { default-features = false, git = "https://github.com/darwinia-network/ethabi.git", branch = "with_no_std" }
 # substrate
@@ -30,7 +30,7 @@ sp-std = { default-features = false, git = "https://github.com/darwinia-network/
 # darwinia
 darwinia-balances = { path = "../../../../frame/balances" }
 darwinia-staking = { path = "../../../../frame/staking" }
-eth-primitives = { features = ["easy-testing"], path = "../../../../primitives/eth-primitives" }
+ethereum-primitives = { features = ["easy-testing"], path = "../../../../primitives/ethereum-primitives" }
 # github
 rlp = { package = "rlp", git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
@@ -47,9 +47,9 @@ std = [
 	"serde",
 	# darwinia
 	"array-bytes/std",
-	"darwinia-eth-relay/std",
+	"darwinia-ethereum-linear-relay/std",
 	"darwinia-support/std",
-	"eth-primitives/std",
+	"ethereum-primitives/std",
 	# github
 	"ethabi/std",
 	# substrate

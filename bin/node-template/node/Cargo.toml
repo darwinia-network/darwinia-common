@@ -25,7 +25,8 @@ structopt = { version = "0.3.13" }
 darwinia-balances-rpc = { path = "../../../frame/balances/rpc" }
 darwinia-claims = { path = "../../../frame/claims" }
 darwinia-cli = { optional = true, path = "../../../client/cli" }
-darwinia-eth-relay = { path = "../../../frame/bridge/eth/relay" }
+darwinia-ethereum-linear-relay = { path = "../../../frame/bridge/ethereum/linear-relay" }
+darwinia-ethereum-relay = { path = "../../../frame/bridge/ethereum/relay" }
 darwinia-header-mmr-rpc = { path = "../../../frame/header-mmr/rpc" }
 darwinia-staking = { path = "../../../frame/staking" }
 darwinia-staking-rpc = { path = "../../../frame/staking/rpc" }

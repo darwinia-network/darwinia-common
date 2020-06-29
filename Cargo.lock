@@ -900,16 +900,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-eth-backing"
+name = "darwinia-ethereum-backing"
 version = "0.6.1"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
- "darwinia-eth-relay",
+ "darwinia-ethereum-linear-relay",
  "darwinia-staking",
  "darwinia-support",
- "eth-primitives",
  "ethabi",
+ "ethereum-primitives",
  "frame-support",
  "frame-system",
  "pallet-session",
@@ -925,14 +925,37 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-eth-offchain"
+name = "darwinia-ethereum-linear-relay"
 version = "0.6.1"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
- "darwinia-eth-relay",
  "darwinia-support",
- "eth-primitives",
+ "ethash",
+ "ethereum-primitives",
+ "ethereum-types 0.8.0",
+ "frame-support",
+ "frame-system",
+ "merkle-patricia-trie",
+ "parity-scale-codec",
+ "rlp 0.4.4",
+ "serde",
+ "serde_json",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 2.0.0-rc2",
+]
+
+[[package]]
+name = "darwinia-ethereum-offchain"
+version = "0.6.1"
+dependencies = [
+ "array-bytes",
+ "darwinia-balances",
+ "darwinia-ethereum-linear-relay",
+ "darwinia-support",
+ "ethereum-primitives",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
@@ -945,24 +968,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-eth-relay"
+name = "darwinia-ethereum-relay"
 version = "0.6.1"
 dependencies = [
- "array-bytes",
- "darwinia-balances",
  "darwinia-support",
- "eth-primitives",
- "ethash",
+ "ethereum-primitives",
  "ethereum-types 0.8.0",
  "frame-support",
  "frame-system",
- "merkle-patricia-trie",
  "parity-scale-codec",
- "rlp 0.4.4",
  "serde",
- "serde_json",
- "sp-core",
- "sp-io",
  "sp-runtime",
  "sp-std 2.0.0-rc2",
 ]
@@ -1008,6 +1023,19 @@ dependencies = [
  "parity-scale-codec",
  "serde",
  "sp-api",
+ "sp-runtime",
+ "sp-std 2.0.0-rc2",
+]
+
+[[package]]
+name = "darwinia-relayer-game"
+version = "0.6.1"
+dependencies = [
+ "darwinia-support",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
  "sp-runtime",
  "sp-std 2.0.0-rc2",
 ]
@@ -1216,31 +1244,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "eth-primitives"
-version = "0.6.1"
-dependencies = [
- "array-bytes",
- "ethash",
- "ethbloom 0.8.1",
- "ethereum-types 0.8.0",
- "fixed-hash 0.5.2",
- "frame-support",
- "impl-codec 0.4.2 (git+https://github.com/darwinia-network/parity-common.git)",
- "impl-rlp 0.2.1 (git+https://github.com/darwinia-network/parity-common.git)",
- "keccak-hash",
- "keccak-hasher",
- "parity-scale-codec",
- "primitive-types 0.6.2",
- "rlp 0.4.4",
- "rlp-derive",
- "serde",
- "serde_json",
- "sp-runtime",
- "sp-std 2.0.0-rc2",
- "triehash",
-]
-
-[[package]]
 name = "ethabi"
 version = "9.0.1"
 source = "git+https://github.com/darwinia-network/ethabi.git?branch=with_no_std#a37eab192664dbf2dbdc8d7fd4141142e9a9eeec"
@@ -1290,6 +1293,31 @@ dependencies = [
  "impl-rlp 0.2.1 (git+https://github.com/darwinia-network/parity-common.git)",
  "impl-serde 0.3.0",
  "tiny-keccak 2.0.2",
+]
+
+[[package]]
+name = "ethereum-primitives"
+version = "0.6.1"
+dependencies = [
+ "array-bytes",
+ "ethash",
+ "ethbloom 0.8.1",
+ "ethereum-types 0.8.0",
+ "fixed-hash 0.5.2",
+ "frame-support",
+ "impl-codec 0.4.2 (git+https://github.com/darwinia-network/parity-common.git)",
+ "impl-rlp 0.2.1 (git+https://github.com/darwinia-network/parity-common.git)",
+ "keccak-hash",
+ "keccak-hasher",
+ "parity-scale-codec",
+ "primitive-types 0.6.2",
+ "rlp 0.4.4",
+ "rlp-derive",
+ "serde",
+ "serde_json",
+ "sp-runtime",
+ "sp-std 2.0.0-rc2",
+ "triehash",
 ]
 
 [[package]]
@@ -3252,7 +3280,8 @@ dependencies = [
  "darwinia-balances-rpc",
  "darwinia-claims",
  "darwinia-cli",
- "darwinia-eth-relay",
+ "darwinia-ethereum-linear-relay",
+ "darwinia-ethereum-relay",
  "darwinia-header-mmr-rpc",
  "darwinia-staking",
  "darwinia-staking-rpc",
@@ -3303,15 +3332,18 @@ dependencies = [
  "darwinia-balances-rpc-runtime-api",
  "darwinia-claims",
  "darwinia-elections-phragmen",
- "darwinia-eth-backing",
- "darwinia-eth-offchain",
- "darwinia-eth-relay",
+ "darwinia-ethereum-backing",
+ "darwinia-ethereum-linear-relay",
+ "darwinia-ethereum-offchain",
+ "darwinia-ethereum-relay",
  "darwinia-header-mmr",
  "darwinia-header-mmr-rpc-runtime-api",
+ "darwinia-relayer-game",
  "darwinia-staking",
  "darwinia-staking-rpc-runtime-api",
  "darwinia-support",
  "darwinia-treasury",
+ "ethereum-primitives",
  "frame-benchmarking",
  "frame-executive",
  "frame-support",

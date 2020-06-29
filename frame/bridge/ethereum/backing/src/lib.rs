@@ -42,9 +42,9 @@ use sp_runtime::{
 use sp_std::borrow::ToOwned;
 use sp_std::{convert::TryFrom, marker::PhantomData, vec};
 // --- darwinia ---
-use darwinia_eth_relay::{EthReceiptProof, VerifyEthReceipts};
+use darwinia_ethereum_linear_relay::{EthReceiptProof, VerifyEthReceipts};
 use darwinia_support::{balance::lock::*, traits::OnDepositRedeem};
-use eth_primitives::{EthAddress, H256, U256};
+use ethereum_primitives::{EthAddress, H256, U256};
 use types::*;
 
 pub trait Trait: frame_system::Trait {
@@ -74,7 +74,7 @@ pub enum RedeemFor {
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait> as DarwiniaEthBacking {
+	trait Store for Module<T: Trait> as DarwiniaEthereumBacking {
 		pub RingProofVerified
 			get(fn ring_proof_verfied)
 			: map hasher(blake2_128_concat) EthTransactionIndex => Option<EthReceiptProof>;
@@ -321,14 +321,14 @@ impl<T: Trait> Module<T> {
 				.clone()
 				.to_bytes()
 				.ok_or(<Error<T>>::BytesCF)?;
-			debug::trace!(target: "eth-backing", "[eth-backing] Raw Subkey: {:?}", raw_subkey);
+			debug::trace!(target: "ethereum-backing", "[ethereum-backing] Raw Subkey: {:?}", raw_subkey);
 
 			// let decoded_sub_key =
 			// 	hex::decode(&raw_subkey).map_err(|_| "Decode Address - FAILED")?;
 
 			T::DetermineAccountId::account_id_for(&raw_subkey)?
 		};
-		debug::trace!(target: "eth-backing", "[eth-backing] Darwinia Account: {:?}", darwinia_account);
+		debug::trace!(target: "ethereum-backing", "[ethereum-backing] Darwinia Account: {:?}", darwinia_account);
 
 		Ok((redeemed_amount, darwinia_account, fee))
 	}
@@ -447,14 +447,14 @@ impl<T: Trait> Module<T> {
 				.clone()
 				.to_bytes()
 				.ok_or(<Error<T>>::BytesCF)?;
-			debug::trace!(target: "eth-backing", "[eth-backing] Raw Subkey: {:?}", raw_subkey);
+			debug::trace!(target: "ethereum-backing", "[ethereum-backing] Raw Subkey: {:?}", raw_subkey);
 
 			// let decoded_sub_key =
 			// 	hex::decode(&raw_subkey).map_err(|_| "Decode Address - FAILED")?;
 
 			T::DetermineAccountId::account_id_for(&raw_subkey)?
 		};
-		debug::trace!(target: "eth-backing", "[eth-backing] Darwinia Account: {:?}", darwinia_account);
+		debug::trace!(target: "ethereum-backing", "[ethereum-backing] Darwinia Account: {:?}", darwinia_account);
 
 		Ok((
 			deposit_id,

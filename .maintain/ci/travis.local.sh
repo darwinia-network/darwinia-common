@@ -2,8 +2,8 @@ readonly TEST_CRATES=(
     'balances'
     'staking'
     'treasury'
-    'eth-relay'
-    'eth-backing'
+    'ethereum-linear-relay'
+    'ethereum-backing'
     'header-mmr'
 );
 

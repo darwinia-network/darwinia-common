@@ -22,13 +22,17 @@
 /bin/node-template/node/ @AurevoirXavier
 /bin/node-template/runtime/ @AurevoirXavier
 
+/client/cli/ @AurevoirXavier
+
 /frame/balances/ @AurevoirXavier @HackFisher
 /frame/balances/rpc/ @AurevoirXavier
 /frame/balances/rpc/runtime-api/ @AurevoirXavier
 
-/frame/bridge/eth/relay/ @AurevoirXavier @clearloop @HackFisher
-/frame/bridge/eth/backing/ @AurevoirXavier @HackFisher
-/frame/bridge/eth/offchain/ @AurevoirXavier @yanganto
+/frame/bridge/relayer-game/ @AurevoirXavier @yanganto
+/frame/bridge/ethereum/backing/ @AurevoirXavier @HackFisher
+/frame/bridge/ethereum/linear-relay/ @AurevoirXavier @clearloop @HackFisher
+/frame/bridge/ethereum/offchain/ @AurevoirXavier @yanganto
+/frame/bridge/ethereum/relay/ @AurevoirXavier @HackFisher @yanganto
 
 /frame/claims/ @AurevoirXavier @HackFisher
 
@@ -37,10 +41,13 @@
 /frame/header-mmr/ @HackFisher
 
 /frame/staking/ @AurevoirXavier @HackFisher
+/frame/staking/rpc/ @AurevoirXavier
+/frame/staking/rpc/runtime-api/ @AurevoirXavier
 
 /frame/support/ @AurevoirXavier @HackFisher
 
 /frame/treasury/ @AurevoirXavier @clearloop @HackFisher
 
-/primitives/eth-primitives/ @AurevoirXavier @HackFisher
+/primitives/array-bytes/ @AurevoirXavier
+/primitives/ethereum-primitives/ @AurevoirXavier @HackFisher
 /primitives/merkle-patricia-trie/ @HackFisher

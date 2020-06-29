@@ -1,4 +1,4 @@
-//! Mock file for eth-backing.
+//! Mock file for ethereum-backing.
 
 // --- std ---
 use std::cell::RefCell;
@@ -12,7 +12,7 @@ use sp_runtime::{
 };
 // --- darwinia ---
 use array_bytes::fixed_hex_bytes_unchecked;
-use darwinia_eth_relay::EthNetworkType;
+use darwinia_ethereum_linear_relay::EthNetworkType;
 use darwinia_staking::{EraIndex, Exposure, ExposureOf};
 
 use crate::*;
@@ -39,7 +39,7 @@ pub type Kton = darwinia_balances::Module<Test, KtonInstance>;
 type Session = pallet_session::Module<Test>;
 type System = frame_system::Module<Test>;
 type Timestamp = pallet_timestamp::Module<Test>;
-pub type EthRelay = darwinia_eth_relay::Module<Test>;
+pub type EthRelay = darwinia_ethereum_linear_relay::Module<Test>;
 pub type Staking = darwinia_staking::Module<Test>;
 pub type EthBacking = Module<Test>;
 
@@ -54,7 +54,7 @@ impl_outer_origin! {
 
 impl_outer_dispatch! {
 	pub enum Call for Test where origin: Origin {
-		darwinia_eth_relay::EthRelay,
+		darwinia_ethereum_linear_relay::EthRelay,
 		darwinia_staking::Staking,
 	}
 }
@@ -154,7 +154,7 @@ parameter_types! {
 	pub const EthRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
 	pub const EthNetwork: EthNetworkType = EthNetworkType::Ropsten;
 }
-impl darwinia_eth_relay::Trait for Test {
+impl darwinia_ethereum_linear_relay::Trait for Test {
 	type ModuleId = EthRelayModuleId;
 	type Event = ();
 	type EthNetwork = EthNetwork;

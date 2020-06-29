@@ -1,5 +1,5 @@
 [package]
-name = "eth-primitives"
+name = "ethereum-primitives"
 version = "0.6.1"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "Ethereum primitives for Darwinia Relay"

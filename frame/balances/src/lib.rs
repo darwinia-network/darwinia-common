@@ -143,7 +143,7 @@ mod tests;
 #[cfg(test)]
 mod tests_local;
 
-// --- custom ---
+// --- darwinia ---
 pub use imbalances::{NegativeImbalance, PositiveImbalance};
 
 // --- crates ---
@@ -318,7 +318,7 @@ decl_storage! {
 		pub Locks
 			get(fn locks)
 			: map hasher(blake2_128_concat) T::AccountId
-				=> Vec<BalanceLock<T::Balance, T::BlockNumber>>;
+			=> Vec<BalanceLock<T::Balance, T::BlockNumber>>;
 	}
 	add_extra_genesis {
 		config(balances): Vec<(T::AccountId, T::Balance)>;

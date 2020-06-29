@@ -1,4 +1,4 @@
-//! Mock file for eth-relay.
+//! Mock file for ethereum-linear-relay.
 
 // --- std ---
 use std::{cell::RefCell, fs::File};
@@ -11,7 +11,7 @@ use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill};
 // --- darwinia ---
 use crate::*;
 use array_bytes::hex_bytes_unchecked;
-use eth_primitives::receipt::LogEntry;
+use ethereum_primitives::receipt::LogEntry;
 
 type AccountId = u64;
 type BlockNumber = u64;

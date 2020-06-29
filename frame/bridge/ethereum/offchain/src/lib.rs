@@ -70,12 +70,12 @@ use sp_runtime::{traits::Zero, DispatchError, KeyTypeId};
 use sp_std::prelude::*;
 // --- darwinia ---
 use array_bytes::{base_n_bytes_unchecked, hex_bytes_unchecked};
-use darwinia_eth_relay::DoubleNodeWithMerkleProof;
+use darwinia_ethereum_linear_relay::DoubleNodeWithMerkleProof;
 use darwinia_support::literal_procesor::extract_from_json_str;
-use eth_primitives::header::EthHeader;
+use ethereum_primitives::header::EthHeader;
 
-type EthRelay<T> = darwinia_eth_relay::Module<T>;
-type EthRelayCall<T> = darwinia_eth_relay::Call<T>;
+type EthRelay<T> = darwinia_ethereum_linear_relay::Module<T>;
+type EthRelayCall<T> = darwinia_ethereum_linear_relay::Call<T>;
 
 pub const ETH_OFFCHAIN: KeyTypeId = KeyTypeId(*b"etho");
 
@@ -124,8 +124,8 @@ impl OffchainRequestTrait for OffchainRequest {
 					} else if resp.code == 301 || resp.code == 302 {
 						self.redirect_times += 1;
 						trace!(
-							target: "eth-offchain",
-							"[eth-offchain] Redirect({}), Request Header: {:?}",
+							target: "ethereum-offchain",
+							"[ethereum-offchain] Redirect({}), Request Header: {:?}",
 							self.redirect_times, resp.headers(),
 						);
 
@@ -136,17 +136,17 @@ impl OffchainRequestTrait for OffchainRequest {
 						if let Some(location) = headers.find("location") {
 							self.location = location.as_bytes().to_vec();
 							trace!(
-								target: "eth-offchain",
-								"[eth-offchain] Redirect({}), Location: {:?}",
+								target: "ethereum-offchain",
+								"[ethereum-offchain] Redirect({}), Location: {:?}",
 								self.redirect_times,
 								self.location,
 							);
 						}
 					} else {
-						trace!(target: "eth-offchain", "[eth-offchain] Status Code: {}", resp.code);
+						trace!(target: "ethereum-offchain", "[ethereum-offchain] Status Code: {}", resp.code);
 						trace!(
-							target: "eth-offchain",
-							"[eth-offchain] Response: {}",
+							target: "ethereum-offchain",
+							"[ethereum-offchain] Response: {}",
 							from_utf8(&resp.body().collect::<Vec<_>>()).unwrap_or_default(),
 						);
 
@@ -160,7 +160,9 @@ impl OffchainRequestTrait for OffchainRequest {
 	}
 }
 
-pub trait Trait: CreateSignedTransaction<EthRelayCall<Self>> + darwinia_eth_relay::Trait {
+pub trait Trait:
+	CreateSignedTransaction<EthRelayCall<Self>> + darwinia_ethereum_linear_relay::Trait
+{
 	type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
 
 	type FetchInterval: Get<Self::BlockNumber>;
@@ -200,10 +202,10 @@ decl_module! {
 				let signer = <Signer<T, T::AuthorityId>>::all_accounts();
 				if signer.can_sign() {
 					if let Err(e) = Self::relay_header(&signer){
-						trace!(target: "eth-offchain", "[eth-offchain] Error: {:?}", e);
+						trace!(target: "ethereum-offchain", "[ethereum-offchain] Error: {:?}", e);
 					}
 				} else {
-					trace!(target: "eth-offchain", "[eth-offchain] use `author_insertKey` rpc to inscert key to enable worker");
+					trace!(target: "ethereum-offchain", "[ethereum-offchain] use `author_insertKey` rpc to inscert key to enable worker");
 				}
 			}
 		}
@@ -221,8 +223,8 @@ impl<T: Trait> Module<T> {
 		let (header, proof_list) = match header_without_option {
 			Ok(r) => r,
 			Err(e) => {
-				trace!(target: "eth-offchain", "[eth-offchain] request without option fail: {:?}", e);
-				trace!(target: "eth-offchain", "[eth-offchain] request fail back wth option");
+				trace!(target: "ethereum-offchain", "[ethereum-offchain] request without option fail: {:?}", e);
+				trace!(target: "ethereum-offchain", "[ethereum-offchain] request fail back wth option");
 				Self::fetch_header(ETH_RESOURCE.to_vec(), target_number, true)?
 			}
 		};
@@ -239,7 +241,7 @@ impl<T: Trait> Module<T> {
 			.number
 			.checked_add(1)
 			.ok_or(<Error<T>>::BlockNumberOF)?;
-		trace!(target: "eth-offchain", "[eth-offchain] Target Number: {}", target_number);
+		trace!(target: "ethereum-offchain", "[ethereum-offchain] Target Number: {}", target_number);
 
 		Ok(target_number)
 	}
@@ -277,7 +279,7 @@ impl<T: Trait> Module<T> {
 		} else {
 			Self::parse_double_node_with_proof_list_from_scale_str(proof_part)?
 		};
-		trace!(target: "eth-offchain", "[eth-offchain] Eth Header: {:?}", header);
+		trace!(target: "ethereum-offchain", "[ethereum-offchain] Eth Header: {:?}", header);
 
 		Ok((header, proof_list))
 	}
@@ -289,20 +291,20 @@ impl<T: Trait> Module<T> {
 	) -> Result<Vec<u8>, DispatchError> {
 		if let Some(resp_body) = maybe_resp_body {
 			trace!(
-				target: "eth-offchain",
-				"[eth-offchain] Response: {}",
+				target: "ethereum-offchain",
+				"[ethereum-offchain] Response: {}",
 				from_utf8(&resp_body).unwrap_or_default(),
 			);
 			if resp_body[0] != 123u8
 				|| (with_option && resp_body.len() < 1362)
 				|| (!with_option && resp_body.len() < 1353)
 			{
-				trace!(target: "eth-offchain", "[eth-offchain] Malresponse");
+				trace!(target: "ethereum-offchain", "[ethereum-offchain] Malresponse");
 				Err(<Error<T>>::APIRespUnexp)?;
 			}
 			Ok(resp_body)
 		} else {
-			trace!(target: "eth-offchain", "[eth-offchain] Lack Response");
+			trace!(target: "ethereum-offchain", "[ethereum-offchain] Lack Response");
 			Err(<Error<T>>::APIRespUnexp)?
 		}
 	}
@@ -313,7 +315,7 @@ impl<T: Trait> Module<T> {
 		header: EthHeader,
 		proof_list: Vec<DoubleNodeWithMerkleProof>,
 	) {
-		// TODO: test support call eth-relay
+		// TODO: test support call ethereum-linear-relay
 		// https://github.com/darwinia-network/darwinia-common/issues/137
 		let results = {
 			#[cfg(test)]
@@ -334,8 +336,8 @@ impl<T: Trait> Module<T> {
 
 		for (_, result) in &results {
 			trace!(
-				target: "eth-offchain",
-				"[eth-offchain] Relay: {:?}",
+				target: "ethereum-offchain",
+				"[ethereum-offchain] Relay: {:?}",
 				result,
 			);
 		}

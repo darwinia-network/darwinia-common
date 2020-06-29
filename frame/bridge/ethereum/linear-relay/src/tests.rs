@@ -1,4 +1,4 @@
-//! Tests for eth-relay.
+//! Tests for ethereum-linear-relay.
 
 // --- substrate ---
 use frame_support::{
@@ -8,7 +8,7 @@ use frame_support::{
 use frame_system::RawOrigin;
 // --- darwinia ---
 use crate::{mock::*, *};
-use eth_primitives::receipt::TransactionOutcome;
+use ethereum_primitives::receipt::TransactionOutcome;
 
 // --- ropsten test ---
 
