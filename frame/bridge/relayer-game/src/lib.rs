@@ -405,20 +405,17 @@ decl_module! {
 								&mut proposals
 							);
 						} else {
-							let relay_target_block_number = last_round_proposals[0]
+							let relay_target = last_round_proposals[0]
 								.bonded_chain[1]
 								.header_brief[0]
 								.as_block_number();
 							let last_round_proposals_chain_len =
 								last_round_proposals[0].bonded_chain.len();
 							let full_chain_len = {
-								let last_confirmed_block_number = proposals[0]
-									.bonded_chain[0]
-									.header_brief[0]
-									.as_block_number();
+								let samples = Self::samples_of_game(game_id);
+								let last_confirmed = samples[0];
 
-								(relay_target_block_number - last_confirmed_block_number)
-									.saturated_into() as u64
+								(relay_target - last_confirmed).saturated_into() as u64
 							};
 
 							if last_round_proposals_chain_len as u64 == full_chain_len {
@@ -429,10 +426,7 @@ decl_module! {
 									proposals
 								);
 							} else {
-								update_samples(
-									relay_target_block_number,
-									last_round_proposals_chain_len as _
-								);
+								update_samples(relay_target, last_round_proposals_chain_len as _);
 							}
 						}
 					}
@@ -458,7 +452,7 @@ decl_module! {
 			let other_proposals = Self::proposals_of_game(game_id);
 			let other_proposals_len = other_proposals.len() as _;
 			let extend_bonded_chain = |chain: &[_], extend_at| {
-				let mut total_bonds = <RingBalance<T, I>>::zero();
+				let mut bonds = <RingBalance<T, I>>::zero();
 				let extend_chain = chain
 					.iter()
 					.cloned()
@@ -469,15 +463,16 @@ decl_module! {
 							other_proposals_len
 						);
 
-						total_bonds = total_bonds.saturating_add(bond);
+						bonds = bonds.saturating_add(bond);
 
 						BondedTcHeader { header_brief, bond }
 					})
 					.collect::<Vec<_>>();
 
-				(total_bonds, extend_chain)
+				(bonds, extend_chain)
 			};
 
+			// TODO: accept a chain (length > 1) but without extend
 			match (other_proposals_len, raw_header_thing_chain.len()) {
 				// New `Game`
 				(0, raw_header_thing_chain_len) => {
@@ -511,7 +506,7 @@ decl_module! {
 					// Each `Proposal`'s chain's len at least is 2; qed
 					<Samples<T, I>>::insert(game_id, vec![last_confirmed, game_id]);
 				}
-				// // First round
+				// First round
 				(_, 1) => {
 					if other_proposals.iter().any(|proposal| proposal.bonded_chain.len() != 1) {
 						Err(<Error<T, I>>::RoundMis)?;
