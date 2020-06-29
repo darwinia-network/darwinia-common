@@ -126,6 +126,12 @@ decl_storage! {
 				TcHeaderHash<T, I>
 			>>;
 
+		/// The last confirmed block number record of a game when it start
+		pub LastConfirmed
+			get(fn last_confirmed_of_game)
+			: map hasher(blake2_128_concat) GameId<TcBlockNumber<T, I>>
+			=> TcBlockNumber<T, I>;
+
 		/// The allow samples for each game
 		pub Samples
 			get(fn samples_of_game)
@@ -138,6 +144,7 @@ decl_storage! {
 			: map hasher(blake2_128_concat) BlockNumber<T>
 			=> Vec<(GameId<TcBlockNumber<T, I>>, Round)>;
 
+		/// Use for updating locks
 		pub Bonds
 			get(fn bond_of_relayer)
 			: map hasher(blake2_128_concat) AccountId<T>
@@ -411,12 +418,9 @@ decl_module! {
 								.as_block_number();
 							let last_round_proposals_chain_len =
 								last_round_proposals[0].bonded_chain.len();
-							let full_chain_len = {
-								let samples = Self::samples_of_game(game_id);
-								let last_confirmed = samples[0];
-
-								(relay_target - last_confirmed).saturated_into() as u64
-							};
+							let full_chain_len =
+								(relay_target - Self::last_confirmed_of_game(game_id))
+									.saturated_into() as u64;
 
 							if last_round_proposals_chain_len as u64 == full_chain_len {
 								on_chain_arbitrate(
@@ -493,6 +497,7 @@ decl_module! {
 
 					Self::update_bonds(&relayer, |old_bonds| old_bonds.saturating_add(bonds));
 
+					<LastConfirmed<T, I>>::insert(game_id, last_confirmed);
 					<Proposals<T, I>>::append(game_id, Proposal {
 						relayer,
 						bonded_chain,
@@ -503,8 +508,7 @@ decl_module! {
 							+ T::RelayerGameAdjustor::challenge_time(0),
 						(game_id, 0)
 					);
-					// Each `Proposal`'s chain's len at least is 2; qed
-					<Samples<T, I>>::insert(game_id, vec![last_confirmed, game_id]);
+					<Samples<T, I>>::append(game_id, game_id);
 				}
 				// First round
 				(_, 1) => {
