@@ -9,7 +9,7 @@ use crate::{mock::*, *};
 use array_bytes::{fixed_hex_bytes_unchecked, hex_bytes_unchecked};
 use darwinia_staking::{RewardDestination, StakingBalance, StakingLedger, TimeDepositItem};
 use darwinia_support::balance::lock::StakingLock;
-use eth_primitives::header::EthHeader;
+use ethereum_primitives::header::EthHeader;
 
 #[test]
 fn genesis_config_works() {

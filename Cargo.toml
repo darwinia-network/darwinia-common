@@ -7,10 +7,10 @@ members = [
 	"frame/balances/rpc",
 	"frame/balances/rpc/runtime-api",
 	"frame/claims",
-	"frame/bridge/eth/backing",
-	"frame/bridge/eth/linear-relay",
-	"frame/bridge/eth/relay",
-	"frame/bridge/eth/offchain",
+	"frame/bridge/ethereum/backing",
+	"frame/bridge/ethereum/linear-relay",
+	"frame/bridge/ethereum/relay",
+	"frame/bridge/ethereum/offchain",
 	"frame/bridge/relayer-game",
 	"frame/elections-phragmen",
 	"frame/header-mmr",
@@ -22,7 +22,7 @@ members = [
 	"frame/support",
 	"frame/treasury",
 	"primitives/array-bytes",
-	"primitives/eth-primitives",
+	"primitives/ethereum-primitives",
 	"primitives/merkle-patricia-trie",
 ]
 

@@ -70,7 +70,7 @@ use sp_std::{cell::RefCell, prelude::*};
 // --- darwinia ---
 use array_bytes::{array_unchecked, fixed_hex_bytes_unchecked};
 use darwinia_support::balance::lock::LockableCurrency;
-use eth_primitives::{
+use ethereum_primitives::{
 	header::EthHeader,
 	pow::{EthashPartial, EthashSeal},
 	receipt::Receipt,

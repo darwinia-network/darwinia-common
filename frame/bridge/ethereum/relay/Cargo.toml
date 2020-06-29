@@ -1,5 +1,5 @@
 [package]
-name = "darwinia-eth-relay"
+name = "darwinia-ethereum-relay"
 version = "0.6.1"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "FRAME pallet to relay Ethereum headers"
@@ -14,7 +14,7 @@ codec = { package = "parity-scale-codec", version = "1.3.0", default-features = 
 serde = { version = "1.0.106", optional = true }
 # darwinia
 darwinia-support = { default-features = false, path = "../../../support" }
-eth-primitives = { default-features = false, path = "../../../../primitives/eth-primitives" }
+ethereum-primitives = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
 # github
 ethereum-types = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
@@ -31,7 +31,7 @@ std = [
 	"serde",
 	# darwinia
 	"darwinia-support/std",
-	"eth-primitives/std",
+	"ethereum-primitives/std",
 	# github
 	"ethereum-types/std",
 	# substrate

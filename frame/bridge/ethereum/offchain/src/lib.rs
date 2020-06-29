@@ -70,12 +70,12 @@ use sp_runtime::{traits::Zero, DispatchError, KeyTypeId};
 use sp_std::prelude::*;
 // --- darwinia ---
 use array_bytes::{base_n_bytes_unchecked, hex_bytes_unchecked};
-use darwinia_eth_linear_relay::DoubleNodeWithMerkleProof;
+use darwinia_ethereum_linear_relay::DoubleNodeWithMerkleProof;
 use darwinia_support::literal_procesor::extract_from_json_str;
-use eth_primitives::header::EthHeader;
+use ethereum_primitives::header::EthHeader;
 
-type EthRelay<T> = darwinia_eth_linear_relay::Module<T>;
-type EthRelayCall<T> = darwinia_eth_linear_relay::Call<T>;
+type EthRelay<T> = darwinia_ethereum_linear_relay::Module<T>;
+type EthRelayCall<T> = darwinia_ethereum_linear_relay::Call<T>;
 
 pub const ETH_OFFCHAIN: KeyTypeId = KeyTypeId(*b"etho");
 
@@ -161,7 +161,7 @@ impl OffchainRequestTrait for OffchainRequest {
 }
 
 pub trait Trait:
-	CreateSignedTransaction<EthRelayCall<Self>> + darwinia_eth_linear_relay::Trait
+	CreateSignedTransaction<EthRelayCall<Self>> + darwinia_ethereum_linear_relay::Trait
 {
 	type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
 

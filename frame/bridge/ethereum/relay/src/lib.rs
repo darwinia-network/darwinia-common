@@ -13,7 +13,7 @@ use sp_runtime::{DispatchError, DispatchResult};
 use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_support::relay::*;
-use eth_primitives::{header::EthHeader, EthBlockNumber, H256};
+use ethereum_primitives::{header::EthHeader, EthBlockNumber, H256};
 
 pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	type Event: From<Event<Self, I>> + Into<<Self as frame_system::Trait>::Event>;

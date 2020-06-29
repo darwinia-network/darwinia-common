@@ -9,12 +9,12 @@ use sp_runtime::{
 };
 // --- darwinia ---
 use crate::*;
-use darwinia_eth_linear_relay::EthNetworkType;
+use darwinia_ethereum_linear_relay::EthNetworkType;
 
 impl_outer_dispatch! {
 	pub enum Call for Test where origin: Origin {
-		darwinia_eth_linear_relay::EthRelay,
-		darwinia_eth_offchain::EthOffchain,
+		darwinia_ethereum_linear_relay::EthRelay,
+		darwinia_ethereum_offchain::EthOffchain,
 	}
 }
 
@@ -47,7 +47,7 @@ pub type _KtonError = darwinia_balances::Error<Test, KtonInstance>;
 pub type _Kton = darwinia_balances::Module<Test, KtonInstance>;
 
 pub type System = frame_system::Module<Test>;
-pub type EthRelay = darwinia_eth_linear_relay::Module<Test>;
+pub type EthRelay = darwinia_ethereum_linear_relay::Module<Test>;
 
 pub type EthOffchain = Module<Test>;
 pub type _OffchainError = Error<Test>;
@@ -107,7 +107,7 @@ parameter_types! {
 	pub const EthRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
 	pub const EthNetwork: EthNetworkType = EthNetworkType::Ropsten;
 }
-impl darwinia_eth_linear_relay::Trait for Test {
+impl darwinia_ethereum_linear_relay::Trait for Test {
 	type ModuleId = EthRelayModuleId;
 	type Event = ();
 	type EthNetwork = EthNetwork;
@@ -173,7 +173,7 @@ impl ExtBuilder {
 			.build_storage::<Test>()
 			.unwrap();
 
-		darwinia_eth_linear_relay::GenesisConfig::<Test> {
+		darwinia_ethereum_linear_relay::GenesisConfig::<Test> {
 			genesis_header: self.genesis_header,
 			..Default::default()
 		}

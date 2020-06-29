@@ -1,9 +1,9 @@
-# darwinia-eth-linear-relay
+# darwinia-ethereum-linear-relay
 
 ## Weights
 
 | Call                                      | Origin | Darwinia |
-|-------------------------------------------|--------|----------|
+| ----------------------------------------- | ------ | -------- |
 | fn relay\_header(...)                     | S      | 100,000  |
 | fn check\_receipt(...)                    | S      | 100,000  |
 | fn add\_authority(...)                    | R      | 50,000   |

@@ -284,7 +284,7 @@ pub mod primitives {
 		frame_system::CheckWeight<Runtime>,
 		pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 		pallet_grandpa::ValidateEquivocationReport<Runtime>,
-		darwinia_eth_linear_relay::CheckEthRelayHeaderHash<Runtime>,
+		darwinia_ethereum_linear_relay::CheckEthRelayHeaderHash<Runtime>,
 	);
 
 	/// Unchecked extrinsic type as expected by this runtime.
@@ -352,8 +352,8 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia ---
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
-use darwinia_eth_linear_relay::EthNetworkType;
-use darwinia_eth_offchain::crypto::AuthorityId as EthOffchainId;
+use darwinia_ethereum_linear_relay::EthNetworkType;
+use darwinia_ethereum_offchain::crypto::AuthorityId as EthOffchainId;
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
 use impls::*;
@@ -733,10 +733,10 @@ parameter_types! {
 	pub const EthBackingModuleId: ModuleId = ModuleId(*b"da/backi");
 	pub const SubKeyPrefix: u8 = 42;
 }
-impl darwinia_eth_backing::Trait for Runtime {
+impl darwinia_ethereum_backing::Trait for Runtime {
 	type ModuleId = EthBackingModuleId;
 	type Event = Event;
-	type DetermineAccountId = darwinia_eth_backing::AccountIdDeterminator<Runtime>;
+	type DetermineAccountId = darwinia_ethereum_backing::AccountIdDeterminator<Runtime>;
 	type EthRelay = EthLinearRelay;
 	type OnDepositRedeem = Staking;
 	type RingCurrency = Ring;
@@ -748,7 +748,7 @@ parameter_types! {
 	pub const EthRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
 	pub const EthNetwork: EthNetworkType = EthNetworkType::Mainnet;
 }
-impl darwinia_eth_linear_relay::Trait for Runtime {
+impl darwinia_ethereum_linear_relay::Trait for Runtime {
 	type ModuleId = EthRelayModuleId;
 	type Event = Event;
 	type EthNetwork = EthNetwork;
@@ -756,14 +756,14 @@ impl darwinia_eth_linear_relay::Trait for Runtime {
 	type Currency = Ring;
 }
 
-impl darwinia_eth_relay::Trait for Runtime {
+impl darwinia_ethereum_relay::Trait for Runtime {
 	type Event = Event;
 }
 
 parameter_types! {
 	pub const FetchInterval: BlockNumber = 3;
 }
-impl darwinia_eth_offchain::Trait for Runtime {
+impl darwinia_ethereum_offchain::Trait for Runtime {
 	type AuthorityId = EthOffchainId;
 	type FetchInterval = FetchInterval;
 }
@@ -826,10 +826,10 @@ construct_runtime!(
 		// Claims. Usable initially.
 		Claims: darwinia_claims::{Module, Call, Storage, Config, Event<T>, ValidateUnsigned},
 
-		EthBacking: darwinia_eth_backing::{Module, Call, Storage, Config<T>, Event<T>},
-		EthLinearRelay: darwinia_eth_linear_relay::{Module, Call, Storage, Config<T>, Event<T>},
-		EthOffchain: darwinia_eth_offchain::{Module, Call},
-		EthRelay: darwinia_eth_relay::{Module, Call, Storage, Event<T>},
+		EthBacking: darwinia_ethereum_backing::{Module, Call, Storage, Config<T>, Event<T>},
+		EthLinearRelay: darwinia_ethereum_linear_relay::{Module, Call, Storage, Config<T>, Event<T>},
+		EthOffchain: darwinia_ethereum_offchain::{Module, Call},
+		EthRelay: darwinia_ethereum_relay::{Module, Call, Storage, Event<T>},
 
 		HeaderMMR: darwinia_header_mmr::{Module, Call, Storage},
 

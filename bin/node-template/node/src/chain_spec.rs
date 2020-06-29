@@ -11,7 +11,7 @@ use sp_runtime::{
 };
 // --- darwinia ---
 use darwinia_claims::ClaimsList;
-use darwinia_eth_linear_relay::DagsMerkleRootsLoader;
+use darwinia_ethereum_linear_relay::DagsMerkleRootsLoader;
 use node_template_runtime::{BalancesConfig as RingConfig, *};
 
 // Note this is the URL for the telemetry server
@@ -223,8 +223,8 @@ fn testnet_genesis(
 				"CLAIMS_LIST_PATH",
 			),
 		}),
-		darwinia_eth_backing: Some(Default::default()),
-		darwinia_eth_linear_relay: Some(EthLinearRelayConfig {
+		darwinia_ethereum_backing: Some(Default::default()),
+		darwinia_ethereum_linear_relay: Some(EthLinearRelayConfig {
 			genesis_header: Some((
 				0x400000000,
 				vec![
