@@ -28,6 +28,7 @@
 /frame/balances/rpc/ @AurevoirXavier
 /frame/balances/rpc/runtime-api/ @AurevoirXavier
 
+/frame/bridge/relayer-game/ @AurevoirXavier @yanganto
 /frame/bridge/ethereum/backing/ @AurevoirXavier @HackFisher
 /frame/bridge/ethereum/linear-relay/ @AurevoirXavier @clearloop @HackFisher
 /frame/bridge/ethereum/offchain/ @AurevoirXavier @yanganto
