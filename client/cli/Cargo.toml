@@ -10,7 +10,7 @@ repository = "https://github.com/darwinia-network/darwinia/"
 
 [dependencies]
 # crates
-serde = { version = "1.0.106", features = ["derive"] }
+serde = { version = "1.0.114", features = ["derive"] }
 toml = { version = "0.5.6" }
 # substrate
 sc-cli = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
