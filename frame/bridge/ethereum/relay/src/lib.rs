@@ -23,7 +23,9 @@ use ethereum_primitives::{
 // TODO: MMR type
 type EthereumMMR = ();
 
-pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
+pub trait Trait<I: Instance = DefaultInstance>:
+	frame_system::Trait + darwinia_ethereum_linear_relay::Trait
+{
 	type Event: From<Event<Self, I>> + Into<<Self as frame_system::Trait>::Event>;
 }
 
@@ -40,6 +42,7 @@ decl_event! {
 decl_error! {
 	pub enum Error for Module<T: Trait<I>, I: Instance> {
 		TargetHeaderAE,
+		HeaderInvalid,
 		NotComplyWithConfirmebBlocks
 	}
 }
@@ -99,29 +102,26 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		}
 
 		let eth_partial = EthashPartial::production();
-		if let Err(_) = eth_partial.verify_block_basic(header) {
+
+		if eth_partial.verify_block_basic(header).is_err() {
 			return false;
 		}
 
-		if let Err(_) = eth_partial.verify_block_basic(header) {
+		if eth_partial.verify_block_basic(header).is_err() {
 			return false;
 		}
 
-		if let Ok(seal) = EthashSeal::parse_seal(header.seal()) {
-			return true;
-		// if let Ok((calculateed_mix_hash, _result)) = hashimoto_merkle(
-		// 	&header.bare_hash(),
-		// 	&seal.nonce,
-		// 	header.number,
-		// 	ethash_proof,
-		// ) {
-		// 	return seal.mix_hash == calculateed_mix_hash;
-		// } else {
-		// 	return false;
-		// }
-		} else {
+		let merkle_root = <darwinia_ethereum_linear_relay::Module<T>>::dag_merkle_root(
+			(header.number as usize / 30000) as u64,
+		);
+		if eth_partial
+			.verify_seal_with_proof(&header, &ethash_proof, &merkle_root)
+			.is_err()
+		{
 			return false;
-		}
+		};
+
+		return true;
 	}
 }
 
@@ -157,6 +157,9 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 		if ConfirmedHeaders::<I>::contains_key(header.number) {
 			return Err(<Error<T, I>>::TargetHeaderAE)?;
 		}
+		if !Self::verify_block_seal(&header, &ethash_proof) {
+			return Err(<Error<T, I>>::HeaderInvalid)?;
+		};
 
 		Ok(vec![TcHeaderThing::BlockNumber(header.number)])
 	}
@@ -175,6 +178,10 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 				ethash_proof,
 				mmr: _mmr,
 			} = raw_header_thing.into();
+
+			if !Self::verify_block_seal(&header, &ethash_proof) {
+				return Err(<Error<T, I>>::HeaderInvalid)?;
+			};
 
 			if !Self::verify_block_with_confrim_blocks(&header) {
 				return Err(<Error<T, I>>::NotComplyWithConfirmebBlocks)?;
@@ -195,8 +202,29 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 		unimplemented!()
 	}
 
-	fn store_header(header: RawHeaderThing) -> DispatchResult {
-		unimplemented!()
+	fn store_header(raw_header_thing: RawHeaderThing) -> DispatchResult {
+		let last_comfirmed_block_number = if let Some(i) = LastConfirmedHeaderInfo::<I>::get() {
+			i.0
+		} else {
+			0
+		};
+		let EthHeaderThing {
+			header,
+			ethash_proof: _,
+			mmr,
+		} = raw_header_thing.into();
+
+		if header.number > last_comfirmed_block_number {
+			LastConfirmedHeaderInfo::<I>::set(Some((
+				header.number,
+				header.hash.unwrap_or_default(),
+				mmr,
+			)))
+		};
+
+		ConfirmedHeaders::<I>::insert(header.number, header);
+
+		Ok(())
 	}
 }
 
