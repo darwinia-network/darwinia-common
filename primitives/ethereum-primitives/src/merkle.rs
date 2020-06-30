@@ -1,7 +1,7 @@
 use array_bytes::{array_unchecked, fixed_hex_bytes_unchecked};
 use codec::{Decode, Encode};
 pub use ethereum_types::{H128, H512};
-use sp_core::hashing::sha2_256;
+use sp_io::hashing::sha2_256;
 use sp_runtime::RuntimeDebug;
 use sp_std::vec::Vec;
 
