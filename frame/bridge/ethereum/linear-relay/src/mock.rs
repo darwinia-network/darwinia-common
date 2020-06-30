@@ -7,11 +7,13 @@ use serde::Deserialize;
 // --- substrate ---
 use frame_support::{impl_outer_dispatch, impl_outer_origin, parameter_types, weights::Weight};
 use sp_core::H256;
+use sp_io;
 use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill};
 // --- darwinia ---
 use crate::*;
-use array_bytes::hex_bytes_unchecked;
+use array_bytes::{fixed_hex_bytes_unchecked, hex_bytes_unchecked};
 use ethereum_primitives::receipt::LogEntry;
+use ethereum_types::H512;
 
 type AccountId = u64;
 type BlockNumber = u64;
