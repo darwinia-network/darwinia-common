@@ -70,9 +70,8 @@ use sp_runtime::{traits::Zero, DispatchError, KeyTypeId};
 use sp_std::prelude::*;
 // --- darwinia ---
 use array_bytes::{base_n_bytes_unchecked, hex_bytes_unchecked};
-use darwinia_ethereum_linear_relay::DoubleNodeWithMerkleProof;
 use darwinia_support::literal_procesor::extract_from_json_str;
-use ethereum_primitives::header::EthHeader;
+use ethereum_primitives::{header::EthHeader, merkle::DoubleNodeWithMerkleProof};
 
 type EthRelay<T> = darwinia_ethereum_linear_relay::Module<T>;
 type EthRelayCall<T> = darwinia_ethereum_linear_relay::Call<T>;

@@ -11,6 +11,7 @@ repository = "https://github.com/darwinia-network/darwinia/"
 [dependencies]
 # crates
 codec = { package = "parity-scale-codec", version = "1.3.0", default-features = false, features = ["derive"] }
+ethash = { git = "https://github.com/darwinia-network/rust-ethash" }
 serde = { version = "1.0.106", optional = true, features = ["derive"] }
 # darwinia
 array-bytes = { default-features = false, path = "../array-bytes" }
@@ -25,12 +26,12 @@ primitive-types = { default-features = false, features = ["codec", "rlp"], git =
 rlp = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 rlp-derive = { git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
+sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
 sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
 sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
 
 [dev-dependencies]
 # crates
-ethash = { git = "https://github.com/darwinia-network/rust-ethash" }
 keccak-hasher = { version = "0.15.2" }
 serde_json = { version = "1.0.51" }
 # github

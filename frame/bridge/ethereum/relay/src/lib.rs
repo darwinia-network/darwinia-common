@@ -10,10 +10,18 @@ use ethereum_types::{H128, H512};
 use frame_support::{decl_error, decl_event, decl_module, decl_storage};
 use frame_system as system;
 use sp_runtime::{DispatchError, DispatchResult};
-use sp_std::prelude::*;
+use sp_std::{convert::From, prelude::*};
 // --- darwinia ---
 use darwinia_support::relay::*;
-use ethereum_primitives::{header::EthHeader, EthBlockNumber, H256};
+use ethereum_primitives::{
+	header::EthHeader,
+	merkle::DoubleNodeWithMerkleProof,
+	pow::{EthashPartial, EthashSeal},
+	EthBlockNumber, H256,
+};
+
+// TODO: MMR type
+type EthereumMMR = ();
 
 pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	type Event: From<Event<Self, I>> + Into<<Self as frame_system::Trait>::Event>;
@@ -31,11 +39,20 @@ decl_event! {
 
 decl_error! {
 	pub enum Error for Module<T: Trait<I>, I: Instance> {
+		TargetHeaderAE,
+		NotComplyWithConfirmebBlocks
 	}
 }
 
 decl_storage! {
 	trait Store for Module<T: Trait<I>, I: Instance = DefaultInstance> as DarwiniaEthereumRelay {
+		/// Ethereum last confrimed header info including ethereum block number, hash, and mmr
+		LastConfirmedHeaderInfo get(fn last_confirm_header_info): Option<(EthBlockNumber, H256, EthereumMMR)>;
+
+		/// The Ethereum headers confrimed by relayer game
+		/// The actural storage needs to be defined
+		ConfirmedHeaders get(fn confirmed_headers): map hasher(identity) EthBlockNumber => EthHeader;
+
 	}
 }
 
@@ -50,18 +67,79 @@ decl_module! {
 	}
 }
 
+impl<T: Trait<I>, I: Instance> Module<T, I> {
+	/// validate block with the hash, difficulty of confirmed headers
+	fn verify_block_with_confrim_blocks(header: &EthHeader) -> bool {
+		let eth_partial = EthashPartial::production();
+		if ConfirmedHeaders::<I>::contains_key(header.number - 1) {
+			let previous_header = ConfirmedHeaders::<I>::get(header.number - 1);
+			if header.parent_hash != previous_header.hash.unwrap_or_default()
+				|| *header.difficulty()
+					!= eth_partial.calculate_difficulty(header, &previous_header)
+			{
+				return false;
+			}
+		}
+
+		if ConfirmedHeaders::<I>::contains_key(header.number + 1) {
+			let subsequent_header = ConfirmedHeaders::<I>::get(header.number + 1);
+			if header.hash.unwrap_or_default() != subsequent_header.parent_hash
+				|| *subsequent_header.difficulty()
+					!= eth_partial.calculate_difficulty(&subsequent_header, header)
+			{
+				return false;
+			}
+		}
+		true
+	}
+
+	fn verify_block_seal(header: &EthHeader, ethash_proof: &[DoubleNodeWithMerkleProof]) -> bool {
+		if header.hash() != header.re_compute_hash() {
+			return false;
+		}
+
+		let eth_partial = EthashPartial::production();
+		if let Err(_) = eth_partial.verify_block_basic(header) {
+			return false;
+		}
+
+		if let Err(_) = eth_partial.verify_block_basic(header) {
+			return false;
+		}
+
+		if let Ok(seal) = EthashSeal::parse_seal(header.seal()) {
+			return true;
+		// if let Ok((calculateed_mix_hash, _result)) = hashimoto_merkle(
+		// 	&header.bare_hash(),
+		// 	&seal.nonce,
+		// 	header.number,
+		// 	ethash_proof,
+		// ) {
+		// 	return seal.mix_hash == calculateed_mix_hash;
+		// } else {
+		// 	return false;
+		// }
+		} else {
+			return false;
+		}
+	}
+}
+
 impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 	type TcBlockNumber = EthBlockNumber;
 	type TcHeaderHash = H256;
-	// TODO: MMR type
-	type TcHeaderMMR = ();
+	type TcHeaderMMR = EthereumMMR;
 
 	fn last_confirmed() -> Self::TcBlockNumber {
-		unimplemented!()
+		return if let Some(i) = LastConfirmedHeaderInfo::<I>::get() {
+			i.0
+		} else {
+			0u64.into()
+		};
 	}
 
 	fn header_existed(block_number: Self::TcBlockNumber) -> bool {
-		unimplemented!()
+		ConfirmedHeaders::<I>::contains_key(block_number)
 	}
 
 	fn verify_raw_header_thing(
@@ -70,23 +148,39 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 		TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
 		DispatchError,
 	> {
-		unimplemented!()
+		let EthHeaderThing {
+			header,
+			ethash_proof,
+			mmr: _mmr,
+		} = raw_header_thing.into();
+
+		if ConfirmedHeaders::<I>::contains_key(header.number) {
+			return Err(<Error<T, I>>::TargetHeaderAE)?;
+		}
+
+		Ok(vec![TcHeaderThing::BlockNumber(header.number)])
 	}
 
-	/// Eth additional `Other` fileds in `Vec<TcHeaderBrief>`:
-	/// 	[
-	///			...,
-	/// 		Difficulty (shoule be in addition field `Other`, bytes style),
-	/// 		Total Difficulty (shoule be in addition field `Other`, bytes style),
-	/// 	]
+	/// verify ethereum headers with seal, hash, and difficulty
 	fn verify_raw_header_thing_chain(
 		raw_header_thing_chain: Vec<RawHeaderThing>,
 	) -> Result<
 		Vec<TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>>,
 		DispatchError,
 	> {
-		// TODO: also verify continuous here for eth
-		unimplemented!()
+		let output = vec![];
+		for raw_header_thing in raw_header_thing_chain {
+			let EthHeaderThing {
+				header,
+				ethash_proof,
+				mmr: _mmr,
+			} = raw_header_thing.into();
+
+			if !Self::verify_block_with_confrim_blocks(&header) {
+				return Err(<Error<T, I>>::NotComplyWithConfirmebBlocks)?;
+			}
+		}
+		Ok(output)
 	}
 
 	fn on_chain_arbitrate(
@@ -106,15 +200,15 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 	}
 }
 
-#[derive(Encode, Decode)]
+#[derive(Encode, Decode, Default)]
 pub struct EthHeaderThing {
 	header: EthHeader,
 	ethash_proof: Vec<DoubleNodeWithMerkleProof>,
-	// mmr: ?,
+	mmr: EthereumMMR,
 }
 
-#[derive(Encode, Decode)]
-pub struct DoubleNodeWithMerkleProof {
-	dag_nodes: [H512; 2],
-	proof: Vec<H128>,
+impl From<RawHeaderThing> for EthHeaderThing {
+	fn from(raw_header_thing: RawHeaderThing) -> Self {
+		EthHeaderThing::decode(&mut &*raw_header_thing).unwrap_or_default()
+	}
 }

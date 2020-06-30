@@ -27,6 +27,8 @@ pub enum BlockError {
 	InvalidProofOfWork(OutOfBounds<U256>),
 	DifficultyOutOfBounds(OutOfBounds<U256>),
 	InvalidSealArity(Mismatch<usize>),
+	SealInvalid,
+	MerkleProofMismatch(&'static str),
 	Rlp(&'static str),
 }
 
@@ -38,6 +40,8 @@ impl From<BlockError> for &str {
 			InvalidProofOfWork(_) => "Proof Of Work - INVALID",
 			DifficultyOutOfBounds(_) => "Difficulty - OUT OF BOUNDS",
 			InvalidSealArity(_) => "Seal Arity - INVALID",
+			SealInvalid => "Seal - INVALID",
+			MerkleProofMismatch(msg) => msg,
 			Rlp(msg) => msg,
 		}
 	}
