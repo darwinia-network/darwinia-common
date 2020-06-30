@@ -100,6 +100,12 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 	) -> DispatchResult {
 		unimplemented!()
 	}
+
+	fn store_header_brief(
+		header_brief: TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
+	) -> DispatchResult {
+		unimplemented!()
+	}
 }
 
 #[derive(Encode, Decode)]

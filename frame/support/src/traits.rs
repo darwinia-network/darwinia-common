@@ -199,6 +199,8 @@ pub trait Relayable {
 		>,
 	) -> DispatchResult;
 
-	// TODO:
-	// fn store_header() {}
+	/// Store the brief of header confirmed in relayer game
+	fn store_header_brief(
+		header_brief: TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
+	) -> DispatchResult;
 }
