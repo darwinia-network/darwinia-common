@@ -101,9 +101,7 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 		unimplemented!()
 	}
 
-	fn store_header_brief(
-		header_brief: TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
-	) -> DispatchResult {
+	fn store_header(header: RawHeaderThing) -> DispatchResult {
 		unimplemented!()
 	}
 }
