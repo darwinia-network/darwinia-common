@@ -56,7 +56,7 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 	// TODO: MMR type
 	type TcHeaderMMR = ();
 
-	fn last_confirmed() -> Self::TcBlockNumber {
+	fn best_block_number() -> Self::TcBlockNumber {
 		unimplemented!()
 	}
 
@@ -90,7 +90,7 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 	}
 
 	fn on_chain_arbitrate(
-		header_thing_brief_chain: Vec<
+		header_briefs_chain: Vec<
 			darwinia_support::relay::TcHeaderBrief<
 				Self::TcBlockNumber,
 				Self::TcHeaderHash,
@@ -98,6 +98,10 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 			>,
 		>,
 	) -> DispatchResult {
+		unimplemented!()
+	}
+
+	fn store_header(raw_header_thing: RawHeaderThing) -> DispatchResult {
 		unimplemented!()
 	}
 }

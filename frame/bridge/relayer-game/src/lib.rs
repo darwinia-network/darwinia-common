@@ -15,6 +15,11 @@
 
 // FIXME: separate long function into several functions
 
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
+
 mod types {
 	// --- darwinia ---
 	use crate::*;
@@ -128,7 +133,7 @@ decl_storage! {
 
 		/// The last confirmed block number record of a game when it start
 		pub LastConfirmeds
-			get(fn last_confirmed_of_game)
+			get(fn best_block_number_of_game)
 			: map hasher(blake2_128_concat) GameId<TcBlockNumber<T, I>>
 			=> TcBlockNumber<T, I>;
 
@@ -419,7 +424,7 @@ decl_module! {
 							let last_round_proposals_chain_len =
 								last_round_proposals[0].bonded_chain.len();
 							let full_chain_len =
-								(relay_target - Self::last_confirmed_of_game(game_id))
+								(relay_target - Self::best_block_number_of_game(game_id))
 									.saturated_into() as u64;
 
 							if last_round_proposals_chain_len as u64 == full_chain_len {
@@ -449,9 +454,9 @@ decl_module! {
 			let relayer = ensure_signed(origin)?;
 			let game_id = T::TargetChain
 				::verify_raw_header_thing(raw_header_thing_chain[0].clone())?[0].as_block_number();
-			let last_confirmed = T::TargetChain::last_confirmed();
+			let best_block_number = T::TargetChain::best_block_number();
 
-			ensure!(game_id > last_confirmed, <Error<T, I>>::TargetHeaderAC);
+			ensure!(game_id > best_block_number, <Error<T, I>>::TargetHeaderAC);
 
 			let other_proposals = Self::proposals_of_game(game_id);
 			let other_proposals_len = other_proposals.len();
@@ -497,7 +502,7 @@ decl_module! {
 
 					Self::update_bonds(&relayer, |old_bonds| old_bonds.saturating_add(bonds));
 
-					<LastConfirmeds<T, I>>::insert(game_id, last_confirmed);
+					<LastConfirmeds<T, I>>::insert(game_id, best_block_number);
 					<Proposals<T, I>>::append(game_id, Proposal {
 						relayer,
 						bonded_chain,
