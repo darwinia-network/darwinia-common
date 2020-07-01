@@ -1,4 +1,4 @@
-mod mock_relay {
+pub mod mock_relay {
 	// --- substrate ---
 	use sp_runtime::DispatchResult;
 	// --- darwinia ---
@@ -38,7 +38,7 @@ mod mock_relay {
 		}
 
 		fn header_existed(block_number: Self::TcBlockNumber) -> bool {
-			Self::best_block_number() <= block_number
+			Self::best_block_number() >= block_number
 		}
 
 		fn verify_raw_header_thing(
@@ -130,11 +130,11 @@ mod mock_relay {
 
 	#[derive(Encode, Decode)]
 	pub struct MockTcHeader {
-		valid: bool,
+		pub valid: bool,
 
-		number: MockTcBlockNumber,
-		hash: MockTcHeaderHash,
-		parent_hash: MockTcHeaderHash,
+		pub number: MockTcBlockNumber,
+		pub hash: MockTcHeaderHash,
+		pub parent_hash: MockTcHeaderHash,
 	}
 }
 
