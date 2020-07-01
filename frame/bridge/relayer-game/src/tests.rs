@@ -65,11 +65,11 @@ fn extend_should_work() {
 			proposal_chain_b.clone()
 		));
 
-		for i in (4..5).rev() {
-			run_to_block((i - 1) * 3 + 1);
+		for (block_number, &challenge_at) in (2..5).rev().zip([4, 8, 12].iter()) {
+			run_to_block(challenge_at);
 
-			proposal_chain_a.push(MockTcHeader::new_raw(i, 0));
-			proposal_chain_b.push(MockTcHeader::new_raw(i, 2));
+			proposal_chain_a.push(MockTcHeader::new_raw(block_number, 0));
+			proposal_chain_b.push(MockTcHeader::new_raw(block_number, 2));
 
 			assert_ok!(RelayerGame::submit_proposal(
 				Origin::signed(1),
