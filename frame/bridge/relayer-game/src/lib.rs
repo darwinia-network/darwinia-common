@@ -59,6 +59,7 @@ use sp_std::borrow::ToOwned;
 use sp_std::{collections::btree_map::BTreeMap, prelude::*};
 // --- darwinia ---
 use darwinia_support::{balance::lock::*, relay::*};
+use ethereum_primitives::H256;
 use types::*;
 
 const RELAYER_GAME_ID: LockIdentifier = *b"da/rgame";
@@ -80,8 +81,7 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	>;
 
 	/// The target chain's relay module's API
-	// TODO: MMR type
-	type TargetChain: Relayable<TcHeaderMMR = ()>;
+	type TargetChain: Relayable<TcHeaderMMR = H256>;
 }
 
 decl_event! {
@@ -126,7 +126,7 @@ decl_storage! {
 				AccountId<T>,
 				BondedTcHeader<
 					RingBalance<T, I>,
-					TcHeaderBrief<TcBlockNumber<T, I>, TcHeaderHash<T, I>, ()>
+					TcHeaderBrief<TcBlockNumber<T, I>, TcHeaderHash<T, I>, H256>
 				>,
 				TcHeaderHash<T, I>
 			>>;

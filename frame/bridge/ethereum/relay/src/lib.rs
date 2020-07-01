@@ -15,7 +15,7 @@ use ethereum_primitives::{
 	header::EthHeader, merkle::DoubleNodeWithMerkleProof, pow::EthashPartial, EthBlockNumber, H256,
 };
 
-type EthereumMMR = ();
+type EthereumMMR = H256;
 
 pub trait Trait<I: Instance = DefaultInstance>:
 	frame_system::Trait + darwinia_ethereum_linear_relay::Trait
@@ -146,7 +146,7 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 		let EthHeaderThing {
 			header,
 			ethash_proof,
-			mmr: _mmr,
+			mmr,
 		} = raw_header_thing.into();
 
 		if ConfirmedHeaders::<I>::contains_key(header.number) {
@@ -160,7 +160,7 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 			block_number: header.number,
 			hash: header.hash.unwrap_or_default(),
 			parent_hash: header.parent_hash,
-			mmr: (),
+			mmr,
 			others: header.encode(),
 		})
 	}
