@@ -4,8 +4,6 @@
 
 // --- crates ---
 use codec::{Decode, Encode};
-// --- github ---
-use ethereum_types::{H128, H512};
 // --- substrate ---
 use frame_support::{decl_error, decl_event, decl_module, decl_storage};
 use frame_system as system;
@@ -14,13 +12,9 @@ use sp_std::{convert::From, prelude::*};
 // --- darwinia ---
 use darwinia_support::relay::*;
 use ethereum_primitives::{
-	header::EthHeader,
-	merkle::DoubleNodeWithMerkleProof,
-	pow::{EthashPartial, EthashSeal},
-	EthBlockNumber, H256, U256,
+	header::EthHeader, merkle::DoubleNodeWithMerkleProof, pow::EthashPartial, EthBlockNumber, H256,
 };
 
-// TODO: MMR type
 type EthereumMMR = ();
 
 pub trait Trait<I: Instance = DefaultInstance>:
@@ -34,7 +28,7 @@ decl_event! {
 	where
 		<T as frame_system::Trait>::AccountId,
 	{
-		/// TODO
+		//TODO
 		TODO(AccountId),
 	}
 }
@@ -43,7 +37,8 @@ decl_error! {
 	pub enum Error for Module<T: Trait<I>, I: Instance> {
 		TargetHeaderAE,
 		HeaderInvalid,
-		NotComplyWithConfirmebBlocks
+		NotComplyWithConfirmebBlocks,
+		ChainInvalid,
 	}
 }
 
@@ -161,16 +156,12 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 			return Err(<Error<T, I>>::HeaderInvalid)?;
 		};
 
-		let other_field = EthOther {
-			difficulty: header.difficulty,
-		};
-
 		Ok(TcHeaderBrief {
 			block_number: header.number,
 			hash: header.hash.unwrap_or_default(),
 			parent_hash: header.parent_hash,
 			mmr: (),
-			others: other_field.encode(),
+			others: header.encode(),
 		})
 	}
 
@@ -208,7 +199,25 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 			>,
 		>,
 	) -> DispatchResult {
-		unimplemented!()
+		// Currently Ethereum samples function is continuesly sampling
+
+		let eth_partial = EthashPartial::production();
+
+		for i in 1..header_briefs_chain.len() - 1 {
+			if header_briefs_chain[i].parent_hash != header_briefs_chain[i + 1].hash {
+				return Err(<Error<T, I>>::ChainInvalid)?;
+			}
+			let header =
+				EthHeader::decode(&mut &*header_briefs_chain[i].others).unwrap_or_default();
+			let previous_header =
+				EthHeader::decode(&mut &*header_briefs_chain[i + 1].others).unwrap_or_default();
+
+			if *(header.difficulty()) != eth_partial.calculate_difficulty(&header, &previous_header)
+			{
+				return Err(<Error<T, I>>::ChainInvalid)?;
+			}
+		}
+		Ok(())
 	}
 
 	fn store_header(raw_header_thing: RawHeaderThing) -> DispatchResult {
@@ -242,11 +251,6 @@ pub struct EthHeaderThing {
 	header: EthHeader,
 	ethash_proof: Vec<DoubleNodeWithMerkleProof>,
 	mmr: EthereumMMR,
-}
-
-#[derive(Encode, Decode)]
-pub struct EthOther {
-	difficulty: U256,
 }
 
 impl From<RawHeaderThing> for EthHeaderThing {
