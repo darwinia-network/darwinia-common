@@ -84,7 +84,6 @@ pub trait DustCollector<AccountId> {
 
 	fn collect(who: &AccountId);
 }
-
 #[impl_for_tuples(15)]
 impl<AccountId> DustCollector<AccountId> for Currencies {
 	fn check(who: &AccountId) -> Result<(), ()> {
