@@ -130,7 +130,7 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 	type TcHeaderHash = H256;
 	type TcHeaderMMR = EthereumMMR;
 
-	fn last_confirmed() -> Self::TcBlockNumber {
+	fn best_block_number() -> Self::TcBlockNumber {
 		return if let Some(i) = LastConfirmedHeaderInfo::<I>::get() {
 			i.0
 		} else {
@@ -164,7 +164,9 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 		Ok(vec![TcHeaderThing::BlockNumber(header.number)])
 	}
 
-	/// verify ethereum headers with seal, hash, and difficulty
+	/// Ethereum additional `others` fileds in `TcHeaderBrief`:
+	/// 	- Difficulty (shoule be in addition field `others`, codec style),
+	/// 	- Total Difficulty (shoule be in addition field `others`, codec style),
 	fn verify_raw_header_thing_chain(
 		raw_header_thing_chain: Vec<RawHeaderThing>,
 	) -> Result<
@@ -191,7 +193,7 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 	}
 
 	fn on_chain_arbitrate(
-		header_thing_brief_chain: Vec<
+		header_briefs_chain: Vec<
 			darwinia_support::relay::TcHeaderBrief<
 				Self::TcBlockNumber,
 				Self::TcHeaderHash,

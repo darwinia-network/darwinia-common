@@ -72,7 +72,7 @@ pub mod literal_procesor {
 pub mod relay {
 	// --- darwinia ---
 	pub use crate::{
-		structs::TcHeaderThing,
+		structs::TcHeaderBrief,
 		traits::{AdjustableRelayerGame, Relayable},
 	};
 
@@ -81,8 +81,6 @@ pub mod relay {
 
 	pub type Round = u64;
 	pub type RawHeaderThing = Vec<u8>;
-	pub type TcHeaderBrief<TcBlockNumber, TcHeaderHash, TcHeaderMMR> =
-		Vec<TcHeaderThing<TcBlockNumber, TcHeaderHash, TcHeaderMMR>>;
 }
 
 #[cfg(test)]
