@@ -2,7 +2,7 @@ mod mock_relay {
 	// --- substrate ---
 	use sp_runtime::DispatchResult;
 	// --- darwinia ---
-	use crate::{mock::*, *};
+	use crate::*;
 	use darwinia_support::relay::Relayable;
 
 	pub type MockTcBlockNumber = u64;
@@ -162,6 +162,9 @@ pub type Kton = darwinia_balances::Module<Test, KtonInstance>;
 pub type System = frame_system::Module<Test>;
 pub type Relay = mock_relay::Module<Test>;
 
+pub type RelayerGameError = Error<Test, DefaultInstance>;
+pub type RelayerGame = Module<Test>;
+
 impl_outer_origin! {
 	pub enum Origin for Test  where system = frame_system {}
 }
@@ -214,11 +217,14 @@ impl frame_system::Trait for Test {
 	type OnKilledAccount = ();
 }
 
+parameter_types! {
+	pub const ExistentialDeposit: Balance = 1;
+}
 impl darwinia_balances::Trait<RingInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = ();
-	type ExistentialDeposit = ();
+	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
 	type DustCollector = (Kton,);
@@ -227,7 +233,7 @@ impl darwinia_balances::Trait<KtonInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = ();
-	type ExistentialDeposit = ();
+	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
 	type DustCollector = (Ring,);
@@ -267,5 +273,27 @@ impl AdjustableRelayerGame for RelayerGameAdjustor {
 
 	fn estimate_bond(_round: Round, _proposals_count: u64) -> Self::Balance {
 		1
+	}
+}
+
+pub struct ExtBuilder {}
+impl ExtBuilder {
+	pub fn build(self) -> sp_io::TestExternalities {
+		let mut storage = frame_system::GenesisConfig::default()
+			.build_storage::<Test>()
+			.unwrap();
+
+		darwinia_balances::GenesisConfig::<Test, RingInstance> {
+			balances: vec![(1, 100), (2, 200), (3, 300)],
+		}
+		.assimilate_storage(&mut storage)
+		.unwrap();
+
+		storage.into()
+	}
+}
+impl Default for ExtBuilder {
+	fn default() -> Self {
+		Self {}
 	}
 }
