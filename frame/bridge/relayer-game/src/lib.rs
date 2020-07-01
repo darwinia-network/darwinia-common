@@ -420,7 +420,7 @@ decl_module! {
 							);
 						} else {
 							let relay_target = last_round_proposals[0]
-								.bonded_chain[1]
+								.bonded_chain[0]
 								.header_brief
 								.block_number;
 							let last_round_proposals_chain_len =
