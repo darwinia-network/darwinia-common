@@ -534,10 +534,7 @@ decl_module! {
 					ensure!(
 						!other_proposals
 							.into_iter()
-							.any(|proposal|
-								(proposal.bonded_chain.len() == chain.len())
-									&& (&proposal.bonded_chain.last().unwrap().header_brief
-										== chain.last().unwrap())),
+							.any(|proposal| &proposal.bonded_chain[0].header_brief == &chain[0]),
 						<Error<T, I>>::ProposalAE
 					);
 
