@@ -97,8 +97,8 @@ decl_event! {
 
 decl_error! {
 	pub enum Error for Module<T: Trait<I>, I: Instance> {
-		/// Challenge - NOT HAPPENED
-		ChallengeNH,
+		/// Proposal - INVALID
+		ProposalI,
 
 		/// Target Header - ALREADY CONFIRMED
 		TargetHeaderAC,
@@ -454,6 +454,11 @@ decl_module! {
 		#[weight = 0]
 		fn submit_proposal(origin, raw_header_thing_chain: Vec<RawHeaderThing>) {
 			let relayer = ensure_signed(origin)?;
+
+			if raw_header_thing_chain.is_empty() {
+				Err(<Error<T, I>>::ProposalI)?;
+			}
+
 			let game_id = T::TargetChain
 				::verify_raw_header_thing(raw_header_thing_chain[0].clone())?.block_number;
 			let best_block_number = T::TargetChain::best_block_number();
