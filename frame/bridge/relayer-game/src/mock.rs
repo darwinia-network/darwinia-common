@@ -136,6 +136,20 @@ pub mod mock_relay {
 		pub hash: MockTcHeaderHash,
 		pub parent_hash: MockTcHeaderHash,
 	}
+	impl MockTcHeader {
+		pub fn new(n: MockTcBlockNumber, valid: bool) -> Self {
+			Self {
+				valid,
+				number: n,
+				hash: n.into(),
+				parent_hash: (n - 1).into(),
+			}
+		}
+
+		pub fn new_raw(n: MockTcBlockNumber, valid: bool) -> RawHeaderThing {
+			Self::new(n, valid).encode()
+		}
+	}
 }
 
 // --- substrate ---
