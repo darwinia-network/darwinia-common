@@ -555,6 +555,7 @@ decl_module! {
 
 				}
 				// Extend
+				// FIXME: check same with samples
 				(_, raw_header_thing_chain_len) => {
 					let round = T::RelayerGameAdjustor
 						::round_from_chain_len(raw_header_thing_chain_len as _);
