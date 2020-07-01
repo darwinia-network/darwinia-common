@@ -74,8 +74,8 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 	}
 
 	/// Ethereum additional `others` fileds in `TcHeaderBrief`:
-	/// 	- Difficulty (shoule be in addition field `others`, bytes style),
-	/// 	- Total Difficulty (shoule be in addition field `others`, bytes style),
+	/// 	- Difficulty (shoule be in addition field `others`, codec style),
+	/// 	- Total Difficulty (shoule be in addition field `others`, codec style),
 	fn verify_raw_header_thing_chain(
 		raw_header_thing_chain: Vec<RawHeaderThing>,
 	) -> Result<
