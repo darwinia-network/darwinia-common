@@ -166,7 +166,7 @@ pub trait Relayable {
 	type TcHeaderMMR: Clone + Debug + Default + PartialEq + FullCodec;
 
 	/// The latest finalize block's header's record id in darwinia
-	fn last_confirmed() -> Self::TcBlockNumber;
+	fn best_block_number() -> Self::TcBlockNumber;
 
 	/// Check the header if it's already existed
 	fn header_existed(block_number: Self::TcBlockNumber) -> bool;
@@ -194,11 +194,11 @@ pub trait Relayable {
 
 	/// On chain arbitrate, to confirmed the header with 100% sure
 	fn on_chain_arbitrate(
-		header_thing_brief_chain: Vec<
+		header_briefs_chain: Vec<
 			TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
 		>,
 	) -> DispatchResult;
 
-	// TODO:
-	// fn store_header() {}
+	/// Store the header confirmed in relayer game
+	fn store_header(raw_header_thing: RawHeaderThing) -> DispatchResult;
 }

@@ -15,6 +15,11 @@
 
 // FIXME: separate long function into several functions
 
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
+
 mod types {
 	// --- darwinia ---
 	use crate::*;
@@ -213,9 +218,11 @@ decl_module! {
 					let mut evils = vec![];
 
 					for proposal in proposals_filter(extend_at, proposals) {
-						let BondedTcHeader::<_, TcHeaderBrief<_, _, _>> { header_brief, bond }
-							= proposal.bonded_chain.last().unwrap();
-						let header_hash = header_brief[1].as_hash();
+						let BondedTcHeader::<_, TcHeaderBrief<_, TcHeaderHash<T, I>, _>> {
+							header_brief,
+							bond
+						} = proposal.bonded_chain.last().unwrap();
+						let header_hash = header_brief.hash.clone();
 
 						if header_hash == extend_from_header_hash {
 							if let Some(header_hash) = proposal.extend_from_header_hash {
@@ -414,8 +421,8 @@ decl_module! {
 						} else {
 							let relay_target = last_round_proposals[0]
 								.bonded_chain[1]
-								.header_brief[0]
-								.as_block_number();
+								.header_brief
+								.block_number;
 							let last_round_proposals_chain_len =
 								last_round_proposals[0].bonded_chain.len();
 							let full_chain_len =
@@ -448,10 +455,10 @@ decl_module! {
 		fn submit_proposal(origin, raw_header_thing_chain: Vec<RawHeaderThing>) {
 			let relayer = ensure_signed(origin)?;
 			let game_id = T::TargetChain
-				::verify_raw_header_thing(raw_header_thing_chain[0].clone())?[0].as_block_number();
-			let last_confirmed = T::TargetChain::last_confirmed();
+				::verify_raw_header_thing(raw_header_thing_chain[0].clone())?.block_number;
+			let best_block_number = T::TargetChain::best_block_number();
 
-			ensure!(game_id > last_confirmed, <Error<T, I>>::TargetHeaderAC);
+			ensure!(game_id > best_block_number, <Error<T, I>>::TargetHeaderAC);
 
 			let other_proposals = Self::proposals_of_game(game_id);
 			let other_proposals_len = other_proposals.len();
@@ -497,7 +504,7 @@ decl_module! {
 
 					Self::update_bonds(&relayer, |old_bonds| old_bonds.saturating_add(bonds));
 
-					<LastConfirmeds<T, I>>::insert(game_id, last_confirmed);
+					<LastConfirmeds<T, I>>::insert(game_id, best_block_number);
 					<Proposals<T, I>>::append(game_id, Proposal {
 						relayer,
 						bonded_chain,
@@ -554,7 +561,7 @@ decl_module! {
 						::verify_raw_header_thing_chain(raw_header_thing_chain)?;
 					let samples = {
 						// Chain's len is ALWAYS great than 1 under this match pattern; qed
-						let game_id = chain[0][0].as_block_number();
+						let game_id = chain[0].block_number;
 
 						Self::samples_of_game(game_id)
 					};
@@ -565,7 +572,7 @@ decl_module! {
 							.iter()
 							.zip(samples.iter())
 							.all(|(header_thing, sample_block_number)|
-								header_thing[0].as_block_number() == *sample_block_number),
+								header_thing.block_number == *sample_block_number),
 						<Error<T, I>>::RoundMis
 					);
 
@@ -619,7 +626,7 @@ decl_module! {
 								relayer,
 								bonded_chain,
 								// Each proposal MUST contains a NOT empty chain; qed
-								extend_from_header_hash: Some(extend_from_header[1].as_hash())
+								extend_from_header_hash: Some(extend_from_header.hash)
 							}
 						);
 						{
@@ -680,12 +687,6 @@ pub struct Proposal<AccountId, BondedTcHeader, TcHeaderHash> {
 
 #[derive(Clone, Encode, Decode, RuntimeDebug)]
 pub struct BondedTcHeader<Balance, TcHeaderBrief> {
-	/// `HeaderBrief`'s
-	/// 	first item MUST be block number
-	/// 	second item MUST be header hash
-	/// 	third item MUST be parent hash
-	/// 	fourth item MUST be MMR
-	/// which was defined in spec
 	header_brief: TcHeaderBrief,
 	bond: Balance,
 }
