@@ -391,12 +391,12 @@ decl_module! {
 				<Samples<T, I>>::take(game_id);
 			};
 			let update_samples = |game_id, chain_len| {
-				<Samples<T, I>>::mutate(game_id, |samples| {
+				<Samples<T, I>>::mutate(game_id, |samples|
 					T::RelayerGameAdjustor::update_samples(
-						T::RelayerGameAdjustor::round_from_chain_len(chain_len),
+						T::RelayerGameAdjustor::round_from_chain_len(chain_len) + 1,
 						samples
-					);
-				});
+					)
+				);
 			};
 
 			for (game_id, last_round) in closed_rounds {
