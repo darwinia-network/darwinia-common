@@ -49,3 +49,36 @@ fn jump_round_should_fail() {
 		}
 	});
 }
+
+#[test]
+fn extend_should_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		let mut proposal_chain_a = vec![MockTcHeader::new_raw(5, 0)];
+		let mut proposal_chain_b = vec![MockTcHeader::new_raw(5, 2)];
+
+		assert_ok!(RelayerGame::submit_proposal(
+			Origin::signed(1),
+			proposal_chain_a.clone()
+		));
+		assert_ok!(RelayerGame::submit_proposal(
+			Origin::signed(2),
+			proposal_chain_b.clone()
+		));
+
+		for i in (4..5).rev() {
+			run_to_block((i - 1) * 3 + 1);
+
+			proposal_chain_a.push(MockTcHeader::new_raw(i, 0));
+			proposal_chain_b.push(MockTcHeader::new_raw(i, 2));
+
+			assert_ok!(RelayerGame::submit_proposal(
+				Origin::signed(1),
+				proposal_chain_a.clone()
+			));
+			assert_ok!(RelayerGame::submit_proposal(
+				Origin::signed(2),
+				proposal_chain_b.clone()
+			));
+		}
+	});
+}
