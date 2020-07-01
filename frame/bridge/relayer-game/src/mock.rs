@@ -257,9 +257,7 @@ impl AdjustableRelayerGame for RelayerGameAdjustor {
 	}
 
 	fn update_samples(_round: Round, samples: &mut Vec<Self::TcBlockNumber>) {
-		let prev = samples[0] - 1;
-
-		samples.push(prev);
+		samples.push(samples.last().unwrap() - 1);
 	}
 
 	fn estimate_bond(_round: Round, _proposals_count: u64) -> Self::Balance {
