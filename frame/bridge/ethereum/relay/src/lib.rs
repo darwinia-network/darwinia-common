@@ -73,12 +73,9 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 		unimplemented!()
 	}
 
-	/// Eth additional `Other` fileds in `Vec<TcHeaderBrief>`:
-	/// 	[
-	///			...,
-	/// 		Difficulty (shoule be in addition field `Other`, bytes style),
-	/// 		Total Difficulty (shoule be in addition field `Other`, bytes style),
-	/// 	]
+	/// Ethereum additional `others` fileds in `TcHeaderBrief`:
+	/// 	- Difficulty (shoule be in addition field `others`, bytes style),
+	/// 	- Total Difficulty (shoule be in addition field `others`, bytes style),
 	fn verify_raw_header_thing_chain(
 		raw_header_thing_chain: Vec<RawHeaderThing>,
 	) -> Result<

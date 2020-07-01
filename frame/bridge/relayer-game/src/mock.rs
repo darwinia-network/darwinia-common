@@ -57,11 +57,13 @@ mod mock_relay {
 
 			verify(&header)?;
 
-			Ok(vec![
-				TcHeaderThing::BlockNumber(header.number),
-				TcHeaderThing::Hash(header.hash),
-				TcHeaderThing::ParentHash(header.parent_hash),
-			])
+			Ok(TcHeaderBrief {
+				block_number: header.number,
+				hash: header.hash,
+				parent_hash: header.parent_hash,
+				mmr: (),
+				others: vec![],
+			})
 		}
 
 		fn on_chain_arbitrate(
@@ -73,27 +75,27 @@ mod mock_relay {
 
 			if header_briefs_chain.len() == 1 {
 				ensure!(
-					header_briefs_chain[0][0].as_block_number() + 1 == best_header.0,
+					header_briefs_chain[0].block_number + 1 == best_header.0,
 					"Previous Block Number - MISMATCHED"
 				);
 				ensure!(
-					header_briefs_chain[0][1].as_hash() == best_header.1,
+					header_briefs_chain[0].hash == best_header.1,
 					"Previous Hash - MISMATCHED"
 				);
 
 				return Ok(());
 			}
 
-			header_briefs_chain.sort_by_key(|header_briefs| header_briefs[0].as_block_number());
+			header_briefs_chain.sort_by_key(|header_briefs| header_briefs.block_number);
 
 			{
 				let last_header_briefs = header_briefs_chain.last().unwrap();
 				ensure!(
-					best_header.0 + 1 == last_header_briefs[0].as_block_number(),
+					best_header.0 + 1 == last_header_briefs.block_number,
 					"Previous Block Number - MISMATCHED"
 				);
 				ensure!(
-					best_header.1 == last_header_briefs[2].as_hash(),
+					best_header.1 == last_header_briefs.parent_hash,
 					"Previous Hash - MISMATCHED"
 				);
 			}
@@ -102,12 +104,11 @@ mod mock_relay {
 
 			for header_briefs in &header_briefs_chain[1..] {
 				ensure!(
-					prev_header_briefs[0].as_block_number() + 1
-						== header_briefs[0].as_block_number(),
+					prev_header_briefs.block_number + 1 == header_briefs.block_number,
 					"Previous Block Number - MISMATCHED"
 				);
 				ensure!(
-					prev_header_briefs[1].as_hash() == header_briefs[2].as_hash(),
+					prev_header_briefs.hash == header_briefs.parent_hash,
 					"Previous Hash - MISMATCHED"
 				);
 

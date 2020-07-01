@@ -199,5 +199,6 @@ pub trait Relayable {
 		>,
 	) -> DispatchResult;
 
+	/// Store the header confirmed in relayer game
 	fn store_header(raw_header_thing: RawHeaderThing) -> DispatchResult;
 }
