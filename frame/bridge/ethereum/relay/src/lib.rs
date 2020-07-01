@@ -17,7 +17,7 @@ use ethereum_primitives::{
 	header::EthHeader,
 	merkle::DoubleNodeWithMerkleProof,
 	pow::{EthashPartial, EthashSeal},
-	EthBlockNumber, H256,
+	EthBlockNumber, H256, U256,
 };
 
 // TODO: MMR type
@@ -161,12 +161,19 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 			return Err(<Error<T, I>>::HeaderInvalid)?;
 		};
 
-		Ok(vec![TcHeaderThing::BlockNumber(header.number)])
+		let other_field = EthOther {
+			difficulty: header.difficulty,
+		};
+
+		Ok(TcHeaderBrief {
+			block_number: header.number,
+			hash: header.hash.unwrap_or_default(),
+			parent_hash: header.parent_hash,
+			mmr: (),
+			others: other_field.encode(),
+		})
 	}
 
-	/// Ethereum additional `others` fileds in `TcHeaderBrief`:
-	/// 	- Difficulty (shoule be in addition field `others`, codec style),
-	/// 	- Total Difficulty (shoule be in addition field `others`, codec style),
 	fn verify_raw_header_thing_chain(
 		raw_header_thing_chain: Vec<RawHeaderThing>,
 	) -> Result<
@@ -235,6 +242,11 @@ pub struct EthHeaderThing {
 	header: EthHeader,
 	ethash_proof: Vec<DoubleNodeWithMerkleProof>,
 	mmr: EthereumMMR,
+}
+
+#[derive(Encode, Decode)]
+pub struct EthOther {
+	difficulty: U256,
 }
 
 impl From<RawHeaderThing> for EthHeaderThing {

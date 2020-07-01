@@ -185,5 +185,5 @@ pub struct TcHeaderBrief<TcBlockNumber, TcHeaderHash, TcHeaderMMR> {
 	pub hash: TcHeaderHash,
 	pub parent_hash: TcHeaderHash,
 	pub mmr: TcHeaderMMR,
-	pub others: RawHeaderThing,
+	pub others: Vec<u8>,
 }
