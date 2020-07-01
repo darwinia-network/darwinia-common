@@ -534,7 +534,7 @@ decl_module! {
 					ensure!(
 						!other_proposals
 							.into_iter()
-							.any(|proposal| &proposal.bonded_chain[0].header_brief == &chain[0]),
+							.all(|proposal| &proposal.bonded_chain[0].header_brief == &chain[0]),
 						<Error<T, I>>::ProposalAE
 					);
 
@@ -555,7 +555,6 @@ decl_module! {
 
 				}
 				// Extend
-				// FIXME: check same with samples
 				(_, raw_header_thing_chain_len) => {
 					let round = T::RelayerGameAdjustor
 						::round_from_chain_len(raw_header_thing_chain_len as _);
@@ -597,7 +596,7 @@ decl_module! {
 							}
 						} else if proposal_chain_len == chain.len() {
 							ensure!(
-								extend_chain
+								!extend_chain
 									.iter()
 									.zip(proposal.bonded_chain[extend_at..].iter())
 									.all(|(a, b)| a.header_brief == b.header_brief),
