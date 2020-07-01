@@ -1,20 +1,19 @@
 pub mod mock_relay {
 	// --- substrate ---
-	use sp_runtime::DispatchResult;
+	use sp_runtime::{DispatchError, DispatchResult};
 	// --- darwinia ---
 	use crate::*;
 	use darwinia_support::relay::Relayable;
 
 	pub type MockTcBlockNumber = u64;
-	pub type MockTcHeaderHash = u64;
 
 	decl_storage! {
 		trait Store for Module<T: Trait> as DarwiniaRelay {
-			pub BestHeader get(fn best_header): (MockTcBlockNumber, MockTcHeaderHash);
+			pub BestBlockNumber get(fn best_block_number): MockTcBlockNumber;
 
 			pub Headers
-				get(fn header_of_hash)
-				: map hasher(identity) MockTcHeaderHash
+				get(fn header_of_block_number)
+				: map hasher(identity) MockTcBlockNumber
 				=> Option<MockTcHeader>;
 		}
 	}
@@ -30,11 +29,11 @@ pub mod mock_relay {
 
 	impl<T: Trait> Relayable for Module<T> {
 		type TcBlockNumber = MockTcBlockNumber;
-		type TcHeaderHash = MockTcHeaderHash;
+		type TcHeaderHash = ();
 		type TcHeaderMMR = ();
 
 		fn best_block_number() -> Self::TcBlockNumber {
-			Self::best_header().0
+			Self::best_block_number()
 		}
 
 		fn header_existed(block_number: Self::TcBlockNumber) -> bool {
@@ -45,12 +44,12 @@ pub mod mock_relay {
 			raw_header_thing: RawHeaderThing,
 		) -> Result<
 			TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
-			sp_runtime::DispatchError,
+			DispatchError,
 		> {
 			let header: MockTcHeader =
 				Decode::decode(&mut &raw_header_thing[..]).map_err(|_| "Decode - FAILED")?;
 			let verify = |header: &MockTcHeader| -> DispatchResult {
-				ensure!(header.valid, "Header Hash - MISMATCHED");
+				ensure!(header.valid != Validation::HashInvalid, "Header - INVALID");
 
 				Ok(())
 			};
@@ -59,60 +58,26 @@ pub mod mock_relay {
 
 			Ok(TcHeaderBrief {
 				block_number: header.number,
-				hash: header.hash,
-				parent_hash: header.parent_hash,
+				hash: (),
+				parent_hash: (),
 				mmr: (),
-				others: vec![],
+				others: header.valid.encode(),
 			})
 		}
 
 		fn on_chain_arbitrate(
-			mut header_briefs_chain: Vec<
+			header_briefs_chain: Vec<
 				TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
 			>,
-		) -> sp_runtime::DispatchResult {
-			let best_header = Self::best_header();
+		) -> DispatchResult {
+			for header_briefs in header_briefs_chain {
+				let validation: Validation = Decode::decode(&mut &header_briefs.others[..])
+					.map_err(|_| "Decode - FAILED")?;
 
-			if header_briefs_chain.len() == 1 {
 				ensure!(
-					header_briefs_chain[0].block_number + 1 == best_header.0,
-					"Previous Block Number - MISMATCHED"
+					validation != Validation::ContinuousInvalid,
+					"Continuous - INVALID"
 				);
-				ensure!(
-					header_briefs_chain[0].hash == best_header.1,
-					"Previous Hash - MISMATCHED"
-				);
-
-				return Ok(());
-			}
-
-			header_briefs_chain.sort_by_key(|header_briefs| header_briefs.block_number);
-
-			{
-				let last_header_briefs = header_briefs_chain.last().unwrap();
-				ensure!(
-					best_header.0 + 1 == last_header_briefs.block_number,
-					"Previous Block Number - MISMATCHED"
-				);
-				ensure!(
-					best_header.1 == last_header_briefs.parent_hash,
-					"Previous Hash - MISMATCHED"
-				);
-			}
-
-			let mut prev_header_briefs = &header_briefs_chain[0];
-
-			for header_briefs in &header_briefs_chain[1..] {
-				ensure!(
-					prev_header_briefs.block_number + 1 == header_briefs.block_number,
-					"Previous Block Number - MISMATCHED"
-				);
-				ensure!(
-					prev_header_briefs.hash == header_briefs.parent_hash,
-					"Previous Hash - MISMATCHED"
-				);
-
-				prev_header_briefs = header_briefs;
 			}
 
 			Ok(())
@@ -122,7 +87,7 @@ pub mod mock_relay {
 			let header: MockTcHeader =
 				Decode::decode(&mut &raw_header_thing[..]).map_err(|_| "Decode - FAILED")?;
 
-			Headers::insert(header.hash, header);
+			Headers::insert(header.number, header);
 
 			Ok(())
 		}
@@ -130,30 +95,42 @@ pub mod mock_relay {
 
 	#[derive(Encode, Decode)]
 	pub struct MockTcHeader {
-		pub valid: bool,
-
 		pub number: MockTcBlockNumber,
-		pub hash: MockTcHeaderHash,
-		pub parent_hash: MockTcHeaderHash,
+		pub valid: Validation,
 	}
 	impl MockTcHeader {
-		pub fn new(n: MockTcBlockNumber, valid: bool) -> Self {
+		pub fn new(number: MockTcBlockNumber, valid: u8) -> Self {
 			Self {
-				valid,
-				number: n,
-				hash: n.into(),
-				parent_hash: (n - 1).into(),
+				number,
+				valid: valid.into(),
 			}
 		}
 
-		pub fn new_raw(n: MockTcBlockNumber, valid: bool) -> RawHeaderThing {
-			Self::new(n, valid).encode()
+		pub fn new_raw(number: MockTcBlockNumber, valid: u8) -> RawHeaderThing {
+			Self::new(number, valid).encode()
+		}
+	}
+
+	#[derive(PartialEq, Encode, Decode)]
+	pub enum Validation {
+		Valid,
+		HashInvalid,
+		ContinuousInvalid,
+	}
+	impl Into<Validation> for u8 {
+		fn into(self) -> Validation {
+			match self {
+				0 => Validation::Valid,
+				1 => Validation::HashInvalid,
+				2 => Validation::ContinuousInvalid,
+				_ => unreachable!(),
+			}
 		}
 	}
 }
 
 // --- substrate ---
-use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
+use frame_support::{impl_outer_origin, parameter_types, traits::OnFinalize, weights::Weight};
 use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill};
 // --- darwinia ---
@@ -309,5 +286,17 @@ impl ExtBuilder {
 impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {}
+	}
+}
+
+pub fn run_to_block(n: BlockNumber) {
+	RelayerGame::on_finalize(System::block_number());
+
+	for b in System::block_number() + 1..=n {
+		System::set_block_number(b);
+
+		if b != n {
+			RelayerGame::on_finalize(System::block_number());
+		}
 	}
 }

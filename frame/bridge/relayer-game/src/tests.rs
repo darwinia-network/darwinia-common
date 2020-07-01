@@ -16,7 +16,7 @@ fn empty_proposal_should_fail() {
 #[test]
 fn duplicate_game_should_fail() {
 	ExtBuilder::default().build().execute_with(|| {
-		let proposal_chain = vec![MockTcHeader::new_raw(1, true)];
+		let proposal_chain = vec![MockTcHeader::new_raw(1, 0)];
 
 		assert_ok!(RelayerGame::submit_proposal(
 			Origin::signed(1),
@@ -32,7 +32,7 @@ fn duplicate_game_should_fail() {
 #[test]
 fn jump_round_should_fail() {
 	ExtBuilder::default().build().execute_with(|| {
-		let mut proposal_chain = vec![MockTcHeader::new_raw(1, true)];
+		let mut proposal_chain = vec![MockTcHeader::new_raw(1, 0)];
 
 		assert_ok!(RelayerGame::submit_proposal(
 			Origin::signed(1),
@@ -40,7 +40,7 @@ fn jump_round_should_fail() {
 		));
 
 		for i in 2..5 {
-			proposal_chain.push(MockTcHeader::new_raw(i, true));
+			proposal_chain.push(MockTcHeader::new_raw(i, 0));
 
 			assert_err!(
 				RelayerGame::submit_proposal(Origin::signed(1), proposal_chain.clone()),
