@@ -118,7 +118,7 @@ decl_error! {
 
 decl_storage! {
 	trait Store for Module<T: Trait<I>, I: Instance = DefaultInstance> as DarwiniaRelayerGame {
-		/// Each target chain's header relay can open a game
+		/// All the proposals here per game
 		pub Proposals
 			get(fn proposals_of_game)
 			: map hasher(blake2_128_concat) GameId<TcBlockNumber<T, I>>
@@ -149,7 +149,7 @@ decl_storage! {
 			: map hasher(blake2_128_concat) BlockNumber<T>
 			=> Vec<(GameId<TcBlockNumber<T, I>>, Round)>;
 
-		/// Use for updating locks
+		/// All the bonds per relayer
 		pub Bonds
 			get(fn bond_of_relayer)
 			: map hasher(blake2_128_concat) AccountId<T>
@@ -194,8 +194,9 @@ decl_module! {
 
 				// TODO: reward if no challenge
 				// TODO: store header
-				<Proposals<T, I>>::take(game_id);
 				<Samples<T, I>>::take(game_id);
+				<LastConfirmeds<T, I>>::take(game_id);
+				<Proposals<T, I>>::take(game_id);
 			};
 			let settle_with_challenge = |
 				game_id,
@@ -321,8 +322,9 @@ decl_module! {
 
 				// TODO: reward if no challenge
 				// TODO: store header
-				<Proposals<T, I>>::take(game_id);
 				<Samples<T, I>>::take(game_id);
+				<LastConfirmeds<T, I>>::take(game_id);
+				<Proposals<T, I>>::take(game_id);
 			};
 			let on_chain_arbitrate = |
 				game_id,
@@ -369,8 +371,6 @@ decl_module! {
 						rewards,
 						&mut proposals
 					);
-
-					// TODO: store header
 				} else {
 					// slash all
 					let mut evils_map = BTreeMap::new();
@@ -387,8 +387,9 @@ decl_module! {
 					}
 				}
 
-				<Proposals<T, I>>::take(game_id);
 				<Samples<T, I>>::take(game_id);
+				<LastConfirmeds<T, I>>::take(game_id);
+				<Proposals<T, I>>::take(game_id);
 			};
 			let update_samples = |game_id, chain_len| {
 				<Samples<T, I>>::mutate(game_id, |samples|
@@ -509,18 +510,18 @@ decl_module! {
 
 					Self::update_bonds(&relayer, |old_bonds| old_bonds.saturating_add(bonds));
 
-					<LastConfirmeds<T, I>>::insert(game_id, best_block_number);
-					<Proposals<T, I>>::append(game_id, Proposal {
-						relayer,
-						bonded_chain,
-						extend_from_header_hash: None
-					});
 					<ClosedRounds<T, I>>::append(
 						<frame_system::Module<T>>::block_number()
 							+ T::RelayerGameAdjustor::challenge_time(0),
 						(game_id, 0)
 					);
 					<Samples<T, I>>::append(game_id, game_id);
+					<LastConfirmeds<T, I>>::insert(game_id, best_block_number);
+					<Proposals<T, I>>::append(game_id, Proposal {
+						relayer,
+						bonded_chain,
+						extend_from_header_hash: None
+					});
 				}
 				// First round
 				(_, 1) => {
@@ -622,6 +623,14 @@ decl_module! {
 
 						Self::update_bonds(&relayer, |old_bonds| old_bonds.saturating_add(bonds));
 
+						{
+							let closed_at = <frame_system::Module<T>>::block_number()
+								+ T::RelayerGameAdjustor::challenge_time(round);
+
+							if !Self::closed_rounds_at(closed_at).contains(&(game_id, round)) {
+								<ClosedRounds<T, I>>::append(closed_at, (game_id, round));
+							}
+						}
 						<Proposals<T, I>>::append(
 							game_id,
 							Proposal {
@@ -631,14 +640,6 @@ decl_module! {
 								extend_from_header_hash: Some(extend_from_header.hash)
 							}
 						);
-						{
-							let closed_at = <frame_system::Module<T>>::block_number()
-								+ T::RelayerGameAdjustor::challenge_time(round);
-
-							if !Self::closed_rounds_at(closed_at).contains(&(game_id, round)) {
-								<ClosedRounds<T, I>>::append(closed_at, (game_id, round));
-							}
-						}
 					} else {
 						Err(<Error<T, I>>::RoundMis)?;
 					}
