@@ -4,9 +4,11 @@
 
 // --- crates ---
 use codec::{Decode, Encode};
+// --- github ---
+use ethereum_types::H128;
 // --- substrate ---
 use frame_support::{decl_error, decl_event, decl_module, decl_storage};
-use frame_system as system;
+use frame_system::{self as system, ensure_root};
 use sp_runtime::{DispatchError, DispatchResult};
 use sp_std::{convert::From, prelude::*};
 // --- darwinia ---
@@ -26,8 +28,8 @@ decl_event! {
 	where
 		<T as frame_system::Trait>::AccountId,
 	{
-		//TODO
-		TODO(AccountId),
+		DUMMY(AccountId),
+		RemoveConfrimedBlock(EthBlockNumber),
 	}
 }
 
@@ -47,8 +49,10 @@ decl_storage! {
 
 		/// The Ethereum headers confrimed by relayer game
 		/// The actural storage needs to be defined
-		ConfirmedHeaders get(fn confirmed_headers): map hasher(identity) EthBlockNumber => EthHeader;
+		ConfirmedHeadersMap get(fn confirmed_header): map hasher(identity) EthBlockNumber => EthHeader;
 
+		/// Dags merkle roots of ethereum epoch (each epoch is 30000)
+		pub DagsMerkleRoots get(fn dag_merkle_root): map hasher(identity) u64 => H128;
 	}
 }
 
@@ -60,6 +64,13 @@ decl_module! {
 		type Error = Error<T>;
 
 		fn deposit_event() = default;
+
+		#[weight = 100_000_000]
+		pub fn remove_confirmed_block(origin, number: EthBlockNumber) {
+			ensure_root(origin)?;
+			ConfirmedHeadersMap::take(number);
+			Self::deposit_event(RawEvent::RemoveConfrimedBlock(number));
+		}
 	}
 }
 
@@ -67,8 +78,8 @@ impl<T: Trait> Module<T> {
 	/// validate block with the hash, difficulty of confirmed headers
 	fn verify_block_with_confrim_blocks(header: &EthHeader) -> bool {
 		let eth_partial = EthashPartial::production();
-		if ConfirmedHeaders::contains_key(header.number - 1) {
-			let previous_header = ConfirmedHeaders::get(header.number - 1);
+		if ConfirmedHeadersMap::contains_key(header.number - 1) {
+			let previous_header = ConfirmedHeadersMap::get(header.number - 1);
 			if header.parent_hash != previous_header.hash.unwrap_or_default()
 				|| *header.difficulty()
 					!= eth_partial.calculate_difficulty(header, &previous_header)
@@ -77,8 +88,8 @@ impl<T: Trait> Module<T> {
 			}
 		}
 
-		if ConfirmedHeaders::contains_key(header.number + 1) {
-			let subsequent_header = ConfirmedHeaders::get(header.number + 1);
+		if ConfirmedHeadersMap::contains_key(header.number + 1) {
+			let subsequent_header = ConfirmedHeadersMap::get(header.number + 1);
 			if header.hash.unwrap_or_default() != subsequent_header.parent_hash
 				|| *subsequent_header.difficulty()
 					!= eth_partial.calculate_difficulty(&subsequent_header, header)
@@ -86,9 +97,6 @@ impl<T: Trait> Module<T> {
 				return false;
 			}
 		}
-
-		// Test Event
-		Self::deposit_event(RawEvent::TODO(Default::default()));
 
 		true
 	}
@@ -108,11 +116,11 @@ impl<T: Trait> Module<T> {
 			return false;
 		}
 
-		// FIXME: drop linear-relay dep
-		let merkle_root = Default::default();
-		// let merkle_root = <darwinia_ethereum_linear_relay::Module<T>>::dag_merkle_root(
-		// (header.number as usize / 30000) as u64,
-		// );
+		// NOTE:
+		// The `ethereum-linear-relay` is ready to drop, the merkle root data will migrate to
+		// `ethereum-relay`
+		let merkle_root = <Module<T>>::dag_merkle_root((header.number as usize / 30000) as u64);
+
 		if eth_partial
 			.verify_seal_with_proof(&header, &ethash_proof, &merkle_root)
 			.is_err()
@@ -138,7 +146,7 @@ impl<T: Trait> Relayable for Module<T> {
 	}
 
 	fn header_existed(block_number: Self::TcBlockNumber) -> bool {
-		ConfirmedHeaders::contains_key(block_number)
+		ConfirmedHeadersMap::contains_key(block_number)
 	}
 
 	fn verify_raw_header_thing(
@@ -153,7 +161,7 @@ impl<T: Trait> Relayable for Module<T> {
 			mmr,
 		} = raw_header_thing.into();
 
-		if ConfirmedHeaders::contains_key(header.number) {
+		if ConfirmedHeadersMap::contains_key(header.number) {
 			return Err(<Error<T>>::TargetHeaderAE)?;
 		}
 		if !Self::verify_block_seal(&header, &ethash_proof) {
@@ -244,8 +252,7 @@ impl<T: Trait> Relayable for Module<T> {
 			)))
 		};
 
-		ConfirmedHeaders::insert(header.number, header);
-
+		ConfirmedHeadersMap::insert(header.number, header);
 		Ok(())
 	}
 }
