@@ -86,6 +86,10 @@ impl<T: Trait> Module<T> {
 				return false;
 			}
 		}
+
+		// Test Event
+		Self::deposit_event(RawEvent::TODO(Default::default()));
+
 		true
 	}
 
