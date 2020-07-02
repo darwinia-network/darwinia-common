@@ -1000,6 +1000,7 @@ dependencies = [
 name = "darwinia-ethereum-relay"
 version = "0.6.1"
 dependencies = [
+ "darwinia-header-mmr-rpc-runtime-api",
  "darwinia-support",
  "ethereum-primitives",
  "ethereum-types 0.8.0",

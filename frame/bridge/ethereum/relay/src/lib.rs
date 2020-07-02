@@ -7,11 +7,13 @@ use codec::{Decode, Encode};
 // --- github ---
 use ethereum_types::H128;
 // --- substrate ---
+use crate::sp_api_hidden_includes_decl_storage::hidden_include::sp_runtime::traits::Hash;
 use frame_support::{decl_error, decl_event, decl_module, decl_storage};
 use frame_system::{self as system, ensure_root};
 use sp_runtime::{DispatchError, DispatchResult};
 use sp_std::{convert::From, prelude::*};
 // --- darwinia ---
+use darwinia_header_mmr_rpc_runtime_api::Proof as MMRProof;
 use darwinia_support::relay::*;
 use ethereum_primitives::{
 	header::EthHeader, merkle::DoubleNodeWithMerkleProof, pow::EthashPartial, EthBlockNumber, H256,
@@ -39,6 +41,7 @@ decl_error! {
 		HeaderInvalid,
 		NotComplyWithConfirmebBlocks,
 		ChainInvalid,
+		MMRInvalid,
 	}
 }
 
@@ -130,6 +133,25 @@ impl<T: Trait> Module<T> {
 
 		return true;
 	}
+
+	fn verify_mmr_with_confrim_blocks(mmr: EthereumMMR, mmr_proof: MMRProof<EthereumMMR>) -> bool {
+		if let Some(i) = LastConfirmedHeaderInfo::get() {
+			let mut cal_mmr: Vec<u8> = i.2.as_ref().iter().cloned().collect();
+			for h in mmr_proof.0 {
+				let encodable = (mmr, h);
+				cal_mmr = <T as frame_system::Trait>::Hashing::hash_of(&encodable)
+					.as_ref()
+					.iter()
+					.cloned()
+					.collect();
+			}
+			return cal_mmr
+				.iter()
+				.zip(mmr.as_ref().iter())
+				.all(|(a, b)| *a == *b);
+		};
+		true
+	}
 }
 
 impl<T: Trait> Relayable for Module<T> {
@@ -159,6 +181,7 @@ impl<T: Trait> Relayable for Module<T> {
 			header,
 			ethash_proof,
 			mmr,
+			mmr_proof: _,
 		} = raw_header_thing.into();
 
 		if ConfirmedHeadersMap::contains_key(header.number) {
@@ -188,7 +211,8 @@ impl<T: Trait> Relayable for Module<T> {
 			let EthHeaderThing {
 				header,
 				ethash_proof,
-				mmr: _mmr,
+				mmr,
+				mmr_proof,
 			} = raw_header_thing.into();
 
 			if !Self::verify_block_seal(&header, &ethash_proof) {
@@ -197,6 +221,10 @@ impl<T: Trait> Relayable for Module<T> {
 
 			if !Self::verify_block_with_confrim_blocks(&header) {
 				return Err(<Error<T>>::NotComplyWithConfirmebBlocks)?;
+			}
+
+			if !Self::verify_mmr_with_confrim_blocks(mmr, mmr_proof) {
+				return Err(<Error<T>>::MMRInvalid)?;
 			}
 		}
 		Ok(output)
@@ -242,6 +270,7 @@ impl<T: Trait> Relayable for Module<T> {
 			header,
 			ethash_proof: _,
 			mmr,
+			mmr_proof: _,
 		} = raw_header_thing.into();
 
 		if header.number > last_comfirmed_block_number {
@@ -262,6 +291,7 @@ pub struct EthHeaderThing {
 	header: EthHeader,
 	ethash_proof: Vec<DoubleNodeWithMerkleProof>,
 	mmr: EthereumMMR,
+	mmr_proof: MMRProof<EthereumMMR>,
 }
 
 impl From<RawHeaderThing> for EthHeaderThing {

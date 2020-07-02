@@ -15,6 +15,7 @@ serde = { version = "1.0.114", optional = true }
 # darwinia
 darwinia-support = { default-features = false, path = "../../../support" }
 ethereum-primitives = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
+darwinia-header-mmr-rpc-runtime-api = { default-features = false, path = "../../../header-mmr/rpc/runtime-api" }
 # github
 ethereum-types = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
