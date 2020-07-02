@@ -1,4 +1,6 @@
 pub mod mock_relay {
+	// --- crates ---
+	use serde::{Deserialize, Serialize};
 	// --- substrate ---
 	use sp_runtime::{DispatchError, DispatchResult};
 	// --- darwinia ---
@@ -15,6 +17,21 @@ pub mod mock_relay {
 				get(fn header_of_block_number)
 				: map hasher(identity) MockTcBlockNumber
 				=> Option<MockTcHeader>;
+		}
+
+		add_extra_genesis {
+			config(headers): Vec<MockTcHeader>;
+			build(|config: &GenesisConfig| {
+				let mut best_block_number = MockTcBlockNumber::zero();
+
+				for header in &config.headers {
+					Headers::insert(header.number, header.clone());
+
+					best_block_number = best_block_number.max(header.number);
+				}
+
+				BestBlockNumber::put(best_block_number);
+			});
 		}
 	}
 
@@ -104,7 +121,7 @@ pub mod mock_relay {
 		}
 	}
 
-	#[derive(Debug, PartialEq, Encode, Decode)]
+	#[derive(Clone, Debug, PartialEq, Encode, Decode, Serialize, Deserialize)]
 	pub struct MockTcHeader {
 		pub number: MockTcBlockNumber,
 		pub valid: Validation,
@@ -122,7 +139,7 @@ pub mod mock_relay {
 		}
 	}
 
-	#[derive(Debug, PartialEq, Encode, Decode)]
+	#[derive(Clone, Debug, PartialEq, Encode, Decode, Serialize, Deserialize)]
 	pub enum Validation {
 		Valid,
 		HashInvalid,
@@ -276,8 +293,16 @@ impl AdjustableRelayerGame for RelayerGameAdjustor {
 	}
 }
 
-pub struct ExtBuilder {}
+pub struct ExtBuilder {
+	headers: Vec<mock_relay::MockTcHeader>,
+}
 impl ExtBuilder {
+	pub fn headers(mut self, headers: Vec<mock_relay::MockTcHeader>) -> Self {
+		self.headers = headers;
+
+		self
+	}
+
 	pub fn build(self) -> sp_io::TestExternalities {
 		let mut storage = frame_system::GenesisConfig::default()
 			.build_storage::<Test>()
@@ -289,12 +314,18 @@ impl ExtBuilder {
 		.assimilate_storage(&mut storage)
 		.unwrap();
 
+		mock_relay::GenesisConfig {
+			headers: self.headers.clone(),
+		}
+		.assimilate_storage(&mut storage)
+		.unwrap();
+
 		storage.into()
 	}
 }
 impl Default for ExtBuilder {
 	fn default() -> Self {
-		Self {}
+		Self { headers: vec![] }
 	}
 }
 

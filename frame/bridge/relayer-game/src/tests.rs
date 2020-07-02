@@ -16,6 +16,30 @@ fn empty_proposal_should_fail() {
 }
 
 #[test]
+fn already_confirmed_should_failed() {
+	let mut confirmed_headers = vec![];
+
+	for block_number in 5..10 {
+		confirmed_headers.push(MockTcHeader::new(5, 0));
+	}
+
+	ExtBuilder::default()
+		.headers(confirmed_headers.clone())
+		.build()
+		.execute_with(|| {
+			for confirmed_header in confirmed_headers {
+				assert_err!(
+					RelayerGame::submit_proposal(
+						Origin::signed(1),
+						vec![confirmed_header.encode()]
+					),
+					RelayerGameError::TargetHeaderAC
+				);
+			}
+		});
+}
+
+#[test]
 fn duplicate_game_should_fail() {
 	ExtBuilder::default().build().execute_with(|| {
 		let proposal_chain = vec![MockTcHeader::new_raw(1, 0)];
