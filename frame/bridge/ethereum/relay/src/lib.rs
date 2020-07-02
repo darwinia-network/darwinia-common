@@ -31,9 +31,20 @@ decl_event! {
 		<T as frame_system::Trait>::AccountId,
 	{
 		PhantomEvent(AccountId),
+		/// The specific confirmed block is removed
 		RemoveConfirmedBlock(EthBlockNumber),
+
+		/// The range of confirmed blocks are removed
 		RemoveConfirmedBlockRang(EthBlockNumber, EthBlockNumber),
+
+		/// The block confimed block parameters are changed
 		UpdateConfrimedBlockCleanCycle(EthBlockNumber, EthBlockNumber),
+
+		/// This Error event is caused by unreasonable Confirm block delete parameter set
+		///
+		/// ConfirmBlockKeepInMonth should be greator then 1 to avoid the relayer game cross the
+		/// month
+		ConfirmBlockManagementError(EthBlockNumber),
 	}
 }
 
@@ -50,21 +61,22 @@ decl_error! {
 decl_storage! {
 	trait Store for Module<T: Trait> as DarwiniaEthereumRelay {
 		/// Ethereum last confrimed header info including ethereum block number, hash, and mmr
-		LastConfirmedHeaderInfo get(fn last_confirm_header_info): Option<(EthBlockNumber, H256, EthereumMMR)>;
+		pub LastConfirmedHeaderInfo get(fn last_confirm_header_info): Option<(EthBlockNumber, H256, EthereumMMR)>;
 
 		/// The Ethereum headers confrimed by relayer game
 		/// The actural storage needs to be defined
-		ConfirmedHeadersDoubleMap get(fn confirmed_header): double_map hasher(identity) EthBlockNumber, hasher(identity) EthBlockNumber => EthHeader;
+		pub ConfirmedHeadersDoubleMap get(fn confirmed_header): double_map hasher(identity) EthBlockNumber, hasher(identity) EthBlockNumber => EthHeader;
 
 		/// Dags merkle roots of ethereum epoch (each epoch is 30000)
 		pub DagsMerkleRoots get(fn dag_merkle_root): map hasher(identity) u64 => H128;
 
+		/// The current confirm block cycle nubmer (default is one month one cycle)
 		LastConfirmedBlockCycle: EthBlockNumber;
 
 		/// The number of ehtereum blocks in a month
-		ConfirmBlocksInCycle get(fn confirm_block_cycle): EthBlockNumber = 185142;
+		pub ConfirmBlocksInCycle get(fn confirm_block_cycle): EthBlockNumber = 185142;
 		/// The confirm blocks keep in month
-		ConfirmBlockKeepInMonth get(fn confirm_block_keep_in_mounth): EthBlockNumber = 3;
+		pub ConfirmBlockKeepInMonth get(fn confirm_block_keep_in_mounth): EthBlockNumber = 3;
 	}
 }
 
@@ -76,7 +88,7 @@ decl_module! {
 		type Error = Error<T>;
 
 		fn deposit_event() = default;
-
+		/// Remove the specific malicous block
 		#[weight = 100_000_000]
 		pub fn remove_confirmed_block(origin, number: EthBlockNumber) {
 			ensure_root(origin)?;
@@ -84,20 +96,27 @@ decl_module! {
 			Self::deposit_event(RawEvent::RemoveConfirmedBlock(number));
 		}
 
+		/// Remove the blocks in particular month (month is calculated as cycle)
 		#[weight = 100_000_000]
-		pub fn remove_confirmed_blocks_in_cycle(origin, cycle: EthBlockNumber) {
+		pub fn remove_confirmed_blocks_in_month(origin, cycle: EthBlockNumber) {
 			ensure_root(origin)?;
 			let c = ConfirmBlocksInCycle::get();
 			ConfirmedHeadersDoubleMap::remove_prefix(cycle);
 			Self::deposit_event(RawEvent::RemoveConfirmedBlockRang(cycle * c, cycle.saturating_add(1) * c));
 		}
 
+		/// Setup the parameters to delete the confirmed blocks after month * blocks_in_month
 		#[weight = 100_000_000]
-		pub fn set_confirmed_blocks_clean_parameters(origin, month: EthBlockNumber, blocks_in_cycle: EthBlockNumber) {
+		pub fn set_confirmed_blocks_clean_parameters(origin, month: EthBlockNumber, blocks_in_month: EthBlockNumber) {
 			ensure_root(origin)?;
-			ConfirmBlocksInCycle::set(blocks_in_cycle);
-			ConfirmBlockKeepInMonth::set(month);
-			Self::deposit_event(RawEvent::UpdateConfrimedBlockCleanCycle(month, blocks_in_cycle));
+			if month < 2 {
+				// read the doc string of of event
+				Self::deposit_event(RawEvent::ConfirmBlockManagementError(month));
+			} else {
+				ConfirmBlocksInCycle::set(blocks_in_month);
+				ConfirmBlockKeepInMonth::set(month);
+				Self::deposit_event(RawEvent::UpdateConfrimedBlockCleanCycle(month, blocks_in_month));
+			}
 		}
 	}
 }
