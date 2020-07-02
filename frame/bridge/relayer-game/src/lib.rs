@@ -105,8 +105,6 @@ decl_error! {
 
 		/// Proposal - ALREADY EXISTED
 		ProposalAE,
-		/// Target Header - ALREADY EXISTED
-		TargetHeaderAE,
 
 		/// Round - MISMATCHED
 		RoundMis,
@@ -536,10 +534,6 @@ decl_module! {
 				// New `Game`
 				(0, raw_header_thing_chain_len) => {
 					ensure!(raw_header_thing_chain_len == 1, <Error<T, I>>::RoundMis);
-					ensure!(
-						!T::TargetChain::header_existed(game_id),
-						<Error<T, I>>::TargetHeaderAE
-					);
 
 					let chain = T::TargetChain
 						::verify_raw_header_thing_chain(raw_header_thing_chain)?;

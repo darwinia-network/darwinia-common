@@ -167,9 +167,6 @@ pub trait Relayable {
 	/// The latest finalize block's header's record id in darwinia
 	fn best_block_number() -> Self::TcBlockNumber;
 
-	/// Check the header if it's already existed
-	fn header_existed(block_number: Self::TcBlockNumber) -> bool;
-
 	/// Verify the codec style header thing
 	///
 	/// If `with_raw_header` is enabled,

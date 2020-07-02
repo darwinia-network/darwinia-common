@@ -53,10 +53,6 @@ pub mod mock_relay {
 			Self::best_block_number()
 		}
 
-		fn header_existed(block_number: Self::TcBlockNumber) -> bool {
-			Self::best_block_number() >= block_number
-		}
-
 		fn verify_raw_header_thing(
 			raw_header_thing: RawHeaderThing,
 			with_raw_header: bool,

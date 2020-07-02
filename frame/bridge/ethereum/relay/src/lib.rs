@@ -60,10 +60,6 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 		unimplemented!()
 	}
 
-	fn header_existed(block_number: Self::TcBlockNumber) -> bool {
-		unimplemented!()
-	}
-
 	fn verify_raw_header_thing(
 		raw_header_thing: RawHeaderThing,
 		with_raw_header: bool,
