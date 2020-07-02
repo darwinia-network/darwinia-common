@@ -110,7 +110,7 @@ decl_error! {
 		RoundMis,
 
 		/// Can not bond with value less than usable balance.
-		InsufficientValue,
+		InsufficientBond,
 	}
 }
 
@@ -540,8 +540,9 @@ decl_module! {
 					let (bonds, bonded_chain) = extend_bonded_chain(&chain, 0);
 
 					ensure!(
-						T::RingCurrency::usable_balance(&relayer) >= bonds,
-						<Error<T, I>>::InsufficientValue
+						(T::RingCurrency::usable_balance(&relayer)
+							- T::RingCurrency::minimum_balance()) >= bonds,
+						<Error<T, I>>::InsufficientBond
 					);
 
 					Self::update_bonds(&relayer, |old_bonds| old_bonds.saturating_add(bonds));
@@ -579,8 +580,9 @@ decl_module! {
 					let (bonds, bonded_chain) = extend_bonded_chain(&chain, 0);
 
 					ensure!(
-						T::RingCurrency::usable_balance(&relayer) >= bonds,
-						<Error<T, I>>::InsufficientValue
+						(T::RingCurrency::usable_balance(&relayer)
+							- T::RingCurrency::minimum_balance()) >= bonds,
+						<Error<T, I>>::InsufficientBond
 					);
 
 					Self::update_bonds(&relayer, |old_bonds| old_bonds.saturating_add(bonds));
@@ -646,8 +648,9 @@ decl_module! {
 
 					if let Some(Proposal { bonded_chain: extend_from_chain, .. }) = extend_from_proposal {
 						ensure!(
-							T::RingCurrency::usable_balance(&relayer) >= bonds,
-							<Error<T, I>>::InsufficientValue
+							(T::RingCurrency::usable_balance(&relayer)
+								- T::RingCurrency::minimum_balance()) >= bonds,
+							<Error<T, I>>::InsufficientBond
 						);
 
 						let extend_from_header = extend_from_chain
