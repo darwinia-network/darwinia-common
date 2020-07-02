@@ -42,8 +42,12 @@ pub mod mock_relay {
 
 		fn verify_raw_header_thing(
 			raw_header_thing: RawHeaderThing,
+			with_raw_header: bool,
 		) -> Result<
-			TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
+			(
+				TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
+				RawHeaderThing,
+			),
 			DispatchError,
 		> {
 			let header =
@@ -56,21 +60,28 @@ pub mod mock_relay {
 
 			verify(&header)?;
 
-			Ok(TcHeaderBrief {
-				block_number: header.number,
-				hash: (),
-				parent_hash: (),
-				mmr: (),
-				others: header.valid.encode(),
-			})
+			Ok((
+				TcHeaderBrief {
+					number: header.number,
+					hash: (),
+					parent_hash: (),
+					mmr: (),
+					others: header.valid.encode(),
+				},
+				if with_raw_header {
+					raw_header_thing
+				} else {
+					vec![]
+				},
+			))
 		}
 
 		fn on_chain_arbitrate(
-			header_briefs_chain: Vec<
+			header_brief_chain: Vec<
 				TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
 			>,
 		) -> DispatchResult {
-			for header_briefs in header_briefs_chain {
+			for header_briefs in header_brief_chain {
 				let validation = Validation::decode(&mut &*header_briefs.others)
 					.map_err(|_| "Decode - FAILED")?;
 
@@ -93,7 +104,7 @@ pub mod mock_relay {
 		}
 	}
 
-	#[derive(Encode, Decode)]
+	#[derive(Debug, PartialEq, Encode, Decode)]
 	pub struct MockTcHeader {
 		pub number: MockTcBlockNumber,
 		pub valid: Validation,
@@ -111,7 +122,7 @@ pub mod mock_relay {
 		}
 	}
 
-	#[derive(PartialEq, Encode, Decode)]
+	#[derive(Debug, PartialEq, Encode, Decode)]
 	pub enum Validation {
 		Valid,
 		HashInvalid,

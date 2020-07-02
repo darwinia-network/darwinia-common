@@ -181,7 +181,7 @@ where
 // TODO: spec
 #[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug)]
 pub struct TcHeaderBrief<TcBlockNumber, TcHeaderHash, TcHeaderMMR> {
-	pub block_number: TcBlockNumber,
+	pub number: TcBlockNumber,
 	pub hash: TcHeaderHash,
 	pub parent_hash: TcHeaderHash,
 	pub mmr: TcHeaderMMR,

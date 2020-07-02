@@ -66,8 +66,12 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 
 	fn verify_raw_header_thing(
 		raw_header_thing: RawHeaderThing,
+		with_raw_header: bool,
 	) -> Result<
-		TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
+		(
+			TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
+			RawHeaderThing,
+		),
 		DispatchError,
 	> {
 		unimplemented!()
@@ -87,7 +91,7 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 	}
 
 	fn on_chain_arbitrate(
-		header_briefs_chain: Vec<
+		header_brief_chain: Vec<
 			darwinia_support::relay::TcHeaderBrief<
 				Self::TcBlockNumber,
 				Self::TcHeaderHash,

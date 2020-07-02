@@ -131,6 +131,14 @@ decl_storage! {
 				TcHeaderHash<T, I>
 			>>;
 
+		/// All the proposal relay headers(not brief) here per game
+		pub Headers
+			get(fn header_of_game_with_hash)
+			: double_map
+				hasher(blake2_128_concat) GameId<TcBlockNumber<T, I>>,
+				hasher(blake2_128_concat) TcHeaderHash<T, I>
+			=>  RawHeaderThing;
+
 		/// The last confirmed block number record of a game when it start
 		pub LastConfirmeds
 			get(fn last_confirmed_of_game)
@@ -184,8 +192,10 @@ decl_module! {
 					.collect::<Vec<_>>()
 			};
 			let settle_without_challenge = |game_id, proposal: Proposal<_, _, _>| {
-				let BondedTcHeader::<_, TcHeaderBrief<_, _, _>> { header_brief, bond }
-					= &proposal.bonded_chain[0];
+				let BondedTcHeader::<_, _> {
+					header_brief: TcHeaderBrief::<_, _, _> { hash, .. },
+					bond
+				} = &proposal.bonded_chain[0];
 
 				Self::update_bonds(
 					&proposal.relayer,
@@ -193,15 +203,26 @@ decl_module! {
 				);
 
 				// TODO: reward if no challenge
-				// TODO: store header
+
+				// TODO: handle error
+				let _ = T::TargetChain::store_header(Self::header_of_game_with_hash(
+					game_id,
+					hash
+				));
+
 				<Samples<T, I>>::take(game_id);
 				<LastConfirmeds<T, I>>::take(game_id);
+				<Headers<T, I>>::remove_prefix(game_id);
 				<Proposals<T, I>>::take(game_id);
 			};
 			let settle_with_challenge = |
 				game_id,
 				mut extend_at,
-				confirmed_proposal: Proposal<_, _, _>,
+				confirmed_proposal: Proposal<
+					_,
+					BondedTcHeader<_, TcHeaderBrief<_, TcHeaderHash<T, I>, _>>,
+					_
+				>,
 				mut rewards: Vec<_>,
 				proposals: &mut Vec<_>
 			| {
@@ -321,9 +342,16 @@ decl_module! {
 				}
 
 				// TODO: reward if no challenge
-				// TODO: store header
+
+				// TODO: handle error
+				let _ = T::TargetChain::store_header(Self::header_of_game_with_hash(
+					game_id,
+					confirmed_proposal.bonded_chain[0].header_brief.hash.clone()
+				));
+
 				<Samples<T, I>>::take(game_id);
 				<LastConfirmeds<T, I>>::take(game_id);
+				<Headers<T, I>>::remove_prefix(game_id);
 				<Proposals<T, I>>::take(game_id);
 			};
 			let on_chain_arbitrate = |
@@ -389,6 +417,7 @@ decl_module! {
 
 				<Samples<T, I>>::take(game_id);
 				<LastConfirmeds<T, I>>::take(game_id);
+				<Headers<T, I>>::remove_prefix(game_id);
 				<Proposals<T, I>>::take(game_id);
 			};
 			let update_samples = |game_id, chain_len| {
@@ -423,7 +452,7 @@ decl_module! {
 							let relay_target = last_round_proposals[0]
 								.bonded_chain[0]
 								.header_brief
-								.block_number;
+								.number;
 							let last_round_proposals_chain_len =
 								last_round_proposals[0].bonded_chain.len();
 							let full_chain_len =
@@ -460,8 +489,21 @@ decl_module! {
 				Err(<Error<T, I>>::ProposalI)?;
 			}
 
-			let game_id = T::TargetChain
-				::verify_raw_header_thing(raw_header_thing_chain[0].clone())?.block_number;
+			let (game_id, proposed_header_hash, proposed_raw_header) = {
+				let (
+					proposed_header_brief,
+					proposed_raw_header
+				) = T::TargetChain::verify_raw_header_thing(
+					raw_header_thing_chain[0].clone(),
+					true
+				)?;
+
+				(
+					proposed_header_brief.number,
+					proposed_header_brief.hash,
+					proposed_raw_header
+				)
+			};
 			let best_block_number = T::TargetChain::best_block_number();
 
 			ensure!(game_id > best_block_number, <Error<T, I>>::TargetHeaderAC);
@@ -517,6 +559,7 @@ decl_module! {
 					);
 					<Samples<T, I>>::append(game_id, game_id);
 					<LastConfirmeds<T, I>>::insert(game_id, best_block_number);
+					<Headers<T, I>>::insert(game_id, proposed_header_hash, proposed_raw_header);
 					<Proposals<T, I>>::append(game_id, Proposal {
 						relayer,
 						bonded_chain,
@@ -548,6 +591,7 @@ decl_module! {
 
 					Self::update_bonds(&relayer, |old_bonds| old_bonds.saturating_add(bonds));
 
+					<Headers<T, I>>::insert(game_id, proposed_header_hash, proposed_raw_header);
 					<Proposals<T, I>>::append(game_id, Proposal {
 						relayer,
 						bonded_chain,
@@ -564,7 +608,7 @@ decl_module! {
 						::verify_raw_header_thing_chain(raw_header_thing_chain)?;
 					let samples = {
 						// Chain's len is ALWAYS great than 1 under this match pattern; qed
-						let game_id = chain[0].block_number;
+						let game_id = chain[0].number;
 
 						Self::samples_of_game(game_id)
 					};
@@ -575,7 +619,7 @@ decl_module! {
 							.iter()
 							.zip(samples.iter())
 							.all(|(header_thing, sample_block_number)|
-								header_thing.block_number == *sample_block_number),
+								header_thing.number == *sample_block_number),
 						<Error<T, I>>::RoundMis
 					);
 
