@@ -4,6 +4,7 @@ mod mock_relay {
 	// --- darwinia ---
 	use crate::{mock::*, *};
 	use darwinia_support::relay::Relayable;
+	use ethereum_primitives::H256;
 
 	pub type MockTcBlockNumber = u64;
 	pub type MockTcHeaderHash = u64;
@@ -31,7 +32,7 @@ mod mock_relay {
 	impl<T: Trait> Relayable for Module<T> {
 		type TcBlockNumber = MockTcBlockNumber;
 		type TcHeaderHash = MockTcHeaderHash;
-		type TcHeaderMMR = ();
+		type TcHeaderMMR = H256;
 
 		fn best_block_number() -> Self::TcBlockNumber {
 			Self::best_header().0
@@ -61,7 +62,7 @@ mod mock_relay {
 				block_number: header.number,
 				hash: header.hash,
 				parent_hash: header.parent_hash,
-				mmr: (),
+				mmr: H256::default(),
 				others: vec![],
 			})
 		}
