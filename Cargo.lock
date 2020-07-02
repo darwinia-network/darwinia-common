@@ -1000,7 +1000,6 @@ dependencies = [
 name = "darwinia-ethereum-relay"
 version = "0.6.1"
 dependencies = [
- "darwinia-ethereum-linear-relay",
  "darwinia-support",
  "ethereum-primitives",
  "ethereum-types 0.8.0",

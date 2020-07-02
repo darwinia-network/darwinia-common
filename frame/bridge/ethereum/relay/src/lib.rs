@@ -17,7 +17,7 @@ use ethereum_primitives::{
 
 type EthereumMMR = H256;
 
-pub trait Trait: frame_system::Trait + darwinia_ethereum_linear_relay::Trait {
+pub trait Trait: frame_system::Trait {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 }
 
@@ -104,9 +104,11 @@ impl<T: Trait> Module<T> {
 			return false;
 		}
 
-		let merkle_root = <darwinia_ethereum_linear_relay::Module<T>>::dag_merkle_root(
-			(header.number as usize / 30000) as u64,
-		);
+		// FIXME: drop linear-relay dep
+		let merkle_root = Default::default();
+		// let merkle_root = <darwinia_ethereum_linear_relay::Module<T>>::dag_merkle_root(
+		// (header.number as usize / 30000) as u64,
+		// );
 		if eth_partial
 			.verify_seal_with_proof(&header, &ethash_proof, &merkle_root)
 			.is_err()

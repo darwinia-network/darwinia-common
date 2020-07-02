@@ -15,7 +15,6 @@ serde = { version = "1.0.114", optional = true }
 # darwinia
 darwinia-support = { default-features = false, path = "../../../support" }
 ethereum-primitives = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
-darwinia-ethereum-linear-relay = { default-features = false, path = "../linear-relay" }
 # github
 ethereum-types = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
@@ -33,7 +32,6 @@ std = [
 	# darwinia
 	"darwinia-support/std",
 	"ethereum-primitives/std",
-	"darwinia-ethereum-linear-relay/std",
 	# github
 	"ethereum-types/std",
 	# substrate
