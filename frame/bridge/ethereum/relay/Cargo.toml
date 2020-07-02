@@ -33,6 +33,7 @@ std = [
 	# darwinia
 	"darwinia-support/std",
 	"ethereum-primitives/std",
+	"darwinia-ethereum-linear-relay/std",
 	# github
 	"ethereum-types/std",
 	# substrate
