@@ -46,8 +46,8 @@ pub mod mock_relay {
 			TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
 			DispatchError,
 		> {
-			let header: MockTcHeader =
-				Decode::decode(&mut &raw_header_thing[..]).map_err(|_| "Decode - FAILED")?;
+			let header =
+				MockTcHeader::decode(&mut &*raw_header_thing).map_err(|_| "Decode - FAILED")?;
 			let verify = |header: &MockTcHeader| -> DispatchResult {
 				ensure!(header.valid != Validation::HashInvalid, "Header - INVALID");
 
@@ -71,7 +71,7 @@ pub mod mock_relay {
 			>,
 		) -> DispatchResult {
 			for header_briefs in header_briefs_chain {
-				let validation: Validation = Decode::decode(&mut &header_briefs.others[..])
+				let validation = Validation::decode(&mut &*header_briefs.others)
 					.map_err(|_| "Decode - FAILED")?;
 
 				ensure!(
@@ -84,8 +84,8 @@ pub mod mock_relay {
 		}
 
 		fn store_header(raw_header_thing: RawHeaderThing) -> DispatchResult {
-			let header: MockTcHeader =
-				Decode::decode(&mut &raw_header_thing[..]).map_err(|_| "Decode - FAILED")?;
+			let header =
+				MockTcHeader::decode(&mut &*raw_header_thing).map_err(|_| "Decode - FAILED")?;
 
 			Headers::insert(header.number, header);
 
