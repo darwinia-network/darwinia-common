@@ -19,10 +19,6 @@ use ethereum_primitives::{
 	header::EthHeader, merkle::DoubleNodeWithMerkleProof, pow::EthashPartial, EthBlockNumber, H256,
 };
 
-/// The confirmed block will be clean up ever 3 * 185000 blocks (about 3 month)
-static CONFIRM_BLOCK_CYCLE: EthBlockNumber = 185142;
-static CONFIRM_BLOCK_IN_MONTH: EthBlockNumber = 3;
-
 type EthereumMMR = H256;
 
 pub trait Trait: frame_system::Trait {
@@ -36,6 +32,8 @@ decl_event! {
 	{
 		PhantomEvent(AccountId),
 		RemoveConfirmedBlock(EthBlockNumber),
+		RemoveConfirmedBlockRang(EthBlockNumber, EthBlockNumber),
+		UpdateConfrimedBlockCleanCycle(EthBlockNumber, EthBlockNumber),
 	}
 }
 
@@ -62,6 +60,11 @@ decl_storage! {
 		pub DagsMerkleRoots get(fn dag_merkle_root): map hasher(identity) u64 => H128;
 
 		LastConfirmedBlockCycle: EthBlockNumber;
+
+		/// The number of ehtereum blocks in a month
+		ConfirmBlocksInCycle get(fn confirm_block_cycle): EthBlockNumber = 185142;
+		/// The confirm blocks keep in month
+		ConfirmBlockKeepInMonth get(fn confirm_block_keep_in_mounth): EthBlockNumber = 3;
 	}
 }
 
@@ -77,8 +80,24 @@ decl_module! {
 		#[weight = 100_000_000]
 		pub fn remove_confirmed_block(origin, number: EthBlockNumber) {
 			ensure_root(origin)?;
-			ConfirmedHeadersDoubleMap::take(number/CONFIRM_BLOCK_CYCLE, number);
+			ConfirmedHeadersDoubleMap::take(number/ConfirmBlocksInCycle::get(), number);
 			Self::deposit_event(RawEvent::RemoveConfirmedBlock(number));
+		}
+
+		#[weight = 100_000_000]
+		pub fn remove_confirmed_blocks_in_cycle(origin, cycle: EthBlockNumber) {
+			ensure_root(origin)?;
+			let c = ConfirmBlocksInCycle::get();
+			ConfirmedHeadersDoubleMap::remove_prefix(cycle);
+			Self::deposit_event(RawEvent::RemoveConfirmedBlockRang(cycle * c, cycle.saturating_add(1) * c));
+		}
+
+		#[weight = 100_000_000]
+		pub fn set_confirmed_blocks_clean_parameters(origin, month: EthBlockNumber, blocks_in_cycle: EthBlockNumber) {
+			ensure_root(origin)?;
+			ConfirmBlocksInCycle::set(blocks_in_cycle);
+			ConfirmBlockKeepInMonth::set(month);
+			Self::deposit_event(RawEvent::UpdateConfrimedBlockCleanCycle(month, blocks_in_cycle));
 		}
 	}
 }
@@ -87,13 +106,14 @@ impl<T: Trait> Module<T> {
 	/// validate block with the hash, difficulty of confirmed headers
 	fn verify_block_with_confrim_blocks(header: &EthHeader) -> bool {
 		let eth_partial = EthashPartial::production();
+		let confirm_blocks_in_cycle = ConfirmBlocksInCycle::get();
 		if ConfirmedHeadersDoubleMap::contains_key(
-			(header.number - 1) / CONFIRM_BLOCK_CYCLE,
-			header.number - 1,
+			(header.number.saturating_sub(1)) / confirm_blocks_in_cycle,
+			header.number.saturating_sub(1),
 		) {
 			let previous_header = ConfirmedHeadersDoubleMap::get(
-				(header.number - 1) / CONFIRM_BLOCK_CYCLE,
-				header.number - 1,
+				(header.number.saturating_sub(1)) / confirm_blocks_in_cycle,
+				header.number.saturating_sub(1),
 			);
 			if header.parent_hash != previous_header.hash.unwrap_or_default()
 				|| *header.difficulty()
@@ -104,12 +124,12 @@ impl<T: Trait> Module<T> {
 		}
 
 		if ConfirmedHeadersDoubleMap::contains_key(
-			(header.number + 1) / CONFIRM_BLOCK_CYCLE,
-			header.number + 1,
+			(header.number.saturating_add(1)) / confirm_blocks_in_cycle,
+			header.number.saturating_add(1),
 		) {
 			let subsequent_header = ConfirmedHeadersDoubleMap::get(
-				(header.number + 1) / CONFIRM_BLOCK_CYCLE,
-				header.number + 1,
+				(header.number.saturating_add(1)) / confirm_blocks_in_cycle,
+				header.number.saturating_add(1),
 			);
 			if header.hash.unwrap_or_default() != subsequent_header.parent_hash
 				|| *subsequent_header.difficulty()
@@ -186,7 +206,10 @@ impl<T: Trait> Relayable for Module<T> {
 	}
 
 	fn header_existed(block_number: Self::TcBlockNumber) -> bool {
-		ConfirmedHeadersDoubleMap::contains_key(block_number / CONFIRM_BLOCK_CYCLE, block_number)
+		ConfirmedHeadersDoubleMap::contains_key(
+			block_number / ConfirmBlocksInCycle::get(),
+			block_number,
+		)
 	}
 
 	fn verify_raw_header_thing(
@@ -203,7 +226,7 @@ impl<T: Trait> Relayable for Module<T> {
 		} = raw_header_thing.into();
 
 		if ConfirmedHeadersDoubleMap::contains_key(
-			header.number / CONFIRM_BLOCK_CYCLE,
+			header.number / ConfirmBlocksInCycle::get(),
 			header.number,
 		) {
 			return Err(<Error<T>>::TargetHeaderAE)?;
@@ -302,13 +325,15 @@ impl<T: Trait> Relayable for Module<T> {
 			)))
 		};
 
-		let confirm_cycle = header.number / CONFIRM_BLOCK_CYCLE;
+		let confirm_cycle = header.number / ConfirmBlocksInCycle::get();
 		let last_confirmed_block_cycle = LastConfirmedBlockCycle::get();
+
 		ConfirmedHeadersDoubleMap::insert(confirm_cycle, header.number, header);
 
 		if confirm_cycle > last_confirmed_block_cycle {
-			// keep the confimed headers about 3 months
-			ConfirmedHeadersDoubleMap::remove_prefix(confirm_cycle - CONFIRM_BLOCK_IN_MONTH);
+			ConfirmedHeadersDoubleMap::remove_prefix(
+				confirm_cycle.saturating_sub(ConfirmBlockKeepInMonth::get()),
+			);
 			LastConfirmedBlockCycle::set(confirm_cycle);
 		}
 		Ok(())
