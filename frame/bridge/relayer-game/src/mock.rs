@@ -153,6 +153,8 @@ pub mod mock_relay {
 	}
 }
 
+// --- std ---
+use std::cell::RefCell;
 // --- substrate ---
 use frame_support::{impl_outer_origin, parameter_types, traits::OnFinalize, weights::Weight};
 use sp_core::H256;
@@ -179,6 +181,10 @@ pub type Relay = mock_relay::Module<Test>;
 
 pub type RelayerGameError = Error<Test, DefaultInstance>;
 pub type RelayerGame = Module<Test>;
+
+thread_local! {
+	static ESTIMATE_BOND: RefCell<Balance> = RefCell::new(1);
+}
 
 impl_outer_origin! {
 	pub enum Origin for Test  where system = frame_system {}
@@ -285,21 +291,32 @@ impl AdjustableRelayerGame for RelayerGameAdjustor {
 	}
 
 	fn estimate_bond(_round: Round, _proposals_count: u64) -> Self::Balance {
-		1
+		ESTIMATE_BOND.with(|v| v.borrow().to_owned())
 	}
 }
 
 pub struct ExtBuilder {
+	estimate_bond: Balance,
 	headers: Vec<mock_relay::MockTcHeader>,
 }
 impl ExtBuilder {
+	pub fn estimate_bond(mut self, estimate_bond: Balance) -> Self {
+		self.estimate_bond = estimate_bond;
+
+		self
+	}
 	pub fn headers(mut self, headers: Vec<mock_relay::MockTcHeader>) -> Self {
 		self.headers = headers;
 
 		self
 	}
+	pub fn set_associated_constants(&self) {
+		ESTIMATE_BOND.with(|v| v.replace(self.estimate_bond));
+	}
 
 	pub fn build(self) -> sp_io::TestExternalities {
+		self.set_associated_constants();
+
 		let mut storage = frame_system::GenesisConfig::default()
 			.build_storage::<Test>()
 			.unwrap();
@@ -321,7 +338,10 @@ impl ExtBuilder {
 }
 impl Default for ExtBuilder {
 	fn default() -> Self {
-		Self { headers: vec![] }
+		Self {
+			estimate_bond: RelayerGameAdjustor::estimate_bond(0, 0),
+			headers: vec![],
+		}
 	}
 }
 

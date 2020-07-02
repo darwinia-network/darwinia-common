@@ -16,11 +16,47 @@ fn empty_proposal_should_fail() {
 }
 
 #[test]
+fn insufficient_bond_should_fail() {
+	ExtBuilder::default()
+		.estimate_bond(100)
+		.build()
+		.execute_with(|| {
+			let mut proposal_chain = vec![MockTcHeader::new_raw(5, 0)];
+
+			assert_err!(
+				RelayerGame::submit_proposal(Origin::signed(1), proposal_chain.clone()),
+				RelayerGameError::InsufficientBond
+			);
+			assert_ok!(RelayerGame::submit_proposal(
+				Origin::signed(2),
+				vec![MockTcHeader::new_raw(5, 2)]
+			));
+			assert_ok!(RelayerGame::submit_proposal(
+				Origin::signed(3),
+				proposal_chain.clone()
+			));
+
+			run_to_block(4);
+
+			proposal_chain.push(MockTcHeader::new_raw(4, 0));
+
+			assert_err!(
+				RelayerGame::submit_proposal(Origin::signed(2), proposal_chain.clone()),
+				RelayerGameError::InsufficientBond
+			);
+			assert_ok!(RelayerGame::submit_proposal(
+				Origin::signed(3),
+				proposal_chain.clone()
+			));
+		});
+}
+
+#[test]
 fn already_confirmed_should_failed() {
 	let mut confirmed_headers = vec![];
 
 	for block_number in 5..10 {
-		confirmed_headers.push(MockTcHeader::new(5, 0));
+		confirmed_headers.push(MockTcHeader::new(block_number, 0));
 	}
 
 	ExtBuilder::default()
