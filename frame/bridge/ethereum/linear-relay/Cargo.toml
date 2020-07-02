@@ -30,7 +30,7 @@ sp-std = { default-features = false, git = "https://github.com/darwinia-network/
 
 [dev-dependencies]
 # darwinia
-array-bytes = { default-features = false, path = "../../../../primitives/array-bytes" }
+array-bytes = { path = "../../../../primitives/array-bytes" }
 darwinia-balances = { path = "../../../../frame/balances" }
 ethereum-primitives = { features = ["easy-testing"], path = "../../../../primitives/ethereum-primitives" }
 # substrate
@@ -45,7 +45,6 @@ std = [
 	"serde",
 	"serde_json",
 	# darwinia
-	"array-bytes/std",
 	"darwinia-support/std",
 	"ethash/std",
 	"ethereum-primitives/std",
