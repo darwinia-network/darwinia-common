@@ -17,14 +17,12 @@ use ethereum_primitives::{
 
 type EthereumMMR = H256;
 
-pub trait Trait<I: Instance = DefaultInstance>:
-	frame_system::Trait + darwinia_ethereum_linear_relay::Trait
-{
-	type Event: From<Event<Self, I>> + Into<<Self as frame_system::Trait>::Event>;
+pub trait Trait: frame_system::Trait + darwinia_ethereum_linear_relay::Trait {
+	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 }
 
 decl_event! {
-	pub enum Event<T, I: Instance = DefaultInstance>
+	pub enum Event<T>
 	where
 		<T as frame_system::Trait>::AccountId,
 	{
@@ -34,7 +32,7 @@ decl_event! {
 }
 
 decl_error! {
-	pub enum Error for Module<T: Trait<I>, I: Instance> {
+	pub enum Error for Module<T: Trait> {
 		TargetHeaderAE,
 		HeaderInvalid,
 		NotComplyWithConfirmebBlocks,
@@ -43,7 +41,7 @@ decl_error! {
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait<I>, I: Instance = DefaultInstance> as DarwiniaEthereumRelay {
+	trait Store for Module<T: Trait> as DarwiniaEthereumRelay {
 		/// Ethereum last confrimed header info including ethereum block number, hash, and mmr
 		LastConfirmedHeaderInfo get(fn last_confirm_header_info): Option<(EthBlockNumber, H256, EthereumMMR)>;
 
@@ -55,22 +53,22 @@ decl_storage! {
 }
 
 decl_module! {
-	pub struct Module<T: Trait<I>, I: Instance = DefaultInstance> for enum Call
+	pub struct Module<T: Trait> for enum Call
 	where
 		origin: T::Origin
 	{
-		type Error = Error<T, I>;
+		type Error = Error<T>;
 
 		fn deposit_event() = default;
 	}
 }
 
-impl<T: Trait<I>, I: Instance> Module<T, I> {
+impl<T: Trait> Module<T> {
 	/// validate block with the hash, difficulty of confirmed headers
 	fn verify_block_with_confrim_blocks(header: &EthHeader) -> bool {
 		let eth_partial = EthashPartial::production();
-		if ConfirmedHeaders::<I>::contains_key(header.number - 1) {
-			let previous_header = ConfirmedHeaders::<I>::get(header.number - 1);
+		if ConfirmedHeaders::contains_key(header.number - 1) {
+			let previous_header = ConfirmedHeaders::get(header.number - 1);
 			if header.parent_hash != previous_header.hash.unwrap_or_default()
 				|| *header.difficulty()
 					!= eth_partial.calculate_difficulty(header, &previous_header)
@@ -79,8 +77,8 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 			}
 		}
 
-		if ConfirmedHeaders::<I>::contains_key(header.number + 1) {
-			let subsequent_header = ConfirmedHeaders::<I>::get(header.number + 1);
+		if ConfirmedHeaders::contains_key(header.number + 1) {
+			let subsequent_header = ConfirmedHeaders::get(header.number + 1);
 			if header.hash.unwrap_or_default() != subsequent_header.parent_hash
 				|| *subsequent_header.difficulty()
 					!= eth_partial.calculate_difficulty(&subsequent_header, header)
@@ -120,13 +118,13 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	}
 }
 
-impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
+impl<T: Trait> Relayable for Module<T> {
 	type TcBlockNumber = EthBlockNumber;
 	type TcHeaderHash = H256;
 	type TcHeaderMMR = EthereumMMR;
 
 	fn best_block_number() -> Self::TcBlockNumber {
-		return if let Some(i) = LastConfirmedHeaderInfo::<I>::get() {
+		return if let Some(i) = LastConfirmedHeaderInfo::get() {
 			i.0
 		} else {
 			0u64.into()
@@ -134,7 +132,7 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 	}
 
 	fn header_existed(block_number: Self::TcBlockNumber) -> bool {
-		ConfirmedHeaders::<I>::contains_key(block_number)
+		ConfirmedHeaders::contains_key(block_number)
 	}
 
 	fn verify_raw_header_thing(
@@ -149,11 +147,11 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 			mmr,
 		} = raw_header_thing.into();
 
-		if ConfirmedHeaders::<I>::contains_key(header.number) {
-			return Err(<Error<T, I>>::TargetHeaderAE)?;
+		if ConfirmedHeaders::contains_key(header.number) {
+			return Err(<Error<T>>::TargetHeaderAE)?;
 		}
 		if !Self::verify_block_seal(&header, &ethash_proof) {
-			return Err(<Error<T, I>>::HeaderInvalid)?;
+			return Err(<Error<T>>::HeaderInvalid)?;
 		};
 
 		Ok(TcHeaderBrief {
@@ -180,11 +178,11 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 			} = raw_header_thing.into();
 
 			if !Self::verify_block_seal(&header, &ethash_proof) {
-				return Err(<Error<T, I>>::HeaderInvalid)?;
+				return Err(<Error<T>>::HeaderInvalid)?;
 			};
 
 			if !Self::verify_block_with_confrim_blocks(&header) {
-				return Err(<Error<T, I>>::NotComplyWithConfirmebBlocks)?;
+				return Err(<Error<T>>::NotComplyWithConfirmebBlocks)?;
 			}
 		}
 		Ok(output)
@@ -205,7 +203,7 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 
 		for i in 1..header_briefs_chain.len() - 1 {
 			if header_briefs_chain[i].parent_hash != header_briefs_chain[i + 1].hash {
-				return Err(<Error<T, I>>::ChainInvalid)?;
+				return Err(<Error<T>>::ChainInvalid)?;
 			}
 			let header =
 				EthHeader::decode(&mut &*header_briefs_chain[i].others).unwrap_or_default();
@@ -214,14 +212,14 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 
 			if *(header.difficulty()) != eth_partial.calculate_difficulty(&header, &previous_header)
 			{
-				return Err(<Error<T, I>>::ChainInvalid)?;
+				return Err(<Error<T>>::ChainInvalid)?;
 			}
 		}
 		Ok(())
 	}
 
 	fn store_header(raw_header_thing: RawHeaderThing) -> DispatchResult {
-		let last_comfirmed_block_number = if let Some(i) = LastConfirmedHeaderInfo::<I>::get() {
+		let last_comfirmed_block_number = if let Some(i) = LastConfirmedHeaderInfo::get() {
 			i.0
 		} else {
 			0
@@ -233,14 +231,14 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 		} = raw_header_thing.into();
 
 		if header.number > last_comfirmed_block_number {
-			LastConfirmedHeaderInfo::<I>::set(Some((
+			LastConfirmedHeaderInfo::set(Some((
 				header.number,
 				header.hash.unwrap_or_default(),
 				mmr,
 			)))
 		};
 
-		ConfirmedHeaders::<I>::insert(header.number, header);
+		ConfirmedHeaders::insert(header.number, header);
 
 		Ok(())
 	}
