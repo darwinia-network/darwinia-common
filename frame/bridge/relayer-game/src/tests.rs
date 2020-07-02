@@ -55,7 +55,7 @@ fn jump_round_should_fail() {
 #[test]
 fn no_challenge_should_work() {
 	ExtBuilder::default().build().execute_with(|| {
-		for (block_number, closed_at) in (1..10).rev().zip((1..10).map(|n| 4 * n)) {
+		for (block_number, closed_at) in (1..10).rev().zip((1..).map(|n| 4 * n)) {
 			let header = MockTcHeader::new(block_number, 0);
 
 			assert_ok!(RelayerGame::submit_proposal(
@@ -85,7 +85,7 @@ fn extend_should_work() {
 			proposal_chain_b.clone()
 		));
 
-		for (block_number, closed_at) in (2..5).rev().zip((1..4).map(|n| 4 * n)) {
+		for (block_number, closed_at) in (2..5).rev().zip((1..).map(|n| 4 * n)) {
 			run_to_block(closed_at);
 
 			proposal_chain_a.push(MockTcHeader::new_raw(block_number, 0));
