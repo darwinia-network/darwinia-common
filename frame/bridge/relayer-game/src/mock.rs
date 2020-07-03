@@ -183,6 +183,7 @@ pub type RelayerGameError = Error<Test, DefaultInstance>;
 pub type RelayerGame = Module<Test>;
 
 thread_local! {
+	static CHALLENGE_TIME: RefCell<BlockNumber> = RefCell::new(3);
 	static ESTIMATE_BOND: RefCell<Balance> = RefCell::new(1);
 }
 
@@ -275,7 +276,7 @@ impl AdjustableRelayerGame for RelayerGameAdjustor {
 	type TcBlockNumber = mock_relay::MockTcBlockNumber;
 
 	fn challenge_time(_round: Round) -> Self::Moment {
-		3
+		CHALLENGE_TIME.with(|v| v.borrow().to_owned())
 	}
 
 	fn round_from_chain_len(chain_len: u64) -> Round {
@@ -296,10 +297,16 @@ impl AdjustableRelayerGame for RelayerGameAdjustor {
 }
 
 pub struct ExtBuilder {
+	challenge_time: BlockNumber,
 	estimate_bond: Balance,
 	headers: Vec<mock_relay::MockTcHeader>,
 }
 impl ExtBuilder {
+	pub fn challenge_time(mut self, challenge_time: BlockNumber) -> Self {
+		self.challenge_time = challenge_time;
+
+		self
+	}
 	pub fn estimate_bond(mut self, estimate_bond: Balance) -> Self {
 		self.estimate_bond = estimate_bond;
 
@@ -310,7 +317,9 @@ impl ExtBuilder {
 
 		self
 	}
+
 	pub fn set_associated_constants(&self) {
+		CHALLENGE_TIME.with(|v| v.replace(self.challenge_time));
 		ESTIMATE_BOND.with(|v| v.replace(self.estimate_bond));
 	}
 
@@ -339,6 +348,7 @@ impl ExtBuilder {
 impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {
+			challenge_time: RelayerGameAdjustor::challenge_time(0),
 			estimate_bond: RelayerGameAdjustor::estimate_bond(0, 0),
 			headers: vec![],
 		}

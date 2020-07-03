@@ -113,6 +113,35 @@ fn jump_round_should_fail() {
 }
 
 #[test]
+fn challenge_time_should_work() {
+	for challenge_time in 3..10 {
+		ExtBuilder::default()
+			.challenge_time(challenge_time)
+			.build()
+			.execute_with(|| {
+				let header = MockTcHeader::new(1, 0);
+
+				assert_ok!(RelayerGame::submit_proposal(
+					Origin::signed(1),
+					vec![header.encode()]
+				));
+
+				for block in 0..=challenge_time {
+					run_to_block(block);
+
+					assert_eq!(RelayerGame::proposals_of_game(header.number).len(), 1);
+					assert_eq!(Relay::header_of_block_number(header.number), None);
+				}
+
+				run_to_block(challenge_time + 1);
+
+				assert_eq!(RelayerGame::proposals_of_game(header.number).len(), 0);
+				assert_eq!(Relay::header_of_block_number(header.number), Some(header));
+			});
+	}
+}
+
+#[test]
 fn no_challenge_should_work() {
 	ExtBuilder::default().build().execute_with(|| {
 		for (block_number, closed_at) in (1..10).rev().zip((1..).map(|n| 4 * n)) {
