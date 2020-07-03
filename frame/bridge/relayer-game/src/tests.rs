@@ -52,7 +52,7 @@ fn insufficient_bond_should_fail() {
 }
 
 #[test]
-fn already_confirmed_should_failed() {
+fn already_confirmed_should_fail() {
 	let mut confirmed_headers = vec![];
 
 	for block_number in 5..10 {
