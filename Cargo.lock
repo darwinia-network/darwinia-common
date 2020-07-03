@@ -1000,6 +1000,8 @@ dependencies = [
 name = "darwinia-ethereum-relay"
 version = "0.6.1"
 dependencies = [
+ "array-bytes",
+ "darwinia-balances",
  "darwinia-header-mmr-rpc-runtime-api",
  "darwinia-support",
  "ethereum-primitives",
@@ -1008,6 +1010,9 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "serde",
+ "serde_json",
+ "sp-core",
+ "sp-io",
  "sp-runtime",
  "sp-std 2.0.0-rc2 (git+https://github.com/darwinia-network/substrate.git?tag=v2.0.0-rc.darwinia.1)",
 ]
