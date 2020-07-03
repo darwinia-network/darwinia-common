@@ -36,7 +36,7 @@
 	        a   b d   e |          a   b   d
 	        1   2 3   4 |          1   2   3
 
-	This Extended Prove: Previous MMR Root A Contains d(Block 3's MMR Hash)
+	This Extended Prove: A(Previous MMR Root) Contains d(Block 3's MMR Hash)
 	Proof: [e, c]
 	  A
 	 / \
@@ -54,7 +54,7 @@
 	        a   b d   e |          a   b
 	        1   2 3   4 |          1   2
 
-	This Extended Prove: Previous MMR Root B Contains b(Block 2's MMR Hash)
+	This Extended Prove: B(Previous MMR Root) Contains b(Block 2's MMR Hash)
 	Proof: [a, d]
 	    B
 	   / \
