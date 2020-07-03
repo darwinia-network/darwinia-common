@@ -1,6 +1,7 @@
 ## Steps Into MMR Proof
 
 - **Target Chain: Ethereum**
+- **Sampling Strategy: One By One**
 - **Relay Block's Number: 4**
 - **Game Id: 4**
 - **Last Confirmed Block's Number on Darwinia When Game(4) Started: 1**
@@ -17,7 +18,7 @@
 	        a   b d   e |          a   b d   e
 	        1   2 3   4 |          1   2 3   4
 
-	This Proposal Say: I Think A Contains a
+	This Proposal Say: I Think The MMR Root Is A, And I Prove It Contains a(Block 1's MMR Hash)
 	Proof: [b, f]
 	    A
 	   / \
@@ -35,7 +36,7 @@
 	        a   b d   e |          a   b   d
 	        1   2 3   4 |          1   2   3
 
-	This Extended Prove: Previous MMR Root A Contains d
+	This Extended Prove: Previous MMR Root A Contains d(Block 3's MMR Hash)
 	Proof: [e, c]
 	  A
 	 / \
@@ -53,7 +54,7 @@
 	        a   b d   e |          a   b
 	        1   2 3   4 |          1   2
 
-	This Extended Prove: Previous MMR Root B Contains b
+	This Extended Prove: Previous MMR Root B Contains b(Block 2's MMR Hash)
 	Proof: [a, d]
 	    B
 	   / \
