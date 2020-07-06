@@ -13,7 +13,7 @@ use sp_runtime::{DispatchError, DispatchResult};
 use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_support::relay::*;
-use ethereum_primitives::{header::EthHeader, EthBlockNumber, H256};
+use ethereum_primitives::{header::EthHeader, EthBlockNumber};
 
 pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	type Event: From<Event<Self, I>> + Into<<Self as frame_system::Trait>::Event>;
@@ -52,9 +52,8 @@ decl_module! {
 
 impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 	type TcBlockNumber = EthBlockNumber;
-	type TcHeaderHash = H256;
-	// TODO: MMR type
-	type TcHeaderMMR = ();
+	type TcHeaderHash = ethereum_primitives::H256;
+	type TcHeaderMMR = sp_core::H256;
 
 	fn best_block_number() -> Self::TcBlockNumber {
 		unimplemented!()

@@ -20,6 +20,7 @@ ethereum-types = { default-features = false, git = "https://github.com/darwinia-
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
 frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
+sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
 sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
 sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
 
@@ -37,6 +38,7 @@ std = [
 	# substrate
 	"frame-support/std",
 	"frame-system/std",
+	"sp-core/std",
 	"sp-runtime/std",
 	"sp-std/std",
 ]

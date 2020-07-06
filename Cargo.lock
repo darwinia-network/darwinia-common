@@ -1007,6 +1007,7 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "serde",
+ "sp-core",
  "sp-runtime",
  "sp-std 2.0.0-rc2 (git+https://github.com/darwinia-network/substrate.git?tag=v2.0.0-rc.darwinia.1)",
 ]

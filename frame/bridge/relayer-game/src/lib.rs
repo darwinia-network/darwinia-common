@@ -33,6 +33,7 @@ mod types {
 
 	pub type TcBlockNumber<T, I> = <Tc<T, I> as Relayable>::TcBlockNumber;
 	pub type TcHeaderHash<T, I> = <Tc<T, I> as Relayable>::TcHeaderHash;
+	pub type TcHeaderMMR = H256;
 
 	pub type GameId<TcBlockNumber> = TcBlockNumber;
 
@@ -50,6 +51,7 @@ use frame_support::{
 	traits::{Currency, ExistenceRequirement, OnUnbalanced},
 };
 use frame_system::{self as system, ensure_signed};
+use sp_core::H256;
 use sp_runtime::{
 	traits::{SaturatedConversion, Saturating, Zero},
 	RuntimeDebug,
@@ -80,8 +82,7 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	>;
 
 	/// The target chain's relay module's API
-	// TODO: MMR type
-	type TargetChain: Relayable<TcHeaderMMR = ()>;
+	type TargetChain: Relayable<TcHeaderMMR = TcHeaderMMR>;
 }
 
 decl_event! {
@@ -124,7 +125,7 @@ decl_storage! {
 				AccountId<T>,
 				BondedTcHeader<
 					RingBalance<T, I>,
-					TcHeaderBrief<TcBlockNumber<T, I>, TcHeaderHash<T, I>, ()>
+					TcHeaderBrief<TcBlockNumber<T, I>, TcHeaderHash<T, I>, TcHeaderMMR>
 				>,
 				TcHeaderHash<T, I>
 			>>;
