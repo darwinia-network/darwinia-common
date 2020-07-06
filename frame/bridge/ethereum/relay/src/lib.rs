@@ -15,7 +15,7 @@ use ethereum_types::H128;
 use crate::sp_api_hidden_includes_decl_storage::hidden_include::sp_runtime::traits::Hash;
 use frame_support::{decl_error, decl_event, decl_module, decl_storage};
 use frame_system::{self as system, ensure_root};
-use sp_runtime::{DispatchError, DispatchResult};
+use sp_runtime::{DispatchError, DispatchResult, RuntimeDebug};
 use sp_std::{convert::From, prelude::*};
 // --- darwinia ---
 use darwinia_header_mmr_rpc_runtime_api::Proof as MMRProof;
@@ -376,7 +376,7 @@ impl<T: Trait> Relayable for Module<T> {
 	}
 }
 
-#[derive(Encode, Decode, Default)]
+#[derive(Encode, Decode, Default, RuntimeDebug)]
 pub struct EthHeaderThing {
 	header: EthHeader,
 	ethash_proof: Vec<DoubleNodeWithMerkleProof>,

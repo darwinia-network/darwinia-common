@@ -1,6 +1,7 @@
 //! Mock file for ethereum-relay.
 // --- std ---
 use std::fs::File;
+use std::mem::transmute;
 // --- crates ---
 use serde::Deserialize;
 // --- substrate ---
@@ -20,6 +21,7 @@ pub type RingInstance = darwinia_balances::Instance0;
 pub type KtonInstance = darwinia_balances::Instance1;
 
 pub type System = frame_system::Module<Test>;
+pub type EthRelay = Module<Test>;
 
 darwinia_support::impl_account_data! {
 	pub struct AccountData<Balance>
@@ -109,43 +111,35 @@ impl ExtBuilder {
 	}
 }
 
-#[derive(Debug, Deserialize)]
-pub struct EthHeaderJson {
-	eth_header: String,
-	ethash_proof: String,
-	mmr_root: String,
-	mmr_proof: Vec<String>,
-}
-
-pub struct EthHeaderRaw {
-	pub eth_header: EthHeader,
-	pub ethash_proof: DoubleNodeWithMerkleProof,
-	pub mmr_root: H256,
-	pub mmr_proof: Vec<H256>,
-}
-
-impl EthHeaderRaw {
-	pub fn from_file(path: &str) -> Self {
-		let eth_header_json: EthHeaderJson =
-			serde_json::from_reader(File::open(path).unwrap()).unwrap();
-		let eth_header = EthHeader::decode(&mut &*hex_bytes_unchecked(eth_header_json.eth_header))
-			.unwrap_or_default();
-		let ethash_proof = DoubleNodeWithMerkleProof::decode(&mut &*hex_bytes_unchecked(
-			eth_header_json.ethash_proof,
-		))
+pub fn from_file_to_eth_header_thing(path: &str) -> EthHeaderThing {
+	#[derive(Debug, Deserialize)]
+	pub struct EthHeaderJson {
+		eth_header: String,
+		ethash_proof: String,
+		mmr_root: String,
+		mmr_proof: Vec<String>,
+	}
+	let eth_header_json: EthHeaderJson =
+		serde_json::from_reader(File::open(path).unwrap()).unwrap();
+	let header = EthHeader::decode(&mut &*hex_bytes_unchecked(eth_header_json.eth_header))
 		.unwrap_or_default();
-		let mmr_root =
-			H256::decode(&mut &*hex_bytes_unchecked(eth_header_json.mmr_root)).unwrap_or_default();
-		let mmr_proof: Vec<H256> = eth_header_json
-			.mmr_proof
-			.iter()
-			.map(|h| H256::decode(&mut &*hex_bytes_unchecked(h)).unwrap_or_default())
-			.collect();
-		EthHeaderRaw {
-			eth_header,
-			ethash_proof,
-			mmr_root,
-			mmr_proof,
+	let ethash_proof = Vec::<DoubleNodeWithMerkleProof>::decode(&mut &*hex_bytes_unchecked(
+		eth_header_json.ethash_proof,
+	))
+	.unwrap_or_default();
+	let mmr_root =
+		H256::decode(&mut &*hex_bytes_unchecked(eth_header_json.mmr_root)).unwrap_or_default();
+	let mmr_proof: Vec<H256> = eth_header_json
+		.mmr_proof
+		.iter()
+		.map(|h| H256::decode(&mut &*hex_bytes_unchecked(h)).unwrap_or_default())
+		.collect();
+	unsafe {
+		EthHeaderThing {
+			header,
+			ethash_proof: transmute(ethash_proof),
+			mmr: transmute(mmr_root),
+			mmr_proof: transmute(mmr_proof),
 		}
 	}
 }
