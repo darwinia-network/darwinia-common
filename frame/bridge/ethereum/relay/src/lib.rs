@@ -191,23 +191,20 @@ impl<T: Trait> Module<T> {
 		return true;
 	}
 
-	fn verify_mmr_with_confrim_blocks(mmr: EthereumMMR, mmr_proof: MMRProof<EthereumMMR>) -> bool {
-		if let Some(i) = LastConfirmedHeaderInfo::get() {
-			let mut cal_mmr: Vec<u8> = i.2.as_ref().iter().cloned().collect();
-			for h in mmr_proof.0 {
-				let encodable = (mmr, h);
-				cal_mmr = <T as frame_system::Trait>::Hashing::hash_of(&encodable)
-					.as_ref()
-					.iter()
-					.cloned()
-					.collect();
-			}
-			return cal_mmr
+	fn verify_mmr(hash: H256, mmr: EthereumMMR, mmr_proof: MMRProof<EthereumMMR>) -> bool {
+		let mut cal_mmr: Vec<u8> = hash.as_ref().iter().cloned().collect();
+		for h in mmr_proof.0 {
+			let encodable = (mmr, h);
+			cal_mmr = <T as frame_system::Trait>::Hashing::hash_of(&encodable)
+				.as_ref()
 				.iter()
-				.zip(mmr.as_ref().iter())
-				.all(|(a, b)| *a == *b);
-		};
-		true
+				.cloned()
+				.collect();
+		}
+		cal_mmr
+			.iter()
+			.zip(mmr.as_ref().iter())
+			.all(|(a, b)| *a == *b)
 	}
 }
 
@@ -270,7 +267,9 @@ impl<T: Trait> Relayable for Module<T> {
 		DispatchError,
 	> {
 		let output = vec![];
-		for raw_header_thing in raw_header_thing_chain {
+		let mut previous_mmr = None;
+
+		for (idx, raw_header_thing) in raw_header_thing_chain.into_iter().enumerate() {
 			let EthHeaderThing {
 				header,
 				ethash_proof,
@@ -286,9 +285,22 @@ impl<T: Trait> Relayable for Module<T> {
 				return Err(<Error<T>>::NotComplyWithConfirmebBlocks)?;
 			}
 
-			if !Self::verify_mmr_with_confrim_blocks(mmr, mmr_proof) {
-				return Err(<Error<T>>::MMRInvalid)?;
+			if idx == 0 {
+				if let Some(i) = LastConfirmedHeaderInfo::get() {
+					if !Self::verify_mmr(i.2, mmr, mmr_proof) {
+						return Err(<Error<T>>::MMRInvalid)?;
+					}
+				}
+			} else {
+				if !Self::verify_mmr(
+					header.hash.unwrap_or_default(),
+					previous_mmr.unwrap_or_default(),
+					mmr_proof,
+				) {
+					return Err(<Error<T>>::MMRInvalid)?;
+				}
 			}
+			previous_mmr = Some(mmr);
 		}
 		Ok(output)
 	}
