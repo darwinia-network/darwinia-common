@@ -62,7 +62,7 @@ use sp_std::{collections::btree_map::BTreeMap, prelude::*};
 use darwinia_support::{balance::lock::*, relay::*};
 use types::*;
 
-const RELAYER_GAME_ID: LockIdentifier = *b"da/rgame";
+pub const RELAYER_GAME_ID: LockIdentifier = *b"da/rgame";
 
 pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	type Event: From<Event<Self, I>> + Into<<Self as frame_system::Trait>::Event>;
@@ -157,7 +157,7 @@ decl_storage! {
 
 		/// All the bonds per relayer
 		pub Bonds
-			get(fn bond_of_relayer)
+			get(fn bonds_of_relayer)
 			: map hasher(blake2_128_concat) AccountId<T>
 			=> RingBalance<T, I>;
 	}
@@ -695,7 +695,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	where
 		F: FnOnce(RingBalance<T, I>) -> RingBalance<T, I>,
 	{
-		let bonds = calc_bonds(Self::bond_of_relayer(relayer));
+		let bonds = calc_bonds(Self::bonds_of_relayer(relayer));
 
 		if bonds.is_zero() {
 			T::RingCurrency::remove_lock(RELAYER_GAME_ID, relayer);

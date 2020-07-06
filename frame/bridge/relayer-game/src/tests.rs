@@ -3,7 +3,10 @@ use codec::Encode;
 // --- substrate ---
 use frame_support::{assert_err, assert_ok};
 // --- darwinia ---
-use crate::mock::{mock_relay::MockTcHeader, *};
+use crate::{
+	mock::{mock_relay::*, *},
+	*,
+};
 
 #[test]
 fn empty_proposal_should_fail() {
@@ -89,6 +92,86 @@ fn duplicate_game_should_fail() {
 			RelayerGameError::ProposalAE
 		);
 	});
+}
+
+#[test]
+fn lock_should_work() {
+	for estimate_bond in 1..5 {
+		ExtBuilder::default()
+			.estimate_bond(estimate_bond)
+			.build()
+			.execute_with(|| {
+				let mut bonds = estimate_bond;
+
+				let mut proposal_chain_a = vec![MockTcHeader::new_raw(5, 0)];
+				let mut proposal_chain_b = vec![MockTcHeader::new_raw(5, 2)];
+
+				assert_ok!(RelayerGame::submit_proposal(
+					Origin::signed(1),
+					proposal_chain_a.clone()
+				));
+				assert_eq!(RelayerGame::bonds_of_relayer(1), bonds);
+				assert_eq!(
+					Ring::locks(1),
+					vec![BalanceLock {
+						id: RELAYER_GAME_ID,
+						lock_for: LockFor::Common { amount: bonds },
+						lock_reasons: LockReasons::All
+					}]
+				);
+
+				assert_ok!(RelayerGame::submit_proposal(
+					Origin::signed(2),
+					proposal_chain_b.clone()
+				));
+				assert_eq!(RelayerGame::bonds_of_relayer(2), bonds);
+				assert_eq!(
+					Ring::locks(2),
+					vec![BalanceLock {
+						id: RELAYER_GAME_ID,
+						lock_for: LockFor::Common { amount: bonds },
+						lock_reasons: LockReasons::All
+					}]
+				);
+
+				for (block_number, closed_at) in (2..5).rev().zip((1..).map(|n| 4 * n)) {
+					run_to_block(closed_at);
+
+					bonds += estimate_bond;
+
+					proposal_chain_a.push(MockTcHeader::new_raw(block_number, 0));
+					proposal_chain_b.push(MockTcHeader::new_raw(block_number, 2));
+
+					assert_ok!(RelayerGame::submit_proposal(
+						Origin::signed(1),
+						proposal_chain_a.clone()
+					));
+					assert_eq!(RelayerGame::bonds_of_relayer(1), bonds);
+					assert_eq!(
+						Ring::locks(1),
+						vec![BalanceLock {
+							id: RELAYER_GAME_ID,
+							lock_for: LockFor::Common { amount: bonds },
+							lock_reasons: LockReasons::All
+						}]
+					);
+
+					assert_ok!(RelayerGame::submit_proposal(
+						Origin::signed(2),
+						proposal_chain_b.clone()
+					));
+					assert_eq!(RelayerGame::bonds_of_relayer(2), bonds);
+					assert_eq!(
+						Ring::locks(2),
+						vec![BalanceLock {
+							id: RELAYER_GAME_ID,
+							lock_for: LockFor::Common { amount: bonds },
+							lock_reasons: LockReasons::All
+						}]
+					);
+				}
+			});
+	}
 }
 
 #[test]
