@@ -20,6 +20,40 @@ fn test_check_test_date_decoding() {
 		assert_eq!(header_thing.header.number, 3);
 	})
 }
+
+#[test]
+fn test_verify_test_data_mmr_proof() {
+	ExtBuilder::default().build().execute_with(|| {
+		let header_thing_0 = from_file_to_eth_header_thing("./src/test-data/0.json");
+		let header_thing_1 = from_file_to_eth_header_thing("./src/test-data/1.json");
+		let header_thing_2 = from_file_to_eth_header_thing("./src/test-data/2.json");
+		let header_thing_3 = from_file_to_eth_header_thing("./src/test-data/3.json");
+		assert_eq!(
+			EthRelay::verify_mmr(
+				header_thing_0.mmr,
+				header_thing_3.mmr,
+				header_thing_3.mmr_proof,
+			),
+			true
+		);
+		assert_eq!(
+			EthRelay::verify_mmr(
+				header_thing_2.header.hash.unwrap(),
+				header_thing_3.mmr,
+				header_thing_2.mmr_proof,
+			),
+			true
+		);
+		assert_eq!(
+			EthRelay::verify_mmr(
+				header_thing_1.header.hash.unwrap(),
+				header_thing_2.mmr,
+				header_thing_1.mmr_proof,
+			),
+			true
+		);
+	})
+}
 #[test]
 fn test_store_header() {
 	ExtBuilder::default().build().execute_with(|| {
