@@ -21,6 +21,8 @@ sp-runtime = { default-features = false, git = "https://github.com/darwinia-netw
 sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
 
 [dev-dependencies]
+# --- crates ---
+env_logger = { version = "0.7.1" }
 # --- darwinia ---
 darwinia-balances = { path = "../../balances" }
 # --- substrate ---

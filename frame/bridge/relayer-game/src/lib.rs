@@ -46,7 +46,7 @@ mod types {
 use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
-	debug::error,
+	debug::{error, info},
 	decl_error, decl_event, decl_module, decl_storage, ensure,
 	traits::{Currency, ExistenceRequirement, OnUnbalanced},
 };
@@ -458,6 +458,8 @@ decl_module! {
 									.saturated_into() as u64;
 
 							if last_round_proposals_chain_len as u64 == full_chain_len {
+								info!("[relayer-game] On Chain Arbitrate");
+
 								on_chain_arbitrate(
 									game_id,
 									last_round,
