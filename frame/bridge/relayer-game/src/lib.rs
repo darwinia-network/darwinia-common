@@ -114,6 +114,7 @@ decl_error! {
 	}
 }
 
+// TODO: store in relay, avoid dup codec
 decl_storage! {
 	trait Store for Module<T: Trait<I>, I: Instance = DefaultInstance> as DarwiniaRelayerGame {
 		/// All the proposals here per game

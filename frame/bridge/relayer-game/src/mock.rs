@@ -1,13 +1,17 @@
 pub mod mock_relay {
+	pub mod types {
+		pub type MockTcBlockNumber = u64;
+		pub type MockTcHeaderHash = u128;
+	}
+
 	// --- crates ---
 	use serde::{Deserialize, Serialize};
 	// --- substrate ---
 	use sp_runtime::{DispatchError, DispatchResult};
 	// --- darwinia ---
-	use crate::*;
+	use crate::{mock::*, *};
 	use darwinia_support::relay::Relayable;
-
-	pub type MockTcBlockNumber = u64;
+	use types::*;
 
 	decl_storage! {
 		trait Store for Module<T: Trait> as DarwiniaRelay {
@@ -46,7 +50,7 @@ pub mod mock_relay {
 
 	impl<T: Trait> Relayable for Module<T> {
 		type TcBlockNumber = MockTcBlockNumber;
-		type TcHeaderHash = ();
+		type TcHeaderHash = MockTcHeaderHash;
 		type TcHeaderMMR = ();
 
 		fn best_block_number() -> Self::TcBlockNumber {
@@ -63,23 +67,23 @@ pub mod mock_relay {
 			),
 			DispatchError,
 		> {
-			let header =
-				MockTcHeader::decode(&mut &*raw_header_thing).map_err(|_| "Decode - FAILED")?;
 			let verify = |header: &MockTcHeader| -> DispatchResult {
-				ensure!(header.valid != Validation::HashInvalid, "Header - INVALID");
+				ensure!(header.valid, "Header - INVALID");
 
 				Ok(())
 			};
+			let header =
+				MockTcHeader::decode(&mut &*raw_header_thing).map_err(|_| "Decode - FAILED")?;
 
 			verify(&header)?;
 
 			Ok((
 				TcHeaderBrief {
 					number: header.number,
-					hash: (),
-					parent_hash: (),
+					hash: header.hash,
+					parent_hash: header.parent_hash,
 					mmr: (),
-					others: header.valid.encode(),
+					others: vec![],
 				},
 				if with_raw_header {
 					raw_header_thing
@@ -90,18 +94,21 @@ pub mod mock_relay {
 		}
 
 		fn on_chain_arbitrate(
-			header_brief_chain: Vec<
+			mut header_brief_chain: Vec<
 				TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
 			>,
 		) -> DispatchResult {
-			for header_briefs in header_brief_chain {
-				let validation = Validation::decode(&mut &*header_briefs.others)
-					.map_err(|_| "Decode - FAILED")?;
+			header_brief_chain.sort_by_key(|header_brief| header_brief.number);
 
+			let mut parent_hash = header_brief_chain.pop().unwrap().hash;
+
+			while let Some(header_brief) = header_brief_chain.pop() {
 				ensure!(
-					validation != Validation::ContinuousInvalid,
+					parent_hash != header_brief.parent_hash,
 					"Continuous - INVALID"
 				);
+
+				parent_hash = header_brief.hash;
 			}
 
 			Ok(())
@@ -120,41 +127,71 @@ pub mod mock_relay {
 	#[derive(Clone, Debug, PartialEq, Encode, Decode, Serialize, Deserialize)]
 	pub struct MockTcHeader {
 		pub number: MockTcBlockNumber,
-		pub valid: Validation,
+		pub hash: MockTcHeaderHash,
+		pub parent_hash: MockTcHeaderHash,
+		pub valid: bool,
 	}
 	impl MockTcHeader {
-		pub fn new(number: MockTcBlockNumber, valid: u8) -> Self {
+		pub fn mock(number: MockTcBlockNumber, parent_hash: MockTcHeaderHash, valid: u8) -> Self {
+			let valid = match valid {
+				0 => false,
+				_ => true,
+			};
+
 			Self {
 				number,
-				valid: valid.into(),
+				hash: GENESIS_TIME.with(|v| v.to_owned()).elapsed().as_nanos(),
+				parent_hash,
+				valid,
 			}
 		}
 
-		pub fn new_raw(number: MockTcBlockNumber, valid: u8) -> RawHeaderThing {
-			Self::new(number, valid).encode()
+		pub fn mock_raw(
+			number: MockTcBlockNumber,
+			parent_hash: MockTcHeaderHash,
+			valid: u8,
+		) -> RawHeaderThing {
+			Self::mock(number, parent_hash, valid).encode()
 		}
-	}
 
-	#[derive(Clone, Debug, PartialEq, Encode, Decode, Serialize, Deserialize)]
-	pub enum Validation {
-		Valid,
-		HashInvalid,
-		ContinuousInvalid,
-	}
-	impl Into<Validation> for u8 {
-		fn into(self) -> Validation {
-			match self {
-				0 => Validation::Valid,
-				1 => Validation::HashInvalid,
-				2 => Validation::ContinuousInvalid,
-				_ => unreachable!(),
+		pub fn mock_chain(validations: Vec<u8>) -> Vec<Self> {
+			if validations.is_empty() {
+				return vec![];
 			}
+
+			let header = Self::mock(1, 0, validations[0]);
+			let mut parent_hash = header.hash;
+			let mut chain = vec![];
+
+			if validations.len() > 1 {
+				for (&valid, number) in validations[1..]
+					.iter()
+					.zip(2..(validations.len() as u64) + 1)
+				{
+					let header = Self::mock(number, parent_hash, valid);
+
+					parent_hash = header.hash;
+
+					chain.push(header);
+				}
+			}
+
+			chain.push(header);
+
+			chain
+		}
+
+		pub fn mock_raw_chain(validations: Vec<u8>) -> Vec<RawHeaderThing> {
+			Self::mock_chain(validations)
+				.into_iter()
+				.map(|header| header.encode())
+				.collect()
 		}
 	}
 }
 
 // --- std ---
-use std::cell::RefCell;
+use std::{cell::RefCell, time::Instant};
 // --- substrate ---
 use frame_support::{impl_outer_origin, parameter_types, traits::OnFinalize, weights::Weight};
 use sp_core::H256;
@@ -162,6 +199,7 @@ use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill};
 // --- darwinia ---
 use crate::*;
 use darwinia_support::relay::AdjustableRelayerGame;
+use mock_relay::{types::*, MockTcHeader};
 
 pub type AccountId = u64;
 pub type AccountIndex = u64;
@@ -183,6 +221,7 @@ pub type RelayerGameError = Error<Test, DefaultInstance>;
 pub type RelayerGame = Module<Test>;
 
 thread_local! {
+	static GENESIS_TIME: Instant = Instant::now();
 	static CHALLENGE_TIME: RefCell<BlockNumber> = RefCell::new(3);
 	static ESTIMATE_BOND: RefCell<Balance> = RefCell::new(1);
 }
@@ -273,7 +312,7 @@ pub struct RelayerGameAdjustor;
 impl AdjustableRelayerGame for RelayerGameAdjustor {
 	type Moment = BlockNumber;
 	type Balance = Balance;
-	type TcBlockNumber = mock_relay::MockTcBlockNumber;
+	type TcBlockNumber = MockTcBlockNumber;
 
 	fn challenge_time(_round: Round) -> Self::Moment {
 		CHALLENGE_TIME.with(|v| v.borrow().to_owned())
@@ -299,7 +338,7 @@ impl AdjustableRelayerGame for RelayerGameAdjustor {
 pub struct ExtBuilder {
 	challenge_time: BlockNumber,
 	estimate_bond: Balance,
-	headers: Vec<mock_relay::MockTcHeader>,
+	headers: Vec<MockTcHeader>,
 }
 impl ExtBuilder {
 	pub fn challenge_time(mut self, challenge_time: BlockNumber) -> Self {
@@ -312,7 +351,7 @@ impl ExtBuilder {
 
 		self
 	}
-	pub fn headers(mut self, headers: Vec<mock_relay::MockTcHeader>) -> Self {
+	pub fn headers(mut self, headers: Vec<MockTcHeader>) -> Self {
 		self.headers = headers;
 
 		self
