@@ -154,7 +154,7 @@ pub mod mock_relay {
 			Self::mock(number, parent_hash, valid).encode()
 		}
 
-		pub fn mock_chain(validations: Vec<u8>) -> Vec<Self> {
+		pub fn mock_chain(mut validations: Vec<u8>) -> Vec<Self> {
 			if validations.is_empty() {
 				return vec![];
 			}
@@ -164,9 +164,14 @@ pub mod mock_relay {
 			let mut chain = vec![];
 
 			if validations.len() > 1 {
-				for (&valid, number) in validations[1..]
-					.iter()
-					.zip(2..(validations.len() as u64) + 1)
+				validations.remove(0);
+
+				for (valid, number) in validations
+					.into_iter()
+					.zip(2..)
+					.collect::<Vec<_>>()
+					.into_iter()
+					.rev()
 				{
 					let header = Self::mock(number, parent_hash, valid);
 

@@ -24,24 +24,22 @@ fn insufficient_bond_should_fail() {
 		.estimate_bond(100)
 		.build()
 		.execute_with(|| {
-			let mut proposal_chain = vec![MockTcHeader::new_raw(5, 0)];
+			let proposal_chain = MockTcHeader::mock_raw_chain(vec![1, 1]);
 
 			assert_err!(
-				RelayerGame::submit_proposal(Origin::signed(1), proposal_chain.clone()),
+				RelayerGame::submit_proposal(Origin::signed(1), proposal_chain[..1].to_vec()),
 				RelayerGameError::InsufficientBond
 			);
 			assert_ok!(RelayerGame::submit_proposal(
 				Origin::signed(2),
-				vec![MockTcHeader::new_raw(5, 2)]
+				vec![MockTcHeader::mock_raw(2, 0, 1)]
 			));
 			assert_ok!(RelayerGame::submit_proposal(
 				Origin::signed(3),
-				proposal_chain.clone()
+				proposal_chain[..1].to_vec()
 			));
 
 			run_to_block(4);
-
-			proposal_chain.push(MockTcHeader::new_raw(4, 0));
 
 			assert_err!(
 				RelayerGame::submit_proposal(Origin::signed(2), proposal_chain.clone()),
@@ -49,18 +47,14 @@ fn insufficient_bond_should_fail() {
 			);
 			assert_ok!(RelayerGame::submit_proposal(
 				Origin::signed(3),
-				proposal_chain.clone()
+				proposal_chain
 			));
 		});
 }
 
 #[test]
 fn already_confirmed_should_fail() {
-	let mut confirmed_headers = vec![];
-
-	for block_number in 5..10 {
-		confirmed_headers.push(MockTcHeader::new(block_number, 0));
-	}
+	let confirmed_headers = MockTcHeader::mock_chain(vec![1, 1, 1, 1, 1]);
 
 	ExtBuilder::default()
 		.headers(confirmed_headers.clone())
@@ -81,7 +75,7 @@ fn already_confirmed_should_fail() {
 #[test]
 fn duplicate_game_should_fail() {
 	ExtBuilder::default().build().execute_with(|| {
-		let proposal_chain = vec![MockTcHeader::new_raw(1, 0)];
+		let proposal_chain = MockTcHeader::mock_raw_chain(vec![1]);
 
 		assert_ok!(RelayerGame::submit_proposal(
 			Origin::signed(1),
@@ -95,100 +89,18 @@ fn duplicate_game_should_fail() {
 }
 
 #[test]
-fn lock_should_work() {
-	for estimate_bond in 1..5 {
-		ExtBuilder::default()
-			.estimate_bond(estimate_bond)
-			.build()
-			.execute_with(|| {
-				let mut bonds = estimate_bond;
-
-				let mut proposal_chain_a = vec![MockTcHeader::new_raw(5, 0)];
-				let mut proposal_chain_b = vec![MockTcHeader::new_raw(5, 2)];
-
-				assert_ok!(RelayerGame::submit_proposal(
-					Origin::signed(1),
-					proposal_chain_a.clone()
-				));
-				assert_eq!(RelayerGame::bonds_of_relayer(1), bonds);
-				assert_eq!(
-					Ring::locks(1),
-					vec![BalanceLock {
-						id: RELAYER_GAME_ID,
-						lock_for: LockFor::Common { amount: bonds },
-						lock_reasons: LockReasons::All
-					}]
-				);
-
-				assert_ok!(RelayerGame::submit_proposal(
-					Origin::signed(2),
-					proposal_chain_b.clone()
-				));
-				assert_eq!(RelayerGame::bonds_of_relayer(2), bonds);
-				assert_eq!(
-					Ring::locks(2),
-					vec![BalanceLock {
-						id: RELAYER_GAME_ID,
-						lock_for: LockFor::Common { amount: bonds },
-						lock_reasons: LockReasons::All
-					}]
-				);
-
-				for (block_number, closed_at) in (2..5).rev().zip((1..).map(|n| 4 * n)) {
-					run_to_block(closed_at);
-
-					bonds += estimate_bond;
-
-					proposal_chain_a.push(MockTcHeader::new_raw(block_number, 0));
-					proposal_chain_b.push(MockTcHeader::new_raw(block_number, 2));
-
-					assert_ok!(RelayerGame::submit_proposal(
-						Origin::signed(1),
-						proposal_chain_a.clone()
-					));
-					assert_eq!(RelayerGame::bonds_of_relayer(1), bonds);
-					assert_eq!(
-						Ring::locks(1),
-						vec![BalanceLock {
-							id: RELAYER_GAME_ID,
-							lock_for: LockFor::Common { amount: bonds },
-							lock_reasons: LockReasons::All
-						}]
-					);
-
-					assert_ok!(RelayerGame::submit_proposal(
-						Origin::signed(2),
-						proposal_chain_b.clone()
-					));
-					assert_eq!(RelayerGame::bonds_of_relayer(2), bonds);
-					assert_eq!(
-						Ring::locks(2),
-						vec![BalanceLock {
-							id: RELAYER_GAME_ID,
-							lock_for: LockFor::Common { amount: bonds },
-							lock_reasons: LockReasons::All
-						}]
-					);
-				}
-			});
-	}
-}
-
-#[test]
 fn jump_round_should_fail() {
 	ExtBuilder::default().build().execute_with(|| {
-		let mut proposal_chain = vec![MockTcHeader::new_raw(5, 0)];
+		let proposal_chain = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1]);
 
 		assert_ok!(RelayerGame::submit_proposal(
 			Origin::signed(1),
-			proposal_chain.clone()
+			proposal_chain[..1].to_vec()
 		));
 
-		for block_number in (2..5).rev() {
-			proposal_chain.push(MockTcHeader::new_raw(block_number, 0));
-
+		for i in 2..5 {
 			assert_err!(
-				RelayerGame::submit_proposal(Origin::signed(1), proposal_chain.clone()),
+				RelayerGame::submit_proposal(Origin::signed(1), proposal_chain[..i].to_vec()),
 				RelayerGameError::RoundMis
 			);
 		}
@@ -202,7 +114,7 @@ fn challenge_time_should_work() {
 			.challenge_time(challenge_time)
 			.build()
 			.execute_with(|| {
-				let header = MockTcHeader::new(1, 0);
+				let header = MockTcHeader::mock(1, 0, 1);
 
 				assert_ok!(RelayerGame::submit_proposal(
 					Origin::signed(1),
@@ -225,10 +137,31 @@ fn challenge_time_should_work() {
 }
 
 #[test]
-fn no_challenge_should_work() {
+fn extend_should_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		let proposal_chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1]);
+		let proposal_chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1]);
+
+		for i in 1..5 {
+			assert_ok!(RelayerGame::submit_proposal(
+				Origin::signed(1),
+				proposal_chain_a[..i].to_vec()
+			));
+			assert_ok!(RelayerGame::submit_proposal(
+				Origin::signed(2),
+				proposal_chain_b[..i].to_vec()
+			));
+
+			run_to_block(4 * i as u64);
+		}
+	});
+}
+
+#[test]
+fn settle_without_challenge_should_work() {
 	ExtBuilder::default().build().execute_with(|| {
 		for (block_number, closed_at) in (1..10).rev().zip((1..).map(|n| 4 * n)) {
-			let header = MockTcHeader::new(block_number, 0);
+			let header = MockTcHeader::mock(block_number, 0, 1);
 
 			assert_ok!(RelayerGame::submit_proposal(
 				Origin::signed(1),
@@ -242,35 +175,93 @@ fn no_challenge_should_work() {
 	})
 }
 
-#[test]
-fn extend_should_work() {
-	ExtBuilder::default().build().execute_with(|| {
-		let mut proposal_chain_a = vec![MockTcHeader::new_raw(5, 0)];
-		let mut proposal_chain_b = vec![MockTcHeader::new_raw(5, 2)];
+// #[test]
+// fn settle_with_challenge_should_work() {}
 
-		assert_ok!(RelayerGame::submit_proposal(
-			Origin::signed(1),
-			proposal_chain_a.clone()
-		));
-		assert_ok!(RelayerGame::submit_proposal(
-			Origin::signed(2),
-			proposal_chain_b.clone()
-		));
+// #[test]
+// fn lock_should_work() {
+// 	for estimate_bond in 1..5 {
+// 		ExtBuilder::default()
+// 			.estimate_bond(estimate_bond)
+// 			.build()
+// 			.execute_with(|| {
+// 				let mut bonds = estimate_bond;
 
-		for (block_number, closed_at) in (2..5).rev().zip((1..).map(|n| 4 * n)) {
-			run_to_block(closed_at);
+// 				let mut proposal_chain_a = vec![MockTcHeader::new_raw(5, 0)];
+// 				let mut proposal_chain_b = vec![MockTcHeader::new_raw(5, 2)];
 
-			proposal_chain_a.push(MockTcHeader::new_raw(block_number, 0));
-			proposal_chain_b.push(MockTcHeader::new_raw(block_number, 2));
+// 				assert_ok!(RelayerGame::submit_proposal(
+// 					Origin::signed(1),
+// 					proposal_chain_a.clone()
+// 				));
+// 				assert_eq!(RelayerGame::bonds_of_relayer(1), bonds);
+// 				assert_eq!(
+// 					Ring::locks(1),
+// 					vec![BalanceLock {
+// 						id: RELAYER_GAME_ID,
+// 						lock_for: LockFor::Common { amount: bonds },
+// 						lock_reasons: LockReasons::All
+// 					}]
+// 				);
 
-			assert_ok!(RelayerGame::submit_proposal(
-				Origin::signed(1),
-				proposal_chain_a.clone()
-			));
-			assert_ok!(RelayerGame::submit_proposal(
-				Origin::signed(2),
-				proposal_chain_b.clone()
-			));
-		}
-	});
-}
+// 				assert_ok!(RelayerGame::submit_proposal(
+// 					Origin::signed(2),
+// 					proposal_chain_b.clone()
+// 				));
+// 				assert_eq!(RelayerGame::bonds_of_relayer(2), bonds);
+// 				assert_eq!(
+// 					Ring::locks(2),
+// 					vec![BalanceLock {
+// 						id: RELAYER_GAME_ID,
+// 						lock_for: LockFor::Common { amount: bonds },
+// 						lock_reasons: LockReasons::All
+// 					}]
+// 				);
+
+// 				for (block_number, closed_at) in (1..5).rev().zip((1..).map(|n| 4 * n)) {
+// 					run_to_block(closed_at);
+
+// 					bonds += estimate_bond;
+
+// 					proposal_chain_a.push(MockTcHeader::new_raw(block_number, 0));
+// 					proposal_chain_b.push(MockTcHeader::new_raw(block_number, 2));
+
+// 					assert_ok!(RelayerGame::submit_proposal(
+// 						Origin::signed(1),
+// 						proposal_chain_a.clone()
+// 					));
+// 					assert_eq!(RelayerGame::bonds_of_relayer(1), bonds);
+// 					assert_eq!(
+// 						Ring::locks(1),
+// 						vec![BalanceLock {
+// 							id: RELAYER_GAME_ID,
+// 							lock_for: LockFor::Common { amount: bonds },
+// 							lock_reasons: LockReasons::All
+// 						}]
+// 					);
+
+// 					assert_ok!(RelayerGame::submit_proposal(
+// 						Origin::signed(2),
+// 						proposal_chain_b.clone()
+// 					));
+// 					assert_eq!(RelayerGame::bonds_of_relayer(2), bonds);
+// 					assert_eq!(
+// 						Ring::locks(2),
+// 						vec![BalanceLock {
+// 							id: RELAYER_GAME_ID,
+// 							lock_for: LockFor::Common { amount: bonds },
+// 							lock_reasons: LockReasons::All
+// 						}]
+// 					);
+// 				}
+
+// 				// run_to_block(5 * 4);
+
+// 				// assert_eq!(RelayerGame::bonds_of_relayer(1), 0);
+// 				// assert_eq!(Ring::locks(1), vec![]);
+
+// 				// assert_eq!(RelayerGame::bonds_of_relayer(2), 0);
+// 				// assert_eq!(Ring::locks(2), vec![]);
+// 			});
+// 	}
+// }
