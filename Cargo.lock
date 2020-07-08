@@ -1001,6 +1001,8 @@ name = "darwinia-ethereum-relay"
 version = "0.6.1"
 dependencies = [
  "array-bytes",
+ "blake2-rfc",
+ "ckb-merkle-mountain-range",
  "darwinia-balances",
  "darwinia-header-mmr-rpc-runtime-api",
  "darwinia-support",

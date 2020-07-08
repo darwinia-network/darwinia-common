@@ -2,11 +2,14 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+mod helper;
+mod mmr;
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
 mod tests;
 
+use core::marker::PhantomData;
 // --- crates ---
 use codec::{Decode, Encode};
 // --- github ---
@@ -18,13 +21,15 @@ use frame_system::{self as system, ensure_root};
 use sp_runtime::{DispatchError, DispatchResult, RuntimeDebug};
 use sp_std::{convert::From, prelude::*};
 // --- darwinia ---
-use darwinia_header_mmr_rpc_runtime_api::Proof as MMRProof;
+use crate::helper::leaf_index_to_pos;
+use crate::mmr::{block_num_to_mmr_size, MergeHash, MerkleProof};
 use darwinia_support::relay::*;
 use ethereum_primitives::{
 	header::EthHeader, merkle::DoubleNodeWithMerkleProof, pow::EthashPartial, EthBlockNumber, H256,
 };
 
 type EthereumMMRHash = H256;
+type MMRMerkleProof = MerkleProof<EthereumMMRHash, EthereumMMRHash>;
 
 pub trait Trait: frame_system::Trait {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
@@ -196,45 +201,21 @@ impl<T: Trait> Module<T> {
 		return true;
 	}
 
-	/// Verify the `leaf_hash` is included in the mmr tree, which root of tree is `mmr_root`.
-	/// The `mmr_proof` is a serial of hash in the path from `leaf_hash` to `mmr_root`
-	/// The length of `mmr_proof` is linear related with the height of mmr tree.
-	///
-	///                       mmr_root
-	///                      /
-	///                   ...
-	///                 /    \
-	///                -      nth hash of mmr_proof
-	///              /   \
-	///             -     3rd hash of mmr_proof
-	///           /   \
-	///          -     2nd hash of mmr_proof
-	///        /   \
-	/// leaf_hash   1st hash of mmr_proof
-	///
-	/// mmr_proof = [ 1st_hash, 2nd_hash, 3rd_hash ... nth_hash ]
-	///
 	fn verify_mmr(
-		leaf_hash: H256,
-		mmr_root: EthereumMMRHash,
-		mmr_proof: MMRProof<EthereumMMRHash>,
+		block_number: u64,
+		mmr_root: H256,
+		mmr_proof: Vec<H256>,
+		leaves: Vec<(u64, H256)>,
 	) -> bool {
-		// Merge the hash from mmr_proof ony by one
-		let mut cal_mmr: Vec<u8> = leaf_hash.as_ref().iter().cloned().collect();
-		for hash in mmr_proof.0 {
-			let encodable = (cal_mmr, hash);
-			cal_mmr = <T as frame_system::Trait>::Hashing::hash_of(&encodable)
-				.as_ref()
-				.iter()
-				.cloned()
-				.collect();
-		}
-
-		// verify the leaf_hash can reach the mmr_root by mmr_proof
-		cal_mmr
-			.iter()
-			.zip(mmr_root.as_ref().iter())
-			.all(|(a, b)| *a == *b)
+		let p = MerkleProof::<[u8; 32], MergeHash>::new(
+			block_num_to_mmr_size(block_number),
+			mmr_proof.into_iter().map(|h| h.into()).collect(),
+		);
+		p.verify(
+			mmr_root.into(),
+			leaves.into_iter().map(|(pos, h)| (pos, h.into())).collect(),
+		)
+		.unwrap_or(false)
 	}
 }
 
@@ -297,9 +278,8 @@ impl<T: Trait> Relayable for Module<T> {
 		DispatchError,
 	> {
 		let output = vec![];
-		let mut previous_mmr = None;
 
-		for (idx, raw_header_thing) in raw_header_thing_chain.into_iter().enumerate() {
+		for raw_header_thing in raw_header_thing_chain.into_iter() {
 			let EthHeaderThing {
 				header,
 				ethash_proof,
@@ -315,22 +295,18 @@ impl<T: Trait> Relayable for Module<T> {
 				return Err(<Error<T>>::NotComplyWithConfirmebBlocks)?;
 			}
 
-			if idx == 0 {
-				if let Some(i) = LastConfirmedHeaderInfo::get() {
-					if !Self::verify_mmr(i.2, mmr, mmr_proof) {
-						return Err(<Error<T>>::MMRInvalid)?;
-					}
-				}
-			} else {
-				if !Self::verify_mmr(
-					header.hash.unwrap_or_default(),
-					previous_mmr.unwrap_or_default(),
-					mmr_proof,
-				) {
-					return Err(<Error<T>>::MMRInvalid)?;
-				}
+			let mut leaves = vec![(
+				leaf_index_to_pos(header.number),
+				header.hash.unwrap_or_default(),
+			)];
+
+			if let Some(i) = LastConfirmedHeaderInfo::get() {
+				leaves.push((i.0, i.1));
+			};
+
+			if !Self::verify_mmr(header.number, mmr, mmr_proof, leaves) {
+				return Err(<Error<T>>::MMRInvalid)?;
 			}
-			previous_mmr = Some(mmr);
 		}
 		Ok(output)
 	}
@@ -406,7 +382,7 @@ pub struct EthHeaderThing {
 	header: EthHeader,
 	ethash_proof: Vec<DoubleNodeWithMerkleProof>,
 	mmr: EthereumMMRHash,
-	mmr_proof: MMRProof<EthereumMMRHash>,
+	mmr_proof: Vec<EthereumMMRHash>,
 }
 
 impl From<RawHeaderThing> for EthHeaderThing {
