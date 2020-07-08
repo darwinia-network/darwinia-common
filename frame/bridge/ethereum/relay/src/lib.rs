@@ -24,7 +24,7 @@ use ethereum_primitives::{
 	header::EthHeader, merkle::DoubleNodeWithMerkleProof, pow::EthashPartial, EthBlockNumber, H256,
 };
 
-type EthereumMMR = H256;
+type EthereumMMRHash = H256;
 
 pub trait Trait: frame_system::Trait {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
@@ -66,7 +66,7 @@ decl_error! {
 decl_storage! {
 	trait Store for Module<T: Trait> as DarwiniaEthereumRelay {
 		/// Ethereum last confrimed header info including ethereum block number, hash, and mmr
-		pub LastConfirmedHeaderInfo get(fn last_confirm_header_info): Option<(EthBlockNumber, H256, EthereumMMR)>;
+		pub LastConfirmedHeaderInfo get(fn last_confirm_header_info): Option<(EthBlockNumber, H256, EthereumMMRHash)>;
 
 		/// The Ethereum headers confrimed by relayer game
 		/// The actural storage needs to be defined
@@ -196,19 +196,41 @@ impl<T: Trait> Module<T> {
 		return true;
 	}
 
-	fn verify_mmr(hash: H256, mmr: EthereumMMR, mmr_proof: MMRProof<EthereumMMR>) -> bool {
-		let mut cal_mmr: Vec<u8> = hash.as_ref().iter().cloned().collect();
-		for h in mmr_proof.0 {
-			let encodable = (mmr, h);
+	// Verify the `leaf_hash` is included in the mmr tree, which root is `mmr_root`
+	// the `mmr_proof` is a serial of hash in the path from `leaf_hash` to `mmr_root`
+	//
+	//                       mmr_root
+	//                      /
+	//                   ...
+	//                 /    \
+	//                -      nth hash of mmr_proof
+	//              /   \
+	//             -     3rd hash of mmr_proof     mmr_proof = [1st_hash, 2nd_hash, 3rd_hash ... ]
+	//           /   \
+	//          -     2nd hash of mmr_proof
+	//        /   \
+	// leaf_hash   1st hash of mmr_proof
+	//
+	fn verify_mmr(
+		leaf_hash: H256,
+		mmr_root: EthereumMMRHash,
+		mmr_proof: MMRProof<EthereumMMRHash>,
+	) -> bool {
+		// Merge the hash from mmr_proof ony by one
+		let mut cal_mmr: Vec<u8> = leaf_hash.as_ref().iter().cloned().collect();
+		for hash in mmr_proof.0 {
+			let encodable = (cal_mmr, hash);
 			cal_mmr = <T as frame_system::Trait>::Hashing::hash_of(&encodable)
 				.as_ref()
 				.iter()
 				.cloned()
 				.collect();
 		}
+
+		// verify the leaf_hash can reach the mmr_root by mmr_proof
 		cal_mmr
 			.iter()
-			.zip(mmr.as_ref().iter())
+			.zip(mmr_root.as_ref().iter())
 			.all(|(a, b)| *a == *b)
 	}
 }
@@ -216,7 +238,7 @@ impl<T: Trait> Module<T> {
 impl<T: Trait> Relayable for Module<T> {
 	type TcBlockNumber = EthBlockNumber;
 	type TcHeaderHash = H256;
-	type TcHeaderMMR = EthereumMMR;
+	type TcHeaderMMR = EthereumMMRHash;
 
 	fn best_block_number() -> Self::TcBlockNumber {
 		return if let Some(i) = LastConfirmedHeaderInfo::get() {
@@ -380,8 +402,8 @@ impl<T: Trait> Relayable for Module<T> {
 pub struct EthHeaderThing {
 	header: EthHeader,
 	ethash_proof: Vec<DoubleNodeWithMerkleProof>,
-	mmr: EthereumMMR,
-	mmr_proof: MMRProof<EthereumMMR>,
+	mmr: EthereumMMRHash,
+	mmr_proof: MMRProof<EthereumMMRHash>,
 }
 
 impl From<RawHeaderThing> for EthHeaderThing {
