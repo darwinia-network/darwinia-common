@@ -95,7 +95,7 @@ fn jump_round_should_fail() {
 			chain[..1].to_vec()
 		));
 
-		for i in 2..5 {
+		for i in 2..=5 {
 			assert_err!(
 				RelayerGame::submit_proposal(Origin::signed(1), chain[..i].to_vec()),
 				RelayerGameError::RoundMis
@@ -139,7 +139,7 @@ fn extend_should_work() {
 		let chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], true);
 		let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
 
-		for i in 1..5 {
+		for i in 1..=5 {
 			assert_ok!(RelayerGame::submit_proposal(
 				Origin::signed(1),
 				chain_a[..i as usize].to_vec()
@@ -206,7 +206,7 @@ fn lock_should_work() {
 
 				run_to_block(4);
 
-				for i in 2..5 {
+				for i in 2..=5 {
 					bonds += estimate_bond;
 
 					submit_then_assert(1, chain_a[..i as usize].to_vec(), bonds);

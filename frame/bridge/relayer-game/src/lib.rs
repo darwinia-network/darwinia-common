@@ -253,7 +253,7 @@ decl_module! {
 							if maybe_honesty.is_none() {
 								maybe_honesty = Some((proposal.relayer, *bond));
 							} else {
-								error!("[relayer-game] Honest Relayer MORE THAN 1 Within a Round");
+								error!("Honest Relayer MORE THAN 1 Within a Round");
 							}
 						} else {
 							evils.push((proposal.relayer, *bond));
@@ -276,7 +276,7 @@ decl_module! {
 							T::RingSlash::on_unbalanced(imbalance);
 						}
 
-						error!("[relayer-game] NO Honest Relayer");
+						error!("NO Honest Relayer");
 					}
 				}
 
@@ -431,6 +431,7 @@ decl_module! {
 			for (game_id, last_round) in closed_rounds {
 				let mut proposals = Self::proposals_of_game(game_id);
 
+
 				match proposals.len() {
 					0 => (),
 					1 => settle_without_challenge(game_id, proposals.pop().unwrap()),
@@ -459,7 +460,7 @@ decl_module! {
 									.saturated_into() as u64;
 
 							if last_round_proposals_chain_len as u64 == full_chain_len {
-								info!("[relayer-game] On Chain Arbitrate");
+								info!("On Chain Arbitrate");
 
 								on_chain_arbitrate(
 									game_id,
