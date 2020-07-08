@@ -154,25 +154,24 @@ pub mod mock_relay {
 			Self::mock(number, parent_hash, valid).encode()
 		}
 
-		pub fn mock_chain(mut validations: Vec<u8>) -> Vec<Self> {
+		pub fn mock_chain(mut validations: Vec<u8>, valid: bool) -> Vec<Self> {
 			if validations.is_empty() {
 				return vec![];
 			}
 
-			let header = Self::mock(1, 0, validations[0]);
-			let mut parent_hash = header.hash;
-			let mut chain = vec![];
+			let mut parent_hash = if valid {
+				0
+			} else {
+				GENESIS_TIME.with(|v| v.to_owned()).elapsed().as_nanos()
+			};
+			let mut chain = vec![Self::mock(1, parent_hash, validations[0])];
+
+			parent_hash = chain[0].hash;
 
 			if validations.len() > 1 {
 				validations.remove(0);
 
-				for (valid, number) in validations
-					.into_iter()
-					.zip(2..)
-					.collect::<Vec<_>>()
-					.into_iter()
-					.rev()
-				{
+				for (valid, number) in validations.into_iter().zip(2..) {
 					let header = Self::mock(number, parent_hash, valid);
 
 					parent_hash = header.hash;
@@ -181,13 +180,13 @@ pub mod mock_relay {
 				}
 			}
 
-			chain.push(header);
+			chain.reverse();
 
 			chain
 		}
 
-		pub fn mock_raw_chain(validations: Vec<u8>) -> Vec<RawHeaderThing> {
-			Self::mock_chain(validations)
+		pub fn mock_raw_chain(validations: Vec<u8>, valid: bool) -> Vec<RawHeaderThing> {
+			Self::mock_chain(validations, valid)
 				.into_iter()
 				.map(|header| header.encode())
 				.collect()
@@ -249,6 +248,13 @@ darwinia_support::impl_account_data! {
 
 #[derive(Clone, Eq, PartialEq)]
 pub struct Test;
+impl Trait for Test {
+	type Event = ();
+	type RingCurrency = Ring;
+	type RingSlash = ();
+	type RelayerGameAdjustor = RelayerGameAdjustor;
+	type TargetChain = Relay;
+}
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
@@ -303,14 +309,6 @@ impl darwinia_balances::Trait<KtonInstance> for Test {
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
 	type DustCollector = (Ring,);
-}
-
-impl Trait for Test {
-	type Event = ();
-	type RingCurrency = Ring;
-	type RingSlash = ();
-	type RelayerGameAdjustor = RelayerGameAdjustor;
-	type TargetChain = Relay;
 }
 
 pub struct RelayerGameAdjustor;
