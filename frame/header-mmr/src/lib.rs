@@ -55,7 +55,7 @@ use codec::{Decode, Encode};
 use frame_support::{debug::error, decl_module, decl_storage};
 use sp_runtime::{
 	generic::{DigestItem, OpaqueDigestItemId},
-	traits::{Hash, Header},
+	traits::{Hash, Header, UniqueSaturatedInto},
 	RuntimeDebug,
 };
 use sp_std::{marker::PhantomData, prelude::*};
@@ -172,15 +172,30 @@ impl<T: Trait> MMRStore<T::Hash> for ModuleMMRStore<T> {
 impl<T: Trait> Module<T> {
 	impl_rpc! {
 		pub fn gen_proof_rpc(
-			block_number: T::BlockNumber,
-			mmr_block_number: T::BlockNumber,
+			block_number_for_member_leaf: T::BlockNumber,
+			block_number_for_last_leaf: T::BlockNumber,
 		) -> RuntimeDispatchInfo<T::Hash> {
-			if block_number < mmr_block_number {
-				let pos = Self::position_of(block_number);
-				let mmr_header_pos = Self::position_of(mmr_block_number);
+			if block_number_for_member_leaf < block_number_for_last_leaf {
+				let pos = Self::position_of(block_number_for_member_leaf);
+
+				// block number start with 0
+				let block_count : u64 = block_number_for_last_leaf.unique_saturated_into() as u64 + 1;
+
+				let peak_count = Self::peak_count(block_count);
+
+				// mmr_size = 2 * B - k
+				// Terminology:
+				// B: the block_number for the last leaf of MMR
+				// mmr_size: the MMR node list size
+				// k: k is the peak count of the MMR.
+				// Rationale:
+				// If B = 2^p1 + 2^ p2 + ... + 2^pk (p1 > p2 > ... pk)
+				// then mmr_size = (2*2^p1 - 1) + (2*2^ p2 - 1) + ... + (2*2^pk - 1)
+				// = 2*2^p1 + 2*2^p2 + ... + 2*2^pk - k = 2 * B - k
+				let mmr_size = 2 * block_count - peak_count;
 
 				let store = <ModuleMMRStore<T>>::default();
-				let mmr = <MMR<_, MMRMerge<T>, _>>::new(mmr_header_pos, store);
+				let mmr = <MMR<_, MMRMerge<T>, _>>::new(mmr_size, store);
 
 				if let Ok(merkle_proof) = mmr.gen_proof(vec![pos]) {
 					return RuntimeDispatchInfo {
@@ -195,6 +210,21 @@ impl<T: Trait> Module<T> {
 				proof: Proof(vec![]),
 			}
 		}
+	}
+
+	// peak count of the MMR with block_count blocks as leafs.
+	// If block count is 2^p1 + 2^ p2 + ... + 2^pk (p1 > p2 > ... pk)
+	// the peak count(k) is actually the count of 1 in block count's binary representation
+	fn peak_count(block_count: u64) -> u64 {
+		let mut count: u64 = 0;
+		let mut number = block_count;
+
+		while 0 != number {
+			count = count + 1;
+			number = number & (number - 1);
+		}
+
+		count
 	}
 
 	// TODO: For future rpc calls

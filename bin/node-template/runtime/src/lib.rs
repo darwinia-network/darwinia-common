@@ -1061,8 +1061,8 @@ impl_runtime_apis! {
 	}
 
 	impl darwinia_header_mmr_rpc_runtime_api::HeaderMMRApi<Block, BlockNumber, Hash> for Runtime {
-		fn gen_proof(block_number: BlockNumber, mmr_block_number: BlockNumber) -> HeaderMMRRuntimeDispatchInfo<Hash> {
-			HeaderMMR::gen_proof_rpc(block_number, mmr_block_number)
+		fn gen_proof(block_number_for_member_leaf: BlockNumber, block_number_for_last_leaf: BlockNumber) -> HeaderMMRRuntimeDispatchInfo<Hash> {
+			HeaderMMR::gen_proof_rpc(block_number_for_member_leaf, block_number_for_last_leaf)
 		}
 	}
 
