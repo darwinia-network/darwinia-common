@@ -196,21 +196,24 @@ impl<T: Trait> Module<T> {
 		return true;
 	}
 
-	// Verify the `leaf_hash` is included in the mmr tree, which root is `mmr_root`
-	// the `mmr_proof` is a serial of hash in the path from `leaf_hash` to `mmr_root`
-	//
-	//                       mmr_root
-	//                      /
-	//                   ...
-	//                 /    \
-	//                -      nth hash of mmr_proof
-	//              /   \
-	//             -     3rd hash of mmr_proof     mmr_proof = [1st_hash, 2nd_hash, 3rd_hash ... ]
-	//           /   \
-	//          -     2nd hash of mmr_proof
-	//        /   \
-	// leaf_hash   1st hash of mmr_proof
-	//
+	/// Verify the `leaf_hash` is included in the mmr tree, which root of tree is `mmr_root`.
+	/// The `mmr_proof` is a serial of hash in the path from `leaf_hash` to `mmr_root`
+	/// The length of `mmr_proof` is linear related with the height of mmr tree.
+	///
+	///                       mmr_root
+	///                      /
+	///                   ...
+	///                 /    \
+	///                -      nth hash of mmr_proof
+	///              /   \
+	///             -     3rd hash of mmr_proof
+	///           /   \
+	///          -     2nd hash of mmr_proof
+	///        /   \
+	/// leaf_hash   1st hash of mmr_proof
+	///
+	/// mmr_proof = [ 1st_hash, 2nd_hash, 3rd_hash ... nth_hash ]
+	///
 	fn verify_mmr(
 		leaf_hash: H256,
 		mmr_root: EthereumMMRHash,
