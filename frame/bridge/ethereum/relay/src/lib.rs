@@ -278,8 +278,10 @@ impl<T: Trait> Relayable for Module<T> {
 		DispatchError,
 	> {
 		let output = vec![];
+		let mut previous_mmr = None;
+		let mut previous_header_number = 0;
 
-		for raw_header_thing in raw_header_thing_chain.into_iter() {
+		for (idx, raw_header_thing) in raw_header_thing_chain.into_iter().enumerate() {
 			let EthHeaderThing {
 				header,
 				ethash_proof,
@@ -294,19 +296,44 @@ impl<T: Trait> Relayable for Module<T> {
 			if !Self::verify_block_with_confrim_blocks(&header) {
 				return Err(<Error<T>>::NotComplyWithConfirmebBlocks)?;
 			}
-
-			let mut leaves = vec![(
-				leaf_index_to_pos(header.number),
-				header.hash.unwrap_or_default(),
-			)];
-
-			if let Some(i) = LastConfirmedHeaderInfo::get() {
-				leaves.push((i.0, i.1));
-			};
-
-			if !Self::verify_mmr(header.number, mmr, mmr_proof, leaves) {
-				return Err(<Error<T>>::MMRInvalid)?;
+			if idx == 0 {
+				// The mmr_root of first submit should includ the hash last confirm block
+				//      mmr_root of 1st
+				//     / \
+				//    -   -
+				//   /     \
+				//  C  ...  1st
+				//  C: Last Comfirmed Block  1st: 1st submit block
+				if let Some(l) = LastConfirmedHeaderInfo::get() {
+					if !Self::verify_mmr(header.number, mmr, mmr_proof, vec![(l.0, l.1)]) {
+						return Err(<Error<T>>::MMRInvalid)?;
+					}
+				};
+			// the hash of other submit should be included by previous mmr_root
+			} else {
+				// last confirm no exsit the mmr verification will be passed
+				//
+				//      mmr_root of prevous submit
+				//     / \
+				//    - ..-
+				//   /   | \
+				//  -  ..c  p
+				// c: current submit	p: previous sumit
+				if !Self::verify_mmr(
+					previous_header_number,
+					previous_mmr.unwrap_or_default(),
+					mmr_proof,
+					vec![(
+						leaf_index_to_pos(header.number),
+						header.hash.unwrap_or_default(),
+					)],
+				) {
+					return Err(<Error<T>>::MMRInvalid)?;
+				}
 			}
+
+			previous_mmr = Some(mmr);
+			previous_header_number = header.number;
 		}
 		Ok(output)
 	}
