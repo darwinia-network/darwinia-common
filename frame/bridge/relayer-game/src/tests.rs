@@ -155,27 +155,6 @@ fn extend_should_work() {
 }
 
 #[test]
-fn settle_without_challenge_should_work() {
-	ExtBuilder::default().build().execute_with(|| {
-		for (block_number, closed_at) in (1..10).rev().zip((1..).map(|n| 4 * n)) {
-			let header = MockTcHeader::mock(block_number, 0, 1);
-
-			assert_ok!(RelayerGame::submit_proposal(
-				Origin::signed(1),
-				vec![header.encode()]
-			));
-
-			run_to_block(closed_at);
-
-			assert_eq!(Relay::header_of_block_number(block_number), Some(header));
-		}
-	})
-}
-
-// #[test]
-// fn settle_with_challenge_should_work() {}
-
-#[test]
 fn lock_should_work() {
 	for estimate_bond in 1..5 {
 		ExtBuilder::default()
@@ -225,3 +204,72 @@ fn lock_should_work() {
 			});
 	}
 }
+
+// #[test]
+// fn reward_should_work() {
+// 	for estimate_bond in 1..5 {
+// 		ExtBuilder::default()
+// 			.estimate_bond(estimate_bond)
+// 			.build()
+// 			.execute_with(|| {
+// 				let mut bonds = estimate_bond;
+
+// 				let mut proposal_chain_a = vec![MockTcHeader::new_raw(5, 0)];
+// 				let mut proposal_chain_b = vec![MockTcHeader::new_raw(5, 2)];
+
+// 				assert_ok!(RelayerGame::submit_proposal(
+// 					Origin::signed(1),
+// 					proposal_chain_a.clone()
+// 				));
+// 				assert_ok!(RelayerGame::submit_proposal(
+// 					Origin::signed(2),
+// 					proposal_chain_b.clone()
+// 				));
+
+// 				for (block_number, closed_at) in (2..5).rev().zip((1..).map(|n| 4 * n)) {
+// 					run_to_block(closed_at);
+
+// 					bonds += estimate_bond;
+
+// 					proposal_chain_a.push(MockTcHeader::new_raw(block_number, 0));
+// 					proposal_chain_b.push(MockTcHeader::new_raw(block_number, 2));
+
+// 					assert_ok!(RelayerGame::submit_proposal(
+// 						Origin::signed(1),
+// 						proposal_chain_a.clone()
+// 					));
+// 					assert_ok!(RelayerGame::submit_proposal(
+// 						Origin::signed(2),
+// 						proposal_chain_b.clone()
+// 					));
+// 				}
+// 			});
+// 	}
+// }
+
+// #[test]
+// fn settle_without_challenge_should_work() {
+// 	ExtBuilder::default().build().execute_with(|| {
+// 		let chain = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], true);
+
+// 		for i in 0..5 {
+// 			assert_ok!(RelayerGame::submit_proposal(
+// 				Origin::signed(1),
+// 				chain[..1].to_vec()
+// 			));
+
+// 			run_to_block(4 * i);
+
+// 			assert_eq!(Relay::header_of_block_number(block_number), Some(header));
+// 		}
+// 	})
+// }
+
+// #[test]
+// fn settle_with_challenge_should_work() {}
+
+// #[test]
+// fn on_chain_arbitrate_should_work() {}
+
+// #[test]
+// fn handle_give_up_should_work() {}
