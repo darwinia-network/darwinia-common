@@ -12,7 +12,7 @@ use sp_runtime::{
 // --- darwinia ---
 use crate::{mock::*, *};
 use array_bytes::fixed_hex_bytes_unchecked as hh;
-use merkle_mountain_range::Merge;
+use merkle_mountain_range::{leaf_index_to_pos as position_of, Merge};
 
 #[test]
 fn first_header_mmr() {
@@ -59,14 +59,14 @@ fn test_insert_header() {
 		let prove_elem = headers[h1 as usize - 1].hash();
 
 		let pos = 19;
-		assert_eq!(pos, HeaderMMR::position_of(h1));
+		assert_eq!(pos, position_of(h1));
 		assert_eq!(prove_elem, HeaderMMR::mmr_node_list(pos));
 
 		let mmr_root = HeaderMMR::_find_mmr_root(headers[h2 as usize - 1].clone())
 			.expect("Header mmr get failed");
 
 		let store = <ModuleMMRStore<Test>>::default();
-		let mmr = MMR::<_, MMRMerge<Test>, _>::new(HeaderMMR::position_of(h2), store);
+		let mmr = MMR::<_, MMRMerge<Test>, _>::new(position_of(h2), store);
 
 		assert_eq!(mmr.get_root().expect("Get Root Failed"), mmr_root);
 
