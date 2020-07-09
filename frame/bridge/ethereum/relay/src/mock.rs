@@ -121,7 +121,7 @@ pub fn from_file_to_eth_header_thing(path: &str) -> EthHeaderThing {
 	}
 	let eth_header_json: EthHeaderJson =
 		serde_json::from_reader(File::open(path).unwrap()).unwrap();
-	let header = EthHeader::from_scale_codec_str(eth_header_json.eth_header).unwrap();
+	let eth_header = EthHeader::from_scale_codec_str(eth_header_json.eth_header).unwrap();
 	let ethash_proof = Vec::<DoubleNodeWithMerkleProof>::decode(&mut &*hex_bytes_unchecked(
 		eth_header_json.ethash_proof,
 	))
@@ -135,9 +135,9 @@ pub fn from_file_to_eth_header_thing(path: &str) -> EthHeaderThing {
 		.collect();
 	unsafe {
 		EthHeaderThing {
-			header,
+			eth_header,
 			ethash_proof: transmute(ethash_proof),
-			mmr: transmute(mmr_root),
+			mmr_root: transmute(mmr_root),
 			mmr_proof: transmute(mmr_proof),
 		}
 	}

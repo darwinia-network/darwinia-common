@@ -213,7 +213,10 @@ impl<T: Trait> Module<T> {
 		);
 		p.verify(
 			mmr_root.into(),
-			leaves.into_iter().map(|(pos, h)| (pos, h.into())).collect(),
+			leaves
+				.into_iter()
+				.map(|(n, h)| (leaf_index_to_pos(n), h.into()))
+				.collect(),
 		)
 		.unwrap_or(false)
 	}
@@ -246,28 +249,28 @@ impl<T: Trait> Relayable for Module<T> {
 		DispatchError,
 	> {
 		let EthHeaderThing {
-			header,
+			eth_header,
 			ethash_proof,
-			mmr,
+			mmr_root,
 			mmr_proof: _,
 		} = raw_header_thing.into();
 
 		if ConfirmedHeadersDoubleMap::contains_key(
-			header.number / ConfirmBlocksInCycle::get(),
-			header.number,
+			eth_header.number / ConfirmBlocksInCycle::get(),
+			eth_header.number,
 		) {
 			return Err(<Error<T>>::TargetHeaderAE)?;
 		}
-		if !Self::verify_block_seal(&header, &ethash_proof) {
+		if !Self::verify_block_seal(&eth_header, &ethash_proof) {
 			return Err(<Error<T>>::HeaderInvalid)?;
 		};
 
 		Ok(TcHeaderBrief {
-			block_number: header.number,
-			hash: header.hash.unwrap_or_default(),
-			parent_hash: header.parent_hash,
-			mmr,
-			others: header.encode(),
+			block_number: eth_header.number,
+			hash: eth_header.hash.unwrap_or_default(),
+			parent_hash: eth_header.parent_hash,
+			mmr: mmr_root,
+			others: eth_header.encode(),
 		})
 	}
 
@@ -283,17 +286,17 @@ impl<T: Trait> Relayable for Module<T> {
 
 		for (idx, raw_header_thing) in raw_header_thing_chain.into_iter().enumerate() {
 			let EthHeaderThing {
-				header,
+				eth_header,
 				ethash_proof,
-				mmr,
+				mmr_root,
 				mmr_proof,
 			} = raw_header_thing.into();
 
-			if !Self::verify_block_seal(&header, &ethash_proof) {
+			if !Self::verify_block_seal(&eth_header, &ethash_proof) {
 				return Err(<Error<T>>::HeaderInvalid)?;
 			};
 
-			if !Self::verify_block_with_confrim_blocks(&header) {
+			if !Self::verify_block_with_confrim_blocks(&eth_header) {
 				return Err(<Error<T>>::NotComplyWithConfirmebBlocks)?;
 			}
 			if idx == 0 {
@@ -305,7 +308,7 @@ impl<T: Trait> Relayable for Module<T> {
 				//  C  ...  1st
 				//  C: Last Comfirmed Block  1st: 1st submit block
 				if let Some(l) = LastConfirmedHeaderInfo::get() {
-					if !Self::verify_mmr(header.number, mmr, mmr_proof, vec![(l.0, l.1)]) {
+					if !Self::verify_mmr(eth_header.number, mmr_root, mmr_proof, vec![(l.0, l.1)]) {
 						return Err(<Error<T>>::MMRInvalid)?;
 					}
 				};
@@ -323,17 +326,14 @@ impl<T: Trait> Relayable for Module<T> {
 					previous_header_number,
 					previous_mmr.unwrap_or_default(),
 					mmr_proof,
-					vec![(
-						leaf_index_to_pos(header.number),
-						header.hash.unwrap_or_default(),
-					)],
+					vec![(eth_header.number, eth_header.hash.unwrap_or_default())],
 				) {
 					return Err(<Error<T>>::MMRInvalid)?;
 				}
 			}
 
-			previous_mmr = Some(mmr);
-			previous_header_number = header.number;
+			previous_mmr = Some(mmr_root);
+			previous_header_number = eth_header.number;
 		}
 		Ok(output)
 	}
@@ -375,24 +375,24 @@ impl<T: Trait> Relayable for Module<T> {
 			0
 		};
 		let EthHeaderThing {
-			header,
+			eth_header,
 			ethash_proof: _,
-			mmr,
+			mmr_root,
 			mmr_proof: _,
 		} = raw_header_thing.into();
 
-		if header.number > last_comfirmed_block_number {
+		if eth_header.number > last_comfirmed_block_number {
 			LastConfirmedHeaderInfo::set(Some((
-				header.number,
-				header.hash.unwrap_or_default(),
-				mmr,
+				eth_header.number,
+				eth_header.hash.unwrap_or_default(),
+				mmr_root,
 			)))
 		};
 
-		let confirm_cycle = header.number / ConfirmBlocksInCycle::get();
+		let confirm_cycle = eth_header.number / ConfirmBlocksInCycle::get();
 		let last_confirmed_block_cycle = LastConfirmedBlockCycle::get();
 
-		ConfirmedHeadersDoubleMap::insert(confirm_cycle, header.number, header);
+		ConfirmedHeadersDoubleMap::insert(confirm_cycle, eth_header.number, eth_header);
 
 		if confirm_cycle > last_confirmed_block_cycle {
 			ConfirmedHeadersDoubleMap::remove_prefix(
@@ -406,9 +406,9 @@ impl<T: Trait> Relayable for Module<T> {
 
 #[derive(Encode, Decode, Default, RuntimeDebug)]
 pub struct EthHeaderThing {
-	header: EthHeader,
+	eth_header: EthHeader,
 	ethash_proof: Vec<DoubleNodeWithMerkleProof>,
-	mmr: EthereumMMRHash,
+	mmr_root: EthereumMMRHash,
 	mmr_proof: Vec<EthereumMMRHash>,
 }
 

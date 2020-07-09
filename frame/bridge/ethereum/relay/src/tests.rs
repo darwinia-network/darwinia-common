@@ -11,13 +11,13 @@ use frame_support::assert_ok;
 fn test_check_test_date_decoding() {
 	ExtBuilder::default().build().execute_with(|| {
 		let header_thing = from_file_to_eth_header_thing("./src/test-data/0.json");
-		assert_eq!(header_thing.header.number, 0);
+		assert_eq!(header_thing.eth_header.number, 0);
 		let header_thing = from_file_to_eth_header_thing("./src/test-data/1.json");
-		assert_eq!(header_thing.header.number, 1);
+		assert_eq!(header_thing.eth_header.number, 1);
 		let header_thing = from_file_to_eth_header_thing("./src/test-data/2.json");
-		assert_eq!(header_thing.header.number, 2);
+		assert_eq!(header_thing.eth_header.number, 2);
 		let header_thing = from_file_to_eth_header_thing("./src/test-data/3.json");
-		assert_eq!(header_thing.header.number, 3);
+		assert_eq!(header_thing.eth_header.number, 3);
 	})
 }
 
@@ -30,25 +30,37 @@ fn test_verify_test_data_mmr_proof() {
 		let header_thing_3 = from_file_to_eth_header_thing("./src/test-data/3.json");
 		assert_eq!(
 			EthRelay::verify_mmr(
-				header_thing_3.header.number,
-				header_thing_3.mmr,
+				header_thing_3.eth_header.number,
+				header_thing_3.mmr_root,
 				header_thing_3.mmr_proof,
+				vec![(
+					header_thing_0.eth_header.number,
+					header_thing_0.eth_header.hash.unwrap()
+				)]
 			),
 			true
 		);
 		assert_eq!(
 			EthRelay::verify_mmr(
-				header_thing_2.header.number,
-				header_thing_2.mmr,
+				header_thing_3.eth_header.number,
+				header_thing_3.mmr_root,
 				header_thing_2.mmr_proof,
+				vec![(
+					header_thing_2.eth_header.number,
+					header_thing_2.eth_header.hash.unwrap()
+				)]
 			),
 			true
 		);
 		assert_eq!(
 			EthRelay::verify_mmr(
-				header_thing_1.header.number,
-				header_thing_1.mmr,
+				header_thing_2.eth_header.number,
+				header_thing_2.mmr_root,
 				header_thing_1.mmr_proof,
+				vec![(
+					header_thing_1.eth_header.number,
+					header_thing_1.eth_header.hash.unwrap()
+				)]
 			),
 			true
 		);
@@ -59,7 +71,7 @@ fn test_store_header() {
 	ExtBuilder::default().build().execute_with(|| {
 		let header_thing = from_file_to_eth_header_thing("./src/test-data/1.json");
 
-		assert_eq!(header_thing.header.number, 1);
+		assert_eq!(header_thing.eth_header.number, 1);
 
 		assert_ok!(<EthRelay as Relayable>::store_header(
 			Box::new(header_thing).encode()
