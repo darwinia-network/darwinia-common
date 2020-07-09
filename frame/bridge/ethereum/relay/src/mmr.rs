@@ -1,5 +1,6 @@
-/// MMR
-/// The merge trait is compataible with shadow service
+/// MMR for Ethereum
+/// No mater the hash function of chain,
+/// the Merge of Ethereum MMR used in shadow service is blake2b
 use blake2_rfc::blake2b::blake2b;
 use ckb_merkle_mountain_range::Merge;
 pub use ckb_merkle_mountain_range::MerkleProof;
@@ -26,6 +27,7 @@ impl Merge for MergeHash {
 	}
 }
 
+/// Get mmr_size for the MMR model
 pub fn block_num_to_mmr_size(b: u64) -> u64 {
 	2 * b - ((b + 1).count_ones() as u64)
 }
