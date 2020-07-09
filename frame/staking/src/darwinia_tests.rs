@@ -2,31 +2,116 @@
 
 // --- substrate ---
 use frame_support::assert_ok;
+use substrate_test_utils::assert_eq_uvec;
 // --- darwinia ---
 use crate::{mock::*, *};
+
+#[test]
+fn slash_ledger_should_work() {
+	ExtBuilder::default()
+		.nominate(false)
+		.validator_count(1)
+		.build()
+		.execute_with(|| {
+			start_era(0);
+
+			assert_eq_uvec!(validator_controllers(), vec![20]);
+
+			let (account_id, bond) = (777, COIN);
+			let _ = Ring::deposit_creating(&account_id, bond);
+
+			assert_ok!(Staking::bond(
+				Origin::signed(account_id),
+				account_id,
+				StakingBalance::RingBalance(bond),
+				RewardDestination::Controller,
+				0,
+			));
+			assert_ok!(Staking::deposit_extra(
+				Origin::signed(account_id),
+				COIN * 80 / 100,
+				36
+			));
+			assert_ok!(Staking::validate(
+				Origin::signed(account_id),
+				ValidatorPrefs::default()
+			));
+
+			start_era(1);
+
+			assert_eq_uvec!(validator_controllers(), vec![777]);
+
+			on_offence_now(
+				&[OffenceDetails {
+					offender: (
+						account_id,
+						Staking::eras_stakers(Staking::active_era().unwrap().index, account_id),
+					),
+					reporters: vec![],
+				}],
+				&[Perbill::from_percent(90)],
+			);
+
+			{
+				let total = bond;
+				let normal = total * (100 - 80) / 100;
+				let deposit = total * 80 / 100;
+
+				assert!(normal + deposit == total);
+				let total_slashed = bond * 90 / 100;
+
+				assert!(total_slashed > normal);
+				let normal_slashed = normal;
+				let deposit_slashed = total_slashed - normal_slashed;
+
+				assert_eq!(
+					Staking::ledger(&account_id).unwrap(),
+					StakingLedger {
+						stash: account_id,
+						active_ring: total - total_slashed,
+						active_deposit_ring: deposit - deposit_slashed,
+						deposit_items: vec![TimeDepositItem {
+							value: deposit - deposit_slashed,
+							start_time: 30000,
+							expire_time: 93312030000,
+						}],
+						ring_staking_lock: StakingLock {
+							staking_amount: deposit - deposit_slashed,
+							unbondings: vec![],
+						},
+						..Default::default()
+					},
+				);
+			}
+
+			// Should not overflow here
+			assert_ok!(Staking::unbond(
+				Origin::signed(account_id),
+				StakingBalance::RingBalance(COIN)
+			));
+		});
+}
 
 #[test]
 fn kton_should_reward_even_does_not_own_kton_before() {
 	// Tests that validator storage items are cleaned up when stash is empty
 	// Tests that storage items are untouched when controller is empty
 	ExtBuilder::default()
-		.existential_deposit(10000)
-		.nominate(false)
-		.stakers(false)
 		.init_ring(false)
 		.build()
 		.execute_with(|| {
-			let acct = 777;
-			let _ = Ring::deposit_creating(&acct, 10000);
-			assert!(Kton::free_balance(&acct).is_zero());
+			let account_id = 777;
+			let _ = Ring::deposit_creating(&account_id, 10000);
+
+			assert!(Kton::free_balance(&account_id).is_zero());
 			assert_ok!(Staking::bond(
-				Origin::signed(acct),
-				acct,
+				Origin::signed(account_id),
+				account_id,
 				StakingBalance::RingBalance(10000),
 				RewardDestination::Stash,
 				36,
 			));
-			assert_eq!(Kton::free_balance(&acct), 3);
+			assert_eq!(Kton::free_balance(&account_id), 3);
 		});
 }
 

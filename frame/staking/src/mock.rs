@@ -457,6 +457,7 @@ impl ExtBuilder {
 	}
 	pub fn has_stakers(mut self, has: bool) -> Self {
 		self.has_stakers = has;
+		self.init_ring = has;
 		self
 	}
 	pub fn max_offchain_iterations(mut self, iterations: u32) -> Self {
@@ -465,6 +466,7 @@ impl ExtBuilder {
 	}
 	pub fn init_ring(mut self, init_ring: bool) -> Self {
 		self.init_ring = init_ring;
+		self.has_stakers = init_ring;
 		self
 	}
 	pub fn init_kton(mut self, init_kton: bool) -> Self {
