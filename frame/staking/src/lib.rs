@@ -263,8 +263,8 @@ pub mod inflation;
 pub mod offchain_election;
 pub mod slashing;
 
-// #[cfg(test)]
-// mod darwinia_tests;
+#[cfg(test)]
+mod darwinia_tests;
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
@@ -718,6 +718,8 @@ where
 				if let Some(mut slashable_deposit_ring) =
 					slashable_active_ring.checked_sub(&slashable_normal_ring)
 				{
+					*active_deposit_ring -= slashable_deposit_ring;
+
 					deposit_item.drain_filter(|item| {
 						if ts >= item.expire_time {
 							true
@@ -741,6 +743,7 @@ where
 						}
 					});
 				}
+
 				*active_ring -= slashable_active_ring;
 				*slash_ring -= slashable_active_ring;
 			}
