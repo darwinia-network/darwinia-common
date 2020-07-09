@@ -51,7 +51,7 @@ mod migration {
 		{
 		}
 
-		remove_storage_prefix(b"DarwiniaHeaderMMR", b"Total", &[]);
+		remove_storage_prefix(b"DarwiniaHeaderMMR", b"Positions", &[]);
 	}
 }
 
