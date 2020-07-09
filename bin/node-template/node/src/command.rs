@@ -1,11 +1,14 @@
+// --- std ---
+use std::path::PathBuf;
 // --- substrate ---
-use sc_cli::SubstrateCli;
+use sc_cli::{RunCmd, SubstrateCli};
 // --- darwinia ---
 use crate::{
 	chain_spec,
 	cli::{Cli, Subcommand},
 	service,
 };
+use darwinia_cli::{Configuration, DarwiniaCli};
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> &'static str {
@@ -47,14 +50,28 @@ impl SubstrateCli for Cli {
 	}
 }
 
+impl DarwiniaCli for Cli {
+	fn conf(&self) -> &Option<PathBuf> {
+		&self.conf
+	}
+
+	fn base(&self) -> &RunCmd {
+		&self.run
+	}
+
+	fn mut_base(&mut self) -> &mut RunCmd {
+		&mut self.run
+	}
+}
+
 /// Parse command line arguments into service configuration.
 pub fn run() -> sc_cli::Result<()> {
 	let cli = Cli::from_args();
 
 	match &cli.subcommand {
 		None => {
-			let runner = cli.create_runner(&cli.run)?;
-			runner.run_node(
+			let runtime = Configuration::create_runner_from_cli(cli)?;
+			runtime.run_node(
 				service::new_light,
 				service::new_full,
 				node_template_runtime::VERSION,

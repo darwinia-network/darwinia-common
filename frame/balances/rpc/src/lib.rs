@@ -22,7 +22,7 @@ use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo;
 const RUNTIME_ERROR: i64 = -1;
 
 #[rpc]
-pub trait BalancesApi<AccountId, Balance, Response> {
+pub trait BalancesApi<AccountId, Response> {
 	#[rpc(name = "balances_usableBalance")]
 	fn usable_balance(&self, instance: u8, who: AccountId) -> Result<Response>;
 }
@@ -41,8 +41,8 @@ impl<Client, Block> Balances<Client, Block> {
 	}
 }
 
-impl<Client, Block, AccountId, Balance>
-	BalancesApi<AccountId, Balance, RuntimeDispatchInfo<Balance>> for Balances<Client, Block>
+impl<Client, Block, AccountId, Balance> BalancesApi<AccountId, RuntimeDispatchInfo<Balance>>
+	for Balances<Client, Block>
 where
 	Client: 'static + Send + Sync + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
 	Client::Api: BalancesRuntimeApi<Block, AccountId, Balance>,

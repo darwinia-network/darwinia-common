@@ -2,6 +2,7 @@
 members = [
 	"bin/node-template/node",
 	"bin/node-template/runtime",
+	"client/cli",
 	"frame/balances",
 	"frame/balances/rpc",
 	"frame/balances/rpc/runtime-api",
@@ -11,6 +12,8 @@ members = [
 	"frame/bridge/eth/offchain",
 	"frame/elections-phragmen",
 	"frame/header-mmr",
+	"frame/header-mmr/rpc",
+	"frame/header-mmr/rpc/runtime-api",
 	"frame/staking",
 	"frame/staking/rpc",
 	"frame/staking/rpc/runtime-api",

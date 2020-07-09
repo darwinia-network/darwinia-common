@@ -22,7 +22,7 @@ use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo;
 const RUNTIME_ERROR: i64 = -1;
 
 #[rpc]
-pub trait StakingApi<AccountId, Power, Response> {
+pub trait StakingApi<AccountId, Response> {
 	#[rpc(name = "staking_powerOf")]
 	fn power_of(&self, who: AccountId) -> Result<Response>;
 }
@@ -41,7 +41,7 @@ impl<Client, Block> Staking<Client, Block> {
 	}
 }
 
-impl<Client, Block, AccountId, Power> StakingApi<AccountId, Power, RuntimeDispatchInfo<Power>>
+impl<Client, Block, AccountId, Power> StakingApi<AccountId, RuntimeDispatchInfo<Power>>
 	for Staking<Client, Block>
 where
 	Client: 'static + Send + Sync + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
