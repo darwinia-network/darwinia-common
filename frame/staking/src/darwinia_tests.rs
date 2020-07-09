@@ -2,22 +2,89 @@
 
 // --- substrate ---
 use frame_support::assert_ok;
+use substrate_test_utils::assert_eq_uvec;
 // --- darwinia ---
 use crate::{mock::*, *};
+
+#[test]
+fn slash_ledger_should_work() {
+	ExtBuilder::default()
+		.nominate(false)
+		.validator_count(1)
+		.build()
+		.execute_with(|| {
+			start_era(0);
+
+			assert_eq_uvec!(validator_controllers(), vec![20]);
+
+			let (acct, bond) = (777, COIN);
+			let _ = Ring::deposit_creating(&acct, bond);
+
+			assert_ok!(Staking::bond(
+				Origin::signed(acct),
+				acct,
+				StakingBalance::RingBalance(bond),
+				RewardDestination::Controller,
+				36,
+			));
+			assert_ok!(Staking::validate(
+				Origin::signed(acct),
+				ValidatorPrefs::default()
+			));
+
+			start_era(1);
+
+			assert_eq_uvec!(validator_controllers(), vec![777]);
+
+			on_offence_now(
+				&[OffenceDetails {
+					offender: (
+						acct,
+						Staking::eras_stakers(Staking::active_era().unwrap().index, acct),
+					),
+					reporters: vec![],
+				}],
+				&[Perbill::from_percent(77)],
+			);
+			assert_eq!(
+				Staking::ledger(&acct).unwrap(),
+				StakingLedger {
+					stash: acct,
+					active_ring: COIN / 100 * (100 - 77),
+					active_deposit_ring: COIN / 100 * (100 - 77),
+					active_kton: 0,
+					deposit_items: vec![TimeDepositItem {
+						value: COIN / 100 * (100 - 77),
+						start_time: 30000,
+						expire_time: 93312030000,
+					}],
+					ring_staking_lock: StakingLock {
+						staking_amount: COIN / 100 * (100 - 77),
+						unbondings: vec![],
+					},
+					..Default::default()
+				},
+			);
+
+			// Should not overflow here
+			assert_ok!(Staking::unbond(
+				Origin::signed(acct),
+				StakingBalance::RingBalance(COIN)
+			));
+		});
+}
 
 #[test]
 fn kton_should_reward_even_does_not_own_kton_before() {
 	// Tests that validator storage items are cleaned up when stash is empty
 	// Tests that storage items are untouched when controller is empty
 	ExtBuilder::default()
-		.existential_deposit(10000)
-		.nominate(false)
-		.stakers(false)
 		.init_ring(false)
 		.build()
 		.execute_with(|| {
 			let acct = 777;
 			let _ = Ring::deposit_creating(&acct, 10000);
+
 			assert!(Kton::free_balance(&acct).is_zero());
 			assert_ok!(Staking::bond(
 				Origin::signed(acct),
