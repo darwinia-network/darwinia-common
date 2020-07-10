@@ -62,7 +62,7 @@ mod tests;
 use serde::Serialize;
 
 // --- github ---
-use merkle_mountain_range::{MMRStore, MMR};
+use merkle_mountain_range::{leaf_index_to_mmr_size, leaf_index_to_pos, MMRStore, MMR};
 // --- substrate ---
 use codec::{Decode, Encode};
 use frame_support::{debug::error, decl_module, decl_storage};
@@ -184,9 +184,9 @@ impl<T: Trait> Module<T> {
 		) -> RuntimeDispatchInfo<T::Hash> {
 			if block_number_of_member_leaf < block_number_of_last_leaf {
 				let store = <ModuleMMRStore<T>>::default();
-				let mmr_size = block_number_to_mmr_size(block_number_of_last_leaf);
+				let mmr_size = leaf_index_to_mmr_size(block_number_of_last_leaf);
 				let mmr = <MMR<_, MMRMerge<T>, _>>::new(mmr_size, store);
-				let pos = block_number_to_pos(block_number_of_member_leaf);
+				let pos = leaf_index_to_pos(block_number_of_member_leaf);
 
 				if let Ok(merkle_proof) = mmr.gen_proof(vec![pos]) {
 					return RuntimeDispatchInfo {
@@ -221,40 +221,4 @@ impl<T: Trait> Module<T> {
 			.digest()
 			.convert_first(|l| l.try_to(id).and_then(filter_log))
 	}
-}
-
-fn block_number_to_mmr_size(block_number: u64) -> u64 {
-	// peak count of the MMR with block_count blocks as leafs.
-	// If block count is 2^p1 + 2^ p2 + ... + 2^pk (p1 > p2 > ... pk)
-	// the peak count(k) is actually the count of 1 in block count's binary representation
-	fn peak_count(block_count: u64) -> u64 {
-		let mut count = 0;
-		let mut number = block_count;
-
-		while 0 != number {
-			count = count + 1;
-			number = number & (number - 1);
-		}
-
-		count
-	}
-
-	// block number start with 0
-	let block_count = block_number + 1;
-	let peak_count = peak_count(block_count);
-
-	// mmr_size = 2 * B - k
-	// Terminology:
-	// B: the block_number for the last leaf of MMR
-	// mmr_size: the MMR node list size
-	// k: k is the peak count of the MMR.
-	// Rationale:
-	// If B = 2^p1 + 2^ p2 + ... + 2^pk (p1 > p2 > ... pk)
-	// then mmr_size = (2*2^p1 - 1) + (2*2^ p2 - 1) + ... + (2*2^pk - 1)
-	// = 2*2^p1 + 2*2^p2 + ... + 2*2^pk - k = 2 * B - k
-	2 * block_count - peak_count
-}
-
-fn block_number_to_pos(block_number: u64) -> u64 {
-	block_number_to_mmr_size(block_number) - (block_number + 1).trailing_zeros() as u64 - 1
 }
