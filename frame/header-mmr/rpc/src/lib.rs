@@ -22,12 +22,12 @@ use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo;
 const RUNTIME_ERROR: i64 = -1;
 
 #[rpc]
-pub trait HeaderMMRApi<BlockNumber, Hash, Response> {
+pub trait HeaderMMRApi<Hash, Response> {
 	#[rpc(name = "headerMMR_genProof")]
 	fn gen_proof(
 		&self,
-		block_number: BlockNumber,
-		mmr_block_number: BlockNumber,
+		block_number_of_member_leaf: u64,
+		block_number_of_last_leaf: u64,
 	) -> Result<Response>;
 }
 
@@ -45,25 +45,23 @@ impl<Client, Block> HeaderMMR<Client, Block> {
 	}
 }
 
-impl<Client, Block, BlockNumber, Hash> HeaderMMRApi<BlockNumber, Hash, RuntimeDispatchInfo<Hash>>
-	for HeaderMMR<Client, Block>
+impl<Client, Block, Hash> HeaderMMRApi<Hash, RuntimeDispatchInfo<Hash>> for HeaderMMR<Client, Block>
 where
 	Client: 'static + Send + Sync + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
-	Client::Api: HeaderMMRRuntimeApi<Block, BlockNumber, Hash>,
+	Client::Api: HeaderMMRRuntimeApi<Block, Hash>,
 	Block: BlockT,
-	BlockNumber: Codec,
 	Hash: core::fmt::Debug + Codec + MaybeDisplay + MaybeFromStr,
 {
 	fn gen_proof(
 		&self,
-		block_number: BlockNumber,
-		mmr_block_number: BlockNumber,
+		block_number_of_member_leaf: u64,
+		block_number_of_last_leaf: u64,
 	) -> Result<RuntimeDispatchInfo<Hash>> {
 		let api = self.client.runtime_api();
 		let best = self.client.info().best_hash;
 		let at = BlockId::hash(best);
 
-		api.gen_proof(&at, block_number, mmr_block_number)
+		api.gen_proof(&at, block_number_of_member_leaf, block_number_of_last_leaf)
 			.map_err(|e| Error {
 				code: ErrorCode::ServerError(RUNTIME_ERROR),
 				message: "Unable to query power.".into(),

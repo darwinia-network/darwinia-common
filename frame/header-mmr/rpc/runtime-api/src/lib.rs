@@ -34,14 +34,13 @@ impl_runtime_dispatch_info! {
 }
 
 decl_runtime_apis! {
-	pub trait HeaderMMRApi<BlockNumber, Hash>
+	pub trait HeaderMMRApi<Hash>
 	where
-		BlockNumber: Codec,
 		Hash: core::fmt::Debug + Codec + MaybeDisplay + MaybeFromStr,
 	{
 		fn gen_proof(
-			block_number: BlockNumber,
-			mmr_block_number: BlockNumber,
+			block_number_of_member_leaf: u64,
+			block_number_of_last_leaf: u64,
 		) -> RuntimeDispatchInfo<Hash>;
 	}
 }

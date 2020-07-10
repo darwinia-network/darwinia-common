@@ -1060,9 +1060,12 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl darwinia_header_mmr_rpc_runtime_api::HeaderMMRApi<Block, BlockNumber, Hash> for Runtime {
-		fn gen_proof(block_number: BlockNumber, mmr_block_number: BlockNumber) -> HeaderMMRRuntimeDispatchInfo<Hash> {
-			HeaderMMR::gen_proof_rpc(block_number, mmr_block_number)
+	impl darwinia_header_mmr_rpc_runtime_api::HeaderMMRApi<Block, Hash> for Runtime {
+		fn gen_proof(
+			block_number_of_member_leaf: u64,
+			block_number_of_last_leaf: u64
+		) -> HeaderMMRRuntimeDispatchInfo<Hash> {
+			HeaderMMR::gen_proof_rpc(block_number_of_member_leaf, block_number_of_last_leaf )
 		}
 	}
 
