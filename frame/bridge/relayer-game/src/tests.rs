@@ -247,23 +247,24 @@ fn lock_should_work() {
 // 	}
 // }
 
-// #[test]
-// fn settle_without_challenge_should_work() {
-// 	ExtBuilder::default().build().execute_with(|| {
-// 		let chain = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], true);
+#[test]
+fn settle_without_challenge_should_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		for (header, i) in MockTcHeader::mock_chain(vec![1, 1, 1, 1, 1], true)
+			.into_iter()
+			.zip(1..)
+		{
+			assert_ok!(RelayerGame::submit_proposal(
+				Origin::signed(1),
+				vec![header.encode()]
+			));
 
-// 		for i in 0..5 {
-// 			assert_ok!(RelayerGame::submit_proposal(
-// 				Origin::signed(1),
-// 				chain[..1].to_vec()
-// 			));
+			run_to_block(4 * i);
 
-// 			run_to_block(4 * i);
-
-// 			assert_eq!(Relay::header_of_block_number(block_number), Some(header));
-// 		}
-// 	})
-// }
+			assert_eq!(Relay::header_of_block_number(header.number), Some(header));
+		}
+	})
+}
 
 // #[test]
 // fn settle_with_challenge_should_work() {}
