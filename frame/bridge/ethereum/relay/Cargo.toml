@@ -17,12 +17,14 @@ blake2-rfc = { default-features = false, versiona="0.2.18" }
 darwinia-support = { default-features = false, path = "../../../support" }
 ethereum-primitives = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
 darwinia-header-mmr-rpc-runtime-api = { default-features = false, path = "../../../header-mmr/rpc/runtime-api" }
+array-bytes = { default-features = false, path = "../../../../primitives/array-bytes" }
 # github
 ethereum-types = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 ckb-merkle-mountain-range = { default-features = false, git= "https://github.com/nervosnetwork/merkle-mountain-range.git"}
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
 frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
+sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
 sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
 sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
 
@@ -30,7 +32,6 @@ sp-std = { default-features = false, git = "https://github.com/darwinia-network/
 # crates
 serde_json = { version = "1.0.51"}
 # darwinia
-array-bytes = { path = "../../../../primitives/array-bytes" }
 darwinia-balances = { path = "../../../../frame/balances" }
 ethereum-primitives = { features = ["easy-testing"], path = "../../../../primitives/ethereum-primitives" }
 # substrate
@@ -46,11 +47,13 @@ std = [
 	# darwinia
 	"darwinia-support/std",
 	"ethereum-primitives/std",
+	"array-bytes/std",
 	# github
 	"ethereum-types/std",
 	# substrate
 	"frame-support/std",
 	"frame-system/std",
+	"sp-core/std",
 	"sp-runtime/std",
 	"sp-std/std",
 ]

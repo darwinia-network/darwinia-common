@@ -23,13 +23,15 @@ use sp_std::{convert::From, prelude::*};
 // --- darwinia ---
 use crate::helper::leaf_index_to_pos;
 use crate::mmr::{block_num_to_mmr_size, MergeHash, MerkleProof};
+use array_bytes::array_unchecked;
 use darwinia_support::relay::*;
 use ethereum_primitives::{
-	header::EthHeader, merkle::DoubleNodeWithMerkleProof, pow::EthashPartial, EthBlockNumber, H256,
+	header::EthHeader, merkle::DoubleNodeWithMerkleProof, pow::EthashPartial, EthBlockNumber,
+	H256 as EthH256,
 };
+use sp_core::H256;
 
-type EthereumMMRHash = H256;
-type MMRMerkleProof = MerkleProof<EthereumMMRHash, EthereumMMRHash>;
+type EthereumMMRHash = EthH256;
 
 pub trait Trait: frame_system::Trait {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
@@ -224,8 +226,8 @@ impl<T: Trait> Module<T> {
 
 impl<T: Trait> Relayable for Module<T> {
 	type TcBlockNumber = EthBlockNumber;
-	type TcHeaderHash = H256;
-	type TcHeaderMMR = EthereumMMRHash;
+	type TcHeaderHash = ethereum_primitives::H256;
+	type TcHeaderMMR = sp_core::H256;
 
 	fn best_block_number() -> Self::TcBlockNumber {
 		return if let Some(i) = LastConfirmedHeaderInfo::get() {
@@ -235,17 +237,14 @@ impl<T: Trait> Relayable for Module<T> {
 		};
 	}
 
-	fn header_existed(block_number: Self::TcBlockNumber) -> bool {
-		ConfirmedHeadersDoubleMap::contains_key(
-			block_number / ConfirmBlocksInCycle::get(),
-			block_number,
-		)
-	}
-
 	fn verify_raw_header_thing(
 		raw_header_thing: RawHeaderThing,
+		with_proposed_raw_header: bool,
 	) -> Result<
-		TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
+		(
+			TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
+			RawHeaderThing,
+		),
 		DispatchError,
 	> {
 		let EthHeaderThing {
@@ -264,14 +263,33 @@ impl<T: Trait> Relayable for Module<T> {
 		if !Self::verify_block_seal(&eth_header, &ethash_proof) {
 			return Err(<Error<T>>::HeaderInvalid)?;
 		};
-
-		Ok(TcHeaderBrief {
-			block_number: eth_header.number,
-			hash: eth_header.hash.unwrap_or_default(),
-			parent_hash: eth_header.parent_hash,
-			mmr: mmr_root,
-			others: eth_header.encode(),
-		})
+		if with_proposed_raw_header {
+			Ok((
+				TcHeaderBrief {
+					number: eth_header.number,
+					hash: eth_header.hash.unwrap_or_default(),
+					parent_hash: eth_header.parent_hash,
+					mmr: array_unchecked!(mmr_root, 16, 32).into(),
+					others: eth_header.encode(),
+				},
+				ProposalEthHeaderThing {
+					eth_header,
+					mmr_root,
+				}
+				.encode(),
+			))
+		} else {
+			Ok((
+				TcHeaderBrief {
+					number: eth_header.number,
+					hash: eth_header.hash.unwrap_or_default(),
+					parent_hash: eth_header.parent_hash,
+					mmr: array_unchecked!(mmr_root, 16, 32).into(),
+					others: eth_header.encode(),
+				},
+				vec![],
+			))
+		}
 	}
 
 	fn verify_raw_header_thing_chain(
@@ -308,7 +326,15 @@ impl<T: Trait> Relayable for Module<T> {
 				//  C  ...  1st
 				//  C: Last Comfirmed Block  1st: 1st submit block
 				if let Some(l) = LastConfirmedHeaderInfo::get() {
-					if !Self::verify_mmr(eth_header.number, mmr_root, mmr_proof, vec![(l.0, l.1)]) {
+					if !Self::verify_mmr(
+						eth_header.number,
+						array_unchecked!(mmr_root, 16, 32).into(),
+						mmr_proof
+							.iter()
+							.map(|h| array_unchecked!(h, 16, 32).into())
+							.collect(),
+						vec![(l.0, l.1)],
+					) {
 						return Err(<Error<T>>::MMRInvalid)?;
 					}
 				};
@@ -325,21 +351,27 @@ impl<T: Trait> Relayable for Module<T> {
 				if !Self::verify_mmr(
 					previous_header_number,
 					previous_mmr.unwrap_or_default(),
-					mmr_proof,
-					vec![(eth_header.number, eth_header.hash.unwrap_or_default())],
+					mmr_proof
+						.iter()
+						.map(|h| array_unchecked!(h, 16, 32).into())
+						.collect(),
+					vec![(
+						eth_header.number,
+						array_unchecked!(eth_header.hash.unwrap_or_default(), 16, 32).into(),
+					)],
 				) {
 					return Err(<Error<T>>::MMRInvalid)?;
 				}
 			}
 
-			previous_mmr = Some(mmr_root);
+			previous_mmr = Some(array_unchecked!(mmr_root, 16, 32).into());
 			previous_header_number = eth_header.number;
 		}
 		Ok(output)
 	}
 
 	fn on_chain_arbitrate(
-		header_briefs_chain: Vec<
+		header_brief_chain: Vec<
 			darwinia_support::relay::TcHeaderBrief<
 				Self::TcBlockNumber,
 				Self::TcHeaderHash,
@@ -351,14 +383,13 @@ impl<T: Trait> Relayable for Module<T> {
 
 		let eth_partial = EthashPartial::production();
 
-		for i in 1..header_briefs_chain.len() - 1 {
-			if header_briefs_chain[i].parent_hash != header_briefs_chain[i + 1].hash {
+		for i in 1..header_brief_chain.len() - 1 {
+			if header_brief_chain[i].parent_hash != header_brief_chain[i + 1].hash {
 				return Err(<Error<T>>::ChainInvalid)?;
 			}
-			let header =
-				EthHeader::decode(&mut &*header_briefs_chain[i].others).unwrap_or_default();
+			let header = EthHeader::decode(&mut &*header_brief_chain[i].others).unwrap_or_default();
 			let previous_header =
-				EthHeader::decode(&mut &*header_briefs_chain[i + 1].others).unwrap_or_default();
+				EthHeader::decode(&mut &*header_brief_chain[i + 1].others).unwrap_or_default();
 
 			if *(header.difficulty()) != eth_partial.calculate_difficulty(&header, &previous_header)
 			{
@@ -384,7 +415,7 @@ impl<T: Trait> Relayable for Module<T> {
 		if eth_header.number > last_comfirmed_block_number {
 			LastConfirmedHeaderInfo::set(Some((
 				eth_header.number,
-				eth_header.hash.unwrap_or_default(),
+				array_unchecked!(eth_header.hash.unwrap_or_default(), 16, 32).into(),
 				mmr_root,
 			)))
 		};
@@ -410,6 +441,12 @@ pub struct EthHeaderThing {
 	ethash_proof: Vec<DoubleNodeWithMerkleProof>,
 	mmr_root: EthereumMMRHash,
 	mmr_proof: Vec<EthereumMMRHash>,
+}
+
+#[derive(Encode, Decode, Default, RuntimeDebug)]
+pub struct ProposalEthHeaderThing {
+	eth_header: EthHeader,
+	mmr_root: EthereumMMRHash,
 }
 
 impl From<RawHeaderThing> for EthHeaderThing {
