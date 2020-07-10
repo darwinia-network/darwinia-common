@@ -84,7 +84,6 @@ pub trait DustCollector<AccountId> {
 
 	fn collect(who: &AccountId);
 }
-
 #[impl_for_tuples(15)]
 impl<AccountId> DustCollector<AccountId> for Currencies {
 	fn check(who: &AccountId) -> Result<(), ()> {
@@ -168,33 +167,43 @@ pub trait Relayable {
 	/// The latest finalize block's header's record id in darwinia
 	fn best_block_number() -> Self::TcBlockNumber;
 
-	/// Check the header if it's already existed
-	fn header_existed(block_number: Self::TcBlockNumber) -> bool;
-
 	/// Verify the codec style header thing
+	///
+	/// If `with_proposed_raw_header` is enabled,
+	/// this function will push a codec header into the header brief's other filed
+	/// as the LAST item
 	fn verify_raw_header_thing(
 		raw_header_thing: RawHeaderThing,
+		with_proposed_raw_header: bool,
 	) -> Result<
-		TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
+		(
+			TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
+			RawHeaderThing,
+		),
 		DispatchError,
 	>;
 
-	/// Verify the codec style header thing chain
+	/// Verify the codec style header thing chain and return the header brief
 	fn verify_raw_header_thing_chain(
 		raw_header_thing_chain: Vec<RawHeaderThing>,
 	) -> Result<
 		Vec<TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>>,
 		DispatchError,
 	> {
-		raw_header_thing_chain
-			.into_iter()
-			.map(<Self as Relayable>::verify_raw_header_thing)
-			.collect()
+		let mut header_brief_chain = vec![];
+
+		for raw_header_thing in raw_header_thing_chain {
+			let (header_brief, _) = Self::verify_raw_header_thing(raw_header_thing, false)?;
+
+			header_brief_chain.push(header_brief);
+		}
+
+		Ok(header_brief_chain)
 	}
 
 	/// On chain arbitrate, to confirmed the header with 100% sure
 	fn on_chain_arbitrate(
-		header_briefs_chain: Vec<
+		header_brief_chain: Vec<
 			TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
 		>,
 	) -> DispatchResult;

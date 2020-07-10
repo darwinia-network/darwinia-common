@@ -13,7 +13,7 @@ use sp_runtime::{DispatchError, DispatchResult};
 use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_support::relay::*;
-use ethereum_primitives::{header::EthHeader, EthBlockNumber, H256};
+use ethereum_primitives::{header::EthHeader, EthBlockNumber};
 
 pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	type Event: From<Event<Self, I>> + Into<<Self as frame_system::Trait>::Event>;
@@ -52,22 +52,21 @@ decl_module! {
 
 impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 	type TcBlockNumber = EthBlockNumber;
-	type TcHeaderHash = H256;
-	// TODO: MMR type
-	type TcHeaderMMR = ();
+	type TcHeaderHash = ethereum_primitives::H256;
+	type TcHeaderMMR = sp_core::H256;
 
 	fn best_block_number() -> Self::TcBlockNumber {
 		unimplemented!()
 	}
 
-	fn header_existed(block_number: Self::TcBlockNumber) -> bool {
-		unimplemented!()
-	}
-
 	fn verify_raw_header_thing(
 		raw_header_thing: RawHeaderThing,
+		with_proposed_raw_header: bool,
 	) -> Result<
-		TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
+		(
+			TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
+			RawHeaderThing,
+		),
 		DispatchError,
 	> {
 		unimplemented!()
@@ -87,7 +86,7 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 	}
 
 	fn on_chain_arbitrate(
-		header_briefs_chain: Vec<
+		header_brief_chain: Vec<
 			darwinia_support::relay::TcHeaderBrief<
 				Self::TcBlockNumber,
 				Self::TcHeaderHash,
