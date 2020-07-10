@@ -27,7 +27,7 @@
 	             |   -   f
 	             |  / \
 	             | a   b
-	Block Number | 0 1
+	Block Number | 0   1
 	```
 
 1. **Round 1, Sample 3**
