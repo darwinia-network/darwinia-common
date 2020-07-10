@@ -62,7 +62,7 @@ mod tests;
 use serde::Serialize;
 
 // --- github ---
-use merkle_mountain_range::{leaf_index_to_pos as block_number_to_pos, MMRStore, MMR};
+use merkle_mountain_range::{MMRStore, MMR};
 // --- substrate ---
 use codec::{Decode, Encode};
 use frame_support::{debug::error, decl_module, decl_storage};
@@ -253,4 +253,8 @@ fn block_number_to_mmr_size(block_number: u64) -> u64 {
 	// then mmr_size = (2*2^p1 - 1) + (2*2^ p2 - 1) + ... + (2*2^pk - 1)
 	// = 2*2^p1 + 2*2^p2 + ... + 2*2^pk - k = 2 * B - k
 	2 * block_count - peak_count
+}
+
+fn block_number_to_pos(block_number: u64) -> u64 {
+	block_number_to_mmr_size(block_number) - (block_number + 1).trailing_zeros() as u64 - 1
 }
