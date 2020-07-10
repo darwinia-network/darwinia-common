@@ -152,7 +152,7 @@ pub trait AdjustableRelayerGame {
 
 	fn chain_len_from_round(round: Round) -> u64;
 
-	fn update_samples(round: Round, samples: &mut Vec<Self::TcBlockNumber>);
+	fn update_samples(samples: &mut Vec<Vec<Self::TcBlockNumber>>);
 
 	fn estimate_bond(round: Round, proposals_count: u64) -> Self::Balance;
 }
