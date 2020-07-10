@@ -169,12 +169,12 @@ pub trait Relayable {
 
 	/// Verify the codec style header thing
 	///
-	/// If `with_raw_header` is enabled,
+	/// If `with_proposed_raw_header` is enabled,
 	/// this function will push a codec header into the header brief's other filed
 	/// as the LAST item
 	fn verify_raw_header_thing(
 		raw_header_thing: RawHeaderThing,
-		with_raw_header: bool,
+		with_proposed_raw_header: bool,
 	) -> Result<
 		(
 			TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,

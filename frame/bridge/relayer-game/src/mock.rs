@@ -59,7 +59,7 @@ pub mod mock_relay {
 
 		fn verify_raw_header_thing(
 			raw_header_thing: RawHeaderThing,
-			with_raw_header: bool,
+			with_proposed_raw_header: bool,
 		) -> Result<
 			(
 				TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
@@ -85,7 +85,7 @@ pub mod mock_relay {
 					mmr: (),
 					others: vec![],
 				},
-				if with_raw_header {
+				if with_proposed_raw_header {
 					raw_header_thing
 				} else {
 					vec![]

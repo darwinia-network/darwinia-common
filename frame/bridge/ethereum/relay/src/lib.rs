@@ -61,7 +61,7 @@ impl<T: Trait<I>, I: Instance> Relayable for Module<T, I> {
 
 	fn verify_raw_header_thing(
 		raw_header_thing: RawHeaderThing,
-		with_raw_header: bool,
+		with_proposed_raw_header: bool,
 	) -> Result<
 		(
 			TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
