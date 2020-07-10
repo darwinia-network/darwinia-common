@@ -4,8 +4,7 @@
 use blake2_rfc::blake2b::blake2b;
 use ckb_merkle_mountain_range::Merge;
 pub use ckb_merkle_mountain_range::MerkleProof;
-
-use sp_std::prelude::*;
+use sp_std::vec;
 
 /// BlakeTwo256 hash function
 pub fn hash(data: &[u8]) -> [u8; 32] {

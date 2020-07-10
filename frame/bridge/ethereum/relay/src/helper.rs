@@ -1,6 +1,4 @@
 // This file is part of merkle-mountain-range from nervosnetwork
-use sp_std::prelude::*;
-
 fn log2(mut n: u64) -> u64 {
 	let mut k = 0;
 	while n > 1 {

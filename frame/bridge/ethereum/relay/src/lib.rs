@@ -9,13 +9,11 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-use core::marker::PhantomData;
 // --- crates ---
 use codec::{Decode, Encode};
 // --- github ---
 use ethereum_types::H128;
 // --- substrate ---
-use crate::sp_api_hidden_includes_decl_storage::hidden_include::sp_runtime::traits::Hash;
 use frame_support::{decl_error, decl_event, decl_module, decl_storage};
 use frame_system::{self as system, ensure_root};
 use sp_runtime::{DispatchError, DispatchResult, RuntimeDebug};
@@ -298,7 +296,7 @@ impl<T: Trait> Relayable for Module<T> {
 		Vec<TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>>,
 		DispatchError,
 	> {
-		let output = vec![];
+		let mut output = vec![];
 		let mut previous_mmr = None;
 		let mut previous_header_number = 0;
 
@@ -366,6 +364,13 @@ impl<T: Trait> Relayable for Module<T> {
 
 			previous_mmr = Some(array_unchecked!(mmr_root, 16, 32).into());
 			previous_header_number = eth_header.number;
+			output.push(TcHeaderBrief {
+				number: eth_header.number,
+				hash: eth_header.hash.unwrap_or_default(),
+				parent_hash: eth_header.parent_hash,
+				mmr: array_unchecked!(mmr_root, 16, 32).into(),
+				others: eth_header.encode(),
+			});
 		}
 		Ok(output)
 	}
