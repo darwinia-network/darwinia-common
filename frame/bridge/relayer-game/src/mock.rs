@@ -26,7 +26,13 @@ pub mod mock_relay {
 		add_extra_genesis {
 			config(headers): Vec<MockTcHeader>;
 			build(|config: &GenesisConfig| {
-				let mut best_block_number = MockTcBlockNumber::zero();
+				let mut best_block_number = 0;
+
+				BestBlockNumber::put(best_block_number);
+				Headers::insert(
+					best_block_number,
+					MockTcHeader::mock(best_block_number, 0, 1)
+				);
 
 				for header in &config.headers {
 					Headers::insert(header.number, header.clone());
@@ -100,16 +106,23 @@ pub mod mock_relay {
 		) -> DispatchResult {
 			header_brief_chain.sort_by_key(|header_brief| header_brief.number);
 
-			let mut parent_hash = header_brief_chain.pop().unwrap().hash;
+			let mut parent_hash = header_brief_chain.pop().unwrap().parent_hash;
 
 			while let Some(header_brief) = header_brief_chain.pop() {
-				ensure!(
-					parent_hash != header_brief.parent_hash,
-					"Continuous - INVALID"
-				);
+				ensure!(parent_hash == header_brief.hash, "Continuous - INVALID");
 
-				parent_hash = header_brief.hash;
+				parent_hash = header_brief.parent_hash;
 			}
+
+			println!("{}", Self::best_block_number());
+
+			ensure!(
+				parent_hash
+					== Self::header_of_block_number(Self::best_block_number())
+						.unwrap()
+						.hash,
+				"Continuous - INVALID"
+			);
 
 			Ok(())
 		}
@@ -118,7 +131,13 @@ pub mod mock_relay {
 			let header =
 				MockTcHeader::decode(&mut &*raw_header_thing).map_err(|_| "Decode - FAILED")?;
 
-			Headers::insert(header.number, header);
+			BestBlockNumber::mutate(|best_block_number| {
+				if header.number > *best_block_number {
+					*best_block_number = header.number;
+
+					Headers::insert(header.number, header);
+				}
+			});
 
 			Ok(())
 		}
@@ -374,7 +393,10 @@ impl ExtBuilder {
 			.unwrap();
 
 		darwinia_balances::GenesisConfig::<Test, RingInstance> {
-			balances: vec![(1, 100), (2, 200), (3, 300)],
+			balances: (1..10)
+				.map(|i: AccountId| vec![(i, 100 * i as Balance), (10 * i, 1000 * i as Balance)])
+				.flatten()
+				.collect(),
 		}
 		.assimilate_storage(&mut storage)
 		.unwrap();

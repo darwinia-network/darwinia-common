@@ -205,47 +205,51 @@ fn lock_should_work() {
 	}
 }
 
-// #[test]
-// fn reward_should_work() {
-// 	for estimate_bond in 1..5 {
-// 		ExtBuilder::default()
-// 			.estimate_bond(estimate_bond)
-// 			.build()
-// 			.execute_with(|| {
-// 				let mut bonds = estimate_bond;
+#[test]
+fn slash_and_reward_should_work() {
+	for estimate_bond in 1..5 {
+		ExtBuilder::default()
+			.estimate_bond(estimate_bond)
+			.build()
+			.execute_with(|| {
+				let mut bonds = 0;
 
-// 				let mut proposal_chain_a = vec![MockTcHeader::new_raw(5, 0)];
-// 				let mut proposal_chain_b = vec![MockTcHeader::new_raw(5, 2)];
+				let relayer_a = 10;
+				let relayer_a_balances = Ring::usable_balance(&relayer_a);
+				let chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], true);
 
-// 				assert_ok!(RelayerGame::submit_proposal(
-// 					Origin::signed(1),
-// 					proposal_chain_a.clone()
-// 				));
-// 				assert_ok!(RelayerGame::submit_proposal(
-// 					Origin::signed(2),
-// 					proposal_chain_b.clone()
-// 				));
+				let relayer_b = 20;
+				let relayer_b_balances = Ring::usable_balance(&relayer_b);
+				let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
 
-// 				for (block_number, closed_at) in (2..5).rev().zip((1..).map(|n| 4 * n)) {
-// 					run_to_block(closed_at);
+				assert_eq!(relayer_a_balances, 1000);
+				assert_eq!(relayer_b_balances, 2000);
 
-// 					bonds += estimate_bond;
+				for i in 1..=5 {
+					assert_ok!(RelayerGame::submit_proposal(
+						Origin::signed(10),
+						chain_a[..i as usize].to_vec()
+					));
+					assert_ok!(RelayerGame::submit_proposal(
+						Origin::signed(20),
+						chain_b[..i as usize].to_vec()
+					));
 
-// 					proposal_chain_a.push(MockTcHeader::new_raw(block_number, 0));
-// 					proposal_chain_b.push(MockTcHeader::new_raw(block_number, 2));
+					run_to_block(4 * i);
 
-// 					assert_ok!(RelayerGame::submit_proposal(
-// 						Origin::signed(1),
-// 						proposal_chain_a.clone()
-// 					));
-// 					assert_ok!(RelayerGame::submit_proposal(
-// 						Origin::signed(2),
-// 						proposal_chain_b.clone()
-// 					));
-// 				}
-// 			});
-// 	}
-// }
+					bonds += estimate_bond;
+				}
+
+				println!(
+					"{}, {}",
+					Ring::usable_balance(&relayer_a),
+					Ring::usable_balance(&relayer_b)
+				);
+				assert_eq!(Ring::usable_balance(&relayer_a), relayer_a_balances + bonds);
+				assert_eq!(Ring::usable_balance(&relayer_b), relayer_b_balances - bonds);
+			});
+	}
+}
 
 #[test]
 fn settle_without_challenge_should_work() {
