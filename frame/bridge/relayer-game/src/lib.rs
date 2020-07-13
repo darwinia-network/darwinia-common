@@ -91,8 +91,8 @@ decl_event! {
 		GameId = GameId<TcBlockNumber<T, I>>,
 	{
 		/// A new round started.
-		/// GameId, Samples, MMR Members, MMR Last Leaf
-		NewRound(GameId, Vec<TcBlockNumber>, Vec<TcBlockNumber>, TcBlockNumber),
+		/// GameId(MMR Last Leaf), Samples, MMR Members
+		NewRound(GameId, Vec<TcBlockNumber>, Vec<TcBlockNumber>),
 	}
 }
 
@@ -434,7 +434,6 @@ decl_module! {
 							game_id,
 							samples.concat(),
 							samples[samples.len() - 1].clone(),
-							samples[samples.len() - 2].iter().max().unwrap().to_owned()
 						));
 					}
 				);
