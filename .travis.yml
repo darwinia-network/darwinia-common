@@ -59,6 +59,10 @@ jobs:
       env: CLAIMS RUST_TOOLCHAIN=nightly TARGET=native
       script: .maintain/ci/darwinia_test_script.sh claims
 
+    - stage: Darwinia Test
+      env: RELAYERGAME RUST_TOOLCHAIN=nightly TARGET=native
+      script: .maintain/ci/darwinia_test_script.sh relayer-game
+
     # over the time limitation, so we comment this
     # - stage: Overall Test
     #   env: RUST_TOOLCHAIN=nightly TARGET=native
