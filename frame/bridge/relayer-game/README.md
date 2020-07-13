@@ -9,6 +9,51 @@
 
 ---
 
+### POC Version
+
+1. **Round 0, Target 4**
+	```
+	                  R3
+	                /   \
+	               c     f
+	              / \   / \
+	             a   b d   e
+	Block Number 0   1 2   3
+
+	This Proposal Say: I think the MMR Root is R3, and I prove it contains a(last confirmed block's MMR Hash which is block 0's)
+	Gen Proof With: [a]
+	```
+
+1. **Round 1, Sample 3**
+	```
+	                  R3
+	                /   \
+	               c     f
+	              / \   / \
+	             a   b d   e
+	Block Number 0   1 2   3
+
+	This Extended Prove: R3(proposed root which is block 3's MMR root) contains d(current sample point block's MMR Hash which is block 2's)
+	Gen Proof With: [d]
+	```
+
+1. **Round 2, Sample 2**
+	```
+	                  R3
+	                /   \
+	               c     f
+	              / \   / \
+	             a   b d   e
+	Block Number 0   1 2   3
+
+	This Extended Prove: R3(proposed root which is block 3's MMR root) contains b(current sample point block's MMR Hash which is block 1's)
+	Gen Proof With: [b]
+	```
+
+1. **Reach Last Confirmed Block, Game Over**
+
+### TODO
+
 1. **Round 0, Target 4**
 	```
 	             | Global:             | Current:
@@ -27,7 +72,7 @@
 	             |   -   f
 	             |  / \
 	             | a   b
-	Block Number | 0 1
+	Block Number | 0   1
 	```
 
 1. **Round 1, Sample 3**
