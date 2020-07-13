@@ -38,26 +38,9 @@ fn test_check_test_date_decoding() {
 #[test]
 fn test_verify_test_data_mmr_proof() {
 	ExtBuilder::default().build().execute_with(|| {
-		let header_thing_0 = from_file_to_eth_header_thing("./src/test-data/0.json");
 		let header_thing_1 = from_file_to_eth_header_thing("./src/test-data/1.json");
 		let header_thing_2 = from_file_to_eth_header_thing("./src/test-data/2.json");
 		let header_thing_3 = from_file_to_eth_header_thing("./src/test-data/3.json");
-		assert_eq!(
-			EthRelay::verify_mmr(
-				header_thing_3.eth_header.number,
-				array_unchecked!(header_thing_3.mmr_root, 0, 32).into(),
-				header_thing_3
-					.mmr_proof
-					.iter()
-					.map(|h| array_unchecked!(h, 0, 32).into())
-					.collect(),
-				vec![(
-					header_thing_0.eth_header.number,
-					array_unchecked!(header_thing_0.eth_header.hash.unwrap(), 0, 32).into(),
-				)]
-			),
-			true
-		);
 		assert_eq!(
 			EthRelay::verify_mmr(
 				header_thing_3.eth_header.number,

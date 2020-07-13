@@ -28,5 +28,5 @@ impl Merge for MergeHash {
 
 /// Get mmr_size for the MMR model
 pub fn block_num_to_mmr_size(b: u64) -> u64 {
-	2 * b - ((b + 1).count_ones() as u64)
+	2 * b - ((b + 1).count_ones() as u64) + 2
 }
