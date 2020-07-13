@@ -493,7 +493,8 @@ decl_module! {
 		//	the bond should relate to the bytes fee
 		//	that we slash the evil relayer(s) to reward the honest relayer(s) (economic optimize)
 		// TODO: compact params? (efficency optimize)
-		// TODO: check too far from last confirmed? (efficency optimize)
+		// TODO: check too far from last confirmed? maybe we can submit some check point (efficency optimize)
+		// TODO: drop previous rounds' proof (efficency optimize)
 		#[weight = 0]
 		fn submit_proposal(origin, raw_header_thing_chain: Vec<RawHeaderThing>) {
 			let relayer = ensure_signed(origin)?;
