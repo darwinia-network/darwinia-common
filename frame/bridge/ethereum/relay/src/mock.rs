@@ -1,7 +1,6 @@
 //! Mock file for ethereum-relay.
 // --- std ---
 use std::fs::File;
-use std::mem::transmute;
 // --- crates ---
 use serde::Deserialize;
 // --- substrate ---
@@ -104,9 +103,19 @@ impl Default for ExtBuilder {
 
 impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
-		let storage = system::GenesisConfig::default()
+		let mut storage = system::GenesisConfig::default()
 			.build_storage::<Test>()
 			.unwrap();
+
+		GenesisConfig {
+			dags_merkle_roots_loader: DagsMerkleRootsLoader::from_file(
+				"../../../../bin/node-template/node/res/dags_merkle_roots.json",
+				"DAG_MERKLE_ROOTS_PATH",
+			),
+			..Default::default()
+		}
+		.assimilate_storage(&mut storage)
+		.unwrap();
 		storage.into()
 	}
 }
@@ -117,7 +126,7 @@ pub fn from_file_to_eth_header_thing(path: &str) -> EthHeaderThing {
 		eth_header: String,
 		ethash_proof: String,
 		mmr_root: String,
-		mmr_proof: Vec<String>,
+		mmr_proof: Option<String>,
 	}
 	let eth_header_json: EthHeaderJson =
 		serde_json::from_reader(File::open(path).unwrap()).unwrap();
@@ -127,18 +136,19 @@ pub fn from_file_to_eth_header_thing(path: &str) -> EthHeaderThing {
 	))
 	.unwrap_or_default();
 	let mmr_root =
-		H256::decode(&mut &*hex_bytes_unchecked(eth_header_json.mmr_root)).unwrap_or_default();
-	let mmr_proof: Vec<H256> = eth_header_json
-		.mmr_proof
-		.iter()
-		.map(|h| H256::decode(&mut &*hex_bytes_unchecked(h)).unwrap_or_default())
-		.collect();
-	unsafe {
-		EthHeaderThing {
-			eth_header,
-			ethash_proof: transmute(ethash_proof),
-			mmr_root: transmute(mmr_root),
-			mmr_proof: transmute(mmr_proof),
-		}
+		EthH256::decode(&mut &*hex_bytes_unchecked(eth_header_json.mmr_root)).unwrap_or_default();
+	let mmr_proof = if eth_header_json.mmr_proof.is_some() {
+		Vec::<EthH256>::decode(&mut &*hex_bytes_unchecked(
+			eth_header_json.mmr_proof.unwrap(),
+		))
+		.unwrap_or_default()
+	} else {
+		vec![]
+	};
+	EthHeaderThing {
+		eth_header,
+		ethash_proof,
+		mmr_root,
+		mmr_proof,
 	}
 }

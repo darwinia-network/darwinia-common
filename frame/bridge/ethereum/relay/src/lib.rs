@@ -68,6 +68,13 @@ decl_error! {
 	}
 }
 
+#[cfg(feature = "std")]
+darwinia_support::impl_genesis! {
+	struct DagsMerkleRootsLoader {
+		dags_merkle_roots: Vec<H128>
+	}
+}
+
 decl_storage! {
 	trait Store for Module<T: Trait> as DarwiniaEthereumRelay {
 		/// Ethereum last confrimed header info including ethereum block number, hash, and mmr
@@ -87,6 +94,25 @@ decl_storage! {
 		pub ConfirmBlocksInCycle get(fn confirm_block_cycle): EthBlockNumber = 185142;
 		/// The confirm blocks keep in month
 		pub ConfirmBlockKeepInMonth get(fn confirm_block_keep_in_mounth): EthBlockNumber = 3;
+	}
+	add_extra_genesis {
+		config(dags_merkle_roots_loader): DagsMerkleRootsLoader;
+		build(|config| {
+			let GenesisConfig {
+				dags_merkle_roots_loader,
+				..
+			} = config;
+
+			let dags_merkle_roots = if dags_merkle_roots_loader.dags_merkle_roots.is_empty() {
+				// DagsMerkleRootsLoader::from_str(DAGS_MERKLE_ROOTS_STR).dags_merkle_roots.clone()
+				DagsMerkleRootsLoader::from_str(r#""\"{}\"""#).dags_merkle_roots.clone()
+			} else {
+				dags_merkle_roots_loader.dags_merkle_roots.clone()
+			};
+			for (i, dag_merkle_root) in dags_merkle_roots.into_iter().enumerate() {
+				DagsMerkleRoots::insert(i as u64, dag_merkle_root);
+			}
+		});
 	}
 }
 
@@ -173,16 +199,14 @@ impl<T: Trait> Module<T> {
 
 	fn verify_block_seal(header: &EthHeader, ethash_proof: &[DoubleNodeWithMerkleProof]) -> bool {
 		if header.hash() != header.re_compute_hash() {
+			println!("re_compute_hash fail");
 			return false;
 		}
 
 		let eth_partial = EthashPartial::production();
 
 		if eth_partial.verify_block_basic(header).is_err() {
-			return false;
-		}
-
-		if eth_partial.verify_block_basic(header).is_err() {
+			println!("verify_block_basic fail");
 			return false;
 		}
 
@@ -195,12 +219,16 @@ impl<T: Trait> Module<T> {
 			.verify_seal_with_proof(&header, &ethash_proof, &merkle_root)
 			.is_err()
 		{
+			println!("verify ethash proof fail");
 			return false;
 		};
 
 		return true;
 	}
 
+	// Verify the MMR root
+	// NOTE: leaves are (block_number, H256)
+	// block_number will transform to position in this function
 	fn verify_mmr(
 		block_number: u64,
 		mmr_root: H256,
@@ -267,7 +295,7 @@ impl<T: Trait> Relayable for Module<T> {
 					number: eth_header.number,
 					hash: eth_header.hash.unwrap_or_default(),
 					parent_hash: eth_header.parent_hash,
-					mmr: array_unchecked!(mmr_root, 16, 32).into(),
+					mmr: array_unchecked!(mmr_root, 0, 32).into(),
 					others: eth_header.encode(),
 				},
 				ProposalEthHeaderThing {
@@ -282,7 +310,7 @@ impl<T: Trait> Relayable for Module<T> {
 					number: eth_header.number,
 					hash: eth_header.hash.unwrap_or_default(),
 					parent_hash: eth_header.parent_hash,
-					mmr: array_unchecked!(mmr_root, 16, 32).into(),
+					mmr: array_unchecked!(mmr_root, 0, 32).into(),
 					others: eth_header.encode(),
 				},
 				vec![],
@@ -297,8 +325,9 @@ impl<T: Trait> Relayable for Module<T> {
 		DispatchError,
 	> {
 		let mut output = vec![];
-		let mut previous_mmr = None;
-		let mut previous_header_number = 0;
+		let mut first_header_mmr = None;
+		let mut first_header_number = 0;
+		let chain_lengeth = raw_header_thing_chain.len();
 
 		for (idx, raw_header_thing) in raw_header_thing_chain.into_iter().enumerate() {
 			let EthHeaderThing {
@@ -324,18 +353,23 @@ impl<T: Trait> Relayable for Module<T> {
 				//  C  ...  1st
 				//  C: Last Comfirmed Block  1st: 1st submit block
 				if let Some(l) = LastConfirmedHeaderInfo::get() {
-					if !Self::verify_mmr(
-						eth_header.number,
-						array_unchecked!(mmr_root, 16, 32).into(),
-						mmr_proof
-							.iter()
-							.map(|h| array_unchecked!(h, 16, 32).into())
-							.collect(),
-						vec![(l.0, l.1)],
-					) {
-						return Err(<Error<T>>::MMRInvalid)?;
+					if chain_lengeth == 1 {
+						if !Self::verify_mmr(
+							eth_header.number,
+							array_unchecked!(mmr_root, 0, 32).into(),
+							mmr_proof
+								.iter()
+								.map(|h| array_unchecked!(h, 0, 32).into())
+								.collect(),
+							vec![(l.0, l.1)],
+						) {
+							return Err(<Error<T>>::MMRInvalid)?;
+						}
 					}
 				};
+
+				first_header_mmr = Some(array_unchecked!(mmr_root, 0, 32).into());
+				first_header_number = eth_header.number;
 			// the hash of other submit should be included by previous mmr_root
 			} else {
 				// last confirm no exsit the mmr verification will be passed
@@ -344,31 +378,30 @@ impl<T: Trait> Relayable for Module<T> {
 				//     / \
 				//    - ..-
 				//   /   | \
-				//  -  ..c  p
-				// c: current submit	p: previous sumit
-				if !Self::verify_mmr(
-					previous_header_number,
-					previous_mmr.unwrap_or_default(),
-					mmr_proof
-						.iter()
-						.map(|h| array_unchecked!(h, 16, 32).into())
-						.collect(),
-					vec![(
-						eth_header.number,
-						array_unchecked!(eth_header.hash.unwrap_or_default(), 16, 32).into(),
-					)],
-				) {
-					return Err(<Error<T>>::MMRInvalid)?;
+				//  -  ..c  1st
+				// c: current submit  1st: 1st submit block
+				if idx == chain_lengeth - 1 {
+					if !Self::verify_mmr(
+						first_header_number,
+						first_header_mmr.unwrap_or_default(),
+						mmr_proof
+							.iter()
+							.map(|h| array_unchecked!(h, 0, 32).into())
+							.collect(),
+						vec![(
+							eth_header.number,
+							array_unchecked!(eth_header.hash.unwrap_or_default(), 0, 32).into(),
+						)],
+					) {
+						return Err(<Error<T>>::MMRInvalid)?;
+					}
 				}
 			}
-
-			previous_mmr = Some(array_unchecked!(mmr_root, 16, 32).into());
-			previous_header_number = eth_header.number;
 			output.push(TcHeaderBrief {
 				number: eth_header.number,
 				hash: eth_header.hash.unwrap_or_default(),
 				parent_hash: eth_header.parent_hash,
-				mmr: array_unchecked!(mmr_root, 16, 32).into(),
+				mmr: array_unchecked!(mmr_root, 0, 32).into(),
 				others: eth_header.encode(),
 			});
 		}
@@ -420,7 +453,7 @@ impl<T: Trait> Relayable for Module<T> {
 		if eth_header.number > last_comfirmed_block_number {
 			LastConfirmedHeaderInfo::set(Some((
 				eth_header.number,
-				array_unchecked!(eth_header.hash.unwrap_or_default(), 16, 32).into(),
+				array_unchecked!(eth_header.hash.unwrap_or_default(), 0, 32).into(),
 				mmr_root,
 			)))
 		};
