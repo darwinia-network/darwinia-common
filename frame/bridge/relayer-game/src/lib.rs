@@ -88,11 +88,12 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 decl_event! {
 	pub enum Event<T, I: Instance = DefaultInstance>
 	where
-		AccountId = AccountId<T>,
-		BlockNumber = BlockNumber<T>,
+		TcBlockNumber = TcBlockNumber<T, I>,
+		GameId = GameId<TcBlockNumber<T, I>>,
 	{
-		/// TODO
-		TODO(AccountId, BlockNumber),
+		/// A new round started.
+		/// GameId(MMR Last Leaf), Samples, MMR Members
+		NewRound(GameId, Vec<TcBlockNumber>, Vec<TcBlockNumber>),
 	}
 }
 
@@ -115,7 +116,6 @@ decl_error! {
 	}
 }
 
-// TODO: store in relay, avoid dup codec
 decl_storage! {
 	trait Store for Module<T: Trait<I>, I: Instance = DefaultInstance> as DarwiniaRelayerGame {
 		/// All the proposals here per game
@@ -149,7 +149,7 @@ decl_storage! {
 		pub Samples
 			get(fn samples_of_game)
 			: map hasher(blake2_128_concat) TcBlockNumber<T, I>
-			=> Vec<TcBlockNumber<T, I>>;
+			=> Vec<Vec<TcBlockNumber<T, I>>>;
 
 		/// The closed rounds which had passed the challenge time at this moment
 		pub ClosedRounds
@@ -420,12 +420,23 @@ decl_module! {
 				<Headers<T, I>>::remove_prefix(game_id);
 				<Proposals<T, I>>::take(game_id);
 			};
-			let update_samples = |game_id, chain_len| {
-				<Samples<T, I>>::mutate(game_id, |samples|
-					T::RelayerGameAdjustor::update_samples(
-						T::RelayerGameAdjustor::round_from_chain_len(chain_len) + 1,
-						samples
-					)
+			let update_samples = |game_id| {
+				<Samples<T, I>>::mutate(game_id, |samples| {
+						T::RelayerGameAdjustor::update_samples(samples);
+
+						if samples.len() < 2 {
+							error!("Sample Points MISSING, \
+								Check Your Sample Strategy Implementation");
+
+							return;
+						}
+
+						Self::deposit_event(RawEvent::NewRound(
+							game_id,
+							samples.concat(),
+							samples[samples.len() - 1].clone(),
+						));
+					}
 				);
 			};
 
@@ -470,7 +481,7 @@ decl_module! {
 									proposals
 								);
 							} else {
-								update_samples(relay_target, last_round_proposals_chain_len as _);
+								update_samples(relay_target);
 							}
 						}
 					}
@@ -483,7 +494,8 @@ decl_module! {
 		//	the bond should relate to the bytes fee
 		//	that we slash the evil relayer(s) to reward the honest relayer(s) (economic optimize)
 		// TODO: compact params? (efficency optimize)
-		// TODO: check too far from last confirmed? (efficency optimize)
+		// TODO: check too far from last confirmed? maybe we can submit some check point (efficency optimize)
+		// TODO: drop previous rounds' proof (efficency optimize)
 		#[weight = 0]
 		fn submit_proposal(origin, raw_header_thing_chain: Vec<RawHeaderThing>) {
 			let relayer = ensure_signed(origin)?;
@@ -557,7 +569,7 @@ decl_module! {
 							+ T::RelayerGameAdjustor::challenge_time(0),
 						(game_id, 0)
 					);
-					<Samples<T, I>>::append(game_id, game_id);
+					<Samples<T, I>>::append(game_id, vec![game_id]);
 					<LastConfirmeds<T, I>>::insert(game_id, best_block_number);
 					<Headers<T, I>>::insert(game_id, proposed_header_hash, proposed_raw_header);
 					<Proposals<T, I>>::append(game_id, Proposal {
@@ -611,7 +623,7 @@ decl_module! {
 						// Chain's len is ALWAYS great than 1 under this match pattern; qed
 						let game_id = chain[0].number;
 
-						Self::samples_of_game(game_id)
+						Self::samples_of_game(game_id).concat()
 					};
 
 					ensure!(chain.len() == samples.len(), <Error<T, I>>::RoundMis);

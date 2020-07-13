@@ -199,14 +199,12 @@ impl<T: Trait> Module<T> {
 
 	fn verify_block_seal(header: &EthHeader, ethash_proof: &[DoubleNodeWithMerkleProof]) -> bool {
 		if header.hash() != header.re_compute_hash() {
-			println!("re_compute_hash fail");
 			return false;
 		}
 
 		let eth_partial = EthashPartial::production();
 
 		if eth_partial.verify_block_basic(header).is_err() {
-			println!("verify_block_basic fail");
 			return false;
 		}
 
@@ -219,7 +217,6 @@ impl<T: Trait> Module<T> {
 			.verify_seal_with_proof(&header, &ethash_proof, &merkle_root)
 			.is_err()
 		{
-			println!("verify ethash proof fail");
 			return false;
 		};
 

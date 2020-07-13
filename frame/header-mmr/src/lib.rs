@@ -17,10 +17,6 @@
 //! block header hash. Proofs can be used to verify block inclusion together with
 //! the mmr root in the header digest.
 //!
-//! ### Positions
-//! The index position of the nodes(and hash leave nodes) in the mmr node list
-//! constructed using MMR struct
-//!
 //! ### Digest Item
 //! The is a ```MerkleMountainRangeRoot(Hash)``` digest item pre-subscribed in Digest.
 //! This is implemented in Darwinia's fork of substrate: https://github.com/darwinia-network/substrate
@@ -42,6 +38,23 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+mod migration {
+	// --- substrate ---
+	use frame_support::migration::*;
+	// --- darwinia ---
+	use crate::*;
+
+	pub fn migrate<T: Trait>() {
+		sp_runtime::print("Migrating DarwiniaHeaderMMR...");
+
+		for _ in <StorageIterator<T::BlockNumber>>::new(b"DarwiniaHeaderMMR", b"Positions").drain()
+		{
+		}
+
+		remove_storage_prefix(b"DarwiniaHeaderMMR", b"Positions", &[]);
+	}
+}
+
 mod mock;
 mod tests;
 
@@ -49,7 +62,7 @@ mod tests;
 use serde::Serialize;
 
 // --- github ---
-use merkle_mountain_range::{MMRStore, MMR};
+use merkle_mountain_range::{leaf_index_to_mmr_size, leaf_index_to_pos, MMRStore, MMR};
 // --- substrate ---
 use codec::{Decode, Encode};
 use frame_support::{debug::error, decl_module, decl_storage};
@@ -83,9 +96,6 @@ decl_storage! {
 
 		/// The MMR size and length of the mmr node list
 		pub MMRCounter get(fn mmr_counter): u64;
-
-		/// The positions of header numbers in the MMR Node List
-		pub Positions get(fn position_of): map hasher(identity) T::BlockNumber => u64;
 	}
 }
 
@@ -100,21 +110,13 @@ decl_module! {
 			let mut mmr = <MMR<_, MMRMerge<T>, _>>::new(<MMRCounter>::get(), store);
 
 			// Update MMR and add mmr root to digest of block header
-			if let Ok(pos) = mmr.push(parent_hash) {
-				// The first block number should start with 1 and parent block should be (T::BlockNumber::zero(), hash69())
-				// Checking just in case custom changes in system genesis config
-				if block_number >= 1.into() {
-					<Positions<T>>::insert(block_number - 1.into(), pos);
-				}
-			} else {
-				error!("[darwinia-header-mmr] FAILED to Push Parent Hash to MMR");
-			}
+			let _ = mmr.push(parent_hash);
 
 			if let Ok(mmr_root) = mmr.get_root() {
 				if mmr.commit().is_ok() {
 					let mmr_root_log = MerkleMountainRangeRootLog::<T::Hash> {
-						prefix : MMR_ROOT_LOG_ID,
-						mmr_root : mmr_root.into()
+						prefix: MMR_ROOT_LOG_ID,
+						mmr_root: mmr_root.into()
 					};
 					let mmr_item = DigestItem::Other(mmr_root_log.encode());
 
@@ -125,6 +127,11 @@ decl_module! {
 			} else {
 				error!("[darwinia-header-mmr] FAILED to Calculate MMR");
 			}
+		}
+
+		fn on_runtime_upgrade() -> frame_support::weights::Weight {
+			migration::migrate::<T>();
+			0
 		}
 	}
 }
@@ -172,19 +179,18 @@ impl<T: Trait> MMRStore<T::Hash> for ModuleMMRStore<T> {
 impl<T: Trait> Module<T> {
 	impl_rpc! {
 		pub fn gen_proof_rpc(
-			block_number: T::BlockNumber,
-			mmr_block_number: T::BlockNumber,
+			block_number_of_member_leaf: u64,
+			block_number_of_last_leaf: u64,
 		) -> RuntimeDispatchInfo<T::Hash> {
-			if block_number < mmr_block_number {
-				let pos = Self::position_of(block_number);
-				let mmr_header_pos = Self::position_of(mmr_block_number);
-
+			if block_number_of_member_leaf < block_number_of_last_leaf {
 				let store = <ModuleMMRStore<T>>::default();
-				let mmr = <MMR<_, MMRMerge<T>, _>>::new(mmr_header_pos, store);
+				let mmr_size = leaf_index_to_mmr_size(block_number_of_last_leaf);
+				let mmr = <MMR<_, MMRMerge<T>, _>>::new(mmr_size, store);
+				let pos = leaf_index_to_pos(block_number_of_member_leaf);
 
 				if let Ok(merkle_proof) = mmr.gen_proof(vec![pos]) {
 					return RuntimeDispatchInfo {
-						mmr_size: merkle_proof.mmr_size(),
+						mmr_size,
 						proof: Proof(merkle_proof.proof_items().to_vec()),
 					};
 				}
