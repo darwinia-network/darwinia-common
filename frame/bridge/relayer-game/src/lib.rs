@@ -174,6 +174,7 @@ decl_module! {
 		fn deposit_event() = default;
 
 		// TODO: too many db operations and calc need to move to `offchain_worker`
+		// TODO: close the game that its id less than the best number
 		fn on_finalize(block_number: BlockNumber<T>) {
 			let closed_rounds = <ClosedRounds<T, I>>::take(block_number);
 
@@ -253,7 +254,7 @@ decl_module! {
 							if maybe_honesty.is_none() {
 								maybe_honesty = Some((proposal.relayer, *bond));
 							} else {
-								error!("Honest Relayer MORE THAN 1 Within a Round");
+								error!("Honest Relayer Count - MORE THAN 1 WITHIN A ROUND");
 							}
 						} else {
 							evils.push((proposal.relayer, *bond));
@@ -276,7 +277,7 @@ decl_module! {
 							T::RingSlash::on_unbalanced(imbalance);
 						}
 
-						error!("NO Honest Relayer");
+						error!("Honest Relayer - NOT FOUND");
 					}
 				}
 
@@ -362,19 +363,23 @@ decl_module! {
 				let mut maybe_confirmed_proposal: Option<Proposal<AccountId<T>, _, _>> = None;
 				let mut evils = vec![];
 
-				for last_round_proposal in last_round_proposals {
-					if T::TargetChain::on_chain_arbitrate(last_round_proposal
+				for proposal in last_round_proposals {
+					if T::TargetChain::on_chain_arbitrate(proposal
 						.bonded_chain
 						.iter()
 						.map(|BondedTcHeader::<_, TcHeaderBrief<_, _, _>> { header_brief, .. }|
 							header_brief.clone())
 						.collect()).is_ok()
 					{
-						maybe_confirmed_proposal = Some(last_round_proposal);
+						if maybe_confirmed_proposal.is_none() {
+							maybe_confirmed_proposal = Some(proposal);
+						} else {
+							error!("Honest Relayer Count - MORE THAN 1 WITHIN A ROUND");
+						}
 					} else {
 						evils.push((
-							last_round_proposal.relayer,
-							last_round_proposal.bonded_chain.last().unwrap().bond
+							proposal.relayer,
+							proposal.bonded_chain.last().unwrap().bond
 						));
 					}
 				}
