@@ -256,6 +256,7 @@ fn settle_without_challenge_should_work() {
 	ExtBuilder::default().build().execute_with(|| {
 		for (header, i) in MockTcHeader::mock_chain(vec![1, 1, 1, 1, 1], true)
 			.into_iter()
+			.rev()
 			.zip(1..)
 		{
 			assert_ok!(RelayerGame::submit_proposal(

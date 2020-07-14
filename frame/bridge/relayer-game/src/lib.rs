@@ -504,9 +504,7 @@ decl_module! {
 		fn submit_proposal(origin, raw_header_thing_chain: Vec<RawHeaderThing>) {
 			let relayer = ensure_signed(origin)?;
 
-			if raw_header_thing_chain.is_empty() {
-				Err(<Error<T, I>>::ProposalI)?;
-			}
+			ensure!(!raw_header_thing_chain.is_empty(), <Error<T, I>>::ProposalI);
 
 			let (game_id, proposed_header_hash, proposed_raw_header) = {
 				let (
@@ -524,9 +522,6 @@ decl_module! {
 				)
 			};
 			let best_block_number = T::TargetChain::best_block_number();
-
-			ensure!(game_id > best_block_number, <Error<T, I>>::TargetHeaderAC);
-
 			let other_proposals = Self::proposals_of_game(game_id);
 			let other_proposals_len = other_proposals.len();
 			let extend_bonded_chain = |chain: &[_], extend_at| {
@@ -554,6 +549,7 @@ decl_module! {
 			match (other_proposals_len, raw_header_thing_chain.len()) {
 				// New `Game`
 				(0, raw_header_thing_chain_len) => {
+					ensure!(game_id > best_block_number, <Error<T, I>>::TargetHeaderAC);
 					ensure!(raw_header_thing_chain_len == 1, <Error<T, I>>::RoundMis);
 
 					let chain = T::TargetChain
