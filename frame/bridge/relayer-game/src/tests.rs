@@ -156,12 +156,12 @@ fn extend_should_work() {
 
 #[test]
 fn lock_should_work() {
-	for estimate_bond in 1..5 {
+	for estimate_bond in 1..2 {
 		ExtBuilder::default()
 			.estimate_bond(estimate_bond)
 			.build()
 			.execute_with(|| {
-				let mut bonds = estimate_bond;
+				let mut bonds = 0;
 				let chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], true);
 				let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
 				let submit_then_assert = |account_id, chain, bonds| {
@@ -180,12 +180,7 @@ fn lock_should_work() {
 					);
 				};
 
-				submit_then_assert(1, chain_a[..1].to_vec(), bonds);
-				submit_then_assert(2, chain_b[..1].to_vec(), bonds);
-
-				run_to_block(4);
-
-				for i in 2..=5 {
+				for i in 1..=5 {
 					bonds += estimate_bond;
 
 					submit_then_assert(1, chain_a[..i as usize].to_vec(), bonds);
@@ -193,8 +188,6 @@ fn lock_should_work() {
 
 					run_to_block(4 * i);
 				}
-
-				run_to_block(4 * 5);
 
 				assert_eq!(RelayerGame::bonds_of_relayer(1), 0);
 				assert_eq!(Ring::locks(1), vec![]);
@@ -279,3 +272,6 @@ fn settle_without_challenge_should_work() {
 
 // #[test]
 // fn handle_give_up_should_work() {}
+
+// #[test]
+// fn no_honesty_should_work() {}
