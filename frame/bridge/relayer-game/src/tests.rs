@@ -205,7 +205,7 @@ fn slash_and_reward_should_work() {
 			.estimate_bond(estimate_bond)
 			.build()
 			.execute_with(|| {
-				let mut bonds = 0;
+				let mut bonds = estimate_bond;
 
 				let relayer_a = 10;
 				let relayer_a_balances = Ring::usable_balance(&relayer_a);
@@ -233,11 +233,6 @@ fn slash_and_reward_should_work() {
 					bonds += estimate_bond;
 				}
 
-				println!(
-					"{}, {}",
-					Ring::usable_balance(&relayer_a),
-					Ring::usable_balance(&relayer_b)
-				);
 				assert_eq!(Ring::usable_balance(&relayer_a), relayer_a_balances + bonds);
 				assert_eq!(Ring::usable_balance(&relayer_b), relayer_b_balances - bonds);
 			});
