@@ -2,7 +2,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-mod helper;
 mod mmr;
 #[cfg(test)]
 mod mock;
@@ -19,8 +18,7 @@ use frame_system::{self as system, ensure_root};
 use sp_runtime::{DispatchError, DispatchResult, RuntimeDebug};
 use sp_std::{convert::From, prelude::*};
 // --- darwinia ---
-use crate::helper::leaf_index_to_pos;
-use crate::mmr::{block_num_to_mmr_size, MergeHash, MerkleProof};
+use crate::mmr::{leaf_index_to_mmr_size, leaf_index_to_pos, MergeHash, MerkleProof};
 use array_bytes::array_unchecked;
 use darwinia_support::relay::*;
 use ethereum_primitives::{
@@ -233,7 +231,7 @@ impl<T: Trait> Module<T> {
 		leaves: Vec<(u64, H256)>,
 	) -> bool {
 		let p = MerkleProof::<[u8; 32], MergeHash>::new(
-			block_num_to_mmr_size(block_number),
+			leaf_index_to_mmr_size(block_number),
 			mmr_proof.into_iter().map(|h| h.into()).collect(),
 		);
 		p.verify(

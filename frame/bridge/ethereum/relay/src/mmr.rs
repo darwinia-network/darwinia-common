@@ -2,8 +2,9 @@
 /// No mater the hash function of chain,
 /// the Merge of Ethereum MMR used in shadow service is blake2b
 use blake2_rfc::blake2b::blake2b;
-use ckb_merkle_mountain_range::Merge;
-pub use ckb_merkle_mountain_range::MerkleProof;
+pub use ckb_merkle_mountain_range::{
+	leaf_index_to_mmr_size, leaf_index_to_pos, Merge, MerkleProof,
+};
 use sp_std::vec;
 
 /// BlakeTwo256 hash function
@@ -24,9 +25,4 @@ impl Merge for MergeHash {
 		data.append(&mut rhs.to_vec());
 		hash(&data.as_slice())
 	}
-}
-
-/// Get mmr_size for the MMR model
-pub fn block_num_to_mmr_size(b: u64) -> u64 {
-	2 * b - ((b + 1).count_ones() as u64) + 2
 }

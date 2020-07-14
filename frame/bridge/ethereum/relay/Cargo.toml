@@ -22,7 +22,7 @@ darwinia-header-mmr-rpc-runtime-api = { default-features = false, path = "../../
 array-bytes = { default-features = false, path = "../../../../primitives/array-bytes" }
 # github
 ethereum-types = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
-ckb-merkle-mountain-range = { default-features = false, git= "https://github.com/nervosnetwork/merkle-mountain-range.git"}
+ckb-merkle-mountain-range = { default-features = false, git= "https://github.com/darwinia-network/merkle-mountain-range.git"}
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
 frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
