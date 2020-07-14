@@ -58,8 +58,7 @@ impl EthHeader {
 
 		fn parse_value_unchecked(s: &str) -> &str {
 			s.splitn(2, ':')
-				.skip(1)
-				.next()
+				.nth(1)
 				.unwrap_or_default()
 				.trim()
 				.trim_matches('"')
@@ -73,7 +72,7 @@ impl EthHeader {
 			}
 		}
 
-		let mut s = s
+		let s = s
 			.trim()
 			.trim_start_matches('{')
 			.trim_end_matches('}')
@@ -82,7 +81,7 @@ impl EthHeader {
 		let mut eth_header = Self::default();
 		let mut mix_hash = H256::default();
 		let mut nonce = H64::default();
-		while let Some(s) = s.next() {
+		for s in s {
 			if s.is_empty() {
 				continue;
 			}

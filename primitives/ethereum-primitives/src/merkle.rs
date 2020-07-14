@@ -6,21 +6,21 @@ use sp_runtime::RuntimeDebug;
 use sp_std::vec::Vec;
 
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
-pub struct DoubleNodeWithMerkleProof {
+pub struct EthashProof {
 	pub dag_nodes: [H512; 2],
 	pub proof: Vec<H128>,
 }
 
-impl Default for DoubleNodeWithMerkleProof {
-	fn default() -> DoubleNodeWithMerkleProof {
-		DoubleNodeWithMerkleProof {
+impl Default for EthashProof {
+	fn default() -> Self {
+		EthashProof {
 			dag_nodes: <[H512; 2]>::default(),
 			proof: Vec::new(),
 		}
 	}
 }
 
-impl DoubleNodeWithMerkleProof {
+impl EthashProof {
 	pub fn from_str_unchecked(s: &str) -> Self {
 		let mut dag_nodes: Vec<H512> = Vec::new();
 		let mut proof: Vec<H128> = Vec::new();
@@ -35,14 +35,14 @@ impl DoubleNodeWithMerkleProof {
 				panic!("the proofs are longer than 25");
 			}
 		}
-		DoubleNodeWithMerkleProof {
+		EthashProof {
 			dag_nodes: [dag_nodes[0], dag_nodes[1]],
 			proof,
 		}
 	}
 }
 
-impl DoubleNodeWithMerkleProof {
+impl EthashProof {
 	pub fn apply_merkle_proof(&self, index: u64) -> H128 {
 		fn hash_h128(l: H128, r: H128) -> H128 {
 			let mut data = [0u8; 64];

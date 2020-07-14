@@ -4,7 +4,6 @@ use core::{
 };
 
 use codec::{Decode, Encode};
-use ethash;
 use ethereum_types::{BigEndianHash, H128};
 use keccak_hash::KECCAK_EMPTY_LIST_RLP;
 use primitive_types::{H256, U256, U512};
@@ -15,7 +14,7 @@ use sp_std::{cell::RefCell, collections::btree_map::BTreeMap, mem};
 use crate::{
 	error::{BlockError, Mismatch, OutOfBounds},
 	header::EthHeader,
-	merkle::DoubleNodeWithMerkleProof,
+	merkle::EthashProof,
 	*,
 };
 
@@ -124,7 +123,7 @@ impl EthashPartial {
 	pub fn verify_seal_with_proof(
 		self,
 		header: &EthHeader,
-		ethash_proof: &[DoubleNodeWithMerkleProof],
+		ethash_proof: &[EthashProof],
 		merkle_root: &H128,
 	) -> Result<(), BlockError> {
 		let seal = EthashSeal::parse_seal(header.seal())?;
@@ -147,7 +146,7 @@ impl EthashPartial {
 		header_hash: &H256,
 		nonce: &H64,
 		block_number: u64,
-		nodes: &[DoubleNodeWithMerkleProof],
+		nodes: &[EthashProof],
 		merkle_root: &H128,
 	) -> Result<(H256, H256), BlockError> {
 		// Boxed index since ethash::hashimoto gets Fn, but not FnMut
@@ -155,8 +154,8 @@ impl EthashPartial {
 		let err = RefCell::new(0u8);
 
 		let pair = ethash::hashimoto(
-			header_hash.clone(),
-			nonce.clone(),
+			*header_hash,
+			*nonce,
 			ethash::get_full_size(block_number as usize / 30000),
 			|offset| {
 				if *err.borrow() != 0 {
@@ -216,7 +215,7 @@ impl EthashPartial {
 			return Err(BlockError::DifficultyOutOfBounds(OutOfBounds {
 				min: Some(min_difficulty),
 				max: None,
-				found: header.difficulty().clone(),
+				found: *header.difficulty(),
 			}));
 		}
 
@@ -229,7 +228,7 @@ impl EthashPartial {
 
 		if &difficulty < header.difficulty() {
 			return Err(BlockError::InvalidProofOfWork(OutOfBounds {
-				min: Some(header.difficulty().clone()),
+				min: Some(*header.difficulty()),
 				max: None,
 				found: difficulty,
 			}));
@@ -341,8 +340,7 @@ impl EthashSeal {
 			return Err(BlockError::InvalidSealArity(Mismatch {
 				expected: 2,
 				found: seal.len(),
-			})
-			.into());
+			}));
 		}
 
 		let mix_hash = Rlp::new(seal[0].as_ref())

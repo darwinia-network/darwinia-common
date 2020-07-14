@@ -69,8 +69,8 @@ use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_support::balance::lock::LockableCurrency;
 use ethereum_primitives::{
-	header::EthHeader, merkle::DoubleNodeWithMerkleProof, pow::EthashPartial, receipt::Receipt,
-	EthBlockNumber, H256, U256,
+	header::EthHeader, merkle::EthashProof, pow::EthashPartial, receipt::Receipt, EthBlockNumber,
+	H256, U256,
 };
 use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
 use types::*;
@@ -286,7 +286,7 @@ decl_module! {
 		/// - Up to one event
 		/// # </weight>
 		#[weight = 200_000_000]
-		pub fn relay_header(origin, header: EthHeader, ethash_proof: Vec<DoubleNodeWithMerkleProof>) {
+		pub fn relay_header(origin, header: EthHeader, ethash_proof: Vec<EthashProof>) {
 			trace!(target: "ethereum-linear-relay", "{:?}", header);
 			let relayer = ensure_signed(origin)?;
 
@@ -597,10 +597,7 @@ impl<T: Trait> Module<T> {
 		Ok(())
 	}
 
-	fn verify_header_pow(
-		header: &EthHeader,
-		ethash_proof: &[DoubleNodeWithMerkleProof],
-	) -> DispatchResult {
+	fn verify_header_pow(header: &EthHeader, ethash_proof: &[EthashProof]) -> DispatchResult {
 		Self::verify_header_basic(&header)?;
 
 		let ethash_params = match T::EthNetwork::get() {

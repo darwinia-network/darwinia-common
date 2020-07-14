@@ -22,8 +22,7 @@ use crate::mmr::{leaf_index_to_mmr_size, leaf_index_to_pos, MergeHash, MerklePro
 use array_bytes::array_unchecked;
 use darwinia_support::relay::*;
 use ethereum_primitives::{
-	header::EthHeader, merkle::DoubleNodeWithMerkleProof, pow::EthashPartial, EthBlockNumber,
-	H256 as EthH256,
+	header::EthHeader, merkle::EthashProof, pow::EthashPartial, EthBlockNumber, H256 as EthH256,
 };
 use sp_core::H256;
 
@@ -102,8 +101,7 @@ decl_storage! {
 			} = config;
 
 			let dags_merkle_roots = if dags_merkle_roots_loader.dags_merkle_roots.is_empty() {
-				// DagsMerkleRootsLoader::from_str(DAGS_MERKLE_ROOTS_STR).dags_merkle_roots.clone()
-				DagsMerkleRootsLoader::from_str(r#""\"{}\"""#).dags_merkle_roots.clone()
+				DagsMerkleRootsLoader::from_str(r#""\"{}\"""#).dags_merkle_roots
 			} else {
 				dags_merkle_roots_loader.dags_merkle_roots.clone()
 			};
@@ -195,7 +193,7 @@ impl<T: Trait> Module<T> {
 		true
 	}
 
-	fn verify_block_seal(header: &EthHeader, ethash_proof: &[DoubleNodeWithMerkleProof]) -> bool {
+	fn verify_block_seal(header: &EthHeader, ethash_proof: &[EthashProof]) -> bool {
 		if header.hash() != header.re_compute_hash() {
 			return false;
 		}
@@ -218,7 +216,7 @@ impl<T: Trait> Module<T> {
 			return false;
 		};
 
-		return true;
+		true
 	}
 
 	// Verify the MMR root
@@ -251,11 +249,11 @@ impl<T: Trait> Relayable for Module<T> {
 	type TcHeaderMMR = sp_core::H256;
 
 	fn best_block_number() -> Self::TcBlockNumber {
-		return if let Some(i) = LastConfirmedHeaderInfo::get() {
+		if let Some(i) = LastConfirmedHeaderInfo::get() {
 			i.0
 		} else {
-			0u64.into()
-		};
+			0u64
+		}
 	}
 
 	fn verify_raw_header_thing(
@@ -279,10 +277,10 @@ impl<T: Trait> Relayable for Module<T> {
 			eth_header.number / ConfirmBlocksInCycle::get(),
 			eth_header.number,
 		) {
-			return Err(<Error<T>>::TargetHeaderAE)?;
+			return Err(<Error<T>>::TargetHeaderAE.into());
 		}
 		if !Self::verify_block_seal(&eth_header, &ethash_proof) {
-			return Err(<Error<T>>::HeaderInvalid)?;
+			return Err(<Error<T>>::HeaderInvalid.into());
 		};
 		if with_proposed_raw_header {
 			Ok((
@@ -333,11 +331,11 @@ impl<T: Trait> Relayable for Module<T> {
 			} = raw_header_thing.into();
 
 			if !Self::verify_block_seal(&eth_header, &ethash_proof) {
-				return Err(<Error<T>>::HeaderInvalid)?;
+				return Err(<Error<T>>::HeaderInvalid.into());
 			};
 
 			if !Self::verify_block_with_confrim_blocks(&eth_header) {
-				return Err(<Error<T>>::NotComplyWithConfirmebBlocks)?;
+				return Err(<Error<T>>::NotComplyWithConfirmebBlocks.into());
 			}
 			if idx == 0 {
 				// The mmr_root of first submit should includ the hash last confirm block
@@ -348,8 +346,8 @@ impl<T: Trait> Relayable for Module<T> {
 				//  C  ...  1st
 				//  C: Last Comfirmed Block  1st: 1st submit block
 				if let Some(l) = LastConfirmedHeaderInfo::get() {
-					if chain_lengeth == 1 {
-						if !Self::verify_mmr(
+					if chain_lengeth == 1
+						&& !Self::verify_mmr(
 							eth_header.number,
 							array_unchecked!(mmr_root, 0, 32).into(),
 							mmr_proof
@@ -358,8 +356,7 @@ impl<T: Trait> Relayable for Module<T> {
 								.collect(),
 							vec![(l.0, l.1)],
 						) {
-							return Err(<Error<T>>::MMRInvalid)?;
-						}
+						return Err(<Error<T>>::MMRInvalid.into());
 					}
 				};
 
@@ -375,8 +372,8 @@ impl<T: Trait> Relayable for Module<T> {
 				//   /   | \
 				//  -  ..c  1st
 				// c: current submit  1st: 1st submit block
-				if idx == chain_lengeth - 1 {
-					if !Self::verify_mmr(
+				if idx == chain_lengeth - 1
+					&& !Self::verify_mmr(
 						first_header_number,
 						first_header_mmr.unwrap_or_default(),
 						mmr_proof
@@ -388,8 +385,7 @@ impl<T: Trait> Relayable for Module<T> {
 							array_unchecked!(eth_header.hash.unwrap_or_default(), 0, 32).into(),
 						)],
 					) {
-						return Err(<Error<T>>::MMRInvalid)?;
-					}
+					return Err(<Error<T>>::MMRInvalid.into());
 				}
 			}
 			output.push(TcHeaderBrief {
@@ -418,7 +414,7 @@ impl<T: Trait> Relayable for Module<T> {
 
 		for i in 1..header_brief_chain.len() - 1 {
 			if header_brief_chain[i].parent_hash != header_brief_chain[i + 1].hash {
-				return Err(<Error<T>>::ChainInvalid)?;
+				return Err(<Error<T>>::ChainInvalid.into());
 			}
 			let header = EthHeader::decode(&mut &*header_brief_chain[i].others).unwrap_or_default();
 			let previous_header =
@@ -426,7 +422,7 @@ impl<T: Trait> Relayable for Module<T> {
 
 			if *(header.difficulty()) != eth_partial.calculate_difficulty(&header, &previous_header)
 			{
-				return Err(<Error<T>>::ChainInvalid)?;
+				return Err(<Error<T>>::ChainInvalid.into());
 			}
 		}
 		Ok(())
@@ -471,7 +467,7 @@ impl<T: Trait> Relayable for Module<T> {
 #[derive(Encode, Decode, Default, RuntimeDebug)]
 pub struct EthHeaderThing {
 	eth_header: EthHeader,
-	ethash_proof: Vec<DoubleNodeWithMerkleProof>,
+	ethash_proof: Vec<EthashProof>,
 	mmr_root: EthereumMMRHash,
 	mmr_proof: Vec<EthereumMMRHash>,
 }

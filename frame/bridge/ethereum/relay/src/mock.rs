@@ -131,10 +131,9 @@ pub fn from_file_to_eth_header_thing(path: &str) -> EthHeaderThing {
 	let eth_header_json: EthHeaderJson =
 		serde_json::from_reader(File::open(path).unwrap()).unwrap();
 	let eth_header = EthHeader::from_scale_codec_str(eth_header_json.eth_header).unwrap();
-	let ethash_proof = Vec::<DoubleNodeWithMerkleProof>::decode(&mut &*hex_bytes_unchecked(
-		eth_header_json.ethash_proof,
-	))
-	.unwrap_or_default();
+	let ethash_proof =
+		Vec::<EthashProof>::decode(&mut &*hex_bytes_unchecked(eth_header_json.ethash_proof))
+			.unwrap_or_default();
 	let mmr_root =
 		EthH256::decode(&mut &*hex_bytes_unchecked(eth_header_json.mmr_root)).unwrap_or_default();
 	let mmr_proof = if eth_header_json.mmr_proof.is_some() {
