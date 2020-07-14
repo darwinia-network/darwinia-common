@@ -70,9 +70,8 @@ use sp_runtime::{traits::Zero, DispatchError, KeyTypeId};
 use sp_std::prelude::*;
 // --- darwinia ---
 use array_bytes::{base_n_bytes_unchecked, hex_bytes_unchecked};
-use darwinia_ethereum_linear_relay::DoubleNodeWithMerkleProof;
 use darwinia_support::literal_procesor::extract_from_json_str;
-use ethereum_primitives::header::EthHeader;
+use ethereum_primitives::{header::EthHeader, merkle::EthashProof};
 
 type EthRelay<T> = darwinia_ethereum_linear_relay::Module<T>;
 type EthRelayCall<T> = darwinia_ethereum_linear_relay::Call<T>;
@@ -255,7 +254,7 @@ impl<T: Trait> Module<T> {
 		url: Vec<u8>,
 		target_number: u64,
 		option: bool,
-	) -> Result<(EthHeader, Vec<DoubleNodeWithMerkleProof>), DispatchError> {
+	) -> Result<(EthHeader, Vec<EthashProof>), DispatchError> {
 		let payload = Self::build_payload(target_number, option);
 		let mut client = Self::build_request_client(url, payload);
 		let maybe_resp_body = client.send();
@@ -313,7 +312,7 @@ impl<T: Trait> Module<T> {
 	fn submit_header(
 		signer: &Signer<T, T::AuthorityId, ForAll>,
 		header: EthHeader,
-		proof_list: Vec<DoubleNodeWithMerkleProof>,
+		proof_list: Vec<EthashProof>,
 	) {
 		// TODO: test support call ethereum-linear-relay
 		// https://github.com/darwinia-network/darwinia-common/issues/137
@@ -368,17 +367,17 @@ impl<T: Trait> Module<T> {
 	/// Build the merkle proof information from json format response
 	fn parse_double_node_with_proof_list_from_json_str(
 		json_str: &[u8],
-	) -> Result<Vec<DoubleNodeWithMerkleProof>, DispatchError> {
+	) -> Result<Vec<EthashProof>, DispatchError> {
 		let raw_str = match from_utf8(json_str) {
 			Ok(r) => r,
 			Err(_) => return Err(<Error<T>>::ProofJE)?,
 		};
 
-		let mut proof_list: Vec<DoubleNodeWithMerkleProof> = Vec::new();
+		let mut proof_list: Vec<EthashProof> = Vec::new();
 		// The proof list is 64 length, and we use 256 just in case.
 		for p in raw_str.splitn(256, '}') {
 			if p.len() > 0 {
-				proof_list.push(DoubleNodeWithMerkleProof::from_str_unchecked(p));
+				proof_list.push(EthashProof::from_str_unchecked(p));
 			}
 		}
 		Ok(proof_list)
@@ -387,7 +386,7 @@ impl<T: Trait> Module<T> {
 	/// Build the merkle proof information from scale encoded response
 	fn parse_double_node_with_proof_list_from_scale_str(
 		scale_str: &[u8],
-	) -> Result<Vec<DoubleNodeWithMerkleProof>, DispatchError> {
+	) -> Result<Vec<EthashProof>, DispatchError> {
 		if scale_str.len() < 2 {
 			return Err(<Error<T>>::ProofSE)?;
 		};

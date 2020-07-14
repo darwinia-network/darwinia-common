@@ -51,7 +51,7 @@ pub mod mock_relay {
 	impl<T: Trait> Relayable for Module<T> {
 		type TcBlockNumber = MockTcBlockNumber;
 		type TcHeaderHash = MockTcHeaderHash;
-		type TcHeaderMMR = ();
+		type TcHeaderMMR = H256;
 
 		fn best_block_number() -> Self::TcBlockNumber {
 			Self::best_block_number()

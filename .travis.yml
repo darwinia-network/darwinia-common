@@ -44,6 +44,10 @@ jobs:
       script: .maintain/ci/darwinia_test_script.sh ethereum-linear-relay
 
     - stage: Darwinia Test
+      env: ETHRELAY RUST_TOOLCHAIN=nightly TARGET=native
+      script: .maintain/ci/darwinia_test_script.sh ethereum-relay
+
+    - stage: Darwinia Test
       env: ETHBACKING RUST_TOOLCHAIN=nightly TARGET=native
       script: .maintain/ci/darwinia_test_script.sh ethereum-backing
 

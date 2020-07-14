@@ -60,6 +60,7 @@ use sp_std::borrow::ToOwned;
 use sp_std::{collections::btree_map::BTreeMap, prelude::*};
 // --- darwinia ---
 use darwinia_support::{balance::lock::*, relay::*};
+use ethereum_primitives::H256;
 use types::*;
 
 pub const RELAYER_GAME_ID: LockIdentifier = *b"da/rgame";

@@ -4,16 +4,17 @@ use core::{
 };
 
 use codec::{Decode, Encode};
-use ethereum_types::BigEndianHash;
+use ethereum_types::{BigEndianHash, H128};
 use keccak_hash::KECCAK_EMPTY_LIST_RLP;
 use primitive_types::{H256, U256, U512};
 use rlp::*;
 use sp_runtime::RuntimeDebug;
-use sp_std::{collections::btree_map::BTreeMap, mem};
+use sp_std::{cell::RefCell, collections::btree_map::BTreeMap, mem};
 
 use crate::{
 	error::{BlockError, Mismatch, OutOfBounds},
 	header::EthHeader,
+	merkle::EthashProof,
 	*,
 };
 
@@ -119,6 +120,91 @@ impl EthashPartial {
 }
 
 impl EthashPartial {
+	pub fn verify_seal_with_proof(
+		self,
+		header: &EthHeader,
+		ethash_proof: &[EthashProof],
+		merkle_root: &H128,
+	) -> Result<(), BlockError> {
+		let seal = EthashSeal::parse_seal(header.seal())?;
+
+		let (mix_hash, _result) = self.hashimoto_merkle(
+			&header.bare_hash(),
+			&seal.nonce,
+			header.number,
+			ethash_proof,
+			merkle_root,
+		)?;
+		if mix_hash != seal.mix_hash {
+			return Err(BlockError::SealInvalid);
+		}
+		Ok(())
+	}
+
+	fn hashimoto_merkle(
+		self,
+		header_hash: &H256,
+		nonce: &H64,
+		block_number: u64,
+		nodes: &[EthashProof],
+		merkle_root: &H128,
+	) -> Result<(H256, H256), BlockError> {
+		// Boxed index since ethash::hashimoto gets Fn, but not FnMut
+		let index = RefCell::new(0);
+		let err = RefCell::new(0u8);
+
+		let pair = ethash::hashimoto(
+			*header_hash,
+			*nonce,
+			ethash::get_full_size(block_number as usize / 30000),
+			|offset| {
+				if *err.borrow() != 0 {
+					return Default::default();
+				}
+
+				let index = index.replace_with(|&mut old| old + 1);
+
+				// Each two nodes are packed into single 128 bytes with Merkle proof
+				let node = if let Some(node) = nodes.get(index / 2) {
+					node
+				} else {
+					err.replace(1);
+					return Default::default();
+				};
+
+				if index % 2 == 0 {
+					// Divide by 2 to adjust offset for 64-byte words instead of 128-byte
+					if *merkle_root != node.apply_merkle_proof((offset / 2) as u64) {
+						err.replace(2);
+						return Default::default();
+					}
+				};
+
+				// Reverse each 32 bytes for ETHASH compatibility
+				let mut data = if let Some(dag_node) = node.dag_nodes.get(index % 2) {
+					dag_node.0
+				} else {
+					err.replace(1);
+					return Default::default();
+				};
+				data[..32].reverse();
+				data[32..].reverse();
+				data.into()
+			},
+		);
+
+		match err.into_inner() {
+			0 => Ok(pair),
+			1 => Err(BlockError::MerkleProofMismatch(
+				"Merkle proof index out off range error",
+			)),
+			2 => Err(BlockError::MerkleProofMismatch("Merkle root mismatch")),
+			_ => Err(BlockError::MerkleProofMismatch(
+				"Merkle root error - should not be here",
+			)),
+		}
+	}
+
 	pub fn verify_block_basic(&self, header: &EthHeader) -> Result<(), BlockError> {
 		// check the seal fields.
 		let seal = EthashSeal::parse_seal(header.seal())?;
@@ -129,7 +215,7 @@ impl EthashPartial {
 			return Err(BlockError::DifficultyOutOfBounds(OutOfBounds {
 				min: Some(min_difficulty),
 				max: None,
-				found: header.difficulty().clone(),
+				found: *header.difficulty(),
 			}));
 		}
 
@@ -142,7 +228,7 @@ impl EthashPartial {
 
 		if &difficulty < header.difficulty() {
 			return Err(BlockError::InvalidProofOfWork(OutOfBounds {
-				min: Some(header.difficulty().clone()),
+				min: Some(*header.difficulty()),
 				max: None,
 				found: difficulty,
 			}));
@@ -254,8 +340,7 @@ impl EthashSeal {
 			return Err(BlockError::InvalidSealArity(Mismatch {
 				expected: 2,
 				found: seal.len(),
-			})
-			.into());
+			}));
 		}
 
 		let mix_hash = Rlp::new(seal[0].as_ref())

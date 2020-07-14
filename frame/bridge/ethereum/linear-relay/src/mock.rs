@@ -7,11 +7,13 @@ use serde::Deserialize;
 // --- substrate ---
 use frame_support::{impl_outer_dispatch, impl_outer_origin, parameter_types, weights::Weight};
 use sp_core::H256;
+use sp_io;
 use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill};
 // --- darwinia ---
 use crate::*;
-use array_bytes::hex_bytes_unchecked;
+use array_bytes::{fixed_hex_bytes_unchecked, hex_bytes_unchecked};
 use ethereum_primitives::receipt::LogEntry;
+use ethereum_types::H512;
 
 type AccountId = u64;
 type BlockNumber = u64;
@@ -108,7 +110,7 @@ impl BlockWithProof {
 		}
 	}
 
-	pub fn to_double_node_with_merkle_proof_vec(&self) -> Vec<DoubleNodeWithMerkleProof> {
+	pub fn to_double_node_with_merkle_proof_vec(&self) -> Vec<EthashProof> {
 		fn combine_dag_h256_to_h512(elements: Vec<H256>) -> Vec<H512> {
 			elements
 				.iter()
@@ -130,7 +132,7 @@ impl BlockWithProof {
 			.zip(h512s.iter().skip(1))
 			.enumerate()
 			.filter(|(i, _)| i % 2 == 0)
-			.map(|(i, (a, b))| DoubleNodeWithMerkleProof {
+			.map(|(i, (a, b))| EthashProof {
 				dag_nodes: [*a, *b],
 				proof: self.merkle_proofs
 					[i / 2 * self.proof_length as usize..(i / 2 + 1) * self.proof_length as usize]
@@ -142,7 +144,7 @@ impl BlockWithProof {
 
 pub struct HeaderWithProof {
 	pub header: EthHeader,
-	pub proof: Vec<DoubleNodeWithMerkleProof>,
+	pub proof: Vec<EthashProof>,
 }
 impl HeaderWithProof {
 	fn from_file(path: &str) -> Self {
