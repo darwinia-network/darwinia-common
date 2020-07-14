@@ -200,7 +200,7 @@ fn lock_should_work() {
 
 #[test]
 fn slash_and_reward_should_work() {
-	for estimate_bond in 1..5 {
+	for estimate_bond in vec![1, 5, 10, 20, 50, 100] {
 		ExtBuilder::default()
 			.estimate_bond(estimate_bond)
 			.build()
@@ -259,8 +259,37 @@ fn settle_without_challenge_should_work() {
 	})
 }
 
-// #[test]
-// fn settle_with_challenge_should_work() {}
+#[test]
+fn settle_with_challenge_should_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		let chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], true);
+		let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
+
+		for i in 1..=3 {
+			assert_ok!(RelayerGame::submit_proposal(
+				Origin::signed(1),
+				chain_a[..i as usize].to_vec()
+			));
+			assert_ok!(RelayerGame::submit_proposal(
+				Origin::signed(2),
+				chain_b[..i as usize].to_vec()
+			));
+
+			run_to_block(4 * i);
+		}
+
+		assert_ok!(RelayerGame::submit_proposal(
+			Origin::signed(1),
+			chain_a[..4 as usize].to_vec()
+		));
+
+		run_to_block(4 * 4);
+
+		let header: MockTcHeader = Decode::decode(&mut &*chain_a[0]).unwrap();
+
+		assert_eq!(Relay::header_of_block_number(header.number), Some(header));
+	});
+}
 
 // #[test]
 // fn on_chain_arbitrate_should_work() {}
