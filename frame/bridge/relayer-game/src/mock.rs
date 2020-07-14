@@ -31,7 +31,12 @@ pub mod mock_relay {
 				BestBlockNumber::put(best_block_number);
 				Headers::insert(
 					best_block_number,
-					MockTcHeader::mock(best_block_number, 0, 1)
+					MockTcHeader {
+						number: 0,
+						hash: 0,
+						parent_hash: 0,
+						valid: true,
+					}
 				);
 
 				for header in &config.headers {
@@ -113,8 +118,6 @@ pub mod mock_relay {
 
 				parent_hash = header_brief.parent_hash;
 			}
-
-			println!("{}", Self::best_block_number());
 
 			ensure!(
 				parent_hash
