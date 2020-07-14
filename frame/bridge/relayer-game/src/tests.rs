@@ -149,7 +149,7 @@ fn extend_should_work() {
 				chain_b[..i as usize].to_vec()
 			));
 
-			run_to_block(4 * i);
+			run_to_block(3 * i + 1);
 		}
 	});
 }
@@ -186,7 +186,7 @@ fn lock_should_work() {
 					submit_then_assert(1, chain_a[..i as usize].to_vec(), bonds);
 					submit_then_assert(2, chain_b[..i as usize].to_vec(), bonds);
 
-					run_to_block(4 * i);
+					run_to_block(3 * i + 1);
 				}
 
 				assert_eq!(RelayerGame::bonds_of_relayer(1), 0);
@@ -228,7 +228,7 @@ fn slash_and_reward_should_work() {
 						chain_b[..i as usize].to_vec()
 					));
 
-					run_to_block(4 * i);
+					run_to_block(3 * i + 1);
 
 					bonds += estimate_bond;
 				}
@@ -275,7 +275,7 @@ fn settle_with_challenge_should_work() {
 				chain_b[..i as usize].to_vec()
 			));
 
-			run_to_block(4 * i);
+			run_to_block(3 * i + 1);
 		}
 
 		assert_ok!(RelayerGame::submit_proposal(
@@ -283,7 +283,7 @@ fn settle_with_challenge_should_work() {
 			chain_a[..4 as usize].to_vec()
 		));
 
-		run_to_block(4 * 4);
+		run_to_block(3 * 4 + 1);
 
 		let header: MockTcHeader = Decode::decode(&mut &*chain_a[0]).unwrap();
 
@@ -307,7 +307,7 @@ fn on_chain_arbitrate_should_work() {
 				chain_b[..i as usize].to_vec()
 			));
 
-			run_to_block(4 * i);
+			run_to_block(3 * i + 1);
 		}
 
 		let header: MockTcHeader = Decode::decode(&mut &*chain_a[0]).unwrap();
@@ -316,8 +316,35 @@ fn on_chain_arbitrate_should_work() {
 	});
 }
 
-// #[test]
-// fn handle_give_up_should_work() {}
+#[test]
+fn handle_give_up_should_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		// let chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], true);
+		// let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
+
+		// for i in 1..=3 {
+		// 	assert_ok!(RelayerGame::submit_proposal(
+		// 		Origin::signed(1),
+		// 		chain_a[..i as usize].to_vec()
+		// 	));
+		// 	assert_ok!(RelayerGame::submit_proposal(
+		// 		Origin::signed(2),
+		// 		chain_b[..i as usize].to_vec()
+		// 	));
+
+		// 	run_to_block(3 * i + 1);
+		// }
+
+		// for i in 4..100 {
+		// 	run_to_block(3 * i + 1);
+		// }
+
+		// println!("{}", Ring::usable_balance(&1));
+		// println!("{:?}", Ring::locks(&1));
+		// println!("{}", Ring::usable_balance(&2));
+		// println!("{:?}", Ring::locks(&2));
+	});
+}
 
 // #[test]
 // fn no_honesty_should_work() {}

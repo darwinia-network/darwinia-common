@@ -447,45 +447,56 @@ decl_module! {
 			for (game_id, last_round) in closed_rounds {
 				let mut proposals = Self::proposals_of_game(game_id);
 
-
 				match proposals.len() {
 					0 => (),
 					1 => settle_without_challenge(game_id, proposals.pop().unwrap()),
 					_ => {
 						let last_round_proposals = proposals_filter(last_round, &mut proposals);
 
-						if last_round_proposals.len() == 1 {
-							let mut last_round_proposals = last_round_proposals;
+						match last_round_proposals.len() {
+							0 => {
+								info!("All Relayers Abstain from Game `{:?}`", game_id);
+							}
+							1 => {
+								let mut last_round_proposals = last_round_proposals;
 
-							settle_with_challenge(
-								game_id,
-								last_round,
-								last_round_proposals.pop().unwrap(),
-								vec![],
-								&mut proposals
-							);
-						} else {
-							let relay_target = last_round_proposals[0]
-								.bonded_chain[0]
-								.header_brief
-								.number;
-							let last_round_proposals_chain_len =
-								last_round_proposals[0].bonded_chain.len();
-							let full_chain_len =
-								(relay_target - Self::last_confirmed_of_game(game_id))
-									.saturated_into() as u64;
-
-							if last_round_proposals_chain_len as u64 == full_chain_len {
-								info!("On Chain Arbitrate");
-
-								on_chain_arbitrate(
+								settle_with_challenge(
 									game_id,
 									last_round,
-									last_round_proposals,
-									proposals
+									last_round_proposals.pop().unwrap(),
+									vec![],
+									&mut proposals
 								);
-							} else {
-								update_samples(relay_target);
+							}
+							_ => {
+								let relay_target = last_round_proposals[0]
+									.bonded_chain[0]
+									.header_brief
+									.number;
+								let last_round_proposals_chain_len =
+									last_round_proposals[0].bonded_chain.len();
+								let full_chain_len =
+									(relay_target - Self::last_confirmed_of_game(game_id))
+										.saturated_into() as u64;
+
+								if last_round_proposals_chain_len as u64 == full_chain_len {
+									info!("On Chain Arbitrate for Game `{:?}`", game_id);
+
+									on_chain_arbitrate(
+										game_id,
+										last_round,
+										last_round_proposals,
+										proposals
+									);
+								} else {
+									update_samples(relay_target);
+
+									let round = last_round + 1;
+									let closed_at = block_number
+										+ T::RelayerGameAdjustor::challenge_time(round);
+
+									<ClosedRounds<T, I>>::append(closed_at, (game_id, round));
+								}
 							}
 						}
 					}
@@ -675,20 +686,10 @@ decl_module! {
 							.unwrap()
 							.header_brief
 							.clone();
-						let mut extend_chain = extend_chain;
-						let mut bonded_chain = extend_from_chain;
-						bonded_chain.append(&mut extend_chain);
+						let bonded_chain = [extend_from_chain, extend_chain].concat();
 
 						Self::update_bonds(&relayer, |old_bonds| old_bonds.saturating_add(bonds));
 
-						{
-							let closed_at = <frame_system::Module<T>>::block_number()
-								+ T::RelayerGameAdjustor::challenge_time(round);
-
-							if !Self::closed_rounds_at(closed_at).contains(&(game_id, round)) {
-								<ClosedRounds<T, I>>::append(closed_at, (game_id, round));
-							}
-						}
 						<Proposals<T, I>>::append(
 							game_id,
 							Proposal {
