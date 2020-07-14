@@ -291,8 +291,30 @@ fn settle_with_challenge_should_work() {
 	});
 }
 
-// #[test]
-// fn on_chain_arbitrate_should_work() {}
+#[test]
+fn on_chain_arbitrate_should_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		let chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], true);
+		let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
+
+		for i in 1..=5 {
+			assert_ok!(RelayerGame::submit_proposal(
+				Origin::signed(1),
+				chain_a[..i as usize].to_vec()
+			));
+			assert_ok!(RelayerGame::submit_proposal(
+				Origin::signed(2),
+				chain_b[..i as usize].to_vec()
+			));
+
+			run_to_block(4 * i);
+		}
+
+		let header: MockTcHeader = Decode::decode(&mut &*chain_a[0]).unwrap();
+
+		assert_eq!(Relay::header_of_block_number(header.number), Some(header));
+	});
+}
 
 // #[test]
 // fn handle_give_up_should_work() {}
