@@ -8,6 +8,17 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+mod types {
+	// --- darwinia ---
+	use crate::*;
+
+	pub type Balance<T> = <CurrencyT<T> as Currency<AccountId<T>>>::Balance;
+
+	type AccountId<T> = <T as system::Trait>::AccountId;
+
+	type CurrencyT<T> = <T as Trait>::Currency;
+}
+
 // --- crates ---
 use codec::{Decode, Encode};
 // --- github ---
@@ -22,14 +33,43 @@ use crate::mmr::{leaf_index_to_mmr_size, leaf_index_to_pos, MergeHash, MerklePro
 use array_bytes::array_unchecked;
 use darwinia_support::relay::*;
 use ethereum_primitives::{
-	header::EthHeader, merkle::EthashProof, pow::EthashPartial, EthBlockNumber, H256 as EthH256,
+	header::EthHeader, merkle::EthashProof, pow::EthashPartial, receipt::Receipt, EthBlockNumber,
+	H256 as EthH256,
 };
+use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
 use sp_core::H256;
 
 type EthereumMMRHash = EthH256;
 
 pub trait Trait: frame_system::Trait {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+}
+
+#[derive(Encode, Decode, Default, RuntimeDebug)]
+pub struct EthHeaderThing {
+	eth_header: EthHeader,
+	ethash_proof: Vec<EthashProof>,
+	mmr_root: EthereumMMRHash,
+	mmr_proof: Vec<EthereumMMRHash>,
+}
+
+#[derive(Encode, Decode, Default, RuntimeDebug)]
+pub struct ProposalEthHeaderThing {
+	eth_header: EthHeader,
+	mmr_root: EthereumMMRHash,
+}
+
+impl From<RawHeaderThing> for EthHeaderThing {
+	fn from(raw_header_thing: RawHeaderThing) -> Self {
+		EthHeaderThing::decode(&mut &*raw_header_thing).unwrap_or_default()
+	}
+}
+
+#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
+pub struct EthReceiptProof {
+	pub index: u64,
+	pub proof: Vec<u8>,
+	pub header_hash: H256,
 }
 
 decl_event! {
@@ -52,6 +92,8 @@ decl_event! {
 		/// ConfirmBlockKeepInMonth should be greator then 1 to avoid the relayer game cross the
 		/// month
 		ConfirmBlockManagementError(EthBlockNumber),
+
+		VerifyReceipt(AccountId, Receipt, EthReceiptProof, EthHeader, Vec<H256>),
 	}
 }
 
@@ -62,6 +104,7 @@ decl_error! {
 		NotComplyWithConfirmebBlocks,
 		ChainInvalid,
 		MMRInvalid,
+		HeaderHashMis,
 	}
 }
 
@@ -91,6 +134,8 @@ decl_storage! {
 		pub ConfirmBlocksInCycle get(fn confirm_block_cycle): EthBlockNumber = 185142;
 		/// The confirm blocks keep in month
 		pub ConfirmBlockKeepInMonth get(fn confirm_block_keep_in_mounth): EthBlockNumber = 3;
+
+		pub ReceiptVerifyFee get(fn receipt_verify_fee) config(): Balance<T>;
 	}
 	add_extra_genesis {
 		config(dags_merkle_roots_loader): DagsMerkleRootsLoader;
@@ -120,6 +165,27 @@ decl_module! {
 		type Error = Error<T>;
 
 		fn deposit_event() = default;
+
+		/// Check receipt
+		///
+		/// # <weight>
+		/// - `O(1)`.
+		/// - Limited Storage reads
+		/// - Up to one event
+		/// # </weight>
+		#[weight = 100_000_000]
+		pub fn check_receipt(origin, proof_record: EthReceiptProof, eth_header: EthHeader, mmr_proof: Vec<H256>) {
+			let worker = ensure_signed(origin)?;
+
+			let (verified_receipt, fee) = Self::verify_receipt(&proof_record, &eth_header, &mmr_proof)?;
+
+			let module_account = Self::account_id();
+
+			T::Currency::transfer(&worker, &module_account, fee, KeepAlive)?;
+
+			<Module<T>>::deposit_event(RawEvent::VerifyReceipt(worker, verified_receipt, proof_record, eth_header, mmr_proof));
+		}
+
 		/// Remove the specific malicous block
 		#[weight = 100_000_000]
 		pub fn remove_confirmed_block(origin, number: EthBlockNumber) {
@@ -223,7 +289,7 @@ impl<T: Trait> Module<T> {
 	// NOTE: leaves are (block_number, H256)
 	// block_number will transform to position in this function
 	fn verify_mmr(
-		block_number: u64,
+		last_block: u64,
 		mmr_root: H256,
 		mmr_proof: Vec<H256>,
 		leaves: Vec<(u64, H256)>,
@@ -464,22 +530,63 @@ impl<T: Trait> Relayable for Module<T> {
 	}
 }
 
-#[derive(Encode, Decode, Default, RuntimeDebug)]
-pub struct EthHeaderThing {
-	eth_header: EthHeader,
-	ethash_proof: Vec<EthashProof>,
-	mmr_root: EthereumMMRHash,
-	mmr_proof: Vec<EthereumMMRHash>,
+/// Handler for selecting the genesis validator set.
+pub trait VerifyEthReceipts<Balance, AccountId> {
+	fn verify_receipt(
+		proof_record: &EthReceiptProof,
+		eth_header: &EthHeader,
+		mmr_proof: &Vec<H256>,
+	) -> Result<(Receipt, Balance), DispatchError>;
+
+	fn account_id() -> AccountId;
 }
 
-#[derive(Encode, Decode, Default, RuntimeDebug)]
-pub struct ProposalEthHeaderThing {
-	eth_header: EthHeader,
-	mmr_root: EthereumMMRHash,
-}
+impl<T: Trait> VerifyEthReceipts<Balance<T>, T::AccountId> for Module<T> {
+	/// confirm that the block hash is right
+	/// get the receipt MPT trie root from the block header
+	/// Using receipt MPT trie root to verify the proof and index etc.
+	fn verify_receipt(
+		proof_record: &EthReceiptProof,
+		eth_header: &EthHeader,
+		mmr_proof: &Vec<H256>,
+	) -> Result<(Receipt, Balance<T>), DispatchError> {
+		// Verify header hash
+		let header_hash = eth_header.hash();
 
-impl From<RawHeaderThing> for EthHeaderThing {
-	fn from(raw_header_thing: RawHeaderThing) -> Self {
-		EthHeaderThing::decode(&mut &*raw_header_thing).unwrap_or_default()
+		ensure!(
+			header_hash == header.re_compute_hash(),
+			<Error<T>>::HeaderHashMis
+		);
+
+		// Verify header member to last confirmed block using mmr proof
+		let last_block_info = Self::last_confirm_header_info()?;
+
+		ensure!(
+			Self::verify_mmr(
+				last_block_info.0,
+				last_block_info.2,
+				mmr_proof,
+				vec![(
+					eth_header.number,
+					array_unchecked!(eth_header.hash.unwrap_or_default(), 0, 32).into(),
+				)]
+			),
+			<Error<T>>::MMRInvalid
+		);
+
+		// Verify receipt proof
+		let proof: Proof = rlp::decode(&proof_record.proof).map_err(|_| <Error<T>>::RlpDcF)?;
+		let key = rlp::encode(&proof_record.index);
+		let value =
+			MerklePatriciaTrie::verify_proof(eth_header.receipts_root().0.to_vec(), &key, proof)
+				.map_err(|_| <Error<T>>::ProofVF)?
+				.ok_or(<Error<T>>::TrieKeyNE)?;
+		let receipt = rlp::decode(&value).map_err(|_| <Error<T>>::ReceiptDsF)?;
+
+		Ok((receipt, Self::receipt_verify_fee()))
+	}
+
+	fn account_id() -> T::AccountId {
+		<Module<T>>::account_id()
 	}
 }

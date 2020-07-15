@@ -320,15 +320,15 @@ decl_module! {
 		/// # </weight>
 		#[weight = 100_000_000]
 		pub fn check_receipt(origin, proof_record: EthReceiptProof) {
-			let relayer = ensure_signed(origin)?;
+			let worker = ensure_signed(origin)?;
 
 			let (verified_receipt, fee) = Self::verify_receipt(&proof_record)?;
 
 			let module_account = Self::account_id();
 
-			T::Currency::transfer(&relayer, &module_account, fee, KeepAlive)?;
+			T::Currency::transfer(&worker, &module_account, fee, KeepAlive)?;
 
-			<Module<T>>::deposit_event(RawEvent::VerifyProof(relayer, verified_receipt, proof_record));
+			<Module<T>>::deposit_event(RawEvent::VerifyProof(worker, verified_receipt, proof_record));
 		}
 
 		/// Claim Reward for Relayers

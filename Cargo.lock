@@ -1047,6 +1047,7 @@ dependencies = [
  "ethereum-types 0.8.0",
  "frame-support",
  "frame-system",
+ "merkle-patricia-trie",
  "parity-scale-codec",
  "serde",
  "serde_json",
