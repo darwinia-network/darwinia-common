@@ -35,7 +35,7 @@ use sp_runtime::{
 };
 use sp_std::{convert::From, prelude::*};
 // --- darwinia ---
-use crate::mmr::{leaf_index_to_mmr_size, leaf_index_to_pos, MergeHash, MerkleProof};
+use crate::mmr::{leaf_index_to_mmr_size, leaf_index_to_pos, MMRMerge, MerkleProof};
 use array_bytes::array_unchecked;
 use darwinia_support::balance::lock::LockableCurrency;
 use darwinia_support::relay::*;
@@ -320,7 +320,7 @@ impl<T: Trait> Module<T> {
 		mmr_proof: Vec<H256>,
 		leaves: Vec<(u64, H256)>,
 	) -> bool {
-		let p = MerkleProof::<[u8; 32], MergeHash>::new(
+		let p = MerkleProof::<[u8; 32], MMRMerge>::new(
 			leaf_index_to_mmr_size(last_block_number),
 			mmr_proof.into_iter().map(|h| h.into()).collect(),
 		);
