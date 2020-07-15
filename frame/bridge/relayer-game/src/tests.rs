@@ -205,18 +205,12 @@ fn slash_and_reward_should_work() {
 			.estimate_bond(estimate_bond)
 			.build()
 			.execute_with(|| {
+				let chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], true);
+				let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
 				let mut bonds = estimate_bond;
 
-				let relayer_a = 10;
-				let relayer_a_balances = Ring::usable_balance(&relayer_a);
-				let chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], true);
-
-				let relayer_b = 20;
-				let relayer_b_balances = Ring::usable_balance(&relayer_b);
-				let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
-
-				assert_eq!(relayer_a_balances, 1000);
-				assert_eq!(relayer_b_balances, 2000);
+				assert_eq!(Ring::usable_balance(&10), 1000);
+				assert_eq!(Ring::usable_balance(&20), 2000);
 
 				for i in 1..=5 {
 					assert_ok!(RelayerGame::submit_proposal(
@@ -233,8 +227,11 @@ fn slash_and_reward_should_work() {
 					bonds += estimate_bond;
 				}
 
-				assert_eq!(Ring::usable_balance(&relayer_a), relayer_a_balances + bonds);
-				assert_eq!(Ring::usable_balance(&relayer_b), relayer_b_balances - bonds);
+				assert_eq!(Ring::usable_balance(&10), 1000 + bonds);
+				assert!(Ring::locks(10).is_empty());
+
+				assert_eq!(Ring::usable_balance(&20), 2000 - bonds);
+				assert!(Ring::locks(20).is_empty());
 			});
 	}
 }
@@ -253,6 +250,9 @@ fn settle_without_challenge_should_work() {
 			));
 
 			run_to_block(4 * i);
+
+			assert_eq!(Ring::usable_balance(&1), 100);
+			assert!(Ring::locks(1).is_empty());
 
 			assert_eq!(Relay::header_of_block_number(header.number), Some(header));
 		}
@@ -297,6 +297,9 @@ fn settle_abandon_should_work() {
 		let chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], true);
 		let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
 
+		assert_eq!(Ring::usable_balance(&1), 100);
+		assert_eq!(Ring::usable_balance(&2), 200);
+
 		for i in 1..=3 {
 			assert_ok!(RelayerGame::submit_proposal(
 				Origin::signed(1),
@@ -313,10 +316,10 @@ fn settle_abandon_should_work() {
 		run_to_block(4 * 3 + 1);
 
 		assert_eq!(Ring::usable_balance(&1), 100 - 3);
-		assert!(Ring::locks(&1).is_empty());
+		assert!(Ring::locks(1).is_empty());
 
 		assert_eq!(Ring::usable_balance(&2), 200 - 3);
-		assert!(Ring::locks(&2).is_empty());
+		assert!(Ring::locks(2).is_empty());
 	});
 }
 
@@ -346,4 +349,22 @@ fn on_chain_arbitrate_should_work() {
 }
 
 // #[test]
-// fn no_honesty_should_work() {}
+// fn no_honesty_should_work() {
+// 	ExtBuilder::default().build().execute_with(|| {
+// 		let chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
+// 		let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
+
+// 		for i in 1..=5 {
+// 			assert_ok!(RelayerGame::submit_proposal(
+// 				Origin::signed(1),
+// 				chain_a[..i as usize].to_vec()
+// 			));
+// 			assert_ok!(RelayerGame::submit_proposal(
+// 				Origin::signed(2),
+// 				chain_b[..i as usize].to_vec()
+// 			));
+
+// 			run_to_block(3 * i + 1);
+// 		}
+// 	});
+// }
