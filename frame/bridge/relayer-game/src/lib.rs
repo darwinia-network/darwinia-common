@@ -183,6 +183,9 @@ decl_module! {
 				return;
 			}
 
+			info!("Found Closed Rounds at {}", block_number);
+			info!("---");
+
 			let proposals_filter = |round, proposals: &mut Vec<Proposal<_, _, _>>| {
 				proposals
 					.drain_filter(|proposal|
@@ -224,7 +227,7 @@ decl_module! {
 					_
 				>,
 				mut rewards: Vec<_>,
-				proposals: &mut Vec<_>
+				mut proposals: Vec<_>
 			| {
 				let mut extend_from_header_hash
 					= confirmed_proposal.extend_from_header_hash.unwrap();
@@ -239,7 +242,7 @@ decl_module! {
 					let mut maybe_honesty = None;
 					let mut evils = vec![];
 
-					for proposal in proposals_filter(extend_at, proposals) {
+					for proposal in proposals_filter(extend_at, &mut proposals) {
 						let BondedTcHeader::<_, TcHeaderBrief<_, TcHeaderHash<T, I>, _>> {
 							header_brief,
 							bond
@@ -354,11 +357,29 @@ decl_module! {
 				<Headers<T, I>>::remove_prefix(game_id);
 				<Proposals<T, I>>::take(game_id);
 			};
+			let settle_abandon = |
+				proposals: Vec<Proposal<_, BondedTcHeader<RingBalance<T, I>, _>, _>>
+			| {
+				for proposal in proposals {
+					let bonds = proposal
+						.bonded_chain
+						.iter()
+						.fold(Zero::zero(), |bonds, bonded_header| bonds + bonded_header.bond);
+
+					Self::update_bonds(
+						&proposal.relayer,
+						|old_bonds| old_bonds.saturating_sub(bonds)
+					);
+
+					let (imbalance, _) = T::RingCurrency::slash(&proposal.relayer, bonds);
+					T::RingSlash::on_unbalanced(imbalance);
+				}
+			};
 			let on_chain_arbitrate = |
 				game_id,
 				last_round,
 				last_round_proposals: Vec<Proposal<_, _, _>>,
-				mut proposals: Vec<Proposal<_, _, _>>
+				proposals: Vec<_>
 			| {
 				let mut maybe_confirmed_proposal: Option<Proposal<AccountId<T>, _, _>> = None;
 				let mut evils = vec![];
@@ -401,7 +422,7 @@ decl_module! {
 						last_round,
 						confirmed_proposal,
 						rewards,
-						&mut proposals
+						proposals
 					);
 				} else {
 					// slash all
@@ -445,17 +466,25 @@ decl_module! {
 			};
 
 			for (game_id, last_round) in closed_rounds {
+				info!(">  Trying to Settle Game {:?} at Round {}", game_id, last_round);
+
 				let mut proposals = Self::proposals_of_game(game_id);
 
 				match proposals.len() {
-					0 => (),
-					1 => settle_without_challenge(game_id, proposals.pop().unwrap()),
+					0 => info!("   >  No Proposal Found"),
+					1 => {
+						info!("   >  No Challenge Found");
+
+						settle_without_challenge(game_id, proposals.pop().unwrap());
+					}
 					_ => {
 						let last_round_proposals = proposals_filter(last_round, &mut proposals);
 
 						match last_round_proposals.len() {
 							0 => {
-								info!("All Relayers Abstain from Game `{:?}`", game_id);
+								info!("   >  All Relayers Abstain");
+
+								settle_abandon(proposals_filter(last_round - 1, &mut proposals));
 							}
 							1 => {
 								let mut last_round_proposals = last_round_proposals;
@@ -465,7 +494,7 @@ decl_module! {
 									last_round,
 									last_round_proposals.pop().unwrap(),
 									vec![],
-									&mut proposals
+									proposals
 								);
 							}
 							_ => {
@@ -480,7 +509,7 @@ decl_module! {
 										.saturated_into() as u64;
 
 								if last_round_proposals_chain_len as u64 == full_chain_len {
-									info!("On Chain Arbitrate for Game `{:?}`", game_id);
+									info!("   >  On Chain Arbitrate");
 
 									on_chain_arbitrate(
 										game_id,
@@ -489,6 +518,8 @@ decl_module! {
 										proposals
 									);
 								} else {
+									info!("   >  Update Samples");
+
 									update_samples(relay_target);
 
 									let round = last_round + 1;
@@ -502,6 +533,8 @@ decl_module! {
 					}
 				}
 			}
+
+			info!("---");
 		}
 
 		// TODO:
@@ -556,6 +589,8 @@ decl_module! {
 				(bonds, extend_chain)
 			};
 
+			info!("Relayer {} Submit a Proposal: ", relayer);
+
 			// TODO: accept a chain (length > 1) but without extend
 			match (other_proposals_len, raw_header_thing_chain.len()) {
 				// New `Game`
@@ -565,6 +600,7 @@ decl_module! {
 
 					let chain = T::TargetChain
 						::verify_raw_header_thing_chain(raw_header_thing_chain)?;
+					info!("{:#?}", chain);
 					let (bonds, bonded_chain) = extend_bonded_chain(&chain, 0);
 
 					ensure!(
@@ -597,6 +633,7 @@ decl_module! {
 
 					let chain = T::TargetChain
 						::verify_raw_header_thing_chain(raw_header_thing_chain)?;
+					info!("{:#?}", chain);
 
 					ensure!(
 						!other_proposals
@@ -630,6 +667,7 @@ decl_module! {
 					let prev_round = round.checked_sub(1).ok_or(<Error<T, I>>::RoundMis)?;
 					let chain = T::TargetChain
 						::verify_raw_header_thing_chain(raw_header_thing_chain)?;
+					info!("{:#?}", chain);
 					let samples = {
 						// Chain's len is ALWAYS great than 1 under this match pattern; qed
 						let game_id = chain[0].number;
