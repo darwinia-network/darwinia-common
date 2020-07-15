@@ -46,7 +46,7 @@ use ethereum_primitives::{
 use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
 use types::*;
 
-type EthereumMMRHash = H256;
+type MMRHash = H256;
 
 pub trait Trait: frame_system::Trait {
 	/// The ethereum-relay's module id, used for deriving its sovereign account ID.
@@ -62,14 +62,14 @@ pub trait Trait: frame_system::Trait {
 pub struct EthHeaderThing {
 	eth_header: EthHeader,
 	ethash_proof: Vec<EthashProof>,
-	mmr_root: EthereumMMRHash,
-	mmr_proof: Vec<EthereumMMRHash>,
+	mmr_root: MMRHash,
+	mmr_proof: Vec<MMRHash>,
 }
 
 #[derive(Encode, Decode, Default, RuntimeDebug)]
 pub struct ProposalEthHeaderThing {
 	eth_header: EthHeader,
-	mmr_root: EthereumMMRHash,
+	mmr_root: MMRHash,
 }
 
 impl From<RawHeaderThing> for EthHeaderThing {
@@ -106,6 +106,7 @@ decl_event! {
 		/// month
 		ConfirmBlockManagementError(EthBlockNumber),
 
+		/// TODO: Add documents
 		VerifyReceipt(AccountId, Receipt, EthHeader),
 	}
 }
@@ -136,7 +137,7 @@ darwinia_support::impl_genesis! {
 decl_storage! {
 	trait Store for Module<T: Trait> as DarwiniaEthereumRelay {
 		/// Ethereum last confrimed header info including ethereum block number, hash, and mmr
-		pub LastConfirmedHeaderInfo get(fn last_confirm_header_info): Option<(EthBlockNumber, H256, EthereumMMRHash)>;
+		pub LastConfirmedHeaderInfo get(fn last_confirm_header_info): Option<(EthBlockNumber, H256, MMRHash)>;
 
 		/// The Ethereum headers confrimed by relayer game
 		/// The actural storage needs to be defined
@@ -500,7 +501,7 @@ impl<T: Trait> Relayable for Module<T> {
 			>,
 		>,
 	) -> DispatchResult {
-		// Currently Ethereum samples function is continuesly sampling
+		// Currently Ethereum samples function is continuously sampling
 
 		let eth_partial = EthashPartial::production();
 

@@ -14,7 +14,7 @@ pub fn hash(data: &[u8]) -> [u8; 32] {
 	dest
 }
 
-/// MMR Merge trait for ETHash
+/// MMR Merge for MMR Merge trait
 pub struct MMRMerge;
 
 impl Merge for MMRMerge {
