@@ -348,23 +348,32 @@ fn on_chain_arbitrate_should_work() {
 	});
 }
 
-// #[test]
-// fn no_honesty_should_work() {
-// 	ExtBuilder::default().build().execute_with(|| {
-// 		let chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
-// 		let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
+#[test]
+fn no_honesty_should_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		let chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
+		let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
 
-// 		for i in 1..=5 {
-// 			assert_ok!(RelayerGame::submit_proposal(
-// 				Origin::signed(1),
-// 				chain_a[..i as usize].to_vec()
-// 			));
-// 			assert_ok!(RelayerGame::submit_proposal(
-// 				Origin::signed(2),
-// 				chain_b[..i as usize].to_vec()
-// 			));
+		assert_eq!(Ring::usable_balance(&1), 100);
+		assert_eq!(Ring::usable_balance(&2), 200);
 
-// 			run_to_block(3 * i + 1);
-// 		}
-// 	});
-// }
+		for i in 1..=5 {
+			assert_ok!(RelayerGame::submit_proposal(
+				Origin::signed(1),
+				chain_a[..i as usize].to_vec()
+			));
+			assert_ok!(RelayerGame::submit_proposal(
+				Origin::signed(2),
+				chain_b[..i as usize].to_vec()
+			));
+
+			run_to_block(3 * i + 1);
+		}
+
+		assert_eq!(Ring::usable_balance(&1), 100 - 5);
+		assert!(Ring::locks(1).is_empty());
+
+		assert_eq!(Ring::usable_balance(&2), 200 - 5);
+		assert!(Ring::locks(2).is_empty());
+	});
+}

@@ -384,7 +384,7 @@ decl_module! {
 				let mut maybe_confirmed_proposal: Option<Proposal<AccountId<T>, _, _>> = None;
 				let mut evils = vec![];
 
-				for proposal in last_round_proposals {
+				for proposal in last_round_proposals.iter() {
 					if T::TargetChain::on_chain_arbitrate(proposal
 						.bonded_chain
 						.iter()
@@ -393,13 +393,13 @@ decl_module! {
 						.collect()).is_ok()
 					{
 						if maybe_confirmed_proposal.is_none() {
-							maybe_confirmed_proposal = Some(proposal);
+							maybe_confirmed_proposal = Some(proposal.to_owned());
 						} else {
 							error!("Honest Relayer Count - MORE THAN 1 WITHIN A ROUND");
 						}
 					} else {
 						evils.push((
-							proposal.relayer,
+							proposal.relayer.clone(),
 							proposal.bonded_chain.last().unwrap().bond
 						));
 					}
@@ -425,19 +425,9 @@ decl_module! {
 						proposals
 					);
 				} else {
-					// slash all
-					let mut evils_map = BTreeMap::new();
+					info!("   >  No Honest Relayer");
 
-					for (evil, evil_bond) in evils {
-						*evils_map.entry(evil.clone()).or_insert(evil_bond) += evil_bond;
-					}
-
-					for (evil, evil_bonds) in evils_map {
-						Self::update_bonds(
-							&evil,
-							|old_bonds| old_bonds.saturating_sub(evil_bonds)
-						);
-					}
+					settle_abandon(last_round_proposals);
 				}
 
 				<Samples<T, I>>::take(game_id);
