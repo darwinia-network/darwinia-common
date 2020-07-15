@@ -484,6 +484,7 @@ decl_module! {
 							0 => {
 								info!("   >  All Relayers Abstain");
 
+								// `last_round` MUST NOT be `0`; qed
 								settle_abandon(proposals_filter(last_round - 1, &mut proposals));
 							}
 							1 => {
