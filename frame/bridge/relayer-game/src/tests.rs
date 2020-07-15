@@ -190,10 +190,10 @@ fn lock_should_work() {
 				}
 
 				assert_eq!(RelayerGame::bonds_of_relayer(1), 0);
-				assert_eq!(Ring::locks(1), vec![]);
+				assert!(Ring::locks(1).is_empty());
 
 				assert_eq!(RelayerGame::bonds_of_relayer(2), 0);
-				assert_eq!(Ring::locks(2), vec![]);
+				assert!(Ring::locks(2).is_empty());
 			});
 	}
 }
@@ -292,6 +292,35 @@ fn settle_with_challenge_should_work() {
 }
 
 #[test]
+fn settle_abandon_should_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		let chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], true);
+		let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
+
+		for i in 1..=3 {
+			assert_ok!(RelayerGame::submit_proposal(
+				Origin::signed(1),
+				chain_a[..i as usize].to_vec()
+			));
+			assert_ok!(RelayerGame::submit_proposal(
+				Origin::signed(2),
+				chain_b[..i as usize].to_vec()
+			));
+
+			run_to_block(3 * i + 1);
+		}
+
+		run_to_block(4 * 3 + 1);
+
+		assert_eq!(Ring::usable_balance(&1), 100 - 3);
+		assert!(Ring::locks(&1).is_empty());
+
+		assert_eq!(Ring::usable_balance(&2), 200 - 3);
+		assert!(Ring::locks(&2).is_empty());
+	});
+}
+
+#[test]
 fn on_chain_arbitrate_should_work() {
 	ExtBuilder::default().build().execute_with(|| {
 		let chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], true);
@@ -313,36 +342,6 @@ fn on_chain_arbitrate_should_work() {
 		let header: MockTcHeader = Decode::decode(&mut &*chain_a[0]).unwrap();
 
 		assert_eq!(Relay::header_of_block_number(header.number), Some(header));
-	});
-}
-
-#[test]
-fn handle_give_up_should_work() {
-	ExtBuilder::default().build().execute_with(|| {
-		// let chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], true);
-		// let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
-
-		// for i in 1..=3 {
-		// 	assert_ok!(RelayerGame::submit_proposal(
-		// 		Origin::signed(1),
-		// 		chain_a[..i as usize].to_vec()
-		// 	));
-		// 	assert_ok!(RelayerGame::submit_proposal(
-		// 		Origin::signed(2),
-		// 		chain_b[..i as usize].to_vec()
-		// 	));
-
-		// 	run_to_block(3 * i + 1);
-		// }
-
-		// for i in 4..100 {
-		// 	run_to_block(3 * i + 1);
-		// }
-
-		// println!("{}", Ring::usable_balance(&1));
-		// println!("{:?}", Ring::locks(&1));
-		// println!("{}", Ring::usable_balance(&2));
-		// println!("{:?}", Ring::locks(&2));
 	});
 }
 
