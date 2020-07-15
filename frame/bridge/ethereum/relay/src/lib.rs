@@ -24,25 +24,38 @@ use codec::{Decode, Encode};
 // --- github ---
 use ethereum_types::H128;
 // --- substrate ---
-use frame_support::{decl_error, decl_event, decl_module, decl_storage};
-use frame_system::{self as system, ensure_root};
-use sp_runtime::{DispatchError, DispatchResult, RuntimeDebug};
+use frame_support::{
+	decl_error, decl_event, decl_module, decl_storage, ensure,
+	traits::Get,
+	traits::{Currency, ExistenceRequirement::KeepAlive, ReservableCurrency},
+};
+use frame_system::{self as system, ensure_root, ensure_signed};
+use sp_runtime::{
+	traits::AccountIdConversion, DispatchError, DispatchResult, ModuleId, RuntimeDebug,
+};
 use sp_std::{convert::From, prelude::*};
 // --- darwinia ---
 use crate::mmr::{leaf_index_to_mmr_size, leaf_index_to_pos, MergeHash, MerkleProof};
 use array_bytes::array_unchecked;
+use darwinia_support::balance::lock::LockableCurrency;
 use darwinia_support::relay::*;
 use ethereum_primitives::{
 	header::EthHeader, merkle::EthashProof, pow::EthashPartial, receipt::Receipt, EthBlockNumber,
-	H256 as EthH256,
+	H256,
 };
 use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
-use sp_core::H256;
+use types::*;
 
-type EthereumMMRHash = EthH256;
+type EthereumMMRHash = H256;
 
 pub trait Trait: frame_system::Trait {
+	/// The ethereum-relay's module id, used for deriving its sovereign account ID.
+	type ModuleId: Get<ModuleId>;
+
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+
+	type Currency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
+		+ ReservableCurrency<Self::AccountId>;
 }
 
 #[derive(Encode, Decode, Default, RuntimeDebug)]
@@ -93,7 +106,7 @@ decl_event! {
 		/// month
 		ConfirmBlockManagementError(EthBlockNumber),
 
-		VerifyReceipt(AccountId, Receipt, EthReceiptProof, EthHeader, Vec<H256>),
+		VerifyReceipt(AccountId, Receipt, EthHeader),
 	}
 }
 
@@ -105,6 +118,11 @@ decl_error! {
 		ChainInvalid,
 		MMRInvalid,
 		HeaderHashMis,
+		LastHeaderNE,
+		RlpDcF,
+		ProofVF,
+		TrieKeyNE,
+		ReceiptDsF,
 	}
 }
 
@@ -177,13 +195,13 @@ decl_module! {
 		pub fn check_receipt(origin, proof_record: EthReceiptProof, eth_header: EthHeader, mmr_proof: Vec<H256>) {
 			let worker = ensure_signed(origin)?;
 
-			let (verified_receipt, fee) = Self::verify_receipt(&proof_record, &eth_header, &mmr_proof)?;
+			let (verified_receipt, fee) = Self::verify_receipt(&proof_record, &eth_header, mmr_proof)?;
 
 			let module_account = Self::account_id();
 
 			T::Currency::transfer(&worker, &module_account, fee, KeepAlive)?;
 
-			<Module<T>>::deposit_event(RawEvent::VerifyReceipt(worker, verified_receipt, proof_record, eth_header, mmr_proof));
+			<Module<T>>::deposit_event(RawEvent::VerifyReceipt(worker, verified_receipt, eth_header));
 		}
 
 		/// Remove the specific malicous block
@@ -220,6 +238,14 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
+	/// The account ID of the ethereum relay pot.
+	///
+	/// This actually does computation. If you need to keep using it, then make sure you cache the
+	/// value and only call this once.
+	fn account_id() -> T::AccountId {
+		T::ModuleId::get().into_account()
+	}
+
 	/// validate block with the hash, difficulty of confirmed headers
 	fn verify_block_with_confrim_blocks(header: &EthHeader) -> bool {
 		let eth_partial = EthashPartial::production();
@@ -289,13 +315,13 @@ impl<T: Trait> Module<T> {
 	// NOTE: leaves are (block_number, H256)
 	// block_number will transform to position in this function
 	fn verify_mmr(
-		last_block: u64,
+		last_block_number: u64,
 		mmr_root: H256,
 		mmr_proof: Vec<H256>,
 		leaves: Vec<(u64, H256)>,
 	) -> bool {
 		let p = MerkleProof::<[u8; 32], MergeHash>::new(
-			leaf_index_to_mmr_size(block_number),
+			leaf_index_to_mmr_size(last_block_number),
 			mmr_proof.into_iter().map(|h| h.into()).collect(),
 		);
 		p.verify(
@@ -535,7 +561,7 @@ pub trait VerifyEthReceipts<Balance, AccountId> {
 	fn verify_receipt(
 		proof_record: &EthReceiptProof,
 		eth_header: &EthHeader,
-		mmr_proof: &Vec<H256>,
+		mmr_proof: Vec<H256>,
 	) -> Result<(Receipt, Balance), DispatchError>;
 
 	fn account_id() -> AccountId;
@@ -548,18 +574,18 @@ impl<T: Trait> VerifyEthReceipts<Balance<T>, T::AccountId> for Module<T> {
 	fn verify_receipt(
 		proof_record: &EthReceiptProof,
 		eth_header: &EthHeader,
-		mmr_proof: &Vec<H256>,
+		mmr_proof: Vec<H256>,
 	) -> Result<(Receipt, Balance<T>), DispatchError> {
 		// Verify header hash
 		let header_hash = eth_header.hash();
 
 		ensure!(
-			header_hash == header.re_compute_hash(),
+			header_hash == eth_header.re_compute_hash(),
 			<Error<T>>::HeaderHashMis
 		);
 
 		// Verify header member to last confirmed block using mmr proof
-		let last_block_info = Self::last_confirm_header_info()?;
+		let last_block_info = Self::last_confirm_header_info().ok_or(<Error<T>>::LastHeaderNE)?;
 
 		ensure!(
 			Self::verify_mmr(

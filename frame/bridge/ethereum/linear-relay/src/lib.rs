@@ -491,7 +491,7 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
-	/// The account ID of the eth linear relay pot.
+	/// The account ID of the ethereum linear relay pot.
 	///
 	/// This actually does computation. If you need to keep using it, then make sure you cache the
 	/// value and only call this once.
