@@ -47,6 +47,7 @@ use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
 	debug::{error, info},
+	storage::IterableStorageMap,
 	decl_error, decl_event, decl_module, decl_storage, ensure,
 	traits::{Currency, ExistenceRequirement, OnUnbalanced},
 };
@@ -62,6 +63,7 @@ use sp_std::{collections::btree_map::BTreeMap, prelude::*};
 use darwinia_support::{balance::lock::*, relay::*};
 use types::*;
 
+pub const MAX_ACTIVE_GAMES: usize = 32;
 pub const RELAYER_GAME_ID: LockIdentifier = *b"da/rgame";
 
 pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
@@ -98,11 +100,14 @@ decl_event! {
 
 decl_error! {
 	pub enum Error for Module<T: Trait<I>, I: Instance> {
+		/// Active Game - TOO MANY
+		ActiveGameTM,
+
+		/// Can not bond with value less than usable balance.
+		InsufficientBond,
+
 		/// Proposal - INVALID
 		ProposalI,
-
-		/// Target Header - ALREADY CONFIRMED
-		TargetHeaderAC,
 
 		/// Proposal - ALREADY EXISTED
 		ProposalAE,
@@ -110,8 +115,8 @@ decl_error! {
 		/// Round - MISMATCHED
 		RoundMis,
 
-		/// Can not bond with value less than usable balance.
-		InsufficientBond,
+		/// Target Header - ALREADY CONFIRMED
+		TargetHeaderAC,
 	}
 }
 
@@ -161,6 +166,15 @@ decl_storage! {
 			get(fn bonds_of_relayer)
 			: map hasher(blake2_128_concat) AccountId<T>
 			=> RingBalance<T, I>;
+
+
+		// TODO: move into relay
+		/// Dawinia Relay Guard System
+		///
+		/// https://github.com/darwinia-network/darwinia-common/issues/150
+		pub PendingConfirmedHeaders
+			get(fn pending_confirmed_headers)
+			: Vec<RawHeaderThing>;
 	}
 }
 
@@ -586,6 +600,10 @@ decl_module! {
 			match (other_proposals_len, raw_header_thing_chain.len()) {
 				// New `Game`
 				(0, raw_header_thing_chain_len) => {
+					ensure!(
+						<Proposals<T, I>>::iter().count() > MAX_ACTIVE_GAMES,
+						<Error<T, I>>::ActiveGameTM
+					);
 					ensure!(game_id > best_block_number, <Error<T, I>>::TargetHeaderAC);
 					ensure!(raw_header_thing_chain_len == 1, <Error<T, I>>::RoundMis);
 
