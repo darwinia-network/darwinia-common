@@ -183,8 +183,8 @@ decl_module! {
 				return;
 			}
 
-			info!("Found Closed Rounds at {}", block_number);
-			info!("---");
+			info!(target: "relayer-game", "Found Closed Rounds at {}", block_number);
+			info!(target: "relayer-game", "---");
 
 			let proposals_filter = |round, proposals: &mut Vec<Proposal<_, _, _>>| {
 				proposals
@@ -425,7 +425,7 @@ decl_module! {
 						proposals
 					);
 				} else {
-					info!("   >  No Honest Relayer");
+					info!(target: "relayer-game", "   >  No Honest Relayer");
 
 					settle_abandon(last_round_proposals);
 				}
@@ -456,14 +456,14 @@ decl_module! {
 			};
 
 			for (game_id, last_round) in closed_rounds {
-				info!(">  Trying to Settle Game {:?} at Round {}", game_id, last_round);
+				info!(target: "relayer-game", ">  Trying to Settle Game {:?} at Round {}", game_id, last_round);
 
 				let mut proposals = Self::proposals_of_game(game_id);
 
 				match proposals.len() {
-					0 => info!("   >  No Proposal Found"),
+					0 => info!(target: "relayer-game", "   >  No Proposal Found"),
 					1 => {
-						info!("   >  No Challenge Found");
+						info!(target: "relayer-game", "   >  No Challenge Found");
 
 						settle_without_challenge(game_id, proposals.pop().unwrap());
 					}
@@ -472,7 +472,7 @@ decl_module! {
 
 						match last_round_proposals.len() {
 							0 => {
-								info!("   >  All Relayers Abstain");
+								info!(target: "relayer-game", "   >  All Relayers Abstain");
 
 								// `last_round` MUST NOT be `0`; qed
 								settle_abandon(proposals_filter(last_round - 1, &mut proposals));
@@ -500,7 +500,7 @@ decl_module! {
 										.saturated_into() as u64;
 
 								if last_round_proposals_chain_len as u64 == full_chain_len {
-									info!("   >  On Chain Arbitrate");
+									info!(target: "relayer-game", "   >  On Chain Arbitrate");
 
 									on_chain_arbitrate(
 										game_id,
@@ -509,7 +509,7 @@ decl_module! {
 										proposals
 									);
 								} else {
-									info!("   >  Update Samples");
+									info!(target: "relayer-game", "   >  Update Samples");
 
 									update_samples(relay_target);
 
@@ -525,7 +525,7 @@ decl_module! {
 				}
 			}
 
-			info!("---");
+			info!(target: "relayer-game", "---");
 		}
 
 		// TODO:
@@ -580,7 +580,7 @@ decl_module! {
 				(bonds, extend_chain)
 			};
 
-			info!("Relayer {} Submit a Proposal: ", relayer);
+			info!(target: "relayer-game", "Relayer {} Submit a Proposal: ", relayer);
 
 			// TODO: accept a chain (length > 1) but without extend
 			match (other_proposals_len, raw_header_thing_chain.len()) {
@@ -591,7 +591,7 @@ decl_module! {
 
 					let chain = T::TargetChain
 						::verify_raw_header_thing_chain(raw_header_thing_chain)?;
-					info!("{:#?}", chain);
+					info!(target: "relayer-game", "{:#?}", chain);
 					let (bonds, bonded_chain) = extend_bonded_chain(&chain, 0);
 
 					ensure!(
@@ -624,7 +624,7 @@ decl_module! {
 
 					let chain = T::TargetChain
 						::verify_raw_header_thing_chain(raw_header_thing_chain)?;
-					info!("{:#?}", chain);
+					info!(target: "relayer-game", "{:#?}", chain);
 
 					ensure!(
 						!other_proposals
@@ -658,7 +658,7 @@ decl_module! {
 					let prev_round = round.checked_sub(1).ok_or(<Error<T, I>>::RoundMis)?;
 					let chain = T::TargetChain
 						::verify_raw_header_thing_chain(raw_header_thing_chain)?;
-					info!("{:#?}", chain);
+					info!(target: "relayer-game", "{:#?}", chain);
 					let samples = {
 						// Chain's len is ALWAYS great than 1 under this match pattern; qed
 						let game_id = chain[0].number;
