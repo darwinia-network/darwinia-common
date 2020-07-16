@@ -57,6 +57,7 @@ std = [
 	# github
 	"ethereum-types/std",
 	"rlp/std",
+	"merkle-patricia-trie/std",
 	# substrate
 	"frame-support/std",
 	"frame-system/std",

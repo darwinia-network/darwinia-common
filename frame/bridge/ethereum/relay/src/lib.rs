@@ -339,7 +339,7 @@ impl<T: Trait> Module<T> {
 impl<T: Trait> Relayable for Module<T> {
 	type TcBlockNumber = EthBlockNumber;
 	type TcHeaderHash = ethereum_primitives::H256;
-	type TcHeaderMMR = sp_core::H256;
+	type TcHeaderMMR = ethereum_primitives::H256;
 
 	fn best_block_number() -> Self::TcBlockNumber {
 		if let Some(i) = LastConfirmedHeaderInfo::get() {

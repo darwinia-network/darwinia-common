@@ -89,8 +89,15 @@ impl_outer_dispatch! {
 	}
 }
 
+parameter_types! {
+	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
+}
+
+pub type Ring = darwinia_balances::Module<Test, RingInstance>;
 impl Trait for Test {
+	type ModuleId = EthereumRelayModuleId;
 	type Event = ();
+	type Currency = Ring;
 }
 
 pub struct ExtBuilder {}
@@ -107,7 +114,7 @@ impl ExtBuilder {
 			.build_storage::<Test>()
 			.unwrap();
 
-		GenesisConfig {
+		GenesisConfig::<Test> {
 			dags_merkle_roots_loader: DagsMerkleRootsLoader::from_file(
 				"../../../../bin/node-template/node/res/dags_merkle_roots.json",
 				"DAG_MERKLE_ROOTS_PATH",
@@ -135,9 +142,10 @@ pub fn from_file_to_eth_header_thing(path: &str) -> EthHeaderThing {
 		Vec::<EthashProof>::decode(&mut &*hex_bytes_unchecked(eth_header_json.ethash_proof))
 			.unwrap_or_default();
 	let mmr_root =
-		EthH256::decode(&mut &*hex_bytes_unchecked(eth_header_json.mmr_root)).unwrap_or_default();
+		ethereum_types::H256::decode(&mut &*hex_bytes_unchecked(eth_header_json.mmr_root))
+			.unwrap_or_default();
 	let mmr_proof = if eth_header_json.mmr_proof.is_some() {
-		Vec::<EthH256>::decode(&mut &*hex_bytes_unchecked(
+		Vec::<ethereum_types::H256>::decode(&mut &*hex_bytes_unchecked(
 			eth_header_json.mmr_proof.unwrap(),
 		))
 		.unwrap_or_default()

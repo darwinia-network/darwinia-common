@@ -51,7 +51,7 @@ pub mod mock_relay {
 	impl<T: Trait> Relayable for Module<T> {
 		type TcBlockNumber = MockTcBlockNumber;
 		type TcHeaderHash = MockTcHeaderHash;
-		type TcHeaderMMR = H256;
+		type TcHeaderMMR = ethereum_primitives::H256;
 
 		fn best_block_number() -> Self::TcBlockNumber {
 			Self::best_block_number()
@@ -82,7 +82,7 @@ pub mod mock_relay {
 					number: header.number,
 					hash: header.hash,
 					parent_hash: header.parent_hash,
-					mmr: (),
+					mmr: Default::default(),
 					others: vec![],
 				},
 				if with_proposed_raw_header {

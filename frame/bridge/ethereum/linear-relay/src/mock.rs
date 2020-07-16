@@ -238,7 +238,7 @@ impl_outer_dispatch! {
 }
 
 parameter_types! {
-	pub const EthRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
+	pub const EthRelayModuleId: ModuleId = ModuleId(*b"da/ethli");
 }
 
 impl Trait for Test {

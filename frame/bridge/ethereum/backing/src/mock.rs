@@ -151,7 +151,7 @@ impl pallet_session::historical::Trait for Test {
 }
 
 parameter_types! {
-	pub const EthRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
+	pub const EthRelayModuleId: ModuleId = ModuleId(*b"da/ethli");
 	pub const EthNetwork: EthNetworkType = EthNetworkType::Ropsten;
 }
 impl darwinia_ethereum_linear_relay::Trait for Test {
