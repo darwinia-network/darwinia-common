@@ -88,6 +88,7 @@ std = [
 	"darwinia-ethereum-relay/std",
 	"darwinia-header-mmr/std",
 	"darwinia-header-mmr-rpc-runtime-api/std",
+	"darwinia-relayer-game/std",
 	# TODO: benchmark
 	# "darwinia-session-benchmarking/std",
 	"darwinia-staking/std",
