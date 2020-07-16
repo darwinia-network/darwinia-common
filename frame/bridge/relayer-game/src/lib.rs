@@ -183,7 +183,7 @@ decl_module! {
 				return;
 			}
 
-			info!(target: "relayer-game", "Found Closed Rounds at {}", block_number);
+			info!(target: "relayer-game", "Found Closed Rounds at `{:?}`", block_number);
 			info!(target: "relayer-game", "---");
 
 			let proposals_filter = |round, proposals: &mut Vec<Proposal<_, _, _>>| {
@@ -456,7 +456,7 @@ decl_module! {
 			};
 
 			for (game_id, last_round) in closed_rounds {
-				info!(target: "relayer-game", ">  Trying to Settle Game {:?} at Round {}", game_id, last_round);
+				info!(target: "relayer-game", ">  Trying to Settle Game `{:?}` at Round `{}`", game_id, last_round);
 
 				let mut proposals = Self::proposals_of_game(game_id);
 
@@ -580,7 +580,7 @@ decl_module! {
 				(bonds, extend_chain)
 			};
 
-			info!(target: "relayer-game", "Relayer {} Submit a Proposal: ", relayer);
+			info!(target: "relayer-game", "Relayer `{:?}` Submit a Proposal: ", relayer);
 
 			// TODO: accept a chain (length > 1) but without extend
 			match (other_proposals_len, raw_header_thing_chain.len()) {
