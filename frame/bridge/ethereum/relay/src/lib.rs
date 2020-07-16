@@ -175,12 +175,33 @@ decl_module! {
 
 		fn deposit_event() = default;
 
-		/// Check receipt
+		/// Check and verify the receipt
+		///
+		/// `check_receipt` will verify the validation of the ethereum receipt proof from ethereum.
+		/// Ethereum receipt proof are constructed with 3 parts.
+		///
+		/// The first part `proof_record` is the Ethereum receipt and its merkle member proof regarding
+		/// to the receipt root in related Ethereum block header.
+		///
+		/// The second part `eth_header` is the Ethereum block header which included/generated this
+		/// receipt, we need to provide this as part of proof, because in Darwinia Relay, we only have
+		/// last confirmed block's MMR root, don't have previous blocks, so we need to include this to
+		/// provide the `receipt_root` inside it, we will need to verify validation by checking header hash.
+		///
+		/// The third part `mmr_proof` is the mmr proof generate according to
+		/// `(member_index=[eth_header.number], last_index=last_confirmed_block_header.number)`
+		/// it can prove that the `eth_header` is the chain which is committed by last confirmed block's `mmr_root`
+		///
+		/// The dispatch origin for this call must be `Signed` by the transactor.
 		///
 		/// # <weight>
 		/// - `O(1)`.
 		/// - Limited Storage reads
 		/// - Up to one event
+		///
+		/// Related functions:
+		///
+		///   - `set_receipt_verify_fee` can be used to set the verify fee for each receipt check.
 		/// # </weight>
 		#[weight = 100_000_000]
 		pub fn check_receipt(origin, proof_record: EthReceiptProof, eth_header: EthHeader, mmr_proof: Vec<H256>) {
