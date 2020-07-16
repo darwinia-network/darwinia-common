@@ -16,9 +16,7 @@ serde = { version = "1.0.114", optional = true }
 serde_json = { version = "1.0.56", optional = true }
 # darwinia
 darwinia-support = { default-features = false, path = "../../../support" }
-ethash = { default-features = false, git = "https://github.com/darwinia-network/rust-ethash" }
 ethereum-primitives = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
-merkle-patricia-trie = { default-features = false, path = "../../../../primitives/merkle-patricia-trie" }
 # github
 ethereum-types = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 rlp = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
@@ -46,9 +44,7 @@ std = [
 	"serde_json",
 	# darwinia
 	"darwinia-support/std",
-	"ethash/std",
 	"ethereum-primitives/std",
-	"merkle-patricia-trie/std",
 	# github
 	"ethereum-types/std",
 	"ethereum-types/serialize",

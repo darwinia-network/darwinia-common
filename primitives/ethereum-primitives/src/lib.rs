@@ -6,8 +6,8 @@ pub extern crate rlp_derive;
 
 pub mod encoded;
 pub mod error;
+pub mod ethashproof;
 pub mod header;
-pub mod merkle;
 pub mod pow;
 pub mod receipt;
 

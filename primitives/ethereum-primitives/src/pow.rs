@@ -12,9 +12,9 @@ use sp_runtime::RuntimeDebug;
 use sp_std::{cell::RefCell, collections::btree_map::BTreeMap, mem};
 
 use crate::{
-	error::{BlockError, Mismatch, OutOfBounds},
+	error::{EthereumError, Mismatch, OutOfBounds},
+	ethashproof::EthashProof,
 	header::EthHeader,
-	merkle::EthashProof,
 	*,
 };
 
@@ -125,7 +125,7 @@ impl EthashPartial {
 		header: &EthHeader,
 		ethash_proof: &[EthashProof],
 		merkle_root: &H128,
-	) -> Result<(), BlockError> {
+	) -> Result<(), EthereumError> {
 		let seal = EthashSeal::parse_seal(header.seal())?;
 
 		let (mix_hash, _result) = self.hashimoto_merkle(
@@ -136,7 +136,7 @@ impl EthashPartial {
 			merkle_root,
 		)?;
 		if mix_hash != seal.mix_hash {
-			return Err(BlockError::SealInvalid);
+			return Err(EthereumError::SealInvalid);
 		}
 		Ok(())
 	}
@@ -148,7 +148,7 @@ impl EthashPartial {
 		block_number: u64,
 		nodes: &[EthashProof],
 		merkle_root: &H128,
-	) -> Result<(H256, H256), BlockError> {
+	) -> Result<(H256, H256), EthereumError> {
 		// Boxed index since ethash::hashimoto gets Fn, but not FnMut
 		let index = RefCell::new(0);
 		let err = RefCell::new(0u8);
@@ -195,24 +195,24 @@ impl EthashPartial {
 
 		match err.into_inner() {
 			0 => Ok(pair),
-			1 => Err(BlockError::MerkleProofMismatch(
+			1 => Err(EthereumError::MerkleProofMismatch(
 				"Merkle proof index out off range error",
 			)),
-			2 => Err(BlockError::MerkleProofMismatch("Merkle root mismatch")),
-			_ => Err(BlockError::MerkleProofMismatch(
+			2 => Err(EthereumError::MerkleProofMismatch("Merkle root mismatch")),
+			_ => Err(EthereumError::MerkleProofMismatch(
 				"Merkle root error - should not be here",
 			)),
 		}
 	}
 
-	pub fn verify_block_basic(&self, header: &EthHeader) -> Result<(), BlockError> {
+	pub fn verify_block_basic(&self, header: &EthHeader) -> Result<(), EthereumError> {
 		// check the seal fields.
 		let seal = EthashSeal::parse_seal(header.seal())?;
 
 		// TODO: consider removing these lines.
 		let min_difficulty = self.minimum_difficulty;
 		if header.difficulty() < &min_difficulty {
-			return Err(BlockError::DifficultyOutOfBounds(OutOfBounds {
+			return Err(EthereumError::DifficultyOutOfBounds(OutOfBounds {
 				min: Some(min_difficulty),
 				max: None,
 				found: *header.difficulty(),
@@ -227,7 +227,7 @@ impl EthashPartial {
 		)));
 
 		if &difficulty < header.difficulty() {
-			return Err(BlockError::InvalidProofOfWork(OutOfBounds {
+			return Err(EthereumError::InvalidProofOfWork(OutOfBounds {
 				min: Some(*header.difficulty()),
 				max: None,
 				found: difficulty,
@@ -335,9 +335,9 @@ pub struct EthashSeal {
 
 impl EthashSeal {
 	/// Tries to parse rlp encoded bytes as an Ethash/Clique seal.
-	pub fn parse_seal<T: AsRef<[u8]>>(seal: &[T]) -> Result<Self, BlockError> {
+	pub fn parse_seal<T: AsRef<[u8]>>(seal: &[T]) -> Result<Self, EthereumError> {
 		if seal.len() != 2 {
-			return Err(BlockError::InvalidSealArity(Mismatch {
+			return Err(EthereumError::InvalidSealArity(Mismatch {
 				expected: 2,
 				found: seal.len(),
 			}));
@@ -345,11 +345,11 @@ impl EthashSeal {
 
 		let mix_hash = Rlp::new(seal[0].as_ref())
 			.as_val::<H256>()
-			.map_err(|_e| BlockError::Rlp("Rlp - INVALID"))
+			.map_err(|_e| EthereumError::Rlp("Rlp - INVALID"))
 			.unwrap();
 		let nonce = Rlp::new(seal[1].as_ref())
 			.as_val::<H64>()
-			.map_err(|_e| BlockError::Rlp("Rlp - INVALID"))
+			.map_err(|_e| EthereumError::Rlp("Rlp - INVALID"))
 			.unwrap();
 		Ok(EthashSeal { mix_hash, nonce })
 	}

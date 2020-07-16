@@ -40,10 +40,10 @@ use array_bytes::array_unchecked;
 use darwinia_support::balance::lock::LockableCurrency;
 use darwinia_support::relay::*;
 use ethereum_primitives::{
-	header::EthHeader, merkle::EthashProof, pow::EthashPartial, receipt::Receipt, EthBlockNumber,
-	H256,
+	ethashproof::EthashProof, header::EthHeader, pow::EthashPartial, receipt::EthReceiptProof,
+	receipt::Receipt, EthBlockNumber, H256,
 };
-use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
+
 use types::*;
 
 type MMRHash = H256;
@@ -78,13 +78,6 @@ impl From<RawHeaderThing> for EthHeaderThing {
 	}
 }
 
-#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
-pub struct EthReceiptProof {
-	pub index: u64,
-	pub proof: Vec<u8>,
-	pub header_hash: H256,
-}
-
 decl_event! {
 	pub enum Event<T>
 	where
@@ -106,7 +99,7 @@ decl_event! {
 		/// month
 		ConfirmBlockManagementError(EthBlockNumber),
 
-		/// TODO: Add documents
+		/// Receipt Verification
 		VerifyReceipt(AccountId, Receipt, EthHeader),
 	}
 }
@@ -120,10 +113,7 @@ decl_error! {
 		MMRInvalid,
 		HeaderHashMis,
 		LastHeaderNE,
-		RlpDcF,
-		ProofVF,
-		TrieKeyNE,
-		ReceiptDsF,
+		ReceiptProofInvalid,
 	}
 }
 
@@ -196,13 +186,25 @@ decl_module! {
 		pub fn check_receipt(origin, proof_record: EthReceiptProof, eth_header: EthHeader, mmr_proof: Vec<H256>) {
 			let worker = ensure_signed(origin)?;
 
-			let (verified_receipt, fee) = Self::verify_receipt(&proof_record, &eth_header, mmr_proof)?;
+			let (verified_receipt, fee) = Self::verify_receipt_using_mmr(&proof_record, &eth_header, mmr_proof)?;
 
 			let module_account = Self::account_id();
 
 			T::Currency::transfer(&worker, &module_account, fee, KeepAlive)?;
 
 			<Module<T>>::deposit_event(RawEvent::VerifyReceipt(worker, verified_receipt, eth_header));
+		}
+
+		/// Set verify receipt fee
+		///
+		/// # <weight>
+		/// - `O(1)`.
+		/// - One storage write
+		/// # </weight>
+		#[weight = 10_000_000]
+		pub fn set_receipt_verify_fee(origin, #[compact] new: Balance<T>) {
+			ensure_root(origin)?;
+			<ReceiptVerifyFee<T>>::put(new);
 		}
 
 		/// Remove the specific malicous block
@@ -558,8 +560,8 @@ impl<T: Trait> Relayable for Module<T> {
 }
 
 /// Handler for selecting the genesis validator set.
-pub trait VerifyEthReceipts<Balance, AccountId> {
-	fn verify_receipt(
+pub trait MMRVerifyEthReceipts<Balance, AccountId> {
+	fn verify_receipt_using_mmr(
 		proof_record: &EthReceiptProof,
 		eth_header: &EthHeader,
 		mmr_proof: Vec<H256>,
@@ -568,11 +570,11 @@ pub trait VerifyEthReceipts<Balance, AccountId> {
 	fn account_id() -> AccountId;
 }
 
-impl<T: Trait> VerifyEthReceipts<Balance<T>, T::AccountId> for Module<T> {
+impl<T: Trait> MMRVerifyEthReceipts<Balance<T>, T::AccountId> for Module<T> {
 	/// confirm that the block hash is right
 	/// get the receipt MPT trie root from the block header
 	/// Using receipt MPT trie root to verify the proof and index etc.
-	fn verify_receipt(
+	fn verify_receipt_using_mmr(
 		proof_record: &EthReceiptProof,
 		eth_header: &EthHeader,
 		mmr_proof: Vec<H256>,
@@ -602,14 +604,8 @@ impl<T: Trait> VerifyEthReceipts<Balance<T>, T::AccountId> for Module<T> {
 		);
 
 		// Verify receipt proof
-		let proof: Proof = rlp::decode(&proof_record.proof).map_err(|_| <Error<T>>::RlpDcF)?;
-		let key = rlp::encode(&proof_record.index);
-		let value =
-			MerklePatriciaTrie::verify_proof(eth_header.receipts_root().0.to_vec(), &key, proof)
-				.map_err(|_| <Error<T>>::ProofVF)?
-				.ok_or(<Error<T>>::TrieKeyNE)?;
-		let receipt = rlp::decode(&value).map_err(|_| <Error<T>>::ReceiptDsF)?;
-
+		let receipt = Receipt::verify_proof_and_generate(eth_header.receipts_root(), &proof_record)
+			.map_err(|_| <Error<T>>::ReceiptProofInvalid)?;
 		Ok((receipt, Self::receipt_verify_fee()))
 	}
 

@@ -487,7 +487,7 @@ mod tests {
 	// --- darwinia ---
 	use super::*;
 	use array_bytes::fixed_hex_bytes_unchecked;
-	use error::BlockError;
+	use error::EthereumError;
 	use pow::EthashPartial;
 
 	#[inline]
@@ -723,7 +723,7 @@ mod tests {
 		let verify_result = ethash_params.verify_block_basic(&header);
 
 		match verify_result {
-			Err(BlockError::InvalidProofOfWork(_)) => {}
+			Err(EthereumError::InvalidProofOfWork(_)) => {}
 			Err(_) => {
 				panic!(
 					"should be invalid proof of work error (got {:?})",

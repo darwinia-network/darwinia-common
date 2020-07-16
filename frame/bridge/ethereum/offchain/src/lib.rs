@@ -71,7 +71,7 @@ use sp_std::prelude::*;
 // --- darwinia ---
 use array_bytes::{base_n_bytes_unchecked, hex_bytes_unchecked};
 use darwinia_support::literal_procesor::extract_from_json_str;
-use ethereum_primitives::{header::EthHeader, merkle::EthashProof};
+use ethereum_primitives::{ethashproof::EthashProof, header::EthHeader};
 
 type EthRelay<T> = darwinia_ethereum_linear_relay::Module<T>;
 type EthRelayCall<T> = darwinia_ethereum_linear_relay::Call<T>;

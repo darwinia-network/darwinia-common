@@ -7,7 +7,8 @@ use rlp::*;
 use sp_runtime::RuntimeDebug;
 use sp_std::prelude::*;
 // --- darwinia ---
-use crate::*;
+use crate::{error::EthereumError, *};
+use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
 
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
 pub enum TransactionOutcome {
@@ -54,6 +55,13 @@ pub struct Receipt {
 	pub outcome: TransactionOutcome,
 }
 
+#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
+pub struct EthReceiptProof {
+	pub index: u64,
+	pub proof: Vec<u8>,
+	pub header_hash: H256,
+}
+
 impl Receipt {
 	/// Create a new receipt.
 	pub fn new(outcome: TransactionOutcome, gas_used: U256, logs: Vec<LogEntry>) -> Self {
@@ -66,6 +74,22 @@ impl Receipt {
 			logs,
 			outcome,
 		}
+	}
+
+	pub fn verify_proof_and_generate(
+		receipt_root: &H256,
+		proof_record: &EthReceiptProof,
+	) -> Result<Self, EthereumError> {
+		let proof: Proof =
+			rlp::decode(&proof_record.proof).map_err(|_| EthereumError::InvalidReceiptProof)?;
+		let key = rlp::encode(&proof_record.index);
+
+		let value = MerklePatriciaTrie::verify_proof(receipt_root.0.to_vec(), &key, proof)
+			.map_err(|_| EthereumError::InvalidReceiptProof)?
+			.ok_or(EthereumError::InvalidReceiptProof)?;
+		let receipt = rlp::decode(&value).map_err(|_| EthereumError::InvalidReceiptProof)?;
+
+		Ok(receipt)
 	}
 }
 
