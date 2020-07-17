@@ -15,6 +15,7 @@ ethash = { default-features = false, git = "https://github.com/darwinia-network/
 serde = { version = "1.0.114", optional = true, features = ["derive"] }
 # darwinia
 array-bytes = { default-features = false, path = "../array-bytes" }
+merkle-patricia-trie = { default-features = false, path = "../merkle-patricia-trie" }
 # github
 ethbloom = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 ethereum-types = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
@@ -48,6 +49,7 @@ std = [
 	# darwinia
 	"array-bytes/std",
 	"ethash/std",
+	"merkle-patricia-trie/std",
 	# github
 	"ethbloom/std",
 	"ethereum-types/std",

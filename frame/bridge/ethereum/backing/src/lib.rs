@@ -42,9 +42,9 @@ use sp_runtime::{
 use sp_std::borrow::ToOwned;
 use sp_std::{convert::TryFrom, marker::PhantomData, vec};
 // --- darwinia ---
-use darwinia_ethereum_linear_relay::{EthReceiptProof, VerifyEthReceipts};
+use darwinia_ethereum_linear_relay::VerifyEthReceipts;
 use darwinia_support::{balance::lock::*, traits::OnDepositRedeem};
-use ethereum_primitives::{EthAddress, H256, U256};
+use ethereum_primitives::{receipt::EthReceiptProof, EthAddress, H256, U256};
 use types::*;
 
 pub trait Trait: frame_system::Trait {

@@ -14,10 +14,10 @@ pub fn hash(data: &[u8]) -> [u8; 32] {
 	dest
 }
 
-/// MMR Merge trait for ETHash
-pub struct MergeHash;
+/// MMR Merge for MMR Merge trait
+pub struct MMRMerge;
 
-impl Merge for MergeHash {
+impl Merge for MMRMerge {
 	type Item = [u8; 32];
 	fn merge(lhs: &Self::Item, rhs: &Self::Item) -> Self::Item {
 		let mut data = vec![];

@@ -63,16 +63,15 @@ use sp_runtime::{
 	transaction_validity::{
 		InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
 	},
-	DispatchError, DispatchResult, ModuleId, RuntimeDebug, SaturatedConversion,
+	DispatchError, DispatchResult, ModuleId, SaturatedConversion,
 };
 use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_support::balance::lock::LockableCurrency;
 use ethereum_primitives::{
-	header::EthHeader, merkle::EthashProof, pow::EthashPartial, receipt::Receipt, EthBlockNumber,
-	H256, U256,
+	ethashproof::EthashProof, header::EthHeader, pow::EthashPartial, receipt::EthReceiptProof,
+	receipt::Receipt, EthBlockNumber, H256, U256,
 };
-use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
 use types::*;
 
 #[cfg(feature = "std")]
@@ -122,13 +121,6 @@ pub struct EthHeaderBrief<AccountId> {
 	pub number: EthBlockNumber,
 	/// Relayer of the block header
 	pub relayer: AccountId,
-}
-
-#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
-pub struct EthReceiptProof {
-	pub index: u64,
-	pub proof: Vec<u8>,
-	pub header_hash: H256,
 }
 
 decl_storage! {
@@ -234,8 +226,6 @@ decl_error! {
 		HeaderNE,
 		/// Header Brief - NOT EXISTED
 		HeaderBriefNE,
-		/// Trie Key - NOT EXISTED
-		TrieKeyNE,
 
 		/// Header - ALREADY EXISTS
 		HeaderAE,
@@ -251,13 +241,11 @@ decl_error! {
 		/// Rlp - DECODE FAILED
 		RlpDcF,
 		/// Receipt - DESERIALIZE FAILED
-		ReceiptDsF,
+		ReceiptProofInvalid,
 		/// Block Basic - VERIFICATION FAILED
 		BlockBasicVF,
 		/// Difficulty - VERIFICATION FAILED
 		DifficultyVF,
-		/// Proof - VERIFICATION FAILED
-		ProofVF,
 
 		/// Payout - NO POINTS OR FUNDS
 		PayoutNPF,
@@ -320,15 +308,15 @@ decl_module! {
 		/// # </weight>
 		#[weight = 100_000_000]
 		pub fn check_receipt(origin, proof_record: EthReceiptProof) {
-			let relayer = ensure_signed(origin)?;
+			let worker = ensure_signed(origin)?;
 
 			let (verified_receipt, fee) = Self::verify_receipt(&proof_record)?;
 
 			let module_account = Self::account_id();
 
-			T::Currency::transfer(&relayer, &module_account, fee, KeepAlive)?;
+			T::Currency::transfer(&worker, &module_account, fee, KeepAlive)?;
 
-			<Module<T>>::deposit_event(RawEvent::VerifyProof(relayer, verified_receipt, proof_record));
+			<Module<T>>::deposit_event(RawEvent::VerifyProof(worker, verified_receipt, proof_record));
 		}
 
 		/// Claim Reward for Relayers
@@ -491,7 +479,7 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
-	/// The account ID of the eth linear relay pot.
+	/// The account ID of the ethereum linear relay pot.
 	///
 	/// This actually does computation. If you need to keep using it, then make sure you cache the
 	/// value and only call this once.
@@ -772,13 +760,10 @@ impl<T: Trait> VerifyEthReceipts<Balance<T>, T::AccountId> for Module<T> {
 		);
 
 		let header = Self::header(&proof_record.header_hash).ok_or(<Error<T>>::HeaderNE)?;
-		let proof: Proof = rlp::decode(&proof_record.proof).map_err(|_| <Error<T>>::RlpDcF)?;
-		let key = rlp::encode(&proof_record.index);
-		let value =
-			MerklePatriciaTrie::verify_proof(header.receipts_root().0.to_vec(), &key, proof)
-				.map_err(|_| <Error<T>>::ProofVF)?
-				.ok_or(<Error<T>>::TrieKeyNE)?;
-		let receipt = rlp::decode(&value).map_err(|_| <Error<T>>::ReceiptDsF)?;
+
+		// Verify receipt proof
+		let receipt = Receipt::verify_proof_and_generate(header.receipts_root(), &proof_record)
+			.map_err(|_| <Error<T>>::ReceiptProofInvalid)?;
 
 		Ok((receipt, Self::receipt_verify_fee()))
 	}

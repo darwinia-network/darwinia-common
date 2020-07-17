@@ -8,28 +8,74 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+mod types {
+	// --- darwinia ---
+	use crate::*;
+
+	pub type Balance<T> = <CurrencyT<T> as Currency<AccountId<T>>>::Balance;
+
+	type AccountId<T> = <T as system::Trait>::AccountId;
+
+	type CurrencyT<T> = <T as Trait>::Currency;
+}
+
 // --- crates ---
 use codec::{Decode, Encode};
 // --- github ---
 use ethereum_types::H128;
 // --- substrate ---
-use frame_support::{decl_error, decl_event, decl_module, decl_storage};
-use frame_system::{self as system, ensure_root};
-use sp_runtime::{DispatchError, DispatchResult, RuntimeDebug};
+use frame_support::{
+	decl_error, decl_event, decl_module, decl_storage, ensure,
+	traits::Get,
+	traits::{Currency, ExistenceRequirement::KeepAlive, ReservableCurrency},
+};
+use frame_system::{self as system, ensure_root, ensure_signed};
+use sp_runtime::{
+	traits::AccountIdConversion, DispatchError, DispatchResult, ModuleId, RuntimeDebug,
+};
 use sp_std::{convert::From, prelude::*};
 // --- darwinia ---
-use crate::mmr::{leaf_index_to_mmr_size, leaf_index_to_pos, MergeHash, MerkleProof};
+use crate::mmr::{leaf_index_to_mmr_size, leaf_index_to_pos, MMRMerge, MerkleProof};
 use array_bytes::array_unchecked;
+use darwinia_support::balance::lock::LockableCurrency;
 use darwinia_support::relay::*;
 use ethereum_primitives::{
-	header::EthHeader, merkle::EthashProof, pow::EthashPartial, EthBlockNumber, H256 as EthH256,
+	ethashproof::EthashProof, header::EthHeader, pow::EthashPartial, receipt::EthReceiptProof,
+	receipt::Receipt, EthBlockNumber, H256,
 };
-use sp_core::H256;
 
-type EthereumMMRHash = EthH256;
+use types::*;
+
+type MMRHash = H256;
 
 pub trait Trait: frame_system::Trait {
+	/// The ethereum-relay's module id, used for deriving its sovereign account ID.
+	type ModuleId: Get<ModuleId>;
+
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+
+	type Currency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
+		+ ReservableCurrency<Self::AccountId>;
+}
+
+#[derive(Encode, Decode, Default, RuntimeDebug)]
+pub struct EthHeaderThing {
+	eth_header: EthHeader,
+	ethash_proof: Vec<EthashProof>,
+	mmr_root: MMRHash,
+	mmr_proof: Vec<MMRHash>,
+}
+
+#[derive(Encode, Decode, Default, RuntimeDebug)]
+pub struct ProposalEthHeaderThing {
+	eth_header: EthHeader,
+	mmr_root: MMRHash,
+}
+
+impl From<RawHeaderThing> for EthHeaderThing {
+	fn from(raw_header_thing: RawHeaderThing) -> Self {
+		EthHeaderThing::decode(&mut &*raw_header_thing).unwrap_or_default()
+	}
 }
 
 decl_event! {
@@ -52,6 +98,9 @@ decl_event! {
 		/// ConfirmBlockKeepInMonth should be greator then 1 to avoid the relayer game cross the
 		/// month
 		ConfirmBlockManagementError(EthBlockNumber),
+
+		/// Receipt Verification
+		VerifyReceipt(AccountId, Receipt, EthHeader),
 	}
 }
 
@@ -62,6 +111,9 @@ decl_error! {
 		NotComplyWithConfirmebBlocks,
 		ChainInvalid,
 		MMRInvalid,
+		HeaderHashMis,
+		LastHeaderNE,
+		ReceiptProofInvalid,
 	}
 }
 
@@ -75,7 +127,7 @@ darwinia_support::impl_genesis! {
 decl_storage! {
 	trait Store for Module<T: Trait> as DarwiniaEthereumRelay {
 		/// Ethereum last confrimed header info including ethereum block number, hash, and mmr
-		pub LastConfirmedHeaderInfo get(fn last_confirm_header_info): Option<(EthBlockNumber, H256, EthereumMMRHash)>;
+		pub LastConfirmedHeaderInfo get(fn last_confirm_header_info): Option<(EthBlockNumber, H256, MMRHash)>;
 
 		/// The Ethereum headers confrimed by relayer game
 		/// The actural storage needs to be defined
@@ -91,6 +143,8 @@ decl_storage! {
 		pub ConfirmBlocksInCycle get(fn confirm_block_cycle): EthBlockNumber = 185142;
 		/// The confirm blocks keep in month
 		pub ConfirmBlockKeepInMonth get(fn confirm_block_keep_in_mounth): EthBlockNumber = 3;
+
+		pub ReceiptVerifyFee get(fn receipt_verify_fee) config(): Balance<T>;
 	}
 	add_extra_genesis {
 		config(dags_merkle_roots_loader): DagsMerkleRootsLoader;
@@ -120,6 +174,60 @@ decl_module! {
 		type Error = Error<T>;
 
 		fn deposit_event() = default;
+
+		/// Check and verify the receipt
+		///
+		/// `check_receipt` will verify the validation of the ethereum receipt proof from ethereum.
+		/// Ethereum receipt proof are constructed with 3 parts.
+		///
+		/// The first part `proof_record` is the Ethereum receipt and its merkle member proof regarding
+		/// to the receipt root in related Ethereum block header.
+		///
+		/// The second part `eth_header` is the Ethereum block header which included/generated this
+		/// receipt, we need to provide this as part of proof, because in Darwinia Relay, we only have
+		/// last confirmed block's MMR root, don't have previous blocks, so we need to include this to
+		/// provide the `receipt_root` inside it, we will need to verify validation by checking header hash.
+		///
+		/// The third part `mmr_proof` is the mmr proof generate according to
+		/// `(member_index=[eth_header.number], last_index=last_confirmed_block_header.number)`
+		/// it can prove that the `eth_header` is the chain which is committed by last confirmed block's `mmr_root`
+		///
+		/// The dispatch origin for this call must be `Signed` by the transactor.
+		///
+		/// # <weight>
+		/// - `O(1)`.
+		/// - Limited Storage reads
+		/// - Up to one event
+		///
+		/// Related functions:
+		///
+		///   - `set_receipt_verify_fee` can be used to set the verify fee for each receipt check.
+		/// # </weight>
+		#[weight = 100_000_000]
+		pub fn check_receipt(origin, proof_record: EthReceiptProof, eth_header: EthHeader, mmr_proof: Vec<H256>) {
+			let worker = ensure_signed(origin)?;
+
+			let (verified_receipt, fee) = Self::verify_receipt_using_mmr(&proof_record, &eth_header, mmr_proof)?;
+
+			let module_account = Self::account_id();
+
+			T::Currency::transfer(&worker, &module_account, fee, KeepAlive)?;
+
+			<Module<T>>::deposit_event(RawEvent::VerifyReceipt(worker, verified_receipt, eth_header));
+		}
+
+		/// Set verify receipt fee
+		///
+		/// # <weight>
+		/// - `O(1)`.
+		/// - One storage write
+		/// # </weight>
+		#[weight = 10_000_000]
+		pub fn set_receipt_verify_fee(origin, #[compact] new: Balance<T>) {
+			ensure_root(origin)?;
+			<ReceiptVerifyFee<T>>::put(new);
+		}
+
 		/// Remove the specific malicous block
 		#[weight = 100_000_000]
 		pub fn remove_confirmed_block(origin, number: EthBlockNumber) {
@@ -154,6 +262,14 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
+	/// The account ID of the ethereum relay pot.
+	///
+	/// This actually does computation. If you need to keep using it, then make sure you cache the
+	/// value and only call this once.
+	fn account_id() -> T::AccountId {
+		T::ModuleId::get().into_account()
+	}
+
 	/// validate block with the hash, difficulty of confirmed headers
 	fn verify_block_with_confrim_blocks(header: &EthHeader) -> bool {
 		let eth_partial = EthashPartial::production();
@@ -223,13 +339,13 @@ impl<T: Trait> Module<T> {
 	// NOTE: leaves are (block_number, H256)
 	// block_number will transform to position in this function
 	fn verify_mmr(
-		block_number: u64,
+		last_block_number: u64,
 		mmr_root: H256,
 		mmr_proof: Vec<H256>,
 		leaves: Vec<(u64, H256)>,
 	) -> bool {
-		let p = MerkleProof::<[u8; 32], MergeHash>::new(
-			leaf_index_to_mmr_size(block_number),
+		let p = MerkleProof::<[u8; 32], MMRMerge>::new(
+			leaf_index_to_mmr_size(last_block_number),
 			mmr_proof.into_iter().map(|h| h.into()).collect(),
 		);
 		p.verify(
@@ -246,7 +362,7 @@ impl<T: Trait> Module<T> {
 impl<T: Trait> Relayable for Module<T> {
 	type TcBlockNumber = EthBlockNumber;
 	type TcHeaderHash = ethereum_primitives::H256;
-	type TcHeaderMMR = sp_core::H256;
+	type TcHeaderMMR = ethereum_primitives::H256;
 
 	fn best_block_number() -> Self::TcBlockNumber {
 		if let Some(i) = LastConfirmedHeaderInfo::get() {
@@ -408,7 +524,7 @@ impl<T: Trait> Relayable for Module<T> {
 			>,
 		>,
 	) -> DispatchResult {
-		// Currently Ethereum samples function is continuesly sampling
+		// Currently Ethereum samples function is continuously sampling
 
 		let eth_partial = EthashPartial::production();
 
@@ -464,22 +580,57 @@ impl<T: Trait> Relayable for Module<T> {
 	}
 }
 
-#[derive(Encode, Decode, Default, RuntimeDebug)]
-pub struct EthHeaderThing {
-	eth_header: EthHeader,
-	ethash_proof: Vec<EthashProof>,
-	mmr_root: EthereumMMRHash,
-	mmr_proof: Vec<EthereumMMRHash>,
+/// Handler for selecting the genesis validator set.
+pub trait MMRVerifyEthReceipts<Balance, AccountId> {
+	fn verify_receipt_using_mmr(
+		proof_record: &EthReceiptProof,
+		eth_header: &EthHeader,
+		mmr_proof: Vec<H256>,
+	) -> Result<(Receipt, Balance), DispatchError>;
+
+	fn account_id() -> AccountId;
 }
 
-#[derive(Encode, Decode, Default, RuntimeDebug)]
-pub struct ProposalEthHeaderThing {
-	eth_header: EthHeader,
-	mmr_root: EthereumMMRHash,
-}
+impl<T: Trait> MMRVerifyEthReceipts<Balance<T>, T::AccountId> for Module<T> {
+	/// confirm that the block hash is right
+	/// get the receipt MPT trie root from the block header
+	/// Using receipt MPT trie root to verify the proof and index etc.
+	fn verify_receipt_using_mmr(
+		proof_record: &EthReceiptProof,
+		eth_header: &EthHeader,
+		mmr_proof: Vec<H256>,
+	) -> Result<(Receipt, Balance<T>), DispatchError> {
+		// Verify header hash
+		let header_hash = eth_header.hash();
 
-impl From<RawHeaderThing> for EthHeaderThing {
-	fn from(raw_header_thing: RawHeaderThing) -> Self {
-		EthHeaderThing::decode(&mut &*raw_header_thing).unwrap_or_default()
+		ensure!(
+			header_hash == eth_header.re_compute_hash(),
+			<Error<T>>::HeaderHashMis
+		);
+
+		// Verify header member to last confirmed block using mmr proof
+		let last_block_info = Self::last_confirm_header_info().ok_or(<Error<T>>::LastHeaderNE)?;
+
+		ensure!(
+			Self::verify_mmr(
+				last_block_info.0,
+				last_block_info.2,
+				mmr_proof,
+				vec![(
+					eth_header.number,
+					array_unchecked!(eth_header.hash.unwrap_or_default(), 0, 32).into(),
+				)]
+			),
+			<Error<T>>::MMRInvalid
+		);
+
+		// Verify receipt proof
+		let receipt = Receipt::verify_proof_and_generate(eth_header.receipts_root(), &proof_record)
+			.map_err(|_| <Error<T>>::ReceiptProofInvalid)?;
+		Ok((receipt, Self::receipt_verify_fee()))
+	}
+
+	fn account_id() -> T::AccountId {
+		<Module<T>>::account_id()
 	}
 }
