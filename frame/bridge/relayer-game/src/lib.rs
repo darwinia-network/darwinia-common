@@ -601,7 +601,7 @@ decl_module! {
 				// New `Game`
 				(0, raw_header_thing_chain_len) => {
 					ensure!(
-						<Proposals<T, I>>::iter().count() > MAX_ACTIVE_GAMES,
+						<Proposals<T, I>>::iter().count() <= MAX_ACTIVE_GAMES,
 						<Error<T, I>>::ActiveGameTM
 					);
 					ensure!(game_id > best_block_number, <Error<T, I>>::TargetHeaderAC);
