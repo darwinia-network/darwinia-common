@@ -40,28 +40,28 @@ jobs:
       script: .maintain/ci/darwinia_test_script.sh treasury
 
     - stage: Darwinia Test
-      env: ETHRELAY RUST_TOOLCHAIN=nightly TARGET=native
-      script: .maintain/ci/darwinia_test_script.sh ethereum-linear-relay
-
-    - stage: Darwinia Test
-      env: ETHRELAY RUST_TOOLCHAIN=nightly TARGET=native
-      script: .maintain/ci/darwinia_test_script.sh ethereum-relay
-
-    - stage: Darwinia Test
-      env: ETHBACKING RUST_TOOLCHAIN=nightly TARGET=native
+      env: ETHEREUMBACKING RUST_TOOLCHAIN=nightly TARGET=native
       script: .maintain/ci/darwinia_test_script.sh ethereum-backing
 
     - stage: Darwinia Test
-      env: HEADERMMR RUST_TOOLCHAIN=nightly TARGET=native
-      script: .maintain/ci/darwinia_test_script.sh header-mmr
+      env: ETHEREUMRELAY RUST_TOOLCHAIN=nightly TARGET=native
+      script: .maintain/ci/darwinia_test_script.sh ethereum-linear-relay
 
     - stage: Darwinia Test
-      env: ETHOFFCHAIN RUST_TOOLCHAIN=nightly TARGET=native
+      env: ETHEREUMRELAY RUST_TOOLCHAIN=nightly TARGET=native
+      script: .maintain/ci/darwinia_test_script.sh ethereum-relay
+
+    - stage: Darwinia Test
+      env: ETHEREUMOFFCHAIN RUST_TOOLCHAIN=nightly TARGET=native
       script: .maintain/ci/darwinia_test_script.sh ethereum-offchain
 
     - stage: Darwinia Test
       env: CLAIMS RUST_TOOLCHAIN=nightly TARGET=native
       script: .maintain/ci/darwinia_test_script.sh claims
+
+    - stage: Darwinia Test
+      env: HEADERMMR RUST_TOOLCHAIN=nightly TARGET=native
+      script: .maintain/ci/darwinia_test_script.sh header-mmr
 
     - stage: Darwinia Test
       env: RELAYERGAME RUST_TOOLCHAIN=nightly TARGET=native
