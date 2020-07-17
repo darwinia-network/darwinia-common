@@ -23,22 +23,28 @@ pub struct Mismatch<T> {
 }
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
-pub enum BlockError {
+pub enum EthereumError {
 	InvalidProofOfWork(OutOfBounds<U256>),
 	DifficultyOutOfBounds(OutOfBounds<U256>),
 	InvalidSealArity(Mismatch<usize>),
+	SealInvalid,
+	MerkleProofMismatch(&'static str),
 	Rlp(&'static str),
+	InvalidReceiptProof,
 }
 
-impl From<BlockError> for &str {
-	fn from(e: BlockError) -> Self {
-		use BlockError::*;
+impl From<EthereumError> for &str {
+	fn from(e: EthereumError) -> Self {
+		use EthereumError::*;
 
 		match e {
 			InvalidProofOfWork(_) => "Proof Of Work - INVALID",
 			DifficultyOutOfBounds(_) => "Difficulty - OUT OF BOUNDS",
 			InvalidSealArity(_) => "Seal Arity - INVALID",
+			SealInvalid => "Seal - INVALID",
+			MerkleProofMismatch(msg) => msg,
 			Rlp(msg) => msg,
+			InvalidReceiptProof => "Receipt Proof - INVALID",
 		}
 	}
 }

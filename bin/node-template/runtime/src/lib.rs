@@ -745,19 +745,25 @@ impl darwinia_ethereum_backing::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const EthRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
+	pub const EthereumLinearRelayModuleId: ModuleId = ModuleId(*b"da/ethli");
 	pub const EthNetwork: EthNetworkType = EthNetworkType::Mainnet;
 }
 impl darwinia_ethereum_linear_relay::Trait for Runtime {
-	type ModuleId = EthRelayModuleId;
+	type ModuleId = EthereumLinearRelayModuleId;
 	type Event = Event;
 	type EthNetwork = EthNetwork;
 	type Call = Call;
 	type Currency = Ring;
 }
 
+parameter_types! {
+	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
+}
+
 impl darwinia_ethereum_relay::Trait for Runtime {
+	type ModuleId = EthereumRelayModuleId;
 	type Event = Event;
+	type Currency = Ring;
 }
 
 parameter_types! {

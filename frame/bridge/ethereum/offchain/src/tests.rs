@@ -36,10 +36,7 @@ fn test_build_eth_header_from_scale_response() {
 	let decoded_double_node_with_proof =
 		EthOffchain::parse_double_node_with_proof_list_from_scale_str(proof_part).unwrap();
 
-	assert_eq!(
-		vec![DoubleNodeWithMerkleProof::default()],
-		decoded_double_node_with_proof
-	);
+	assert_eq!(vec![EthashProof::default()], decoded_double_node_with_proof);
 }
 
 /// Request format should be json

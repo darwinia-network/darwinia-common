@@ -48,7 +48,7 @@ mod types {
 // --- crates ---
 use codec::{Decode, Encode};
 // --- github ---
-use ethereum_types::{H128, H512, H64};
+use ethereum_types::H128;
 // --- substrate ---
 use frame_support::{
 	debug::trace,
@@ -58,25 +58,20 @@ use frame_support::{
 	IsSubType,
 };
 use frame_system::{self as system, ensure_root, ensure_signed};
-use sp_io::hashing::sha2_256;
 use sp_runtime::{
 	traits::{AccountIdConversion, DispatchInfoOf, Dispatchable, Saturating, SignedExtension},
 	transaction_validity::{
 		InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
 	},
-	DispatchError, DispatchResult, ModuleId, RuntimeDebug, SaturatedConversion,
+	DispatchError, DispatchResult, ModuleId, SaturatedConversion,
 };
-use sp_std::{cell::RefCell, prelude::*};
+use sp_std::prelude::*;
 // --- darwinia ---
-use array_bytes::{array_unchecked, fixed_hex_bytes_unchecked};
 use darwinia_support::balance::lock::LockableCurrency;
 use ethereum_primitives::{
-	header::EthHeader,
-	pow::{EthashPartial, EthashSeal},
-	receipt::Receipt,
-	EthBlockNumber, H256, U256,
+	ethashproof::EthashProof, header::EthHeader, pow::EthashPartial, receipt::EthReceiptProof,
+	receipt::Receipt, EthBlockNumber, H256, U256,
 };
-use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
 use types::*;
 
 #[cfg(feature = "std")]
@@ -115,72 +110,6 @@ darwinia_support::impl_genesis! {
 	}
 }
 
-#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
-pub struct DoubleNodeWithMerkleProof {
-	pub dag_nodes: [H512; 2],
-	pub proof: Vec<H128>,
-}
-
-impl Default for DoubleNodeWithMerkleProof {
-	fn default() -> DoubleNodeWithMerkleProof {
-		DoubleNodeWithMerkleProof {
-			dag_nodes: <[H512; 2]>::default(),
-			proof: Vec::new(),
-		}
-	}
-}
-
-impl DoubleNodeWithMerkleProof {
-	pub fn from_str_unchecked(s: &str) -> Self {
-		let mut dag_nodes: Vec<H512> = Vec::new();
-		let mut proof: Vec<H128> = Vec::new();
-		for e in s.splitn(60, '"') {
-			let l = e.len();
-			if l == 34 {
-				proof.push(fixed_hex_bytes_unchecked!(e, 16).into());
-			} else if l == 130 {
-				dag_nodes.push(fixed_hex_bytes_unchecked!(e, 64).into());
-			} else if l > 34 {
-				// should not be here
-				panic!("the proofs are longer than 25");
-			}
-		}
-		DoubleNodeWithMerkleProof {
-			dag_nodes: [dag_nodes[0], dag_nodes[1]],
-			proof,
-		}
-	}
-}
-
-impl DoubleNodeWithMerkleProof {
-	pub fn apply_merkle_proof(&self, index: u64) -> H128 {
-		fn hash_h128(l: H128, r: H128) -> H128 {
-			let mut data = [0u8; 64];
-			data[16..32].copy_from_slice(&(l.0));
-			data[48..64].copy_from_slice(&(r.0));
-
-			// `H256` is 32 length, truncate is safe; qed
-			array_unchecked!(sha2_256(&data), 16, 16).into()
-		}
-
-		let mut data = [0u8; 128];
-		data[..64].copy_from_slice(&(self.dag_nodes[0].0));
-		data[64..].copy_from_slice(&(self.dag_nodes[1].0));
-
-		// `H256` is 32 length, truncate is safe; qed
-		let mut leaf = array_unchecked!(sha2_256(&data), 16, 16).into();
-		for i in 0..self.proof.len() {
-			if (index >> i as u64) % 2 == 0 {
-				leaf = hash_h128(leaf, self.proof[i]);
-			} else {
-				leaf = hash_h128(self.proof[i], leaf);
-			}
-		}
-
-		leaf
-	}
-}
-
 /// Familial details concerning a block
 #[derive(Clone, Default, PartialEq, Encode, Decode)]
 pub struct EthHeaderBrief<AccountId> {
@@ -192,13 +121,6 @@ pub struct EthHeaderBrief<AccountId> {
 	pub number: EthBlockNumber,
 	/// Relayer of the block header
 	pub relayer: AccountId,
-}
-
-#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
-pub struct EthReceiptProof {
-	pub index: u64,
-	pub proof: Vec<u8>,
-	pub header_hash: H256,
 }
 
 decl_storage! {
@@ -290,15 +212,11 @@ decl_error! {
 		BlockNumberOF,
 		/// Block Number - UNDERFLOW
 		BlockNumberUF,
-		/// Index - OUT OF RANGE
-		IndexOFR,
 
 		/// Block Number - MISMATCHED
 		BlockNumberMis,
 		/// Header Hash - MISMATCHED
 		HeaderHashMis,
-		/// Merkle Root - MISMATCHED
-		MerkleRootMis,
 		/// Mixhash - MISMATCHED
 		MixHashMis,
 
@@ -308,8 +226,6 @@ decl_error! {
 		HeaderNE,
 		/// Header Brief - NOT EXISTED
 		HeaderBriefNE,
-		/// Trie Key - NOT EXISTED
-		TrieKeyNE,
 
 		/// Header - ALREADY EXISTS
 		HeaderAE,
@@ -325,15 +241,11 @@ decl_error! {
 		/// Rlp - DECODE FAILED
 		RlpDcF,
 		/// Receipt - DESERIALIZE FAILED
-		ReceiptDsF,
-		/// Seal - PARSING FAILED
-		SealPF,
+		ReceiptProofInvalid,
 		/// Block Basic - VERIFICATION FAILED
 		BlockBasicVF,
 		/// Difficulty - VERIFICATION FAILED
 		DifficultyVF,
-		/// Proof - VERIFICATION FAILED
-		ProofVF,
 
 		/// Payout - NO POINTS OR FUNDS
 		PayoutNPF,
@@ -362,7 +274,7 @@ decl_module! {
 		/// - Up to one event
 		/// # </weight>
 		#[weight = 200_000_000]
-		pub fn relay_header(origin, header: EthHeader, ethash_proof: Vec<DoubleNodeWithMerkleProof>) {
+		pub fn relay_header(origin, header: EthHeader, ethash_proof: Vec<EthashProof>) {
 			trace!(target: "ethereum-linear-relay", "{:?}", header);
 			let relayer = ensure_signed(origin)?;
 
@@ -396,15 +308,15 @@ decl_module! {
 		/// # </weight>
 		#[weight = 100_000_000]
 		pub fn check_receipt(origin, proof_record: EthReceiptProof) {
-			let relayer = ensure_signed(origin)?;
+			let worker = ensure_signed(origin)?;
 
 			let (verified_receipt, fee) = Self::verify_receipt(&proof_record)?;
 
 			let module_account = Self::account_id();
 
-			T::Currency::transfer(&relayer, &module_account, fee, KeepAlive)?;
+			T::Currency::transfer(&worker, &module_account, fee, KeepAlive)?;
 
-			<Module<T>>::deposit_event(RawEvent::VerifyProof(relayer, verified_receipt, proof_record));
+			<Module<T>>::deposit_event(RawEvent::VerifyProof(worker, verified_receipt, proof_record));
 		}
 
 		/// Claim Reward for Relayers
@@ -567,7 +479,7 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
-	/// The account ID of the eth linear relay pot.
+	/// The account ID of the ethereum linear relay pot.
 	///
 	/// This actually does computation. If you need to keep using it, then make sure you cache the
 	/// value and only call this once.
@@ -673,25 +585,21 @@ impl<T: Trait> Module<T> {
 		Ok(())
 	}
 
-	fn verify_header_pow(
-		header: &EthHeader,
-		ethash_proof: &[DoubleNodeWithMerkleProof],
-	) -> DispatchResult {
+	fn verify_header_pow(header: &EthHeader, ethash_proof: &[EthashProof]) -> DispatchResult {
 		Self::verify_header_basic(&header)?;
 
-		let seal = EthashSeal::parse_seal(header.seal()).map_err(|_| <Error<T>>::SealPF)?;
-		trace!(target: "ethereum-linear-relay", "Seal OK");
+		let ethash_params = match T::EthNetwork::get() {
+			EthNetworkType::Mainnet => EthashPartial::production(),
+			EthNetworkType::Ropsten => EthashPartial::ropsten_testnet(),
+		};
 
-		let partial_header_hash = header.bare_hash();
-
-		let (mix_hash, _result) = Self::hashimoto_merkle(
-			&partial_header_hash,
-			&seal.nonce,
-			header.number,
-			ethash_proof,
-		)?;
-
-		ensure!(mix_hash == seal.mix_hash, <Error<T>>::MixHashMis);
+		let merkle_root = Self::dag_merkle_root((header.number as usize / 30000) as u64);
+		if ethash_params
+			.verify_seal_with_proof(&header, &ethash_proof, &merkle_root)
+			.is_err()
+		{
+			return Err(<Error<T>>::MixHashMis)?;
+		};
 		trace!(target: "ethereum-linear-relay", "MixHash OK");
 
 		// TODO: Check other verification condition
@@ -716,67 +624,6 @@ impl<T: Trait> Module<T> {
 		//				&& header.parent_hash == prev.hash.unwrap()
 
 		Ok(())
-	}
-
-	fn hashimoto_merkle(
-		header_hash: &H256,
-		nonce: &H64,
-		block_number: u64,
-		nodes: &[DoubleNodeWithMerkleProof],
-	) -> Result<(H256, H256), DispatchError> {
-		// Boxed index since ethash::hashimoto gets Fn, but not FnMut
-		let index = RefCell::new(0);
-		let err = RefCell::new(0u8);
-
-		// Reuse single Merkle root across all the proofs
-		let merkle_root = Self::dag_merkle_root((block_number as usize / 30000) as u64);
-
-		let pair = ethash::hashimoto(
-			header_hash.clone(),
-			nonce.clone(),
-			ethash::get_full_size(block_number as usize / 30000),
-			|offset| {
-				if *err.borrow() != 0 {
-					return Default::default();
-				}
-
-				let index = index.replace_with(|&mut old| old + 1);
-
-				// Each two nodes are packed into single 128 bytes with Merkle proof
-				let node = if let Some(node) = nodes.get(index / 2) {
-					node
-				} else {
-					err.replace(1);
-					return Default::default();
-				};
-
-				if index % 2 == 0 {
-					// Divide by 2 to adjust offset for 64-byte words instead of 128-byte
-					if merkle_root != node.apply_merkle_proof((offset / 2) as u64) {
-						err.replace(2);
-						return Default::default();
-					}
-				};
-
-				// Reverse each 32 bytes for ETHASH compatibility
-				let mut data = if let Some(dag_node) = node.dag_nodes.get(index % 2) {
-					dag_node.0
-				} else {
-					err.replace(1);
-					return Default::default();
-				};
-				data[..32].reverse();
-				data[32..].reverse();
-				data.into()
-			},
-		);
-
-		match err.into_inner() {
-			0 => Ok(pair),
-			1 => Err(<Error<T>>::IndexOFR)?,
-			2 => Err(<Error<T>>::MerkleRootMis)?,
-			_ => Err("unreachable".into()),
-		}
 	}
 
 	fn maybe_store_header(relayer: &T::AccountId, header: &EthHeader) -> DispatchResult {
@@ -913,13 +760,10 @@ impl<T: Trait> VerifyEthReceipts<Balance<T>, T::AccountId> for Module<T> {
 		);
 
 		let header = Self::header(&proof_record.header_hash).ok_or(<Error<T>>::HeaderNE)?;
-		let proof: Proof = rlp::decode(&proof_record.proof).map_err(|_| <Error<T>>::RlpDcF)?;
-		let key = rlp::encode(&proof_record.index);
-		let value =
-			MerklePatriciaTrie::verify_proof(header.receipts_root().0.to_vec(), &key, proof)
-				.map_err(|_| <Error<T>>::ProofVF)?
-				.ok_or(<Error<T>>::TrieKeyNE)?;
-		let receipt = rlp::decode(&value).map_err(|_| <Error<T>>::ReceiptDsF)?;
+
+		// Verify receipt proof
+		let receipt = Receipt::verify_proof_and_generate(header.receipts_root(), &proof_record)
+			.map_err(|_| <Error<T>>::ReceiptProofInvalid)?;
 
 		Ok((receipt, Self::receipt_verify_fee()))
 	}

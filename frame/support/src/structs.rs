@@ -5,10 +5,7 @@ use num_traits::Zero;
 use sp_runtime::{traits::AtLeast32Bit, RuntimeDebug};
 use sp_std::{ops::BitOr, prelude::*};
 // --- darwinia ---
-use crate::{
-	balance::lock::{LockIdentifier, WithdrawReason, WithdrawReasons},
-	relay::RawHeaderThing,
-};
+use crate::balance::lock::{LockIdentifier, WithdrawReason, WithdrawReasons};
 
 /// Frozen balance information for an account.
 pub struct FrozenBalance<Balance> {
@@ -176,12 +173,11 @@ where
 	}
 }
 
-// TODO: spec
 #[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug)]
 pub struct TcHeaderBrief<TcBlockNumber, TcHeaderHash, TcHeaderMMR> {
 	pub number: TcBlockNumber,
 	pub hash: TcHeaderHash,
 	pub parent_hash: TcHeaderHash,
 	pub mmr: TcHeaderMMR,
-	pub others: RawHeaderThing,
+	pub others: Vec<u8>,
 }
