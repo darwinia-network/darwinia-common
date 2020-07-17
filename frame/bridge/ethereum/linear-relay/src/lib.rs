@@ -91,102 +91,6 @@ pub trait Trait: frame_system::Trait {
 		+ ReservableCurrency<Self::AccountId>;
 }
 
-#[derive(Clone, PartialEq, Encode, Decode)]
-pub enum EthNetworkType {
-	Mainnet,
-	Ropsten,
-}
-
-impl Default for EthNetworkType {
-	fn default() -> EthNetworkType {
-		EthNetworkType::Mainnet
-	}
-}
-
-#[cfg(feature = "std")]
-darwinia_support::impl_genesis! {
-	struct DagsMerkleRootsLoader {
-		dags_merkle_roots: Vec<H128>
-	}
-}
-
-/// Familial details concerning a block
-#[derive(Clone, Default, PartialEq, Encode, Decode)]
-pub struct EthHeaderBrief<AccountId> {
-	/// Total difficulty of the block and all its parents
-	pub total_difficulty: U256,
-	/// Parent hash of the header
-	pub parent_hash: H256,
-	/// Block number
-	pub number: EthBlockNumber,
-	/// Relayer of the block header
-	pub relayer: AccountId,
-}
-
-decl_storage! {
-	trait Store for Module<T: Trait> as DarwiniaEthereumLinearRelay {
-		/// Anchor block that works as genesis block
-		pub GenesisHeader get(fn begin_header): Option<EthHeader>;
-
-		/// Dags merkle roots of ethereum epoch (each epoch is 30000)
-		pub DagsMerkleRoots get(fn dag_merkle_root): map hasher(identity) u64 => H128;
-
-		/// Hash of best block header
-		pub BestHeaderHash get(fn best_header_hash): H256;
-
-		pub CanonicalHeaderHashes get(fn canonical_header_hash): map hasher(identity) u64 => H256;
-
-		pub Headers get(fn header): map hasher(identity) H256 => Option<EthHeader>;
-		pub HeaderBriefs get(fn header_brief): map hasher(identity) H256 => Option<EthHeaderBrief::<T::AccountId>>;
-
-		/// Number of blocks finality
-		pub NumberOfBlocksFinality get(fn number_of_blocks_finality) config(): u64;
-		pub NumberOfBlocksSafe get(fn number_of_blocks_safe) config(): u64;
-
-		pub CheckAuthority get(fn check_authority) config(): bool = true;
-		pub Authorities get(fn authorities) config(): Vec<T::AccountId>;
-
-		pub ReceiptVerifyFee get(fn receipt_verify_fee) config(): Balance<T>;
-
-		pub RelayerPoints get(fn relayer_points): map hasher(blake2_128_concat) T::AccountId => u64;
-		pub TotalRelayerPoints get(fn total_points): u64 = 0;
-	}
-	add_extra_genesis {
-		// genesis: Option<Header, Difficulty>
-		config(genesis_header): Option<(u64, Vec<u8>)>;
-		config(dags_merkle_roots_loader): DagsMerkleRootsLoader;
-		build(|config| {
-			let GenesisConfig {
-				genesis_header,
-				dags_merkle_roots_loader,
-				..
-			} = config;
-
-			if let Some((total_difficulty, header)) = genesis_header {
-				if let Ok(header) = rlp::decode(&header) {
-					<Module<T>>::init_genesis_header(&header, *total_difficulty).unwrap();
-				} else {
-					panic!(<&str>::from(<Error<T>>::RlpDcF));
-				}
-			}
-
-			let dags_merkle_roots = if dags_merkle_roots_loader.dags_merkle_roots.is_empty() {
-				DagsMerkleRootsLoader::from_str(DAGS_MERKLE_ROOTS_STR).dags_merkle_roots.clone()
-			} else {
-				dags_merkle_roots_loader.dags_merkle_roots.clone()
-			};
-			for (i, dag_merkle_root) in dags_merkle_roots.into_iter().enumerate() {
-				DagsMerkleRoots::insert(i as u64, dag_merkle_root);
-			}
-
-			let _ = T::Currency::make_free_balance_be(
-				&<Module<T>>::account_id(),
-				T::Currency::minimum_balance(),
-			);
-		});
-	}
-}
-
 decl_event! {
 	pub enum Event<T>
 	where
@@ -249,6 +153,76 @@ decl_error! {
 
 		/// Payout - NO POINTS OR FUNDS
 		PayoutNPF,
+	}
+}
+
+#[cfg(feature = "std")]
+darwinia_support::impl_genesis! {
+	struct DagsMerkleRootsLoader {
+		dags_merkle_roots: Vec<H128>
+	}
+}
+decl_storage! {
+	trait Store for Module<T: Trait> as DarwiniaEthereumLinearRelay {
+		/// Anchor block that works as genesis block
+		pub GenesisHeader get(fn begin_header): Option<EthHeader>;
+
+		/// Dags merkle roots of ethereum epoch (each epoch is 30000)
+		pub DagsMerkleRoots get(fn dag_merkle_root): map hasher(identity) u64 => H128;
+
+		/// Hash of best block header
+		pub BestHeaderHash get(fn best_header_hash): H256;
+
+		pub CanonicalHeaderHashes get(fn canonical_header_hash): map hasher(identity) u64 => H256;
+
+		pub Headers get(fn header): map hasher(identity) H256 => Option<EthHeader>;
+		pub HeaderBriefs get(fn header_brief): map hasher(identity) H256 => Option<EthHeaderBrief::<T::AccountId>>;
+
+		/// Number of blocks finality
+		pub NumberOfBlocksFinality get(fn number_of_blocks_finality) config(): u64;
+		pub NumberOfBlocksSafe get(fn number_of_blocks_safe) config(): u64;
+
+		pub CheckAuthority get(fn check_authority) config(): bool = true;
+		pub Authorities get(fn authorities) config(): Vec<T::AccountId>;
+
+		pub ReceiptVerifyFee get(fn receipt_verify_fee) config(): Balance<T>;
+
+		pub RelayerPoints get(fn relayer_points): map hasher(blake2_128_concat) T::AccountId => u64;
+		pub TotalRelayerPoints get(fn total_points): u64 = 0;
+	}
+	add_extra_genesis {
+		// genesis: Option<Header, Difficulty>
+		config(genesis_header): Option<(u64, Vec<u8>)>;
+		config(dags_merkle_roots_loader): DagsMerkleRootsLoader;
+		build(|config| {
+			let GenesisConfig {
+				genesis_header,
+				dags_merkle_roots_loader,
+				..
+			} = config;
+
+			if let Some((total_difficulty, header)) = genesis_header {
+				if let Ok(header) = rlp::decode(&header) {
+					<Module<T>>::init_genesis_header(&header, *total_difficulty).unwrap();
+				} else {
+					panic!(<&str>::from(<Error<T>>::RlpDcF));
+				}
+			}
+
+			let dags_merkle_roots = if dags_merkle_roots_loader.dags_merkle_roots.is_empty() {
+				DagsMerkleRootsLoader::from_str(DAGS_MERKLE_ROOTS_STR).dags_merkle_roots.clone()
+			} else {
+				dags_merkle_roots_loader.dags_merkle_roots.clone()
+			};
+			for (i, dag_merkle_root) in dags_merkle_roots.into_iter().enumerate() {
+				DagsMerkleRoots::insert(i as u64, dag_merkle_root);
+			}
+
+			let _ = T::Currency::make_free_balance_be(
+				&<Module<T>>::account_id(),
+				T::Currency::minimum_balance(),
+			);
+		});
 	}
 }
 
@@ -730,7 +704,6 @@ pub trait VerifyEthReceipts<Balance, AccountId> {
 
 	fn account_id() -> AccountId;
 }
-
 impl<T: Trait> VerifyEthReceipts<Balance<T>, T::AccountId> for Module<T> {
 	/// confirm that the block hash is right
 	/// get the receipt MPT trie root from the block header
@@ -830,4 +803,28 @@ impl<T: Trait + Send + Sync> SignedExtension for CheckEthRelayHeaderHash<T> {
 			_ => Ok(Default::default()),
 		}
 	}
+}
+
+#[derive(Clone, PartialEq, Encode, Decode)]
+pub enum EthNetworkType {
+	Mainnet,
+	Ropsten,
+}
+impl Default for EthNetworkType {
+	fn default() -> EthNetworkType {
+		EthNetworkType::Mainnet
+	}
+}
+
+/// Familial details concerning a block
+#[derive(Clone, Default, PartialEq, Encode, Decode)]
+pub struct EthHeaderBrief<AccountId> {
+	/// Total difficulty of the block and all its parents
+	pub total_difficulty: U256,
+	/// Parent hash of the header
+	pub parent_hash: H256,
+	/// Block number
+	pub number: EthBlockNumber,
+	/// Relayer of the block header
+	pub relayer: AccountId,
 }
