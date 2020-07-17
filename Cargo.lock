@@ -1104,7 +1104,6 @@ dependencies = [
  "darwinia-balances",
  "darwinia-support",
  "env_logger",
- "ethereum-primitives",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
