@@ -240,8 +240,8 @@ decl_error! {
 
 		/// Rlp - DECODE FAILED
 		RlpDcF,
-		/// Receipt - DESERIALIZE FAILED
-		ReceiptProofInvalid,
+		/// Receipt - INVALID
+		ReceiptProofI,
 		/// Block Basic - VERIFICATION FAILED
 		BlockBasicVF,
 		/// Difficulty - VERIFICATION FAILED
@@ -763,7 +763,7 @@ impl<T: Trait> VerifyEthReceipts<Balance<T>, T::AccountId> for Module<T> {
 
 		// Verify receipt proof
 		let receipt = Receipt::verify_proof_and_generate(header.receipts_root(), &proof_record)
-			.map_err(|_| <Error<T>>::ReceiptProofInvalid)?;
+			.map_err(|_| <Error<T>>::ReceiptProofI)?;
 
 		Ok((receipt, Self::receipt_verify_fee()))
 	}

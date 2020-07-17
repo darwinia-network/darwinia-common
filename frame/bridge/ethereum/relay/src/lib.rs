@@ -113,7 +113,7 @@ decl_error! {
 		MMRInvalid,
 		HeaderHashMis,
 		LastHeaderNE,
-		ReceiptProofInvalid,
+		ReceiptProofI,
 	}
 }
 
@@ -626,7 +626,7 @@ impl<T: Trait> MMRVerifyEthReceipts<Balance<T>, T::AccountId> for Module<T> {
 
 		// Verify receipt proof
 		let receipt = Receipt::verify_proof_and_generate(eth_header.receipts_root(), &proof_record)
-			.map_err(|_| <Error<T>>::ReceiptProofInvalid)?;
+			.map_err(|_| <Error<T>>::ReceiptProofI)?;
 		Ok((receipt, Self::receipt_verify_fee()))
 	}
 
