@@ -570,6 +570,8 @@ impl pallet_authority_discovery::Trait for Runtime {}
 parameter_types! {
 	pub const CouncilMotionDuration: BlockNumber = 3 * DAYS;
 	pub const CouncilMaxProposals: u32 = 100;
+	pub const TechnicalMotionDuration: BlockNumber = 3 * DAYS;
+	pub const TechnicalMaxProposals: u32 = 100;
 }
 type CouncilCollective = pallet_collective::Instance1;
 impl pallet_collective::Trait<CouncilCollective> for Runtime {
@@ -578,6 +580,30 @@ impl pallet_collective::Trait<CouncilCollective> for Runtime {
 	type Event = Event;
 	type MotionDuration = CouncilMotionDuration;
 	type MaxProposals = CouncilMaxProposals;
+}
+type TechnicalCollective = pallet_collective::Instance2;
+impl pallet_collective::Trait<TechnicalCollective> for Runtime {
+	type Origin = Origin;
+	type Proposal = Call;
+	type Event = Event;
+	type MotionDuration = TechnicalMotionDuration;
+	type MaxProposals = TechnicalMaxProposals;
+}
+
+impl pallet_membership::Trait<pallet_membership::Instance1> for Runtime {
+	type Event = Event;
+	type AddOrigin =
+		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
+	type RemoveOrigin =
+		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
+	type SwapOrigin =
+		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
+	type ResetOrigin =
+		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
+	type PrimeOrigin =
+		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
+	type MembershipInitialized = TechnicalCommittee;
+	type MembershipChanged = TechnicalCommittee;
 }
 
 impl pallet_sudo::Trait for Runtime {
@@ -776,12 +802,20 @@ impl darwinia_ethereum_offchain::Trait for Runtime {
 
 impl darwinia_header_mmr::Trait for Runtime {}
 
+parameter_types! {
+	pub const ConfirmPeriod: BlockNumber = 200;
+}
 impl darwinia_relayer_game::Trait for Runtime {
 	type Event = Event;
 	type RingCurrency = Ring;
 	type RingSlash = Treasury;
 	type RelayerGameAdjustor = bridge::EthRelayerGameAdjustor;
 	type TargetChain = EthRelay;
+	type ConfirmPeriod = ConfirmPeriod;
+	type ApproveOrigin =
+		pallet_collective::EnsureProportionAtLeast<_3, _5, AccountId, CouncilCollective>;
+	type RejectOrigin =
+		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
 }
 
 construct_runtime!(
@@ -815,6 +849,8 @@ construct_runtime!(
 		// Governance stuff; uncallable initially.
 		// Democracy: pallet_democracy::{Module, Call, Storage, Config, Event<T>},
 		Council: pallet_collective::<Instance1>::{Module, Call, Storage, Origin<T>, Config<T>, Event<T>},
+		TechnicalCommittee: pallet_collective::<Instance2>::{Module, Call, Storage, Origin<T>, Config<T>, Event<T>},
+		TechnicalMembership: pallet_membership::<Instance1>::{Module, Call, Storage, Config<T>, Event<T>},
 
 		Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>},
 

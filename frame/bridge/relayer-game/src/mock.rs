@@ -219,7 +219,12 @@ pub mod mock_relay {
 // --- std ---
 use std::{cell::RefCell, time::Instant};
 // --- substrate ---
-use frame_support::{impl_outer_origin, parameter_types, traits::OnFinalize, weights::Weight};
+use frame_support::{
+	impl_outer_origin, parameter_types,
+	traits::{OnFinalize, OnInitialize},
+	weights::Weight,
+};
+use frame_system::EnsureRoot;
 use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill};
 // --- darwinia ---
@@ -250,6 +255,7 @@ thread_local! {
 	static GENESIS_TIME: Instant = Instant::now();
 	static CHALLENGE_TIME: RefCell<BlockNumber> = RefCell::new(3);
 	static ESTIMATE_BOND: RefCell<Balance> = RefCell::new(1);
+	static CONFIRM_PERIOD: RefCell<BlockNumber> = RefCell::new(0);
 }
 
 impl_outer_origin! {
@@ -268,6 +274,13 @@ darwinia_support::impl_account_data! {
 	}
 }
 
+pub struct ConfirmPeriod;
+impl Get<BlockNumber> for ConfirmPeriod {
+	fn get() -> BlockNumber {
+		CONFIRM_PERIOD.with(|v| v.borrow().to_owned())
+	}
+}
+
 #[derive(Clone, Eq, PartialEq)]
 pub struct Test;
 impl Trait for Test {
@@ -276,6 +289,9 @@ impl Trait for Test {
 	type RingSlash = ();
 	type RelayerGameAdjustor = RelayerGameAdjustor;
 	type TargetChain = Relay;
+	type ConfirmPeriod = ConfirmPeriod;
+	type ApproveOrigin = EnsureRoot<AccountId>;
+	type RejectOrigin = EnsureRoot<AccountId>;
 }
 
 parameter_types! {
@@ -361,11 +377,17 @@ impl AdjustableRelayerGame for RelayerGameAdjustor {
 }
 
 pub struct ExtBuilder {
+	headers: Vec<MockTcHeader>,
 	challenge_time: BlockNumber,
 	estimate_bond: Balance,
-	headers: Vec<MockTcHeader>,
+	confirmed_period: BlockNumber,
 }
 impl ExtBuilder {
+	pub fn headers(mut self, headers: Vec<MockTcHeader>) -> Self {
+		self.headers = headers;
+
+		self
+	}
 	pub fn challenge_time(mut self, challenge_time: BlockNumber) -> Self {
 		self.challenge_time = challenge_time;
 
@@ -376,8 +398,8 @@ impl ExtBuilder {
 
 		self
 	}
-	pub fn headers(mut self, headers: Vec<MockTcHeader>) -> Self {
-		self.headers = headers;
+	pub fn confirmed_period(mut self, confirmed_period: BlockNumber) -> Self {
+		self.confirmed_period = confirmed_period;
 
 		self
 	}
@@ -385,6 +407,7 @@ impl ExtBuilder {
 	pub fn set_associated_constants(&self) {
 		CHALLENGE_TIME.with(|v| v.replace(self.challenge_time));
 		ESTIMATE_BOND.with(|v| v.replace(self.estimate_bond));
+		CONFIRM_PERIOD.with(|v| v.replace(self.confirmed_period));
 	}
 
 	pub fn build(self) -> sp_io::TestExternalities {
@@ -416,9 +439,10 @@ impl ExtBuilder {
 impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {
+			headers: vec![],
 			challenge_time: RelayerGameAdjustor::challenge_time(0),
 			estimate_bond: RelayerGameAdjustor::estimate_bond(0, 0),
-			headers: vec![],
+			confirmed_period: CONFIRM_PERIOD.with(|v| v.borrow().to_owned()),
 		}
 	}
 }
@@ -428,6 +452,7 @@ pub fn run_to_block(n: BlockNumber) {
 
 	for b in System::block_number() + 1..=n {
 		System::set_block_number(b);
+		RelayerGame::on_initialize(b);
 
 		if b != n {
 			RelayerGame::on_finalize(System::block_number());
