@@ -377,3 +377,32 @@ fn no_honesty_should_work() {
 		assert!(Ring::locks(2).is_empty());
 	});
 }
+
+// TODO: more cases
+#[test]
+fn auto_confirm_period_should_work() {
+	ExtBuilder::default()
+		.confirmed_period(3)
+		.build()
+		.execute_with(|| {
+			let header = MockTcHeader::mock(1, 0, 1);
+
+			assert_ok!(RelayerGame::submit_proposal(
+				Origin::signed(1),
+				vec![header.encode()]
+			));
+
+			run_to_block(4);
+
+			assert!(Relay::header_of_block_number(header.number).is_none());
+			assert_eq!(
+				RelayerGame::pending_headers(),
+				vec![(6, header.number, header.encode())]
+			);
+
+			run_to_block(6);
+
+			assert_eq!(Relay::header_of_block_number(header.number), Some(header));
+			assert!(RelayerGame::pending_headers().is_empty());
+		});
+}
