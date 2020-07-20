@@ -45,7 +45,7 @@ pub mod impls {
 
 			fn estimate_bond(round: Round, proposals_count: u64) -> Self::Balance {
 				match round {
-					1 => {
+					0 => {
 						match proposals_count {
 							0 => 1000 * COIN,
 							_ => 1500 * COIN,
