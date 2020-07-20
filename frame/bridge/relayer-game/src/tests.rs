@@ -438,3 +438,35 @@ fn approve_pending_header_should_work() {
 			assert!(RelayerGame::pending_headers().is_empty());
 		});
 }
+
+// TODO: more cases
+#[test]
+fn reject_pending_header_should_work() {
+	ExtBuilder::default()
+		.confirmed_period(3)
+		.build()
+		.execute_with(|| {
+			let header = MockTcHeader::mock(1, 0, 1);
+
+			assert_ok!(RelayerGame::submit_proposal(
+				Origin::signed(1),
+				vec![header.encode()]
+			));
+
+			run_to_block(4);
+
+			assert!(Relay::header_of_block_number(header.number).is_none());
+			assert_eq!(
+				RelayerGame::pending_headers(),
+				vec![(6, header.number, header.encode())]
+			);
+
+			assert_ok!(RelayerGame::reject_pending_header(
+				Origin::ROOT,
+				header.number
+			));
+
+			assert!(Relay::header_of_block_number(header.number).is_none());
+			assert!(RelayerGame::pending_headers().is_empty());
+		});
+}
