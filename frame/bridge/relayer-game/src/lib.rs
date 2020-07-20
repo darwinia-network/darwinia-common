@@ -50,6 +50,7 @@ use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
 	storage::IterableStorageMap,
 	traits::{Currency, EnsureOrigin, ExistenceRequirement, Get, OnUnbalanced},
+	weights::Weight,
 };
 use frame_system::{self as system, ensure_root, ensure_signed};
 use sp_runtime::{
@@ -196,6 +197,23 @@ decl_module! {
 		type Error = Error<T, I>;
 
 		fn deposit_event() = default;
+
+		fn on_initialize(block_number: BlockNumber<T>) -> Weight {
+			<PendingHeaders<T, I>>::mutate(|pending_headers|
+				pending_headers.retain(|(confirm_at, _, pending_header)|
+					if *confirm_at == block_number {
+						// TODO: handle error
+						let _ = T::TargetChain::store_header(pending_header.to_owned());
+
+						false
+					} else {
+						true
+					}
+				)
+			);
+
+			0
+		}
 
 		// TODO: too many db operations and calc need to move to `offchain_worker`
 		// TODO: close the game that its id less than the best number
@@ -581,19 +599,6 @@ decl_module! {
 					));
 				}
 			}
-
-			let mut pending_headers = Self::pending_headers();
-
-			pending_headers.retain(|(confirm_at, _, pending_header)|
-				if *confirm_at == block_number {
-					// TODO: handle error
-					let _ = T::TargetChain::store_header(pending_header.to_owned());
-
-					false
-				} else {
-					true
-				}
-			);
 
 			info!(target: "relayer-game", "---");
 		}
