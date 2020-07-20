@@ -178,7 +178,7 @@ decl_storage! {
 
 
 		// TODO: move into relay
-		// TODO: reject submit if the same block number already on pending?
+		// TODO: reject submit if the block number already on pending?
 		/// Dawinia Relay Guard System
 		///
 		/// https://github.com/darwinia-network/darwinia-common/issues/150
