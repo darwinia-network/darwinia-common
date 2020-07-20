@@ -178,9 +178,9 @@ fn testnet_genesis(
 		pallet_grandpa: Some(Default::default()),
 		pallet_im_online: Some(Default::default()),
 		pallet_authority_discovery: Some(Default::default()),
+		pallet_collective_Instance0: Some(Default::default()),
 		pallet_collective_Instance1: Some(Default::default()),
-		pallet_collective_Instance2: Some(Default::default()),
-		pallet_membership_Instance1: Some(Default::default()),
+		pallet_membership_Instance0: Some(Default::default()),
 		pallet_sudo: Some(SudoConfig { key: root_key }),
 		// --- darwinia ---
 		darwinia_balances_Instance0: Some(RingConfig {

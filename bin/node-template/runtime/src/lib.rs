@@ -23,15 +23,20 @@ pub mod impls {
 			type TcBlockNumber = <EthRelay as darwinia_support::relay::Relayable>::TcBlockNumber;
 
 			fn challenge_time(round: Round) -> Self::Moment {
-				unimplemented!()
+				match round {
+					// 3 mins
+					0 => 30,
+					// 1 mins
+					_ => 10
+				}
 			}
 
 			fn round_from_chain_len(chain_len: u64) -> Round {
-				unimplemented!()
+				chain_len - 1
 			}
 
 			fn chain_len_from_round(round: Round) -> u64 {
-				unimplemented!()
+				round + 1
 			}
 
 			fn update_samples(samples: &mut Vec<Vec<Self::TcBlockNumber>>) {
@@ -39,7 +44,15 @@ pub mod impls {
 			}
 
 			fn estimate_bond(round: Round, proposals_count: u64) -> Self::Balance {
-				unimplemented!()
+				match round {
+					1 => {
+						match proposals_count {
+							0 => 1000 * COIN,
+							_ => 1500 * COIN,
+						}
+					}
+					_ => 100 * COIN,
+				}
 			}
 		}
 	}
@@ -50,8 +63,6 @@ pub mod impls {
 	// --- darwinia ---
 	use crate::{primitives::*, *};
 
-	pub type RingInstance = darwinia_balances::Instance0;
-	pub type KtonInstance = darwinia_balances::Instance1;
 	darwinia_support::impl_account_data! {
 		struct AccountData<Balance>
 		for
@@ -573,7 +584,7 @@ parameter_types! {
 	pub const TechnicalMotionDuration: BlockNumber = 3 * DAYS;
 	pub const TechnicalMaxProposals: u32 = 100;
 }
-type CouncilCollective = pallet_collective::Instance1;
+type CouncilCollective = pallet_collective::Instance0;
 impl pallet_collective::Trait<CouncilCollective> for Runtime {
 	type Origin = Origin;
 	type Proposal = Call;
@@ -581,7 +592,7 @@ impl pallet_collective::Trait<CouncilCollective> for Runtime {
 	type MotionDuration = CouncilMotionDuration;
 	type MaxProposals = CouncilMaxProposals;
 }
-type TechnicalCollective = pallet_collective::Instance2;
+type TechnicalCollective = pallet_collective::Instance1;
 impl pallet_collective::Trait<TechnicalCollective> for Runtime {
 	type Origin = Origin;
 	type Proposal = Call;
@@ -590,7 +601,7 @@ impl pallet_collective::Trait<TechnicalCollective> for Runtime {
 	type MaxProposals = TechnicalMaxProposals;
 }
 
-impl pallet_membership::Trait<pallet_membership::Instance1> for Runtime {
+impl pallet_membership::Trait<pallet_membership::Instance0> for Runtime {
 	type Event = Event;
 	type AddOrigin =
 		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
@@ -611,6 +622,7 @@ impl pallet_sudo::Trait for Runtime {
 	type Call = Call;
 }
 
+type RingInstance = darwinia_balances::Instance0;
 parameter_types! {
 	pub const ExistentialDeposit: Balance = 1 * COIN;
 }
@@ -623,6 +635,7 @@ impl darwinia_balances::Trait<RingInstance> for Runtime {
 	type AccountStore = System;
 	type DustCollector = (Kton,);
 }
+type KtonInstance = darwinia_balances::Instance1;
 impl darwinia_balances::Trait<KtonInstance> for Runtime {
 	type Balance = Balance;
 	type DustRemoval = ();
@@ -802,10 +815,11 @@ impl darwinia_ethereum_offchain::Trait for Runtime {
 
 impl darwinia_header_mmr::Trait for Runtime {}
 
+type EthereumRelayerGameInstance = darwinia_relayer_game::Instance0;
 parameter_types! {
 	pub const ConfirmPeriod: BlockNumber = 200;
 }
-impl darwinia_relayer_game::Trait for Runtime {
+impl darwinia_relayer_game::Trait<EthereumRelayerGameInstance> for Runtime {
 	type Event = Event;
 	type RingCurrency = Ring;
 	type RingSlash = Treasury;
@@ -848,9 +862,9 @@ construct_runtime!(
 
 		// Governance stuff; uncallable initially.
 		// Democracy: pallet_democracy::{Module, Call, Storage, Config, Event<T>},
-		Council: pallet_collective::<Instance1>::{Module, Call, Storage, Origin<T>, Config<T>, Event<T>},
-		TechnicalCommittee: pallet_collective::<Instance2>::{Module, Call, Storage, Origin<T>, Config<T>, Event<T>},
-		TechnicalMembership: pallet_membership::<Instance1>::{Module, Call, Storage, Config<T>, Event<T>},
+		Council: pallet_collective::<Instance0>::{Module, Call, Storage, Origin<T>, Config<T>, Event<T>},
+		TechnicalCommittee: pallet_collective::<Instance1>::{Module, Call, Storage, Origin<T>, Config<T>, Event<T>},
+		TechnicalMembership: pallet_membership::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
 
 		Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>},
 
@@ -875,7 +889,7 @@ construct_runtime!(
 
 		HeaderMMR: darwinia_header_mmr::{Module, Call, Storage},
 
-		RelayerGame: darwinia_relayer_game::{Module, Call, Storage, Event<T>},
+		RelayerGame: darwinia_relayer_game::<Instance0>::{Module, Call, Storage, Event<T>},
 
 		// Governance stuff; uncallable initially.
 		Treasury: darwinia_treasury::{Module, Call, Storage, Event<T>},
