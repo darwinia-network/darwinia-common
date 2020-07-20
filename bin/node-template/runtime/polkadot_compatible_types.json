@@ -183,6 +183,9 @@
 		"prefix": "[u8; 4; Prefix]",
 		"mmr_root": "Hash"
 	},
+	"__[pallet.relayer-game]__": {},
+	"TcBlockNumber": "Vec<u8>",
+	"GameId": "TcBlockNumber",
 	"__[node.rpc]__": {},
 	"BalancesRuntimeDispatchInfo": {
 		"usable_balance": "Balance"

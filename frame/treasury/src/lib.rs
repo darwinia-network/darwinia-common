@@ -432,7 +432,7 @@ decl_module! {
 		/// # </weight>
 		#[weight = (34_000_000 + T::DbWeight::get().reads_writes(2, 1), DispatchClass::Operational)]
 		fn approve_proposal(origin, #[compact] proposal_id: ProposalIndex) {
-			T::RejectOrigin::try_origin(origin)
+			T::ApproveOrigin::try_origin(origin)
 				.map(|_| ())
 				.or_else(ensure_root)?;
 

@@ -149,19 +149,19 @@ fn extend_should_work() {
 				chain_b[..i as usize].to_vec()
 			));
 
-			run_to_block(4 * i);
+			run_to_block(3 * i + 1);
 		}
 	});
 }
 
 #[test]
 fn lock_should_work() {
-	for estimate_bond in 1..5 {
+	for estimate_bond in 1..2 {
 		ExtBuilder::default()
 			.estimate_bond(estimate_bond)
 			.build()
 			.execute_with(|| {
-				let mut bonds = estimate_bond;
+				let mut bonds = 0;
 				let chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], true);
 				let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
 				let submit_then_assert = |account_id, chain, bonds| {
@@ -180,78 +180,68 @@ fn lock_should_work() {
 					);
 				};
 
-				submit_then_assert(1, chain_a[..1].to_vec(), bonds);
-				submit_then_assert(2, chain_b[..1].to_vec(), bonds);
-
-				run_to_block(4);
-
-				for i in 2..=5 {
+				for i in 1..=5 {
 					bonds += estimate_bond;
 
 					submit_then_assert(1, chain_a[..i as usize].to_vec(), bonds);
 					submit_then_assert(2, chain_b[..i as usize].to_vec(), bonds);
 
-					run_to_block(4 * i);
+					run_to_block(3 * i + 1);
 				}
 
-				run_to_block(4 * 5);
-
 				assert_eq!(RelayerGame::bonds_of_relayer(1), 0);
-				assert_eq!(Ring::locks(1), vec![]);
+				assert!(Ring::locks(1).is_empty());
 
 				assert_eq!(RelayerGame::bonds_of_relayer(2), 0);
-				assert_eq!(Ring::locks(2), vec![]);
+				assert!(Ring::locks(2).is_empty());
 			});
 	}
 }
 
-// #[test]
-// fn reward_should_work() {
-// 	for estimate_bond in 1..5 {
-// 		ExtBuilder::default()
-// 			.estimate_bond(estimate_bond)
-// 			.build()
-// 			.execute_with(|| {
-// 				let mut bonds = estimate_bond;
+#[test]
+fn slash_and_reward_should_work() {
+	for estimate_bond in vec![1, 5, 10, 20, 50, 100] {
+		ExtBuilder::default()
+			.estimate_bond(estimate_bond)
+			.build()
+			.execute_with(|| {
+				let chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], true);
+				let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
+				let mut bonds = estimate_bond;
 
-// 				let mut proposal_chain_a = vec![MockTcHeader::new_raw(5, 0)];
-// 				let mut proposal_chain_b = vec![MockTcHeader::new_raw(5, 2)];
+				assert_eq!(Ring::usable_balance(&10), 1000);
+				assert_eq!(Ring::usable_balance(&20), 2000);
 
-// 				assert_ok!(RelayerGame::submit_proposal(
-// 					Origin::signed(1),
-// 					proposal_chain_a.clone()
-// 				));
-// 				assert_ok!(RelayerGame::submit_proposal(
-// 					Origin::signed(2),
-// 					proposal_chain_b.clone()
-// 				));
+				for i in 1..=5 {
+					assert_ok!(RelayerGame::submit_proposal(
+						Origin::signed(10),
+						chain_a[..i as usize].to_vec()
+					));
+					assert_ok!(RelayerGame::submit_proposal(
+						Origin::signed(20),
+						chain_b[..i as usize].to_vec()
+					));
 
-// 				for (block_number, closed_at) in (2..5).rev().zip((1..).map(|n| 4 * n)) {
-// 					run_to_block(closed_at);
+					run_to_block(3 * i + 1);
 
-// 					bonds += estimate_bond;
+					bonds += estimate_bond;
+				}
 
-// 					proposal_chain_a.push(MockTcHeader::new_raw(block_number, 0));
-// 					proposal_chain_b.push(MockTcHeader::new_raw(block_number, 2));
+				assert_eq!(Ring::usable_balance(&10), 1000 + bonds);
+				assert!(Ring::locks(10).is_empty());
 
-// 					assert_ok!(RelayerGame::submit_proposal(
-// 						Origin::signed(1),
-// 						proposal_chain_a.clone()
-// 					));
-// 					assert_ok!(RelayerGame::submit_proposal(
-// 						Origin::signed(2),
-// 						proposal_chain_b.clone()
-// 					));
-// 				}
-// 			});
-// 	}
-// }
+				assert_eq!(Ring::usable_balance(&20), 2000 - bonds);
+				assert!(Ring::locks(20).is_empty());
+			});
+	}
+}
 
 #[test]
 fn settle_without_challenge_should_work() {
 	ExtBuilder::default().build().execute_with(|| {
 		for (header, i) in MockTcHeader::mock_chain(vec![1, 1, 1, 1, 1], true)
 			.into_iter()
+			.rev()
 			.zip(1..)
 		{
 			assert_ok!(RelayerGame::submit_proposal(
@@ -261,16 +251,129 @@ fn settle_without_challenge_should_work() {
 
 			run_to_block(4 * i);
 
+			assert_eq!(Ring::usable_balance(&1), 100);
+			assert!(Ring::locks(1).is_empty());
+
 			assert_eq!(Relay::header_of_block_number(header.number), Some(header));
 		}
 	})
 }
 
-// #[test]
-// fn settle_with_challenge_should_work() {}
+#[test]
+fn settle_with_challenge_should_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		let chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], true);
+		let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
 
-// #[test]
-// fn on_chain_arbitrate_should_work() {}
+		for i in 1..=3 {
+			assert_ok!(RelayerGame::submit_proposal(
+				Origin::signed(1),
+				chain_a[..i as usize].to_vec()
+			));
+			assert_ok!(RelayerGame::submit_proposal(
+				Origin::signed(2),
+				chain_b[..i as usize].to_vec()
+			));
 
-// #[test]
-// fn handle_give_up_should_work() {}
+			run_to_block(3 * i + 1);
+		}
+
+		assert_ok!(RelayerGame::submit_proposal(
+			Origin::signed(1),
+			chain_a[..4 as usize].to_vec()
+		));
+
+		run_to_block(3 * 4 + 1);
+
+		let header: MockTcHeader = Decode::decode(&mut &*chain_a[0]).unwrap();
+
+		assert_eq!(Relay::header_of_block_number(header.number), Some(header));
+	});
+}
+
+#[test]
+fn settle_abandon_should_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		let chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], true);
+		let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
+
+		assert_eq!(Ring::usable_balance(&1), 100);
+		assert_eq!(Ring::usable_balance(&2), 200);
+
+		for i in 1..=3 {
+			assert_ok!(RelayerGame::submit_proposal(
+				Origin::signed(1),
+				chain_a[..i as usize].to_vec()
+			));
+			assert_ok!(RelayerGame::submit_proposal(
+				Origin::signed(2),
+				chain_b[..i as usize].to_vec()
+			));
+
+			run_to_block(3 * i + 1);
+		}
+
+		run_to_block(4 * 3 + 1);
+
+		assert_eq!(Ring::usable_balance(&1), 100 - 3);
+		assert!(Ring::locks(1).is_empty());
+
+		assert_eq!(Ring::usable_balance(&2), 200 - 3);
+		assert!(Ring::locks(2).is_empty());
+	});
+}
+
+#[test]
+fn on_chain_arbitrate_should_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		let chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], true);
+		let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
+
+		for i in 1..=5 {
+			assert_ok!(RelayerGame::submit_proposal(
+				Origin::signed(1),
+				chain_a[..i as usize].to_vec()
+			));
+			assert_ok!(RelayerGame::submit_proposal(
+				Origin::signed(2),
+				chain_b[..i as usize].to_vec()
+			));
+
+			run_to_block(3 * i + 1);
+		}
+
+		let header: MockTcHeader = Decode::decode(&mut &*chain_a[0]).unwrap();
+
+		assert_eq!(Relay::header_of_block_number(header.number), Some(header));
+	});
+}
+
+#[test]
+fn no_honesty_should_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		let chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
+		let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
+
+		assert_eq!(Ring::usable_balance(&1), 100);
+		assert_eq!(Ring::usable_balance(&2), 200);
+
+		for i in 1..=5 {
+			assert_ok!(RelayerGame::submit_proposal(
+				Origin::signed(1),
+				chain_a[..i as usize].to_vec()
+			));
+			assert_ok!(RelayerGame::submit_proposal(
+				Origin::signed(2),
+				chain_b[..i as usize].to_vec()
+			));
+
+			run_to_block(3 * i + 1);
+		}
+
+		assert_eq!(Ring::usable_balance(&1), 100 - 5);
+		assert!(Ring::locks(1).is_empty());
+
+		assert_eq!(Ring::usable_balance(&2), 200 - 5);
+		assert!(Ring::locks(2).is_empty());
+	});
+}

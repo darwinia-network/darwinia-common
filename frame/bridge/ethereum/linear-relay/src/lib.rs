@@ -91,15 +91,68 @@ pub trait Trait: frame_system::Trait {
 		+ ReservableCurrency<Self::AccountId>;
 }
 
-#[derive(Clone, PartialEq, Encode, Decode)]
-pub enum EthNetworkType {
-	Mainnet,
-	Ropsten,
+decl_event! {
+	pub enum Event<T>
+	where
+		<T as frame_system::Trait>::AccountId,
+		Balance = Balance<T>,
+	{
+		SetGenesisHeader(EthHeader, u64),
+		RelayHeader(AccountId, EthHeader),
+		VerifyProof(AccountId, Receipt, EthReceiptProof),
+		AddAuthority(AccountId),
+		RemoveAuthority(AccountId),
+		ToggleCheckAuthorities(bool),
+		ClaimReward(AccountId, Balance),
+	}
 }
 
-impl Default for EthNetworkType {
-	fn default() -> EthNetworkType {
-		EthNetworkType::Mainnet
+decl_error! {
+	pub enum Error for Module<T: Trait> {
+		/// Account - NO PRIVILEGES
+		AccountNP,
+
+		/// Block Number - OVERFLOW
+		BlockNumberOF,
+		/// Block Number - UNDERFLOW
+		BlockNumberUF,
+
+		/// Block Number - MISMATCHED
+		BlockNumberMis,
+		/// Header Hash - MISMATCHED
+		HeaderHashMis,
+		/// Mixhash - MISMATCHED
+		MixHashMis,
+
+		/// Begin Header - NOT EXISTED
+		BeginHeaderNE,
+		/// Header - NOT EXISTED
+		HeaderNE,
+		/// Header Brief - NOT EXISTED
+		HeaderBriefNE,
+
+		/// Header - ALREADY EXISTS
+		HeaderAE,
+		/// Header - NOT CANONICAL
+		HeaderNC,
+		/// Header - NOT SAFE
+		HeaderNS,
+		/// Header - TOO EARLY
+		HeaderTE,
+		/// Header - TOO OLD,
+		HeaderTO,
+
+		/// Rlp - DECODE FAILED
+		RlpDcF,
+		/// Receipt - INVALID
+		ReceiptProofI,
+		/// Block Basic - VERIFICATION FAILED
+		BlockBasicVF,
+		/// Difficulty - VERIFICATION FAILED
+		DifficultyVF,
+
+		/// Payout - NO POINTS OR FUNDS
+		PayoutNPF,
 	}
 }
 
@@ -109,20 +162,6 @@ darwinia_support::impl_genesis! {
 		dags_merkle_roots: Vec<H128>
 	}
 }
-
-/// Familial details concerning a block
-#[derive(Clone, Default, PartialEq, Encode, Decode)]
-pub struct EthHeaderBrief<AccountId> {
-	/// Total difficulty of the block and all its parents
-	pub total_difficulty: U256,
-	/// Parent hash of the header
-	pub parent_hash: H256,
-	/// Block number
-	pub number: EthBlockNumber,
-	/// Relayer of the block header
-	pub relayer: AccountId,
-}
-
 decl_storage! {
 	trait Store for Module<T: Trait> as DarwiniaEthereumLinearRelay {
 		/// Anchor block that works as genesis block
@@ -184,71 +223,6 @@ decl_storage! {
 				T::Currency::minimum_balance(),
 			);
 		});
-	}
-}
-
-decl_event! {
-	pub enum Event<T>
-	where
-		<T as frame_system::Trait>::AccountId,
-		Balance = Balance<T>,
-	{
-		SetGenesisHeader(EthHeader, u64),
-		RelayHeader(AccountId, EthHeader),
-		VerifyProof(AccountId, Receipt, EthReceiptProof),
-		AddAuthority(AccountId),
-		RemoveAuthority(AccountId),
-		ToggleCheckAuthorities(bool),
-		ClaimReward(AccountId, Balance),
-	}
-}
-
-decl_error! {
-	pub enum Error for Module<T: Trait> {
-		/// Account - NO PRIVILEGES
-		AccountNP,
-
-		/// Block Number - OVERFLOW
-		BlockNumberOF,
-		/// Block Number - UNDERFLOW
-		BlockNumberUF,
-
-		/// Block Number - MISMATCHED
-		BlockNumberMis,
-		/// Header Hash - MISMATCHED
-		HeaderHashMis,
-		/// Mixhash - MISMATCHED
-		MixHashMis,
-
-		/// Begin Header - NOT EXISTED
-		BeginHeaderNE,
-		/// Header - NOT EXISTED
-		HeaderNE,
-		/// Header Brief - NOT EXISTED
-		HeaderBriefNE,
-
-		/// Header - ALREADY EXISTS
-		HeaderAE,
-		/// Header - NOT CANONICAL
-		HeaderNC,
-		/// Header - NOT SAFE
-		HeaderNS,
-		/// Header - TOO EARLY
-		HeaderTE,
-		/// Header - TOO OLD,
-		HeaderTO,
-
-		/// Rlp - DECODE FAILED
-		RlpDcF,
-		/// Receipt - DESERIALIZE FAILED
-		ReceiptProofInvalid,
-		/// Block Basic - VERIFICATION FAILED
-		BlockBasicVF,
-		/// Difficulty - VERIFICATION FAILED
-		DifficultyVF,
-
-		/// Payout - NO POINTS OR FUNDS
-		PayoutNPF,
 	}
 }
 
@@ -730,7 +704,6 @@ pub trait VerifyEthReceipts<Balance, AccountId> {
 
 	fn account_id() -> AccountId;
 }
-
 impl<T: Trait> VerifyEthReceipts<Balance<T>, T::AccountId> for Module<T> {
 	/// confirm that the block hash is right
 	/// get the receipt MPT trie root from the block header
@@ -763,7 +736,7 @@ impl<T: Trait> VerifyEthReceipts<Balance<T>, T::AccountId> for Module<T> {
 
 		// Verify receipt proof
 		let receipt = Receipt::verify_proof_and_generate(header.receipts_root(), &proof_record)
-			.map_err(|_| <Error<T>>::ReceiptProofInvalid)?;
+			.map_err(|_| <Error<T>>::ReceiptProofI)?;
 
 		Ok((receipt, Self::receipt_verify_fee()))
 	}
@@ -830,4 +803,28 @@ impl<T: Trait + Send + Sync> SignedExtension for CheckEthRelayHeaderHash<T> {
 			_ => Ok(Default::default()),
 		}
 	}
+}
+
+#[derive(Clone, PartialEq, Encode, Decode)]
+pub enum EthNetworkType {
+	Mainnet,
+	Ropsten,
+}
+impl Default for EthNetworkType {
+	fn default() -> EthNetworkType {
+		EthNetworkType::Mainnet
+	}
+}
+
+/// Familial details concerning a block
+#[derive(Clone, Default, PartialEq, Encode, Decode)]
+pub struct EthHeaderBrief<AccountId> {
+	/// Total difficulty of the block and all its parents
+	pub total_difficulty: U256,
+	/// Parent hash of the header
+	pub parent_hash: H256,
+	/// Block number
+	pub number: EthBlockNumber,
+	/// Relayer of the block header
+	pub relayer: AccountId,
 }

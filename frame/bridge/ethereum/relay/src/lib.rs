@@ -13,6 +13,7 @@ mod types {
 	use crate::*;
 
 	pub type Balance<T> = <CurrencyT<T> as Currency<AccountId<T>>>::Balance;
+	pub type MMRHash = H256;
 
 	type AccountId<T> = <T as system::Trait>::AccountId;
 
@@ -46,7 +47,8 @@ use ethereum_primitives::{
 
 use types::*;
 
-type MMRHash = H256;
+#[cfg(feature = "std")]
+include!(concat!(env!("OUT_DIR"), "/dags_merkle_roots.rs"));
 
 pub trait Trait: frame_system::Trait {
 	/// The ethereum-relay's module id, used for deriving its sovereign account ID.
@@ -56,26 +58,6 @@ pub trait Trait: frame_system::Trait {
 
 	type Currency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
 		+ ReservableCurrency<Self::AccountId>;
-}
-
-#[derive(Encode, Decode, Default, RuntimeDebug)]
-pub struct EthHeaderThing {
-	eth_header: EthHeader,
-	ethash_proof: Vec<EthashProof>,
-	mmr_root: MMRHash,
-	mmr_proof: Vec<MMRHash>,
-}
-
-#[derive(Encode, Decode, Default, RuntimeDebug)]
-pub struct ProposalEthHeaderThing {
-	eth_header: EthHeader,
-	mmr_root: MMRHash,
-}
-
-impl From<RawHeaderThing> for EthHeaderThing {
-	fn from(raw_header_thing: RawHeaderThing) -> Self {
-		EthHeaderThing::decode(&mut &*raw_header_thing).unwrap_or_default()
-	}
 }
 
 decl_event! {
@@ -106,14 +88,22 @@ decl_event! {
 
 decl_error! {
 	pub enum Error for Module<T: Trait> {
+		/// Target Header - ALREADY EXISTED
 		TargetHeaderAE,
-		HeaderInvalid,
-		NotComplyWithConfirmebBlocks,
-		ChainInvalid,
-		MMRInvalid,
+		/// Header - INVALID
+		HeaderI,
+		/// Confirmed Blocks - CONFLICT
+		ConfirmebBlocksC,
+		/// Chain - INVALID
+		ChainI,
+		/// MMR - INVALID
+		MMRI,
+		/// Header Hash - MISMATCHED
 		HeaderHashMis,
+		/// Last Header - NOT EXISTED
 		LastHeaderNE,
-		ReceiptProofInvalid,
+		/// Receipt Proof - INVALID
+		ReceiptProofI,
 	}
 }
 
@@ -123,7 +113,6 @@ darwinia_support::impl_genesis! {
 		dags_merkle_roots: Vec<H128>
 	}
 }
-
 decl_storage! {
 	trait Store for Module<T: Trait> as DarwiniaEthereumRelay {
 		/// Ethereum last confrimed header info including ethereum block number, hash, and mmr
@@ -155,7 +144,7 @@ decl_storage! {
 			} = config;
 
 			let dags_merkle_roots = if dags_merkle_roots_loader.dags_merkle_roots.is_empty() {
-				DagsMerkleRootsLoader::from_str(r#""\"{}\"""#).dags_merkle_roots
+				DagsMerkleRootsLoader::from_str(DAGS_MERKLE_ROOTS_STR).dags_merkle_roots.clone()
 			} else {
 				dags_merkle_roots_loader.dags_merkle_roots.clone()
 			};
@@ -396,7 +385,7 @@ impl<T: Trait> Relayable for Module<T> {
 			return Err(<Error<T>>::TargetHeaderAE.into());
 		}
 		if !Self::verify_block_seal(&eth_header, &ethash_proof) {
-			return Err(<Error<T>>::HeaderInvalid.into());
+			return Err(<Error<T>>::HeaderI.into());
 		};
 		if with_proposed_raw_header {
 			Ok((
@@ -447,11 +436,11 @@ impl<T: Trait> Relayable for Module<T> {
 			} = raw_header_thing.into();
 
 			if !Self::verify_block_seal(&eth_header, &ethash_proof) {
-				return Err(<Error<T>>::HeaderInvalid.into());
+				return Err(<Error<T>>::HeaderI.into());
 			};
 
 			if !Self::verify_block_with_confrim_blocks(&eth_header) {
-				return Err(<Error<T>>::NotComplyWithConfirmebBlocks.into());
+				return Err(<Error<T>>::ConfirmebBlocksC.into());
 			}
 			if idx == 0 {
 				// The mmr_root of first submit should includ the hash last confirm block
@@ -472,7 +461,7 @@ impl<T: Trait> Relayable for Module<T> {
 								.collect(),
 							vec![(l.0, l.1)],
 						) {
-						return Err(<Error<T>>::MMRInvalid.into());
+						return Err(<Error<T>>::MMRI.into());
 					}
 				};
 
@@ -501,7 +490,7 @@ impl<T: Trait> Relayable for Module<T> {
 							array_unchecked!(eth_header.hash.unwrap_or_default(), 0, 32).into(),
 						)],
 					) {
-					return Err(<Error<T>>::MMRInvalid.into());
+					return Err(<Error<T>>::MMRI.into());
 				}
 			}
 			output.push(TcHeaderBrief {
@@ -530,7 +519,7 @@ impl<T: Trait> Relayable for Module<T> {
 
 		for i in 1..header_brief_chain.len() - 1 {
 			if header_brief_chain[i].parent_hash != header_brief_chain[i + 1].hash {
-				return Err(<Error<T>>::ChainInvalid.into());
+				return Err(<Error<T>>::ChainI.into());
 			}
 			let header = EthHeader::decode(&mut &*header_brief_chain[i].others).unwrap_or_default();
 			let previous_header =
@@ -538,7 +527,7 @@ impl<T: Trait> Relayable for Module<T> {
 
 			if *(header.difficulty()) != eth_partial.calculate_difficulty(&header, &previous_header)
 			{
-				return Err(<Error<T>>::ChainInvalid.into());
+				return Err(<Error<T>>::ChainI.into());
 			}
 		}
 		Ok(())
@@ -590,7 +579,6 @@ pub trait MMRVerifyEthReceipts<Balance, AccountId> {
 
 	fn account_id() -> AccountId;
 }
-
 impl<T: Trait> MMRVerifyEthReceipts<Balance<T>, T::AccountId> for Module<T> {
 	/// confirm that the block hash is right
 	/// get the receipt MPT trie root from the block header
@@ -621,16 +609,35 @@ impl<T: Trait> MMRVerifyEthReceipts<Balance<T>, T::AccountId> for Module<T> {
 					array_unchecked!(eth_header.hash.unwrap_or_default(), 0, 32).into(),
 				)]
 			),
-			<Error<T>>::MMRInvalid
+			<Error<T>>::MMRI
 		);
 
 		// Verify receipt proof
 		let receipt = Receipt::verify_proof_and_generate(eth_header.receipts_root(), &proof_record)
-			.map_err(|_| <Error<T>>::ReceiptProofInvalid)?;
+			.map_err(|_| <Error<T>>::ReceiptProofI)?;
 		Ok((receipt, Self::receipt_verify_fee()))
 	}
 
 	fn account_id() -> T::AccountId {
 		<Module<T>>::account_id()
 	}
+}
+
+#[derive(Encode, Decode, Default, RuntimeDebug)]
+pub struct EthHeaderThing {
+	eth_header: EthHeader,
+	ethash_proof: Vec<EthashProof>,
+	mmr_root: MMRHash,
+	mmr_proof: Vec<MMRHash>,
+}
+impl From<RawHeaderThing> for EthHeaderThing {
+	fn from(raw_header_thing: RawHeaderThing) -> Self {
+		EthHeaderThing::decode(&mut &*raw_header_thing).unwrap_or_default()
+	}
+}
+
+#[derive(Encode, Decode, Default, RuntimeDebug)]
+pub struct ProposalEthHeaderThing {
+	eth_header: EthHeader,
+	mmr_root: MMRHash,
 }

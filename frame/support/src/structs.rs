@@ -3,8 +3,6 @@ use codec::{Decode, Encode};
 use num_traits::Zero;
 // --- substrate ---
 use sp_runtime::{traits::AtLeast32Bit, RuntimeDebug};
-#[cfg(not(feature = "std"))]
-use sp_std::borrow::ToOwned;
 use sp_std::{ops::BitOr, prelude::*};
 // --- darwinia ---
 use crate::balance::lock::{LockIdentifier, WithdrawReason, WithdrawReasons};
