@@ -138,15 +138,6 @@ impl ExtBuilder {
 	}
 }
 
-/// Get Header things form scale codec hex
-///
-/// # Rounds
-///
-/// | Round |   Members  | Last Leaf | Number |
-/// |-------|------------|-----------|--------|
-/// |   0   |  [3, 1]    |     3     |   1    |
-/// |   1   |  [3, 2]    |     3     |   2    |
-/// |   2   |  [3, 2, 1] |     3     |   3    |
 pub fn header_things() -> Result<[EthHeaderThing; 4], Error> {
 	Ok([
 		EthHeaderThing::decode(&mut &*hex_bytes_unchecked(test_data::HEADER_THING_CODEC_0))?,
