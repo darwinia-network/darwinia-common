@@ -2,6 +2,7 @@
 // --- std ---
 use std::fs::File;
 // --- crates ---
+use codec::Error;
 use serde::Deserialize;
 // --- substrate ---
 use frame_support::{impl_outer_dispatch, impl_outer_origin, parameter_types, weights::Weight};
@@ -11,6 +12,18 @@ use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill, RuntimeDebug}
 use crate::*;
 use array_bytes::hex_bytes_unchecked;
 
+// Static codec header source
+mod header_thing_0;
+mod header_thing_1;
+mod header_thing_2;
+mod test_data {
+	pub use super::{
+		header_thing_0::HEADER_THING_CODEC_0, header_thing_1::HEADER_THING_CODEC_1,
+		header_thing_2::HEADER_THING_CODEC_2,
+	};
+}
+
+// Types
 type AccountId = u64;
 type BlockNumber = u64;
 type Balance = u128;
@@ -124,6 +137,23 @@ impl ExtBuilder {
 		.unwrap();
 		storage.into()
 	}
+}
+
+/// Get Header things form scale codec hex
+///
+/// # Rounds
+///
+/// | Round |   Members  | Last Leaf | Number |
+/// |-------|------------|-----------|--------|
+/// |   0   |  [3, 1]    |     3     |   1    |
+/// |   1   |  [3, 2]    |     3     |   2    |
+/// |   2   |  [3, 2, 1] |     3     |   3    |
+pub fn header_things() -> Result<[EthHeaderThing; 3], Error> {
+	Ok([
+		EthHeaderThing::decode(&mut &*hex_bytes_unchecked(test_data::HEADER_THING_CODEC_0))?,
+		EthHeaderThing::decode(&mut &*hex_bytes_unchecked(test_data::HEADER_THING_CODEC_1))?,
+		EthHeaderThing::decode(&mut &*hex_bytes_unchecked(test_data::HEADER_THING_CODEC_2))?,
+	])
 }
 
 pub fn from_file_to_eth_header_thing(path: &str) -> EthHeaderThing {

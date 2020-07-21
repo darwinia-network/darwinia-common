@@ -11,6 +11,7 @@ use frame_support::assert_ok;
 #[test]
 fn test_check_test_date_decoding() {
 	ExtBuilder::default().build().execute_with(|| {
+		let header_things = header_things().unwrap();
 		let header_thing = from_file_to_eth_header_thing("./src/test-data/0.json");
 		assert_eq!(header_thing.eth_header.number, 0);
 		let header_thing = from_file_to_eth_header_thing("./src/test-data/1.json");
@@ -38,9 +39,10 @@ fn test_check_test_date_decoding() {
 #[test]
 fn test_verify_test_data_mmr_proof() {
 	ExtBuilder::default().build().execute_with(|| {
-		let header_thing_1 = from_file_to_eth_header_thing("./src/test-data/1.json");
-		let header_thing_2 = from_file_to_eth_header_thing("./src/test-data/2.json");
-		let header_thing_3 = from_file_to_eth_header_thing("./src/test-data/3.json");
+		let header_things = header_things().unwrap();
+		let header_thing_1 = &header_things[0];
+		let header_thing_2 = &header_things[1];
+		let header_thing_3 = &header_things[2];
 		assert_eq!(
 			EthRelay::verify_mmr(
 				header_thing_3.eth_header.number,
@@ -123,4 +125,9 @@ fn test_verify_raw_header_thing_chain() {
 			raw_header_thing_chain
 		));
 	})
+}
+
+#[test]
+fn test_codec() {
+	let _ = header_things().unwrap();
 }
