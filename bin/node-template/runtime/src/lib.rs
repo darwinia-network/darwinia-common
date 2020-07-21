@@ -57,7 +57,8 @@ pub mod impls {
 
 	// --- substrate ---
 	use frame_support::traits::{Currency, Get, Imbalance, OnUnbalanced};
-	use sp_runtime::{traits::Convert, Fixed128, FixedPointNumber, Perquintill};
+	use pallet_transaction_payment::Multiplier;
+	use sp_runtime::{traits::Convert, FixedPointNumber, Perquintill};
 	// --- darwinia ---
 	use crate::{primitives::*, *};
 
@@ -109,8 +110,8 @@ pub mod impls {
 	/// https://research.web3.foundation/en/latest/polkadot/Token%20Economics/#relay-chain-transaction-fees
 	pub struct TargetedFeeAdjustment<T>(sp_std::marker::PhantomData<T>);
 
-	impl<T: Get<Perquintill>> Convert<Fixed128, Fixed128> for TargetedFeeAdjustment<T> {
-		fn convert(multiplier: Fixed128) -> Fixed128 {
+	impl<T: Get<Perquintill>> Convert<Multiplier, Multiplier> for TargetedFeeAdjustment<T> {
+		fn convert(multiplier: Multiplier) -> Multiplier {
 			let max_weight = MaximumBlockWeight::get();
 			let block_weight = System::block_weight().total().min(max_weight);
 			let target_weight = (T::get() * max_weight) as u128;
@@ -120,13 +121,13 @@ pub mod impls {
 			let positive = block_weight >= target_weight;
 			let diff_abs = block_weight.max(target_weight) - block_weight.min(target_weight);
 			// safe, diff_abs cannot exceed u64.
-			let diff = Fixed128::saturating_from_rational(diff_abs, max_weight.max(1));
+			let diff = Multiplier::saturating_from_rational(diff_abs, max_weight.max(1));
 			let diff_squared = diff.saturating_mul(diff);
 
 			// 0.00004 = 4/100_000 = 40_000/10^9
-			let v = Fixed128::saturating_from_rational(4, 100_000);
+			let v = Multiplier::saturating_from_rational(4, 100_000);
 			// 0.00004^2 = 16/10^10 Taking the future /2 into account... 8/10^10
-			let v_squared_2 = Fixed128::saturating_from_rational(8, 10_000_000_000u64);
+			let v_squared_2 = Multiplier::saturating_from_rational(8, 10_000_000_000u64);
 
 			let first_term = v.saturating_mul(diff);
 			let second_term = v_squared_2.saturating_mul(diff_squared);
@@ -146,7 +147,7 @@ pub mod impls {
 					// multiplier. While at -1, it means that the network is so un-congested that all
 					// transactions have no weight fee. We stop here and only increase if the network
 					// became more busy.
-					.max(Fixed128::saturating_from_integer(-1))
+					.max(Multiplier::saturating_from_integer(-1))
 			}
 		}
 	}
