@@ -2947,7 +2947,7 @@ impl<T: Trait> Module<T> {
 		// candidates.
 		let snapshot_validators_length = <SnapshotValidators<T>>::decode_len()
 			.map(|l| l as u32)
-			.ok_or_else(|| Error::<T>::SnapshotUnavailable)?;
+			.ok_or_else(|| <Error<T>>::SnapshotUnavailable)?;
 
 		// size of the solution must be correct.
 		ensure!(
@@ -3513,11 +3513,11 @@ impl<T: Trait> Module<T> {
 	/// - after a `withdraw_unbond()` call that frees all of a stash's bonded balance.
 	/// - through `reap_stash()` if the balance has fallen to zero (through slashing).
 	fn kill_stash(stash: &T::AccountId, num_slashing_spans: u32) -> DispatchResult {
-		let controller = Bonded::<T>::get(stash).ok_or(Error::<T>::NotStash)?;
+		let controller = <Bonded<T>>::get(stash).ok_or(<Error<T>>::NotStash)?;
 
 		slashing::clear_stash_metadata::<T>(stash, num_slashing_spans)?;
 
-		Bonded::<T>::remove(stash);
+		<Bonded<T>>::remove(stash);
 		<Ledger<T>>::remove(&controller);
 
 		<Payee<T>>::remove(stash);
