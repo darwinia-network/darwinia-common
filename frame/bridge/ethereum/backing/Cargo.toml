@@ -20,11 +20,11 @@ ethereum-primitives = { default-features = false, path = "../../../../primitives
 # github
 ethabi = { default-features = false, git = "https://github.com/darwinia-network/ethabi.git", branch = "with_no_std" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
-frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
-sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.2" }
+frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.2" }
+sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.2" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.2" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.2" }
 
 [dev-dependencies]
 # darwinia
@@ -34,10 +34,10 @@ ethereum-primitives = { features = ["easy-testing"], path = "../../../../primiti
 # github
 rlp = { package = "rlp", git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
-pallet-session = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
-pallet-timestamp = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
-sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
-sp-staking = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.1" }
+pallet-session = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.2" }
+pallet-timestamp = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.2" }
+sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.2" }
+sp-staking = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.2" }
 
 [features]
 default = ["std"]
