@@ -27,7 +27,7 @@ pub mod impls {
 					// 3 mins
 					0 => 30,
 					// 1 mins
-					_ => 10
+					_ => 10,
 				}
 			}
 
@@ -45,12 +45,10 @@ pub mod impls {
 
 			fn estimate_bond(round: Round, proposals_count: u64) -> Self::Balance {
 				match round {
-					0 => {
-						match proposals_count {
-							0 => 1000 * COIN,
-							_ => 1500 * COIN,
-						}
-					}
+					0 => match proposals_count {
+						0 => 1000 * COIN,
+						_ => 1500 * COIN,
+					},
 					_ => 100 * COIN,
 				}
 			}
@@ -318,10 +316,6 @@ pub mod primitives {
 	>;
 }
 
-// --- darwinia ---
-pub use darwinia_staking::StakerStatus;
-pub use primitives::*;
-
 // --- crates ---
 use codec::{Decode, Encode};
 use static_assertions::const_assert;
@@ -354,7 +348,7 @@ use sp_runtime::{
 		Saturating,
 	},
 	transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, ModuleId, Perbill, Percent, Permill, Perquintill, RuntimeDebug,
+	ApplyExtrinsicResult, ModuleId, PerThing, Perbill, Percent, Permill, Perquintill, RuntimeDebug,
 };
 use sp_staking::SessionIndex;
 use sp_std::prelude::*;
@@ -418,17 +412,20 @@ pub fn native_version() -> NativeVersion {
 	}
 }
 
+const AVERAGE_ON_INITIALIZE_WEIGHT: Perbill = Perbill::from_percent(10);
 parameter_types! {
 	pub const BlockHashCount: BlockNumber = 2400;
 	/// We allow for 2 seconds of compute with a 6 second average block time.
 	pub const MaximumBlockWeight: Weight = 2 * WEIGHT_PER_SECOND;
 	/// Assume 10% of weight for average on_initialize calls.
-	pub const MaximumExtrinsicWeight: Weight = AvailableBlockRatio::get()
-		.saturating_sub(Perbill::from_percent(10)) * MaximumBlockWeight::get();
+	pub MaximumExtrinsicWeight: Weight =
+		AvailableBlockRatio::get().saturating_sub(AVERAGE_ON_INITIALIZE_WEIGHT)
+		* MaximumBlockWeight::get();
 	pub const MaximumBlockLength: u32 = 5 * 1024 * 1024;
 	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
 	pub const Version: RuntimeVersion = VERSION;
 }
+const_assert!(AvailableBlockRatio::get().deconstruct() >= AVERAGE_ON_INITIALIZE_WEIGHT.deconstruct());
 impl frame_system::Trait for Runtime {
 	type Origin = Origin;
 	type Call = Call;
@@ -477,9 +474,14 @@ impl pallet_timestamp::Trait for Runtime {
 
 parameter_types! {
 	pub const TransactionByteFee: Balance = 10 * MICRO;
-	// for a sane configuration, this should always be less than `AvailableBlockRatio`.
 	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
 }
+// for a sane configuration, this should always be less than `AvailableBlockRatio`.
+const_assert!(
+	TargetBlockFullness::get().deconstruct() <
+	(AvailableBlockRatio::get().deconstruct() as <Perquintill as PerThing>::Inner)
+		* (<Perquintill as PerThing>::ACCURACY / <Perbill as PerThing>::ACCURACY as <Perquintill as PerThing>::Inner)
+);
 impl pallet_transaction_payment::Trait for Runtime {
 	type Currency = Ring;
 	type OnTransactionPayment = DealWithFees;
@@ -499,7 +501,7 @@ impl pallet_authorship::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const OffencesWeightSoftLimit: Weight = Perbill::from_percent(60) * MaximumBlockWeight::get();
+	pub OffencesWeightSoftLimit: Weight = Perbill::from_percent(60) * MaximumBlockWeight::get();
 }
 impl pallet_offences::Trait for Runtime {
 	type Event = Event;
@@ -691,18 +693,19 @@ impl darwinia_staking::Trait for Runtime {
 	type TotalPower = TotalPower;
 }
 
-const DESIRED_MEMBERS: u32 = 13;
 // Make sure that there are no more than `MAX_MEMBERS` members elected via phragmen.
 const_assert!(DESIRED_MEMBERS <= pallet_collective::MAX_MEMBERS);
 parameter_types! {
 	pub const ElectionsPhragmenModuleId: LockIdentifier = *b"da/phrel";
 	pub const CandidacyBond: Balance = 1 * COIN;
 	pub const VotingBond: Balance = 5 * MILLI;
-	pub const DesiredMembers: u32 = DESIRED_MEMBERS;
+	pub const DesiredMembers: u32 = 13;
 	pub const DesiredRunnersUp: u32 = 7;
 	/// Daily council elections.
 	pub const TermDuration: BlockNumber = 24 * HOURS;
 }
+// Make sure that there are no more than `MAX_MEMBERS` members elected via phragmen.
+const_assert!(DesiredMembers::get() <= pallet_collective::MAX_MEMBERS);
 impl darwinia_elections_phragmen::Trait for Runtime {
 	type Event = Event;
 	type ModuleId = ElectionsPhragmenModuleId;
