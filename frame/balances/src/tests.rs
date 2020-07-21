@@ -38,6 +38,14 @@ macro_rules! decl_tests {
 			}
 		}
 
+		fn events() -> Vec<Event> {
+			let evt = System::events().into_iter().map(|evt| evt.event).collect::<Vec<_>>();
+
+			System::reset_events();
+
+			evt
+		}
+
 		#[test]
 		fn basic_locking_should_work() {
 			<$ext_builder>::default()
