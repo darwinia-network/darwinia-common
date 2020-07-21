@@ -5,9 +5,9 @@ use codec::Decode;
 // --- substrate ---
 use frame_support::traits::Get;
 use frame_system::offchain::SubmitTransaction;
-use sp_phragmen::{
-	build_support_map, equalize, evaluate_support, reduce, Assignment, ExtendedBalance,
-	PhragmenResult, PhragmenScore,
+use sp_npos_elections::{
+	balance_solution, build_support_map, evaluate_support, reduce, Assignment, ElectionResult,
+	ElectionScore, ExtendedBalance,
 };
 use sp_runtime::{
 	offchain::storage::StorageValueRef,
@@ -24,22 +24,22 @@ use crate::{
 /// Error types related to the offchain election machinery.
 #[derive(RuntimeDebug)]
 pub enum OffchainElectionError {
-	/// Phragmen election returned None. This means less candidate that minimum number of needed
+	/// election returned None. This means less candidate that minimum number of needed
 	/// validators were present. The chain is in trouble and not much that we can do about it.
 	ElectionFailed,
 	/// Submission to the transaction pool failed.
 	PoolSubmissionFailed,
 	/// The snapshot data is not available.
 	SnapshotUnavailable,
-	/// Error from phragmen crate. This usually relates to compact operation.
-	PhragmenError(sp_phragmen::Error),
+	/// Error from npos-election crate. This usually relates to compact operation.
+	InternalElectionError(sp_npos_elections::Error),
 	/// One of the computed winners is invalid.
 	InvalidWinner,
 }
 
-impl From<sp_phragmen::Error> for OffchainElectionError {
-	fn from(e: sp_phragmen::Error) -> Self {
-		Self::PhragmenError(e)
+impl From<sp_npos_elections::Error> for OffchainElectionError {
+	fn from(e: sp_npos_elections::Error) -> Self {
+		Self::InternalElectionError(e)
 	}
 }
 
@@ -96,7 +96,7 @@ pub(crate) fn set_check_offchain_execution_status<T: Trait>(
 /// unsigned transaction, without any signature.
 pub(crate) fn compute_offchain_election<T: Trait>() -> Result<(), OffchainElectionError> {
 	// compute raw solution. Note that we use `OffchainAccuracy`.
-	let PhragmenResult {
+	let ElectionResult {
 		winners,
 		assignments,
 	} = <Module<T>>::do_phragmen::<OffchainAccuracy>().ok_or(OffchainElectionError::ElectionFailed)?;
@@ -115,7 +115,7 @@ pub(crate) fn compute_offchain_election<T: Trait>() -> Result<(), OffchainElecti
 		.map_err(|_| OffchainElectionError::PoolSubmissionFailed)
 }
 
-/// Takes a phragmen result and spits out some data that can be submitted to the chain.
+/// Takes an election result and spits out some data that can be submitted to the chain.
 ///
 /// This does a lot of stuff; read the inline comments.
 pub fn prepare_submission<T: Trait>(
@@ -126,7 +126,7 @@ pub fn prepare_submission<T: Trait>(
 	(
 		Vec<ValidatorIndex>,
 		CompactAssignments,
-		PhragmenScore,
+		ElectionScore,
 		ElectionSize,
 	),
 	OffchainElectionError,
@@ -155,18 +155,19 @@ where
 	};
 
 	// Clean winners.
-	let winners = sp_phragmen::to_without_backing(winners);
+	let winners = sp_npos_elections::to_without_backing(winners);
 
 	// convert into absolute value and to obtain the reduced version.
-	let mut staked =
-		sp_phragmen::assignment_ratio_to_staked(assignments, |s| <Module<T>>::power_of(s) as _);
+	let mut staked = sp_npos_elections::assignment_ratio_to_staked(assignments, |s| {
+		<Module<T>>::power_of(s) as _
+	});
 
 	let (mut support_map, _) = build_support_map::<T::AccountId>(&winners, &staked);
 
-	// equalize a random number of times.
+	// balance a random number of times.
 	let iterations_executed = match T::MaxIterations::get() {
 		0 => {
-			// Don't run equalize at all
+			// Don't run balance_solution at all
 			0
 		}
 		iterations @ _ => {
@@ -174,7 +175,7 @@ where
 			let iterations = <u32>::decode(&mut TrailingZeroInput::new(seed.as_ref()))
 				.expect("input is padded with zeroes; qed")
 				% iterations.saturating_add(1);
-			equalize(
+			balance_solution(
 				&mut staked,
 				&mut support_map,
 				Zero::zero(),
@@ -189,7 +190,7 @@ where
 	}
 
 	// Convert back to ratio assignment. This takes less space.
-	let low_accuracy_assignment = sp_phragmen::assignment_staked_to_ratio(staked);
+	let low_accuracy_assignment = sp_npos_elections::assignment_staked_to_ratio(staked);
 
 	// convert back to staked to compute the score in the receiver's accuracy. This can be done
 	// nicer, for now we do it as such since this code is not time-critical. This ensure that the
@@ -201,7 +202,7 @@ where
 	// converting to ratio thereafter is not trivially reversible.
 	let score = {
 		let staked =
-			sp_phragmen::assignment_ratio_to_staked(low_accuracy_assignment.clone(), |s| {
+			sp_npos_elections::assignment_ratio_to_staked(low_accuracy_assignment.clone(), |s| {
 				<Module<T>>::power_of(s) as _
 			});
 

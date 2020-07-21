@@ -660,7 +660,7 @@ parameter_types! {
 	pub const MaxIterations: u32 = 10;
 	// 0.05%. The higher the value, the more strict solution acceptance becomes.
 	pub MinSolutionScoreBump: Perbill = Perbill::from_rational_approximation(5u32, 10_000);
-	/// We prioritize im-online heartbeats over phragmen solution submission.
+	/// We prioritize im-online heartbeats over election solution submission.
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
 	pub const StakingUnsignedPriority: TransactionPriority = TransactionPriority::max_value() / 2;
 	pub const Cap: Balance = CAP;
@@ -710,7 +710,7 @@ parameter_types! {
 	/// Daily council elections.
 	pub const TermDuration: BlockNumber = 24 * HOURS;
 }
-// Make sure that there are no more than `MAX_MEMBERS` members elected via phragmen.
+// Make sure that there are no more than `MAX_MEMBERS` members elected via elections-phragmen.
 const_assert!(DesiredMembers::get() <= pallet_collective::MAX_MEMBERS);
 impl darwinia_elections_phragmen::Trait for Runtime {
 	type Event = Event;

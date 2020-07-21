@@ -8,25 +8,25 @@
 //!
 //! ## Overview
 //!
-//! The Staking module is the means by which a set of network maintainers (known as _authorities_
-//! in some contexts and _validators_ in others) are chosen based upon those who voluntarily place
-//! funds under deposit. Under deposit, those funds are rewarded under normal operation but are
-//! held at pain of _slash_ (expropriation) should the staked maintainer be found not to be
-//! discharging its duties properly.
+//! The Staking module is the means by which a set of network maintainers (known as _authorities_ in
+//! some contexts and _validators_ in others) are chosen based upon those who voluntarily place
+//! funds under deposit. Under deposit, those funds are rewarded under normal operation but are held
+//! at pain of _slash_ (expropriation) should the staked maintainer be found not to be discharging
+//! its duties properly.
 //!
 //! ### Terminology
 //! <!-- Original author of paragraph: @gavofyork -->
 //!
 //! - Staking: The process of locking up funds for some time, placing them at risk of slashing
-//! (loss) in order to become a rewarded maintainer of the network.
+//!   (loss) in order to become a rewarded maintainer of the network.
 //! - Validating: The process of running a node to actively maintain the network, either by
-//! producing blocks or guaranteeing finality of the chain.
+//!   producing blocks or guaranteeing finality of the chain.
 //! - Nominating: The process of placing staked funds behind one or more validators in order to
-//! share in any reward, and punishment, they take.
+//!   share in any reward, and punishment, they take.
 //! - Stash account: The account holding an owner's funds used for staking.
 //! - Controller account: The account that controls an owner's funds for staking.
 //! - Era: A (whole) number of sessions, which is the period that the validator set (and each
-//! validator's active nominator set) is recalculated and where rewards are paid out.
+//!   validator's active nominator set) is recalculated and where rewards are paid out.
 //! - Slash: The punishment of a staker by reducing its funds.
 //!
 //! ### Goals
@@ -88,11 +88,10 @@
 //! The **reward and slashing** procedure is the core of the Staking module, attempting to _embrace
 //! valid behavior_ while _punishing any misbehavior or lack of availability_.
 //!
-//! Rewards must be claimed for each era before it gets too old by `$HISTORY_DEPTH` using the
-//! `payout_stakers` call. Any account can call `payout_stakers`, which pays the reward to
-//! the validator as well as its nominators.
-//! Only the [`T::MaxNominatorRewardedPerValidator`] biggest stakers can claim their reward. This
-//! is to limit the i/o cost to mutate storage for each nominator's account.
+//! `payout_stakers` call. Any account can call `payout_stakers`, which pays the reward to the
+//! validator as well as its nominators. Only the [`Trait::MaxNominatorRewardedPerValidator`]
+//! biggest stakers can claim their reward. This is to limit the i/o cost to mutate storage for each
+//! nominator's account.
 //!
 //! Slashing can occur at any point in time, once misbehavior is reported. Once slashing is
 //! determined, a value is deducted from the balance of the validator and all the nominators who
@@ -101,8 +100,8 @@
 //! Slashing logic is further described in the documentation of the `slashing` module.
 //!
 //! Similar to slashing, rewards are also shared among a validator and its associated nominators.
-//! Yet, the reward funds are not always transferred to the stash account and can be configured.
-//! See [Reward Calculation](#reward-calculation) for more details.
+//! Yet, the reward funds are not always transferred to the stash account and can be configured. See
+//! [Reward Calculation](#reward-calculation) for more details.
 //!
 //! #### Chilling
 //!
@@ -141,7 +140,7 @@
 //!
 //! decl_module! {
 //! 	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
-//!			/// Reward a validator.
+//! 		/// Reward a validator.
 //! 		#[weight = 0]
 //! 		pub fn reward_myself(origin) -> dispatch::DispatchResult {
 //! 			let reported = ensure_signed(origin)?;
@@ -191,8 +190,8 @@
 //! The validator and its nominator split their reward as following:
 //!
 //! The validator can declare an amount, named
-//! [`commission`](./struct.ValidatorPrefs.html#structfield.commission), that does not
-//! get shared with the nominators at each reward payout through its
+//! [`commission`](./struct.ValidatorPrefs.html#structfield.commission), that does not get shared
+//! with the nominators at each reward payout through its
 //! [`ValidatorPrefs`](./struct.ValidatorPrefs.html). This value gets deducted from the total reward
 //! that is paid to the validator and its nominators. The remaining portion is split among the
 //! validator and all of the nominators that nominated the validator, proportional to the value
@@ -201,8 +200,8 @@
 //! [`others`](./struct.Exposure.html#structfield.others) by
 //! [`total`](./struct.Exposure.html#structfield.total) in [`Exposure`](./struct.Exposure.html)).
 //!
-//! All entities who receive a reward have the option to choose their reward destination
-//! through the [`Payee`](./struct.Payee.html) storage item (see
+//! All entities who receive a reward have the option to choose their reward destination through the
+//! [`Payee`](./struct.Payee.html) storage item (see
 //! [`set_payee`](enum.Call.html#variant.set_payee)), to be one of the following:
 //!
 //! - Controller account, (obviously) not increasing the staked value.
@@ -227,9 +226,8 @@
 //!
 //! ### Election Algorithm
 //!
-//! The current election algorithm is implemented based on Phragmén.
-//! The reference implementation can be found
-//! [here](https://github.com/w3f/consensus/tree/master/NPoS).
+//! The current election algorithm is implemented based on Phragmén. The reference implementation
+//! can be found [here](https://github.com/w3f/consensus/tree/master/NPoS).
 //!
 //! The election algorithm, aside from electing the validators with the most stake value and votes,
 //! tries to divide the nominator votes among candidates in an equal manner. To further assure this,
@@ -239,8 +237,8 @@
 //!
 //! ## GenesisConfig
 //!
-//! The Staking module depends on the [`GenesisConfig`](./struct.GenesisConfig.html).
-//! The `GenesisConfig` is optional and allow to set some initial stakers.
+//! The Staking module depends on the [`GenesisConfig`](./struct.GenesisConfig.html). The
+//! `GenesisConfig` is optional and allow to set some initial stakers.
 //!
 //! ## Related Modules
 //!
@@ -289,9 +287,9 @@ mod types {
 
 	// Note: Maximum nomination limit is set here -- 16.
 	generate_compact_solution_type!(pub GenericCompactAssignments, 16);
-	/// Accuracy used for on-chain phragmen.
+	/// Accuracy used for on-chain election.
 	pub type ChainAccuracy = Perbill;
-	/// Accuracy used for off-chain phragmen. This better be small.
+	/// Accuracy used for off-chain election. This better be small.
 	pub type OffchainAccuracy = PerU16;
 	/// The compact type for election solutions.
 	pub type CompactAssignments =
@@ -429,10 +427,10 @@ use frame_support::{
 use frame_system::{
 	self as system, ensure_none, ensure_root, ensure_signed, offchain::SendTransactionTypes,
 };
-use sp_phragmen::{
-	build_support_map, elect, evaluate_support, generate_compact_solution_type, is_score_better,
-	Assignment, ExtendedBalance, PhragmenResult, PhragmenScore, SupportMap, VoteWeight,
-	VotingLimit,
+use sp_npos_elections::{
+	build_support_map, evaluate_support, generate_compact_solution_type, is_score_better,
+	seq_phragmen, Assignment, ElectionResult as PrimitiveElectionResult, ElectionScore,
+	ExtendedBalance, SupportMap, VoteWeight, VotingLimit,
 };
 use sp_runtime::{
 	helpers_128bit::multiply_by_rational,
@@ -985,9 +983,9 @@ pub trait Trait: frame_system::Trait + SendTransactionTypes<Call<Self>> {
 	/// Number of eras that staked funds must remain bonded for.
 	type BondingDurationInBlockNumber: Get<Self::BlockNumber>;
 
-	/// Number of eras that slashes are deferred by, after computation. This
-	/// should be less than the bonding duration. Set to 0 if slashes should be
-	/// applied immediately, without opportunity for intervention.
+	/// Number of eras that slashes are deferred by, after computation. This should be less than the
+	/// bonding duration. Set to 0 if slashes should be applied immediately, without opportunity for
+	/// intervention.
 	type SlashDeferDuration: Get<EraIndex>;
 
 	/// The origin which can cancel a deferred slash. Root can always do this.
@@ -999,16 +997,19 @@ pub trait Trait: frame_system::Trait + SendTransactionTypes<Call<Self>> {
 	/// Something that can estimate the next session change, accurately or as a best effort guess.
 	type NextNewSession: EstimateNextNewSession<Self::BlockNumber>;
 
-	/// How many blocks ahead of the era, within the last do we try to run the phragmen offchain?
+	/// The number of blocks before the end of the era from which election submissions are allowed.
 	/// Setting this to zero will disable the offchain compute and only on-chain seq-phragmen will
 	/// be used.
+	///
+	/// This is bounded by being within the last session. Hence, setting it to a value more than the
+	/// length of a session will be pointless.
 	type ElectionLookahead: Get<Self::BlockNumber>;
 
 	/// The overarching call type.
 	type Call: Dispatchable + From<Call<Self>> + IsSubType<Module<Self>, Self> + Clone;
 
-	/// Maximum number of equalise iterations to run in the offchain submission. If set to 0,
-	/// equalize will not be executed at all.
+	/// Maximum number of balancing iterations to run in the offchain submission. If set to 0,
+	/// balance_solution will not be executed at all.
 	type MaxIterations: Get<u32>;
 
 	/// The threshold of improvement that should be provided for a new solution to be accepted.
@@ -1056,9 +1057,9 @@ decl_storage! {
 		///
 		/// Information is kept for eras in `[current_era - history_depth; current_era]`.
 		///
-		/// Must be more than the number of eras delayed by session otherwise.
-		/// I.e. active era must always be in history.
-		/// I.e. `active_era > current_era - history_depth` must be guaranteed.
+		/// Must be more than the number of eras delayed by session otherwise. I.e. active era must
+		/// always be in history. I.e. `active_era > current_era - history_depth` must be
+		/// guaranteed.
 		HistoryDepth get(fn history_depth) config(): u32 = 336;
 
 		/// The ideal number of staking participants.
@@ -1226,7 +1227,7 @@ decl_storage! {
 		pub QueuedElected get(fn queued_elected): Option<ElectionResultT<T>>;
 
 		/// The score of the current [`QueuedElected`].
-		pub QueuedScore get(fn queued_score): Option<PhragmenScore>;
+		pub QueuedScore get(fn queued_score): Option<ElectionScore>;
 
 		/// Flag to control the execution of the offchain election. When `Open(_)`, we accept
 		/// solutions to be submitted.
@@ -1493,7 +1494,7 @@ decl_module! {
 					);
 				} else {
 					if let Err(e) = compute_offchain_election::<T>() {
-						log!(error, "💸 Error in phragmen offchain worker: {:?}", e);
+						log!(error, "💸 Error in election offchain worker: {:?}", e);
 					} else {
 						log!(debug, "Executed offchain worker thread without errors.");
 					}
@@ -2415,7 +2416,7 @@ decl_module! {
 			T::KtonCurrency::remove_lock(STAKING_ID, &stash);
 		}
 
-		/// Submit a phragmen result to the chain. If the solution:
+		/// Submit an election result to the chain. If the solution:
 		///
 		/// 1. is valid.
 		/// 2. has a better score than a potentially existing solution on chain.
@@ -2428,7 +2429,7 @@ decl_module! {
 		/// 2. `assignments`: the compact version of an assignment vector that encodes the edge
 		///	weights.
 		///
-		/// Both of which may be computed using [`phragmen`], or any other algorithm.
+		/// Both of which may be computed using _phragmen_, or any other algorithm.
 		///
 		/// Additionally, the submitter must provide:
 		///
@@ -2467,7 +2468,7 @@ decl_module! {
 			origin,
 			winners: Vec<ValidatorIndex>,
 			compact: CompactAssignments,
-			score: PhragmenScore,
+			score: ElectionScore,
 			era: EraIndex,
 			size: ElectionSize,
 		) -> DispatchResultWithPostInfo {
@@ -2496,7 +2497,7 @@ decl_module! {
 			origin,
 			winners: Vec<ValidatorIndex>,
 			compact: CompactAssignments,
-			score: PhragmenScore,
+			score: ElectionScore,
 			era: EraIndex,
 			size: ElectionSize,
 		)  -> DispatchResultWithPostInfo {
@@ -2895,7 +2896,7 @@ impl<T: Trait> Module<T> {
 	///
 	/// This function does weight refund in case of errors, which is based upon the fact that it is
 	/// called at the very beginning of the call site's function.
-	pub fn pre_dispatch_checks(score: PhragmenScore, era: EraIndex) -> DispatchResultWithPostInfo {
+	pub fn pre_dispatch_checks(score: ElectionScore, era: EraIndex) -> DispatchResultWithPostInfo {
 		// discard solutions that are not in-time
 		// check window open
 		ensure!(
@@ -2928,7 +2929,7 @@ impl<T: Trait> Module<T> {
 		winners: Vec<ValidatorIndex>,
 		compact_assignments: CompactAssignments,
 		compute: ElectionCompute,
-		claimed_score: PhragmenScore,
+		claimed_score: ElectionScore,
 		era: EraIndex,
 		election_size: ElectionSize,
 	) -> DispatchResultWithPostInfo {
@@ -3069,7 +3070,7 @@ impl<T: Trait> Module<T> {
 
 		// convert into staked assignments.
 		let staked_assignments =
-			sp_phragmen::assignment_ratio_to_staked(assignments, |s| Self::power_of(s) as _);
+			sp_npos_elections::assignment_ratio_to_staked(assignments, |s| Self::power_of(s) as _);
 
 		// build the support map thereof in order to evaluate.
 		// OPTIMIZATION: loop to create the staked assignments but it would bloat the code. Okay for
@@ -3264,7 +3265,7 @@ impl<T: Trait> Module<T> {
 			elected_stashes,
 			exposures,
 			compute,
-		}) = Self::try_do_phragmen()
+		}) = Self::try_do_election()
 		{
 			// Totally close the election round and data.
 			Self::close_election_window();
@@ -3313,12 +3314,12 @@ impl<T: Trait> Module<T> {
 	}
 
 	/// Select a new validator set from the assembled stakers and their role preferences. It tries
-	/// first to peek into [`QueuedElected`]. Otherwise, it runs a new phragmen.
+	/// first to peek into [`QueuedElected`]. Otherwise, it runs a new on-chain phragmen election.
 	///
 	/// If [`QueuedElected`] and [`QueuedScore`] exists, they are both removed. No further storage
 	/// is updated.
-	fn try_do_phragmen() -> Option<ElectionResultT<T>> {
-		// a phragmen result from either a stored submission or locally executed one.
+	fn try_do_election() -> Option<ElectionResultT<T>> {
+		// an election result from either a stored submission or locally executed one.
 		let next_result = <QueuedElected<T>>::take().or_else(|| {
 			Self::do_phragmen_with_post_processing::<ChainAccuracy>(ElectionCompute::OnChain)
 		});
@@ -3330,11 +3331,11 @@ impl<T: Trait> Module<T> {
 		next_result
 	}
 
-	/// Execute phragmen and return the new results. The edge weights are processed into support
+	/// Execute election and return the new results. The edge weights are processed into support
 	/// values.
 	///
-	/// This is basically a wrapper around [`do_phragmen`] which translates `PhragmenResult` into
-	/// `ElectionResult`.
+	/// This is basically a wrapper around [`do_phragmen`] which translates
+	/// `PrimitiveElectionResult` into `ElectionResult`.
 	///
 	/// No storage item is updated.
 	fn do_phragmen_with_post_processing<Accuracy: PerThing>(
@@ -3353,7 +3354,9 @@ impl<T: Trait> Module<T> {
 			let assignments = phragmen_result.assignments;
 
 			let staked_assignments =
-				sp_phragmen::assignment_ratio_to_staked(assignments, |s| Self::power_of(s) as _);
+				sp_npos_elections::assignment_ratio_to_staked(assignments, |s| {
+					Self::power_of(s) as _
+				});
 
 			let (supports, _) =
 				build_support_map::<T::AccountId>(&elected_stashes, &staked_assignments);
@@ -3379,13 +3382,13 @@ impl<T: Trait> Module<T> {
 		}
 	}
 
-	// Execute phragmen and return the new results. No post-processing is applied and the raw edge
-	/// weights are returned.
+	/// Execute phragmen election and return the new results. No post-processing is applied and the
+	/// raw edge weights are returned.
 	///
 	/// Self votes are added and nominations before the most recent slashing span are reaped.
 	///
 	/// No storage item is updated.
-	fn do_phragmen<Accuracy: PerThing>() -> Option<PhragmenResult<T::AccountId, Accuracy>> {
+	fn do_phragmen<Accuracy: PerThing>() -> Option<PrimitiveElectionResult<T::AccountId, Accuracy>> {
 		let mut all_nominators: Vec<(T::AccountId, VoteWeight, Vec<T::AccountId>)> = vec![];
 		let mut all_validators = vec![];
 		for (validator, _) in <Validators<T>>::iter() {
@@ -3420,7 +3423,7 @@ impl<T: Trait> Module<T> {
 			(n, s, ns)
 		}));
 
-		elect::<_, Accuracy>(
+		seq_phragmen::<_, Accuracy>(
 			Self::validator_count() as usize,
 			Self::minimum_validator_count().max(1) as usize,
 			all_validators,
@@ -3428,7 +3431,7 @@ impl<T: Trait> Module<T> {
 		)
 	}
 
-	/// Consume a set of [`Supports`] from [`sp_phragmen`] and collect them into a [`Exposure`]
+	/// Consume a set of [`Supports`] from [`sp_npos_elections`] and collect them into a [`Exposure`]
 	fn collect_exposure(supports: SupportMap<T::AccountId>) -> Vec<(T::AccountId, ExposureT<T>)> {
 		supports
 			.into_iter()
