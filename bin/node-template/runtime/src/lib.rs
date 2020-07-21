@@ -425,7 +425,9 @@ parameter_types! {
 	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
 	pub const Version: RuntimeVersion = VERSION;
 }
-const_assert!(AvailableBlockRatio::get().deconstruct() >= AVERAGE_ON_INITIALIZE_WEIGHT.deconstruct());
+const_assert!(
+	AvailableBlockRatio::get().deconstruct() >= AVERAGE_ON_INITIALIZE_WEIGHT.deconstruct()
+);
 impl frame_system::Trait for Runtime {
 	type Origin = Origin;
 	type Call = Call;
@@ -478,9 +480,10 @@ parameter_types! {
 }
 // for a sane configuration, this should always be less than `AvailableBlockRatio`.
 const_assert!(
-	TargetBlockFullness::get().deconstruct() <
-	(AvailableBlockRatio::get().deconstruct() as <Perquintill as PerThing>::Inner)
-		* (<Perquintill as PerThing>::ACCURACY / <Perbill as PerThing>::ACCURACY as <Perquintill as PerThing>::Inner)
+	TargetBlockFullness::get().deconstruct()
+		< (AvailableBlockRatio::get().deconstruct() as <Perquintill as PerThing>::Inner)
+			* (<Perquintill as PerThing>::ACCURACY
+				/ <Perbill as PerThing>::ACCURACY as <Perquintill as PerThing>::Inner)
 );
 impl pallet_transaction_payment::Trait for Runtime {
 	type Currency = Ring;
@@ -654,9 +657,11 @@ parameter_types! {
 	pub const BondingDurationInBlockNumber: BlockNumber = 14 * DAYS;
 	pub const SlashDeferDuration: darwinia_staking::EraIndex = 0;
 	pub const ElectionLookahead: BlockNumber = BLOCKS_PER_SESSION / 4;
-	pub const MaxIterations: u32 = 5;
-	pub const MaxNominatorRewardedPerValidator: u32 = 64;
+	pub const MaxIterations: u32 = 10;
+	// 0.05%. The higher the value, the more strict solution acceptance becomes.
+	pub MinSolutionScoreBump: Perbill = Perbill::from_rational_approximation(5u32, 10_000);
 	/// We prioritize im-online heartbeats over phragmen solution submission.
+	pub const MaxNominatorRewardedPerValidator: u32 = 64;
 	pub const StakingUnsignedPriority: TransactionPriority = TransactionPriority::max_value() / 2;
 	pub const Cap: Balance = CAP;
 	pub const TotalPower: Power = TOTAL_POWER;
@@ -676,6 +681,7 @@ impl darwinia_staking::Trait for Runtime {
 	type ElectionLookahead = ElectionLookahead;
 	type Call = Call;
 	type MaxIterations = MaxIterations;
+	type MinSolutionScoreBump = MinSolutionScoreBump;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
 	type UnsignedPriority = StakingUnsignedPriority;
 	type RingCurrency = Ring;
