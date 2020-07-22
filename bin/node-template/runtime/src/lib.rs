@@ -771,7 +771,7 @@ impl darwinia_treasury::Trait for Runtime {
 
 parameter_types! {
 	pub const ClaimsModuleId: ModuleId = ModuleId(*b"da/claim");
-	pub const Prefix: &'static [u8] = b"Pay RINGs to the template account:";
+	pub Prefix: &'static [u8] = b"Pay RINGs to the template account:";
 }
 impl darwinia_claims::Trait for Runtime {
 	type Event = Event;
