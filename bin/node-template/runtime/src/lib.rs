@@ -317,6 +317,10 @@ pub mod primitives {
 	>;
 }
 
+// --- darwinia ---
+pub use darwinia_staking::StakerStatus;
+pub use primitives::*;
+
 // --- crates ---
 use codec::{Decode, Encode};
 use static_assertions::const_assert;
@@ -543,8 +547,8 @@ impl pallet_session::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const WindowSize: BlockNumber = pallet_finality_tracker::DEFAULT_WINDOW_SIZE.into();
-	pub const ReportLatency: BlockNumber = pallet_finality_tracker::DEFAULT_REPORT_LATENCY.into();
+	pub WindowSize: BlockNumber = pallet_finality_tracker::DEFAULT_WINDOW_SIZE.into();
+	pub ReportLatency: BlockNumber = pallet_finality_tracker::DEFAULT_REPORT_LATENCY.into();
 }
 impl pallet_finality_tracker::Trait for Runtime {
 	type OnFinalizationStalled = ();
@@ -700,8 +704,6 @@ impl darwinia_staking::Trait for Runtime {
 	type TotalPower = TotalPower;
 }
 
-// Make sure that there are no more than `MAX_MEMBERS` members elected via phragmen.
-const_assert!(DESIRED_MEMBERS <= pallet_collective::MAX_MEMBERS);
 parameter_types! {
 	pub const ElectionsPhragmenModuleId: LockIdentifier = *b"da/phrel";
 	pub const CandidacyBond: Balance = 1 * COIN;
