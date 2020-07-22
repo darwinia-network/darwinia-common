@@ -26,7 +26,7 @@ use codec::{Decode, Encode};
 use ethereum_types::H128;
 // --- substrate ---
 use frame_support::{
-	decl_error, decl_event, decl_module, decl_storage, ensure,
+	debug, decl_error, decl_event, decl_module, decl_storage, ensure,
 	traits::Get,
 	traits::{Currency, ExistenceRequirement::KeepAlive, ReservableCurrency},
 };
@@ -371,12 +371,14 @@ impl<T: Trait> Relayable for Module<T> {
 		),
 		DispatchError,
 	> {
+		let eth_header_thing = raw_header_thing.into();
+		debug::trace!(target: "ethereum-relay", "{:?}", eth_header_thing);
 		let EthHeaderThing {
 			eth_header,
 			ethash_proof,
 			mmr_root,
-			mmr_proof: _,
-		} = raw_header_thing.into();
+			..
+		} = eth_header_thing;
 
 		if ConfirmedHeadersDoubleMap::contains_key(
 			eth_header.number / ConfirmBlocksInCycle::get(),
