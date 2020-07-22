@@ -1,7 +1,7 @@
 //! Test utilities
 
 mod balances {
-	pub use crate::Event;
+	pub use crate::{Event, Instance0, Instance1};
 }
 
 // --- std ---
@@ -41,7 +41,8 @@ impl_outer_origin! {
 impl_outer_event! {
 	pub enum Event for Test {
 		system<T>,
-		balances<T>,
+		balances Instance0<T>,
+		balances Instance1<T>,
 	}
 }
 
@@ -111,7 +112,7 @@ impl pallet_transaction_payment::Trait for Test {
 impl Trait<RingInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
-	type Event = ();
+	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = StorageMapShim<
@@ -201,18 +202,18 @@ fn emit_events_with_no_existential_deposit_suicide_with_dust() {
 		.existential_deposit(0)
 		.build()
 		.execute_with(|| {
-			assert_ok!(Balances::set_balance(RawOrigin::Root.into(), 1, 100, 0));
+			assert_ok!(Ring::set_balance(RawOrigin::Root.into(), 1, 100, 0));
 
 			assert_eq!(
 				events(),
 				[
 					Event::system(system::RawEvent::NewAccount(1)),
-					Event::balances(RawEvent::Endowed(1, 100)),
-					Event::balances(RawEvent::BalanceSet(1, 100, 0)),
+					Event::balances_Instance0(RawEvent::Endowed(1, 100)),
+					Event::balances_Instance0(RawEvent::BalanceSet(1, 100, 0)),
 				]
 			);
 
-			let _ = Balances::slash(&1, 99);
+			let _ = Ring::slash(&1, 99);
 
 			// no events
 			assert_eq!(events(), []);
@@ -222,7 +223,7 @@ fn emit_events_with_no_existential_deposit_suicide_with_dust() {
 			assert_eq!(
 				events(),
 				[
-					Event::balances(RawEvent::DustLost(1, 1)),
+					Event::balances_Instance0(RawEvent::DustLost(1, 1)),
 					Event::system(system::RawEvent::KilledAccount(1))
 				]
 			);

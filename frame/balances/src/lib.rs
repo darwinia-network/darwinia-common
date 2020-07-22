@@ -1420,10 +1420,16 @@ where
 
 impl<T: Trait<I>, I: Instance> DustCollector<T::AccountId> for Module<T, I> {
 	fn check(who: &T::AccountId) -> Result<(), ()> {
-		if Self::total_balance(who) < T::ExistentialDeposit::get() {
+		let total_balance = Self::total_balance(who);
+
+		if total_balance.is_zero() {
 			Ok(())
 		} else {
-			Err(())
+			if total_balance < T::ExistentialDeposit::get() {
+				Ok(())
+			} else {
+				Err(())
+			}
 		}
 	}
 
