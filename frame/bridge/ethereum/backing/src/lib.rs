@@ -55,7 +55,7 @@ pub trait Trait: frame_system::Trait {
 
 	type DetermineAccountId: AccountIdFor<Self::AccountId>;
 
-	type EthRelay: VerifyEthReceipts<RingBalance<Self>, Self::AccountId>;
+	type EthereumRelay: VerifyEthReceipts<RingBalance<Self>, Self::AccountId>;
 
 	type OnDepositRedeem: OnDepositRedeem<Self::AccountId, Balance = RingBalance<Self>>;
 
@@ -258,7 +258,7 @@ impl<T: Trait> Module<T> {
 		proof_record: &EthReceiptProof,
 		event_name: &str,
 	) -> Result<(Balance, T::AccountId, RingBalance<T>), DispatchError> {
-		let (verified_receipt, fee) = T::EthRelay::verify_receipt(proof_record)?;
+		let (verified_receipt, fee) = T::EthereumRelay::verify_receipt(proof_record)?;
 		let result = {
 			let eth_event = EthEvent {
 				name: event_name.to_owned(),
@@ -346,7 +346,7 @@ impl<T: Trait> Module<T> {
 		),
 		DispatchError,
 	> {
-		let (verified_receipt, fee) = T::EthRelay::verify_receipt(proof_record)?;
+		let (verified_receipt, fee) = T::EthereumRelay::verify_receipt(proof_record)?;
 		let result = {
 			let eth_event = EthEvent {
 				name: "Burndrop".to_owned(),
@@ -497,7 +497,7 @@ impl<T: Trait> Module<T> {
 			KeepAlive,
 		)?;
 		// Transfer the fee from redeemer.
-		T::RingCurrency::transfer(redeemer, &T::EthRelay::account_id(), fee, KeepAlive)?;
+		T::RingCurrency::transfer(redeemer, &T::EthereumRelay::account_id(), fee, KeepAlive)?;
 
 		RingProofVerified::insert(
 			(proof_record.header_hash, proof_record.index),
@@ -542,7 +542,7 @@ impl<T: Trait> Module<T> {
 			KeepAlive,
 		)?;
 		// Transfer the fee from redeemer.
-		T::RingCurrency::transfer(redeemer, &T::EthRelay::account_id(), fee, KeepAlive)?;
+		T::RingCurrency::transfer(redeemer, &T::EthereumRelay::account_id(), fee, KeepAlive)?;
 
 		KtonProofVerified::insert(
 			(proof_record.header_hash, proof_record.index),
@@ -587,7 +587,7 @@ impl<T: Trait> Module<T> {
 			&darwinia_account,
 		)?;
 		// Transfer the fee from redeemer.
-		T::RingCurrency::transfer(redeemer, &T::EthRelay::account_id(), fee, KeepAlive)?;
+		T::RingCurrency::transfer(redeemer, &T::EthereumRelay::account_id(), fee, KeepAlive)?;
 
 		// TODO: check deposit_id duplication
 		// TODO: Ignore Unit Interest for now

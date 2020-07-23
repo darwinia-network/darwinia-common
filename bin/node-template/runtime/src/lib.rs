@@ -20,7 +20,7 @@ pub mod impls {
 		impl AdjustableRelayerGame for EthRelayerGameAdjustor {
 			type Moment = BlockNumber;
 			type Balance = Balance;
-			type TcBlockNumber = <EthRelay as darwinia_support::relay::Relayable>::TcBlockNumber;
+			type TcBlockNumber = <EthereumRelay as darwinia_support::relay::Relayable>::TcBlockNumber;
 
 			fn challenge_time(round: Round) -> Self::Moment {
 				match round {
@@ -788,7 +788,7 @@ impl darwinia_ethereum_backing::Trait for Runtime {
 	type ModuleId = EthBackingModuleId;
 	type Event = Event;
 	type DetermineAccountId = darwinia_ethereum_backing::AccountIdDeterminator<Runtime>;
-	type EthRelay = EthLinearRelay;
+	type EthereumRelay = EthereumLinearRelay;
 	type OnDepositRedeem = Staking;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
@@ -836,7 +836,7 @@ impl darwinia_relayer_game::Trait<EthereumRelayerGameInstance> for Runtime {
 	type RingCurrency = Ring;
 	type RingSlash = Treasury;
 	type RelayerGameAdjustor = bridge::EthRelayerGameAdjustor;
-	type TargetChain = EthRelay;
+	type TargetChain = EthereumRelay;
 	type ConfirmPeriod = ConfirmPeriod;
 	type ApproveOrigin =
 		pallet_collective::EnsureProportionAtLeast<_3, _5, AccountId, CouncilCollective>;
@@ -894,10 +894,10 @@ construct_runtime!(
 		// Claims. Usable initially.
 		Claims: darwinia_claims::{Module, Call, Storage, Config, Event<T>, ValidateUnsigned},
 
-		EthBacking: darwinia_ethereum_backing::{Module, Call, Storage, Config<T>, Event<T>},
-		EthLinearRelay: darwinia_ethereum_linear_relay::{Module, Call, Storage, Config<T>, Event<T>},
-		EthOffchain: darwinia_ethereum_offchain::{Module, Call},
-		EthRelay: darwinia_ethereum_relay::{Module, Call, Storage, Event<T>},
+		EthereumBacking: darwinia_ethereum_backing::{Module, Call, Storage, Config<T>, Event<T>},
+		EthereumLinearRelay: darwinia_ethereum_linear_relay::{Module, Call, Storage, Config<T>, Event<T>},
+		EthereumOffchain: darwinia_ethereum_offchain::{Module, Call},
+		EthereumRelay: darwinia_ethereum_relay::{Module, Call, Storage, Config<T>, Event<T>},
 
 		HeaderMMR: darwinia_header_mmr::{Module, Call, Storage},
 
