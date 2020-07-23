@@ -98,6 +98,11 @@
 		"power": "Power",
 		"value": "Compact<Balance>"
 	},
+	"ElectionResultT": {
+		"elected_stashes": "Vec<AccountId>",
+		"exposures": "Vec<(AccountId, ExposureT)>",
+		"compute": "ElectionCompute"
+	},
 	"RKT": {
 		"r": "Balance",
 		"k": "Balance"
@@ -146,7 +151,7 @@
 	"EthAddress": "H160",
 	"Bloom": "[u8; 256; Bloom]",
 	"H128": "[u8; 16; H128]",
-	"DoubleNodeWithMerkleProof": {
+	"EthashProof": {
 		"dag_nodes": "(H512, H512)",
 		"proof": "Vec<H128>"
 	},
@@ -195,7 +200,10 @@
 		"mmr_root": "Hash"
 	},
 	"__[pallet.relayer-game]__": {},
+	"Round": "u64",
 	"TcBlockNumber": "Vec<u8>",
+	"TcHeaderHash": "Vec<u8>",
+	"MMRHash": "Vec<u8>",
 	"GameId": "TcBlockNumber",
 	"RawHeaderThing": "Vec<u8>",
 	"__[node.rpc]__": {},
