@@ -24,7 +24,7 @@ fn verify_parse_token_redeem_proof() {
 	ExtBuilder::default()
 		.build()
 		.execute_with(|| {
-			assert_ok!(EthRelay::set_number_of_blocks_safe(RawOrigin::Root.into(), 0));
+			assert_ok!(EthereumRelay::set_number_of_blocks_safe(RawOrigin::Root.into(), 0));
 
 			// https://ropsten.etherscan.io/tx/0x59c6758bd2b93b2f060e471df8d6f4d901c453d2c2c012ba28088acfb94f8216
 			let proof_record = EthReceiptProof {
@@ -63,7 +63,7 @@ fn verify_parse_token_redeem_proof() {
 				}
 				"#
 			);
-			assert_ok!(EthRelay::init_genesis_header(&header, 0x68de130d2c02a8_u64));
+			assert_ok!(EthereumRelay::init_genesis_header(&header, 0x68de130d2c02a8_u64));
 
 			let expect_account_id = <Test as Trait>::DetermineAccountId::account_id_for(
 				&hex_bytes_unchecked("0x2a92ae5b41feba5ee68a61449c557efa9e3b894a6461c058ec2de45429adb44546"),
@@ -80,7 +80,7 @@ fn verify_redeem_ring() {
 	ExtBuilder::default()
 		.build()
 		.execute_with(|| {
-			assert_ok!(EthRelay::set_number_of_blocks_safe(RawOrigin::Root.into(), 0));
+			assert_ok!(EthereumRelay::set_number_of_blocks_safe(RawOrigin::Root.into(), 0));
 
 			// https://ropsten.etherscan.io/tx/0x59c6758bd2b93b2f060e471df8d6f4d901c453d2c2c012ba28088acfb94f8216
 			let proof_record = EthReceiptProof {
@@ -120,7 +120,7 @@ fn verify_redeem_ring() {
 				}
 				"#
 			);
-			assert_ok!(EthRelay::init_genesis_header(&header, 0x68de130d2c02a8_u64));
+			assert_ok!(EthereumRelay::init_genesis_header(&header, 0x68de130d2c02a8_u64));
 
 			let expect_account_id = <Test as Trait>::DetermineAccountId::account_id_for(
 				&hex_bytes_unchecked("0x2a92ae5b41feba5ee68a61449c557efa9e3b894a6461c058ec2de45429adb44546"),
@@ -148,7 +148,7 @@ fn verify_redeem_kton() {
 	ExtBuilder::default()
 		.build()
 		.execute_with(|| {
-			assert_ok!(EthRelay::set_number_of_blocks_safe(RawOrigin::Root.into(), 0));
+			assert_ok!(EthereumRelay::set_number_of_blocks_safe(RawOrigin::Root.into(), 0));
 
 			// https://ropsten.etherscan.io/tx/0xc878562085dd8b68ad81adf0820aa0380f1f81b0ea7c012be122937b74020f96
 			// darwinia: 5FP2eFNSVxJzSrE3N2NEVFPhUU34VzYFD6DDtRXbYzTdwPn8
@@ -193,7 +193,7 @@ fn verify_redeem_kton() {
 			);
 
 			// totalDifficulty
-			assert_ok!(EthRelay::init_genesis_header(&header, 0x68e4ea361f7a78_u64));
+			assert_ok!(EthereumRelay::init_genesis_header(&header, 0x68e4ea361f7a78_u64));
 
 			let expect_account_id = <Test as Trait>::DetermineAccountId::account_id_for(
 				&hex_bytes_unchecked("0x2a92ae5b41feba5ee68a61449c557efa9e3b894a6461c058ec2de45429adb44546"),
@@ -227,7 +227,7 @@ fn verify_redeem_deposit() {
 	ExtBuilder::default()
 		.build()
 		.execute_with(|| {
-			assert_ok!(EthRelay::set_number_of_blocks_safe(RawOrigin::Root.into(), 0));
+			assert_ok!(EthereumRelay::set_number_of_blocks_safe(RawOrigin::Root.into(), 0));
 
 			// 1234ring -> 0.1234kton
 
@@ -278,7 +278,7 @@ fn verify_redeem_deposit() {
 				}
 				"#
 			);
-			assert_ok!(EthRelay::init_genesis_header(&header, 0x68e58ae1c31caf_u64));
+			assert_ok!(EthereumRelay::init_genesis_header(&header, 0x68e58ae1c31caf_u64));
 
 			let ring_locked_before = EthBacking::pot::<Ring>();
 			let expect_account_id = <Test as Trait>::DetermineAccountId::account_id_for(

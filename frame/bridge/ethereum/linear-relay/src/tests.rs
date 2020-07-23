@@ -16,7 +16,7 @@ use ethereum_primitives::receipt::TransactionOutcome;
 fn verify_receipt_proof() {
 	ExtBuilder::default().build().execute_with(|| {
 		System::inc_account_nonce(&2);
-		assert_ok!(EthRelay::set_number_of_blocks_safe(
+		assert_ok!(EthereumRelay::set_number_of_blocks_safe(
 			RawOrigin::Root.into(),
 			0
 		));
@@ -38,11 +38,11 @@ fn verify_receipt_proof() {
 		let receipt = Receipt::new(TransactionOutcome::StatusCode(1), 1371263.into(), logs);
 
 		// verify receipt
-		assert_ok!(EthRelay::init_genesis_header(
+		assert_ok!(EthereumRelay::init_genesis_header(
 			&header_with_proof.header,
 			0x6b2dd4a2c4f47d
 		));
-		assert_eq!(EthRelay::verify_receipt(&proof_record).unwrap().0, receipt);
+		assert_eq!(EthereumRelay::verify_receipt(&proof_record).unwrap().0, receipt);
 	});
 }
 
@@ -50,22 +50,22 @@ fn verify_receipt_proof() {
 fn relay_header() {
 	ExtBuilder::default().build().execute_with(|| {
 		let [origin, grandpa, _, parent, current] = mock_canonical_relationship();
-		assert_ok!(EthRelay::init_genesis_header(
+		assert_ok!(EthereumRelay::init_genesis_header(
 			&origin.header,
 			0x6b2dd4a2c4f47d
 		));
 
 		// relay grandpa
-		assert_ok!(EthRelay::verify_header_basic(&grandpa.header));
-		assert_ok!(EthRelay::maybe_store_header(&0, &grandpa.header));
+		assert_ok!(EthereumRelay::verify_header_basic(&grandpa.header));
+		assert_ok!(EthereumRelay::maybe_store_header(&0, &grandpa.header));
 
 		// relay parent
-		assert_ok!(EthRelay::verify_header_basic(&parent.header));
-		assert_ok!(EthRelay::maybe_store_header(&0, &parent.header));
+		assert_ok!(EthereumRelay::verify_header_basic(&parent.header));
+		assert_ok!(EthereumRelay::maybe_store_header(&0, &parent.header));
 
 		// relay current
-		assert_ok!(EthRelay::verify_header_basic(&current.header));
-		assert_ok!(EthRelay::maybe_store_header(&0, &current.header));
+		assert_ok!(EthereumRelay::verify_header_basic(&current.header));
+		assert_ok!(EthereumRelay::maybe_store_header(&0, &current.header));
 	});
 }
 
@@ -93,15 +93,15 @@ fn relay_header() {
 #[test]
 fn check_receipt_safety() {
 	ExtBuilder::default().build().execute_with(|| {
-		assert_ok!(EthRelay::add_authority(RawOrigin::Root.into(), 0));
-		assert_ok!(EthRelay::set_number_of_blocks_safe(
+		assert_ok!(EthereumRelay::add_authority(RawOrigin::Root.into(), 0));
+		assert_ok!(EthereumRelay::set_number_of_blocks_safe(
 			RawOrigin::Root.into(),
 			0
 		));
 
 		// family tree
 		let [origin, grandpa, uncle, _, _] = mock_canonical_relationship();
-		assert_ok!(EthRelay::init_genesis_header(
+		assert_ok!(EthereumRelay::init_genesis_header(
 			&origin.header,
 			0x6b2dd4a2c4f47d
 		));
@@ -111,22 +111,22 @@ fn check_receipt_safety() {
 		assert_eq!(grandpa.header.number, uncle.header.number);
 
 		// check receipt should succeed when we relayed the correct header
-		assert_ok!(EthRelay::relay_header(
+		assert_ok!(EthereumRelay::relay_header(
 			Origin::signed(0),
 			grandpa.header.clone(),
 			grandpa.proof
 		));
-		assert_ok!(EthRelay::check_receipt(Origin::signed(0), receipt.clone(),));
+		assert_ok!(EthereumRelay::check_receipt(Origin::signed(0), receipt.clone(),));
 
 		// check should fail when canonical hash was re-orged by
 		// the block which contains our tx's brother block
-		assert_ok!(EthRelay::relay_header(
+		assert_ok!(EthereumRelay::relay_header(
 			Origin::signed(0),
 			uncle.header,
 			uncle.proof
 		));
 		assert_err!(
-			EthRelay::check_receipt(Origin::signed(0), receipt.clone()),
+			EthereumRelay::check_receipt(Origin::signed(0), receipt.clone()),
 			<Error<Test>>::HeaderNC
 		);
 	});
@@ -135,14 +135,14 @@ fn check_receipt_safety() {
 #[test]
 fn canonical_reorg_uncle_should_succeed() {
 	ExtBuilder::default().build().execute_with(|| {
-		assert_ok!(EthRelay::add_authority(RawOrigin::Root.into(), 0));
-		assert_ok!(EthRelay::set_number_of_blocks_safe(
+		assert_ok!(EthereumRelay::add_authority(RawOrigin::Root.into(), 0));
+		assert_ok!(EthereumRelay::set_number_of_blocks_safe(
 			RawOrigin::Root.into(),
 			0
 		));
 
 		let [origin, grandpa, uncle, _, _] = mock_canonical_relationship();
-		assert_ok!(EthRelay::init_genesis_header(
+		assert_ok!(EthereumRelay::init_genesis_header(
 			&origin.header,
 			0x6b2dd4a2c4f47d
 		));
@@ -155,28 +155,28 @@ fn canonical_reorg_uncle_should_succeed() {
 		let number = grandpa.header.number;
 
 		// relay uncle header
-		assert_ok!(EthRelay::relay_header(
+		assert_ok!(EthereumRelay::relay_header(
 			Origin::signed(0),
 			uncle.header,
 			uncle.proof
 		));
-		assert_eq!(EthRelay::canonical_header_hash(number), uh.unwrap());
+		assert_eq!(EthereumRelay::canonical_header_hash(number), uh.unwrap());
 
 		// relay grandpa and re-org uncle
-		assert_ok!(EthRelay::relay_header(
+		assert_ok!(EthereumRelay::relay_header(
 			Origin::signed(0),
 			grandpa.header,
 			grandpa.proof
 		));
-		assert_eq!(EthRelay::canonical_header_hash(number), gh.unwrap());
+		assert_eq!(EthereumRelay::canonical_header_hash(number), gh.unwrap());
 	});
 }
 
 #[test]
 fn test_safety_block() {
 	ExtBuilder::default().build().execute_with(|| {
-		assert_ok!(EthRelay::add_authority(RawOrigin::Root.into(), 0));
-		assert_ok!(EthRelay::set_number_of_blocks_safe(
+		assert_ok!(EthereumRelay::add_authority(RawOrigin::Root.into(), 0));
+		assert_ok!(EthereumRelay::set_number_of_blocks_safe(
 			RawOrigin::Root.into(),
 			2
 		));
@@ -187,43 +187,43 @@ fn test_safety_block() {
 		let receipt = mock_canonical_receipt();
 
 		// not safety after 0 block
-		assert_ok!(EthRelay::init_genesis_header(
+		assert_ok!(EthereumRelay::init_genesis_header(
 			&origin.header,
 			0x6b2dd4a2c4f47d
 		));
-		assert_ok!(EthRelay::relay_header(
+		assert_ok!(EthereumRelay::relay_header(
 			Origin::signed(0),
 			grandpa.header,
 			grandpa.proof
 		));
 		assert_err!(
-			EthRelay::check_receipt(Origin::signed(0), receipt.clone()),
+			EthereumRelay::check_receipt(Origin::signed(0), receipt.clone()),
 			<Error<Test>>::HeaderNS
 		);
 
 		// not safety after 2 blocks
-		assert_ok!(EthRelay::relay_header(
+		assert_ok!(EthereumRelay::relay_header(
 			Origin::signed(0),
 			parent.header,
 			parent.proof
 		));
-		assert_ok!(EthRelay::relay_header(
+		assert_ok!(EthereumRelay::relay_header(
 			Origin::signed(0),
 			uncle.header,
 			uncle.proof
 		));
 		assert_err!(
-			EthRelay::check_receipt(Origin::signed(0), receipt.clone()),
+			EthereumRelay::check_receipt(Origin::signed(0), receipt.clone()),
 			<Error<Test>>::HeaderNS
 		);
 
 		// safety after 3 blocks
-		assert_ok!(EthRelay::relay_header(
+		assert_ok!(EthereumRelay::relay_header(
 			Origin::signed(0),
 			current.header,
 			current.proof
 		));
-		assert_ok!(EthRelay::check_receipt(Origin::signed(0), receipt));
+		assert_ok!(EthereumRelay::check_receipt(Origin::signed(0), receipt));
 	});
 }
 
@@ -242,8 +242,8 @@ fn relay_mainet_header() {
 		.eth_network(EthNetworkType::Mainnet)
 		.build()
 		.execute_with(|| {
-			assert_ok!(EthRelay::add_authority(RawOrigin::Root.into(), 0));
-			assert_ok!(EthRelay::set_number_of_blocks_safe(
+			assert_ok!(EthereumRelay::add_authority(RawOrigin::Root.into(), 0));
+			assert_ok!(EthereumRelay::set_number_of_blocks_safe(
 				RawOrigin::Root.into(),
 				0
 			));
@@ -254,7 +254,7 @@ fn relay_mainet_header() {
 				// println!("{:?}", blocks_with_proof);
 				let header: EthHeader =
 					rlp::decode(&blocks_with_proof.header_rlp.to_vec()).unwrap();
-				assert_ok!(EthRelay::init_genesis_header(&header, 0x6b2dd4a2c4f47d));
+				assert_ok!(EthereumRelay::init_genesis_header(&header, 0x6b2dd4a2c4f47d));
 				// println!("{:?}", &header);
 			}
 
@@ -266,11 +266,11 @@ fn relay_mainet_header() {
 					rlp::decode(&blocks_with_proof.header_rlp.to_vec()).unwrap();
 				// println!("{:?}", &header);
 
-				assert_ok!(EthRelay::verify_header_pow(
+				assert_ok!(EthereumRelay::verify_header_pow(
 					&header,
 					&blocks_with_proof.to_double_node_with_merkle_proof_vec()
 				));
-				assert_ok!(EthRelay::maybe_store_header(&0, &header));
+				assert_ok!(EthereumRelay::maybe_store_header(&0, &header));
 			}
 
 			// block 8996778
@@ -281,11 +281,11 @@ fn relay_mainet_header() {
 					rlp::decode(&blocks_with_proof.header_rlp.to_vec()).unwrap();
 				// println!("{:?}", &header);
 
-				assert_ok!(EthRelay::verify_header_pow(
+				assert_ok!(EthereumRelay::verify_header_pow(
 					&header,
 					&blocks_with_proof.to_double_node_with_merkle_proof_vec()
 				));
-				assert_ok!(EthRelay::maybe_store_header(&0, &header));
+				assert_ok!(EthereumRelay::maybe_store_header(&0, &header));
 			}
 		});
 }
@@ -293,18 +293,18 @@ fn relay_mainet_header() {
 #[test]
 fn receipt_verify_fees_and_relayer_claim_reward() {
 	ExtBuilder::default().build().execute_with(|| {
-		assert_ok!(EthRelay::add_authority(RawOrigin::Root.into(), 0));
-		assert_ok!(EthRelay::set_number_of_blocks_safe(
+		assert_ok!(EthereumRelay::add_authority(RawOrigin::Root.into(), 0));
+		assert_ok!(EthereumRelay::set_number_of_blocks_safe(
 			RawOrigin::Root.into(),
 			0
 		));
 
-		assert_ok!(EthRelay::set_number_of_blocks_finality(
+		assert_ok!(EthereumRelay::set_number_of_blocks_finality(
 			RawOrigin::Root.into(),
 			0
 		));
 
-		assert_ok!(EthRelay::set_receipt_verify_fee(RawOrigin::Root.into(), 0));
+		assert_ok!(EthereumRelay::set_receipt_verify_fee(RawOrigin::Root.into(), 0));
 
 		// family tree
 		let [origin, grandpa, _, parent, _] = mock_canonical_relationship();
@@ -312,42 +312,42 @@ fn receipt_verify_fees_and_relayer_claim_reward() {
 		let receipt = mock_canonical_receipt();
 
 		// not safety after 0 block
-		assert_ok!(EthRelay::init_genesis_header(
+		assert_ok!(EthereumRelay::init_genesis_header(
 			&origin.header,
 			0x6b2dd4a2c4f47d
 		));
-		assert_ok!(EthRelay::relay_header(
+		assert_ok!(EthereumRelay::relay_header(
 			Origin::signed(0),
 			grandpa.header,
 			grandpa.proof
 		));
 
 		// not safety after 2 blocks
-		assert_ok!(EthRelay::relay_header(
+		assert_ok!(EthereumRelay::relay_header(
 			Origin::signed(0),
 			parent.header,
 			parent.proof
 		));
 
-		assert_ok!(EthRelay::check_receipt(Origin::signed(1), receipt.clone()));
+		assert_ok!(EthereumRelay::check_receipt(Origin::signed(1), receipt.clone()));
 
-		assert_ok!(EthRelay::set_receipt_verify_fee(RawOrigin::Root.into(), 10));
+		assert_ok!(EthereumRelay::set_receipt_verify_fee(RawOrigin::Root.into(), 10));
 
 		assert_err!(
-			EthRelay::check_receipt(Origin::signed(1), receipt.clone()),
+			EthereumRelay::check_receipt(Origin::signed(1), receipt.clone()),
 			RingError::InsufficientBalance,
 		);
 
 		let _ = Ring::deposit_creating(&1, 1000);
 
-		assert_ok!(EthRelay::check_receipt(Origin::signed(1), receipt.clone()));
+		assert_ok!(EthereumRelay::check_receipt(Origin::signed(1), receipt.clone()));
 
-		assert_eq!(EthRelay::pot(), 10);
+		assert_eq!(EthereumRelay::pot(), 10);
 		assert_eq!(Ring::free_balance(&1), 990);
 
-		assert_ok!(EthRelay::claim_reward(Origin::signed(0)));
+		assert_ok!(EthereumRelay::claim_reward(Origin::signed(0)));
 
-		assert_eq!(EthRelay::pot(), 0);
+		assert_eq!(EthereumRelay::pot(), 0);
 		assert_eq!(Ring::free_balance(&0), 10);
 	});
 }
@@ -364,7 +364,7 @@ fn check_eth_relay_header_hash_works() {
 				// println!("{:?}", blocks_with_proof);
 				let header: EthHeader =
 					rlp::decode(&blocks_with_proof.header_rlp.to_vec()).unwrap();
-				assert_ok!(EthRelay::init_genesis_header(&header, 0x6b2dd4a2c4f47d));
+				assert_ok!(EthereumRelay::init_genesis_header(&header, 0x6b2dd4a2c4f47d));
 
 				let blocks_with_proof = BlockWithProof::from_file("./src/test-data/8996776.json");
 				let header: EthHeader =

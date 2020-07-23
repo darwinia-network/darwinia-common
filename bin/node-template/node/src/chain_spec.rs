@@ -11,7 +11,8 @@ use sp_runtime::{
 };
 // --- darwinia ---
 use darwinia_claims::ClaimsList;
-use darwinia_ethereum_linear_relay::DagsMerkleRootsLoader;
+use darwinia_ethereum_linear_relay::DagsMerkleRootsLoader as DagsMerkleRootsLoaderLR;
+use darwinia_ethereum_relay::DagsMerkleRootsLoader as DagsMerkleRootsLoaderR;
 use node_template_runtime::{BalancesConfig as RingConfig, *};
 
 // Note this is the URL for the telemetry server
@@ -226,7 +227,7 @@ fn testnet_genesis(
 			),
 		}),
 		darwinia_ethereum_backing: Some(Default::default()),
-		darwinia_ethereum_linear_relay: Some(EthLinearRelayConfig {
+		darwinia_ethereum_linear_relay: Some(EthereumLinearRelayConfig {
 			genesis_header: Some((
 				0x400000000,
 				vec![
@@ -258,7 +259,14 @@ fn testnet_genesis(
 				],
 			)),
 			check_authority: false,
-			dags_merkle_roots_loader: DagsMerkleRootsLoader::from_file(
+			dags_merkle_roots_loader: DagsMerkleRootsLoaderLR::from_file(
+				"bin/node-template/node/res/dags_merkle_roots.json",
+				"DAG_MERKLE_ROOTS_PATH",
+			),
+			..Default::default()
+		}),
+		darwinia_ethereum_relay: Some(EthereumRelayConfig {
+			dags_merkle_roots_loader: DagsMerkleRootsLoaderR::from_file(
 				"bin/node-template/node/res/dags_merkle_roots.json",
 				"DAG_MERKLE_ROOTS_PATH",
 			),

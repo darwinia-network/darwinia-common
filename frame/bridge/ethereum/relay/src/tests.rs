@@ -32,7 +32,7 @@ fn test_verify_test_data_mmr_proof() {
 		let header_things = header_things().unwrap();
 		&header_things.iter().for_each(|ht| {
 			assert_eq!(
-				EthRelay::verify_mmr(
+				EthereumRelay::verify_mmr(
 					header_things[3].eth_header.number,
 					array_unchecked!(header_things[3].mmr_root, 0, 32).into(),
 					ht.mmr_proof
@@ -55,18 +55,18 @@ fn test_store_header() {
 	ExtBuilder::default().build().execute_with(|| {
 		let header_thing = &header_things().unwrap()[1];
 		assert_eq!(header_thing.eth_header.number, 1);
-		assert_ok!(<EthRelay as Relayable>::store_header(
+		assert_ok!(<EthereumRelay as Relayable>::store_header(
 			Box::new(header_thing).encode()
 		));
 
-		assert_eq!(<EthRelay as Relayable>::best_block_number(), 1);
+		assert_eq!(<EthereumRelay as Relayable>::best_block_number(), 1);
 	})
 }
 #[test]
 fn test_verify_raw_header_thing() {
 	ExtBuilder::default().build().execute_with(|| {
 		let header_thing = &header_things().unwrap()[2];
-		assert_ok!(<EthRelay as Relayable>::verify_raw_header_thing(
+		assert_ok!(<EthereumRelay as Relayable>::verify_raw_header_thing(
 			Box::new(header_thing).encode(),
 			false
 		));
@@ -79,11 +79,11 @@ fn test_verify_raw_header_thing_chain() {
 		let mut header_things = header_things().unwrap();
 		header_things.reverse();
 
-		assert_ok!(<EthRelay as Relayable>::store_header(
+		assert_ok!(<EthereumRelay as Relayable>::store_header(
 			Box::new(&header_things[3]).encode()
 		));
 
-		assert_ok!(<EthRelay as Relayable>::verify_raw_header_thing_chain(
+		assert_ok!(<EthereumRelay as Relayable>::verify_raw_header_thing_chain(
 			header_things[..3]
 				.iter()
 				.map(|ht| Box::new(ht).encode())

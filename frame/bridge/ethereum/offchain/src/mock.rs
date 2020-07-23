@@ -13,7 +13,7 @@ use darwinia_ethereum_linear_relay::EthNetworkType;
 
 impl_outer_dispatch! {
 	pub enum Call for Test where origin: Origin {
-		darwinia_ethereum_linear_relay::EthRelay,
+		darwinia_ethereum_linear_relay::EthereumRelay,
 		darwinia_ethereum_offchain::EthOffchain,
 	}
 }
@@ -47,7 +47,7 @@ pub type _KtonError = darwinia_balances::Error<Test, KtonInstance>;
 pub type _Kton = darwinia_balances::Module<Test, KtonInstance>;
 
 pub type System = frame_system::Module<Test>;
-pub type EthRelay = darwinia_ethereum_linear_relay::Module<Test>;
+pub type EthereumRelay = darwinia_ethereum_linear_relay::Module<Test>;
 
 pub type EthOffchain = Module<Test>;
 pub type _OffchainError = Error<Test>;
