@@ -370,7 +370,7 @@ impl<T: Trait> Module<T> {
 	) -> Result<Vec<EthashProof>, DispatchError> {
 		let raw_str = match from_utf8(json_str) {
 			Ok(r) => r,
-			Err(_) => return Err(<Error<T>>::ProofJE)?,
+			Err(_) => Err(<Error<T>>::ProofJE)?,
 		};
 
 		let mut proof_list: Vec<EthashProof> = Vec::new();
@@ -388,7 +388,7 @@ impl<T: Trait> Module<T> {
 		scale_str: &[u8],
 	) -> Result<Vec<EthashProof>, DispatchError> {
 		if scale_str.len() < 2 {
-			return Err(<Error<T>>::ProofSE)?;
+			Err(<Error<T>>::ProofSE)?;
 		};
 		let proof_scale_bytes = hex_bytes_unchecked(from_utf8(scale_str).unwrap_or_default());
 		Ok(Decode::decode::<&[u8]>(&mut &proof_scale_bytes[..]).unwrap_or_default())

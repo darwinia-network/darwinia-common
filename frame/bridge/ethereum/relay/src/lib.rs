@@ -384,10 +384,10 @@ impl<T: Trait> Relayable for Module<T> {
 			eth_header.number / ConfirmBlocksInCycle::get(),
 			eth_header.number,
 		) {
-			return Err(<Error<T>>::TargetHeaderAE.into());
+			Err(<Error<T>>::TargetHeaderAE)?;
 		}
 		if !Self::verify_block_seal(&eth_header, &ethash_proof) {
-			return Err(<Error<T>>::HeaderI.into());
+			Err(<Error<T>>::HeaderI)?;
 		};
 		if with_proposed_raw_header {
 			Ok((
@@ -438,11 +438,11 @@ impl<T: Trait> Relayable for Module<T> {
 			} = raw_header_thing.into();
 
 			if !Self::verify_block_seal(&eth_header, &ethash_proof) {
-				return Err(<Error<T>>::HeaderI.into());
+				Err(<Error<T>>::HeaderI)?;
 			};
 
 			if !Self::verify_block_with_confrim_blocks(&eth_header) {
-				return Err(<Error<T>>::ConfirmebBlocksC.into());
+				Err(<Error<T>>::ConfirmebBlocksC)?;
 			}
 			if idx == 0 {
 				// The mmr_root of first submit should includ the hash last confirm block
@@ -463,7 +463,7 @@ impl<T: Trait> Relayable for Module<T> {
 								.collect(),
 							vec![(l.0, l.1)],
 						) {
-						return Err(<Error<T>>::MMRI.into());
+						Err(<Error<T>>::MMRI)?;
 					}
 				};
 
@@ -492,7 +492,7 @@ impl<T: Trait> Relayable for Module<T> {
 							array_unchecked!(eth_header.hash.unwrap_or_default(), 0, 32).into(),
 						)],
 					) {
-					return Err(<Error<T>>::MMRI.into());
+					Err(<Error<T>>::MMRI)?;
 				}
 			}
 			output.push(TcHeaderBrief {
@@ -521,7 +521,7 @@ impl<T: Trait> Relayable for Module<T> {
 
 		for i in 1..header_brief_chain.len() - 1 {
 			if header_brief_chain[i].parent_hash != header_brief_chain[i + 1].hash {
-				return Err(<Error<T>>::ChainI.into());
+				Err(<Error<T>>::ChainI)?;
 			}
 			let header = EthHeader::decode(&mut &*header_brief_chain[i].others).unwrap_or_default();
 			let previous_header =
@@ -529,7 +529,7 @@ impl<T: Trait> Relayable for Module<T> {
 
 			if *(header.difficulty()) != eth_partial.calculate_difficulty(&header, &previous_header)
 			{
-				return Err(<Error<T>>::ChainI.into());
+				Err(<Error<T>>::ChainI)?;
 			}
 		}
 		Ok(())
