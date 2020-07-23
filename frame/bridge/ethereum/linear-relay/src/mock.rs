@@ -22,7 +22,7 @@ pub type RingInstance = darwinia_balances::Instance0;
 pub type KtonInstance = darwinia_balances::Instance1;
 
 pub type System = frame_system::Module<Test>;
-pub type EthRelay = Module<Test>;
+pub type EthereumRelay = Module<Test>;
 pub type Ring = darwinia_balances::Module<Test, RingInstance>;
 
 pub(crate) type RingError = darwinia_balances::Error<Test, RingInstance>;
@@ -232,7 +232,7 @@ impl_outer_origin! {
 impl_outer_dispatch! {
 	pub enum Call for Test where origin: Origin {
 		frame_system::System,
-		pallet_eth_relay::EthRelay,
+		pallet_eth_relay::EthereumRelay,
 	}
 }
 

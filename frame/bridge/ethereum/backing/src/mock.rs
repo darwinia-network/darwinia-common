@@ -39,7 +39,7 @@ pub type Kton = darwinia_balances::Module<Test, KtonInstance>;
 type Session = pallet_session::Module<Test>;
 type System = frame_system::Module<Test>;
 type Timestamp = pallet_timestamp::Module<Test>;
-pub type EthRelay = darwinia_ethereum_linear_relay::Module<Test>;
+pub type EthereumRelay = darwinia_ethereum_linear_relay::Module<Test>;
 pub type Staking = darwinia_staking::Module<Test>;
 pub type EthBacking = Module<Test>;
 
@@ -54,7 +54,7 @@ impl_outer_origin! {
 
 impl_outer_dispatch! {
 	pub enum Call for Test where origin: Origin {
-		darwinia_ethereum_linear_relay::EthRelay,
+		darwinia_ethereum_linear_relay::EthereumRelay,
 		darwinia_staking::Staking,
 	}
 }
@@ -216,7 +216,7 @@ impl Trait for Test {
 	type ModuleId = EthBackingModuleId;
 	type Event = ();
 	type DetermineAccountId = AccountIdDeterminator<Test>;
-	type EthRelay = EthRelay;
+	type EthereumRelay = EthereumRelay;
 	type OnDepositRedeem = Staking;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;

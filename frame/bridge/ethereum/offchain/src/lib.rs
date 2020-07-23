@@ -73,7 +73,7 @@ use array_bytes::{base_n_bytes_unchecked, hex_bytes_unchecked};
 use darwinia_support::literal_procesor::extract_from_json_str;
 use ethereum_primitives::{ethashproof::EthashProof, header::EthHeader};
 
-type EthRelay<T> = darwinia_ethereum_linear_relay::Module<T>;
+type EthereumRelay<T> = darwinia_ethereum_linear_relay::Module<T>;
 type EthRelayCall<T> = darwinia_ethereum_linear_relay::Call<T>;
 
 pub const ETH_OFFCHAIN: KeyTypeId = KeyTypeId(*b"etho");
@@ -235,7 +235,7 @@ impl<T: Trait> Module<T> {
 
 	/// Get the last relayed block number, and return the blocknumber of next one as target
 	fn get_target_number() -> Result<u64, DispatchError> {
-		let target_number = <EthRelay<T>>::header(<EthRelay<T>>::best_header_hash())
+		let target_number = <EthereumRelay<T>>::header(<EthereumRelay<T>>::best_header_hash())
 			.ok_or(<Error<T>>::BestHeaderNE)?
 			.number
 			.checked_add(1)
@@ -370,7 +370,7 @@ impl<T: Trait> Module<T> {
 	) -> Result<Vec<EthashProof>, DispatchError> {
 		let raw_str = match from_utf8(json_str) {
 			Ok(r) => r,
-			Err(_) => return Err(<Error<T>>::ProofJE)?,
+			Err(_) => Err(<Error<T>>::ProofJE)?,
 		};
 
 		let mut proof_list: Vec<EthashProof> = Vec::new();
@@ -388,7 +388,7 @@ impl<T: Trait> Module<T> {
 		scale_str: &[u8],
 	) -> Result<Vec<EthashProof>, DispatchError> {
 		if scale_str.len() < 2 {
-			return Err(<Error<T>>::ProofSE)?;
+			Err(<Error<T>>::ProofSE)?;
 		};
 		let proof_scale_bytes = hex_bytes_unchecked(from_utf8(scale_str).unwrap_or_default());
 		Ok(Decode::decode::<&[u8]>(&mut &proof_scale_bytes[..]).unwrap_or_default())

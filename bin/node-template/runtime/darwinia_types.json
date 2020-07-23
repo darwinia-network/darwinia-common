@@ -101,6 +101,13 @@
 		"slashed": "RKT",
 		"paid_out": "RKT"
 	},
+	"UnappliedSlash": {
+		"validator": "AccountId",
+		"own": "RKT",
+		"others": "Vec<(AccountId, RKT)>",
+		"reporters": "Vec<AccountId>",
+		"payout": "RKT"
+	},
 	"__[pallet.treasury]__": {},
 	"Proposal": {
 		"proposer": "AccountId",

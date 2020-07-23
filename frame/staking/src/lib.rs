@@ -3027,7 +3027,7 @@ impl<T: Trait> Module<T> {
 					"💸 detected an error in the staking locking and snapshot."
 				);
 				// abort.
-				return Err(<Error<T>>::PhragmenBogusNominator.into());
+				Err(<Error<T>>::PhragmenBogusNominator)?;
 			}
 
 			if !is_validator {
@@ -3044,13 +3044,13 @@ impl<T: Trait> Module<T> {
 					// each target in the provided distribution must be actually nominated by the
 					// nominator after the last non-zero slash.
 					if nomination.targets.iter().find(|&tt| tt == t).is_none() {
-						return Err(<Error<T>>::PhragmenBogusNomination.into());
+						Err(<Error<T>>::PhragmenBogusNomination)?;
 					}
 
 					if <Self as Store>::SlashingSpans::get(&t).map_or(false, |spans| {
 						nomination.submitted_in < spans.last_nonzero_slash()
 					}) {
-						return Err(<Error<T>>::PhragmenSlashedNomination.into());
+						Err(<Error<T>>::PhragmenSlashedNomination)?;
 					}
 				}
 			} else {

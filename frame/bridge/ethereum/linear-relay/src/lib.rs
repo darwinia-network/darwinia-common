@@ -572,7 +572,7 @@ impl<T: Trait> Module<T> {
 			.verify_seal_with_proof(&header, &ethash_proof, &merkle_root)
 			.is_err()
 		{
-			return Err(<Error<T>>::MixHashMis)?;
+			Err(<Error<T>>::MixHashMis)?;
 		};
 		trace!(target: "ethereum-linear-relay", "MixHash OK");
 
