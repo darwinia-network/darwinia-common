@@ -31,7 +31,7 @@ pub type RingInstance = darwinia_balances::Instance0;
 pub type KtonInstance = darwinia_balances::Instance1;
 
 pub type System = frame_system::Module<Test>;
-pub type EthRelay = Module<Test>;
+pub type EthereumRelay = Module<Test>;
 
 darwinia_support::impl_account_data! {
 	pub struct AccountData<Balance>

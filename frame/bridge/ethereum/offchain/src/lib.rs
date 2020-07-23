@@ -73,7 +73,7 @@ use array_bytes::{base_n_bytes_unchecked, hex_bytes_unchecked};
 use darwinia_support::literal_procesor::extract_from_json_str;
 use ethereum_primitives::{ethashproof::EthashProof, header::EthHeader};
 
-type EthRelay<T> = darwinia_ethereum_linear_relay::Module<T>;
+type EthereumRelay<T> = darwinia_ethereum_linear_relay::Module<T>;
 type EthRelayCall<T> = darwinia_ethereum_linear_relay::Call<T>;
 
 pub const ETH_OFFCHAIN: KeyTypeId = KeyTypeId(*b"etho");
@@ -235,7 +235,7 @@ impl<T: Trait> Module<T> {
 
 	/// Get the last relayed block number, and return the blocknumber of next one as target
 	fn get_target_number() -> Result<u64, DispatchError> {
-		let target_number = <EthRelay<T>>::header(<EthRelay<T>>::best_header_hash())
+		let target_number = <EthereumRelay<T>>::header(<EthereumRelay<T>>::best_header_hash())
 			.ok_or(<Error<T>>::BestHeaderNE)?
 			.number
 			.checked_add(1)
