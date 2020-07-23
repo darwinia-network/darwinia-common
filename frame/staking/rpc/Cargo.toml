@@ -17,6 +17,6 @@ jsonrpc-derive = "14.2.1"
 # darwinia
 darwinia-staking-rpc-runtime-api = { path = "./runtime-api" }
 # substrate
-sp-api = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.2" }
-sp-blockchain = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.2" }
-sp-runtime = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.2" }
+sp-api = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
+sp-blockchain = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
+sp-runtime = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }

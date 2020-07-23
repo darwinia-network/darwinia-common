@@ -21,10 +21,10 @@ ethereum-primitives = { default-features = false, path = "../../../../primitives
 ethereum-types = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 rlp = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.2" }
-frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.2" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.2" }
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.2" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
+frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
 
 [dev-dependencies]
 # darwinia
@@ -32,8 +32,8 @@ array-bytes = { path = "../../../../primitives/array-bytes" }
 darwinia-balances = { path = "../../../../frame/balances" }
 ethereum-primitives = { features = ["easy-testing"], path = "../../../../primitives/ethereum-primitives" }
 # substrate
-sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.2" }
-sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.2" }
+sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
+sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
 
 [features]
 default = ["std"]
