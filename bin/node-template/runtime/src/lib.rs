@@ -333,6 +333,7 @@ use frame_support::{
 		IdentityFee, Weight,
 	},
 };
+use frame_system::{EnsureOneOf, EnsureRoot};
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
@@ -611,18 +612,18 @@ impl pallet_collective::Trait<TechnicalCollective> for Runtime {
 	type MaxProposals = TechnicalMaxProposals;
 }
 
+type EnsureRootOrHalfCouncil = EnsureOneOf<
+	AccountId,
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>,
+>;
 impl pallet_membership::Trait<pallet_membership::Instance0> for Runtime {
 	type Event = Event;
-	type AddOrigin =
-		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
-	type RemoveOrigin =
-		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
-	type SwapOrigin =
-		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
-	type ResetOrigin =
-		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
-	type PrimeOrigin =
-		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
+	type AddOrigin = EnsureRootOrHalfCouncil;
+	type RemoveOrigin = EnsureRootOrHalfCouncil;
+	type SwapOrigin = EnsureRootOrHalfCouncil;
+	type ResetOrigin = EnsureRootOrHalfCouncil;
+	type PrimeOrigin = EnsureRootOrHalfCouncil;
 	type MembershipInitialized = TechnicalCommittee;
 	type MembershipChanged = TechnicalCommittee;
 }
@@ -679,8 +680,11 @@ impl darwinia_staking::Trait for Runtime {
 	type BondingDurationInBlockNumber = BondingDurationInBlockNumber;
 	type SlashDeferDuration = SlashDeferDuration;
 	/// A super-majority of the council can cancel the slash.
-	type SlashCancelOrigin =
-		pallet_collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilCollective>;
+	type SlashCancelOrigin = EnsureOneOf<
+		AccountId,
+		EnsureRoot<AccountId>,
+		pallet_collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilCollective>,
+	>;
 	type SessionInterface = Self;
 	type NextNewSession = Session;
 	type ElectionLookahead = ElectionLookahead;
@@ -750,10 +754,16 @@ impl darwinia_treasury::Trait for Runtime {
 	type ModuleId = TreasuryModuleId;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
-	type ApproveOrigin =
-		pallet_collective::EnsureProportionAtLeast<_3, _5, AccountId, CouncilCollective>;
-	type RejectOrigin =
-		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
+	type ApproveOrigin = EnsureOneOf<
+		AccountId,
+		EnsureRoot<AccountId>,
+		pallet_collective::EnsureMembers<_3, _5, AccountId, CouncilCollective>,
+	>;
+	type RejectOrigin = EnsureOneOf<
+		AccountId,
+		EnsureRoot<AccountId>,
+		pallet_collective::EnsureMembers<_1, _2, AccountId, CouncilCollective>,
+	>;
 	type Tippers = ElectionsPhragmen;
 	type TipCountdown = TipCountdown;
 	type TipFindersFee = TipFindersFee;
@@ -838,10 +848,16 @@ impl darwinia_relayer_game::Trait<EthereumRelayerGameInstance> for Runtime {
 	type RelayerGameAdjustor = bridge::EthRelayerGameAdjustor;
 	type TargetChain = EthRelay;
 	type ConfirmPeriod = ConfirmPeriod;
-	type ApproveOrigin =
-		pallet_collective::EnsureProportionAtLeast<_3, _5, AccountId, CouncilCollective>;
-	type RejectOrigin =
-		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
+	type ApproveOrigin = EnsureOneOf<
+		AccountId,
+		EnsureRoot<AccountId>,
+		pallet_collective::EnsureMembers<_3, _5, AccountId, CouncilCollective>,
+	>;
+	type RejectOrigin = EnsureOneOf<
+		AccountId,
+		EnsureRoot<AccountId>,
+		pallet_collective::EnsureMembers<_1, _2, AccountId, CouncilCollective>,
+	>;
 }
 
 construct_runtime!(

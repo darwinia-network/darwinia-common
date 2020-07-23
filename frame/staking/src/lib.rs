@@ -2280,9 +2280,7 @@ decl_module! {
 			.saturating_add((35 * WEIGHT_PER_MICROS).saturating_mul(slash_indices.len() as Weight))
 		]
 		fn cancel_deferred_slash(origin, era: EraIndex, slash_indices: Vec<u32>) {
-			T::SlashCancelOrigin::try_origin(origin)
-				.map(|_| ())
-				.or_else(ensure_root)?;
+			T::SlashCancelOrigin::ensure_origin(origin)?;
 
 			ensure!(!slash_indices.is_empty(), <Error<T>>::EmptyTargets);
 			ensure!(is_sorted_and_unique(&slash_indices), <Error<T>>::NotSortedAndUnique);
@@ -3388,7 +3386,8 @@ impl<T: Trait> Module<T> {
 	/// Self votes are added and nominations before the most recent slashing span are reaped.
 	///
 	/// No storage item is updated.
-	fn do_phragmen<Accuracy: PerThing>() -> Option<PrimitiveElectionResult<T::AccountId, Accuracy>> {
+	fn do_phragmen<Accuracy: PerThing>() -> Option<PrimitiveElectionResult<T::AccountId, Accuracy>>
+	{
 		let mut all_nominators: Vec<(T::AccountId, VoteWeight, Vec<T::AccountId>)> = vec![];
 		let mut all_validators = vec![];
 		for (validator, _) in <Validators<T>>::iter() {
