@@ -12,7 +12,7 @@ use sp_runtime::{
 };
 // --- darwinia ---
 use array_bytes::fixed_hex_bytes_unchecked;
-use darwinia_ethereum_linear_relay::EthNetworkType;
+use darwinia_ethereum_linear_relay::EthereumNetworkType;
 use darwinia_staking::{EraIndex, Exposure, ExposureOf};
 
 use crate::*;
@@ -151,13 +151,13 @@ impl pallet_session::historical::Trait for Test {
 }
 
 parameter_types! {
-	pub const EthRelayModuleId: ModuleId = ModuleId(*b"da/ethli");
-	pub const EthNetwork: EthNetworkType = EthNetworkType::Ropsten;
+	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethli");
+	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Ropsten;
 }
 impl darwinia_ethereum_linear_relay::Trait for Test {
-	type ModuleId = EthRelayModuleId;
+	type ModuleId = EthereumRelayModuleId;
 	type Event = ();
-	type EthNetwork = EthNetwork;
+	type EthereumNetwork = EthereumNetwork;
 	type Call = Call;
 	type Currency = Ring;
 }

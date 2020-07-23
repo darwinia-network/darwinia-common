@@ -83,7 +83,7 @@ pub trait Trait: frame_system::Trait {
 
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
-	type EthNetwork: Get<EthNetworkType>;
+	type EthereumNetwork: Get<EthereumNetworkType>;
 
 	type Call: Dispatchable + From<Call<Self>> + IsSubType<Module<Self>, Self> + Clone;
 
@@ -233,7 +233,7 @@ decl_module! {
 	{
 		type Error = Error<T>;
 
-		const EthNetwork: EthNetworkType = T::EthNetwork::get();
+		const EthereumNetwork: EthereumNetworkType = T::EthereumNetwork::get();
 
 		fn deposit_event() = default;
 
@@ -542,9 +542,9 @@ impl<T: Trait> Module<T> {
 		trace!(target: "ethereum-linear-relay", "Number2 OK");
 
 		// check difficulty
-		let ethash_params = match T::EthNetwork::get() {
-			EthNetworkType::Mainnet => EthashPartial::production(),
-			EthNetworkType::Ropsten => EthashPartial::ropsten_testnet(),
+		let ethash_params = match T::EthereumNetwork::get() {
+			EthereumNetworkType::Mainnet => EthashPartial::production(),
+			EthereumNetworkType::Ropsten => EthashPartial::ropsten_testnet(),
 		};
 		ethash_params
 			.verify_block_basic(header)
@@ -562,9 +562,9 @@ impl<T: Trait> Module<T> {
 	fn verify_header_pow(header: &EthHeader, ethash_proof: &[EthashProof]) -> DispatchResult {
 		Self::verify_header_basic(&header)?;
 
-		let ethash_params = match T::EthNetwork::get() {
-			EthNetworkType::Mainnet => EthashPartial::production(),
-			EthNetworkType::Ropsten => EthashPartial::ropsten_testnet(),
+		let ethash_params = match T::EthereumNetwork::get() {
+			EthereumNetworkType::Mainnet => EthashPartial::production(),
+			EthereumNetworkType::Ropsten => EthashPartial::ropsten_testnet(),
 		};
 
 		let merkle_root = Self::dag_merkle_root((header.number as usize / 30000) as u64);
@@ -749,16 +749,16 @@ impl<T: Trait> VerifyEthReceipts<Balance<T>, T::AccountId> for Module<T> {
 /// `SignedExtension` that checks if a transaction has duplicate header hash to avoid coincidence
 /// header between several relayers
 #[derive(Encode, Decode, Clone, Eq, PartialEq)]
-pub struct CheckEthRelayHeaderHash<T: Trait + Send + Sync>(sp_std::marker::PhantomData<T>);
-impl<T: Trait + Send + Sync> Default for CheckEthRelayHeaderHash<T> {
+pub struct CheckEthereumRelayHeaderHash<T: Trait + Send + Sync>(sp_std::marker::PhantomData<T>);
+impl<T: Trait + Send + Sync> Default for CheckEthereumRelayHeaderHash<T> {
 	fn default() -> Self {
 		Self(sp_std::marker::PhantomData)
 	}
 }
-impl<T: Trait + Send + Sync> sp_std::fmt::Debug for CheckEthRelayHeaderHash<T> {
+impl<T: Trait + Send + Sync> sp_std::fmt::Debug for CheckEthereumRelayHeaderHash<T> {
 	#[cfg(feature = "std")]
 	fn fmt(&self, f: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
-		write!(f, "CheckEthRelayHeaderHash")
+		write!(f, "CheckEthereumRelayHeaderHash")
 	}
 
 	#[cfg(not(feature = "std"))]
@@ -766,8 +766,8 @@ impl<T: Trait + Send + Sync> sp_std::fmt::Debug for CheckEthRelayHeaderHash<T> {
 		Ok(())
 	}
 }
-impl<T: Trait + Send + Sync> SignedExtension for CheckEthRelayHeaderHash<T> {
-	const IDENTIFIER: &'static str = "CheckEthRelayHeaderHash";
+impl<T: Trait + Send + Sync> SignedExtension for CheckEthereumRelayHeaderHash<T> {
+	const IDENTIFIER: &'static str = "CheckEthereumRelayHeaderHash";
 	type AccountId = T::AccountId;
 	type Call = <T as Trait>::Call;
 	type AdditionalSigned = ();
@@ -806,13 +806,13 @@ impl<T: Trait + Send + Sync> SignedExtension for CheckEthRelayHeaderHash<T> {
 }
 
 #[derive(Clone, PartialEq, Encode, Decode)]
-pub enum EthNetworkType {
+pub enum EthereumNetworkType {
 	Mainnet,
 	Ropsten,
 }
-impl Default for EthNetworkType {
-	fn default() -> EthNetworkType {
-		EthNetworkType::Mainnet
+impl Default for EthereumNetworkType {
+	fn default() -> EthereumNetworkType {
+		EthereumNetworkType::Mainnet
 	}
 }
 

@@ -16,11 +16,12 @@ pub mod impls {
 		use crate::{impls::*, *};
 		use darwinia_support::relay::*;
 
-		pub struct EthRelayerGameAdjustor;
-		impl AdjustableRelayerGame for EthRelayerGameAdjustor {
+		pub struct EthereumRelayerGameAdjustor;
+		impl AdjustableRelayerGame for EthereumRelayerGameAdjustor {
 			type Moment = BlockNumber;
 			type Balance = Balance;
-			type TcBlockNumber = <EthereumRelay as darwinia_support::relay::Relayable>::TcBlockNumber;
+			type TcBlockNumber =
+				<EthereumRelay as darwinia_support::relay::Relayable>::TcBlockNumber;
 
 			fn challenge_time(round: Round) -> Self::Moment {
 				match round {
@@ -294,7 +295,7 @@ pub mod primitives {
 		frame_system::CheckWeight<Runtime>,
 		pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 		pallet_grandpa::ValidateEquivocationReport<Runtime>,
-		darwinia_ethereum_linear_relay::CheckEthRelayHeaderHash<Runtime>,
+		darwinia_ethereum_linear_relay::CheckEthereumRelayHeaderHash<Runtime>,
 	);
 
 	/// Unchecked extrinsic type as expected by this runtime.
@@ -363,7 +364,7 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia ---
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
-use darwinia_ethereum_linear_relay::EthNetworkType;
+use darwinia_ethereum_linear_relay::EthereumNetworkType;
 use darwinia_ethereum_offchain::crypto::AuthorityId as EthOffchainId;
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
@@ -807,12 +808,12 @@ impl darwinia_ethereum_backing::Trait for Runtime {
 
 parameter_types! {
 	pub const EthereumLinearRelayModuleId: ModuleId = ModuleId(*b"da/ethli");
-	pub const EthNetwork: EthNetworkType = EthNetworkType::Mainnet;
+	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Mainnet;
 }
 impl darwinia_ethereum_linear_relay::Trait for Runtime {
 	type ModuleId = EthereumLinearRelayModuleId;
 	type Event = Event;
-	type EthNetwork = EthNetwork;
+	type EthereumNetwork = EthereumNetwork;
 	type Call = Call;
 	type Currency = Ring;
 }
@@ -845,7 +846,7 @@ impl darwinia_relayer_game::Trait<EthereumRelayerGameInstance> for Runtime {
 	type Event = Event;
 	type RingCurrency = Ring;
 	type RingSlash = Treasury;
-	type RelayerGameAdjustor = bridge::EthRelayerGameAdjustor;
+	type RelayerGameAdjustor = bridge::EthereumRelayerGameAdjustor;
 	type TargetChain = EthereumRelay;
 	type ConfirmPeriod = ConfirmPeriod;
 	type ApproveOrigin = EnsureOneOf<

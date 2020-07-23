@@ -156,7 +156,7 @@
 		"logs": "Vec<LogEntry>",
 		"outcome": "TransactionOutcome"
 	},
-	"EthNetworkType": {
+	"EthereumNetworkType": {
 		"_enum": {
 			"Mainnet": null,
 			"Ropsten": null
