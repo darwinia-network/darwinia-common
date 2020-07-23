@@ -515,7 +515,7 @@ mod tests {
 
 	parameter_types! {
 		pub const ClaimsModuleId: ModuleId = ModuleId(*b"da/claim");
-		pub const Prefix: &'static [u8] = b"Pay RUSTs to the TEST account:";
+		pub Prefix: &'static [u8] = b"Pay RUSTs to the TEST account:";
 	}
 	impl Trait for Test {
 		type Event = ();
