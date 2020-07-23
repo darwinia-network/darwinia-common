@@ -487,7 +487,7 @@ fn staking_should_work() {
 					..Default::default()
 				})
 			);
-			// e.g. it cannot spend more than 500 that it has free from the total 2000
+			// e.g. it cannot reserve more than 500 that it has free from the total 2000
 			assert_noop!(Ring::reserve(&3, 501), RingError::LiquidityRestrictions);
 			assert_ok!(Ring::reserve(&3, 409));
 		});
