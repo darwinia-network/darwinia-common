@@ -442,7 +442,7 @@ use sp_runtime::{
 		InvalidTransaction, TransactionPriority, TransactionSource, TransactionValidity,
 		TransactionValidityError, ValidTransaction,
 	},
-	DispatchError, DispatchResult, PerThing, PerU16, Perbill, Perquintill, RuntimeDebug,
+	DispatchError, DispatchResult, PerThing, PerU16, Perbill, Percent, Perquintill, RuntimeDebug,
 };
 #[cfg(feature = "std")]
 use sp_runtime::{Deserialize, Serialize};
@@ -2167,6 +2167,34 @@ decl_module! {
 			ValidatorCount::put(new);
 		}
 
+				/// Increments the ideal number of validators.
+		///
+		/// The dispatch origin must be Root.
+		///
+		/// # <weight>
+		/// Base Weight: 1.717 µs
+		/// Read/Write: Validator Count
+		/// # </weight>
+		#[weight = 2 * WEIGHT_PER_MICROS + T::DbWeight::get().reads_writes(1, 1)]
+		fn increase_validator_count(origin, #[compact] additional: u32) {
+			ensure_root(origin)?;
+			ValidatorCount::mutate(|n| *n += additional);
+		}
+
+		/// Scale up the ideal number of validators by a factor.
+		///
+		/// The dispatch origin must be Root.
+		///
+		/// # <weight>
+		/// Base Weight: 1.717 µs
+		/// Read/Write: Validator Count
+		/// # </weight>
+		#[weight = 2 * WEIGHT_PER_MICROS + T::DbWeight::get().reads_writes(1, 1)]
+		fn scale_validator_count(origin, factor: Percent) {
+			ensure_root(origin)?;
+			ValidatorCount::mutate(|n| *n += factor * *n);
+		}
+		
 		/// Force there to be no new eras indefinitely.
 		///
 		/// The dispatch origin must be Root.
