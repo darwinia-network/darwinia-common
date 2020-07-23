@@ -21,6 +21,7 @@ futures = { version = "0.3.5" }
 jsonrpc-core = { version = "14.2.0" }
 log = { version = "0.4.11" }
 structopt = { version = "0.3.15" }
+tokio = { version = "0.2.13", optional = true, features = ["rt-threaded"] }
 # darwinia
 darwinia-balances-rpc = { path = "../../../frame/balances/rpc" }
 darwinia-claims = { path = "../../../frame/claims" }
@@ -64,29 +65,16 @@ substrate-frame-rpc-system = { git = "https://github.com/darwinia-network/substr
 
 [build-dependencies]
 # substrate
-structopt = { version = "0.3.15", optional = true }
-frame-benchmarking-cli = { optional = true, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
-substrate-build-script-utils = { optional = true, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
+substrate-build-script-utils = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
 
 [features]
-default = [
-	# darwinia
-	"cli",
-]
+default = [ "cli", "db", "wasmtime" ]
 cli = [
-	# crates
-	"structopt",
-	# darwinia
+	"tokio",
 	"darwinia-cli",
-	# substrate
 	"frame-benchmarking-cli",
 	"sc-cli",
-	"sc-service/db",
-	"substrate-build-script-utils",
+	"sc-service",
 ]
-runtime-benchmarks = [
-	# darwinia
-	"node-template-runtime/runtime-benchmarks",
-	# substrate
-	"frame-benchmarking-cli",
-]
+db = [ "service/db" ]
+wasmtime = [ "sc-cli/wasmtime" ]
