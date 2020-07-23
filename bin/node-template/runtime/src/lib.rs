@@ -27,7 +27,7 @@ pub mod impls {
 					// 3 mins
 					0 => 30,
 					// 1 mins
-					_ => 10
+					_ => 10,
 				}
 			}
 
@@ -45,12 +45,10 @@ pub mod impls {
 
 			fn estimate_bond(round: Round, proposals_count: u64) -> Self::Balance {
 				match round {
-					0 => {
-						match proposals_count {
-							0 => 1000 * COIN,
-							_ => 1500 * COIN,
-						}
-					}
+					0 => match proposals_count {
+						0 => 1000 * COIN,
+						_ => 1500 * COIN,
+					},
 					_ => 100 * COIN,
 				}
 			}
@@ -59,7 +57,8 @@ pub mod impls {
 
 	// --- substrate ---
 	use frame_support::traits::{Currency, Get, Imbalance, OnUnbalanced};
-	use sp_runtime::{traits::Convert, Fixed128, FixedPointNumber, Perquintill};
+	use pallet_transaction_payment::Multiplier;
+	use sp_runtime::{traits::Convert, FixedPointNumber, Perquintill};
 	// --- darwinia ---
 	use crate::{primitives::*, *};
 
@@ -111,8 +110,8 @@ pub mod impls {
 	/// https://research.web3.foundation/en/latest/polkadot/Token%20Economics/#relay-chain-transaction-fees
 	pub struct TargetedFeeAdjustment<T>(sp_std::marker::PhantomData<T>);
 
-	impl<T: Get<Perquintill>> Convert<Fixed128, Fixed128> for TargetedFeeAdjustment<T> {
-		fn convert(multiplier: Fixed128) -> Fixed128 {
+	impl<T: Get<Perquintill>> Convert<Multiplier, Multiplier> for TargetedFeeAdjustment<T> {
+		fn convert(multiplier: Multiplier) -> Multiplier {
 			let max_weight = MaximumBlockWeight::get();
 			let block_weight = System::block_weight().total().min(max_weight);
 			let target_weight = (T::get() * max_weight) as u128;
@@ -122,13 +121,13 @@ pub mod impls {
 			let positive = block_weight >= target_weight;
 			let diff_abs = block_weight.max(target_weight) - block_weight.min(target_weight);
 			// safe, diff_abs cannot exceed u64.
-			let diff = Fixed128::saturating_from_rational(diff_abs, max_weight.max(1));
+			let diff = Multiplier::saturating_from_rational(diff_abs, max_weight.max(1));
 			let diff_squared = diff.saturating_mul(diff);
 
 			// 0.00004 = 4/100_000 = 40_000/10^9
-			let v = Fixed128::saturating_from_rational(4, 100_000);
+			let v = Multiplier::saturating_from_rational(4, 100_000);
 			// 0.00004^2 = 16/10^10 Taking the future /2 into account... 8/10^10
-			let v_squared_2 = Fixed128::saturating_from_rational(8, 10_000_000_000u64);
+			let v_squared_2 = Multiplier::saturating_from_rational(8, 10_000_000_000u64);
 
 			let first_term = v.saturating_mul(diff);
 			let second_term = v_squared_2.saturating_mul(diff_squared);
@@ -148,7 +147,7 @@ pub mod impls {
 					// multiplier. While at -1, it means that the network is so un-congested that all
 					// transactions have no weight fee. We stop here and only increase if the network
 					// became more busy.
-					.max(Fixed128::saturating_from_integer(-1))
+					.max(Multiplier::saturating_from_integer(-1))
 			}
 		}
 	}
@@ -354,7 +353,7 @@ use sp_runtime::{
 		Saturating,
 	},
 	transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, ModuleId, Perbill, Percent, Permill, Perquintill, RuntimeDebug,
+	ApplyExtrinsicResult, ModuleId, PerThing, Perbill, Percent, Permill, Perquintill, RuntimeDebug,
 };
 use sp_staking::SessionIndex;
 use sp_std::prelude::*;
@@ -418,17 +417,22 @@ pub fn native_version() -> NativeVersion {
 	}
 }
 
+const AVERAGE_ON_INITIALIZE_WEIGHT: Perbill = Perbill::from_percent(10);
 parameter_types! {
 	pub const BlockHashCount: BlockNumber = 2400;
 	/// We allow for 2 seconds of compute with a 6 second average block time.
 	pub const MaximumBlockWeight: Weight = 2 * WEIGHT_PER_SECOND;
 	/// Assume 10% of weight for average on_initialize calls.
-	pub const MaximumExtrinsicWeight: Weight = AvailableBlockRatio::get()
-		.saturating_sub(Perbill::from_percent(10)) * MaximumBlockWeight::get();
+	pub MaximumExtrinsicWeight: Weight =
+		AvailableBlockRatio::get().saturating_sub(AVERAGE_ON_INITIALIZE_WEIGHT)
+		* MaximumBlockWeight::get();
 	pub const MaximumBlockLength: u32 = 5 * 1024 * 1024;
 	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
 	pub const Version: RuntimeVersion = VERSION;
 }
+const_assert!(
+	AvailableBlockRatio::get().deconstruct() >= AVERAGE_ON_INITIALIZE_WEIGHT.deconstruct()
+);
 impl frame_system::Trait for Runtime {
 	type Origin = Origin;
 	type Call = Call;
@@ -477,9 +481,15 @@ impl pallet_timestamp::Trait for Runtime {
 
 parameter_types! {
 	pub const TransactionByteFee: Balance = 10 * MICRO;
-	// for a sane configuration, this should always be less than `AvailableBlockRatio`.
 	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
 }
+// for a sane configuration, this should always be less than `AvailableBlockRatio`.
+const_assert!(
+	TargetBlockFullness::get().deconstruct()
+		< (AvailableBlockRatio::get().deconstruct() as <Perquintill as PerThing>::Inner)
+			* (<Perquintill as PerThing>::ACCURACY
+				/ <Perbill as PerThing>::ACCURACY as <Perquintill as PerThing>::Inner)
+);
 impl pallet_transaction_payment::Trait for Runtime {
 	type Currency = Ring;
 	type OnTransactionPayment = DealWithFees;
@@ -499,7 +509,7 @@ impl pallet_authorship::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const OffencesWeightSoftLimit: Weight = Perbill::from_percent(60) * MaximumBlockWeight::get();
+	pub OffencesWeightSoftLimit: Weight = Perbill::from_percent(60) * MaximumBlockWeight::get();
 }
 impl pallet_offences::Trait for Runtime {
 	type Event = Event;
@@ -537,8 +547,8 @@ impl pallet_session::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const WindowSize: BlockNumber = pallet_finality_tracker::DEFAULT_WINDOW_SIZE.into();
-	pub const ReportLatency: BlockNumber = pallet_finality_tracker::DEFAULT_REPORT_LATENCY.into();
+	pub WindowSize: BlockNumber = pallet_finality_tracker::DEFAULT_WINDOW_SIZE.into();
+	pub ReportLatency: BlockNumber = pallet_finality_tracker::DEFAULT_REPORT_LATENCY.into();
 }
 impl pallet_finality_tracker::Trait for Runtime {
 	type OnFinalizationStalled = ();
@@ -652,9 +662,11 @@ parameter_types! {
 	pub const BondingDurationInBlockNumber: BlockNumber = 14 * DAYS;
 	pub const SlashDeferDuration: darwinia_staking::EraIndex = 0;
 	pub const ElectionLookahead: BlockNumber = BLOCKS_PER_SESSION / 4;
-	pub const MaxIterations: u32 = 5;
+	pub const MaxIterations: u32 = 10;
+	// 0.05%. The higher the value, the more strict solution acceptance becomes.
+	pub MinSolutionScoreBump: Perbill = Perbill::from_rational_approximation(5u32, 10_000);
+	/// We prioritize im-online heartbeats over election solution submission.
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
-	/// We prioritize im-online heartbeats over phragmen solution submission.
 	pub const StakingUnsignedPriority: TransactionPriority = TransactionPriority::max_value() / 2;
 	pub const Cap: Balance = CAP;
 	pub const TotalPower: Power = TOTAL_POWER;
@@ -674,6 +686,7 @@ impl darwinia_staking::Trait for Runtime {
 	type ElectionLookahead = ElectionLookahead;
 	type Call = Call;
 	type MaxIterations = MaxIterations;
+	type MinSolutionScoreBump = MinSolutionScoreBump;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
 	type UnsignedPriority = StakingUnsignedPriority;
 	type RingCurrency = Ring;
@@ -691,18 +704,17 @@ impl darwinia_staking::Trait for Runtime {
 	type TotalPower = TotalPower;
 }
 
-const DESIRED_MEMBERS: u32 = 13;
-// Make sure that there are no more than `MAX_MEMBERS` members elected via phragmen.
-const_assert!(DESIRED_MEMBERS <= pallet_collective::MAX_MEMBERS);
 parameter_types! {
 	pub const ElectionsPhragmenModuleId: LockIdentifier = *b"da/phrel";
 	pub const CandidacyBond: Balance = 1 * COIN;
 	pub const VotingBond: Balance = 5 * MILLI;
-	pub const DesiredMembers: u32 = DESIRED_MEMBERS;
+	pub const DesiredMembers: u32 = 13;
 	pub const DesiredRunnersUp: u32 = 7;
 	/// Daily council elections.
 	pub const TermDuration: BlockNumber = 24 * HOURS;
 }
+// Make sure that there are no more than `MAX_MEMBERS` members elected via elections-phragmen.
+const_assert!(DesiredMembers::get() <= pallet_collective::MAX_MEMBERS);
 impl darwinia_elections_phragmen::Trait for Runtime {
 	type Event = Event;
 	type ModuleId = ElectionsPhragmenModuleId;
@@ -759,7 +771,7 @@ impl darwinia_treasury::Trait for Runtime {
 
 parameter_types! {
 	pub const ClaimsModuleId: ModuleId = ModuleId(*b"da/claim");
-	pub const Prefix: &'static [u8] = b"Pay RINGs to the template account:";
+	pub Prefix: &'static [u8] = b"Pay RINGs to the template account:";
 }
 impl darwinia_claims::Trait for Runtime {
 	type Event = Event;

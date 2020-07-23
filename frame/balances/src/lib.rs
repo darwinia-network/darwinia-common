@@ -307,9 +307,6 @@ decl_storage! {
 
 		/// The balance of an account.
 		///
-		/// NOTE: THIS MAY NEVER BE IN EXISTENCE AND YET HAVE A `total().is_zero()`. If the total
-		/// is ever zero, then the entry *MUST* be removed.
-		///
 		/// NOTE: This is only used in the case that this module is used to store balances.
 		pub Account: map hasher(blake2_128_concat) T::AccountId => T::BalanceInfo;
 
@@ -324,10 +321,6 @@ decl_storage! {
 		config(balances): Vec<(T::AccountId, T::Balance)>;
 		// ^^ begin, length, amount liquid at genesis
 		build(|config: &GenesisConfig<T, I>| {
-			assert!(
-				<T as Trait<I>>::ExistentialDeposit::get() > Zero::zero(),
-				"The existential deposit should be greater than zero.",
-			);
 			for (_, balance) in &config.balances {
 				assert!(
 					*balance >= <T as Trait<I>>::ExistentialDeposit::get(),
@@ -558,8 +551,8 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	///
 	/// NOTE: LOW-LEVEL: This will not attempt to maintain total issuance. It is expected that
 	/// the caller will do this.
-	fn mutate_account<R>(who: &T::AccountId, f: impl FnOnce(&mut T::BalanceInfo) -> R) -> R {
-		Self::try_mutate_account(who, |a| -> Result<R, Infallible> { Ok(f(a)) })
+	pub fn mutate_account<R>(who: &T::AccountId, f: impl FnOnce(&mut T::BalanceInfo) -> R) -> R {
+		Self::try_mutate_account(who, |a, _| -> Result<R, Infallible> { Ok(f(a)) })
 			.expect("Error is infallible; qed")
 	}
 
@@ -574,13 +567,13 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	/// the caller will do this.
 	fn try_mutate_account<R, E>(
 		who: &T::AccountId,
-		f: impl FnOnce(&mut T::BalanceInfo) -> Result<R, E>,
+		f: impl FnOnce(&mut T::BalanceInfo, bool) -> Result<R, E>,
 	) -> Result<R, E> {
 		T::AccountStore::try_mutate_exists(who, |maybe_account| {
+			let is_new = maybe_account.is_none();
 			let mut account = maybe_account.take().unwrap_or_default();
-			let was_zero = account.total().is_zero();
-			f(&mut account).map(move |result| {
-				let maybe_endowed = if was_zero { Some(account.free()) } else { None };
+			f(&mut account, is_new).map(move |result| {
+				let maybe_endowed = if is_new { Some(account.free()) } else { None };
 				*maybe_account = Self::post_mutation(who, account);
 				(maybe_endowed, result)
 			})
@@ -906,7 +899,7 @@ where
 		let min_balance = Self::frozen_balance(who.borrow()).frozen_for(reasons.into());
 		ensure!(
 			new_balance >= min_balance,
-			Error::<T, I>::LiquidityRestrictions
+			<Error<T, I>>::LiquidityRestrictions
 		);
 		Ok(())
 	}
@@ -923,13 +916,13 @@ where
 			return Ok(());
 		}
 
-		Self::try_mutate_account(dest, |to_account| -> DispatchResult {
-			Self::try_mutate_account(transactor, |from_account| -> DispatchResult {
+		Self::try_mutate_account(dest, |to_account, _| -> DispatchResult {
+			Self::try_mutate_account(transactor, |from_account, _| -> DispatchResult {
 				from_account.set_free(
 					from_account
 						.free()
 						.checked_sub(&value)
-						.ok_or(Error::<T, I>::InsufficientBalance)?,
+						.ok_or(<Error<T, I>>::InsufficientBalance)?,
 				);
 
 				// NOTE: total stake being stored in the same type means that this could never overflow
@@ -938,14 +931,14 @@ where
 					to_account
 						.free()
 						.checked_add(&value)
-						.ok_or(Error::<T, I>::Overflow)?,
+						.ok_or(<Error<T, I>>::Overflow)?,
 				);
 
 				let ed = T::ExistentialDeposit::get();
 
 				ensure!(
 					to_account.total() >= ed || T::DustCollector::check(dest).is_err(),
-					Error::<T, I>::ExistentialDeposit
+					<Error<T, I>>::ExistentialDeposit
 				);
 
 				Self::ensure_can_withdraw(
@@ -962,7 +955,7 @@ where
 					allow_death
 						|| from_account.free() >= ed
 						|| T::DustCollector::check(transactor).is_err(),
-					Error::<T, I>::KeepAlive
+					<Error<T, I>>::KeepAlive
 				);
 
 				Ok(())
@@ -1022,16 +1015,16 @@ where
 
 		Self::try_mutate_account(
 			who,
-			|account| -> Result<Self::PositiveImbalance, DispatchError> {
+			|account, is_new| -> Result<Self::PositiveImbalance, DispatchError> {
 				ensure!(
-					!account.total().is_zero() || T::DustCollector::check(who).is_err(),
-					Error::<T, I>::DeadAccount
+					!is_new || T::DustCollector::check(who).is_err(),
+					<Error<T, I>>::DeadAccount
 				);
 				account.set_free(
 					account
 						.free()
 						.checked_add(&value)
-						.ok_or(Error::<T, I>::Overflow)?,
+						.ok_or(<Error<T, I>>::Overflow)?,
 				);
 				Ok(PositiveImbalance::new(value))
 			},
@@ -1051,13 +1044,11 @@ where
 
 		Self::try_mutate_account(
 			who,
-			|account| -> Result<Self::PositiveImbalance, Self::PositiveImbalance> {
+			|account, is_new| -> Result<Self::PositiveImbalance, Self::PositiveImbalance> {
 				// bail if not yet created and this operation wouldn't be enough to create it.
 				let ed = T::ExistentialDeposit::get();
 				ensure!(
-					value >= ed
-						|| !account.total().is_zero()
-						|| T::DustCollector::check(who).is_err(),
+					value >= ed || !is_new || T::DustCollector::check(who).is_err(),
 					Self::PositiveImbalance::zero()
 				);
 
@@ -1091,11 +1082,11 @@ where
 
 		Self::try_mutate_account(
 			who,
-			|account| -> Result<Self::NegativeImbalance, DispatchError> {
+			|account, _| -> Result<Self::NegativeImbalance, DispatchError> {
 				let new_free_account = account
 					.free()
 					.checked_sub(&value)
-					.ok_or(Error::<T, I>::InsufficientBalance)?;
+					.ok_or(<Error<T, I>>::InsufficientBalance)?;
 
 				// bail if we need to keep the account alive and this would kill it.
 				let ed = T::ExistentialDeposit::get();
@@ -1110,7 +1101,7 @@ where
 				};
 				ensure!(
 					liveness == AllowDeath || !would_kill,
-					Error::<T, I>::KeepAlive
+					<Error<T, I>>::KeepAlive
 				);
 
 				Self::ensure_can_withdraw(who, value, reasons, new_free_account)?;
@@ -1129,7 +1120,9 @@ where
 	) -> SignedImbalance<Self::Balance, Self::PositiveImbalance> {
 		Self::try_mutate_account(
 			who,
-			|account| -> Result<SignedImbalance<Self::Balance, Self::PositiveImbalance>, ()> {
+			|account,
+			 is_new|
+			 -> Result<SignedImbalance<Self::Balance, Self::PositiveImbalance>, ()> {
 				let ed = T::ExistentialDeposit::get();
 				// If we're attempting to set an existing account to less than ED, then
 				// bypass the entire operation. It's a no-op if you follow it through, but
@@ -1141,9 +1134,7 @@ where
 				{
 					let new_total = value.saturating_add(account.reserved());
 					ensure!(
-						new_total >= ed
-							|| !account.total().is_zero()
-							|| T::DustCollector::check(who).is_err(),
+						new_total >= ed || !is_new || T::DustCollector::check(who).is_err(),
 						()
 					);
 				}
@@ -1215,17 +1206,17 @@ where
 			return Ok(());
 		}
 
-		Self::try_mutate_account(who, |account| -> DispatchResult {
+		Self::try_mutate_account(who, |account, _| -> DispatchResult {
 			let new_free = account
 				.free()
 				.checked_sub(&value)
-				.ok_or(Error::<T, I>::InsufficientBalance)?;
+				.ok_or(<Error<T, I>>::InsufficientBalance)?;
 			account.set_free(new_free);
 
 			let new_reserved = account
 				.reserved()
 				.checked_add(&value)
-				.ok_or(Error::<T, I>::Overflow)?;
+				.ok_or(<Error<T, I>>::Overflow)?;
 			account.set_reserved(new_reserved);
 			Self::ensure_can_withdraw(who, value, WithdrawReason::Reserve.into(), account.free())
 		})
@@ -1274,27 +1265,27 @@ where
 
 		Self::try_mutate_account(
 			beneficiary,
-			|to_account| -> Result<Self::Balance, DispatchError> {
+			|to_account, is_new| -> Result<Self::Balance, DispatchError> {
 				ensure!(
-					!to_account.total().is_zero() || T::DustCollector::check(beneficiary).is_err(),
-					Error::<T, I>::DeadAccount
+					!is_new || T::DustCollector::check(beneficiary).is_err(),
+					<Error<T, I>>::DeadAccount
 				);
 				Self::try_mutate_account(
 					slashed,
-					|from_account| -> Result<Self::Balance, DispatchError> {
+					|from_account, _| -> Result<Self::Balance, DispatchError> {
 						let actual = cmp::min(from_account.reserved(), value);
 						match status {
 							Status::Free => to_account.set_free(
 								to_account
 									.free()
 									.checked_add(&actual)
-									.ok_or(Error::<T, I>::Overflow)?,
+									.ok_or(<Error<T, I>>::Overflow)?,
 							),
 							Status::Reserved => to_account.set_reserved(
 								to_account
 									.reserved()
 									.checked_add(&actual)
-									.ok_or(Error::<T, I>::Overflow)?,
+									.ok_or(<Error<T, I>>::Overflow)?,
 							),
 						}
 						let new_reserved = from_account.reserved() - actual;
@@ -1314,7 +1305,14 @@ where
 /// storage (which is the default in most examples and tests) then there's no need.**
 impl<T: Trait<I>, I: Instance> OnKilledAccount<T::AccountId> for Module<T, I> {
 	fn on_killed_account(who: &T::AccountId) {
-		Account::<T, I>::remove(who);
+		<Account<T, I>>::mutate_exists(who, |account| {
+			let total = account.as_ref().map(|acc| acc.total()).unwrap_or_default();
+			if !total.is_zero() && T::DustCollector::check(&who).is_ok() {
+				T::DustRemoval::on_unbalanced(NegativeImbalance::new(total));
+				Self::deposit_event(RawEvent::DustLost(who.clone(), total));
+			}
+			*account = None;
+		});
 	}
 }
 
@@ -1415,17 +1413,23 @@ where
 	T::Balance: MaybeSerializeDeserialize + Debug,
 {
 	fn is_dead_account(who: &T::AccountId) -> bool {
-		// this should always be exactly equivalent to `Self::account(who).total().is_zero()`
+		// this should always be exactly equivalent to `Self::account(who).total().is_zero()` if ExistentialDeposit > 0
 		!T::AccountStore::is_explicit(who)
 	}
 }
 
 impl<T: Trait<I>, I: Instance> DustCollector<T::AccountId> for Module<T, I> {
 	fn check(who: &T::AccountId) -> Result<(), ()> {
-		if Self::total_balance(who) < T::ExistentialDeposit::get() {
+		let total_balance = Self::total_balance(who);
+
+		if total_balance.is_zero() {
 			Ok(())
 		} else {
-			Err(())
+			if total_balance < T::ExistentialDeposit::get() {
+				Ok(())
+			} else {
+				Err(())
+			}
 		}
 	}
 

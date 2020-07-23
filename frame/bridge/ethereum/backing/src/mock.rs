@@ -194,6 +194,7 @@ impl darwinia_staking::Trait for Test {
 	type ElectionLookahead = ();
 	type Call = Call;
 	type MaxIterations = ();
+	type MinSolutionScoreBump = ();
 	type MaxNominatorRewardedPerValidator = ();
 	type UnsignedPriority = ();
 	type RingCurrency = Ring;

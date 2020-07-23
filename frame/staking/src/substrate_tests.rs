@@ -554,41 +554,6 @@ fn no_candidate_emergency_condition() {
 
 #[test]
 fn nominating_and_rewards_should_work() {
-	// PHRAGMEN OUTPUT: running this test with the reference impl gives:
-	//
-	// Sequential Phragmén gives
-	// 10  is elected with stake  2200.0 and score  0.0003333333333333333
-	// 20  is elected with stake  1800.0 and score  0.0005555555555555556
-
-	// 10  has load  0.0003333333333333333 and supported
-	// 10  with stake  1000.0
-	// 20  has load  0.0005555555555555556 and supported
-	// 20  with stake  1000.0
-	// 30  has load  0 and supported
-	// 30  with stake  0
-	// 40  has load  0 and supported
-	// 40  with stake  0
-	// 2  has load  0.0005555555555555556 and supported
-	// 10  with stake  600.0 20  with stake  400.0 30  with stake  0.0
-	// 4  has load  0.0005555555555555556 and supported
-	// 10  with stake  600.0 20  with stake  400.0 40  with stake  0.0
-
-	// Sequential Phragmén with post processing gives
-	// 10  is elected with stake  2000.0 and score  0.0003333333333333333
-	// 20  is elected with stake  2000.0 and score  0.0005555555555555556
-
-	// 10  has load  0.0003333333333333333 and supported
-	// 10  with stake  1000.0
-	// 20  has load  0.0005555555555555556 and supported
-	// 20  with stake  1000.0
-	// 30  has load  0 and supported
-	// 30  with stake  0
-	// 40  has load  0 and supported
-	// 40  with stake  0
-	// 2  has load  0.0005555555555555556 and supported
-	// 10  with stake  400.0 20  with stake  600.0 30  with stake  0
-	// 4  has load  0.0005555555555555556 and supported
-	// 10  with stake  600.0 20  with stake  400.0 40  with stake  0.0
 	ExtBuilder::default()
 		.nominate(false)
 		.validator_pool(true)
@@ -649,7 +614,7 @@ fn nominating_and_rewards_should_work() {
 
 			start_era(1);
 
-			// 10 and 20 have more votes, they will be chosen by phragmen.
+			// 10 and 20 have more votes, they will be chosen.
 			assert_eq_uvec!(validator_controllers(), vec![20, 10]);
 
 			// OLD validators must have already received some rewards.

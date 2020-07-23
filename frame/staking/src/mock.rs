@@ -26,7 +26,7 @@ use frame_support::{
 	StorageValue,
 };
 use sp_core::H256;
-use sp_phragmen::{reduce, StakedAssignment};
+use sp_npos_elections::{reduce, StakedAssignment};
 use sp_runtime::{
 	testing::{Header, TestXt, UintAuthorityId},
 	traits::IdentityLookup,
@@ -327,6 +327,7 @@ parameter_types! {
 	pub const BondingDurationInBlockNumber: BlockNumber = 9;
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
 	pub const UnsignedPriority: u64 = 1 << 20;
+	pub const MinSolutionScoreBump: Perbill = Perbill::zero();
 	pub const Cap: Balance = CAP;
 	pub const TotalPower: Power = TOTAL_POWER;
 }
@@ -343,6 +344,7 @@ impl Trait for Test {
 	type ElectionLookahead = ElectionLookahead;
 	type Call = Call;
 	type MaxIterations = MaxIterations;
+	type MinSolutionScoreBump = MinSolutionScoreBump;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
 	type UnsignedPriority = UnsignedPriority;
 	type RingCurrency = Ring;
@@ -880,7 +882,7 @@ pub(crate) fn add_slash(who: &AccountId) {
 // distributed evenly.
 pub(crate) fn horrible_phragmen_with_post_processing(
 	do_reduce: bool,
-) -> (CompactAssignments, Vec<ValidatorIndex>, PhragmenScore) {
+) -> (CompactAssignments, Vec<ValidatorIndex>, ElectionScore) {
 	let mut backing_stake_of: BTreeMap<AccountId, Balance> = BTreeMap::new();
 
 	// self stake
@@ -951,7 +953,11 @@ pub(crate) fn horrible_phragmen_with_post_processing(
 		let support = build_support_map::<AccountId>(&winners, &staked_assignment).0;
 		let score = evaluate_support(&support);
 
-		assert!(sp_phragmen::is_score_better(score, better_score));
+		assert!(sp_npos_elections::is_score_better::<Perbill>(
+			better_score,
+			score,
+			MinSolutionScoreBump::get(),
+		));
 
 		score
 	};
@@ -976,8 +982,10 @@ pub(crate) fn horrible_phragmen_with_post_processing(
 	};
 
 	// convert back to ratio assignment. This takes less space.
-	let assignments_reduced =
-		sp_phragmen::assignment_staked_to_ratio::<AccountId, OffchainAccuracy>(staked_assignment);
+	let assignments_reduced = sp_npos_elections::assignment_staked_to_ratio::<
+		AccountId,
+		OffchainAccuracy,
+	>(staked_assignment);
 
 	let compact =
 		CompactAssignments::from_assignment(assignments_reduced, nominator_index, validator_index)
@@ -998,21 +1006,26 @@ pub(crate) fn prepare_submission_with(
 	do_reduce: bool,
 	iterations: usize,
 	tweak: impl FnOnce(&mut Vec<StakedAssignment<AccountId>>),
-) -> (CompactAssignments, Vec<ValidatorIndex>, PhragmenScore) {
-	// run phragmen on the default stuff.
-	let sp_phragmen::PhragmenResult {
+) -> (CompactAssignments, Vec<ValidatorIndex>, ElectionScore) {
+	// run election on the default stuff.
+	let sp_npos_elections::ElectionResult {
 		winners,
 		assignments,
 	} = Staking::do_phragmen::<OffchainAccuracy>().unwrap();
-	let winners = sp_phragmen::to_without_backing(winners);
+	let winners = sp_npos_elections::to_without_backing(winners);
 
 	let stake_of = |who: &AccountId| -> VoteWeight { Staking::power_of(&who) as _ };
 
-	let mut staked = sp_phragmen::assignment_ratio_to_staked(assignments, stake_of);
+	let mut staked = sp_npos_elections::assignment_ratio_to_staked(assignments, stake_of);
 	let (mut support_map, _) = build_support_map::<AccountId>(&winners, &staked);
 
 	if iterations > 0 {
-		sp_phragmen::equalize(&mut staked, &mut support_map, Zero::zero(), iterations);
+		sp_npos_elections::balance_solution(
+			&mut staked,
+			&mut support_map,
+			Zero::zero(),
+			iterations,
+		);
 	}
 
 	// apply custom tweaks. awesome for testing.
@@ -1044,13 +1057,14 @@ pub(crate) fn prepare_submission_with(
 		)
 	};
 
-	let assignments_reduced = sp_phragmen::assignment_staked_to_ratio(staked);
+	let assignments_reduced = sp_npos_elections::assignment_staked_to_ratio(staked);
 
 	// re-compute score by converting, yet again, into staked type
 	let score = {
-		let staked = sp_phragmen::assignment_ratio_to_staked(assignments_reduced.clone(), |s| {
-			Staking::power_of(s) as _
-		});
+		let staked =
+			sp_npos_elections::assignment_ratio_to_staked(assignments_reduced.clone(), |s| {
+				Staking::power_of(s) as _
+			});
 
 		let (support_map, _) =
 			build_support_map::<AccountId>(winners.as_slice(), staked.as_slice());

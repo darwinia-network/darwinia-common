@@ -21,7 +21,7 @@ macro_rules! decl_tests {
 		};
 		use frame_system::RawOrigin;
 		use pallet_transaction_payment::ChargeTransactionPayment;
-		use sp_runtime::{FixedPointNumber, Fixed128, traits::{SignedExtension, BadOrigin}};
+		use sp_runtime::{FixedPointNumber, FixedI128, traits::{SignedExtension, BadOrigin}};
 
 		pub type System = frame_system::Module<$test>;
 
@@ -36,6 +36,14 @@ macro_rules! decl_tests {
 				weight: w,
 				..Default::default()
 			}
+		}
+
+		fn events() -> Vec<Event> {
+			let evt = System::events().into_iter().map(|evt| evt.event).collect::<Vec<_>>();
+
+			System::reset_events();
+
+			evt
 		}
 
 		#[test]
@@ -187,7 +195,7 @@ macro_rules! decl_tests {
 				.monied(true)
 				.build()
 				.execute_with(|| {
-					pallet_transaction_payment::NextFeeMultiplier::put(Fixed128::saturating_from_integer(1));
+					pallet_transaction_payment::NextFeeMultiplier::put(FixedI128::saturating_from_integer(1));
 					Ring::set_lock(
 						ID_1,
 						&1,

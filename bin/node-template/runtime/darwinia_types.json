@@ -96,6 +96,15 @@
 		"slashed": "RKT",
 		"paid_out": "RKT"
 	},
+	"__[pallet.treasury]__": {},
+	"Proposal": {
+		"proposer": "AccountId",
+		"beneficiary": "AccountId",
+		"ring_value": "Balance",
+		"kton_value": "Balance",
+		"ring_bond": "Balance",
+		"kton_bond": "Balance"
+	},
 	"__[pallet.bridge.eth]__": {},
 	"EthTransactionIndex": "(H256, u64)",
 	"EthHeaderBrief": {
@@ -176,6 +185,7 @@
 	"__[pallet.relayer-game]__": {},
 	"TcBlockNumber": "Vec<u8>",
 	"GameId": "TcBlockNumber",
+	"RawHeaderThing": "Vec<u8>",
 	"__[node.rpc]__": {},
 	"BalancesRuntimeDispatchInfo": {
 		"usable_balance": "Balance"

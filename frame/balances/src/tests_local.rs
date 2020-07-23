@@ -1,12 +1,16 @@
 //! Test utilities
 
+mod balances {
+	pub use crate::{Event, Instance0, Instance1};
+}
+
 // --- std ---
 use std::cell::RefCell;
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
-	impl_outer_origin, parameter_types,
+	impl_outer_event, impl_outer_origin, parameter_types,
 	traits::{Get, StorageMapShim},
 	weights::{DispatchInfo, IdentityFee, Weight},
 };
@@ -32,6 +36,14 @@ thread_local! {
 
 impl_outer_origin! {
 	pub enum Origin for Test {}
+}
+
+impl_outer_event! {
+	pub enum Event for Test {
+		system<T>,
+		balances Instance0<T>,
+		balances Instance1<T>,
+	}
 }
 
 darwinia_support::impl_account_data! {
@@ -72,7 +84,7 @@ impl frame_system::Trait for Test {
 	type AccountId = Balance;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = ();
+	type Event = Event;
 	type BlockHashCount = BlockHashCount;
 	type MaximumBlockWeight = MaximumBlockWeight;
 	type DbWeight = ();
@@ -100,7 +112,7 @@ impl pallet_transaction_payment::Trait for Test {
 impl Trait<RingInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
-	type Event = ();
+	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = StorageMapShim<
@@ -115,7 +127,7 @@ impl Trait<RingInstance> for Test {
 impl Trait<KtonInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
-	type Event = ();
+	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = StorageMapShim<
@@ -175,8 +187,45 @@ impl ExtBuilder {
 		}
 		.assimilate_storage(&mut t)
 		.unwrap();
-		t.into()
+
+		let mut ext = sp_io::TestExternalities::new(t);
+		ext.execute_with(|| System::set_block_number(1));
+		ext
 	}
 }
 
 decl_tests! { Test, ExtBuilder, EXISTENTIAL_DEPOSIT }
+
+#[test]
+fn emit_events_with_no_existential_deposit_suicide_with_dust() {
+	<ExtBuilder>::default()
+		.existential_deposit(0)
+		.build()
+		.execute_with(|| {
+			assert_ok!(Ring::set_balance(RawOrigin::Root.into(), 1, 100, 0));
+
+			assert_eq!(
+				events(),
+				[
+					Event::system(system::RawEvent::NewAccount(1)),
+					Event::balances_Instance0(RawEvent::Endowed(1, 100)),
+					Event::balances_Instance0(RawEvent::BalanceSet(1, 100, 0)),
+				]
+			);
+
+			let _ = Ring::slash(&1, 99);
+
+			// no events
+			assert_eq!(events(), []);
+
+			assert_ok!(System::suicide(Origin::signed(1)));
+
+			assert_eq!(
+				events(),
+				[
+					Event::balances_Instance0(RawEvent::DustLost(1, 1)),
+					Event::system(system::RawEvent::KilledAccount(1))
+				]
+			);
+		});
+}
