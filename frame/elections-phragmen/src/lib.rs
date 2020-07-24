@@ -2495,7 +2495,7 @@ mod tests {
 
 			// no replacement yet.
 			assert_err_with_weight!(
-				Elections::remove_member(Origin::root(), 4, false),
+				Elections::remove_member(Origin::root(), 4, true),
 				Error::<Test>::InvalidReplacement,
 				Some(6000000),
 			);
@@ -2519,7 +2519,7 @@ mod tests {
 
 				// there is a replacement! and this one needs a weight refund.
 				assert_err_with_weight!(
-					Elections::remove_member(Origin::root(), 4, true),
+					Elections::remove_member(Origin::root(), 4, false),
 					Error::<Test>::InvalidReplacement,
 					Some(6000000) // only thing that matters for now is that it is NOT the full block.
 				);
