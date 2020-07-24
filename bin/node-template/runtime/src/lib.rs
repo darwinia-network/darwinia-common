@@ -56,8 +56,13 @@ pub mod impls {
 		}
 	}
 
+	// --- crates ---
+	use smallvec::smallvec;
 	// --- substrate ---
-	use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
+	use frame_support::{
+		traits::{Currency, Imbalance, OnUnbalanced},
+		weights::{WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
+	};
 	use sp_runtime::traits::Convert;
 	// --- darwinia ---
 	use crate::{primitives::*, *};
@@ -113,6 +118,32 @@ pub mod impls {
 				Treasury::on_unbalanced(split.0);
 				Author::on_unbalanced(split.1);
 			}
+		}
+	}
+
+	/// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
+	/// node's balance type.
+	///
+	/// This should typically create a mapping between the following ranges:
+	///   - [0, system::MaximumBlockWeight]
+	///   - [Balance::min, Balance::max]
+	///
+	/// Yet, it can be used for any other sort of change to weight-fee. Some examples being:
+	///   - Setting it to `0` will essentially disable the weight fee.
+	///   - Setting it to `1` will cause the literal `#[weight = x]` values to be charged.
+	pub struct WeightToFee;
+	impl WeightToFeePolynomial for WeightToFee {
+		type Balance = Balance;
+		fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
+			// in Crab, extrinsic base weight (smallest non-zero weight) is mapped to 100 MILLI:
+			let p = 100 * MILLI;
+			let q = Balance::from(ExtrinsicBaseWeight::get());
+			smallvec![WeightToFeeCoefficient {
+				degree: 1,
+				negative: false,
+				coeff_frac: Perbill::from_rational_approximation(p % q, q),
+				coeff_integer: p / q,
+			}]
 		}
 	}
 }
@@ -278,7 +309,7 @@ use frame_support::{
 	traits::{KeyOwnerProofSystem, LockIdentifier, Randomness},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		IdentityFee, Weight,
+		Weight,
 	},
 };
 use frame_system::{EnsureOneOf, EnsureRoot};
@@ -303,7 +334,8 @@ use sp_runtime::{
 		Saturating,
 	},
 	transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, ModuleId, Perbill, Percent, Permill, Perquintill, RuntimeDebug,
+	ApplyExtrinsicResult, FixedPointNumber, ModuleId, Perbill, Percent, Permill, Perquintill,
+	RuntimeDebug,
 };
 use sp_staking::SessionIndex;
 use sp_std::prelude::*;
@@ -693,7 +725,7 @@ impl darwinia_elections_phragmen::Trait for Runtime {
 type ApproveOrigin = EnsureOneOf<
 	AccountId,
 	EnsureRoot<AccountId>,
-	collective::EnsureProportionAtLeast<_3, _5, AccountId, CouncilCollective>,
+	pallet_collective::EnsureProportionAtLeast<_3, _5, AccountId, CouncilCollective>,
 >;
 parameter_types! {
 	pub const TreasuryModuleId: ModuleId = ModuleId(*b"da/trsry");
