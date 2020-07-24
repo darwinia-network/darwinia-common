@@ -161,7 +161,7 @@ use frame_support::{
 use frame_system::{self as system, ensure_root, ensure_signed};
 use sp_runtime::{
 	traits::{
-		AtLeast32Bit, Bounded, CheckedAdd, CheckedSub, MaybeSerializeDeserialize, Member,
+		AtLeast32BitUnsigned, Bounded, CheckedAdd, CheckedSub, MaybeSerializeDeserialize, Member,
 		Saturating, StaticLookup, Zero,
 	},
 	DispatchError, DispatchResult,
@@ -186,7 +186,7 @@ pub trait Subtrait<I: Instance = DefaultInstance>: frame_system::Trait {
 	/// The balance of an account.
 	type Balance: Parameter
 		+ Member
-		+ AtLeast32Bit
+		+ AtLeast32BitUnsigned
 		+ Codec
 		+ Default
 		+ Copy
@@ -215,7 +215,7 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	/// The balance of an account.
 	type Balance: Parameter
 		+ Member
-		+ AtLeast32Bit
+		+ AtLeast32BitUnsigned
 		+ Codec
 		+ Default
 		+ Copy

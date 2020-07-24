@@ -118,7 +118,9 @@ use frame_support::{
 };
 use frame_system::{self as system, ensure_signed};
 use sp_runtime::{
-	traits::{AccountIdConversion, AtLeast32Bit, BadOrigin, Hash, Saturating, StaticLookup, Zero},
+	traits::{
+		AccountIdConversion, AtLeast32BitUnsigned, BadOrigin, Hash, Saturating, StaticLookup, Zero,
+	},
 	ModuleId, Percent, Permill, RuntimeDebug,
 };
 use sp_std::prelude::*;
@@ -661,7 +663,7 @@ impl<T: Trait> Module<T> {
 	/// The needed bond for a proposal whose spend is `value`.
 	fn calculate_bond<Balance, ProposalBondMinimum>(value: Balance) -> Balance
 	where
-		Balance: Clone + AtLeast32Bit,
+		Balance: Clone + AtLeast32BitUnsigned,
 		ProposalBondMinimum: Get<Balance>,
 	{
 		ProposalBondMinimum::get().max(T::ProposalBond::get() * value)

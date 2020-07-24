@@ -435,7 +435,7 @@ use sp_npos_elections::{
 use sp_runtime::{
 	helpers_128bit::multiply_by_rational,
 	traits::{
-		AtLeast32Bit, CheckedSub, Convert, Dispatchable, SaturatedConversion, Saturating,
+		AtLeast32BitUnsigned, CheckedSub, Convert, Dispatchable, SaturatedConversion, Saturating,
 		StaticLookup, Zero,
 	},
 	transaction_validity::{
@@ -686,8 +686,8 @@ where
 impl<AccountId, RingBalance, KtonBalance, BlockNumber>
 	StakingLedger<AccountId, RingBalance, KtonBalance, BlockNumber>
 where
-	RingBalance: AtLeast32Bit + Saturating + Copy,
-	KtonBalance: AtLeast32Bit + Saturating + Copy,
+	RingBalance: AtLeast32BitUnsigned + Saturating + Copy,
+	KtonBalance: AtLeast32BitUnsigned + Saturating + Copy,
 	BlockNumber: PartialOrd,
 	TsInMs: PartialOrd,
 {
@@ -2895,8 +2895,9 @@ impl<T: Trait> Module<T> {
 	) -> Option<RingPositiveImbalance<T>> {
 		let dest = Self::payee(stash);
 		match dest {
-			RewardDestination::Controller => Self::bonded(stash)
-				.and_then(|controller| Some(T::RingCurrency::deposit_creating(&controller, amount))),
+			RewardDestination::Controller => Self::bonded(stash).and_then(|controller| {
+				Some(T::RingCurrency::deposit_creating(&controller, amount))
+			}),
 			RewardDestination::Stash => T::RingCurrency::deposit_into_existing(stash, amount).ok(),
 			// TODO month
 			RewardDestination::Staked { promise_month: _ } => Self::bonded(stash)
