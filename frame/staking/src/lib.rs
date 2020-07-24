@@ -2374,16 +2374,17 @@ decl_module! {
 		/// - Contains a limited number of reads and writes.
 		/// -----------
 		/// N is the Number of payouts for the validator (including the validator)
-		/// Base Weight: 110 + 54.2 * N µs (Median Slopes)
+		/// Base Weight:
+		/// - Reward Destination Staked: 110 + 54.2 * N µs (Median Slopes)
+		/// - Reward Destination Controller (Creating): 120 + 41.95 * N µs (Median Slopes)
 		/// DB Weight:
-		/// - Read: EraElectionStatus, CurrentEra, HistoryDepth, MigrateEra, ErasValidatorReward,
+		/// - Read: EraElectionStatus, CurrentEra, HistoryDepth, ErasValidatorReward,
 		///         ErasStakersClipped, ErasRewardPoints, ErasValidatorPrefs (8 items)
 		/// - Read Each: Bonded, Ledger, Payee, Locks, System Account (5 items)
 		/// - Write Each: System Account, Locks, Ledger (3 items)
-		// TODO: Remove read on Migrate Era
 		/// # </weight>
 		#[weight =
-			110 * WEIGHT_PER_MICROS
+			120 * WEIGHT_PER_MICROS
 			+ 54 * WEIGHT_PER_MICROS * Weight::from(T::MaxNominatorRewardedPerValidator::get())
 			+ T::DbWeight::get().reads(8)
 			+ T::DbWeight::get().reads(5)  * Weight::from(T::MaxNominatorRewardedPerValidator::get() + 1)
@@ -2894,9 +2895,8 @@ impl<T: Trait> Module<T> {
 	) -> Option<RingPositiveImbalance<T>> {
 		let dest = Self::payee(stash);
 		match dest {
-			RewardDestination::Controller => Self::bonded(stash).and_then(|controller| {
-				T::RingCurrency::deposit_into_existing(&controller, amount).ok()
-			}),
+			RewardDestination::Controller => Self::bonded(stash)
+				.and_then(|controller| Some(T::RingCurrency::deposit_creating(&controller, amount))),
 			RewardDestination::Stash => T::RingCurrency::deposit_into_existing(stash, amount).ok(),
 			// TODO month
 			RewardDestination::Staked { promise_month: _ } => Self::bonded(stash)
