@@ -6,7 +6,7 @@ description = "Pallet for logging MMR into header digest"
 edition = "2018"
 license = "GPL-3.0"
 homepage = "https://darwinia.network/"
-repository = "https://github.com/darwinia-network/darwinia/"
+repository = "https://github.com/darwinia-network/darwinia-common/"
 
 [dependencies]
 # crates
