@@ -6,7 +6,7 @@ description = "Darwinia Node template"
 edition = "2018"
 license = "Unlicense"
 homepage = "https://darwinia.network/"
-repository = "https://github.com/darwinia-network/darwinia/"
+repository = "https://github.com/darwinia-network/darwinia-common/"
 build = "build.rs"
 
 [[bin]]
