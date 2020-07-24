@@ -153,7 +153,7 @@ fn close_tip_works() {
 		);
 
 		System::set_block_number(2);
-		assert_noop!(Treasury::close_tip(Origin::NONE, h.into()), BadOrigin);
+		assert_noop!(Treasury::close_tip(Origin::none(), h.into()), BadOrigin);
 		assert_ok!(Treasury::close_tip(Origin::signed(0), h.into()));
 		assert_eq!(Ring::free_balance(3), 10);
 
@@ -292,7 +292,7 @@ fn accepted_spend_proposal_ignored_outside_spend_period() {
 		Ring::make_free_balance_be(&Treasury::account_id(), 101);
 
 		assert_ok!(Treasury::propose_spend(Origin::signed(0), 100, 0, 3));
-		assert_ok!(Treasury::approve_proposal(Origin::ROOT, 0));
+		assert_ok!(Treasury::approve_proposal(Origin::root(), 0));
 
 		<Treasury as OnInitialize<u64>>::on_initialize(1);
 		assert_eq!(Ring::free_balance(3), 0);
@@ -318,7 +318,7 @@ fn rejected_spend_proposal_ignored_on_spend_period() {
 	new_test_ext().execute_with(|| {
 		Ring::make_free_balance_be(&Treasury::account_id(), 101);
 		assert_ok!(Treasury::propose_spend(Origin::signed(0), 100, 0, 3));
-		assert_ok!(Treasury::reject_proposal(Origin::ROOT, 0));
+		assert_ok!(Treasury::reject_proposal(Origin::root(), 0));
 		<Treasury as OnInitialize<u64>>::on_initialize(2);
 		assert_eq!(Ring::free_balance(3), 0);
 		assert_eq!(Treasury::pot::<Ring>(), 50);
@@ -330,9 +330,9 @@ fn reject_already_rejected_spend_proposal_fails() {
 	new_test_ext().execute_with(|| {
 		Ring::make_free_balance_be(&Treasury::account_id(), 101);
 		assert_ok!(Treasury::propose_spend(Origin::signed(0), 100, 0, 3));
-		assert_ok!(Treasury::reject_proposal(Origin::ROOT, 0));
+		assert_ok!(Treasury::reject_proposal(Origin::root(), 0));
 		assert_noop!(
-			Treasury::reject_proposal(Origin::ROOT, 0),
+			Treasury::reject_proposal(Origin::root(), 0),
 			<Error<Test>>::InvalidProposalIndex
 		);
 	});
@@ -342,7 +342,7 @@ fn reject_already_rejected_spend_proposal_fails() {
 fn reject_non_existent_spend_proposal_fails() {
 	new_test_ext().execute_with(|| {
 		assert_noop!(
-			Treasury::reject_proposal(Origin::ROOT, 0),
+			Treasury::reject_proposal(Origin::root(), 0),
 			<Error<Test>>::InvalidProposalIndex
 		);
 	});
@@ -352,7 +352,7 @@ fn reject_non_existent_spend_proposal_fails() {
 fn accept_non_existent_spend_proposal_fails() {
 	new_test_ext().execute_with(|| {
 		assert_noop!(
-			Treasury::approve_proposal(Origin::ROOT, 0),
+			Treasury::approve_proposal(Origin::root(), 0),
 			<Error<Test>>::InvalidProposalIndex
 		);
 	});
@@ -363,9 +363,9 @@ fn accept_already_rejected_spend_proposal_fails() {
 	new_test_ext().execute_with(|| {
 		Ring::make_free_balance_be(&Treasury::account_id(), 101);
 		assert_ok!(Treasury::propose_spend(Origin::signed(0), 100, 100, 3));
-		assert_ok!(Treasury::reject_proposal(Origin::ROOT, 0));
+		assert_ok!(Treasury::reject_proposal(Origin::root(), 0));
 		assert_noop!(
-			Treasury::approve_proposal(Origin::ROOT, 0),
+			Treasury::approve_proposal(Origin::root(), 0),
 			<Error<Test>>::InvalidProposalIndex
 		);
 	});
@@ -377,7 +377,7 @@ fn accepted_spend_proposal_enacted_on_spend_period() {
 		Ring::make_free_balance_be(&Treasury::account_id(), 101);
 		assert_eq!(Treasury::pot::<Ring>(), 100);
 		assert_ok!(Treasury::propose_spend(Origin::signed(0), 100, 0, 3));
-		assert_ok!(Treasury::approve_proposal(Origin::ROOT, 0));
+		assert_ok!(Treasury::approve_proposal(Origin::root(), 0));
 
 		<Treasury as OnInitialize<u64>>::on_initialize(2);
 		assert_eq!(Ring::free_balance(3), 100);
@@ -391,7 +391,7 @@ fn pot_underflow_should_not_diminish() {
 		Ring::make_free_balance_be(&Treasury::account_id(), 101);
 		assert_eq!(Treasury::pot::<Ring>(), 100);
 		assert_ok!(Treasury::propose_spend(Origin::signed(0), 150, 0, 3));
-		assert_ok!(Treasury::approve_proposal(Origin::ROOT, 0));
+		assert_ok!(Treasury::approve_proposal(Origin::root(), 0));
 
 		<Treasury as OnInitialize<u64>>::on_initialize(2);
 		assert_eq!(Treasury::pot::<Ring>(), 100); // Pot hasn't changed
@@ -418,7 +418,7 @@ fn treasury_account_doesnt_get_deleted() {
 			0,
 			3
 		));
-		assert_ok!(Treasury::approve_proposal(Origin::ROOT, 0));
+		assert_ok!(Treasury::approve_proposal(Origin::root(), 0));
 
 		<Treasury as OnInitialize<u64>>::on_initialize(2);
 		assert_eq!(Treasury::pot::<Ring>(), 100); // Pot hasn't changed
@@ -429,7 +429,7 @@ fn treasury_account_doesnt_get_deleted() {
 			0,
 			3
 		));
-		assert_ok!(Treasury::approve_proposal(Origin::ROOT, 1));
+		assert_ok!(Treasury::approve_proposal(Origin::root(), 1));
 
 		<Treasury as OnInitialize<u64>>::on_initialize(4);
 		assert_eq!(Treasury::pot::<Ring>(), 0); // Pot is emptied
@@ -463,9 +463,9 @@ fn inexistent_account_works() {
 		assert_eq!(Ring::free_balance(Treasury::account_id()), 0); // Account does not exist
 		assert_eq!(Treasury::pot::<Ring>(), 0); // Pot is empty
 		assert_ok!(Treasury::propose_spend(Origin::signed(0), 99, 0, 3));
-		assert_ok!(Treasury::approve_proposal(Origin::ROOT, 0));
+		assert_ok!(Treasury::approve_proposal(Origin::root(), 0));
 		assert_ok!(Treasury::propose_spend(Origin::signed(0), 1, 0, 3));
-		assert_ok!(Treasury::approve_proposal(Origin::ROOT, 1));
+		assert_ok!(Treasury::approve_proposal(Origin::root(), 1));
 		<Treasury as OnInitialize<u64>>::on_initialize(2);
 		assert_eq!(Treasury::pot::<Ring>(), 0); // Pot hasn't changed
 		assert_eq!(Ring::free_balance(3), 0); // Balance of `3` hasn't changed
@@ -511,7 +511,7 @@ fn approve_proposal_no_keep_burning() {
 
 		// Put forward a suggestion for spending, burn treasury balances to AccontID-3
 		assert_ok!(Treasury::propose_spend(Origin::signed(0), 100, 100, 3));
-		assert_ok!(Treasury::approve_proposal(Origin::ROOT, 0)); // Accept proposal
+		assert_ok!(Treasury::approve_proposal(Origin::root(), 0)); // Accept proposal
 
 		// @0-1: Check balances after `propose_spend`
 		<Treasury as OnInitialize<u64>>::on_initialize(1);
@@ -592,7 +592,7 @@ fn reject_proposal_keep_burning() {
 
 		// Put forward a suggestion for spending, burn treasury balances to AccontID-3
 		assert_ok!(Treasury::propose_spend(Origin::signed(0), 100, 100, 3));
-		assert_ok!(Treasury::reject_proposal(Origin::ROOT, 0));
+		assert_ok!(Treasury::reject_proposal(Origin::root(), 0));
 
 		// @0-1: Check balances after `propose_spend`
 		<Treasury as OnInitialize<u64>>::on_initialize(1);

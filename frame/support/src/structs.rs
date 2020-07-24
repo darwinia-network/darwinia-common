@@ -2,7 +2,7 @@
 use codec::{Decode, Encode};
 use num_traits::Zero;
 // --- substrate ---
-use sp_runtime::{traits::AtLeast32Bit, RuntimeDebug};
+use sp_runtime::{traits::AtLeast32BitUnsigned, RuntimeDebug};
 use sp_std::{ops::BitOr, prelude::*};
 // --- darwinia ---
 use crate::balance::lock::{LockIdentifier, WithdrawReason, WithdrawReasons};
@@ -86,7 +86,7 @@ pub struct BalanceLock<Balance, Moment> {
 #[cfg(feature = "easy-testing")]
 impl<Balance, Moment> BalanceLock<Balance, Moment>
 where
-	Balance: Copy + PartialOrd + AtLeast32Bit,
+	Balance: Copy + PartialOrd + AtLeast32BitUnsigned,
 	Moment: Copy + PartialOrd,
 {
 	// For performance, we don't need the `at` in some cases
@@ -115,7 +115,7 @@ pub struct StakingLock<Balance, Moment> {
 
 impl<Balance, Moment> StakingLock<Balance, Moment>
 where
-	Balance: Copy + PartialOrd + AtLeast32Bit,
+	Balance: Copy + PartialOrd + AtLeast32BitUnsigned,
 	Moment: Copy + PartialOrd,
 {
 	#[inline]

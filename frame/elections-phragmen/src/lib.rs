@@ -1106,8 +1106,9 @@ mod tests {
 		pub const AvailableBlockRatio: Perbill = Perbill::one();
 	}
 	impl frame_system::Trait for Test {
+		type BaseCallFilter = ();
 		type Origin = Origin;
-		type Call = ();
+		type Call = Call;
 		type Index = u64;
 		type BlockNumber = u64;
 		type Hash = H256;
@@ -1455,11 +1456,8 @@ mod tests {
 		// historical note: helper function was created in a period of time in which the API of vote
 		// call was changing. Currently it is a wrapper for the original call and does not do much.
 		// Nonetheless, totally harmless.
-		if let Origin::system(frame_system::RawOrigin::Signed(_account)) = origin {
-			Elections::vote(origin, votes, stake)
-		} else {
-			panic!("vote origin must be signed");
-		}
+		ensure_signed(origin.clone()).expect("vote origin must be signed");
+		Elections::vote(origin, votes, stake)
 	}
 
 	fn votes_of(who: &u64) -> Vec<u64> {
@@ -2474,7 +2472,7 @@ mod tests {
 			assert_ok!(submit_candidacy(Origin::signed(3)));
 			assert_ok!(vote(Origin::signed(3), vec![3], 30));
 
-			assert_ok!(Elections::remove_member(Origin::ROOT, 4, false));
+			assert_ok!(Elections::remove_member(Origin::root(), 4, false));
 
 			assert_eq!(balances(&4), (35, 2)); // slashed
 			assert_eq!(Elections::election_rounds(), 2); // new election round
@@ -2497,7 +2495,7 @@ mod tests {
 
 			// no replacement yet.
 			assert_err_with_weight!(
-				Elections::remove_member(Origin::ROOT, 4, true),
+				Elections::remove_member(Origin::root(), 4, true),
 				Error::<Test>::InvalidReplacement,
 				Some(6000000),
 			);
@@ -2521,7 +2519,7 @@ mod tests {
 
 				// there is a replacement! and this one needs a weight refund.
 				assert_err_with_weight!(
-					Elections::remove_member(Origin::ROOT, 4, false),
+					Elections::remove_member(Origin::root(), 4, false),
 					Error::<Test>::InvalidReplacement,
 					Some(6000000) // only thing that matters for now is that it is NOT the full block.
 				);
@@ -2687,7 +2685,7 @@ mod tests {
 				Elections::end_block(System::block_number());
 
 				assert_eq!(Elections::members_ids(), vec![2, 4]);
-				assert_ok!(Elections::remove_member(Origin::ROOT, 2, true));
+				assert_ok!(Elections::remove_member(Origin::root(), 2, true));
 				assert_eq!(Elections::members_ids(), vec![4, 5]);
 			});
 	}

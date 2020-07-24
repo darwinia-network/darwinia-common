@@ -116,9 +116,11 @@ use frame_support::{
 	weights::{DispatchClass, Weight},
 	Parameter,
 };
-use frame_system::{self as system, ensure_root, ensure_signed};
+use frame_system::{self as system, ensure_signed};
 use sp_runtime::{
-	traits::{AccountIdConversion, AtLeast32Bit, BadOrigin, Hash, Saturating, StaticLookup, Zero},
+	traits::{
+		AccountIdConversion, AtLeast32BitUnsigned, BadOrigin, Hash, Saturating, StaticLookup, Zero,
+	},
 	ModuleId, Percent, Permill, RuntimeDebug,
 };
 use sp_std::prelude::*;
@@ -398,6 +400,8 @@ decl_module! {
 
 		/// Reject a proposed spend. The original deposit will be slashed.
 		///
+		/// May only be called from `T::RejectOrigin`.
+		///
 		/// # <weight>
 		/// - Complexity: O(1)
 		/// - DbReads: `Proposals`, `rejected proposer account`
@@ -405,9 +409,7 @@ decl_module! {
 		/// # </weight>
 		#[weight = (130_000_000 + T::DbWeight::get().reads_writes(2, 2), DispatchClass::Operational)]
 		fn reject_proposal(origin, #[compact] proposal_id: ProposalIndex) {
-			T::RejectOrigin::try_origin(origin)
-				.map(|_| ())
-				.or_else(ensure_root)?;
+			T::RejectOrigin::ensure_origin(origin)?;
 
 			let proposal = <Proposals<T>>::take(&proposal_id).ok_or(<Error<T>>::InvalidProposalIndex)?;
 
@@ -425,6 +427,8 @@ decl_module! {
 		/// Approve a proposal. At a later time, the proposal will be allocated to the beneficiary
 		/// and the original deposit will be returned.
 		///
+		/// May only be called from `T::RejectOrigin`.
+		///
 		/// # <weight>
 		/// - Complexity: O(1).
 		/// - DbReads: `Proposals`, `Approvals`
@@ -432,9 +436,7 @@ decl_module! {
 		/// # </weight>
 		#[weight = (34_000_000 + T::DbWeight::get().reads_writes(2, 1), DispatchClass::Operational)]
 		fn approve_proposal(origin, #[compact] proposal_id: ProposalIndex) {
-			T::ApproveOrigin::try_origin(origin)
-				.map(|_| ())
-				.or_else(ensure_root)?;
+			T::ApproveOrigin::ensure_origin(origin)?;
 
 			ensure!(<Proposals<T>>::contains_key(proposal_id), <Error<T>>::InvalidProposalIndex);
 			Approvals::mutate(|v| v.push(proposal_id));
@@ -665,7 +667,7 @@ impl<T: Trait> Module<T> {
 	/// The needed bond for a proposal whose spend is `value`.
 	fn calculate_bond<Balance, ProposalBondMinimum>(value: Balance) -> Balance
 	where
-		Balance: Clone + AtLeast32Bit,
+		Balance: Clone + AtLeast32BitUnsigned,
 		ProposalBondMinimum: Get<Balance>,
 	{
 		ProposalBondMinimum::get().max(T::ProposalBond::get() * value)

@@ -16,11 +16,12 @@ pub mod impls {
 		use crate::{impls::*, *};
 		use darwinia_support::relay::*;
 
-		pub struct EthRelayerGameAdjustor;
-		impl AdjustableRelayerGame for EthRelayerGameAdjustor {
+		pub struct EthereumRelayerGameAdjustor;
+		impl AdjustableRelayerGame for EthereumRelayerGameAdjustor {
 			type Moment = BlockNumber;
 			type Balance = Balance;
-			type TcBlockNumber = <EthereumRelay as darwinia_support::relay::Relayable>::TcBlockNumber;
+			type TcBlockNumber =
+				<EthereumRelay as darwinia_support::relay::Relayable>::TcBlockNumber;
 
 			fn challenge_time(round: Round) -> Self::Moment {
 				match round {
@@ -55,10 +56,14 @@ pub mod impls {
 		}
 	}
 
+	// --- crates ---
+	use smallvec::smallvec;
 	// --- substrate ---
-	use frame_support::traits::{Currency, Get, Imbalance, OnUnbalanced};
-	use pallet_transaction_payment::Multiplier;
-	use sp_runtime::{traits::Convert, FixedPointNumber, Perquintill};
+	use frame_support::{
+		traits::{Currency, Imbalance, OnUnbalanced},
+		weights::{WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
+	};
+	use sp_runtime::traits::Convert;
 	// --- darwinia ---
 	use crate::{primitives::*, *};
 
@@ -100,58 +105,6 @@ pub mod impls {
 		}
 	}
 
-	/// Update the given multiplier based on the following formula
-	///
-	///   diff = (previous_block_weight - target_weight)/max_weight
-	///   v = 0.00004
-	///   next_weight = weight * (1 + (v * diff) + (v * diff)^2 / 2)
-	///
-	/// Where `target_weight` must be given as the `Get` implementation of the `T` generic type.
-	/// https://research.web3.foundation/en/latest/polkadot/Token%20Economics/#relay-chain-transaction-fees
-	pub struct TargetedFeeAdjustment<T>(sp_std::marker::PhantomData<T>);
-
-	impl<T: Get<Perquintill>> Convert<Multiplier, Multiplier> for TargetedFeeAdjustment<T> {
-		fn convert(multiplier: Multiplier) -> Multiplier {
-			let max_weight = MaximumBlockWeight::get();
-			let block_weight = System::block_weight().total().min(max_weight);
-			let target_weight = (T::get() * max_weight) as u128;
-			let block_weight = block_weight as u128;
-
-			// determines if the first_term is positive
-			let positive = block_weight >= target_weight;
-			let diff_abs = block_weight.max(target_weight) - block_weight.min(target_weight);
-			// safe, diff_abs cannot exceed u64.
-			let diff = Multiplier::saturating_from_rational(diff_abs, max_weight.max(1));
-			let diff_squared = diff.saturating_mul(diff);
-
-			// 0.00004 = 4/100_000 = 40_000/10^9
-			let v = Multiplier::saturating_from_rational(4, 100_000);
-			// 0.00004^2 = 16/10^10 Taking the future /2 into account... 8/10^10
-			let v_squared_2 = Multiplier::saturating_from_rational(8, 10_000_000_000u64);
-
-			let first_term = v.saturating_mul(diff);
-			let second_term = v_squared_2.saturating_mul(diff_squared);
-
-			if positive {
-				// Note: this is merely bounded by how big the multiplier and the inner value can go,
-				// not by any economical reasoning.
-				let excess = first_term.saturating_add(second_term);
-				multiplier.saturating_add(excess)
-			} else {
-				// Defensive-only: first_term > second_term. Safe subtraction.
-				let negative = first_term.saturating_sub(second_term);
-				multiplier
-					.saturating_sub(negative)
-					// despite the fact that apply_to saturates weight (final fee cannot go below 0)
-					// it is crucially important to stop here and don't further reduce the weight fee
-					// multiplier. While at -1, it means that the network is so un-congested that all
-					// transactions have no weight fee. We stop here and only increase if the network
-					// became more busy.
-					.max(Multiplier::saturating_from_integer(-1))
-			}
-		}
-	}
-
 	pub struct DealWithFees;
 	impl OnUnbalanced<NegativeImbalance> for DealWithFees {
 		fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance>) {
@@ -165,6 +118,32 @@ pub mod impls {
 				Treasury::on_unbalanced(split.0);
 				Author::on_unbalanced(split.1);
 			}
+		}
+	}
+
+	/// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
+	/// node's balance type.
+	///
+	/// This should typically create a mapping between the following ranges:
+	///   - [0, system::MaximumBlockWeight]
+	///   - [Balance::min, Balance::max]
+	///
+	/// Yet, it can be used for any other sort of change to weight-fee. Some examples being:
+	///   - Setting it to `0` will essentially disable the weight fee.
+	///   - Setting it to `1` will cause the literal `#[weight = x]` values to be charged.
+	pub struct WeightToFee;
+	impl WeightToFeePolynomial for WeightToFee {
+		type Balance = Balance;
+		fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
+			// in Crab, extrinsic base weight (smallest non-zero weight) is mapped to 100 MILLI:
+			let p = 100 * MILLI;
+			let q = Balance::from(ExtrinsicBaseWeight::get());
+			smallvec![WeightToFeeCoefficient {
+				degree: 1,
+				negative: false,
+				coeff_frac: Perbill::from_rational_approximation(p % q, q),
+				coeff_integer: p / q,
+			}]
 		}
 	}
 }
@@ -294,7 +273,7 @@ pub mod primitives {
 		frame_system::CheckWeight<Runtime>,
 		pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 		pallet_grandpa::ValidateEquivocationReport<Runtime>,
-		darwinia_ethereum_linear_relay::CheckEthRelayHeaderHash<Runtime>,
+		darwinia_ethereum_linear_relay::CheckEthereumRelayHeaderHash<Runtime>,
 	);
 
 	/// Unchecked extrinsic type as expected by this runtime.
@@ -330,14 +309,16 @@ use frame_support::{
 	traits::{KeyOwnerProofSystem, LockIdentifier, Randomness},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		IdentityFee, Weight,
+		Weight,
 	},
 };
+use frame_system::{EnsureOneOf, EnsureRoot};
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use pallet_session::historical as pallet_session_historical;
+use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
 use pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo as TransactionPaymentRuntimeDispatchInfo;
 use sp_api::impl_runtime_apis;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
@@ -353,7 +334,8 @@ use sp_runtime::{
 		Saturating,
 	},
 	transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, ModuleId, PerThing, Perbill, Percent, Permill, Perquintill, RuntimeDebug,
+	ApplyExtrinsicResult, FixedPointNumber, ModuleId, Perbill, Percent, Permill, Perquintill,
+	RuntimeDebug,
 };
 use sp_staking::SessionIndex;
 use sp_std::prelude::*;
@@ -362,7 +344,7 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia ---
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
-use darwinia_ethereum_linear_relay::EthNetworkType;
+use darwinia_ethereum_linear_relay::EthereumNetworkType;
 use darwinia_ethereum_offchain::crypto::AuthorityId as EthOffchainId;
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
@@ -434,6 +416,7 @@ const_assert!(
 	AvailableBlockRatio::get().deconstruct() >= AVERAGE_ON_INITIALIZE_WEIGHT.deconstruct()
 );
 impl frame_system::Trait for Runtime {
+	type BaseCallFilter = ();
 	type Origin = Origin;
 	type Call = Call;
 	type Index = Nonce;
@@ -479,23 +462,29 @@ impl pallet_timestamp::Trait for Runtime {
 	type MinimumPeriod = MinimumPeriod;
 }
 
+/// Parameterized slow adjusting fee updated based on
+/// https://w3f-research.readthedocs.io/en/latest/polkadot/Token%20Economics.html#-2.-slow-adjusting-mechanism
+pub type SlowAdjustingFeeUpdate<R> =
+	TargetedFeeAdjustment<R, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
 parameter_types! {
 	pub const TransactionByteFee: Balance = 10 * MICRO;
+	/// The portion of the `AvailableBlockRatio` that we adjust the fees with. Blocks filled less
+	/// than this will decrease the weight and more will increase.
 	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
+	/// The adjustment variable of the runtime. Higher values will cause `TargetBlockFullness` to
+	/// change the fees more rapidly.
+	pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(3, 100_000);
+	/// Minimum amount of the multiplier. This value cannot be too low. A test case should ensure
+	/// that combined with `AdjustmentVariable`, we can recover from the minimum.
+	/// See `multiplier_can_grow_from_zero`.
+	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000_000u128);
 }
-// for a sane configuration, this should always be less than `AvailableBlockRatio`.
-const_assert!(
-	TargetBlockFullness::get().deconstruct()
-		< (AvailableBlockRatio::get().deconstruct() as <Perquintill as PerThing>::Inner)
-			* (<Perquintill as PerThing>::ACCURACY
-				/ <Perbill as PerThing>::ACCURACY as <Perquintill as PerThing>::Inner)
-);
 impl pallet_transaction_payment::Trait for Runtime {
 	type Currency = Ring;
 	type OnTransactionPayment = DealWithFees;
 	type TransactionByteFee = TransactionByteFee;
-	type WeightToFee = IdentityFee<Balance>;
-	type FeeMultiplierUpdate = TargetedFeeAdjustment<TargetBlockFullness>;
+	type WeightToFee = WeightToFee;
+	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
 }
 
 parameter_types! {
@@ -611,18 +600,18 @@ impl pallet_collective::Trait<TechnicalCollective> for Runtime {
 	type MaxProposals = TechnicalMaxProposals;
 }
 
+type EnsureRootOrHalfCouncil = EnsureOneOf<
+	AccountId,
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>,
+>;
 impl pallet_membership::Trait<pallet_membership::Instance0> for Runtime {
 	type Event = Event;
-	type AddOrigin =
-		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
-	type RemoveOrigin =
-		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
-	type SwapOrigin =
-		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
-	type ResetOrigin =
-		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
-	type PrimeOrigin =
-		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
+	type AddOrigin = EnsureRootOrHalfCouncil;
+	type RemoveOrigin = EnsureRootOrHalfCouncil;
+	type SwapOrigin = EnsureRootOrHalfCouncil;
+	type ResetOrigin = EnsureRootOrHalfCouncil;
+	type PrimeOrigin = EnsureRootOrHalfCouncil;
 	type MembershipInitialized = TechnicalCommittee;
 	type MembershipChanged = TechnicalCommittee;
 }
@@ -679,8 +668,7 @@ impl darwinia_staking::Trait for Runtime {
 	type BondingDurationInBlockNumber = BondingDurationInBlockNumber;
 	type SlashDeferDuration = SlashDeferDuration;
 	/// A super-majority of the council can cancel the slash.
-	type SlashCancelOrigin =
-		pallet_collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilCollective>;
+	type SlashCancelOrigin = EnsureRootOrHalfCouncil;
 	type SessionInterface = Self;
 	type NextNewSession = Session;
 	type ElectionLookahead = ElectionLookahead;
@@ -734,6 +722,11 @@ impl darwinia_elections_phragmen::Trait for Runtime {
 	type TermDuration = TermDuration;
 }
 
+type ApproveOrigin = EnsureOneOf<
+	AccountId,
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureProportionAtLeast<_3, _5, AccountId, CouncilCollective>,
+>;
 parameter_types! {
 	pub const TreasuryModuleId: ModuleId = ModuleId(*b"da/trsry");
 	pub const TipCountdown: BlockNumber = 1 * DAYS;
@@ -750,10 +743,8 @@ impl darwinia_treasury::Trait for Runtime {
 	type ModuleId = TreasuryModuleId;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
-	type ApproveOrigin =
-		pallet_collective::EnsureProportionAtLeast<_3, _5, AccountId, CouncilCollective>;
-	type RejectOrigin =
-		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
+	type ApproveOrigin = ApproveOrigin;
+	type RejectOrigin = EnsureRootOrHalfCouncil;
 	type Tippers = ElectionsPhragmen;
 	type TipCountdown = TipCountdown;
 	type TipFindersFee = TipFindersFee;
@@ -797,12 +788,12 @@ impl darwinia_ethereum_backing::Trait for Runtime {
 
 parameter_types! {
 	pub const EthereumLinearRelayModuleId: ModuleId = ModuleId(*b"da/ethli");
-	pub const EthNetwork: EthNetworkType = EthNetworkType::Mainnet;
+	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Mainnet;
 }
 impl darwinia_ethereum_linear_relay::Trait for Runtime {
 	type ModuleId = EthereumLinearRelayModuleId;
 	type Event = Event;
-	type EthNetwork = EthNetwork;
+	type EthereumNetwork = EthereumNetwork;
 	type Call = Call;
 	type Currency = Ring;
 }
@@ -835,13 +826,11 @@ impl darwinia_relayer_game::Trait<EthereumRelayerGameInstance> for Runtime {
 	type Event = Event;
 	type RingCurrency = Ring;
 	type RingSlash = Treasury;
-	type RelayerGameAdjustor = bridge::EthRelayerGameAdjustor;
+	type RelayerGameAdjustor = bridge::EthereumRelayerGameAdjustor;
 	type TargetChain = EthereumRelay;
 	type ConfirmPeriod = ConfirmPeriod;
-	type ApproveOrigin =
-		pallet_collective::EnsureProportionAtLeast<_3, _5, AccountId, CouncilCollective>;
-	type RejectOrigin =
-		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
+	type ApproveOrigin = ApproveOrigin;
+	type RejectOrigin = EnsureRootOrHalfCouncil;
 }
 
 construct_runtime!(

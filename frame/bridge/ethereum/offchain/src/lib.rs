@@ -74,7 +74,7 @@ use darwinia_support::literal_procesor::extract_from_json_str;
 use ethereum_primitives::{ethashproof::EthashProof, header::EthHeader};
 
 type EthereumRelay<T> = darwinia_ethereum_linear_relay::Module<T>;
-type EthRelayCall<T> = darwinia_ethereum_linear_relay::Call<T>;
+type EthereumRelayCall<T> = darwinia_ethereum_linear_relay::Call<T>;
 
 pub const ETH_OFFCHAIN: KeyTypeId = KeyTypeId(*b"etho");
 
@@ -160,7 +160,7 @@ impl OffchainRequestTrait for OffchainRequest {
 }
 
 pub trait Trait:
-	CreateSignedTransaction<EthRelayCall<Self>> + darwinia_ethereum_linear_relay::Trait
+	CreateSignedTransaction<EthereumRelayCall<Self>> + darwinia_ethereum_linear_relay::Trait
 {
 	type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
 
@@ -328,7 +328,7 @@ impl<T: Trait> Module<T> {
 			#[cfg(not(test))]
 			{
 				signer.send_signed_transaction(|_| {
-					<EthRelayCall<T>>::relay_header(header.clone(), proof_list.clone())
+					<EthereumRelayCall<T>>::relay_header(header.clone(), proof_list.clone())
 				})
 			}
 		};

@@ -435,14 +435,14 @@ use sp_npos_elections::{
 use sp_runtime::{
 	helpers_128bit::multiply_by_rational,
 	traits::{
-		AtLeast32Bit, CheckedSub, Convert, Dispatchable, SaturatedConversion, Saturating,
+		AtLeast32BitUnsigned, CheckedSub, Convert, Dispatchable, SaturatedConversion, Saturating,
 		StaticLookup, Zero,
 	},
 	transaction_validity::{
 		InvalidTransaction, TransactionPriority, TransactionSource, TransactionValidity,
 		TransactionValidityError, ValidTransaction,
 	},
-	DispatchError, DispatchResult, PerThing, PerU16, Perbill, Perquintill, RuntimeDebug,
+	DispatchError, DispatchResult, PerThing, PerU16, Perbill, Percent, Perquintill, RuntimeDebug,
 };
 #[cfg(feature = "std")]
 use sp_runtime::{Deserialize, Serialize};
@@ -686,8 +686,8 @@ where
 impl<AccountId, RingBalance, KtonBalance, BlockNumber>
 	StakingLedger<AccountId, RingBalance, KtonBalance, BlockNumber>
 where
-	RingBalance: AtLeast32Bit + Saturating + Copy,
-	KtonBalance: AtLeast32Bit + Saturating + Copy,
+	RingBalance: AtLeast32BitUnsigned + Saturating + Copy,
+	KtonBalance: AtLeast32BitUnsigned + Saturating + Copy,
 	BlockNumber: PartialOrd,
 	TsInMs: PartialOrd,
 {
@@ -983,9 +983,10 @@ pub trait Trait: frame_system::Trait + SendTransactionTypes<Call<Self>> {
 	/// Number of eras that staked funds must remain bonded for.
 	type BondingDurationInBlockNumber: Get<Self::BlockNumber>;
 
-	/// Number of eras that slashes are deferred by, after computation. This should be less than the
-	/// bonding duration. Set to 0 if slashes should be applied immediately, without opportunity for
-	/// intervention.
+	/// Number of eras that slashes are deferred by, after computation.
+	///
+	/// This should be less than the bonding duration. Set to 0 if slashes
+	/// should be applied immediately, without opportunity for intervention.
 	type SlashDeferDuration: Get<EraIndex>;
 
 	/// The origin which can cancel a deferred slash. Root can always do this.
@@ -998,6 +999,7 @@ pub trait Trait: frame_system::Trait + SendTransactionTypes<Call<Self>> {
 	type NextNewSession: EstimateNextNewSession<Self::BlockNumber>;
 
 	/// The number of blocks before the end of the era from which election submissions are allowed.
+	///
 	/// Setting this to zero will disable the offchain compute and only on-chain seq-phragmen will
 	/// be used.
 	///
@@ -1008,14 +1010,15 @@ pub trait Trait: frame_system::Trait + SendTransactionTypes<Call<Self>> {
 	/// The overarching call type.
 	type Call: Dispatchable + From<Call<Self>> + IsSubType<Module<Self>, Self> + Clone;
 
-	/// Maximum number of balancing iterations to run in the offchain submission. If set to 0,
-	/// balance_solution will not be executed at all.
+	/// Maximum number of balancing iterations to run in the offchain submission.
+	///
+	/// If set to 0, balance_solution will not be executed at all.
 	type MaxIterations: Get<u32>;
 
 	/// The threshold of improvement that should be provided for a new solution to be accepted.
 	type MinSolutionScoreBump: Get<Perbill>;
 
-	/// The maximum number of nominator rewarded for each validator.
+	/// The maximum number of nominators rewarded for each validator.
 	///
 	/// For each validator only the `$MaxNominatorRewardedPerValidator` biggest stakers can claim
 	/// their reward. This used to limit the i/o cost for the nominator payout.
@@ -1417,6 +1420,36 @@ decl_module! {
 		const BondingDurationInEra: EraIndex = T::BondingDurationInEra::get();
 		/// Number of BlockNumbers that staked funds must remain bonded for.
 		const BondingDurationInBlockNumber: T::BlockNumber = T::BondingDurationInBlockNumber::get();
+
+		/// Number of eras that slashes are deferred by, after computation.
+		///
+		/// This should be less than the bonding duration.
+		/// Set to 0 if slashes should be applied immediately, without opportunity for
+		/// intervention.
+		const SlashDeferDuration: EraIndex = T::SlashDeferDuration::get();
+
+		/// The number of blocks before the end of the era from which election submissions are allowed.
+		///
+		/// Setting this to zero will disable the offchain compute and only on-chain seq-phragmen will
+		/// be used.
+		///
+		/// This is bounded by being within the last session. Hence, setting it to a value more than the
+		/// length of a session will be pointless.
+		const ElectionLookahead: T::BlockNumber = T::ElectionLookahead::get();
+
+		/// Maximum number of balancing iterations to run in the offchain submission.
+		///
+		/// If set to 0, balance_solution will not be executed at all.
+		const MaxIterations: u32 = T::MaxIterations::get();
+
+		/// The threshold of improvement that should be provided for a new solution to be accepted.
+		const MinSolutionScoreBump: Perbill = T::MinSolutionScoreBump::get();
+
+		/// The maximum number of nominators rewarded for each validator.
+		///
+		/// For each validator only the `$MaxNominatorRewardedPerValidator` biggest stakers can claim
+		/// their reward. This used to limit the i/o cost for the nominator payout.
+		const MaxNominatorRewardedPerValidator: u32 = T::MaxNominatorRewardedPerValidator::get();
 
 		// TODO: doc
 		const Cap: RingBalance<T> = T::Cap::get();
@@ -2167,6 +2200,34 @@ decl_module! {
 			ValidatorCount::put(new);
 		}
 
+				/// Increments the ideal number of validators.
+		///
+		/// The dispatch origin must be Root.
+		///
+		/// # <weight>
+		/// Base Weight: 1.717 µs
+		/// Read/Write: Validator Count
+		/// # </weight>
+		#[weight = 2 * WEIGHT_PER_MICROS + T::DbWeight::get().reads_writes(1, 1)]
+		fn increase_validator_count(origin, #[compact] additional: u32) {
+			ensure_root(origin)?;
+			ValidatorCount::mutate(|n| *n += additional);
+		}
+
+		/// Scale up the ideal number of validators by a factor.
+		///
+		/// The dispatch origin must be Root.
+		///
+		/// # <weight>
+		/// Base Weight: 1.717 µs
+		/// Read/Write: Validator Count
+		/// # </weight>
+		#[weight = 2 * WEIGHT_PER_MICROS + T::DbWeight::get().reads_writes(1, 1)]
+		fn scale_validator_count(origin, factor: Percent) {
+			ensure_root(origin)?;
+			ValidatorCount::mutate(|n| *n += factor * *n);
+		}
+
 		/// Force there to be no new eras indefinitely.
 		///
 		/// The dispatch origin must be Root.
@@ -2263,7 +2324,7 @@ decl_module! {
 
 		/// Cancel enactment of a deferred slash.
 		///
-		/// Can be called by either the root origin or the `T::SlashCancelOrigin`.
+		/// Can be called by the `T::SlashCancelOrigin`.
 		///
 		/// Parameters: era and indices of the slashes for that era to kill.
 		///
@@ -2280,9 +2341,7 @@ decl_module! {
 			.saturating_add((35 * WEIGHT_PER_MICROS).saturating_mul(slash_indices.len() as Weight))
 		]
 		fn cancel_deferred_slash(origin, era: EraIndex, slash_indices: Vec<u32>) {
-			T::SlashCancelOrigin::try_origin(origin)
-				.map(|_| ())
-				.or_else(ensure_root)?;
+			T::SlashCancelOrigin::ensure_origin(origin)?;
 
 			ensure!(!slash_indices.is_empty(), <Error<T>>::EmptyTargets);
 			ensure!(is_sorted_and_unique(&slash_indices), <Error<T>>::NotSortedAndUnique);
@@ -2315,16 +2374,17 @@ decl_module! {
 		/// - Contains a limited number of reads and writes.
 		/// -----------
 		/// N is the Number of payouts for the validator (including the validator)
-		/// Base Weight: 110 + 54.2 * N µs (Median Slopes)
+		/// Base Weight:
+		/// - Reward Destination Staked: 110 + 54.2 * N µs (Median Slopes)
+		/// - Reward Destination Controller (Creating): 120 + 41.95 * N µs (Median Slopes)
 		/// DB Weight:
-		/// - Read: EraElectionStatus, CurrentEra, HistoryDepth, MigrateEra, ErasValidatorReward,
+		/// - Read: EraElectionStatus, CurrentEra, HistoryDepth, ErasValidatorReward,
 		///         ErasStakersClipped, ErasRewardPoints, ErasValidatorPrefs (8 items)
 		/// - Read Each: Bonded, Ledger, Payee, Locks, System Account (5 items)
 		/// - Write Each: System Account, Locks, Ledger (3 items)
-		// TODO: Remove read on Migrate Era
 		/// # </weight>
 		#[weight =
-			110 * WEIGHT_PER_MICROS
+			120 * WEIGHT_PER_MICROS
 			+ 54 * WEIGHT_PER_MICROS * Weight::from(T::MaxNominatorRewardedPerValidator::get())
 			+ T::DbWeight::get().reads(8)
 			+ T::DbWeight::get().reads(5)  * Weight::from(T::MaxNominatorRewardedPerValidator::get() + 1)
@@ -2500,20 +2560,22 @@ decl_module! {
 			score: ElectionScore,
 			era: EraIndex,
 			size: ElectionSize,
-		)  -> DispatchResultWithPostInfo {
+		) -> DispatchResultWithPostInfo {
 			ensure_none(origin)?;
-			Self::check_and_replace_solution(
+			let adjustments = Self::check_and_replace_solution(
 				winners,
 				compact,
 				ElectionCompute::Unsigned,
 				score,
 				era,
 				size,
-			)
-			// TODO: instead of returning an error, panic. This makes the entire produced block
-			// invalid.
-			// This ensures that block authors will not ever try and submit a solution which is not
-			// an improvement, since they will lose their authoring points/rewards.
+			).expect(
+				"An unsigned solution can only be submitted by validators; A validator should \
+				always produce correct solutions, else this block should not be imported, thus \
+				effectively depriving the validators from their authoring reward. Hence, this panic
+				is expected."
+			);
+			Ok(adjustments)
 		}
 	}
 }
@@ -2834,7 +2896,7 @@ impl<T: Trait> Module<T> {
 		let dest = Self::payee(stash);
 		match dest {
 			RewardDestination::Controller => Self::bonded(stash).and_then(|controller| {
-				T::RingCurrency::deposit_into_existing(&controller, amount).ok()
+				Some(T::RingCurrency::deposit_creating(&controller, amount))
 			}),
 			RewardDestination::Stash => T::RingCurrency::deposit_into_existing(stash, amount).ok(),
 			// TODO month
@@ -3388,7 +3450,8 @@ impl<T: Trait> Module<T> {
 	/// Self votes are added and nominations before the most recent slashing span are reaped.
 	///
 	/// No storage item is updated.
-	fn do_phragmen<Accuracy: PerThing>() -> Option<PrimitiveElectionResult<T::AccountId, Accuracy>> {
+	fn do_phragmen<Accuracy: PerThing>() -> Option<PrimitiveElectionResult<T::AccountId, Accuracy>>
+	{
 		let mut all_nominators: Vec<(T::AccountId, VoteWeight, Vec<T::AccountId>)> = vec![];
 		let mut all_validators = vec![];
 		for (validator, _) in <Validators<T>>::iter() {

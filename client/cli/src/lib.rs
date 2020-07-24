@@ -318,11 +318,6 @@ impl Configuration {
 				no_yamux_flow_control
 			);
 			quick_if_let!(cmd.network_params, self.network_config, discover_local);
-			quick_if_let!(
-				cmd.network_params,
-				self.network_config,
-				legacy_network_protocol
-			);
 
 			quick_if_let!(cmd.pool_config, self.pool_config, pool_limit);
 			quick_if_let!(cmd.pool_config, self.pool_config, pool_kbytes);
@@ -879,10 +874,6 @@ struct NetworkConfig {
 	///
 	/// By default this option is true for `--dev` and false otherwise.
 	discover_local: Option<bool>,
-
-	/// Use the legacy "pre-mainnet-launch" networking protocol. Enable if things seem broken.
-	/// This option will be removed in the future.
-	legacy_network_protocol: Option<bool>,
 }
 /// Parameters used to create the `NodeKeyConfig`, which determines the keypair
 /// used for libp2p networking.

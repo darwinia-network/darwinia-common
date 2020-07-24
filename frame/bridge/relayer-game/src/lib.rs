@@ -52,7 +52,7 @@ use frame_support::{
 	traits::{Currency, EnsureOrigin, ExistenceRequirement, Get, OnUnbalanced},
 	weights::Weight,
 };
-use frame_system::{self as system, ensure_root, ensure_signed};
+use frame_system::{self as system, ensure_signed};
 use sp_runtime::{
 	traits::{SaturatedConversion, Saturating, Zero},
 	DispatchResult, RuntimeDebug,
@@ -816,9 +816,7 @@ decl_module! {
 
 		#[weight = 0]
 		fn approve_pending_header(origin, pending_block_number: TcBlockNumber<T, I>) {
-			T::ApproveOrigin::try_origin(origin)
-				.map(|_| ())
-				.or_else(ensure_root)?;
+			T::ApproveOrigin::ensure_origin(origin)?;
 
 			Self::update_pending_headers_with(
 				pending_block_number,
@@ -828,9 +826,7 @@ decl_module! {
 
 		#[weight = 0]
 		fn reject_pending_header(origin, pending_block_number: TcBlockNumber<T, I>) {
-			T::RejectOrigin::try_origin(origin)
-				.map(|_| ())
-				.or_else(ensure_root)?;
+			T::RejectOrigin::ensure_origin(origin)?;
 
 			Self::update_pending_headers_with(pending_block_number, |_| Ok(()))?;
 		}

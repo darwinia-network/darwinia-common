@@ -161,7 +161,7 @@ use frame_support::{
 use frame_system::{self as system, ensure_root, ensure_signed};
 use sp_runtime::{
 	traits::{
-		AtLeast32Bit, Bounded, CheckedAdd, CheckedSub, MaybeSerializeDeserialize, Member,
+		AtLeast32BitUnsigned, Bounded, CheckedAdd, CheckedSub, MaybeSerializeDeserialize, Member,
 		Saturating, StaticLookup, Zero,
 	},
 	DispatchError, DispatchResult,
@@ -186,7 +186,7 @@ pub trait Subtrait<I: Instance = DefaultInstance>: frame_system::Trait {
 	/// The balance of an account.
 	type Balance: Parameter
 		+ Member
-		+ AtLeast32Bit
+		+ AtLeast32BitUnsigned
 		+ Codec
 		+ Default
 		+ Copy
@@ -215,7 +215,7 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	/// The balance of an account.
 	type Balance: Parameter
 		+ Member
-		+ AtLeast32Bit
+		+ AtLeast32BitUnsigned
 		+ Codec
 		+ Default
 		+ Copy
@@ -271,6 +271,13 @@ decl_event!(
 		BalanceSet(AccountId, Balance, Balance),
 		/// Some amount was deposited (e.g. for transaction fees).
 		Deposit(AccountId, Balance),
+		/// Some balance was reserved (moved from free to reserved).
+		Reserved(AccountId, Balance),
+		/// Some balance was unreserved (moved from reserved to free).
+		Unreserved(AccountId, Balance),
+		/// Some balance was moved from the reserve of the first account to the second account.
+		/// Final argument indicates the destination balance type.
+		ReserveRepatriated(AccountId, AccountId, Balance, Status),
 	}
 );
 
@@ -781,6 +788,7 @@ impl<T: Subtrait<I>, I: Instance> PartialEq for ElevatedTrait<T, I> {
 }
 impl<T: Subtrait<I>, I: Instance> Eq for ElevatedTrait<T, I> {}
 impl<T: Subtrait<I>, I: Instance> frame_system::Trait for ElevatedTrait<T, I> {
+	type BaseCallFilter = T::BaseCallFilter;
 	type Origin = T::Origin;
 	type Call = T::Call;
 	type Index = T::Index;
@@ -794,8 +802,8 @@ impl<T: Subtrait<I>, I: Instance> frame_system::Trait for ElevatedTrait<T, I> {
 	type BlockHashCount = T::BlockHashCount;
 	type MaximumBlockWeight = T::MaximumBlockWeight;
 	type DbWeight = T::DbWeight;
-	type BlockExecutionWeight = ();
-	type ExtrinsicBaseWeight = ();
+	type BlockExecutionWeight = T::BlockExecutionWeight;
+	type ExtrinsicBaseWeight = T::ExtrinsicBaseWeight;
 	type MaximumExtrinsicWeight = T::MaximumBlockWeight;
 	type MaximumBlockLength = T::MaximumBlockLength;
 	type AvailableBlockRatio = T::AvailableBlockRatio;
@@ -1218,8 +1226,16 @@ where
 				.checked_add(&value)
 				.ok_or(<Error<T, I>>::Overflow)?;
 			account.set_reserved(new_reserved);
-			Self::ensure_can_withdraw(who, value, WithdrawReason::Reserve.into(), account.free())
-		})
+			Self::ensure_can_withdraw(
+				&who,
+				value.clone(),
+				WithdrawReason::Reserve.into(),
+				account.free(),
+			)
+		})?;
+
+		Self::deposit_event(RawEvent::Reserved(who.clone(), value));
+		Ok(())
 	}
 
 	/// Unreserve some funds, returning any amount that was unable to be unreserved.
@@ -1230,15 +1246,18 @@ where
 			return Zero::zero();
 		}
 
-		Self::mutate_account(who, |account| {
+		let actual = Self::mutate_account(who, |account| {
 			let actual = cmp::min(account.reserved(), value);
 			let new_reserved = account.reserved() - actual;
 			account.set_reserved(new_reserved);
 			// defensive only: this can never fail since total issuance which is at least free+reserved
 			// fits into the same data type.
 			account.set_free(account.free().saturating_add(actual));
-			value - actual
-		})
+			actual
+		});
+
+		Self::deposit_event(RawEvent::Unreserved(who.clone(), actual.clone()));
+		value - actual
 	}
 
 	/// Move the reserved balance of one account into the balance of another, according to `status`.
@@ -1263,7 +1282,7 @@ where
 			};
 		}
 
-		Self::try_mutate_account(
+		let actual = Self::try_mutate_account(
 			beneficiary,
 			|to_account, is_new| -> Result<Self::Balance, DispatchError> {
 				ensure!(
@@ -1290,11 +1309,19 @@ where
 						}
 						let new_reserved = from_account.reserved() - actual;
 						from_account.set_reserved(new_reserved);
-						Ok(value - actual)
+						Ok(actual)
 					},
 				)
 			},
-		)
+		)?;
+
+		Self::deposit_event(RawEvent::ReserveRepatriated(
+			slashed.clone(),
+			beneficiary.clone(),
+			actual,
+			status,
+		));
+		Ok(value - actual)
 	}
 }
 

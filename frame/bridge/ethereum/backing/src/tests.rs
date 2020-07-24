@@ -288,12 +288,12 @@ fn verify_redeem_deposit() {
 			let controller = AccountId32::from([1; 32]);
 			let _ = Ring::deposit_creating(&expect_account_id, 1);
 
-			assert_ok!(<darwinia_staking::Call<Test>>::bond(
+			assert_ok!(mock::Call::from(<darwinia_staking::Call<Test>>::bond(
 				controller.clone(),
 				StakingBalance::RingBalance(1),
 				RewardDestination::Controller,
 				0,
-			).dispatch(Origin::signed(expect_account_id.clone())));
+			)).dispatch(Origin::signed(expect_account_id.clone())));
 			assert_ok!(EthBacking::redeem(Origin::signed(id1.clone()), RedeemFor::Deposit(proof_record.clone())));
 			assert_eq!(Ring::free_balance(&expect_account_id), 1234000000000 + 1);
 

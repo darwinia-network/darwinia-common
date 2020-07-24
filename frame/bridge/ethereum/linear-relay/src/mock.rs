@@ -40,7 +40,7 @@ darwinia_support::impl_account_data! {
 }
 
 thread_local! {
-	static ETH_NETWORK: RefCell<EthNetworkType> = RefCell::new(EthNetworkType::Ropsten);
+	static ETH_NETWORK: RefCell<EthereumNetworkType> = RefCell::new(EthereumNetworkType::Ropsten);
 }
 
 #[derive(Debug)]
@@ -172,9 +172,9 @@ impl HeaderWithProof {
 	}
 }
 
-pub struct EthNetwork;
-impl Get<EthNetworkType> for EthNetwork {
-	fn get() -> EthNetworkType {
+pub struct EthereumNetwork;
+impl Get<EthereumNetworkType> for EthereumNetwork {
+	fn get() -> EthereumNetworkType {
 		ETH_NETWORK.with(|v| v.borrow().to_owned())
 	}
 }
@@ -190,6 +190,7 @@ parameter_types! {
 	pub const AvailableBlockRatio: Perbill = Perbill::one();
 }
 impl frame_system::Trait for Test {
+	type BaseCallFilter = ();
 	type Origin = Origin;
 	type Call = Call;
 	type Index = u64;
@@ -232,36 +233,36 @@ impl_outer_origin! {
 impl_outer_dispatch! {
 	pub enum Call for Test where origin: Origin {
 		frame_system::System,
-		pallet_eth_relay::EthereumRelay,
+		darwinia_ethereum_relay::EthereumRelay,
 	}
 }
 
 parameter_types! {
-	pub const EthRelayModuleId: ModuleId = ModuleId(*b"da/ethli");
+	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethli");
 }
 
 impl Trait for Test {
-	type ModuleId = EthRelayModuleId;
+	type ModuleId = EthereumRelayModuleId;
 	type Event = ();
-	type EthNetwork = EthNetwork;
+	type EthereumNetwork = EthereumNetwork;
 	type Call = Call;
 	type Currency = Ring;
 }
 
 pub struct ExtBuilder {
-	eth_network: EthNetworkType,
+	eth_network: EthereumNetworkType,
 }
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {
-			eth_network: EthNetworkType::Ropsten,
+			eth_network: EthereumNetworkType::Ropsten,
 		}
 	}
 }
 
 impl ExtBuilder {
-	pub fn eth_network(mut self, eth_network: EthNetworkType) -> Self {
+	pub fn eth_network(mut self, eth_network: EthereumNetworkType) -> Self {
 		self.eth_network = eth_network;
 		self
 	}

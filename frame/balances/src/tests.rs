@@ -7,6 +7,7 @@ impl sp_runtime::traits::Dispatchable for CallWithDispatchInfo {
 	type Trait = ();
 	type Info = frame_support::weights::DispatchInfo;
 	type PostInfo = frame_support::weights::PostDispatchInfo;
+
 	fn dispatch(self, _origin: Self::Origin) -> sp_runtime::DispatchResultWithInfo<Self::PostInfo> {
 		panic!("Do not use dummy implementation for dispatch.");
 	}
@@ -15,13 +16,14 @@ impl sp_runtime::traits::Dispatchable for CallWithDispatchInfo {
 #[macro_export]
 macro_rules! decl_tests {
 	($test:ty, $ext_builder:ty, $existential_deposit:expr) => {
+		// --- substrate ---
 		use frame_support::{
 			assert_err, assert_noop, assert_ok,
 			traits::{Currency, ExistenceRequirement::AllowDeath, ReservableCurrency, StoredMap},
 		};
 		use frame_system::RawOrigin;
-		use pallet_transaction_payment::ChargeTransactionPayment;
-		use sp_runtime::{FixedPointNumber, FixedI128, traits::{SignedExtension, BadOrigin}};
+		use pallet_transaction_payment::{ChargeTransactionPayment, Multiplier};
+		use sp_runtime::{FixedPointNumber, traits::{SignedExtension, BadOrigin}};
 
 		pub type System = frame_system::Module<$test>;
 
@@ -195,7 +197,7 @@ macro_rules! decl_tests {
 				.monied(true)
 				.build()
 				.execute_with(|| {
-					pallet_transaction_payment::NextFeeMultiplier::put(FixedI128::saturating_from_integer(1));
+					pallet_transaction_payment::NextFeeMultiplier::put(Multiplier::saturating_from_integer(1));
 					Ring::set_lock(
 						ID_1,
 						&1,

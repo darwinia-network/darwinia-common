@@ -9,7 +9,7 @@ use sp_runtime::{
 };
 // --- darwinia ---
 use crate::*;
-use darwinia_ethereum_linear_relay::EthNetworkType;
+use darwinia_ethereum_linear_relay::EthereumNetworkType;
 
 impl_outer_dispatch! {
 	pub enum Call for Test where origin: Origin {
@@ -68,8 +68,9 @@ parameter_types! {
 	pub const AvailableBlockRatio: Perbill = Perbill::one();
 }
 impl frame_system::Trait for Test {
+	type BaseCallFilter = ();
 	type Origin = Origin;
-	type Call = ();
+	type Call = Call;
 	type Index = u64;
 	type BlockNumber = u64;
 	type Hash = sp_core::H256;
@@ -104,13 +105,13 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 }
 
 parameter_types! {
-	pub const EthRelayModuleId: ModuleId = ModuleId(*b"da/ethli");
-	pub const EthNetwork: EthNetworkType = EthNetworkType::Ropsten;
+	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethli");
+	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Ropsten;
 }
 impl darwinia_ethereum_linear_relay::Trait for Test {
-	type ModuleId = EthRelayModuleId;
+	type ModuleId = EthereumRelayModuleId;
 	type Event = ();
-	type EthNetwork = EthNetwork;
+	type EthereumNetwork = EthereumNetwork;
 	type Call = Call;
 	type Currency = Ring;
 }

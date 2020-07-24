@@ -42,7 +42,10 @@ fn verify_receipt_proof() {
 			&header_with_proof.header,
 			0x6b2dd4a2c4f47d
 		));
-		assert_eq!(EthereumRelay::verify_receipt(&proof_record).unwrap().0, receipt);
+		assert_eq!(
+			EthereumRelay::verify_receipt(&proof_record).unwrap().0,
+			receipt
+		);
 	});
 }
 
@@ -116,7 +119,10 @@ fn check_receipt_safety() {
 			grandpa.header.clone(),
 			grandpa.proof
 		));
-		assert_ok!(EthereumRelay::check_receipt(Origin::signed(0), receipt.clone(),));
+		assert_ok!(EthereumRelay::check_receipt(
+			Origin::signed(0),
+			receipt.clone(),
+		));
 
 		// check should fail when canonical hash was re-orged by
 		// the block which contains our tx's brother block
@@ -239,7 +245,7 @@ fn build_genesis_header() {
 #[test]
 fn relay_mainet_header() {
 	ExtBuilder::default()
-		.eth_network(EthNetworkType::Mainnet)
+		.eth_network(EthereumNetworkType::Mainnet)
 		.build()
 		.execute_with(|| {
 			assert_ok!(EthereumRelay::add_authority(RawOrigin::Root.into(), 0));
@@ -254,7 +260,10 @@ fn relay_mainet_header() {
 				// println!("{:?}", blocks_with_proof);
 				let header: EthHeader =
 					rlp::decode(&blocks_with_proof.header_rlp.to_vec()).unwrap();
-				assert_ok!(EthereumRelay::init_genesis_header(&header, 0x6b2dd4a2c4f47d));
+				assert_ok!(EthereumRelay::init_genesis_header(
+					&header,
+					0x6b2dd4a2c4f47d
+				));
 				// println!("{:?}", &header);
 			}
 
@@ -304,7 +313,10 @@ fn receipt_verify_fees_and_relayer_claim_reward() {
 			0
 		));
 
-		assert_ok!(EthereumRelay::set_receipt_verify_fee(RawOrigin::Root.into(), 0));
+		assert_ok!(EthereumRelay::set_receipt_verify_fee(
+			RawOrigin::Root.into(),
+			0
+		));
 
 		// family tree
 		let [origin, grandpa, _, parent, _] = mock_canonical_relationship();
@@ -329,9 +341,15 @@ fn receipt_verify_fees_and_relayer_claim_reward() {
 			parent.proof
 		));
 
-		assert_ok!(EthereumRelay::check_receipt(Origin::signed(1), receipt.clone()));
+		assert_ok!(EthereumRelay::check_receipt(
+			Origin::signed(1),
+			receipt.clone()
+		));
 
-		assert_ok!(EthereumRelay::set_receipt_verify_fee(RawOrigin::Root.into(), 10));
+		assert_ok!(EthereumRelay::set_receipt_verify_fee(
+			RawOrigin::Root.into(),
+			10
+		));
 
 		assert_err!(
 			EthereumRelay::check_receipt(Origin::signed(1), receipt.clone()),
@@ -340,7 +358,10 @@ fn receipt_verify_fees_and_relayer_claim_reward() {
 
 		let _ = Ring::deposit_creating(&1, 1000);
 
-		assert_ok!(EthereumRelay::check_receipt(Origin::signed(1), receipt.clone()));
+		assert_ok!(EthereumRelay::check_receipt(
+			Origin::signed(1),
+			receipt.clone()
+		));
 
 		assert_eq!(EthereumRelay::pot(), 10);
 		assert_eq!(Ring::free_balance(&1), 990);
@@ -355,7 +376,7 @@ fn receipt_verify_fees_and_relayer_claim_reward() {
 #[test]
 fn check_eth_relay_header_hash_works() {
 	ExtBuilder::default()
-		.eth_network(EthNetworkType::Mainnet)
+		.eth_network(EthereumNetworkType::Mainnet)
 		.build()
 		.execute_with(|| {
 			// block 8996776
@@ -364,7 +385,10 @@ fn check_eth_relay_header_hash_works() {
 				// println!("{:?}", blocks_with_proof);
 				let header: EthHeader =
 					rlp::decode(&blocks_with_proof.header_rlp.to_vec()).unwrap();
-				assert_ok!(EthereumRelay::init_genesis_header(&header, 0x6b2dd4a2c4f47d));
+				assert_ok!(EthereumRelay::init_genesis_header(
+					&header,
+					0x6b2dd4a2c4f47d
+				));
 
 				let blocks_with_proof = BlockWithProof::from_file("./src/test-data/8996776.json");
 				let header: EthHeader =
@@ -375,7 +399,7 @@ fn check_eth_relay_header_hash_works() {
 					class: DispatchClass::Normal,
 					..Default::default()
 				};
-				let check = CheckEthRelayHeaderHash::<Test>(Default::default());
+				let check = CheckEthereumRelayHeaderHash::<Test>(Default::default());
 				let call: mock::Call = crate::Call::relay_header(
 					header,
 					blocks_with_proof.to_double_node_with_merkle_proof_vec(),
@@ -399,7 +423,7 @@ fn check_eth_relay_header_hash_works() {
 					class: DispatchClass::Normal,
 					..Default::default()
 				};
-				let check = CheckEthRelayHeaderHash::<Test>(Default::default());
+				let check = CheckEthereumRelayHeaderHash::<Test>(Default::default());
 				let call: mock::Call = crate::Call::relay_header(
 					header,
 					blocks_with_proof.to_double_node_with_merkle_proof_vec(),
