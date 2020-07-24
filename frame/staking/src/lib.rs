@@ -1421,7 +1421,7 @@ decl_module! {
 		/// Number of BlockNumbers that staked funds must remain bonded for.
 		const BondingDurationInBlockNumber: T::BlockNumber = T::BondingDurationInBlockNumber::get();
 
-				/// Number of eras that slashes are deferred by, after computation.
+		/// Number of eras that slashes are deferred by, after computation.
 		///
 		/// This should be less than the bonding duration.
 		/// Set to 0 if slashes should be applied immediately, without opportunity for
