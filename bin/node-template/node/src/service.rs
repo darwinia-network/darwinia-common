@@ -203,7 +203,9 @@ pub fn new_full(config: Configuration) -> Result<impl AbstractService, ServiceEr
 		};
 
 		let babe = sc_consensus_babe::start_babe(babe_config)?;
-		service.spawn_essential_task_handle().spawn_blocking("babe-proposer", babe);
+		service
+			.spawn_essential_task_handle()
+			.spawn_blocking("babe-proposer", babe);
 	}
 
 	// if the node isn't actively participating in consensus then it doesn't

@@ -288,7 +288,7 @@ fn verify_redeem_deposit() {
 			let controller = AccountId32::from([1; 32]);
 			let _ = Ring::deposit_creating(&expect_account_id, 1);
 
-			assert_ok!( mock::Call::from(<darwinia_staking::Call<Test>>::bond(
+			assert_ok!(mock::Call::from(<darwinia_staking::Call<Test>>::bond(
 				controller.clone(),
 				StakingBalance::RingBalance(1),
 				RewardDestination::Controller,
