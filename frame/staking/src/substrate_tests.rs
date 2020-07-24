@@ -93,7 +93,7 @@ fn force_unstake_works() {
 		// Force unstake needs correct number of slashing spans (for weight calculation)
 		assert_noop!(Staking::force_unstake(Origin::signed(11), 11, 0), BadOrigin);
 		// We now force them to unstake
-		assert_ok!(Staking::force_unstake(Origin::ROOT, 11, 2));
+		assert_ok!(Staking::force_unstake(Origin::root(), 11, 2));
 		// No longer bonded.
 		assert_eq!(Staking::bonded(&11), None);
 		// Transfer works.
@@ -1504,7 +1504,7 @@ fn on_free_balance_zero_stash_removes_validator() {
 			assert_eq!(Ring::free_balance(&11), 0);
 
 			// Reap the stash
-			assert_ok!(Staking::reap_stash(Origin::NONE, 11, 0));
+			assert_ok!(Staking::reap_stash(Origin::none(), 11, 0));
 
 			// Check storage items do not exist
 			assert!(!<Ledger<Test>>::contains_key(&10));
@@ -1565,7 +1565,7 @@ fn on_free_balance_zero_stash_removes_nominator() {
 			assert_eq!(Ring::free_balance(&11), 0);
 
 			// Reap the stash
-			assert_ok!(Staking::reap_stash(Origin::NONE, 11, 0));
+			assert_ok!(Staking::reap_stash(Origin::none(), 11, 0));
 
 			// Check storage items do not exist
 			assert!(!<Ledger<Test>>::contains_key(&10));
@@ -2072,7 +2072,7 @@ fn offence_forces_new_era() {
 #[test]
 fn offence_ensures_new_era_without_clobbering() {
 	ExtBuilder::default().build_and_execute(|| {
-		assert_ok!(Staking::force_new_era_always(Origin::ROOT));
+		assert_ok!(Staking::force_new_era_always(Origin::root()));
 		assert_eq!(Staking::force_era(), Forcing::ForceAlways);
 
 		on_offence_now(
@@ -2491,10 +2491,10 @@ fn garbage_collection_after_slashing() {
 
 			// reap_stash respects num_slashing_spans so that weight is accurate
 			assert_noop!(
-				Staking::reap_stash(Origin::NONE, 11, 0),
+				Staking::reap_stash(Origin::none(), 11, 0),
 				StakingError::IncorrectSlashingSpans
 			);
-			assert_ok!(Staking::reap_stash(Origin::NONE, 11, 2));
+			assert_ok!(Staking::reap_stash(Origin::none(), 11, 2));
 
 			assert!(<Staking as Store>::SlashingSpans::get(&11).is_none());
 			assert_eq!(
@@ -2836,11 +2836,11 @@ fn remove_deferred() {
 
 			// fails if empty
 			assert_noop!(
-				Staking::cancel_deferred_slash(Origin::ROOT, 1, vec![]),
+				Staking::cancel_deferred_slash(Origin::root(), 1, vec![]),
 				StakingError::EmptyTargets
 			);
 
-			assert_ok!(Staking::cancel_deferred_slash(Origin::ROOT, 1, vec![0]));
+			assert_ok!(Staking::cancel_deferred_slash(Origin::root(), 1, vec![0]));
 
 			assert_eq!(Ring::free_balance(11), 1000);
 			assert_eq!(Ring::free_balance(101), 2000);
@@ -2932,22 +2932,22 @@ fn remove_multi_deferred() {
 
 			// fails if list is not sorted
 			assert_noop!(
-				Staking::cancel_deferred_slash(Origin::ROOT, 1, vec![2, 0, 4]),
+				Staking::cancel_deferred_slash(Origin::root(), 1, vec![2, 0, 4]),
 				StakingError::NotSortedAndUnique,
 			);
 			// fails if list is not unique
 			assert_noop!(
-				Staking::cancel_deferred_slash(Origin::ROOT, 1, vec![0, 2, 2]),
+				Staking::cancel_deferred_slash(Origin::root(), 1, vec![0, 2, 2]),
 				StakingError::NotSortedAndUnique,
 			);
 			// fails if bad index
 			assert_noop!(
-				Staking::cancel_deferred_slash(Origin::ROOT, 1, vec![1, 2, 3, 4, 5]),
+				Staking::cancel_deferred_slash(Origin::root(), 1, vec![1, 2, 3, 4, 5]),
 				StakingError::InvalidSlashIndex,
 			);
 
 			assert_ok!(Staking::cancel_deferred_slash(
-				Origin::ROOT,
+				Origin::root(),
 				1,
 				vec![0, 2, 4]
 			));
@@ -3268,16 +3268,16 @@ fn test_max_nominator_rewarded_per_validator_and_cant_steal_someone_else_reward(
 fn set_history_depth_works() {
 	ExtBuilder::default().build_and_execute(|| {
 		mock::start_era(10);
-		Staking::set_history_depth(Origin::ROOT, 20, 0).unwrap();
+		Staking::set_history_depth(Origin::root(), 20, 0).unwrap();
 		assert!(<Staking as Store>::ErasTotalStake::contains_key(10 - 4));
 		assert!(<Staking as Store>::ErasTotalStake::contains_key(10 - 5));
-		Staking::set_history_depth(Origin::ROOT, 4, 0).unwrap();
+		Staking::set_history_depth(Origin::root(), 4, 0).unwrap();
 		assert!(<Staking as Store>::ErasTotalStake::contains_key(10 - 4));
 		assert!(!<Staking as Store>::ErasTotalStake::contains_key(10 - 5));
-		Staking::set_history_depth(Origin::ROOT, 3, 0).unwrap();
+		Staking::set_history_depth(Origin::root(), 3, 0).unwrap();
 		assert!(!<Staking as Store>::ErasTotalStake::contains_key(10 - 4));
 		assert!(!<Staking as Store>::ErasTotalStake::contains_key(10 - 5));
-		Staking::set_history_depth(Origin::ROOT, 8, 0).unwrap();
+		Staking::set_history_depth(Origin::root(), 8, 0).unwrap();
 		assert!(!<Staking as Store>::ErasTotalStake::contains_key(10 - 4));
 		assert!(!<Staking as Store>::ErasTotalStake::contains_key(10 - 5));
 	});

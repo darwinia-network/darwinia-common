@@ -473,6 +473,7 @@ mod tests {
 		pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
 	}
 	impl frame_system::Trait for Test {
+		type BaseCallFilter = ();
 		type Origin = Origin;
 		type Call = ();
 		type Index = u64;
@@ -646,7 +647,7 @@ mod tests {
 		new_test_ext().execute_with(|| {
 			assert_eq!(Ring::free_balance(1), 0);
 			assert_ok!(Claims::claim(
-				Origin::NONE,
+				Origin::none(),
 				1,
 				OtherSignature::Eth(eth_sig(&alice(), &1u64.encode(), ETHEREUM_SIGNED_MESSAGE)),
 			));
@@ -655,7 +656,7 @@ mod tests {
 
 			assert_eq!(Ring::free_balance(2), 0);
 			assert_ok!(Claims::claim(
-				Origin::NONE,
+				Origin::none(),
 				2,
 				OtherSignature::Eth(eth_sig(&bob(), &2u64.encode(), ETHEREUM_SIGNED_MESSAGE)),
 			));
@@ -664,7 +665,7 @@ mod tests {
 
 			assert_eq!(Ring::free_balance(3), 0);
 			assert_ok!(Claims::claim(
-				Origin::NONE,
+				Origin::none(),
 				3,
 				OtherSignature::Tron(tron_sig(&carol(), &3u64.encode(), TRON_SIGNED_MESSAGE)),
 			));
@@ -683,7 +684,7 @@ mod tests {
 			assert_eq!(Ring::free_balance(42), 0);
 			assert_noop!(
 				Claims::claim(
-					Origin::NONE,
+					Origin::none(),
 					69,
 					OtherSignature::Eth(eth_sig(
 						&carol(),
@@ -694,13 +695,13 @@ mod tests {
 				<Error<Test>>::SignerHasNoClaim,
 			);
 			assert_ok!(Claims::mint_claim(
-				Origin::ROOT,
+				Origin::root(),
 				OtherAddress::Eth(addr(&carol())),
 				200
 			));
 			assert_eq!(Ring::usable_balance(&Claims::account_id()), 800);
 			assert_ok!(Claims::claim(
-				Origin::NONE,
+				Origin::none(),
 				69,
 				OtherSignature::Eth(eth_sig(&carol(), &69u64.encode(), ETHEREUM_SIGNED_MESSAGE)),
 			));
@@ -733,13 +734,13 @@ mod tests {
 		new_test_ext().execute_with(|| {
 			assert_eq!(Ring::free_balance(42), 0);
 			assert_ok!(Claims::claim(
-				Origin::NONE,
+				Origin::none(),
 				42,
 				OtherSignature::Eth(eth_sig(&alice(), &42u64.encode(), ETHEREUM_SIGNED_MESSAGE)),
 			));
 			assert_noop!(
 				Claims::claim(
-					Origin::NONE,
+					Origin::none(),
 					42,
 					OtherSignature::Eth(eth_sig(
 						&alice(),
@@ -758,7 +759,7 @@ mod tests {
 			assert_eq!(Ring::free_balance(42), 0);
 			assert_noop!(
 				Claims::claim(
-					Origin::NONE,
+					Origin::none(),
 					42,
 					OtherSignature::Eth(eth_sig(
 						&alice(),
@@ -777,7 +778,7 @@ mod tests {
 			assert_eq!(Ring::free_balance(42), 0);
 			assert_noop!(
 				Claims::claim(
-					Origin::NONE,
+					Origin::none(),
 					42,
 					OtherSignature::Eth(eth_sig(
 						&carol(),

@@ -430,7 +430,7 @@ fn approve_pending_header_should_work() {
 			);
 
 			assert_ok!(RelayerGame::approve_pending_header(
-				Origin::ROOT,
+				Origin::root(),
 				header.number
 			));
 
@@ -462,7 +462,7 @@ fn reject_pending_header_should_work() {
 			);
 
 			assert_ok!(RelayerGame::reject_pending_header(
-				Origin::ROOT,
+				Origin::root(),
 				header.number
 			));
 
