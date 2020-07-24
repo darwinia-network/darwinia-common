@@ -3635,14 +3635,14 @@ fn payout_creates_controller() {
 		.build_and_execute(|| {
 			let balance = 1000;
 			// Create three validators:
-			bond_validator(11, 10, balance); // Default(64)
+			bond_validator(11, 10, StakingBalance::RingBalance(balance)); // Default(64)
 
 			// Create a stash/controller pair
-			bond_nominator(1234, 1337, 100, vec![11]);
+			bond_nominator(1234, 1337, StakingBalance::RingBalance(balance), vec![11]);
 
 			// kill controller
-			assert_ok!(Balances::transfer(Origin::signed(1337), 1234, 100));
-			assert_eq!(Balances::free_balance(1337), 0);
+			assert_ok!(Ring::transfer(Origin::signed(1337), 1234, 100));
+			assert_eq!(Ring::free_balance(1337), 0);
 
 			mock::start_era(1);
 			Staking::reward_by_ids(vec![(11, 1)]);
@@ -3653,6 +3653,6 @@ fn payout_creates_controller() {
 			assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11, 1));
 
 			// Controller is created
-			assert!(Balances::free_balance(1337) > 0);
+			assert!(Ring::free_balance(1337) > 0);
 		})
 }

@@ -87,9 +87,22 @@ impl pallet_session::SessionHandler<AccountId> for TestSessionHandler {
 	fn on_disabled(_validator_index: usize) {}
 }
 
-// Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Test;
+parameter_types! {
+	pub const EthBackingModuleId: ModuleId = ModuleId(*b"da/backi");
+	pub const SubKeyPrefix: u8 = 42;
+}
+impl Trait for Test {
+	type ModuleId = EthBackingModuleId;
+	type Event = ();
+	type DetermineAccountId = AccountIdDeterminator<Test>;
+	type EthereumRelay = EthereumRelay;
+	type OnDepositRedeem = Staking;
+	type RingCurrency = Ring;
+	type KtonCurrency = Kton;
+	type SubKeyPrefix = SubKeyPrefix;
+}
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
@@ -100,7 +113,7 @@ parameter_types! {
 impl frame_system::Trait for Test {
 	type BaseCallFilter = ();
 	type Origin = Origin;
-	type Call = ();
+	type Call = Call;
 	type Index = u64;
 	type BlockNumber = BlockNumber;
 	type Hash = H256;
@@ -209,21 +222,6 @@ impl darwinia_staking::Trait for Test {
 	type TotalPower = ();
 }
 
-parameter_types! {
-	pub const EthBackingModuleId: ModuleId = ModuleId(*b"da/backi");
-	pub const SubKeyPrefix: u8 = 42;
-}
-impl Trait for Test {
-	type ModuleId = EthBackingModuleId;
-	type Event = ();
-	type DetermineAccountId = AccountIdDeterminator<Test>;
-	type EthereumRelay = EthereumRelay;
-	type OnDepositRedeem = Staking;
-	type RingCurrency = Ring;
-	type KtonCurrency = Kton;
-	type SubKeyPrefix = SubKeyPrefix;
-}
-
 impl<LocalCall> frame_system::offchain::SendTransactionTypes<LocalCall> for Test
 where
 	Call: From<LocalCall>,
@@ -238,7 +236,6 @@ impl Default for ExtBuilder {
 		Self
 	}
 }
-
 impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
 		let mut t = system::GenesisConfig::default()
