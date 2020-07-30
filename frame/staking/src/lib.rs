@@ -3344,7 +3344,7 @@ impl<T: Trait> Module<T> {
 				if exposure_clipped.others.len() > clipped_max_len {
 					exposure_clipped
 						.others
-						.sort_unstable_by(|a, b| a.power.cmp(&b.power).reverse());
+						.sort_by(|a, b| a.power.cmp(&b.power).reverse());
 					exposure_clipped.others.truncate(clipped_max_len);
 				}
 				<ErasStakersClipped<T>>::insert(&current_era, &stash, exposure_clipped);
