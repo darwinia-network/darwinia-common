@@ -1,6 +1,6 @@
 [package]
 name = "merkle-patricia-trie"
-version = "0.6.1"
+version = "0.6.4"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "Merkle-Patricia Trie (Ethereum Style)"
 edition = "2018"
@@ -10,7 +10,7 @@ repository = "https://github.com/darwinia-network/darwinia-common/"
 
 [dependencies]
 # crates
-hashbrown = { version = "0.7.1" }
+hashbrown = { version = "0.8.1" }
 # github
 hash = { package = "keccak-hash", default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 rlp = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
@@ -19,7 +19,7 @@ sp-std = { default-features = false, git = "https://github.com/darwinia-network/
 
 [dev-dependencies]
 # crates
-criterion = { version = "0.3.1" }
+criterion = { version = "0.3.3" }
 ethereum-types = { version = "0.5.2" }
 hex = { version = "0.4.2" }
 rand = { version = "0.7.3" }
