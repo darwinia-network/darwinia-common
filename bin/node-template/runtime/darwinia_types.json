@@ -30,7 +30,7 @@
 	},
 	"Unbonding": {
 		"amount": "Balance",
-		"moment": "BlockNumber"
+		"until": "BlockNumber"
 	},
 	"AccountData": {
 		"free": "Balance",
