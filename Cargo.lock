@@ -1061,7 +1061,7 @@ dependencies = [
  "darwinia-support",
  "frame-support",
  "frame-system",
- "hex-literal 0.3.0",
+ "hex-literal 0.3.1",
  "parity-scale-codec",
  "serde",
  "sp-core",
@@ -2343,9 +2343,9 @@ dependencies = [
 
 [[package]]
 name = "hex-literal"
-version = "0.3.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc38ca401ca1b8d89ff1185e39a132e5c4f86d844c0cf6364251576f2d7fa0c1"
+checksum = "5af1f635ef1bc545d78392b136bfe1c9809e029023c84a3638a864a10b8819c8"
 
 [[package]]
 name = "hex-literal-impl"
