@@ -264,6 +264,8 @@ pub mod slashing;
 mod migration {
 	// --- substrate ---
 	use frame_support::migration::*;
+	#[cfg(not(feature = "std"))]
+	use sp_std::borrow::ToOwned;
 	// --- darwinia ---
 	use crate::*;
 
@@ -332,6 +334,8 @@ mod migration {
 					// fix invalid data
 					*active_deposit_ring = Zero::zero();
 				}
+
+				put_storage_value(module, item, &hash, value);
 			}
 		}
 	}
