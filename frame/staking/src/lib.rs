@@ -4024,14 +4024,12 @@ where
 	}
 }
 
-impl<T: Trait> OnDepositRedeem<T::AccountId> for Module<T> {
-	type Balance = RingBalance<T>;
-
+impl<T: Trait> OnDepositRedeem<T::AccountId, RingBalance<T>> for Module<T> {
 	fn on_deposit_redeem(
 		backing: &T::AccountId,
 		start_time: TsInMs,
 		months: u8,
-		amount: Self::Balance,
+		amount: RingBalance<T>,
 		stash: &T::AccountId,
 	) -> DispatchResult {
 		let controller = Self::bonded(&stash).ok_or(<Error<T>>::NotStash)?;

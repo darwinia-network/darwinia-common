@@ -66,9 +66,7 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 // --- darwinia ---
-use darwinia_support::{
-	balance::lock::LockableCurrency, relay::EthereumReceipt, relay::EthereumRelay,
-};
+use darwinia_support::{balance::lock::LockableCurrency, relay::EthereumReceipt};
 use ethereum_primitives::{
 	error::EthereumError,
 	ethashproof::EthashProof,
@@ -706,8 +704,16 @@ impl<T: Trait> Module<T> {
 	}
 }
 
-impl<T: Trait> EthereumReceipt for Module<T> {
+impl<T: Trait> EthereumReceipt<T::AccountId, Balance<T>> for Module<T> {
 	type EthereumReceiptProof = EthReceiptProof;
+
+	fn account_id() -> T::AccountId {
+		Self::account_id()
+	}
+
+	fn receipt_verify_fee() -> Balance<T> {
+		Self::receipt_verify_fee()
+	}
 
 	/// confirm that the block hash is right
 	/// get the receipt MPT trie root from the block header
@@ -745,16 +751,6 @@ impl<T: Trait> EthereumReceipt for Module<T> {
 
 	fn gen_receipt_index(proof: &Self::EthereumReceiptProof) -> EthTransactionIndex {
 		(proof.header_hash, proof.index)
-	}
-}
-
-impl<T: Trait> EthereumRelay<T::AccountId, Balance<T>> for Module<T> {
-	fn account_id() -> T::AccountId {
-		Self::account_id()
-	}
-
-	fn receipt_verify_fee() -> Balance<T> {
-		Self::receipt_verify_fee()
 	}
 }
 

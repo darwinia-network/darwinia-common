@@ -73,7 +73,7 @@ pub mod relay {
 	// --- darwinia ---
 	pub use crate::{
 		structs::TcHeaderBrief,
-		traits::{AdjustableRelayerGame, EthereumReceipt, EthereumRelay, Relayable},
+		traits::{AdjustableRelayerGame, EthereumReceipt, Relayable},
 	};
 
 	// --- substrate ---

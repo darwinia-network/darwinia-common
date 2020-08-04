@@ -641,8 +641,16 @@ impl<T: Trait> Relayable for Module<T> {
 	}
 }
 
-impl<T: Trait> EthereumReceipt for Module<T> {
+impl<T: Trait> EthereumReceipt<T::AccountId, Balance<T>> for Module<T> {
 	type EthereumReceiptProof = (EthHeader, EthReceiptProof, MMRProof);
+
+	fn account_id() -> T::AccountId {
+		Self::account_id()
+	}
+
+	fn receipt_verify_fee() -> Balance<T> {
+		Self::receipt_verify_fee()
+	}
 
 	fn verify_receipt(proof: &Self::EthereumReceiptProof) -> Result<Receipt, EthereumError> {
 		// Verify header hash
@@ -683,16 +691,6 @@ impl<T: Trait> EthereumReceipt for Module<T> {
 	fn gen_receipt_index(proof: &Self::EthereumReceiptProof) -> EthTransactionIndex {
 		let proof_record = &proof.1;
 		(proof_record.header_hash, proof.1.index)
-	}
-}
-
-impl<T: Trait> EthereumRelay<T::AccountId, Balance<T>> for Module<T> {
-	fn account_id() -> T::AccountId {
-		Self::account_id()
-	}
-
-	fn receipt_verify_fee() -> Balance<T> {
-		Self::receipt_verify_fee()
 	}
 }
 

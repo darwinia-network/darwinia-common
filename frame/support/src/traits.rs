@@ -211,14 +211,12 @@ pub trait Relayable {
 	fn store_header(raw_header_thing: RawHeaderThing) -> DispatchResult;
 }
 
-pub trait EthereumRelay<AccountId, Balance> {
+pub trait EthereumReceipt<AccountId, Balance> {
+	type EthereumReceiptProof: FullCodec + Clone + PartialEq + Debug;
+
 	fn account_id() -> AccountId;
 
 	fn receipt_verify_fee() -> Balance;
-}
-
-pub trait EthereumReceipt {
-	type EthereumReceiptProof: FullCodec + Clone + PartialEq + Debug;
 
 	fn verify_receipt(proof: &Self::EthereumReceiptProof) -> Result<Receipt, EthereumError>;
 
