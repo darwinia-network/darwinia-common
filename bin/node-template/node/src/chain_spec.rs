@@ -169,21 +169,6 @@ fn testnet_genesis(
 			changes_trie_config: Default::default(),
 		}),
 		pallet_babe: Some(Default::default()),
-		pallet_session: Some(SessionConfig {
-			keys: initial_authorities
-				.iter()
-				.cloned()
-				.map(|x| (x.0.clone(), x.0, session_keys(x.2, x.3, x.4, x.5)))
-				.collect(),
-		}),
-		pallet_grandpa: Some(Default::default()),
-		pallet_im_online: Some(Default::default()),
-		pallet_authority_discovery: Some(Default::default()),
-		pallet_collective_Instance0: Some(Default::default()),
-		pallet_collective_Instance1: Some(Default::default()),
-		pallet_membership_Instance0: Some(Default::default()),
-		pallet_sudo: Some(SudoConfig { key: root_key }),
-		// --- darwinia ---
 		darwinia_balances_Instance0: Some(RingConfig {
 			balances: endowed_accounts
 				.iter()
@@ -212,6 +197,18 @@ fn testnet_genesis(
 			payout_fraction: Perbill::from_percent(50),
 			..Default::default()
 		}),
+		pallet_session: Some(SessionConfig {
+			keys: initial_authorities
+				.iter()
+				.cloned()
+				.map(|x| (x.0.clone(), x.0, session_keys(x.2, x.3, x.4, x.5)))
+				.collect(),
+		}),
+		pallet_grandpa: Some(Default::default()),
+		pallet_im_online: Some(Default::default()),
+		pallet_authority_discovery: Some(Default::default()),
+		pallet_collective_Instance0: Some(Default::default()),
+		pallet_collective_Instance1: Some(Default::default()),
 		darwinia_elections_phragmen: Some(ElectionsPhragmenConfig {
 			members: endowed_accounts
 				.iter()
@@ -220,12 +217,14 @@ fn testnet_genesis(
 				.map(|member| (member, 1 << 60))
 				.collect(),
 		}),
+		pallet_membership_Instance0: Some(Default::default()),
 		darwinia_claims: Some(ClaimsConfig {
 			claims_list: ClaimsList::from_file(
 				"bin/node-template/node/res/claims_list.json",
 				"CLAIMS_LIST_PATH",
 			),
 		}),
+		pallet_sudo: Some(SudoConfig { key: root_key }),
 		darwinia_ethereum_backing: Some(Default::default()),
 		darwinia_ethereum_linear_relay: Some(EthereumLinearRelayConfig {
 			genesis_header: Some((
