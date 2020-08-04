@@ -137,10 +137,6 @@ decl_error! {
 
 		/// Header - ALREADY EXISTS
 		HeaderAE,
-		/// Header - NOT CANONICAL
-		HeaderNC,
-		/// Header - NOT SAFE
-		HeaderNS,
 		/// Header - TOO EARLY
 		HeaderTE,
 		/// Header - TOO OLD,

@@ -212,7 +212,7 @@ pub trait Relayable {
 }
 
 pub trait EthereumReceipt<AccountId, Balance> {
-	type EthereumReceiptProof: FullCodec + Clone + PartialEq + Debug;
+	type EthereumReceiptProof: Clone + Debug + PartialEq + FullCodec;
 
 	fn account_id() -> AccountId;
 
