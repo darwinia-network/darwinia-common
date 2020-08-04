@@ -18,6 +18,8 @@ frame-support = { default-features = false, git = "https://github.com/darwinia-n
 sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
 sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
 
+ethereum-primitives = { default-features = false, path = "../../primitives/ethereum-primitives" }
+
 [features]
 default = ["std"]
 easy-testing = []
@@ -29,4 +31,5 @@ std = [
 	"frame-support/std",
 	"sp-runtime/std",
 	"sp-std/std",
+	"ethereum-primitives/std",
 ]

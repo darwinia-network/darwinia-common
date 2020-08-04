@@ -43,12 +43,9 @@ mod migration {
 				put_storage_value(new_module, address, hash, value);
 			}
 		}
-		for receipt_proof in receipt_proofs {
-			for (hash, value) in
-				<StorageIterator<Option<EthReceiptProof>>>::new(old_module, receipt_proof).drain()
-			{
-				put_storage_value(new_module, receipt_proof, &hash, value);
-			}
+
+		for item in receipt_proofs {
+			remove_storage_prefix(old_module, item, hash);
 		}
 	}
 }
@@ -63,14 +60,12 @@ mod types {
 
 	pub type Balance = u128;
 	pub type DepositId = U256;
-	pub type MMRProof = Vec<H256>;
 
 	pub type RingBalance<T> =
 		<<T as Trait>::RingCurrency as Currency<<T as system::Trait>::AccountId>>::Balance;
 	pub type KtonBalance<T> =
 		<<T as Trait>::KtonCurrency as Currency<<T as system::Trait>::AccountId>>::Balance;
 
-	pub type EthTransactionIndex = (H256, u64);
 	pub type EthereumReceiptProof<T> =
 		<<T as Trait>::EthereumReceipt as EthereumReceipt>::EthereumReceiptProof;
 }
@@ -93,12 +88,10 @@ use sp_runtime::{
 use sp_std::borrow::ToOwned;
 use sp_std::{convert::TryFrom, marker::PhantomData, vec};
 // --- darwinia ---
-use darwinia_support::{balance::lock::*, relay::EthereumRelay, traits::OnDepositRedeem};
-use ethereum_primitives::{
-	header::EthHeader,
-	receipt::{EthReceiptProof, EthereumReceipt},
-	EthAddress, H256, U256,
+use darwinia_support::{
+	balance::lock::*, relay::EthereumReceipt, relay::EthereumRelay, traits::OnDepositRedeem,
 };
+use ethereum_primitives::{receipt::EthTransactionIndex, EthAddress, U256};
 use types::*;
 
 pub trait Trait: frame_system::Trait {
@@ -133,17 +126,17 @@ decl_storage! {
 	trait Store for Module<T: Trait> as DarwiniaEthereumBacking {
 		pub RingProofVerified
 			get(fn ring_proof_verfied)
-			: map hasher(blake2_128_concat) EthTransactionIndex => Option<EthReceiptProof>;
+			: map hasher(blake2_128_concat) EthTransactionIndex => Option<bool>;
 		pub RingRedeemAddress get(fn ring_redeem_address) config(): EthAddress;
 
 		pub KtonProofVerified
 			get(fn kton_proof_verfied)
-			: map hasher(blake2_128_concat) EthTransactionIndex => Option<EthReceiptProof>;
+			: map hasher(blake2_128_concat) EthTransactionIndex => Option<bool>;
 		pub KtonRedeemAddress get(fn kton_redeem_address) config(): EthAddress;
 
 		pub DepositProofVerified
 			get(fn deposit_proof_verfied)
-			: map hasher(blake2_128_concat) EthTransactionIndex => Option<EthReceiptProof>;
+			: map hasher(blake2_128_concat) EthTransactionIndex => Option<bool>;
 		pub DepositRedeemAddress get(fn deposit_redeem_address) config(): EthAddress;
 	}
 	add_extra_genesis {
@@ -245,9 +238,9 @@ decl_module! {
 			let redeemer = ensure_signed(origin)?;
 
 			match act {
-				RedeemFor::Ring => Self::redeem_ring(&redeemer, proof)?,
-				RedeemFor::Kton => Self::redeem_kton(&redeemer, proof)?,
-				RedeemFor::Deposit => Self::redeem_deposit(&redeemer, proof)?,
+				RedeemFor::Ring => Self::redeem_ring(&redeemer, &proof)?,
+				RedeemFor::Kton => Self::redeem_kton(&redeemer, &proof)?,
+				RedeemFor::Deposit => Self::redeem_deposit(&redeemer, &proof)?,
 			}
 		}
 
@@ -539,17 +532,14 @@ impl<T: Trait> Module<T> {
 
 	// event RingBurndropTokens(address indexed token, address indexed owner, uint amount, bytes data)
 	// https://ropsten.etherscan.io/tx/0x81f699c93b00ab0b7db701f87b6f6045c1e0692862fcaaf8f06755abb0536800
-	fn redeem_ring(
-		redeemer: &T::AccountId,
-		proof_record: EthereumReceiptProof<T>,
-	) -> DispatchResult {
+	fn redeem_ring(redeemer: &T::AccountId, proof: &EthereumReceiptProof<T>) -> DispatchResult {
 		ensure!(
-			!RingProofVerified::contains_key((proof_record.header_hash, proof_record.index)),
+			!RingProofVerified::contains_key(T::EthereumReceipt::gen_receipt_index(proof)),
 			<Error<T>>::RingAR,
 		);
 
 		let (redeemed_ring, darwinia_account, fee) =
-			Self::parse_token_redeem_proof(&proof_record, "RingBurndropTokens")?;
+			Self::parse_token_redeem_proof(&proof, "RingBurndropTokens")?;
 		let redeemed_ring = redeemed_ring.saturated_into();
 
 		ensure!(
@@ -569,17 +559,14 @@ impl<T: Trait> Module<T> {
 			KeepAlive,
 		)?;
 		// Transfer the fee from redeemer.
-		T::RingCurrency::transfer(redeemer, &T::EthereumRelay::module_id(), fee, KeepAlive)?;
+		T::RingCurrency::transfer(redeemer, &T::EthereumRelay::account_id(), fee, KeepAlive)?;
 
-		RingProofVerified::insert(
-			(proof_record.header_hash, proof_record.index),
-			&proof_record,
-		);
+		RingProofVerified::insert(T::EthereumReceipt::gen_receipt_index(proof), true);
 
 		<Module<T>>::deposit_event(RawEvent::RedeemRing(
 			darwinia_account,
 			redeemed_ring,
-			(proof_record.header_hash, proof_record.index),
+			T::EthereumReceipt::gen_receipt_index(proof),
 		));
 
 		Ok(())
@@ -587,17 +574,14 @@ impl<T: Trait> Module<T> {
 
 	// event KtonBurndropTokens(address indexed token, address indexed owner, uint amount, bytes data)
 	// https://ropsten.etherscan.io/tx/0xc878562085dd8b68ad81adf0820aa0380f1f81b0ea7c012be122937b74020f96
-	fn redeem_kton(
-		redeemer: &T::AccountId,
-		proof_record: EthereumReceiptProof<T>,
-	) -> DispatchResult {
+	fn redeem_kton(redeemer: &T::AccountId, proof: &EthereumReceiptProof<T>) -> DispatchResult {
 		ensure!(
-			!KtonProofVerified::contains_key((proof_record.header_hash, proof_record.index)),
+			!KtonProofVerified::contains_key(T::EthereumReceipt::gen_receipt_index(proof)),
 			<Error<T>>::KtonAR,
 		);
 
 		let (redeemed_kton, darwinia_account, fee) =
-			Self::parse_token_redeem_proof(&proof_record, "KtonBurndropTokens")?;
+			Self::parse_token_redeem_proof(&proof, "KtonBurndropTokens")?;
 		let redeemed_kton = redeemed_kton.saturated_into();
 
 		ensure!(
@@ -617,17 +601,14 @@ impl<T: Trait> Module<T> {
 			KeepAlive,
 		)?;
 		// Transfer the fee from redeemer.
-		T::RingCurrency::transfer(redeemer, &T::EthereumRelay::module_id(), fee, KeepAlive)?;
+		T::RingCurrency::transfer(redeemer, &T::EthereumRelay::account_id(), fee, KeepAlive)?;
 
-		KtonProofVerified::insert(
-			(proof_record.header_hash, proof_record.index),
-			&proof_record,
-		);
+		KtonProofVerified::insert(T::EthereumReceipt::gen_receipt_index(proof), true);
 
 		<Module<T>>::deposit_event(RawEvent::RedeemKton(
 			darwinia_account,
 			redeemed_kton,
-			(proof_record.header_hash, proof_record.index),
+			T::EthereumReceipt::gen_receipt_index(proof),
 		));
 
 		Ok(())
@@ -635,17 +616,14 @@ impl<T: Trait> Module<T> {
 
 	// event Burndrop(uint256 indexed _depositID,  address _depositor, uint48 _months, uint48 _startAt, uint64 _unitInterest, uint128 _value, bytes _data)
 	// https://ropsten.etherscan.io/tx/0xfd2cac791bb0c0bee7c5711f17ef93401061d314f4eb84e1bc91f32b73134ca1
-	fn redeem_deposit(
-		redeemer: &T::AccountId,
-		proof_record: EthereumReceiptProof<T>,
-	) -> DispatchResult {
+	fn redeem_deposit(redeemer: &T::AccountId, proof: &EthereumReceiptProof<T>) -> DispatchResult {
 		ensure!(
-			!DepositProofVerified::contains_key((proof_record.header_hash, proof_record.index)),
+			!DepositProofVerified::contains_key(T::EthereumReceipt::gen_receipt_index(proof)),
 			<Error<T>>::DepositAR,
 		);
 
 		let (deposit_id, month, start_at, redeemed_ring, darwinia_account, fee) =
-			Self::parse_deposit_redeem_proof(&proof_record)?;
+			Self::parse_deposit_redeem_proof(&proof)?;
 
 		ensure!(
 			Self::pot::<T::RingCurrency>() >= redeemed_ring,
@@ -665,20 +643,17 @@ impl<T: Trait> Module<T> {
 			&darwinia_account,
 		)?;
 		// Transfer the fee from redeemer.
-		T::RingCurrency::transfer(redeemer, &T::EthereumRelay::module_id(), fee, KeepAlive)?;
+		T::RingCurrency::transfer(redeemer, &T::EthereumRelay::account_id(), fee, KeepAlive)?;
 
 		// TODO: check deposit_id duplication
 		// TODO: Ignore Unit Interest for now
-		DepositProofVerified::insert(
-			(proof_record.header_hash, proof_record.index),
-			&proof_record,
-		);
+		DepositProofVerified::insert(T::EthereumReceipt::gen_receipt_index(proof), true);
 
 		<Module<T>>::deposit_event(RawEvent::RedeemDeposit(
 			darwinia_account,
 			deposit_id,
 			redeemed_ring,
-			(proof_record.header_hash, proof_record.index),
+			T::EthereumReceipt::gen_receipt_index(proof),
 		));
 
 		Ok(())

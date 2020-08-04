@@ -141,11 +141,7 @@ impl Decodable for Receipt {
 	}
 }
 
-pub trait EthereumReceipt {
-	type EthereumReceiptProof: Encode + Decode;
-
-	fn verify_receipt(proof_record: &Self::EthereumReceiptProof) -> Result<Receipt, EthereumError>;
-}
+pub type EthTransactionIndex = (H256, u64);
 
 #[cfg(test)]
 mod tests {

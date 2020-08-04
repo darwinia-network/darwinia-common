@@ -66,14 +66,16 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 // --- darwinia ---
-use darwinia_support::{balance::lock::LockableCurrency, relay::EthereumRelay};
+use darwinia_support::{
+	balance::lock::LockableCurrency, relay::EthereumReceipt, relay::EthereumRelay,
+};
 use ethereum_primitives::{
 	error::EthereumError,
 	ethashproof::EthashProof,
 	header::EthHeader,
 	pow::EthashPartial,
 	receipt::Receipt,
-	receipt::{EthReceiptProof, EthereumReceipt},
+	receipt::{EthReceiptProof, EthTransactionIndex},
 	EthBlockNumber, H256, U256,
 };
 use types::*;
@@ -710,13 +712,13 @@ impl<T: Trait> EthereumReceipt for Module<T> {
 	/// confirm that the block hash is right
 	/// get the receipt MPT trie root from the block header
 	/// Using receipt MPT trie root to verify the proof and index etc.
-	fn verify_receipt(proof_record: &Self::EthereumReceiptProof) -> Result<Receipt, EthereumError> {
-		let info = Self::header_brief(&proof_record.header_hash)
-			.ok_or(EthereumError::InvalidReceiptProof)?;
+	fn verify_receipt(proof: &Self::EthereumReceiptProof) -> Result<Receipt, EthereumError> {
+		let info =
+			Self::header_brief(&proof.header_hash).ok_or(EthereumError::InvalidReceiptProof)?;
 
 		let canonical_hash = Self::canonical_header_hash(info.number);
 		ensure!(
-			canonical_hash == proof_record.header_hash,
+			canonical_hash == proof.header_hash,
 			EthereumError::InvalidReceiptProof
 		);
 
@@ -732,19 +734,22 @@ impl<T: Trait> EthereumReceipt for Module<T> {
 			EthereumError::InvalidReceiptProof
 		);
 
-		let header =
-			Self::header(&proof_record.header_hash).ok_or(EthereumError::InvalidReceiptProof)?;
+		let header = Self::header(&proof.header_hash).ok_or(EthereumError::InvalidReceiptProof)?;
 
 		// Verify receipt proof
-		let receipt = Receipt::verify_proof_and_generate(header.receipts_root(), &proof_record)
+		let receipt = Receipt::verify_proof_and_generate(header.receipts_root(), &proof)
 			.map_err(|_| EthereumError::InvalidReceiptProof)?;
 
 		Ok(receipt)
 	}
+
+	fn gen_receipt_index(proof: &Self::EthereumReceiptProof) -> EthTransactionIndex {
+		(proof.header_hash, proof.index)
+	}
 }
 
 impl<T: Trait> EthereumRelay<T::AccountId, Balance<T>> for Module<T> {
-	fn module_id() -> T::AccountId {
+	fn account_id() -> T::AccountId {
 		Self::account_id()
 	}
 

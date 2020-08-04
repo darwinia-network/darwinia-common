@@ -18,6 +18,7 @@ use crate::{
 	},
 	relay::{RawHeaderThing, Round, TcHeaderBrief},
 };
+use ethereum_primitives::{error::EthereumError, receipt::EthTransactionIndex, receipt::Receipt};
 
 pub trait BalanceInfo<Balance, Module> {
 	fn free(&self) -> Balance;
@@ -210,8 +211,16 @@ pub trait Relayable {
 	fn store_header(raw_header_thing: RawHeaderThing) -> DispatchResult;
 }
 
-pub trait EthereumRelay<ModuleId, Balance> {
-	fn module_id() -> ModuleId;
+pub trait EthereumRelay<AccountId, Balance> {
+	fn account_id() -> AccountId;
 
 	fn receipt_verify_fee() -> Balance;
+}
+
+pub trait EthereumReceipt {
+	type EthereumReceiptProof: FullCodec + Clone + PartialEq + Debug;
+
+	fn verify_receipt(proof: &Self::EthereumReceiptProof) -> Result<Receipt, EthereumError>;
+
+	fn gen_receipt_index(proof: &Self::EthereumReceiptProof) -> EthTransactionIndex;
 }
