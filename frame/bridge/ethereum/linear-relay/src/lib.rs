@@ -24,7 +24,6 @@
 //! The points owners can claim their incomes any time(block), the income is calculated according
 //! to his points proportion of total points, and after paying to him, the points will be destroyed
 //! from the points pool.
-//!
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "128"]
@@ -63,14 +62,19 @@ use sp_runtime::{
 	transaction_validity::{
 		InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
 	},
-	DispatchError, DispatchResult, ModuleId, SaturatedConversion,
+	DispatchResult, ModuleId, SaturatedConversion,
 };
 use sp_std::prelude::*;
 // --- darwinia ---
-use darwinia_support::balance::lock::LockableCurrency;
+use darwinia_support::{balance::lock::LockableCurrency, relay::EthereumRelay};
 use ethereum_primitives::{
-	ethashproof::EthashProof, header::EthHeader, pow::EthashPartial, receipt::EthReceiptProof,
-	receipt::Receipt, EthBlockNumber, H256, U256,
+	error::EthereumError,
+	ethashproof::EthashProof,
+	header::EthHeader,
+	pow::EthashPartial,
+	receipt::Receipt,
+	receipt::{EthReceiptProof, EthereumReceipt},
+	EthBlockNumber, H256, U256,
 };
 use types::*;
 
@@ -144,7 +148,7 @@ decl_error! {
 
 		/// Rlp - DECODE FAILED
 		RlpDcF,
-		/// Receipt - INVALID
+		/// Receipt Proof - INVALID
 		ReceiptProofI,
 		/// Block Basic - VERIFICATION FAILED
 		BlockBasicVF,
@@ -284,7 +288,9 @@ decl_module! {
 		pub fn check_receipt(origin, proof_record: EthReceiptProof) {
 			let worker = ensure_signed(origin)?;
 
-			let (verified_receipt, fee) = Self::verify_receipt(&proof_record)?;
+			let verified_receipt =
+				Self::verify_receipt(&proof_record).map_err(|_| <Error<T>>::ReceiptProofI)?;
+			let fee = Self::receipt_verify_fee();
 
 			let module_account = Self::account_id();
 
@@ -698,51 +704,52 @@ impl<T: Trait> Module<T> {
 	}
 }
 
-/// Handler for selecting the genesis validator set.
-pub trait VerifyEthReceipts<Balance, AccountId> {
-	fn verify_receipt(proof_record: &EthReceiptProof) -> Result<(Receipt, Balance), DispatchError>;
+impl<T: Trait> EthereumReceipt for Module<T> {
+	type EthereumReceiptProof = EthReceiptProof;
 
-	fn account_id() -> AccountId;
-}
-impl<T: Trait> VerifyEthReceipts<Balance<T>, T::AccountId> for Module<T> {
 	/// confirm that the block hash is right
 	/// get the receipt MPT trie root from the block header
 	/// Using receipt MPT trie root to verify the proof and index etc.
-	fn verify_receipt(
-		proof_record: &EthReceiptProof,
-	) -> Result<(Receipt, Balance<T>), DispatchError> {
-		let info =
-			Self::header_brief(&proof_record.header_hash).ok_or(<Error<T>>::HeaderBriefNE)?;
+	fn verify_receipt(proof_record: &Self::EthereumReceiptProof) -> Result<Receipt, EthereumError> {
+		let info = Self::header_brief(&proof_record.header_hash)
+			.ok_or(EthereumError::InvalidReceiptProof)?;
 
 		let canonical_hash = Self::canonical_header_hash(info.number);
 		ensure!(
 			canonical_hash == proof_record.header_hash,
-			<Error<T>>::HeaderNC
+			EthereumError::InvalidReceiptProof
 		);
 
-		let best_info =
-			Self::header_brief(Self::best_header_hash()).ok_or(<Error<T>>::HeaderBriefNE)?;
+		let best_info = Self::header_brief(Self::best_header_hash())
+			.ok_or(EthereumError::InvalidReceiptProof)?;
 
 		ensure!(
 			best_info.number
 				>= info
 					.number
 					.checked_add(Self::number_of_blocks_safe())
-					.ok_or(<Error<T>>::BlockNumberOF)?,
-			<Error<T>>::HeaderNS,
+					.ok_or(EthereumError::InvalidReceiptProof)?,
+			EthereumError::InvalidReceiptProof
 		);
 
-		let header = Self::header(&proof_record.header_hash).ok_or(<Error<T>>::HeaderNE)?;
+		let header =
+			Self::header(&proof_record.header_hash).ok_or(EthereumError::InvalidReceiptProof)?;
 
 		// Verify receipt proof
 		let receipt = Receipt::verify_proof_and_generate(header.receipts_root(), &proof_record)
-			.map_err(|_| <Error<T>>::ReceiptProofI)?;
+			.map_err(|_| EthereumError::InvalidReceiptProof)?;
 
-		Ok((receipt, Self::receipt_verify_fee()))
+		Ok(receipt)
+	}
+}
+
+impl<T: Trait> EthereumRelay<T::AccountId, Balance<T>> for Module<T> {
+	fn module_id() -> T::AccountId {
+		Self::account_id()
 	}
 
-	fn account_id() -> T::AccountId {
-		<Module<T>>::account_id()
+	fn receipt_verify_fee() -> Balance<T> {
+		Self::receipt_verify_fee()
 	}
 }
 

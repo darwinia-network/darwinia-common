@@ -790,7 +790,7 @@ impl darwinia_ethereum_backing::Trait for Runtime {
 	type ModuleId = EthBackingModuleId;
 	type Event = Event;
 	type DetermineAccountId = darwinia_ethereum_backing::AccountIdDeterminator<Runtime>;
-	type EthereumRelay = EthereumLinearRelay;
+	type EthereumRelay = EthereumRelay;
 	type OnDepositRedeem = Staking;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;

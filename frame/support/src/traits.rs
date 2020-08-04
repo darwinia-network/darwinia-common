@@ -97,14 +97,12 @@ impl<AccountId> DustCollector<AccountId> for Currencies {
 }
 
 /// Callback on ethereum-backing module
-pub trait OnDepositRedeem<AccountId> {
-	type Balance;
-
+pub trait OnDepositRedeem<AccountId, Balance> {
 	fn on_deposit_redeem(
 		backing: &AccountId,
 		start_at: u64,
 		months: u8,
-		amount: Self::Balance,
+		amount: Balance,
 		stash: &AccountId,
 	) -> DispatchResult;
 }
@@ -210,4 +208,10 @@ pub trait Relayable {
 
 	/// Store the header confirmed in relayer game
 	fn store_header(raw_header_thing: RawHeaderThing) -> DispatchResult;
+}
+
+pub trait EthereumRelay<ModuleId, Balance> {
+	fn module_id() -> ModuleId;
+
+	fn receipt_verify_fee() -> Balance;
 }

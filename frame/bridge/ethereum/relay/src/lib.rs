@@ -72,6 +72,7 @@ mod types {
 
 	pub type Balance<T> = <CurrencyT<T> as Currency<AccountId<T>>>::Balance;
 	pub type MMRHash = H256;
+	pub type MMRProof = Vec<H256>;
 
 	type AccountId<T> = <T as system::Trait>::AccountId;
 	type CurrencyT<T> = <T as Trait>::Currency;
@@ -98,8 +99,12 @@ use array_bytes::array_unchecked;
 use darwinia_support::balance::lock::LockableCurrency;
 use darwinia_support::relay::*;
 use ethereum_primitives::{
-	ethashproof::EthashProof, header::EthHeader, pow::EthashPartial, receipt::EthReceiptProof,
-	receipt::Receipt, EthBlockNumber, H256,
+	error::EthereumError,
+	ethashproof::EthashProof,
+	header::EthHeader,
+	pow::EthashPartial,
+	receipt::{EthReceiptProof, EthereumReceipt, Receipt},
+	EthBlockNumber, H256,
 };
 
 use types::*;
@@ -256,7 +261,7 @@ decl_module! {
 		///   - `set_receipt_verify_fee` can be used to set the verify fee for each receipt check.
 		/// # </weight>
 		#[weight = 100_000_000]
-		pub fn check_receipt(origin, proof_record: EthReceiptProof, eth_header: EthHeader, mmr_proof: Vec<H256>) {
+		pub fn check_receipt(origin, proof_record: EthReceiptProof, eth_header: EthHeader, mmr_proof: MMRProof) {
 			let worker = ensure_signed(origin)?;
 
 			let (verified_receipt, fee) = Self::verify_receipt_using_mmr(&proof_record, &eth_header, mmr_proof)?;
@@ -393,7 +398,7 @@ impl<T: Trait> Module<T> {
 	fn verify_mmr(
 		last_block_number: u64,
 		mmr_root: H256,
-		mmr_proof: Vec<H256>,
+		mmr_proof: MMRProof,
 		leaves: Vec<(u64, H256)>,
 	) -> bool {
 		let p = MerkleProof::<[u8; 32], MMRMerge>::new(
@@ -634,12 +639,20 @@ impl<T: Trait> Relayable for Module<T> {
 	}
 }
 
+impl<T: Trait> EthereumReceipt for Module<T> {
+	type EthereumReceiptProof = (EthHeader, EthReceiptProof, MMRProof);
+
+	fn verify_receipt(proof_record: &Self::EthereumReceiptProof) -> Result<Receipt, EthereumError> {
+		unimplemented!()
+	}
+}
+
 /// Handler for selecting the genesis validator set.
 pub trait MMRVerifyEthReceipts<Balance, AccountId> {
 	fn verify_receipt_using_mmr(
 		proof_record: &EthReceiptProof,
 		eth_header: &EthHeader,
-		mmr_proof: Vec<H256>,
+		mmr_proof: MMRProof,
 	) -> Result<(Receipt, Balance), DispatchError>;
 
 	fn account_id() -> AccountId;
@@ -651,7 +664,7 @@ impl<T: Trait> MMRVerifyEthReceipts<Balance<T>, T::AccountId> for Module<T> {
 	fn verify_receipt_using_mmr(
 		proof_record: &EthReceiptProof,
 		eth_header: &EthHeader,
-		mmr_proof: Vec<H256>,
+		mmr_proof: MMRProof,
 	) -> Result<(Receipt, Balance<T>), DispatchError> {
 		// Verify header hash
 		let header_hash = eth_header.hash();
