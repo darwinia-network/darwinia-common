@@ -102,6 +102,9 @@ decl_event! {
 		/// A new round started.
 		/// GameId(MMR Last Leaf), Samples, MMR Members
 		NewRound(GameId, Vec<TcBlockNumber>, Vec<TcBlockNumber>),
+
+		/// A game have been settled.
+		GameOver(GameId),
 	}
 }
 
@@ -264,6 +267,8 @@ decl_module! {
 				<LastConfirmeds<T, I>>::take(game_id);
 				<Headers<T, I>>::remove_prefix(game_id);
 				<Proposals<T, I>>::take(game_id);
+
+				Self::deposit_event(RawEvent::GameOver(game_id));
 			};
 			let settle_with_challenge = |
 				game_id,
@@ -406,6 +411,8 @@ decl_module! {
 				<LastConfirmeds<T, I>>::take(game_id);
 				<Headers<T, I>>::remove_prefix(game_id);
 				<Proposals<T, I>>::take(game_id);
+
+				Self::deposit_event(RawEvent::GameOver(game_id));
 			};
 			let settle_abandon = |
 				proposals: Vec<Proposal<_, BondedTcHeader<RingBalance<T, I>, _>, _>>
@@ -486,6 +493,8 @@ decl_module! {
 				<LastConfirmeds<T, I>>::take(game_id);
 				<Headers<T, I>>::remove_prefix(game_id);
 				<Proposals<T, I>>::take(game_id);
+
+				Self::deposit_event(RawEvent::GameOver(game_id));
 			};
 			let update_samples = |game_id| {
 				<Samples<T, I>>::mutate(game_id, |samples| {
