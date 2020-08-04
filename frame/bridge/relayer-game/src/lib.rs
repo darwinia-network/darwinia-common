@@ -103,7 +103,7 @@ decl_event! {
 		/// GameId(MMR Last Leaf), Samples, MMR Members
 		NewRound(GameId, Vec<TcBlockNumber>, Vec<TcBlockNumber>),
 
-		/// A game have been settled.
+		/// A game has been settled.
 		GameOver(GameId),
 	}
 }
