@@ -3,6 +3,56 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "128"]
 
+mod migration {
+	// --- substrate ---
+	use frame_support::migration::*;
+	// --- darwinia ---
+	use crate::*;
+
+	pub fn migrate<T: Trait>() {
+		sp_runtime::print("Migrating DarwiniaEthereumBacking...");
+
+		let old_module: &[u8] = b"DarwiniaEthBacking";
+		let new_module: &[u8] = b"DarwiniaEthereumBacking";
+		let addresses: &[&[u8]] = &[
+			// pub RingRedeemAddress get(fn ring_redeem_address) config(): EthAddress;
+			b"RingRedeemAddress",
+			// pub KtonRedeemAddress get(fn kton_redeem_address) config(): EthAddress;
+			b"KtonRedeemAddress",
+			// pub DepositRedeemAddress get(fn deposit_redeem_address) config(): EthAddress;
+			b"DepositRedeemAddress",
+		];
+		let receipt_proofs: &[&[u8]] = &[
+			// pub RingProofVerified
+			// 	get(fn ring_proof_verfied)
+			// 	: map hasher(blake2_128_concat) EthTransactionIndex => Option<EthReceiptProof>;
+			b"RingProofVerified",
+			// pub KtonProofVerified
+			// 	get(fn kton_proof_verfied)
+			// 	: map hasher(blake2_128_concat) EthTransactionIndex => Option<EthReceiptProof>;
+			b"KtonProofVerified",
+			// pub DepositProofVerified
+			// 	get(fn deposit_proof_verfied)
+			// 	: map hasher(blake2_128_concat) EthTransactionIndex => Option<EthReceiptProof>;
+			b"DepositProofVerified",
+		];
+		let hash: &[u8] = &[];
+
+		for address in addresses {
+			if let Some(value) = take_storage_value::<EthAddress>(old_module, address, hash) {
+				put_storage_value(new_module, address, hash, value);
+			}
+		}
+		for receipt_proof in receipt_proofs {
+			for (hash, value) in
+				<StorageIterator<Option<EthReceiptProof>>>::new(old_module, receipt_proof).drain()
+			{
+				put_storage_value(new_module, receipt_proof, &hash, value);
+			}
+		}
+	}
+}
+
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
@@ -86,8 +136,8 @@ decl_storage! {
 		pub KtonRedeemAddress get(fn kton_redeem_address) config(): EthAddress;
 
 		pub DepositProofVerified
-			 get(fn deposit_proof_verfied)
-			 : map hasher(blake2_128_concat) EthTransactionIndex => Option<EthReceiptProof>;
+			get(fn deposit_proof_verfied)
+			: map hasher(blake2_128_concat) EthTransactionIndex => Option<EthReceiptProof>;
 		pub DepositRedeemAddress get(fn deposit_redeem_address) config(): EthAddress;
 	}
 	add_extra_genesis {
@@ -169,6 +219,12 @@ decl_module! {
 		const SubKeyPrefix: u8 = T::SubKeyPrefix::get();
 
 		fn deposit_event() = default;
+
+		fn on_runtime_upgrade() -> frame_support::weights::Weight {
+			migration::migrate::<T>();
+
+			0
+		}
 
 		/// Redeem balances
 		///

@@ -261,6 +261,85 @@ pub mod inflation;
 pub mod offchain_election;
 pub mod slashing;
 
+mod migration {
+	// --- substrate ---
+	use frame_support::migration::*;
+	#[cfg(not(feature = "std"))]
+	use sp_std::borrow::ToOwned;
+	// --- darwinia ---
+	use crate::*;
+
+	pub fn migrate<T: Trait>() {
+		let module: &[u8] = b"DarwiniaStaking";
+		// pub Ledger get(fn ledger): map hasher(blake2_128_concat) T::AccountId => Option<StakingLedgerT<T>>;
+		let item: &[u8] = b"Ledger";
+
+		for (hash, value) in <StorageIterator<Option<StakingLedgerT<T>>>>::new(module, item) {
+			if value.is_none() {
+				continue;
+			}
+
+			let mut value = value.unwrap();
+			let StakingLedger {
+				stash,
+				active_ring,
+				active_deposit_ring,
+				deposit_items,
+				ring_staking_lock,
+				..
+			} = &mut value;
+
+			// can not be zero, but better safe
+			if active_ring.is_zero() {
+				continue;
+			}
+
+			let dirty_active_ring = {
+				let free_balance = T::RingCurrency::free_balance(stash);
+
+				if free_balance < *active_ring {
+					// cur `active_ring`
+					*active_ring = free_balance;
+
+					true
+				} else {
+					false
+				}
+			};
+
+			if *active_ring < *active_deposit_ring || dirty_active_ring {
+				if ring_staking_lock.staking_amount != *active_ring {
+					// update lock
+
+					ring_staking_lock.staking_amount = *active_ring;
+
+					T::RingCurrency::set_lock(
+						STAKING_ID,
+						stash,
+						LockFor::Staking(ring_staking_lock.to_owned()),
+						WithdrawReasons::all(),
+					);
+				}
+
+				if let Some(deposit_item) = deposit_items.last() {
+					// cut `deposit_items`
+
+					let mut deposit_item = deposit_item.to_owned();
+
+					deposit_item.value = *active_ring;
+
+					*active_deposit_ring = *active_ring;
+					*deposit_items = vec![deposit_item];
+				} else {
+					// fix invalid data
+					*active_deposit_ring = Zero::zero();
+				}
+
+				put_storage_value(module, item, &hash, value);
+			}
+		}
+	}
+}
 #[cfg(test)]
 mod darwinia_tests;
 #[cfg(test)]
@@ -1458,6 +1537,12 @@ decl_module! {
 		const TotalPower: Power = T::TotalPower::get();
 
 		fn deposit_event() = default;
+
+		fn on_runtime_upgrade() -> frame_support::weights::Weight {
+			migration::migrate::<T>();
+
+			0
+		}
 
 		/// sets `ElectionStatus` to `Open(now)` where `now` is the block number at which the
 		/// election window has opened, if we are at the last session and less blocks than
@@ -3344,7 +3429,7 @@ impl<T: Trait> Module<T> {
 				if exposure_clipped.others.len() > clipped_max_len {
 					exposure_clipped
 						.others
-						.sort_unstable_by(|a, b| a.power.cmp(&b.power).reverse());
+						.sort_by(|a, b| a.power.cmp(&b.power).reverse());
 					exposure_clipped.others.truncate(clipped_max_len);
 				}
 				<ErasStakersClipped<T>>::insert(&current_era, &stash, exposure_clipped);

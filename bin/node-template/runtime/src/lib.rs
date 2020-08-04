@@ -4,10 +4,6 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
-// Make the WASM binary available.
-#[cfg(feature = "std")]
-include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
-
 pub mod impls {
 	//! Some configurable implementations as associated type for the substrate runtime.
 
@@ -296,9 +292,24 @@ pub mod primitives {
 	>;
 }
 
+pub mod wasm {
+	//! Make the WASM binary available.
+
+	#[cfg(all(feature = "std", not(target_arch = "arm")))]
+	include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
+
+	#[cfg(target_arch = "arm")]
+	pub const WASM_BINARY: &[u8] =
+		include_bytes!("../../../../wasm/node_template_runtime.compact.wasm");
+	#[cfg(target_arch = "arm")]
+	pub const WASM_BINARY_BLOATY: &[u8] =
+		include_bytes!("../../../../wasm/node_template_runtime.wasm");
+}
+
 // --- darwinia ---
 pub use darwinia_staking::StakerStatus;
 pub use primitives::*;
+pub use wasm::*;
 
 // --- crates ---
 use codec::{Decode, Encode};

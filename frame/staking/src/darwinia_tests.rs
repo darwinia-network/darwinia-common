@@ -84,11 +84,15 @@ fn slash_ledger_should_work() {
 				);
 			}
 
+			let ledger = Staking::ledger(&account_id).unwrap();
+
 			// Should not overflow here
 			assert_ok!(Staking::unbond(
 				Origin::signed(account_id),
-				StakingBalance::RingBalance(COIN)
+				StakingBalance::RingBalance(1)
 			));
+
+			assert_eq!(ledger, Staking::ledger(&account_id).unwrap());
 		});
 }
 

@@ -1,6 +1,6 @@
 [package]
 name = "darwinia-relayer-game"
-version = "0.6.1"
+version = "0.6.4"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "Relayer game"
 edition = "2018"
@@ -10,7 +10,7 @@ repository = "https://github.com/darwinia-network/darwinia-common/"
 
 [dependencies]
 # crates
-codec = { package = "parity-scale-codec", version = "1.3.1", default-features = false }
+codec = { package = "parity-scale-codec", version = "1.3.4", default-features = false }
 serde = { version = "1.0.114", optional = true }
 # darwinia
 darwinia-support = { default-features = false, path = "../../support" }
