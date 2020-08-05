@@ -72,6 +72,7 @@ mod types {
 
 	pub type Balance<T> = <CurrencyT<T> as Currency<AccountId<T>>>::Balance;
 	pub type MMRHash = H256;
+	pub type MMRProof = Vec<H256>;
 
 	type AccountId<T> = <T as system::Trait>::AccountId;
 	type CurrencyT<T> = <T as Trait>::Currency;
@@ -98,8 +99,12 @@ use array_bytes::array_unchecked;
 use darwinia_support::balance::lock::LockableCurrency;
 use darwinia_support::relay::*;
 use ethereum_primitives::{
-	ethashproof::EthashProof, header::EthHeader, pow::EthashPartial, receipt::EthReceiptProof,
-	receipt::Receipt, EthBlockNumber, H256,
+	error::EthereumError,
+	ethashproof::EthashProof,
+	header::EthHeader,
+	pow::EthashPartial,
+	receipt::{EthReceiptProof, EthTransactionIndex, Receipt},
+	EthBlockNumber, H256,
 };
 
 use types::*;
@@ -256,10 +261,12 @@ decl_module! {
 		///   - `set_receipt_verify_fee` can be used to set the verify fee for each receipt check.
 		/// # </weight>
 		#[weight = 100_000_000]
-		pub fn check_receipt(origin, proof_record: EthReceiptProof, eth_header: EthHeader, mmr_proof: Vec<H256>) {
+		pub fn check_receipt(origin, proof_record: EthReceiptProof, eth_header: EthHeader, mmr_proof: MMRProof) {
 			let worker = ensure_signed(origin)?;
 
-			let (verified_receipt, fee) = Self::verify_receipt_using_mmr(&proof_record, &eth_header, mmr_proof)?;
+			let verified_receipt = Self::verify_receipt(&(eth_header.clone(), proof_record, mmr_proof)).map_err(|_| <Error<T>>::ReceiptProofI)?;
+
+			let fee = Self::receipt_verify_fee();
 
 			let module_account = Self::account_id();
 
@@ -393,7 +400,7 @@ impl<T: Trait> Module<T> {
 	fn verify_mmr(
 		last_block_number: u64,
 		mmr_root: H256,
-		mmr_proof: Vec<H256>,
+		mmr_proof: MMRProof,
 		leaves: Vec<(u64, H256)>,
 	) -> bool {
 		let p = MerkleProof::<[u8; 32], MMRMerge>::new(
@@ -634,57 +641,56 @@ impl<T: Trait> Relayable for Module<T> {
 	}
 }
 
-/// Handler for selecting the genesis validator set.
-pub trait MMRVerifyEthReceipts<Balance, AccountId> {
-	fn verify_receipt_using_mmr(
-		proof_record: &EthReceiptProof,
-		eth_header: &EthHeader,
-		mmr_proof: Vec<H256>,
-	) -> Result<(Receipt, Balance), DispatchError>;
+impl<T: Trait> EthereumReceipt<T::AccountId, Balance<T>> for Module<T> {
+	type EthereumReceiptProof = (EthHeader, EthReceiptProof, MMRProof);
 
-	fn account_id() -> AccountId;
-}
-impl<T: Trait> MMRVerifyEthReceipts<Balance<T>, T::AccountId> for Module<T> {
-	/// confirm that the block hash is right
-	/// get the receipt MPT trie root from the block header
-	/// Using receipt MPT trie root to verify the proof and index etc.
-	fn verify_receipt_using_mmr(
-		proof_record: &EthReceiptProof,
-		eth_header: &EthHeader,
-		mmr_proof: Vec<H256>,
-	) -> Result<(Receipt, Balance<T>), DispatchError> {
+	fn account_id() -> T::AccountId {
+		Self::account_id()
+	}
+
+	fn receipt_verify_fee() -> Balance<T> {
+		Self::receipt_verify_fee()
+	}
+
+	fn verify_receipt(proof: &Self::EthereumReceiptProof) -> Result<Receipt, EthereumError> {
 		// Verify header hash
+		let eth_header = &proof.0;
+		let proof_record = &proof.1;
+		let mmr_proof = &proof.2;
 		let header_hash = eth_header.hash();
 
 		ensure!(
 			header_hash == eth_header.re_compute_hash(),
-			<Error<T>>::HeaderHashMis
+			EthereumError::InvalidReceiptProof
 		);
 
 		// Verify header member to last confirmed block using mmr proof
-		let last_block_info = Self::last_confirm_header_info().ok_or(<Error<T>>::LastHeaderNE)?;
+		let last_block_info =
+			Self::last_confirm_header_info().ok_or(EthereumError::InvalidReceiptProof)?;
 
 		ensure!(
 			Self::verify_mmr(
 				last_block_info.0,
 				last_block_info.2,
-				mmr_proof,
+				mmr_proof.to_vec(),
 				vec![(
 					eth_header.number,
 					array_unchecked!(eth_header.hash.unwrap_or_default(), 0, 32).into(),
 				)]
 			),
-			<Error<T>>::MMRI
+			EthereumError::InvalidReceiptProof
 		);
 
 		// Verify receipt proof
 		let receipt = Receipt::verify_proof_and_generate(eth_header.receipts_root(), &proof_record)
-			.map_err(|_| <Error<T>>::ReceiptProofI)?;
-		Ok((receipt, Self::receipt_verify_fee()))
+			.map_err(|_| EthereumError::InvalidReceiptProof)?;
+
+		Ok(receipt)
 	}
 
-	fn account_id() -> T::AccountId {
-		<Module<T>>::account_id()
+	fn gen_receipt_index(proof: &Self::EthereumReceiptProof) -> EthTransactionIndex {
+		let proof_record = &proof.1;
+		(proof_record.header_hash, proof.1.index)
 	}
 }
 

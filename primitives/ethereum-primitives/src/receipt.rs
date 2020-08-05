@@ -141,6 +141,8 @@ impl Decodable for Receipt {
 	}
 }
 
+pub type EthTransactionIndex = (H256, u64);
+
 #[cfg(test)]
 mod tests {
 	// --- std ---

@@ -43,7 +43,7 @@ fn verify_receipt_proof() {
 			0x6b2dd4a2c4f47d
 		));
 		assert_eq!(
-			EthereumRelay::verify_receipt(&proof_record).unwrap().0,
+			EthereumRelay::verify_receipt(&proof_record).unwrap(),
 			receipt
 		);
 	});
@@ -133,7 +133,7 @@ fn check_receipt_safety() {
 		));
 		assert_err!(
 			EthereumRelay::check_receipt(Origin::signed(0), receipt.clone()),
-			<Error<Test>>::HeaderNC
+			<Error<Test>>::ReceiptProofI
 		);
 	});
 }
@@ -204,7 +204,7 @@ fn test_safety_block() {
 		));
 		assert_err!(
 			EthereumRelay::check_receipt(Origin::signed(0), receipt.clone()),
-			<Error<Test>>::HeaderNS
+			<Error<Test>>::ReceiptProofI
 		);
 
 		// not safety after 2 blocks
@@ -220,7 +220,7 @@ fn test_safety_block() {
 		));
 		assert_err!(
 			EthereumRelay::check_receipt(Origin::signed(0), receipt.clone()),
-			<Error<Test>>::HeaderNS
+			<Error<Test>>::ReceiptProofI
 		);
 
 		// safety after 3 blocks

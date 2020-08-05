@@ -18,6 +18,7 @@ use crate::{
 	},
 	relay::{RawHeaderThing, Round, TcHeaderBrief},
 };
+use ethereum_primitives::{error::EthereumError, receipt::EthTransactionIndex, receipt::Receipt};
 
 pub trait BalanceInfo<Balance, Module> {
 	fn free(&self) -> Balance;
@@ -97,14 +98,12 @@ impl<AccountId> DustCollector<AccountId> for Currencies {
 }
 
 /// Callback on ethereum-backing module
-pub trait OnDepositRedeem<AccountId> {
-	type Balance;
-
+pub trait OnDepositRedeem<AccountId, Balance> {
 	fn on_deposit_redeem(
 		backing: &AccountId,
 		start_at: u64,
 		months: u8,
-		amount: Self::Balance,
+		amount: Balance,
 		stash: &AccountId,
 	) -> DispatchResult;
 }
@@ -210,4 +209,16 @@ pub trait Relayable {
 
 	/// Store the header confirmed in relayer game
 	fn store_header(raw_header_thing: RawHeaderThing) -> DispatchResult;
+}
+
+pub trait EthereumReceipt<AccountId, Balance> {
+	type EthereumReceiptProof: Clone + Debug + PartialEq + FullCodec;
+
+	fn account_id() -> AccountId;
+
+	fn receipt_verify_fee() -> Balance;
+
+	fn verify_receipt(proof: &Self::EthereumReceiptProof) -> Result<Receipt, EthereumError>;
+
+	fn gen_receipt_index(proof: &Self::EthereumReceiptProof) -> EthTransactionIndex;
 }

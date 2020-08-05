@@ -9,7 +9,7 @@ use crate::{mock::*, *};
 use array_bytes::{fixed_hex_bytes_unchecked, hex_bytes_unchecked};
 use darwinia_staking::{RewardDestination, StakingBalance, StakingLedger, TimeDepositItem};
 use darwinia_support::balance::lock::StakingLock;
-use ethereum_primitives::header::EthHeader;
+use ethereum_primitives::{header::EthHeader, receipt::EthReceiptProof};
 
 #[test]
 fn genesis_config_works() {
@@ -129,7 +129,11 @@ fn verify_redeem_ring() {
 			let ring_locked_before = EthBacking::pot::<Ring>();
 			let _ = Ring::deposit_creating(&expect_account_id, 1);
 
-			assert_ok!(EthBacking::redeem(Origin::signed(id1.clone()), RedeemFor::Ring(proof_record.clone())));
+			assert_ok!(EthBacking::redeem(
+				Origin::signed(id1.clone()),
+				RedeemFor::Ring,
+				proof_record.clone()
+			));
 			assert_eq!(Ring::free_balance(&expect_account_id), 1234567891 + 1);
 
 			let ring_locked_after = EthBacking::pot::<Ring>();
@@ -137,7 +141,7 @@ fn verify_redeem_ring() {
 
 			// shouldn't redeem twice
 			assert_err!(
-				EthBacking::redeem(Origin::signed(id1.clone()), RedeemFor::Ring(proof_record.clone())),
+				EthBacking::redeem(Origin::signed(id1.clone()), RedeemFor::Ring, proof_record),
 				<Error<Test>>::RingAR,
 			);
 		});
@@ -208,7 +212,11 @@ fn verify_redeem_kton() {
 			let kton_locked_before = EthBacking::pot::<Kton>();
 			let _ = Kton::deposit_creating(&expect_account_id, 1);
 
-			assert_ok!(EthBacking::redeem(Origin::signed(id1.clone()), RedeemFor::Kton(proof_record.clone())));
+			assert_ok!(EthBacking::redeem(
+				Origin::signed(id1.clone()),
+				RedeemFor::Kton,
+				proof_record.clone()
+			));
 			assert_eq!(Kton::free_balance(&expect_account_id), 123456789 + 1);
 
 			let kton_locked_after = EthBacking::pot::<Kton>();
@@ -216,7 +224,7 @@ fn verify_redeem_kton() {
 
 			// shouldn't redeem twice
 			assert_err!(
-				EthBacking::redeem(Origin::signed(id1.clone()), RedeemFor::Kton(proof_record.clone())),
+				EthBacking::redeem(Origin::signed(id1.clone()), RedeemFor::Kton, proof_record),
 				<Error<Test>>::KtonAR,
 			);
 		});
@@ -294,7 +302,11 @@ fn verify_redeem_deposit() {
 				RewardDestination::Controller,
 				0,
 			)).dispatch(Origin::signed(expect_account_id.clone())));
-			assert_ok!(EthBacking::redeem(Origin::signed(id1.clone()), RedeemFor::Deposit(proof_record.clone())));
+			assert_ok!(EthBacking::redeem(
+				Origin::signed(id1.clone()),
+				RedeemFor::Deposit,
+				proof_record.clone()
+			));
 			assert_eq!(Ring::free_balance(&expect_account_id), 1234000000000 + 1);
 
 			let ring_locked_after = EthBacking::pot::<Ring>();
@@ -316,7 +328,7 @@ fn verify_redeem_deposit() {
 
 			// shouldn't redeem twice
 			assert_err!(
-				EthBacking::redeem(Origin::signed(id1.clone()), RedeemFor::Deposit(proof_record.clone())),
+				EthBacking::redeem(Origin::signed(id1.clone()), RedeemFor::Deposit, proof_record),
 				<Error<Test>>::DepositAR,
 			);
 		});

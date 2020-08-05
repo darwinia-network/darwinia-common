@@ -1282,6 +1282,7 @@ dependencies = [
 name = "darwinia-support"
 version = "0.6.4"
 dependencies = [
+ "ethereum-primitives",
  "frame-support",
  "impl-trait-for-tuples",
  "num-traits 0.2.12",
