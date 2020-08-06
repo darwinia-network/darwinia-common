@@ -11,7 +11,8 @@ mod migration {
 	pub fn migrate<T: Trait>() {
 		sp_runtime::print("Migrating DarwiniaEthereumLinearRelay...");
 
-		let module: &[u8] = b"DarwiniaEthRelay";
+		let new_module: &[u8] = b"DarwiniaEthereumRelay";
+		let old_module: &[u8] = b"DarwiniaEthRelay";
 		let value_items: &[&[u8]] = &[
 			// pub GenesisHeader get(fn begin_header): Option<EthHeader>;
 			b"GenesisHeader",
@@ -31,8 +32,6 @@ mod migration {
 			b"TotalRelayerPoints",
 		];
 		let map_items: &[&[u8]] = &[
-			// pub DagsMerkleRoots get(fn dag_merkle_root): map hasher(identity) u64 => H128;
-			b"DagsMerkleRoots",
 			// pub CanonicalHeaderHashes get(fn canonical_header_hash): map hasher(identity) u64 => H256;
 			b"CanonicalHeaderHashes",
 			// pub Headers get(fn header): map hasher(identity) H256 => Option<EthHeader>;
@@ -49,13 +48,22 @@ mod migration {
 			use frame_support::{storage::unhashed::kill, StorageHasher, Twox128};
 
 			let mut key = vec![0u8; 32 + hash.len()];
-			key[0..16].copy_from_slice(&Twox128::hash(module));
+			key[0..16].copy_from_slice(&Twox128::hash(old_module));
 			key[16..32].copy_from_slice(&Twox128::hash(item));
 			key[32..].copy_from_slice(hash);
 			kill(&key);
 		}
 		for item in map_items {
-			remove_storage_prefix(module, item, hash);
+			remove_storage_prefix(old_module, item, hash);
+		}
+
+		// pub DagsMerkleRoots get(fn dag_merkle_root): map hasher(identity) u64 => H128;
+		{
+			let item: &[u8] = b"DagsMerkleRoots";
+
+			for (hash, value) in <StorageIterator<H128>>::new(old_module, item) {
+				put_storage_value(new_module, item, &hash, value);
+			}
 		}
 	}
 }

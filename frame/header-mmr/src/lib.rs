@@ -38,23 +38,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-mod migration {
-	// --- substrate ---
-	use frame_support::migration::*;
-	// --- darwinia ---
-	use crate::*;
-
-	pub fn migrate<T: Trait>() {
-		sp_runtime::print("Migrating DarwiniaHeaderMMR...");
-
-		for _ in <StorageIterator<T::BlockNumber>>::new(b"DarwiniaHeaderMMR", b"Positions").drain()
-		{
-		}
-
-		remove_storage_prefix(b"DarwiniaHeaderMMR", b"Positions", &[]);
-	}
-}
-
 mod mock;
 mod tests;
 
@@ -127,11 +110,6 @@ decl_module! {
 			} else {
 				error!("[darwinia-header-mmr] FAILED to Calculate MMR");
 			}
-		}
-
-		fn on_runtime_upgrade() -> frame_support::weights::Weight {
-			migration::migrate::<T>();
-			0
 		}
 	}
 }
