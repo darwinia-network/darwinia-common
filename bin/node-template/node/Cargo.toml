@@ -32,7 +32,6 @@ darwinia-header-mmr-rpc = { path = "../../../frame/header-mmr/rpc" }
 darwinia-staking = { path = "../../../frame/staking" }
 darwinia-staking-rpc = { path = "../../../frame/staking/rpc" }
 # substrate
-frame-benchmarking-cli = { optional = true, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
 pallet-im-online = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
 pallet-transaction-payment-rpc = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
 sc-basic-authorship = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
@@ -73,7 +72,6 @@ default = [ "cli", "db", "wasmtime" ]
 cli = [
 	"tokio",
 	"darwinia-cli",
-	"frame-benchmarking-cli",
 	"sc-cli",
 	"sc-service",
 ]

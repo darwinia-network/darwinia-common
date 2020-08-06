@@ -250,9 +250,6 @@
 #![feature(drain_filter)]
 #![recursion_limit = "128"]
 
-// TODO: benchmark
-// #[cfg(any(feature = "runtime-benchmarks", test))]
-// pub mod benchmarking;
 // TODO: offchain phragmen test https://github.com/darwinia-network/darwinia-common/issues/97
 // #[cfg(features = "testing-utils")]
 // pub mod testing_utils;

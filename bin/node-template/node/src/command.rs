@@ -77,21 +77,6 @@ pub fn run() -> sc_cli::Result<()> {
 				node_template_runtime::VERSION,
 			)
 		}
-		Some(Subcommand::Benchmark(cmd)) => {
-			if cfg!(feature = "runtime-benchmarks") {
-				let runner = cli.create_runner(cmd)?;
-
-				runner.sync_run(|config| {
-					cmd.run::<node_template_runtime::Block, service::Executor>(config)
-				})
-			} else {
-				println!(
-					"Benchmarking wasn't enabled when building the node. \
-				You can enable it with `--features runtime-benchmarks`."
-				);
-				Ok(())
-			}
-		}
 		Some(Subcommand::Base(subcommand)) => {
 			let runner = cli.create_runner(subcommand)?;
 

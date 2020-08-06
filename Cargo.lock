@@ -984,7 +984,6 @@ version = "0.6.4"
 dependencies = [
  "darwinia-balances-rpc-runtime-api",
  "darwinia-support",
- "frame-benchmarking",
  "frame-support",
  "frame-system",
  "pallet-transaction-payment",
@@ -1232,7 +1231,6 @@ dependencies = [
  "darwinia-staking-rpc-runtime-api",
  "darwinia-support",
  "env_logger",
- "frame-benchmarking",
  "frame-support",
  "frame-system",
  "num-integer",
@@ -1749,24 +1747,6 @@ dependencies = [
  "sp-runtime",
  "sp-runtime-interface",
  "sp-std 2.0.0-rc4",
-]
-
-[[package]]
-name = "frame-benchmarking-cli"
-version = "2.0.0-rc4"
-source = "git+https://github.com/darwinia-network/substrate.git?tag=v2.0.0-rc.darwinia.3#93a6a53061b9ecb8660c291ab43d083cf51c1f89"
-dependencies = [
- "frame-benchmarking",
- "parity-scale-codec",
- "sc-cli",
- "sc-client-db",
- "sc-executor",
- "sc-service",
- "sp-core",
- "sp-externalities",
- "sp-runtime",
- "sp-state-machine",
- "structopt",
 ]
 
 [[package]]
@@ -3632,7 +3612,6 @@ dependencies = [
  "darwinia-header-mmr-rpc",
  "darwinia-staking",
  "darwinia-staking-rpc",
- "frame-benchmarking-cli",
  "futures 0.3.5",
  "jsonrpc-core",
  "log",
@@ -3693,7 +3672,6 @@ dependencies = [
  "darwinia-support",
  "darwinia-treasury",
  "ethereum-primitives",
- "frame-benchmarking",
  "frame-executive",
  "frame-support",
  "frame-system",

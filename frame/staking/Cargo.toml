@@ -19,7 +19,6 @@ static_assertions = { version = "1.1.0" }
 darwinia-staking-rpc-runtime-api = { default-features = false, path = "./rpc/runtime-api" }
 darwinia-support = { default-features = false, path = "../support" }
 # substrate
-frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
 frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
 pallet-authorship = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
@@ -39,7 +38,6 @@ rand_chacha = { version = "0.2" }
 darwinia-balances = { path = "../../frame/balances" }
 darwinia-support = { features = ["easy-testing"], path = "../support" }
 # substrate
-frame-benchmarking = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
 pallet-timestamp = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
 sp-storage = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
 substrate-test-utils = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
@@ -65,10 +63,4 @@ std = [
 	"sp-runtime/std",
 	"sp-staking/std",
 	"sp-std/std",
-]
-runtime-benchmarks = [
-	# crates
-	"rand_chacha",
-	# substrate
-	"frame-benchmarking",
 ]
