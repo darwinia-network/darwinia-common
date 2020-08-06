@@ -295,13 +295,13 @@ pub mod primitives {
 pub mod wasm {
 	//! Make the WASM binary available.
 
-	#[cfg(all(feature = "std", not(target_arch = "arm")))]
+	#[cfg(all(feature = "std", any(target_arch = "x86_64", target_arch = "x86")))]
 	include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-	#[cfg(target_arch = "arm")]
+	#[cfg(all(feature = "std", not(any(target_arch = "x86_64", target_arch = "x86"))))]
 	pub const WASM_BINARY: &[u8] =
 		include_bytes!("../../../../wasm/node_template_runtime.compact.wasm");
-	#[cfg(target_arch = "arm")]
+	#[cfg(all(feature = "std", not(any(target_arch = "x86_64", target_arch = "x86"))))]
 	pub const WASM_BINARY_BLOATY: &[u8] =
 		include_bytes!("../../../../wasm/node_template_runtime.wasm");
 }
