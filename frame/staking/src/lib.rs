@@ -340,6 +340,7 @@ mod migration {
 		}
 	}
 }
+
 #[cfg(test)]
 mod darwinia_tests;
 #[cfg(test)]
