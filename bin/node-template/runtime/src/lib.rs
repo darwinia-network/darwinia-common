@@ -358,6 +358,7 @@ use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDis
 use darwinia_ethereum_linear_relay::EthereumNetworkType;
 use darwinia_ethereum_offchain::crypto::AuthorityId as EthOffchainId;
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
+use darwinia_staking::EraIndex;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
 use impls::*;
 
@@ -377,6 +378,9 @@ pub const MICRO: Balance = 1_000 * NANO;
 pub const MILLI: Balance = 1_000 * MICRO;
 pub const COIN: Balance = 1_000 * MILLI;
 
+pub const CAP: Balance = 10_000_000_000 * COIN;
+pub const TOTAL_POWER: Power = 1_000_000_000;
+
 pub const MILLISECS_PER_BLOCK: u64 = 3000;
 
 pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
@@ -390,16 +394,9 @@ pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
 
 pub const BLOCKS_PER_SESSION: BlockNumber = MINUTES / 2;
-pub const EPOCH_DURATION_IN_SLOTS: u64 = {
-	const SLOT_FILL_RATE: f64 = MILLISECS_PER_BLOCK as f64 / SLOT_DURATION as f64;
-
-	(BLOCKS_PER_SESSION as f64 * SLOT_FILL_RATE) as u64
-};
+pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
 pub const SESSION_DURATION: BlockNumber = EPOCH_DURATION_IN_SLOTS as _;
 pub const SESSIONS_PER_ERA: SessionIndex = 3;
-
-pub const CAP: Balance = 10_000_000_000 * COIN;
-pub const TOTAL_POWER: Power = 1_000_000_000;
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
@@ -534,14 +531,15 @@ impl pallet_authorship::Trait for Runtime {
 
 parameter_types! {
 	pub const SessionsPerEra: SessionIndex = SESSIONS_PER_ERA;
-	pub const BondingDurationInEra: darwinia_staking::EraIndex = 14 * 24 * (HOURS / (SESSIONS_PER_ERA * BLOCKS_PER_SESSION));
+	pub const BondingDurationInEra: EraIndex = 14 * DAYS
+		/ (SESSIONS_PER_ERA as BlockNumber * BLOCKS_PER_SESSION);
 	pub const BondingDurationInBlockNumber: BlockNumber = 14 * DAYS;
-	pub const SlashDeferDuration: darwinia_staking::EraIndex = 0;
+	pub const SlashDeferDuration: EraIndex = 14 * DAYS
+		/ (SESSIONS_PER_ERA as BlockNumber * BLOCKS_PER_SESSION);
+	// quarter of the last session will be for election.
 	pub const ElectionLookahead: BlockNumber = BLOCKS_PER_SESSION / 4;
-	pub const MaxIterations: u32 = 10;
-	// 0.05%. The higher the value, the more strict solution acceptance becomes.
+	pub const MaxIterations: u32 = 5;
 	pub MinSolutionScoreBump: Perbill = Perbill::from_rational_approximation(5u32, 10_000);
-	/// We prioritize im-online heartbeats over election solution submission.
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
 	pub const StakingUnsignedPriority: TransactionPriority = TransactionPriority::max_value() / 2;
 	pub const Cap: Balance = CAP;
@@ -895,19 +893,6 @@ construct_runtime!(
 	}
 );
 
-impl frame_system::offchain::SigningTypes for Runtime {
-	type Public = <Signature as sp_runtime::traits::Verify>::Signer;
-	type Signature = Signature;
-}
-
-impl<C> frame_system::offchain::SendTransactionTypes<C> for Runtime
-where
-	Call: From<C>,
-{
-	type Extrinsic = UncheckedExtrinsic;
-	type OverarchingCall = Call;
-}
-
 impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
 where
 	Call: From<LocalCall>,
@@ -952,6 +937,17 @@ where
 		let (call, extra, _) = raw_payload.deconstruct();
 		Some((call, (account, signature, extra)))
 	}
+}
+impl frame_system::offchain::SigningTypes for Runtime {
+	type Public = <Signature as sp_runtime::traits::Verify>::Signer;
+	type Signature = Signature;
+}
+impl<C> frame_system::offchain::SendTransactionTypes<C> for Runtime
+where
+	Call: From<C>,
+{
+	type Extrinsic = UncheckedExtrinsic;
+	type OverarchingCall = Call;
 }
 
 impl_runtime_apis! {
