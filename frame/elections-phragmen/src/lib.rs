@@ -83,7 +83,7 @@ use frame_support::{
 		Weight,
 	},
 };
-use frame_system::{self as system, ensure_root, ensure_signed};
+use frame_system::{ensure_root, ensure_signed};
 use sp_npos_elections::{build_support_map, ElectionResult, ExtendedBalance, VoteWeight};
 use sp_runtime::{
 	traits::{Convert, StaticLookup, Zero},

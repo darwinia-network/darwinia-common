@@ -17,7 +17,7 @@ mod types {
 	// TODO: support *KTON*
 	// pub type KtonBalance<T> = <KtonCurrency<T> as Currency<AccountId<T>>>::Balance;
 
-	type AccountId<T> = <T as system::Trait>::AccountId;
+	type AccountId<T> = <T as frame_system::Trait>::AccountId;
 	type RingCurrency<T> = <T as Trait>::RingCurrency;
 	// TODO: support *KTON*
 	// type KtonCurrency<T> = <T as Trait>::KtonCurrency;
@@ -33,7 +33,7 @@ use frame_support::{
 	traits::{Currency, ExistenceRequirement::KeepAlive, Get},
 	{decl_error, decl_event, decl_module, decl_storage},
 };
-use frame_system::{self as system, ensure_none, ensure_root};
+use frame_system::{ensure_none, ensure_root};
 use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};
 #[cfg(feature = "std")]
 use sp_runtime::traits::{SaturatedConversion, Zero};

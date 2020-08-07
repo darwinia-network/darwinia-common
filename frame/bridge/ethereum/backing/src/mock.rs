@@ -202,7 +202,7 @@ impl darwinia_staking::Trait for Test {
 	type BondingDurationInEra = ();
 	type BondingDurationInBlockNumber = ();
 	type SlashDeferDuration = ();
-	type SlashCancelOrigin = system::EnsureRoot<Self::AccountId>;
+	type SlashCancelOrigin = frame_system::EnsureRoot<Self::AccountId>;
 	type SessionInterface = Self;
 	type NextNewSession = Session;
 	type ElectionLookahead = ();
@@ -238,7 +238,7 @@ impl Default for ExtBuilder {
 }
 impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
-		let mut t = system::GenesisConfig::default()
+		let mut t = frame_system::GenesisConfig::default()
 			.build_storage::<Test>()
 			.unwrap();
 

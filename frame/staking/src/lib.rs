@@ -133,7 +133,7 @@
 //!
 //! ```
 //! use frame_support::{decl_module, dispatch};
-//! use frame_system::{self as system, ensure_signed};
+//! use frame_system::ensure_signed;
 //! use darwinia_staking as staking;
 //!
 //! pub trait Trait: staking::Trait {}
@@ -501,9 +501,7 @@ use frame_support::{
 		Weight,
 	},
 };
-use frame_system::{
-	self as system, ensure_none, ensure_root, ensure_signed, offchain::SendTransactionTypes,
-};
+use frame_system::{ensure_none, ensure_root, ensure_signed, offchain::SendTransactionTypes};
 use sp_npos_elections::{
 	build_support_map, evaluate_support, generate_compact_solution_type, is_score_better,
 	seq_phragmen, Assignment, ElectionResult as PrimitiveElectionResult, ElectionScore,
@@ -3673,7 +3671,7 @@ impl<T: Trait> Module<T> {
 		<Validators<T>>::remove(stash);
 		<Nominators<T>>::remove(stash);
 
-		system::Module::<T>::dec_ref(stash);
+		<frame_system::Module<T>>::dec_ref(stash);
 
 		Ok(())
 	}

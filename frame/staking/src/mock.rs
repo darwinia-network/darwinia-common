@@ -339,7 +339,7 @@ impl Trait for Test {
 	type BondingDurationInEra = BondingDurationInEra;
 	type BondingDurationInBlockNumber = BondingDurationInBlockNumber;
 	type SlashDeferDuration = SlashDeferDuration;
-	type SlashCancelOrigin = system::EnsureRoot<Self::AccountId>;
+	type SlashCancelOrigin = frame_system::EnsureRoot<Self::AccountId>;
 	type SessionInterface = Self;
 	type NextNewSession = Session;
 	type ElectionLookahead = ElectionLookahead;

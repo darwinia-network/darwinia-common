@@ -118,8 +118,8 @@ impl Trait<RingInstance> for Test {
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = StorageMapShim<
 		Account<Test, RingInstance>,
-		system::CallOnCreatedAccount<Test>,
-		system::CallKillAccount<Test>,
+		frame_system::CallOnCreatedAccount<Test>,
+		frame_system::CallKillAccount<Test>,
 		Balance,
 		AccountData<Balance>,
 	>;
@@ -133,8 +133,8 @@ impl Trait<KtonInstance> for Test {
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = StorageMapShim<
 		Account<Test, KtonInstance>,
-		system::CallOnCreatedAccount<Test>,
-		system::CallKillAccount<Test>,
+		frame_system::CallOnCreatedAccount<Test>,
+		frame_system::CallKillAccount<Test>,
 		Balance,
 		AccountData<Balance>,
 	>;
@@ -208,7 +208,7 @@ fn emit_events_with_no_existential_deposit_suicide_with_dust() {
 			assert_eq!(
 				events(),
 				[
-					Event::system(system::RawEvent::NewAccount(1)),
+					Event::system(frame_system::RawEvent::NewAccount(1)),
 					Event::balances_Instance0(RawEvent::Endowed(1, 100)),
 					Event::balances_Instance0(RawEvent::BalanceSet(1, 100, 0)),
 				]
@@ -225,7 +225,7 @@ fn emit_events_with_no_existential_deposit_suicide_with_dust() {
 				events(),
 				[
 					Event::balances_Instance0(RawEvent::DustLost(1, 1)),
-					Event::system(system::RawEvent::KilledAccount(1))
+					Event::system(frame_system::RawEvent::KilledAccount(1))
 				]
 			);
 		});

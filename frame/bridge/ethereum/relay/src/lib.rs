@@ -82,7 +82,7 @@ mod types {
 	pub type MMRHash = H256;
 	pub type MMRProof = Vec<H256>;
 
-	type AccountId<T> = <T as system::Trait>::AccountId;
+	type AccountId<T> = <T as frame_system::Trait>::AccountId;
 	type CurrencyT<T> = <T as Trait>::Currency;
 }
 
@@ -96,7 +96,7 @@ use frame_support::{
 	traits::Get,
 	traits::{Currency, ExistenceRequirement::KeepAlive, ReservableCurrency},
 };
-use frame_system::{self as system, ensure_root, ensure_signed};
+use frame_system::{ensure_root, ensure_signed};
 use sp_runtime::{
 	traits::AccountIdConversion, DispatchError, DispatchResult, ModuleId, RuntimeDebug,
 };

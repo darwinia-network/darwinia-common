@@ -158,7 +158,7 @@ use frame_support::{
 	},
 	Parameter, StorageValue,
 };
-use frame_system::{self as system, ensure_root, ensure_signed};
+use frame_system::{ensure_root, ensure_signed};
 use sp_runtime::{
 	traits::{
 		AtLeast32BitUnsigned, Bounded, CheckedAdd, CheckedSub, MaybeSerializeDeserialize, Member,

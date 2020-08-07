@@ -62,12 +62,12 @@ mod types {
 	pub type DepositId = U256;
 
 	pub type RingBalance<T> =
-		<<T as Trait>::RingCurrency as Currency<<T as system::Trait>::AccountId>>::Balance;
+		<<T as Trait>::RingCurrency as Currency<<T as frame_system::Trait>::AccountId>>::Balance;
 	pub type KtonBalance<T> =
-		<<T as Trait>::KtonCurrency as Currency<<T as system::Trait>::AccountId>>::Balance;
+		<<T as Trait>::KtonCurrency as Currency<<T as frame_system::Trait>::AccountId>>::Balance;
 
 	pub type EthereumReceiptProof<T> = <<T as Trait>::EthereumRelay as EthereumReceipt<
-		<T as system::Trait>::AccountId,
+		<T as frame_system::Trait>::AccountId,
 		RingBalance<T>,
 	>>::EthereumReceiptProof;
 }
@@ -81,7 +81,7 @@ use frame_support::{
 	debug, decl_error, decl_event, decl_module, decl_storage, ensure,
 	traits::{Currency, ExistenceRequirement::KeepAlive, Get},
 };
-use frame_system::{self as system, ensure_root, ensure_signed};
+use frame_system::{ensure_root, ensure_signed};
 use sp_runtime::{
 	traits::{AccountIdConversion, SaturatedConversion, Saturating},
 	DispatchError, DispatchResult, ModuleId, RuntimeDebug,
@@ -98,7 +98,7 @@ pub trait Trait: frame_system::Trait {
 	/// The backing's module id, used for deriving its sovereign account ID.
 	type ModuleId: Get<ModuleId>;
 
-	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
+	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
 	type DetermineAccountId: AccountIdFor<Self::AccountId>;
 
@@ -158,7 +158,7 @@ decl_storage! {
 decl_event! {
 	pub enum Event<T>
 	where
-		<T as system::Trait>::AccountId,
+		<T as frame_system::Trait>::AccountId,
 		RingBalance = RingBalance<T>,
 		KtonBalance = KtonBalance<T>,
 	{

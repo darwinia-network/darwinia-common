@@ -39,7 +39,7 @@ mod types {
 
 	pub type Balance<T> = <CurrencyT<T> as Currency<AccountId<T>>>::Balance;
 
-	type AccountId<T> = <T as system::Trait>::AccountId;
+	type AccountId<T> = <T as frame_system::Trait>::AccountId;
 
 	type CurrencyT<T> = <T as Trait>::Currency;
 }
@@ -56,7 +56,7 @@ use frame_support::{
 	traits::{Currency, ExistenceRequirement::KeepAlive, ReservableCurrency},
 	IsSubType,
 };
-use frame_system::{self as system, ensure_root, ensure_signed};
+use frame_system::{ensure_root, ensure_signed};
 use sp_runtime::{
 	traits::{AccountIdConversion, DispatchInfoOf, Dispatchable, Saturating, SignedExtension},
 	transaction_validity::{

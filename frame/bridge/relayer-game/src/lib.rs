@@ -52,7 +52,7 @@ use frame_support::{
 	traits::{Currency, EnsureOrigin, ExistenceRequirement, Get, OnUnbalanced},
 	weights::Weight,
 };
-use frame_system::{self as system, ensure_signed};
+use frame_system::ensure_signed;
 use sp_runtime::{
 	traits::{SaturatedConversion, Saturating, Zero},
 	DispatchResult, RuntimeDebug,

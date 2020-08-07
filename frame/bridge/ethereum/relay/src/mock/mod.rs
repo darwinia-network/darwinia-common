@@ -122,7 +122,7 @@ impl Default for ExtBuilder {
 
 impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
-		let mut storage = system::GenesisConfig::default()
+		let mut storage = frame_system::GenesisConfig::default()
 			.build_storage::<Test>()
 			.unwrap();
 

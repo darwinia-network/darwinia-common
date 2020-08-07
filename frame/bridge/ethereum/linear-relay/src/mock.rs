@@ -273,7 +273,7 @@ impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
 		self.set_associated_constants();
 
-		let mut storage = system::GenesisConfig::default()
+		let mut storage = frame_system::GenesisConfig::default()
 			.build_storage::<Test>()
 			.unwrap();
 

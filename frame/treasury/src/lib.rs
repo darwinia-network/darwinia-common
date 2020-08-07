@@ -94,7 +94,7 @@ mod types {
 	pub type KtonNegativeImbalance<T> =
 		<KtonCurrency<T> as Currency<AccountId<T>>>::NegativeImbalance;
 
-	type AccountId<T> = <T as system::Trait>::AccountId;
+	type AccountId<T> = <T as frame_system::Trait>::AccountId;
 	type RingCurrency<T> = <T as Trait>::RingCurrency;
 	type KtonCurrency<T> = <T as Trait>::KtonCurrency;
 }
@@ -113,7 +113,7 @@ use frame_support::{
 	weights::{DispatchClass, Weight},
 	Parameter,
 };
-use frame_system::{self as system, ensure_signed};
+use frame_system::ensure_signed;
 use sp_runtime::{
 	traits::{
 		AccountIdConversion, AtLeast32BitUnsigned, BadOrigin, Hash, Saturating, StaticLookup, Zero,
