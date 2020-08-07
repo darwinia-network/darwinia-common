@@ -89,7 +89,7 @@ pub trait Trait: frame_system::Trait {
 
 	type EthereumNetwork: Get<EthereumNetworkType>;
 
-	type Call: Dispatchable + From<Call<Self>> + IsSubType<Module<Self>, Self> + Clone;
+	type Call: Dispatchable + From<Call<Self>> + IsSubType<Call<Self>> + Clone;
 
 	type Currency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
 		+ ReservableCurrency<Self::AccountId>;
