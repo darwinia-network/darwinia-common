@@ -44,7 +44,10 @@ macro_rules! new_full_start {
 		>($config)?
 		.with_select_chain(|_config, backend| Ok(sc_consensus::LongestChain::new(backend.clone())))?
 		.with_transaction_pool(|builder| {
-			let pool_api = sc_transaction_pool::FullChainApi::new(builder.client().clone());
+			let pool_api = sc_transaction_pool::FullChainApi::new(
+				builder.client().clone(),
+				builder.prometheus_registry(),
+			);
 			let config = builder.config();
 
 			Ok(sc_transaction_pool::BasicPool::new(
