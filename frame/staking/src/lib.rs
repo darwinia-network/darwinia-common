@@ -4020,6 +4020,10 @@ where
 			Ok(())
 		}
 	}
+
+	fn is_known_offence(offenders: &[Offender], time_slot: &O::TimeSlot) -> bool {
+		R::is_known_offence(offenders, time_slot)
+	}
 }
 
 impl<T: Trait> OnDepositRedeem<T::AccountId, RingBalance<T>> for Module<T> {
