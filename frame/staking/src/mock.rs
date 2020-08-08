@@ -100,7 +100,7 @@ impl_outer_event! {
 }
 
 impl_outer_origin! {
-	pub enum Origin for Test  where system = system {}
+	pub enum Origin for Test where system = system {}
 }
 
 darwinia_support::impl_account_data! {
