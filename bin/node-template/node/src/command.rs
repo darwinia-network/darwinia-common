@@ -11,28 +11,24 @@ use crate::{
 use darwinia_cli::{Configuration, DarwiniaCli};
 
 impl SubstrateCli for Cli {
-	fn impl_name() -> &'static str {
-		"Darwinia Node"
+	fn impl_name() -> String {
+		"Darwinia Node".into()
 	}
 
-	fn impl_version() -> &'static str {
-		env!("SUBSTRATE_CLI_IMPL_VERSION")
+	fn impl_version() -> String {
+		env!("SUBSTRATE_CLI_IMPL_VERSION").into()
 	}
 
-	fn executable_name() -> &'static str {
-		env!("CARGO_PKG_NAME")
+	fn description() -> String {
+		env!("CARGO_PKG_DESCRIPTION").into()
 	}
 
-	fn description() -> &'static str {
-		env!("CARGO_PKG_DESCRIPTION")
+	fn author() -> String {
+		env!("CARGO_PKG_AUTHORS").into()
 	}
 
-	fn author() -> &'static str {
-		env!("CARGO_PKG_AUTHORS")
-	}
-
-	fn support_url() -> &'static str {
-		"support.anonymous.an"
+	fn support_url() -> String {
+		"support.anonymous.an".into()
 	}
 
 	fn copyright_start_year() -> i32 {
