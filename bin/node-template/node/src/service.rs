@@ -48,12 +48,13 @@ macro_rules! new_full_start {
 				builder.client().clone(),
 				builder.prometheus_registry(),
 			);
-			let config = builder.config();
 
-			Ok(sc_transaction_pool::BasicPool::new(
-				config.transaction_pool.clone(),
+			Ok(sc_transaction_pool::BasicPool::new_full(
+				builder.config().transaction_pool.clone(),
 				std::sync::Arc::new(pool_api),
 				builder.prometheus_registry(),
+				builder.spawn_handle(),
+				builder.client().clone(),
 			))
 		})?
 		.with_import_queue(
@@ -278,12 +279,13 @@ pub fn new_light(config: Configuration) -> Result<impl AbstractService, ServiceE
 				.ok_or_else(|| "Trying to start light transaction pool without active fetcher")?;
 			let pool_api =
 				sc_transaction_pool::LightChainApi::new(builder.client().clone(), fetcher);
-			let pool = sc_transaction_pool::BasicPool::with_revalidation_type(
+			let pool = Arc::new(sc_transaction_pool::BasicPool::new_light(
 				builder.config().transaction_pool.clone(),
 				Arc::new(pool_api),
 				builder.prometheus_registry(),
-				sc_transaction_pool::RevalidationType::Light,
-			);
+				builder.spawn_handle(),
+			));
+
 			Ok(pool)
 		})?
 		.with_import_queue_and_fprb(
