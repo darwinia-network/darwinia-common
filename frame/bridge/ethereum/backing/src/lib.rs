@@ -111,48 +111,9 @@ pub trait Trait: frame_system::Trait {
 	type KtonCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
 	type SubKeyPrefix: Get<u8>;
-}
 
-#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
-pub enum RedeemFor {
-	Ring,
-	Kton,
-	Deposit,
-}
-
-decl_storage! {
-	trait Store for Module<T: Trait> as DarwiniaEthereumBacking {
-		pub RingProofVerified
-			get(fn ring_proof_verfied)
-			: map hasher(blake2_128_concat) EthTransactionIndex => Option<bool>;
-		pub RingRedeemAddress get(fn ring_redeem_address) config(): EthAddress;
-
-		pub KtonProofVerified
-			get(fn kton_proof_verfied)
-			: map hasher(blake2_128_concat) EthTransactionIndex => Option<bool>;
-		pub KtonRedeemAddress get(fn kton_redeem_address) config(): EthAddress;
-
-		pub DepositProofVerified
-			get(fn deposit_proof_verfied)
-			: map hasher(blake2_128_concat) EthTransactionIndex => Option<bool>;
-		pub DepositRedeemAddress get(fn deposit_redeem_address) config(): EthAddress;
-	}
-	add_extra_genesis {
-		config(ring_locked): RingBalance<T>;
-		config(kton_locked): KtonBalance<T>;
-		build(|config: &GenesisConfig<T>| {
-			// Create Backing account
-			let _ = T::RingCurrency::make_free_balance_be(
-				&<Module<T>>::account_id(),
-				T::RingCurrency::minimum_balance().max(config.ring_locked),
-			);
-
-			let _ = T::KtonCurrency::make_free_balance_be(
-				&<Module<T>>::account_id(),
-				T::KtonCurrency::minimum_balance().max(config.kton_locked),
-			);
-		});
-	}
+	/// Weight information for the extrinsics in this pallet.
+	type WeightInfo: WeightInfo;
 }
 
 decl_event! {
@@ -203,6 +164,41 @@ decl_error! {
 
 		/// Usable Balance for Paying Redeem Fee - NOT ENOUGH
 		FeeNE,
+	}
+}
+
+decl_storage! {
+	trait Store for Module<T: Trait> as DarwiniaEthereumBacking {
+		pub RingProofVerified
+			get(fn ring_proof_verfied)
+			: map hasher(blake2_128_concat) EthTransactionIndex => Option<bool>;
+		pub RingRedeemAddress get(fn ring_redeem_address) config(): EthAddress;
+
+		pub KtonProofVerified
+			get(fn kton_proof_verfied)
+			: map hasher(blake2_128_concat) EthTransactionIndex => Option<bool>;
+		pub KtonRedeemAddress get(fn kton_redeem_address) config(): EthAddress;
+
+		pub DepositProofVerified
+			get(fn deposit_proof_verfied)
+			: map hasher(blake2_128_concat) EthTransactionIndex => Option<bool>;
+		pub DepositRedeemAddress get(fn deposit_redeem_address) config(): EthAddress;
+	}
+	add_extra_genesis {
+		config(ring_locked): RingBalance<T>;
+		config(kton_locked): KtonBalance<T>;
+		build(|config: &GenesisConfig<T>| {
+			// Create Backing account
+			let _ = T::RingCurrency::make_free_balance_be(
+				&<Module<T>>::account_id(),
+				T::RingCurrency::minimum_balance().max(config.ring_locked),
+			);
+
+			let _ = T::KtonCurrency::make_free_balance_be(
+				&<Module<T>>::account_id(),
+				T::KtonCurrency::minimum_balance().max(config.kton_locked),
+			);
+		});
 	}
 }
 
@@ -658,12 +654,22 @@ impl<T: Trait> Module<T> {
 	}
 }
 
+// TODO: https://github.com/darwinia-network/darwinia-common/issues/209
+pub trait WeightInfo {}
+impl WeightInfo for () {}
+
+#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
+pub enum RedeemFor {
+	Ring,
+	Kton,
+	Deposit,
+}
+
 pub trait AccountIdFor<AccountId> {
 	fn account_id_for(decoded_sub_key: &[u8]) -> Result<AccountId, DispatchError>;
 }
 
 pub struct AccountIdDeterminator<T: Trait>(PhantomData<T>);
-
 impl<T: Trait> AccountIdFor<T::AccountId> for AccountIdDeterminator<T>
 where
 	T::AccountId: sp_std::convert::From<[u8; 32]> + AsRef<[u8]>,

@@ -81,84 +81,6 @@ pub const ETH_OFFCHAIN: KeyTypeId = KeyTypeId(*b"etho");
 /// A dummy endpoint, point this to shadow service
 const ETH_RESOURCE: &'static [u8] = b"http://shadow.darwinia.network/";
 
-#[derive(Default)]
-pub struct OffchainRequest {
-	location: Vec<u8>,
-	payload: Vec<u8>,
-	redirect_times: u8,
-	cookie: Option<Vec<u8>>,
-}
-
-pub trait OffchainRequestTrait {
-	fn send(&mut self) -> Option<Vec<u8>>;
-}
-
-impl OffchainRequest {
-	fn new(url: Vec<u8>, payload: Vec<u8>) -> Self {
-		OffchainRequest {
-			location: url.clone(),
-			payload,
-			..Default::default()
-		}
-	}
-}
-
-/// The OffchainRequest handle the request session
-/// - set cookie if returns
-/// - handle the redirect actions if happened
-#[cfg(not(test))]
-impl OffchainRequestTrait for OffchainRequest {
-	fn send(&mut self) -> Option<Vec<u8>> {
-		for _ in 0..=3 {
-			let p = self.payload.clone();
-			let request = sp_runtime::offchain::http::Request::post(
-				from_utf8(&self.location).unwrap_or_default(),
-				vec![&p[..]],
-			)
-			.add_header("Content-Type", "application/json");
-			if let Ok(pending) = request.send() {
-				if let Ok(mut resp) = pending.wait() {
-					if resp.code == 200 {
-						return Some(resp.body().collect::<Vec<_>>());
-					} else if resp.code == 301 || resp.code == 302 {
-						self.redirect_times += 1;
-						trace!(
-							target: "ethereum-offchain",
-							"[ethereum-offchain] Redirect({}), Request Header: {:?}",
-							self.redirect_times, resp.headers(),
-						);
-
-						let headers = resp.headers();
-						if let Some(cookie) = headers.find("set-cookie") {
-							self.cookie = Some(cookie.as_bytes().to_vec());
-						}
-						if let Some(location) = headers.find("location") {
-							self.location = location.as_bytes().to_vec();
-							trace!(
-								target: "ethereum-offchain",
-								"[ethereum-offchain] Redirect({}), Location: {:?}",
-								self.redirect_times,
-								self.location,
-							);
-						}
-					} else {
-						trace!(target: "ethereum-offchain", "[ethereum-offchain] Status Code: {}", resp.code);
-						trace!(
-							target: "ethereum-offchain",
-							"[ethereum-offchain] Response: {}",
-							from_utf8(&resp.body().collect::<Vec<_>>()).unwrap_or_default(),
-						);
-
-						return None;
-					}
-				}
-			}
-		}
-
-		None
-	}
-}
-
 pub trait Trait:
 	CreateSignedTransaction<EthereumRelayCall<Self>> + darwinia_ethereum_linear_relay::Trait
 {
@@ -392,5 +314,81 @@ impl<T: Trait> Module<T> {
 		};
 		let proof_scale_bytes = hex_bytes_unchecked(from_utf8(scale_str).unwrap_or_default());
 		Ok(Decode::decode::<&[u8]>(&mut &proof_scale_bytes[..]).unwrap_or_default())
+	}
+}
+
+#[derive(Default)]
+pub struct OffchainRequest {
+	location: Vec<u8>,
+	payload: Vec<u8>,
+	redirect_times: u8,
+	cookie: Option<Vec<u8>>,
+}
+
+pub trait OffchainRequestTrait {
+	fn send(&mut self) -> Option<Vec<u8>>;
+}
+impl OffchainRequest {
+	fn new(url: Vec<u8>, payload: Vec<u8>) -> Self {
+		OffchainRequest {
+			location: url.clone(),
+			payload,
+			..Default::default()
+		}
+	}
+}
+/// The OffchainRequest handle the request session
+/// - set cookie if returns
+/// - handle the redirect actions if happened
+#[cfg(not(test))]
+impl OffchainRequestTrait for OffchainRequest {
+	fn send(&mut self) -> Option<Vec<u8>> {
+		for _ in 0..=3 {
+			let p = self.payload.clone();
+			let request = sp_runtime::offchain::http::Request::post(
+				from_utf8(&self.location).unwrap_or_default(),
+				vec![&p[..]],
+			)
+			.add_header("Content-Type", "application/json");
+			if let Ok(pending) = request.send() {
+				if let Ok(mut resp) = pending.wait() {
+					if resp.code == 200 {
+						return Some(resp.body().collect::<Vec<_>>());
+					} else if resp.code == 301 || resp.code == 302 {
+						self.redirect_times += 1;
+						trace!(
+							target: "ethereum-offchain",
+							"[ethereum-offchain] Redirect({}), Request Header: {:?}",
+							self.redirect_times, resp.headers(),
+						);
+
+						let headers = resp.headers();
+						if let Some(cookie) = headers.find("set-cookie") {
+							self.cookie = Some(cookie.as_bytes().to_vec());
+						}
+						if let Some(location) = headers.find("location") {
+							self.location = location.as_bytes().to_vec();
+							trace!(
+								target: "ethereum-offchain",
+								"[ethereum-offchain] Redirect({}), Location: {:?}",
+								self.redirect_times,
+								self.location,
+							);
+						}
+					} else {
+						trace!(target: "ethereum-offchain", "[ethereum-offchain] Status Code: {}", resp.code);
+						trace!(
+							target: "ethereum-offchain",
+							"[ethereum-offchain] Response: {}",
+							from_utf8(&resp.body().collect::<Vec<_>>()).unwrap_or_default(),
+						);
+
+						return None;
+					}
+				}
+			}
+		}
+
+		None
 	}
 }

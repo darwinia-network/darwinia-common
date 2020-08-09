@@ -91,6 +91,9 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	type ApproveOrigin: EnsureOrigin<Self::Origin>;
 
 	type RejectOrigin: EnsureOrigin<Self::Origin>;
+
+	/// Weight information for extrinsics in this pallet.
+	type WeightInfo: WeightInfo;
 }
 
 decl_event! {
@@ -886,6 +889,10 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		})
 	}
 }
+
+// TODO: https://github.com/darwinia-network/darwinia-common/issues/209
+pub trait WeightInfo {}
+impl WeightInfo for () {}
 
 #[derive(Clone, Encode, Decode, RuntimeDebug)]
 pub struct Proposal<AccountId, BondedTcHeader, TcHeaderHash> {

@@ -50,41 +50,6 @@ use sp_std::prelude::*;
 use darwinia_support::balance::lock::*;
 use types::*;
 
-#[repr(u8)]
-enum ValidityError {
-	/// The signature is invalid.
-	InvalidSignature = 0,
-	/// The signer has no claim.
-	SignerHasNoClaim = 1,
-}
-
-#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
-pub enum OtherSignature {
-	Eth(EcdsaSignature),
-	Tron(EcdsaSignature),
-}
-
-#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
-pub enum OtherAddress {
-	Eth(AddressT),
-	Tron(AddressT),
-}
-
-#[derive(Clone, Encode, Decode)]
-pub struct EcdsaSignature(pub [u8; 65]);
-
-impl PartialEq for EcdsaSignature {
-	fn eq(&self, other: &Self) -> bool {
-		&self.0[..] == &other.0[..]
-	}
-}
-
-impl sp_std::fmt::Debug for EcdsaSignature {
-	fn fmt(&self, f: &mut sp_std::fmt::Formatter<'_>) -> sp_std::fmt::Result {
-		write!(f, "EcdsaSignature({:?})", &self.0[..])
-	}
-}
-
 pub trait Trait: frame_system::Trait {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
@@ -403,6 +368,39 @@ impl<T: Trait> sp_runtime::traits::ValidateUnsigned for Module<T> {
 	}
 }
 
+#[repr(u8)]
+enum ValidityError {
+	/// The signature is invalid.
+	InvalidSignature = 0,
+	/// The signer has no claim.
+	SignerHasNoClaim = 1,
+}
+
+#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
+pub enum OtherSignature {
+	Eth(EcdsaSignature),
+	Tron(EcdsaSignature),
+}
+
+#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
+pub enum OtherAddress {
+	Eth(AddressT),
+	Tron(AddressT),
+}
+
+#[derive(Clone, Encode, Decode)]
+pub struct EcdsaSignature(pub [u8; 65]);
+impl PartialEq for EcdsaSignature {
+	fn eq(&self, other: &Self) -> bool {
+		&self.0[..] == &other.0[..]
+	}
+}
+impl sp_std::fmt::Debug for EcdsaSignature {
+	fn fmt(&self, f: &mut sp_std::fmt::Formatter<'_>) -> sp_std::fmt::Result {
+		write!(f, "EcdsaSignature({:?})", &self.0[..])
+	}
+}
+
 /// Converts the given binary data into ASCII-encoded hex. It will be twice the length.
 fn to_ascii_hex(data: &[u8]) -> Vec<u8> {
 	let mut r = Vec::with_capacity(data.len() * 2);
@@ -499,6 +497,7 @@ mod tests {
 		type AccountData = AccountData<Balance>;
 		type OnNewAccount = ();
 		type OnKilledAccount = ();
+		type SystemWeightInfo = ();
 	}
 
 	parameter_types! {
@@ -511,6 +510,7 @@ mod tests {
 		type ExistentialDeposit = ExistentialDeposit;
 		type BalanceInfo = AccountData<Balance>;
 		type AccountStore = System;
+		type WeightInfo = ();
 		type DustCollector = ();
 	}
 

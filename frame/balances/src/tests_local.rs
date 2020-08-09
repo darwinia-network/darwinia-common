@@ -99,6 +99,7 @@ impl frame_system::Trait for Test {
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = Ring;
+	type SystemWeightInfo = ();
 }
 parameter_types! {
 	pub const TransactionByteFee: Balance = 1;
@@ -123,6 +124,7 @@ impl Trait<RingInstance> for Test {
 		Balance,
 		AccountData<Balance>,
 	>;
+	type WeightInfo = ();
 	type DustCollector = (Kton,);
 }
 impl Trait<KtonInstance> for Test {
@@ -138,6 +140,7 @@ impl Trait<KtonInstance> for Test {
 		Balance,
 		AccountData<Balance>,
 	>;
+	type WeightInfo = ();
 	type DustCollector = (Ring,);
 }
 

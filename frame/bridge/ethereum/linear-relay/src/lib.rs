@@ -93,6 +93,9 @@ pub trait Trait: frame_system::Trait {
 
 	type Currency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
 		+ ReservableCurrency<Self::AccountId>;
+
+	/// Weight information for extrinsics in this pallet.
+	type WeightInfo: WeightInfo;
 }
 
 decl_event! {
@@ -749,6 +752,10 @@ impl<T: Trait> EthereumReceipt<T::AccountId, Balance<T>> for Module<T> {
 		(proof.header_hash, proof.index)
 	}
 }
+
+// TODO: https://github.com/darwinia-network/darwinia-common/issues/209
+pub trait WeightInfo {}
+impl WeightInfo for () {}
 
 /// `SignedExtension` that checks if a transaction has duplicate header hash to avoid coincidence
 /// header between several relayers

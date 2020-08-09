@@ -58,6 +58,7 @@ impl frame_system::Trait for Test {
 	type AccountData = ();
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
+	type SystemWeightInfo = ();
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {

@@ -132,9 +132,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(feature = "runtime-benchmarks")]
-mod benchmarking;
-
 #[cfg(test)]
 #[macro_use]
 mod tests;
@@ -156,6 +153,7 @@ use frame_support::{
 		ExistenceRequirement::KeepAlive, Get, Imbalance, IsDeadAccount, OnKilledAccount,
 		OnUnbalanced, ReservableCurrency, SignedImbalance, StoredMap, TryDrop,
 	},
+	weights::Weight,
 	Parameter, StorageValue,
 };
 use frame_system::{ensure_root, ensure_signed};
@@ -182,6 +180,31 @@ use darwinia_support::{
 	traits::BalanceInfo,
 };
 
+pub trait WeightInfo {
+	fn transfer(u: u32, e: u32) -> Weight;
+	fn transfer_best_case(u: u32, e: u32) -> Weight;
+	fn transfer_keep_alive(u: u32, e: u32) -> Weight;
+	fn set_balance(u: u32, e: u32) -> Weight;
+	fn set_balance_killing(u: u32, e: u32) -> Weight;
+}
+impl WeightInfo for () {
+	fn transfer(_u: u32, _e: u32) -> Weight {
+		1_000_000_000
+	}
+	fn transfer_best_case(_u: u32, _e: u32) -> Weight {
+		1_000_000_000
+	}
+	fn transfer_keep_alive(_u: u32, _e: u32) -> Weight {
+		1_000_000_000
+	}
+	fn set_balance(_u: u32, _e: u32) -> Weight {
+		1_000_000_000
+	}
+	fn set_balance_killing(_u: u32, _e: u32) -> Weight {
+		1_000_000_000
+	}
+}
+
 pub trait Subtrait<I: Instance = DefaultInstance>: frame_system::Trait {
 	/// The balance of an account.
 	type Balance: Parameter
@@ -206,6 +229,9 @@ pub trait Subtrait<I: Instance = DefaultInstance>: frame_system::Trait {
 		+ Clone
 		+ Default
 		+ EncodeLike;
+
+	/// Weight information for the extrinsics in this pallet.
+	type WeightInfo: WeightInfo;
 
 	// TODO: doc
 	type DustCollector: DustCollector<Self::AccountId>;
@@ -242,6 +268,9 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	/// The means of storing the balances of an account.
 	type AccountStore: StoredMap<Self::AccountId, Self::BalanceInfo>;
 
+	/// Weight information for the extrinsics in this pallet.
+	type WeightInfo: WeightInfo;
+
 	// TODO: doc
 	type DustCollector: DustCollector<Self::AccountId>;
 }
@@ -251,6 +280,7 @@ impl<T: Trait<I>, I: Instance> Subtrait<I> for T {
 	type ExistentialDeposit = T::ExistentialDeposit;
 	type AccountStore = T::AccountStore;
 	type BalanceInfo = T::BalanceInfo;
+	type WeightInfo = <T as Trait<I>>::WeightInfo;
 	type DustCollector = T::DustCollector;
 }
 
@@ -812,6 +842,7 @@ impl<T: Subtrait<I>, I: Instance> frame_system::Trait for ElevatedTrait<T, I> {
 	type AccountData = T::AccountData;
 	type OnNewAccount = T::OnNewAccount;
 	type OnKilledAccount = T::OnKilledAccount;
+	type SystemWeightInfo = T::SystemWeightInfo;
 }
 impl<T: Subtrait<I>, I: Instance> Trait<I> for ElevatedTrait<T, I> {
 	type Balance = T::Balance;
@@ -820,6 +851,7 @@ impl<T: Subtrait<I>, I: Instance> Trait<I> for ElevatedTrait<T, I> {
 	type ExistentialDeposit = T::ExistentialDeposit;
 	type BalanceInfo = T::BalanceInfo;
 	type AccountStore = T::AccountStore;
+	type WeightInfo = <T as Subtrait<I>>::WeightInfo;
 	type DustCollector = T::DustCollector;
 }
 

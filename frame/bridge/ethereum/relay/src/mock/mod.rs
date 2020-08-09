@@ -1,4 +1,5 @@
 //! Mock file for ethereum-relay.
+
 // --- crates ---
 use codec::Error;
 // --- substrate ---
@@ -32,6 +33,17 @@ pub type KtonInstance = darwinia_balances::Instance1;
 
 pub type System = frame_system::Module<Test>;
 pub type EthereumRelay = Module<Test>;
+pub type Ring = darwinia_balances::Module<Test, RingInstance>;
+
+impl_outer_origin! {
+	pub enum Origin for Test where system = frame_system {}
+}
+
+impl_outer_dispatch! {
+	pub enum Call for Test where origin: Origin {
+		frame_system::System,
+	}
+}
 
 darwinia_support::impl_account_data! {
 	pub struct AccountData<Balance>
@@ -47,6 +59,15 @@ darwinia_support::impl_account_data! {
 // Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Test;
+parameter_types! {
+	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
+}
+impl Trait for Test {
+	type ModuleId = EthereumRelayModuleId;
+	type Event = ();
+	type Currency = Ring;
+	type WeightInfo = ();
+}
 
 parameter_types! {
 	pub const BlockHashCount: BlockNumber = 250;
@@ -79,6 +100,7 @@ impl frame_system::Trait for Test {
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
+	type SystemWeightInfo = ();
 }
 
 impl darwinia_balances::Trait<RingInstance> for Test {
@@ -88,38 +110,16 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 	type ExistentialDeposit = ();
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
+	type WeightInfo = ();
 	type DustCollector = ();
 }
 
-impl_outer_origin! {
-	pub enum Origin for Test where system = frame_system {}
-}
-
-impl_outer_dispatch! {
-	pub enum Call for Test where origin: Origin {
-		frame_system::System,
-	}
-}
-
-parameter_types! {
-	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
-}
-
-pub type Ring = darwinia_balances::Module<Test, RingInstance>;
-impl Trait for Test {
-	type ModuleId = EthereumRelayModuleId;
-	type Event = ();
-	type Currency = Ring;
-}
-
 pub struct ExtBuilder {}
-
 impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {}
 	}
 }
-
 impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
 		let mut storage = frame_system::GenesisConfig::default()

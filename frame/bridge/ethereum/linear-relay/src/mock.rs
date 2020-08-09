@@ -27,6 +27,21 @@ pub type Ring = darwinia_balances::Module<Test, RingInstance>;
 
 pub(crate) type RingError = darwinia_balances::Error<Test, RingInstance>;
 
+thread_local! {
+	static ETH_NETWORK: RefCell<EthereumNetworkType> = RefCell::new(EthereumNetworkType::Ropsten);
+}
+
+impl_outer_origin! {
+	pub enum Origin for Test where system = frame_system {}
+}
+
+impl_outer_dispatch! {
+	pub enum Call for Test where origin: Origin {
+		frame_system::System,
+		darwinia_ethereum_relay::EthereumRelay,
+	}
+}
+
 darwinia_support::impl_account_data! {
 	pub struct AccountData<Balance>
 	for
@@ -39,8 +54,64 @@ darwinia_support::impl_account_data! {
 	}
 }
 
-thread_local! {
-	static ETH_NETWORK: RefCell<EthereumNetworkType> = RefCell::new(EthereumNetworkType::Ropsten);
+// Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct Test;
+parameter_types! {
+	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethli");
+}
+impl Trait for Test {
+	type ModuleId = EthereumRelayModuleId;
+	type Event = ();
+	type EthereumNetwork = EthereumNetwork;
+	type Call = Call;
+	type Currency = Ring;
+	type WeightInfo = ();
+}
+
+parameter_types! {
+	pub const BlockHashCount: BlockNumber = 250;
+	pub const MaximumBlockWeight: Weight = 1024;
+	pub const MaximumBlockLength: u32 = 2 * 1024;
+	pub const AvailableBlockRatio: Perbill = Perbill::one();
+}
+impl frame_system::Trait for Test {
+	type BaseCallFilter = ();
+	type Origin = Origin;
+	type Call = Call;
+	type Index = u64;
+	type BlockNumber = BlockNumber;
+	type Hash = H256;
+	type Hashing = sp_runtime::traits::BlakeTwo256;
+	type AccountId = AccountId;
+	type Lookup = IdentityLookup<Self::AccountId>;
+	type Header = Header;
+	type Event = ();
+	type BlockHashCount = BlockHashCount;
+	type MaximumBlockWeight = MaximumBlockWeight;
+	type DbWeight = ();
+	type BlockExecutionWeight = ();
+	type ExtrinsicBaseWeight = ();
+	type MaximumExtrinsicWeight = MaximumBlockWeight;
+	type MaximumBlockLength = MaximumBlockLength;
+	type AvailableBlockRatio = AvailableBlockRatio;
+	type Version = ();
+	type ModuleToIndex = ();
+	type AccountData = AccountData<Balance>;
+	type OnNewAccount = ();
+	type OnKilledAccount = ();
+	type SystemWeightInfo = ();
+}
+
+impl darwinia_balances::Trait<RingInstance> for Test {
+	type Balance = Balance;
+	type DustRemoval = ();
+	type Event = ();
+	type ExistentialDeposit = ();
+	type BalanceInfo = AccountData<Balance>;
+	type AccountStore = System;
+	type WeightInfo = ();
+	type DustCollector = ();
 }
 
 #[derive(Debug)]
@@ -179,80 +250,9 @@ impl Get<EthereumNetworkType> for EthereumNetwork {
 	}
 }
 
-// Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
-#[derive(Clone, PartialEq, Eq, Debug)]
-pub struct Test;
-
-parameter_types! {
-	pub const BlockHashCount: BlockNumber = 250;
-	pub const MaximumBlockWeight: Weight = 1024;
-	pub const MaximumBlockLength: u32 = 2 * 1024;
-	pub const AvailableBlockRatio: Perbill = Perbill::one();
-}
-impl frame_system::Trait for Test {
-	type BaseCallFilter = ();
-	type Origin = Origin;
-	type Call = Call;
-	type Index = u64;
-	type BlockNumber = BlockNumber;
-	type Hash = H256;
-	type Hashing = sp_runtime::traits::BlakeTwo256;
-	type AccountId = AccountId;
-	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
-	type Event = ();
-	type BlockHashCount = BlockHashCount;
-	type MaximumBlockWeight = MaximumBlockWeight;
-	type DbWeight = ();
-	type BlockExecutionWeight = ();
-	type ExtrinsicBaseWeight = ();
-	type MaximumExtrinsicWeight = MaximumBlockWeight;
-	type MaximumBlockLength = MaximumBlockLength;
-	type AvailableBlockRatio = AvailableBlockRatio;
-	type Version = ();
-	type ModuleToIndex = ();
-	type AccountData = AccountData<Balance>;
-	type OnNewAccount = ();
-	type OnKilledAccount = ();
-}
-
-impl darwinia_balances::Trait<RingInstance> for Test {
-	type Balance = Balance;
-	type DustRemoval = ();
-	type Event = ();
-	type ExistentialDeposit = ();
-	type BalanceInfo = AccountData<Balance>;
-	type AccountStore = System;
-	type DustCollector = ();
-}
-
-impl_outer_origin! {
-	pub enum Origin for Test where system = frame_system {}
-}
-
-impl_outer_dispatch! {
-	pub enum Call for Test where origin: Origin {
-		frame_system::System,
-		darwinia_ethereum_relay::EthereumRelay,
-	}
-}
-
-parameter_types! {
-	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethli");
-}
-
-impl Trait for Test {
-	type ModuleId = EthereumRelayModuleId;
-	type Event = ();
-	type EthereumNetwork = EthereumNetwork;
-	type Call = Call;
-	type Currency = Ring;
-}
-
 pub struct ExtBuilder {
 	eth_network: EthereumNetworkType,
 }
-
 impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {
@@ -260,7 +260,6 @@ impl Default for ExtBuilder {
 		}
 	}
 }
-
 impl ExtBuilder {
 	pub fn eth_network(mut self, eth_network: EthereumNetworkType) -> Self {
 		self.eth_network = eth_network;

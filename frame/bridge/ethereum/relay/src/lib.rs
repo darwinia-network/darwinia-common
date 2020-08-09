@@ -128,6 +128,9 @@ pub trait Trait: frame_system::Trait {
 
 	type Currency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
 		+ ReservableCurrency<Self::AccountId>;
+
+	/// Weight information for extrinsics in this pallet.
+	type WeightInfo: WeightInfo;
 }
 
 decl_event! {
@@ -701,6 +704,10 @@ impl<T: Trait> EthereumReceipt<T::AccountId, Balance<T>> for Module<T> {
 		(proof_record.header_hash, proof.1.index)
 	}
 }
+
+// TODO: https://github.com/darwinia-network/darwinia-common/issues/209
+pub trait WeightInfo {}
+impl WeightInfo for () {}
 
 #[derive(Encode, Decode, Default, RuntimeDebug)]
 pub struct EthHeaderThing {

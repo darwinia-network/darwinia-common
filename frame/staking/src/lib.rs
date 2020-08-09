@@ -563,483 +563,6 @@ const MONTH_IN_MINUTES: TsInMs = 30 * 24 * 60;
 const MONTH_IN_MILLISECONDS: TsInMs = MONTH_IN_MINUTES * 60 * 1000;
 const STAKING_ID: LockIdentifier = *b"da/staki";
 
-// --- enum ---
-
-/// Indicates the initial status of the staker.
-#[derive(RuntimeDebug)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub enum StakerStatus<AccountId> {
-	/// Chilling.
-	Idle,
-	/// Declared desire in validating or already participating in it.
-	Validator,
-	/// Nominating for a group of other stakers.
-	Nominator(Vec<AccountId>),
-}
-
-/// A destination account for payment.
-#[derive(PartialEq, Eq, Copy, Clone, Encode, Decode, RuntimeDebug)]
-pub enum RewardDestination {
-	/// Pay into the stash account, increasing the amount at stake accordingly.
-	Staked { promise_month: u8 },
-	/// Pay into the stash account, not increasing the amount at stake.
-	Stash,
-	/// Pay into the controller account.
-	Controller,
-}
-
-impl Default for RewardDestination {
-	fn default() -> Self {
-		RewardDestination::Staked { promise_month: 0 }
-	}
-}
-
-/// Mode of era-forcing.
-#[derive(Copy, Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub enum Forcing {
-	/// Not forcing anything - just let whatever happen.
-	NotForcing,
-	/// Force a new era, then reset to `NotForcing` as soon as it is done.
-	ForceNew,
-	/// Avoid a new era indefinitely.
-	ForceNone,
-	/// Force a new era at the end of all sessions indefinitely.
-	ForceAlways,
-}
-
-impl Default for Forcing {
-	fn default() -> Self {
-		Forcing::NotForcing
-	}
-}
-
-/// Indicate how an election round was computed.
-#[derive(PartialEq, Eq, Clone, Copy, Encode, Decode, RuntimeDebug)]
-pub enum ElectionCompute {
-	/// Result was forcefully computed on chain at the end of the session.
-	OnChain,
-	/// Result was submitted and accepted to the chain via a signed transaction.
-	Signed,
-	/// Result was submitted and accepted to the chain via an unsigned transaction (by an
-	/// authority).
-	Unsigned,
-}
-
-/// The status of the upcoming (offchain) election.
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
-pub enum ElectionStatus<BlockNumber> {
-	/// Nothing has and will happen for now. submission window is not open.
-	Closed,
-	/// The submission window has been open since the contained block number.
-	Open(BlockNumber),
-}
-
-impl<BlockNumber: PartialEq> ElectionStatus<BlockNumber> {
-	fn is_open_at(&self, n: BlockNumber) -> bool {
-		*self == Self::Open(n)
-	}
-
-	fn is_closed(&self) -> bool {
-		match self {
-			Self::Closed => true,
-			_ => false,
-		}
-	}
-
-	fn is_open(&self) -> bool {
-		!self.is_closed()
-	}
-}
-
-impl<BlockNumber> Default for ElectionStatus<BlockNumber> {
-	fn default() -> Self {
-		Self::Closed
-	}
-}
-
-/// To unify *RING* and *KTON* balances.
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
-pub enum StakingBalance<RingBalance, KtonBalance>
-where
-	RingBalance: HasCompact,
-	KtonBalance: HasCompact,
-{
-	RingBalance(RingBalance),
-	KtonBalance(KtonBalance),
-}
-
-impl<RingBalance, KtonBalance> Default for StakingBalance<RingBalance, KtonBalance>
-where
-	RingBalance: Default + HasCompact,
-	KtonBalance: Default + HasCompact,
-{
-	fn default() -> Self {
-		StakingBalance::RingBalance(Default::default())
-	}
-}
-
-// --- struct ---
-
-/// Information regarding the active era (era in used in session).
-#[derive(Debug, Encode, Decode)]
-pub struct ActiveEraInfo {
-	/// Index of era.
-	pub index: EraIndex,
-	/// Moment of start expressed as millisecond from `$UNIX_EPOCH`.
-	///
-	/// Start can be none if start hasn't been set for the era yet,
-	/// Start is set on the first on_finalize of the era to guarantee usage of `Time`.
-	start: Option<TsInMs>,
-}
-
-/// Reward points of an era. Used to split era total payout between validators.
-///
-/// This points will be used to reward validators and their respective nominators.
-#[derive(PartialEq, Encode, Decode, Default, Debug)]
-pub struct EraRewardPoints<AccountId: Ord> {
-	/// Total number of points. Equals the sum of reward points for each validator.
-	total: RewardPoint,
-	/// The reward points earned by a given validator.
-	individual: BTreeMap<AccountId, RewardPoint>,
-}
-
-/// Preference of what happens regarding validation.
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
-pub struct ValidatorPrefs {
-	/// Reward that validator takes up-front; only the rest is split between themselves and
-	/// nominators.
-	#[codec(compact)]
-	pub commission: Perbill,
-}
-
-impl Default for ValidatorPrefs {
-	fn default() -> Self {
-		ValidatorPrefs {
-			commission: Default::default(),
-		}
-	}
-}
-
-/// The ledger of a (bonded) stash.
-#[derive(PartialEq, Eq, Clone, Default, Encode, Decode, RuntimeDebug)]
-pub struct StakingLedger<AccountId, RingBalance, KtonBalance, BlockNumber>
-where
-	RingBalance: HasCompact,
-	KtonBalance: HasCompact,
-{
-	/// The stash account whose balance is actually locked and at stake.
-	pub stash: AccountId,
-
-	/// The total amount of the stash's *RING* that will be at stake in any forthcoming
-	/// rounds.
-	#[codec(compact)]
-	pub active_ring: RingBalance,
-	// active time-deposit ring
-	#[codec(compact)]
-	pub active_deposit_ring: RingBalance,
-
-	/// The total amount of the stash's *KTON* that will be at stake in any forthcoming
-	/// rounds.
-	#[codec(compact)]
-	pub active_kton: KtonBalance,
-
-	// If you deposit *RING* for a minimum period,
-	// you can get *KTON* as bonus which can also be used for staking.
-	pub deposit_items: Vec<TimeDepositItem<RingBalance>>,
-
-	// TODO doc
-	pub ring_staking_lock: StakingLock<RingBalance, BlockNumber>,
-	// TODO doc
-	pub kton_staking_lock: StakingLock<KtonBalance, BlockNumber>,
-
-	/// List of eras for which the stakers behind a validator have claimed rewards. Only updated
-	/// for validators.
-	pub claimed_rewards: Vec<EraIndex>,
-}
-
-impl<AccountId, RingBalance, KtonBalance, BlockNumber>
-	StakingLedger<AccountId, RingBalance, KtonBalance, BlockNumber>
-where
-	RingBalance: AtLeast32BitUnsigned + Saturating + Copy,
-	KtonBalance: AtLeast32BitUnsigned + Saturating + Copy,
-	BlockNumber: PartialOrd,
-	TsInMs: PartialOrd,
-{
-	/// Slash the validator for a given amount of balance. This can grow the value
-	/// of the slash in the case that the validator has less than `minimum_balance`
-	/// active funds. Returns the amount of funds actually slashed.
-	///
-	/// Slashes from `active` funds first, and then `unlocking`, starting with the
-	/// chunks that are closest to unlocking.
-	fn slash(
-		&mut self,
-		slash_ring: RingBalance,
-		slash_kton: KtonBalance,
-		bn: BlockNumber,
-		ts: TsInMs,
-	) -> (RingBalance, KtonBalance) {
-		let slash_out_of = |active_ring: &mut RingBalance,
-		                    active_deposit_ring: &mut RingBalance,
-		                    deposit_item: &mut Vec<TimeDepositItem<RingBalance>>,
-		                    active_kton: &mut KtonBalance,
-		                    slash_ring: &mut RingBalance,
-		                    slash_kton: &mut KtonBalance| {
-			let slashable_active_ring = (*slash_ring).min(*active_ring);
-			let slashable_active_kton = (*slash_kton).min(*active_kton);
-
-			if !slashable_active_ring.is_zero() {
-				let slashable_normal_ring = *active_ring - *active_deposit_ring;
-				if let Some(mut slashable_deposit_ring) =
-					slashable_active_ring.checked_sub(&slashable_normal_ring)
-				{
-					*active_deposit_ring -= slashable_deposit_ring;
-
-					deposit_item.drain_filter(|item| {
-						if ts >= item.expire_time {
-							true
-						} else {
-							if slashable_deposit_ring.is_zero() {
-								false
-							} else {
-								if let Some(new_slashable_deposit_ring) =
-									slashable_deposit_ring.checked_sub(&item.value)
-								{
-									slashable_deposit_ring = new_slashable_deposit_ring;
-									true
-								} else {
-									item.value -= sp_std::mem::replace(
-										&mut slashable_deposit_ring,
-										Zero::zero(),
-									);
-									false
-								}
-							}
-						}
-					});
-				}
-
-				*active_ring -= slashable_active_ring;
-				*slash_ring -= slashable_active_ring;
-			}
-
-			if !slashable_active_kton.is_zero() {
-				*active_kton -= slashable_active_kton;
-				*slash_kton -= slashable_active_kton;
-			}
-		};
-
-		let (mut apply_slash_ring, mut apply_slash_kton) = (slash_ring, slash_kton);
-		let StakingLedger {
-			active_ring,
-			active_deposit_ring,
-			deposit_items,
-			active_kton,
-			ring_staking_lock,
-			kton_staking_lock,
-			..
-		} = self;
-
-		slash_out_of(
-			active_ring,
-			active_deposit_ring,
-			deposit_items,
-			active_kton,
-			&mut apply_slash_ring,
-			&mut apply_slash_kton,
-		);
-
-		if !apply_slash_ring.is_zero() {
-			ring_staking_lock.unbondings.drain_filter(|lock| {
-				if bn >= lock.until {
-					true
-				} else {
-					if apply_slash_ring.is_zero() {
-						false
-					} else {
-						if apply_slash_ring > lock.amount {
-							apply_slash_ring -= lock.amount;
-							true
-						} else {
-							lock.amount -=
-								sp_std::mem::replace(&mut apply_slash_ring, Zero::zero());
-							false
-						}
-					}
-				}
-			});
-		}
-		if !apply_slash_kton.is_zero() {
-			kton_staking_lock.unbondings.drain_filter(|lock| {
-				if bn >= lock.until {
-					true
-				} else {
-					if apply_slash_kton.is_zero() {
-						false
-					} else {
-						if apply_slash_kton > lock.amount {
-							apply_slash_kton -= lock.amount;
-
-							true
-						} else {
-							lock.amount -=
-								sp_std::mem::replace(&mut apply_slash_kton, Zero::zero());
-							false
-						}
-					}
-				}
-			});
-		}
-
-		(slash_ring - apply_slash_ring, slash_kton - apply_slash_kton)
-	}
-}
-
-/// The *RING* under deposit.
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
-pub struct TimeDepositItem<RingBalance: HasCompact> {
-	#[codec(compact)]
-	pub value: RingBalance,
-	#[codec(compact)]
-	pub start_time: TsInMs,
-	#[codec(compact)]
-	pub expire_time: TsInMs,
-}
-
-/// A record of the nominations made by a specific account.
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
-pub struct Nominations<AccountId> {
-	/// The targets of nomination.
-	pub targets: Vec<AccountId>,
-	/// The era the nominations were submitted.
-	///
-	/// Except for initial nominations which are considered submitted at era 0.
-	pub submitted_in: EraIndex,
-	/// Whether the nominations have been suppressed.
-	pub suppressed: bool,
-}
-
-/// A snapshot of the stake backing a single validator in the system.
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, Default, RuntimeDebug)]
-pub struct Exposure<AccountId, RingBalance, KtonBalance>
-where
-	RingBalance: HasCompact,
-	KtonBalance: HasCompact,
-{
-	/// The validator's own stash that is exposed.
-	#[codec(compact)]
-	pub own_ring_balance: RingBalance,
-	#[codec(compact)]
-	pub own_kton_balance: KtonBalance,
-	pub own_power: Power,
-	/// The total balance backing this validator.
-	pub total_power: Power,
-	/// The portions of nominators stashes that are exposed.
-	pub others: Vec<IndividualExposure<AccountId, RingBalance, KtonBalance>>,
-}
-
-/// The amount of exposure (to slashing) than an individual nominator has.
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, RuntimeDebug)]
-pub struct IndividualExposure<AccountId, RingBalance, KtonBalance>
-where
-	RingBalance: HasCompact,
-	KtonBalance: HasCompact,
-{
-	/// The stash account of the nominator in question.
-	who: AccountId,
-	/// Amount of funds exposed.
-	#[codec(compact)]
-	ring_balance: RingBalance,
-	#[codec(compact)]
-	kton_balance: KtonBalance,
-	power: Power,
-}
-
-/// A pending slash record. The value of the slash has been computed but not applied yet,
-/// rather deferred for several eras.
-#[derive(Encode, Decode, Default, RuntimeDebug)]
-pub struct UnappliedSlash<AccountId, RingBalance, KtonBalance> {
-	/// The stash ID of the offending validator.
-	validator: AccountId,
-	/// The validator's own slash.
-	own: slashing::RK<RingBalance, KtonBalance>,
-	/// All other slashed stakers and amounts.
-	others: Vec<(AccountId, slashing::RK<RingBalance, KtonBalance>)>,
-	/// Reporters of the offence; bounty payout recipients.
-	reporters: Vec<AccountId>,
-	/// The amount of payout.
-	payout: slashing::RK<RingBalance, KtonBalance>,
-}
-
-/// Some indications about the size of the election. This must be submitted with the solution.
-///
-/// Note that these values must reflect the __total__ number, not only those that are present in the
-/// solution. In short, these should be the same size as the size of the values dumped in
-/// `SnapshotValidators` and `SnapshotNominators`.
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, Default)]
-pub struct ElectionSize {
-	/// Number of validators in the snapshot of the current election round.
-	#[codec(compact)]
-	pub validators: ValidatorIndex,
-	/// Number of nominators in the snapshot of the current election round.
-	#[codec(compact)]
-	pub nominators: NominatorIndex,
-}
-
-/// The result of an election round.
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
-pub struct ElectionResult<AccountId, RingBalance: HasCompact, KtonBalance: HasCompact> {
-	/// Flat list of validators who have been elected.
-	elected_stashes: Vec<AccountId>,
-	/// Flat list of new exposures, to be updated in the [`Exposure`] storage.
-	exposures: Vec<(AccountId, Exposure<AccountId, RingBalance, KtonBalance>)>,
-	/// Type of the result. This is kept on chain only to track and report the best score's
-	/// submission type. An optimisation could remove this.
-	compute: ElectionCompute,
-}
-
-// --- trait ---
-
-/// Means for interacting with a specialized version of the `session` trait.
-///
-/// This is needed because `Staking` sets the `ValidatorIdOf` of the `pallet_session::Trait`
-pub trait SessionInterface<AccountId>: frame_system::Trait {
-	/// Disable a given validator by stash ID.
-	///
-	/// Returns `true` if new era should be forced at the end of this session.
-	/// This allows preventing a situation where there is too many validators
-	/// disabled and block production stalls.
-	fn disable_validator(validator: &AccountId) -> Result<bool, ()>;
-	/// Get the validators from session.
-	fn validators() -> Vec<AccountId>;
-	/// Prune historical session tries up to but not including the given index.
-	fn prune_historical_up_to(up_to: SessionIndex);
-}
-
-impl<T: Trait> SessionInterface<AccountId<T>> for T
-where
-	T: pallet_session::Trait<ValidatorId = AccountId<T>>,
-	T: pallet_session::historical::Trait<
-		FullIdentification = Exposure<AccountId<T>, RingBalance<T>, KtonBalance<T>>,
-		FullIdentificationOf = ExposureOf<T>,
-	>,
-	T::SessionHandler: pallet_session::SessionHandler<AccountId<T>>,
-	T::SessionManager: pallet_session::SessionManager<AccountId<T>>,
-	T::ValidatorIdOf: Convert<AccountId<T>, Option<AccountId<T>>>,
-{
-	fn disable_validator(validator: &AccountId<T>) -> Result<bool, ()> {
-		<pallet_session::Module<T>>::disable(validator)
-	}
-
-	fn validators() -> Vec<AccountId<T>> {
-		<pallet_session::Module<T>>::validators()
-	}
-
-	fn prune_historical_up_to(up_to: SessionIndex) {
-		<pallet_session::historical::Module<T>>::prune_up_to(up_to);
-	}
-}
-
 pub trait Trait: frame_system::Trait + SendTransactionTypes<Call<Self>> {
 	/// The overarching event type.
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
@@ -1104,6 +627,9 @@ pub trait Trait: frame_system::Trait + SendTransactionTypes<Call<Self>> {
 	/// This is exposed so that it can be tuned for particular runtime, when
 	/// multiple pallets send unsigned transactions.
 	type UnsignedPriority: Get<TransactionPriority>;
+
+	/// Weight information for extrinsics in this pallet.
+	type WeightInfo: WeightInfo;
 
 	/// The *RING* currency.
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
@@ -4138,6 +3664,585 @@ impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
 		} else {
 			Err(InvalidTransaction::Call.into())
 		}
+	}
+}
+
+pub trait WeightInfo {
+	fn bond(u: u32) -> Weight;
+	fn bond_extra(u: u32) -> Weight;
+	fn unbond(u: u32) -> Weight;
+	fn claim_mature_deposits(u: u32) -> Weight;
+	fn try_claim_deposits_with_punish(u: u32) -> Weight;
+	fn validate(u: u32) -> Weight;
+	fn nominate(n: u32) -> Weight;
+	fn chill(u: u32) -> Weight;
+	fn set_payee(u: u32) -> Weight;
+	fn set_controller(u: u32) -> Weight;
+	fn set_validator_count(c: u32) -> Weight;
+	fn force_no_eras(i: u32) -> Weight;
+	fn force_new_era(i: u32) -> Weight;
+	fn force_new_era_always(i: u32) -> Weight;
+	fn set_invulnerables(v: u32) -> Weight;
+	fn force_unstake(s: u32) -> Weight;
+	fn cancel_deferred_slash(s: u32) -> Weight;
+	fn payout_stakers(n: u32) -> Weight;
+	fn payout_stakers_alive_controller(n: u32) -> Weight;
+	fn set_history_depth(e: u32) -> Weight;
+	fn reap_stash(s: u32) -> Weight;
+	fn new_era(v: u32, n: u32) -> Weight;
+	fn do_slash(l: u32) -> Weight;
+	fn payout_all(v: u32, n: u32) -> Weight;
+	fn submit_solution_initial(v: u32, n: u32, a: u32, w: u32) -> Weight;
+	fn submit_solution_better(v: u32, n: u32, a: u32, w: u32) -> Weight;
+	fn submit_solution_weaker(v: u32, n: u32) -> Weight;
+}
+impl WeightInfo for () {
+	fn bond(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn bond_extra(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn unbond(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn claim_mature_deposits(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn try_claim_deposits_with_punish(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn validate(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn nominate(_n: u32) -> Weight {
+		1_000_000_000
+	}
+	fn chill(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn set_payee(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn set_controller(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn set_validator_count(_c: u32) -> Weight {
+		1_000_000_000
+	}
+	fn force_no_eras(_i: u32) -> Weight {
+		1_000_000_000
+	}
+	fn force_new_era(_i: u32) -> Weight {
+		1_000_000_000
+	}
+	fn force_new_era_always(_i: u32) -> Weight {
+		1_000_000_000
+	}
+	fn set_invulnerables(_v: u32) -> Weight {
+		1_000_000_000
+	}
+	fn force_unstake(_s: u32) -> Weight {
+		1_000_000_000
+	}
+	fn cancel_deferred_slash(_s: u32) -> Weight {
+		1_000_000_000
+	}
+	fn payout_stakers(_n: u32) -> Weight {
+		1_000_000_000
+	}
+	fn payout_stakers_alive_controller(_n: u32) -> Weight {
+		1_000_000_000
+	}
+	fn set_history_depth(_e: u32) -> Weight {
+		1_000_000_000
+	}
+	fn reap_stash(_s: u32) -> Weight {
+		1_000_000_000
+	}
+	fn new_era(_v: u32, _n: u32) -> Weight {
+		1_000_000_000
+	}
+	fn do_slash(_l: u32) -> Weight {
+		1_000_000_000
+	}
+	fn payout_all(_v: u32, _n: u32) -> Weight {
+		1_000_000_000
+	}
+	fn submit_solution_initial(_v: u32, _n: u32, _a: u32, _w: u32) -> Weight {
+		1_000_000_000
+	}
+	fn submit_solution_better(_v: u32, _n: u32, _a: u32, _w: u32) -> Weight {
+		1_000_000_000
+	}
+	fn submit_solution_weaker(_v: u32, _n: u32) -> Weight {
+		1_000_000_000
+	}
+}
+
+/// Indicates the initial status of the staker.
+#[derive(RuntimeDebug)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub enum StakerStatus<AccountId> {
+	/// Chilling.
+	Idle,
+	/// Declared desire in validating or already participating in it.
+	Validator,
+	/// Nominating for a group of other stakers.
+	Nominator(Vec<AccountId>),
+}
+
+/// A destination account for payment.
+#[derive(PartialEq, Eq, Copy, Clone, Encode, Decode, RuntimeDebug)]
+pub enum RewardDestination {
+	/// Pay into the stash account, increasing the amount at stake accordingly.
+	Staked { promise_month: u8 },
+	/// Pay into the stash account, not increasing the amount at stake.
+	Stash,
+	/// Pay into the controller account.
+	Controller,
+}
+impl Default for RewardDestination {
+	fn default() -> Self {
+		RewardDestination::Staked { promise_month: 0 }
+	}
+}
+
+/// Mode of era-forcing.
+#[derive(Copy, Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub enum Forcing {
+	/// Not forcing anything - just let whatever happen.
+	NotForcing,
+	/// Force a new era, then reset to `NotForcing` as soon as it is done.
+	ForceNew,
+	/// Avoid a new era indefinitely.
+	ForceNone,
+	/// Force a new era at the end of all sessions indefinitely.
+	ForceAlways,
+}
+impl Default for Forcing {
+	fn default() -> Self {
+		Forcing::NotForcing
+	}
+}
+
+/// Indicate how an election round was computed.
+#[derive(PartialEq, Eq, Clone, Copy, Encode, Decode, RuntimeDebug)]
+pub enum ElectionCompute {
+	/// Result was forcefully computed on chain at the end of the session.
+	OnChain,
+	/// Result was submitted and accepted to the chain via a signed transaction.
+	Signed,
+	/// Result was submitted and accepted to the chain via an unsigned transaction (by an
+	/// authority).
+	Unsigned,
+}
+
+/// The status of the upcoming (offchain) election.
+#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
+pub enum ElectionStatus<BlockNumber> {
+	/// Nothing has and will happen for now. submission window is not open.
+	Closed,
+	/// The submission window has been open since the contained block number.
+	Open(BlockNumber),
+}
+impl<BlockNumber: PartialEq> ElectionStatus<BlockNumber> {
+	fn is_open_at(&self, n: BlockNumber) -> bool {
+		*self == Self::Open(n)
+	}
+
+	fn is_closed(&self) -> bool {
+		match self {
+			Self::Closed => true,
+			_ => false,
+		}
+	}
+
+	fn is_open(&self) -> bool {
+		!self.is_closed()
+	}
+}
+impl<BlockNumber> Default for ElectionStatus<BlockNumber> {
+	fn default() -> Self {
+		Self::Closed
+	}
+}
+
+/// To unify *RING* and *KTON* balances.
+#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
+pub enum StakingBalance<RingBalance, KtonBalance>
+where
+	RingBalance: HasCompact,
+	KtonBalance: HasCompact,
+{
+	RingBalance(RingBalance),
+	KtonBalance(KtonBalance),
+}
+impl<RingBalance, KtonBalance> Default for StakingBalance<RingBalance, KtonBalance>
+where
+	RingBalance: Default + HasCompact,
+	KtonBalance: Default + HasCompact,
+{
+	fn default() -> Self {
+		StakingBalance::RingBalance(Default::default())
+	}
+}
+
+/// Information regarding the active era (era in used in session).
+#[derive(Debug, Encode, Decode)]
+pub struct ActiveEraInfo {
+	/// Index of era.
+	pub index: EraIndex,
+	/// Moment of start expressed as millisecond from `$UNIX_EPOCH`.
+	///
+	/// Start can be none if start hasn't been set for the era yet,
+	/// Start is set on the first on_finalize of the era to guarantee usage of `Time`.
+	start: Option<TsInMs>,
+}
+
+/// Reward points of an era. Used to split era total payout between validators.
+///
+/// This points will be used to reward validators and their respective nominators.
+#[derive(PartialEq, Encode, Decode, Default, Debug)]
+pub struct EraRewardPoints<AccountId: Ord> {
+	/// Total number of points. Equals the sum of reward points for each validator.
+	total: RewardPoint,
+	/// The reward points earned by a given validator.
+	individual: BTreeMap<AccountId, RewardPoint>,
+}
+
+/// Preference of what happens regarding validation.
+#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
+pub struct ValidatorPrefs {
+	/// Reward that validator takes up-front; only the rest is split between themselves and
+	/// nominators.
+	#[codec(compact)]
+	pub commission: Perbill,
+}
+
+impl Default for ValidatorPrefs {
+	fn default() -> Self {
+		ValidatorPrefs {
+			commission: Default::default(),
+		}
+	}
+}
+
+/// The ledger of a (bonded) stash.
+#[derive(PartialEq, Eq, Clone, Default, Encode, Decode, RuntimeDebug)]
+pub struct StakingLedger<AccountId, RingBalance, KtonBalance, BlockNumber>
+where
+	RingBalance: HasCompact,
+	KtonBalance: HasCompact,
+{
+	/// The stash account whose balance is actually locked and at stake.
+	pub stash: AccountId,
+
+	/// The total amount of the stash's *RING* that will be at stake in any forthcoming
+	/// rounds.
+	#[codec(compact)]
+	pub active_ring: RingBalance,
+	// active time-deposit ring
+	#[codec(compact)]
+	pub active_deposit_ring: RingBalance,
+
+	/// The total amount of the stash's *KTON* that will be at stake in any forthcoming
+	/// rounds.
+	#[codec(compact)]
+	pub active_kton: KtonBalance,
+
+	// If you deposit *RING* for a minimum period,
+	// you can get *KTON* as bonus which can also be used for staking.
+	pub deposit_items: Vec<TimeDepositItem<RingBalance>>,
+
+	// TODO doc
+	pub ring_staking_lock: StakingLock<RingBalance, BlockNumber>,
+	// TODO doc
+	pub kton_staking_lock: StakingLock<KtonBalance, BlockNumber>,
+
+	/// List of eras for which the stakers behind a validator have claimed rewards. Only updated
+	/// for validators.
+	pub claimed_rewards: Vec<EraIndex>,
+}
+impl<AccountId, RingBalance, KtonBalance, BlockNumber>
+	StakingLedger<AccountId, RingBalance, KtonBalance, BlockNumber>
+where
+	RingBalance: AtLeast32BitUnsigned + Saturating + Copy,
+	KtonBalance: AtLeast32BitUnsigned + Saturating + Copy,
+	BlockNumber: PartialOrd,
+	TsInMs: PartialOrd,
+{
+	/// Slash the validator for a given amount of balance. This can grow the value
+	/// of the slash in the case that the validator has less than `minimum_balance`
+	/// active funds. Returns the amount of funds actually slashed.
+	///
+	/// Slashes from `active` funds first, and then `unlocking`, starting with the
+	/// chunks that are closest to unlocking.
+	fn slash(
+		&mut self,
+		slash_ring: RingBalance,
+		slash_kton: KtonBalance,
+		bn: BlockNumber,
+		ts: TsInMs,
+	) -> (RingBalance, KtonBalance) {
+		let slash_out_of = |active_ring: &mut RingBalance,
+		                    active_deposit_ring: &mut RingBalance,
+		                    deposit_item: &mut Vec<TimeDepositItem<RingBalance>>,
+		                    active_kton: &mut KtonBalance,
+		                    slash_ring: &mut RingBalance,
+		                    slash_kton: &mut KtonBalance| {
+			let slashable_active_ring = (*slash_ring).min(*active_ring);
+			let slashable_active_kton = (*slash_kton).min(*active_kton);
+
+			if !slashable_active_ring.is_zero() {
+				let slashable_normal_ring = *active_ring - *active_deposit_ring;
+				if let Some(mut slashable_deposit_ring) =
+					slashable_active_ring.checked_sub(&slashable_normal_ring)
+				{
+					*active_deposit_ring -= slashable_deposit_ring;
+
+					deposit_item.drain_filter(|item| {
+						if ts >= item.expire_time {
+							true
+						} else {
+							if slashable_deposit_ring.is_zero() {
+								false
+							} else {
+								if let Some(new_slashable_deposit_ring) =
+									slashable_deposit_ring.checked_sub(&item.value)
+								{
+									slashable_deposit_ring = new_slashable_deposit_ring;
+									true
+								} else {
+									item.value -= sp_std::mem::replace(
+										&mut slashable_deposit_ring,
+										Zero::zero(),
+									);
+									false
+								}
+							}
+						}
+					});
+				}
+
+				*active_ring -= slashable_active_ring;
+				*slash_ring -= slashable_active_ring;
+			}
+
+			if !slashable_active_kton.is_zero() {
+				*active_kton -= slashable_active_kton;
+				*slash_kton -= slashable_active_kton;
+			}
+		};
+
+		let (mut apply_slash_ring, mut apply_slash_kton) = (slash_ring, slash_kton);
+		let StakingLedger {
+			active_ring,
+			active_deposit_ring,
+			deposit_items,
+			active_kton,
+			ring_staking_lock,
+			kton_staking_lock,
+			..
+		} = self;
+
+		slash_out_of(
+			active_ring,
+			active_deposit_ring,
+			deposit_items,
+			active_kton,
+			&mut apply_slash_ring,
+			&mut apply_slash_kton,
+		);
+
+		if !apply_slash_ring.is_zero() {
+			ring_staking_lock.unbondings.drain_filter(|lock| {
+				if bn >= lock.until {
+					true
+				} else {
+					if apply_slash_ring.is_zero() {
+						false
+					} else {
+						if apply_slash_ring > lock.amount {
+							apply_slash_ring -= lock.amount;
+							true
+						} else {
+							lock.amount -=
+								sp_std::mem::replace(&mut apply_slash_ring, Zero::zero());
+							false
+						}
+					}
+				}
+			});
+		}
+		if !apply_slash_kton.is_zero() {
+			kton_staking_lock.unbondings.drain_filter(|lock| {
+				if bn >= lock.until {
+					true
+				} else {
+					if apply_slash_kton.is_zero() {
+						false
+					} else {
+						if apply_slash_kton > lock.amount {
+							apply_slash_kton -= lock.amount;
+
+							true
+						} else {
+							lock.amount -=
+								sp_std::mem::replace(&mut apply_slash_kton, Zero::zero());
+							false
+						}
+					}
+				}
+			});
+		}
+
+		(slash_ring - apply_slash_ring, slash_kton - apply_slash_kton)
+	}
+}
+
+/// The *RING* under deposit.
+#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
+pub struct TimeDepositItem<RingBalance: HasCompact> {
+	#[codec(compact)]
+	pub value: RingBalance,
+	#[codec(compact)]
+	pub start_time: TsInMs,
+	#[codec(compact)]
+	pub expire_time: TsInMs,
+}
+
+/// A record of the nominations made by a specific account.
+#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
+pub struct Nominations<AccountId> {
+	/// The targets of nomination.
+	pub targets: Vec<AccountId>,
+	/// The era the nominations were submitted.
+	///
+	/// Except for initial nominations which are considered submitted at era 0.
+	pub submitted_in: EraIndex,
+	/// Whether the nominations have been suppressed.
+	pub suppressed: bool,
+}
+
+/// A snapshot of the stake backing a single validator in the system.
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, Default, RuntimeDebug)]
+pub struct Exposure<AccountId, RingBalance, KtonBalance>
+where
+	RingBalance: HasCompact,
+	KtonBalance: HasCompact,
+{
+	/// The validator's own stash that is exposed.
+	#[codec(compact)]
+	pub own_ring_balance: RingBalance,
+	#[codec(compact)]
+	pub own_kton_balance: KtonBalance,
+	pub own_power: Power,
+	/// The total balance backing this validator.
+	pub total_power: Power,
+	/// The portions of nominators stashes that are exposed.
+	pub others: Vec<IndividualExposure<AccountId, RingBalance, KtonBalance>>,
+}
+
+/// The amount of exposure (to slashing) than an individual nominator has.
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, RuntimeDebug)]
+pub struct IndividualExposure<AccountId, RingBalance, KtonBalance>
+where
+	RingBalance: HasCompact,
+	KtonBalance: HasCompact,
+{
+	/// The stash account of the nominator in question.
+	who: AccountId,
+	/// Amount of funds exposed.
+	#[codec(compact)]
+	ring_balance: RingBalance,
+	#[codec(compact)]
+	kton_balance: KtonBalance,
+	power: Power,
+}
+
+/// A pending slash record. The value of the slash has been computed but not applied yet,
+/// rather deferred for several eras.
+#[derive(Encode, Decode, Default, RuntimeDebug)]
+pub struct UnappliedSlash<AccountId, RingBalance, KtonBalance> {
+	/// The stash ID of the offending validator.
+	validator: AccountId,
+	/// The validator's own slash.
+	own: slashing::RK<RingBalance, KtonBalance>,
+	/// All other slashed stakers and amounts.
+	others: Vec<(AccountId, slashing::RK<RingBalance, KtonBalance>)>,
+	/// Reporters of the offence; bounty payout recipients.
+	reporters: Vec<AccountId>,
+	/// The amount of payout.
+	payout: slashing::RK<RingBalance, KtonBalance>,
+}
+
+/// Some indications about the size of the election. This must be submitted with the solution.
+///
+/// Note that these values must reflect the __total__ number, not only those that are present in the
+/// solution. In short, these should be the same size as the size of the values dumped in
+/// `SnapshotValidators` and `SnapshotNominators`.
+#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, Default)]
+pub struct ElectionSize {
+	/// Number of validators in the snapshot of the current election round.
+	#[codec(compact)]
+	pub validators: ValidatorIndex,
+	/// Number of nominators in the snapshot of the current election round.
+	#[codec(compact)]
+	pub nominators: NominatorIndex,
+}
+
+/// The result of an election round.
+#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
+pub struct ElectionResult<AccountId, RingBalance: HasCompact, KtonBalance: HasCompact> {
+	/// Flat list of validators who have been elected.
+	elected_stashes: Vec<AccountId>,
+	/// Flat list of new exposures, to be updated in the [`Exposure`] storage.
+	exposures: Vec<(AccountId, Exposure<AccountId, RingBalance, KtonBalance>)>,
+	/// Type of the result. This is kept on chain only to track and report the best score's
+	/// submission type. An optimisation could remove this.
+	compute: ElectionCompute,
+}
+
+// --- trait ---
+
+/// Means for interacting with a specialized version of the `session` trait.
+///
+/// This is needed because `Staking` sets the `ValidatorIdOf` of the `pallet_session::Trait`
+pub trait SessionInterface<AccountId>: frame_system::Trait {
+	/// Disable a given validator by stash ID.
+	///
+	/// Returns `true` if new era should be forced at the end of this session.
+	/// This allows preventing a situation where there is too many validators
+	/// disabled and block production stalls.
+	fn disable_validator(validator: &AccountId) -> Result<bool, ()>;
+	/// Get the validators from session.
+	fn validators() -> Vec<AccountId>;
+	/// Prune historical session tries up to but not including the given index.
+	fn prune_historical_up_to(up_to: SessionIndex);
+}
+impl<T: Trait> SessionInterface<AccountId<T>> for T
+where
+	T: pallet_session::Trait<ValidatorId = AccountId<T>>,
+	T: pallet_session::historical::Trait<
+		FullIdentification = Exposure<AccountId<T>, RingBalance<T>, KtonBalance<T>>,
+		FullIdentificationOf = ExposureOf<T>,
+	>,
+	T::SessionHandler: pallet_session::SessionHandler<AccountId<T>>,
+	T::SessionManager: pallet_session::SessionManager<AccountId<T>>,
+	T::ValidatorIdOf: Convert<AccountId<T>, Option<AccountId<T>>>,
+{
+	fn disable_validator(validator: &AccountId<T>) -> Result<bool, ()> {
+		<pallet_session::Module<T>>::disable(validator)
+	}
+
+	fn validators() -> Vec<AccountId<T>> {
+		<pallet_session::Module<T>>::validators()
+	}
+
+	fn prune_historical_up_to(up_to: SessionIndex) {
+		<pallet_session::historical::Module<T>>::prune_up_to(up_to);
 	}
 }
 
