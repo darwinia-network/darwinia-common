@@ -173,6 +173,9 @@ impl Trait for Test {
 	type KtonProposalBondMinimum = KtonProposalBondMinimum;
 	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
+	type RingBurnDestination = (); // Just gets burned.
+	type KtonBurnDestination = (); // Just gets burned.
+	type WeightInfo = ();
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {

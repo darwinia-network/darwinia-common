@@ -182,51 +182,15 @@ pub trait Trait: frame_system::Trait {
 
 	/// Percentage of spare funds (if any) that are burnt per spend period.
 	type Burn: Get<Permill>;
-}
 
-/// A spending proposal.
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug)]
-pub struct Proposal<AccountId, RingBalance, KtonBalance> {
-	/// The account proposing it.
-	proposer: AccountId,
-	/// The account to whom the payment should be made if the proposal is accepted.
-	beneficiary: AccountId,
-	/// The (total) *RING* that should be paid if the proposal is accepted.
-	ring_value: RingBalance,
-	/// The (total) *KTON* that should be paid if the proposal is accepted.
-	kton_value: KtonBalance,
-	/// The *RING* held on deposit (reserved) for making this proposal.
-	ring_bond: RingBalance,
-	/// The *KTON* held on deposit (reserved) for making this proposal.
-	kton_bond: KtonBalance,
-}
+	/// Handler for the unbalanced decrease when treasury funds are burned.
+	type RingBurnDestination: OnUnbalanced<RingNegativeImbalance<Self>>;
 
-/// An open tipping "motion". Retains all details of a tip including information on the finder
-/// and the members who have voted.
-#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug)]
-pub struct OpenTip<
-	AccountId: Parameter,
-	RingBalance: Parameter,
-	BlockNumber: Parameter,
-	Hash: Parameter,
-> {
-	/// The hash of the reason for the tip. The reason should be a human-readable UTF-8 encoded string. A URL would be
-	/// sensible.
-	reason: Hash,
-	/// The account to be tipped.
-	who: AccountId,
-	/// The account who began this tip.
-	finder: AccountId,
-	/// The amount held on deposit for this tip.
-	deposit: RingBalance,
-	/// The block number at which this tip will close if `Some`. If `None`, then no closing is
-	/// scheduled.
-	closes: Option<BlockNumber>,
-	/// The members who have voted for this tip. Sorted by AccountId.
-	tips: Vec<(AccountId, RingBalance)>,
-	/// Whether this tip should result in the finder taking a fee.
-	finders_fee: bool,
+	/// Handler for the unbalanced decrease when treasury funds are burned.
+	type KtonBurnDestination: OnUnbalancedKton<KtonNegativeImbalance<Self>>;
+
+	/// Weight information for extrinsics in this pallet.
+	type WeightInfo: WeightInfo;
 }
 
 decl_storage! {
@@ -846,7 +810,10 @@ impl<T: Trait> Module<T> {
 				// burn some proportion of the remaining budget if we run a surplus.
 				let burn = (T::Burn::get() * budget_remaining_ring).min(budget_remaining_ring);
 				budget_remaining_ring -= burn;
-				imbalance_ring.subsume(T::RingCurrency::burn(burn));
+
+				let (debit, credit) = T::RingCurrency::pair(burn);
+				imbalance_ring.subsume(debit);
+				T::RingBurnDestination::on_unbalanced(credit);
 
 				burn
 			} else {
@@ -855,7 +822,10 @@ impl<T: Trait> Module<T> {
 			let burn_kton = if !miss_any_kton {
 				let burn = (T::Burn::get() * budget_remaining_kton).min(budget_remaining_kton);
 				budget_remaining_kton -= burn;
-				imbalance_kton.subsume(T::KtonCurrency::burn(burn));
+
+				let (debit, credit) = T::KtonCurrency::pair(burn);
+				imbalance_kton.subsume(debit);
+				T::KtonBurnDestination::on_unbalanced(credit);
 
 				burn
 			} else {
@@ -961,7 +931,6 @@ impl<T: Trait> OnUnbalanced<RingNegativeImbalance<T>> for Module<T> {
 		Self::deposit_event(RawEvent::DepositRing(numeric_amount));
 	}
 }
-
 // FIXME: Ugly hack due to https://github.com/rust-lang/rust/issues/31844#issuecomment-557918823
 impl<T: Trait> OnUnbalancedKton<KtonNegativeImbalance<T>> for Module<T> {
 	fn on_nonzero_unbalanced(amount: KtonNegativeImbalance<T>) {
@@ -972,4 +941,91 @@ impl<T: Trait> OnUnbalancedKton<KtonNegativeImbalance<T>> for Module<T> {
 
 		Self::deposit_event(RawEvent::DepositKton(numeric_amount));
 	}
+}
+
+pub trait WeightInfo {
+	fn propose_spend(u: u32) -> Weight;
+	fn reject_proposal(u: u32) -> Weight;
+	fn approve_proposal(u: u32) -> Weight;
+	fn report_awesome(r: u32) -> Weight;
+	fn retract_tip(r: u32) -> Weight;
+	fn tip_new(r: u32, t: u32) -> Weight;
+	fn tip(t: u32) -> Weight;
+	fn close_tip(t: u32) -> Weight;
+	fn on_initialize(p: u32) -> Weight;
+}
+
+impl WeightInfo for () {
+	fn propose_spend(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn reject_proposal(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn approve_proposal(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn report_awesome(_r: u32) -> Weight {
+		1_000_000_000
+	}
+	fn retract_tip(_r: u32) -> Weight {
+		1_000_000_000
+	}
+	fn tip_new(_r: u32, _t: u32) -> Weight {
+		1_000_000_000
+	}
+	fn tip(_t: u32) -> Weight {
+		1_000_000_000
+	}
+	fn close_tip(_t: u32) -> Weight {
+		1_000_000_000
+	}
+	fn on_initialize(_p: u32) -> Weight {
+		1_000_000_000
+	}
+}
+
+/// A spending proposal.
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug)]
+pub struct Proposal<AccountId, RingBalance, KtonBalance> {
+	/// The account proposing it.
+	proposer: AccountId,
+	/// The account to whom the payment should be made if the proposal is accepted.
+	beneficiary: AccountId,
+	/// The (total) *RING* that should be paid if the proposal is accepted.
+	ring_value: RingBalance,
+	/// The (total) *KTON* that should be paid if the proposal is accepted.
+	kton_value: KtonBalance,
+	/// The *RING* held on deposit (reserved) for making this proposal.
+	ring_bond: RingBalance,
+	/// The *KTON* held on deposit (reserved) for making this proposal.
+	kton_bond: KtonBalance,
+}
+
+/// An open tipping "motion". Retains all details of a tip including information on the finder
+/// and the members who have voted.
+#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug)]
+pub struct OpenTip<
+	AccountId: Parameter,
+	RingBalance: Parameter,
+	BlockNumber: Parameter,
+	Hash: Parameter,
+> {
+	/// The hash of the reason for the tip. The reason should be a human-readable UTF-8 encoded string. A URL would be
+	/// sensible.
+	reason: Hash,
+	/// The account to be tipped.
+	who: AccountId,
+	/// The account who began this tip.
+	finder: AccountId,
+	/// The amount held on deposit for this tip.
+	deposit: RingBalance,
+	/// The block number at which this tip will close if `Some`. If `None`, then no closing is
+	/// scheduled.
+	closes: Option<BlockNumber>,
+	/// The members who have voted for this tip. Sorted by AccountId.
+	tips: Vec<(AccountId, RingBalance)>,
+	/// Whether this tip should result in the finder taking a fee.
+	finders_fee: bool,
 }
