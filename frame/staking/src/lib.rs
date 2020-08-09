@@ -628,9 +628,6 @@ pub trait Trait: frame_system::Trait + SendTransactionTypes<Call<Self>> {
 	/// multiple pallets send unsigned transactions.
 	type UnsignedPriority: Get<TransactionPriority>;
 
-	/// Weight information for extrinsics in this pallet.
-	type WeightInfo: WeightInfo;
-
 	/// The *RING* currency.
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 	/// Tokens have been minted and are unused for validator-reward.
@@ -648,6 +645,9 @@ pub trait Trait: frame_system::Trait + SendTransactionTypes<Call<Self>> {
 	type KtonSlash: OnUnbalancedKton<KtonNegativeImbalance<Self>>;
 	/// Handler for the unbalanced *KTON* increment when rewarding a staker.
 	type KtonReward: OnUnbalanced<KtonPositiveImbalance<Self>>;
+
+	/// Weight information for extrinsics in this pallet.
+	type WeightInfo: WeightInfo;
 
 	// TODO: doc
 	type Cap: Get<RingBalance<Self>>;

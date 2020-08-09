@@ -792,7 +792,6 @@ impl darwinia_claims::Trait for Runtime {
 	type ModuleId = ClaimsModuleId;
 	type Prefix = Prefix;
 	type RingCurrency = Ring;
-	type WeightInfo = ();
 }
 
 impl pallet_sudo::Trait for Runtime {
@@ -835,7 +834,6 @@ parameter_types! {
 impl darwinia_ethereum_offchain::Trait for Runtime {
 	type AuthorityId = EthOffchainId;
 	type FetchInterval = FetchInterval;
-	type WeightInfo = ();
 }
 
 parameter_types! {
