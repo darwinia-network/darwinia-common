@@ -324,10 +324,6 @@ pub struct OffchainRequest {
 	redirect_times: u8,
 	cookie: Option<Vec<u8>>,
 }
-
-pub trait OffchainRequestTrait {
-	fn send(&mut self) -> Option<Vec<u8>>;
-}
 impl OffchainRequest {
 	fn new(url: Vec<u8>, payload: Vec<u8>) -> Self {
 		OffchainRequest {
@@ -336,6 +332,10 @@ impl OffchainRequest {
 			..Default::default()
 		}
 	}
+}
+
+pub trait OffchainRequestTrait {
+	fn send(&mut self) -> Option<Vec<u8>>;
 }
 /// The OffchainRequest handle the request session
 /// - set cookie if returns

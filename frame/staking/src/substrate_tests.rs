@@ -1832,11 +1832,15 @@ fn bond_with_duplicate_vote_should_be_ignored_by_npos_election() {
 			// disable the nominator
 			assert_ok!(Staking::chill(Origin::signed(100)));
 			// make stakes equal.
-			assert_ok!(Staking::bond_extra(Origin::signed(31), 999));
+			assert_ok!(Staking::bond_extra(
+				Origin::signed(31),
+				StakingBalance::RingBalance(999),
+				0
+			));
 
 			assert_eq!(
 				<Validators<Test>>::iter()
-					.map(|(v, _)| (v, Staking::ledger(v - 1).unwrap().total))
+					.map(|(v, _)| (v, Staking::ledger(v - 1).unwrap().active_ring))
 					.collect::<Vec<_>>(),
 				vec![(31, 1000), (21, 1000), (11, 1000)],
 			);
@@ -1850,14 +1854,15 @@ fn bond_with_duplicate_vote_should_be_ignored_by_npos_election() {
 			// give the man some money
 			let initial_balance = 1000;
 			for i in [1, 2, 3, 4].iter() {
-				let _ = Balances::make_free_balance_be(i, initial_balance);
+				let _ = Ring::make_free_balance_be(i, initial_balance);
 			}
 
 			assert_ok!(Staking::bond(
 				Origin::signed(1),
 				2,
-				1000,
-				RewardDestination::Controller
+				StakingBalance::RingBalance(1000),
+				RewardDestination::Controller,
+				0
 			));
 			assert_ok!(Staking::nominate(
 				Origin::signed(2),
@@ -1867,8 +1872,9 @@ fn bond_with_duplicate_vote_should_be_ignored_by_npos_election() {
 			assert_ok!(Staking::bond(
 				Origin::signed(3),
 				4,
-				1000,
-				RewardDestination::Controller
+				StakingBalance::RingBalance(1000),
+				RewardDestination::Controller,
+				0
 			));
 			assert_ok!(Staking::nominate(Origin::signed(4), vec![21, 31]));
 
@@ -1906,11 +1912,15 @@ fn bond_with_duplicate_vote_should_be_ignored_by_npos_election_elected() {
 			// disable the nominator
 			assert_ok!(Staking::chill(Origin::signed(100)));
 			// make stakes equal.
-			assert_ok!(Staking::bond_extra(Origin::signed(31), 99));
+			assert_ok!(Staking::bond_extra(
+				Origin::signed(31),
+				StakingBalance::RingBalance(99),
+				0
+			));
 
 			assert_eq!(
 				<Validators<Test>>::iter()
-					.map(|(v, _)| (v, Staking::ledger(v - 1).unwrap().total))
+					.map(|(v, _)| (v, Staking::ledger(v - 1).unwrap().active_ring))
 					.collect::<Vec<_>>(),
 				vec![(31, 100), (21, 1000), (11, 1000)],
 			);
@@ -1924,14 +1934,15 @@ fn bond_with_duplicate_vote_should_be_ignored_by_npos_election_elected() {
 			// give the man some money
 			let initial_balance = 1000;
 			for i in [1, 2, 3, 4].iter() {
-				let _ = Balances::make_free_balance_be(i, initial_balance);
+				let _ = Ring::make_free_balance_be(i, initial_balance);
 			}
 
 			assert_ok!(Staking::bond(
 				Origin::signed(1),
 				2,
-				1000,
-				RewardDestination::Controller
+				StakingBalance::RingBalance(1000),
+				RewardDestination::Controller,
+				0
 			));
 			assert_ok!(Staking::nominate(
 				Origin::signed(2),
@@ -1941,8 +1952,9 @@ fn bond_with_duplicate_vote_should_be_ignored_by_npos_election_elected() {
 			assert_ok!(Staking::bond(
 				Origin::signed(3),
 				4,
-				1000,
-				RewardDestination::Controller
+				StakingBalance::RingBalance(1000),
+				RewardDestination::Controller,
+				0
 			));
 			assert_ok!(Staking::nominate(Origin::signed(4), vec![21, 31]));
 

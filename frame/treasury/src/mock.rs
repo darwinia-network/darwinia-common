@@ -50,7 +50,7 @@ thread_local! {
 
 impl_outer_event! {
 	pub enum MockEvent for Test {
-		system<T>,
+		frame_system<T>,
 		darwinia_balances Instance0<T>,
 		darwinia_balances Instance1<T>,
 		treasury<T>,

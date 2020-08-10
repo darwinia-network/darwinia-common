@@ -353,6 +353,7 @@ impl Trait for Test {
 	type MinSolutionScoreBump = MinSolutionScoreBump;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
 	type UnsignedPriority = UnsignedPriority;
+	type WeightInfo = ();
 	type RingCurrency = Ring;
 	type RingRewardRemainder = RingRewardRemainderMock;
 	type RingSlash = ();
