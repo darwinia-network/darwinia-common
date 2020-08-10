@@ -61,12 +61,25 @@ pub struct FullDeps<C, P, SC> {
 	pub grandpa: GrandpaDeps,
 }
 
-pub fn create<C, P, SC, UE>(deps: FullDeps<C, P, SC>) -> RpcExtension
+/// Light client extra dependencies.
+pub struct LightDeps<C, F, P> {
+	/// The client instance to use.
+	pub client: Arc<C>,
+	/// Transaction pool instance.
+	pub pool: Arc<P>,
+	/// Remote access to the blockchain (async).
+	pub remote_blockchain: Arc<dyn sc_client_api::RemoteBlockchain<Block>>,
+	/// Fetcher instance.
+	pub fetcher: Arc<F>,
+}
+
+/// Instantiate all RPC extensions.
+pub fn create_full<C, P, SC, UE>(deps: FullDeps<C, P, SC>) -> RpcExtension
 where
+	C: 'static + Send + Sync,
 	C: ProvideRuntimeApi<Block>,
 	C: sp_blockchain::HeaderBackend<Block>
 		+ sp_blockchain::HeaderMetadata<Block, Error = sp_blockchain::Error>,
-	C: 'static + Send + Sync,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance, UE>,
 	C::Api: sc_consensus_babe::BabeApi<Block>,
@@ -96,8 +109,8 @@ where
 		babe,
 		grandpa,
 	} = deps;
-
 	let mut io = jsonrpc_core::IoHandler::default();
+
 	io.extend_with(SystemApi::to_delegate(FullSystem::new(
 		client.clone(),
 		pool,
@@ -133,6 +146,36 @@ where
 	io.extend_with(BalancesApi::to_delegate(Balances::new(client.clone())));
 	io.extend_with(HeaderMMRApi::to_delegate(HeaderMMR::new(client.clone())));
 	io.extend_with(StakingApi::to_delegate(Staking::new(client)));
+
+	io
+}
+
+/// Instantiate all RPC extensions for light node.
+pub fn create_light<C, P, F, UE>(deps: LightDeps<C, F, P>) -> RpcExtension
+where
+	C: 'static + Send + Sync,
+	C: ProvideRuntimeApi<Block>,
+	C: sp_blockchain::HeaderBackend<Block>,
+	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
+	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance, UE>,
+	P: 'static + sp_transaction_pool::TransactionPool,
+	F: 'static + sc_client_api::Fetcher<Block>,
+	UE: 'static + Send + Sync + codec::Codec,
+{
+	// --- substrate ---
+	use substrate_frame_rpc_system::{LightSystem, SystemApi};
+
+	let LightDeps {
+		client,
+		pool,
+		remote_blockchain,
+		fetcher,
+	} = deps;
+	let mut io = jsonrpc_core::IoHandler::default();
+
+	io.extend_with(SystemApi::<Hash, AccountId, Nonce>::to_delegate(
+		LightSystem::new(client, remote_blockchain, fetcher, pool),
+	));
 
 	io
 }

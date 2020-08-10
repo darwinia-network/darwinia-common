@@ -18,8 +18,8 @@ use node_template_runtime::{BalancesConfig as RingConfig, *};
 // Note this is the URL for the telemetry server
 //const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
-/// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
-pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
+/// Specialized `NodeTemplateChainSpec`. This is a specialization of the general Substrate ChainSpec type.
+pub type NodeTemplateChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
 
 fn session_keys(
 	babe: BabeId,
@@ -86,8 +86,8 @@ pub fn get_authority_keys_from_seed(
 	)
 }
 
-pub fn development_config() -> ChainSpec {
-	ChainSpec::from_genesis(
+pub fn node_template_development_config() -> NodeTemplateChainSpec {
+	NodeTemplateChainSpec::from_genesis(
 		"Development",
 		"dev",
 		ChainType::Development,
@@ -111,8 +111,8 @@ pub fn development_config() -> ChainSpec {
 	)
 }
 
-pub fn local_testnet_config() -> ChainSpec {
-	ChainSpec::from_genesis(
+pub fn node_template_local_testnet_config() -> NodeTemplateChainSpec {
+	NodeTemplateChainSpec::from_genesis(
 		"Local Testnet",
 		"local_testnet",
 		ChainType::Local,

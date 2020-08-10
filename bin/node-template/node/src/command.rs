@@ -1,7 +1,8 @@
 // --- std ---
 use std::path::PathBuf;
 // --- substrate ---
-use sc_cli::{RunCmd, SubstrateCli};
+use sc_cli::{Role, RunCmd, RuntimeVersion, SubstrateCli};
+use sp_core::crypto::Ss58AddressFormat;
 // --- darwinia ---
 use crate::{
 	chain_spec,
@@ -12,7 +13,7 @@ use darwinia_cli::{Configuration, DarwiniaCli};
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
-		"Darwinia Node".into()
+		"Node Template".into()
 	}
 
 	fn impl_version() -> String {
@@ -35,17 +36,35 @@ impl SubstrateCli for Cli {
 		2018
 	}
 
+	fn executable_name() -> String {
+		"node-template".into()
+	}
+
 	fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
+		let id = if id == "" {
+			let n = get_exec_name().unwrap_or_default();
+			["node-template"]
+				.iter()
+				.cloned()
+				.find(|&chain| n.starts_with(chain))
+				.unwrap_or("node-template")
+		} else {
+			id
+		};
+
 		Ok(match id {
-			"dev" => Box::new(chain_spec::development_config()),
-			"" | "local" => Box::new(chain_spec::local_testnet_config()),
-			path => Box::new(chain_spec::ChainSpec::from_json_file(
-				std::path::PathBuf::from(path),
+			"node-template-dev" | "dev" => Box::new(chain_spec::node_template_development_config()),
+			"node-template-local" => Box::new(chain_spec::node_template_local_testnet_config()),
+			path => Box::new(chain_spec::NodeTemplateChainSpec::from_json_file(
+				PathBuf::from(path),
 			)?),
 		})
 	}
-}
 
+	fn native_runtime_version(_spec: &Box<dyn sc_service::ChainSpec>) -> &'static RuntimeVersion {
+		&service::node_template_runtime::VERSION
+	}
+}
 impl DarwiniaCli for Cli {
 	fn conf(&self) -> &Option<PathBuf> {
 		&self.conf
@@ -60,23 +79,48 @@ impl DarwiniaCli for Cli {
 	}
 }
 
+fn get_exec_name() -> Option<String> {
+	std::env::current_exe()
+		.ok()
+		.and_then(|pb| pb.file_name().map(|s| s.to_os_string()))
+		.and_then(|s| s.into_string().ok())
+}
+
 /// Parse command line arguments into service configuration.
 pub fn run() -> sc_cli::Result<()> {
 	let cli = Cli::from_args();
 
+	fn set_default_ss58_version(_spec: &Box<dyn sc_service::ChainSpec>) {
+		let ss58_version = Ss58AddressFormat::PolkadotAccount;
+
+		sp_core::crypto::set_default_ss58_version(ss58_version);
+	};
+
 	match &cli.subcommand {
 		None => {
-			let runtime = Configuration::create_runner_from_cli(cli)?;
-			runtime.run_node(
-				service::new_light,
-				service::new_full,
-				node_template_runtime::VERSION,
-			)
+			let runtime = Configuration::create_runner(cli)?;
+			let chain_spec = &runtime.config().chain_spec;
+
+			set_default_ss58_version(chain_spec);
+
+			runtime.run_node_until_exit(|config| match config.role {
+				Role::Light => service::node_template_new_light(config),
+				_ => service::node_template_new_full(config).map(|(components, _)| components),
+			})
 		}
 		Some(Subcommand::Base(subcommand)) => {
-			let runner = cli.create_runner(subcommand)?;
+			let runtime = cli.create_runner(subcommand)?;
+			let chain_spec = &runtime.config().chain_spec;
 
-			runner.run_subcommand(subcommand, |config| Ok(new_full_start!(config).0))
+			set_default_ss58_version(chain_spec);
+
+			runtime.run_subcommand(subcommand, |config| {
+				service::new_chain_ops::<
+					service::node_template_runtime::RuntimeApi,
+					service::NodeTemplateExecutor,
+					service::node_template_runtime::UncheckedExtrinsic,
+				>(config)
+			})
 		}
 	}
 }

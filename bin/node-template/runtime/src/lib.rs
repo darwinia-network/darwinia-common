@@ -4,6 +4,32 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
+pub mod constants {
+	// --- darwinia ---
+	use super::{primitives::*, *};
+
+	pub const NANO: Balance = 1;
+	pub const MICRO: Balance = 1_000 * NANO;
+	pub const MILLI: Balance = 1_000 * MICRO;
+	pub const COIN: Balance = 1_000 * MILLI;
+
+	pub const CAP: Balance = 10_000_000_000 * COIN;
+	pub const TOTAL_POWER: Power = 1_000_000_000;
+
+	pub const MILLISECS_PER_BLOCK: Moment = 3000;
+	pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
+	pub const BLOCKS_PER_SESSION: BlockNumber = MINUTES / 2;
+	pub const SESSIONS_PER_ERA: SessionIndex = 3;
+
+	// These time units are defined in number of blocks.
+	pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
+	pub const HOURS: BlockNumber = 60 * MINUTES;
+	pub const DAYS: BlockNumber = 24 * HOURS;
+
+	// 1 in 4 blocks (on average, not counting collisions) will be primary babe blocks.
+	pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
+}
+
 pub mod impls {
 	//! Some configurable implementations as associated type for the substrate runtime.
 
@@ -353,6 +379,7 @@ use sp_std::prelude::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia ---
+use constants::*;
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
 use darwinia_ethereum_linear_relay::EthereumNetworkType;
 use darwinia_ethereum_offchain::crypto::AuthorityId as EthOffchainId;
@@ -371,31 +398,6 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
 };
-
-pub const NANO: Balance = 1;
-pub const MICRO: Balance = 1_000 * NANO;
-pub const MILLI: Balance = 1_000 * MICRO;
-pub const COIN: Balance = 1_000 * MILLI;
-
-pub const CAP: Balance = 10_000_000_000 * COIN;
-pub const TOTAL_POWER: Power = 1_000_000_000;
-
-pub const MILLISECS_PER_BLOCK: u64 = 3000;
-
-pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
-
-// 1 in 4 blocks (on average, not counting collisions) will be primary BABE blocks.
-pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
-
-// These time units are defined in number of blocks.
-pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
-pub const HOURS: BlockNumber = MINUTES * 60;
-pub const DAYS: BlockNumber = HOURS * 24;
-
-pub const BLOCKS_PER_SESSION: BlockNumber = MINUTES / 2;
-pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
-pub const SESSION_DURATION: BlockNumber = EPOCH_DURATION_IN_SLOTS as _;
-pub const SESSIONS_PER_ERA: SessionIndex = 3;
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
@@ -451,7 +453,7 @@ impl frame_system::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const EpochDuration: u64 = EPOCH_DURATION_IN_SLOTS;
+	pub const EpochDuration: u64 = BLOCKS_PER_SESSION as _;
 	pub const ExpectedBlockTime: Moment = MILLISECS_PER_BLOCK;
 }
 impl pallet_babe::Trait for Runtime {
@@ -656,7 +658,7 @@ impl pallet_grandpa::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const SessionDuration: BlockNumber = SESSION_DURATION;
+	pub const SessionDuration: BlockNumber = BLOCKS_PER_SESSION as _;
 	pub const ImOnlineUnsignedPriority: TransactionPriority = TransactionPriority::max_value();
 }
 impl pallet_im_online::Trait for Runtime {
