@@ -119,6 +119,48 @@ fn kton_should_reward_even_does_not_own_kton_before() {
 		});
 }
 
+#[test]
+fn migration_should_fix_broken_ledger() {
+	let mut s = sp_storage::Storage::default();
+	let id: mock::AccountId = 777;
+	let mut broken_ledger =
+		StakingLedger::<mock::AccountId, mock::Balance, mock::Balance, mock::BlockNumber> {
+			stash: id,
+			active_ring: 500,
+			active_deposit_ring: 1000,
+			deposit_items: vec![TimeDepositItem {
+				value: 1000,
+				start_time: 0,
+				expire_time: 1,
+			}],
+			ring_staking_lock: StakingLock {
+				staking_amount: 500,
+				unbondings: vec![],
+			},
+			..Default::default()
+		};
+	let data = vec![(
+		<Ledger<Test>>::hashed_key_for(id),
+		broken_ledger.encode().to_vec(),
+	)];
+
+	s.top = data.into_iter().collect();
+	sp_io::TestExternalities::new(s).execute_with(|| {
+		let _ = Ring::deposit_creating(&id, 200);
+
+		assert_eq!(Staking::ledger(&id).unwrap(), broken_ledger);
+
+		crate::migration::migrate::<Test>();
+
+		broken_ledger.active_ring = 200;
+		broken_ledger.active_deposit_ring = 200;
+		broken_ledger.deposit_items[0].value = 200;
+		broken_ledger.ring_staking_lock.staking_amount = 200;
+
+		assert_eq!(Staking::ledger(&id).unwrap(), broken_ledger);
+	});
+}
+
 #[cfg(feature = "backup")]
 mod backup {
 	/// gen_paired_account!(a(1), b(2), m(12));
