@@ -271,12 +271,7 @@ mod migration {
 		// pub Ledger get(fn ledger): map hasher(blake2_128_concat) T::AccountId => Option<StakingLedgerT<T>>;
 		let item: &[u8] = b"Ledger";
 
-		for (hash, value) in <StorageIterator<Option<StakingLedgerT<T>>>>::new(module, item) {
-			if value.is_none() {
-				continue;
-			}
-
-			let mut value = value.unwrap();
+		for (hash, mut value) in <StorageIterator<StakingLedgerT<T>>>::new(module, item) {
 			let StakingLedger {
 				stash,
 				active_ring,
