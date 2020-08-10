@@ -216,7 +216,7 @@ pub fn new_full(config: Configuration) -> Result<impl AbstractService, ServiceEr
 	// if the node isn't actively participating in consensus then it doesn't
 	// need a keystore, regardless of which protocol we use below.
 	let keystore = if role.is_authority() {
-		Some(service.keystore() as sp_core::traits::BareCryptoStorePtr)
+		Some(keystore as BareCryptoStorePtr)
 	} else {
 		None
 	};
@@ -246,7 +246,7 @@ pub fn new_full(config: Configuration) -> Result<impl AbstractService, ServiceEr
 			inherent_data_providers: inherent_data_providers.clone(),
 			telemetry_on_connect: Some(service.telemetry_on_connect_stream()),
 			voting_rule: sc_finality_grandpa::VotingRulesBuilder::default().build(),
-			prometheus_registry: service.prometheus_registry(),
+			prometheus_registry,
 			shared_voter_state,
 		};
 
