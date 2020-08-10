@@ -1,6 +1,7 @@
 // --- crates ---
 use num_integer::Roots;
 // --- substrate ---
+use frame_support::debug::*;
 use sp_core::U256;
 use sp_runtime::{Perbill, Perquintill};
 use sp_std::convert::TryInto;
@@ -25,6 +26,15 @@ pub fn compute_total_payout<T: Trait>(
 ) -> (RingBalance<T>, RingBalance<T>) {
 	// Milliseconds per year for the Julian year (365.25 days).
 	const MILLISECONDS_PER_YEAR: TsInMs = ((36525 * 24 * 60 * 60) / 100) * 1000;
+
+	info!(
+		target: "darwinia-staking",
+		"era_duration: {}, living_time: {}, total_left: {:?}, payout_fraction: {:?}",
+		era_duration,
+		living_time,
+		total_left,
+		payout_fraction,
+	);
 
 	let maximum = {
 		let maximum = {

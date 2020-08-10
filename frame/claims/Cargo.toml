@@ -17,11 +17,11 @@ serde_json = { version = "1.0.57", optional = true }
 array-bytes = { default-features = false, path = "../../primitives/array-bytes" }
 darwinia-support = { default-features = false, path = "../support" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
-frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
-sp-io = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.4" }
+frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.4" }
+sp-io = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.4" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.4" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.4" }
 
 [dev-dependencies]
 # crates
@@ -30,7 +30,7 @@ tiny-keccak = { version = "1.5.0" }
 # darwinia
 darwinia-balances = { path = "../balances" }
 # substrate
-sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.3" }
+sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.4" }
 
 [features]
 default = ["std"]

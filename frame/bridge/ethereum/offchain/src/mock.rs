@@ -54,13 +54,16 @@ pub type _OffchainError = Error<Test>;
 
 static mut SHADOW_SERVICE: Option<ShadowService> = None;
 
-pub enum ShadowService {
-	Scale,
-	Json,
-}
-
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Test;
+parameter_types! {
+	pub const FetchInterval: u64 = 3;
+}
+impl Trait for Test {
+	type AuthorityId = crypto::AuthorityId;
+	type FetchInterval = FetchInterval;
+}
+
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub const MaximumBlockWeight: Weight = 1024;
@@ -92,6 +95,7 @@ impl frame_system::Trait for Test {
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
+	type SystemWeightInfo = ();
 }
 
 impl darwinia_balances::Trait<RingInstance> for Test {
@@ -102,6 +106,7 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
 	type DustCollector = ();
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -114,14 +119,7 @@ impl darwinia_ethereum_linear_relay::Trait for Test {
 	type EthereumNetwork = EthereumNetwork;
 	type Call = Call;
 	type Currency = Ring;
-}
-
-parameter_types! {
-	pub const FetchInterval: u64 = 3;
-}
-impl Trait for Test {
-	type AuthorityId = crypto::AuthorityId;
-	type FetchInterval = FetchInterval;
+	type WeightInfo = ();
 }
 
 impl frame_system::offchain::SigningTypes for Test {
@@ -154,7 +152,6 @@ where
 pub struct ExtBuilder {
 	genesis_header: Option<(u64, Vec<u8>)>,
 }
-
 impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {
@@ -162,7 +159,6 @@ impl Default for ExtBuilder {
 		}
 	}
 }
-
 impl ExtBuilder {
 	pub fn set_genesis_header(mut self) -> Self {
 		let genesis_header = EthHeader::from_str_unchecked(SUPPOSED_ETH_HEADER);
@@ -195,6 +191,11 @@ impl OffchainRequestTrait for OffchainRequest {
 			}
 		}
 	}
+}
+
+pub enum ShadowService {
+	Scale,
+	Json,
 }
 
 pub(crate) fn set_shadow_service(s: Option<ShadowService>) {

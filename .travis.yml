@@ -32,6 +32,10 @@ jobs:
       script: .maintain/ci/tests.sh staking
 
     - stage: Darwinia Test
+      env: ELECTIONSPHRAGMEN RUST_TOOLCHAIN=nightly
+      script: .maintain/ci/tests.sh elections-phragmen
+
+    - stage: Darwinia Test
       env: TREASURY RUST_TOOLCHAIN=nightly
       script: .maintain/ci/tests.sh treasury
 

@@ -100,7 +100,7 @@ impl_outer_event! {
 }
 
 impl_outer_origin! {
-	pub enum Origin for Test  where system = system {}
+	pub enum Origin for Test where system = system {}
 }
 
 darwinia_support::impl_account_data! {
@@ -257,6 +257,7 @@ impl frame_system::Trait for Test {
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
+	type SystemWeightInfo = ();
 }
 
 sp_runtime::impl_opaque_keys! {
@@ -278,6 +279,7 @@ impl pallet_session::Trait for Test {
 	type SessionHandler = (OtherSessionHandler,);
 	type Keys = SessionKeys;
 	type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
+	type WeightInfo = ();
 }
 
 impl pallet_session::historical::Trait for Test {
@@ -302,6 +304,7 @@ impl pallet_timestamp::Trait for Test {
 	type Moment = u64;
 	type OnTimestampSet = ();
 	type MinimumPeriod = MinimumPeriod;
+	type WeightInfo = ();
 }
 
 impl darwinia_balances::Trait<RingInstance> for Test {
@@ -311,6 +314,7 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
+	type WeightInfo = ();
 	type DustCollector = (Kton,);
 }
 impl darwinia_balances::Trait<KtonInstance> for Test {
@@ -320,6 +324,7 @@ impl darwinia_balances::Trait<KtonInstance> for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
+	type WeightInfo = ();
 	type DustCollector = (Ring,);
 }
 
@@ -339,7 +344,7 @@ impl Trait for Test {
 	type BondingDurationInEra = BondingDurationInEra;
 	type BondingDurationInBlockNumber = BondingDurationInBlockNumber;
 	type SlashDeferDuration = SlashDeferDuration;
-	type SlashCancelOrigin = system::EnsureRoot<Self::AccountId>;
+	type SlashCancelOrigin = frame_system::EnsureRoot<Self::AccountId>;
 	type SessionInterface = Self;
 	type NextNewSession = Session;
 	type ElectionLookahead = ElectionLookahead;
@@ -348,6 +353,7 @@ impl Trait for Test {
 	type MinSolutionScoreBump = MinSolutionScoreBump;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
 	type UnsignedPriority = UnsignedPriority;
+	type WeightInfo = ();
 	type RingCurrency = Ring;
 	type RingRewardRemainder = RingRewardRemainderMock;
 	type RingSlash = ();

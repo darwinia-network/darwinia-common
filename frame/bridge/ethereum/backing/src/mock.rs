@@ -49,7 +49,7 @@ thread_local! {
 }
 
 impl_outer_origin! {
-	pub enum Origin for Test  where system = frame_system {}
+	pub enum Origin for Test where system = frame_system {}
 }
 
 impl_outer_dispatch! {
@@ -102,6 +102,7 @@ impl Trait for Test {
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 	type SubKeyPrefix = SubKeyPrefix;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -135,12 +136,14 @@ impl frame_system::Trait for Test {
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
+	type SystemWeightInfo = ();
 }
 
 impl pallet_timestamp::Trait for Test {
 	type Moment = u64;
 	type OnTimestampSet = ();
 	type MinimumPeriod = ();
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -157,6 +160,7 @@ impl pallet_session::Trait for Test {
 	type SessionHandler = TestSessionHandler;
 	type Keys = UintAuthorityId;
 	type DisabledValidatorsThreshold = ();
+	type WeightInfo = ();
 }
 
 impl pallet_session::historical::Trait for Test {
@@ -174,6 +178,7 @@ impl darwinia_ethereum_linear_relay::Trait for Test {
 	type EthereumNetwork = EthereumNetwork;
 	type Call = Call;
 	type Currency = Ring;
+	type WeightInfo = ();
 }
 
 impl darwinia_balances::Trait<KtonInstance> for Test {
@@ -183,6 +188,7 @@ impl darwinia_balances::Trait<KtonInstance> for Test {
 	type ExistentialDeposit = ();
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
+	type WeightInfo = ();
 	type DustCollector = ();
 }
 impl darwinia_balances::Trait<RingInstance> for Test {
@@ -192,6 +198,7 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 	type ExistentialDeposit = ();
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
+	type WeightInfo = ();
 	type DustCollector = ();
 }
 
@@ -202,7 +209,7 @@ impl darwinia_staking::Trait for Test {
 	type BondingDurationInEra = ();
 	type BondingDurationInBlockNumber = ();
 	type SlashDeferDuration = ();
-	type SlashCancelOrigin = system::EnsureRoot<Self::AccountId>;
+	type SlashCancelOrigin = frame_system::EnsureRoot<Self::AccountId>;
 	type SessionInterface = Self;
 	type NextNewSession = Session;
 	type ElectionLookahead = ();
@@ -211,6 +218,7 @@ impl darwinia_staking::Trait for Test {
 	type MinSolutionScoreBump = ();
 	type MaxNominatorRewardedPerValidator = ();
 	type UnsignedPriority = ();
+	type WeightInfo = ();
 	type RingCurrency = Ring;
 	type RingRewardRemainder = ();
 	type RingSlash = ();
@@ -238,7 +246,7 @@ impl Default for ExtBuilder {
 }
 impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
-		let mut t = system::GenesisConfig::default()
+		let mut t = frame_system::GenesisConfig::default()
 			.build_storage::<Test>()
 			.unwrap();
 

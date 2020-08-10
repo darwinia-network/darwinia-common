@@ -12,7 +12,7 @@ use sp_runtime::{testing::Header, traits::IdentityLookup, DigestItem, Perbill};
 use crate::*;
 
 impl_outer_origin! {
-	pub enum Origin for Test  where system = frame_system {}
+	pub enum Origin for Test where system = frame_system {}
 }
 
 // --- substrate ---
@@ -58,6 +58,7 @@ impl frame_system::Trait for Test {
 	type AccountData = ();
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
+	type SystemWeightInfo = ();
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {

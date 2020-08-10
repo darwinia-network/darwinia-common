@@ -39,7 +39,7 @@ mod types {
 
 	pub type Balance<T> = <CurrencyT<T> as Currency<AccountId<T>>>::Balance;
 
-	type AccountId<T> = <T as system::Trait>::AccountId;
+	type AccountId<T> = <T as frame_system::Trait>::AccountId;
 
 	type CurrencyT<T> = <T as Trait>::Currency;
 }
@@ -56,7 +56,7 @@ use frame_support::{
 	traits::{Currency, ExistenceRequirement::KeepAlive, ReservableCurrency},
 	IsSubType,
 };
-use frame_system::{self as system, ensure_root, ensure_signed};
+use frame_system::{ensure_root, ensure_signed};
 use sp_runtime::{
 	traits::{AccountIdConversion, DispatchInfoOf, Dispatchable, Saturating, SignedExtension},
 	transaction_validity::{
@@ -89,10 +89,13 @@ pub trait Trait: frame_system::Trait {
 
 	type EthereumNetwork: Get<EthereumNetworkType>;
 
-	type Call: Dispatchable + From<Call<Self>> + IsSubType<Module<Self>, Self> + Clone;
+	type Call: Dispatchable + From<Call<Self>> + IsSubType<Call<Self>> + Clone;
 
 	type Currency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
 		+ ReservableCurrency<Self::AccountId>;
+
+	/// Weight information for extrinsics in this pallet.
+	type WeightInfo: WeightInfo;
 }
 
 decl_event! {
@@ -749,6 +752,10 @@ impl<T: Trait> EthereumReceipt<T::AccountId, Balance<T>> for Module<T> {
 		(proof.header_hash, proof.index)
 	}
 }
+
+// TODO: https://github.com/darwinia-network/darwinia-common/issues/209
+pub trait WeightInfo {}
+impl WeightInfo for () {}
 
 /// `SignedExtension` that checks if a transaction has duplicate header hash to avoid coincidence
 /// header between several relayers

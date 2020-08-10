@@ -2,72 +2,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-mod migration {
-	// --- substrate ---
-	use frame_support::migration::*;
-	// --- darwinia ---
-	use crate::*;
-
-	pub fn migrate<T: Trait>() {
-		sp_runtime::print("Migrating DarwiniaEthereumLinearRelay...");
-
-		let new_module: &[u8] = b"DarwiniaEthereumRelay";
-		let old_module: &[u8] = b"DarwiniaEthRelay";
-		let value_items: &[&[u8]] = &[
-			// pub GenesisHeader get(fn begin_header): Option<EthHeader>;
-			b"GenesisHeader",
-			// pub BestHeaderHash get(fn best_header_hash): H256;
-			b"BestHeaderHash",
-			// pub NumberOfBlocksFinality get(fn number_of_blocks_finality) config(): u64;
-			b"NumberOfBlocksFinality",
-			// pub NumberOfBlocksSafe get(fn number_of_blocks_safe) config(): u64;
-			b"NumberOfBlocksSafe",
-			// pub CheckAuthority get(fn check_authority) config(): bool = true;
-			b"CheckAuthority",
-			// pub Authorities get(fn authorities) config(): Vec<T::AccountId>;
-			b"Authorities",
-			// pub ReceiptVerifyFee get(fn receipt_verify_fee) config(): Balance<T>;
-			b"ReceiptVerifyFee",
-			// pub TotalRelayerPoints get(fn total_points): u64 = 0;
-			b"TotalRelayerPoints",
-		];
-		let map_items: &[&[u8]] = &[
-			// pub CanonicalHeaderHashes get(fn canonical_header_hash): map hasher(identity) u64 => H256;
-			b"CanonicalHeaderHashes",
-			// pub Headers get(fn header): map hasher(identity) H256 => Option<EthHeader>;
-			b"Headers",
-			// pub HeaderBriefs get(fn header_brief): map hasher(identity) H256 => Option<EthHeaderBrief::<T::AccountId>>;
-			b"HeaderBriefs",
-			// pub RelayerPoints get(fn relayer_points): map hasher(blake2_128_concat) T::AccountId => u64;
-			b"RelayerPoints",
-		];
-		let hash: &[u8] = &[];
-
-		for item in value_items {
-			// --- substrate ---
-			use frame_support::{storage::unhashed::kill, StorageHasher, Twox128};
-
-			let mut key = vec![0u8; 32 + hash.len()];
-			key[0..16].copy_from_slice(&Twox128::hash(old_module));
-			key[16..32].copy_from_slice(&Twox128::hash(item));
-			key[32..].copy_from_slice(hash);
-			kill(&key);
-		}
-		for item in map_items {
-			remove_storage_prefix(old_module, item, hash);
-		}
-
-		// pub DagsMerkleRoots get(fn dag_merkle_root): map hasher(identity) u64 => H128;
-		{
-			let item: &[u8] = b"DagsMerkleRoots";
-
-			for (hash, value) in <StorageIterator<H128>>::new(old_module, item) {
-				put_storage_value(new_module, item, &hash, value);
-			}
-		}
-	}
-}
-
 mod mmr;
 #[cfg(test)]
 mod mock;
@@ -82,7 +16,7 @@ mod types {
 	pub type MMRHash = H256;
 	pub type MMRProof = Vec<H256>;
 
-	type AccountId<T> = <T as system::Trait>::AccountId;
+	type AccountId<T> = <T as frame_system::Trait>::AccountId;
 	type CurrencyT<T> = <T as Trait>::Currency;
 }
 
@@ -96,7 +30,7 @@ use frame_support::{
 	traits::Get,
 	traits::{Currency, ExistenceRequirement::KeepAlive, ReservableCurrency},
 };
-use frame_system::{self as system, ensure_root, ensure_signed};
+use frame_system::{ensure_root, ensure_signed};
 use sp_runtime::{
 	traits::AccountIdConversion, DispatchError, DispatchResult, ModuleId, RuntimeDebug,
 };
@@ -128,6 +62,9 @@ pub trait Trait: frame_system::Trait {
 
 	type Currency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
 		+ ReservableCurrency<Self::AccountId>;
+
+	/// Weight information for extrinsics in this pallet.
+	type WeightInfo: WeightInfo;
 }
 
 decl_event! {
@@ -135,23 +72,23 @@ decl_event! {
 	where
 		<T as frame_system::Trait>::AccountId,
 	{
-		PhantomEvent(AccountId),
-		/// The specific confirmed block is removed
+		/// The specific confirmed block is removed. [block height]
 		RemoveConfirmedBlock(EthBlockNumber),
 
-		/// The range of confirmed blocks are removed
+		/// The range of confirmed blocks are removed. [block height, block height]
 		RemoveConfirmedBlockRang(EthBlockNumber, EthBlockNumber),
 
-		/// The block confimed block parameters are changed
+		/// The block confimed block parameters are changed. [block height, block height]
 		UpdateConfrimedBlockCleanCycle(EthBlockNumber, EthBlockNumber),
 
-		/// This Error event is caused by unreasonable Confirm block delete parameter set
+		/// This Error event is caused by unreasonable Confirm block delete parameter set.
 		///
 		/// ConfirmBlockKeepInMonth should be greator then 1 to avoid the relayer game cross the
-		/// month
+		/// month.
+		/// [block height]
 		ConfirmBlockManagementError(EthBlockNumber),
 
-		/// Receipt Verification
+		/// Receipt Verification. [account, receipt, header]
 		VerifyReceipt(AccountId, Receipt, EthHeader),
 	}
 }
@@ -233,12 +170,6 @@ decl_module! {
 		type Error = Error<T>;
 
 		fn deposit_event() = default;
-
-		fn on_runtime_upgrade() -> frame_support::weights::Weight {
-			migration::migrate::<T>();
-
-			0
-		}
 
 		/// Check and verify the receipt
 		///
@@ -701,6 +632,10 @@ impl<T: Trait> EthereumReceipt<T::AccountId, Balance<T>> for Module<T> {
 		(proof_record.header_hash, proof.1.index)
 	}
 }
+
+// TODO: https://github.com/darwinia-network/darwinia-common/issues/209
+pub trait WeightInfo {}
+impl WeightInfo for () {}
 
 #[derive(Encode, Decode, Default, RuntimeDebug)]
 pub struct EthHeaderThing {

@@ -204,7 +204,7 @@ pub struct Configuration {
 	sentry_nodes: Option<Vec<sc_service::config::MultiaddrWithPeerId>>,
 }
 impl Configuration {
-	pub fn create_runner_from_cli<C: SubstrateCli + DarwiniaCli>(
+	pub fn create_runner<C: SubstrateCli + DarwiniaCli>(
 		cli: C,
 	) -> sc_cli::Result<sc_cli::Runner<C>> {
 		if let Some(path) = cli.conf() {
@@ -342,7 +342,9 @@ impl Configuration {
 				self.keystore_config,
 				password_interactive
 			);
-			quick_if_let!(cmd.keystore_params, self.keystore_config, Some(password));
+			if let Some(ref password) = self.keystore_config.password {
+				cmd.keystore_params.password = Some(password.parse().unwrap());
+			}
 			quick_if_let!(
 				cmd.keystore_params,
 				self.keystore_config,

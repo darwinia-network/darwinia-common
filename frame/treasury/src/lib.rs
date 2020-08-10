@@ -94,7 +94,7 @@ mod types {
 	pub type KtonNegativeImbalance<T> =
 		<KtonCurrency<T> as Currency<AccountId<T>>>::NegativeImbalance;
 
-	type AccountId<T> = <T as system::Trait>::AccountId;
+	type AccountId<T> = <T as frame_system::Trait>::AccountId;
 	type RingCurrency<T> = <T as Trait>::RingCurrency;
 	type KtonCurrency<T> = <T as Trait>::KtonCurrency;
 }
@@ -113,7 +113,7 @@ use frame_support::{
 	weights::{DispatchClass, Weight},
 	Parameter,
 };
-use frame_system::{self as system, ensure_signed};
+use frame_system::ensure_signed;
 use sp_runtime::{
 	traits::{
 		AccountIdConversion, AtLeast32BitUnsigned, BadOrigin, Hash, Saturating, StaticLookup, Zero,
@@ -182,47 +182,15 @@ pub trait Trait: frame_system::Trait {
 
 	/// Percentage of spare funds (if any) that are burnt per spend period.
 	type Burn: Get<Permill>;
-}
 
-/// A spending proposal.
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug)]
-pub struct Proposal<AccountId, RingBalance, KtonBalance> {
-	/// The account proposing it.
-	proposer: AccountId,
-	/// The account to whom the payment should be made if the proposal is accepted.
-	beneficiary: AccountId,
-	/// The (total) *RING* that should be paid if the proposal is accepted.
-	ring_value: RingBalance,
-	/// The (total) *KTON* that should be paid if the proposal is accepted.
-	kton_value: KtonBalance,
-	/// The *RING* held on deposit (reserved) for making this proposal.
-	ring_bond: RingBalance,
-	/// The *KTON* held on deposit (reserved) for making this proposal.
-	kton_bond: KtonBalance,
-}
+	/// Handler for the unbalanced decrease when treasury funds are burned.
+	type RingBurnDestination: OnUnbalanced<RingNegativeImbalance<Self>>;
 
-/// An open tipping "motion". Retains all details of a tip including information on the finder
-/// and the members who have voted.
-#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug)]
-pub struct OpenTip<
-	AccountId: Parameter,
-	RingBalance: Parameter,
-	BlockNumber: Parameter,
-	Hash: Parameter,
-> {
-	/// The hash of the reason for the tip. The reason should be a human-readable UTF-8 encoded string. A URL would be
-	/// sensible.
-	reason: Hash,
-	/// The account to be tipped.
-	who: AccountId,
-	/// The account who began this tip and the amount held on deposit.
-	finder: Option<(AccountId, RingBalance)>,
-	/// The block number at which this tip will close if `Some`. If `None`, then no closing is
-	/// scheduled.
-	closes: Option<BlockNumber>,
-	/// The members who have voted for this tip. Sorted by AccountId.
-	tips: Vec<(AccountId, RingBalance)>,
+	/// Handler for the unbalanced decrease when treasury funds are burned.
+	type KtonBurnDestination: OnUnbalancedKton<KtonNegativeImbalance<Self>>;
+
+	/// Weight information for extrinsics in this pallet.
+	type WeightInfo: WeightInfo;
 }
 
 decl_storage! {
@@ -269,29 +237,29 @@ decl_event!(
 		RingBalance = RingBalance<T>,
 		KtonBalance = KtonBalance<T>,
 	{
-		/// New proposal.
+		/// New proposal. [proposal_index]
 		Proposed(ProposalIndex),
-		/// We have ended a spend period and will now allocate funds.
+		/// We have ended a spend period and will now allocate funds. [budget_remaining]
 		Spending(RingBalance, KtonBalance),
-		/// Some funds have been allocated.
+		/// Some funds have been allocated. [proposal_index, award, beneficiary]
 		Awarded(ProposalIndex, RingBalance, KtonBalance, AccountId),
-		/// A proposal was rejected; funds were slashed.
+		/// A proposal was rejected; funds were slashed. [proposal_index, slashed]
 		Rejected(ProposalIndex, RingBalance, KtonBalance),
-		/// Some of our funds have been burnt.
+		/// Some of our funds have been burnt. [burn]
 		Burnt(RingBalance, KtonBalance),
-		/// Spending has finished; this is the amount that rolls over until next spend.
+		/// Spending has finished; this is the amount that rolls over until next spend. [budget_remaining]
 		Rollover(RingBalance, KtonBalance),
-		/// Some *RING* have been deposited.
+		/// Some *RING* have been deposited. [deposit]
 		DepositRing(RingBalance),
-		/// Some *KTON* have been deposited.
+		/// Some *KTON* have been deposited. [deposit]
 		DepositKton(KtonBalance),
-		/// A new tip suggestion has been opened.
+		/// A new tip suggestion has been opened. [tip_hash]
 		NewTip(Hash),
-		/// A tip suggestion has reached threshold and is closing.
+		/// A tip suggestion has reached threshold and is closing. [tip_hash]
 		TipClosing(Hash),
-		/// A tip suggestion has been closed.
+		/// A tip suggestion has been closed. [tip_hash, who, payout]
 		TipClosed(Hash, AccountId, RingBalance),
-		/// A tip suggestion has been retracted.
+		/// A tip suggestion has been retracted. [tip_hash]
 		TipRetracted(Hash),
 	}
 );
@@ -475,8 +443,15 @@ decl_module! {
 			T::RingCurrency::reserve(&finder, deposit)?;
 
 			<Reasons<T>>::insert(&reason_hash, &reason);
-			let finder = Some((finder, deposit));
-			let tip = OpenTip { reason: reason_hash, who, finder, closes: None, tips: vec![] };
+			let tip = OpenTip {
+				reason: reason_hash,
+				who,
+				finder,
+				deposit,
+				closes: None,
+				tips: vec![],
+				finders_fee: true
+			};
 			<Tips<T>>::insert(&hash, tip);
 			Self::deposit_event(RawEvent::NewTip(hash));
 		}
@@ -504,12 +479,13 @@ decl_module! {
 		fn retract_tip(origin, hash: T::Hash) {
 			let who = ensure_signed(origin)?;
 			let tip = <Tips<T>>::get(&hash).ok_or(<Error<T>>::UnknownTip)?;
-			let (finder, deposit) = tip.finder.ok_or(<Error<T>>::NotFinder)?;
-			ensure!(finder == who, <Error<T>>::NotFinder);
+			ensure!(tip.finder == who, <Error<T>>::NotFinder);
 
 			<Reasons<T>>::remove(&tip.reason);
 			<Tips<T>>::remove(&hash);
-			let _ = T::RingCurrency::unreserve(&who, deposit);
+			if !tip.deposit.is_zero() {
+				let _ = T::RingCurrency::unreserve(&who, tip.deposit);
+			}
 			Self::deposit_event(RawEvent::TipRetracted(hash));
 		}
 
@@ -548,8 +524,16 @@ decl_module! {
 
 			<Reasons<T>>::insert(&reason_hash, &reason);
 			Self::deposit_event(RawEvent::NewTip(hash.clone()));
-			let tips = vec![(tipper, tip_value)];
-			let tip = OpenTip { reason: reason_hash, who, finder: None, closes: None, tips };
+			let tips = vec![(tipper.clone(), tip_value)];
+			let tip = OpenTip {
+				reason: reason_hash,
+				who,
+				finder: tipper,
+				deposit: Zero::zero(),
+				closes: None,
+				tips,
+				finders_fee: false,
+			};
 			<Tips<T>>::insert(&hash, tip);
 		}
 
@@ -728,15 +712,17 @@ impl<T: Trait> Module<T> {
 		let treasury = Self::account_id();
 		let max_payout = Self::pot::<T::RingCurrency>();
 		let mut payout = tips[tips.len() / 2].1.min(max_payout);
-		if let Some((finder, deposit)) = tip.finder {
-			let _ = T::RingCurrency::unreserve(&finder, deposit);
-			if finder != tip.who {
+		if !tip.deposit.is_zero() {
+			let _ = T::RingCurrency::unreserve(&tip.finder, tip.deposit);
+		}
+		if tip.finders_fee {
+			if tip.finder != tip.who {
 				// pay out the finder's fee.
 				let finders_fee = T::TipFindersFee::get() * payout;
 				payout -= finders_fee;
 				// this should go through given we checked it's at most the free balance, but still
 				// we only make a best-effort.
-				let _ = T::RingCurrency::transfer(&treasury, &finder, finders_fee, KeepAlive);
+				let _ = T::RingCurrency::transfer(&treasury, &tip.finder, finders_fee, KeepAlive);
 			}
 		}
 		// same as above: best-effort only.
@@ -824,7 +810,10 @@ impl<T: Trait> Module<T> {
 				// burn some proportion of the remaining budget if we run a surplus.
 				let burn = (T::Burn::get() * budget_remaining_ring).min(budget_remaining_ring);
 				budget_remaining_ring -= burn;
-				imbalance_ring.subsume(T::RingCurrency::burn(burn));
+
+				let (debit, credit) = T::RingCurrency::pair(burn);
+				imbalance_ring.subsume(debit);
+				T::RingBurnDestination::on_unbalanced(credit);
 
 				burn
 			} else {
@@ -833,7 +822,10 @@ impl<T: Trait> Module<T> {
 			let burn_kton = if !miss_any_kton {
 				let burn = (T::Burn::get() * budget_remaining_kton).min(budget_remaining_kton);
 				budget_remaining_kton -= burn;
-				imbalance_kton.subsume(T::KtonCurrency::burn(burn));
+
+				let (debit, credit) = T::KtonCurrency::pair(burn);
+				imbalance_kton.subsume(debit);
+				T::KtonBurnDestination::on_unbalanced(credit);
 
 				burn
 			} else {
@@ -876,6 +868,57 @@ impl<T: Trait> Module<T> {
 
 		prior_approvals_len
 	}
+
+	pub fn migrate_retract_tip_for_tip_new() {
+		/// An open tipping "motion". Retains all details of a tip including information on the finder
+		/// and the members who have voted.
+		#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug)]
+		pub struct OldOpenTip<
+			AccountId: Parameter,
+			RingBalance: Parameter,
+			BlockNumber: Parameter,
+			Hash: Parameter,
+		> {
+			/// The hash of the reason for the tip. The reason should be a human-readable UTF-8 encoded string. A URL would be
+			/// sensible.
+			reason: Hash,
+			/// The account to be tipped.
+			who: AccountId,
+			/// The account who began this tip and the amount held on deposit.
+			finder: Option<(AccountId, RingBalance)>,
+			/// The block number at which this tip will close if `Some`. If `None`, then no closing is
+			/// scheduled.
+			closes: Option<BlockNumber>,
+			/// The members who have voted for this tip. Sorted by AccountId.
+			tips: Vec<(AccountId, RingBalance)>,
+		}
+
+		// --- substrate ---
+		use frame_support::{migration::StorageKeyIterator, Twox64Concat};
+
+		for (hash, old_tip) in StorageKeyIterator::<
+			T::Hash,
+			OldOpenTip<T::AccountId, RingBalance<T>, T::BlockNumber, T::Hash>,
+			Twox64Concat,
+		>::new(b"DarwiniaTreasury", b"Tips")
+		.drain()
+		{
+			let (finder, deposit, finders_fee) = match old_tip.finder {
+				Some((finder, deposit)) => (finder, deposit, true),
+				None => (T::AccountId::default(), Zero::zero(), false),
+			};
+			let new_tip = OpenTip {
+				reason: old_tip.reason,
+				who: old_tip.who,
+				finder,
+				deposit,
+				closes: old_tip.closes,
+				tips: old_tip.tips,
+				finders_fee,
+			};
+			<Tips<T>>::insert(hash, new_tip)
+		}
+	}
 }
 
 impl<T: Trait> OnUnbalanced<RingNegativeImbalance<T>> for Module<T> {
@@ -888,7 +931,6 @@ impl<T: Trait> OnUnbalanced<RingNegativeImbalance<T>> for Module<T> {
 		Self::deposit_event(RawEvent::DepositRing(numeric_amount));
 	}
 }
-
 // FIXME: Ugly hack due to https://github.com/rust-lang/rust/issues/31844#issuecomment-557918823
 impl<T: Trait> OnUnbalancedKton<KtonNegativeImbalance<T>> for Module<T> {
 	fn on_nonzero_unbalanced(amount: KtonNegativeImbalance<T>) {
@@ -899,4 +941,91 @@ impl<T: Trait> OnUnbalancedKton<KtonNegativeImbalance<T>> for Module<T> {
 
 		Self::deposit_event(RawEvent::DepositKton(numeric_amount));
 	}
+}
+
+pub trait WeightInfo {
+	fn propose_spend(u: u32) -> Weight;
+	fn reject_proposal(u: u32) -> Weight;
+	fn approve_proposal(u: u32) -> Weight;
+	fn report_awesome(r: u32) -> Weight;
+	fn retract_tip(r: u32) -> Weight;
+	fn tip_new(r: u32, t: u32) -> Weight;
+	fn tip(t: u32) -> Weight;
+	fn close_tip(t: u32) -> Weight;
+	fn on_initialize(p: u32) -> Weight;
+}
+
+impl WeightInfo for () {
+	fn propose_spend(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn reject_proposal(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn approve_proposal(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn report_awesome(_r: u32) -> Weight {
+		1_000_000_000
+	}
+	fn retract_tip(_r: u32) -> Weight {
+		1_000_000_000
+	}
+	fn tip_new(_r: u32, _t: u32) -> Weight {
+		1_000_000_000
+	}
+	fn tip(_t: u32) -> Weight {
+		1_000_000_000
+	}
+	fn close_tip(_t: u32) -> Weight {
+		1_000_000_000
+	}
+	fn on_initialize(_p: u32) -> Weight {
+		1_000_000_000
+	}
+}
+
+/// A spending proposal.
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug)]
+pub struct Proposal<AccountId, RingBalance, KtonBalance> {
+	/// The account proposing it.
+	proposer: AccountId,
+	/// The account to whom the payment should be made if the proposal is accepted.
+	beneficiary: AccountId,
+	/// The (total) *RING* that should be paid if the proposal is accepted.
+	ring_value: RingBalance,
+	/// The (total) *KTON* that should be paid if the proposal is accepted.
+	kton_value: KtonBalance,
+	/// The *RING* held on deposit (reserved) for making this proposal.
+	ring_bond: RingBalance,
+	/// The *KTON* held on deposit (reserved) for making this proposal.
+	kton_bond: KtonBalance,
+}
+
+/// An open tipping "motion". Retains all details of a tip including information on the finder
+/// and the members who have voted.
+#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug)]
+pub struct OpenTip<
+	AccountId: Parameter,
+	RingBalance: Parameter,
+	BlockNumber: Parameter,
+	Hash: Parameter,
+> {
+	/// The hash of the reason for the tip. The reason should be a human-readable UTF-8 encoded string. A URL would be
+	/// sensible.
+	reason: Hash,
+	/// The account to be tipped.
+	who: AccountId,
+	/// The account who began this tip.
+	finder: AccountId,
+	/// The amount held on deposit for this tip.
+	deposit: RingBalance,
+	/// The block number at which this tip will close if `Some`. If `None`, then no closing is
+	/// scheduled.
+	closes: Option<BlockNumber>,
+	/// The members who have voted for this tip. Sorted by AccountId.
+	tips: Vec<(AccountId, RingBalance)>,
+	/// Whether this tip should result in the finder taking a fee.
+	finders_fee: bool,
 }

@@ -259,7 +259,7 @@ thread_local! {
 }
 
 impl_outer_origin! {
-	pub enum Origin for Test  where system = frame_system {}
+	pub enum Origin for Test where system = frame_system {}
 }
 
 darwinia_support::impl_account_data! {
@@ -292,6 +292,7 @@ impl Trait for Test {
 	type ConfirmPeriod = ConfirmPeriod;
 	type ApproveOrigin = EnsureRoot<AccountId>;
 	type RejectOrigin = EnsureRoot<AccountId>;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -326,6 +327,7 @@ impl frame_system::Trait for Test {
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
+	type SystemWeightInfo = ();
 }
 
 parameter_types! {
@@ -338,6 +340,7 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
+	type WeightInfo = ();
 	type DustCollector = (Kton,);
 }
 impl darwinia_balances::Trait<KtonInstance> for Test {
@@ -347,6 +350,7 @@ impl darwinia_balances::Trait<KtonInstance> for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
+	type WeightInfo = ();
 	type DustCollector = (Ring,);
 }
 

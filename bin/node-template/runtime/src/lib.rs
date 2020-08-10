@@ -4,6 +4,32 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
+pub mod constants {
+	// --- darwinia ---
+	use super::{primitives::*, *};
+
+	pub const NANO: Balance = 1;
+	pub const MICRO: Balance = 1_000 * NANO;
+	pub const MILLI: Balance = 1_000 * MICRO;
+	pub const COIN: Balance = 1_000 * MILLI;
+
+	pub const CAP: Balance = 10_000_000_000 * COIN;
+	pub const TOTAL_POWER: Power = 1_000_000_000;
+
+	pub const MILLISECS_PER_BLOCK: Moment = 3000;
+	pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
+	pub const BLOCKS_PER_SESSION: BlockNumber = MINUTES / 2;
+	pub const SESSIONS_PER_ERA: SessionIndex = 3;
+
+	// These time units are defined in number of blocks.
+	pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
+	pub const HOURS: BlockNumber = 60 * MINUTES;
+	pub const DAYS: BlockNumber = 24 * HOURS;
+
+	// 1 in 4 blocks (on average, not counting collisions) will be primary babe blocks.
+	pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
+}
+
 pub mod impls {
 	//! Some configurable implementations as associated type for the substrate runtime.
 
@@ -121,7 +147,7 @@ pub mod impls {
 	/// node's balance type.
 	///
 	/// This should typically create a mapping between the following ranges:
-	///   - [0, system::MaximumBlockWeight]
+	///   - [0, frame_system::MaximumBlockWeight]
 	///   - [Balance::min, Balance::max]
 	///
 	/// Yet, it can be used for any other sort of change to weight-fee. Some examples being:
@@ -268,7 +294,6 @@ pub mod primitives {
 		frame_system::CheckNonce<Runtime>,
 		frame_system::CheckWeight<Runtime>,
 		pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
-		pallet_grandpa::ValidateEquivocationReport<Runtime>,
 		darwinia_ethereum_linear_relay::CheckEthereumRelayHeaderHash<Runtime>,
 	);
 
@@ -354,10 +379,12 @@ use sp_std::prelude::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia ---
+use constants::*;
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
 use darwinia_ethereum_linear_relay::EthereumNetworkType;
 use darwinia_ethereum_offchain::crypto::AuthorityId as EthOffchainId;
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
+use darwinia_staking::EraIndex;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
 use impls::*;
 
@@ -371,35 +398,6 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
 };
-
-pub const NANO: Balance = 1;
-pub const MICRO: Balance = 1_000 * NANO;
-pub const MILLI: Balance = 1_000 * MICRO;
-pub const COIN: Balance = 1_000 * MILLI;
-
-pub const MILLISECS_PER_BLOCK: u64 = 3000;
-
-pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
-
-// 1 in 4 blocks (on average, not counting collisions) will be primary BABE blocks.
-pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
-
-// These time units are defined in number of blocks.
-pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
-pub const HOURS: BlockNumber = MINUTES * 60;
-pub const DAYS: BlockNumber = HOURS * 24;
-
-pub const BLOCKS_PER_SESSION: BlockNumber = MINUTES / 2;
-pub const EPOCH_DURATION_IN_SLOTS: u64 = {
-	const SLOT_FILL_RATE: f64 = MILLISECS_PER_BLOCK as f64 / SLOT_DURATION as f64;
-
-	(BLOCKS_PER_SESSION as f64 * SLOT_FILL_RATE) as u64
-};
-pub const SESSION_DURATION: BlockNumber = EPOCH_DURATION_IN_SLOTS as _;
-pub const SESSIONS_PER_ERA: SessionIndex = 3;
-
-pub const CAP: Balance = 10_000_000_000 * COIN;
-pub const TOTAL_POWER: Power = 1_000_000_000;
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
@@ -451,17 +449,28 @@ impl frame_system::Trait for Runtime {
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
+	type SystemWeightInfo = ();
 }
 
 parameter_types! {
-	pub const EpochDuration: u64 = EPOCH_DURATION_IN_SLOTS;
+	pub const EpochDuration: u64 = BLOCKS_PER_SESSION as _;
 	pub const ExpectedBlockTime: Moment = MILLISECS_PER_BLOCK;
 }
 impl pallet_babe::Trait for Runtime {
 	type EpochDuration = EpochDuration;
 	type ExpectedBlockTime = ExpectedBlockTime;
-	// session module is the trigger
 	type EpochChangeTrigger = pallet_babe::ExternalTrigger;
+	type KeyOwnerProofSystem = Historical;
+	type KeyOwnerProof = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
+		KeyTypeId,
+		pallet_babe::AuthorityId,
+	)>>::Proof;
+	type KeyOwnerIdentification = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
+		KeyTypeId,
+		pallet_babe::AuthorityId,
+	)>>::IdentificationTuple;
+	type HandleEquivocation =
+		pallet_babe::EquivocationHandler<Self::KeyOwnerIdentification, Offences>;
 }
 
 parameter_types! {
@@ -471,6 +480,7 @@ impl pallet_timestamp::Trait for Runtime {
 	type Moment = Moment;
 	type OnTimestampSet = Babe;
 	type MinimumPeriod = MinimumPeriod;
+	type WeightInfo = ();
 }
 
 type RingInstance = darwinia_balances::Instance0;
@@ -484,6 +494,7 @@ impl darwinia_balances::Trait<RingInstance> for Runtime {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
+	type WeightInfo = ();
 	type DustCollector = (Kton,);
 }
 type KtonInstance = darwinia_balances::Instance1;
@@ -494,6 +505,7 @@ impl darwinia_balances::Trait<KtonInstance> for Runtime {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
+	type WeightInfo = ();
 	type DustCollector = (Ring,);
 }
 
@@ -534,14 +546,15 @@ impl pallet_authorship::Trait for Runtime {
 
 parameter_types! {
 	pub const SessionsPerEra: SessionIndex = SESSIONS_PER_ERA;
-	pub const BondingDurationInEra: darwinia_staking::EraIndex = 14 * 24 * (HOURS / (SESSIONS_PER_ERA * BLOCKS_PER_SESSION));
+	pub const BondingDurationInEra: EraIndex = 14 * DAYS
+		/ (SESSIONS_PER_ERA as BlockNumber * BLOCKS_PER_SESSION);
 	pub const BondingDurationInBlockNumber: BlockNumber = 14 * DAYS;
-	pub const SlashDeferDuration: darwinia_staking::EraIndex = 0;
+	pub const SlashDeferDuration: EraIndex = 14 * DAYS
+		/ (SESSIONS_PER_ERA as BlockNumber * BLOCKS_PER_SESSION);
+	// quarter of the last session will be for election.
 	pub const ElectionLookahead: BlockNumber = BLOCKS_PER_SESSION / 4;
-	pub const MaxIterations: u32 = 10;
-	// 0.05%. The higher the value, the more strict solution acceptance becomes.
+	pub const MaxIterations: u32 = 5;
 	pub MinSolutionScoreBump: Perbill = Perbill::from_rational_approximation(5u32, 10_000);
-	/// We prioritize im-online heartbeats over election solution submission.
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
 	pub const StakingUnsignedPriority: TransactionPriority = TransactionPriority::max_value() / 2;
 	pub const Cap: Balance = CAP;
@@ -575,6 +588,7 @@ impl darwinia_staking::Trait for Runtime {
 	type KtonSlash = Treasury;
 	// rewards are minted from the void
 	type KtonReward = ();
+	type WeightInfo = ();
 	type Cap = Cap;
 	type TotalPower = TotalPower;
 }
@@ -587,6 +601,7 @@ impl pallet_offences::Trait for Runtime {
 	type IdentificationTuple = pallet_session::historical::IdentificationTuple<Self>;
 	type OnOffenceHandler = Staking;
 	type WeightSoftLimit = OffencesWeightSoftLimit;
+	type WeightInfo = ();
 }
 
 impl pallet_session::historical::Trait for Runtime {
@@ -615,6 +630,7 @@ impl pallet_session::Trait for Runtime {
 	type SessionHandler = <SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = SessionKeys;
 	type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -637,16 +653,12 @@ impl pallet_grandpa::Trait for Runtime {
 		GrandpaId,
 	)>>::IdentificationTuple;
 	type KeyOwnerProofSystem = Historical;
-	type HandleEquivocation = pallet_grandpa::EquivocationHandler<
-		Self::KeyOwnerIdentification,
-		primitives::report::ReporterAppCrypto,
-		Runtime,
-		Offences,
-	>;
+	type HandleEquivocation =
+		pallet_grandpa::EquivocationHandler<Self::KeyOwnerIdentification, Offences>;
 }
 
 parameter_types! {
-	pub const SessionDuration: BlockNumber = SESSION_DURATION;
+	pub const SessionDuration: BlockNumber = BLOCKS_PER_SESSION as _;
 	pub const ImOnlineUnsignedPriority: TransactionPriority = TransactionPriority::max_value();
 }
 impl pallet_im_online::Trait for Runtime {
@@ -655,6 +667,7 @@ impl pallet_im_online::Trait for Runtime {
 	type SessionDuration = SessionDuration;
 	type ReportUnresponsiveness = Offences;
 	type UnsignedPriority = ImOnlineUnsignedPriority;
+	type WeightInfo = ();
 }
 
 impl pallet_authority_discovery::Trait for Runtime {}
@@ -672,6 +685,7 @@ impl pallet_collective::Trait<CouncilCollective> for Runtime {
 	type Event = Event;
 	type MotionDuration = CouncilMotionDuration;
 	type MaxProposals = CouncilMaxProposals;
+	type WeightInfo = ();
 }
 type TechnicalCollective = pallet_collective::Instance1;
 impl pallet_collective::Trait<TechnicalCollective> for Runtime {
@@ -680,6 +694,7 @@ impl pallet_collective::Trait<TechnicalCollective> for Runtime {
 	type Event = Event;
 	type MotionDuration = TechnicalMotionDuration;
 	type MaxProposals = TechnicalMaxProposals;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -710,6 +725,7 @@ impl darwinia_elections_phragmen::Trait for Runtime {
 	type DesiredMembers = DesiredMembers;
 	type DesiredRunnersUp = DesiredRunnersUp;
 	type TermDuration = TermDuration;
+	type WeightInfo = ();
 }
 
 type EnsureRootOrHalfCouncil = EnsureOneOf<
@@ -764,6 +780,9 @@ impl darwinia_treasury::Trait for Runtime {
 	type KtonProposalBondMinimum = KtonProposalBondMinimum;
 	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
+	type RingBurnDestination = ();
+	type KtonBurnDestination = ();
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -795,6 +814,7 @@ impl darwinia_ethereum_backing::Trait for Runtime {
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 	type SubKeyPrefix = SubKeyPrefix;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -807,6 +827,7 @@ impl darwinia_ethereum_linear_relay::Trait for Runtime {
 	type EthereumNetwork = EthereumNetwork;
 	type Call = Call;
 	type Currency = Ring;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -824,6 +845,7 @@ impl darwinia_ethereum_relay::Trait for Runtime {
 	type ModuleId = EthereumRelayModuleId;
 	type Event = Event;
 	type Currency = Ring;
+	type WeightInfo = ();
 }
 
 type EthereumRelayerGameInstance = darwinia_relayer_game::Instance0;
@@ -839,6 +861,7 @@ impl darwinia_relayer_game::Trait<EthereumRelayerGameInstance> for Runtime {
 	type ConfirmPeriod = ConfirmPeriod;
 	type ApproveOrigin = ApproveOrigin;
 	type RejectOrigin = EnsureRootOrHalfCouncil;
+	type WeightInfo = ();
 }
 
 impl darwinia_header_mmr::Trait for Runtime {}
@@ -855,7 +878,7 @@ construct_runtime!(
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
 
 		// Must be before session.
-		Babe: pallet_babe::{Module, Call, Storage, Config, Inherent(Timestamp)},
+		Babe: pallet_babe::{Module, Call, Storage, Config, Inherent, ValidateUnsigned},
 
 		Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
 		Balances: darwinia_balances::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
@@ -869,7 +892,7 @@ construct_runtime!(
 		Historical: pallet_session_historical::{Module},
 		Session: pallet_session::{Module, Call, Storage, Config<T>, Event},
 		FinalityTracker: pallet_finality_tracker::{Module, Call, Storage, Inherent},
-		Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
+		Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event, ValidateUnsigned},
 		ImOnline: pallet_im_online::{Module, Call, Storage, Config<T>, Event<T>, ValidateUnsigned},
 		AuthorityDiscovery: pallet_authority_discovery::{Module, Call, Config},
 
@@ -894,19 +917,6 @@ construct_runtime!(
 		HeaderMMR: darwinia_header_mmr::{Module, Call, Storage},
 	}
 );
-
-impl frame_system::offchain::SigningTypes for Runtime {
-	type Public = <Signature as sp_runtime::traits::Verify>::Signer;
-	type Signature = Signature;
-}
-
-impl<C> frame_system::offchain::SendTransactionTypes<C> for Runtime
-where
-	Call: From<C>,
-{
-	type Extrinsic = UncheckedExtrinsic;
-	type OverarchingCall = Call;
-}
 
 impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
 where
@@ -940,7 +950,6 @@ where
 			frame_system::CheckNonce::<Runtime>::from(nonce),
 			frame_system::CheckWeight::<Runtime>::new(),
 			pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
-			pallet_grandpa::ValidateEquivocationReport::<Runtime>::new(),
 			Default::default(),
 		);
 		let raw_payload = SignedPayload::new(call, extra)
@@ -952,6 +961,17 @@ where
 		let (call, extra, _) = raw_payload.deconstruct();
 		Some((call, (account, signature, extra)))
 	}
+}
+impl frame_system::offchain::SigningTypes for Runtime {
+	type Public = <Signature as sp_runtime::traits::Verify>::Signer;
+	type Signature = Signature;
+}
+impl<C> frame_system::offchain::SendTransactionTypes<C> for Runtime
+where
+	Call: From<C>,
+{
+	type Extrinsic = UncheckedExtrinsic;
+	type OverarchingCall = Call;
 }
 
 impl_runtime_apis! {
@@ -1022,7 +1042,7 @@ impl_runtime_apis! {
 			Grandpa::grandpa_authorities()
 		}
 
-		fn submit_report_equivocation_extrinsic(
+		fn submit_report_equivocation_unsigned_extrinsic(
 			equivocation_proof: fg_primitives::EquivocationProof<
 				<Block as BlockT>::Hash,
 				NumberFor<Block>,
@@ -1031,7 +1051,7 @@ impl_runtime_apis! {
 		) -> Option<()> {
 			let key_owner_proof = key_owner_proof.decode()?;
 
-			Grandpa::submit_report_equivocation_extrinsic(
+			Grandpa::submit_unsigned_equivocation_report(
 				equivocation_proof,
 				key_owner_proof,
 			)
@@ -1068,6 +1088,29 @@ impl_runtime_apis! {
 
 		fn current_epoch_start() -> sp_consensus_babe::SlotNumber {
 			Babe::current_epoch_start()
+		}
+
+		fn generate_key_ownership_proof(
+			_slot_number: sp_consensus_babe::SlotNumber,
+			authority_id: sp_consensus_babe::AuthorityId,
+		) -> Option<sp_consensus_babe::OpaqueKeyOwnershipProof> {
+			use codec::Encode;
+
+			Historical::prove((sp_consensus_babe::KEY_TYPE, authority_id))
+				.map(|p| p.encode())
+				.map(sp_consensus_babe::OpaqueKeyOwnershipProof::new)
+		}
+
+		fn submit_report_equivocation_unsigned_extrinsic(
+			equivocation_proof: sp_consensus_babe::EquivocationProof<<Block as BlockT>::Header>,
+			key_owner_proof: sp_consensus_babe::OpaqueKeyOwnershipProof,
+		) -> Option<()> {
+			let key_owner_proof = key_owner_proof.decode()?;
+
+			Babe::submit_unsigned_equivocation_report(
+				equivocation_proof,
+				key_owner_proof,
+			)
 		}
 	}
 

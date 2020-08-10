@@ -52,7 +52,7 @@ use frame_support::{
 	traits::{Currency, EnsureOrigin, ExistenceRequirement, Get, OnUnbalanced},
 	weights::Weight,
 };
-use frame_system::{self as system, ensure_signed};
+use frame_system::ensure_signed;
 use sp_runtime::{
 	traits::{SaturatedConversion, Saturating, Zero},
 	DispatchResult, RuntimeDebug,
@@ -91,6 +91,9 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	type ApproveOrigin: EnsureOrigin<Self::Origin>;
 
 	type RejectOrigin: EnsureOrigin<Self::Origin>;
+
+	/// Weight information for extrinsics in this pallet.
+	type WeightInfo: WeightInfo;
 }
 
 decl_event! {
@@ -99,11 +102,10 @@ decl_event! {
 		TcBlockNumber = TcBlockNumber<T, I>,
 		GameId = GameId<TcBlockNumber<T, I>>,
 	{
-		/// A new round started.
-		/// GameId(MMR Last Leaf), Samples, MMR Members
+		/// A new round started. [game id, samples, mmr members]
 		NewRound(GameId, Vec<TcBlockNumber>, Vec<TcBlockNumber>),
 
-		/// A game has been settled.
+		/// A game has been settled. [game id]
 		GameOver(GameId),
 	}
 }
@@ -886,6 +888,10 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		})
 	}
 }
+
+// TODO: https://github.com/darwinia-network/darwinia-common/issues/209
+pub trait WeightInfo {}
+impl WeightInfo for () {}
 
 #[derive(Clone, Encode, Decode, RuntimeDebug)]
 pub struct Proposal<AccountId, BondedTcHeader, TcHeaderHash> {

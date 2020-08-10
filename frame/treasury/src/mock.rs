@@ -50,7 +50,7 @@ thread_local! {
 
 impl_outer_event! {
 	pub enum MockEvent for Test {
-		system<T>,
+		frame_system<T>,
 		darwinia_balances Instance0<T>,
 		darwinia_balances Instance1<T>,
 		treasury<T>,
@@ -58,7 +58,7 @@ impl_outer_event! {
 }
 
 impl_outer_origin! {
-	pub enum Origin for Test  where system = frame_system {}
+	pub enum Origin for Test where system = frame_system {}
 }
 
 #[derive(Clone, Eq, PartialEq)]
@@ -95,6 +95,7 @@ impl frame_system::Trait for Test {
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
+	type SystemWeightInfo = ();
 }
 
 pub struct TenToFourteen;
@@ -130,6 +131,7 @@ impl darwinia_balances::Trait<KtonInstance> for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
+	type WeightInfo = ();
 	type DustCollector = ();
 }
 impl darwinia_balances::Trait<RingInstance> for Test {
@@ -139,6 +141,7 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
+	type WeightInfo = ();
 	type DustCollector = ();
 }
 
@@ -173,6 +176,9 @@ impl Trait for Test {
 	type KtonProposalBondMinimum = KtonProposalBondMinimum;
 	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
+	type RingBurnDestination = (); // Just gets burned.
+	type KtonBurnDestination = (); // Just gets burned.
+	type WeightInfo = ();
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {

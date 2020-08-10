@@ -18,8 +18,8 @@ use node_template_runtime::{BalancesConfig as RingConfig, *};
 // Note this is the URL for the telemetry server
 //const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
-/// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
-pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
+/// Specialized `NodeTemplateChainSpec`. This is a specialization of the general Substrate ChainSpec type.
+pub type NodeTemplateChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
 
 fn session_keys(
 	babe: BabeId,
@@ -86,8 +86,8 @@ pub fn get_authority_keys_from_seed(
 	)
 }
 
-pub fn development_config() -> ChainSpec {
-	ChainSpec::from_genesis(
+pub fn node_template_development_config() -> NodeTemplateChainSpec {
+	NodeTemplateChainSpec::from_genesis(
 		"Development",
 		"dev",
 		ChainType::Development,
@@ -101,7 +101,6 @@ pub fn development_config() -> ChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
 					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
 				],
-				true,
 			)
 		},
 		vec![],
@@ -112,8 +111,8 @@ pub fn development_config() -> ChainSpec {
 	)
 }
 
-pub fn local_testnet_config() -> ChainSpec {
-	ChainSpec::from_genesis(
+pub fn node_template_local_testnet_config() -> NodeTemplateChainSpec {
+	NodeTemplateChainSpec::from_genesis(
 		"Local Testnet",
 		"local_testnet",
 		ChainType::Local,
@@ -138,7 +137,6 @@ pub fn local_testnet_config() -> ChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
 					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 				],
-				true,
 			)
 		},
 		vec![],
@@ -160,10 +158,8 @@ fn testnet_genesis(
 	)>,
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
-	_enable_println: bool,
 ) -> GenesisConfig {
 	GenesisConfig {
-		// --- substrate ---
 		frame_system: Some(SystemConfig {
 			code: WASM_BINARY.to_vec(),
 			changes_trie_config: Default::default(),
@@ -192,7 +188,7 @@ fn testnet_genesis(
 				.map(|x| (x.0, x.1, 1 << 60, StakerStatus::Validator))
 				.collect(),
 			invulnerables: initial_authorities.iter().cloned().map(|x| x.0).collect(),
-			force_era: darwinia_staking::Forcing::NotForcing,
+			force_era: darwinia_staking::Forcing::ForceAlways,
 			slash_reward_fraction: Perbill::from_percent(10),
 			payout_fraction: Perbill::from_percent(50),
 			..Default::default()
@@ -209,14 +205,7 @@ fn testnet_genesis(
 		pallet_authority_discovery: Some(Default::default()),
 		pallet_collective_Instance0: Some(Default::default()),
 		pallet_collective_Instance1: Some(Default::default()),
-		darwinia_elections_phragmen: Some(ElectionsPhragmenConfig {
-			members: endowed_accounts
-				.iter()
-				.take((endowed_accounts.len() + 1) / 2)
-				.cloned()
-				.map(|member| (member, 1 << 60))
-				.collect(),
-		}),
+		darwinia_elections_phragmen: Some(Default::default()),
 		pallet_membership_Instance0: Some(Default::default()),
 		darwinia_claims: Some(ClaimsConfig {
 			claims_list: ClaimsList::from_file(
