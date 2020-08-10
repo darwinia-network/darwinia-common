@@ -900,38 +900,42 @@ decl_event!(
 	{
 		/// The era payout has been set; the first balance is the validator-payout; the second is
 		/// the remainder from the maximum amount of reward.
+		/// [era_index, validator_payout, remainder]
 		EraPayout(EraIndex, RingBalance, RingBalance),
 
-		/// The staker has been rewarded by this amount. `AccountId` is the stash account.
+		/// The staker has been rewarded by this amount. [stash, amount]
 		Reward(AccountId, RingBalance),
 
 		/// One validator (and its nominators) has been slashed by the given amount.
+		/// [validator, amount, amount]
 		Slash(AccountId, RingBalance, KtonBalance),
 		/// An old slashing report from a prior era was discarded because it could
-		/// not be processed.
+		/// not be processed. [session_index]
 		OldSlashingReportDiscarded(SessionIndex),
 
-		/// A new set of stakers was elected with the given computation method.
+		/// A new set of stakers was elected with the given [compute].
 		StakingElection(ElectionCompute),
 
-		/// A new solution for the upcoming election has been stored.
+		/// A new solution for the upcoming election has been stored. [compute]
 		SolutionStored(ElectionCompute),
 
-		/// Bond succeed.
-		/// `amount` in `RingBalance<T>`, `start_time` in `TsInMs`, `expired_time` in `TsInMs`
+		/// An account has bonded this amount. [amount, start, end]
+		///
+		/// NOTE: This event is only emitted when funds are bonded via a dispatchable. Notably,
+		/// it will not be emitted for staking rewards when they are added to stake.
 		BondRing(RingBalance, TsInMs, TsInMs),
-		/// Bond succeed.
-		/// `amount`
+		/// An account has bonded this amount. [amount, start, end]
+		///
+		/// NOTE: This event is only emitted when funds are bonded via a dispatchable. Notably,
+		/// it will not be emitted for staking rewards when they are added to stake.
 		BondKton(KtonBalance),
 
-		/// Unbond succeed.
-		/// `amount` in `RingBalance<T>`, `now` in `BlockNumber`
+		/// An account has unbonded this amount. [amount, now]
 		UnbondRing(RingBalance, BlockNumber),
-		/// Unbond succeed.
-		/// `amount` om `KtonBalance<T>`, `now` in `BlockNumber`
+		/// An account has unbonded this amount. [amount, now]
 		UnbondKton(KtonBalance, BlockNumber),
 
-		/// Someone claimed his deposits with some *KTON*s punishment
+		/// Someone claimed his deposits with some *KTON*s punishment. [stash, forfeit]
 		ClaimDepositsWithPunish(AccountId, KtonBalance),
 	}
 );

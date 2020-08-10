@@ -71,7 +71,7 @@ decl_event!(
 		<T as frame_system::Trait>::AccountId,
 		RingBalance = RingBalance<T>,
 	{
-		/// Someone claimed some *RING*s.
+		/// Someone claimed some *RING*s. [account, address, amount]
 		Claimed(AccountId, AddressT, RingBalance),
 	}
 );

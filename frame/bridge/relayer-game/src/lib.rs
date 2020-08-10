@@ -102,11 +102,10 @@ decl_event! {
 		TcBlockNumber = TcBlockNumber<T, I>,
 		GameId = GameId<TcBlockNumber<T, I>>,
 	{
-		/// A new round started.
-		/// GameId(MMR Last Leaf), Samples, MMR Members
+		/// A new round started. [game id, samples, mmr members]
 		NewRound(GameId, Vec<TcBlockNumber>, Vec<TcBlockNumber>),
 
-		/// A game has been settled.
+		/// A game has been settled. [game id]
 		GameOver(GameId),
 	}
 }

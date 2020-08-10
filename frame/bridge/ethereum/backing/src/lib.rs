@@ -76,8 +76,11 @@ decl_event! {
 		RingBalance = RingBalance<T>,
 		KtonBalance = KtonBalance<T>,
 	{
+		/// Some one redeem some *RING*. [account, amount, transaction index]
 		RedeemRing(AccountId, RingBalance, EthTransactionIndex),
+		/// Some one redeem some *KTON*. [account, amount, transaction index]
 		RedeemKton(AccountId, KtonBalance, EthTransactionIndex),
+		/// Some one redeem a deposit. [account, deposit id, amount, transaction index]
 		RedeemDeposit(AccountId, DepositId, RingBalance, EthTransactionIndex),
 	}
 }

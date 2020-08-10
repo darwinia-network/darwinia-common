@@ -72,23 +72,23 @@ decl_event! {
 	where
 		<T as frame_system::Trait>::AccountId,
 	{
-		PhantomEvent(AccountId),
-		/// The specific confirmed block is removed
+		/// The specific confirmed block is removed. [block height]
 		RemoveConfirmedBlock(EthBlockNumber),
 
-		/// The range of confirmed blocks are removed
+		/// The range of confirmed blocks are removed. [block height, block height]
 		RemoveConfirmedBlockRang(EthBlockNumber, EthBlockNumber),
 
-		/// The block confimed block parameters are changed
+		/// The block confimed block parameters are changed. [block height, block height]
 		UpdateConfrimedBlockCleanCycle(EthBlockNumber, EthBlockNumber),
 
-		/// This Error event is caused by unreasonable Confirm block delete parameter set
+		/// This Error event is caused by unreasonable Confirm block delete parameter set.
 		///
 		/// ConfirmBlockKeepInMonth should be greator then 1 to avoid the relayer game cross the
-		/// month
+		/// month.
+		/// [block height]
 		ConfirmBlockManagementError(EthBlockNumber),
 
-		/// Receipt Verification
+		/// Receipt Verification. [account, receipt, header]
 		VerifyReceipt(AccountId, Receipt, EthHeader),
 	}
 }
