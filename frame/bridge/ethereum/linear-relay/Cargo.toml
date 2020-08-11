@@ -1,6 +1,6 @@
 [package]
 name = "darwinia-ethereum-linear-relay"
-version = "0.6.4"
+version = "1.0.0-alpha.1"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "FRAME pallet to linear relay Ethereum headers"
 edition = "2018"

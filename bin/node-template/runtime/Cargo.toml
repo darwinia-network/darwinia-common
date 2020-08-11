@@ -1,6 +1,6 @@
 [package]
 name = "node-template-runtime"
-version = "0.6.4"
+version = "1.0.0-alpha.1"
 authors = ["Anonymous"]
 edition = "2018"
 license = "Unlicense"

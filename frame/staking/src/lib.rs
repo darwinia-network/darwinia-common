@@ -258,6 +258,76 @@ pub mod inflation;
 pub mod offchain_election;
 pub mod slashing;
 
+pub mod weight {
+	// --- darwinia ---
+	use super::*;
+
+	/// All weight notes are pertaining to the case of a better solution, in which we execute
+	/// the longest code path.
+	/// Weight: 0 + (0.63 μs * v) + (0.36 μs * n) + (96.53 μs * a ) + (8 μs * w ) with:
+	/// * v validators in snapshot validators,
+	/// * n nominators in snapshot nominators,
+	/// * a assignment in the submitted solution
+	/// * w winners in the submitted solution
+	///
+	/// State reads:
+	/// 	- Initial checks:
+	/// 		- ElectionState, CurrentEra, QueuedScore
+	/// 		- SnapshotValidators.len() + SnapShotNominators.len()
+	/// 		- ValidatorCount
+	/// 		- SnapshotValidators
+	/// 		- SnapshotNominators
+	/// 	- Iterate over nominators:
+	/// 		- compact.len() * Nominators(who)
+	/// 		- (non_self_vote_edges) * SlashingSpans
+	/// 	- For `assignment_ratio_to_staked`: Basically read the staked value of each stash.
+	/// 		- (winners.len() + compact.len()) * (Ledger + Bonded)
+	/// 		- TotalIssuance (read a gzillion times potentially, but well it is cached.)
+	/// - State writes:
+	/// 	- QueuedElected, QueuedScore
+	pub fn weight_for_submit_solution<T: Trait>(
+		winners: &Vec<ValidatorIndex>,
+		compact: &CompactAssignments,
+		size: &ElectionSize,
+	) -> Weight {
+		(630 * WEIGHT_PER_NANOS)
+			.saturating_mul(size.validators as Weight)
+			.saturating_add((360 * WEIGHT_PER_NANOS).saturating_mul(size.nominators as Weight))
+			.saturating_add((96 * WEIGHT_PER_MICROS).saturating_mul(compact.len() as Weight))
+			.saturating_add((8 * WEIGHT_PER_MICROS).saturating_mul(winners.len() as Weight))
+			// Initial checks
+			.saturating_add(T::DbWeight::get().reads(8))
+			// Nominators
+			.saturating_add(T::DbWeight::get().reads(compact.len() as Weight))
+			// SlashingSpans (upper bound for invalid solution)
+			.saturating_add(T::DbWeight::get().reads(compact.edge_count() as Weight))
+			// `assignment_ratio_to_staked`
+			.saturating_add(
+				T::DbWeight::get().reads(2 * ((winners.len() + compact.len()) as Weight)),
+			)
+			.saturating_add(T::DbWeight::get().reads(1))
+			// write queued score and elected
+			.saturating_add(T::DbWeight::get().writes(2))
+	}
+
+	/// Weight of `submit_solution` in case of a correct submission.
+	///
+	/// refund: we charged compact.len() * read(1) for SlashingSpans. A valid solution only reads
+	/// winners.len().
+	pub fn weight_for_correct_submit_solution<T: Trait>(
+		winners: &Vec<ValidatorIndex>,
+		compact: &CompactAssignments,
+		size: &ElectionSize,
+	) -> Weight {
+		// NOTE: for consistency, we re-compute the original weight to maintain their relation and
+		// prevent any foot-guns.
+		let original_weight = weight_for_submit_solution::<T>(winners, compact, size);
+		original_weight
+			.saturating_sub(T::DbWeight::get().reads(compact.edge_count() as Weight))
+			.saturating_add(T::DbWeight::get().reads(winners.len() as Weight))
+	}
+}
+
 mod migration {
 	// --- substrate ---
 	use frame_support::migration::*;
@@ -402,76 +472,6 @@ mod types {
 
 	type RingCurrency<T> = <T as Trait>::RingCurrency;
 	type KtonCurrency<T> = <T as Trait>::KtonCurrency;
-}
-
-pub mod weight {
-	// --- darwinia ---
-	use super::*;
-
-	/// All weight notes are pertaining to the case of a better solution, in which we execute
-	/// the longest code path.
-	/// Weight: 0 + (0.63 μs * v) + (0.36 μs * n) + (96.53 μs * a ) + (8 μs * w ) with:
-	/// * v validators in snapshot validators,
-	/// * n nominators in snapshot nominators,
-	/// * a assignment in the submitted solution
-	/// * w winners in the submitted solution
-	///
-	/// State reads:
-	/// 	- Initial checks:
-	/// 		- ElectionState, CurrentEra, QueuedScore
-	/// 		- SnapshotValidators.len() + SnapShotNominators.len()
-	/// 		- ValidatorCount
-	/// 		- SnapshotValidators
-	/// 		- SnapshotNominators
-	/// 	- Iterate over nominators:
-	/// 		- compact.len() * Nominators(who)
-	/// 		- (non_self_vote_edges) * SlashingSpans
-	/// 	- For `assignment_ratio_to_staked`: Basically read the staked value of each stash.
-	/// 		- (winners.len() + compact.len()) * (Ledger + Bonded)
-	/// 		- TotalIssuance (read a gzillion times potentially, but well it is cached.)
-	/// - State writes:
-	/// 	- QueuedElected, QueuedScore
-	pub fn weight_for_submit_solution<T: Trait>(
-		winners: &Vec<ValidatorIndex>,
-		compact: &CompactAssignments,
-		size: &ElectionSize,
-	) -> Weight {
-		(630 * WEIGHT_PER_NANOS)
-			.saturating_mul(size.validators as Weight)
-			.saturating_add((360 * WEIGHT_PER_NANOS).saturating_mul(size.nominators as Weight))
-			.saturating_add((96 * WEIGHT_PER_MICROS).saturating_mul(compact.len() as Weight))
-			.saturating_add((8 * WEIGHT_PER_MICROS).saturating_mul(winners.len() as Weight))
-			// Initial checks
-			.saturating_add(T::DbWeight::get().reads(8))
-			// Nominators
-			.saturating_add(T::DbWeight::get().reads(compact.len() as Weight))
-			// SlashingSpans (upper bound for invalid solution)
-			.saturating_add(T::DbWeight::get().reads(compact.edge_count() as Weight))
-			// `assignment_ratio_to_staked`
-			.saturating_add(
-				T::DbWeight::get().reads(2 * ((winners.len() + compact.len()) as Weight)),
-			)
-			.saturating_add(T::DbWeight::get().reads(1))
-			// write queued score and elected
-			.saturating_add(T::DbWeight::get().writes(2))
-	}
-
-	/// Weight of `submit_solution` in case of a correct submission.
-	///
-	/// refund: we charged compact.len() * read(1) for SlashingSpans. A valid solution only reads
-	/// winners.len().
-	pub fn weight_for_correct_submit_solution<T: Trait>(
-		winners: &Vec<ValidatorIndex>,
-		compact: &CompactAssignments,
-		size: &ElectionSize,
-	) -> Weight {
-		// NOTE: for consistency, we re-compute the original weight to maintain their relation and
-		// prevent any foot-guns.
-		let original_weight = weight_for_submit_solution::<T>(winners, compact, size);
-		original_weight
-			.saturating_sub(T::DbWeight::get().reads(compact.edge_count() as Weight))
-			.saturating_add(T::DbWeight::get().reads(winners.len() as Weight))
-	}
 }
 
 // --- darwinia ---

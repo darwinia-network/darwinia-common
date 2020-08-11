@@ -1,6 +1,6 @@
 [package]
 name = "node-template"
-version = "0.6.4"
+version = "1.0.0-alpha.1"
 authors = ["Anonymous"]
 description = "Darwinia Node template"
 edition = "2018"
