@@ -621,7 +621,7 @@ decl_module! {
 		// TODO: compact params? (efficency optimize)
 		// TODO: check too far from last confirmed? maybe we can submit some check point (efficency optimize)
 		// TODO: drop previous rounds' proof (efficency optimize)
-		#[weight = 0]
+		#[weight = 100_000_000]
 		fn submit_proposal(origin, raw_header_thing_chain: Vec<RawHeaderThing>) {
 			let relayer = ensure_signed(origin)?;
 
@@ -825,7 +825,7 @@ decl_module! {
 			}
 		}
 
-		#[weight = 0]
+		#[weight = 100_000_000]
 		fn approve_pending_header(origin, pending_block_number: TcBlockNumber<T, I>) {
 			T::ApproveOrigin::ensure_origin(origin)?;
 
@@ -835,7 +835,7 @@ decl_module! {
 			)?;
 		}
 
-		#[weight = 0]
+		#[weight = 100_000_000]
 		fn reject_pending_header(origin, pending_block_number: TcBlockNumber<T, I>) {
 			T::RejectOrigin::ensure_origin(origin)?;
 
