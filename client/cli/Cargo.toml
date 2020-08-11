@@ -1,6 +1,6 @@
 [package]
 name = "darwinia-cli"
-version = "0.6.4"
+version = "1.0.0-alpha.1"
 authors = ["Darwinia Network <hello@darwinia.network>"]
 description = "Darwinia CLI interface."
 edition = "2018"
@@ -10,7 +10,7 @@ repository = "https://github.com/darwinia-network/darwinia-common/"
 
 [dependencies]
 # crates
-serde = { version = "1.0.114", features = ["derive"] }
+serde = { version = "1.0.115", features = ["derive"] }
 toml = { version = "0.5.6" }
 # substrate
 sc-cli = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.4" }
