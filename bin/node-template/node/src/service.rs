@@ -245,8 +245,8 @@ macro_rules! new_full {
 			let grandpa_config = GrandpaParams {
 				config: grandpa_config,
 				link: link_half,
-				network: network.clone(),
-				inherent_data_providers: inherent_data_providers.clone(),
+				network,
+				inherent_data_providers,
 				telemetry_on_connect: Some(telemetry_on_connect_sinks.on_connect_stream()),
 				voting_rule: GrandpaVotingRulesBuilder::default().build(),
 				prometheus_registry,
@@ -261,7 +261,7 @@ macro_rules! new_full {
 			sc_finality_grandpa::setup_disabled_grandpa(
 				client.clone(),
 				&inherent_data_providers,
-				network.clone(),
+				network,
 			)?;
 			}
 
@@ -477,7 +477,11 @@ pub fn node_template_new_full(
 	),
 	ServiceError,
 > {
-	let (components, client) = new_full!(config, node_template_runtime::RuntimeApi, NodeTemplateExecutor);
+	let (components, client) = new_full!(
+		config,
+		node_template_runtime::RuntimeApi,
+		NodeTemplateExecutor
+	);
 
 	Ok((components, client))
 }
