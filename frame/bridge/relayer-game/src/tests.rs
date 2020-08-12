@@ -26,6 +26,14 @@ fn insufficient_bond_should_fail() {
 		.execute_with(|| {
 			let chain = MockTcHeader::mock_raw_chain(vec![1, 1], true);
 
+			{
+				let poor_man = 0;
+				assert_err!(
+					RelayerGame::submit_proposal(Origin::signed(poor_man), chain[..1].to_vec()),
+					RelayerGameError::InsufficientBond
+				);
+			}
+
 			assert_err!(
 				RelayerGame::submit_proposal(Origin::signed(1), chain[..1].to_vec()),
 				RelayerGameError::InsufficientBond
