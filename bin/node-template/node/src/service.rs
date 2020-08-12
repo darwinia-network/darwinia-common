@@ -11,11 +11,13 @@ use std::{sync::Arc, time::Duration};
 use sc_basic_authorship::ProposerFactory;
 use sc_client_api::{ExecutorProvider, StateBackendFor};
 use sc_consensus::LongestChain;
+use sc_consensus_babe::{BabeParams, Config as BabeConfig};
 use sc_executor::{native_executor_instance, NativeExecutionDispatch};
-use sc_consensus_babe::{Config as BabeConfig, BabeParams};
 use sc_finality_grandpa::{
-	Config as GrandpaConfig,GrandpaParams,SharedVoterState as GrandpaSharedVoterState, VotingRulesBuilder as GrandpaVotingRulesBuilder,
-	FinalityProofProvider as GrandpaFinalityProofProvider, StorageAndProofProvider as GrandpaStorageAndProofProvider,
+	Config as GrandpaConfig, FinalityProofProvider as GrandpaFinalityProofProvider, GrandpaParams,
+	SharedVoterState as GrandpaSharedVoterState,
+	StorageAndProofProvider as GrandpaStorageAndProofProvider,
+	VotingRulesBuilder as GrandpaVotingRulesBuilder,
 };
 use sc_service::{
 	config::{KeystoreConfig, PrometheusConfig},
@@ -35,7 +37,6 @@ use crate::rpc;
 use node_template_runtime::{
 	opaque::Block,
 	primitives::{AccountId, Balance, Hash, Nonce, Power},
-	RuntimeApi,
 };
 
 // Our native executor instance.
@@ -275,7 +276,7 @@ macro_rules! new_light {
 
 		let inherent_data_providers = InherentDataProviders::new();
 
-		ServiceBuilder::new_light::<Block, RuntimeApi, NodeTemplateExecutor>($config)?
+		ServiceBuilder::new_light::<Block, $runtime, $dispatch>($config)?
 			.with_select_chain(|_, backend| Ok(LongestChain::new(backend.clone())))?
 			.with_transaction_pool(|builder| {
 				let fetcher = builder.fetcher().ok_or_else(|| {
@@ -472,16 +473,20 @@ pub fn node_template_new_full(
 ) -> Result<
 	(
 		TaskManager,
-		Arc<impl NodeTemplateClient<Block, TFullBackend<Block>, RuntimeApi>>,
+		Arc<impl NodeTemplateClient<Block, TFullBackend<Block>, node_template_runtime::RuntimeApi>>,
 	),
 	ServiceError,
 > {
-	let (components, client) = new_full!(config, RuntimeApi, NodeTemplateExecutor);
+	let (components, client) = new_full!(config, node_template_runtime::RuntimeApi, NodeTemplateExecutor);
 
 	Ok((components, client))
 }
 
 /// Create a new node-template service for a light client.
 pub fn node_template_new_light(mut config: Configuration) -> Result<TaskManager, ServiceError> {
-	new_light!(config, RuntimeApi, NodeTemplateExecutor)
+	new_light!(
+		config,
+		node_template_runtime::RuntimeApi,
+		NodeTemplateExecutor
+	)
 }

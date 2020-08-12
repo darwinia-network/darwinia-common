@@ -40,6 +40,10 @@ impl SubstrateCli for Cli {
 		"node-template".into()
 	}
 
+	fn native_runtime_version(_spec: &Box<dyn sc_service::ChainSpec>) -> &'static RuntimeVersion {
+		&service::node_template_runtime::VERSION
+	}
+
 	fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
 		let id = if id == "" {
 			let n = get_exec_name().unwrap_or_default();
@@ -59,10 +63,6 @@ impl SubstrateCli for Cli {
 				PathBuf::from(path),
 			)?),
 		})
-	}
-
-	fn native_runtime_version(_spec: &Box<dyn sc_service::ChainSpec>) -> &'static RuntimeVersion {
-		&service::node_template_runtime::VERSION
 	}
 }
 impl DarwiniaCli for Cli {
