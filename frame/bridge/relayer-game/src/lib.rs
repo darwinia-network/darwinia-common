@@ -54,7 +54,7 @@ use frame_support::{
 };
 use frame_system::ensure_signed;
 use sp_runtime::{
-	traits::{SaturatedConversion, Saturating, Zero},
+	traits::{CheckedSub, SaturatedConversion, Saturating, Zero},
 	DispatchResult, RuntimeDebug,
 };
 #[cfg(not(feature = "std"))]
@@ -684,11 +684,13 @@ decl_module! {
 					info!(target: "relayer-game", "{:#?}", chain);
 					let (bonds, bonded_chain) = extend_bonded_chain(&chain, 0);
 
-					ensure!(
-						(T::RingCurrency::usable_balance(&relayer)
-							- T::RingCurrency::minimum_balance()) >= bonds,
-						<Error<T, I>>::InsufficientBond
-					);
+					{
+						let use_for_bonds = T::RingCurrency::usable_balance(&relayer)
+							.checked_sub(&T::RingCurrency::minimum_balance())
+							.ok_or(<Error<T, I>>::InsufficientBond)?;
+
+						ensure!(use_for_bonds >= bonds, <Error<T, I>>::InsufficientBond);
+					}
 
 					Self::update_bonds_with(&relayer, |old_bonds| old_bonds.saturating_add(bonds));
 
