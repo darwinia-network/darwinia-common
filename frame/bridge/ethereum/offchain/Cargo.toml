@@ -19,11 +19,11 @@ ethereum-primitives = { default-features = false, path = "../../../../primitives
 # github
 rlp = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.4" }
-frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.4" }
-sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.4" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.4" }
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.4" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
+frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
+sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
 
 [dev-dependencies]
 # crates
@@ -32,8 +32,8 @@ serde_json = { version = "1.0.57" }
 darwinia-balances = { path = "../../../../frame/balances" }
 ethereum-primitives = { features = ["easy-testing"], path = "../../../../primitives/ethereum-primitives" }
 # substrate
-sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.4" }
-sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-rc.darwinia.4" }
+sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
+sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
 
 [features]
 default = ["std"]
