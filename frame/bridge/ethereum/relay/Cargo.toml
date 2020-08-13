@@ -20,6 +20,7 @@ array-bytes = { default-features = false, path = "../../../../primitives/array-b
 darwinia-header-mmr-rpc-runtime-api = { default-features = false, path = "../../../header-mmr/rpc/runtime-api" }
 darwinia-support = { default-features = false, path = "../../../support" }
 ethereum-primitives = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
+darwinia-relayer-game = { default-features = false, path = "../../../bridge/relayer-game" }
 # github
 ckb-merkle-mountain-range = { default-features = false, git= "https://github.com/darwinia-network/merkle-mountain-range.git"}
 ethereum-types = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
@@ -53,6 +54,7 @@ std = [
 	"array-bytes/std",
 	"darwinia-support/std",
 	"ethereum-primitives/std",
+	"darwinia-relayer-game/std",
 	# github
 	"ethereum-types/std",
 	"rlp/std",

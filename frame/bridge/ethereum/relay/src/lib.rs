@@ -65,6 +65,8 @@ pub trait Trait: frame_system::Trait {
 
 	/// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
+
+	type RelayerGame: RelayerGame<Self::AccountId>;
 }
 
 decl_event! {
@@ -170,6 +172,14 @@ decl_module! {
 		type Error = Error<T>;
 
 		fn deposit_event() = default;
+
+		//
+		#[weight = 100_000_000]
+		pub fn relay_header(origin, eth_header_thing: EthHeaderThing) {
+			let relayer = ensure_signed(origin)?;
+			let raw_header_thing: RawHeaderThing = eth_header_thing.encode();
+			T::RelayerGame::submit_proposal(relayer, vec![raw_header_thing])?
+		}
 
 		/// Check and verify the receipt
 		///
@@ -637,7 +647,7 @@ impl<T: Trait> EthereumReceipt<T::AccountId, Balance<T>> for Module<T> {
 pub trait WeightInfo {}
 impl WeightInfo for () {}
 
-#[derive(Encode, Decode, Default, RuntimeDebug)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, Default, RuntimeDebug)]
 pub struct EthHeaderThing {
 	eth_header: EthHeader,
 	ethash_proof: Vec<EthashProof>,

@@ -846,6 +846,7 @@ impl darwinia_ethereum_relay::Trait for Runtime {
 	type Event = Event;
 	type Currency = Ring;
 	type WeightInfo = ();
+	type RelayerGame = RelayerGame;
 }
 
 type EthereumRelayerGameInstance = darwinia_relayer_game::Instance0;

@@ -229,3 +229,7 @@ pub trait EthereumReceipt<AccountId, Balance> {
 
 	fn gen_receipt_index(proof: &Self::EthereumReceiptProof) -> EthTransactionIndex;
 }
+
+pub trait RelayerGame<AccountId> {
+	fn submit_proposal(relayer: AccountId, raw_header_thing_chain: Vec<RawHeaderThing>) -> DispatchResult;
+}
