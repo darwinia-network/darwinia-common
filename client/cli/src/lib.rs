@@ -202,6 +202,15 @@ pub struct Configuration {
 	// conflicts_with_all = &[ "sentry", "public-addr" ]
 	// )]
 	sentry_nodes: Option<Vec<sc_service::config::MultiaddrWithPeerId>>,
+
+	/// Run a temporary node.
+	///
+	/// A temporary directory will be created to store the configuration and will be deleted
+	/// at the end of the process.
+	///
+	/// Note: the directory is random per process execution. This directory is used as base path
+	/// which includes: database, node key and keystore.
+	tmp: Option<bool>,
 }
 impl Configuration {
 	pub fn create_runner<C: SubstrateCli + DarwiniaCli>(
@@ -353,6 +362,7 @@ impl Configuration {
 
 			quick_if_let!(cmd, self, Some(max_runtime_instances));
 			quick_if_let!(cmd, self, sentry_nodes);
+			quick_if_let!(cmd, self, tmp);
 		}
 
 		let mut runner = cli.create_runner(cli.base())?;
