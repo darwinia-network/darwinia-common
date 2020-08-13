@@ -175,10 +175,10 @@ decl_module! {
 
 		//
 		#[weight = 100_000_000]
-		pub fn relay_header(origin, eth_header_thing: EthHeaderThing) {
+		pub fn relay_headers(origin, eth_header_thing_chain: Vec<EthHeaderThing>) {
 			let relayer = ensure_signed(origin)?;
-			let raw_header_thing: RawHeaderThing = eth_header_thing.encode();
-			T::RelayerGame::submit_proposal(relayer, vec![raw_header_thing])?
+			let raw_header_thing_chain = eth_header_thing_chain.iter().map(|x| x.encode()).collect::<Vec<_>>();
+			T::RelayerGame::submit_proposal(relayer, raw_header_thing_chain)?
 		}
 
 		/// Check and verify the receipt
