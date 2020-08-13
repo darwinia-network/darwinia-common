@@ -30,7 +30,8 @@ use codec::{Decode, Encode};
 use frame_support::{debug::error, traits::WithdrawReasons};
 use frame_support::{
 	ensure,
-	traits::{Currency, ExistenceRequirement::KeepAlive, Get},
+	traits::{Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, Get},
+	weights::{DispatchClass, Pays},
 	{decl_error, decl_event, decl_module, decl_storage},
 };
 use frame_system::{ensure_none, ensure_root};
@@ -63,6 +64,8 @@ pub trait Trait: frame_system::Trait {
 	// TODO: support *KTON*
 	// /// The *KTON* currency.
 	// type KtonCurrency: Currency<Self::AccountId>;
+
+	type MoveClaimOrigin: EnsureOrigin<Self::Origin>;
 }
 
 decl_event!(
@@ -85,6 +88,8 @@ decl_error! {
 		/// There's not enough in the pot to pay out some unvested amount. Generally implies a logic
 		/// error.
 		PotUnderflow,
+		/// New Address - INVALID
+		NewAddressI,
 	}
 }
 
@@ -158,8 +163,45 @@ decl_module! {
 		/// Deposit one of this module's events by using the default implementation.
 		fn deposit_event() = default;
 
-		/// Make a claim.
-		#[weight = 1_000_000_000]
+		/// Make a claim to collect your DOTs.
+		///
+		/// The dispatch origin for this call must be _None_.
+		///
+		/// Unsigned Validation:
+		/// A call to claim is deemed valid if the signature provided matches
+		/// the expected signed message of:
+		///
+		/// > Ethereum Signed Message:
+		/// > (configured prefix string)(address)
+		///
+		/// and `address` matches the `dest` account.
+		///
+		/// Parameters:
+		/// - `dest`: The destination account to payout the claim.
+		/// - `ethereum_signature`: The signature of an ethereum signed message
+		///    matching the format described above.
+		///
+		/// <weight>
+		/// The weight of this call is invariant over the input parameters.
+		/// - One `eth_recover` operation which involves a keccak hash and a
+		///   ecdsa recover.
+		/// - Three storage reads to check if a claim exists for the user, to
+		///   get the current pot size, to see if there exists a vesting schedule.
+		/// - Up to one storage write for adding a new vesting schedule.
+		/// - One `deposit_creating` Currency call.
+		/// - One storage write to update the total.
+		/// - Two storage removals for vesting and claims information.
+		/// - One deposit event.
+		///
+		/// Total Complexity: O(1)
+		/// ----------------------------
+		/// Base Weight: 269.7 µs
+		/// DB Weight:
+		/// - Read: Claims
+		/// - Write: Account, Claims
+		/// Validate Unsigned: +188.7 µs
+		/// </weight>
+		#[weight = T::DbWeight::get().reads_writes(1, 2) + 270_000_000 + 190_000_000]
 		fn claim(origin, dest: T::AccountId, signature: OtherSignature) {
 			ensure_none(origin)?;
 
@@ -211,8 +253,33 @@ decl_module! {
 			}
 		}
 
-		/// Add a new claim, if you are root.
-		#[weight = 30_000_000]
+		/// Mint a new claim to collect DOTs.
+		///
+		/// The dispatch origin for this call must be _Root_.
+		///
+		/// Parameters:
+		/// - `who`: The Ethereum address allowed to collect this claim.
+		/// - `value`: The number of DOTs that will be claimed.
+		/// - `vesting_schedule`: An optional vesting schedule for these DOTs.
+		///
+		/// <weight>
+		/// The weight of this call is invariant over the input parameters.
+		/// - One storage mutate to increase the total claims available.
+		/// - One storage write to add a new claim.
+		/// - Up to one storage write to add a new vesting schedule.
+		///
+		/// Total Complexity: O(1)
+		/// ---------------------
+		/// Base Weight: 10.46 µs
+		/// DB Weight:
+		/// - Reads:
+		/// - Writes: Account, Claims
+		/// - Maybe Write: Vesting, Statement
+		/// </weight>
+		#[weight =
+			T::DbWeight::get().reads_writes(0, 2)
+			+ 10_000_000
+		]
 		fn mint_claim(origin, who: OtherAddress, value: RingBalance<T>) {
 			ensure_root(origin)?;
 
@@ -224,6 +291,45 @@ decl_module! {
 				OtherAddress::Tron(who) => {
 					T::RingCurrency::deposit_creating(&Self::account_id(), value);
 					<ClaimsFromTron<T>>::insert(who, value);
+				}
+			}
+		}
+
+		#[weight = (
+			T::DbWeight::get().reads_writes(4, 4) + 100_000_000_000,
+			DispatchClass::Normal,
+			Pays::No
+		)]
+		fn move_claim(origin,
+			old: OtherAddress,
+			new: OtherAddress,
+		) {
+			T::MoveClaimOrigin::try_origin(origin).map(|_| ()).or_else(ensure_root)?;
+
+			match old {
+				OtherAddress::Eth(old) => if let OtherAddress::Eth(new) = new {
+					<ClaimsFromEth<T>>::take(&old).map(|c| <ClaimsFromEth<T>>::mutate(&new, |maybe_overwrite| {
+						if let Some(overwrite) = maybe_overwrite {
+							let _ = T::RingCurrency::deposit_into_existing(&Self::account_id(), c);
+							T::RingCurrency::slash(&Self::account_id(), *overwrite);
+						}
+
+						*maybe_overwrite = Some(c);
+					}));
+				} else {
+					Err(<Error<T>>::NewAddressI)?;
+				},
+				OtherAddress::Tron(old) => if let OtherAddress::Tron(new) = new {
+					<ClaimsFromTron<T>>::take(&old).map(|c| <ClaimsFromTron<T>>::mutate(&new, |maybe_overwrite| {
+						if let Some(overwrite) = maybe_overwrite {
+							let _ = T::RingCurrency::deposit_into_existing(&Self::account_id(), c);
+							T::RingCurrency::slash(&Self::account_id(), *overwrite);
+						}
+
+						*maybe_overwrite = Some(c);
+					}));
+				} else {
+					Err(<Error<T>>::NewAddressI)?;
 				}
 			}
 		}
@@ -412,13 +518,65 @@ fn to_ascii_hex(data: &[u8]) -> Vec<u8> {
 	r
 }
 
+#[cfg(any(test, feature = "runtime-benchmarks"))]
+mod secp_utils {
+	// --- crates ---
+	use sp_io::hashing::keccak_256;
+	// --- custom ---
+	use crate::*;
+
+	pub fn public(secret: &secp256k1::SecretKey) -> secp256k1::PublicKey {
+		secp256k1::PublicKey::from_secret_key(secret)
+	}
+
+	pub fn addr(secret: &secp256k1::SecretKey) -> AddressT {
+		let mut res = AddressT::default();
+		res.copy_from_slice(&keccak_256(&public(secret).serialize()[1..65])[12..]);
+		res
+	}
+
+	pub fn eth_sig<T: Trait>(
+		secret: &secp256k1::SecretKey,
+		what: &[u8],
+		signed_message: &[u8],
+	) -> EcdsaSignature {
+		let msg = keccak_256(&<super::Module<T>>::eth_signable_message(
+			&to_ascii_hex(what)[..],
+			signed_message,
+		));
+		let (sig, recovery_id) = secp256k1::sign(&secp256k1::Message::parse(&msg), secret);
+		let mut r = [0u8; 65];
+		r[0..64].copy_from_slice(&sig.serialize()[..]);
+		r[64] = recovery_id.serialize();
+		EcdsaSignature(r)
+	}
+
+	pub fn tron_sig<T: Trait>(
+		secret: &secp256k1::SecretKey,
+		what: &[u8],
+		signed_message: &[u8],
+	) -> EcdsaSignature {
+		let msg = keccak_256(&<super::Module<T>>::tron_signable_message(
+			&to_ascii_hex(what)[..],
+			signed_message,
+		));
+		let (sig, recovery_id) = secp256k1::sign(&secp256k1::Message::parse(&msg), secret);
+		let mut r = [0u8; 65];
+		r[0..64].copy_from_slice(&sig.serialize()[..]);
+		r[64] = recovery_id.serialize();
+		EcdsaSignature(r)
+	}
+}
+
 #[cfg(test)]
 mod tests {
 	// --- crates ---
 	use codec::Encode;
-	use tiny_keccak::keccak256;
 	// --- substrate ---
-	use frame_support::{assert_err, assert_noop, assert_ok, impl_outer_origin, parameter_types};
+	use frame_support::{
+		assert_err, assert_noop, assert_ok, dispatch::DispatchError::BadOrigin, impl_outer_origin,
+		ord_parameter_types, parameter_types,
+	};
 	use sp_core::H256;
 	use sp_runtime::{
 		testing::Header,
@@ -426,7 +584,7 @@ mod tests {
 		Perbill,
 	};
 	// --- darwinia ---
-	use crate::*;
+	use crate::{secp_utils::*, *};
 	use array_bytes::fixed_hex_bytes_unchecked;
 
 	type Balance = u64;
@@ -463,6 +621,20 @@ mod tests {
 
 	#[derive(Clone, Eq, PartialEq)]
 	pub struct Test;
+	parameter_types! {
+		pub const ClaimsModuleId: ModuleId = ModuleId(*b"da/claim");
+		pub Prefix: &'static [u8] = b"Pay RUSTs to the TEST account:";
+	}
+	ord_parameter_types! {
+		pub const Six: u64 = 6;
+	}
+	impl Trait for Test {
+		type Event = ();
+		type ModuleId = ClaimsModuleId;
+		type Prefix = Prefix;
+		type RingCurrency = Ring;
+		type MoveClaimOrigin = frame_system::EnsureSignedBy<Six, u64>;
+	}
 
 	parameter_types! {
 		pub const BlockHashCount: u32 = 250;
@@ -514,64 +686,14 @@ mod tests {
 		type DustCollector = ();
 	}
 
-	parameter_types! {
-		pub const ClaimsModuleId: ModuleId = ModuleId(*b"da/claim");
-		pub Prefix: &'static [u8] = b"Pay RUSTs to the TEST account:";
-	}
-	impl Trait for Test {
-		type Event = ();
-		type ModuleId = ClaimsModuleId;
-		type Prefix = Prefix;
-		type RingCurrency = Ring;
-	}
-
 	fn alice() -> secp256k1::SecretKey {
-		secp256k1::SecretKey::parse(&keccak256(b"Alice")).unwrap()
+		secp256k1::SecretKey::parse(&keccak_256(b"Alice")).unwrap()
 	}
 	fn bob() -> secp256k1::SecretKey {
-		secp256k1::SecretKey::parse(&keccak256(b"Bob")).unwrap()
+		secp256k1::SecretKey::parse(&keccak_256(b"Bob")).unwrap()
 	}
 	fn carol() -> secp256k1::SecretKey {
-		secp256k1::SecretKey::parse(&keccak256(b"Carol")).unwrap()
-	}
-	fn public(secret: &secp256k1::SecretKey) -> secp256k1::PublicKey {
-		secp256k1::PublicKey::from_secret_key(secret)
-	}
-	fn addr(secret: &secp256k1::SecretKey) -> AddressT {
-		let mut res = AddressT::default();
-		res.copy_from_slice(&keccak256(&public(secret).serialize()[1..65])[12..]);
-		res
-	}
-	fn eth_sig(
-		secret: &secp256k1::SecretKey,
-		what: &[u8],
-		signed_message: &[u8],
-	) -> EcdsaSignature {
-		let msg = keccak256(&Claims::eth_signable_message(
-			&to_ascii_hex(what)[..],
-			signed_message,
-		));
-		let (sig, recovery_id) = secp256k1::sign(&secp256k1::Message::parse(&msg), secret);
-		let mut r = [0u8; 65];
-		r[0..64].copy_from_slice(&sig.serialize()[..]);
-		r[64] = recovery_id.serialize();
-		EcdsaSignature(r)
-	}
-
-	fn tron_sig(
-		secret: &secp256k1::SecretKey,
-		what: &[u8],
-		signed_message: &[u8],
-	) -> EcdsaSignature {
-		let msg = keccak256(&Claims::tron_signable_message(
-			&to_ascii_hex(what)[..],
-			signed_message,
-		));
-		let (sig, recovery_id) = secp256k1::sign(&secp256k1::Message::parse(&msg), secret);
-		let mut r = [0u8; 65];
-		r[0..64].copy_from_slice(&sig.serialize()[..]);
-		r[64] = recovery_id.serialize();
-		EcdsaSignature(r)
+		secp256k1::SecretKey::parse(&keccak_256(b"Carol")).unwrap()
 	}
 
 	// This function basically just builds a genesis storage key/value store according to
@@ -603,6 +725,10 @@ mod tests {
 		.assimilate_storage::<Test>(&mut t)
 		.unwrap();
 		t.into()
+	}
+
+	fn total_claims() -> u64 {
+		100 + 200 + 300
 	}
 
 	#[test]
@@ -649,7 +775,11 @@ mod tests {
 			assert_ok!(Claims::claim(
 				Origin::none(),
 				1,
-				OtherSignature::Eth(eth_sig(&alice(), &1u64.encode(), ETHEREUM_SIGNED_MESSAGE)),
+				OtherSignature::Eth(eth_sig::<Test>(
+					&alice(),
+					&1u64.encode(),
+					ETHEREUM_SIGNED_MESSAGE
+				)),
 			));
 			assert_eq!(Ring::free_balance(&1), 100);
 			assert_eq!(Ring::usable_balance(&Claims::account_id()), 500);
@@ -658,7 +788,11 @@ mod tests {
 			assert_ok!(Claims::claim(
 				Origin::none(),
 				2,
-				OtherSignature::Eth(eth_sig(&bob(), &2u64.encode(), ETHEREUM_SIGNED_MESSAGE)),
+				OtherSignature::Eth(eth_sig::<Test>(
+					&bob(),
+					&2u64.encode(),
+					ETHEREUM_SIGNED_MESSAGE
+				)),
 			));
 			assert_eq!(Ring::free_balance(&2), 200);
 			assert_eq!(Ring::usable_balance(&Claims::account_id()), 300);
@@ -667,10 +801,77 @@ mod tests {
 			assert_ok!(Claims::claim(
 				Origin::none(),
 				3,
-				OtherSignature::Tron(tron_sig(&carol(), &3u64.encode(), TRON_SIGNED_MESSAGE)),
+				OtherSignature::Tron(tron_sig::<Test>(
+					&carol(),
+					&3u64.encode(),
+					TRON_SIGNED_MESSAGE
+				)),
 			));
 			assert_eq!(Ring::free_balance(&3), 300);
 			assert_eq!(Ring::usable_balance(&Claims::account_id()), 0);
+		});
+	}
+
+	#[test]
+	fn basic_claim_moving_works() {
+		new_test_ext().execute_with(|| {
+			let alice_held = Claims::claims_from_eth(&addr(&alice())).unwrap();
+			let bob_held = Claims::claims_from_eth(&addr(&bob())).unwrap();
+
+			assert_eq!(Ring::free_balance(42), 0);
+			assert_noop!(
+				Claims::move_claim(
+					Origin::signed(1),
+					OtherAddress::Eth(addr(&alice())),
+					OtherAddress::Eth(addr(&bob())),
+				),
+				BadOrigin
+			);
+			assert_noop!(
+				Claims::move_claim(
+					Origin::signed(6),
+					OtherAddress::Eth(addr(&alice())),
+					OtherAddress::Tron(addr(&bob())),
+				),
+				<Error<Test>>::NewAddressI
+			);
+			assert_ok!(Claims::move_claim(
+				Origin::signed(6),
+				OtherAddress::Eth(addr(&alice())),
+				OtherAddress::Eth(addr(&bob())),
+			));
+			assert_noop!(
+				Claims::claim(
+					Origin::none(),
+					42,
+					OtherSignature::Eth(eth_sig::<Test>(
+						&alice(),
+						&42u64.encode(),
+						ETHEREUM_SIGNED_MESSAGE
+					))
+				),
+				<Error<Test>>::SignerHasNoClaim
+			);
+
+			let new_bob_held = alice_held;
+
+			assert_ok!(Claims::claim(
+				Origin::none(),
+				42,
+				OtherSignature::Eth(eth_sig::<Test>(
+					&bob(),
+					&42u64.encode(),
+					ETHEREUM_SIGNED_MESSAGE
+				))
+			));
+			assert_eq!(Ring::free_balance(&42), new_bob_held);
+
+			let claimed = new_bob_held;
+
+			assert_eq!(
+				Ring::usable_balance(&Claims::account_id()),
+				total_claims() - bob_held + alice_held - claimed
+			);
 		});
 	}
 
@@ -686,7 +887,7 @@ mod tests {
 				Claims::claim(
 					Origin::none(),
 					69,
-					OtherSignature::Eth(eth_sig(
+					OtherSignature::Eth(eth_sig::<Test>(
 						&carol(),
 						&69u64.encode(),
 						ETHEREUM_SIGNED_MESSAGE
@@ -703,7 +904,11 @@ mod tests {
 			assert_ok!(Claims::claim(
 				Origin::none(),
 				69,
-				OtherSignature::Eth(eth_sig(&carol(), &69u64.encode(), ETHEREUM_SIGNED_MESSAGE)),
+				OtherSignature::Eth(eth_sig::<Test>(
+					&carol(),
+					&69u64.encode(),
+					ETHEREUM_SIGNED_MESSAGE
+				)),
 			));
 			assert_eq!(Ring::free_balance(&69), 200);
 			assert_eq!(Ring::usable_balance(&Claims::account_id()), 600);
@@ -718,7 +923,7 @@ mod tests {
 				Claims::claim(
 					Origin::signed(42),
 					42,
-					OtherSignature::Eth(eth_sig(
+					OtherSignature::Eth(eth_sig::<Test>(
 						&alice(),
 						&42u64.encode(),
 						ETHEREUM_SIGNED_MESSAGE
@@ -736,13 +941,17 @@ mod tests {
 			assert_ok!(Claims::claim(
 				Origin::none(),
 				42,
-				OtherSignature::Eth(eth_sig(&alice(), &42u64.encode(), ETHEREUM_SIGNED_MESSAGE)),
+				OtherSignature::Eth(eth_sig::<Test>(
+					&alice(),
+					&42u64.encode(),
+					ETHEREUM_SIGNED_MESSAGE
+				)),
 			));
 			assert_noop!(
 				Claims::claim(
 					Origin::none(),
 					42,
-					OtherSignature::Eth(eth_sig(
+					OtherSignature::Eth(eth_sig::<Test>(
 						&alice(),
 						&42u64.encode(),
 						ETHEREUM_SIGNED_MESSAGE
@@ -761,7 +970,7 @@ mod tests {
 				Claims::claim(
 					Origin::none(),
 					42,
-					OtherSignature::Eth(eth_sig(
+					OtherSignature::Eth(eth_sig::<Test>(
 						&alice(),
 						&69u64.encode(),
 						ETHEREUM_SIGNED_MESSAGE
@@ -780,7 +989,7 @@ mod tests {
 				Claims::claim(
 					Origin::none(),
 					42,
-					OtherSignature::Eth(eth_sig(
+					OtherSignature::Eth(eth_sig::<Test>(
 						&carol(),
 						&69u64.encode(),
 						ETHEREUM_SIGNED_MESSAGE
@@ -828,7 +1037,7 @@ mod tests {
 					source,
 					&Call::claim(
 						1,
-						OtherSignature::Eth(eth_sig(
+						OtherSignature::Eth(eth_sig::<Test>(
 							&alice(),
 							&1u64.encode(),
 							ETHEREUM_SIGNED_MESSAGE
@@ -855,7 +1064,7 @@ mod tests {
 					source,
 					&Call::claim(
 						1,
-						OtherSignature::Eth(eth_sig(
+						OtherSignature::Eth(eth_sig::<Test>(
 							&carol(),
 							&1u64.encode(),
 							ETHEREUM_SIGNED_MESSAGE
@@ -869,7 +1078,7 @@ mod tests {
 					source,
 					&Call::claim(
 						0,
-						OtherSignature::Eth(eth_sig(
+						OtherSignature::Eth(eth_sig::<Test>(
 							&carol(),
 							&1u64.encode(),
 							ETHEREUM_SIGNED_MESSAGE
