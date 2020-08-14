@@ -49,7 +49,7 @@ use frame_support::{
 	debug::{error, info},
 	decl_error, decl_event, decl_module, decl_storage, ensure,
 	storage::IterableStorageMap,
-	traits::{Currency, EnsureOrigin, ExistenceRequirement, Get, OnUnbalanced},
+	traits::{Currency, ExistenceRequirement, Get, OnUnbalanced},
 	weights::Weight,
 };
 use sp_runtime::{
@@ -86,10 +86,6 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	type TargetChain: Relayable;
 
 	type ConfirmPeriod: Get<Self::BlockNumber>;
-
-	type ApproveOrigin: EnsureOrigin<Self::Origin>;
-
-	type RejectOrigin: EnsureOrigin<Self::Origin>;
 
 	/// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
@@ -662,6 +658,21 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 }
 
 impl<T: Trait<I>, I: Instance> RelayerGame<T::AccountId> for Module<T, I> {
+	// type TcBlockNumber = types::TcBlockNumber<T, I>;
+
+	fn approve_pending_header(pending_block_number: u64) -> DispatchResult {
+		Self::update_pending_headers_with(
+			pending_block_number.saturated_into(),
+			|header| T::TargetChain::store_header(header)
+		)?;
+		Ok(())
+	}
+
+	fn reject_pending_header(pending_block_number: u64) -> DispatchResult {
+		Self::update_pending_headers_with(pending_block_number.saturated_into(), |_| Ok(()))?;
+		Ok(())
+	}
+
 	// TODO:
 	//	The `header_thing_chain` could be very large,
 	//	the bond should relate to the bytes fee
