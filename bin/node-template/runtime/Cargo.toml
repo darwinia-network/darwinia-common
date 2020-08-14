@@ -79,7 +79,10 @@ std = [
 	"substrate-std",
 ]
 
-crates-std    = ["codec/std", "serde"]
+crates-std    = [
+	"codec/std",
+	"serde",
+]
 darwinia-std  = [
 	"darwinia-balances/std",
 	"darwinia-balances-rpc-runtime-api/std",
