@@ -21,7 +21,7 @@ pub mod constants {
 	pub const BLOCKS_PER_SESSION: BlockNumber = MINUTES;
 	pub const SESSIONS_PER_ERA: SessionIndex = 3;
 
-	// These time units are defined in number of blocks.
+	// Time is measured by number of blocks.
 	pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 	pub const HOURS: BlockNumber = 60 * MINUTES;
 	pub const DAYS: BlockNumber = 24 * HOURS;

@@ -15,8 +15,8 @@ use darwinia_ethereum_linear_relay::DagsMerkleRootsLoader as DagsMerkleRootsLoad
 use darwinia_ethereum_relay::DagsMerkleRootsLoader as DagsMerkleRootsLoaderR;
 use node_template_runtime::{BalancesConfig as RingConfig, *};
 
-// Note this is the URL for the telemetry server
-//const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
+// The URL for the telemetry server.
+// const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
 /// Specialized `NodeTemplateChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type NodeTemplateChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
@@ -48,7 +48,7 @@ pub fn properties() -> Properties {
 	properties
 }
 
-/// Helper function to generate a crypto pair from seed
+/// Generate a crypto pair from seed.
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
 	TPublic::Pair::from_string(&format!("//{}", seed), None)
 		.expect("static values are valid; qed")
@@ -57,7 +57,7 @@ pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Pu
 
 type AccountPublic = <Signature as Verify>::Signer;
 
-/// Helper function to generate an account ID from seed
+/// Generate an account ID from seed.
 pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
 where
 	AccountPublic: From<<TPublic::Pair as Pair>::Public>,
