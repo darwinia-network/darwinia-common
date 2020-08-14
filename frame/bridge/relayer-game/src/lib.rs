@@ -877,8 +877,8 @@ impl<T: Trait<I>, I: Instance> RelayerGame<T::AccountId> for Module<T, I> {
 					);
 					Ok(())
 				} else {
-					// Err(<Error<T, I>>::RoundMis)
-					Err(DispatchError::Other("hello"))
+					Err(<Error<T, I>>::RoundMis)?;
+					Ok(())
 				}
 			}
 		}
