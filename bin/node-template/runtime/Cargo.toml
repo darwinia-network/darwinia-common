@@ -73,7 +73,11 @@ wasm-builder-runner = { package = "substrate-wasm-builder-runner", git = "https:
 [features]
 default = ["std"]
 
-std = ["crates-std", "darwinia-std", "substrate-std"]
+std = [
+	"crates-std",
+	"darwinia-std",
+	"substrate-std",
+]
 
 crates-std    = ["codec/std", "serde"]
 darwinia-std  = [

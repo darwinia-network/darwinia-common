@@ -22,7 +22,11 @@ sp-std     = { default-features = false, git = "https://github.com/darwinia-netw
 [features]
 default = ["std"]
 
-std = ["crates-std", "darwinia-std", "substrate-std"]
+std = [
+	"crates-std",
+	"darwinia-std",
+	"substrate-std",
+]
 
 crates-std    = [
 	"codec/std",

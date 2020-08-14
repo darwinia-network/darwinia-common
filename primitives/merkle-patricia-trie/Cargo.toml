@@ -32,7 +32,10 @@ uuid           = { version = "0.8.1", features = ["serde", "v4"] }
 [features]
 default = ["std"]
 
-std = ["github-std", "substrate-std"]
+std = [
+	"github-std",
+	"substrate-std",
+]
 
 github-std    = [
 	"hash/std",

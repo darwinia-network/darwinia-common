@@ -43,7 +43,12 @@ frame-support = { git = "https://github.com/darwinia-network/substrate.git", tag
 [features]
 default = ["std"]
 
-std = ["crates-std", "github-std", "darwinia-std", "substrate-std"]
+std = [
+	"crates-std",
+	"github-std",
+	"darwinia-std",
+	"substrate-std",
+]
 
 crates-std    = [
 	"codec/std",

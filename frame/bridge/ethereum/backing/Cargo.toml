@@ -42,7 +42,12 @@ sp-staking       = { git = "https://github.com/darwinia-network/substrate.git", 
 [features]
 default = ["std"]
 
-std = ["crates-std", "darwinia-std", "github-std", "substrate-std"]
+std = [
+	"crates-std",
+	"darwinia-std",
+	"github-std",
+	"substrate-std",
+]
 
 crates-std    = [
 	"codec/std",
