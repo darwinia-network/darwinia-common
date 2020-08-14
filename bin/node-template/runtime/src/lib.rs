@@ -329,6 +329,16 @@ pub mod wasm {
 	#[cfg(all(feature = "std", not(any(target_arch = "x86_64", target_arch = "x86"))))]
 	pub const WASM_BINARY_BLOATY: &[u8] =
 		include_bytes!("../../../../wasm/node_template_runtime.wasm");
+
+	#[cfg(feature = "std")]
+	/// Wasm binary unwrapped. If built with `BUILD_DUMMY_WASM_BINARY`, the function panics.
+	pub fn wasm_binary_unwrap() -> &'static [u8] {
+		WASM_BINARY.expect(
+			"Development wasm binary is not available. This means the client is \
+						built with `BUILD_DUMMY_WASM_BINARY` flag and it is only usable for \
+						production chains. Please rebuild with the flag disabled.",
+		)
+	}
 }
 
 // --- darwinia ---
