@@ -1,62 +1,67 @@
 [package]
-name = "darwinia-ethereum-relay"
-version = "1.0.0-alpha.1"
-authors = ["Darwinia Network <hello@darwinia.network>"]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+build       = "build.rs"
 description = "FRAME pallet to relay Ethereum headers"
-edition = "2018"
-license = "GPL-3.0"
-homepage = "https://darwinia.network/"
-repository = "https://github.com/darwinia-network/darwinia-common/"
-build = "build.rs"
+edition     = "2018"
+homepage    = "https://darwinia.network/"
+license     = "GPL-3.0"
+name        = "darwinia-ethereum-relay"
+repository  = "https://github.com/darwinia-network/darwinia-common/"
+version     = "1.0.0-alpha.1"
 
 [dependencies]
 # crates
 blake2-rfc = { default-features = false, version = "0.2.18" }
-codec = { package = "parity-scale-codec", version = "1.3.4", default-features = false }
-serde = { version = "1.0.115", optional = true }
+codec      = { package = "parity-scale-codec", version = "1.3.4", default-features = false }
+serde      = { version = "1.0.115", optional = true }
 serde_json = { version = "1.0.57", optional = true }
 # darwinia
-array-bytes = { default-features = false, path = "../../../../primitives/array-bytes" }
+array-bytes                         = { default-features = false, path = "../../../../primitives/array-bytes" }
 darwinia-header-mmr-rpc-runtime-api = { default-features = false, path = "../../../header-mmr/rpc/runtime-api" }
-darwinia-support = { default-features = false, path = "../../../support" }
-ethereum-primitives = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
+darwinia-support                    = { default-features = false, path = "../../../support" }
+ethereum-primitives                 = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
 # github
-ckb-merkle-mountain-range = { default-features = false, git= "https://github.com/darwinia-network/merkle-mountain-range.git"}
-ethereum-types = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
-rlp = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
+ckb-merkle-mountain-range = { default-features = false, git = "https://github.com/darwinia-network/merkle-mountain-range.git" }
+ethereum-types            = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
+rlp                       = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
-frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
-sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
+sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
 
 [dev-dependencies]
 # crates
 serde_json = { version = "1.0.57" }
 # darwinia
-darwinia-balances = { path = "../../../../frame/balances" }
+darwinia-balances   = { path = "../../../../frame/balances" }
 ethereum-primitives = { features = ["easy-testing"], path = "../../../../primitives/ethereum-primitives" }
 # substrate
 sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
-sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
+sp-io   = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
 
 [features]
 default = ["std"]
-std = [
-	# crates
+
+std = ["crates-std", "darwinia-std", "github-std", "substrate-std"]
+
+crates-std    = [
 	"blake2-rfc/std",
 	"codec/std",
 	"serde",
 	"serde_json",
-	# darwinia
+]
+darwinia-std  = [
 	"array-bytes/std",
 	"darwinia-support/std",
 	"ethereum-primitives/std",
-	# github
+]
+github-std    = [
 	"ethereum-types/std",
 	"rlp/std",
-	# substrate
+]
+substrate-std = [
 	"frame-support/std",
 	"frame-system/std",
 	"sp-core/std",

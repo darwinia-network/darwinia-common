@@ -1,12 +1,12 @@
 [package]
-name = "darwinia-treasury"
-version = "1.0.0-alpha.1"
-authors = ["Darwinia Network <hello@darwinia.network>"]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
 description = "FRAME pallet to manage treasury"
-edition = "2018"
-license = "GPL-3.0"
-homepage = "https://darwinia.network/"
-repository = "https://github.com/darwinia-network/darwinia-common/"
+edition     = "2018"
+homepage    = "https://darwinia.network/"
+license     = "GPL-3.0"
+name        = "darwinia-treasury"
+repository  = "https://github.com/darwinia-network/darwinia-common/"
+version     = "1.0.0-alpha.1"
 
 [dependencies]
 # crates
@@ -16,27 +16,29 @@ serde = { version = "1.0.115", optional = true, features = ["derive"] }
 darwinia-support = { default-features = false, path = "../support" }
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
-frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
 
 [dev-dependencies]
 # darwinia
 darwinia-balances = { path = "../balances" }
 # substrate
-sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
-sp-io = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
+sp-core    = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
+sp-io      = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
 sp-storage = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
 
 [features]
 default = ["std"]
-std = [
-	# crates
+
+std = ["crates-std", "darwinia-std", "substrate-std"]
+
+crates-std    = [
 	"codec/std",
 	"serde",
-	# darwinia
-	"darwinia-support/std",
-	# substrate
+]
+darwinia-std  = ["darwinia-support/std"]
+substrate-std = [
 	"frame-support/std",
 	"frame-system/std",
 	"sp-runtime/std",

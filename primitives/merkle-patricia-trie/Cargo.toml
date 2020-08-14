@@ -1,40 +1,41 @@
 [package]
-name = "merkle-patricia-trie"
-version = "1.0.0-alpha.1"
-authors = ["Darwinia Network <hello@darwinia.network>"]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
 description = "Merkle-Patricia Trie (Ethereum Style)"
-edition = "2018"
-license = "GPL-3.0"
-homepage = "https://darwinia.network/"
-repository = "https://github.com/darwinia-network/darwinia-common/"
+edition     = "2018"
+homepage    = "https://darwinia.network/"
+license     = "GPL-3.0"
+name        = "merkle-patricia-trie"
+repository  = "https://github.com/darwinia-network/darwinia-common/"
+version     = "1.0.0-alpha.1"
+
+[[bench]]
+harness = false
+name    = "trie"
 
 [dependencies]
 # crates
-hashbrown = { version = "0.8.1" }
+hashbrown = { version = "0.8.2" }
 # github
 hash = { package = "keccak-hash", default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
-rlp = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
+rlp  = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
 sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
 
 [dev-dependencies]
 # crates
-criterion = { version = "0.3.3" }
+criterion      = { version = "0.3.3" }
 ethereum-types = { version = "0.5.2" }
-hex = { version = "0.4.2" }
-rand = { version = "0.7.3" }
-uuid = { version = "0.8.1", features = ["serde", "v4"] }
+hex            = { version = "0.4.2" }
+rand           = { version = "0.7.3" }
+uuid           = { version = "0.8.1", features = ["serde", "v4"] }
 
 [features]
 default = ["std"]
-std = [
-	# github
+
+std = ["github-std", "substrate-std"]
+
+github-std    = [
 	"hash/std",
 	"rlp/std",
-	# substrate
-	"sp-std/std",
 ]
-
-[[bench]]
-name = "trie"
-harness = false
+substrate-std = ["sp-std/std"]
