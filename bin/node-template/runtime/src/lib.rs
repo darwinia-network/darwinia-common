@@ -215,7 +215,6 @@ pub mod primitives {
 		/// An `AppCrypto` type to allow submitting signed transactions using the reporting
 		/// application key as signer.
 		pub struct ReporterAppCrypto;
-
 		impl AppCrypto<<Signature as Verify>::Signer, Signature> for ReporterAppCrypto {
 			type RuntimeAppPublic = ReporterId;
 			type GenericPublic = sp_core::sr25519::Public;
@@ -1147,9 +1146,8 @@ impl_runtime_apis! {
 	impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<
 		Block,
 		Balance,
-		UncheckedExtrinsic,
 	> for Runtime {
-		fn query_info(uxt: UncheckedExtrinsic, len: u32) -> TransactionPaymentRuntimeDispatchInfo<Balance> {
+		fn query_info(uxt: <Block as BlockT>::Extrinsic, len: u32) -> TransactionPaymentRuntimeDispatchInfo<Balance> {
 			TransactionPayment::query_info(uxt, len)
 		}
 	}

@@ -358,7 +358,7 @@ macro_rules! new_light {
 }
 
 /// A set of APIs that polkadot-like runtimes must implement.
-pub trait RuntimeApiCollection<Extrinsic: 'static + Send + Sync + codec::Codec>:
+pub trait RuntimeApiCollection:
 	sp_api::ApiExt<Block, Error = sp_blockchain::Error>
 	+ sp_api::Metadata<Block>
 	+ sp_authority_discovery::AuthorityDiscoveryApi<Block>
@@ -368,16 +368,15 @@ pub trait RuntimeApiCollection<Extrinsic: 'static + Send + Sync + codec::Codec>:
 	+ sp_session::SessionKeys<Block>
 	+ sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 	+ frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce>
-	+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance, Extrinsic>
+	+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
 	+ darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance>
 	+ darwinia_header_mmr_rpc_runtime_api::HeaderMMRApi<Block, Hash>
 	+ darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>
 where
-	Extrinsic: RuntimeExtrinsic,
 	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
 {
 }
-impl<Api, Extrinsic> RuntimeApiCollection<Extrinsic> for Api
+impl<Api> RuntimeApiCollection for Api
 where
 	Api: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 		+ sp_api::ApiExt<Block, Error = sp_blockchain::Error>
@@ -388,17 +387,13 @@ where
 		+ sp_offchain::OffchainWorkerApi<Block>
 		+ sp_session::SessionKeys<Block>
 		+ frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce>
-		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance, Extrinsic>
+		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
 		+ darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance>
 		+ darwinia_header_mmr_rpc_runtime_api::HeaderMMRApi<Block, Hash>
 		+ darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>,
-	Extrinsic: RuntimeExtrinsic,
 	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
 {
 }
-
-pub trait RuntimeExtrinsic: codec::Codec + Send + Sync + 'static {}
-impl<E> RuntimeExtrinsic for E where E: codec::Codec + Send + Sync + 'static {}
 
 /// node-template client abstraction, this super trait only pulls in functionality required for
 /// node-template internal crates like node-template-collator.
@@ -440,7 +435,7 @@ fn set_prometheus_registry(config: &mut Configuration) -> Result<(), ServiceErro
 }
 
 /// Builds a new object suitable for chain operations.
-pub fn new_chain_ops<Runtime, Dispatch, Extrinsic>(
+pub fn new_chain_ops<Runtime, Dispatch>(
 	mut config: Configuration,
 ) -> Result<
 	(
@@ -455,9 +450,8 @@ where
 	Runtime:
 		'static + Send + Sync + ConstructRuntimeApi<Block, TFullClient<Block, Runtime, Dispatch>>,
 	Runtime::RuntimeApi:
-		RuntimeApiCollection<Extrinsic, StateBackend = StateBackendFor<TFullBackend<Block>, Block>>,
+		RuntimeApiCollection<StateBackend = StateBackendFor<TFullBackend<Block>, Block>>,
 	Dispatch: 'static + NativeExecutionDispatch,
-	Extrinsic: RuntimeExtrinsic,
 {
 	config.keystore = KeystoreConfig::InMemory;
 
@@ -477,7 +471,11 @@ pub fn node_template_new_full(
 	),
 	ServiceError,
 > {
-	let (components, client) = new_full!(config, node_template_runtime::RuntimeApi, NodeTemplateExecutor);
+	let (components, client) = new_full!(
+		config,
+		node_template_runtime::RuntimeApi,
+		NodeTemplateExecutor
+	);
 
 	Ok((components, client))
 }
