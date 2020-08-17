@@ -340,6 +340,9 @@ pub mod wasm {
 	}
 }
 
+/// Weights for pallets used in the runtime.
+mod weights;
+
 // --- darwinia ---
 pub use darwinia_staking::StakerStatus;
 pub use primitives::*;
@@ -503,8 +506,8 @@ impl darwinia_balances::Trait<RingInstance> for Runtime {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
-	type WeightInfo = ();
 	type DustCollector = (Kton,);
+	type WeightInfo = weights::darwinia_balances::WeightInfo;
 }
 type KtonInstance = darwinia_balances::Instance1;
 impl darwinia_balances::Trait<KtonInstance> for Runtime {
@@ -514,8 +517,8 @@ impl darwinia_balances::Trait<KtonInstance> for Runtime {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
-	type WeightInfo = ();
 	type DustCollector = (Ring,);
+	type WeightInfo = weights::darwinia_balances::WeightInfo;
 }
 
 /// Parameterized slow adjusting fee updated based on
