@@ -641,13 +641,13 @@ pub trait Trait: frame_system::Trait + SendTransactionTypes<Call<Self>> {
 	/// Handler for the unbalanced *KTON* increment when rewarding a staker.
 	type KtonReward: OnUnbalanced<KtonPositiveImbalance<Self>>;
 
-	/// Weight information for extrinsics in this pallet.
-	type WeightInfo: WeightInfo;
-
 	// TODO: doc
 	type Cap: Get<RingBalance<Self>>;
 	// TODO: doc
 	type TotalPower: Get<Power>;
+
+	/// Weight information for extrinsics in this pallet.
+	type WeightInfo: WeightInfo;
 }
 
 decl_storage! {

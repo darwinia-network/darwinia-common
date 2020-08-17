@@ -110,8 +110,8 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 	type ExistentialDeposit = ();
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
-	type WeightInfo = ();
 	type DustCollector = ();
+	type WeightInfo = ();
 }
 
 pub struct ExtBuilder {}

@@ -340,8 +340,8 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
-	type WeightInfo = ();
 	type DustCollector = (Kton,);
+	type WeightInfo = ();
 }
 impl darwinia_balances::Trait<KtonInstance> for Test {
 	type Balance = Balance;
@@ -350,8 +350,8 @@ impl darwinia_balances::Trait<KtonInstance> for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
-	type WeightInfo = ();
 	type DustCollector = (Ring,);
+	type WeightInfo = ();
 }
 
 pub struct RelayerGameAdjustor;

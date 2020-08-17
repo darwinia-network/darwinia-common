@@ -600,9 +600,9 @@ impl darwinia_staking::Trait for Runtime {
 	type KtonSlash = Treasury;
 	// rewards are minted from the void
 	type KtonReward = ();
-	type WeightInfo = ();
 	type Cap = Cap;
 	type TotalPower = TotalPower;
+	type WeightInfo = ();
 }
 
 parameter_types! {

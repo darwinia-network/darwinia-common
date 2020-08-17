@@ -314,8 +314,8 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
-	type WeightInfo = ();
 	type DustCollector = (Kton,);
+	type WeightInfo = ();
 }
 impl darwinia_balances::Trait<KtonInstance> for Test {
 	type Balance = Balance;
@@ -324,8 +324,8 @@ impl darwinia_balances::Trait<KtonInstance> for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
-	type WeightInfo = ();
 	type DustCollector = (Ring,);
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -353,7 +353,6 @@ impl Trait for Test {
 	type MinSolutionScoreBump = MinSolutionScoreBump;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
 	type UnsignedPriority = UnsignedPriority;
-	type WeightInfo = ();
 	type RingCurrency = Ring;
 	type RingRewardRemainder = RingRewardRemainderMock;
 	type RingSlash = ();
@@ -363,6 +362,7 @@ impl Trait for Test {
 	type KtonReward = ();
 	type Cap = Cap;
 	type TotalPower = TotalPower;
+	type WeightInfo = ();
 }
 
 impl<LocalCall> frame_system::offchain::SendTransactionTypes<LocalCall> for Test
