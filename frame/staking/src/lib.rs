@@ -3892,11 +3892,11 @@ where
 }
 impl<RingBalance, KtonBalance> Default for StakingBalance<RingBalance, KtonBalance>
 where
-	RingBalance: Default + HasCompact,
-	KtonBalance: Default + HasCompact,
+	RingBalance: Zero + HasCompact,
+	KtonBalance: Zero + HasCompact,
 {
 	fn default() -> Self {
-		StakingBalance::RingBalance(Default::default())
+		StakingBalance::RingBalance(Zero::zero())
 	}
 }
 
@@ -3931,11 +3931,10 @@ pub struct ValidatorPrefs {
 	#[codec(compact)]
 	pub commission: Perbill,
 }
-
 impl Default for ValidatorPrefs {
 	fn default() -> Self {
 		ValidatorPrefs {
-			commission: Default::default(),
+			commission: Perbill::zero(),
 		}
 	}
 }
