@@ -155,7 +155,7 @@ checksum = "4d25d88fd6b8041580a654f9d0c581a047baee2b3efee13275f2fc392fc75034"
 
 [[package]]
 name = "array-bytes"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 dependencies = [
  "sp-std 2.0.0-rc5",
 ]
@@ -1008,7 +1008,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-balances"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 dependencies = [
  "darwinia-balances-rpc-runtime-api",
  "darwinia-support",
@@ -1025,7 +1025,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-balances-rpc"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 dependencies = [
  "darwinia-balances-rpc-runtime-api",
  "jsonrpc-core",
@@ -1039,7 +1039,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-balances-rpc-runtime-api"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 dependencies = [
  "darwinia-support",
  "parity-scale-codec",
@@ -1050,7 +1050,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-claims"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
@@ -1070,7 +1070,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-cli"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 dependencies = [
  "sc-cli",
  "sc-client-api",
@@ -1082,7 +1082,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-elections-phragmen"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 dependencies = [
  "darwinia-balances",
  "darwinia-support",
@@ -1101,7 +1101,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-ethereum-backing"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
@@ -1126,7 +1126,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-ethereum-linear-relay"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
@@ -1147,7 +1147,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-ethereum-offchain"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
@@ -1167,7 +1167,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-ethereum-relay"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 dependencies = [
  "array-bytes",
  "blake2-rfc",
@@ -1191,7 +1191,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-header-mmr"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 dependencies = [
  "array-bytes",
  "ckb-merkle-mountain-range",
@@ -1210,7 +1210,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-header-mmr-rpc"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 dependencies = [
  "darwinia-header-mmr-rpc-runtime-api",
  "jsonrpc-core",
@@ -1224,7 +1224,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-header-mmr-rpc-runtime-api"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 dependencies = [
  "darwinia-support",
  "parity-scale-codec",
@@ -1236,7 +1236,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-relayer-game"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 dependencies = [
  "darwinia-balances",
  "darwinia-support",
@@ -1253,7 +1253,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-staking"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 dependencies = [
  "darwinia-balances",
  "darwinia-staking-rpc-runtime-api",
@@ -1281,7 +1281,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-staking-rpc"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 dependencies = [
  "darwinia-staking-rpc-runtime-api",
  "jsonrpc-core",
@@ -1295,7 +1295,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-staking-rpc-runtime-api"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 dependencies = [
  "darwinia-support",
  "parity-scale-codec",
@@ -1306,7 +1306,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-support"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 dependencies = [
  "ethereum-primitives",
  "frame-support",
@@ -1319,7 +1319,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-treasury"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 dependencies = [
  "darwinia-balances",
  "darwinia-support",
@@ -1559,7 +1559,7 @@ dependencies = [
 
 [[package]]
 name = "ethereum-primitives"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 dependencies = [
  "array-bytes",
  "ethash",
@@ -3420,7 +3420,7 @@ checksum = "71d96e3f3c0b6325d8ccd83c33b28acb183edcb6c67938ba104ec546854b0882"
 
 [[package]]
 name = "merkle-patricia-trie"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 dependencies = [
  "criterion",
  "ethereum-types 0.5.2",
@@ -3634,7 +3634,7 @@ dependencies = [
 
 [[package]]
 name = "node-template"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 dependencies = [
  "darwinia-balances-rpc",
  "darwinia-balances-rpc-runtime-api",
@@ -3695,7 +3695,7 @@ dependencies = [
 
 [[package]]
 name = "node-template-runtime"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 dependencies = [
  "darwinia-balances",
  "darwinia-balances-rpc-runtime-api",
