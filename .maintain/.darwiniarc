@@ -3,7 +3,7 @@
 # The node will be started with the authority role and actively
 # participate in any consensus task that it can (e.g. depending on
 # availability of local keys).
-validator = true
+#validator = true
 
 # Enable sentry mode.
 #
@@ -40,7 +40,7 @@ unsafe-rpc-external = true
 # - `Safe`: Exposes only a safe subset of RPC methods, denying unsafe RPC methods.
 # - `Auto`: Acts as `Safe` if RPC is served externally, e.g. when `--{rpc,ws}-external` is passed,
 # otherwise acts as `Unsafe`.
-#rpc-methods = "Auto"
+rpc-methods = "Unsafe"
 
 # Listen to all Websocket interfaces.
 #
@@ -87,12 +87,12 @@ rpc-cors = "All"
 # The human-readable name for this node.
 #
 # The node name will be reported to the telemetry server, if enabled.
-name = "Example"
+name = "Alice"
 
 # Disable connecting to the Substrate telemetry server.
 #
 # Telemetry is on by default on global chains.
-#no-telemetry = true
+no-telemetry = true
 
 # The URL of the telemetry server to connect to.
 #
@@ -103,13 +103,13 @@ name = "Example"
 #telemetry-url = ["wss://telemetry.polkadot.io/submit/ 0"]
 
 # Specify the chain specification (one of dev, local, or staging).
-#chain = "crab"
+chain = "dev"
 
 # Specify the development chain.
 #dev = true
 
 # Specify custom base path.
-base-path = "/tmp/data"
+#base-path = "/tmp/data"
 
 # Sets a custom logging filter. Syntax is <target>=<level>, e.g. -lsync=debug.
 #
@@ -122,7 +122,7 @@ base-path = "/tmp/data"
 # Default is to keep all block states if the node is running as a
 # validator (i.e. 'archive'), otherwise state is only kept for the last
 # 256 blocks.
-pruning = "32"
+#pruning = "32"
 
 # Select database backend to use.
 #db = "ParityDb"
@@ -135,7 +135,7 @@ pruning = "32"
 # When running as a validator it is highly recommended to disable state
 # pruning (i.e. 'archive') which is the default. The node will refuse to
 # start as a validator if pruning is enabled unless this option is set.
-unsafe-pruning = true
+#unsafe-pruning = true
 
 # Method for executing Wasm runtime code.
 #wasm_method = "Interpreted"
@@ -258,7 +258,7 @@ unsafe-pruning = true
 #pool_kbytes = 20480
 
 # Shortcut for `--name Alice --validator` with session keys for `Alice` added to keystore.
-#alice = true
+alice = true
 
 # Shortcut for `--name Bob --validator` with session keys for `Bob` added to keystore.
 #bob = true
@@ -306,3 +306,12 @@ unsafe-pruning = true
 # Can't be used with --public-addr as the sentry node would take precedence over the public address
 # specified there.
 #sentry-nodes = []
+
+# Run a temporary node.
+#
+# A temporary directory will be created to store the configuration and will be deleted
+# at the end of the process.
+#
+# Note: the directory is random per process execution. This directory is used as base path
+# which includes: database, node key and keystore.
+tmp = true
