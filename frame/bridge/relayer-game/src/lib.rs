@@ -740,6 +740,7 @@ impl<T: Trait<I>, I: Instance> RelayerGame<T::AccountId> for Module<T, I> {
 				info!(target: "relayer-game", "{:#?}", chain);
 				let (bonds, bonded_chain) = extend_bonded_chain(&chain, 0);
 
+				ensure!(T::RingCurrency::usable_balance(&relayer) > T::RingCurrency::minimum_balance(), <Error<T, I>>::InsufficientBond);
 				ensure!(
 						(T::RingCurrency::usable_balance(&relayer)
 							- T::RingCurrency::minimum_balance()) >= bonds,

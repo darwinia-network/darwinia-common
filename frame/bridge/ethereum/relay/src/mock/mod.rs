@@ -9,6 +9,7 @@ use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill, RuntimeDebug}
 // --- darwinia ---
 use crate::*;
 use array_bytes::hex_bytes_unchecked;
+use frame_system::EnsureRoot;
 
 // Static codec header source
 mod test_data {
@@ -67,6 +68,9 @@ impl Trait for Test {
 	type Event = ();
 	type Currency = Ring;
 	type WeightInfo = ();
+	type RelayerGame = ();
+	type ApproveOrigin = EnsureRoot<AccountId>;
+	type RejectOrigin = EnsureRoot<AccountId>;
 }
 
 parameter_types! {
