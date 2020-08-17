@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eux
+set -ex
 
 rustup default stable
 rustup component add rustfmt
@@ -13,5 +13,4 @@ rustc --version
 
 cargo clean
 
-cargo fmt --all
-echo -e "\e[0;32m +-------------+ \n\e[0;32m | Format Pass | \n\e[0;32m +-------------+ \e[0m"
+cargo fmt ${CI_PACKAGE/#/-p darwinia-}
