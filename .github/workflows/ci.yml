@@ -5,29 +5,19 @@ on:
       - develop
       - master
       - feature/github-actions-*
+  pull_request:
+    branches:
+      - master
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build-packages:
-    name: Build Packages
+  build-and-test:
+    name: Build and Test
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        package:
-          - balances
-          - staking
-          - elections-phragmen
-          - treasury
-          - ethereum-backing
-          - ethereum-linear-relay
-          - ethereum-offchain
-          - ethereum-relay
-          - claims
-          - header-mmr
-          - relayer-game
     steps:
       - uses: actions/checkout@v2
 
@@ -48,46 +38,15 @@ jobs:
             ${{ runner.os }}-cargo-${{ matrix.package }}-
 
       - name: Lint and prepare
-        env:
-          CI_PACKAGE: ${{ matrix.package }}
         run: .maintain/ci/format.sh
 
       - name: Build
         env:
-          CI_PACKAGE: ${{ matrix.package }}
           RUST_TOOLCHAIN: nightly
         run: .maintain/ci/build.sh
 
       - name: Overall test
         env:
-          CI_PACKAGE: ${{ matrix.package }}
           RUST_TOOLCHAIN: nightly
           TARGET: native
         run: .maintain/ci/tests.sh
-
-  build-root-package:
-    name: Build Root Package
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly
-          override: true
-          target: wasm32-unknown-unknown
-
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-root-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-root-
-
-      - name: Build
-        env:
-          RUST_TOOLCHAIN: nightly
-        run: .maintain/ci/build.sh
