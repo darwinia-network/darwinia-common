@@ -846,6 +846,9 @@ impl darwinia_ethereum_relay::Trait for Runtime {
 	type Event = Event;
 	type Currency = Ring;
 	type WeightInfo = ();
+	type RelayerGame = RelayerGame;
+	type ApproveOrigin = ApproveOrigin;
+	type RejectOrigin = EnsureRootOrHalfCouncil;
 }
 
 type EthereumRelayerGameInstance = darwinia_relayer_game::Instance0;
@@ -859,8 +862,6 @@ impl darwinia_relayer_game::Trait<EthereumRelayerGameInstance> for Runtime {
 	type RelayerGameAdjustor = relay::EthereumRelayerGameAdjustor;
 	type TargetChain = EthereumRelay;
 	type ConfirmPeriod = ConfirmPeriod;
-	type ApproveOrigin = ApproveOrigin;
-	type RejectOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = ();
 }
 
