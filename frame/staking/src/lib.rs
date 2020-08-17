@@ -341,60 +341,61 @@ mod migration {
 		// pub Ledger get(fn ledger): map hasher(blake2_128_concat) T::AccountId => Option<StakingLedgerT<T>>;
 		let item: &[u8] = b"Ledger";
 
+		// broken ledger
+		//
+		// ring check: true
+		// deposit check: false
+		// lock check: true
+		// Ledger {
+		//     stash: "0f9985cf8a27e42a191f0f4d4b2bfd770256728868f42f642b60ef247b79b245",
+		//     active_ring: 9513338321214,
+		//     active_deposit_ring: 9459998000000,
+		//     deposit_items: Some(
+		//         [
+		//             DepositItem {
+		//                 value: 974523822662,
+		//             },
+		//             DepositItem {
+		//                 value: 998000000,
+		//             },
+		//             DepositItem {
+		//                 value: 8460000000000,
+		//             },
+		//         ],
+		//     ),
+		//     ring_staking_lock: StakingLock {
+		//         staking_amount: 9513338321214,
+		//     },
+		// }
+		//
+		// this migration will set the `deposit_items` to
+		// `vec![DepositItem {
+		// 	value: active_deposit_ring,
+		// 	expire_time,
+		// }]`
+		// the value of `start_time` and `expire_time` is the original first item's
+
 		for (hash, mut value) in <StorageIterator<StakingLedgerT<T>>>::new(module, item) {
 			let StakingLedger {
-				stash,
-				active_ring,
 				active_deposit_ring,
 				deposit_items,
-				ring_staking_lock,
 				..
 			} = &mut value;
 
-			// can not be zero, but better safe
-			if active_ring.is_zero() {
-				continue;
-			}
-
-			let dirty_active_ring = {
-				let free_balance = T::RingCurrency::free_balance(stash);
-
-				if free_balance < *active_ring {
-					// cur `active_ring`
-					*active_ring = free_balance;
-
-					true
+			if *active_deposit_ring
+				!= deposit_items
+					.iter()
+					.fold(0.into(), |total_deposit, item| total_deposit + item.value)
+			{
+				if deposit_items.is_empty() {
+					// can not be, but better safe
+					*active_deposit_ring = 0.into();
 				} else {
-					false
-				}
-			};
-
-			if *active_ring < *active_deposit_ring || dirty_active_ring {
-				if ring_staking_lock.staking_amount != *active_ring {
-					// update lock
-
-					ring_staking_lock.staking_amount = *active_ring;
-
-					T::RingCurrency::set_lock(
-						STAKING_ID,
-						stash,
-						LockFor::Staking(ring_staking_lock.to_owned()),
-						WithdrawReasons::all(),
-					);
-				}
-
-				if let Some(deposit_item) = deposit_items.last() {
-					// cut `deposit_items`
-
-					let mut deposit_item = deposit_item.to_owned();
-
-					deposit_item.value = *active_ring;
-
-					*active_deposit_ring = *active_ring;
-					*deposit_items = vec![deposit_item];
-				} else {
-					// fix invalid data
-					*active_deposit_ring = Zero::zero();
+					*deposit_items = vec![TimeDepositItem {
+						value: *active_deposit_ring,
+						start_time: deposit_items[0].start_time,
+						expire_time: deposit_items[0].expire_time,
+					}]
 				}
 
 				put_storage_value(module, item, &hash, value);
