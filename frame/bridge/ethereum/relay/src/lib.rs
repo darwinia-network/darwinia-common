@@ -30,7 +30,7 @@ use frame_support::{
 	traits::Get,
 	traits::{Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, ReservableCurrency},
 };
-use frame_system::{ensure_root, ensure_signed};
+use frame_system::ensure_signed;
 use sp_runtime::{
 	traits::AccountIdConversion, DispatchError, DispatchResult, ModuleId, RuntimeDebug,
 };
@@ -129,11 +129,18 @@ darwinia_support::impl_genesis! {
 decl_storage! {
 	trait Store for Module<T: Trait> as DarwiniaEthereumRelay {
 		/// Ethereum last confrimed header info including ethereum block number, hash, and mmr
-		pub LastConfirmedHeaderInfo get(fn last_confirm_header_info): Option<(EthBlockNumber, H256, MMRHash)>;
+		pub
+			LastConfirmedHeaderInfo
+			get(fn last_confirm_header_info)
+			: Option<(EthBlockNumber, H256, MMRHash)>;
 
 		/// The Ethereum headers confrimed by relayer game
 		/// The actural storage needs to be defined
-		pub ConfirmedHeadersDoubleMap get(fn confirmed_header): double_map hasher(identity) EthBlockNumber, hasher(identity) EthBlockNumber => EthHeader;
+		pub
+			ConfirmedHeadersDoubleMap
+			get(fn confirmed_header)
+			: double_map hasher(identity) EthBlockNumber, hasher(identity) EthBlockNumber
+			=> EthHeader;
 
 		/// Dags merkle roots of ethereum epoch (each epoch is 30000)
 		pub DagsMerkleRoots get(fn dag_merkle_root): map hasher(identity) u64 => H128;
@@ -251,37 +258,45 @@ decl_module! {
 		/// # </weight>
 		#[weight = 10_000_000]
 		pub fn set_receipt_verify_fee(origin, #[compact] new: Balance<T>) {
-			ensure_root(origin)?;
+			T::RejectOrigin::ensure_origin(origin)?;
+
 			<ReceiptVerifyFee<T>>::put(new);
 		}
 
 		/// Remove the specific malicous block
 		#[weight = 100_000_000]
 		pub fn remove_confirmed_block(origin, number: EthBlockNumber) {
-			ensure_root(origin)?;
+			T::RejectOrigin::ensure_origin(origin)?;
+
 			ConfirmedHeadersDoubleMap::take(number/ConfirmBlocksInCycle::get(), number);
+
 			Self::deposit_event(RawEvent::RemoveConfirmedBlock(number));
 		}
 
 		/// Remove the blocks in particular month (month is calculated as cycle)
 		#[weight = 100_000_000]
 		pub fn remove_confirmed_blocks_in_month(origin, cycle: EthBlockNumber) {
-			ensure_root(origin)?;
+			T::RejectOrigin::ensure_origin(origin)?;
+
 			let c = ConfirmBlocksInCycle::get();
+
 			ConfirmedHeadersDoubleMap::remove_prefix(cycle);
+
 			Self::deposit_event(RawEvent::RemoveConfirmedBlockRang(cycle * c, cycle.saturating_add(1) * c));
 		}
 
 		/// Setup the parameters to delete the confirmed blocks after month * blocks_in_month
 		#[weight = 100_000_000]
 		pub fn set_confirmed_blocks_clean_parameters(origin, month: EthBlockNumber, blocks_in_month: EthBlockNumber) {
-			ensure_root(origin)?;
+			T::RejectOrigin::ensure_origin(origin)?;
+
 			if month < 2 {
 				// read the doc string of of event
 				Self::deposit_event(RawEvent::ConfirmBlockManagementError(month));
 			} else {
 				ConfirmBlocksInCycle::set(blocks_in_month);
 				ConfirmBlockKeepInMonth::set(month);
+
 				Self::deposit_event(RawEvent::UpdateConfrimedBlockCleanCycle(month, blocks_in_month));
 			}
 		}
