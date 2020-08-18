@@ -35,7 +35,6 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 [dev-dependencies]
 # darwinia
 darwinia-balances   = { path = "../../../../frame/balances" }
-darwinia-support    = { features = ["easy-testing"], path = "../../../support" }
 ethereum-primitives = { features = ["easy-testing"], path = "../../../../primitives/ethereum-primitives" }
 # substrate
 sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }

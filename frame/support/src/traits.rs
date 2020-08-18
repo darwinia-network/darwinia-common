@@ -230,23 +230,14 @@ pub trait EthereumReceipt<AccountId, Balance> {
 	fn gen_receipt_index(proof: &Self::EthereumReceiptProof) -> EthTransactionIndex;
 }
 
-pub trait RelayerGameProtocol<AccountId> {
+pub trait RelayerGameProtocol {
+	type Relayer;
+	type TcBlockNumber;
+
 	fn submit_proposal(
-		relayer: AccountId,
+		relayer: Self::Relayer,
 		raw_header_thing_chain: Vec<RawHeaderThing>,
 	) -> DispatchResult;
-	fn approve_pending_header(pending_block_number: u64) -> DispatchResult;
-	fn reject_pending_header(pending_block_number: u64) -> DispatchResult;
-}
-#[cfg(feature = "easy-testing")]
-impl<AccountId> RelayerGameProtocol<AccountId> for () {
-	fn submit_proposal(_: AccountId, _: Vec<RawHeaderThing>) -> DispatchResult {
-		unimplemented!()
-	}
-	fn approve_pending_header(_: u64) -> DispatchResult {
-		unimplemented!()
-	}
-	fn reject_pending_header(_: u64) -> DispatchResult {
-		unimplemented!()
-	}
+	fn approve_pending_header(pending: Self::TcBlockNumber) -> DispatchResult;
+	fn reject_pending_header(pending: Self::TcBlockNumber) -> DispatchResult;
 }

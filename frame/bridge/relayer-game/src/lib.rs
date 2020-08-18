@@ -102,6 +102,11 @@ decl_event! {
 
 		/// A game has been settled. [game id]
 		GameOver(GameId),
+
+		/// Pending header approved. [block number, reason]
+		PendingHeaderApproved(TcBlockNumber, Vec<u8>),
+		/// Pending header rejected. [block number]
+		PendingHeaderRejected(TcBlockNumber),
 	}
 }
 
@@ -200,10 +205,16 @@ decl_module! {
 
 		fn on_initialize(block_number: BlockNumber<T>) -> Weight {
 			<PendingHeaders<T, I>>::mutate(|pending_headers|
-				pending_headers.retain(|(confirm_at, _, pending_header)|
+				pending_headers.retain(|(confirm_at, pending_block_number, pending_header)|
 					if *confirm_at == block_number {
-						// TODO: handle error
-						let _ = T::TargetChain::store_header(pending_header.to_owned());
+						if let Err(_) = T::TargetChain::store_header(pending_header.to_owned()) {
+							// TODO: handle error
+						} else {
+							Self::deposit_event(RawEvent::PendingHeaderApproved(
+								*pending_block_number,
+								b"Not Enough Coucil Online, Approved By System".to_vec()
+							));
+						}
 
 						false
 					} else {
@@ -657,20 +668,9 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	}
 }
 
-impl<T: Trait<I>, I: Instance> RelayerGameProtocol<T::AccountId> for Module<T, I> {
-	fn approve_pending_header(pending_block_number: u64) -> DispatchResult {
-		Self::update_pending_headers_with(pending_block_number.saturated_into(), |header| {
-			T::TargetChain::store_header(header)
-		})?;
-
-		Ok(())
-	}
-
-	fn reject_pending_header(pending_block_number: u64) -> DispatchResult {
-		Self::update_pending_headers_with(pending_block_number.saturated_into(), |_| Ok(()))?;
-
-		Ok(())
-	}
+impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
+	type Relayer = AccountId<T>;
+	type TcBlockNumber = TcBlockNumber<T, I>;
 
 	// TODO:
 	//	The `header_thing_chain` could be very large,
@@ -685,7 +685,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol<T::AccountId> for Module<T, I
 	//
 	// TODO: handle uncle block
 	fn submit_proposal(
-		relayer: T::AccountId,
+		relayer: Self::Relayer,
 		raw_header_thing_chain: Vec<RawHeaderThing>,
 	) -> DispatchResult {
 		ensure!(!raw_header_thing_chain.is_empty(), <Error<T, I>>::ProposalI);
@@ -888,6 +888,23 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol<T::AccountId> for Module<T, I
 				}
 			}
 		}
+
+		Ok(())
+	}
+
+	fn approve_pending_header(pending: Self::TcBlockNumber) -> DispatchResult {
+		Self::update_pending_headers_with(pending, |header| T::TargetChain::store_header(header))?;
+		Self::deposit_event(RawEvent::PendingHeaderApproved(
+			pending,
+			b"Approved By Council".to_vec(),
+		));
+
+		Ok(())
+	}
+
+	fn reject_pending_header(pending: Self::TcBlockNumber) -> DispatchResult {
+		Self::update_pending_headers_with(pending, |_| Ok(()))?;
+		Self::deposit_event(RawEvent::PendingHeaderRejected(pending));
 
 		Ok(())
 	}

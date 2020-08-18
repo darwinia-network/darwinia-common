@@ -67,7 +67,7 @@ impl Trait for Test {
 	type ModuleId = EthereumRelayModuleId;
 	type Event = ();
 	type Currency = Ring;
-	type RelayerGame = ();
+	type RelayerGame = UnusedRelayerGame;
 	type ApproveOrigin = EnsureRoot<AccountId>;
 	type RejectOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = ();
@@ -140,6 +140,22 @@ impl ExtBuilder {
 		.assimilate_storage(&mut storage)
 		.unwrap();
 		storage.into()
+	}
+}
+
+pub struct UnusedRelayerGame;
+impl RelayerGameProtocol for UnusedRelayerGame {
+	type Relayer = u64;
+	type TcBlockNumber = u64;
+
+	fn submit_proposal(_: Self::Relayer, _: Vec<RawHeaderThing>) -> DispatchResult {
+		unimplemented!()
+	}
+	fn approve_pending_header(_: Self::TcBlockNumber) -> DispatchResult {
+		unimplemented!()
+	}
+	fn reject_pending_header(_: Self::TcBlockNumber) -> DispatchResult {
+		unimplemented!()
 	}
 }
 

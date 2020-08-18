@@ -12,11 +12,11 @@ mod types {
 	// --- darwinia ---
 	use crate::*;
 
+	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
 	pub type Balance<T> = <CurrencyT<T> as Currency<AccountId<T>>>::Balance;
 	pub type MMRHash = H256;
 	pub type MMRProof = Vec<H256>;
 
-	type AccountId<T> = <T as frame_system::Trait>::AccountId;
 	type CurrencyT<T> = <T as Trait>::Currency;
 }
 
@@ -63,7 +63,7 @@ pub trait Trait: frame_system::Trait {
 	type Currency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
 		+ ReservableCurrency<Self::AccountId>;
 
-	type RelayerGame: RelayerGameProtocol<Self::AccountId>;
+	type RelayerGame: RelayerGameProtocol<Relayer = AccountId<Self>, TcBlockNumber = EthBlockNumber>;
 
 	type ApproveOrigin: EnsureOrigin<Self::Origin>;
 
@@ -192,19 +192,19 @@ decl_module! {
 				.map(|x| x.encode())
 				.collect::<Vec<_>>();
 
-			T::RelayerGame::submit_proposal(relayer, raw_header_thing_chain)?
+			T::RelayerGame::submit_proposal(relayer, raw_header_thing_chain)?;
 		}
 
 		#[weight = 100_000_000]
-		pub fn approve_pending_header(origin, pending_block_number: EthBlockNumber) {
+		pub fn approve_pending_header(origin, pending: EthBlockNumber) {
 			T::ApproveOrigin::ensure_origin(origin)?;
-			T::RelayerGame::approve_pending_header(pending_block_number)?
+			T::RelayerGame::approve_pending_header(pending)?;
 		}
 
 		#[weight = 100_000_000]
-		pub fn reject_pending_header(origin, pending_block_number: EthBlockNumber) {
+		pub fn reject_pending_header(origin, pending: EthBlockNumber) {
 			T::RejectOrigin::ensure_origin(origin)?;
-			T::RelayerGame::reject_pending_header(pending_block_number)?;
+			T::RelayerGame::reject_pending_header(pending)?;
 		}
 
 		/// Check and verify the receipt
@@ -308,7 +308,7 @@ impl<T: Trait> Module<T> {
 	///
 	/// This actually does computation. If you need to keep using it, then make sure you cache the
 	/// value and only call this once.
-	fn account_id() -> T::AccountId {
+	fn account_id() -> AccountId<T> {
 		T::ModuleId::get().into_account()
 	}
 
@@ -624,10 +624,10 @@ impl<T: Trait> Relayable for Module<T> {
 	}
 }
 
-impl<T: Trait> EthereumReceipt<T::AccountId, Balance<T>> for Module<T> {
+impl<T: Trait> EthereumReceipt<AccountId<T>, Balance<T>> for Module<T> {
 	type EthereumReceiptProof = (EthHeader, EthReceiptProof, MMRProof);
 
-	fn account_id() -> T::AccountId {
+	fn account_id() -> AccountId<T> {
 		Self::account_id()
 	}
 
