@@ -1141,6 +1141,7 @@ dependencies = [
  "ckb-merkle-mountain-range",
  "darwinia-balances",
  "darwinia-header-mmr-rpc-runtime-api",
+ "darwinia-relayer-game",
  "darwinia-support",
  "ethereum-primitives",
  "ethereum-types 0.8.0",

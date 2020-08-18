@@ -7,12 +7,13 @@ use crate::{
 	mock::{mock_relay::*, *},
 	*,
 };
+use darwinia_support::relay::RelayerGame;
 
 #[test]
 fn empty_proposal_should_fail() {
 	ExtBuilder::default().build().execute_with(|| {
 		assert_err!(
-			RelayerGame::submit_proposal(Origin::signed(1), vec![]),
+			<RGame as RelayerGame<u64>>::submit_proposal(1, vec![]),
 			RelayerGameError::ProposalI
 		);
 	});
@@ -29,31 +30,31 @@ fn insufficient_bond_should_fail() {
 			{
 				let poor_man = 0;
 				assert_err!(
-					RelayerGame::submit_proposal(Origin::signed(poor_man), chain[..1].to_vec()),
+					<RGame as RelayerGame<u64>>::submit_proposal(poor_man, chain[..1].to_vec()),
 					RelayerGameError::InsufficientBond
 				);
 			}
 
 			assert_err!(
-				RelayerGame::submit_proposal(Origin::signed(1), chain[..1].to_vec()),
+				<RGame as RelayerGame<u64>>::submit_proposal(1, chain[..1].to_vec()),
 				RelayerGameError::InsufficientBond
 			);
-			assert_ok!(RelayerGame::submit_proposal(
-				Origin::signed(2),
+			assert_ok!(<RGame as RelayerGame<u64>>::submit_proposal(
+				2,
 				vec![MockTcHeader::mock_raw(2, 0, 1)]
 			));
-			assert_ok!(RelayerGame::submit_proposal(
-				Origin::signed(3),
+			assert_ok!(<RGame as RelayerGame<u64>>::submit_proposal(
+				3,
 				chain[..1].to_vec()
 			));
 
 			run_to_block(4);
 
 			assert_err!(
-				RelayerGame::submit_proposal(Origin::signed(2), chain.clone()),
+				<RGame as RelayerGame<u64>>::submit_proposal(2, chain.clone()),
 				RelayerGameError::InsufficientBond
 			);
-			assert_ok!(RelayerGame::submit_proposal(Origin::signed(3), chain));
+			assert_ok!(<RGame as RelayerGame<u64>>::submit_proposal(3, chain));
 		});
 }
 
@@ -67,8 +68,8 @@ fn already_confirmed_should_fail() {
 		.execute_with(|| {
 			for confirmed_header in confirmed_headers {
 				assert_err!(
-					RelayerGame::submit_proposal(
-						Origin::signed(1),
+					<RGame as RelayerGame<u64>>::submit_proposal(
+						1,
 						vec![confirmed_header.encode()]
 					),
 					RelayerGameError::TargetHeaderAC
@@ -82,12 +83,12 @@ fn duplicate_game_should_fail() {
 	ExtBuilder::default().build().execute_with(|| {
 		let chain = MockTcHeader::mock_raw_chain(vec![1], true);
 
-		assert_ok!(RelayerGame::submit_proposal(
-			Origin::signed(1),
+		assert_ok!(<RGame as RelayerGame<u64>>::submit_proposal(
+			1,
 			chain.clone()
 		));
 		assert_err!(
-			RelayerGame::submit_proposal(Origin::signed(1), chain),
+			<RGame as RelayerGame<u64>>::submit_proposal(1, chain),
 			RelayerGameError::ProposalAE
 		);
 	});
@@ -98,14 +99,14 @@ fn jump_round_should_fail() {
 	ExtBuilder::default().build().execute_with(|| {
 		let chain = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], true);
 
-		assert_ok!(RelayerGame::submit_proposal(
-			Origin::signed(1),
+		assert_ok!(<RGame as RelayerGame<u64>>::submit_proposal(
+			1,
 			chain[..1].to_vec()
 		));
 
 		for i in 2..=5 {
 			assert_err!(
-				RelayerGame::submit_proposal(Origin::signed(1), chain[..i].to_vec()),
+				<RGame as RelayerGame<u64>>::submit_proposal(1, chain[..i].to_vec()),
 				RelayerGameError::RoundMis
 			);
 		}
@@ -121,21 +122,21 @@ fn challenge_time_should_work() {
 			.execute_with(|| {
 				let header = MockTcHeader::mock(1, 0, 1);
 
-				assert_ok!(RelayerGame::submit_proposal(
-					Origin::signed(1),
+				assert_ok!(<RGame as RelayerGame<u64>>::submit_proposal(
+					1,
 					vec![header.encode()]
 				));
 
 				for block in 0..=challenge_time {
 					run_to_block(block);
 
-					assert_eq!(RelayerGame::proposals_of_game(header.number).len(), 1);
+					assert_eq!(RGame::proposals_of_game(header.number).len(), 1);
 					assert_eq!(Relay::header_of_block_number(header.number), None);
 				}
 
 				run_to_block(challenge_time + 1);
 
-				assert_eq!(RelayerGame::proposals_of_game(header.number).len(), 0);
+				assert_eq!(RGame::proposals_of_game(header.number).len(), 0);
 				assert_eq!(Relay::header_of_block_number(header.number), Some(header));
 			});
 	}
@@ -148,12 +149,12 @@ fn extend_should_work() {
 		let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
 
 		for i in 1..=5 {
-			assert_ok!(RelayerGame::submit_proposal(
-				Origin::signed(1),
+			assert_ok!(<RGame as RelayerGame<u64>>::submit_proposal(
+				1,
 				chain_a[..i as usize].to_vec()
 			));
-			assert_ok!(RelayerGame::submit_proposal(
-				Origin::signed(2),
+			assert_ok!(<RGame as RelayerGame<u64>>::submit_proposal(
+				2,
 				chain_b[..i as usize].to_vec()
 			));
 
@@ -173,11 +174,11 @@ fn lock_should_work() {
 				let chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], true);
 				let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
 				let submit_then_assert = |account_id, chain, bonds| {
-					assert_ok!(RelayerGame::submit_proposal(
-						Origin::signed(account_id),
+					assert_ok!(<RGame as RelayerGame<u64>>::submit_proposal(
+						account_id,
 						chain
 					));
-					assert_eq!(RelayerGame::bonds_of_relayer(account_id), bonds);
+					assert_eq!(RGame::bonds_of_relayer(account_id), bonds);
 					assert_eq!(
 						Ring::locks(account_id),
 						vec![BalanceLock {
@@ -197,10 +198,10 @@ fn lock_should_work() {
 					run_to_block(3 * i + 1);
 				}
 
-				assert_eq!(RelayerGame::bonds_of_relayer(1), 0);
+				assert_eq!(RGame::bonds_of_relayer(1), 0);
 				assert!(Ring::locks(1).is_empty());
 
-				assert_eq!(RelayerGame::bonds_of_relayer(2), 0);
+				assert_eq!(RGame::bonds_of_relayer(2), 0);
 				assert!(Ring::locks(2).is_empty());
 			});
 	}
@@ -221,12 +222,12 @@ fn slash_and_reward_should_work() {
 				assert_eq!(Ring::usable_balance(&20), 2000);
 
 				for i in 1..=5 {
-					assert_ok!(RelayerGame::submit_proposal(
-						Origin::signed(10),
+					assert_ok!(<RGame as RelayerGame<u64>>::submit_proposal(
+						10,
 						chain_a[..i as usize].to_vec()
 					));
-					assert_ok!(RelayerGame::submit_proposal(
-						Origin::signed(20),
+					assert_ok!(<RGame as RelayerGame<u64>>::submit_proposal(
+						20,
 						chain_b[..i as usize].to_vec()
 					));
 
@@ -252,8 +253,8 @@ fn settle_without_challenge_should_work() {
 			.rev()
 			.zip(1..)
 		{
-			assert_ok!(RelayerGame::submit_proposal(
-				Origin::signed(1),
+			assert_ok!(<RGame as RelayerGame<u64>>::submit_proposal(
+				1,
 				vec![header.encode()]
 			));
 
@@ -274,20 +275,20 @@ fn settle_with_challenge_should_work() {
 		let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
 
 		for i in 1..=3 {
-			assert_ok!(RelayerGame::submit_proposal(
-				Origin::signed(1),
+			assert_ok!(<RGame as RelayerGame<u64>>::submit_proposal(
+				1,
 				chain_a[..i as usize].to_vec()
 			));
-			assert_ok!(RelayerGame::submit_proposal(
-				Origin::signed(2),
+			assert_ok!(<RGame as RelayerGame<u64>>::submit_proposal(
+				2,
 				chain_b[..i as usize].to_vec()
 			));
 
 			run_to_block(3 * i + 1);
 		}
 
-		assert_ok!(RelayerGame::submit_proposal(
-			Origin::signed(1),
+		assert_ok!(<RGame as RelayerGame<u64>>::submit_proposal(
+			1,
 			chain_a[..4 as usize].to_vec()
 		));
 
@@ -309,12 +310,12 @@ fn settle_abandon_should_work() {
 		assert_eq!(Ring::usable_balance(&2), 200);
 
 		for i in 1..=3 {
-			assert_ok!(RelayerGame::submit_proposal(
-				Origin::signed(1),
+			assert_ok!(<RGame as RelayerGame<u64>>::submit_proposal(
+				1,
 				chain_a[..i as usize].to_vec()
 			));
-			assert_ok!(RelayerGame::submit_proposal(
-				Origin::signed(2),
+			assert_ok!(<RGame as RelayerGame<u64>>::submit_proposal(
+				2,
 				chain_b[..i as usize].to_vec()
 			));
 
@@ -338,12 +339,12 @@ fn on_chain_arbitrate_should_work() {
 		let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
 
 		for i in 1..=5 {
-			assert_ok!(RelayerGame::submit_proposal(
-				Origin::signed(1),
+			assert_ok!(<RGame as RelayerGame<u64>>::submit_proposal(
+				1,
 				chain_a[..i as usize].to_vec()
 			));
-			assert_ok!(RelayerGame::submit_proposal(
-				Origin::signed(2),
+			assert_ok!(<RGame as RelayerGame<u64>>::submit_proposal(
+				2,
 				chain_b[..i as usize].to_vec()
 			));
 
@@ -366,12 +367,12 @@ fn no_honesty_should_work() {
 		assert_eq!(Ring::usable_balance(&2), 200);
 
 		for i in 1..=5 {
-			assert_ok!(RelayerGame::submit_proposal(
-				Origin::signed(1),
+			assert_ok!(<RGame as RelayerGame<u64>>::submit_proposal(
+				1,
 				chain_a[..i as usize].to_vec()
 			));
-			assert_ok!(RelayerGame::submit_proposal(
-				Origin::signed(2),
+			assert_ok!(<RGame as RelayerGame<u64>>::submit_proposal(
+				2,
 				chain_b[..i as usize].to_vec()
 			));
 
@@ -395,8 +396,8 @@ fn auto_confirm_period_should_work() {
 		.execute_with(|| {
 			let header = MockTcHeader::mock(1, 0, 1);
 
-			assert_ok!(RelayerGame::submit_proposal(
-				Origin::signed(1),
+			assert_ok!(<RGame as RelayerGame<u64>>::submit_proposal(
+				1,
 				vec![header.encode()]
 			));
 
@@ -404,14 +405,14 @@ fn auto_confirm_period_should_work() {
 
 			assert!(Relay::header_of_block_number(header.number).is_none());
 			assert_eq!(
-				RelayerGame::pending_headers(),
+				RGame::pending_headers(),
 				vec![(6, header.number, header.encode())]
 			);
 
 			run_to_block(6);
 
 			assert_eq!(Relay::header_of_block_number(header.number), Some(header));
-			assert!(RelayerGame::pending_headers().is_empty());
+			assert!(RGame::pending_headers().is_empty());
 		});
 }
 
@@ -424,8 +425,8 @@ fn approve_pending_header_should_work() {
 		.execute_with(|| {
 			let header = MockTcHeader::mock(1, 0, 1);
 
-			assert_ok!(RelayerGame::submit_proposal(
-				Origin::signed(1),
+			assert_ok!(<RGame as RelayerGame<u64>>::submit_proposal(
+				1,
 				vec![header.encode()]
 			));
 
@@ -433,17 +434,16 @@ fn approve_pending_header_should_work() {
 
 			assert!(Relay::header_of_block_number(header.number).is_none());
 			assert_eq!(
-				RelayerGame::pending_headers(),
+				RGame::pending_headers(),
 				vec![(6, header.number, header.encode())]
 			);
 
-			assert_ok!(RelayerGame::approve_pending_header(
-				Origin::root(),
+			assert_ok!(<RGame as RelayerGame<u64>>::approve_pending_header(
 				header.number
 			));
 
 			assert_eq!(Relay::header_of_block_number(header.number), Some(header));
-			assert!(RelayerGame::pending_headers().is_empty());
+			assert!(RGame::pending_headers().is_empty());
 		});
 }
 
@@ -456,8 +456,8 @@ fn reject_pending_header_should_work() {
 		.execute_with(|| {
 			let header = MockTcHeader::mock(1, 0, 1);
 
-			assert_ok!(RelayerGame::submit_proposal(
-				Origin::signed(1),
+			assert_ok!(<RGame as RelayerGame<u64>>::submit_proposal(
+				1,
 				vec![header.encode()]
 			));
 
@@ -465,16 +465,15 @@ fn reject_pending_header_should_work() {
 
 			assert!(Relay::header_of_block_number(header.number).is_none());
 			assert_eq!(
-				RelayerGame::pending_headers(),
+				RGame::pending_headers(),
 				vec![(6, header.number, header.encode())]
 			);
 
-			assert_ok!(RelayerGame::reject_pending_header(
-				Origin::root(),
+			assert_ok!(<RGame as RelayerGame<u64>>::reject_pending_header(
 				header.number
 			));
 
 			assert!(Relay::header_of_block_number(header.number).is_none());
-			assert!(RelayerGame::pending_headers().is_empty());
+			assert!(RGame::pending_headers().is_empty());
 		});
 }

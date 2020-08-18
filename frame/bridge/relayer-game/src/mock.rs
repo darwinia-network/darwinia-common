@@ -224,7 +224,6 @@ use frame_support::{
 	traits::{OnFinalize, OnInitialize},
 	weights::Weight,
 };
-use frame_system::EnsureRoot;
 use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill};
 // --- darwinia ---
@@ -249,7 +248,7 @@ pub type System = frame_system::Module<Test>;
 pub type Relay = mock_relay::Module<Test>;
 
 pub type RelayerGameError = Error<Test, DefaultInstance>;
-pub type RelayerGame = Module<Test>;
+pub type RGame = Module<Test>;
 
 thread_local! {
 	static GENESIS_TIME: Instant = Instant::now();
@@ -290,8 +289,6 @@ impl Trait for Test {
 	type RelayerGameAdjustor = RelayerGameAdjustor;
 	type TargetChain = Relay;
 	type ConfirmPeriod = ConfirmPeriod;
-	type ApproveOrigin = EnsureRoot<AccountId>;
-	type RejectOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = ();
 }
 
@@ -453,14 +450,14 @@ impl Default for ExtBuilder {
 }
 
 pub fn run_to_block(n: BlockNumber) {
-	RelayerGame::on_finalize(System::block_number());
+	RGame::on_finalize(System::block_number());
 
 	for b in System::block_number() + 1..=n {
 		System::set_block_number(b);
-		RelayerGame::on_initialize(b);
+		RGame::on_initialize(b);
 
 		if b != n {
-			RelayerGame::on_finalize(System::block_number());
+			RGame::on_finalize(System::block_number());
 		}
 	}
 }
