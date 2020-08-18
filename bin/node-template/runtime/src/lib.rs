@@ -806,6 +806,7 @@ impl darwinia_claims::Trait for Runtime {
 	type ModuleId = ClaimsModuleId;
 	type Prefix = Prefix;
 	type RingCurrency = Ring;
+	type MoveClaimOrigin = EnsureRootOrHalfCouncil;
 }
 
 impl pallet_sudo::Trait for Runtime {

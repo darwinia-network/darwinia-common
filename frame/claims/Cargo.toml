@@ -26,7 +26,6 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 [dev-dependencies]
 # crates
 libsecp256k1 = { version = "0.3.5" }
-tiny-keccak  = { version = "1.5.0" }
 # darwinia
 darwinia-balances = { path = "../balances" }
 # substrate
