@@ -21,7 +21,7 @@ pub mod constants {
 	pub const BLOCKS_PER_SESSION: BlockNumber = MINUTES;
 	pub const SESSIONS_PER_ERA: SessionIndex = 3;
 
-	// These time units are defined in number of blocks.
+	// Time is measured by number of blocks.
 	pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 	pub const HOURS: BlockNumber = 60 * MINUTES;
 	pub const DAYS: BlockNumber = 24 * HOURS;
@@ -215,7 +215,6 @@ pub mod primitives {
 		/// An `AppCrypto` type to allow submitting signed transactions using the reporting
 		/// application key as signer.
 		pub struct ReporterAppCrypto;
-
 		impl AppCrypto<<Signature as Verify>::Signer, Signature> for ReporterAppCrypto {
 			type RuntimeAppPublic = ReporterId;
 			type GenericPublic = sp_core::sr25519::Public;
@@ -329,7 +328,20 @@ pub mod wasm {
 	#[cfg(all(feature = "std", not(any(target_arch = "x86_64", target_arch = "x86"))))]
 	pub const WASM_BINARY_BLOATY: &[u8] =
 		include_bytes!("../../../../wasm/node_template_runtime.wasm");
+
+	#[cfg(feature = "std")]
+	/// Wasm binary unwrapped. If built with `BUILD_DUMMY_WASM_BINARY`, the function panics.
+	pub fn wasm_binary_unwrap() -> &'static [u8] {
+		WASM_BINARY.expect(
+			"Development wasm binary is not available. This means the client is \
+						built with `BUILD_DUMMY_WASM_BINARY` flag and it is only usable for \
+						production chains. Please rebuild with the flag disabled.",
+		)
+	}
 }
+
+/// Weights for pallets used in the runtime.
+mod weights;
 
 // --- darwinia ---
 pub use darwinia_staking::StakerStatus;
@@ -494,8 +506,8 @@ impl darwinia_balances::Trait<RingInstance> for Runtime {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
-	type WeightInfo = ();
 	type DustCollector = (Kton,);
+	type WeightInfo = weights::darwinia_balances::WeightInfo;
 }
 type KtonInstance = darwinia_balances::Instance1;
 impl darwinia_balances::Trait<KtonInstance> for Runtime {
@@ -505,8 +517,8 @@ impl darwinia_balances::Trait<KtonInstance> for Runtime {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
-	type WeightInfo = ();
 	type DustCollector = (Ring,);
+	type WeightInfo = weights::darwinia_balances::WeightInfo;
 }
 
 /// Parameterized slow adjusting fee updated based on
@@ -550,7 +562,7 @@ parameter_types! {
 		/ (SESSIONS_PER_ERA as BlockNumber * BLOCKS_PER_SESSION);
 	pub const BondingDurationInBlockNumber: BlockNumber = 14 * DAYS;
 	pub const SlashDeferDuration: EraIndex = 14 * DAYS
-		/ (SESSIONS_PER_ERA as BlockNumber * BLOCKS_PER_SESSION);
+		/ (SESSIONS_PER_ERA as BlockNumber * BLOCKS_PER_SESSION) - 1;
 	// quarter of the last session will be for election.
 	pub const ElectionLookahead: BlockNumber = BLOCKS_PER_SESSION / 4;
 	pub const MaxIterations: u32 = 5;
@@ -588,9 +600,9 @@ impl darwinia_staking::Trait for Runtime {
 	type KtonSlash = Treasury;
 	// rewards are minted from the void
 	type KtonReward = ();
-	type WeightInfo = ();
 	type Cap = Cap;
 	type TotalPower = TotalPower;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -794,6 +806,7 @@ impl darwinia_claims::Trait for Runtime {
 	type ModuleId = ClaimsModuleId;
 	type Prefix = Prefix;
 	type RingCurrency = Ring;
+	type MoveClaimOrigin = EnsureRootOrHalfCouncil;
 }
 
 impl pallet_sudo::Trait for Runtime {
@@ -845,10 +858,10 @@ impl darwinia_ethereum_relay::Trait for Runtime {
 	type ModuleId = EthereumRelayModuleId;
 	type Event = Event;
 	type Currency = Ring;
-	type WeightInfo = ();
 	type RelayerGame = RelayerGame;
 	type ApproveOrigin = ApproveOrigin;
 	type RejectOrigin = EnsureRootOrHalfCouncil;
+	type WeightInfo = ();
 }
 
 type EthereumRelayerGameInstance = darwinia_relayer_game::Instance0;
@@ -1138,9 +1151,8 @@ impl_runtime_apis! {
 	impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<
 		Block,
 		Balance,
-		UncheckedExtrinsic,
 	> for Runtime {
-		fn query_info(uxt: UncheckedExtrinsic, len: u32) -> TransactionPaymentRuntimeDispatchInfo<Balance> {
+		fn query_info(uxt: <Block as BlockT>::Extrinsic, len: u32) -> TransactionPaymentRuntimeDispatchInfo<Balance> {
 			TransactionPayment::query_info(uxt, len)
 		}
 	}

@@ -248,7 +248,7 @@ pub type System = frame_system::Module<Test>;
 pub type Relay = mock_relay::Module<Test>;
 
 pub type RelayerGameError = Error<Test, DefaultInstance>;
-pub type RGame = Module<Test>;
+pub type RelayerGame = Module<Test>;
 
 thread_local! {
 	static GENESIS_TIME: Instant = Instant::now();
@@ -337,8 +337,8 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
-	type WeightInfo = ();
 	type DustCollector = (Kton,);
+	type WeightInfo = ();
 }
 impl darwinia_balances::Trait<KtonInstance> for Test {
 	type Balance = Balance;
@@ -347,8 +347,8 @@ impl darwinia_balances::Trait<KtonInstance> for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
-	type WeightInfo = ();
 	type DustCollector = (Ring,);
+	type WeightInfo = ();
 }
 
 pub struct RelayerGameAdjustor;
@@ -450,14 +450,14 @@ impl Default for ExtBuilder {
 }
 
 pub fn run_to_block(n: BlockNumber) {
-	RGame::on_finalize(System::block_number());
+	RelayerGame::on_finalize(System::block_number());
 
 	for b in System::block_number() + 1..=n {
 		System::set_block_number(b);
-		RGame::on_initialize(b);
+		RelayerGame::on_initialize(b);
 
 		if b != n {
-			RGame::on_finalize(System::block_number());
+			RelayerGame::on_finalize(System::block_number());
 		}
 	}
 }

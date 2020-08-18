@@ -124,8 +124,8 @@ impl Trait<RingInstance> for Test {
 		Balance,
 		AccountData<Balance>,
 	>;
-	type WeightInfo = ();
 	type DustCollector = (Kton,);
+	type WeightInfo = ();
 }
 impl Trait<KtonInstance> for Test {
 	type Balance = Balance;
@@ -140,8 +140,8 @@ impl Trait<KtonInstance> for Test {
 		Balance,
 		AccountData<Balance>,
 	>;
-	type WeightInfo = ();
 	type DustCollector = (Ring,);
+	type WeightInfo = ();
 }
 
 pub struct ExtBuilder {

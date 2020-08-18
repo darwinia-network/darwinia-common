@@ -102,6 +102,11 @@ decl_event! {
 
 		/// A game has been settled. [game id]
 		GameOver(GameId),
+
+		/// Pending header approved. [block number, reason]
+		PendingHeaderApproved(TcBlockNumber, Vec<u8>),
+		/// Pending header rejected. [block number]
+		PendingHeaderRejected(TcBlockNumber),
 	}
 }
 
@@ -200,10 +205,16 @@ decl_module! {
 
 		fn on_initialize(block_number: BlockNumber<T>) -> Weight {
 			<PendingHeaders<T, I>>::mutate(|pending_headers|
-				pending_headers.retain(|(confirm_at, _, pending_header)|
+				pending_headers.retain(|(confirm_at, pending_block_number, pending_header)|
 					if *confirm_at == block_number {
-						// TODO: handle error
-						let _ = T::TargetChain::store_header(pending_header.to_owned());
+						if let Err(_) = T::TargetChain::store_header(pending_header.to_owned()) {
+							// TODO: handle error
+						} else {
+							Self::deposit_event(RawEvent::PendingHeaderApproved(
+								*pending_block_number,
+								b"Not Enough Coucil Online, Approved By System".to_vec()
+							));
+						}
 
 						false
 					} else {
@@ -657,45 +668,36 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	}
 }
 
-impl<T: Trait<I>, I: Instance> RelayerGame<T::AccountId> for Module<T, I> {
-	// type TcBlockNumber = types::TcBlockNumber<T, I>;
-
-	fn approve_pending_header(pending_block_number: u64) -> DispatchResult {
-		Self::update_pending_headers_with(
-			pending_block_number.saturated_into(),
-			|header| T::TargetChain::store_header(header)
-		)?;
-		Ok(())
-	}
-
-	fn reject_pending_header(pending_block_number: u64) -> DispatchResult {
-		Self::update_pending_headers_with(pending_block_number.saturated_into(), |_| Ok(()))?;
-		Ok(())
-	}
+impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
+	type Relayer = AccountId<T>;
+	type TcBlockNumber = TcBlockNumber<T, I>;
 
 	// TODO:
 	//	The `header_thing_chain` could be very large,
 	//	the bond should relate to the bytes fee
 	//	that we slash the evil relayer(s) to reward the honest relayer(s) (economic optimize)
+	//
 	// TODO: compact params? (efficency optimize)
+	//
 	// TODO: check too far from last confirmed? maybe we can submit some check point (efficency optimize)
+	//
 	// TODO: drop previous rounds' proof (efficency optimize)
-	fn submit_proposal(relayer: T::AccountId, raw_header_thing_chain: Vec<RawHeaderThing>) -> DispatchResult {
+	//
+	// TODO: handle uncle block
+	fn submit_proposal(
+		relayer: Self::Relayer,
+		raw_header_thing_chain: Vec<RawHeaderThing>,
+	) -> DispatchResult {
 		ensure!(!raw_header_thing_chain.is_empty(), <Error<T, I>>::ProposalI);
 
 		let (game_id, proposed_header_hash, proposed_raw_header) = {
-			let (
-				proposed_header_brief,
-				proposed_raw_header
-			) = T::TargetChain::verify_raw_header_thing(
-				raw_header_thing_chain[0].clone(),
-				true
-			)?;
+			let (proposed_header_brief, proposed_raw_header) =
+				T::TargetChain::verify_raw_header_thing(raw_header_thing_chain[0].clone(), true)?;
 
 			(
 				proposed_header_brief.number,
 				proposed_header_brief.hash,
-				proposed_raw_header
+				proposed_raw_header,
 			)
 		};
 		let best_block_number = T::TargetChain::best_block_number();
@@ -710,7 +712,7 @@ impl<T: Trait<I>, I: Instance> RelayerGame<T::AccountId> for Module<T, I> {
 				.map(|(round_offset, header_brief)| {
 					let bond = T::RelayerGameAdjustor::estimate_bond(
 						extend_at + round_offset as Round,
-						other_proposals_len as _
+						other_proposals_len as _,
 					);
 
 					bonds = bonds.saturating_add(bond);
@@ -729,83 +731,88 @@ impl<T: Trait<I>, I: Instance> RelayerGame<T::AccountId> for Module<T, I> {
 			// New `Game`
 			(0, raw_header_thing_chain_len) => {
 				ensure!(
-						<Proposals<T, I>>::iter().count() <= MAX_ACTIVE_GAMES,
-						<Error<T, I>>::ActiveGameTM
-					);
+					<Proposals<T, I>>::iter().count() <= MAX_ACTIVE_GAMES,
+					<Error<T, I>>::ActiveGameTM
+				);
 				ensure!(game_id > best_block_number, <Error<T, I>>::TargetHeaderAC);
 				ensure!(raw_header_thing_chain_len == 1, <Error<T, I>>::RoundMis);
 
-				let chain = T::TargetChain
-				::verify_raw_header_thing_chain(raw_header_thing_chain)?;
+				let chain = T::TargetChain::verify_raw_header_thing_chain(raw_header_thing_chain)?;
 				info!(target: "relayer-game", "{:#?}", chain);
 				let (bonds, bonded_chain) = extend_bonded_chain(&chain, 0);
 
-				ensure!(T::RingCurrency::usable_balance(&relayer) > T::RingCurrency::minimum_balance(), <Error<T, I>>::InsufficientBond);
-				ensure!(
-						(T::RingCurrency::usable_balance(&relayer)
-							- T::RingCurrency::minimum_balance()) >= bonds,
-						<Error<T, I>>::InsufficientBond
-					);
+				{
+					let use_for_bonds = T::RingCurrency::usable_balance(&relayer)
+						.checked_sub(&T::RingCurrency::minimum_balance())
+						.ok_or(<Error<T, I>>::InsufficientBond)?;
+					ensure!(use_for_bonds >= bonds, <Error<T, I>>::InsufficientBond);
+				}
 
 				Self::update_bonds_with(&relayer, |old_bonds| old_bonds.saturating_add(bonds));
 
 				<ClosedRounds<T, I>>::append(
 					<frame_system::Module<T>>::block_number()
 						+ T::RelayerGameAdjustor::challenge_time(0),
-					(game_id, 0)
+					(game_id, 0),
 				);
 				<Samples<T, I>>::append(game_id, vec![game_id]);
 				<LastConfirmeds<T, I>>::insert(game_id, best_block_number);
 				<Headers<T, I>>::insert(game_id, proposed_header_hash, proposed_raw_header);
-				<Proposals<T, I>>::append(game_id, Proposal {
-					relayer,
-					bonded_chain,
-					extend_from_header_hash: None
-				});
-				Ok(())
+				<Proposals<T, I>>::append(
+					game_id,
+					Proposal {
+						relayer,
+						bonded_chain,
+						extend_from_header_hash: None,
+					},
+				);
 			}
 			// First round
 			(_, 1) => {
-				if other_proposals.iter().any(|proposal| proposal.bonded_chain.len() != 1) {
+				if other_proposals
+					.iter()
+					.any(|proposal| proposal.bonded_chain.len() != 1)
+				{
 					Err(<Error<T, I>>::RoundMis)?;
 				}
 
-				let chain = T::TargetChain
-				::verify_raw_header_thing_chain(raw_header_thing_chain)?;
+				let chain = T::TargetChain::verify_raw_header_thing_chain(raw_header_thing_chain)?;
 				info!(target: "relayer-game", "{:#?}", chain);
 
 				ensure!(
-						!other_proposals
-							.into_iter()
-							.all(|proposal| &proposal.bonded_chain[0].header_brief == &chain[0]),
-						<Error<T, I>>::ProposalAE
-					);
+					!other_proposals
+						.into_iter()
+						.all(|proposal| &proposal.bonded_chain[0].header_brief == &chain[0]),
+					<Error<T, I>>::ProposalAE
+				);
 
 				let (bonds, bonded_chain) = extend_bonded_chain(&chain, 0);
 
 				ensure!(
-						(T::RingCurrency::usable_balance(&relayer)
-							- T::RingCurrency::minimum_balance()) >= bonds,
-						<Error<T, I>>::InsufficientBond
-					);
+					(T::RingCurrency::usable_balance(&relayer)
+						- T::RingCurrency::minimum_balance())
+						>= bonds,
+					<Error<T, I>>::InsufficientBond
+				);
 
 				Self::update_bonds_with(&relayer, |old_bonds| old_bonds.saturating_add(bonds));
 
 				<Headers<T, I>>::insert(game_id, proposed_header_hash, proposed_raw_header);
-				<Proposals<T, I>>::append(game_id, Proposal {
-					relayer,
-					bonded_chain,
-					extend_from_header_hash: None
-				});
-				Ok(())
+				<Proposals<T, I>>::append(
+					game_id,
+					Proposal {
+						relayer,
+						bonded_chain,
+						extend_from_header_hash: None,
+					},
+				);
 			}
 			// Extend
 			(_, raw_header_thing_chain_len) => {
-				let round = T::RelayerGameAdjustor
-				::round_from_chain_len(raw_header_thing_chain_len as _);
+				let round =
+					T::RelayerGameAdjustor::round_from_chain_len(raw_header_thing_chain_len as _);
 				let prev_round = round.checked_sub(1).ok_or(<Error<T, I>>::RoundMis)?;
-				let chain = T::TargetChain
-				::verify_raw_header_thing_chain(raw_header_thing_chain)?;
+				let chain = T::TargetChain::verify_raw_header_thing_chain(raw_header_thing_chain)?;
 				info!(target: "relayer-game", "{:#?}", chain);
 				let samples = {
 					// Chain's len is ALWAYS great than 1 under this match pattern; qed
@@ -816,17 +823,16 @@ impl<T: Trait<I>, I: Instance> RelayerGame<T::AccountId> for Module<T, I> {
 
 				ensure!(chain.len() == samples.len(), <Error<T, I>>::RoundMis);
 				ensure!(
-						chain
-							.iter()
-							.zip(samples.iter())
-							.all(|(header_thing, sample_block_number)|
-								header_thing.number == *sample_block_number),
-						<Error<T, I>>::RoundMis
-					);
+					chain
+						.iter()
+						.zip(samples.iter())
+						.all(|(header_thing, sample_block_number)| header_thing.number
+							== *sample_block_number),
+					<Error<T, I>>::RoundMis
+				);
 
 				let extend_at = T::RelayerGameAdjustor::chain_len_from_round(prev_round) as _;
-				let (bonds, extend_chain) =
-					extend_bonded_chain(&chain[extend_at..], prev_round);
+				let (bonds, extend_chain) = extend_bonded_chain(&chain[extend_at..], prev_round);
 				let mut extend_from_proposal = None;
 
 				for proposal in other_proposals {
@@ -842,27 +848,28 @@ impl<T: Trait<I>, I: Instance> RelayerGame<T::AccountId> for Module<T, I> {
 						}
 					} else if proposal_chain_len == chain.len() {
 						ensure!(
-								!extend_chain
-									.iter()
-									.zip(proposal.bonded_chain[extend_at..].iter())
-									.all(|(a, b)| a.header_brief == b.header_brief),
-								<Error<T, I>>::ProposalAE
-							);
+							!extend_chain
+								.iter()
+								.zip(proposal.bonded_chain[extend_at..].iter())
+								.all(|(a, b)| a.header_brief == b.header_brief),
+							<Error<T, I>>::ProposalAE
+						);
 					}
 				}
 
-				if let Some(Proposal { bonded_chain: extend_from_chain, .. }) = extend_from_proposal {
+				if let Some(Proposal {
+					bonded_chain: extend_from_chain,
+					..
+				}) = extend_from_proposal
+				{
 					ensure!(
-							(T::RingCurrency::usable_balance(&relayer)
-								- T::RingCurrency::minimum_balance()) >= bonds,
-							<Error<T, I>>::InsufficientBond
-						);
+						(T::RingCurrency::usable_balance(&relayer)
+							- T::RingCurrency::minimum_balance())
+							>= bonds,
+						<Error<T, I>>::InsufficientBond
+					);
 
-					let extend_from_header = extend_from_chain
-						.last()
-						.unwrap()
-						.header_brief
-						.clone();
+					let extend_from_header = extend_from_chain.last().unwrap().header_brief.clone();
 					let bonded_chain = [extend_from_chain, extend_chain].concat();
 
 					Self::update_bonds_with(&relayer, |old_bonds| old_bonds.saturating_add(bonds));
@@ -873,18 +880,34 @@ impl<T: Trait<I>, I: Instance> RelayerGame<T::AccountId> for Module<T, I> {
 							relayer,
 							bonded_chain,
 							// Each proposal MUST contains a NOT empty chain; qed
-							extend_from_header_hash: Some(extend_from_header.hash)
-						}
+							extend_from_header_hash: Some(extend_from_header.hash),
+						},
 					);
-					Ok(())
 				} else {
 					Err(<Error<T, I>>::RoundMis)?;
-					Ok(())
 				}
 			}
 		}
+
+		Ok(())
 	}
 
+	fn approve_pending_header(pending: Self::TcBlockNumber) -> DispatchResult {
+		Self::update_pending_headers_with(pending, |header| T::TargetChain::store_header(header))?;
+		Self::deposit_event(RawEvent::PendingHeaderApproved(
+			pending,
+			b"Approved By Council".to_vec(),
+		));
+
+		Ok(())
+	}
+
+	fn reject_pending_header(pending: Self::TcBlockNumber) -> DispatchResult {
+		Self::update_pending_headers_with(pending, |_| Ok(()))?;
+		Self::deposit_event(RawEvent::PendingHeaderRejected(pending));
+
+		Ok(())
+	}
 }
 
 // TODO: https://github.com/darwinia-network/darwinia-common/issues/209

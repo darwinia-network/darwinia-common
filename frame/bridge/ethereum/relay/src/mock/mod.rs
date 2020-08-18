@@ -4,12 +4,12 @@
 use codec::Error;
 // --- substrate ---
 use frame_support::{impl_outer_dispatch, impl_outer_origin, parameter_types, weights::Weight};
+use frame_system::EnsureRoot;
 use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill, RuntimeDebug};
 // --- darwinia ---
 use crate::*;
 use array_bytes::hex_bytes_unchecked;
-use frame_system::EnsureRoot;
 
 // Static codec header source
 mod test_data {
@@ -67,10 +67,10 @@ impl Trait for Test {
 	type ModuleId = EthereumRelayModuleId;
 	type Event = ();
 	type Currency = Ring;
-	type WeightInfo = ();
-	type RelayerGame = ();
+	type RelayerGame = UnusedRelayerGame;
 	type ApproveOrigin = EnsureRoot<AccountId>;
 	type RejectOrigin = EnsureRoot<AccountId>;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -114,8 +114,8 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 	type ExistentialDeposit = ();
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
-	type WeightInfo = ();
 	type DustCollector = ();
+	type WeightInfo = ();
 }
 
 pub struct ExtBuilder {}
@@ -140,6 +140,22 @@ impl ExtBuilder {
 		.assimilate_storage(&mut storage)
 		.unwrap();
 		storage.into()
+	}
+}
+
+pub struct UnusedRelayerGame;
+impl RelayerGameProtocol for UnusedRelayerGame {
+	type Relayer = u64;
+	type TcBlockNumber = u64;
+
+	fn submit_proposal(_: Self::Relayer, _: Vec<RawHeaderThing>) -> DispatchResult {
+		unimplemented!()
+	}
+	fn approve_pending_header(_: Self::TcBlockNumber) -> DispatchResult {
+		unimplemented!()
+	}
+	fn reject_pending_header(_: Self::TcBlockNumber) -> DispatchResult {
+		unimplemented!()
 	}
 }
 

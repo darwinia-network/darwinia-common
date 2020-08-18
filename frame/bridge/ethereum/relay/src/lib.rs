@@ -12,11 +12,11 @@ mod types {
 	// --- darwinia ---
 	use crate::*;
 
+	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
 	pub type Balance<T> = <CurrencyT<T> as Currency<AccountId<T>>>::Balance;
 	pub type MMRHash = H256;
 	pub type MMRProof = Vec<H256>;
 
-	type AccountId<T> = <T as frame_system::Trait>::AccountId;
 	type CurrencyT<T> = <T as Trait>::Currency;
 }
 
@@ -30,7 +30,7 @@ use frame_support::{
 	traits::Get,
 	traits::{Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, ReservableCurrency},
 };
-use frame_system::{ensure_root, ensure_signed};
+use frame_system::ensure_signed;
 use sp_runtime::{
 	traits::AccountIdConversion, DispatchError, DispatchResult, ModuleId, RuntimeDebug,
 };
@@ -63,14 +63,14 @@ pub trait Trait: frame_system::Trait {
 	type Currency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
 		+ ReservableCurrency<Self::AccountId>;
 
-	/// Weight information for extrinsics in this pallet.
-	type WeightInfo: WeightInfo;
-
-	type RelayerGame: RelayerGame<Self::AccountId>;
+	type RelayerGame: RelayerGameProtocol<Relayer = AccountId<Self>, TcBlockNumber = EthBlockNumber>;
 
 	type ApproveOrigin: EnsureOrigin<Self::Origin>;
 
 	type RejectOrigin: EnsureOrigin<Self::Origin>;
+
+	/// Weight information for extrinsics in this pallet.
+	type WeightInfo: WeightInfo;
 }
 
 decl_event! {
@@ -129,11 +129,18 @@ darwinia_support::impl_genesis! {
 decl_storage! {
 	trait Store for Module<T: Trait> as DarwiniaEthereumRelay {
 		/// Ethereum last confrimed header info including ethereum block number, hash, and mmr
-		pub LastConfirmedHeaderInfo get(fn last_confirm_header_info): Option<(EthBlockNumber, H256, MMRHash)>;
+		pub
+			LastConfirmedHeaderInfo
+			get(fn last_confirm_header_info)
+			: Option<(EthBlockNumber, H256, MMRHash)>;
 
 		/// The Ethereum headers confrimed by relayer game
 		/// The actural storage needs to be defined
-		pub ConfirmedHeadersDoubleMap get(fn confirmed_header): double_map hasher(identity) EthBlockNumber, hasher(identity) EthBlockNumber => EthHeader;
+		pub
+			ConfirmedHeadersDoubleMap
+			get(fn confirmed_header)
+			: double_map hasher(identity) EthBlockNumber, hasher(identity) EthBlockNumber
+			=> EthHeader;
 
 		/// Dags merkle roots of ethereum epoch (each epoch is 30000)
 		pub DagsMerkleRoots get(fn dag_merkle_root): map hasher(identity) u64 => H128;
@@ -177,26 +184,27 @@ decl_module! {
 
 		fn deposit_event() = default;
 
-		//
 		#[weight = 100_000_000]
-		fn relay_headers(origin, eth_header_thing_chain: Vec<EthHeaderThing>) {
+		pub fn submit_proposal(origin, eth_header_thing_chain: Vec<EthHeaderThing>) {
 			let relayer = ensure_signed(origin)?;
-			let raw_header_thing_chain = eth_header_thing_chain.iter().map(|x| x.encode()).collect::<Vec<_>>();
-			T::RelayerGame::submit_proposal(relayer, raw_header_thing_chain)?
+			let raw_header_thing_chain = eth_header_thing_chain
+				.iter()
+				.map(|x| x.encode())
+				.collect::<Vec<_>>();
+
+			T::RelayerGame::submit_proposal(relayer, raw_header_thing_chain)?;
 		}
 
 		#[weight = 100_000_000]
-		fn approve_pending_header(origin, pending_block_number: EthBlockNumber) {
+		pub fn approve_pending_header(origin, pending: EthBlockNumber) {
 			T::ApproveOrigin::ensure_origin(origin)?;
-			
-			T::RelayerGame::approve_pending_header(pending_block_number)?
+			T::RelayerGame::approve_pending_header(pending)?;
 		}
 
 		#[weight = 100_000_000]
-		fn reject_pending_header(origin, pending_block_number: EthBlockNumber) {
+		pub fn reject_pending_header(origin, pending: EthBlockNumber) {
 			T::RejectOrigin::ensure_origin(origin)?;
-
-			T::RelayerGame::reject_pending_header(pending_block_number)?;
+			T::RelayerGame::reject_pending_header(pending)?;
 		}
 
 		/// Check and verify the receipt
@@ -250,37 +258,45 @@ decl_module! {
 		/// # </weight>
 		#[weight = 10_000_000]
 		pub fn set_receipt_verify_fee(origin, #[compact] new: Balance<T>) {
-			ensure_root(origin)?;
+			T::RejectOrigin::ensure_origin(origin)?;
+
 			<ReceiptVerifyFee<T>>::put(new);
 		}
 
 		/// Remove the specific malicous block
 		#[weight = 100_000_000]
 		pub fn remove_confirmed_block(origin, number: EthBlockNumber) {
-			ensure_root(origin)?;
+			T::RejectOrigin::ensure_origin(origin)?;
+
 			ConfirmedHeadersDoubleMap::take(number/ConfirmBlocksInCycle::get(), number);
+
 			Self::deposit_event(RawEvent::RemoveConfirmedBlock(number));
 		}
 
 		/// Remove the blocks in particular month (month is calculated as cycle)
 		#[weight = 100_000_000]
 		pub fn remove_confirmed_blocks_in_month(origin, cycle: EthBlockNumber) {
-			ensure_root(origin)?;
+			T::RejectOrigin::ensure_origin(origin)?;
+
 			let c = ConfirmBlocksInCycle::get();
+
 			ConfirmedHeadersDoubleMap::remove_prefix(cycle);
+
 			Self::deposit_event(RawEvent::RemoveConfirmedBlockRang(cycle * c, cycle.saturating_add(1) * c));
 		}
 
 		/// Setup the parameters to delete the confirmed blocks after month * blocks_in_month
 		#[weight = 100_000_000]
 		pub fn set_confirmed_blocks_clean_parameters(origin, month: EthBlockNumber, blocks_in_month: EthBlockNumber) {
-			ensure_root(origin)?;
+			T::RejectOrigin::ensure_origin(origin)?;
+
 			if month < 2 {
 				// read the doc string of of event
 				Self::deposit_event(RawEvent::ConfirmBlockManagementError(month));
 			} else {
 				ConfirmBlocksInCycle::set(blocks_in_month);
 				ConfirmBlockKeepInMonth::set(month);
+
 				Self::deposit_event(RawEvent::UpdateConfrimedBlockCleanCycle(month, blocks_in_month));
 			}
 		}
@@ -292,7 +308,7 @@ impl<T: Trait> Module<T> {
 	///
 	/// This actually does computation. If you need to keep using it, then make sure you cache the
 	/// value and only call this once.
-	fn account_id() -> T::AccountId {
+	fn account_id() -> AccountId<T> {
 		T::ModuleId::get().into_account()
 	}
 
@@ -608,10 +624,10 @@ impl<T: Trait> Relayable for Module<T> {
 	}
 }
 
-impl<T: Trait> EthereumReceipt<T::AccountId, Balance<T>> for Module<T> {
+impl<T: Trait> EthereumReceipt<AccountId<T>, Balance<T>> for Module<T> {
 	type EthereumReceiptProof = (EthHeader, EthReceiptProof, MMRProof);
 
-	fn account_id() -> T::AccountId {
+	fn account_id() -> AccountId<T> {
 		Self::account_id()
 	}
 

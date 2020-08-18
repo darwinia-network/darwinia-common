@@ -13,6 +13,9 @@
 
 #![warn(missing_docs)]
 
+// --- substrate ---
+pub use sc_rpc_api::DenyUnsafe;
+
 // --- std ---
 use std::sync::Arc;
 // --- substrate ---
@@ -74,14 +77,14 @@ pub struct LightDeps<C, F, P> {
 }
 
 /// Instantiate all RPC extensions.
-pub fn create_full<C, P, SC, UE>(deps: FullDeps<C, P, SC>) -> RpcExtension
+pub fn create_full<C, P, SC>(deps: FullDeps<C, P, SC>) -> RpcExtension
 where
 	C: 'static + Send + Sync,
 	C: ProvideRuntimeApi<Block>,
 	C: sp_blockchain::HeaderBackend<Block>
 		+ sp_blockchain::HeaderMetadata<Block, Error = sp_blockchain::Error>,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
-	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance, UE>,
+	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: sc_consensus_babe::BabeApi<Block>,
 	C::Api: sp_block_builder::BlockBuilder<Block>,
 	C::Api: darwinia_balances_rpc::BalancesRuntimeApi<Block, AccountId, Balance>,
@@ -89,7 +92,6 @@ where
 	C::Api: darwinia_staking_rpc::StakingRuntimeApi<Block, AccountId, Power>,
 	P: 'static + sp_transaction_pool::TransactionPool,
 	SC: 'static + sp_consensus::SelectChain<Block>,
-	UE: 'static + Send + Sync + codec::Codec,
 {
 	// --- substrate ---
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
@@ -151,16 +153,15 @@ where
 }
 
 /// Instantiate all RPC extensions for light node.
-pub fn create_light<C, P, F, UE>(deps: LightDeps<C, F, P>) -> RpcExtension
+pub fn create_light<C, P, F>(deps: LightDeps<C, F, P>) -> RpcExtension
 where
 	C: 'static + Send + Sync,
 	C: ProvideRuntimeApi<Block>,
 	C: sp_blockchain::HeaderBackend<Block>,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
-	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance, UE>,
+	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	P: 'static + sp_transaction_pool::TransactionPool,
 	F: 'static + sc_client_api::Fetcher<Block>,
-	UE: 'static + Send + Sync + codec::Codec,
 {
 	// --- substrate ---
 	use substrate_frame_rpc_system::{LightSystem, SystemApi};

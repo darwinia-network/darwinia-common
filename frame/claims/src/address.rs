@@ -15,7 +15,6 @@ macro_rules! impl_address {
 		#[doc = "-prefixed hex representation."]
 		#[derive(Debug, Default)]
 		pub struct $name(pub AddressT);
-
 		impl Serialize for $name {
 			fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
 			where
@@ -25,7 +24,6 @@ macro_rules! impl_address {
 				serializer.serialize_str(&hex)
 			}
 		}
-
 		impl<'de> Deserialize<'de> for $name {
 			fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
 			where

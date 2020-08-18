@@ -341,61 +341,53 @@ mod migration {
 		// pub Ledger get(fn ledger): map hasher(blake2_128_concat) T::AccountId => Option<StakingLedgerT<T>>;
 		let item: &[u8] = b"Ledger";
 
+		// broken ledger
+		//
+		// ring check: true
+		// deposit check: false
+		// lock check: true
+		// Ledger {
+		//     stash: "0f9985cf8a27e42a191f0f4d4b2bfd770256728868f42f642b60ef247b79b245",
+		//     active_ring: 9513338321214,
+		//     active_deposit_ring: 9459998000000,
+		//     deposit_items: Some(
+		//         [
+		//             DepositItem {
+		//                 value: 974523822662,
+		//             },
+		//             DepositItem {
+		//                 value: 998000000,
+		//             },
+		//             DepositItem {
+		//                 value: 8460000000000,
+		//             },
+		//         ],
+		//     ),
+		//     ring_staking_lock: StakingLock {
+		//         staking_amount: 9513338321214,
+		//     },
+		// }
+		//
+		// if `active_ring` >= `active_deposit_ring` then cut the `active_deposit_ring`
+		// else will set the `deposit_items` to
+		// `vec![DepositItem {
+		// 	value: active_deposit_ring,
+		// 	expire_time,
+		// }]`
+		// the value of `start_time` and `expire_time` is the original first item's
+
 		for (hash, mut value) in <StorageIterator<StakingLedgerT<T>>>::new(module, item) {
 			let StakingLedger {
-				stash,
-				active_ring,
 				active_deposit_ring,
 				deposit_items,
-				ring_staking_lock,
 				..
 			} = &mut value;
+			let total_deposit = deposit_items
+				.iter()
+				.fold(0.into(), |total_deposit, item| total_deposit + item.value);
 
-			// can not be zero, but better safe
-			if active_ring.is_zero() {
-				continue;
-			}
-
-			let dirty_active_ring = {
-				let free_balance = T::RingCurrency::free_balance(stash);
-
-				if free_balance < *active_ring {
-					// cur `active_ring`
-					*active_ring = free_balance;
-
-					true
-				} else {
-					false
-				}
-			};
-
-			if *active_ring < *active_deposit_ring || dirty_active_ring {
-				if ring_staking_lock.staking_amount != *active_ring {
-					// update lock
-
-					ring_staking_lock.staking_amount = *active_ring;
-
-					T::RingCurrency::set_lock(
-						STAKING_ID,
-						stash,
-						LockFor::Staking(ring_staking_lock.to_owned()),
-						WithdrawReasons::all(),
-					);
-				}
-
-				if let Some(deposit_item) = deposit_items.last() {
-					// cut `deposit_items`
-
-					let mut deposit_item = deposit_item.to_owned();
-
-					deposit_item.value = *active_ring;
-
-					*active_deposit_ring = *active_ring;
-					*deposit_items = vec![deposit_item];
-				} else {
-					// fix invalid data
-					*active_deposit_ring = Zero::zero();
-				}
+			if *active_deposit_ring != total_deposit {
+				*active_deposit_ring = total_deposit;
 
 				put_storage_value(module, item, &hash, value);
 			}
@@ -641,13 +633,13 @@ pub trait Trait: frame_system::Trait + SendTransactionTypes<Call<Self>> {
 	/// Handler for the unbalanced *KTON* increment when rewarding a staker.
 	type KtonReward: OnUnbalanced<KtonPositiveImbalance<Self>>;
 
-	/// Weight information for extrinsics in this pallet.
-	type WeightInfo: WeightInfo;
-
 	// TODO: doc
 	type Cap: Get<RingBalance<Self>>;
 	// TODO: doc
 	type TotalPower: Get<Power>;
+
+	/// Weight information for extrinsics in this pallet.
+	type WeightInfo: WeightInfo;
 }
 
 decl_storage! {
@@ -1152,6 +1144,17 @@ decl_module! {
 				}
 			}
 			// `on_finalize` weight is tracked in `on_initialize`
+		}
+
+		fn integrity_test() {
+			sp_io::TestExternalities::new_empty().execute_with(||
+				assert!(
+					T::SlashDeferDuration::get() < T::BondingDurationInEra::get() || T::BondingDurationInEra::get() == 0,
+					"As per documentation, slash defer duration ({}) should be less than bonding duration ({}).",
+					T::SlashDeferDuration::get(),
+					T::BondingDurationInEra::get(),
+				)
+			);
 		}
 
 		/// Take the origin account as a stash and lock up `value` of its balance. `controller` will
@@ -3880,11 +3883,11 @@ where
 }
 impl<RingBalance, KtonBalance> Default for StakingBalance<RingBalance, KtonBalance>
 where
-	RingBalance: Default + HasCompact,
-	KtonBalance: Default + HasCompact,
+	RingBalance: Zero + HasCompact,
+	KtonBalance: Zero + HasCompact,
 {
 	fn default() -> Self {
-		StakingBalance::RingBalance(Default::default())
+		StakingBalance::RingBalance(Zero::zero())
 	}
 }
 
@@ -3919,11 +3922,10 @@ pub struct ValidatorPrefs {
 	#[codec(compact)]
 	pub commission: Perbill,
 }
-
 impl Default for ValidatorPrefs {
 	fn default() -> Self {
 		ValidatorPrefs {
-			commission: Default::default(),
+			commission: Perbill::zero(),
 		}
 	}
 }

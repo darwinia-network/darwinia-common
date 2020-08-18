@@ -126,15 +126,27 @@ fn migration_should_fix_broken_ledger() {
 	let mut broken_ledger =
 		StakingLedger::<mock::AccountId, mock::Balance, mock::Balance, mock::BlockNumber> {
 			stash: id,
-			active_ring: 500,
-			active_deposit_ring: 1000,
-			deposit_items: vec![TimeDepositItem {
-				value: 1000,
-				start_time: 0,
-				expire_time: 1,
-			}],
+			active_ring: 1000,
+			active_deposit_ring: 1,
+			deposit_items: vec![
+				TimeDepositItem {
+					value: 1,
+					start_time: 0,
+					expire_time: 1,
+				},
+				TimeDepositItem {
+					value: 2,
+					start_time: 1,
+					expire_time: 2,
+				},
+				TimeDepositItem {
+					value: 3,
+					start_time: 2,
+					expire_time: 3,
+				},
+			],
 			ring_staking_lock: StakingLock {
-				staking_amount: 500,
+				staking_amount: 1000,
 				unbondings: vec![],
 			},
 			..Default::default()
@@ -152,10 +164,7 @@ fn migration_should_fix_broken_ledger() {
 
 		crate::migration::migrate::<Test>();
 
-		broken_ledger.active_ring = 200;
-		broken_ledger.active_deposit_ring = 200;
-		broken_ledger.deposit_items[0].value = 200;
-		broken_ledger.ring_staking_lock.staking_amount = 200;
+		broken_ledger.active_deposit_ring = 6;
 
 		assert_eq!(Staking::ledger(&id).unwrap(), broken_ledger);
 	});

@@ -140,6 +140,8 @@ mod tests;
 #[cfg(test)]
 mod tests_local;
 
+mod default_weight;
+
 // --- darwinia ---
 pub use imbalances::{NegativeImbalance, PositiveImbalance};
 
@@ -181,28 +183,11 @@ use darwinia_support::{
 };
 
 pub trait WeightInfo {
-	fn transfer(u: u32, e: u32) -> Weight;
-	fn transfer_best_case(u: u32, e: u32) -> Weight;
-	fn transfer_keep_alive(u: u32, e: u32) -> Weight;
-	fn set_balance(u: u32, e: u32) -> Weight;
-	fn set_balance_killing(u: u32, e: u32) -> Weight;
-}
-impl WeightInfo for () {
-	fn transfer(_u: u32, _e: u32) -> Weight {
-		1_000_000_000
-	}
-	fn transfer_best_case(_u: u32, _e: u32) -> Weight {
-		1_000_000_000
-	}
-	fn transfer_keep_alive(_u: u32, _e: u32) -> Weight {
-		1_000_000_000
-	}
-	fn set_balance(_u: u32, _e: u32) -> Weight {
-		1_000_000_000
-	}
-	fn set_balance_killing(_u: u32, _e: u32) -> Weight {
-		1_000_000_000
-	}
+	fn transfer() -> Weight;
+	fn transfer_keep_alive() -> Weight;
+	fn set_balance_creating() -> Weight;
+	fn set_balance_killing() -> Weight;
+	fn force_transfer() -> Weight;
 }
 
 pub trait Subtrait<I: Instance = DefaultInstance>: frame_system::Trait {
@@ -268,11 +253,11 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	/// The means of storing the balances of an account.
 	type AccountStore: StoredMap<Self::AccountId, Self::BalanceInfo>;
 
-	/// Weight information for the extrinsics in this pallet.
-	type WeightInfo: WeightInfo;
-
 	// TODO: doc
 	type DustCollector: DustCollector<Self::AccountId>;
+
+	/// Weight information for the extrinsics in this pallet.
+	type WeightInfo: WeightInfo;
 }
 
 impl<T: Trait<I>, I: Instance> Subtrait<I> for T {
@@ -280,8 +265,8 @@ impl<T: Trait<I>, I: Instance> Subtrait<I> for T {
 	type ExistentialDeposit = T::ExistentialDeposit;
 	type AccountStore = T::AccountStore;
 	type BalanceInfo = T::BalanceInfo;
-	type WeightInfo = <T as Trait<I>>::WeightInfo;
 	type DustCollector = T::DustCollector;
+	type WeightInfo = <T as Trait<I>>::WeightInfo;
 }
 
 decl_event!(
@@ -852,8 +837,8 @@ impl<T: Subtrait<I>, I: Instance> Trait<I> for ElevatedTrait<T, I> {
 	type ExistentialDeposit = T::ExistentialDeposit;
 	type BalanceInfo = T::BalanceInfo;
 	type AccountStore = T::AccountStore;
-	type WeightInfo = <T as Subtrait<I>>::WeightInfo;
 	type DustCollector = T::DustCollector;
+	type WeightInfo = <T as Subtrait<I>>::WeightInfo;
 }
 
 impl<T: Trait<I>, I: Instance> Currency<T::AccountId> for Module<T, I>

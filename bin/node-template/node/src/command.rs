@@ -118,7 +118,6 @@ pub fn run() -> sc_cli::Result<()> {
 				service::new_chain_ops::<
 					service::node_template_runtime::RuntimeApi,
 					service::NodeTemplateExecutor,
-					service::node_template_runtime::UncheckedExtrinsic,
 				>(config)
 			})
 		}
