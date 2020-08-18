@@ -368,7 +368,8 @@ mod migration {
 		//     },
 		// }
 		//
-		// this migration will set the `deposit_items` to
+		// if `active_ring` >= `active_deposit_ring` then cut the `active_deposit_ring`
+		// else will set the `deposit_items` to
 		// `vec![DepositItem {
 		// 	value: active_deposit_ring,
 		// 	expire_time,
@@ -381,22 +382,12 @@ mod migration {
 				deposit_items,
 				..
 			} = &mut value;
+			let total_deposit = deposit_items
+				.iter()
+				.fold(0.into(), |total_deposit, item| total_deposit + item.value);
 
-			if *active_deposit_ring
-				!= deposit_items
-					.iter()
-					.fold(0.into(), |total_deposit, item| total_deposit + item.value)
-			{
-				if deposit_items.is_empty() {
-					// can not be, but better safe
-					*active_deposit_ring = 0.into();
-				} else {
-					*deposit_items = vec![TimeDepositItem {
-						value: *active_deposit_ring,
-						start_time: deposit_items[0].start_time,
-						expire_time: deposit_items[0].expire_time,
-					}]
-				}
+			if *active_deposit_ring != total_deposit {
+				*active_deposit_ring = total_deposit;
 
 				put_storage_value(module, item, &hash, value);
 			}

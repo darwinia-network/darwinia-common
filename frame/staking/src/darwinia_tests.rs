@@ -121,97 +121,53 @@ fn kton_should_reward_even_does_not_own_kton_before() {
 
 #[test]
 fn migration_should_fix_broken_ledger() {
-	{
-		let mut s = sp_storage::Storage::default();
-		let id: mock::AccountId = 777;
-		let mut broken_ledger =
-			StakingLedger::<mock::AccountId, mock::Balance, mock::Balance, mock::BlockNumber> {
-				stash: id,
-				active_ring: 1000,
-				active_deposit_ring: 1000,
-				deposit_items: vec![TimeDepositItem {
+	let mut s = sp_storage::Storage::default();
+	let id: mock::AccountId = 777;
+	let mut broken_ledger =
+		StakingLedger::<mock::AccountId, mock::Balance, mock::Balance, mock::BlockNumber> {
+			stash: id,
+			active_ring: 1000,
+			active_deposit_ring: 1,
+			deposit_items: vec![
+				TimeDepositItem {
 					value: 1,
 					start_time: 0,
 					expire_time: 1,
-				}],
-				ring_staking_lock: StakingLock {
-					staking_amount: 1000,
-					unbondings: vec![],
 				},
-				..Default::default()
-			};
-		let data = vec![(
-			<Ledger<Test>>::hashed_key_for(id),
-			broken_ledger.encode().to_vec(),
-		)];
-
-		s.top = data.into_iter().collect();
-		sp_io::TestExternalities::new(s).execute_with(|| {
-			let _ = Ring::deposit_creating(&id, 200);
-
-			assert_eq!(Staking::ledger(&id).unwrap(), broken_ledger);
-
-			crate::migration::migrate::<Test>();
-
-			broken_ledger.deposit_items[0].value = 1000;
-
-			assert_eq!(Staking::ledger(&id).unwrap(), broken_ledger);
-		});
-	}
-
-	{
-		let mut s = sp_storage::Storage::default();
-		let id: mock::AccountId = 777;
-		let mut broken_ledger =
-			StakingLedger::<mock::AccountId, mock::Balance, mock::Balance, mock::BlockNumber> {
-				stash: id,
-				active_ring: 1000,
-				active_deposit_ring: 1000,
-				deposit_items: vec![
-					TimeDepositItem {
-						value: 1,
-						start_time: 10,
-						expire_time: 100,
-					},
-					TimeDepositItem {
-						value: 2,
-						start_time: 100,
-						expire_time: 1000,
-					},
-					TimeDepositItem {
-						value: 3,
-						start_time: 1000,
-						expire_time: 10000,
-					},
-				],
-				ring_staking_lock: StakingLock {
-					staking_amount: 1000,
-					unbondings: vec![],
+				TimeDepositItem {
+					value: 2,
+					start_time: 1,
+					expire_time: 2,
 				},
-				..Default::default()
-			};
-		let data = vec![(
-			<Ledger<Test>>::hashed_key_for(id),
-			broken_ledger.encode().to_vec(),
-		)];
+				TimeDepositItem {
+					value: 3,
+					start_time: 2,
+					expire_time: 3,
+				},
+			],
+			ring_staking_lock: StakingLock {
+				staking_amount: 1000,
+				unbondings: vec![],
+			},
+			..Default::default()
+		};
+	let data = vec![(
+		<Ledger<Test>>::hashed_key_for(id),
+		broken_ledger.encode().to_vec(),
+	)];
 
-		s.top = data.into_iter().collect();
-		sp_io::TestExternalities::new(s).execute_with(|| {
-			let _ = Ring::deposit_creating(&id, 200);
+	s.top = data.into_iter().collect();
+	sp_io::TestExternalities::new(s).execute_with(|| {
+		let _ = Ring::deposit_creating(&id, 200);
 
-			assert_eq!(Staking::ledger(&id).unwrap(), broken_ledger);
+		assert_eq!(Staking::ledger(&id).unwrap(), broken_ledger);
 
-			crate::migration::migrate::<Test>();
+		crate::migration::migrate::<Test>();
 
-			broken_ledger.deposit_items.remove(2);
-			broken_ledger.deposit_items.remove(1);
-			broken_ledger.deposit_items[0].value = 1000;
-			broken_ledger.deposit_items[0].start_time = 10;
-			broken_ledger.deposit_items[0].expire_time = 100;
+		broken_ledger.active_deposit_ring = 6;
 
-			assert_eq!(Staking::ledger(&id).unwrap(), broken_ledger);
-		});
-	}
+		assert_eq!(Staking::ledger(&id).unwrap(), broken_ledger);
+	});
 }
 
 #[cfg(feature = "backup")]
