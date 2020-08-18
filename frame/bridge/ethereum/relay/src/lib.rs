@@ -178,7 +178,7 @@ decl_module! {
 		fn deposit_event() = default;
 
 		#[weight = 100_000_000]
-		pub fn relay_headers(origin, eth_header_thing_chain: Vec<EthHeaderThing>) {
+		pub fn submit_proposal(origin, eth_header_thing_chain: Vec<EthHeaderThing>) {
 			let relayer = ensure_signed(origin)?;
 			let raw_header_thing_chain = eth_header_thing_chain
 				.iter()
