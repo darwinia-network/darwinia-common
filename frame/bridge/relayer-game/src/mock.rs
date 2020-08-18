@@ -224,7 +224,6 @@ use frame_support::{
 	traits::{OnFinalize, OnInitialize},
 	weights::Weight,
 };
-use frame_system::EnsureRoot;
 use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill};
 // --- darwinia ---
@@ -290,8 +289,6 @@ impl Trait for Test {
 	type RelayerGameAdjustor = RelayerGameAdjustor;
 	type TargetChain = Relay;
 	type ConfirmPeriod = ConfirmPeriod;
-	type ApproveOrigin = EnsureRoot<AccountId>;
-	type RejectOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = ();
 }
 

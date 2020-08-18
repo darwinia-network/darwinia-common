@@ -4,6 +4,7 @@
 use codec::Error;
 // --- substrate ---
 use frame_support::{impl_outer_dispatch, impl_outer_origin, parameter_types, weights::Weight};
+use frame_system::EnsureRoot;
 use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill, RuntimeDebug};
 // --- darwinia ---
@@ -66,6 +67,9 @@ impl Trait for Test {
 	type ModuleId = EthereumRelayModuleId;
 	type Event = ();
 	type Currency = Ring;
+	type RelayerGame = ();
+	type ApproveOrigin = EnsureRoot<AccountId>;
+	type RejectOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = ();
 }
 

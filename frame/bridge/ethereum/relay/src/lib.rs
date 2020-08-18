@@ -28,7 +28,7 @@ use ethereum_types::H128;
 use frame_support::{
 	debug, decl_error, decl_event, decl_module, decl_storage, ensure,
 	traits::Get,
-	traits::{Currency, ExistenceRequirement::KeepAlive, ReservableCurrency},
+	traits::{Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, ReservableCurrency},
 };
 use frame_system::{ensure_root, ensure_signed};
 use sp_runtime::{
@@ -62,6 +62,12 @@ pub trait Trait: frame_system::Trait {
 
 	type Currency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
 		+ ReservableCurrency<Self::AccountId>;
+
+	type RelayerGame: RelayerGameProtocol<Self::AccountId>;
+
+	type ApproveOrigin: EnsureOrigin<Self::Origin>;
+
+	type RejectOrigin: EnsureOrigin<Self::Origin>;
 
 	/// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
@@ -170,6 +176,29 @@ decl_module! {
 		type Error = Error<T>;
 
 		fn deposit_event() = default;
+
+		#[weight = 100_000_000]
+		pub fn relay_headers(origin, eth_header_thing_chain: Vec<EthHeaderThing>) {
+			let relayer = ensure_signed(origin)?;
+			let raw_header_thing_chain = eth_header_thing_chain
+				.iter()
+				.map(|x| x.encode())
+				.collect::<Vec<_>>();
+
+			T::RelayerGame::submit_proposal(relayer, raw_header_thing_chain)?
+		}
+
+		#[weight = 100_000_000]
+		pub fn approve_pending_header(origin, pending_block_number: EthBlockNumber) {
+			T::ApproveOrigin::ensure_origin(origin)?;
+			T::RelayerGame::approve_pending_header(pending_block_number)?
+		}
+
+		#[weight = 100_000_000]
+		pub fn reject_pending_header(origin, pending_block_number: EthBlockNumber) {
+			T::RejectOrigin::ensure_origin(origin)?;
+			T::RelayerGame::reject_pending_header(pending_block_number)?;
+		}
 
 		/// Check and verify the receipt
 		///
@@ -637,7 +666,7 @@ impl<T: Trait> EthereumReceipt<T::AccountId, Balance<T>> for Module<T> {
 pub trait WeightInfo {}
 impl WeightInfo for () {}
 
-#[derive(Encode, Decode, Default, RuntimeDebug)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, Default, RuntimeDebug)]
 pub struct EthHeaderThing {
 	eth_header: EthHeader,
 	ethash_proof: Vec<EthashProof>,

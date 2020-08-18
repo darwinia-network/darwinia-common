@@ -18,6 +18,7 @@ serde_json = { version = "1.0.57", optional = true }
 # darwinia
 array-bytes                         = { default-features = false, path = "../../../../primitives/array-bytes" }
 darwinia-header-mmr-rpc-runtime-api = { default-features = false, path = "../../../header-mmr/rpc/runtime-api" }
+darwinia-relayer-game               = { default-features = false, path = "../../../bridge/relayer-game" }
 darwinia-support                    = { default-features = false, path = "../../../support" }
 ethereum-primitives                 = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
 # github
@@ -32,10 +33,9 @@ sp-runtime    = { default-features = false, git = "https://github.com/darwinia-n
 sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
 
 [dev-dependencies]
-# crates
-serde_json = { version = "1.0.57" }
 # darwinia
 darwinia-balances   = { path = "../../../../frame/balances" }
+darwinia-support    = { features = ["easy-testing"], path = "../../../support" }
 ethereum-primitives = { features = ["easy-testing"], path = "../../../../primitives/ethereum-primitives" }
 # substrate
 sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc5" }
@@ -59,10 +59,12 @@ crates-std    = [
 ]
 darwinia-std  = [
 	"array-bytes/std",
+	"darwinia-relayer-game/std",
 	"darwinia-support/std",
 	"ethereum-primitives/std",
 ]
 github-std    = [
+	"ckb-merkle-mountain-range/std",
 	"ethereum-types/std",
 	"rlp/std",
 ]
