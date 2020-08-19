@@ -186,21 +186,22 @@ decl_module! {
 
 		/// A `RawHeadThing` version of `submit_proposal`
 		#[weight = 100_000_000]
-		pub fn submit_raw_proposal(origin, raw_header_thing_chain: Vec<RawHeaderThing>) {
+		pub fn submit_proposal(origin, raw_header_thing_chain: Vec<RawHeaderThing>) {
 			let relayer = ensure_signed(origin)?;
-			T::RelayerGame::submit_proposal(relayer, raw_header_thing_chain)?;
-		}
-
-		#[weight = 100_000_000]
-		pub fn submit_proposal(origin, eth_header_thing_chain: Vec<EthHeaderThing>) {
-			let relayer = ensure_signed(origin)?;
-			let raw_header_thing_chain = eth_header_thing_chain
-				.iter()
-				.map(|x| x.encode())
-				.collect::<Vec<_>>();
 
 			T::RelayerGame::submit_proposal(relayer, raw_header_thing_chain)?;
 		}
+
+		// #[weight = 100_000_000]
+		// pub fn submit_proposal(origin, eth_header_thing_chain: Vec<EthHeaderThing>) {
+		// 	let relayer = ensure_signed(origin)?;
+		// 	let raw_header_thing_chain = eth_header_thing_chain
+		// 		.iter()
+		// 		.map(|x| x.encode())
+		// 		.collect::<Vec<_>>();
+		//
+		// 	T::RelayerGame::submit_proposal(relayer, raw_header_thing_chain)?;
+		// }
 
 		#[weight = 100_000_000]
 		pub fn approve_pending_header(origin, pending: EthBlockNumber) {
