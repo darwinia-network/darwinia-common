@@ -154,77 +154,45 @@ pub fn is_disabled(controller: AccountId) -> bool {
 	SESSION.with(|d| d.borrow().1.contains(&stash))
 }
 
-pub struct ExistentialDeposit;
-impl Get<Balance> for ExistentialDeposit {
-	fn get() -> Balance {
-		EXISTENTIAL_DEPOSIT.with(|v| *v.borrow())
-	}
-}
-
-pub struct SessionsPerEra;
-impl Get<SessionIndex> for SessionsPerEra {
-	fn get() -> SessionIndex {
-		SESSION_PER_ERA.with(|v| *v.borrow())
-	}
-}
-impl Get<BlockNumber> for SessionsPerEra {
-	fn get() -> BlockNumber {
-		SESSION_PER_ERA.with(|v| *v.borrow() as BlockNumber)
-	}
-}
-
-pub struct ElectionLookahead;
-impl Get<BlockNumber> for ElectionLookahead {
-	fn get() -> BlockNumber {
-		ELECTION_LOOKAHEAD.with(|v| *v.borrow())
-	}
-}
-
-pub struct Period;
-impl Get<BlockNumber> for Period {
-	fn get() -> BlockNumber {
-		PERIOD.with(|v| *v.borrow())
-	}
-}
-
-pub struct SlashDeferDuration;
-impl Get<EraIndex> for SlashDeferDuration {
-	fn get() -> EraIndex {
-		SLASH_DEFER_DURATION.with(|v| *v.borrow())
-	}
-}
-
-pub struct MaxIterations;
-impl Get<u32> for MaxIterations {
-	fn get() -> u32 {
-		MAX_ITERATIONS.with(|v| *v.borrow())
-	}
-}
-
-/// Author of block is always 11
-pub struct Author11;
-impl FindAuthor<AccountId> for Author11 {
-	fn find_author<'a, I>(_digests: I) -> Option<AccountId>
-	where
-		I: 'a + IntoIterator<Item = (frame_support::ConsensusEngineId, &'a [u8])>,
-	{
-		Some(11)
-	}
-}
-
-pub struct RingRewardRemainderMock;
-impl OnUnbalanced<RingNegativeImbalance<Test>> for RingRewardRemainderMock {
-	fn on_nonzero_unbalanced(amount: RingNegativeImbalance<Test>) {
-		RING_REWARD_REMAINDER_UNBALANCED.with(|v| {
-			*v.borrow_mut() += amount.peek();
-		});
-		drop(amount);
-	}
-}
-
 // Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Test;
+parameter_types! {
+	pub const BondingDurationInEra: EraIndex = 3;
+	pub const BondingDurationInBlockNumber: BlockNumber = 9;
+	pub const MaxNominatorRewardedPerValidator: u32 = 64;
+	pub const UnsignedPriority: u64 = 1 << 20;
+	pub const MinSolutionScoreBump: Perbill = Perbill::zero();
+	pub const Cap: Balance = CAP;
+	pub const TotalPower: Power = TOTAL_POWER;
+}
+impl Trait for Test {
+	type Event = MetaEvent;
+	type UnixTime = Timestamp;
+	type SessionsPerEra = SessionsPerEra;
+	type BondingDurationInEra = BondingDurationInEra;
+	type BondingDurationInBlockNumber = BondingDurationInBlockNumber;
+	type SlashDeferDuration = SlashDeferDuration;
+	type SlashCancelOrigin = frame_system::EnsureRoot<Self::AccountId>;
+	type SessionInterface = Self;
+	type NextNewSession = Session;
+	type ElectionLookahead = ElectionLookahead;
+	type Call = Call;
+	type MaxIterations = MaxIterations;
+	type MinSolutionScoreBump = MinSolutionScoreBump;
+	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
+	type UnsignedPriority = UnsignedPriority;
+	type RingCurrency = Ring;
+	type RingRewardRemainder = RingRewardRemainderMock;
+	type RingSlash = ();
+	type RingReward = ();
+	type KtonCurrency = Kton;
+	type KtonSlash = ();
+	type KtonReward = ();
+	type Cap = Cap;
+	type TotalPower = TotalPower;
+	type WeightInfo = ();
+}
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
@@ -325,43 +293,6 @@ impl darwinia_balances::Trait<KtonInstance> for Test {
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
 	type DustCollector = (Ring,);
-	type WeightInfo = ();
-}
-
-parameter_types! {
-	pub const BondingDurationInEra: EraIndex = 3;
-	pub const BondingDurationInBlockNumber: BlockNumber = 9;
-	pub const MaxNominatorRewardedPerValidator: u32 = 64;
-	pub const UnsignedPriority: u64 = 1 << 20;
-	pub const MinSolutionScoreBump: Perbill = Perbill::zero();
-	pub const Cap: Balance = CAP;
-	pub const TotalPower: Power = TOTAL_POWER;
-}
-impl Trait for Test {
-	type Event = MetaEvent;
-	type UnixTime = Timestamp;
-	type SessionsPerEra = SessionsPerEra;
-	type BondingDurationInEra = BondingDurationInEra;
-	type BondingDurationInBlockNumber = BondingDurationInBlockNumber;
-	type SlashDeferDuration = SlashDeferDuration;
-	type SlashCancelOrigin = frame_system::EnsureRoot<Self::AccountId>;
-	type SessionInterface = Self;
-	type NextNewSession = Session;
-	type ElectionLookahead = ElectionLookahead;
-	type Call = Call;
-	type MaxIterations = MaxIterations;
-	type MinSolutionScoreBump = MinSolutionScoreBump;
-	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
-	type UnsignedPriority = UnsignedPriority;
-	type RingCurrency = Ring;
-	type RingRewardRemainder = RingRewardRemainderMock;
-	type RingSlash = ();
-	type RingReward = ();
-	type KtonCurrency = Kton;
-	type KtonSlash = ();
-	type KtonReward = ();
-	type Cap = Cap;
-	type TotalPower = TotalPower;
 	type WeightInfo = ();
 }
 
@@ -637,6 +568,74 @@ impl ExtBuilder {
 		let mut ext = self.build();
 		ext.execute_with(test);
 		ext.execute_with(post_conditions);
+	}
+}
+
+pub struct ExistentialDeposit;
+impl Get<Balance> for ExistentialDeposit {
+	fn get() -> Balance {
+		EXISTENTIAL_DEPOSIT.with(|v| *v.borrow())
+	}
+}
+
+pub struct SessionsPerEra;
+impl Get<SessionIndex> for SessionsPerEra {
+	fn get() -> SessionIndex {
+		SESSION_PER_ERA.with(|v| *v.borrow())
+	}
+}
+impl Get<BlockNumber> for SessionsPerEra {
+	fn get() -> BlockNumber {
+		SESSION_PER_ERA.with(|v| *v.borrow() as BlockNumber)
+	}
+}
+
+pub struct ElectionLookahead;
+impl Get<BlockNumber> for ElectionLookahead {
+	fn get() -> BlockNumber {
+		ELECTION_LOOKAHEAD.with(|v| *v.borrow())
+	}
+}
+
+pub struct Period;
+impl Get<BlockNumber> for Period {
+	fn get() -> BlockNumber {
+		PERIOD.with(|v| *v.borrow())
+	}
+}
+
+pub struct SlashDeferDuration;
+impl Get<EraIndex> for SlashDeferDuration {
+	fn get() -> EraIndex {
+		SLASH_DEFER_DURATION.with(|v| *v.borrow())
+	}
+}
+
+pub struct MaxIterations;
+impl Get<u32> for MaxIterations {
+	fn get() -> u32 {
+		MAX_ITERATIONS.with(|v| *v.borrow())
+	}
+}
+
+/// Author of block is always 11
+pub struct Author11;
+impl FindAuthor<AccountId> for Author11 {
+	fn find_author<'a, I>(_digests: I) -> Option<AccountId>
+	where
+		I: 'a + IntoIterator<Item = (frame_support::ConsensusEngineId, &'a [u8])>,
+	{
+		Some(11)
+	}
+}
+
+pub struct RingRewardRemainderMock;
+impl OnUnbalanced<RingNegativeImbalance<Test>> for RingRewardRemainderMock {
+	fn on_nonzero_unbalanced(amount: RingNegativeImbalance<Test>) {
+		RING_REWARD_REMAINDER_UNBALANCED.with(|v| {
+			*v.borrow_mut() += amount.peek();
+		});
+		drop(amount);
 	}
 }
 
