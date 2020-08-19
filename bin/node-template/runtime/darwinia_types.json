@@ -1,4 +1,6 @@
 {
+	"__[frame.system]__": {},
+	"Address": "AccountId",
 	"__[pallet.balances]__": {},
 	"BalanceInfo": null,
 	"BalanceLock": {
