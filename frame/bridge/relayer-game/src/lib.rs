@@ -141,7 +141,7 @@ decl_storage! {
 		pub Proposals
 			get(fn proposals_of_game)
 			: map hasher(blake2_128_concat) GameId<TcBlockNumber<T, I>>
-			=> Vec<Proposal<
+			=> Vec<RelayProposal<
 				AccountId<T>,
 				BondedTcHeader<
 					RingBalance<T, I>,
@@ -241,7 +241,7 @@ decl_module! {
 
 			let mut pending_headers = vec![];
 
-			let proposals_filter = |round, proposals: &mut Vec<Proposal<_, _, _>>| {
+			let proposals_filter = |round, proposals: &mut Vec<RelayProposal<_, _, _>>| {
 				proposals
 					.drain_filter(|proposal|
 						T::RelayerGameAdjustor
@@ -251,7 +251,7 @@ decl_module! {
 			};
 			let settle_without_challenge = |
 				game_id,
-				proposal: Proposal<_, _, _>,
+				proposal: RelayProposal<_, _, _>,
 				pending_headers: &mut Vec<_>
 			| {
 				let BondedTcHeader::<_, _> {
@@ -281,7 +281,7 @@ decl_module! {
 			let settle_with_challenge = |
 				game_id,
 				mut extend_at,
-				confirmed_proposal: Proposal<
+				confirmed_proposal: RelayProposal<
 					_,
 					BondedTcHeader<_, TcHeaderBrief<_, TcHeaderHash<T, I>, _>>,
 					_
@@ -423,7 +423,7 @@ decl_module! {
 				Self::deposit_event(RawEvent::GameOver(game_id));
 			};
 			let settle_abandon = |
-				proposals: Vec<Proposal<_, BondedTcHeader<RingBalance<T, I>, _>, _>>
+				proposals: Vec<RelayProposal<_, BondedTcHeader<RingBalance<T, I>, _>, _>>
 			| {
 				for proposal in proposals {
 					let bonds = proposal
@@ -443,11 +443,11 @@ decl_module! {
 			let on_chain_arbitrate = |
 				game_id,
 				last_round,
-				last_round_proposals: Vec<Proposal<_, _, _>>,
+				last_round_proposals: Vec<RelayProposal<_, _, _>>,
 				proposals: Vec<_>,
 				pending_headers: &mut Vec<_>
 			| {
-				let mut maybe_confirmed_proposal: Option<Proposal<AccountId<T>, _, _>> = None;
+				let mut maybe_confirmed_proposal: Option<RelayProposal<AccountId<T>, _, _>> = None;
 				let mut evils = vec![];
 
 				for proposal in last_round_proposals.iter() {
@@ -760,7 +760,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 				<Headers<T, I>>::insert(game_id, proposed_header_hash, proposed_raw_header);
 				<Proposals<T, I>>::append(
 					game_id,
-					Proposal {
+					RelayProposal {
 						relayer,
 						bonded_chain,
 						extend_from_header_hash: None,
@@ -800,7 +800,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 				<Headers<T, I>>::insert(game_id, proposed_header_hash, proposed_raw_header);
 				<Proposals<T, I>>::append(
 					game_id,
-					Proposal {
+					RelayProposal {
 						relayer,
 						bonded_chain,
 						extend_from_header_hash: None,
@@ -857,7 +857,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 					}
 				}
 
-				if let Some(Proposal {
+				if let Some(RelayProposal {
 					bonded_chain: extend_from_chain,
 					..
 				}) = extend_from_proposal
@@ -876,7 +876,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 					<Proposals<T, I>>::append(
 						game_id,
-						Proposal {
+						RelayProposal {
 							relayer,
 							bonded_chain,
 							// Each proposal MUST contains a NOT empty chain; qed
@@ -915,7 +915,7 @@ pub trait WeightInfo {}
 impl WeightInfo for () {}
 
 #[derive(Clone, Encode, Decode, RuntimeDebug)]
-pub struct Proposal<AccountId, BondedTcHeader, TcHeaderHash> {
+pub struct RelayProposal<AccountId, BondedTcHeader, TcHeaderHash> {
 	// TODO: Can this proposal submit by other relayers?
 	/// The relayer of these series of headers
 	/// The proposer of this proposal

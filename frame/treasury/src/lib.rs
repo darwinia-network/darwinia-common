@@ -199,7 +199,7 @@ decl_storage! {
 		ProposalCount get(fn proposal_count): ProposalIndex;
 
 		/// Proposals that have been made.
-		Proposals get(fn proposals): map hasher(twox_64_concat) ProposalIndex => Option<Proposal<T::AccountId, RingBalance<T>, KtonBalance<T>>>;
+		Proposals get(fn proposals): map hasher(twox_64_concat) ProposalIndex => Option<TreasuryProposal<T::AccountId, RingBalance<T>, KtonBalance<T>>>;
 
 		/// Proposal indices that have been approved but not yet awarded.
 		Approvals get(fn approvals): Vec<ProposalIndex>;
@@ -351,7 +351,7 @@ decl_module! {
 
 			let c = Self::proposal_count();
 			ProposalCount::put(c + 1);
-			<Proposals<T>>::insert(c, Proposal {
+			<Proposals<T>>::insert(c, TreasuryProposal {
 				proposer,
 				beneficiary,
 				ring_value,
@@ -988,7 +988,7 @@ impl WeightInfo for () {
 /// A spending proposal.
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug)]
-pub struct Proposal<AccountId, RingBalance, KtonBalance> {
+pub struct TreasuryProposal<AccountId, RingBalance, KtonBalance> {
 	/// The account proposing it.
 	proposer: AccountId,
 	/// The account to whom the payment should be made if the proposal is accepted.
