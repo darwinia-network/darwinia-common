@@ -236,6 +236,7 @@ where
 				grandpa: GrandpaDeps {
 					shared_voter_state: shared_voter_state.clone(),
 					shared_authority_set: shared_authority_set.clone(),
+					justification_stream: justification_stream.clone(),
 					subscriptions,
 				},
 			};
