@@ -6,6 +6,76 @@ use substrate_test_utils::assert_eq_uvec;
 // --- darwinia ---
 use crate::{mock::*, *};
 
+/// gen_paired_account!(a(1), b(2), m(12));
+/// will create stash `a` and controller `b`
+/// `a` has 100 Ring and 100 Kton
+/// promise for `m` month with 50 Ring and 50 Kton
+///
+/// `m` can be ignore, this won't create variable `m`
+/// ```rust
+/// gen_paired_account!(a(1), b(2), 12);
+/// ```
+///
+/// `m(12)` can be ignore, and it won't perform `bond` action
+/// ```rust
+/// gen_paired_account!(a(1), b(2));
+/// ```
+macro_rules! gen_paired_account {
+	($stash:ident($stash_id:expr), $controller:ident($controller_id:expr), $promise_month:ident($how_long:expr)) => {
+		#[allow(non_snake_case, unused)]
+		let $stash = $stash_id;
+		let _ = Ring::deposit_creating(&$stash, 100 * COIN);
+		let _ = Kton::deposit_creating(&$stash, 100 * COIN);
+		#[allow(non_snake_case, unused)]
+		let $controller = $controller_id;
+		let _ = Ring::deposit_creating(&$controller, COIN);
+		#[allow(non_snake_case, unused)]
+		let $promise_month = $how_long;
+		assert_ok!(Staking::bond(
+			Origin::signed($stash),
+			$controller,
+			StakingBalance::RingBalance(50 * COIN),
+			RewardDestination::Stash,
+			$how_long,
+			));
+		assert_ok!(Staking::bond_extra(
+			Origin::signed($stash),
+			StakingBalance::KtonBalance(50 * COIN),
+			$how_long
+			));
+	};
+	($stash:ident($stash_id:expr), $controller:ident($controller_id:expr), $how_long:expr) => {
+		#[allow(non_snake_case, unused)]
+		let $stash = $stash_id;
+		let _ = Ring::deposit_creating(&$stash, 100 * COIN);
+		let _ = Kton::deposit_creating(&$stash, 100 * COIN);
+		#[allow(non_snake_case, unused)]
+		let $controller = $controller_id;
+		let _ = Ring::deposit_creating(&$controller, COIN);
+		assert_ok!(Staking::bond(
+			Origin::signed($stash),
+			$controller,
+			StakingBalance::RingBalance(50 * COIN),
+			RewardDestination::Stash,
+			$how_long,
+			));
+		assert_ok!(Staking::bond_extra(
+			Origin::signed($stash),
+			StakingBalance::KtonBalance(50 * COIN),
+			$how_long,
+			));
+	};
+	($stash:ident($stash_id:expr), $controller:ident($controller_id:expr)) => {
+		#[allow(non_snake_case, unused)]
+		let $stash = $stash_id;
+		let _ = Ring::deposit_creating(&$stash, 100 * COIN);
+		let _ = Kton::deposit_creating(&$stash, 100 * COIN);
+		#[allow(non_snake_case, unused)]
+		let $controller = $controller_id;
+		let _ = Ring::deposit_creating(&$controller, COIN);
+	};
+}
+
 #[test]
 fn slash_ledger_should_work() {
 	ExtBuilder::default()
@@ -170,100 +240,34 @@ fn migration_should_fix_broken_ledger() {
 	});
 }
 
-/// gen_paired_account!(a(1), b(2), m(12));
-/// will create stash `a` and controller `b`
-/// `a` has 100 Ring and 100 Kton
-/// promise for `m` month with 50 Ring and 50 Kton
-///
-/// `m` can be ignore, this won't create variable `m`
-/// ```rust
-/// gen_parired_account!(a(1), b(2), 12);
-/// ```
-///
-/// `m(12)` can be ignore, and it won't perform `bond` action
-/// ```rust
-/// gen_paired_account!(a(1), b(2));
-/// ```
-macro_rules! gen_paired_account {
-	($stash:ident($stash_id:expr), $controller:ident($controller_id:expr), $promise_month:ident($how_long:expr)) => {
-		#[allow(non_snake_case, unused)]
-		let $stash = $stash_id;
-		let _ = Ring::deposit_creating(&$stash, 100 * COIN);
-		let _ = Kton::deposit_creating(&$stash, 100 * COIN);
-		#[allow(non_snake_case, unused)]
-		let $controller = $controller_id;
-		let _ = Ring::deposit_creating(&$controller, COIN);
-		#[allow(non_snake_case, unused)]
-		let $promise_month = $how_long;
-		assert_ok!(Staking::bond(
-			Origin::signed($stash),
-			$controller,
-			StakingBalance::RingBalance(50 * COIN),
-			RewardDestination::Stash,
-			$how_long,
-			));
-		assert_ok!(Staking::bond_extra(
-			Origin::signed($stash),
-			StakingBalance::KtonBalance(50 * COIN),
-			$how_long
-			));
-	};
-	($stash:ident($stash_id:expr), $controller:ident($controller_id:expr), $how_long:expr) => {
-		#[allow(non_snake_case, unused)]
-		let $stash = $stash_id;
-		let _ = Ring::deposit_creating(&$stash, 100 * COIN);
-		let _ = Kton::deposit_creating(&$stash, 100 * COIN);
-		#[allow(non_snake_case, unused)]
-		let $controller = $controller_id;
-		let _ = Ring::deposit_creating(&$controller, COIN);
-		assert_ok!(Staking::bond(
-			Origin::signed($stash),
-			$controller,
-			StakingBalance::RingBalance(50 * COIN),
-			RewardDestination::Stash,
-			$how_long,
-			));
-		assert_ok!(Staking::bond_extra(
-			Origin::signed($stash),
-			StakingBalance::KtonBalance(50 * COIN),
-			$how_long,
-			));
-	};
-	($stash:ident($stash_id:expr), $controller:ident($controller_id:expr)) => {
-		#[allow(non_snake_case, unused)]
-		let $stash = $stash_id;
-		let _ = Ring::deposit_creating(&$stash, 100 * COIN);
-		let _ = Kton::deposit_creating(&$stash, 100 * COIN);
-		#[allow(non_snake_case, unused)]
-		let $controller = $controller_id;
-		let _ = Ring::deposit_creating(&$controller, COIN);
-	};
-}
+#[test]
+fn bond_zero_should_fail() {
+	ExtBuilder::default().build().execute_with(|| {
+		gen_paired_account!(s(123), c(456));
+		assert_err!(
+			Staking::bond(
+				Origin::signed(s),
+				c,
+				StakingBalance::RingBalance(0),
+				RewardDestination::Stash,
+				0,
+			),
+			StakingError::InsufficientValue
+		);
 
-// @review(deprecated): this should not work, please delete it after review.
-// due to: https://github.com/paritytech/substrate/blob/013c1ee167354a08283fb69915fda56a62fee943/frame/staking/src/mock.rs#L290
-// #[test]
-// fn bond_zero_should_work() {
-// 	ExtBuilder::default().build().execute_with(|| {
-// 		let (stash, controller) = (123, 456);
-// 		assert_ok!(Staking::bond(
-// 			Origin::signed(stash),
-// 			controller,
-// 			StakingBalance::RingBalance(0),
-// 			RewardDestination::Stash,
-// 			0,
-// 		));
-//
-// 		let (stash, controller) = (234, 567);
-// 		assert_ok!(Staking::bond(
-// 			Origin::signed(stash),
-// 			controller,
-// 			StakingBalance::KtonBalance(0),
-// 			RewardDestination::Stash,
-// 			0,
-// 		));
-// 	});
-// }
+		gen_paired_account!(s(234), c(567));
+		assert_err!(
+			Staking::bond(
+				Origin::signed(s),
+				c,
+				StakingBalance::KtonBalance(0),
+				RewardDestination::Stash,
+				0,
+			),
+			StakingError::InsufficientValue
+		);
+	});
+}
 
 #[test]
 fn normal_kton_should_work() {
