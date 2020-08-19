@@ -109,7 +109,7 @@
 		"payout": "RKT"
 	},
 	"__[pallet.treasury]__": {},
-	"Proposal": {
+	"TreasuryProposal": {
 		"proposer": "AccountId",
 		"beneficiary": "AccountId",
 		"ring_value": "Balance",
