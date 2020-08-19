@@ -545,7 +545,6 @@ pub(crate) const MAX_UNLOCKING_CHUNKS: usize = 32;
 pub(crate) const MAX_VALIDATORS: usize = ValidatorIndex::max_value() as usize;
 pub(crate) const MAX_NOMINATORS: usize = NominatorIndex::max_value() as usize;
 
-const DEFAULT_MINIMUM_VALIDATOR_COUNT: u32 = 4;
 const MONTH_IN_MINUTES: TsInMs = 30 * 24 * 60;
 const MONTH_IN_MILLISECONDS: TsInMs = MONTH_IN_MINUTES * 60 * 1000;
 const STAKING_ID: LockIdentifier = *b"da/staki";
@@ -657,9 +656,7 @@ decl_storage! {
 		pub ValidatorCount get(fn validator_count) config(): u32;
 
 		/// Minimum number of staking participants before emergency conditions are imposed.
-		pub MinimumValidatorCount
-			get(fn minimum_validator_count) config()
-			: u32 = DEFAULT_MINIMUM_VALIDATOR_COUNT;
+		pub MinimumValidatorCount get(fn minimum_validator_count) config(): u32;
 
 		/// Any validators that may never be slashed or forcibly kicked. It's a Vec since they're
 		/// easy to initialize and the performance hit is minimal (we expect no more than four
