@@ -241,3 +241,18 @@ pub trait RelayerGameProtocol {
 	fn approve_pending_header(pending: Self::TcBlockNumber) -> DispatchResult;
 	fn reject_pending_header(pending: Self::TcBlockNumber) -> DispatchResult;
 }
+#[cfg(feature="easy-testing")]
+impl RelayerGameProtocol for () {
+	type Relayer = u32;
+	type TcBlockNumber = u64;
+
+	fn submit_proposal(_relayer: Self::Relayer, _raw_header_thing_chain: Vec<RawHeaderThing>) -> DispatchResult {
+		unimplemented!()
+	}
+	fn approve_pending_header(_pending_block_number: Self::TcBlockNumber) -> DispatchResult {
+		unimplemented!()
+	}
+	fn reject_pending_header(_pending_block_number: Self::TcBlockNumber) -> DispatchResult {
+		unimplemented!()
+	}
+}

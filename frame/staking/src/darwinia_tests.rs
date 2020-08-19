@@ -786,7 +786,7 @@ fn slash_should_not_touch_unbondings() {
 			StakingBalance::RingBalance(10)
 		));
 		let ledger = Staking::ledger(controller).unwrap();
-		let unbondings = (
+		let _unbondings = (
 			ledger.ring_staking_lock.unbondings.clone(),
 			ledger.kton_staking_lock.unbondings.clone(),
 		);
