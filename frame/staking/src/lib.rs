@@ -420,14 +420,14 @@ mod types {
 	static_assertions::const_assert!(size_of::<NominatorIndex>() <= size_of::<usize>());
 
 	// Note: Maximum nomination limit is set here -- 16.
-	generate_compact_solution_type!(pub GenericCompactAssignments, 16);
+	generate_solution_type!(
+		#[compact]
+		pub struct CompactAssignments::<NominatorIndex, ValidatorIndex, OffchainAccuracy>(16)
+	);
 	/// Accuracy used for on-chain election.
 	pub type ChainAccuracy = Perbill;
 	/// Accuracy used for off-chain election. This better be small.
 	pub type OffchainAccuracy = PerU16;
-	/// The compact type for election solutions.
-	pub type CompactAssignments =
-		GenericCompactAssignments<NominatorIndex, ValidatorIndex, OffchainAccuracy>;
 
 	/// Balance of an account.
 	pub type Balance = u128;
@@ -490,9 +490,9 @@ use frame_support::{
 };
 use frame_system::{ensure_none, ensure_root, ensure_signed, offchain::SendTransactionTypes};
 use sp_npos_elections::{
-	build_support_map, evaluate_support, generate_compact_solution_type, is_score_better,
-	seq_phragmen, Assignment, ElectionResult as PrimitiveElectionResult, ElectionScore,
-	ExtendedBalance, SupportMap, VoteWeight, VotingLimit,
+	build_support_map, evaluate_support, generate_solution_type, is_score_better, seq_phragmen,
+	Assignment, ElectionResult as PrimitiveElectionResult, ElectionScore, ExtendedBalance,
+	SupportMap, VoteWeight, VotingLimit,
 };
 use sp_runtime::{
 	helpers_128bit::multiply_by_rational,
@@ -3889,7 +3889,7 @@ where
 }
 
 /// Information regarding the active era (era in used in session).
-#[derive(Debug, Encode, Decode)]
+#[derive(Encode, Decode, RuntimeDebug)]
 pub struct ActiveEraInfo {
 	/// Index of era.
 	pub index: EraIndex,
@@ -3897,7 +3897,7 @@ pub struct ActiveEraInfo {
 	///
 	/// Start can be none if start hasn't been set for the era yet,
 	/// Start is set on the first on_finalize of the era to guarantee usage of `Time`.
-	start: Option<TsInMs>,
+	start: Option<u64>,
 }
 
 /// Reward points of an era. Used to split era total payout between validators.
