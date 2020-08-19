@@ -420,14 +420,14 @@ mod types {
 	static_assertions::const_assert!(size_of::<NominatorIndex>() <= size_of::<usize>());
 
 	// Note: Maximum nomination limit is set here -- 16.
-	generate_compact_solution_type!(pub GenericCompactAssignments, 16);
+	generate_solution_type!(
+		#[compact]
+		pub struct CompactAssignments::<NominatorIndex, ValidatorIndex, OffchainAccuracy>(16)
+	);
 	/// Accuracy used for on-chain election.
 	pub type ChainAccuracy = Perbill;
 	/// Accuracy used for off-chain election. This better be small.
 	pub type OffchainAccuracy = PerU16;
-	/// The compact type for election solutions.
-	pub type CompactAssignments =
-		GenericCompactAssignments<NominatorIndex, ValidatorIndex, OffchainAccuracy>;
 
 	/// Balance of an account.
 	pub type Balance = u128;
@@ -490,9 +490,9 @@ use frame_support::{
 };
 use frame_system::{ensure_none, ensure_root, ensure_signed, offchain::SendTransactionTypes};
 use sp_npos_elections::{
-	build_support_map, evaluate_support, generate_compact_solution_type, is_score_better,
-	seq_phragmen, Assignment, ElectionResult as PrimitiveElectionResult, ElectionScore,
-	ExtendedBalance, SupportMap, VoteWeight, VotingLimit,
+	build_support_map, evaluate_support, generate_solution_type, is_score_better, seq_phragmen,
+	Assignment, ElectionResult as PrimitiveElectionResult, ElectionScore, ExtendedBalance,
+	SupportMap, VoteWeight, VotingLimit,
 };
 use sp_runtime::{
 	helpers_128bit::multiply_by_rational,
@@ -545,7 +545,6 @@ pub(crate) const MAX_UNLOCKING_CHUNKS: usize = 32;
 pub(crate) const MAX_VALIDATORS: usize = ValidatorIndex::max_value() as usize;
 pub(crate) const MAX_NOMINATORS: usize = NominatorIndex::max_value() as usize;
 
-const DEFAULT_MINIMUM_VALIDATOR_COUNT: u32 = 4;
 const MONTH_IN_MINUTES: TsInMs = 30 * 24 * 60;
 const MONTH_IN_MILLISECONDS: TsInMs = MONTH_IN_MINUTES * 60 * 1000;
 const STAKING_ID: LockIdentifier = *b"da/staki";
@@ -657,9 +656,7 @@ decl_storage! {
 		pub ValidatorCount get(fn validator_count) config(): u32;
 
 		/// Minimum number of staking participants before emergency conditions are imposed.
-		pub MinimumValidatorCount
-			get(fn minimum_validator_count) config()
-			: u32 = DEFAULT_MINIMUM_VALIDATOR_COUNT;
+		pub MinimumValidatorCount get(fn minimum_validator_count) config(): u32;
 
 		/// Any validators that may never be slashed or forcibly kicked. It's a Vec since they're
 		/// easy to initialize and the performance hit is minimal (we expect no more than four
@@ -2454,8 +2451,9 @@ impl<T: Trait> Module<T> {
 		Ok(())
 	}
 
-	/// Update the ledger for a controller. This will also update the stash lock. The lock will
-	/// will lock the entire funds except paying for further transactions.
+	/// Update the ledger for a controller.
+	///
+	/// This will also update the stash lock.
 	fn update_ledger(controller: &T::AccountId, ledger: &mut StakingLedgerT<T>) {
 		let StakingLedger {
 			active_ring,
@@ -3892,7 +3890,7 @@ where
 }
 
 /// Information regarding the active era (era in used in session).
-#[derive(Debug, Encode, Decode)]
+#[derive(Encode, Decode, RuntimeDebug)]
 pub struct ActiveEraInfo {
 	/// Index of era.
 	pub index: EraIndex,
@@ -3900,7 +3898,7 @@ pub struct ActiveEraInfo {
 	///
 	/// Start can be none if start hasn't been set for the era yet,
 	/// Start is set on the first on_finalize of the era to guarantee usage of `Time`.
-	start: Option<TsInMs>,
+	start: Option<u64>,
 }
 
 /// Reward points of an era. Used to split era total payout between validators.
@@ -4123,7 +4121,10 @@ pub struct Nominations<AccountId> {
 	///
 	/// Except for initial nominations which are considered submitted at era 0.
 	pub submitted_in: EraIndex,
-	/// Whether the nominations have been suppressed.
+	/// Whether the nominations have been suppressed. This can happen due to slashing of the
+	/// validators, or other events that might invalidate the nomination.
+	///
+	/// NOTE: this for future proofing and is thus far not used.
 	pub suppressed: bool,
 }
 
