@@ -1,7 +1,6 @@
 {
-	"__[adaptor.specname]__": {},
+	"__[frame.system]__": {},
 	"Address": "AccountId",
-	"LookupSource": "AccountId",
 	"__[pallet.balances]__": {},
 	"BalanceInfo": null,
 	"BalanceLock": {
