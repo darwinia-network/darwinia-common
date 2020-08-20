@@ -3183,12 +3183,13 @@ fn slash_kicks_validators_not_nominators_and_disables_nominator_for_kicked_valid
 		);
 
 		// 20 is re-elected, with the (almost) entire support of 100
-		assert_eq!(
+		assert_eq_error_rate!(
 			exposure_21.total_power,
 			Staking::currency_to_power(
 				1000 + 500 - nominator_slash_amount_11,
 				Staking::ring_pool()
-			)
+			),
+			10
 		);
 	});
 }
