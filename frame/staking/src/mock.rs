@@ -168,7 +168,7 @@ parameter_types! {
 }
 impl Trait for Test {
 	type Event = MetaEvent;
-	type UnixTime = Timestamp;
+	type UnixTime = SuppressUnixTimeWarning;
 	type SessionsPerEra = SessionsPerEra;
 	type BondingDurationInEra = BondingDurationInEra;
 	type BondingDurationInBlockNumber = BondingDurationInBlockNumber;
@@ -636,6 +636,13 @@ impl OnUnbalanced<RingNegativeImbalance<Test>> for RingRewardRemainderMock {
 			*v.borrow_mut() += amount.peek();
 		});
 		drop(amount);
+	}
+}
+
+pub struct SuppressUnixTimeWarning;
+impl UnixTime for SuppressUnixTimeWarning {
+	fn now() -> core::time::Duration {
+		core::time::Duration::from_millis(Timestamp::now().saturated_into::<u64>())
 	}
 }
 
