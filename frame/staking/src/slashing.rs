@@ -730,6 +730,8 @@ pub fn do_slash<T: Trait>(
 			// deduct overslash from the reward payout
 			reward_payout.r = reward_payout.r.saturating_sub(missing);
 		}
+
+		<RingPool<T>>::mutate(|p| *p -= slash_ring);
 	}
 
 	if !slash_kton.is_zero() {
@@ -742,6 +744,8 @@ pub fn do_slash<T: Trait>(
 			// deduct overslash from the reward payout
 			reward_payout.k = reward_payout.k.saturating_sub(missing);
 		}
+
+		<KtonPool<T>>::mutate(|p| *p -= slash_kton);
 	}
 
 	if slashed {
