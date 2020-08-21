@@ -220,7 +220,6 @@
 	"TcHeaderMMR": "Vec<u8>",
 	"MMRHash": "Vec<u8>",
 	"GameId": "TcBlockNumber",
-	"RawHeaderThing": "Vec<u8>",
 	"__[node.rpc]__": {},
 	"BalancesRuntimeDispatchInfo": {
 		"usable_balance": "Balance"

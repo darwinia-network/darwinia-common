@@ -208,7 +208,6 @@
 	"TcHeaderMMR": "Vec<u8>",
 	"MMRHash": "Vec<u8>",
 	"GameId": "TcBlockNumber",
-	"RawHeaderThing": "Vec<u8>",
 	"TcHeaderBrief": {
 		"number": "TcBlockNumber",
 		"hash": "TcHeaderHash",
