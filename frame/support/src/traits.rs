@@ -8,15 +8,12 @@ use codec::FullCodec;
 use impl_trait_for_tuples::impl_for_tuples;
 // --- substrate ---
 use frame_support::traits::{Currency, TryDrop};
-use sp_runtime::{traits::AtLeast32BitUnsigned, DispatchError, DispatchResult};
+use sp_runtime::DispatchResult;
 use sp_std::prelude::*;
 // --- darwinia ---
-use crate::{
-	balance::{
-		lock::{LockFor, LockReasons},
-		FrozenBalance,
-	},
-	relay::{RawHeaderThing, Round, TcHeaderBrief},
+use crate::balance::{
+	lock::{LockFor, LockReasons},
+	FrozenBalance,
 };
 use ethereum_primitives::{error::EthereumError, receipt::EthTransactionIndex, receipt::Receipt};
 
@@ -145,79 +142,6 @@ pub trait OnUnbalancedKton<Imbalance: TryDrop> {
 }
 impl<Imbalance: TryDrop> OnUnbalancedKton<Imbalance> for () {}
 
-// A regulator to adjust relay args for a specific chain
-// Implement this in runtime's impls
-pub trait AdjustableRelayerGame {
-	type Moment;
-	type Balance;
-	type TcBlockNumber;
-
-	fn challenge_time(round: Round) -> Self::Moment;
-
-	fn round_from_chain_len(chain_len: u64) -> Round;
-
-	fn chain_len_from_round(round: Round) -> u64;
-
-	fn update_samples(samples: &mut Vec<Vec<Self::TcBlockNumber>>);
-
-	fn estimate_bond(round: Round, proposals_count: u64) -> Self::Balance;
-}
-
-/// Implement this for target chain's relay module's
-/// to expose some necessary APIs for relayer game
-pub trait Relayable {
-	type TcBlockNumber: Clone + Copy + Debug + Default + AtLeast32BitUnsigned + FullCodec;
-	type TcHeaderHash: Clone + Debug + Default + PartialEq + FullCodec;
-	type TcHeaderMMR: Clone + Debug + Default + PartialEq + FullCodec;
-
-	/// The latest finalize block's header's record id in darwinia
-	fn best_block_number() -> Self::TcBlockNumber;
-
-	/// Verify the codec style header thing
-	///
-	/// If `with_proposed_raw_header` is enabled,
-	/// this function will push a codec header into the header brief's other filed
-	/// as the LAST item
-	fn verify_raw_header_thing(
-		raw_header_thing: RawHeaderThing,
-		with_proposed_raw_header: bool,
-	) -> Result<
-		(
-			TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
-			RawHeaderThing,
-		),
-		DispatchError,
-	>;
-
-	/// Verify the codec style header thing chain and return the header brief
-	fn verify_raw_header_thing_chain(
-		raw_header_thing_chain: Vec<RawHeaderThing>,
-	) -> Result<
-		Vec<TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>>,
-		DispatchError,
-	> {
-		let mut header_brief_chain = vec![];
-
-		for raw_header_thing in raw_header_thing_chain {
-			let (header_brief, _) = Self::verify_raw_header_thing(raw_header_thing, false)?;
-
-			header_brief_chain.push(header_brief);
-		}
-
-		Ok(header_brief_chain)
-	}
-
-	/// On chain arbitrate, to confirmed the header with 100% sure
-	fn on_chain_arbitrate(
-		header_brief_chain: Vec<
-			TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
-		>,
-	) -> DispatchResult;
-
-	/// Store the header confirmed in relayer game
-	fn store_header(raw_header_thing: RawHeaderThing) -> DispatchResult;
-}
-
 pub trait EthereumReceipt<AccountId, Balance> {
 	type EthereumReceiptProof: Clone + Debug + PartialEq + FullCodec;
 
@@ -228,16 +152,4 @@ pub trait EthereumReceipt<AccountId, Balance> {
 	fn verify_receipt(proof: &Self::EthereumReceiptProof) -> Result<Receipt, EthereumError>;
 
 	fn gen_receipt_index(proof: &Self::EthereumReceiptProof) -> EthTransactionIndex;
-}
-
-pub trait RelayerGameProtocol {
-	type Relayer;
-	type TcBlockNumber;
-
-	fn submit_proposal(
-		relayer: Self::Relayer,
-		raw_header_thing_chain: Vec<RawHeaderThing>,
-	) -> DispatchResult;
-	fn approve_pending_header(pending: Self::TcBlockNumber) -> DispatchResult;
-	fn reject_pending_header(pending: Self::TcBlockNumber) -> DispatchResult;
 }

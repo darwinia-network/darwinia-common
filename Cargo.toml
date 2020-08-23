@@ -24,6 +24,7 @@ members = [
 	"primitives/array-bytes",
 	"primitives/ethereum-primitives",
 	"primitives/merkle-patricia-trie",
+	"primitives/relay",
 ]
 
 # The list of dependencies below (which can be both direct and indirect dependencies) are crates

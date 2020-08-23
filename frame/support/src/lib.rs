@@ -68,20 +68,5 @@ pub mod literal_procesor {
 	}
 }
 
-// TODO: move to `darwinia-relay-primitives`?
-pub mod relay {
-	// --- darwinia ---
-	pub use crate::{
-		structs::TcHeaderBrief,
-		traits::{AdjustableRelayerGame, EthereumReceipt, Relayable, RelayerGameProtocol},
-	};
-
-	// --- substrate ---
-	use sp_std::prelude::*;
-
-	pub type Round = u64;
-	pub type RawHeaderThing = Vec<u8>;
-}
-
 #[cfg(test)]
 mod tests;

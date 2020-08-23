@@ -1244,10 +1244,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-relay-primitives"
+version = "1.0.0-alpha.2"
+dependencies = [
+ "parity-scale-codec",
+ "sp-runtime",
+ "sp-std 2.0.0-rc5",
+]
+
+[[package]]
 name = "darwinia-relayer-game"
 version = "1.0.0-alpha.2"
 dependencies = [
  "darwinia-balances",
+ "darwinia-relay-primitives",
  "darwinia-support",
  "env_logger",
  "frame-support",
