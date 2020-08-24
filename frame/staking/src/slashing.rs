@@ -740,7 +740,7 @@ pub fn do_slash<T: Trait>(
 			if *p > slashed_active_ring {
 				*p -= slashed_active_ring;
 			} else {
-				error!("Slash on {} Underflow the RING Pool", stash);
+				error!("Slash on {:#?} Underflow the RING Pool", stash);
 
 				*p = Zero::zero();
 			}
@@ -763,7 +763,7 @@ pub fn do_slash<T: Trait>(
 			if *p > slashed_active_kton {
 				*p -= slashed_active_kton;
 			} else {
-				error!("Slash on {} Underflow the RING Pool", stash);
+				error!("Slash on {:#?} Underflow the RING Pool", stash);
 
 				*p = Zero::zero();
 			}
