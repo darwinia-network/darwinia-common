@@ -1,7 +1,7 @@
 //! Tests for the module.
 
 // --- substrate ---
-use frame_support::{assert_err, assert_noop, assert_ok};
+use frame_support::{assert_err, assert_ok};
 use substrate_test_utils::assert_eq_uvec;
 // --- darwinia ---
 use crate::{mock::*, *};
@@ -465,6 +465,7 @@ fn time_deposit_ring_unbond_and_withdraw_automatically_should_work() {
 			StakingBalance::RingBalance(10)
 		));
 
+		// TODO: clean dust ledger
 		// check the ledger, it will be empty because we have
 		// just unbonded all balances, the ledger is drained.
 		// assert!(Staking::ledger(controller).is_none());
@@ -474,13 +475,7 @@ fn time_deposit_ring_unbond_and_withdraw_automatically_should_work() {
 			Staking::ledger(controller).unwrap(),
 			StakingLedger {
 				stash,
-				active_ring: 0,
-				active_deposit_ring: 0,
-				active_kton: 0,
-				deposit_items: vec![],
-				ring_staking_lock: Default::default(),
-				kton_staking_lock: Default::default(),
-				claimed_rewards: vec![]
+				..Default::default()
 			},
 		);
 	});
@@ -496,7 +491,6 @@ fn normal_unbond_should_work() {
 		let start = System::block_number();
 
 		{
-			let kton_free_balance = Kton::free_balance(&stash);
 			let mut ledger = Staking::ledger(controller).unwrap();
 
 			assert_ok!(Staking::bond_extra(
@@ -504,10 +498,6 @@ fn normal_unbond_should_work() {
 				StakingBalance::RingBalance(value),
 				promise_month as u8,
 			));
-			assert_eq!(
-				Kton::free_balance(&stash),
-				kton_free_balance + inflation::compute_kton_return::<Test>(value, promise_month)
-			);
 			ledger.active_ring += value;
 			ledger.active_deposit_ring += value;
 			ledger.deposit_items.push(TimeDepositItem {
@@ -523,10 +513,6 @@ fn normal_unbond_should_work() {
 			let kton_free_balance = Kton::free_balance(&stash);
 			let mut ledger = Staking::ledger(controller).unwrap();
 
-			//TODO: checkout the staking following staking values
-			// We try to bond 1 kton, but stash only has 0.2 Kton.
-			// extra = COIN.min(20_000_000)
-			// bond += 20_000_000
 			assert_ok!(Staking::bond_extra(
 				Origin::signed(stash),
 				StakingBalance::KtonBalance(COIN),
@@ -563,7 +549,6 @@ fn punished_claim_should_work() {
 			stash,
 			active_ring: bond_value,
 			active_deposit_ring: bond_value,
-			active_kton: 0,
 			deposit_items: vec![TimeDepositItem {
 				value: bond_value,
 				start_time: INIT_TIMESTAMP,
@@ -573,8 +558,7 @@ fn punished_claim_should_work() {
 				staking_amount: bond_value,
 				unbondings: vec![],
 			},
-			kton_staking_lock: Default::default(),
-			claimed_rewards: vec![],
+			..Default::default()
 		};
 
 		assert_ok!(Staking::bond(
@@ -713,67 +697,70 @@ fn inflation_should_be_correct() {
 	// });
 }
 
-// #[test]
-// fn slash_also_slash_unbondings() {
-// 	ExtBuilder::default()
-// 		.validator_count(1)
-// 		.build()
-// 		.execute_with(|| {
-// 			start_era(0);
+#[test]
+fn slash_also_slash_unbondings() {
+	ExtBuilder::default()
+		.validator_count(1)
+		.build()
+		.execute_with(|| {
+			start_era(0);
 
-// 			let (account_id, bond) = (777, COIN);
-// 			let _ = Ring::deposit_creating(&account_id, bond);
+			let (account_id, bond) = (777, COIN);
+			let _ = Ring::deposit_creating(&account_id, bond);
 
-// 			assert_ok!(Staking::bond(
-// 				Origin::signed(account_id),
-// 				account_id,
-// 				StakingBalance::RingBalance(bond),
-// 				RewardDestination::Controller,
-// 				0,
-// 			));
-// 			assert_ok!(Staking::validate(
-// 				Origin::signed(account_id),
-// 				ValidatorPrefs::default()
-// 			));
-// 			assert_ok!(Staking::unbond(
-// 				Origin::signed(account_id),
-// 				StakingBalance::RingBalance(COIN / 2)
-// 			));
+			assert_ok!(Staking::bond(
+				Origin::signed(account_id),
+				account_id,
+				StakingBalance::RingBalance(bond),
+				RewardDestination::Controller,
+				0,
+			));
+			assert_ok!(Staking::validate(
+				Origin::signed(account_id),
+				ValidatorPrefs::default()
+			));
 
-// 			let mut ring_staking_lock = Staking::ledger(account_id)
-// 				.unwrap()
-// 				.ring_staking_lock
-// 				.clone();
+			let mut ring_staking_lock = Staking::ledger(account_id)
+				.unwrap()
+				.ring_staking_lock
+				.clone();
 
-// 			start_era(1);
+			start_era(1);
 
-// 			assert_eq_uvec!(validator_controllers(), vec![777]);
+			assert_ok!(Staking::unbond(
+				Origin::signed(account_id),
+				StakingBalance::RingBalance(COIN / 2)
+			));
 
-// 			on_offence_now(
-// 				&[OffenceDetails {
-// 					offender: (
-// 						account_id,
-// 						Staking::eras_stakers(Staking::active_era().unwrap().index, account_id),
-// 					),
-// 					reporters: vec![],
-// 				}],
-// 				&[Perbill::from_percent(100)],
-// 			);
+			assert_eq_uvec!(validator_controllers(), vec![777]);
 
-// 			ring_staking_lock.staking_amount = 0;
+			on_offence_now(
+				&[OffenceDetails {
+					offender: (
+						account_id,
+						Staking::eras_stakers(Staking::active_era().unwrap().index, account_id),
+					),
+					reporters: vec![],
+				}],
+				&[Perbill::from_percent(100)],
+			);
 
-// 			assert_eq!(
-// 				ring_staking_lock,
-// 				Staking::ledger(account_id).unwrap().ring_staking_lock,
-// 			);
-// 		});
-// }
+			ring_staking_lock.staking_amount = 0;
+			ring_staking_lock.unbondings.clear();
+
+			assert_eq!(
+				Staking::ledger(account_id).unwrap().ring_staking_lock,
+				ring_staking_lock
+			);
+		});
+}
 
 #[test]
 fn check_stash_already_bonded_and_controller_already_paired() {
 	ExtBuilder::default().build().execute_with(|| {
 		gen_paired_account!(unpaired_stash(123), unpaired_controller(456));
-		assert_noop!(
+
+		assert_err!(
 			Staking::bond(
 				Origin::signed(11),
 				unpaired_controller,
@@ -781,13 +768,9 @@ fn check_stash_already_bonded_and_controller_already_paired() {
 				RewardDestination::Stash,
 				0,
 			),
-			DispatchError::Module {
-				index: 0,
-				error: 2,
-				message: Some("AlreadyBonded")
-			}
+			StakingError::AlreadyBonded
 		);
-		assert_noop!(
+		assert_err!(
 			Staking::bond(
 				Origin::signed(unpaired_stash),
 				10,
@@ -795,11 +778,7 @@ fn check_stash_already_bonded_and_controller_already_paired() {
 				RewardDestination::Stash,
 				0,
 			),
-			DispatchError::Module {
-				index: 0,
-				error: 3,
-				message: Some("AlreadyPaired")
-			}
+			StakingError::AlreadyPaired
 		);
 	});
 }
