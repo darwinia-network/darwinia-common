@@ -36,6 +36,7 @@
 use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
+	debug::error,
 	ensure,
 	traits::{Currency, Imbalance, OnUnbalanced},
 	StorageDoubleMap, StorageMap,
@@ -712,6 +713,8 @@ pub fn do_slash<T: Trait>(
 		None => return, // nothing to do.
 	};
 
+	let (pre_active_ring, pre_active_kton) = (ledger.active_ring, ledger.active_kton);
+
 	let (slash_ring, slash_kton) = ledger.slash(
 		value.r,
 		value.k,
@@ -731,9 +734,18 @@ pub fn do_slash<T: Trait>(
 			reward_payout.r = reward_payout.r.saturating_sub(missing);
 		}
 
-		<RingPool<T>>::mutate(|p| *p -= slash_ring);
-	}
+		<RingPool<T>>::mutate(|p| {
+			let slashed_active_ring = pre_active_ring.saturating_sub(ledger.active_ring);
 
+			if *p > slashed_active_ring {
+				*p -= slashed_active_ring;
+			} else {
+				error!("Slash on {} Underflow the RING Pool", stash);
+
+				*p = Zero::zero();
+			}
+		});
+	}
 	if !slash_kton.is_zero() {
 		slashed = true;
 
@@ -745,7 +757,17 @@ pub fn do_slash<T: Trait>(
 			reward_payout.k = reward_payout.k.saturating_sub(missing);
 		}
 
-		<KtonPool<T>>::mutate(|p| *p -= slash_kton);
+		<KtonPool<T>>::mutate(|p| {
+			let slashed_active_kton = pre_active_kton.saturating_sub(ledger.active_kton);
+
+			if *p > slashed_active_kton {
+				*p -= slashed_active_kton;
+			} else {
+				error!("Slash on {} Underflow the RING Pool", stash);
+
+				*p = Zero::zero();
+			}
+		});
 	}
 
 	if slashed {
