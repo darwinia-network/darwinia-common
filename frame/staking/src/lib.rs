@@ -376,12 +376,20 @@ mod migration {
 		// }]`
 		// the value of `start_time` and `expire_time` is the original first item's
 
+		let (mut ring_pool, mut kton_pool) = (<RingBalance<T>>::zero(), <KtonBalance<T>>::zero());
+
 		for (hash, mut value) in <StorageIterator<StakingLedgerT<T>>>::new(module, item) {
 			let StakingLedger {
+				active_ring,
 				active_deposit_ring,
+				active_kton,
 				deposit_items,
 				..
 			} = &mut value;
+
+			ring_pool = ring_pool.saturating_add(*active_ring);
+			kton_pool = kton_pool.saturating_add(*active_kton);
+
 			let total_deposit = deposit_items
 				.iter()
 				.fold(0.into(), |total_deposit, item| total_deposit + item.value);
@@ -392,6 +400,9 @@ mod migration {
 				put_storage_value(module, item, &hash, value);
 			}
 		}
+
+		put_storage_value(module, b"RingPool", &[], ring_pool);
+		put_storage_value(module, b"KtonPool", &[], kton_pool);
 	}
 }
 

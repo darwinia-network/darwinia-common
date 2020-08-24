@@ -190,57 +190,6 @@ fn kton_should_reward_even_does_not_own_kton_before() {
 }
 
 #[test]
-fn migration_should_fix_broken_ledger() {
-	let mut s = sp_storage::Storage::default();
-	let id: mock::AccountId = 777;
-	let mut broken_ledger =
-		StakingLedger::<mock::AccountId, mock::Balance, mock::Balance, mock::BlockNumber> {
-			stash: id,
-			active_ring: 1000,
-			active_deposit_ring: 1,
-			deposit_items: vec![
-				TimeDepositItem {
-					value: 1,
-					start_time: 0,
-					expire_time: 1,
-				},
-				TimeDepositItem {
-					value: 2,
-					start_time: 1,
-					expire_time: 2,
-				},
-				TimeDepositItem {
-					value: 3,
-					start_time: 2,
-					expire_time: 3,
-				},
-			],
-			ring_staking_lock: StakingLock {
-				staking_amount: 1000,
-				unbondings: vec![],
-			},
-			..Default::default()
-		};
-	let data = vec![(
-		<Ledger<Test>>::hashed_key_for(id),
-		broken_ledger.encode().to_vec(),
-	)];
-
-	s.top = data.into_iter().collect();
-	sp_io::TestExternalities::new(s).execute_with(|| {
-		let _ = Ring::deposit_creating(&id, 200);
-
-		assert_eq!(Staking::ledger(&id).unwrap(), broken_ledger);
-
-		crate::migration::migrate::<Test>();
-
-		broken_ledger.active_deposit_ring = 6;
-
-		assert_eq!(Staking::ledger(&id).unwrap(), broken_ledger);
-	});
-}
-
-#[test]
 fn bond_zero_should_fail() {
 	ExtBuilder::default().build().execute_with(|| {
 		gen_paired_account!(s(123), c(456));
@@ -1859,5 +1808,61 @@ fn bond_values_when_some_value_unbonding() {
 				..Default::default()
 			}
 		);
+	});
+}
+
+#[test]
+fn migration_should_fix_broken_ledger_and_pool() {
+	let mut s = sp_storage::Storage::default();
+	let id: mock::AccountId = 777;
+	let mut broken_ledger =
+		StakingLedger::<mock::AccountId, mock::Balance, mock::Balance, mock::BlockNumber> {
+			stash: id,
+			active_ring: 1000,
+			active_deposit_ring: 1,
+			active_kton: 1000,
+			deposit_items: vec![
+				TimeDepositItem {
+					value: 1,
+					start_time: 0,
+					expire_time: 1,
+				},
+				TimeDepositItem {
+					value: 2,
+					start_time: 1,
+					expire_time: 2,
+				},
+				TimeDepositItem {
+					value: 3,
+					start_time: 2,
+					expire_time: 3,
+				},
+			],
+			ring_staking_lock: StakingLock {
+				staking_amount: 1000,
+				unbondings: vec![],
+			},
+			..Default::default()
+		};
+	let data = vec![(
+		<Ledger<Test>>::hashed_key_for(id),
+		broken_ledger.encode().to_vec(),
+	)];
+
+	s.top = data.into_iter().collect();
+	sp_io::TestExternalities::new(s).execute_with(|| {
+		let _ = Ring::deposit_creating(&id, 200);
+
+		assert!(Staking::ring_pool().is_zero());
+		assert!(Staking::kton_pool().is_zero());
+		assert_eq!(Staking::ledger(&id).unwrap(), broken_ledger);
+
+		crate::migration::migrate::<Test>();
+
+		broken_ledger.active_deposit_ring = 6;
+
+		assert_eq!(Staking::ring_pool(), 1000);
+		assert_eq!(Staking::kton_pool(), 1000);
+		assert_eq!(Staking::ledger(&id).unwrap(), broken_ledger);
 	});
 }
