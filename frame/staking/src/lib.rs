@@ -4063,7 +4063,7 @@ where
 					if apply_slash_ring.is_zero() {
 						false
 					} else {
-						if apply_slash_ring > lock.amount {
+						if apply_slash_ring >= lock.amount {
 							apply_slash_ring -= lock.amount;
 							true
 						} else {
