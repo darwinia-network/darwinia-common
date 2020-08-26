@@ -27,7 +27,7 @@ use codec::{Decode, Encode};
 use ethereum_types::H128;
 // --- substrate ---
 use frame_support::{
-	debug, decl_error, decl_event, decl_module, decl_storage, ensure,
+	decl_error, decl_event, decl_module, decl_storage, ensure,
 	traits::Get,
 	traits::{Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, ReservableCurrency},
 };
@@ -35,6 +35,8 @@ use frame_system::ensure_signed;
 use sp_runtime::{
 	traits::AccountIdConversion, DispatchError, DispatchResult, ModuleId, RuntimeDebug,
 };
+#[cfg(feature = "std")]
+use sp_std::borrow::ToOwned;
 use sp_std::{convert::From, prelude::*};
 // --- darwinia ---
 use crate::mmr::{leaf_index_to_mmr_size, leaf_index_to_pos, MMRMerge, MerkleProof};
@@ -49,7 +51,6 @@ use ethereum_primitives::{
 	receipt::{EthReceiptProof, EthTransactionIndex, Receipt},
 	EthBlockNumber, H256,
 };
-
 use types::*;
 
 #[cfg(feature = "std")]
@@ -269,7 +270,7 @@ decl_module! {
 		pub fn remove_confirmed_block(origin, number: EthBlockNumber) {
 			T::RejectOrigin::ensure_origin(origin)?;
 
-			ConfirmedHeadersDoubleMap::take(number/ConfirmBlocksInCycle::get(), number);
+			ConfirmedHeadersDoubleMap::take(number / ConfirmBlocksInCycle::get(), number);
 
 			Self::deposit_event(RawEvent::RemoveConfirmedBlock(number));
 		}
@@ -411,7 +412,86 @@ impl<T: Trait> Relayable for Module<T> {
 	fn basic_verify(
 		proposal_with_proof: Vec<Self::HeaderThingWithProof>,
 	) -> Result<Vec<Self::HeaderThing>, DispatchError> {
-		unimplemented!()
+		let propose_chain_len = proposal_with_proof.len();
+		let mut proposal = vec![];
+		let mut first_header_mmr = None;
+		let mut first_header_number = 0;
+
+		for (i, header_with_proof) in proposal_with_proof.into_iter().enumerate() {
+			let Self::HeaderThingWithProof {
+				header,
+				ethash_proof,
+				mmr_root,
+				mmr_proof,
+			} = header_with_proof;
+
+			ensure!(
+				Self::verify_block_seal(&header, &ethash_proof),
+				<Error<T>>::HeaderI
+			);
+			ensure!(
+				Self::verify_block_with_confrim_blocks(&header),
+				<Error<T>>::ConfirmebBlocksC
+			);
+
+			if i == 0 {
+				if propose_chain_len == 1 {
+					if let Some(l) = LastConfirmedHeaderInfo::get() {
+						// The mmr_root of first submit should includ the hash last confirm block
+						//      mmr_root of 1st
+						//     / \
+						//    -   -
+						//   /     \
+						//  C  ...  1st
+						//  C: Last Comfirmed Block  1st: 1st submit block
+						ensure!(
+							Self::verify_mmr(
+								header.number,
+								array_unchecked!(mmr_root, 0, 32).into(),
+								mmr_proof
+									.iter()
+									.map(|h| array_unchecked!(h, 0, 32).into())
+									.collect(),
+								vec![(l.0, l.1)],
+							),
+							<Error<T>>::MMRI
+						);
+					};
+				}
+
+				first_header_mmr = Some(array_unchecked!(mmr_root, 0, 32).into());
+				first_header_number = header.number;
+			// the hash of other submit should be included by previous mmr_root
+			} else if i == propose_chain_len - 1 {
+				// last confirm no exsit the mmr verification will be passed
+				//
+				//      mmr_root of prevous submit
+				//     / \
+				//    - ..-
+				//   /   | \
+				//  -  ..c  1st
+				// c: current submit  1st: 1st submit block
+				ensure!(
+					Self::verify_mmr(
+						first_header_number,
+						first_header_mmr.unwrap_or_default(),
+						mmr_proof
+							.iter()
+							.map(|h| array_unchecked!(h, 0, 32).into())
+							.collect(),
+						vec![(
+							header.number,
+							array_unchecked!(header.hash.unwrap_or_default(), 0, 32).into(),
+						)],
+					),
+					<Error<T>>::MMRI
+				);
+			}
+
+			proposal.push(Self::HeaderThing { header, mmr_root });
+		}
+
+		Ok(proposal)
 	}
 
 	fn best_block_number() -> Self::BlockNumber {
@@ -422,204 +502,57 @@ impl<T: Trait> Relayable for Module<T> {
 		}
 	}
 
-	// fn verify_raw_header_thing(
-	// 	raw_header_thing: RawHeaderThing,
-	// 	with_proposed_raw_header: bool,
-	// ) -> Result<
-	// 	(
-	// 		TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
-	// 		RawHeaderThing,
-	// 	),
-	// 	DispatchError,
-	// > {
-	// 	let eth_header_thing = raw_header_thing.into();
-	// 	debug::trace!(target: "ethereum-relay", "{:?}", eth_header_thing);
-	// 	let EthereumHeaderThing {
-	// 		eth_header,
-	// 		ethash_proof,
-	// 		mmr_root,
-	// 		..
-	// 	} = eth_header_thing;
-
-	// 	if ConfirmedHeadersDoubleMap::contains_key(
-	// 		eth_header.number / ConfirmBlocksInCycle::get(),
-	// 		eth_header.number,
-	// 	) {
-	// 		Err(<Error<T>>::TargetHeaderAE)?;
-	// 	}
-	// 	if !Self::verify_block_seal(&eth_header, &ethash_proof) {
-	// 		Err(<Error<T>>::HeaderI)?;
-	// 	};
-	// 	if with_proposed_raw_header {
-	// 		Ok((
-	// 			TcHeaderBrief {
-	// 				number: eth_header.number,
-	// 				hash: eth_header.hash.unwrap_or_default(),
-	// 				parent_hash: eth_header.parent_hash,
-	// 				mmr: array_unchecked!(mmr_root, 0, 32).into(),
-	// 				others: eth_header.encode(),
-	// 			},
-	// 			ProposalEthHeaderThing {
-	// 				eth_header,
-	// 				mmr_root,
-	// 			}
-	// 			.encode(),
-	// 		))
-	// 	} else {
-	// 		Ok((
-	// 			TcHeaderBrief {
-	// 				number: eth_header.number,
-	// 				hash: eth_header.hash.unwrap_or_default(),
-	// 				parent_hash: eth_header.parent_hash,
-	// 				mmr: array_unchecked!(mmr_root, 0, 32).into(),
-	// 				others: eth_header.encode(),
-	// 			},
-	// 			vec![],
-	// 		))
-	// 	}
-	// }
-
-	// fn verify_raw_header_thing_chain(
-	// 	raw_header_thing_chain: Vec<RawHeaderThing>,
-	// ) -> Result<
-	// 	Vec<TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>>,
-	// 	DispatchError,
-	// > {
-	// 	let mut output = vec![];
-	// 	let mut first_header_mmr = None;
-	// 	let mut first_header_number = 0;
-	// 	let chain_lengeth = raw_header_thing_chain.len();
-
-	// 	for (idx, raw_header_thing) in raw_header_thing_chain.into_iter().enumerate() {
-	// 		let EthereumHeaderThing {
-	// 			eth_header,
-	// 			ethash_proof,
-	// 			mmr_root,
-	// 			mmr_proof,
-	// 		} = raw_header_thing.into();
-
-	// 		if !Self::verify_block_seal(&eth_header, &ethash_proof) {
-	// 			Err(<Error<T>>::HeaderI)?;
-	// 		};
-
-	// 		if !Self::verify_block_with_confrim_blocks(&eth_header) {
-	// 			Err(<Error<T>>::ConfirmebBlocksC)?;
-	// 		}
-	// 		if idx == 0 {
-	// 			// The mmr_root of first submit should includ the hash last confirm block
-	// 			//      mmr_root of 1st
-	// 			//     / \
-	// 			//    -   -
-	// 			//   /     \
-	// 			//  C  ...  1st
-	// 			//  C: Last Comfirmed Block  1st: 1st submit block
-	// 			if let Some(l) = LastConfirmedHeaderInfo::get() {
-	// 				if chain_lengeth == 1
-	// 					&& !Self::verify_mmr(
-	// 						eth_header.number,
-	// 						array_unchecked!(mmr_root, 0, 32).into(),
-	// 						mmr_proof
-	// 							.iter()
-	// 							.map(|h| array_unchecked!(h, 0, 32).into())
-	// 							.collect(),
-	// 						vec![(l.0, l.1)],
-	// 					) {
-	// 					Err(<Error<T>>::MMRI)?;
-	// 				}
-	// 			};
-
-	// 			first_header_mmr = Some(array_unchecked!(mmr_root, 0, 32).into());
-	// 			first_header_number = eth_header.number;
-	// 		// the hash of other submit should be included by previous mmr_root
-	// 		} else {
-	// 			// last confirm no exsit the mmr verification will be passed
-	// 			//
-	// 			//      mmr_root of prevous submit
-	// 			//     / \
-	// 			//    - ..-
-	// 			//   /   | \
-	// 			//  -  ..c  1st
-	// 			// c: current submit  1st: 1st submit block
-	// 			if idx == chain_lengeth - 1
-	// 				&& !Self::verify_mmr(
-	// 					first_header_number,
-	// 					first_header_mmr.unwrap_or_default(),
-	// 					mmr_proof
-	// 						.iter()
-	// 						.map(|h| array_unchecked!(h, 0, 32).into())
-	// 						.collect(),
-	// 					vec![(
-	// 						eth_header.number,
-	// 						array_unchecked!(eth_header.hash.unwrap_or_default(), 0, 32).into(),
-	// 					)],
-	// 				) {
-	// 				Err(<Error<T>>::MMRI)?;
-	// 			}
-	// 		}
-	// 		output.push(TcHeaderBrief {
-	// 			number: eth_header.number,
-	// 			hash: eth_header.hash.unwrap_or_default(),
-	// 			parent_hash: eth_header.parent_hash,
-	// 			mmr: array_unchecked!(mmr_root, 0, 32).into(),
-	// 			others: eth_header.encode(),
-	// 		});
-	// 	}
-	// 	Ok(output)
-	// }
-
 	fn on_chain_arbitrate(proposal: Vec<Self::HeaderThing>) -> DispatchResult {
 		// Currently Ethereum samples function is continuously sampling
 
-		// let eth_partial = EthashPartial::production();
+		let eth_partial = EthashPartial::production();
 
-		// for i in 1..header_brief_chain.len() - 1 {
-		// 	if header_brief_chain[i].parent_hash != header_brief_chain[i + 1].hash {
-		// 		Err(<Error<T>>::ChainI)?;
-		// 	}
-		// 	let header = EthHeader::decode(&mut &*header_brief_chain[i].others).unwrap_or_default();
-		// 	let previous_header =
-		// 		EthHeader::decode(&mut &*header_brief_chain[i + 1].others).unwrap_or_default();
+		for i in 1..proposal.len() - 1 {
+			let header = &proposal[i].header;
+			let prev_header = &proposal[i + 1].header;
 
-		// 	if *(header.difficulty()) != eth_partial.calculate_difficulty(&header, &previous_header)
-		// 	{
-		// 		Err(<Error<T>>::ChainI)?;
-		// 	}
-		// }
+			ensure!(
+				header.parent_hash == header.hash.ok_or(<Error<T>>::ChainI)?,
+				<Error<T>>::ChainI
+			);
+			ensure!(
+				header.difficulty().to_owned()
+					== eth_partial.calculate_difficulty(&header, &prev_header),
+				<Error<T>>::ChainI
+			);
+		}
+
 		Ok(())
 	}
 
 	fn store_header(header_thing: Self::HeaderThing) -> DispatchResult {
-		// let last_comfirmed_block_number = if let Some(i) = LastConfirmedHeaderInfo::get() {
-		// 	i.0
-		// } else {
-		// 	0
-		// };
-		// let EthereumHeaderThing {
-		// 	eth_header,
-		// 	ethash_proof: _,
-		// 	mmr_root,
-		// 	mmr_proof: _,
-		// } = raw_header_thing.into();
+		let last_comfirmed_block_number = if let Some(i) = LastConfirmedHeaderInfo::get() {
+			i.0
+		} else {
+			0
+		};
+		let EthereumHeaderThing { header, mmr_root } = header_thing;
 
-		// if eth_header.number > last_comfirmed_block_number {
-		// 	LastConfirmedHeaderInfo::set(Some((
-		// 		eth_header.number,
-		// 		array_unchecked!(eth_header.hash.unwrap_or_default(), 0, 32).into(),
-		// 		mmr_root,
-		// 	)))
-		// };
+		if header.number > last_comfirmed_block_number {
+			LastConfirmedHeaderInfo::set(Some((
+				header.number,
+				array_unchecked!(header.hash.unwrap_or_default(), 0, 32).into(),
+				mmr_root,
+			)))
+		};
 
-		// let confirm_cycle = eth_header.number / ConfirmBlocksInCycle::get();
-		// let last_confirmed_block_cycle = LastConfirmedBlockCycle::get();
+		let confirm_cycle = header.number / ConfirmBlocksInCycle::get();
+		let last_confirmed_block_cycle = LastConfirmedBlockCycle::get();
 
-		// ConfirmedHeadersDoubleMap::insert(confirm_cycle, eth_header.number, eth_header);
+		ConfirmedHeadersDoubleMap::insert(confirm_cycle, header.number, header);
 
-		// if confirm_cycle > last_confirmed_block_cycle {
-		// 	ConfirmedHeadersDoubleMap::remove_prefix(
-		// 		confirm_cycle.saturating_sub(ConfirmBlockKeepInMonth::get()),
-		// 	);
-		// 	LastConfirmedBlockCycle::set(confirm_cycle);
-		// }
+		if confirm_cycle > last_confirmed_block_cycle {
+			ConfirmedHeadersDoubleMap::remove_prefix(
+				confirm_cycle.saturating_sub(ConfirmBlockKeepInMonth::get()),
+			);
+			LastConfirmedBlockCycle::set(confirm_cycle);
+		}
+
 		Ok(())
 	}
 }
@@ -683,7 +616,7 @@ impl WeightInfo for () {}
 
 #[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
 pub struct EthereumHeaderThingWithProof {
-	ethereum_header: EthHeader,
+	header: EthHeader,
 	ethash_proof: Vec<EthashProof>,
 	mmr_root: MMRHash,
 	mmr_proof: Vec<MMRHash>,
@@ -691,26 +624,18 @@ pub struct EthereumHeaderThingWithProof {
 
 #[derive(Clone, PartialEq, Encode, Decode, Default, RuntimeDebug)]
 pub struct EthereumHeaderThing {
-	eth_header: EthHeader,
-	ethash_proof: Vec<EthashProof>,
+	header: EthHeader,
 	mmr_root: MMRHash,
-	mmr_proof: Vec<MMRHash>,
 }
 impl HeaderThing for EthereumHeaderThing {
 	type BlockNumber = EthBlockNumber;
 	type Hash = H256;
 
 	fn block_number(&self) -> Self::BlockNumber {
-		self.block_number()
+		self.header.number()
 	}
 
 	fn hash(&self) -> Self::Hash {
-		self.hash()
+		self.header.hash()
 	}
-}
-
-#[derive(Encode, Decode, Default, RuntimeDebug)]
-pub struct ProposalEthHeaderThing {
-	eth_header: EthHeader,
-	mmr_root: MMRHash,
 }

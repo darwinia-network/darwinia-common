@@ -145,25 +145,34 @@ impl ExtBuilder {
 
 pub struct UnusedRelayerGame;
 impl RelayerGameProtocol for UnusedRelayerGame {
-	type Relayer = u64;
-	type TcBlockNumber = u64;
+	type Relayer = AccountId;
+	type HeaderThingWithProof = EthereumHeaderThingWithProof;
+	type BlockNumber = BlockNumber;
 
-	fn submit_proposal(_: Self::Relayer, _: Vec<RawHeaderThing>) -> DispatchResult {
+	fn submit_proposal(_: Self::Relayer, _: Vec<Self::HeaderThingWithProof>) -> DispatchResult {
 		unimplemented!()
 	}
-	fn approve_pending_header(_: Self::TcBlockNumber) -> DispatchResult {
+	fn approve_pending_header(_: Self::BlockNumber) -> DispatchResult {
 		unimplemented!()
 	}
-	fn reject_pending_header(_: Self::TcBlockNumber) -> DispatchResult {
+	fn reject_pending_header(_: Self::BlockNumber) -> DispatchResult {
 		unimplemented!()
 	}
 }
 
-pub fn header_things() -> Result<[EthHeaderThing; 4], Error> {
+pub fn header_things_with_proof() -> Result<[EthereumHeaderThingWithProof; 4], Error> {
 	Ok([
-		EthHeaderThing::decode(&mut &*hex_bytes_unchecked(test_data::HEADER_THING_CODEC_0))?,
-		EthHeaderThing::decode(&mut &*hex_bytes_unchecked(test_data::HEADER_THING_CODEC_1))?,
-		EthHeaderThing::decode(&mut &*hex_bytes_unchecked(test_data::HEADER_THING_CODEC_2))?,
-		EthHeaderThing::decode(&mut &*hex_bytes_unchecked(test_data::HEADER_THING_CODEC_3))?,
+		EthereumHeaderThingWithProof::decode(&mut &*hex_bytes_unchecked(
+			test_data::HEADER_THING_CODEC_0,
+		))?,
+		EthereumHeaderThingWithProof::decode(&mut &*hex_bytes_unchecked(
+			test_data::HEADER_THING_CODEC_1,
+		))?,
+		EthereumHeaderThingWithProof::decode(&mut &*hex_bytes_unchecked(
+			test_data::HEADER_THING_CODEC_2,
+		))?,
+		EthereumHeaderThingWithProof::decode(&mut &*hex_bytes_unchecked(
+			test_data::HEADER_THING_CODEC_3,
+		))?,
 	])
 }
