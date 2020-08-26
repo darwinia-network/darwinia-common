@@ -1,14 +1,16 @@
 //! Relayer Game Primitives
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![feature(drain_filter)]
 
 // --- core ---
 use core::fmt::Debug;
 // --- crates ---
 use codec::{Decode, Encode, FullCodec};
 // --- substrate ---
+use frame_support::debug::error;
 use sp_runtime::{traits::AtLeast32BitUnsigned, DispatchError, DispatchResult, RuntimeDebug};
-use sp_std::prelude::*;
+use sp_std::{collections::btree_map::BTreeMap, prelude::*};
 
 pub type Round = u64;
 
@@ -56,9 +58,9 @@ pub trait AdjustableRelayerGame {
 
 	fn challenge_time(round: Round) -> Self::Moment;
 
-	fn round_from_chain_len(chain_len: u64) -> Round;
+	fn round_of_samples_count(samples_count: u64) -> Round;
 
-	fn chain_len_from_round(round: Round) -> u64;
+	fn samples_count_of_round(round: Round) -> u64;
 
 	fn update_samples(samples: &mut Vec<Vec<Self::TcBlockNumber>>);
 
@@ -78,32 +80,26 @@ pub trait RelayerGameProtocol {
 }
 
 #[derive(Clone, Encode, Decode, RuntimeDebug)]
-pub struct RelayProposal<AccountId, BondedHeader, HeaderHash> {
+pub struct RelayProposal<Relayer, Balance, HeaderBrief, HeaderHash> {
 	// TODO: Can this proposal submit by other relayers?
 	/// The relayer of these series of headers
 	/// The proposer of this proposal
 	/// The person who support this proposal with some bonds
-	pub relayer: AccountId,
-	/// A series of target chain's header ids and the value that relayer had bonded for it
-	pub bonded_proposal: Vec<BondedHeader>,
+	pub relayer: Relayer,
+	/// A series of target chain's header brief and the value that relayer had bonded for it
+	pub bonded_samples: Vec<(Balance, HeaderBrief)>,
 	/// Parents (previous header hash)
 	///
 	/// If this field is `None` that means this proposal is the first proposal
 	pub extend_from_header_hash: Option<HeaderHash>,
 }
 
-#[derive(Clone, Encode, Decode, RuntimeDebug)]
-pub struct BondedHeaderBrief<Balance, HeaderBrief> {
-	pub header_brief: HeaderBrief,
-	pub bond: Balance,
-}
-
 pub fn extend_proposal<Balance, HeaderBrief, F>(
 	proposal: &[HeaderBrief],
-	extend_at: Round,
+	round: Round,
 	other_proposals_len: usize,
 	estimate_bond: F,
-) -> (Balance, Vec<BondedHeaderBrief<Balance, HeaderBrief>>)
+) -> (Balance, Vec<(Balance, HeaderBrief)>)
 where
 	Balance: Copy + AtLeast32BitUnsigned,
 	HeaderBrief: Clone,
@@ -118,13 +114,119 @@ where
 			.cloned()
 			.enumerate()
 			.map(|(round_offset, header_brief)| {
-				let bond =
-					estimate_bond(extend_at + round_offset as Round, other_proposals_len as _);
+				let bond = estimate_bond(round + round_offset as Round, other_proposals_len as _);
 
 				bonds = bonds.saturating_add(bond);
 
-				BondedHeaderBrief { header_brief, bond }
+				(bond, header_brief)
 			})
 			.collect(),
 	)
+}
+
+pub fn build_reward_map<Relayer, Balance, HeaderBrief, HeaderHash, F>(
+	mut round: Round,
+	mut proposals: Vec<RelayProposal<Relayer, Balance, HeaderBrief, HeaderHash>>,
+	mut extend_from_header_hash: HeaderHash,
+	mut rewards: Vec<((Relayer, Balance), (Relayer, Balance))>,
+	round_of_samples_count: F,
+) -> (
+	BTreeMap<Relayer, Balance>,
+	BTreeMap<Relayer, (Balance, BTreeMap<Relayer, Balance>)>,
+	Vec<Vec<(Relayer, Balance)>>,
+)
+where
+	Relayer: Clone + Ord,
+	Balance: Copy + AtLeast32BitUnsigned,
+	HeaderBrief: crate::HeaderBrief<Hash = HeaderHash>,
+	HeaderHash: PartialEq,
+	F: Fn(u64) -> Round,
+{
+	let mut missing = vec![];
+
+	// If there's no extended at first round,
+	// that means this proposal MUST be the first proposal
+	// Else,
+	// it MUST extend from some; qed
+	// TODO: while let Some()? to remove the round
+	while round > 0 {
+		round -= 1;
+
+		let mut maybe_honesty = None;
+		let mut evils = vec![];
+
+		for proposal in proposals_filter_by_round(&mut proposals, round, &round_of_samples_count) {
+			let (bond, header_brief) = proposal.bonded_samples.last().unwrap();
+			let header_hash = header_brief.hash();
+
+			if header_hash == extend_from_header_hash {
+				if let Some(header_hash) = proposal.extend_from_header_hash {
+					extend_from_header_hash = header_hash;
+				}
+
+				if maybe_honesty.is_none() {
+					maybe_honesty = Some((proposal.relayer, *bond));
+				} else {
+					error!("Honest Relayer Count - MORE THAN 1 WITHIN A ROUND");
+				}
+			} else {
+				evils.push((proposal.relayer, *bond));
+			}
+		}
+
+		if let Some(honesty) = maybe_honesty {
+			for evil in evils {
+				rewards.push((honesty.to_owned(), evil));
+			}
+		} else {
+			// Should NEVER enter this condition
+
+			missing.push(evils);
+
+			error!("Honest Relayer - NOT FOUND");
+		}
+	}
+
+	// Use for updating relayers' bonds and locks with just 2 DB writes
+	let mut honesties_map = BTreeMap::new();
+	// Use for updating evils' bonds, locks and reward relayers
+	let mut evils_map = BTreeMap::new();
+
+	for ((honesty, honesty_bonds), (evil, evil_bond)) in rewards {
+		*honesties_map
+			.entry(honesty.clone())
+			.or_insert(honesty_bonds) += honesty_bonds;
+
+		let evil_map_ptr = evils_map.entry(evil).or_insert({
+			let mut slash_map = BTreeMap::new();
+
+			slash_map.insert(honesty.clone(), evil_bond);
+
+			// The first item means total bonds
+			// which use for updating bonds and locks with just 2 DB writes
+			//
+			// The second item use for rewarding relayers
+			(evil_bond, slash_map)
+		});
+
+		evil_map_ptr.0 += evil_bond;
+		*evil_map_ptr.1.entry(honesty).or_insert(evil_bond) += evil_bond;
+	}
+
+	(honesties_map, evils_map, missing)
+}
+
+pub fn proposals_filter_by_round<R, B, HB, HH, F>(
+	proposals: &mut Vec<RelayProposal<R, B, HB, HH>>,
+	round: Round,
+	round_of_samples_count: F,
+) -> Vec<RelayProposal<R, B, HB, HH>>
+where
+	F: Fn(u64) -> Round,
+{
+	proposals
+		.drain_filter(|proposal| {
+			round_of_samples_count(proposal.bonded_samples.len() as _) == round
+		})
+		.collect()
 }
