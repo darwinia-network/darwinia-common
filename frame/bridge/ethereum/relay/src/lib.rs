@@ -35,7 +35,7 @@ use frame_system::ensure_signed;
 use sp_runtime::{
 	traits::AccountIdConversion, DispatchError, DispatchResult, ModuleId, RuntimeDebug,
 };
-#[cfg(feature = "std")]
+#[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
 use sp_std::{convert::From, prelude::*};
 // --- darwinia ---
