@@ -223,25 +223,6 @@ decl_module! {
 			info!(target: "relayer-game", "---");
 
 			let mut pending_headers = vec![];
-			let update_samples = |game_id| {
-				<Samples<T, I>>::mutate(game_id, |samples| {
-						T::RelayerGameAdjustor::update_samples(samples);
-
-						if samples.len() < 2 {
-							error!("Sample Points MISSING, \
-								Check Your Sample Strategy Implementation");
-
-							return;
-						}
-
-						Self::deposit_event(RawEvent::NewRound(
-							game_id,
-							samples.concat(),
-							samples[samples.len() - 1].clone(),
-						));
-					}
-				);
-			};
 
 			for (game_id, last_round) in closed_rounds {
 				info!(target: "relayer-game", ">  Trying to Settle Game `{:?}` at Round `{}`", game_id, last_round);
@@ -310,14 +291,10 @@ decl_module! {
 								));
 							}
 							_ => {
-								let relay_target = last_round_proposals[0]
-									.bonded_samples[0]
-									.1
-									.block_number();
 								let last_round_proposals_chain_len =
 									last_round_proposals[0].bonded_samples.len();
 								let full_chain_len =
-									(relay_target - Self::last_confirmed_of_game(game_id))
+									(game_id - Self::last_confirmed_of_game(game_id))
 										.saturated_into() as u64;
 
 								if last_round_proposals_chain_len as u64 == full_chain_len {
@@ -336,7 +313,7 @@ decl_module! {
 								} else {
 									info!(target: "relayer-game", "   >  Update Samples");
 
-									update_samples(relay_target);
+									Self::update_samples(game_id);
 
 									let round = last_round + 1;
 									let closed_at = block_number
@@ -570,6 +547,24 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 
 			None
 		}
+	}
+
+	pub fn update_samples(game_id: GameId<TcBlockNumber<T, I>>) {
+		<Samples<T, I>>::mutate(game_id, |samples| {
+			T::RelayerGameAdjustor::update_samples(samples);
+
+			if samples.len() < 2 {
+				error!("Sample Points MISSING, Check Your Sample Strategy Implementation");
+
+				return;
+			}
+
+			Self::deposit_event(RawEvent::NewRound(
+				game_id,
+				samples.concat(),
+				samples[samples.len() - 1].clone(),
+			));
+		});
 	}
 
 	pub fn game_over(game_id: GameId<TcBlockNumber<T, I>>) {
