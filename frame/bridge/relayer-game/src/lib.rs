@@ -331,22 +331,8 @@ decl_module! {
 				Self::game_over(game_id);
 			}
 
-			let confirm_period = T::ConfirmPeriod::get();
-
-			if confirm_period.is_zero() {
-				for (_, pending_header) in pending_headers {
-					// TODO: handle error
-					let _ = T::TargetChain::store_header(pending_header);
-				}
-			} else {
-				for (pending_block_number, pending_header) in pending_headers {
-					<PendingHeaders<T, I>>::append((
-						block_number + confirm_period,
-						pending_block_number,
-						pending_header
-					));
-				}
-			}
+			// TODO: handle error
+			let _ = Self::store_pending_headers(block_number, pending_headers);
 
 			info!(target: "relayer-game", "---");
 		}
@@ -574,6 +560,29 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		<Proposals<T, I>>::take(game_id);
 
 		Self::deposit_event(RawEvent::GameOver(game_id));
+	}
+
+	pub fn store_pending_headers(
+		now: BlockNumber<T>,
+		pending_headers: Vec<(TcBlockNumber<T, I>, TcHeaderBrief<T, I>)>,
+	) -> DispatchResult {
+		let confirm_period = T::ConfirmPeriod::get();
+
+		if confirm_period.is_zero() {
+			for (_, pending_header) in pending_headers {
+				T::TargetChain::store_header(pending_header)?;
+			}
+		} else {
+			for (pending_block_number, pending_header) in pending_headers {
+				<PendingHeaders<T, I>>::append((
+					now + confirm_period,
+					pending_block_number,
+					pending_header,
+				));
+			}
+		}
+
+		Ok(())
 	}
 
 	pub fn update_pending_headers_with<F>(

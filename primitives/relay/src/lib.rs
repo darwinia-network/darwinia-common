@@ -38,7 +38,7 @@ pub trait Relayable {
 	fn on_chain_arbitrate(header_brief_chain: Vec<Self::HeaderBrief>) -> DispatchResult;
 
 	/// Store the header confirmed in relayer game
-	fn store_header(header_thing: Self::HeaderBrief) -> DispatchResult;
+	fn store_header(header_brief: Self::HeaderBrief) -> DispatchResult;
 }
 pub trait HeaderBrief {
 	type Hash;
