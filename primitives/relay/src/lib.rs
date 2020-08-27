@@ -17,30 +17,30 @@ pub type Round = u64;
 /// Implement this for target chain's relay module's
 /// to expose some necessary APIs for relayer game
 pub trait Relayable {
-	type HeaderThing: Clone + Debug + Default + PartialEq;
-	type HeaderBrief: Clone
+	type HeaderThingWithProof: Debug;
+	type HeaderThing: Clone
 		+ Debug
 		+ Default
 		+ PartialEq
 		+ FullCodec
-		+ HeaderBrief<Hash = Self::HeaderHash, BlockNumber = Self::BlockNumber>;
+		+ HeaderThing<Hash = Self::HeaderHash, BlockNumber = Self::BlockNumber>;
 	type BlockNumber: Clone + Copy + Debug + Default + AtLeast32BitUnsigned + FullCodec;
 	type HeaderHash: Clone + Debug + Default + PartialEq + FullCodec;
 
 	fn basic_verify(
-		proposal: Vec<Self::HeaderThing>,
-	) -> Result<Vec<Self::HeaderBrief>, DispatchError>;
+		proposal: Vec<Self::HeaderThingWithProof>,
+	) -> Result<Vec<Self::HeaderThing>, DispatchError>;
 
 	/// The latest finalize block's header's record id in darwinia
 	fn best_block_number() -> Self::BlockNumber;
 
 	/// On chain arbitrate, to confirmed the header with 100% sure
-	fn on_chain_arbitrate(header_brief_chain: Vec<Self::HeaderBrief>) -> DispatchResult;
+	fn on_chain_arbitrate(header_brief_chain: Vec<Self::HeaderThing>) -> DispatchResult;
 
 	/// Store the header confirmed in relayer game
-	fn store_header(header_brief: Self::HeaderBrief) -> DispatchResult;
+	fn store_header(header_thing: Self::HeaderThing) -> DispatchResult;
 }
-pub trait HeaderBrief {
+pub trait HeaderThing {
 	type Hash;
 	type BlockNumber;
 
@@ -69,10 +69,13 @@ pub trait AdjustableRelayerGame {
 
 pub trait RelayerGameProtocol {
 	type Relayer;
-	type HeaderThing;
+	type HeaderThingWithProof;
 	type BlockNumber;
 
-	fn submit_proposal(relayer: Self::Relayer, proposal: Vec<Self::HeaderThing>) -> DispatchResult;
+	fn submit_proposal(
+		relayer: Self::Relayer,
+		proposal: Vec<Self::HeaderThingWithProof>,
+	) -> DispatchResult;
 
 	fn approve_pending_header(pending: Self::BlockNumber) -> DispatchResult;
 
@@ -80,29 +83,29 @@ pub trait RelayerGameProtocol {
 }
 
 #[derive(Clone, Encode, Decode, RuntimeDebug)]
-pub struct RelayProposal<Relayer, Balance, HeaderBrief, HeaderHash> {
+pub struct RelayProposal<Relayer, Balance, HeaderThing, HeaderHash> {
 	// TODO: Can this proposal submit by other relayers?
 	/// The relayer of these series of headers
 	/// The proposer of this proposal
 	/// The person who support this proposal with some bonds
 	pub relayer: Relayer,
 	/// A series of target chain's header brief and the value that relayer had bonded for it
-	pub bonded_samples: Vec<(Balance, HeaderBrief)>,
+	pub bonded_samples: Vec<(Balance, HeaderThing)>,
 	/// Parents (previous header hash)
 	///
 	/// If this field is `None` that means this proposal is the first proposal
 	pub extend_from_header_hash: Option<HeaderHash>,
 }
 
-pub fn extend_proposal<Balance, HeaderBrief, F>(
-	proposal: &[HeaderBrief],
+pub fn extend_proposal<Balance, HeaderThing, F>(
+	proposal: &[HeaderThing],
 	round: Round,
 	other_proposals_len: usize,
 	estimate_bond: F,
-) -> (Balance, Vec<(Balance, HeaderBrief)>)
+) -> (Balance, Vec<(Balance, HeaderThing)>)
 where
 	Balance: Copy + AtLeast32BitUnsigned,
-	HeaderBrief: Clone,
+	HeaderThing: Clone,
 	F: Fn(Round, u64) -> Balance,
 {
 	let mut bonds = Balance::zero();
@@ -124,9 +127,9 @@ where
 	)
 }
 
-pub fn build_reward_map<Relayer, Balance, HeaderBrief, HeaderHash, F>(
+pub fn build_reward_map<Relayer, Balance, HeaderThing, HeaderHash, F>(
 	mut round: Round,
-	mut proposals: Vec<RelayProposal<Relayer, Balance, HeaderBrief, HeaderHash>>,
+	mut proposals: Vec<RelayProposal<Relayer, Balance, HeaderThing, HeaderHash>>,
 	mut extend_from_header_hash: HeaderHash,
 	mut rewards: Vec<((Relayer, Balance), (Relayer, Balance))>,
 	round_of_samples_count: F,
@@ -138,7 +141,7 @@ pub fn build_reward_map<Relayer, Balance, HeaderBrief, HeaderHash, F>(
 where
 	Relayer: Clone + Ord,
 	Balance: Copy + AtLeast32BitUnsigned,
-	HeaderBrief: crate::HeaderBrief<Hash = HeaderHash>,
+	HeaderThing: crate::HeaderThing<Hash = HeaderHash>,
 	HeaderHash: PartialEq,
 	F: Fn(u64) -> Round,
 {

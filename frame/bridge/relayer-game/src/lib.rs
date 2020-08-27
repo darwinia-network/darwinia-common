@@ -4,8 +4,8 @@
 
 #[cfg(test)]
 mod mock;
-#[cfg(test)]
-mod tests;
+// #[cfg(test)]
+// mod tests;
 
 mod types {
 	// --- darwinia ---
@@ -18,15 +18,15 @@ mod types {
 	pub type RingNegativeImbalance<T, I> =
 		<RingCurrency<T, I> as Currency<AccountId<T>>>::NegativeImbalance;
 
+	pub type TcHeaderThingWithProof<T, I> = <Tc<T, I> as Relayable>::HeaderThingWithProof;
 	pub type TcHeaderThing<T, I> = <Tc<T, I> as Relayable>::HeaderThing;
-	pub type TcHeaderBrief<T, I> = <Tc<T, I> as Relayable>::HeaderBrief;
 	pub type TcBlockNumber<T, I> = <Tc<T, I> as Relayable>::BlockNumber;
 	pub type TcHeaderHash<T, I> = <Tc<T, I> as Relayable>::HeaderHash;
 
 	pub type GameId<TcBlockNumber> = TcBlockNumber;
 
 	pub type RelayProposalT<T, I> =
-		RelayProposal<AccountId<T>, RingBalance<T, I>, TcHeaderBrief<T, I>, TcHeaderHash<T, I>>;
+		RelayProposal<AccountId<T>, RingBalance<T, I>, TcHeaderThing<T, I>, TcHeaderHash<T, I>>;
 
 	type RingCurrency<T, I> = <T as Trait<I>>::RingCurrency;
 
@@ -139,7 +139,7 @@ decl_storage! {
 			: double_map
 				hasher(blake2_128_concat) GameId<TcBlockNumber<T, I>>,
 				hasher(blake2_128_concat) TcHeaderHash<T, I>
-			=>  TcHeaderBrief<T, I>;
+			=>  TcHeaderThing<T, I>;
 
 		/// The last confirmed block number record of a game when it start
 		pub LastConfirmeds
@@ -166,14 +166,11 @@ decl_storage! {
 			=> RingBalance<T, I>;
 
 
-		// TODO: move into relay
 		// TODO: reject submit if the block number already on pending?
 		/// Dawinia Relay Guard System
-		///
-		/// https://github.com/darwinia-network/darwinia-common/issues/150
 		pub PendingHeaders
 			get(fn pending_headers)
-			: Vec<(BlockNumber<T>, TcBlockNumber<T, I>, TcHeaderBrief<T, I>)>;
+			: Vec<(BlockNumber<T>, TcBlockNumber<T, I>, TcHeaderThing<T, I>)>;
 	}
 }
 
@@ -216,13 +213,13 @@ decl_module! {
 impl<T: Trait<I>, I: Instance> Module<T, I> {
 	pub fn ensure_can_bond(
 		relayer: &AccountId<T>,
-		proposal: &[TcHeaderBrief<T, I>],
+		proposal: &[TcHeaderThing<T, I>],
 		extend_at: Round,
 		other_proposals_len: usize,
 	) -> Result<
 		(
 			RingBalance<T, I>,
-			Vec<(RingBalance<T, I>, TcHeaderBrief<T, I>)>,
+			Vec<(RingBalance<T, I>, TcHeaderThing<T, I>)>,
 		),
 		DispatchError,
 	> {
@@ -558,7 +555,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 
 	pub fn store_pending_headers(
 		now: BlockNumber<T>,
-		pending_headers: Vec<(TcBlockNumber<T, I>, TcHeaderBrief<T, I>)>,
+		pending_headers: Vec<(TcBlockNumber<T, I>, TcHeaderThing<T, I>)>,
 	) -> DispatchResult {
 		let confirm_period = T::ConfirmPeriod::get();
 
@@ -584,7 +581,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		f: F,
 	) -> DispatchResult
 	where
-		F: FnOnce(TcHeaderBrief<T, I>) -> DispatchResult,
+		F: FnOnce(TcHeaderThing<T, I>) -> DispatchResult,
 	{
 		<PendingHeaders<T, I>>::mutate(|pending_headers| {
 			if let Some(i) = pending_headers
@@ -625,7 +622,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 
 impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 	type Relayer = AccountId<T>;
-	type HeaderThing = TcHeaderThing<T, I>;
+	type HeaderThingWithProof = TcHeaderThingWithProof<T, I>;
 	type BlockNumber = TcBlockNumber<T, I>;
 
 	// TODO:
@@ -640,7 +637,10 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 	// TODO: drop previous rounds' proof (efficency optimize)
 	//
 	// TODO: handle uncle block
-	fn submit_proposal(relayer: Self::Relayer, proposal: Vec<Self::HeaderThing>) -> DispatchResult {
+	fn submit_proposal(
+		relayer: Self::Relayer,
+		proposal: Vec<Self::HeaderThingWithProof>,
+	) -> DispatchResult {
 		info!(
 			target: "relayer-game",
 			"Relayer `{:?}` Submit a Proposal:\n{:#?}",
