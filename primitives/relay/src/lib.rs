@@ -28,25 +28,25 @@ pub trait Relayable {
 	type HeaderHash: Clone + Debug + Default + PartialEq + FullCodec;
 
 	fn basic_verify(
-		proposal: Vec<Self::HeaderThingWithProof>,
+		proposal_with_proof: Vec<Self::HeaderThingWithProof>,
 	) -> Result<Vec<Self::HeaderThing>, DispatchError>;
 
 	/// The latest finalize block's header's record id in darwinia
 	fn best_block_number() -> Self::BlockNumber;
 
 	/// On chain arbitrate, to confirmed the header with 100% sure
-	fn on_chain_arbitrate(header_brief_chain: Vec<Self::HeaderThing>) -> DispatchResult;
+	fn on_chain_arbitrate(proposal: Vec<Self::HeaderThing>) -> DispatchResult;
 
 	/// Store the header confirmed in relayer game
 	fn store_header(header_thing: Self::HeaderThing) -> DispatchResult;
 }
 pub trait HeaderThing {
-	type Hash;
 	type BlockNumber;
-
-	fn hash(&self) -> Self::Hash;
+	type Hash;
 
 	fn block_number(&self) -> Self::BlockNumber;
+
+	fn hash(&self) -> Self::Hash;
 }
 
 // A regulator to adjust relay args for a specific chain
@@ -109,22 +109,20 @@ where
 	F: Fn(Round, u64) -> Balance,
 {
 	let mut bonds = Balance::zero();
+	let bonded_proposal = proposal
+		.iter()
+		.cloned()
+		.enumerate()
+		.map(|(round_offset, header_thing)| {
+			let bond = estimate_bond(round + round_offset as Round, other_proposals_len as _);
 
-	(
-		bonds,
-		proposal
-			.iter()
-			.cloned()
-			.enumerate()
-			.map(|(round_offset, header_thing)| {
-				let bond = estimate_bond(round + round_offset as Round, other_proposals_len as _);
+			bonds = bonds.saturating_add(bond);
 
-				bonds = bonds.saturating_add(bond);
+			(bond, header_thing)
+		})
+		.collect();
 
-				(bond, header_thing)
-			})
-			.collect(),
-	)
+	(bonds, bonded_proposal)
 }
 
 pub fn build_reward_map<Relayer, Balance, HeaderThing, HeaderHash, F>(

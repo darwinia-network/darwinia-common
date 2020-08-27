@@ -1,13 +1,11 @@
-// --- crates ---
-use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{assert_err, assert_ok};
 // --- darwinia ---
 use crate::{
 	mock::{mock_relay::*, *},
-	RELAYER_GAME_ID,
+	*,
 };
-use darwinia_support::{balance::lock::*, relay::RelayerGameProtocol};
+use darwinia_support::balance::lock::*;
 
 #[test]
 fn empty_proposal_should_fail() {
@@ -22,50 +20,51 @@ fn empty_proposal_should_fail() {
 #[test]
 fn insufficient_bond_should_fail() {
 	ExtBuilder::default()
-		.estimate_bond(100)
+		.estimate_bond(101)
 		.build()
 		.execute_with(|| {
-			let chain = MockTcHeader::mock_raw_chain(vec![1, 1], true);
+			let proposal = MockTcHeader::mock_proposal(vec![1, 1], true);
 
 			{
 				let poor_man = 0;
+
 				assert_err!(
 					<RelayerGame as RelayerGameProtocol>::submit_proposal(
 						poor_man,
-						chain[..1].to_vec()
+						proposal[..1].to_vec()
 					),
 					RelayerGameError::InsufficientBond
 				);
 			}
 
 			assert_err!(
-				<RelayerGame as RelayerGameProtocol>::submit_proposal(1, chain[..1].to_vec()),
+				<RelayerGame as RelayerGameProtocol>::submit_proposal(1, proposal[..1].to_vec()),
 				RelayerGameError::InsufficientBond
 			);
 			assert_ok!(<RelayerGame as RelayerGameProtocol>::submit_proposal(
 				2,
-				vec![MockTcHeader::mock_raw(2, 0, 1)]
+				vec![MockTcHeader::mock(2, 0, 1)]
 			));
 			assert_ok!(<RelayerGame as RelayerGameProtocol>::submit_proposal(
 				3,
-				chain[..1].to_vec()
+				proposal[..1].to_vec()
 			));
 
 			run_to_block(4);
 
 			assert_err!(
-				<RelayerGame as RelayerGameProtocol>::submit_proposal(2, chain.clone()),
+				<RelayerGame as RelayerGameProtocol>::submit_proposal(2, proposal.clone()),
 				RelayerGameError::InsufficientBond
 			);
 			assert_ok!(<RelayerGame as RelayerGameProtocol>::submit_proposal(
-				3, chain
+				3, proposal
 			));
 		});
 }
 
 #[test]
 fn already_confirmed_should_fail() {
-	let confirmed_headers = MockTcHeader::mock_chain(vec![1, 1, 1, 1, 1], true);
+	let confirmed_headers = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], true);
 
 	ExtBuilder::default()
 		.headers(confirmed_headers.clone())
@@ -75,7 +74,7 @@ fn already_confirmed_should_fail() {
 				assert_err!(
 					<RelayerGame as RelayerGameProtocol>::submit_proposal(
 						1,
-						vec![confirmed_header.encode()]
+						vec![confirmed_header]
 					),
 					RelayerGameError::TargetHeaderAC
 				);
@@ -86,14 +85,14 @@ fn already_confirmed_should_fail() {
 #[test]
 fn duplicate_game_should_fail() {
 	ExtBuilder::default().build().execute_with(|| {
-		let chain = MockTcHeader::mock_raw_chain(vec![1], true);
+		let proposal = MockTcHeader::mock_proposal(vec![1], true);
 
 		assert_ok!(<RelayerGame as RelayerGameProtocol>::submit_proposal(
 			1,
-			chain.clone()
+			proposal.clone()
 		));
 		assert_err!(
-			<RelayerGame as RelayerGameProtocol>::submit_proposal(1, chain),
+			<RelayerGame as RelayerGameProtocol>::submit_proposal(1, proposal),
 			RelayerGameError::ProposalAE
 		);
 	});
@@ -102,16 +101,16 @@ fn duplicate_game_should_fail() {
 #[test]
 fn jump_round_should_fail() {
 	ExtBuilder::default().build().execute_with(|| {
-		let chain = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], true);
+		let proposal = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], true);
 
 		assert_ok!(<RelayerGame as RelayerGameProtocol>::submit_proposal(
 			1,
-			chain[..1].to_vec()
+			proposal[..1].to_vec()
 		));
 
 		for i in 2..=5 {
 			assert_err!(
-				<RelayerGame as RelayerGameProtocol>::submit_proposal(1, chain[..i].to_vec()),
+				<RelayerGame as RelayerGameProtocol>::submit_proposal(1, proposal[..i].to_vec()),
 				RelayerGameError::RoundMis
 			);
 		}
@@ -125,24 +124,27 @@ fn challenge_time_should_work() {
 			.challenge_time(challenge_time)
 			.build()
 			.execute_with(|| {
-				let header = MockTcHeader::mock(1, 0, 1);
+				let header_thing = MockTcHeader::mock(1, 0, 1);
 
 				assert_ok!(<RelayerGame as RelayerGameProtocol>::submit_proposal(
 					1,
-					vec![header.encode()]
+					vec![header_thing.clone()]
 				));
 
 				for block in 0..=challenge_time {
 					run_to_block(block);
 
-					assert_eq!(RelayerGame::proposals_of_game(header.number).len(), 1);
-					assert_eq!(Relay::header_of_block_number(header.number), None);
+					assert_eq!(RelayerGame::proposals_of_game(header_thing.number).len(), 1);
+					assert_eq!(Relay::header_of_block_number(header_thing.number), None);
 				}
 
 				run_to_block(challenge_time + 1);
 
-				assert_eq!(RelayerGame::proposals_of_game(header.number).len(), 0);
-				assert_eq!(Relay::header_of_block_number(header.number), Some(header));
+				assert_eq!(RelayerGame::proposals_of_game(header_thing.number).len(), 0);
+				assert_eq!(
+					Relay::header_of_block_number(header_thing.number),
+					Some(header_thing)
+				);
 			});
 	}
 }
@@ -150,17 +152,17 @@ fn challenge_time_should_work() {
 #[test]
 fn extend_should_work() {
 	ExtBuilder::default().build().execute_with(|| {
-		let chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], true);
-		let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
+		let proposal_a = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], true);
+		let proposal_b = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], false);
 
 		for i in 1..=5 {
 			assert_ok!(<RelayerGame as RelayerGameProtocol>::submit_proposal(
 				1,
-				chain_a[..i as usize].to_vec()
+				proposal_a[..i as usize].to_vec()
 			));
 			assert_ok!(<RelayerGame as RelayerGameProtocol>::submit_proposal(
 				2,
-				chain_b[..i as usize].to_vec()
+				proposal_b[..i as usize].to_vec()
 			));
 
 			run_to_block(3 * i + 1);
@@ -176,8 +178,8 @@ fn lock_should_work() {
 			.build()
 			.execute_with(|| {
 				let mut bonds = 0;
-				let chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], true);
-				let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
+				let proposal_a = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], true);
+				let proposal_b = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], false);
 				let submit_then_assert = |account_id, chain, bonds| {
 					assert_ok!(<RelayerGame as RelayerGameProtocol>::submit_proposal(
 						account_id, chain
@@ -196,8 +198,8 @@ fn lock_should_work() {
 				for i in 1..=5 {
 					bonds += estimate_bond;
 
-					submit_then_assert(1, chain_a[..i as usize].to_vec(), bonds);
-					submit_then_assert(2, chain_b[..i as usize].to_vec(), bonds);
+					submit_then_assert(1, proposal_a[..i as usize].to_vec(), bonds);
+					submit_then_assert(2, proposal_b[..i as usize].to_vec(), bonds);
 
 					run_to_block(3 * i + 1);
 				}
@@ -218,8 +220,8 @@ fn slash_and_reward_should_work() {
 			.estimate_bond(estimate_bond)
 			.build()
 			.execute_with(|| {
-				let chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], true);
-				let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
+				let proposal_a = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], true);
+				let proposal_b = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], false);
 				let mut bonds = estimate_bond;
 
 				assert_eq!(Ring::usable_balance(&10), 1000);
@@ -228,11 +230,11 @@ fn slash_and_reward_should_work() {
 				for i in 1..=5 {
 					assert_ok!(<RelayerGame as RelayerGameProtocol>::submit_proposal(
 						10,
-						chain_a[..i as usize].to_vec()
+						proposal_a[..i as usize].to_vec()
 					));
 					assert_ok!(<RelayerGame as RelayerGameProtocol>::submit_proposal(
 						20,
-						chain_b[..i as usize].to_vec()
+						proposal_b[..i as usize].to_vec()
 					));
 
 					run_to_block(3 * i + 1);
@@ -252,14 +254,14 @@ fn slash_and_reward_should_work() {
 #[test]
 fn settle_without_challenge_should_work() {
 	ExtBuilder::default().build().execute_with(|| {
-		for (header, i) in MockTcHeader::mock_chain(vec![1, 1, 1, 1, 1], true)
+		for (header_thing, i) in MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], true)
 			.into_iter()
 			.rev()
 			.zip(1..)
 		{
 			assert_ok!(<RelayerGame as RelayerGameProtocol>::submit_proposal(
 				1,
-				vec![header.encode()]
+				vec![header_thing.clone()]
 			));
 
 			run_to_block(4 * i);
@@ -267,7 +269,10 @@ fn settle_without_challenge_should_work() {
 			assert_eq!(Ring::usable_balance(&1), 100);
 			assert!(Ring::locks(1).is_empty());
 
-			assert_eq!(Relay::header_of_block_number(header.number), Some(header));
+			assert_eq!(
+				Relay::header_of_block_number(header_thing.number),
+				Some(header_thing)
+			);
 		}
 	})
 }
@@ -275,17 +280,17 @@ fn settle_without_challenge_should_work() {
 #[test]
 fn settle_with_challenge_should_work() {
 	ExtBuilder::default().build().execute_with(|| {
-		let chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], true);
-		let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
+		let proposal_a = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], true);
+		let proposal_b = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], false);
 
 		for i in 1..=3 {
 			assert_ok!(<RelayerGame as RelayerGameProtocol>::submit_proposal(
 				1,
-				chain_a[..i as usize].to_vec()
+				proposal_a[..i as usize].to_vec()
 			));
 			assert_ok!(<RelayerGame as RelayerGameProtocol>::submit_proposal(
 				2,
-				chain_b[..i as usize].to_vec()
+				proposal_b[..i as usize].to_vec()
 			));
 
 			run_to_block(3 * i + 1);
@@ -293,22 +298,25 @@ fn settle_with_challenge_should_work() {
 
 		assert_ok!(<RelayerGame as RelayerGameProtocol>::submit_proposal(
 			1,
-			chain_a[..4 as usize].to_vec()
+			proposal_a[..4 as usize].to_vec()
 		));
 
 		run_to_block(3 * 4 + 1);
 
-		let header: MockTcHeader = Decode::decode(&mut &*chain_a[0]).unwrap();
+		let header_thing = proposal_a[0].clone();
 
-		assert_eq!(Relay::header_of_block_number(header.number), Some(header));
+		assert_eq!(
+			Relay::header_of_block_number(header_thing.number),
+			Some(header_thing)
+		);
 	});
 }
 
 #[test]
 fn settle_abandon_should_work() {
 	ExtBuilder::default().build().execute_with(|| {
-		let chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], true);
-		let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
+		let proposal_a = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], true);
+		let proposal_b = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], false);
 
 		assert_eq!(Ring::usable_balance(&1), 100);
 		assert_eq!(Ring::usable_balance(&2), 200);
@@ -316,11 +324,11 @@ fn settle_abandon_should_work() {
 		for i in 1..=3 {
 			assert_ok!(<RelayerGame as RelayerGameProtocol>::submit_proposal(
 				1,
-				chain_a[..i as usize].to_vec()
+				proposal_a[..i as usize].to_vec()
 			));
 			assert_ok!(<RelayerGame as RelayerGameProtocol>::submit_proposal(
 				2,
-				chain_b[..i as usize].to_vec()
+				proposal_b[..i as usize].to_vec()
 			));
 
 			run_to_block(3 * i + 1);
@@ -339,33 +347,36 @@ fn settle_abandon_should_work() {
 #[test]
 fn on_chain_arbitrate_should_work() {
 	ExtBuilder::default().build().execute_with(|| {
-		let chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], true);
-		let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
+		let proposal_a = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], true);
+		let proposal_b = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], false);
 
 		for i in 1..=5 {
 			assert_ok!(<RelayerGame as RelayerGameProtocol>::submit_proposal(
 				1,
-				chain_a[..i as usize].to_vec()
+				proposal_a[..i as usize].to_vec()
 			));
 			assert_ok!(<RelayerGame as RelayerGameProtocol>::submit_proposal(
 				2,
-				chain_b[..i as usize].to_vec()
+				proposal_b[..i as usize].to_vec()
 			));
 
 			run_to_block(3 * i + 1);
 		}
 
-		let header: MockTcHeader = Decode::decode(&mut &*chain_a[0]).unwrap();
+		let header_thing = proposal_a[0].clone();
 
-		assert_eq!(Relay::header_of_block_number(header.number), Some(header));
+		assert_eq!(
+			Relay::header_of_block_number(header_thing.number),
+			Some(header_thing)
+		);
 	});
 }
 
 #[test]
 fn no_honesty_should_work() {
 	ExtBuilder::default().build().execute_with(|| {
-		let chain_a = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
-		let chain_b = MockTcHeader::mock_raw_chain(vec![1, 1, 1, 1, 1], false);
+		let proposal_a = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], false);
+		let proposal_b = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], false);
 
 		assert_eq!(Ring::usable_balance(&1), 100);
 		assert_eq!(Ring::usable_balance(&2), 200);
@@ -373,11 +384,11 @@ fn no_honesty_should_work() {
 		for i in 1..=5 {
 			assert_ok!(<RelayerGame as RelayerGameProtocol>::submit_proposal(
 				1,
-				chain_a[..i as usize].to_vec()
+				proposal_a[..i as usize].to_vec()
 			));
 			assert_ok!(<RelayerGame as RelayerGameProtocol>::submit_proposal(
 				2,
-				chain_b[..i as usize].to_vec()
+				proposal_b[..i as usize].to_vec()
 			));
 
 			run_to_block(3 * i + 1);
@@ -398,24 +409,27 @@ fn auto_confirm_period_should_work() {
 		.confirmed_period(3)
 		.build()
 		.execute_with(|| {
-			let header = MockTcHeader::mock(1, 0, 1);
+			let header_thing = MockTcHeader::mock(1, 0, 1);
 
 			assert_ok!(<RelayerGame as RelayerGameProtocol>::submit_proposal(
 				1,
-				vec![header.encode()]
+				vec![header_thing.clone()]
 			));
 
 			run_to_block(4);
 
-			assert!(Relay::header_of_block_number(header.number).is_none());
+			assert!(Relay::header_of_block_number(header_thing.number).is_none());
 			assert_eq!(
 				RelayerGame::pending_headers(),
-				vec![(6, header.number, header.encode())]
+				vec![(6, header_thing.number, header_thing.clone())]
 			);
 
 			run_to_block(6);
 
-			assert_eq!(Relay::header_of_block_number(header.number), Some(header));
+			assert_eq!(
+				Relay::header_of_block_number(header_thing.number),
+				Some(header_thing)
+			);
 			assert!(RelayerGame::pending_headers().is_empty());
 		});
 }
@@ -427,24 +441,29 @@ fn approve_pending_header_should_work() {
 		.confirmed_period(3)
 		.build()
 		.execute_with(|| {
-			let header = MockTcHeader::mock(1, 0, 1);
+			let header_thing = MockTcHeader::mock(1, 0, 1);
 
 			assert_ok!(<RelayerGame as RelayerGameProtocol>::submit_proposal(
 				1,
-				vec![header.encode()]
+				vec![header_thing.clone()],
 			));
 
 			run_to_block(4);
 
-			assert!(Relay::header_of_block_number(header.number).is_none());
+			assert!(Relay::header_of_block_number(header_thing.number).is_none());
 			assert_eq!(
 				RelayerGame::pending_headers(),
-				vec![(6, header.number, header.encode())]
+				vec![(6, header_thing.number, header_thing.clone())]
 			);
 
-			assert_ok!(<RelayerGame as RelayerGameProtocol>::approve_pending_header(header.number));
+			assert_ok!(
+				<RelayerGame as RelayerGameProtocol>::approve_pending_header(header_thing.number)
+			);
 
-			assert_eq!(Relay::header_of_block_number(header.number), Some(header));
+			assert_eq!(
+				Relay::header_of_block_number(header_thing.number),
+				Some(header_thing)
+			);
 			assert!(RelayerGame::pending_headers().is_empty());
 		});
 }
@@ -456,26 +475,26 @@ fn reject_pending_header_should_work() {
 		.confirmed_period(3)
 		.build()
 		.execute_with(|| {
-			let header = MockTcHeader::mock(1, 0, 1);
+			let header_thing = MockTcHeader::mock(1, 0, 1);
 
 			assert_ok!(<RelayerGame as RelayerGameProtocol>::submit_proposal(
 				1,
-				vec![header.encode()]
+				vec![header_thing.clone()]
 			));
 
 			run_to_block(4);
 
-			assert!(Relay::header_of_block_number(header.number).is_none());
+			assert!(Relay::header_of_block_number(header_thing.number).is_none());
 			assert_eq!(
 				RelayerGame::pending_headers(),
-				vec![(6, header.number, header.encode())]
+				vec![(6, header_thing.number, header_thing.clone())]
 			);
 
 			assert_ok!(<RelayerGame as RelayerGameProtocol>::reject_pending_header(
-				header.number
+				header_thing.number
 			));
 
-			assert!(Relay::header_of_block_number(header.number).is_none());
+			assert!(Relay::header_of_block_number(header_thing.number).is_none());
 			assert!(RelayerGame::pending_headers().is_empty());
 		});
 }

@@ -4,8 +4,8 @@
 
 #[cfg(test)]
 mod mock;
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod tests;
 
 mod types {
 	// --- darwinia ---
@@ -231,7 +231,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		);
 
 		ensure!(
-			T::RingCurrency::usable_balance(&relayer) - T::RingCurrency::minimum_balance() >= bond,
+			T::RingCurrency::usable_balance(&relayer) >= bond,
 			<Error<T, I>>::InsufficientBond
 		);
 
@@ -385,7 +385,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		let bond = confirmed_proposal.bonded_samples[0].0;
 
 		Self::update_bonds_with(&confirmed_proposal.relayer, |bonds| {
-			bonds.saturating_add(bond)
+			bonds.saturating_sub(bond)
 		});
 	}
 
