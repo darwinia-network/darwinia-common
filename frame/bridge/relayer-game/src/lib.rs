@@ -210,131 +210,17 @@ decl_module! {
 		}
 
 		// TODO: too many db operations and calc need to move to `offchain_worker`
+		// 	https://github.com/darwinia-network/darwinia-common/issues/254
 		// TODO: close the game that its id less than the best number
+		// 	https://github.com/darwinia-network/darwinia-common/issues/253
 		fn on_finalize(block_number: BlockNumber<T>) {
 			let closed_rounds = <ClosedRounds<T, I>>::take(block_number);
 
 			// `closed_rounds` MUST NOT be empty after this check; qed
-			if closed_rounds.len() == 0 {
-				return;
+			if closed_rounds.len() != 0 {
+				// TODO: handle error
+				let _ = Self::settle(block_number, closed_rounds);
 			}
-
-			info!(target: "relayer-game", "Found Closed Rounds at `{:?}`", block_number);
-			info!(target: "relayer-game", "---");
-
-			let mut pending_headers = vec![];
-
-			for (game_id, last_round) in closed_rounds {
-				info!(target: "relayer-game", ">  Trying to Settle Game `{:?}` at Round `{}`", game_id, last_round);
-
-				let mut proposals = Self::proposals_of_game(game_id);
-
-				match proposals.len() {
-					0 => info!(target: "relayer-game", "   >  No Proposal Found"),
-					1 => {
-						info!(target: "relayer-game", "   >  No Challenge Found");
-
-						let confirmed_proposal = proposals.pop().unwrap();
-
-						Self::settle_without_challenge(&confirmed_proposal);
-
-						// TODO: reward if no challenge
-
-						pending_headers.push((
-							game_id,
-							Self::header_of_game_with_hash(
-								game_id,
-								confirmed_proposal.bonded_samples[0].1.hash()
-							)
-						));
-					}
-					_ => {
-						let last_round_proposals = proposals_filter_by_round(
-							&mut proposals,
-							last_round,
-							T::RelayerGameAdjustor::round_of_samples_count
-						);
-
-						match last_round_proposals.len() {
-							0 => {
-								info!(target: "relayer-game", "   >  All Relayers Abstain");
-
-								// `last_round` MUST NOT be `0`; qed
-								Self::settle_abandon(proposals_filter_by_round(
-									&mut proposals,
-									last_round - 1,
-									T::RelayerGameAdjustor::round_of_samples_count
-								));
-							}
-							1 => {
-								let confirmed_proposal = {
-									let mut last_round_proposals = last_round_proposals;
-
-									last_round_proposals.pop().unwrap()
-								};
-
-								Self::settle_with_challenge(
-									last_round,
-									proposals,
-									&confirmed_proposal,
-									vec![],
-								);
-
-								// TODO: reward if no challenge
-
-								pending_headers.push((
-									game_id,
-									Self::header_of_game_with_hash(
-										game_id,
-										confirmed_proposal.bonded_samples[0].1.hash()
-									)
-								));
-							}
-							_ => {
-								let last_round_proposals_chain_len =
-									last_round_proposals[0].bonded_samples.len();
-								let full_chain_len =
-									(game_id - Self::last_confirmed_of_game(game_id))
-										.saturated_into() as u64;
-
-								if last_round_proposals_chain_len as u64 == full_chain_len {
-									info!(target: "relayer-game", "   >  On Chain Arbitrate");
-
-									if let Some(hash) = Self::on_chain_arbitrate(
-										last_round,
-										proposals,
-										last_round_proposals,
-									) {
-										pending_headers.push((
-											game_id,
-											Self::header_of_game_with_hash(game_id, hash)
-										));
-									}
-								} else {
-									info!(target: "relayer-game", "   >  Update Samples");
-
-									Self::update_samples(game_id);
-
-									let round = last_round + 1;
-									let closed_at = block_number
-										+ T::RelayerGameAdjustor::challenge_time(round);
-
-									<ClosedRounds<T, I>>::append(closed_at, (game_id, round));
-
-									continue;
-								}
-							}
-						}
-					}
-				}
-
-				Self::game_over(game_id);
-			}
-
-			// TODO: handle error
-			let _ = Self::store_pending_headers(block_number, pending_headers);
-
-			info!(target: "relayer-game", "---");
 		}
 
 	}
@@ -388,6 +274,127 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 
 			<Bonds<T, I>>::insert(relayer, bonds);
 		}
+	}
+
+	pub fn settle(
+		now: BlockNumber<T>,
+		closed_rounds: Vec<(GameId<TcBlockNumber<T, I>>, Round)>,
+	) -> DispatchResult {
+		info!(target: "relayer-game", "Found Closed Rounds at `{:?}`", now);
+		info!(target: "relayer-game", "---");
+
+		let mut pending_headers = vec![];
+
+		for (game_id, last_round) in closed_rounds {
+			info!(target: "relayer-game", ">  Trying to Settle Game `{:?}` at Round `{}`", game_id, last_round);
+
+			let mut proposals = Self::proposals_of_game(game_id);
+
+			match proposals.len() {
+				0 => info!(target: "relayer-game", "   >  No Proposal Found"),
+				1 => {
+					info!(target: "relayer-game", "   >  No Challenge Found");
+
+					let confirmed_proposal = proposals.pop().unwrap();
+
+					Self::settle_without_challenge(&confirmed_proposal);
+
+					// TODO: reward if no challenge
+
+					pending_headers.push((
+						game_id,
+						Self::header_of_game_with_hash(
+							game_id,
+							confirmed_proposal.bonded_samples[0].1.hash(),
+						),
+					));
+				}
+				_ => {
+					let last_round_proposals = proposals_filter_by_round(
+						&mut proposals,
+						last_round,
+						T::RelayerGameAdjustor::round_of_samples_count,
+					);
+
+					match last_round_proposals.len() {
+						0 => {
+							info!(target: "relayer-game", "   >  All Relayers Abstain");
+
+							// `last_round` MUST NOT be `0`; qed
+							Self::settle_abandon(proposals_filter_by_round(
+								&mut proposals,
+								last_round - 1,
+								T::RelayerGameAdjustor::round_of_samples_count,
+							));
+						}
+						1 => {
+							let confirmed_proposal = {
+								let mut last_round_proposals = last_round_proposals;
+
+								last_round_proposals.pop().unwrap()
+							};
+
+							Self::settle_with_challenge(
+								last_round,
+								proposals,
+								&confirmed_proposal,
+								vec![],
+							);
+
+							// TODO: reward if no challenge
+
+							pending_headers.push((
+								game_id,
+								Self::header_of_game_with_hash(
+									game_id,
+									confirmed_proposal.bonded_samples[0].1.hash(),
+								),
+							));
+						}
+						_ => {
+							let last_round_proposals_chain_len =
+								last_round_proposals[0].bonded_samples.len();
+							let full_chain_len = (game_id - Self::last_confirmed_of_game(game_id))
+								.saturated_into() as u64;
+
+							if last_round_proposals_chain_len as u64 == full_chain_len {
+								info!(target: "relayer-game", "   >  On Chain Arbitrate");
+
+								if let Some(hash) = Self::on_chain_arbitrate(
+									last_round,
+									proposals,
+									last_round_proposals,
+								) {
+									pending_headers.push((
+										game_id,
+										Self::header_of_game_with_hash(game_id, hash),
+									));
+								}
+							} else {
+								info!(target: "relayer-game", "   >  Update Samples");
+
+								Self::update_samples(game_id);
+
+								let round = last_round + 1;
+								let closed_at = now + T::RelayerGameAdjustor::challenge_time(round);
+
+								<ClosedRounds<T, I>>::append(closed_at, (game_id, round));
+
+								continue;
+							}
+						}
+					}
+				}
+			}
+
+			Self::game_over(game_id);
+		}
+
+		Self::store_pending_headers(now, pending_headers)?;
+
+		info!(target: "relayer-game", "---");
+
+		Ok(())
 	}
 
 	pub fn settle_without_challenge(confirmed_proposal: &RelayProposalT<T, I>) {
