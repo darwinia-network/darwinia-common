@@ -480,7 +480,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 				proposal
 					.bonded_samples
 					.iter()
-					.map(|(_, header_brief)| header_brief.clone())
+					.map(|(_, header_thing)| header_thing.clone())
 					.collect(),
 			)
 			.is_ok()
@@ -738,7 +738,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 				);
 				ensure!(
 					verified_proposal.iter().zip(samples.iter()).all(
-						|(header_brief, sample_block_number)| header_brief.block_number()
+						|(header_thing, sample_block_number)| header_thing.block_number()
 							== *sample_block_number
 					),
 					<Error<T, I>>::RoundMis

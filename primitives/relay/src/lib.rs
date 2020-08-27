@@ -116,12 +116,12 @@ where
 			.iter()
 			.cloned()
 			.enumerate()
-			.map(|(round_offset, header_brief)| {
+			.map(|(round_offset, header_thing)| {
 				let bond = estimate_bond(round + round_offset as Round, other_proposals_len as _);
 
 				bonds = bonds.saturating_add(bond);
 
-				(bond, header_brief)
+				(bond, header_thing)
 			})
 			.collect(),
 	)
@@ -159,8 +159,8 @@ where
 		let mut evils = vec![];
 
 		for proposal in proposals_filter_by_round(&mut proposals, round, &round_of_samples_count) {
-			let (bond, header_brief) = proposal.bonded_samples.last().unwrap();
-			let header_hash = header_brief.hash();
+			let (bond, header_thing) = proposal.bonded_samples.last().unwrap();
+			let header_hash = header_thing.hash();
 
 			if header_hash == extend_from_header_hash {
 				if let Some(header_hash) = proposal.extend_from_header_hash {
