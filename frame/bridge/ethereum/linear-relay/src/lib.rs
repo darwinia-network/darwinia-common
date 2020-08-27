@@ -66,7 +66,7 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 // --- darwinia ---
-use darwinia_support::{balance::lock::LockableCurrency, relay::EthereumReceipt};
+use darwinia_support::{balance::lock::LockableCurrency, traits::EthereumReceipt};
 use ethereum_primitives::{
 	error::EthereumError,
 	ethashproof::EthashProof,

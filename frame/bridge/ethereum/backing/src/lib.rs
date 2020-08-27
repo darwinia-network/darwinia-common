@@ -43,7 +43,10 @@ use sp_runtime::{
 use sp_std::borrow::ToOwned;
 use sp_std::{convert::TryFrom, marker::PhantomData, vec};
 // --- darwinia ---
-use darwinia_support::{balance::lock::*, relay::EthereumReceipt, traits::OnDepositRedeem};
+use darwinia_support::{
+	balance::lock::*,
+	traits::{EthereumReceipt, OnDepositRedeem},
+};
 use ethereum_primitives::{receipt::EthTransactionIndex, EthAddress, U256};
 use types::*;
 

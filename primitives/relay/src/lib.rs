@@ -10,6 +10,8 @@ use codec::{Decode, Encode, FullCodec};
 // --- substrate ---
 use frame_support::debug::error;
 use sp_runtime::{traits::AtLeast32BitUnsigned, DispatchError, DispatchResult, RuntimeDebug};
+#[cfg(not(feature = "std"))]
+use sp_std::borrow::ToOwned;
 use sp_std::{collections::btree_map::BTreeMap, prelude::*};
 
 pub type Round = u64;

@@ -1181,7 +1181,7 @@ dependencies = [
  "blake2-rfc",
  "ckb-merkle-mountain-range",
  "darwinia-balances",
- "darwinia-header-mmr-rpc-runtime-api",
+ "darwinia-relay-primitives",
  "darwinia-relayer-game",
  "darwinia-support",
  "ethereum-primitives",
@@ -1247,6 +1247,7 @@ dependencies = [
 name = "darwinia-relay-primitives"
 version = "1.0.0-alpha.2"
 dependencies = [
+ "frame-support",
  "parity-scale-codec",
  "sp-runtime",
  "sp-std 2.0.0-rc5",
@@ -3750,6 +3751,7 @@ dependencies = [
  "darwinia-ethereum-relay",
  "darwinia-header-mmr",
  "darwinia-header-mmr-rpc-runtime-api",
+ "darwinia-relay-primitives",
  "darwinia-relayer-game",
  "darwinia-staking",
  "darwinia-staking-rpc-runtime-api",
