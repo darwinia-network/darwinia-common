@@ -187,26 +187,13 @@ decl_module! {
 		fn deposit_event() = default;
 
 		fn on_initialize(block_number: BlockNumber<T>) -> Weight {
-			<PendingHeaders<T, I>>::mutate(|pending_headers|
-				pending_headers.retain(|(confirm_at, pending_block_number, pending_header)|
-					if *confirm_at == block_number {
-						if let Err(_) = T::TargetChain::store_header(pending_header.to_owned()) {
-							// TODO: handle error
-						} else {
-							Self::deposit_event(RawEvent::PendingHeaderApproved(
-								*pending_block_number,
-								b"Not Enough Technical Member Online, Approved By System".to_vec()
-							));
-						}
+			if let Ok(weight) = Self::system_approve_pending_headers(block_number) {
+				weight
+			} else {
+				// TODO: handle error
 
-						false
-					} else {
-						true
-					}
-				)
-			);
-
-			0
+				0
+			}
 		}
 
 		// TODO: too many db operations and calc need to move to `offchain_worker`
@@ -611,6 +598,28 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 				Err(<Error<T, I>>::PendingHeaderNF)?
 			}
 		})
+	}
+
+	pub fn system_approve_pending_headers(now: BlockNumber<T>) -> Result<Weight, DispatchError> {
+		<PendingHeaders<T, I>>::mutate(|pending_headers| {
+			pending_headers.retain(|(confirm_at, pending_block_number, pending_header)| {
+				if *confirm_at == now {
+					// TODO: handle error
+					let _ = T::TargetChain::store_header(pending_header.to_owned());
+
+					Self::deposit_event(RawEvent::PendingHeaderApproved(
+						*pending_block_number,
+						b"Not Enough Technical Member Online, Approved By System".to_vec(),
+					));
+
+					false
+				} else {
+					true
+				}
+			})
+		});
+
+		Ok(0)
 	}
 }
 
