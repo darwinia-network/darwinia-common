@@ -43,8 +43,11 @@ use sp_runtime::{
 use sp_std::borrow::ToOwned;
 use sp_std::{convert::TryFrom, marker::PhantomData, vec};
 // --- darwinia ---
-use darwinia_support::{balance::lock::*, relay::EthereumReceipt, traits::OnDepositRedeem};
-use ethereum_primitives::{receipt::EthTransactionIndex, EthAddress, U256};
+use darwinia_support::{
+	balance::lock::*,
+	traits::{EthereumReceipt, OnDepositRedeem},
+};
+use ethereum_primitives::{receipt::EthereumTransactionIndex, EthereumAddress, U256};
 use types::*;
 
 pub trait Trait: frame_system::Trait {
@@ -77,11 +80,11 @@ decl_event! {
 		KtonBalance = KtonBalance<T>,
 	{
 		/// Some one redeem some *RING*. [account, amount, transaction index]
-		RedeemRing(AccountId, RingBalance, EthTransactionIndex),
+		RedeemRing(AccountId, RingBalance, EthereumTransactionIndex),
 		/// Some one redeem some *KTON*. [account, amount, transaction index]
-		RedeemKton(AccountId, KtonBalance, EthTransactionIndex),
+		RedeemKton(AccountId, KtonBalance, EthereumTransactionIndex),
 		/// Some one redeem a deposit. [account, deposit id, amount, transaction index]
-		RedeemDeposit(AccountId, DepositId, RingBalance, EthTransactionIndex),
+		RedeemDeposit(AccountId, DepositId, RingBalance, EthereumTransactionIndex),
 	}
 }
 
@@ -104,7 +107,7 @@ decl_error! {
 		/// *RING* - ALREADY REDEEMED
 		RingAR,
 
-		/// Receipt Proof - INVALID
+		/// EthereumReceipt Proof - INVALID
 		ReceiptProofI,
 
 		/// Eth Log - PARSING FAILED
@@ -127,18 +130,18 @@ decl_storage! {
 	trait Store for Module<T: Trait> as DarwiniaEthereumBacking {
 		pub RingProofVerified
 			get(fn ring_proof_verfied)
-			: map hasher(blake2_128_concat) EthTransactionIndex => Option<bool>;
-		pub RingRedeemAddress get(fn ring_redeem_address) config(): EthAddress;
+			: map hasher(blake2_128_concat) EthereumTransactionIndex => Option<bool>;
+		pub RingRedeemAddress get(fn ring_redeem_address) config(): EthereumAddress;
 
 		pub KtonProofVerified
 			get(fn kton_proof_verfied)
-			: map hasher(blake2_128_concat) EthTransactionIndex => Option<bool>;
-		pub KtonRedeemAddress get(fn kton_redeem_address) config(): EthAddress;
+			: map hasher(blake2_128_concat) EthereumTransactionIndex => Option<bool>;
+		pub KtonRedeemAddress get(fn kton_redeem_address) config(): EthereumAddress;
 
 		pub DepositProofVerified
 			get(fn deposit_proof_verfied)
-			: map hasher(blake2_128_concat) EthTransactionIndex => Option<bool>;
-		pub DepositRedeemAddress get(fn deposit_redeem_address) config(): EthAddress;
+			: map hasher(blake2_128_concat) EthereumTransactionIndex => Option<bool>;
+		pub DepositRedeemAddress get(fn deposit_redeem_address) config(): EthereumAddress;
 	}
 	add_extra_genesis {
 		config(ring_locked): RingBalance<T>;
@@ -200,7 +203,7 @@ decl_module! {
 		/// - `O(1)`.
 		/// # </weight>
 		#[weight = 10_000_000]
-		pub fn set_ring_redeem_address(origin, new: EthAddress) {
+		pub fn set_ring_redeem_address(origin, new: EthereumAddress) {
 			ensure_root(origin)?;
 			RingRedeemAddress::put(new);
 		}
@@ -215,7 +218,7 @@ decl_module! {
 		/// - `O(1)`.
 		/// # </weight>
 		#[weight = 10_000_000]
-		pub fn set_kton_redeem_address(origin, new: EthAddress) {
+		pub fn set_kton_redeem_address(origin, new: EthereumAddress) {
 			ensure_root(origin)?;
 			KtonRedeemAddress::put(new);
 		}
@@ -230,7 +233,7 @@ decl_module! {
 		/// - `O(1)`.
 		/// # </weight>
 		#[weight = 10_000_000]
-		pub fn set_deposit_redeem_address(origin, new: EthAddress) {
+		pub fn set_deposit_redeem_address(origin, new: EthereumAddress) {
 			ensure_root(origin)?;
 			DepositRedeemAddress::put(new);
 		}

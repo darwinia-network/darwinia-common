@@ -172,12 +172,3 @@ where
 		}
 	}
 }
-
-#[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug)]
-pub struct TcHeaderBrief<TcBlockNumber, TcHeaderHash, TcHeaderMMR> {
-	pub number: TcBlockNumber,
-	pub hash: TcHeaderHash,
-	pub parent_hash: TcHeaderHash,
-	pub mmr: TcHeaderMMR,
-	pub others: Vec<u8>,
-}

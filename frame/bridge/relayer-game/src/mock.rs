@@ -10,7 +10,6 @@ pub mod mock_relay {
 	use sp_runtime::{DispatchError, DispatchResult};
 	// --- darwinia ---
 	use crate::{mock::*, *};
-	use darwinia_support::relay::Relayable;
 	use types::*;
 
 	decl_storage! {
@@ -60,63 +59,43 @@ pub mod mock_relay {
 	}
 
 	impl<T: Trait> Relayable for Module<T> {
-		type TcBlockNumber = MockTcBlockNumber;
-		type TcHeaderHash = MockTcHeaderHash;
-		type TcHeaderMMR = ();
+		type HeaderThingWithProof = MockTcHeader;
+		type HeaderThing = MockTcHeader;
+		type BlockNumber = MockTcBlockNumber;
+		type HeaderHash = MockTcHeaderHash;
 
-		fn best_block_number() -> Self::TcBlockNumber {
-			Self::best_block_number()
-		}
-
-		fn verify_raw_header_thing(
-			raw_header_thing: RawHeaderThing,
-			with_proposed_raw_header: bool,
-		) -> Result<
-			(
-				TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
-				RawHeaderThing,
-			),
-			DispatchError,
-		> {
-			let verify = |header: &MockTcHeader| -> DispatchResult {
+		fn basic_verify(
+			proposal_with_proof: Vec<Self::HeaderThingWithProof>,
+		) -> Result<Vec<Self::HeaderThing>, DispatchError> {
+			let verify = |header: &Self::HeaderThing| -> DispatchResult {
 				ensure!(header.valid, "Header - INVALID");
 
 				Ok(())
 			};
-			let header =
-				MockTcHeader::decode(&mut &*raw_header_thing).map_err(|_| "Decode - FAILED")?;
+			let mut proposal = vec![];
 
-			verify(&header)?;
+			for header_thing in proposal_with_proof {
+				verify(&header_thing)?;
 
-			Ok((
-				TcHeaderBrief {
-					number: header.number,
-					hash: header.hash,
-					parent_hash: header.parent_hash,
-					mmr: (),
-					others: vec![],
-				},
-				if with_proposed_raw_header {
-					raw_header_thing
-				} else {
-					vec![]
-				},
-			))
+				proposal.push(header_thing);
+			}
+
+			Ok(proposal)
 		}
 
-		fn on_chain_arbitrate(
-			mut header_brief_chain: Vec<
-				TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
-			>,
-		) -> DispatchResult {
-			header_brief_chain.sort_by_key(|header_brief| header_brief.number);
+		fn best_block_number() -> Self::BlockNumber {
+			Self::best_block_number()
+		}
 
-			let mut parent_hash = header_brief_chain.pop().unwrap().parent_hash;
+		fn on_chain_arbitrate(mut proposal: Vec<Self::HeaderThing>) -> DispatchResult {
+			proposal.sort_by_key(|header_thing| header_thing.number);
 
-			while let Some(header_brief) = header_brief_chain.pop() {
-				ensure!(parent_hash == header_brief.hash, "Continuous - INVALID");
+			let mut parent_hash = proposal.pop().unwrap().parent_hash;
 
-				parent_hash = header_brief.parent_hash;
+			while let Some(header_thing) = proposal.pop() {
+				ensure!(parent_hash == header_thing.hash, "Continuous - INVALID");
+
+				parent_hash = header_thing.parent_hash;
 			}
 
 			ensure!(
@@ -130,15 +109,12 @@ pub mod mock_relay {
 			Ok(())
 		}
 
-		fn store_header(raw_header_thing: RawHeaderThing) -> DispatchResult {
-			let header =
-				MockTcHeader::decode(&mut &*raw_header_thing).map_err(|_| "Decode - FAILED")?;
-
+		fn store_header(header_thing: Self::HeaderThing) -> DispatchResult {
 			BestBlockNumber::mutate(|best_block_number| {
-				if header.number > *best_block_number {
-					*best_block_number = header.number;
+				if header_thing.number > *best_block_number {
+					*best_block_number = header_thing.number;
 
-					Headers::insert(header.number, header);
+					Headers::insert(header_thing.number, header_thing);
 				}
 			});
 
@@ -146,7 +122,7 @@ pub mod mock_relay {
 		}
 	}
 
-	#[derive(Clone, Debug, PartialEq, Encode, Decode, Serialize, Deserialize)]
+	#[derive(Clone, Debug, Default, PartialEq, Encode, Decode, Serialize, Deserialize)]
 	pub struct MockTcHeader {
 		pub number: MockTcBlockNumber,
 		pub hash: MockTcHeaderHash,
@@ -168,15 +144,7 @@ pub mod mock_relay {
 			}
 		}
 
-		pub fn mock_raw(
-			number: MockTcBlockNumber,
-			parent_hash: MockTcHeaderHash,
-			valid: u8,
-		) -> RawHeaderThing {
-			Self::mock(number, parent_hash, valid).encode()
-		}
-
-		pub fn mock_chain(mut validations: Vec<u8>, valid: bool) -> Vec<Self> {
+		pub fn mock_proposal(mut validations: Vec<u8>, valid: bool) -> Vec<Self> {
 			if validations.is_empty() {
 				return vec![];
 			}
@@ -206,18 +174,25 @@ pub mod mock_relay {
 
 			chain
 		}
+	}
+	impl HeaderThing for MockTcHeader {
+		type Number = MockTcBlockNumber;
+		type Hash = MockTcHeaderHash;
 
-		pub fn mock_raw_chain(validations: Vec<u8>, valid: bool) -> Vec<RawHeaderThing> {
-			Self::mock_chain(validations, valid)
-				.into_iter()
-				.map(|header| header.encode())
-				.collect()
+		fn number(&self) -> Self::Number {
+			self.number
+		}
+
+		fn hash(&self) -> Self::Hash {
+			self.hash
 		}
 	}
 }
 
 // --- std ---
 use std::{cell::RefCell, time::Instant};
+// --- crates ---
+use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
 	impl_outer_origin, parameter_types,
@@ -225,10 +200,10 @@ use frame_support::{
 	weights::Weight,
 };
 use sp_core::H256;
-use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill};
+use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill, RuntimeDebug};
 // --- darwinia ---
 use crate::*;
-use darwinia_support::relay::AdjustableRelayerGame;
+use darwinia_relay_primitives::*;
 use mock_relay::{types::*, MockTcHeader};
 
 pub type AccountId = u64;
@@ -361,11 +336,11 @@ impl AdjustableRelayerGame for RelayerGameAdjustor {
 		CHALLENGE_TIME.with(|v| v.borrow().to_owned())
 	}
 
-	fn round_from_chain_len(chain_len: u64) -> Round {
-		chain_len - 1
+	fn round_of_samples_count(samples_count: u64) -> Round {
+		samples_count - 1
 	}
 
-	fn chain_len_from_round(round: Round) -> u64 {
+	fn samples_count_of_round(round: Round) -> u64 {
 		round + 1
 	}
 

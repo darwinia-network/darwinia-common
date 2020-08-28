@@ -161,7 +161,7 @@ impl Default for ExtBuilder {
 }
 impl ExtBuilder {
 	pub fn set_genesis_header(mut self) -> Self {
-		let genesis_header = EthHeader::from_str_unchecked(SUPPOSED_ETH_HEADER);
+		let genesis_header = EthereumHeader::from_str_unchecked(SUPPOSED_ETH_HEADER);
 		self.genesis_header = Some((1, rlp::encode(&genesis_header)));
 		self
 	}

@@ -44,7 +44,7 @@ impl From<EthereumError> for &str {
 			SealInvalid => "Seal - INVALID",
 			MerkleProofMismatch(msg) => msg,
 			Rlp(msg) => msg,
-			InvalidReceiptProof => "Receipt Proof - INVALID",
+			InvalidReceiptProof => "EthereumReceipt Proof - INVALID",
 		}
 	}
 }

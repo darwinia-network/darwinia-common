@@ -213,7 +213,7 @@ impl BlockWithProof {
 }
 
 pub struct HeaderWithProof {
-	pub header: EthHeader,
+	pub header: EthereumHeader,
 	pub proof: Vec<EthashProof>,
 }
 impl HeaderWithProof {
@@ -318,9 +318,9 @@ pub fn mock_canonical_relationship() -> [HeaderWithProof; 5] {
 }
 
 /// mock canonical receipt
-pub fn mock_canonical_receipt() -> EthReceiptProof {
-	// fn mock_receipt_from_source(o: &mut Object) -> Option<EthReceiptProof> {
-	// 	Some(EthReceiptProof {
+pub fn mock_canonical_receipt() -> EthereumReceiptProof {
+	// fn mock_receipt_from_source(o: &mut Object) -> Option<EthereumReceiptProof> {
+	// 	Some(EthereumReceiptProof {
 	// 		index: o.get("index")?.as_str()?[2..].parse::<u64>().unwrap(),
 	// 		proof: hex(&o.get("proof")?.as_str()?)?,
 	// 		header_hash: H256::from(bytes!(&o.get("header_hash")?, 32)),
@@ -328,7 +328,7 @@ pub fn mock_canonical_receipt() -> EthReceiptProof {
 	// }
 
 	let receipt: serde_json::Value = serde_json::from_str(RECEIPT).unwrap();
-	EthReceiptProof {
+	EthereumReceiptProof {
 		index: receipt["index"]
 			.as_str()
 			.unwrap()

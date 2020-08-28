@@ -5,7 +5,9 @@ extern crate alloc;
 use alloc::{format, string::String};
 
 use rlp::DecoderError;
-use sp_std::{borrow::ToOwned, fmt};
+#[cfg(not(feature = "std"))]
+use sp_std::borrow::ToOwned;
+use sp_std::fmt;
 
 #[derive(Debug)]
 pub enum TrieError {

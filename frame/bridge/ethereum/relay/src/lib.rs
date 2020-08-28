@@ -14,7 +14,7 @@ mod types {
 
 	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
 	pub type Balance<T> = <CurrencyT<T> as Currency<AccountId<T>>>::Balance;
-	pub type MMRHash = H256;
+
 	pub type MMRProof = Vec<H256>;
 
 	type CurrencyT<T> = <T as Trait>::Currency;
@@ -26,7 +26,7 @@ use codec::{Decode, Encode};
 use ethereum_types::H128;
 // --- substrate ---
 use frame_support::{
-	debug, decl_error, decl_event, decl_module, decl_storage, ensure,
+	decl_error, decl_event, decl_module, decl_storage, ensure,
 	traits::Get,
 	traits::{Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, ReservableCurrency},
 };
@@ -34,21 +34,24 @@ use frame_system::ensure_signed;
 use sp_runtime::{
 	traits::AccountIdConversion, DispatchError, DispatchResult, ModuleId, RuntimeDebug,
 };
+#[cfg(not(feature = "std"))]
+use sp_std::borrow::ToOwned;
 use sp_std::{convert::From, prelude::*};
 // --- darwinia ---
 use crate::mmr::{leaf_index_to_mmr_size, leaf_index_to_pos, MMRMerge, MerkleProof};
 use array_bytes::array_unchecked;
-use darwinia_support::balance::lock::LockableCurrency;
-use darwinia_support::relay::*;
+use darwinia_relay_primitives::*;
+use darwinia_support::{
+	balance::lock::LockableCurrency, traits::EthereumReceipt as EthereumReceiptT,
+};
 use ethereum_primitives::{
 	error::EthereumError,
 	ethashproof::EthashProof,
-	header::EthHeader,
+	header::EthereumHeader,
 	pow::EthashPartial,
-	receipt::{EthReceiptProof, EthTransactionIndex, Receipt},
-	EthBlockNumber, H256,
+	receipt::{EthereumReceipt, EthereumReceiptProof, EthereumTransactionIndex},
+	EthereumBlockNumber, H256,
 };
-
 use types::*;
 
 #[cfg(feature = "std")]
@@ -63,7 +66,11 @@ pub trait Trait: frame_system::Trait {
 	type Currency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
 		+ ReservableCurrency<Self::AccountId>;
 
-	type RelayerGame: RelayerGameProtocol<Relayer = AccountId<Self>, TcBlockNumber = EthBlockNumber>;
+	type RelayerGame: RelayerGameProtocol<
+		Relayer = AccountId<Self>,
+		HeaderThingWithProof = EthereumHeaderThingWithProof,
+		BlockNumber = EthereumBlockNumber,
+	>;
 
 	type ApproveOrigin: EnsureOrigin<Self::Origin>;
 
@@ -79,23 +86,23 @@ decl_event! {
 		<T as frame_system::Trait>::AccountId,
 	{
 		/// The specific confirmed block is removed. [block height]
-		RemoveConfirmedBlock(EthBlockNumber),
+		RemoveConfirmedBlock(EthereumBlockNumber),
 
 		/// The range of confirmed blocks are removed. [block height, block height]
-		RemoveConfirmedBlockRang(EthBlockNumber, EthBlockNumber),
+		RemoveConfirmedBlockRang(EthereumBlockNumber, EthereumBlockNumber),
 
 		/// The block confimed block parameters are changed. [block height, block height]
-		UpdateConfrimedBlockCleanCycle(EthBlockNumber, EthBlockNumber),
+		UpdateConfrimedBlockCleanCycle(EthereumBlockNumber, EthereumBlockNumber),
 
 		/// This Error event is caused by unreasonable Confirm block delete parameter set.
 		///
 		/// ConfirmBlockKeepInMonth should be greator then 1 to avoid the relayer game cross the
 		/// month.
 		/// [block height]
-		ConfirmBlockManagementError(EthBlockNumber),
+		ConfirmBlockManagementError(EthereumBlockNumber),
 
-		/// Receipt Verification. [account, receipt, header]
-		VerifyReceipt(AccountId, Receipt, EthHeader),
+		/// EthereumReceipt Verification. [account, receipt, header]
+		VerifyReceipt(AccountId, EthereumReceipt, EthereumHeader),
 	}
 }
 
@@ -115,7 +122,7 @@ decl_error! {
 		HeaderHashMis,
 		/// Last Header - NOT EXISTED
 		LastHeaderNE,
-		/// Receipt Proof - INVALID
+		/// EthereumReceipt Proof - INVALID
 		ReceiptProofI,
 	}
 }
@@ -132,26 +139,26 @@ decl_storage! {
 		pub
 			LastConfirmedHeaderInfo
 			get(fn last_confirm_header_info)
-			: Option<(EthBlockNumber, H256, MMRHash)>;
+			: Option<(EthereumBlockNumber, H256, H256)>;
 
 		/// The Ethereum headers confrimed by relayer game
 		/// The actural storage needs to be defined
 		pub
 			ConfirmedHeadersDoubleMap
 			get(fn confirmed_header)
-			: double_map hasher(identity) EthBlockNumber, hasher(identity) EthBlockNumber
-			=> EthHeader;
+			: double_map hasher(identity) EthereumBlockNumber, hasher(identity) EthereumBlockNumber
+			=> EthereumHeader;
 
 		/// Dags merkle roots of ethereum epoch (each epoch is 30000)
 		pub DagsMerkleRoots get(fn dag_merkle_root): map hasher(identity) u64 => H128;
 
 		/// The current confirm block cycle nubmer (default is one month one cycle)
-		LastConfirmedBlockCycle: EthBlockNumber;
+		LastConfirmedBlockCycle: EthereumBlockNumber;
 
 		/// The number of ehtereum blocks in a month
-		pub ConfirmBlocksInCycle get(fn confirm_block_cycle): EthBlockNumber = 185142;
+		pub ConfirmBlocksInCycle get(fn confirm_block_cycle): EthereumBlockNumber = 185142;
 		/// The confirm blocks keep in month
-		pub ConfirmBlockKeepInMonth get(fn confirm_block_keep_in_mounth): EthBlockNumber = 3;
+		pub ConfirmBlockKeepInMonth get(fn confirm_block_keep_in_mounth): EthereumBlockNumber = 3;
 
 		pub ReceiptVerifyFee get(fn receipt_verify_fee) config(): Balance<T>;
 	}
@@ -185,24 +192,20 @@ decl_module! {
 		fn deposit_event() = default;
 
 		#[weight = 100_000_000]
-		pub fn submit_proposal(origin, eth_header_thing_chain: Vec<EthHeaderThing>) {
+		pub fn submit_proposal(origin, proposal: Vec<EthereumHeaderThingWithProof>) {
 			let relayer = ensure_signed(origin)?;
-			let raw_header_thing_chain = eth_header_thing_chain
-				.iter()
-				.map(|x| x.encode())
-				.collect::<Vec<_>>();
 
-			T::RelayerGame::submit_proposal(relayer, raw_header_thing_chain)?;
+			T::RelayerGame::submit_proposal(relayer, proposal)?;
 		}
 
 		#[weight = 100_000_000]
-		pub fn approve_pending_header(origin, pending: EthBlockNumber) {
+		pub fn approve_pending_header(origin, pending: EthereumBlockNumber) {
 			T::ApproveOrigin::ensure_origin(origin)?;
 			T::RelayerGame::approve_pending_header(pending)?;
 		}
 
 		#[weight = 100_000_000]
-		pub fn reject_pending_header(origin, pending: EthBlockNumber) {
+		pub fn reject_pending_header(origin, pending: EthereumBlockNumber) {
 			T::RejectOrigin::ensure_origin(origin)?;
 			T::RelayerGame::reject_pending_header(pending)?;
 		}
@@ -236,7 +239,7 @@ decl_module! {
 		///   - `set_receipt_verify_fee` can be used to set the verify fee for each receipt check.
 		/// # </weight>
 		#[weight = 100_000_000]
-		pub fn check_receipt(origin, proof_record: EthReceiptProof, eth_header: EthHeader, mmr_proof: MMRProof) {
+		pub fn check_receipt(origin, proof_record: EthereumReceiptProof, eth_header: EthereumHeader, mmr_proof: MMRProof) {
 			let worker = ensure_signed(origin)?;
 
 			let verified_receipt = Self::verify_receipt(&(eth_header.clone(), proof_record, mmr_proof)).map_err(|_| <Error<T>>::ReceiptProofI)?;
@@ -265,17 +268,17 @@ decl_module! {
 
 		/// Remove the specific malicous block
 		#[weight = 100_000_000]
-		pub fn remove_confirmed_block(origin, number: EthBlockNumber) {
+		pub fn remove_confirmed_block(origin, number: EthereumBlockNumber) {
 			T::RejectOrigin::ensure_origin(origin)?;
 
-			ConfirmedHeadersDoubleMap::take(number/ConfirmBlocksInCycle::get(), number);
+			ConfirmedHeadersDoubleMap::take(number / ConfirmBlocksInCycle::get(), number);
 
 			Self::deposit_event(RawEvent::RemoveConfirmedBlock(number));
 		}
 
 		/// Remove the blocks in particular month (month is calculated as cycle)
 		#[weight = 100_000_000]
-		pub fn remove_confirmed_blocks_in_month(origin, cycle: EthBlockNumber) {
+		pub fn remove_confirmed_blocks_in_month(origin, cycle: EthereumBlockNumber) {
 			T::RejectOrigin::ensure_origin(origin)?;
 
 			let c = ConfirmBlocksInCycle::get();
@@ -287,7 +290,7 @@ decl_module! {
 
 		/// Setup the parameters to delete the confirmed blocks after month * blocks_in_month
 		#[weight = 100_000_000]
-		pub fn set_confirmed_blocks_clean_parameters(origin, month: EthBlockNumber, blocks_in_month: EthBlockNumber) {
+		pub fn set_confirmed_blocks_clean_parameters(origin, month: EthereumBlockNumber, blocks_in_month: EthereumBlockNumber) {
 			T::RejectOrigin::ensure_origin(origin)?;
 
 			if month < 2 {
@@ -313,7 +316,7 @@ impl<T: Trait> Module<T> {
 	}
 
 	/// validate block with the hash, difficulty of confirmed headers
-	fn verify_block_with_confrim_blocks(header: &EthHeader) -> bool {
+	fn verify_block_with_confrim_blocks(header: &EthereumHeader) -> bool {
 		let eth_partial = EthashPartial::production();
 		let confirm_blocks_in_cycle = ConfirmBlocksInCycle::get();
 		if ConfirmedHeadersDoubleMap::contains_key(
@@ -351,7 +354,7 @@ impl<T: Trait> Module<T> {
 		true
 	}
 
-	fn verify_block_seal(header: &EthHeader, ethash_proof: &[EthashProof]) -> bool {
+	fn verify_block_seal(header: &EthereumHeader, ethash_proof: &[EthashProof]) -> bool {
 		if header.hash() != header.re_compute_hash() {
 			return false;
 		}
@@ -402,128 +405,65 @@ impl<T: Trait> Module<T> {
 }
 
 impl<T: Trait> Relayable for Module<T> {
-	type TcBlockNumber = EthBlockNumber;
-	type TcHeaderHash = ethereum_primitives::H256;
-	type TcHeaderMMR = ethereum_primitives::H256;
+	type HeaderThingWithProof = EthereumHeaderThingWithProof;
+	type HeaderThing = EthereumHeaderThing;
+	type BlockNumber = EthereumBlockNumber;
+	type HeaderHash = ethereum_primitives::H256;
 
-	fn best_block_number() -> Self::TcBlockNumber {
-		if let Some(i) = LastConfirmedHeaderInfo::get() {
-			i.0
-		} else {
-			0u64
-		}
-	}
-
-	fn verify_raw_header_thing(
-		raw_header_thing: RawHeaderThing,
-		with_proposed_raw_header: bool,
-	) -> Result<
-		(
-			TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>,
-			RawHeaderThing,
-		),
-		DispatchError,
-	> {
-		let eth_header_thing = raw_header_thing.into();
-		debug::trace!(target: "ethereum-relay", "{:?}", eth_header_thing);
-		let EthHeaderThing {
-			eth_header,
-			ethash_proof,
-			mmr_root,
-			..
-		} = eth_header_thing;
-
-		if ConfirmedHeadersDoubleMap::contains_key(
-			eth_header.number / ConfirmBlocksInCycle::get(),
-			eth_header.number,
-		) {
-			Err(<Error<T>>::TargetHeaderAE)?;
-		}
-		if !Self::verify_block_seal(&eth_header, &ethash_proof) {
-			Err(<Error<T>>::HeaderI)?;
-		};
-		if with_proposed_raw_header {
-			Ok((
-				TcHeaderBrief {
-					number: eth_header.number,
-					hash: eth_header.hash.unwrap_or_default(),
-					parent_hash: eth_header.parent_hash,
-					mmr: array_unchecked!(mmr_root, 0, 32).into(),
-					others: eth_header.encode(),
-				},
-				ProposalEthHeaderThing {
-					eth_header,
-					mmr_root,
-				}
-				.encode(),
-			))
-		} else {
-			Ok((
-				TcHeaderBrief {
-					number: eth_header.number,
-					hash: eth_header.hash.unwrap_or_default(),
-					parent_hash: eth_header.parent_hash,
-					mmr: array_unchecked!(mmr_root, 0, 32).into(),
-					others: eth_header.encode(),
-				},
-				vec![],
-			))
-		}
-	}
-
-	fn verify_raw_header_thing_chain(
-		raw_header_thing_chain: Vec<RawHeaderThing>,
-	) -> Result<
-		Vec<TcHeaderBrief<Self::TcBlockNumber, Self::TcHeaderHash, Self::TcHeaderMMR>>,
-		DispatchError,
-	> {
-		let mut output = vec![];
+	fn basic_verify(
+		proposal_with_proof: Vec<Self::HeaderThingWithProof>,
+	) -> Result<Vec<Self::HeaderThing>, DispatchError> {
+		let propose_chain_len = proposal_with_proof.len();
+		let mut proposal = vec![];
 		let mut first_header_mmr = None;
 		let mut first_header_number = 0;
-		let chain_lengeth = raw_header_thing_chain.len();
 
-		for (idx, raw_header_thing) in raw_header_thing_chain.into_iter().enumerate() {
-			let EthHeaderThing {
-				eth_header,
+		for (i, header_with_proof) in proposal_with_proof.into_iter().enumerate() {
+			let Self::HeaderThingWithProof {
+				header,
 				ethash_proof,
 				mmr_root,
 				mmr_proof,
-			} = raw_header_thing.into();
+			} = header_with_proof;
 
-			if !Self::verify_block_seal(&eth_header, &ethash_proof) {
-				Err(<Error<T>>::HeaderI)?;
-			};
+			ensure!(
+				Self::verify_block_seal(&header, &ethash_proof),
+				<Error<T>>::HeaderI
+			);
+			ensure!(
+				Self::verify_block_with_confrim_blocks(&header),
+				<Error<T>>::ConfirmebBlocksC
+			);
 
-			if !Self::verify_block_with_confrim_blocks(&eth_header) {
-				Err(<Error<T>>::ConfirmebBlocksC)?;
-			}
-			if idx == 0 {
-				// The mmr_root of first submit should includ the hash last confirm block
-				//      mmr_root of 1st
-				//     / \
-				//    -   -
-				//   /     \
-				//  C  ...  1st
-				//  C: Last Comfirmed Block  1st: 1st submit block
-				if let Some(l) = LastConfirmedHeaderInfo::get() {
-					if chain_lengeth == 1
-						&& !Self::verify_mmr(
-							eth_header.number,
-							array_unchecked!(mmr_root, 0, 32).into(),
-							mmr_proof
-								.iter()
-								.map(|h| array_unchecked!(h, 0, 32).into())
-								.collect(),
-							vec![(l.0, l.1)],
-						) {
-						Err(<Error<T>>::MMRI)?;
-					}
-				};
+			if i == 0 {
+				if propose_chain_len == 1 {
+					if let Some(l) = LastConfirmedHeaderInfo::get() {
+						// The mmr_root of first submit should includ the hash last confirm block
+						//      mmr_root of 1st
+						//     / \
+						//    -   -
+						//   /     \
+						//  C  ...  1st
+						//  C: Last Comfirmed Block 1st: 1st submit block
+						ensure!(
+							Self::verify_mmr(
+								header.number,
+								array_unchecked!(mmr_root, 0, 32).into(),
+								mmr_proof
+									.iter()
+									.map(|h| array_unchecked!(h, 0, 32).into())
+									.collect(),
+								vec![(l.0, l.1)],
+							),
+							<Error<T>>::MMRI
+						);
+					};
+				}
 
 				first_header_mmr = Some(array_unchecked!(mmr_root, 0, 32).into());
-				first_header_number = eth_header.number;
+				first_header_number = header.number;
 			// the hash of other submit should be included by previous mmr_root
-			} else {
+			} else if i == propose_chain_len - 1 {
 				// last confirm no exsit the mmr verification will be passed
 				//
 				//      mmr_root of prevous submit
@@ -532,8 +472,8 @@ impl<T: Trait> Relayable for Module<T> {
 				//   /   | \
 				//  -  ..c  1st
 				// c: current submit  1st: 1st submit block
-				if idx == chain_lengeth - 1
-					&& !Self::verify_mmr(
+				ensure!(
+					Self::verify_mmr(
 						first_header_number,
 						first_header_mmr.unwrap_or_default(),
 						mmr_proof
@@ -541,78 +481,71 @@ impl<T: Trait> Relayable for Module<T> {
 							.map(|h| array_unchecked!(h, 0, 32).into())
 							.collect(),
 						vec![(
-							eth_header.number,
-							array_unchecked!(eth_header.hash.unwrap_or_default(), 0, 32).into(),
+							header.number,
+							array_unchecked!(header.hash.unwrap_or_default(), 0, 32).into(),
 						)],
-					) {
-					Err(<Error<T>>::MMRI)?;
-				}
+					),
+					<Error<T>>::MMRI
+				);
 			}
-			output.push(TcHeaderBrief {
-				number: eth_header.number,
-				hash: eth_header.hash.unwrap_or_default(),
-				parent_hash: eth_header.parent_hash,
-				mmr: array_unchecked!(mmr_root, 0, 32).into(),
-				others: eth_header.encode(),
-			});
+
+			proposal.push(Self::HeaderThing { header, mmr_root });
 		}
-		Ok(output)
+
+		Ok(proposal)
 	}
 
-	fn on_chain_arbitrate(
-		header_brief_chain: Vec<
-			darwinia_support::relay::TcHeaderBrief<
-				Self::TcBlockNumber,
-				Self::TcHeaderHash,
-				Self::TcHeaderMMR,
-			>,
-		>,
-	) -> DispatchResult {
+	fn best_block_number() -> Self::BlockNumber {
+		if let Some(i) = LastConfirmedHeaderInfo::get() {
+			i.0
+		} else {
+			0
+		}
+	}
+
+	fn on_chain_arbitrate(proposal: Vec<Self::HeaderThing>) -> DispatchResult {
 		// Currently Ethereum samples function is continuously sampling
 
 		let eth_partial = EthashPartial::production();
 
-		for i in 1..header_brief_chain.len() - 1 {
-			if header_brief_chain[i].parent_hash != header_brief_chain[i + 1].hash {
-				Err(<Error<T>>::ChainI)?;
-			}
-			let header = EthHeader::decode(&mut &*header_brief_chain[i].others).unwrap_or_default();
-			let previous_header =
-				EthHeader::decode(&mut &*header_brief_chain[i + 1].others).unwrap_or_default();
+		for i in 1..proposal.len() - 1 {
+			let header = &proposal[i].header;
+			let prev_header = &proposal[i + 1].header;
 
-			if *(header.difficulty()) != eth_partial.calculate_difficulty(&header, &previous_header)
-			{
-				Err(<Error<T>>::ChainI)?;
-			}
+			ensure!(
+				header.parent_hash == header.hash.ok_or(<Error<T>>::ChainI)?,
+				<Error<T>>::ChainI
+			);
+			ensure!(
+				header.difficulty().to_owned()
+					== eth_partial.calculate_difficulty(&header, &prev_header),
+				<Error<T>>::ChainI
+			);
 		}
+
 		Ok(())
 	}
 
-	fn store_header(raw_header_thing: RawHeaderThing) -> DispatchResult {
+	fn store_header(header_thing: Self::HeaderThing) -> DispatchResult {
 		let last_comfirmed_block_number = if let Some(i) = LastConfirmedHeaderInfo::get() {
 			i.0
 		} else {
 			0
 		};
-		let EthHeaderThing {
-			eth_header,
-			ethash_proof: _,
-			mmr_root,
-			mmr_proof: _,
-		} = raw_header_thing.into();
+		let EthereumHeaderThing { header, mmr_root } = header_thing;
 
-		if eth_header.number > last_comfirmed_block_number {
+		if header.number > last_comfirmed_block_number {
 			LastConfirmedHeaderInfo::set(Some((
-				eth_header.number,
-				array_unchecked!(eth_header.hash.unwrap_or_default(), 0, 32).into(),
+				header.number,
+				array_unchecked!(header.hash.unwrap_or_default(), 0, 32).into(),
 				mmr_root,
 			)))
 		};
 
-		let confirm_cycle = eth_header.number / ConfirmBlocksInCycle::get();
+		let confirm_cycle = header.number / ConfirmBlocksInCycle::get();
 		let last_confirmed_block_cycle = LastConfirmedBlockCycle::get();
 
-		ConfirmedHeadersDoubleMap::insert(confirm_cycle, eth_header.number, eth_header);
+		ConfirmedHeadersDoubleMap::insert(confirm_cycle, header.number, header);
 
 		if confirm_cycle > last_confirmed_block_cycle {
 			ConfirmedHeadersDoubleMap::remove_prefix(
@@ -620,12 +553,13 @@ impl<T: Trait> Relayable for Module<T> {
 			);
 			LastConfirmedBlockCycle::set(confirm_cycle);
 		}
+
 		Ok(())
 	}
 }
 
-impl<T: Trait> EthereumReceipt<AccountId<T>, Balance<T>> for Module<T> {
-	type EthereumReceiptProof = (EthHeader, EthReceiptProof, MMRProof);
+impl<T: Trait> EthereumReceiptT<AccountId<T>, Balance<T>> for Module<T> {
+	type EthereumReceiptProof = (EthereumHeader, EthereumReceiptProof, MMRProof);
 
 	fn account_id() -> AccountId<T> {
 		Self::account_id()
@@ -635,7 +569,9 @@ impl<T: Trait> EthereumReceipt<AccountId<T>, Balance<T>> for Module<T> {
 		Self::receipt_verify_fee()
 	}
 
-	fn verify_receipt(proof: &Self::EthereumReceiptProof) -> Result<Receipt, EthereumError> {
+	fn verify_receipt(
+		proof: &Self::EthereumReceiptProof,
+	) -> Result<EthereumReceipt, EthereumError> {
 		// Verify header hash
 		let eth_header = &proof.0;
 		let proof_record = &proof.1;
@@ -665,13 +601,14 @@ impl<T: Trait> EthereumReceipt<AccountId<T>, Balance<T>> for Module<T> {
 		);
 
 		// Verify receipt proof
-		let receipt = Receipt::verify_proof_and_generate(eth_header.receipts_root(), &proof_record)
-			.map_err(|_| EthereumError::InvalidReceiptProof)?;
+		let receipt =
+			EthereumReceipt::verify_proof_and_generate(eth_header.receipts_root(), &proof_record)
+				.map_err(|_| EthereumError::InvalidReceiptProof)?;
 
 		Ok(receipt)
 	}
 
-	fn gen_receipt_index(proof: &Self::EthereumReceiptProof) -> EthTransactionIndex {
+	fn gen_receipt_index(proof: &Self::EthereumReceiptProof) -> EthereumTransactionIndex {
 		let proof_record = &proof.1;
 		(proof_record.header_hash, proof.1.index)
 	}
@@ -681,21 +618,28 @@ impl<T: Trait> EthereumReceipt<AccountId<T>, Balance<T>> for Module<T> {
 pub trait WeightInfo {}
 impl WeightInfo for () {}
 
-#[derive(Clone, PartialEq, Eq, Encode, Decode, Default, RuntimeDebug)]
-pub struct EthHeaderThing {
-	eth_header: EthHeader,
+#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
+pub struct EthereumHeaderThingWithProof {
+	header: EthereumHeader,
 	ethash_proof: Vec<EthashProof>,
-	mmr_root: MMRHash,
-	mmr_proof: Vec<MMRHash>,
-}
-impl From<RawHeaderThing> for EthHeaderThing {
-	fn from(raw_header_thing: RawHeaderThing) -> Self {
-		EthHeaderThing::decode(&mut &*raw_header_thing).unwrap_or_default()
-	}
+	mmr_root: H256,
+	mmr_proof: Vec<H256>,
 }
 
-#[derive(Encode, Decode, Default, RuntimeDebug)]
-pub struct ProposalEthHeaderThing {
-	eth_header: EthHeader,
-	mmr_root: MMRHash,
+#[derive(Clone, PartialEq, Encode, Decode, Default, RuntimeDebug)]
+pub struct EthereumHeaderThing {
+	header: EthereumHeader,
+	mmr_root: H256,
+}
+impl HeaderThing for EthereumHeaderThing {
+	type Number = EthereumBlockNumber;
+	type Hash = H256;
+
+	fn number(&self) -> Self::Number {
+		self.header.number()
+	}
+
+	fn hash(&self) -> Self::Hash {
+		self.header.hash()
+	}
 }

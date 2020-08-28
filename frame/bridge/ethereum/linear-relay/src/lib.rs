@@ -66,15 +66,16 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 // --- darwinia ---
-use darwinia_support::{balance::lock::LockableCurrency, relay::EthereumReceipt};
+use darwinia_support::{
+	balance::lock::LockableCurrency, traits::EthereumReceipt as EthereumReceiptT,
+};
 use ethereum_primitives::{
 	error::EthereumError,
 	ethashproof::EthashProof,
-	header::EthHeader,
+	header::EthereumHeader,
 	pow::EthashPartial,
-	receipt::Receipt,
-	receipt::{EthReceiptProof, EthTransactionIndex},
-	EthBlockNumber, H256, U256,
+	receipt::{EthereumReceipt, EthereumReceiptProof, EthereumTransactionIndex},
+	EthereumBlockNumber, H256, U256,
 };
 use types::*;
 
@@ -104,9 +105,9 @@ decl_event! {
 		<T as frame_system::Trait>::AccountId,
 		Balance = Balance<T>,
 	{
-		SetGenesisHeader(EthHeader, u64),
-		RelayHeader(AccountId, EthHeader),
-		VerifyProof(AccountId, Receipt, EthReceiptProof),
+		SetGenesisHeader(EthereumHeader, u64),
+		RelayHeader(AccountId, EthereumHeader),
+		VerifyProof(AccountId, EthereumReceipt, EthereumReceiptProof),
 		AddAuthority(AccountId),
 		RemoveAuthority(AccountId),
 		ToggleCheckAuthorities(bool),
@@ -147,7 +148,7 @@ decl_error! {
 
 		/// Rlp - DECODE FAILED
 		RlpDcF,
-		/// Receipt Proof - INVALID
+		/// EthereumReceipt Proof - INVALID
 		ReceiptProofI,
 		/// Block Basic - VERIFICATION FAILED
 		BlockBasicVF,
@@ -168,7 +169,7 @@ darwinia_support::impl_genesis! {
 decl_storage! {
 	trait Store for Module<T: Trait> as DarwiniaEthereumLinearRelay {
 		/// Anchor block that works as genesis block
-		pub GenesisHeader get(fn begin_header): Option<EthHeader>;
+		pub GenesisHeader get(fn begin_header): Option<EthereumHeader>;
 
 		/// Dags merkle roots of ethereum epoch (each epoch is 30000)
 		pub DagsMerkleRoots get(fn dag_merkle_root): map hasher(identity) u64 => H128;
@@ -178,8 +179,8 @@ decl_storage! {
 
 		pub CanonicalHeaderHashes get(fn canonical_header_hash): map hasher(identity) u64 => H256;
 
-		pub Headers get(fn header): map hasher(identity) H256 => Option<EthHeader>;
-		pub HeaderBriefs get(fn header_brief): map hasher(identity) H256 => Option<EthHeaderBrief::<T::AccountId>>;
+		pub Headers get(fn header): map hasher(identity) H256 => Option<EthereumHeader>;
+		pub HeaderBriefs get(fn header_brief): map hasher(identity) H256 => Option<EthereumHeaderBrief<T::AccountId>>;
 
 		/// Number of blocks finality
 		pub NumberOfBlocksFinality get(fn number_of_blocks_finality) config(): u64;
@@ -251,7 +252,7 @@ decl_module! {
 		/// - Up to one event
 		/// # </weight>
 		#[weight = 200_000_000]
-		pub fn relay_header(origin, header: EthHeader, ethash_proof: Vec<EthashProof>) {
+		pub fn relay_header(origin, header: EthereumHeader, ethash_proof: Vec<EthashProof>) {
 			trace!(target: "ethereum-linear-relay", "{:?}", header);
 			let relayer = ensure_signed(origin)?;
 
@@ -284,7 +285,7 @@ decl_module! {
 		/// - Up to one event
 		/// # </weight>
 		#[weight = 100_000_000]
-		pub fn check_receipt(origin, proof_record: EthReceiptProof) {
+		pub fn check_receipt(origin, proof_record: EthereumReceiptProof) {
 			let worker = ensure_signed(origin)?;
 
 			let verified_receipt =
@@ -331,7 +332,7 @@ decl_module! {
 		// --- root call ---
 
 		#[weight = 100_000_000]
-		pub fn reset_genesis_header(origin, header: EthHeader, genesis_difficulty: u64) {
+		pub fn reset_genesis_header(origin, header: EthereumHeader, genesis_difficulty: u64) {
 			let _ = ensure_root(origin)?;
 
 			Self::init_genesis_header(&header, genesis_difficulty)?;
@@ -475,7 +476,7 @@ impl<T: Trait> Module<T> {
 	}
 
 	pub fn init_genesis_header(
-		header: &EthHeader,
+		header: &EthereumHeader,
 		genesis_total_difficulty: u64,
 	) -> DispatchResult {
 		let header_hash = header.hash();
@@ -492,7 +493,7 @@ impl<T: Trait> Module<T> {
 		// initialize header info, including total difficulty.
 		<HeaderBriefs<T>>::insert(
 			&header_hash,
-			EthHeaderBrief::<T::AccountId> {
+			EthereumHeaderBrief::<T::AccountId> {
 				parent_hash: header.parent_hash,
 				total_difficulty: genesis_total_difficulty.into(),
 				number: block_number,
@@ -524,7 +525,7 @@ impl<T: Trait> Module<T> {
 		Ok(())
 	}
 
-	fn verify_header_basic(header: &EthHeader) -> DispatchResult {
+	fn verify_header_basic(header: &EthereumHeader) -> DispatchResult {
 		ensure!(
 			header.hash() == header.re_compute_hash(),
 			<Error<T>>::HeaderHashMis
@@ -564,7 +565,7 @@ impl<T: Trait> Module<T> {
 		Ok(())
 	}
 
-	fn verify_header_pow(header: &EthHeader, ethash_proof: &[EthashProof]) -> DispatchResult {
+	fn verify_header_pow(header: &EthereumHeader, ethash_proof: &[EthashProof]) -> DispatchResult {
 		Self::verify_header_basic(&header)?;
 
 		let ethash_params = match T::EthereumNetwork::get() {
@@ -605,7 +606,7 @@ impl<T: Trait> Module<T> {
 		Ok(())
 	}
 
-	fn maybe_store_header(relayer: &T::AccountId, header: &EthHeader) -> DispatchResult {
+	fn maybe_store_header(relayer: &T::AccountId, header: &EthereumHeader) -> DispatchResult {
 		let best_header_info =
 			Self::header_brief(Self::best_header_hash()).ok_or(<Error<T>>::HeaderBriefNE)?;
 
@@ -623,7 +624,7 @@ impl<T: Trait> Module<T> {
 			.total_difficulty;
 
 		let header_hash = header.hash();
-		let header_brief = EthHeaderBrief::<T::AccountId> {
+		let header_brief = EthereumHeaderBrief::<T::AccountId> {
 			number: header.number,
 			parent_hash: header.parent_hash,
 			total_difficulty: parent_total_difficulty
@@ -703,8 +704,8 @@ impl<T: Trait> Module<T> {
 	}
 }
 
-impl<T: Trait> EthereumReceipt<T::AccountId, Balance<T>> for Module<T> {
-	type EthereumReceiptProof = EthReceiptProof;
+impl<T: Trait> EthereumReceiptT<T::AccountId, Balance<T>> for Module<T> {
+	type EthereumReceiptProof = EthereumReceiptProof;
 
 	fn account_id() -> T::AccountId {
 		Self::account_id()
@@ -717,7 +718,9 @@ impl<T: Trait> EthereumReceipt<T::AccountId, Balance<T>> for Module<T> {
 	/// confirm that the block hash is right
 	/// get the receipt MPT trie root from the block header
 	/// Using receipt MPT trie root to verify the proof and index etc.
-	fn verify_receipt(proof: &Self::EthereumReceiptProof) -> Result<Receipt, EthereumError> {
+	fn verify_receipt(
+		proof: &Self::EthereumReceiptProof,
+	) -> Result<EthereumReceipt, EthereumError> {
 		let info =
 			Self::header_brief(&proof.header_hash).ok_or(EthereumError::InvalidReceiptProof)?;
 
@@ -742,13 +745,13 @@ impl<T: Trait> EthereumReceipt<T::AccountId, Balance<T>> for Module<T> {
 		let header = Self::header(&proof.header_hash).ok_or(EthereumError::InvalidReceiptProof)?;
 
 		// Verify receipt proof
-		let receipt = Receipt::verify_proof_and_generate(header.receipts_root(), &proof)
+		let receipt = EthereumReceipt::verify_proof_and_generate(header.receipts_root(), &proof)
 			.map_err(|_| EthereumError::InvalidReceiptProof)?;
 
 		Ok(receipt)
 	}
 
-	fn gen_receipt_index(proof: &Self::EthereumReceiptProof) -> EthTransactionIndex {
+	fn gen_receipt_index(proof: &Self::EthereumReceiptProof) -> EthereumTransactionIndex {
 		(proof.header_hash, proof.index)
 	}
 }
@@ -829,13 +832,13 @@ impl Default for EthereumNetworkType {
 
 /// Familial details concerning a block
 #[derive(Clone, Default, PartialEq, Encode, Decode)]
-pub struct EthHeaderBrief<AccountId> {
+pub struct EthereumHeaderBrief<AccountId> {
 	/// Total difficulty of the block and all its parents
 	pub total_difficulty: U256,
 	/// Parent hash of the header
 	pub parent_hash: H256,
 	/// Block number
-	pub number: EthBlockNumber,
+	pub number: EthereumBlockNumber,
 	/// Relayer of the block header
 	pub relayer: AccountId,
 }

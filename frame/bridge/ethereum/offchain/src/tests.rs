@@ -8,7 +8,7 @@ fn test_build_eth_header_from_json_response() {
 	let eth_header_part =
 		extract_from_json_str(&SUPPOSED_SHADOW_JSON_RESPONSE[..], b"eth_header" as &[u8])
 			.unwrap_or_default();
-	let header = EthHeader::from_str_unchecked(from_utf8(eth_header_part).unwrap_or_default());
+	let header = EthereumHeader::from_str_unchecked(from_utf8(eth_header_part).unwrap_or_default());
 	assert_eq!(header.hash.unwrap(), header.re_compute_hash());
 
 	let proof_part = extract_from_json_str(&SUPPOSED_SHADOW_JSON_RESPONSE[..], b"proof" as &[u8])
@@ -25,10 +25,10 @@ fn test_build_eth_header_from_scale_response() {
 		extract_from_json_str(&SUPPOSED_SHADOW_SCALE_RESPONSE[..], b"eth_header" as &[u8])
 			.unwrap_or_default();
 	let scale_bytes = hex_bytes_unchecked(from_utf8(eth_header_part).unwrap_or_default());
-	let scale_decode_header: EthHeader =
+	let scale_decode_header: EthereumHeader =
 		Decode::decode::<&[u8]>(&mut &scale_bytes[..]).unwrap_or_default();
 
-	let header = EthHeader::from_str_unchecked(SUPPOSED_ETH_HEADER);
+	let header = EthereumHeader::from_str_unchecked(SUPPOSED_ETH_HEADER);
 	assert_eq!(scale_decode_header, header);
 
 	let proof_part = extract_from_json_str(&SUPPOSED_SHADOW_SCALE_RESPONSE[..], b"proof" as &[u8])

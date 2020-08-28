@@ -14,7 +14,7 @@ use sp_std::{cell::RefCell, collections::btree_map::BTreeMap, mem};
 use crate::{
 	error::{EthereumError, Mismatch, OutOfBounds},
 	ethashproof::EthashProof,
-	header::EthHeader,
+	header::EthereumHeader,
 	*,
 };
 
@@ -32,14 +32,18 @@ pub struct EthashPartial {
 	pub eip100b_transition: u64,
 	pub ecip1010_pause_transition: u64,
 	pub ecip1010_continue_transition: u64,
-	pub difficulty_bomb_delays: BTreeMap<EthBlockNumber, EthBlockNumber>,
+	pub difficulty_bomb_delays: BTreeMap<EthereumBlockNumber, EthereumBlockNumber>,
 	pub expip2_transition: u64,
 	pub expip2_duration_limit: u64,
 	pub progpow_transition: u64,
 }
 
 impl EthashPartial {
-	pub fn set_difficulty_bomb_delays(&mut self, key: EthBlockNumber, value: EthBlockNumber) {
+	pub fn set_difficulty_bomb_delays(
+		&mut self,
+		key: EthereumBlockNumber,
+		value: EthereumBlockNumber,
+	) {
 		self.difficulty_bomb_delays.insert(key, value);
 	}
 
@@ -57,7 +61,7 @@ impl EthashPartial {
 			eip100b_transition: 0xC3500,
 			ecip1010_pause_transition: 0x2dc6c0,
 			ecip1010_continue_transition: 0x4c4b40,
-			difficulty_bomb_delays: BTreeMap::<EthBlockNumber, EthBlockNumber>::default(),
+			difficulty_bomb_delays: BTreeMap::<EthereumBlockNumber, EthereumBlockNumber>::default(),
 			expip2_transition: 0xc3500,
 			expip2_duration_limit: 0x1e,
 			progpow_transition: u64::max_value(),
@@ -122,7 +126,7 @@ impl EthashPartial {
 impl EthashPartial {
 	pub fn verify_seal_with_proof(
 		self,
-		header: &EthHeader,
+		header: &EthereumHeader,
 		ethash_proof: &[EthashProof],
 		merkle_root: &H128,
 	) -> Result<(), EthereumError> {
@@ -205,7 +209,7 @@ impl EthashPartial {
 		}
 	}
 
-	pub fn verify_block_basic(&self, header: &EthHeader) -> Result<(), EthereumError> {
+	pub fn verify_block_basic(&self, header: &EthereumHeader) -> Result<(), EthereumError> {
 		// check the seal fields.
 		let seal = EthashSeal::parse_seal(header.seal())?;
 
@@ -237,7 +241,7 @@ impl EthashPartial {
 		Ok(())
 	}
 
-	pub fn calculate_difficulty(&self, header: &EthHeader, parent: &EthHeader) -> U256 {
+	pub fn calculate_difficulty(&self, header: &EthereumHeader, parent: &EthereumHeader) -> U256 {
 		const EXP_DIFF_PERIOD: u64 = 100_000;
 
 		if header.number() == 0 {
