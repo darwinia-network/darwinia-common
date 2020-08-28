@@ -180,7 +180,7 @@ decl_storage! {
 		pub CanonicalHeaderHashes get(fn canonical_header_hash): map hasher(identity) u64 => H256;
 
 		pub Headers get(fn header): map hasher(identity) H256 => Option<EthereumHeader>;
-		pub HeaderBriefs get(fn header_brief): map hasher(identity) H256 => Option<EthereumHeaderBrief::<T::AccountId>>;
+		pub HeaderBriefs get(fn header_brief): map hasher(identity) H256 => Option<EthereumHeaderBrief<T::AccountId>>;
 
 		/// Number of blocks finality
 		pub NumberOfBlocksFinality get(fn number_of_blocks_finality) config(): u64;
