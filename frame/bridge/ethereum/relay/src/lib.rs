@@ -444,7 +444,7 @@ impl<T: Trait> Relayable for Module<T> {
 						//    -   -
 						//   /     \
 						//  C  ...  1st
-						//  C: Last Comfirmed Block  1st: 1st submit block
+						//  C: Last Comfirmed Block 1st: 1st submit block
 						ensure!(
 							Self::verify_mmr(
 								header.number,
