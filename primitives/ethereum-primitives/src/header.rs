@@ -21,11 +21,11 @@ enum Seal {
 
 #[cfg_attr(any(feature = "easy-testing", test), derive(serde::Deserialize))]
 #[derive(Clone, Eq, Encode, Decode, RuntimeDebug)]
-pub struct EthHeader {
+pub struct EthereumHeader {
 	pub parent_hash: H256,
 	pub timestamp: u64,
-	pub number: EthBlockNumber,
-	pub author: EthAddress,
+	pub number: EthereumBlockNumber,
+	pub author: EthereumAddress,
 	pub transactions_root: H256,
 	pub uncles_hash: H256,
 	pub extra_data: Bytes,
@@ -39,7 +39,7 @@ pub struct EthHeader {
 	pub hash: Option<H256>,
 }
 
-impl EthHeader {
+impl EthereumHeader {
 	pub fn from_scale_codec_str<S: AsRef<str>>(s: S) -> Option<Self> {
 		if let Ok(eth_header) = <Self as Decode>::decode(&mut &hex_bytes_unchecked(s.as_ref())[..])
 		{
@@ -149,13 +149,13 @@ impl EthHeader {
 	}
 }
 
-impl Default for EthHeader {
+impl Default for EthereumHeader {
 	fn default() -> Self {
-		EthHeader {
+		EthereumHeader {
 			parent_hash: H256::zero(),
 			timestamp: 0,
 			number: 0,
-			author: EthAddress::zero(),
+			author: EthereumAddress::zero(),
 			transactions_root: KECCAK_NULL_RLP,
 			uncles_hash: KECCAK_EMPTY_LIST_RLP,
 			extra_data: vec![],
@@ -171,10 +171,10 @@ impl Default for EthHeader {
 	}
 }
 
-impl PartialEq for EthHeader {
-	fn eq(&self, c: &EthHeader) -> bool {
+impl PartialEq for EthereumHeader {
+	fn eq(&self, c: &EthereumHeader) -> bool {
 		if let (&Some(ref h1), &Some(ref h2)) = (&self.hash, &c.hash) {
-			// More strict check even if hashes equal since EthHeader could be decoded from dispatch call by external
+			// More strict check even if hashes equal since EthereumHeader could be decoded from dispatch call by external
 			// Note that this is different implementation compared to Open Ethereum
 			// Refer: https://github.com/openethereum/openethereum/blob/v3.0.0-alpha.1/ethcore/types/src/header.rs#L93
 			if h1 != h2 {
@@ -199,9 +199,9 @@ impl PartialEq for EthHeader {
 	}
 }
 
-impl Decodable for EthHeader {
+impl Decodable for EthereumHeader {
 	fn decode(r: &Rlp) -> Result<Self, DecoderError> {
-		let mut blockheader = EthHeader {
+		let mut blockheader = EthereumHeader {
 			parent_hash: r.val_at(0)?,
 			uncles_hash: r.val_at(1)?,
 			author: r.val_at(2)?,
@@ -227,7 +227,7 @@ impl Decodable for EthHeader {
 	}
 }
 
-impl Encodable for EthHeader {
+impl Encodable for EthereumHeader {
 	fn rlp_append(&self, s: &mut RlpStream) {
 		self.stream_rlp(s, Seal::With);
 	}
@@ -244,7 +244,7 @@ where
 	}
 }
 
-impl EthHeader {
+impl EthereumHeader {
 	/// Create a new, default-valued, header.
 	pub fn new() -> Self {
 		Self::default()
@@ -261,12 +261,12 @@ impl EthHeader {
 	}
 
 	/// Get the number field of the header.
-	pub fn number(&self) -> EthBlockNumber {
+	pub fn number(&self) -> EthereumBlockNumber {
 		self.number
 	}
 
 	/// Get the author field of the header.
-	pub fn author(&self) -> &EthAddress {
+	pub fn author(&self) -> &EthereumAddress {
 		&self.author
 	}
 
@@ -401,13 +401,13 @@ mod tests {
 		// --- github ---
 		use ethash::{EthereumPatch, LightDAG};
 		// --- darwinia ---
-		use crate::{header::EthHeader, pow::EthashSeal};
+		use crate::{header::EthereumHeader, pow::EthashSeal};
 
 		type DAG = LightDAG<EthereumPatch>;
 
 		#[test]
 		fn mix_hash_should_work_for_mainnet_block_0x1() {
-			let header = EthHeader::from_str_unchecked(
+			let header = EthereumHeader::from_str_unchecked(
 				r#"
 				{
 					"difficulty": "0x3ff800000",
@@ -445,7 +445,7 @@ mod tests {
 
 		#[test]
 		fn mix_hash_should_work_for_mainnet_block_0x93806d() {
-			let header = EthHeader::from_str_unchecked(
+			let header = EthereumHeader::from_str_unchecked(
 				r#"
 				{
 					"difficulty": "0x7db1e47bc4cb4",
@@ -491,9 +491,9 @@ mod tests {
 	use pow::EthashPartial;
 
 	#[inline]
-	fn sequential_header() -> (EthHeader, EthHeader) {
+	fn sequential_header() -> (EthereumHeader, EthereumHeader) {
 		(
-			EthHeader::from_str_unchecked(
+			EthereumHeader::from_str_unchecked(
 				r#"
 				{
 					"difficulty": "0x92ac28cbc4930",
@@ -519,7 +519,7 @@ mod tests {
 				}
 			"#,
 			),
-			EthHeader::from_str_unchecked(
+			EthereumHeader::from_str_unchecked(
 				r#"
 				{
 					"difficulty": "0x92c07e50de0b9",
@@ -549,9 +549,9 @@ mod tests {
 	}
 
 	#[inline]
-	fn ropsten_sequential_header() -> (EthHeader, EthHeader) {
+	fn ropsten_sequential_header() -> (EthereumHeader, EthereumHeader) {
 		(
-			EthHeader::from_str_unchecked(
+			EthereumHeader::from_str_unchecked(
 				r#"
 				{
 					"author": "0x4ccfb3039b78d3938588157564c9ad559bafab94",
@@ -582,7 +582,7 @@ mod tests {
 				}
 				"#,
 			),
-			EthHeader::from_str_unchecked(
+			EthereumHeader::from_str_unchecked(
 				r#"
 				{
 					"author": "0x4ccfb3039b78d3938588157564c9ad559bafab94",
@@ -618,7 +618,7 @@ mod tests {
 
 	#[test]
 	fn test_mainet_header_bare_hash() {
-		let header = EthHeader::from_str_unchecked(
+		let header = EthereumHeader::from_str_unchecked(
 			r#"
 			{
 				"difficulty": "0x92ac28cbc4930",
@@ -667,7 +667,7 @@ mod tests {
 
 	#[test]
 	fn test_ropsten_header_bare_hash() {
-		let header = EthHeader::from_str_unchecked(
+		let header = EthereumHeader::from_str_unchecked(
 			r#"
 			{
 				"author": "0x1ad857f27200aec56ebb68283f91e6ac1086ad62",
@@ -712,7 +712,7 @@ mod tests {
 
 	#[test]
 	fn can_do_proof_of_work_verification_fail() {
-		let mut header: EthHeader = EthHeader::default();
+		let mut header: EthereumHeader = EthereumHeader::default();
 		header.set_seal(vec![rlp::encode(&H256::zero()), rlp::encode(&H64::zero())]);
 		header.set_difficulty(
 			U256::from_str("ffffffffffffffffffffffffffffffffffffffffffffaaaaaaaaaaaaaaaaaaaa")
@@ -775,7 +775,7 @@ mod tests {
 
 	#[test]
 	fn test_scale_codec_of_eth_header() {
-		let header = EthHeader::from_str_unchecked(
+		let header = EthereumHeader::from_str_unchecked(
 			r#"
 			{
 				"difficulty": "0x3ff800000",
@@ -803,13 +803,14 @@ mod tests {
 		);
 
 		let mut scale_encoded: &[u8] = b"\xd4\xe5g@\xf8v\xae\xf8\xc0\x10\xb8j@\xd5\xf5gE\xa1\x18\xd0\x90j4\xe6\x9a\xec\x8c\r\xb1\xcb\x8f\xa3$B\xbaU\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x05\xa5n-R\xc8\x17\x16\x18\x83\xf5\x0cD\x1c2(\xcf\xe5M\x9fV\xe8\x1f\x17\x1b\xccU\xa6\xff\x83E\xe6\x92\xc0\xf8n[H\xe0\x1b\x99l\xad\xc0\x01b/\xb5\xe3c\xb4!\x1d\xccM\xe8\xde\xc7]z\xab\x85\xb5g\xb6\xcc\xd4\x1a\xd3\x12E\x1b\x94\x8at\x13\xf0\xa1B\xfd@\xd4\x93GdGeth/v1.0.0/linux/go1.4.2\xd6~ME\x03C\x04d%\xaeBqGCS\x85z\xb8`\xdb\xc0\xa1\xdd\xe6KA\xb5\xcd:S+\xf3V\xe8\x1f\x17\x1b\xccU\xa6\xff\x83E\xe6\x92\xc0\xf8n[H\xe0\x1b\x99l\xad\xc0\x01b/\xb5\xe3c\xb4!\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x88\x13\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\xff\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x84\xa0\x96\x9b\x90\r\xe2{j\xc6\xa6wB6]\xd6_U\xa0RlA\xfd\x18\xe1\xb1o\x1a\x12\x15\xc2\xe6oY$\x88S\x9b\xd4\x97\x9f\xef\x1e\xc4\x01\x88\xe9mE7\xbe\xa4\xd9\xc0]\x12T\x99\x07\xb3%a\xd3\xbf1\xf4Z\xaesL\xdc\x11\x9f\x13@l\xb6";
-		let decoded_header: EthHeader = Decode::decode::<&[u8]>(&mut scale_encoded).ok().unwrap();
+		let decoded_header: EthereumHeader =
+			Decode::decode::<&[u8]>(&mut scale_encoded).ok().unwrap();
 		assert_eq!(header, decoded_header);
 	}
 
 	#[test]
 	fn deserialize_should_work() {
-		let header = EthHeader::from_str_unchecked(
+		let header = EthereumHeader::from_str_unchecked(
 			r#"
 			{
 				"difficulty": "0x234ac172",
@@ -837,7 +838,7 @@ mod tests {
 		);
 		let encoded_header = hex_bytes_unchecked("ccd3a54b1bb11a8fa7eb82c6885c3bdcc9884cb0229cb9a70683d58bfe78e80c57f2785e00000000d59873000000000005fc5a079e0583b8a07526023a16e2022c4c62961d096373d65213a55a03f1edd066091ef245054ddbd827a4679f19983b2d8ae6ec428257d3daf5aa3a394665c7ab79e14a51116178653038fd2d5c23bb0118337cde830207028f5061726974792d457468657265756d86312e34312e30826c69bd3b97632b55686763748c69dec192fa2b5067c92cc0e3b5e19afad6bf43ed046c57de9ea8a275b131b344d60bbdef1ea1465753cba5924be631116fc9994d8b0006000000400004000000000800000ac000000200208000040000100084410200017001004000090100600000002800000041020002400000000000200000c81080602800004000000200080020000828200000110320001000000008008420000000400200a0008c0000380410084040200201040001000014045011001010000408000000a80000000010020002000000049000000000800a5000080000000000008010000000820041040014000100000004000000000040000002000000000000221000404028000002048200080000000000000000000001000108204002000200000012000000808000008200a002000000100080000000008000000055881b00000000000000000000000000000000000000000000000000000000001d127a000000000000000000000000000000000000000000000000000000000072c14a23000000000000000000000000000000000000000000000000000000000884a0e582018f215ce844c7e0b9bd10ee8ab89cad57dc01f3aec080bff11134cc55732488e55fdb2d73c14cee01253c1f8ed3051930949251bcf786d4ecfe379c001202d07aeb8a68ba15588f1d");
 		assert_eq!(
-			<EthHeader as Decode>::decode(&mut &encoded_header[..]).unwrap(),
+			<EthereumHeader as Decode>::decode(&mut &encoded_header[..]).unwrap(),
 			header
 		);
 	}

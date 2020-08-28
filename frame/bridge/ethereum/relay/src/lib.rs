@@ -15,7 +15,6 @@ mod types {
 	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
 	pub type Balance<T> = <CurrencyT<T> as Currency<AccountId<T>>>::Balance;
 
-	pub type MMRHash = H256;
 	pub type MMRProof = Vec<H256>;
 
 	type CurrencyT<T> = <T as Trait>::Currency;
@@ -42,14 +41,16 @@ use sp_std::{convert::From, prelude::*};
 use crate::mmr::{leaf_index_to_mmr_size, leaf_index_to_pos, MMRMerge, MerkleProof};
 use array_bytes::array_unchecked;
 use darwinia_relay_primitives::*;
-use darwinia_support::{balance::lock::LockableCurrency, traits::EthereumReceipt};
+use darwinia_support::{
+	balance::lock::LockableCurrency, traits::EthereumReceipt as EthereumReceiptT,
+};
 use ethereum_primitives::{
 	error::EthereumError,
 	ethashproof::EthashProof,
-	header::EthHeader,
+	header::EthereumHeader,
 	pow::EthashPartial,
-	receipt::{EthReceiptProof, EthTransactionIndex, Receipt},
-	EthBlockNumber, H256,
+	receipt::{EthereumReceipt, EthereumReceiptProof, EthereumTransactionIndex},
+	EthereumBlockNumber, H256,
 };
 use types::*;
 
@@ -68,7 +69,7 @@ pub trait Trait: frame_system::Trait {
 	type RelayerGame: RelayerGameProtocol<
 		Relayer = AccountId<Self>,
 		HeaderThingWithProof = EthereumHeaderThingWithProof,
-		BlockNumber = EthBlockNumber,
+		BlockNumber = EthereumBlockNumber,
 	>;
 
 	type ApproveOrigin: EnsureOrigin<Self::Origin>;
@@ -85,23 +86,23 @@ decl_event! {
 		<T as frame_system::Trait>::AccountId,
 	{
 		/// The specific confirmed block is removed. [block height]
-		RemoveConfirmedBlock(EthBlockNumber),
+		RemoveConfirmedBlock(EthereumBlockNumber),
 
 		/// The range of confirmed blocks are removed. [block height, block height]
-		RemoveConfirmedBlockRang(EthBlockNumber, EthBlockNumber),
+		RemoveConfirmedBlockRang(EthereumBlockNumber, EthereumBlockNumber),
 
 		/// The block confimed block parameters are changed. [block height, block height]
-		UpdateConfrimedBlockCleanCycle(EthBlockNumber, EthBlockNumber),
+		UpdateConfrimedBlockCleanCycle(EthereumBlockNumber, EthereumBlockNumber),
 
 		/// This Error event is caused by unreasonable Confirm block delete parameter set.
 		///
 		/// ConfirmBlockKeepInMonth should be greator then 1 to avoid the relayer game cross the
 		/// month.
 		/// [block height]
-		ConfirmBlockManagementError(EthBlockNumber),
+		ConfirmBlockManagementError(EthereumBlockNumber),
 
-		/// Receipt Verification. [account, receipt, header]
-		VerifyReceipt(AccountId, Receipt, EthHeader),
+		/// EthereumReceipt Verification. [account, receipt, header]
+		VerifyReceipt(AccountId, EthereumReceipt, EthereumHeader),
 	}
 }
 
@@ -121,7 +122,7 @@ decl_error! {
 		HeaderHashMis,
 		/// Last Header - NOT EXISTED
 		LastHeaderNE,
-		/// Receipt Proof - INVALID
+		/// EthereumReceipt Proof - INVALID
 		ReceiptProofI,
 	}
 }
@@ -138,26 +139,26 @@ decl_storage! {
 		pub
 			LastConfirmedHeaderInfo
 			get(fn last_confirm_header_info)
-			: Option<(EthBlockNumber, H256, MMRHash)>;
+			: Option<(EthereumBlockNumber, H256, H256)>;
 
 		/// The Ethereum headers confrimed by relayer game
 		/// The actural storage needs to be defined
 		pub
 			ConfirmedHeadersDoubleMap
 			get(fn confirmed_header)
-			: double_map hasher(identity) EthBlockNumber, hasher(identity) EthBlockNumber
-			=> EthHeader;
+			: double_map hasher(identity) EthereumBlockNumber, hasher(identity) EthereumBlockNumber
+			=> EthereumHeader;
 
 		/// Dags merkle roots of ethereum epoch (each epoch is 30000)
 		pub DagsMerkleRoots get(fn dag_merkle_root): map hasher(identity) u64 => H128;
 
 		/// The current confirm block cycle nubmer (default is one month one cycle)
-		LastConfirmedBlockCycle: EthBlockNumber;
+		LastConfirmedBlockCycle: EthereumBlockNumber;
 
 		/// The number of ehtereum blocks in a month
-		pub ConfirmBlocksInCycle get(fn confirm_block_cycle): EthBlockNumber = 185142;
+		pub ConfirmBlocksInCycle get(fn confirm_block_cycle): EthereumBlockNumber = 185142;
 		/// The confirm blocks keep in month
-		pub ConfirmBlockKeepInMonth get(fn confirm_block_keep_in_mounth): EthBlockNumber = 3;
+		pub ConfirmBlockKeepInMonth get(fn confirm_block_keep_in_mounth): EthereumBlockNumber = 3;
 
 		pub ReceiptVerifyFee get(fn receipt_verify_fee) config(): Balance<T>;
 	}
@@ -198,13 +199,13 @@ decl_module! {
 		}
 
 		#[weight = 100_000_000]
-		pub fn approve_pending_header(origin, pending: EthBlockNumber) {
+		pub fn approve_pending_header(origin, pending: EthereumBlockNumber) {
 			T::ApproveOrigin::ensure_origin(origin)?;
 			T::RelayerGame::approve_pending_header(pending)?;
 		}
 
 		#[weight = 100_000_000]
-		pub fn reject_pending_header(origin, pending: EthBlockNumber) {
+		pub fn reject_pending_header(origin, pending: EthereumBlockNumber) {
 			T::RejectOrigin::ensure_origin(origin)?;
 			T::RelayerGame::reject_pending_header(pending)?;
 		}
@@ -238,7 +239,7 @@ decl_module! {
 		///   - `set_receipt_verify_fee` can be used to set the verify fee for each receipt check.
 		/// # </weight>
 		#[weight = 100_000_000]
-		pub fn check_receipt(origin, proof_record: EthReceiptProof, eth_header: EthHeader, mmr_proof: MMRProof) {
+		pub fn check_receipt(origin, proof_record: EthereumReceiptProof, eth_header: EthereumHeader, mmr_proof: MMRProof) {
 			let worker = ensure_signed(origin)?;
 
 			let verified_receipt = Self::verify_receipt(&(eth_header.clone(), proof_record, mmr_proof)).map_err(|_| <Error<T>>::ReceiptProofI)?;
@@ -267,7 +268,7 @@ decl_module! {
 
 		/// Remove the specific malicous block
 		#[weight = 100_000_000]
-		pub fn remove_confirmed_block(origin, number: EthBlockNumber) {
+		pub fn remove_confirmed_block(origin, number: EthereumBlockNumber) {
 			T::RejectOrigin::ensure_origin(origin)?;
 
 			ConfirmedHeadersDoubleMap::take(number / ConfirmBlocksInCycle::get(), number);
@@ -277,7 +278,7 @@ decl_module! {
 
 		/// Remove the blocks in particular month (month is calculated as cycle)
 		#[weight = 100_000_000]
-		pub fn remove_confirmed_blocks_in_month(origin, cycle: EthBlockNumber) {
+		pub fn remove_confirmed_blocks_in_month(origin, cycle: EthereumBlockNumber) {
 			T::RejectOrigin::ensure_origin(origin)?;
 
 			let c = ConfirmBlocksInCycle::get();
@@ -289,7 +290,7 @@ decl_module! {
 
 		/// Setup the parameters to delete the confirmed blocks after month * blocks_in_month
 		#[weight = 100_000_000]
-		pub fn set_confirmed_blocks_clean_parameters(origin, month: EthBlockNumber, blocks_in_month: EthBlockNumber) {
+		pub fn set_confirmed_blocks_clean_parameters(origin, month: EthereumBlockNumber, blocks_in_month: EthereumBlockNumber) {
 			T::RejectOrigin::ensure_origin(origin)?;
 
 			if month < 2 {
@@ -315,7 +316,7 @@ impl<T: Trait> Module<T> {
 	}
 
 	/// validate block with the hash, difficulty of confirmed headers
-	fn verify_block_with_confrim_blocks(header: &EthHeader) -> bool {
+	fn verify_block_with_confrim_blocks(header: &EthereumHeader) -> bool {
 		let eth_partial = EthashPartial::production();
 		let confirm_blocks_in_cycle = ConfirmBlocksInCycle::get();
 		if ConfirmedHeadersDoubleMap::contains_key(
@@ -353,7 +354,7 @@ impl<T: Trait> Module<T> {
 		true
 	}
 
-	fn verify_block_seal(header: &EthHeader, ethash_proof: &[EthashProof]) -> bool {
+	fn verify_block_seal(header: &EthereumHeader, ethash_proof: &[EthashProof]) -> bool {
 		if header.hash() != header.re_compute_hash() {
 			return false;
 		}
@@ -406,7 +407,7 @@ impl<T: Trait> Module<T> {
 impl<T: Trait> Relayable for Module<T> {
 	type HeaderThingWithProof = EthereumHeaderThingWithProof;
 	type HeaderThing = EthereumHeaderThing;
-	type BlockNumber = EthBlockNumber;
+	type BlockNumber = EthereumBlockNumber;
 	type HeaderHash = ethereum_primitives::H256;
 
 	fn basic_verify(
@@ -557,8 +558,8 @@ impl<T: Trait> Relayable for Module<T> {
 	}
 }
 
-impl<T: Trait> EthereumReceipt<AccountId<T>, Balance<T>> for Module<T> {
-	type EthereumReceiptProof = (EthHeader, EthReceiptProof, MMRProof);
+impl<T: Trait> EthereumReceiptT<AccountId<T>, Balance<T>> for Module<T> {
+	type EthereumReceiptProof = (EthereumHeader, EthereumReceiptProof, MMRProof);
 
 	fn account_id() -> AccountId<T> {
 		Self::account_id()
@@ -568,7 +569,9 @@ impl<T: Trait> EthereumReceipt<AccountId<T>, Balance<T>> for Module<T> {
 		Self::receipt_verify_fee()
 	}
 
-	fn verify_receipt(proof: &Self::EthereumReceiptProof) -> Result<Receipt, EthereumError> {
+	fn verify_receipt(
+		proof: &Self::EthereumReceiptProof,
+	) -> Result<EthereumReceipt, EthereumError> {
 		// Verify header hash
 		let eth_header = &proof.0;
 		let proof_record = &proof.1;
@@ -598,13 +601,14 @@ impl<T: Trait> EthereumReceipt<AccountId<T>, Balance<T>> for Module<T> {
 		);
 
 		// Verify receipt proof
-		let receipt = Receipt::verify_proof_and_generate(eth_header.receipts_root(), &proof_record)
-			.map_err(|_| EthereumError::InvalidReceiptProof)?;
+		let receipt =
+			EthereumReceipt::verify_proof_and_generate(eth_header.receipts_root(), &proof_record)
+				.map_err(|_| EthereumError::InvalidReceiptProof)?;
 
 		Ok(receipt)
 	}
 
-	fn gen_receipt_index(proof: &Self::EthereumReceiptProof) -> EthTransactionIndex {
+	fn gen_receipt_index(proof: &Self::EthereumReceiptProof) -> EthereumTransactionIndex {
 		let proof_record = &proof.1;
 		(proof_record.header_hash, proof.1.index)
 	}
@@ -616,22 +620,22 @@ impl WeightInfo for () {}
 
 #[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
 pub struct EthereumHeaderThingWithProof {
-	header: EthHeader,
+	header: EthereumHeader,
 	ethash_proof: Vec<EthashProof>,
-	mmr_root: MMRHash,
-	mmr_proof: Vec<MMRHash>,
+	mmr_root: H256,
+	mmr_proof: Vec<H256>,
 }
 
 #[derive(Clone, PartialEq, Encode, Decode, Default, RuntimeDebug)]
 pub struct EthereumHeaderThing {
-	header: EthHeader,
-	mmr_root: MMRHash,
+	header: EthereumHeader,
+	mmr_root: H256,
 }
 impl HeaderThing for EthereumHeaderThing {
-	type BlockNumber = EthBlockNumber;
+	type Number = EthereumBlockNumber;
 	type Hash = H256;
 
-	fn block_number(&self) -> Self::BlockNumber {
+	fn number(&self) -> Self::Number {
 		self.header.number()
 	}
 

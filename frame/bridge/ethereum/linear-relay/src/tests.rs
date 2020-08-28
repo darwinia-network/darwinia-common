@@ -35,7 +35,7 @@ fn verify_receipt_proof() {
 		logs.reverse();
 
 		// mock receipt
-		let receipt = Receipt::new(TransactionOutcome::StatusCode(1), 1371263.into(), logs);
+		let receipt = EthereumReceipt::new(TransactionOutcome::StatusCode(1), 1371263.into(), logs);
 
 		// verify receipt
 		assert_ok!(EthereumRelay::init_genesis_header(
@@ -72,7 +72,7 @@ fn relay_header() {
 	});
 }
 
-/// # Check Receipt Safety
+/// # Check EthereumReceipt Safety
 ///
 /// ## Family Tree
 ///
@@ -237,7 +237,7 @@ fn test_safety_block() {
 
 #[test]
 fn build_genesis_header() {
-	let genesis_header = EthHeader::from_str_unchecked(MAINNET_GENESIS_HEADER);
+	let genesis_header = EthereumHeader::from_str_unchecked(MAINNET_GENESIS_HEADER);
 	assert_eq!(genesis_header.hash(), genesis_header.re_compute_hash());
 	// println!("{:?}", rlp::encode(&genesis_header));
 }
@@ -258,7 +258,7 @@ fn relay_mainet_header() {
 			{
 				let blocks_with_proof = BlockWithProof::from_file("./src/test-data/8996776.json");
 				// println!("{:?}", blocks_with_proof);
-				let header: EthHeader =
+				let header: EthereumHeader =
 					rlp::decode(&blocks_with_proof.header_rlp.to_vec()).unwrap();
 				assert_ok!(EthereumRelay::init_genesis_header(
 					&header,
@@ -271,7 +271,7 @@ fn relay_mainet_header() {
 			{
 				let blocks_with_proof = BlockWithProof::from_file("./src/test-data/8996777.json");
 				// println!("{:#?}", blocks_with_proof);
-				let header: EthHeader =
+				let header: EthereumHeader =
 					rlp::decode(&blocks_with_proof.header_rlp.to_vec()).unwrap();
 				// println!("{:?}", &header);
 
@@ -286,7 +286,7 @@ fn relay_mainet_header() {
 			{
 				let blocks_with_proof = BlockWithProof::from_file("./src/test-data/8996778.json");
 				// println!("{:?}", blocks_with_proof);
-				let header: EthHeader =
+				let header: EthereumHeader =
 					rlp::decode(&blocks_with_proof.header_rlp.to_vec()).unwrap();
 				// println!("{:?}", &header);
 
@@ -383,7 +383,7 @@ fn check_eth_relay_header_hash_works() {
 			{
 				let blocks_with_proof = BlockWithProof::from_file("./src/test-data/8996776.json");
 				// println!("{:?}", blocks_with_proof);
-				let header: EthHeader =
+				let header: EthereumHeader =
 					rlp::decode(&blocks_with_proof.header_rlp.to_vec()).unwrap();
 				assert_ok!(EthereumRelay::init_genesis_header(
 					&header,
@@ -391,7 +391,7 @@ fn check_eth_relay_header_hash_works() {
 				));
 
 				let blocks_with_proof = BlockWithProof::from_file("./src/test-data/8996776.json");
-				let header: EthHeader =
+				let header: EthereumHeader =
 					rlp::decode(&blocks_with_proof.header_rlp.to_vec()).unwrap();
 
 				let info = DispatchInfo {
@@ -415,7 +415,7 @@ fn check_eth_relay_header_hash_works() {
 			// block 8996777
 			{
 				let blocks_with_proof = BlockWithProof::from_file("./src/test-data/8996777.json");
-				let header: EthHeader =
+				let header: EthereumHeader =
 					rlp::decode(&blocks_with_proof.header_rlp.to_vec()).unwrap();
 
 				let info = DispatchInfo {

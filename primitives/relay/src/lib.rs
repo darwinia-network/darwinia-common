@@ -25,7 +25,7 @@ pub trait Relayable {
 		+ Default
 		+ PartialEq
 		+ FullCodec
-		+ HeaderThing<Hash = Self::HeaderHash, BlockNumber = Self::BlockNumber>;
+		+ HeaderThing<Number = Self::BlockNumber, Hash = Self::HeaderHash>;
 	type BlockNumber: Clone + Copy + Debug + Default + AtLeast32BitUnsigned + FullCodec;
 	type HeaderHash: Clone + Debug + Default + PartialEq + FullCodec;
 
@@ -43,10 +43,10 @@ pub trait Relayable {
 	fn store_header(header_thing: Self::HeaderThing) -> DispatchResult;
 }
 pub trait HeaderThing {
-	type BlockNumber;
+	type Number;
 	type Hash;
 
-	fn block_number(&self) -> Self::BlockNumber;
+	fn number(&self) -> Self::Number;
 
 	fn hash(&self) -> Self::Hash;
 }

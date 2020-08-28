@@ -71,7 +71,7 @@ use sp_std::prelude::*;
 // --- darwinia ---
 use array_bytes::{base_n_bytes_unchecked, hex_bytes_unchecked};
 use darwinia_support::literal_procesor::extract_from_json_str;
-use ethereum_primitives::{ethashproof::EthashProof, header::EthHeader};
+use ethereum_primitives::{ethashproof::EthashProof, header::EthereumHeader};
 
 type EthereumRelay<T> = darwinia_ethereum_linear_relay::Module<T>;
 type EthereumRelayCall<T> = darwinia_ethereum_linear_relay::Call<T>;
@@ -171,12 +171,12 @@ impl<T: Trait> Module<T> {
 		OffchainRequest::new(url, payload)
 	}
 
-	/// Build the response as EthHeader struct after validating
+	/// Build the response as EthereumHeader struct after validating
 	fn fetch_header(
 		url: Vec<u8>,
 		target_number: u64,
 		option: bool,
-	) -> Result<(EthHeader, Vec<EthashProof>), DispatchError> {
+	) -> Result<(EthereumHeader, Vec<EthashProof>), DispatchError> {
 		let payload = Self::build_payload(target_number, option);
 		let mut client = Self::build_request_client(url, payload);
 		let maybe_resp_body = client.send();
@@ -187,7 +187,7 @@ impl<T: Trait> Module<T> {
 			extract_from_json_str(&resp_body[..], b"eth_header" as &[u8]).unwrap_or_default();
 		let header = if option {
 			panic!("FIXME")
-		// EthHeader::from_str_unchecked(from_utf8(eth_header_part).unwrap_or_default())
+		// EthereumHeader::from_str_unchecked(from_utf8(eth_header_part).unwrap_or_default())
 		} else {
 			let scale_bytes = hex_bytes_unchecked(from_utf8(eth_header_part).unwrap_or_default());
 			Decode::decode::<&[u8]>(&mut &scale_bytes[..]).unwrap_or_default()
@@ -233,7 +233,7 @@ impl<T: Trait> Module<T> {
 	/// Submit and record the valid header on Darwinia network
 	fn submit_header(
 		signer: &Signer<T, T::AuthorityId, ForAll>,
-		header: EthHeader,
+		header: EthereumHeader,
 		proof_list: Vec<EthashProof>,
 	) {
 		// TODO: test support call ethereum-linear-relay

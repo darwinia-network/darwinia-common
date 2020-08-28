@@ -23,7 +23,7 @@ pub enum TransactionOutcome {
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RlpEncodable, RlpDecodable, RuntimeDebug)]
 pub struct LogEntry {
 	/// The address of the contract executing at the point of the `LOG` operation.
-	pub address: EthAddress,
+	pub address: EthereumAddress,
 	/// The topics associated with the `LOG` operation.
 	pub topics: Vec<H256>,
 	/// The data associated with the `LOG` operation.
@@ -44,7 +44,7 @@ impl LogEntry {
 }
 
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
-pub struct Receipt {
+pub struct EthereumReceipt {
 	/// The total gas used in the block following execution of the transaction.
 	pub gas_used: U256,
 	/// The OR-wide combination of all logs' blooms for this transaction.
@@ -56,13 +56,13 @@ pub struct Receipt {
 }
 
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
-pub struct EthReceiptProof {
+pub struct EthereumReceiptProof {
 	pub index: u64,
 	pub proof: Vec<u8>,
 	pub header_hash: H256,
 }
 
-impl Receipt {
+impl EthereumReceipt {
 	/// Create a new receipt.
 	pub fn new(outcome: TransactionOutcome, gas_used: U256, logs: Vec<LogEntry>) -> Self {
 		Self {
@@ -78,7 +78,7 @@ impl Receipt {
 
 	pub fn verify_proof_and_generate(
 		receipt_root: &H256,
-		proof_record: &EthReceiptProof,
+		proof_record: &EthereumReceiptProof,
 	) -> Result<Self, EthereumError> {
 		let proof: Proof =
 			rlp::decode(&proof_record.proof).map_err(|_| EthereumError::InvalidReceiptProof)?;
@@ -93,7 +93,7 @@ impl Receipt {
 	}
 }
 
-impl Encodable for Receipt {
+impl Encodable for EthereumReceipt {
 	fn rlp_append(&self, s: &mut RlpStream) {
 		match self.outcome {
 			TransactionOutcome::Unknown => {
@@ -114,17 +114,17 @@ impl Encodable for Receipt {
 	}
 }
 
-impl Decodable for Receipt {
+impl Decodable for EthereumReceipt {
 	fn decode(rlp: &Rlp) -> Result<Self, DecoderError> {
 		if rlp.item_count()? == 3 {
-			Ok(Receipt {
+			Ok(EthereumReceipt {
 				outcome: TransactionOutcome::Unknown,
 				gas_used: rlp.val_at(0)?,
 				log_bloom: rlp.val_at(1)?,
 				logs: rlp.list_at(2)?,
 			})
 		} else {
-			Ok(Receipt {
+			Ok(EthereumReceipt {
 				gas_used: rlp.val_at(1)?,
 				log_bloom: rlp.val_at(2)?,
 				logs: rlp.list_at(3)?,
@@ -141,7 +141,7 @@ impl Decodable for Receipt {
 	}
 }
 
-pub type EthTransactionIndex = (H256, u64);
+pub type EthereumTransactionIndex = (H256, u64);
 
 #[cfg(test)]
 mod tests {
@@ -159,8 +159,8 @@ mod tests {
 		gas_used: U256,
 		status: Option<u8>,
 		log_entries: Vec<LogEntry>,
-	) -> Receipt {
-		Receipt::new(
+	) -> EthereumReceipt {
+		EthereumReceipt::new(
 			if root.is_some() {
 				TransactionOutcome::StateRoot(root.unwrap())
 			} else {
@@ -176,7 +176,7 @@ mod tests {
 	fn test_basic() {
 		// https://ropsten.etherscan.io/tx/0xce62c3d1d2a43cfcc39707b98de53e61a7ef7b7f8853e943d85e511b3451aa7e#eventlog
 		let log_entries = vec![LogEntry {
-			address: EthAddress::from_str("ad52e0f67b6f44cd5b9a6f4fbc7c0f78f37e094b").unwrap(),
+			address: EthereumAddress::from_str("ad52e0f67b6f44cd5b9a6f4fbc7c0f78f37e094b").unwrap(),
 			topics: vec![
 				fixed_hex_bytes_unchecked!(
 					"0x6775ce244ff81f0a82f87d6fd2cf885affb38416e3a04355f713c6f008dd126a",
@@ -219,7 +219,7 @@ mod tests {
 		.into();
 
 		let log_entries = vec![LogEntry {
-			address: EthAddress::from_str("a24df0420de1f3b8d740a52aaeb9d55d6d64478e").unwrap(),
+			address: EthereumAddress::from_str("a24df0420de1f3b8d740a52aaeb9d55d6d64478e").unwrap(),
 			topics: vec![fixed_hex_bytes_unchecked!(
 				"0xf36406321d51f9ba55d04e900c1d56caac28601524e09d53e9010e03f83d7d00",
 				32
@@ -227,7 +227,7 @@ mod tests {
 			.into()],
 			data: hex_bytes_unchecked("0x0000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000363384a3868b9000000000000000000000000000000000000000000000000000000005d75f54f0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000e53504f5450582f4241542d455448000000000000000000000000000000000000"),
 		}];
-		let receipts = vec![Receipt::new(
+		let receipts = vec![EthereumReceipt::new(
 			TransactionOutcome::StatusCode(1),
 			73705.into(),
 			log_entries,

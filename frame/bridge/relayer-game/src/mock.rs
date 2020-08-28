@@ -176,10 +176,10 @@ pub mod mock_relay {
 		}
 	}
 	impl HeaderThing for MockTcHeader {
-		type BlockNumber = MockTcBlockNumber;
+		type Number = MockTcBlockNumber;
 		type Hash = MockTcHeaderHash;
 
-		fn block_number(&self) -> Self::BlockNumber {
+		fn number(&self) -> Self::Number {
 			self.number
 		}
 

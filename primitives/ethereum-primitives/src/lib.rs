@@ -18,5 +18,5 @@ pub use primitive_types::{H160, H256, U128, U256, U512};
 use sp_std::prelude::*;
 
 pub type Bytes = Vec<u8>;
-pub type EthAddress = H160;
-pub type EthBlockNumber = u64;
+pub type EthereumAddress = H160;
+pub type EthereumBlockNumber = u64;

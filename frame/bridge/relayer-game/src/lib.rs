@@ -653,7 +653,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			.get(0)
 			.ok_or(<Error<T, I>>::ProposalI)?
 			.to_owned();
-		let game_id = proposed_header.block_number();
+		let game_id = proposed_header.number();
 		let proposed_header_hash = proposed_header.hash();
 		let other_proposals = Self::proposals_of_game(game_id);
 		let other_proposals_len = other_proposals.len();
@@ -737,10 +737,11 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 					<Error<T, I>>::RoundMis
 				);
 				ensure!(
-					verified_proposal.iter().zip(samples.iter()).all(
-						|(header_thing, sample_block_number)| header_thing.block_number()
-							== *sample_block_number
-					),
+					verified_proposal
+						.iter()
+						.zip(samples.iter())
+						.all(|(header_thing, sample_block_number)| header_thing.number()
+							== *sample_block_number),
 					<Error<T, I>>::RoundMis
 				);
 

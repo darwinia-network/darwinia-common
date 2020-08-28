@@ -15,7 +15,7 @@ use crate::balance::{
 	lock::{LockFor, LockReasons},
 	FrozenBalance,
 };
-use ethereum_primitives::{error::EthereumError, receipt::EthTransactionIndex, receipt::Receipt};
+use ethereum_primitives::{error::EthereumError, receipt::EthereumTransactionIndex};
 
 pub trait BalanceInfo<Balance, Module> {
 	fn free(&self) -> Balance;
@@ -149,7 +149,9 @@ pub trait EthereumReceipt<AccountId, Balance> {
 
 	fn receipt_verify_fee() -> Balance;
 
-	fn verify_receipt(proof: &Self::EthereumReceiptProof) -> Result<Receipt, EthereumError>;
+	fn verify_receipt(
+		proof: &Self::EthereumReceiptProof,
+	) -> Result<ethereum_primitives::receipt::EthereumReceipt, EthereumError>;
 
-	fn gen_receipt_index(proof: &Self::EthereumReceiptProof) -> EthTransactionIndex;
+	fn gen_receipt_index(proof: &Self::EthereumReceiptProof) -> EthereumTransactionIndex;
 }
