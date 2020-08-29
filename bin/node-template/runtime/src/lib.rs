@@ -857,7 +857,7 @@ impl darwinia_ethereum_relay::Trait for Runtime {
 	type ModuleId = EthereumRelayModuleId;
 	type Event = Event;
 	type Currency = Ring;
-	type RelayerGame = RelayerGame;
+	type RelayerGame = EthereumRelayerGame;
 	type ApproveOrigin = ApproveOrigin;
 	type RejectOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = ();
@@ -925,7 +925,7 @@ construct_runtime!(
 		EthereumLinearRelay: darwinia_ethereum_linear_relay::{Module, Call, Storage, Config<T>, Event<T>},
 		EthereumOffchain: darwinia_ethereum_offchain::{Module, Call},
 		EthereumRelay: darwinia_ethereum_relay::{Module, Call, Storage, Config<T>, Event<T>},
-		RelayerGame: darwinia_relayer_game::<Instance0>::{Module, Call, Storage, Event<T>},
+		EthereumRelayerGame: darwinia_relayer_game::<Instance0>::{Module, Call, Storage, Event<T>},
 
 		HeaderMMR: darwinia_header_mmr::{Module, Call, Storage},
 	}
