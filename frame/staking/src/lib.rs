@@ -328,84 +328,6 @@ pub mod weight {
 	}
 }
 
-mod migration {
-	// --- substrate ---
-	use frame_support::migration::*;
-	#[cfg(not(feature = "std"))]
-	use sp_std::borrow::ToOwned;
-	// --- darwinia ---
-	use crate::*;
-
-	pub fn migrate<T: Trait>() {
-		let module: &[u8] = b"DarwiniaStaking";
-		// pub Ledger get(fn ledger): map hasher(blake2_128_concat) T::AccountId => Option<StakingLedgerT<T>>;
-		let item: &[u8] = b"Ledger";
-
-		// broken ledger
-		//
-		// ring check: true
-		// deposit check: false
-		// lock check: true
-		// Ledger {
-		//     stash: "0f9985cf8a27e42a191f0f4d4b2bfd770256728868f42f642b60ef247b79b245",
-		//     active_ring: 9513338321214,
-		//     active_deposit_ring: 9459998000000,
-		//     deposit_items: Some(
-		//         [
-		//             DepositItem {
-		//                 value: 974523822662,
-		//             },
-		//             DepositItem {
-		//                 value: 998000000,
-		//             },
-		//             DepositItem {
-		//                 value: 8460000000000,
-		//             },
-		//         ],
-		//     ),
-		//     ring_staking_lock: StakingLock {
-		//         staking_amount: 9513338321214,
-		//     },
-		// }
-		//
-		// if `active_ring` >= `active_deposit_ring` then cut the `active_deposit_ring`
-		// else will set the `deposit_items` to
-		// `vec![DepositItem {
-		// 	value: active_deposit_ring,
-		// 	expire_time,
-		// }]`
-		// the value of `start_time` and `expire_time` is the original first item's
-
-		let (mut ring_pool, mut kton_pool) = (<RingBalance<T>>::zero(), <KtonBalance<T>>::zero());
-
-		for (hash, mut value) in <StorageIterator<StakingLedgerT<T>>>::new(module, item) {
-			let StakingLedger {
-				active_ring,
-				active_deposit_ring,
-				active_kton,
-				deposit_items,
-				..
-			} = &mut value;
-
-			ring_pool = ring_pool.saturating_add(*active_ring);
-			kton_pool = kton_pool.saturating_add(*active_kton);
-
-			let total_deposit = deposit_items
-				.iter()
-				.fold(0.into(), |total_deposit, item| total_deposit + item.value);
-
-			if *active_deposit_ring != total_deposit {
-				*active_deposit_ring = total_deposit;
-
-				put_storage_value(module, item, &hash, value);
-			}
-		}
-
-		put_storage_value(module, b"RingPool", &[], ring_pool);
-		put_storage_value(module, b"KtonPool", &[], kton_pool);
-	}
-}
-
 #[cfg(test)]
 mod darwinia_tests;
 #[cfg(test)]
@@ -1058,12 +980,6 @@ decl_module! {
 		const TotalPower: Power = T::TotalPower::get();
 
 		fn deposit_event() = default;
-
-		fn on_runtime_upgrade() -> frame_support::weights::Weight {
-			migration::migrate::<T>();
-
-			0
-		}
 
 		/// sets `ElectionStatus` to `Open(now)` where `now` is the block number at which the
 		/// election window has opened, if we are at the last session and less blocks than
