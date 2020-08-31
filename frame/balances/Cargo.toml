@@ -16,16 +16,16 @@ serde = { version = "1.0.115", optional = true }
 darwinia-balances-rpc-runtime-api = { default-features = false, path = "./rpc/runtime-api" }
 darwinia-support                  = { default-features = false, path = "../support" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc6" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc6" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc6" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc6" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 [dev-dependencies]
 # substrate
-pallet-transaction-payment = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc6" }
-sp-core                    = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc6" }
-sp-io                      = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc6" }
+pallet-transaction-payment = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-core                    = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-io                      = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 [features]
 default = ["std"]

@@ -18,10 +18,10 @@ darwinia-support                    = { default-features = false, path = "../sup
 # github
 merkle-mountain-range = { package = "ckb-merkle-mountain-range", default-features = false, git = "https://github.com/darwinia-network/merkle-mountain-range.git" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc6" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc6" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc6" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc6" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 [dev-dependencies]
 # crates
@@ -29,8 +29,8 @@ serde_json = { version = "1.0.57" }
 # darwinia
 array-bytes = { path = "../../primitives/array-bytes" }
 # substrate
-sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc6" }
-sp-io   = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc6" }
+sp-core = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-io   = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 [features]
 default = ["std"]
