@@ -894,34 +894,34 @@ decl_error! {
 		/// Rewards for this era have already been claimed for this validator.
 		AlreadyClaimed,
 		/// The submitted result is received out of the open window.
-		PhragmenEarlySubmission,
+		OffchainElectionEarlySubmission,
 		/// The submitted result is not as good as the one stored on chain.
-		PhragmenWeakSubmission,
+		OffchainElectionWeakSubmission,
 		/// The snapshot data of the current window is missing.
 		SnapshotUnavailable,
 		/// Incorrect number of winners were presented.
-		PhragmenBogusWinnerCount,
+		OffchainElectionBogusWinnerCount,
 		/// One of the submitted winners is not an active candidate on chain (index is out of range
 		/// in snapshot).
-		PhragmenBogusWinner,
+		OffchainElectionBogusWinner,
 		/// Error while building the assignment type from the compact. This can happen if an index
 		/// is invalid, or if the weights _overflow_.
-		PhragmenBogusCompact,
+		OffchainElectionBogusCompact,
 		/// One of the submitted nominators is not an active nominator on chain.
-		PhragmenBogusNominator,
+		OffchainElectionBogusNominator,
 		/// One of the submitted nominators has an edge to which they have not voted on chain.
-		PhragmenBogusNomination,
+		OffchainElectionBogusNomination,
 		/// One of the submitted nominators has an edge which is submitted before the last non-zero
 		/// slash of the target.
-		PhragmenSlashedNomination,
+		OffchainElectionSlashedNomination,
 		/// A self vote must only be originated from a validator to ONLY themselves.
-		PhragmenBogusSelfVote,
+		OffchainElectionBogusSelfVote,
 		/// The submitted result has unknown edges that are not among the presented winners.
-		PhragmenBogusEdge,
+		OffchainElectionBogusEdge,
 		/// The claimed score does not match with the one computed from the data.
-		PhragmenBogusScore,
+		OffchainElectionBogusScore,
 		/// The election size is invalid.
-		PhragmenBogusElectionSize,
+		OffchainElectionBogusElectionSize,
 		/// The call is not allowed at the given time due to restrictions of election period.
 		CallNotAllowed,
 		/// Incorrect previous history depth input provided.
@@ -2497,14 +2497,15 @@ impl<T: Trait> Module<T> {
 		// check window open
 		ensure!(
 			Self::era_election_status().is_open(),
-			<Error<T>>::PhragmenEarlySubmission.with_weight(T::DbWeight::get().reads(1)),
+			<Error<T>>::OffchainElectionEarlySubmission.with_weight(T::DbWeight::get().reads(1)),
 		);
 
 		// check current era.
 		if let Some(current_era) = Self::current_era() {
 			ensure!(
 				current_era == era,
-				<Error<T>>::PhragmenEarlySubmission.with_weight(T::DbWeight::get().reads(2)),
+				<Error<T>>::OffchainElectionEarlySubmission
+					.with_weight(T::DbWeight::get().reads(2)),
 			)
 		}
 
@@ -2512,7 +2513,7 @@ impl<T: Trait> Module<T> {
 		if let Some(queued_score) = Self::queued_score() {
 			ensure!(
 				is_score_better(score, queued_score, T::MinSolutionScoreBump::get()),
-				<Error<T>>::PhragmenWeakSubmission.with_weight(T::DbWeight::get().reads(3)),
+				<Error<T>>::OffchainElectionWeakSubmission.with_weight(T::DbWeight::get().reads(3)),
 			)
 		}
 
@@ -2549,7 +2550,7 @@ impl<T: Trait> Module<T> {
 		// size of the solution must be correct.
 		ensure!(
 			snapshot_validators_length == u32::from(election_size.validators),
-			<Error<T>>::PhragmenBogusElectionSize,
+			<Error<T>>::OffchainElectionBogusElectionSize,
 		);
 
 		// check the winner length only here and when we know the length of the snapshot validators
@@ -2557,7 +2558,7 @@ impl<T: Trait> Module<T> {
 		let desired_winners = Self::validator_count().min(snapshot_validators_length);
 		ensure!(
 			winners.len() as u32 == desired_winners,
-			<Error<T>>::PhragmenBogusWinnerCount
+			<Error<T>>::OffchainElectionBogusWinnerCount
 		);
 
 		let snapshot_nominators_len = <SnapshotNominators<T>>::decode_len()
@@ -2567,7 +2568,7 @@ impl<T: Trait> Module<T> {
 		// rest of the size of the solution must be correct.
 		ensure!(
 			snapshot_nominators_len == election_size.nominators,
-			<Error<T>>::PhragmenBogusElectionSize,
+			<Error<T>>::OffchainElectionBogusElectionSize,
 		);
 
 		// decode snapshot validators.
@@ -2584,7 +2585,7 @@ impl<T: Trait> Module<T> {
 				snapshot_validators
 					.get(widx as usize)
 					.cloned()
-					.ok_or(<Error<T>>::PhragmenBogusWinner)
+					.ok_or(<Error<T>>::OffchainElectionBogusWinner)
 			})
 			.collect::<Result<Vec<T::AccountId>, Error<T>>>()?;
 
@@ -2606,7 +2607,7 @@ impl<T: Trait> Module<T> {
 			.map_err(|e| {
 				// log the error since it is not propagated into the runtime error.
 				log!(warn, "💸 un-compacting solution failed due to {:?}", e);
-				<Error<T>>::PhragmenBogusCompact
+				<Error<T>>::OffchainElectionBogusCompact
 			})?;
 
 		// check all nominators actually including the claimed vote. Also check correct self votes.
@@ -2625,14 +2626,14 @@ impl<T: Trait> Module<T> {
 					"💸 detected an error in the staking locking and snapshot."
 				);
 				// abort.
-				Err(<Error<T>>::PhragmenBogusNominator)?;
+				return Err(<Error<T>>::OffchainElectionBogusNominator.into());
 			}
 
 			if !is_validator {
 				// a normal vote
 				let nomination = maybe_nomination.expect(
 					"exactly one of `maybe_validator` and `maybe_nomination.is_some` is true. \
-				is_validator is false; maybe_nomination is some; qed",
+					is_validator is false; maybe_nomination is some; qed",
 				);
 
 				// NOTE: we don't really have to check here if the sum of all edges are the
@@ -2642,24 +2643,30 @@ impl<T: Trait> Module<T> {
 					// each target in the provided distribution must be actually nominated by the
 					// nominator after the last non-zero slash.
 					if nomination.targets.iter().find(|&tt| tt == t).is_none() {
-						Err(<Error<T>>::PhragmenBogusNomination)?;
+						return Err(<Error<T>>::OffchainElectionBogusNomination.into());
 					}
 
 					if <Self as Store>::SlashingSpans::get(&t).map_or(false, |spans| {
 						nomination.submitted_in < spans.last_nonzero_slash()
 					}) {
-						Err(<Error<T>>::PhragmenSlashedNomination)?;
+						return Err(<Error<T>>::OffchainElectionSlashedNomination.into());
 					}
 				}
 			} else {
 				// a self vote
-				ensure!(distribution.len() == 1, <Error<T>>::PhragmenBogusSelfVote);
-				ensure!(distribution[0].0 == *who, <Error<T>>::PhragmenBogusSelfVote);
+				ensure!(
+					distribution.len() == 1,
+					<Error<T>>::OffchainElectionBogusSelfVote
+				);
+				ensure!(
+					distribution[0].0 == *who,
+					<Error<T>>::OffchainElectionBogusSelfVote
+				);
 				// defensive only. A compact assignment of length one does NOT encode the weight and
 				// it is always created to be 100%.
 				ensure!(
 					distribution[0].1 == OffchainAccuracy::one(),
-					<Error<T>>::PhragmenBogusSelfVote,
+					<Error<T>>::OffchainElectionBogusSelfVote,
 				);
 			}
 		}
@@ -2674,13 +2681,13 @@ impl<T: Trait> Module<T> {
 		let (supports, num_error) =
 			build_support_map::<T::AccountId>(&winners, &staked_assignments);
 		// This technically checks that all targets in all nominators were among the winners.
-		ensure!(num_error == 0, <Error<T>>::PhragmenBogusEdge);
+		ensure!(num_error == 0, <Error<T>>::OffchainElectionBogusEdge);
 
 		// Check if the score is the same as the claimed one.
 		let submitted_score = evaluate_support(&supports);
 		ensure!(
 			submitted_score == claimed_score,
-			<Error<T>>::PhragmenBogusScore
+			<Error<T>>::OffchainElectionBogusScore
 		);
 
 		// At last, alles Ok. Exposures and store the result.
