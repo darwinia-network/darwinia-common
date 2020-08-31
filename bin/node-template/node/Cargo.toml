@@ -28,7 +28,6 @@ darwinia-balances-rpc               = { path = "../../../frame/balances/rpc" }
 darwinia-balances-rpc-runtime-api   = { path = "../../../frame/balances/rpc/runtime-api" }
 darwinia-claims                     = { path = "../../../frame/claims" }
 darwinia-cli                        = { optional = true, path = "../../../client/cli" }
-darwinia-ethereum-linear-relay      = { path = "../../../frame/bridge/ethereum/linear-relay" }
 darwinia-ethereum-relay             = { path = "../../../frame/bridge/ethereum/relay" }
 darwinia-header-mmr-rpc             = { path = "../../../frame/header-mmr/rpc" }
 darwinia-header-mmr-rpc-runtime-api = { path = "../../../frame/header-mmr/rpc/runtime-api" }

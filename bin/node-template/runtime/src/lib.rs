@@ -292,7 +292,6 @@ pub mod primitives {
 		frame_system::CheckNonce<Runtime>,
 		frame_system::CheckWeight<Runtime>,
 		pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
-		darwinia_ethereum_linear_relay::CheckEthereumRelayHeaderHash<Runtime>,
 	);
 
 	/// Unchecked extrinsic type as expected by this runtime.
@@ -392,8 +391,6 @@ use sp_version::RuntimeVersion;
 // --- darwinia ---
 use constants::*;
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
-use darwinia_ethereum_linear_relay::EthereumNetworkType;
-use darwinia_ethereum_offchain::crypto::AuthorityId as EthOffchainId;
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
 use darwinia_staking::EraIndex;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
@@ -834,27 +831,6 @@ impl darwinia_ethereum_backing::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const EthereumLinearRelayModuleId: ModuleId = ModuleId(*b"da/ethli");
-	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Mainnet;
-}
-impl darwinia_ethereum_linear_relay::Trait for Runtime {
-	type ModuleId = EthereumLinearRelayModuleId;
-	type Event = Event;
-	type EthereumNetwork = EthereumNetwork;
-	type Call = Call;
-	type Currency = Ring;
-	type WeightInfo = ();
-}
-
-parameter_types! {
-	pub const FetchInterval: BlockNumber = 3;
-}
-impl darwinia_ethereum_offchain::Trait for Runtime {
-	type AuthorityId = EthOffchainId;
-	type FetchInterval = FetchInterval;
-}
-
-parameter_types! {
 	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
 }
 impl darwinia_ethereum_relay::Trait for Runtime {
@@ -926,8 +902,6 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>},
 
 		EthereumBacking: darwinia_ethereum_backing::{Module, Call, Storage, Config<T>, Event<T>},
-		EthereumLinearRelay: darwinia_ethereum_linear_relay::{Module, Call, Storage, Config<T>, Event<T>},
-		EthereumOffchain: darwinia_ethereum_offchain::{Module, Call},
 		EthereumRelay: darwinia_ethereum_relay::{Module, Call, Storage, Config<T>, Event<T>},
 		RelayerGame: darwinia_relayer_game::<Instance0>::{Module, Call, Storage, Event<T>},
 
@@ -967,7 +941,6 @@ where
 			frame_system::CheckNonce::<Runtime>::from(nonce),
 			frame_system::CheckWeight::<Runtime>::new(),
 			pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
-			Default::default(),
 		);
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|e| {
