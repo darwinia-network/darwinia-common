@@ -17,6 +17,6 @@ jsonrpc-derive      = "14.2.1"
 # darwinia
 darwinia-balances-rpc-runtime-api = { path = "./runtime-api" }
 # substrate
-sp-api        = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc6" }
-sp-blockchain = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc6" }
-sp-runtime    = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.0.0-darwinia-rc6" }
+sp-api        = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-blockchain = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-runtime    = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }

@@ -737,10 +737,14 @@ pub fn do_slash<T: Trait>(
 		<RingPool<T>>::mutate(|p| {
 			let slashed_active_ring = pre_active_ring.saturating_sub(ledger.active_ring);
 
-			if *p > slashed_active_ring {
+			if *p >= slashed_active_ring {
 				*p -= slashed_active_ring;
 			} else {
-				error!("Slash on {:#?} Underflow the RING Pool", stash);
+				let error_rate = 100.into();
+
+				if slashed_active_ring - *p > error_rate {
+					error!("Slash on {:#?} Underflow the RING Pool", stash);
+				}
 
 				*p = Zero::zero();
 			}
@@ -760,10 +764,14 @@ pub fn do_slash<T: Trait>(
 		<KtonPool<T>>::mutate(|p| {
 			let slashed_active_kton = pre_active_kton.saturating_sub(ledger.active_kton);
 
-			if *p > slashed_active_kton {
+			if *p >= slashed_active_kton {
 				*p -= slashed_active_kton;
 			} else {
-				error!("Slash on {:#?} Underflow the RING Pool", stash);
+				let error_rate = 100.into();
+
+				if slashed_active_kton - *p > error_rate {
+					error!("Slash on {:#?} Underflow the KTON Pool", stash);
+				}
 
 				*p = Zero::zero();
 			}

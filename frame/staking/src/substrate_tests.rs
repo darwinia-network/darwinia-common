@@ -10,11 +10,13 @@
 //! + If you want to delete some functions, please left some comments
 //! explaining why you delete them.
 
-mod offchain_phragmen {
+mod offchain_election {
 	// --- darwinia ---
 	use crate::{mock::*, *};
 
-	pub fn build_offchain_phragmen_test_ext() {
+	/// setup a new set of validators and nominator storage items independent of the parent mock
+	/// file. This produces a edge graph that can be reduced.
+	pub fn build_offchain_election_test_ext() {
 		for i in (10..=40).step_by(10) {
 			// Note: we respect the convention of the mock (10, 11 pairs etc.) since these accounts
 			// have corresponding keys in session which makes everything more ergonomic and
@@ -3451,7 +3453,7 @@ fn test_payout_stakers() {
 		.has_stakers(false)
 		.build_and_execute(|| {
 			let balance = 1000;
-			// Create three validators:
+			// Create a validators:
 			bond_validator(11, 10, StakingBalance::RingBalance(balance)); // Default(64)
 
 			// Create nominators, targeting stash of validators
@@ -3763,12 +3765,12 @@ fn on_initialize_weight_is_correct() {
 		});
 
 	ExtBuilder::default()
-		.offchain_phragmen_ext()
+		.offchain_election_ext()
 		.validator_count(4)
 		.has_stakers(false)
 		.build()
 		.execute_with(|| {
-			crate::substrate_tests::offchain_phragmen::build_offchain_phragmen_test_ext();
+			crate::substrate_tests::offchain_election::build_offchain_election_test_ext();
 			run_to_block(11);
 			Staking::on_finalize(System::block_number());
 			System::set_block_number((System::block_number() + 1).into());
@@ -3788,14 +3790,12 @@ fn on_initialize_weight_is_correct() {
 
 #[test]
 fn payout_creates_controller() {
-	// Here we will test validator can set `max_nominators_payout` and it works.
-	// We also test that `payout_extra_nominators` works.
 	ExtBuilder::default()
 		.has_stakers(false)
 		.build_and_execute(|| {
 			let balance = StakingBalance::RingBalance(1000);
-			// Create three validators:
-			bond_validator(11, 10, balance); // Default(64)
+			// Create a validator:
+			bond_validator(11, 10, balance);
 
 			// Create a stash/controller pair
 			bond_nominator(1234, 1337, StakingBalance::RingBalance(100), vec![11]);
@@ -3814,5 +3814,39 @@ fn payout_creates_controller() {
 
 			// Controller is created
 			assert!(Ring::free_balance(1337) > 0);
+		})
+}
+
+#[test]
+fn payout_to_any_account_works() {
+	ExtBuilder::default()
+		.has_stakers(false)
+		.build_and_execute(|| {
+			let balance = StakingBalance::RingBalance(1000);
+			// Create a validator:
+			bond_validator(11, 10, balance); // Default(64)
+
+			// Create a stash/controller pair
+			bond_nominator(1234, 1337, StakingBalance::RingBalance(100), vec![11]);
+
+			// Update payout location
+			assert_ok!(Staking::set_payee(
+				Origin::signed(1337),
+				RewardDestination::Account(42)
+			));
+
+			// Reward Destination account doesn't exist
+			assert_eq!(Ring::free_balance(42), 0);
+
+			mock::start_era(1);
+			Staking::reward_by_ids(vec![(11, 1)]);
+			// Compute total payout now for whole duration as other parameter won't change
+			let total_payout_0 = current_total_payout_for_duration(3 * 1000);
+			assert!(total_payout_0 > 100); // Test is meaningful if reward something
+			mock::start_era(2);
+			assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11, 1));
+
+			// Payment is successful
+			assert!(Ring::free_balance(42) > 0);
 		})
 }

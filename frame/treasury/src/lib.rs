@@ -868,57 +868,6 @@ impl<T: Trait> Module<T> {
 
 		prior_approvals_len
 	}
-
-	pub fn migrate_retract_tip_for_tip_new() {
-		/// An open tipping "motion". Retains all details of a tip including information on the finder
-		/// and the members who have voted.
-		#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug)]
-		pub struct OldOpenTip<
-			AccountId: Parameter,
-			RingBalance: Parameter,
-			BlockNumber: Parameter,
-			Hash: Parameter,
-		> {
-			/// The hash of the reason for the tip. The reason should be a human-readable UTF-8 encoded string. A URL would be
-			/// sensible.
-			reason: Hash,
-			/// The account to be tipped.
-			who: AccountId,
-			/// The account who began this tip and the amount held on deposit.
-			finder: Option<(AccountId, RingBalance)>,
-			/// The block number at which this tip will close if `Some`. If `None`, then no closing is
-			/// scheduled.
-			closes: Option<BlockNumber>,
-			/// The members who have voted for this tip. Sorted by AccountId.
-			tips: Vec<(AccountId, RingBalance)>,
-		}
-
-		// --- substrate ---
-		use frame_support::{migration::StorageKeyIterator, Twox64Concat};
-
-		for (hash, old_tip) in StorageKeyIterator::<
-			T::Hash,
-			OldOpenTip<T::AccountId, RingBalance<T>, T::BlockNumber, T::Hash>,
-			Twox64Concat,
-		>::new(b"DarwiniaTreasury", b"Tips")
-		.drain()
-		{
-			let (finder, deposit, finders_fee) = match old_tip.finder {
-				Some((finder, deposit)) => (finder, deposit, true),
-				None => (T::AccountId::default(), Zero::zero(), false),
-			};
-			let new_tip = OpenTip {
-				reason: old_tip.reason,
-				who: old_tip.who,
-				finder,
-				deposit,
-				closes: old_tip.closes,
-				tips: old_tip.tips,
-				finders_fee,
-			};
-			<Tips<T>>::insert(hash, new_tip)
-		}
-	}
 }
 
 impl<T: Trait> OnUnbalanced<RingNegativeImbalance<T>> for Module<T> {
