@@ -460,7 +460,7 @@ impl frame_system::Trait for Runtime {
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
-	type SystemWeightInfo = ();
+	type SystemWeightInfo = weights::frame_system::WeightInfo;
 }
 
 parameter_types! {
@@ -491,7 +491,7 @@ impl pallet_timestamp::Trait for Runtime {
 	type Moment = Moment;
 	type OnTimestampSet = Babe;
 	type MinimumPeriod = MinimumPeriod;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_timestamp::WeightInfo;
 }
 
 type RingInstance = darwinia_balances::Instance0;
