@@ -489,7 +489,6 @@ impl<T: Trait> Relayable for Module<T> {
 
 			Self::verify_basic(&header, &ethash_proof)?;
 
-			println!("{:?}", "OKOK");
 			// last confirm no exsit the mmr verification will be passed
 			//
 			//      mmr_root of prevous submit
