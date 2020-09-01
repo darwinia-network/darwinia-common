@@ -6,7 +6,7 @@ homepage   = "https://darwinia.network/"
 license    = "Unlicense"
 name       = "node-template-runtime"
 repository = "https://github.com/darwinia-network/darwinia-common/"
-version    = "1.0.0-alpha.2"
+version    = "1.0.0-alpha.3"
 
 [dependencies]
 # crates
