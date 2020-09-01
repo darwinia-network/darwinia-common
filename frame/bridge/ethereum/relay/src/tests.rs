@@ -63,7 +63,7 @@ fn test_store_header() {
 }
 
 #[test]
-fn test_verify_raw_header_thing_chain() {
+fn proposal_basic_verification_should_sucess() {
 	ExtBuilder::default().build().execute_with(|| {
 		let mut header_things_with_proof = header_things_with_proof().unwrap();
 		header_things_with_proof.reverse();

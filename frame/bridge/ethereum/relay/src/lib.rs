@@ -114,8 +114,8 @@ decl_error! {
 		HeaderI,
 		/// Confirmed Blocks - CONFLICT
 		ConfirmebBlocksC,
-		/// Chain - INVALID
-		ChainI,
+		/// Proposal - INVALID
+		ProposalI,
 		/// MMR - INVALID
 		MMRI,
 		/// Header Hash - MISMATCHED
@@ -380,6 +380,19 @@ impl<T: Trait> Module<T> {
 		true
 	}
 
+	fn verify_basic(header: &EthereumHeader, ethash_proof: &[EthashProof]) -> DispatchResult {
+		ensure!(
+			Self::verify_block_seal(header, ethash_proof),
+			<Error<T>>::HeaderI
+		);
+		ensure!(
+			Self::verify_block_with_confrim_blocks(header),
+			<Error<T>>::ConfirmebBlocksC
+		);
+
+		Ok(())
+	}
+
 	// Verify the MMR root
 	// NOTE: leaves are (block_number, H256)
 	// block_number will transform to position in this function
@@ -413,12 +426,61 @@ impl<T: Trait> Relayable for Module<T> {
 	fn basic_verify(
 		proposal_with_proof: Vec<Self::HeaderThingWithProof>,
 	) -> Result<Vec<Self::HeaderThing>, DispatchError> {
-		let propose_chain_len = proposal_with_proof.len();
-		let mut proposal = vec![];
-		let mut first_header_mmr = None;
-		let mut first_header_number = 0;
+		let proposal_len = proposal_with_proof.len();
 
-		for (i, header_with_proof) in proposal_with_proof.into_iter().enumerate() {
+		ensure!(proposal_len != 0, <Error<T>>::ProposalI);
+		// Not allow to relay genesis header
+		ensure!(
+			proposal_with_proof[0].header.number > 0,
+			<Error<T>>::ProposalI
+		);
+
+		let mut proposal = vec![];
+		let mut proposal_with_proof = proposal_with_proof.into_iter();
+
+		let (proposed_header_mmr_root, last_leaf) = {
+			let Self::HeaderThingWithProof {
+				header,
+				ethash_proof,
+				mmr_root,
+				mmr_proof,
+			} = proposal_with_proof.next().unwrap();
+
+			Self::verify_basic(&header, &ethash_proof)?;
+
+			let parsed_mmr_root = array_unchecked!(mmr_root, 0, 32).into();
+			let last_leaf = header.number - 1;
+
+			if proposal_len == 1 {
+				if let Some(l) = LastConfirmedHeaderInfo::get() {
+					// The mmr_root of first submit should includ the hash last confirm block
+					//      mmr_root of 1st
+					//     / \
+					//    -   -
+					//   /     \
+					//  C  ...  1st
+					//  C: Last Comfirmed Block 1st: 1st submit block
+					ensure!(
+						Self::verify_mmr(
+							last_leaf,
+							parsed_mmr_root,
+							mmr_proof
+								.iter()
+								.map(|h| array_unchecked!(h, 0, 32).into())
+								.collect(),
+							vec![(l.0, l.1)],
+						),
+						<Error<T>>::MMRI
+					);
+				}
+			}
+
+			proposal.push(Self::HeaderThing { header, mmr_root });
+
+			(parsed_mmr_root, last_leaf)
+		};
+
+		for header_with_proof in proposal_with_proof.into_iter() {
 			let Self::HeaderThingWithProof {
 				header,
 				ethash_proof,
@@ -426,68 +488,32 @@ impl<T: Trait> Relayable for Module<T> {
 				mmr_proof,
 			} = header_with_proof;
 
-			ensure!(
-				Self::verify_block_seal(&header, &ethash_proof),
-				<Error<T>>::HeaderI
-			);
-			ensure!(
-				Self::verify_block_with_confrim_blocks(&header),
-				<Error<T>>::ConfirmebBlocksC
-			);
+			Self::verify_basic(&header, &ethash_proof)?;
 
-			if i == 0 {
-				if propose_chain_len == 1 {
-					if let Some(l) = LastConfirmedHeaderInfo::get() {
-						// The mmr_root of first submit should includ the hash last confirm block
-						//      mmr_root of 1st
-						//     / \
-						//    -   -
-						//   /     \
-						//  C  ...  1st
-						//  C: Last Comfirmed Block 1st: 1st submit block
-						ensure!(
-							Self::verify_mmr(
-								header.number,
-								array_unchecked!(mmr_root, 0, 32).into(),
-								mmr_proof
-									.iter()
-									.map(|h| array_unchecked!(h, 0, 32).into())
-									.collect(),
-								vec![(l.0, l.1)],
-							),
-							<Error<T>>::MMRI
-						);
-					};
-				}
-
-				first_header_mmr = Some(array_unchecked!(mmr_root, 0, 32).into());
-				first_header_number = header.number;
-			// the hash of other submit should be included by previous mmr_root
-			} else if i == propose_chain_len - 1 {
-				// last confirm no exsit the mmr verification will be passed
-				//
-				//      mmr_root of prevous submit
-				//     / \
-				//    - ..-
-				//   /   | \
-				//  -  ..c  1st
-				// c: current submit  1st: 1st submit block
-				ensure!(
-					Self::verify_mmr(
-						first_header_number,
-						first_header_mmr.unwrap_or_default(),
-						mmr_proof
-							.iter()
-							.map(|h| array_unchecked!(h, 0, 32).into())
-							.collect(),
-						vec![(
-							header.number,
-							array_unchecked!(header.hash.unwrap_or_default(), 0, 32).into(),
-						)],
-					),
-					<Error<T>>::MMRI
-				);
-			}
+			println!("{:?}", "OKOK");
+			// last confirm no exsit the mmr verification will be passed
+			//
+			//      mmr_root of prevous submit
+			//     / \
+			//    - ..-
+			//   /   | \
+			//  -  ..c  1st
+			// c: current submit  1st: 1st submit block
+			ensure!(
+				Self::verify_mmr(
+					last_leaf,
+					proposed_header_mmr_root,
+					mmr_proof
+						.iter()
+						.map(|h| array_unchecked!(h, 0, 32).into())
+						.collect(),
+					vec![(
+						header.number,
+						array_unchecked!(header.hash.ok_or(<Error<T>>::HeaderI)?, 0, 32).into(),
+					)],
+				),
+				<Error<T>>::MMRI
+			);
 
 			proposal.push(Self::HeaderThing { header, mmr_root });
 		}
@@ -513,13 +539,13 @@ impl<T: Trait> Relayable for Module<T> {
 			let prev_header = &proposal[i + 1].header;
 
 			ensure!(
-				header.parent_hash == header.hash.ok_or(<Error<T>>::ChainI)?,
-				<Error<T>>::ChainI
+				header.parent_hash == header.hash.ok_or(<Error<T>>::ProposalI)?,
+				<Error<T>>::ProposalI
 			);
 			ensure!(
 				header.difficulty().to_owned()
 					== eth_partial.calculate_difficulty(&header, &prev_header),
-				<Error<T>>::ChainI
+				<Error<T>>::ProposalI
 			);
 		}
 
