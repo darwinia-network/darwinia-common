@@ -437,7 +437,6 @@ impl<T: Trait> Relayable for Module<T> {
 
 		let mut proposal = vec![];
 		let mut proposal_with_proof = proposal_with_proof.into_iter();
-
 		let (proposed_header_mmr_root, last_leaf) = {
 			let Self::HeaderThingWithProof {
 				header,
