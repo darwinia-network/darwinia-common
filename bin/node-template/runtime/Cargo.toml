@@ -6,7 +6,7 @@ homepage   = "https://darwinia.network/"
 license    = "Unlicense"
 name       = "node-template-runtime"
 repository = "https://github.com/darwinia-network/darwinia-common/"
-version    = "1.0.0-alpha.2"
+version    = "1.0.0-alpha.3"
 
 [dependencies]
 # crates
@@ -20,7 +20,6 @@ darwinia-balances-rpc-runtime-api   = { default-features = false, path = "../../
 darwinia-claims                     = { default-features = false, path = "../../../frame/claims" }
 darwinia-elections-phragmen         = { default-features = false, path = "../../../frame/elections-phragmen" }
 darwinia-ethereum-backing           = { default-features = false, path = "../../../frame/bridge/ethereum/backing" }
-darwinia-ethereum-offchain          = { default-features = false, path = "../../../frame/bridge/ethereum/offchain" }
 darwinia-ethereum-relay             = { default-features = false, path = "../../../frame/bridge/ethereum/relay" }
 darwinia-header-mmr                 = { default-features = false, path = "../../../frame/header-mmr" }
 darwinia-header-mmr-rpc-runtime-api = { default-features = false, path = "../../../frame/header-mmr/rpc/runtime-api" }

@@ -6,7 +6,7 @@ homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"
 name        = "darwinia-support"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "1.0.0-alpha.2"
+version     = "1.0.0-alpha.3"
 
 [dependencies]
 # crates

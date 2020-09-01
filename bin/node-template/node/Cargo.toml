@@ -7,7 +7,7 @@ homepage    = "https://darwinia.network/"
 license     = "Unlicense"
 name        = "node-template"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "1.0.0-alpha.2"
+version     = "1.0.0-alpha.3"
 
 [[bin]]
 name = "node-template"
