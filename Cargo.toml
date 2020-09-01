@@ -10,7 +10,6 @@ members = [
 	"frame/bridge/ethereum/backing",
 	"frame/bridge/ethereum/linear-relay",
 	"frame/bridge/ethereum/relay",
-	"frame/bridge/ethereum/offchain",
 	"frame/bridge/relayer-game",
 	"frame/elections-phragmen",
 	"frame/header-mmr",

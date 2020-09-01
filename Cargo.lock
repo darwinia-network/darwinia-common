@@ -1285,26 +1285,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-ethereum-offchain"
-version = "1.0.0-alpha.3"
-dependencies = [
- "array-bytes",
- "darwinia-balances",
- "darwinia-ethereum-linear-relay",
- "darwinia-support",
- "ethereum-primitives",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "rlp 0.4.4",
- "serde_json",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std 2.0.0-rc6",
-]
-
-[[package]]
 name = "darwinia-ethereum-relay"
 version = "1.0.0-alpha.3"
 dependencies = [
@@ -4052,7 +4032,6 @@ dependencies = [
  "darwinia-claims",
  "darwinia-elections-phragmen",
  "darwinia-ethereum-backing",
- "darwinia-ethereum-offchain",
  "darwinia-ethereum-relay",
  "darwinia-header-mmr",
  "darwinia-header-mmr-rpc-runtime-api",
