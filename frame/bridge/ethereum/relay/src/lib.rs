@@ -13,13 +13,15 @@ mod types {
 	use crate::*;
 
 	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
-	pub type Balance<T> = <CurrencyT<T> as Currency<AccountId<T>>>::Balance;
+	pub type RingBalance<T> = <CurrencyT<T> as Currency<AccountId<T>>>::Balance;
 
 	pub type MMRProof = Vec<H256>;
 
 	type CurrencyT<T> = <T as Trait>::Currency;
 }
 
+// --- core ---
+use core::fmt::{Debug, Formatter, Result as FmtResult};
 // --- crates ---
 use codec::{Decode, Encode};
 // --- github ---
@@ -29,14 +31,18 @@ use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
 	traits::Get,
 	traits::{Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, ReservableCurrency},
+	unsigned::{TransactionValidity, TransactionValidityError},
+	IsSubType,
 };
 use frame_system::ensure_signed;
 use sp_runtime::{
-	traits::AccountIdConversion, DispatchError, DispatchResult, ModuleId, RuntimeDebug,
+	traits::{AccountIdConversion, DispatchInfoOf, Dispatchable, SignedExtension},
+	transaction_validity::{InvalidTransaction, ValidTransaction},
+	DispatchError, DispatchResult, ModuleId, RuntimeDebug,
 };
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
-use sp_std::{convert::From, prelude::*};
+use sp_std::{convert::From, marker::PhantomData, prelude::*};
 // --- darwinia ---
 use crate::mmr::{leaf_index_to_mmr_size, leaf_index_to_pos, MMRMerge, MerkleProof};
 use array_bytes::array_unchecked;
@@ -63,13 +69,16 @@ pub trait Trait: frame_system::Trait {
 
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
+	type Call: Dispatchable + From<Call<Self>> + IsSubType<Call<Self>> + Clone;
+
 	type Currency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
 		+ ReservableCurrency<Self::AccountId>;
 
 	type RelayerGame: RelayerGameProtocol<
 		Relayer = AccountId<Self>,
+		Balance = RingBalance<Self>,
 		HeaderThingWithProof = EthereumHeaderThingWithProof,
-		BlockNumber = EthereumBlockNumber,
+		HeaderThing = EthereumHeaderThing,
 	>;
 
 	type ApproveOrigin: EnsureOrigin<Self::Origin>;
@@ -160,7 +169,7 @@ decl_storage! {
 		/// The confirm blocks keep in month
 		pub ConfirmBlockKeepInMonth get(fn confirm_block_keep_in_mounth): EthereumBlockNumber = 3;
 
-		pub ReceiptVerifyFee get(fn receipt_verify_fee) config(): Balance<T>;
+		pub ReceiptVerifyFee get(fn receipt_verify_fee) config(): RingBalance<T>;
 	}
 	add_extra_genesis {
 		config(dags_merkle_roots_loader): DagsMerkleRootsLoader;
@@ -260,7 +269,7 @@ decl_module! {
 		/// - One storage write
 		/// # </weight>
 		#[weight = 10_000_000]
-		pub fn set_receipt_verify_fee(origin, #[compact] new: Balance<T>) {
+		pub fn set_receipt_verify_fee(origin, #[compact] new: RingBalance<T>) {
 			T::RejectOrigin::ensure_origin(origin)?;
 
 			<ReceiptVerifyFee<T>>::put(new);
@@ -420,8 +429,6 @@ impl<T: Trait> Module<T> {
 impl<T: Trait> Relayable for Module<T> {
 	type HeaderThingWithProof = EthereumHeaderThingWithProof;
 	type HeaderThing = EthereumHeaderThing;
-	type BlockNumber = EthereumBlockNumber;
-	type HeaderHash = ethereum_primitives::H256;
 
 	fn basic_verify(
 		proposal_with_proof: Vec<Self::HeaderThingWithProof>,
@@ -519,7 +526,7 @@ impl<T: Trait> Relayable for Module<T> {
 		Ok(proposal)
 	}
 
-	fn best_block_number() -> Self::BlockNumber {
+	fn best_block_number() -> <Self::HeaderThing as HeaderThing>::Number {
 		if let Some(i) = LastConfirmedHeaderInfo::get() {
 			i.0
 		} else {
@@ -582,14 +589,14 @@ impl<T: Trait> Relayable for Module<T> {
 	}
 }
 
-impl<T: Trait> EthereumReceiptT<AccountId<T>, Balance<T>> for Module<T> {
+impl<T: Trait> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
 	type EthereumReceiptProof = (EthereumHeader, EthereumReceiptProof, MMRProof);
 
 	fn account_id() -> AccountId<T> {
 		Self::account_id()
 	}
 
-	fn receipt_verify_fee() -> Balance<T> {
+	fn receipt_verify_fee() -> RingBalance<T> {
 		Self::receipt_verify_fee()
 	}
 
@@ -665,5 +672,71 @@ impl HeaderThing for EthereumHeaderThing {
 
 	fn hash(&self) -> Self::Hash {
 		self.header.hash()
+	}
+}
+
+#[derive(Encode, Decode, Clone, Eq, PartialEq)]
+pub struct CheckEthereumRelayHeaderHash<T: Trait>(PhantomData<T>);
+impl<T: Trait> Debug for CheckEthereumRelayHeaderHash<T> {
+	#[cfg(feature = "std")]
+	fn fmt(&self, f: &mut Formatter) -> FmtResult {
+		write!(f, "CheckEthereumRelayHeaderHash")
+	}
+
+	#[cfg(not(feature = "std"))]
+	fn fmt(&self, _: &mut Formatter) -> FmtResult {
+		Ok(())
+	}
+}
+impl<T: Send + Sync + Trait> SignedExtension for CheckEthereumRelayHeaderHash<T> {
+	const IDENTIFIER: &'static str = "CheckEthereumRelayHeaderHash";
+	type AccountId = T::AccountId;
+	type Call = <T as Trait>::Call;
+	type AdditionalSigned = ();
+	type Pre = ();
+
+	fn additional_signed(&self) -> Result<Self::AdditionalSigned, TransactionValidityError> {
+		Ok(())
+	}
+
+	fn validate(
+		&self,
+		_: &Self::AccountId,
+		call: &Self::Call,
+		_: &DispatchInfoOf<Self::Call>,
+		_: usize,
+	) -> TransactionValidity {
+		if let Some(Call::submit_proposal(ref proposal)) = call.is_sub_type() {
+			if let Some(proposed_header_thing) = proposal.get(0) {
+				for existed_proposal in
+					T::RelayerGame::proposals_of_game(proposed_header_thing.header.number)
+				{
+					if existed_proposal
+						.bonded_proposal
+						.iter()
+						.zip(proposal.iter())
+						.all(
+							|(
+								(
+									_,
+									EthereumHeaderThing {
+										header: header_a,
+										mmr_root: mmr_root_a,
+									},
+								),
+								EthereumHeaderThingWithProof {
+									header: header_b,
+									mmr_root: mmr_root_b,
+									..
+								},
+							)| header_a == header_b && mmr_root_a == mmr_root_b,
+						) {
+						return InvalidTransaction::Custom(<Error<T>>::ProposalI.as_u8()).into();
+					}
+				}
+			}
+		}
+
+		Ok(ValidTransaction::default())
 	}
 }

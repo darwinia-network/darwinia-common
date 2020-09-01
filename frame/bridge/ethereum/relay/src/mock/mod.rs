@@ -43,6 +43,7 @@ impl_outer_origin! {
 impl_outer_dispatch! {
 	pub enum Call for Test where origin: Origin {
 		frame_system::System,
+		darwinia_ethereum_relay::EthereumRelay,
 	}
 }
 
@@ -66,6 +67,7 @@ parameter_types! {
 impl Trait for Test {
 	type ModuleId = EthereumRelayModuleId;
 	type Event = ();
+	type Call = Call;
 	type Currency = Ring;
 	type RelayerGame = UnusedRelayerGame;
 	type ApproveOrigin = EnsureRoot<AccountId>;
@@ -146,16 +148,30 @@ impl ExtBuilder {
 pub struct UnusedRelayerGame;
 impl RelayerGameProtocol for UnusedRelayerGame {
 	type Relayer = AccountId;
+	type Balance = Balance;
 	type HeaderThingWithProof = EthereumHeaderThingWithProof;
-	type BlockNumber = BlockNumber;
+	type HeaderThing = EthereumHeaderThing;
+
+	fn proposals_of_game(
+		_: <Self::HeaderThing as HeaderThing>::Number,
+	) -> Vec<
+		RelayProposal<
+			Self::Relayer,
+			Self::Balance,
+			Self::HeaderThing,
+			<Self::HeaderThing as HeaderThing>::Hash,
+		>,
+	> {
+		unimplemented!()
+	}
 
 	fn submit_proposal(_: Self::Relayer, _: Vec<Self::HeaderThingWithProof>) -> DispatchResult {
 		unimplemented!()
 	}
-	fn approve_pending_header(_: Self::BlockNumber) -> DispatchResult {
+	fn approve_pending_header(_: <Self::HeaderThing as HeaderThing>::Number) -> DispatchResult {
 		unimplemented!()
 	}
-	fn reject_pending_header(_: Self::BlockNumber) -> DispatchResult {
+	fn reject_pending_header(_: <Self::HeaderThing as HeaderThing>::Number) -> DispatchResult {
 		unimplemented!()
 	}
 }

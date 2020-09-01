@@ -20,21 +20,16 @@ pub type Round = u64;
 /// to expose some necessary APIs for relayer game
 pub trait Relayable {
 	type HeaderThingWithProof: Debug;
-	type HeaderThing: Clone
-		+ Debug
-		+ Default
-		+ PartialEq
-		+ FullCodec
-		+ HeaderThing<Number = Self::BlockNumber, Hash = Self::HeaderHash>;
-	type BlockNumber: Clone + Copy + Debug + Default + AtLeast32BitUnsigned + FullCodec;
-	type HeaderHash: Clone + Debug + Default + PartialEq + FullCodec;
+	type HeaderThing: HeaderThing;
+	// type BlockNumber: Clone + Copy + Debug + Default + AtLeast32BitUnsigned + FullCodec;
+	// type HeaderHash: Clone + Debug + Default + PartialEq + FullCodec;
 
 	fn basic_verify(
 		proposal_with_proof: Vec<Self::HeaderThingWithProof>,
 	) -> Result<Vec<Self::HeaderThing>, DispatchError>;
 
 	/// The latest finalize block's header's record id in darwinia
-	fn best_block_number() -> Self::BlockNumber;
+	fn best_block_number() -> <Self::HeaderThing as HeaderThing>::Number;
 
 	/// On chain arbitrate, to confirmed the header with 100% sure
 	fn on_chain_arbitrate(proposal: Vec<Self::HeaderThing>) -> DispatchResult;
@@ -42,9 +37,9 @@ pub trait Relayable {
 	/// Store the header confirmed in relayer game
 	fn store_header(header_thing: Self::HeaderThing) -> DispatchResult;
 }
-pub trait HeaderThing {
-	type Number;
-	type Hash;
+pub trait HeaderThing: Clone + Debug + Default + PartialEq + FullCodec {
+	type Number: Clone + Copy + Debug + Default + AtLeast32BitUnsigned + FullCodec;
+	type Hash: Clone + Debug + Default + PartialEq + FullCodec;
 
 	fn number(&self) -> Self::Number;
 
@@ -71,17 +66,32 @@ pub trait AdjustableRelayerGame {
 
 pub trait RelayerGameProtocol {
 	type Relayer;
+	type Balance;
 	type HeaderThingWithProof;
-	type BlockNumber;
+	type HeaderThing: HeaderThing;
+
+	fn proposals_of_game(
+		game_id: <Self::HeaderThing as HeaderThing>::Number,
+	) -> Vec<
+		RelayProposal<
+			Self::Relayer,
+			Self::Balance,
+			Self::HeaderThing,
+			<Self::HeaderThing as HeaderThing>::Hash,
+		>,
+	>;
 
 	fn submit_proposal(
 		relayer: Self::Relayer,
 		proposal: Vec<Self::HeaderThingWithProof>,
 	) -> DispatchResult;
 
-	fn approve_pending_header(pending: Self::BlockNumber) -> DispatchResult;
+	fn approve_pending_header(
+		pending: <Self::HeaderThing as HeaderThing>::Number,
+	) -> DispatchResult;
 
-	fn reject_pending_header(pending: Self::BlockNumber) -> DispatchResult;
+	fn reject_pending_header(pending: <Self::HeaderThing as HeaderThing>::Number)
+		-> DispatchResult;
 }
 
 #[derive(Clone, Encode, Decode, RuntimeDebug)]
@@ -92,7 +102,7 @@ pub struct RelayProposal<Relayer, Balance, HeaderThing, HeaderHash> {
 	/// The person who support this proposal with some bonds
 	pub relayer: Relayer,
 	/// A series of target chain's header brief and the value that relayer had bonded for it
-	pub bonded_samples: Vec<(Balance, HeaderThing)>,
+	pub bonded_proposal: Vec<(Balance, HeaderThing)>,
 	/// Parents (previous header hash)
 	///
 	/// If this field is `None` that means this proposal is the first proposal
@@ -142,7 +152,7 @@ where
 	Relayer: Clone + Ord,
 	Balance: Copy + AtLeast32BitUnsigned,
 	HeaderThing: crate::HeaderThing<Hash = HeaderHash>,
-	HeaderHash: PartialEq,
+	HeaderHash: Clone + Debug + Default + PartialEq + FullCodec,
 	F: Fn(u64) -> Round,
 {
 	let mut missing = vec![];
@@ -159,7 +169,7 @@ where
 		let mut evils = vec![];
 
 		for proposal in proposals_filter_by_round(&mut proposals, round, &round_of_samples_count) {
-			let (bond, header_thing) = proposal.bonded_samples.last().unwrap();
+			let (bond, header_thing) = proposal.bonded_proposal.last().unwrap();
 			let header_hash = header_thing.hash();
 
 			if header_hash == extend_from_header_hash {
@@ -229,7 +239,7 @@ where
 {
 	proposals
 		.drain_filter(|proposal| {
-			round_of_samples_count(proposal.bonded_samples.len() as _) == round
+			round_of_samples_count(proposal.bonded_proposal.len() as _) == round
 		})
 		.collect()
 }

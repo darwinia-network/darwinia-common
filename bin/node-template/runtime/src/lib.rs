@@ -42,7 +42,7 @@ pub mod impls {
 		impl AdjustableRelayerGame for EthereumRelayerGameAdjustor {
 			type Moment = BlockNumber;
 			type Balance = Balance;
-			type TcBlockNumber = <EthereumRelay as Relayable>::BlockNumber;
+			type TcBlockNumber = <<EthereumRelay as Relayable>::HeaderThing as HeaderThing>::Number;
 
 			fn challenge_time(round: Round) -> Self::Moment {
 				match round {
@@ -832,6 +832,7 @@ parameter_types! {
 impl darwinia_ethereum_relay::Trait for Runtime {
 	type ModuleId = EthereumRelayModuleId;
 	type Event = Event;
+	type Call = Call;
 	type Currency = Ring;
 	type RelayerGame = EthereumRelayerGame;
 	type ApproveOrigin = ApproveOrigin;
