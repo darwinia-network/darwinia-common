@@ -76,5 +76,5 @@ substrate-std = [
 	"sp-std/std",
 ]
 
-easy-testing = []
+deserialize  = []
 with-new-dag = []
