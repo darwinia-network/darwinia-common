@@ -28,6 +28,7 @@ use codec::{Decode, Encode};
 use ethereum_types::H128;
 // --- substrate ---
 use frame_support::{
+	debug::trace,
 	decl_error, decl_event, decl_module, decl_storage, ensure,
 	traits::Get,
 	traits::{Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, ReservableCurrency},
@@ -406,15 +407,16 @@ impl<T: Trait> Module<T> {
 	// NOTE: leaves are (block_number, H256)
 	// block_number will transform to position in this function
 	fn verify_mmr(
-		last_block_number: u64,
+		last_leaf: u64,
 		mmr_root: H256,
 		mmr_proof: MMRProof,
 		leaves: Vec<(u64, H256)>,
 	) -> bool {
 		let p = MerkleProof::<[u8; 32], MMRMerge>::new(
-			leaf_index_to_mmr_size(last_block_number),
+			leaf_index_to_mmr_size(last_leaf),
 			mmr_proof.into_iter().map(|h| h.into()).collect(),
 		);
+
 		p.verify(
 			mmr_root.into(),
 			leaves
@@ -442,51 +444,11 @@ impl<T: Trait> Relayable for Module<T> {
 			<Error<T>>::ProposalI
 		);
 
+		let mut proposed_mmr_root = Default::default();
+		let mut last_leaf = Default::default();
 		let mut proposal = vec![];
-		let mut proposal_with_proof = proposal_with_proof.into_iter();
-		let (proposed_header_mmr_root, last_leaf) = {
-			let Self::HeaderThingWithProof {
-				header,
-				ethash_proof,
-				mmr_root,
-				mmr_proof,
-			} = proposal_with_proof.next().unwrap();
 
-			Self::verify_basic(&header, &ethash_proof)?;
-
-			let parsed_mmr_root = array_unchecked!(mmr_root, 0, 32).into();
-			let last_leaf = header.number - 1;
-
-			if proposal_len == 1 {
-				if let Some(l) = LastConfirmedHeaderInfo::get() {
-					// The mmr_root of first submit should includ the hash last confirm block
-					//      mmr_root of 1st
-					//     / \
-					//    -   -
-					//   /     \
-					//  C  ...  1st
-					//  C: Last Comfirmed Block 1st: 1st submit block
-					ensure!(
-						Self::verify_mmr(
-							last_leaf,
-							parsed_mmr_root,
-							mmr_proof
-								.iter()
-								.map(|h| array_unchecked!(h, 0, 32).into())
-								.collect(),
-							vec![(l.0, l.1)],
-						),
-						<Error<T>>::MMRI
-					);
-				}
-			}
-
-			proposal.push(Self::HeaderThing { header, mmr_root });
-
-			(parsed_mmr_root, last_leaf)
-		};
-
-		for header_with_proof in proposal_with_proof.into_iter() {
+		for (i, header_with_proof) in proposal_with_proof.into_iter().enumerate() {
 			let Self::HeaderThingWithProof {
 				header,
 				ethash_proof,
@@ -496,29 +458,68 @@ impl<T: Trait> Relayable for Module<T> {
 
 			Self::verify_basic(&header, &ethash_proof)?;
 
-			// last confirm no exsit the mmr verification will be passed
-			//
-			//      mmr_root of prevous submit
-			//     / \
-			//    - ..-
-			//   /   | \
-			//  -  ..c  1st
-			// c: current submit  1st: 1st submit block
-			ensure!(
-				Self::verify_mmr(
-					last_leaf,
-					proposed_header_mmr_root,
-					mmr_proof
-						.iter()
-						.map(|h| array_unchecked!(h, 0, 32).into())
-						.collect(),
-					vec![(
-						header.number,
-						array_unchecked!(header.hash.ok_or(<Error<T>>::HeaderI)?, 0, 32).into(),
-					)],
-				),
-				<Error<T>>::MMRI
-			);
+			if i == 0 {
+				proposed_mmr_root = array_unchecked!(mmr_root, 0, 32).into();
+				last_leaf = header.number - 1;
+
+				if proposal_len == 1 {
+					if let Some(l) = LastConfirmedHeaderInfo::get() {
+						trace!(
+							target: "ethereum-relay",
+							"last_leaf: {:?}\n\
+							proposed_mmr_root: {:?}\n\
+							mmr_proof: {:#?}\n\
+							last_confirmed_block_number: {:?}\n\
+							last_confirmed_hash: {:?}",
+							last_leaf, proposed_mmr_root, mmr_proof, l.0, l.1,
+						);
+
+						// The mmr_root of first submit should includ the hash last confirm block
+						//      mmr_root of 1st
+						//     / \
+						//    -   -
+						//   /     \
+						//  C  ...  1st
+						//  C: Last Comfirmed Block 1st: 1st submit block
+						ensure!(
+							Self::verify_mmr(
+								last_leaf,
+								proposed_mmr_root,
+								mmr_proof
+									.iter()
+									.map(|h| array_unchecked!(h, 0, 32).into())
+									.collect(),
+								vec![(l.0, l.1)],
+							),
+							<Error<T>>::MMRI
+						);
+					}
+				}
+			} else if i == proposal_len - 1 {
+				// last confirm no exsit the mmr verification will be passed
+				//
+				//      mmr_root of prevous submit
+				//     / \
+				//    - ..-
+				//   /   | \
+				//  -  ..c  1st
+				// c: current submit  1st: 1st submit block
+				ensure!(
+					Self::verify_mmr(
+						last_leaf,
+						proposed_mmr_root,
+						mmr_proof
+							.iter()
+							.map(|h| array_unchecked!(h, 0, 32).into())
+							.collect(),
+						vec![(
+							header.number,
+							array_unchecked!(header.hash.ok_or(<Error<T>>::HeaderI)?, 0, 32).into(),
+						)],
+					),
+					<Error<T>>::MMRI
+				);
+			}
 
 			proposal.push(Self::HeaderThing { header, mmr_root });
 		}
@@ -564,6 +565,9 @@ impl<T: Trait> Relayable for Module<T> {
 			0
 		};
 		let EthereumHeaderThing { header, mmr_root } = header_thing;
+
+		// Not allow to relay genesis header
+		ensure!(header.number > 0, <Error<T>>::HeaderI);
 
 		if header.number > last_comfirmed_block_number {
 			LastConfirmedHeaderInfo::set(Some((
@@ -649,6 +653,7 @@ impl<T: Trait> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
 pub trait WeightInfo {}
 impl WeightInfo for () {}
 
+#[cfg_attr(test, derive(serde::Deserialize))]
 #[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
 pub struct EthereumHeaderThingWithProof {
 	header: EthereumHeader,
@@ -657,6 +662,7 @@ pub struct EthereumHeaderThingWithProof {
 	mmr_proof: Vec<H256>,
 }
 
+#[cfg_attr(test, derive(serde::Deserialize))]
 #[derive(Clone, PartialEq, Encode, Decode, Default, RuntimeDebug)]
 pub struct EthereumHeaderThing {
 	header: EthereumHeader,
