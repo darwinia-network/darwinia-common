@@ -65,8 +65,8 @@ fn verify_parse_token_redeem_proof() {
 			);
 			assert_ok!(EthereumRelay::init_genesis_header(&header, 0x68de130d2c02a8_u64));
 
-			let expect_account_id = <Test as Trait>::DetermineAccountId::account_id_for(
-				&hex_bytes_unchecked("0x2a92ae5b41feba5ee68a61449c557efa9e3b894a6461c058ec2de45429adb44546"),
+			let expect_account_id = EthereumBacking::account_id_try_from_bytes(
+				&hex_bytes_unchecked("0x92ae5b41feba5ee68a61449c557efa9e3b894a6461c058ec2de45429adb44546"),
 			).unwrap();
 			assert_eq!(
 				EthereumBacking::parse_token_redeem_proof(&proof_record, "RingBurndropTokens"),
@@ -122,8 +122,8 @@ fn verify_redeem_ring() {
 			);
 			assert_ok!(EthereumRelay::init_genesis_header(&header, 0x68de130d2c02a8_u64));
 
-			let expect_account_id = <Test as Trait>::DetermineAccountId::account_id_for(
-				&hex_bytes_unchecked("0x2a92ae5b41feba5ee68a61449c557efa9e3b894a6461c058ec2de45429adb44546"),
+			let expect_account_id = EthereumBacking::account_id_try_from_bytes(
+				&hex_bytes_unchecked("0x92ae5b41feba5ee68a61449c557efa9e3b894a6461c058ec2de45429adb44546"),
 			).unwrap();
 			let id1 = AccountId32::from([0; 32]);
 			let ring_locked_before = EthereumBacking::pot::<Ring>();
@@ -199,8 +199,8 @@ fn verify_redeem_kton() {
 			// totalDifficulty
 			assert_ok!(EthereumRelay::init_genesis_header(&header, 0x68e4ea361f7a78_u64));
 
-			let expect_account_id = <Test as Trait>::DetermineAccountId::account_id_for(
-				&hex_bytes_unchecked("0x2a92ae5b41feba5ee68a61449c557efa9e3b894a6461c058ec2de45429adb44546"),
+			let expect_account_id = EthereumBacking::account_id_try_from_bytes(
+				&hex_bytes_unchecked("0x92ae5b41feba5ee68a61449c557efa9e3b894a6461c058ec2de45429adb44546"),
 			).unwrap();
 			// 0.123456789123456789 KTON
 			assert_eq!(
@@ -246,7 +246,7 @@ fn verify_redeem_deposit() {
 			// 3: uint256: 1576664555 _startAt
 			// 4: uint256: 1000 _unitInterest
 			// 5: bool: false
-			//  _data     0x2a92ae5b41feba5ee68a61449c557efa9e3b894a6461c058ec2de45429adb44546
+			//  _data     0x92ae5b41feba5ee68a61449c557efa9e3b894a6461c058ec2de45429adb44546
 
 			// transfer：https://ropsten.etherscan.io/tx/0x4343443642cafe19e06d61047286c5ec5964b1483d5e8cf61e89892c09dc5209
 			let proof_record = EthereumReceiptProof {
@@ -289,8 +289,8 @@ fn verify_redeem_deposit() {
 			assert_ok!(EthereumRelay::init_genesis_header(&header, 0x68e58ae1c31caf_u64));
 
 			let ring_locked_before = EthereumBacking::pot::<Ring>();
-			let expect_account_id = <Test as Trait>::DetermineAccountId::account_id_for(
-				&hex_bytes_unchecked("0x2a92ae5b41feba5ee68a61449c557efa9e3b894a6461c058ec2de45429adb44546"),
+			let expect_account_id = EthereumBacking::account_id_try_from_bytes(
+				&hex_bytes_unchecked("0x92ae5b41feba5ee68a61449c557efa9e3b894a6461c058ec2de45429adb44546"),
 			).unwrap();
 			let id1 = AccountId32::from([0; 32]);
 			let controller = AccountId32::from([1; 32]);

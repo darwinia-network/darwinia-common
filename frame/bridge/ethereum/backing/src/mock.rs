@@ -96,7 +96,7 @@ parameter_types! {
 impl Trait for Test {
 	type ModuleId = EthBackingModuleId;
 	type Event = ();
-	type DetermineAccountId = AccountIdDeterminator<Test>;
+	type RedeemAccountId = AccountId;
 	type EthereumRelay = EthereumRelay;
 	type OnDepositRedeem = Staking;
 	type RingCurrency = Ring;

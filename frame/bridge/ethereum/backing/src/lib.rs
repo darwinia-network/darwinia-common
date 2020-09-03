@@ -41,8 +41,9 @@ use sp_runtime::{
 };
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
-use sp_std::{convert::TryFrom, marker::PhantomData, vec};
+use sp_std::{convert::TryFrom, vec};
 // --- darwinia ---
+use array_bytes::array_unchecked;
 use darwinia_support::{
 	balance::lock::*,
 	traits::{EthereumReceipt, OnDepositRedeem},
@@ -56,7 +57,7 @@ pub trait Trait: frame_system::Trait {
 
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
-	type DetermineAccountId: AccountIdFor<Self::AccountId>;
+	type RedeemAccountId: From<[u8; 32]> + Into<<Self as frame_system::Trait>::AccountId>;
 
 	type EthereumRelay: EthereumReceipt<Self::AccountId, RingBalance<Self>>;
 
@@ -251,6 +252,14 @@ impl<T: Trait> Module<T> {
 		T::ModuleId::get().into_account()
 	}
 
+	pub fn account_id_try_from_bytes(bytes: &[u8]) -> Result<T::AccountId, DispatchError> {
+		ensure!(bytes.len() == 32, <Error<T>>::AddrLenMis);
+
+		let redeem_account_id: T::RedeemAccountId = array_unchecked!(bytes, 0, 32).into();
+
+		Ok(redeem_account_id.into())
+	}
+
 	/// Return the amount of money in the pot.
 	// The existential deposit is not part of the pot so backing account never gets deleted.
 	fn pot<C: LockableCurrency<T::AccountId>>() -> C::Balance {
@@ -330,10 +339,7 @@ impl<T: Trait> Module<T> {
 				.ok_or(<Error<T>>::BytesCF)?;
 			debug::trace!(target: "ethereum-backing", "[ethereum-backing] Raw Subkey: {:?}", raw_subkey);
 
-			// let decoded_sub_key =
-			// 	hex::decode(&raw_subkey).map_err(|_| "Decode Address - FAILED")?;
-
-			T::DetermineAccountId::account_id_for(&raw_subkey)?
+			Self::account_id_try_from_bytes(&raw_subkey)?
 		};
 		debug::trace!(target: "ethereum-backing", "[ethereum-backing] Darwinia Account: {:?}", darwinia_account);
 
@@ -458,10 +464,7 @@ impl<T: Trait> Module<T> {
 				.ok_or(<Error<T>>::BytesCF)?;
 			debug::trace!(target: "ethereum-backing", "[ethereum-backing] Raw Subkey: {:?}", raw_subkey);
 
-			// let decoded_sub_key =
-			// 	hex::decode(&raw_subkey).map_err(|_| "Decode Address - FAILED")?;
-
-			T::DetermineAccountId::account_id_for(&raw_subkey)?
+			Self::account_id_try_from_bytes(&raw_subkey)?
 		};
 		debug::trace!(target: "ethereum-backing", "[ethereum-backing] Darwinia Account: {:?}", darwinia_account);
 
@@ -616,27 +619,4 @@ pub enum RedeemFor {
 	Ring,
 	Kton,
 	Deposit,
-}
-
-pub trait AccountIdFor<AccountId> {
-	fn account_id_for(decoded_sub_key: &[u8]) -> Result<AccountId, DispatchError>;
-}
-
-pub struct AccountIdDeterminator<T: Trait>(PhantomData<T>);
-impl<T: Trait> AccountIdFor<T::AccountId> for AccountIdDeterminator<T>
-where
-	T::AccountId: sp_std::convert::From<[u8; 32]> + AsRef<[u8]>,
-{
-	fn account_id_for(decoded_sub_key: &[u8]) -> Result<T::AccountId, DispatchError> {
-		ensure!(decoded_sub_key.len() == 33, <Error<T>>::AddrLenMis);
-		ensure!(
-			decoded_sub_key[0] == T::SubKeyPrefix::get(),
-			<Error<T>>::PubkeyPrefixMis
-		);
-
-		let mut raw_account = [0u8; 32];
-		raw_account.copy_from_slice(&decoded_sub_key[1..]);
-
-		Ok(raw_account.into())
-	}
 }
