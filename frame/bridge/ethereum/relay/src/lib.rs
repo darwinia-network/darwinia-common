@@ -148,8 +148,14 @@ decl_storage! {
 		/// Ethereum last confrimed header info including ethereum block number, hash, and mmr
 		pub
 			LastConfirmedHeaderInfo
-			get(fn last_confirm_header_info)
-			: Option<(EthereumBlockNumber, H256, H256)>;
+			get(fn last_confirmed_header_info)
+			config()
+			: (EthereumBlockNumber, H256, H256)
+			= (
+				0,
+				b"\xd4\xe5g@\xf8v\xae\xf8\xc0\x10\xb8j@\xd5\xf5gE\xa1\x18\xd0\x90j4\xe6\x9a\xec\x8c\r\xb1\xcb\x8f\xa3".into(),
+				b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00".into()
+			);
 
 		/// The Ethereum headers confrimed by relayer game
 		/// The actural storage needs to be defined
@@ -456,46 +462,52 @@ impl<T: Trait> Relayable for Module<T> {
 				mmr_proof,
 			} = header_with_proof;
 
-			Self::verify_basic(&header, &ethash_proof)?;
-
 			if i == 0 {
 				proposed_mmr_root = array_unchecked!(mmr_root, 0, 32).into();
 				last_leaf = header.number - 1;
 
 				if proposal_len == 1 {
-					if let Some(l) = LastConfirmedHeaderInfo::get() {
-						trace!(
-							target: "ethereum-relay",
-							"last_leaf: {:?}\n\
-							proposed_mmr_root: {:?}\n\
-							mmr_proof: {:#?}\n\
-							last_confirmed_block_number: {:?}\n\
-							last_confirmed_hash: {:?}",
-							last_leaf, proposed_mmr_root, mmr_proof, l.0, l.1,
-						);
+					Self::verify_basic(&header, &ethash_proof)?;
 
-						// The mmr_root of first submit should includ the hash last confirm block
-						//      mmr_root of 1st
-						//     / \
-						//    -   -
-						//   /     \
-						//  C  ...  1st
-						//  C: Last Comfirmed Block 1st: 1st submit block
-						ensure!(
-							Self::verify_mmr(
-								last_leaf,
-								proposed_mmr_root,
-								mmr_proof
-									.iter()
-									.map(|h| array_unchecked!(h, 0, 32).into())
-									.collect(),
-								vec![(l.0, l.1)],
-							),
-							<Error<T>>::MMRI
-						);
-					}
+					let (last_confirmed_block_number, last_confirmed_hash, _) =
+						LastConfirmedHeaderInfo::get();
+					trace!(
+						target: "ethereum-relay",
+						"last_leaf: {:?}\n\
+						proposed_mmr_root: {:?}\n\
+						mmr_proof: {:#?}\n\
+						last_confirmed_block_number: {:?}\n\
+						last_confirmed_hash: {:?}",
+						last_leaf,
+						proposed_mmr_root,
+						mmr_proof,
+						last_confirmed_block_number,
+						last_confirmed_hash,
+					);
+
+					// The mmr_root of first submit should includ the hash last confirm block
+					//      mmr_root of 1st
+					//     / \
+					//    -   -
+					//   /     \
+					//  C  ...  1st
+					//  C: Last Comfirmed Block 1st: 1st submit block
+					ensure!(
+						Self::verify_mmr(
+							last_leaf,
+							proposed_mmr_root,
+							mmr_proof
+								.iter()
+								.map(|h| array_unchecked!(h, 0, 32).into())
+								.collect(),
+							vec![(last_confirmed_block_number, last_confirmed_hash)],
+						),
+						<Error<T>>::MMRI
+					);
 				}
 			} else if i == proposal_len - 1 {
+				Self::verify_basic(&header, &ethash_proof)?;
+
 				// last confirm no exsit the mmr verification will be passed
 				//
 				//      mmr_root of prevous submit
@@ -528,11 +540,7 @@ impl<T: Trait> Relayable for Module<T> {
 	}
 
 	fn best_block_number() -> <Self::HeaderThing as HeaderThing>::Number {
-		if let Some(i) = LastConfirmedHeaderInfo::get() {
-			i.0
-		} else {
-			0
-		}
+		Self::last_confirmed_header_info().0
 	}
 
 	fn on_chain_arbitrate(proposal: Vec<Self::HeaderThing>) -> DispatchResult {
@@ -559,22 +567,18 @@ impl<T: Trait> Relayable for Module<T> {
 	}
 
 	fn store_header(header_thing: Self::HeaderThing) -> DispatchResult {
-		let last_comfirmed_block_number = if let Some(i) = LastConfirmedHeaderInfo::get() {
-			i.0
-		} else {
-			0
-		};
+		let last_comfirmed_block_number = LastConfirmedHeaderInfo::get().0;
 		let EthereumHeaderThing { header, mmr_root } = header_thing;
 
 		// Not allow to relay genesis header
 		ensure!(header.number > 0, <Error<T>>::HeaderI);
 
 		if header.number > last_comfirmed_block_number {
-			LastConfirmedHeaderInfo::set(Some((
+			LastConfirmedHeaderInfo::set((
 				header.number,
 				array_unchecked!(header.hash.unwrap_or_default(), 0, 32).into(),
 				mmr_root,
-			)))
+			));
 		};
 
 		let confirm_cycle = header.number / ConfirmBlocksInCycle::get();
@@ -619,8 +623,7 @@ impl<T: Trait> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
 		);
 
 		// Verify header member to last confirmed block using mmr proof
-		let last_block_info =
-			Self::last_confirm_header_info().ok_or(EthereumError::InvalidReceiptProof)?;
+		let last_block_info = Self::last_confirmed_header_info();
 
 		ensure!(
 			Self::verify_mmr(

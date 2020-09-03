@@ -11,6 +11,7 @@ use sp_runtime::RuntimeDebug;
 use sp_std::prelude::*;
 // --- darwinia ---
 use crate::*;
+#[cfg(any(feature = "deserialize", test))]
 use array_bytes::hex_bytes_unchecked;
 
 #[derive(Clone, Copy, PartialEq, Eq, Encode, Decode, RuntimeDebug)]

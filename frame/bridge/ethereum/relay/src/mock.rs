@@ -161,6 +161,16 @@ impl RelayerGameProtocol for UnusedRelayerGame {
 	}
 }
 
-pub fn header_things_with_proof() -> Vec<EthereumHeaderThingWithProof> {
-	serde_json::from_reader(File::open("blocks.json").unwrap()).unwrap()
+pub fn proposal_of_game_with_id(
+	game_id: u64,
+	proposal_id: u64,
+) -> Vec<EthereumHeaderThingWithProof> {
+	serde_json::from_reader(
+		File::open(format!(
+			"tests-data/game-{}/proposal-{}.json",
+			game_id, proposal_id
+		))
+		.unwrap(),
+	)
+	.unwrap()
 }
