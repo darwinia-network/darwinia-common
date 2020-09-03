@@ -52,7 +52,6 @@ use darwinia_support::{
 	balance::lock::LockableCurrency, traits::EthereumReceipt as EthereumReceiptT,
 };
 use ethereum_primitives::{
-	error::EthereumError,
 	ethashproof::EthashProof,
 	header::EthereumHeader,
 	pow::EthashPartial,
@@ -118,6 +117,8 @@ decl_event! {
 
 decl_error! {
 	pub enum Error for Module<T: Trait> {
+		/// Block Number - UNDERFLOW
+		BlockNumberUF,
 		/// Target Header - ALREADY EXISTED
 		TargetHeaderAE,
 		/// Header - INVALID
@@ -598,7 +599,7 @@ impl<T: Trait> Relayable for Module<T> {
 }
 
 impl<T: Trait> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
-	type EthereumReceiptProof = (EthereumHeader, EthereumReceiptProof, MMRProof);
+	type EthereumReceiptProofThing = (EthereumHeader, EthereumReceiptProof, MMRProof);
 
 	fn account_id() -> AccountId<T> {
 		Self::account_id()
@@ -609,8 +610,8 @@ impl<T: Trait> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
 	}
 
 	fn verify_receipt(
-		proof: &Self::EthereumReceiptProof,
-	) -> Result<EthereumReceipt, EthereumError> {
+		proof: &Self::EthereumReceiptProofThing,
+	) -> Result<EthereumReceipt, DispatchError> {
 		// Verify header hash
 		let eth_header = &proof.0;
 		let proof_record = &proof.1;
@@ -619,34 +620,43 @@ impl<T: Trait> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
 
 		ensure!(
 			header_hash == eth_header.re_compute_hash(),
-			EthereumError::InvalidReceiptProof
+			<Error<T>>::HeaderHashMis,
 		);
 
 		// Verify header member to last confirmed block using mmr proof
-		let last_block_info = Self::last_confirmed_header_info();
+		let (last_leaf, mmr_root) = {
+			let (block_number, _, mmr_root) = Self::last_confirmed_header_info();
+
+			(
+				block_number
+					.checked_sub(1)
+					.ok_or(<Error<T>>::BlockNumberUF)?,
+				mmr_root,
+			)
+		};
 
 		ensure!(
 			Self::verify_mmr(
-				last_block_info.0,
-				last_block_info.2,
+				last_leaf,
+				mmr_root,
 				mmr_proof.to_vec(),
 				vec![(
 					eth_header.number,
 					array_unchecked!(eth_header.hash.unwrap_or_default(), 0, 32).into(),
 				)]
 			),
-			EthereumError::InvalidReceiptProof
+			<Error<T>>::MMRI
 		);
 
 		// Verify receipt proof
 		let receipt =
 			EthereumReceipt::verify_proof_and_generate(eth_header.receipts_root(), &proof_record)
-				.map_err(|_| EthereumError::InvalidReceiptProof)?;
+				.map_err(|_| <Error<T>>::ReceiptProofI)?;
 
 		Ok(receipt)
 	}
 
-	fn gen_receipt_index(proof: &Self::EthereumReceiptProof) -> EthereumTransactionIndex {
+	fn gen_receipt_index(proof: &Self::EthereumReceiptProofThing) -> EthereumTransactionIndex {
 		let proof_record = &proof.1;
 		(proof_record.header_hash, proof.1.index)
 	}
@@ -686,6 +696,11 @@ impl HeaderThing for EthereumHeaderThing {
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq)]
 pub struct CheckEthereumRelayHeaderHash<T: Trait>(PhantomData<T>);
+impl<T: Trait> CheckEthereumRelayHeaderHash<T> {
+	pub fn new() -> Self {
+		Self(Default::default())
+	}
+}
 impl<T: Trait> Debug for CheckEthereumRelayHeaderHash<T> {
 	#[cfg(feature = "std")]
 	fn fmt(&self, f: &mut Formatter) -> FmtResult {

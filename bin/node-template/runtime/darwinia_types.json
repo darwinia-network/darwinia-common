@@ -185,6 +185,7 @@
 		"proof": "Bytes",
 		"header_hash": "H256"
 	},
+	"EthereumReceiptProofThing": "(EthereumHeader, EthereumReceiptProof, MMRProof)",
 	"MMRProof": "Vec<H256>",
 	"__[pallet.claims]__": {},
 	"OtherSignature": {

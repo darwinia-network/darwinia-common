@@ -19,10 +19,10 @@ mod types {
 	pub type KtonBalance<T> =
 		<<T as Trait>::KtonCurrency as Currency<<T as frame_system::Trait>::AccountId>>::Balance;
 
-	pub type EthereumReceiptProof<T> = <<T as Trait>::EthereumRelay as EthereumReceipt<
+	pub type EthereumReceiptProofThing<T> = <<T as Trait>::EthereumRelay as EthereumReceipt<
 		<T as frame_system::Trait>::AccountId,
 		RingBalance<T>,
-	>>::EthereumReceiptProof;
+	>>::EthereumReceiptProofThing;
 }
 
 // --- crates ---
@@ -182,7 +182,7 @@ decl_module! {
 		/// - `O(1)`
 		/// # </weight>
 		#[weight = 10_000_000]
-		pub fn redeem(origin, act: RedeemFor, proof: EthereumReceiptProof<T>) {
+		pub fn redeem(origin, act: RedeemFor, proof: EthereumReceiptProofThing<T>) {
 			let redeemer = ensure_signed(origin)?;
 
 			match act {
@@ -269,7 +269,7 @@ impl<T: Trait> Module<T> {
 	}
 
 	fn parse_token_redeem_proof(
-		proof_record: &EthereumReceiptProof<T>,
+		proof_record: &EthereumReceiptProofThing<T>,
 		event_name: &str,
 	) -> Result<(Balance, T::AccountId, RingBalance<T>), DispatchError> {
 		let verified_receipt = T::EthereumRelay::verify_receipt(proof_record)
@@ -347,7 +347,7 @@ impl<T: Trait> Module<T> {
 	}
 
 	fn parse_deposit_redeem_proof(
-		proof_record: &EthereumReceiptProof<T>,
+		proof_record: &EthereumReceiptProofThing<T>,
 	) -> Result<
 		(
 			DepositId,
@@ -482,7 +482,10 @@ impl<T: Trait> Module<T> {
 
 	// event RingBurndropTokens(address indexed token, address indexed owner, uint amount, bytes data)
 	// https://ropsten.etherscan.io/tx/0x81f699c93b00ab0b7db701f87b6f6045c1e0692862fcaaf8f06755abb0536800
-	fn redeem_ring(redeemer: &T::AccountId, proof: &EthereumReceiptProof<T>) -> DispatchResult {
+	fn redeem_ring(
+		redeemer: &T::AccountId,
+		proof: &EthereumReceiptProofThing<T>,
+	) -> DispatchResult {
 		ensure!(
 			!RingProofVerified::contains_key(T::EthereumRelay::gen_receipt_index(proof)),
 			<Error<T>>::RingAR,
@@ -524,7 +527,10 @@ impl<T: Trait> Module<T> {
 
 	// event KtonBurndropTokens(address indexed token, address indexed owner, uint amount, bytes data)
 	// https://ropsten.etherscan.io/tx/0xc878562085dd8b68ad81adf0820aa0380f1f81b0ea7c012be122937b74020f96
-	fn redeem_kton(redeemer: &T::AccountId, proof: &EthereumReceiptProof<T>) -> DispatchResult {
+	fn redeem_kton(
+		redeemer: &T::AccountId,
+		proof: &EthereumReceiptProofThing<T>,
+	) -> DispatchResult {
 		ensure!(
 			!KtonProofVerified::contains_key(T::EthereumRelay::gen_receipt_index(proof)),
 			<Error<T>>::KtonAR,
@@ -566,7 +572,10 @@ impl<T: Trait> Module<T> {
 
 	// event Burndrop(uint256 indexed _depositID,  address _depositor, uint48 _months, uint48 _startAt, uint64 _unitInterest, uint128 _value, bytes _data)
 	// https://ropsten.etherscan.io/tx/0xfd2cac791bb0c0bee7c5711f17ef93401061d314f4eb84e1bc91f32b73134ca1
-	fn redeem_deposit(redeemer: &T::AccountId, proof: &EthereumReceiptProof<T>) -> DispatchResult {
+	fn redeem_deposit(
+		redeemer: &T::AccountId,
+		proof: &EthereumReceiptProofThing<T>,
+	) -> DispatchResult {
 		ensure!(
 			!DepositProofVerified::contains_key(T::EthereumRelay::gen_receipt_index(proof)),
 			<Error<T>>::DepositAR,

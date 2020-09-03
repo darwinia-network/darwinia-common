@@ -8,14 +8,14 @@ use codec::FullCodec;
 use impl_trait_for_tuples::impl_for_tuples;
 // --- substrate ---
 use frame_support::traits::{Currency, TryDrop};
-use sp_runtime::DispatchResult;
+use sp_runtime::{DispatchError, DispatchResult};
 use sp_std::prelude::*;
 // --- darwinia ---
 use crate::balance::{
 	lock::{LockFor, LockReasons},
 	FrozenBalance,
 };
-use ethereum_primitives::{error::EthereumError, receipt::EthereumTransactionIndex};
+use ethereum_primitives::receipt::EthereumTransactionIndex;
 
 pub trait BalanceInfo<Balance, Module> {
 	fn free(&self) -> Balance;
@@ -143,15 +143,15 @@ pub trait OnUnbalancedKton<Imbalance: TryDrop> {
 impl<Imbalance: TryDrop> OnUnbalancedKton<Imbalance> for () {}
 
 pub trait EthereumReceipt<AccountId, Balance> {
-	type EthereumReceiptProof: Clone + Debug + PartialEq + FullCodec;
+	type EthereumReceiptProofThing: Clone + Debug + PartialEq + FullCodec;
 
 	fn account_id() -> AccountId;
 
 	fn receipt_verify_fee() -> Balance;
 
 	fn verify_receipt(
-		proof: &Self::EthereumReceiptProof,
-	) -> Result<ethereum_primitives::receipt::EthereumReceipt, EthereumError>;
+		proof: &Self::EthereumReceiptProofThing,
+	) -> Result<ethereum_primitives::receipt::EthereumReceipt, DispatchError>;
 
-	fn gen_receipt_index(proof: &Self::EthereumReceiptProof) -> EthereumTransactionIndex;
+	fn gen_receipt_index(proof: &Self::EthereumReceiptProofThing) -> EthereumTransactionIndex;
 }
