@@ -14,8 +14,8 @@ use ethereum_primitives::{header::EthereumHeader, receipt::EthereumReceiptProof}
 #[test]
 fn genesis_config_works() {
 	ExtBuilder::default().build().execute_with(|| {
-		assert_eq!(EthBacking::pot::<Ring>(), 20000000000000);
-		assert_eq!(EthBacking::pot::<Kton>(), 5000000000000);
+		assert_eq!(EthereumBacking::pot::<Ring>(), 20000000000000);
+		assert_eq!(EthereumBacking::pot::<Kton>(), 5000000000000);
 	});
 }
 
@@ -69,7 +69,7 @@ fn verify_parse_token_redeem_proof() {
 				&hex_bytes_unchecked("0x2a92ae5b41feba5ee68a61449c557efa9e3b894a6461c058ec2de45429adb44546"),
 			).unwrap();
 			assert_eq!(
-				EthBacking::parse_token_redeem_proof(&proof_record, "RingBurndropTokens"),
+				EthereumBacking::parse_token_redeem_proof(&proof_record, "RingBurndropTokens"),
 				Ok((1234567891, expect_account_id, 0)),
 			);
 		});
@@ -126,22 +126,22 @@ fn verify_redeem_ring() {
 				&hex_bytes_unchecked("0x2a92ae5b41feba5ee68a61449c557efa9e3b894a6461c058ec2de45429adb44546"),
 			).unwrap();
 			let id1 = AccountId32::from([0; 32]);
-			let ring_locked_before = EthBacking::pot::<Ring>();
+			let ring_locked_before = EthereumBacking::pot::<Ring>();
 			let _ = Ring::deposit_creating(&expect_account_id, 1);
 
-			assert_ok!(EthBacking::redeem(
+			assert_ok!(EthereumBacking::redeem(
 				Origin::signed(id1.clone()),
 				RedeemFor::Ring,
 				proof_record.clone()
 			));
 			assert_eq!(Ring::free_balance(&expect_account_id), 1234567891 + 1);
 
-			let ring_locked_after = EthBacking::pot::<Ring>();
+			let ring_locked_after = EthereumBacking::pot::<Ring>();
 			assert_eq!(ring_locked_after + 1234567891, ring_locked_before);
 
 			// shouldn't redeem twice
 			assert_err!(
-				EthBacking::redeem(Origin::signed(id1.clone()), RedeemFor::Ring, proof_record),
+				EthereumBacking::redeem(Origin::signed(id1.clone()), RedeemFor::Ring, proof_record),
 				<Error<Test>>::RingAR,
 			);
 		});
@@ -204,27 +204,27 @@ fn verify_redeem_kton() {
 			).unwrap();
 			// 0.123456789123456789 KTON
 			assert_eq!(
-				EthBacking::parse_token_redeem_proof(&proof_record, "KtonBurndropTokens"),
+				EthereumBacking::parse_token_redeem_proof(&proof_record, "KtonBurndropTokens"),
 				Ok((123456789, expect_account_id.clone(), 0)),
 			);
 
 			let id1 = AccountId32::from([0; 32]);
-			let kton_locked_before = EthBacking::pot::<Kton>();
+			let kton_locked_before = EthereumBacking::pot::<Kton>();
 			let _ = Kton::deposit_creating(&expect_account_id, 1);
 
-			assert_ok!(EthBacking::redeem(
+			assert_ok!(EthereumBacking::redeem(
 				Origin::signed(id1.clone()),
 				RedeemFor::Kton,
 				proof_record.clone()
 			));
 			assert_eq!(Kton::free_balance(&expect_account_id), 123456789 + 1);
 
-			let kton_locked_after = EthBacking::pot::<Kton>();
+			let kton_locked_after = EthereumBacking::pot::<Kton>();
 			assert_eq!(kton_locked_after + 123456789, kton_locked_before);
 
 			// shouldn't redeem twice
 			assert_err!(
-				EthBacking::redeem(Origin::signed(id1.clone()), RedeemFor::Kton, proof_record),
+				EthereumBacking::redeem(Origin::signed(id1.clone()), RedeemFor::Kton, proof_record),
 				<Error<Test>>::KtonAR,
 			);
 		});
@@ -288,7 +288,7 @@ fn verify_redeem_deposit() {
 			);
 			assert_ok!(EthereumRelay::init_genesis_header(&header, 0x68e58ae1c31caf_u64));
 
-			let ring_locked_before = EthBacking::pot::<Ring>();
+			let ring_locked_before = EthereumBacking::pot::<Ring>();
 			let expect_account_id = <Test as Trait>::DetermineAccountId::account_id_for(
 				&hex_bytes_unchecked("0x2a92ae5b41feba5ee68a61449c557efa9e3b894a6461c058ec2de45429adb44546"),
 			).unwrap();
@@ -302,14 +302,14 @@ fn verify_redeem_deposit() {
 				RewardDestination::Controller,
 				0,
 			)).dispatch(Origin::signed(expect_account_id.clone())));
-			assert_ok!(EthBacking::redeem(
+			assert_ok!(EthereumBacking::redeem(
 				Origin::signed(id1.clone()),
 				RedeemFor::Deposit,
 				proof_record.clone()
 			));
 			assert_eq!(Ring::free_balance(&expect_account_id), 1234000000000 + 1);
 
-			let ring_locked_after = EthBacking::pot::<Ring>();
+			let ring_locked_after = EthereumBacking::pot::<Ring>();
 			assert_eq!(ring_locked_after + 1234000000000, ring_locked_before);
 
 			let staking_ledger = Staking::ledger(&controller);
@@ -328,7 +328,7 @@ fn verify_redeem_deposit() {
 
 			// shouldn't redeem twice
 			assert_err!(
-				EthBacking::redeem(Origin::signed(id1.clone()), RedeemFor::Deposit, proof_record),
+				EthereumBacking::redeem(Origin::signed(id1.clone()), RedeemFor::Deposit, proof_record),
 				<Error<Test>>::DepositAR,
 			);
 		});

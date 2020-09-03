@@ -41,7 +41,7 @@ type System = frame_system::Module<Test>;
 type Timestamp = pallet_timestamp::Module<Test>;
 pub type EthereumRelay = darwinia_ethereum_linear_relay::Module<Test>;
 pub type Staking = darwinia_staking::Module<Test>;
-pub type EthBacking = Module<Test>;
+pub type EthereumBacking = Module<Test>;
 
 thread_local! {
 	static EXISTENTIAL_DEPOSIT: RefCell<Balance> = RefCell::new(0);
