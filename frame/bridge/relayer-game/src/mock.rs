@@ -61,8 +61,6 @@ pub mod mock_relay {
 	impl<T: Trait> Relayable for Module<T> {
 		type HeaderThingWithProof = MockTcHeader;
 		type HeaderThing = MockTcHeader;
-		type BlockNumber = MockTcBlockNumber;
-		type HeaderHash = MockTcHeaderHash;
 
 		fn basic_verify(
 			proposal_with_proof: Vec<Self::HeaderThingWithProof>,
@@ -83,7 +81,7 @@ pub mod mock_relay {
 			Ok(proposal)
 		}
 
-		fn best_block_number() -> Self::BlockNumber {
+		fn best_block_number() -> <Self::HeaderThing as HeaderThing>::Number {
 			Self::best_block_number()
 		}
 
@@ -204,7 +202,7 @@ use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill, RuntimeDebug}
 // --- darwinia ---
 use crate::*;
 use darwinia_relay_primitives::*;
-use mock_relay::{types::*, MockTcHeader};
+use mock_relay::MockTcHeader;
 
 pub type AccountId = u64;
 pub type AccountIndex = u64;
@@ -330,7 +328,7 @@ pub struct RelayerGameAdjustor;
 impl AdjustableRelayerGame for RelayerGameAdjustor {
 	type Moment = BlockNumber;
 	type Balance = Balance;
-	type TcBlockNumber = MockTcBlockNumber;
+	type TcBlockNumber = <<Relay as Relayable>::HeaderThing as HeaderThing>::Number;
 
 	fn challenge_time(_round: Round) -> Self::Moment {
 		CHALLENGE_TIME.with(|v| v.borrow().to_owned())

@@ -30,7 +30,7 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 # darwinia
 array-bytes         = { path = "../../../../primitives/array-bytes" }
 darwinia-balances   = { path = "../../../../frame/balances" }
-ethereum-primitives = { features = ["easy-testing"], path = "../../../../primitives/ethereum-primitives" }
+ethereum-primitives = { features = ["deserialize"], path = "../../../../primitives/ethereum-primitives" }
 # substrate
 sp-core = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-io   = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }

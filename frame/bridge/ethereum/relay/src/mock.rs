@@ -1,7 +1,7 @@
 //! Mock file for ethereum-relay.
 
-// --- crates ---
-use codec::Error;
+// --- std ---
+use std::fs::File;
 // --- substrate ---
 use frame_support::{impl_outer_dispatch, impl_outer_origin, parameter_types, weights::Weight};
 use frame_system::EnsureRoot;
@@ -9,25 +9,10 @@ use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill, RuntimeDebug};
 // --- darwinia ---
 use crate::*;
-use array_bytes::hex_bytes_unchecked;
 
-// Static codec header source
-mod test_data {
-	mod header_thing_0;
-	mod header_thing_1;
-	mod header_thing_2;
-	mod header_thing_3;
-
-	pub use self::{
-		header_thing_0::HEADER_THING_CODEC_0, header_thing_1::HEADER_THING_CODEC_1,
-		header_thing_2::HEADER_THING_CODEC_2, header_thing_3::HEADER_THING_CODEC_3,
-	};
-}
-
-// Types
-type AccountId = u64;
-type BlockNumber = u64;
-type Balance = u128;
+pub type AccountId = u64;
+pub type BlockNumber = u64;
+pub type Balance = u128;
 
 pub type RingInstance = darwinia_balances::Instance0;
 pub type KtonInstance = darwinia_balances::Instance1;
@@ -43,6 +28,7 @@ impl_outer_origin! {
 impl_outer_dispatch! {
 	pub enum Call for Test where origin: Origin {
 		frame_system::System,
+		darwinia_ethereum_relay::EthereumRelay,
 	}
 }
 
@@ -66,6 +52,7 @@ parameter_types! {
 impl Trait for Test {
 	type ModuleId = EthereumRelayModuleId;
 	type Event = ();
+	type Call = Call;
 	type Currency = Ring;
 	type RelayerGame = UnusedRelayerGame;
 	type ApproveOrigin = EnsureRoot<AccountId>;
@@ -146,33 +133,44 @@ impl ExtBuilder {
 pub struct UnusedRelayerGame;
 impl RelayerGameProtocol for UnusedRelayerGame {
 	type Relayer = AccountId;
+	type Balance = Balance;
 	type HeaderThingWithProof = EthereumHeaderThingWithProof;
-	type BlockNumber = BlockNumber;
+	type HeaderThing = EthereumHeaderThing;
+
+	fn proposals_of_game(
+		_: <Self::HeaderThing as HeaderThing>::Number,
+	) -> Vec<
+		RelayProposal<
+			Self::Relayer,
+			Self::Balance,
+			Self::HeaderThing,
+			<Self::HeaderThing as HeaderThing>::Hash,
+		>,
+	> {
+		unimplemented!()
+	}
 
 	fn submit_proposal(_: Self::Relayer, _: Vec<Self::HeaderThingWithProof>) -> DispatchResult {
 		unimplemented!()
 	}
-	fn approve_pending_header(_: Self::BlockNumber) -> DispatchResult {
+	fn approve_pending_header(_: <Self::HeaderThing as HeaderThing>::Number) -> DispatchResult {
 		unimplemented!()
 	}
-	fn reject_pending_header(_: Self::BlockNumber) -> DispatchResult {
+	fn reject_pending_header(_: <Self::HeaderThing as HeaderThing>::Number) -> DispatchResult {
 		unimplemented!()
 	}
 }
 
-pub fn header_things_with_proof() -> Result<[EthereumHeaderThingWithProof; 4], Error> {
-	Ok([
-		EthereumHeaderThingWithProof::decode(&mut &*hex_bytes_unchecked(
-			test_data::HEADER_THING_CODEC_0,
-		))?,
-		EthereumHeaderThingWithProof::decode(&mut &*hex_bytes_unchecked(
-			test_data::HEADER_THING_CODEC_1,
-		))?,
-		EthereumHeaderThingWithProof::decode(&mut &*hex_bytes_unchecked(
-			test_data::HEADER_THING_CODEC_2,
-		))?,
-		EthereumHeaderThingWithProof::decode(&mut &*hex_bytes_unchecked(
-			test_data::HEADER_THING_CODEC_3,
-		))?,
-	])
+pub fn proposal_of_game_with_id(
+	game_id: u64,
+	proposal_id: u64,
+) -> Vec<EthereumHeaderThingWithProof> {
+	serde_json::from_reader(
+		File::open(format!(
+			"tests-data/game-{}/proposal-{}.json",
+			game_id, proposal_id
+		))
+		.unwrap(),
+	)
+	.unwrap()
 }

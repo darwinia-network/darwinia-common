@@ -20,8 +20,8 @@ mod types {
 
 	pub type TcHeaderThingWithProof<T, I> = <Tc<T, I> as Relayable>::HeaderThingWithProof;
 	pub type TcHeaderThing<T, I> = <Tc<T, I> as Relayable>::HeaderThing;
-	pub type TcBlockNumber<T, I> = <Tc<T, I> as Relayable>::BlockNumber;
-	pub type TcHeaderHash<T, I> = <Tc<T, I> as Relayable>::HeaderHash;
+	pub type TcBlockNumber<T, I> = <TcHeaderThing<T, I> as HeaderThing>::Number;
+	pub type TcHeaderHash<T, I> = <TcHeaderThing<T, I> as HeaderThing>::Hash;
 
 	pub type GameId<TcBlockNumber> = TcBlockNumber;
 
@@ -223,7 +223,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		),
 		DispatchError,
 	> {
-		let (bond, bonded_samples) = extend_proposal(
+		let (bond, bonded_proposal) = extend_proposal(
 			proposal,
 			extend_at,
 			other_proposals_len,
@@ -235,7 +235,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 			<Error<T, I>>::InsufficientBond
 		);
 
-		Ok((bond, bonded_samples))
+		Ok((bond, bonded_proposal))
 	}
 
 	pub fn update_bonds_with<F>(relayer: &AccountId<T>, calc_bonds: F)
@@ -289,7 +289,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 						game_id,
 						Self::header_of_game_with_hash(
 							game_id,
-							confirmed_proposal.bonded_samples[0].1.hash(),
+							confirmed_proposal.bonded_proposal[0].1.hash(),
 						),
 					));
 				}
@@ -331,13 +331,13 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 								game_id,
 								Self::header_of_game_with_hash(
 									game_id,
-									confirmed_proposal.bonded_samples[0].1.hash(),
+									confirmed_proposal.bonded_proposal[0].1.hash(),
 								),
 							));
 						}
 						_ => {
 							let last_round_proposals_chain_len =
-								last_round_proposals[0].bonded_samples.len();
+								last_round_proposals[0].bonded_proposal.len();
 							let full_chain_len = (game_id - Self::last_confirmed_of_game(game_id))
 								.saturated_into() as u64;
 
@@ -382,7 +382,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	}
 
 	pub fn settle_without_challenge(confirmed_proposal: &RelayProposalT<T, I>) {
-		let bond = confirmed_proposal.bonded_samples[0].0;
+		let bond = confirmed_proposal.bonded_proposal[0].0;
 
 		Self::update_bonds_with(&confirmed_proposal.relayer, |bonds| {
 			bonds.saturating_sub(bond)
@@ -451,7 +451,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	pub fn settle_abandon(proposals: Vec<RelayProposalT<T, I>>) {
 		for proposal in proposals {
 			let bond = proposal
-				.bonded_samples
+				.bonded_proposal
 				.iter()
 				.fold(Zero::zero(), |proposal_bond, (round_bond, _)| {
 					proposal_bond + *round_bond
@@ -478,7 +478,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		for proposal in last_round_proposals.iter() {
 			if T::TargetChain::on_chain_arbitrate(
 				proposal
-					.bonded_samples
+					.bonded_proposal
 					.iter()
 					.map(|(_, header_thing)| header_thing.clone())
 					.collect(),
@@ -493,7 +493,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 			} else {
 				evils.push((
 					proposal.relayer.clone(),
-					proposal.bonded_samples.last().unwrap().0,
+					proposal.bonded_proposal.last().unwrap().0,
 				));
 			}
 		}
@@ -505,7 +505,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 					(
 						(
 							confirmed_proposal.relayer.clone(),
-							confirmed_proposal.bonded_samples.last().unwrap().0,
+							confirmed_proposal.bonded_proposal.last().unwrap().0,
 						),
 						evil,
 					)
@@ -516,7 +516,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 
 			// TODO: reward if no challenge
 
-			Some(confirmed_proposal.bonded_samples[0].1.hash())
+			Some(confirmed_proposal.bonded_proposal[0].1.hash())
 		} else {
 			info!(target: "relayer-game", "   >  No Honest Relayer");
 
@@ -622,8 +622,22 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 
 impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 	type Relayer = AccountId<T>;
+	type Balance = RingBalance<T, I>;
 	type HeaderThingWithProof = TcHeaderThingWithProof<T, I>;
-	type BlockNumber = TcBlockNumber<T, I>;
+	type HeaderThing = TcHeaderThing<T, I>;
+
+	fn proposals_of_game(
+		game_id: <Self::HeaderThing as HeaderThing>::Number,
+	) -> Vec<
+		RelayProposal<
+			Self::Relayer,
+			Self::Balance,
+			Self::HeaderThing,
+			<Self::HeaderThing as HeaderThing>::Hash,
+		>,
+	> {
+		Self::proposals_of_game(game_id)
+	}
 
 	// TODO:
 	//	The `header_thing_chain` could be very large,
@@ -672,7 +686,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 					<Error<T, I>>::ActiveGameTM
 				);
 
-				let (bond, bonded_samples) =
+				let (bond, bonded_proposal) =
 					Self::ensure_can_bond(&relayer, &verified_proposal, 0, other_proposals_len)?;
 
 				Self::update_bonds_with(&relayer, |bonds| bonds.saturating_add(bond));
@@ -689,7 +703,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 					game_id,
 					RelayProposal {
 						relayer,
-						bonded_samples,
+						bonded_proposal,
 						extend_from_header_hash: None,
 					},
 				);
@@ -699,18 +713,18 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 				ensure!(
 					!other_proposals
 						.iter()
-						.any(|other_proposal| other_proposal.bonded_samples.len() != 1),
+						.any(|other_proposal| other_proposal.bonded_proposal.len() != 1),
 					<Error<T, I>>::RoundMis
 				);
 				ensure!(
 					!other_proposals
 						.into_iter()
-						.all(|other_proposal| &other_proposal.bonded_samples[0].1
+						.all(|other_proposal| &other_proposal.bonded_proposal[0].1
 							== &verified_proposal[0]),
 					<Error<T, I>>::ProposalAE
 				);
 
-				let (bond, bonded_samples) =
+				let (bond, bonded_proposal) =
 					Self::ensure_can_bond(&relayer, &verified_proposal, 0, other_proposals_len)?;
 
 				Self::update_bonds_with(&relayer, |bonds| bonds.saturating_add(bond));
@@ -720,7 +734,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 					game_id,
 					RelayProposal {
 						relayer,
-						bonded_samples,
+						bonded_proposal,
 						extend_from_header_hash: None,
 					},
 				);
@@ -755,12 +769,12 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 				let mut extend_from_proposal = None;
 
 				for other_proposal in other_proposals {
-					let proposal_chain_len = other_proposal.bonded_samples.len();
+					let proposal_chain_len = other_proposal.bonded_proposal.len();
 
 					if proposal_chain_len == extend_at {
 						if verified_proposal[..extend_at]
 							.iter()
-							.zip(other_proposal.bonded_samples.iter())
+							.zip(other_proposal.bonded_proposal.iter())
 							.all(|(a, b)| a == &b.1)
 						{
 							extend_from_proposal = Some(other_proposal);
@@ -769,7 +783,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 						ensure!(
 							!extend_proposal
 								.iter()
-								.zip(other_proposal.bonded_samples[extend_at..].iter())
+								.zip(other_proposal.bonded_proposal[extend_at..].iter())
 								.all(|(a, b)| a.1 == b.1),
 							<Error<T, I>>::ProposalAE
 						);
@@ -777,12 +791,12 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 				}
 
 				if let Some(RelayProposal {
-					bonded_samples: extend_from_proposal,
+					bonded_proposal: extend_from_proposal,
 					..
 				}) = extend_from_proposal
 				{
 					let extend_from_header = extend_from_proposal.last().unwrap().1.clone();
-					let bonded_samples = [extend_from_proposal, extend_proposal].concat();
+					let bonded_proposal = [extend_from_proposal, extend_proposal].concat();
 
 					Self::update_bonds_with(&relayer, |bonds| bonds.saturating_add(bond));
 
@@ -790,7 +804,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 						game_id,
 						RelayProposal {
 							relayer,
-							bonded_samples,
+							bonded_proposal,
 							// Each proposal MUST contains a NOT empty chain; qed
 							extend_from_header_hash: Some(extend_from_header.hash()),
 						},
@@ -804,7 +818,9 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		Ok(())
 	}
 
-	fn approve_pending_header(pending: Self::BlockNumber) -> DispatchResult {
+	fn approve_pending_header(
+		pending: <Self::HeaderThing as HeaderThing>::Number,
+	) -> DispatchResult {
 		Self::update_pending_headers_with(pending, |header| T::TargetChain::store_header(header))?;
 		Self::deposit_event(RawEvent::PendingHeaderApproved(
 			pending,
@@ -814,7 +830,9 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		Ok(())
 	}
 
-	fn reject_pending_header(pending: Self::BlockNumber) -> DispatchResult {
+	fn reject_pending_header(
+		pending: <Self::HeaderThing as HeaderThing>::Number,
+	) -> DispatchResult {
 		Self::update_pending_headers_with(pending, |_| Ok(()))?;
 		Self::deposit_event(RawEvent::PendingHeaderRejected(pending));
 

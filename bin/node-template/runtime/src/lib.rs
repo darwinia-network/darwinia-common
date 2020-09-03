@@ -42,7 +42,7 @@ pub mod impls {
 		impl AdjustableRelayerGame for EthereumRelayerGameAdjustor {
 			type Moment = BlockNumber;
 			type Balance = Balance;
-			type TcBlockNumber = <EthereumRelay as Relayable>::BlockNumber;
+			type TcBlockNumber = <<EthereumRelay as Relayable>::HeaderThing as HeaderThing>::Number;
 
 			fn challenge_time(round: Round) -> Self::Moment {
 				match round {
@@ -292,6 +292,7 @@ pub mod primitives {
 		frame_system::CheckNonce<Runtime>,
 		frame_system::CheckWeight<Runtime>,
 		pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
+		darwinia_ethereum_relay::CheckEthereumRelayHeaderHash<Runtime>,
 	);
 
 	/// Unchecked extrinsic type as expected by this runtime.
@@ -817,7 +818,7 @@ parameter_types! {
 impl darwinia_ethereum_backing::Trait for Runtime {
 	type ModuleId = EthBackingModuleId;
 	type Event = Event;
-	type DetermineAccountId = darwinia_ethereum_backing::AccountIdDeterminator<Runtime>;
+	type RedeemAccountId = AccountId;
 	type EthereumRelay = EthereumRelay;
 	type OnDepositRedeem = Staking;
 	type RingCurrency = Ring;
@@ -832,6 +833,7 @@ parameter_types! {
 impl darwinia_ethereum_relay::Trait for Runtime {
 	type ModuleId = EthereumRelayModuleId;
 	type Event = Event;
+	type Call = Call;
 	type Currency = Ring;
 	type RelayerGame = EthereumRelayerGame;
 	type ApproveOrigin = ApproveOrigin;
@@ -937,6 +939,7 @@ where
 			frame_system::CheckNonce::<Runtime>::from(nonce),
 			frame_system::CheckWeight::<Runtime>::new(),
 			pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
+			darwinia_ethereum_relay::CheckEthereumRelayHeaderHash::<Runtime>::new(),
 		);
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|e| {

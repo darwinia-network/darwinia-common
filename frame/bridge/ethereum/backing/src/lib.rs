@@ -5,8 +5,8 @@
 
 #[cfg(test)]
 mod mock;
-#[cfg(test)]
-mod tests;
+// #[cfg(test)]
+// mod tests;
 
 mod types {
 	use crate::*;
@@ -19,10 +19,10 @@ mod types {
 	pub type KtonBalance<T> =
 		<<T as Trait>::KtonCurrency as Currency<<T as frame_system::Trait>::AccountId>>::Balance;
 
-	pub type EthereumReceiptProof<T> = <<T as Trait>::EthereumRelay as EthereumReceipt<
+	pub type EthereumReceiptProofThing<T> = <<T as Trait>::EthereumRelay as EthereumReceipt<
 		<T as frame_system::Trait>::AccountId,
 		RingBalance<T>,
-	>>::EthereumReceiptProof;
+	>>::EthereumReceiptProofThing;
 }
 
 // --- crates ---
@@ -41,8 +41,9 @@ use sp_runtime::{
 };
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
-use sp_std::{convert::TryFrom, marker::PhantomData, vec};
+use sp_std::{convert::TryFrom, vec};
 // --- darwinia ---
+use array_bytes::array_unchecked;
 use darwinia_support::{
 	balance::lock::*,
 	traits::{EthereumReceipt, OnDepositRedeem},
@@ -56,7 +57,7 @@ pub trait Trait: frame_system::Trait {
 
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
-	type DetermineAccountId: AccountIdFor<Self::AccountId>;
+	type RedeemAccountId: From<[u8; 32]> + Into<<Self as frame_system::Trait>::AccountId>;
 
 	type EthereumRelay: EthereumReceipt<Self::AccountId, RingBalance<Self>>;
 
@@ -181,7 +182,7 @@ decl_module! {
 		/// - `O(1)`
 		/// # </weight>
 		#[weight = 10_000_000]
-		pub fn redeem(origin, act: RedeemFor, proof: EthereumReceiptProof<T>) {
+		pub fn redeem(origin, act: RedeemFor, proof: EthereumReceiptProofThing<T>) {
 			let redeemer = ensure_signed(origin)?;
 
 			match act {
@@ -251,6 +252,14 @@ impl<T: Trait> Module<T> {
 		T::ModuleId::get().into_account()
 	}
 
+	pub fn account_id_try_from_bytes(bytes: &[u8]) -> Result<T::AccountId, DispatchError> {
+		ensure!(bytes.len() == 32, <Error<T>>::AddrLenMis);
+
+		let redeem_account_id: T::RedeemAccountId = array_unchecked!(bytes, 0, 32).into();
+
+		Ok(redeem_account_id.into())
+	}
+
 	/// Return the amount of money in the pot.
 	// The existential deposit is not part of the pot so backing account never gets deleted.
 	fn pot<C: LockableCurrency<T::AccountId>>() -> C::Balance {
@@ -260,7 +269,7 @@ impl<T: Trait> Module<T> {
 	}
 
 	fn parse_token_redeem_proof(
-		proof_record: &EthereumReceiptProof<T>,
+		proof_record: &EthereumReceiptProofThing<T>,
 		event_name: &str,
 	) -> Result<(Balance, T::AccountId, RingBalance<T>), DispatchError> {
 		let verified_receipt = T::EthereumRelay::verify_receipt(proof_record)
@@ -330,10 +339,7 @@ impl<T: Trait> Module<T> {
 				.ok_or(<Error<T>>::BytesCF)?;
 			debug::trace!(target: "ethereum-backing", "[ethereum-backing] Raw Subkey: {:?}", raw_subkey);
 
-			// let decoded_sub_key =
-			// 	hex::decode(&raw_subkey).map_err(|_| "Decode Address - FAILED")?;
-
-			T::DetermineAccountId::account_id_for(&raw_subkey)?
+			Self::account_id_try_from_bytes(&raw_subkey)?
 		};
 		debug::trace!(target: "ethereum-backing", "[ethereum-backing] Darwinia Account: {:?}", darwinia_account);
 
@@ -341,7 +347,7 @@ impl<T: Trait> Module<T> {
 	}
 
 	fn parse_deposit_redeem_proof(
-		proof_record: &EthereumReceiptProof<T>,
+		proof_record: &EthereumReceiptProofThing<T>,
 	) -> Result<
 		(
 			DepositId,
@@ -458,10 +464,7 @@ impl<T: Trait> Module<T> {
 				.ok_or(<Error<T>>::BytesCF)?;
 			debug::trace!(target: "ethereum-backing", "[ethereum-backing] Raw Subkey: {:?}", raw_subkey);
 
-			// let decoded_sub_key =
-			// 	hex::decode(&raw_subkey).map_err(|_| "Decode Address - FAILED")?;
-
-			T::DetermineAccountId::account_id_for(&raw_subkey)?
+			Self::account_id_try_from_bytes(&raw_subkey)?
 		};
 		debug::trace!(target: "ethereum-backing", "[ethereum-backing] Darwinia Account: {:?}", darwinia_account);
 
@@ -479,7 +482,10 @@ impl<T: Trait> Module<T> {
 
 	// event RingBurndropTokens(address indexed token, address indexed owner, uint amount, bytes data)
 	// https://ropsten.etherscan.io/tx/0x81f699c93b00ab0b7db701f87b6f6045c1e0692862fcaaf8f06755abb0536800
-	fn redeem_ring(redeemer: &T::AccountId, proof: &EthereumReceiptProof<T>) -> DispatchResult {
+	fn redeem_ring(
+		redeemer: &T::AccountId,
+		proof: &EthereumReceiptProofThing<T>,
+	) -> DispatchResult {
 		ensure!(
 			!RingProofVerified::contains_key(T::EthereumRelay::gen_receipt_index(proof)),
 			<Error<T>>::RingAR,
@@ -521,7 +527,10 @@ impl<T: Trait> Module<T> {
 
 	// event KtonBurndropTokens(address indexed token, address indexed owner, uint amount, bytes data)
 	// https://ropsten.etherscan.io/tx/0xc878562085dd8b68ad81adf0820aa0380f1f81b0ea7c012be122937b74020f96
-	fn redeem_kton(redeemer: &T::AccountId, proof: &EthereumReceiptProof<T>) -> DispatchResult {
+	fn redeem_kton(
+		redeemer: &T::AccountId,
+		proof: &EthereumReceiptProofThing<T>,
+	) -> DispatchResult {
 		ensure!(
 			!KtonProofVerified::contains_key(T::EthereumRelay::gen_receipt_index(proof)),
 			<Error<T>>::KtonAR,
@@ -563,7 +572,10 @@ impl<T: Trait> Module<T> {
 
 	// event Burndrop(uint256 indexed _depositID,  address _depositor, uint48 _months, uint48 _startAt, uint64 _unitInterest, uint128 _value, bytes _data)
 	// https://ropsten.etherscan.io/tx/0xfd2cac791bb0c0bee7c5711f17ef93401061d314f4eb84e1bc91f32b73134ca1
-	fn redeem_deposit(redeemer: &T::AccountId, proof: &EthereumReceiptProof<T>) -> DispatchResult {
+	fn redeem_deposit(
+		redeemer: &T::AccountId,
+		proof: &EthereumReceiptProofThing<T>,
+	) -> DispatchResult {
 		ensure!(
 			!DepositProofVerified::contains_key(T::EthereumRelay::gen_receipt_index(proof)),
 			<Error<T>>::DepositAR,
@@ -616,27 +628,4 @@ pub enum RedeemFor {
 	Ring,
 	Kton,
 	Deposit,
-}
-
-pub trait AccountIdFor<AccountId> {
-	fn account_id_for(decoded_sub_key: &[u8]) -> Result<AccountId, DispatchError>;
-}
-
-pub struct AccountIdDeterminator<T: Trait>(PhantomData<T>);
-impl<T: Trait> AccountIdFor<T::AccountId> for AccountIdDeterminator<T>
-where
-	T::AccountId: sp_std::convert::From<[u8; 32]> + AsRef<[u8]>,
-{
-	fn account_id_for(decoded_sub_key: &[u8]) -> Result<T::AccountId, DispatchError> {
-		ensure!(decoded_sub_key.len() == 33, <Error<T>>::AddrLenMis);
-		ensure!(
-			decoded_sub_key[0] == T::SubKeyPrefix::get(),
-			<Error<T>>::PubkeyPrefixMis
-		);
-
-		let mut raw_account = [0u8; 32];
-		raw_account.copy_from_slice(&decoded_sub_key[1..]);
-
-		Ok(raw_account.into())
-	}
 }

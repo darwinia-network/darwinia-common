@@ -1,5 +1,7 @@
 // --- crates ---
 use codec::{Decode, Encode};
+#[cfg(any(feature = "deserialize", test))]
+use serde::Deserialize;
 // --- github ---
 use ethbloom::Bloom;
 use keccak_hash::{keccak, KECCAK_EMPTY_LIST_RLP, KECCAK_NULL_RLP};
@@ -9,6 +11,7 @@ use sp_runtime::RuntimeDebug;
 use sp_std::prelude::*;
 // --- darwinia ---
 use crate::*;
+#[cfg(any(feature = "deserialize", test))]
 use array_bytes::hex_bytes_unchecked;
 
 #[derive(Clone, Copy, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
@@ -19,7 +22,7 @@ enum Seal {
 	Without,
 }
 
-#[cfg_attr(any(feature = "easy-testing", test), derive(serde::Deserialize))]
+#[cfg_attr(any(feature = "deserialize", test), derive(serde::Deserialize))]
 #[derive(Clone, Eq, Encode, Decode, RuntimeDebug)]
 pub struct EthereumHeader {
 	pub parent_hash: H256,
@@ -28,18 +31,38 @@ pub struct EthereumHeader {
 	pub author: EthereumAddress,
 	pub transactions_root: H256,
 	pub uncles_hash: H256,
+	#[cfg_attr(
+		any(feature = "deserialize", test),
+		serde(deserialize_with = "bytes_from_string")
+	)]
 	pub extra_data: Bytes,
 	pub state_root: H256,
 	pub receipts_root: H256,
 	pub log_bloom: Bloom,
+	#[cfg_attr(
+		any(feature = "deserialize", test),
+		serde(deserialize_with = "u256_from_u64")
+	)]
 	pub gas_used: U256,
+	#[cfg_attr(
+		any(feature = "deserialize", test),
+		serde(deserialize_with = "u256_from_u64")
+	)]
 	pub gas_limit: U256,
+	#[cfg_attr(
+		any(feature = "deserialize", test),
+		serde(deserialize_with = "u256_from_u64")
+	)]
 	pub difficulty: U256,
+	#[cfg_attr(
+		any(feature = "deserialize", test),
+		serde(deserialize_with = "bytes_array_from_string")
+	)]
 	pub seal: Vec<Bytes>,
 	pub hash: Option<H256>,
 }
-
 impl EthereumHeader {
+	#[cfg(any(feature = "deserialize", test))]
 	pub fn from_scale_codec_str<S: AsRef<str>>(s: S) -> Option<Self> {
 		if let Ok(eth_header) = <Self as Decode>::decode(&mut &hex_bytes_unchecked(s.as_ref())[..])
 		{
@@ -49,7 +72,7 @@ impl EthereumHeader {
 		}
 	}
 
-	#[cfg(any(feature = "easy-testing", test))]
+	#[cfg(any(feature = "deserialize", test))]
 	pub fn from_str_unchecked(s: &str) -> Self {
 		// --- std ---
 		use std::str::FromStr;
@@ -62,14 +85,6 @@ impl EthereumHeader {
 				.unwrap_or_default()
 				.trim()
 				.trim_matches('"')
-		}
-
-		fn str_to_u64(s: &str) -> u64 {
-			if s.starts_with("0x") {
-				u64::from_str_radix(&s[2..], 16).unwrap_or_default()
-			} else {
-				s.parse().unwrap_or_default()
-			}
 		}
 
 		let s = s
@@ -148,7 +163,6 @@ impl EthereumHeader {
 		eth_header
 	}
 }
-
 impl Default for EthereumHeader {
 	fn default() -> Self {
 		EthereumHeader {
@@ -170,7 +184,6 @@ impl Default for EthereumHeader {
 		}
 	}
 }
-
 impl PartialEq for EthereumHeader {
 	fn eq(&self, c: &EthereumHeader) -> bool {
 		if let (&Some(ref h1), &Some(ref h2)) = (&self.hash, &c.hash) {
@@ -198,7 +211,6 @@ impl PartialEq for EthereumHeader {
 			&& self.seal == c.seal
 	}
 }
-
 impl Decodable for EthereumHeader {
 	fn decode(r: &Rlp) -> Result<Self, DecoderError> {
 		let mut blockheader = EthereumHeader {
@@ -226,7 +238,6 @@ impl Decodable for EthereumHeader {
 		Ok(blockheader)
 	}
 }
-
 impl Encodable for EthereumHeader {
 	fn rlp_append(&self, s: &mut RlpStream) {
 		self.stream_rlp(s, Seal::With);
@@ -392,6 +403,42 @@ impl EthereumHeader {
 			}
 		}
 	}
+}
+
+#[cfg(any(feature = "deserialize", test))]
+pub fn str_to_u64(s: &str) -> u64 {
+	if s.starts_with("0x") {
+		u64::from_str_radix(&s[2..], 16).unwrap_or_default()
+	} else {
+		s.parse().unwrap_or_default()
+	}
+}
+
+#[cfg(any(feature = "deserialize", test))]
+fn bytes_from_string<'de, D>(deserializer: D) -> Result<Bytes, D::Error>
+where
+	D: serde::Deserializer<'de>,
+{
+	Ok(hex_bytes_unchecked(&String::deserialize(deserializer)?))
+}
+
+#[cfg(any(feature = "deserialize", test))]
+fn u256_from_u64<'de, D>(deserializer: D) -> Result<U256, D::Error>
+where
+	D: serde::Deserializer<'de>,
+{
+	Ok(u64::deserialize(deserializer)?.into())
+}
+
+#[cfg(any(feature = "deserialize", test))]
+fn bytes_array_from_string<'de, D>(deserializer: D) -> Result<Vec<Bytes>, D::Error>
+where
+	D: serde::Deserializer<'de>,
+{
+	Ok(<Vec<String>>::deserialize(deserializer)?
+		.into_iter()
+		.map(|s| hex_bytes_unchecked(&s))
+		.collect())
 }
 
 #[cfg(test)]

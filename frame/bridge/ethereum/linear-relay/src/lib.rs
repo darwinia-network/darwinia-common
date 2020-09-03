@@ -62,7 +62,7 @@ use sp_runtime::{
 	transaction_validity::{
 		InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
 	},
-	DispatchResult, ModuleId, SaturatedConversion,
+	DispatchError, DispatchResult, ModuleId, SaturatedConversion,
 };
 use sp_std::prelude::*;
 // --- darwinia ---
@@ -70,7 +70,6 @@ use darwinia_support::{
 	balance::lock::LockableCurrency, traits::EthereumReceipt as EthereumReceiptT,
 };
 use ethereum_primitives::{
-	error::EthereumError,
 	ethashproof::EthashProof,
 	header::EthereumHeader,
 	pow::EthashPartial,
@@ -148,7 +147,7 @@ decl_error! {
 
 		/// Rlp - DECODE FAILED
 		RlpDcF,
-		/// EthereumReceipt Proof - INVALID
+		/// Ethereum Receipt Proof - INVALID
 		ReceiptProofI,
 		/// Block Basic - VERIFICATION FAILED
 		BlockBasicVF,
@@ -705,7 +704,7 @@ impl<T: Trait> Module<T> {
 }
 
 impl<T: Trait> EthereumReceiptT<T::AccountId, Balance<T>> for Module<T> {
-	type EthereumReceiptProof = EthereumReceiptProof;
+	type EthereumReceiptProofThing = EthereumReceiptProof;
 
 	fn account_id() -> T::AccountId {
 		Self::account_id()
@@ -719,39 +718,38 @@ impl<T: Trait> EthereumReceiptT<T::AccountId, Balance<T>> for Module<T> {
 	/// get the receipt MPT trie root from the block header
 	/// Using receipt MPT trie root to verify the proof and index etc.
 	fn verify_receipt(
-		proof: &Self::EthereumReceiptProof,
-	) -> Result<EthereumReceipt, EthereumError> {
-		let info =
-			Self::header_brief(&proof.header_hash).ok_or(EthereumError::InvalidReceiptProof)?;
+		proof: &Self::EthereumReceiptProofThing,
+	) -> Result<EthereumReceipt, DispatchError> {
+		let info = Self::header_brief(&proof.header_hash).ok_or(<Error<T>>::HeaderBriefNE)?;
 
 		let canonical_hash = Self::canonical_header_hash(info.number);
 		ensure!(
 			canonical_hash == proof.header_hash,
-			EthereumError::InvalidReceiptProof
+			<Error<T>>::HeaderHashMis
 		);
 
-		let best_info = Self::header_brief(Self::best_header_hash())
-			.ok_or(EthereumError::InvalidReceiptProof)?;
+		let best_info =
+			Self::header_brief(Self::best_header_hash()).ok_or(<Error<T>>::HeaderBriefNE)?;
 
 		ensure!(
 			best_info.number
 				>= info
 					.number
 					.checked_add(Self::number_of_blocks_safe())
-					.ok_or(EthereumError::InvalidReceiptProof)?,
-			EthereumError::InvalidReceiptProof
+					.ok_or(<Error<T>>::BlockNumberOF)?,
+			<Error<T>>::BlockNumberMis
 		);
 
-		let header = Self::header(&proof.header_hash).ok_or(EthereumError::InvalidReceiptProof)?;
+		let header = Self::header(&proof.header_hash).ok_or(<Error<T>>::HeaderNE)?;
 
 		// Verify receipt proof
 		let receipt = EthereumReceipt::verify_proof_and_generate(header.receipts_root(), &proof)
-			.map_err(|_| EthereumError::InvalidReceiptProof)?;
+			.map_err(|_| <Error<T>>::ReceiptProofI)?;
 
 		Ok(receipt)
 	}
 
-	fn gen_receipt_index(proof: &Self::EthereumReceiptProof) -> EthereumTransactionIndex {
+	fn gen_receipt_index(proof: &Self::EthereumReceiptProofThing) -> EthereumTransactionIndex {
 		(proof.header_hash, proof.index)
 	}
 }

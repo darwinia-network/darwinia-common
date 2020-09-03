@@ -30,7 +30,7 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 darwinia-balances              = { path = "../../../../frame/balances" }
 darwinia-ethereum-linear-relay = { path = "../linear-relay" }
 darwinia-staking               = { path = "../../../../frame/staking" }
-ethereum-primitives            = { features = ["easy-testing"], path = "../../../../primitives/ethereum-primitives" }
+ethereum-primitives            = { features = ["deserialize"], path = "../../../../primitives/ethereum-primitives" }
 # github
 rlp = { package = "rlp", git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
