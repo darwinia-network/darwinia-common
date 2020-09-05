@@ -348,10 +348,10 @@ impl<T: Trait> Module<T> {
 	) -> Result<
 		(
 			DepositId,
-			u8,
-			u64,
-			RingBalance<T>,
 			T::AccountId,
+			RingBalance<T>,
+			u64,
+			u8,
 			RingBalance<T>,
 		),
 		DispatchError,
@@ -466,10 +466,10 @@ impl<T: Trait> Module<T> {
 
 		Ok((
 			deposit_id,
-			month,
-			start_at,
-			redeemed_ring,
 			darwinia_account,
+			redeemed_ring,
+			start_at,
+			month,
 			fee,
 		))
 	}
@@ -563,7 +563,7 @@ impl<T: Trait> Module<T> {
 
 		ensure!(!VerifiedProof::contains_key(tx_index), <Error<T>>::AssetAR);
 
-		let (deposit_id, month, start_at, redeemed_ring, darwinia_account, fee) =
+		let (deposit_id, darwinia_account, redeemed_ring, start_at, month, fee) =
 			Self::parse_deposit_redeem_proof(&proof)?;
 
 		ensure!(
