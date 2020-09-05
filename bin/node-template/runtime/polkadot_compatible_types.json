@@ -88,7 +88,7 @@
 		"own_kton_balance": "Compact<Balance>",
 		"own_power": "Power",
 		"total_power": "Power",
-		"others": "Vec<IndividualExposure>",
+		"others": "Vec<IndividualExposure>"
 	},
 	"IndividualExposure": {
 		"who": "AccountId",
@@ -124,7 +124,7 @@
 		"ring_value": "Balance",
 		"kton_value": "Balance",
 		"ring_bond": "Balance",
-		"kton_bond": "Balance",
+		"kton_bond": "Balance"
 	},
 	"__[pallet.bridge.eth]__": {},
 	"EthereumTransactionIndex": "(H256, u64)",
