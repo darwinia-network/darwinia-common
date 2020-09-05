@@ -298,7 +298,7 @@ impl<T: Trait> Module<T> {
 				.find(|x| {
 					is_ring = x.address == Self::ring_redeem_address();
 
-					let address_found = is_ring || x.address == Self::ring_redeem_address();
+					let address_found = is_ring || x.address == Self::kton_redeem_address();
 					let signature_matched = x.topics[0] == eth_event.signature();
 
 					address_found && signature_matched
