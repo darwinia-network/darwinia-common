@@ -3966,6 +3966,7 @@ dependencies = [
 name = "node-template"
 version = "1.0.0-alpha.3"
 dependencies = [
+ "array-bytes",
  "darwinia-balances-rpc",
  "darwinia-balances-rpc-runtime-api",
  "darwinia-claims",

@@ -10,6 +10,7 @@ use sp_runtime::{
 	Perbill,
 };
 // --- darwinia ---
+use array_bytes::fixed_hex_bytes_unchecked;
 use darwinia_claims::ClaimsList;
 use darwinia_ethereum_relay::DagsMerkleRootsLoader as DagsMerkleRootsLoaderR;
 use node_template_runtime::{BalancesConfig as RingConfig, *};
@@ -213,7 +214,25 @@ fn testnet_genesis(
 			),
 		}),
 		pallet_sudo: Some(SudoConfig { key: root_key }),
-		darwinia_ethereum_backing: Some(Default::default()),
+		darwinia_ethereum_backing: Some(EthereumBackingConfig {
+			ring_redeem_address: fixed_hex_bytes_unchecked!(
+				"0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0",
+				20
+			)
+			.into(),
+			kton_redeem_address: fixed_hex_bytes_unchecked!(
+				"0x1994100c58753793D52c6f457f189aa3ce9cEe94",
+				20
+			)
+			.into(),
+			deposit_redeem_address: fixed_hex_bytes_unchecked!(
+				"0x6EF538314829EfA8386Fc43386cB13B4e0A67D1e",
+				20
+			)
+			.into(),
+			ring_locked: 1 << 60,
+			kton_locked: 1 << 60,
+		}),
 		darwinia_ethereum_relay: Some(EthereumRelayConfig {
 			dags_merkle_roots_loader: DagsMerkleRootsLoaderR::from_file(
 				"bin/node-template/node/res/dags_merkle_roots.json",
