@@ -2,26 +2,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-mod mmr;
-#[cfg(test)]
-mod mock;
-#[cfg(test)]
-mod tests;
-
-mod types {
-	// --- darwinia ---
-	use crate::*;
-
-	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
-	pub type RingBalance<T> = <CurrencyT<T> as Currency<AccountId<T>>>::Balance;
-
-	pub type MMRProof = Vec<H256>;
-
-	type CurrencyT<T> = <T as Trait>::Currency;
-}
-
-// --- core ---
-use core::fmt::{Debug, Formatter, Result as FmtResult};
 // --- crates ---
 use codec::{Decode, Encode};
 // --- github ---
@@ -44,9 +24,10 @@ use sp_runtime::{
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
 use sp_std::{convert::From, marker::PhantomData, prelude::*};
-// --- darwinia ---
-use crate::mmr::{leaf_index_to_mmr_size, leaf_index_to_pos, MMRMerge, MerkleProof};
+
 use array_bytes::array_unchecked;
+// --- core ---
+use core::fmt::{Debug, Formatter, Result as FmtResult};
 use darwinia_relay_primitives::*;
 use darwinia_support::{
 	balance::lock::LockableCurrency, traits::EthereumReceipt as EthereumReceiptT,
@@ -59,6 +40,27 @@ use ethereum_primitives::{
 	EthereumBlockNumber, H256,
 };
 use types::*;
+
+// --- darwinia ---
+use crate::mmr::{leaf_index_to_mmr_size, leaf_index_to_pos, MMRMerge, MerkleProof};
+
+mod mmr;
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
+
+mod types {
+	// --- darwinia ---
+	use crate::*;
+
+	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
+	pub type RingBalance<T> = <CurrencyT<T> as Currency<AccountId<T>>>::Balance;
+
+	pub type MMRProof = Vec<H256>;
+
+	type CurrencyT<T> = <T as Trait>::Currency;
+}
 
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/dags_merkle_roots.rs"));
@@ -442,99 +444,68 @@ impl<T: Trait> Relayable for Module<T> {
 	fn basic_verify(
 		proposal_with_proof: Vec<Self::HeaderThingWithProof>,
 	) -> Result<Vec<Self::HeaderThing>, DispatchError> {
-		let proposal_len = proposal_with_proof.len();
+		ensure!(proposal_with_proof.len() != 0, <Error<T>>::ProposalI);
 
-		ensure!(proposal_len != 0, <Error<T>>::ProposalI);
-		// Not allow to relay genesis header
-		ensure!(
-			proposal_with_proof[0].header.number > 0,
-			<Error<T>>::ProposalI
-		);
-
-		let mut proposed_mmr_root = Default::default();
-		let mut last_leaf = Default::default();
 		let mut proposal = vec![];
 
-		for (i, header_with_proof) in proposal_with_proof.into_iter().enumerate() {
-			let Self::HeaderThingWithProof {
-				header,
-				ethash_proof,
-				mmr_root,
-				mmr_proof,
-			} = header_with_proof;
+		// cut to head and tail
+		let target = &proposal_with_proof[0];
+		ensure!(target.header.number > 0, <Error<T>>::ProposalI);
+		let remainings = &proposal_with_proof[1..];
 
-			if i == 0 {
-				proposed_mmr_root = array_unchecked!(mmr_root, 0, 32).into();
-				last_leaf = header.number - 1;
+		// verify target and add to proposal
+		Self::verify_basic(&target.header, &target.ethash_proof)?;
+		proposal.push(Self::HeaderThing {
+			header: target.header.clone(),
+			mmr_root: target.mmr_root.clone(),
+		});
 
-				if proposal_len == 1 {
-					Self::verify_basic(&header, &ethash_proof)?;
+		// prepare mmr proof and leaves of members
+		let member_items = if remainings.len() == 0 {
+			let (last_confirmed_block_number, last_confirmed_hash, _) =
+				LastConfirmedHeaderInfo::get();
+			[(
+				target.mmr_proof.clone(),
+				last_confirmed_block_number,
+				last_confirmed_hash,
+			)]
+			.to_vec()
+		} else {
+			let mut result = vec![];
+			for member in remainings {
+				// verfiy and add to proposal
+				Self::verify_basic(&member.header, &member.ethash_proof)?;
+				proposal.push(Self::HeaderThing {
+					header: member.header.clone(),
+					mmr_root: member.mmr_root.clone(),
+				});
 
-					let (last_confirmed_block_number, last_confirmed_hash, _) =
-						LastConfirmedHeaderInfo::get();
-					trace!(
-						target: "ethereum-relay",
-						"last_leaf: {:?}\n\
-						proposed_mmr_root: {:?}\n\
-						mmr_proof: {:#?}\n\
-						last_confirmed_block_number: {:?}\n\
-						last_confirmed_hash: {:?}",
-						last_leaf,
-						proposed_mmr_root,
-						mmr_proof,
-						last_confirmed_block_number,
-						last_confirmed_hash,
-					);
-
-					// The mmr_root of first submit should includ the hash last confirm block
-					//      mmr_root of 1st
-					//     / \
-					//    -   -
-					//   /     \
-					//  C  ...  1st
-					//  C: Last Comfirmed Block 1st: 1st submit block
-					ensure!(
-						Self::verify_mmr(
-							last_leaf,
-							proposed_mmr_root,
-							mmr_proof
-								.iter()
-								.map(|h| array_unchecked!(h, 0, 32).into())
-								.collect(),
-							vec![(last_confirmed_block_number, last_confirmed_hash)],
-						),
-						<Error<T>>::MMRI
-					);
-				}
-			} else if i == proposal_len - 1 {
-				Self::verify_basic(&header, &ethash_proof)?;
-
-				// last confirm no exsit the mmr verification will be passed
-				//
-				//      mmr_root of prevous submit
-				//     / \
-				//    - ..-
-				//   /   | \
-				//  -  ..c  1st
-				// c: current submit  1st: 1st submit block
-				ensure!(
-					Self::verify_mmr(
-						last_leaf,
-						proposed_mmr_root,
-						mmr_proof
-							.iter()
-							.map(|h| array_unchecked!(h, 0, 32).into())
-							.collect(),
-						vec![(
-							header.number,
-							array_unchecked!(header.hash.ok_or(<Error<T>>::HeaderI)?, 0, 32).into(),
-						)],
-					),
-					<Error<T>>::MMRI
-				);
+				result.push((
+					member.mmr_proof.clone(),
+					member.header.number,
+					array_unchecked!(member.header.hash.ok_or(<Error<T>>::HeaderI)?, 0, 32).into(),
+				));
 			}
+			result
+		};
 
-			proposal.push(Self::HeaderThing { header, mmr_root });
+		// verify mmrs of members
+		for member_item in member_items.into_iter() {
+			let (mmr_proof, block_number, block_header_hash) = member_item;
+			ensure!(
+				Self::verify_mmr(
+					target.header.number - 1,
+					// mmr root from target
+					array_unchecked!(target.mmr_root, 0, 32).into(),
+					// mmr proof and leaves from member
+					mmr_proof
+						.iter()
+						.map(|h| array_unchecked!(h, 0, 32).into())
+						.collect(),
+					vec![(block_number, block_header_hash)],
+				),
+				<Error<T>>::MMRI
+			);
 		}
 
 		Ok(proposal)
@@ -664,6 +635,7 @@ impl<T: Trait> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
 
 // TODO: https://github.com/darwinia-network/darwinia-common/issues/209
 pub trait WeightInfo {}
+
 impl WeightInfo for () {}
 
 #[cfg_attr(test, derive(serde::Deserialize))]
@@ -681,6 +653,7 @@ pub struct EthereumHeaderThing {
 	header: EthereumHeader,
 	mmr_root: H256,
 }
+
 impl HeaderThing for EthereumHeaderThing {
 	type Number = EthereumBlockNumber;
 	type Hash = H256;
@@ -696,11 +669,13 @@ impl HeaderThing for EthereumHeaderThing {
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq)]
 pub struct CheckEthereumRelayHeaderHash<T: Trait>(PhantomData<T>);
+
 impl<T: Trait> CheckEthereumRelayHeaderHash<T> {
 	pub fn new() -> Self {
 		Self(Default::default())
 	}
 }
+
 impl<T: Trait> Debug for CheckEthereumRelayHeaderHash<T> {
 	#[cfg(feature = "std")]
 	fn fmt(&self, f: &mut Formatter) -> FmtResult {
@@ -712,6 +687,7 @@ impl<T: Trait> Debug for CheckEthereumRelayHeaderHash<T> {
 		Ok(())
 	}
 }
+
 impl<T: Send + Sync + Trait> SignedExtension for CheckEthereumRelayHeaderHash<T> {
 	const IDENTIFIER: &'static str = "CheckEthereumRelayHeaderHash";
 	type AccountId = T::AccountId;
