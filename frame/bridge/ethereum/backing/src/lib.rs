@@ -5,8 +5,8 @@
 
 #[cfg(test)]
 mod mock;
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod tests;
 
 mod types {
 	use crate::*;
@@ -364,7 +364,7 @@ impl<T: Trait> Module<T> {
 		let fee = T::EthereumRelay::receipt_verify_fee();
 		let result = {
 			let eth_event = EthEvent {
-				name: "Burndrop".to_owned(),
+				name: "BurnAndRedeem".to_owned(),
 				inputs: vec![
 					EthEventParam {
 						name: "_depositID".to_owned(),
