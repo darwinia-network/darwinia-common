@@ -228,12 +228,11 @@ fn testnet_genesis(
 			ring_token_address: fixed_hex_bytes_unchecked!(
 				"0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0",
 				20
-			),
+			).into(),
 			kton_token_address: fixed_hex_bytes_unchecked!(
 				"0x1994100c58753793D52c6f457f189aa3ce9cEe94",
 				20
-			)
-				.into(),
+			).into(),
 			ring_locked: 1 << 60,
 			kton_locked: 1 << 60,
 		}),
