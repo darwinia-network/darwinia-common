@@ -25,6 +25,7 @@ fn proposal_basic_verification_should_sucess() {
 		for &game in [2].iter() {
 			for id in 0..=2 {
 				// eprintln!("{}, {}", game, id);
+
 				assert_ok!(<EthereumRelay as Relayable>::basic_verify(
 					proposal_of_game_with_id(game, id)
 				));

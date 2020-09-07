@@ -151,12 +151,7 @@ decl_storage! {
 			LastConfirmedHeaderInfo
 			get(fn last_confirmed_header_info)
 			config()
-			: (EthereumBlockNumber, H256, H256)
-			= (
-				0,
-				b"\xd4\xe5g@\xf8v\xae\xf8\xc0\x10\xb8j@\xd5\xf5gE\xa1\x18\xd0\x90j4\xe6\x9a\xec\x8c\r\xb1\xcb\x8f\xa3".into(),
-				b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00".into()
-			);
+			: (EthereumBlockNumber, H256, H256);
 
 		/// The Ethereum headers confrimed by relayer game
 		/// The actural storage needs to be defined
