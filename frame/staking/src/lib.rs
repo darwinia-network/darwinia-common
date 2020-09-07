@@ -334,6 +334,8 @@ mod darwinia_tests;
 mod mock;
 #[cfg(test)]
 mod substrate_tests;
+#[cfg(test)]
+mod inflation_tests;
 
 mod types {
 	// --- darwinia ---
