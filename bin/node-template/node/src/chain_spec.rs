@@ -234,6 +234,11 @@ fn testnet_genesis(
 			kton_locked: 1 << 60,
 		}),
 		darwinia_ethereum_relay: Some(EthereumRelayConfig {
+			genesis_header_info: (
+				0,
+				b"A\x94\x10#h\t#\xe0\xfeMt\xa3K\xda\xc8\x14\x1f%@\xe3\xae\x90b7\x18\xe4}f\xd1\xcaJ-".into(),
+				b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00".into()
+			),
 			dags_merkle_roots_loader: DagsMerkleRootsLoaderR::from_file(
 				"bin/node-template/node/res/dags_merkle_roots.json",
 				"DAG_MERKLE_ROOTS_PATH",
