@@ -12,7 +12,7 @@ use darwinia_support::balance::lock::StakingLock;
 use ethereum_primitives::{header::EthereumHeader, receipt::EthereumReceiptProof};
 
 #[test]
-fn genesis_config_works() {
+fn genesis_linear_config_works() {
 	ExtBuilder::default().build().execute_with(|| {
 		assert_eq!(EthereumBacking::pot::<Ring>(), 20000000000000);
 		assert_eq!(EthereumBacking::pot::<Kton>(), 5000000000000);
@@ -20,7 +20,7 @@ fn genesis_config_works() {
 }
 
 #[test]
-fn verify_parse_token_redeem_proof() {
+fn verify_linear_parse_token_redeem_proof() {
 	ExtBuilder::default()
 		.build()
 		.execute_with(|| {
@@ -72,7 +72,7 @@ fn verify_parse_token_redeem_proof() {
 }
 
 #[test]
-fn verify_redeem_ring() {
+fn verify_linear_redeem_ring() {
 	ExtBuilder::default()
 		.build()
 		.execute_with(|| {
@@ -138,7 +138,7 @@ fn verify_redeem_ring() {
 }
 
 #[test]
-fn verify_redeem_kton() {
+fn verify_linear_redeem_kton() {
 	ExtBuilder::default()
 		.build()
 		.execute_with(|| {
@@ -213,7 +213,7 @@ fn verify_redeem_kton() {
 }
 
 #[test]
-fn verify_redeem_deposit() {
+fn verify_linear_redeem_deposit() {
 	ExtBuilder::default()
 		.build()
 		.execute_with(|| {
