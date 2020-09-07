@@ -251,21 +251,24 @@ impl ExtBuilder {
 			.unwrap();
 
 		GenesisConfig::<Test> {
-			ring_redeem_address: fixed_hex_bytes_unchecked!(
-				"0xdbc888d701167cbfb86486c516aafbefc3a4de6e",
-				20
-			)
-			.into(),
-			kton_redeem_address: fixed_hex_bytes_unchecked!(
-				"0xdbc888d701167cbfb86486c516aafbefc3a4de6e",
+			token_redeem_address: fixed_hex_bytes_unchecked!(
+				"0x49262B932E439271d05634c32978294C7Ea15d0C",
 				20
 			)
 			.into(),
 			deposit_redeem_address: fixed_hex_bytes_unchecked!(
-				"0x6ef538314829efa8386fc43386cb13b4e0a67d1e",
+				"0x6EF538314829EfA8386Fc43386cB13B4e0A67D1e",
 				20
 			)
 			.into(),
+			ring_token_address: fixed_hex_bytes_unchecked!(
+				"0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0",
+				20
+			).into(),
+			kton_token_address: fixed_hex_bytes_unchecked!(
+				"0x1994100c58753793D52c6f457f189aa3ce9cEe94",
+				20
+			).into(),
 			ring_locked: 20000000000000,
 			kton_locked: 5000000000000,
 		}

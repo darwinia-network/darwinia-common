@@ -215,13 +215,8 @@ fn testnet_genesis(
 		}),
 		pallet_sudo: Some(SudoConfig { key: root_key }),
 		darwinia_ethereum_backing: Some(EthereumBackingConfig {
-			ring_redeem_address: fixed_hex_bytes_unchecked!(
-				"0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0",
-				20
-			)
-			.into(),
-			kton_redeem_address: fixed_hex_bytes_unchecked!(
-				"0x1994100c58753793D52c6f457f189aa3ce9cEe94",
+			token_redeem_address: fixed_hex_bytes_unchecked!(
+				"0x49262B932E439271d05634c32978294C7Ea15d0C",
 				20
 			)
 			.into(),
@@ -230,6 +225,15 @@ fn testnet_genesis(
 				20
 			)
 			.into(),
+			ring_token_address: fixed_hex_bytes_unchecked!(
+				"0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0",
+				20
+			),
+			kton_token_address: fixed_hex_bytes_unchecked!(
+				"0x1994100c58753793D52c6f457f189aa3ce9cEe94",
+				20
+			)
+				.into(),
 			ring_locked: 1 << 60,
 			kton_locked: 1 << 60,
 		}),

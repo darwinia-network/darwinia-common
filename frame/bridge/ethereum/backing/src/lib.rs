@@ -100,6 +100,9 @@ decl_error! {
 		/// Int - CONVERSION FAILED
 		IntCF,
 
+		/// Address - CONVERSION FAILED
+		AddressCF,
+
 		/// Asset - ALREADY REDEEMED
 		AssetAR,
 
@@ -128,9 +131,10 @@ decl_storage! {
 			get(fn ring_proof_verfied)
 			: map hasher(blake2_128_concat) EthereumTransactionIndex => Option<bool>;
 
-		pub RingRedeemAddress get(fn ring_redeem_address) config(): EthereumAddress;
-		pub KtonRedeemAddress get(fn kton_redeem_address) config(): EthereumAddress;
+		pub TokenRedeemAddress get(fn token_redeem_address) config(): EthereumAddress;
 		pub DepositRedeemAddress get(fn deposit_redeem_address) config(): EthereumAddress;
+		pub RingTokenAddress get(fn ring_token_address) config(): EthereumAddress;
+		pub KtonTokenAddress get(fn kton_token_address) config(): EthereumAddress;
 	}
 	add_extra_genesis {
 		config(ring_locked): RingBalance<T>;
@@ -191,24 +195,9 @@ decl_module! {
 		/// - `O(1)`.
 		/// # </weight>
 		#[weight = 10_000_000]
-		pub fn set_ring_redeem_address(origin, new: EthereumAddress) {
+		pub fn set_token_redeem_address(origin, new: EthereumAddress) {
 			ensure_root(origin)?;
-			RingRedeemAddress::put(new);
-		}
-
-		/// Set a new kton redeem address.
-		///
-		/// The dispatch origin of this call must be _Root_.
-		///
-		/// - `new`: The new kton redeem address.
-		///
-		/// # <weight>
-		/// - `O(1)`.
-		/// # </weight>
-		#[weight = 10_000_000]
-		pub fn set_kton_redeem_address(origin, new: EthereumAddress) {
-			ensure_root(origin)?;
-			KtonRedeemAddress::put(new);
+			TokenRedeemAddress::put(new);
 		}
 
 		/// Set a new deposit redeem address.
@@ -264,7 +253,6 @@ impl<T: Trait> Module<T> {
 		let verified_receipt = T::EthereumRelay::verify_receipt(proof_record)
 			.map_err(|_| <Error<T>>::ReceiptProofI)?;
 		let fee = T::EthereumRelay::receipt_verify_fee();
-		let mut is_ring = false;
 		let result = {
 			let eth_event = EthEvent {
 				name: "BurnAndRedeem".to_owned(),
@@ -296,12 +284,7 @@ impl<T: Trait> Module<T> {
 				.logs
 				.into_iter()
 				.find(|x| {
-					is_ring = x.address == Self::ring_redeem_address();
-
-					let address_found = is_ring || x.address == Self::kton_redeem_address();
-					let signature_matched = x.topics[0] == eth_event.signature();
-
-					address_found && signature_matched
+					x.address == Self::token_redeem_address() && x.topics[0] == eth_event.signature()
 				})
 				.ok_or(<Error<T>>::LogEntryNE)?;
 			let log = RawLog {
@@ -315,6 +298,18 @@ impl<T: Trait> Module<T> {
 
 			eth_event.parse_log(log).map_err(|_| <Error<T>>::EthLogPF)?
 		};
+		let is_ring = {
+			let token_address = result.params[0]
+				.value
+				.clone()
+				.to_address()
+				.ok_or(<Error<T>>::AddressCF)?;
+
+			ensure!(token_address == Self::ring_token_address() || token_address == Self::kton_token_address(), <Error<T>>::AssetAR);
+
+			token_address == Self::ring_token_address()
+		};
+
 		let redeemed_amount = {
 			// TODO: div 10**18 and mul 10**9
 			let amount = result.params[2]
