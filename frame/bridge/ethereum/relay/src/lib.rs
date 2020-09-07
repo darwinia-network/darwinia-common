@@ -671,7 +671,7 @@ impl<T: Trait> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
 pub trait WeightInfo {}
 impl WeightInfo for () {}
 
-#[cfg_attr(test, derive(serde::Deserialize))]
+#[cfg_attr(any(feature = "deserialize", test), derive(serde::Deserialize))]
 #[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
 pub struct EthereumHeaderThingWithProof {
 	header: EthereumHeader,
@@ -680,7 +680,7 @@ pub struct EthereumHeaderThingWithProof {
 	mmr_proof: Vec<H256>,
 }
 
-#[cfg_attr(test, derive(serde::Deserialize))]
+#[cfg_attr(any(feature = "deserialize", test), derive(serde::Deserialize))]
 #[derive(Clone, PartialEq, Encode, Decode, Default, RuntimeDebug)]
 pub struct EthereumHeaderThing {
 	pub header: EthereumHeader,
