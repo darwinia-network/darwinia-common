@@ -415,7 +415,7 @@ pub fn str_to_u64(s: &str) -> u64 {
 }
 
 #[cfg(any(feature = "deserialize", test))]
-fn bytes_from_string<'de, D>(deserializer: D) -> Result<Bytes, D::Error>
+pub fn bytes_from_string<'de, D>(deserializer: D) -> Result<Bytes, D::Error>
 where
 	D: serde::Deserializer<'de>,
 {

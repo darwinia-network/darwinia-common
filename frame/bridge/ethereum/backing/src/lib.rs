@@ -8,6 +8,11 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+#[cfg(test)]
+mod mock2;
+#[cfg(test)]
+mod tests2;
+
 mod types {
 	use crate::*;
 
@@ -66,8 +71,6 @@ pub trait Trait: frame_system::Trait {
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
 	type KtonCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
-
-	type SubKeyPrefix: Get<u8>;
 
 	/// Weight information for the extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
@@ -163,8 +166,6 @@ decl_module! {
 
 		/// The treasury's module id, used for deriving its sovereign account ID.
 		const ModuleId: ModuleId = T::ModuleId::get();
-
-		const SubKeyPrefix: u8 = T::SubKeyPrefix::get();
 
 		fn deposit_event() = default;
 

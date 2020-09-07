@@ -4,6 +4,7 @@
 use std::cell::RefCell;
 // --- substrate ---
 use frame_support::{impl_outer_dispatch, impl_outer_origin, parameter_types, weights::Weight};
+use frame_system::EnsureRoot;
 use sp_core::{crypto::key_types, H256};
 use sp_runtime::{
 	testing::{Header, TestXt, UintAuthorityId},
@@ -12,8 +13,9 @@ use sp_runtime::{
 };
 // --- darwinia ---
 use array_bytes::fixed_hex_bytes_unchecked;
-use darwinia_ethereum_linear_relay::EthereumNetworkType;
 use darwinia_staking::{EraIndex, Exposure, ExposureOf};
+use darwinia_relay_primitives::*;
+use darwinia_ethereum_relay::{EthereumHeaderThingWithProof, EthereumHeaderThing};
 
 use crate::*;
 
@@ -39,7 +41,7 @@ pub type Kton = darwinia_balances::Module<Test, KtonInstance>;
 type Session = pallet_session::Module<Test>;
 type System = frame_system::Module<Test>;
 type Timestamp = pallet_timestamp::Module<Test>;
-pub type EthereumLinearRelay = darwinia_ethereum_linear_relay::Module<Test>;
+pub type EthereumRelay = darwinia_ethereum_relay::Module<Test>;
 pub type Staking = darwinia_staking::Module<Test>;
 pub type EthereumBacking = Module<Test>;
 
@@ -54,7 +56,7 @@ impl_outer_origin! {
 
 impl_outer_dispatch! {
 	pub enum Call for Test where origin: Origin {
-		darwinia_ethereum_linear_relay::EthereumLinearRelay,
+		darwinia_ethereum_relay::EthereumRelay,
 		darwinia_staking::Staking,
 	}
 }
@@ -96,7 +98,7 @@ impl Trait for Test {
 	type ModuleId = EthBackingModuleId;
 	type Event = ();
 	type RedeemAccountId = AccountId;
-	type EthereumRelay = EthereumLinearRelay;
+	type EthereumRelay = EthereumRelay;
 	type OnDepositRedeem = Staking;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
@@ -167,13 +169,14 @@ impl pallet_session::historical::Trait for Test {
 }
 
 parameter_types! {
-	pub const EthereumLinearRelayModuleId: ModuleId = ModuleId(*b"da/ethli");
-	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Ropsten;
+	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
 }
-impl darwinia_ethereum_linear_relay::Trait for Test {
-	type ModuleId = EthereumLinearRelayModuleId;
+impl darwinia_ethereum_relay::Trait for Test {
+	type ModuleId = EthereumRelayModuleId;
 	type Event = ();
-	type EthereumNetwork = EthereumNetwork;
+	type RelayerGame = UnusedRelayerGame;
+	type ApproveOrigin = EnsureRoot<AccountId>;
+	type RejectOrigin = EnsureRoot<AccountId>;
 	type Call = Call;
 	type Currency = Ring;
 	type WeightInfo = ();
@@ -276,3 +279,35 @@ impl ExtBuilder {
 		t.into()
 	}
 }
+
+pub struct UnusedRelayerGame;
+impl RelayerGameProtocol for UnusedRelayerGame {
+	type Relayer = AccountId;
+	type Balance = Balance;
+	type HeaderThingWithProof = EthereumHeaderThingWithProof;
+	type HeaderThing = EthereumHeaderThing;
+
+	fn proposals_of_game(
+		_: <Self::HeaderThing as HeaderThing>::Number,
+	) -> Vec<
+		RelayProposal<
+			Self::Relayer,
+			Self::Balance,
+			Self::HeaderThing,
+			<Self::HeaderThing as HeaderThing>::Hash,
+		>,
+	> {
+		unimplemented!()
+	}
+
+	fn submit_proposal(_: Self::Relayer, _: Vec<Self::HeaderThingWithProof>) -> DispatchResult {
+		unimplemented!()
+	}
+	fn approve_pending_header(_: <Self::HeaderThing as HeaderThing>::Number) -> DispatchResult {
+		unimplemented!()
+	}
+	fn reject_pending_header(_: <Self::HeaderThing as HeaderThing>::Number) -> DispatchResult {
+		unimplemented!()
+	}
+}
+

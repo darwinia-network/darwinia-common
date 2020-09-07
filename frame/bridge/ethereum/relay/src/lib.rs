@@ -683,8 +683,8 @@ pub struct EthereumHeaderThingWithProof {
 #[cfg_attr(test, derive(serde::Deserialize))]
 #[derive(Clone, PartialEq, Encode, Decode, Default, RuntimeDebug)]
 pub struct EthereumHeaderThing {
-	header: EthereumHeader,
-	mmr_root: H256,
+	pub header: EthereumHeader,
+	pub mmr_root: H256,
 }
 impl HeaderThing for EthereumHeaderThing {
 	type Number = EthereumBlockNumber;

@@ -30,6 +30,9 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 # darwinia
 darwinia-balances              = { path = "../../../../frame/balances" }
 darwinia-ethereum-linear-relay = { path = "../linear-relay" }
+darwinia-ethereum-relay = { path = "../relay" }
+darwinia-relayer-game = { path = "../../relayer-game"}
+darwinia-relay-primitives = { path = "../../../../primitives/relay"}
 darwinia-staking               = { path = "../../../../frame/staking" }
 ethereum-primitives            = { features = ["deserialize"], path = "../../../../primitives/ethereum-primitives" }
 # github
