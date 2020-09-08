@@ -1396,13 +1396,13 @@ dependencies = [
  "env_logger",
  "frame-support",
  "frame-system",
- "num-integer",
  "pallet-authorship",
  "pallet-session",
  "pallet-timestamp",
  "parity-scale-codec",
  "rand_chacha 0.2.2",
  "serde",
+ "sp-arithmetic",
  "sp-core",
  "sp-io",
  "sp-npos-elections",
@@ -1411,6 +1411,7 @@ dependencies = [
  "sp-std 2.0.0-rc6",
  "sp-storage",
  "static_assertions 1.1.0",
+ "substrate-fixed",
  "substrate-test-utils",
 ]
 
@@ -7610,6 +7611,15 @@ version = "2.0.0-rc6"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library#35fe3cd1bc4b64cadb0bc6196ae40173db65bb28"
 dependencies = [
  "platforms",
+]
+
+[[package]]
+name = "substrate-fixed"
+version = "0.5.4"
+source = "git+https://github.com/encointer/substrate-fixed?branch=master#2c52170fa02507dc5b52c516061302670860869a"
+dependencies = [
+ "parity-scale-codec",
+ "typenum",
 ]
 
 [[package]]

@@ -331,6 +331,8 @@ pub mod weight {
 #[cfg(test)]
 mod darwinia_tests;
 #[cfg(test)]
+mod inflation_tests;
+#[cfg(test)]
 mod mock;
 #[cfg(test)]
 mod substrate_tests;
@@ -766,7 +768,7 @@ decl_storage! {
 		/// The percentage of the total payout that is distributed to validators and nominators
 		///
 		/// The reset might go to Treasury or something else.
-		pub PayoutFraction get(fn payout_fraction) config(): Perbill;
+		pub PayoutFraction get(fn payout_fraction) config(): Perquintill;
 
 		/// Total *RING* in pool.
 		pub RingPool get(fn ring_pool): RingBalance<T>;
