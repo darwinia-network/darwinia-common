@@ -24,6 +24,7 @@ log            = { version = "0.4.11" }
 structopt      = { version = "0.3.16" }
 tokio          = { version = "0.2.22", optional = true, features = ["rt-threaded"] }
 # darwinia
+array-bytes                         = { path = "../../../primitives/array-bytes" }
 darwinia-balances-rpc               = { path = "../../../frame/balances/rpc" }
 darwinia-balances-rpc-runtime-api   = { path = "../../../frame/balances/rpc/runtime-api" }
 darwinia-claims                     = { path = "../../../frame/claims" }

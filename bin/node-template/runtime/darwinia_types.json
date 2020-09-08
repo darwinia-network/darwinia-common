@@ -175,8 +175,7 @@
 	},
 	"RedeemFor": {
 		"_enum": {
-			"Ring": null,
-			"Kton": null,
+			"Token": null,
 			"Deposit": null
 		}
 	},

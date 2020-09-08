@@ -151,12 +151,7 @@ decl_storage! {
 			LastConfirmedHeaderInfo
 			get(fn last_confirmed_header_info)
 			config()
-			: (EthereumBlockNumber, H256, H256)
-			= (
-				0,
-				b"\xd4\xe5g@\xf8v\xae\xf8\xc0\x10\xb8j@\xd5\xf5gE\xa1\x18\xd0\x90j4\xe6\x9a\xec\x8c\r\xb1\xcb\x8f\xa3".into(),
-				b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00".into()
-			);
+			: (EthereumBlockNumber, H256, H256);
 
 		/// The Ethereum headers confrimed by relayer game
 		/// The actural storage needs to be defined
@@ -180,12 +175,16 @@ decl_storage! {
 		pub ReceiptVerifyFee get(fn receipt_verify_fee) config(): RingBalance<T>;
 	}
 	add_extra_genesis {
+		config(genesis_header_info): (EthereumBlockNumber, H256, H256);
 		config(dags_merkle_roots_loader): DagsMerkleRootsLoader;
 		build(|config| {
 			let GenesisConfig {
+				genesis_header_info,
 				dags_merkle_roots_loader,
 				..
 			} = config;
+
+			LastConfirmedHeaderInfo::put(genesis_header_info);
 
 			let dags_merkle_roots = if dags_merkle_roots_loader.dags_merkle_roots.is_empty() {
 				DagsMerkleRootsLoader::from_str(DAGS_MERKLE_ROOTS_STR).dags_merkle_roots.clone()
@@ -314,8 +313,8 @@ decl_module! {
 				// read the doc string of of event
 				Self::deposit_event(RawEvent::ConfirmBlockManagementError(month));
 			} else {
-				ConfirmBlocksInCycle::set(blocks_in_month);
-				ConfirmBlockKeepInMonth::set(month);
+				ConfirmBlocksInCycle::put(blocks_in_month);
+				ConfirmBlockKeepInMonth::put(month);
 
 				Self::deposit_event(RawEvent::UpdateConfrimedBlockCleanCycle(month, blocks_in_month));
 			}
@@ -472,6 +471,7 @@ impl<T: Trait> Relayable for Module<T> {
 
 					let (last_confirmed_block_number, last_confirmed_hash, _) =
 						LastConfirmedHeaderInfo::get();
+
 					trace!(
 						target: "ethereum-relay",
 						"last_leaf: {:?}\n\
@@ -575,9 +575,9 @@ impl<T: Trait> Relayable for Module<T> {
 		ensure!(header.number > 0, <Error<T>>::HeaderI);
 
 		if header.number > last_comfirmed_block_number {
-			LastConfirmedHeaderInfo::set((
+			LastConfirmedHeaderInfo::put((
 				header.number,
-				array_unchecked!(header.hash.unwrap_or_default(), 0, 32).into(),
+				H256::from(array_unchecked!(header.hash.unwrap_or_default(), 0, 32)),
 				mmr_root,
 			));
 		};
@@ -591,7 +591,7 @@ impl<T: Trait> Relayable for Module<T> {
 			ConfirmedHeadersDoubleMap::remove_prefix(
 				confirm_cycle.saturating_sub(ConfirmBlockKeepInMonth::get()),
 			);
-			LastConfirmedBlockCycle::set(confirm_cycle);
+			LastConfirmedBlockCycle::put(confirm_cycle);
 		}
 
 		Ok(())
@@ -666,7 +666,7 @@ impl<T: Trait> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
 pub trait WeightInfo {}
 impl WeightInfo for () {}
 
-#[cfg_attr(test, derive(serde::Deserialize))]
+#[cfg_attr(any(feature = "deserialize", test), derive(serde::Deserialize))]
 #[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
 pub struct EthereumHeaderThingWithProof {
 	header: EthereumHeader,
@@ -675,11 +675,11 @@ pub struct EthereumHeaderThingWithProof {
 	mmr_proof: Vec<H256>,
 }
 
-#[cfg_attr(test, derive(serde::Deserialize))]
+#[cfg_attr(any(feature = "deserialize", test), derive(serde::Deserialize))]
 #[derive(Clone, PartialEq, Encode, Decode, Default, RuntimeDebug)]
 pub struct EthereumHeaderThing {
-	header: EthereumHeader,
-	mmr_root: H256,
+	pub header: EthereumHeader,
+	pub mmr_root: H256,
 }
 impl HeaderThing for EthereumHeaderThing {
 	type Number = EthereumBlockNumber;
