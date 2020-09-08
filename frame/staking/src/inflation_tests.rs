@@ -37,8 +37,7 @@ fn compute_total_payout_should_work() {
 	];
 	let mut total_left: RingBalance<Test> = hard_cap - initial_issuance;
 
-	for &(year, exp_inflation, exp_inflation_rate, payout_fraction) in inflation_spec.iter().skip(1)
-	{
+	for &(year, exp_inflation, exp_inflation_rate, payout_fraction) in inflation_spec.iter() {
 		let payout_fraction = Perquintill::from_percent(payout_fraction);
 		let (payout, inflation) = compute_total_payout::<Test>(
 			MILLISECONDS_PER_YEAR,
@@ -47,16 +46,15 @@ fn compute_total_payout_should_work() {
 			payout_fraction,
 		);
 
+		// eprintln!("{}\n{}\n", inflation, exp_inflation);
+
 		assert_eq!(payout, payout_fraction * inflation);
-
-		eprintln!("{}\n{}\n", inflation, exp_inflation);
-
-		// assert_eq_error_rate!(inflation as i128, exp_inflation as i128, 1300000);
-		// assert_eq_error_rate!(
-		// (inflation * 10000 / (hard_cap - total_left)) as i128,
-		// (exp_inflation_rate * 100.0) as i128,
-		// 3
-		// );
+		assert_eq_error_rate!(inflation, exp_inflation, 3);
+		assert_eq_error_rate!(
+			inflation * 10000 / (hard_cap - total_left),
+			(exp_inflation_rate * 100.0) as Balance,
+			3
+		);
 
 		total_left -= inflation;
 	}
