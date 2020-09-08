@@ -8,6 +8,7 @@ mod migration {
 	use frame_support::migration::*;
 	// --- darwinia ---
 	use crate::*;
+	use array_bytes::fixed_hex_bytes_unchecked;
 
 	pub fn migrate<T: Trait>() {
 		let module: &[u8] = b"DarwiniaEthereumBacking";
@@ -59,10 +60,25 @@ mod migration {
 		}
 
 		for (item, value) in &[
-			(token_redeem_address, 0),
-			(deposit_redeem_address, 0),
-			(ring_token_address, 0),
-			(kton_token_address, 0),
+			(token_redeem_address, {
+				// type annotation
+				EthereumAddress::from(fixed_hex_bytes_unchecked!(
+					"0x49262B932E439271d05634c32978294C7Ea15d0C",
+					20
+				))
+			}),
+			(
+				deposit_redeem_address,
+				fixed_hex_bytes_unchecked!("0x6EF538314829EfA8386Fc43386cB13B4e0A67D1e", 20).into(),
+			),
+			(
+				ring_token_address,
+				fixed_hex_bytes_unchecked!("0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0", 20).into(),
+			),
+			(
+				kton_token_address,
+				fixed_hex_bytes_unchecked!("0x1994100c58753793D52c6f457f189aa3ce9cEe94", 20).into(),
+			),
 		] {
 			put_storage_value(module, item, empty_hash, value);
 		}
