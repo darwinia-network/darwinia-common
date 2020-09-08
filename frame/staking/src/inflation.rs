@@ -85,7 +85,11 @@ pub fn compute_inflation(maximum: Balance, year: u32) -> Option<u128> {
 				let e_f64 = maximum as f64 * d_f64;
 				// eprintln!("{}\n{}", e, e_f64);
 
-				sp_runtime::assert_eq_error_rate!(e.floor(), e_f64 as u128, 3);
+				sp_runtime::assert_eq_error_rate!(
+					e.floor(),
+					e_f64 as u128,
+					if e_f64 == 0.00_f64 { 0 } else { 3 }
+				);
 			}
 
 			return Some(e.floor().to_num());
