@@ -118,6 +118,11 @@ impl ExtBuilder {
 			.unwrap();
 
 		GenesisConfig::<Test> {
+			genesis_header_info: (
+				0,
+				b"\xd4\xe5g@\xf8v\xae\xf8\xc0\x10\xb8j@\xd5\xf5gE\xa1\x18\xd0\x90j4\xe6\x9a\xec\x8c\r\xb1\xcb\x8f\xa3".into(),
+				b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00".into()
+			),
 			dags_merkle_roots_loader: DagsMerkleRootsLoader::from_file(
 				"../../../../bin/node-template/node/res/dags_merkle_roots.json",
 				"DAG_MERKLE_ROOTS_PATH",

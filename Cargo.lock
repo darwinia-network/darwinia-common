@@ -1245,6 +1245,9 @@ dependencies = [
  "array-bytes",
  "darwinia-balances",
  "darwinia-ethereum-linear-relay",
+ "darwinia-ethereum-relay",
+ "darwinia-relay-primitives",
+ "darwinia-relayer-game",
  "darwinia-staking",
  "darwinia-support",
  "ethabi",
@@ -1256,6 +1259,7 @@ dependencies = [
  "parity-scale-codec",
  "rlp 0.4.4",
  "serde",
+ "serde_json",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -3966,6 +3970,7 @@ dependencies = [
 name = "node-template"
 version = "1.0.0-alpha.3"
 dependencies = [
+ "array-bytes",
  "darwinia-balances-rpc",
  "darwinia-balances-rpc-runtime-api",
  "darwinia-claims",

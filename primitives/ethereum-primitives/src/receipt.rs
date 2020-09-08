@@ -7,6 +7,8 @@ use rlp::*;
 use sp_runtime::RuntimeDebug;
 use sp_std::prelude::*;
 // --- darwinia ---
+#[cfg(any(feature = "deserialize", test))]
+use crate::header::bytes_from_string;
 use crate::{error::EthereumError, *};
 use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
 
@@ -55,9 +57,14 @@ pub struct EthereumReceipt {
 	pub outcome: TransactionOutcome,
 }
 
+#[cfg_attr(any(feature = "deserialize", test), derive(serde::Deserialize))]
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
 pub struct EthereumReceiptProof {
 	pub index: u64,
+	#[cfg_attr(
+		any(feature = "deserialize", test),
+		serde(deserialize_with = "bytes_from_string")
+	)]
 	pub proof: Vec<u8>,
 	pub header_hash: H256,
 }
