@@ -528,7 +528,7 @@ impl ExtBuilder {
 			minimum_validator_count: self.minimum_validator_count,
 			invulnerables: self.invulnerables,
 			slash_reward_fraction: Perbill::from_percent(10),
-			payout_fraction: Perbill::from_percent(50),
+			payout_fraction: Perquintill::from_percent(50),
 			..Default::default()
 		}
 		.assimilate_storage(&mut storage);
@@ -817,7 +817,7 @@ pub(crate) fn current_total_payout_for_duration(era_duration: TsInMs) -> Balance
 		era_duration,
 		Staking::living_time(),
 		<Test as Trait>::Cap::get() - Ring::total_issuance(),
-		Perbill::from_percent(50),
+		Perquintill::from_percent(50),
 	)
 	.0
 }

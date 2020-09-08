@@ -24,6 +24,7 @@ frame-support     = { default-features = false, git = "https://github.com/darwin
 frame-system      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 pallet-authorship = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 pallet-session    = { default-features = false, features = ["historical"], git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-arithmetic     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-core           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-io             = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-npos-elections = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
@@ -67,6 +68,7 @@ substrate-std = [
 	"frame-system/std",
 	"pallet-authorship/std",
 	"pallet-session/std",
+	"sp-arithmetic/std",
 	"sp-core/std",
 	"sp-io/std",
 	"sp-npos-elections/std",

@@ -1398,6 +1398,7 @@ dependencies = [
  "parity-scale-codec",
  "rand_chacha 0.2.2",
  "serde",
+ "sp-arithmetic",
  "sp-core",
  "sp-io",
  "sp-npos-elections",
