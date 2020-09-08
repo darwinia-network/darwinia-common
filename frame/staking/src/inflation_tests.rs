@@ -36,7 +36,6 @@ fn compute_total_payout_should_work() {
 		(18, 204920129, 4.03, 50),
 		(19, 201629917, 3.81, 50),
 		(20, 197889214, 3.60, 50),
-		(21, 0, 0.0, 50),
 
 	];
 	let mut total_left: RingBalance<Test> = hard_cap - initial_issuance;

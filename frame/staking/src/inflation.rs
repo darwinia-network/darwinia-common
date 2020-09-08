@@ -65,7 +65,7 @@ pub fn compute_total_payout<T: Trait>(
 
 pub fn compute_inflation(maximum: Balance, year: u32) -> Option<u128> {
 	type S = I16F16;
-	type D = I32F32;
+	type D = I96F32;
 	type R = I96F32;
 
 	if let Ok(e) = sqrt::<S, D>(S::from_num(year)) {
