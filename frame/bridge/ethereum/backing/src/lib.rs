@@ -6,12 +6,9 @@
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
-mod tests;
-
+mod test_with_linear_relay;
 #[cfg(test)]
-mod mock2;
-#[cfg(test)]
-mod tests2;
+mod test_with_relay;
 
 mod types {
 	use crate::*;
@@ -285,7 +282,8 @@ impl<T: Trait> Module<T> {
 				.logs
 				.into_iter()
 				.find(|x| {
-					x.address == Self::token_redeem_address() && x.topics[0] == eth_event.signature()
+					x.address == Self::token_redeem_address()
+						&& x.topics[0] == eth_event.signature()
 				})
 				.ok_or(<Error<T>>::LogEntryNE)?;
 			let log = RawLog {
@@ -306,7 +304,11 @@ impl<T: Trait> Module<T> {
 				.to_address()
 				.ok_or(<Error<T>>::AddressCF)?;
 
-			ensure!(token_address == Self::ring_token_address() || token_address == Self::kton_token_address(), <Error<T>>::AssetAR);
+			ensure!(
+				token_address == Self::ring_token_address()
+					|| token_address == Self::kton_token_address(),
+				<Error<T>>::AssetAR
+			);
 
 			token_address == Self::ring_token_address()
 		};

@@ -5,11 +5,72 @@ use frame_support::{assert_err, assert_ok};
 use frame_system::RawOrigin;
 use sp_runtime::{traits::Dispatchable, AccountId32};
 // --- darwinia ---
-use crate::{mock::*, *};
-use array_bytes::{fixed_hex_bytes_unchecked, hex_bytes_unchecked};
+use crate::*;
+use array_bytes::hex_bytes_unchecked;
+use darwinia_ethereum_linear_relay::EthereumNetworkType;
 use darwinia_staking::{RewardDestination, StakingBalance, StakingLedger, TimeDepositItem};
 use darwinia_support::balance::lock::StakingLock;
 use ethereum_primitives::{header::EthereumHeader, receipt::EthereumReceiptProof};
+
+type EthereumRelay = darwinia_ethereum_linear_relay::Module<Test>;
+
+decl_tests!();
+
+parameter_types! {
+	pub const EthereumLinearRelayModuleId: ModuleId = ModuleId(*b"da/ethli");
+	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Ropsten;
+}
+impl darwinia_ethereum_linear_relay::Trait for Test {
+	type ModuleId = EthereumLinearRelayModuleId;
+	type Event = ();
+	type EthereumNetwork = EthereumNetwork;
+	type Call = Call;
+	type Currency = Ring;
+	type WeightInfo = ();
+}
+
+pub struct ExtBuilder;
+impl Default for ExtBuilder {
+	fn default() -> Self {
+		Self
+	}
+}
+impl ExtBuilder {
+	pub fn build(self) -> sp_io::TestExternalities {
+		let mut t = frame_system::GenesisConfig::default()
+			.build_storage::<Test>()
+			.unwrap();
+
+		GenesisConfig::<Test> {
+			token_redeem_address: fixed_hex_bytes_unchecked!(
+				"0x49262B932E439271d05634c32978294C7Ea15d0C",
+				20
+			)
+			.into(),
+			deposit_redeem_address: fixed_hex_bytes_unchecked!(
+				"0x6EF538314829EfA8386Fc43386cB13B4e0A67D1e",
+				20
+			)
+			.into(),
+			ring_token_address: fixed_hex_bytes_unchecked!(
+				"0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0",
+				20
+			)
+			.into(),
+			kton_token_address: fixed_hex_bytes_unchecked!(
+				"0x1994100c58753793D52c6f457f189aa3ce9cEe94",
+				20
+			)
+			.into(),
+			ring_locked: 20000000000000,
+			kton_locked: 5000000000000,
+		}
+		.assimilate_storage(&mut t)
+		.unwrap();
+
+		t.into()
+	}
+}
 
 #[test]
 fn genesis_linear_config_works() {
@@ -24,7 +85,7 @@ fn verify_linear_parse_token_redeem_proof() {
 	ExtBuilder::default()
 		.build()
 		.execute_with(|| {
-			assert_ok!(EthereumLinearRelay::set_number_of_blocks_safe(RawOrigin::Root.into(), 0));
+			assert_ok!(EthereumRelay::set_number_of_blocks_safe(RawOrigin::Root.into(), 0));
 
 			// https://ropsten.etherscan.io/tx/0x1d3ef601b9fa4a7f1d6259c658d0a10c77940fa5db9e10ab55397eb0ce88807d
 			let proof_record = EthereumReceiptProof {
@@ -58,7 +119,7 @@ fn verify_linear_parse_token_redeem_proof() {
 				"#
 			).unwrap();
 
-			assert_ok!(EthereumLinearRelay::init_genesis_header(&header, 31419688206738532));
+			assert_ok!(EthereumRelay::init_genesis_header(&header, 31419688206738532));
 
 			let expect_account_id = EthereumBacking::account_id_try_from_bytes(
 				&hex_bytes_unchecked("0xe44664996ab7b5d86c12e9d5ac3093f5b2efc9172cb7ce298cd6c3c51002c318"),
@@ -76,7 +137,7 @@ fn verify_linear_redeem_ring() {
 	ExtBuilder::default()
 		.build()
 		.execute_with(|| {
-			assert_ok!(EthereumLinearRelay::set_number_of_blocks_safe(RawOrigin::Root.into(), 0));
+			assert_ok!(EthereumRelay::set_number_of_blocks_safe(RawOrigin::Root.into(), 0));
 
 			// https://ropsten.etherscan.io/tx/0x1d3ef601b9fa4a7f1d6259c658d0a10c77940fa5db9e10ab55397eb0ce88807d
 			let proof_record = EthereumReceiptProof {
@@ -110,7 +171,7 @@ fn verify_linear_redeem_ring() {
 				"#
 			).unwrap();
 
-			assert_ok!(EthereumLinearRelay::init_genesis_header(&header, 31419688206738532));
+			assert_ok!(EthereumRelay::init_genesis_header(&header, 31419688206738532));
 
 			let expect_account_id = EthereumBacking::account_id_try_from_bytes(
 				&hex_bytes_unchecked("0xe44664996ab7b5d86c12e9d5ac3093f5b2efc9172cb7ce298cd6c3c51002c318"),
@@ -142,7 +203,7 @@ fn verify_linear_redeem_kton() {
 	ExtBuilder::default()
 		.build()
 		.execute_with(|| {
-			assert_ok!(EthereumLinearRelay::set_number_of_blocks_safe(RawOrigin::Root.into(), 0));
+			assert_ok!(EthereumRelay::set_number_of_blocks_safe(RawOrigin::Root.into(), 0));
 
 			// https://ropsten.etherscan.io/tx/0x2878ae39a9e0db95e61164528bb1ec8684be194bdcc236848ff14d3fe5ba335d
 			// darwinia: 5FP2eFNSVxJzSrE3N2NEVFPhUU34VzYFD6DDtRXbYzTdwPn8
@@ -179,7 +240,7 @@ fn verify_linear_redeem_kton() {
 				"#
 			).unwrap();
 
-			assert_ok!(EthereumLinearRelay::init_genesis_header(&header, 31419690269906095));
+			assert_ok!(EthereumRelay::init_genesis_header(&header, 31419690269906095));
 
 			let expect_account_id = EthereumBacking::account_id_try_from_bytes(
 				&hex_bytes_unchecked("0xe44664996ab7b5d86c12e9d5ac3093f5b2efc9172cb7ce298cd6c3c51002c318"),
@@ -217,7 +278,7 @@ fn verify_linear_redeem_deposit() {
 	ExtBuilder::default()
 		.build()
 		.execute_with(|| {
-			assert_ok!(EthereumLinearRelay::set_number_of_blocks_safe(RawOrigin::Root.into(), 0));
+			assert_ok!(EthereumRelay::set_number_of_blocks_safe(RawOrigin::Root.into(), 0));
 
 			// 1234ring -> 0.1234kton
 
@@ -262,7 +323,7 @@ fn verify_linear_redeem_deposit() {
 				"#
 			).unwrap();
 
-			assert_ok!(EthereumLinearRelay::init_genesis_header(&header, 31419789208662997));
+			assert_ok!(EthereumRelay::init_genesis_header(&header, 31419789208662997));
 
 			let ring_locked_before = EthereumBacking::pot::<Ring>();
 			let expect_account_id = EthereumBacking::account_id_try_from_bytes(
@@ -272,7 +333,7 @@ fn verify_linear_redeem_deposit() {
 			let controller = AccountId32::from([1; 32]);
 			let _ = Ring::deposit_creating(&expect_account_id, 1);
 
-			assert_ok!(mock::Call::from(<darwinia_staking::Call<Test>>::bond(
+			assert_ok!(Call::from(<darwinia_staking::Call<Test>>::bond(
 				controller.clone(),
 				StakingBalance::RingBalance(1),
 				RewardDestination::Controller,

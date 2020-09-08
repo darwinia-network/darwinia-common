@@ -2,16 +2,108 @@
 
 // --- substrate ---
 use frame_support::{assert_err, assert_ok};
+use frame_system::EnsureRoot;
 use sp_runtime::{traits::Dispatchable, AccountId32};
 // --- darwinia ---
-use crate::{mock2::*, *};
-use array_bytes::{hex_bytes_unchecked};
+use crate::*;
+use array_bytes::hex_bytes_unchecked;
+use darwinia_ethereum_relay::{EthereumHeaderThing, EthereumHeaderThingWithProof};
+use darwinia_relay_primitives::*;
 use darwinia_staking::{RewardDestination, StakingBalance, StakingLedger, TimeDepositItem};
 use darwinia_support::balance::lock::StakingLock;
 use ethereum_primitives::{header::EthereumHeader, receipt::EthereumReceiptProof, H256};
-use darwinia_ethereum_relay::EthereumHeaderThing;
 
-use darwinia_relay_primitives::Relayable;
+type EthereumRelay = darwinia_ethereum_relay::Module<Test>;
+
+decl_tests!();
+
+parameter_types! {
+	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
+}
+impl darwinia_ethereum_relay::Trait for Test {
+	type ModuleId = EthereumRelayModuleId;
+	type Event = ();
+	type RelayerGame = UnusedRelayerGame;
+	type ApproveOrigin = EnsureRoot<AccountId>;
+	type RejectOrigin = EnsureRoot<AccountId>;
+	type Call = Call;
+	type Currency = Ring;
+	type WeightInfo = ();
+}
+
+pub struct UnusedRelayerGame;
+impl RelayerGameProtocol for UnusedRelayerGame {
+	type Relayer = AccountId;
+	type Balance = Balance;
+	type HeaderThingWithProof = EthereumHeaderThingWithProof;
+	type HeaderThing = EthereumHeaderThing;
+
+	fn proposals_of_game(
+		_: <Self::HeaderThing as HeaderThing>::Number,
+	) -> Vec<
+		RelayProposal<
+			Self::Relayer,
+			Self::Balance,
+			Self::HeaderThing,
+			<Self::HeaderThing as HeaderThing>::Hash,
+		>,
+	> {
+		unimplemented!()
+	}
+
+	fn submit_proposal(_: Self::Relayer, _: Vec<Self::HeaderThingWithProof>) -> DispatchResult {
+		unimplemented!()
+	}
+	fn approve_pending_header(_: <Self::HeaderThing as HeaderThing>::Number) -> DispatchResult {
+		unimplemented!()
+	}
+	fn reject_pending_header(_: <Self::HeaderThing as HeaderThing>::Number) -> DispatchResult {
+		unimplemented!()
+	}
+}
+
+pub struct ExtBuilder;
+impl Default for ExtBuilder {
+	fn default() -> Self {
+		Self
+	}
+}
+impl ExtBuilder {
+	pub fn build(self) -> sp_io::TestExternalities {
+		let mut t = frame_system::GenesisConfig::default()
+			.build_storage::<Test>()
+			.unwrap();
+
+		GenesisConfig::<Test> {
+			token_redeem_address: fixed_hex_bytes_unchecked!(
+				"0x49262B932E439271d05634c32978294C7Ea15d0C",
+				20
+			)
+			.into(),
+			deposit_redeem_address: fixed_hex_bytes_unchecked!(
+				"0x6EF538314829EfA8386Fc43386cB13B4e0A67D1e",
+				20
+			)
+			.into(),
+			ring_token_address: fixed_hex_bytes_unchecked!(
+				"0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0",
+				20
+			)
+			.into(),
+			kton_token_address: fixed_hex_bytes_unchecked!(
+				"0x1994100c58753793D52c6f457f189aa3ce9cEe94",
+				20
+			)
+			.into(),
+			ring_locked: 20000000000000,
+			kton_locked: 5000000000000,
+		}
+		.assimilate_storage(&mut t)
+		.unwrap();
+
+		t.into()
+	}
+}
 
 #[cfg_attr(test, derive(serde::Deserialize))]
 #[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
@@ -450,7 +542,7 @@ fn verify_redeem_deposit() {
 			let controller = AccountId32::from([1; 32]);
 			let _ = Ring::deposit_creating(&expect_account_id, 1);
 
-			assert_ok!(mock2::Call::from(<darwinia_staking::Call<Test>>::bond(
+			assert_ok!(Call::from(<darwinia_staking::Call<Test>>::bond(
 				controller.clone(),
 				StakingBalance::RingBalance(1),
 				RewardDestination::Controller,
