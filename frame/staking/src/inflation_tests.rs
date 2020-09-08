@@ -114,7 +114,6 @@ fn compute_total_payout_should_work() {
 		(98, 1199332, 0.01, 50),
 		(99, 1091004, 0.01, 50),
 		(100, 991910, 0.01, 50),
-
 	];
 	let mut total_left: RingBalance<Test> = hard_cap - initial_issuance;
 
@@ -130,11 +129,11 @@ fn compute_total_payout_should_work() {
 		// eprintln!("{}\n{}\n", inflation, exp_inflation);
 
 		assert_eq!(payout, payout_fraction * inflation);
-		assert_eq_error_rate!(inflation as i128, exp_inflation as i128, 3);
+		assert_eq_error_rate!(inflation, exp_inflation, if inflation == 0 { 0 } else { 3 });
 		assert_eq_error_rate!(
-			(inflation * 10000 / (hard_cap - total_left)) as i128,
-			(exp_inflation_rate * 100.0) as i128,
-			3
+			inflation as f64 / (hard_cap - total_left) as f64,
+			exp_inflation_rate / 100.00_f64,
+			0.01_f64 / 100.00_f64
 		);
 
 		total_left -= inflation;

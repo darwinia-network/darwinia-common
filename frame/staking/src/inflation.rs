@@ -93,7 +93,11 @@ pub fn compute_inflation(maximum: Balance, year: u32) -> Option<u128> {
 			}
 
 			return Some(e.floor().to_num());
+		} else {
+			error!(target: "darwniia-staking", "Compute Inflation Failed at Step 1");
 		}
+	} else {
+		error!(target: "darwniia-staking", "Compute Inflation Failed at Step 0");
 	}
 
 	None
