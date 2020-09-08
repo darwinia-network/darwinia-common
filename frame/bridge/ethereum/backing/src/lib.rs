@@ -3,6 +3,72 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "128"]
 
+mod migration {
+	// --- substrate ---
+	use frame_support::migration::*;
+	// --- darwinia ---
+	use crate::*;
+
+	pub fn migrate<T: Trait>() {
+		let module: &[u8] = b"DarwiniaEthereumBacking";
+		let old_verified_map_items: &[&[u8]] = &[
+			// pub RingProofVerified
+			// 	get(fn ring_proof_verfied)
+			// 	: map hasher(blake2_128_concat) EthereumTransactionIndex => Option<bool>;
+			b"RingProofVerified",
+			// pub KtonProofVerified
+			// 	get(fn kton_proof_verfied)
+			// 	: map hasher(blake2_128_concat) EthereumTransactionIndex => Option<bool>;
+			b"KtonProofVerified",
+			// pub DepositProofVerified
+			// 	get(fn deposit_proof_verfied)
+			// 	: map hasher(blake2_128_concat) EthereumTransactionIndex => Option<bool>;
+			b"DepositProofVerified",
+		];
+		let old_token_value_items: &[&[u8]] = &[
+			// pub RingRedeemAddress get(fn ring_redeem_address) config(): EthereumAddress;
+			b"RingRedeemAddress",
+			// pub KtonRedeemAddress get(fn kton_redeem_address) config(): EthereumAddress;
+			b"KtonRedeemAddress",
+		];
+
+		// pub VerifiedProof
+		// 	get(fn verified_proof)
+		// 	: map hasher(blake2_128_concat) EthereumTransactionIndex => Option<bool>;
+		let verified_proof: &[u8] = b"VerifiedProof";
+		// pub TokenRedeemAddress get(fn token_redeem_address) config(): EthereumAddress;
+		let token_redeem_address: &[u8] = b"TokenRedeemAddress";
+		// pub DepositRedeemAddress get(fn deposit_redeem_address) config(): EthereumAddress;
+		let deposit_redeem_address: &[u8] = b"DepositRedeemAddress";
+		// pub RingTokenAddress get(fn ring_token_address) config(): EthereumAddress;
+		let ring_token_address: &[u8] = b"RingTokenAddress";
+		// pub KtonTokenAddress get(fn kton_token_address) config(): EthereumAddress;
+		let kton_token_address: &[u8] = b"KtonTokenAddress";
+		let empty_hash: &[u8] = &[];
+
+		for old_verified_map_item in old_verified_map_items {
+			for (hash, value) in <StorageIterator<bool>>::new(module, old_verified_map_item) {
+				put_storage_value(module, verified_proof, &hash, value);
+			}
+
+			remove_storage_prefix(module, old_verified_map_item, empty_hash);
+		}
+
+		for old_token_value_item in old_token_value_items {
+			take_storage_value::<EthereumAddress>(module, old_token_value_item, empty_hash);
+		}
+
+		for (item, value) in &[
+			(token_redeem_address, 0),
+			(deposit_redeem_address, 0),
+			(ring_token_address, 0),
+			(kton_token_address, 0),
+		] {
+			put_storage_value(module, item, empty_hash, value);
+		}
+	}
+}
+
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
@@ -128,11 +194,12 @@ decl_error! {
 decl_storage! {
 	trait Store for Module<T: Trait> as DarwiniaEthereumBacking {
 		pub VerifiedProof
-			get(fn ring_proof_verfied)
+			get(fn verified_proof)
 			: map hasher(blake2_128_concat) EthereumTransactionIndex => Option<bool>;
 
 		pub TokenRedeemAddress get(fn token_redeem_address) config(): EthereumAddress;
 		pub DepositRedeemAddress get(fn deposit_redeem_address) config(): EthereumAddress;
+
 		pub RingTokenAddress get(fn ring_token_address) config(): EthereumAddress;
 		pub KtonTokenAddress get(fn kton_token_address) config(): EthereumAddress;
 	}
@@ -165,6 +232,12 @@ decl_module! {
 		const ModuleId: ModuleId = T::ModuleId::get();
 
 		fn deposit_event() = default;
+
+		fn on_runtime_upgrade() -> frame_support::weights::Weight {
+			migration::migrate::<T>();
+
+			0
+		}
 
 		/// Redeem balances
 		///
