@@ -1220,6 +1220,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-crab-issuing"
+version = "1.0.0-alpha.3"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "sp-runtime",
+]
+
+[[package]]
 name = "darwinia-elections-phragmen"
 version = "1.0.0-alpha.3"
 dependencies = [
@@ -4036,6 +4047,7 @@ dependencies = [
  "darwinia-balances",
  "darwinia-balances-rpc-runtime-api",
  "darwinia-claims",
+ "darwinia-crab-issuing",
  "darwinia-elections-phragmen",
  "darwinia-ethereum-backing",
  "darwinia-ethereum-relay",

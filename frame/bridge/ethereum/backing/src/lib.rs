@@ -100,6 +100,7 @@ mod types {
 
 	pub type RingBalance<T> =
 		<<T as Trait>::RingCurrency as Currency<<T as frame_system::Trait>::AccountId>>::Balance;
+	#[cfg(feature = "std")]
 	pub type KtonBalance<T> =
 		<<T as Trait>::KtonCurrency as Currency<<T as frame_system::Trait>::AccountId>>::Balance;
 
@@ -141,7 +142,7 @@ pub trait Trait: frame_system::Trait {
 
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
-	type RedeemAccountId: From<[u8; 32]> + Into<<Self as frame_system::Trait>::AccountId>;
+	type RedeemAccountId: From<[u8; 32]> + Into<Self::AccountId>;
 
 	type EthereumRelay: EthereumReceipt<Self::AccountId, RingBalance<Self>>;
 

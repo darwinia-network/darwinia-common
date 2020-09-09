@@ -812,7 +812,17 @@ impl pallet_sudo::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const EthBackingModuleId: ModuleId = ModuleId(*b"da/backi");
+	pub const CrabIssuingModuleId: ModuleId = ModuleId(*b"da/crabi");
+}
+impl darwinia_crab_issuing::Trait for Runtime {
+	type Event = Event;
+	type ModuleId = CrabIssuingModuleId;
+	type RingCurrency = Ring;
+	type WeightInfo = ();
+}
+
+parameter_types! {
+	pub const EthBackingModuleId: ModuleId = ModuleId(*b"da/ethbk");
 }
 impl darwinia_ethereum_backing::Trait for Runtime {
 	type ModuleId = EthBackingModuleId;
@@ -896,6 +906,8 @@ construct_runtime!(
 		Claims: darwinia_claims::{Module, Call, Storage, Config, Event<T>, ValidateUnsigned},
 
 		Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>},
+
+		CrabIssuing: darwinia_crab_issuing::{Module, Call, Storage, Config, Event<T>},
 
 		EthereumBacking: darwinia_ethereum_backing::{Module, Call, Storage, Config<T>, Event<T>},
 		EthereumRelay: darwinia_ethereum_relay::{Module, Call, Storage, Config<T>, Event<T>},

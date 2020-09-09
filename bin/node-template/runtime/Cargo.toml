@@ -18,6 +18,7 @@ static_assertions = { version = "1.1.0" }
 darwinia-balances                   = { default-features = false, path = "../../../frame/balances" }
 darwinia-balances-rpc-runtime-api   = { default-features = false, path = "../../../frame/balances/rpc/runtime-api" }
 darwinia-claims                     = { default-features = false, path = "../../../frame/claims" }
+darwinia-crab-issuing               = { default-features = false, path = "../../../frame/bridge/crab/issuing" }
 darwinia-elections-phragmen         = { default-features = false, path = "../../../frame/elections-phragmen" }
 darwinia-ethereum-backing           = { default-features = false, path = "../../../frame/bridge/ethereum/backing" }
 darwinia-ethereum-relay             = { default-features = false, path = "../../../frame/bridge/ethereum/relay" }
@@ -79,6 +80,7 @@ std = [
 	"darwinia-balances/std",
 	"darwinia-balances-rpc-runtime-api/std",
 	"darwinia-claims/std",
+	"darwinia-crab-issuing/std",
 	"darwinia-elections-phragmen/std",
 	"darwinia-ethereum-backing/std",
 	"darwinia-ethereum-relay/std",
