@@ -17,6 +17,13 @@ frame-support = { default-features = false, git = "https://github.com/darwinia-n
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
+[dev-dependencies]
+# substrate
+sp-io = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+# darwinia
+darwinia-balances = { path = "../../../balances" }
+darwinia-support  = { path = "../../../support" }
+
 [features]
 default = ["std"]
 

@@ -1223,10 +1223,13 @@ dependencies = [
 name = "darwinia-crab-issuing"
 version = "1.0.0-alpha.3"
 dependencies = [
+ "darwinia-balances",
+ "darwinia-support",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
  "serde",
+ "sp-io",
  "sp-runtime",
 ]
 

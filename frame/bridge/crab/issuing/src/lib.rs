@@ -51,7 +51,7 @@ decl_event! {
 		RingBalance = RingBalance<T>,
 	{
 		/// Someone swapped some *CRING*. [who, swapped *CRING*, burned Mapped *RING*]
-		BurnAndSwap(AccountId, RingBalance, MappedRing),
+		SwapAndBurn(AccountId, RingBalance, MappedRing),
 	}
 }
 
@@ -92,7 +92,7 @@ decl_module! {
 
 		fn deposit_event() = default;
 
-		#[weight = T::DbWeight::get().reads_writes(1, 1) + 100_000_000]
+		#[weight = T::DbWeight::get().reads_writes(2, 1) + 100_000_000]
 		pub fn swap_and_burn(origin, amount: RingBalance<T>) {
 			let who = ensure_signed(origin)?;
 			let burned = amount.saturated_into() / 100;
@@ -106,7 +106,7 @@ decl_module! {
 			T::RingCurrency::transfer(&who, &Self::account_id(), amount, ExistenceRequirement::AllowDeath)?;
 			BackedRing::put(backed - burned);
 
-			Self::deposit_event(RawEvent::BurnAndSwap(who, amount, burned));
+			Self::deposit_event(RawEvent::SwapAndBurn(who, amount, burned));
 		}
 	}
 }
