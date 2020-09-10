@@ -51,7 +51,7 @@ decl_event! {
 		RingBalance = RingBalance<T>,
 	{
 		/// Someone swapped some *CRING*. [who, swapped *CRING*, burned Mapped *RING*]
-		SwapAndBurn(AccountId, RingBalance, MappedRing),
+		SwapAndBurnToGenesis(AccountId, RingBalance, MappedRing),
 	}
 }
 
@@ -66,8 +66,8 @@ decl_error! {
 
 decl_storage! {
 	trait Store for Module<T: Trait> as DarwiniaCrabIssuing {
-		pub BackedRing
-			get(fn backed_ring)
+		pub TotalMappedRing
+			get(fn total_mapped_ring)
 			config()
 			: MappedRing;
 	}
@@ -78,7 +78,7 @@ decl_storage! {
 				&<Module<T>>::account_id(),
 				T::RingCurrency::minimum_balance()
 			);
-			BackedRing::put(config.backed_ring);
+			TotalMappedRing::put(config.total_mapped_ring);
 		});
 	}
 }
@@ -93,20 +93,20 @@ decl_module! {
 		fn deposit_event() = default;
 
 		#[weight = T::DbWeight::get().reads_writes(2, 1) + 100_000_000]
-		pub fn swap_and_burn(origin, amount: RingBalance<T>) {
+		pub fn swap_and_burn_to_genesis(origin, amount: RingBalance<T>) {
 			let who = ensure_signed(origin)?;
 			let burned = amount.saturated_into() / 100;
 
 			ensure!(burned > 0, <Error<T>>::SwapAmountTL);
 
-			let backed = Self::backed_ring();
+			let backed = Self::total_mapped_ring();
 
 			ensure!(backed >= burned, <Error<T>>::BackedRingIS);
 
 			T::RingCurrency::transfer(&who, &Self::account_id(), amount, ExistenceRequirement::AllowDeath)?;
-			BackedRing::put(backed - burned);
+			TotalMappedRing::put(backed - burned);
 
-			Self::deposit_event(RawEvent::SwapAndBurn(who, amount, burned));
+			Self::deposit_event(RawEvent::SwapAndBurnToGenesis(who, amount, burned));
 		}
 	}
 }

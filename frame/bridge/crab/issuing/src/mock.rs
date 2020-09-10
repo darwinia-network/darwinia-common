@@ -128,9 +128,11 @@ pub fn new_test_ext() -> TestExternalities {
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
-	GenesisConfig { backed_ring: 4_000 }
-		.assimilate_storage::<Test>(&mut t)
-		.unwrap();
+	GenesisConfig {
+		total_mapped_ring: 4_000,
+	}
+	.assimilate_storage::<Test>(&mut t)
+	.unwrap();
 
 	t.into()
 }

@@ -215,7 +215,7 @@ fn testnet_genesis(
 		}),
 		pallet_sudo: Some(SudoConfig { key: root_key }),
 		darwinia_crab_issuing: Some(CrabIssuingConfig {
-			backed_ring: 1 << 60
+			total_mapped_ring: 1 << 60
 		}),
 		darwinia_ethereum_backing: Some(EthereumBackingConfig {
 			token_redeem_address: fixed_hex_bytes_unchecked!(
