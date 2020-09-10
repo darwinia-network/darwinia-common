@@ -1117,6 +1117,30 @@ decl_module! {
 			let controller = T::Lookup::lookup(controller)?;
 			ensure!(!<Ledger<T>>::contains_key(&controller), <Error<T>>::AlreadyPaired);
 
+			match value {
+				StakingBalance::RingBalance(value) => {
+					// reject a bond which is considered to be _dust_.
+					ensure!(
+						value >= T::RingCurrency::minimum_balance(),
+						<Error<T>>::InsufficientValue,
+					);
+				}
+				StakingBalance::KtonBalance(value) => {
+					// reject a bond which is considered to be _dust_.
+					ensure!(
+						value >= T::KtonCurrency::minimum_balance(),
+						<Error<T>>::InsufficientValue,
+					);
+				}
+			}
+
+			// You're auto-bonded forever, here. We might improve this by only bonding when
+			// you actually validate/nominate and remove once you unbond __everything__.
+			<Bonded<T>>::insert(&stash, &controller);
+			<Payee<T>>::insert(&stash, payee);
+
+			<frame_system::Module<T>>::inc_ref(&stash);
+
 			let ledger = StakingLedger {
 				stash: stash.clone(),
 				claimed_rewards: {
@@ -1126,19 +1150,12 @@ decl_module! {
 				},
 				..Default::default()
 			};
-			let promise_month = promise_month.min(36);
 
 			match value {
-				StakingBalance::RingBalance(r) => {
-					let usable_balance = T::RingCurrency::usable_balance(&stash);
-					let value = r.min(usable_balance);
-
-					// reject a bond which is considered to be _dust_.
-					ensure!(
-						value >= T::RingCurrency::minimum_balance(),
-						<Error<T>>::InsufficientValue,
-					);
-
+				StakingBalance::RingBalance(value) => {
+					let stash_balance = T::RingCurrency::free_balance(&stash);
+					let value = value.min(stash_balance);
+					let promise_month = promise_month.min(36);
 					let (start_time, expire_time) = Self::bond_ring(
 						&stash,
 						&controller,
@@ -1147,32 +1164,21 @@ decl_module! {
 						ledger,
 					);
 
-					<RingPool<T>>::mutate(|r| *r += value);
+					<RingPool<T>>::mutate(|ring_pool| *ring_pool += value);
+
 					Self::deposit_event(RawEvent::BondRing(value, start_time, expire_time));
 				},
-				StakingBalance::KtonBalance(k) => {
-					let usable_balance = T::KtonCurrency::usable_balance(&stash);
-					let value = k.min(usable_balance);
-
-					// reject a bond which is considered to be _dust_.
-					ensure!(
-						value >= T::KtonCurrency::minimum_balance(),
-						<Error<T>>::InsufficientValue,
-					);
+				StakingBalance::KtonBalance(value) => {
+					let stash_balance = T::KtonCurrency::free_balance(&stash);
+					let value = value.min(stash_balance);
 
 					Self::bond_kton(&controller, value, ledger);
 
-					<KtonPool<T>>::mutate(|k| *k += value);
+					<KtonPool<T>>::mutate(|kton_pool| *kton_pool += value);
+
 					Self::deposit_event(RawEvent::BondKton(value));
 				},
 			}
-
-			// You're auto-bonded forever, here. We might improve this by only bonding when
-			// you actually validate/nominate and remove once you unbond __everything__.
-			<Bonded<T>>::insert(&stash, &controller);
-			<Payee<T>>::insert(&stash, payee);
-
-			<frame_system::Module<T>>::inc_ref(&stash);
 		}
 
 		/// Add some extra amount that have appeared in the stash `free_balance` into the balance up
@@ -1207,28 +1213,40 @@ decl_module! {
 			let promise_month = promise_month.min(36);
 
 			match max_additional {
-				 StakingBalance::RingBalance(r) => {
-					let extra = T::RingCurrency::usable_balance(&stash);
-					let extra = extra.min(r);
-					let (start_time, expire_time) = Self::bond_ring(
-						&stash,
-						&controller,
-						extra,
-						promise_month,
-						ledger,
-					);
+				 StakingBalance::RingBalance(max_additional) => {
+					let stash_balance = T::RingCurrency::free_balance(&stash);
 
-					<RingPool<T>>::mutate(|r| *r += extra);
-					Self::deposit_event(RawEvent::BondRing(extra, start_time, expire_time));
+					if let Some(extra) = stash_balance.checked_sub(
+						&ledger.ring_locked_amount_at(<frame_system::Module<T>>::block_number())
+					) {
+						let extra = extra.min(max_additional);
+						let (start_time, expire_time) = Self::bond_ring(
+							&stash,
+							&controller,
+							extra,
+							promise_month,
+							ledger,
+						);
+
+						<RingPool<T>>::mutate(|ring_pool| *ring_pool += extra);
+
+						Self::deposit_event(RawEvent::BondRing(extra, start_time, expire_time));
+					}
 				},
-				StakingBalance::KtonBalance(k) => {
-					let extra = T::KtonCurrency::usable_balance(&stash);
-					let extra = extra.min(k);
+				StakingBalance::KtonBalance(max_additional) => {
+					let stash_balance = T::KtonCurrency::free_balance(&stash);
 
-					Self::bond_kton(&controller, extra, ledger);
+					if let Some(extra) = stash_balance.checked_sub(
+						&ledger.kton_locked_amount_at(<frame_system::Module<T>>::block_number())
+					) {
+						let extra = extra.min(max_additional);
 
-					<KtonPool<T>>::mutate(|k| *k += extra);
-					Self::deposit_event(RawEvent::BondKton(extra));
+						Self::bond_kton(&controller, extra, ledger);
+
+						<KtonPool<T>>::mutate(|kton_pool| *kton_pool += extra);
+
+						Self::deposit_event(RawEvent::BondKton(extra));
+					}
 				},
 			}
 		}
@@ -3908,18 +3926,26 @@ where
 impl<AccountId, RingBalance, KtonBalance, BlockNumber>
 	StakingLedger<AccountId, RingBalance, KtonBalance, BlockNumber>
 where
-	RingBalance: AtLeast32BitUnsigned + Saturating + Copy,
-	KtonBalance: AtLeast32BitUnsigned + Saturating + Copy,
-	BlockNumber: PartialOrd,
+	RingBalance: Copy + AtLeast32BitUnsigned + Saturating,
+	KtonBalance: Copy + AtLeast32BitUnsigned + Saturating,
+	BlockNumber: Copy + PartialOrd,
 	TsInMs: PartialOrd,
 {
+	pub fn ring_locked_amount_at(&self, at: BlockNumber) -> RingBalance {
+		self.ring_staking_lock.locked_amount(at)
+	}
+
+	pub fn kton_locked_amount_at(&self, at: BlockNumber) -> KtonBalance {
+		self.kton_staking_lock.locked_amount(at)
+	}
+
 	/// Slash the validator for a given amount of balance. This can grow the value
 	/// of the slash in the case that the validator has less than `minimum_balance`
 	/// active funds. Returns the amount of funds actually slashed.
 	///
 	/// Slashes from `active` funds first, and then `unlocking`, starting with the
 	/// chunks that are closest to unlocking.
-	fn slash(
+	pub fn slash(
 		&mut self,
 		slash_ring: RingBalance,
 		slash_kton: KtonBalance,
