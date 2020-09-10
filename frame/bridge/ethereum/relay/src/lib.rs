@@ -150,7 +150,6 @@ decl_storage! {
 		pub
 			LastConfirmedHeaderInfo
 			get(fn last_confirmed_header_info)
-			config()
 			: (EthereumBlockNumber, H256, H256);
 
 		/// The Ethereum headers confrimed by relayer game

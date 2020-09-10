@@ -81,6 +81,10 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	type WeightInfo: WeightInfo;
 }
 
+// TODO: https://github.com/darwinia-network/darwinia-common/issues/209
+pub trait WeightInfo {}
+impl WeightInfo for () {}
+
 decl_event! {
 	pub enum Event<T, I: Instance = DefaultInstance>
 	where
@@ -839,7 +843,3 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		Ok(())
 	}
 }
-
-// TODO: https://github.com/darwinia-network/darwinia-common/issues/209
-pub trait WeightInfo {}
-impl WeightInfo for () {}

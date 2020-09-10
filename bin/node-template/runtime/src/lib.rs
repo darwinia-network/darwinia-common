@@ -812,7 +812,17 @@ impl pallet_sudo::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const EthBackingModuleId: ModuleId = ModuleId(*b"da/backi");
+	pub const CrabIssuingModuleId: ModuleId = ModuleId(*b"da/crabi");
+}
+impl darwinia_crab_issuing::Trait for Runtime {
+	type Event = Event;
+	type ModuleId = CrabIssuingModuleId;
+	type RingCurrency = Ring;
+	type WeightInfo = ();
+}
+
+parameter_types! {
+	pub const EthBackingModuleId: ModuleId = ModuleId(*b"da/ethbk");
 }
 impl darwinia_ethereum_backing::Trait for Runtime {
 	type ModuleId = EthBackingModuleId;
@@ -825,6 +835,11 @@ impl darwinia_ethereum_backing::Trait for Runtime {
 	type WeightInfo = ();
 }
 
+type EnsureRootOrHalfTechnicalComittee = EnsureOneOf<
+	AccountId,
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, TechnicalCollective>,
+>;
 parameter_types! {
 	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
 }
@@ -835,7 +850,7 @@ impl darwinia_ethereum_relay::Trait for Runtime {
 	type Currency = Ring;
 	type RelayerGame = EthereumRelayerGame;
 	type ApproveOrigin = ApproveOrigin;
-	type RejectOrigin = EnsureRootOrHalfCouncil;
+	type RejectOrigin = EnsureRootOrHalfTechnicalComittee;
 	type WeightInfo = ();
 }
 
@@ -896,6 +911,8 @@ construct_runtime!(
 		Claims: darwinia_claims::{Module, Call, Storage, Config, Event<T>, ValidateUnsigned},
 
 		Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>},
+
+		CrabIssuing: darwinia_crab_issuing::{Module, Call, Storage, Config, Event<T>},
 
 		EthereumBacking: darwinia_ethereum_backing::{Module, Call, Storage, Config<T>, Event<T>},
 		EthereumRelay: darwinia_ethereum_relay::{Module, Call, Storage, Config<T>, Event<T>},
