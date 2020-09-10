@@ -835,6 +835,11 @@ impl darwinia_ethereum_backing::Trait for Runtime {
 	type WeightInfo = ();
 }
 
+type EnsureRootOrHalfTechnicalComittee = EnsureOneOf<
+	AccountId,
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, TechnicalCollective>,
+>;
 parameter_types! {
 	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
 }
@@ -845,7 +850,7 @@ impl darwinia_ethereum_relay::Trait for Runtime {
 	type Currency = Ring;
 	type RelayerGame = EthereumRelayerGame;
 	type ApproveOrigin = ApproveOrigin;
-	type RejectOrigin = EnsureRootOrHalfCouncil;
+	type RejectOrigin = EnsureRootOrHalfTechnicalComittee;
 	type WeightInfo = ();
 }
 
