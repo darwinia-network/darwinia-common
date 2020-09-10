@@ -16,7 +16,6 @@ pub struct FrozenBalance<Balance> {
 	/// fee payment*.
 	pub misc: Balance,
 }
-
 impl<Balance> FrozenBalance<Balance>
 where
 	Balance: Copy + Ord + Zero,
@@ -49,7 +48,6 @@ pub enum LockReasons {
 	/// Any reason at all.
 	All = 2,
 }
-
 impl From<WithdrawReasons> for LockReasons {
 	fn from(r: WithdrawReasons) -> LockReasons {
 		if r == WithdrawReasons::from(WithdrawReason::TransactionPayment) {
@@ -61,7 +59,6 @@ impl From<WithdrawReasons> for LockReasons {
 		}
 	}
 }
-
 impl BitOr for LockReasons {
 	type Output = LockReasons;
 	fn bitor(self, other: LockReasons) -> LockReasons {
@@ -82,7 +79,6 @@ pub struct BalanceLock<Balance, Moment> {
 	/// If true, then the lock remains in effect even for payment of transaction fees.
 	pub lock_reasons: LockReasons,
 }
-
 #[cfg(feature = "easy-testing")]
 impl<Balance, Moment> BalanceLock<Balance, Moment>
 where
@@ -112,7 +108,6 @@ pub struct StakingLock<Balance, Moment> {
 	pub staking_amount: Balance,
 	pub unbondings: Vec<Unbonding<Balance, Moment>>,
 }
-
 impl<Balance, Moment> StakingLock<Balance, Moment>
 where
 	Balance: Copy + PartialOrd + AtLeast32BitUnsigned,
@@ -152,7 +147,6 @@ pub struct Unbonding<Balance, Moment> {
 	pub amount: Balance,
 	pub until: Moment,
 }
-
 impl<Balance, Moment> Unbonding<Balance, Moment>
 where
 	Balance: Copy + PartialOrd + Zero,
