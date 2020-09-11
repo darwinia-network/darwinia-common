@@ -54,7 +54,7 @@ use ethereum_primitives::{
 	header::EthereumHeader,
 	pow::EthashPartial,
 	receipt::{EthereumReceipt, EthereumReceiptProof, EthereumTransactionIndex},
-	EthereumBlockNumber, H256,
+	EthereumBlockNumber, H256, EthereumNetworkType
 };
 use types::*;
 
@@ -66,6 +66,8 @@ pub trait Trait: frame_system::Trait {
 	type ModuleId: Get<ModuleId>;
 
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+
+	type EthereumNetwork: Get<EthereumNetworkType>;
 
 	type Call: Dispatchable + From<Call<Self>> + IsSubType<Call<Self>> + Clone;
 
@@ -304,9 +306,16 @@ impl<T: Trait> Module<T> {
 		T::ModuleId::get().into_account()
 	}
 
+	fn ethash_params() -> EthashPartial {
+		match T::EthereumNetwork::get() {
+			EthereumNetworkType::Mainnet => EthashPartial::production(),
+			EthereumNetworkType::Ropsten => EthashPartial::ropsten_testnet(),
+		}
+	}
+
 	/// validate block with the hash, difficulty of confirmed headers
 	fn verify_block_with_confirmed_blocks(header: &EthereumHeader) -> bool {
-		let eth_partial = EthashPartial::production();
+		let eth_partial = Self::ethash_params();
 		let last_confirmed_block = Self::best_block_number();
 
 		if header.number <= last_confirmed_block {
@@ -338,7 +347,7 @@ impl<T: Trait> Module<T> {
 			return false;
 		}
 
-		let eth_partial = EthashPartial::production();
+		let eth_partial = Self::ethash_params();
 
 		if eth_partial.verify_block_basic(header).is_err() {
 			return false;
@@ -516,7 +525,7 @@ impl<T: Trait> Relayable for Module<T> {
 	fn on_chain_arbitrate(proposal: Vec<Self::HeaderThing>) -> DispatchResult {
 		// Currently Ethereum samples function is continuously sampling
 
-		let eth_partial = EthashPartial::production();
+		let eth_partial = Self::ethash_params();
 
 		for i in 1..proposal.len() - 1 {
 			let header = &proposal[i].header;

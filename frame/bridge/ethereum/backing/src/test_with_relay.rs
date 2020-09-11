@@ -11,7 +11,7 @@ use darwinia_ethereum_relay::{EthereumHeaderThing, EthereumHeaderThingWithProof,
 use darwinia_relay_primitives::*;
 use darwinia_staking::{RewardDestination, StakingBalance, StakingLedger, TimeDepositItem};
 use darwinia_support::balance::lock::StakingLock;
-use ethereum_primitives::{header::EthereumHeader, receipt::EthereumReceiptProof};
+use ethereum_primitives::{header::EthereumHeader, receipt::EthereumReceiptProof, EthereumNetworkType};
 
 type EthereumRelay = darwinia_ethereum_relay::Module<Test>;
 
@@ -19,10 +19,12 @@ decl_tests!();
 
 parameter_types! {
 	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
+	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Ropsten;
 }
 impl darwinia_ethereum_relay::Trait for Test {
 	type ModuleId = EthereumRelayModuleId;
 	type Event = ();
+	type EthereumNetwork = EthereumNetwork;
 	type RelayerGame = UnusedRelayerGame;
 	type ApproveOrigin = EnsureRoot<AccountId>;
 	type RejectOrigin = EnsureRoot<AccountId>;

@@ -74,7 +74,7 @@ use ethereum_primitives::{
 	header::EthereumHeader,
 	pow::EthashPartial,
 	receipt::{EthereumReceipt, EthereumReceiptProof, EthereumTransactionIndex},
-	EthereumBlockNumber, H256, U256,
+	EthereumBlockNumber, H256, U256, EthereumNetworkType
 };
 use types::*;
 
@@ -814,17 +814,6 @@ impl<T: Trait + Send + Sync> SignedExtension for CheckEthereumRelayHeaderHash<T>
 			}
 			_ => Ok(Default::default()),
 		}
-	}
-}
-
-#[derive(Clone, PartialEq, Encode, Decode)]
-pub enum EthereumNetworkType {
-	Mainnet,
-	Ropsten,
-}
-impl Default for EthereumNetworkType {
-	fn default() -> EthereumNetworkType {
-		EthereumNetworkType::Mainnet
 	}
 }
 

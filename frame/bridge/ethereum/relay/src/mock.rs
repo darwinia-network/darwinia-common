@@ -48,10 +48,12 @@ darwinia_support::impl_account_data! {
 pub struct Test;
 parameter_types! {
 	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
+	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Mainnet;
 }
 impl Trait for Test {
 	type ModuleId = EthereumRelayModuleId;
 	type Event = ();
+	type EthereumNetwork = EthereumNetwork;
 	type Call = Call;
 	type Currency = Ring;
 	type RelayerGame = UnusedRelayerGame;

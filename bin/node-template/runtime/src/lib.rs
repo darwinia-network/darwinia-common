@@ -842,10 +842,12 @@ type EnsureRootOrHalfTechnicalComittee = EnsureOneOf<
 >;
 parameter_types! {
 	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
+	pub const EthereumNetwork: ethereum_primitives::EthereumNetworkType = ethereum_primitives::EthereumNetworkType::Ropsten;
 }
 impl darwinia_ethereum_relay::Trait for Runtime {
 	type ModuleId = EthereumRelayModuleId;
 	type Event = Event;
+	type EthereumNetwork = EthereumNetwork;
 	type Call = Call;
 	type Currency = Ring;
 	type RelayerGame = EthereumRelayerGame;
