@@ -768,7 +768,7 @@ decl_storage! {
 		/// The percentage of the total payout that is distributed to validators and nominators
 		///
 		/// The reset might go to Treasury or something else.
-		pub PayoutFraction get(fn payout_fraction) config(): Perquintill;
+		pub PayoutFraction get(fn payout_fraction) config(): Perbill;
 
 		/// Total *RING* in pool.
 		pub RingPool get(fn ring_pool): RingBalance<T>;
