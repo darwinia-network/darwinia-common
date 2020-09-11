@@ -812,7 +812,7 @@ impl pallet_sudo::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const CrabIssuingModuleId: ModuleId = ModuleId(*b"da/crabi");
+	pub const CrabIssuingModuleId: ModuleId = ModuleId(*b"da/crais");
 }
 impl darwinia_crab_issuing::Trait for Runtime {
 	type Event = Event;

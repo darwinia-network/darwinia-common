@@ -7,7 +7,7 @@ use sp_core::{sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::{
 	traits::{IdentifyAccount, Verify},
-	Perbill, Perquintill,
+	Perbill,
 };
 // --- darwinia ---
 use array_bytes::fixed_hex_bytes_unchecked;
@@ -190,7 +190,7 @@ fn testnet_genesis(
 			invulnerables: initial_authorities.iter().cloned().map(|x| x.0).collect(),
 			force_era: darwinia_staking::Forcing::ForceAlways,
 			slash_reward_fraction: Perbill::from_percent(10),
-			payout_fraction: Perquintill::from_percent(50),
+			payout_fraction: Perbill::from_percent(50),
 			..Default::default()
 		}),
 		pallet_session: Some(SessionConfig {

@@ -205,7 +205,7 @@ decl_module! {
 
 		fn deposit_event() = default;
 
-		#[weight = 100_000_000]
+		#[weight = 0]
 		pub fn submit_proposal(origin, proposal: Vec<EthereumHeaderThingWithProof>) {
 			let relayer = ensure_signed(origin)?;
 
