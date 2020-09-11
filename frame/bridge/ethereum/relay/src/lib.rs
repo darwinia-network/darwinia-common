@@ -583,12 +583,16 @@ impl<T: Trait> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
 			<Error<T>>::HeaderHashMis,
 		);
 
+		ensure!(
+			eth_header.number == mmr_proof.member_leaf_index,
+			<Error<T>>::MMRI,
+		);
+
 		// Verify header member to last confirmed block using mmr proof
 		let ConfirmedEthereumHeaderInfo {
 			header: _,
 			mmr_root
 		} = Self::confirmed_header(mmr_proof.last_leaf_index + 1).ok_or(<Error<T>>::ConfirmedHeaderNE)?;
-
 
 		ensure!(
 			Self::verify_mmr(
@@ -659,7 +663,7 @@ pub struct ConfirmedEthereumHeaderInfo {
 
 #[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug)]
 pub struct MMRProof {
-	pub member_index: u64,
+	pub member_leaf_index: u64,
 	pub last_leaf_index: u64,
 	pub proof: Vec<H256>
 }
