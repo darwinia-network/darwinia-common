@@ -661,6 +661,7 @@ pub struct ConfirmedEthereumHeaderInfo {
 	pub mmr_root: H256,
 }
 
+#[cfg_attr(any(feature = "deserialize", test), derive(serde::Deserialize))]
 #[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug)]
 pub struct MMRProof {
 	pub member_leaf_index: u64,
