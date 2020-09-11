@@ -7,7 +7,7 @@ use substrate_fixed::{
 use frame_support::debug::*;
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
 use sp_core::U256;
-use sp_runtime::Perquintill;
+use sp_runtime::Perbill;
 use sp_std::convert::TryInto;
 // --- darwinia ---
 use crate::*;
@@ -26,7 +26,7 @@ pub fn compute_total_payout<T: Trait>(
 	era_duration: TsInMs,
 	living_time: TsInMs,
 	total_left: RingBalance<T>,
-	payout_fraction: Perquintill,
+	payout_fraction: Perbill,
 ) -> (RingBalance<T>, RingBalance<T>) {
 	info!(
 		target: "darwinia-staking",
