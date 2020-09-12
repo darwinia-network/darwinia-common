@@ -112,6 +112,9 @@ decl_event! {
 
 		/// EthereumReceipt Verification. [account, receipt, header]
 		VerifyReceipt(AccountId, EthereumReceipt, EthereumHeader),
+
+		/// Reset Last Confirmed Header
+		ResetLastConfirmedHeader(EthereumHeaderThing),
 	}
 }
 
@@ -275,7 +278,7 @@ decl_module! {
 		/// # </weight>
 		#[weight = 10_000_000]
 		pub fn set_receipt_verify_fee(origin, #[compact] new: RingBalance<T>) {
-			T::RejectOrigin::ensure_origin(origin)?;
+			T::ApproveOrigin::ensure_origin(origin)?;
 
 			<ReceiptVerifyFee<T>>::put(new);
 		}
@@ -283,7 +286,7 @@ decl_module! {
 		/// Remove the specific malicous block
 		#[weight = 100_000_000]
 		pub fn remove_confirmed_block(origin, number: EthereumBlockNumber) {
-			T::RejectOrigin::ensure_origin(origin)?;
+			T::ApproveOrigin::ensure_origin(origin)?;
 
 			<ConfirmedBlockNumbers>::mutate(|numbers| {
 				let index = numbers.iter().position(|x| *x == number).unwrap();
@@ -293,6 +296,28 @@ decl_module! {
 			});
 
 			Self::deposit_event(RawEvent::RemoveConfirmedBlock(number));
+		}
+
+		// --- root call ---
+
+		#[weight = 10_000_000]
+		pub fn reset_last_confirmed_header(origin, header_thing: EthereumHeaderThing) {
+			T::ApproveOrigin::ensure_origin(origin)?;
+
+			// Clean current confirmed headers
+			let old_confirmed_blocks = Self::confirmed_header_numbers();
+
+			for block_number in old_confirmed_blocks {
+				ConfirmedHeaders::remove(block_number);
+			}
+
+			let new_confirmed_blocks: Vec<EthereumBlockNumber> = vec![];
+
+			ConfirmedBlockNumbers::put(new_confirmed_blocks);
+
+			Self::store_header(header_thing.clone())?;
+
+			<Module<T>>::deposit_event(RawEvent::ResetLastConfirmedHeader(header_thing));
 		}
 	}
 }
@@ -644,7 +669,7 @@ pub struct EthereumHeaderThingWithProof {
 }
 
 #[cfg_attr(any(feature = "deserialize", test), derive(serde::Deserialize))]
-#[derive(Clone, PartialEq, Encode, Decode, Default, RuntimeDebug)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, Default, RuntimeDebug)]
 pub struct EthereumHeaderThing {
 	pub header: EthereumHeader,
 	pub mmr_root: H256,
