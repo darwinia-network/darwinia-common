@@ -2,6 +2,49 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+mod migration {
+	// --- substrate ---
+	use frame_support::migration::*;
+	// --- darwinia ---
+	use crate::*;
+
+	pub fn migrate<T: Trait>() {
+		sp_runtime::print("Migrating DarwiniaEthereumRelay...");
+
+		let module_name: &[u8] = b"DarwiniaEthereumRelay";
+		let value_items: &[&[u8]] = &[
+			// pub LastConfirmedHeaderInfo get(fn last_confirmed_header_info): (EthereumBlockNumber, H256, H256);
+			b"LastConfirmedHeaderInfo",
+			// LastConfirmedBlockCycle: EthereumBlockNumber;
+			b"LastConfirmedBlockCycle",
+			// pub ConfirmBlocksInCycle get(fn confirm_block_cycle): EthereumBlockNumber = 185142;
+			b"ConfirmBlocksInCycle",
+			// pub ConfirmBlockKeepInMonth get(fn confirm_block_keep_in_mounth): EthereumBlockNumber = 3;
+			b"ConfirmBlockKeepInMonth",
+		];
+		let map_items: &[&[u8]] = &[
+			// pub ConfirmedHeadersDoubleMap get(fn confirmed_header) : double_map hasher(identity) EthereumBlockNumber, hasher(identity) EthereumBlockNumber => EthereumHeader;
+			b"ConfirmedHeadersDoubleMap",
+		];
+		let hash: &[u8] = &[];
+
+		for item in value_items {
+			// --- substrate ---
+			use frame_support::{storage::unhashed::kill, StorageHasher, Twox128};
+
+			let mut key = vec![0u8; 32 + hash.len()];
+			key[0..16].copy_from_slice(&Twox128::hash(module_name));
+			key[16..32].copy_from_slice(&Twox128::hash(item));
+			key[32..].copy_from_slice(hash);
+			kill(&key);
+		}
+
+		for item in map_items {
+			remove_storage_prefix(module_name, item, hash);
+		}
+	}
+}
+
 mod mmr;
 #[cfg(test)]
 mod mock;
@@ -207,6 +250,11 @@ decl_module! {
 		type Error = Error<T>;
 
 		fn deposit_event() = default;
+
+		fn on_runtime_upgrade() -> frame_support::weights::Weight {
+			migration::migrate::<T>();
+			0
+		}
 
 		#[weight = 0]
 		pub fn submit_proposal(origin, proposal: Vec<EthereumHeaderThingWithProof>) {
