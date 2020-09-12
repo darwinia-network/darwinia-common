@@ -387,7 +387,7 @@ impl<T: Trait> Module<T> {
 	}
 
 	/// validate block with the hash, difficulty of confirmed headers
-	fn verify_block_with_confirmed_blocks(header: &EthereumHeader) -> bool {
+	fn verify_block_with_last_confirmed_block(header: &EthereumHeader) -> bool {
 		let eth_partial = Self::ethash_params();
 		let last_confirmed_block = Self::best_block_number();
 
@@ -447,7 +447,7 @@ impl<T: Trait> Module<T> {
 			<Error<T>>::HeaderI
 		);
 		ensure!(
-			Self::verify_block_with_confirmed_blocks(header),
+			Self::verify_block_with_last_confirmed_block(header),
 			<Error<T>>::ConfirmebBlocksC
 		);
 
