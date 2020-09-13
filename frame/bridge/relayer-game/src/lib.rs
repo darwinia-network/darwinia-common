@@ -666,7 +666,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			proposal
 		);
 
-		let verified_proposal = T::TargetChain::basic_verify(proposal)?;
+		let verified_proposal = T::TargetChain::verify(proposal)?;
 		let proposed_header = verified_proposal
 			.get(0)
 			.ok_or(<Error<T, I>>::ProposalI)?

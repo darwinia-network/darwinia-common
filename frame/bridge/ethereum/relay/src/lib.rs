@@ -144,9 +144,6 @@ decl_event! {
 
 		/// EthereumReceipt Verification. [account, receipt, header]
 		VerifyReceipt(AccountId, EthereumReceipt, EthereumHeader),
-
-		/// Reset last confirmed header. [header thing]
-		ResetLastConfirmedHeader(EthereumHeaderThing),
 	}
 }
 
@@ -184,7 +181,7 @@ decl_storage! {
 
 		/// Confirmed Ethereum Block Numbers
 		/// The orders are from small to large
-		pub ConfirmedBlockNumbers get(fn confirmed_header_numbers) : Vec<EthereumBlockNumber>;
+		pub ConfirmedBlockNumbers get(fn confirmed_header_numbers): Vec<EthereumBlockNumber>;
 
 		pub ConfirmedDepth get(fn confirmed_depth) config(): u32 = 10;
 
@@ -336,23 +333,29 @@ decl_module! {
 		// --- root call ---
 
 		#[weight = 10_000_000]
-		pub fn reset_last_confirmed_header(origin, header_thing: EthereumHeaderThing) {
+		pub fn clean_confirmeds(origin) {
 			T::ApproveOrigin::ensure_origin(origin)?;
 
-			// Clean current confirmed headers
-			let old_confirmed_blocks = Self::confirmed_header_numbers();
-
-			for block_number in old_confirmed_blocks {
+			for block_number in Self::confirmed_header_numbers() {
 				ConfirmedHeaders::remove(block_number);
 			}
+			ConfirmedBlockNumbers::put(<Vec<EthereumBlockNumber>>::new());
+		}
 
-			let new_confirmed_blocks: Vec<EthereumBlockNumber> = vec![];
+		#[weight = 10_000_000]
+		pub fn set_confirmed(origin, header_thing: EthereumHeaderThing) {
+			T::ApproveOrigin::ensure_origin(origin)?;
 
-			ConfirmedBlockNumbers::put(new_confirmed_blocks);
+			let EthereumHeaderThing { header, mmr_root } = header_thing;
 
-			Self::store_header(header_thing.clone())?;
+			ConfirmedBlockNumbers::mutate(|numbers| {
+				numbers.push(header.number);
 
-			<Module<T>>::deposit_event(RawEvent::ResetLastConfirmedHeader(header_thing));
+				ConfirmedHeaders::insert(
+					header.number,
+					ConfirmedEthereumHeaderInfo { header, mmr_root },
+				);
+			});
 		}
 	}
 }
@@ -362,47 +365,18 @@ impl<T: Trait> Module<T> {
 	///
 	/// This actually does computation. If you need to keep using it, then make sure you cache the
 	/// value and only call this once.
-	fn account_id() -> AccountId<T> {
+	pub fn account_id() -> AccountId<T> {
 		T::ModuleId::get().into_account()
 	}
 
-	fn ethash_params() -> EthashPartial {
+	pub fn ethash_params() -> EthashPartial {
 		match T::EthereumNetwork::get() {
 			EthereumNetworkType::Mainnet => EthashPartial::production(),
 			EthereumNetworkType::Ropsten => EthashPartial::ropsten_testnet(),
 		}
 	}
 
-	/// validate block with the hash, difficulty of confirmed headers
-	fn verify_block_with_last_confirmed_block(header: &EthereumHeader) -> bool {
-		let eth_partial = Self::ethash_params();
-		let last_confirmed_block = Self::best_block_number();
-
-		if header.number <= last_confirmed_block {
-			return false;
-		} else if header.number.saturating_sub(1) == last_confirmed_block {
-			let last_confirmed_header_info = Self::confirmed_header(last_confirmed_block);
-
-			// This should not happen.
-			if last_confirmed_header_info.is_none() {
-				return false;
-			}
-
-			let previous_header = last_confirmed_header_info.unwrap().header;
-
-			// TODO: Review and add docs
-			if header.parent_hash != previous_header.hash.unwrap_or_default()
-				|| *header.difficulty()
-					!= eth_partial.calculate_difficulty(header, &previous_header)
-			{
-				return false;
-			}
-		}
-
-		true
-	}
-
-	fn verify_block_seal(header: &EthereumHeader, ethash_proof: &[EthashProof]) -> bool {
+	pub fn verify_header(header: &EthereumHeader, ethash_proof: &[EthashProof]) -> bool {
 		if header.hash() != header.re_compute_hash() {
 			return false;
 		}
@@ -428,23 +402,13 @@ impl<T: Trait> Module<T> {
 		true
 	}
 
-	fn verify_basic(header: &EthereumHeader, ethash_proof: &[EthashProof]) -> DispatchResult {
-		ensure!(
-			Self::verify_block_seal(header, ethash_proof),
-			<Error<T>>::HeaderI
-		);
-		ensure!(
-			Self::verify_block_with_last_confirmed_block(header),
-			<Error<T>>::ConfirmebBlocksC
-		);
-
-		Ok(())
-	}
+	// TODO
+	// pub fn verify_continuous() -> bool {}
 
 	// Verify the MMR root
 	// NOTE: leaves are (block_number, H256)
 	// block_number will transform to position in this function
-	fn verify_mmr(
+	pub fn verify_mmr(
 		last_leaf: u64,
 		mmr_root: H256,
 		mmr_proof: Vec<H256>,
@@ -470,7 +434,7 @@ impl<T: Trait> Relayable for Module<T> {
 	type HeaderThingWithProof = EthereumHeaderThingWithProof;
 	type HeaderThing = EthereumHeaderThing;
 
-	fn basic_verify(
+	fn verify(
 		proposal_with_proof: Vec<Self::HeaderThingWithProof>,
 	) -> Result<Vec<Self::HeaderThing>, DispatchError> {
 		let proposal_len = proposal_with_proof.len();
@@ -499,7 +463,10 @@ impl<T: Trait> Relayable for Module<T> {
 				last_leaf = header.number - 1;
 
 				if proposal_len == 1 {
-					Self::verify_basic(&header, &ethash_proof)?;
+					ensure!(
+						Self::verify_header(&header, &ethash_proof),
+						<Error<T>>::HeaderI
+					);
 
 					let ConfirmedEthereumHeaderInfo {
 						header: last_confirmed_header,
@@ -548,7 +515,10 @@ impl<T: Trait> Relayable for Module<T> {
 					);
 				}
 			} else if i == proposal_len - 1 {
-				Self::verify_basic(&header, &ethash_proof)?;
+				ensure!(
+					Self::verify_header(&header, &ethash_proof),
+					<Error<T>>::HeaderI
+				);
 
 				// last confirm no exsit the mmr verification will be passed
 				//
@@ -626,7 +596,7 @@ impl<T: Trait> Relayable for Module<T> {
 
 			// TODO: remove old numbers according to ConfirmedDepth
 
-			<ConfirmedHeaders>::insert(
+			ConfirmedHeaders::insert(
 				header.number,
 				ConfirmedEthereumHeaderInfo { header, mmr_root },
 			);
