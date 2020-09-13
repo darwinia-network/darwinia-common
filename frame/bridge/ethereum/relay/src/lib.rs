@@ -1,4 +1,4 @@
-//! # Darwinia-ethereum-relay Module
+//! # Darwinia Ethereum Relay Module
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -23,7 +23,9 @@ mod migration {
 			b"ConfirmBlockKeepInMonth",
 		];
 		let map_items: &[&[u8]] = &[
-			// pub ConfirmedHeadersDoubleMap get(fn confirmed_header) : double_map hasher(identity) EthereumBlockNumber, hasher(identity) EthereumBlockNumber => EthereumHeader;
+			// pub ConfirmedHeadersDoubleMap
+			// 	get(fn confirmed_header)
+			// 	: double_map hasher(identity) EthereumBlockNumber, hasher(identity) EthereumBlockNumber => EthereumHeader;
 			b"ConfirmedHeadersDoubleMap",
 		];
 		let hash: &[u8] = &[];
@@ -97,7 +99,7 @@ use ethereum_primitives::{
 	header::EthereumHeader,
 	pow::EthashPartial,
 	receipt::{EthereumReceipt, EthereumReceiptProof, EthereumTransactionIndex},
-	EthereumBlockNumber, H256, EthereumNetworkType
+	EthereumBlockNumber, EthereumNetworkType, H256,
 };
 use types::*;
 
@@ -140,33 +142,16 @@ decl_event! {
 		/// The specific confirmed block is removed. [block height]
 		RemoveConfirmedBlock(EthereumBlockNumber),
 
-		/// The range of confirmed blocks are removed. [block height, block height]
-		RemoveConfirmedBlockRang(EthereumBlockNumber, EthereumBlockNumber),
-
-		/// The block confimed block parameters are changed. [block height, block height]
-		UpdateConfrimedBlockCleanCycle(EthereumBlockNumber, EthereumBlockNumber),
-
-		/// This Error event is caused by unreasonable Confirm block delete parameter set.
-		///
-		/// ConfirmBlockKeepInMonth should be greator then 1 to avoid the relayer game cross the
-		/// month.
-		/// [block height]
-		ConfirmBlockManagementError(EthereumBlockNumber),
-
 		/// EthereumReceipt Verification. [account, receipt, header]
 		VerifyReceipt(AccountId, EthereumReceipt, EthereumHeader),
 
-		/// Reset Last Confirmed Header
+		/// Reset last confirmed header. [header thing]
 		ResetLastConfirmedHeader(EthereumHeaderThing),
 	}
 }
 
 decl_error! {
 	pub enum Error for Module<T: Trait> {
-		/// Block Number - UNDERFLOW
-		BlockNumberUF,
-		/// Target Header - ALREADY EXISTED
-		TargetHeaderAE,
 		/// Header - INVALID
 		HeaderI,
 		/// Confirmed Blocks - CONFLICT
@@ -190,11 +175,12 @@ darwinia_support::impl_genesis! {
 		dags_merkle_roots: Vec<H128>
 	}
 }
-
 decl_storage! {
 	trait Store for Module<T: Trait> as DarwiniaEthereumRelay {
 		/// Confirmed Ethereum Headers
-		pub ConfirmedHeaders get(fn confirmed_header) : map hasher(identity) EthereumBlockNumber => Option<ConfirmedEthereumHeaderInfo>;
+		pub ConfirmedHeaders
+			get(fn confirmed_header)
+			: map hasher(identity) EthereumBlockNumber => Option<ConfirmedEthereumHeaderInfo>;
 
 		/// Confirmed Ethereum Block Numbers
 		/// The orders are from small to large
@@ -235,6 +221,7 @@ decl_storage! {
 			} else {
 				dags_merkle_roots_loader.dags_merkle_roots.clone()
 			};
+
 			for (i, dag_merkle_root) in dags_merkle_roots.into_iter().enumerate() {
 				DagsMerkleRoots::insert(i as u64, dag_merkle_root);
 			}
@@ -393,7 +380,7 @@ impl<T: Trait> Module<T> {
 
 		if header.number <= last_confirmed_block {
 			return false;
-		} else if header.number.saturating_sub(1) ==  last_confirmed_block {
+		} else if header.number.saturating_sub(1) == last_confirmed_block {
 			let last_confirmed_header_info = Self::confirmed_header(last_confirmed_block);
 
 			// This should not happen.
@@ -406,7 +393,7 @@ impl<T: Trait> Module<T> {
 			// TODO: Review and add docs
 			if header.parent_hash != previous_header.hash.unwrap_or_default()
 				|| *header.difficulty()
-				!= eth_partial.calculate_difficulty(header, &previous_header)
+					!= eth_partial.calculate_difficulty(header, &previous_header)
 			{
 				return false;
 			}
@@ -515,13 +502,16 @@ impl<T: Trait> Relayable for Module<T> {
 					Self::verify_basic(&header, &ethash_proof)?;
 
 					let ConfirmedEthereumHeaderInfo {
-						header : last_confirmed_header,
-						mmr_root : _
-					} = Self::confirmed_header(Self::best_block_number()).ok_or(<Error<T>>::ConfirmedHeaderNE)?;
+						header: last_confirmed_header,
+						mmr_root: _,
+					} = Self::confirmed_header(Self::best_block_number())
+						.ok_or(<Error<T>>::ConfirmedHeaderNE)?;
 
 					// last_confirmed_header.hash should not be None.
-					let (last_confirmed_block_number, last_confirmed_hash) =
-						(last_confirmed_header.number, last_confirmed_header.hash.unwrap_or_default());
+					let (last_confirmed_block_number, last_confirmed_hash) = (
+						last_confirmed_header.number,
+						last_confirmed_header.hash.unwrap_or_default(),
+					);
 
 					trace!(
 						target: "ethereum-relay",
@@ -592,7 +582,10 @@ impl<T: Trait> Relayable for Module<T> {
 	}
 
 	fn best_block_number() -> <Self::HeaderThing as HeaderThing>::Number {
-		Self::confirmed_header_numbers().last().copied().unwrap_or(0)
+		Self::confirmed_header_numbers()
+			.last()
+			.copied()
+			.unwrap_or(0)
 	}
 
 	fn on_chain_arbitrate(proposal: Vec<Self::HeaderThing>) -> DispatchResult {
@@ -623,17 +616,20 @@ impl<T: Trait> Relayable for Module<T> {
 		let EthereumHeaderThing { header, mmr_root } = header_thing;
 
 		// Not allow to relay genesis header
-		ensure!(header.number > last_comfirmed_block_number, <Error<T>>::HeaderI);
+		ensure!(
+			header.number > last_comfirmed_block_number,
+			<Error<T>>::HeaderI
+		);
 
 		ConfirmedBlockNumbers::mutate(|numbers| {
 			numbers.push(header.number);
 
 			// TODO: remove old numbers according to ConfirmedDepth
 
-			<ConfirmedHeaders>::insert(header.number, ConfirmedEthereumHeaderInfo{
-				header,
-				mmr_root,
-			});
+			<ConfirmedHeaders>::insert(
+				header.number,
+				ConfirmedEthereumHeaderInfo { header, mmr_root },
+			);
 		});
 
 		Ok(())
@@ -673,8 +669,9 @@ impl<T: Trait> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
 		// Verify header member to last confirmed block using mmr proof
 		let ConfirmedEthereumHeaderInfo {
 			header: _,
-			mmr_root
-		} = Self::confirmed_header(mmr_proof.last_leaf_index + 1).ok_or(<Error<T>>::ConfirmedHeaderNE)?;
+			mmr_root,
+		} = Self::confirmed_header(mmr_proof.last_leaf_index + 1)
+			.ok_or(<Error<T>>::ConfirmedHeaderNE)?;
 
 		ensure!(
 			Self::verify_mmr(
@@ -748,7 +745,7 @@ pub struct ConfirmedEthereumHeaderInfo {
 pub struct MMRProof {
 	pub member_leaf_index: u64,
 	pub last_leaf_index: u64,
-	pub proof: Vec<H256>
+	pub proof: Vec<H256>,
 }
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq)]
