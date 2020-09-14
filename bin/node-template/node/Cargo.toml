@@ -16,7 +16,7 @@ name = "node-template"
 # anonymous
 node-template-runtime = { path = "../runtime" }
 # crates
-codec          = { package = "parity-scale-codec", version = "1.3.4" }
+codec          = { package = "parity-scale-codec", version = "1.3.5" }
 futures        = { version = "0.3.5" }
 jsonrpc-core   = { version = "14.2.0" }
 jsonrpc-pubsub = { version = "14.2.0" }
