@@ -62,7 +62,7 @@ pub mod mock_relay {
 		type HeaderThingWithProof = MockTcHeader;
 		type HeaderThing = MockTcHeader;
 
-		fn basic_verify(
+		fn verify(
 			proposal_with_proof: Vec<Self::HeaderThingWithProof>,
 		) -> Result<Vec<Self::HeaderThing>, DispatchError> {
 			let verify = |header: &Self::HeaderThing| -> DispatchResult {

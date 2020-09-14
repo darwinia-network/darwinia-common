@@ -7,10 +7,9 @@ use sp_runtime::{traits::Dispatchable, AccountId32};
 // --- darwinia ---
 use crate::*;
 use array_bytes::hex_bytes_unchecked;
-use darwinia_ethereum_linear_relay::EthereumNetworkType;
 use darwinia_staking::{RewardDestination, StakingBalance, StakingLedger, TimeDepositItem};
 use darwinia_support::balance::lock::StakingLock;
-use ethereum_primitives::{header::EthereumHeader, receipt::EthereumReceiptProof};
+use ethereum_primitives::{EthereumNetworkType, header::EthereumHeader, receipt::EthereumReceiptProof};
 
 type EthereumRelay = darwinia_ethereum_linear_relay::Module<Test>;
 

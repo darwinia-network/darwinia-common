@@ -24,7 +24,7 @@ pub trait Relayable {
 	// type BlockNumber: Clone + Copy + Debug + Default + AtLeast32BitUnsigned + FullCodec;
 	// type HeaderHash: Clone + Debug + Default + PartialEq + FullCodec;
 
-	fn basic_verify(
+	fn verify(
 		proposal_with_proof: Vec<Self::HeaderThingWithProof>,
 	) -> Result<Vec<Self::HeaderThing>, DispatchError>;
 
