@@ -37,7 +37,6 @@ pub trait Trait: frame_system::Trait {
 
 	type RingCurrency: Currency<AccountId<Self>>;
 
-	/// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
 }
 
