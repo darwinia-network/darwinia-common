@@ -36,13 +36,5 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
-      - name: Build
-        env:
-          RUST_TOOLCHAIN: nightly
-        run: .maintain/ci/build.sh
-
       - name: Overall test
-        env:
-          RUST_TOOLCHAIN: nightly
-          TARGET: native
-        run: .maintain/ci/tests.sh
+        run: cargo test
