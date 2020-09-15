@@ -2149,7 +2149,7 @@ impl<T: Trait> Module<T> {
 		// if stash promise to a extra-lock
 		// there will be extra reward, kton, which
 		// can also be use to stake.
-		if promise_month >= 3 {
+		if promise_month > 0 {
 			expire_time += promise_month as TsInMs * MONTH_IN_MILLISECONDS;
 			ledger.active_deposit_ring += value;
 			// for now, kton_return is free
