@@ -2146,14 +2146,12 @@ impl<T: Trait> Module<T> {
 		let mut expire_time = start_time;
 
 		ledger.active_ring = ledger.active_ring.saturating_add(value);
-		// if stash promise to a extra-lock
-		// there will be extra reward, kton, which
-		// can also be use to stake.
+		// if stash promise to an extra-lock
+		// there will be extra reward (*KTON*), which can also be used for staking
 		if promise_month > 0 {
 			expire_time += promise_month as TsInMs * MONTH_IN_MILLISECONDS;
 			ledger.active_deposit_ring += value;
-			// for now, kton_return is free
-			// mint kton
+
 			let kton_return = inflation::compute_kton_return::<T>(value, promise_month as _);
 			let kton_positive_imbalance = T::KtonCurrency::deposit_creating(&stash, kton_return);
 
