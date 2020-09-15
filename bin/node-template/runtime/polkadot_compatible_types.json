@@ -126,6 +126,8 @@
 		"ring_bond": "Balance",
 		"kton_bond": "Balance"
 	},
+	"__[pallet.bridge.crab]__": {},
+	"MappedRing": "u128",
 	"__[pallet.bridge.eth]__": {},
 	"EthereumTransactionIndex": "(H256, u64)",
 	"EthereumHeaderBrief": {
@@ -140,6 +142,10 @@
 		"ethash_proof": "Vec<EthashProof>",
 		"mmr_root": "H256",
 		"mmr_proof": "Vec<H256>"
+	},
+	"ConfirmedEthereumHeaderInfo": {
+		"header": "EthereumHeader",
+		"mmr_root": "H256"
 	},
 	"EthereumHeaderThing": {
 		"header": "EthereumHeader",
@@ -193,7 +199,11 @@
 		"header_hash": "H256"
 	},
 	"EthereumReceiptProofThing": "(EthereumHeader, EthereumReceiptProof, MMRProof)",
-	"MMRProof": "Vec<H256>",
+	"MMRProof": {
+		"member_leaf_index": "u64",
+		"last_leaf_index": "u64",
+		"proof": "Vec<H256>"
+	},
 	"__[pallet.claims]__": {},
 	"OtherSignature": {
 		"_enum": {
@@ -227,6 +237,17 @@
 		"relayer": "AccountId",
 		"bonded_proposal": "Vec<(Balance, TcHeaderThing)>",
 		"extend_from_header_hash": "Option<TcHeaderHash>"
+	},
+	"__[crab.runtime]__": {
+		"ProxyType": {
+			"_enum": {
+				"Any": null,
+				"NonTransfer": null,
+				"Staking": null,
+				"IdentityJudgement": null,
+				"EthereumBridge": null
+			}
+		}
 	},
 	"__[node.rpc]__": {},
 	"BalancesRuntimeDispatchInfo": {
