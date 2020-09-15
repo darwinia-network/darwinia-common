@@ -2,6 +2,41 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(feature = "genesis-loader")]
+pub mod genesis_loader {
+	// --- crate ---
+	use serde::{Deserialize, Serialize};
+
+	#[derive(Debug, Default, Serialize, Deserialize)]
+	pub struct Account {
+		pub address: String,
+		pub mapped_ring: u128,
+	}
+	darwinia_support::impl_genesis! {
+		struct MappedRingLoader {
+			mapped_rings: Vec<Account>
+		}
+	}
+
+	#[test]
+	fn genesis_loader_should_work() {
+		let mapped_ring_loader = MappedRingLoader::from_str(
+			r#"{
+				"mapped_rings": [
+					{
+						"address": "0xb4f7f03bebc56ebe96bc52ea5ed3159d45a0ce3a8d7f082983c33ef133274747",
+						"mapped_ring": 2000000000000000000
+					}
+				]
+			}"#,
+		);
+
+		eprintln!("{:#?}", mapped_ring_loader);
+	}
+}
+#[cfg(feature = "genesis-loader")]
+pub use genesis_loader::*;
+
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
