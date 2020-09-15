@@ -10,7 +10,7 @@ version     = "1.0.0-alpha.3"
 
 [dependencies]
 # crates
-serde = { version = "1.0.115", features = ["derive"] }
+serde = { version = "1.0.116", features = ["derive"] }
 toml  = { version = "0.5.6" }
 # substrate
 sc-cli        = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
