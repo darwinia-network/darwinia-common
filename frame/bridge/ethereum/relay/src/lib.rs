@@ -2,51 +2,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-mod migration {
-	// --- substrate ---
-	use frame_support::migration::*;
-	// --- darwinia ---
-	use crate::*;
-
-	pub fn migrate<T: Trait>() {
-		sp_runtime::print("Migrating DarwiniaEthereumRelay...");
-
-		let module_name: &[u8] = b"DarwiniaEthereumRelay";
-		let value_items: &[&[u8]] = &[
-			// pub LastConfirmedHeaderInfo get(fn last_confirmed_header_info): (EthereumBlockNumber, H256, H256);
-			b"LastConfirmedHeaderInfo",
-			// LastConfirmedBlockCycle: EthereumBlockNumber;
-			b"LastConfirmedBlockCycle",
-			// pub ConfirmBlocksInCycle get(fn confirm_block_cycle): EthereumBlockNumber = 185142;
-			b"ConfirmBlocksInCycle",
-			// pub ConfirmBlockKeepInMonth get(fn confirm_block_keep_in_mounth): EthereumBlockNumber = 3;
-			b"ConfirmBlockKeepInMonth",
-		];
-		let map_items: &[&[u8]] = &[
-			// pub ConfirmedHeadersDoubleMap
-			// 	get(fn confirmed_header)
-			// 	: double_map hasher(identity) EthereumBlockNumber, hasher(identity) EthereumBlockNumber => EthereumHeader;
-			b"ConfirmedHeadersDoubleMap",
-		];
-		let hash: &[u8] = &[];
-
-		for item in value_items {
-			// --- substrate ---
-			use frame_support::{storage::unhashed::kill, StorageHasher, Twox128};
-
-			let mut key = vec![0u8; 32 + hash.len()];
-			key[0..16].copy_from_slice(&Twox128::hash(module_name));
-			key[16..32].copy_from_slice(&Twox128::hash(item));
-			key[32..].copy_from_slice(hash);
-			kill(&key);
-		}
-
-		for item in map_items {
-			remove_storage_prefix(module_name, item, hash);
-		}
-	}
-}
-
 mod mmr;
 #[cfg(test)]
 mod mock;
@@ -177,7 +132,7 @@ decl_storage! {
 		/// Confirmed Ethereum Headers
 		pub ConfirmedHeaders
 			get(fn confirmed_header)
-			: map hasher(identity) EthereumBlockNumber => Option<ConfirmedEthereumHeaderInfo>;
+			: map hasher(identity) EthereumBlockNumber => Option<EthereumHeaderThing>;
 
 		/// Confirmed Ethereum Block Numbers
 		/// The orders are from small to large
@@ -195,23 +150,24 @@ decl_storage! {
 		config(dags_merkle_roots_loader): DagsMerkleRootsLoader;
 		build(|config| {
 			let GenesisConfig {
-				genesis_header_info,
+				genesis_header_info: (genesis_header, genesis_header_mmr_root),
 				dags_merkle_roots_loader,
 				..
 			} = config;
+			let genesis_header = EthereumHeader::decode(&mut &*genesis_header.to_vec()).unwrap();
 
-			if let Ok(header) = rlp::decode(&genesis_header_info.0) {
-				let header_info = ConfirmedEthereumHeaderInfo {
-					header,
-					mmr_root : genesis_header_info.1
-				};
+			ConfirmedBlockNumbers::mutate(|numbers| {
+				numbers.push(genesis_header.number);
 
-				ConfirmedBlockNumbers::mutate(|numbers| {
-					numbers.push(header_info.header.number);
+				ConfirmedHeaders::insert(
+					genesis_header.number,
+					EthereumHeaderThing {
+						header: genesis_header,
+						mmr_root: *genesis_header_mmr_root
+					}
+				);
+			});
 
-					ConfirmedHeaders::insert(header_info.header.number, header_info);
-				});
-			}
 
 			let dags_merkle_roots = if dags_merkle_roots_loader.dags_merkle_roots.is_empty() {
 				DagsMerkleRootsLoader::from_str(DAGS_MERKLE_ROOTS_STR).dags_merkle_roots.clone()
@@ -234,11 +190,6 @@ decl_module! {
 		type Error = Error<T>;
 
 		fn deposit_event() = default;
-
-		fn on_runtime_upgrade() -> frame_support::weights::Weight {
-			migration::migrate::<T>();
-			0
-		}
 
 		#[weight = 0]
 		pub fn submit_proposal(origin, proposal: Vec<EthereumHeaderThingWithProof>) {
@@ -320,11 +271,12 @@ decl_module! {
 		pub fn remove_confirmed_block(origin, number: EthereumBlockNumber) {
 			T::ApproveOrigin::ensure_origin(origin)?;
 
-			<ConfirmedBlockNumbers>::mutate(|numbers| {
-				let index = numbers.iter().position(|x| *x == number).unwrap();
-				numbers.remove(index);
+			ConfirmedBlockNumbers::mutate(|numbers| {
+				if let Some(i) = numbers.iter().position(|number_| *number_ == number) {
+					numbers.remove(i);
+				}
 
-				<ConfirmedHeaders>::remove(number);
+				ConfirmedHeaders::remove(number);
 			});
 
 			Self::deposit_event(RawEvent::RemoveConfirmedBlock(number));
@@ -336,9 +288,7 @@ decl_module! {
 		pub fn clean_confirmeds(origin) {
 			T::ApproveOrigin::ensure_origin(origin)?;
 
-			for block_number in Self::confirmed_header_numbers() {
-				ConfirmedHeaders::remove(block_number);
-			}
+			ConfirmedHeaders::remove_all();
 			ConfirmedBlockNumbers::put(<Vec<EthereumBlockNumber>>::new());
 		}
 
@@ -346,15 +296,10 @@ decl_module! {
 		pub fn set_confirmed(origin, header_thing: EthereumHeaderThing) {
 			T::ApproveOrigin::ensure_origin(origin)?;
 
-			let EthereumHeaderThing { header, mmr_root } = header_thing;
-
 			ConfirmedBlockNumbers::mutate(|numbers| {
-				numbers.push(header.number);
+				numbers.push(header_thing.header.number);
 
-				ConfirmedHeaders::insert(
-					header.number,
-					ConfirmedEthereumHeaderInfo { header, mmr_root },
-				);
+				ConfirmedHeaders::insert(header_thing.header.number, header_thing);
 			});
 		}
 	}
@@ -468,9 +413,9 @@ impl<T: Trait> Relayable for Module<T> {
 						<Error<T>>::HeaderI
 					);
 
-					let ConfirmedEthereumHeaderInfo {
+					let EthereumHeaderThing {
 						header: last_confirmed_header,
-						mmr_root: _,
+						..
 					} = Self::confirmed_header(Self::best_block_number())
 						.ok_or(<Error<T>>::ConfirmedHeaderNE)?;
 
@@ -583,23 +528,19 @@ impl<T: Trait> Relayable for Module<T> {
 
 	fn store_header(header_thing: Self::HeaderThing) -> DispatchResult {
 		let last_comfirmed_block_number = Self::best_block_number();
-		let EthereumHeaderThing { header, mmr_root } = header_thing;
 
 		// Not allow to relay genesis header
 		ensure!(
-			header.number > last_comfirmed_block_number,
+			header_thing.header.number > last_comfirmed_block_number,
 			<Error<T>>::HeaderI
 		);
 
 		ConfirmedBlockNumbers::mutate(|numbers| {
-			numbers.push(header.number);
+			numbers.push(header_thing.header.number);
 
 			// TODO: remove old numbers according to ConfirmedDepth
 
-			ConfirmedHeaders::insert(
-				header.number,
-				ConfirmedEthereumHeaderInfo { header, mmr_root },
-			);
+			ConfirmedHeaders::insert(header_thing.header.number, header_thing);
 		});
 
 		Ok(())
@@ -637,11 +578,9 @@ impl<T: Trait> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
 		);
 
 		// Verify header member to last confirmed block using mmr proof
-		let ConfirmedEthereumHeaderInfo {
-			header: _,
-			mmr_root,
-		} = Self::confirmed_header(mmr_proof.last_leaf_index + 1)
-			.ok_or(<Error<T>>::ConfirmedHeaderNE)?;
+		let EthereumHeaderThing { mmr_root, .. } =
+			Self::confirmed_header(mmr_proof.last_leaf_index + 1)
+				.ok_or(<Error<T>>::ConfirmedHeaderNE)?;
 
 		ensure!(
 			Self::verify_mmr(
@@ -686,7 +625,9 @@ pub struct EthereumHeaderThingWithProof {
 #[cfg_attr(any(feature = "deserialize", test), derive(serde::Deserialize))]
 #[derive(Clone, PartialEq, Eq, Encode, Decode, Default, RuntimeDebug)]
 pub struct EthereumHeaderThing {
+	/// Ethereum Block Number
 	pub header: EthereumHeader,
+	/// MMR root of all previous headers.
 	pub mmr_root: H256,
 }
 impl HeaderThing for EthereumHeaderThing {
@@ -700,14 +641,6 @@ impl HeaderThing for EthereumHeaderThing {
 	fn hash(&self) -> Self::Hash {
 		self.header.hash()
 	}
-}
-
-#[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug)]
-pub struct ConfirmedEthereumHeaderInfo {
-	/// Ethereum Block Number
-	pub header: EthereumHeader,
-	/// MMR root of all previous headers.
-	pub mmr_root: H256,
 }
 
 #[cfg_attr(any(feature = "deserialize", test), derive(serde::Deserialize))]
