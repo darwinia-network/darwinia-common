@@ -29,7 +29,7 @@ sp-core    = { git = "https://github.com/darwinia-network/substrate.git", branch
 sp-io      = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-storage = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 # darwinia
-darwinia-balances = { path = "../balacnes" }
+darwinia-balances = { path = "../balances" }
 
 [features]
 default = ["std"]
