@@ -809,7 +809,7 @@ impl darwinia_claims::Trait for Runtime {
 parameter_types! {
 	pub const MinVestedTransfer: Balance = 100 * MILLI;
 }
-impl pallet_vesting::Trait for Runtime {
+impl darwinia_pallet::Trait for Runtime {
 	type Event = Event;
 	type Currency = Ring;
 	type BlockNumberToBalance = ConvertInto;
@@ -933,7 +933,7 @@ construct_runtime!(
 		Claims: darwinia_claims::{Module, Call, Storage, Config, Event<T>, ValidateUnsigned},
 
 		// Vesting. Usable initially, but removed once all vesting is finished.
-		Vesting: pallet_vesting::{Module, Call, Storage, Event<T>, Config<T>},
+		Vesting: darwinia_pallet::{Module, Call, Storage, Event<T>, Config<T>},
 
 		Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>},
 
