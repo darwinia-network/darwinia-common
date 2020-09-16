@@ -4114,6 +4114,7 @@ dependencies = [
  "darwinia-staking-rpc-runtime-api",
  "darwinia-support",
  "darwinia-treasury",
+ "darwinia-vesting",
  "ethereum-primitives",
  "frame-executive",
  "frame-support",

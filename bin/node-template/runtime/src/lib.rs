@@ -806,6 +806,17 @@ impl darwinia_claims::Trait for Runtime {
 	type MoveClaimOrigin = EnsureRootOrHalfCouncil;
 }
 
+parameter_types! {
+	pub const MinVestedTransfer: Balance = 100 * MILLI;
+}
+impl pallet_vesting::Trait for Runtime {
+	type Event = Event;
+	type Currency = Ring;
+	type BlockNumberToBalance = ConvertInto;
+	type MinVestedTransfer = MinVestedTransfer;
+	type WeightInfo = ();
+}
+
 impl pallet_sudo::Trait for Runtime {
 	type Event = Event;
 	type Call = Call;
@@ -920,6 +931,9 @@ construct_runtime!(
 
 		// Claims. Usable initially.
 		Claims: darwinia_claims::{Module, Call, Storage, Config, Event<T>, ValidateUnsigned},
+
+		// Vesting. Usable initially, but removed once all vesting is finished.
+		Vesting: pallet_vesting::{Module, Call, Storage, Event<T>, Config<T>},
 
 		Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>},
 

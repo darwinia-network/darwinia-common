@@ -213,6 +213,7 @@ fn testnet_genesis(
 				"CLAIMS_LIST_PATH",
 			),
 		}),
+		pallet_vesting: Some(Default::default()),
 		pallet_sudo: Some(SudoConfig { key: root_key }),
 		darwinia_crab_issuing: Some(CrabIssuingConfig {
 			total_mapped_ring: 1 << 60
