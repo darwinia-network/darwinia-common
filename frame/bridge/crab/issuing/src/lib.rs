@@ -108,10 +108,11 @@ decl_storage! {
 
 	add_extra_genesis {
 		build(|config| {
-			T::RingCurrency::deposit_creating(
+			let _ = T::RingCurrency::make_free_balance_be(
 				&<Module<T>>::account_id(),
-				T::RingCurrency::minimum_balance()
+				T::RingCurrency::minimum_balance(),
 			);
+
 			TotalMappedRing::put(config.total_mapped_ring);
 		});
 	}

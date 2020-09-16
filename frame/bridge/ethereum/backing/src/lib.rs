@@ -145,12 +145,12 @@ decl_storage! {
 			// Create Backing account
 			let _ = T::RingCurrency::make_free_balance_be(
 				&<Module<T>>::account_id(),
-				T::RingCurrency::minimum_balance().max(config.ring_locked),
+				T::RingCurrency::minimum_balance() + config.ring_locked,
 			);
 
 			let _ = T::KtonCurrency::make_free_balance_be(
 				&<Module<T>>::account_id(),
-				T::KtonCurrency::minimum_balance().max(config.kton_locked),
+				T::KtonCurrency::minimum_balance() + config.kton_locked,
 			);
 		});
 	}
