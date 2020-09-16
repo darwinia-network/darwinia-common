@@ -22,6 +22,7 @@ members = [
 	"frame/staking/rpc/runtime-api",
 	"frame/support",
 	"frame/treasury",
+	"frame/vesting",
 	"primitives/array-bytes",
 	"primitives/ethereum-primitives",
 	"primitives/merkle-patricia-trie",

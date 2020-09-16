@@ -74,7 +74,7 @@ use ethereum_primitives::{
 	header::EthereumHeader,
 	pow::EthashPartial,
 	receipt::{EthereumReceipt, EthereumReceiptProof, EthereumTransactionIndex},
-	EthereumBlockNumber, H256, U256, EthereumNetworkType
+	EthereumBlockNumber, EthereumNetworkType, H256, U256,
 };
 use types::*;
 
@@ -453,7 +453,6 @@ decl_module! {
 			ensure_root(origin)?;
 			<ReceiptVerifyFee<T>>::put(new);
 		}
-
 	}
 }
 
