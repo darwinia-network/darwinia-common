@@ -11,7 +11,9 @@ use darwinia_ethereum_relay::{EthereumHeaderThing, EthereumHeaderThingWithProof,
 use darwinia_relay_primitives::*;
 use darwinia_staking::{RewardDestination, StakingBalance, StakingLedger, TimeDepositItem};
 use darwinia_support::balance::lock::StakingLock;
-use ethereum_primitives::{header::EthereumHeader, receipt::EthereumReceiptProof, EthereumNetworkType};
+use ethereum_primitives::{
+	header::EthereumHeader, receipt::EthereumReceiptProof, EthereumNetworkType,
+};
 
 type EthereumRelay = darwinia_ethereum_relay::Module<Test>;
 
