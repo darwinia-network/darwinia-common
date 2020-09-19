@@ -187,6 +187,28 @@ impl<T, I> Round<T, I> {
 			state: RoundState::Open,
 		}
 	}
+
+	pub fn set_state(&self, new_state: RoundState) {
+		let game = T::game_by_id(self.game_id);
+
+		if new_state == RoundState::Closed {
+			if self.number == 0 { // round 0 closed
+				if self.proposals.len() == 1 {
+					game.set_state(GameState::Settled(SettleReason::NoChallenge));
+				} else { // proposals > 1
+					game.set_state(GameState::WaitingProofs);
+				}
+			} else { // round >= 1 closed
+				if self.proposals.len() == 0 {
+					game.set_state(GameState::Settled(SettleReason::AllAbstain));
+				} else if self.proposals.len() == 1 {
+					game.set_state(GameState::Settled(SettleReason::OnlyOneProof));
+				} else {
+					game.set_state(GameState::WaitingProofs);
+				}
+			}
+		}
+	}
 }
 
 pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
@@ -345,7 +367,9 @@ decl_module! {
 			// `closed_rounds` MUST NOT be empty after this check; qed
 			if closed_rounds.len() != 0 {
 				// TODO: handle error
-
+				for closed_round in closed_rounds {
+					closed_round.set_state(RoundState::Closed);
+				}
 			}
 		}
 
@@ -887,6 +911,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		let other_proposals_len = other_proposals.len();
 
 		match Self::game_by_id(game_id) {
+			// New Game
 			None => {
 				ensure!(verified_proposal.len() == 1, <Error<T, I>>::RoundMis);
 
@@ -920,7 +945,8 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 				);
 				<Game<T, I>>::insert(game_id, game);
 			},
-			Some(game) => { // challenge
+			// Challenge
+			Some(game) => {
 				let round = game.rounds[0];
 				let (bond, bonded_proposal) =
 					Self::ensure_can_bond(&relayer, &verified_proposal, 0, round.proposals.len())?;
