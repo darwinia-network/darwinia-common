@@ -56,6 +56,139 @@ use types::*;
 pub const MAX_ACTIVE_GAMES: usize = 32;
 pub const RELAYER_GAME_ID: LockIdentifier = *b"da/rgame";
 
+pub struct Game<T, I> {
+	id: TcBlockNumber<T, I>,
+	current_round: Round<T, I>,
+	rounds: Vec<Round<T, I>>,
+	state: Option<GameState>,
+	last_confirmed: TcBlockNumber<T, I>
+}
+
+impl<T, I> Game<T, I> {
+	pub fn new(id: TcBlockNumber<T, I>, samples: Vec<TcBlockNumber<T, I>>, proposals: Vec<RelayProposalT<T, I>>, last_confirmed: TcBlockNumber<T, I>) -> Game<T, I> {
+		let round_number = 0;
+		let round = Round {
+			number: round_number,
+			game_id: id,
+			samples,
+			proposals,
+			state: RoundState::Open,
+		};
+		let mut game = Game {
+			id,
+			current_round: round,
+			rounds: vec![round],
+			state: None,
+			last_confirmed
+		};
+		game.set_state(GameState::WaitingChallenges);
+		game
+	}
+
+	pub fn set_state(&mut self, new_state: GameState) {
+		let ori_state = &self.state;
+		self.state = new_state.clone();
+		match ori_state {
+			None => self.on_created(),
+			Some(old_state) => {
+				if old_state == GameState::WaitingChallenges && new_state == GameState::Settled(SettleReason::NoChallenge) {
+					self.on_settled(old_state, &new_state);
+				} else if old_state == GameState::WaitingChallenges && new_state == GameState::WaitingProofs {
+					self.on_challenged(old_state, &new_state);
+					self.on_started(old_state, &new_state);
+					self.on_new_round(old_state, &new_state);
+				} else if old_state == GameState::WaitingProofs && new_state == GameState::Settled(SettleReason::AllAbstain) {
+					self.on_settled(old_state, &new_state);
+				} else if old_state == GameState::WaitingProofs && new_state == GameState::Settled(SettleReason::OnlyOneProof) {
+					self.on_settled(old_state, &new_state);
+				} else if old_state == GameState::WaitingProofs && new_state == GameState::WaitingProofs {
+					self.on_new_round(old_state, &new_state);
+				} else {
+					self.unsupported(old_state, &new_state);
+				}
+			}
+		}
+	}
+
+	fn on_created(&self) {
+
+	}
+
+	fn on_challenged(&self, old_state: &GameState, new_state: &GameState) {
+
+	}
+
+	fn on_started(&self, old_state: &GameState, new_state: &GameState) {
+
+	}
+
+	fn on_new_round(&self, old_state: &GameState, new_state: &GameState) {
+
+	}
+
+	fn on_settled(&self, old_state: &GameState, new_state: &GameState) {
+
+	}
+
+	fn unsupported(&self, old_state: &GameState, new_state: &GameState) {
+
+	}
+
+}
+
+pub enum SettleReason {
+	NoChallenge,
+	AllAbstain,
+	OnlyOneProof,
+}
+pub enum GameState {
+	WaitingChallenges,
+	WaitingProofs,
+	Settled(SettleReason),
+	Unknown
+}
+
+pub struct Round<T, I> {
+	game_id: TcBlockNumber<T, I>,
+	number: RoundNumber,
+	samples: Vec<TcBlockNumber<T, I>>,
+	proposals: Vec<RelayProposalT<T, I>>,
+	state: RoundState,
+}
+
+pub enum RoundState {
+	Open,
+	Closed
+}
+
+impl<T, I> Round<T, I> {
+	pub fn new(game_id: TcBlockNumber<T, I>, number: RoundNumber, samples: Vec<TcBlockNumber<T, I>>) -> Round<T, I> {
+		Round {
+			game_id,
+			number,
+			samples,
+			proposals: vec![],
+			state: RoundState::Open,
+		}
+	}
+
+	pub fn add_proposal(&mut self, proposal: RelayProposalT<T, I>) {
+		self.proposals.push(proposal);
+	}
+
+	pub fn next(&self) -> Round<T, I> {
+		let mut samples = self.samples.clone();
+		T::RelayerGameAdjustor::update_samples(&samples);
+		Round {
+			game_id: self.game_id,
+			number: self.number + 1,
+			samples: samples,
+			proposals: vec![],
+			state: RoundState::Open,
+		}
+	}
+}
+
 pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	type Event: From<Event<Self, I>> + Into<<Self as frame_system::Trait>::Event>;
 
@@ -127,6 +260,15 @@ decl_error! {
 
 decl_storage! {
 	trait Store for Module<T: Trait<I>, I: Instance = DefaultInstance> as DarwiniaRelayerGame {
+		pub Games get(fn game_by_id)
+			: map hasher(blake2_128_concat) GameId<TcBlockNumber<T, I>>
+			=> Option<Game<T, I>>;
+
+		pub ClosedRounds
+			get(fn closed_rounds_at)
+			: map hasher(blake2_128_concat) BlockNumber<T>
+			=> Vec<Round>;
+
 		/// All the proposals here per game
 		pub Proposals
 			get(fn proposals_of_game)
@@ -142,22 +284,22 @@ decl_storage! {
 			=>  TcHeaderThing<T, I>;
 
 		/// The last confirmed block number record of a game when it start
-		pub LastConfirmeds
-			get(fn last_confirmed_of_game)
-			: map hasher(blake2_128_concat) GameId<TcBlockNumber<T, I>>
-			=> TcBlockNumber<T, I>;
+		// pub LastConfirmeds
+		// 	get(fn last_confirmed_of_game)
+		// 	: map hasher(blake2_128_concat) GameId<TcBlockNumber<T, I>>
+		// 	=> TcBlockNumber<T, I>;
 
 		/// The allow samples for each game
-		pub Samples
-			get(fn samples_of_game)
-			: map hasher(blake2_128_concat) TcBlockNumber<T, I>
-			=> Vec<Vec<TcBlockNumber<T, I>>>;
+		// pub Samples
+		// 	get(fn samples_of_game)
+		// 	: map hasher(blake2_128_concat) TcBlockNumber<T, I>
+		// 	=> Vec<Vec<TcBlockNumber<T, I>>>;
 
 		/// The closed rounds which had passed the challenge time at this moment
-		pub ClosedRounds
-			get(fn closed_rounds_at)
-			: map hasher(blake2_128_concat) BlockNumber<T>
-			=> Vec<(GameId<TcBlockNumber<T, I>>, Round)>;
+		// pub ClosedRounds
+		// 	get(fn closed_rounds_at)
+		// 	: map hasher(blake2_128_concat) BlockNumber<T>
+		// 	=> Vec<(GameId<TcBlockNumber<T, I>>, Round)>;
 
 		/// All the bonds per relayer
 		pub Bonds
@@ -203,7 +345,7 @@ decl_module! {
 			// `closed_rounds` MUST NOT be empty after this check; qed
 			if closed_rounds.len() != 0 {
 				// TODO: handle error
-				let _ = Self::settle(block_number, closed_rounds);
+
 			}
 		}
 
@@ -214,7 +356,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	pub fn ensure_can_bond(
 		relayer: &AccountId<T>,
 		proposal: &[TcHeaderThing<T, I>],
-		extend_at: Round,
+		extend_at: RoundNumber,
 		other_proposals_len: usize,
 	) -> Result<
 		(
@@ -294,6 +436,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 					));
 				}
 				_ => {
+					// 从这个游戏的所有proposals中找出符合这轮长度的
 					let last_round_proposals = proposals_filter_by_round(
 						&mut proposals,
 						last_round,
@@ -341,6 +484,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 							let full_chain_len = (game_id - Self::last_confirmed_of_game(game_id))
 								.saturated_into() as u64;
 
+							// 跑完了
 							if last_round_proposals_chain_len as u64 == full_chain_len {
 								info!(target: "relayer-game", "   >  On Chain Arbitrate");
 
@@ -354,7 +498,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 										Self::header_of_game_with_hash(game_id, hash),
 									));
 								}
-							} else {
+							} else { // 还没有跑完，更新samples等信息，进入下一轮
 								info!(target: "relayer-game", "   >  Update Samples");
 
 								Self::update_samples(game_id);
@@ -639,6 +783,75 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		Self::proposals_of_game(game_id)
 	}
 
+	fn submit_extend_proposal(
+		relayer: Self::Relayer,
+		proposal: Vec<Self::HeaderThingWithProof>,
+	) -> DispatchResult {
+		let verified_proposal = T::TargetChain::basic_verify(proposal)?;
+		let proposed_header = verified_proposal
+			.get(0)
+			.ok_or(<Error<T, I>>::ProposalI)?
+			.to_owned();
+		let game_id = proposed_header.number();
+
+		match Self::game_by_id(game_id) {
+			None => Ok(()), // TODO: add error
+			Some(game) => {
+				let round_number =
+					T::RelayerGameAdjustor::round_of_samples_count(verified_proposal.len() as _);
+				let prev_round_number = round_number.checked_sub(1).ok_or(<Error<T, I>>::RoundMis)?;
+
+				let round = game.rounds[round_number];
+				let previous_round = game.rounds[prev_round_number];
+
+				ensure!(
+					verified_proposal.len() == round.samples.len(),
+					<Error<T, I>>::RoundMis
+				);
+				ensure!(
+					verified_proposal
+						.iter()
+						.zip(round.samples.iter())
+						.all(|(header_thing, sample_block_number)| header_thing.number()
+							== *sample_block_number),
+					<Error<T, I>>::RoundMis
+				);
+
+				let extend_at = previous_round.samples.len();
+				let (bond, extend_proposal) = Self::ensure_can_bond(
+					&relayer,
+					&verified_proposal[extend_at..],
+					prev_round_number,
+					other_proposals_len,
+				)?;
+
+				let extend_from_proposal = previous_round.proposals.last();
+
+				if let Some(RelayProposal {
+								bonded_proposal: extend_from_proposal,
+								..
+							}) = extend_from_proposal
+				{
+					let extend_from_header = extend_from_proposal.last().unwrap().1.clone();
+					let bonded_proposal = [extend_from_proposal, extend_proposal].concat();
+
+					Self::update_bonds_with(&relayer, |bonds| bonds.saturating_add(bond));
+
+					round.add_proposal(RelayProposal {
+						relayer,
+						bonded_proposal,
+						// Each proposal MUST contains a NOT empty chain; qed
+						extend_from_header_hash: Some(extend_from_header.hash()),
+					});
+
+					<Game<T, I>>::insert(game_id, game);
+				} else {
+					Err(<Error<T, I>>::RoundMis)?;
+				}
+			}
+		}
+	}
+
 	// TODO:
 	//	The `header_thing_chain` could be very large,
 	//	the bond should relate to the bytes fee
@@ -669,149 +882,59 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			.to_owned();
 		let game_id = proposed_header.number();
 		let proposed_header_hash = proposed_header.hash();
+
 		let other_proposals = Self::proposals_of_game(game_id);
 		let other_proposals_len = other_proposals.len();
 
-		// TODO: accept a chain (length > 1) but without extend
-		match (other_proposals.len(), verified_proposal.len()) {
-			// New `Game`
-			(0, raw_header_thing_chain_len) => {
-				ensure!(raw_header_thing_chain_len == 1, <Error<T, I>>::RoundMis);
+		match Self::game_by_id(game_id) {
+			None => {
+				ensure!(verified_proposal.len() == 1, <Error<T, I>>::RoundMis);
 
 				let best_block_number = T::TargetChain::best_block_number();
 
 				ensure!(game_id > best_block_number, <Error<T, I>>::TargetHeaderAC);
-				ensure!(
-					<Proposals<T, I>>::iter().count() <= MAX_ACTIVE_GAMES,
-					<Error<T, I>>::ActiveGameTM
-				);
 
 				let (bond, bonded_proposal) =
-					Self::ensure_can_bond(&relayer, &verified_proposal, 0, other_proposals_len)?;
-
-				Self::update_bonds_with(&relayer, |bonds| bonds.saturating_add(bond));
-
-				<ClosedRounds<T, I>>::append(
-					<frame_system::Module<T>>::block_number()
-						+ T::RelayerGameAdjustor::challenge_time(0),
-					(game_id, 0),
-				);
-				<Samples<T, I>>::append(game_id, vec![game_id]);
-				<LastConfirmeds<T, I>>::insert(game_id, best_block_number);
-				<Headers<T, I>>::insert(game_id, proposed_header_hash, proposed_header);
-				<Proposals<T, I>>::append(
-					game_id,
-					RelayProposal {
-						relayer,
-						bonded_proposal,
-						extend_from_header_hash: None,
-					},
-				);
-			}
-			// First round
-			(_, 1) => {
-				ensure!(
-					!other_proposals
-						.iter()
-						.any(|other_proposal| other_proposal.bonded_proposal.len() != 1),
-					<Error<T, I>>::RoundMis
-				);
-				ensure!(
-					!other_proposals
-						.into_iter()
-						.all(|other_proposal| &other_proposal.bonded_proposal[0].1
-							== &verified_proposal[0]),
-					<Error<T, I>>::ProposalAE
-				);
-
-				let (bond, bonded_proposal) =
-					Self::ensure_can_bond(&relayer, &verified_proposal, 0, other_proposals_len)?;
+					Self::ensure_can_bond(&relayer, &verified_proposal, 0, 0)?;
 
 				Self::update_bonds_with(&relayer, |bonds| bonds.saturating_add(bond));
 
 				<Headers<T, I>>::insert(game_id, proposed_header_hash, proposed_header);
-				<Proposals<T, I>>::append(
+
+				let game = Game::new(
 					game_id,
-					RelayProposal {
-						relayer,
-						bonded_proposal,
-						extend_from_header_hash: None,
-					},
-				);
-			}
-			// Extend
-			(_, raw_header_thing_chain_len) => {
-				let round =
-					T::RelayerGameAdjustor::round_of_samples_count(raw_header_thing_chain_len as _);
-				let prev_round = round.checked_sub(1).ok_or(<Error<T, I>>::RoundMis)?;
-				let samples = Self::samples_of_game(game_id).concat();
-
-				ensure!(
-					verified_proposal.len() == samples.len(),
-					<Error<T, I>>::RoundMis
-				);
-				ensure!(
-					verified_proposal
-						.iter()
-						.zip(samples.iter())
-						.all(|(header_thing, sample_block_number)| header_thing.number()
-							== *sample_block_number),
-					<Error<T, I>>::RoundMis
-				);
-
-				let extend_at = T::RelayerGameAdjustor::samples_count_of_round(prev_round) as _;
-				let (bond, extend_proposal) = Self::ensure_can_bond(
-					&relayer,
-					&verified_proposal[extend_at..],
-					prev_round,
-					other_proposals_len,
-				)?;
-				let mut extend_from_proposal = None;
-
-				for other_proposal in other_proposals {
-					let proposal_chain_len = other_proposal.bonded_proposal.len();
-
-					if proposal_chain_len == extend_at {
-						if verified_proposal[..extend_at]
-							.iter()
-							.zip(other_proposal.bonded_proposal.iter())
-							.all(|(a, b)| a == &b.1)
-						{
-							extend_from_proposal = Some(other_proposal);
-						}
-					} else if proposal_chain_len == verified_proposal.len() {
-						ensure!(
-							!extend_proposal
-								.iter()
-								.zip(other_proposal.bonded_proposal[extend_at..].iter())
-								.all(|(a, b)| a.1 == b.1),
-							<Error<T, I>>::ProposalAE
-						);
-					}
-				}
-
-				if let Some(RelayProposal {
-					bonded_proposal: extend_from_proposal,
-					..
-				}) = extend_from_proposal
-				{
-					let extend_from_header = extend_from_proposal.last().unwrap().1.clone();
-					let bonded_proposal = [extend_from_proposal, extend_proposal].concat();
-
-					Self::update_bonds_with(&relayer, |bonds| bonds.saturating_add(bond));
-
-					<Proposals<T, I>>::append(
-						game_id,
+					vec![game_id],
+					vec![
 						RelayProposal {
 							relayer,
 							bonded_proposal,
-							// Each proposal MUST contains a NOT empty chain; qed
-							extend_from_header_hash: Some(extend_from_header.hash()),
+							extend_from_header_hash: None,
 						},
-					);
-				} else {
-					Err(<Error<T, I>>::RoundMis)?;
-				}
+					],
+					best_block_number
+				);
+				<ClosedRounds<T, I>>::append(
+					<frame_system::Module<T>>::block_number()
+						+ T::RelayerGameAdjustor::challenge_time(0),
+					&game.current_round,
+				);
+				<Game<T, I>>::insert(game_id, game);
+			},
+			Some(game) => { // challenge
+				let round = game.rounds[0];
+				let (bond, bonded_proposal) =
+					Self::ensure_can_bond(&relayer, &verified_proposal, 0, round.proposals.len())?;
+
+				Self::update_bonds_with(&relayer, |bonds| bonds.saturating_add(bond));
+
+				<Headers<T, I>>::insert(game.id, proposed_header_hash, proposed_header);
+
+				round.add_proposal(RelayProposal {
+					relayer,
+					bonded_proposal,
+					extend_from_header_hash: None,
+				});
+				<Game<T, I>>::insert(game_id, game);
 			}
 		}
 

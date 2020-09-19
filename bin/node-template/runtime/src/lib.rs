@@ -44,7 +44,7 @@ pub mod impls {
 			type Balance = Balance;
 			type TcBlockNumber = <<EthereumRelay as Relayable>::HeaderThing as HeaderThing>::Number;
 
-			fn challenge_time(round: Round) -> Self::Moment {
+			fn challenge_time(round: RoundNumber) -> Self::Moment {
 				match round {
 					// 3 mins
 					0 => 30,
@@ -53,11 +53,11 @@ pub mod impls {
 				}
 			}
 
-			fn round_of_samples_count(samples_count: u64) -> Round {
+			fn round_of_samples_count(samples_count: u64) -> RoundNumber {
 				samples_count - 1
 			}
 
-			fn samples_count_of_round(round: Round) -> u64 {
+			fn samples_count_of_round(round: RoundNumber) -> u64 {
 				round + 1
 			}
 
@@ -65,7 +65,7 @@ pub mod impls {
 				samples.push(vec![samples.last().unwrap().last().unwrap() - 1]);
 			}
 
-			fn estimate_bond(round: Round, proposals_count: u64) -> Self::Balance {
+			fn estimate_bond(round: RoundNumber, proposals_count: u64) -> Self::Balance {
 				match round {
 					0 => match proposals_count {
 						0 => 1000 * COIN,

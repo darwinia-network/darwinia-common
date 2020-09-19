@@ -14,7 +14,7 @@ use sp_runtime::{traits::AtLeast32BitUnsigned, DispatchError, DispatchResult, Ru
 use sp_std::borrow::ToOwned;
 use sp_std::{collections::btree_map::BTreeMap, prelude::*};
 
-pub type Round = u64;
+pub type RoundNumber = u64;
 
 /// Implement this for target chain's relay module's
 /// to expose some necessary APIs for relayer game
@@ -53,15 +53,15 @@ pub trait AdjustableRelayerGame {
 	type Balance;
 	type TcBlockNumber;
 
-	fn challenge_time(round: Round) -> Self::Moment;
+	fn challenge_time(round: RoundNumber) -> Self::Moment;
 
-	fn round_of_samples_count(samples_count: u64) -> Round;
+	fn round_of_samples_count(samples_count: u64) -> RoundNumber;
 
-	fn samples_count_of_round(round: Round) -> u64;
+	fn samples_count_of_round(round: RoundNumber) -> u64;
 
 	fn update_samples(samples: &mut Vec<Vec<Self::TcBlockNumber>>);
 
-	fn estimate_bond(round: Round, proposals_count: u64) -> Self::Balance;
+	fn estimate_bond(round: RoundNumber, proposals_count: u64) -> Self::Balance;
 }
 
 pub trait RelayerGameProtocol {
@@ -80,6 +80,11 @@ pub trait RelayerGameProtocol {
 			<Self::HeaderThing as HeaderThing>::Hash,
 		>,
 	>;
+
+	fn submit_extend_proposal(
+		relayer: Self::Relayer,
+		proposal: Vec<Self::HeaderThingWithProof>,
+	) -> DispatchResult;
 
 	fn submit_proposal(
 		relayer: Self::Relayer,
@@ -111,14 +116,14 @@ pub struct RelayProposal<Relayer, Balance, HeaderThing, HeaderHash> {
 
 pub fn extend_proposal<Balance, HeaderThing, F>(
 	proposal: &[HeaderThing],
-	round: Round,
+	round: RoundNumber,
 	other_proposals_len: usize,
 	estimate_bond: F,
 ) -> (Balance, Vec<(Balance, HeaderThing)>)
 where
 	Balance: Copy + AtLeast32BitUnsigned,
 	HeaderThing: Clone,
-	F: Fn(Round, u64) -> Balance,
+	F: Fn(RoundNumber, u64) -> Balance,
 {
 	let mut bonds = Balance::zero();
 	let bonded_proposal = proposal
@@ -126,7 +131,7 @@ where
 		.cloned()
 		.enumerate()
 		.map(|(round_offset, header_thing)| {
-			let bond = estimate_bond(round + round_offset as Round, other_proposals_len as _);
+			let bond = estimate_bond(round + round_offset as RoundNumber, other_proposals_len as _);
 
 			bonds = bonds.saturating_add(bond);
 
@@ -138,7 +143,7 @@ where
 }
 
 pub fn build_reward_map<Relayer, Balance, HeaderThing, HeaderHash, F>(
-	mut round: Round,
+	mut round: RoundNumber,
 	mut proposals: Vec<RelayProposal<Relayer, Balance, HeaderThing, HeaderHash>>,
 	mut extend_from_header_hash: HeaderHash,
 	mut rewards: Vec<((Relayer, Balance), (Relayer, Balance))>,
@@ -153,7 +158,7 @@ where
 	Balance: Copy + AtLeast32BitUnsigned,
 	HeaderThing: crate::HeaderThing<Hash = HeaderHash>,
 	HeaderHash: Clone + Debug + Default + PartialEq + FullCodec,
-	F: Fn(u64) -> Round,
+	F: Fn(u64) -> RoundNumber,
 {
 	let mut missing = vec![];
 
@@ -231,11 +236,11 @@ where
 
 pub fn proposals_filter_by_round<R, B, HB, HH, F>(
 	proposals: &mut Vec<RelayProposal<R, B, HB, HH>>,
-	round: Round,
+	round: RoundNumber,
 	round_of_samples_count: F,
 ) -> Vec<RelayProposal<R, B, HB, HH>>
 where
-	F: Fn(u64) -> Round,
+	F: Fn(u64) -> RoundNumber,
 {
 	proposals
 		.drain_filter(|proposal| {
