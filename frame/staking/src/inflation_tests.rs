@@ -141,7 +141,31 @@ fn compute_total_payout_should_work() {
 }
 
 #[test]
-fn calc_error_rate() {
+fn compute_kton_reward_should_work() {
+	const COIN: Balance = 1_000_000_000;
+	const PRECISION: f64 = 10_000.0000;
+
+	for (month, exp_kton_reward) in (1..=36).zip(
+		[
+			0.0761_f64, 0.1522, 0.2335, 0.3096, 0.3959, 0.4771, 0.5634, 0.6446, 0.7309, 0.8223,
+			0.9086, 1.0000, 1.0913, 1.1878, 1.2842, 1.3807, 1.4771, 1.5736, 1.6751, 1.7766, 1.8832,
+			1.9898, 2.0964, 2.2030, 2.3147, 2.4263, 2.5380, 2.6548, 2.7715, 2.8934, 3.0101, 3.1370,
+			3.2588, 3.3857, 3.5126, 3.6446,
+		]
+		.iter(),
+	) {
+		let kton_reward = compute_kton_reward::<Test>(10_000 * COIN, month) as f64 / COIN as f64;
+		let kton_reward = (kton_reward * PRECISION).floor() / PRECISION;
+
+		// eprintln!("{:?}", kton_reward);
+
+		assert_eq!(kton_reward, *exp_kton_reward);
+	}
+}
+
+#[ignore]
+#[test]
+fn print_total_payout_error_rate() {
 	const MILLISECONDS_PER_YEAR: TsInMs = ((36525 * 24 * 60 * 60) / 100) * 1000;
 
 	let initial_issuance = 2_000_000_000;
@@ -157,7 +181,6 @@ fn calc_error_rate() {
 			total_left,
 			Perbill::from_percent(0),
 		);
-
 		let inflation_rate = inflation * 10_000 / (hard_cap - total_left);
 
 		println!(
