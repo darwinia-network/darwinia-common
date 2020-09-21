@@ -60,7 +60,7 @@ use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
 	traits::{Currency, ExistenceRequirement, Get},
 };
-use frame_system::ensure_signed;
+use frame_system::{ensure_root, ensure_signed};
 use sp_runtime::{traits::AccountIdConversion, ModuleId, SaturatedConversion};
 // --- darwinia ---
 use types::*;
@@ -91,6 +91,8 @@ decl_event! {
 
 decl_error! {
 	pub enum Error for Module<T: Trait> {
+			/// Genesis Swap - CLOSED
+			GenesisSwapC,
 			/// Swap Amount - TOO LOW
 			SwapAmountTL,
 			/// Backed *RING* - INSUFFICIENT
@@ -100,10 +102,9 @@ decl_error! {
 
 decl_storage! {
 	trait Store for Module<T: Trait> as DarwiniaCrabIssuing {
-		pub TotalMappedRing
-			get(fn total_mapped_ring)
-			config()
-			: MappedRing;
+		pub GenesisSwapOpen get(fn genesis_swap_open): bool = true;
+
+		pub TotalMappedRing get(fn total_mapped_ring) config(): MappedRing;
 	}
 
 	add_extra_genesis {
@@ -127,9 +128,12 @@ decl_module! {
 
 		fn deposit_event() = default;
 
-		#[weight = T::DbWeight::get().reads_writes(2, 1) + 100_000_000]
+		#[weight = T::DbWeight::get().reads_writes(3, 1) + 100_000_000]
 		pub fn swap_and_burn_to_genesis(origin, amount: RingBalance<T>) {
 			let who = ensure_signed(origin)?;
+
+			ensure!(Self::genesis_swap_open(), <Error<T>>::GenesisSwapC);
+
 			let burned = amount.saturated_into() / 100;
 
 			ensure!(burned > 0, <Error<T>>::SwapAmountTL);
@@ -142,6 +146,13 @@ decl_module! {
 			TotalMappedRing::put(backed - burned);
 
 			Self::deposit_event(RawEvent::SwapAndBurnToGenesis(who, amount, burned));
+		}
+
+		#[weight = 100_000_000]
+		pub fn set_genesis_swap_status(origin, status: bool) {
+			ensure_root(origin)?;
+
+			GenesisSwapOpen::put(status);
 		}
 	}
 }

@@ -1,5 +1,6 @@
 // --- substrate ---
-use frame_support::{assert_err, assert_ok, traits::Currency};
+use frame_support::{assert_err, assert_ok};
+use frame_system::RawOrigin;
 // --- darwinia ---
 use crate::{mock::*, RawEvent};
 
@@ -63,13 +64,38 @@ fn insufficient_ring_should_fail() {
 #[test]
 fn backed_ring_insufficient_should_fail() {
 	new_test_ext().execute_with(|| {
-		let _ = Ring::deposit_creating(&100, 450_000);
-		assert_eq!(Ring::free_balance(&100), 450_000);
-		assert_eq!(CrabIssuing::total_mapped_ring(), 4_000);
-
 		assert_err!(
 			CrabIssuing::swap_and_burn_to_genesis(Origin::signed(100), 450_000),
 			CrabIssuingError::BackedRingIS
 		);
+	});
+}
+
+#[test]
+fn genesis_swap_switch_should_work() {
+	new_test_ext().execute_with(|| {
+		assert!(CrabIssuing::genesis_swap_open());
+		assert_ok!(CrabIssuing::swap_and_burn_to_genesis(
+			Origin::signed(10),
+			100
+		));
+
+		assert_ok!(CrabIssuing::set_genesis_swap_status(
+			RawOrigin::Root.into(),
+			false
+		));
+		assert_err!(
+			CrabIssuing::swap_and_burn_to_genesis(Origin::signed(1), 100),
+			CrabIssuingError::GenesisSwapC
+		);
+
+		assert_ok!(CrabIssuing::set_genesis_swap_status(
+			RawOrigin::Root.into(),
+			true
+		));
+		assert_ok!(CrabIssuing::swap_and_burn_to_genesis(
+			Origin::signed(1),
+			100
+		));
 	});
 }
