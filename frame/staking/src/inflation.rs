@@ -110,9 +110,11 @@ pub fn compute_kton_reward<T: Trait>(value: RingBalance<T>, months: u8) -> KtonB
 	let d = U256::from(66).pow(U256::from(months));
 	let quot = n / d;
 	let rem = n % d;
-	let one_thousand: U256 = 1000.into();
+	let precision: U256 = 1000.into();
 
-	(value * (one_thousand * (quot - 1) + one_thousand * rem / d) / U256::from(1_970_000))
+	// `((quot - 1) * precision + rem * precision / d)` is 197 when `months` is 12
+	// The default interest is 1_000, so directly use 1_970_000 here instead `interest * 197 * 10^7`
+	(value * (precision * (quot - 1) + precision * rem / d) / U256::from(1_970_000))
 		.as_u128()
 		.saturated_into()
 }
