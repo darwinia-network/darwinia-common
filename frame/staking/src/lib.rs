@@ -1281,7 +1281,7 @@ decl_module! {
 				..
 			} = &mut ledger;
 			let value = value.min(*active_ring - *active_deposit_ring);
-			let kton_return = inflation::compute_kton_return::<T>(value, promise_month as _);
+			let kton_return = inflation::compute_kton_reward::<T>(value, promise_month);
 			let kton_positive_imbalance = T::KtonCurrency::deposit_creating(&stash, kton_return);
 
 			T::KtonReward::on_unbalanced(kton_positive_imbalance);
@@ -1543,9 +1543,9 @@ decl_module! {
 						};
 
 						(
-							inflation::compute_kton_return::<T>(item.value, plan_duration_in_months)
+							inflation::compute_kton_reward::<T>(item.value, plan_duration_in_months as _)
 							-
-							inflation::compute_kton_return::<T>(item.value, passed_duration_in_months)
+							inflation::compute_kton_reward::<T>(item.value, passed_duration_in_months as _)
 						).max(1.into()) * 3.into()
 					};
 
@@ -2152,7 +2152,7 @@ impl<T: Trait> Module<T> {
 			expire_time += promise_month as TsInMs * MONTH_IN_MILLISECONDS;
 			ledger.active_deposit_ring += value;
 
-			let kton_return = inflation::compute_kton_return::<T>(value, promise_month as _);
+			let kton_return = inflation::compute_kton_reward::<T>(value, promise_month);
 			let kton_positive_imbalance = T::KtonCurrency::deposit_creating(&stash, kton_return);
 
 			T::KtonReward::on_unbalanced(kton_positive_imbalance);

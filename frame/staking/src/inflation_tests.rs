@@ -141,7 +141,29 @@ fn compute_total_payout_should_work() {
 }
 
 #[test]
-fn calc_error_rate() {
+fn compute_kton_reward_should_work() {
+	const COIN: Balance = 1_000_000_000;
+	const PRECISION: f64 = 10_000.0000;
+
+	for (month, exp_kton_reward) in (1..=36).zip(
+		[
+			0.0761_f64, 0.1522, 0.2335, 0.3096, 0.3959, 0.4771, 0.5634, 0.6446, 0.7309, 0.8223,
+			0.9086, 1.0000,
+		]
+		.iter(),
+	) {
+		let kton_reward = compute_kton_reward::<Test>(10_000 * COIN, month) as f64 / COIN as f64;
+		let kton_reward = (kton_reward * PRECISION).floor() / PRECISION;
+
+		// eprintln!("{:?}", kton_reward);
+
+		assert_eq!(kton_reward, *exp_kton_reward);
+	}
+}
+
+#[ignore]
+#[test]
+fn print_total_payout_error_rate() {
 	const MILLISECONDS_PER_YEAR: TsInMs = ((36525 * 24 * 60 * 60) / 100) * 1000;
 
 	let initial_issuance = 2_000_000_000;

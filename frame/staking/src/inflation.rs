@@ -8,7 +8,6 @@ use frame_support::debug::*;
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
 use sp_core::U256;
 use sp_runtime::Perbill;
-use sp_std::convert::TryInto;
 // --- darwinia ---
 use crate::*;
 
@@ -105,15 +104,15 @@ pub fn compute_inflation(maximum: Balance, year: u32) -> Option<u128> {
 
 // consistent with the formula in smart contract in evolution land which can be found in
 // https://github.com/evolutionlandorg/bank/blob/master/contracts/GringottsBank.sol#L280
-pub fn compute_kton_return<T: Trait>(value: RingBalance<T>, months: u64) -> KtonBalance<T> {
-	let value = value.saturated_into::<u64>();
-	let no = U256::from(67).pow(U256::from(months));
-	let de = U256::from(66).pow(U256::from(months));
+pub fn compute_kton_reward<T: Trait>(value: RingBalance<T>, months: u8) -> KtonBalance<T> {
+	let value: U256 = value.saturated_into::<Balance>().into();
+	let n = U256::from(67).pow(U256::from(months));
+	let d = U256::from(66).pow(U256::from(months));
+	let quot = n / d;
+	let rem = n % d;
+	let one_thousand: U256 = 1000.into();
 
-	let quotient = no / de;
-	let remainder = no % de;
-	let res = U256::from(value)
-		* (U256::from(1000) * (quotient - 1) + U256::from(1000) * remainder / de)
-		/ U256::from(1_970_000);
-	res.as_u128().try_into().unwrap_or_default()
+	(value * (one_thousand * (quot - 1) + one_thousand * rem / d) / U256::from(1_970_000))
+		.as_u128()
+		.saturated_into()
 }
