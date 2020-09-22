@@ -6,7 +6,7 @@ homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"
 name        = "darwinia-header-mmr-rpc-runtime-api"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "1.0.0-alpha.3"
+version     = "1.0.0-alpha.4"
 
 [dependencies]
 # crates
