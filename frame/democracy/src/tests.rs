@@ -1,24 +1,10 @@
-// This file is part of Substrate.
-
-// Copyright (C) 2017-2020 Parity Technologies (UK) Ltd.
-// SPDX-License-Identifier: Apache-2.0
-
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// 	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 //! The crate's tests.
 
-use super::*;
+// --- std ---
+use std::cell::RefCell;
+// --- crates ---
 use codec::Encode;
+// --- substrate ---
 use frame_support::{
 	assert_noop, assert_ok, impl_outer_dispatch, impl_outer_event, impl_outer_origin,
 	ord_parameter_types, parameter_types,
@@ -26,14 +12,15 @@ use frame_support::{
 	weights::Weight,
 };
 use frame_system::{EnsureRoot, EnsureSignedBy};
-use pallet_balances::{BalanceLock, Error as BalancesError};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BadOrigin, BlakeTwo256, IdentityLookup},
 	Perbill,
 };
-use std::cell::RefCell;
+// --- darwinia ---
+use super::*;
+use darwinia_balances::Error as BalancesError;
 
 mod cancellation;
 mod decoders;
@@ -45,6 +32,12 @@ mod preimage;
 mod public_proposals;
 mod scheduling;
 mod voting;
+
+type BlockNumber = u64;
+type Balance = u64;
+
+type RingInstance = darwinia_balances::Instance0;
+type KtonInstance = darwinia_balances::Instance1;
 
 const AYE: Vote = Vote {
 	aye: true,
@@ -82,9 +75,21 @@ mod democracy {
 impl_outer_event! {
 	pub enum Event for Test {
 		system<T>,
-		pallet_balances<T>,
+		darwinia_balances Instance0<T>,
 		pallet_scheduler<T>,
 		democracy<T>,
+	}
+}
+
+darwinia_support::impl_account_data! {
+	struct AccountData<Balance>
+	for
+		RingInstance,
+		KtonInstance
+	where
+		Balance = Balance
+	{
+		// other data
 	}
 }
 
@@ -94,7 +99,7 @@ impl Filter<Call> for BaseFilter {
 	fn filter(call: &Call) -> bool {
 		!matches!(
 			call,
-			&Call::Balances(pallet_balances::Call::set_balance(..))
+			&Call::Balances(darwinia_balances::Call::set_balance(..))
 		)
 	}
 }
@@ -130,7 +135,7 @@ impl frame_system::Trait for Test {
 	type AvailableBlockRatio = AvailableBlockRatio;
 	type Version = ();
 	type ModuleToIndex = ();
-	type AccountData = pallet_balances::AccountData<u64>;
+	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
@@ -150,12 +155,14 @@ impl pallet_scheduler::Trait for Test {
 parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;
 }
-impl pallet_balances::Trait for Test {
-	type Balance = u64;
-	type Event = Event;
+impl darwinia_balances::Trait<RingInstance> for Test {
+	type Balance = Balance;
 	type DustRemoval = ();
+	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
+	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
+	type DustCollector = ();
 	type WeightInfo = ();
 }
 parameter_types! {
@@ -202,7 +209,7 @@ impl Get<bool> for InstantAllowed {
 impl super::Trait for Test {
 	type Proposal = Call;
 	type Event = Event;
-	type Currency = pallet_balances::Module<Self>;
+	type Currency = Balances;
 	type EnactmentPeriod = EnactmentPeriod;
 	type LaunchPeriod = LaunchPeriod;
 	type VotingPeriod = VotingPeriod;
@@ -230,7 +237,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default()
 		.build_storage::<Test>()
 		.unwrap();
-	pallet_balances::GenesisConfig::<Test> {
+	darwinia_balances::GenesisConfig::<Test, RingInstance> {
 		balances: vec![(1, 10), (2, 20), (3, 30), (4, 40), (5, 50), (6, 60)],
 	}
 	.assimilate_storage(&mut t)
@@ -248,7 +255,7 @@ pub fn new_test_ext_execute_with_cond(execute: impl FnOnce(bool) -> () + Clone) 
 }
 
 type System = frame_system::Module<Test>;
-type Balances = pallet_balances::Module<Test>;
+type Balances = darwinia_balances::Module<Test, RingInstance>;
 type Scheduler = pallet_scheduler::Module<Test>;
 type Democracy = Module<Test>;
 
@@ -262,7 +269,7 @@ fn params_should_work() {
 }
 
 fn set_balance_proposal(value: u64) -> Vec<u8> {
-	Call::Balances(pallet_balances::Call::set_balance(42, value, 0)).encode()
+	Call::Balances(darwinia_balances::Call::set_balance(42, value, 0)).encode()
 }
 
 #[test]

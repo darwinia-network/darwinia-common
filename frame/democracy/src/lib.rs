@@ -152,15 +152,16 @@
 #![recursion_limit = "128"]
 #![cfg_attr(not(feature = "std"), no_std)]
 
+// --- crates ---
 use codec::{Decode, Encode, Input};
+// --- substrate ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage,
 	dispatch::DispatchResultWithPostInfo,
 	ensure,
 	traits::{
 		schedule::{DispatchTime, Named as ScheduleNamed},
-		BalanceStatus, Currency, EnsureOrigin, Get, LockIdentifier, LockableCurrency, OnUnbalanced,
-		ReservableCurrency, WithdrawReason,
+		BalanceStatus, Currency, EnsureOrigin, Get, OnUnbalanced, ReservableCurrency,
 	},
 	weights::{DispatchClass, Pays, Weight},
 	Parameter,
@@ -171,6 +172,8 @@ use sp_runtime::{
 	DispatchError, DispatchResult, RuntimeDebug,
 };
 use sp_std::prelude::*;
+// --- darwinia ---
+use darwinia_support::balance::lock::*;
 
 mod conviction;
 mod default_weight;
@@ -1309,7 +1312,7 @@ impl<T: Trait> Module<T> {
 			who,
 			vote.balance(),
 			WithdrawReason::Transfer.into(),
-		);
+		)?;
 		ReferendumInfoOf::<T>::insert(ref_index, ReferendumInfo::Ongoing(status));
 		Ok(())
 	}
@@ -1472,7 +1475,7 @@ impl<T: Trait> Module<T> {
 			let votes = Self::increase_upstream_delegation(&target, conviction.votes(balance));
 			// Extend the lock to `balance` (rather than setting it) since we don't know what other
 			// votes are in place.
-			T::Currency::extend_lock(DEMOCRACY_ID, &who, balance, WithdrawReason::Transfer.into());
+			T::Currency::extend_lock(DEMOCRACY_ID, &who, balance, WithdrawReason::Transfer.into())?;
 			Ok(votes)
 		})?;
 		Self::deposit_event(Event::<T>::Delegated(who, target));
@@ -1524,7 +1527,9 @@ impl<T: Trait> Module<T> {
 			T::Currency::set_lock(
 				DEMOCRACY_ID,
 				who,
-				lock_needed,
+				LockFor::Common {
+					amount: lock_needed,
+				},
 				WithdrawReason::Transfer.into(),
 			);
 		}
