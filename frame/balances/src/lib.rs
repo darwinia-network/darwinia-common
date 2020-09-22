@@ -310,6 +310,8 @@ decl_error! {
 		ExistingVestingSchedule,
 		/// Beneficiary account must pre-exist
 		DeadAccount,
+		/// Lock - POISONED
+		LockP,
 	}
 }
 
@@ -1395,41 +1397,78 @@ where
 		Self::update_locks(who, &locks);
 	}
 
-	// TODO: for democracy
-	// // Extend a lock on the balance of `who`.
-	// // Is a no-op if lock amount is zero or `reasons` `is_none()`.
-	// fn extend_lock(id: LockIdentifier, who: &T::AccountId, amount: T::Balance, reasons: WithdrawReasons) {
-	// 	if amount.is_zero() || reasons.is_none() {
-	// 		return;
-	// 	}
-	// 	let mut new_lock = Some(BalanceLock {
-	// 		id,
-	// 		amount,
-	// 		reasons: reasons.into(),
-	// 	});
-	// 	let mut locks = Self::locks(who)
-	// 		.into_iter()
-	// 		.filter_map(|l| {
-	// 			if l.id == id {
-	// 				new_lock.take().map(|nl| BalanceLock {
-	// 					id: l.id,
-	// 					amount: l.amount.max(nl.amount),
-	// 					reasons: l.reasons | nl.reasons,
-	// 				})
-	// 			} else {
-	// 				Some(l)
-	// 			}
-	// 		})
-	// 		.collect::<Vec<_>>();
-	// 	if let Some(lock) = new_lock {
-	// 		locks.push(lock)
-	// 	}
-	// 	Self::update_locks(who, &locks[..]);
-	// }
+	// Extend a lock on the balance of `who`.
+	// Is a no-op if lock amount is zero or `reasons` `is_none()`.
+	fn extend_lock(
+		id: LockIdentifier,
+		who: &T::AccountId,
+		amount: T::Balance,
+		reasons: WithdrawReasons,
+	) -> DispatchResult {
+		if amount.is_zero() || reasons.is_none() {
+			return Ok(());
+		}
+
+		let mut new_lock = Some(BalanceLock {
+			id,
+			lock_for: LockFor::Common { amount },
+			lock_reasons: reasons.into(),
+		});
+		let mut poisoned = false;
+		let mut locks = Self::locks(who)
+			.into_iter()
+			.filter_map(|l| {
+				if l.id == id {
+					if let LockFor::Common { amount: a } = l.lock_for {
+						new_lock.take().map(|nl| BalanceLock {
+							id: l.id,
+							lock_for: {
+								match nl.lock_for {
+									// Only extend common lock type
+									LockFor::Common { amount: na } => LockFor::Common {
+										amount: (a).max(na),
+									},
+									// Not allow to extend other combination/type lock
+									//
+									// And the staking lock is always with staking lock id
+									// it's impossiable to match a (other lock, common lock)
+									// under this if condition
+									_ => {
+										poisoned = true;
+
+										nl.lock_for
+									}
+								}
+							},
+							lock_reasons: l.lock_reasons | nl.lock_reasons,
+						})
+					} else {
+						Some(l)
+					}
+				} else {
+					Some(l)
+				}
+			})
+			.collect::<Vec<_>>();
+
+		if poisoned {
+			Err(<Error<T, I>>::LockP)?;
+		}
+
+		if let Some(lock) = new_lock {
+			locks.push(lock)
+		}
+
+		Self::update_locks(who, &locks);
+
+		Ok(())
+	}
 
 	fn remove_lock(id: LockIdentifier, who: &T::AccountId) {
 		let mut locks = Self::locks(who);
+
 		locks.retain(|l| l.id != id);
+
 		Self::update_locks(who, &locks);
 	}
 
@@ -1437,6 +1476,7 @@ where
 	/// non-locking, non-transaction-fee activity. Will be at most `free_balance`.
 	fn usable_balance(who: &T::AccountId) -> Self::Balance {
 		let account = Self::account(who);
+
 		account.usable(LockReasons::Misc, Self::frozen_balance(who))
 	}
 
@@ -1444,6 +1484,7 @@ where
 	/// or any other kind of fees, though). Will be at most `free_balance`.
 	fn usable_balance_for_fees(who: &T::AccountId) -> Self::Balance {
 		let account = Self::account(who);
+
 		account.usable(LockReasons::Fee, Self::frozen_balance(who))
 	}
 }
