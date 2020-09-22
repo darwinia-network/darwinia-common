@@ -20,6 +20,7 @@ darwinia-balances-rpc-runtime-api   = { default-features = false, path = "../../
 darwinia-claims                     = { default-features = false, path = "../../../frame/claims" }
 darwinia-crab-backing               = { default-features = false, path = "../../../frame/bridge/crab/backing" }
 darwinia-crab-issuing               = { default-features = false, path = "../../../frame/bridge/crab/issuing" }
+darwinia-democracy                  = { default-features = false, path = "../../../frame/democracy" }
 darwinia-elections-phragmen         = { default-features = false, path = "../../../frame/elections-phragmen" }
 darwinia-ethereum-backing           = { default-features = false, path = "../../../frame/bridge/ethereum/backing" }
 darwinia-ethereum-relay             = { default-features = false, path = "../../../frame/bridge/ethereum/relay" }
@@ -48,6 +49,7 @@ pallet-im-online                           = { default-features = false, git = "
 pallet-membership                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 pallet-offences                            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 pallet-randomness-collective-flip          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-scheduler                           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 pallet-session                             = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 pallet-sudo                                = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 pallet-timestamp                           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
@@ -84,6 +86,7 @@ std = [
 	"darwinia-claims/std",
 	"darwinia-crab-backing/std",
 	"darwinia-crab-issuing/std",
+	"darwinia-democracy/std",
 	"darwinia-elections-phragmen/std",
 	"darwinia-ethereum-backing/std",
 	"darwinia-ethereum-relay/std",
@@ -111,6 +114,7 @@ std = [
 	"pallet-membership/std",
 	"pallet-offences/std",
 	"pallet-randomness-collective-flip/std",
+	"pallet-scheduler/std",
 	"pallet-session/std",
 	"pallet-sudo/std",
 	"pallet-timestamp/std",

@@ -203,6 +203,7 @@ fn testnet_genesis(
 		pallet_grandpa: Some(Default::default()),
 		pallet_im_online: Some(Default::default()),
 		pallet_authority_discovery: Some(Default::default()),
+		darwinia_democracy: Some(Default::default()),
 		pallet_collective_Instance0: Some(Default::default()),
 		pallet_collective_Instance1: Some(Default::default()),
 		darwinia_elections_phragmen: Some(Default::default()),
