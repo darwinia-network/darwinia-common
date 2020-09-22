@@ -26,7 +26,7 @@ fn cancel_referendum_should_work() {
 			2,
 			set_balance_proposal_hash_and_note(2),
 			VoteThreshold::SuperMajorityApprove,
-			0
+			0,
 		);
 		assert_ok!(Democracy::vote(Origin::signed(1), r, aye(1)));
 		assert_ok!(Democracy::cancel_referendum(Origin::root(), r.into()));
@@ -53,7 +53,10 @@ fn cancel_queued_should_work() {
 
 		assert!(pallet_scheduler::Agenda::<Test>::get(6)[0].is_some());
 
-		assert_noop!(Democracy::cancel_queued(Origin::root(), 1), Error::<Test>::ProposalMissing);
+		assert_noop!(
+			Democracy::cancel_queued(Origin::root(), 1),
+			Error::<Test>::ProposalMissing
+		);
 		assert_ok!(Democracy::cancel_queued(Origin::root(), 0));
 		assert!(pallet_scheduler::Agenda::<Test>::get(6)[0].is_none());
 	});
@@ -67,7 +70,7 @@ fn emergency_cancel_should_work() {
 			2,
 			set_balance_proposal_hash_and_note(2),
 			VoteThreshold::SuperMajorityApprove,
-			2
+			2,
 		);
 		assert!(Democracy::referendum_status(r).is_ok());
 
@@ -81,7 +84,7 @@ fn emergency_cancel_should_work() {
 			2,
 			set_balance_proposal_hash_and_note(2),
 			VoteThreshold::SuperMajorityApprove,
-			2
+			2,
 		);
 		assert!(Democracy::referendum_status(r).is_ok());
 		assert_noop!(

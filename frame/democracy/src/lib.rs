@@ -149,41 +149,41 @@
 //! - `cancel_queued` - Cancels a proposal that is queued for enactment.
 //! - `clear_public_proposal` - Removes all public proposals.
 
-#![recursion_limit="128"]
+#![recursion_limit = "128"]
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use sp_std::prelude::*;
-use sp_runtime::{
-	DispatchResult, DispatchError, RuntimeDebug,
-	traits::{Zero, Hash, Dispatchable, Saturating},
-};
-use codec::{Encode, Decode, Input};
+use codec::{Decode, Encode, Input};
 use frame_support::{
-	decl_module, decl_storage, decl_event, decl_error, ensure, Parameter,
-	weights::{Weight, DispatchClass, Pays},
-	traits::{
-		Currency, ReservableCurrency, LockableCurrency, WithdrawReason, LockIdentifier, Get,
-		OnUnbalanced, BalanceStatus, schedule::{Named as ScheduleNamed, DispatchTime}, EnsureOrigin
-	},
+	decl_error, decl_event, decl_module, decl_storage,
 	dispatch::DispatchResultWithPostInfo,
+	ensure,
+	traits::{
+		schedule::{DispatchTime, Named as ScheduleNamed},
+		BalanceStatus, Currency, EnsureOrigin, Get, LockIdentifier, LockableCurrency, OnUnbalanced,
+		ReservableCurrency, WithdrawReason,
+	},
+	weights::{DispatchClass, Pays, Weight},
+	Parameter,
 };
-use frame_system::{self as system, ensure_signed, ensure_root};
+use frame_system::{self as system, ensure_root, ensure_signed};
+use sp_runtime::{
+	traits::{Dispatchable, Hash, Saturating, Zero},
+	DispatchError, DispatchResult, RuntimeDebug,
+};
+use sp_std::prelude::*;
 
-mod vote_threshold;
-mod vote;
 mod conviction;
-mod types;
 mod default_weight;
-pub use vote_threshold::{Approved, VoteThreshold};
-pub use vote::{Vote, AccountVote, Voting};
+mod types;
+mod vote;
+mod vote_threshold;
 pub use conviction::Conviction;
-pub use types::{ReferendumInfo, ReferendumStatus, Tally, UnvoteScope, Delegations};
+pub use types::{Delegations, ReferendumInfo, ReferendumStatus, Tally, UnvoteScope};
+pub use vote::{AccountVote, Vote, Voting};
+pub use vote_threshold::{Approved, VoteThreshold};
 
 #[cfg(test)]
 mod tests;
-
-#[cfg(feature = "runtime-benchmarks")]
-pub mod benchmarking;
 
 const DEMOCRACY_ID: LockIdentifier = *b"democrac";
 
@@ -198,43 +198,44 @@ pub type PropIndex = u32;
 /// A referendum index.
 pub type ReferendumIndex = u32;
 
-type BalanceOf<T> = <<T as Trait>::Currency as Currency<<T as frame_system::Trait>::AccountId>>::Balance;
+type BalanceOf<T> =
+	<<T as Trait>::Currency as Currency<<T as frame_system::Trait>::AccountId>>::Balance;
 type NegativeImbalanceOf<T> =
 	<<T as Trait>::Currency as Currency<<T as frame_system::Trait>::AccountId>>::NegativeImbalance;
 
 pub trait WeightInfo {
 	fn propose() -> Weight;
-	fn second(s: u32, ) -> Weight;
-	fn vote_new(r: u32, ) -> Weight;
-	fn vote_existing(r: u32, ) -> Weight;
+	fn second(s: u32) -> Weight;
+	fn vote_new(r: u32) -> Weight;
+	fn vote_existing(r: u32) -> Weight;
 	fn emergency_cancel() -> Weight;
-	fn external_propose(v: u32, ) -> Weight;
+	fn external_propose(v: u32) -> Weight;
 	fn external_propose_majority() -> Weight;
 	fn external_propose_default() -> Weight;
 	fn fast_track() -> Weight;
-	fn veto_external(v: u32, ) -> Weight;
+	fn veto_external(v: u32) -> Weight;
 	fn cancel_referendum() -> Weight;
-	fn cancel_queued(r: u32, ) -> Weight;
-	fn on_initialize_base(r: u32, ) -> Weight;
-	fn delegate(r: u32, ) -> Weight;
-	fn undelegate(r: u32, ) -> Weight;
+	fn cancel_queued(r: u32) -> Weight;
+	fn on_initialize_base(r: u32) -> Weight;
+	fn delegate(r: u32) -> Weight;
+	fn undelegate(r: u32) -> Weight;
 	fn clear_public_proposals() -> Weight;
-	fn note_preimage(b: u32, ) -> Weight;
-	fn note_imminent_preimage(b: u32, ) -> Weight;
-	fn reap_preimage(b: u32, ) -> Weight;
-	fn unlock_remove(r: u32, ) -> Weight;
-	fn unlock_set(r: u32, ) -> Weight;
-	fn remove_vote(r: u32, ) -> Weight;
-	fn remove_other_vote(r: u32, ) -> Weight;
+	fn note_preimage(b: u32) -> Weight;
+	fn note_imminent_preimage(b: u32) -> Weight;
+	fn reap_preimage(b: u32) -> Weight;
+	fn unlock_remove(r: u32) -> Weight;
+	fn unlock_set(r: u32) -> Weight;
+	fn remove_vote(r: u32) -> Weight;
+	fn remove_other_vote(r: u32) -> Weight;
 }
 
 pub trait Trait: frame_system::Trait + Sized {
-	type Proposal: Parameter + Dispatchable<Origin=Self::Origin> + From<Call<Self>>;
+	type Proposal: Parameter + Dispatchable<Origin = Self::Origin> + From<Call<Self>>;
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
 	/// Currency type for this module.
 	type Currency: ReservableCurrency<Self::AccountId>
-		+ LockableCurrency<Self::AccountId, Moment=Self::BlockNumber>;
+		+ LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
 	/// The minimum period of locking and the period between a proposal being approved and enacted.
 	///
@@ -291,7 +292,7 @@ pub trait Trait: frame_system::Trait + Sized {
 	///
 	/// The number of Vetoers for a proposal must be small, extrinsics are weighted according to
 	/// [MAX_VETOERS](./const.MAX_VETOERS.html)
-	type VetoOrigin: EnsureOrigin<Self::Origin, Success=Self::AccountId>;
+	type VetoOrigin: EnsureOrigin<Self::Origin, Success = Self::AccountId>;
 
 	/// Period in blocks where an external proposal may not be re-submitted after being vetoed.
 	type CooloffPeriod: Get<Self::BlockNumber>;
@@ -300,7 +301,7 @@ pub trait Trait: frame_system::Trait + Sized {
 	type PreimageByteDeposit: Get<BalanceOf<Self>>;
 
 	/// An origin that can provide a preimage using operational extrinsics.
-	type OperationalPreimageOrigin: EnsureOrigin<Self::Origin, Success=Self::AccountId>;
+	type OperationalPreimageOrigin: EnsureOrigin<Self::Origin, Success = Self::AccountId>;
 
 	/// Handler for the unbalanced reduction when slashing a preimage deposit.
 	type Slash: OnUnbalanced<NegativeImbalanceOf<Self>>;
@@ -1184,8 +1185,11 @@ impl<T: Trait> Module<T> {
 
 	/// Get all referenda ready for tally at block `n`.
 	pub fn maturing_referenda_at(
-		n: T::BlockNumber
-	) -> Vec<(ReferendumIndex, ReferendumStatus<T::BlockNumber, T::Hash, BalanceOf<T>>)> {
+		n: T::BlockNumber,
+	) -> Vec<(
+		ReferendumIndex,
+		ReferendumStatus<T::BlockNumber, T::Hash, BalanceOf<T>>,
+	)> {
 		let next = Self::lowest_unbaked();
 		let last = Self::referendum_count();
 		Self::maturing_referenda_at_inner(n, next..last)
@@ -1194,8 +1198,12 @@ impl<T: Trait> Module<T> {
 	fn maturing_referenda_at_inner(
 		n: T::BlockNumber,
 		range: core::ops::Range<PropIndex>,
-	) -> Vec<(ReferendumIndex, ReferendumStatus<T::BlockNumber, T::Hash, BalanceOf<T>>)> {
-		range.into_iter()
+	) -> Vec<(
+		ReferendumIndex,
+		ReferendumStatus<T::BlockNumber, T::Hash, BalanceOf<T>>,
+	)> {
+		range
+			.into_iter()
 			.map(|i| (i, Self::referendum_info(i)))
 			.filter_map(|(i, maybe_info)| match maybe_info {
 				Some(ReferendumInfo::Ongoing(status)) => Some((i, status)),
@@ -1211,13 +1219,13 @@ impl<T: Trait> Module<T> {
 	pub fn internal_start_referendum(
 		proposal_hash: T::Hash,
 		threshold: VoteThreshold,
-		delay: T::BlockNumber
+		delay: T::BlockNumber,
 	) -> ReferendumIndex {
 		<Module<T>>::inject_referendum(
 			<frame_system::Module<T>>::block_number() + T::VotingPeriod::get(),
 			proposal_hash,
 			threshold,
-			delay
+			delay,
 		)
 	}
 
@@ -1230,40 +1238,57 @@ impl<T: Trait> Module<T> {
 	// private.
 
 	/// Ok if the given referendum is active, Err otherwise
-	fn ensure_ongoing(r: ReferendumInfo<T::BlockNumber, T::Hash, BalanceOf<T>>)
-		-> Result<ReferendumStatus<T::BlockNumber, T::Hash, BalanceOf<T>>, DispatchError>
-	{
+	fn ensure_ongoing(
+		r: ReferendumInfo<T::BlockNumber, T::Hash, BalanceOf<T>>,
+	) -> Result<ReferendumStatus<T::BlockNumber, T::Hash, BalanceOf<T>>, DispatchError> {
 		match r {
 			ReferendumInfo::Ongoing(s) => Ok(s),
 			_ => Err(Error::<T>::ReferendumInvalid.into()),
 		}
 	}
 
-	fn referendum_status(ref_index: ReferendumIndex)
-		-> Result<ReferendumStatus<T::BlockNumber, T::Hash, BalanceOf<T>>, DispatchError>
-	{
-		let info = ReferendumInfoOf::<T>::get(ref_index)
-			.ok_or(Error::<T>::ReferendumInvalid)?;
+	fn referendum_status(
+		ref_index: ReferendumIndex,
+	) -> Result<ReferendumStatus<T::BlockNumber, T::Hash, BalanceOf<T>>, DispatchError> {
+		let info = ReferendumInfoOf::<T>::get(ref_index).ok_or(Error::<T>::ReferendumInvalid)?;
 		Self::ensure_ongoing(info)
 	}
 
 	/// Actually enact a vote, if legit.
-	fn try_vote(who: &T::AccountId, ref_index: ReferendumIndex, vote: AccountVote<BalanceOf<T>>) -> DispatchResult {
+	fn try_vote(
+		who: &T::AccountId,
+		ref_index: ReferendumIndex,
+		vote: AccountVote<BalanceOf<T>>,
+	) -> DispatchResult {
 		let mut status = Self::referendum_status(ref_index)?;
-		ensure!(vote.balance() <= T::Currency::free_balance(who), Error::<T>::InsufficientFunds);
+		ensure!(
+			vote.balance() <= T::Currency::free_balance(who),
+			Error::<T>::InsufficientFunds
+		);
 		VotingOf::<T>::try_mutate(who, |voting| -> DispatchResult {
-			if let Voting::Direct { ref mut votes, delegations, .. } = voting {
+			if let Voting::Direct {
+				ref mut votes,
+				delegations,
+				..
+			} = voting
+			{
 				match votes.binary_search_by_key(&ref_index, |i| i.0) {
 					Ok(i) => {
 						// Shouldn't be possible to fail, but we handle it gracefully.
-						status.tally.remove(votes[i].1).ok_or(Error::<T>::Underflow)?;
+						status
+							.tally
+							.remove(votes[i].1)
+							.ok_or(Error::<T>::Underflow)?;
 						if let Some(approve) = votes[i].1.as_standard() {
 							status.tally.reduce(approve, *delegations);
 						}
 						votes[i].1 = vote;
 					}
 					Err(i) => {
-						ensure!(votes.len() as u32 <= T::MaxVotes::get(), Error::<T>::MaxVotesReached);
+						ensure!(
+							votes.len() as u32 <= T::MaxVotes::get(),
+							Error::<T>::MaxVotesReached
+						);
 						votes.insert(i, (ref_index, vote));
 					}
 				}
@@ -1283,7 +1308,7 @@ impl<T: Trait> Module<T> {
 			DEMOCRACY_ID,
 			who,
 			vote.balance(),
-			WithdrawReason::Transfer.into()
+			WithdrawReason::Transfer.into(),
 		);
 		ReferendumInfoOf::<T>::insert(ref_index, ReferendumInfo::Ongoing(status));
 		Ok(())
@@ -1295,31 +1320,49 @@ impl<T: Trait> Module<T> {
 	/// - The referendum has finished and the voter's lock period is up.
 	///
 	/// This will generally be combined with a call to `unlock`.
-	fn try_remove_vote(who: &T::AccountId, ref_index: ReferendumIndex, scope: UnvoteScope) -> DispatchResult {
+	fn try_remove_vote(
+		who: &T::AccountId,
+		ref_index: ReferendumIndex,
+		scope: UnvoteScope,
+	) -> DispatchResult {
 		let info = ReferendumInfoOf::<T>::get(ref_index);
 		VotingOf::<T>::try_mutate(who, |voting| -> DispatchResult {
-			if let Voting::Direct { ref mut votes, delegations, ref mut prior } = voting {
-				let i = votes.binary_search_by_key(&ref_index, |i| i.0).map_err(|_| Error::<T>::NotVoter)?;
+			if let Voting::Direct {
+				ref mut votes,
+				delegations,
+				ref mut prior,
+			} = voting
+			{
+				let i = votes
+					.binary_search_by_key(&ref_index, |i| i.0)
+					.map_err(|_| Error::<T>::NotVoter)?;
 				match info {
 					Some(ReferendumInfo::Ongoing(mut status)) => {
 						ensure!(matches!(scope, UnvoteScope::Any), Error::<T>::NoPermission);
 						// Shouldn't be possible to fail, but we handle it gracefully.
-						status.tally.remove(votes[i].1).ok_or(Error::<T>::Underflow)?;
+						status
+							.tally
+							.remove(votes[i].1)
+							.ok_or(Error::<T>::Underflow)?;
 						if let Some(approve) = votes[i].1.as_standard() {
 							status.tally.reduce(approve, *delegations);
 						}
 						ReferendumInfoOf::<T>::insert(ref_index, ReferendumInfo::Ongoing(status));
 					}
-					Some(ReferendumInfo::Finished{end, approved}) =>
+					Some(ReferendumInfo::Finished { end, approved }) => {
 						if let Some((lock_periods, balance)) = votes[i].1.locked_if(approved) {
 							let unlock_at = end + T::EnactmentPeriod::get() * lock_periods.into();
 							let now = system::Module::<T>::block_number();
 							if now < unlock_at {
-								ensure!(matches!(scope, UnvoteScope::Any), Error::<T>::NoPermission);
+								ensure!(
+									matches!(scope, UnvoteScope::Any),
+									Error::<T>::NoPermission
+								);
 								prior.accumulate(unlock_at, balance)
 							}
-						},
-					None => {}  // Referendum was cancelled.
+						}
+					}
+					None => {} // Referendum was cancelled.
 				}
 				votes.remove(i);
 			}
@@ -1335,16 +1378,18 @@ impl<T: Trait> Module<T> {
 				// We don't support second level delegating, so we don't need to do anything more.
 				*delegations = delegations.saturating_add(amount);
 				1
-			},
-			Voting::Direct { votes, delegations, .. } => {
+			}
+			Voting::Direct {
+				votes, delegations, ..
+			} => {
 				*delegations = delegations.saturating_add(amount);
 				for &(ref_index, account_vote) in votes.iter() {
 					if let AccountVote::Standard { vote, .. } = account_vote {
-						ReferendumInfoOf::<T>::mutate(ref_index, |maybe_info|
+						ReferendumInfoOf::<T>::mutate(ref_index, |maybe_info| {
 							if let Some(ReferendumInfo::Ongoing(ref mut status)) = maybe_info {
 								status.tally.increase(vote.aye, amount);
 							}
-						);
+						});
 					}
 				}
 				votes.len() as u32
@@ -1360,15 +1405,17 @@ impl<T: Trait> Module<T> {
 				*delegations = delegations.saturating_sub(amount);
 				1
 			}
-			Voting::Direct { votes, delegations, .. } => {
+			Voting::Direct {
+				votes, delegations, ..
+			} => {
 				*delegations = delegations.saturating_sub(amount);
 				for &(ref_index, account_vote) in votes.iter() {
 					if let AccountVote::Standard { vote, .. } = account_vote {
-						ReferendumInfoOf::<T>::mutate(ref_index, |maybe_info|
+						ReferendumInfoOf::<T>::mutate(ref_index, |maybe_info| {
 							if let Some(ReferendumInfo::Ongoing(ref mut status)) = maybe_info {
 								status.tally.reduce(vote.aye, amount);
 							}
-						);
+						});
 					}
 				}
 				votes.len() as u32
@@ -1386,7 +1433,10 @@ impl<T: Trait> Module<T> {
 		balance: BalanceOf<T>,
 	) -> Result<u32, DispatchError> {
 		ensure!(who != target, Error::<T>::Nonsense);
-		ensure!(balance <= T::Currency::free_balance(&who), Error::<T>::InsufficientFunds);
+		ensure!(
+			balance <= T::Currency::free_balance(&who),
+			Error::<T>::InsufficientFunds
+		);
 		let votes = VotingOf::<T>::try_mutate(&who, |voting| -> Result<u32, DispatchError> {
 			let mut old = Voting::Delegating {
 				balance,
@@ -1397,12 +1447,23 @@ impl<T: Trait> Module<T> {
 			};
 			sp_std::mem::swap(&mut old, voting);
 			match old {
-				Voting::Delegating { balance, target, conviction, delegations, prior, .. } => {
+				Voting::Delegating {
+					balance,
+					target,
+					conviction,
+					delegations,
+					prior,
+					..
+				} => {
 					// remove any delegation votes to our current target.
 					Self::reduce_upstream_delegation(&target, conviction.votes(balance));
 					voting.set_common(delegations, prior);
 				}
-				Voting::Direct { votes, delegations, prior } => {
+				Voting::Direct {
+					votes,
+					delegations,
+					prior,
+				} => {
 					// here we just ensure that we're currently idling with no votes recorded.
 					ensure!(votes.is_empty(), Error::<T>::VotesExist);
 					voting.set_common(delegations, prior);
@@ -1411,12 +1472,7 @@ impl<T: Trait> Module<T> {
 			let votes = Self::increase_upstream_delegation(&target, conviction.votes(balance));
 			// Extend the lock to `balance` (rather than setting it) since we don't know what other
 			// votes are in place.
-			T::Currency::extend_lock(
-				DEMOCRACY_ID,
-				&who,
-				balance,
-				WithdrawReason::Transfer.into()
-			);
+			T::Currency::extend_lock(DEMOCRACY_ID, &who, balance, WithdrawReason::Transfer.into());
 			Ok(votes)
 		})?;
 		Self::deposit_event(Event::<T>::Delegated(who, target));
@@ -1439,7 +1495,8 @@ impl<T: Trait> Module<T> {
 					mut prior,
 				} => {
 					// remove any delegation votes to our current target.
-					let votes = Self::reduce_upstream_delegation(&target, conviction.votes(balance));
+					let votes =
+						Self::reduce_upstream_delegation(&target, conviction.votes(balance));
 					let now = system::Module::<T>::block_number();
 					let lock_periods = conviction.lock_periods().into();
 					prior.accumulate(now + T::EnactmentPeriod::get() * lock_periods, balance);
@@ -1447,9 +1504,7 @@ impl<T: Trait> Module<T> {
 
 					Ok(votes)
 				}
-				Voting::Direct { .. } => {
-					Err(Error::<T>::NotDelegating.into())
-				}
+				Voting::Direct { .. } => Err(Error::<T>::NotDelegating.into()),
 			}
 		})?;
 		Self::deposit_event(Event::<T>::Undelegated(who));
@@ -1466,7 +1521,12 @@ impl<T: Trait> Module<T> {
 		if lock_needed.is_zero() {
 			T::Currency::remove_lock(DEMOCRACY_ID, who);
 		} else {
-			T::Currency::set_lock(DEMOCRACY_ID, who, lock_needed, WithdrawReason::Transfer.into());
+			T::Currency::set_lock(
+				DEMOCRACY_ID,
+				who,
+				lock_needed,
+				WithdrawReason::Transfer.into(),
+			);
 		}
 	}
 
@@ -1479,7 +1539,13 @@ impl<T: Trait> Module<T> {
 	) -> ReferendumIndex {
 		let ref_index = Self::referendum_count();
 		ReferendumCount::put(ref_index + 1);
-		let status = ReferendumStatus { end, proposal_hash, threshold, delay, tally: Default::default() };
+		let status = ReferendumStatus {
+			end,
+			proposal_hash,
+			threshold,
+			delay,
+			tally: Default::default(),
+		};
 		let item = ReferendumInfo::Ongoing(status);
 		<ReferendumInfoOf<T>>::insert(ref_index, item);
 		Self::deposit_event(RawEvent::Started(ref_index, threshold));
@@ -1492,7 +1558,8 @@ impl<T: Trait> Module<T> {
 			Self::launch_public(now).or_else(|_| Self::launch_external(now))
 		} else {
 			Self::launch_external(now).or_else(|_| Self::launch_public(now))
-		}.map_err(|_| Error::<T>::NoneWaiting.into())
+		}
+		.map_err(|_| Error::<T>::NoneWaiting.into())
 	}
 
 	/// Table the waiting external proposal for a vote, if there is one.
@@ -1544,12 +1611,20 @@ impl<T: Trait> Module<T> {
 
 	fn do_enact_proposal(proposal_hash: T::Hash, index: ReferendumIndex) -> DispatchResult {
 		let preimage = <Preimages<T>>::take(&proposal_hash);
-		if let Some(PreimageStatus::Available { data, provider, deposit, .. }) = preimage {
+		if let Some(PreimageStatus::Available {
+			data,
+			provider,
+			deposit,
+			..
+		}) = preimage
+		{
 			if let Ok(proposal) = T::Proposal::decode(&mut &data[..]) {
 				let _ = T::Currency::unreserve(&provider, deposit);
 				Self::deposit_event(RawEvent::PreimageUsed(proposal_hash, provider, deposit));
 
-				let ok = proposal.dispatch(frame_system::RawOrigin::Root.into()).is_ok();
+				let ok = proposal
+					.dispatch(frame_system::RawOrigin::Root.into())
+					.is_ok();
 				Self::deposit_event(RawEvent::Executed(index, ok));
 
 				Ok(())
@@ -1579,10 +1654,15 @@ impl<T: Trait> Module<T> {
 			} else {
 				let when = now + status.delay;
 				// Note that we need the preimage now.
-				Preimages::<T>::mutate_exists(&status.proposal_hash, |maybe_pre| match *maybe_pre {
-					Some(PreimageStatus::Available { ref mut expiry, .. }) => *expiry = Some(when),
-					ref mut a => *a = Some(PreimageStatus::Missing(when)),
-				});
+				Preimages::<T>::mutate_exists(
+					&status.proposal_hash,
+					|maybe_pre| match *maybe_pre {
+						Some(PreimageStatus::Available { ref mut expiry, .. }) => {
+							*expiry = Some(when)
+						}
+						ref mut a => *a = Some(PreimageStatus::Missing(when)),
+					},
+				);
 
 				if T::Scheduler::schedule_named(
 					(DEMOCRACY_ID, index).encode(),
@@ -1591,7 +1671,9 @@ impl<T: Trait> Module<T> {
 					63,
 					system::RawOrigin::Root.into(),
 					Call::enact_proposal(status.proposal_hash, index).into(),
-				).is_err() {
+				)
+				.is_err()
+				{
 					frame_support::print("LOGIC ERROR: bake_referendum/schedule_named failed");
 				}
 			}
@@ -1703,10 +1785,12 @@ impl<T: Trait> Module<T> {
 		}
 
 		// Decode the length of the vector.
-		let len = codec::Compact::<u32>::decode(&mut input).map_err(|_| {
-			sp_runtime::print("Failed to decode `PreimageStatus` variant");
-			DispatchError::from(Error::<T>::PreimageMissing)
-		})?.0;
+		let len = codec::Compact::<u32>::decode(&mut input)
+			.map_err(|_| {
+				sp_runtime::print("Failed to decode `PreimageStatus` variant");
+				DispatchError::from(Error::<T>::PreimageMissing)
+			})?
+			.0;
 
 		Ok(len)
 	}
@@ -1714,7 +1798,10 @@ impl<T: Trait> Module<T> {
 	// See `note_preimage`
 	fn note_preimage_inner(who: T::AccountId, encoded_proposal: Vec<u8>) -> DispatchResult {
 		let proposal_hash = T::Hashing::hash(&encoded_proposal[..]);
-		ensure!(!<Preimages<T>>::contains_key(&proposal_hash), Error::<T>::DuplicatePreimage);
+		ensure!(
+			!<Preimages<T>>::contains_key(&proposal_hash),
+			Error::<T>::DuplicatePreimage
+		);
 
 		let deposit = <BalanceOf<T>>::from(encoded_proposal.len() as u32)
 			.saturating_mul(T::PreimageByteDeposit::get());
@@ -1736,11 +1823,16 @@ impl<T: Trait> Module<T> {
 	}
 
 	// See `note_imminent_preimage`
-	fn note_imminent_preimage_inner(who: T::AccountId, encoded_proposal: Vec<u8>) -> DispatchResult {
+	fn note_imminent_preimage_inner(
+		who: T::AccountId,
+		encoded_proposal: Vec<u8>,
+	) -> DispatchResult {
 		let proposal_hash = T::Hashing::hash(&encoded_proposal[..]);
 		Self::check_pre_image_is_missing(proposal_hash)?;
 		let status = Preimages::<T>::get(&proposal_hash).ok_or(Error::<T>::NotImminent)?;
-		let expiry = status.to_missing_expiry().ok_or(Error::<T>::DuplicatePreimage)?;
+		let expiry = status
+			.to_missing_expiry()
+			.ok_or(Error::<T>::DuplicatePreimage)?;
 
 		let now = <frame_system::Module<T>>::block_number();
 		let free = <BalanceOf<T>>::zero();

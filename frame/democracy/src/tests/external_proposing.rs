@@ -34,17 +34,17 @@ fn veto_external_works() {
 		// cancelled.
 		assert!(!<NextExternal<Test>>::exists());
 		// fails - same proposal can't be resubmitted.
-		assert_noop!(Democracy::external_propose(
-			Origin::signed(2),
-			set_balance_proposal_hash(2),
-		), Error::<Test>::ProposalBlacklisted);
+		assert_noop!(
+			Democracy::external_propose(Origin::signed(2), set_balance_proposal_hash(2),),
+			Error::<Test>::ProposalBlacklisted
+		);
 
 		fast_forward_to(1);
 		// fails as we're still in cooloff period.
-		assert_noop!(Democracy::external_propose(
-			Origin::signed(2),
-			set_balance_proposal_hash(2),
-		), Error::<Test>::ProposalBlacklisted);
+		assert_noop!(
+			Democracy::external_propose(Origin::signed(2), set_balance_proposal_hash(2),),
+			Error::<Test>::ProposalBlacklisted
+		);
 
 		fast_forward_to(2);
 		// works; as we're out of the cooloff period.
@@ -67,10 +67,10 @@ fn veto_external_works() {
 
 		fast_forward_to(3);
 		// same proposal fails as we're still in cooloff
-		assert_noop!(Democracy::external_propose(
-			Origin::signed(2),
-			set_balance_proposal_hash(2),
-		), Error::<Test>::ProposalBlacklisted);
+		assert_noop!(
+			Democracy::external_propose(Origin::signed(2), set_balance_proposal_hash(2),),
+			Error::<Test>::ProposalBlacklisted
+		);
 		// different proposal works fine.
 		assert_ok!(Democracy::external_propose(
 			Origin::signed(2),
@@ -84,20 +84,17 @@ fn external_referendum_works() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(0);
 		assert_noop!(
-			Democracy::external_propose(
-				Origin::signed(1),
-				set_balance_proposal_hash(2),
-			),
+			Democracy::external_propose(Origin::signed(1), set_balance_proposal_hash(2),),
 			BadOrigin,
 		);
 		assert_ok!(Democracy::external_propose(
 			Origin::signed(2),
 			set_balance_proposal_hash_and_note(2),
 		));
-		assert_noop!(Democracy::external_propose(
-			Origin::signed(2),
-			set_balance_proposal_hash(1),
-		), Error::<Test>::DuplicateProposal);
+		assert_noop!(
+			Democracy::external_propose(Origin::signed(2), set_balance_proposal_hash(1),),
+			Error::<Test>::DuplicateProposal
+		);
 		fast_forward_to(2);
 		assert_eq!(
 			Democracy::referendum_status(0),
@@ -106,7 +103,11 @@ fn external_referendum_works() {
 				proposal_hash: set_balance_proposal_hash(2),
 				threshold: VoteThreshold::SuperMajorityApprove,
 				delay: 2,
-				tally: Tally { ayes: 0, nays: 0, turnout: 0 },
+				tally: Tally {
+					ayes: 0,
+					nays: 0,
+					turnout: 0
+				},
 			})
 		);
 	});
@@ -117,10 +118,7 @@ fn external_majority_referendum_works() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(0);
 		assert_noop!(
-			Democracy::external_propose_majority(
-				Origin::signed(1),
-				set_balance_proposal_hash(2)
-			),
+			Democracy::external_propose_majority(Origin::signed(1), set_balance_proposal_hash(2)),
 			BadOrigin,
 		);
 		assert_ok!(Democracy::external_propose_majority(
@@ -135,7 +133,11 @@ fn external_majority_referendum_works() {
 				proposal_hash: set_balance_proposal_hash(2),
 				threshold: VoteThreshold::SimpleMajority,
 				delay: 2,
-				tally: Tally { ayes: 0, nays: 0, turnout: 0 },
+				tally: Tally {
+					ayes: 0,
+					nays: 0,
+					turnout: 0
+				},
 			})
 		);
 	});
@@ -146,10 +148,7 @@ fn external_default_referendum_works() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(0);
 		assert_noop!(
-			Democracy::external_propose_default(
-				Origin::signed(3),
-				set_balance_proposal_hash(2)
-			),
+			Democracy::external_propose_default(Origin::signed(3), set_balance_proposal_hash(2)),
 			BadOrigin,
 		);
 		assert_ok!(Democracy::external_propose_default(
@@ -164,12 +163,15 @@ fn external_default_referendum_works() {
 				proposal_hash: set_balance_proposal_hash(2),
 				threshold: VoteThreshold::SuperMajorityAgainst,
 				delay: 2,
-				tally: Tally { ayes: 0, nays: 0, turnout: 0 },
+				tally: Tally {
+					ayes: 0,
+					nays: 0,
+					turnout: 0
+				},
 			})
 		);
 	});
 }
-
 
 #[test]
 fn external_and_public_interleaving_works() {
@@ -191,14 +193,18 @@ fn external_and_public_interleaving_works() {
 				proposal_hash: set_balance_proposal_hash_and_note(1),
 				threshold: VoteThreshold::SuperMajorityApprove,
 				delay: 2,
-				tally: Tally { ayes: 0, nays: 0, turnout: 0 },
+				tally: Tally {
+					ayes: 0,
+					nays: 0,
+					turnout: 0
+				},
 			})
 		);
 		// replenish external
 		assert_ok!(Democracy::external_propose(
-				Origin::signed(2),
-				set_balance_proposal_hash_and_note(3),
-			));
+			Origin::signed(2),
+			set_balance_proposal_hash_and_note(3),
+		));
 
 		fast_forward_to(4);
 
@@ -210,7 +216,11 @@ fn external_and_public_interleaving_works() {
 				proposal_hash: set_balance_proposal_hash_and_note(2),
 				threshold: VoteThreshold::SuperMajorityApprove,
 				delay: 2,
-				tally: Tally { ayes: 0, nays: 0, turnout: 0 },
+				tally: Tally {
+					ayes: 0,
+					nays: 0,
+					turnout: 0
+				},
 			})
 		);
 		// don't replenish public
@@ -225,14 +235,18 @@ fn external_and_public_interleaving_works() {
 				proposal_hash: set_balance_proposal_hash_and_note(3),
 				threshold: VoteThreshold::SuperMajorityApprove,
 				delay: 2,
-				tally: Tally { ayes: 0, nays: 0, turnout: 0 },
+				tally: Tally {
+					ayes: 0,
+					nays: 0,
+					turnout: 0
+				},
 			})
 		);
 		// replenish external
 		assert_ok!(Democracy::external_propose(
-				Origin::signed(2),
-				set_balance_proposal_hash_and_note(5),
-			));
+			Origin::signed(2),
+			set_balance_proposal_hash_and_note(5),
+		));
 
 		fast_forward_to(8);
 
@@ -244,7 +258,11 @@ fn external_and_public_interleaving_works() {
 				proposal_hash: set_balance_proposal_hash_and_note(5),
 				threshold: VoteThreshold::SuperMajorityApprove,
 				delay: 2,
-				tally: Tally { ayes: 0, nays: 0, turnout: 0 },
+				tally: Tally {
+					ayes: 0,
+					nays: 0,
+					turnout: 0
+				},
 			})
 		);
 		// replenish both
@@ -264,7 +282,11 @@ fn external_and_public_interleaving_works() {
 				proposal_hash: set_balance_proposal_hash_and_note(4),
 				threshold: VoteThreshold::SuperMajorityApprove,
 				delay: 2,
-				tally: Tally { ayes: 0, nays: 0, turnout: 0 },
+				tally: Tally {
+					ayes: 0,
+					nays: 0,
+					turnout: 0
+				},
 			})
 		);
 		// replenish public again
@@ -283,7 +305,11 @@ fn external_and_public_interleaving_works() {
 				proposal_hash: set_balance_proposal_hash_and_note(6),
 				threshold: VoteThreshold::SuperMajorityApprove,
 				delay: 2,
-				tally: Tally { ayes: 0, nays: 0, turnout: 0 },
+				tally: Tally {
+					ayes: 0,
+					nays: 0,
+					turnout: 0
+				},
 			})
 		);
 	});

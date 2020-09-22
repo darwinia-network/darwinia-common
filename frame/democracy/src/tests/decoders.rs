@@ -17,7 +17,7 @@
 //! The for various partial storage decoders
 
 use super::*;
-use frame_support::storage::{migration, StorageMap, unhashed};
+use frame_support::storage::{migration, unhashed, StorageMap};
 
 #[test]
 fn test_decode_compact_u32_at() {
@@ -65,7 +65,7 @@ fn pre_image() {
 		assert!(Democracy::check_pre_image_is_missing(key).is_err());
 
 		for l in vec![0, 10, 100, 1000u32] {
-			let available = PreimageStatus::Available{
+			let available = PreimageStatus::Available {
 				data: (0..l).map(|i| i as u8).collect(),
 				provider: 0,
 				deposit: 0,
