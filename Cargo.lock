@@ -1246,6 +1246,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-democracy"
+version = "1.0.0-alpha.3"
+dependencies = [
+ "darwinia-balances",
+ "darwinia-support",
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "pallet-scheduler",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 2.0.0-rc6",
+ "sp-storage",
+ "substrate-test-utils",
+]
+
+[[package]]
 name = "darwinia-elections-phragmen"
 version = "1.0.0-alpha.3"
 dependencies = [
@@ -4113,6 +4133,7 @@ dependencies = [
  "darwinia-claims",
  "darwinia-crab-backing",
  "darwinia-crab-issuing",
+ "darwinia-democracy",
  "darwinia-elections-phragmen",
  "darwinia-ethereum-backing",
  "darwinia-ethereum-relay",
@@ -4140,6 +4161,7 @@ dependencies = [
  "pallet-membership",
  "pallet-offences",
  "pallet-randomness-collective-flip",
+ "pallet-scheduler",
  "pallet-session",
  "pallet-sudo",
  "pallet-timestamp",
@@ -4500,6 +4522,21 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "safe-mix",
+ "sp-runtime",
+ "sp-std 2.0.0-rc6",
+]
+
+[[package]]
+name = "pallet-scheduler"
+version = "2.0.0-rc6"
+source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library#35fe3cd1bc4b64cadb0bc6196ae40173db65bb28"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "sp-io",
  "sp-runtime",
  "sp-std 2.0.0-rc6",
 ]

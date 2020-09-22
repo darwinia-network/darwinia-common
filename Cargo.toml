@@ -13,6 +13,7 @@ members = [
 	"frame/bridge/ethereum/linear-relay",
 	"frame/bridge/ethereum/relay",
 	"frame/bridge/relayer-game",
+	"frame/democracy",
 	"frame/elections-phragmen",
 	"frame/header-mmr",
 	"frame/header-mmr/rpc",
