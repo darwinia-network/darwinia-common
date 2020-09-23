@@ -1023,15 +1023,19 @@ decl_module! {
 				<StorageIterator<OldRewardDestination<T::AccountId>>>
 					::new(b"DarwiniaStaking", b"Payee")
 			{
-				match value {
-					OldRewardDestination::Staked { .. } => put_storage_value(
-						b"DarwiniaStaking",
-						b"Payee",
-						&hash,
-						<RewardDestination<T::AccountId>>::Staked
-					),
-					_ => ()
-				}
+				put_storage_value(
+					b"DarwiniaStaking",
+					b"Payee",
+					&hash,
+					match value {
+						OldRewardDestination::Staked { .. } => <RewardDestination<T::AccountId>>::Staked,
+						OldRewardDestination::Stash => <RewardDestination<T::AccountId>>::Stash,
+						OldRewardDestination::Controller =>
+							<RewardDestination<T::AccountId>>::Controller,
+						OldRewardDestination::Account(account) =>
+							<RewardDestination<T::AccountId>>::Account(account),
+					}
+				);
 			}
 
 			0
