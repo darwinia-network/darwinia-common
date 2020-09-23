@@ -1517,6 +1517,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-tron-backing"
+version = "1.0.0-alpha.4"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "sp-runtime",
+]
+
+[[package]]
 name = "darwinia-vesting"
 version = "1.0.0-alpha.4"
 dependencies = [
@@ -4145,6 +4156,7 @@ dependencies = [
  "darwinia-staking-rpc-runtime-api",
  "darwinia-support",
  "darwinia-treasury",
+ "darwinia-tron-backing",
  "darwinia-vesting",
  "ethereum-primitives",
  "frame-executive",
