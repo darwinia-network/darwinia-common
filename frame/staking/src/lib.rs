@@ -432,14 +432,15 @@ use sp_npos_elections::{
 use sp_runtime::{
 	helpers_128bit::multiply_by_rational,
 	traits::{
-		AtLeast32BitUnsigned, CheckedSub, Convert, Dispatchable, SaturatedConversion, Saturating,
-		StaticLookup, Zero,
+		AccountIdConversion, AtLeast32BitUnsigned, CheckedSub, Convert, Dispatchable,
+		SaturatedConversion, Saturating, StaticLookup, Zero,
 	},
 	transaction_validity::{
 		InvalidTransaction, TransactionPriority, TransactionSource, TransactionValidity,
 		TransactionValidityError, ValidTransaction,
 	},
-	DispatchError, DispatchResult, PerThing, PerU16, Perbill, Percent, Perquintill, RuntimeDebug,
+	DispatchError, DispatchResult, ModuleId, PerThing, PerU16, Perbill, Percent, Perquintill,
+	RuntimeDebug,
 };
 #[cfg(feature = "std")]
 use sp_runtime::{Deserialize, Serialize};
@@ -487,6 +488,8 @@ const STAKING_ID: LockIdentifier = *b"da/staki";
 pub trait Trait: frame_system::Trait + SendTransactionTypes<Call<Self>> {
 	/// The overarching event type.
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+
+	type ModuleId: Get<ModuleId>;
 
 	/// Time used for computing era duration.
 	///
@@ -792,7 +795,7 @@ decl_storage! {
 					T::Origin::from(Some(stash.to_owned()).into()),
 					T::Lookup::unlookup(controller.to_owned()),
 					StakingBalance::RingBalance(ring_to_be_bonded),
-					RewardDestination::Staked { promise_month: 0 },
+					RewardDestination::Staked,
 					0,
 				);
 				let _ = match status {
@@ -809,6 +812,10 @@ decl_storage! {
 						)
 					}, _ => Ok(())
 				};
+				let _ = T::RingCurrency::make_free_balance_be(
+					&<Module<T>>::account_id(),
+					T::RingCurrency::minimum_balance(),
+				);
 			}
 		});
 	}
@@ -930,6 +937,8 @@ decl_error! {
 		IncorrectHistoryDepth,
 		/// Incorrect number of slashing spans provided.
 		IncorrectSlashingSpans,
+		/// Payout - INSUFFICIENT
+		PayoutI,
 	}
 }
 
@@ -982,6 +991,23 @@ decl_module! {
 		const TotalPower: Power = T::TotalPower::get();
 
 		fn deposit_event() = default;
+
+		fn on_runtime_upgrade() -> frame_support::weights::Weight {
+			// --- substrate ---
+			use frame_support::migration::*;
+
+			// pub ErasValidatorReward
+			// get(fn eras_validator_reward)
+			// : map hasher(twox_64_concat) EraIndex => Option<RingBalance<T>>;
+			let reawrds = <StorageIterator<RingBalance<T>>>::new(b"DarwiniaStaking", b"ErasValidatorReward")
+				.fold(<RingBalance<T>>::zero(), |rewards, (_, reward)| rewards + reward);
+			let _ = T::RingCurrency::make_free_balance_be(
+				&<Module<T>>::account_id(),
+				T::RingCurrency::minimum_balance() + reawrds,
+			);
+
+			0
+		}
 
 		/// sets `ElectionStatus` to `Open(now)` where `now` is the block number at which the
 		/// election window has opened, if we are at the last session and less blocks than
@@ -2134,6 +2160,10 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
+	pub fn account_id() -> T::AccountId {
+		T::ModuleId::get().into_account()
+	}
+
 	// Update the ledger while bonding ring and compute the kton should return.
 	fn bond_ring(
 		stash: &T::AccountId,
@@ -2360,6 +2390,13 @@ impl<T: Trait> Module<T> {
 		// This is how much validator + nominators are entitled to.
 		let validator_total_payout = validator_total_reward_part * era_payout;
 
+		let module_account = Self::account_id();
+
+		ensure!(
+			T::RingCurrency::usable_balance(&module_account) >= validator_total_payout,
+			<Error<T>>::PayoutI
+		);
+
 		let validator_prefs = Self::eras_validator_prefs(&era, &validator_stash);
 		// Validator first gets a cut off the top.
 		let validator_commission = validator_prefs.commission;
@@ -2371,12 +2408,19 @@ impl<T: Trait> Module<T> {
 			Perbill::from_rational_approximation(exposure.own_power, exposure.total_power);
 		let validator_staking_payout = validator_exposure_part * validator_leftover_payout;
 
+		// Due to the `payout * percent` there might be some losses
+		let mut actual_payout = <RingPositiveImbalance<T>>::zero();
+
 		// We can now make total validator payout:
 		if let Some(imbalance) = Self::make_payout(
 			&ledger.stash,
 			validator_staking_payout + validator_commission_payout,
 		) {
-			Self::deposit_event(RawEvent::Reward(ledger.stash, imbalance.peek()));
+			let payout = imbalance.peek();
+
+			actual_payout.subsume(imbalance);
+
+			Self::deposit_event(RawEvent::Reward(ledger.stash, payout));
 		}
 
 		// Lets now calculate how this is split to the nominators.
@@ -2389,9 +2433,21 @@ impl<T: Trait> Module<T> {
 				nominator_exposure_part * validator_leftover_payout;
 			// We can now make nominator payout:
 			if let Some(imbalance) = Self::make_payout(&nominator.who, nominator_reward) {
-				Self::deposit_event(RawEvent::Reward(nominator.who.clone(), imbalance.peek()));
+				let payout = imbalance.peek();
+
+				actual_payout.subsume(imbalance);
+
+				Self::deposit_event(RawEvent::Reward(nominator.who.clone(), payout));
 			}
 		}
+
+		T::RingCurrency::settle(
+			&module_account,
+			actual_payout,
+			WithdrawReasons::all(),
+			KeepAlive,
+		)
+		.map_err(|_| <Error<T>>::PayoutI)?;
 
 		Ok(())
 	}
@@ -2451,8 +2507,7 @@ impl<T: Trait> Module<T> {
 				Some(T::RingCurrency::deposit_creating(&controller, amount))
 			}),
 			RewardDestination::Stash => T::RingCurrency::deposit_into_existing(stash, amount).ok(),
-			// TODO month
-			RewardDestination::Staked { promise_month: _ } => Self::bonded(stash)
+			RewardDestination::Staked => Self::bonded(stash)
 				.and_then(|c| Self::ledger(&c).map(|l| (c, l)))
 				.and_then(|(c, mut l)| {
 					l.active_ring += amount;
@@ -2835,6 +2890,7 @@ impl<T: Trait> Module<T> {
 			LivingTime::put(living_time + era_duration);
 			// Set ending era reward.
 			<ErasValidatorReward<T>>::insert(&active_era.index, validator_payout);
+			T::RingCurrency::deposit_creating(&Self::account_id(), validator_payout);
 			T::RingRewardRemainder::on_unbalanced(T::RingCurrency::issue(rest));
 		}
 	}
@@ -3751,7 +3807,7 @@ pub enum StakerStatus<AccountId> {
 #[derive(PartialEq, Eq, Copy, Clone, Encode, Decode, RuntimeDebug)]
 pub enum RewardDestination<AccountId> {
 	/// Pay into the stash account, increasing the amount at stake accordingly.
-	Staked { promise_month: u8 },
+	Staked,
 	/// Pay into the stash account, not increasing the amount at stake.
 	Stash,
 	/// Pay into the controller account.
@@ -3761,7 +3817,7 @@ pub enum RewardDestination<AccountId> {
 }
 impl<AccountId> Default for RewardDestination<AccountId> {
 	fn default() -> Self {
-		RewardDestination::Staked { promise_month: 0 }
+		RewardDestination::Staked
 	}
 }
 
