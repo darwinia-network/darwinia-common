@@ -2050,6 +2050,7 @@ fn reward_validator_slashing_validator_does_not_overflow() {
 		<ErasStakers<Test>>::insert(0, 11, &exposure);
 		<ErasStakersClipped<Test>>::insert(0, 11, exposure);
 		<ErasValidatorReward<Test>>::insert(0, stake);
+		let _ = Ring::deposit_creating(&Staking::account_id(), stake);
 		assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11, 0));
 		assert_eq!(Ring::free_balance(&11), stake * 2);
 
