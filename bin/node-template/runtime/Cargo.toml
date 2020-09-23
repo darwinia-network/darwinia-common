@@ -32,6 +32,7 @@ darwinia-staking                    = { default-features = false, path = "../../
 darwinia-staking-rpc-runtime-api    = { default-features = false, path = "../../../frame/staking/rpc/runtime-api" }
 darwinia-support                    = { default-features = false, path = "../../../frame/support" }
 darwinia-treasury                   = { default-features = false, path = "../../../frame/treasury" }
+darwinia-tron-backing               = { default-features = false, path = "../../../frame/bridge/tron/backing" }
 darwinia-vesting                    = { default-features = false, path = "../../../frame/vesting" }
 ethereum-primitives                 = { default-features = false, path = "../../../primitives/ethereum-primitives" }
 # substrate
@@ -98,6 +99,7 @@ std = [
 	"darwinia-staking-rpc-runtime-api/std",
 	"darwinia-support/std",
 	"darwinia-treasury/std",
+	"darwinia-tron-backing/std",
 	"darwinia-vesting/std",
 	"ethereum-primitives/std",
 	"frame-executive/std",
