@@ -172,8 +172,12 @@ macro_rules! decl_tests {
 			type WeightInfo = ();
 		}
 
+		parameter_types! {
+			pub const StakingModuleId: ModuleId = ModuleId(*b"da/staki");
+		}
 		impl darwinia_staking::Trait for Test {
 			type Event = ();
+			type ModuleId = StakingModuleId;
 			type UnixTime = Timestamp;
 			type SessionsPerEra = ();
 			type BondingDurationInEra = ();
