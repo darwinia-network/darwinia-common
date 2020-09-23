@@ -1430,7 +1430,7 @@ where
 									},
 									// Not allow to extend other combination/type lock
 									//
-									// And the staking lock is always with staking lock id
+									// And the lock is always with lock id
 									// it's impossiable to match a (other lock, common lock)
 									// under this if condition
 									_ => {
