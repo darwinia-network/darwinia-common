@@ -912,7 +912,7 @@ parameter_types! {
 	pub const TronBackingModuleId: ModuleId = ModuleId(*b"da/trobk");
 }
 impl darwinia_tron_backing::Trait for Runtime {
-	type ModuleId = CrabBackingModuleId;
+	type ModuleId = TronBackingModuleId;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 	type WeightInfo = ();
