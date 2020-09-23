@@ -1072,10 +1072,7 @@ fn reward_destination_works() {
 		make_all_reward_payment(0);
 
 		// Check that RewardDestination is Staked (default)
-		assert_eq!(
-			Staking::payee(&11),
-			RewardDestination::Staked { promise_month: 0 }
-		);
+		assert_eq!(Staking::payee(&11), RewardDestination::Staked);
 		// Check that reward went to the stash account of validator
 		assert_eq!(Ring::free_balance(11), 1000 + total_payout_0);
 		// Check that amount at stake increased accordingly
