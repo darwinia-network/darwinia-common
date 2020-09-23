@@ -2543,10 +2543,13 @@ impl<T: Trait> Module<T> {
 			RewardDestination::Staked => Self::bonded(stash)
 				.and_then(|c| Self::ledger(&c).map(|l| (c, l)))
 				.and_then(|(c, mut l)| {
-					l.active_ring += amount;
-
 					let r = T::RingCurrency::deposit_into_existing(stash, amount).ok();
-					Self::update_ledger(&c, &mut l);
+
+					if r.is_some() {
+						l.active_ring += amount;
+						Self::update_ledger(&c, &mut l);
+					}
+
 					r
 				}),
 			RewardDestination::Account(dest_account) => {
