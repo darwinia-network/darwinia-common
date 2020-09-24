@@ -169,14 +169,14 @@ fn testnet_genesis(
 			balances: endowed_accounts
 				.iter()
 				.cloned()
-				.map(|k| (k, 1 << 30))
+				.map(|k| (k, 1 << 56))
 				.collect(),
 		}),
 		darwinia_balances_Instance1: Some(KtonConfig {
 			balances: endowed_accounts
 				.iter()
 				.cloned()
-				.map(|k| (k, 1 << 30))
+				.map(|k| (k, 1 << 56))
 				.collect(),
 		}),
 		darwinia_staking: Some(StakingConfig {
@@ -185,7 +185,7 @@ fn testnet_genesis(
 			stakers: initial_authorities
 				.iter()
 				.cloned()
-				.map(|x| (x.0, x.1, 1 << 30, StakerStatus::Validator))
+				.map(|x| (x.0, x.1, 1 << 56, StakerStatus::Validator))
 				.collect(),
 			invulnerables: initial_authorities.iter().cloned().map(|x| x.0).collect(),
 			force_era: darwinia_staking::Forcing::ForceAlways,
@@ -217,10 +217,10 @@ fn testnet_genesis(
 		darwinia_vesting: Some(Default::default()),
 		pallet_sudo: Some(SudoConfig { key: root_key }),
 		darwinia_crab_issuing: Some(CrabIssuingConfig {
-			total_mapped_ring: 1 << 30
+			total_mapped_ring: 1 << 56
 		}),
 		darwinia_crab_backing: Some(CrabBackingConfig {
-			backed_ring: 1 << 30
+			backed_ring: 1 << 56
 		}),
 		darwinia_ethereum_backing: Some(EthereumBackingConfig {
 			token_redeem_address: fixed_hex_bytes_unchecked!(
@@ -241,8 +241,8 @@ fn testnet_genesis(
 				"0x1994100c58753793D52c6f457f189aa3ce9cEe94",
 				20
 			).into(),
-			ring_locked: 1 << 30,
-			kton_locked: 1 << 30,
+			ring_locked: 1 << 56,
+			kton_locked: 1 << 56,
 		}),
 		darwinia_ethereum_relay: Some(EthereumRelayConfig {
 			genesis_header_info: (
@@ -256,8 +256,8 @@ fn testnet_genesis(
 			..Default::default()
 		}),
 		darwinia_tron_backing: Some(TronBackingConfig {
-			backed_ring: 1 << 30,
-			backed_kton: 1 << 30,
+			backed_ring: 1 << 56,
+			backed_kton: 1 << 56,
 		})
 	}
 }
