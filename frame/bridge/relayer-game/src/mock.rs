@@ -215,7 +215,6 @@ pub type Ring = darwinia_balances::Module<Test, RingInstance>;
 
 pub type KtonInstance = darwinia_balances::Instance1;
 pub type _KtonError = darwinia_balances::Error<Test, KtonInstance>;
-pub type Kton = darwinia_balances::Module<Test, KtonInstance>;
 
 pub type System = frame_system::Module<Test>;
 pub type Relay = mock_relay::Module<Test>;
@@ -310,7 +309,7 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
-	type DustCollector = (Kton,);
+	type OtherCurrencies = ();
 	type WeightInfo = ();
 }
 impl darwinia_balances::Trait<KtonInstance> for Test {
@@ -320,7 +319,7 @@ impl darwinia_balances::Trait<KtonInstance> for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
-	type DustCollector = (Ring,);
+	type OtherCurrencies = ();
 	type WeightInfo = ();
 }
 
