@@ -158,6 +158,7 @@ pub fn is_disabled(controller: AccountId) -> bool {
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Test;
 parameter_types! {
+	pub const StakingModuleId: ModuleId = ModuleId(*b"da/staki");
 	pub const BondingDurationInEra: EraIndex = 3;
 	pub const BondingDurationInBlockNumber: BlockNumber = 9;
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
@@ -168,6 +169,7 @@ parameter_types! {
 }
 impl Trait for Test {
 	type Event = MetaEvent;
+	type ModuleId = StakingModuleId;
 	type UnixTime = SuppressUnixTimeWarning;
 	type SessionsPerEra = SessionsPerEra;
 	type BondingDurationInEra = BondingDurationInEra;

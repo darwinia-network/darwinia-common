@@ -59,16 +59,13 @@ const REWARD_F1: Perbill = Perbill::from_percent(50);
 /// The index of a slashing span - unique to each stash.
 pub type SpanIndex = u32;
 
-// TODO doc
 pub(crate) type RKT<T> = RK<RingBalance<T>, KtonBalance<T>>;
 
-// TODO doc
 #[derive(Clone, Copy, Default, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, RuntimeDebug)]
 pub struct RK<R, K> {
 	pub(crate) r: R,
 	pub(crate) k: K,
 }
-
 impl<R, K> Zero for RK<R, K>
 where
 	R: Zero,
@@ -90,7 +87,6 @@ where
 		self.r.is_zero() && self.k.is_zero()
 	}
 }
-
 impl<R, K> Add for RK<R, K>
 where
 	R: Add<Output = R>,
@@ -105,7 +101,6 @@ where
 		}
 	}
 }
-
 impl<R, K> AddAssign for RK<R, K>
 where
 	R: AddAssign,
@@ -116,7 +111,6 @@ where
 		self.k += rhs.k;
 	}
 }
-
 impl<R, K> Sub for RK<R, K>
 where
 	R: Sub<Output = R>,
@@ -131,7 +125,6 @@ where
 		}
 	}
 }
-
 impl<R, K> Saturating for RK<R, K>
 where
 	R: Copy + Saturating,
@@ -825,75 +818,33 @@ fn pay_reporters<T: Trait>(
 	slashed_kton: KtonNegativeImbalance<T>,
 	reporters: &[T::AccountId],
 ) {
-	if reporters.is_empty() {
-		return;
-	}
-
-	let reward_ring_is_zero = reward_payout.r.is_zero();
-	let reward_kton_is_zero = reward_payout.k.is_zero();
-
-	if reward_ring_is_zero && reward_kton_is_zero {
-		return;
-	}
-
-	if !reward_ring_is_zero && reward_kton_is_zero {
-		// take rewards out of the slashed imbalance.
-		let ring_reward_payout = reward_payout.r.min(slashed_ring.peek());
-		let (mut ring_reward_payout, mut ring_slashed) = slashed_ring.split(ring_reward_payout);
-
-		let ring_per_reporter = ring_reward_payout.peek() / (reporters.len() as u32).into();
-		for reporter in reporters {
-			let (ring_reporter_reward, ring_rest) = ring_reward_payout.split(ring_per_reporter);
-			ring_reward_payout = ring_rest;
-
-			// this cancels out the reporter reward imbalance internally, leading
-			// to no change in total issuance.
-			T::RingCurrency::resolve_creating(reporter, ring_reporter_reward);
-		}
-
-		// the rest goes to the on-slash imbalance handler (e.g. treasury)
-		ring_slashed.subsume(ring_reward_payout); // remainder of reward division remains.
-		T::RingSlash::on_unbalanced(ring_slashed);
-		// nobody to pay out to or nothing to pay;
-		// just treat the whole value as slashed.
-		T::KtonSlash::on_unbalanced(slashed_kton);
-	} else if reward_ring_is_zero && !reward_kton_is_zero {
-		let kton_reward_payout = reward_payout.k.min(slashed_kton.peek());
-		let (mut kton_reward_payout, mut kton_slashed) = slashed_kton.split(kton_reward_payout);
-
-		let kton_per_reporter = kton_reward_payout.peek() / (reporters.len() as u32).into();
-		for reporter in reporters {
-			let (kton_reporter_reward, kton_rest) = kton_reward_payout.split(kton_per_reporter);
-			kton_reward_payout = kton_rest;
-
-			// this cancels out the reporter reward imbalance internally, leading
-			// to no change in total issuance.
-			T::KtonCurrency::resolve_creating(reporter, kton_reporter_reward);
-		}
-
-		// the rest goes to the on-slash imbalance handler (e.g. treasury)
-		kton_slashed.subsume(kton_reward_payout); // remainder of reward division remains.
-		T::KtonSlash::on_unbalanced(kton_slashed);
-		// nobody to pay out to or nothing to pay;
-		// just treat the whole value as slashed.
+	if reporters.is_empty() || reward_payout.is_zero() {
 		T::RingSlash::on_unbalanced(slashed_ring);
-	} else if !reward_ring_is_zero && !reward_kton_is_zero {
-		// take rewards out of the slashed imbalance.
-		let ring_reward_payout = reward_payout.r.min(slashed_ring.peek());
-		let (mut ring_reward_payout, mut ring_slashed) = slashed_ring.split(ring_reward_payout);
-		let kton_reward_payout = reward_payout.k.min(slashed_kton.peek());
-		let (mut kton_reward_payout, mut kton_slashed) = slashed_kton.split(kton_reward_payout);
+		T::KtonSlash::on_unbalanced(slashed_kton);
 
-		let ring_per_reporter = ring_reward_payout.peek() / (reporters.len() as u32).into();
-		let kton_per_reporter = kton_reward_payout.peek() / (reporters.len() as u32).into();
-		for reporter in reporters {
+		return;
+	}
+
+	// take rewards out of the slashed imbalance.
+	let ring_reward_payout = reward_payout.r.min(slashed_ring.peek());
+	let (mut ring_reward_payout, mut ring_slashed) = slashed_ring.split(ring_reward_payout);
+	let kton_reward_payout = reward_payout.k.min(slashed_kton.peek());
+	let (mut kton_reward_payout, mut kton_slashed) = slashed_kton.split(kton_reward_payout);
+
+	let ring_per_reporter = ring_reward_payout.peek() / (reporters.len() as u32).into();
+	let kton_per_reporter = kton_reward_payout.peek() / (reporters.len() as u32).into();
+
+	for reporter in reporters {
+		if !ring_per_reporter.is_zero() {
 			let (ring_reporter_reward, ring_rest) = ring_reward_payout.split(ring_per_reporter);
 			ring_reward_payout = ring_rest;
 
 			// this cancels out the reporter reward imbalance internally, leading
 			// to no change in total issuance.
 			T::RingCurrency::resolve_creating(reporter, ring_reporter_reward);
+		}
 
+		if !kton_per_reporter.is_zero() {
 			let (kton_reporter_reward, kton_rest) = kton_reward_payout.split(kton_per_reporter);
 			kton_reward_payout = kton_rest;
 
@@ -901,15 +852,15 @@ fn pay_reporters<T: Trait>(
 			// to no change in total issuance.
 			T::KtonCurrency::resolve_creating(reporter, kton_reporter_reward);
 		}
-
-		// the rest goes to the on-slash imbalance handler (e.g. treasury)
-		ring_slashed.subsume(ring_reward_payout); // remainder of reward division remains.
-		T::RingSlash::on_unbalanced(ring_slashed);
-
-		// the rest goes to the on-slash imbalance handler (e.g. treasury)
-		kton_slashed.subsume(kton_reward_payout); // remainder of reward division remains.
-		T::KtonSlash::on_unbalanced(kton_slashed);
 	}
+
+	// the rest goes to the on-slash imbalance handler (e.g. treasury)
+	ring_slashed.subsume(ring_reward_payout); // remainder of reward division remains.
+	T::RingSlash::on_unbalanced(ring_slashed);
+
+	// the rest goes to the on-slash imbalance handler (e.g. treasury)
+	kton_slashed.subsume(kton_reward_payout); // remainder of reward division remains.
+	T::KtonSlash::on_unbalanced(kton_slashed);
 }
 
 // #[cfg(test)]

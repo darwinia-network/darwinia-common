@@ -1072,10 +1072,7 @@ fn reward_destination_works() {
 		make_all_reward_payment(0);
 
 		// Check that RewardDestination is Staked (default)
-		assert_eq!(
-			Staking::payee(&11),
-			RewardDestination::Staked { promise_month: 0 }
-		);
+		assert_eq!(Staking::payee(&11), RewardDestination::Staked);
 		// Check that reward went to the stash account of validator
 		assert_eq!(Ring::free_balance(11), 1000 + total_payout_0);
 		// Check that amount at stake increased accordingly
@@ -2053,6 +2050,7 @@ fn reward_validator_slashing_validator_does_not_overflow() {
 		<ErasStakers<Test>>::insert(0, 11, &exposure);
 		<ErasStakersClipped<Test>>::insert(0, 11, exposure);
 		<ErasValidatorReward<Test>>::insert(0, stake);
+		let _ = Ring::deposit_creating(&Staking::account_id(), stake);
 		assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11, 0));
 		assert_eq!(Ring::free_balance(&11), stake * 2);
 

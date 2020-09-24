@@ -911,16 +911,6 @@ impl darwinia_crab_backing::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const TronBackingModuleId: ModuleId = ModuleId(*b"da/trobk");
-}
-impl darwinia_tron_backing::Trait for Runtime {
-	type ModuleId = TronBackingModuleId;
-	type RingCurrency = Ring;
-	type KtonCurrency = Kton;
-	type WeightInfo = ();
-}
-
-parameter_types! {
 	pub const EthBackingModuleId: ModuleId = ModuleId(*b"da/ethbk");
 }
 impl darwinia_ethereum_backing::Trait for Runtime {
@@ -966,6 +956,16 @@ impl darwinia_relayer_game::Trait<EthereumRelayerGameInstance> for Runtime {
 	type RelayerGameAdjustor = relay::EthereumRelayerGameAdjustor;
 	type TargetChain = EthereumRelay;
 	type ConfirmPeriod = ConfirmPeriod;
+	type WeightInfo = ();
+}
+
+parameter_types! {
+	pub const TronBackingModuleId: ModuleId = ModuleId(*b"da/trobk");
+}
+impl darwinia_tron_backing::Trait for Runtime {
+	type ModuleId = TronBackingModuleId;
+	type RingCurrency = Ring;
+	type KtonCurrency = Kton;
 	type WeightInfo = ();
 }
 
