@@ -479,7 +479,7 @@ macro_rules! decl_tests {
 		fn refunding_balance_should_work() {
 			<$ext_builder>::default().build().execute_with(|| {
 				let _ = Ring::deposit_creating(&1, 42);
-				Ring::mutate_account(&1, |a| a.reserved_ring = 69);
+				Ring::mutate_account(&1, |a| a.reserved = 69);
 				Ring::unreserve(&1, 69);
 				assert_eq!(Ring::free_balance(1), 111);
 				assert_eq!(Ring::reserved_balance(1), 0);
