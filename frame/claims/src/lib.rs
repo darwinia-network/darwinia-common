@@ -681,7 +681,7 @@ mod tests {
 		type BalanceInfo = AccountData<Balance>;
 		type AccountStore = System;
 		type WeightInfo = ();
-		type DustCollector = ();
+		type OtherCurrencies = ();
 	}
 
 	fn alice() -> secp256k1::SecretKey {
