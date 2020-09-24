@@ -213,8 +213,8 @@ pub trait Subtrait<I: Instance = DefaultInstance>: frame_system::Trait {
 	/// Weight information for the extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
 
-	// TODO: doc
-	type DustCollector: DustCollector<Self::AccountId>;
+	// A handle to check if other curencies drop below existential deposit
+	type OtherCurrencies: DustCollector<Self::AccountId>;
 }
 
 pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
@@ -248,8 +248,8 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	/// The means of storing the balances of an account.
 	type AccountStore: StoredMap<Self::AccountId, Self::BalanceInfo>;
 
-	// TODO: doc
-	type DustCollector: DustCollector<Self::AccountId>;
+	// A handle to check if other curencies drop below existential deposit
+	type OtherCurrencies: DustCollector<Self::AccountId>;
 
 	/// Weight information for the extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
@@ -260,7 +260,7 @@ impl<T: Trait<I>, I: Instance> Subtrait<I> for T {
 	type ExistentialDeposit = T::ExistentialDeposit;
 	type AccountStore = T::AccountStore;
 	type BalanceInfo = T::BalanceInfo;
-	type DustCollector = T::DustCollector;
+	type OtherCurrencies = T::OtherCurrencies;
 	type WeightInfo = <T as Trait<I>>::WeightInfo;
 }
 
@@ -429,7 +429,8 @@ decl_module! {
 
 			let wipeout = {
 				let new_total = new_free + new_reserved;
-				new_total < existential_deposit && T::DustCollector::check(&who).is_ok()
+
+				new_total < existential_deposit && T::OtherCurrencies::is_dust(&who)
 			};
 			let new_free = if wipeout { Zero::zero() } else { new_free };
 			let new_reserved = if wipeout { Zero::zero() } else { new_reserved };
@@ -548,19 +549,19 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	/// as its "endowment".
 	fn post_mutation(who: &T::AccountId, new: T::BalanceInfo) -> Option<T::BalanceInfo> {
 		let total = new.total();
-		if total < T::ExistentialDeposit::get() {
-			if T::DustCollector::check(who).is_ok() {
-				T::DustCollector::collect(who);
-				if !total.is_zero() {
-					T::DustRemoval::on_unbalanced(NegativeImbalance::new(total));
-					Self::deposit_event(RawEvent::DustLost(who.to_owned(), total));
-				}
 
-				return None;
+		if total < T::ExistentialDeposit::get() && T::OtherCurrencies::is_dust(who) {
+			T::OtherCurrencies::collect(who);
+
+			if !total.is_zero() {
+				T::DustRemoval::on_unbalanced(NegativeImbalance::new(total));
+				Self::deposit_event(RawEvent::DustLost(who.clone(), total));
 			}
-		}
 
-		Some(new)
+			None
+		} else {
+			Some(new)
+		}
 	}
 
 	/// Mutate an account to some new value, or delete it entirely with `None`. Will enforce
@@ -834,7 +835,7 @@ impl<T: Subtrait<I>, I: Instance> Trait<I> for ElevatedTrait<T, I> {
 	type ExistentialDeposit = T::ExistentialDeposit;
 	type BalanceInfo = T::BalanceInfo;
 	type AccountStore = T::AccountStore;
-	type DustCollector = T::DustCollector;
+	type OtherCurrencies = T::OtherCurrencies;
 	type WeightInfo = <T as Subtrait<I>>::WeightInfo;
 }
 
@@ -960,7 +961,7 @@ where
 				let ed = T::ExistentialDeposit::get();
 
 				ensure!(
-					to_account.total() >= ed || T::DustCollector::check(dest).is_err(),
+					to_account.total() >= ed || !T::OtherCurrencies::is_dust(dest),
 					<Error<T, I>>::ExistentialDeposit
 				);
 
@@ -977,7 +978,7 @@ where
 				ensure!(
 					allow_death
 						|| from_account.free() >= ed
-						|| T::DustCollector::check(transactor).is_err(),
+						|| !T::OtherCurrencies::is_dust(transactor),
 					<Error<T, I>>::KeepAlive
 				);
 
@@ -1040,7 +1041,7 @@ where
 			who,
 			|account, is_new| -> Result<Self::PositiveImbalance, DispatchError> {
 				ensure!(
-					!is_new || T::DustCollector::check(who).is_err(),
+					!is_new || !T::OtherCurrencies::is_dust(who),
 					<Error<T, I>>::DeadAccount
 				);
 				account.set_free(
@@ -1071,7 +1072,7 @@ where
 				// bail if not yet created and this operation wouldn't be enough to create it.
 				let ed = T::ExistentialDeposit::get();
 				ensure!(
-					value >= ed || !is_new || T::DustCollector::check(who).is_err(),
+					value >= ed || !is_new || !T::OtherCurrencies::is_dust(who),
 					Self::PositiveImbalance::zero()
 				);
 
@@ -1113,14 +1114,14 @@ where
 
 				// bail if we need to keep the account alive and this would kill it.
 				let ed = T::ExistentialDeposit::get();
-				let safe_to_collect_in_others = T::DustCollector::check(who).is_ok();
+				let others_is_dust = T::OtherCurrencies::is_dust(who);
 				let would_be_dead = {
 					let new_total = new_free_account + account.reserved();
-					new_total < ed && safe_to_collect_in_others
+					new_total < ed && others_is_dust
 				};
 				let would_kill = {
 					let old_total = account.free() + account.reserved();
-					would_be_dead && (old_total >= ed || !safe_to_collect_in_others)
+					would_be_dead && (old_total >= ed || !others_is_dust)
 				};
 				ensure!(
 					liveness == AllowDeath || !would_kill,
@@ -1154,13 +1155,11 @@ where
 				// equal and opposite cause (returned as an Imbalance), then in the
 				// instance that there's no other accounts on the system at all, we might
 				// underflow the issuance and our arithmetic will be off.
-				{
-					let new_total = value.saturating_add(account.reserved());
-					ensure!(
-						new_total >= ed || !is_new || T::DustCollector::check(who).is_err(),
-						()
-					);
-				}
+				ensure!(
+					value.saturating_add(account.reserved()) >= ed
+						|| !is_new || !T::OtherCurrencies::is_dust(who),
+					()
+				);
 
 				let imbalance = if account.free() <= value {
 					SignedImbalance::Positive(PositiveImbalance::new(value - account.free()))
@@ -1301,7 +1300,7 @@ where
 			beneficiary,
 			|to_account, is_new| -> Result<Self::Balance, DispatchError> {
 				ensure!(
-					!is_new || T::DustCollector::check(beneficiary).is_err(),
+					!is_new || !T::OtherCurrencies::is_dust(beneficiary),
 					<Error<T, I>>::DeadAccount
 				);
 				Self::try_mutate_account(
@@ -1349,7 +1348,7 @@ impl<T: Trait<I>, I: Instance> OnKilledAccount<T::AccountId> for Module<T, I> {
 	fn on_killed_account(who: &T::AccountId) {
 		<Account<T, I>>::mutate_exists(who, |account| {
 			let total = account.as_ref().map(|acc| acc.total()).unwrap_or_default();
-			if !total.is_zero() && T::DustCollector::check(&who).is_ok() {
+			if !total.is_zero() && T::OtherCurrencies::is_dust(who) {
 				T::DustRemoval::on_unbalanced(NegativeImbalance::new(total));
 				Self::deposit_event(RawEvent::DustLost(who.clone(), total));
 			}
@@ -1500,25 +1499,17 @@ where
 }
 
 impl<T: Trait<I>, I: Instance> DustCollector<T::AccountId> for Module<T, I> {
-	fn check(who: &T::AccountId) -> Result<(), ()> {
-		let total_balance = Self::total_balance(who);
+	fn is_dust(who: &T::AccountId) -> bool {
+		let total = Self::total_balance(who);
 
-		if total_balance.is_zero() {
-			Ok(())
-		} else {
-			if total_balance < T::ExistentialDeposit::get() {
-				Ok(())
-			} else {
-				Err(())
-			}
-		}
+		total < T::ExistentialDeposit::get() || total.is_zero()
 	}
 
 	fn collect(who: &T::AccountId) {
-		let dropped_balance = Self::total_balance(who);
-		if !dropped_balance.is_zero() {
-			T::DustRemoval::on_unbalanced(NegativeImbalance::new(dropped_balance));
-			Self::deposit_event(RawEvent::DustLost(who.to_owned(), dropped_balance));
+		let dropped = Self::total_balance(who);
+
+		if !dropped.is_zero() {
+			T::DustRemoval::on_unbalanced(NegativeImbalance::new(dropped));
 		}
 	}
 }
