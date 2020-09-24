@@ -992,55 +992,6 @@ decl_module! {
 
 		fn deposit_event() = default;
 
-		fn on_runtime_upgrade() -> frame_support::weights::Weight {
-			// --- substrate ---
-			use frame_support::migration::*;
-
-			#[derive(PartialEq, Eq, Copy, Clone, Encode, Decode, RuntimeDebug)]
-			pub enum OldRewardDestination<AccountId> {
-				/// Pay into the stash account, increasing the amount at stake accordingly.
-				Staked { promise_month: u8 },
-				/// Pay into the stash account, not increasing the amount at stake.
-				Stash,
-				/// Pay into the controller account.
-				Controller,
-				/// Pay into a specified account.
-				Account(AccountId),
-			}
-
-			// pub ErasValidatorReward
-			// 	get(fn eras_validator_reward)
-			// 	: map hasher(twox_64_concat) EraIndex => Option<RingBalance<T>>;
-			let reawrds = <StorageIterator<RingBalance<T>>>::new(b"DarwiniaStaking", b"ErasValidatorReward")
-				.fold(<RingBalance<T>>::zero(), |rewards, (_, reward)| rewards + reward);
-			let _ = T::RingCurrency::make_free_balance_be(
-				&<Module<T>>::account_id(),
-				T::RingCurrency::minimum_balance() + reawrds,
-			);
-
-			// pub Payee get(fn payee): map hasher(twox_64_concat) T::AccountId => RewardDestination<T::AccountId>;
-			for (hash, value) in
-				<StorageIterator<OldRewardDestination<T::AccountId>>>
-					::new(b"DarwiniaStaking", b"Payee")
-			{
-				put_storage_value(
-					b"DarwiniaStaking",
-					b"Payee",
-					&hash,
-					match value {
-						OldRewardDestination::Staked { .. } => <RewardDestination<T::AccountId>>::Staked,
-						OldRewardDestination::Stash => <RewardDestination<T::AccountId>>::Stash,
-						OldRewardDestination::Controller =>
-							<RewardDestination<T::AccountId>>::Controller,
-						OldRewardDestination::Account(account) =>
-							<RewardDestination<T::AccountId>>::Account(account),
-					}
-				);
-			}
-
-			0
-		}
-
 		/// sets `ElectionStatus` to `Open(now)` where `now` is the block number at which the
 		/// election window has opened, if we are at the last session and less blocks than
 		/// `T::ElectionLookahead` is remaining until the next new session schedule. The offchain
