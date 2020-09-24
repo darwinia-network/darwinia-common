@@ -24,8 +24,8 @@ macro_rules! impl_account_data {
 			$($gtypebound)*
 		)?
 		{
-			pub free_ring: Balance,
-			pub reserved_ring: Balance,
+			pub free: Balance,
+			pub reserved: Balance,
 			pub free_kton: Balance,
 			pub reserved_kton: Balance,
 			$(pub $fname: $ftype),*
@@ -33,21 +33,21 @@ macro_rules! impl_account_data {
 
 		impl BalanceInfo<$btype, $ring_instance> for AccountData<$btype> {
 			fn free(&self) -> $btype {
-				self.free_ring
+				self.free
 			}
-			fn set_free(&mut self, new_free_ring: $btype) {
-				self.free_ring = new_free_ring;
+			fn set_free(&mut self, new_free: $btype) {
+				self.free = new_free;
 			}
 
 			fn reserved(&self) -> $btype {
-				self.reserved_ring
+				self.reserved
 			}
-			fn set_reserved(&mut self, new_reserved_ring: $btype) {
-				self.reserved_ring = new_reserved_ring;
+			fn set_reserved(&mut self, new_reserved: $btype) {
+				self.reserved = new_reserved;
 			}
 
 			fn total(&self) -> $btype {
-				self.free_ring.saturating_add(self.reserved_ring)
+				self.free.saturating_add(self.reserved)
 			}
 
 			fn usable(
@@ -55,7 +55,7 @@ macro_rules! impl_account_data {
 				reasons: darwinia_support::balance::lock::LockReasons,
 				frozen_balance: darwinia_support::balance::FrozenBalance<$btype>,
 			) -> $btype {
-				self.free_ring.saturating_sub(frozen_balance.frozen_for(reasons))
+				self.free.saturating_sub(frozen_balance.frozen_for(reasons))
 			}
 		}
 
