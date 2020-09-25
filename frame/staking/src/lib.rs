@@ -3471,8 +3471,8 @@ impl<T: Trait> Module<T> {
 		// --- substrate ---
 		use frame_support::migration::*;
 
-		let mut ring_pool = Zero::zero();
-		let mut kton_pool = Zero::zero();
+		let mut ring_pool: RingBalance<T> = Zero::zero();
+		let mut kton_pool: KtonBalance<T> = Zero::zero();
 
 		for (
 			_,
