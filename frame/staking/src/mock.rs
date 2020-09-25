@@ -284,7 +284,7 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
-	type DustCollector = (Kton,);
+	type OtherCurrencies = ();
 	type WeightInfo = ();
 }
 impl darwinia_balances::Trait<KtonInstance> for Test {
@@ -294,7 +294,7 @@ impl darwinia_balances::Trait<KtonInstance> for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
-	type DustCollector = (Ring,);
+	type OtherCurrencies = ();
 	type WeightInfo = ();
 }
 

@@ -1204,7 +1204,7 @@ mod tests {
 		type BalanceInfo = AccountData<Balance>;
 		type AccountStore = frame_system::Module<Test>;
 		type WeightInfo = ();
-		type DustCollector = ();
+		type OtherCurrencies = ();
 	}
 
 	thread_local! {

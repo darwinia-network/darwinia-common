@@ -77,15 +77,20 @@ pub trait LockableCurrency<AccountId>: Currency<AccountId> {
 }
 
 pub trait DustCollector<AccountId> {
-	fn check(who: &AccountId) -> Result<(), ()>;
+	fn is_dust(who: &AccountId) -> bool;
 
 	fn collect(who: &AccountId);
 }
-#[impl_for_tuples(15)]
+#[impl_for_tuples(30)]
 impl<AccountId> DustCollector<AccountId> for Currencies {
-	fn check(who: &AccountId) -> Result<(), ()> {
-		for_tuples!( #( Currencies::check(who)?; )* );
-		Ok(())
+	fn is_dust(who: &AccountId) -> bool {
+		for_tuples!( #(
+			if !Currencies::is_dust(who) {
+				return false;
+			}
+		)* );
+
+		true
 	}
 
 	fn collect(who: &AccountId) {

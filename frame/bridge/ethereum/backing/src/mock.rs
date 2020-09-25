@@ -158,7 +158,7 @@ macro_rules! decl_tests {
 			type ExistentialDeposit = ();
 			type BalanceInfo = AccountData<Balance>;
 			type AccountStore = System;
-			type DustCollector = ();
+			type OtherCurrencies = ();
 			type WeightInfo = ();
 		}
 		impl darwinia_balances::Trait<RingInstance> for Test {
@@ -168,7 +168,7 @@ macro_rules! decl_tests {
 			type ExistentialDeposit = ();
 			type BalanceInfo = AccountData<Balance>;
 			type AccountStore = System;
-			type DustCollector = ();
+			type OtherCurrencies = ();
 			type WeightInfo = ();
 		}
 

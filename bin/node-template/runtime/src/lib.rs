@@ -513,7 +513,7 @@ impl darwinia_balances::Trait<RingInstance> for Runtime {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
-	type DustCollector = (Kton,);
+	type OtherCurrencies = (Kton,);
 	type WeightInfo = weights::darwinia_balances::WeightInfo;
 }
 type KtonInstance = darwinia_balances::Instance1;
@@ -524,7 +524,7 @@ impl darwinia_balances::Trait<KtonInstance> for Runtime {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
-	type DustCollector = (Ring,);
+	type OtherCurrencies = (Ring,);
 	type WeightInfo = weights::darwinia_balances::WeightInfo;
 }
 

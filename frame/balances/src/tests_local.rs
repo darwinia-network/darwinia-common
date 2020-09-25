@@ -124,7 +124,7 @@ impl Trait<RingInstance> for Test {
 		Balance,
 		AccountData<Balance>,
 	>;
-	type DustCollector = (Kton,);
+	type OtherCurrencies = (Kton,);
 	type WeightInfo = ();
 }
 impl Trait<KtonInstance> for Test {
@@ -140,7 +140,7 @@ impl Trait<KtonInstance> for Test {
 		Balance,
 		AccountData<Balance>,
 	>;
-	type DustCollector = (Ring,);
+	type OtherCurrencies = (Ring,);
 	type WeightInfo = ();
 }
 
@@ -229,6 +229,74 @@ fn emit_events_with_no_existential_deposit_suicide_with_dust() {
 				[
 					Event::balances_Instance0(RawEvent::DustLost(1, 1)),
 					Event::system(frame_system::RawEvent::KilledAccount(1))
+				]
+			);
+		});
+}
+
+#[test]
+fn dust_collector_should_work() {
+	type AnotherBalance = Module<Test, Instance1>;
+
+	<ExtBuilder>::default()
+		.existential_deposit(100)
+		.build()
+		.execute_with(|| {
+			assert_ok!(Ring::set_balance(RawOrigin::Root.into(), 1, 100, 0));
+
+			assert_eq!(
+				events(),
+				[
+					Event::system(system::RawEvent::NewAccount(1)),
+					Event::balances_Instance0(RawEvent::Endowed(1, 100)),
+					Event::balances_Instance0(RawEvent::BalanceSet(1, 100, 0)),
+				]
+			);
+
+			let _ = Ring::slash(&1, 1);
+
+			assert_eq!(
+				events(),
+				[
+					Event::balances_Instance0(RawEvent::DustLost(1, 99)),
+					Event::system(system::RawEvent::KilledAccount(1))
+				]
+			);
+
+			// ---
+
+			assert_ok!(Ring::set_balance(RawOrigin::Root.into(), 1, 100, 0));
+			assert_ok!(AnotherBalance::set_balance(
+				RawOrigin::Root.into(),
+				1,
+				100,
+				0
+			));
+
+			assert_eq!(
+				events(),
+				[
+					Event::system(system::RawEvent::NewAccount(1)),
+					Event::balances_Instance0(RawEvent::Endowed(1, 100)),
+					Event::balances_Instance0(RawEvent::BalanceSet(1, 100, 0)),
+					Event::system(system::RawEvent::NewAccount(1)),
+					Event::balances_Instance1(RawEvent::Endowed(1, 100)),
+					Event::balances_Instance1(RawEvent::BalanceSet(1, 100, 0)),
+				]
+			);
+
+			let _ = Ring::slash(&1, 1);
+
+			assert_eq!(events(), []);
+
+			let _ = AnotherBalance::slash(&1, 1);
+
+			assert_eq!(
+				events(),
+				[
+					Event::balances_Instance1(RawEvent::DustLost(1, 99)),
+					Event::balances_Instance0(RawEvent::DustLost(1, 99)),
+					Event::system(system::RawEvent::KilledAccount(1)),
 				]
 			);
 		});
