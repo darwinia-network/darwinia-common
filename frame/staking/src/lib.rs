@@ -3468,6 +3468,30 @@ impl<T: Trait> Module<T> {
 		}
 	}
 
+	pub fn migrate_correct_pool_value() {
+		// --- substrate ---
+		use frame_support::migration::*;
+
+		let mut ring_pool = Zero::zero();
+		let mut kton_pool = Zero::zero();
+
+		for (
+			_,
+			StakingLedger {
+				active_ring,
+				active_kton,
+				..
+			},
+		) in <StorageIterator<StakingLedgerT<T>>>::new(b"DarwiniaStaking", b"Ledger")
+		{
+			ring_pool += active_ring;
+			kton_pool += active_kton;
+		}
+
+		put_storage_value(b"DarwiniaStaking", b"RingPool", &[], ring_pool);
+		put_storage_value(b"DarwiniaStaking", b"KtonPool", &[], kton_pool);
+	}
+
 	#[cfg(feature = "runtime-benchmarks")]
 	pub fn add_era_stakers(
 		current_era: EraIndex,
