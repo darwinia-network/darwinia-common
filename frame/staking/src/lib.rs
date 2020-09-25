@@ -579,6 +579,158 @@ pub trait Trait: frame_system::Trait + SendTransactionTypes<Call<Self>> {
 	type WeightInfo: WeightInfo;
 }
 
+/// Means for interacting with a specialized version of the `session` trait.
+///
+/// This is needed because `Staking` sets the `ValidatorIdOf` of the `pallet_session::Trait`
+pub trait SessionInterface<AccountId>: frame_system::Trait {
+	/// Disable a given validator by stash ID.
+	///
+	/// Returns `true` if new era should be forced at the end of this session.
+	/// This allows preventing a situation where there is too many validators
+	/// disabled and block production stalls.
+	fn disable_validator(validator: &AccountId) -> Result<bool, ()>;
+	/// Get the validators from session.
+	fn validators() -> Vec<AccountId>;
+	/// Prune historical session tries up to but not including the given index.
+	fn prune_historical_up_to(up_to: SessionIndex);
+}
+impl<T: Trait> SessionInterface<AccountId<T>> for T
+where
+	T: pallet_session::Trait<ValidatorId = AccountId<T>>,
+	T: pallet_session::historical::Trait<
+		FullIdentification = Exposure<AccountId<T>, RingBalance<T>, KtonBalance<T>>,
+		FullIdentificationOf = ExposureOf<T>,
+	>,
+	T::SessionHandler: pallet_session::SessionHandler<AccountId<T>>,
+	T::SessionManager: pallet_session::SessionManager<AccountId<T>>,
+	T::ValidatorIdOf: Convert<AccountId<T>, Option<AccountId<T>>>,
+{
+	fn disable_validator(validator: &AccountId<T>) -> Result<bool, ()> {
+		<pallet_session::Module<T>>::disable(validator)
+	}
+
+	fn validators() -> Vec<AccountId<T>> {
+		<pallet_session::Module<T>>::validators()
+	}
+
+	fn prune_historical_up_to(up_to: SessionIndex) {
+		<pallet_session::historical::Module<T>>::prune_up_to(up_to);
+	}
+}
+
+pub trait WeightInfo {
+	fn bond(u: u32) -> Weight;
+	fn bond_extra(u: u32) -> Weight;
+	fn unbond(u: u32) -> Weight;
+	fn claim_mature_deposits(u: u32) -> Weight;
+	fn try_claim_deposits_with_punish(u: u32) -> Weight;
+	fn validate(u: u32) -> Weight;
+	fn nominate(n: u32) -> Weight;
+	fn chill(u: u32) -> Weight;
+	fn set_payee(u: u32) -> Weight;
+	fn set_controller(u: u32) -> Weight;
+	fn set_validator_count(c: u32) -> Weight;
+	fn force_no_eras(i: u32) -> Weight;
+	fn force_new_era(i: u32) -> Weight;
+	fn force_new_era_always(i: u32) -> Weight;
+	fn set_invulnerables(v: u32) -> Weight;
+	fn force_unstake(s: u32) -> Weight;
+	fn cancel_deferred_slash(s: u32) -> Weight;
+	fn payout_stakers(n: u32) -> Weight;
+	fn payout_stakers_alive_controller(n: u32) -> Weight;
+	fn set_history_depth(e: u32) -> Weight;
+	fn reap_stash(s: u32) -> Weight;
+	fn new_era(v: u32, n: u32) -> Weight;
+	fn do_slash(l: u32) -> Weight;
+	fn payout_all(v: u32, n: u32) -> Weight;
+	fn submit_solution_initial(v: u32, n: u32, a: u32, w: u32) -> Weight;
+	fn submit_solution_better(v: u32, n: u32, a: u32, w: u32) -> Weight;
+	fn submit_solution_weaker(v: u32, n: u32) -> Weight;
+}
+impl WeightInfo for () {
+	fn bond(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn bond_extra(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn unbond(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn claim_mature_deposits(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn try_claim_deposits_with_punish(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn validate(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn nominate(_n: u32) -> Weight {
+		1_000_000_000
+	}
+	fn chill(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn set_payee(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn set_controller(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn set_validator_count(_c: u32) -> Weight {
+		1_000_000_000
+	}
+	fn force_no_eras(_i: u32) -> Weight {
+		1_000_000_000
+	}
+	fn force_new_era(_i: u32) -> Weight {
+		1_000_000_000
+	}
+	fn force_new_era_always(_i: u32) -> Weight {
+		1_000_000_000
+	}
+	fn set_invulnerables(_v: u32) -> Weight {
+		1_000_000_000
+	}
+	fn force_unstake(_s: u32) -> Weight {
+		1_000_000_000
+	}
+	fn cancel_deferred_slash(_s: u32) -> Weight {
+		1_000_000_000
+	}
+	fn payout_stakers(_n: u32) -> Weight {
+		1_000_000_000
+	}
+	fn payout_stakers_alive_controller(_n: u32) -> Weight {
+		1_000_000_000
+	}
+	fn set_history_depth(_e: u32) -> Weight {
+		1_000_000_000
+	}
+	fn reap_stash(_s: u32) -> Weight {
+		1_000_000_000
+	}
+	fn new_era(_v: u32, _n: u32) -> Weight {
+		1_000_000_000
+	}
+	fn do_slash(_l: u32) -> Weight {
+		1_000_000_000
+	}
+	fn payout_all(_v: u32, _n: u32) -> Weight {
+		1_000_000_000
+	}
+	fn submit_solution_initial(_v: u32, _n: u32, _a: u32, _w: u32) -> Weight {
+		1_000_000_000
+	}
+	fn submit_solution_better(_v: u32, _n: u32, _a: u32, _w: u32) -> Weight {
+		1_000_000_000
+	}
+	fn submit_solution_weaker(_v: u32, _n: u32) -> Weight {
+		1_000_000_000
+	}
+}
+
 decl_storage! {
 	trait Store for Module<T: Trait> as DarwiniaStaking {
 		/// Number of eras to keep in history.
@@ -3325,52 +3477,6 @@ impl<T: Trait> pallet_session::historical::SessionManager<T::AccountId, Exposure
 	}
 }
 
-/// Add reward points to block authors:
-/// * 20 points to the block producer for producing a (non-uncle) block in the relay chain,
-/// * 2 points to the block producer for each reference to a previously unreferenced uncle, and
-/// * 1 point to the producer of each referenced uncle block.
-impl<T> pallet_authorship::EventHandler<T::AccountId, T::BlockNumber> for Module<T>
-where
-	T: Trait + pallet_authorship::Trait + pallet_session::Trait,
-{
-	fn note_author(author: T::AccountId) {
-		Self::reward_by_ids(vec![(author, 20)]);
-	}
-	fn note_uncle(author: T::AccountId, _age: T::BlockNumber) {
-		Self::reward_by_ids(vec![
-			(<pallet_authorship::Module<T>>::author(), 2),
-			(author, 1),
-		]);
-	}
-}
-
-/// A `Convert` implementation that finds the stash of the given controller account,
-/// if any.
-pub struct StashOf<T>(PhantomData<T>);
-
-impl<T: Trait> Convert<T::AccountId, Option<T::AccountId>> for StashOf<T> {
-	fn convert(controller: T::AccountId) -> Option<T::AccountId> {
-		<Module<T>>::ledger(&controller).map(|l| l.stash)
-	}
-}
-
-/// A typed conversion from stash account ID to the active exposure of nominators
-/// on that account.
-///
-/// Active exposure is the exposure of the validator set currently validating, i.e. in
-/// `active_era`. It can differ from the latest planned exposure in `current_era`.
-pub struct ExposureOf<T>(PhantomData<T>);
-
-impl<T: Trait> Convert<T::AccountId, Option<ExposureT<T>>> for ExposureOf<T> {
-	fn convert(validator: T::AccountId) -> Option<ExposureT<T>> {
-		if let Some(active_era) = <Module<T>>::active_era() {
-			Some(<Module<T>>::eras_stakers(active_era.index, &validator))
-		} else {
-			None
-		}
-	}
-}
-
 /// This is intended to be used with `FilterHistoricalOffences`.
 impl<T: Trait>
 	OnOffenceHandler<T::AccountId, pallet_session::historical::IdentificationTuple<T>, Weight>
@@ -3515,39 +3621,6 @@ where
 	}
 }
 
-/// Filter historical offences out and only allow those from the bonding period.
-pub struct FilterHistoricalOffences<T, R> {
-	_inner: PhantomData<(T, R)>,
-}
-impl<T, Reporter, Offender, R, O> ReportOffence<Reporter, Offender, O>
-	for FilterHistoricalOffences<Module<T>, R>
-where
-	T: Trait,
-	R: ReportOffence<Reporter, Offender, O>,
-	O: Offence<Offender>,
-{
-	fn report_offence(reporters: Vec<Reporter>, offence: O) -> Result<(), OffenceError> {
-		// disallow any slashing from before the current bonding period.
-		let offence_session = offence.session_index();
-		let bonded_eras = BondedEras::get();
-
-		if bonded_eras
-			.first()
-			.filter(|(_, start)| offence_session >= *start)
-			.is_some()
-		{
-			R::report_offence(reporters, offence)
-		} else {
-			<Module<T>>::deposit_event(RawEvent::OldSlashingReportDiscarded(offence_session));
-			Ok(())
-		}
-	}
-
-	fn is_known_offence(offenders: &[Offender], time_slot: &O::TimeSlot) -> bool {
-		R::is_known_offence(offenders, time_slot)
-	}
-}
-
 impl<T: Trait> OnDepositRedeem<T::AccountId, RingBalance<T>> for Module<T> {
 	fn on_deposit_redeem(
 		backing: &T::AccountId,
@@ -3665,116 +3738,80 @@ impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
 	}
 }
 
-pub trait WeightInfo {
-	fn bond(u: u32) -> Weight;
-	fn bond_extra(u: u32) -> Weight;
-	fn unbond(u: u32) -> Weight;
-	fn claim_mature_deposits(u: u32) -> Weight;
-	fn try_claim_deposits_with_punish(u: u32) -> Weight;
-	fn validate(u: u32) -> Weight;
-	fn nominate(n: u32) -> Weight;
-	fn chill(u: u32) -> Weight;
-	fn set_payee(u: u32) -> Weight;
-	fn set_controller(u: u32) -> Weight;
-	fn set_validator_count(c: u32) -> Weight;
-	fn force_no_eras(i: u32) -> Weight;
-	fn force_new_era(i: u32) -> Weight;
-	fn force_new_era_always(i: u32) -> Weight;
-	fn set_invulnerables(v: u32) -> Weight;
-	fn force_unstake(s: u32) -> Weight;
-	fn cancel_deferred_slash(s: u32) -> Weight;
-	fn payout_stakers(n: u32) -> Weight;
-	fn payout_stakers_alive_controller(n: u32) -> Weight;
-	fn set_history_depth(e: u32) -> Weight;
-	fn reap_stash(s: u32) -> Weight;
-	fn new_era(v: u32, n: u32) -> Weight;
-	fn do_slash(l: u32) -> Weight;
-	fn payout_all(v: u32, n: u32) -> Weight;
-	fn submit_solution_initial(v: u32, n: u32, a: u32, w: u32) -> Weight;
-	fn submit_solution_better(v: u32, n: u32, a: u32, w: u32) -> Weight;
-	fn submit_solution_weaker(v: u32, n: u32) -> Weight;
+/// Add reward points to block authors:
+/// * 20 points to the block producer for producing a (non-uncle) block in the relay chain,
+/// * 2 points to the block producer for each reference to a previously unreferenced uncle, and
+/// * 1 point to the producer of each referenced uncle block.
+impl<T> pallet_authorship::EventHandler<T::AccountId, T::BlockNumber> for Module<T>
+where
+	T: Trait + pallet_authorship::Trait + pallet_session::Trait,
+{
+	fn note_author(author: T::AccountId) {
+		Self::reward_by_ids(vec![(author, 20)]);
+	}
+	fn note_uncle(author: T::AccountId, _age: T::BlockNumber) {
+		Self::reward_by_ids(vec![
+			(<pallet_authorship::Module<T>>::author(), 2),
+			(author, 1),
+		]);
+	}
 }
-impl WeightInfo for () {
-	fn bond(_u: u32) -> Weight {
-		1_000_000_000
+
+/// A `Convert` implementation that finds the stash of the given controller account,
+/// if any.
+pub struct StashOf<T>(PhantomData<T>);
+impl<T: Trait> Convert<T::AccountId, Option<T::AccountId>> for StashOf<T> {
+	fn convert(controller: T::AccountId) -> Option<T::AccountId> {
+		<Module<T>>::ledger(&controller).map(|l| l.stash)
 	}
-	fn bond_extra(_u: u32) -> Weight {
-		1_000_000_000
+}
+
+/// A typed conversion from stash account ID to the active exposure of nominators
+/// on that account.
+///
+/// Active exposure is the exposure of the validator set currently validating, i.e. in
+/// `active_era`. It can differ from the latest planned exposure in `current_era`.
+pub struct ExposureOf<T>(PhantomData<T>);
+impl<T: Trait> Convert<T::AccountId, Option<ExposureT<T>>> for ExposureOf<T> {
+	fn convert(validator: T::AccountId) -> Option<ExposureT<T>> {
+		if let Some(active_era) = <Module<T>>::active_era() {
+			Some(<Module<T>>::eras_stakers(active_era.index, &validator))
+		} else {
+			None
+		}
 	}
-	fn unbond(_u: u32) -> Weight {
-		1_000_000_000
+}
+
+/// Filter historical offences out and only allow those from the bonding period.
+pub struct FilterHistoricalOffences<T, R> {
+	_inner: PhantomData<(T, R)>,
+}
+impl<T, Reporter, Offender, R, O> ReportOffence<Reporter, Offender, O>
+	for FilterHistoricalOffences<Module<T>, R>
+where
+	T: Trait,
+	R: ReportOffence<Reporter, Offender, O>,
+	O: Offence<Offender>,
+{
+	fn report_offence(reporters: Vec<Reporter>, offence: O) -> Result<(), OffenceError> {
+		// disallow any slashing from before the current bonding period.
+		let offence_session = offence.session_index();
+		let bonded_eras = BondedEras::get();
+
+		if bonded_eras
+			.first()
+			.filter(|(_, start)| offence_session >= *start)
+			.is_some()
+		{
+			R::report_offence(reporters, offence)
+		} else {
+			<Module<T>>::deposit_event(RawEvent::OldSlashingReportDiscarded(offence_session));
+			Ok(())
+		}
 	}
-	fn claim_mature_deposits(_u: u32) -> Weight {
-		1_000_000_000
-	}
-	fn try_claim_deposits_with_punish(_u: u32) -> Weight {
-		1_000_000_000
-	}
-	fn validate(_u: u32) -> Weight {
-		1_000_000_000
-	}
-	fn nominate(_n: u32) -> Weight {
-		1_000_000_000
-	}
-	fn chill(_u: u32) -> Weight {
-		1_000_000_000
-	}
-	fn set_payee(_u: u32) -> Weight {
-		1_000_000_000
-	}
-	fn set_controller(_u: u32) -> Weight {
-		1_000_000_000
-	}
-	fn set_validator_count(_c: u32) -> Weight {
-		1_000_000_000
-	}
-	fn force_no_eras(_i: u32) -> Weight {
-		1_000_000_000
-	}
-	fn force_new_era(_i: u32) -> Weight {
-		1_000_000_000
-	}
-	fn force_new_era_always(_i: u32) -> Weight {
-		1_000_000_000
-	}
-	fn set_invulnerables(_v: u32) -> Weight {
-		1_000_000_000
-	}
-	fn force_unstake(_s: u32) -> Weight {
-		1_000_000_000
-	}
-	fn cancel_deferred_slash(_s: u32) -> Weight {
-		1_000_000_000
-	}
-	fn payout_stakers(_n: u32) -> Weight {
-		1_000_000_000
-	}
-	fn payout_stakers_alive_controller(_n: u32) -> Weight {
-		1_000_000_000
-	}
-	fn set_history_depth(_e: u32) -> Weight {
-		1_000_000_000
-	}
-	fn reap_stash(_s: u32) -> Weight {
-		1_000_000_000
-	}
-	fn new_era(_v: u32, _n: u32) -> Weight {
-		1_000_000_000
-	}
-	fn do_slash(_l: u32) -> Weight {
-		1_000_000_000
-	}
-	fn payout_all(_v: u32, _n: u32) -> Weight {
-		1_000_000_000
-	}
-	fn submit_solution_initial(_v: u32, _n: u32, _a: u32, _w: u32) -> Weight {
-		1_000_000_000
-	}
-	fn submit_solution_better(_v: u32, _n: u32, _a: u32, _w: u32) -> Weight {
-		1_000_000_000
-	}
-	fn submit_solution_weaker(_v: u32, _n: u32) -> Weight {
-		1_000_000_000
+
+	fn is_known_offence(offenders: &[Offender], time_slot: &O::TimeSlot) -> bool {
+		R::is_known_offence(offenders, time_slot)
 	}
 }
 
@@ -4213,47 +4250,6 @@ pub struct ElectionResult<AccountId, RingBalance: HasCompact, KtonBalance: HasCo
 	/// Type of the result. This is kept on chain only to track and report the best score's
 	/// submission type. An optimisation could remove this.
 	compute: ElectionCompute,
-}
-
-// --- trait ---
-
-/// Means for interacting with a specialized version of the `session` trait.
-///
-/// This is needed because `Staking` sets the `ValidatorIdOf` of the `pallet_session::Trait`
-pub trait SessionInterface<AccountId>: frame_system::Trait {
-	/// Disable a given validator by stash ID.
-	///
-	/// Returns `true` if new era should be forced at the end of this session.
-	/// This allows preventing a situation where there is too many validators
-	/// disabled and block production stalls.
-	fn disable_validator(validator: &AccountId) -> Result<bool, ()>;
-	/// Get the validators from session.
-	fn validators() -> Vec<AccountId>;
-	/// Prune historical session tries up to but not including the given index.
-	fn prune_historical_up_to(up_to: SessionIndex);
-}
-impl<T: Trait> SessionInterface<AccountId<T>> for T
-where
-	T: pallet_session::Trait<ValidatorId = AccountId<T>>,
-	T: pallet_session::historical::Trait<
-		FullIdentification = Exposure<AccountId<T>, RingBalance<T>, KtonBalance<T>>,
-		FullIdentificationOf = ExposureOf<T>,
-	>,
-	T::SessionHandler: pallet_session::SessionHandler<AccountId<T>>,
-	T::SessionManager: pallet_session::SessionManager<AccountId<T>>,
-	T::ValidatorIdOf: Convert<AccountId<T>, Option<AccountId<T>>>,
-{
-	fn disable_validator(validator: &AccountId<T>) -> Result<bool, ()> {
-		<pallet_session::Module<T>>::disable(validator)
-	}
-
-	fn validators() -> Vec<AccountId<T>> {
-		<pallet_session::Module<T>>::validators()
-	}
-
-	fn prune_historical_up_to(up_to: SessionIndex) {
-		<pallet_session::historical::Module<T>>::prune_up_to(up_to);
-	}
 }
 
 /// Check that list is sorted and has no duplicates.
