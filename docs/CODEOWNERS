@@ -52,3 +52,4 @@
 /primitives/array-bytes/ @AurevoirXavier
 /primitives/ethereum-primitives/ @AurevoirXavier @HackFisher
 /primitives/merkle-patricia-trie/ @HackFisher
+/primitives/relay/ @AurevoirXavier
