@@ -570,9 +570,9 @@ pub trait Trait: frame_system::Trait + SendTransactionTypes<Call<Self>> {
 	/// Handler for the unbalanced *KTON* increment when rewarding a staker.
 	type KtonReward: OnUnbalanced<KtonPositiveImbalance<Self>>;
 
-	// TODO: doc
+	/// Darwinia's hard cap default 10_000_000_000 * 10^9
 	type Cap: Get<RingBalance<Self>>;
-	// TODO: doc
+	/// Darwinia's staking vote default 1_000_000_000
 	type TotalPower: Get<Power>;
 
 	/// Weight information for extrinsics in this pallet.
@@ -915,9 +915,8 @@ decl_storage! {
 		/// forcing into account.
 		pub IsCurrentSessionFinal get(fn is_current_session_final): bool = false;
 
-		// --- darwinia ---
-
-		// TODO: doc
+		/// The chain's running time form genesis in milliseconds,
+		/// use for calculate darwinia era payout
 		pub LivingTime get(fn living_time): TsInMs;
 
 		/// The percentage of the total payout that is distributed to validators and nominators
@@ -1136,10 +1135,10 @@ decl_module! {
 		/// their reward. This used to limit the i/o cost for the nominator payout.
 		const MaxNominatorRewardedPerValidator: u32 = T::MaxNominatorRewardedPerValidator::get();
 
-		// TODO: doc
+		/// Darwinia's hard cap default 10_000_000_000 * 10^9
 		const Cap: RingBalance<T> = T::Cap::get();
 
-		// TODO: doc
+		/// Darwinia's staking vote default 1_000_000_000
 		const TotalPower: Power = T::TotalPower::get();
 
 		fn deposit_event() = default;
@@ -2373,7 +2372,7 @@ impl<T: Trait> Module<T> {
 		Self::update_ledger(&controller, None, Some(origin_active_kton), &mut ledger);
 	}
 
-	// TODO: doc
+	/// Turn the expired deposit items into normal bond
 	pub fn clear_mature_deposits(mut ledger: StakingLedgerT<T>) -> StakingLedgerT<T> {
 		let now = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
 		let StakingLedger {
@@ -4045,7 +4044,7 @@ where
 	/// rounds.
 	#[codec(compact)]
 	pub active_ring: RingBalance,
-	// active time-deposit ring
+	/// active time-deposit ring
 	#[codec(compact)]
 	pub active_deposit_ring: RingBalance,
 
@@ -4054,13 +4053,13 @@ where
 	#[codec(compact)]
 	pub active_kton: KtonBalance,
 
-	// If you deposit *RING* for a minimum period,
-	// you can get *KTON* as bonus which can also be used for staking.
+	/// If you deposit *RING* for a minimum period,
+	/// you can get *KTON* as bonus which can also be used for staking.
 	pub deposit_items: Vec<TimeDepositItem<RingBalance>>,
 
-	// TODO doc
+	/// The staking lock on *RING* balance, use for updating darwinia balance module's lock
 	pub ring_staking_lock: StakingLock<RingBalance, BlockNumber>,
-	// TODO doc
+	/// The staking lock on *KTON* balance, use for updating darwinia balance module's lock
 	pub kton_staking_lock: StakingLock<KtonBalance, BlockNumber>,
 
 	/// List of eras for which the stakers behind a validator have claimed rewards. Only updated
