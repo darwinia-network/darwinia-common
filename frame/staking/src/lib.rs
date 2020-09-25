@@ -1326,8 +1326,6 @@ decl_module! {
 						ledger,
 					);
 
-					<RingPool<T>>::mutate(|ring_pool| *ring_pool += value);
-
 					Self::deposit_event(RawEvent::BondRing(value, start_time, expire_time));
 				},
 				StakingBalance::KtonBalance(value) => {
@@ -1335,9 +1333,6 @@ decl_module! {
 					let value = value.min(stash_balance);
 
 					Self::bond_kton(&controller, value, ledger);
-
-					<KtonPool<T>>::mutate(|kton_pool| *kton_pool += value);
-
 					Self::deposit_event(RawEvent::BondKton(value));
 				},
 			}
@@ -1390,8 +1385,6 @@ decl_module! {
 							ledger,
 						);
 
-						<RingPool<T>>::mutate(|ring_pool| *ring_pool += extra);
-
 						Self::deposit_event(RawEvent::BondRing(extra, start_time, expire_time));
 					}
 				},
@@ -1404,9 +1397,6 @@ decl_module! {
 						let extra = extra.min(max_additional);
 
 						Self::bond_kton(&controller, extra, ledger);
-
-						<KtonPool<T>>::mutate(|kton_pool| *kton_pool += extra);
-
 						Self::deposit_event(RawEvent::BondKton(extra));
 					}
 				},
@@ -1504,6 +1494,8 @@ decl_module! {
 				kton_staking_lock,
 				..
 			} = &mut ledger;
+			let origin_active_ring = *active_ring;
+			let origin_active_kton = *active_kton;
 			let now = <frame_system::Module<T>>::block_number();
 
 			ring_staking_lock.update(now);
@@ -1548,7 +1540,6 @@ decl_module! {
 							until: now + T::BondingDurationInBlockNumber::get(),
 						});
 
-						<RingPool<T>>::mutate(|r| *r -= unbond_ring);
 						Self::deposit_event(RawEvent::UnbondRing(unbond_ring, now));
 
 						if !unbond_kton.is_zero() {
@@ -1557,7 +1548,6 @@ decl_module! {
 								until: now + T::BondingDurationInBlockNumber::get(),
 							});
 
-							<KtonPool<T>>::mutate(|k| *k -= unbond_kton);
 							Self::deposit_event(RawEvent::UnbondKton(unbond_kton, now));
 						}
 					}
@@ -1584,7 +1574,6 @@ decl_module! {
 						});
 
 
-						<KtonPool<T>>::mutate(|k| *k -= unbond_kton);
 						Self::deposit_event(RawEvent::UnbondKton(unbond_kton, now));
 
 						if !unbond_ring.is_zero() {
@@ -1593,42 +1582,46 @@ decl_module! {
 								until: now + T::BondingDurationInBlockNumber::get(),
 							});
 
-							<RingPool<T>>::mutate(|k| *k -= unbond_ring);
 							Self::deposit_event(RawEvent::UnbondRing(unbond_ring, now));
 						}
 					}
 				},
 			}
 
-			Self::update_ledger(&controller, &mut ledger);
+			Self::update_ledger(
+				&controller,
+				Some(origin_active_ring),
+				Some(origin_active_kton),
+				&mut ledger
+			);
 
-			let StakingLedger {
-				active_ring,
-				active_kton,
-				..
-			} = ledger;
+			// TODO: https://github.com/darwinia-network/darwinia-common/issues/96
+			// FIXME: https://github.com/darwinia-network/darwinia-common/issues/121
+			// let StakingLedger {
+			// 	active_ring,
+			// 	active_kton,
+			// 	..
+			// } = ledger;
 
-			// All bonded *RING* and *KTON* is withdrawing, then remove Ledger to save storage
-			if active_ring.is_zero() && active_kton.is_zero() {
-				// TODO: https://github.com/darwinia-network/darwinia-common/issues/96
-				// FIXME: https://github.com/darwinia-network/darwinia-common/issues/121
-				//
-				// `OnKilledAccount` would be a method to collect the locks.
-				//
-				// These locks are still in the system, and should be removed after 14 days
-				//
-				// There two situations should be considered after the 14 days
-				// - the user never bond again, so the locks should be released.
-				// - the user is bonded again in the 14 days, so the after 14 days
-				//   the lock should not be removed
-				//
-				// If the locks are not deleted, this lock will waste the storage in the future
-				// blocks.
-				//
-				// T::Ring::remove_lock(STAKING_ID, &stash);
-				// T::Kton::remove_lock(STAKING_ID, &stash);
-				// Self::kill_stash(&stash)?;
-			}
+			// // All bonded *RING* and *KTON* is withdrawing, then remove Ledger to save storage
+			// if active_ring.is_zero() && active_kton.is_zero() {
+			// 	//
+			// 	// `OnKilledAccount` would be a method to collect the locks.
+			// 	//
+			// 	// These locks are still in the system, and should be removed after 14 days
+			// 	//
+			// 	// There two situations should be considered after the 14 days
+			// 	// - the user never bond again, so the locks should be released.
+			// 	// - the user is bonded again in the 14 days, so the after 14 days
+			// 	//   the lock should not be removed
+			// 	//
+			// 	// If the locks are not deleted, this lock will waste the storage in the future
+			// 	// blocks.
+			// 	//
+			// 	// T::Ring::remove_lock(STAKING_ID, &stash);
+			// 	// T::Kton::remove_lock(STAKING_ID, &stash);
+			// 	// Self::kill_stash(&stash)?;
+			// }
 		}
 
 		/// Stash accounts can get their ring back after the depositing time exceeded,
@@ -2300,7 +2293,7 @@ impl<T: Trait> Module<T> {
 		T::ModuleId::get().into_account()
 	}
 
-	// Update the ledger while bonding ring and compute the kton should return.
+	/// Update the ledger while bonding ring and compute the *KTON* reward
 	fn bond_ring(
 		stash: &T::AccountId,
 		controller: &T::AccountId,
@@ -2308,28 +2301,36 @@ impl<T: Trait> Module<T> {
 		promise_month: u8,
 		mut ledger: StakingLedgerT<T>,
 	) -> (TsInMs, TsInMs) {
+		let StakingLedger {
+			active_ring,
+			active_deposit_ring,
+			deposit_items,
+			..
+		} = &mut ledger;
+		let origin_active_ring = *active_ring;
+
 		let start_time = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
 		let mut expire_time = start_time;
 
-		ledger.active_ring = ledger.active_ring.saturating_add(value);
+		*active_ring = active_ring.saturating_add(value);
 		// if stash promise to an extra-lock
 		// there will be extra reward (*KTON*), which can also be used for staking
 		if promise_month > 0 {
 			expire_time += promise_month as TsInMs * MONTH_IN_MILLISECONDS;
-			ledger.active_deposit_ring += value;
+			*active_deposit_ring += value;
 
 			let kton_return = inflation::compute_kton_reward::<T>(value, promise_month);
 			let kton_positive_imbalance = T::KtonCurrency::deposit_creating(&stash, kton_return);
 
 			T::KtonReward::on_unbalanced(kton_positive_imbalance);
-			ledger.deposit_items.push(TimeDepositItem {
+			deposit_items.push(TimeDepositItem {
 				value,
 				start_time,
 				expire_time,
 			});
 		}
 
-		Self::update_ledger(&controller, &mut ledger);
+		Self::update_ledger(&controller, Some(origin_active_ring), None, &mut ledger);
 
 		(start_time, expire_time)
 	}
@@ -2341,25 +2342,35 @@ impl<T: Trait> Module<T> {
 		promise_month: u8,
 		mut ledger: StakingLedgerT<T>,
 	) -> (TsInMs, TsInMs) {
+		let StakingLedger {
+			active_ring,
+			active_deposit_ring,
+			deposit_items,
+			..
+		} = &mut ledger;
+		let origin_active_ring = *active_ring;
 		let expire_time = start_time + promise_month as TsInMs * MONTH_IN_MILLISECONDS;
 
-		ledger.active_ring = ledger.active_ring.saturating_add(value);
-		ledger.active_deposit_ring = ledger.active_deposit_ring.saturating_add(value);
-		ledger.deposit_items.push(TimeDepositItem {
+		*active_ring = active_ring.saturating_add(value);
+		*active_deposit_ring = active_deposit_ring.saturating_add(value);
+		deposit_items.push(TimeDepositItem {
 			value,
 			start_time,
 			expire_time,
 		});
 
-		Self::update_ledger(&controller, &mut ledger);
+		Self::update_ledger(&controller, Some(origin_active_ring), None, &mut ledger);
 
 		(start_time, expire_time)
 	}
 
-	// Update the ledger while bonding controller with kton.
+	/// Update the ledger while bonding controller with *KTON*
 	fn bond_kton(controller: &T::AccountId, value: KtonBalance<T>, mut ledger: StakingLedgerT<T>) {
+		let origin_active_kton = ledger.active_kton;
+
 		ledger.active_kton += value;
-		Self::update_ledger(&controller, &mut ledger);
+
+		Self::update_ledger(&controller, None, Some(origin_active_kton), &mut ledger);
 	}
 
 	// TODO: doc
@@ -2591,7 +2602,18 @@ impl<T: Trait> Module<T> {
 	/// Update the ledger for a controller.
 	///
 	/// This will also update the stash lock.
-	fn update_ledger(controller: &T::AccountId, ledger: &mut StakingLedgerT<T>) {
+	fn update_ledger(
+		controller: &T::AccountId,
+		// The origin active ring, none means
+		// there's no change on this field during this update,
+		// just ignore it
+		origin_active_ring: Option<RingBalance<T>>,
+		// The origin active kton, none means
+		// there's no change on this field during this update,
+		// just ignore it
+		origin_active_kton: Option<KtonBalance<T>>,
+		ledger: &mut StakingLedgerT<T>,
+	) {
 		let StakingLedger {
 			active_ring,
 			active_kton,
@@ -2603,6 +2625,18 @@ impl<T: Trait> Module<T> {
 		if *active_ring != ring_staking_lock.staking_amount {
 			ring_staking_lock.staking_amount = *active_ring;
 
+			// If the active ring != staking amount, there must be a difference
+			// The origin active ring MUST be some, but better safe here
+			if let Some(origin) = origin_active_ring {
+				<RingPool<T>>::mutate(|pool| {
+					if origin > *active_ring {
+						*pool = pool.saturating_sub(origin - *active_ring);
+					} else {
+						*pool = pool.saturating_add(*active_ring - origin);
+					}
+				});
+			}
+
 			T::RingCurrency::set_lock(
 				STAKING_ID,
 				&ledger.stash,
@@ -2613,6 +2647,18 @@ impl<T: Trait> Module<T> {
 
 		if *active_kton != kton_staking_lock.staking_amount {
 			kton_staking_lock.staking_amount = *active_kton;
+
+			// If the active kton != staking amount, there must be a difference
+			// The origin active kton MUST be some, but better safe here
+			if let Some(origin) = origin_active_kton {
+				<KtonPool<T>>::mutate(|pool| {
+					if origin > *active_kton {
+						*pool = pool.saturating_sub(origin - *active_kton);
+					} else {
+						*pool = pool.saturating_add(*active_kton - origin);
+					}
+				});
+			}
 
 			T::KtonCurrency::set_lock(
 				STAKING_ID,
@@ -2649,8 +2695,11 @@ impl<T: Trait> Module<T> {
 					let r = T::RingCurrency::deposit_into_existing(stash, amount).ok();
 
 					if r.is_some() {
+						let origin_active_ring = l.active_ring;
+
 						l.active_ring += amount;
-						Self::update_ledger(&c, &mut l);
+
+						Self::update_ledger(&c, Some(origin_active_ring), None, &mut l);
 					}
 
 					r
@@ -3636,11 +3685,6 @@ impl<T: Trait> OnDepositRedeem<T::AccountId, RingBalance<T>> for Module<T> {
 		let start_time = start_time * 1000;
 		let promise_month = months.min(36);
 
-		//		let stash_balance = T::Ring::free_balance(&stash);
-
-		// TODO: Lock but no kton reward because this is a deposit redeem
-		//		let extra = extra.min(r);
-
 		T::RingCurrency::transfer(&backing, &stash, amount, KeepAlive)?;
 
 		let (start_time, expire_time) = Self::bond_ring_for_deposit_redeem(
@@ -3651,9 +3695,7 @@ impl<T: Trait> OnDepositRedeem<T::AccountId, RingBalance<T>> for Module<T> {
 			ledger,
 		);
 
-		<RingPool<T>>::mutate(|r| *r += amount);
-		// TODO: Should we deposit an different event?
-		<Module<T>>::deposit_event(RawEvent::BondRing(amount, start_time, expire_time));
+		Self::deposit_event(RawEvent::BondRing(amount, start_time, expire_time));
 
 		Ok(())
 	}
