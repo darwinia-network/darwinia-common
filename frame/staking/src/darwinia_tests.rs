@@ -843,8 +843,8 @@ fn pool_should_be_increased_and_decreased_correctly() {
 
 			Staking::reward_by_ids(vec![(11, 1)]);
 
-			let total_payout_0 = current_total_payout_for_duration(3 * 1000);
-			assert!(total_payout_0 > 100);
+			let payout = current_total_payout_for_duration(3 * 1000);
+			assert!(payout > 100);
 
 			start_era(2);
 
@@ -852,7 +852,7 @@ fn pool_should_be_increased_and_decreased_correctly() {
 
 			assert_ok!(Staking::payout_stakers(Origin::signed(10), 11, 1));
 
-			assert_eq!(Staking::ring_pool(), total_payout_0 + ring_pool);
+			assert_eq!(Staking::ring_pool(), payout + ring_pool);
 		});
 }
 
