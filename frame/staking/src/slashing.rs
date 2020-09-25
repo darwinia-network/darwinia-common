@@ -36,7 +36,6 @@
 use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
-	debug::error,
 	ensure,
 	traits::{Currency, Imbalance, OnUnbalanced},
 	StorageDoubleMap, StorageMap,
@@ -700,14 +699,11 @@ pub fn do_slash<T: Trait>(
 		None => return, // defensive: should always exist.
 		Some(c) => c,
 	};
-
 	let mut ledger = match <Module<T>>::ledger(&controller) {
 		Some(ledger) => ledger,
 		None => return, // nothing to do.
 	};
-
-	let (pre_active_ring, pre_active_kton) = (ledger.active_ring, ledger.active_kton);
-
+	let (origin_active_ring, origin_active_kton) = (ledger.active_ring, ledger.active_kton);
 	let (slash_ring, slash_kton) = ledger.slash(
 		value.r,
 		value.k,
@@ -720,59 +716,34 @@ pub fn do_slash<T: Trait>(
 		slashed = true;
 
 		let (imbalance, missing) = T::RingCurrency::slash(stash, slash_ring);
+
 		slashed_ring.subsume(imbalance);
 
 		if !missing.is_zero() {
 			// deduct overslash from the reward payout
 			reward_payout.r = reward_payout.r.saturating_sub(missing);
 		}
-
-		<RingPool<T>>::mutate(|p| {
-			let slashed_active_ring = pre_active_ring.saturating_sub(ledger.active_ring);
-
-			if *p >= slashed_active_ring {
-				*p -= slashed_active_ring;
-			} else {
-				let error_rate = 100.into();
-
-				if slashed_active_ring - *p > error_rate {
-					error!("Slash on {:#?} Underflow the RING Pool", stash);
-				}
-
-				*p = Zero::zero();
-			}
-		});
 	}
 	if !slash_kton.is_zero() {
 		slashed = true;
 
 		let (imbalance, missing) = T::KtonCurrency::slash(stash, slash_kton);
+
 		slashed_kton.subsume(imbalance);
 
 		if !missing.is_zero() {
 			// deduct overslash from the reward payout
 			reward_payout.k = reward_payout.k.saturating_sub(missing);
 		}
-
-		<KtonPool<T>>::mutate(|p| {
-			let slashed_active_kton = pre_active_kton.saturating_sub(ledger.active_kton);
-
-			if *p >= slashed_active_kton {
-				*p -= slashed_active_kton;
-			} else {
-				let error_rate = 100.into();
-
-				if slashed_active_kton - *p > error_rate {
-					error!("Slash on {:#?} Underflow the KTON Pool", stash);
-				}
-
-				*p = Zero::zero();
-			}
-		});
 	}
 
 	if slashed {
-		<Module<T>>::update_ledger(&controller, &mut ledger);
+		<Module<T>>::update_ledger(
+			&controller,
+			Some(origin_active_ring),
+			Some(origin_active_kton),
+			&mut ledger,
+		);
 		<Module<T>>::deposit_event(RawEvent::Slash(stash.clone(), value.r, value.k));
 	}
 }

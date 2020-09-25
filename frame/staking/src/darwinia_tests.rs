@@ -827,6 +827,28 @@ fn pool_should_be_increased_and_decreased_correctly() {
 		assert_eq!(Staking::ring_pool(), ring_pool);
 		assert_eq!(Staking::kton_pool(), kton_pool);
 	});
+
+	ExtBuilder::default()
+		.has_stakers(false)
+		.build_and_execute(|| {
+			bond_validator(11, 10, StakingBalance::RingBalance(1000));
+			assert_ok!(Staking::set_payee(
+				Origin::signed(10),
+				RewardDestination::Staked
+			));
+
+			start_era(1);
+
+			Staking::reward_by_ids(vec![(11, 1)]);
+			let payout = current_total_payout_for_duration(3 * 1000);
+			assert!(payout > 100);
+
+			start_era(2);
+
+			let ring_pool = Staking::ring_pool();
+			assert_ok!(Staking::payout_stakers(Origin::signed(10), 11, 1));
+			assert_eq!(Staking::ring_pool(), payout + ring_pool);
+		});
 }
 
 #[test]
@@ -843,6 +865,7 @@ fn unbond_over_max_unbondings_chunks_should_fail() {
 
 		for ts in 0..MAX_UNLOCKING_CHUNKS {
 			Timestamp::set_timestamp(ts as u64);
+
 			assert_ok!(Staking::unbond(
 				Origin::signed(controller),
 				StakingBalance::RingBalance(1)

@@ -579,6 +579,158 @@ pub trait Trait: frame_system::Trait + SendTransactionTypes<Call<Self>> {
 	type WeightInfo: WeightInfo;
 }
 
+/// Means for interacting with a specialized version of the `session` trait.
+///
+/// This is needed because `Staking` sets the `ValidatorIdOf` of the `pallet_session::Trait`
+pub trait SessionInterface<AccountId>: frame_system::Trait {
+	/// Disable a given validator by stash ID.
+	///
+	/// Returns `true` if new era should be forced at the end of this session.
+	/// This allows preventing a situation where there is too many validators
+	/// disabled and block production stalls.
+	fn disable_validator(validator: &AccountId) -> Result<bool, ()>;
+	/// Get the validators from session.
+	fn validators() -> Vec<AccountId>;
+	/// Prune historical session tries up to but not including the given index.
+	fn prune_historical_up_to(up_to: SessionIndex);
+}
+impl<T: Trait> SessionInterface<AccountId<T>> for T
+where
+	T: pallet_session::Trait<ValidatorId = AccountId<T>>,
+	T: pallet_session::historical::Trait<
+		FullIdentification = Exposure<AccountId<T>, RingBalance<T>, KtonBalance<T>>,
+		FullIdentificationOf = ExposureOf<T>,
+	>,
+	T::SessionHandler: pallet_session::SessionHandler<AccountId<T>>,
+	T::SessionManager: pallet_session::SessionManager<AccountId<T>>,
+	T::ValidatorIdOf: Convert<AccountId<T>, Option<AccountId<T>>>,
+{
+	fn disable_validator(validator: &AccountId<T>) -> Result<bool, ()> {
+		<pallet_session::Module<T>>::disable(validator)
+	}
+
+	fn validators() -> Vec<AccountId<T>> {
+		<pallet_session::Module<T>>::validators()
+	}
+
+	fn prune_historical_up_to(up_to: SessionIndex) {
+		<pallet_session::historical::Module<T>>::prune_up_to(up_to);
+	}
+}
+
+pub trait WeightInfo {
+	fn bond(u: u32) -> Weight;
+	fn bond_extra(u: u32) -> Weight;
+	fn unbond(u: u32) -> Weight;
+	fn claim_mature_deposits(u: u32) -> Weight;
+	fn try_claim_deposits_with_punish(u: u32) -> Weight;
+	fn validate(u: u32) -> Weight;
+	fn nominate(n: u32) -> Weight;
+	fn chill(u: u32) -> Weight;
+	fn set_payee(u: u32) -> Weight;
+	fn set_controller(u: u32) -> Weight;
+	fn set_validator_count(c: u32) -> Weight;
+	fn force_no_eras(i: u32) -> Weight;
+	fn force_new_era(i: u32) -> Weight;
+	fn force_new_era_always(i: u32) -> Weight;
+	fn set_invulnerables(v: u32) -> Weight;
+	fn force_unstake(s: u32) -> Weight;
+	fn cancel_deferred_slash(s: u32) -> Weight;
+	fn payout_stakers(n: u32) -> Weight;
+	fn payout_stakers_alive_controller(n: u32) -> Weight;
+	fn set_history_depth(e: u32) -> Weight;
+	fn reap_stash(s: u32) -> Weight;
+	fn new_era(v: u32, n: u32) -> Weight;
+	fn do_slash(l: u32) -> Weight;
+	fn payout_all(v: u32, n: u32) -> Weight;
+	fn submit_solution_initial(v: u32, n: u32, a: u32, w: u32) -> Weight;
+	fn submit_solution_better(v: u32, n: u32, a: u32, w: u32) -> Weight;
+	fn submit_solution_weaker(v: u32, n: u32) -> Weight;
+}
+impl WeightInfo for () {
+	fn bond(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn bond_extra(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn unbond(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn claim_mature_deposits(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn try_claim_deposits_with_punish(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn validate(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn nominate(_n: u32) -> Weight {
+		1_000_000_000
+	}
+	fn chill(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn set_payee(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn set_controller(_u: u32) -> Weight {
+		1_000_000_000
+	}
+	fn set_validator_count(_c: u32) -> Weight {
+		1_000_000_000
+	}
+	fn force_no_eras(_i: u32) -> Weight {
+		1_000_000_000
+	}
+	fn force_new_era(_i: u32) -> Weight {
+		1_000_000_000
+	}
+	fn force_new_era_always(_i: u32) -> Weight {
+		1_000_000_000
+	}
+	fn set_invulnerables(_v: u32) -> Weight {
+		1_000_000_000
+	}
+	fn force_unstake(_s: u32) -> Weight {
+		1_000_000_000
+	}
+	fn cancel_deferred_slash(_s: u32) -> Weight {
+		1_000_000_000
+	}
+	fn payout_stakers(_n: u32) -> Weight {
+		1_000_000_000
+	}
+	fn payout_stakers_alive_controller(_n: u32) -> Weight {
+		1_000_000_000
+	}
+	fn set_history_depth(_e: u32) -> Weight {
+		1_000_000_000
+	}
+	fn reap_stash(_s: u32) -> Weight {
+		1_000_000_000
+	}
+	fn new_era(_v: u32, _n: u32) -> Weight {
+		1_000_000_000
+	}
+	fn do_slash(_l: u32) -> Weight {
+		1_000_000_000
+	}
+	fn payout_all(_v: u32, _n: u32) -> Weight {
+		1_000_000_000
+	}
+	fn submit_solution_initial(_v: u32, _n: u32, _a: u32, _w: u32) -> Weight {
+		1_000_000_000
+	}
+	fn submit_solution_better(_v: u32, _n: u32, _a: u32, _w: u32) -> Weight {
+		1_000_000_000
+	}
+	fn submit_solution_weaker(_v: u32, _n: u32) -> Weight {
+		1_000_000_000
+	}
+}
+
 decl_storage! {
 	trait Store for Module<T: Trait> as DarwiniaStaking {
 		/// Number of eras to keep in history.
@@ -1174,8 +1326,6 @@ decl_module! {
 						ledger,
 					);
 
-					<RingPool<T>>::mutate(|ring_pool| *ring_pool += value);
-
 					Self::deposit_event(RawEvent::BondRing(value, start_time, expire_time));
 				},
 				StakingBalance::KtonBalance(value) => {
@@ -1183,9 +1333,6 @@ decl_module! {
 					let value = value.min(stash_balance);
 
 					Self::bond_kton(&controller, value, ledger);
-
-					<KtonPool<T>>::mutate(|kton_pool| *kton_pool += value);
-
 					Self::deposit_event(RawEvent::BondKton(value));
 				},
 			}
@@ -1238,8 +1385,6 @@ decl_module! {
 							ledger,
 						);
 
-						<RingPool<T>>::mutate(|ring_pool| *ring_pool += extra);
-
 						Self::deposit_event(RawEvent::BondRing(extra, start_time, expire_time));
 					}
 				},
@@ -1252,9 +1397,6 @@ decl_module! {
 						let extra = extra.min(max_additional);
 
 						Self::bond_kton(&controller, extra, ledger);
-
-						<KtonPool<T>>::mutate(|kton_pool| *kton_pool += extra);
-
 						Self::deposit_event(RawEvent::BondKton(extra));
 					}
 				},
@@ -1352,6 +1494,8 @@ decl_module! {
 				kton_staking_lock,
 				..
 			} = &mut ledger;
+			let origin_active_ring = *active_ring;
+			let origin_active_kton = *active_kton;
 			let now = <frame_system::Module<T>>::block_number();
 
 			ring_staking_lock.update(now);
@@ -1396,7 +1540,6 @@ decl_module! {
 							until: now + T::BondingDurationInBlockNumber::get(),
 						});
 
-						<RingPool<T>>::mutate(|r| *r -= unbond_ring);
 						Self::deposit_event(RawEvent::UnbondRing(unbond_ring, now));
 
 						if !unbond_kton.is_zero() {
@@ -1405,7 +1548,6 @@ decl_module! {
 								until: now + T::BondingDurationInBlockNumber::get(),
 							});
 
-							<KtonPool<T>>::mutate(|k| *k -= unbond_kton);
 							Self::deposit_event(RawEvent::UnbondKton(unbond_kton, now));
 						}
 					}
@@ -1432,7 +1574,6 @@ decl_module! {
 						});
 
 
-						<KtonPool<T>>::mutate(|k| *k -= unbond_kton);
 						Self::deposit_event(RawEvent::UnbondKton(unbond_kton, now));
 
 						if !unbond_ring.is_zero() {
@@ -1441,42 +1582,46 @@ decl_module! {
 								until: now + T::BondingDurationInBlockNumber::get(),
 							});
 
-							<RingPool<T>>::mutate(|k| *k -= unbond_ring);
 							Self::deposit_event(RawEvent::UnbondRing(unbond_ring, now));
 						}
 					}
 				},
 			}
 
-			Self::update_ledger(&controller, &mut ledger);
+			Self::update_ledger(
+				&controller,
+				Some(origin_active_ring),
+				Some(origin_active_kton),
+				&mut ledger
+			);
 
-			let StakingLedger {
-				active_ring,
-				active_kton,
-				..
-			} = ledger;
+			// TODO: https://github.com/darwinia-network/darwinia-common/issues/96
+			// FIXME: https://github.com/darwinia-network/darwinia-common/issues/121
+			// let StakingLedger {
+			// 	active_ring,
+			// 	active_kton,
+			// 	..
+			// } = ledger;
 
-			// All bonded *RING* and *KTON* is withdrawing, then remove Ledger to save storage
-			if active_ring.is_zero() && active_kton.is_zero() {
-				// TODO: https://github.com/darwinia-network/darwinia-common/issues/96
-				// FIXME: https://github.com/darwinia-network/darwinia-common/issues/121
-				//
-				// `OnKilledAccount` would be a method to collect the locks.
-				//
-				// These locks are still in the system, and should be removed after 14 days
-				//
-				// There two situations should be considered after the 14 days
-				// - the user never bond again, so the locks should be released.
-				// - the user is bonded again in the 14 days, so the after 14 days
-				//   the lock should not be removed
-				//
-				// If the locks are not deleted, this lock will waste the storage in the future
-				// blocks.
-				//
-				// T::Ring::remove_lock(STAKING_ID, &stash);
-				// T::Kton::remove_lock(STAKING_ID, &stash);
-				// Self::kill_stash(&stash)?;
-			}
+			// // All bonded *RING* and *KTON* is withdrawing, then remove Ledger to save storage
+			// if active_ring.is_zero() && active_kton.is_zero() {
+			// 	//
+			// 	// `OnKilledAccount` would be a method to collect the locks.
+			// 	//
+			// 	// These locks are still in the system, and should be removed after 14 days
+			// 	//
+			// 	// There two situations should be considered after the 14 days
+			// 	// - the user never bond again, so the locks should be released.
+			// 	// - the user is bonded again in the 14 days, so the after 14 days
+			// 	//   the lock should not be removed
+			// 	//
+			// 	// If the locks are not deleted, this lock will waste the storage in the future
+			// 	// blocks.
+			// 	//
+			// 	// T::Ring::remove_lock(STAKING_ID, &stash);
+			// 	// T::Kton::remove_lock(STAKING_ID, &stash);
+			// 	// Self::kill_stash(&stash)?;
+			// }
 		}
 
 		/// Stash accounts can get their ring back after the depositing time exceeded,
@@ -2148,7 +2293,7 @@ impl<T: Trait> Module<T> {
 		T::ModuleId::get().into_account()
 	}
 
-	// Update the ledger while bonding ring and compute the kton should return.
+	/// Update the ledger while bonding ring and compute the *KTON* reward
 	fn bond_ring(
 		stash: &T::AccountId,
 		controller: &T::AccountId,
@@ -2156,28 +2301,36 @@ impl<T: Trait> Module<T> {
 		promise_month: u8,
 		mut ledger: StakingLedgerT<T>,
 	) -> (TsInMs, TsInMs) {
+		let StakingLedger {
+			active_ring,
+			active_deposit_ring,
+			deposit_items,
+			..
+		} = &mut ledger;
+		let origin_active_ring = *active_ring;
+
 		let start_time = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
 		let mut expire_time = start_time;
 
-		ledger.active_ring = ledger.active_ring.saturating_add(value);
+		*active_ring = active_ring.saturating_add(value);
 		// if stash promise to an extra-lock
 		// there will be extra reward (*KTON*), which can also be used for staking
 		if promise_month > 0 {
 			expire_time += promise_month as TsInMs * MONTH_IN_MILLISECONDS;
-			ledger.active_deposit_ring += value;
+			*active_deposit_ring += value;
 
 			let kton_return = inflation::compute_kton_reward::<T>(value, promise_month);
 			let kton_positive_imbalance = T::KtonCurrency::deposit_creating(&stash, kton_return);
 
 			T::KtonReward::on_unbalanced(kton_positive_imbalance);
-			ledger.deposit_items.push(TimeDepositItem {
+			deposit_items.push(TimeDepositItem {
 				value,
 				start_time,
 				expire_time,
 			});
 		}
 
-		Self::update_ledger(&controller, &mut ledger);
+		Self::update_ledger(&controller, Some(origin_active_ring), None, &mut ledger);
 
 		(start_time, expire_time)
 	}
@@ -2189,25 +2342,35 @@ impl<T: Trait> Module<T> {
 		promise_month: u8,
 		mut ledger: StakingLedgerT<T>,
 	) -> (TsInMs, TsInMs) {
+		let StakingLedger {
+			active_ring,
+			active_deposit_ring,
+			deposit_items,
+			..
+		} = &mut ledger;
+		let origin_active_ring = *active_ring;
 		let expire_time = start_time + promise_month as TsInMs * MONTH_IN_MILLISECONDS;
 
-		ledger.active_ring = ledger.active_ring.saturating_add(value);
-		ledger.active_deposit_ring = ledger.active_deposit_ring.saturating_add(value);
-		ledger.deposit_items.push(TimeDepositItem {
+		*active_ring = active_ring.saturating_add(value);
+		*active_deposit_ring = active_deposit_ring.saturating_add(value);
+		deposit_items.push(TimeDepositItem {
 			value,
 			start_time,
 			expire_time,
 		});
 
-		Self::update_ledger(&controller, &mut ledger);
+		Self::update_ledger(&controller, Some(origin_active_ring), None, &mut ledger);
 
 		(start_time, expire_time)
 	}
 
-	// Update the ledger while bonding controller with kton.
+	/// Update the ledger while bonding controller with *KTON*
 	fn bond_kton(controller: &T::AccountId, value: KtonBalance<T>, mut ledger: StakingLedgerT<T>) {
+		let origin_active_kton = ledger.active_kton;
+
 		ledger.active_kton += value;
-		Self::update_ledger(&controller, &mut ledger);
+
+		Self::update_ledger(&controller, None, Some(origin_active_kton), &mut ledger);
 	}
 
 	// TODO: doc
@@ -2439,7 +2602,18 @@ impl<T: Trait> Module<T> {
 	/// Update the ledger for a controller.
 	///
 	/// This will also update the stash lock.
-	fn update_ledger(controller: &T::AccountId, ledger: &mut StakingLedgerT<T>) {
+	fn update_ledger(
+		controller: &T::AccountId,
+		// The origin active ring, none means
+		// there's no change on this field during this update,
+		// just ignore it
+		origin_active_ring: Option<RingBalance<T>>,
+		// The origin active kton, none means
+		// there's no change on this field during this update,
+		// just ignore it
+		origin_active_kton: Option<KtonBalance<T>>,
+		ledger: &mut StakingLedgerT<T>,
+	) {
 		let StakingLedger {
 			active_ring,
 			active_kton,
@@ -2451,6 +2625,18 @@ impl<T: Trait> Module<T> {
 		if *active_ring != ring_staking_lock.staking_amount {
 			ring_staking_lock.staking_amount = *active_ring;
 
+			// If the active ring != staking amount, there must be a difference
+			// The origin active ring MUST be some, but better safe here
+			if let Some(origin) = origin_active_ring {
+				<RingPool<T>>::mutate(|pool| {
+					if origin > *active_ring {
+						*pool = pool.saturating_sub(origin - *active_ring);
+					} else {
+						*pool = pool.saturating_add(*active_ring - origin);
+					}
+				});
+			}
+
 			T::RingCurrency::set_lock(
 				STAKING_ID,
 				&ledger.stash,
@@ -2461,6 +2647,18 @@ impl<T: Trait> Module<T> {
 
 		if *active_kton != kton_staking_lock.staking_amount {
 			kton_staking_lock.staking_amount = *active_kton;
+
+			// If the active kton != staking amount, there must be a difference
+			// The origin active kton MUST be some, but better safe here
+			if let Some(origin) = origin_active_kton {
+				<KtonPool<T>>::mutate(|pool| {
+					if origin > *active_kton {
+						*pool = pool.saturating_sub(origin - *active_kton);
+					} else {
+						*pool = pool.saturating_add(*active_kton - origin);
+					}
+				});
+			}
 
 			T::KtonCurrency::set_lock(
 				STAKING_ID,
@@ -2497,8 +2695,11 @@ impl<T: Trait> Module<T> {
 					let r = T::RingCurrency::deposit_into_existing(stash, amount).ok();
 
 					if r.is_some() {
+						let origin_active_ring = l.active_ring;
+
 						l.active_ring += amount;
-						Self::update_ledger(&c, &mut l);
+
+						Self::update_ledger(&c, Some(origin_active_ring), None, &mut l);
 					}
 
 					r
@@ -3325,52 +3526,6 @@ impl<T: Trait> pallet_session::historical::SessionManager<T::AccountId, Exposure
 	}
 }
 
-/// Add reward points to block authors:
-/// * 20 points to the block producer for producing a (non-uncle) block in the relay chain,
-/// * 2 points to the block producer for each reference to a previously unreferenced uncle, and
-/// * 1 point to the producer of each referenced uncle block.
-impl<T> pallet_authorship::EventHandler<T::AccountId, T::BlockNumber> for Module<T>
-where
-	T: Trait + pallet_authorship::Trait + pallet_session::Trait,
-{
-	fn note_author(author: T::AccountId) {
-		Self::reward_by_ids(vec![(author, 20)]);
-	}
-	fn note_uncle(author: T::AccountId, _age: T::BlockNumber) {
-		Self::reward_by_ids(vec![
-			(<pallet_authorship::Module<T>>::author(), 2),
-			(author, 1),
-		]);
-	}
-}
-
-/// A `Convert` implementation that finds the stash of the given controller account,
-/// if any.
-pub struct StashOf<T>(PhantomData<T>);
-
-impl<T: Trait> Convert<T::AccountId, Option<T::AccountId>> for StashOf<T> {
-	fn convert(controller: T::AccountId) -> Option<T::AccountId> {
-		<Module<T>>::ledger(&controller).map(|l| l.stash)
-	}
-}
-
-/// A typed conversion from stash account ID to the active exposure of nominators
-/// on that account.
-///
-/// Active exposure is the exposure of the validator set currently validating, i.e. in
-/// `active_era`. It can differ from the latest planned exposure in `current_era`.
-pub struct ExposureOf<T>(PhantomData<T>);
-
-impl<T: Trait> Convert<T::AccountId, Option<ExposureT<T>>> for ExposureOf<T> {
-	fn convert(validator: T::AccountId) -> Option<ExposureT<T>> {
-		if let Some(active_era) = <Module<T>>::active_era() {
-			Some(<Module<T>>::eras_stakers(active_era.index, &validator))
-		} else {
-			None
-		}
-	}
-}
-
 /// This is intended to be used with `FilterHistoricalOffences`.
 impl<T: Trait>
 	OnOffenceHandler<T::AccountId, pallet_session::historical::IdentificationTuple<T>, Weight>
@@ -3515,39 +3670,6 @@ where
 	}
 }
 
-/// Filter historical offences out and only allow those from the bonding period.
-pub struct FilterHistoricalOffences<T, R> {
-	_inner: PhantomData<(T, R)>,
-}
-impl<T, Reporter, Offender, R, O> ReportOffence<Reporter, Offender, O>
-	for FilterHistoricalOffences<Module<T>, R>
-where
-	T: Trait,
-	R: ReportOffence<Reporter, Offender, O>,
-	O: Offence<Offender>,
-{
-	fn report_offence(reporters: Vec<Reporter>, offence: O) -> Result<(), OffenceError> {
-		// disallow any slashing from before the current bonding period.
-		let offence_session = offence.session_index();
-		let bonded_eras = BondedEras::get();
-
-		if bonded_eras
-			.first()
-			.filter(|(_, start)| offence_session >= *start)
-			.is_some()
-		{
-			R::report_offence(reporters, offence)
-		} else {
-			<Module<T>>::deposit_event(RawEvent::OldSlashingReportDiscarded(offence_session));
-			Ok(())
-		}
-	}
-
-	fn is_known_offence(offenders: &[Offender], time_slot: &O::TimeSlot) -> bool {
-		R::is_known_offence(offenders, time_slot)
-	}
-}
-
 impl<T: Trait> OnDepositRedeem<T::AccountId, RingBalance<T>> for Module<T> {
 	fn on_deposit_redeem(
 		backing: &T::AccountId,
@@ -3563,11 +3685,6 @@ impl<T: Trait> OnDepositRedeem<T::AccountId, RingBalance<T>> for Module<T> {
 		let start_time = start_time * 1000;
 		let promise_month = months.min(36);
 
-		//		let stash_balance = T::Ring::free_balance(&stash);
-
-		// TODO: Lock but no kton reward because this is a deposit redeem
-		//		let extra = extra.min(r);
-
 		T::RingCurrency::transfer(&backing, &stash, amount, KeepAlive)?;
 
 		let (start_time, expire_time) = Self::bond_ring_for_deposit_redeem(
@@ -3578,9 +3695,7 @@ impl<T: Trait> OnDepositRedeem<T::AccountId, RingBalance<T>> for Module<T> {
 			ledger,
 		);
 
-		<RingPool<T>>::mutate(|r| *r += amount);
-		// TODO: Should we deposit an different event?
-		<Module<T>>::deposit_event(RawEvent::BondRing(amount, start_time, expire_time));
+		Self::deposit_event(RawEvent::BondRing(amount, start_time, expire_time));
 
 		Ok(())
 	}
@@ -3665,116 +3780,80 @@ impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
 	}
 }
 
-pub trait WeightInfo {
-	fn bond(u: u32) -> Weight;
-	fn bond_extra(u: u32) -> Weight;
-	fn unbond(u: u32) -> Weight;
-	fn claim_mature_deposits(u: u32) -> Weight;
-	fn try_claim_deposits_with_punish(u: u32) -> Weight;
-	fn validate(u: u32) -> Weight;
-	fn nominate(n: u32) -> Weight;
-	fn chill(u: u32) -> Weight;
-	fn set_payee(u: u32) -> Weight;
-	fn set_controller(u: u32) -> Weight;
-	fn set_validator_count(c: u32) -> Weight;
-	fn force_no_eras(i: u32) -> Weight;
-	fn force_new_era(i: u32) -> Weight;
-	fn force_new_era_always(i: u32) -> Weight;
-	fn set_invulnerables(v: u32) -> Weight;
-	fn force_unstake(s: u32) -> Weight;
-	fn cancel_deferred_slash(s: u32) -> Weight;
-	fn payout_stakers(n: u32) -> Weight;
-	fn payout_stakers_alive_controller(n: u32) -> Weight;
-	fn set_history_depth(e: u32) -> Weight;
-	fn reap_stash(s: u32) -> Weight;
-	fn new_era(v: u32, n: u32) -> Weight;
-	fn do_slash(l: u32) -> Weight;
-	fn payout_all(v: u32, n: u32) -> Weight;
-	fn submit_solution_initial(v: u32, n: u32, a: u32, w: u32) -> Weight;
-	fn submit_solution_better(v: u32, n: u32, a: u32, w: u32) -> Weight;
-	fn submit_solution_weaker(v: u32, n: u32) -> Weight;
+/// Add reward points to block authors:
+/// * 20 points to the block producer for producing a (non-uncle) block in the relay chain,
+/// * 2 points to the block producer for each reference to a previously unreferenced uncle, and
+/// * 1 point to the producer of each referenced uncle block.
+impl<T> pallet_authorship::EventHandler<T::AccountId, T::BlockNumber> for Module<T>
+where
+	T: Trait + pallet_authorship::Trait + pallet_session::Trait,
+{
+	fn note_author(author: T::AccountId) {
+		Self::reward_by_ids(vec![(author, 20)]);
+	}
+	fn note_uncle(author: T::AccountId, _age: T::BlockNumber) {
+		Self::reward_by_ids(vec![
+			(<pallet_authorship::Module<T>>::author(), 2),
+			(author, 1),
+		]);
+	}
 }
-impl WeightInfo for () {
-	fn bond(_u: u32) -> Weight {
-		1_000_000_000
+
+/// A `Convert` implementation that finds the stash of the given controller account,
+/// if any.
+pub struct StashOf<T>(PhantomData<T>);
+impl<T: Trait> Convert<T::AccountId, Option<T::AccountId>> for StashOf<T> {
+	fn convert(controller: T::AccountId) -> Option<T::AccountId> {
+		<Module<T>>::ledger(&controller).map(|l| l.stash)
 	}
-	fn bond_extra(_u: u32) -> Weight {
-		1_000_000_000
+}
+
+/// A typed conversion from stash account ID to the active exposure of nominators
+/// on that account.
+///
+/// Active exposure is the exposure of the validator set currently validating, i.e. in
+/// `active_era`. It can differ from the latest planned exposure in `current_era`.
+pub struct ExposureOf<T>(PhantomData<T>);
+impl<T: Trait> Convert<T::AccountId, Option<ExposureT<T>>> for ExposureOf<T> {
+	fn convert(validator: T::AccountId) -> Option<ExposureT<T>> {
+		if let Some(active_era) = <Module<T>>::active_era() {
+			Some(<Module<T>>::eras_stakers(active_era.index, &validator))
+		} else {
+			None
+		}
 	}
-	fn unbond(_u: u32) -> Weight {
-		1_000_000_000
+}
+
+/// Filter historical offences out and only allow those from the bonding period.
+pub struct FilterHistoricalOffences<T, R> {
+	_inner: PhantomData<(T, R)>,
+}
+impl<T, Reporter, Offender, R, O> ReportOffence<Reporter, Offender, O>
+	for FilterHistoricalOffences<Module<T>, R>
+where
+	T: Trait,
+	R: ReportOffence<Reporter, Offender, O>,
+	O: Offence<Offender>,
+{
+	fn report_offence(reporters: Vec<Reporter>, offence: O) -> Result<(), OffenceError> {
+		// disallow any slashing from before the current bonding period.
+		let offence_session = offence.session_index();
+		let bonded_eras = BondedEras::get();
+
+		if bonded_eras
+			.first()
+			.filter(|(_, start)| offence_session >= *start)
+			.is_some()
+		{
+			R::report_offence(reporters, offence)
+		} else {
+			<Module<T>>::deposit_event(RawEvent::OldSlashingReportDiscarded(offence_session));
+			Ok(())
+		}
 	}
-	fn claim_mature_deposits(_u: u32) -> Weight {
-		1_000_000_000
-	}
-	fn try_claim_deposits_with_punish(_u: u32) -> Weight {
-		1_000_000_000
-	}
-	fn validate(_u: u32) -> Weight {
-		1_000_000_000
-	}
-	fn nominate(_n: u32) -> Weight {
-		1_000_000_000
-	}
-	fn chill(_u: u32) -> Weight {
-		1_000_000_000
-	}
-	fn set_payee(_u: u32) -> Weight {
-		1_000_000_000
-	}
-	fn set_controller(_u: u32) -> Weight {
-		1_000_000_000
-	}
-	fn set_validator_count(_c: u32) -> Weight {
-		1_000_000_000
-	}
-	fn force_no_eras(_i: u32) -> Weight {
-		1_000_000_000
-	}
-	fn force_new_era(_i: u32) -> Weight {
-		1_000_000_000
-	}
-	fn force_new_era_always(_i: u32) -> Weight {
-		1_000_000_000
-	}
-	fn set_invulnerables(_v: u32) -> Weight {
-		1_000_000_000
-	}
-	fn force_unstake(_s: u32) -> Weight {
-		1_000_000_000
-	}
-	fn cancel_deferred_slash(_s: u32) -> Weight {
-		1_000_000_000
-	}
-	fn payout_stakers(_n: u32) -> Weight {
-		1_000_000_000
-	}
-	fn payout_stakers_alive_controller(_n: u32) -> Weight {
-		1_000_000_000
-	}
-	fn set_history_depth(_e: u32) -> Weight {
-		1_000_000_000
-	}
-	fn reap_stash(_s: u32) -> Weight {
-		1_000_000_000
-	}
-	fn new_era(_v: u32, _n: u32) -> Weight {
-		1_000_000_000
-	}
-	fn do_slash(_l: u32) -> Weight {
-		1_000_000_000
-	}
-	fn payout_all(_v: u32, _n: u32) -> Weight {
-		1_000_000_000
-	}
-	fn submit_solution_initial(_v: u32, _n: u32, _a: u32, _w: u32) -> Weight {
-		1_000_000_000
-	}
-	fn submit_solution_better(_v: u32, _n: u32, _a: u32, _w: u32) -> Weight {
-		1_000_000_000
-	}
-	fn submit_solution_weaker(_v: u32, _n: u32) -> Weight {
-		1_000_000_000
+
+	fn is_known_offence(offenders: &[Offender], time_slot: &O::TimeSlot) -> bool {
+		R::is_known_offence(offenders, time_slot)
 	}
 }
 
@@ -4213,47 +4292,6 @@ pub struct ElectionResult<AccountId, RingBalance: HasCompact, KtonBalance: HasCo
 	/// Type of the result. This is kept on chain only to track and report the best score's
 	/// submission type. An optimisation could remove this.
 	compute: ElectionCompute,
-}
-
-// --- trait ---
-
-/// Means for interacting with a specialized version of the `session` trait.
-///
-/// This is needed because `Staking` sets the `ValidatorIdOf` of the `pallet_session::Trait`
-pub trait SessionInterface<AccountId>: frame_system::Trait {
-	/// Disable a given validator by stash ID.
-	///
-	/// Returns `true` if new era should be forced at the end of this session.
-	/// This allows preventing a situation where there is too many validators
-	/// disabled and block production stalls.
-	fn disable_validator(validator: &AccountId) -> Result<bool, ()>;
-	/// Get the validators from session.
-	fn validators() -> Vec<AccountId>;
-	/// Prune historical session tries up to but not including the given index.
-	fn prune_historical_up_to(up_to: SessionIndex);
-}
-impl<T: Trait> SessionInterface<AccountId<T>> for T
-where
-	T: pallet_session::Trait<ValidatorId = AccountId<T>>,
-	T: pallet_session::historical::Trait<
-		FullIdentification = Exposure<AccountId<T>, RingBalance<T>, KtonBalance<T>>,
-		FullIdentificationOf = ExposureOf<T>,
-	>,
-	T::SessionHandler: pallet_session::SessionHandler<AccountId<T>>,
-	T::SessionManager: pallet_session::SessionManager<AccountId<T>>,
-	T::ValidatorIdOf: Convert<AccountId<T>, Option<AccountId<T>>>,
-{
-	fn disable_validator(validator: &AccountId<T>) -> Result<bool, ()> {
-		<pallet_session::Module<T>>::disable(validator)
-	}
-
-	fn validators() -> Vec<AccountId<T>> {
-		<pallet_session::Module<T>>::validators()
-	}
-
-	fn prune_historical_up_to(up_to: SessionIndex) {
-		<pallet_session::historical::Module<T>>::prune_up_to(up_to);
-	}
 }
 
 /// Check that list is sorted and has no duplicates.
