@@ -6,7 +6,7 @@ homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"
 name        = "darwinia-staking"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "1.0.0-beta.1"
+version     = "1.0.0"
 
 [dependencies]
 # crates
