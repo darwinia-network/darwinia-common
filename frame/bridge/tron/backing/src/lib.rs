@@ -37,7 +37,7 @@ pub trait WeightInfo {}
 impl WeightInfo for () {}
 
 decl_storage! {
-	trait Store for Module<T: Trait> as DarwiniaCrabBacking {}
+	trait Store for Module<T: Trait> as DarwiniaTronBacking {}
 
 	add_extra_genesis {
 		config(backed_ring): RingBalance<T>;
