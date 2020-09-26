@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 pub mod crab_issuing {
 	// --- darwinia ---
 	pub use crate::Event;
