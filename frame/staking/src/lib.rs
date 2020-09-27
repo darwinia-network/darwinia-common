@@ -1439,6 +1439,11 @@ decl_module! {
 				..
 			} = &mut ledger;
 			let value = value.min(active_ring.saturating_sub(*active_deposit_ring));
+
+			if value.is_zero() {
+				return Ok(());
+			}
+
 			let kton_return = inflation::compute_kton_reward::<T>(value, promise_month);
 			let kton_positive_imbalance = T::KtonCurrency::deposit_creating(&stash, kton_return);
 

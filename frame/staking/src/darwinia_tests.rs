@@ -551,6 +551,7 @@ fn deposit_zero_should_do_nothing() {
 		));
 
 		for m in 0..=36 {
+			// NO-OP
 			assert_ok!(Staking::deposit_extra(Origin::signed(stash), 0, m));
 		}
 
@@ -558,6 +559,14 @@ fn deposit_zero_should_do_nothing() {
 			.unwrap()
 			.deposit_items
 			.is_empty());
+
+		// Deposit succeeded.
+		assert_ok!(Staking::deposit_extra(Origin::signed(stash), COIN, 1));
+		assert_eq!(Staking::ledger(&controller).unwrap().deposit_items.len(), 1);
+
+		// NO-OP
+		assert_ok!(Staking::deposit_extra(Origin::signed(stash), COIN, 1));
+		assert_eq!(Staking::ledger(&controller).unwrap().deposit_items.len(), 1);
 	})
 }
 
