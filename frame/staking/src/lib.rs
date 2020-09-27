@@ -1428,7 +1428,7 @@ decl_module! {
 			}
 
 			let start_time = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
-			let promise_month = promise_month.max(3).min(36);
+			let promise_month = promise_month.max(1).min(36);
 			let expire_time = start_time + promise_month as TsInMs * MONTH_IN_MILLISECONDS;
 			let mut ledger = Self::clear_mature_deposits(ledger);
 			let StakingLedger {
