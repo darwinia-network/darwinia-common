@@ -538,6 +538,39 @@ fn punished_claim_should_work() {
 }
 
 #[test]
+fn deposit_zero_should_do_nothing() {
+	ExtBuilder::default().build().execute_with(|| {
+		let (stash, controller) = (1001, 1000);
+		let _ = Ring::deposit_creating(&stash, COIN);
+		assert_ok!(Staking::bond(
+			Origin::signed(stash),
+			controller,
+			StakingBalance::RingBalance(COIN),
+			RewardDestination::Stash,
+			0,
+		));
+
+		for m in 0..=36 {
+			// NO-OP
+			assert_ok!(Staking::deposit_extra(Origin::signed(stash), 0, m));
+		}
+
+		assert!(Staking::ledger(&controller)
+			.unwrap()
+			.deposit_items
+			.is_empty());
+
+		// Deposit succeeded.
+		assert_ok!(Staking::deposit_extra(Origin::signed(stash), COIN, 1));
+		assert_eq!(Staking::ledger(&controller).unwrap().deposit_items.len(), 1);
+
+		// NO-OP
+		assert_ok!(Staking::deposit_extra(Origin::signed(stash), COIN, 1));
+		assert_eq!(Staking::ledger(&controller).unwrap().deposit_items.len(), 1);
+	})
+}
+
+#[test]
 fn transform_to_deposited_ring_should_work() {
 	ExtBuilder::default().build().execute_with(|| {
 		let (stash, controller) = (1001, 1000);

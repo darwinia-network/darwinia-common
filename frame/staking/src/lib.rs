@@ -1406,6 +1406,8 @@ decl_module! {
 		///
 		/// The dispatch origin for this call must be _Signed_ by the stash, not the controller.
 		///
+		/// Is a no-op if value to be deposited is zero.
+		///
 		/// # <weight>
 		/// - Independent of the arguments. Insignificant complexity.
 		/// - O(1).
@@ -1420,8 +1422,13 @@ decl_module! {
 			let stash = ensure_signed(origin)?;
 			let controller = Self::bonded(&stash).ok_or(<Error<T>>::NotStash)?;
 			let ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
+
+			if value.is_zero() {
+				return Ok(());
+			}
+
 			let start_time = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
-			let promise_month = promise_month.max(3).min(36);
+			let promise_month = promise_month.max(1).min(36);
 			let expire_time = start_time + promise_month as TsInMs * MONTH_IN_MILLISECONDS;
 			let mut ledger = Self::clear_mature_deposits(ledger);
 			let StakingLedger {
@@ -1431,12 +1438,17 @@ decl_module! {
 				deposit_items,
 				..
 			} = &mut ledger;
-			let value = value.min(*active_ring - *active_deposit_ring);
+			let value = value.min(active_ring.saturating_sub(*active_deposit_ring));
+
+			if value.is_zero() {
+				return Ok(());
+			}
+
 			let kton_return = inflation::compute_kton_reward::<T>(value, promise_month);
 			let kton_positive_imbalance = T::KtonCurrency::deposit_creating(&stash, kton_return);
 
 			T::KtonReward::on_unbalanced(kton_positive_imbalance);
-			*active_deposit_ring += value;
+			*active_deposit_ring = active_deposit_ring.saturating_add(value);
 			deposit_items.push(TimeDepositItem {
 				value,
 				start_time,
