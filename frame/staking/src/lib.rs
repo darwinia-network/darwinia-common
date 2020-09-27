@@ -1406,6 +1406,8 @@ decl_module! {
 		///
 		/// The dispatch origin for this call must be _Signed_ by the stash, not the controller.
 		///
+		/// Is a no-op if value to be deposited is zero.
+		///
 		/// # <weight>
 		/// - Independent of the arguments. Insignificant complexity.
 		/// - O(1).
@@ -1420,6 +1422,11 @@ decl_module! {
 			let stash = ensure_signed(origin)?;
 			let controller = Self::bonded(&stash).ok_or(<Error<T>>::NotStash)?;
 			let ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
+
+			if value.is_zero() {
+				return Ok(());
+			}
+
 			let start_time = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
 			let promise_month = promise_month.max(3).min(36);
 			let expire_time = start_time + promise_month as TsInMs * MONTH_IN_MILLISECONDS;
