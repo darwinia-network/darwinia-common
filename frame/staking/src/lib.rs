@@ -1438,12 +1438,12 @@ decl_module! {
 				deposit_items,
 				..
 			} = &mut ledger;
-			let value = value.min(*active_ring - *active_deposit_ring);
+			let value = value.min(active_ring.saturating_sub(*active_deposit_ring));
 			let kton_return = inflation::compute_kton_reward::<T>(value, promise_month);
 			let kton_positive_imbalance = T::KtonCurrency::deposit_creating(&stash, kton_return);
 
 			T::KtonReward::on_unbalanced(kton_positive_imbalance);
-			*active_deposit_ring += value;
+			*active_deposit_ring = active_deposit_ring.saturating_add(value);
 			deposit_items.push(TimeDepositItem {
 				value,
 				start_time,
