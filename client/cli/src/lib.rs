@@ -666,7 +666,7 @@ impl DatabaseConfig {
 							.unwrap_or(origin_data_base_cache_size.unwrap_or(128)),
 					}
 				}
-				Database::SubDb => sc_service::config::DatabaseConfig::SubDb { path },
+				// aki: Database::SubDb => sc_service::config::DatabaseConfig::SubDb { path },
 				Database::ParityDb => sc_service::config::DatabaseConfig::ParityDb { path },
 			}
 		} else {
@@ -689,7 +689,7 @@ enum Database {
 	// Facebooks RocksDB
 	RocksDb,
 	// Subdb. https://github.com/paritytech/subdb/
-	SubDb,
+	// aki: SubDb,
 	// ParityDb. https://github.com/paritytech/parity-db/
 	ParityDb,
 }

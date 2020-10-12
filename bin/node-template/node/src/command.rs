@@ -108,19 +108,20 @@ pub fn run() -> sc_cli::Result<()> {
 				_ => service::node_template_new_full(config).map(|(components, _)| components),
 			})
 		}
-		Some(Subcommand::Base(subcommand)) => {
-			let runtime = cli.create_runner(subcommand)?;
-			let chain_spec = &runtime.config().chain_spec;
-
-			set_default_ss58_version(chain_spec);
-
-			runtime.run_subcommand(subcommand, |config| {
-				service::new_chain_ops::<
-					service::node_template_runtime::RuntimeApi,
-					service::NodeTemplateExecutor,
-				>(config)
-			})
-		}
+		// aki:
+		// Some(Subcommand::Base(subcommand)) => {
+		// 	let runtime = cli.create_runner(subcommand)?;
+		// 	let chain_spec = &runtime.config().chain_spec;
+		//
+		// 	set_default_ss58_version(chain_spec);
+		//
+		// 	runtime.run_subcommand(subcommand, |config| {
+		// 		service::new_chain_ops::<
+		// 			service::node_template_runtime::RuntimeApi,
+		// 			service::NodeTemplateExecutor,
+		// 		>(config)
+		// 	})
+		// }
 		Some(Subcommand::Key(cmd)) => cmd.run(),
 		Some(Subcommand::Sign(cmd)) => cmd.run(),
 		Some(Subcommand::Verify(cmd)) => cmd.run(),

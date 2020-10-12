@@ -22,9 +22,9 @@ pub struct Cli {
 /// Possible subcommands of the main binary.
 #[derive(Debug, StructOpt)]
 pub enum Subcommand {
-	/// A set of base subcommands handled by `sc_cli`.
-	#[structopt(flatten)]
-	Base(sc_cli::Subcommand),
+	// aki: /// A set of base subcommands handled by `sc_cli`.
+	// #[structopt(flatten)]
+	// Base(sc_cli::Subcommand),
 
 	/// Key management cli utilities
 	Key(KeySubcommand),
