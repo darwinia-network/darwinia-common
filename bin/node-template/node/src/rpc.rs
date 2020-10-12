@@ -50,7 +50,7 @@ pub struct GrandpaDeps<B> {
 	/// Receives notifications about justification events from Grandpa.
 	pub justification_stream: sc_finality_grandpa::GrandpaJustificationStream<Block>,
 	/// Subscription manager to keep track of pubsub subscribers.
-	pub subscriptions: jsonrpc_pubsub::manager::SubscriptionManager,
+	pub subscriptions: sc_rpc::SubscriptionTaskExecutor,
 	/// Finality proof provider.
 	pub finality_provider: Arc<sc_finality_grandpa::FinalityProofProvider<B, Block>>,
 }
