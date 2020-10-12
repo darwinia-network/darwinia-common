@@ -387,7 +387,7 @@ impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
 		self.set_associated_constants();
 
-		let _ = env_logger::try_init();
+		sp_tracing::try_init_simple();
 		let mut storage = frame_system::GenesisConfig::default()
 			.build_storage::<Test>()
 			.unwrap();
