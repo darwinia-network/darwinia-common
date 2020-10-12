@@ -755,11 +755,13 @@ impl darwinia_democracy::Trait for Runtime {
 parameter_types! {
 	pub const CouncilMotionDuration: BlockNumber = 3 * DAYS;
 	pub const CouncilMaxProposals: u32 = 100;
+	pub const CouncilMaxMembers: u32 = 100;
 	pub const TechnicalMotionDuration: BlockNumber = 3 * DAYS;
 	pub const TechnicalMaxProposals: u32 = 100;
+	pub const TechnicalMaxMembers: u32 = 100;
 }
-// Make sure that there are no more than `MAX_MEMBERS` members elected via elections-phragmen.
-const_assert!(DesiredMembers::get() <= pallet_collective::MAX_MEMBERS);
+// Make sure that there are no more than `MaxMembers` members elected via elections-phragmen.
+const_assert!(DesiredMembers::get() <= CouncilMaxMembers::get());
 type CouncilCollective = pallet_collective::Instance0;
 impl pallet_collective::Trait<CouncilCollective> for Runtime {
 	type Origin = Origin;
@@ -767,7 +769,8 @@ impl pallet_collective::Trait<CouncilCollective> for Runtime {
 	type Event = Event;
 	type MotionDuration = CouncilMotionDuration;
 	type MaxProposals = CouncilMaxProposals;
-	type WeightInfo = ();
+	type MaxMembers = CouncilMaxMembers;
+	type WeightInfo = weights::pallet_collective::WeightInfo;
 }
 type TechnicalCollective = pallet_collective::Instance1;
 impl pallet_collective::Trait<TechnicalCollective> for Runtime {
@@ -776,7 +779,8 @@ impl pallet_collective::Trait<TechnicalCollective> for Runtime {
 	type Event = Event;
 	type MotionDuration = TechnicalMotionDuration;
 	type MaxProposals = TechnicalMaxProposals;
-	type WeightInfo = ();
+	type MaxMembers = TechnicalMaxMembers;
+	type WeightInfo = weights::pallet_collective::WeightInfo;
 }
 
 parameter_types! {
