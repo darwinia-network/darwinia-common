@@ -138,3 +138,5 @@ std = [
 	"sp-transaction-pool/std",
 	"sp-version/std",
 ]
+
+with-tracing = ["frame-executive/with-tracing"]

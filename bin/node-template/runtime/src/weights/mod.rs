@@ -4,4 +4,5 @@ pub mod darwinia_staking;
 pub mod frame_system;
 pub mod pallet_collective;
 pub mod pallet_im_online;
+pub mod pallet_scheduler;
 pub mod pallet_timestamp;
