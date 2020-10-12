@@ -124,6 +124,7 @@ impl Trait<RingInstance> for Test {
 		Balance,
 		AccountData<Balance>,
 	>;
+	type MaxLocks = ();
 	type OtherCurrencies = (Kton,);
 	type WeightInfo = ();
 }
@@ -140,6 +141,7 @@ impl Trait<KtonInstance> for Test {
 		Balance,
 		AccountData<Balance>,
 	>;
+	type MaxLocks = ();
 	type OtherCurrencies = (Ring,);
 	type WeightInfo = ();
 }

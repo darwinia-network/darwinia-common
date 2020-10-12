@@ -210,6 +210,10 @@ pub trait Subtrait<I: Instance = DefaultInstance>: frame_system::Trait {
 		+ Default
 		+ EncodeLike;
 
+	/// The maximum number of locks that should exist on an account.
+	/// Not strictly enforced, but used for weight estimation.
+	type MaxLocks: Get<u32>;
+
 	/// Weight information for the extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
 
@@ -248,6 +252,10 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	/// The means of storing the balances of an account.
 	type AccountStore: StoredMap<Self::AccountId, Self::BalanceInfo>;
 
+	/// The maximum number of locks that should exist on an account.
+	/// Not strictly enforced, but used for weight estimation.
+	type MaxLocks: Get<u32>;
+
 	// A handle to check if other curencies drop below existential deposit
 	type OtherCurrencies: DustCollector<Self::AccountId>;
 
@@ -260,6 +268,7 @@ impl<T: Trait<I>, I: Instance> Subtrait<I> for T {
 	type ExistentialDeposit = T::ExistentialDeposit;
 	type AccountStore = T::AccountStore;
 	type BalanceInfo = T::BalanceInfo;
+	type MaxLocks = T::MaxLocks;
 	type OtherCurrencies = T::OtherCurrencies;
 	type WeightInfo = <T as Trait<I>>::WeightInfo;
 }
@@ -609,6 +618,13 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 
 	/// Update the account entry for `who`, given the locks.
 	fn update_locks(who: &T::AccountId, locks: &[BalanceLock<T::Balance, T::BlockNumber>]) {
+		if locks.len() as u32 > T::MaxLocks::get() {
+			frame_support::debug::warn!(
+				"Warning: A user has more currency locks than expected. \
+				A runtime configuration adjustment may be needed."
+			);
+		}
+
 		let existed = Locks::<T, I>::contains_key(who);
 		if locks.is_empty() {
 			Locks::<T, I>::remove(who);
@@ -835,6 +851,7 @@ impl<T: Subtrait<I>, I: Instance> Trait<I> for ElevatedTrait<T, I> {
 	type ExistentialDeposit = T::ExistentialDeposit;
 	type BalanceInfo = T::BalanceInfo;
 	type AccountStore = T::AccountStore;
+	type MaxLocks = T::MaxLocks;
 	type OtherCurrencies = T::OtherCurrencies;
 	type WeightInfo = <T as Subtrait<I>>::WeightInfo;
 }
@@ -1362,6 +1379,7 @@ where
 	T::Balance: MaybeSerializeDeserialize + Debug,
 {
 	type Moment = T::BlockNumber;
+	type MaxLocks = T::MaxLocks;
 
 	// Set a lock on the balance of `who`.
 	// Is a no-op if lock amount is zero or `reasons` `is_none()`.

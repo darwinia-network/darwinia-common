@@ -508,6 +508,7 @@ impl pallet_timestamp::Trait for Runtime {
 type RingInstance = darwinia_balances::Instance0;
 parameter_types! {
 	pub const ExistentialDeposit: Balance = 1 * COIN;
+	pub const MaxLocks: u32 = 50;
 }
 impl darwinia_balances::Trait<RingInstance> for Runtime {
 	type Balance = Balance;
@@ -516,6 +517,7 @@ impl darwinia_balances::Trait<RingInstance> for Runtime {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
+	type MaxLocks = MaxLocks;
 	type OtherCurrencies = (Kton,);
 	type WeightInfo = weights::darwinia_balances::WeightInfo;
 }
@@ -527,6 +529,7 @@ impl darwinia_balances::Trait<KtonInstance> for Runtime {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
+	type MaxLocks = MaxLocks;
 	type OtherCurrencies = (Ring,);
 	type WeightInfo = weights::darwinia_balances::WeightInfo;
 }

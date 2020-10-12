@@ -680,6 +680,7 @@ mod tests {
 		type ExistentialDeposit = ExistentialDeposit;
 		type BalanceInfo = AccountData<Balance>;
 		type AccountStore = System;
+		type MaxLocks = ();
 		type WeightInfo = ();
 		type OtherCurrencies = ();
 	}

@@ -131,6 +131,7 @@ impl darwinia_balances::Trait<KtonInstance> for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
+	type MaxLocks = ();
 	type OtherCurrencies = ();
 	type WeightInfo = ();
 }
@@ -141,6 +142,7 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
+	type MaxLocks = ();
 	type OtherCurrencies = ();
 	type WeightInfo = ();
 }

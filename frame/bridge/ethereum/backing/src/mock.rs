@@ -158,6 +158,7 @@ macro_rules! decl_tests {
 			type ExistentialDeposit = ();
 			type BalanceInfo = AccountData<Balance>;
 			type AccountStore = System;
+			type MaxLocks = ();
 			type OtherCurrencies = ();
 			type WeightInfo = ();
 		}
@@ -168,6 +169,7 @@ macro_rules! decl_tests {
 			type ExistentialDeposit = ();
 			type BalanceInfo = AccountData<Balance>;
 			type AccountStore = System;
+			type MaxLocks = ();
 			type OtherCurrencies = ();
 			type WeightInfo = ();
 		}
