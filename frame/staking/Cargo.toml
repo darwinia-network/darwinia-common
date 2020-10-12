@@ -34,7 +34,6 @@ sp-std            = { default-features = false, git = "https://github.com/darwin
 
 [dev-dependencies]
 # crates
-env_logger  = "0.7.1"
 rand_chacha = { version = "0.2" }
 # darwinia
 darwinia-balances = { path = "../../frame/balances" }
@@ -42,6 +41,7 @@ darwinia-support  = { features = ["easy-testing"], path = "../support" }
 # substrate
 pallet-timestamp     = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-storage           = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-tracing           = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 substrate-test-utils = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 [features]
