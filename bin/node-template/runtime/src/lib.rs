@@ -694,7 +694,7 @@ impl pallet_im_online::Trait for Runtime {
 	type SessionDuration = SessionDuration;
 	type ReportUnresponsiveness = Offences;
 	type UnsignedPriority = ImOnlineUnsignedPriority;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_im_online::WeightInfo;
 }
 
 impl pallet_authority_discovery::Trait for Runtime {}
