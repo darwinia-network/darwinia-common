@@ -34,7 +34,7 @@ sp-std     = { default-features = false, git = "https://github.com/darwinia-netw
 [dev-dependencies]
 # crates
 keccak-hasher = { version = "0.15.3" }
-serde_json    = { version = "1.0.57" }
+serde_json    = { version = "1.0.58" }
 # github
 triehash = { git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
