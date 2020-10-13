@@ -869,7 +869,13 @@ parameter_types! {
 	pub const TipCountdown: BlockNumber = 1 * DAYS;
 	pub const TipFindersFee: Percent = Percent::from_percent(20);
 	pub const TipReportDepositBase: Balance = 1 * COIN;
-	pub const TipReportDepositPerByte: Balance = 1 * MILLI;
+	pub const DataDepositPerByte: Balance = 1 * MILLI;
+	pub const BountyDepositBase: Balance = 1 * COIN;
+	pub const BountyDepositPayoutDelay: BlockNumber = 4 * DAYS;
+	pub const BountyUpdatePeriod: BlockNumber = 90 * DAYS;
+	pub const MaximumReasonLength: u32 = 16384;
+	pub const BountyCuratorDeposit: Permill = Permill::from_percent(50);
+	pub const BountyValueMinimum: Balance = 2 * COIN;
 }
 impl darwinia_treasury::Trait for Runtime {
 	type ModuleId = TreasuryModuleId;
@@ -881,19 +887,24 @@ impl darwinia_treasury::Trait for Runtime {
 	type TipCountdown = TipCountdown;
 	type TipFindersFee = TipFindersFee;
 	type TipReportDepositBase = TipReportDepositBase;
-	type TipReportDepositPerByte = TipReportDepositPerByte;
+	type DataDepositPerByte = DataDepositPerByte;
 	type Event = Event;
-	type RingProposalRejection = Treasury;
-	type KtonProposalRejection = Treasury;
+	type OnSlashRing = Treasury;
+	type OnSlashKton = Treasury;
 	type ProposalBond = ProposalBond;
 	type RingProposalBondMinimum = RingProposalBondMinimum;
 	type KtonProposalBondMinimum = KtonProposalBondMinimum;
 	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
+	type BountyDepositBase = BountyDepositBase;
+	type BountyDepositPayoutDelay = BountyDepositPayoutDelay;
+	type BountyUpdatePeriod = BountyUpdatePeriod;
+	type MaximumReasonLength = MaximumReasonLength;
+	type BountyCuratorDeposit = BountyCuratorDeposit;
+	type BountyValueMinimum = BountyValueMinimum;
 	type RingBurnDestination = ();
-	// TODO
 	type KtonBurnDestination = ();
-	type WeightInfo = ();
+	type WeightInfo = weights::darwinia_treasury::WeightInfo;
 }
 
 parameter_types! {
