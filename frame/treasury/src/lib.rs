@@ -222,14 +222,28 @@ decl_storage! {
 	add_extra_genesis {
 		build(|_config| {
 			// Create Treasury account
-			let _ = T::RingCurrency::make_free_balance_be(
-				&<Module<T, I>>::account_id(),
-				T::RingCurrency::minimum_balance(),
-			);
-			let _ = T::KtonCurrency::make_free_balance_be(
-				&<Module<T, I>>::account_id(),
-				T::KtonCurrency::minimum_balance(),
-			);
+			let account_id = <Module<T, I>>::account_id();
+
+			{
+				let min = T::RingCurrency::minimum_balance();
+
+				if T::RingCurrency::free_balance(&account_id) < min {
+					let _ = T::RingCurrency::make_free_balance_be(
+						&account_id,
+						min,
+					);
+				}
+			}
+			{
+				let min = T::KtonCurrency::minimum_balance();
+
+				if T::KtonCurrency::free_balance(&account_id) < min {
+					let _ = T::KtonCurrency::make_free_balance_be(
+						&account_id,
+						min,
+					);
+				}
+			}
 		});
 	}
 }

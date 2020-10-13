@@ -749,3 +749,40 @@ fn no_accept_no_reject_keep_burning() {
 		assert_eq!(Treasury::pot::<Kton>(), 25); // No changes from last perid
 	});
 }
+
+#[test]
+fn genesis_funding_works() {
+	let mut t = frame_system::GenesisConfig::default()
+		.build_storage::<Test>()
+		.unwrap();
+	let initial_funding = 100;
+	darwinia_balances::GenesisConfig::<Test, RingInstance> {
+		// Total issuance will be 200 with treasury account initialized with 100.
+		balances: vec![(0, 100), (Treasury::account_id(), initial_funding)],
+	}
+	.assimilate_storage(&mut t)
+	.unwrap();
+	darwinia_balances::GenesisConfig::<Test, KtonInstance> {
+		// Total issuance will be 200 with treasury account initialized with 100.
+		balances: vec![(0, 100), (Treasury::account_id(), initial_funding)],
+	}
+	.assimilate_storage(&mut t)
+	.unwrap();
+	GenesisConfig::default()
+		.assimilate_storage::<Test, _>(&mut t)
+		.unwrap();
+	let mut t: sp_io::TestExternalities = t.into();
+
+	t.execute_with(|| {
+		assert_eq!(Ring::free_balance(Treasury::account_id()), initial_funding);
+		assert_eq!(
+			Treasury::pot::<Ring>(),
+			initial_funding - Ring::minimum_balance()
+		);
+		assert_eq!(Kton::free_balance(Treasury::account_id()), initial_funding);
+		assert_eq!(
+			Treasury::pot::<Kton>(),
+			initial_funding - Kton::minimum_balance()
+		);
+	});
+}
