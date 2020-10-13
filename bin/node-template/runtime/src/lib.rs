@@ -1245,6 +1245,10 @@ impl frame_evm::Trait for Runtime {
 	type Currency = Balances;
 	type Event = Event;
 	type Precompiles = (
+		frame_evm::precompiles::ECRecover,
+		frame_evm::precompiles::Sha256,
+		frame_evm::precompiles::Ripemd160,
+		frame_evm::precompiles::Identity,
 		TransferBack,
 	);
 	type ChainId = ChainId;
