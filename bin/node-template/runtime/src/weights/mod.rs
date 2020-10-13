@@ -6,3 +6,4 @@ pub mod pallet_collective;
 pub mod pallet_im_online;
 pub mod pallet_scheduler;
 pub mod pallet_timestamp;
+pub mod pallet_session;
