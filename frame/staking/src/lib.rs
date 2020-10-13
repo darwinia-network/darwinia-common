@@ -372,8 +372,8 @@ use sp_runtime::{
 		InvalidTransaction, TransactionPriority, TransactionSource, TransactionValidity,
 		TransactionValidityError, ValidTransaction,
 	},
-	DispatchError, DispatchResult, ModuleId, PerThing, PerU16, Perbill, Percent, Perquintill,
-	RuntimeDebug,
+	DispatchError, DispatchResult, InnerOf, ModuleId, PerThing, PerU16, Perbill, Percent,
+	Perquintill, RuntimeDebug,
 };
 #[cfg(feature = "std")]
 use sp_runtime::{Deserialize, Serialize};
@@ -1089,6 +1089,25 @@ decl_module! {
 					T::SlashDeferDuration::get(),
 					T::BondingDurationInEra::get(),
 				)
+			);
+
+			use sp_runtime::UpperOf;
+			// see the documentation of `Assignment::try_normalize`. Now we can ensure that this
+			// will always return `Ok`.
+			// 1. Maximum sum of Vec<ChainAccuracy> must fit into `UpperOf<ChainAccuracy>`.
+			assert!(
+				<usize as TryInto<UpperOf<ChainAccuracy>>>::try_into(MAX_NOMINATIONS)
+				.unwrap()
+				.checked_mul(<ChainAccuracy>::one().deconstruct().try_into().unwrap())
+				.is_some()
+			);
+
+			// 2. Maximum sum of Vec<OffchainAccuracy> must fit into `UpperOf<OffchainAccuracy>`.
+			assert!(
+				<usize as TryInto<UpperOf<OffchainAccuracy>>>::try_into(MAX_NOMINATIONS)
+				.unwrap()
+				.checked_mul(<OffchainAccuracy>::one().deconstruct().try_into().unwrap())
+				.is_some()
 			);
 		}
 
@@ -2759,12 +2778,8 @@ impl<T: Trait> Module<T> {
 			sp_npos_elections::assignment_ratio_to_staked(assignments, |s| Self::power_of(s) as _);
 
 		// build the support map thereof in order to evaluate.
-		// OPTIMIZATION: loop to create the staked assignments but it would bloat the code. Okay for
-		// now as it does not add to the complexity order.
-		let (supports, num_error) =
-			build_support_map::<T::AccountId>(&winners, &staked_assignments);
-		// This technically checks that all targets in all nominators were among the winners.
-		ensure!(num_error == 0, <Error<T>>::OffchainElectionBogusEdge);
+		let supports = build_support_map::<T::AccountId>(&winners, &staked_assignments)
+			.map_err(|_| Error::<T>::OffchainElectionBogusEdge)?;
 
 		// Check if the score is the same as the claimed one.
 		let submitted_score = evaluate_support(&supports);
@@ -3007,9 +3022,7 @@ impl<T: Trait> Module<T> {
 	/// is updated.
 	fn try_do_election() -> Option<ElectionResultT<T>> {
 		// an election result from either a stored submission or locally executed one.
-		let next_result = <QueuedElected<T>>::take().or_else(|| {
-			Self::do_phragmen_with_post_processing::<ChainAccuracy>(ElectionCompute::OnChain)
-		});
+		let next_result = <QueuedElected<T>>::take().or_else(|| Self::do_on_chain_phragmen());
 
 		// either way, kill this. We remove it here to make sure it always has the exact same
 		// lifetime as `QueuedElected`.
@@ -3025,14 +3038,8 @@ impl<T: Trait> Module<T> {
 	/// `PrimitiveElectionResult` into `ElectionResult`.
 	///
 	/// No storage item is updated.
-	fn do_phragmen_with_post_processing<Accuracy: PerThing>(
-		compute: ElectionCompute,
-	) -> Option<ElectionResultT<T>>
-	where
-		Accuracy: sp_std::ops::Mul<ExtendedBalance, Output = ExtendedBalance>,
-		ExtendedBalance: From<<Accuracy as PerThing>::Inner>,
-	{
-		if let Some(phragmen_result) = Self::do_phragmen::<Accuracy>() {
+	fn do_on_chain_phragmen() -> Option<ElectionResult<T::AccountId, BalanceOf<T>>> {
+		if let Some(phragmen_result) = Self::do_phragmen::<ChainAccuracy>(0) {
 			let elected_stashes = phragmen_result
 				.winners
 				.iter()
@@ -3045,8 +3052,14 @@ impl<T: Trait> Module<T> {
 					Self::power_of(s) as _
 				});
 
-			let (supports, _) =
-				build_support_map::<T::AccountId>(&elected_stashes, &staked_assignments);
+			let supports = build_support_map::<T::AccountId>(&elected_stashes, &staked_assignments)
+				.map_err(|_| {
+					log!(
+						error,
+						"💸 on-chain phragmen is failing due to a problem in the result. This must be a bug."
+					)
+				})
+				.ok()?;
 
 			// collect exposures
 			let exposures = Self::collect_exposure(supports);
@@ -3058,7 +3071,7 @@ impl<T: Trait> Module<T> {
 			Some(ElectionResultT::<T> {
 				elected_stashes,
 				exposures,
-				compute,
+				compute: ElectionCompute::OnChain,
 			})
 		} else {
 			// There were not enough candidates for even our minimal level of functionality. This is
@@ -3072,10 +3085,14 @@ impl<T: Trait> Module<T> {
 	/// Execute phragmen election and return the new results. No post-processing is applied and the
 	/// raw edge weights are returned.
 	///
-	/// Self votes are added and nominations before the most recent slashing span are reaped.
+	/// Self votes are added and nominations before the most recent slashing span are ignored.
 	///
 	/// No storage item is updated.
-	fn do_phragmen<Accuracy: PerThing>() -> Option<PrimitiveElectionResult<T::AccountId, Accuracy>>
+	pub fn do_phragmen<Accuracy: PerThing>(
+		iterations: usize,
+	) -> Option<PrimitiveElectionResult<T::AccountId, Accuracy>>
+	where
+		ExtendedBalance: From<InnerOf<Accuracy>>,
 	{
 		let mut all_nominators: Vec<(T::AccountId, VoteWeight, Vec<T::AccountId>)> = vec![];
 		let mut all_validators = vec![];
@@ -3111,12 +3128,24 @@ impl<T: Trait> Module<T> {
 			(n, s, ns)
 		}));
 
-		seq_phragmen::<_, Accuracy>(
-			Self::validator_count() as usize,
-			Self::minimum_validator_count().max(1) as usize,
-			all_validators,
-			all_nominators,
-		)
+		if all_validators.len() < Self::minimum_validator_count().max(1) as usize {
+			// If we don't have enough candidates, nothing to do.
+			log!(
+				error,
+				"💸 Chain does not have enough staking candidates to operate. Era {:?}.",
+				Self::current_era()
+			);
+			None
+		} else {
+			seq_phragmen::<_, Accuracy>(
+				Self::validator_count() as usize,
+				all_validators,
+				all_nominators,
+				Some((iterations, 0)), // exactly run `iterations` rounds.
+			)
+			.map_err(|err| log!(error, "Call to seq-phragmen failed due to {}", err))
+			.ok()
+		}
 	}
 
 	/// Consume a set of [`Supports`] from [`sp_npos_elections`] and collect them into a [`Exposure`]
@@ -3746,18 +3775,18 @@ pub enum ElectionStatus<BlockNumber> {
 	Open(BlockNumber),
 }
 impl<BlockNumber: PartialEq> ElectionStatus<BlockNumber> {
-	fn is_open_at(&self, n: BlockNumber) -> bool {
+	pub fn is_open_at(&self, n: BlockNumber) -> bool {
 		*self == Self::Open(n)
 	}
 
-	fn is_closed(&self) -> bool {
+	pub fn is_closed(&self) -> bool {
 		match self {
 			Self::Closed => true,
 			_ => false,
 		}
 	}
 
-	fn is_open(&self) -> bool {
+	pub fn is_open(&self) -> bool {
 		!self.is_closed()
 	}
 }

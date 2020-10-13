@@ -1880,7 +1880,7 @@ fn bond_with_duplicate_vote_should_be_ignored_by_npos_election() {
 			let sp_npos_elections::ElectionResult {
 				winners,
 				assignments,
-			} = Staking::do_phragmen::<Perbill>().unwrap();
+			} = Staking::do_phragmen::<Perbill>(0).unwrap();
 			let winners = sp_npos_elections::to_without_backing(winners);
 
 			assert_eq!(winners, vec![31, 21]);
@@ -1958,7 +1958,7 @@ fn bond_with_duplicate_vote_should_be_ignored_by_npos_election_elected() {
 			let sp_npos_elections::ElectionResult {
 				winners,
 				assignments,
-			} = Staking::do_phragmen::<Perbill>().unwrap();
+			} = Staking::do_phragmen::<Perbill>(0).unwrap();
 
 			let winners = sp_npos_elections::to_without_backing(winners);
 			assert_eq!(winners, vec![21, 11]);

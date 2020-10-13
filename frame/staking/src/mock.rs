@@ -277,6 +277,9 @@ impl pallet_timestamp::Trait for Test {
 	type WeightInfo = ();
 }
 
+parameter_types! {
+	pub const MaxLocks: u32 = 1024;
+}
 impl darwinia_balances::Trait<RingInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
@@ -284,7 +287,7 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
-	type MaxLocks = ();
+	type MaxLocks = MaxLocks;
 	type OtherCurrencies = ();
 	type WeightInfo = ();
 }
@@ -295,7 +298,7 @@ impl darwinia_balances::Trait<KtonInstance> for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
-	type MaxLocks = ();
+	type MaxLocks = MaxLocks;
 	type OtherCurrencies = ();
 	type WeightInfo = ();
 }
@@ -965,9 +968,9 @@ pub(crate) fn horrible_npos_solution(
 	// Ensure that this result is worse than seq-phragmen. Otherwise, it should not have been used
 	// for testing.
 	let score = {
-		let (_, _, better_score) = prepare_submission_with(true, 0, |_| {});
+		let (_, _, better_score) = prepare_submission_with(true, true, 0, |_| {});
 
-		let support = build_support_map::<AccountId>(&winners, &staked_assignment).0;
+		let support = build_support_map::<AccountId>(&winners, &staked_assignment).unwrap();
 		let score = evaluate_support(&support);
 
 		assert!(sp_npos_elections::is_score_better::<Perbill>(
@@ -1017,9 +1020,13 @@ pub(crate) fn horrible_npos_solution(
 	(compact, winners, score)
 }
 
-// Note: this should always logically reproduce [`offchain_election::prepare_submission`], yet we
-// cannot do it since we want to have `tweak` injected into the process.
+/// Note: this should always logically reproduce [`offchain_election::prepare_submission`], yet we
+/// cannot do it since we want to have `tweak` injected into the process.
+///
+/// If the input is being tweaked in a way that the score cannot be compute accurately,
+/// `compute_real_score` can be set to true. In this case a `Default` score is returned.
 pub(crate) fn prepare_submission_with(
+	compute_real_score: bool,
 	do_reduce: bool,
 	iterations: usize,
 	tweak: impl FnOnce(&mut Vec<StakedAssignment<AccountId>>),
@@ -1028,22 +1035,13 @@ pub(crate) fn prepare_submission_with(
 	let sp_npos_elections::ElectionResult {
 		winners,
 		assignments,
-	} = Staking::do_phragmen::<OffchainAccuracy>().unwrap();
+	} = Staking::do_phragmen::<OffchainAccuracy>(iterations).unwrap();
 	let winners = sp_npos_elections::to_without_backing(winners);
 
-	let stake_of = |who: &AccountId| -> VoteWeight { Staking::power_of(&who) as _ };
-
-	let mut staked = sp_npos_elections::assignment_ratio_to_staked(assignments, stake_of);
-	let (mut support_map, _) = build_support_map::<AccountId>(&winners, &staked);
-
-	if iterations > 0 {
-		sp_npos_elections::balance_solution(
-			&mut staked,
-			&mut support_map,
-			Zero::zero(),
-			iterations,
-		);
-	}
+	let mut staked = sp_npos_elections::assignment_ratio_to_staked(
+		assignments,
+		Staking::slashable_balance_of_vote_weight,
+	);
 
 	// apply custom tweaks. awesome for testing.
 	tweak(&mut staked);
@@ -1077,15 +1075,17 @@ pub(crate) fn prepare_submission_with(
 	let assignments_reduced = sp_npos_elections::assignment_staked_to_ratio(staked);
 
 	// re-compute score by converting, yet again, into staked type
-	let score = {
-		let staked =
-			sp_npos_elections::assignment_ratio_to_staked(assignments_reduced.clone(), |s| {
-				Staking::power_of(s) as _
-			});
+	let score = if compute_real_score {
+		let staked = sp_npos_elections::assignment_ratio_to_staked(
+			assignments_reduced.clone(),
+			Staking::slashable_balance_of_vote_weight,
+		);
 
-		let (support_map, _) =
-			build_support_map::<AccountId>(winners.as_slice(), staked.as_slice());
+		let support_map =
+			build_support_map::<AccountId>(winners.as_slice(), staked.as_slice()).unwrap();
 		evaluate_support::<AccountId>(&support_map)
+	} else {
+		Default::default()
 	};
 
 	let compact =
