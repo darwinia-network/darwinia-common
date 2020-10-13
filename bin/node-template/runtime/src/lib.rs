@@ -819,7 +819,7 @@ impl darwinia_elections_phragmen::Trait for Runtime {
 	type DesiredMembers = DesiredMembers;
 	type DesiredRunnersUp = DesiredRunnersUp;
 	type TermDuration = TermDuration;
-	type WeightInfo = ();
+	type WeightInfo = weights::darwinia_elections_phragmen::WeightInfo;
 }
 
 type EnsureRootOrMoreThanHalfCouncil = EnsureOneOf<
