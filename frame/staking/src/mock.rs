@@ -164,6 +164,7 @@ parameter_types! {
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
 	pub const UnsignedPriority: u64 = 1 << 20;
 	pub const MinSolutionScoreBump: Perbill = Perbill::zero();
+	pub const OffchainSolutionWeightLimit: Weight = MaximumBlockWeight::get();
 	pub const Cap: Balance = CAP;
 	pub const TotalPower: Power = TOTAL_POWER;
 }
@@ -184,6 +185,7 @@ impl Trait for Test {
 	type MinSolutionScoreBump = MinSolutionScoreBump;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
 	type UnsignedPriority = UnsignedPriority;
+	type OffchainSolutionWeightLimit = OffchainSolutionWeightLimit;
 	type RingCurrency = Ring;
 	type RingRewardRemainder = RingRewardRemainderMock;
 	type RingSlash = ();
@@ -198,7 +200,7 @@ impl Trait for Test {
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
-	pub const MaximumBlockWeight: Weight = 1024;
+	pub const MaximumBlockWeight: Weight = frame_support::weights::constants::WEIGHT_PER_SECOND * 2;
 	pub const MaximumBlockLength: u32 = 2 * 1024;
 	pub const AvailableBlockRatio: Perbill = Perbill::one();
 }
@@ -1038,10 +1040,9 @@ pub(crate) fn prepare_submission_with(
 	} = Staking::do_phragmen::<OffchainAccuracy>(iterations).unwrap();
 	let winners = sp_npos_elections::to_without_backing(winners);
 
-	let mut staked = sp_npos_elections::assignment_ratio_to_staked(
-		assignments,
-		Staking::slashable_balance_of_vote_weight,
-	);
+	let mut staked = sp_npos_elections::assignment_ratio_to_staked(assignments, |stash| {
+		Staking::power_of(stash) as _
+	});
 
 	// apply custom tweaks. awesome for testing.
 	tweak(&mut staked);
@@ -1076,10 +1077,10 @@ pub(crate) fn prepare_submission_with(
 
 	// re-compute score by converting, yet again, into staked type
 	let score = if compute_real_score {
-		let staked = sp_npos_elections::assignment_ratio_to_staked(
-			assignments_reduced.clone(),
-			Staking::slashable_balance_of_vote_weight,
-		);
+		let staked =
+			sp_npos_elections::assignment_ratio_to_staked(assignments_reduced.clone(), |stash| {
+				Staking::power_of(stash) as _
+			});
 
 		let support_map =
 			build_support_map::<AccountId>(winners.as_slice(), staked.as_slice()).unwrap();

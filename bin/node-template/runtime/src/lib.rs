@@ -588,6 +588,9 @@ parameter_types! {
 	pub MinSolutionScoreBump: Perbill = Perbill::from_rational_approximation(5u32, 10_000);
 	pub const MaxNominatorRewardedPerValidator: u32 = 128;
 	pub const StakingUnsignedPriority: TransactionPriority = TransactionPriority::max_value() / 2;
+	pub OffchainSolutionWeightLimit: Weight = MaximumExtrinsicWeight::get()
+		.saturating_sub(BlockExecutionWeight::get())
+		.saturating_sub(ExtrinsicBaseWeight::get());
 	pub const Cap: Balance = CAP;
 	pub const TotalPower: Power = TOTAL_POWER;
 }
@@ -609,6 +612,9 @@ impl darwinia_staking::Trait for Runtime {
 	type MinSolutionScoreBump = MinSolutionScoreBump;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
 	type UnsignedPriority = StakingUnsignedPriority;
+	// The unsigned solution weight targeted by the OCW. We set it to the maximum possible value of
+	// a single extrinsic.
+	type OffchainSolutionWeightLimit = OffchainSolutionWeightLimit;
 	type RingCurrency = Ring;
 	type RingRewardRemainder = Treasury;
 	// send the slashed funds to the treasury.

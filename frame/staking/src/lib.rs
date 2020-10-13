@@ -351,10 +351,7 @@ use frame_support::{
 		Currency, EnsureOrigin, EstimateNextNewSession, ExistenceRequirement::KeepAlive, Get,
 		Imbalance, OnUnbalanced, UnixTime,
 	},
-	weights::{
-		constants::{WEIGHT_PER_MICROS, WEIGHT_PER_NANOS},
-		Weight,
-	},
+	weights::{constants::WEIGHT_PER_MICROS, Weight},
 };
 use frame_system::{ensure_none, ensure_root, ensure_signed, offchain::SendTransactionTypes};
 use sp_npos_elections::{
@@ -484,6 +481,13 @@ pub trait Trait: frame_system::Trait + SendTransactionTypes<Call<Self>> {
 	/// This is exposed so that it can be tuned for particular runtime, when
 	/// multiple pallets send unsigned transactions.
 	type UnsignedPriority: Get<TransactionPriority>;
+
+	/// Maximum weight that the unsigned transaction can have.
+	///
+	/// Chose this value with care. On one hand, it should be as high as possible, so the solution
+	/// can contain as many nominators/validators as possible. On the other hand, it should be small
+	/// enough to fit in the block.
+	type OffchainSolutionWeightLimit: Get<Weight>;
 
 	/// The *RING* currency.
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
@@ -1054,15 +1058,15 @@ decl_module! {
 				let offchain_status = set_check_offchain_execution_status::<T>(now);
 				if let Err(why) = offchain_status {
 					log!(
-						debug,
-						"skipping offchain worker in open election window due to [{}]",
+						warn,
+						"💸 skipping offchain worker in open election window due to [{}]",
 						why
 					);
 				} else {
 					if let Err(e) = compute_offchain_election::<T>() {
 						log!(error, "💸 Error in election offchain worker: {:?}", e);
 					} else {
-						log!(debug, "Executed offchain worker thread without errors.");
+						log!(debug, "💸 Executed offchain worker thread without errors.");
 					}
 				}
 
@@ -2101,7 +2105,7 @@ decl_module! {
 		/// transaction in the block.
 		///
 		/// # <weight>
-		/// See `crate::weight` module.
+		/// See [`submit_election_solution`].
 		/// # </weight>
 		#[weight = T::WeightInfo::submit_solution_better(
 			size.validators.into(),
@@ -2131,6 +2135,7 @@ decl_module! {
 				effectively depriving the validators from their authoring reward. Hence, this panic
 				is expected."
 			);
+
 			Ok(adjustments)
 		}
 	}
@@ -2655,6 +2660,19 @@ impl<T: Trait> Module<T> {
 			<Error<T>>::OffchainElectionBogusWinnerCount,
 		);
 
+		// Check that the number of presented winners is sane. Most often we have more candidates
+		// than we need. Then it should be `Self::validator_count()`. Else it should be all the
+		// candidates.
+		let snapshot_validators_length = <SnapshotValidators<T>>::decode_len()
+			.map(|l| l as u32)
+			.ok_or_else(|| Error::<T>::SnapshotUnavailable)?;
+
+		// size of the solution must be correct.
+		ensure!(
+			snapshot_validators_length == u32::from(election_size.validators),
+			Error::<T>::OffchainElectionBogusElectionSize,
+		);
+
 		// check the winner length only here and when we know the length of the snapshot validators
 		// length.
 		let desired_winners = Self::validator_count().min(snapshot_validators_length);
@@ -3038,7 +3056,7 @@ impl<T: Trait> Module<T> {
 	/// `PrimitiveElectionResult` into `ElectionResult`.
 	///
 	/// No storage item is updated.
-	fn do_on_chain_phragmen() -> Option<ElectionResult<T::AccountId, BalanceOf<T>>> {
+	fn do_on_chain_phragmen() -> Option<ElectionResultT<T>> {
 		if let Some(phragmen_result) = Self::do_phragmen::<ChainAccuracy>(0) {
 			let elected_stashes = phragmen_result
 				.winners
@@ -3573,7 +3591,7 @@ impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
 				let invalid = to_invalid(error_with_post_info);
 				log!(
 					debug,
-					"validate unsigned pre dispatch checks failed due to error #{:?}.",
+					"💸 validate unsigned pre dispatch checks failed due to error #{:?}.",
 					invalid,
 				);
 				return invalid.into();
@@ -3581,7 +3599,7 @@ impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
 
 			log!(
 				debug,
-				"validateUnsigned succeeded for a solution at era {}.",
+				"💸 validateUnsigned succeeded for a solution at era {}.",
 				era
 			);
 
@@ -4120,7 +4138,7 @@ pub struct UnappliedSlash<AccountId, RingBalance, KtonBalance> {
 /// Note that these values must reflect the __total__ number, not only those that are present in the
 /// solution. In short, these should be the same size as the size of the values dumped in
 /// `SnapshotValidators` and `SnapshotNominators`.
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, Default)]
+#[derive(PartialEq, Eq, Clone, Copy, Encode, Decode, RuntimeDebug, Default)]
 pub struct ElectionSize {
 	/// Number of validators in the snapshot of the current election round.
 	#[codec(compact)]

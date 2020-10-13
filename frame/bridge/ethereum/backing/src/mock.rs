@@ -194,6 +194,7 @@ macro_rules! decl_tests {
 			type MinSolutionScoreBump = ();
 			type MaxNominatorRewardedPerValidator = ();
 			type UnsignedPriority = ();
+			type OffchainSolutionWeightLimit = ();
 			type RingCurrency = Ring;
 			type RingRewardRemainder = ();
 			type RingSlash = ();
