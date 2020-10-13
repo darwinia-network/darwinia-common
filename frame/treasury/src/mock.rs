@@ -201,7 +201,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	.assimilate_storage(&mut t)
 	.unwrap();
 	GenesisConfig::default()
-		.assimilate_storage::<Test>(&mut t)
+		.assimilate_storage::<Test, _>(&mut t)
 		.unwrap();
 
 	t.into()
