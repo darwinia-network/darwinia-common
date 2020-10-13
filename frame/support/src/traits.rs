@@ -7,7 +7,7 @@ use core::fmt::Debug;
 use codec::FullCodec;
 use impl_trait_for_tuples::impl_for_tuples;
 // --- substrate ---
-use frame_support::traits::{Get, Currency, TryDrop};
+use frame_support::traits::{Currency, Get, TryDrop};
 use sp_runtime::{DispatchError, DispatchResult};
 use sp_std::prelude::*;
 // --- darwinia ---
