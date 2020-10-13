@@ -416,6 +416,7 @@ use impls::*;
 // frontier
 use frame_evm::{Account as EVMAccount, FeeCalculator, HashedAddressMapping, EnsureAddressTruncated};
 use frontier_rpc_primitives::{TransactionStatus};
+use frame_evm::AddressMapping;
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
@@ -1141,11 +1142,23 @@ parameter_types! {
 	pub const ChainId: u64 = 43;
 }
 
+pub struct ConcatAddressMapping;
+
+impl AddressMapping<AccountId> for ConcatAddressMapping {
+	fn into_account_id(address: H160) -> AccountId {
+		let suffix = &BlakeTwo256::hash(&address[..])[0..12];
+
+		let mut data = [0u8; 32];
+		data[0..20].copy_from_slice(&address[..]);
+		data[20..32].copy_from_slice(suffix);
+		AccountId::from(data)
+	}
+}
 impl frame_evm::Trait for Runtime {
 	type FeeCalculator = FixedGasPrice;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
-	type AddressMapping = HashedAddressMapping<BlakeTwo256>;
+	type AddressMapping = ConcatAddressMapping;
 	type Currency = Balances;
 	type Event = Event;
 	type Precompiles = ();
