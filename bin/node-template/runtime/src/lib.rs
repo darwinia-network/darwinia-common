@@ -388,7 +388,7 @@ use sp_core::{
 	crypto::{KeyTypeId, Public},
 	u32_trait::{_1, _2, _3, _5},
 	OpaqueMetadata,
-	U256, H160, H256,
+	U256, H160, H256, Hasher,
 };
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
@@ -414,9 +414,14 @@ use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispa
 use impls::*;
 
 // frontier
-use frame_evm::{Account as EVMAccount, FeeCalculator, HashedAddressMapping, EnsureAddressTruncated};
+use frame_evm::{Account as EVMAccount, FeeCalculator, HashedAddressMapping, EnsureAddressTruncated,
+				precompiles::Precompile,
+				ExitReason, ExitSucceed, ExitError, ExitRevert, ExitFatal,
+	};
 use frontier_rpc_primitives::{TransactionStatus};
 use frame_evm::AddressMapping;
+use darwinia_balances::Error::KeepAlive;
+use frame_support::traits::ExistenceRequirement;
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
@@ -1154,6 +1159,68 @@ impl AddressMapping<AccountId> for ConcatAddressMapping {
 		AccountId::from(data)
 	}
 }
+
+fn ensure_linear_cost(
+	target_gas: Option<usize>,
+	len: usize,
+	base: usize,
+	word: usize
+) -> Result<usize, ExitError> {
+	let cost = base.checked_add(
+		word.checked_mul(len.saturating_add(31) / 32).ok_or(ExitError::OutOfGas)?
+	).ok_or(ExitError::OutOfGas)?;
+
+	if let Some(target_gas) = target_gas {
+		if cost > target_gas {
+			return Err(ExitError::OutOfGas)
+		}
+	}
+
+	Ok(cost)
+}
+
+/// The TransferFromEvm precompile.
+pub struct TransferBack;
+
+impl Precompile for TransferBack {
+	fn execute(
+		input: &[u8],
+		target_gas: Option<usize>,
+	) -> core::result::Result<(ExitSucceed, Vec<u8>, usize), ExitError> {
+		if input.len() != 68 {
+			Err(ExitError::Other("InputDataLenErr"))
+		} else {
+			let cost = ensure_linear_cost(target_gas, input.len(), 60, 12)?;
+
+			let from = ConcatAddressMapping::into_account_id(H160::from_slice(&input[0..20]));
+
+			let mut to_data = [0u8; 32];
+			to_data.copy_from_slice(&input[20..52]);
+			let to = AccountId::from(to_data);
+
+			let mut value_data = [0u8; 16];
+			value_data.copy_from_slice(&input[52..68]);
+			let value = u128::from_be_bytes(value_data);
+
+			let result = <Balances as frame_support::traits::Currency<_>>::transfer(&from, &to, value, ExistenceRequirement::KeepAlive);
+			match result {
+				Ok(()) => Ok((ExitSucceed::Returned, vec![], cost)),
+				Err(error) => {
+					match error {
+						sp_runtime::DispatchError::BadOrigin => Err(ExitError::Other("BadOrigin")),
+						sp_runtime::DispatchError::CannotLookup => Err(ExitError::Other("CannotLookup")),
+						sp_runtime::DispatchError::Other(message) => Err(ExitError::Other(message)),
+						sp_runtime::DispatchError::Module { message, .. } => {
+							Err(ExitError::Other(message.unwrap()))
+						}
+					}
+
+				}
+			}
+		}
+	}
+}
+
 impl frame_evm::Trait for Runtime {
 	type FeeCalculator = FixedGasPrice;
 	type CallOrigin = EnsureAddressTruncated;
@@ -1161,7 +1228,9 @@ impl frame_evm::Trait for Runtime {
 	type AddressMapping = ConcatAddressMapping;
 	type Currency = Balances;
 	type Event = Event;
-	type Precompiles = ();
+	type Precompiles = (
+		TransferBack,
+	);
 	type ChainId = ChainId;
 }
 
