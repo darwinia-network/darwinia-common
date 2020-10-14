@@ -14,8 +14,7 @@
 #![warn(missing_docs)]
 
 // --- substrate ---
-pub use jsonrpc_pubsub::manager::SubscriptionManager;
-pub use sc_rpc_api::DenyUnsafe;
+pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
 
 // --- std ---
 use std::sync::Arc;
@@ -50,7 +49,7 @@ pub struct GrandpaDeps {
 	/// Receives notifications about justification events from Grandpa.
 	pub justification_stream: sc_finality_grandpa::GrandpaJustificationStream<Block>,
 	/// Subscription manager to keep track of pubsub subscribers.
-	pub subscriptions: jsonrpc_pubsub::manager::SubscriptionManager,
+	pub subscription_executor: sc_rpc::SubscriptionTaskExecutor,
 }
 
 /// Full client dependencies.
@@ -62,7 +61,7 @@ pub struct FullDeps<C, P, SC> {
 	/// The SelectChain Strategy
 	pub select_chain: SC,
 	/// Whether to deny unsafe calls
-	pub deny_unsafe: sc_rpc_api::DenyUnsafe,
+	pub deny_unsafe: sc_rpc::DenyUnsafe,
 	/// BABE specific dependencies.
 	pub babe: BabeDeps,
 	/// GRANDPA specific dependencies.
@@ -146,14 +145,14 @@ where
 			shared_voter_state,
 			shared_authority_set,
 			justification_stream,
-			subscriptions,
+			subscription_executor,
 		} = grandpa;
 		io.extend_with(sc_finality_grandpa_rpc::GrandpaApi::to_delegate(
 			GrandpaRpcHandler::new(
 				shared_authority_set,
 				shared_voter_state,
 				justification_stream,
-				subscriptions,
+				subscription_executor,
 			),
 		));
 	}

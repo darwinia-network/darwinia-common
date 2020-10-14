@@ -35,7 +35,8 @@ use sp_trie::PrefixedMemoryDB;
 use substrate_prometheus_endpoint::Registry;
 // --- darwinia ---
 use crate::rpc::{
-	self, BabeDeps, DenyUnsafe, FullDeps, GrandpaDeps, LightDeps, RpcExtension, SubscriptionManager,
+	self, BabeDeps, DenyUnsafe, FullDeps, GrandpaDeps, LightDeps, RpcExtension,
+	SubscriptionTaskExecutor,
 };
 use node_template_runtime::{
 	opaque::Block,
@@ -151,7 +152,7 @@ fn new_partial<RuntimeApi, Executor>(
 		DefaultImportQueue<Block, FullClient<RuntimeApi, Executor>>,
 		FullPool<Block, FullClient<RuntimeApi, Executor>>,
 		(
-			impl Fn(DenyUnsafe, SubscriptionManager) -> RpcExtension,
+			impl Fn(DenyUnsafe, SubscriptionTaskExecutor) -> RpcExtension,
 			(
 				BabeBlockImport<
 					Block,
@@ -225,7 +226,7 @@ where
 		let transaction_pool = transaction_pool.clone();
 		let select_chain = select_chain.clone();
 
-		move |deny_unsafe, subscriptions| -> RpcExtension {
+		move |deny_unsafe, subscription_executor| -> RpcExtension {
 			let deps = FullDeps {
 				client: client.clone(),
 				pool: transaction_pool.clone(),
@@ -240,7 +241,7 @@ where
 					shared_voter_state: shared_voter_state.clone(),
 					shared_authority_set: shared_authority_set.clone(),
 					justification_stream: justification_stream.clone(),
-					subscriptions,
+					subscription_executor,
 				},
 			};
 
@@ -511,7 +512,7 @@ where
 /// Builds a new object suitable for chain operations.
 #[cfg(feature = "full-node")]
 pub fn new_chain_ops<Runtime, Dispatch>(
-	mut config: Configuration,
+	config: &mut Configuration,
 ) -> Result<
 	(
 		Arc<FullClient<Runtime, Dispatch>>,
@@ -534,7 +535,7 @@ where
 		import_queue,
 		task_manager,
 		..
-	} = new_partial::<Runtime, Dispatch>(&mut config)?;
+	} = new_partial::<Runtime, Dispatch>(config)?;
 
 	Ok((client, backend, import_queue, task_manager))
 }
