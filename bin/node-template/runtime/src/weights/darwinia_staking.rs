@@ -1,4 +1,4 @@
-//! Weights for pallet_staking
+//! Weights for darwinia_staking
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 2.0.0
 //! DATE: 2020-09-30, STEPS: [50], REPEAT: 20, LOW RANGE: [], HIGH RANGE: []
 

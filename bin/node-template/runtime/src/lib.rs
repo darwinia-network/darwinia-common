@@ -461,7 +461,7 @@ impl frame_system::Trait for Runtime {
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
-	type SystemWeightInfo = weights::frame_system::WeightInfo;
+	type SystemWeightInfo = weights::frame_system::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -475,7 +475,7 @@ impl pallet_scheduler::Trait for Runtime {
 	type MaximumWeight = MaximumBlockWeight;
 	type ScheduleOrigin = EnsureRoot<AccountId>;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
-	type WeightInfo = weights::pallet_scheduler::WeightInfo;
+	type WeightInfo = weights::pallet_scheduler::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -507,7 +507,7 @@ impl pallet_timestamp::Trait for Runtime {
 	type Moment = Moment;
 	type OnTimestampSet = Babe;
 	type MinimumPeriod = MinimumPeriod;
-	type WeightInfo = weights::pallet_timestamp::WeightInfo;
+	type WeightInfo = weights::pallet_timestamp::WeightInfo<Runtime>;
 }
 
 type RingInstance = darwinia_balances::Instance0;
@@ -524,7 +524,7 @@ impl darwinia_balances::Trait<RingInstance> for Runtime {
 	type AccountStore = System;
 	type MaxLocks = MaxLocks;
 	type OtherCurrencies = (Kton,);
-	type WeightInfo = weights::darwinia_balances::WeightInfo;
+	type WeightInfo = weights::darwinia_balances::WeightInfo<Runtime>;
 }
 type KtonInstance = darwinia_balances::Instance1;
 impl darwinia_balances::Trait<KtonInstance> for Runtime {
@@ -536,7 +536,7 @@ impl darwinia_balances::Trait<KtonInstance> for Runtime {
 	type AccountStore = System;
 	type MaxLocks = MaxLocks;
 	type OtherCurrencies = (Ring,);
-	type WeightInfo = weights::darwinia_balances::WeightInfo;
+	type WeightInfo = weights::darwinia_balances::WeightInfo<Runtime>;
 }
 
 /// Parameterized slow adjusting fee updated based on
@@ -628,7 +628,7 @@ impl darwinia_staking::Trait for Runtime {
 	type KtonReward = ();
 	type Cap = Cap;
 	type TotalPower = TotalPower;
-	type WeightInfo = weights::pallet_staking::WeightInfo;
+	type WeightInfo = weights::darwinia_staking::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -667,7 +667,7 @@ impl pallet_session::Trait for Runtime {
 	type SessionHandler = <SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = SessionKeys;
 	type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
-	type WeightInfo = weights::pallet_session::WeightInfo;
+	type WeightInfo = weights::pallet_session::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -705,7 +705,7 @@ impl pallet_im_online::Trait for Runtime {
 	type SessionDuration = SessionDuration;
 	type ReportUnresponsiveness = Offences;
 	type UnsignedPriority = ImOnlineUnsignedPriority;
-	type WeightInfo = weights::pallet_im_online::WeightInfo;
+	type WeightInfo = weights::pallet_im_online::WeightInfo<Runtime>;
 }
 
 impl pallet_authority_discovery::Trait for Runtime {}
@@ -773,7 +773,7 @@ impl darwinia_democracy::Trait for Runtime {
 	type MaxVotes = MaxVotes;
 	type OperationalPreimageOrigin = pallet_collective::EnsureMember<AccountId, CouncilCollective>;
 	type MaxProposals = MaxProposals;
-	type WeightInfo = weights::darwinia_democracy::WeightInfo;
+	type WeightInfo = weights::darwinia_democracy::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -795,7 +795,7 @@ impl pallet_collective::Trait<CouncilCollective> for Runtime {
 	type MaxProposals = CouncilMaxProposals;
 	type MaxMembers = CouncilMaxMembers;
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
-	type WeightInfo = weights::pallet_collective::WeightInfo;
+	type WeightInfo = weights::pallet_collective::WeightInfo<Runtime>;
 }
 type TechnicalCollective = pallet_collective::Instance1;
 impl pallet_collective::Trait<TechnicalCollective> for Runtime {
@@ -806,7 +806,7 @@ impl pallet_collective::Trait<TechnicalCollective> for Runtime {
 	type MaxProposals = TechnicalMaxProposals;
 	type MaxMembers = TechnicalMaxMembers;
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
-	type WeightInfo = weights::pallet_collective::WeightInfo;
+	type WeightInfo = weights::pallet_collective::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -835,7 +835,7 @@ impl darwinia_elections_phragmen::Trait for Runtime {
 	type DesiredMembers = DesiredMembers;
 	type DesiredRunnersUp = DesiredRunnersUp;
 	type TermDuration = TermDuration;
-	type WeightInfo = weights::darwinia_elections_phragmen::WeightInfo;
+	type WeightInfo = weights::darwinia_elections_phragmen::WeightInfo<Runtime>;
 }
 
 type EnsureRootOrMoreThanHalfCouncil = EnsureOneOf<
@@ -904,7 +904,7 @@ impl darwinia_treasury::Trait for Runtime {
 	type BountyValueMinimum = BountyValueMinimum;
 	type RingBurnDestination = ();
 	type KtonBurnDestination = ();
-	type WeightInfo = weights::darwinia_treasury::WeightInfo;
+	type WeightInfo = weights::darwinia_treasury::WeightInfo<Runtime>;
 }
 
 parameter_types! {
