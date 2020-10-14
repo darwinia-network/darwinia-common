@@ -41,19 +41,21 @@ pub struct BabeDeps {
 }
 
 /// Extra dependencies for GRANDPA
-pub struct GrandpaDeps {
+pub struct GrandpaDeps<B> {
 	/// Voting round info.
 	pub shared_voter_state: sc_finality_grandpa::SharedVoterState,
 	/// Authority set info.
 	pub shared_authority_set: sc_finality_grandpa::SharedAuthoritySet<Hash, BlockNumber>,
 	/// Receives notifications about justification events from Grandpa.
 	pub justification_stream: sc_finality_grandpa::GrandpaJustificationStream<Block>,
-	/// Subscription manager to keep track of pubsub subscribers.
+	/// Executor to drive the subscription manager in the Grandpa RPC handler.
 	pub subscription_executor: sc_rpc::SubscriptionTaskExecutor,
+	/// Finality proof provider.
+	pub finality_provider: Arc<sc_finality_grandpa::FinalityProofProvider<B, Block>>,
 }
 
 /// Full client dependencies.
-pub struct FullDeps<C, P, SC> {
+pub struct FullDeps<C, P, SC, B> {
 	/// The client instance to use.
 	pub client: Arc<C>,
 	/// Transaction pool instance.
@@ -65,7 +67,7 @@ pub struct FullDeps<C, P, SC> {
 	/// BABE specific dependencies.
 	pub babe: BabeDeps,
 	/// GRANDPA specific dependencies.
-	pub grandpa: GrandpaDeps,
+	pub grandpa: GrandpaDeps<B>,
 }
 
 /// Light client extra dependencies.
@@ -81,7 +83,7 @@ pub struct LightDeps<C, F, P> {
 }
 
 /// Instantiate all RPC extensions.
-pub fn create_full<C, P, SC>(deps: FullDeps<C, P, SC>) -> RpcExtension
+pub fn create_full<C, P, SC, B>(deps: FullDeps<C, P, SC, B>) -> RpcExtension
 where
 	C: 'static + Send + Sync,
 	C: ProvideRuntimeApi<Block>,
@@ -96,6 +98,8 @@ where
 	C::Api: darwinia_staking_rpc::StakingRuntimeApi<Block, AccountId, Power>,
 	P: 'static + sp_transaction_pool::TransactionPool,
 	SC: 'static + sp_consensus::SelectChain<Block>,
+	B: 'static + Send + Sync + sc_client_api::Backend<Block>,
+	B::State: sc_client_api::StateBackend<sp_runtime::traits::HashFor<Block>>,
 {
 	// --- substrate ---
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
@@ -146,6 +150,7 @@ where
 			shared_authority_set,
 			justification_stream,
 			subscription_executor,
+			finality_provider,
 		} = grandpa;
 		io.extend_with(sc_finality_grandpa_rpc::GrandpaApi::to_delegate(
 			GrandpaRpcHandler::new(
@@ -153,6 +158,7 @@ where
 				shared_voter_state,
 				justification_stream,
 				subscription_executor,
+				finality_provider,
 			),
 		));
 	}
