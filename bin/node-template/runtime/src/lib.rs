@@ -1203,22 +1203,24 @@ impl Precompile for TransferBack {
 		input: &[u8],
 		target_gas: Option<usize>,
 	) -> core::result::Result<(ExitSucceed, Vec<u8>, usize), ExitError> {
-		if input.len() != 68 {
+		if input.len() != 0x80 {
 			Err(ExitError::Other("InputDataLenErr"))
 		} else {
 			let cost = ensure_linear_cost(target_gas, input.len(), 60, 12)?;
 
-			let from = ConcatAddressMapping::into_account_id(H160::from_slice(&input[0..20]));
+			let from = ConcatAddressMapping::into_account_id(H160::from_slice(&input[44..64]));
 
 			let mut to_data = [0u8; 32];
-			to_data.copy_from_slice(&input[20..52]);
+			to_data.copy_from_slice(&input[64..96]);
 			let to = AccountId::from(to_data);
 
 			let mut value_data = [0u8; 16];
-			value_data.copy_from_slice(&input[52..68]);
+			value_data.copy_from_slice(&input[112..128]);
 			let value = u128::from_be_bytes(value_data);
 
-			let result = <Balances as frame_support::traits::Currency<_>>::transfer(&from, &to, value, ExistenceRequirement::KeepAlive);
+			let result = <Ring as frame_support::traits::Currency<_>>::transfer(&from, &to, value, ExistenceRequirement::KeepAlive);
+			let free_balance = <Ring as frame_support::traits::Currency<_>>::free_balance(&from);
+
 			match result {
 				Ok(()) => Ok((ExitSucceed::Returned, vec![], cost)),
 				Err(error) => {
