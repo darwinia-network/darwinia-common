@@ -194,14 +194,16 @@ fn basic_setup_works() {
 				own_ring_balance: 1000,
 				own_kton_balance: 0,
 				own_power: Staking::power_of(&11),
+				// Allow error rate 1
 				total_power: Staking::power_of(&11)
-					+ Staking::currency_to_power(125, Staking::ring_pool()),
+					+ Staking::currency_to_power(125, Staking::ring_pool())
+					+ 1,
 				others: vec![IndividualExposure {
 					who: 101,
-					// expect 125, error rate 1
-					ring_balance: 124,
+					ring_balance: 125,
 					kton_balance: 0,
-					power: Staking::currency_to_power(125, Staking::ring_pool()),
+					// Allow error rate 1
+					power: Staking::currency_to_power(125, Staking::ring_pool()) + 1,
 				}]
 			}
 		);
@@ -212,13 +214,17 @@ fn basic_setup_works() {
 				own_ring_balance: 1000,
 				own_kton_balance: 0,
 				own_power: Staking::power_of(&21),
+				// Allow error rate 1
 				total_power: Staking::power_of(&21)
-					+ Staking::currency_to_power(375, Staking::ring_pool()),
+					+ Staking::currency_to_power(375, Staking::ring_pool())
+					- 1,
 				others: vec![IndividualExposure {
 					who: 101,
-					ring_balance: 375,
+					// Allow error rate 1
+					ring_balance: 375 - 1,
 					kton_balance: 0,
-					power: Staking::currency_to_power(375, Staking::ring_pool()),
+					// Allow error rate 1
+					power: Staking::currency_to_power(375, Staking::ring_pool()) - 1,
 				}]
 			}
 		);
@@ -1880,7 +1886,7 @@ fn bond_with_duplicate_vote_should_be_ignored_by_npos_election() {
 			let sp_npos_elections::ElectionResult {
 				winners,
 				assignments,
-			} = Staking::do_phragmen::<Perbill>().unwrap();
+			} = Staking::do_phragmen::<Perbill>(0).unwrap();
 			let winners = sp_npos_elections::to_without_backing(winners);
 
 			assert_eq!(winners, vec![31, 21]);
@@ -1958,7 +1964,7 @@ fn bond_with_duplicate_vote_should_be_ignored_by_npos_election_elected() {
 			let sp_npos_elections::ElectionResult {
 				winners,
 				assignments,
-			} = Staking::do_phragmen::<Perbill>().unwrap();
+			} = Staking::do_phragmen::<Perbill>(0).unwrap();
 
 			let winners = sp_npos_elections::to_without_backing(winners);
 			assert_eq!(winners, vec![21, 11]);
@@ -2390,8 +2396,7 @@ fn reporters_receive_their_slice() {
 				.others
 				.iter()
 				.fold(expo.own_ring_balance, |acc, i| acc + i.ring_balance);
-			// expect `initial_balance`, error rate 1
-			assert_eq!(total_ring, initial_balance - 1);
+			assert_eq!(total_ring, initial_balance);
 		}
 
 		on_offence_now(
@@ -2428,8 +2433,7 @@ fn subsequent_reports_in_same_span_pay_out_less() {
 				.others
 				.iter()
 				.fold(expo.own_ring_balance, |acc, i| acc + i.ring_balance);
-			// expect `initial_balance`, error rate 1
-			assert_eq!(total_ring, initial_balance - 1);
+			assert_eq!(total_ring, initial_balance);
 		}
 
 		on_offence_now(
@@ -2513,9 +2517,10 @@ fn invulnerables_are_not_slashed() {
 
 			// ensure that nominators were slashed as well.
 			for (initial_balance, other) in nominator_balances.into_iter().zip(exposure.others) {
-				assert_eq!(
+				assert_eq_error_rate!(
 					Ring::free_balance(&other.who),
 					initial_balance - (2 * other.ring_balance / 10),
+					1
 				);
 			}
 		});
@@ -3128,13 +3133,15 @@ fn slash_kicks_validators_not_nominators_and_disables_nominator_for_kicked_valid
 		let exposure_11 = Staking::eras_stakers(active_era(), &11);
 		let exposure_21 = Staking::eras_stakers(active_era(), &21);
 
-		assert_eq!(
+		assert_eq_error_rate!(
 			exposure_11.total_power,
-			Staking::currency_to_power(1000 + 125, Staking::ring_pool())
+			Staking::currency_to_power(1000 + 125, Staking::ring_pool()),
+			1
 		);
-		assert_eq!(
+		assert_eq_error_rate!(
 			exposure_21.total_power,
-			Staking::currency_to_power(1000 + 375, Staking::ring_pool())
+			Staking::currency_to_power(1000 + 375, Staking::ring_pool()),
+			1
 		);
 
 		on_offence_now(

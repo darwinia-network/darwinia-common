@@ -5,6 +5,7 @@ edition     = "2018"
 homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"
 name        = "darwinia-header-mmr"
+readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "1.0.0"
 
@@ -25,7 +26,7 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 
 [dev-dependencies]
 # crates
-serde_json = { version = "1.0.57" }
+serde_json = { version = "1.0.59" }
 # darwinia
 array-bytes = { path = "../../primitives/array-bytes" }
 # substrate

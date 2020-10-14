@@ -86,39 +86,104 @@ fn get_exec_name() -> Option<String> {
 		.and_then(|s| s.into_string().ok())
 }
 
+fn set_default_ss58_version(_spec: &Box<dyn sc_service::ChainSpec>) {
+	sp_core::crypto::set_default_ss58_version(Ss58AddressFormat::DarwiniaAccount);
+}
+
 /// Parse command line arguments into service configuration.
 pub fn run() -> sc_cli::Result<()> {
 	let cli = Cli::from_args();
 
-	fn set_default_ss58_version(_spec: &Box<dyn sc_service::ChainSpec>) {
-		let ss58_version = Ss58AddressFormat::PolkadotAccount;
-
-		sp_core::crypto::set_default_ss58_version(ss58_version);
-	};
-
 	match &cli.subcommand {
 		None => {
-			let runtime = Configuration::create_runner(cli)?;
-			let chain_spec = &runtime.config().chain_spec;
+			let runner = Configuration::create_runner(cli)?;
+			let chain_spec = &runner.config().chain_spec;
 
 			set_default_ss58_version(chain_spec);
 
-			runtime.run_node_until_exit(|config| match config.role {
+			runner.run_node_until_exit(|config| match config.role {
 				Role::Light => service::node_template_new_light(config),
 				_ => service::node_template_new_full(config).map(|(components, _)| components),
 			})
 		}
-		Some(Subcommand::Base(subcommand)) => {
-			let runtime = cli.create_runner(subcommand)?;
-			let chain_spec = &runtime.config().chain_spec;
+		Some(Subcommand::BuildSpec(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
+		}
+		// substrate 6804, #6999
+		// Some(Subcommand::BuildSyncSpec(cmd)) => {}
+		Some(Subcommand::CheckBlock(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			let chain_spec = &runner.config().chain_spec;
 
 			set_default_ss58_version(chain_spec);
 
-			runtime.run_subcommand(subcommand, |config| {
-				service::new_chain_ops::<
+			runner.async_run(|mut config| {
+				let (client, _, import_queue, task_manager) = service::new_chain_ops::<
 					service::node_template_runtime::RuntimeApi,
 					service::NodeTemplateExecutor,
-				>(config)
+				>(&mut config)?;
+				Ok((cmd.run(client, import_queue), task_manager))
+			})
+		}
+		Some(Subcommand::ExportBlocks(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			let chain_spec = &runner.config().chain_spec;
+
+			set_default_ss58_version(chain_spec);
+
+			runner.async_run(|mut config| {
+				let (client, _, _, task_manager) = service::new_chain_ops::<
+					service::node_template_runtime::RuntimeApi,
+					service::NodeTemplateExecutor,
+				>(&mut config)?;
+				Ok((cmd.run(client, config.database), task_manager))
+			})
+		}
+		Some(Subcommand::ExportState(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			let chain_spec = &runner.config().chain_spec;
+
+			set_default_ss58_version(chain_spec);
+
+			runner.async_run(|mut config| {
+				let (client, _, _, task_manager) = service::new_chain_ops::<
+					service::node_template_runtime::RuntimeApi,
+					service::NodeTemplateExecutor,
+				>(&mut config)?;
+				Ok((cmd.run(client, config.chain_spec), task_manager))
+			})
+		}
+		Some(Subcommand::ImportBlocks(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			let chain_spec = &runner.config().chain_spec;
+
+			set_default_ss58_version(chain_spec);
+
+			runner.async_run(|mut config| {
+				let (client, _, import_queue, task_manager) = service::new_chain_ops::<
+					service::node_template_runtime::RuntimeApi,
+					service::NodeTemplateExecutor,
+				>(&mut config)?;
+				Ok((cmd.run(client, import_queue), task_manager))
+			})
+		}
+		Some(Subcommand::PurgeChain(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			runner.sync_run(|config| cmd.run(config.database))
+		}
+		Some(Subcommand::Revert(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			let chain_spec = &runner.config().chain_spec;
+
+			set_default_ss58_version(chain_spec);
+
+			runner.async_run(|mut config| {
+				let (client, backend, _, task_manager) = service::new_chain_ops::<
+					service::node_template_runtime::RuntimeApi,
+					service::NodeTemplateExecutor,
+				>(&mut config)?;
+				Ok((cmd.run(client, backend), task_manager))
 			})
 		}
 		Some(Subcommand::Key(cmd)) => cmd.run(),

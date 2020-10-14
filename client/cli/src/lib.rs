@@ -84,6 +84,10 @@ pub struct Configuration {
 	/// Default is local.
 	prometheus_external: Option<bool>,
 
+	/// Specify IPC RPC server path
+	// #[structopt(long = "ipc-path", value_name = "PATH")]
+	ipc_path: Option<String>,
+
 	/// Specify HTTP RPC server TCP port.
 	rpc_port: Option<u16>,
 
@@ -265,6 +269,7 @@ impl Configuration {
 			quick_if_let!(cmd, self, ws_external);
 			quick_if_let!(cmd, self, unsafe_ws_external);
 			quick_if_let!(cmd, self, prometheus_external);
+			quick_if_let!(cmd, self, Some(ipc_path));
 			quick_if_let!(cmd, self, Some(rpc_port));
 			quick_if_let!(cmd, self, Some(ws_port));
 			quick_if_let!(cmd, self, Some(ws_max_connections));
@@ -666,7 +671,6 @@ impl DatabaseConfig {
 							.unwrap_or(origin_data_base_cache_size.unwrap_or(128)),
 					}
 				}
-				Database::SubDb => sc_service::config::DatabaseConfig::SubDb { path },
 				Database::ParityDb => sc_service::config::DatabaseConfig::ParityDb { path },
 			}
 		} else {
@@ -688,8 +692,6 @@ impl DatabaseConfig {
 enum Database {
 	// Facebooks RocksDB
 	RocksDb,
-	// Subdb. https://github.com/paritytech/subdb/
-	SubDb,
 	// ParityDb. https://github.com/paritytech/parity-db/
 	ParityDb,
 }

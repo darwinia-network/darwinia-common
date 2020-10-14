@@ -115,7 +115,7 @@ macro_rules! decl_tests {
 			type MaximumBlockLength = MaximumBlockLength;
 			type AvailableBlockRatio = AvailableBlockRatio;
 			type Version = ();
-			type ModuleToIndex = ();
+			type PalletInfo = ();
 			type AccountData = AccountData<Balance>;
 			type OnNewAccount = ();
 			type OnKilledAccount = ();
@@ -158,6 +158,7 @@ macro_rules! decl_tests {
 			type ExistentialDeposit = ();
 			type BalanceInfo = AccountData<Balance>;
 			type AccountStore = System;
+			type MaxLocks = ();
 			type OtherCurrencies = ();
 			type WeightInfo = ();
 		}
@@ -168,6 +169,7 @@ macro_rules! decl_tests {
 			type ExistentialDeposit = ();
 			type BalanceInfo = AccountData<Balance>;
 			type AccountStore = System;
+			type MaxLocks = ();
 			type OtherCurrencies = ();
 			type WeightInfo = ();
 		}
@@ -192,6 +194,7 @@ macro_rules! decl_tests {
 			type MinSolutionScoreBump = ();
 			type MaxNominatorRewardedPerValidator = ();
 			type UnsignedPriority = ();
+			type OffchainSolutionWeightLimit = ();
 			type RingCurrency = Ring;
 			type RingRewardRemainder = ();
 			type RingSlash = ();

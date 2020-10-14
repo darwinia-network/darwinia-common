@@ -5,6 +5,7 @@ edition    = "2018"
 homepage   = "https://darwinia.network/"
 license    = "Unlicense"
 name       = "node-template-runtime"
+readme     = "README.md"
 repository = "https://github.com/darwinia-network/darwinia-common/"
 version    = "1.0.0"
 
@@ -138,3 +139,5 @@ std = [
 	"sp-transaction-pool/std",
 	"sp-version/std",
 ]
+
+with-tracing = ["frame-executive/with-tracing"]

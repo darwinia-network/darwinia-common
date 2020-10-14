@@ -5,6 +5,7 @@ edition     = "2018"
 homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"
 name        = "darwinia-ethereum-offchain"
+readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "1.0.0"
 
@@ -27,7 +28,7 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 
 [dev-dependencies]
 # crates
-serde_json = { version = "1.0.57" }
+serde_json = { version = "1.0.59" }
 # darwinia
 darwinia-balances   = { path = "../../../../frame/balances" }
 ethereum-primitives = { features = ["deserialize"], path = "../../../../primitives/ethereum-primitives" }

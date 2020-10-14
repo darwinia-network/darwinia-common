@@ -663,7 +663,7 @@ mod tests {
 		type MaximumBlockLength = MaximumBlockLength;
 		type AvailableBlockRatio = AvailableBlockRatio;
 		type Version = ();
-		type ModuleToIndex = ();
+		type PalletInfo = ();
 		type AccountData = AccountData<Balance>;
 		type OnNewAccount = ();
 		type OnKilledAccount = ();
@@ -680,6 +680,7 @@ mod tests {
 		type ExistentialDeposit = ExistentialDeposit;
 		type BalanceInfo = AccountData<Balance>;
 		type AccountStore = System;
+		type MaxLocks = ();
 		type WeightInfo = ();
 		type OtherCurrencies = ();
 	}

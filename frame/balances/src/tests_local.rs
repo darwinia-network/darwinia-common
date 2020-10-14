@@ -95,7 +95,7 @@ impl frame_system::Trait for Test {
 	type MaximumBlockLength = MaximumBlockLength;
 	type AvailableBlockRatio = AvailableBlockRatio;
 	type Version = ();
-	type ModuleToIndex = ();
+	type PalletInfo = ();
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = Ring;
@@ -124,6 +124,7 @@ impl Trait<RingInstance> for Test {
 		Balance,
 		AccountData<Balance>,
 	>;
+	type MaxLocks = ();
 	type OtherCurrencies = (Kton,);
 	type WeightInfo = ();
 }
@@ -140,6 +141,7 @@ impl Trait<KtonInstance> for Test {
 		Balance,
 		AccountData<Balance>,
 	>;
+	type MaxLocks = ();
 	type OtherCurrencies = (Ring,);
 	type WeightInfo = ();
 }

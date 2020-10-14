@@ -7,7 +7,7 @@ use core::fmt::Debug;
 use codec::FullCodec;
 use impl_trait_for_tuples::impl_for_tuples;
 // --- substrate ---
-use frame_support::traits::{Currency, TryDrop};
+use frame_support::traits::{Currency, Get, TryDrop};
 use sp_runtime::{DispatchError, DispatchResult};
 use sp_std::prelude::*;
 // --- darwinia ---
@@ -35,6 +35,9 @@ pub trait BalanceInfo<Balance, Module> {
 pub trait LockableCurrency<AccountId>: Currency<AccountId> {
 	/// The quantity used to denote time; usually just a `BlockNumber`.
 	type Moment;
+
+	/// The maximum number of locks a user should have on their account.
+	type MaxLocks: Get<u32>;
 
 	/// Create a new balance lock on account `who`.
 	///
