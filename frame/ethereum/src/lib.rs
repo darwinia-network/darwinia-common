@@ -50,10 +50,11 @@ mod tests;
 mod mock;
 
 /// A type alias for the balance type from this pallet's point of view.
-pub type BalanceOf<T> = <T as pallet_balances::Trait>::Balance;
+pub type BalanceOf<T> = <T as darwinia_balances::Trait>::Balance;
+type RingInstance = darwinia_balances::Instance0;
 
 /// Trait for Ethereum pallet.
-pub trait Trait: frame_system::Trait<Hash=H256> + pallet_balances::Trait + pallet_timestamp::Trait + pallet_evm::Trait {
+pub trait Trait: frame_system::Trait<Hash=H256> + darwinia_balances::Trait::<RingInstance> + pallet_timestamp::Trait + pallet_evm::Trait {
 	/// The overarching event type.
 	type Event: From<Event> + Into<<Self as frame_system::Trait>::Event>;
 	/// Find author for Ethereum.

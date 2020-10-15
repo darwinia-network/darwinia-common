@@ -12,7 +12,7 @@ serde = { version = "1.0.101", optional = true }
 codec = { package = "parity-scale-codec", version = "1.0.0", default-features = false }
 frame-support ={ default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 frame-system ={ default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-pallet-balances ={ default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+darwinia-balances  = { default-features = false, path = "../../../frame/balances" }
 pallet-timestamp ={ default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 pallet-evm ={ default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-runtime ={ default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
@@ -39,7 +39,7 @@ std = [
 	"sp-runtime/std",
 	"frame-support/std",
 	"frame-system/std",
-	"pallet-balances/std",
+	"darwinia-balances/std",
 	"pallet-timestamp/std",
 	"pallet-evm/std",
 	"sp-io/std",
