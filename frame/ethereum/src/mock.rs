@@ -28,10 +28,26 @@ use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 	ModuleId, Perbill,
+	RuntimeDebug,
 };
+
+use codec::{Decode, Encode};
 
 impl_outer_origin! {
 	pub enum Origin for Test where system = frame_system {}
+}
+
+type Balance = u64;
+darwinia_support::impl_account_data! {
+	struct AccountData<Balance>
+	for
+		RingInstance,
+		KtonInstance
+	where
+		Balance = Balance
+	{
+		// other data
+	}
 }
 
 // For testing the pallet, we construct most of a mock runtime. This means
@@ -68,7 +84,7 @@ impl frame_system::Trait for Test {
 	type AvailableBlockRatio = AvailableBlockRatio;
 	type Version = ();
 	type PalletInfo = ();
-	type AccountData = pallet_balances::AccountData<u64>;
+	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 }
@@ -80,14 +96,18 @@ parameter_types! {
 	pub const ExistentialDeposit: u64 = 500;
 }
 
-impl pallet_balances::Trait for Test {
-	type MaxLocks = MaxLocks;
-	type Balance = u64;
-	type Event = ();
+type RingInstance = darwinia_balances::Instance0;
+type KtonInstance = darwinia_balances::Instance1;
+impl darwinia_balances::Trait<RingInstance> for Test {
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
+	type MaxLocks = ();
+	type OtherCurrencies = ();
 	type WeightInfo = ();
+	type Balance = Balance;
+	type Event = ();
+	type BalanceInfo = AccountData<Balance>;
 }
 
 parameter_types! {
@@ -151,7 +171,7 @@ impl Trait for Test {
 }
 
 pub type System = frame_system::Module<Test>;
-pub type Balances = pallet_balances::Module<Test>;
+pub type Balances = darwinia_balances::Module<Test, RingInstance>;
 pub type Ethereum = Module<Test>;
 pub type Evm = pallet_evm::Module<Test>;
 
@@ -193,7 +213,7 @@ pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExtern
 		.map(|i| (pairs[i].account_id.clone(), 10_000_000))
 		.collect();
 
-	pallet_balances::GenesisConfig::<Test> { balances }
+	darwinia_balances::GenesisConfig::<Test, RingInstance> { balances }
 		.assimilate_storage(&mut ext)
 		.unwrap();
 

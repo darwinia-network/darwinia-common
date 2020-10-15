@@ -26,6 +26,7 @@ sha3 = { version = "0.8", default-features = false }
 libsecp256k1 = { version = "0.3", default-features = false }
 frontier-consensus-primitives = { path = "../../consensus/primitives", default-features = false }
 frontier-rpc-primitives = { path = "../../rpc/primitives", default-features = false }
+darwinia-support                  = { default-features = false, path = "../../../frame/support" }
 
 [dev-dependencies]
 sp-core = { version = "2.0.0-dev", git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
