@@ -147,6 +147,23 @@ decl_module! {
 	}
 }
 
+impl<T: Trait<I>, I: Instance> Module<T, I> {
+	/// Check if is time for proposing
+	pub fn is_open_game(game_id: &GameId<T, I>) -> bool {
+		matches!(Self::game_status(&game_id), GameStatus::Open(_))
+	}
+
+	/// Check if others already make a same proposal
+	pub fn is_unique_proposal(
+		proposal_content: &[RelayStuffs<T, I>],
+		existed_proposals: &[RelayProposalT<T, I>],
+	) -> bool {
+		!existed_proposals
+			.iter()
+			.any(|existed_proposal| existed_proposal.content.as_slice() == proposal_content)
+	}
+}
+
 impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 	type Relayer = AccountId<T>;
 	type GameId = GameId<T, I>;
@@ -179,9 +196,10 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			<Error<T, I>>::RoundMis
 		);
 
-		let other_proposals = Self::proposals_of_game_at_round(&game_id, 0);
+		let existed_proposals = Self::proposals_of_game_at_round(&game_id, 0);
+		let proposal_content = vec![relay_stuffs];
 
-		if other_proposals.is_empty() {
+		if existed_proposals.is_empty() {
 			// A new game might open
 
 			// Check is ok to open more games
@@ -192,21 +210,14 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		} else {
 			// An against proposal might add
 
-			// Check if is time for proposing
+			ensure!(Self::is_open_game(&game_id), <Error<T, I>>::GameC);
 			ensure!(
-				matches!(Self::game_status(&game_id), GameStatus::Open(_)),
-				<Error<T, I>>::GameC,
-			);
-			// Check if others already make a same proposal
-			ensure!(
-				!other_proposals
-					.iter()
-					.any(|proposal| &proposal.content[0] == &relay_stuffs),
+				Self::is_unique_proposal(&proposal_content, &existed_proposals),
 				<Error<T, I>>::ProposalDup
 			);
 		}
 
-		let bond = T::RelayerGameAdjustor::estimate_bond(0, other_proposals.len() as u8 + 1);
+		let bond = T::RelayerGameAdjustor::estimate_bond(0, existed_proposals.len() as u8 + 1);
 
 		// Make sure relayer have enough balance,
 		// this won't let the account's free balance drop below existential deposit
@@ -221,12 +232,12 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			// Allow propose without proofs
 			// The proofs can be completed later through `complete_proofs`
 			if let Some(proofs) = proofs {
-				T::RelayableChain::verify_proofs(&relay_stuffs, &proofs)?;
+				T::RelayableChain::verify_proofs(&proposal_content[0], &proofs)?;
 
 				proposal.verified = true;
 			}
 
-			proposal.content = vec![relay_stuffs];
+			proposal.content = proposal_content;
 			proposal.bonds = vec![(relayer, bond)];
 
 			proposal
@@ -243,13 +254,13 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 	}
 
 	fn complete_proofs(
-		game_id: Self::GameId,
-		round: u32,
-		index: u32,
+		proposal_id: ProposalId<Self::GameId>,
 		proofs: Vec<Self::Proofs>,
 	) -> DispatchResult {
+		let (game_id, round, round_index) = proposal_id;
+
 		<Proposals<T, I>>::try_mutate(&game_id, round, |proposals| {
-			if let Some(proposal) = proposals.get_mut(index as usize) {
+			if let Some(proposal) = proposals.get_mut(round_index as usize) {
 				for (relay_stuffs, proofs) in proposal.content.iter().zip(proofs.into_iter()) {
 					T::RelayableChain::verify_proofs(relay_stuffs, &proofs)?;
 				}
@@ -261,5 +272,19 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 				Err(<Error<T, I>>::ProposalNF)?
 			}
 		})
+	}
+
+	fn extend_proposal(
+		samples: Vec<Self::RelayStuffs>,
+		extended_proposal_id: ProposalId<Self::GameId>,
+		proofs: Option<Vec<Self::Proofs>>,
+	) -> DispatchResult {
+		let (game_id, previous_round, previous_round_index) = &extended_proposal_id;
+		let round = *previous_round + 1;
+		let existed_proposals = Self::proposals_of_game_at_round(&game_id, round);
+
+		ensure!(Self::is_open_game(game_id), <Error<T, I>>::GameC);
+
+		Ok(())
 	}
 }

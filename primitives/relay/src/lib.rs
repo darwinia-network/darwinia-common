@@ -68,14 +68,20 @@ pub trait RelayerGameProtocol {
 
 	/// Verify a specify proposal
 	///
-	/// Game id, round and the index under the round point to a unique proposal AKA proposal id
-	/// Proofs is a `Vec` because the sampling function might give more than 1 sample points
-	/// So need to verify each sample point with its proofs
+	/// Proofs is a `Vec` because the sampling function might give more than 1 sample points,
+	/// so need to verify each sample point with its proofs
 	fn complete_proofs(
-		game_id: Self::GameId,
-		round: u32,
-		index: u32,
+		proposal_id: ProposalId<Self::GameId>,
 		proofs: Vec<Self::Proofs>,
+	) -> DispatchResult;
+
+	/// Once there're different opinions in a game,
+	/// chain will ask relayer to submit more samples
+	/// to help the chain make a on chain arbitrate finally
+	fn extend_proposal(
+		samples: Vec<Self::RelayStuffs>,
+		extended_proposal_id: ProposalId<Self::GameId>,
+		proofs: Option<Vec<Self::Proofs>>,
 	) -> DispatchResult;
 }
 
