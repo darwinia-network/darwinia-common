@@ -20,11 +20,11 @@ mod types {
 
 	pub type RelayBlockId<T, I> = <RelayableChainT<T, I> as RelayableChain>::RelayBlockId;
 	pub type GameId<T, I> = RelayBlockId<T, I>;
-	pub type RelayStuffs<T, I> = <RelayableChainT<T, I> as RelayableChain>::RelayStuffs;
+	pub type Parcel<T, I> = <RelayableChainT<T, I> as RelayableChain>::Parcel;
 	pub type RelayProofs<T, I> = <RelayableChainT<T, I> as RelayableChain>::Proofs;
 
 	pub type RelayProposalT<T, I> =
-		RelayProposal<RelayStuffs<T, I>, AccountId<T>, RingBalance<T, I>, GameId<T, I>>;
+		RelayProposal<Parcel<T, I>, AccountId<T>, RingBalance<T, I>, GameId<T, I>>;
 
 	type RingCurrency<T, I> = <T as Trait<I>>::RingCurrency;
 
@@ -269,7 +269,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	}
 	/// Check if others already make a same proposal
 	pub fn is_unique_proposal(
-		proposal_content: &[RelayStuffs<T, I>],
+		proposal_content: &[Parcel<T, I>],
 		existed_proposals: &[RelayProposalT<T, I>],
 	) -> bool {
 		!existed_proposals
@@ -302,22 +302,22 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	// /// The proofs can be completed later through `complete_proofs`
 	// pub fn build_proposal(
 	// 	relayer: AccountId<T>,
-	// 	relay_stuffses: Vec<RelayStuffs<T, I>>,
+	// 	parcels: Vec<Parcel<T, I>>,
 	// 	proofses: Option<Vec<RelayProofs<T, I>>>,
 	// 	bond: RingBalance<T, I>,
 	// ) -> Result<RelayProposalT<T, I>, DispatchError> {
 	// 	let mut proposal = RelayProposal::new();
 
 	// 	if let Some(proofses) = proofses {
-	// 		for (relay_stuffs, proofs) in relay_stuffses.iter().zip(proofses.into_iter()) {
-	// 			T::RelayableChain::verify_proofs(relay_stuffs, &proofs)?;
+	// 		for (parcel, proofs) in parcels.iter().zip(proofses.into_iter()) {
+	// 			T::RelayableChain::verify_proofs(parcel, &proofs)?;
 	// 		}
 
 	// 		proposal.verified = true;
 	// 	}
 
 	// 	proposal.relayer = relayer;
-	// 	proposal.content = relay_stuffses;
+	// 	proposal.content = parcels;
 	// 	proposal.bond = bond;
 
 	// 	Ok(proposal)
@@ -420,20 +420,20 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 	type Relayer = AccountId<T>;
 	type GameId = GameId<T, I>;
-	type RelayStuffs = RelayStuffs<T, I>;
+	type Parcel = Parcel<T, I>;
 	type Proofs = RelayProofs<T, I>;
 
 	fn propose(
 		relayer: Self::Relayer,
 		game_id: Self::GameId,
-		relay_stuffs: Self::RelayStuffs,
+		parcel: Self::Parcel,
 		proofs: Option<Self::Proofs>,
 	) -> DispatchResult {
 		info!(
 			target: "relayer-game",
 			"Relayer `{:?}` propose:\n{:#?}",
 			relayer,
-			relay_stuffs
+			parcel
 		);
 
 		let active_games = Self::active_games();
@@ -451,7 +451,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		);
 
 		let existed_proposals = Self::proposals_of_game_at(&game_id, 0);
-		let proposal_content = vec![relay_stuffs];
+		let proposal_content = vec![parcel];
 
 		if existed_proposals.is_empty() {
 			// A new game might open
@@ -513,8 +513,8 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 		<Proposals<T, I>>::try_mutate(&game_id, round, |proposals| {
 			if let Some(proposal) = proposals.get_mut(round_index as usize) {
-				for (relay_stuffs, proofs) in proposal.content.iter().zip(proofses.into_iter()) {
-					T::RelayableChain::verify_proofs(relay_stuffs, &proofs)?;
+				for (parcel, proofs) in proposal.content.iter().zip(proofses.into_iter()) {
+					T::RelayableChain::verify_proofs(parcel, &proofs)?;
 				}
 
 				proposal.verified = true;
@@ -528,7 +528,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 	fn extend_proposal(
 		relayer: Self::Relayer,
-		samples: Vec<Self::RelayStuffs>,
+		samples: Vec<Self::Parcel>,
 		extended_proposal_id: ProposalId<Self::GameId>,
 		proofses: Option<Vec<Self::Proofs>>,
 	) -> DispatchResult {

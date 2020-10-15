@@ -20,18 +20,15 @@ pub type ProposalId<GameId> = (GameId, u32, u32);
 /// to expose some necessary APIs for relayer game
 pub trait RelayableChain {
 	type RelayBlockId: Clone + Debug + Default + PartialOrd + FullCodec;
-	type RelayStuffs: Clone + Debug + PartialEq + PartialOrd + FullCodec;
+	type Parcel: Clone + Debug + PartialEq + PartialOrd + FullCodec;
 	type Proofs;
 
 	/// The latest finalize block's id which recorded in darwinia
 	fn best_block_id() -> Self::RelayBlockId;
 
-	fn verify_proofs(relay_stuffs: &Self::RelayStuffs, proofs: &Self::Proofs) -> DispatchResult;
+	fn verify_proofs(parcel: &Self::Parcel, proofs: &Self::Proofs) -> DispatchResult;
 
-	fn verify_continuous(
-		samples: &[Self::RelayStuffs],
-		extended: &[Self::RelayStuffs],
-	) -> DispatchResult;
+	fn verify_continuous(samples: &[Self::Parcel], extended: &[Self::Parcel]) -> DispatchResult;
 
 	fn distance_between(
 		game_id: &Self::RelayBlockId,
@@ -66,7 +63,7 @@ pub trait AdjustableRelayerGame {
 pub trait RelayerGameProtocol {
 	type Relayer;
 	type GameId: Clone + PartialOrd;
-	type RelayStuffs: Clone + Debug + PartialEq + PartialOrd + FullCodec;
+	type Parcel: Clone + Debug + PartialEq + PartialOrd + FullCodec;
 	type Proofs;
 
 	/// Game's entry point, call only at the first round
@@ -75,7 +72,7 @@ pub trait RelayerGameProtocol {
 	fn propose(
 		relayer: Self::Relayer,
 		game_id: Self::GameId,
-		relay_stuffs: Self::RelayStuffs,
+		parcel: Self::Parcel,
 		proofs: Option<Self::Proofs>,
 	) -> DispatchResult;
 
@@ -93,21 +90,21 @@ pub trait RelayerGameProtocol {
 	/// to help the chain make a on chain arbitrate finally
 	fn extend_proposal(
 		relayer: Self::Relayer,
-		samples: Vec<Self::RelayStuffs>,
+		samples: Vec<Self::Parcel>,
 		extended_proposal_id: ProposalId<Self::GameId>,
 		proofses: Option<Vec<Self::Proofs>>,
 	) -> DispatchResult;
 }
 
 #[derive(Clone, Encode, Decode, RuntimeDebug)]
-pub struct RelayProposal<RelayStuffs, Relayer, Balance, GameId> {
+pub struct RelayProposal<Parcel, Relayer, Balance, GameId> {
 	pub relayer: Relayer,
-	pub content: Vec<RelayStuffs>,
+	pub content: Vec<Parcel>,
 	pub bond: Balance,
 	pub maybe_extended_proposal_id: Option<ProposalId<GameId>>,
 	pub verified: bool,
 }
-impl<RelayStuffs, Relayer, Balance, GameId> RelayProposal<RelayStuffs, Relayer, Balance, GameId>
+impl<Parcel, Relayer, Balance, GameId> RelayProposal<Parcel, Relayer, Balance, GameId>
 where
 	Relayer: Default,
 	Balance: Zero,
