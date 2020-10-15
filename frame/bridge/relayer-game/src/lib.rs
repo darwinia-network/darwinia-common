@@ -126,19 +126,27 @@ decl_storage! {
 		/// The first key is game id, the second key is round index
 		/// then you will get the proposals under that round in that game
 		pub Proposals
-			get(fn proposals_of_game_at_round)
+			get(fn proposals_of_game_at)
 			: double_map
 				hasher(identity) GameId<T, I>,
 				hasher(identity) u32
 			=> Vec<RelayProposalT<T, I>>;
 
-		/// All the games' status here
+		/// All the closed games here
 		///
-		/// Use this to manage the challenge time
-		pub GamesStatus
-			get(fn game_status)
+		/// Closed games won't accept any proposal
+		pub ClosedGames
+			get(fn game_closed_at_of)
 			: map hasher(identity) GameId<T, I>
-			=> GameStatus<BlockNumber<T>>;
+			=> BlockNumber<T>;
+
+		/// All the closed rounds here
+		///
+		/// Record the closed rounds endpoint which use for settlling or updating
+		pub ClosedRounds
+			get(fn round_closed_at)
+			: map hasher(identity) BlockNumber<T>
+			=> Vec<GameId<T, I>>;
 	}
 }
 
@@ -150,13 +158,19 @@ decl_module! {
 		type Error = Error<T, I>;
 
 		fn deposit_event() = default;
+
+		fn offchain_worker(now: BlockNumber<T>) {
+			for game_id in Self::round_closed_at(now) {
+
+			}
+		}
 	}
 }
 
 impl<T: Trait<I>, I: Instance> Module<T, I> {
 	/// Check if time for proposing
-	pub fn is_open_game(game_id: &GameId<T, I>) -> bool {
-		matches!(Self::game_status(&game_id), GameStatus::Open(_))
+	pub fn is_game_open_at(game_id: &GameId<T, I>, moment: BlockNumber<T>) -> bool {
+		Self::game_closed_at_of(game_id) > moment
 	}
 
 	/// Check if others already make a same proposal
@@ -214,6 +228,14 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 
 	// 	Ok(proposal)
 	// }
+
+	pub fn update_timer_of_game_at(game_id: &GameId<T, I>, round: u32) {
+		let propose_time = T::RelayerGameAdjustor::propose_time(round);
+		let complete_proofs_time = T::RelayerGameAdjustor::complete_proofs_time(round);
+
+		<ClosedGames<T, I>>::insert(game_id, propose_time);
+		<ClosedRounds<T, I>>::append(propose_time + complete_proofs_time, game_id);
+	}
 }
 
 impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
@@ -244,11 +266,11 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		);
 		// Make sure the game is at first round
 		ensure!(
-			Self::proposals_of_game_at_round(&game_id, 1).is_empty(),
+			Self::proposals_of_game_at(&game_id, 1).is_empty(),
 			<Error<T, I>>::RoundMis
 		);
 
-		let existed_proposals = Self::proposals_of_game_at_round(&game_id, 0);
+		let existed_proposals = Self::proposals_of_game_at(&game_id, 0);
 		let proposal_content = vec![relay_stuffs];
 
 		if existed_proposals.is_empty() {
@@ -262,7 +284,10 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		} else {
 			// An against proposal might add
 
-			ensure!(Self::is_open_game(&game_id), <Error<T, I>>::GameC);
+			ensure!(
+				Self::is_game_open_at(&game_id, <frame_system::Module<T>>::block_number()),
+				<Error<T, I>>::GameC
+			);
 			ensure!(
 				Self::is_unique_proposal(&proposal_content, &existed_proposals),
 				<Error<T, I>>::ProposalDup
@@ -270,6 +295,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		}
 
 		let bond = Self::ensure_can_bond(&relayer, 0, existed_proposals.len() as u8 + 1)?;
+		// let proposal = Self::build_proposal(relayer, samples, proofses, bond)?;
 		let proposal = {
 			let mut proposal = RelayProposal::new();
 
@@ -288,12 +314,10 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			proposal
 		};
 
-		<Proposals<T, I>>::append(&game_id, 0, proposal);
-		<GamesStatus<T, I>>::insert(
-			&game_id,
-			GameStatus::Open(T::RelayerGameAdjustor::propose_time(0)),
-		);
 		<ActiveGames<I>>::mutate(|count| *count += 1);
+		<Proposals<T, I>>::append(&game_id, 0, proposal);
+
+		Self::update_timer_of_game_at(&game_id, 0);
 
 		Ok(())
 	}
@@ -327,14 +351,17 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 	) -> DispatchResult {
 		let (game_id, previous_round, previous_round_index) = &extended_proposal_id;
 
-		ensure!(Self::is_open_game(game_id), <Error<T, I>>::GameC);
+		ensure!(
+			Self::is_game_open_at(game_id, <frame_system::Module<T>>::block_number()),
+			<Error<T, I>>::GameC
+		);
 
 		if let Some(ref proofses) = &proofses {
 			ensure!(proofses.len() == samples.len(), <Error<T, I>>::ProofsesNE);
 		}
 
 		let round = *previous_round + 1;
-		let existed_proposals = Self::proposals_of_game_at_round(&game_id, round);
+		let existed_proposals = Self::proposals_of_game_at(&game_id, round);
 
 		ensure!(
 			Self::is_unique_proposal(&samples, &existed_proposals),
@@ -373,10 +400,6 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		};
 
 		<Proposals<T, I>>::append(&game_id, round, proposal);
-		<GamesStatus<T, I>>::insert(
-			&game_id,
-			GameStatus::Open(T::RelayerGameAdjustor::propose_time(round)),
-		);
 
 		Ok(())
 	}
