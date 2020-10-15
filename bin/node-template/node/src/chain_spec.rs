@@ -3,7 +3,7 @@ use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_service::{ChainType, Properties};
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::AuthorityId as BabeId;
-use sp_core::{sr25519, Pair, Public};
+use sp_core::{sr25519, Pair, Public, H160, U256};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::{
 	traits::{IdentifyAccount, Verify},
@@ -13,7 +13,11 @@ use sp_runtime::{
 use array_bytes::fixed_hex_bytes_unchecked;
 use darwinia_claims::ClaimsList;
 use darwinia_ethereum_relay::DagsMerkleRootsLoader as DagsMerkleRootsLoaderR;
-use node_template_runtime::{BalancesConfig as RingConfig, *};
+use node_template_runtime::{BalancesConfig as RingConfig, *, EVMConfig, EthereumConfig};
+
+// std
+use std::collections::BTreeMap;
+use std::str::FromStr;
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -159,6 +163,19 @@ fn testnet_genesis(
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
 ) -> GenesisConfig {
+
+	let gerald_evm_account_id = H160::from_str("6be02d1d3665660d22ff9624b7be0551ee1ac91b").unwrap();
+	let mut evm_accounts = BTreeMap::new();
+	evm_accounts.insert(
+		gerald_evm_account_id,
+		evm::GenesisAccount {
+			nonce: 0.into(),
+			balance: U256::from(123456_123_000_000_000_000_000u128),
+			storage: BTreeMap::new(),
+			code: vec![],
+		},
+	);
+
 	GenesisConfig {
 		frame_system: Some(SystemConfig {
 			code: wasm_binary_unwrap().to_vec(),
@@ -258,6 +275,11 @@ fn testnet_genesis(
 		darwinia_tron_backing: Some(TronBackingConfig {
 			backed_ring: 1 << 56,
 			backed_kton: 1 << 56,
-		})
+		}),
+		// frontier
+		frame_evm: Some(EVMConfig {
+			accounts: evm_accounts,
+		}),
+		frame_ethereum: Some(EthereumConfig {}),
 	}
 }

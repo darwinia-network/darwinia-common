@@ -38,6 +38,9 @@ use crate::rpc::{
 	self, BabeDeps, DenyUnsafe, FullDeps, GrandpaDeps, LightDeps, RpcExtension,
 	SubscriptionTaskExecutor,
 };
+// frontier
+use frontier_consensus::FrontierBlockImport;
+
 use node_template_runtime::{
 	opaque::Block,
 	primitives::{AccountId, Balance, Hash, Nonce, Power},
@@ -78,6 +81,7 @@ pub trait RuntimeApiCollection:
 	+ darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance>
 	+ darwinia_header_mmr_rpc_runtime_api::HeaderMMRApi<Block, Hash>
 	+ darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>
+	+ frontier_rpc_primitives::EthereumRuntimeRPCApi<Block>
 where
 	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
 {
@@ -97,8 +101,9 @@ where
 		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
 		+ darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance>
 		+ darwinia_header_mmr_rpc_runtime_api::HeaderMMRApi<Block, Hash>
-		+ darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>,
-	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
+		+ darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>
+		+ frontier_rpc_primitives::EthereumRuntimeRPCApi<Block>,
+	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>
 {
 }
 
@@ -152,12 +157,15 @@ fn new_partial<RuntimeApi, Executor>(
 		DefaultImportQueue<Block, FullClient<RuntimeApi, Executor>>,
 		FullPool<Block, FullClient<RuntimeApi, Executor>>,
 		(
-			impl Fn(DenyUnsafe, SubscriptionTaskExecutor) -> RpcExtension,
 			(
 				BabeBlockImport<
 					Block,
 					FullClient<RuntimeApi, Executor>,
-					FullGrandpaBlockImport<RuntimeApi, Executor>,
+					FrontierBlockImport<
+						Block,
+						FullGrandpaBlockImport<RuntimeApi, Executor>,
+						FullClient<RuntimeApi, Executor>,
+					>,
 				>,
 				LinkHalf<Block, FullClient<RuntimeApi, Executor>, FullSelectChain>,
 				BabeLink<Block>,
@@ -199,9 +207,10 @@ where
 			grandpa_hard_forks,
 		)?;
 	let justification_import = grandpa_block_import.clone();
+	let frontier_block_import = FrontierBlockImport::new(grandpa_block_import.clone(), client.clone(), true);
 	let (babe_import, babe_link) = sc_consensus_babe::block_import(
 		BabeConfig::get_or_compute(&*client)?,
-		grandpa_block_import,
+		frontier_block_import,
 		client.clone(),
 	)?;
 	let import_queue = sc_consensus_babe::import_queue(
@@ -225,35 +234,6 @@ where
 	let rpc_setup = (shared_voter_state.clone(), finality_proof_provider.clone());
 	let babe_config = babe_link.config().clone();
 	let shared_epoch_changes = babe_link.epoch_changes().clone();
-	let rpc_extensions_builder = {
-		let client = client.clone();
-		let keystore = keystore.clone();
-		let transaction_pool = transaction_pool.clone();
-		let select_chain = select_chain.clone();
-
-		move |deny_unsafe, subscription_executor| -> RpcExtension {
-			let deps = FullDeps {
-				client: client.clone(),
-				pool: transaction_pool.clone(),
-				select_chain: select_chain.clone(),
-				deny_unsafe,
-				babe: BabeDeps {
-					babe_config: babe_config.clone(),
-					shared_epoch_changes: shared_epoch_changes.clone(),
-					keystore: keystore.clone(),
-				},
-				grandpa: GrandpaDeps {
-					shared_voter_state: shared_voter_state.clone(),
-					shared_authority_set: shared_authority_set.clone(),
-					justification_stream: justification_stream.clone(),
-					subscription_executor,
-					finality_provider: finality_proof_provider.clone(),
-				},
-			};
-
-			rpc::create_full(deps)
-		}
-	};
 
 	Ok(PartialComponents {
 		client,
@@ -264,7 +244,7 @@ where
 		import_queue,
 		transaction_pool,
 		inherent_data_providers,
-		other: (rpc_extensions_builder, import_setup, rpc_setup),
+		other: (import_setup, rpc_setup),
 	})
 }
 
@@ -293,7 +273,7 @@ where
 		import_queue,
 		transaction_pool,
 		inherent_data_providers,
-		other: (rpc_extensions_builder, import_setup, rpc_setup),
+		other: (import_setup, rpc_setup),
 	} = new_partial::<RuntimeApi, Executor>(&mut config)?;
 	let prometheus_registry = config.prometheus_registry().cloned();
 	let (shared_voter_state, finality_proof_provider) = rpc_setup;
@@ -320,8 +300,63 @@ where
 		);
 	}
 
-	let telemetry_connection_sinks = TelemetryConnectionSinks::default();
+	let grandpa_hard_forks = vec![];
+	let (grandpa_block_import, grandpa_link) =
+		sc_finality_grandpa::block_import_with_authority_set_hard_forks(
+			client.clone(),
+			&(client.clone() as Arc<_>),
+			select_chain.clone(),
+			grandpa_hard_forks,
+		)?;
+	let (babe_import, babe_link) = sc_consensus_babe::block_import(
+		BabeConfig::get_or_compute(&*client)?,
+		grandpa_block_import,
+		client.clone(),
+	)?;
+	let justification_stream = grandpa_link.justification_stream();
+	let shared_authority_set = grandpa_link.shared_authority_set().clone();
+	let shared_epoch_changes = babe_link.epoch_changes().clone();
+	let shared_voter_state = GrandpaSharedVoterState::empty();
+	let babe_config = babe_link.config().clone();
+	let subscription_task_executor = sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 
+	let rpc_extensions_builder = {
+		let client = client.clone();
+		let keystore = keystore.clone();
+		let transaction_pool = transaction_pool.clone();
+		let select_chain = select_chain.clone();
+		let network = network.clone();
+		let shared_voter_state = shared_voter_state.clone();
+		Box::new(move |deny_unsafe, subscriptions| {
+			let deps = FullDeps {
+				client: client.clone(),
+				pool: transaction_pool.clone(),
+				select_chain: select_chain.clone(),
+				deny_unsafe,
+				is_authority,
+				network: network.clone(),
+				babe: BabeDeps {
+					babe_config: babe_config.clone(),
+					shared_epoch_changes: shared_epoch_changes.clone(),
+					keystore: keystore.clone(),
+				},
+				grandpa: GrandpaDeps {
+					shared_voter_state: shared_voter_state.clone(),
+					shared_authority_set: shared_authority_set.clone(),
+					justification_stream: justification_stream.clone(),
+					subscription_executor: subscriptions,
+					finality_provider: finality_proof_provider.clone(),
+				},
+			};
+
+			rpc::create_full(
+				deps,
+				subscription_task_executor.clone()
+			)
+		})
+	};
+
+	let telemetry_connection_sinks = TelemetryConnectionSinks::default();
 	sc_service::spawn_tasks(SpawnTasksParams {
 		config,
 		backend: backend.clone(),
