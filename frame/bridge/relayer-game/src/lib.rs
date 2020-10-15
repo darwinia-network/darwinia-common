@@ -141,6 +141,17 @@ decl_storage! {
 				hasher(identity) u32
 			=> Vec<RelayProposalT<T, I>>;
 
+		/// The last confirmed block id record of a game when it start
+		pub LastConfirmeds
+			get(fn last_confirmed_block_id_of)
+			: map hasher(identity) GameId<T, I>
+			=> RelayBlockId<T, I>;
+
+		pub RoundCounts
+			get(fn round_count_of)
+			: map hasher(identity) GameId<T, I>
+			=> u32;
+
 		/// All the closed games here
 		///
 		/// Closed games won't accept any proposal
@@ -196,9 +207,8 @@ decl_module! {
 					">  Trying to Settle Game `{:?}`", game_id
 				);
 
+				let round_count = Self::round_count_of(&game_id);
 				let last_round = {
-					let round_count = <Proposals<T, I>>::iter_prefix_values(&game_id).count() as u32;
-
 					if round_count == 0 {
 						// Should never enter this condition
 						error!(target: "relayer-game", "   >  No Proposal Found");
@@ -227,9 +237,24 @@ decl_module! {
 
 						Self::settle_abandon(proposals);
 					},
-					// Trying to settle a game with challenge
+					// No more challenge found at latest round, only one relayer win
+					(_, 1) => {
+						info!(target: "relayer-game", "   >  No More Challenge");
+
+						Self::settle_with_challenge(proposals.pop().unwrap());
+					}
+					//
 					(_, proposals_count) => {
 						info!(target: "relayer-game", "   >  Challenge Found");
+
+						let distance = T::RelayableChain::distance_between(
+							&game_id,
+							Self::last_confirmed_block_id_of(&game_id)
+						);
+
+						if distance == round_count {
+							// TODO: Self::on_chain_arbitrate
+						}
 					}
 				}
 			}
@@ -388,6 +413,8 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 			);
 		}
 	}
+
+	pub fn settle_with_challenge(proposal: RelayProposalT<T, I>) {}
 }
 
 impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
@@ -402,7 +429,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		relay_stuffs: Self::RelayStuffs,
 		proofs: Option<Self::Proofs>,
 	) -> DispatchResult {
-		trace!(
+		info!(
 			target: "relayer-game",
 			"Relayer `{:?}` propose:\n{:#?}",
 			relayer,
@@ -410,10 +437,11 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		);
 
 		let active_games = Self::active_games();
+		let last_confirmed_block_id = T::RelayableChain::best_block_id();
 
 		// Check if the proposed header has already been relaied
 		ensure!(
-			game_id > T::RelayableChain::best_block_id(),
+			game_id > last_confirmed_block_id,
 			<Error<T, I>>::RelayStuffsAC
 		);
 		// Make sure the game is at first round
@@ -465,11 +493,14 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 			proposal
 		};
+		let round = 0;
 
 		<ActiveGames<I>>::mutate(|count| *count += 1);
-		<Proposals<T, I>>::append(&game_id, 0, proposal);
+		<Proposals<T, I>>::append(&game_id, round, proposal);
+		<LastConfirmeds<T, I>>::insert(&game_id, last_confirmed_block_id);
+		<RoundCounts<T, I>>::insert(&game_id, round);
 
-		Self::update_timer_of_game_at(&game_id, 0);
+		Self::update_timer_of_game_at(&game_id, round);
 
 		Ok(())
 	}

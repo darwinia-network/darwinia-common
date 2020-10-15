@@ -19,7 +19,7 @@ pub type ProposalId<GameId> = (GameId, u32, u32);
 /// Implement this for target chain's relay module's
 /// to expose some necessary APIs for relayer game
 pub trait RelayableChain {
-	type RelayBlockId: Clone + Debug + PartialOrd + FullCodec;
+	type RelayBlockId: Clone + Debug + Default + PartialOrd + FullCodec;
 	type RelayStuffs: Clone + Debug + PartialEq + PartialOrd + FullCodec;
 	type Proofs;
 
@@ -32,6 +32,11 @@ pub trait RelayableChain {
 		samples: &[Self::RelayStuffs],
 		extended: &[Self::RelayStuffs],
 	) -> DispatchResult;
+
+	fn distance_between(
+		game_id: &Self::RelayBlockId,
+		last_confirmed_block_id_of: Self::RelayBlockId,
+	) -> u32;
 }
 
 /// A regulator to adjust relay args for a specific chain
