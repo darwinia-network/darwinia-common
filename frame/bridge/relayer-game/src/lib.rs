@@ -47,7 +47,7 @@ use sp_runtime::{
 };
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
-use sp_std::prelude::*;
+use sp_std::{collections::btree_map::BTreeMap, prelude::*};
 // --- darwinia ---
 use darwinia_relay_primitives::*;
 use darwinia_support::balance::lock::*;
@@ -208,24 +208,22 @@ decl_module! {
 				);
 
 				let round_count = Self::round_count_of(&game_id);
-				let last_round = {
-					if round_count == 0 {
-						// Should never enter this condition
-						error!(target: "relayer-game", "   >  No Proposal Found");
+				let last_round = if let Some(last_round) = round_count.checked_sub(1) {
+					last_round
+				} else {
+					// Should never enter this condition
+					error!(target: "relayer-game", "   >  Rounds - EMPTY");
 
-						continue;
-					} else {
-						round_count - 1
-					}
+					continue;
 				};
 				let mut proposals = Self::proposals_of_game_at(&game_id, last_round);
 
 				match (last_round, proposals.len()) {
 					// Should never enter this condition
-					(0, 0) => error!(target: "relayer-game", "   >  No Proposal Found"),
+					(0, 0) => error!(target: "relayer-game", "   >  Proposals - EMPTY"),
 					// At first round and only one proposal found
 					(0, 1) => {
-						info!(target: "relayer-game", "   >  No Challenge Found");
+						info!(target: "relayer-game", "   >  Challenge - NOT EXISTED");
 
 						Self::settle_without_challenge(proposals.pop().unwrap());
 
@@ -241,7 +239,7 @@ decl_module! {
 					(_, 1) => {
 						info!(target: "relayer-game", "   >  No More Challenge");
 
-						Self::settle_with_challenge(proposals.pop().unwrap());
+						Self::settle_with_challenge(&game_id, proposals.pop().unwrap());
 					}
 					//
 					(_, proposals_count) => {
@@ -371,21 +369,21 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 
 	pub fn for_each_extended_proposal<F>(
 		mut maybe_extended_proposal_id: Option<ProposalId<GameId<T, I>>>,
-		f: F,
+		mut f: F,
 	) where
-		F: Fn(&RelayProposalT<T, I>),
+		F: FnMut(&RelayProposalT<T, I>, u32, u32),
 	{
 		while let Some((game_id, round, index)) = maybe_extended_proposal_id.take() {
 			if let Some(proposal) = Self::proposals_of_game_at(&game_id, round)
 				.into_iter()
 				.nth(index as _)
 			{
-				f(&proposal);
+				f(&proposal, round, index);
 
 				maybe_extended_proposal_id = proposal.maybe_extended_proposal_id;
 			} else {
 				// Should never enter this condition
-				error!(target: "relayer-game", "   >  Can't Find Proposal");
+				error!(target: "relayer-game", "   >  Proposal - NOT EXISTED");
 			}
 		}
 	}
@@ -407,14 +405,73 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 			Self::slash_on(&relayer, bond);
 			Self::for_each_extended_proposal(
 				maybe_extended_proposal_id,
-				|RelayProposal { relayer, bond, .. }| {
+				|RelayProposal { relayer, bond, .. }, _, _| {
 					Self::slash_on(relayer, *bond);
 				},
 			);
 		}
 	}
 
-	pub fn settle_with_challenge(proposal: RelayProposalT<T, I>) {}
+	pub fn settle_with_challenge(game_id: &GameId<T, I>, proposal: RelayProposalT<T, I>) {
+		let RelayProposal {
+			relayer,
+			bond,
+			maybe_extended_proposal_id,
+			..
+		} = proposal;
+		// TODO: reward on no challenge
+		let mut honesties = <BTreeMap<AccountId<T>, (RingBalance<T, I>, RingBalance<T, I>)>>::new();
+		let mut evils = <BTreeMap<AccountId<T>, RingBalance<T, I>>>::new();
+
+		honesties.insert(relayer, (bond, Zero::zero()));
+
+		Self::for_each_extended_proposal(
+			maybe_extended_proposal_id,
+			|RelayProposal {
+			     relayer: honesty_relayer,
+			     bond: honesty_relayer_bond,
+			     ..
+			 },
+			 round,
+			 index| {
+				honesties
+					.entry(honesty_relayer.to_owned())
+					.and_modify(|(unbonds, _)| {
+						*unbonds = unbonds.saturating_add(*honesty_relayer_bond)
+					})
+					.or_insert((*honesty_relayer_bond, Zero::zero()));
+
+				for (i, RelayProposal { relayer, bond, .. }) in
+					Self::proposals_of_game_at(game_id, round)
+						.into_iter()
+						.enumerate()
+				{
+					if i as u32 != index {
+						honesties
+							.entry(honesty_relayer.to_owned())
+							.and_modify(|(_, deposits)| *deposits = deposits.saturating_add(bond));
+						evils
+							.entry(relayer)
+							.and_modify(|slashs| *slashs = slashs.saturating_add(bond))
+							.or_insert(Zero::zero());
+					}
+				}
+			},
+		);
+
+		for (relayer, (unbonds, deposits)) in honesties {
+			// Unlock bonds for honesty
+			Self::update_bonds_with(&relayer, |bonds| bonds.saturating_sub(unbonds));
+
+			// Reward honesty
+			T::RingCurrency::deposit_creating(&relayer, deposits);
+		}
+
+		for (relayer, slashs) in evils {
+			// Punish evil
+			T::RingCurrency::slash(&relayer, slashs);
+		}
+	}
 }
 
 impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
