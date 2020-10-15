@@ -385,7 +385,7 @@ use pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo as Transacti
 use sp_api::impl_runtime_apis;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_core::{
-	crypto::KeyTypeId,
+	crypto::{KeyTypeId, Public},
 	u32_trait::{_1, _2, _3, _5},
 	OpaqueMetadata,
 	U256, H160, H256,
