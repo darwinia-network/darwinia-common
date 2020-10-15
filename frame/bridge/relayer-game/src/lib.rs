@@ -384,7 +384,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		);
 
 		if let Some(ref proofses) = &proofses {
-			ensure!(proofses.len() == samples.len(), <Error<T, I>>::ProofsesNE);
+			ensure!(proofses.len() == samples.len(), <Error<T, I>>::ProofsesInv);
 		}
 
 		let round = *previous_round + 1;
