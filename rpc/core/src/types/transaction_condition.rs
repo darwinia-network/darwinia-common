@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Open Ethereum.  If not, see <http://www.gnu.org/licenses/>.
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Represents condition on minimum block number or block timestamp.
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]

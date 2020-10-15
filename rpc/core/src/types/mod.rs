@@ -27,26 +27,28 @@ mod log;
 mod receipt;
 mod sync;
 mod transaction;
-mod transaction_request;
 mod transaction_condition;
+mod transaction_request;
 mod work;
 
 pub mod pubsub;
 
-pub use self::account_info::{AccountInfo, ExtAccountInfo, EthAccount, StorageProof, RecoveredAccount};
-pub use self::bytes::Bytes;
-pub use self::block::{RichBlock, Block, BlockTransactions, Header, RichHeader, Rich};
+pub use self::account_info::{
+	AccountInfo, EthAccount, ExtAccountInfo, RecoveredAccount, StorageProof,
+};
+pub use self::block::{Block, BlockTransactions, Header, Rich, RichBlock, RichHeader};
 pub use self::block_number::BlockNumber;
+pub use self::bytes::Bytes;
 pub use self::call_request::CallRequest;
-pub use self::filter::{Filter, FilterChanges, VariadicValue, FilterAddress, Topic};
+pub use self::filter::{Filter, FilterAddress, FilterChanges, Topic, VariadicValue};
 pub use self::index::Index;
 pub use self::log::Log;
 pub use self::receipt::Receipt;
 pub use self::sync::{
-	SyncStatus, SyncInfo, Peers, PeerInfo, PeerNetworkInfo, PeerProtocolsInfo,
-	TransactionStats, ChainStatus, EthProtocolInfo, PipProtocolInfo,
+	ChainStatus, EthProtocolInfo, PeerInfo, PeerNetworkInfo, PeerProtocolsInfo, Peers,
+	PipProtocolInfo, SyncInfo, SyncStatus, TransactionStats,
 };
-pub use self::transaction::{Transaction, RichRawTransaction, LocalTransactionStatus};
-pub use self::transaction_request::TransactionRequest;
+pub use self::transaction::{LocalTransactionStatus, RichRawTransaction, Transaction};
 pub use self::transaction_condition::TransactionCondition;
+pub use self::transaction_request::TransactionRequest;
 pub use self::work::Work;

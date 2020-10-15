@@ -16,19 +16,22 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use codec::{Encode, Decode};
+use codec::{Decode, Encode};
+use sc_client_api::backend::AuxStore;
+use sp_blockchain::{Error as ClientError, Result as ClientResult};
 use sp_core::H256;
 use sp_runtime::traits::Block as BlockT;
-use sc_client_api::backend::AuxStore;
-use sp_blockchain::{Result as ClientResult, Error as ClientError};
 
 fn load_decode<B: AuxStore, T: Decode>(backend: &B, key: &[u8]) -> ClientResult<Option<T>> {
 	let corrupt = |e: codec::Error| {
-		ClientError::Backend(format!("Frontier DB is corrupted. Decode error: {}", e.what()))
+		ClientError::Backend(format!(
+			"Frontier DB is corrupted. Decode error: {}",
+			e.what()
+		))
 	};
 	match backend.get_aux(key)? {
 		None => Ok(None),
-		Some(t) => T::decode(&mut &t[..]).map(Some).map_err(corrupt)
+		Some(t) => T::decode(&mut &t[..]).map(Some).map_err(corrupt),
 	}
 }
 
@@ -54,13 +57,13 @@ pub fn write_block_hash<Hash: Encode + Decode, F, R, Backend: AuxStore>(
 	ethereum_hash: H256,
 	block_hash: Hash,
 	write_aux: F,
-) -> R where
+) -> R
+where
 	F: FnOnce(&[(&[u8], &[u8])]) -> R,
 {
 	let key = block_hash_key(ethereum_hash);
 
-	let mut data: Vec<Hash> = match load_decode(client, &key)
-	{
+	let mut data: Vec<Hash> = match load_decode(client, &key) {
 		Ok(Some(hashes)) => hashes,
 		_ => Vec::new(),
 	};
@@ -86,11 +89,8 @@ pub fn load_transaction_metadata<B: AuxStore>(
 }
 
 /// Update Aux transaction metadata.
-pub fn write_transaction_metadata<F, R>(
-	hash: H256,
-	metadata: (H256, u32),
-	write_aux: F,
-) -> R where
+pub fn write_transaction_metadata<F, R>(hash: H256, metadata: (H256, u32), write_aux: F) -> R
+where
 	F: FnOnce(&[(&[u8], &[u8])]) -> R,
 {
 	let key = transaction_metadata_key(hash);

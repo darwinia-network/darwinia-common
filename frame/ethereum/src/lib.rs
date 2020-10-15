@@ -22,26 +22,27 @@
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use codec::Encode;
+use ethereum_types::{Bloom, H160, H256, H64, U256};
+use evm::{ExitError, ExitFatal, ExitReason, ExitRevert};
 use frame_support::{
-	decl_module, decl_storage, decl_error, decl_event,
-	traits::Get, traits::FindAuthor
+	decl_error, decl_event, decl_module, decl_storage, traits::FindAuthor, traits::Get,
 };
-use sp_std::prelude::*;
 use frame_system::ensure_none;
-use ethereum_types::{H160, H64, H256, U256, Bloom};
+use frontier_consensus_primitives::{ConsensusLog, FRONTIER_ENGINE_ID};
+use sha3::{Digest, Keccak256};
 use sp_runtime::{
-	traits::UniqueSaturatedInto,
-	transaction_validity::{TransactionValidity, TransactionSource, ValidTransaction, InvalidTransaction},
 	generic::DigestItem,
+	traits::UniqueSaturatedInto,
+	transaction_validity::{
+		InvalidTransaction, TransactionSource, TransactionValidity, ValidTransaction,
+	},
 	DispatchResult,
 };
-use evm::{ExitError, ExitRevert, ExitFatal, ExitReason};
-use sha3::{Digest, Keccak256};
-use codec::Encode;
-use frontier_consensus_primitives::{FRONTIER_ENGINE_ID, ConsensusLog};
+use sp_std::prelude::*;
 
+pub use ethereum::{Block, Log, Receipt, Transaction, TransactionAction};
 pub use frontier_rpc_primitives::TransactionStatus;
-pub use ethereum::{Transaction, Log, Block, Receipt, TransactionAction};
 
 #[cfg(all(feature = "std", test))]
 mod tests;
@@ -54,7 +55,12 @@ pub type BalanceOf<T> = <T as darwinia_balances::Trait>::Balance;
 type RingInstance = darwinia_balances::Instance0;
 
 /// Trait for Ethereum pallet.
-pub trait Trait: frame_system::Trait<Hash=H256> + darwinia_balances::Trait::<RingInstance> + pallet_timestamp::Trait + pallet_evm::Trait {
+pub trait Trait:
+	frame_system::Trait<Hash = H256>
+	+ darwinia_balances::Trait<RingInstance>
+	+ pallet_timestamp::Trait
+	+ pallet_evm::Trait
+{
 	/// The overarching event type.
 	type Event: From<Event> + Into<<Self as frame_system::Trait>::Event>;
 	/// Find author for Ethereum.
@@ -87,7 +93,6 @@ decl_event!(
 		Executed(H160, H256),
 	}
 );
-
 
 decl_error! {
 	/// Ethereum pallet errors.
@@ -173,7 +178,7 @@ decl_module! {
 
 #[repr(u8)]
 enum TransactionValidationError {
-	#[allow (dead_code)]
+	#[allow(dead_code)]
 	UnknownError,
 	InvalidChainId,
 	InvalidSignature,
@@ -185,11 +190,15 @@ impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
 	fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
 		if let Call::transact(transaction) = call {
 			if transaction.signature.chain_id().unwrap_or_default() != T::ChainId::get() {
-				return InvalidTransaction::Custom(TransactionValidationError::InvalidChainId as u8).into();
+				return InvalidTransaction::Custom(
+					TransactionValidationError::InvalidChainId as u8,
+				)
+				.into();
 			}
 
-			let origin = Self::recover_signer(&transaction)
-				.ok_or_else(|| InvalidTransaction::Custom(TransactionValidationError::InvalidSignature as u8))?;
+			let origin = Self::recover_signer(&transaction).ok_or_else(|| {
+				InvalidTransaction::Custom(TransactionValidationError::InvalidSignature as u8)
+			})?;
 
 			let account_data = pallet_evm::Module::<T>::account_basic(&origin);
 
@@ -220,7 +229,6 @@ impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
 }
 
 impl<T: Trait> Module<T> {
-
 	fn recover_signer(transaction: &ethereum::Transaction) -> Option<H160> {
 		let mut sig = [0u8; 65];
 		let mut msg = [0u8; 32];
@@ -230,7 +238,9 @@ impl<T: Trait> Module<T> {
 		msg.copy_from_slice(&transaction.message_hash(Some(T::ChainId::get()))[..]);
 
 		let pubkey = sp_io::crypto::secp256k1_ecdsa_recover(&sig, &msg).ok()?;
-		Some(H160::from(H256::from_slice(Keccak256::digest(&pubkey).as_slice())))
+		Some(H160::from(H256::from_slice(
+			Keccak256::digest(&pubkey).as_slice(),
+		)))
 	}
 
 	fn store_block() {
@@ -254,15 +264,16 @@ impl<T: Trait> Module<T> {
 			), // TODO: check receipts hash.
 			logs_bloom: Bloom::default(), // TODO: gather the logs bloom from receipts.
 			difficulty: U256::zero(),
-			number: U256::from(
-				UniqueSaturatedInto::<u128>::unique_saturated_into(
-					frame_system::Module::<T>::block_number()
-				)
-			),
+			number: U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(
+				frame_system::Module::<T>::block_number(),
+			)),
 			gas_limit: U256::zero(), // TODO: set this using Ethereum's gas limit change algorithm.
-			gas_used: receipts.clone().into_iter().fold(U256::zero(), |acc, r| acc + r.used_gas),
+			gas_used: receipts
+				.clone()
+				.into_iter()
+				.fold(U256::zero(), |acc, r| acc + r.used_gas),
 			timestamp: UniqueSaturatedInto::<u64>::unique_saturated_into(
-				pallet_timestamp::Module::<T>::get()
+				pallet_timestamp::Module::<T>::get(),
 			),
 			extra_data: H256::default(),
 			mix_hash: H256::default(),
@@ -273,9 +284,7 @@ impl<T: Trait> Module<T> {
 		let mut transaction_hashes = Vec::new();
 
 		for t in &transactions {
-			let transaction_hash = H256::from_slice(
-				Keccak256::digest(&rlp::encode(t)).as_slice()
-			);
+			let transaction_hash = H256::from_slice(Keccak256::digest(&rlp::encode(t)).as_slice());
 			transaction_hashes.push(transaction_hash);
 		}
 
@@ -288,7 +297,8 @@ impl<T: Trait> Module<T> {
 			ConsensusLog::EndBlock {
 				block_hash: block.header.hash(),
 				transaction_hashes,
-			}.encode(),
+			}
+			.encode(),
 		);
 		frame_system::Module::<T>::deposit_log(digest.into());
 	}
@@ -323,15 +333,14 @@ impl<T: Trait> Module<T> {
 
 	/// Execute an Ethereum transaction, ignoring transaction signatures.
 	pub fn execute(source: H160, transaction: ethereum::Transaction) -> DispatchResult {
-		let transaction_hash = H256::from_slice(
-			Keccak256::digest(&rlp::encode(&transaction)).as_slice()
-		);
+		let transaction_hash =
+			H256::from_slice(Keccak256::digest(&rlp::encode(&transaction)).as_slice());
 		let transaction_index = Pending::get().len() as u32;
 
 		let (status, gas_used) = match transaction.action {
 			ethereum::TransactionAction::Call(target) => {
-				let (_, _, gas_used, logs) = Self::handle_exec(
-					pallet_evm::Module::<T>::execute_call(
+				let (_, _, gas_used, logs) =
+					Self::handle_exec(pallet_evm::Module::<T>::execute_call(
 						source,
 						target,
 						transaction.input.clone(),
@@ -340,31 +349,32 @@ impl<T: Trait> Module<T> {
 						transaction.gas_price,
 						Some(transaction.nonce),
 						true,
-					)?
-				)?;
+					)?)?;
 
-				(TransactionStatus {
-					transaction_hash,
-					transaction_index,
-					from: source,
-					to: Some(target),
-					contract_address: None,
-					logs: {
-						logs.into_iter()
-						.map(|log| {
-							Log {
-								address: log.address,
-								topics: log.topics,
-								data: log.data
-							}
-						}).collect()
+				(
+					TransactionStatus {
+						transaction_hash,
+						transaction_index,
+						from: source,
+						to: Some(target),
+						contract_address: None,
+						logs: {
+							logs.into_iter()
+								.map(|log| Log {
+									address: log.address,
+									topics: log.topics,
+									data: log.data,
+								})
+								.collect()
+						},
+						logs_bloom: Bloom::default(), // TODO: feed in bloom.
 					},
-					logs_bloom: Bloom::default(), // TODO: feed in bloom.
-				}, gas_used)
-			},
+					gas_used,
+				)
+			}
 			ethereum::TransactionAction::Create => {
-				let (_, contract_address, gas_used, logs) = Self::handle_exec(
-					pallet_evm::Module::<T>::execute_create(
+				let (_, contract_address, gas_used, logs) =
+					Self::handle_exec(pallet_evm::Module::<T>::execute_create(
 						source,
 						transaction.input.clone(),
 						transaction.value,
@@ -372,28 +382,29 @@ impl<T: Trait> Module<T> {
 						transaction.gas_price,
 						Some(transaction.nonce),
 						true,
-					)?
-				)?;
+					)?)?;
 
-				(TransactionStatus {
-					transaction_hash,
-					transaction_index,
-					from: source,
-					to: None,
-					contract_address: Some(contract_address),
-					logs: {
-						logs.into_iter()
-						.map(|log| {
-							Log {
-								address: log.address,
-								topics: log.topics,
-								data: log.data
-							}
-						}).collect()
+				(
+					TransactionStatus {
+						transaction_hash,
+						transaction_index,
+						from: source,
+						to: None,
+						contract_address: Some(contract_address),
+						logs: {
+							logs.into_iter()
+								.map(|log| Log {
+									address: log.address,
+									topics: log.topics,
+									data: log.data,
+								})
+								.collect()
+						},
+						logs_bloom: Bloom::default(), // TODO: feed in bloom.
 					},
-					logs_bloom: Bloom::default(), // TODO: feed in bloom.
-				}, gas_used)
-			},
+					gas_used,
+				)
+			}
 		};
 
 		let receipt = ethereum::Receipt {
@@ -408,23 +419,20 @@ impl<T: Trait> Module<T> {
 		Ok(())
 	}
 
-	fn handle_exec<R>(res: (ExitReason, R, U256, Vec<pallet_evm::Log>))
-		-> Result<(ExitReason, R, U256, Vec<pallet_evm::Log>), Error<T>> {
+	fn handle_exec<R>(
+		res: (ExitReason, R, U256, Vec<pallet_evm::Log>),
+	) -> Result<(ExitReason, R, U256, Vec<pallet_evm::Log>), Error<T>> {
 		match res.0 {
 			ExitReason::Succeed(_s) => Ok(res),
 			ExitReason::Error(e) => Err(Self::parse_exit_error(e)),
-			ExitReason::Revert(e) => {
-				match e {
-					ExitRevert::Reverted => Err(Error::<T>::Reverted),
-				}
+			ExitReason::Revert(e) => match e {
+				ExitRevert::Reverted => Err(Error::<T>::Reverted),
 			},
-			ExitReason::Fatal(e) => {
-				match e {
-					ExitFatal::NotSupported => Err(Error::<T>::NotSupported),
-					ExitFatal::UnhandledInterrupt => Err(Error::<T>::UnhandledInterrupt),
-					ExitFatal::CallErrorAsFatal(e_error) => Err(Self::parse_exit_error(e_error)),
-					ExitFatal::Other(_s) => Err(Error::<T>::ExitFatalOther),
-				}
+			ExitReason::Fatal(e) => match e {
+				ExitFatal::NotSupported => Err(Error::<T>::NotSupported),
+				ExitFatal::UnhandledInterrupt => Err(Error::<T>::UnhandledInterrupt),
+				ExitFatal::CallErrorAsFatal(e_error) => Err(Self::parse_exit_error(e_error)),
+				ExitFatal::Other(_s) => Err(Error::<T>::ExitFatalOther),
 			},
 		}
 	}

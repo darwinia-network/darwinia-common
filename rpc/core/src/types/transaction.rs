@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Open Ethereum.  If not, see <http://www.gnu.org/licenses/>.
 
-use serde::{Serialize, Serializer};
-use serde::ser::SerializeStruct;
-use ethereum_types::{H160, H256, H512, U64, U256};
 use crate::types::{Bytes, TransactionCondition};
+use ethereum_types::{H160, H256, H512, U256, U64};
+use serde::ser::SerializeStruct;
+use serde::{Serialize, Serializer};
 
 /// Transaction
 #[derive(Debug, Default, Clone, PartialEq, Serialize)]
@@ -90,7 +90,8 @@ pub enum LocalTransactionStatus {
 
 impl Serialize for LocalTransactionStatus {
 	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-		where S: Serializer
+	where
+		S: Serializer,
 	{
 		use self::LocalTransactionStatus::*;
 
@@ -111,34 +112,34 @@ impl Serialize for LocalTransactionStatus {
 			Mined(ref tx) => {
 				struc.serialize_field(status, "mined")?;
 				struc.serialize_field(transaction, tx)?;
-			},
+			}
 			Culled(ref tx) => {
 				struc.serialize_field(status, "culled")?;
 				struc.serialize_field(transaction, tx)?;
-			},
+			}
 			Dropped(ref tx) => {
 				struc.serialize_field(status, "dropped")?;
 				struc.serialize_field(transaction, tx)?;
-			},
+			}
 			Canceled(ref tx) => {
 				struc.serialize_field(status, "canceled")?;
 				struc.serialize_field(transaction, tx)?;
-			},
+			}
 			Invalid(ref tx) => {
 				struc.serialize_field(status, "invalid")?;
 				struc.serialize_field(transaction, tx)?;
-			},
+			}
 			Rejected(ref tx, ref reason) => {
 				struc.serialize_field(status, "rejected")?;
 				struc.serialize_field(transaction, tx)?;
 				struc.serialize_field("error", reason)?;
-			},
+			}
 			Replaced(ref tx, ref gas_price, ref hash) => {
 				struc.serialize_field(status, "replaced")?;
 				struc.serialize_field(transaction, tx)?;
 				struc.serialize_field("hash", hash)?;
 				struc.serialize_field("gasPrice", gas_price)?;
-			},
+			}
 		}
 
 		struc.end()
@@ -152,5 +153,5 @@ pub struct RichRawTransaction {
 	pub raw: Bytes,
 	/// Transaction details
 	#[serde(rename = "tx")]
-	pub transaction: Transaction
+	pub transaction: Transaction,
 }

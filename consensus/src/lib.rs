@@ -20,22 +20,21 @@ mod aux_schema;
 
 pub use crate::aux_schema::{load_block_hash, load_transaction_metadata};
 
-use std::sync::Arc;
-use std::collections::HashMap;
-use std::marker::PhantomData;
-use frontier_consensus_primitives::{FRONTIER_ENGINE_ID, ConsensusLog};
-use sc_client_api::{BlockOf, backend::AuxStore};
-use sp_blockchain::{HeaderBackend, ProvideCache, well_known_cache_keys::Id as CacheKeyId};
-use sp_block_builder::BlockBuilder as BlockBuilderApi;
-use sp_runtime::generic::OpaqueDigestItemId;
-use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
-use sp_api::ProvideRuntimeApi;
-use sp_consensus::{
-	BlockImportParams, Error as ConsensusError, BlockImport,
-	BlockCheckParams, ImportResult,
-};
+use frontier_consensus_primitives::{ConsensusLog, FRONTIER_ENGINE_ID};
 use log::*;
 use sc_client_api;
+use sc_client_api::{backend::AuxStore, BlockOf};
+use sp_api::ProvideRuntimeApi;
+use sp_block_builder::BlockBuilder as BlockBuilderApi;
+use sp_blockchain::{well_known_cache_keys::Id as CacheKeyId, HeaderBackend, ProvideCache};
+use sp_consensus::{
+	BlockCheckParams, BlockImport, BlockImportParams, Error as ConsensusError, ImportResult,
+};
+use sp_runtime::generic::OpaqueDigestItemId;
+use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
+use std::collections::HashMap;
+use std::marker::PhantomData;
+use std::sync::Arc;
 
 #[derive(derive_more::Display, Debug)]
 pub enum Error {
@@ -75,18 +74,15 @@ impl<Block: BlockT, I: Clone + BlockImport<Block>, C> Clone for FrontierBlockImp
 	}
 }
 
-impl<B, I, C> FrontierBlockImport<B, I, C> where
+impl<B, I, C> FrontierBlockImport<B, I, C>
+where
 	B: BlockT,
 	I: BlockImport<B, Transaction = sp_api::TransactionFor<C, B>> + Send + Sync,
 	I::Error: Into<ConsensusError>,
 	C: ProvideRuntimeApi<B> + Send + Sync + HeaderBackend<B> + AuxStore + ProvideCache<B> + BlockOf,
 	C::Api: BlockBuilderApi<B, Error = sp_blockchain::Error>,
 {
-	pub fn new(
-		inner: I,
-		client: Arc<C>,
-		enabled: bool,
-	) -> Self {
+	pub fn new(inner: I, client: Arc<C>, enabled: bool) -> Self {
 		Self {
 			inner,
 			client,
@@ -96,7 +92,8 @@ impl<B, I, C> FrontierBlockImport<B, I, C> where
 	}
 }
 
-impl<B, I, C> BlockImport<B> for FrontierBlockImport<B, I, C> where
+impl<B, I, C> BlockImport<B> for FrontierBlockImport<B, I, C>
+where
 	B: BlockT,
 	I: BlockImport<B, Transaction = sp_api::TransactionFor<C, B>> + Send + Sync,
 	I::Error: Into<ConsensusError>,
@@ -106,10 +103,7 @@ impl<B, I, C> BlockImport<B> for FrontierBlockImport<B, I, C> where
 	type Error = ConsensusError;
 	type Transaction = sp_api::TransactionFor<C, B>;
 
-	fn check_block(
-		&mut self,
-		block: BlockCheckParams<B>,
-	) -> Result<ImportResult, Self::Error> {
+	fn check_block(&mut self, block: BlockCheckParams<B>) -> Result<ImportResult, Self::Error> {
 		self.inner.check_block(block).map_err(Into::into)
 	}
 
@@ -119,11 +113,13 @@ impl<B, I, C> BlockImport<B> for FrontierBlockImport<B, I, C> where
 		new_cache: HashMap<CacheKeyId, Vec<u8>>,
 	) -> Result<ImportResult, Self::Error> {
 		macro_rules! insert_closure {
-			() => (
-				|insert| block.auxiliary.extend(
-					insert.iter().map(|(k, v)| (k.to_vec(), Some(v.to_vec())))
-				)
-			)
+			() => {
+				|insert| {
+					block
+						.auxiliary
+						.extend(insert.iter().map(|(k, v)| (k.to_vec(), Some(v.to_vec()))))
+					}
+			};
 		}
 
 		let client = self.client.clone();
@@ -134,9 +130,15 @@ impl<B, I, C> BlockImport<B> for FrontierBlockImport<B, I, C> where
 
 			match log {
 				ConsensusLog::EndBlock {
-					block_hash, transaction_hashes,
+					block_hash,
+					transaction_hashes,
 				} => {
-					aux_schema::write_block_hash(client.as_ref(), block_hash, hash, insert_closure!());
+					aux_schema::write_block_hash(
+						client.as_ref(),
+						block_hash,
+						hash,
+						insert_closure!(),
+					);
 
 					for (index, transaction_hash) in transaction_hashes.into_iter().enumerate() {
 						aux_schema::write_transaction_metadata(
@@ -145,24 +147,23 @@ impl<B, I, C> BlockImport<B> for FrontierBlockImport<B, I, C> where
 							insert_closure!(),
 						);
 					}
-				},
+				}
 			}
 		}
 
-		self.inner.import_block(block, new_cache).map_err(Into::into)
+		self.inner
+			.import_block(block, new_cache)
+			.map_err(Into::into)
 	}
 }
 
-fn find_frontier_log<B: BlockT>(
-	header: &B::Header,
-) -> Result<ConsensusLog, Error> {
+fn find_frontier_log<B: BlockT>(header: &B::Header) -> Result<ConsensusLog, Error> {
 	let mut frontier_log: Option<_> = None;
 	for log in header.digest().logs() {
 		trace!(target: "frontier-consensus", "Checking log {:?}, looking for ethereum block.", log);
 		let log = log.try_to::<ConsensusLog>(OpaqueDigestItemId::Consensus(&FRONTIER_ENGINE_ID));
 		match (log, frontier_log.is_some()) {
-			(Some(_), true) =>
-				return Err(Error::MultiplePostRuntimeLogs),
+			(Some(_), true) => return Err(Error::MultiplePostRuntimeLogs),
 			(Some(log), false) => frontier_log = Some(log),
 			_ => trace!(target: "frontier-consensus", "Ignoring digest not meant for us"),
 		}

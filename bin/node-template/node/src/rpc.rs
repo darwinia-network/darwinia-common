@@ -18,7 +18,7 @@ pub use jsonrpc_pubsub::manager::SubscriptionManager;
 pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
 
 // --- std ---
-use std::{sync::Arc, fmt};
+use std::{fmt, sync::Arc};
 // --- substrate ---
 use sp_api::ProvideRuntimeApi;
 // --- darwinia ---
@@ -27,12 +27,12 @@ use node_template_runtime::{
 	primitives::{AccountId, Balance, BlockNumber, Hash, Nonce, Power},
 };
 // frontier
-use sc_network::NetworkService;
-use frontier_rpc::{EthApi, EthApiServer, NetApi, NetApiServer, EthPubSubApi, EthPubSubApiServer};
+use frontier_rpc::{EthApi, EthApiServer, EthPubSubApi, EthPubSubApiServer, NetApi, NetApiServer};
 use sc_client_api::{
-	backend::{StorageProvider, Backend, StateBackend, AuxStore},
-	client::BlockchainEvents
+	backend::{AuxStore, Backend, StateBackend, StorageProvider},
+	client::BlockchainEvents,
 };
+use sc_network::NetworkService;
 use sp_runtime::traits::BlakeTwo256;
 
 /// A type representing all RPC extensions.
@@ -98,10 +98,11 @@ pub struct LightDeps<C, F, P> {
 /// Instantiate all RPC extensions.
 pub fn create_full<C, P, SC, B, BE>(
 	deps: FullDeps<C, P, SC, B>,
-	subscription_task_executor: SubscriptionTaskExecutor) -> RpcExtension
+	subscription_task_executor: SubscriptionTaskExecutor,
+) -> RpcExtension
 where
-    BE: Backend<Block> + 'static,
-    BE::State: StateBackend<BlakeTwo256>,
+	BE: Backend<Block> + 'static,
+	BE::State: StateBackend<BlakeTwo256>,
 	C: 'static + Send + Sync,
 	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE> + AuxStore,
 	C: sp_blockchain::HeaderBackend<Block>
@@ -189,27 +190,19 @@ where
 	io.extend_with(HeaderMMRApi::to_delegate(HeaderMMR::new(client.clone())));
 	io.extend_with(StakingApi::to_delegate(Staking::new(client.clone())));
 
-	io.extend_with(
-		EthApiServer::to_delegate(EthApi::new(
-			client.clone(),
-			pool.clone(),
-			node_template_runtime::TransactionConverter,
-			is_authority,
-		))
-	);
-	io.extend_with(
-		NetApiServer::to_delegate(NetApi::new(
-			client.clone(),
-		))
-	);
-	io.extend_with(
-		EthPubSubApiServer::to_delegate(EthPubSubApi::new(
-			pool.clone(),
-			client.clone(),
-			network.clone(),
-			SubscriptionManager::new(Arc::new(subscription_task_executor)),
-		))
-	);
+	io.extend_with(EthApiServer::to_delegate(EthApi::new(
+		client.clone(),
+		pool.clone(),
+		node_template_runtime::TransactionConverter,
+		is_authority,
+	)));
+	io.extend_with(NetApiServer::to_delegate(NetApi::new(client.clone())));
+	io.extend_with(EthPubSubApiServer::to_delegate(EthPubSubApi::new(
+		pool.clone(),
+		client.clone(),
+		network.clone(),
+		SubscriptionManager::new(Arc::new(subscription_task_executor)),
+	)));
 
 	io
 }

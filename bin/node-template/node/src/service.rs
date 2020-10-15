@@ -34,9 +34,7 @@ use sp_runtime::traits::BlakeTwo256;
 use sp_trie::PrefixedMemoryDB;
 use substrate_prometheus_endpoint::Registry;
 // --- darwinia ---
-use crate::rpc::{
-	self, BabeDeps, FullDeps, GrandpaDeps, LightDeps
-};
+use crate::rpc::{self, BabeDeps, FullDeps, GrandpaDeps, LightDeps};
 // frontier
 use frontier_consensus::FrontierBlockImport;
 
@@ -102,7 +100,7 @@ where
 		+ darwinia_header_mmr_rpc_runtime_api::HeaderMMRApi<Block, Hash>
 		+ darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>
 		+ frontier_rpc_primitives::EthereumRuntimeRPCApi<Block>,
-	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>
+	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
 {
 }
 
@@ -206,7 +204,8 @@ where
 			grandpa_hard_forks,
 		)?;
 	let justification_import = grandpa_block_import.clone();
-	let frontier_block_import = FrontierBlockImport::new(grandpa_block_import.clone(), client.clone(), true);
+	let frontier_block_import =
+		FrontierBlockImport::new(grandpa_block_import.clone(), client.clone(), true);
 	let (babe_import, babe_link) = sc_consensus_babe::block_import(
 		BabeConfig::get_or_compute(&*client)?,
 		frontier_block_import,
@@ -312,7 +311,8 @@ where
 	let shared_authority_set = grandpa_link.shared_authority_set().clone();
 	let shared_epoch_changes = babe_link.epoch_changes().clone();
 	let babe_config = babe_link.config().clone();
-	let subscription_task_executor = sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
+	let subscription_task_executor =
+		sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 
 	let rpc_extensions_builder = {
 		let client = client.clone();
@@ -343,10 +343,7 @@ where
 				},
 			};
 
-			rpc::create_full(
-				deps,
-				subscription_task_executor.clone()
-			)
+			rpc::create_full(deps, subscription_task_executor.clone())
 		})
 	};
 

@@ -20,12 +20,12 @@ mod eth_pubsub;
 pub use eth::{EthApi, EthApiServer, NetApi, NetApiServer};
 pub use eth_pubsub::{EthPubSubApi, EthPubSubApiServer};
 
-use jsonrpc_core::{ErrorCode, Error};
+use jsonrpc_core::{Error, ErrorCode};
 
 pub fn internal_err<T: ToString>(message: T) -> Error {
 	Error {
 		code: ErrorCode::InternalError,
 		message: message.to_string(),
-		data: None
+		data: None,
 	}
 }

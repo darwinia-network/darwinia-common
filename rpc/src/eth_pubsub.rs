@@ -1,39 +1,39 @@
-use std::{marker::PhantomData, sync::Arc};
-use std::collections::BTreeMap;
-use sp_runtime::traits::{
-	Block as BlockT, BlakeTwo256,
-	UniqueSaturatedInto
-};
-use sp_transaction_pool::TransactionPool;
-use sp_api::{ProvideRuntimeApi, BlockId};
-use sp_blockchain::{Error as BlockChainError, HeaderMetadata, HeaderBackend};
-use sp_storage::{StorageKey, StorageData};
-use sp_io::hashing::twox_128;
+use log::warn;
 use sc_client_api::{
-	backend::{StorageProvider, Backend, StateBackend, AuxStore},
-	client::BlockchainEvents
+	backend::{AuxStore, Backend, StateBackend, StorageProvider},
+	client::BlockchainEvents,
 };
 use sc_rpc::Metadata;
-use log::warn;
+use sp_api::{BlockId, ProvideRuntimeApi};
+use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
+use sp_io::hashing::twox_128;
+use sp_runtime::traits::{BlakeTwo256, Block as BlockT, UniqueSaturatedInto};
+use sp_storage::{StorageData, StorageKey};
+use sp_transaction_pool::TransactionPool;
+use std::collections::BTreeMap;
+use std::{marker::PhantomData, sync::Arc};
 
-use jsonrpc_pubsub::{typed::Subscriber, SubscriptionId, manager::SubscriptionManager};
-use frontier_rpc_core::EthPubSubApi::{self as EthPubSubApiT};
-use frontier_rpc_core::types::{
-	BlockNumber, Rich, Header, Bytes, Log, FilterAddress, Topic, VariadicValue,
-	pubsub::{Kind, Params, Result as PubSubResult, PubSubSyncStatus}
-};
-use ethereum_types::{H256, U256};
 use codec::Decode;
-use sha3::{Keccak256, Digest};
+use ethereum_types::{H256, U256};
+use frontier_rpc_core::types::{
+	pubsub::{Kind, Params, PubSubSyncStatus, Result as PubSubResult},
+	BlockNumber, Bytes, FilterAddress, Header, Log, Rich, Topic, VariadicValue,
+};
+use frontier_rpc_core::EthPubSubApi::{self as EthPubSubApiT};
+use jsonrpc_pubsub::{manager::SubscriptionManager, typed::Subscriber, SubscriptionId};
+use sha3::{Digest, Keccak256};
 
 pub use frontier_rpc_core::EthPubSubApiServer;
 use futures::{StreamExt as _, TryStreamExt as _};
 
-use jsonrpc_core::{Result as JsonRpcResult, futures::{Future, Sink}};
 use frontier_rpc_primitives::{EthereumRuntimeRPCApi, TransactionStatus};
+use jsonrpc_core::{
+	futures::{Future, Sink},
+	Result as JsonRpcResult,
+};
 
-use sc_network::{NetworkService, ExHashT};
 use crate::internal_err;
+use sc_network::{ExHashT, NetworkService};
 
 pub struct EthPubSubApi<B: BlockT, P, C, BE, H: ExHashT> {
 	_pool: Arc<P>,
@@ -50,16 +50,22 @@ impl<B: BlockT, P, C, BE, H: ExHashT> EthPubSubApi<B, P, C, BE, H> {
 		network: Arc<NetworkService<B, H>>,
 		subscriptions: SubscriptionManager,
 	) -> Self {
-		Self { _pool, client, network, subscriptions, _marker: PhantomData }
+		Self {
+			_pool,
+			client,
+			network,
+			subscriptions,
+			_marker: PhantomData,
+		}
 	}
 }
 
-impl<B: BlockT, P, C, BE, H: ExHashT> EthPubSubApi<B, P, C, BE, H> where
-	B: BlockT<Hash=H256> + Send + Sync + 'static,
-	P: TransactionPool<Block=B> + Send + Sync + 'static,
-	C: ProvideRuntimeApi<B> + StorageProvider<B,BE> +
-		BlockchainEvents<B> + AuxStore,
-	C: HeaderBackend<B> + HeaderMetadata<B, Error=BlockChainError> + 'static,
+impl<B: BlockT, P, C, BE, H: ExHashT> EthPubSubApi<B, P, C, BE, H>
+where
+	B: BlockT<Hash = H256> + Send + Sync + 'static,
+	P: TransactionPool<Block = B> + Send + Sync + 'static,
+	C: ProvideRuntimeApi<B> + StorageProvider<B, BE> + BlockchainEvents<B> + AuxStore,
+	C: HeaderBackend<B> + HeaderMetadata<B, Error = BlockChainError> + 'static,
 	C::Api: EthereumRuntimeRPCApi<B>,
 	C: Send + Sync + 'static,
 	BE: Backend<B> + 'static,
@@ -77,36 +83,41 @@ impl<B: BlockT, P, C, BE, H: ExHashT> EthPubSubApi<B, P, C, BE, H> where
 							native_number = Some(block.header.number.as_u32());
 						}
 					}
-				},
+				}
 				BlockNumber::Num(_) => {
 					if let Some(number) = number.to_min_block_num() {
 						native_number = Some(number.unique_saturated_into());
 					}
-				},
+				}
 				BlockNumber::Latest => {
 					native_number = Some(
-						self.client.info().best_number.clone().unique_saturated_into() as u32
+						self.client
+							.info()
+							.best_number
+							.clone()
+							.unique_saturated_into() as u32,
 					);
-				},
+				}
 				BlockNumber::Earliest => {
 					native_number = Some(0);
-				},
+				}
 				BlockNumber::Pending => {
 					native_number = None;
 				}
 			};
 		} else {
 			native_number = Some(
-				self.client.info().best_number.clone().unique_saturated_into() as u32
+				self.client
+					.info()
+					.best_number
+					.clone()
+					.unique_saturated_into() as u32,
 			);
 		}
 		Ok(native_number)
 	}
 
-	fn filter_block(
-		&self,
-		params: Option<Params>
-	) -> (Option<u32>, Option<u32>) {
+	fn filter_block(&self, params: Option<Params>) -> (Option<u32>, Option<u32>) {
 		if let Some(Params::Logs(f)) = params {
 			let to_block: Option<u32> = if f.to_block.is_some() {
 				self.native_block_number(f.to_block).unwrap_or(None)
@@ -115,7 +126,7 @@ impl<B: BlockT, P, C, BE, H: ExHashT> EthPubSubApi<B, P, C, BE, H> where
 			};
 			return (
 				self.native_block_number(f.from_block).unwrap_or(None),
-				to_block
+				to_block,
 			);
 		}
 		(None, None)
@@ -124,24 +135,25 @@ impl<B: BlockT, P, C, BE, H: ExHashT> EthPubSubApi<B, P, C, BE, H> where
 	// Asumes there is only one mapped canonical block in the AuxStore, otherwise something is wrong
 	fn load_hash(&self, hash: H256) -> JsonRpcResult<Option<BlockId<B>>> {
 		let hashes = match frontier_consensus::load_block_hash::<B, _>(self.client.as_ref(), hash)
-			.map_err(|err| internal_err(format!("fetch aux store failed: {:?}", err)))?
-		{
+			.map_err(|err| {
+			internal_err(format!("fetch aux store failed: {:?}", err))
+		})? {
 			Some(hashes) => hashes,
 			None => return Ok(None),
 		};
-		let out: Vec<H256> = hashes.into_iter()
+		let out: Vec<H256> = hashes
+			.into_iter()
 			.filter_map(|h| {
 				if let Ok(Some(_)) = self.client.header(BlockId::Hash(h)) {
 					Some(h)
 				} else {
 					None
 				}
-			}).collect();
+			})
+			.collect();
 
 		if out.len() == 1 {
-			return Ok(Some(
-				BlockId::Hash(out[0])
-			));
+			return Ok(Some(BlockId::Hash(out[0])));
 		}
 		Ok(None)
 	}
@@ -152,21 +164,18 @@ struct FilteredParams {
 	to_block: Option<u32>,
 	block_hash: Option<H256>,
 	address: Option<FilterAddress>,
-	topics: Option<Topic>
+	topics: Option<Topic>,
 }
 
 impl FilteredParams {
-	pub fn new(
-		params: Option<Params>,
-		block_range: (Option<u32>, Option<u32>)
-	) -> Self {
+	pub fn new(params: Option<Params>, block_range: (Option<u32>, Option<u32>)) -> Self {
 		if let Some(Params::Logs(d)) = params {
 			return FilteredParams {
 				from_block: block_range.0,
 				to_block: block_range.1,
 				block_hash: d.block_hash,
 				address: d.address,
-				topics: d.topics
+				topics: d.topics,
 			};
 		}
 		FilteredParams {
@@ -174,18 +183,13 @@ impl FilteredParams {
 			to_block: None,
 			block_hash: None,
 			address: None,
-			topics: None
+			topics: None,
 		}
 	}
 
-	pub fn filter_block_range(
-		&self,
-		block: &ethereum::Block
-	) -> bool {
+	pub fn filter_block_range(&self, block: &ethereum::Block) -> bool {
 		let mut out = true;
-		let number: u32 = UniqueSaturatedInto::<u32>::unique_saturated_into(
-			block.header.number
-		);
+		let number: u32 = UniqueSaturatedInto::<u32>::unique_saturated_into(block.header.number);
 		if let Some(from) = self.from_block {
 			if from > number {
 				out = false;
@@ -199,51 +203,52 @@ impl FilteredParams {
 		out
 	}
 
-	fn filter_block_hash(
-		&self,
-		block_hash: H256
-	) -> bool {
+	fn filter_block_hash(&self, block_hash: H256) -> bool {
 		if let Some(h) = self.block_hash {
-			if h != block_hash { return false; }
-		}
-		true
-	}
-
-	fn filter_address(
-		&self,
-		log: &ethereum::Log
-	) -> bool {
-		if let Some(input_address) = &self.address {
-			match input_address {
-				VariadicValue::Single(x) => {
-					if log.address != *x { return false; }
-				},
-				VariadicValue::Multiple(x) => {
-					if !x.contains(&log.address) { return false; }
-				},
-				_ => { return true; }
+			if h != block_hash {
+				return false;
 			}
 		}
 		true
 	}
 
-	fn filter_topics(
-		&self,
-		log: &ethereum::Log
-	) -> bool {
+	fn filter_address(&self, log: &ethereum::Log) -> bool {
+		if let Some(input_address) = &self.address {
+			match input_address {
+				VariadicValue::Single(x) => {
+					if log.address != *x {
+						return false;
+					}
+				}
+				VariadicValue::Multiple(x) => {
+					if !x.contains(&log.address) {
+						return false;
+					}
+				}
+				_ => {
+					return true;
+				}
+			}
+		}
+		true
+	}
+
+	fn filter_topics(&self, log: &ethereum::Log) -> bool {
 		if let Some(input_topics) = &self.topics {
 			match input_topics {
 				VariadicValue::Single(x) => {
 					if !log.topics.starts_with(&vec![*x]) {
 						return false;
 					}
-				},
+				}
 				VariadicValue::Multiple(x) => {
 					if !log.topics.starts_with(&x) {
 						return false;
 					}
-				},
-				_ => { return true; }
+				}
+				_ => {
+					return true;
+				}
 			}
 		}
 		true
@@ -252,56 +257,46 @@ impl FilteredParams {
 
 struct SubscriptionResult {}
 impl SubscriptionResult {
-	pub fn new() -> Self { SubscriptionResult{} }
+	pub fn new() -> Self {
+		SubscriptionResult {}
+	}
 	pub fn new_heads(&self, block: ethereum::Block) -> PubSubResult {
-		PubSubResult::Header(Box::new(
-			Rich {
-				inner: Header {
-					hash: Some(H256::from_slice(Keccak256::digest(
-						&rlp::encode(&block.header)
-					).as_slice())),
-					parent_hash: block.header.parent_hash,
-					uncles_hash: block.header.ommers_hash,
-					author: block.header.beneficiary,
-					miner: block.header.beneficiary,
-					state_root: block.header.state_root,
-					transactions_root: block.header.transactions_root,
-					receipts_root: block.header.receipts_root,
-					number: Some(block.header.number),
-					gas_used: block.header.gas_used,
-					gas_limit: block.header.gas_limit,
-					extra_data: Bytes(
-						block.header.extra_data.as_bytes().to_vec()
-					),
-					logs_bloom: block.header.logs_bloom,
-					timestamp: U256::from(block.header.timestamp),
-					difficulty: block.header.difficulty,
-					seal_fields:  vec![
-						Bytes(
-							block.header.mix_hash.as_bytes().to_vec()
-						),
-						Bytes(
-							block.header.nonce.as_bytes().to_vec()
-						)
-					],
-					size: Some(U256::from(
-						rlp::encode(&block).len() as u32
-					)),
-				},
-				extra_info: BTreeMap::new()
-			}
-		))
+		PubSubResult::Header(Box::new(Rich {
+			inner: Header {
+				hash: Some(H256::from_slice(
+					Keccak256::digest(&rlp::encode(&block.header)).as_slice(),
+				)),
+				parent_hash: block.header.parent_hash,
+				uncles_hash: block.header.ommers_hash,
+				author: block.header.beneficiary,
+				miner: block.header.beneficiary,
+				state_root: block.header.state_root,
+				transactions_root: block.header.transactions_root,
+				receipts_root: block.header.receipts_root,
+				number: Some(block.header.number),
+				gas_used: block.header.gas_used,
+				gas_limit: block.header.gas_limit,
+				extra_data: Bytes(block.header.extra_data.as_bytes().to_vec()),
+				logs_bloom: block.header.logs_bloom,
+				timestamp: U256::from(block.header.timestamp),
+				difficulty: block.header.difficulty,
+				seal_fields: vec![
+					Bytes(block.header.mix_hash.as_bytes().to_vec()),
+					Bytes(block.header.nonce.as_bytes().to_vec()),
+				],
+				size: Some(U256::from(rlp::encode(&block).len() as u32)),
+			},
+			extra_info: BTreeMap::new(),
+		}))
 	}
 	pub fn logs(
 		&self,
 		block: ethereum::Block,
 		receipts: Vec<ethereum::Receipt>,
-		params: &FilteredParams
+		params: &FilteredParams,
 	) -> Vec<Log> {
 		let block_hash = Some(H256::from_slice(
-			Keccak256::digest(&rlp::encode(
-				&block.header
-			)).as_slice()
+			Keccak256::digest(&rlp::encode(&block.header)).as_slice(),
 		));
 		let mut logs: Vec<Log> = vec![];
 		let mut log_index: u32 = 0;
@@ -309,30 +304,24 @@ impl SubscriptionResult {
 			let mut transaction_log_index: u32 = 0;
 			let transaction_hash: Option<H256> = if receipt.logs.len() > 0 {
 				Some(H256::from_slice(
-					Keccak256::digest(&rlp::encode(
-						&block.transactions[receipt_index as usize]
-					)).as_slice()
+					Keccak256::digest(&rlp::encode(&block.transactions[receipt_index as usize]))
+						.as_slice(),
 				))
-			} else { None };
+			} else {
+				None
+			};
 			for log in receipt.logs {
-				if self.add_log(
-					block_hash.unwrap(),
-					&log,
-					&block,
-					params
-				) {
+				if self.add_log(block_hash.unwrap(), &log, &block, params) {
 					logs.push(Log {
 						address: log.address,
 						topics: log.topics,
 						data: Bytes(log.data),
-						block_hash: block_hash,
+						block_hash,
 						block_number: Some(block.header.number),
-						transaction_hash: transaction_hash,
+						transaction_hash,
 						transaction_index: Some(U256::from(log_index)),
 						log_index: Some(U256::from(log_index)),
-						transaction_log_index: Some(U256::from(
-							transaction_log_index
-						)),
+						transaction_log_index: Some(U256::from(transaction_log_index)),
 						removed: false,
 					});
 				}
@@ -347,11 +336,13 @@ impl SubscriptionResult {
 		block_hash: H256,
 		log: &ethereum::Log,
 		block: &ethereum::Block,
-		params: &FilteredParams
+		params: &FilteredParams,
 	) -> bool {
-		if !params.filter_block_range(block) ||
-			!params.filter_block_hash(block_hash) ||
-			!params.filter_address(log) || !params.filter_topics(log) {
+		if !params.filter_block_range(block)
+			|| !params.filter_block_hash(block_hash)
+			|| !params.filter_address(log)
+			|| !params.filter_topics(log)
+		{
 			return false;
 		}
 		true
@@ -364,30 +355,27 @@ fn storage_prefix_build(module: &[u8], storage: &[u8]) -> Vec<u8> {
 
 macro_rules! stream_build {
 	($context:expr => $module:expr, $storage:expr) => {{
-		let key: StorageKey = StorageKey(
-			storage_prefix_build($module, $storage)
-		);
-		match $context.client.storage_changes_notification_stream(
-			Some(&[key]),
-			None
-		) {
+		let key: StorageKey = StorageKey(storage_prefix_build($module, $storage));
+		match $context
+			.client
+			.storage_changes_notification_stream(Some(&[key]), None)
+			{
 			Ok(stream) => Some(stream),
 			Err(_err) => None,
-		}
-	}};
+			}
+		}};
 }
 
 impl<B: BlockT, P, C, BE, H: ExHashT> EthPubSubApiT for EthPubSubApi<B, P, C, BE, H>
-	where
-		B: BlockT<Hash=H256> + Send + Sync + 'static,
-		P: TransactionPool<Block=B> + Send + Sync + 'static,
-		C: ProvideRuntimeApi<B> + StorageProvider<B,BE> +
-			BlockchainEvents<B> + AuxStore,
-		C: HeaderBackend<B> + HeaderMetadata<B, Error=BlockChainError> + 'static,
-		C: Send + Sync + 'static,
-		C::Api: EthereumRuntimeRPCApi<B>,
-		BE: Backend<B> + 'static,
-		BE::State: StateBackend<BlakeTwo256>,
+where
+	B: BlockT<Hash = H256> + Send + Sync + 'static,
+	P: TransactionPool<Block = B> + Send + Sync + 'static,
+	C: ProvideRuntimeApi<B> + StorageProvider<B, BE> + BlockchainEvents<B> + AuxStore,
+	C: HeaderBackend<B> + HeaderMetadata<B, Error = BlockChainError> + 'static,
+	C: Send + Sync + 'static,
+	C::Api: EthereumRuntimeRPCApi<B>,
+	BE: Backend<B> + 'static,
+	BE::State: StateBackend<BlakeTwo256>,
 {
 	type Metadata = Metadata;
 	fn subscribe(
@@ -408,114 +396,101 @@ impl<B: BlockT, P, C, BE, H: ExHashT> EthPubSubApiT for EthPubSubApi<B, P, C, BE
 				) {
 					self.subscriptions.add(subscriber, |sink| {
 						let stream = stream
-						.flat_map(move |(block_hash, changes)| {
-							let id = BlockId::Hash(block_hash);
-							let data = changes.iter().last().unwrap().2.unwrap();
-							let receipts: Vec<ethereum::Receipt> =
-								Decode::decode(&mut &data.0[..]).unwrap();
-							let block: ethereum::Block = client.runtime_api()
-								.current_block(&id).unwrap().unwrap();
-							futures::stream::iter(
-								SubscriptionResult::new()
-									.logs(block, receipts, &filtered_params)
-							)
-						})
-						.map(|x| {
-							return Ok::<Result<
-								PubSubResult,
-								jsonrpc_core::types::error::Error
-							>, ()>(Ok(
-								PubSubResult::Log(Box::new(x))
-							));
-						})
-						.compat();
+							.flat_map(move |(block_hash, changes)| {
+								let id = BlockId::Hash(block_hash);
+								let data = changes.iter().last().unwrap().2.unwrap();
+								let receipts: Vec<ethereum::Receipt> =
+									Decode::decode(&mut &data.0[..]).unwrap();
+								let block: ethereum::Block =
+									client.runtime_api().current_block(&id).unwrap().unwrap();
+								futures::stream::iter(SubscriptionResult::new().logs(
+									block,
+									receipts,
+									&filtered_params,
+								))
+							})
+							.map(|x| {
+								return Ok::<
+									Result<PubSubResult, jsonrpc_core::types::error::Error>,
+									(),
+								>(Ok(PubSubResult::Log(Box::new(x))));
+							})
+							.compat();
 
-						sink
-							.sink_map_err(|e| warn!(
-								"Error sending notifications: {:?}", e
-							))
+						sink.sink_map_err(|e| warn!("Error sending notifications: {:?}", e))
 							.send_all(stream)
 							.map(|_| ())
 					});
 				}
-			},
+			}
 			Kind::NewHeads => {
 				if let Some(stream) = stream_build!(
 					self => b"Ethereum", b"CurrentBlock"
 				) {
 					self.subscriptions.add(subscriber, |sink| {
 						let stream = stream
-						.map(|(_block, changes)| {
-							let data = changes.iter().last().unwrap().2.unwrap();
-							let block: ethereum::Block =
-								Decode::decode(&mut &data.0[..]).unwrap();
-							return Ok::<_, ()>(Ok(
-								SubscriptionResult::new()
-									.new_heads(block)
-							));
-						})
-						.compat();
+							.map(|(_block, changes)| {
+								let data = changes.iter().last().unwrap().2.unwrap();
+								let block: ethereum::Block =
+									Decode::decode(&mut &data.0[..]).unwrap();
+								return Ok::<_, ()>(Ok(SubscriptionResult::new().new_heads(block)));
+							})
+							.compat();
 
-						sink
-							.sink_map_err(|e| warn!(
-								"Error sending notifications: {:?}", e
-							))
+						sink.sink_map_err(|e| warn!("Error sending notifications: {:?}", e))
 							.send_all(stream)
 							.map(|_| ())
 					});
 				}
-			},
+			}
 			Kind::NewPendingTransactions => {
 				if let Some(stream) = stream_build!(
 					self => b"Ethereum", b"Pending"
 				) {
 					self.subscriptions.add(subscriber, |sink| {
 						let stream = stream
-						.flat_map(|(_block, changes)| {
-							let mut transactions: Vec<ethereum::Transaction> = vec![];
-							let storage: Vec<Option<StorageData>> = changes.iter()
-								.filter_map(|(o_sk, _k, v)| {
-									if o_sk.is_none() {
-										Some(v.cloned())
-									} else { None }
-								}).collect();
-							for change in storage {
-								if let Some(data) = change {
-									let storage: Vec<(
-										ethereum::Transaction,
-										TransactionStatus,
-										ethereum::Receipt
-									)> = Decode::decode(&mut &data.0[..]).unwrap();
-									let tmp: Vec<ethereum::Transaction> =
-										storage.iter().map(|x| x.0.clone()).collect();
-									transactions.extend(tmp);
+							.flat_map(|(_block, changes)| {
+								let mut transactions: Vec<ethereum::Transaction> = vec![];
+								let storage: Vec<Option<StorageData>> = changes
+									.iter()
+									.filter_map(|(o_sk, _k, v)| {
+										if o_sk.is_none() {
+											Some(v.cloned())
+										} else {
+											None
+										}
+									})
+									.collect();
+								for change in storage {
+									if let Some(data) = change {
+										let storage: Vec<(
+											ethereum::Transaction,
+											TransactionStatus,
+											ethereum::Receipt,
+										)> = Decode::decode(&mut &data.0[..]).unwrap();
+										let tmp: Vec<ethereum::Transaction> =
+											storage.iter().map(|x| x.0.clone()).collect();
+										transactions.extend(tmp);
+									}
 								}
-							}
-							futures::stream::iter(transactions)
-						})
-						.map(|transaction| {
-							return Ok::<Result<
-								PubSubResult,
-								jsonrpc_core::types::error::Error
-							>, ()>(Ok(
-								PubSubResult::TransactionHash(H256::from_slice(
-									Keccak256::digest(
-										&rlp::encode(&transaction)
-									).as_slice()
-								))
-							));
-						})
-						.compat();
+								futures::stream::iter(transactions)
+							})
+							.map(|transaction| {
+								return Ok::<
+									Result<PubSubResult, jsonrpc_core::types::error::Error>,
+									(),
+								>(Ok(PubSubResult::TransactionHash(H256::from_slice(
+									Keccak256::digest(&rlp::encode(&transaction)).as_slice(),
+								))));
+							})
+							.compat();
 
-						sink
-							.sink_map_err(|e| warn!(
-								"Error sending notifications: {:?}", e
-							))
+						sink.sink_map_err(|e| warn!("Error sending notifications: {:?}", e))
 							.send_all(stream)
 							.map(|_| ())
 					});
 				}
-			},
+			}
 			Kind::Syncing => {
 				if let Some(stream) = stream_build!(
 					self => b"Ethereum", b"CurrentBlock"
@@ -523,43 +498,37 @@ impl<B: BlockT, P, C, BE, H: ExHashT> EthPubSubApiT for EthPubSubApi<B, P, C, BE
 					self.subscriptions.add(subscriber, |sink| {
 						let mut previous_syncing = network.is_major_syncing();
 						let stream = stream
-						.filter_map(move |(_, _)| {
-							let syncing = network.is_major_syncing();
-							if previous_syncing != syncing {
-								previous_syncing = syncing;
-								futures::future::ready(Some(syncing))
-							} else {
-								futures::future::ready(None)
-							}
-						})
-						.map(|syncing| {
-							return Ok::<Result<
-								PubSubResult,
-								jsonrpc_core::types::error::Error
-							>, ()>(Ok(
-								PubSubResult::SyncState(PubSubSyncStatus {
-									syncing: syncing
-								})
-							));
-						})
-						.compat();
-						sink
-							.sink_map_err(|e| warn!(
-								"Error sending notifications: {:?}", e
-							))
+							.filter_map(move |(_, _)| {
+								let syncing = network.is_major_syncing();
+								if previous_syncing != syncing {
+									previous_syncing = syncing;
+									futures::future::ready(Some(syncing))
+								} else {
+									futures::future::ready(None)
+								}
+							})
+							.map(|syncing| {
+								return Ok::<
+									Result<PubSubResult, jsonrpc_core::types::error::Error>,
+									(),
+								>(Ok(PubSubResult::SyncState(PubSubSyncStatus {
+									syncing,
+								})));
+							})
+							.compat();
+						sink.sink_map_err(|e| warn!("Error sending notifications: {:?}", e))
 							.send_all(stream)
 							.map(|_| ())
-
 					});
 				}
-			},
+			}
 		}
 	}
 
 	fn unsubscribe(
 		&self,
 		_metadata: Option<Self::Metadata>,
-		subscription_id: SubscriptionId
+		subscription_id: SubscriptionId,
 	) -> JsonRpcResult<bool> {
 		Ok(self.subscriptions.cancel(subscription_id))
 	}

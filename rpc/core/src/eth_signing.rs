@@ -19,8 +19,8 @@
 use jsonrpc_core::BoxFuture;
 use jsonrpc_derive::rpc;
 
+use crate::types::{Bytes, RichRawTransaction, TransactionRequest};
 use ethereum_types::{H160, H256, H520};
-use crate::types::{Bytes, TransactionRequest, RichRawTransaction};
 
 /// Signing methods implementation relying on unlocked accounts.
 #[rpc(server)]
@@ -42,5 +42,9 @@ pub trait EthSigningApi {
 	/// Returns signed transaction RLP representation and the transaction itself.
 	/// It can be later submitted using `eth_sendRawTransaction/eth_submitTransaction`.
 	#[rpc(meta, name = "eth_signTransaction")]
-	fn sign_transaction(&self, _: Self::Metadata, _: TransactionRequest) -> BoxFuture<RichRawTransaction>;
+	fn sign_transaction(
+		&self,
+		_: Self::Metadata,
+		_: TransactionRequest,
+	) -> BoxFuture<RichRawTransaction>;
 }

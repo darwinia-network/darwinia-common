@@ -16,12 +16,10 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use sp_core::{H160, H256, U256};
-use ethereum::{
-	Log, Block as EthereumBlock, TransactionAction
-};
+use codec::{Decode, Encode};
+use ethereum::{Block as EthereumBlock, Log, TransactionAction};
 use ethereum_types::Bloom;
-use codec::{Encode, Decode};
+use sp_core::{H160, H256, U256};
 use sp_std::vec::Vec;
 
 #[derive(Eq, PartialEq, Clone, Encode, Decode, sp_runtime::RuntimeDebug)]

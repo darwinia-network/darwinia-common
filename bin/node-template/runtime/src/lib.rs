@@ -387,8 +387,7 @@ use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_core::{
 	crypto::{KeyTypeId, Public},
 	u32_trait::{_1, _2, _3, _5},
-	OpaqueMetadata,
-	U256, H160, H256, Hasher,
+	Hasher, OpaqueMetadata, H160, H256, U256,
 };
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
@@ -414,14 +413,13 @@ use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispa
 use impls::*;
 
 // frontier
-use frame_evm::{Account as EVMAccount, FeeCalculator, HashedAddressMapping, EnsureAddressTruncated,
-				precompiles::Precompile,
-				ExitReason, ExitSucceed, ExitError, ExitRevert, ExitFatal,
-	};
-use frontier_rpc_primitives::{TransactionStatus};
 use frame_evm::AddressMapping;
-use darwinia_balances::Error::KeepAlive;
+use frame_evm::{
+	precompiles::Precompile, Account as EVMAccount, EnsureAddressTruncated, ExitError, ExitSucceed,
+	FeeCalculator,
+};
 use frame_support::traits::ExistenceRequirement;
+use frontier_rpc_primitives::TransactionStatus;
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
@@ -1163,7 +1161,9 @@ impl AddressMapping<AccountId> for ConcatAddressMapping {
 #[test]
 fn test_concat_address_mapping() {
 	// 0x182c00A789A7cC6BeA8fbc627121022D6029a416
-	let evm_address = [24u8, 44, 0, 167, 137, 167, 204, 107, 234, 143, 188, 98, 113, 33, 2, 45, 96, 41, 164, 22];
+	let evm_address = [
+		24u8, 44, 0, 167, 137, 167, 204, 107, 234, 143, 188, 98, 113, 33, 2, 45, 96, 41, 164, 22,
+	];
 
 	// same evm address's result should be equal
 	let account_id = ConcatAddressMapping::into_account_id(H160::from_slice(&evm_address));
@@ -1180,15 +1180,18 @@ fn ensure_linear_cost(
 	target_gas: Option<usize>,
 	len: usize,
 	base: usize,
-	word: usize
+	word: usize,
 ) -> Result<usize, ExitError> {
-	let cost = base.checked_add(
-		word.checked_mul(len.saturating_add(31) / 32).ok_or(ExitError::OutOfGas)?
-	).ok_or(ExitError::OutOfGas)?;
+	let cost = base
+		.checked_add(
+			word.checked_mul(len.saturating_add(31) / 32)
+				.ok_or(ExitError::OutOfGas)?,
+		)
+		.ok_or(ExitError::OutOfGas)?;
 
 	if let Some(target_gas) = target_gas {
 		if cost > target_gas {
-			return Err(ExitError::OutOfGas)
+			return Err(ExitError::OutOfGas);
 		}
 	}
 
@@ -1218,22 +1221,24 @@ impl Precompile for TransferBack {
 			value_data.copy_from_slice(&input[112..128]);
 			let value = u128::from_be_bytes(value_data);
 
-			let result = <Ring as frame_support::traits::Currency<_>>::transfer(&from, &to, value, ExistenceRequirement::KeepAlive);
-			let free_balance = <Ring as frame_support::traits::Currency<_>>::free_balance(&from);
-
+			let result = <Ring as frame_support::traits::Currency<_>>::transfer(
+				&from,
+				&to,
+				value,
+				ExistenceRequirement::KeepAlive,
+			);
 			match result {
 				Ok(()) => Ok((ExitSucceed::Returned, vec![], cost)),
-				Err(error) => {
-					match error {
-						sp_runtime::DispatchError::BadOrigin => Err(ExitError::Other("BadOrigin")),
-						sp_runtime::DispatchError::CannotLookup => Err(ExitError::Other("CannotLookup")),
-						sp_runtime::DispatchError::Other(message) => Err(ExitError::Other(message)),
-						sp_runtime::DispatchError::Module { message, .. } => {
-							Err(ExitError::Other(message.unwrap()))
-						}
+				Err(error) => match error {
+					sp_runtime::DispatchError::BadOrigin => Err(ExitError::Other("BadOrigin")),
+					sp_runtime::DispatchError::CannotLookup => {
+						Err(ExitError::Other("CannotLookup"))
 					}
-
-				}
+					sp_runtime::DispatchError::Other(message) => Err(ExitError::Other(message)),
+					sp_runtime::DispatchError::Module { message, .. } => {
+						Err(ExitError::Other(message.unwrap()))
+					}
+				},
 			}
 		}
 	}
@@ -1270,7 +1275,6 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 	}
 }
 
-
 impl frame_ethereum::Trait for Runtime {
 	type Event = Event;
 	type FindAuthor = EthereumFindAuthor<Babe>;
@@ -1280,15 +1284,25 @@ pub struct TransactionConverter;
 
 impl frontier_rpc_primitives::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
 	fn convert_transaction(&self, transaction: frame_ethereum::Transaction) -> UncheckedExtrinsic {
-		UncheckedExtrinsic::new_unsigned(frame_ethereum::Call::<Runtime>::transact(transaction).into())
+		UncheckedExtrinsic::new_unsigned(
+			frame_ethereum::Call::<Runtime>::transact(transaction).into(),
+		)
 	}
 }
 
-impl frontier_rpc_primitives::ConvertTransaction<opaque::UncheckedExtrinsic> for TransactionConverter {
-	fn convert_transaction(&self, transaction: frame_ethereum::Transaction) -> opaque::UncheckedExtrinsic {
-		let extrinsic = UncheckedExtrinsic::new_unsigned(frame_ethereum::Call::<Runtime>::transact(transaction).into());
+impl frontier_rpc_primitives::ConvertTransaction<opaque::UncheckedExtrinsic>
+	for TransactionConverter
+{
+	fn convert_transaction(
+		&self,
+		transaction: frame_ethereum::Transaction,
+	) -> opaque::UncheckedExtrinsic {
+		let extrinsic = UncheckedExtrinsic::new_unsigned(
+			frame_ethereum::Call::<Runtime>::transact(transaction).into(),
+		);
 		let encoded = extrinsic.encode();
-		opaque::UncheckedExtrinsic::decode(&mut &encoded[..]).expect("Encoded extrinsic is always valid")
+		opaque::UncheckedExtrinsic::decode(&mut &encoded[..])
+			.expect("Encoded extrinsic is always valid")
 	}
 }
 

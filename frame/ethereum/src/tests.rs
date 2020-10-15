@@ -18,16 +18,12 @@
 //! Consensus extension module tests for BABE consensus.
 
 use super::*;
+use ethereum::TransactionSignature;
+use frame_support::{assert_err, assert_noop, assert_ok, unsigned::ValidateUnsigned};
 use mock::*;
 use rustc_hex::FromHex;
+use sp_runtime::transaction_validity::{InvalidTransaction, TransactionSource};
 use std::str::FromStr;
-use ethereum::TransactionSignature;
-use frame_support::{
-	assert_noop, assert_err, assert_ok,
-	unsigned::ValidateUnsigned,
-};
-use sp_runtime::transaction_validity::{TransactionSource, InvalidTransaction};
-
 
 // This ERC-20 contract mints the maximum amount of tokens to the contract creator.
 // pragma solidity ^0.5.0;
@@ -66,7 +62,6 @@ fn transaction_should_increment_nonce() {
 	});
 }
 
-
 #[test]
 fn transaction_should_be_added_to_pending() {
 	let (pairs, mut ext) = new_test_ext(1);
@@ -74,15 +69,11 @@ fn transaction_should_be_added_to_pending() {
 
 	ext.execute_with(|| {
 		let transaction = default_erc20_creation_transaction(alice);
-		assert_ok!(Ethereum::execute(
-			alice.address,
-			transaction.clone(),
-		));
+		assert_ok!(Ethereum::execute(alice.address, transaction.clone(),));
 		assert_eq!(Pending::get().len(), 1);
 		assert_eq!(Pending::get()[0].0.input, transaction.input);
 	});
 }
-
 
 #[test]
 fn transaction_without_enough_gas_should_not_work() {
@@ -93,7 +84,10 @@ fn transaction_without_enough_gas_should_not_work() {
 		let mut transaction = default_erc20_creation_transaction(alice);
 		transaction.gas_price = U256::from(11_000_000);
 
-		assert_err!(Ethereum::validate_unsigned(TransactionSource::External, &Call::transact(transaction)), InvalidTransaction::Payment);
+		assert_err!(
+			Ethereum::validate_unsigned(TransactionSource::External, &Call::transact(transaction)),
+			InvalidTransaction::Payment
+		);
 	});
 }
 
@@ -127,7 +121,10 @@ fn transaction_with_invalid_nonce_should_not_work() {
 
 		let signed2 = transaction.sign(&alice.private_key);
 
-		assert_err!(Ethereum::validate_unsigned(TransactionSource::External, &Call::transact(signed2)), InvalidTransaction::Stale);
+		assert_err!(
+			Ethereum::validate_unsigned(TransactionSource::External, &Call::transact(signed2)),
+			InvalidTransaction::Stale
+		);
 	});
 }
 
@@ -143,10 +140,11 @@ fn contract_constructor_should_get_executed() {
 			alice.address,
 			default_erc20_creation_transaction(alice),
 		));
-		assert_eq!(Evm::account_storages(
-			erc20_address, alice_storage_address
-		), H256::from_str("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff").unwrap())
-
+		assert_eq!(
+			Evm::account_storages(erc20_address, alice_storage_address),
+			H256::from_str("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
+				.unwrap()
+		)
 	});
 }
 
@@ -159,16 +157,15 @@ fn source_should_be_derived_from_signature() {
 	let alice_storage_address = storage_address(alice.address, H256::zero());
 
 	ext.execute_with(|| {
-		Ethereum::transact(
-			Origin::none(),
-			default_erc20_creation_transaction(alice),
-		).expect("Failed to execute transaction");
+		Ethereum::transact(Origin::none(), default_erc20_creation_transaction(alice))
+			.expect("Failed to execute transaction");
 
 		// We verify the transaction happened with alice account.
-		assert_eq!(Evm::account_storages(
-			erc20_address, alice_storage_address
-		), H256::from_str("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff").unwrap())
-
+		assert_eq!(
+			Evm::account_storages(erc20_address, alice_storage_address),
+			H256::from_str("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
+				.unwrap()
+		)
 	});
 }
 
@@ -178,12 +175,17 @@ fn invalid_signature_should_be_ignored() {
 	let alice = &pairs[0];
 
 	let mut transaction = default_erc20_creation_transaction(alice);
-	transaction.signature = TransactionSignature::new(0x78, H256::from_slice(&[55u8;32]), H256::from_slice(&[55u8;32])).unwrap();
+	transaction.signature = TransactionSignature::new(
+		0x78,
+		H256::from_slice(&[55u8; 32]),
+		H256::from_slice(&[55u8; 32]),
+	)
+	.unwrap();
 	ext.execute_with(|| {
-		assert_noop!(Ethereum::transact(
-			Origin::none(),
-			transaction,
-		), Error::<Test>::InvalidSignature);
+		assert_noop!(
+			Ethereum::transact(Origin::none(), transaction,),
+			Error::<Test>::InvalidSignature
+		);
 	});
 }
 

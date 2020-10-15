@@ -21,8 +21,8 @@ use jsonrpc_core::{BoxFuture, Result};
 use jsonrpc_derive::rpc;
 
 use crate::types::{
-	BlockNumber, Bytes, CallRequest, Filter, FilterChanges, Index, Log, Receipt,
-	RichBlock, SyncStatus, Transaction, Work,
+	BlockNumber, Bytes, CallRequest, Filter, FilterChanges, Index, Log, Receipt, RichBlock,
+	SyncStatus, Transaction, Work,
 };
 pub use rpc_impl_EthApi::gen_server::EthApi as EthApiServer;
 
@@ -125,11 +125,8 @@ pub trait EthApi {
 
 	/// Returns transaction at given block hash and index.
 	#[rpc(name = "eth_getTransactionByBlockHashAndIndex")]
-	fn transaction_by_block_hash_and_index(
-		&self,
-		_: H256,
-		_: Index,
-	) -> Result<Option<Transaction>>;
+	fn transaction_by_block_hash_and_index(&self, _: H256, _: Index)
+		-> Result<Option<Transaction>>;
 
 	/// Returns transaction by given block number and index.
 	#[rpc(name = "eth_getTransactionByBlockNumberAndIndex")]
