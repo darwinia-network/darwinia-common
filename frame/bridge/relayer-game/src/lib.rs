@@ -178,7 +178,6 @@ decl_module! {
 		#[weight = 100_000_000]
 		pub fn update_games_unsigned(origin) {
 			ensure_none(origin)?;
-
 		}
 	}
 }
