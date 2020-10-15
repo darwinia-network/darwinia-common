@@ -13,6 +13,9 @@ use sp_runtime::{traits::Zero, DispatchResult, RuntimeDebug};
 use sp_std::borrow::ToOwned;
 use sp_std::prelude::*;
 
+/// Game id, round and the index under the round point to a unique proposal AKA proposal id
+pub type ProposalId<GameId> = (GameId, u32, u32);
+
 /// Implement this for target chain's relay module's
 /// to expose some necessary APIs for relayer game
 pub trait RelayableChain {
@@ -26,16 +29,16 @@ pub trait RelayableChain {
 	fn verify_proofs(relay_stuffs: &Self::RelayStuffs, proofs: &Self::Proofs) -> DispatchResult;
 }
 
-// A regulator to adjust relay args for a specific chain
-// Implement this in runtime's impls
+/// A regulator to adjust relay args for a specific chain
+/// Implement this in runtime's `impls.rs`
 pub trait AdjustableRelayerGame {
 	type Moment;
 	type Balance;
 	type RelayBlockId;
 
-	// The maximum number of active games
-	//
-	// This might relate to the validators count
+	/// The maximum number of active games
+	///
+	/// This might relate to the validators count
 	fn max_active_games() -> u8;
 
 	fn propose_time(round: u32) -> Self::Moment;
@@ -54,7 +57,8 @@ pub trait RelayerGameProtocol {
 	type Proofs;
 
 	/// Game's entry point, call only at the first round
-	/// Against
+	///
+	/// Propose a new proposal or against a existed proposal
 	fn propose(
 		relayer: Self::Relayer,
 		game_id: Self::GameId,
@@ -62,6 +66,8 @@ pub trait RelayerGameProtocol {
 		proofs: Option<Self::Proofs>,
 	) -> DispatchResult;
 
+	/// Verify a specify proposal
+	///
 	/// Game id, round and the index under the round point to a unique proposal AKA proposal id
 	/// Proofs is a `Vec` because the sampling function might give more than 1 sample points
 	/// So need to verify each sample point with its proofs
@@ -77,7 +83,7 @@ pub trait RelayerGameProtocol {
 pub struct RelayProposal<RelayStuffs, AccountId, Balance, GameId> {
 	pub content: Vec<RelayStuffs>,
 	pub bonds: Vec<(AccountId, Balance)>,
-	pub extended_proposal_id: Option<(GameId, u32, u32)>,
+	pub extended_proposal_id: Option<ProposalId<GameId>>,
 	pub verified: bool,
 }
 impl<RelayStuffs, AccountId, Balance, GameId>
@@ -95,12 +101,12 @@ impl<RelayStuffs, AccountId, Balance, GameId>
 
 #[derive(Encode, Decode, RuntimeDebug)]
 pub enum GameStatus<Moment> {
-	// Relayer can propose before `Moment`
+	/// Relayer can propose before `Moment`
 	Open(Moment),
-	// First parameter means is this game got different proposal
-	// if no challenge, the proofs can be ignored
-	//
-	// Second parameter means relayer can complete proofs before this time
+	/// First parameter means is this game got different proposal
+	/// if no challenge, the proofs can be ignored
+	///
+	/// Second parameter means relayer can complete proofs before this time
 	Closed((bool, Moment)),
 }
 impl<Moment> Default for GameStatus<Moment>
