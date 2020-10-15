@@ -401,7 +401,7 @@ use sp_runtime::{
 	RuntimeDebug,
 };
 use sp_staking::SessionIndex;
-use sp_std::{prelude::*, marker::PhantomData};
+use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;

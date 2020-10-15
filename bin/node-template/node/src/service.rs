@@ -35,8 +35,7 @@ use sp_trie::PrefixedMemoryDB;
 use substrate_prometheus_endpoint::Registry;
 // --- darwinia ---
 use crate::rpc::{
-	self, BabeDeps, DenyUnsafe, FullDeps, GrandpaDeps, LightDeps, RpcExtension,
-	SubscriptionTaskExecutor,
+	self, BabeDeps, FullDeps, GrandpaDeps, LightDeps
 };
 // frontier
 use frontier_consensus::FrontierBlockImport;
@@ -225,15 +224,11 @@ where
 		config.prometheus_registry(),
 		CanAuthorWithNativeVersion::new(client.executor().clone()),
 	)?;
-	let justification_stream = grandpa_link.justification_stream();
-	let shared_authority_set = grandpa_link.shared_authority_set().clone();
 	let shared_voter_state = GrandpaSharedVoterState::empty();
 	let finality_proof_provider =
 		GrandpaFinalityProofProvider::new_for_service(backend.clone(), client.clone());
 	let import_setup = (babe_import.clone(), grandpa_link, babe_link.clone());
 	let rpc_setup = (shared_voter_state.clone(), finality_proof_provider.clone());
-	let babe_config = babe_link.config().clone();
-	let shared_epoch_changes = babe_link.epoch_changes().clone();
 
 	Ok(PartialComponents {
 		client,
@@ -308,7 +303,7 @@ where
 			select_chain.clone(),
 			grandpa_hard_forks,
 		)?;
-	let (babe_import, babe_link) = sc_consensus_babe::block_import(
+	let (_, babe_link) = sc_consensus_babe::block_import(
 		BabeConfig::get_or_compute(&*client)?,
 		grandpa_block_import,
 		client.clone(),
@@ -316,7 +311,6 @@ where
 	let justification_stream = grandpa_link.justification_stream();
 	let shared_authority_set = grandpa_link.shared_authority_set().clone();
 	let shared_epoch_changes = babe_link.epoch_changes().clone();
-	let shared_voter_state = GrandpaSharedVoterState::empty();
 	let babe_config = babe_link.config().clone();
 	let subscription_task_executor = sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 
