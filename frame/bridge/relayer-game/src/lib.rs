@@ -37,6 +37,10 @@ use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
 	traits::{Currency, Get, OnUnbalanced},
 };
+use frame_system::{
+	ensure_none,
+	offchain::{SendTransactionTypes, SubmitTransaction},
+};
 use sp_runtime::{DispatchError, DispatchResult};
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
@@ -48,7 +52,9 @@ use types::*;
 
 pub const RELAYER_GAME_ID: LockIdentifier = *b"da/rgame";
 
-pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
+pub trait Trait<I: Instance = DefaultInstance>:
+	frame_system::Trait + SendTransactionTypes<Call<Self, I>>
+{
 	type Event: From<Event<Self, I>> + Into<<Self as frame_system::Trait>::Event>;
 
 	/// The currency use for bond
@@ -160,11 +166,19 @@ decl_module! {
 		fn deposit_event() = default;
 
 		fn offchain_worker(now: BlockNumber<T>) {
-			let closed_rounds = Self::closed_rounds_at(now);
+			let closed_rounds = <ClosedRounds<T, I>>::take(now);
 
 			if !closed_rounds.is_empty() {
-				Self::update_games_at(closed_rounds, now);
+				if let Err(e) = Self::update_games_at(closed_rounds, now) {
+					error!(target: "relayer-game", "{:?}", e);
+				}
 			}
+		}
+
+		#[weight = 100_000_000]
+		pub fn update_games_unsigned(origin) {
+			ensure_none(origin)?;
+
 		}
 	}
 }
@@ -239,11 +253,16 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		<ClosedRounds<T, I>>::append(propose_time + complete_proofs_time, game_id);
 	}
 
-	pub fn update_games_at(game_ids: Vec<GameId<T, I>>, moment: BlockNumber<T>) {
+	pub fn update_games_at(game_ids: Vec<GameId<T, I>>, moment: BlockNumber<T>) -> DispatchResult {
 		info!(target: "relayer-game", "Found Closed Rounds at `{:?}`", moment);
 		info!(target: "relayer-game", "---");
 
 		for game_id in game_ids {}
+
+		let call = Call::update_games_unsigned().into();
+
+		<SubmitTransaction<T, Call<T, I>>>::submit_unsigned_transaction(call)
+			.map_err(|_| "TODO".into())
 	}
 }
 
