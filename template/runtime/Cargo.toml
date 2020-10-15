@@ -16,10 +16,10 @@ serde = { version = "1.0.101", optional = true, features = ["derive"] }
 
 frame-ethereum = { version = "0.1.0", default-features = false, package = "pallet-ethereum", path = "../../frame/ethereum" }
 frame-evm = { version = "2.0.0-dev", default-features = false, package = "pallet-evm", git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-frame-executive = { version = "2.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-frame-support = { version = "2.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+frame-executive ={ default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+frame-support ={ default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 frame-system = { version = "2.0.0-dev", default-features = false, package = "frame-system", git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-frame-system-rpc-runtime-api = { version = "2.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+frame-system-rpc-runtime-api ={ default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 pallet-aura = { version = "2.0.0-dev", default-features = false, package = "pallet-aura", git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 pallet-balances = { version = "2.0.0-dev", default-features = false, package = "pallet-balances", git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
@@ -28,20 +28,20 @@ pallet-randomness-collective-flip = { version = "2.0.0-dev", default-features = 
 pallet-sudo = { version = "2.0.0-dev", default-features = false, package = "pallet-sudo", git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 pallet-timestamp = { version = "2.0.0-dev", default-features = false, package = "pallet-timestamp", git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 pallet-transaction-payment = { version = "2.0.0-dev", default-features = false, package = "pallet-transaction-payment", git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-pallet-transaction-payment-rpc-runtime-api = { version = "2.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+pallet-transaction-payment-rpc-runtime-api ={ default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
-sp-api = { version = "2.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+sp-api ={ default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-block-builder = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "frontier"}
 sp-consensus-aura = { version = "0.8.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-sp-core = { version = "2.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+sp-core ={ default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-inherents = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "frontier"}
-sp-io = { version = "2.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-sp-offchain = { version = "2.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-sp-runtime = { version = "2.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-sp-session = { version = "2.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-sp-std = { version = "2.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-sp-transaction-pool = { version = "2.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-sp-version = { version = "2.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+sp-io ={ default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-offchain ={ default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-runtime ={ default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-session ={ default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-std ={ default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-transaction-pool ={ default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-version ={ default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 frontier-rpc-primitives = { default-features = false, path = "../../rpc/primitives" }
 

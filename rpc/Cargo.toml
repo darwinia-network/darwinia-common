@@ -16,16 +16,16 @@ ethereum-types = "0.9.0"
 frontier-consensus = { path = "../consensus" }
 frontier-rpc-core = { path = "core" }
 frontier-rpc-primitives = { path = "primitives" }
-sp-io = { git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-sp-api = { git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-sp-transaction-pool = { git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-sp-storage = { git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-sp-blockchain = { git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-sc-service = { git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-sc-client-api = { git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-sc-rpc = { git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-sc-network = { git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+sp-io = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-runtime = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-api = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-storage = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-blockchain = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-service = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-client-api = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-rpc = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-network = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 ethereum = { version = "0.3", features = ["codec"] }
 codec = { package = "parity-scale-codec", version = "1.0.0" }
 rlp = "0.4"

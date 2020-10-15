@@ -35,18 +35,18 @@ sp-transaction-pool = { version = "2.0.0-dev", git = "https://github.com/parityt
 sc-network = { version = "0.8.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 sc-consensus-aura = { version = "0.8.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 sp-consensus-aura = { version = "0.8.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-sc-consensus-manual-seal = { git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+sc-consensus-manual-seal = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-consensus = { version = "0.8.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 sc-consensus = { version = "0.8.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-sp-timestamp = { version = "2.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+sp-timestamp ={ default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 evm = { version = "2.0.0-dev", package = "pallet-evm", git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 ethereum = { version = "0.1.0", package = "pallet-ethereum" }
 sc-finality-grandpa = { version = "0.8.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 sp-finality-grandpa = { version = "2.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 sc-client-api = { version = "2.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 sp-runtime = { version = "2.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-sc-basic-authorship = { git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-sp-block-builder = { git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+sc-basic-authorship = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-block-builder = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 frontier-consensus = { version = "0.1.0", path = "../../consensus" }
 frontier-template-runtime = { version = "2.0.0-dev", path = "../runtime" }
