@@ -73,6 +73,11 @@ sp-staking                                 = { default-features = false, git = "
 sp-std                                     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-transaction-pool                        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-version                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+# frontier
+# TODO： change to common-library frame-evm
+frame-evm = { default-features = false, package = "pallet-evm", git = "https://github.com/purestake/substrate", branch = "tgmichel-rococo-branch" }
+frame-ethereum = { version = "0.1.0", default-features = false, package = "pallet-ethereum", path = "../../../frontier/frame/ethereum" }
+frontier-rpc-primitives = { default-features = false, path = "../../../frontier/rpc/primitives" }
 
 [build-dependencies]
 # substrate
@@ -140,6 +145,10 @@ std = [
 	"sp-std/std",
 	"sp-transaction-pool/std",
 	"sp-version/std",
+	# frontier
+	"frontier-rpc-primitives/std",
+	"frame-evm/std",
+	"frame-ethereum/std",
 ]
 
 with-tracing = ["frame-executive/with-tracing"]
