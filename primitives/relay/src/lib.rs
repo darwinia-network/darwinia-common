@@ -119,22 +119,3 @@ where
 		}
 	}
 }
-
-// #[derive(Encode, Decode, RuntimeDebug)]
-// pub enum GameStatus<Moment> {
-// 	/// Relayer can propose before `Moment`
-// 	Open(Moment),
-// 	/// First parameter means there are some different opinions in this game
-// 	/// if true, the proofs can be ignored
-// 	///
-// 	/// Second parameter means relayer can complete proofs before this time
-// 	Closed((bool, Moment)),
-// }
-// impl<Moment> Default for GameStatus<Moment>
-// where
-// 	Moment: Zero,
-// {
-// 	fn default() -> Self {
-// 		Self::Closed((false, Zero::zero()))
-// 	}
-// }
