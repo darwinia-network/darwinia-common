@@ -144,7 +144,7 @@ decl_storage! {
 		///
 		/// Record the closed rounds endpoint which use for settlling or updating
 		pub ClosedRounds
-			get(fn round_closed_at)
+			get(fn closed_rounds_at)
 			: map hasher(identity) BlockNumber<T>
 			=> Vec<GameId<T, I>>;
 	}
@@ -160,8 +160,10 @@ decl_module! {
 		fn deposit_event() = default;
 
 		fn offchain_worker(now: BlockNumber<T>) {
-			for game_id in Self::round_closed_at(now) {
+			let closed_rounds = Self::closed_rounds_at(now);
 
+			if !closed_rounds.is_empty() {
+				Self::update_games_at(closed_rounds, now);
 			}
 		}
 	}
@@ -235,6 +237,13 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 
 		<ClosedGames<T, I>>::insert(game_id, propose_time);
 		<ClosedRounds<T, I>>::append(propose_time + complete_proofs_time, game_id);
+	}
+
+	pub fn update_games_at(game_ids: Vec<GameId<T, I>>, moment: BlockNumber<T>) {
+		info!(target: "relayer-game", "Found Closed Rounds at `{:?}`", moment);
+		info!(target: "relayer-game", "---");
+
+		for game_id in game_ids {}
 	}
 }
 
