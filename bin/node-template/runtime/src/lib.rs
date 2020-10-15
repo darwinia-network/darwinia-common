@@ -1506,4 +1506,103 @@ impl_runtime_apis! {
 			Staking::power_of_rpc(account)
 		}
 	}
+
+	impl frontier_rpc_primitives::EthereumRuntimeRPCApi<Block> for Runtime {
+		fn chain_id() -> u64 {
+			ChainId::get()
+		}
+
+		fn account_basic(address: H160) -> EVMAccount {
+			frame_evm::Module::<Runtime>::account_basic(&address)
+		}
+
+		fn gas_price() -> U256 {
+			FixedGasPrice::min_gas_price()
+		}
+
+		fn account_code_at(address: H160) -> Vec<u8> {
+			frame_evm::Module::<Runtime>::account_codes(address)
+		}
+
+		fn author() -> H160 {
+			<frame_ethereum::Module<Runtime>>::find_author()
+		}
+
+		fn storage_at(address: H160, index: U256) -> H256 {
+			let mut tmp = [0u8; 32];
+			index.to_big_endian(&mut tmp);
+			frame_evm::Module::<Runtime>::account_storages(address, H256::from_slice(&tmp[..]))
+		}
+
+		fn call(
+			from: H160,
+			data: Vec<u8>,
+			value: U256,
+			gas_limit: U256,
+			gas_price: Option<U256>,
+			nonce: Option<U256>,
+			action: frame_ethereum::TransactionAction,
+		) -> Result<(Vec<u8>, U256), sp_runtime::DispatchError> {
+			// ensure that the gas_limit fits within a u32; otherwise the wrong value will be passed
+			use sp_runtime::traits::UniqueSaturatedInto;
+			let gas_limit_considered: u32 = gas_limit.unique_saturated_into();
+			let gas_limit_considered_256: U256 = gas_limit_considered.into();
+			if gas_limit_considered_256 != gas_limit {
+				log::warn!("WARNING: An invalid gas_limit amount was submitted.
+							Make sure your gas_limit fits within a 32-bit integer
+							(gas_limit: {:?})", gas_limit);
+			}
+			match action {
+				frame_ethereum::TransactionAction::Call(to) =>
+				EVM::execute_call(
+						from,
+						to,
+						data,
+						value,
+						gas_limit_considered,
+						gas_price.unwrap_or(U256::from(0)),
+						nonce,
+						false,
+					)
+					.map(|(_, ret, gas, _)| (ret, gas))
+					.map_err(|err| err.into()),
+				frame_ethereum::TransactionAction::Create =>
+				EVM::execute_create(
+						from,
+						data,
+						value,
+						gas_limit_considered,
+						gas_price.unwrap_or(U256::from(0)),
+						nonce,
+						false,
+					)
+					.map(|(_, _, gas, _)| (vec![], gas))
+					.map_err(|err| err.into()),
+			}
+		}
+
+		fn current_transaction_statuses() -> Option<Vec<TransactionStatus>> {
+			Ethereum::current_transaction_statuses()
+		}
+
+		fn current_block() -> Option<frame_ethereum::Block> {
+			Ethereum::current_block()
+		}
+
+		fn current_receipts() -> Option<Vec<frame_ethereum::Receipt>> {
+			Ethereum::current_receipts()
+		}
+
+		fn current_all() -> (
+			Option<frame_ethereum::Block>,
+			Option<Vec<frame_ethereum::Receipt>>,
+			Option<Vec<TransactionStatus>>
+		) {
+			(
+				Ethereum::current_block(),
+				Ethereum::current_receipts(),
+				Ethereum::current_transaction_statuses()
+			)
+		}
+	}
 }
