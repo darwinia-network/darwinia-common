@@ -111,8 +111,8 @@ decl_error! {
 		ProposalDup,
 		/// Usable *RING* for Bond - INSUFFICIENT
 		BondIns,
-		/// Proofses - NOT ENOUGH
-		ProofsesNE,
+		/// Proofses Quantity - INVALID
+		ProofsesInv,
 		/// Proposal - NOT EXISTED
 		ProposalNE,
 		/// Extended Proposal - NOT EXISTED

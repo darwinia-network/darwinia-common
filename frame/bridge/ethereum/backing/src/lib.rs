@@ -108,7 +108,7 @@ decl_error! {
 		AssetAR,
 
 		/// EthereumReceipt Proof - INVALID
-		ReceiptProofI,
+		ReceiptProofInv,
 
 		/// Eth Log - PARSING FAILED
 		EthLogPF,
@@ -122,7 +122,7 @@ decl_error! {
 		LogEntryNE,
 
 		/// Usable Balance for Paying Redeem Fee - INSUFFICIENT
-		FeeI,
+		FeeIns,
 	}
 }
 
@@ -251,7 +251,7 @@ impl<T: Trait> Module<T> {
 		proof_record: &EthereumReceiptProofThing<T>,
 	) -> Result<(T::AccountId, (bool, Balance), RingBalance<T>), DispatchError> {
 		let verified_receipt = T::EthereumRelay::verify_receipt(proof_record)
-			.map_err(|_| <Error<T>>::ReceiptProofI)?;
+			.map_err(|_| <Error<T>>::ReceiptProofInv)?;
 		let fee = T::EthereumRelay::receipt_verify_fee();
 		let result = {
 			let eth_event = EthEvent {
@@ -357,7 +357,7 @@ impl<T: Trait> Module<T> {
 		DispatchError,
 	> {
 		let verified_receipt = T::EthereumRelay::verify_receipt(proof_record)
-			.map_err(|_| <Error<T>>::ReceiptProofI)?;
+			.map_err(|_| <Error<T>>::ReceiptProofInv)?;
 		let fee = T::EthereumRelay::receipt_verify_fee();
 		let result = {
 			let eth_event = EthEvent {
@@ -532,7 +532,7 @@ impl<T: Trait> Module<T> {
 		// Checking redeemer have enough of balance to pay fee, make sure follow up transfer will success.
 		ensure!(
 			T::RingCurrency::usable_balance(redeemer) >= fee,
-			<Error<T>>::FeeI
+			<Error<T>>::FeeIns
 		);
 
 		C::transfer(
@@ -573,7 +573,7 @@ impl<T: Trait> Module<T> {
 		// Checking redeemer have enough of balance to pay fee, make sure follow up fee transfer will success.
 		ensure!(
 			T::RingCurrency::usable_balance(redeemer) >= fee,
-			<Error<T>>::FeeI
+			<Error<T>>::FeeIns
 		);
 
 		T::OnDepositRedeem::on_deposit_redeem(

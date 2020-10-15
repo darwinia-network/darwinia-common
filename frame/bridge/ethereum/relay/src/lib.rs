@@ -105,19 +105,19 @@ decl_event! {
 decl_error! {
 	pub enum Error for Module<T: Trait> {
 		/// Header - INVALID
-		HeaderI,
+		HeaderInv,
 		/// Confirmed Blocks - CONFLICT
 		ConfirmebBlocksC,
 		/// Proposal - INVALID
-		ProposalI,
+		ProposalInv,
 		/// MMR - INVALID
-		MMRI,
+		MMRInv,
 		/// Header Hash - MISMATCHED
 		HeaderHashMis,
 		/// Confirmed Header - NOT EXISTED
 		ConfirmedHeaderNE,
 		/// EthereumReceipt Proof - INVALID
-		ReceiptProofI,
+		ReceiptProofInv,
 	}
 }
 
@@ -242,7 +242,7 @@ decl_module! {
 		pub fn check_receipt(origin, proof_record: EthereumReceiptProof, eth_header: EthereumHeader, mmr_proof: MMRProof) {
 			let worker = ensure_signed(origin)?;
 
-			let verified_receipt = Self::verify_receipt(&(eth_header.clone(), proof_record, mmr_proof)).map_err(|_| <Error<T>>::ReceiptProofI)?;
+			let verified_receipt = Self::verify_receipt(&(eth_header.clone(), proof_record, mmr_proof)).map_err(|_| <Error<T>>::ReceiptProofInv)?;
 
 			let fee = Self::receipt_verify_fee();
 
@@ -384,11 +384,11 @@ impl<T: Trait> Relayable for Module<T> {
 	) -> Result<Vec<Self::HeaderThing>, DispatchError> {
 		let proposal_len = proposal_with_proof.len();
 
-		ensure!(proposal_len != 0, <Error<T>>::ProposalI);
+		ensure!(proposal_len != 0, <Error<T>>::ProposalInv);
 		// Not allow to relay genesis header
 		ensure!(
 			proposal_with_proof[0].header.number > 0,
-			<Error<T>>::ProposalI
+			<Error<T>>::ProposalInv
 		);
 
 		let mut proposed_mmr_root = Default::default();
@@ -410,7 +410,7 @@ impl<T: Trait> Relayable for Module<T> {
 				if proposal_len == 1 {
 					ensure!(
 						Self::verify_header(&header, &ethash_proof),
-						<Error<T>>::HeaderI
+						<Error<T>>::HeaderInv
 					);
 
 					let EthereumHeaderThing {
@@ -456,13 +456,13 @@ impl<T: Trait> Relayable for Module<T> {
 								.collect(),
 							vec![(last_confirmed_block_number, last_confirmed_hash)],
 						),
-						<Error<T>>::MMRI
+						<Error<T>>::MMRInv
 					);
 				}
 			} else if i == proposal_len - 1 {
 				ensure!(
 					Self::verify_header(&header, &ethash_proof),
-					<Error<T>>::HeaderI
+					<Error<T>>::HeaderInv
 				);
 
 				// last confirm no exsit the mmr verification will be passed
@@ -483,10 +483,11 @@ impl<T: Trait> Relayable for Module<T> {
 							.collect(),
 						vec![(
 							header.number,
-							array_unchecked!(header.hash.ok_or(<Error<T>>::HeaderI)?, 0, 32).into(),
+							array_unchecked!(header.hash.ok_or(<Error<T>>::HeaderInv)?, 0, 32)
+								.into(),
 						)],
 					),
-					<Error<T>>::MMRI
+					<Error<T>>::MMRInv
 				);
 			}
 
@@ -513,13 +514,13 @@ impl<T: Trait> Relayable for Module<T> {
 			let prev_header = &proposal[i + 1].header;
 
 			ensure!(
-				header.parent_hash == header.hash.ok_or(<Error<T>>::ProposalI)?,
-				<Error<T>>::ProposalI
+				header.parent_hash == header.hash.ok_or(<Error<T>>::ProposalInv)?,
+				<Error<T>>::ProposalInv
 			);
 			ensure!(
 				header.difficulty().to_owned()
 					== eth_partial.calculate_difficulty(&header, &prev_header),
-				<Error<T>>::ProposalI
+				<Error<T>>::ProposalInv
 			);
 		}
 
@@ -532,7 +533,7 @@ impl<T: Trait> Relayable for Module<T> {
 		// Not allow to relay genesis header
 		ensure!(
 			header_thing.header.number > last_comfirmed_block_number,
-			<Error<T>>::HeaderI
+			<Error<T>>::HeaderInv
 		);
 
 		ConfirmedBlockNumbers::mutate(|numbers| {
@@ -574,7 +575,7 @@ impl<T: Trait> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
 
 		ensure!(
 			eth_header.number == mmr_proof.member_leaf_index,
-			<Error<T>>::MMRI,
+			<Error<T>>::MMRInv,
 		);
 
 		// Verify header member to last confirmed block using mmr proof
@@ -592,13 +593,13 @@ impl<T: Trait> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
 					array_unchecked!(eth_header.hash.unwrap_or_default(), 0, 32).into(),
 				)]
 			),
-			<Error<T>>::MMRI
+			<Error<T>>::MMRInv
 		);
 
 		// Verify receipt proof
 		let receipt =
 			EthereumReceipt::verify_proof_and_generate(eth_header.receipts_root(), &proof_record)
-				.map_err(|_| <Error<T>>::ReceiptProofI)?;
+				.map_err(|_| <Error<T>>::ReceiptProofInv)?;
 
 		Ok(receipt)
 	}
@@ -712,7 +713,7 @@ impl<T: Send + Sync + Trait> SignedExtension for CheckEthereumRelayHeaderHash<T>
 								},
 							)| header_a == header_b && mmr_root_a == mmr_root_b,
 						) {
-						return InvalidTransaction::Custom(<Error<T>>::ProposalI.as_u8()).into();
+						return InvalidTransaction::Custom(<Error<T>>::ProposalInv.as_u8()).into();
 					}
 				}
 			}
