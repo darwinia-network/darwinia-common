@@ -166,8 +166,6 @@ use sp_runtime::{
 	},
 	DispatchError, DispatchResult,
 };
-#[cfg(not(feature = "std"))]
-use sp_std::borrow::ToOwned;
 use sp_std::{borrow::Borrow, cmp, convert::Infallible, fmt::Debug, mem, prelude::*};
 // --- darwinia ---
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo;
