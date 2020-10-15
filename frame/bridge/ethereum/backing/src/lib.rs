@@ -121,8 +121,8 @@ decl_error! {
 		/// Log Entry - NOT EXISTED
 		LogEntryNE,
 
-		/// Usable Balance for Paying Redeem Fee - NOT ENOUGH
-		FeeNE,
+		/// Usable Balance for Paying Redeem Fee - INSUFFICIENT
+		FeeI,
 	}
 }
 
@@ -532,7 +532,7 @@ impl<T: Trait> Module<T> {
 		// Checking redeemer have enough of balance to pay fee, make sure follow up transfer will success.
 		ensure!(
 			T::RingCurrency::usable_balance(redeemer) >= fee,
-			<Error<T>>::FeeNE
+			<Error<T>>::FeeI
 		);
 
 		C::transfer(
@@ -573,7 +573,7 @@ impl<T: Trait> Module<T> {
 		// Checking redeemer have enough of balance to pay fee, make sure follow up fee transfer will success.
 		ensure!(
 			T::RingCurrency::usable_balance(redeemer) >= fee,
-			<Error<T>>::FeeNE
+			<Error<T>>::FeeI
 		);
 
 		T::OnDepositRedeem::on_deposit_redeem(
