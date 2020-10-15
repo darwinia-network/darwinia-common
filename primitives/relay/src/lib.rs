@@ -27,6 +27,11 @@ pub trait RelayableChain {
 	fn best_block_id() -> Self::RelayBlockId;
 
 	fn verify_proofs(relay_stuffs: &Self::RelayStuffs, proofs: &Self::Proofs) -> DispatchResult;
+
+	fn verify_continuous(
+		samples: &[Self::RelayStuffs],
+		extended: &[Self::RelayStuffs],
+	) -> DispatchResult;
 }
 
 /// A regulator to adjust relay args for a specific chain
@@ -47,6 +52,9 @@ pub trait AdjustableRelayerGame {
 
 	fn update_samples(samples: &mut Vec<Vec<Self::RelayBlockId>>);
 
+	/// Give an estimate bond value for a specify round
+	///
+	/// Usally the bond value go expensive wihle the round and the proposals count increase
 	fn estimate_bond(round: u32, proposals_count: u8) -> Self::Balance;
 }
 
@@ -79,26 +87,31 @@ pub trait RelayerGameProtocol {
 	/// chain will ask relayer to submit more samples
 	/// to help the chain make a on chain arbitrate finally
 	fn extend_proposal(
+		relayer: Self::Relayer,
 		samples: Vec<Self::RelayStuffs>,
 		extended_proposal_id: ProposalId<Self::GameId>,
-		proofs: Option<Vec<Self::Proofs>>,
+		proofses: Option<Vec<Self::Proofs>>,
 	) -> DispatchResult;
 }
 
 #[derive(Clone, Encode, Decode, RuntimeDebug)]
-pub struct RelayProposal<RelayStuffs, AccountId, Balance, GameId> {
+pub struct RelayProposal<RelayStuffs, Relayer, Balance, GameId> {
+	pub relayer: Relayer,
 	pub content: Vec<RelayStuffs>,
-	pub bonds: Vec<(AccountId, Balance)>,
+	pub bond: Balance,
 	pub extended_proposal_id: Option<ProposalId<GameId>>,
 	pub verified: bool,
 }
-impl<RelayStuffs, AccountId, Balance, GameId>
-	RelayProposal<RelayStuffs, AccountId, Balance, GameId>
+impl<RelayStuffs, Relayer, Balance, GameId> RelayProposal<RelayStuffs, Relayer, Balance, GameId>
+where
+	Relayer: Default,
+	Balance: Zero,
 {
 	pub fn new() -> Self {
 		Self {
+			relayer: Relayer::default(),
 			content: vec![],
-			bonds: vec![],
+			bond: Zero::zero(),
 			extended_proposal_id: None,
 			verified: false,
 		}
