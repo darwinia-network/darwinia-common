@@ -182,6 +182,8 @@ decl_module! {
 					error!(target: "relayer-game", "{:?}", e);
 				}
 			}
+
+			// Return while no closed rounds found
 		}
 
 		#[weight = 100_000_000]
@@ -194,26 +196,40 @@ decl_module! {
 					">  Trying to Settle Game `{:?}`", game_id
 				);
 
-				let round_count = <Proposals<T, I>>::iter_prefix_values(&game_id).count();
+				let last_round = {
+					let round_count = <Proposals<T, I>>::iter_prefix_values(&game_id).count() as u32;
 
-				match round_count {
-					0 => error!(target: "relayer-game", "   >  No Proposal Found"),
-					_ => {
-						let mut proposals = Self::proposals_of_game_at(&game_id, round_count as u32 - 1);
+					if round_count == 0 {
+						// Should never enter this condition
+						error!(target: "relayer-game", "   >  No Proposal Found");
 
-						match proposals.len() {
-							0 => error!(target: "relayer-game", "   >  No Proposal Found"),
-							1 => {
-								info!(target: "relayer-game", "   >  No Challenge Found");
+						continue;
+					} else {
+						round_count - 1
+					}
+				};
+				let mut proposals = Self::proposals_of_game_at(&game_id, last_round);
 
-								Self::settle_without_challenge(proposals.pop().unwrap());
+				match (last_round, proposals.len()) {
+					// Should never enter this condition
+					(0, 0) => error!(target: "relayer-game", "   >  No Proposal Found"),
+					// At first round and only one proposal found
+					(0, 1) => {
+						info!(target: "relayer-game", "   >  No Challenge Found");
 
-								// TODO: reward if no challenge
-							}
-							_ => {
-								info!(target: "relayer-game", "   >  Challenge Found");
-							}
-						}
+						Self::settle_without_challenge(proposals.pop().unwrap());
+
+						// TODO: reward if no challenge
+					}
+					// No relayer response for the lastest round
+					(_, 0) => {
+						info!(target: "relayer-game", "   >  All Relayers Abstain");
+
+						Self::settle_abandon(proposals);
+					},
+					// Trying to settle a game with challenge
+					(_, proposals_count) => {
+						info!(target: "relayer-game", "   >  Challenge Found");
 					}
 				}
 			}
@@ -322,10 +338,55 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		}
 	}
 
+	pub fn slash_on(relayer: &AccountId<T>, bond: RingBalance<T, I>) {
+		Self::update_bonds_with(relayer, |old_bonds| old_bonds.saturating_sub(bond));
+
+		T::RingSlash::on_unbalanced(T::RingCurrency::slash(relayer, bond).0);
+	}
+
+	pub fn for_each_extended_proposal<F>(
+		mut maybe_extended_proposal_id: Option<ProposalId<GameId<T, I>>>,
+		f: F,
+	) where
+		F: Fn(&RelayProposalT<T, I>),
+	{
+		while let Some((game_id, round, index)) = maybe_extended_proposal_id.take() {
+			if let Some(proposal) = Self::proposals_of_game_at(&game_id, round)
+				.into_iter()
+				.nth(index as _)
+			{
+				f(&proposal);
+
+				maybe_extended_proposal_id = proposal.maybe_extended_proposal_id;
+			} else {
+				// Should never enter this condition
+				error!(target: "relayer-game", "   >  Can't Find Proposal");
+			}
+		}
+	}
+
 	pub fn settle_without_challenge(proposal: RelayProposalT<T, I>) {
 		Self::update_bonds_with(&proposal.relayer, |bonds| {
 			bonds.saturating_sub(proposal.bond)
 		});
+	}
+
+	pub fn settle_abandon(proposals: Vec<RelayProposalT<T, I>>) {
+		for RelayProposal {
+			relayer,
+			bond,
+			maybe_extended_proposal_id,
+			..
+		} in proposals
+		{
+			Self::slash_on(&relayer, bond);
+			Self::for_each_extended_proposal(
+				maybe_extended_proposal_id,
+				|RelayProposal { relayer, bond, .. }| {
+					Self::slash_on(relayer, *bond);
+				},
+			);
+		}
 	}
 }
 
@@ -390,17 +451,17 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		let proposal = {
 			let mut proposal = RelayProposal::new();
 
-			// Allow propose without proofs
-			// The proofs can be completed later through `complete_proofs`
-			if let Some(proofs) = proofs {
-				T::RelayableChain::verify_proofs(&proposal_content[0], &proofs)?;
-
-				proposal.verified = true;
-			}
-
 			proposal.relayer = relayer;
 			proposal.content = proposal_content;
 			proposal.bond = bond;
+
+			// Allow propose without proofs
+			// The proofs can be completed later through `complete_proofs`
+			if let Some(proofs) = proofs {
+				T::RelayableChain::verify_proofs(&proposal.content[0], &proofs)?;
+
+				proposal.verified = true;
+			}
 
 			proposal
 		};
@@ -440,10 +501,10 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		extended_proposal_id: ProposalId<Self::GameId>,
 		proofses: Option<Vec<Self::Proofs>>,
 	) -> DispatchResult {
-		let (game_id, previous_round, previous_round_index) = &extended_proposal_id;
+		let (game_id, previous_round, previous_round_index) = extended_proposal_id.clone();
 
 		ensure!(
-			Self::is_game_open_at(game_id, <frame_system::Module<T>>::block_number()),
+			Self::is_game_open_at(&game_id, <frame_system::Module<T>>::block_number()),
 			<Error<T, I>>::GameC
 		);
 
@@ -451,7 +512,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			ensure!(proofses.len() == samples.len(), <Error<T, I>>::ProofsesInv);
 		}
 
-		let round = *previous_round + 1;
+		let round = previous_round + 1;
 		let existed_proposals = Self::proposals_of_game_at(&game_id, round);
 
 		ensure!(
@@ -460,7 +521,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		);
 
 		let extended_proposal = existed_proposals
-			.get(*previous_round_index as usize)
+			.get(previous_round_index as usize)
 			.ok_or(<Error<T, I>>::ExtendedProposalNE)?;
 
 		// Currently only accept extending from a completed proposal
@@ -473,19 +534,20 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		let proposal = {
 			let mut proposal = RelayProposal::new();
 
+			proposal.relayer = relayer;
+			proposal.content = samples;
+			proposal.bond = bond;
+			proposal.maybe_extended_proposal_id = Some(extended_proposal_id);
+
 			// Allow propose without proofs
 			// The proofs can be completed later through `complete_proofs`
 			if let Some(proofses) = proofses {
-				for (sample, proofs) in samples.iter().zip(proofses.into_iter()) {
+				for (sample, proofs) in proposal.content.iter().zip(proofses.into_iter()) {
 					T::RelayableChain::verify_proofs(sample, &proofs)?;
 				}
 
 				proposal.verified = true;
 			}
-
-			proposal.relayer = relayer;
-			proposal.content = samples;
-			proposal.bond = bond;
 
 			proposal
 		};

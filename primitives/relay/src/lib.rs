@@ -99,7 +99,7 @@ pub struct RelayProposal<RelayStuffs, Relayer, Balance, GameId> {
 	pub relayer: Relayer,
 	pub content: Vec<RelayStuffs>,
 	pub bond: Balance,
-	pub extended_proposal_id: Option<ProposalId<GameId>>,
+	pub maybe_extended_proposal_id: Option<ProposalId<GameId>>,
 	pub verified: bool,
 }
 impl<RelayStuffs, Relayer, Balance, GameId> RelayProposal<RelayStuffs, Relayer, Balance, GameId>
@@ -112,7 +112,7 @@ where
 			relayer: Relayer::default(),
 			content: vec![],
 			bond: Zero::zero(),
-			extended_proposal_id: None,
+			maybe_extended_proposal_id: None,
 			verified: false,
 		}
 	}
