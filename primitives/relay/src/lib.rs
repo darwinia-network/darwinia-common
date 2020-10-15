@@ -19,7 +19,7 @@ pub type ProposalId<GameId> = (GameId, u32, u32);
 /// Implement this for target chain's relay module's
 /// to expose some necessary APIs for relayer game
 pub trait RelayableChain {
-	type RelayBlockId: Clone + PartialOrd + FullCodec;
+	type RelayBlockId: Clone + Debug + PartialOrd + FullCodec;
 	type RelayStuffs: Clone + Debug + PartialEq + PartialOrd + FullCodec;
 	type Proofs;
 

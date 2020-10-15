@@ -41,7 +41,10 @@ use frame_system::{
 	ensure_none,
 	offchain::{SendTransactionTypes, SubmitTransaction},
 };
-use sp_runtime::{DispatchError, DispatchResult};
+use sp_runtime::{
+	traits::{Saturating, Zero},
+	DispatchError, DispatchResult,
+};
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
 use sp_std::prelude::*;
@@ -153,6 +156,12 @@ decl_storage! {
 			get(fn closed_rounds_at)
 			: map hasher(identity) BlockNumber<T>
 			=> Vec<GameId<T, I>>;
+
+		/// All the bonds here
+		pub Bonds
+			get(fn bonds_of)
+			: map hasher(blake2_128_concat) AccountId<T>
+			=> RingBalance<T, I>;
 	}
 }
 
@@ -166,18 +175,48 @@ decl_module! {
 		fn deposit_event() = default;
 
 		fn offchain_worker(now: BlockNumber<T>) {
-			let closed_rounds = <ClosedRounds<T, I>>::take(now);
+			let game_ids = <ClosedRounds<T, I>>::take(now);
 
-			if !closed_rounds.is_empty() {
-				if let Err(e) = Self::update_games_at(closed_rounds, now) {
+			if !game_ids.is_empty() {
+				if let Err(e) = Self::update_games_at(game_ids, now) {
 					error!(target: "relayer-game", "{:?}", e);
 				}
 			}
 		}
 
 		#[weight = 100_000_000]
-		pub fn update_games_unsigned(origin) {
+		pub fn update_games_unsigned(origin, game_ids: Vec<GameId<T, I>>) {
 			ensure_none(origin)?;
+
+			for game_id in game_ids {
+				info!(
+					target: "relayer-game",
+					">  Trying to Settle Game `{:?}`", game_id
+				);
+
+				let round_count = <Proposals<T, I>>::iter_prefix_values(&game_id).count();
+
+				match round_count {
+					0 => error!(target: "relayer-game", "   >  No Proposal Found"),
+					_ => {
+						let mut proposals = Self::proposals_of_game_at(&game_id, round_count as u32 - 1);
+
+						match proposals.len() {
+							0 => error!(target: "relayer-game", "   >  No Proposal Found"),
+							1 => {
+								info!(target: "relayer-game", "   >  No Challenge Found");
+
+								Self::settle_without_challenge(proposals.pop().unwrap());
+
+								// TODO: reward if no challenge
+							}
+							_ => {
+								info!(target: "relayer-game", "   >  Challenge Found");
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 }
@@ -187,7 +226,6 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	pub fn is_game_open_at(game_id: &GameId<T, I>, moment: BlockNumber<T>) -> bool {
 		Self::game_closed_at_of(game_id) > moment
 	}
-
 	/// Check if others already make a same proposal
 	pub fn is_unique_proposal(
 		proposal_content: &[RelayStuffs<T, I>],
@@ -256,12 +294,38 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		info!(target: "relayer-game", "Found Closed Rounds at `{:?}`", moment);
 		info!(target: "relayer-game", "---");
 
-		for game_id in game_ids {}
-
-		let call = Call::update_games_unsigned().into();
+		let call = Call::update_games_unsigned(game_ids).into();
 
 		<SubmitTransaction<T, Call<T, I>>>::submit_unsigned_transaction(call)
 			.map_err(|_| "TODO".into())
+	}
+
+	pub fn update_bonds_with<F>(relayer: &AccountId<T>, calc_bonds: F)
+	where
+		F: FnOnce(RingBalance<T, I>) -> RingBalance<T, I>,
+	{
+		let bonds = calc_bonds(Self::bonds_of(relayer));
+
+		if bonds.is_zero() {
+			T::RingCurrency::remove_lock(RELAYER_GAME_ID, relayer);
+
+			<Bonds<T, I>>::take(relayer);
+		} else {
+			T::RingCurrency::set_lock(
+				RELAYER_GAME_ID,
+				relayer,
+				LockFor::Common { amount: bonds },
+				WithdrawReasons::all(),
+			);
+
+			<Bonds<T, I>>::insert(relayer, bonds);
+		}
+	}
+
+	pub fn settle_without_challenge(proposal: RelayProposalT<T, I>) {
+		Self::update_bonds_with(&proposal.relayer, |bonds| {
+			bonds.saturating_sub(proposal.bond)
+		});
 	}
 }
 
