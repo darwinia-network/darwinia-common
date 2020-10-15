@@ -12,28 +12,28 @@ mod types {
 	use crate::*;
 
 	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
-	// pub type BlockNumber<T> = <T as frame_system::Trait>::BlockNumber;
+	pub type BlockNumber<T> = <T as frame_system::Trait>::BlockNumber;
 
 	pub type RingBalance<T, I> = <RingCurrency<T, I> as Currency<AccountId<T>>>::Balance;
 	pub type RingNegativeImbalance<T, I> =
 		<RingCurrency<T, I> as Currency<AccountId<T>>>::NegativeImbalance;
 
-	pub type BlockId<T, I> = <Tc<T, I> as Relayable>::BlockId;
-	pub type GameId<T, I> = BlockId<T, I>;
-	pub type RelayStuffs<T, I> = <Tc<T, I> as Relayable>::RelayStuffs;
-	pub type RelayProofs<T, I> = <Tc<T, I> as Relayable>::Proofs;
+	pub type RelayBlockId<T, I> = <RelayableChainT<T, I> as RelayableChain>::RelayBlockId;
+	pub type GameId<T, I> = RelayBlockId<T, I>;
+	pub type RelayStuffs<T, I> = <RelayableChainT<T, I> as RelayableChain>::RelayStuffs;
+	pub type RelayProofs<T, I> = <RelayableChainT<T, I> as RelayableChain>::Proofs;
 
 	pub type RelayProposalT<T, I> =
-		RelayProposal<RelayStuffs<T, I>, AccountId<T>, RingBalance<T, I>>;
+		RelayProposal<RelayStuffs<T, I>, AccountId<T>, RingBalance<T, I>, GameId<T, I>>;
 
 	type RingCurrency<T, I> = <T as Trait<I>>::RingCurrency;
 
-	type Tc<T, I> = <T as Trait<I>>::TargetChain;
+	type RelayableChainT<T, I> = <T as Trait<I>>::RelayableChain;
 }
 
 // --- substrate ---
 use frame_support::{
-	debug::info,
+	debug::*,
 	decl_error, decl_event, decl_module, decl_storage, ensure,
 	traits::{Currency, Get, OnUnbalanced},
 };
@@ -61,11 +61,11 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	type RelayerGameAdjustor: AdjustableRelayerGame<
 		Balance = RingBalance<Self, I>,
 		Moment = Self::BlockNumber,
-		BlockId = BlockId<Self, I>,
+		RelayBlockId = RelayBlockId<Self, I>,
 	>;
 
-	/// The target chain's relay module's API
-	type TargetChain: Relayable;
+	/// A chain which implemented `RelayableChain` trait
+	type RelayableChain: RelayableChain;
 
 	/// The comfirm period for guard
 	///
@@ -93,16 +93,20 @@ decl_event! {
 
 decl_error! {
 	pub enum Error for Module<T: Trait<I>, I: Instance> {
-		/// Active Games - TOO MANY
-		ActiveGamesTM,
-		/// Target Header - ALREADY CONFIRMED
-		TargetHeaderAC,
+		/// Relay Stuffs - ALREADY CONFIRMED
+		RelayStuffsAC,
 		/// Round - MISMATCHED
 		RoundMis,
+		/// Active Games - TOO MANY
+		ActiveGamesTM,
+		/// Game - CLOSED
+		GameC,
 		/// Proposal - DUPLICATED
 		ProposalDup,
 		/// Usable *RING* for Bond - INSUFFICIENT
 		BondI,
+		/// Proposal - NOT FOUND
+		ProposalNF,
 	}
 }
 
@@ -111,12 +115,24 @@ decl_storage! {
 		/// The number of active games
 		pub ActiveGames get(fn active_games): u8;
 
+		/// All the active games' proposals here
+		///
+		/// The first key is game id, the second key is round index
+		/// then you will get the proposals under that round in that game
 		pub Proposals
 			get(fn proposals_of_game_at_round)
 			: double_map
 				hasher(identity) GameId<T, I>,
-				hasher(identity) Round
+				hasher(identity) u32
 			=> Vec<RelayProposalT<T, I>>;
+
+		/// All the games' status here
+		///
+		/// Use this to manage the challenge time
+		pub GameStatuses
+			get(fn game_status)
+			: map hasher(identity) GameId<T, I>
+			=> GameStatus<BlockNumber<T>>;
 	}
 }
 
@@ -143,7 +159,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		relay_stuffs: Self::RelayStuffs,
 		proofs: Option<Self::Proofs>,
 	) -> DispatchResult {
-		info!(
+		trace!(
 			target: "relayer-game",
 			"Relayer `{:?}` propose:\n{:#?}",
 			relayer,
@@ -152,34 +168,45 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 		let active_games = Self::active_games();
 
-		// Check if the chain can open more games
-		ensure!(
-			active_games < T::RelayerGameAdjustor::max_active_games(),
-			<Error<T, I>>::ActiveGamesTM
-		);
 		// Check if the proposed header has already been relaied
 		ensure!(
-			game_id > T::TargetChain::best_block_id(),
-			<Error<T, I>>::TargetHeaderAC
+			game_id > T::RelayableChain::best_block_id(),
+			<Error<T, I>>::RelayStuffsAC
 		);
-		// Make sure this is a new game
+		// Make sure the game is at first round
 		ensure!(
-			Self::proposals_of_game_at_round(game_id.clone(), 1).is_empty(),
+			Self::proposals_of_game_at_round(&game_id, 1).is_empty(),
 			<Error<T, I>>::RoundMis
 		);
 
-		let round = 0;
-		let other_proposals = Self::proposals_of_game_at_round(game_id.clone(), round);
+		let other_proposals = Self::proposals_of_game_at_round(&game_id, 0);
 
-		// Check if others already make a same proposal
-		ensure!(
-			!other_proposals
-				.iter()
-				.any(|proposal| &proposal.proposed[0] == &relay_stuffs),
-			<Error<T, I>>::ProposalDup
-		);
+		if other_proposals.is_empty() {
+			// A new game might open
 
-		let bond = T::RelayerGameAdjustor::estimate_bond(round, other_proposals.len() as u8 + 1);
+			// Check is ok to open more games
+			ensure!(
+				active_games < T::RelayerGameAdjustor::max_active_games(),
+				<Error<T, I>>::ActiveGamesTM
+			);
+		} else {
+			// An against proposal might add
+
+			// Check if is time for proposing
+			ensure!(
+				matches!(Self::game_status(&game_id), GameStatus::Open(_)),
+				<Error<T, I>>::GameC,
+			);
+			// Check if others already make a same proposal
+			ensure!(
+				!other_proposals
+					.iter()
+					.any(|proposal| &proposal.content[0] == &relay_stuffs),
+				<Error<T, I>>::ProposalDup
+			);
+		}
+
+		let bond = T::RelayerGameAdjustor::estimate_bond(0, other_proposals.len() as u8 + 1);
 
 		// Make sure relayer have enough balance,
 		// this won't let the account's free balance drop below existential deposit
@@ -194,20 +221,45 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			// Allow propose without proofs
 			// The proofs can be completed later through `complete_proofs`
 			if let Some(proofs) = proofs {
-				T::TargetChain::verify_proofs(&relay_stuffs, &proofs)?;
+				T::RelayableChain::verify_proofs(&relay_stuffs, &proofs)?;
 
 				proposal.verified = true;
 			}
 
-			proposal.proposed = vec![relay_stuffs];
+			proposal.content = vec![relay_stuffs];
 			proposal.bonds = vec![(relayer, bond)];
 
 			proposal
 		};
 
-		<Proposals<T, I>>::insert(game_id, round, vec![proposal]);
+		<Proposals<T, I>>::append(&game_id, 0, proposal);
+		<GameStatuses<T, I>>::insert(
+			&game_id,
+			GameStatus::Open(T::RelayerGameAdjustor::propose_time(0)),
+		);
 		<ActiveGames<I>>::mutate(|count| *count += 1);
 
 		Ok(())
+	}
+
+	fn complete_proofs(
+		game_id: Self::GameId,
+		round: u32,
+		index: u32,
+		proofs: Vec<Self::Proofs>,
+	) -> DispatchResult {
+		<Proposals<T, I>>::try_mutate(&game_id, round, |proposals| {
+			if let Some(proposal) = proposals.get_mut(index as usize) {
+				for (relay_stuffs, proofs) in proposal.content.iter().zip(proofs.into_iter()) {
+					T::RelayableChain::verify_proofs(relay_stuffs, &proofs)?;
+				}
+
+				proposal.verified = true;
+
+				Ok(())
+			} else {
+				Err(<Error<T, I>>::ProposalNF)?
+			}
+		})
 	}
 }
