@@ -1180,10 +1180,10 @@ fn ensure_linear_cost(
 	Ok(cost)
 }
 
-/// The TransferFromEvm precompile.
-pub struct TransferBack;
+/// Precompile for withdrawing from evm address
+pub struct Withdraw;
 
-impl Precompile for TransferBack {
+impl Precompile for Withdraw {
 	fn execute(
 		input: &[u8],
 		target_gas: Option<usize>,
@@ -1238,7 +1238,7 @@ impl frame_evm::Trait for Runtime {
 		frame_evm::precompiles::Sha256,
 		frame_evm::precompiles::Ripemd160,
 		frame_evm::precompiles::Identity,
-		TransferBack,
+		Withdraw,
 	);
 	type ChainId = ChainId;
 }
