@@ -241,7 +241,6 @@ decl_module! {
 
 						Self::settle_with_challenge(&game_id, proposals.pop().unwrap());
 					}
-					//
 					(_, proposals_count) => {
 						info!(target: "relayer-game", "   >  Challenge Found");
 
@@ -251,7 +250,11 @@ decl_module! {
 						);
 
 						if distance == round_count {
+							// A whole chain gave, start continuous verification
 							// TODO: Self::on_chain_arbitrate
+						} else {
+							// Update samples, start next round
+							// TODO: update samples
 						}
 					}
 				}
@@ -471,6 +474,10 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 			// Punish evil
 			T::RingCurrency::slash(&relayer, slashs);
 		}
+	}
+
+	pub fn on_chain_arbitrate(proposals: Vec<RelayProposalT<T, I>>) {
+		for proposal in proposals {}
 	}
 }
 
