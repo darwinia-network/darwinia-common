@@ -27,8 +27,7 @@ use sp_runtime::AccountId32;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	ModuleId, Perbill,
-	RuntimeDebug,
+	ModuleId, Perbill, RuntimeDebug,
 };
 
 use codec::{Decode, Encode};
