@@ -241,7 +241,7 @@ decl_module! {
 
 						Self::settle_with_challenge(&game_id, proposals.pop().unwrap());
 					}
-					(_, proposals_count) => {
+					(last_round, proposals_count) => {
 						info!(target: "relayer-game", "   >  Challenge Found");
 
 						let distance = T::RelayableChain::distance_between(
@@ -251,7 +251,7 @@ decl_module! {
 
 						if distance == round_count {
 							// A whole chain gave, start continuous verification
-							// TODO: Self::on_chain_arbitrate
+							Self::on_chain_arbitrate(&game_id, last_round);
 						} else {
 							// Update samples, start next round
 							// TODO: update samples
@@ -275,7 +275,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	) -> bool {
 		!existed_proposals
 			.iter()
-			.any(|existed_proposal| existed_proposal.content.as_slice() == proposal_content)
+			.any(|existed_proposal| existed_proposal.parcels.as_slice() == proposal_content)
 	}
 
 	/// Check if relayer can afford the bond
@@ -318,7 +318,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	// 	}
 
 	// 	proposal.relayer = relayer;
-	// 	proposal.content = parcels;
+	// 	proposal.parcels = parcels;
 	// 	proposal.bond = bond;
 
 	// 	Ok(proposal)
@@ -391,37 +391,20 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		}
 	}
 
-	pub fn settle_without_challenge(proposal: RelayProposalT<T, I>) {
-		Self::update_bonds_with(&proposal.relayer, |bonds| {
-			bonds.saturating_sub(proposal.bond)
-		});
-	}
-
-	pub fn settle_abandon(proposals: Vec<RelayProposalT<T, I>>) {
-		for RelayProposal {
-			relayer,
-			bond,
-			maybe_extended_proposal_id,
-			..
-		} in proposals
-		{
-			Self::slash_on(&relayer, bond);
-			Self::for_each_extended_proposal(
-				maybe_extended_proposal_id,
-				|RelayProposal { relayer, bond, .. }, _, _| {
-					Self::slash_on(relayer, *bond);
-				},
-			);
-		}
-	}
-
-	pub fn settle_with_challenge(game_id: &GameId<T, I>, proposal: RelayProposalT<T, I>) {
+	pub fn build_honsties_evils_map(
+		game_id: &GameId<T, I>,
+		winning_proposal: RelayProposalT<T, I>,
+	) -> (
+		BTreeMap<AccountId<T>, (RingBalance<T, I>, RingBalance<T, I>)>,
+		BTreeMap<AccountId<T>, RingBalance<T, I>>,
+	) {
 		let RelayProposal {
 			relayer,
 			bond,
 			maybe_extended_proposal_id,
 			..
-		} = proposal;
+		} = winning_proposal;
+
 		// TODO: reward on no challenge
 		let mut honesties = <BTreeMap<AccountId<T>, (RingBalance<T, I>, RingBalance<T, I>)>>::new();
 		let mut evils = <BTreeMap<AccountId<T>, RingBalance<T, I>>>::new();
@@ -462,6 +445,38 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 			},
 		);
 
+		(honesties, evils)
+	}
+
+	pub fn find_winning_proposal() -> Option<RelayProposalT<T, I>> {}
+
+	pub fn settle_without_challenge(winning_proposal: RelayProposalT<T, I>) {
+		Self::update_bonds_with(&winning_proposal.relayer, |bonds| {
+			bonds.saturating_sub(winning_proposal.bond)
+		});
+	}
+
+	pub fn settle_abandon(abandoned_proposals: Vec<RelayProposalT<T, I>>) {
+		for RelayProposal {
+			relayer,
+			bond,
+			maybe_extended_proposal_id,
+			..
+		} in abandoned_proposals
+		{
+			Self::slash_on(&relayer, bond);
+			Self::for_each_extended_proposal(
+				maybe_extended_proposal_id,
+				|RelayProposal { relayer, bond, .. }, _, _| {
+					Self::slash_on(relayer, *bond);
+				},
+			);
+		}
+	}
+
+	pub fn settle_with_challenge(game_id: &GameId<T, I>, winning_proposal: RelayProposalT<T, I>) {
+		let (honesties, evils) = Self::build_honsties_evils_map(game_id, winning_proposal);
+
 		for (relayer, (unbonds, deposits)) in honesties {
 			// Unlock bonds for honesty
 			Self::update_bonds_with(&relayer, |bonds| bonds.saturating_sub(unbonds));
@@ -476,8 +491,55 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		}
 	}
 
-	pub fn on_chain_arbitrate(proposals: Vec<RelayProposalT<T, I>>) {
-		for proposal in proposals {}
+	pub fn on_chain_arbitrate(game_id: &GameId<T, I>, mut round: u32) {
+		// let proposals = <Proposals<T, I>>::iter_prefix_values(&game_id).collect::<Vec<_>>();
+
+		// while let Some(previous_round) = round.checked_sub(1) {
+		// 	proposals[round];
+		// }
+
+		// let mut proposals = Self::proposals_of_game_at(&game_id, round);
+		// let mut relayers = <BTreeMap<AccountId<T>, Vec<(RingBalance<T, I>, bool)>>>::new();
+
+		// while let Some(previous_round) = round.checked_sub(1) {
+		// 	let previous_round_proposals = Self::proposals_of_game_at(&game_id, previous_round);
+
+		// 	for RelayProposal {
+		// 		relayer,
+		// 		parcels,
+		// 		bond,
+		// 		maybe_extended_proposal_id,
+		// 		verified,
+		// 	} in proposals.iter()
+		// 	{
+		// 		if let Some((_, _, index)) = maybe_extended_proposal_id {
+		// 			if let Some(extended_proposal) = previous_round_proposals.get(*index as usize) {
+		// 				let valid = *verified
+		// 					&& T::RelayableChain::verify_continuous(
+		// 						parcels,
+		// 						&extended_proposal.parcels,
+		// 					)
+		// 					.is_ok();
+
+		// 				relayers
+		// 					.entry(relayer.to_owned())
+		// 					.and_modify(|proposals| proposals.push((*bond, valid)))
+		// 					.or_insert(vec![(*bond, valid)]);
+		// 			} else {
+		// 				relayers
+		// 					.entry(relayer.to_owned())
+		// 					.and_modify(|proposals| proposals.push((*bond, false)))
+		// 					.or_insert(vec![(*bond, false)]);
+		// 			}
+		// 		} else {
+		// 			// Should never enter this condition
+		// 			error!(target: "relayer-game", "   >  Extended Proposal - NOT EXISTED");
+		// 		}
+		// 	}
+
+		// 	proposals = previous_round_proposals;
+		// 	round = previous_round;
+		// }
 	}
 }
 
@@ -544,13 +606,13 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			let mut proposal = RelayProposal::new();
 
 			proposal.relayer = relayer;
-			proposal.content = proposal_content;
+			proposal.parcels = proposal_content;
 			proposal.bond = bond;
 
 			// Allow propose without proofs
 			// The proofs can be completed later through `complete_proofs`
 			if let Some(proofs) = proofs {
-				T::RelayableChain::verify_proofs(&proposal.content[0], &proofs)?;
+				T::RelayableChain::verify_proofs(&proposal.parcels[0], &proofs)?;
 
 				proposal.verified = true;
 			}
@@ -577,7 +639,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 		<Proposals<T, I>>::try_mutate(&game_id, round, |proposals| {
 			if let Some(proposal) = proposals.get_mut(round_index as usize) {
-				for (parcel, proofs) in proposal.content.iter().zip(proofses.into_iter()) {
+				for (parcel, proofs) in proposal.parcels.iter().zip(proofses.into_iter()) {
 					T::RelayableChain::verify_proofs(parcel, &proofs)?;
 				}
 
@@ -622,7 +684,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		// Currently only accept extending from a completed proposal
 		ensure!(extended_proposal.verified, <Error<T, I>>::PreviousProofsInc);
 
-		T::RelayableChain::verify_continuous(&samples, &extended_proposal.content)?;
+		T::RelayableChain::verify_continuous(&samples, &extended_proposal.parcels)?;
 
 		let bond = Self::ensure_can_bond(&relayer, round, existed_proposals.len() as u8 + 1)?;
 		// let proposal = Self::build_proposal(relayer, samples, proofses, bond)?;
@@ -630,14 +692,14 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			let mut proposal = RelayProposal::new();
 
 			proposal.relayer = relayer;
-			proposal.content = samples;
+			proposal.parcels = samples;
 			proposal.bond = bond;
 			proposal.maybe_extended_proposal_id = Some(extended_proposal_id);
 
 			// Allow propose without proofs
 			// The proofs can be completed later through `complete_proofs`
 			if let Some(proofses) = proofses {
-				for (sample, proofs) in proposal.content.iter().zip(proofses.into_iter()) {
+				for (sample, proofs) in proposal.parcels.iter().zip(proofses.into_iter()) {
 					T::RelayableChain::verify_proofs(sample, &proofs)?;
 				}
 

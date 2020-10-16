@@ -28,7 +28,7 @@ pub trait RelayableChain {
 
 	fn verify_proofs(parcel: &Self::Parcel, proofs: &Self::Proofs) -> DispatchResult;
 
-	fn verify_continuous(samples: &[Self::Parcel], extended: &[Self::Parcel]) -> DispatchResult;
+	fn verify_continuous(parcels: &[Self::Parcel], extended: &[Self::Parcel]) -> DispatchResult;
 
 	fn distance_between(
 		game_id: &Self::RelayBlockId,
@@ -99,7 +99,7 @@ pub trait RelayerGameProtocol {
 #[derive(Clone, Encode, Decode, RuntimeDebug)]
 pub struct RelayProposal<Parcel, Relayer, Balance, GameId> {
 	pub relayer: Relayer,
-	pub content: Vec<Parcel>,
+	pub parcels: Vec<Parcel>,
 	pub bond: Balance,
 	pub maybe_extended_proposal_id: Option<ProposalId<GameId>>,
 	pub verified: bool,
@@ -112,7 +112,7 @@ where
 	pub fn new() -> Self {
 		Self {
 			relayer: Relayer::default(),
-			content: vec![],
+			parcels: vec![],
 			bond: Zero::zero(),
 			maybe_extended_proposal_id: None,
 			verified: false,
