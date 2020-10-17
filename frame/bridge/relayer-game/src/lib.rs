@@ -448,7 +448,87 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		(honesties, evils)
 	}
 
-	pub fn find_winning_proposal() -> Option<RelayProposalT<T, I>> {}
+	pub fn find_winning_proposal(
+		game_id: &GameId<T, I>,
+		mut round: u32,
+	) -> Option<RelayProposalT<T, I>> {
+		// Vec<(id, proposal)>
+		let mut winning_proposal_candidates = Self::proposals_of_game_at(game_id, round)
+			.into_iter()
+			.filter(|proposal| proposal.verified)
+			.enumerate()
+			.collect::<Vec<_>>();
+		// Verified proposals under current `round`
+		let mut valid_proposals = winning_proposal_candidates.clone();
+		let remove_winning_candidate = |candidates: &mut Vec<_>, i| {
+			if let Some(i) = candidates.iter().position(|(i_, _)| i == *i_) {
+				candidates.remove(i);
+			}
+		};
+
+		while let Some(previous_round) = round.checked_sub(1) {
+			let previous_round_proposals = Self::proposals_of_game_at(&game_id, previous_round);
+			// A set of the previous round valid-proposal which the winning proposal candidate extend from
+			let mut next_valid_proposals = vec![];
+
+			for (i, proposal) in valid_proposals {
+				let RelayProposal {
+					parcels,
+					bond,
+					maybe_extended_proposal_id,
+					verified,
+					..
+				} = &proposal;
+
+				if !*verified {
+					remove_winning_candidate(&mut winning_proposal_candidates, i);
+
+					continue;
+				}
+
+				if let Some((_, _, index)) = maybe_extended_proposal_id {
+					if let Some(extended_proposal) = previous_round_proposals.get(*index as usize) {
+						if T::RelayableChain::verify_continuous(parcels, &extended_proposal.parcels)
+							.is_ok()
+						{
+							next_valid_proposals.push((i, extended_proposal.to_owned()));
+						} else {
+							remove_winning_candidate(&mut winning_proposal_candidates, i);
+						}
+					} else {
+						// Should never enter this condition
+						error!(
+							target: "relayer-game",
+							"   >  During Finding Winning Proposal, Extended Proposal - NOT EXISTED"
+						);
+					}
+				} else {
+					// Should never enter this condition
+					error!(
+						target: "relayer-game",
+						"   >  During Finding Winning Proposal, Proposal Extend From - NOTHING"
+					);
+				}
+			}
+
+			round = previous_round;
+			valid_proposals = next_valid_proposals;
+		}
+
+		match winning_proposal_candidates.len() {
+			0 => None,
+			1 => winning_proposal_candidates.pop().unwrap(),
+			_ => {
+				// Should never enter this condition
+				error!(
+					target: "relayer-game",
+					"   >  During Finding Winning Proposal, Wining Proposal - MORE THAN ONE"
+				);
+
+				None
+			}
+		}
+	}
 
 	pub fn settle_without_challenge(winning_proposal: RelayProposalT<T, I>) {
 		Self::update_bonds_with(&winning_proposal.relayer, |bonds| {
