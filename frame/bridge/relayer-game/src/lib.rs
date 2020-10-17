@@ -241,7 +241,7 @@ decl_module! {
 
 						Self::settle_with_challenge(&game_id, proposals.pop().unwrap());
 					}
-					(last_round, proposals_count) => {
+					(last_round, _) => {
 						info!(target: "relayer-game", "   >  Challenge Found");
 
 						let distance = T::RelayableChain::distance_between(
@@ -391,6 +391,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		}
 	}
 
+	// Build the honsties/evils(reward/slash) map follow a gave winning proposal
 	pub fn build_honsties_evils_map(
 		game_id: &GameId<T, I>,
 		winning_proposal: RelayProposalT<T, I>,
@@ -405,10 +406,12 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 			..
 		} = winning_proposal;
 
-		// TODO: reward on no challenge
+		// BTreeMap<(relayer, unbond, reward)>
 		let mut honesties = <BTreeMap<AccountId<T>, (RingBalance<T, I>, RingBalance<T, I>)>>::new();
+		// BTreeMap<(relayer, slash)>
 		let mut evils = <BTreeMap<AccountId<T>, RingBalance<T, I>>>::new();
 
+		// TODO: reward on no challenge
 		honesties.insert(relayer, (bond, Zero::zero()));
 
 		Self::for_each_extended_proposal(
@@ -435,7 +438,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 					if i as u32 != index {
 						honesties
 							.entry(honesty_relayer.to_owned())
-							.and_modify(|(_, deposits)| *deposits = deposits.saturating_add(bond));
+							.and_modify(|(_, rewards)| *rewards = rewards.saturating_add(bond));
 						evils
 							.entry(relayer)
 							.and_modify(|slashs| *slashs = slashs.saturating_add(bond))
@@ -448,11 +451,29 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		(honesties, evils)
 	}
 
-	pub fn find_winning_proposal(
+	/// Try to find a winning proposal to build the honsties/evils(reward/slash) map
+	pub fn try_build_honsties_evils_map(
 		game_id: &GameId<T, I>,
-		mut round: u32,
-	) -> Option<RelayProposalT<T, I>> {
+		last_round: u32,
+	) -> (
+		Option<(
+			RelayProposalT<T, I>,
+			BTreeMap<AccountId<T>, (RingBalance<T, I>, RingBalance<T, I>)>,
+		)>,
+		BTreeMap<AccountId<T>, RingBalance<T, I>>,
+	) {
+		let mut round = last_round;
+		// Vec<(id, relayer, unbond)>
+		// Remove evil by this id each loop to find the honesties finally
+		let mut relayers = vec![];
+		// Vec<slashs>
+		// Reward the round's winner with the round's total slash
+		// But don't reward the round's winner if can't find a winning proposal finally
+		let mut rounds_slashs = vec![];
+		// BTreeMap<(relayer, slash)>
+		let mut evils = <BTreeMap<AccountId<T>, RingBalance<T, I>>>::new();
 		// Vec<(id, proposal)>
+		// Remove evil proposal by this id each loop to find the winning proposal finally
 		let mut winning_proposal_candidates = Self::proposals_of_game_at(game_id, round)
 			.into_iter()
 			.filter(|proposal| proposal.verified)
@@ -460,40 +481,36 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 			.collect::<Vec<_>>();
 		// Verified proposals under current `round`
 		let mut valid_proposals = winning_proposal_candidates.clone();
-		let remove_winning_candidate = |candidates: &mut Vec<_>, i| {
-			if let Some(i) = candidates.iter().position(|(i_, _)| i == *i_) {
-				candidates.remove(i);
-			}
-		};
 
 		while let Some(previous_round) = round.checked_sub(1) {
 			let previous_round_proposals = Self::proposals_of_game_at(&game_id, previous_round);
 			// A set of the previous round valid-proposal which the winning proposal candidate extend from
 			let mut next_valid_proposals = vec![];
 
-			for (i, proposal) in valid_proposals {
-				let RelayProposal {
-					parcels,
+			for (
+				id,
+				RelayProposal {
+					ref relayer,
+					ref parcels,
 					bond,
-					maybe_extended_proposal_id,
-					verified,
+					ref maybe_extended_proposal_id,
 					..
-				} = &proposal;
-
-				if !*verified {
-					remove_winning_candidate(&mut winning_proposal_candidates, i);
-
-					continue;
-				}
-
+				},
+			) in valid_proposals
+			{
 				if let Some((_, _, index)) = maybe_extended_proposal_id {
 					if let Some(extended_proposal) = previous_round_proposals.get(*index as usize) {
 						if T::RelayableChain::verify_continuous(parcels, &extended_proposal.parcels)
 							.is_ok()
 						{
-							next_valid_proposals.push((i, extended_proposal.to_owned()));
+							relayers.push((id, relayer.to_owned(), bond));
+							next_valid_proposals.push((id, extended_proposal.to_owned()));
 						} else {
-							remove_winning_candidate(&mut winning_proposal_candidates, i);
+							evils
+								.entry(relayer.to_owned())
+								.and_modify(|slashs| *slashs = slashs.saturating_add(bond))
+								.or_insert(bond);
+							rounds_slashs.push(bond);
 						}
 					} else {
 						// Should never enter this condition
@@ -511,22 +528,91 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 				}
 			}
 
+			relayers = relayers
+				.into_iter()
+				.filter(|(id, relayer, bond)| {
+					if next_valid_proposals.iter().any(|(id_, _)| id == id_) {
+						true
+					} else {
+						evils
+							.entry(relayer.to_owned())
+							.and_modify(|slashs| *slashs = slashs.saturating_add(*bond))
+							.or_insert(*bond);
+						rounds_slashs.push(*bond);
+
+						false
+					}
+				})
+				.collect();
+			winning_proposal_candidates = winning_proposal_candidates
+				.into_iter()
+				.filter(|(id, _)| next_valid_proposals.iter().any(|(id_, _)| id == id_))
+				.collect();
+
 			round = previous_round;
 			valid_proposals = next_valid_proposals;
 		}
 
 		match winning_proposal_candidates.len() {
-			0 => None,
-			1 => winning_proposal_candidates.pop().unwrap(),
+			0 => (None, evils),
+			1 => {
+				let (_, winning_proposal) = winning_proposal_candidates.pop().unwrap();
+
+				if relayers.len() as u32 + 1 == last_round
+					&& rounds_slashs.len() as u32 + 1 == last_round
+				{
+					let mut honesties = BTreeMap::new();
+
+					// TODO: reward on no challenge
+					honesties.insert(
+						winning_proposal.relayer.clone(),
+						(winning_proposal.bond, Zero::zero()),
+					);
+
+					for ((_, round_winner, unbond), round_rewards) in
+						relayers.into_iter().zip(rounds_slashs.into_iter())
+					{
+						honesties.insert(round_winner, (unbond, round_rewards));
+					}
+
+					(Some((winning_proposal, honesties)), evils)
+				} else {
+					// Should never enter this condition
+					error!(
+						target: "relayer-game",
+						"   >  Honesties Count - MISMATCHED"
+					);
+
+					(None, evils)
+				}
+			}
 			_ => {
 				// Should never enter this condition
 				error!(
 					target: "relayer-game",
-					"   >  During Finding Winning Proposal, Wining Proposal - MORE THAN ONE"
+					"   >  Wining Proposal - MORE THAN ONE"
 				);
 
-				None
+				(None, evils)
 			}
+		}
+	}
+
+	pub fn payout_honesties_and_slash_evils(
+		honesties: BTreeMap<AccountId<T>, (RingBalance<T, I>, RingBalance<T, I>)>,
+		evils: BTreeMap<AccountId<T>, RingBalance<T, I>>,
+	) {
+		for (relayer, (unbonds, rewards)) in honesties {
+			// Unlock bonds for honesty
+			Self::update_bonds_with(&relayer, |bonds| bonds.saturating_sub(unbonds));
+
+			// Reward honesty
+			T::RingCurrency::deposit_creating(&relayer, rewards);
+		}
+
+		for (relayer, slashs) in evils {
+			// Punish evil
+			T::RingCurrency::slash(&relayer, slashs);
 		}
 	}
 
@@ -534,6 +620,8 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		Self::update_bonds_with(&winning_proposal.relayer, |bonds| {
 			bonds.saturating_sub(winning_proposal.bond)
 		});
+
+		// TODO: store
 	}
 
 	pub fn settle_abandon(abandoned_proposals: Vec<RelayProposalT<T, I>>) {
@@ -557,69 +645,21 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	pub fn settle_with_challenge(game_id: &GameId<T, I>, winning_proposal: RelayProposalT<T, I>) {
 		let (honesties, evils) = Self::build_honsties_evils_map(game_id, winning_proposal);
 
-		for (relayer, (unbonds, deposits)) in honesties {
-			// Unlock bonds for honesty
-			Self::update_bonds_with(&relayer, |bonds| bonds.saturating_sub(unbonds));
+		Self::payout_honesties_and_slash_evils(honesties, evils);
 
-			// Reward honesty
-			T::RingCurrency::deposit_creating(&relayer, deposits);
-		}
-
-		for (relayer, slashs) in evils {
-			// Punish evil
-			T::RingCurrency::slash(&relayer, slashs);
-		}
+		// TODO: store
 	}
 
-	pub fn on_chain_arbitrate(game_id: &GameId<T, I>, mut round: u32) {
-		// let proposals = <Proposals<T, I>>::iter_prefix_values(&game_id).collect::<Vec<_>>();
+	pub fn on_chain_arbitrate(game_id: &GameId<T, I>, last_round: u32) {
+		let (maybe_honesties, evils) = Self::try_build_honsties_evils_map(game_id, last_round);
 
-		// while let Some(previous_round) = round.checked_sub(1) {
-		// 	proposals[round];
-		// }
+		if let Some((winning_proposal, honesties)) = maybe_honesties {
+			Self::payout_honesties_and_slash_evils(honesties, evils);
+		} else {
+			Self::payout_honesties_and_slash_evils(BTreeMap::new(), evils);
+		}
 
-		// let mut proposals = Self::proposals_of_game_at(&game_id, round);
-		// let mut relayers = <BTreeMap<AccountId<T>, Vec<(RingBalance<T, I>, bool)>>>::new();
-
-		// while let Some(previous_round) = round.checked_sub(1) {
-		// 	let previous_round_proposals = Self::proposals_of_game_at(&game_id, previous_round);
-
-		// 	for RelayProposal {
-		// 		relayer,
-		// 		parcels,
-		// 		bond,
-		// 		maybe_extended_proposal_id,
-		// 		verified,
-		// 	} in proposals.iter()
-		// 	{
-		// 		if let Some((_, _, index)) = maybe_extended_proposal_id {
-		// 			if let Some(extended_proposal) = previous_round_proposals.get(*index as usize) {
-		// 				let valid = *verified
-		// 					&& T::RelayableChain::verify_continuous(
-		// 						parcels,
-		// 						&extended_proposal.parcels,
-		// 					)
-		// 					.is_ok();
-
-		// 				relayers
-		// 					.entry(relayer.to_owned())
-		// 					.and_modify(|proposals| proposals.push((*bond, valid)))
-		// 					.or_insert(vec![(*bond, valid)]);
-		// 			} else {
-		// 				relayers
-		// 					.entry(relayer.to_owned())
-		// 					.and_modify(|proposals| proposals.push((*bond, false)))
-		// 					.or_insert(vec![(*bond, false)]);
-		// 			}
-		// 		} else {
-		// 			// Should never enter this condition
-		// 			error!(target: "relayer-game", "   >  Extended Proposal - NOT EXISTED");
-		// 		}
-		// 	}
-
-		// 	proposals = previous_round_proposals;
-		// 	round = previous_round;
-		// }
+		// TODO: store
 	}
 }
 
