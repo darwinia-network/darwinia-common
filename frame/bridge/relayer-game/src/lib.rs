@@ -147,6 +147,9 @@ decl_storage! {
 			: map hasher(identity) GameId<T, I>
 			=> RelayBlockId<T, I>;
 
+		/// The total rounds of a game
+		///
+		/// `total rounds - 1 = last round index`
 		pub RoundCounts
 			get(fn round_count_of)
 			: map hasher(identity) GameId<T, I>
@@ -154,17 +157,18 @@ decl_storage! {
 
 		/// All the closed games here
 		///
-		/// Closed games won't accept any proposal
-		pub ClosedGames
-			get(fn game_closed_at_of)
+		/// Game close at this moment, closed games won't accept any proposal
+		pub ProposeEndTime
+			get(fn propose_end_time_of)
 			: map hasher(identity) GameId<T, I>
 			=> BlockNumber<T>;
 
 		/// All the closed rounds here
 		///
 		/// Record the closed rounds endpoint which use for settlling or updating
-		pub ClosedRounds
-			get(fn closed_rounds_at)
+		/// Settle or update a game will be scheduled which will start at this moment
+		pub GamesToUpdate
+			get(fn games_to_update_at)
 			: map hasher(identity) BlockNumber<T>
 			=> Vec<GameId<T, I>>;
 
@@ -186,7 +190,7 @@ decl_module! {
 		fn deposit_event() = default;
 
 		fn offchain_worker(now: BlockNumber<T>) {
-			let game_ids = <ClosedRounds<T, I>>::take(now);
+			let game_ids = <GamesToUpdate<T, I>>::take(now);
 
 			if !game_ids.is_empty() {
 				if let Err(e) = Self::update_games_at(game_ids, now) {
@@ -266,8 +270,9 @@ decl_module! {
 impl<T: Trait<I>, I: Instance> Module<T, I> {
 	/// Check if time for proposing
 	pub fn is_game_open_at(game_id: &GameId<T, I>, moment: BlockNumber<T>) -> bool {
-		Self::game_closed_at_of(game_id) > moment
+		Self::propose_end_time_of(game_id) > moment
 	}
+
 	/// Check if others already make a same proposal
 	pub fn is_unique_proposal(
 		proposal_content: &[Parcel<T, I>],
@@ -328,8 +333,8 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		let propose_time = T::RelayerGameAdjustor::propose_time(round);
 		let complete_proofs_time = T::RelayerGameAdjustor::complete_proofs_time(round);
 
-		<ClosedGames<T, I>>::insert(game_id, propose_time);
-		<ClosedRounds<T, I>>::append(propose_time + complete_proofs_time, game_id);
+		<ProposeEndTime<T, I>>::insert(game_id, propose_time);
+		<GamesToUpdate<T, I>>::append(propose_time + complete_proofs_time, game_id);
 	}
 
 	pub fn update_games_at(game_ids: Vec<GameId<T, I>>, moment: BlockNumber<T>) -> DispatchResult {
@@ -503,6 +508,8 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 						if T::RelayableChain::verify_continuous(parcels, &extended_proposal.parcels)
 							.is_ok()
 						{
+							// Can't find the relayer cheating within this round
+							// So add the relayer and his proposal into the candidate
 							relayers.push((id, relayer.to_owned(), bond));
 							next_valid_proposals.push((id, extended_proposal.to_owned()));
 						} else {
@@ -528,6 +535,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 				}
 			}
 
+			// Remove all the evil relayers and record the slash
 			relayers = relayers
 				.into_iter()
 				.filter(|(id, relayer, bond)| {
@@ -544,6 +552,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 					}
 				})
 				.collect();
+			// Remove all the evil proposals
 			winning_proposal_candidates = winning_proposal_candidates
 				.into_iter()
 				.filter(|(id, _)| next_valid_proposals.iter().any(|(id_, _)| id == id_))
