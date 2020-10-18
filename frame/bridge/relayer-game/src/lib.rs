@@ -96,7 +96,7 @@ decl_event! {
 	where
 		GameId = GameId<T, I>,
 	{
-		TODO(GameId),
+		NewRound(GameId, ),
 	}
 }
 
@@ -127,8 +127,8 @@ decl_error! {
 
 decl_storage! {
 	trait Store for Module<T: Trait<I>, I: Instance = DefaultInstance> as DarwiniaRelayerGame {
-		/// The number of active games
-		pub ActiveGames get(fn active_games): u8;
+		/// Active games' relay block ids
+		pub BlocksToRelay get(fn blocks_to_relay): Vec<RelayBlockId<T, I>>;
 
 		/// All the active games' proposals here
 		///
@@ -177,6 +177,11 @@ decl_storage! {
 			get(fn bonds_of)
 			: map hasher(blake2_128_concat) AccountId<T>
 			=> RingBalance<T, I>;
+
+		pub Samples
+			get(fn samples)
+			:map hasher(identity) GameId<T, I>
+			=> Vec<Vec<RelayBlockId<T, I>>>;
 	}
 }
 
@@ -230,8 +235,6 @@ decl_module! {
 						info!(target: "relayer-game", "   >  Challenge - NOT EXISTED");
 
 						Self::settle_without_challenge(proposals.pop().unwrap());
-
-						// TODO: reward if no challenge
 					}
 					// No relayer response for the lastest round
 					(_, 0) => {
@@ -258,7 +261,7 @@ decl_module! {
 							Self::on_chain_arbitrate(&game_id, last_round);
 						} else {
 							// Update samples, start next round
-							// TODO: update samples
+							Self::update_samples(&game_id);
 						}
 					}
 				}
@@ -630,6 +633,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 			bonds.saturating_sub(winning_proposal.bond)
 		});
 
+		// TODO: reward on no challenge
 		// TODO: store
 	}
 
@@ -664,11 +668,19 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 
 		if let Some((winning_proposal, honesties)) = maybe_honesties {
 			Self::payout_honesties_and_slash_evils(honesties, evils);
+
+		// TODO: store
 		} else {
 			Self::payout_honesties_and_slash_evils(BTreeMap::new(), evils);
 		}
+	}
 
-		// TODO: store
+	pub fn update_samples(game_id: &GameId<T, I>) {
+		<Samples<T, I>>::mutate(game_id, |samples| {
+			T::RelayerGameAdjustor::update_samples(samples);
+
+			Self::deposit_event(RawEvent::NewRound(game_id.to_owned()));
+		});
 	}
 }
 
@@ -691,7 +703,9 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			parcel
 		);
 
-		let active_games = Self::active_games();
+		let active_games = <BlocksToRelay<T, I>>::decode_len()
+			.map(|length| length as u8)
+			.unwrap_or(0);
 		let last_confirmed_block_id = T::RelayableChain::best_block_id();
 
 		// Check if the proposed header has already been relaied
@@ -750,12 +764,13 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		};
 		let round = 0;
 
-		<ActiveGames<I>>::mutate(|count| *count += 1);
 		<Proposals<T, I>>::append(&game_id, round, proposal);
 		<LastConfirmeds<T, I>>::insert(&game_id, last_confirmed_block_id);
 		<RoundCounts<T, I>>::insert(&game_id, round);
 
 		Self::update_timer_of_game_at(&game_id, round);
+
+		<BlocksToRelay<T, I>>::mutate(|blocks_to_relay| blocks_to_relay.push(game_id));
 
 		Ok(())
 	}
