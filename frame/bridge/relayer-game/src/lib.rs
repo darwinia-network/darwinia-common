@@ -102,6 +102,8 @@ decl_event! {
 		NewRound(GameId, Vec<RelayBlockId>),
 		/// A game has been settled. [game id]
 		GameOver(GameId),
+		/// Pending header approved. [block number, reason]
+		PendingParcelApproved(RelayBlockId, Vec<u8>),
 	}
 }
 
@@ -190,7 +192,7 @@ decl_storage! {
 
 		pub PendingParcels
 			get(fn pending_parcels)
-			: Vec<(BlockNumber<T>, RelayParcel<T, I>)>
+			: Vec<(BlockNumber<T>, RelayBlockId<T, I>, RelayParcel<T, I>)>
 	}
 }
 
@@ -204,7 +206,7 @@ decl_module! {
 		fn deposit_event() = default;
 
 		fn on_initialize(block_number: BlockNumber<T>) -> Weight {
-			if let Ok(weight) = Self::system_approve_pending_headers(block_number) {
+			if let Ok(weight) = Self::system_approve_pending_parcels(block_number) {
 				weight
 			} else {
 				// TODO: handle error
@@ -259,7 +261,7 @@ decl_module! {
 						if let Some(parcel) =
 							Self::settle_without_challenge(proposals.pop().unwrap())
 						{
-							parcels.push(parcel);
+							parcels.push((game_id.to_owned(), parcel));
 						}
 					}
 					// No relayer response for the lastest round
@@ -275,7 +277,7 @@ decl_module! {
 						if let Some(parcel) =
 							Self::settle_with_challenge(&game_id, proposals.pop().unwrap())
 						{
-							parcels.push(parcel);
+							parcels.push((game_id.to_owned(), parcel));
 						}
 					}
 					(last_round, _) => {
@@ -289,7 +291,7 @@ decl_module! {
 						if distance == round_count {
 							// A whole chain gave, start continuous verification
 							if let Some(parcel) = Self::on_chain_arbitrate(&game_id, last_round) {
-								parcels.push(parcel);
+								parcels.push((game_id.to_owned(), parcel));
 							}
 						} else {
 							// Update game, start next round
@@ -797,24 +799,28 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 
 	pub fn store_parcels(
 		now: BlockNumber<T>,
-		pending_parcels: Vec<RelayParcel<T, I>>,
+		pending_parcels: Vec<(RelayBlockId<T, I>, RelayParcel<T, I>)>,
 	) -> DispatchResult {
 		let confirm_period = T::ConfirmPeriod::get();
 
 		if confirm_period.is_zero() {
-			for pending_parcel in pending_parcels {
+			for (_, pending_parcel) in pending_parcels {
 				T::RelayableChain::store_parcel(pending_parcel)?;
 			}
 		} else {
-			for pending_parcel in pending_parcels {
-				<PendingParcels<T, I>>::append((now + confirm_period, pending_parcel));
+			for (pending_relay_block_id, pending_parcel) in pending_parcels {
+				<PendingParcels<T, I>>::append((
+					now + confirm_period,
+					pending_relay_block_id,
+					pending_parcel,
+				));
 			}
 		}
 
 		Ok(())
 	}
 
-	// pub fn update_pending_headers_with<F>(
+	// pub fn update_pending_parcels_with<F>(
 	// 	pending_block_number: TcBlockNumber<T, I>,
 	// 	f: F,
 	// ) -> DispatchResult
@@ -835,17 +841,17 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	// 	})
 	// }
 
-	pub fn system_approve_pending_headers(now: BlockNumber<T>) -> Result<Weight, DispatchError> {
+	pub fn system_approve_pending_parcels(now: BlockNumber<T>) -> Result<Weight, DispatchError> {
 		<PendingParcels<T, I>>::mutate(|pending_parcels| {
-			pending_parcels.retain(|(confirm_at, pending_parcel)| {
+			pending_parcels.retain(|(confirm_at, pending_relay_block_id, pending_parcel)| {
 				if *confirm_at == now {
 					// TODO: handle error
 					let _ = T::RelayableChain::store_parcel(pending_parcel.to_owned());
 
-					// Self::deposit_event(RawEvent::PendingHeaderApproved(
-					// 	*pending_block_number,
-					// 	b"Not Enough Technical Member Online, Approved By System".to_vec(),
-					// ));
+					Self::deposit_event(RawEvent::PendingParcelApproved(
+						pending_relay_block_id.to_owned(),
+						b"Not Enough Technical Member Online, Approved By System".to_vec(),
+					));
 
 					false
 				} else {
