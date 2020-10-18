@@ -34,6 +34,8 @@ pub trait RelayableChain {
 		game_id: &Self::RelayBlockId,
 		last_confirmed_block_id_of: Self::RelayBlockId,
 	) -> u32;
+
+	fn store_parcel(parcel: Self::Parcel) -> DispatchResult;
 }
 
 /// A regulator to adjust relay args for a specific chain
@@ -52,7 +54,11 @@ pub trait AdjustableRelayerGame {
 
 	fn complete_proofs_time(round: u32) -> Self::Moment;
 
-	fn update_samples(samples: &mut Vec<Vec<Self::RelayBlockId>>);
+	/// Update the samples
+	///
+	/// Push the new samples to the `samples`, the index of `samples` aka round index
+	/// And return the new samples
+	fn update_samples(samples: &mut Vec<Vec<Self::RelayBlockId>>) -> Vec<Self::RelayBlockId>;
 
 	/// Give an estimate bond value for a specify round
 	///
