@@ -4,8 +4,8 @@
 
 #[cfg(test)]
 mod mock;
-#[cfg(test)]
-mod tests;
+// #[cfg(test)]
+// mod tests;
 
 mod types {
 	// --- darwinia ---
@@ -59,6 +59,8 @@ pub const RELAYER_GAME_ID: LockIdentifier = *b"da/rgame";
 pub trait Trait<I: Instance = DefaultInstance>:
 	frame_system::Trait + SendTransactionTypes<Call<Self, I>>
 {
+	type Call: From<Call<Self, I>>;
+
 	type Event: From<Event<Self, I>> + Into<<Self as frame_system::Trait>::Event>;
 
 	/// The currency use for bond
@@ -425,7 +427,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	}
 
 	pub fn for_each_extended_proposal<F>(
-		mut maybe_extended_proposal_id: Option<ProposalId<GameId<T, I>>>,
+		mut maybe_extended_proposal_id: Option<RelayProposalId<GameId<T, I>>>,
 		mut f: F,
 	) -> Option<RelayProposalT<T, I>>
 	where
@@ -798,9 +800,12 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		Self::update_timer_of_game_at(game_id, last_round + 1, moment);
 
 		<Samples<T, I>>::mutate(game_id, |samples| {
-			let samples = T::RelayerGameAdjustor::update_samples(samples);
+			T::RelayerGameAdjustor::update_samples(samples);
 
-			Self::deposit_event(RawEvent::NewRound(game_id.to_owned(), samples));
+			Self::deposit_event(RawEvent::NewRound(
+				game_id.to_owned(),
+				samples.last().map(ToOwned::to_owned).unwrap_or_default(),
+			));
 		});
 	}
 
@@ -989,7 +994,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 	}
 
 	fn complete_proofs(
-		proposal_id: ProposalId<Self::GameId>,
+		proposal_id: RelayProposalId<Self::GameId>,
 		proofses: Vec<Self::Proofs>,
 	) -> DispatchResult {
 		let (game_id, round, round_index) = proposal_id;
@@ -1012,10 +1017,10 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 	fn extend_proposal(
 		relayer: Self::Relayer,
 		samples: Vec<Self::RelayParcel>,
-		extended_proposal_id: ProposalId<Self::GameId>,
+		extended_relay_proposal_id: RelayProposalId<Self::GameId>,
 		proofses: Option<Vec<Self::Proofs>>,
 	) -> DispatchResult {
-		let (game_id, previous_round, previous_round_index) = extended_proposal_id.clone();
+		let (game_id, previous_round, previous_round_index) = extended_relay_proposal_id.clone();
 
 		ensure!(
 			Self::is_game_open_at(&game_id, <frame_system::Module<T>>::block_number()),
@@ -1051,7 +1056,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			proposal.relayer = relayer;
 			proposal.relay_parcels = samples;
 			proposal.bond = bond;
-			proposal.maybe_extended_proposal_id = Some(extended_proposal_id);
+			proposal.maybe_extended_proposal_id = Some(extended_relay_proposal_id);
 
 			// Allow propose without proofs
 			// The proofs can be completed later through `complete_proofs`

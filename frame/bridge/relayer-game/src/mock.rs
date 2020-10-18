@@ -1,8 +1,10 @@
 pub mod mock_relay {
 	pub mod types {
-		pub type MockTcBlockNumber = u64;
-		pub type MockTcHeaderHash = u128;
+		pub type MockRelayBlockNumber = u32;
+		pub type MockRelayHeaderHash = u128;
 	}
+
+	pub use types::*;
 
 	// --- crates ---
 	use serde::{Deserialize, Serialize};
@@ -10,27 +12,25 @@ pub mod mock_relay {
 	use sp_runtime::{DispatchError, DispatchResult};
 	// --- darwinia ---
 	use crate::{mock::*, *};
-	use types::*;
 
 	decl_storage! {
 		trait Store for Module<T: Trait> as DarwiniaRelay {
-			pub BestBlockNumber get(fn best_block_number): MockTcBlockNumber;
+			pub BestBlockNumber get(fn best_block_number): MockRelayBlockNumber;
 
 			pub Headers
 				get(fn header_of_block_number)
-				: map hasher(identity) MockTcBlockNumber
-				=> Option<MockTcHeader>;
+				: map hasher(identity) MockRelayBlockNumber
+				=> Option<MockRelayHeader>;
 		}
 
 		add_extra_genesis {
-			config(headers): Vec<MockTcHeader>;
+			config(headers): Vec<MockRelayHeader>;
 			build(|config: &GenesisConfig| {
 				let mut best_block_number = 0;
 
-				BestBlockNumber::put(best_block_number);
 				Headers::insert(
 					best_block_number,
-					MockTcHeader {
+					MockRelayHeader {
 						number: 0,
 						hash: 0,
 						parent_hash: 0,
@@ -53,66 +53,52 @@ pub mod mock_relay {
 		pub struct Module<T: Trait> for enum Call
 		where
 			origin: T::Origin
-		{
-
-		}
+		{}
 	}
 
-	impl<T: Trait> Relayable for Module<T> {
-		type HeaderThingWithProof = MockTcHeader;
-		type HeaderThing = MockTcHeader;
+	impl<T: Trait> RelayableChain for Module<T> {
+		type RelayBlockId = MockRelayBlockNumber;
+		type RelayParcel = MockRelayHeader;
+		type Proofs = ();
 
-		fn verify(
-			proposal_with_proof: Vec<Self::HeaderThingWithProof>,
-		) -> Result<Vec<Self::HeaderThing>, DispatchError> {
-			let verify = |header: &Self::HeaderThing| -> DispatchResult {
-				ensure!(header.valid, "Header - INVALID");
-
-				Ok(())
-			};
-			let mut proposal = vec![];
-
-			for header_thing in proposal_with_proof {
-				verify(&header_thing)?;
-
-				proposal.push(header_thing);
-			}
-
-			Ok(proposal)
-		}
-
-		fn best_block_number() -> <Self::HeaderThing as HeaderThing>::Number {
+		fn best_block_id() -> Self::RelayBlockId {
 			Self::best_block_number()
 		}
 
-		fn on_chain_arbitrate(mut proposal: Vec<Self::HeaderThing>) -> DispatchResult {
-			proposal.sort_by_key(|header_thing| header_thing.number);
+		fn verify_proofs(
+			relay_parcel: &Self::RelayParcel,
+			proofs: &Self::Proofs,
+		) -> DispatchResult {
+			ensure!(relay_parcel.valid, "Parcel - INVALID");
 
-			let mut parent_hash = proposal.pop().unwrap().parent_hash;
+			Ok(())
+		}
 
-			while let Some(header_thing) = proposal.pop() {
-				ensure!(parent_hash == header_thing.hash, "Continuous - INVALID");
-
-				parent_hash = header_thing.parent_hash;
-			}
-
+		fn verify_continuous(
+			parcels: &[Self::RelayParcel],
+			extended_parcels: &[Self::RelayParcel],
+		) -> DispatchResult {
 			ensure!(
-				parent_hash
-					== Self::header_of_block_number(Self::best_block_number())
-						.unwrap()
-						.hash,
+				parcels[0].parent_hash == extended_parcels[0].hash,
 				"Continuous - INVALID"
 			);
 
 			Ok(())
 		}
 
-		fn store_header(header_thing: Self::HeaderThing) -> DispatchResult {
-			BestBlockNumber::mutate(|best_block_number| {
-				if header_thing.number > *best_block_number {
-					*best_block_number = header_thing.number;
+		fn distance_between(
+			relay_block_id: &Self::RelayBlockId,
+			last_confirmed_relay_block_id: Self::RelayBlockId,
+		) -> u32 {
+			relay_block_id - last_confirmed_relay_block_id
+		}
 
-					Headers::insert(header_thing.number, header_thing);
+		fn store_relay_parcel(relay_parcel: Self::RelayParcel) -> DispatchResult {
+			BestBlockNumber::mutate(|best_block_number| {
+				if relay_parcel.number > *best_block_number {
+					*best_block_number = relay_parcel.number;
+
+					Headers::insert(relay_parcel.number, relay_parcel);
 				}
 			});
 
@@ -120,15 +106,21 @@ pub mod mock_relay {
 		}
 	}
 
-	#[derive(Clone, Debug, Default, PartialEq, Encode, Decode, Serialize, Deserialize)]
-	pub struct MockTcHeader {
-		pub number: MockTcBlockNumber,
-		pub hash: MockTcHeaderHash,
-		pub parent_hash: MockTcHeaderHash,
+	#[derive(
+		Clone, Debug, Default, PartialEq, PartialOrd, Encode, Decode, Serialize, Deserialize,
+	)]
+	pub struct MockRelayHeader {
+		pub number: MockRelayBlockNumber,
+		pub hash: MockRelayHeaderHash,
+		pub parent_hash: MockRelayHeaderHash,
 		pub valid: bool,
 	}
-	impl MockTcHeader {
-		pub fn mock(number: MockTcBlockNumber, parent_hash: MockTcHeaderHash, valid: u8) -> Self {
+	impl MockRelayHeader {
+		pub fn mock(
+			number: MockRelayBlockNumber,
+			parent_hash: MockRelayHeaderHash,
+			valid: u8,
+		) -> Self {
 			let valid = match valid {
 				0 => false,
 				_ => true,
@@ -173,18 +165,6 @@ pub mod mock_relay {
 			chain
 		}
 	}
-	impl HeaderThing for MockTcHeader {
-		type Number = MockTcBlockNumber;
-		type Hash = MockTcHeaderHash;
-
-		fn number(&self) -> Self::Number {
-			self.number
-		}
-
-		fn hash(&self) -> Self::Hash {
-			self.hash
-		}
-	}
 }
 
 // --- std ---
@@ -193,34 +173,32 @@ use std::{cell::RefCell, time::Instant};
 use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
-	impl_outer_origin, parameter_types,
+	impl_outer_dispatch, impl_outer_origin, parameter_types,
 	traits::{OnFinalize, OnInitialize},
 	weights::Weight,
 };
-use sp_core::H256;
-use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill, RuntimeDebug};
+use sp_runtime::{Perbill, RuntimeDebug};
 // --- darwinia ---
 use crate::*;
 use darwinia_relay_primitives::*;
-use mock_relay::MockTcHeader;
+use mock_relay::{MockRelayBlockNumber, MockRelayHeader};
 
 pub type AccountId = u64;
-pub type AccountIndex = u64;
 pub type BlockNumber = u64;
 pub type Balance = u128;
 
+pub type Extrinsic = sp_runtime::testing::TestXt<Call, ()>;
+
 pub type RingInstance = darwinia_balances::Instance0;
-pub type _RingError = darwinia_balances::Error<Test, RingInstance>;
 pub type Ring = darwinia_balances::Module<Test, RingInstance>;
 
 pub type KtonInstance = darwinia_balances::Instance1;
-pub type _KtonError = darwinia_balances::Error<Test, KtonInstance>;
 
 pub type System = frame_system::Module<Test>;
 pub type Relay = mock_relay::Module<Test>;
 
 pub type RelayerGameError = Error<Test, DefaultInstance>;
-pub type RelayerGame = Module<Test>;
+pub type RelayerGame = Module<Test, DefaultInstance>;
 
 thread_local! {
 	static GENESIS_TIME: Instant = Instant::now();
@@ -230,7 +208,19 @@ thread_local! {
 }
 
 impl_outer_origin! {
-	pub enum Origin for Test where system = frame_system {}
+	pub enum Origin for Test
+	where
+		system = frame_system
+	{}
+}
+
+impl_outer_dispatch! {
+	pub enum Call for Test
+	where
+		origin: Origin
+	{
+		Self::RelayerGame,
+	}
 }
 
 darwinia_support::impl_account_data! {
@@ -255,42 +245,36 @@ impl Get<BlockNumber> for ConfirmPeriod {
 #[derive(Clone, Eq, PartialEq)]
 pub struct Test;
 impl Trait for Test {
+	type Call = Call;
 	type Event = ();
 	type RingCurrency = Ring;
 	type RingSlash = ();
 	type RelayerGameAdjustor = RelayerGameAdjustor;
-	type TargetChain = Relay;
+	type RelayableChain = Relay;
 	type ConfirmPeriod = ConfirmPeriod;
 	type WeightInfo = ();
 }
 
-parameter_types! {
-	pub const BlockHashCount: u64 = 250;
-	pub const MaximumBlockWeight: Weight = 1024;
-	pub const MaximumBlockLength: u32 = 2 * 1024;
-	pub const MinimumPeriod: u64 = 5;
-	pub const AvailableBlockRatio: Perbill = Perbill::one();
-}
 impl frame_system::Trait for Test {
 	type BaseCallFilter = ();
 	type Origin = Origin;
-	type Call = ();
-	type Index = AccountIndex;
+	type Call = Call;
+	type Index = u64;
 	type BlockNumber = BlockNumber;
-	type Hash = H256;
-	type Hashing = ::sp_runtime::traits::BlakeTwo256;
+	type Hash = sp_core::H256;
+	type Hashing = sp_runtime::traits::BlakeTwo256;
 	type AccountId = AccountId;
-	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
+	type Lookup = sp_runtime::traits::IdentityLookup<Self::AccountId>;
+	type Header = sp_runtime::testing::Header;
 	type Event = ();
-	type BlockHashCount = BlockHashCount;
-	type MaximumBlockWeight = MaximumBlockWeight;
+	type BlockHashCount = ();
+	type MaximumBlockWeight = ();
 	type DbWeight = ();
 	type BlockExecutionWeight = ();
 	type ExtrinsicBaseWeight = ();
-	type MaximumExtrinsicWeight = MaximumBlockWeight;
-	type MaximumBlockLength = MaximumBlockLength;
-	type AvailableBlockRatio = AvailableBlockRatio;
+	type MaximumExtrinsicWeight = ();
+	type MaximumBlockLength = ();
+	type AvailableBlockRatio = ();
 	type Version = ();
 	type PalletInfo = ();
 	type AccountData = AccountData<Balance>;
@@ -313,53 +297,50 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 	type OtherCurrencies = ();
 	type WeightInfo = ();
 }
-impl darwinia_balances::Trait<KtonInstance> for Test {
-	type Balance = Balance;
-	type DustRemoval = ();
-	type Event = ();
-	type ExistentialDeposit = ExistentialDeposit;
-	type BalanceInfo = AccountData<Balance>;
-	type AccountStore = System;
-	type MaxLocks = ();
-	type OtherCurrencies = ();
-	type WeightInfo = ();
+
+impl<LocalCall> frame_system::offchain::SendTransactionTypes<LocalCall> for Test
+where
+	Call: From<LocalCall>,
+{
+	type Extrinsic = Extrinsic;
+	type OverarchingCall = Call;
 }
 
 pub struct RelayerGameAdjustor;
 impl AdjustableRelayerGame for RelayerGameAdjustor {
 	type Moment = BlockNumber;
 	type Balance = Balance;
-	type TcBlockNumber = <<Relay as Relayable>::HeaderThing as HeaderThing>::Number;
+	type RelayBlockId = MockRelayBlockNumber;
 
-	fn challenge_time(_round: Round) -> Self::Moment {
-		CHALLENGE_TIME.with(|v| v.borrow().to_owned())
+	fn max_active_games() -> u8 {
+		32
 	}
 
-	fn round_of_samples_count(samples_count: u64) -> Round {
-		samples_count - 1
+	fn propose_time(round: u32) -> Self::Moment {
+		CHALLENGE_TIME.with(|v| v.borrow().to_owned()) / 2
 	}
 
-	fn samples_count_of_round(round: Round) -> u64 {
-		round + 1
+	fn complete_proofs_time(round: u32) -> Self::Moment {
+		CHALLENGE_TIME.with(|v| v.borrow().to_owned()) / 2
 	}
 
-	fn update_samples(samples: &mut Vec<Vec<Self::TcBlockNumber>>) {
+	fn update_samples(samples: &mut Vec<Vec<Self::RelayBlockId>>) {
 		samples.push(vec![samples.last().unwrap().last().unwrap() - 1]);
 	}
 
-	fn estimate_bond(_round: Round, _proposals_count: u64) -> Self::Balance {
+	fn estimate_bond(_round: u32, _proposals_count: u8) -> Self::Balance {
 		ESTIMATE_BOND.with(|v| v.borrow().to_owned())
 	}
 }
 
 pub struct ExtBuilder {
-	headers: Vec<MockTcHeader>,
+	headers: Vec<MockRelayHeader>,
 	challenge_time: BlockNumber,
 	estimate_bond: Balance,
 	confirmed_period: BlockNumber,
 }
 impl ExtBuilder {
-	pub fn headers(mut self, headers: Vec<MockTcHeader>) -> Self {
+	pub fn headers(mut self, headers: Vec<MockRelayHeader>) -> Self {
 		self.headers = headers;
 
 		self
@@ -402,7 +383,6 @@ impl ExtBuilder {
 		}
 		.assimilate_storage(&mut storage)
 		.unwrap();
-
 		mock_relay::GenesisConfig {
 			headers: self.headers.clone(),
 		}
@@ -416,7 +396,8 @@ impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {
 			headers: vec![],
-			challenge_time: RelayerGameAdjustor::challenge_time(0),
+			challenge_time: RelayerGameAdjustor::propose_time(0)
+				+ RelayerGameAdjustor::complete_proofs_time(0),
 			estimate_bond: RelayerGameAdjustor::estimate_bond(0, 0),
 			confirmed_period: CONFIRM_PERIOD.with(|v| v.borrow().to_owned()),
 		}
@@ -424,14 +405,14 @@ impl Default for ExtBuilder {
 }
 
 pub fn run_to_block(n: BlockNumber) {
-	RelayerGame::on_finalize(System::block_number());
+	// 	RelayerGame::on_finalize(System::block_number());
 
 	for b in System::block_number() + 1..=n {
 		System::set_block_number(b);
-		RelayerGame::on_initialize(b);
+		// 		RelayerGame::on_initialize(b);
 
 		if b != n {
-			RelayerGame::on_finalize(System::block_number());
+			// 			RelayerGame::on_finalize(System::block_number());
 		}
 	}
 }

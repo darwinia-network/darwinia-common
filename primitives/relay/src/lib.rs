@@ -14,7 +14,7 @@ use sp_std::borrow::ToOwned;
 use sp_std::prelude::*;
 
 /// Game id, round and the index under the round point to a unique proposal AKA proposal id
-pub type ProposalId<GameId> = (GameId, u32, u32);
+pub type RelayProposalId<GameId> = (GameId, u32, u32);
 
 /// Implement this for target chain's relay module's
 /// to expose some necessary APIs for relayer game
@@ -30,12 +30,12 @@ pub trait RelayableChain {
 
 	fn verify_continuous(
 		parcels: &[Self::RelayParcel],
-		extended: &[Self::RelayParcel],
+		extended_parcels: &[Self::RelayParcel],
 	) -> DispatchResult;
 
 	fn distance_between(
-		game_id: &Self::RelayBlockId,
-		last_confirmed_block_id_of: Self::RelayBlockId,
+		relay_block_id: &Self::RelayBlockId,
+		last_confirmed_relay_block_id: Self::RelayBlockId,
 	) -> u32;
 
 	fn store_relay_parcel(relay_parcel: Self::RelayParcel) -> DispatchResult;
@@ -61,7 +61,7 @@ pub trait AdjustableRelayerGame {
 	///
 	/// Push the new samples to the `samples`, the index of `samples` aka round index
 	/// And return the new samples
-	fn update_samples(samples: &mut Vec<Vec<Self::RelayBlockId>>) -> Vec<Self::RelayBlockId>;
+	fn update_samples(samples: &mut Vec<Vec<Self::RelayBlockId>>);
 
 	/// Give an estimate bond value for a specify round
 	///
@@ -90,7 +90,7 @@ pub trait RelayerGameProtocol {
 	/// Proofs is a `Vec` because the sampling function might give more than 1 sample points,
 	/// so need to verify each sample point with its proofs
 	fn complete_proofs(
-		proposal_id: ProposalId<Self::GameId>,
+		proposal_id: RelayProposalId<Self::GameId>,
 		proofs: Vec<Self::Proofs>,
 	) -> DispatchResult;
 
@@ -100,7 +100,7 @@ pub trait RelayerGameProtocol {
 	fn extend_proposal(
 		relayer: Self::Relayer,
 		samples: Vec<Self::RelayParcel>,
-		extended_proposal_id: ProposalId<Self::GameId>,
+		extended_relay_proposal_id: RelayProposalId<Self::GameId>,
 		proofses: Option<Vec<Self::Proofs>>,
 	) -> DispatchResult;
 
@@ -114,7 +114,7 @@ pub struct RelayProposal<RelayParcel, Relayer, Balance, GameId> {
 	pub relayer: Relayer,
 	pub relay_parcels: Vec<RelayParcel>,
 	pub bond: Balance,
-	pub maybe_extended_proposal_id: Option<ProposalId<GameId>>,
+	pub maybe_extended_proposal_id: Option<RelayProposalId<GameId>>,
 	pub verified: bool,
 }
 impl<RelayParcel, Relayer, Balance, GameId> RelayProposal<RelayParcel, Relayer, Balance, GameId>
