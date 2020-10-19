@@ -412,14 +412,14 @@ use darwinia_staking::EraIndex;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
 use impls::*;
 
-// frontier
+// dvm
+use dvm_rpc_primitives::TransactionStatus;
 use frame_evm::AddressMapping;
 use frame_evm::{
 	precompiles::Precompile, Account as EVMAccount, EnsureAddressTruncated, ExitError, ExitSucceed,
 	FeeCalculator,
 };
 use frame_support::traits::ExistenceRequirement;
-use frontier_rpc_primitives::TransactionStatus;
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
@@ -1130,7 +1130,7 @@ impl darwinia_tron_backing::Trait for Runtime {
 
 impl darwinia_header_mmr::Trait for Runtime {}
 
-// Frontier needed
+// dvm needed
 /// Fixed gas price of `1`.
 pub struct FixedGasPrice;
 
@@ -1264,7 +1264,7 @@ impl frame_ethereum::Trait for Runtime {
 
 pub struct TransactionConverter;
 
-impl frontier_rpc_primitives::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
+impl dvm_rpc_primitives::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
 	fn convert_transaction(&self, transaction: frame_ethereum::Transaction) -> UncheckedExtrinsic {
 		UncheckedExtrinsic::new_unsigned(
 			frame_ethereum::Call::<Runtime>::transact(transaction).into(),
@@ -1272,9 +1272,7 @@ impl frontier_rpc_primitives::ConvertTransaction<UncheckedExtrinsic> for Transac
 	}
 }
 
-impl frontier_rpc_primitives::ConvertTransaction<opaque::UncheckedExtrinsic>
-	for TransactionConverter
-{
+impl dvm_rpc_primitives::ConvertTransaction<opaque::UncheckedExtrinsic> for TransactionConverter {
 	fn convert_transaction(
 		&self,
 		transaction: frame_ethereum::Transaction,
@@ -1351,7 +1349,7 @@ construct_runtime!(
 
 		HeaderMMR: darwinia_header_mmr::{Module, Call, Storage},
 
-		// Frontier related
+		// dvm related
 		Ethereum: frame_ethereum::{Module, Call, Storage, Event, Config, ValidateUnsigned},
 		EVM: frame_evm::{Module, Config, Call, Storage, Event<T>},
 	}
@@ -1607,7 +1605,7 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl frontier_rpc_primitives::EthereumRuntimeRPCApi<Block> for Runtime {
+	impl dvm_rpc_primitives::EthereumRuntimeRPCApi<Block> for Runtime {
 		fn chain_id() -> u64 {
 			ChainId::get()
 		}

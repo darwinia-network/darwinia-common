@@ -1631,6 +1631,124 @@ dependencies = [
 ]
 
 [[package]]
+name = "dvm-consensus"
+version = "0.1.0"
+dependencies = [
+ "derive_more",
+ "dvm-consensus-primitives",
+ "ethereum 0.3.3",
+ "futures 0.3.6",
+ "log",
+ "parity-scale-codec",
+ "sc-client-api",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-timestamp",
+ "substrate-prometheus-endpoint",
+]
+
+[[package]]
+name = "dvm-consensus-primitives"
+version = "0.1.0"
+dependencies = [
+ "parity-scale-codec",
+ "sp-core",
+ "sp-runtime",
+ "sp-std 2.0.0",
+]
+
+[[package]]
+name = "dvm-ethereum"
+version = "0.1.0"
+dependencies = [
+ "darwinia-balances",
+ "darwinia-support",
+ "dvm-consensus-primitives",
+ "dvm-rpc-primitives",
+ "ethereum 0.3.3",
+ "ethereum-types 0.9.2",
+ "evm",
+ "frame-support",
+ "frame-system",
+ "libsecp256k1",
+ "pallet-evm",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "rlp 0.4.6",
+ "rustc-hex",
+ "serde",
+ "sha3 0.8.2",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 2.0.0",
+]
+
+[[package]]
+name = "dvm-rpc"
+version = "0.1.0"
+dependencies = [
+ "dvm-consensus",
+ "dvm-rpc-core",
+ "dvm-rpc-primitives",
+ "ethereum 0.3.3",
+ "ethereum-types 0.9.2",
+ "futures 0.3.6",
+ "jsonrpc-core 15.1.0",
+ "jsonrpc-core-client 14.2.0",
+ "jsonrpc-derive 14.2.2",
+ "jsonrpc-pubsub 15.1.0",
+ "log",
+ "pallet-ethereum",
+ "parity-scale-codec",
+ "rlp 0.4.6",
+ "sc-client-api",
+ "sc-network",
+ "sc-rpc",
+ "sc-service",
+ "sha3 0.8.2",
+ "sp-api",
+ "sp-blockchain",
+ "sp-io",
+ "sp-runtime",
+ "sp-storage",
+ "sp-transaction-pool",
+]
+
+[[package]]
+name = "dvm-rpc-core"
+version = "0.1.0"
+dependencies = [
+ "ethereum-types 0.9.2",
+ "jsonrpc-core 15.1.0",
+ "jsonrpc-core-client 14.2.0",
+ "jsonrpc-derive 14.2.2",
+ "jsonrpc-pubsub 15.1.0",
+ "rustc-hex",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "dvm-rpc-primitives"
+version = "0.1.0"
+dependencies = [
+ "ethereum 0.3.3",
+ "ethereum-types 0.9.2",
+ "pallet-evm",
+ "parity-scale-codec",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
+ "sp-std 2.0.0",
+]
+
+[[package]]
 name = "dyn-clonable"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2264,97 +2382,6 @@ source = "git+https://github.com/darwinia-network/substrate.git?branch=common-li
 dependencies = [
  "parity-scale-codec",
  "sp-api",
-]
-
-[[package]]
-name = "frontier-consensus"
-version = "0.1.0"
-dependencies = [
- "derive_more",
- "ethereum 0.3.3",
- "frontier-consensus-primitives",
- "futures 0.3.6",
- "log",
- "parity-scale-codec",
- "sc-client-api",
- "sp-api",
- "sp-block-builder",
- "sp-blockchain",
- "sp-consensus",
- "sp-core",
- "sp-inherents",
- "sp-runtime",
- "sp-timestamp",
- "substrate-prometheus-endpoint",
-]
-
-[[package]]
-name = "frontier-consensus-primitives"
-version = "0.1.0"
-dependencies = [
- "parity-scale-codec",
- "sp-core",
- "sp-runtime",
- "sp-std 2.0.0",
-]
-
-[[package]]
-name = "frontier-rpc"
-version = "0.1.0"
-dependencies = [
- "ethereum 0.3.3",
- "ethereum-types 0.9.2",
- "frontier-consensus",
- "frontier-rpc-core",
- "frontier-rpc-primitives",
- "futures 0.3.6",
- "jsonrpc-core 15.1.0",
- "jsonrpc-core-client 14.2.0",
- "jsonrpc-derive 14.2.2",
- "jsonrpc-pubsub 15.1.0",
- "log",
- "pallet-ethereum 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "parity-scale-codec",
- "rlp 0.4.6",
- "sc-client-api",
- "sc-network",
- "sc-rpc",
- "sc-service",
- "sha3 0.8.2",
- "sp-api",
- "sp-blockchain",
- "sp-io",
- "sp-runtime",
- "sp-storage",
- "sp-transaction-pool",
-]
-
-[[package]]
-name = "frontier-rpc-core"
-version = "0.1.0"
-dependencies = [
- "ethereum-types 0.9.2",
- "jsonrpc-core 15.1.0",
- "jsonrpc-core-client 14.2.0",
- "jsonrpc-derive 14.2.2",
- "jsonrpc-pubsub 15.1.0",
- "rustc-hex",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "frontier-rpc-primitives"
-version = "0.1.0"
-dependencies = [
- "ethereum 0.3.3",
- "ethereum-types 0.9.2",
- "pallet-evm",
- "parity-scale-codec",
- "sp-api",
- "sp-core",
- "sp-runtime",
- "sp-std 2.0.0",
 ]
 
 [[package]]
@@ -4392,10 +4419,10 @@ dependencies = [
  "darwinia-staking",
  "darwinia-staking-rpc",
  "darwinia-staking-rpc-runtime-api",
+ "dvm-consensus",
+ "dvm-rpc",
+ "dvm-rpc-primitives",
  "frame-system-rpc-runtime-api",
- "frontier-consensus",
- "frontier-rpc",
- "frontier-rpc-primitives",
  "futures 0.3.6",
  "jsonrpc-core 15.1.0",
  "jsonrpc-pubsub 15.1.0",
@@ -4465,18 +4492,18 @@ dependencies = [
  "darwinia-treasury",
  "darwinia-tron-backing",
  "darwinia-vesting",
+ "dvm-ethereum",
+ "dvm-rpc-primitives",
  "ethereum-primitives",
  "frame-executive",
  "frame-support",
  "frame-system",
  "frame-system-rpc-runtime-api",
- "frontier-rpc-primitives",
  "log",
  "pallet-authority-discovery",
  "pallet-authorship",
  "pallet-babe",
  "pallet-collective",
- "pallet-ethereum 0.1.0",
  "pallet-evm",
  "pallet-finality-tracker",
  "pallet-grandpa",
@@ -4751,33 +4778,6 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std 2.0.0",
-]
-
-[[package]]
-name = "pallet-ethereum"
-version = "0.1.0"
-dependencies = [
- "darwinia-balances",
- "darwinia-support",
- "ethereum 0.3.3",
- "ethereum-types 0.9.2",
- "evm",
- "frame-support",
- "frame-system",
- "frontier-consensus-primitives",
- "frontier-rpc-primitives",
- "libsecp256k1",
- "pallet-evm",
- "pallet-timestamp",
- "parity-scale-codec",
- "rlp 0.4.6",
- "rustc-hex",
- "serde",
- "sha3 0.8.2",
  "sp-core",
  "sp-io",
  "sp-runtime",

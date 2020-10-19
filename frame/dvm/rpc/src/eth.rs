@@ -15,14 +15,14 @@
 // along with Substrate.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::internal_err;
-use ethereum::{Block as EthereumBlock, Transaction as EthereumTransaction};
-use ethereum_types::{H160, H256, H512, H64, U256, U64};
-use frontier_rpc_core::types::{
+use dvm_rpc_core::types::{
 	Block, BlockNumber, BlockTransactions, Bytes, CallRequest, Filter, Index, Log, Receipt, Rich,
 	RichBlock, SyncInfo, SyncStatus, Transaction, VariadicValue, Work,
 };
-use frontier_rpc_core::{EthApi as EthApiT, NetApi as NetApiT};
-use frontier_rpc_primitives::{ConvertTransaction, EthereumRuntimeRPCApi, TransactionStatus};
+use dvm_rpc_core::{EthApi as EthApiT, NetApi as NetApiT};
+use dvm_rpc_primitives::{ConvertTransaction, EthereumRuntimeRPCApi, TransactionStatus};
+use ethereum::{Block as EthereumBlock, Transaction as EthereumTransaction};
+use ethereum_types::{H160, H256, H512, H64, U256, U64};
 use futures::future::TryFutureExt;
 use jsonrpc_core::{
 	futures::future::{self, Future},
@@ -39,7 +39,7 @@ use sp_transaction_pool::TransactionPool;
 use std::collections::BTreeMap;
 use std::{marker::PhantomData, sync::Arc};
 
-pub use frontier_rpc_core::{EthApiServer, NetApiServer};
+pub use dvm_rpc_core::{EthApiServer, NetApiServer};
 
 pub struct EthApi<B: BlockT, C, P, CT, BE> {
 	pool: Arc<P>,
@@ -200,10 +200,9 @@ where
 
 	// Asumes there is only one mapped canonical block in the AuxStore, otherwise something is wrong
 	fn load_hash(&self, hash: H256) -> Result<Option<BlockId<B>>> {
-		let hashes = match frontier_consensus::load_block_hash::<B, _>(self.client.as_ref(), hash)
-			.map_err(|err| {
-			internal_err(format!("fetch aux store failed: {:?}", err))
-		})? {
+		let hashes = match dvm_consensus::load_block_hash::<B, _>(self.client.as_ref(), hash)
+			.map_err(|err| internal_err(format!("fetch aux store failed: {:?}", err)))?
+		{
 			Some(hashes) => hashes,
 			None => return Ok(None),
 		};
@@ -573,7 +572,7 @@ where
 
 	fn transaction_by_hash(&self, hash: H256) -> Result<Option<Transaction>> {
 		let (hash, index) =
-			match frontier_consensus::load_transaction_metadata(self.client.as_ref(), hash)
+			match dvm_consensus::load_transaction_metadata(self.client.as_ref(), hash)
 				.map_err(|err| internal_err(format!("fetch aux store failed: {:?})", err)))?
 			{
 				Some((hash, index)) => (hash, index as usize),
@@ -678,7 +677,7 @@ where
 
 	fn transaction_receipt(&self, hash: H256) -> Result<Option<Receipt>> {
 		let (hash, index) =
-			match frontier_consensus::load_transaction_metadata(self.client.as_ref(), hash)
+			match dvm_consensus::load_transaction_metadata(self.client.as_ref(), hash)
 				.map_err(|err| internal_err(format!("fetch aux store failed : {:?}", err)))?
 			{
 				Some((hash, index)) => (hash, index as usize),

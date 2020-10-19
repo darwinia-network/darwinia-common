@@ -23,13 +23,13 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::Encode;
+use dvm_consensus_primitives::{ConsensusLog, FRONTIER_ENGINE_ID};
 use ethereum_types::{Bloom, H160, H256, H64, U256};
 use evm::{ExitError, ExitFatal, ExitReason, ExitRevert};
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, traits::FindAuthor, traits::Get,
 };
 use frame_system::ensure_none;
-use frontier_consensus_primitives::{ConsensusLog, FRONTIER_ENGINE_ID};
 use sha3::{Digest, Keccak256};
 use sp_runtime::{
 	generic::DigestItem,
@@ -41,8 +41,8 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 
+pub use dvm_rpc_primitives::TransactionStatus;
 pub use ethereum::{Block, Log, Receipt, Transaction, TransactionAction};
-pub use frontier_rpc_primitives::TransactionStatus;
 
 #[cfg(all(feature = "std", test))]
 mod tests;

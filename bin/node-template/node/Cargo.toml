@@ -71,11 +71,11 @@ sp-transaction-pool                        = { git = "https://github.com/darwini
 sp-trie                                    = { features = ["memory-tracker"], git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 substrate-frame-rpc-system                 = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 substrate-prometheus-endpoint              = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-# frontier
+# dvm
 evm = { default-features = false, package = "pallet-evm", git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-frontier-rpc = { default-features = false, path = "../../../frame/dvm/rpc" }
-frontier-consensus = { path = "../../../frame/dvm/consensus" }
-frontier-rpc-primitives = { default-features = false, path = "../../../frame/dvm/rpc/primitives" }
+dvm-rpc = { default-features = false, path = "../../../frame/dvm/rpc" }
+dvm-consensus = { path = "../../../frame/dvm/consensus" }
+dvm-rpc-primitives = { default-features = false, path = "../../../frame/dvm/rpc/primitives" }
 
 [build-dependencies]
 # substrate

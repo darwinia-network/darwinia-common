@@ -20,7 +20,7 @@ mod aux_schema;
 
 pub use crate::aux_schema::{load_block_hash, load_transaction_metadata};
 
-use frontier_consensus_primitives::{ConsensusLog, FRONTIER_ENGINE_ID};
+use dvm_consensus_primitives::{ConsensusLog, FRONTIER_ENGINE_ID};
 use log::*;
 use sc_client_api;
 use sc_client_api::{backend::AuxStore, BlockOf};
@@ -160,12 +160,12 @@ where
 fn find_frontier_log<B: BlockT>(header: &B::Header) -> Result<ConsensusLog, Error> {
 	let mut frontier_log: Option<_> = None;
 	for log in header.digest().logs() {
-		trace!(target: "frontier-consensus", "Checking log {:?}, looking for ethereum block.", log);
+		trace!(target: "dvm-consensus", "Checking log {:?}, looking for ethereum block.", log);
 		let log = log.try_to::<ConsensusLog>(OpaqueDigestItemId::Consensus(&FRONTIER_ENGINE_ID));
 		match (log, frontier_log.is_some()) {
 			(Some(_), true) => return Err(Error::MultiplePostRuntimeLogs),
 			(Some(log), false) => frontier_log = Some(log),
-			_ => trace!(target: "frontier-consensus", "Ignoring digest not meant for us"),
+			_ => trace!(target: "dvm-consensus", "Ignoring digest not meant for us"),
 		}
 	}
 

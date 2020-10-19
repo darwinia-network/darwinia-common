@@ -26,8 +26,8 @@ use node_template_runtime::{
 	opaque::Block,
 	primitives::{AccountId, Balance, BlockNumber, Hash, Nonce, Power},
 };
-// frontier
-use frontier_rpc::{EthApi, EthApiServer, EthPubSubApi, EthPubSubApiServer, NetApi, NetApiServer};
+// dvm
+use dvm_rpc::{EthApi, EthApiServer, EthPubSubApi, EthPubSubApiServer, NetApi, NetApiServer};
 use sc_client_api::{
 	backend::{AuxStore, Backend, StateBackend, StorageProvider},
 	client::BlockchainEvents,
@@ -118,7 +118,7 @@ where
 	P: 'static + sp_transaction_pool::TransactionPool,
 	<C::Api as sp_api::ApiErrorExt>::Error: fmt::Debug,
 	P: sp_transaction_pool::TransactionPool<Block = Block> + Sync + Send + 'static,
-	C::Api: frontier_rpc_primitives::EthereumRuntimeRPCApi<Block>,
+	C::Api: dvm_rpc_primitives::EthereumRuntimeRPCApi<Block>,
 	SC: 'static + sp_consensus::SelectChain<Block>,
 	B: 'static + Send + Sync + sc_client_api::Backend<Block>,
 	B::State: sc_client_api::StateBackend<sp_runtime::traits::HashFor<Block>>,

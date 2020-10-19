@@ -275,7 +275,7 @@ fn testnet_genesis(
 			backed_ring: 1 << 56,
 			backed_kton: 1 << 56,
 		}),
-		// frontier
+		// dvm
 		frame_evm: Some(EVMConfig {
 			accounts: evm_accounts,
 		}),

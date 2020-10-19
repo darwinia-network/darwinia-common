@@ -1,10 +1,11 @@
 [package]
-name = "frontier-rpc"
+name = "dvm-rpc"
 version = "0.1.0"
-authors = ["Parity Technologies <admin@parity.io>"]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
 edition = "2018"
-description = "Ethereum RPC (web3) compatibility layer for Substrate."
+description = "Ethereum RPC (web3) compatibility layer for Darwinia."
 license = "GPL-3.0"
+repository  = "https://github.com/darwinia-network/darwinia-common/"
 
 [dependencies]
 jsonrpc-core = "15.0.0"
@@ -13,9 +14,9 @@ jsonrpc-core-client = "14.0.3"
 jsonrpc-pubsub = "15.0.0"
 log = "0.4.8"
 ethereum-types = "0.9.0"
-frontier-consensus = { path = "../consensus" }
-frontier-rpc-core = { path = "core" }
-frontier-rpc-primitives = { path = "primitives" }
+dvm-consensus = { path = "../consensus" }
+dvm-rpc-core = { path = "core" }
+dvm-rpc-primitives = { path = "primitives" }
 sp-io = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-runtime = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-api = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }

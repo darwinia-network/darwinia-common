@@ -14,19 +14,19 @@ use std::collections::BTreeMap;
 use std::{marker::PhantomData, sync::Arc};
 
 use codec::Decode;
-use ethereum_types::{H256, U256};
-use frontier_rpc_core::types::{
+use dvm_rpc_core::types::{
 	pubsub::{Kind, Params, PubSubSyncStatus, Result as PubSubResult},
 	BlockNumber, Bytes, FilterAddress, Header, Log, Rich, Topic, VariadicValue,
 };
-use frontier_rpc_core::EthPubSubApi::{self as EthPubSubApiT};
+use dvm_rpc_core::EthPubSubApi::{self as EthPubSubApiT};
+use ethereum_types::{H256, U256};
 use jsonrpc_pubsub::{manager::SubscriptionManager, typed::Subscriber, SubscriptionId};
 use sha3::{Digest, Keccak256};
 
-pub use frontier_rpc_core::EthPubSubApiServer;
+pub use dvm_rpc_core::EthPubSubApiServer;
 use futures::{StreamExt as _, TryStreamExt as _};
 
-use frontier_rpc_primitives::{EthereumRuntimeRPCApi, TransactionStatus};
+use dvm_rpc_primitives::{EthereumRuntimeRPCApi, TransactionStatus};
 use jsonrpc_core::{
 	futures::{Future, Sink},
 	Result as JsonRpcResult,
@@ -134,10 +134,9 @@ where
 
 	// Asumes there is only one mapped canonical block in the AuxStore, otherwise something is wrong
 	fn load_hash(&self, hash: H256) -> JsonRpcResult<Option<BlockId<B>>> {
-		let hashes = match frontier_consensus::load_block_hash::<B, _>(self.client.as_ref(), hash)
-			.map_err(|err| {
-			internal_err(format!("fetch aux store failed: {:?}", err))
-		})? {
+		let hashes = match dvm_consensus::load_block_hash::<B, _>(self.client.as_ref(), hash)
+			.map_err(|err| internal_err(format!("fetch aux store failed: {:?}", err)))?
+		{
 			Some(hashes) => hashes,
 			None => return Ok(None),
 		};

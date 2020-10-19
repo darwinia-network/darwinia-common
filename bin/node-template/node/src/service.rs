@@ -35,8 +35,8 @@ use sp_trie::PrefixedMemoryDB;
 use substrate_prometheus_endpoint::Registry;
 // --- darwinia ---
 use crate::rpc::{self, BabeDeps, FullDeps, GrandpaDeps, LightDeps};
-// frontier
-use frontier_consensus::FrontierBlockImport;
+// dvm
+use dvm_consensus::FrontierBlockImport;
 
 use node_template_runtime::{
 	opaque::Block,
@@ -78,7 +78,7 @@ pub trait RuntimeApiCollection:
 	+ darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance>
 	+ darwinia_header_mmr_rpc_runtime_api::HeaderMMRApi<Block, Hash>
 	+ darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>
-	+ frontier_rpc_primitives::EthereumRuntimeRPCApi<Block>
+	+ dvm_rpc_primitives::EthereumRuntimeRPCApi<Block>
 where
 	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
 {
@@ -99,7 +99,7 @@ where
 		+ darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance>
 		+ darwinia_header_mmr_rpc_runtime_api::HeaderMMRApi<Block, Hash>
 		+ darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>
-		+ frontier_rpc_primitives::EthereumRuntimeRPCApi<Block>,
+		+ dvm_rpc_primitives::EthereumRuntimeRPCApi<Block>,
 	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
 {
 }

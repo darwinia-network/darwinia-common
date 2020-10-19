@@ -1,12 +1,12 @@
 [package]
-name = "frontier-consensus-primitives"
+name = "dvm-consensus-primitives"
 version = "0.1.0"
-authors = ["Parity Technologies <admin@parity.io>"]
-description = "Primitives for Frontier consensus"
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+description = "Primitives for Dvm consensus"
 edition = "2018"
 license = "Apache-2.0"
 homepage = "https://substrate.dev"
-repository = "https://github.com/paritytech/substrate/"
+repository  = "https://github.com/darwinia-network/darwinia-common/"
 
 [dependencies]
 sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }

@@ -1,10 +1,11 @@
 [package]
-name = "pallet-ethereum"
+name = "dvm-ethereum"
 version = "0.1.0"
 authors = ["Parity Technologies <admin@parity.io>"]
 edition = "2018"
-description = "Ethereum compatibility full block processing emulation pallet for Substrate."
+description = "Ethereum compatibility full block processing emulation pallet for Darwinia."
 license = "GPL-3.0"
+repository  = "https://github.com/darwinia-network/darwinia-common/"
 
 [dependencies]
 rustc-hex = { version = "2.1.0", default-features = false }
@@ -24,8 +25,8 @@ ethereum-types = { version = "0.9", default-features = false }
 rlp = { version = "0.4", default-features = false }
 sha3 = { version = "0.8", default-features = false }
 libsecp256k1 = { version = "0.3", default-features = false }
-frontier-consensus-primitives = { path = "../consensus/primitives", default-features = false }
-frontier-rpc-primitives = { path = "../rpc/primitives", default-features = false }
+dvm-consensus-primitives = { path = "../consensus/primitives", default-features = false }
+dvm-rpc-primitives = { path = "../rpc/primitives", default-features = false }
 darwinia-support                  = { default-features = false, path = "../../../frame/support" }
 
 [dev-dependencies]
@@ -50,7 +51,7 @@ std = [
 	"rlp/std",
 	"sha3/std",
 	"libsecp256k1/std",
-	"frontier-consensus-primitives/std",
-	"frontier-rpc-primitives/std",
+	"dvm-consensus-primitives/std",
+	"dvm-rpc-primitives/std",
 	"evm/std",
 ]

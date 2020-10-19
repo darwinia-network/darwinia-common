@@ -1,10 +1,11 @@
 [package]
-name = "frontier-rpc-primitives"
+name = "dvm-rpc-primitives"
 version = "0.1.0"
-authors = ["Parity Technologies <admin@parity.io"]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
 edition = "2018"
-description = "Runtime primitives for Ethereum RPC (web3) compatibility layer for Substrate."
+description = "Runtime primitives for Ethereum RPC (web3) compatibility layer for Darwinia."
 license = "GPL-3.0"
+repository  = "https://github.com/darwinia-network/darwinia-common/"
 
 [dependencies]
 sp-core ={ default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
