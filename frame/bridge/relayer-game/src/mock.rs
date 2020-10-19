@@ -116,7 +116,7 @@ pub mod mock_relay {
 		pub valid: bool,
 	}
 	impl MockRelayHeader {
-		pub fn mock(
+		pub fn gen(
 			number: MockRelayBlockNumber,
 			parent_hash: MockRelayHeaderHash,
 			valid: u8,
@@ -134,25 +134,29 @@ pub mod mock_relay {
 			}
 		}
 
-		pub fn mock_proposal(mut validations: Vec<u8>, valid: bool) -> Vec<Self> {
+		pub fn gen_continous(
+			start: u32,
+			mut validations: Vec<u8>,
+			continous_valid: bool,
+		) -> Vec<Self> {
 			if validations.is_empty() {
 				return vec![];
 			}
 
-			let mut parent_hash = if valid {
+			let mut parent_hash = if continous_valid {
 				0
 			} else {
 				GENESIS_TIME.with(|v| v.to_owned()).elapsed().as_nanos()
 			};
-			let mut chain = vec![Self::mock(1, parent_hash, validations[0])];
+			let mut chain = vec![Self::gen(start, parent_hash, validations[0])];
 
 			parent_hash = chain[0].hash;
 
 			if validations.len() > 1 {
 				validations.remove(0);
 
-				for (valid, number) in validations.into_iter().zip(2..) {
-					let header = Self::mock(number, parent_hash, valid);
+				for (valid, number) in validations.into_iter().zip(start + 1..) {
+					let header = Self::gen(number, parent_hash, valid);
 
 					parent_hash = header.hash;
 
@@ -412,7 +416,7 @@ impl Default for ExtBuilder {
 }
 
 pub fn run_to_block(n: BlockNumber) {
-	// 	RelayerGame::on_finalize(System::block_number());
+	RelayerGame::on_finalize(System::block_number());
 
 	for b in System::block_number() + 1..=n {
 		System::set_block_number(b);
