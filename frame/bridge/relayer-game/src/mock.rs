@@ -77,7 +77,7 @@ pub mod mock_relay {
 		}
 
 		fn verify_proofs(
-			_: &Self::RelayBlockId
+			_: &Self::RelayBlockId,
 			relay_parcel: &Self::RelayParcel,
 			_: &Self::Proofs,
 			_: Option<&Self::RelayBlockId>,
