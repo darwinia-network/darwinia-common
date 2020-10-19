@@ -24,8 +24,8 @@ ethereum-types = { version = "0.9", default-features = false }
 rlp = { version = "0.4", default-features = false }
 sha3 = { version = "0.8", default-features = false }
 libsecp256k1 = { version = "0.3", default-features = false }
-frontier-consensus-primitives = { path = "../../consensus/primitives", default-features = false }
-frontier-rpc-primitives = { path = "../../rpc/primitives", default-features = false }
+frontier-consensus-primitives = { path = "../consensus/primitives", default-features = false }
+frontier-rpc-primitives = { path = "../rpc/primitives", default-features = false }
 darwinia-support                  = { default-features = false, path = "../../../frame/support" }
 
 [dev-dependencies]

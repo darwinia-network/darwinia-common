@@ -73,9 +73,9 @@ substrate-frame-rpc-system                 = { git = "https://github.com/darwini
 substrate-prometheus-endpoint              = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 # frontier
 evm = { default-features = false, package = "pallet-evm", git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-frontier-rpc = { default-features = false, path = "../../../frontier/rpc" }
-frontier-consensus = { path = "../../../frontier/consensus" }
-frontier-rpc-primitives = { default-features = false, path = "../../../frontier/rpc/primitives" }
+frontier-rpc = { default-features = false, path = "../../../frame/dvm/rpc" }
+frontier-consensus = { path = "../../../frame/dvm/consensus" }
+frontier-rpc-primitives = { default-features = false, path = "../../../frame/dvm/rpc/primitives" }
 
 [build-dependencies]
 # substrate

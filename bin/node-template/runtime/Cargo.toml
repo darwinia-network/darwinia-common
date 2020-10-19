@@ -76,8 +76,8 @@ sp-transaction-pool                        = { default-features = false, git = "
 sp-version                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 # frontier
 frame-evm = { default-features = false, package = "pallet-evm", git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-frame-ethereum = { version = "0.1.0", default-features = false, package = "pallet-ethereum", path = "../../../frontier/frame/ethereum" }
-frontier-rpc-primitives = { default-features = false, path = "../../../frontier/rpc/primitives" }
+frame-ethereum = { version = "0.1.0", default-features = false, package = "pallet-ethereum", path = "../../../frame/dvm/ethereum" }
+frontier-rpc-primitives = { default-features = false, path = "../../../frame/dvm/rpc/primitives" }
 
 [build-dependencies]
 # substrate

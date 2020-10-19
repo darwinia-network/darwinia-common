@@ -29,12 +29,12 @@ members = [
 	"primitives/ethereum-primitives",
 	"primitives/merkle-patricia-trie",
 	"primitives/relay",
-	"frontier/frame/ethereum",
-	"frontier/rpc",
-	"frontier/rpc/core",
-	"frontier/rpc/primitives",
-	"frontier/consensus",
-	"frontier/consensus/primitives",
+	"frame/dvm/ethereum",
+	"frame/dvm/rpc",
+	"frame/dvm/rpc/core",
+	"frame/dvm/rpc/primitives",
+	"frame/dvm/consensus",
+	"frame/dvm/consensus/primitives",
 ]
 
 # The list of dependencies below (which can be both direct and indirect dependencies) are crates
