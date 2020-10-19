@@ -18,10 +18,10 @@ mod types {
 	pub type RingNegativeImbalance<T, I> =
 		<RingCurrency<T, I> as Currency<AccountId<T>>>::NegativeImbalance;
 
-	pub type RelayBlockId<T, I> = <RelayableChainT<T, I> as RelayableChain>::RelayBlockId;
+	pub type RelayBlockId<T, I> = <RelayableChainT<T, I> as Relayable>::RelayBlockId;
 	pub type GameId<T, I> = RelayBlockId<T, I>;
-	pub type RelayParcel<T, I> = <RelayableChainT<T, I> as RelayableChain>::RelayParcel;
-	pub type RelayProofs<T, I> = <RelayableChainT<T, I> as RelayableChain>::Proofs;
+	pub type RelayParcel<T, I> = <RelayableChainT<T, I> as Relayable>::RelayParcel;
+	pub type RelayProofs<T, I> = <RelayableChainT<T, I> as Relayable>::Proofs;
 
 	pub type RelayProposalT<T, I> =
 		RelayProposal<RelayParcel<T, I>, AccountId<T>, RingBalance<T, I>, GameId<T, I>>;
@@ -76,8 +76,8 @@ pub trait Trait<I: Instance = DefaultInstance>:
 		RelayBlockId = RelayBlockId<Self, I>,
 	>;
 
-	/// A chain which implemented `RelayableChain` trait
-	type RelayableChain: RelayableChain;
+	/// A chain which implemented `Relayable` trait
+	type RelayableChain: Relayable;
 
 	/// The comfirm period for guard
 	///
@@ -100,7 +100,7 @@ decl_event! {
 		GameId = GameId<T, I>,
 		RelayBlockId = RelayBlockId<T, I>,
 	{
-		/// A new round started. [game id, samples]
+		/// A new round started. [game id, game_sample_points]
 		NewRound(GameId, Vec<RelayBlockId>),
 		/// A game has been settled. [game id]
 		GameOver(GameId),
@@ -154,9 +154,9 @@ decl_storage! {
 				hasher(identity) u32
 			=> Vec<RelayProposalT<T, I>>;
 
-		/// The last confirmed block id record of a game when it start
-		pub LastConfirmeds
-			get(fn last_confirmed_block_id_of)
+		/// The best relaied block id record of a game when it start
+		pub BestRelaiedBlockId
+			get(fn best_relaied_block_id_of)
 			: map hasher(identity) GameId<T, I>
 			=> RelayBlockId<T, I>;
 
@@ -191,8 +191,8 @@ decl_storage! {
 			: map hasher(blake2_128_concat) AccountId<T>
 			=> RingBalance<T, I>;
 
-		pub Samples
-			get(fn samples)
+		pub GameSamplePoints
+			get(fn game_sample_points)
 			:map hasher(identity) GameId<T, I>
 			=> Vec<Vec<RelayBlockId<T, I>>>;
 
@@ -291,7 +291,7 @@ decl_module! {
 
 						let distance = T::RelayableChain::distance_between(
 							&game_id,
-							Self::last_confirmed_block_id_of(&game_id)
+							Self::best_relaied_block_id_of(&game_id)
 						);
 
 						if distance == round_count {
@@ -355,8 +355,8 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 
 	// /// Build a proposal
 	// ///
-	// /// Allow propose without proofs
-	// /// The proofs can be completed later through `complete_proofs`
+	// /// Allow propose without relay proofs
+	// /// The relay proofs can be completed later through `complete_proofs`
 	// pub fn build_proposal(
 	// 	relayer: AccountId<T>,
 	// 	relay_parcels: Vec<RelayParcel<T, I>>,
@@ -366,8 +366,8 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	// 	let mut proposal = RelayProposal::new();
 
 	// 	if let Some(proofses) = proofses {
-	// 		for (parcel, proofs) in relay_parcels.iter().zip(proofses.into_iter()) {
-	// 			T::RelayableChain::verify_proofs(parcel, &proofs)?;
+	// 		for (relay_parcel, relay_proofs) in relay_parcels.iter().zip(proofses.into_iter()) {
+	// 			T::RelayableChain::verify_proofs(relay_parcel, &relay_proofs)?;
 	// 		}
 
 	// 		proposal.verified = true;
@@ -799,28 +799,31 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	pub fn update_game_at(game_id: &GameId<T, I>, last_round: u32, moment: BlockNumber<T>) {
 		Self::update_timer_of_game_at(game_id, last_round + 1, moment);
 
-		<Samples<T, I>>::mutate(game_id, |samples| {
-			T::RelayerGameAdjustor::update_samples(samples);
+		<GameSamplePoints<T, I>>::mutate(game_id, |game_sample_points| {
+			T::RelayerGameAdjustor::update_sample_points(game_sample_points);
 
 			Self::deposit_event(RawEvent::NewRound(
 				game_id.to_owned(),
-				samples.last().map(ToOwned::to_owned).unwrap_or_default(),
+				game_sample_points
+					.last()
+					.map(ToOwned::to_owned)
+					.unwrap_or_default(),
 			));
 		});
 	}
 
 	pub fn store_relay_parcels(
 		now: BlockNumber<T>,
-		pendingrelay_parcels: Vec<(RelayBlockId<T, I>, RelayParcel<T, I>)>,
+		pending_relay_parcels: Vec<(RelayBlockId<T, I>, RelayParcel<T, I>)>,
 	) -> DispatchResult {
 		let confirm_period = T::ConfirmPeriod::get();
 
 		if confirm_period.is_zero() {
-			for (_, pendingrelay_parcel) in pendingrelay_parcels {
+			for (_, pendingrelay_parcel) in pending_relay_parcels {
 				T::RelayableChain::store_relay_parcel(pendingrelay_parcel)?;
 			}
 		} else {
-			for (pending_relay_block_id, pendingrelay_parcel) in pendingrelay_parcels {
+			for (pending_relay_block_id, pendingrelay_parcel) in pending_relay_parcels {
 				<PendingRelayParcels<T, I>>::append((
 					now + confirm_period,
 					pending_relay_block_id,
@@ -847,10 +850,10 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 			}
 		});
 		<Proposals<T, I>>::remove_prefix(&game_id);
-		<LastConfirmeds<T, I>>::take(&game_id);
+		<BestRelaiedBlockId<T, I>>::take(&game_id);
 		<RoundCounts<T, I>>::take(&game_id);
 		<ProposeEndTime<T, I>>::take(&game_id);
-		<Samples<T, I>>::take(&game_id);
+		<GameSamplePoints<T, I>>::take(&game_id);
 
 		Self::deposit_event(RawEvent::GameOver(game_id));
 	}
@@ -862,14 +865,14 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	where
 		F: FnOnce(RelayParcel<T, I>) -> DispatchResult,
 	{
-		<PendingRelayParcels<T, I>>::mutate(|pendingrelay_parcels| {
-			if let Some(i) = pendingrelay_parcels
+		<PendingRelayParcels<T, I>>::mutate(|pending_relay_parcels| {
+			if let Some(i) = pending_relay_parcels
 				.iter()
 				.position(|(_, relay_block_id, _)| relay_block_id == pending_relay_block_id)
 			{
-				let (_, _, parcel) = pendingrelay_parcels.remove(i);
+				let (_, _, relay_parcel) = pending_relay_parcels.remove(i);
 
-				f(parcel)
+				f(relay_parcel)
 			} else {
 				Err(<Error<T, I>>::PendingRelayParcelNE)?
 			}
@@ -879,8 +882,8 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	pub fn system_approve_pending_relay_parcels(
 		now: BlockNumber<T>,
 	) -> Result<Weight, DispatchError> {
-		<PendingRelayParcels<T, I>>::mutate(|pendingrelay_parcels| {
-			pendingrelay_parcels.retain(
+		<PendingRelayParcels<T, I>>::mutate(|pending_relay_parcels| {
+			pending_relay_parcels.retain(
 				|(confirm_at, pending_relay_block_id, pendingrelay_parcel)| {
 					if *confirm_at == now {
 						// TODO: handle error
@@ -913,19 +916,19 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 	fn propose(
 		relayer: Self::Relayer,
-		parcel: Self::RelayParcel,
-		proofs: Option<Self::Proofs>,
+		relay_parcel: Self::RelayParcel,
+		optional_relay_proofs: Option<Self::Proofs>,
 	) -> DispatchResult {
 		info!(
 			target: "relayer-game",
 			"Relayer `{:?}` propose:\n{:#?}",
 			relayer,
-			parcel
+			relay_parcel
 		);
 
 		let last_confirmed_block_id = T::RelayableChain::best_block_id();
 		// TODO: optimize clone
-		let game_id = parcel.block_id().to_owned();
+		let game_id = relay_parcel.block_id().to_owned();
 
 		// Check if the proposed header has already been relaied
 		ensure!(
@@ -940,7 +943,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 		let now = <frame_system::Module<T>>::block_number();
 		let existed_proposals = Self::proposals_of_game_at(&game_id, 0);
-		let proposal_content = vec![parcel];
+		let proposal_content = vec![relay_parcel];
 
 		if existed_proposals.is_empty() {
 			// A new game might open
@@ -966,7 +969,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 		Self::update_bonds_with(&relayer, |old_bonds| old_bonds.saturating_add(bond));
 
-		// let proposal = Self::build_proposal(relayer, samples, proofses, bond)?;
+		// let proposal = Self::build_proposal(relayer, game_sample_points, proofses, bond)?;
 		let proposal = {
 			let mut proposal = RelayProposal::new();
 
@@ -974,10 +977,10 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			proposal.relay_parcels = proposal_content;
 			proposal.bond = bond;
 
-			// Allow propose without proofs
-			// The proofs can be completed later through `complete_proofs`
-			if let Some(proofs) = proofs {
-				T::RelayableChain::verify_proofs(&proposal.relay_parcels[0], &proofs)?;
+			// Allow propose without relay proofs
+			// The relay proofs can be completed later through `complete_proofs`
+			if let Some(relay_proofs) = optional_relay_proofs {
+				T::RelayableChain::verify_proofs(&proposal.relay_parcels[0], &relay_proofs, true)?;
 
 				proposal.verified = true;
 			}
@@ -987,7 +990,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		let round = 0;
 
 		<Proposals<T, I>>::append(&game_id, round, proposal);
-		<LastConfirmeds<T, I>>::insert(&game_id, last_confirmed_block_id);
+		<BestRelaiedBlockId<T, I>>::insert(&game_id, last_confirmed_block_id);
 		<RoundCounts<T, I>>::insert(&game_id, round);
 
 		Self::update_timer_of_game_at(&game_id, round, now);
@@ -997,16 +1000,18 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		Ok(())
 	}
 
-	fn complete_proofs(
+	fn complete_relay_proofs(
 		proposal_id: RelayProposalId<Self::GameId>,
-		proofses: Vec<Self::Proofs>,
+		relay_proofs: Vec<Self::Proofs>,
 	) -> DispatchResult {
 		let (game_id, round, round_index) = proposal_id;
 
 		<Proposals<T, I>>::try_mutate(&game_id, round, |proposals| {
 			if let Some(proposal) = proposals.get_mut(round_index as usize) {
-				for (parcel, proofs) in proposal.relay_parcels.iter().zip(proofses.into_iter()) {
-					T::RelayableChain::verify_proofs(parcel, &proofs)?;
+				for (relay_parcel, relay_proofs) in
+					proposal.relay_parcels.iter().zip(relay_proofs.into_iter())
+				{
+					T::RelayableChain::verify_proofs(relay_parcel, &relay_proofs, round == 0)?;
 				}
 
 				proposal.verified = true;
@@ -1020,9 +1025,9 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 	fn extend_proposal(
 		relayer: Self::Relayer,
-		samples: Vec<Self::RelayParcel>,
+		game_sample_points: Vec<Self::RelayParcel>,
 		extended_relay_proposal_id: RelayProposalId<Self::GameId>,
-		proofses: Option<Vec<Self::Proofs>>,
+		optional_relay_proofs: Option<Vec<Self::Proofs>>,
 	) -> DispatchResult {
 		let (game_id, previous_round, previous_round_index) = extended_relay_proposal_id.clone();
 
@@ -1031,15 +1036,18 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			<Error<T, I>>::GameC
 		);
 
-		if let Some(ref proofses) = &proofses {
-			ensure!(proofses.len() == samples.len(), <Error<T, I>>::ProofsesInv);
+		if let Some(ref relay_proofs) = &optional_relay_proofs {
+			ensure!(
+				relay_proofs.len() == game_sample_points.len(),
+				<Error<T, I>>::ProofsesInv
+			);
 		}
 
 		let round = previous_round + 1;
 		let existed_proposals = Self::proposals_of_game_at(&game_id, round);
 
 		ensure!(
-			Self::is_unique_proposal(&samples, &existed_proposals),
+			Self::is_unique_proposal(&game_sample_points, &existed_proposals),
 			<Error<T, I>>::ProposalDup
 		);
 
@@ -1050,26 +1058,31 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		// Currently only accept extending from a completed proposal
 		ensure!(extended_proposal.verified, <Error<T, I>>::PreviousProofsInc);
 
-		T::RelayableChain::verify_continuous(&samples, &extended_proposal.relay_parcels)?;
+		T::RelayableChain::verify_continuous(
+			&game_sample_points,
+			&extended_proposal.relay_parcels,
+		)?;
 
 		let bond = Self::ensure_can_bond(&relayer, round, existed_proposals.len() as u8 + 1)?;
 
 		Self::update_bonds_with(&relayer, |old_bonds| old_bonds.saturating_add(bond));
 
-		// let proposal = Self::build_proposal(relayer, samples, proofses, bond)?;
+		// let proposal = Self::build_proposal(relayer, game_sample_points, proofses, bond)?;
 		let proposal = {
 			let mut proposal = RelayProposal::new();
 
 			proposal.relayer = relayer;
-			proposal.relay_parcels = samples;
+			proposal.relay_parcels = game_sample_points;
 			proposal.bond = bond;
 			proposal.maybe_extended_proposal_id = Some(extended_relay_proposal_id);
 
-			// Allow propose without proofs
-			// The proofs can be completed later through `complete_proofs`
-			if let Some(proofses) = proofses {
-				for (sample, proofs) in proposal.relay_parcels.iter().zip(proofses.into_iter()) {
-					T::RelayableChain::verify_proofs(sample, &proofs)?;
+			// Allow propose without relay proofs
+			// The relay proofs can be completed later through `complete_proofs`
+			if let Some(relay_proofs) = optional_relay_proofs {
+				for (sample, relay_proofs) in
+					proposal.relay_parcels.iter().zip(relay_proofs.into_iter())
+				{
+					T::RelayableChain::verify_proofs(sample, &relay_proofs, false)?;
 				}
 
 				proposal.verified = true;

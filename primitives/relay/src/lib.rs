@@ -24,12 +24,11 @@ pub trait BlockInfo {
 
 /// Implement this for target chain's relay module's
 /// to expose some necessary APIs for relayer game
-pub trait RelayableChain {
+pub trait Relayable {
 	type RelayBlockId: Clone + Debug + Default + PartialOrd + FullCodec;
 	type RelayParcel: Clone
 		+ Debug
 		+ PartialEq
-		+ PartialOrd
 		+ FullCodec
 		+ BlockInfo<BlockId = Self::RelayBlockId>;
 	type Proofs;
@@ -37,16 +36,21 @@ pub trait RelayableChain {
 	/// The latest finalize block's id which recorded in darwinia
 	fn best_block_id() -> Self::RelayBlockId;
 
-	fn verify_proofs(relay_parcel: &Self::RelayParcel, proofs: &Self::Proofs) -> DispatchResult;
+	// TODO: optimize this
+	fn verify_proofs(
+		relay_parcel: &Self::RelayParcel,
+		relay_proofs: &Self::Proofs,
+		is_first_round: bool,
+	) -> DispatchResult;
 
 	fn verify_continuous(
-		parcels: &[Self::RelayParcel],
-		extended_parcels: &[Self::RelayParcel],
+		relay_parcels: &[Self::RelayParcel],
+		extended_relay_parcels: &[Self::RelayParcel],
 	) -> DispatchResult;
 
 	fn distance_between(
 		relay_block_id: &Self::RelayBlockId,
-		last_confirmed_relay_block_id: Self::RelayBlockId,
+		best_relaied_block_id: Self::RelayBlockId,
 	) -> u32;
 
 	fn store_relay_parcel(relay_parcel: Self::RelayParcel) -> DispatchResult;
@@ -68,11 +72,11 @@ pub trait AdjustableRelayerGame {
 
 	fn complete_proofs_time(round: u32) -> Self::Moment;
 
-	/// Update the samples
+	/// Update the game's sample points
 	///
 	/// Push the new samples to the `samples`, the index of `samples` aka round index
 	/// And return the new samples
-	fn update_samples(samples: &mut Vec<Vec<Self::RelayBlockId>>);
+	fn update_sample_points(samples: &mut Vec<Vec<Self::RelayBlockId>>);
 
 	/// Give an estimate bond value for a specify round
 	///
@@ -83,7 +87,7 @@ pub trait AdjustableRelayerGame {
 pub trait RelayerGameProtocol {
 	type Relayer;
 	type GameId: Clone + PartialOrd;
-	type RelayParcel: Clone + Debug + PartialEq + PartialOrd + FullCodec + BlockInfo;
+	type RelayParcel: Clone + Debug + PartialEq + FullCodec + BlockInfo;
 	type Proofs;
 
 	/// Game's entry point, call only at the first round
@@ -92,16 +96,16 @@ pub trait RelayerGameProtocol {
 	fn propose(
 		relayer: Self::Relayer,
 		relay_parcel: Self::RelayParcel,
-		proofs: Option<Self::Proofs>,
+		optional_relay_proofs: Option<Self::Proofs>,
 	) -> DispatchResult;
 
 	/// Verify a specify proposal
 	///
 	/// Proofs is a `Vec` because the sampling function might give more than 1 sample points,
 	/// so need to verify each sample point with its proofs
-	fn complete_proofs(
+	fn complete_relay_proofs(
 		proposal_id: RelayProposalId<Self::GameId>,
-		proofs: Vec<Self::Proofs>,
+		relay_proofs: Vec<Self::Proofs>,
 	) -> DispatchResult;
 
 	/// Once there're different opinions in a game,
@@ -109,9 +113,9 @@ pub trait RelayerGameProtocol {
 	/// to help the chain make a on chain arbitrate finally
 	fn extend_proposal(
 		relayer: Self::Relayer,
-		samples: Vec<Self::RelayParcel>,
+		game_sample_points: Vec<Self::RelayParcel>,
 		extended_relay_proposal_id: RelayProposalId<Self::GameId>,
-		proofses: Option<Vec<Self::Proofs>>,
+		optional_relay_proofs: Option<Vec<Self::Proofs>>,
 	) -> DispatchResult;
 
 	fn approve_pending_relay_parcel(pending_relay_block_id: Self::GameId) -> DispatchResult;

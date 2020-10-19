@@ -26,10 +26,10 @@ pub mod mock_relay {
 
 	decl_storage! {
 		trait Store for Module<T: Trait> as DarwiniaRelay {
-			pub BestBlockNumber get(fn best_block_number): MockRelayBlockNumber;
+			pub RelaiedBlockNumbers get(fn best_relaied_block_number): MockRelayBlockNumber;
 
-			pub Headers
-				get(fn header_of_block_number)
+			pub RelaiedHeaders
+				get(fn relaied_header_of)
 				: map hasher(identity) MockRelayBlockNumber
 				=> Option<MockRelayHeader>;
 		}
@@ -37,10 +37,10 @@ pub mod mock_relay {
 		add_extra_genesis {
 			config(headers): Vec<MockRelayHeader>;
 			build(|config: &GenesisConfig| {
-				let mut best_block_number = 0;
+				let mut best_relaied_block_number = 0;
 
-				Headers::insert(
-					best_block_number,
+				RelaiedHeaders::insert(
+					best_relaied_block_number,
 					MockRelayHeader {
 						number: 0,
 						hash: 0,
@@ -50,12 +50,12 @@ pub mod mock_relay {
 				);
 
 				for header in &config.headers {
-					Headers::insert(header.number, header.clone());
+					RelaiedHeaders::insert(header.number, header.clone());
 
-					best_block_number = best_block_number.max(header.number);
+					best_relaied_block_number = best_relaied_block_number.max(header.number);
 				}
 
-				BestBlockNumber::put(best_block_number);
+				RelaiedBlockNumbers::put(best_relaied_block_number);
 			});
 		}
 	}
@@ -73,12 +73,12 @@ pub mod mock_relay {
 		type Proofs = ();
 
 		fn best_block_id() -> Self::RelayBlockId {
-			Self::best_block_number()
+			Self::best_relaied_block_number()
 		}
 
 		fn verify_proofs(
 			relay_parcel: &Self::RelayParcel,
-			proofs: &Self::Proofs,
+			relay_proofs: &Self::Proofs,
 		) -> DispatchResult {
 			ensure!(relay_parcel.valid, "Parcel - INVALID");
 
@@ -86,8 +86,8 @@ pub mod mock_relay {
 		}
 
 		fn verify_continuous(
-			parcels: &[Self::RelayParcel],
-			extended_parcels: &[Self::RelayParcel],
+			relay_parcels: &[Self::RelayParcel],
+			extended_relay_parcels: &[Self::RelayParcel],
 		) -> DispatchResult {
 			ensure!(
 				parcels[0].parent_hash == extended_parcels[0].hash,
@@ -99,17 +99,17 @@ pub mod mock_relay {
 
 		fn distance_between(
 			relay_block_id: &Self::RelayBlockId,
-			last_confirmed_relay_block_id: Self::RelayBlockId,
+			best_relaied_block_id: Self::RelayBlockId,
 		) -> u32 {
-			relay_block_id - last_confirmed_relay_block_id
+			relay_block_id - best_relaied_block_id
 		}
 
 		fn store_relay_parcel(relay_parcel: Self::RelayParcel) -> DispatchResult {
-			BestBlockNumber::mutate(|best_block_number| {
-				if relay_parcel.number > *best_block_number {
-					*best_block_number = relay_parcel.number;
+			RelaiedBlockNumbers::mutate(|best_relaied_block_number| {
+				if relay_parcel.number > *best_relaied_block_number {
+					*best_relaied_block_number = relay_parcel.number;
 
-					Headers::insert(relay_parcel.number, relay_parcel);
+					RelaiedHeaders::insert(relay_parcel.number, relay_parcel);
 				}
 			});
 
