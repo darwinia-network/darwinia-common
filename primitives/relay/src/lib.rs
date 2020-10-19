@@ -16,11 +16,22 @@ use sp_std::prelude::*;
 /// Game id, round and the index under the round point to a unique proposal AKA proposal id
 pub type RelayProposalId<GameId> = (GameId, u32, u32);
 
+pub trait BlockInfo {
+	type BlockId: Clone;
+
+	fn block_id(&self) -> &Self::BlockId;
+}
+
 /// Implement this for target chain's relay module's
 /// to expose some necessary APIs for relayer game
 pub trait RelayableChain {
 	type RelayBlockId: Clone + Debug + Default + PartialOrd + FullCodec;
-	type RelayParcel: Clone + Debug + PartialEq + PartialOrd + FullCodec;
+	type RelayParcel: Clone
+		+ Debug
+		+ PartialEq
+		+ PartialOrd
+		+ FullCodec
+		+ BlockInfo<BlockId = Self::RelayBlockId>;
 	type Proofs;
 
 	/// The latest finalize block's id which recorded in darwinia
@@ -72,7 +83,7 @@ pub trait AdjustableRelayerGame {
 pub trait RelayerGameProtocol {
 	type Relayer;
 	type GameId: Clone + PartialOrd;
-	type RelayParcel: Clone + Debug + PartialEq + PartialOrd + FullCodec;
+	type RelayParcel: Clone + Debug + PartialEq + PartialOrd + FullCodec + BlockInfo;
 	type Proofs;
 
 	/// Game's entry point, call only at the first round
@@ -80,7 +91,6 @@ pub trait RelayerGameProtocol {
 	/// Propose a new proposal or against a existed proposal
 	fn propose(
 		relayer: Self::Relayer,
-		game_id: Self::GameId,
 		relay_parcel: Self::RelayParcel,
 		proofs: Option<Self::Proofs>,
 	) -> DispatchResult;

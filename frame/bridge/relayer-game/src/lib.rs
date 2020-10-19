@@ -4,8 +4,8 @@
 
 #[cfg(test)]
 mod mock;
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod tests;
 
 mod types {
 	// --- darwinia ---
@@ -913,7 +913,6 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 	fn propose(
 		relayer: Self::Relayer,
-		game_id: Self::GameId,
 		parcel: Self::RelayParcel,
 		proofs: Option<Self::Proofs>,
 	) -> DispatchResult {
@@ -925,6 +924,8 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		);
 
 		let last_confirmed_block_id = T::RelayableChain::best_block_id();
+		// TODO: optimize clone
+		let game_id = parcel.block_id().to_owned();
 
 		// Check if the proposed header has already been relaied
 		ensure!(
