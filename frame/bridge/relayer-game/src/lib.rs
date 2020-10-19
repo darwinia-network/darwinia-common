@@ -914,6 +914,17 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 	type RelayParcel = RelayParcel<T, I>;
 	type Proofs = RelayProofs<T, I>;
 
+	fn get_proposed_relay_parcels(
+		proposal_id: RelayProposalId<Self::GameId>,
+	) -> Option<Vec<Self::RelayParcel>> {
+		let (game_id, round, index) = proposal_id;
+
+		Self::proposals_of_game_at(&game_id, round)
+			.into_iter()
+			.nth(index as usize)
+			.map(|proposal| proposal.relay_parcels)
+	}
+
 	fn propose(
 		relayer: Self::Relayer,
 		relay_parcel: Self::RelayParcel,

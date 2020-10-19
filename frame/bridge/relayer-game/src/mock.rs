@@ -67,7 +67,7 @@ pub mod mock_relay {
 		{}
 	}
 
-	impl<T: Trait> RelayableChain for Module<T> {
+	impl<T: Trait> Relayable for Module<T> {
 		type RelayBlockId = MockRelayBlockNumber;
 		type RelayParcel = MockRelayHeader;
 		type Proofs = ();
@@ -79,6 +79,7 @@ pub mod mock_relay {
 		fn verify_proofs(
 			relay_parcel: &Self::RelayParcel,
 			relay_proofs: &Self::Proofs,
+			_: bool,
 		) -> DispatchResult {
 			ensure!(relay_parcel.valid, "Parcel - INVALID");
 
@@ -90,7 +91,7 @@ pub mod mock_relay {
 			extended_relay_parcels: &[Self::RelayParcel],
 		) -> DispatchResult {
 			ensure!(
-				parcels[0].parent_hash == extended_parcels[0].hash,
+				relay_parcels[0].parent_hash == extended_relay_parcels[0].hash,
 				"Continuous - INVALID"
 			);
 
@@ -355,7 +356,7 @@ impl AdjustableRelayerGame for RelayerGameAdjustor {
 		CHALLENGE_TIME.with(|v| v.borrow().to_owned()) / 2
 	}
 
-	fn update_samples(samples: &mut Vec<Vec<Self::RelayBlockId>>) {
+	fn update_sample_points(samples: &mut Vec<Vec<Self::RelayBlockId>>) {
 		samples.push(vec![samples.last().unwrap().last().unwrap() - 1]);
 	}
 

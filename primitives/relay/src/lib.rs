@@ -90,6 +90,10 @@ pub trait RelayerGameProtocol {
 	type RelayParcel: Clone + Debug + PartialEq + FullCodec + BlockInfo;
 	type Proofs;
 
+	fn get_proposed_relay_parcels(
+		proposal_id: RelayProposalId<Self::GameId>,
+	) -> Option<Vec<Self::RelayParcel>>;
+
 	/// Game's entry point, call only at the first round
 	///
 	/// Propose a new proposal or against a existed proposal
