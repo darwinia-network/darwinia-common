@@ -357,8 +357,8 @@ impl AdjustableRelayerGame for RelayerGameAdjustor {
 		CHALLENGE_TIME.with(|v| v.borrow().to_owned()) / 2
 	}
 
-	fn update_sample_points(samples: &mut Vec<Vec<Self::RelayBlockId>>) {
-		samples.push(vec![samples.last().unwrap().last().unwrap() - 1]);
+	fn update_sample_points(sample_points: &mut Vec<Vec<Self::RelayBlockId>>) {
+		sample_points.push(vec![sample_points.last().unwrap().last().unwrap() - 1]);
 	}
 
 	fn estimate_bond(_round: u32, _proposals_count: u8) -> Self::Balance {

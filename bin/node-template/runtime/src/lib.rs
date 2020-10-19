@@ -37,35 +37,41 @@ pub mod impls {
 		// --- darwinia ---
 		use crate::{impls::*, *};
 		use darwinia_relay_primitives::*;
+		use ethereum_primitives::EthereumBlockNumber;
 
 		pub struct EthereumRelayerGameAdjustor;
 		impl AdjustableRelayerGame for EthereumRelayerGameAdjustor {
 			type Moment = BlockNumber;
 			type Balance = Balance;
-			type TcBlockNumber = <<EthereumRelay as Relayable>::HeaderThing as HeaderThing>::Number;
+			type RelayBlockId = EthereumBlockNumber;
 
-			fn challenge_time(round: Round) -> Self::Moment {
+			fn max_active_games() -> u8 {
+				32
+			}
+
+			fn propose_time(round: u32) -> Self::Moment {
 				match round {
-					// 3 mins
-					0 => 30,
-					// 1 mins
-					_ => 10,
+					// 1.5 mins
+					0 => 15,
+					// 0.5 mins
+					_ => 5,
 				}
 			}
 
-			fn round_of_samples_count(samples_count: u64) -> Round {
-				samples_count - 1
+			fn complete_proofs_time(round: u32) -> Self::Moment {
+				match round {
+					// 1.5 mins
+					0 => 15,
+					// 0.5 mins
+					_ => 5,
+				}
 			}
 
-			fn samples_count_of_round(round: Round) -> u64 {
-				round + 1
+			fn update_sample_points(sample_points: &mut Vec<Vec<Self::RelayBlockId>>) {
+				sample_points.push(vec![sample_points.last().unwrap().last().unwrap() - 1]);
 			}
 
-			fn update_samples(samples: &mut Vec<Vec<Self::TcBlockNumber>>) {
-				samples.push(vec![samples.last().unwrap().last().unwrap() - 1]);
-			}
-
-			fn estimate_bond(round: Round, proposals_count: u64) -> Self::Balance {
+			fn estimate_bond(round: u32, proposals_count: u8) -> Self::Balance {
 				match round {
 					0 => match proposals_count {
 						0 => 1000 * COIN,
@@ -994,11 +1000,12 @@ parameter_types! {
 	pub const ConfirmPeriod: BlockNumber = 200;
 }
 impl darwinia_relayer_game::Trait<EthereumRelayerGameInstance> for Runtime {
+	type Call = Call;
 	type Event = Event;
 	type RingCurrency = Ring;
 	type RingSlash = Treasury;
 	type RelayerGameAdjustor = relay::EthereumRelayerGameAdjustor;
-	type TargetChain = EthereumRelay;
+	type RelayableChain = EthereumRelay;
 	type ConfirmPeriod = ConfirmPeriod;
 	type WeightInfo = ();
 }

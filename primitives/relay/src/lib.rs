@@ -75,9 +75,9 @@ pub trait AdjustableRelayerGame {
 
 	/// Update the game's sample points
 	///
-	/// Push the new samples to the `samples`, the index of `samples` aka round index
+	/// Push the new samples to the `sample_points`, the index of `sample_points` aka round index
 	/// And return the new samples
-	fn update_sample_points(samples: &mut Vec<Vec<Self::RelayBlockId>>);
+	fn update_sample_points(sample_points: &mut Vec<Vec<Self::RelayBlockId>>);
 
 	/// Give an estimate bond value for a specify round
 	///
