@@ -34,18 +34,19 @@ pub trait Relayable {
 	type Proofs;
 
 	/// The latest finalize block's id which recorded in darwinia
-	fn best_block_id() -> Self::RelayBlockId;
+	fn best_relaied_block_id() -> Self::RelayBlockId;
 
 	// TODO: optimize this
 	fn verify_proofs(
+		relay_block_id: &Self::RelayBlockId,
 		relay_parcel: &Self::RelayParcel,
 		relay_proofs: &Self::Proofs,
-		is_first_round: bool,
+		optional_best_relaied_block_id: Option<&Self::RelayBlockId>,
 	) -> DispatchResult;
 
 	fn verify_continuous(
-		relay_parcels: &[Self::RelayParcel],
-		extended_relay_parcels: &[Self::RelayParcel],
+		relay_parcels: &Self::RelayParcel,
+		extended_relay_parcels: &Self::RelayParcel,
 	) -> DispatchResult;
 
 	fn distance_between(

@@ -72,14 +72,15 @@ pub mod mock_relay {
 		type RelayParcel = MockRelayHeader;
 		type Proofs = ();
 
-		fn best_block_id() -> Self::RelayBlockId {
+		fn best_relaied_block_id() -> Self::RelayBlockId {
 			Self::best_relaied_block_number()
 		}
 
 		fn verify_proofs(
+			_: &Self::RelayBlockId
 			relay_parcel: &Self::RelayParcel,
-			relay_proofs: &Self::Proofs,
-			_: bool,
+			_: &Self::Proofs,
+			_: Option<&Self::RelayBlockId>,
 		) -> DispatchResult {
 			ensure!(relay_parcel.valid, "Parcel - INVALID");
 
@@ -87,11 +88,11 @@ pub mod mock_relay {
 		}
 
 		fn verify_continuous(
-			relay_parcels: &[Self::RelayParcel],
-			extended_relay_parcels: &[Self::RelayParcel],
+			relay_parcels: &Self::RelayParcel,
+			extended_relay_parcels: &Self::RelayParcel,
 		) -> DispatchResult {
 			ensure!(
-				relay_parcels[0].parent_hash == extended_relay_parcels[0].hash,
+				relay_parcels.parent_hash == extended_relay_parcels.hash,
 				"Continuous - INVALID"
 			);
 
