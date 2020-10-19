@@ -40,7 +40,7 @@ impl_outer_origin! {
 
 impl_outer_event! {
 	pub enum Event for Test {
-		system<T>,
+		system <T>,
 		balances Instance0<T>,
 		balances Instance1<T>,
 	}
