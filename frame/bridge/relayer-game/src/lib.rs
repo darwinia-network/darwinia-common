@@ -963,6 +963,9 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		}
 
 		let bond = Self::ensure_can_bond(&relayer, 0, existed_proposals.len() as u8 + 1)?;
+
+		Self::update_bonds_with(&relayer, |old_bonds| old_bonds.saturating_add(bond));
+
 		// let proposal = Self::build_proposal(relayer, samples, proofses, bond)?;
 		let proposal = {
 			let mut proposal = RelayProposal::new();
@@ -1050,6 +1053,9 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		T::RelayableChain::verify_continuous(&samples, &extended_proposal.relay_parcels)?;
 
 		let bond = Self::ensure_can_bond(&relayer, round, existed_proposals.len() as u8 + 1)?;
+
+		Self::update_bonds_with(&relayer, |old_bonds| old_bonds.saturating_add(bond));
+
 		// let proposal = Self::build_proposal(relayer, samples, proofses, bond)?;
 		let proposal = {
 			let mut proposal = RelayProposal::new();
