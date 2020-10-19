@@ -1,3 +1,14 @@
+pub mod alias {
+	pub mod relayer_game {
+		pub use crate::Event;
+	}
+
+	// --- substrate ---
+	pub use frame_system as system;
+	// --- darwinia ---
+	pub use darwinia_balances as balances;
+}
+
 pub mod mock_relay {
 	pub mod types {
 		pub type MockRelayBlockNumber = u32;
@@ -184,13 +195,14 @@ use std::{cell::RefCell, time::Instant};
 use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
-	impl_outer_dispatch, impl_outer_origin, parameter_types,
+	impl_outer_dispatch, impl_outer_event, impl_outer_origin, parameter_types,
 	traits::{OnFinalize, OnInitialize},
 	weights::Weight,
 };
 use sp_runtime::{Perbill, RuntimeDebug};
 // --- darwinia ---
 use crate::*;
+use alias::*;
 use darwinia_relay_primitives::*;
 use mock_relay::{MockRelayBlockNumber, MockRelayHeader};
 
@@ -230,7 +242,15 @@ impl_outer_dispatch! {
 	where
 		origin: Origin
 	{
-		Self::RelayerGame,
+		relayer_game::RelayerGame,
+	}
+}
+
+impl_outer_event! {
+	pub enum Event for Test {
+		system <T>,
+		balances Instance0<T>,
+		relayer_game <T>,
 	}
 }
 
@@ -257,7 +277,7 @@ impl Get<BlockNumber> for ConfirmPeriod {
 pub struct Test;
 impl Trait for Test {
 	type Call = Call;
-	type Event = ();
+	type Event = Event;
 	type RingCurrency = Ring;
 	type RingSlash = ();
 	type RelayerGameAdjustor = RelayerGameAdjustor;
@@ -277,7 +297,7 @@ impl frame_system::Trait for Test {
 	type AccountId = AccountId;
 	type Lookup = sp_runtime::traits::IdentityLookup<Self::AccountId>;
 	type Header = sp_runtime::testing::Header;
-	type Event = ();
+	type Event = Event;
 	type BlockHashCount = ();
 	type MaximumBlockWeight = ();
 	type DbWeight = ();
@@ -300,7 +320,7 @@ parameter_types! {
 impl darwinia_balances::Trait<RingInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
-	type Event = ();
+	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
@@ -426,4 +446,18 @@ pub fn run_to_block(n: BlockNumber) {
 			RelayerGame::on_finalize(System::block_number());
 		}
 	}
+}
+
+pub(crate) fn relayer_game_events() -> Vec<crate::Event<Test>> {
+	System::events()
+		.into_iter()
+		.map(|r| r.event)
+		.filter_map(|e| {
+			if let Event::relayer_game(inner) = e {
+				Some(inner)
+			} else {
+				None
+			}
+		})
+		.collect()
 }
