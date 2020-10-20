@@ -1149,11 +1149,13 @@ pub struct ConcatAddressMapping;
 
 impl AddressMapping<AccountId> for ConcatAddressMapping {
 	fn into_account_id(address: H160) -> AccountId {
-		let suffix = &BlakeTwo256::hash(&address[..])[0..12];
-
 		let mut data = [0u8; 32];
-		data[0..20].copy_from_slice(&address[..]);
-		data[20..32].copy_from_slice(suffix);
+		data[0..4].copy_from_slice(b"dvm:");
+		data[11..31].copy_from_slice(&address[..]);
+		let checksum: u8 = data[1..31]
+			.iter()
+			.fold(data[0], |mut sum, &byte| {sum = sum ^ byte; sum});
+		data[31] = checksum;
 		AccountId::from(data)
 	}
 }
