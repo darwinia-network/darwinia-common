@@ -213,6 +213,26 @@ decl_module! {
 
 		fn deposit_event() = default;
 
+		fn on_runtime_upgrade() -> frame_support::weights::Weight {
+			// --- substrate ---
+			use frame_support::migration::*;
+
+			let module = b"DarwiniaEthereumRelay";
+			let items: [&[u8]; 3] = [
+				b"ConfirmedHeaders",
+				b"ConfirmedBlockNumbers",
+				b"ConfirmedDepth",
+			];
+
+			for item in &items {
+				remove_storage_prefix(module, item, &[]);
+			}
+
+			// Caution: Please set the genesis header in custom runtime upgrade
+
+			0
+		}
+
 		#[weight = 0]
 		pub fn propose(
 			origin,
