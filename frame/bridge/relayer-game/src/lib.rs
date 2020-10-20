@@ -97,12 +97,12 @@ impl WeightInfo for () {}
 decl_event! {
 	pub enum Event<T, I: Instance = DefaultInstance>
 	where
+		AccountId = AccountId<T>,
 		GameId = GameId<T, I>,
 		RelayBlockId = RelayBlockId<T, I>,
-		RelayParcel = RelayParcel<T, I>,
 	{
-		/// A new relay parcel proposed. [game id, round, index, relay parcel]
-		RelayProposed(GameId, u32, u32, RelayParcel),
+		/// A new relay parcel proposed. [game id, round, index, relayer]
+		RelayProposed(GameId, u32, u32, AccountId),
 		/// A new round started. [game id, game sample points]
 		NewRound(GameId, Vec<RelayBlockId>),
 		/// A game has been settled. [game id]
@@ -116,8 +116,8 @@ decl_event! {
 
 decl_error! {
 	pub enum Error for Module<T: Trait<I>, I: Instance> {
-		/// Relay Stuffs - ALREADY CONFIRMED
-		RelayStuffsAC,
+		/// Relay Stuffs - ALREADY RELAIED
+		RelayStuffsAR,
 		/// Round - MISMATCHED
 		RoundMis,
 		/// Active Games - TOO MANY
@@ -921,7 +921,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		// Check if the proposed header has already been relaied
 		ensure!(
 			game_id > best_relaied_block_id,
-			<Error<T, I>>::RelayStuffsAC
+			<Error<T, I>>::RelayStuffsAR
 		);
 		// Make sure the game is at first round
 		ensure!(
@@ -960,7 +960,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		let proposal = {
 			let mut proposal = RelayProposal::new();
 
-			proposal.relayer = relayer;
+			proposal.relayer = relayer.clone();
 			proposal.relay_parcels = proposed_relay_parcels;
 			proposal.bond = bond;
 
@@ -981,20 +981,15 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		};
 		let round = 0;
 
-		Self::deposit_event(RawEvent::RelayProposed(
-			game_id.clone(),
-			round,
-			0,
-			proposal.relay_parcels[0].clone(),
-		));
-
 		<Proposals<T, I>>::append(&game_id, round, proposal);
 		<BestRelaiedBlockId<T, I>>::insert(&game_id, best_relaied_block_id);
 		<RoundCounts<T, I>>::insert(&game_id, round);
 
 		Self::update_timer_of_game_at(&game_id, round, now);
 
-		<BlocksToRelay<T, I>>::mutate(|blocks_to_relay| blocks_to_relay.push(game_id));
+		<BlocksToRelay<T, I>>::mutate(|blocks_to_relay| blocks_to_relay.push(game_id.clone()));
+
+		Self::deposit_event(RawEvent::RelayProposed(game_id, round, 0, relayer));
 
 		Ok(())
 	}
@@ -1078,7 +1073,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		let proposal = {
 			let mut proposal = RelayProposal::new();
 
-			proposal.relayer = relayer;
+			proposal.relayer = relayer.clone();
 			proposal.relay_parcels = game_sample_points;
 			proposal.bond = bond;
 			proposal.maybe_extended_proposal_id = Some(extended_relay_proposal_id);
@@ -1100,6 +1095,12 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 		<Proposals<T, I>>::append(&game_id, round, proposal);
 
+		let index = <Proposals<T, I>>::decode_len(&game_id, round)
+			.map(|length| length as u32)
+			.unwrap_or(0);
+
+		Self::deposit_event(RawEvent::RelayProposed(game_id, round, index, relayer));
+
 		Ok(())
 	}
 
@@ -1109,7 +1110,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		})?;
 		Self::deposit_event(RawEvent::PendingRelayParcelApproved(
 			pending_relay_block_id,
-			b"Approved By Council".to_vec(),
+			b"Approved By Tech.Comm".to_vec(),
 		));
 
 		Ok(())
