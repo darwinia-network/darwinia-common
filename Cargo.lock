@@ -1704,7 +1704,6 @@ dependencies = [
  "jsonrpc-derive 14.2.2",
  "jsonrpc-pubsub 15.1.0",
  "log",
- "pallet-ethereum",
  "parity-scale-codec",
  "rlp 0.4.6",
  "sc-client-api",
@@ -4783,12 +4782,6 @@ dependencies = [
  "sp-runtime",
  "sp-std 2.0.0",
 ]
-
-[[package]]
-name = "pallet-ethereum"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd4556fb64842e71bb6e2f98b7541c0d310069eb607d432c6ac9bdaecbfd3118"
 
 [[package]]
 name = "pallet-evm"
