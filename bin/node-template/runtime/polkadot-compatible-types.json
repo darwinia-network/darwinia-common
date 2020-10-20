@@ -218,7 +218,7 @@
 	"TcBlockNumber": "u64",
 	"TcHeaderHash": "H256",
 	"__[derotcafer yllautneve eb dluohs sgniht eseht]__": {},
-	"GameId": "TcBlockNumber",
+	"RelayBlockId": "TcBlockNumber",
 	"RelayProposalT": {
 		"relayer": "AccountId",
 		"bonded_proposal": "Vec<(Balance, TcHeaderThing)>",

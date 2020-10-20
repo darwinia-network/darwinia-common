@@ -84,12 +84,16 @@ pub trait AdjustableRelayerGame {
 
 pub trait RelayerGameProtocol {
 	type Relayer;
-	type GameId: Clone + PartialOrd;
-	type RelayParcel: Clone + Debug + PartialEq + FullCodec + BlockInfo<BlockId = Self::GameId>;
+	type RelayBlockId: Clone + PartialOrd;
+	type RelayParcel: Clone
+		+ Debug
+		+ PartialEq
+		+ FullCodec
+		+ BlockInfo<BlockId = Self::RelayBlockId>;
 	type Proofs;
 
 	fn get_proposed_relay_parcels(
-		proposal_id: RelayProposalId<Self::GameId>,
+		proposal_id: RelayProposalId<Self::RelayBlockId>,
 	) -> Option<Vec<Self::RelayParcel>>;
 
 	/// Game's entry point, call only at the first round
@@ -106,7 +110,7 @@ pub trait RelayerGameProtocol {
 	/// Proofs is a `Vec` because the sampling function might give more than 1 sample points,
 	/// so need to verify each sample point with its proofs
 	fn complete_relay_proofs(
-		proposal_id: RelayProposalId<Self::GameId>,
+		proposal_id: RelayProposalId<Self::RelayBlockId>,
 		relay_proofs: Vec<Self::Proofs>,
 	) -> DispatchResult;
 
@@ -116,20 +120,20 @@ pub trait RelayerGameProtocol {
 	fn extend_proposal(
 		relayer: Self::Relayer,
 		game_sample_points: Vec<Self::RelayParcel>,
-		extended_relay_proposal_id: RelayProposalId<Self::GameId>,
+		extended_relay_proposal_id: RelayProposalId<Self::RelayBlockId>,
 		optional_relay_proofs: Option<Vec<Self::Proofs>>,
 	) -> DispatchResult;
 
-	fn approve_pending_relay_parcel(pending_relay_block_id: Self::GameId) -> DispatchResult;
+	fn approve_pending_relay_parcel(pending_relay_block_id: Self::RelayBlockId) -> DispatchResult;
 
-	fn reject_pending_relay_parcel(pending_relay_block_id: Self::GameId) -> DispatchResult;
+	fn reject_pending_relay_parcel(pending_relay_block_id: Self::RelayBlockId) -> DispatchResult;
 }
 
 /// Game id, round and the index under the round point to a unique proposal AKA proposal id
 #[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
-pub struct RelayProposalId<GameId> {
+pub struct RelayProposalId<RelayBlockId> {
 	/// Game id aka block id
-	pub game_id: GameId,
+	pub relay_block_id: RelayBlockId,
 	/// Round index
 	pub round: u32,
 	/// Index of a proposal list which under a round
@@ -137,14 +141,15 @@ pub struct RelayProposalId<GameId> {
 }
 
 #[derive(Clone, Encode, Decode, RuntimeDebug)]
-pub struct RelayProposal<RelayParcel, Relayer, Balance, GameId> {
+pub struct RelayProposal<RelayParcel, Relayer, Balance, RelayBlockId> {
 	pub relayer: Relayer,
 	pub relay_parcels: Vec<RelayParcel>,
 	pub bond: Balance,
-	pub maybe_extended_proposal_id: Option<RelayProposalId<GameId>>,
+	pub maybe_extended_proposal_id: Option<RelayProposalId<RelayBlockId>>,
 	pub verified: bool,
 }
-impl<RelayParcel, Relayer, Balance, GameId> RelayProposal<RelayParcel, Relayer, Balance, GameId>
+impl<RelayParcel, Relayer, Balance, RelayBlockId>
+	RelayProposal<RelayParcel, Relayer, Balance, RelayBlockId>
 where
 	Relayer: Default,
 	Balance: Zero,

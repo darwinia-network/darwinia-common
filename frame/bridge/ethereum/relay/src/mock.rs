@@ -169,13 +169,13 @@ impl RelayerGameProtocol for UnusedRelayerGame {
 }
 
 pub fn proposal_of_game_with_id(
-	game_id: u64,
+	relay_block_id: u64,
 	proposal_id: u64,
 ) -> Vec<EthereumHeaderThingWithProof> {
 	serde_json::from_reader(
 		File::open(format!(
 			"tests-data/game-{}/proposal-{}.json",
-			game_id, proposal_id
+			relay_block_id, proposal_id
 		))
 		.unwrap(),
 	)

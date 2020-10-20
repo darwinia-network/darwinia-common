@@ -38,12 +38,12 @@ impl darwinia_ethereum_relay::Trait for Test {
 pub struct UnusedRelayerGame;
 impl RelayerGameProtocol for UnusedRelayerGame {
 	type Relayer = AccountId;
-	type GameId = EthereumBlockNumber;
+	type RelayBlockId = EthereumBlockNumber;
 	type RelayParcel = EthereumRelayParcel;
 	type Proofs = EthereumRelayProofs;
 
 	fn get_proposed_relay_parcels(
-		proposal_id: RelayProposalId<Self::GameId>,
+		proposal_id: RelayProposalId<Self::RelayBlockId>,
 	) -> Option<Vec<Self::RelayParcel>> {
 		unimplemented!()
 	}
@@ -57,7 +57,7 @@ impl RelayerGameProtocol for UnusedRelayerGame {
 	}
 
 	fn complete_relay_proofs(
-		proposal_id: RelayProposalId<Self::GameId>,
+		proposal_id: RelayProposalId<Self::RelayBlockId>,
 		relay_proofs: Vec<Self::Proofs>,
 	) -> DispatchResult {
 		unimplemented!()
@@ -66,17 +66,17 @@ impl RelayerGameProtocol for UnusedRelayerGame {
 	fn extend_proposal(
 		relayer: Self::Relayer,
 		game_sample_points: Vec<Self::RelayParcel>,
-		extended_relay_proposal_id: RelayProposalId<Self::GameId>,
+		extended_relay_proposal_id: RelayProposalId<Self::RelayBlockId>,
 		optional_relay_proofs: Option<Vec<Self::Proofs>>,
 	) -> DispatchResult {
 		unimplemented!()
 	}
 
-	fn approve_pending_relay_parcel(pending_relay_block_id: Self::GameId) -> DispatchResult {
+	fn approve_pending_relay_parcel(pending_relay_block_id: Self::RelayBlockId) -> DispatchResult {
 		unimplemented!()
 	}
 
-	fn reject_pending_relay_parcel(pending_relay_block_id: Self::GameId) -> DispatchResult {
+	fn reject_pending_relay_parcel(pending_relay_block_id: Self::RelayBlockId) -> DispatchResult {
 		unimplemented!()
 	}
 }

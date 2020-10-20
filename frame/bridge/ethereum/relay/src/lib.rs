@@ -77,7 +77,7 @@ pub trait Trait: frame_system::Trait {
 
 	type RelayerGame: RelayerGameProtocol<
 		Relayer = AccountId<Self>,
-		GameId = EthereumBlockNumber,
+		RelayBlockId = EthereumBlockNumber,
 		RelayParcel = EthereumRelayParcel,
 		Proofs = EthereumRelayProofs,
 	>;
@@ -101,7 +101,6 @@ decl_event! {
 	{
 		/// The specific relaied parcel removed. [block id]
 		RemoveRelaiedParcel(EthereumBlockNumber),
-
 		/// EthereumReceipt verification. [account, ethereum receipt, ethereum header]
 		VerifyReceipt(AccountId, EthereumReceipt, EthereumHeader),
 	}
