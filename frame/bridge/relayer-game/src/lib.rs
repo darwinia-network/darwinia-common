@@ -99,8 +99,11 @@ decl_event! {
 	where
 		GameId = GameId<T, I>,
 		RelayBlockId = RelayBlockId<T, I>,
+		RelayParcel = RelayParcel<T, I>,
 	{
-		/// A new round started. [game id, game_sample_points]
+		/// A new relay parcel proposed. [game id, round, index, relay parcel]
+		RelayProposed(GameId, u32, u32, RelayParcel),
+		/// A new round started. [game id, game sample points]
 		NewRound(GameId, Vec<RelayBlockId>),
 		/// A game has been settled. [game id]
 		GameOver(GameId),
@@ -326,12 +329,12 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 
 	/// Check if others already make a same proposal
 	pub fn is_unique_proposal(
-		proposal_content: &[RelayParcel<T, I>],
+		proposed_relay_parcels: &[RelayParcel<T, I>],
 		existed_proposals: &[RelayProposalT<T, I>],
 	) -> bool {
-		!existed_proposals
-			.iter()
-			.any(|existed_proposal| existed_proposal.relay_parcels.as_slice() == proposal_content)
+		!existed_proposals.iter().any(|existed_proposal| {
+			existed_proposal.relay_parcels.as_slice() == proposed_relay_parcels
+		})
 	}
 
 	/// Check if relayer can afford the bond
@@ -922,13 +925,13 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		);
 		// Make sure the game is at first round
 		ensure!(
-			Self::proposals_of_game_at(&game_id, 1).is_empty(),
+			<Proposals<T, I>>::decode_len(&game_id, 1).unwrap_or(0) == 0,
 			<Error<T, I>>::RoundMis
 		);
 
 		let now = <frame_system::Module<T>>::block_number();
 		let existed_proposals = Self::proposals_of_game_at(&game_id, 0);
-		let proposal_content = vec![relay_parcel];
+		let proposed_relay_parcels = vec![relay_parcel];
 
 		if existed_proposals.is_empty() {
 			// A new game might open
@@ -945,7 +948,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 			ensure!(Self::is_game_open_at(&game_id, now), <Error<T, I>>::GameC);
 			ensure!(
-				Self::is_unique_proposal(&proposal_content, &existed_proposals),
+				Self::is_unique_proposal(&proposed_relay_parcels, &existed_proposals),
 				<Error<T, I>>::ProposalDup
 			);
 		}
@@ -958,7 +961,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			let mut proposal = RelayProposal::new();
 
 			proposal.relayer = relayer;
-			proposal.relay_parcels = proposal_content;
+			proposal.relay_parcels = proposed_relay_parcels;
 			proposal.bond = bond;
 
 			// Allow propose without relay proofs
@@ -977,6 +980,13 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			proposal
 		};
 		let round = 0;
+
+		Self::deposit_event(RawEvent::RelayProposed(
+			game_id.clone(),
+			round,
+			0,
+			proposal.relay_parcels[0].clone(),
+		));
 
 		<Proposals<T, I>>::append(&game_id, round, proposal);
 		<BestRelaiedBlockId<T, I>>::insert(&game_id, best_relaied_block_id);

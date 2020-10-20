@@ -665,14 +665,9 @@ pub struct EthereumRelayParcel {
 }
 impl BlockInfo for EthereumRelayParcel {
 	type BlockId = EthereumBlockNumber;
-	type HeaderHash = H256;
 
 	fn block_id(&self) -> &Self::BlockId {
 		&self.header.number
-	}
-
-	fn header_hash(&self) -> Self::HeaderHash {
-		self.header.hash()
 	}
 }
 

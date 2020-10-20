@@ -21,8 +21,6 @@ pub trait BlockInfo {
 	type HeaderHash: Clone;
 
 	fn block_id(&self) -> &Self::BlockId;
-
-	fn header_hash(&self) -> Self::HeaderHash;
 }
 
 /// Implement this for target chain's relay module's
@@ -91,7 +89,7 @@ pub trait AdjustableRelayerGame {
 pub trait RelayerGameProtocol {
 	type Relayer;
 	type GameId: Clone + PartialOrd;
-	type RelayParcel: Clone + Debug + PartialEq + FullCodec + BlockInfo;
+	type RelayParcel: Clone + Debug + PartialEq + FullCodec + BlockInfo<BlockId = Self::GameId>;
 	type Proofs;
 
 	fn get_proposed_relay_parcels(
