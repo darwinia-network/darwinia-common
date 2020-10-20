@@ -46,6 +46,8 @@ pub trait Relayable {
 		extended_relay_parcels: &Self::RelayParcel,
 	) -> DispatchResult;
 
+	fn verify_relay_chain(relay_chain: Vec<&Self::RelayParcel>) -> DispatchResult;
+
 	fn distance_between(
 		relay_block_id: &Self::RelayBlockId,
 		best_relaied_block_id: Self::RelayBlockId,
@@ -145,7 +147,7 @@ pub struct RelayProposal<RelayParcel, Relayer, Balance, RelayBlockId> {
 	pub relayer: Relayer,
 	pub relay_parcels: Vec<RelayParcel>,
 	pub bond: Balance,
-	pub maybe_extended_proposal_id: Option<RelayProposalId<RelayBlockId>>,
+	pub maybe_extended_relay_proposal_id: Option<RelayProposalId<RelayBlockId>>,
 	pub verified: bool,
 }
 impl<RelayParcel, Relayer, Balance, RelayBlockId>
@@ -159,7 +161,7 @@ where
 			relayer: Relayer::default(),
 			relay_parcels: vec![],
 			bond: Zero::zero(),
-			maybe_extended_proposal_id: None,
+			maybe_extended_relay_proposal_id: None,
 			verified: false,
 		}
 	}

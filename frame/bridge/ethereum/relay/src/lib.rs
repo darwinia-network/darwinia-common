@@ -112,8 +112,10 @@ decl_error! {
 		HeaderInv,
 		/// Relaied Blocks - CONFLICT
 		RelaiedBlocksC,
-		/// Proposal - INVALID
-		ProposalInv,
+		/// Continuous - INVALID
+		ContinuousInv,
+		// /// Proposal - INVALID
+		// ProposalInv,
 		/// Header Hash - INVALID
 		HeaderHashInv,
 		/// MMR - INVALID
@@ -537,18 +539,51 @@ impl<T: Trait> Relayable for Module<T> {
 		extended_relay_parcels: &Self::RelayParcel,
 	) -> DispatchResult {
 		let eth_partial = Self::ethash_params();
-		let header = &relay_parcels.header;
-		let previous_header = &extended_relay_parcels.header;
+		let next_relay_header = &relay_parcels.header;
+		let previous_relay_header = &extended_relay_parcels.header;
 
 		ensure!(
-			header.parent_hash == previous_header.hash.ok_or(<Error<T>>::HeaderHashInv)?,
-			<Error<T>>::ProposalInv
+			next_relay_header.parent_hash
+				== previous_relay_header
+					.hash
+					.ok_or(<Error<T>>::HeaderHashInv)?,
+			<Error<T>>::ContinuousInv
 		);
 		ensure!(
-			header.difficulty().to_owned()
-				== eth_partial.calculate_difficulty(header, previous_header),
-			<Error<T>>::ProposalInv
+			next_relay_header.difficulty().to_owned()
+				== eth_partial.calculate_difficulty(next_relay_header, previous_relay_header),
+			<Error<T>>::ContinuousInv
 		);
+
+		Ok(())
+	}
+
+	fn verify_relay_chain(mut relay_chain: Vec<&Self::RelayParcel>) -> DispatchResult {
+		let eth_partial = Self::ethash_params();
+
+		relay_chain.sort_by_key(|relay_parcel| relay_parcel.header.number);
+
+		for window in relay_chain.windows(2) {
+			let next_relay_parcel = window[0];
+			let previous_relay_parcel = window[1];
+
+			ensure!(
+				next_relay_parcel
+					.header
+					.hash
+					.ok_or(<Error<T>>::HeaderHashInv)?
+					== previous_relay_parcel.header.parent_hash,
+				<Error<T>>::ContinuousInv
+			);
+			ensure!(
+				next_relay_parcel.header.difficulty().to_owned()
+					== eth_partial.calculate_difficulty(
+						&next_relay_parcel.header,
+						&previous_relay_parcel.header
+					),
+				<Error<T>>::ContinuousInv
+			);
+		}
 
 		Ok(())
 	}

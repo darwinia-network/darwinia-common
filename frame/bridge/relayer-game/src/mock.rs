@@ -99,6 +99,19 @@ pub mod mock_relay {
 			Ok(())
 		}
 
+		fn verify_relay_chain(mut relay_chain: Vec<&Self::RelayParcel>) -> DispatchResult {
+			relay_chain.sort_by_key(|relay_parcel| relay_parcel.number);
+
+			for window in relay_chain.windows(2) {
+				let next = window[0];
+				let previous = window[1];
+
+				ensure!(next.hash == previous.parent_hash, "Continuous - INVALID");
+			}
+
+			Ok(())
+		}
+
 		fn distance_between(
 			relay_block_id: &Self::RelayBlockId,
 			best_relaied_block_id: Self::RelayBlockId,

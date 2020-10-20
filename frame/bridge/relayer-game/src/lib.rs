@@ -37,10 +37,6 @@ use frame_support::{
 	traits::{Currency, Get, OnUnbalanced},
 	weights::Weight,
 };
-use frame_system::{
-	ensure_none,
-	offchain::{SendTransactionTypes, SubmitTransaction},
-};
 use sp_runtime::{
 	traits::{Saturating, Zero},
 	DispatchError, DispatchResult,
@@ -55,9 +51,7 @@ use types::*;
 
 pub const RELAYER_GAME_ID: LockIdentifier = *b"da/rgame";
 
-pub trait Trait<I: Instance = DefaultInstance>:
-	frame_system::Trait + SendTransactionTypes<Call<Self, I>>
-{
+pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	type Call: From<Call<Self, I>>;
 
 	type Event: From<Event<Self, I>> + Into<<Self as frame_system::Trait>::Event>;
@@ -229,101 +223,6 @@ decl_module! {
 
 			// Return while no closed rounds found
 		}
-
-		// fn offchain_worker(now: BlockNumber<T>) {
-		// 	let game_ids = <GamesToUpdate<T, I>>::take(now);
-
-		// 	if !game_ids.is_empty() {
-		// 		if let Err(e) = Self::update_games_at(game_ids, now) {
-		// 			error!(target: "relayer-game", "{:?}", e);
-		// 		}
-		// 	}
-
-		// 	// Return while no closed rounds found
-		// }
-
-		// #[weight = 100_000_000]
-		// pub fn update_games_unsigned(origin, game_ids: Vec<RelayBlockId<T, I>>) {
-		// 	ensure_none(origin)?;
-
-		// 	let now = <frame_system::Module<T>>::block_number();
-		// 	let mut relay_parcels = vec![];
-
-		// 	for game_id in game_ids {
-		// 		trace!(
-		// 			target: "relayer-game",
-		// 			">  Trying to Settle Game `{:?}`", game_id
-		// 		);
-
-		// 		let round_count = Self::round_count_of(&game_id);
-		// 		let last_round = if let Some(last_round) = round_count.checked_sub(1) {
-		// 			last_round
-		// 		} else {
-		// 			// Should never enter this condition
-		// 			error!(target: "relayer-game", "   >  Rounds - EMPTY");
-
-		// 			continue;
-		// 		};
-		// 		let mut proposals = Self::proposals_of_game_at(&game_id, last_round);
-
-		// 		match (last_round, proposals.len()) {
-		// 			// Should never enter this condition
-		// 			(0, 0) => error!(target: "relayer-game", "   >  Proposals - EMPTY"),
-		// 			// At first round and only one proposal found
-		// 			(0, 1) => {
-		// 				trace!(target: "relayer-game", "   >  Challenge - NOT EXISTED");
-
-		// 				if let Some(relay_parcel) =
-		// 					Self::settle_without_challenge(proposals.pop().unwrap())
-		// 				{
-		// 					relay_parcels.push((game_id.to_owned(), relay_parcel));
-		// 				}
-		// 			}
-		// 			// No relayer response for the lastest round
-		// 			(_, 0) => {
-		// 				trace!(target: "relayer-game", "   >  All Relayers Abstain");
-
-		// 				Self::settle_abandon(proposals);
-		// 			},
-		// 			// No more challenge found at latest round, only one relayer win
-		// 			(_, 1) => {
-		// 				trace!(target: "relayer-game", "   >  No More Challenge");
-
-		// 				if let Some(relay_parcel) =
-		// 					Self::settle_with_challenge(&game_id, proposals.pop().unwrap())
-		// 				{
-		// 					relay_parcels.push((game_id.to_owned(), relay_parcel));
-		// 				}
-		// 			}
-		// 			(last_round, _) => {
-		// 				trace!(target: "relayer-game", "   >  Challenge Found");
-
-		// 				let distance = T::RelayableChain::distance_between(
-		// 					&game_id,
-		// 					Self::best_relaied_block_id_of(&game_id)
-		// 				);
-
-		// 				if distance == round_count {
-		// 					// A whole chain gave, start continuous verification
-		// 					if let Some(relay_parcel) = Self::on_chain_arbitrate(&game_id, last_round) {
-		// 						relay_parcels.push((game_id.to_owned(), relay_parcel));
-		// 					}
-		// 				} else {
-		// 					// Update game, start next round
-		// 					Self::update_game_at(&game_id, last_round, now);
-
-		// 					continue;
-		// 				}
-		// 			}
-		// 		}
-
-		// 		Self::game_over(game_id);
-		// 	}
-
-		// 	Self::store_relay_parcels(now, relay_parcels)?;
-
-		// 	trace!(target: "relayer-game", "---");
-		// }
 	}
 }
 
@@ -419,274 +318,6 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		T::RingSlash::on_unbalanced(T::RingCurrency::slash(relayer, bond).0);
 	}
 
-	pub fn for_each_extended_proposal<F>(
-		mut maybe_extended_proposal_id: Option<RelayProposalId<RelayBlockId<T, I>>>,
-		mut f: F,
-	) -> Option<RelayProposalT<T, I>>
-	where
-		F: FnMut(&RelayProposalT<T, I>, u32, u32),
-	{
-		if maybe_extended_proposal_id.is_none() {
-			return None;
-		}
-
-		loop {
-			let RelayProposalId {
-				relay_block_id: game_id,
-				round,
-				index,
-			} = maybe_extended_proposal_id.take().unwrap();
-
-			if let Some(proposal) = Self::proposals_of_game_at(&game_id, round)
-				.into_iter()
-				.nth(index as _)
-			{
-				f(&proposal, round, index);
-
-				if proposal.maybe_extended_proposal_id.is_none() {
-					return Some(proposal);
-				} else {
-					maybe_extended_proposal_id = proposal.maybe_extended_proposal_id;
-				}
-			} else {
-				// Should never enter this condition
-				error!(target: "relayer-game", "   >  Proposal - NOT EXISTED");
-			}
-		}
-	}
-
-	/// Build the honsties/evils(reward/slash) map follow a gave winning proposal
-	pub fn build_honsties_evils_map(
-		game_id: &RelayBlockId<T, I>,
-		winning_proposal: RelayProposalT<T, I>,
-	) -> (
-		Option<RelayProposalT<T, I>>,
-		BTreeMap<AccountId<T>, (RingBalance<T, I>, RingBalance<T, I>)>,
-		BTreeMap<AccountId<T>, RingBalance<T, I>>,
-	) {
-		let RelayProposal {
-			relayer,
-			bond,
-			maybe_extended_proposal_id,
-			..
-		} = winning_proposal;
-
-		// BTreeMap<(relayer, unbond, reward)>
-		let mut honesties = <BTreeMap<AccountId<T>, (RingBalance<T, I>, RingBalance<T, I>)>>::new();
-		// BTreeMap<(relayer, slash)>
-		let mut evils = <BTreeMap<AccountId<T>, RingBalance<T, I>>>::new();
-
-		// TODO: reward on no challenge
-		honesties.insert(relayer, (bond, Zero::zero()));
-
-		let winning_proposal = Self::for_each_extended_proposal(
-			maybe_extended_proposal_id,
-			|RelayProposal {
-			     relayer: honesty,
-			     bond: honesty_bond,
-			     ..
-			 },
-			 round,
-			 index| {
-				honesties
-					.entry(honesty.to_owned())
-					.and_modify(|(unbonds, _)| *unbonds = unbonds.saturating_add(*honesty_bond))
-					.or_insert((*honesty_bond, Zero::zero()));
-
-				for (i, RelayProposal { relayer, bond, .. }) in
-					Self::proposals_of_game_at(game_id, round)
-						.into_iter()
-						.enumerate()
-				{
-					if i as u32 != index {
-						honesties
-							.entry(honesty.to_owned())
-							.and_modify(|(_, rewards)| *rewards = rewards.saturating_add(bond));
-						evils
-							.entry(relayer)
-							.and_modify(|slashs| *slashs = slashs.saturating_add(bond))
-							.or_insert(Zero::zero());
-					}
-				}
-			},
-		);
-
-		(winning_proposal, honesties, evils)
-	}
-
-	/// Try to find a winning proposal to build the honsties/evils(reward/slash) map
-	pub fn try_build_honsties_evils_map(
-		game_id: &RelayBlockId<T, I>,
-		last_round: u32,
-	) -> (
-		Option<(
-			RelayProposalT<T, I>,
-			BTreeMap<AccountId<T>, (RingBalance<T, I>, RingBalance<T, I>)>,
-		)>,
-		BTreeMap<AccountId<T>, RingBalance<T, I>>,
-	) {
-		let mut round = last_round;
-		// Vec<(id, relayer, unbond)>
-		// Remove evil by this id each loop to find the honesties finally
-		let mut honesties_candidates = vec![];
-		// Vec<slashs>
-		// Reward the round's winner with the round's total slash
-		// But don't reward the round's winner if can't find a winning proposal finally
-		let mut rounds_slashs = vec![];
-		// BTreeMap<(relayer, slash)>
-		let mut evils = <BTreeMap<AccountId<T>, RingBalance<T, I>>>::new();
-		// Vec<(id, proposal)>
-		// Remove evil proposal by this id each loop
-		// to find the winning proposals(a winning proposal chain) finally
-		let mut winning_proposal_candidates = Self::proposals_of_game_at(game_id, round)
-			.into_iter()
-			.filter(|proposal| proposal.verified)
-			.enumerate()
-			.collect::<Vec<_>>();
-		// Verified proposals under current `round`
-		let mut valid_proposals = winning_proposal_candidates.clone();
-		let mut maybe_winning_proposal = None;
-
-		loop {
-			// A set of the previous round valid-proposal which the winning proposal candidate extend from
-			let mut next_valid_proposals = vec![];
-
-			if round == 0 {
-				if next_valid_proposals.len() == 1 {
-					maybe_winning_proposal = next_valid_proposals.pop();
-				}
-
-				break;
-			}
-
-			let previous_round = round - 1;
-			let previous_round_proposals = Self::proposals_of_game_at(&game_id, previous_round);
-
-			for (
-				id,
-				RelayProposal {
-					ref relayer,
-					ref relay_parcels,
-					bond,
-					ref maybe_extended_proposal_id,
-					..
-				},
-			) in valid_proposals
-			{
-				if let Some(RelayProposalId { index, .. }) = maybe_extended_proposal_id {
-					if let Some(extended_proposal) = previous_round_proposals.get(*index as usize) {
-						// FIXME
-						// if T::RelayableChain::verify_continuous(
-						// 	relay_parcels,
-						// 	&extended_proposal.relay_parcels,
-						// )
-						// .is_ok()
-						if true {
-							// Can't find the relayer cheating within this round
-							// So add the relayer and his proposal into the candidate
-							honesties_candidates.push((id, relayer.to_owned(), bond));
-							next_valid_proposals.push((id, extended_proposal.to_owned()));
-						} else {
-							evils
-								.entry(relayer.to_owned())
-								.and_modify(|slashs| *slashs = slashs.saturating_add(bond))
-								.or_insert(bond);
-							rounds_slashs.push(bond);
-						}
-					} else {
-						// Should never enter this condition
-						error!(
-							target: "relayer-game",
-							"   >  During Finding Winning Proposal, Extended Proposal - NOT EXISTED"
-						);
-					}
-				} else {
-					// Should never enter this condition
-					error!(
-						target: "relayer-game",
-						"   >  During Finding Winning Proposal, Proposal Extend From - NOTHING"
-					);
-				}
-			}
-
-			// Remove all the evils and record the slash
-			honesties_candidates = honesties_candidates
-				.into_iter()
-				.filter(|(id, relayer, bond)| {
-					if next_valid_proposals.iter().any(|(id_, _)| id == id_) {
-						true
-					} else {
-						evils
-							.entry(relayer.to_owned())
-							.and_modify(|slashs| *slashs = slashs.saturating_add(*bond))
-							.or_insert(*bond);
-						rounds_slashs.push(*bond);
-
-						false
-					}
-				})
-				.collect();
-			// Remove all the evil proposals
-			winning_proposal_candidates = winning_proposal_candidates
-				.into_iter()
-				.filter(|(id, _)| next_valid_proposals.iter().any(|(id_, _)| id == id_))
-				.collect();
-
-			round = previous_round;
-			valid_proposals = next_valid_proposals;
-		}
-
-		match winning_proposal_candidates.len() {
-			0 => (None, evils),
-			1 => {
-				if honesties_candidates.len() as u32 + 1 == last_round
-					&& rounds_slashs.len() as u32 + 1 == last_round
-					&& maybe_winning_proposal.is_some()
-				{
-					// The first(head) proposal of a winning proposal chain
-					let (_, winning_proposal_head) = maybe_winning_proposal.unwrap();
-					// The last(tail) proposal of a winning proposal chain
-					let (_, winning_proposal_tail) = winning_proposal_candidates.pop().unwrap();
-					let mut honesties = BTreeMap::new();
-
-					// TODO: reward on no challenge
-					honesties.insert(
-						winning_proposal_tail.relayer,
-						(winning_proposal_tail.bond, Zero::zero()),
-					);
-
-					for ((_, round_winner, unbond), round_rewards) in honesties_candidates
-						.into_iter()
-						.zip(rounds_slashs.into_iter())
-					{
-						honesties.insert(round_winner, (unbond, round_rewards));
-					}
-
-					(Some((winning_proposal_head, honesties)), evils)
-				} else {
-					// TODO: handle return
-					// Should never enter this condition
-					error!(
-						target: "relayer-game",
-						"   >  Honesties Count - MISMATCHED"
-					);
-
-					(None, evils)
-				}
-			}
-			_ => {
-				// TODO: handle return
-				// Should never enter this condition
-				error!(
-					target: "relayer-game",
-					"   >  Wining Proposal - MORE THAN ONE"
-				);
-
-				(None, evils)
-			}
-		}
-	}
-
 	pub fn payout_honesties_and_slash_evils(
 		honesties: BTreeMap<AccountId<T>, (RingBalance<T, I>, RingBalance<T, I>)>,
 		evils: BTreeMap<AccountId<T>, RingBalance<T, I>>,
@@ -706,16 +337,16 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	}
 
 	pub fn settle_without_challenge(
-		mut winning_proposal: RelayProposalT<T, I>,
+		mut winning_relay_proposal: RelayProposalT<T, I>,
 	) -> Option<RelayParcel<T, I>> {
-		Self::update_bonds_with(&winning_proposal.relayer, |bonds| {
-			bonds.saturating_sub(winning_proposal.bond)
+		Self::update_bonds_with(&winning_relay_proposal.relayer, |bonds| {
+			bonds.saturating_sub(winning_relay_proposal.bond)
 		});
 
 		// TODO: reward on no challenge
 
-		if winning_proposal.relay_parcels.len() == 1 {
-			Some(winning_proposal.relay_parcels.pop().unwrap())
+		if winning_relay_proposal.relay_parcels.len() == 1 {
+			Some(winning_relay_proposal.relay_parcels.pop().unwrap())
 		} else {
 			// Should never enter this condition
 			error!(target: "relayer-game", "   >  Relay Parcels Count - MISMATCHED");
@@ -724,71 +355,253 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		}
 	}
 
-	pub fn settle_abandon(abandoned_proposals: Vec<RelayProposalT<T, I>>) {
-		for RelayProposal {
-			relayer,
-			bond,
-			maybe_extended_proposal_id,
-			..
-		} in abandoned_proposals
-		{
-			Self::slash_on(&relayer, bond);
-			Self::for_each_extended_proposal(
-				maybe_extended_proposal_id,
-				|RelayProposal { relayer, bond, .. }, _, _| {
-					Self::slash_on(relayer, *bond);
-				},
-			);
+	pub fn settle_abandon(game_id: &RelayBlockId<T, I>) {
+		for relay_proposals in <Proposals<T, I>>::iter_prefix_values(&game_id) {
+			for RelayProposal { relayer, bond, .. } in relay_proposals {
+				Self::slash_on(&relayer, bond);
+			}
 		}
 	}
 
 	pub fn settle_with_challenge(
 		game_id: &RelayBlockId<T, I>,
-		// The last(tail) proposal of a winning proposal chain
-		winning_proposal: RelayProposalT<T, I>,
+		relay_proposal: RelayProposalT<T, I>,
 	) -> Option<RelayParcel<T, I>> {
-		// The first(head) proposal of a winning proposal chain
-		let (maybe_winning_proposal, honesties, evils) =
-			Self::build_honsties_evils_map(game_id, winning_proposal);
+		let RelayProposal {
+			relayer,
+			bond,
+			mut maybe_extended_relay_proposal_id,
+			..
+		} = relay_proposal;
+		// BTreeMap<(relayer, unbond, reward)>
+		let mut honesties = <BTreeMap<AccountId<T>, (RingBalance<T, I>, RingBalance<T, I>)>>::new();
+		// BTreeMap<(relayer, slash)>
+		let mut evils = <BTreeMap<AccountId<T>, RingBalance<T, I>>>::new();
 
-		Self::payout_honesties_and_slash_evils(honesties, evils);
+		// TODO: reward on no challenge
+		honesties.insert(relayer, (bond, Zero::zero()));
 
-		if let Some(mut winning_proposal) = maybe_winning_proposal {
-			if winning_proposal.relay_parcels.len() == 1 {
-				Some(winning_proposal.relay_parcels.pop().unwrap())
+		while let Some(RelayProposalId { round, index, .. }) =
+			maybe_extended_relay_proposal_id.take()
+		{
+			let relay_proposals = Self::proposals_of_game_at(&game_id, round);
+
+			if let Some(RelayProposal {
+				relayer: honesty,
+				bond,
+				maybe_extended_relay_proposal_id: previous_maybe_extended_relay_proposal_id,
+				..
+			}) = relay_proposals.get(index as usize)
+			{
+				maybe_extended_relay_proposal_id =
+					previous_maybe_extended_relay_proposal_id.to_owned();
+
+				honesties
+					.entry(honesty.to_owned())
+					.and_modify(|(unbonds, _)| *unbonds = unbonds.saturating_add(*bond))
+					.or_insert((*bond, Zero::zero()));
+
+				for (index_, RelayProposal { relayer, bond, .. }) in
+					relay_proposals.iter().enumerate()
+				{
+					if index_ as u32 != index {
+						honesties
+							.entry(honesty.to_owned())
+							.and_modify(|(_, rewards)| *rewards = rewards.saturating_add(*bond));
+						evils
+							.entry(relayer.to_owned())
+							.and_modify(|slashs| *slashs = slashs.saturating_add(*bond))
+							.or_insert(Zero::zero());
+					}
+				}
+
+				if previous_maybe_extended_relay_proposal_id.is_none() {
+					let mut relay_parcels = relay_proposals
+						.into_iter()
+						.nth(index as usize)
+						.unwrap()
+						.relay_parcels;
+
+					if relay_parcels.len() == 1 {
+						Self::payout_honesties_and_slash_evils(honesties, evils);
+
+						return Some(relay_parcels.pop().unwrap());
+					} else {
+						// Should never enter this condition
+						error!(target: "relayer-game", "   >  Relay Parcels - MORE THAN ONE");
+
+						return None;
+					}
+				}
 			} else {
 				// Should never enter this condition
-				error!(target: "relayer-game", "   >  Relay Parcels Count - MISMATCHED");
+				error!(target: "relayer-game", "   >  Extended Relay Rroposal - NOT EXISTED");
 
-				None
+				return None;
+			}
+		}
+
+		// Should never enter this condition
+		error!(target: "relayer-game", "   >  Extended Relay Rroposal - NOT EXISTED");
+
+		None
+	}
+
+	pub fn on_chain_arbitrate(game_id: &RelayBlockId<T, I>) -> Option<RelayParcel<T, I>> {
+		let relay_proposals = <Proposals<T, I>>::iter_prefix_values(&game_id).collect::<Vec<_>>();
+		let mut winning_relay_chain_indexes = vec![];
+
+		if let Some(last_round_relay_proposals) = relay_proposals.last() {
+			let mut maybe_extended_relay_proposal_id;
+
+			for (
+				index,
+				RelayProposal {
+					maybe_extended_relay_proposal_id: current_maybe_extended_relay_proposal_id,
+					relay_parcels,
+					..
+				},
+			) in last_round_relay_proposals.iter().enumerate()
+			{
+				maybe_extended_relay_proposal_id = current_maybe_extended_relay_proposal_id;
+
+				let mut relay_chain = vec![];
+
+				for relay_parcel in relay_parcels.iter() {
+					relay_chain.push(relay_parcel);
+				}
+
+				while let Some(RelayProposalId { round, index, .. }) =
+					maybe_extended_relay_proposal_id
+				{
+					if let Some(round_relay_proposals) = relay_proposals.get(*round as usize) {
+						if let Some(RelayProposal {
+							maybe_extended_relay_proposal_id:
+								previous_maybe_extended_relay_proposal_id,
+							relay_parcels,
+							..
+						}) = round_relay_proposals.get(*index as usize)
+						{
+							maybe_extended_relay_proposal_id =
+								previous_maybe_extended_relay_proposal_id;
+
+							for relay_parcel in relay_parcels.iter() {
+								relay_chain.push(relay_parcel);
+							}
+						} else {
+							// Should never enter this condition
+							error!(target: "relayer-game", "   >  Index - NOT EXISTED");
+
+							return None;
+						}
+					} else {
+						// Should never enter this condition
+						error!(target: "relayer-game", "   >  Round - NOT EXISTED");
+
+						return None;
+					}
+				}
+
+				if T::RelayableChain::verify_relay_chain(relay_chain).is_ok() {
+					winning_relay_chain_indexes.push(index);
+				} else {
+					trace!(
+						target: "relayer-game",
+						">  Relay Chain - INVALID",
+					);
+				}
+			}
+
+			match winning_relay_chain_indexes.len() {
+				0 => None,
+				1 => {
+					let index = winning_relay_chain_indexes.pop().unwrap();
+					let mut maybe_extended_relay_proposal_id = relay_proposals.last().unwrap()
+						[index]
+						.to_owned()
+						.maybe_extended_relay_proposal_id;
+					// BTreeMap<(relayer, unbond, reward)>
+					let mut honesties =
+						<BTreeMap<AccountId<T>, (RingBalance<T, I>, RingBalance<T, I>)>>::new();
+					// BTreeMap<(relayer, slash)>
+					let mut evils = <BTreeMap<AccountId<T>, RingBalance<T, I>>>::new();
+
+					while let Some(RelayProposalId { round, index, .. }) =
+						maybe_extended_relay_proposal_id.take()
+					{
+						let round_relay_proposals = &relay_proposals[round as usize];
+
+						if let Some(RelayProposal {
+							relayer: honesty,
+							bond,
+							maybe_extended_relay_proposal_id:
+								previous_maybe_extended_relay_proposal_id,
+							..
+						}) = round_relay_proposals.get(index as usize)
+						{
+							maybe_extended_relay_proposal_id =
+								previous_maybe_extended_relay_proposal_id.to_owned();
+
+							honesties
+								.entry(honesty.to_owned())
+								.and_modify(|(unbonds, _)| *unbonds = unbonds.saturating_add(*bond))
+								.or_insert((*bond, Zero::zero()));
+
+							for (index_, RelayProposal { relayer, bond, .. }) in
+								round_relay_proposals.iter().enumerate()
+							{
+								if index_ as u32 != index {
+									honesties.entry(honesty.to_owned()).and_modify(
+										|(_, rewards)| *rewards = rewards.saturating_add(*bond),
+									);
+									evils
+										.entry(relayer.to_owned())
+										.and_modify(|slashs| *slashs = slashs.saturating_add(*bond))
+										.or_insert(Zero::zero());
+								}
+							}
+
+							if previous_maybe_extended_relay_proposal_id.is_none() {
+								let relay_parcels = &round_relay_proposals
+									.into_iter()
+									.nth(index as usize)
+									.unwrap()
+									.relay_parcels;
+
+								if relay_parcels.len() == 1 {
+									Self::payout_honesties_and_slash_evils(honesties, evils);
+
+									return Some(relay_parcels[0].to_owned());
+								} else {
+									// Should never enter this condition
+									error!(target: "relayer-game", "   >  Relay Parcels - MORE THAN ONE");
+
+									return None;
+								}
+							}
+						} else {
+							// Should never enter this condition
+							error!(target: "relayer-game", "   >  Extended Relay Rroposal - NOT EXISTED");
+
+							return None;
+						}
+					}
+
+					// Should never enter this condition
+					error!(target: "relayer-game", "   >  Extended Relay Rroposal - NOT EXISTED");
+
+					None
+				}
+				_ => {
+					// Should never enter this condition
+					error!(target: "relayer-game", "   >  Honesty Relayer - MORE THAN ONE");
+
+					None
+				}
 			}
 		} else {
 			// Should never enter this condition
-			error!(target: "relayer-game", "   >  Winning Proposal - NOT EXISTED");
-
-			None
-		}
-	}
-
-	pub fn on_chain_arbitrate(
-		game_id: &RelayBlockId<T, I>,
-		last_round: u32,
-	) -> Option<RelayParcel<T, I>> {
-		let (maybe_honesties, evils) = Self::try_build_honsties_evils_map(game_id, last_round);
-
-		if let Some((mut winning_proposal, honesties)) = maybe_honesties {
-			Self::payout_honesties_and_slash_evils(honesties, evils);
-
-			if winning_proposal.relay_parcels.len() == 1 {
-				Some(winning_proposal.relay_parcels.pop().unwrap())
-			} else {
-				// Should never enter this condition
-				error!(target: "relayer-game", "   >  Relay Parcels Count - MISMATCHED");
-
-				None
-			}
-		} else {
-			Self::payout_honesties_and_slash_evils(BTreeMap::new(), evils);
+			error!(target: "relayer-game", "   >  Relay Proposals - EMPTY");
 
 			None
 		}
@@ -896,9 +709,9 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 
 				continue;
 			};
-			let mut proposals = Self::proposals_of_game_at(&game_id, last_round);
+			let mut relay_proposals = Self::proposals_of_game_at(&game_id, last_round);
 
-			match (last_round, proposals.len()) {
+			match (last_round, relay_proposals.len()) {
 				// Should never enter this condition
 				(0, 0) => error!(target: "relayer-game", "   >  Proposals - EMPTY"),
 				// At first round and only one proposal found
@@ -906,42 +719,50 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 					trace!(target: "relayer-game", "   >  Challenge - NOT EXISTED");
 
 					if let Some(relay_parcel) =
-						Self::settle_without_challenge(proposals.pop().unwrap())
+						Self::settle_without_challenge(relay_proposals.pop().unwrap())
 					{
 						relay_parcels.push((game_id.to_owned(), relay_parcel));
 					}
 				}
 				// No relayer response for the lastest round
 				(_, 0) => {
-					trace!(target: "relayer-game", "   >  All Relayers Abstain");
+					trace!(target: "relayer-game", "   >  All Relayers Abstain, Settle Abanbon");
 
-					Self::settle_abandon(proposals);
+					Self::settle_abandon(&game_id);
 				}
 				// No more challenge found at latest round, only one relayer win
 				(_, 1) => {
-					trace!(target: "relayer-game", "   >  No More Challenge");
+					trace!(target: "relayer-game", "   >  No More Challenge, Settle With Challenge");
 
 					if let Some(relay_parcel) =
-						Self::settle_with_challenge(&game_id, proposals.pop().unwrap())
+						Self::settle_with_challenge(&game_id, relay_proposals.pop().unwrap())
 					{
 						relay_parcels.push((game_id.to_owned(), relay_parcel));
+					} else {
+						// Should never enter this condition
+
+						Self::settle_abandon(&game_id);
 					}
 				}
 				(last_round, _) => {
-					trace!(target: "relayer-game", "   >  Challenge Found");
-
 					let distance = T::RelayableChain::distance_between(
 						&game_id,
 						Self::best_relaied_block_id_of(&game_id),
 					);
 
 					if distance == round_count {
+						trace!(target: "relayer-game", "   >  A Full Chain Gave, On Chain Arbitrate");
+
 						// A whole chain gave, start continuous verification
-						if let Some(relay_parcel) = Self::on_chain_arbitrate(&game_id, last_round) {
+						if let Some(relay_parcel) = Self::on_chain_arbitrate(&game_id) {
 							relay_parcels.push((game_id.to_owned(), relay_parcel));
+						} else {
+							Self::settle_abandon(&game_id);
 						}
 					} else {
-						// Update game, start next round
+						trace!(target: "relayer-game", "   >  Still In Challenge, Update Games");
+
+						// Update game, start new round
 						Self::update_game_at(&game_id, last_round, now);
 
 						continue;
@@ -1006,7 +827,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		Self::proposals_of_game_at(&game_id, round)
 			.into_iter()
 			.nth(index as usize)
-			.map(|proposal| proposal.relay_parcels)
+			.map(|relay_proposal| relay_proposal.relay_parcels)
 	}
 
 	fn propose(
@@ -1064,37 +885,37 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 		Self::update_bonds_with(&relayer, |old_bonds| old_bonds.saturating_add(bond));
 
-		let proposal = {
-			let mut proposal = RelayProposal::new();
+		let relay_proposal = {
+			let mut relay_proposal = RelayProposal::new();
 
-			proposal.relayer = relayer.clone();
-			proposal.relay_parcels = proposed_relay_parcels;
-			proposal.bond = bond;
+			relay_proposal.relayer = relayer.clone();
+			relay_proposal.relay_parcels = proposed_relay_parcels;
+			relay_proposal.bond = bond;
 
 			// Allow propose without relay proofs
 			// The relay proofs can be completed later through `complete_proofs`
 			if let Some(relay_proofs) = optional_relay_proofs {
 				T::RelayableChain::verify_proofs(
 					&game_id,
-					&proposal.relay_parcels[0],
+					&relay_proposal.relay_parcels[0],
 					&relay_proofs,
 					Some(&best_relaied_block_id),
 				)?;
 
-				proposal.verified = true;
+				relay_proposal.verified = true;
 			}
 
-			proposal
+			relay_proposal
 		};
-		let round = 0;
 
-		<Proposals<T, I>>::append(&game_id, round, proposal);
+		<Proposals<T, I>>::append(&game_id, 0, relay_proposal);
 		<BestRelaiedBlockId<T, I>>::insert(&game_id, best_relaied_block_id);
-		<RoundCounts<T, I>>::insert(&game_id, round);
+		<RoundCounts<T, I>>::insert(&game_id, 1);
 		<BlocksToRelay<T, I>>::mutate(|blocks_to_relay| blocks_to_relay.push(game_id.clone()));
+		<GameSamplePoints<T, I>>::append(&game_id, vec![game_id.clone()]);
 
-		Self::update_timer_of_game_at(&game_id, round, now);
-		Self::deposit_event(RawEvent::RelayProposed(game_id, round, 0, relayer));
+		Self::update_timer_of_game_at(&game_id, 0, now);
+		Self::deposit_event(RawEvent::RelayProposed(game_id, 0, 0, relayer));
 
 		Ok(())
 	}
@@ -1109,10 +930,12 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			index,
 		} = proposal_id;
 
-		<Proposals<T, I>>::try_mutate(&game_id, round, |proposals| {
-			if let Some(proposal) = proposals.get_mut(index as usize) {
-				for (relay_parcel, relay_proofs) in
-					proposal.relay_parcels.iter().zip(relay_proofs.into_iter())
+		<Proposals<T, I>>::try_mutate(&game_id, round, |relay_proposals| {
+			if let Some(relay_proposal) = relay_proposals.get_mut(index as usize) {
+				for (relay_parcel, relay_proofs) in relay_proposal
+					.relay_parcels
+					.iter()
+					.zip(relay_proofs.into_iter())
 				{
 					if round == 0 {
 						T::RelayableChain::verify_proofs(
@@ -1131,7 +954,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 					}
 				}
 
-				proposal.verified = true;
+				relay_proposal.verified = true;
 
 				Ok(())
 			} else {
@@ -1186,30 +1009,32 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 		Self::update_bonds_with(&relayer, |old_bonds| old_bonds.saturating_add(bond));
 
-		let proposal = {
-			let mut proposal = RelayProposal::new();
+		let relay_proposal = {
+			let mut relay_proposal = RelayProposal::new();
 
-			proposal.relayer = relayer.clone();
-			proposal.relay_parcels = game_sample_points;
-			proposal.bond = bond;
-			proposal.maybe_extended_proposal_id = Some(extended_relay_proposal_id);
+			relay_proposal.relayer = relayer.clone();
+			relay_proposal.relay_parcels = game_sample_points;
+			relay_proposal.bond = bond;
+			relay_proposal.maybe_extended_relay_proposal_id = Some(extended_relay_proposal_id);
 
 			// Allow propose without relay proofs
 			// The relay proofs can be completed later through `complete_proofs`
 			if let Some(relay_proofs) = optional_relay_proofs {
-				for (relay_parcel, relay_proofs) in
-					proposal.relay_parcels.iter().zip(relay_proofs.into_iter())
+				for (relay_parcel, relay_proofs) in relay_proposal
+					.relay_parcels
+					.iter()
+					.zip(relay_proofs.into_iter())
 				{
 					T::RelayableChain::verify_proofs(&game_id, relay_parcel, &relay_proofs, None)?;
 				}
 
-				proposal.verified = true;
+				relay_proposal.verified = true;
 			}
 
-			proposal
+			relay_proposal
 		};
 
-		<Proposals<T, I>>::append(&game_id, round, proposal);
+		<Proposals<T, I>>::append(&game_id, round, relay_proposal);
 
 		let index = <Proposals<T, I>>::decode_len(&game_id, round)
 			.map(|length| length as u32)
