@@ -13,9 +13,6 @@ use sp_runtime::{traits::Zero, DispatchResult, RuntimeDebug};
 use sp_std::borrow::ToOwned;
 use sp_std::prelude::*;
 
-/// Game id, round and the index under the round point to a unique proposal AKA proposal id
-pub type RelayProposalId<GameId> = (GameId, u32, u32);
-
 pub trait BlockInfo {
 	type BlockId: Clone;
 	type HeaderHash: Clone;
@@ -127,6 +124,17 @@ pub trait RelayerGameProtocol {
 	fn approve_pending_relay_parcel(pending_relay_block_id: Self::GameId) -> DispatchResult;
 
 	fn reject_pending_relay_parcel(pending_relay_block_id: Self::GameId) -> DispatchResult;
+}
+
+/// Game id, round and the index under the round point to a unique proposal AKA proposal id
+#[derive(Clone, Encode, Decode, RuntimeDebug)]
+pub struct RelayProposalId<GameId> {
+	/// Game id aka block id
+	pub game_id: GameId,
+	/// Round index
+	pub round: u32,
+	/// Index of a proposal list which under a round
+	pub index: u32,
 }
 
 #[derive(Clone, Encode, Decode, RuntimeDebug)]

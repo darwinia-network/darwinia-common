@@ -414,7 +414,11 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		}
 
 		loop {
-			let (game_id, round, index) = maybe_extended_proposal_id.take().unwrap();
+			let RelayProposalId {
+				game_id,
+				round,
+				index,
+			} = maybe_extended_proposal_id.take().unwrap();
 
 			if let Some(proposal) = Self::proposals_of_game_at(&game_id, round)
 				.into_iter()
@@ -552,7 +556,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 				},
 			) in valid_proposals
 			{
-				if let Some((_, _, index)) = maybe_extended_proposal_id {
+				if let Some(RelayProposalId { index, .. }) = maybe_extended_proposal_id {
 					if let Some(extended_proposal) = previous_round_proposals.get(*index as usize) {
 						// FIXME
 						// if T::RelayableChain::verify_continuous(
@@ -894,7 +898,11 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 	fn get_proposed_relay_parcels(
 		proposal_id: RelayProposalId<Self::GameId>,
 	) -> Option<Vec<Self::RelayParcel>> {
-		let (game_id, round, index) = proposal_id;
+		let RelayProposalId {
+			game_id,
+			round,
+			index,
+		} = proposal_id;
 
 		Self::proposals_of_game_at(&game_id, round)
 			.into_iter()
@@ -998,10 +1006,14 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		proposal_id: RelayProposalId<Self::GameId>,
 		relay_proofs: Vec<Self::Proofs>,
 	) -> DispatchResult {
-		let (game_id, round, round_index) = proposal_id;
+		let RelayProposalId {
+			game_id,
+			round,
+			index,
+		} = proposal_id;
 
 		<Proposals<T, I>>::try_mutate(&game_id, round, |proposals| {
-			if let Some(proposal) = proposals.get_mut(round_index as usize) {
+			if let Some(proposal) = proposals.get_mut(index as usize) {
 				for (relay_parcel, relay_proofs) in
 					proposal.relay_parcels.iter().zip(relay_proofs.into_iter())
 				{
@@ -1037,7 +1049,11 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		extended_relay_proposal_id: RelayProposalId<Self::GameId>,
 		optional_relay_proofs: Option<Vec<Self::Proofs>>,
 	) -> DispatchResult {
-		let (game_id, previous_round, previous_round_index) = extended_relay_proposal_id.clone();
+		let RelayProposalId {
+			game_id,
+			round: previous_round,
+			index: previous_index,
+		} = extended_relay_proposal_id.clone();
 
 		ensure!(
 			Self::is_game_open_at(&game_id, <frame_system::Module<T>>::block_number()),
@@ -1060,7 +1076,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		);
 
 		let extended_proposal = existed_proposals
-			.get(previous_round_index as usize)
+			.get(previous_index as usize)
 			.ok_or(<Error<T, I>>::ExtendedProposalNE)?;
 
 		// Currently only accept extending from a completed proposal
