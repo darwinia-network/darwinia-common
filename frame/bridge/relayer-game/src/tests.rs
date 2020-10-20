@@ -45,41 +45,35 @@ fn insufficient_bond_should_fail() {
 		});
 }
 
-// #[test]
-// fn already_confirmed_should_fail() {
-// 	let confirmed_headers = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], true);
+#[test]
+fn already_confirmed_should_fail() {
+	let relay_parcels = MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], true);
 
-// 	ExtBuilder::default()
-// 		.headers(confirmed_headers.clone())
-// 		.build()
-// 		.execute_with(|| {
-// 			for confirmed_header in confirmed_headers {
-// 				assert_err!(
-// 					RelayerGame::submit_proposal(
-// 						1,
-// 						vec![confirmed_header]
-// 					),
-// 					RelayerGameError::TargetHeaderAC
-// 				);
-// 			}
-// 		});
-// }
+	ExtBuilder::default()
+		.headers(relay_parcels.clone())
+		.build()
+		.execute_with(|| {
+			for relay_parcel in relay_parcels {
+				assert_err!(
+					RelayerGame::propose(1, relay_parcel, None),
+					RelayerGameError::RelayParcelAR
+				);
+			}
+		});
+}
 
-// #[test]
-// fn duplicate_game_should_fail() {
-// 	ExtBuilder::default().build().execute_with(|| {
-// 		let proposal = MockTcHeader::mock_proposal(vec![1], true);
+#[test]
+fn duplicate_game_should_fail() {
+	ExtBuilder::default().build().execute_with(|| {
+		let relay_parcel = MockRelayHeader::gen(1, 0, 1);
 
-// 		assert_ok!(RelayerGame::submit_proposal(
-// 			1,
-// 			proposal.clone()
-// 		));
-// 		assert_err!(
-// 			RelayerGame::submit_proposal(1, proposal),
-// 			RelayerGameError::ProposalAE
-// 		);
-// 	});
-// }
+		assert_ok!(RelayerGame::propose(1, relay_parcel.clone(), None));
+		assert_err!(
+			RelayerGame::propose(2, relay_parcel, None),
+			RelayerGameError::RelayProposalDup
+		);
+	});
+}
 
 // #[test]
 // fn jump_round_should_fail() {

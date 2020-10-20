@@ -108,8 +108,8 @@ decl_event! {
 
 decl_error! {
 	pub enum Error for Module<T: Trait<I>, I: Instance> {
-		/// Relay Stuffs - ALREADY RELAIED
-		RelayStuffsAR,
+		/// Relay Parcel - ALREADY RELAIED
+		RelayParcelAR,
 		/// Round - MISMATCHED
 		RoundMis,
 		/// Active Games - TOO MANY
@@ -870,7 +870,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		// Check if the proposed header has already been relaied
 		ensure!(
 			game_id > best_relaied_block_id,
-			<Error<T, I>>::RelayStuffsAR
+			<Error<T, I>>::RelayParcelAR
 		);
 		// Make sure the game is at first round
 		ensure!(
