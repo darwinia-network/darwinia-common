@@ -18,8 +18,11 @@ pub type RelayProposalId<GameId> = (GameId, u32, u32);
 
 pub trait BlockInfo {
 	type BlockId: Clone;
+	type HeaderHash: Clone;
 
 	fn block_id(&self) -> &Self::BlockId;
+
+	fn header_hash(&self) -> Self::HeaderHash;
 }
 
 /// Implement this for target chain's relay module's

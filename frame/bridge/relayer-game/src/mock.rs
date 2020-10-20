@@ -184,9 +184,14 @@ pub mod mock_relay {
 	}
 	impl BlockInfo for MockRelayHeader {
 		type BlockId = u32;
+		type HeaderHash = u128;
 
 		fn block_id(&self) -> &Self::BlockId {
 			&self.number
+		}
+
+		fn header_hash(&self) -> Self::HeaderHash {
+			self.hash
 		}
 	}
 }
