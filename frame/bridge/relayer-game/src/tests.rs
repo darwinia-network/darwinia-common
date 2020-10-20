@@ -101,26 +101,26 @@ fn duplicate_game_should_fail() {
 // 			.challenge_time(challenge_time)
 // 			.build()
 // 			.execute_with(|| {
-// 				let header_thing = MockTcHeader::mock(1, 0, 1);
+// 				let relay_parcel = MockTcHeader::mock(1, 0, 1);
 
 // 				assert_ok!(RelayerGame::submit_proposal(
 // 					1,
-// 					vec![header_thing.clone()]
+// 					vec![relay_parcel.clone()]
 // 				));
 
 // 				for block in 0..=challenge_time {
 // 					run_to_block(block);
 
-// 					assert_eq!(RelayerGame::proposals_of_game(header_thing.number).len(), 1);
-// 					assert_eq!(Relay::header_of_block_number(header_thing.number), None);
+// 					assert_eq!(RelayerGame::proposals_of_game(relay_parcel.number).len(), 1);
+// 					assert_eq!(Relay::relaied_header_of(relay_parcel.number), None);
 // 				}
 
 // 				run_to_block(challenge_time + 1);
 
-// 				assert_eq!(RelayerGame::proposals_of_game(header_thing.number).len(), 0);
+// 				assert_eq!(RelayerGame::proposals_of_game(relay_parcel.number).len(), 0);
 // 				assert_eq!(
-// 					Relay::header_of_block_number(header_thing.number),
-// 					Some(header_thing)
+// 					Relay::relaied_header_of(relay_parcel.number),
+// 					Some(relay_parcel)
 // 				);
 // 			});
 // 	}
@@ -231,14 +231,14 @@ fn duplicate_game_should_fail() {
 // #[test]
 // fn settle_without_challenge_should_work() {
 // 	ExtBuilder::default().build().execute_with(|| {
-// 		for (header_thing, i) in MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], true)
+// 		for (relay_parcel, i) in MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], true)
 // 			.into_iter()
 // 			.rev()
 // 			.zip(1..)
 // 		{
 // 			assert_ok!(RelayerGame::submit_proposal(
 // 				1,
-// 				vec![header_thing.clone()]
+// 				vec![relay_parcel.clone()]
 // 			));
 
 // 			run_to_block(4 * i);
@@ -247,8 +247,8 @@ fn duplicate_game_should_fail() {
 // 			assert!(Ring::locks(1).is_empty());
 
 // 			assert_eq!(
-// 				Relay::header_of_block_number(header_thing.number),
-// 				Some(header_thing)
+// 				Relay::relaied_header_of(relay_parcel.number),
+// 				Some(relay_parcel)
 // 			);
 // 		}
 // 	})
@@ -280,11 +280,11 @@ fn duplicate_game_should_fail() {
 
 // 		run_to_block(3 * 4 + 1);
 
-// 		let header_thing = proposal_a[0].clone();
+// 		let relay_parcel = proposal_a[0].clone();
 
 // 		assert_eq!(
-// 			Relay::header_of_block_number(header_thing.number),
-// 			Some(header_thing)
+// 			Relay::relaied_header_of(relay_parcel.number),
+// 			Some(relay_parcel)
 // 		);
 // 	});
 // }
@@ -340,11 +340,11 @@ fn duplicate_game_should_fail() {
 // 			run_to_block(3 * i + 1);
 // 		}
 
-// 		let header_thing = proposal_a[0].clone();
+// 		let relay_parcel = proposal_a[0].clone();
 
 // 		assert_eq!(
-// 			Relay::header_of_block_number(header_thing.number),
-// 			Some(header_thing)
+// 			Relay::relaied_header_of(relay_parcel.number),
+// 			Some(relay_parcel)
 // 		);
 // 	});
 // }
@@ -408,67 +408,61 @@ fn auto_confirm_period_should_work() {
 		});
 }
 
-// // TODO: more cases
-// #[test]
-// fn approve_pending_header_should_work() {
-// 	ExtBuilder::default()
-// 		.confirmed_period(3)
-// 		.build()
-// 		.execute_with(|| {
-// 			let header_thing = MockTcHeader::mock(1, 0, 1);
+// TODO: more cases
+#[test]
+fn approve_pending_header_should_work() {
+	ExtBuilder::default()
+		.confirmed_period(3)
+		.build()
+		.execute_with(|| {
+			let relay_parcel = MockRelayHeader::gen(1, 0, 1);
 
-// 			assert_ok!(RelayerGame::submit_proposal(
-// 				1,
-// 				vec![header_thing.clone()],
-// 			));
+			assert_ok!(RelayerGame::propose(1, relay_parcel.clone(), None));
 
-// 			run_to_block(4);
+			run_to_block(7);
 
-// 			assert!(Relay::header_of_block_number(header_thing.number).is_none());
-// 			assert_eq!(
-// 				RelayerGame::pending_headers(),
-// 				vec![(6, header_thing.number, header_thing.clone())]
-// 			);
+			assert!(Relay::relaied_header_of(relay_parcel.number).is_none());
+			assert_eq!(
+				RelayerGame::pending_relay_parcels(),
+				vec![(9, relay_parcel.number, relay_parcel.clone())]
+			);
 
-// 			assert_ok!(
-// 				RelayerGame::approve_pending_header(header_thing.number)
-// 			);
+			assert_ok!(RelayerGame::approve_pending_relay_parcel(
+				relay_parcel.number
+			));
 
-// 			assert_eq!(
-// 				Relay::header_of_block_number(header_thing.number),
-// 				Some(header_thing)
-// 			);
-// 			assert!(RelayerGame::pending_headers().is_empty());
-// 		});
-// }
+			assert_eq!(
+				Relay::relaied_header_of(relay_parcel.number),
+				Some(relay_parcel)
+			);
+			assert!(RelayerGame::pending_relay_parcels().is_empty());
+		});
+}
 
-// // TODO: more cases
-// #[test]
-// fn reject_pending_header_should_work() {
-// 	ExtBuilder::default()
-// 		.confirmed_period(3)
-// 		.build()
-// 		.execute_with(|| {
-// 			let header_thing = MockTcHeader::mock(1, 0, 1);
+// TODO: more cases
+#[test]
+fn reject_pending_header_should_work() {
+	ExtBuilder::default()
+		.confirmed_period(3)
+		.build()
+		.execute_with(|| {
+			let relay_parcel = MockRelayHeader::gen(1, 0, 1);
 
-// 			assert_ok!(RelayerGame::submit_proposal(
-// 				1,
-// 				vec![header_thing.clone()]
-// 			));
+			assert_ok!(RelayerGame::propose(1, relay_parcel.clone(), None));
 
-// 			run_to_block(4);
+			run_to_block(7);
 
-// 			assert!(Relay::header_of_block_number(header_thing.number).is_none());
-// 			assert_eq!(
-// 				RelayerGame::pending_headers(),
-// 				vec![(6, header_thing.number, header_thing.clone())]
-// 			);
+			assert!(Relay::relaied_header_of(relay_parcel.number).is_none());
+			assert_eq!(
+				RelayerGame::pending_relay_parcels(),
+				vec![(9, relay_parcel.number, relay_parcel.clone())]
+			);
 
-// 			assert_ok!(RelayerGame::reject_pending_header(
-// 				header_thing.number
-// 			));
+			assert_ok!(RelayerGame::reject_pending_relay_parcel(
+				relay_parcel.number
+			));
 
-// 			assert!(Relay::header_of_block_number(header_thing.number).is_none());
-// 			assert!(RelayerGame::pending_headers().is_empty());
-// 		});
-// }
+			assert!(Relay::relaied_header_of(relay_parcel.number).is_none());
+			assert!(RelayerGame::pending_relay_parcels().is_empty());
+		});
+}
