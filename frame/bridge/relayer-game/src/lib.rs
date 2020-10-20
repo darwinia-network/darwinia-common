@@ -212,12 +212,13 @@ decl_module! {
 
 		fn deposit_event() = default;
 
-		fn on_initialize(block_number: BlockNumber<T>) -> Weight {
+		fn on_initialize(now: BlockNumber<T>) -> Weight {
 			// TODO: handle error
-			Self::system_approve_pending_relay_parcels(block_number).unwrap_or(0)
+			// TODO: weight
+			Self::system_approve_pending_relay_parcels(now).unwrap_or(0)
 		}
 
-		fn offchain_worker(now: BlockNumber<T>) {
+		fn on_finalize(now: BlockNumber<T>) {
 			let game_ids = <GamesToUpdate<T, I>>::take(now);
 
 			if !game_ids.is_empty() {
@@ -229,88 +230,100 @@ decl_module! {
 			// Return while no closed rounds found
 		}
 
-		#[weight = 100_000_000]
-		pub fn update_games_unsigned(origin, game_ids: Vec<RelayBlockId<T, I>>) {
-			ensure_none(origin)?;
+		// fn offchain_worker(now: BlockNumber<T>) {
+		// 	let game_ids = <GamesToUpdate<T, I>>::take(now);
 
-			let now = <frame_system::Module<T>>::block_number();
-			let mut relay_parcels = vec![];
+		// 	if !game_ids.is_empty() {
+		// 		if let Err(e) = Self::update_games_at(game_ids, now) {
+		// 			error!(target: "relayer-game", "{:?}", e);
+		// 		}
+		// 	}
 
-			for game_id in game_ids {
-				trace!(
-					target: "relayer-game",
-					">  Trying to Settle Game `{:?}`", game_id
-				);
+		// 	// Return while no closed rounds found
+		// }
 
-				let round_count = Self::round_count_of(&game_id);
-				let last_round = if let Some(last_round) = round_count.checked_sub(1) {
-					last_round
-				} else {
-					// Should never enter this condition
-					error!(target: "relayer-game", "   >  Rounds - EMPTY");
+		// #[weight = 100_000_000]
+		// pub fn update_games_unsigned(origin, game_ids: Vec<RelayBlockId<T, I>>) {
+		// 	ensure_none(origin)?;
 
-					continue;
-				};
-				let mut proposals = Self::proposals_of_game_at(&game_id, last_round);
+		// 	let now = <frame_system::Module<T>>::block_number();
+		// 	let mut relay_parcels = vec![];
 
-				match (last_round, proposals.len()) {
-					// Should never enter this condition
-					(0, 0) => error!(target: "relayer-game", "   >  Proposals - EMPTY"),
-					// At first round and only one proposal found
-					(0, 1) => {
-						trace!(target: "relayer-game", "   >  Challenge - NOT EXISTED");
+		// 	for game_id in game_ids {
+		// 		trace!(
+		// 			target: "relayer-game",
+		// 			">  Trying to Settle Game `{:?}`", game_id
+		// 		);
 
-						if let Some(relay_parcel) =
-							Self::settle_without_challenge(proposals.pop().unwrap())
-						{
-							relay_parcels.push((game_id.to_owned(), relay_parcel));
-						}
-					}
-					// No relayer response for the lastest round
-					(_, 0) => {
-						trace!(target: "relayer-game", "   >  All Relayers Abstain");
+		// 		let round_count = Self::round_count_of(&game_id);
+		// 		let last_round = if let Some(last_round) = round_count.checked_sub(1) {
+		// 			last_round
+		// 		} else {
+		// 			// Should never enter this condition
+		// 			error!(target: "relayer-game", "   >  Rounds - EMPTY");
 
-						Self::settle_abandon(proposals);
-					},
-					// No more challenge found at latest round, only one relayer win
-					(_, 1) => {
-						trace!(target: "relayer-game", "   >  No More Challenge");
+		// 			continue;
+		// 		};
+		// 		let mut proposals = Self::proposals_of_game_at(&game_id, last_round);
 
-						if let Some(relay_parcel) =
-							Self::settle_with_challenge(&game_id, proposals.pop().unwrap())
-						{
-							relay_parcels.push((game_id.to_owned(), relay_parcel));
-						}
-					}
-					(last_round, _) => {
-						trace!(target: "relayer-game", "   >  Challenge Found");
+		// 		match (last_round, proposals.len()) {
+		// 			// Should never enter this condition
+		// 			(0, 0) => error!(target: "relayer-game", "   >  Proposals - EMPTY"),
+		// 			// At first round and only one proposal found
+		// 			(0, 1) => {
+		// 				trace!(target: "relayer-game", "   >  Challenge - NOT EXISTED");
 
-						let distance = T::RelayableChain::distance_between(
-							&game_id,
-							Self::best_relaied_block_id_of(&game_id)
-						);
+		// 				if let Some(relay_parcel) =
+		// 					Self::settle_without_challenge(proposals.pop().unwrap())
+		// 				{
+		// 					relay_parcels.push((game_id.to_owned(), relay_parcel));
+		// 				}
+		// 			}
+		// 			// No relayer response for the lastest round
+		// 			(_, 0) => {
+		// 				trace!(target: "relayer-game", "   >  All Relayers Abstain");
 
-						if distance == round_count {
-							// A whole chain gave, start continuous verification
-							if let Some(relay_parcel) = Self::on_chain_arbitrate(&game_id, last_round) {
-								relay_parcels.push((game_id.to_owned(), relay_parcel));
-							}
-						} else {
-							// Update game, start next round
-							Self::update_game_at(&game_id, last_round, now);
+		// 				Self::settle_abandon(proposals);
+		// 			},
+		// 			// No more challenge found at latest round, only one relayer win
+		// 			(_, 1) => {
+		// 				trace!(target: "relayer-game", "   >  No More Challenge");
 
-							continue;
-						}
-					}
-				}
+		// 				if let Some(relay_parcel) =
+		// 					Self::settle_with_challenge(&game_id, proposals.pop().unwrap())
+		// 				{
+		// 					relay_parcels.push((game_id.to_owned(), relay_parcel));
+		// 				}
+		// 			}
+		// 			(last_round, _) => {
+		// 				trace!(target: "relayer-game", "   >  Challenge Found");
 
-				Self::game_over(game_id);
-			}
+		// 				let distance = T::RelayableChain::distance_between(
+		// 					&game_id,
+		// 					Self::best_relaied_block_id_of(&game_id)
+		// 				);
 
-			Self::store_relay_parcels(now, relay_parcels)?;
+		// 				if distance == round_count {
+		// 					// A whole chain gave, start continuous verification
+		// 					if let Some(relay_parcel) = Self::on_chain_arbitrate(&game_id, last_round) {
+		// 						relay_parcels.push((game_id.to_owned(), relay_parcel));
+		// 					}
+		// 				} else {
+		// 					// Update game, start next round
+		// 					Self::update_game_at(&game_id, last_round, now);
 
-			trace!(target: "relayer-game", "---");
-		}
+		// 					continue;
+		// 				}
+		// 			}
+		// 		}
+
+		// 		Self::game_over(game_id);
+		// 	}
+
+		// 	Self::store_relay_parcels(now, relay_parcels)?;
+
+		// 	trace!(target: "relayer-game", "---");
+		// }
 	}
 }
 
@@ -368,10 +381,14 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		trace!(target: "relayer-game", "Found Closed Rounds at `{:?}`", moment);
 		trace!(target: "relayer-game", "---");
 
-		let call = Call::update_games_unsigned(game_ids).into();
+		// let call = Call::update_games_unsigned(game_ids).into();
+		//
+		// <SubmitTransaction<T, Call<T, I>>>::submit_unsigned_transaction(call)
+		// .map_err(|_| "TODO".into())
 
-		<SubmitTransaction<T, Call<T, I>>>::submit_unsigned_transaction(call)
-			.map_err(|_| "TODO".into())
+		Self::update_games(game_ids)?;
+
+		Ok(())
 	}
 
 	pub fn update_bonds_with<F>(relayer: &AccountId<T>, calc_bonds: F)
@@ -438,7 +455,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		}
 	}
 
-	// Build the honsties/evils(reward/slash) map follow a gave winning proposal
+	/// Build the honsties/evils(reward/slash) map follow a gave winning proposal
 	pub fn build_honsties_evils_map(
 		game_id: &RelayBlockId<T, I>,
 		winning_proposal: RelayProposalT<T, I>,
@@ -860,6 +877,88 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		})
 	}
 
+	pub fn update_games(game_ids: Vec<RelayBlockId<T, I>>) -> DispatchResult {
+		let now = <frame_system::Module<T>>::block_number();
+		let mut relay_parcels = vec![];
+
+		for game_id in game_ids {
+			trace!(
+				target: "relayer-game",
+				">  Trying to Settle Game `{:?}`", game_id
+			);
+
+			let round_count = Self::round_count_of(&game_id);
+			let last_round = if let Some(last_round) = round_count.checked_sub(1) {
+				last_round
+			} else {
+				// Should never enter this condition
+				error!(target: "relayer-game", "   >  Rounds - EMPTY");
+
+				continue;
+			};
+			let mut proposals = Self::proposals_of_game_at(&game_id, last_round);
+
+			match (last_round, proposals.len()) {
+				// Should never enter this condition
+				(0, 0) => error!(target: "relayer-game", "   >  Proposals - EMPTY"),
+				// At first round and only one proposal found
+				(0, 1) => {
+					trace!(target: "relayer-game", "   >  Challenge - NOT EXISTED");
+
+					if let Some(relay_parcel) =
+						Self::settle_without_challenge(proposals.pop().unwrap())
+					{
+						relay_parcels.push((game_id.to_owned(), relay_parcel));
+					}
+				}
+				// No relayer response for the lastest round
+				(_, 0) => {
+					trace!(target: "relayer-game", "   >  All Relayers Abstain");
+
+					Self::settle_abandon(proposals);
+				}
+				// No more challenge found at latest round, only one relayer win
+				(_, 1) => {
+					trace!(target: "relayer-game", "   >  No More Challenge");
+
+					if let Some(relay_parcel) =
+						Self::settle_with_challenge(&game_id, proposals.pop().unwrap())
+					{
+						relay_parcels.push((game_id.to_owned(), relay_parcel));
+					}
+				}
+				(last_round, _) => {
+					trace!(target: "relayer-game", "   >  Challenge Found");
+
+					let distance = T::RelayableChain::distance_between(
+						&game_id,
+						Self::best_relaied_block_id_of(&game_id),
+					);
+
+					if distance == round_count {
+						// A whole chain gave, start continuous verification
+						if let Some(relay_parcel) = Self::on_chain_arbitrate(&game_id, last_round) {
+							relay_parcels.push((game_id.to_owned(), relay_parcel));
+						}
+					} else {
+						// Update game, start next round
+						Self::update_game_at(&game_id, last_round, now);
+
+						continue;
+					}
+				}
+			}
+
+			Self::game_over(game_id);
+		}
+
+		Self::store_relay_parcels(now, relay_parcels)?;
+
+		trace!(target: "relayer-game", "---");
+
+		Ok(())
+	}
+
 	pub fn system_approve_pending_relay_parcels(
 		now: BlockNumber<T>,
 	) -> Result<Weight, DispatchError> {
@@ -884,7 +983,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 			)
 		});
 
-		// TODO weight
+		// TODO: weight
 		Ok(0)
 	}
 }
