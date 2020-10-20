@@ -379,37 +379,34 @@ fn duplicate_game_should_fail() {
 // 	});
 // }
 
-// // TODO: more cases
-// #[test]
-// fn auto_confirm_period_should_work() {
-// 	ExtBuilder::default()
-// 		.confirmed_period(3)
-// 		.build()
-// 		.execute_with(|| {
-// 			let header_thing = MockTcHeader::mock(1, 0, 1);
+// TODO: more cases
+#[test]
+fn auto_confirm_period_should_work() {
+	ExtBuilder::default()
+		.confirmed_period(3)
+		.build()
+		.execute_with(|| {
+			let relay_parcel = MockRelayHeader::gen(1, 0, 1);
 
-// 			assert_ok!(RelayerGame::submit_proposal(
-// 				1,
-// 				vec![header_thing.clone()]
-// 			));
+			assert_ok!(RelayerGame::propose(1, relay_parcel.clone(), None));
 
-// 			run_to_block(4);
+			run_to_block(7);
 
-// 			assert!(Relay::header_of_block_number(header_thing.number).is_none());
-// 			assert_eq!(
-// 				RelayerGame::pending_headers(),
-// 				vec![(6, header_thing.number, header_thing.clone())]
-// 			);
+			assert!(Relay::relaied_header_of(relay_parcel.number).is_none());
+			assert_eq!(
+				RelayerGame::pending_relay_parcels(),
+				vec![(9, relay_parcel.number, relay_parcel.clone())]
+			);
 
-// 			run_to_block(6);
+			run_to_block(9);
 
-// 			assert_eq!(
-// 				Relay::header_of_block_number(header_thing.number),
-// 				Some(header_thing)
-// 			);
-// 			assert!(RelayerGame::pending_headers().is_empty());
-// 		});
-// }
+			assert_eq!(
+				Relay::relaied_header_of(relay_parcel.number),
+				Some(relay_parcel)
+			);
+			assert!(RelayerGame::pending_relay_parcels().is_empty());
+		});
+}
 
 // // TODO: more cases
 // #[test]

@@ -240,7 +240,7 @@ pub type RelayerGame = Module<Test, DefaultInstance>;
 
 thread_local! {
 	static GENESIS_TIME: Instant = Instant::now();
-	static CHALLENGE_TIME: RefCell<BlockNumber> = RefCell::new(3);
+	static CHALLENGE_TIME: RefCell<BlockNumber> = RefCell::new(6);
 	static ESTIMATE_BOND: RefCell<Balance> = RefCell::new(1);
 	static CONFIRM_PERIOD: RefCell<BlockNumber> = RefCell::new(0);
 }
