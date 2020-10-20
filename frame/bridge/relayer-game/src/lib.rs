@@ -122,18 +122,18 @@ decl_error! {
 		ActiveGamesTM,
 		/// Game - CLOSED
 		GameC,
-		/// Proposal - DUPLICATED
-		ProposalDup,
+		/// Relay Proposal - DUPLICATED
+		RelayProposalDup,
 		/// Usable *RING* for Bond - INSUFFICIENT
 		BondIns,
-		/// Proofses Quantity - INVALID
-		ProofsesInv,
-		/// Proposal - NOT EXISTED
-		ProposalNE,
-		/// Extended Proposal - NOT EXISTED
-		ExtendedProposalNE,
-		/// Previous Proofs - INCOMPLETE
-		PreviousProofsInc,
+		/// Relay Proofs Quantity - INVALID
+		RelayProofsQuantityInv,
+		/// Relay Proposal - NOT EXISTED
+		RelayProposalNE,
+		/// Extended Relay Proposal - NOT EXISTED
+		ExtendedRelayProposalNE,
+		/// Previous Relay Proofs - INCOMPLETE
+		PreviousRelayProofsInc,
 		/// Pending Relay Parcel - NOT EXISTED
 		PendingRelayParcelNE,
 	}
@@ -971,7 +971,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			// Currently not allow to vote for(relay) the same parcel
 			ensure!(
 				Self::is_unique_proposal(&proposed_relay_parcels, &existed_proposals),
-				<Error<T, I>>::ProposalDup
+				<Error<T, I>>::RelayProposalDup
 			);
 		}
 
@@ -1052,7 +1052,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 				Ok(())
 			} else {
-				Err(<Error<T, I>>::ProposalNE)?
+				Err(<Error<T, I>>::RelayProposalNE.into())
 			}
 		})
 	}
@@ -1077,7 +1077,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		if let Some(ref relay_proofs) = &optional_relay_proofs {
 			ensure!(
 				relay_proofs.len() == game_sample_points.len(),
-				<Error<T, I>>::ProofsesInv
+				<Error<T, I>>::RelayProofsQuantityInv
 			);
 		}
 
@@ -1086,15 +1086,18 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 		ensure!(
 			Self::is_unique_proposal(&game_sample_points, &existed_proposals),
-			<Error<T, I>>::ProposalDup
+			<Error<T, I>>::RelayProposalDup
 		);
 
 		let extended_proposal = existed_proposals
 			.get(previous_index as usize)
-			.ok_or(<Error<T, I>>::ExtendedProposalNE)?;
+			.ok_or(<Error<T, I>>::ExtendedRelayProposalNE)?;
 
 		// Currently only accept extending from a completed proposal
-		ensure!(extended_proposal.verified, <Error<T, I>>::PreviousProofsInc);
+		ensure!(
+			extended_proposal.verified,
+			<Error<T, I>>::PreviousRelayProofsInc
+		);
 
 		let bond = Self::ensure_can_bond(&relayer, round, existed_proposals.len() as u8 + 1)?;
 
