@@ -924,7 +924,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 		let best_relaied_block_id = T::RelayableChain::best_relaied_block_id();
 		// TODO: optimize clone
-		let game_id = relay_parcel.block_id().to_owned();
+		let game_id = relay_parcel.block_id();
 
 		// Check if the proposed header has already been relaied
 		ensure!(

@@ -15,9 +15,8 @@ use sp_std::prelude::*;
 
 pub trait BlockInfo {
 	type BlockId: Clone;
-	type HeaderHash: Clone;
 
-	fn block_id(&self) -> &Self::BlockId;
+	fn block_id(&self) -> Self::BlockId;
 }
 
 /// Implement this for target chain's relay module's
@@ -127,7 +126,7 @@ pub trait RelayerGameProtocol {
 }
 
 /// Game id, round and the index under the round point to a unique proposal AKA proposal id
-#[derive(Clone, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
 pub struct RelayProposalId<GameId> {
 	/// Game id aka block id
 	pub game_id: GameId,
