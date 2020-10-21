@@ -43,6 +43,8 @@ use sp_std::prelude::*;
 
 pub use dvm_rpc_primitives::TransactionStatus;
 pub use ethereum::{Block, Log, Receipt, Transaction, TransactionAction};
+use frame_support::traits::Currency;
+use pallet_evm::AddressMapping;
 
 #[cfg(all(feature = "std", test))]
 mod tests;
@@ -66,6 +68,8 @@ pub trait Trait:
 	type Event: From<Event> + Into<<Self as frame_system::Trait>::Event>;
 	/// Find author for Ethereum.
 	type FindAuthor: FindAuthor<H160>;
+	type AddressMapping: AddressMapping<Self::AccountId>;
+	type RingCurrency: Currency<Self::AccountId>;
 }
 
 decl_storage! {
