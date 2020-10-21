@@ -80,51 +80,51 @@ fn duplicate_game_should_fail() {
 // 	ExtBuilder::default().build().execute_with(|| {
 // 		let proposal = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], true);
 
-// 		assert_ok!(RelayerGame::submit_proposal(
+// 		assert_ok!(RelayerGame::propose(
 // 			1,
 // 			proposal[..1].to_vec()
 // 		));
 
 // 		for i in 2..=5 {
 // 			assert_err!(
-// 				RelayerGame::submit_proposal(1, proposal[..i].to_vec()),
+// 				RelayerGame::propose(1, proposal[..i].to_vec()),
 // 				RelayerGameError::RoundMis
 // 			);
 // 		}
 // 	});
 // }
 
-// #[test]
-// fn challenge_time_should_work() {
-// 	for challenge_time in 3..10 {
-// 		ExtBuilder::default()
-// 			.challenge_time(challenge_time)
-// 			.build()
-// 			.execute_with(|| {
-// 				let relay_parcel = MockTcHeader::mock(1, 0, 1);
+#[test]
+fn challenge_time_should_work() {
+	for &challenge_time in [4, 6, 8].iter() {
+		ExtBuilder::default()
+			.challenge_time(challenge_time)
+			.build()
+			.execute_with(|| {
+				let relay_parcel = MockRelayHeader::gen(1, 0, 1);
 
-// 				assert_ok!(RelayerGame::submit_proposal(
-// 					1,
-// 					vec![relay_parcel.clone()]
-// 				));
+				assert_ok!(RelayerGame::propose(1, relay_parcel.clone(), None));
 
-// 				for block in 0..=challenge_time {
-// 					run_to_block(block);
+				for block in 0..=challenge_time {
+					run_to_block(block);
 
-// 					assert_eq!(RelayerGame::proposals_of_game(relay_parcel.number).len(), 1);
-// 					assert_eq!(Relay::relaied_header_of(relay_parcel.number), None);
-// 				}
+					assert_eq!(
+						RelayerGame::proposals_of_game_at(relay_parcel.number, 0).len(),
+						1
+					);
+					assert!(Relay::relaied_header_of(relay_parcel.number).is_none());
+				}
 
-// 				run_to_block(challenge_time + 1);
+				run_to_block(challenge_time + 1);
 
-// 				assert_eq!(RelayerGame::proposals_of_game(relay_parcel.number).len(), 0);
-// 				assert_eq!(
-// 					Relay::relaied_header_of(relay_parcel.number),
-// 					Some(relay_parcel)
-// 				);
-// 			});
-// 	}
-// }
+				assert!(RelayerGame::proposals_of_game_at(relay_parcel.number, 1).is_empty());
+				assert_eq!(
+					Relay::relaied_header_of(relay_parcel.number),
+					Some(relay_parcel)
+				);
+			});
+	}
+}
 
 // #[test]
 // fn extend_should_work() {
@@ -133,11 +133,11 @@ fn duplicate_game_should_fail() {
 // 		let proposal_b = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], false);
 
 // 		for i in 1..=5 {
-// 			assert_ok!(RelayerGame::submit_proposal(
+// 			assert_ok!(RelayerGame::propose(
 // 				1,
 // 				proposal_a[..i as usize].to_vec()
 // 			));
-// 			assert_ok!(RelayerGame::submit_proposal(
+// 			assert_ok!(RelayerGame::propose(
 // 				2,
 // 				proposal_b[..i as usize].to_vec()
 // 			));
@@ -158,7 +158,7 @@ fn duplicate_game_should_fail() {
 // 				let proposal_a = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], true);
 // 				let proposal_b = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], false);
 // 				let submit_then_assert = |account_id, chain, bonds| {
-// 					assert_ok!(RelayerGame::submit_proposal(
+// 					assert_ok!(RelayerGame::propose(
 // 						account_id, chain
 // 					));
 // 					assert_eq!(RelayerGame::bonds_of_relayer(account_id), bonds);
@@ -205,11 +205,11 @@ fn duplicate_game_should_fail() {
 // 				assert_eq!(Ring::usable_balance(&20), 2000);
 
 // 				for i in 1..=5 {
-// 					assert_ok!(RelayerGame::submit_proposal(
+// 					assert_ok!(RelayerGame::propose(
 // 						10,
 // 						proposal_a[..i as usize].to_vec()
 // 					));
-// 					assert_ok!(RelayerGame::submit_proposal(
+// 					assert_ok!(RelayerGame::propose(
 // 						20,
 // 						proposal_b[..i as usize].to_vec()
 // 					));
@@ -236,7 +236,7 @@ fn duplicate_game_should_fail() {
 // 			.rev()
 // 			.zip(1..)
 // 		{
-// 			assert_ok!(RelayerGame::submit_proposal(
+// 			assert_ok!(RelayerGame::propose(
 // 				1,
 // 				vec![relay_parcel.clone()]
 // 			));
@@ -261,11 +261,11 @@ fn duplicate_game_should_fail() {
 // 		let proposal_b = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], false);
 
 // 		for i in 1..=3 {
-// 			assert_ok!(RelayerGame::submit_proposal(
+// 			assert_ok!(RelayerGame::propose(
 // 				1,
 // 				proposal_a[..i as usize].to_vec()
 // 			));
-// 			assert_ok!(RelayerGame::submit_proposal(
+// 			assert_ok!(RelayerGame::propose(
 // 				2,
 // 				proposal_b[..i as usize].to_vec()
 // 			));
@@ -273,7 +273,7 @@ fn duplicate_game_should_fail() {
 // 			run_to_block(3 * i + 1);
 // 		}
 
-// 		assert_ok!(RelayerGame::submit_proposal(
+// 		assert_ok!(RelayerGame::propose(
 // 			1,
 // 			proposal_a[..4 as usize].to_vec()
 // 		));
@@ -299,11 +299,11 @@ fn duplicate_game_should_fail() {
 // 		assert_eq!(Ring::usable_balance(&2), 200);
 
 // 		for i in 1..=3 {
-// 			assert_ok!(RelayerGame::submit_proposal(
+// 			assert_ok!(RelayerGame::propose(
 // 				1,
 // 				proposal_a[..i as usize].to_vec()
 // 			));
-// 			assert_ok!(RelayerGame::submit_proposal(
+// 			assert_ok!(RelayerGame::propose(
 // 				2,
 // 				proposal_b[..i as usize].to_vec()
 // 			));
@@ -328,11 +328,11 @@ fn duplicate_game_should_fail() {
 // 		let proposal_b = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], false);
 
 // 		for i in 1..=5 {
-// 			assert_ok!(RelayerGame::submit_proposal(
+// 			assert_ok!(RelayerGame::propose(
 // 				1,
 // 				proposal_a[..i as usize].to_vec()
 // 			));
-// 			assert_ok!(RelayerGame::submit_proposal(
+// 			assert_ok!(RelayerGame::propose(
 // 				2,
 // 				proposal_b[..i as usize].to_vec()
 // 			));
@@ -359,11 +359,11 @@ fn duplicate_game_should_fail() {
 // 		assert_eq!(Ring::usable_balance(&2), 200);
 
 // 		for i in 1..=5 {
-// 			assert_ok!(RelayerGame::submit_proposal(
+// 			assert_ok!(RelayerGame::propose(
 // 				1,
 // 				proposal_a[..i as usize].to_vec()
 // 			));
-// 			assert_ok!(RelayerGame::submit_proposal(
+// 			assert_ok!(RelayerGame::propose(
 // 				2,
 // 				proposal_b[..i as usize].to_vec()
 // 			));
@@ -410,7 +410,7 @@ fn auto_confirm_period_should_work() {
 
 // TODO: more cases
 #[test]
-fn approve_pending_header_should_work() {
+fn approve_pending_parcels_should_work() {
 	ExtBuilder::default()
 		.confirmed_period(3)
 		.build()
@@ -441,7 +441,7 @@ fn approve_pending_header_should_work() {
 
 // TODO: more cases
 #[test]
-fn reject_pending_header_should_work() {
+fn reject_pending_parcels_should_work() {
 	ExtBuilder::default()
 		.confirmed_period(3)
 		.build()
