@@ -49,6 +49,7 @@ mod tests;
 
 #[cfg(all(feature = "std", test))]
 mod mock;
+mod precompiles;
 
 /// A type alias for the balance type from this pallet's point of view.
 pub type BalanceOf<T> = <T as darwinia_balances::Trait>::Balance;
