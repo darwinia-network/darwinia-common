@@ -28,7 +28,7 @@ libsecp256k1 = { version = "0.3", default-features = false }
 dvm-consensus-primitives = { path = "../consensus/primitives", default-features = false }
 dvm-rpc-primitives = { path = "../rpc/primitives", default-features = false }
 darwinia-support                  = { default-features = false, path = "../../../frame/support" }
-sp-core = { version = "2.0.0-dev", git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 [features]
 default = ["std"]
@@ -52,4 +52,5 @@ std = [
 	"dvm-consensus-primitives/std",
 	"dvm-rpc-primitives/std",
 	"evm/std",
+	"sp-core/std",
 ]
