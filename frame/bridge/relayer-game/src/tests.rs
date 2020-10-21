@@ -126,26 +126,72 @@ fn challenge_time_should_work() {
 	}
 }
 
-// #[test]
-// fn extend_should_work() {
-// 	ExtBuilder::default().build().execute_with(|| {
-// 		let proposal_a = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], true);
-// 		let proposal_b = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], false);
+#[test]
+fn extend_should_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		let relay_parcels_a = MockRelayHeader::gen_continous(1, vec![1, 1, 1], true);
+		let relay_parcels_b = MockRelayHeader::gen_continous(1, vec![1, 1, 1], true);
 
-// 		for i in 1..=5 {
-// 			assert_ok!(RelayerGame::propose(
-// 				1,
-// 				proposal_a[..i as usize].to_vec()
-// 			));
-// 			assert_ok!(RelayerGame::propose(
-// 				2,
-// 				proposal_b[..i as usize].to_vec()
-// 			));
+		assert_ok!(RelayerGame::propose(
+			1,
+			relay_parcels_a[0].clone(),
+			Some(())
+		));
+		assert_ok!(RelayerGame::propose(
+			2,
+			relay_parcels_b[0].clone(),
+			Some(())
+		));
 
-// 			run_to_block(3 * i + 1);
-// 		}
-// 	});
-// }
+		run_to_block(6 * 1 + 1);
+
+		// println_game(3);
+
+		assert_ok!(RelayerGame::extend_proposal(
+			1,
+			vec![relay_parcels_a[1].clone()],
+			RelayProposalId {
+				relay_block_id: 3,
+				round: 0,
+				index: 0
+			},
+			Some(vec![()])
+		));
+		assert_ok!(RelayerGame::extend_proposal(
+			2,
+			vec![relay_parcels_b[1].clone()],
+			RelayProposalId {
+				relay_block_id: 3,
+				round: 0,
+				index: 1
+			},
+			Some(vec![()])
+		));
+
+		run_to_block(6 * 2 + 1);
+
+		assert_ok!(RelayerGame::extend_proposal(
+			1,
+			vec![relay_parcels_a[2].clone()],
+			RelayProposalId {
+				relay_block_id: 3,
+				round: 1,
+				index: 0
+			},
+			Some(vec![()])
+		));
+		assert_ok!(RelayerGame::extend_proposal(
+			2,
+			vec![relay_parcels_b[2].clone()],
+			RelayProposalId {
+				relay_block_id: 3,
+				round: 1,
+				index: 1
+			},
+			Some(vec![()])
+		));
+	});
+}
 
 // #[test]
 // fn lock_should_work() {

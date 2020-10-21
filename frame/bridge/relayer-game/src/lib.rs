@@ -292,7 +292,18 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		let complete_proofs_time = T::RelayerGameAdjustor::complete_proofs_time(round);
 
 		<ProposeEndTime<T, I>>::insert(game_id, propose_time);
-		<GamesToUpdate<T, I>>::append(propose_time + complete_proofs_time, game_id);
+		let _ = <GamesToUpdate<T, I>>::try_mutate(
+			propose_time + complete_proofs_time,
+			|games_to_update| {
+				if games_to_update.contains(game_id) {
+					Err(())
+				} else {
+					games_to_update.push(game_id.to_owned());
+
+					Ok(())
+				}
+			},
+		);
 	}
 
 	pub fn update_games_at(
@@ -632,6 +643,9 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	pub fn update_game_at(game_id: &RelayBlockId<T, I>, last_round: u32, moment: BlockNumber<T>) {
 		Self::update_timer_of_game_at(game_id, last_round + 1, moment);
 
+		<RoundCounts<T, I>>::mutate(&game_id, |round_count| {
+			*round_count = round_count.saturating_add(1)
+		});
 		<GameSamplePoints<T, I>>::mutate(game_id, |game_sample_points| {
 			T::RelayerGameAdjustor::update_sample_points(game_sample_points);
 
