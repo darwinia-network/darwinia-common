@@ -10,6 +10,11 @@ use pallet_evm::{AddressMapping, ExitError, ExitSucceed, Precompile};
 
 pub struct ConcatAddressMapping;
 
+/// The ConcatAddressMapping used for transfer from evm 20-length to substrate 32-length address
+/// The concat rule inclued three parts:
+/// 1. AccountId Prefix: concat("dvm", "0x00000000000000"), length: 11 byetes
+/// 2. Evm address: the original evm address, length: 20 bytes
+/// 3. CheckSum:  byte_xor(AccountId Prefix + Evm address), length: 1 bytes
 impl AddressMapping<AccountId32> for ConcatAddressMapping {
 	fn into_account_id(address: H160) -> AccountId32 {
 		let mut data = [0u8; 32];
