@@ -78,10 +78,10 @@ pub trait AdjustableRelayerGame {
 	/// And return the new samples
 	fn update_sample_points(sample_points: &mut Vec<Vec<Self::RelayHeaderId>>);
 
-	/// Give an estimate bond value for a specify round
+	/// Give an estimate stake value for a specify round
 	///
-	/// Usally the bond value go expensive wihle the round and the affirmations count increase
-	fn estimate_bond(round: u32, proposals_count: u8) -> Self::Balance;
+	/// Usally the stake value go expensive wihle the round and the affirmations count increase
+	fn estimate_stake(round: u32, proposals_count: u8) -> Self::Balance;
 }
 
 pub trait RelayerGameProtocol {
@@ -159,9 +159,9 @@ pub struct RelayAffirmationId<RelayHeaderId> {
 pub struct RelayAffirmation<RelayHeaderParcel, Relayer, Balance, RelayHeaderId> {
 	pub relayer: Relayer,
 	pub relay_header_parcels: Vec<RelayHeaderParcel>,
-	pub bond: Balance,
+	pub stake: Balance,
 	pub maybe_extended_relay_affirmation_id: Option<RelayAffirmationId<RelayHeaderId>>,
-	pub verified: bool,
+	pub verified_on_chain: bool,
 }
 impl<RelayHeaderParcel, Relayer, Balance, RelayHeaderId>
 	RelayAffirmation<RelayHeaderParcel, Relayer, Balance, RelayHeaderId>
@@ -173,9 +173,9 @@ where
 		Self {
 			relayer: Relayer::default(),
 			relay_header_parcels: vec![],
-			bond: Zero::zero(),
+			stake: Zero::zero(),
 			maybe_extended_relay_affirmation_id: None,
-			verified: false,
+			verified_on_chain: false,
 		}
 	}
 }

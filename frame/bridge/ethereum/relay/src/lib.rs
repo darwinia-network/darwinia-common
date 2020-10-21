@@ -37,7 +37,7 @@ use frame_support::{
 use frame_system::ensure_signed;
 use sp_runtime::{
 	traits::{AccountIdConversion, DispatchInfoOf, Dispatchable, SignedExtension},
-	transaction_validity::{InvalidTransaction, ValidTransaction},
+	transaction_validity::ValidTransaction,
 	DispatchError, DispatchResult, ModuleId, RuntimeDebug,
 };
 #[cfg(not(feature = "std"))]
@@ -79,7 +79,7 @@ pub trait Trait: frame_system::Trait {
 		Relayer = AccountId<Self>,
 		RelayHeaderId = EthereumBlockNumber,
 		RelayHeaderParcel = EthereumRelayHeaderParcel,
-		Proofs = EthereumRelayProofs,
+		RelayProofs = EthereumRelayProofs,
 	>;
 
 	type ApproveOrigin: EnsureOrigin<Self::Origin>;
@@ -234,14 +234,29 @@ decl_module! {
 		}
 
 		#[weight = 0]
-		pub fn propose(
+		pub fn affirm(
 			origin,
 			ethereum_relay_header_parcel: EthereumRelayHeaderParcel,
 			optional_ethereum_relay_proofs: Option<EthereumRelayProofs>
 		) {
 			let relayer = ensure_signed(origin)?;
 
-			T::RelayerGame::propose(
+			T::RelayerGame::affirm(
+				relayer,
+				ethereum_relay_header_parcel,
+				optional_ethereum_relay_proofs
+			)?;
+		}
+
+		#[weight = 0]
+		pub fn dispute_and_affirm(
+			origin,
+			ethereum_relay_header_parcel: EthereumRelayHeaderParcel,
+			optional_ethereum_relay_proofs: Option<EthereumRelayProofs>
+		) {
+			let relayer = ensure_signed(origin)?;
+
+			T::RelayerGame::dispute_and_affirm(
 				relayer,
 				ethereum_relay_header_parcel,
 				optional_ethereum_relay_proofs

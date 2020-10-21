@@ -20,7 +20,7 @@ pub mod mock_relay {
 	// --- crates ---
 	use serde::{Deserialize, Serialize};
 	// --- substrate ---
-	use sp_runtime::{DispatchError, DispatchResult};
+	use sp_runtime::DispatchResult;
 	// --- darwinia ---
 	use crate::{mock::*, *};
 
@@ -214,9 +214,8 @@ use codec::{Decode, Encode};
 use frame_support::{
 	impl_outer_dispatch, impl_outer_event, impl_outer_origin, parameter_types,
 	traits::{OnFinalize, OnInitialize},
-	weights::Weight,
 };
-use sp_runtime::{Perbill, RuntimeDebug};
+use sp_runtime::RuntimeDebug;
 // --- darwinia ---
 use crate::*;
 use alias::*;
@@ -364,11 +363,11 @@ impl AdjustableRelayerGame for RelayerGameAdjustor {
 		32
 	}
 
-	fn propose_time(round: u32) -> Self::Moment {
+	fn propose_time(_round: u32) -> Self::Moment {
 		CHALLENGE_TIME.with(|v| v.borrow().to_owned()) / 2
 	}
 
-	fn complete_proofs_time(round: u32) -> Self::Moment {
+	fn complete_proofs_time(_round: u32) -> Self::Moment {
 		CHALLENGE_TIME.with(|v| v.borrow().to_owned()) / 2
 	}
 
@@ -376,7 +375,7 @@ impl AdjustableRelayerGame for RelayerGameAdjustor {
 		sample_points.push(vec![sample_points.last().unwrap().last().unwrap() - 1]);
 	}
 
-	fn estimate_bond(_round: u32, _proposals_count: u8) -> Self::Balance {
+	fn estimate_stake(_round: u32, _proposals_count: u8) -> Self::Balance {
 		ESTIMATE_BOND.with(|v| v.borrow().to_owned())
 	}
 }
@@ -384,7 +383,7 @@ impl AdjustableRelayerGame for RelayerGameAdjustor {
 pub struct ExtBuilder {
 	headers: Vec<MockRelayHeader>,
 	challenge_time: BlockNumber,
-	estimate_bond: Balance,
+	estimate_stake: Balance,
 	confirmed_period: BlockNumber,
 }
 impl ExtBuilder {
@@ -398,8 +397,8 @@ impl ExtBuilder {
 
 		self
 	}
-	pub fn estimate_bond(mut self, estimate_bond: Balance) -> Self {
-		self.estimate_bond = estimate_bond;
+	pub fn estimate_stake(mut self, estimate_stake: Balance) -> Self {
+		self.estimate_stake = estimate_stake;
 
 		self
 	}
@@ -411,7 +410,7 @@ impl ExtBuilder {
 
 	pub fn set_associated_constants(&self) {
 		CHALLENGE_TIME.with(|v| v.replace(self.challenge_time));
-		ESTIMATE_BOND.with(|v| v.replace(self.estimate_bond));
+		ESTIMATE_BOND.with(|v| v.replace(self.estimate_stake));
 		CONFIRM_PERIOD.with(|v| v.replace(self.confirmed_period));
 	}
 
@@ -446,7 +445,7 @@ impl Default for ExtBuilder {
 			headers: vec![],
 			challenge_time: RelayerGameAdjustor::propose_time(0)
 				+ RelayerGameAdjustor::complete_proofs_time(0),
-			estimate_bond: RelayerGameAdjustor::estimate_bond(0, 0),
+			estimate_stake: RelayerGameAdjustor::estimate_stake(0, 0),
 			confirmed_period: CONFIRM_PERIOD.with(|v| v.borrow().to_owned()),
 		}
 	}
@@ -465,6 +464,7 @@ pub fn run_to_block(n: BlockNumber) {
 	}
 }
 
+#[allow(unused)]
 pub fn relayer_game_events() -> Vec<crate::Event<Test>> {
 	System::events()
 		.into_iter()
@@ -479,6 +479,7 @@ pub fn relayer_game_events() -> Vec<crate::Event<Test>> {
 		.collect()
 }
 
+#[allow(unused)]
 pub fn println_game(game_id: MockRelayBlockNumber) {
 	println!(
 		"{:#?}",

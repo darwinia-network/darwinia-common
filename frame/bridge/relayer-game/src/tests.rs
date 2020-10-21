@@ -10,7 +10,7 @@ use darwinia_support::balance::lock::*;
 #[test]
 fn insufficient_bond_should_fail() {
 	ExtBuilder::default()
-		.estimate_bond(101)
+		.estimate_stake(101)
 		.build()
 		.execute_with(|| {
 			let relay_header_parcels = MockRelayHeader::gen_continous(1, vec![1, 1], true);
@@ -20,13 +20,13 @@ fn insufficient_bond_should_fail() {
 
 				assert_err!(
 					RelayerGame::affirm(poor_man, relay_header_parcels[0].clone(), None),
-					RelayerGameError::BondIns
+					RelayerGameError::StakeIns
 				);
 			}
 
 			assert_err!(
 				RelayerGame::affirm(1, relay_header_parcels[0].clone(), None),
-				RelayerGameError::BondIns
+				RelayerGameError::StakeIns
 			);
 			assert_ok!(RelayerGame::affirm(
 				2,
@@ -43,7 +43,7 @@ fn insufficient_bond_should_fail() {
 
 			assert_err!(
 				RelayerGame::affirm(2, relay_header_parcels[1].clone(), None),
-				RelayerGameError::BondIns
+				RelayerGameError::StakeIns
 			);
 			assert_ok!(RelayerGame::affirm(
 				3,
@@ -223,9 +223,9 @@ fn extend_should_work() {
 
 // #[test]
 // fn lock_should_work() {
-// 	for estimate_bond in 1..2 {
+// 	for estimate_stake in 1..2 {
 // 		ExtBuilder::default()
-// 			.estimate_bond(estimate_bond)
+// 			.estimate_stake(estimate_stake)
 // 			.build()
 // 			.execute_with(|| {
 // 				let mut bonds = 0;
@@ -247,7 +247,7 @@ fn extend_should_work() {
 // 				};
 
 // 				for i in 1..=5 {
-// 					bonds += estimate_bond;
+// 					bonds += estimate_stake;
 
 // 					submit_then_assert(1, proposal_a[..i as usize].to_vec(), bonds);
 // 					submit_then_assert(2, proposal_b[..i as usize].to_vec(), bonds);
@@ -266,14 +266,14 @@ fn extend_should_work() {
 
 // #[test]
 // fn slash_and_reward_should_work() {
-// 	for estimate_bond in vec![1, 5, 10, 20, 50, 100] {
+// 	for estimate_stake in vec![1, 5, 10, 20, 50, 100] {
 // 		ExtBuilder::default()
-// 			.estimate_bond(estimate_bond)
+// 			.estimate_stake(estimate_stake)
 // 			.build()
 // 			.execute_with(|| {
 // 				let proposal_a = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], true);
 // 				let proposal_b = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], false);
-// 				let mut bonds = estimate_bond;
+// 				let mut bonds = estimate_stake;
 
 // 				assert_eq!(Ring::usable_balance(&10), 1000);
 // 				assert_eq!(Ring::usable_balance(&20), 2000);
@@ -290,7 +290,7 @@ fn extend_should_work() {
 
 // 					run_to_block(3 * i + 1);
 
-// 					bonds += estimate_bond;
+// 					bonds += estimate_stake;
 // 				}
 
 // 				assert_eq!(Ring::usable_balance(&10), 1000 + bonds);
