@@ -1,12 +1,17 @@
-use crate::Trait;
-use frame_support::traits::{Currency, ExistenceRequirement};
-use sp_core::H160;
-use sp_runtime::{traits::UniqueSaturatedFrom, AccountId32};
+
+use pallet_evm::{Precompile, ExitError, ExitSucceed, AddressMapping};
+use sp_core::{H160, Hasher};
+use sp_runtime::{
+    traits::{BlakeTwo256, IdentifyAccount, Verify, Hash},
+    MultiSignature,
+};
+use frame_support::traits::ExistenceRequirement;
 use sp_std::marker::PhantomData;
 use sp_std::prelude::*;
 
-pub use codec::Decode;
-use pallet_evm::{AddressMapping, ExitError, ExitSucceed, Precompile};
+use crate::*;
+use sp_runtime::AccountId32;
+use sp_runtime::traits::UniqueSaturatedFrom;
 
 pub struct ConcatAddressMapping;
 
@@ -48,6 +53,64 @@ fn ensure_linear_cost(
 	Ok(cost)
 }
 
+fn recover_signer(sig: [u8; 65], msg: [u8; 32]) -> Option<H160> {
+	match sp_io::crypto::secp256k1_ecdsa_recover(&sig, &msg) {
+		Ok(pubkey) => {
+			Some(H160::from(H256::from_slice(
+				Keccak256::digest(&pubkey).as_slice(),
+			)))
+		},
+		Err(e) => None
+	}
+}
+
+struct Params {
+	from: [u8; 20],
+	to: [u8; 32],
+	value: [u8; 16],
+	signature: [u8; 65],
+}
+
+impl Params {
+	pub fn is_valid_signature(&self) -> bool {
+		let mut data = [0u8; 68];
+		data.copy_from_slice(&self.from);
+		data.copy_from_slice(&self.to);
+		data.copy_from_slice(&self.value);
+		let hash = BlakeTwo256::hash_of(&data);
+
+		match recover_signer(self.signature, hash.to_fixed_bytes()) {
+			Some(signer) => {
+				signer[..] == self.from
+			},
+			None => false
+		}
+	}
+}
+
+fn decode_params(input: &[u8]) -> Params {
+	let offset = 44;
+
+	let mut from = [0u8; 20];
+	from.copy_from_slice(&input[offset..offset+20]);
+
+	let mut to = [0u8; 32];
+	to.copy_from_slice(&input[offset+20..offset+52]);
+
+	let mut value = [0u8; 16];
+	value.copy_from_slice(&input[offset+52..offset+68]);
+
+	let mut signature = [0u8; 65];
+	signature.copy_from_slice(&input[offset+68..offset+133]);
+
+	Params {
+		from,
+		to,
+		value,
+		signature
+	}
+}
+
 /// Precompile for withdrawing from evm address
 pub struct NativeTransfer<T>(PhantomData<T>);
 
@@ -56,45 +119,46 @@ impl<T: Trait> Precompile for NativeTransfer<T> {
 		input: &[u8],
 		target_gas: Option<usize>,
 	) -> core::result::Result<(ExitSucceed, Vec<u8>, usize), ExitError> {
-		if input.len() != 0x80 {
+		if input.len() != 133 {
 			Err(ExitError::Other("InputDataLenErr"))
 		} else {
 			let cost = ensure_linear_cost(target_gas, input.len(), 60, 12)?;
 
-			let from =
-				<T as Trait>::AddressMapping::into_account_id(H160::from_slice(&input[44..64]));
-
-			let mut to_data = [0u8; 32];
-			to_data.copy_from_slice(&input[64..96]);
-			let to = AccountId32::from(to_data);
+			let params = decode_params(input);
+			// from account id
+			let from = <T as Trait>::AddressMapping::into_account_id(H160::from_slice(&params.from));
+			// to account id
+			let to = AccountId32::from(params.to);
 			let to = <T as frame_system::Trait>::AccountId::decode(&mut to.as_ref()).unwrap();
+			// value
+			let value = u128::from_be_bytes(params.value);
+			let value  = <<T as Trait>::RingCurrency as Currency<T::AccountId>>::Balance::unique_saturated_from(value);
 
-			let mut value_data = [0u8; 16];
-			value_data.copy_from_slice(&input[112..128]);
-			let value = u128::from_be_bytes(value_data);
-			let value = <<T as Trait>::RingCurrency as Currency<
-				<T as frame_system::Trait>::AccountId,
-			>>::Balance::unique_saturated_from(value);
-
-			let result = <T as Trait>::RingCurrency::transfer(
-				&from,
-				&to,
-				value,
-				ExistenceRequirement::KeepAlive,
-			);
-			match result {
-				Ok(()) => Ok((ExitSucceed::Returned, vec![], cost)),
-				Err(error) => match error {
-					sp_runtime::DispatchError::BadOrigin => Err(ExitError::Other("BadOrigin")),
-					sp_runtime::DispatchError::CannotLookup => {
-						Err(ExitError::Other("CannotLookup"))
-					}
-					sp_runtime::DispatchError::Other(message) => Err(ExitError::Other(message)),
-					sp_runtime::DispatchError::Module { message, .. } => {
-						Err(ExitError::Other(message.unwrap()))
-					}
-				},
+			if params.is_valid_signature() {
+				let result = <T as Trait>::RingCurrency::transfer(
+					&from,
+					&to,
+					value,
+					ExistenceRequirement::KeepAlive,
+				);
+				match result {
+					Ok(()) => Ok((ExitSucceed::Returned, vec![], cost)),
+					Err(error) => match error {
+						sp_runtime::DispatchError::BadOrigin => Err(ExitError::Other("BadOrigin")),
+						sp_runtime::DispatchError::CannotLookup => {
+							Err(ExitError::Other("CannotLookup"))
+						}
+						sp_runtime::DispatchError::Other(message) => Err(ExitError::Other(message)),
+						sp_runtime::DispatchError::Module { message, .. } => {
+							Err(ExitError::Other(message.unwrap()))
+						}
+					},
+				}
+			} else {
+				Err(ExitError::Other("BadSignature"))
 			}
+
+
 		}
 	}
 }
