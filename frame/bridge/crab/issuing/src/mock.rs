@@ -38,9 +38,9 @@ impl_outer_origin! {
 
 impl_outer_event! {
 	pub enum Event for Test {
-		frame_system<T>,
+		frame_system <T>,
 		darwinia_balances Instance0<T>,
-		crab_issuing<T>,
+		crab_issuing <T>,
 	}
 }
 

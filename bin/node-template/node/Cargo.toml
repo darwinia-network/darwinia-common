@@ -22,7 +22,7 @@ futures      = { version = "0.3.6" }
 jsonrpc-core = { version = "15.1.0" }
 log          = { version = "0.4.11" }
 structopt    = { version = "0.3.20" }
-tokio        = { version = "0.2.22", optional = true, features = ["rt-threaded"] }
+tokio        = { version = "0.3.0", optional = true, features = ["rt-multi-thread"] }
 # darwinia
 array-bytes                         = { path = "../../../primitives/array-bytes" }
 darwinia-balances-rpc               = { path = "../../../frame/balances/rpc" }

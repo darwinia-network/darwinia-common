@@ -91,11 +91,11 @@ impl_outer_dispatch! {
 
 impl_outer_event! {
 	pub enum MetaEvent for Test {
-		system<T>,
+		system <T>,
 		session,
 		balances Instance0<T>,
 		balances Instance1<T>,
-		staking<T>,
+		staking <T>,
 	}
 }
 

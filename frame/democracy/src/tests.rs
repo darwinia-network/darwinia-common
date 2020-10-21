@@ -76,10 +76,10 @@ mod democracy {
 
 impl_outer_event! {
 	pub enum Event for Test {
-		system<T>,
+		system <T>,
 		darwinia_balances Instance0<T>,
-		pallet_scheduler<T>,
-		democracy<T>,
+		pallet_scheduler <T>,
+		democracy <T>,
 	}
 }
 

@@ -50,10 +50,10 @@ thread_local! {
 
 impl_outer_event! {
 	pub enum Event for Test {
-		frame_system<T>,
+		frame_system <T>,
 		darwinia_balances Instance0<T>,
 		darwinia_balances Instance1<T>,
-		treasury<T>,
+		treasury <T>,
 	}
 }
 

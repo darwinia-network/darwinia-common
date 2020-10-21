@@ -147,7 +147,7 @@ impl RelayerGameProtocol for UnusedRelayerGame {
 	fn proposals_of_game(
 		_: <Self::HeaderThing as HeaderThing>::Number,
 	) -> Vec<
-		RelayProposal<
+		RelayAffirmation<
 			Self::Relayer,
 			Self::Balance,
 			Self::HeaderThing,
@@ -175,7 +175,7 @@ pub fn proposal_of_game_with_id(
 	serde_json::from_reader(
 		File::open(format!(
 			"tests-data/game-{}/proposal-{}.json",
-			game_id, proposal_id
+			relay_header_id, proposal_id
 		))
 		.unwrap(),
 	)

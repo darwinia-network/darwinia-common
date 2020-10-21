@@ -55,7 +55,7 @@ fn test_request_payload_format() {
 	.is_ok());
 }
 
-/// Test offchain worker before any header relayed
+/// Test offchain worker before any header confirmed
 #[test]
 fn test_should_error_when_best_header_not_set() {
 	ExtBuilder::default().build().execute_with(|| {

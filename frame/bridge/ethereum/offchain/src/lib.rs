@@ -155,7 +155,7 @@ impl<T: Trait> Module<T> {
 		Ok(())
 	}
 
-	/// Get the last relayed block number, and return the blocknumber of next one as target
+	/// Get the last confirmed block number, and return the blocknumber of next one as target
 	fn get_target_number() -> Result<u64, DispatchError> {
 		let target_number = <EthereumRelay<T>>::header(<EthereumRelay<T>>::best_header_hash())
 			.ok_or(<Error<T>>::BestHeaderNE)?

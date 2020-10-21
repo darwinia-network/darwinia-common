@@ -941,7 +941,7 @@ decl_error! {
 		/// Incorrect number of slashing spans provided.
 		IncorrectSlashingSpans,
 		/// Payout - INSUFFICIENT
-		PayoutI,
+		PayoutIns,
 	}
 }
 
@@ -2394,7 +2394,7 @@ impl<T: Trait> Module<T> {
 
 		ensure!(
 			T::RingCurrency::usable_balance(&module_account) >= validator_total_payout,
-			<Error<T>>::PayoutI
+			<Error<T>>::PayoutIns
 		);
 
 		let validator_prefs = Self::eras_validator_prefs(&era, &validator_stash);
@@ -2447,7 +2447,7 @@ impl<T: Trait> Module<T> {
 			WithdrawReasons::all(),
 			KeepAlive,
 		)
-		.map_err(|_| <Error<T>>::PayoutI)?;
+		.map_err(|_| <Error<T>>::PayoutIns)?;
 
 		Ok(())
 	}

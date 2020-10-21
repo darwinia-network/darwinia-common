@@ -11,7 +11,7 @@
 //! ### Relayer Incentive Model
 //!
 //! There is a points pool recording contribution of relayers, for each finalized and
-//! relayed block header, the relayer(origin) will get one unit of contribution point.
+//! confirmed block header, the relayer(origin) will get one unit of contribution point.
 //! The income of the points pool come from two parts:
 //! 	- The first part comes from clients who use chain relay to verify receipts, they
 //!       might need to pay for the check_receipt service, although currently the chain
@@ -148,7 +148,7 @@ decl_error! {
 		/// Rlp - DECODE FAILED
 		RlpDcF,
 		/// Ethereum Receipt Proof - INVALID
-		ReceiptProofI,
+		ReceiptProofInv,
 		/// Block Basic - VERIFICATION FAILED
 		BlockBasicVF,
 		/// Difficulty - VERIFICATION FAILED
@@ -288,7 +288,7 @@ decl_module! {
 			let worker = ensure_signed(origin)?;
 
 			let verified_receipt =
-				Self::verify_receipt(&proof_record).map_err(|_| <Error<T>>::ReceiptProofI)?;
+				Self::verify_receipt(&proof_record).map_err(|_| <Error<T>>::ReceiptProofInv)?;
 			let fee = Self::receipt_verify_fee();
 
 			let module_account = Self::account_id();
@@ -743,7 +743,7 @@ impl<T: Trait> EthereumReceiptT<T::AccountId, Balance<T>> for Module<T> {
 
 		// Verify receipt proof
 		let receipt = EthereumReceipt::verify_proof_and_generate(header.receipts_root(), &proof)
-			.map_err(|_| <Error<T>>::ReceiptProofI)?;
+			.map_err(|_| <Error<T>>::ReceiptProofInv)?;
 
 		Ok(receipt)
 	}
