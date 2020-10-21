@@ -1152,9 +1152,8 @@ impl AddressMapping<AccountId> for ConcatAddressMapping {
 		let mut data = [0u8; 32];
 		data[0..4].copy_from_slice(b"dvm:");
 		data[11..31].copy_from_slice(&address[..]);
-		let checksum: u8 = data[1..31].iter().fold(data[0], |mut sum, &byte| {
-			sum = sum ^ byte;
-			sum
+		let checksum: u8 = data[1..31].iter().fold(data[0], |sum, &byte| {
+			sum ^ byte
 		});
 		data[31] = checksum;
 		AccountId::from(data)
