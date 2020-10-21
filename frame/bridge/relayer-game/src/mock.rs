@@ -463,7 +463,7 @@ pub fn run_to_block(n: BlockNumber) {
 	}
 }
 
-pub(crate) fn relayer_game_events() -> Vec<crate::Event<Test>> {
+pub fn relayer_game_events() -> Vec<crate::Event<Test>> {
 	System::events()
 		.into_iter()
 		.map(|r| r.event)
@@ -475,4 +475,11 @@ pub(crate) fn relayer_game_events() -> Vec<crate::Event<Test>> {
 			}
 		})
 		.collect()
+}
+
+pub fn println_game(game_id: MockRelayBlockNumber) {
+	println!(
+		"{:#?}",
+		<RelayerGame as Store>::Proposals::iter_prefix_values(game_id).collect::<Vec<_>>()
+	);
 }
