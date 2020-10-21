@@ -1725,7 +1725,7 @@ mod test {
 
 		// the prefix should equal to the original evm address
 		let account_id: &[u8] = &account_id.as_ref();
-		let account_id_part_1 = &account_id[0..20];
+		let account_id_part_1 = &account_id[11..31];
 		assert_eq!(account_id_part_1, &evm_address);
 	}
 }
