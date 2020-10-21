@@ -167,6 +167,8 @@ impl pallet_evm::Trait for Test {
 impl Trait for Test {
 	type Event = ();
 	type FindAuthor = EthereumFindAuthor;
+	type AddressMapping = HashedAddressMapping;
+	type RingCurrency = Balances;
 }
 
 pub type System = frame_system::Module<Test>;

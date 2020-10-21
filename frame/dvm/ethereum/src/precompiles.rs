@@ -98,3 +98,26 @@ impl<T: Trait> Precompile for NativeTransfer<T> {
 		}
 	}
 }
+
+mod test {
+	#[test]
+	fn test_concat_address_mapping() {
+		use crate::precompiles::ConcatAddressMapping;
+		use crate::*;
+		// 0x182c00A789A7cC6BeA8fbc627121022D6029a416
+		let evm_address = [
+			24u8, 44, 0, 167, 137, 167, 204, 107, 234, 143, 188, 98, 113, 33, 2, 45, 96, 41, 164,
+			22,
+		];
+
+		// same evm address's result should be equal
+		let account_id = ConcatAddressMapping::into_account_id(H160::from_slice(&evm_address));
+		let account_id_2 = ConcatAddressMapping::into_account_id(H160::from_slice(&evm_address));
+		assert_eq!(account_id, account_id_2);
+
+		// the prefix should equal to the original evm address
+		let account_id: &[u8] = &account_id.as_ref();
+		let account_id_part_1 = &account_id[11..31];
+		assert_eq!(account_id_part_1, &evm_address);
+	}
+}
