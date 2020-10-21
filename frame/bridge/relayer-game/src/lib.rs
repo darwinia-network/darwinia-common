@@ -903,7 +903,8 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			);
 		}
 
-		let bond = Self::ensure_can_bond(&relayer, 0, existed_proposals.len() as u8 + 1)?;
+		let existed_relay_proposals_count = existed_proposals.len();
+		let bond = Self::ensure_can_bond(&relayer, 0, existed_relay_proposals_count as u8 + 1)?;
 
 		Self::update_bonds_with(&relayer, |old_bonds| old_bonds.saturating_add(bond));
 
@@ -931,10 +932,13 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		};
 
 		<Proposals<T, I>>::append(&game_id, 0, relay_proposal);
-		<BestRelaiedBlockId<T, I>>::insert(&game_id, best_relaied_block_id);
-		<RoundCounts<T, I>>::insert(&game_id, 1);
-		<BlocksToRelay<T, I>>::mutate(|blocks_to_relay| blocks_to_relay.push(game_id.clone()));
-		<GameSamplePoints<T, I>>::append(&game_id, vec![game_id.clone()]);
+
+		if existed_relay_proposals_count == 0 {
+			<BestRelaiedBlockId<T, I>>::insert(&game_id, best_relaied_block_id);
+			<RoundCounts<T, I>>::insert(&game_id, 1);
+			<BlocksToRelay<T, I>>::mutate(|blocks_to_relay| blocks_to_relay.push(game_id.clone()));
+			<GameSamplePoints<T, I>>::append(&game_id, vec![game_id.clone()]);
+		}
 
 		Self::update_timer_of_game_at(&game_id, 0, now);
 		Self::deposit_event(RawEvent::RelayProposed(game_id, 0, 0, relayer));
@@ -1010,7 +1014,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		}
 
 		let round = previous_round + 1;
-		let existed_proposals = Self::proposals_of_game_at(&game_id, round);
+		let existed_proposals = Self::proposals_of_game_at(&game_id, previous_round);
 
 		ensure!(
 			Self::is_unique_proposal(&game_sample_points, &existed_proposals),
