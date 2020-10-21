@@ -488,7 +488,7 @@ impl<T: Trait> Relayable for Module<T> {
 	type RelayHeaderParcel = EthereumRelayHeaderParcel;
 	type RelayProofs = EthereumRelayProofs;
 
-	fn best_confirmed_block_id() -> Self::RelayHeaderId {
+	fn best_confirmed_relay_header_id() -> Self::RelayHeaderId {
 		Self::best_confirmed_block_number()
 	}
 
@@ -496,7 +496,7 @@ impl<T: Trait> Relayable for Module<T> {
 		relay_header_id: &Self::RelayHeaderId,
 		relay_header_parcel: &Self::RelayHeaderParcel,
 		relay_proofs: &Self::RelayProofs,
-		optional_best_confirmed_block_id: Option<&Self::RelayHeaderId>,
+		optional_best_confirmed_relay_header_id: Option<&Self::RelayHeaderId>,
 	) -> DispatchResult {
 		let Self::RelayHeaderParcel { header, mmr_root } = relay_header_parcel;
 		let Self::RelayProofs {
@@ -512,7 +512,7 @@ impl<T: Trait> Relayable for Module<T> {
 		let last_leaf = *relay_header_id - 1;
 		let mmr_root = array_unchecked!(mmr_root, 0, 32).into();
 
-		if let Some(best_confirmed_block_number) = optional_best_confirmed_block_id {
+		if let Some(best_confirmed_block_number) = optional_best_confirmed_relay_header_id {
 			let maybe_best_confirmed_block_header_hash =
 				Self::confirmed_parcel_of(best_confirmed_block_number)
 					.ok_or(<Error<T>>::ConfirmedHeaderNE)?
@@ -572,45 +572,17 @@ impl<T: Trait> Relayable for Module<T> {
 		Ok(())
 	}
 
-	fn verify_continuous(
-		relay_header_parcel: &Self::RelayHeaderParcel,
-		extended_relay_header_parcel: &Self::RelayHeaderParcel,
-	) -> DispatchResult {
-		let eth_partial = Self::ethash_params();
-		let next_relay_header = &relay_header_parcel.header;
-		let previous_relay_header = &extended_relay_header_parcel.header;
-
-		ensure!(
-			next_relay_header.parent_hash
-				== previous_relay_header
-					.hash
-					.ok_or(<Error<T>>::HeaderHashInv)?,
-			<Error<T>>::ContinuousInv
-		);
-		ensure!(
-			next_relay_header.difficulty().to_owned()
-				== eth_partial.calculate_difficulty(next_relay_header, previous_relay_header),
-			<Error<T>>::ContinuousInv
-		);
-
-		Ok(())
-	}
-
 	fn verify_relay_chain(mut relay_chain: Vec<&Self::RelayHeaderParcel>) -> DispatchResult {
 		let eth_partial = Self::ethash_params();
-
-		relay_chain.sort_by_key(|relay_header_parcel| relay_header_parcel.header.number);
-
-		for window in relay_chain.windows(2) {
-			let next_relay_header_parcel = window[0];
-			let previous_relay_header_parcel = window[1];
-
+		let verify_continuous = |previous_relay_header_parcel: &EthereumRelayHeaderParcel,
+		                         next_relay_header_parcel: &EthereumRelayHeaderParcel|
+		 -> DispatchResult {
 			ensure!(
-				next_relay_header_parcel
-					.header
-					.hash
-					.ok_or(<Error<T>>::HeaderHashInv)?
-					== previous_relay_header_parcel.header.parent_hash,
+				previous_relay_header_parcel.header.hash
+					== next_relay_header_parcel
+						.header
+						.parent_hash
+						.ok_or(<Error<T>>::HeaderHashInv)?,
 				<Error<T>>::ContinuousInv
 			);
 			ensure!(
@@ -621,17 +593,34 @@ impl<T: Trait> Relayable for Module<T> {
 					),
 				<Error<T>>::ContinuousInv
 			);
+
+			Ok(())
+		};
+
+		relay_chain.sort_by_key(|relay_header_parcel| relay_header_parcel.header.number);
+
+		for window in relay_chain.windows(2) {
+			let previous_relay_header_parcel = window[0];
+			let next_relay_header_parcel = window[1];
+
+			verify_continuous(previous_relay_header_parcel, next_relay_header_parcel)?;
 		}
+
+		verify_continuous(
+			&Self::confirmed_parcel_of(T::RelayerGame::best_confirmed_header_id_of(&0))
+				.ok_or(<Error<T>>::ConfirmedHeaderNE)?,
+			*relay_chain.get(0).ok_or(<Error<T>>::ContinuousInv)?,
+		)?;
 
 		Ok(())
 	}
 
 	fn distance_between(
 		relay_header_id: &Self::RelayHeaderId,
-		best_confirmed_block_id: Self::RelayHeaderId,
+		best_confirmed_relay_header_id: Self::RelayHeaderId,
 	) -> u32 {
 		relay_header_id
-			.checked_sub(best_confirmed_block_id)
+			.checked_sub(best_confirmed_relay_header_id)
 			.map(|distance| distance as u32)
 			.unwrap_or(0)
 	}

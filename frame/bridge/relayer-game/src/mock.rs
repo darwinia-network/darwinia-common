@@ -72,7 +72,7 @@ pub mod mock_relay {
 		type RelayHeaderParcel = MockRelayHeader;
 		type RelayProofs = ();
 
-		fn best_confirmed_block_id() -> Self::RelayHeaderId {
+		fn best_confirmed_relay_header_id() -> Self::RelayHeaderId {
 			Self::best_confirmed_block_number()
 		}
 
@@ -87,36 +87,39 @@ pub mod mock_relay {
 			Ok(())
 		}
 
-		fn verify_continuous(
-			relay_header_parcel: &Self::RelayHeaderParcel,
-			extended_relay_header_parcel: &Self::RelayHeaderParcel,
-		) -> DispatchResult {
-			ensure!(
-				relay_header_parcel.parent_hash == extended_relay_header_parcel.hash,
-				"Continuous - INVALID"
-			);
-
-			Ok(())
-		}
-
 		fn verify_relay_chain(mut relay_chain: Vec<&Self::RelayHeaderParcel>) -> DispatchResult {
+			let verify_continuous =
+				|previous: &MockRelayHeader, next: &MockRelayHeader| -> DispatchResult {
+					ensure!(previous.hash == next.parent_hash, "Continuous - INVALID");
+
+					Ok(())
+				};
+
 			relay_chain.sort_by_key(|relay_header_parcel| relay_header_parcel.number);
 
 			for window in relay_chain.windows(2) {
-				let next = window[0];
-				let previous = window[1];
+				let previous = window[0];
+				let next = window[1];
 
-				ensure!(next.hash == previous.parent_hash, "Continuous - INVALID");
+				verify_continuous(previous, next)?;
 			}
+
+			verify_continuous(
+				&Self::confirmed_header_of(RelayerGame::best_confirmed_header_id_of(
+					&relay_chain[0].number,
+				))
+				.unwrap(),
+				relay_chain[0],
+			)?;
 
 			Ok(())
 		}
 
 		fn distance_between(
 			relay_header_id: &Self::RelayHeaderId,
-			best_confirmed_block_id: Self::RelayHeaderId,
+			best_confirmed_relay_header_id: Self::RelayHeaderId,
 		) -> u32 {
-			relay_header_id - best_confirmed_block_id
+			relay_header_id - best_confirmed_relay_header_id
 		}
 
 		fn store_relay_header_parcel(

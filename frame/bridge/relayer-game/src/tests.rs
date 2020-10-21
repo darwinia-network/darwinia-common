@@ -175,25 +175,25 @@ fn extend_should_work() {
 
 		let relay_header_id = relay_header_parcels_a.len() as _;
 
-		for round in 0..1 {
-			run_to_block(6 * (round as BlockNumber + 1) + 1);
+		for round in 1..relay_header_parcels_a.len() as _ {
+			run_to_block(6 * round as BlockNumber + 1);
 
 			assert_ok!(RelayerGame::extend_affirmation(
 				1,
-				vec![relay_header_parcels_a[round as usize + 1].clone()],
+				vec![relay_header_parcels_a[round as usize].clone()],
 				RelayAffirmationId {
 					relay_header_id,
-					round,
+					round: round - 1,
 					index: 0
 				},
 				Some(vec![()])
 			));
 			assert_ok!(RelayerGame::extend_affirmation(
 				2,
-				vec![relay_header_parcels_b[round as usize + 1].clone()],
+				vec![relay_header_parcels_b[round as usize].clone()],
 				RelayAffirmationId {
 					relay_header_id,
-					round,
+					round: round - 1,
 					index: 1
 				},
 				Some(vec![()])
@@ -202,46 +202,84 @@ fn extend_should_work() {
 	});
 }
 
-// #[test]
-// fn lock_should_work() {
-// 	for estimate_stake in 1..2 {
-// 		ExtBuilder::default()
-// 			.estimate_stake(estimate_stake)
-// 			.build()
-// 			.execute_with(|| {
-// 				let mut bonds = 0;
-// 				let proposal_a = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], true);
-// 				let proposal_b = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], false);
-// 				let submit_then_assert = |account_id, chain, bonds| {
-// 					assert_ok!(RelayerGame::affirm(account_id, chain));
-// 					assert_eq!(RelayerGame::stakes_of(account_id), bonds);
-// 					assert_eq!(
-// 						Ring::locks(account_id),
-// 						vec![BalanceLock {
-// 							id: RELAYER_GAME_ID,
-// 							lock_for: LockFor::Common { amount: bonds },
-// 							lock_reasons: LockReasons::All
-// 						}]
-// 					);
-// 				};
+#[test]
+fn lock_should_work() {
+	for estimate_stake in 1..=3 {
+		ExtBuilder::default()
+			.estimate_stake(estimate_stake)
+			.build()
+			.execute_with(|| {
+				let relay_header_parcels_a =
+					MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], true);
+				let relay_header_parcels_b =
+					MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], false);
+				let relay_header_id = relay_header_parcels_a.len() as _;
+				let submit_then_assert = |relayer, relay_parcel, round, index, stakes| {
+					assert_ok!(RelayerGame::extend_affirmation(
+						relayer,
+						vec![relay_parcel],
+						RelayAffirmationId {
+							relay_header_id,
+							round,
+							index,
+						},
+						Some(vec![()])
+					));
+					assert_eq!(RelayerGame::stakes_of(relayer), stakes);
+					assert_eq!(
+						Ring::locks(relayer),
+						vec![BalanceLock {
+							id: RELAYER_GAME_ID,
+							lock_for: LockFor::Common { amount: stakes },
+							lock_reasons: LockReasons::All
+						}]
+					);
+				};
 
-// 				for i in 1..=5 {
-// 					bonds += estimate_stake;
+				assert_ok!(RelayerGame::affirm(
+					1,
+					relay_header_parcels_a[0].clone(),
+					Some(())
+				));
+				assert_ok!(RelayerGame::dispute_and_affirm(
+					2,
+					relay_header_parcels_b[0].clone(),
+					Some(())
+				));
 
-// 					submit_then_assert(1, proposal_a[..i as usize].to_vec(), bonds);
-// 					submit_then_assert(2, proposal_b[..i as usize].to_vec(), bonds);
+				run_to_block(7);
 
-// 					run_to_block(3 * i + 1);
-// 				}
+				let mut stakes = estimate_stake;
 
-// 				assert_eq!(RelayerGame::stakes_of(1), 0);
-// 				assert!(Ring::locks(1).is_empty());
+				for round in 1..relay_header_parcels_a.len() as _ {
+					stakes += estimate_stake;
 
-// 				assert_eq!(RelayerGame::stakes_of(2), 0);
-// 				assert!(Ring::locks(2).is_empty());
-// 			});
-// 	}
-// }
+					submit_then_assert(
+						1,
+						relay_header_parcels_a[round as usize].clone(),
+						round - 1,
+						0,
+						stakes,
+					);
+					submit_then_assert(
+						2,
+						relay_header_parcels_b[round as usize].clone(),
+						round - 1,
+						1,
+						stakes,
+					);
+
+					run_to_block(6 * (round as BlockNumber + 1) + 1);
+				}
+
+				assert_eq!(RelayerGame::stakes_of(1), 0);
+				assert!(Ring::locks(1).is_empty());
+
+				assert_eq!(RelayerGame::stakes_of(2), 0);
+				assert!(Ring::locks(2).is_empty());
+			});
+	}
+}
 
 // #[test]
 // fn slash_and_reward_should_work() {
@@ -252,7 +290,7 @@ fn extend_should_work() {
 // 			.execute_with(|| {
 // 				let proposal_a = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], true);
 // 				let proposal_b = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], false);
-// 				let mut bonds = estimate_stake;
+// 				let mut stakes = estimate_stake;
 
 // 				assert_eq!(Ring::usable_balance(&10), 1000);
 // 				assert_eq!(Ring::usable_balance(&20), 2000);
@@ -269,13 +307,13 @@ fn extend_should_work() {
 
 // 					run_to_block(3 * i + 1);
 
-// 					bonds += estimate_stake;
+// 					stakes += estimate_stake;
 // 				}
 
-// 				assert_eq!(Ring::usable_balance(&10), 1000 + bonds);
+// 				assert_eq!(Ring::usable_balance(&10), 1000 + stakes);
 // 				assert!(Ring::locks(10).is_empty());
 
-// 				assert_eq!(Ring::usable_balance(&20), 2000 - bonds);
+// 				assert_eq!(Ring::usable_balance(&20), 2000 - stakes);
 // 				assert!(Ring::locks(20).is_empty());
 // 			});
 // 	}
