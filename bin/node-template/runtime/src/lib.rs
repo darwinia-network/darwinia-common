@@ -387,7 +387,7 @@ use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_core::{
 	crypto::{KeyTypeId, Public},
 	u32_trait::{_1, _2, _3, _5},
-	Hasher, OpaqueMetadata, H160, H256, U256,
+	OpaqueMetadata, H160, H256, U256,
 };
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
@@ -1152,9 +1152,10 @@ impl AddressMapping<AccountId> for ConcatAddressMapping {
 		let mut data = [0u8; 32];
 		data[0..4].copy_from_slice(b"dvm:");
 		data[11..31].copy_from_slice(&address[..]);
-		let checksum: u8 = data[1..31]
-			.iter()
-			.fold(data[0], |mut sum, &byte| {sum = sum ^ byte; sum});
+		let checksum: u8 = data[1..31].iter().fold(data[0], |mut sum, &byte| {
+			sum = sum ^ byte;
+			sum
+		});
 		data[31] = checksum;
 		AccountId::from(data)
 	}
