@@ -274,31 +274,29 @@ fn extend_should_work() {
 // 	}
 // }
 
-// #[test]
-// fn settle_without_challenge_should_work() {
-// 	ExtBuilder::default().build().execute_with(|| {
-// 		for (relay_parcel, i) in MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], true)
-// 			.into_iter()
-// 			.rev()
-// 			.zip(1..)
-// 		{
-// 			assert_ok!(RelayerGame::propose(
-// 				1,
-// 				vec![relay_parcel.clone()]
-// 			));
+#[test]
+fn settle_without_challenge_should_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		for (relay_parcel, i) in MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], true)
+			.into_iter()
+			.rev()
+			.zip(1..)
+		{
+			assert_ok!(RelayerGame::propose(1, relay_parcel.clone(), None));
+			assert!(Ring::usable_balance(&1) < 100);
+			assert!(!Ring::locks(1).is_empty());
 
-// 			run_to_block(4 * i);
+			run_to_block(7 * i);
 
-// 			assert_eq!(Ring::usable_balance(&1), 100);
-// 			assert!(Ring::locks(1).is_empty());
-
-// 			assert_eq!(
-// 				Relay::relaied_header_of(relay_parcel.number),
-// 				Some(relay_parcel)
-// 			);
-// 		}
-// 	})
-// }
+			assert_eq!(
+				Relay::relaied_header_of(relay_parcel.number),
+				Some(relay_parcel)
+			);
+			assert_eq!(Ring::usable_balance(&1), 100);
+			assert!(Ring::locks(1).is_empty());
+		}
+	})
+}
 
 // #[test]
 // fn settle_with_challenge_should_work() {
