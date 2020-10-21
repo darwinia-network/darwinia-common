@@ -578,11 +578,11 @@ impl<T: Trait> Relayable for Module<T> {
 		                         next_relay_header_parcel: &EthereumRelayHeaderParcel|
 		 -> DispatchResult {
 			ensure!(
-				previous_relay_header_parcel.header.hash
-					== next_relay_header_parcel
-						.header
-						.parent_hash
-						.ok_or(<Error<T>>::HeaderHashInv)?,
+				previous_relay_header_parcel
+					.header
+					.hash
+					.ok_or(<Error<T>>::HeaderHashInv)?
+					== next_relay_header_parcel.header.parent_hash,
 				<Error<T>>::ContinuousInv
 			);
 			ensure!(
