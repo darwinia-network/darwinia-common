@@ -374,6 +374,9 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		}
 
 		for (relayer, slashs) in evils {
+			// Unlock stakes for honesty
+			Self::update_stakes_with(&relayer, |stakes| stakes.saturating_sub(slashs));
+
 			// Punish evil
 			T::RingCurrency::slash(&relayer, slashs);
 		}
@@ -459,7 +462,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 						evils
 							.entry(relayer.to_owned())
 							.and_modify(|slashs| *slashs = slashs.saturating_add(*stake))
-							.or_insert(Zero::zero());
+							.or_insert(*stake);
 					}
 				}
 
@@ -498,7 +501,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	pub fn on_chain_arbitrate(game_id: &RelayHeaderId<T, I>) -> Option<RelayHeaderParcel<T, I>> {
 		let relay_affirmations =
 			<Affirmations<T, I>>::iter_prefix_values(&game_id).collect::<Vec<_>>();
-		let mut winning_relay_chain_indexes = vec![];
+		let mut last_round_winning_relay_chain_indexes = vec![];
 
 		if let Some(last_round_relay_affirmations) = relay_affirmations.last() {
 			let mut maybe_extended_relay_affirmation_id;
@@ -553,28 +556,54 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 				}
 
 				if T::RelayableChain::verify_relay_chain(relay_chain).is_ok() {
-					winning_relay_chain_indexes.push(index);
+					last_round_winning_relay_chain_indexes.push(index);
 				} else {
 					trace!(
 						target: "relayer-game",
-						">  Relay Chain - INVALID",
+						"   >  Relay Chain - INVALID",
 					);
 				}
 			}
 
-			match winning_relay_chain_indexes.len() {
+			match last_round_winning_relay_chain_indexes.len() {
 				0 => None,
 				1 => {
-					let index = winning_relay_chain_indexes.pop().unwrap();
+					let last_round_winning_relay_chain_index =
+						last_round_winning_relay_chain_indexes.pop().unwrap();
+					let RelayAffirmation {
+						relayer: honesty,
+						stake,
+						maybe_extended_relay_affirmation_id,
+						..
+					} = &relay_affirmations.last().unwrap()[last_round_winning_relay_chain_index];
 					let mut maybe_extended_relay_affirmation_id =
-						relay_affirmations.last().unwrap()[index]
-							.to_owned()
-							.maybe_extended_relay_affirmation_id;
+						maybe_extended_relay_affirmation_id.to_owned();
 					// BTreeMap<(relayer, unstake, reward)>
 					let mut honesties =
 						<BTreeMap<AccountId<T>, (RingBalance<T, I>, RingBalance<T, I>)>>::new();
 					// BTreeMap<(relayer, slash)>
 					let mut evils = <BTreeMap<AccountId<T>, RingBalance<T, I>>>::new();
+
+					honesties
+						.entry(honesty.to_owned())
+						.and_modify(|(unstakes, _)| *unstakes = unstakes.saturating_add(*stake))
+						.or_insert((*stake, Zero::zero()));
+
+					for (index, RelayAffirmation { relayer, stake, .. }) in
+						last_round_relay_affirmations.iter().enumerate()
+					{
+						if index != last_round_winning_relay_chain_index {
+							honesties
+								.entry(honesty.to_owned())
+								.and_modify(|(_, rewards)| {
+									*rewards = rewards.saturating_add(*stake)
+								});
+							evils
+								.entry(relayer.to_owned())
+								.and_modify(|slashs| *slashs = slashs.saturating_add(*stake))
+								.or_insert(*stake);
+						}
+					}
 
 					while let Some(RelayAffirmationId { round, index, .. }) =
 						maybe_extended_relay_affirmation_id.take()
@@ -611,7 +640,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 										.and_modify(|slashs| {
 											*slashs = slashs.saturating_add(*stake)
 										})
-										.or_insert(Zero::zero());
+										.or_insert(*stake);
 								}
 							}
 
@@ -889,6 +918,10 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			.map(|relay_affirmation| relay_affirmation.relay_header_parcels)
 	}
 
+	fn best_confirmed_header_id_of(game_id: &Self::RelayHeaderId) -> Self::RelayHeaderId {
+		Self::best_confirmed_header_id_of(game_id)
+	}
+
 	fn affirm(
 		relayer: Self::Relayer,
 		relay_header_parcel: Self::RelayHeaderParcel,
@@ -901,12 +934,12 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			relay_header_parcel
 		);
 
-		let best_confirmed_block_id = T::RelayableChain::best_confirmed_block_id();
+		let best_confirmed_relay_header_id = T::RelayableChain::best_confirmed_relay_header_id();
 		let game_id = relay_header_parcel.header_id();
 
 		// Check if the proposed header has already been confirmed
 		ensure!(
-			game_id > best_confirmed_block_id,
+			game_id > best_confirmed_relay_header_id,
 			<Error<T, I>>::RelayParcelAR
 		);
 		// Make sure the game is at first round
@@ -949,7 +982,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 					&game_id,
 					&relay_affirmation.relay_header_parcels[0],
 					&relay_proofs,
-					Some(&best_confirmed_block_id),
+					Some(&best_confirmed_relay_header_id),
 				)?;
 
 				relay_affirmation.verified_on_chain = true;
@@ -959,7 +992,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		};
 
 		<Affirmations<T, I>>::append(&game_id, 0, relay_affirmation);
-		<BestConfirmedHeaderId<T, I>>::insert(&game_id, best_confirmed_block_id);
+		<BestConfirmedHeaderId<T, I>>::insert(&game_id, best_confirmed_relay_header_id);
 		<RoundCounts<T, I>>::insert(&game_id, 1);
 		<RelayHeaderParcelToResolve<T, I>>::mutate(|relay_header_parcel_to_resolve| {
 			relay_header_parcel_to_resolve.push(game_id.clone())
@@ -984,12 +1017,12 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			relay_header_parcel
 		);
 
-		let best_confirmed_block_id = T::RelayableChain::best_confirmed_block_id();
+		let best_confirmed_relay_header_id = T::RelayableChain::best_confirmed_relay_header_id();
 		let game_id = relay_header_parcel.header_id();
 
 		// Check if the proposed header has already been confirmed
 		ensure!(
-			game_id > best_confirmed_block_id,
+			game_id > best_confirmed_relay_header_id,
 			<Error<T, I>>::RelayParcelAR
 		);
 		// Make sure the game is at first round
@@ -1036,7 +1069,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 					&game_id,
 					&relay_affirmation.relay_header_parcels[0],
 					&relay_proofs,
-					Some(&best_confirmed_block_id),
+					Some(&best_confirmed_relay_header_id),
 				)?;
 
 				relay_affirmation.verified_on_chain = true;
