@@ -13,47 +13,47 @@ use sp_runtime::{traits::Zero, DispatchResult, RuntimeDebug};
 use sp_std::borrow::ToOwned;
 use sp_std::prelude::*;
 
-pub trait BlockInfo {
-	type BlockId: Clone;
+pub trait RelayHeaderParcelInfo {
+	type HeaderId: Clone;
 
-	fn block_id(&self) -> Self::BlockId;
+	fn header_id(&self) -> Self::HeaderId;
 }
 
 /// Implement this for target chain's relay module's
 /// to expose some necessary APIs for relayer game
 pub trait Relayable {
-	type RelayBlockId: Clone + Debug + Default + PartialOrd + FullCodec;
-	type RelayParcel: Clone
+	type RelayHeaderId: Clone + Debug + Default + PartialOrd + FullCodec;
+	type RelayHeaderParcel: Clone
 		+ Debug
 		+ PartialEq
 		+ FullCodec
-		+ BlockInfo<BlockId = Self::RelayBlockId>;
+		+ RelayHeaderParcelInfo<HeaderId = Self::RelayHeaderId>;
 	type Proofs;
 
 	/// The latest finalize block's id which recorded in darwinia
-	fn best_relaied_block_id() -> Self::RelayBlockId;
+	fn best_relayed_block_id() -> Self::RelayHeaderId;
 
 	// TODO: optimize this
 	fn verify_proofs(
-		relay_block_id: &Self::RelayBlockId,
-		relay_parcel: &Self::RelayParcel,
+		relay_header_id: &Self::RelayHeaderId,
+		relay_parcel: &Self::RelayHeaderParcel,
 		relay_proofs: &Self::Proofs,
-		optional_best_relaied_block_id: Option<&Self::RelayBlockId>,
+		optional_best_relayed_block_id: Option<&Self::RelayHeaderId>,
 	) -> DispatchResult;
 
 	fn verify_continuous(
-		relay_parcels: &Self::RelayParcel,
-		extended_relay_parcels: &Self::RelayParcel,
+		relay_header_parcel: &Self::RelayHeaderParcel,
+		extended_relay_parcel: &Self::RelayHeaderParcel,
 	) -> DispatchResult;
 
-	fn verify_relay_chain(relay_chain: Vec<&Self::RelayParcel>) -> DispatchResult;
+	fn verify_relay_chain(relay_chain: Vec<&Self::RelayHeaderParcel>) -> DispatchResult;
 
 	fn distance_between(
-		relay_block_id: &Self::RelayBlockId,
-		best_relaied_block_id: Self::RelayBlockId,
+		relay_header_id: &Self::RelayHeaderId,
+		best_relayed_block_id: Self::RelayHeaderId,
 	) -> u32;
 
-	fn store_relay_parcel(relay_parcel: Self::RelayParcel) -> DispatchResult;
+	fn store_relay_parcel(relay_parcel: Self::RelayHeaderParcel) -> DispatchResult;
 }
 
 /// A regulator to adjust relay args for a specific chain
@@ -61,7 +61,7 @@ pub trait Relayable {
 pub trait AdjustableRelayerGame {
 	type Moment;
 	type Balance;
-	type RelayBlockId;
+	type RelayHeaderId;
 
 	/// The maximum number of active games
 	///
@@ -76,7 +76,7 @@ pub trait AdjustableRelayerGame {
 	///
 	/// Push the new samples to the `sample_points`, the index of `sample_points` aka round index
 	/// And return the new samples
-	fn update_sample_points(sample_points: &mut Vec<Vec<Self::RelayBlockId>>);
+	fn update_sample_points(sample_points: &mut Vec<Vec<Self::RelayHeaderId>>);
 
 	/// Give an estimate bond value for a specify round
 	///
@@ -86,24 +86,24 @@ pub trait AdjustableRelayerGame {
 
 pub trait RelayerGameProtocol {
 	type Relayer;
-	type RelayBlockId: Clone + PartialOrd;
-	type RelayParcel: Clone
+	type RelayHeaderId: Clone + PartialOrd;
+	type RelayHeaderParcel: Clone
 		+ Debug
 		+ PartialEq
 		+ FullCodec
-		+ BlockInfo<BlockId = Self::RelayBlockId>;
+		+ RelayHeaderParcelInfo<HeaderId = Self::RelayHeaderId>;
 	type Proofs;
 
 	fn get_proposed_relay_parcels(
-		proposal_id: RelayProposalId<Self::RelayBlockId>,
-	) -> Option<Vec<Self::RelayParcel>>;
+		proposal_id: RelayAffirmationId<Self::RelayHeaderId>,
+	) -> Option<Vec<Self::RelayHeaderParcel>>;
 
 	/// Game's entry point, call only at the first round
 	///
 	/// Propose a new proposal or against a existed proposal
 	fn propose(
 		relayer: Self::Relayer,
-		relay_parcel: Self::RelayParcel,
+		relay_parcel: Self::RelayHeaderParcel,
 		optional_relay_proofs: Option<Self::Proofs>,
 	) -> DispatchResult;
 
@@ -112,7 +112,7 @@ pub trait RelayerGameProtocol {
 	/// Proofs is a `Vec` because the sampling function might give more than 1 sample points,
 	/// so need to verify each sample point with its proofs
 	fn complete_relay_proofs(
-		proposal_id: RelayProposalId<Self::RelayBlockId>,
+		proposal_id: RelayAffirmationId<Self::RelayHeaderId>,
 		relay_proofs: Vec<Self::Proofs>,
 	) -> DispatchResult;
 
@@ -121,21 +121,25 @@ pub trait RelayerGameProtocol {
 	/// to help the chain make a on chain arbitrate finally
 	fn extend_proposal(
 		relayer: Self::Relayer,
-		game_sample_points: Vec<Self::RelayParcel>,
-		extended_relay_proposal_id: RelayProposalId<Self::RelayBlockId>,
+		game_sample_points: Vec<Self::RelayHeaderParcel>,
+		extended_relay_affirmation_id: RelayAffirmationId<Self::RelayHeaderId>,
 		optional_relay_proofs: Option<Vec<Self::Proofs>>,
 	) -> DispatchResult;
 
-	fn approve_pending_relay_parcel(pending_relay_block_id: Self::RelayBlockId) -> DispatchResult;
+	fn approve_pending_relay_header_parcel(
+		pending_relay_block_id: Self::RelayHeaderId,
+	) -> DispatchResult;
 
-	fn reject_pending_relay_parcel(pending_relay_block_id: Self::RelayBlockId) -> DispatchResult;
+	fn reject_pending_relay_header_parcel(
+		pending_relay_block_id: Self::RelayHeaderId,
+	) -> DispatchResult;
 }
 
 /// Game id, round and the index under the round point to a unique proposal AKA proposal id
 #[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
-pub struct RelayProposalId<RelayBlockId> {
-	/// Game id aka block id
-	pub relay_block_id: RelayBlockId,
+pub struct RelayAffirmationId<RelayHeaderId> {
+	/// Relay header id aka game id
+	pub relay_header_id: RelayHeaderId,
 	/// Round index
 	pub round: u32,
 	/// Index of a proposal list which under a round
@@ -143,15 +147,15 @@ pub struct RelayProposalId<RelayBlockId> {
 }
 
 #[derive(Clone, Encode, Decode, RuntimeDebug)]
-pub struct RelayProposal<RelayParcel, Relayer, Balance, RelayBlockId> {
+pub struct RelayAffirmation<RelayHeaderParcel, Relayer, Balance, RelayHeaderId> {
 	pub relayer: Relayer,
-	pub relay_parcels: Vec<RelayParcel>,
+	pub relay_header_parcels: Vec<RelayHeaderParcel>,
 	pub bond: Balance,
-	pub maybe_extended_relay_proposal_id: Option<RelayProposalId<RelayBlockId>>,
+	pub maybe_extended_relay_affirmation_id: Option<RelayAffirmationId<RelayHeaderId>>,
 	pub verified: bool,
 }
-impl<RelayParcel, Relayer, Balance, RelayBlockId>
-	RelayProposal<RelayParcel, Relayer, Balance, RelayBlockId>
+impl<RelayHeaderParcel, Relayer, Balance, RelayHeaderId>
+	RelayAffirmation<RelayHeaderParcel, Relayer, Balance, RelayHeaderId>
 where
 	Relayer: Default,
 	Balance: Zero,
@@ -159,9 +163,9 @@ where
 	pub fn new() -> Self {
 		Self {
 			relayer: Relayer::default(),
-			relay_parcels: vec![],
+			relay_header_parcels: vec![],
 			bond: Zero::zero(),
-			maybe_extended_relay_proposal_id: None,
+			maybe_extended_relay_affirmation_id: None,
 			verified: false,
 		}
 	}

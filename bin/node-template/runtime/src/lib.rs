@@ -43,7 +43,7 @@ pub mod impls {
 		impl AdjustableRelayerGame for EthereumRelayerGameAdjustor {
 			type Moment = BlockNumber;
 			type Balance = Balance;
-			type RelayBlockId = EthereumBlockNumber;
+			type RelayHeaderId = EthereumBlockNumber;
 
 			fn max_active_games() -> u8 {
 				32
@@ -67,7 +67,7 @@ pub mod impls {
 				}
 			}
 
-			fn update_sample_points(sample_points: &mut Vec<Vec<Self::RelayBlockId>>) {
+			fn update_sample_points(sample_points: &mut Vec<Vec<Self::RelayHeaderId>>) {
 				sample_points.push(vec![sample_points.last().unwrap().last().unwrap() - 1]);
 			}
 

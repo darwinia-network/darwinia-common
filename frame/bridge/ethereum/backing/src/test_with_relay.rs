@@ -7,7 +7,7 @@ use sp_runtime::{traits::Dispatchable, AccountId32};
 // --- darwinia ---
 use crate::*;
 use array_bytes::hex_bytes_unchecked;
-use darwinia_ethereum_relay::{EthereumRelayParcel, MMRProof};
+use darwinia_ethereum_relay::{EthereumRelayHeaderParcel, MMRProof};
 use darwinia_relay_primitives::*;
 use darwinia_staking::{RewardDestination, StakingBalance, StakingLedger, TimeDepositItem};
 use darwinia_support::balance::lock::StakingLock;
@@ -38,26 +38,26 @@ impl darwinia_ethereum_relay::Trait for Test {
 pub struct UnusedRelayerGame;
 impl RelayerGameProtocol for UnusedRelayerGame {
 	type Relayer = AccountId;
-	type RelayBlockId = EthereumBlockNumber;
-	type RelayParcel = EthereumRelayParcel;
+	type RelayHeaderId = EthereumBlockNumber;
+	type RelayHeaderParcel = EthereumRelayHeaderParcel;
 	type Proofs = EthereumRelayProofs;
 
 	fn get_proposed_relay_parcels(
-		proposal_id: RelayProposalId<Self::RelayBlockId>,
-	) -> Option<Vec<Self::RelayParcel>> {
+		proposal_id: RelayAffirmationId<Self::RelayHeaderId>,
+	) -> Option<Vec<Self::RelayHeaderParcel>> {
 		unimplemented!()
 	}
 
 	fn propose(
 		relayer: Self::Relayer,
-		relay_parcel: Self::RelayParcel,
+		relay_parcel: Self::RelayHeaderParcel,
 		optional_relay_proofs: Option<Self::Proofs>,
 	) -> DispatchResult {
 		unimplemented!()
 	}
 
 	fn complete_relay_proofs(
-		proposal_id: RelayProposalId<Self::RelayBlockId>,
+		proposal_id: RelayAffirmationId<Self::RelayHeaderId>,
 		relay_proofs: Vec<Self::Proofs>,
 	) -> DispatchResult {
 		unimplemented!()
@@ -65,18 +65,22 @@ impl RelayerGameProtocol for UnusedRelayerGame {
 
 	fn extend_proposal(
 		relayer: Self::Relayer,
-		game_sample_points: Vec<Self::RelayParcel>,
-		extended_relay_proposal_id: RelayProposalId<Self::RelayBlockId>,
+		game_sample_points: Vec<Self::RelayHeaderParcel>,
+		extended_relay_affirmation_id: RelayAffirmationId<Self::RelayHeaderId>,
 		optional_relay_proofs: Option<Vec<Self::Proofs>>,
 	) -> DispatchResult {
 		unimplemented!()
 	}
 
-	fn approve_pending_relay_parcel(pending_relay_block_id: Self::RelayBlockId) -> DispatchResult {
+	fn approve_pending_relay_header_parcel(
+		pending_relay_block_id: Self::RelayHeaderId,
+	) -> DispatchResult {
 		unimplemented!()
 	}
 
-	fn reject_pending_relay_parcel(pending_relay_block_id: Self::RelayBlockId) -> DispatchResult {
+	fn reject_pending_relay_header_parcel(
+		pending_relay_block_id: Self::RelayHeaderId,
+	) -> DispatchResult {
 		unimplemented!()
 	}
 }
@@ -197,7 +201,7 @@ fn verify_parse_token_redeem_proof() {
 
 			let ethereum_proof_header_thing = (test_proof_header_thing.header, test_proof_header_thing.receipt_proof, test_proof_header_thing.mmr_proof);
 
-			let header_thing : EthereumRelayParcel = serde_json::from_str(
+			let header_thing : EthereumRelayHeaderParcel = serde_json::from_str(
 				r#"
 				{
 					"header": {
@@ -296,7 +300,7 @@ fn verify_redeem_ring() {
 
 			let ethereum_proof_header_thing = (test_proof_header_thing.header, test_proof_header_thing.receipt_proof, test_proof_header_thing.mmr_proof);
 
-			let header_thing : EthereumRelayParcel = serde_json::from_str(
+			let header_thing : EthereumRelayHeaderParcel = serde_json::from_str(
 				r#"
 				{
 					"header": {
@@ -411,7 +415,7 @@ fn verify_redeem_kton() {
 
 			let ethereum_proof_header_thing = (test_proof_header_thing.header, test_proof_header_thing.receipt_proof, test_proof_header_thing.mmr_proof);
 
-			let header_thing : EthereumRelayParcel = serde_json::from_str(
+			let header_thing : EthereumRelayHeaderParcel = serde_json::from_str(
 				r#"
 				{
 					"header": {
@@ -539,7 +543,7 @@ fn verify_redeem_deposit() {
 
 			let ethereum_proof_header_thing = (test_proof_header_thing.header, test_proof_header_thing.receipt_proof, test_proof_header_thing.mmr_proof);
 
-			let header_thing : EthereumRelayParcel = serde_json::from_str(
+			let header_thing : EthereumRelayHeaderParcel = serde_json::from_str(
 				r#"
 				{
 					"header": {

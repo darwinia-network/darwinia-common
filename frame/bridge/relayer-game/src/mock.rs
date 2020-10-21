@@ -26,10 +26,10 @@ pub mod mock_relay {
 
 	decl_storage! {
 		trait Store for Module<T: Trait> as DarwiniaRelay {
-			pub RelaiedBlockNumbers get(fn best_relaied_block_number): MockRelayBlockNumber;
+			pub RelayedBlockNumbers get(fn best_relayed_block_number): MockRelayBlockNumber;
 
-			pub RelaiedHeaders
-				get(fn relaied_header_of)
+			pub RelayedHeaders
+				get(fn relayed_header_of)
 				: map hasher(identity) MockRelayBlockNumber
 				=> Option<MockRelayHeader>;
 		}
@@ -37,10 +37,10 @@ pub mod mock_relay {
 		add_extra_genesis {
 			config(headers): Vec<MockRelayHeader>;
 			build(|config: &GenesisConfig| {
-				let mut best_relaied_block_number = 0;
+				let mut best_relayed_block_number = 0;
 
-				RelaiedHeaders::insert(
-					best_relaied_block_number,
+				RelayedHeaders::insert(
+					best_relayed_block_number,
 					MockRelayHeader {
 						number: 0,
 						hash: 0,
@@ -50,12 +50,12 @@ pub mod mock_relay {
 				);
 
 				for header in &config.headers {
-					RelaiedHeaders::insert(header.number, header.clone());
+					RelayedHeaders::insert(header.number, header.clone());
 
-					best_relaied_block_number = best_relaied_block_number.max(header.number);
+					best_relayed_block_number = best_relayed_block_number.max(header.number);
 				}
 
-				RelaiedBlockNumbers::put(best_relaied_block_number);
+				RelayedBlockNumbers::put(best_relayed_block_number);
 			});
 		}
 	}
@@ -68,19 +68,19 @@ pub mod mock_relay {
 	}
 
 	impl<T: Trait> Relayable for Module<T> {
-		type RelayBlockId = MockRelayBlockNumber;
-		type RelayParcel = MockRelayHeader;
+		type RelayHeaderId = MockRelayBlockNumber;
+		type RelayHeaderParcel = MockRelayHeader;
 		type Proofs = ();
 
-		fn best_relaied_block_id() -> Self::RelayBlockId {
-			Self::best_relaied_block_number()
+		fn best_relayed_block_id() -> Self::RelayHeaderId {
+			Self::best_relayed_block_number()
 		}
 
 		fn verify_proofs(
-			_: &Self::RelayBlockId,
-			relay_parcel: &Self::RelayParcel,
+			_: &Self::RelayHeaderId,
+			relay_parcel: &Self::RelayHeaderParcel,
 			_: &Self::Proofs,
-			_: Option<&Self::RelayBlockId>,
+			_: Option<&Self::RelayHeaderId>,
 		) -> DispatchResult {
 			ensure!(relay_parcel.valid, "Parcel - INVALID");
 
@@ -88,18 +88,18 @@ pub mod mock_relay {
 		}
 
 		fn verify_continuous(
-			relay_parcels: &Self::RelayParcel,
-			extended_relay_parcels: &Self::RelayParcel,
+			relay_header_parcel: &Self::RelayHeaderParcel,
+			extended_relay_parcel: &Self::RelayHeaderParcel,
 		) -> DispatchResult {
 			ensure!(
-				relay_parcels.parent_hash == extended_relay_parcels.hash,
+				relay_header_parcel.parent_hash == extended_relay_parcel.hash,
 				"Continuous - INVALID"
 			);
 
 			Ok(())
 		}
 
-		fn verify_relay_chain(mut relay_chain: Vec<&Self::RelayParcel>) -> DispatchResult {
+		fn verify_relay_chain(mut relay_chain: Vec<&Self::RelayHeaderParcel>) -> DispatchResult {
 			relay_chain.sort_by_key(|relay_parcel| relay_parcel.number);
 
 			for window in relay_chain.windows(2) {
@@ -113,18 +113,18 @@ pub mod mock_relay {
 		}
 
 		fn distance_between(
-			relay_block_id: &Self::RelayBlockId,
-			best_relaied_block_id: Self::RelayBlockId,
+			relay_header_id: &Self::RelayHeaderId,
+			best_relayed_block_id: Self::RelayHeaderId,
 		) -> u32 {
-			relay_block_id - best_relaied_block_id
+			relay_header_id - best_relayed_block_id
 		}
 
-		fn store_relay_parcel(relay_parcel: Self::RelayParcel) -> DispatchResult {
-			RelaiedBlockNumbers::mutate(|best_relaied_block_number| {
-				if relay_parcel.number > *best_relaied_block_number {
-					*best_relaied_block_number = relay_parcel.number;
+		fn store_relay_parcel(relay_parcel: Self::RelayHeaderParcel) -> DispatchResult {
+			RelayedBlockNumbers::mutate(|best_relayed_block_number| {
+				if relay_parcel.number > *best_relayed_block_number {
+					*best_relayed_block_number = relay_parcel.number;
 
-					RelaiedHeaders::insert(relay_parcel.number, relay_parcel);
+					RelayedHeaders::insert(relay_parcel.number, relay_parcel);
 				}
 			});
 
@@ -195,10 +195,10 @@ pub mod mock_relay {
 			chain
 		}
 	}
-	impl BlockInfo for MockRelayHeader {
-		type BlockId = u32;
+	impl RelayHeaderParcelInfo for MockRelayHeader {
+		type HeaderId = u32;
 
-		fn block_id(&self) -> Self::BlockId {
+		fn header_id(&self) -> Self::HeaderId {
 			self.number
 		}
 	}
@@ -356,7 +356,7 @@ pub struct RelayerGameAdjustor;
 impl AdjustableRelayerGame for RelayerGameAdjustor {
 	type Moment = BlockNumber;
 	type Balance = Balance;
-	type RelayBlockId = MockRelayBlockNumber;
+	type RelayHeaderId = MockRelayBlockNumber;
 
 	fn max_active_games() -> u8 {
 		32
@@ -370,7 +370,7 @@ impl AdjustableRelayerGame for RelayerGameAdjustor {
 		CHALLENGE_TIME.with(|v| v.borrow().to_owned()) / 2
 	}
 
-	fn update_sample_points(sample_points: &mut Vec<Vec<Self::RelayBlockId>>) {
+	fn update_sample_points(sample_points: &mut Vec<Vec<Self::RelayHeaderId>>) {
 		sample_points.push(vec![sample_points.last().unwrap().last().unwrap() - 1]);
 	}
 
@@ -480,6 +480,6 @@ pub fn relayer_game_events() -> Vec<crate::Event<Test>> {
 pub fn println_game(game_id: MockRelayBlockNumber) {
 	println!(
 		"{:#?}",
-		<RelayerGame as Store>::Proposals::iter_prefix_values(game_id).collect::<Vec<_>>()
+		<RelayerGame as Store>::Affirmations::iter_prefix_values(game_id).collect::<Vec<_>>()
 	);
 }
