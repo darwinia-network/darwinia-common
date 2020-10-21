@@ -11,7 +11,7 @@
 //! ### Relayer Incentive Model
 //!
 //! There is a points pool recording contribution of relayers, for each finalized and
-//! relayed block header, the relayer(origin) will get one unit of contribution point.
+//! confirmed block header, the relayer(origin) will get one unit of contribution point.
 //! The income of the points pool come from two parts:
 //! 	- The first part comes from clients who use chain relay to verify receipts, they
 //!       might need to pay for the check_receipt service, although currently the chain

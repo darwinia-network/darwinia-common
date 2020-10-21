@@ -26,10 +26,10 @@ pub mod mock_relay {
 
 	decl_storage! {
 		trait Store for Module<T: Trait> as DarwiniaRelay {
-			pub RelayedBlockNumbers get(fn best_relayed_block_number): MockRelayBlockNumber;
+			pub ConfirmedBlockNumbers get(fn best_confirmed_block_number): MockRelayBlockNumber;
 
-			pub RelayedHeaders
-				get(fn relayed_header_of)
+			pub ConfirmedHeaders
+				get(fn confirmed_header_of)
 				: map hasher(identity) MockRelayBlockNumber
 				=> Option<MockRelayHeader>;
 		}
@@ -37,10 +37,10 @@ pub mod mock_relay {
 		add_extra_genesis {
 			config(headers): Vec<MockRelayHeader>;
 			build(|config: &GenesisConfig| {
-				let mut best_relayed_block_number = 0;
+				let mut best_confirmed_block_number = 0;
 
-				RelayedHeaders::insert(
-					best_relayed_block_number,
+				ConfirmedHeaders::insert(
+					best_confirmed_block_number,
 					MockRelayHeader {
 						number: 0,
 						hash: 0,
@@ -50,12 +50,12 @@ pub mod mock_relay {
 				);
 
 				for header in &config.headers {
-					RelayedHeaders::insert(header.number, header.clone());
+					ConfirmedHeaders::insert(header.number, header.clone());
 
-					best_relayed_block_number = best_relayed_block_number.max(header.number);
+					best_confirmed_block_number = best_confirmed_block_number.max(header.number);
 				}
 
-				RelayedBlockNumbers::put(best_relayed_block_number);
+				ConfirmedBlockNumbers::put(best_confirmed_block_number);
 			});
 		}
 	}
@@ -70,16 +70,16 @@ pub mod mock_relay {
 	impl<T: Trait> Relayable for Module<T> {
 		type RelayHeaderId = MockRelayBlockNumber;
 		type RelayHeaderParcel = MockRelayHeader;
-		type Proofs = ();
+		type RelayProofs = ();
 
-		fn best_relayed_block_id() -> Self::RelayHeaderId {
-			Self::best_relayed_block_number()
+		fn best_confirmed_block_id() -> Self::RelayHeaderId {
+			Self::best_confirmed_block_number()
 		}
 
-		fn verify_proofs(
+		fn verify_relay_proofs(
 			_: &Self::RelayHeaderId,
 			relay_parcel: &Self::RelayHeaderParcel,
-			_: &Self::Proofs,
+			_: &Self::RelayProofs,
 			_: Option<&Self::RelayHeaderId>,
 		) -> DispatchResult {
 			ensure!(relay_parcel.valid, "Parcel - INVALID");
@@ -114,17 +114,17 @@ pub mod mock_relay {
 
 		fn distance_between(
 			relay_header_id: &Self::RelayHeaderId,
-			best_relayed_block_id: Self::RelayHeaderId,
+			best_confirmed_block_id: Self::RelayHeaderId,
 		) -> u32 {
-			relay_header_id - best_relayed_block_id
+			relay_header_id - best_confirmed_block_id
 		}
 
 		fn store_relay_parcel(relay_parcel: Self::RelayHeaderParcel) -> DispatchResult {
-			RelayedBlockNumbers::mutate(|best_relayed_block_number| {
-				if relay_parcel.number > *best_relayed_block_number {
-					*best_relayed_block_number = relay_parcel.number;
+			ConfirmedBlockNumbers::mutate(|best_confirmed_block_number| {
+				if relay_parcel.number > *best_confirmed_block_number {
+					*best_confirmed_block_number = relay_parcel.number;
 
-					RelayedHeaders::insert(relay_parcel.number, relay_parcel);
+					ConfirmedHeaders::insert(relay_parcel.number, relay_parcel);
 				}
 			});
 

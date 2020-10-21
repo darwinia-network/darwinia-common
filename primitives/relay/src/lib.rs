@@ -28,17 +28,17 @@ pub trait Relayable {
 		+ PartialEq
 		+ FullCodec
 		+ RelayHeaderParcelInfo<HeaderId = Self::RelayHeaderId>;
-	type Proofs;
+	type RelayProofs;
 
 	/// The latest finalize block's id which recorded in darwinia
-	fn best_relayed_block_id() -> Self::RelayHeaderId;
+	fn best_confirmed_block_id() -> Self::RelayHeaderId;
 
 	// TODO: optimize this
-	fn verify_proofs(
+	fn verify_relay_proofs(
 		relay_header_id: &Self::RelayHeaderId,
 		relay_parcel: &Self::RelayHeaderParcel,
-		relay_proofs: &Self::Proofs,
-		optional_best_relayed_block_id: Option<&Self::RelayHeaderId>,
+		relay_proofs: &Self::RelayProofs,
+		optional_best_confirmed_block_id: Option<&Self::RelayHeaderId>,
 	) -> DispatchResult;
 
 	fn verify_continuous(
@@ -50,7 +50,7 @@ pub trait Relayable {
 
 	fn distance_between(
 		relay_header_id: &Self::RelayHeaderId,
-		best_relayed_block_id: Self::RelayHeaderId,
+		best_confirmed_block_id: Self::RelayHeaderId,
 	) -> u32;
 
 	fn store_relay_parcel(relay_parcel: Self::RelayHeaderParcel) -> DispatchResult;
@@ -80,7 +80,7 @@ pub trait AdjustableRelayerGame {
 
 	/// Give an estimate bond value for a specify round
 	///
-	/// Usally the bond value go expensive wihle the round and the proposals count increase
+	/// Usally the bond value go expensive wihle the round and the affirmations count increase
 	fn estimate_bond(round: u32, proposals_count: u8) -> Self::Balance;
 }
 
@@ -92,7 +92,7 @@ pub trait RelayerGameProtocol {
 		+ PartialEq
 		+ FullCodec
 		+ RelayHeaderParcelInfo<HeaderId = Self::RelayHeaderId>;
-	type Proofs;
+	type RelayProofs;
 
 	fn get_proposed_relay_parcels(
 		proposal_id: RelayAffirmationId<Self::RelayHeaderId>,
@@ -100,30 +100,30 @@ pub trait RelayerGameProtocol {
 
 	/// Game's entry point, call only at the first round
 	///
-	/// Propose a new proposal or against a existed proposal
-	fn propose(
+	/// Arrirm a new affirmation or against a existed affirmation
+	fn affirm(
 		relayer: Self::Relayer,
 		relay_parcel: Self::RelayHeaderParcel,
-		optional_relay_proofs: Option<Self::Proofs>,
+		optional_relay_proofs: Option<Self::RelayProofs>,
 	) -> DispatchResult;
 
-	/// Verify a specify proposal
+	/// Verify a specify affirmation
 	///
 	/// Proofs is a `Vec` because the sampling function might give more than 1 sample points,
 	/// so need to verify each sample point with its proofs
 	fn complete_relay_proofs(
 		proposal_id: RelayAffirmationId<Self::RelayHeaderId>,
-		relay_proofs: Vec<Self::Proofs>,
+		relay_proofs: Vec<Self::RelayProofs>,
 	) -> DispatchResult;
 
 	/// Once there're different opinions in a game,
 	/// chain will ask relayer to submit more samples
 	/// to help the chain make a on chain arbitrate finally
-	fn extend_proposal(
+	fn extend_affirmation(
 		relayer: Self::Relayer,
 		game_sample_points: Vec<Self::RelayHeaderParcel>,
 		extended_relay_affirmation_id: RelayAffirmationId<Self::RelayHeaderId>,
-		optional_relay_proofs: Option<Vec<Self::Proofs>>,
+		optional_relay_proofs: Option<Vec<Self::RelayProofs>>,
 	) -> DispatchResult;
 
 	fn approve_pending_relay_header_parcel(
@@ -135,14 +135,14 @@ pub trait RelayerGameProtocol {
 	) -> DispatchResult;
 }
 
-/// Game id, round and the index under the round point to a unique proposal AKA proposal id
+/// Game id, round and the index under the round point to a unique affirmation AKA affirmation id
 #[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
 pub struct RelayAffirmationId<RelayHeaderId> {
 	/// Relay header id aka game id
 	pub relay_header_id: RelayHeaderId,
 	/// Round index
 	pub round: u32,
-	/// Index of a proposal list which under a round
+	/// Index of a affirmation list which under a round
 	pub index: u32,
 }
 

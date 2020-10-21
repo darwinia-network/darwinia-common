@@ -99,8 +99,8 @@ decl_event! {
 	where
 		<T as frame_system::Trait>::AccountId,
 	{
-		/// The specific relayed parcel removed. [block id]
-		RemoveRelayedParcel(EthereumBlockNumber),
+		/// The specific confirmed parcel removed. [block id]
+		RemoveConfirmedParcel(EthereumBlockNumber),
 		/// EthereumReceipt verification. [account, ethereum receipt, ethereum header]
 		VerifyReceipt(AccountId, EthereumReceipt, EthereumHeader),
 	}
@@ -110,8 +110,8 @@ decl_error! {
 	pub enum Error for Module<T: Trait> {
 		/// Header - INVALID
 		HeaderInv,
-		/// Relayed Blocks - CONFLICT
-		RelayedBlocksC,
+		/// Confirmed Blocks - CONFLICT
+		ConfirmedBlocksC,
 		/// Continuous - INVALID
 		ContinuousInv,
 		// /// Proposal - INVALID
@@ -122,8 +122,8 @@ decl_error! {
 		MMRInv,
 		/// Header Hash - MISMATCHED
 		HeaderHashMis,
-		/// Relayed Header - NOT EXISTED
-		RelayedHeaderNE,
+		/// Confirmed Header - NOT EXISTED
+		ConfirmedHeaderNE,
 		/// EthereumReceipt Proof - INVALID
 		ReceiptProofInv,
 	}
@@ -137,24 +137,24 @@ darwinia_support::impl_genesis! {
 }
 decl_storage! {
 	trait Store for Module<T: Trait> as DarwiniaEthereumRelay {
-		/// Relayed ethereum parcel
-		pub RelayedParcels
-			get(fn relayed_parcel_of)
+		/// Confirmed ethereum parcel
+		pub ConfirmedParcels
+			get(fn confirmed_parcel_of)
 			: map hasher(identity) EthereumBlockNumber => Option<EthereumRelayHeaderParcel>;
 
-		/// Relayed Ethereum block numbers
+		/// Confirmed Ethereum block numbers
 		///
 		/// The order are from small to large
-		pub RelayedBlockNumbers
-			get(fn relayed_block_numbers)
+		pub ConfirmedBlockNumbers
+			get(fn confirmed_block_numbers)
 			: Vec<EthereumBlockNumber>;
 
 		/// The highest ethereum block number that record in darwinia
-		pub BestRelayedBlockNumber
-			get(fn best_relayed_block_number)
+		pub BestConfirmedBlockNumber
+			get(fn best_confirmed_block_number)
 			: EthereumBlockNumber;
 
-		pub RelayedDepth get(fn relayed_depth) config(): u32 = 10;
+		pub ConfirmedDepth get(fn confirmed_depth) config(): u32 = 10;
 
 		/// Dags merkle roots of ethereum epoch (each epoch is 30000)
 		pub DagsMerkleRoots
@@ -178,11 +178,11 @@ decl_storage! {
 			} = config;
 			let genesis_header = EthereumHeader::decode(&mut &*genesis_header.to_vec()).unwrap();
 
-			BestRelayedBlockNumber::put(genesis_header.number);
-			RelayedBlockNumbers::mutate(|numbers| {
+			BestConfirmedBlockNumber::put(genesis_header.number);
+			ConfirmedBlockNumbers::mutate(|numbers| {
 				numbers.push(genesis_header.number);
 
-				RelayedParcels::insert(
+				ConfirmedParcels::insert(
 					genesis_header.number,
 					EthereumRelayHeaderParcel {
 						header: genesis_header,
@@ -260,7 +260,7 @@ decl_module! {
 		}
 
 		#[weight = 0]
-		fn extend_proposal(
+		fn extend_affirmation(
 			origin,
 			game_sample_points: Vec<EthereumRelayHeaderParcel>,
 			extended_ethereum_relay_affirmation_id: RelayAffirmationId<EthereumBlockNumber>,
@@ -268,7 +268,7 @@ decl_module! {
 		) {
 			let relayer = ensure_signed(origin)?;
 
-			T::RelayerGame::extend_proposal(
+			T::RelayerGame::extend_affirmation(
 				relayer,
 				game_sample_points,
 				extended_ethereum_relay_affirmation_id,
@@ -346,57 +346,57 @@ decl_module! {
 			<ReceiptVerifyFee<T>>::put(new);
 		}
 
-		/// Remove the specific malicous relayed parcel
+		/// Remove the specific malicous confirmed parcel
 		#[weight = 100_000_000]
-		pub fn remove_relayed_parcel_of(origin, relayed_block_number: EthereumBlockNumber) {
+		pub fn remove_confirmed_parcel_of(origin, confirmed_block_number: EthereumBlockNumber) {
 			T::ApproveOrigin::ensure_origin(origin)?;
 
-			RelayedBlockNumbers::mutate(|relayed_block_numbers| {
-				if let Some(i) = relayed_block_numbers
+			ConfirmedBlockNumbers::mutate(|confirmed_block_numbers| {
+				if let Some(i) = confirmed_block_numbers
 					.iter()
-					.position(|relayed_block_number_|
-						*relayed_block_number_ == relayed_block_number)
+					.position(|confirmed_block_number_|
+						*confirmed_block_number_ == confirmed_block_number)
 				{
-					relayed_block_numbers.remove(i);
+					confirmed_block_numbers.remove(i);
 				}
 
-				RelayedParcels::remove(relayed_block_number);
-				BestRelayedBlockNumber::put(relayed_block_numbers
+				ConfirmedParcels::remove(confirmed_block_number);
+				BestConfirmedBlockNumber::put(confirmed_block_numbers
 					.iter()
 					.max()
 					.map(ToOwned::to_owned)
 					.unwrap_or(0));
 			});
 
-			Self::deposit_event(RawEvent::RemoveRelayedParcel(relayed_block_number));
+			Self::deposit_event(RawEvent::RemoveConfirmedParcel(confirmed_block_number));
 		}
 
 		// --- root call ---
 
 		/// Caution: the genesis parcel will be removed too
 		#[weight = 10_000_000]
-		pub fn clean_relayed_parcels(origin) {
+		pub fn clean_confirmed_parcels(origin) {
 			T::ApproveOrigin::ensure_origin(origin)?;
 
-			RelayedParcels::remove_all();
-			RelayedBlockNumbers::kill();
-			BestRelayedBlockNumber::kill();
+			ConfirmedParcels::remove_all();
+			ConfirmedBlockNumbers::kill();
+			BestConfirmedBlockNumber::kill();
 		}
 
 		#[weight = 10_000_000]
-		pub fn set_relayed_parcel(origin, ethereum_relay_parcel: EthereumRelayHeaderParcel) {
+		pub fn set_confirmed_parcel(origin, ethereum_relay_parcel: EthereumRelayHeaderParcel) {
 			T::ApproveOrigin::ensure_origin(origin)?;
 
-			RelayedBlockNumbers::mutate(|relayed_block_numbers| {
-				relayed_block_numbers.push(ethereum_relay_parcel.header.number);
+			ConfirmedBlockNumbers::mutate(|confirmed_block_numbers| {
+				confirmed_block_numbers.push(ethereum_relay_parcel.header.number);
 
-				BestRelayedBlockNumber::put(relayed_block_numbers
+				BestConfirmedBlockNumber::put(confirmed_block_numbers
 					.iter()
 					.max()
 					.map(ToOwned::to_owned)
 					.unwrap_or(0));
 			});
-			RelayedParcels::insert(ethereum_relay_parcel.header.number, ethereum_relay_parcel);
+			ConfirmedParcels::insert(ethereum_relay_parcel.header.number, ethereum_relay_parcel);
 		}
 	}
 }
@@ -471,20 +471,20 @@ impl<T: Trait> Module<T> {
 impl<T: Trait> Relayable for Module<T> {
 	type RelayHeaderId = EthereumBlockNumber;
 	type RelayHeaderParcel = EthereumRelayHeaderParcel;
-	type Proofs = EthereumRelayProofs;
+	type RelayProofs = EthereumRelayProofs;
 
-	fn best_relayed_block_id() -> Self::RelayHeaderId {
-		Self::best_relayed_block_number()
+	fn best_confirmed_block_id() -> Self::RelayHeaderId {
+		Self::best_confirmed_block_number()
 	}
 
-	fn verify_proofs(
+	fn verify_relay_proofs(
 		relay_header_id: &Self::RelayHeaderId,
 		relay_parcel: &Self::RelayHeaderParcel,
-		relay_proofs: &Self::Proofs,
-		optional_best_relayed_block_id: Option<&Self::RelayHeaderId>,
+		relay_proofs: &Self::RelayProofs,
+		optional_best_confirmed_block_id: Option<&Self::RelayHeaderId>,
 	) -> DispatchResult {
 		let Self::RelayHeaderParcel { header, mmr_root } = relay_parcel;
-		let Self::Proofs {
+		let Self::RelayProofs {
 			ethash_proof,
 			mmr_proof,
 		} = relay_proofs;
@@ -497,14 +497,14 @@ impl<T: Trait> Relayable for Module<T> {
 		let last_leaf = *relay_header_id - 1;
 		let mmr_root = array_unchecked!(mmr_root, 0, 32).into();
 
-		if let Some(best_relayed_block_number) = optional_best_relayed_block_id {
-			let maybe_best_relayed_block_header_hash =
-				Self::relayed_parcel_of(best_relayed_block_number)
-					.ok_or(<Error<T>>::RelayedHeaderNE)?
+		if let Some(best_confirmed_block_number) = optional_best_confirmed_block_id {
+			let maybe_best_confirmed_block_header_hash =
+				Self::confirmed_parcel_of(best_confirmed_block_number)
+					.ok_or(<Error<T>>::ConfirmedHeaderNE)?
 					.header
 					.hash;
-			let best_relayed_block_header_hash =
-				maybe_best_relayed_block_header_hash.ok_or(<Error<T>>::HeaderHashInv)?;
+			let best_confirmed_block_header_hash =
+				maybe_best_confirmed_block_header_hash.ok_or(<Error<T>>::HeaderHashInv)?;
 
 			// The mmr_root of first submit should includ the hash last confirm block
 			//      mmr_root of 1st
@@ -521,7 +521,10 @@ impl<T: Trait> Relayable for Module<T> {
 						.iter()
 						.map(|h| array_unchecked!(h, 0, 32).into())
 						.collect(),
-					vec![(*best_relayed_block_number, best_relayed_block_header_hash)],
+					vec![(
+						*best_confirmed_block_number,
+						best_confirmed_block_header_hash
+					)],
 				),
 				<Error<T>>::MMRInv
 			);
@@ -610,32 +613,32 @@ impl<T: Trait> Relayable for Module<T> {
 
 	fn distance_between(
 		relay_header_id: &Self::RelayHeaderId,
-		best_relayed_block_id: Self::RelayHeaderId,
+		best_confirmed_block_id: Self::RelayHeaderId,
 	) -> u32 {
 		relay_header_id
-			.checked_sub(best_relayed_block_id)
+			.checked_sub(best_confirmed_block_id)
 			.map(|distance| distance as u32)
 			.unwrap_or(0)
 	}
 
 	fn store_relay_parcel(relay_parcel: Self::RelayHeaderParcel) -> DispatchResult {
-		let best_relayed_block_number = Self::best_relayed_block_number();
+		let best_confirmed_block_number = Self::best_confirmed_block_number();
 		let relay_block_number = relay_parcel.header.number;
 
 		// Not allow to relay genesis header
 		ensure!(
-			relay_block_number > best_relayed_block_number,
+			relay_block_number > best_confirmed_block_number,
 			<Error<T>>::HeaderInv
 		);
 
-		RelayedBlockNumbers::mutate(|relayed_block_numbers| {
-			// TODO: remove old numbers according to `RelayedDepth`
+		ConfirmedBlockNumbers::mutate(|confirmed_block_numbers| {
+			// TODO: remove old numbers according to `ConfirmedDepth`
 
-			relayed_block_numbers.push(relay_block_number);
+			confirmed_block_numbers.push(relay_block_number);
 
-			BestRelayedBlockNumber::put(relay_block_number);
+			BestConfirmedBlockNumber::put(relay_block_number);
 		});
-		RelayedParcels::insert(relay_block_number, relay_parcel);
+		ConfirmedParcels::insert(relay_block_number, relay_parcel);
 
 		Ok(())
 	}
@@ -669,8 +672,8 @@ impl<T: Trait> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
 		);
 
 		// Verify header member to last confirmed block using mmr proof
-		let mmr_root = Self::relayed_parcel_of(mmr_proof.last_leaf_index + 1)
-			.ok_or(<Error<T>>::RelayedHeaderNE)?
+		let mmr_root = Self::confirmed_parcel_of(mmr_proof.last_leaf_index + 1)
+			.ok_or(<Error<T>>::ConfirmedHeaderNE)?
 			.mmr_root;
 
 		ensure!(

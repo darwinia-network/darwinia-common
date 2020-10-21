@@ -20,7 +20,7 @@ mod types {
 
 	pub type RelayHeaderId<T, I> = <RelayableChainT<T, I> as Relayable>::RelayHeaderId;
 	pub type RelayHeaderParcel<T, I> = <RelayableChainT<T, I> as Relayable>::RelayHeaderParcel;
-	pub type RelayProofs<T, I> = <RelayableChainT<T, I> as Relayable>::Proofs;
+	pub type RelayProofs<T, I> = <RelayableChainT<T, I> as Relayable>::RelayProofs;
 
 	pub type RelayAffirmationT<T, I> = RelayAffirmation<
 		RelayHeaderParcel<T, I>,
@@ -155,9 +155,9 @@ decl_storage! {
 				hasher(identity) u32
 			=> Vec<RelayAffirmationT<T, I>>;
 
-		/// The best relayed header id record of a game when it start
-		pub BestRelayedHeaderId
-			get(fn best_relayed_header_id_of)
+		/// The best confirmed header id record of a game when it start
+		pub BestConfirmedHeaderId
+			get(fn best_confirmed_header_id_of)
 			: map hasher(identity) RelayHeaderId<T, I>
 			=> RelayHeaderId<T, I>;
 
@@ -710,7 +710,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 			}
 		});
 		<Affirmations<T, I>>::remove_prefix(&game_id);
-		<BestRelayedHeaderId<T, I>>::take(&game_id);
+		<BestConfirmedHeaderId<T, I>>::take(&game_id);
 		<RoundCounts<T, I>>::take(&game_id);
 		<ProposeEndTime<T, I>>::take(&game_id);
 		<GameSamplePoints<T, I>>::take(&game_id);
@@ -796,7 +796,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 				(last_round, _) => {
 					let distance = T::RelayableChain::distance_between(
 						&game_id,
-						Self::best_relayed_header_id_of(&game_id),
+						Self::best_confirmed_header_id_of(&game_id),
 					);
 
 					if distance == round_count {
@@ -862,7 +862,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 	type Relayer = AccountId<T>;
 	type RelayHeaderId = RelayHeaderId<T, I>;
 	type RelayHeaderParcel = RelayHeaderParcel<T, I>;
-	type Proofs = RelayProofs<T, I>;
+	type RelayProofs = RelayProofs<T, I>;
 
 	fn get_proposed_relay_parcels(
 		proposal_id: RelayAffirmationId<Self::RelayHeaderId>,
@@ -879,10 +879,10 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			.map(|relay_affirmation| relay_affirmation.relay_header_parcels)
 	}
 
-	fn propose(
+	fn affirm(
 		relayer: Self::Relayer,
 		relay_parcel: Self::RelayHeaderParcel,
-		optional_relay_proofs: Option<Self::Proofs>,
+		optional_relay_proofs: Option<Self::RelayProofs>,
 	) -> DispatchResult {
 		trace!(
 			target: "relayer-game",
@@ -891,12 +891,12 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			relay_parcel
 		);
 
-		let best_relayed_block_id = T::RelayableChain::best_relayed_block_id();
+		let best_confirmed_block_id = T::RelayableChain::best_confirmed_block_id();
 		let game_id = relay_parcel.header_id();
 
-		// Check if the proposed header has already been relayed
+		// Check if the proposed header has already been confirmed
 		ensure!(
-			game_id > best_relayed_block_id,
+			game_id > best_confirmed_block_id,
 			<Error<T, I>>::RelayParcelAR
 		);
 		// Make sure the game is at first round
@@ -945,11 +945,11 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			// Allow propose without relay proofs
 			// The relay proofs can be completed later through `complete_proofs`
 			if let Some(relay_proofs) = optional_relay_proofs {
-				T::RelayableChain::verify_proofs(
+				T::RelayableChain::verify_relay_proofs(
 					&game_id,
 					&relay_affirmation.relay_header_parcels[0],
 					&relay_proofs,
-					Some(&best_relayed_block_id),
+					Some(&best_confirmed_block_id),
 				)?;
 
 				relay_affirmation.verified = true;
@@ -961,7 +961,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		<Affirmations<T, I>>::append(&game_id, 0, relay_affirmation);
 
 		if existed_relay_affirmations_count == 0 {
-			<BestRelayedHeaderId<T, I>>::insert(&game_id, best_relayed_block_id);
+			<BestConfirmedHeaderId<T, I>>::insert(&game_id, best_confirmed_block_id);
 			<RoundCounts<T, I>>::insert(&game_id, 1);
 			<RelayHeaderParcelToResolve<T, I>>::mutate(|relay_header_parcel_to_resolve| {
 				relay_header_parcel_to_resolve.push(game_id.clone())
@@ -977,7 +977,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 	fn complete_relay_proofs(
 		proposal_id: RelayAffirmationId<Self::RelayHeaderId>,
-		relay_proofs: Vec<Self::Proofs>,
+		relay_proofs: Vec<Self::RelayProofs>,
 	) -> DispatchResult {
 		let RelayAffirmationId {
 			relay_header_id: game_id,
@@ -993,14 +993,14 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 					.zip(relay_proofs.into_iter())
 				{
 					if round == 0 {
-						T::RelayableChain::verify_proofs(
+						T::RelayableChain::verify_relay_proofs(
 							&game_id,
 							relay_parcel,
 							&relay_proofs,
-							Some(&Self::best_relayed_header_id_of(&game_id)),
+							Some(&Self::best_confirmed_header_id_of(&game_id)),
 						)?;
 					} else {
-						T::RelayableChain::verify_proofs(
+						T::RelayableChain::verify_relay_proofs(
 							&game_id,
 							relay_parcel,
 							&relay_proofs,
@@ -1018,11 +1018,11 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		})
 	}
 
-	fn extend_proposal(
+	fn extend_affirmation(
 		relayer: Self::Relayer,
 		game_sample_points: Vec<Self::RelayHeaderParcel>,
 		extended_relay_affirmation_id: RelayAffirmationId<Self::RelayHeaderId>,
-		optional_relay_proofs: Option<Vec<Self::Proofs>>,
+		optional_relay_proofs: Option<Vec<Self::RelayProofs>>,
 	) -> DispatchResult {
 		let RelayAffirmationId {
 			relay_header_id: game_id,
@@ -1081,7 +1081,12 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 					.iter()
 					.zip(relay_proofs.into_iter())
 				{
-					T::RelayableChain::verify_proofs(&game_id, relay_parcel, &relay_proofs, None)?;
+					T::RelayableChain::verify_relay_proofs(
+						&game_id,
+						relay_parcel,
+						&relay_proofs,
+						None,
+					)?;
 				}
 
 				relay_affirmation.verified = true;

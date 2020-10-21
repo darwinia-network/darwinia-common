@@ -91,7 +91,7 @@ fn relay_header() {
 /// ## Note:
 ///
 /// check receipt should
-/// - succeed when we relayed the correct header
+/// - succeed when we confirmed the correct header
 /// - failed when canonical hash was re-orged by the block which contains our tx's brother block
 #[test]
 fn check_receipt_safety() {
@@ -113,7 +113,7 @@ fn check_receipt_safety() {
 		assert_ne!(grandpa.header.hash, uncle.header.hash);
 		assert_eq!(grandpa.header.number, uncle.header.number);
 
-		// check receipt should succeed when we relayed the correct header
+		// check receipt should succeed when we confirmed the correct header
 		assert_ok!(EthereumRelay::relay_header(
 			Origin::signed(0),
 			grandpa.header.clone(),
