@@ -20,9 +20,7 @@ impl AddressMapping<AccountId32> for ConcatAddressMapping {
 		let mut data = [0u8; 32];
 		data[0..4].copy_from_slice(b"dvm:");
 		data[11..31].copy_from_slice(&address[..]);
-		let checksum: u8 = data[1..31].iter().fold(data[0], |sum, &byte| {
-			sum ^ byte
-		});
+		let checksum: u8 = data[1..31].iter().fold(data[0], |sum, &byte| sum ^ byte);
 		data[31] = checksum;
 		AccountId32::from(data)
 	}
@@ -74,7 +72,9 @@ impl<T: Trait> Precompile for NativeTransfer<T> {
 			let mut value_data = [0u8; 16];
 			value_data.copy_from_slice(&input[112..128]);
 			let value = u128::from_be_bytes(value_data);
-			let value  = <<T as Trait>::RingCurrency as Currency<<T as frame_system::Trait>::AccountId>>::Balance::unique_saturated_from(value);
+			let value = <<T as Trait>::RingCurrency as Currency<
+				<T as frame_system::Trait>::AccountId,
+			>>::Balance::unique_saturated_from(value);
 
 			let result = <T as Trait>::RingCurrency::transfer(
 				&from,

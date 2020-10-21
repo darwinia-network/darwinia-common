@@ -414,11 +414,8 @@ use impls::*;
 
 // dvm
 use dvm_rpc_primitives::TransactionStatus;
-use frame_evm::{
-	Account as EVMAccount, EnsureAddressTruncated,
-	FeeCalculator,
-};
 use frame_ethereum::precompiles::{ConcatAddressMapping, NativeTransfer};
+use frame_evm::{Account as EVMAccount, EnsureAddressTruncated, FeeCalculator};
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
@@ -1174,8 +1171,6 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 		None
 	}
 }
-
-
 
 impl frame_ethereum::Trait for Runtime {
 	type Event = Event;
