@@ -159,6 +159,8 @@ fn extend_should_work() {
 	ExtBuilder::default().build().execute_with(|| {
 		let relay_header_parcels_a = MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], true);
 		let relay_header_parcels_b = MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], true);
+		let relay_header_id = relay_header_parcels_a.len() as _;
+		let round_count = relay_header_parcels_a.len() as _;
 
 		assert_ok!(RelayerGame::affirm(
 			1,
@@ -173,9 +175,7 @@ fn extend_should_work() {
 
 		// println_game(3);
 
-		let relay_header_id = relay_header_parcels_a.len() as _;
-
-		for round in 1..relay_header_parcels_a.len() as _ {
+		for round in 1..round_count {
 			run_to_block(6 * round as BlockNumber + 1);
 
 			assert_ok!(RelayerGame::extend_affirmation(
@@ -214,6 +214,7 @@ fn lock_should_work() {
 				let relay_header_parcels_b =
 					MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], false);
 				let relay_header_id = relay_header_parcels_a.len() as _;
+				let round_count = relay_header_parcels_a.len() as _;
 				let submit_then_assert = |relayer, relay_parcel, round, index, stakes| {
 					assert_ok!(RelayerGame::extend_affirmation(
 						relayer,
@@ -251,7 +252,7 @@ fn lock_should_work() {
 
 				let mut stakes = estimate_stake;
 
-				for round in 1..relay_header_parcels_a.len() as _ {
+				for round in 1..round_count {
 					stakes += estimate_stake;
 
 					submit_then_assert(
@@ -438,35 +439,62 @@ fn settle_without_challenge_should_work() {
 // 	});
 // }
 
-// #[test]
-// fn no_honesty_should_work() {
-// 	ExtBuilder::default().build().execute_with(|| {
-// 		let proposal_a = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], false);
-// 		let proposal_b = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], false);
+#[test]
+fn no_honesty_should_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		let relay_header_parcels_a = MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], false);
+		let relay_header_parcels_b = MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], false);
+		let relay_header_id = relay_header_parcels_a.len() as _;
+		let round_count = relay_header_parcels_a.len() as _;
 
-// 		assert_eq!(Ring::usable_balance(&1), 100);
-// 		assert_eq!(Ring::usable_balance(&2), 200);
+		assert_eq!(Ring::usable_balance(&1), 100);
+		assert_eq!(Ring::usable_balance(&2), 200);
 
-// 		for i in 1..=5 {
-// 			assert_ok!(RelayerGame::affirm(
-// 				1,
-// 				proposal_a[..i as usize].to_vec()
-// 			));
-// 			assert_ok!(RelayerGame::affirm(
-// 				2,
-// 				proposal_b[..i as usize].to_vec()
-// 			));
+		assert_ok!(RelayerGame::affirm(
+			1,
+			relay_header_parcels_a[0].clone(),
+			Some(())
+		));
+		assert_ok!(RelayerGame::dispute_and_affirm(
+			2,
+			relay_header_parcels_b[0].clone(),
+			Some(())
+		));
 
-// 			run_to_block(3 * i + 1);
-// 		}
+		run_to_block(7);
 
-// 		assert_eq!(Ring::usable_balance(&1), 100 - 5);
-// 		assert!(Ring::locks(1).is_empty());
+		for round in 1..round_count {
+			assert_ok!(RelayerGame::extend_affirmation(
+				1,
+				vec![relay_header_parcels_a[round as usize].clone()],
+				RelayAffirmationId {
+					relay_header_id,
+					round: round - 1,
+					index: 0
+				},
+				Some(vec![()])
+			));
+			assert_ok!(RelayerGame::extend_affirmation(
+				2,
+				vec![relay_header_parcels_b[round as usize].clone()],
+				RelayAffirmationId {
+					relay_header_id,
+					round: round - 1,
+					index: 1
+				},
+				Some(vec![()])
+			));
 
-// 		assert_eq!(Ring::usable_balance(&2), 200 - 5);
-// 		assert!(Ring::locks(2).is_empty());
-// 	});
-// }
+			run_to_block(6 * (round as BlockNumber + 1) + 1);
+		}
+
+		assert_eq!(Ring::usable_balance(&1), 100 - 5);
+		assert!(Ring::locks(1).is_empty());
+
+		assert_eq!(Ring::usable_balance(&2), 200 - 5);
+		assert!(Ring::locks(2).is_empty());
+	});
+}
 
 // TODO: more cases
 #[test]
