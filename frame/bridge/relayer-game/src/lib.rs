@@ -118,6 +118,10 @@ decl_error! {
 		RoundMis,
 		/// Active Games - TOO MANY
 		ActiveGamesTM,
+		/// Existed Affirmation(s) Found - CONFLICT
+		ExistedAffirmationsFoundC,
+		/// Noting to Against, Affirmations - EMPTY
+		NothingToAgainstAffirmationE,
 		/// Game - CLOSED
 		GameC,
 		/// Relay Affirmation - DUPLICATED
@@ -171,7 +175,7 @@ decl_storage! {
 
 		/// All the closed games here
 		///
-		/// Game close at this moment, closed games won't accept any proposal
+		/// Game close at this moment, closed games won't accept any affirmation
 		pub ProposeEndTime
 			get(fn propose_end_time_of)
 			: map hasher(identity) RelayHeaderId<T, I>
@@ -260,13 +264,13 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		Self::propose_end_time_of(game_id) > moment
 	}
 
-	/// Check if others already make a same proposal
-	pub fn is_unique_proposal(
+	/// Check if others already make a same affirmation
+	pub fn is_unique_affirmation(
 		proposed_relay_header_parcels: &[RelayHeaderParcel<T, I>],
-		existed_proposals: &[RelayAffirmationT<T, I>],
+		existed_affirmations: &[RelayAffirmationT<T, I>],
 	) -> bool {
-		!existed_proposals.iter().any(|existed_proposal| {
-			existed_proposal.relay_header_parcels.as_slice() == proposed_relay_header_parcels
+		!existed_affirmations.iter().any(|existed_affirmation| {
+			existed_affirmation.relay_header_parcels.as_slice() == proposed_relay_header_parcels
 		})
 	}
 
@@ -277,9 +281,9 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	pub fn ensure_can_bond(
 		relayer: &AccountId<T>,
 		round: u32,
-		proposals_count: u8,
+		affirmations_count: u8,
 	) -> Result<RingBalance<T, I>, DispatchError> {
-		let bond = T::RelayerGameAdjustor::estimate_bond(round, proposals_count);
+		let bond = T::RelayerGameAdjustor::estimate_bond(round, affirmations_count);
 
 		ensure!(
 			T::RingCurrency::usable_balance(relayer) >= bond,
@@ -764,7 +768,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 			match (last_round, relay_affirmations.len()) {
 				// Should never enter this condition
 				(0, 0) => error!(target: "relayer-game", "   >  Affirmations - EMPTY"),
-				// At first round and only one proposal found
+				// At first round and only one affirmation found
 				(0, 1) => {
 					trace!(target: "relayer-game", "   >  Challenge - NOT EXISTED");
 
@@ -867,13 +871,13 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 	type RelayProofs = RelayProofs<T, I>;
 
 	fn get_proposed_relay_header_parcels(
-		proposal_id: RelayAffirmationId<Self::RelayHeaderId>,
+		affirmation_id: RelayAffirmationId<Self::RelayHeaderId>,
 	) -> Option<Vec<Self::RelayHeaderParcel>> {
 		let RelayAffirmationId {
 			relay_header_id: game_id,
 			round,
 			index,
-		} = proposal_id;
+		} = affirmation_id;
 
 		Self::affirmations_of_game_at(&game_id, round)
 			.into_iter()
@@ -888,7 +892,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 	) -> DispatchResult {
 		trace!(
 			target: "relayer-game",
-			"Relayer `{:?}` propose:\n{:#?}",
+			"Relayer `{:?}` affirm:\n{:#?}",
 			relayer,
 			relay_header_parcel
 		);
@@ -908,31 +912,107 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		);
 
 		let now = <frame_system::Module<T>>::block_number();
-		let existed_proposals = Self::affirmations_of_game_at(&game_id, 0);
 		let proposed_relay_header_parcels = vec![relay_header_parcel];
 
-		if existed_proposals.is_empty() {
-			// A new game might open
+		// Check if it is a new game
+		ensure!(
+			<Affirmations<T, I>>::decode_len(&game_id, 0).unwrap_or(0) == 0,
+			<Error<T, I>>::ExistedAffirmationsFoundC
+		);
+		// Check if it is ok to open more games
+		ensure!(
+			<RelayHeaderParcelToResolve<T, I>>::decode_len()
+				.map(|length| length as u8)
+				.unwrap_or(0) < T::RelayerGameAdjustor::max_active_games(),
+			<Error<T, I>>::ActiveGamesTM
+		);
 
-			// Check if it is ok to open more games
-			ensure!(
-				<RelayHeaderParcelToResolve<T, I>>::decode_len()
-					.map(|length| length as u8)
-					.unwrap_or(0) < T::RelayerGameAdjustor::max_active_games(),
-				<Error<T, I>>::ActiveGamesTM
-			);
-		} else {
-			// An against proposal might add
+		let bond = Self::ensure_can_bond(&relayer, 0, 1)?;
 
-			ensure!(Self::is_game_open_at(&game_id, now), <Error<T, I>>::GameC);
-			// Currently not allow to vote for(relay) the same parcel
-			ensure!(
-				Self::is_unique_proposal(&proposed_relay_header_parcels, &existed_proposals),
-				<Error<T, I>>::RelayAffirmationDup
-			);
-		}
+		Self::update_bonds_with(&relayer, |old_bonds| old_bonds.saturating_add(bond));
 
-		let existed_relay_affirmations_count = existed_proposals.len();
+		let relay_affirmation = {
+			let mut relay_affirmation = RelayAffirmation::new();
+
+			relay_affirmation.relayer = relayer.clone();
+			relay_affirmation.relay_header_parcels = proposed_relay_header_parcels;
+			relay_affirmation.bond = bond;
+
+			// Allow affirm without relay proofs
+			// The relay proofs can be completed later through `complete_proofs`
+			if let Some(relay_proofs) = optional_relay_proofs {
+				T::RelayableChain::verify_relay_proofs(
+					&game_id,
+					&relay_affirmation.relay_header_parcels[0],
+					&relay_proofs,
+					Some(&best_confirmed_block_id),
+				)?;
+
+				relay_affirmation.verified = true;
+			}
+
+			relay_affirmation
+		};
+
+		<Affirmations<T, I>>::append(&game_id, 0, relay_affirmation);
+		<BestConfirmedHeaderId<T, I>>::insert(&game_id, best_confirmed_block_id);
+		<RoundCounts<T, I>>::insert(&game_id, 1);
+		<RelayHeaderParcelToResolve<T, I>>::mutate(|relay_header_parcel_to_resolve| {
+			relay_header_parcel_to_resolve.push(game_id.clone())
+		});
+		<GameSamplePoints<T, I>>::append(&game_id, vec![game_id.clone()]);
+
+		Self::update_timer_of_game_at(&game_id, 0, now);
+		Self::deposit_event(RawEvent::RelayProposed(game_id, 0, 0, relayer));
+
+		Ok(())
+	}
+
+	fn dispute_and_affirm(
+		relayer: Self::Relayer,
+		relay_header_parcel: Self::RelayHeaderParcel,
+		optional_relay_proofs: Option<Self::RelayProofs>,
+	) -> DispatchResult {
+		trace!(
+			target: "relayer-game",
+			"Relayer `{:?}` dispute and affirm:\n{:#?}",
+			relayer,
+			relay_header_parcel
+		);
+
+		let best_confirmed_block_id = T::RelayableChain::best_confirmed_block_id();
+		let game_id = relay_header_parcel.header_id();
+
+		// Check if the proposed header has already been confirmed
+		ensure!(
+			game_id > best_confirmed_block_id,
+			<Error<T, I>>::RelayParcelAR
+		);
+		// Make sure the game is at first round
+		ensure!(
+			<Affirmations<T, I>>::decode_len(&game_id, 1).unwrap_or(0) == 0,
+			<Error<T, I>>::RoundMis
+		);
+
+		let now = <frame_system::Module<T>>::block_number();
+		let proposed_relay_header_parcels = vec![relay_header_parcel];
+
+		// Check if it is not a new game
+		ensure!(
+			<Affirmations<T, I>>::decode_len(&game_id, 0).unwrap_or(0) != 0,
+			<Error<T, I>>::NothingToAgainstAffirmationE
+		);
+		ensure!(Self::is_game_open_at(&game_id, now), <Error<T, I>>::GameC);
+
+		let existed_affirmations = Self::affirmations_of_game_at(&game_id, 0);
+
+		// Currently not allow to vote for(relay) the same parcel
+		ensure!(
+			Self::is_unique_affirmation(&proposed_relay_header_parcels, &existed_affirmations),
+			<Error<T, I>>::RelayAffirmationDup
+		);
+
+		let existed_relay_affirmations_count = existed_affirmations.len();
 		let bond = Self::ensure_can_bond(&relayer, 0, existed_relay_affirmations_count as u8 + 1)?;
 
 		Self::update_bonds_with(&relayer, |old_bonds| old_bonds.saturating_add(bond));
@@ -944,7 +1024,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			relay_affirmation.relay_header_parcels = proposed_relay_header_parcels;
 			relay_affirmation.bond = bond;
 
-			// Allow propose without relay proofs
+			// Allow affirm without relay proofs
 			// The relay proofs can be completed later through `complete_proofs`
 			if let Some(relay_proofs) = optional_relay_proofs {
 				T::RelayableChain::verify_relay_proofs(
@@ -962,15 +1042,6 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 		<Affirmations<T, I>>::append(&game_id, 0, relay_affirmation);
 
-		if existed_relay_affirmations_count == 0 {
-			<BestConfirmedHeaderId<T, I>>::insert(&game_id, best_confirmed_block_id);
-			<RoundCounts<T, I>>::insert(&game_id, 1);
-			<RelayHeaderParcelToResolve<T, I>>::mutate(|relay_header_parcel_to_resolve| {
-				relay_header_parcel_to_resolve.push(game_id.clone())
-			});
-			<GameSamplePoints<T, I>>::append(&game_id, vec![game_id.clone()]);
-		}
-
 		Self::update_timer_of_game_at(&game_id, 0, now);
 		Self::deposit_event(RawEvent::RelayProposed(game_id, 0, 0, relayer));
 
@@ -978,14 +1049,14 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 	}
 
 	fn complete_relay_proofs(
-		proposal_id: RelayAffirmationId<Self::RelayHeaderId>,
+		affirmation_id: RelayAffirmationId<Self::RelayHeaderId>,
 		relay_proofs: Vec<Self::RelayProofs>,
 	) -> DispatchResult {
 		let RelayAffirmationId {
 			relay_header_id: game_id,
 			round,
 			index,
-		} = proposal_id;
+		} = affirmation_id;
 
 		<Affirmations<T, I>>::try_mutate(&game_id, round, |relay_affirmations| {
 			if let Some(relay_affirmation) = relay_affirmations.get_mut(index as usize) {
@@ -1045,24 +1116,24 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		}
 
 		let round = previous_round + 1;
-		let existed_proposals = Self::affirmations_of_game_at(&game_id, previous_round);
+		let existed_affirmations = Self::affirmations_of_game_at(&game_id, previous_round);
 
 		ensure!(
-			Self::is_unique_proposal(&game_sample_points, &existed_proposals),
+			Self::is_unique_affirmation(&game_sample_points, &existed_affirmations),
 			<Error<T, I>>::RelayAffirmationDup
 		);
 
-		let extended_proposal = existed_proposals
+		let extended_affirmation = existed_affirmations
 			.get(previous_index as usize)
 			.ok_or(<Error<T, I>>::ExtendedRelayAffirmationNE)?;
 
-		// Currently only accept extending from a completed proposal
+		// Currently only accept extending from a completed affirmation
 		ensure!(
-			extended_proposal.verified,
+			extended_affirmation.verified,
 			<Error<T, I>>::PreviousRelayProofsInc
 		);
 
-		let bond = Self::ensure_can_bond(&relayer, round, existed_proposals.len() as u8 + 1)?;
+		let bond = Self::ensure_can_bond(&relayer, round, existed_affirmations.len() as u8 + 1)?;
 
 		Self::update_bonds_with(&relayer, |old_bonds| old_bonds.saturating_add(bond));
 
@@ -1075,7 +1146,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			relay_affirmation.maybe_extended_relay_affirmation_id =
 				Some(extended_relay_affirmation_id);
 
-			// Allow propose without relay proofs
+			// Allow affirm without relay proofs
 			// The relay proofs can be completed later through `complete_proofs`
 			if let Some(relay_proofs) = optional_relay_proofs {
 				for (relay_header_parcel, relay_proofs) in relay_affirmation

@@ -98,10 +98,19 @@ pub trait RelayerGameProtocol {
 		proposal_id: RelayAffirmationId<Self::RelayHeaderId>,
 	) -> Option<Vec<Self::RelayHeaderParcel>>;
 
-	/// Game's entry point, call only at the first round
+	/// Arrirm a new affirmation
 	///
-	/// Arrirm a new affirmation or against a existed affirmation
+	/// Game's entry point, call only at the first round
 	fn affirm(
+		relayer: Self::Relayer,
+		relay_header_parcel: Self::RelayHeaderParcel,
+		optional_relay_proofs: Option<Self::RelayProofs>,
+	) -> DispatchResult;
+
+	/// Dispute Found
+	///
+	/// Arrirm a new affirmation to against the existed affirmation(s)
+	fn dispute_and_affirm(
 		relayer: Self::Relayer,
 		relay_header_parcel: Self::RelayHeaderParcel,
 		optional_relay_proofs: Option<Self::RelayProofs>,

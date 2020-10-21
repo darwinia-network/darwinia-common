@@ -33,7 +33,7 @@ fn insufficient_bond_should_fail() {
 				MockRelayHeader::gen(2, 0, 1),
 				Some(())
 			));
-			assert_ok!(RelayerGame::affirm(
+			assert_ok!(RelayerGame::dispute_and_affirm(
 				3,
 				relay_header_parcels[0].clone(),
 				Some(())
@@ -51,6 +51,24 @@ fn insufficient_bond_should_fail() {
 				None
 			));
 		});
+}
+
+#[test]
+fn some_affirm_cases_should_fail() {
+	ExtBuilder::default().build().execute_with(|| {
+		let relay_header_parcel_a = MockRelayHeader::gen(1, 0, 1);
+		let relay_header_parcel_b = MockRelayHeader::gen(1, 0, 1);
+
+		assert_err!(
+			RelayerGame::dispute_and_affirm(1, relay_header_parcel_a.clone(), None),
+			RelayerGameError::NothingToAgainstAffirmationE
+		);
+		assert_ok!(RelayerGame::affirm(1, relay_header_parcel_a, None));
+		assert_err!(
+			RelayerGame::affirm(1, relay_header_parcel_b, None),
+			RelayerGameError::ExistedAffirmationsFoundC
+		);
+	});
 }
 
 #[test]
@@ -77,7 +95,7 @@ fn duplicate_game_should_fail() {
 
 		assert_ok!(RelayerGame::affirm(1, relay_header_parcel.clone(), None));
 		assert_err!(
-			RelayerGame::affirm(2, relay_header_parcel, None),
+			RelayerGame::dispute_and_affirm(2, relay_header_parcel, None),
 			RelayerGameError::RelayAffirmationDup
 		);
 	});
@@ -147,7 +165,7 @@ fn extend_should_work() {
 			relay_header_parcels_a[0].clone(),
 			Some(())
 		));
-		assert_ok!(RelayerGame::affirm(
+		assert_ok!(RelayerGame::dispute_and_affirm(
 			2,
 			relay_header_parcels_b[0].clone(),
 			Some(())
