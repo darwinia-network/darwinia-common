@@ -198,7 +198,7 @@ decl_storage! {
 			=> Vec<Vec<RelayHeaderId<T, I>>>;
 
 		pub PendingRelayParcels
-			get(fn pending_relay_parcels)
+			get(fn pending_relay_header_parcels)
 			: Vec<(BlockNumber<T>, RelayHeaderId<T, I>, RelayHeaderParcel<T, I>)>
 	}
 }
@@ -215,7 +215,7 @@ decl_module! {
 		fn on_initialize(now: BlockNumber<T>) -> Weight {
 			// TODO: handle error
 			// TODO: weight
-			Self::system_approve_pending_relay_parcels(now).unwrap_or(0)
+			Self::system_approve_pending_relay_header_parcels(now).unwrap_or(0)
 		}
 
 		fn on_finalize(now: BlockNumber<T>) {
@@ -262,11 +262,11 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 
 	/// Check if others already make a same proposal
 	pub fn is_unique_proposal(
-		proposed_relay_parcels: &[RelayHeaderParcel<T, I>],
+		proposed_relay_header_parcels: &[RelayHeaderParcel<T, I>],
 		existed_proposals: &[RelayAffirmationT<T, I>],
 	) -> bool {
 		!existed_proposals.iter().any(|existed_proposal| {
-			existed_proposal.relay_header_parcels.as_slice() == proposed_relay_parcels
+			existed_proposal.relay_header_parcels.as_slice() == proposed_relay_header_parcels
 		})
 	}
 
@@ -512,8 +512,8 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 
 				let mut relay_chain = vec![];
 
-				for relay_parcel in relay_header_parcels.iter() {
-					relay_chain.push(relay_parcel);
+				for relay_header_parcel in relay_header_parcels.iter() {
+					relay_chain.push(relay_header_parcel);
 				}
 
 				while let Some(RelayAffirmationId { round, index, .. }) =
@@ -531,8 +531,8 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 							maybe_extended_relay_affirmation_id =
 								previous_maybe_extended_relay_affirmation_id;
 
-							for relay_parcel in relay_header_parcels.iter() {
-								relay_chain.push(relay_parcel);
+							for relay_header_parcel in relay_header_parcels.iter() {
+								relay_chain.push(relay_header_parcel);
 							}
 						} else {
 							// Should never enter this condition
@@ -672,22 +672,23 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		});
 	}
 
-	pub fn store_relay_parcels(
+	pub fn store_relay_header_parcels(
 		now: BlockNumber<T>,
-		pending_relay_parcels: Vec<(RelayHeaderId<T, I>, RelayHeaderParcel<T, I>)>,
+		pending_relay_header_parcels: Vec<(RelayHeaderId<T, I>, RelayHeaderParcel<T, I>)>,
 	) -> DispatchResult {
 		let confirm_period = T::ConfirmPeriod::get();
 
 		if confirm_period.is_zero() {
-			for (_, pendingrelay_parcel) in pending_relay_parcels {
-				T::RelayableChain::store_relay_parcel(pendingrelay_parcel)?;
+			for (_, pendingrelay_header_parcel) in pending_relay_header_parcels {
+				T::RelayableChain::store_relay_header_parcel(pendingrelay_header_parcel)?;
 			}
 		} else {
-			for (pending_relay_block_id, pendingrelay_parcel) in pending_relay_parcels {
+			for (pending_relay_block_id, pendingrelay_header_parcel) in pending_relay_header_parcels
+			{
 				<PendingRelayParcels<T, I>>::append((
 					now + confirm_period,
 					pending_relay_block_id,
-					pendingrelay_parcel,
+					pendingrelay_header_parcel,
 				));
 			}
 		}
@@ -718,21 +719,21 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		Self::deposit_event(RawEvent::GameOver(game_id));
 	}
 
-	pub fn update_pending_relay_parcels_with<F>(
+	pub fn update_pending_relay_header_parcels_with<F>(
 		pending_relay_block_id: &RelayHeaderId<T, I>,
 		f: F,
 	) -> DispatchResult
 	where
 		F: FnOnce(RelayHeaderParcel<T, I>) -> DispatchResult,
 	{
-		<PendingRelayParcels<T, I>>::mutate(|pending_relay_parcels| {
-			if let Some(i) = pending_relay_parcels
+		<PendingRelayParcels<T, I>>::mutate(|pending_relay_header_parcels| {
+			if let Some(i) = pending_relay_header_parcels
 				.iter()
 				.position(|(_, relay_header_id, _)| relay_header_id == pending_relay_block_id)
 			{
-				let (_, _, relay_parcel) = pending_relay_parcels.remove(i);
+				let (_, _, relay_header_parcel) = pending_relay_header_parcels.remove(i);
 
-				f(relay_parcel)
+				f(relay_header_parcel)
 			} else {
 				Err(<Error<T, I>>::PendingRelayParcelNE)?
 			}
@@ -767,10 +768,10 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 				(0, 1) => {
 					trace!(target: "relayer-game", "   >  Challenge - NOT EXISTED");
 
-					if let Some(relay_parcel) =
+					if let Some(relay_header_parcel) =
 						Self::settle_without_challenge(relay_affirmations.pop().unwrap())
 					{
-						relay_header_parcels.push((game_id.to_owned(), relay_parcel));
+						relay_header_parcels.push((game_id.to_owned(), relay_header_parcel));
 					}
 				}
 				// No relayer response for the lastest round
@@ -783,10 +784,10 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 				(_, 1) => {
 					trace!(target: "relayer-game", "   >  No More Challenge, Settle With Challenge");
 
-					if let Some(relay_parcel) =
+					if let Some(relay_header_parcel) =
 						Self::settle_with_challenge(&game_id, relay_affirmations.pop().unwrap())
 					{
-						relay_header_parcels.push((game_id.to_owned(), relay_parcel));
+						relay_header_parcels.push((game_id.to_owned(), relay_header_parcel));
 					} else {
 						// Should never enter this condition
 
@@ -803,8 +804,8 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 						trace!(target: "relayer-game", "   >  A Full Chain Gave, On Chain Arbitrate");
 
 						// A whole chain gave, start continuous verification
-						if let Some(relay_parcel) = Self::on_chain_arbitrate(&game_id) {
-							relay_header_parcels.push((game_id.to_owned(), relay_parcel));
+						if let Some(relay_header_parcel) = Self::on_chain_arbitrate(&game_id) {
+							relay_header_parcels.push((game_id.to_owned(), relay_header_parcel));
 						} else {
 							Self::settle_abandon(&game_id);
 						}
@@ -822,23 +823,24 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 			Self::game_over(game_id);
 		}
 
-		Self::store_relay_parcels(now, relay_header_parcels)?;
+		Self::store_relay_header_parcels(now, relay_header_parcels)?;
 
 		trace!(target: "relayer-game", "---");
 
 		Ok(())
 	}
 
-	pub fn system_approve_pending_relay_parcels(
+	pub fn system_approve_pending_relay_header_parcels(
 		now: BlockNumber<T>,
 	) -> Result<Weight, DispatchError> {
-		<PendingRelayParcels<T, I>>::mutate(|pending_relay_parcels| {
-			pending_relay_parcels.retain(
-				|(confirm_at, pending_relay_block_id, pendingrelay_parcel)| {
+		<PendingRelayParcels<T, I>>::mutate(|pending_relay_header_parcels| {
+			pending_relay_header_parcels.retain(
+				|(confirm_at, pending_relay_block_id, pendingrelay_header_parcel)| {
 					if *confirm_at == now {
 						// TODO: handle error
-						let _ =
-							T::RelayableChain::store_relay_parcel(pendingrelay_parcel.to_owned());
+						let _ = T::RelayableChain::store_relay_header_parcel(
+							pendingrelay_header_parcel.to_owned(),
+						);
 
 						Self::deposit_event(RawEvent::PendingRelayParcelApproved(
 							pending_relay_block_id.to_owned(),
@@ -864,7 +866,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 	type RelayHeaderParcel = RelayHeaderParcel<T, I>;
 	type RelayProofs = RelayProofs<T, I>;
 
-	fn get_proposed_relay_parcels(
+	fn get_proposed_relay_header_parcels(
 		proposal_id: RelayAffirmationId<Self::RelayHeaderId>,
 	) -> Option<Vec<Self::RelayHeaderParcel>> {
 		let RelayAffirmationId {
@@ -881,18 +883,18 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 	fn affirm(
 		relayer: Self::Relayer,
-		relay_parcel: Self::RelayHeaderParcel,
+		relay_header_parcel: Self::RelayHeaderParcel,
 		optional_relay_proofs: Option<Self::RelayProofs>,
 	) -> DispatchResult {
 		trace!(
 			target: "relayer-game",
 			"Relayer `{:?}` propose:\n{:#?}",
 			relayer,
-			relay_parcel
+			relay_header_parcel
 		);
 
 		let best_confirmed_block_id = T::RelayableChain::best_confirmed_block_id();
-		let game_id = relay_parcel.header_id();
+		let game_id = relay_header_parcel.header_id();
 
 		// Check if the proposed header has already been confirmed
 		ensure!(
@@ -907,7 +909,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 		let now = <frame_system::Module<T>>::block_number();
 		let existed_proposals = Self::affirmations_of_game_at(&game_id, 0);
-		let proposed_relay_parcels = vec![relay_parcel];
+		let proposed_relay_header_parcels = vec![relay_header_parcel];
 
 		if existed_proposals.is_empty() {
 			// A new game might open
@@ -925,7 +927,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			ensure!(Self::is_game_open_at(&game_id, now), <Error<T, I>>::GameC);
 			// Currently not allow to vote for(relay) the same parcel
 			ensure!(
-				Self::is_unique_proposal(&proposed_relay_parcels, &existed_proposals),
+				Self::is_unique_proposal(&proposed_relay_header_parcels, &existed_proposals),
 				<Error<T, I>>::RelayAffirmationDup
 			);
 		}
@@ -939,7 +941,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			let mut relay_affirmation = RelayAffirmation::new();
 
 			relay_affirmation.relayer = relayer.clone();
-			relay_affirmation.relay_header_parcels = proposed_relay_parcels;
+			relay_affirmation.relay_header_parcels = proposed_relay_header_parcels;
 			relay_affirmation.bond = bond;
 
 			// Allow propose without relay proofs
@@ -987,7 +989,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 		<Affirmations<T, I>>::try_mutate(&game_id, round, |relay_affirmations| {
 			if let Some(relay_affirmation) = relay_affirmations.get_mut(index as usize) {
-				for (relay_parcel, relay_proofs) in relay_affirmation
+				for (relay_header_parcel, relay_proofs) in relay_affirmation
 					.relay_header_parcels
 					.iter()
 					.zip(relay_proofs.into_iter())
@@ -995,14 +997,14 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 					if round == 0 {
 						T::RelayableChain::verify_relay_proofs(
 							&game_id,
-							relay_parcel,
+							relay_header_parcel,
 							&relay_proofs,
 							Some(&Self::best_confirmed_header_id_of(&game_id)),
 						)?;
 					} else {
 						T::RelayableChain::verify_relay_proofs(
 							&game_id,
-							relay_parcel,
+							relay_header_parcel,
 							&relay_proofs,
 							None,
 						)?;
@@ -1076,14 +1078,14 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			// Allow propose without relay proofs
 			// The relay proofs can be completed later through `complete_proofs`
 			if let Some(relay_proofs) = optional_relay_proofs {
-				for (relay_parcel, relay_proofs) in relay_affirmation
+				for (relay_header_parcel, relay_proofs) in relay_affirmation
 					.relay_header_parcels
 					.iter()
 					.zip(relay_proofs.into_iter())
 				{
 					T::RelayableChain::verify_relay_proofs(
 						&game_id,
-						relay_parcel,
+						relay_header_parcel,
 						&relay_proofs,
 						None,
 					)?;
@@ -1109,8 +1111,8 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 	fn approve_pending_relay_header_parcel(
 		pending_relay_block_id: Self::RelayHeaderId,
 	) -> DispatchResult {
-		Self::update_pending_relay_parcels_with(&pending_relay_block_id, |header| {
-			T::RelayableChain::store_relay_parcel(header)
+		Self::update_pending_relay_header_parcels_with(&pending_relay_block_id, |header| {
+			T::RelayableChain::store_relay_header_parcel(header)
 		})?;
 		Self::deposit_event(RawEvent::PendingRelayParcelApproved(
 			pending_relay_block_id,
@@ -1123,7 +1125,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 	fn reject_pending_relay_header_parcel(
 		pending_relay_block_id: Self::RelayHeaderId,
 	) -> DispatchResult {
-		Self::update_pending_relay_parcels_with(&pending_relay_block_id, |_| Ok(()))?;
+		Self::update_pending_relay_header_parcels_with(&pending_relay_block_id, |_| Ok(()))?;
 		Self::deposit_event(RawEvent::PendingRelayParcelRejected(pending_relay_block_id));
 
 		Ok(())

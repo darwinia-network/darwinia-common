@@ -78,21 +78,21 @@ pub mod mock_relay {
 
 		fn verify_relay_proofs(
 			_: &Self::RelayHeaderId,
-			relay_parcel: &Self::RelayHeaderParcel,
+			relay_header_parcel: &Self::RelayHeaderParcel,
 			_: &Self::RelayProofs,
 			_: Option<&Self::RelayHeaderId>,
 		) -> DispatchResult {
-			ensure!(relay_parcel.valid, "Parcel - INVALID");
+			ensure!(relay_header_parcel.valid, "Parcel - INVALID");
 
 			Ok(())
 		}
 
 		fn verify_continuous(
 			relay_header_parcel: &Self::RelayHeaderParcel,
-			extended_relay_parcel: &Self::RelayHeaderParcel,
+			extended_relay_header_parcel: &Self::RelayHeaderParcel,
 		) -> DispatchResult {
 			ensure!(
-				relay_header_parcel.parent_hash == extended_relay_parcel.hash,
+				relay_header_parcel.parent_hash == extended_relay_header_parcel.hash,
 				"Continuous - INVALID"
 			);
 
@@ -100,7 +100,7 @@ pub mod mock_relay {
 		}
 
 		fn verify_relay_chain(mut relay_chain: Vec<&Self::RelayHeaderParcel>) -> DispatchResult {
-			relay_chain.sort_by_key(|relay_parcel| relay_parcel.number);
+			relay_chain.sort_by_key(|relay_header_parcel| relay_header_parcel.number);
 
 			for window in relay_chain.windows(2) {
 				let next = window[0];
@@ -119,12 +119,14 @@ pub mod mock_relay {
 			relay_header_id - best_confirmed_block_id
 		}
 
-		fn store_relay_parcel(relay_parcel: Self::RelayHeaderParcel) -> DispatchResult {
+		fn store_relay_header_parcel(
+			relay_header_parcel: Self::RelayHeaderParcel,
+		) -> DispatchResult {
 			ConfirmedBlockNumbers::mutate(|best_confirmed_block_number| {
-				if relay_parcel.number > *best_confirmed_block_number {
-					*best_confirmed_block_number = relay_parcel.number;
+				if relay_header_parcel.number > *best_confirmed_block_number {
+					*best_confirmed_block_number = relay_header_parcel.number;
 
-					ConfirmedHeaders::insert(relay_parcel.number, relay_parcel);
+					ConfirmedHeaders::insert(relay_header_parcel.number, relay_header_parcel);
 				}
 			});
 

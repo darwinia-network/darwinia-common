@@ -236,14 +236,14 @@ decl_module! {
 		#[weight = 0]
 		pub fn propose(
 			origin,
-			ethereum_relay_parcel: EthereumRelayHeaderParcel,
+			ethereum_relay_header_parcel: EthereumRelayHeaderParcel,
 			optional_ethereum_relay_proofs: Option<EthereumRelayProofs>
 		) {
 			let relayer = ensure_signed(origin)?;
 
 			T::RelayerGame::propose(
 				relayer,
-				ethereum_relay_parcel,
+				ethereum_relay_header_parcel,
 				optional_ethereum_relay_proofs
 			)?;
 		}
@@ -384,11 +384,11 @@ decl_module! {
 		}
 
 		#[weight = 10_000_000]
-		pub fn set_confirmed_parcel(origin, ethereum_relay_parcel: EthereumRelayHeaderParcel) {
+		pub fn set_confirmed_parcel(origin, ethereum_relay_header_parcel: EthereumRelayHeaderParcel) {
 			T::ApproveOrigin::ensure_origin(origin)?;
 
 			ConfirmedBlockNumbers::mutate(|confirmed_block_numbers| {
-				confirmed_block_numbers.push(ethereum_relay_parcel.header.number);
+				confirmed_block_numbers.push(ethereum_relay_header_parcel.header.number);
 
 				BestConfirmedBlockNumber::put(confirmed_block_numbers
 					.iter()
@@ -396,7 +396,7 @@ decl_module! {
 					.map(ToOwned::to_owned)
 					.unwrap_or(0));
 			});
-			ConfirmedParcels::insert(ethereum_relay_parcel.header.number, ethereum_relay_parcel);
+			ConfirmedParcels::insert(ethereum_relay_header_parcel.header.number, ethereum_relay_header_parcel);
 		}
 	}
 }
@@ -479,11 +479,11 @@ impl<T: Trait> Relayable for Module<T> {
 
 	fn verify_relay_proofs(
 		relay_header_id: &Self::RelayHeaderId,
-		relay_parcel: &Self::RelayHeaderParcel,
+		relay_header_parcel: &Self::RelayHeaderParcel,
 		relay_proofs: &Self::RelayProofs,
 		optional_best_confirmed_block_id: Option<&Self::RelayHeaderId>,
 	) -> DispatchResult {
-		let Self::RelayHeaderParcel { header, mmr_root } = relay_parcel;
+		let Self::RelayHeaderParcel { header, mmr_root } = relay_header_parcel;
 		let Self::RelayProofs {
 			ethash_proof,
 			mmr_proof,
@@ -559,11 +559,11 @@ impl<T: Trait> Relayable for Module<T> {
 
 	fn verify_continuous(
 		relay_header_parcel: &Self::RelayHeaderParcel,
-		extended_relay_parcel: &Self::RelayHeaderParcel,
+		extended_relay_header_parcel: &Self::RelayHeaderParcel,
 	) -> DispatchResult {
 		let eth_partial = Self::ethash_params();
 		let next_relay_header = &relay_header_parcel.header;
-		let previous_relay_header = &extended_relay_parcel.header;
+		let previous_relay_header = &extended_relay_header_parcel.header;
 
 		ensure!(
 			next_relay_header.parent_hash
@@ -584,25 +584,25 @@ impl<T: Trait> Relayable for Module<T> {
 	fn verify_relay_chain(mut relay_chain: Vec<&Self::RelayHeaderParcel>) -> DispatchResult {
 		let eth_partial = Self::ethash_params();
 
-		relay_chain.sort_by_key(|relay_parcel| relay_parcel.header.number);
+		relay_chain.sort_by_key(|relay_header_parcel| relay_header_parcel.header.number);
 
 		for window in relay_chain.windows(2) {
-			let next_relay_parcel = window[0];
-			let previous_relay_parcel = window[1];
+			let next_relay_header_parcel = window[0];
+			let previous_relay_header_parcel = window[1];
 
 			ensure!(
-				next_relay_parcel
+				next_relay_header_parcel
 					.header
 					.hash
 					.ok_or(<Error<T>>::HeaderHashInv)?
-					== previous_relay_parcel.header.parent_hash,
+					== previous_relay_header_parcel.header.parent_hash,
 				<Error<T>>::ContinuousInv
 			);
 			ensure!(
-				next_relay_parcel.header.difficulty().to_owned()
+				next_relay_header_parcel.header.difficulty().to_owned()
 					== eth_partial.calculate_difficulty(
-						&next_relay_parcel.header,
-						&previous_relay_parcel.header
+						&next_relay_header_parcel.header,
+						&previous_relay_header_parcel.header
 					),
 				<Error<T>>::ContinuousInv
 			);
@@ -621,9 +621,9 @@ impl<T: Trait> Relayable for Module<T> {
 			.unwrap_or(0)
 	}
 
-	fn store_relay_parcel(relay_parcel: Self::RelayHeaderParcel) -> DispatchResult {
+	fn store_relay_header_parcel(relay_header_parcel: Self::RelayHeaderParcel) -> DispatchResult {
 		let best_confirmed_block_number = Self::best_confirmed_block_number();
-		let relay_block_number = relay_parcel.header.number;
+		let relay_block_number = relay_header_parcel.header.number;
 
 		// Not allow to relay genesis header
 		ensure!(
@@ -638,7 +638,7 @@ impl<T: Trait> Relayable for Module<T> {
 
 			BestConfirmedBlockNumber::put(relay_block_number);
 		});
-		ConfirmedParcels::insert(relay_block_number, relay_parcel);
+		ConfirmedParcels::insert(relay_block_number, relay_header_parcel);
 
 		Ok(())
 	}

@@ -61,9 +61,9 @@ fn already_confirmed_should_fail() {
 		.headers(relay_header_parcels.clone())
 		.build()
 		.execute_with(|| {
-			for relay_parcel in relay_header_parcels {
+			for relay_header_parcel in relay_header_parcels {
 				assert_err!(
-					RelayerGame::affirm(1, relay_parcel, None),
+					RelayerGame::affirm(1, relay_header_parcel, None),
 					RelayerGameError::RelayParcelAR
 				);
 			}
@@ -73,11 +73,11 @@ fn already_confirmed_should_fail() {
 #[test]
 fn duplicate_game_should_fail() {
 	ExtBuilder::default().build().execute_with(|| {
-		let relay_parcel = MockRelayHeader::gen(1, 0, 1);
+		let relay_header_parcel = MockRelayHeader::gen(1, 0, 1);
 
-		assert_ok!(RelayerGame::affirm(1, relay_parcel.clone(), None));
+		assert_ok!(RelayerGame::affirm(1, relay_header_parcel.clone(), None));
 		assert_err!(
-			RelayerGame::affirm(2, relay_parcel, None),
+			RelayerGame::affirm(2, relay_header_parcel, None),
 			RelayerGameError::RelayAffirmationDup
 		);
 	});
@@ -109,26 +109,28 @@ fn challenge_time_should_work() {
 			.challenge_time(challenge_time)
 			.build()
 			.execute_with(|| {
-				let relay_parcel = MockRelayHeader::gen(1, 0, 1);
+				let relay_header_parcel = MockRelayHeader::gen(1, 0, 1);
 
-				assert_ok!(RelayerGame::affirm(1, relay_parcel.clone(), None));
+				assert_ok!(RelayerGame::affirm(1, relay_header_parcel.clone(), None));
 
 				for block in 0..=challenge_time {
 					run_to_block(block);
 
 					assert_eq!(
-						RelayerGame::affirmations_of_game_at(relay_parcel.number, 0).len(),
+						RelayerGame::affirmations_of_game_at(relay_header_parcel.number, 0).len(),
 						1
 					);
-					assert!(Relay::confirmed_header_of(relay_parcel.number).is_none());
+					assert!(Relay::confirmed_header_of(relay_header_parcel.number).is_none());
 				}
 
 				run_to_block(challenge_time + 1);
 
-				assert!(RelayerGame::affirmations_of_game_at(relay_parcel.number, 1).is_empty());
+				assert!(
+					RelayerGame::affirmations_of_game_at(relay_header_parcel.number, 1).is_empty()
+				);
 				assert_eq!(
-					Relay::confirmed_header_of(relay_parcel.number),
-					Some(relay_parcel)
+					Relay::confirmed_header_of(relay_header_parcel.number),
+					Some(relay_header_parcel)
 				);
 			});
 	}
@@ -137,11 +139,19 @@ fn challenge_time_should_work() {
 #[test]
 fn extend_should_work() {
 	ExtBuilder::default().build().execute_with(|| {
-		let relay_parcels_a = MockRelayHeader::gen_continous(1, vec![1, 1, 1], true);
-		let relay_parcels_b = MockRelayHeader::gen_continous(1, vec![1, 1, 1], true);
+		let relay_header_parcels_a = MockRelayHeader::gen_continous(1, vec![1, 1, 1], true);
+		let relay_header_parcels_b = MockRelayHeader::gen_continous(1, vec![1, 1, 1], true);
 
-		assert_ok!(RelayerGame::affirm(1, relay_parcels_a[0].clone(), Some(())));
-		assert_ok!(RelayerGame::affirm(2, relay_parcels_b[0].clone(), Some(())));
+		assert_ok!(RelayerGame::affirm(
+			1,
+			relay_header_parcels_a[0].clone(),
+			Some(())
+		));
+		assert_ok!(RelayerGame::affirm(
+			2,
+			relay_header_parcels_b[0].clone(),
+			Some(())
+		));
 
 		run_to_block(6 * 1 + 1);
 
@@ -149,7 +159,7 @@ fn extend_should_work() {
 
 		assert_ok!(RelayerGame::extend_affirmation(
 			1,
-			vec![relay_parcels_a[1].clone()],
+			vec![relay_header_parcels_a[1].clone()],
 			RelayAffirmationId {
 				relay_header_id: 3,
 				round: 0,
@@ -159,7 +169,7 @@ fn extend_should_work() {
 		));
 		assert_ok!(RelayerGame::extend_affirmation(
 			2,
-			vec![relay_parcels_b[1].clone()],
+			vec![relay_header_parcels_b[1].clone()],
 			RelayAffirmationId {
 				relay_header_id: 3,
 				round: 0,
@@ -172,7 +182,7 @@ fn extend_should_work() {
 
 		assert_ok!(RelayerGame::extend_affirmation(
 			1,
-			vec![relay_parcels_a[2].clone()],
+			vec![relay_header_parcels_a[2].clone()],
 			RelayAffirmationId {
 				relay_header_id: 3,
 				round: 1,
@@ -182,7 +192,7 @@ fn extend_should_work() {
 		));
 		assert_ok!(RelayerGame::extend_affirmation(
 			2,
-			vec![relay_parcels_b[2].clone()],
+			vec![relay_header_parcels_b[2].clone()],
 			RelayAffirmationId {
 				relay_header_id: 3,
 				round: 1,
@@ -277,20 +287,20 @@ fn extend_should_work() {
 #[test]
 fn settle_without_challenge_should_work() {
 	ExtBuilder::default().build().execute_with(|| {
-		for (relay_parcel, i) in MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], true)
+		for (relay_header_parcel, i) in MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], true)
 			.into_iter()
 			.rev()
 			.zip(1..)
 		{
-			assert_ok!(RelayerGame::affirm(1, relay_parcel.clone(), None));
+			assert_ok!(RelayerGame::affirm(1, relay_header_parcel.clone(), None));
 			assert!(Ring::usable_balance(&1) < 100);
 			assert!(!Ring::locks(1).is_empty());
 
 			run_to_block(7 * i);
 
 			assert_eq!(
-				Relay::confirmed_header_of(relay_parcel.number),
-				Some(relay_parcel)
+				Relay::confirmed_header_of(relay_header_parcel.number),
+				Some(relay_header_parcel)
 			);
 			assert_eq!(Ring::usable_balance(&1), 100);
 			assert!(Ring::locks(1).is_empty());
@@ -324,11 +334,11 @@ fn settle_without_challenge_should_work() {
 
 // 		run_to_block(3 * 4 + 1);
 
-// 		let relay_parcel = proposal_a[0].clone();
+// 		let relay_header_parcel = proposal_a[0].clone();
 
 // 		assert_eq!(
-// 			Relay::confirmed_header_of(relay_parcel.number),
-// 			Some(relay_parcel)
+// 			Relay::confirmed_header_of(relay_header_parcel.number),
+// 			Some(relay_header_parcel)
 // 		);
 // 	});
 // }
@@ -384,11 +394,11 @@ fn settle_without_challenge_should_work() {
 // 			run_to_block(3 * i + 1);
 // 		}
 
-// 		let relay_parcel = proposal_a[0].clone();
+// 		let relay_header_parcel = proposal_a[0].clone();
 
 // 		assert_eq!(
-// 			Relay::confirmed_header_of(relay_parcel.number),
-// 			Some(relay_parcel)
+// 			Relay::confirmed_header_of(relay_header_parcel.number),
+// 			Some(relay_header_parcel)
 // 		);
 // 	});
 // }
@@ -430,25 +440,25 @@ fn auto_confirm_period_should_work() {
 		.confirmed_period(3)
 		.build()
 		.execute_with(|| {
-			let relay_parcel = MockRelayHeader::gen(1, 0, 1);
+			let relay_header_parcel = MockRelayHeader::gen(1, 0, 1);
 
-			assert_ok!(RelayerGame::affirm(1, relay_parcel.clone(), None));
+			assert_ok!(RelayerGame::affirm(1, relay_header_parcel.clone(), None));
 
 			run_to_block(7);
 
-			assert!(Relay::confirmed_header_of(relay_parcel.number).is_none());
+			assert!(Relay::confirmed_header_of(relay_header_parcel.number).is_none());
 			assert_eq!(
-				RelayerGame::pending_relay_parcels(),
-				vec![(9, relay_parcel.number, relay_parcel.clone())]
+				RelayerGame::pending_relay_header_parcels(),
+				vec![(9, relay_header_parcel.number, relay_header_parcel.clone())]
 			);
 
 			run_to_block(9);
 
 			assert_eq!(
-				Relay::confirmed_header_of(relay_parcel.number),
-				Some(relay_parcel)
+				Relay::confirmed_header_of(relay_header_parcel.number),
+				Some(relay_header_parcel)
 			);
-			assert!(RelayerGame::pending_relay_parcels().is_empty());
+			assert!(RelayerGame::pending_relay_header_parcels().is_empty());
 		});
 }
 
@@ -459,27 +469,27 @@ fn approve_pending_parcels_should_work() {
 		.confirmed_period(3)
 		.build()
 		.execute_with(|| {
-			let relay_parcel = MockRelayHeader::gen(1, 0, 1);
+			let relay_header_parcel = MockRelayHeader::gen(1, 0, 1);
 
-			assert_ok!(RelayerGame::affirm(1, relay_parcel.clone(), None));
+			assert_ok!(RelayerGame::affirm(1, relay_header_parcel.clone(), None));
 
 			run_to_block(7);
 
-			assert!(Relay::confirmed_header_of(relay_parcel.number).is_none());
+			assert!(Relay::confirmed_header_of(relay_header_parcel.number).is_none());
 			assert_eq!(
-				RelayerGame::pending_relay_parcels(),
-				vec![(9, relay_parcel.number, relay_parcel.clone())]
+				RelayerGame::pending_relay_header_parcels(),
+				vec![(9, relay_header_parcel.number, relay_header_parcel.clone())]
 			);
 
 			assert_ok!(RelayerGame::approve_pending_relay_header_parcel(
-				relay_parcel.number
+				relay_header_parcel.number
 			));
 
 			assert_eq!(
-				Relay::confirmed_header_of(relay_parcel.number),
-				Some(relay_parcel)
+				Relay::confirmed_header_of(relay_header_parcel.number),
+				Some(relay_header_parcel)
 			);
-			assert!(RelayerGame::pending_relay_parcels().is_empty());
+			assert!(RelayerGame::pending_relay_header_parcels().is_empty());
 		});
 }
 
@@ -490,23 +500,23 @@ fn reject_pending_parcels_should_work() {
 		.confirmed_period(3)
 		.build()
 		.execute_with(|| {
-			let relay_parcel = MockRelayHeader::gen(1, 0, 1);
+			let relay_header_parcel = MockRelayHeader::gen(1, 0, 1);
 
-			assert_ok!(RelayerGame::affirm(1, relay_parcel.clone(), None));
+			assert_ok!(RelayerGame::affirm(1, relay_header_parcel.clone(), None));
 
 			run_to_block(7);
 
-			assert!(Relay::confirmed_header_of(relay_parcel.number).is_none());
+			assert!(Relay::confirmed_header_of(relay_header_parcel.number).is_none());
 			assert_eq!(
-				RelayerGame::pending_relay_parcels(),
-				vec![(9, relay_parcel.number, relay_parcel.clone())]
+				RelayerGame::pending_relay_header_parcels(),
+				vec![(9, relay_header_parcel.number, relay_header_parcel.clone())]
 			);
 
 			assert_ok!(RelayerGame::reject_pending_relay_header_parcel(
-				relay_parcel.number
+				relay_header_parcel.number
 			));
 
-			assert!(Relay::confirmed_header_of(relay_parcel.number).is_none());
-			assert!(RelayerGame::pending_relay_parcels().is_empty());
+			assert!(Relay::confirmed_header_of(relay_header_parcel.number).is_none());
+			assert!(RelayerGame::pending_relay_header_parcels().is_empty());
 		});
 }

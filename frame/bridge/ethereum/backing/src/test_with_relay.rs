@@ -42,7 +42,7 @@ impl RelayerGameProtocol for UnusedRelayerGame {
 	type RelayHeaderParcel = EthereumRelayHeaderParcel;
 	type RelayProofs = EthereumRelayProofs;
 
-	fn get_proposed_relay_parcels(
+	fn get_proposed_relay_header_parcels(
 		proposal_id: RelayAffirmationId<Self::RelayHeaderId>,
 	) -> Option<Vec<Self::RelayHeaderParcel>> {
 		unimplemented!()
@@ -50,7 +50,7 @@ impl RelayerGameProtocol for UnusedRelayerGame {
 
 	fn propose(
 		relayer: Self::Relayer,
-		relay_parcel: Self::RelayHeaderParcel,
+		relay_header_parcel: Self::RelayHeaderParcel,
 		optional_relay_proofs: Option<Self::RelayProofs>,
 	) -> DispatchResult {
 		unimplemented!()

@@ -36,14 +36,14 @@ pub trait Relayable {
 	// TODO: optimize this
 	fn verify_relay_proofs(
 		relay_header_id: &Self::RelayHeaderId,
-		relay_parcel: &Self::RelayHeaderParcel,
+		relay_header_parcel: &Self::RelayHeaderParcel,
 		relay_proofs: &Self::RelayProofs,
 		optional_best_confirmed_block_id: Option<&Self::RelayHeaderId>,
 	) -> DispatchResult;
 
 	fn verify_continuous(
 		relay_header_parcel: &Self::RelayHeaderParcel,
-		extended_relay_parcel: &Self::RelayHeaderParcel,
+		extended_relay_header_parcel: &Self::RelayHeaderParcel,
 	) -> DispatchResult;
 
 	fn verify_relay_chain(relay_chain: Vec<&Self::RelayHeaderParcel>) -> DispatchResult;
@@ -53,7 +53,7 @@ pub trait Relayable {
 		best_confirmed_block_id: Self::RelayHeaderId,
 	) -> u32;
 
-	fn store_relay_parcel(relay_parcel: Self::RelayHeaderParcel) -> DispatchResult;
+	fn store_relay_header_parcel(relay_header_parcel: Self::RelayHeaderParcel) -> DispatchResult;
 }
 
 /// A regulator to adjust relay args for a specific chain
@@ -94,7 +94,7 @@ pub trait RelayerGameProtocol {
 		+ RelayHeaderParcelInfo<HeaderId = Self::RelayHeaderId>;
 	type RelayProofs;
 
-	fn get_proposed_relay_parcels(
+	fn get_proposed_relay_header_parcels(
 		proposal_id: RelayAffirmationId<Self::RelayHeaderId>,
 	) -> Option<Vec<Self::RelayHeaderParcel>>;
 
@@ -103,7 +103,7 @@ pub trait RelayerGameProtocol {
 	/// Arrirm a new affirmation or against a existed affirmation
 	fn affirm(
 		relayer: Self::Relayer,
-		relay_parcel: Self::RelayHeaderParcel,
+		relay_header_parcel: Self::RelayHeaderParcel,
 		optional_relay_proofs: Option<Self::RelayProofs>,
 	) -> DispatchResult;
 
