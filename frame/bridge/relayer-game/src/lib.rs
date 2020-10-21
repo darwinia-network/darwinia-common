@@ -97,16 +97,20 @@ decl_event! {
 		AccountId = AccountId<T>,
 		RelayHeaderId = RelayHeaderId<T, I>,
 	{
-		/// A new relay parcel proposed. [relay header id, round, index, relayer]
-		RelayProposed(RelayHeaderId, u32, u32, AccountId),
-		/// A new round started. [relay header id, game sample points]
+		/// A new relay parcel affirmed. [game id, round, index, relayer]
+		Affirmed(RelayHeaderId, u32, u32, AccountId),
+		/// A different affirmation submitted, dispute found. [game id]
+		Disputed(RelayHeaderId),
+		/// A extended affirmation submitted, dispute go on. [game id]
+		Extended(RelayHeaderId),
+		/// A new round started. [game id, game sample points]
 		NewRound(RelayHeaderId, Vec<RelayHeaderId>),
-		/// A game has been settled. [relay header id]
+		/// A game has been settled. [game id]
 		GameOver(RelayHeaderId),
-		/// Pending relay parcel approved. [relay header id, reason]
-		PendingRelayParcelApproved(RelayHeaderId, Vec<u8>),
-		/// Pending relay parcel rejected. [relay header id]
-		PendingRelayParcelRejected(RelayHeaderId),
+		/// Pending relay header parcel approved. [game id, reason]
+		PendingRelayHeaderParcelApproved(RelayHeaderId, Vec<u8>),
+		/// Pending relay header parcel rejected. [game id]
+		PendingRelayHeaderParcelRejected(RelayHeaderId),
 	}
 }
 
@@ -150,7 +154,7 @@ decl_storage! {
 
 		/// All the active games' affirmations here
 		///
-		/// The first key is relay header id, the second key is round index
+		/// The first key is game id, the second key is round index
 		/// then you will get the affirmations under that round in that game
 		pub Affirmations
 			get(fn affirmations_of_game_at)
@@ -879,7 +883,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 							pendingrelay_header_parcel.to_owned(),
 						);
 
-						Self::deposit_event(RawEvent::PendingRelayParcelApproved(
+						Self::deposit_event(RawEvent::PendingRelayHeaderParcelApproved(
 							pending_relay_block_id.to_owned(),
 							b"Not Enough Technical Member Online, Approved By System".to_vec(),
 						));
@@ -1000,7 +1004,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		<GameSamplePoints<T, I>>::append(&game_id, vec![game_id.clone()]);
 
 		Self::update_timer_of_game_at(&game_id, 0, now);
-		Self::deposit_event(RawEvent::RelayProposed(game_id, 0, 0, relayer));
+		Self::deposit_event(RawEvent::Affirmed(game_id, 0, 0, relayer));
 
 		Ok(())
 	}
@@ -1081,7 +1085,8 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		<Affirmations<T, I>>::append(&game_id, 0, relay_affirmation);
 
 		Self::update_timer_of_game_at(&game_id, 0, now);
-		Self::deposit_event(RawEvent::RelayProposed(game_id, 0, 0, relayer));
+		Self::deposit_event(RawEvent::Disputed(game_id.clone()));
+		Self::deposit_event(RawEvent::Affirmed(game_id, 0, 0, relayer));
 
 		Ok(())
 	}
@@ -1212,7 +1217,8 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			.map(|length| length as u32)
 			.unwrap_or(0);
 
-		Self::deposit_event(RawEvent::RelayProposed(game_id, round, index, relayer));
+		Self::deposit_event(RawEvent::Extended(game_id.clone()));
+		Self::deposit_event(RawEvent::Affirmed(game_id, round, index, relayer));
 
 		Ok(())
 	}
@@ -1223,7 +1229,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		Self::update_pending_relay_header_parcels_with(&pending_relay_block_id, |header| {
 			T::RelayableChain::store_relay_header_parcel(header)
 		})?;
-		Self::deposit_event(RawEvent::PendingRelayParcelApproved(
+		Self::deposit_event(RawEvent::PendingRelayHeaderParcelApproved(
 			pending_relay_block_id,
 			b"Approved By Tech.Comm".to_vec(),
 		));
@@ -1235,7 +1241,9 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		pending_relay_block_id: Self::RelayHeaderId,
 	) -> DispatchResult {
 		Self::update_pending_relay_header_parcels_with(&pending_relay_block_id, |_| Ok(()))?;
-		Self::deposit_event(RawEvent::PendingRelayParcelRejected(pending_relay_block_id));
+		Self::deposit_event(RawEvent::PendingRelayHeaderParcelRejected(
+			pending_relay_block_id,
+		));
 
 		Ok(())
 	}
