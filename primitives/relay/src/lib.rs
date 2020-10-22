@@ -31,26 +31,21 @@ pub trait Relayable {
 	type RelayProofs;
 
 	/// The latest finalize block's id which recorded in darwinia
-	fn best_confirmed_block_id() -> Self::RelayHeaderId;
+	fn best_confirmed_relay_header_id() -> Self::RelayHeaderId;
 
 	// TODO: optimize this
 	fn verify_relay_proofs(
 		relay_header_id: &Self::RelayHeaderId,
 		relay_header_parcel: &Self::RelayHeaderParcel,
 		relay_proofs: &Self::RelayProofs,
-		optional_best_confirmed_block_id: Option<&Self::RelayHeaderId>,
-	) -> DispatchResult;
-
-	fn verify_continuous(
-		relay_header_parcel: &Self::RelayHeaderParcel,
-		extended_relay_header_parcel: &Self::RelayHeaderParcel,
+		optional_best_confirmed_relay_header_id: Option<&Self::RelayHeaderId>,
 	) -> DispatchResult;
 
 	fn verify_relay_chain(relay_chain: Vec<&Self::RelayHeaderParcel>) -> DispatchResult;
 
 	fn distance_between(
 		relay_header_id: &Self::RelayHeaderId,
-		best_confirmed_block_id: Self::RelayHeaderId,
+		best_confirmed_relay_header_id: Self::RelayHeaderId,
 	) -> u32;
 
 	fn store_relay_header_parcel(relay_header_parcel: Self::RelayHeaderParcel) -> DispatchResult;
@@ -97,6 +92,9 @@ pub trait RelayerGameProtocol {
 	fn get_proposed_relay_header_parcels(
 		proposal_id: RelayAffirmationId<Self::RelayHeaderId>,
 	) -> Option<Vec<Self::RelayHeaderParcel>>;
+
+	/// The best confirmed header id record of a game when it start
+	fn best_confirmed_header_id_of(game_id: &Self::RelayHeaderId) -> Self::RelayHeaderId;
 
 	/// Arrirm a new affirmation
 	///
