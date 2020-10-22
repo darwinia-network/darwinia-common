@@ -448,33 +448,62 @@ fn settle_without_challenge_should_work() {
 // 	});
 // }
 
-// #[test]
-// fn on_chain_arbitrate_should_work() {
-// 	ExtBuilder::default().build().execute_with(|| {
-// 		let proposal_a = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], true);
-// 		let proposal_b = MockTcHeader::mock_proposal(vec![1, 1, 1, 1, 1], false);
+#[test]
+fn on_chain_arbitrate_should_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		let relayer_a = 10;
+		let relayer_b = 20;
+		let relay_header_parcels_a = MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], true);
+		let relay_header_parcels_b = MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], false);
+		let relay_header_id = relay_header_parcels_a.len() as _;
+		let round_count = relay_header_parcels_a.len() as _;
 
-// 		for i in 1..=5 {
-// 			assert_ok!(RelayerGame::affirm(
-// 				1,
-// 				proposal_a[..i as usize].to_vec()
-// 			));
-// 			assert_ok!(RelayerGame::affirm(
-// 				2,
-// 				proposal_b[..i as usize].to_vec()
-// 			));
+		assert_ok!(RelayerGame::affirm(
+			relayer_a,
+			relay_header_parcels_a[0].clone(),
+			Some(())
+		));
+		assert_ok!(RelayerGame::dispute_and_affirm(
+			relayer_b,
+			relay_header_parcels_b[0].clone(),
+			Some(())
+		));
 
-// 			run_to_block(3 * i + 1);
-// 		}
+		run_to_block(7);
 
-// 		let relay_header_parcel = proposal_a[0].clone();
+		for round in 1..round_count {
+			assert_ok!(RelayerGame::extend_affirmation(
+				relayer_a,
+				vec![relay_header_parcels_a[round as usize].clone()],
+				RelayAffirmationId {
+					relay_header_id,
+					round: round - 1,
+					index: 0
+				},
+				Some(vec![()])
+			));
+			assert_ok!(RelayerGame::extend_affirmation(
+				relayer_b,
+				vec![relay_header_parcels_b[round as usize].clone()],
+				RelayAffirmationId {
+					relay_header_id,
+					round: round - 1,
+					index: 1
+				},
+				Some(vec![()])
+			));
 
-// 		assert_eq!(
-// 			Relay::confirmed_header_of(relay_header_parcel.number),
-// 			Some(relay_header_parcel)
-// 		);
-// 	});
-// }
+			run_to_block(6 * (round as BlockNumber + 1) + 1);
+		}
+
+		let relay_header_parcel = relay_header_parcels_a[0].clone();
+
+		assert_eq!(
+			Relay::confirmed_header_of(relay_header_parcel.number),
+			Some(relay_header_parcel)
+		);
+	});
+}
 
 #[test]
 fn no_honesty_should_work() {
