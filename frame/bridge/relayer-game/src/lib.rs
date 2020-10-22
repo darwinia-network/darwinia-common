@@ -205,7 +205,7 @@ decl_storage! {
 			:map hasher(identity) RelayHeaderId<T, I>
 			=> Vec<Vec<RelayHeaderId<T, I>>>;
 
-		pub PendingRelayParcels
+		pub PendingRelayHeaderParcels
 			get(fn pending_relay_header_parcels)
 			: Vec<(BlockNumber<T>, RelayHeaderId<T, I>, RelayHeaderParcel<T, I>)>
 	}
@@ -726,7 +726,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		} else {
 			for (pending_relay_block_id, pendingrelay_header_parcel) in pending_relay_header_parcels
 			{
-				<PendingRelayParcels<T, I>>::append((
+				<PendingRelayHeaderParcels<T, I>>::append((
 					now + confirm_period,
 					pending_relay_block_id,
 					pendingrelay_header_parcel,
@@ -767,7 +767,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	where
 		F: FnOnce(RelayHeaderParcel<T, I>) -> DispatchResult,
 	{
-		<PendingRelayParcels<T, I>>::mutate(|pending_relay_header_parcels| {
+		<PendingRelayHeaderParcels<T, I>>::mutate(|pending_relay_header_parcels| {
 			if let Some(i) = pending_relay_header_parcels
 				.iter()
 				.position(|(_, relay_header_id, _)| relay_header_id == pending_relay_block_id)
@@ -874,7 +874,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	pub fn system_approve_pending_relay_header_parcels(
 		now: BlockNumber<T>,
 	) -> Result<Weight, DispatchError> {
-		<PendingRelayParcels<T, I>>::mutate(|pending_relay_header_parcels| {
+		<PendingRelayHeaderParcels<T, I>>::mutate(|pending_relay_header_parcels| {
 			pending_relay_header_parcels.retain(
 				|(confirm_at, pending_relay_block_id, pendingrelay_header_parcel)| {
 					if *confirm_at == now {

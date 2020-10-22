@@ -90,7 +90,7 @@ pub trait RelayerGameProtocol {
 	type RelayProofs;
 
 	fn get_proposed_relay_header_parcels(
-		proposal_id: RelayAffirmationId<Self::RelayHeaderId>,
+		affirmation_id: RelayAffirmationId<Self::RelayHeaderId>,
 	) -> Option<Vec<Self::RelayHeaderParcel>>;
 
 	/// The best confirmed header id record of a game when it start
@@ -119,7 +119,7 @@ pub trait RelayerGameProtocol {
 	/// Proofs is a `Vec` because the sampling function might give more than 1 sample points,
 	/// so need to verify each sample point with its proofs
 	fn complete_relay_proofs(
-		proposal_id: RelayAffirmationId<Self::RelayHeaderId>,
+		affirmation_id: RelayAffirmationId<Self::RelayHeaderId>,
 		relay_proofs: Vec<Self::RelayProofs>,
 	) -> DispatchResult;
 
