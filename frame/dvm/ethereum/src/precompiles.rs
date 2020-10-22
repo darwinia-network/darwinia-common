@@ -58,7 +58,7 @@ impl<T: Trait> Precompile for NativeTransfer<T> {
 		input: &[u8],
 		target_gas: Option<usize>,
 	) -> core::result::Result<(ExitSucceed, Vec<u8>, usize), ExitError> {
-		if input.len() != 133 {
+		if input.len() != 177 {
 			Err(ExitError::Other("InputDataLenErr"))
 		} else {
 			let cost = ensure_linear_cost(target_gas, input.len(), 60, 12)?;
@@ -111,9 +111,9 @@ struct Params {
 impl Params {
 	pub fn is_valid_signature(&self) -> bool {
 		let mut data = [0u8; 68];
-		data.copy_from_slice(&self.from);
-		data.copy_from_slice(&self.to);
-		data.copy_from_slice(&self.value);
+		data[0..20].copy_from_slice(&self.from);
+		data[20..52].copy_from_slice(&self.to);
+		data[52..68].copy_from_slice(&self.value);
 		let hash = BlakeTwo256::hash_of(&data);
 
 		match recover_signer(self.signature, hash.to_fixed_bytes()) {
@@ -156,10 +156,31 @@ fn recover_signer(sig: [u8; 65], msg: [u8; 32]) -> Option<H160> {
 }
 
 mod test {
+	use crate::*;
+	use ethereum::TransactionSignature;
+
+	#[cfg(test)]
+	fn sign(hash: H256, key: H256) -> [u8; 65] {
+		let msg = secp256k1::Message::parse(hash.as_fixed_bytes());
+		let s = secp256k1::sign(&msg, &secp256k1::SecretKey::parse_slice(&key[..]).unwrap());
+		let sig = s.0.serialize();
+		let tran_sig = TransactionSignature::new(
+			s.1.serialize() as u64 % 2 + 42 * 2 + 35,
+			H256::from_slice(&sig[0..32]),
+			H256::from_slice(&sig[32..64]),
+		)
+		.unwrap();
+
+		let mut res: [u8; 65] = [0u8; 65];
+		res[0..32].copy_from_slice(&tran_sig.r()[..]);
+		res[32..64].copy_from_slice(&tran_sig.s()[..]);
+		res[64] = tran_sig.standard_v();
+		res
+	}
+
 	#[test]
 	fn test_concat_address_mapping() {
 		use crate::precompiles::ConcatAddressMapping;
-		use crate::*;
 		// 0x182c00A789A7cC6BeA8fbc627121022D6029a416
 		let evm_address = [
 			24u8, 44, 0, 167, 137, 167, 204, 107, 234, 143, 188, 98, 113, 33, 2, 45, 96, 41, 164,
@@ -175,5 +196,46 @@ mod test {
 		let account_id: &[u8] = &account_id.as_ref();
 		let account_id_part_1 = &account_id[11..31];
 		assert_eq!(account_id_part_1, &evm_address);
+	}
+
+	#[test]
+	fn test_signature() {
+		use super::{AccountId32, BlakeTwo256};
+		use sp_runtime::traits::Hash;
+
+		// from
+		let private_key = H256::from_slice(&[(8 + 1) as u8; 32]);
+		let secret_key = secp256k1::SecretKey::parse_slice(&private_key[..]).unwrap();
+		let public_key = &secp256k1::PublicKey::from_secret_key(&secret_key).serialize()[1..65];
+		let from = H160::from(H256::from_slice(&Keccak256::digest(public_key)[..])).0;
+
+		// to
+		let account: AccountId32 =
+			hex_literal::hex!["d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"]
+				.into();
+		let to: &[u8] = &account.as_ref();
+
+		// value = 10
+		let value: [u8; 16] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10];
+
+		// signature
+		let mut data = [0u8; 68];
+		data[0..20].copy_from_slice(&from);
+		data[20..52].copy_from_slice(to);
+		data[52..68].copy_from_slice(&value);
+		let hash = BlakeTwo256::hash_of(&data);
+		let signature = sign(hash, private_key);
+
+		let mut input = [0u8; 177];
+		input[44..64].copy_from_slice(&from);
+		input[64..96].copy_from_slice(to);
+		input[96..112].copy_from_slice(&value);
+		input[112..177].copy_from_slice(&signature);
+
+		let param = super::decode_params(&input);
+		assert_eq!(param.from, from);
+		assert_eq!(param.to, to);
+		assert_eq!(param.value, value);
+		assert_eq!(param.is_valid_signature(), true);
 	}
 }

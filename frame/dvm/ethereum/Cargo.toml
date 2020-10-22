@@ -30,6 +30,9 @@ dvm-rpc-primitives = { path = "../rpc/primitives", default-features = false }
 darwinia-support                  = { default-features = false, path = "../../../frame/support" }
 sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
+[dev-dependencies]
+hex-literal = "0.3.1"
+
 [features]
 default = ["std"]
 std = [

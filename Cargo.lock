@@ -1675,6 +1675,7 @@ dependencies = [
  "evm",
  "frame-support",
  "frame-system",
+ "hex-literal",
  "libsecp256k1",
  "pallet-evm",
  "pallet-timestamp",
