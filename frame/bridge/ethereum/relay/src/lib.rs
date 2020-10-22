@@ -525,8 +525,8 @@ impl<T: Trait> Relayable for Module<T> {
 			//     / \
 			//    -   -
 			//   /     \
-			//  C  ...  1st
-			//  C: Last Comfirmed Block 1st: 1st submit block
+			//  c  ...  1st
+			//  c: last comfirmed block 1st: 1st submit block
 			ensure!(
 				Self::verify_mmr(
 					last_leaf,
@@ -545,7 +545,7 @@ impl<T: Trait> Relayable for Module<T> {
 		} else {
 			// last confirm no exsit the mmr verification will be passed
 			//
-			//      mmr_root of prevous submit
+			//      mmr_root of 1st
 			//     / \
 			//    - ..-
 			//   /   | \

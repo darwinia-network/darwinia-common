@@ -22,6 +22,7 @@ pub trait RelayHeaderParcelInfo {
 /// Implement this for target chain's relay module's
 /// to expose some necessary APIs for relayer game
 pub trait Relayable {
+	/// The Id which point to a unique header, for ethereum it's block number
 	type RelayHeaderId: Clone + Debug + Default + PartialOrd + FullCodec;
 	type RelayHeaderParcel: Clone
 		+ Debug
@@ -35,6 +36,11 @@ pub trait Relayable {
 
 	// TODO: optimize this
 	fn verify_relay_proofs(
+		// TODO: doc
+		// This Id is use for getting the mmr root's block's number
+		// For ethereum
+		// 	header id = block number
+		// 	last leaf = block number - 1
 		relay_header_id: &Self::RelayHeaderId,
 		relay_header_parcel: &Self::RelayHeaderParcel,
 		relay_proofs: &Self::RelayProofs,
