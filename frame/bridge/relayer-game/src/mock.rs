@@ -244,7 +244,7 @@ pub type RelayerGame = Module<Test, DefaultInstance>;
 
 thread_local! {
 	static GENESIS_TIME: Instant = Instant::now();
-	static CHALLENGE_TIME: RefCell<BlockNumber> = RefCell::new(6);
+	pub static CHALLENGE_TIME: RefCell<BlockNumber> = RefCell::new(6);
 	static ESTIMATE_BOND: RefCell<Balance> = RefCell::new(1);
 	static CONFIRM_PERIOD: RefCell<BlockNumber> = RefCell::new(0);
 }
@@ -452,6 +452,10 @@ impl Default for ExtBuilder {
 			confirmed_period: CONFIRM_PERIOD.with(|v| v.borrow().to_owned()),
 		}
 	}
+}
+
+pub fn challenge_time() -> u64 {
+	CHALLENGE_TIME.with(|v| v.borrow().to_owned())
 }
 
 pub fn run_to_block(n: BlockNumber) {
