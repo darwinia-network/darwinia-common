@@ -101,7 +101,7 @@ decl_event! {
 		Affirmed(RelayHeaderId, u32, u32, AccountId),
 		/// A different affirmation submitted, dispute found. [game id]
 		Disputed(RelayHeaderId),
-		/// A extended affirmation submitted, dispute go on. [game id]
+		/// An extended affirmation submitted, dispute go on. [game id]
 		Extended(RelayHeaderId),
 		/// A new round started. [game id, game sample points]
 		NewRound(RelayHeaderId, Vec<RelayHeaderId>),
@@ -285,7 +285,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	pub fn ensure_can_stake(
 		relayer: &AccountId<T>,
 		round: u32,
-		affirmations_count: u8,
+		affirmations_count: u32,
 	) -> Result<RingBalance<T, I>, DispatchError> {
 		let stake = T::RelayerGameAdjustor::estimate_stake(round, affirmations_count);
 
@@ -302,12 +302,12 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		round: u32,
 		moment: BlockNumber<T>,
 	) {
-		let propose_time = moment + T::RelayerGameAdjustor::propose_time(round);
+		let affirm_time = moment + T::RelayerGameAdjustor::affirm_time(round);
 		let complete_proofs_time = T::RelayerGameAdjustor::complete_proofs_time(round);
 
-		<ProposeEndTime<T, I>>::insert(game_id, propose_time);
+		<ProposeEndTime<T, I>>::insert(game_id, affirm_time);
 		let _ = <GamesToUpdate<T, I>>::try_mutate(
-			propose_time + complete_proofs_time,
+			affirm_time + complete_proofs_time,
 			|games_to_update| {
 				if games_to_update.contains(game_id) {
 					Err(())
@@ -1054,8 +1054,11 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		);
 
 		let existed_relay_affirmations_count = existed_affirmations.len();
-		let stake =
-			Self::ensure_can_stake(&relayer, 0, existed_relay_affirmations_count as u8 + 1)?;
+		let stake = Self::ensure_can_stake(
+			&relayer,
+			0,
+			(existed_relay_affirmations_count as u32).saturating_add(1),
+		)?;
 
 		Self::update_stakes_with(&relayer, |old_stakes| old_stakes.saturating_add(stake));
 
@@ -1176,7 +1179,11 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			<Error<T, I>>::PreviousRelayProofsInc
 		);
 
-		let stake = Self::ensure_can_stake(&relayer, round, existed_affirmations.len() as u8 + 1)?;
+		let stake = Self::ensure_can_stake(
+			&relayer,
+			round,
+			(existed_affirmations.len() as u32).saturating_add(1),
+		)?;
 
 		Self::update_stakes_with(&relayer, |old_stakes| old_stakes.saturating_add(stake));
 

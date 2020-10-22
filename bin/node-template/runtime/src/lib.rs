@@ -49,7 +49,7 @@ pub mod impls {
 				32
 			}
 
-			fn propose_time(round: u32) -> Self::Moment {
+			fn affirm_time(round: u32) -> Self::Moment {
 				match round {
 					// 1.5 mins
 					0 => 15,
@@ -71,9 +71,9 @@ pub mod impls {
 				sample_points.push(vec![sample_points.last().unwrap().last().unwrap() - 1]);
 			}
 
-			fn estimate_stake(round: u32, proposals_count: u8) -> Self::Balance {
+			fn estimate_stake(round: u32, affirmations_count: u32) -> Self::Balance {
 				match round {
-					0 => match proposals_count {
+					0 => match affirmations_count {
 						0 => 1000 * COIN,
 						_ => 1500 * COIN,
 					},

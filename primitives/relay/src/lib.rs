@@ -63,7 +63,7 @@ pub trait AdjustableRelayerGame {
 	/// This might relate to the validators count
 	fn max_active_games() -> u8;
 
-	fn propose_time(round: u32) -> Self::Moment;
+	fn affirm_time(round: u32) -> Self::Moment;
 
 	fn complete_proofs_time(round: u32) -> Self::Moment;
 
@@ -76,7 +76,7 @@ pub trait AdjustableRelayerGame {
 	/// Give an estimate stake value for a specify round
 	///
 	/// Usally the stake value go expensive wihle the round and the affirmations count increase
-	fn estimate_stake(round: u32, proposals_count: u8) -> Self::Balance;
+	fn estimate_stake(round: u32, affirmations_count: u32) -> Self::Balance;
 }
 
 pub trait RelayerGameProtocol {
