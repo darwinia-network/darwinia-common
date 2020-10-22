@@ -1,7 +1,5 @@
 //! Mock file for ethereum-relay.
 
-// --- std ---
-use std::fs::File;
 // --- substrate ---
 use frame_support::{impl_outer_dispatch, impl_outer_origin, parameter_types, weights::Weight};
 use frame_system::EnsureRoot;
@@ -188,13 +186,13 @@ impl RelayerGameProtocol for UnusedRelayerGame {
 	}
 }
 
-pub fn affirmation_of_game_of(game_id: u64, affirmation_id: u64) -> Vec<EthereumRelayHeaderParcel> {
-	serde_json::from_reader(
-		File::open(format!(
-			"tests-data/game-{}/affirmation-{}.json",
-			game_id, affirmation_id
-		))
-		.unwrap(),
-	)
-	.unwrap()
-}
+// pub fn affirmation_of_game_of(game_id: u64, affirmation_id: u64) -> Vec<EthereumRelayHeaderParcel> {
+// 	serde_json::from_reader(
+// 		File::open(format!(
+// 			"tests-data/game-{}/affirmation-{}.json",
+// 			game_id, affirmation_id
+// 		))
+// 		.unwrap(),
+// 	)
+// 	.unwrap()
+// }
