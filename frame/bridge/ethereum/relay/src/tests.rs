@@ -20,7 +20,7 @@ fn store_relay_header_parcel_should_work() {
 		assert_eq!(EthereumRelay::confirmed_parcel_of(100).unwrap(), ethereum_relay_header_parcel);
 		assert!(EthereumRelay::confirmed_block_numbers().contains(&100));
 		assert_eq!(EthereumRelay::best_confirmed_block_number(), 100);
-	})
+	});
 }
 
 const LAST_CONFIRM: &'static str = r#"{"header":{"parent_hash":"0xdb10afd3efa45327eb284c83cc925bd9bd7966aea53067c1eebe0724d124ec1e","timestamp":1438270443,"number":100,"author":"0xbb7b8287f3f0a933474a79eae42cbca977791171","transactions_root":"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421","uncles_hash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","extra_data":"0x476574682f4c5649562f76312e302e302f6c696e75782f676f312e342e32","state_root":"0x90c25f6d7fddeb31a6cc5668a6bba77adbadec705eb7aa5a51265c2d1e3bb7ac","receipts_root":"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421","log_bloom":"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","gas_used":0,"gas_limit":5000,"difficulty":17916437174,"seal":["0xa05bb43c0772e58084b221c8e0c859a45950c103c712c5b8f11d9566ee078a4501","0x8837129c7f29a9364b"],"hash":"0xdfe2e70d6c116a541101cecbb256d7402d62125f6ddc9b607d49edc989825c64"},"mmr_root":"0x8050b4ab63982d7ab4b0486b50d69938c5a5f70b4cd6bb212bc5da5e212d3179"}"#;
@@ -79,7 +79,48 @@ fn verify_relay_proofs_should_work() {
 			&ethereum_relay_proofs_101,
 			None
 		));
-	})
+	});
+}
+
+#[test]
+fn verify_relay_chain_should_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		assert_ok!(EthereumRelay::store_relay_header_parcel(
+			serde_json::from_str(LAST_CONFIRM).unwrap()
+		));
+
+		// Should work for random sample points order
+
+		let relay_chain = vec![
+			serde_json::from_str(HEADER_101).unwrap(),
+			serde_json::from_str(HEADER_102).unwrap(),
+			serde_json::from_str(HEADER_103).unwrap(),
+		];
+
+		assert_ok!(EthereumRelay::verify_relay_chain(
+			relay_chain.iter().collect()
+		));
+
+		let relay_chain = vec![
+			serde_json::from_str(HEADER_101).unwrap(),
+			serde_json::from_str(HEADER_103).unwrap(),
+			serde_json::from_str(HEADER_102).unwrap(),
+		];
+
+		assert_ok!(EthereumRelay::verify_relay_chain(
+			relay_chain.iter().collect()
+		));
+
+		let relay_chain = vec![
+			serde_json::from_str(HEADER_102).unwrap(),
+			serde_json::from_str(HEADER_103).unwrap(),
+			serde_json::from_str(HEADER_101).unwrap(),
+		];
+
+		assert_ok!(EthereumRelay::verify_relay_chain(
+			relay_chain.iter().collect()
+		));
+	});
 }
 
 // #[test]

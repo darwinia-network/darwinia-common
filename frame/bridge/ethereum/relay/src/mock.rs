@@ -147,8 +147,9 @@ impl RelayerGameProtocol for UnusedRelayerGame {
 	) -> Option<Vec<Self::RelayHeaderParcel>> {
 		unimplemented!()
 	}
+	// TODO: Should construct in `ExtBuilder` finally
 	fn best_confirmed_header_id_of(_: &Self::RelayHeaderId) -> Self::RelayHeaderId {
-		unimplemented!()
+		100
 	}
 	fn affirm(
 		_: Self::Relayer,
