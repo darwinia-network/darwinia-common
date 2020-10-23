@@ -136,9 +136,9 @@ darwinia_support::impl_genesis! {
 }
 decl_storage! {
 	trait Store for Module<T: Trait> as DarwiniaEthereumRelay {
-		/// Confirmed ethereum parcel
-		pub ConfirmedParcels
-			get(fn confirmed_parcel_of)
+		/// Confirmed ethereum header parcel
+		pub ConfirmedHeaderParcels
+			get(fn confirmed_header_parcel_of)
 			: map hasher(identity) EthereumBlockNumber => Option<EthereumRelayHeaderParcel>;
 
 		/// Confirmed Ethereum block numbers
@@ -181,7 +181,7 @@ decl_storage! {
 			ConfirmedBlockNumbers::mutate(|numbers| {
 				numbers.push(genesis_header.number);
 
-				ConfirmedParcels::insert(
+				ConfirmedHeaderParcels::insert(
 					genesis_header.number,
 					EthereumRelayHeaderParcel {
 						header: genesis_header,
@@ -374,7 +374,7 @@ decl_module! {
 					confirmed_block_numbers.remove(i);
 				}
 
-				ConfirmedParcels::remove(confirmed_block_number);
+				ConfirmedHeaderParcels::remove(confirmed_block_number);
 				BestConfirmedBlockNumber::put(confirmed_block_numbers
 					.iter()
 					.max()
@@ -392,7 +392,7 @@ decl_module! {
 		pub fn clean_confirmed_parcels(origin) {
 			T::ApproveOrigin::ensure_origin(origin)?;
 
-			ConfirmedParcels::remove_all();
+			ConfirmedHeaderParcels::remove_all();
 			ConfirmedBlockNumbers::kill();
 			BestConfirmedBlockNumber::kill();
 		}
@@ -410,7 +410,7 @@ decl_module! {
 					.map(ToOwned::to_owned)
 					.unwrap_or(0));
 			});
-			ConfirmedParcels::insert(ethereum_relay_header_parcel.header.number, ethereum_relay_header_parcel);
+			ConfirmedHeaderParcels::insert(ethereum_relay_header_parcel.header.number, ethereum_relay_header_parcel);
 		}
 	}
 }
@@ -513,7 +513,7 @@ impl<T: Trait> Relayable for Module<T> {
 
 		if let Some(best_confirmed_block_number) = optional_best_confirmed_relay_header_id {
 			let maybe_best_confirmed_block_header_hash =
-				Self::confirmed_parcel_of(best_confirmed_block_number)
+				Self::confirmed_header_parcel_of(best_confirmed_block_number)
 					.ok_or(<Error<T>>::ConfirmedHeaderNE)?
 					.header
 					.hash;
@@ -606,7 +606,7 @@ impl<T: Trait> Relayable for Module<T> {
 		}
 
 		verify_continuous(
-			&Self::confirmed_parcel_of(T::RelayerGame::best_confirmed_header_id_of(&0))
+			&Self::confirmed_header_parcel_of(T::RelayerGame::best_confirmed_header_id_of(&0))
 				.ok_or(<Error<T>>::ConfirmedHeaderNE)?,
 			*relay_chain.get(0).ok_or(<Error<T>>::ContinuousInv)?,
 		)?;
@@ -641,7 +641,7 @@ impl<T: Trait> Relayable for Module<T> {
 
 			BestConfirmedBlockNumber::put(relay_block_number);
 		});
-		ConfirmedParcels::insert(relay_block_number, relay_header_parcel);
+		ConfirmedHeaderParcels::insert(relay_block_number, relay_header_parcel);
 
 		Ok(())
 	}
@@ -675,7 +675,7 @@ impl<T: Trait> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
 		);
 
 		// Verify header member to last confirmed block using mmr proof
-		let mmr_root = Self::confirmed_parcel_of(mmr_proof.last_leaf_index + 1)
+		let mmr_root = Self::confirmed_header_parcel_of(mmr_proof.last_leaf_index + 1)
 			.ok_or(<Error<T>>::ConfirmedHeaderNE)?
 			.mmr_root;
 
