@@ -720,8 +720,8 @@ impl<T: Trait> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
 #[cfg_attr(any(feature = "deserialize", test), derive(serde::Deserialize))]
 #[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
 pub struct EthereumRelayHeaderParcel {
-	header: EthereumHeader,
-	mmr_root: H256,
+	pub header: EthereumHeader,
+	pub mmr_root: H256,
 }
 impl RelayHeaderParcelInfo for EthereumRelayHeaderParcel {
 	type HeaderId = EthereumBlockNumber;
@@ -734,8 +734,8 @@ impl RelayHeaderParcelInfo for EthereumRelayHeaderParcel {
 #[cfg_attr(any(feature = "deserialize", test), derive(serde::Deserialize))]
 #[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
 pub struct EthereumRelayProofs {
-	ethash_proof: Vec<EthashProof>,
-	mmr_proof: Vec<H256>,
+	pub ethash_proof: Vec<EthashProof>,
+	pub mmr_proof: Vec<H256>,
 }
 
 #[cfg_attr(any(feature = "deserialize", test), derive(serde::Deserialize))]
