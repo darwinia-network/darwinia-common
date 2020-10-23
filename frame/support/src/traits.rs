@@ -105,10 +105,10 @@ impl<AccountId> DustCollector<AccountId> for Currencies {
 pub trait OnDepositRedeem<AccountId, Balance> {
 	fn on_deposit_redeem(
 		backing: &AccountId,
+		stash: &AccountId,
+		amount: Balance,
 		start_at: u64,
 		months: u8,
-		amount: Balance,
-		stash: &AccountId,
 	) -> DispatchResult;
 }
 

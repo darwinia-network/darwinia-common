@@ -2188,35 +2188,6 @@ impl<T: Trait> Module<T> {
 		(start_time, expire_time)
 	}
 
-	fn bond_ring_for_deposit_redeem(
-		controller: &T::AccountId,
-		value: RingBalance<T>,
-		start_time: TsInMs,
-		promise_month: u8,
-		mut ledger: StakingLedgerT<T>,
-	) -> (TsInMs, TsInMs) {
-		let StakingLedger {
-			active_ring,
-			active_deposit_ring,
-			deposit_items,
-			..
-		} = &mut ledger;
-		let origin_active_ring = *active_ring;
-		let expire_time = start_time + promise_month as TsInMs * MONTH_IN_MILLISECONDS;
-
-		*active_ring = active_ring.saturating_add(value);
-		*active_deposit_ring = active_deposit_ring.saturating_add(value);
-		deposit_items.push(TimeDepositItem {
-			value,
-			start_time,
-			expire_time,
-		});
-
-		Self::update_ledger(&controller, Some(origin_active_ring), None, &mut ledger);
-
-		(start_time, expire_time)
-	}
-
 	/// Update the ledger while bonding controller with *KTON*
 	fn bond_kton(controller: &T::AccountId, value: KtonBalance<T>, mut ledger: StakingLedgerT<T>) {
 		let origin_active_kton = ledger.active_kton;
@@ -2460,11 +2431,11 @@ impl<T: Trait> Module<T> {
 		// The origin active ring, none means
 		// there's no change on this field during this update,
 		// just ignore it
-		origin_active_ring: Option<RingBalance<T>>,
+		maybe_origin_active_ring: Option<RingBalance<T>>,
 		// The origin active kton, none means
 		// there's no change on this field during this update,
 		// just ignore it
-		origin_active_kton: Option<KtonBalance<T>>,
+		maybe_origin_active_kton: Option<KtonBalance<T>>,
 		ledger: &mut StakingLedgerT<T>,
 	) {
 		let StakingLedger {
@@ -2480,12 +2451,12 @@ impl<T: Trait> Module<T> {
 
 			// If the active ring != staking amount, there must be a difference
 			// The origin active ring MUST be some, but better safe here
-			if let Some(origin) = origin_active_ring {
+			if let Some(origin_active_ring) = maybe_origin_active_ring {
 				<RingPool<T>>::mutate(|pool| {
-					if origin > *active_ring {
-						*pool = pool.saturating_sub(origin - *active_ring);
+					if origin_active_ring > *active_ring {
+						*pool = pool.saturating_sub(origin_active_ring - *active_ring);
 					} else {
-						*pool = pool.saturating_add(*active_ring - origin);
+						*pool = pool.saturating_add(*active_ring - origin_active_ring);
 					}
 				});
 			}
@@ -2503,12 +2474,12 @@ impl<T: Trait> Module<T> {
 
 			// If the active kton != staking amount, there must be a difference
 			// The origin active kton MUST be some, but better safe here
-			if let Some(origin) = origin_active_kton {
+			if let Some(origin_active_kton) = maybe_origin_active_kton {
 				<KtonPool<T>>::mutate(|pool| {
-					if origin > *active_kton {
-						*pool = pool.saturating_sub(origin - *active_kton);
+					if origin_active_kton > *active_kton {
+						*pool = pool.saturating_sub(origin_active_kton - *active_kton);
 					} else {
-						*pool = pool.saturating_add(*active_kton - origin);
+						*pool = pool.saturating_add(*active_kton - origin_active_kton);
 					}
 				});
 			}
@@ -3539,27 +3510,76 @@ where
 impl<T: Trait> OnDepositRedeem<T::AccountId, RingBalance<T>> for Module<T> {
 	fn on_deposit_redeem(
 		backing: &T::AccountId,
+		stash: &T::AccountId,
+		amount: RingBalance<T>,
 		start_time: TsInMs,
 		months: u8,
-		amount: RingBalance<T>,
-		stash: &T::AccountId,
 	) -> DispatchResult {
-		let controller = Self::bonded(&stash).ok_or(<Error<T>>::NotStash)?;
-		let ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
-
-		// The timestamp unit is different between Ethereum and Darwinia, converting from seconds to milliseconds
+		// The timestamp unit is different between Ethereum and Darwinia
+		// Converting from seconds to milliseconds
 		let start_time = start_time * 1000;
 		let promise_month = months.min(36);
+		let expire_time = start_time + promise_month as TsInMs * MONTH_IN_MILLISECONDS;
 
-		T::RingCurrency::transfer(&backing, &stash, amount, KeepAlive)?;
+		if let Some(controller) = Self::bonded(&stash) {
+			let mut ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
 
-		let (start_time, expire_time) = Self::bond_ring_for_deposit_redeem(
-			&controller,
-			amount,
-			start_time,
-			promise_month,
-			ledger,
-		);
+			T::RingCurrency::transfer(&backing, &stash, amount, KeepAlive)?;
+
+			let StakingLedger {
+				active_ring,
+				active_deposit_ring,
+				deposit_items,
+				..
+			} = &mut ledger;
+			let origin_active_ring = *active_ring;
+
+			*active_ring = active_ring.saturating_add(amount);
+			*active_deposit_ring = active_deposit_ring.saturating_add(amount);
+			deposit_items.push(TimeDepositItem {
+				value: amount,
+				start_time,
+				expire_time,
+			});
+
+			Self::update_ledger(&controller, Some(origin_active_ring), None, &mut ledger);
+		} else {
+			ensure!(
+				!<Bonded<T>>::contains_key(&stash),
+				<Error<T>>::AlreadyBonded
+			);
+
+			let controller = stash;
+
+			ensure!(
+				!<Ledger<T>>::contains_key(controller),
+				<Error<T>>::AlreadyPaired
+			);
+
+			<Bonded<T>>::insert(&stash, controller);
+			<Payee<T>>::insert(&stash, RewardDestination::Stash);
+
+			<frame_system::Module<T>>::inc_ref(&stash);
+
+			let mut ledger = StakingLedger {
+				stash: stash.clone(),
+				active_ring: amount,
+				active_deposit_ring: amount,
+				deposit_items: vec![TimeDepositItem {
+					value: amount,
+					start_time,
+					expire_time,
+				}],
+				claimed_rewards: {
+					let current_era = CurrentEra::get().unwrap_or(0);
+					let last_reward_era = current_era.saturating_sub(Self::history_depth());
+					(last_reward_era..current_era).collect()
+				},
+				..Default::default()
+			};
+
+			Self::update_ledger(controller, Some(0.into()), None, &mut ledger);
+		};
 
 		Self::deposit_event(RawEvent::BondRing(amount, start_time, expire_time));
 
