@@ -220,7 +220,6 @@ decl_module! {
 			let items: [&[u8]; 3] = [
 				b"ConfirmedHeaders",
 				b"ConfirmedBlockNumbers",
-				b"ConfirmedDepth",
 			];
 
 			for item in &items {
