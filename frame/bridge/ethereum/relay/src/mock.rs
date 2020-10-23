@@ -186,14 +186,3 @@ impl RelayerGameProtocol for UnusedRelayerGame {
 		unimplemented!()
 	}
 }
-
-// pub fn affirmation_of_game_of(game_id: u64, affirmation_id: u64) -> Vec<EthereumRelayHeaderParcel> {
-// 	serde_json::from_reader(
-// 		File::open(format!(
-// 			"tests-data/game-{}/affirmation-{}.json",
-// 			game_id, affirmation_id
-// 		))
-// 		.unwrap(),
-// 	)
-// 	.unwrap()
-// }
