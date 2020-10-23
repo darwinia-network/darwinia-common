@@ -471,7 +471,7 @@ impl<T: Trait> Module<T> {
 		let module = b"DarwiniaEthereumRelay";
 
 		{
-			let items: [&[u8]; 3] = [b"ConfirmedHeaders", b"ConfirmedBlockNumbers"];
+			let items: [&[u8]; 2] = [b"ConfirmedHeaders", b"ConfirmedBlockNumbers"];
 
 			for item in &items {
 				remove_storage_prefix(module, item, &[]);
