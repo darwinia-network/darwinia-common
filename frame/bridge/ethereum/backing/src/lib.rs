@@ -422,14 +422,14 @@ impl<T: Trait> Module<T> {
 			.clone()
 			.to_uint()
 			.ok_or(<Error<T>>::IntCF)?;
-		let month = {
-			let month = result.params[2]
+		let months = {
+			let months = result.params[2]
 				.value
 				.clone()
 				.to_uint()
 				.ok_or(<Error<T>>::IntCF)?;
 
-			month.saturated_into()
+			months.saturated_into()
 		};
 		// The start_at here is in seconds, will be converted to milliseconds later in on_deposit_redeem
 		let start_at = {
@@ -470,7 +470,7 @@ impl<T: Trait> Module<T> {
 			darwinia_account,
 			redeemed_ring,
 			start_at,
-			month,
+			months,
 			fee,
 		))
 	}
@@ -564,7 +564,7 @@ impl<T: Trait> Module<T> {
 
 		ensure!(!VerifiedProof::contains_key(tx_index), <Error<T>>::AssetAR);
 
-		let (deposit_id, darwinia_account, redeemed_ring, start_at, month, fee) =
+		let (deposit_id, darwinia_account, redeemed_ring, start_at, months, fee) =
 			Self::parse_deposit_redeem_proof(&proof)?;
 
 		ensure!(
@@ -579,10 +579,10 @@ impl<T: Trait> Module<T> {
 
 		T::OnDepositRedeem::on_deposit_redeem(
 			&Self::account_id(),
-			start_at,
-			month,
-			redeemed_ring,
 			&darwinia_account,
+			redeemed_ring,
+			start_at,
+			months,
 		)?;
 		// Transfer the fee from redeemer.
 		T::RingCurrency::transfer(redeemer, &T::EthereumRelay::account_id(), fee, KeepAlive)?;
