@@ -136,9 +136,9 @@ darwinia_support::impl_genesis! {
 }
 decl_storage! {
 	trait Store for Module<T: Trait> as DarwiniaEthereumRelay {
-		/// Confirmed ethereum parcel
-		pub ConfirmedParcels
-			get(fn confirmed_parcel_of)
+		/// Confirmed ethereum header parcel
+		pub ConfirmedHeaderParcels
+			get(fn confirmed_header_parcel_of)
 			: map hasher(identity) EthereumBlockNumber => Option<EthereumRelayHeaderParcel>;
 
 		/// Confirmed Ethereum block numbers
@@ -181,7 +181,7 @@ decl_storage! {
 			ConfirmedBlockNumbers::mutate(|numbers| {
 				numbers.push(genesis_header.number);
 
-				ConfirmedParcels::insert(
+				ConfirmedHeaderParcels::insert(
 					genesis_header.number,
 					EthereumRelayHeaderParcel {
 						header: genesis_header,
@@ -211,26 +211,6 @@ decl_module! {
 		type Error = Error<T>;
 
 		fn deposit_event() = default;
-
-		fn on_runtime_upgrade() -> frame_support::weights::Weight {
-			// --- substrate ---
-			use frame_support::migration::*;
-
-			let module = b"DarwiniaEthereumRelay";
-			let items: [&[u8]; 3] = [
-				b"ConfirmedHeaders",
-				b"ConfirmedBlockNumbers",
-				b"ConfirmedDepth",
-			];
-
-			for item in &items {
-				remove_storage_prefix(module, item, &[]);
-			}
-
-			// Caution: Please set the genesis header in custom runtime upgrade
-
-			0
-		}
 
 		#[weight = 0]
 		pub fn affirm(
@@ -374,7 +354,7 @@ decl_module! {
 					confirmed_block_numbers.remove(i);
 				}
 
-				ConfirmedParcels::remove(confirmed_block_number);
+				ConfirmedHeaderParcels::remove(confirmed_block_number);
 				BestConfirmedBlockNumber::put(confirmed_block_numbers
 					.iter()
 					.max()
@@ -392,7 +372,7 @@ decl_module! {
 		pub fn clean_confirmed_parcels(origin) {
 			T::ApproveOrigin::ensure_origin(origin)?;
 
-			ConfirmedParcels::remove_all();
+			ConfirmedHeaderParcels::remove_all();
 			ConfirmedBlockNumbers::kill();
 			BestConfirmedBlockNumber::kill();
 		}
@@ -410,7 +390,7 @@ decl_module! {
 					.map(ToOwned::to_owned)
 					.unwrap_or(0));
 			});
-			ConfirmedParcels::insert(ethereum_relay_header_parcel.header.number, ethereum_relay_header_parcel);
+			ConfirmedHeaderParcels::insert(ethereum_relay_header_parcel.header.number, ethereum_relay_header_parcel);
 		}
 	}
 }
@@ -480,6 +460,112 @@ impl<T: Trait> Module<T> {
 		)
 		.unwrap_or(false)
 	}
+
+	pub fn migrate_genesis(use_ethereum_mainnet: bool) {
+		// --- substrate ---
+		use frame_support::migration::*;
+
+		let module = b"DarwiniaEthereumRelay";
+
+		{
+			let items: [&[u8]; 2] = [b"ConfirmedHeaders", b"ConfirmedBlockNumbers"];
+
+			for item in &items {
+				remove_storage_prefix(module, item, &[]);
+			}
+		}
+
+		let genesis_header = if use_ethereum_mainnet {
+			let raw_genesis_header = vec![
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 86, 232, 31, 23, 27, 204, 85, 166, 255, 131,
+				69, 230, 146, 192, 248, 110, 91, 72, 224, 27, 153, 108, 173, 192, 1, 98, 47, 181,
+				227, 99, 180, 33, 29, 204, 77, 232, 222, 199, 93, 122, 171, 133, 181, 103, 182,
+				204, 212, 26, 211, 18, 69, 27, 148, 138, 116, 19, 240, 161, 66, 253, 64, 212, 147,
+				71, 128, 17, 187, 232, 219, 78, 52, 123, 78, 140, 147, 124, 28, 131, 112, 228, 181,
+				237, 51, 173, 179, 219, 105, 203, 219, 122, 56, 225, 229, 11, 27, 130, 250, 215,
+				248, 151, 79, 181, 172, 120, 217, 172, 9, 155, 154, 213, 1, 139, 237, 194, 206, 10,
+				114, 218, 209, 130, 122, 23, 9, 218, 48, 88, 15, 5, 68, 86, 232, 31, 23, 27, 204,
+				85, 166, 255, 131, 69, 230, 146, 192, 248, 110, 91, 72, 224, 27, 153, 108, 173,
+				192, 1, 98, 47, 181, 227, 99, 180, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 136, 19, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 8, 132, 160, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 136, 0, 0, 0, 0, 0, 0, 0, 66, 1, 212, 229,
+				103, 64, 248, 118, 174, 248, 192, 16, 184, 106, 64, 213, 245, 103, 69, 161, 24,
+				208, 144, 106, 52, 230, 154, 236, 140, 13, 177, 203, 143, 163,
+			];
+
+			EthereumHeader::decode(&mut &*raw_genesis_header.to_vec()).unwrap()
+		} else {
+			let raw_genesis_header = vec![
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 86, 232, 31, 23, 27, 204, 85, 166, 255, 131,
+				69, 230, 146, 192, 248, 110, 91, 72, 224, 27, 153, 108, 173, 192, 1, 98, 47, 181,
+				227, 99, 180, 33, 29, 204, 77, 232, 222, 199, 93, 122, 171, 133, 181, 103, 182,
+				204, 212, 26, 211, 18, 69, 27, 148, 138, 116, 19, 240, 161, 66, 253, 64, 212, 147,
+				71, 128, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53,
+				53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 33, 123, 11, 188, 251, 114,
+				226, 213, 126, 40, 243, 60, 179, 97, 185, 152, 53, 19, 23, 119, 85, 220, 63, 51,
+				206, 62, 112, 34, 237, 98, 183, 123, 86, 232, 31, 23, 27, 204, 85, 166, 255, 131,
+				69, 230, 146, 192, 248, 110, 91, 72, 224, 27, 153, 108, 173, 192, 1, 98, 47, 181,
+				227, 99, 180, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 132, 160,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 36, 136, 0, 0, 0, 0, 0, 0, 0, 66, 1, 65, 148, 16, 35, 104, 9, 35, 224,
+				254, 77, 116, 163, 75, 218, 200, 20, 31, 37, 64, 227, 174, 144, 98, 55, 24, 228,
+				125, 102, 209, 202, 74, 45,
+			];
+
+			EthereumHeader::decode(&mut &*raw_genesis_header.to_vec()).unwrap()
+		};
+		let genesis_header_mmr_root: H256 = b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00".into();
+
+		put_storage_value(
+			module,
+			b"BestConfirmedBlockNumber",
+			&[],
+			genesis_header.number,
+		);
+		put_storage_value(
+			module,
+			b"ConfirmedBlockNumbers",
+			&[],
+			vec![genesis_header.number],
+		);
+		put_storage_value(
+			module,
+			b"ConfirmedHeaderParcels",
+			&genesis_header.number.to_ne_bytes(),
+			EthereumRelayHeaderParcel {
+				header: genesis_header,
+				mmr_root: genesis_header_mmr_root,
+			},
+		);
+	}
 }
 
 impl<T: Trait> Relayable for Module<T> {
@@ -513,7 +599,7 @@ impl<T: Trait> Relayable for Module<T> {
 
 		if let Some(best_confirmed_block_number) = optional_best_confirmed_relay_header_id {
 			let maybe_best_confirmed_block_header_hash =
-				Self::confirmed_parcel_of(best_confirmed_block_number)
+				Self::confirmed_header_parcel_of(best_confirmed_block_number)
 					.ok_or(<Error<T>>::ConfirmedHeaderNE)?
 					.header
 					.hash;
@@ -606,7 +692,7 @@ impl<T: Trait> Relayable for Module<T> {
 		}
 
 		verify_continuous(
-			&Self::confirmed_parcel_of(T::RelayerGame::best_confirmed_header_id_of(&0))
+			&Self::confirmed_header_parcel_of(T::RelayerGame::best_confirmed_header_id_of(&0))
 				.ok_or(<Error<T>>::ConfirmedHeaderNE)?,
 			*relay_chain.get(0).ok_or(<Error<T>>::ContinuousInv)?,
 		)?;
@@ -641,7 +727,7 @@ impl<T: Trait> Relayable for Module<T> {
 
 			BestConfirmedBlockNumber::put(relay_block_number);
 		});
-		ConfirmedParcels::insert(relay_block_number, relay_header_parcel);
+		ConfirmedHeaderParcels::insert(relay_block_number, relay_header_parcel);
 
 		Ok(())
 	}
@@ -675,7 +761,7 @@ impl<T: Trait> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
 		);
 
 		// Verify header member to last confirmed block using mmr proof
-		let mmr_root = Self::confirmed_parcel_of(mmr_proof.last_leaf_index + 1)
+		let mmr_root = Self::confirmed_header_parcel_of(mmr_proof.last_leaf_index + 1)
 			.ok_or(<Error<T>>::ConfirmedHeaderNE)?
 			.mmr_root;
 
