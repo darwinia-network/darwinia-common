@@ -979,16 +979,15 @@ fn on_deposit_redeem_should_work() {
 		let deposit_start_at = 1;
 		let deposit_months = 3;
 		let backing_account = 1;
-		let unbonded_account = 123;
 		let deposit_item = TimeDepositItem {
 			value: deposit_amount,
 			start_time: deposit_start_at * 1000,
 			expire_time: deposit_start_at * 1000 + deposit_months as TsInMs * MONTH_IN_MILLISECONDS,
 		};
 
-		gen_paired_account!(bonded_account(456), bonded_account(456), 0);
-
+		// Not bond yet
 		{
+			let unbonded_account = 123;
 			let ring_pool = Staking::ring_pool();
 
 			assert!(Staking::bonded(unbonded_account).is_none());
@@ -1027,7 +1026,10 @@ fn on_deposit_redeem_should_work() {
 			assert!(System::account(unbonded_account).refcount != 0);
 		}
 
+		// Already bonded
 		{
+			gen_paired_account!(bonded_account(456), bonded_account(456), 0);
+
 			let ring_pool = Staking::ring_pool();
 			let mut ledger = Staking::ledger(bonded_account).unwrap();
 
