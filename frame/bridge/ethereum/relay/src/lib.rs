@@ -464,9 +464,6 @@ impl<T: Trait> Module<T> {
 	pub fn migrate_genesis(use_ethereum_mainnet: bool) {
 		// --- substrate ---
 		use frame_support::migration::*;
-		// --- darwinia ---
-		use darwinia_ethereum_relay::EthereumRelayHeaderParcel;
-		use ethereum_primitives::{header::EthereumHeader, H256};
 
 		let module = b"DarwiniaEthereumRelay";
 
@@ -545,7 +542,7 @@ impl<T: Trait> Module<T> {
 
 			EthereumHeader::decode(&mut &*raw_genesis_header.to_vec()).unwrap()
 		};
-		let genesis_mmr_root: H256 = b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00".into();
+		let genesis_header_mmr_root: H256 = b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00".into();
 
 		put_storage_value(
 			module,
@@ -561,7 +558,7 @@ impl<T: Trait> Module<T> {
 		);
 		put_storage_value(
 			module,
-			b"ConfirmedParcels",
+			b"ConfirmedHeaderParcels",
 			&genesis_header.number.to_ne_bytes(),
 			EthereumRelayHeaderParcel {
 				header: genesis_header,
