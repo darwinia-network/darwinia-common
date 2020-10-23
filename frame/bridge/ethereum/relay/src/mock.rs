@@ -1,7 +1,5 @@
 //! Mock file for ethereum-relay.
 
-// --- std ---
-use std::fs::File;
 // --- substrate ---
 use frame_support::{impl_outer_dispatch, impl_outer_origin, parameter_types, weights::Weight};
 use frame_system::EnsureRoot;
@@ -140,44 +138,51 @@ impl ExtBuilder {
 pub struct UnusedRelayerGame;
 impl RelayerGameProtocol for UnusedRelayerGame {
 	type Relayer = AccountId;
-	type Balance = Balance;
-	type HeaderThingWithProof = EthereumHeaderThingWithProof;
-	type HeaderThing = EthereumHeaderThing;
+	type RelayHeaderId = EthereumBlockNumber;
+	type RelayHeaderParcel = EthereumRelayHeaderParcel;
+	type RelayProofs = EthereumRelayProofs;
 
-	fn proposals_of_game(
-		_: <Self::HeaderThing as HeaderThing>::Number,
-	) -> Vec<
-		RelayAffirmation<
-			Self::Relayer,
-			Self::Balance,
-			Self::HeaderThing,
-			<Self::HeaderThing as HeaderThing>::Hash,
-		>,
-	> {
+	fn get_proposed_relay_header_parcels(
+		_: RelayAffirmationId<Self::RelayHeaderId>,
+	) -> Option<Vec<Self::RelayHeaderParcel>> {
 		unimplemented!()
 	}
-
-	fn submit_proposal(_: Self::Relayer, _: Vec<Self::HeaderThingWithProof>) -> DispatchResult {
+	// TODO: Should construct in `ExtBuilder` finally
+	fn best_confirmed_header_id_of(_: &Self::RelayHeaderId) -> Self::RelayHeaderId {
+		100
+	}
+	fn affirm(
+		_: Self::Relayer,
+		_: Self::RelayHeaderParcel,
+		_: Option<Self::RelayProofs>,
+	) -> DispatchResult {
 		unimplemented!()
 	}
-	fn approve_pending_header(_: <Self::HeaderThing as HeaderThing>::Number) -> DispatchResult {
+	fn dispute_and_affirm(
+		_: Self::Relayer,
+		_: Self::RelayHeaderParcel,
+		_: Option<Self::RelayProofs>,
+	) -> DispatchResult {
 		unimplemented!()
 	}
-	fn reject_pending_header(_: <Self::HeaderThing as HeaderThing>::Number) -> DispatchResult {
+	fn complete_relay_proofs(
+		_: RelayAffirmationId<Self::RelayHeaderId>,
+		_: Vec<Self::RelayProofs>,
+	) -> DispatchResult {
 		unimplemented!()
 	}
-}
-
-pub fn proposal_of_game_with_id(
-	game_id: u64,
-	proposal_id: u64,
-) -> Vec<EthereumHeaderThingWithProof> {
-	serde_json::from_reader(
-		File::open(format!(
-			"tests-data/game-{}/proposal-{}.json",
-			relay_header_id, proposal_id
-		))
-		.unwrap(),
-	)
-	.unwrap()
+	fn extend_affirmation(
+		_: Self::Relayer,
+		_: Vec<Self::RelayHeaderParcel>,
+		_: RelayAffirmationId<Self::RelayHeaderId>,
+		_: Option<Vec<Self::RelayProofs>>,
+	) -> DispatchResult {
+		unimplemented!()
+	}
+	fn approve_pending_relay_header_parcel(_: Self::RelayHeaderId) -> DispatchResult {
+		unimplemented!()
+	}
+	fn reject_pending_relay_header_parcel(_: Self::RelayHeaderId) -> DispatchResult {
+		unimplemented!()
+	}
 }

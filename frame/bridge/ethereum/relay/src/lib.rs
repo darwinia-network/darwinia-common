@@ -4,11 +4,10 @@
 
 mod mmr;
 
-// TODO: test
-// #[cfg(test)]
-// mod mock;
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
 
 mod types {
 	// --- darwinia ---
@@ -266,12 +265,12 @@ decl_module! {
 		#[weight = 0]
 		pub fn complete_relay_proofs(
 			origin,
-			proposal_id: RelayAffirmationId<EthereumBlockNumber>,
+			affirmation_id: RelayAffirmationId<EthereumBlockNumber>,
 			ethereum_relay_proofs: Vec<EthereumRelayProofs>
 		) {
 			ensure_signed(origin)?;
 
-			T::RelayerGame::complete_relay_proofs(proposal_id, ethereum_relay_proofs)?;
+			T::RelayerGame::complete_relay_proofs(affirmation_id, ethereum_relay_proofs)?;
 		}
 
 		#[weight = 0]
@@ -526,8 +525,8 @@ impl<T: Trait> Relayable for Module<T> {
 			//     / \
 			//    -   -
 			//   /     \
-			//  C  ...  1st
-			//  C: Last Comfirmed Block 1st: 1st submit block
+			//  c  ...  1st
+			//  c: last comfirmed block 1st: 1st submit block
 			ensure!(
 				Self::verify_mmr(
 					last_leaf,
@@ -546,7 +545,7 @@ impl<T: Trait> Relayable for Module<T> {
 		} else {
 			// last confirm no exsit the mmr verification will be passed
 			//
-			//      mmr_root of prevous submit
+			//      mmr_root of 1st
 			//     / \
 			//    - ..-
 			//   /   | \

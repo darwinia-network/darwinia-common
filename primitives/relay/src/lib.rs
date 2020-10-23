@@ -22,6 +22,7 @@ pub trait RelayHeaderParcelInfo {
 /// Implement this for target chain's relay module's
 /// to expose some necessary APIs for relayer game
 pub trait Relayable {
+	/// The Id which point to a unique header, for ethereum it's block number
 	type RelayHeaderId: Clone + Debug + Default + PartialOrd + FullCodec;
 	type RelayHeaderParcel: Clone
 		+ Debug
@@ -35,6 +36,11 @@ pub trait Relayable {
 
 	// TODO: optimize this
 	fn verify_relay_proofs(
+		// TODO: doc
+		// This Id is use for getting the mmr root's block's number
+		// For ethereum
+		// 	header id = block number
+		// 	last leaf = block number - 1
 		relay_header_id: &Self::RelayHeaderId,
 		relay_header_parcel: &Self::RelayHeaderParcel,
 		relay_proofs: &Self::RelayProofs,
@@ -63,7 +69,7 @@ pub trait AdjustableRelayerGame {
 	/// This might relate to the validators count
 	fn max_active_games() -> u8;
 
-	fn propose_time(round: u32) -> Self::Moment;
+	fn affirm_time(round: u32) -> Self::Moment;
 
 	fn complete_proofs_time(round: u32) -> Self::Moment;
 
@@ -76,7 +82,7 @@ pub trait AdjustableRelayerGame {
 	/// Give an estimate stake value for a specify round
 	///
 	/// Usally the stake value go expensive wihle the round and the affirmations count increase
-	fn estimate_stake(round: u32, proposals_count: u8) -> Self::Balance;
+	fn estimate_stake(round: u32, affirmations_count: u32) -> Self::Balance;
 }
 
 pub trait RelayerGameProtocol {
@@ -90,7 +96,7 @@ pub trait RelayerGameProtocol {
 	type RelayProofs;
 
 	fn get_proposed_relay_header_parcels(
-		proposal_id: RelayAffirmationId<Self::RelayHeaderId>,
+		affirmation_id: RelayAffirmationId<Self::RelayHeaderId>,
 	) -> Option<Vec<Self::RelayHeaderParcel>>;
 
 	/// The best confirmed header id record of a game when it start
@@ -119,7 +125,7 @@ pub trait RelayerGameProtocol {
 	/// Proofs is a `Vec` because the sampling function might give more than 1 sample points,
 	/// so need to verify each sample point with its proofs
 	fn complete_relay_proofs(
-		proposal_id: RelayAffirmationId<Self::RelayHeaderId>,
+		affirmation_id: RelayAffirmationId<Self::RelayHeaderId>,
 		relay_proofs: Vec<Self::RelayProofs>,
 	) -> DispatchResult;
 

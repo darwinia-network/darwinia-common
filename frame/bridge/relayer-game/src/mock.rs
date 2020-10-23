@@ -366,7 +366,7 @@ impl AdjustableRelayerGame for RelayerGameAdjustor {
 		32
 	}
 
-	fn propose_time(_round: u32) -> Self::Moment {
+	fn affirm_time(_round: u32) -> Self::Moment {
 		CHALLENGE_TIME.with(|v| v.borrow().to_owned()) / 2
 	}
 
@@ -378,7 +378,7 @@ impl AdjustableRelayerGame for RelayerGameAdjustor {
 		sample_points.push(vec![sample_points.last().unwrap().last().unwrap() - 1]);
 	}
 
-	fn estimate_stake(_round: u32, _proposals_count: u8) -> Self::Balance {
+	fn estimate_stake(_: u32, _: u32) -> Self::Balance {
 		ESTIMATE_BOND.with(|v| v.borrow().to_owned())
 	}
 }
@@ -446,7 +446,7 @@ impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {
 			headers: vec![],
-			challenge_time: RelayerGameAdjustor::propose_time(0)
+			challenge_time: RelayerGameAdjustor::affirm_time(0)
 				+ RelayerGameAdjustor::complete_proofs_time(0),
 			estimate_stake: RelayerGameAdjustor::estimate_stake(0, 0),
 			confirmed_period: CONFIRM_PERIOD.with(|v| v.borrow().to_owned()),
