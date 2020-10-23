@@ -7,12 +7,12 @@ use sp_runtime::{traits::Dispatchable, AccountId32};
 // --- darwinia ---
 use crate::*;
 use array_bytes::hex_bytes_unchecked;
-use darwinia_ethereum_relay::{EthereumRelayHeaderParcel, MMRProof};
+use darwinia_ethereum_relay::{EthereumRelayHeaderParcel, EthereumRelayProofs, MMRProof};
 use darwinia_relay_primitives::*;
 use darwinia_staking::{RewardDestination, StakingBalance, StakingLedger, TimeDepositItem};
 use darwinia_support::balance::lock::StakingLock;
 use ethereum_primitives::{
-	header::EthereumHeader, receipt::EthereumReceiptProof, EthereumNetworkType,
+	header::EthereumHeader, receipt::EthereumReceiptProof, EthereumBlockNumber, EthereumNetworkType,
 };
 
 type EthereumRelay = darwinia_ethereum_relay::Module<Test>;
@@ -43,44 +43,45 @@ impl RelayerGameProtocol for UnusedRelayerGame {
 	type RelayProofs = EthereumRelayProofs;
 
 	fn get_proposed_relay_header_parcels(
-		affirmation_id: RelayAffirmationId<Self::RelayHeaderId>,
+		_: RelayAffirmationId<Self::RelayHeaderId>,
 	) -> Option<Vec<Self::RelayHeaderParcel>> {
 		unimplemented!()
 	}
-
-	fn propose(
-		relayer: Self::Relayer,
-		relay_header_parcel: Self::RelayHeaderParcel,
-		optional_relay_proofs: Option<Self::RelayProofs>,
+	fn best_confirmed_header_id_of(_: &Self::RelayHeaderId) -> Self::RelayHeaderId {
+		unimplemented!()
+	}
+	fn affirm(
+		_: Self::Relayer,
+		_: Self::RelayHeaderParcel,
+		_: Option<Self::RelayProofs>,
 	) -> DispatchResult {
 		unimplemented!()
 	}
-
+	fn dispute_and_affirm(
+		_: Self::Relayer,
+		_: Self::RelayHeaderParcel,
+		_: Option<Self::RelayProofs>,
+	) -> DispatchResult {
+		unimplemented!()
+	}
 	fn complete_relay_proofs(
-		affirmation_id: RelayAffirmationId<Self::RelayHeaderId>,
-		relay_proofs: Vec<Self::RelayProofs>,
+		_: RelayAffirmationId<Self::RelayHeaderId>,
+		_: Vec<Self::RelayProofs>,
 	) -> DispatchResult {
 		unimplemented!()
 	}
-
 	fn extend_affirmation(
-		relayer: Self::Relayer,
-		game_sample_points: Vec<Self::RelayHeaderParcel>,
-		extended_relay_affirmation_id: RelayAffirmationId<Self::RelayHeaderId>,
-		optional_relay_proofs: Option<Vec<Self::RelayProofs>>,
+		_: Self::Relayer,
+		_: Vec<Self::RelayHeaderParcel>,
+		_: RelayAffirmationId<Self::RelayHeaderId>,
+		_: Option<Vec<Self::RelayProofs>>,
 	) -> DispatchResult {
 		unimplemented!()
 	}
-
-	fn approve_pending_relay_header_parcel(
-		pending_relay_block_id: Self::RelayHeaderId,
-	) -> DispatchResult {
+	fn approve_pending_relay_header_parcel(_: Self::RelayHeaderId) -> DispatchResult {
 		unimplemented!()
 	}
-
-	fn reject_pending_relay_header_parcel(
-		pending_relay_block_id: Self::RelayHeaderId,
-	) -> DispatchResult {
+	fn reject_pending_relay_header_parcel(_: Self::RelayHeaderId) -> DispatchResult {
 		unimplemented!()
 	}
 }
@@ -150,7 +151,7 @@ fn verify_parse_token_redeem_proof() {
 		.build()
 		.execute_with(|| {
 			// https://ropsten.etherscan.io/tx/0x1d3ef601b9fa4a7f1d6259c658d0a10c77940fa5db9e10ab55397eb0ce88807d
-			let test_proof_header_thing : TestReceiptProofThing =  serde_json::from_str(
+			let test_proof_relay_header_parcel : TestReceiptProofThing =  serde_json::from_str(
 				r#"
 				{
 					"header": {
@@ -199,9 +200,9 @@ fn verify_parse_token_redeem_proof() {
 				"#
 			).unwrap();
 
-			let ethereum_proof_header_thing = (test_proof_header_thing.header, test_proof_header_thing.receipt_proof, test_proof_header_thing.mmr_proof);
+			let ethereum_proof_relay_header_parcel = (test_proof_relay_header_parcel.header, test_proof_relay_header_parcel.receipt_proof, test_proof_relay_header_parcel.mmr_proof);
 
-			let header_thing : EthereumRelayHeaderParcel = serde_json::from_str(
+			let relay_header_parcel : EthereumRelayHeaderParcel = serde_json::from_str(
 				r#"
 				{
 					"header": {
@@ -229,14 +230,14 @@ fn verify_parse_token_redeem_proof() {
 				"#
 			).unwrap();
 
-			assert_ok!(EthereumRelay::store_header(header_thing));
+			assert_ok!(EthereumRelay::store_relay_header_parcel(relay_header_parcel));
 
 			let expect_account_id = EthereumBacking::account_id_try_from_bytes(
 				&hex_bytes_unchecked("0xe44664996ab7b5d86c12e9d5ac3093f5b2efc9172cb7ce298cd6c3c51002c318"),
 			).unwrap();
 
 			assert_eq!(
-				EthereumBacking::parse_token_redeem_proof(&ethereum_proof_header_thing),
+				EthereumBacking::parse_token_redeem_proof(&ethereum_proof_relay_header_parcel),
 				Ok((expect_account_id, (true, 1234500000), 0)),
 			);
 		});
@@ -249,7 +250,7 @@ fn verify_redeem_ring() {
 		.execute_with(|| {
 
 			// https://ropsten.etherscan.io/tx/0x1d3ef601b9fa4a7f1d6259c658d0a10c77940fa5db9e10ab55397eb0ce88807d
-			let test_proof_header_thing : TestReceiptProofThing =  serde_json::from_str(
+			let test_proof_relay_header_parcel : TestReceiptProofThing =  serde_json::from_str(
 				r#"
 				{
 					"header": {
@@ -298,9 +299,9 @@ fn verify_redeem_ring() {
 				"#
 			).unwrap();
 
-			let ethereum_proof_header_thing = (test_proof_header_thing.header, test_proof_header_thing.receipt_proof, test_proof_header_thing.mmr_proof);
+			let ethereum_proof_relay_header_parcel = (test_proof_relay_header_parcel.header, test_proof_relay_header_parcel.receipt_proof, test_proof_relay_header_parcel.mmr_proof);
 
-			let header_thing : EthereumRelayHeaderParcel = serde_json::from_str(
+			let relay_header_parcel : EthereumRelayHeaderParcel = serde_json::from_str(
 				r#"
 				{
 					"header": {
@@ -328,7 +329,7 @@ fn verify_redeem_ring() {
 				"#
 			).unwrap();
 
-			assert_ok!(EthereumRelay::store_header(header_thing));
+			assert_ok!(EthereumRelay::store_relay_header_parcel(relay_header_parcel));
 
 			let expect_account_id = EthereumBacking::account_id_try_from_bytes(
 				&hex_bytes_unchecked("0xe44664996ab7b5d86c12e9d5ac3093f5b2efc9172cb7ce298cd6c3c51002c318"),
@@ -340,7 +341,7 @@ fn verify_redeem_ring() {
 			assert_ok!(EthereumBacking::redeem(
 				Origin::signed(id1.clone()),
 				RedeemFor::Token,
-				ethereum_proof_header_thing.clone()
+				ethereum_proof_relay_header_parcel.clone()
 			));
 			assert_eq!(Ring::free_balance(&expect_account_id), 1234500000 + 1);
 
@@ -349,7 +350,7 @@ fn verify_redeem_ring() {
 
 			// shouldn't redeem twice
 			assert_err!(
-				EthereumBacking::redeem(Origin::signed(id1.clone()), RedeemFor::Token, ethereum_proof_header_thing),
+				EthereumBacking::redeem(Origin::signed(id1.clone()), RedeemFor::Token, ethereum_proof_relay_header_parcel),
 				<Error<Test>>::AssetAR,
 			);
 		});
@@ -364,7 +365,7 @@ fn verify_redeem_kton() {
 			// darwinia: 5FP2eFNSVxJzSrE3N2NEVFPhUU34VzYFD6DDtRXbYzTdwPn8
 			// hex: 0x92ae5b41feba5ee68a61449c557efa9e3b894a6461c058ec2de45429adb44546
 			// amount: 0.123456789123456789 KTON
-			let test_proof_header_thing : TestReceiptProofThing =  serde_json::from_str(
+			let test_proof_relay_header_parcel : TestReceiptProofThing =  serde_json::from_str(
 				r#"
 				{
 					"header": {
@@ -413,9 +414,9 @@ fn verify_redeem_kton() {
 				"#
 			).unwrap();
 
-			let ethereum_proof_header_thing = (test_proof_header_thing.header, test_proof_header_thing.receipt_proof, test_proof_header_thing.mmr_proof);
+			let ethereum_proof_relay_header_parcel = (test_proof_relay_header_parcel.header, test_proof_relay_header_parcel.receipt_proof, test_proof_relay_header_parcel.mmr_proof);
 
-			let header_thing : EthereumRelayHeaderParcel = serde_json::from_str(
+			let relay_header_parcel : EthereumRelayHeaderParcel = serde_json::from_str(
 				r#"
 				{
 					"header": {
@@ -443,14 +444,14 @@ fn verify_redeem_kton() {
 				"#
 			).unwrap();
 
-			assert_ok!(EthereumRelay::store_header(header_thing));
+			assert_ok!(EthereumRelay::store_relay_header_parcel(relay_header_parcel));
 
 			let expect_account_id = EthereumBacking::account_id_try_from_bytes(
 				&hex_bytes_unchecked("0xe44664996ab7b5d86c12e9d5ac3093f5b2efc9172cb7ce298cd6c3c51002c318"),
 			).unwrap();
 			// 0.123456789123456789 KTON
 			assert_eq!(
-				EthereumBacking::parse_token_redeem_proof(&ethereum_proof_header_thing),
+				EthereumBacking::parse_token_redeem_proof(&ethereum_proof_relay_header_parcel),
 				Ok((expect_account_id.clone(), (false, 123400), 0)),
 			);
 
@@ -461,7 +462,7 @@ fn verify_redeem_kton() {
 			assert_ok!(EthereumBacking::redeem(
 				Origin::signed(id1.clone()),
 				RedeemFor::Token,
-				ethereum_proof_header_thing.clone()
+				ethereum_proof_relay_header_parcel.clone()
 			));
 			assert_eq!(Kton::free_balance(&expect_account_id), 123400 + 1);
 
@@ -470,7 +471,7 @@ fn verify_redeem_kton() {
 
 			// shouldn't redeem twice
 			assert_err!(
-				EthereumBacking::redeem(Origin::signed(id1.clone()), RedeemFor::Token, ethereum_proof_header_thing),
+				EthereumBacking::redeem(Origin::signed(id1.clone()), RedeemFor::Token, ethereum_proof_relay_header_parcel),
 				<Error<Test>>::AssetAR,
 			);
 		});
@@ -493,7 +494,7 @@ fn verify_redeem_deposit() {
 			//  _data     0x92ae5b41feba5ee68a61449c557efa9e3b894a6461c058ec2de45429adb44546
 
 			// transfer：https://ropsten.etherscan.io/tx/0x5a7004126466ce763501c89bcbb98d14f3c328c4b310b1976a38be1183d91919
-			let test_proof_header_thing : TestReceiptProofThing =  serde_json::from_str(
+			let test_proof_relay_header_parcel : TestReceiptProofThing =  serde_json::from_str(
 				r#"
 				{
 					"header": {
@@ -541,9 +542,9 @@ fn verify_redeem_deposit() {
 				"#
 			).unwrap();
 
-			let ethereum_proof_header_thing = (test_proof_header_thing.header, test_proof_header_thing.receipt_proof, test_proof_header_thing.mmr_proof);
+			let ethereum_proof_relay_header_parcel = (test_proof_relay_header_parcel.header, test_proof_relay_header_parcel.receipt_proof, test_proof_relay_header_parcel.mmr_proof);
 
-			let header_thing : EthereumRelayHeaderParcel = serde_json::from_str(
+			let relay_header_parcel : EthereumRelayHeaderParcel = serde_json::from_str(
 				r#"
 				{
 					"header": {
@@ -571,7 +572,7 @@ fn verify_redeem_deposit() {
 				"#
 			).unwrap();
 
-			assert_ok!(EthereumRelay::store_header(header_thing));
+			assert_ok!(EthereumRelay::store_relay_header_parcel(relay_header_parcel));
 
 			let ring_locked_before = EthereumBacking::pot::<Ring>();
 			let expect_account_id = EthereumBacking::account_id_try_from_bytes(
@@ -590,7 +591,7 @@ fn verify_redeem_deposit() {
 			assert_ok!(EthereumBacking::redeem(
 				Origin::signed(id1.clone()),
 				RedeemFor::Deposit,
-				ethereum_proof_header_thing.clone()
+				ethereum_proof_relay_header_parcel.clone()
 			));
 			assert_eq!(Ring::free_balance(&expect_account_id), 1001000000000 + 1);
 
@@ -613,7 +614,7 @@ fn verify_redeem_deposit() {
 
 			// shouldn't redeem twice
 			assert_err!(
-				EthereumBacking::redeem(Origin::signed(id1.clone()), RedeemFor::Deposit, ethereum_proof_header_thing),
+				EthereumBacking::redeem(Origin::signed(id1.clone()), RedeemFor::Deposit, ethereum_proof_relay_header_parcel),
 				<Error<Test>>::AssetAR,
 			);
 		});
