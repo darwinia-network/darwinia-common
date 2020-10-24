@@ -2,10 +2,114 @@
 use frame_support::{assert_err, assert_ok};
 // --- darwinia ---
 use crate::{
-	mock::{mock_relay::*, BlockNumber, *},
+	mock::{mock_relay::*, BlockNumber, Event, *},
 	*,
 };
 use darwinia_support::balance::lock::*;
+
+#[test]
+fn events_should_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		run_to_block(1);
+
+		let relayer_a = 1;
+		let relayer_b = 2;
+		let relay_header_parcels_a = MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], true);
+		let relay_header_parcels_b = MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], false);
+		let relay_header_id = relay_header_parcels_a.len() as _;
+		let round_index = relay_header_parcels_a.len() as _;
+
+		assert_ok!(RelayerGame::affirm(
+			relayer_a,
+			relay_header_parcels_a[0].clone(),
+			Some(())
+		));
+		assert_eq!(
+			relayer_game_events(),
+			vec![Event::relayer_game(RawEvent::Affirmed(
+				relay_header_id,
+				0,
+				0,
+				relayer_a
+			))]
+		);
+
+		assert_ok!(RelayerGame::dispute_and_affirm(
+			relayer_b,
+			relay_header_parcels_b[0].clone(),
+			Some(())
+		));
+		assert_eq!(
+			relayer_game_events(),
+			vec![
+				Event::relayer_game(RawEvent::Disputed(relay_header_id)),
+				Event::relayer_game(RawEvent::Affirmed(relay_header_id, 0, 1, relayer_b))
+			]
+		);
+
+		run_to_block(challenge_time() * 1 as BlockNumber + 2);
+
+		assert_eq!(
+			relayer_game_events(),
+			vec![Event::relayer_game(RawEvent::NewRound(5, vec![4]))]
+		);
+
+		for i in 1..round_index {
+			assert_ok!(RelayerGame::extend_affirmation(
+				relayer_a,
+				RelayAffirmationId {
+					relay_header_id,
+					round: i - 1,
+					index: 0
+				},
+				vec![relay_header_parcels_a[i as usize].clone()],
+				Some(vec![()])
+			));
+			assert_eq!(
+				relayer_game_events(),
+				vec![
+					Event::relayer_game(RawEvent::Extended(relay_header_id)),
+					Event::relayer_game(RawEvent::Affirmed(relay_header_id, i, 0, relayer_a,))
+				]
+			);
+
+			assert_ok!(RelayerGame::extend_affirmation(
+				relayer_b,
+				RelayAffirmationId {
+					relay_header_id,
+					round: i - 1,
+					index: 1
+				},
+				vec![relay_header_parcels_b[i as usize].clone()],
+				Some(vec![()])
+			));
+			assert_eq!(
+				relayer_game_events(),
+				vec![
+					Event::relayer_game(RawEvent::Extended(relay_header_id)),
+					Event::relayer_game(RawEvent::Affirmed(relay_header_id, i, 1, relayer_b))
+				]
+			);
+
+			run_to_block(challenge_time() * (i as BlockNumber + 1) + 2);
+
+			if i == round_index - 1 {
+				assert_eq!(
+					relayer_game_events(),
+					vec![Event::relayer_game(RawEvent::GameOver(relay_header_id))]
+				);
+			} else {
+				assert_eq!(
+					relayer_game_events(),
+					vec![Event::relayer_game(RawEvent::NewRound(
+						relay_header_id,
+						vec![round_index - i - 1]
+					))]
+				);
+			}
+		}
+	});
+}
 
 #[test]
 fn insufficient_bond_should_fail() {
@@ -61,7 +165,7 @@ fn some_affirm_cases_should_fail() {
 
 		assert_err!(
 			RelayerGame::dispute_and_affirm(1, relay_header_parcel_a.clone(), None),
-			RelayerGameError::NothingToAgainstAffirmationE
+			RelayerGameError::GameAtThisRoundC
 		);
 		assert_ok!(RelayerGame::affirm(1, relay_header_parcel_a, None));
 		assert_err!(
@@ -159,20 +263,20 @@ fn challenge_time_should_work() {
 #[test]
 fn extend_should_work() {
 	ExtBuilder::default().build().execute_with(|| {
-		let realyer_a = 1;
-		let realyer_b = 2;
+		let relayer_a = 1;
+		let relayer_b = 2;
 		let relay_header_parcels_a = MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], true);
 		let relay_header_parcels_b = MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], true);
 		let relay_header_id = relay_header_parcels_a.len() as _;
 		let round_index = relay_header_parcels_a.len() as _;
 
 		assert_ok!(RelayerGame::affirm(
-			realyer_a,
+			relayer_a,
 			relay_header_parcels_a[0].clone(),
 			Some(())
 		));
 		assert_ok!(RelayerGame::dispute_and_affirm(
-			realyer_b,
+			relayer_b,
 			relay_header_parcels_b[0].clone(),
 			Some(())
 		));
@@ -183,23 +287,23 @@ fn extend_should_work() {
 			run_to_block(challenge_time() * i as BlockNumber + 1);
 
 			assert_ok!(RelayerGame::extend_affirmation(
-				realyer_a,
-				vec![relay_header_parcels_a[i as usize].clone()],
+				relayer_a,
 				RelayAffirmationId {
 					relay_header_id,
 					round: i - 1,
 					index: 0
 				},
+				vec![relay_header_parcels_a[i as usize].clone()],
 				Some(vec![()])
 			));
 			assert_ok!(RelayerGame::extend_affirmation(
-				realyer_b,
-				vec![relay_header_parcels_b[i as usize].clone()],
+				relayer_b,
 				RelayAffirmationId {
 					relay_header_id,
 					round: i - 1,
 					index: 1
 				},
+				vec![relay_header_parcels_b[i as usize].clone()],
 				Some(vec![()])
 			));
 		}
@@ -224,12 +328,12 @@ fn lock_should_work() {
 				let submit_then_assert = |relayer, relay_parcel, round, index, stakes| {
 					assert_ok!(RelayerGame::extend_affirmation(
 						relayer,
-						vec![relay_parcel],
 						RelayAffirmationId {
 							relay_header_id,
 							round,
 							index,
 						},
+						vec![relay_parcel],
 						Some(vec![()])
 					));
 					assert_eq!(RelayerGame::stakes_of(relayer), stakes);
@@ -324,22 +428,22 @@ fn slash_and_reward_should_work() {
 				for i in 1..round_index {
 					assert_ok!(RelayerGame::extend_affirmation(
 						relayer_a,
-						vec![relay_header_parcels_a[i as usize].clone()],
 						RelayAffirmationId {
 							relay_header_id,
 							round: i - 1,
 							index: 0
 						},
+						vec![relay_header_parcels_a[i as usize].clone()],
 						Some(vec![()])
 					));
 					assert_ok!(RelayerGame::extend_affirmation(
 						relayer_b,
-						vec![relay_header_parcels_b[i as usize].clone()],
 						RelayAffirmationId {
 							relay_header_id,
 							round: i - 1,
 							index: 1
 						},
+						vec![relay_header_parcels_b[i as usize].clone()],
 						Some(vec![()])
 					));
 
@@ -402,25 +506,27 @@ fn settle_with_challenge_should_work() {
 			Some(())
 		));
 
+		run_to_block(challenge_time() * 1 + 1);
+
 		for i in 1..round_index {
 			assert_ok!(RelayerGame::extend_affirmation(
 				relayer_a,
-				vec![relay_header_parcels_a[i as usize].clone()],
 				RelayAffirmationId {
 					relay_header_id,
 					round: i - 1,
 					index: 0
 				},
+				vec![relay_header_parcels_a[i as usize].clone()],
 				Some(vec![()])
 			));
 			assert_ok!(RelayerGame::extend_affirmation(
 				relayer_b,
-				vec![relay_header_parcels_b[i as usize].clone()],
 				RelayAffirmationId {
 					relay_header_id,
 					round: i - 1,
 					index: 1
 				},
+				vec![relay_header_parcels_b[i as usize].clone()],
 				Some(vec![()])
 			));
 
@@ -429,12 +535,12 @@ fn settle_with_challenge_should_work() {
 
 		assert_ok!(RelayerGame::extend_affirmation(
 			relayer_a,
-			vec![relay_header_parcels_a[round_index as usize].clone()],
 			RelayAffirmationId {
 				relay_header_id,
 				round: round_index - 1,
 				index: 0
 			},
+			vec![relay_header_parcels_a[round_index as usize].clone()],
 			Some(vec![()])
 		));
 
@@ -478,22 +584,22 @@ fn settle_abandon_should_work() {
 		for i in 1..round_index {
 			assert_ok!(RelayerGame::extend_affirmation(
 				relayer_a,
-				vec![relay_header_parcels_a[i as usize].clone()],
 				RelayAffirmationId {
 					relay_header_id,
 					round: i - 1,
 					index: 0
 				},
+				vec![relay_header_parcels_a[i as usize].clone()],
 				Some(vec![()])
 			));
 			assert_ok!(RelayerGame::extend_affirmation(
 				relayer_b,
-				vec![relay_header_parcels_b[i as usize].clone()],
 				RelayAffirmationId {
 					relay_header_id,
 					round: i - 1,
 					index: 1
 				},
+				vec![relay_header_parcels_b[i as usize].clone()],
 				Some(vec![()])
 			));
 
@@ -536,22 +642,22 @@ fn on_chain_arbitrate_should_work() {
 		for i in 1..round_index {
 			assert_ok!(RelayerGame::extend_affirmation(
 				relayer_a,
-				vec![relay_header_parcels_a[i as usize].clone()],
 				RelayAffirmationId {
 					relay_header_id,
 					round: i - 1,
 					index: 0
 				},
+				vec![relay_header_parcels_a[i as usize].clone()],
 				Some(vec![()])
 			));
 			assert_ok!(RelayerGame::extend_affirmation(
 				relayer_b,
-				vec![relay_header_parcels_b[i as usize].clone()],
 				RelayAffirmationId {
 					relay_header_id,
 					round: i - 1,
 					index: 1
 				},
+				vec![relay_header_parcels_b[i as usize].clone()],
 				Some(vec![()])
 			));
 
@@ -596,22 +702,22 @@ fn no_honesty_should_work() {
 		for i in 1..round_index {
 			assert_ok!(RelayerGame::extend_affirmation(
 				relayer_a,
-				vec![relay_header_parcels_a[i as usize].clone()],
 				RelayAffirmationId {
 					relay_header_id,
 					round: i - 1,
 					index: 0
 				},
+				vec![relay_header_parcels_a[i as usize].clone()],
 				Some(vec![()])
 			));
 			assert_ok!(RelayerGame::extend_affirmation(
 				relayer_b,
-				vec![relay_header_parcels_b[i as usize].clone()],
 				RelayAffirmationId {
 					relay_header_id,
 					round: i - 1,
 					index: 1
 				},
+				vec![relay_header_parcels_b[i as usize].clone()],
 				Some(vec![()])
 			));
 
