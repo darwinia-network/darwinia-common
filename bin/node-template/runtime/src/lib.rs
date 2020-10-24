@@ -28,6 +28,10 @@ pub mod constants {
 
 	// 1 in 4 blocks (on average, not counting collisions) will be primary babe blocks.
 	pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
+
+	pub const fn deposit(items: u32, bytes: u32) -> Balance {
+		items as Balance * 20 * COIN + (bytes as Balance) * 100 * MICRO
+	}
 }
 
 pub mod impls {
@@ -362,7 +366,7 @@ use static_assertions::const_assert;
 // --- substrate ---
 use frame_support::{
 	construct_runtime, debug, parameter_types,
-	traits::{KeyOwnerProofSystem, LockIdentifier, Randomness},
+	traits::{InstanceFilter, KeyOwnerProofSystem, LockIdentifier, Randomness},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		Weight,
@@ -482,6 +486,99 @@ impl pallet_scheduler::Trait for Runtime {
 	type ScheduleOrigin = EnsureRoot<AccountId>;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
 	type WeightInfo = weights::pallet_scheduler::WeightInfo<Runtime>;
+}
+
+/// The type used to represent the kinds of proxying allowed.
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, RuntimeDebug)]
+pub enum ProxyType {
+	Any,
+	NonTransfer,
+	Governance,
+	Staking,
+	EthereumBridge,
+}
+impl Default for ProxyType {
+	fn default() -> Self {
+		Self::Any
+	}
+}
+impl InstanceFilter<Call> for ProxyType {
+	fn filter(&self, c: &Call) -> bool {
+		match self {
+			ProxyType::Any => true,
+			ProxyType::NonTransfer => matches!(
+				c,
+				Call::System(..) |
+				Call::Babe(..) |
+				Call::Timestamp(..) |
+				// Specifically omitting the entire Balances pallet
+				Call::Authorship(..) |
+				Call::Staking(..) |
+				Call::Offences(..) |
+				Call::Session(..) |
+				Call::FinalityTracker(..) |
+				Call::Grandpa(..) |
+				Call::ImOnline(..) |
+				Call::AuthorityDiscovery(..) |
+				Call::Democracy(..) |
+				Call::Council(..) |
+				Call::TechnicalCommittee(..) |
+				Call::ElectionsPhragmen(..) |
+				Call::TechnicalMembership(..) |
+				Call::Treasury(..) |
+				Call::Claims(..) |
+				Call::Scheduler(..) |
+				Call::Proxy(..) |
+				// Specifically omitting the entire Sudo pallet
+				// Specifically omitting the entire CrabIssuing pallet
+				// Specifically omitting the entire CrabBacking pallet
+				Call::EthereumRelay(..) // Specifically omitting the entire EthereumBacking pallet
+				                        // Specifically omitting the entire TronBacking pallet
+			),
+			ProxyType::Governance => matches!(
+				c,
+				Call::Democracy(..)
+					| Call::Council(..) | Call::TechnicalCommittee(..)
+					| Call::ElectionsPhragmen(..)
+					| Call::Treasury(..)
+			),
+			ProxyType::Staking => matches!(c, Call::Staking(..)),
+			ProxyType::EthereumBridge => matches!(c, Call::EthereumRelay(..)),
+		}
+	}
+	fn is_superset(&self, o: &Self) -> bool {
+		match (self, o) {
+			(x, y) if x == y => true,
+			(ProxyType::Any, _) => true,
+			(_, ProxyType::Any) => false,
+			(ProxyType::NonTransfer, _) => true,
+			_ => false,
+		}
+	}
+}
+parameter_types! {
+	// One storage item; key size 32, value size 8; .
+	pub const ProxyDepositBase: Balance = deposit(1, 8);
+	// Additional storage item size of 33 bytes.
+	pub const ProxyDepositFactor: Balance = deposit(0, 33);
+	pub const MaxProxies: u16 = 32;
+	pub const AnnouncementDepositBase: Balance = deposit(1, 8);
+	pub const AnnouncementDepositFactor: Balance = deposit(0, 66);
+	pub const MaxPending: u16 = 32;
+}
+impl pallet_proxy::Trait for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type Currency = Balances;
+	type ProxyType = ProxyType;
+	type ProxyDepositBase = ProxyDepositBase;
+	type ProxyDepositFactor = ProxyDepositFactor;
+	type MaxProxies = MaxProxies;
+	type MaxPending = MaxPending;
+	type CallHasher = BlakeTwo256;
+	type AnnouncementDepositBase = AnnouncementDepositBase;
+	type AnnouncementDepositFactor = AnnouncementDepositFactor;
+	type WeightInfo = weights::pallet_proxy::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -1069,14 +1166,17 @@ construct_runtime!(
 		// System scheduler.
 		Scheduler: pallet_scheduler::{Module, Call, Storage, Event<T>},
 
+		// Proxy module. Late addition.
+		Proxy: pallet_proxy::{Module, Call, Storage, Event<T>} = 30,
+
 		Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>},
 
 		CrabIssuing: darwinia_crab_issuing::{Module, Call, Storage, Config, Event<T>},
 		CrabBacking: darwinia_crab_backing::{Module, Storage, Config<T>},
 
-		EthereumBacking: darwinia_ethereum_backing::{Module, Call, Storage, Config<T>, Event<T>},
-		EthereumRelay: darwinia_ethereum_relay::{Module, Call, Storage, Config<T>, Event<T>},
 		EthereumRelayerGame: darwinia_relayer_game::<Instance0>::{Module, Call, Storage, Event<T>},
+		EthereumRelay: darwinia_ethereum_relay::{Module, Call, Storage, Config<T>, Event<T>},
+		EthereumBacking: darwinia_ethereum_backing::{Module, Call, Storage, Config<T>, Event<T>},
 
 		TronBacking: darwinia_tron_backing::{Module, Storage, Config<T>},
 
