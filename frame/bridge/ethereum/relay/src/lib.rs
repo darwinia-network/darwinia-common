@@ -256,16 +256,16 @@ decl_module! {
 		#[weight = 0]
 		fn extend_affirmation(
 			origin,
-			game_sample_points: Vec<EthereumRelayHeaderParcel>,
 			extended_ethereum_relay_affirmation_id: RelayAffirmationId<EthereumBlockNumber>,
+			game_sample_points: Vec<EthereumRelayHeaderParcel>,
 			optional_ethereum_relay_proofs: Option<Vec<EthereumRelayProofs>>,
 		) {
 			let relayer = ensure_signed(origin)?;
 
 			T::RelayerGame::extend_affirmation(
 				relayer,
-				game_sample_points,
 				extended_ethereum_relay_affirmation_id,
+				game_sample_points,
 				optional_ethereum_relay_proofs
 			)?;
 		}

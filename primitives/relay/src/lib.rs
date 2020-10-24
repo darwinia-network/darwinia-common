@@ -134,8 +134,8 @@ pub trait RelayerGameProtocol {
 	/// to help the chain make a on chain arbitrate finally
 	fn extend_affirmation(
 		relayer: Self::Relayer,
-		game_sample_points: Vec<Self::RelayHeaderParcel>,
 		extended_relay_affirmation_id: RelayAffirmationId<Self::RelayHeaderId>,
+		game_sample_points: Vec<Self::RelayHeaderParcel>,
 		optional_relay_proofs: Option<Vec<Self::RelayProofs>>,
 	) -> DispatchResult;
 

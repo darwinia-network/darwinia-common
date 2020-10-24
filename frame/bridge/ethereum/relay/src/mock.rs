@@ -173,8 +173,8 @@ impl RelayerGameProtocol for UnusedRelayerGame {
 	}
 	fn extend_affirmation(
 		_: Self::Relayer,
-		_: Vec<Self::RelayHeaderParcel>,
 		_: RelayAffirmationId<Self::RelayHeaderId>,
+		_: Vec<Self::RelayHeaderParcel>,
 		_: Option<Vec<Self::RelayProofs>>,
 	) -> DispatchResult {
 		unimplemented!()
