@@ -12,10 +12,10 @@ version    = "1.0.0"
 [dependencies]
 # crates
 codec             = { package = "parity-scale-codec", version = "1.3.5", default-features = false }
+log               = "0.4.8"
 serde             = { version = "1.0.117", optional = true }
 smallvec          = { version = "1.4.2" }
 static_assertions = { version = "1.1.0" }
-log = "0.4.8"
 # darwinia
 darwinia-balances                   = { default-features = false, path = "../../../frame/balances" }
 darwinia-balances-rpc-runtime-api   = { default-features = false, path = "../../../frame/balances/rpc/runtime-api" }
@@ -75,9 +75,9 @@ sp-std                                     = { default-features = false, git = "
 sp-transaction-pool                        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-version                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 # dvm
-frame-evm = { default-features = false, package = "pallet-evm", git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-frame-ethereum = { version = "0.1.0", default-features = false, package = "dvm-ethereum", path = "../../../frame/dvm/ethereum" }
 dvm-rpc-primitives = { default-features = false, path = "../../../frame/dvm/rpc/primitives" }
+frame-ethereum     = { version = "0.1.0", default-features = false, package = "dvm-ethereum", path = "../../../frame/dvm/ethereum" }
+pallet-evm         = { default-features = false, package = "pallet-evm", git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 [build-dependencies]
 # substrate
@@ -147,7 +147,7 @@ std = [
 	"sp-version/std",
 	# dvm
 	"dvm-rpc-primitives/std",
-	"frame-evm/std",
+	"pallet-evm/std",
 	"frame-ethereum/std",
 ]
 

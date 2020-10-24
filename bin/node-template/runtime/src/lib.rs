@@ -415,7 +415,7 @@ use impls::*;
 // dvm
 use dvm_rpc_primitives::TransactionStatus;
 use frame_ethereum::precompiles::{ConcatAddressMapping, NativeTransfer};
-use frame_evm::{Account as EVMAccount, EnsureAddressTruncated, FeeCalculator};
+use pallet_evm::{Account as EVMAccount, EnsureAddressTruncated, FeeCalculator};
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
@@ -1141,7 +1141,7 @@ parameter_types! {
 	pub const ChainId: u64 = 43;
 }
 
-impl frame_evm::Trait for Runtime {
+impl pallet_evm::Trait for Runtime {
 	type FeeCalculator = FixedGasPrice;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
@@ -1149,10 +1149,10 @@ impl frame_evm::Trait for Runtime {
 	type Currency = Balances;
 	type Event = Event;
 	type Precompiles = (
-		frame_evm::precompiles::ECRecover,
-		frame_evm::precompiles::Sha256,
-		frame_evm::precompiles::Ripemd160,
-		frame_evm::precompiles::Identity,
+		pallet_evm::precompiles::ECRecover,
+		pallet_evm::precompiles::Sha256,
+		pallet_evm::precompiles::Ripemd160,
+		pallet_evm::precompiles::Identity,
 		NativeTransfer<Self>,
 	);
 	type ChainId = ChainId;
@@ -1268,7 +1268,7 @@ construct_runtime!(
 
 		// dvm related
 		Ethereum: frame_ethereum::{Module, Call, Storage, Event, Config, ValidateUnsigned},
-		EVM: frame_evm::{Module, Config, Call, Storage, Event<T>},
+		EVM: pallet_evm::{Module, Config, Call, Storage, Event<T>},
 	}
 );
 
@@ -1528,7 +1528,7 @@ impl_runtime_apis! {
 		}
 
 		fn account_basic(address: H160) -> EVMAccount {
-			frame_evm::Module::<Runtime>::account_basic(&address)
+			pallet_evm::Module::<Runtime>::account_basic(&address)
 		}
 
 		fn gas_price() -> U256 {
@@ -1536,7 +1536,7 @@ impl_runtime_apis! {
 		}
 
 		fn account_code_at(address: H160) -> Vec<u8> {
-			frame_evm::Module::<Runtime>::account_codes(address)
+			pallet_evm::Module::<Runtime>::account_codes(address)
 		}
 
 		fn author() -> H160 {
@@ -1546,7 +1546,7 @@ impl_runtime_apis! {
 		fn storage_at(address: H160, index: U256) -> H256 {
 			let mut tmp = [0u8; 32];
 			index.to_big_endian(&mut tmp);
-			frame_evm::Module::<Runtime>::account_storages(address, H256::from_slice(&tmp[..]))
+			pallet_evm::Module::<Runtime>::account_storages(address, H256::from_slice(&tmp[..]))
 		}
 
 		fn call(
