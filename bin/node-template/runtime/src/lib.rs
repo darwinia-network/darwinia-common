@@ -413,8 +413,8 @@ use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispa
 use impls::*;
 
 // dvm
+use dvm_ethereum::precompiles::{ConcatAddressMapping, NativeTransfer};
 use dvm_rpc_primitives::TransactionStatus;
-use frame_ethereum::precompiles::{ConcatAddressMapping, NativeTransfer};
 use pallet_evm::{Account as EVMAccount, EnsureAddressTruncated, FeeCalculator};
 
 /// This runtime version.
@@ -1172,7 +1172,7 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 	}
 }
 
-impl frame_ethereum::Trait for Runtime {
+impl dvm_ethereum::Trait for Runtime {
 	type Event = Event;
 	type FindAuthor = EthereumFindAuthor<Babe>;
 	type AddressMapping = ConcatAddressMapping;
@@ -1182,9 +1182,9 @@ impl frame_ethereum::Trait for Runtime {
 pub struct TransactionConverter;
 
 impl dvm_rpc_primitives::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
-	fn convert_transaction(&self, transaction: frame_ethereum::Transaction) -> UncheckedExtrinsic {
+	fn convert_transaction(&self, transaction: dvm_ethereum::Transaction) -> UncheckedExtrinsic {
 		UncheckedExtrinsic::new_unsigned(
-			frame_ethereum::Call::<Runtime>::transact(transaction).into(),
+			dvm_ethereum::Call::<Runtime>::transact(transaction).into(),
 		)
 	}
 }
@@ -1192,10 +1192,10 @@ impl dvm_rpc_primitives::ConvertTransaction<UncheckedExtrinsic> for TransactionC
 impl dvm_rpc_primitives::ConvertTransaction<opaque::UncheckedExtrinsic> for TransactionConverter {
 	fn convert_transaction(
 		&self,
-		transaction: frame_ethereum::Transaction,
+		transaction: dvm_ethereum::Transaction,
 	) -> opaque::UncheckedExtrinsic {
 		let extrinsic = UncheckedExtrinsic::new_unsigned(
-			frame_ethereum::Call::<Runtime>::transact(transaction).into(),
+			dvm_ethereum::Call::<Runtime>::transact(transaction).into(),
 		);
 		let encoded = extrinsic.encode();
 		opaque::UncheckedExtrinsic::decode(&mut &encoded[..])
@@ -1267,7 +1267,7 @@ construct_runtime!(
 		HeaderMMR: darwinia_header_mmr::{Module, Call, Storage},
 
 		// dvm related
-		Ethereum: frame_ethereum::{Module, Call, Storage, Event, Config, ValidateUnsigned},
+		Ethereum: dvm_ethereum::{Module, Call, Storage, Event, Config, ValidateUnsigned},
 		EVM: pallet_evm::{Module, Config, Call, Storage, Event<T>},
 	}
 );
@@ -1540,7 +1540,7 @@ impl_runtime_apis! {
 		}
 
 		fn author() -> H160 {
-			<frame_ethereum::Module<Runtime>>::find_author()
+			<dvm_ethereum::Module<Runtime>>::find_author()
 		}
 
 		fn storage_at(address: H160, index: U256) -> H256 {
@@ -1556,7 +1556,7 @@ impl_runtime_apis! {
 			gas_limit: U256,
 			gas_price: Option<U256>,
 			nonce: Option<U256>,
-			action: frame_ethereum::TransactionAction,
+			action: dvm_ethereum::TransactionAction,
 		) -> Result<(Vec<u8>, U256), sp_runtime::DispatchError> {
 			// ensure that the gas_limit fits within a u32; otherwise the wrong value will be passed
 			use sp_runtime::traits::UniqueSaturatedInto;
@@ -1568,7 +1568,7 @@ impl_runtime_apis! {
 							(gas_limit: {:?})", gas_limit);
 			}
 			match action {
-				frame_ethereum::TransactionAction::Call(to) =>
+				dvm_ethereum::TransactionAction::Call(to) =>
 				EVM::execute_call(
 						from,
 						to,
@@ -1581,7 +1581,7 @@ impl_runtime_apis! {
 					)
 					.map(|(_, ret, gas, _)| (ret, gas))
 					.map_err(|err| err.into()),
-				frame_ethereum::TransactionAction::Create =>
+				dvm_ethereum::TransactionAction::Create =>
 				EVM::execute_create(
 						from,
 						data,
@@ -1600,17 +1600,17 @@ impl_runtime_apis! {
 			Ethereum::current_transaction_statuses()
 		}
 
-		fn current_block() -> Option<frame_ethereum::Block> {
+		fn current_block() -> Option<dvm_ethereum::Block> {
 			Ethereum::current_block()
 		}
 
-		fn current_receipts() -> Option<Vec<frame_ethereum::Receipt>> {
+		fn current_receipts() -> Option<Vec<dvm_ethereum::Receipt>> {
 			Ethereum::current_receipts()
 		}
 
 		fn current_all() -> (
-			Option<frame_ethereum::Block>,
-			Option<Vec<frame_ethereum::Receipt>>,
+			Option<dvm_ethereum::Block>,
+			Option<Vec<dvm_ethereum::Receipt>>,
 			Option<Vec<TransactionStatus>>
 		) {
 			(

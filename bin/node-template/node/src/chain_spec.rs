@@ -275,10 +275,9 @@ fn testnet_genesis(
 			backed_ring: 1 << 56,
 			backed_kton: 1 << 56,
 		}),
-		// dvm
 		pallet_evm: Some(EVMConfig {
 			accounts: evm_accounts,
 		}),
-		frame_ethereum: Some(EthereumConfig {}),
+		dvm_ethereum: Some(Default::default()),
 	}
 }
