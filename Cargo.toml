@@ -1,12 +1,14 @@
 [workspace]
 members = [
+	# node
 	"bin/node-template/node",
 	"bin/node-template/runtime",
+	# client
 	"client/cli",
+	# frame
 	"frame/balances",
 	"frame/balances/rpc",
 	"frame/balances/rpc/runtime-api",
-	"frame/claims",
 	"frame/bridge/crab/backing",
 	"frame/bridge/crab/issuing",
 	"frame/bridge/ethereum/backing",
@@ -14,7 +16,14 @@ members = [
 	"frame/bridge/ethereum/relay",
 	"frame/bridge/relayer-game",
 	"frame/bridge/tron/backing",
+	"frame/claims",
 	"frame/democracy",
+	"frame/dvm/ethereum",
+	"frame/dvm/rpc",
+	"frame/dvm/rpc/core",
+	"frame/dvm/rpc/primitives",
+	"frame/dvm/consensus",
+	"frame/dvm/consensus/primitives",
 	"frame/elections-phragmen",
 	"frame/header-mmr",
 	"frame/header-mmr/rpc",
@@ -25,16 +34,11 @@ members = [
 	"frame/support",
 	"frame/treasury",
 	"frame/vesting",
+	# primitives
 	"primitives/array-bytes",
 	"primitives/ethereum-primitives",
 	"primitives/merkle-patricia-trie",
 	"primitives/relay",
-	"frame/dvm/ethereum",
-	"frame/dvm/rpc",
-	"frame/dvm/rpc/core",
-	"frame/dvm/rpc/primitives",
-	"frame/dvm/consensus",
-	"frame/dvm/consensus/primitives",
 ]
 
 # The list of dependencies below (which can be both direct and indirect dependencies) are crates
