@@ -1,14 +1,3 @@
-pub mod alias {
-	pub mod relayer_game {
-		pub use crate::Event;
-	}
-
-	// --- substrate ---
-	pub use frame_system as system;
-	// --- darwinia ---
-	pub use darwinia_balances as balances;
-}
-
 pub mod mock_relay {
 	pub mod types {
 		pub type MockRelayBlockNumber = u32;
@@ -209,27 +198,28 @@ pub mod mock_relay {
 	}
 }
 
+pub mod relayer_game {
+	pub use crate::Event;
+}
+
 // --- std ---
 use std::{cell::RefCell, time::Instant};
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
-	impl_outer_dispatch, impl_outer_event, impl_outer_origin, parameter_types,
+	impl_outer_event, impl_outer_origin, parameter_types,
 	traits::{OnFinalize, OnInitialize},
 };
 use sp_runtime::RuntimeDebug;
 // --- darwinia ---
 use crate::*;
-use alias::*;
 use darwinia_relay_primitives::*;
 use mock_relay::{MockRelayBlockNumber, MockRelayHeader};
 
 pub type AccountId = u64;
 pub type BlockNumber = u64;
 pub type Balance = u128;
-
-pub type Extrinsic = sp_runtime::testing::TestXt<Call, ()>;
 
 pub type RingInstance = darwinia_balances::Instance0;
 pub type Ring = darwinia_balances::Module<Test, RingInstance>;
@@ -256,19 +246,10 @@ impl_outer_origin! {
 	{}
 }
 
-impl_outer_dispatch! {
-	pub enum Call for Test
-	where
-		origin: Origin
-	{
-		relayer_game::RelayerGame,
-	}
-}
-
 impl_outer_event! {
 	pub enum Event for Test {
-		system <T>,
-		balances Instance0<T>,
+		frame_system <T>,
+		darwinia_balances Instance0<T>,
 		relayer_game <T>,
 	}
 }
@@ -295,7 +276,6 @@ impl Get<BlockNumber> for ConfirmPeriod {
 #[derive(Clone, Eq, PartialEq)]
 pub struct Test;
 impl Trait for Test {
-	type Call = Call;
 	type Event = Event;
 	type RingCurrency = Ring;
 	type RingSlash = ();
@@ -308,7 +288,7 @@ impl Trait for Test {
 impl frame_system::Trait for Test {
 	type BaseCallFilter = ();
 	type Origin = Origin;
-	type Call = Call;
+	type Call = ();
 	type Index = u64;
 	type BlockNumber = BlockNumber;
 	type Hash = sp_core::H256;
@@ -346,14 +326,6 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 	type MaxLocks = ();
 	type OtherCurrencies = ();
 	type WeightInfo = ();
-}
-
-impl<LocalCall> frame_system::offchain::SendTransactionTypes<LocalCall> for Test
-where
-	Call: From<LocalCall>,
-{
-	type Extrinsic = Extrinsic;
-	type OverarchingCall = Call;
 }
 
 pub struct RelayerGameAdjustor;
@@ -471,18 +443,22 @@ pub fn run_to_block(n: BlockNumber) {
 	}
 }
 
-#[allow(unused)]
-pub fn relayer_game_events() -> Vec<crate::Event<Test>> {
-	System::events()
+pub fn events() -> Vec<Event> {
+	let events = System::events()
 		.into_iter()
-		.map(|r| r.event)
-		.filter_map(|e| {
-			if let Event::relayer_game(inner) = e {
-				Some(inner)
-			} else {
-				None
-			}
-		})
+		.map(|evt| evt.event)
+		.collect::<Vec<_>>();
+
+	System::reset_events();
+
+	events
+}
+
+#[allow(unused)]
+pub fn relayer_game_events() -> Vec<Event> {
+	events()
+		.into_iter()
+		.filter(|e| matches!(e, Event::relayer_game(_)))
 		.collect()
 }
 
