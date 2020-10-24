@@ -155,7 +155,8 @@ fn recover_signer(sig: [u8; 65], msg: [u8; 32]) -> Option<H160> {
 	}
 }
 
-mod test {
+#[cfg(test)]
+mod tests {
 	use crate::*;
 	use ethereum::TransactionSignature;
 
