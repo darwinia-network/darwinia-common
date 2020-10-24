@@ -122,10 +122,8 @@ decl_error! {
 		ActiveGamesTM,
 		/// Existed Affirmation(s) Found - CONFLICT
 		ExistedAffirmationsFoundC,
-		/// Noting to Against, Affirmations - EMPTY
-		NothingToAgainstAffirmationE,
-		/// Game - CLOSED
-		GameC,
+		/// Game at This Round - CLOSED
+		GameAtThisRoundC,
 		/// Relay Affirmation - DUPLICATED
 		RelayAffirmationDup,
 		/// Usable *RING* for Stake - INSUFFICIENT
@@ -178,10 +176,10 @@ decl_storage! {
 		/// All the closed games here
 		///
 		/// Game close at this moment, closed games won't accept any affirmation
-		pub ProposeEndTime
-			get(fn propose_end_time_of)
+		pub AffirmTime
+			get(fn affirm_end_time_of)
 			: map hasher(identity) RelayHeaderId<T, I>
-			=> BlockNumber<T>;
+			=> Option<(BlockNumber<T>, u32)>;
 
 		/// All the closed rounds here
 		///
@@ -262,8 +260,16 @@ decl_module! {
 
 impl<T: Trait<I>, I: Instance> Module<T, I> {
 	/// Check if time for proposing
-	pub fn is_game_open_at(game_id: &RelayHeaderId<T, I>, moment: BlockNumber<T>) -> bool {
-		Self::propose_end_time_of(game_id) > moment
+	pub fn is_game_open_at(
+		game_id: &RelayHeaderId<T, I>,
+		moment: BlockNumber<T>,
+		round: u32,
+	) -> bool {
+		if let Some((affirm_time, affirm_round)) = Self::affirm_end_time_of(game_id) {
+			affirm_time > moment && affirm_round == round
+		} else {
+			false
+		}
 	}
 
 	/// Check if others already make a same affirmation
@@ -303,19 +309,10 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		let affirm_time = moment + T::RelayerGameAdjustor::affirm_time(round);
 		let complete_proofs_time = T::RelayerGameAdjustor::complete_proofs_time(round);
 
-		<ProposeEndTime<T, I>>::insert(game_id, affirm_time);
-		let _ = <GamesToUpdate<T, I>>::try_mutate(
-			affirm_time + complete_proofs_time,
-			|games_to_update| {
-				if games_to_update.contains(game_id) {
-					Err(())
-				} else {
-					games_to_update.push(game_id.to_owned());
-
-					Ok(())
-				}
-			},
-		);
+		<AffirmTime<T, I>>::insert(game_id, (affirm_time, round));
+		<GamesToUpdate<T, I>>::mutate(affirm_time + complete_proofs_time, |games_to_update| {
+			games_to_update.push(game_id.to_owned());
+		});
 	}
 
 	pub fn update_games_at(
@@ -752,7 +749,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		<Affirmations<T, I>>::remove_prefix(&game_id);
 		<BestConfirmedHeaderId<T, I>>::take(&game_id);
 		<RoundCounts<T, I>>::take(&game_id);
-		<ProposeEndTime<T, I>>::take(&game_id);
+		<AffirmTime<T, I>>::take(&game_id);
 		<GameSamplePoints<T, I>>::take(&game_id);
 
 		Self::deposit_event(RawEvent::GameOver(game_id));
@@ -1027,22 +1024,15 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			game_id > best_confirmed_relay_header_id,
 			<Error<T, I>>::RelayParcelAR
 		);
-		// Make sure the game is at first round
-		ensure!(
-			<Affirmations<T, I>>::decode_len(&game_id, 1).unwrap_or(0) == 0,
-			<Error<T, I>>::RoundMis
-		);
 
 		let now = <frame_system::Module<T>>::block_number();
-		let proposed_relay_header_parcels = vec![relay_header_parcel];
 
-		// Check if it is not a new game
 		ensure!(
-			<Affirmations<T, I>>::decode_len(&game_id, 0).unwrap_or(0) != 0,
-			<Error<T, I>>::NothingToAgainstAffirmationE
+			Self::is_game_open_at(&game_id, now, 0),
+			<Error<T, I>>::GameAtThisRoundC
 		);
-		ensure!(Self::is_game_open_at(&game_id, now), <Error<T, I>>::GameC);
 
+		let proposed_relay_header_parcels = vec![relay_header_parcel];
 		let existed_affirmations = Self::affirmations_of_game_at(&game_id, 0);
 
 		// Currently not allow to vote for(relay) the same parcel
@@ -1085,7 +1075,6 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 		<Affirmations<T, I>>::append(&game_id, 0, relay_affirmation);
 
-		Self::update_timer_of_game_at(&game_id, 0, now);
 		Self::deposit_event(RawEvent::Disputed(game_id.clone()));
 		Self::deposit_event(RawEvent::Affirmed(
 			game_id,
@@ -1143,19 +1132,28 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 	fn extend_affirmation(
 		relayer: Self::Relayer,
-		game_sample_points: Vec<Self::RelayHeaderParcel>,
 		extended_relay_affirmation_id: RelayAffirmationId<Self::RelayHeaderId>,
+		game_sample_points: Vec<Self::RelayHeaderParcel>,
 		optional_relay_proofs: Option<Vec<Self::RelayProofs>>,
 	) -> DispatchResult {
+		trace!(
+			target: "relayer-game",
+			"Relayer `{:?}` extend affirmation: {:?} with: {:?}",
+			relayer,
+			extended_relay_affirmation_id,
+			game_sample_points,
+		);
+
 		let RelayAffirmationId {
 			relay_header_id: game_id,
 			round: previous_round,
 			index: previous_index,
 		} = extended_relay_affirmation_id.clone();
+		let round = previous_round + 1;
 
 		ensure!(
-			Self::is_game_open_at(&game_id, <frame_system::Module<T>>::block_number()),
-			<Error<T, I>>::GameC
+			Self::is_game_open_at(&game_id, <frame_system::Module<T>>::block_number(), round),
+			<Error<T, I>>::GameAtThisRoundC
 		);
 
 		if let Some(ref relay_proofs) = &optional_relay_proofs {
@@ -1165,7 +1163,6 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			);
 		}
 
-		let round = previous_round + 1;
 		let existed_affirmations = Self::affirmations_of_game_at(&game_id, previous_round);
 
 		ensure!(
