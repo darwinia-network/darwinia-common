@@ -1051,11 +1051,11 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			<Error<T, I>>::RelayAffirmationDup
 		);
 
-		let existed_relay_affirmations_count = existed_affirmations.len();
+		let existed_relay_affirmations_count = existed_affirmations.len() as u32;
 		let stake = Self::ensure_can_stake(
 			&relayer,
 			0,
-			(existed_relay_affirmations_count as u32).saturating_add(1),
+			existed_relay_affirmations_count.saturating_add(1),
 		)?;
 
 		Self::update_stakes_with(&relayer, |old_stakes| old_stakes.saturating_add(stake));
@@ -1087,7 +1087,13 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 		Self::update_timer_of_game_at(&game_id, 0, now);
 		Self::deposit_event(RawEvent::Disputed(game_id.clone()));
-		Self::deposit_event(RawEvent::Affirmed(game_id, 0, 0, relayer));
+		Self::deposit_event(RawEvent::Affirmed(
+			game_id,
+			0,
+			// index == affirmations_count - 1 == existed_relay_affirmations_count
+			existed_relay_affirmations_count,
+			relayer,
+		));
 
 		Ok(())
 	}
