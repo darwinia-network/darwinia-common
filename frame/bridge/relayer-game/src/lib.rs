@@ -1221,12 +1221,11 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 			relay_affirmation
 		};
-
-		<Affirmations<T, I>>::append(&game_id, round, relay_affirmation);
-
 		let index = <Affirmations<T, I>>::decode_len(&game_id, round)
 			.map(|length| length as u32)
 			.unwrap_or(0);
+
+		<Affirmations<T, I>>::append(&game_id, round, relay_affirmation);
 
 		Self::deposit_event(RawEvent::Extended(game_id.clone()));
 		Self::deposit_event(RawEvent::Affirmed(game_id, round, index, relayer));
