@@ -95,7 +95,7 @@ decl_event! {
 		AccountId = AccountId<T>,
 		RelayHeaderId = RelayHeaderId<T, I>,
 	{
-		/// A new relay parcel affirmed. [game id, round, index, relayer]
+		/// A new relay header parcel affirmed. [game id, round, index, relayer]
 		Affirmed(RelayHeaderId, u32, u32, AccountId),
 		/// A different affirmation submitted, dispute found. [game id]
 		Disputed(RelayHeaderId),
@@ -105,6 +105,8 @@ decl_event! {
 		NewRound(RelayHeaderId, Vec<RelayHeaderId>),
 		/// A game has been settled. [game id]
 		GameOver(RelayHeaderId),
+		/// A relay header parcel got pended. [header parcel id]
+		Pended(RelayHeaderId),
 		/// Pending relay header parcel approved. [game id, reason]
 		PendingRelayHeaderParcelApproved(RelayHeaderId, Vec<u8>),
 		/// Pending relay header parcel rejected. [game id]
@@ -715,17 +717,20 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		let confirm_period = T::ConfirmPeriod::get();
 
 		if confirm_period.is_zero() {
-			for (_, pendingrelay_header_parcel) in pending_relay_header_parcels {
-				T::RelayableChain::store_relay_header_parcel(pendingrelay_header_parcel)?;
+			for (_, pending_relay_header_parcel) in pending_relay_header_parcels {
+				T::RelayableChain::store_relay_header_parcel(pending_relay_header_parcel)?;
 			}
 		} else {
-			for (pending_relay_block_id, pendingrelay_header_parcel) in pending_relay_header_parcels
+			for (pending_relay_block_id, pending_relay_header_parcel) in
+				pending_relay_header_parcels
 			{
 				<PendingRelayHeaderParcels<T, I>>::append((
 					now + confirm_period,
-					pending_relay_block_id,
-					pendingrelay_header_parcel,
+					pending_relay_block_id.clone(),
+					pending_relay_header_parcel,
 				));
+
+				Self::deposit_event(RawEvent::Pended(pending_relay_block_id));
 			}
 		}
 
@@ -871,11 +876,11 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	) -> Result<Weight, DispatchError> {
 		<PendingRelayHeaderParcels<T, I>>::mutate(|pending_relay_header_parcels| {
 			pending_relay_header_parcels.retain(
-				|(confirm_at, pending_relay_block_id, pendingrelay_header_parcel)| {
+				|(confirm_at, pending_relay_block_id, pending_relay_header_parcel)| {
 					if *confirm_at == now {
 						// TODO: handle error
 						let _ = T::RelayableChain::store_relay_header_parcel(
-							pendingrelay_header_parcel.to_owned(),
+							pending_relay_header_parcel.to_owned(),
 						);
 
 						Self::deposit_event(RawEvent::PendingRelayHeaderParcelApproved(
