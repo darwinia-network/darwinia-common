@@ -56,8 +56,6 @@ use types::*;
 pub const RELAYER_GAME_ID: LockIdentifier = *b"da/rgame";
 
 pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
-	type Call: From<Call<Self, I>>;
-
 	type Event: From<Event<Self, I>> + Into<<Self as frame_system::Trait>::Event>;
 
 	/// The currency use for stake

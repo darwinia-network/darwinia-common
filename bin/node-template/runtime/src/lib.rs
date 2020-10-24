@@ -1097,7 +1097,6 @@ parameter_types! {
 	pub const ConfirmPeriod: BlockNumber = 200;
 }
 impl darwinia_relayer_game::Trait<EthereumRelayerGameInstance> for Runtime {
-	type Call = Call;
 	type Event = Event;
 	type RingCurrency = Ring;
 	type RingSlash = Treasury;
@@ -1174,7 +1173,7 @@ construct_runtime!(
 		CrabIssuing: darwinia_crab_issuing::{Module, Call, Storage, Config, Event<T>},
 		CrabBacking: darwinia_crab_backing::{Module, Storage, Config<T>},
 
-		EthereumRelayerGame: darwinia_relayer_game::<Instance0>::{Module, Call, Storage, Event<T>},
+		EthereumRelayerGame: darwinia_relayer_game::<Instance0>::{Module, Storage, Event<T>},
 		EthereumRelay: darwinia_ethereum_relay::{Module, Call, Storage, Config<T>, Event<T>},
 		EthereumBacking: darwinia_ethereum_backing::{Module, Call, Storage, Config<T>, Event<T>},
 
