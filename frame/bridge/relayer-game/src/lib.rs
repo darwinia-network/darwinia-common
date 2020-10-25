@@ -1243,7 +1243,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		})?;
 		Self::deposit_event(RawEvent::PendingRelayHeaderParcelApproved(
 			pending_relay_block_id,
-			b"Approved By Tech.Comm".to_vec(),
+			b"Approved By Root or Tech.Comm".to_vec(),
 		));
 
 		Ok(())
