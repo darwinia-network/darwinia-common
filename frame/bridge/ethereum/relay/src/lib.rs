@@ -385,16 +385,27 @@ decl_module! {
 
 					let approve = ayes.len() as u32;
 					let reject = nays.len() as u32;
-					let total = approve + reject;
-					let current_threashold =
+					let total = T::TechnicalMembership::count() as u32;
+					let approve_threashold =
 						Perbill::from_rational_approximation(approve, total);
+					let reject_threashold =
+						Perbill::from_rational_approximation(reject, total);
 
-					if current_threashold >= T::ApproveThreshold::get() {
+					if approve_threashold >= T::ApproveThreshold::get() {
 						Self::store_relay_header_parcel(
 							pending_relay_header_parcels.remove(i).1
 						)?;
-					} else if current_threashold >= T::RejectThreshold::get() {
+
+						Self::deposit_event(RawEvent::PendingRelayHeaderParcelApproved(
+							block_number,
+							b"Approved By Tech.Comm".to_vec(),
+						));
+					} else if reject_threashold >= T::RejectThreshold::get() {
 						pending_relay_header_parcels.remove(i);
+
+						Self::deposit_event(RawEvent::PendingRelayHeaderParcelRejected(
+							block_number,
+						));
 					}
 
 					Ok(())
@@ -403,11 +414,6 @@ decl_module! {
 				}
 			});
 			res?;
-
-			Self::deposit_event(RawEvent::PendingRelayHeaderParcelApproved(
-				block_number,
-				b"Approved By Tech.Comm".to_vec(),
-			));
 		}
 
 		/// Check and verify the receipt
