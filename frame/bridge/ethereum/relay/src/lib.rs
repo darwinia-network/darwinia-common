@@ -833,16 +833,16 @@ pub struct MMRProof {
 }
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq)]
-pub struct CheckEthereumRelayHeaderHash<T: Trait>(PhantomData<T>);
-impl<T: Trait> CheckEthereumRelayHeaderHash<T> {
+pub struct CheckEthereumRelayHeaderParcel<T: Trait>(PhantomData<T>);
+impl<T: Trait> CheckEthereumRelayHeaderParcel<T> {
 	pub fn new() -> Self {
 		Self(Default::default())
 	}
 }
-impl<T: Trait> Debug for CheckEthereumRelayHeaderHash<T> {
+impl<T: Trait> Debug for CheckEthereumRelayHeaderParcel<T> {
 	#[cfg(feature = "std")]
 	fn fmt(&self, f: &mut Formatter) -> FmtResult {
-		write!(f, "CheckEthereumRelayHeaderHash")
+		write!(f, "CheckEthereumRelayHeaderParcel")
 	}
 
 	#[cfg(not(feature = "std"))]
@@ -850,8 +850,8 @@ impl<T: Trait> Debug for CheckEthereumRelayHeaderHash<T> {
 		Ok(())
 	}
 }
-impl<T: Send + Sync + Trait> SignedExtension for CheckEthereumRelayHeaderHash<T> {
-	const IDENTIFIER: &'static str = "CheckEthereumRelayHeaderHash";
+impl<T: Send + Sync + Trait> SignedExtension for CheckEthereumRelayHeaderParcel<T> {
+	const IDENTIFIER: &'static str = "CheckEthereumRelayHeaderParcel";
 	type AccountId = T::AccountId;
 	type Call = <T as Trait>::Call;
 	type AdditionalSigned = ();

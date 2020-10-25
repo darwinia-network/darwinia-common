@@ -399,7 +399,7 @@ fn check_eth_relay_header_hash_works() {
 					class: DispatchClass::Normal,
 					..Default::default()
 				};
-				let check = CheckEthereumRelayHeaderHash::<Test>(Default::default());
+				let check = CheckEthereumRelayHeaderParcel::<Test>(Default::default());
 				let call: mock::Call = crate::Call::relay_header(
 					header,
 					blocks_with_proof.to_double_node_with_merkle_proof_vec(),
@@ -423,7 +423,7 @@ fn check_eth_relay_header_hash_works() {
 					class: DispatchClass::Normal,
 					..Default::default()
 				};
-				let check = CheckEthereumRelayHeaderHash::<Test>(Default::default());
+				let check = CheckEthereumRelayHeaderParcel::<Test>(Default::default());
 				let call: mock::Call = crate::Call::relay_header(
 					header,
 					blocks_with_proof.to_double_node_with_merkle_proof_vec(),

@@ -904,13 +904,13 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 	type RelayProofs = RelayProofs<T, I>;
 
 	fn get_proposed_relay_header_parcels(
-		affirmation_id: RelayAffirmationId<Self::RelayHeaderId>,
+		relay_affirmation_id: RelayAffirmationId<Self::RelayHeaderId>,
 	) -> Option<Vec<Self::RelayHeaderParcel>> {
 		let RelayAffirmationId {
 			relay_header_id: game_id,
 			round,
 			index,
-		} = affirmation_id;
+		} = relay_affirmation_id;
 
 		Self::affirmations_of_game_at(&game_id, round)
 			.into_iter()
@@ -1089,14 +1089,14 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 	}
 
 	fn complete_relay_proofs(
-		affirmation_id: RelayAffirmationId<Self::RelayHeaderId>,
+		relay_affirmation_id: RelayAffirmationId<Self::RelayHeaderId>,
 		relay_proofs: Vec<Self::RelayProofs>,
 	) -> DispatchResult {
 		let RelayAffirmationId {
 			relay_header_id: game_id,
 			round,
 			index,
-		} = affirmation_id;
+		} = relay_affirmation_id;
 
 		<Affirmations<T, I>>::try_mutate(&game_id, round, |relay_affirmations| {
 			if let Some(relay_affirmation) = relay_affirmations.get_mut(index as usize) {

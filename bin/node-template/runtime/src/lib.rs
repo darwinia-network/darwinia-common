@@ -302,7 +302,7 @@ pub mod primitives {
 		frame_system::CheckNonce<Runtime>,
 		frame_system::CheckWeight<Runtime>,
 		pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
-		darwinia_ethereum_relay::CheckEthereumRelayHeaderHash<Runtime>,
+		darwinia_ethereum_relay::CheckEthereumRelayHeaderParcel<Runtime>,
 	);
 
 	/// Unchecked extrinsic type as expected by this runtime.
@@ -1215,7 +1215,7 @@ where
 			frame_system::CheckNonce::<Runtime>::from(nonce),
 			frame_system::CheckWeight::<Runtime>::new(),
 			pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
-			darwinia_ethereum_relay::CheckEthereumRelayHeaderHash::<Runtime>::new(),
+			darwinia_ethereum_relay::CheckEthereumRelayHeaderParcel::<Runtime>::new(),
 		);
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|e| {
