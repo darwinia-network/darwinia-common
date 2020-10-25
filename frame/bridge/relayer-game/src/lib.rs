@@ -241,14 +241,10 @@ decl_module! {
 			use frame_support::migration::*;
 
 			let module = b"Instance0DarwiniaRelayerGame";
-			let items: [&[u8]; 7] = [
-				b"InstanceProposals",
-				b"Headers",
-				b"LastConfirmeds",
-				b"Samples",
-				b"ClosedRounds",
-				b"Bonds",
-				b"PendingHeaders",
+			let items: [&[u8]; 3] = [
+				b"Proposals",
+				b"ProposeEndTime",
+				b"PendingRelayHeaderParcels",
 			];
 
 			for item in &items {
