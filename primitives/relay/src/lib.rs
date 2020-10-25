@@ -190,10 +190,10 @@ where
 }
 
 /// Info for keeping track of a proposal being voted on.
-#[derive(Encode, Decode, RuntimeDebug)]
+#[derive(Default, Encode, Decode, RuntimeDebug)]
 pub struct RelayVotingState<TechnicalMember> {
 	/// The current set of technical members that approved it.
-	ayes: Vec<TechnicalMember>,
+	pub ayes: Vec<TechnicalMember>,
 	/// The current set of technical members that rejected it.
-	nays: Vec<TechnicalMember>,
+	pub nays: Vec<TechnicalMember>,
 }

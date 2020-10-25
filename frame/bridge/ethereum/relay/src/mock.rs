@@ -44,6 +44,12 @@ darwinia_support::impl_account_data! {
 // Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Test;
+pub struct UnusedTechnicalMembership;
+impl Contains<AccountId> for UnusedTechnicalMembership {
+	fn sorted_members() -> Vec<AccountId> {
+		vec![1, 2, 3]
+	}
+}
 parameter_types! {
 	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
 	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Mainnet;
@@ -56,9 +62,12 @@ impl Trait for Test {
 	type Call = Call;
 	type Currency = Ring;
 	type RelayerGame = UnusedRelayerGame;
-	type ConfirmPeriod = ConfirmPeriod;
 	type ApproveOrigin = EnsureRoot<AccountId>;
 	type RejectOrigin = EnsureRoot<AccountId>;
+	type ConfirmPeriod = ConfirmPeriod;
+	type TechnicalMembership = UnusedTechnicalMembership;
+	type ApproveThreshold = ();
+	type RejectThreshold = ();
 	type WeightInfo = ();
 }
 
