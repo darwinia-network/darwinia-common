@@ -47,6 +47,7 @@ pub struct Test;
 parameter_types! {
 	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
 	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Mainnet;
+	pub const ConfirmPeriod: BlockNumber = 0;
 }
 impl Trait for Test {
 	type ModuleId = EthereumRelayModuleId;
@@ -55,6 +56,7 @@ impl Trait for Test {
 	type Call = Call;
 	type Currency = Ring;
 	type RelayerGame = UnusedRelayerGame;
+	type ConfirmPeriod = ConfirmPeriod;
 	type ApproveOrigin = EnsureRoot<AccountId>;
 	type RejectOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = ();
