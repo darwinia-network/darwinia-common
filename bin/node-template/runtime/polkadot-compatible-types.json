@@ -207,7 +207,7 @@
 	"RelayHeaderParcel": "EthereumRelayHeaderParcel",
 	"RelayProofs": "EthereumRelayProof",
 	"RelayAffirmationId": {
-		"relay_header_id": "EthereumBlockNumber",
+		"game_id": "EthereumBlockNumber",
 		"round": "u32",
 		"index": "u32"
 	},

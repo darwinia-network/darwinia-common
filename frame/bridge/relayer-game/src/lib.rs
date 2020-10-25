@@ -92,15 +92,8 @@ impl WeightInfo for () {}
 decl_event! {
 	pub enum Event<T, I: Instance = DefaultInstance>
 	where
-		AccountId = AccountId<T>,
 		RelayHeaderId = RelayHeaderId<T, I>,
 	{
-		/// A new relay header parcel affirmed. [game id, round, index, relayer]
-		Affirmed(RelayHeaderId, u32, u32, AccountId),
-		/// A different affirmation submitted, dispute found. [game id]
-		Disputed(RelayHeaderId),
-		/// An extended affirmation submitted, dispute go on. [game id]
-		Extended(RelayHeaderId),
 		/// A new round started. [game id, game sample points]
 		NewRound(RelayHeaderId, Vec<RelayHeaderId>),
 		/// A game has been settled. [game id]
@@ -907,7 +900,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		relay_affirmation_id: RelayAffirmationId<Self::RelayHeaderId>,
 	) -> Option<Vec<Self::RelayHeaderParcel>> {
 		let RelayAffirmationId {
-			relay_header_id: game_id,
+			game_id,
 			round,
 			index,
 		} = relay_affirmation_id;
@@ -923,10 +916,10 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 	}
 
 	fn affirm(
-		relayer: Self::Relayer,
+		relayer: &Self::Relayer,
 		relay_header_parcel: Self::RelayHeaderParcel,
 		optional_relay_proofs: Option<Self::RelayProofs>,
-	) -> DispatchResult {
+	) -> Result<Self::RelayHeaderId, DispatchError> {
 		trace!(
 			target: "relayer-game",
 			"Relayer `{:?}` affirm:\n{:#?}",
@@ -964,14 +957,14 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			<Error<T, I>>::ActiveGamesTM
 		);
 
-		let stake = Self::ensure_can_stake(&relayer, 0, 1)?;
+		let stake = Self::ensure_can_stake(relayer, 0, 1)?;
 
-		Self::update_stakes_with(&relayer, |old_stakes| old_stakes.saturating_add(stake));
+		Self::update_stakes_with(relayer, |old_stakes| old_stakes.saturating_add(stake));
 
 		let relay_affirmation = {
 			let mut relay_affirmation = RelayAffirmation::new();
 
-			relay_affirmation.relayer = relayer.clone();
+			relay_affirmation.relayer = relayer.to_owned();
 			relay_affirmation.relay_header_parcels = proposed_relay_header_parcels;
 			relay_affirmation.stake = stake;
 
@@ -1000,16 +993,15 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		<GameSamplePoints<T, I>>::append(&game_id, vec![game_id.clone()]);
 
 		Self::update_timer_of_game_at(&game_id, 0, now);
-		Self::deposit_event(RawEvent::Affirmed(game_id, 0, 0, relayer));
 
-		Ok(())
+		Ok(game_id)
 	}
 
 	fn dispute_and_affirm(
-		relayer: Self::Relayer,
+		relayer: &Self::Relayer,
 		relay_header_parcel: Self::RelayHeaderParcel,
 		optional_relay_proofs: Option<Self::RelayProofs>,
-	) -> DispatchResult {
+	) -> Result<(Self::RelayHeaderId, u32), DispatchError> {
 		trace!(
 			target: "relayer-game",
 			"Relayer `{:?}` dispute and affirm:\n{:#?}",
@@ -1044,17 +1036,17 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 		let existed_relay_affirmations_count = existed_affirmations.len() as u32;
 		let stake = Self::ensure_can_stake(
-			&relayer,
+			relayer,
 			0,
 			existed_relay_affirmations_count.saturating_add(1),
 		)?;
 
-		Self::update_stakes_with(&relayer, |old_stakes| old_stakes.saturating_add(stake));
+		Self::update_stakes_with(relayer, |old_stakes| old_stakes.saturating_add(stake));
 
 		let relay_affirmation = {
 			let mut relay_affirmation = RelayAffirmation::new();
 
-			relay_affirmation.relayer = relayer.clone();
+			relay_affirmation.relayer = relayer.to_owned();
 			relay_affirmation.relay_header_parcels = proposed_relay_header_parcels;
 			relay_affirmation.stake = stake;
 
@@ -1076,16 +1068,11 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 		<Affirmations<T, I>>::append(&game_id, 0, relay_affirmation);
 
-		Self::deposit_event(RawEvent::Disputed(game_id.clone()));
-		Self::deposit_event(RawEvent::Affirmed(
+		Ok((
 			game_id,
-			0,
 			// index == affirmations_count - 1 == existed_relay_affirmations_count
 			existed_relay_affirmations_count,
-			relayer,
-		));
-
-		Ok(())
+		))
 	}
 
 	fn complete_relay_proofs(
@@ -1093,7 +1080,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		relay_proofs: Vec<Self::RelayProofs>,
 	) -> DispatchResult {
 		let RelayAffirmationId {
-			relay_header_id: game_id,
+			game_id,
 			round,
 			index,
 		} = relay_affirmation_id;
@@ -1132,11 +1119,11 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 	}
 
 	fn extend_affirmation(
-		relayer: Self::Relayer,
+		relayer: &Self::Relayer,
 		extended_relay_affirmation_id: RelayAffirmationId<Self::RelayHeaderId>,
 		game_sample_points: Vec<Self::RelayHeaderParcel>,
 		optional_relay_proofs: Option<Vec<Self::RelayProofs>>,
-	) -> DispatchResult {
+	) -> Result<(Self::RelayHeaderId, u32, u32), DispatchError> {
 		trace!(
 			target: "relayer-game",
 			"Relayer `{:?}` extend affirmation: {:?} with: {:?}",
@@ -1146,7 +1133,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		);
 
 		let RelayAffirmationId {
-			relay_header_id: game_id,
+			game_id,
 			round: previous_round,
 			index: previous_index,
 		} = extended_relay_affirmation_id.clone();
@@ -1182,17 +1169,17 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		);
 
 		let stake = Self::ensure_can_stake(
-			&relayer,
+			relayer,
 			round,
 			(existed_affirmations.len() as u32).saturating_add(1),
 		)?;
 
-		Self::update_stakes_with(&relayer, |old_stakes| old_stakes.saturating_add(stake));
+		Self::update_stakes_with(relayer, |old_stakes| old_stakes.saturating_add(stake));
 
 		let relay_affirmation = {
 			let mut relay_affirmation = RelayAffirmation::new();
 
-			relay_affirmation.relayer = relayer.clone();
+			relay_affirmation.relayer = relayer.to_owned();
 			relay_affirmation.relay_header_parcels = game_sample_points;
 			relay_affirmation.stake = stake;
 			relay_affirmation.maybe_extended_relay_affirmation_id =
@@ -1225,10 +1212,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 		<Affirmations<T, I>>::append(&game_id, round, relay_affirmation);
 
-		Self::deposit_event(RawEvent::Extended(game_id.clone()));
-		Self::deposit_event(RawEvent::Affirmed(game_id, round, index, relayer));
-
-		Ok(())
+		Ok((game_id, round, index))
 	}
 
 	fn approve_pending_relay_header_parcel(

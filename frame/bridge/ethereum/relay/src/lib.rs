@@ -97,7 +97,14 @@ decl_event! {
 	pub enum Event<T>
 	where
 		<T as frame_system::Trait>::AccountId,
+		RelayAffirmationId = RelayAffirmationId<EthereumBlockNumber>,
 	{
+		/// A new relay header parcel affirmed. [relayer, relay affirmation id]
+		Affirmed(AccountId, RelayAffirmationId),
+		/// A different affirmation submitted, dispute found. [relayer, relay affirmation id]
+		DisputedAndAffirmed(AccountId, RelayAffirmationId),
+		/// An extended affirmation submitted, dispute go on. [relayer, relay affirmation id]
+		Extended(AccountId, RelayAffirmationId),
 		/// The specific confirmed parcel removed. [block id]
 		RemoveConfirmedParcel(EthereumBlockNumber),
 		/// EthereumReceipt verification. [account, ethereum receipt, ethereum header]
@@ -113,8 +120,8 @@ decl_error! {
 		ConfirmedBlocksC,
 		/// Continuous - INVALID
 		ContinuousInv,
-		// /// Proposal - INVALID
-		// ProposalInv,
+		// /// Affirmation - INVALID
+		// AffirmationInv,
 		/// Header Hash - INVALID
 		HeaderHashInv,
 		/// MMR - INVALID
@@ -219,12 +226,16 @@ decl_module! {
 			optional_ethereum_relay_proofs: Option<EthereumRelayProofs>
 		) {
 			let relayer = ensure_signed(origin)?;
-
-			T::RelayerGame::affirm(
-				relayer,
+			let game_id = T::RelayerGame::affirm(
+				&relayer,
 				ethereum_relay_header_parcel,
 				optional_ethereum_relay_proofs
 			)?;
+
+			Self::deposit_event(RawEvent::Affirmed(
+				relayer,
+				RelayAffirmationId { game_id, round: 0, index: 0 }
+			));
 		}
 
 		#[weight = 0]
@@ -234,12 +245,16 @@ decl_module! {
 			optional_ethereum_relay_proofs: Option<EthereumRelayProofs>
 		) {
 			let relayer = ensure_signed(origin)?;
-
-			T::RelayerGame::dispute_and_affirm(
-				relayer,
+			let (game_id, index) = T::RelayerGame::dispute_and_affirm(
+				&relayer,
 				ethereum_relay_header_parcel,
 				optional_ethereum_relay_proofs
 			)?;
+
+			Self::deposit_event(RawEvent::DisputedAndAffirmed(
+				relayer,
+				RelayAffirmationId { game_id, round: 0, index }
+			));
 		}
 
 		#[weight = 0]
@@ -261,13 +276,17 @@ decl_module! {
 			optional_ethereum_relay_proofs: Option<Vec<EthereumRelayProofs>>,
 		) {
 			let relayer = ensure_signed(origin)?;
-
-			T::RelayerGame::extend_affirmation(
-				relayer,
+			let (game_id, round, index) = T::RelayerGame::extend_affirmation(
+				&relayer,
 				extended_ethereum_relay_affirmation_id,
 				game_sample_points,
 				optional_ethereum_relay_proofs
 			)?;
+
+			Self::deposit_event(RawEvent::Extended(
+				relayer,
+				RelayAffirmationId { game_id, round, index }
+			));
 		}
 
 		#[weight = 100_000_000]
@@ -894,7 +913,7 @@ impl<T: Send + Sync + Trait> SignedExtension for CheckEthereumRelayHeaderParcel<
 		// 						},
 		// 					)| header_a == header_b && mmr_root_a == mmr_root_b,
 		// 				) {
-		// 				return InvalidTransaction::Custom(<Error<T>>::ProposalInv.as_u8()).into();
+		// 				return InvalidTransaction::Custom(<Error<T>>::AffirmationInv.as_u8()).into();
 		// 			}
 		// 		}
 		// 	}
