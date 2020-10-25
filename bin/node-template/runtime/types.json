@@ -194,7 +194,7 @@
 		"prefix": "[u8; 4; Prefix]",
 		"mmr_root": "Hash"
 	},
-	"__[pallet.relayer-game]__": {},
+	"__[primitives.relay]__": {},
 	"RelayHeaderId": "EthereumBlockNumber",
 	"RelayHeaderParcel": "EthereumRelayHeaderParcel",
 	"RelayProofs": "EthereumRelayProof",
@@ -209,6 +209,10 @@
 		"bond": "Balance",
 		"maybe_extended_relay_affirmation_id": "Option<RelayAffirmationId>",
 		"verified": "bool"
+	},
+	"RelayVotingState": {
+		"ayes": "Vec<AccountId>",
+		"nays": "Vec<AccountId>"
 	},
 	"__[crab.runtime]__": {
 		"ProxyType": {

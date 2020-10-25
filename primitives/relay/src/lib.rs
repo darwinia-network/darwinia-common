@@ -183,3 +183,12 @@ where
 		}
 	}
 }
+
+/// Info for keeping track of a proposal being voted on.
+#[derive(Encode, Decode, RuntimeDebug)]
+pub struct RelayVotingState {
+	/// The current set of voters that approved it.
+	ayes: Vec<AccountId>,
+	/// The current set of voters that rejected it.
+	nays: Vec<AccountId>,
+}
