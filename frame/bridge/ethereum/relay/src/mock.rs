@@ -179,10 +179,4 @@ impl RelayerGameProtocol for UnusedRelayerGame {
 	) -> Result<(Self::RelayHeaderId, u32, u32), DispatchError> {
 		unimplemented!()
 	}
-	fn approve_pending_relay_header_parcel(_: Self::RelayHeaderId) -> DispatchResult {
-		unimplemented!()
-	}
-	fn reject_pending_relay_header_parcel(_: Self::RelayHeaderId) -> DispatchResult {
-		unimplemented!()
-	}
 }

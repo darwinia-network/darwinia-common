@@ -55,6 +55,19 @@ pub trait Relayable {
 	) -> u32;
 
 	fn store_relay_header_parcel(relay_header_parcel: Self::RelayHeaderParcel) -> DispatchResult;
+
+	fn store_relay_header_parcels(
+		relay_header_parcels: Vec<Self::RelayHeaderParcel>,
+	) -> Vec<Result<(), DispatchError>> {
+		relay_header_parcels
+			.into_iter()
+			.map(Self::store_relay_header_parcel)
+			.collect::<Vec<Result<(), DispatchError>>>()
+	}
+
+	fn new_round(game_id: &Self::RelayHeaderId, game_sample_points: Vec<Self::RelayHeaderId>);
+
+	fn game_over(game_id: &Self::RelayHeaderId);
 }
 
 /// A regulator to adjust relay args for a specific chain
@@ -138,14 +151,6 @@ pub trait RelayerGameProtocol {
 		game_sample_points: Vec<Self::RelayHeaderParcel>,
 		optional_relay_proofs: Option<Vec<Self::RelayProofs>>,
 	) -> Result<(Self::RelayHeaderId, u32, u32), DispatchError>;
-
-	fn approve_pending_relay_header_parcel(
-		pending_relay_block_id: Self::RelayHeaderId,
-	) -> DispatchResult;
-
-	fn reject_pending_relay_header_parcel(
-		pending_relay_block_id: Self::RelayHeaderId,
-	) -> DispatchResult;
 }
 
 /// Game id, round and the index under the round point to a unique affirmation AKA affirmation id

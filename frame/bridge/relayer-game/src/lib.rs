@@ -37,8 +37,8 @@ mod types {
 // --- substrate ---
 use frame_support::{
 	debug::*,
-	decl_error, decl_event, decl_module, decl_storage, ensure,
-	traits::{Currency, Get, OnUnbalanced},
+	decl_error, decl_module, decl_storage, ensure,
+	traits::{Currency, OnUnbalanced},
 	weights::Weight,
 };
 use sp_runtime::{
@@ -56,8 +56,6 @@ use types::*;
 pub const RELAYER_GAME_ID: LockIdentifier = *b"da/rgame";
 
 pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
-	type Event: From<Event<Self, I>> + Into<<Self as frame_system::Trait>::Event>;
-
 	/// The currency use for stake
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
@@ -74,13 +72,6 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	/// A chain which implemented `Relayable` trait
 	type RelayableChain: Relayable;
 
-	/// The comfirm period for guard
-	///
-	/// Tech.Comm. can vote for the pending header within this period
-	/// If not enough Tech.Comm. votes for the pending header it will be confirmed
-	/// automatically after this period
-	type ConfirmPeriod: Get<Self::BlockNumber>;
-
 	/// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
 }
@@ -88,24 +79,6 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 // TODO: https://github.com/darwinia-network/darwinia-common/issues/209
 pub trait WeightInfo {}
 impl WeightInfo for () {}
-
-decl_event! {
-	pub enum Event<T, I: Instance = DefaultInstance>
-	where
-		RelayHeaderId = RelayHeaderId<T, I>,
-	{
-		/// A new round started. [game id, game sample points]
-		NewRound(RelayHeaderId, Vec<RelayHeaderId>),
-		/// A game has been settled. [game id]
-		GameOver(RelayHeaderId),
-		/// A relay header parcel got pended. [header parcel id]
-		Pended(RelayHeaderId),
-		/// Pending relay header parcel approved. [game id, reason]
-		PendingRelayHeaderParcelApproved(RelayHeaderId, Vec<u8>),
-		/// Pending relay header parcel rejected. [game id]
-		PendingRelayHeaderParcelRejected(RelayHeaderId),
-	}
-}
 
 decl_error! {
 	pub enum Error for Module<T: Trait<I>, I: Instance> {
@@ -208,14 +181,6 @@ decl_module! {
 		origin: T::Origin
 	{
 		type Error = Error<T, I>;
-
-		fn deposit_event() = default;
-
-		fn on_initialize(now: BlockNumber<T>) -> Weight {
-			// TODO: handle error
-			// TODO: weight
-			Self::system_approve_pending_relay_header_parcels(now).unwrap_or(0)
-		}
 
 		fn on_finalize(now: BlockNumber<T>) {
 			let game_ids = <GamesToUpdate<T, I>>::take(now);
@@ -688,42 +653,14 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		});
 		<GameSamplePoints<T, I>>::mutate(game_id, |game_sample_points| {
 			T::RelayerGameAdjustor::update_sample_points(game_sample_points);
-
-			Self::deposit_event(RawEvent::NewRound(
-				game_id.to_owned(),
+			T::RelayableChain::new_round(
+				game_id,
 				game_sample_points
 					.last()
 					.map(ToOwned::to_owned)
 					.unwrap_or_default(),
-			));
+			);
 		});
-	}
-
-	pub fn store_relay_header_parcels(
-		now: BlockNumber<T>,
-		pending_relay_header_parcels: Vec<(RelayHeaderId<T, I>, RelayHeaderParcel<T, I>)>,
-	) -> DispatchResult {
-		let confirm_period = T::ConfirmPeriod::get();
-
-		if confirm_period.is_zero() {
-			for (_, pending_relay_header_parcel) in pending_relay_header_parcels {
-				T::RelayableChain::store_relay_header_parcel(pending_relay_header_parcel)?;
-			}
-		} else {
-			for (pending_relay_block_id, pending_relay_header_parcel) in
-				pending_relay_header_parcels
-			{
-				<PendingRelayHeaderParcels<T, I>>::append((
-					now + confirm_period,
-					pending_relay_block_id.clone(),
-					pending_relay_header_parcel,
-				));
-
-				Self::deposit_event(RawEvent::Pended(pending_relay_block_id));
-			}
-		}
-
-		Ok(())
 	}
 
 	pub fn game_over(game_id: RelayHeaderId<T, I>) {
@@ -746,28 +683,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		<AffirmTime<T, I>>::take(&game_id);
 		<GameSamplePoints<T, I>>::take(&game_id);
 
-		Self::deposit_event(RawEvent::GameOver(game_id));
-	}
-
-	pub fn update_pending_relay_header_parcels_with<F>(
-		pending_relay_block_id: &RelayHeaderId<T, I>,
-		f: F,
-	) -> DispatchResult
-	where
-		F: FnOnce(RelayHeaderParcel<T, I>) -> DispatchResult,
-	{
-		<PendingRelayHeaderParcels<T, I>>::mutate(|pending_relay_header_parcels| {
-			if let Some(i) = pending_relay_header_parcels
-				.iter()
-				.position(|(_, relay_header_id, _)| relay_header_id == pending_relay_block_id)
-			{
-				let (_, _, relay_header_parcel) = pending_relay_header_parcels.remove(i);
-
-				f(relay_header_parcel)
-			} else {
-				Err(<Error<T, I>>::PendingRelayParcelNE)?
-			}
-		})
+		T::RelayableChain::game_over(&game_id);
 	}
 
 	pub fn update_games(game_ids: Vec<RelayHeaderId<T, I>>) -> DispatchResult {
@@ -801,7 +717,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 					if let Some(relay_header_parcel) =
 						Self::settle_without_challenge(relay_affirmations.pop().unwrap())
 					{
-						relay_header_parcels.push((game_id.to_owned(), relay_header_parcel));
+						relay_header_parcels.push(relay_header_parcel);
 					}
 				}
 				// No relayer response for the lastest round
@@ -817,7 +733,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 					if let Some(relay_header_parcel) =
 						Self::settle_with_challenge(&game_id, relay_affirmations.pop().unwrap())
 					{
-						relay_header_parcels.push((game_id.to_owned(), relay_header_parcel));
+						relay_header_parcels.push(relay_header_parcel);
 					} else {
 						// Should never enter this condition
 
@@ -835,7 +751,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 
 						// A whole chain gave, start continuous verification
 						if let Some(relay_header_parcel) = Self::on_chain_arbitrate(&game_id) {
-							relay_header_parcels.push((game_id.to_owned(), relay_header_parcel));
+							relay_header_parcels.push(relay_header_parcel);
 						} else {
 							Self::settle_abandon(&game_id);
 						}
@@ -853,40 +769,12 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 			Self::game_over(game_id);
 		}
 
-		Self::store_relay_header_parcels(now, relay_header_parcels)?;
+		// TODO: handle error
+		let _ = T::RelayableChain::store_relay_header_parcels(relay_header_parcels);
 
 		trace!(target: "relayer-game", "---");
 
 		Ok(())
-	}
-
-	pub fn system_approve_pending_relay_header_parcels(
-		now: BlockNumber<T>,
-	) -> Result<Weight, DispatchError> {
-		<PendingRelayHeaderParcels<T, I>>::mutate(|pending_relay_header_parcels| {
-			pending_relay_header_parcels.retain(
-				|(confirm_at, pending_relay_block_id, pending_relay_header_parcel)| {
-					if *confirm_at == now {
-						// TODO: handle error
-						let _ = T::RelayableChain::store_relay_header_parcel(
-							pending_relay_header_parcel.to_owned(),
-						);
-
-						Self::deposit_event(RawEvent::PendingRelayHeaderParcelApproved(
-							pending_relay_block_id.to_owned(),
-							b"Not Enough Technical Member Online, Approved By System".to_vec(),
-						));
-
-						false
-					} else {
-						true
-					}
-				},
-			)
-		});
-
-		// TODO: weight
-		Ok(0)
 	}
 }
 
@@ -1213,30 +1101,5 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		<Affirmations<T, I>>::append(&game_id, round, relay_affirmation);
 
 		Ok((game_id, round, index))
-	}
-
-	fn approve_pending_relay_header_parcel(
-		pending_relay_block_id: Self::RelayHeaderId,
-	) -> DispatchResult {
-		Self::update_pending_relay_header_parcels_with(&pending_relay_block_id, |header| {
-			T::RelayableChain::store_relay_header_parcel(header)
-		})?;
-		Self::deposit_event(RawEvent::PendingRelayHeaderParcelApproved(
-			pending_relay_block_id,
-			b"Approved By Root or Tech.Comm".to_vec(),
-		));
-
-		Ok(())
-	}
-
-	fn reject_pending_relay_header_parcel(
-		pending_relay_block_id: Self::RelayHeaderId,
-	) -> DispatchResult {
-		Self::update_pending_relay_header_parcels_with(&pending_relay_block_id, |_| Ok(()))?;
-		Self::deposit_event(RawEvent::PendingRelayHeaderParcelRejected(
-			pending_relay_block_id,
-		));
-
-		Ok(())
 	}
 }

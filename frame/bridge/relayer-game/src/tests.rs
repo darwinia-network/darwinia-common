@@ -2,7 +2,7 @@
 use frame_support::{assert_err, assert_ok};
 // --- darwinia ---
 use crate::{
-	mock::{mock_relay::*, BlockNumber, Event, *},
+	mock::{mock_relay::*, BlockNumber, *},
 	*,
 };
 use darwinia_support::balance::lock::*;
@@ -750,92 +750,4 @@ fn no_honesty_should_work() {
 		assert_eq!(Ring::usable_balance(&relayer_b), 200 - 5);
 		assert!(Ring::locks(relayer_b).is_empty());
 	});
-}
-
-// TODO: more cases
-#[test]
-fn auto_confirm_period_should_work() {
-	ExtBuilder::default()
-		.confirmed_period(3)
-		.build()
-		.execute_with(|| {
-			let relay_header_parcel = MockRelayHeader::gen(1, 0, 1);
-
-			assert_ok!(RelayerGame::affirm(&1, relay_header_parcel.clone(), None));
-
-			run_to_block(challenge_time() * 1 + 1);
-
-			assert!(Relay::confirmed_header_of(relay_header_parcel.number).is_none());
-			assert_eq!(
-				RelayerGame::pending_relay_header_parcels(),
-				vec![(9, relay_header_parcel.number, relay_header_parcel.clone())]
-			);
-
-			run_to_block(9);
-
-			assert_eq!(
-				Relay::confirmed_header_of(relay_header_parcel.number),
-				Some(relay_header_parcel)
-			);
-			assert!(RelayerGame::pending_relay_header_parcels().is_empty());
-		});
-}
-
-// TODO: more cases
-#[test]
-fn approve_pending_parcels_should_work() {
-	ExtBuilder::default()
-		.confirmed_period(3)
-		.build()
-		.execute_with(|| {
-			let relay_header_parcel = MockRelayHeader::gen(1, 0, 1);
-
-			assert_ok!(RelayerGame::affirm(&1, relay_header_parcel.clone(), None));
-
-			run_to_block(challenge_time() * 1 + 1);
-
-			assert!(Relay::confirmed_header_of(relay_header_parcel.number).is_none());
-			assert_eq!(
-				RelayerGame::pending_relay_header_parcels(),
-				vec![(9, relay_header_parcel.number, relay_header_parcel.clone())]
-			);
-
-			assert_ok!(RelayerGame::approve_pending_relay_header_parcel(
-				relay_header_parcel.number
-			));
-
-			assert_eq!(
-				Relay::confirmed_header_of(relay_header_parcel.number),
-				Some(relay_header_parcel)
-			);
-			assert!(RelayerGame::pending_relay_header_parcels().is_empty());
-		});
-}
-
-// TODO: more cases
-#[test]
-fn reject_pending_parcels_should_work() {
-	ExtBuilder::default()
-		.confirmed_period(3)
-		.build()
-		.execute_with(|| {
-			let relay_header_parcel = MockRelayHeader::gen(1, 0, 1);
-
-			assert_ok!(RelayerGame::affirm(&1, relay_header_parcel.clone(), None));
-
-			run_to_block(challenge_time() * 1 + 1);
-
-			assert!(Relay::confirmed_header_of(relay_header_parcel.number).is_none());
-			assert_eq!(
-				RelayerGame::pending_relay_header_parcels(),
-				vec![(9, relay_header_parcel.number, relay_header_parcel.clone())]
-			);
-
-			assert_ok!(RelayerGame::reject_pending_relay_header_parcel(
-				relay_header_parcel.number
-			));
-
-			assert!(Relay::confirmed_header_of(relay_header_parcel.number).is_none());
-			assert!(RelayerGame::pending_relay_header_parcels().is_empty());
-		});
 }

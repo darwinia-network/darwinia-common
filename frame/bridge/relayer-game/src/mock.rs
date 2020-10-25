@@ -124,6 +124,10 @@ pub mod mock_relay {
 
 			Ok(())
 		}
+
+		fn new_round(_: &Self::RelayHeaderId, _: Vec<Self::RelayHeaderId>) {}
+
+		fn game_over(_: &Self::RelayHeaderId) {}
 	}
 
 	#[derive(
@@ -198,17 +202,13 @@ pub mod mock_relay {
 	}
 }
 
-pub mod relayer_game {
-	pub use crate::Event;
-}
-
 // --- std ---
 use std::{cell::RefCell, time::Instant};
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
-	impl_outer_event, impl_outer_origin, parameter_types,
+	impl_outer_origin, parameter_types,
 	traits::{OnFinalize, OnInitialize},
 };
 use sp_runtime::RuntimeDebug;
@@ -236,7 +236,6 @@ thread_local! {
 	static GENESIS_TIME: Instant = Instant::now();
 	pub static CHALLENGE_TIME: RefCell<BlockNumber> = RefCell::new(6);
 	static ESTIMATE_BOND: RefCell<Balance> = RefCell::new(1);
-	static CONFIRM_PERIOD: RefCell<BlockNumber> = RefCell::new(0);
 }
 
 impl_outer_origin! {
@@ -244,14 +243,6 @@ impl_outer_origin! {
 	where
 		system = frame_system
 	{}
-}
-
-impl_outer_event! {
-	pub enum Event for Test {
-		frame_system <T>,
-		darwinia_balances Instance0<T>,
-		relayer_game <T>,
-	}
 }
 
 darwinia_support::impl_account_data! {
@@ -266,22 +257,13 @@ darwinia_support::impl_account_data! {
 	}
 }
 
-pub struct ConfirmPeriod;
-impl Get<BlockNumber> for ConfirmPeriod {
-	fn get() -> BlockNumber {
-		CONFIRM_PERIOD.with(|v| v.borrow().to_owned())
-	}
-}
-
 #[derive(Clone, Eq, PartialEq)]
 pub struct Test;
 impl Trait for Test {
-	type Event = Event;
 	type RingCurrency = Ring;
 	type RingSlash = ();
 	type RelayerGameAdjustor = RelayerGameAdjustor;
 	type RelayableChain = Relay;
-	type ConfirmPeriod = ConfirmPeriod;
 	type WeightInfo = ();
 }
 
@@ -296,7 +278,7 @@ impl frame_system::Trait for Test {
 	type AccountId = AccountId;
 	type Lookup = sp_runtime::traits::IdentityLookup<Self::AccountId>;
 	type Header = sp_runtime::testing::Header;
-	type Event = Event;
+	type Event = ();
 	type BlockHashCount = ();
 	type MaximumBlockWeight = ();
 	type DbWeight = ();
@@ -319,7 +301,7 @@ parameter_types! {
 impl darwinia_balances::Trait<RingInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
-	type Event = Event;
+	type Event = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
@@ -359,7 +341,6 @@ pub struct ExtBuilder {
 	headers: Vec<MockRelayHeader>,
 	challenge_time: BlockNumber,
 	estimate_stake: Balance,
-	confirmed_period: BlockNumber,
 }
 impl ExtBuilder {
 	pub fn headers(mut self, headers: Vec<MockRelayHeader>) -> Self {
@@ -377,16 +358,10 @@ impl ExtBuilder {
 
 		self
 	}
-	pub fn confirmed_period(mut self, confirmed_period: BlockNumber) -> Self {
-		self.confirmed_period = confirmed_period;
-
-		self
-	}
 
 	pub fn set_associated_constants(&self) {
 		CHALLENGE_TIME.with(|v| v.replace(self.challenge_time));
 		ESTIMATE_BOND.with(|v| v.replace(self.estimate_stake));
-		CONFIRM_PERIOD.with(|v| v.replace(self.confirmed_period));
 	}
 
 	pub fn build(self) -> sp_io::TestExternalities {
@@ -421,7 +396,6 @@ impl Default for ExtBuilder {
 			challenge_time: RelayerGameAdjustor::affirm_time(0)
 				+ RelayerGameAdjustor::complete_proofs_time(0),
 			estimate_stake: RelayerGameAdjustor::estimate_stake(0, 0),
-			confirmed_period: CONFIRM_PERIOD.with(|v| v.borrow().to_owned()),
 		}
 	}
 }
@@ -441,25 +415,6 @@ pub fn run_to_block(n: BlockNumber) {
 			RelayerGame::on_finalize(System::block_number());
 		}
 	}
-}
-
-pub fn events() -> Vec<Event> {
-	let events = System::events()
-		.into_iter()
-		.map(|evt| evt.event)
-		.collect::<Vec<_>>();
-
-	System::reset_events();
-
-	events
-}
-
-#[allow(unused)]
-pub fn relayer_game_events() -> Vec<Event> {
-	events()
-		.into_iter()
-		.filter(|e| matches!(e, Event::relayer_game(_)))
-		.collect()
 }
 
 #[allow(unused)]
