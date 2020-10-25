@@ -154,7 +154,7 @@ pub trait RelayerGameProtocol {
 }
 
 /// Game id, round and the index under the round point to a unique affirmation AKA affirmation id
-#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
 pub struct RelayAffirmationId<RelayHeaderId> {
 	/// Game id aka relay header id
 	pub game_id: RelayHeaderId,
