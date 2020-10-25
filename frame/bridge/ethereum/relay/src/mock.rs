@@ -152,17 +152,17 @@ impl RelayerGameProtocol for UnusedRelayerGame {
 		100
 	}
 	fn affirm(
-		_: Self::Relayer,
+		_: &Self::Relayer,
 		_: Self::RelayHeaderParcel,
 		_: Option<Self::RelayProofs>,
-	) -> DispatchResult {
+	) -> Result<Self::RelayHeaderId, DispatchError> {
 		unimplemented!()
 	}
 	fn dispute_and_affirm(
-		_: Self::Relayer,
+		_: &Self::Relayer,
 		_: Self::RelayHeaderParcel,
 		_: Option<Self::RelayProofs>,
-	) -> DispatchResult {
+	) -> Result<(Self::RelayHeaderId, u32), DispatchError> {
 		unimplemented!()
 	}
 	fn complete_relay_proofs(
@@ -172,11 +172,11 @@ impl RelayerGameProtocol for UnusedRelayerGame {
 		unimplemented!()
 	}
 	fn extend_affirmation(
-		_: Self::Relayer,
+		_: &Self::Relayer,
 		_: RelayAffirmationId<Self::RelayHeaderId>,
 		_: Vec<Self::RelayHeaderParcel>,
 		_: Option<Vec<Self::RelayProofs>>,
-	) -> DispatchResult {
+	) -> Result<(Self::RelayHeaderId, u32, u32), DispatchError> {
 		unimplemented!()
 	}
 	fn approve_pending_relay_header_parcel(_: Self::RelayHeaderId) -> DispatchResult {
