@@ -74,6 +74,10 @@ pub trait Trait: frame_system::Trait {
 	type WeightInfo: WeightInfo;
 }
 
+// TODO: https://github.com/darwinia-network/darwinia-common/issues/209
+pub trait WeightInfo {}
+impl WeightInfo for () {}
+
 decl_event! {
 	pub enum Event<T>
 	where
@@ -95,34 +99,28 @@ decl_error! {
 		AddrLenMis,
 		/// Pubkey Prefix - MISMATCHED
 		PubkeyPrefixMis,
-
 		/// Bytes - CONVERSION FAILED
 		BytesCF,
 		/// Int - CONVERSION FAILED
 		IntCF,
-
 		/// Address - CONVERSION FAILED
 		AddressCF,
-
 		/// Asset - ALREADY REDEEMED
 		AssetAR,
-
 		/// EthereumReceipt Proof - INVALID
 		ReceiptProofInv,
-
 		/// Eth Log - PARSING FAILED
 		EthLogPF,
-
 		/// *KTON* Locked - NO SUFFICIENT BACKING ASSETS
 		KtonLockedNSBA,
 		/// *RING* Locked - NO SUFFICIENT BACKING ASSETS
 		RingLockedNSBA,
-
 		/// Log Entry - NOT EXISTED
 		LogEntryNE,
-
 		/// Usable Balance for Paying Redeem Fee - INSUFFICIENT
 		FeeIns,
+		/// Redeem - DISABLED
+		RedeemDis
 	}
 }
 
@@ -137,6 +135,8 @@ decl_storage! {
 
 		pub RingTokenAddress get(fn ring_token_address) config(): EthereumAddress;
 		pub KtonTokenAddress get(fn kton_token_address) config(): EthereumAddress;
+
+		pub RedeemStatus get(fn redeem_status): bool = true;
 	}
 	add_extra_genesis {
 		config(ring_locked): RingBalance<T>;
@@ -177,9 +177,13 @@ decl_module! {
 		pub fn redeem(origin, act: RedeemFor, proof: EthereumReceiptProofThing<T>) {
 			let redeemer = ensure_signed(origin)?;
 
-			match act {
-				RedeemFor::Token => Self::redeem_token(&redeemer, &proof)?,
-				RedeemFor::Deposit => Self::redeem_deposit(&redeemer, &proof)?,
+			if Self::redeem_status() {
+				match act {
+					RedeemFor::Token => Self::redeem_token(&redeemer, &proof)?,
+					RedeemFor::Deposit => Self::redeem_deposit(&redeemer, &proof)?,
+				}
+			} else {
+				Err(<Error<T>>::RedeemDis)?;
 			}
 		}
 
@@ -197,6 +201,7 @@ decl_module! {
 		#[weight = 10_000_000]
 		pub fn set_token_redeem_address(origin, new: EthereumAddress) {
 			ensure_root(origin)?;
+
 			TokenRedeemAddress::put(new);
 		}
 
@@ -212,7 +217,15 @@ decl_module! {
 		#[weight = 10_000_000]
 		pub fn set_deposit_redeem_address(origin, new: EthereumAddress) {
 			ensure_root(origin)?;
+
 			DepositRedeemAddress::put(new);
+		}
+
+		#[weight = 10_000_000]
+		pub fn set_redeem_status(origin, status: bool) {
+			ensure_root(origin)?;
+
+			RedeemStatus::put(status);
 		}
 	}
 }
@@ -600,10 +613,6 @@ impl<T: Trait> Module<T> {
 		Ok(())
 	}
 }
-
-// TODO: https://github.com/darwinia-network/darwinia-common/issues/209
-pub trait WeightInfo {}
-impl WeightInfo for () {}
 
 #[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
 pub enum RedeemFor {
