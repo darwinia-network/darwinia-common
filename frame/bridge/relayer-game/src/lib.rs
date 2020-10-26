@@ -168,10 +168,6 @@ decl_storage! {
 			get(fn game_sample_points)
 			:map hasher(identity) RelayHeaderId<T, I>
 			=> Vec<Vec<RelayHeaderId<T, I>>>;
-
-		pub PendingRelayHeaderParcels
-			get(fn pending_relay_header_parcels)
-			: Vec<(BlockNumber<T>, RelayHeaderId<T, I>, RelayHeaderParcel<T, I>)>
 	}
 }
 
