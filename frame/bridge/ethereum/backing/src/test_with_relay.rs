@@ -326,7 +326,7 @@ fn verify_redeem_deposit() {
 }
 
 #[test]
-fn disable_redeem_should_work() {
+fn set_redeem_status_should_work() {
 	ExtBuilder::default().build().execute_with(|| {
 		assert_err!(
 			EthereumBacking::redeem(
