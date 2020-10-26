@@ -82,6 +82,8 @@ decl_module! {
 	{
 		type Error = Error<T>;
 
+		const ModuleId: ModuleId = T::ModuleId::get();
+
 		fn deposit_event() = default;
 	}
 }

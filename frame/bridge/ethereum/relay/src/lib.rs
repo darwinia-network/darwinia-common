@@ -255,6 +255,8 @@ decl_module! {
 	{
 		type Error = Error<T>;
 
+		const ModuleId: ModuleId = T::ModuleId::get();
+
 		fn deposit_event() = default;
 
 		fn on_initialize(now: BlockNumber<T>) -> Weight {

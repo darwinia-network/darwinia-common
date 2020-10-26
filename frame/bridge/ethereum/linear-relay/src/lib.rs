@@ -236,6 +236,8 @@ decl_module! {
 	{
 		type Error = Error<T>;
 
+		const ModuleId: ModuleId = T::ModuleId::get();
+
 		const EthereumNetwork: EthereumNetworkType = T::EthereumNetwork::get();
 
 		fn deposit_event() = default;
