@@ -257,6 +257,11 @@ decl_module! {
 
 		const ModuleId: ModuleId = T::ModuleId::get();
 
+		const ConfirmPeriod: BlockNumber<T> = T::ConfirmPeriod::get();
+
+		const ApproveThreshold: Perbill = T::ApproveThreshold::get();
+		const RejectThreshold: Perbill = T::RejectThreshold::get();
+
 		fn deposit_event() = default;
 
 		fn on_initialize(now: BlockNumber<T>) -> Weight {
