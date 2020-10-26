@@ -324,3 +324,63 @@ fn verify_redeem_deposit() {
 			);
 		});
 }
+
+#[test]
+fn set_redeem_status_should_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		assert_err!(
+			EthereumBacking::redeem(
+				Origin::signed(Default::default()),
+				RedeemFor::Deposit,
+				(
+					Default::default(),
+					EthereumReceiptProof {
+						index: Default::default(),
+						proof: Default::default(),
+						header_hash: Default::default()
+					},
+					Default::default()
+				),
+			),
+			<Error<Test>>::ReceiptProofInv
+		);
+
+		assert_ok!(EthereumBacking::set_redeem_status(Origin::root(), false));
+
+		assert_err!(
+			EthereumBacking::redeem(
+				Origin::signed(Default::default()),
+				RedeemFor::Deposit,
+				(
+					Default::default(),
+					EthereumReceiptProof {
+						index: Default::default(),
+						proof: Default::default(),
+						header_hash: Default::default()
+					},
+					Default::default()
+				),
+			),
+			<Error<Test>>::RedeemDis
+		);
+
+		assert_ok!(EthereumBacking::set_redeem_status(Origin::root(), true));
+
+		assert_err!(
+			EthereumBacking::redeem(
+				Origin::signed(Default::default()),
+				RedeemFor::Deposit,
+				(
+					Default::default(),
+					EthereumReceiptProof {
+						index: Default::default(),
+						proof: Default::default(),
+						header_hash: Default::default()
+					},
+					Default::default()
+				),
+			),
+			<Error<Test>>::ReceiptProofInv
+		);
+	});
+}
