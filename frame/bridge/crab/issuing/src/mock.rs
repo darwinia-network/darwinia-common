@@ -141,14 +141,14 @@ pub fn new_test_ext() -> TestExternalities {
 }
 
 pub fn events() -> Vec<Event> {
-	let evt = System::events()
+	let events = System::events()
 		.into_iter()
 		.map(|evt| evt.event)
 		.collect::<Vec<_>>();
 
 	System::reset_events();
 
-	evt
+	events
 }
 
 pub fn crab_issuing_events() -> Vec<Event> {

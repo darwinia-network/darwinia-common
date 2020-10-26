@@ -44,9 +44,16 @@ darwinia_support::impl_account_data! {
 // Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Test;
+pub struct UnusedTechnicalMembership;
+impl Contains<AccountId> for UnusedTechnicalMembership {
+	fn sorted_members() -> Vec<AccountId> {
+		vec![1, 2, 3]
+	}
+}
 parameter_types! {
 	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
 	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Mainnet;
+	pub const ConfirmPeriod: BlockNumber = 0;
 }
 impl Trait for Test {
 	type ModuleId = EthereumRelayModuleId;
@@ -57,6 +64,10 @@ impl Trait for Test {
 	type RelayerGame = UnusedRelayerGame;
 	type ApproveOrigin = EnsureRoot<AccountId>;
 	type RejectOrigin = EnsureRoot<AccountId>;
+	type ConfirmPeriod = ConfirmPeriod;
+	type TechnicalMembership = UnusedTechnicalMembership;
+	type ApproveThreshold = ();
+	type RejectThreshold = ();
 	type WeightInfo = ();
 }
 
@@ -152,17 +163,17 @@ impl RelayerGameProtocol for UnusedRelayerGame {
 		100
 	}
 	fn affirm(
-		_: Self::Relayer,
+		_: &Self::Relayer,
 		_: Self::RelayHeaderParcel,
 		_: Option<Self::RelayProofs>,
-	) -> DispatchResult {
+	) -> Result<Self::RelayHeaderId, DispatchError> {
 		unimplemented!()
 	}
 	fn dispute_and_affirm(
-		_: Self::Relayer,
+		_: &Self::Relayer,
 		_: Self::RelayHeaderParcel,
 		_: Option<Self::RelayProofs>,
-	) -> DispatchResult {
+	) -> Result<(Self::RelayHeaderId, u32), DispatchError> {
 		unimplemented!()
 	}
 	fn complete_relay_proofs(
@@ -172,17 +183,11 @@ impl RelayerGameProtocol for UnusedRelayerGame {
 		unimplemented!()
 	}
 	fn extend_affirmation(
-		_: Self::Relayer,
-		_: Vec<Self::RelayHeaderParcel>,
+		_: &Self::Relayer,
 		_: RelayAffirmationId<Self::RelayHeaderId>,
+		_: Vec<Self::RelayHeaderParcel>,
 		_: Option<Vec<Self::RelayProofs>>,
-	) -> DispatchResult {
-		unimplemented!()
-	}
-	fn approve_pending_relay_header_parcel(_: Self::RelayHeaderId) -> DispatchResult {
-		unimplemented!()
-	}
-	fn reject_pending_relay_header_parcel(_: Self::RelayHeaderId) -> DispatchResult {
+	) -> Result<(Self::RelayHeaderId, u32, u32), DispatchError> {
 		unimplemented!()
 	}
 }

@@ -760,16 +760,16 @@ impl WeightInfo for () {}
 /// `SignedExtension` that checks if a transaction has duplicate header hash to avoid coincidence
 /// header between several relayers
 #[derive(Encode, Decode, Clone, Eq, PartialEq)]
-pub struct CheckEthereumRelayHeaderHash<T: Trait + Send + Sync>(sp_std::marker::PhantomData<T>);
-impl<T: Trait + Send + Sync> Default for CheckEthereumRelayHeaderHash<T> {
+pub struct CheckEthereumRelayHeaderParcel<T: Trait + Send + Sync>(sp_std::marker::PhantomData<T>);
+impl<T: Trait + Send + Sync> Default for CheckEthereumRelayHeaderParcel<T> {
 	fn default() -> Self {
 		Self(sp_std::marker::PhantomData)
 	}
 }
-impl<T: Trait + Send + Sync> sp_std::fmt::Debug for CheckEthereumRelayHeaderHash<T> {
+impl<T: Trait + Send + Sync> sp_std::fmt::Debug for CheckEthereumRelayHeaderParcel<T> {
 	#[cfg(feature = "std")]
 	fn fmt(&self, f: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
-		write!(f, "CheckEthereumRelayHeaderHash")
+		write!(f, "CheckEthereumRelayHeaderParcel")
 	}
 
 	#[cfg(not(feature = "std"))]
@@ -777,8 +777,8 @@ impl<T: Trait + Send + Sync> sp_std::fmt::Debug for CheckEthereumRelayHeaderHash
 		Ok(())
 	}
 }
-impl<T: Trait + Send + Sync> SignedExtension for CheckEthereumRelayHeaderHash<T> {
-	const IDENTIFIER: &'static str = "CheckEthereumRelayHeaderHash";
+impl<T: Trait + Send + Sync> SignedExtension for CheckEthereumRelayHeaderParcel<T> {
+	const IDENTIFIER: &'static str = "CheckEthereumRelayHeaderParcel";
 	type AccountId = T::AccountId;
 	type Call = <T as Trait>::Call;
 	type AdditionalSigned = ();

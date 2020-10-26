@@ -14,6 +14,8 @@ mod types {
 	use crate::*;
 
 	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
+	pub type BlockNumber<T> = <T as frame_system::Trait>::BlockNumber;
+
 	pub type RingBalance<T> = <CurrencyT<T> as Currency<AccountId<T>>>::Balance;
 
 	type CurrencyT<T> = <T as Trait>::Currency;
@@ -28,16 +30,19 @@ use ethereum_types::H128;
 // --- substrate ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
-	traits::Get,
-	traits::{Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, ReservableCurrency},
+	traits::{
+		ChangeMembers, Contains, Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, Get,
+		ReservableCurrency,
+	},
 	unsigned::{TransactionValidity, TransactionValidityError},
+	weights::Weight,
 	IsSubType,
 };
 use frame_system::ensure_signed;
 use sp_runtime::{
-	traits::{AccountIdConversion, DispatchInfoOf, Dispatchable, SignedExtension},
+	traits::{AccountIdConversion, DispatchInfoOf, Dispatchable, SignedExtension, Zero},
 	transaction_validity::ValidTransaction,
-	DispatchError, DispatchResult, ModuleId, RuntimeDebug,
+	DispatchError, DispatchResult, ModuleId, Perbill, RuntimeDebug,
 };
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
@@ -71,8 +76,8 @@ pub trait Trait: frame_system::Trait {
 
 	type Call: Dispatchable + From<Call<Self>> + IsSubType<Call<Self>> + Clone;
 
-	type Currency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
-		+ ReservableCurrency<Self::AccountId>;
+	type Currency: LockableCurrency<AccountId<Self>, Moment = Self::BlockNumber>
+		+ ReservableCurrency<AccountId<Self>>;
 
 	type RelayerGame: RelayerGameProtocol<
 		Relayer = AccountId<Self>,
@@ -85,6 +90,19 @@ pub trait Trait: frame_system::Trait {
 
 	type RejectOrigin: EnsureOrigin<Self::Origin>;
 
+	/// The comfirm period for guard
+	///
+	/// Tech.Comm. can vote for the pending header within this period
+	/// If not enough Tech.Comm. votes for the pending header it will be confirmed
+	/// automatically after this period
+	type ConfirmPeriod: Get<Self::BlockNumber>;
+
+	type TechnicalMembership: Contains<AccountId<Self>>;
+
+	type ApproveThreshold: Get<Perbill>;
+
+	type RejectThreshold: Get<Perbill>;
+
 	/// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
 }
@@ -96,12 +114,29 @@ impl WeightInfo for () {}
 decl_event! {
 	pub enum Event<T>
 	where
-		<T as frame_system::Trait>::AccountId,
+		AccountId = AccountId<T>,
+		RelayAffirmationId = RelayAffirmationId<EthereumBlockNumber>,
 	{
-		/// The specific confirmed parcel removed. [block id]
+		/// A new relay header parcel affirmed. [relayer, relay affirmation id]
+		Affirmed(AccountId, RelayAffirmationId),
+		/// A different affirmation submitted, dispute found. [relayer, relay affirmation id]
+		DisputedAndAffirmed(AccountId, RelayAffirmationId),
+		/// An extended affirmation submitted, dispute go on. [relayer, relay affirmation id]
+		Extended(AccountId, RelayAffirmationId),
+		/// A new round started. [game id, game sample points]
+		NewRound(EthereumBlockNumber, Vec<EthereumBlockNumber>),
+		/// A game has been settled. [game id]
+		GameOver(EthereumBlockNumber),
+		/// The specific confirmed parcel removed. [block number]
 		RemoveConfirmedParcel(EthereumBlockNumber),
 		/// EthereumReceipt verification. [account, ethereum receipt, ethereum header]
 		VerifyReceipt(AccountId, EthereumReceipt, EthereumHeader),
+		/// A relay header parcel got pended. [block number]
+		Pended(EthereumBlockNumber),
+		/// Pending relay header parcel approved. [block number, reason]
+		PendingRelayHeaderParcelApproved(EthereumBlockNumber, Vec<u8>),
+		/// Pending relay header parcel rejected. [block number]
+		PendingRelayHeaderParcelRejected(EthereumBlockNumber),
 	}
 }
 
@@ -113,8 +148,8 @@ decl_error! {
 		ConfirmedBlocksC,
 		/// Continuous - INVALID
 		ContinuousInv,
-		// /// Proposal - INVALID
-		// ProposalInv,
+		// /// Affirmation - INVALID
+		// AffirmationInv,
 		/// Header Hash - INVALID
 		HeaderHashInv,
 		/// MMR - INVALID
@@ -125,6 +160,12 @@ decl_error! {
 		ConfirmedHeaderNE,
 		/// EthereumReceipt Proof - INVALID
 		ReceiptProofInv,
+		/// Pending Relay Parcel - NOT EXISTED
+		PendingRelayParcelNE,
+		/// Already Vote for Aye - DUPLICATED
+		AlreadyVoteForAyeDup,
+		/// Already Vote for Nay - DUPLICATED
+		AlreadyVoteForNayDup,
 	}
 }
 
@@ -165,6 +206,10 @@ decl_storage! {
 			get(fn receipt_verify_fee)
 			config()
 			: RingBalance<T>;
+
+		pub PendingRelayHeaderParcels
+			get(fn pending_relay_header_parcels)
+			: Vec<(BlockNumber<T>, EthereumRelayHeaderParcel, RelayVotingState<AccountId<T>>)>;
 	}
 	add_extra_genesis {
 		config(genesis_header_info): (Vec<u8>, H256);
@@ -212,6 +257,13 @@ decl_module! {
 
 		fn deposit_event() = default;
 
+		fn on_initialize(now: BlockNumber<T>) -> Weight {
+			// TODO: handle error
+			// TODO: weight
+			Self::system_approve_pending_relay_header_parcels(now).unwrap_or(0)
+		}
+
+		// TODO: weight
 		#[weight = 0]
 		pub fn affirm(
 			origin,
@@ -219,14 +271,19 @@ decl_module! {
 			optional_ethereum_relay_proofs: Option<EthereumRelayProofs>
 		) {
 			let relayer = ensure_signed(origin)?;
-
-			T::RelayerGame::affirm(
-				relayer,
+			let game_id = T::RelayerGame::affirm(
+				&relayer,
 				ethereum_relay_header_parcel,
 				optional_ethereum_relay_proofs
 			)?;
+
+			Self::deposit_event(RawEvent::Affirmed(
+				relayer,
+				RelayAffirmationId { game_id, round: 0, index: 0 }
+			));
 		}
 
+		// TODO: weight
 		#[weight = 0]
 		pub fn dispute_and_affirm(
 			origin,
@@ -234,14 +291,19 @@ decl_module! {
 			optional_ethereum_relay_proofs: Option<EthereumRelayProofs>
 		) {
 			let relayer = ensure_signed(origin)?;
-
-			T::RelayerGame::dispute_and_affirm(
-				relayer,
+			let (game_id, index) = T::RelayerGame::dispute_and_affirm(
+				&relayer,
 				ethereum_relay_header_parcel,
 				optional_ethereum_relay_proofs
 			)?;
+
+			Self::deposit_event(RawEvent::DisputedAndAffirmed(
+				relayer,
+				RelayAffirmationId { game_id, round: 0, index }
+			));
 		}
 
+		// TODO: weight
 		#[weight = 0]
 		pub fn complete_relay_proofs(
 			origin,
@@ -253,33 +315,110 @@ decl_module! {
 			T::RelayerGame::complete_relay_proofs(affirmation_id, ethereum_relay_proofs)?;
 		}
 
+		// TODO: weight
 		#[weight = 0]
 		fn extend_affirmation(
 			origin,
-			game_sample_points: Vec<EthereumRelayHeaderParcel>,
 			extended_ethereum_relay_affirmation_id: RelayAffirmationId<EthereumBlockNumber>,
+			game_sample_points: Vec<EthereumRelayHeaderParcel>,
 			optional_ethereum_relay_proofs: Option<Vec<EthereumRelayProofs>>,
 		) {
 			let relayer = ensure_signed(origin)?;
-
-			T::RelayerGame::extend_affirmation(
-				relayer,
-				game_sample_points,
+			let (game_id, round, index) = T::RelayerGame::extend_affirmation(
+				&relayer,
 				extended_ethereum_relay_affirmation_id,
+				game_sample_points,
 				optional_ethereum_relay_proofs
 			)?;
+
+			Self::deposit_event(RawEvent::Extended(
+				relayer,
+				RelayAffirmationId { game_id, round, index }
+			));
 		}
 
 		#[weight = 100_000_000]
-		pub fn approve_pending_relay_header_parcel(origin, pending_relay_block_id: EthereumBlockNumber) {
-			T::ApproveOrigin::ensure_origin(origin)?;
-			T::RelayerGame::approve_pending_relay_header_parcel(pending_relay_block_id)?;
-		}
+		pub fn vote_pending_relay_header_parcel(
+			origin,
+			block_number: EthereumBlockNumber,
+			aye: bool
+		) {
+			let technical_member = {
+				let account_id = ensure_signed(origin)?;
 
-		#[weight = 100_000_000]
-		pub fn reject_pending_relay_header_parcel(origin, pending_relay_block_id: EthereumBlockNumber) {
-			T::RejectOrigin::ensure_origin(origin)?;
-			T::RelayerGame::reject_pending_relay_header_parcel(pending_relay_block_id)?;
+				if T::TechnicalMembership::contains(&account_id) {
+					account_id
+				} else {
+					Err(DispatchError::BadOrigin)?
+				}
+			};
+			let res: Result<(), DispatchError> = <PendingRelayHeaderParcels<T>>::try_mutate(|pending_relay_header_parcels| {
+				if let Some(i) =
+					pending_relay_header_parcels
+						.iter()
+						.position(|(_, relay_header_parcel, _)| {
+							relay_header_parcel.header.number == block_number
+						}) {
+					let (
+						_,
+						_,
+						RelayVotingState { ayes, nays }
+					) =	&mut pending_relay_header_parcels[i];
+
+					if aye {
+						if ayes.contains(&technical_member) {
+							Err(<Error<T>>::AlreadyVoteForAyeDup)?;
+						} else {
+							if let Some(i) = nays.iter().position(|nay| nay == &technical_member) {
+								nays.remove(i);
+							}
+
+							ayes.push(technical_member);
+						}
+					} else {
+						if nays.contains(&technical_member) {
+							Err(<Error<T>>::AlreadyVoteForNayDup)?;
+						} else {
+							if let Some(i) = ayes.iter().position(|aye| aye == &technical_member) {
+								ayes.remove(i);
+							}
+
+							nays.push(technical_member);
+						}
+					}
+
+					let approve = ayes.len() as u32;
+					let reject = nays.len() as u32;
+					let total = T::TechnicalMembership::count() as u32;
+					let approve_threashold =
+						Perbill::from_rational_approximation(approve, total);
+					let reject_threashold =
+						Perbill::from_rational_approximation(reject, total);
+
+					if approve_threashold >= T::ApproveThreshold::get() {
+						Self::store_relay_header_parcel(
+							pending_relay_header_parcels.remove(i).1
+						)?;
+
+						Self::deposit_event(RawEvent::PendingRelayHeaderParcelApproved(
+							block_number,
+							b"Approved By Tech.Comm".to_vec(),
+						));
+					} else if reject_threashold >= T::RejectThreshold::get() {
+						pending_relay_header_parcels.remove(i);
+
+						Self::deposit_event(RawEvent::PendingRelayHeaderParcelRejected(
+							block_number,
+						));
+					}
+
+					Ok(())
+				} else {
+					Err(<Error<T>>::PendingRelayParcelNE)?
+				}
+			});
+
+			res?;
 		}
 
 		/// Check and verify the receipt
@@ -459,6 +598,31 @@ impl<T: Trait> Module<T> {
 				.collect(),
 		)
 		.unwrap_or(false)
+	}
+
+	pub fn system_approve_pending_relay_header_parcels(
+		now: BlockNumber<T>,
+	) -> Result<Weight, DispatchError> {
+		<PendingRelayHeaderParcels<T>>::mutate(|pending_relay_header_parcels| {
+			pending_relay_header_parcels.retain(|(confirm_at, pending_relay_header_parcel, _)| {
+				if *confirm_at == now {
+					// TODO: handle error
+					let _ = Self::store_relay_header_parcel(pending_relay_header_parcel.to_owned());
+
+					Self::deposit_event(RawEvent::PendingRelayHeaderParcelApproved(
+						pending_relay_header_parcel.header.number,
+						b"Not Enough Technical Member Online, Approved By System".to_vec(),
+					));
+
+					false
+				} else {
+					true
+				}
+			})
+		});
+
+		// TODO: weight
+		Ok(0)
 	}
 
 	pub fn migrate_genesis(use_ethereum_mainnet: bool) {
@@ -711,6 +875,7 @@ impl<T: Trait> Relayable for Module<T> {
 	}
 
 	fn store_relay_header_parcel(relay_header_parcel: Self::RelayHeaderParcel) -> DispatchResult {
+		let confirm_period = T::ConfirmPeriod::get();
 		let best_confirmed_block_number = Self::best_confirmed_block_number();
 		let relay_block_number = relay_header_parcel.header.number;
 
@@ -720,16 +885,34 @@ impl<T: Trait> Relayable for Module<T> {
 			<Error<T>>::HeaderInv
 		);
 
-		ConfirmedBlockNumbers::mutate(|confirmed_block_numbers| {
-			// TODO: remove old numbers according to `ConfirmedDepth`
+		if confirm_period.is_zero() {
+			ConfirmedBlockNumbers::mutate(|confirmed_block_numbers| {
+				// TODO: remove old numbers according to `ConfirmedDepth`
 
-			confirmed_block_numbers.push(relay_block_number);
+				confirmed_block_numbers.push(relay_block_number);
 
-			BestConfirmedBlockNumber::put(relay_block_number);
-		});
-		ConfirmedHeaderParcels::insert(relay_block_number, relay_header_parcel);
+				BestConfirmedBlockNumber::put(relay_block_number);
+			});
+			ConfirmedHeaderParcels::insert(relay_block_number, relay_header_parcel);
+		} else {
+			<PendingRelayHeaderParcels<T>>::append((
+				<frame_system::Module<T>>::block_number() + confirm_period,
+				relay_header_parcel,
+				RelayVotingState::default(),
+			));
+
+			Self::deposit_event(RawEvent::Pended(relay_block_number));
+		}
 
 		Ok(())
+	}
+
+	fn new_round(game_id: &Self::RelayHeaderId, game_sample_points: Vec<Self::RelayHeaderId>) {
+		Self::deposit_event(RawEvent::NewRound(*game_id, game_sample_points));
+	}
+
+	fn game_over(game_id: &Self::RelayHeaderId) {
+		Self::deposit_event(RawEvent::GameOver(*game_id));
 	}
 }
 
@@ -833,16 +1016,16 @@ pub struct MMRProof {
 }
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq)]
-pub struct CheckEthereumRelayHeaderHash<T: Trait>(PhantomData<T>);
-impl<T: Trait> CheckEthereumRelayHeaderHash<T> {
+pub struct CheckEthereumRelayHeaderParcel<T: Trait>(PhantomData<T>);
+impl<T: Trait> CheckEthereumRelayHeaderParcel<T> {
 	pub fn new() -> Self {
 		Self(Default::default())
 	}
 }
-impl<T: Trait> Debug for CheckEthereumRelayHeaderHash<T> {
+impl<T: Trait> Debug for CheckEthereumRelayHeaderParcel<T> {
 	#[cfg(feature = "std")]
 	fn fmt(&self, f: &mut Formatter) -> FmtResult {
-		write!(f, "CheckEthereumRelayHeaderHash")
+		write!(f, "CheckEthereumRelayHeaderParcel")
 	}
 
 	#[cfg(not(feature = "std"))]
@@ -850,8 +1033,8 @@ impl<T: Trait> Debug for CheckEthereumRelayHeaderHash<T> {
 		Ok(())
 	}
 }
-impl<T: Send + Sync + Trait> SignedExtension for CheckEthereumRelayHeaderHash<T> {
-	const IDENTIFIER: &'static str = "CheckEthereumRelayHeaderHash";
+impl<T: Send + Sync + Trait> SignedExtension for CheckEthereumRelayHeaderParcel<T> {
+	const IDENTIFIER: &'static str = "CheckEthereumRelayHeaderParcel";
 	type AccountId = T::AccountId;
 	type Call = <T as Trait>::Call;
 	type AdditionalSigned = ();
@@ -894,7 +1077,7 @@ impl<T: Send + Sync + Trait> SignedExtension for CheckEthereumRelayHeaderHash<T>
 		// 						},
 		// 					)| header_a == header_b && mmr_root_a == mmr_root_b,
 		// 				) {
-		// 				return InvalidTransaction::Custom(<Error<T>>::ProposalInv.as_u8()).into();
+		// 				return InvalidTransaction::Custom(<Error<T>>::AffirmationInv.as_u8()).into();
 		// 			}
 		// 		}
 		// 	}
@@ -902,4 +1085,35 @@ impl<T: Send + Sync + Trait> SignedExtension for CheckEthereumRelayHeaderHash<T>
 
 		Ok(ValidTransaction::default())
 	}
+}
+
+impl<T: Trait> ChangeMembers<AccountId<T>> for Module<T> {
+	fn change_members_sorted(_: &[T::AccountId], outgoing: &[T::AccountId], _: &[T::AccountId]) {
+		let _ = <PendingRelayHeaderParcels<T>>::try_mutate(|pending_relay_header_parcels| {
+			let mut changed = false;
+
+			for (_, _, RelayVotingState { ayes, nays }) in pending_relay_header_parcels {
+				for removed_member in outgoing {
+					if let Some(i) = ayes.iter().position(|aye| aye == removed_member) {
+						changed = true;
+
+						ayes.remove(i);
+					} else if let Some(i) = nays.iter().position(|nay| nay == removed_member) {
+						changed = true;
+
+						nays.remove(i);
+					}
+				}
+			}
+
+			if changed {
+				Ok(())
+			} else {
+				Err(())
+			}
+		});
+	}
+
+	// TODO: if someone give up
+	fn set_prime(_: Option<T::AccountId>) {}
 }
