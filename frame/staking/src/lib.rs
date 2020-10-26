@@ -949,6 +949,8 @@ decl_module! {
 	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
 		type Error = Error<T>;
 
+		const ModuleId: ModuleId = T::ModuleId::get();
+
 		/// Number of sessions per era.
 		const SessionsPerEra: SessionIndex = T::SessionsPerEra::get();
 

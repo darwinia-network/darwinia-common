@@ -291,14 +291,14 @@ decl_module! {
 	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
 		type Error = Error<T>;
 
-		fn deposit_event() = default;
-
 		const CandidacyBond: BalanceOf<T> = T::CandidacyBond::get();
 		const VotingBond: BalanceOf<T> = T::VotingBond::get();
 		const DesiredMembers: u32 = T::DesiredMembers::get();
 		const DesiredRunnersUp: u32 = T::DesiredRunnersUp::get();
 		const TermDuration: T::BlockNumber = T::TermDuration::get();
 		const ModuleId: LockIdentifier  = T::ModuleId::get();
+
+		fn deposit_event() = default;
 
 		/// Vote for a set of candidates for the upcoming round of election. This can be called to
 		/// set the initial votes, or update already existing votes.
