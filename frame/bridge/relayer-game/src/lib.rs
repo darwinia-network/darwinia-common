@@ -191,24 +191,6 @@ decl_module! {
 
 			// Return while no closed rounds found
 		}
-
-		fn on_runtime_upgrade() -> Weight {
-			// --- substrate ---
-			use frame_support::migration::*;
-
-			let module = b"Instance0DarwiniaRelayerGame";
-			let items: [&[u8]; 3] = [
-				b"Proposals",
-				b"ProposeEndTime",
-				b"PendingRelayHeaderParcels",
-			];
-
-			for item in &items {
-				remove_storage_prefix(module, item, &[]);
-			}
-
-			0
-		}
 	}
 }
 
