@@ -160,8 +160,10 @@ decl_error! {
 		ConfirmedHeaderNE,
 		/// EthereumReceipt Proof - INVALID
 		ReceiptProofInv,
-		/// Pending Relay Parcel - NOT EXISTED
-		PendingRelayParcelNE,
+		/// Pending Relay Header Parcel - NOT EXISTED
+		PendingRelayHeaderParcelNE,
+		/// Pending Relay Header Parcel - ALREADY EXISTS
+		PendingRelayHeaderParcelAE,
 		/// Already Vote for Aye - DUPLICATED
 		AlreadyVoteForAyeDup,
 		/// Already Vote for Nay - DUPLICATED
@@ -421,7 +423,7 @@ decl_module! {
 
 					Ok(())
 				} else {
-					Err(<Error<T>>::PendingRelayParcelNE)?
+					Err(<Error<T>>::PendingRelayHeaderParcelNE)?
 				}
 			});
 
@@ -890,6 +892,13 @@ impl<T: Trait> Relayable for Module<T> {
 		ensure!(
 			relay_block_number > best_confirmed_block_number,
 			<Error<T>>::HeaderInv
+		);
+		// Not allow to pend on the same block height
+		ensure!(
+			Self::pending_relay_header_parcels()
+				.into_iter()
+				.all(|(_, p, _)| p.header.number != relay_block_number),
+			<Error<T>>::PendingRelayHeaderParcelAE
 		);
 
 		if confirm_period.is_zero() {
