@@ -182,6 +182,8 @@ decl_module! {
 	{
 		type Error = Error<T, I>;
 
+		const MAX_ACTIVE_GAMES: u8 = T::RelayerGameAdjustor::max_active_games();
+
 		fn on_finalize(now: BlockNumber<T>) {
 			let game_ids = <GamesToUpdate<T, I>>::take(now);
 
