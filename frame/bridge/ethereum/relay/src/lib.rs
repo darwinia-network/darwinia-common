@@ -162,7 +162,7 @@ decl_error! {
 		ReceiptProofInv,
 		/// Pending Relay Header Parcel - NOT EXISTED
 		PendingRelayHeaderParcelNE,
-		/// Pending Relay Header Parcel - ALREADY EXISTS
+		/// Pending Relay Header Parcel - ALREADY EXISTED
 		PendingRelayHeaderParcelAE,
 		/// Already Vote for Aye - DUPLICATED
 		AlreadyVoteForAyeDup,

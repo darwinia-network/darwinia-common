@@ -138,7 +138,7 @@ decl_error! {
 		/// Header Brief - NOT EXISTED
 		HeaderBriefNE,
 
-		/// Header - ALREADY EXISTS
+		/// Header - ALREADY EXISTED
 		HeaderAE,
 		/// Header - TOO EARLY
 		HeaderTE,
