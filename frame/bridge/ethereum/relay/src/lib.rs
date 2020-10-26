@@ -263,6 +263,7 @@ decl_module! {
 			Self::system_approve_pending_relay_header_parcels(now).unwrap_or(0)
 		}
 
+		// TODO: weight
 		#[weight = 0]
 		pub fn affirm(
 			origin,
@@ -282,6 +283,7 @@ decl_module! {
 			));
 		}
 
+		// TODO: weight
 		#[weight = 0]
 		pub fn dispute_and_affirm(
 			origin,
@@ -301,6 +303,7 @@ decl_module! {
 			));
 		}
 
+		// TODO: weight
 		#[weight = 0]
 		pub fn complete_relay_proofs(
 			origin,
@@ -312,6 +315,7 @@ decl_module! {
 			T::RelayerGame::complete_relay_proofs(affirmation_id, ethereum_relay_proofs)?;
 		}
 
+		// TODO: weight
 		#[weight = 0]
 		fn extend_affirmation(
 			origin,
@@ -413,6 +417,7 @@ decl_module! {
 					Err(<Error<T>>::PendingRelayParcelNE)?
 				}
 			});
+
 			res?;
 		}
 
