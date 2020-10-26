@@ -366,8 +366,7 @@ use static_assertions::const_assert;
 // --- substrate ---
 use frame_support::{
 	construct_runtime, debug, parameter_types,
-	traits::{InstanceFilter, KeyOwnerProofSystem, LockIdentifier, Randomness},
-	// traits::{KeyOwnerProofSystem, LockIdentifier, Randomness, FindAuthor},
+	traits::{FindAuthor, InstanceFilter, KeyOwnerProofSystem, LockIdentifier, Randomness},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		Weight,
