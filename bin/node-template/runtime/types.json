@@ -197,7 +197,7 @@
 	"__[primitives.relay]__": {},
 	"RelayHeaderId": "EthereumBlockNumber",
 	"RelayHeaderParcel": "EthereumRelayHeaderParcel",
-	"RelayProofs": "EthereumRelayProof",
+	"RelayProofs": "EthereumRelayProofs",
 	"RelayAffirmationId": {
 		"game_id": "EthereumBlockNumber",
 		"round": "u32",
