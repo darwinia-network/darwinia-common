@@ -644,6 +644,36 @@ impl<T: Trait> Relayable for Module<T> {
 		Self::best_confirmed_block_number()
 	}
 
+	fn preverify_game_sample_points(
+		extended_relay_affirmation_id: &RelayAffirmationId<Self::RelayHeaderId>,
+		game_sample_points: &[Self::RelayHeaderParcel],
+	) -> DispatchResult {
+		let previous_sample_points =
+			T::RelayerGame::get_proposed_relay_header_parcels(extended_relay_affirmation_id)
+				.ok_or("Previous Sample Points - UNKNOWN")?;
+
+		ensure!(previous_sample_points.len() == 1, "Length - UNKNOWN");
+		ensure!(game_sample_points.len() == 1, "Length - UNKNOWN");
+
+		let previous = &previous_sample_points[0];
+		let next = &game_sample_points[0];
+
+		ensure!(
+			previous.header.hash.ok_or(<Error<T>>::HeaderHashInv)? == next.header.parent_hash,
+			<Error<T>>::ContinuousInv
+		);
+
+		let ethereum_partial = Self::ethash_params();
+
+		ensure!(
+			next.header.difficulty().to_owned()
+				== ethereum_partial.calculate_difficulty(&next.header, &previous.header),
+			<Error<T>>::ContinuousInv
+		);
+
+		Ok(())
+	}
+
 	fn verify_relay_proofs(
 		relay_header_id: &Self::RelayHeaderId,
 		relay_header_parcel: &Self::RelayHeaderParcel,
@@ -725,24 +755,17 @@ impl<T: Trait> Relayable for Module<T> {
 	}
 
 	fn verify_relay_chain(mut relay_chain: Vec<&Self::RelayHeaderParcel>) -> DispatchResult {
-		let eth_partial = Self::ethash_params();
-		let verify_continuous = |previous_relay_header_parcel: &EthereumRelayHeaderParcel,
-		                         next_relay_header_parcel: &EthereumRelayHeaderParcel|
+		let ethereum_partial = Self::ethash_params();
+		let verify_continuous = |previous: &EthereumRelayHeaderParcel,
+		                         next: &EthereumRelayHeaderParcel|
 		 -> DispatchResult {
 			ensure!(
-				previous_relay_header_parcel
-					.header
-					.hash
-					.ok_or(<Error<T>>::HeaderHashInv)?
-					== next_relay_header_parcel.header.parent_hash,
+				previous.header.hash.ok_or(<Error<T>>::HeaderHashInv)? == next.header.parent_hash,
 				<Error<T>>::ContinuousInv
 			);
 			ensure!(
-				next_relay_header_parcel.header.difficulty().to_owned()
-					== eth_partial.calculate_difficulty(
-						&next_relay_header_parcel.header,
-						&previous_relay_header_parcel.header
-					),
+				next.header.difficulty().to_owned()
+					== ethereum_partial.calculate_difficulty(&next.header, &previous.header),
 				<Error<T>>::ContinuousInv
 			);
 
@@ -752,10 +775,10 @@ impl<T: Trait> Relayable for Module<T> {
 		relay_chain.sort_by_key(|relay_header_parcel| relay_header_parcel.header.number);
 
 		for window in relay_chain.windows(2) {
-			let previous_relay_header_parcel = window[0];
-			let next_relay_header_parcel = window[1];
+			let previous = window[0];
+			let next = window[1];
 
-			verify_continuous(previous_relay_header_parcel, next_relay_header_parcel)?;
+			verify_continuous(previous, next)?;
 		}
 
 		verify_continuous(
