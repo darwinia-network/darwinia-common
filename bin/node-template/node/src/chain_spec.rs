@@ -5,7 +5,7 @@ use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_service::{ChainType, Properties};
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::AuthorityId as BabeId;
-use sp_core::{sr25519, Pair, Public};
+use sp_core::{sr25519, Pair, Public, U256};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::{
 	traits::{IdentifyAccount, Verify},
@@ -161,15 +161,16 @@ fn testnet_genesis(
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
 ) -> GenesisConfig {
-	let gerald_evm_account_id =
+	let init_evm_account_id =
 		fixed_hex_bytes_unchecked!("0x6be02d1d3665660d22ff9624b7be0551ee1ac91b", 20).into();
+	let init_evm_balance = U256::from(u128::MAX).overflowing_add(U256::from(100)).0;
 	let mut evm_accounts = BTreeMap::new();
 
 	evm_accounts.insert(
-		gerald_evm_account_id,
+		init_evm_account_id,
 		pallet_evm::GenesisAccount {
 			nonce: 0.into(),
-			balance: 123_456_123_000_000_000_000_000u128.into(),
+			balance: init_evm_balance,
 			storage: BTreeMap::new(),
 			code: vec![],
 		},

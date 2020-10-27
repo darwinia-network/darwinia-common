@@ -378,7 +378,9 @@ use frame_support::{
 	ConsensusEngineId,
 };
 use frame_system::{EnsureOneOf, EnsureRoot};
-use pallet_evm::{Account as EVMAccount, EnsureAddressTruncated, FeeCalculator};
+use pallet_evm::{
+	Account as EVMAccount, AccountBasicMapping, EnsureAddressTruncated, FeeCalculator,
+};
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
@@ -414,7 +416,10 @@ use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDis
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
 use darwinia_staking::EraIndex;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
-use dvm_ethereum::precompiles::{ConcatAddressMapping, NativeTransfer};
+use dvm_ethereum::{
+	account_basic::DVMAccountBasicMapping,
+	precompiles::{ConcatAddressMapping, NativeTransfer},
+};
 use dvm_rpc_primitives::TransactionStatus;
 use impls::*;
 
@@ -1167,6 +1172,7 @@ impl pallet_evm::Trait for Runtime {
 		NativeTransfer<Self>,
 	);
 	type ChainId = ChainId;
+	type AccountBasicMapping = DVMAccountBasicMapping<Self>;
 }
 
 pub struct EthereumFindAuthor<F>(sp_std::marker::PhantomData<F>);
@@ -1513,7 +1519,7 @@ impl_runtime_apis! {
 		}
 
 		fn account_basic(address: H160) -> EVMAccount {
-			pallet_evm::Module::<Runtime>::account_basic(&address)
+			<Runtime as pallet_evm::Trait>::AccountBasicMapping::account_basic(&address)
 		}
 
 		fn gas_price() -> U256 {

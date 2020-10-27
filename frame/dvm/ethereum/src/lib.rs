@@ -44,7 +44,8 @@ use sp_std::prelude::*;
 pub use dvm_rpc_primitives::TransactionStatus;
 pub use ethereum::{Block, Log, Receipt, Transaction, TransactionAction};
 use frame_support::traits::Currency;
-use pallet_evm::AddressMapping;
+use pallet_evm::{AccountBasicMapping, AddressMapping};
+use sp_runtime::traits::{CheckedAdd, CheckedSub};
 
 #[cfg(all(feature = "std", test))]
 mod tests;
@@ -52,6 +53,7 @@ mod tests;
 #[cfg(all(feature = "std", test))]
 mod mock;
 // Precomile contract for dvm
+pub mod account_basic;
 pub mod precompiles;
 
 /// A type alias for the balance type from this pallet's point of view.
@@ -84,6 +86,8 @@ decl_storage! {
 		CurrentReceipts: Option<Vec<ethereum::Receipt>>;
 		/// The current transaction statuses.
 		CurrentTransactionStatuses: Option<Vec<TransactionStatus>>;
+		/// Remaining balance for account
+		RemainingBalance get(fn get_remaining_balances): map hasher(blake2_128_concat) T::AccountId => T::Balance;
 	}
 	add_extra_genesis {
 		build(|_config: &GenesisConfig| {
@@ -147,7 +151,9 @@ decl_error! {
 		/// Machine encountered an explict revert.
 		Reverted,
 		/// If call itself fails
-		FailedExecution
+		FailedExecution,
+		/// Not enought remaining balance
+		InsufficientRemainBalance,
 	}
 }
 
@@ -206,14 +212,14 @@ impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
 				InvalidTransaction::Custom(TransactionValidationError::InvalidSignature as u8)
 			})?;
 
-			let account_data = pallet_evm::Module::<T>::account_basic(&origin);
+			let account_data =
+				<T as pallet_evm::Trait>::AccountBasicMapping::account_basic(&origin);
 
 			if transaction.nonce < account_data.nonce {
 				return InvalidTransaction::Stale.into();
 			}
 
 			let fee = transaction.gas_price.saturating_mul(transaction.gas_limit);
-
 			if account_data.balance < fee {
 				return InvalidTransaction::Payment.into();
 			}
@@ -309,6 +315,30 @@ impl<T: Trait> Module<T> {
 		frame_system::Module::<T>::deposit_log(digest.into());
 	}
 
+	/// Get the remaining balance for evm address
+	pub fn remaining_balance(account_id: &T::AccountId) -> T::Balance {
+		<RemainingBalance<T>>::get(account_id)
+	}
+
+	/// Inc remaining balance
+	pub fn inc_remain_balance(account_id: &T::AccountId, value: T::Balance) {
+		let remain_balance = Self::remaining_balance(account_id);
+		let updated_balance = remain_balance
+			.checked_add(&value)
+			.expect("Inc remain balance, panic!");
+		<RemainingBalance<T>>::insert(account_id, updated_balance);
+	}
+
+	/// Dec remaining balance
+	pub fn dec_remain_balance(account_id: &T::AccountId, value: T::Balance) -> DispatchResult {
+		let remain_balance = Self::remaining_balance(account_id);
+		let updated_balance = remain_balance
+			.checked_sub(&value)
+			.ok_or(<Error<T>>::InsufficientRemainBalance)?;
+		<RemainingBalance<T>>::insert(account_id, updated_balance);
+		Ok(())
+	}
+
 	/// Get the author using the FindAuthor trait.
 	pub fn find_author() -> H160 {
 		let digest = <frame_system::Module<T>>::digest();
@@ -321,7 +351,6 @@ impl<T: Trait> Module<T> {
 	pub fn current_transaction_statuses() -> Option<Vec<TransactionStatus>> {
 		CurrentTransactionStatuses::get()
 	}
-
 	/// Get current block.
 	pub fn current_block() -> Option<ethereum::Block> {
 		CurrentBlock::get()

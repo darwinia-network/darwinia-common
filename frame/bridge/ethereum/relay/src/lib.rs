@@ -611,7 +611,10 @@ impl<T: Trait> Module<T> {
 		.unwrap_or(false)
 	}
 
-	pub fn update_confirmeds_with_reason(relay_header_parcel: EthereumRelayHeaderParcel, reason: Vec<u8>) {
+	pub fn update_confirmeds_with_reason(
+		relay_header_parcel: EthereumRelayHeaderParcel,
+		reason: Vec<u8>,
+	) {
 		let relay_block_number = relay_header_parcel.header.number;
 
 		ConfirmedBlockNumbers::mutate(|confirmed_block_numbers| {

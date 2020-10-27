@@ -27,15 +27,9 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 env_logger = { version = "0.8.1" }
 # darwinia
 darwinia-balances = { path = "../../balances" }
-<<<<<<< HEAD
 # substrate
-sp-core = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-io   = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-=======
-# --- substrate ---
 sp-core = { git = "https://github.com/darwinia-network/substrate.git", branch = "branch-for-dvm" }
 sp-io   = { git = "https://github.com/darwinia-network/substrate.git", branch = "branch-for-dvm" }
->>>>>>> Replace evm crate path
 
 [features]
 default = ["std"]
