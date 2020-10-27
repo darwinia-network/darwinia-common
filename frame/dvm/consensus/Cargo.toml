@@ -19,13 +19,13 @@ log         = "0.4.11"
 # darwinia
 dvm-consensus-primitives = { path = "primitives" }
 # substrate
-prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-api              = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-block-builder    = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-consensus        = { version = "0.8.0", git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-core             = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-inherents        = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-timestamp        = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/darwinia-network/substrate.git", branch = "branch-for-dvm" }
+sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", branch = "branch-for-dvm" }
+sp-api              = { git = "https://github.com/darwinia-network/substrate.git", branch = "branch-for-dvm" }
+sp-block-builder    = { git = "https://github.com/darwinia-network/substrate.git", branch = "branch-for-dvm" }
+sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", branch = "branch-for-dvm" }
+sp-consensus        = { version = "0.8.0", git = "https://github.com/darwinia-network/substrate.git", branch = "branch-for-dvm" }
+sp-core             = { git = "https://github.com/darwinia-network/substrate.git", branch = "branch-for-dvm" }
+sp-inherents        = { git = "https://github.com/darwinia-network/substrate.git", branch = "branch-for-dvm" }
+sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", branch = "branch-for-dvm" }
+sp-timestamp        = { git = "https://github.com/darwinia-network/substrate.git", branch = "branch-for-dvm" }

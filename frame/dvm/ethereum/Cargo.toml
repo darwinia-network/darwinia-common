@@ -26,14 +26,14 @@ darwinia-support         = { default-features = false, path = "../../../frame/su
 dvm-consensus-primitives = { default-features = false, path = "../consensus/primitives" }
 dvm-rpc-primitives       = { default-features = false, path = "../rpc/primitives" }
 # substrate
-frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-pallet-evm       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-core          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-io            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-runtime       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "branch-for-dvm" }
+frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "branch-for-dvm" }
+pallet-evm       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "branch-for-dvm" }
+pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "branch-for-dvm" }
+sp-core          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "branch-for-dvm" }
+sp-io            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "branch-for-dvm" }
+sp-runtime       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "branch-for-dvm" }
+sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "branch-for-dvm" }
 
 [dev-dependencies]
 # crates
