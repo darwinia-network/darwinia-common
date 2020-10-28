@@ -65,6 +65,13 @@ pub mod mock_relay {
 			Self::best_confirmed_block_number()
 		}
 
+		fn preverify_game_sample_points(
+			_: &RelayAffirmationId<Self::RelayHeaderId>,
+			_: &[Self::RelayHeaderParcel],
+		) -> DispatchResult {
+			Ok(())
+		}
+
 		fn verify_relay_proofs(
 			_: &Self::RelayHeaderId,
 			relay_header_parcel: &Self::RelayHeaderParcel,

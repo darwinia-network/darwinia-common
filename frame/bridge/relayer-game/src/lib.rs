@@ -764,7 +764,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 	type RelayProofs = RelayProofs<T, I>;
 
 	fn get_proposed_relay_header_parcels(
-		relay_affirmation_id: RelayAffirmationId<Self::RelayHeaderId>,
+		relay_affirmation_id: &RelayAffirmationId<Self::RelayHeaderId>,
 	) -> Option<Vec<Self::RelayHeaderParcel>> {
 		let RelayAffirmationId {
 			game_id,
@@ -774,7 +774,7 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 
 		Self::affirmations_of_game_at(&game_id, round)
 			.into_iter()
-			.nth(index as usize)
+			.nth(*index as usize)
 			.map(|relay_affirmation| relay_affirmation.relay_header_parcels)
 	}
 
@@ -1034,6 +1034,11 @@ impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			extended_affirmation.verified_on_chain,
 			<Error<T, I>>::PreviousRelayProofsInc
 		);
+
+		T::RelayableChain::preverify_game_sample_points(
+			&extended_relay_affirmation_id,
+			&game_sample_points,
+		)?;
 
 		let stake = Self::ensure_can_stake(
 			relayer,
