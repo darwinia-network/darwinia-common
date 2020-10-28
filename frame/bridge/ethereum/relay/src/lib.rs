@@ -7,6 +7,8 @@ mod mmr;
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
+mod test_data;
+#[cfg(test)]
 mod tests;
 
 mod types {
@@ -127,15 +129,15 @@ decl_event! {
 		NewRound(EthereumBlockNumber, Vec<EthereumBlockNumber>),
 		/// A game has been settled. [game id]
 		GameOver(EthereumBlockNumber),
-		/// The specific confirmed parcel removed. [block number]
+		/// The specific confirmed parcel removed. [ethereum block number]
 		RemoveConfirmedParcel(EthereumBlockNumber),
 		/// EthereumReceipt verification. [account, ethereum receipt, ethereum header]
 		VerifyReceipt(AccountId, EthereumReceipt, EthereumHeader),
-		/// A relay header parcel got pended. [block number]
+		/// A relay header parcel got pended. [ethereum block number]
 		Pended(EthereumBlockNumber),
-		/// Pending relay header parcel approved. [block number, reason]
-		PendingRelayHeaderParcelApproved(EthereumBlockNumber, Vec<u8>),
-		/// Pending relay header parcel rejected. [block number]
+		/// Pending relay header parcel confirmed. [ethereum block number, reason]
+		PendingRelayHeaderParcelConfirmed(EthereumBlockNumber, Vec<u8>),
+		/// Pending relay header parcel rejected. [ethereum block number]
 		PendingRelayHeaderParcelRejected(EthereumBlockNumber),
 	}
 }
@@ -405,14 +407,9 @@ decl_module! {
 						Perbill::from_rational_approximation(reject, total);
 
 					if approve_threashold >= T::ApproveThreshold::get() {
-						Self::store_relay_header_parcel(
-							pending_relay_header_parcels.remove(i).1
+						Self::confirm_relay_header_parcel_with_reason(
+							pending_relay_header_parcels.remove(i).1, 	b"Confirmed By Tech.Comm".to_vec()
 						)?;
-
-						Self::deposit_event(RawEvent::PendingRelayHeaderParcelApproved(
-							block_number,
-							b"Approved By Tech.Comm".to_vec(),
-						));
 					} else if reject_threashold >= T::RejectThreshold::get() {
 						pending_relay_header_parcels.remove(i);
 
@@ -609,19 +606,51 @@ impl<T: Trait> Module<T> {
 		.unwrap_or(false)
 	}
 
+	pub fn update_confirmeds_with_reason(relay_header_parcel: EthereumRelayHeaderParcel, reason: Vec<u8>) {
+		let relay_block_number = relay_header_parcel.header.number;
+
+		ConfirmedBlockNumbers::mutate(|confirmed_block_numbers| {
+			// TODO: remove old numbers according to `ConfirmedDepth`
+
+			confirmed_block_numbers.push(relay_block_number);
+
+			BestConfirmedBlockNumber::put(relay_block_number);
+		});
+		ConfirmedHeaderParcels::insert(relay_block_number, relay_header_parcel);
+
+		Self::deposit_event(RawEvent::PendingRelayHeaderParcelConfirmed(
+			relay_block_number,
+			reason,
+		));
+	}
+
+	pub fn confirm_relay_header_parcel_with_reason(
+		relay_header_parcel: EthereumRelayHeaderParcel,
+		reason: Vec<u8>,
+	) -> DispatchResult {
+		let relay_block_number = relay_header_parcel.header.number;
+
+		ensure!(
+			relay_block_number > Self::best_confirmed_block_number(),
+			<Error<T>>::HeaderInv
+		);
+
+		Self::update_confirmeds_with_reason(relay_header_parcel, reason);
+
+		Ok(())
+	}
+
 	pub fn system_approve_pending_relay_header_parcels(
 		now: BlockNumber<T>,
 	) -> Result<Weight, DispatchError> {
-		<PendingRelayHeaderParcels<T>>::mutate(|pending_relay_header_parcels| {
-			pending_relay_header_parcels.retain(|(confirm_at, pending_relay_header_parcel, _)| {
-				if *confirm_at == now {
+		<PendingRelayHeaderParcels<T>>::mutate(|parcels| {
+			parcels.retain(|(at, parcel, _)| {
+				if *at == now {
 					// TODO: handle error
-					let _ = Self::store_relay_header_parcel(pending_relay_header_parcel.to_owned());
-
-					Self::deposit_event(RawEvent::PendingRelayHeaderParcelApproved(
-						pending_relay_header_parcel.header.number,
-						b"Not Enough Technical Member Online, Approved By System".to_vec(),
-					));
+					let _ = Self::confirm_relay_header_parcel_with_reason(
+						parcel.to_owned(),
+						b"Not Enough Technical Member Online, Confirmed By System".to_vec(),
+					);
 
 					false
 				} else {
@@ -777,14 +806,13 @@ impl<T: Trait> Relayable for Module<T> {
 			.unwrap_or(0)
 	}
 
-	fn store_relay_header_parcel(relay_header_parcel: Self::RelayHeaderParcel) -> DispatchResult {
-		let confirm_period = T::ConfirmPeriod::get();
-		let best_confirmed_block_number = Self::best_confirmed_block_number();
+	fn try_confirm_relay_header_parcel(
+		relay_header_parcel: Self::RelayHeaderParcel,
+	) -> DispatchResult {
 		let relay_block_number = relay_header_parcel.header.number;
 
-		// Not allow to relay genesis header
 		ensure!(
-			relay_block_number > best_confirmed_block_number,
+			relay_block_number > Self::best_confirmed_block_number(),
 			<Error<T>>::HeaderInv
 		);
 		// Not allow to pend on the same block height
@@ -795,15 +823,13 @@ impl<T: Trait> Relayable for Module<T> {
 			<Error<T>>::PendingRelayHeaderParcelAE
 		);
 
+		let confirm_period = T::ConfirmPeriod::get();
+
 		if confirm_period.is_zero() {
-			ConfirmedBlockNumbers::mutate(|confirmed_block_numbers| {
-				// TODO: remove old numbers according to `ConfirmedDepth`
-
-				confirmed_block_numbers.push(relay_block_number);
-
-				BestConfirmedBlockNumber::put(relay_block_number);
-			});
-			ConfirmedHeaderParcels::insert(relay_block_number, relay_header_parcel);
+			Self::update_confirmeds_with_reason(
+				relay_header_parcel,
+				b"Confirm Period is Zero, Confirmed By System".to_vec(),
+			);
 		} else {
 			<PendingRelayHeaderParcels<T>>::append((
 				<frame_system::Module<T>>::block_number() + confirm_period,

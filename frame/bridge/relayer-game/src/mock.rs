@@ -111,7 +111,8 @@ pub mod mock_relay {
 			relay_header_id - best_confirmed_relay_header_id
 		}
 
-		fn store_relay_header_parcel(
+		// FIXME
+		fn try_confirm_relay_header_parcel(
 			relay_header_parcel: Self::RelayHeaderParcel,
 		) -> DispatchResult {
 			ConfirmedBlockNumbers::mutate(|best_confirmed_block_number| {
@@ -207,10 +208,7 @@ use std::{cell::RefCell, time::Instant};
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
-use frame_support::{
-	impl_outer_origin, parameter_types,
-	traits::{OnFinalize, OnInitialize},
-};
+use frame_support::{impl_outer_origin, parameter_types, traits::OnFinalize};
 use sp_runtime::RuntimeDebug;
 // --- darwinia ---
 use crate::*;
@@ -409,7 +407,7 @@ pub fn run_to_block(n: BlockNumber) {
 
 	for b in System::block_number() + 1..=n {
 		System::set_block_number(b);
-		RelayerGame::on_initialize(b);
+		// RelayerGame::on_initialize(b);
 
 		if b != n {
 			RelayerGame::on_finalize(System::block_number());
