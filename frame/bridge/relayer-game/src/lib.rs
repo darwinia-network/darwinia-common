@@ -39,7 +39,6 @@ use frame_support::{
 	debug::*,
 	decl_error, decl_module, decl_storage, ensure,
 	traits::{Currency, OnUnbalanced},
-	weights::Weight,
 };
 use sp_runtime::{
 	traits::{Saturating, Zero},
