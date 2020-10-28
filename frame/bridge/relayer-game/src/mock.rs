@@ -111,7 +111,8 @@ pub mod mock_relay {
 			relay_header_id - best_confirmed_relay_header_id
 		}
 
-		fn store_relay_header_parcel(
+		// FIXME
+		fn pend_relay_header_parcel(
 			relay_header_parcel: Self::RelayHeaderParcel,
 		) -> DispatchResult {
 			ConfirmedBlockNumbers::mutate(|best_confirmed_block_number| {

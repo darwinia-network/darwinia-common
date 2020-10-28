@@ -25,7 +25,7 @@ pub type Ring = darwinia_balances::Module<Test, RingInstance>;
 
 thread_local! {
 	static BEST_CONFIRMED_BLOCK_NUMBER: RefCell<EthereumBlockNumber> = RefCell::new(0);
-	static CONFIRM_PERIOD: RefCell<BlockNumber> = RefCell::new(0);
+	static CONFIRM_PERIOD: RefCell<BlockNumber> = RefCell::new(1);
 }
 
 impl_outer_origin! {

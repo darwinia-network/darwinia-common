@@ -54,14 +54,14 @@ pub trait Relayable {
 		best_confirmed_relay_header_id: Self::RelayHeaderId,
 	) -> u32;
 
-	fn store_relay_header_parcel(relay_header_parcel: Self::RelayHeaderParcel) -> DispatchResult;
+	fn pend_relay_header_parcel(relay_header_parcel: Self::RelayHeaderParcel) -> DispatchResult;
 
-	fn store_relay_header_parcels(
+	fn pend_relay_header_parcels(
 		relay_header_parcels: Vec<Self::RelayHeaderParcel>,
 	) -> Vec<Result<(), DispatchError>> {
 		relay_header_parcels
 			.into_iter()
-			.map(Self::store_relay_header_parcel)
+			.map(Self::pend_relay_header_parcel)
 			.collect::<Vec<Result<(), DispatchError>>>()
 	}
 

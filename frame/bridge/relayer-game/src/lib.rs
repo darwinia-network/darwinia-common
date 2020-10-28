@@ -749,7 +749,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		}
 
 		// TODO: handle error
-		let _ = T::RelayableChain::store_relay_header_parcels(relay_header_parcels);
+		let _ = T::RelayableChain::pend_relay_header_parcels(relay_header_parcels);
 
 		trace!(target: "relayer-game", "---");
 
