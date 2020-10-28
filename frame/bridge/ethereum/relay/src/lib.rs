@@ -7,6 +7,8 @@ mod mmr;
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
+mod test_data;
+#[cfg(test)]
 mod tests;
 
 mod types {
@@ -628,9 +630,7 @@ impl<T: Trait> Module<T> {
 		<PendingRelayHeaderParcels<T>>::mutate(|pending_relay_header_parcels| {
 			pending_relay_header_parcels.retain(|(confirm_at, pending_relay_header_parcel, _)| {
 				if *confirm_at == now {
-					// TODO: handle error
-					let _ = Self::store_relay_header_parcel(pending_relay_header_parcel.to_owned());
-
+					Self::store_relay_header_parcel(pending_relay_header_parcel.to_owned());
 					Self::deposit_event(RawEvent::PendingRelayHeaderParcelApproved(
 						pending_relay_header_parcel.header.number,
 						b"Not Enough Technical Member Online, Approved By System".to_vec(),
