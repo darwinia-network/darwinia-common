@@ -409,7 +409,7 @@ pub fn run_to_block(n: BlockNumber) {
 
 	for b in System::block_number() + 1..=n {
 		System::set_block_number(b);
-		RelayerGame::on_initialize(b);
+		// RelayerGame::on_initialize(b);
 
 		if b != n {
 			RelayerGame::on_finalize(System::block_number());
