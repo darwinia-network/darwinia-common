@@ -407,7 +407,7 @@ decl_module! {
 					if approve_threashold >= T::ApproveThreshold::get() {
 						Self::store_relay_header_parcel(
 							pending_relay_header_parcels.remove(i).1
-						)?;
+						);
 
 						Self::deposit_event(RawEvent::PendingRelayHeaderParcelApproved(
 							block_number,
@@ -609,6 +609,19 @@ impl<T: Trait> Module<T> {
 		.unwrap_or(false)
 	}
 
+	pub fn store_relay_header_parcel(relay_header_parcel: EthereumRelayHeaderParcel) {
+		let relay_block_number = relay_header_parcel.header.number;
+
+		ConfirmedBlockNumbers::mutate(|confirmed_block_numbers| {
+			// TODO: remove old numbers according to `ConfirmedDepth`
+
+			confirmed_block_numbers.push(relay_block_number);
+
+			BestConfirmedBlockNumber::put(relay_block_number);
+		});
+		ConfirmedHeaderParcels::insert(relay_block_number, relay_header_parcel);
+	}
+
 	pub fn system_approve_pending_relay_header_parcels(
 		now: BlockNumber<T>,
 	) -> Result<Weight, DispatchError> {
@@ -778,7 +791,6 @@ impl<T: Trait> Relayable for Module<T> {
 	}
 
 	fn store_relay_header_parcel(relay_header_parcel: Self::RelayHeaderParcel) -> DispatchResult {
-		let confirm_period = T::ConfirmPeriod::get();
 		let best_confirmed_block_number = Self::best_confirmed_block_number();
 		let relay_block_number = relay_header_parcel.header.number;
 
@@ -795,15 +807,10 @@ impl<T: Trait> Relayable for Module<T> {
 			<Error<T>>::PendingRelayHeaderParcelAE
 		);
 
+		let confirm_period = T::ConfirmPeriod::get();
+
 		if confirm_period.is_zero() {
-			ConfirmedBlockNumbers::mutate(|confirmed_block_numbers| {
-				// TODO: remove old numbers according to `ConfirmedDepth`
-
-				confirmed_block_numbers.push(relay_block_number);
-
-				BestConfirmedBlockNumber::put(relay_block_number);
-			});
-			ConfirmedHeaderParcels::insert(relay_block_number, relay_header_parcel);
+			Self::store_relay_header_parcel(relay_header_parcel);
 		} else {
 			<PendingRelayHeaderParcels<T>>::append((
 				<frame_system::Module<T>>::block_number() + confirm_period,
