@@ -54,14 +54,19 @@ pub trait Relayable {
 		best_confirmed_relay_header_id: Self::RelayHeaderId,
 	) -> u32;
 
-	fn pend_relay_header_parcel(relay_header_parcel: Self::RelayHeaderParcel) -> DispatchResult;
+	/// Trying to confirm a relay header parcel
+	///
+	/// If there's a guard then it goes pended else confirmed
+	fn try_confirm_relay_header_parcel(
+		relay_header_parcel: Self::RelayHeaderParcel,
+	) -> DispatchResult;
 
-	fn pend_relay_header_parcels(
+	fn try_confirm_relay_header_parcels(
 		relay_header_parcels: Vec<Self::RelayHeaderParcel>,
 	) -> Vec<Result<(), DispatchError>> {
 		relay_header_parcels
 			.into_iter()
-			.map(Self::pend_relay_header_parcel)
+			.map(Self::try_confirm_relay_header_parcel)
 			.collect::<Vec<Result<(), DispatchError>>>()
 	}
 

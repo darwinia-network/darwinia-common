@@ -13,8 +13,9 @@ fn store_relay_header_parcel_should_work() {
 		assert!(EthereumRelay::best_confirmed_block_number() != 100);
 
 		assert_eq!(ethereum_relay_header_parcel.header.number, 100);
-		assert_ok!(EthereumRelay::confirm_relay_header_parcel(
+		assert_ok!(EthereumRelay::confirm_relay_header_parcel_with_reason(
 			ethereum_relay_header_parcel.clone(),
+			vec![]
 		));
 
 		assert_eq!(EthereumRelay::confirmed_header_parcel_of(100).unwrap(), ethereum_relay_header_parcel);
@@ -29,8 +30,9 @@ fn verify_relay_proofs_should_work() {
 		let ethereum_relay_header_parcel_100: EthereumRelayHeaderParcel =
 			serde_json::from_str(LAST_CONFIRM).unwrap();
 
-		assert_ok!(EthereumRelay::confirm_relay_header_parcel(
-			ethereum_relay_header_parcel_100.clone()
+		assert_ok!(EthereumRelay::confirm_relay_header_parcel_with_reason(
+			ethereum_relay_header_parcel_100.clone(),
+			vec![]
 		));
 
 		let ethereum_relay_header_parcel_103: EthereumRelayHeaderParcel =
@@ -77,8 +79,9 @@ fn verify_relay_chain_should_work() {
 		.best_confirmed_block_number(100)
 		.build()
 		.execute_with(|| {
-			assert_ok!(EthereumRelay::confirm_relay_header_parcel(
-				serde_json::from_str(LAST_CONFIRM).unwrap()
+			assert_ok!(EthereumRelay::confirm_relay_header_parcel_with_reason(
+				serde_json::from_str(LAST_CONFIRM).unwrap(),
+				vec![]
 			));
 
 			// Should work for random sample points order
@@ -116,7 +119,19 @@ fn verify_relay_chain_should_work() {
 }
 
 #[test]
-fn store_relay_header_parcel_api_should_work() {
+fn try_confirm_relay_header_parcel_should_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		assert!(EthereumRelay::pending_relay_header_parcels().is_empty());
+		assert_eq!(EthereumRelay::best_confirmed_block_number(), 0);
+
+		assert_ok!(EthereumRelay::try_confirm_relay_header_parcel(
+			serde_json::from_str(LAST_CONFIRM).unwrap()
+		));
+
+		assert!(EthereumRelay::pending_relay_header_parcels().is_empty());
+		assert_eq!(EthereumRelay::best_confirmed_block_number(), 100);
+	});
+
 	ExtBuilder::default()
 		.confirm_period(3)
 		.build()
@@ -124,7 +139,7 @@ fn store_relay_header_parcel_api_should_work() {
 			assert!(EthereumRelay::pending_relay_header_parcels().is_empty());
 			assert_eq!(EthereumRelay::best_confirmed_block_number(), 0);
 
-			assert_ok!(EthereumRelay::pend_relay_header_parcel(
+			assert_ok!(EthereumRelay::try_confirm_relay_header_parcel(
 				serde_json::from_str(LAST_CONFIRM).unwrap()
 			));
 
