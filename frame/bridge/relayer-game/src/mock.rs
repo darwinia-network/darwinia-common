@@ -207,10 +207,7 @@ use std::{cell::RefCell, time::Instant};
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
-use frame_support::{
-	impl_outer_origin, parameter_types,
-	traits::{OnFinalize, OnInitialize},
-};
+use frame_support::{impl_outer_origin, parameter_types, traits::OnFinalize};
 use sp_runtime::RuntimeDebug;
 // --- darwinia ---
 use crate::*;
