@@ -39,7 +39,6 @@ use frame_support::{
 	debug::*,
 	decl_error, decl_module, decl_storage, ensure,
 	traits::{Currency, OnUnbalanced},
-	weights::Weight,
 };
 use sp_runtime::{
 	traits::{Saturating, Zero},
@@ -750,7 +749,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		}
 
 		// TODO: handle error
-		let _ = T::RelayableChain::store_relay_header_parcels(relay_header_parcels);
+		let _ = T::RelayableChain::try_confirm_relay_header_parcels(relay_header_parcels);
 
 		trace!(target: "relayer-game", "---");
 
