@@ -133,6 +133,8 @@ decl_event! {
 		VerifyReceipt(AccountId, EthereumReceipt, EthereumHeader),
 		/// A relay header parcel got pended. [block number]
 		Pended(EthereumBlockNumber),
+		/// A guard voted. [ethereum block number, aye]
+		GuardVoted(EthereumBlockNumber, bool)
 		/// Pending relay header parcel approved. [block number, reason]
 		PendingRelayHeaderParcelApproved(EthereumBlockNumber, Vec<u8>),
 		/// Pending relay header parcel rejected. [block number]
@@ -349,7 +351,7 @@ decl_module! {
 		#[weight = 100_000_000]
 		pub fn vote_pending_relay_header_parcel(
 			origin,
-			block_number: EthereumBlockNumber,
+			ethereum_block_number: EthereumBlockNumber,
 			aye: bool
 		) {
 			let technical_member = {
@@ -366,7 +368,7 @@ decl_module! {
 					pending_relay_header_parcels
 						.iter()
 						.position(|(_, relay_header_parcel, _)| {
-							relay_header_parcel.header.number == block_number
+							relay_header_parcel.header.number == ethereum_block_number
 						}) {
 					let (
 						_,
@@ -410,14 +412,14 @@ decl_module! {
 						)?;
 
 						Self::deposit_event(RawEvent::PendingRelayHeaderParcelApproved(
-							block_number,
+							ethereum_block_number,
 							b"Approved By Tech.Comm".to_vec(),
 						));
 					} else if reject_threashold >= T::RejectThreshold::get() {
 						pending_relay_header_parcels.remove(i);
 
 						Self::deposit_event(RawEvent::PendingRelayHeaderParcelRejected(
-							block_number,
+							ethereum_block_number,
 						));
 					}
 
@@ -428,6 +430,8 @@ decl_module! {
 			});
 
 			res?;
+
+			Self::deposit_event(RawEvent::GuardVoted(ethereum_block_number, aye));
 		}
 
 		/// Check and verify the receipt
