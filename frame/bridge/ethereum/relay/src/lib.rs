@@ -134,7 +134,7 @@ decl_event! {
 		/// A relay header parcel got pended. [block number]
 		Pended(EthereumBlockNumber),
 		/// A guard voted. [ethereum block number, aye]
-		GuardVoted(EthereumBlockNumber, bool)
+		GuardVoted(EthereumBlockNumber, bool),
 		/// Pending relay header parcel approved. [block number, reason]
 		PendingRelayHeaderParcelApproved(EthereumBlockNumber, Vec<u8>),
 		/// Pending relay header parcel rejected. [block number]
