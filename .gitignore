@@ -1,20 +1,23 @@
-# Cross Compile Things
+# Cross Compile
 wasm
 
-# IDE Things
+# IDE
 .idea
 .vscode
-expand.rs
 .ignore
 
-# macOS Things
+# macOS
 .DS_Store
 
-# PM2 Things
+# PM2
 .pm2.json
 
-# Rust Things
+# Release
+release/
+
+# Rust
 **/*.rs.bk
 **/target/
 .cargo-ok
 Cargo.toml.bak
+expand.rs
