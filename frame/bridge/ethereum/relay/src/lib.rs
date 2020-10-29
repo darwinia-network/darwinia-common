@@ -208,6 +208,7 @@ decl_storage! {
 			: map hasher(identity) u64
 			=> H128;
 
+		// TODO: remove fee?
 		pub ReceiptVerifyFee
 			get(fn receipt_verify_fee)
 			config()
