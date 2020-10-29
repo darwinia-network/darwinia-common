@@ -117,8 +117,9 @@ decl_error! {
 		RingLockedNSBA,
 		/// Log Entry - NOT EXISTED
 		LogEntryNE,
-		/// Usable Balance for Paying Redeem Fee - INSUFFICIENT
-		FeeIns,
+		// TODO: remove fee?
+		// /// Usable Balance for Paying Redeem Fee - INSUFFICIENT
+		// FeeIns,
 		/// Redeem - DISABLED
 		RedeemDis
 	}
@@ -497,6 +498,7 @@ impl<T: Trait> Module<T> {
 
 		ensure!(!VerifiedProof::contains_key(tx_index), <Error<T>>::AssetAR);
 
+		// TODO: remove fee?
 		let (darwinia_account, (is_ring, redeem_amount), fee) =
 			Self::parse_token_redeem_proof(&proof)?;
 
@@ -542,11 +544,11 @@ impl<T: Trait> Module<T> {
 				<Error<T>>::KtonLockedNSBA
 			}
 		);
-		// Checking redeemer have enough of balance to pay fee, make sure follow up transfer will success.
-		ensure!(
-			T::RingCurrency::usable_balance(redeemer) >= fee,
-			<Error<T>>::FeeIns
-		);
+		// // Checking redeemer have enough of balance to pay fee, make sure follow up transfer will success.
+		// ensure!(
+		// 	T::RingCurrency::usable_balance(redeemer) >= fee,
+		// 	<Error<T>>::FeeIns
+		// );
 
 		C::transfer(
 			&Self::account_id(),
@@ -554,8 +556,8 @@ impl<T: Trait> Module<T> {
 			redeem_amount,
 			KeepAlive,
 		)?;
-		// Transfer the fee from redeemer.
-		T::RingCurrency::transfer(redeemer, &T::EthereumRelay::account_id(), fee, KeepAlive)?;
+		// // Transfer the fee from redeemer.
+		// T::RingCurrency::transfer(redeemer, &T::EthereumRelay::account_id(), fee, KeepAlive)?;
 
 		VerifiedProof::insert(tx_index, true);
 
@@ -576,6 +578,7 @@ impl<T: Trait> Module<T> {
 
 		ensure!(!VerifiedProof::contains_key(tx_index), <Error<T>>::AssetAR);
 
+		// TODO: remove fee?
 		let (deposit_id, darwinia_account, redeemed_ring, start_at, months, fee) =
 			Self::parse_deposit_redeem_proof(&proof)?;
 
@@ -583,11 +586,11 @@ impl<T: Trait> Module<T> {
 			Self::pot::<T::RingCurrency>() >= redeemed_ring,
 			<Error<T>>::RingLockedNSBA
 		);
-		// Checking redeemer have enough of balance to pay fee, make sure follow up fee transfer will success.
-		ensure!(
-			T::RingCurrency::usable_balance(redeemer) >= fee,
-			<Error<T>>::FeeIns
-		);
+		// // Checking redeemer have enough of balance to pay fee, make sure follow up fee transfer will success.
+		// ensure!(
+		// 	T::RingCurrency::usable_balance(redeemer) >= fee,
+		// 	<Error<T>>::FeeIns
+		// );
 
 		T::OnDepositRedeem::on_deposit_redeem(
 			&Self::account_id(),
@@ -596,8 +599,8 @@ impl<T: Trait> Module<T> {
 			start_at,
 			months,
 		)?;
-		// Transfer the fee from redeemer.
-		T::RingCurrency::transfer(redeemer, &T::EthereumRelay::account_id(), fee, KeepAlive)?;
+		// // Transfer the fee from redeemer.
+		// T::RingCurrency::transfer(redeemer, &T::EthereumRelay::account_id(), fee, KeepAlive)?;
 
 		// TODO: check deposit_id duplication
 		// TODO: Ignore Unit Interest for now
