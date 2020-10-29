@@ -990,6 +990,8 @@ fn on_deposit_redeem_should_work() {
 			let unbonded_account = 123;
 			let ring_pool = Staking::ring_pool();
 
+			assert_eq!(Ring::free_balance(unbonded_account), 0);
+			assert!(Ring::locks(unbonded_account).is_empty());
 			assert!(Staking::bonded(unbonded_account).is_none());
 			assert_eq!(
 				Staking::payee(unbonded_account),
@@ -1006,6 +1008,18 @@ fn on_deposit_redeem_should_work() {
 				deposit_months
 			));
 
+			assert_eq!(Ring::free_balance(unbonded_account), deposit_amount);
+			assert_eq!(
+				Ring::locks(unbonded_account),
+				vec![BalanceLock {
+					id: STAKING_ID,
+					lock_for: LockFor::Staking(StakingLock {
+						staking_amount: deposit_amount,
+						unbondings: vec![],
+					}),
+					lock_reasons: LockReasons::All,
+				}]
+			);
 			assert_eq!(Staking::bonded(unbonded_account).unwrap(), unbonded_account);
 			assert_eq!(Staking::payee(unbonded_account), RewardDestination::Stash);
 			assert_eq!(
@@ -1033,6 +1047,8 @@ fn on_deposit_redeem_should_work() {
 			let ring_pool = Staking::ring_pool();
 			let mut ledger = Staking::ledger(bonded_account).unwrap();
 
+			assert_eq!(Ring::free_balance(bonded_account), 101 * COIN);
+			assert_eq!(Ring::locks(bonded_account).len(), 1);
 			assert_eq!(Staking::bonded(bonded_account).unwrap(), bonded_account);
 
 			assert_ok!(Staking::on_deposit_redeem(
@@ -1048,6 +1064,21 @@ fn on_deposit_redeem_should_work() {
 			ledger.deposit_items.push(deposit_item);
 			ledger.ring_staking_lock.staking_amount += deposit_amount;
 
+			assert_eq!(
+				Ring::free_balance(bonded_account),
+				101 * COIN + deposit_amount
+			);
+			assert_eq!(
+				Ring::locks(bonded_account),
+				vec![BalanceLock {
+					id: STAKING_ID,
+					lock_for: LockFor::Staking(StakingLock {
+						staking_amount: 50 * COIN + deposit_amount,
+						unbondings: vec![],
+					}),
+					lock_reasons: LockReasons::All,
+				}]
+			);
 			assert_eq!(Staking::ledger(bonded_account).unwrap(), ledger);
 			assert_eq!(Staking::ring_pool(), ring_pool + deposit_amount);
 		}

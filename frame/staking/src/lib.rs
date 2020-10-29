@@ -3558,6 +3558,8 @@ impl<T: Trait> OnDepositRedeem<T::AccountId, RingBalance<T>> for Module<T> {
 				<Error<T>>::AlreadyPaired
 			);
 
+			T::RingCurrency::transfer(&backing, &stash, amount, KeepAlive)?;
+
 			<Bonded<T>>::insert(&stash, controller);
 			<Payee<T>>::insert(&stash, RewardDestination::Stash);
 
