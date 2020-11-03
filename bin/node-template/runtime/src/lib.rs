@@ -214,7 +214,9 @@ pub mod primitives {
 		pub const KEY_TYPE: KeyTypeId = key_types::REPORTING;
 
 		mod app {
+			// --- substrate ---
 			use sp_application_crypto::{app_crypto, sr25519};
+
 			app_crypto!(sr25519, super::KEY_TYPE);
 		}
 
@@ -265,7 +267,7 @@ pub mod primitives {
 	pub type Nonce = u32;
 
 	/// A hash of some data used by the chain.
-	pub type Hash = sp_core::H256;
+	pub type Hash = H256;
 
 	/// Digest item type.
 	pub type DigestItem = generic::DigestItem<Hash>;
@@ -374,6 +376,7 @@ use frame_support::{
 	ConsensusEngineId,
 };
 use frame_system::{EnsureOneOf, EnsureRoot};
+use pallet_evm::{Account as EVMAccount, EnsureAddressTruncated, FeeCalculator};
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
@@ -409,12 +412,9 @@ use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDis
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
 use darwinia_staking::EraIndex;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
-use impls::*;
-
-// dvm
 use dvm_ethereum::precompiles::{ConcatAddressMapping, NativeTransfer};
 use dvm_rpc_primitives::TransactionStatus;
-use pallet_evm::{Account as EVMAccount, EnsureAddressTruncated, FeeCalculator};
+use impls::*;
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
@@ -1125,21 +1125,17 @@ impl darwinia_tron_backing::Trait for Runtime {
 
 impl darwinia_header_mmr::Trait for Runtime {}
 
-// dvm needed
 /// Fixed gas price of `1`.
 pub struct FixedGasPrice;
-
 impl FeeCalculator for FixedGasPrice {
 	fn min_gas_price() -> U256 {
 		// Gas price is always one token per gas.
 		0.into()
 	}
 }
-
 parameter_types! {
 	pub const ChainId: u64 = 43;
 }
-
 impl pallet_evm::Trait for Runtime {
 	type FeeCalculator = FixedGasPrice;
 	type CallOrigin = EnsureAddressTruncated;
@@ -1170,36 +1166,11 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 		None
 	}
 }
-
 impl dvm_ethereum::Trait for Runtime {
 	type Event = Event;
 	type FindAuthor = EthereumFindAuthor<Babe>;
 	type AddressMapping = ConcatAddressMapping;
 	type RingCurrency = Balances;
-}
-
-pub struct TransactionConverter;
-
-impl dvm_rpc_primitives::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
-	fn convert_transaction(&self, transaction: dvm_ethereum::Transaction) -> UncheckedExtrinsic {
-		UncheckedExtrinsic::new_unsigned(
-			dvm_ethereum::Call::<Runtime>::transact(transaction).into(),
-		)
-	}
-}
-
-impl dvm_rpc_primitives::ConvertTransaction<opaque::UncheckedExtrinsic> for TransactionConverter {
-	fn convert_transaction(
-		&self,
-		transaction: dvm_ethereum::Transaction,
-	) -> opaque::UncheckedExtrinsic {
-		let extrinsic = UncheckedExtrinsic::new_unsigned(
-			dvm_ethereum::Call::<Runtime>::transact(transaction).into(),
-		);
-		let encoded = extrinsic.encode();
-		opaque::UncheckedExtrinsic::decode(&mut &encoded[..])
-			.expect("Encoded extrinsic is always valid")
-	}
 }
 
 construct_runtime!(
@@ -1265,9 +1236,8 @@ construct_runtime!(
 
 		HeaderMMR: darwinia_header_mmr::{Module, Call, Storage},
 
-		// dvm related
-		Ethereum: dvm_ethereum::{Module, Call, Storage, Event, Config, ValidateUnsigned},
 		EVM: pallet_evm::{Module, Config, Call, Storage, Event<T>},
+		Ethereum: dvm_ethereum::{Module, Call, Storage, Event, Config, ValidateUnsigned},
 	}
 );
 
@@ -1557,8 +1527,10 @@ impl_runtime_apis! {
 			nonce: Option<U256>,
 			action: dvm_ethereum::TransactionAction,
 		) -> Result<(Vec<u8>, U256), sp_runtime::DispatchError> {
-			// ensure that the gas_limit fits within a u32; otherwise the wrong value will be passed
+			// --- substrate ---
 			use sp_runtime::traits::UniqueSaturatedInto;
+
+			// ensure that the gas_limit fits within a u32; otherwise the wrong value will be passed
 			let gas_limit_considered: u32 = gas_limit.unique_saturated_into();
 			let gas_limit_considered_256: U256 = gas_limit_considered.into();
 			if gas_limit_considered_256 != gas_limit {
@@ -1618,5 +1590,28 @@ impl_runtime_apis! {
 				Ethereum::current_transaction_statuses()
 			)
 		}
+	}
+}
+
+pub struct TransactionConverter;
+impl dvm_rpc_primitives::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
+	fn convert_transaction(&self, transaction: dvm_ethereum::Transaction) -> UncheckedExtrinsic {
+		UncheckedExtrinsic::new_unsigned(
+			<dvm_ethereum::Call<Runtime>>::transact(transaction).into(),
+		)
+	}
+}
+impl dvm_rpc_primitives::ConvertTransaction<opaque::UncheckedExtrinsic> for TransactionConverter {
+	fn convert_transaction(
+		&self,
+		transaction: dvm_ethereum::Transaction,
+	) -> opaque::UncheckedExtrinsic {
+		let extrinsic = UncheckedExtrinsic::new_unsigned(
+			<dvm_ethereum::Call<Runtime>>::transact(transaction).into(),
+		);
+		let encoded = extrinsic.encode();
+
+		opaque::UncheckedExtrinsic::decode(&mut &encoded[..])
+			.expect("Encoded extrinsic is always valid")
 	}
 }

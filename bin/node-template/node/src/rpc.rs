@@ -125,6 +125,7 @@ where
 	use darwinia_header_mmr_rpc::{HeaderMMR, HeaderMMRApi};
 	use darwinia_staking_rpc::{Staking, StakingApi};
 	use dvm_rpc::{EthApi, EthApiServer, EthPubSubApi, EthPubSubApiServer, NetApi, NetApiServer};
+	use node_template_runtime::TransactionConverter;
 
 	let FullDeps {
 		client,
@@ -185,7 +186,7 @@ where
 	io.extend_with(EthApiServer::to_delegate(EthApi::new(
 		client.clone(),
 		pool.clone(),
-		node_template_runtime::TransactionConverter,
+		TransactionConverter,
 		is_authority,
 	)));
 	io.extend_with(EthPubSubApiServer::to_delegate(EthPubSubApi::new(
