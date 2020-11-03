@@ -1,28 +1,31 @@
 [package]
-name = "dvm-consensus"
-version = "0.1.0"
 authors     = ["Darwinia Network <hello@darwinia.network>"]
-readme      = "README.md"
-homepage    = "https://darwinia.network/"
 description = "Consensus for darwinia dvm"
-edition = "2018"
+edition     = "2018"
+homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"
+name        = "dvm-consensus"
+readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
+version     = "1.0.0"
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "1.3.4", features = ["derive"] }
-sp-core = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-blockchain = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-runtime = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-api = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sc-client-api = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-block-builder = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-inherents = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-dvm-consensus-primitives = { version = "0.1.0", path = "primitives" }
-sp-consensus = { version = "0.8.0", git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-log = "0.4.8"
-futures = { version = "0.3.1", features = ["compat"] }
-sp-timestamp = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-derive_more = "0.99.2"
-prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/darwinia-network/substrate.git", branch = "common-library"}
-ethereum = { version = "0.3", features = ["codec"] }
+# crates
+codec       = { package = "parity-scale-codec", version = "1.3.5", features = ["derive"] }
+derive_more = "0.99.11"
+ethereum    = { version = "0.3", features = ["codec"] }
+futures     = { version = "0.3.7", features = ["compat"] }
+log         = "0.4.11"
+# darwinia
+dvm-consensus-primitives = { path = "primitives" }
+# substrate
+prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-api              = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-block-builder    = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-consensus        = { version = "0.8.0", git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-core             = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-inherents        = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-timestamp        = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }

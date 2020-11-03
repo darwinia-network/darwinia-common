@@ -1,18 +1,21 @@
 [package]
-name = "dvm-rpc-core"
-version = "0.1.0"
 authors     = ["Darwinia Network <hello@darwinia.network>"]
-edition = "2018"
 description = "RPC traits of Ethereum."
-license = "GPL-3.0"
+edition     = "2018"
+homepage    = "https://darwinia.network/"
+license     = "GPL-3.0"
+name        = "dvm-rpc-core"
+readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
+version     = "1.0.0"
 
 [dependencies]
-jsonrpc-core = "15.0.0"
-jsonrpc-core-client = "14.0.3"
-jsonrpc-derive = "14.0.3"
-jsonrpc-pubsub = "15.0.0"
-rustc-hex = "2.1.0"
-ethereum-types = "0.9.0"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+# crates
+ethereum-types      = "0.9.0"
+jsonrpc-core        = "15.1.0"
+jsonrpc-core-client = "15.1.0"
+jsonrpc-derive      = "15.1.0"
+jsonrpc-pubsub      = "15.1.0"
+rustc-hex           = "2.1.0"
+serde               = { version = "1.0", features = ["derive"] }
+serde_json          = "1.0"
