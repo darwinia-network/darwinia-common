@@ -5,7 +5,7 @@ pub mod crab_issuing {
 	pub use crate::Event;
 }
 
-// --- crate ---
+// --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{impl_outer_event, impl_outer_origin, parameter_types, weights::Weight};
