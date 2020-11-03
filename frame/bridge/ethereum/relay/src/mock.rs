@@ -1,7 +1,11 @@
 //! Mock file for ethereum-relay.
 
+// --- std ---
+use std::cell::RefCell;
 // --- substrate ---
-use frame_support::{impl_outer_dispatch, impl_outer_origin, parameter_types, weights::Weight};
+use frame_support::{
+	impl_outer_dispatch, impl_outer_origin, parameter_types, traits::OnInitialize, weights::Weight,
+};
 use frame_system::EnsureRoot;
 use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill, RuntimeDebug};
@@ -18,6 +22,11 @@ pub type KtonInstance = darwinia_balances::Instance1;
 pub type System = frame_system::Module<Test>;
 pub type EthereumRelay = Module<Test>;
 pub type Ring = darwinia_balances::Module<Test, RingInstance>;
+
+thread_local! {
+	static BEST_CONFIRMED_BLOCK_NUMBER: RefCell<EthereumBlockNumber> = RefCell::new(0);
+	static CONFIRM_PERIOD: RefCell<BlockNumber> = RefCell::new(0);
+}
 
 impl_outer_origin! {
 	pub enum Origin for Test where system = frame_system {}
@@ -41,9 +50,22 @@ darwinia_support::impl_account_data! {
 	}
 }
 
+pub struct ConfirmPeriod;
+impl Get<BlockNumber> for ConfirmPeriod {
+	fn get() -> BlockNumber {
+		CONFIRM_PERIOD.with(|v| *v.borrow())
+	}
+}
+
 // Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Test;
+pub struct UnusedTechnicalMembership;
+impl Contains<AccountId> for UnusedTechnicalMembership {
+	fn sorted_members() -> Vec<AccountId> {
+		vec![1, 2, 3]
+	}
+}
 parameter_types! {
 	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
 	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Mainnet;
@@ -57,6 +79,10 @@ impl Trait for Test {
 	type RelayerGame = UnusedRelayerGame;
 	type ApproveOrigin = EnsureRoot<AccountId>;
 	type RejectOrigin = EnsureRoot<AccountId>;
+	type ConfirmPeriod = ConfirmPeriod;
+	type TechnicalMembership = UnusedTechnicalMembership;
+	type ApproveThreshold = ();
+	type RejectThreshold = ();
 	type WeightInfo = ();
 }
 
@@ -106,14 +132,34 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 	type WeightInfo = ();
 }
 
-pub struct ExtBuilder {}
-impl Default for ExtBuilder {
-	fn default() -> Self {
-		Self {}
-	}
+pub struct ExtBuilder {
+	best_confirmed_block_number: EthereumBlockNumber,
+	confirm_period: BlockNumber,
 }
 impl ExtBuilder {
+	pub fn best_confirmed_block_number(
+		mut self,
+		best_confirmed_block_number: EthereumBlockNumber,
+	) -> Self {
+		self.best_confirmed_block_number = best_confirmed_block_number;
+
+		self
+	}
+
+	pub fn confirm_period(mut self, confirm_period: BlockNumber) -> Self {
+		self.confirm_period = confirm_period;
+
+		self
+	}
+
+	pub fn set_associated_constants(&self) {
+		BEST_CONFIRMED_BLOCK_NUMBER.with(|v| v.replace(self.best_confirmed_block_number));
+		CONFIRM_PERIOD.with(|v| v.replace(self.confirm_period));
+	}
+
 	pub fn build(self) -> sp_io::TestExternalities {
+		self.set_associated_constants();
+
 		let mut storage = frame_system::GenesisConfig::default()
 			.build_storage::<Test>()
 			.unwrap();
@@ -131,7 +177,16 @@ impl ExtBuilder {
 		}
 		.assimilate_storage(&mut storage)
 		.unwrap();
+
 		storage.into()
+	}
+}
+impl Default for ExtBuilder {
+	fn default() -> Self {
+		Self {
+			best_confirmed_block_number: BEST_CONFIRMED_BLOCK_NUMBER.with(|v| *v.borrow()),
+			confirm_period: CONFIRM_PERIOD.with(|v| *v.borrow()),
+		}
 	}
 }
 
@@ -143,26 +198,25 @@ impl RelayerGameProtocol for UnusedRelayerGame {
 	type RelayProofs = EthereumRelayProofs;
 
 	fn get_proposed_relay_header_parcels(
-		_: RelayAffirmationId<Self::RelayHeaderId>,
+		_: &RelayAffirmationId<Self::RelayHeaderId>,
 	) -> Option<Vec<Self::RelayHeaderParcel>> {
 		unimplemented!()
 	}
-	// TODO: Should construct in `ExtBuilder` finally
 	fn best_confirmed_header_id_of(_: &Self::RelayHeaderId) -> Self::RelayHeaderId {
-		100
+		BEST_CONFIRMED_BLOCK_NUMBER.with(|v| *v.borrow())
 	}
 	fn affirm(
-		_: Self::Relayer,
+		_: &Self::Relayer,
 		_: Self::RelayHeaderParcel,
 		_: Option<Self::RelayProofs>,
-	) -> DispatchResult {
+	) -> Result<Self::RelayHeaderId, DispatchError> {
 		unimplemented!()
 	}
 	fn dispute_and_affirm(
-		_: Self::Relayer,
+		_: &Self::Relayer,
 		_: Self::RelayHeaderParcel,
 		_: Option<Self::RelayProofs>,
-	) -> DispatchResult {
+	) -> Result<(Self::RelayHeaderId, u32), DispatchError> {
 		unimplemented!()
 	}
 	fn complete_relay_proofs(
@@ -172,17 +226,24 @@ impl RelayerGameProtocol for UnusedRelayerGame {
 		unimplemented!()
 	}
 	fn extend_affirmation(
-		_: Self::Relayer,
-		_: Vec<Self::RelayHeaderParcel>,
+		_: &Self::Relayer,
 		_: RelayAffirmationId<Self::RelayHeaderId>,
+		_: Vec<Self::RelayHeaderParcel>,
 		_: Option<Vec<Self::RelayProofs>>,
-	) -> DispatchResult {
+	) -> Result<(Self::RelayHeaderId, u32, u32), DispatchError> {
 		unimplemented!()
 	}
-	fn approve_pending_relay_header_parcel(_: Self::RelayHeaderId) -> DispatchResult {
-		unimplemented!()
-	}
-	fn reject_pending_relay_header_parcel(_: Self::RelayHeaderId) -> DispatchResult {
-		unimplemented!()
+}
+
+pub fn run_to_block(n: BlockNumber) {
+	// EthereumRelay::on_finalize(System::block_number());
+
+	for b in System::block_number() + 1..=n {
+		System::set_block_number(b);
+		EthereumRelay::on_initialize(b);
+
+		// if b != n {
+		// 	EthereumRelay::on_finalize(System::block_number());
+		// }
 	}
 }

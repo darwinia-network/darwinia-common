@@ -74,6 +74,10 @@ pub trait Trait: frame_system::Trait {
 	type WeightInfo: WeightInfo;
 }
 
+// TODO: https://github.com/darwinia-network/darwinia-common/issues/209
+pub trait WeightInfo {}
+impl WeightInfo for () {}
+
 decl_event! {
 	pub enum Event<T>
 	where
@@ -95,34 +99,29 @@ decl_error! {
 		AddrLenMis,
 		/// Pubkey Prefix - MISMATCHED
 		PubkeyPrefixMis,
-
 		/// Bytes - CONVERSION FAILED
 		BytesCF,
 		/// Int - CONVERSION FAILED
 		IntCF,
-
 		/// Address - CONVERSION FAILED
 		AddressCF,
-
 		/// Asset - ALREADY REDEEMED
 		AssetAR,
-
 		/// EthereumReceipt Proof - INVALID
 		ReceiptProofInv,
-
 		/// Eth Log - PARSING FAILED
 		EthLogPF,
-
 		/// *KTON* Locked - NO SUFFICIENT BACKING ASSETS
 		KtonLockedNSBA,
 		/// *RING* Locked - NO SUFFICIENT BACKING ASSETS
 		RingLockedNSBA,
-
 		/// Log Entry - NOT EXISTED
 		LogEntryNE,
-
-		/// Usable Balance for Paying Redeem Fee - INSUFFICIENT
-		FeeIns,
+		// TODO: remove fee?
+		// /// Usable Balance for Paying Redeem Fee - INSUFFICIENT
+		// FeeIns,
+		/// Redeem - DISABLED
+		RedeemDis
 	}
 }
 
@@ -137,6 +136,8 @@ decl_storage! {
 
 		pub RingTokenAddress get(fn ring_token_address) config(): EthereumAddress;
 		pub KtonTokenAddress get(fn kton_token_address) config(): EthereumAddress;
+
+		pub RedeemStatus get(fn redeem_status): bool = true;
 	}
 	add_extra_genesis {
 		config(ring_locked): RingBalance<T>;
@@ -177,9 +178,13 @@ decl_module! {
 		pub fn redeem(origin, act: RedeemFor, proof: EthereumReceiptProofThing<T>) {
 			let redeemer = ensure_signed(origin)?;
 
-			match act {
-				RedeemFor::Token => Self::redeem_token(&redeemer, &proof)?,
-				RedeemFor::Deposit => Self::redeem_deposit(&redeemer, &proof)?,
+			if Self::redeem_status() {
+				match act {
+					RedeemFor::Token => Self::redeem_token(&redeemer, &proof)?,
+					RedeemFor::Deposit => Self::redeem_deposit(&redeemer, &proof)?,
+				}
+			} else {
+				Err(<Error<T>>::RedeemDis)?;
 			}
 		}
 
@@ -197,6 +202,7 @@ decl_module! {
 		#[weight = 10_000_000]
 		pub fn set_token_redeem_address(origin, new: EthereumAddress) {
 			ensure_root(origin)?;
+
 			TokenRedeemAddress::put(new);
 		}
 
@@ -212,7 +218,15 @@ decl_module! {
 		#[weight = 10_000_000]
 		pub fn set_deposit_redeem_address(origin, new: EthereumAddress) {
 			ensure_root(origin)?;
+
 			DepositRedeemAddress::put(new);
+		}
+
+		#[weight = 10_000_000]
+		pub fn set_redeem_status(origin, status: bool) {
+			ensure_root(origin)?;
+
+			RedeemStatus::put(status);
 		}
 	}
 }
@@ -484,6 +498,7 @@ impl<T: Trait> Module<T> {
 
 		ensure!(!VerifiedProof::contains_key(tx_index), <Error<T>>::AssetAR);
 
+		// TODO: remove fee?
 		let (darwinia_account, (is_ring, redeem_amount), fee) =
 			Self::parse_token_redeem_proof(&proof)?;
 
@@ -529,11 +544,11 @@ impl<T: Trait> Module<T> {
 				<Error<T>>::KtonLockedNSBA
 			}
 		);
-		// Checking redeemer have enough of balance to pay fee, make sure follow up transfer will success.
-		ensure!(
-			T::RingCurrency::usable_balance(redeemer) >= fee,
-			<Error<T>>::FeeIns
-		);
+		// // Checking redeemer have enough of balance to pay fee, make sure follow up transfer will success.
+		// ensure!(
+		// 	T::RingCurrency::usable_balance(redeemer) >= fee,
+		// 	<Error<T>>::FeeIns
+		// );
 
 		C::transfer(
 			&Self::account_id(),
@@ -541,8 +556,8 @@ impl<T: Trait> Module<T> {
 			redeem_amount,
 			KeepAlive,
 		)?;
-		// Transfer the fee from redeemer.
-		T::RingCurrency::transfer(redeemer, &T::EthereumRelay::account_id(), fee, KeepAlive)?;
+		// // Transfer the fee from redeemer.
+		// T::RingCurrency::transfer(redeemer, &T::EthereumRelay::account_id(), fee, KeepAlive)?;
 
 		VerifiedProof::insert(tx_index, true);
 
@@ -563,6 +578,7 @@ impl<T: Trait> Module<T> {
 
 		ensure!(!VerifiedProof::contains_key(tx_index), <Error<T>>::AssetAR);
 
+		// TODO: remove fee?
 		let (deposit_id, darwinia_account, redeemed_ring, start_at, months, fee) =
 			Self::parse_deposit_redeem_proof(&proof)?;
 
@@ -570,11 +586,11 @@ impl<T: Trait> Module<T> {
 			Self::pot::<T::RingCurrency>() >= redeemed_ring,
 			<Error<T>>::RingLockedNSBA
 		);
-		// Checking redeemer have enough of balance to pay fee, make sure follow up fee transfer will success.
-		ensure!(
-			T::RingCurrency::usable_balance(redeemer) >= fee,
-			<Error<T>>::FeeIns
-		);
+		// // Checking redeemer have enough of balance to pay fee, make sure follow up fee transfer will success.
+		// ensure!(
+		// 	T::RingCurrency::usable_balance(redeemer) >= fee,
+		// 	<Error<T>>::FeeIns
+		// );
 
 		T::OnDepositRedeem::on_deposit_redeem(
 			&Self::account_id(),
@@ -583,8 +599,8 @@ impl<T: Trait> Module<T> {
 			start_at,
 			months,
 		)?;
-		// Transfer the fee from redeemer.
-		T::RingCurrency::transfer(redeemer, &T::EthereumRelay::account_id(), fee, KeepAlive)?;
+		// // Transfer the fee from redeemer.
+		// T::RingCurrency::transfer(redeemer, &T::EthereumRelay::account_id(), fee, KeepAlive)?;
 
 		// TODO: check deposit_id duplication
 		// TODO: Ignore Unit Interest for now
@@ -600,10 +616,6 @@ impl<T: Trait> Module<T> {
 		Ok(())
 	}
 }
-
-// TODO: https://github.com/darwinia-network/darwinia-common/issues/209
-pub trait WeightInfo {}
-impl WeightInfo for () {}
 
 #[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
 pub enum RedeemFor {

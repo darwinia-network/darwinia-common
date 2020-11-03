@@ -7,6 +7,8 @@ mod mmr;
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
+mod test_data;
+#[cfg(test)]
 mod tests;
 
 mod types {
@@ -14,6 +16,8 @@ mod types {
 	use crate::*;
 
 	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
+	pub type BlockNumber<T> = <T as frame_system::Trait>::BlockNumber;
+
 	pub type RingBalance<T> = <CurrencyT<T> as Currency<AccountId<T>>>::Balance;
 
 	type CurrencyT<T> = <T as Trait>::Currency;
@@ -28,16 +32,19 @@ use ethereum_types::H128;
 // --- substrate ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
-	traits::Get,
-	traits::{Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, ReservableCurrency},
+	traits::{
+		ChangeMembers, Contains, Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, Get,
+		ReservableCurrency,
+	},
 	unsigned::{TransactionValidity, TransactionValidityError},
+	weights::Weight,
 	IsSubType,
 };
 use frame_system::ensure_signed;
 use sp_runtime::{
-	traits::{AccountIdConversion, DispatchInfoOf, Dispatchable, SignedExtension},
+	traits::{AccountIdConversion, DispatchInfoOf, Dispatchable, SignedExtension, Zero},
 	transaction_validity::ValidTransaction,
-	DispatchError, DispatchResult, ModuleId, RuntimeDebug,
+	DispatchError, DispatchResult, ModuleId, Perbill, RuntimeDebug,
 };
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
@@ -71,8 +78,8 @@ pub trait Trait: frame_system::Trait {
 
 	type Call: Dispatchable + From<Call<Self>> + IsSubType<Call<Self>> + Clone;
 
-	type Currency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
-		+ ReservableCurrency<Self::AccountId>;
+	type Currency: LockableCurrency<AccountId<Self>, Moment = Self::BlockNumber>
+		+ ReservableCurrency<AccountId<Self>>;
 
 	type RelayerGame: RelayerGameProtocol<
 		Relayer = AccountId<Self>,
@@ -85,6 +92,19 @@ pub trait Trait: frame_system::Trait {
 
 	type RejectOrigin: EnsureOrigin<Self::Origin>;
 
+	/// The comfirm period for guard
+	///
+	/// Tech.Comm. can vote for the pending header within this period
+	/// If not enough Tech.Comm. votes for the pending header it will be confirmed
+	/// automatically after this period
+	type ConfirmPeriod: Get<Self::BlockNumber>;
+
+	type TechnicalMembership: Contains<AccountId<Self>>;
+
+	type ApproveThreshold: Get<Perbill>;
+
+	type RejectThreshold: Get<Perbill>;
+
 	/// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
 }
@@ -96,12 +116,31 @@ impl WeightInfo for () {}
 decl_event! {
 	pub enum Event<T>
 	where
-		<T as frame_system::Trait>::AccountId,
+		AccountId = AccountId<T>,
+		RelayAffirmationId = RelayAffirmationId<EthereumBlockNumber>,
 	{
-		/// The specific confirmed parcel removed. [block id]
+		/// A new relay header parcel affirmed. [relayer, relay affirmation id]
+		Affirmed(AccountId, RelayAffirmationId),
+		/// A different affirmation submitted, dispute found. [relayer, relay affirmation id]
+		DisputedAndAffirmed(AccountId, RelayAffirmationId),
+		/// An extended affirmation submitted, dispute go on. [relayer, relay affirmation id]
+		Extended(AccountId, RelayAffirmationId),
+		/// A new round started. [game id, game sample points]
+		NewRound(EthereumBlockNumber, Vec<EthereumBlockNumber>),
+		/// A game has been settled. [game id]
+		GameOver(EthereumBlockNumber),
+		/// The specific confirmed parcel removed. [ethereum block number]
 		RemoveConfirmedParcel(EthereumBlockNumber),
 		/// EthereumReceipt verification. [account, ethereum receipt, ethereum header]
 		VerifyReceipt(AccountId, EthereumReceipt, EthereumHeader),
+		/// A relay header parcel got pended. [ethereum block number]
+		Pended(EthereumBlockNumber),
+		/// A guard voted. [ethereum block number, aye]
+		GuardVoted(EthereumBlockNumber, bool),
+		/// Pending relay header parcel confirmed. [ethereum block number, reason]
+		PendingRelayHeaderParcelConfirmed(EthereumBlockNumber, Vec<u8>),
+		/// Pending relay header parcel rejected. [ethereum block number]
+		PendingRelayHeaderParcelRejected(EthereumBlockNumber),
 	}
 }
 
@@ -113,8 +152,8 @@ decl_error! {
 		ConfirmedBlocksC,
 		/// Continuous - INVALID
 		ContinuousInv,
-		// /// Proposal - INVALID
-		// ProposalInv,
+		// /// Affirmation - INVALID
+		// AffirmationInv,
 		/// Header Hash - INVALID
 		HeaderHashInv,
 		/// MMR - INVALID
@@ -125,6 +164,14 @@ decl_error! {
 		ConfirmedHeaderNE,
 		/// EthereumReceipt Proof - INVALID
 		ReceiptProofInv,
+		/// Pending Relay Header Parcel - NOT EXISTED
+		PendingRelayHeaderParcelNE,
+		/// Pending Relay Header Parcel - ALREADY EXISTED
+		PendingRelayHeaderParcelAE,
+		/// Already Vote for Aye - DUPLICATED
+		AlreadyVoteForAyeDup,
+		/// Already Vote for Nay - DUPLICATED
+		AlreadyVoteForNayDup,
 	}
 }
 
@@ -161,10 +208,15 @@ decl_storage! {
 			: map hasher(identity) u64
 			=> H128;
 
+		// TODO: remove fee?
 		pub ReceiptVerifyFee
 			get(fn receipt_verify_fee)
 			config()
 			: RingBalance<T>;
+
+		pub PendingRelayHeaderParcels
+			get(fn pending_relay_header_parcels)
+			: Vec<(BlockNumber<T>, EthereumRelayHeaderParcel, RelayVotingState<AccountId<T>>)>;
 	}
 	add_extra_genesis {
 		config(genesis_header_info): (Vec<u8>, H256);
@@ -210,8 +262,22 @@ decl_module! {
 	{
 		type Error = Error<T>;
 
+		const ModuleId: ModuleId = T::ModuleId::get();
+
+		const ConfirmPeriod: BlockNumber<T> = T::ConfirmPeriod::get();
+
+		const ApproveThreshold: Perbill = T::ApproveThreshold::get();
+		const RejectThreshold: Perbill = T::RejectThreshold::get();
+
 		fn deposit_event() = default;
 
+		fn on_initialize(now: BlockNumber<T>) -> Weight {
+			// TODO: handle error
+			// TODO: weight
+			Self::system_approve_pending_relay_header_parcels(now).unwrap_or(0)
+		}
+
+		// TODO: weight
 		#[weight = 0]
 		pub fn affirm(
 			origin,
@@ -219,14 +285,19 @@ decl_module! {
 			optional_ethereum_relay_proofs: Option<EthereumRelayProofs>
 		) {
 			let relayer = ensure_signed(origin)?;
-
-			T::RelayerGame::affirm(
-				relayer,
+			let game_id = T::RelayerGame::affirm(
+				&relayer,
 				ethereum_relay_header_parcel,
 				optional_ethereum_relay_proofs
 			)?;
+
+			Self::deposit_event(RawEvent::Affirmed(
+				relayer,
+				RelayAffirmationId { game_id, round: 0, index: 0 }
+			));
 		}
 
+		// TODO: weight
 		#[weight = 0]
 		pub fn dispute_and_affirm(
 			origin,
@@ -234,14 +305,19 @@ decl_module! {
 			optional_ethereum_relay_proofs: Option<EthereumRelayProofs>
 		) {
 			let relayer = ensure_signed(origin)?;
-
-			T::RelayerGame::dispute_and_affirm(
-				relayer,
+			let (game_id, index) = T::RelayerGame::dispute_and_affirm(
+				&relayer,
 				ethereum_relay_header_parcel,
 				optional_ethereum_relay_proofs
 			)?;
+
+			Self::deposit_event(RawEvent::DisputedAndAffirmed(
+				relayer,
+				RelayAffirmationId { game_id, round: 0, index }
+			));
 		}
 
+		// TODO: weight
 		#[weight = 0]
 		pub fn complete_relay_proofs(
 			origin,
@@ -253,33 +329,107 @@ decl_module! {
 			T::RelayerGame::complete_relay_proofs(affirmation_id, ethereum_relay_proofs)?;
 		}
 
+		// TODO: weight
 		#[weight = 0]
 		fn extend_affirmation(
 			origin,
-			game_sample_points: Vec<EthereumRelayHeaderParcel>,
 			extended_ethereum_relay_affirmation_id: RelayAffirmationId<EthereumBlockNumber>,
+			game_sample_points: Vec<EthereumRelayHeaderParcel>,
 			optional_ethereum_relay_proofs: Option<Vec<EthereumRelayProofs>>,
 		) {
 			let relayer = ensure_signed(origin)?;
-
-			T::RelayerGame::extend_affirmation(
-				relayer,
-				game_sample_points,
+			let (game_id, round, index) = T::RelayerGame::extend_affirmation(
+				&relayer,
 				extended_ethereum_relay_affirmation_id,
+				game_sample_points,
 				optional_ethereum_relay_proofs
 			)?;
+
+			Self::deposit_event(RawEvent::Extended(
+				relayer,
+				RelayAffirmationId { game_id, round, index }
+			));
 		}
 
 		#[weight = 100_000_000]
-		pub fn approve_pending_relay_header_parcel(origin, pending_relay_block_id: EthereumBlockNumber) {
-			T::ApproveOrigin::ensure_origin(origin)?;
-			T::RelayerGame::approve_pending_relay_header_parcel(pending_relay_block_id)?;
-		}
+		pub fn vote_pending_relay_header_parcel(
+			origin,
+			ethereum_block_number: EthereumBlockNumber,
+			aye: bool
+		) {
+			let technical_member = {
+				let account_id = ensure_signed(origin)?;
 
-		#[weight = 100_000_000]
-		pub fn reject_pending_relay_header_parcel(origin, pending_relay_block_id: EthereumBlockNumber) {
-			T::RejectOrigin::ensure_origin(origin)?;
-			T::RelayerGame::reject_pending_relay_header_parcel(pending_relay_block_id)?;
+				if T::TechnicalMembership::contains(&account_id) {
+					account_id
+				} else {
+					Err(DispatchError::BadOrigin)?
+				}
+			};
+			let res: Result<(), DispatchError> = <PendingRelayHeaderParcels<T>>::try_mutate(|pending_relay_header_parcels| {
+				if let Some(i) =
+					pending_relay_header_parcels
+						.iter()
+						.position(|(_, relay_header_parcel, _)| {
+							relay_header_parcel.header.number == ethereum_block_number
+						}) {
+					let (
+						_,
+						_,
+						RelayVotingState { ayes, nays }
+					) =	&mut pending_relay_header_parcels[i];
+
+					if aye {
+						if ayes.contains(&technical_member) {
+							Err(<Error<T>>::AlreadyVoteForAyeDup)?;
+						} else {
+							if let Some(i) = nays.iter().position(|nay| nay == &technical_member) {
+								nays.remove(i);
+							}
+
+							ayes.push(technical_member);
+						}
+					} else {
+						if nays.contains(&technical_member) {
+							Err(<Error<T>>::AlreadyVoteForNayDup)?;
+						} else {
+							if let Some(i) = ayes.iter().position(|aye| aye == &technical_member) {
+								ayes.remove(i);
+							}
+
+							nays.push(technical_member);
+						}
+					}
+
+					let approve = ayes.len() as u32;
+					let reject = nays.len() as u32;
+					let total = T::TechnicalMembership::count() as u32;
+					let approve_threashold =
+						Perbill::from_rational_approximation(approve, total);
+					let reject_threashold =
+						Perbill::from_rational_approximation(reject, total);
+
+					if approve_threashold >= T::ApproveThreshold::get() {
+						Self::confirm_relay_header_parcel_with_reason(
+							pending_relay_header_parcels.remove(i).1, 	b"Confirmed By Tech.Comm".to_vec()
+						)?;
+					} else if reject_threashold >= T::RejectThreshold::get() {
+						pending_relay_header_parcels.remove(i);
+
+						Self::deposit_event(RawEvent::PendingRelayHeaderParcelRejected(
+							ethereum_block_number,
+						));
+					}
+
+					Ok(())
+				} else {
+					Err(<Error<T>>::PendingRelayHeaderParcelNE)?
+				}
+			});
+
+			res?;
+
+			Self::deposit_event(RawEvent::GuardVoted(ethereum_block_number, aye));
 		}
 
 		/// Check and verify the receipt
@@ -461,110 +611,61 @@ impl<T: Trait> Module<T> {
 		.unwrap_or(false)
 	}
 
-	pub fn migrate_genesis(use_ethereum_mainnet: bool) {
-		// --- substrate ---
-		use frame_support::migration::*;
+	pub fn update_confirmeds_with_reason(relay_header_parcel: EthereumRelayHeaderParcel, reason: Vec<u8>) {
+		let relay_block_number = relay_header_parcel.header.number;
 
-		let module = b"DarwiniaEthereumRelay";
+		ConfirmedBlockNumbers::mutate(|confirmed_block_numbers| {
+			// TODO: remove old numbers according to `ConfirmedDepth`
 
-		{
-			let items: [&[u8]; 2] = [b"ConfirmedHeaders", b"ConfirmedBlockNumbers"];
+			confirmed_block_numbers.push(relay_block_number);
 
-			for item in &items {
-				remove_storage_prefix(module, item, &[]);
-			}
-		}
+			BestConfirmedBlockNumber::put(relay_block_number);
+		});
+		ConfirmedHeaderParcels::insert(relay_block_number, relay_header_parcel);
 
-		let genesis_header = if use_ethereum_mainnet {
-			let raw_genesis_header = vec![
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 86, 232, 31, 23, 27, 204, 85, 166, 255, 131,
-				69, 230, 146, 192, 248, 110, 91, 72, 224, 27, 153, 108, 173, 192, 1, 98, 47, 181,
-				227, 99, 180, 33, 29, 204, 77, 232, 222, 199, 93, 122, 171, 133, 181, 103, 182,
-				204, 212, 26, 211, 18, 69, 27, 148, 138, 116, 19, 240, 161, 66, 253, 64, 212, 147,
-				71, 128, 17, 187, 232, 219, 78, 52, 123, 78, 140, 147, 124, 28, 131, 112, 228, 181,
-				237, 51, 173, 179, 219, 105, 203, 219, 122, 56, 225, 229, 11, 27, 130, 250, 215,
-				248, 151, 79, 181, 172, 120, 217, 172, 9, 155, 154, 213, 1, 139, 237, 194, 206, 10,
-				114, 218, 209, 130, 122, 23, 9, 218, 48, 88, 15, 5, 68, 86, 232, 31, 23, 27, 204,
-				85, 166, 255, 131, 69, 230, 146, 192, 248, 110, 91, 72, 224, 27, 153, 108, 173,
-				192, 1, 98, 47, 181, 227, 99, 180, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 136, 19, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 8, 132, 160, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 136, 0, 0, 0, 0, 0, 0, 0, 66, 1, 212, 229,
-				103, 64, 248, 118, 174, 248, 192, 16, 184, 106, 64, 213, 245, 103, 69, 161, 24,
-				208, 144, 106, 52, 230, 154, 236, 140, 13, 177, 203, 143, 163,
-			];
+		Self::deposit_event(RawEvent::PendingRelayHeaderParcelConfirmed(
+			relay_block_number,
+			reason,
+		));
+	}
 
-			EthereumHeader::decode(&mut &*raw_genesis_header.to_vec()).unwrap()
-		} else {
-			let raw_genesis_header = vec![
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 86, 232, 31, 23, 27, 204, 85, 166, 255, 131,
-				69, 230, 146, 192, 248, 110, 91, 72, 224, 27, 153, 108, 173, 192, 1, 98, 47, 181,
-				227, 99, 180, 33, 29, 204, 77, 232, 222, 199, 93, 122, 171, 133, 181, 103, 182,
-				204, 212, 26, 211, 18, 69, 27, 148, 138, 116, 19, 240, 161, 66, 253, 64, 212, 147,
-				71, 128, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53,
-				53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 33, 123, 11, 188, 251, 114,
-				226, 213, 126, 40, 243, 60, 179, 97, 185, 152, 53, 19, 23, 119, 85, 220, 63, 51,
-				206, 62, 112, 34, 237, 98, 183, 123, 86, 232, 31, 23, 27, 204, 85, 166, 255, 131,
-				69, 230, 146, 192, 248, 110, 91, 72, 224, 27, 153, 108, 173, 192, 1, 98, 47, 181,
-				227, 99, 180, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 132, 160,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 36, 136, 0, 0, 0, 0, 0, 0, 0, 66, 1, 65, 148, 16, 35, 104, 9, 35, 224,
-				254, 77, 116, 163, 75, 218, 200, 20, 31, 37, 64, 227, 174, 144, 98, 55, 24, 228,
-				125, 102, 209, 202, 74, 45,
-			];
+	pub fn confirm_relay_header_parcel_with_reason(
+		relay_header_parcel: EthereumRelayHeaderParcel,
+		reason: Vec<u8>,
+	) -> DispatchResult {
+		let relay_block_number = relay_header_parcel.header.number;
 
-			EthereumHeader::decode(&mut &*raw_genesis_header.to_vec()).unwrap()
-		};
-		let genesis_header_mmr_root: H256 = b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00".into();
-
-		put_storage_value(
-			module,
-			b"BestConfirmedBlockNumber",
-			&[],
-			genesis_header.number,
+		ensure!(
+			relay_block_number > Self::best_confirmed_block_number(),
+			<Error<T>>::HeaderInv
 		);
-		put_storage_value(
-			module,
-			b"ConfirmedBlockNumbers",
-			&[],
-			vec![genesis_header.number],
-		);
-		put_storage_value(
-			module,
-			b"ConfirmedHeaderParcels",
-			&genesis_header.number.to_ne_bytes(),
-			EthereumRelayHeaderParcel {
-				header: genesis_header,
-				mmr_root: genesis_header_mmr_root,
-			},
-		);
+
+		Self::update_confirmeds_with_reason(relay_header_parcel, reason);
+
+		Ok(())
+	}
+
+	pub fn system_approve_pending_relay_header_parcels(
+		now: BlockNumber<T>,
+	) -> Result<Weight, DispatchError> {
+		<PendingRelayHeaderParcels<T>>::mutate(|parcels| {
+			parcels.retain(|(at, parcel, _)| {
+				if *at == now {
+					// TODO: handle error
+					let _ = Self::confirm_relay_header_parcel_with_reason(
+						parcel.to_owned(),
+						b"Not Enough Technical Member Online, Confirmed By System".to_vec(),
+					);
+
+					false
+				} else {
+					true
+				}
+			})
+		});
+
+		// TODO: weight
+		Ok(0)
 	}
 }
 
@@ -575,6 +676,36 @@ impl<T: Trait> Relayable for Module<T> {
 
 	fn best_confirmed_relay_header_id() -> Self::RelayHeaderId {
 		Self::best_confirmed_block_number()
+	}
+
+	fn preverify_game_sample_points(
+		extended_relay_affirmation_id: &RelayAffirmationId<Self::RelayHeaderId>,
+		game_sample_points: &[Self::RelayHeaderParcel],
+	) -> DispatchResult {
+		let previous_sample_points =
+			T::RelayerGame::get_proposed_relay_header_parcels(extended_relay_affirmation_id)
+				.ok_or("Previous Sample Points - UNKNOWN")?;
+
+		ensure!(previous_sample_points.len() == 1, "Length - UNKNOWN");
+		ensure!(game_sample_points.len() == 1, "Length - UNKNOWN");
+
+		let previous = &previous_sample_points[0];
+		let next = &game_sample_points[0];
+
+		ensure!(
+			previous.header.hash.ok_or(<Error<T>>::HeaderHashInv)? == next.header.parent_hash,
+			<Error<T>>::ContinuousInv
+		);
+
+		let ethereum_partial = Self::ethash_params();
+
+		ensure!(
+			next.header.difficulty().to_owned()
+				== ethereum_partial.calculate_difficulty(&next.header, &previous.header),
+			<Error<T>>::ContinuousInv
+		);
+
+		Ok(())
 	}
 
 	fn verify_relay_proofs(
@@ -658,24 +789,17 @@ impl<T: Trait> Relayable for Module<T> {
 	}
 
 	fn verify_relay_chain(mut relay_chain: Vec<&Self::RelayHeaderParcel>) -> DispatchResult {
-		let eth_partial = Self::ethash_params();
-		let verify_continuous = |previous_relay_header_parcel: &EthereumRelayHeaderParcel,
-		                         next_relay_header_parcel: &EthereumRelayHeaderParcel|
+		let ethereum_partial = Self::ethash_params();
+		let verify_continuous = |previous: &EthereumRelayHeaderParcel,
+		                         next: &EthereumRelayHeaderParcel|
 		 -> DispatchResult {
 			ensure!(
-				previous_relay_header_parcel
-					.header
-					.hash
-					.ok_or(<Error<T>>::HeaderHashInv)?
-					== next_relay_header_parcel.header.parent_hash,
+				previous.header.hash.ok_or(<Error<T>>::HeaderHashInv)? == next.header.parent_hash,
 				<Error<T>>::ContinuousInv
 			);
 			ensure!(
-				next_relay_header_parcel.header.difficulty().to_owned()
-					== eth_partial.calculate_difficulty(
-						&next_relay_header_parcel.header,
-						&previous_relay_header_parcel.header
-					),
+				next.header.difficulty().to_owned()
+					== ethereum_partial.calculate_difficulty(&next.header, &previous.header),
 				<Error<T>>::ContinuousInv
 			);
 
@@ -685,10 +809,10 @@ impl<T: Trait> Relayable for Module<T> {
 		relay_chain.sort_by_key(|relay_header_parcel| relay_header_parcel.header.number);
 
 		for window in relay_chain.windows(2) {
-			let previous_relay_header_parcel = window[0];
-			let next_relay_header_parcel = window[1];
+			let previous = window[0];
+			let next = window[1];
 
-			verify_continuous(previous_relay_header_parcel, next_relay_header_parcel)?;
+			verify_continuous(previous, next)?;
 		}
 
 		verify_continuous(
@@ -710,26 +834,49 @@ impl<T: Trait> Relayable for Module<T> {
 			.unwrap_or(0)
 	}
 
-	fn store_relay_header_parcel(relay_header_parcel: Self::RelayHeaderParcel) -> DispatchResult {
-		let best_confirmed_block_number = Self::best_confirmed_block_number();
+	fn try_confirm_relay_header_parcel(
+		relay_header_parcel: Self::RelayHeaderParcel,
+	) -> DispatchResult {
 		let relay_block_number = relay_header_parcel.header.number;
 
-		// Not allow to relay genesis header
 		ensure!(
-			relay_block_number > best_confirmed_block_number,
+			relay_block_number > Self::best_confirmed_block_number(),
 			<Error<T>>::HeaderInv
 		);
+		// Not allow to pend on the same block height
+		ensure!(
+			Self::pending_relay_header_parcels()
+				.into_iter()
+				.all(|(_, p, _)| p.header.number != relay_block_number),
+			<Error<T>>::PendingRelayHeaderParcelAE
+		);
 
-		ConfirmedBlockNumbers::mutate(|confirmed_block_numbers| {
-			// TODO: remove old numbers according to `ConfirmedDepth`
+		let confirm_period = T::ConfirmPeriod::get();
 
-			confirmed_block_numbers.push(relay_block_number);
+		if confirm_period.is_zero() {
+			Self::update_confirmeds_with_reason(
+				relay_header_parcel,
+				b"Confirm Period is Zero, Confirmed By System".to_vec(),
+			);
+		} else {
+			<PendingRelayHeaderParcels<T>>::append((
+				<frame_system::Module<T>>::block_number() + confirm_period,
+				relay_header_parcel,
+				RelayVotingState::default(),
+			));
 
-			BestConfirmedBlockNumber::put(relay_block_number);
-		});
-		ConfirmedHeaderParcels::insert(relay_block_number, relay_header_parcel);
+			Self::deposit_event(RawEvent::Pended(relay_block_number));
+		}
 
 		Ok(())
+	}
+
+	fn new_round(game_id: &Self::RelayHeaderId, game_sample_points: Vec<Self::RelayHeaderId>) {
+		Self::deposit_event(RawEvent::NewRound(*game_id, game_sample_points));
+	}
+
+	fn game_over(game_id: &Self::RelayHeaderId) {
+		Self::deposit_event(RawEvent::GameOver(*game_id));
 	}
 }
 
@@ -833,16 +980,16 @@ pub struct MMRProof {
 }
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq)]
-pub struct CheckEthereumRelayHeaderHash<T: Trait>(PhantomData<T>);
-impl<T: Trait> CheckEthereumRelayHeaderHash<T> {
+pub struct CheckEthereumRelayHeaderParcel<T: Trait>(PhantomData<T>);
+impl<T: Trait> CheckEthereumRelayHeaderParcel<T> {
 	pub fn new() -> Self {
 		Self(Default::default())
 	}
 }
-impl<T: Trait> Debug for CheckEthereumRelayHeaderHash<T> {
+impl<T: Trait> Debug for CheckEthereumRelayHeaderParcel<T> {
 	#[cfg(feature = "std")]
 	fn fmt(&self, f: &mut Formatter) -> FmtResult {
-		write!(f, "CheckEthereumRelayHeaderHash")
+		write!(f, "CheckEthereumRelayHeaderParcel")
 	}
 
 	#[cfg(not(feature = "std"))]
@@ -850,8 +997,8 @@ impl<T: Trait> Debug for CheckEthereumRelayHeaderHash<T> {
 		Ok(())
 	}
 }
-impl<T: Send + Sync + Trait> SignedExtension for CheckEthereumRelayHeaderHash<T> {
-	const IDENTIFIER: &'static str = "CheckEthereumRelayHeaderHash";
+impl<T: Send + Sync + Trait> SignedExtension for CheckEthereumRelayHeaderParcel<T> {
+	const IDENTIFIER: &'static str = "CheckEthereumRelayHeaderParcel";
 	type AccountId = T::AccountId;
 	type Call = <T as Trait>::Call;
 	type AdditionalSigned = ();
@@ -894,7 +1041,7 @@ impl<T: Send + Sync + Trait> SignedExtension for CheckEthereumRelayHeaderHash<T>
 		// 						},
 		// 					)| header_a == header_b && mmr_root_a == mmr_root_b,
 		// 				) {
-		// 				return InvalidTransaction::Custom(<Error<T>>::ProposalInv.as_u8()).into();
+		// 				return InvalidTransaction::Custom(<Error<T>>::AffirmationInv.as_u8()).into();
 		// 			}
 		// 		}
 		// 	}
@@ -902,4 +1049,35 @@ impl<T: Send + Sync + Trait> SignedExtension for CheckEthereumRelayHeaderHash<T>
 
 		Ok(ValidTransaction::default())
 	}
+}
+
+impl<T: Trait> ChangeMembers<AccountId<T>> for Module<T> {
+	fn change_members_sorted(_: &[T::AccountId], outgoing: &[T::AccountId], _: &[T::AccountId]) {
+		let _ = <PendingRelayHeaderParcels<T>>::try_mutate(|pending_relay_header_parcels| {
+			let mut changed = false;
+
+			for (_, _, RelayVotingState { ayes, nays }) in pending_relay_header_parcels {
+				for removed_member in outgoing {
+					if let Some(i) = ayes.iter().position(|aye| aye == removed_member) {
+						changed = true;
+
+						ayes.remove(i);
+					} else if let Some(i) = nays.iter().position(|nay| nay == removed_member) {
+						changed = true;
+
+						nays.remove(i);
+					}
+				}
+			}
+
+			if changed {
+				Ok(())
+			} else {
+				Err(())
+			}
+		});
+	}
+
+	// TODO: if someone give up
+	fn set_prime(_: Option<T::AccountId>) {}
 }

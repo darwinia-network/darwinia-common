@@ -8,7 +8,7 @@ use core::fmt::Debug;
 // --- crates ---
 use codec::{Decode, Encode, FullCodec};
 // --- substrate ---
-use sp_runtime::{traits::Zero, DispatchResult, RuntimeDebug};
+use sp_runtime::{traits::Zero, DispatchError, DispatchResult, RuntimeDebug};
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
 use sp_std::prelude::*;
@@ -34,6 +34,12 @@ pub trait Relayable {
 	/// The latest finalize block's id which recorded in darwinia
 	fn best_confirmed_relay_header_id() -> Self::RelayHeaderId;
 
+	/// Some custom preverify logic for different chain
+	fn preverify_game_sample_points(
+		extended_relay_affirmation_id: &RelayAffirmationId<Self::RelayHeaderId>,
+		game_sample_points: &[Self::RelayHeaderParcel],
+	) -> DispatchResult;
+
 	// TODO: optimize this
 	fn verify_relay_proofs(
 		// TODO: doc
@@ -54,7 +60,25 @@ pub trait Relayable {
 		best_confirmed_relay_header_id: Self::RelayHeaderId,
 	) -> u32;
 
-	fn store_relay_header_parcel(relay_header_parcel: Self::RelayHeaderParcel) -> DispatchResult;
+	/// Trying to confirm a relay header parcel
+	///
+	/// If there's a guard then it goes pended else confirmed
+	fn try_confirm_relay_header_parcel(
+		relay_header_parcel: Self::RelayHeaderParcel,
+	) -> DispatchResult;
+
+	fn try_confirm_relay_header_parcels(
+		relay_header_parcels: Vec<Self::RelayHeaderParcel>,
+	) -> Vec<Result<(), DispatchError>> {
+		relay_header_parcels
+			.into_iter()
+			.map(Self::try_confirm_relay_header_parcel)
+			.collect::<Vec<Result<(), DispatchError>>>()
+	}
+
+	fn new_round(game_id: &Self::RelayHeaderId, game_sample_points: Vec<Self::RelayHeaderId>);
+
+	fn game_over(game_id: &Self::RelayHeaderId);
 }
 
 /// A regulator to adjust relay args for a specific chain
@@ -96,7 +120,7 @@ pub trait RelayerGameProtocol {
 	type RelayProofs;
 
 	fn get_proposed_relay_header_parcels(
-		affirmation_id: RelayAffirmationId<Self::RelayHeaderId>,
+		affirmation_id: &RelayAffirmationId<Self::RelayHeaderId>,
 	) -> Option<Vec<Self::RelayHeaderParcel>>;
 
 	/// The best confirmed header id record of a game when it start
@@ -106,19 +130,19 @@ pub trait RelayerGameProtocol {
 	///
 	/// Game's entry point, call only at the first round
 	fn affirm(
-		relayer: Self::Relayer,
+		relayer: &Self::Relayer,
 		relay_header_parcel: Self::RelayHeaderParcel,
 		optional_relay_proofs: Option<Self::RelayProofs>,
-	) -> DispatchResult;
+	) -> Result<Self::RelayHeaderId, DispatchError>;
 
 	/// Dispute Found
 	///
 	/// Arrirm a new affirmation to against the existed affirmation(s)
 	fn dispute_and_affirm(
-		relayer: Self::Relayer,
+		relayer: &Self::Relayer,
 		relay_header_parcel: Self::RelayHeaderParcel,
 		optional_relay_proofs: Option<Self::RelayProofs>,
-	) -> DispatchResult;
+	) -> Result<(Self::RelayHeaderId, u32), DispatchError>;
 
 	/// Verify a specify affirmation
 	///
@@ -133,26 +157,18 @@ pub trait RelayerGameProtocol {
 	/// chain will ask relayer to submit more samples
 	/// to help the chain make a on chain arbitrate finally
 	fn extend_affirmation(
-		relayer: Self::Relayer,
-		game_sample_points: Vec<Self::RelayHeaderParcel>,
+		relayer: &Self::Relayer,
 		extended_relay_affirmation_id: RelayAffirmationId<Self::RelayHeaderId>,
+		game_sample_points: Vec<Self::RelayHeaderParcel>,
 		optional_relay_proofs: Option<Vec<Self::RelayProofs>>,
-	) -> DispatchResult;
-
-	fn approve_pending_relay_header_parcel(
-		pending_relay_block_id: Self::RelayHeaderId,
-	) -> DispatchResult;
-
-	fn reject_pending_relay_header_parcel(
-		pending_relay_block_id: Self::RelayHeaderId,
-	) -> DispatchResult;
+	) -> Result<(Self::RelayHeaderId, u32, u32), DispatchError>;
 }
 
 /// Game id, round and the index under the round point to a unique affirmation AKA affirmation id
-#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
 pub struct RelayAffirmationId<RelayHeaderId> {
-	/// Relay header id aka game id
-	pub relay_header_id: RelayHeaderId,
+	/// Game id aka relay header id
+	pub game_id: RelayHeaderId,
 	/// Round index
 	pub round: u32,
 	/// Index of a affirmation list which under a round
@@ -182,4 +198,13 @@ where
 			verified_on_chain: false,
 		}
 	}
+}
+
+/// Info for keeping track of a proposal being voted on.
+#[derive(Default, Encode, Decode, RuntimeDebug)]
+pub struct RelayVotingState<TechnicalMember> {
+	/// The current set of technical members that approved it.
+	pub ayes: Vec<TechnicalMember>,
+	/// The current set of technical members that rejected it.
+	pub nays: Vec<TechnicalMember>,
 }

@@ -949,6 +949,8 @@ decl_module! {
 	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
 		type Error = Error<T>;
 
+		const ModuleId: ModuleId = T::ModuleId::get();
+
 		/// Number of sessions per era.
 		const SessionsPerEra: SessionIndex = T::SessionsPerEra::get();
 
@@ -3555,6 +3557,8 @@ impl<T: Trait> OnDepositRedeem<T::AccountId, RingBalance<T>> for Module<T> {
 				!<Ledger<T>>::contains_key(controller),
 				<Error<T>>::AlreadyPaired
 			);
+
+			T::RingCurrency::transfer(&backing, &stash, amount, KeepAlive)?;
 
 			<Bonded<T>>::insert(&stash, controller);
 			<Payee<T>>::insert(&stash, RewardDestination::Stash);

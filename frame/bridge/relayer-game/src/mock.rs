@@ -1,14 +1,3 @@
-pub mod alias {
-	pub mod relayer_game {
-		pub use crate::Event;
-	}
-
-	// --- substrate ---
-	pub use frame_system as system;
-	// --- darwinia ---
-	pub use darwinia_balances as balances;
-}
-
 pub mod mock_relay {
 	pub mod types {
 		pub type MockRelayBlockNumber = u32;
@@ -76,6 +65,13 @@ pub mod mock_relay {
 			Self::best_confirmed_block_number()
 		}
 
+		fn preverify_game_sample_points(
+			_: &RelayAffirmationId<Self::RelayHeaderId>,
+			_: &[Self::RelayHeaderParcel],
+		) -> DispatchResult {
+			Ok(())
+		}
+
 		fn verify_relay_proofs(
 			_: &Self::RelayHeaderId,
 			relay_header_parcel: &Self::RelayHeaderParcel,
@@ -122,7 +118,8 @@ pub mod mock_relay {
 			relay_header_id - best_confirmed_relay_header_id
 		}
 
-		fn store_relay_header_parcel(
+		// FIXME
+		fn try_confirm_relay_header_parcel(
 			relay_header_parcel: Self::RelayHeaderParcel,
 		) -> DispatchResult {
 			ConfirmedBlockNumbers::mutate(|best_confirmed_block_number| {
@@ -135,6 +132,10 @@ pub mod mock_relay {
 
 			Ok(())
 		}
+
+		fn new_round(_: &Self::RelayHeaderId, _: Vec<Self::RelayHeaderId>) {}
+
+		fn game_over(_: &Self::RelayHeaderId) {}
 	}
 
 	#[derive(
@@ -214,22 +215,16 @@ use std::{cell::RefCell, time::Instant};
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
-use frame_support::{
-	impl_outer_dispatch, impl_outer_event, impl_outer_origin, parameter_types,
-	traits::{OnFinalize, OnInitialize},
-};
+use frame_support::{impl_outer_origin, parameter_types, traits::OnFinalize};
 use sp_runtime::RuntimeDebug;
 // --- darwinia ---
 use crate::*;
-use alias::*;
 use darwinia_relay_primitives::*;
 use mock_relay::{MockRelayBlockNumber, MockRelayHeader};
 
 pub type AccountId = u64;
 pub type BlockNumber = u64;
 pub type Balance = u128;
-
-pub type Extrinsic = sp_runtime::testing::TestXt<Call, ()>;
 
 pub type RingInstance = darwinia_balances::Instance0;
 pub type Ring = darwinia_balances::Module<Test, RingInstance>;
@@ -246,7 +241,6 @@ thread_local! {
 	static GENESIS_TIME: Instant = Instant::now();
 	pub static CHALLENGE_TIME: RefCell<BlockNumber> = RefCell::new(6);
 	static ESTIMATE_BOND: RefCell<Balance> = RefCell::new(1);
-	static CONFIRM_PERIOD: RefCell<BlockNumber> = RefCell::new(0);
 }
 
 impl_outer_origin! {
@@ -254,23 +248,6 @@ impl_outer_origin! {
 	where
 		system = frame_system
 	{}
-}
-
-impl_outer_dispatch! {
-	pub enum Call for Test
-	where
-		origin: Origin
-	{
-		relayer_game::RelayerGame,
-	}
-}
-
-impl_outer_event! {
-	pub enum Event for Test {
-		system <T>,
-		balances Instance0<T>,
-		relayer_game <T>,
-	}
 }
 
 darwinia_support::impl_account_data! {
@@ -285,30 +262,20 @@ darwinia_support::impl_account_data! {
 	}
 }
 
-pub struct ConfirmPeriod;
-impl Get<BlockNumber> for ConfirmPeriod {
-	fn get() -> BlockNumber {
-		CONFIRM_PERIOD.with(|v| v.borrow().to_owned())
-	}
-}
-
 #[derive(Clone, Eq, PartialEq)]
 pub struct Test;
 impl Trait for Test {
-	type Call = Call;
-	type Event = Event;
 	type RingCurrency = Ring;
 	type RingSlash = ();
 	type RelayerGameAdjustor = RelayerGameAdjustor;
 	type RelayableChain = Relay;
-	type ConfirmPeriod = ConfirmPeriod;
 	type WeightInfo = ();
 }
 
 impl frame_system::Trait for Test {
 	type BaseCallFilter = ();
 	type Origin = Origin;
-	type Call = Call;
+	type Call = ();
 	type Index = u64;
 	type BlockNumber = BlockNumber;
 	type Hash = sp_core::H256;
@@ -316,7 +283,7 @@ impl frame_system::Trait for Test {
 	type AccountId = AccountId;
 	type Lookup = sp_runtime::traits::IdentityLookup<Self::AccountId>;
 	type Header = sp_runtime::testing::Header;
-	type Event = Event;
+	type Event = ();
 	type BlockHashCount = ();
 	type MaximumBlockWeight = ();
 	type DbWeight = ();
@@ -339,21 +306,13 @@ parameter_types! {
 impl darwinia_balances::Trait<RingInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
-	type Event = Event;
+	type Event = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
 	type MaxLocks = ();
 	type OtherCurrencies = ();
 	type WeightInfo = ();
-}
-
-impl<LocalCall> frame_system::offchain::SendTransactionTypes<LocalCall> for Test
-where
-	Call: From<LocalCall>,
-{
-	type Extrinsic = Extrinsic;
-	type OverarchingCall = Call;
 }
 
 pub struct RelayerGameAdjustor;
@@ -387,7 +346,6 @@ pub struct ExtBuilder {
 	headers: Vec<MockRelayHeader>,
 	challenge_time: BlockNumber,
 	estimate_stake: Balance,
-	confirmed_period: BlockNumber,
 }
 impl ExtBuilder {
 	pub fn headers(mut self, headers: Vec<MockRelayHeader>) -> Self {
@@ -405,16 +363,10 @@ impl ExtBuilder {
 
 		self
 	}
-	pub fn confirmed_period(mut self, confirmed_period: BlockNumber) -> Self {
-		self.confirmed_period = confirmed_period;
-
-		self
-	}
 
 	pub fn set_associated_constants(&self) {
 		CHALLENGE_TIME.with(|v| v.replace(self.challenge_time));
 		ESTIMATE_BOND.with(|v| v.replace(self.estimate_stake));
-		CONFIRM_PERIOD.with(|v| v.replace(self.confirmed_period));
 	}
 
 	pub fn build(self) -> sp_io::TestExternalities {
@@ -449,7 +401,6 @@ impl Default for ExtBuilder {
 			challenge_time: RelayerGameAdjustor::affirm_time(0)
 				+ RelayerGameAdjustor::complete_proofs_time(0),
 			estimate_stake: RelayerGameAdjustor::estimate_stake(0, 0),
-			confirmed_period: CONFIRM_PERIOD.with(|v| v.borrow().to_owned()),
 		}
 	}
 }
@@ -463,27 +414,12 @@ pub fn run_to_block(n: BlockNumber) {
 
 	for b in System::block_number() + 1..=n {
 		System::set_block_number(b);
-		RelayerGame::on_initialize(b);
+		// RelayerGame::on_initialize(b);
 
 		if b != n {
 			RelayerGame::on_finalize(System::block_number());
 		}
 	}
-}
-
-#[allow(unused)]
-pub fn relayer_game_events() -> Vec<crate::Event<Test>> {
-	System::events()
-		.into_iter()
-		.map(|r| r.event)
-		.filter_map(|e| {
-			if let Event::relayer_game(inner) = e {
-				Some(inner)
-			} else {
-				None
-			}
-		})
-		.collect()
 }
 
 #[allow(unused)]

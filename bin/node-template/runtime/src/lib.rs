@@ -304,7 +304,7 @@ pub mod primitives {
 		frame_system::CheckNonce<Runtime>,
 		frame_system::CheckWeight<Runtime>,
 		pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
-		darwinia_ethereum_relay::CheckEthereumRelayHeaderHash<Runtime>,
+		darwinia_ethereum_relay::CheckEthereumRelayHeaderParcel<Runtime>,
 	);
 
 	/// Unchecked extrinsic type as expected by this runtime.
@@ -368,7 +368,9 @@ use static_assertions::const_assert;
 // --- substrate ---
 use frame_support::{
 	construct_runtime, debug, parameter_types,
-	traits::{FindAuthor, InstanceFilter, KeyOwnerProofSystem, LockIdentifier, Randomness},
+	traits::{
+		ChangeMembers, FindAuthor, InstanceFilter, KeyOwnerProofSystem, LockIdentifier, Randomness,
+	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		Weight,
@@ -947,6 +949,17 @@ impl darwinia_elections_phragmen::Trait for Runtime {
 	type WeightInfo = weights::darwinia_elections_phragmen::WeightInfo<Runtime>;
 }
 
+pub struct MembershipChangedGroup;
+impl ChangeMembers<AccountId> for MembershipChangedGroup {
+	fn change_members_sorted(
+		incoming: &[AccountId],
+		outgoing: &[AccountId],
+		sorted_new: &[AccountId],
+	) {
+		TechnicalCommittee::change_members_sorted(incoming, outgoing, sorted_new);
+		EthereumRelay::change_members_sorted(incoming, outgoing, sorted_new);
+	}
+}
 type EnsureRootOrMoreThanHalfCouncil = EnsureOneOf<
 	AccountId,
 	EnsureRoot<AccountId>,
@@ -960,7 +973,7 @@ impl pallet_membership::Trait<pallet_membership::Instance0> for Runtime {
 	type ResetOrigin = EnsureRootOrMoreThanHalfCouncil;
 	type PrimeOrigin = EnsureRootOrMoreThanHalfCouncil;
 	type MembershipInitialized = TechnicalCommittee;
-	type MembershipChanged = TechnicalCommittee;
+	type MembershipChanged = MembershipChangedGroup;
 }
 
 type ApproveOrigin = EnsureOneOf<
@@ -1085,6 +1098,8 @@ type EnsureRootOrHalfTechnicalComittee = EnsureOneOf<
 parameter_types! {
 	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
 	pub const EthereumNetwork: ethereum_primitives::EthereumNetworkType = ethereum_primitives::EthereumNetworkType::Ropsten;
+	pub const ApproveThreshold: Perbill = Perbill::from_percent(60);
+	pub const RejectThreshold: Perbill = Perbill::from_percent(1);
 }
 impl darwinia_ethereum_relay::Trait for Runtime {
 	type ModuleId = EthereumRelayModuleId;
@@ -1095,6 +1110,10 @@ impl darwinia_ethereum_relay::Trait for Runtime {
 	type RelayerGame = EthereumRelayerGame;
 	type ApproveOrigin = ApproveOrigin;
 	type RejectOrigin = EnsureRootOrHalfTechnicalComittee;
+	type ConfirmPeriod = ConfirmPeriod;
+	type TechnicalMembership = TechnicalMembership;
+	type ApproveThreshold = ApproveThreshold;
+	type RejectThreshold = RejectThreshold;
 	type WeightInfo = ();
 }
 
@@ -1103,13 +1122,10 @@ parameter_types! {
 	pub const ConfirmPeriod: BlockNumber = 200;
 }
 impl darwinia_relayer_game::Trait<EthereumRelayerGameInstance> for Runtime {
-	type Call = Call;
-	type Event = Event;
 	type RingCurrency = Ring;
 	type RingSlash = Treasury;
 	type RelayerGameAdjustor = relay::EthereumRelayerGameAdjustor;
 	type RelayableChain = EthereumRelay;
-	type ConfirmPeriod = ConfirmPeriod;
 	type WeightInfo = ();
 }
 
@@ -1228,7 +1244,7 @@ construct_runtime!(
 		CrabIssuing: darwinia_crab_issuing::{Module, Call, Storage, Config, Event<T>},
 		CrabBacking: darwinia_crab_backing::{Module, Storage, Config<T>},
 
-		EthereumRelayerGame: darwinia_relayer_game::<Instance0>::{Module, Call, Storage, Event<T>},
+		EthereumRelayerGame: darwinia_relayer_game::<Instance0>::{Module, Storage},
 		EthereumRelay: darwinia_ethereum_relay::{Module, Call, Storage, Config<T>, Event<T>},
 		EthereumBacking: darwinia_ethereum_backing::{Module, Call, Storage, Config<T>, Event<T>},
 
@@ -1273,7 +1289,7 @@ where
 			frame_system::CheckNonce::<Runtime>::from(nonce),
 			frame_system::CheckWeight::<Runtime>::new(),
 			pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
-			darwinia_ethereum_relay::CheckEthereumRelayHeaderHash::<Runtime>::new(),
+			darwinia_ethereum_relay::CheckEthereumRelayHeaderParcel::<Runtime>::new(),
 		);
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|e| {
