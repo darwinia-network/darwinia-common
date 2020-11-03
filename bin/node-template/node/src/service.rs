@@ -18,6 +18,7 @@ use sc_finality_grandpa::{
 	LinkHalf, SharedVoterState as GrandpaSharedVoterState,
 	VotingRulesBuilder as GrandpaVotingRulesBuilder,
 };
+use sc_network::NetworkService;
 use sc_service::{
 	config::{KeystoreConfig, PrometheusConfig},
 	BuildNetworkParams, Configuration, Error as ServiceError, NoopRpcExtensionBuilder,
@@ -38,6 +39,8 @@ use crate::rpc::{
 	self, BabeDeps, DenyUnsafe, FullDeps, GrandpaDeps, LightDeps, RpcExtension,
 	SubscriptionTaskExecutor,
 };
+use dvm_consensus::FrontierBlockImport;
+
 use node_template_runtime::{
 	opaque::Block,
 	primitives::{AccountId, Balance, Hash, Nonce, Power},
@@ -78,6 +81,7 @@ pub trait RuntimeApiCollection:
 	+ darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance>
 	+ darwinia_header_mmr_rpc_runtime_api::HeaderMMRApi<Block, Hash>
 	+ darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>
+	+ dvm_rpc_primitives::EthereumRuntimeRPCApi<Block>
 where
 	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
 {
@@ -97,7 +101,8 @@ where
 		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
 		+ darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance>
 		+ darwinia_header_mmr_rpc_runtime_api::HeaderMMRApi<Block, Hash>
-		+ darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>,
+		+ darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>
+		+ dvm_rpc_primitives::EthereumRuntimeRPCApi<Block>,
 	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
 {
 }
@@ -152,12 +157,21 @@ fn new_partial<RuntimeApi, Executor>(
 		DefaultImportQueue<Block, FullClient<RuntimeApi, Executor>>,
 		FullPool<Block, FullClient<RuntimeApi, Executor>>,
 		(
-			impl Fn(DenyUnsafe, SubscriptionTaskExecutor) -> RpcExtension,
+			impl Fn(
+				DenyUnsafe,
+				bool,
+				Arc<NetworkService<Block, Hash>>,
+				SubscriptionTaskExecutor,
+			) -> RpcExtension,
 			(
 				BabeBlockImport<
 					Block,
 					FullClient<RuntimeApi, Executor>,
-					FullGrandpaBlockImport<RuntimeApi, Executor>,
+					FrontierBlockImport<
+						Block,
+						FullGrandpaBlockImport<RuntimeApi, Executor>,
+						FullClient<RuntimeApi, Executor>,
+					>,
 				>,
 				LinkHalf<Block, FullClient<RuntimeApi, Executor>, FullSelectChain>,
 				BabeLink<Block>,
@@ -199,9 +213,11 @@ where
 			grandpa_hard_forks,
 		)?;
 	let justification_import = grandpa_block_import.clone();
+	let frontier_block_import =
+		FrontierBlockImport::new(grandpa_block_import.clone(), client.clone(), true);
 	let (babe_import, babe_link) = sc_consensus_babe::block_import(
 		BabeConfig::get_or_compute(&*client)?,
-		grandpa_block_import,
+		frontier_block_import,
 		client.clone(),
 	)?;
 	let import_queue = sc_consensus_babe::import_queue(
@@ -225,18 +241,22 @@ where
 	let rpc_setup = (shared_voter_state.clone(), finality_proof_provider.clone());
 	let babe_config = babe_link.config().clone();
 	let shared_epoch_changes = babe_link.epoch_changes().clone();
+	let subscription_task_executor =
+		sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 	let rpc_extensions_builder = {
 		let client = client.clone();
 		let keystore = keystore.clone();
 		let transaction_pool = transaction_pool.clone();
 		let select_chain = select_chain.clone();
 
-		move |deny_unsafe, subscription_executor| -> RpcExtension {
+		move |deny_unsafe, is_authority, network, subscription_executor| -> RpcExtension {
 			let deps = FullDeps {
 				client: client.clone(),
 				pool: transaction_pool.clone(),
 				select_chain: select_chain.clone(),
 				deny_unsafe,
+				is_authority,
+				network,
 				babe: BabeDeps {
 					babe_config: babe_config.clone(),
 					shared_epoch_changes: shared_epoch_changes.clone(),
@@ -251,7 +271,7 @@ where
 				},
 			};
 
-			rpc::create_full(deps)
+			rpc::create_full(deps, subscription_task_executor.clone())
 		}
 	};
 
@@ -321,14 +341,28 @@ where
 	}
 
 	let telemetry_connection_sinks = TelemetryConnectionSinks::default();
-
 	sc_service::spawn_tasks(SpawnTasksParams {
 		config,
 		backend: backend.clone(),
 		client: client.clone(),
 		keystore: keystore.clone(),
 		network: network.clone(),
-		rpc_extensions_builder: Box::new(rpc_extensions_builder),
+		rpc_extensions_builder: {
+			let wrap_rpc_extensions_builder = {
+				let network = network.clone();
+
+				move |deny_unsafe, subscription_executor| -> RpcExtension {
+					rpc_extensions_builder(
+						deny_unsafe,
+						is_authority,
+						network.clone(),
+						subscription_executor,
+					)
+				}
+			};
+
+			Box::new(wrap_rpc_extensions_builder)
+		},
 		transaction_pool: transaction_pool.clone(),
 		task_manager: &mut task_manager,
 		on_demand: None,

@@ -1,0 +1,39 @@
+[package]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+description = "Ethereum RPC (web3) compatibility layer for Darwinia."
+edition     = "2018"
+homepage    = "https://darwinia.network/"
+license     = "GPL-3.0"
+name        = "dvm-rpc"
+readme      = "README.md"
+repository  = "https://github.com/darwinia-network/darwinia-common/"
+version     = "1.2.2"
+
+[dependencies]
+# crates
+codec               = { package = "parity-scale-codec", version = "1.3.5" }
+ethereum            = { version = "0.3", features = ["codec"] }
+ethereum-types      = "0.9.0"
+futures             = { version = "0.3.7", features = ["compat"] }
+jsonrpc-core        = "15.1.0"
+jsonrpc-core-client = "15.1.0"
+jsonrpc-derive      = "15.1.0"
+jsonrpc-pubsub      = "15.1.0"
+log                 = "0.4.11"
+rlp                 = "0.4"
+sha3                = "0.8"
+# darwinia
+dvm-consensus      = { path = "../consensus" }
+dvm-rpc-core       = { path = "core" }
+dvm-rpc-primitives = { path = "primitives" }
+# substrate
+sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-network          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-rpc              = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-service          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-api              = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-io               = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-storage          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }

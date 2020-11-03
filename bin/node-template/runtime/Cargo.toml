@@ -7,7 +7,7 @@ license    = "Unlicense"
 name       = "node-template-runtime"
 readme     = "README.md"
 repository = "https://github.com/darwinia-network/darwinia-common/"
-version    = "1.0.0"
+version    = "1.2.2"
 
 [dependencies]
 # crates
@@ -35,6 +35,8 @@ darwinia-support                    = { default-features = false, path = "../../
 darwinia-treasury                   = { default-features = false, path = "../../../frame/treasury" }
 darwinia-tron-backing               = { default-features = false, path = "../../../frame/bridge/tron/backing" }
 darwinia-vesting                    = { default-features = false, path = "../../../frame/vesting" }
+dvm-ethereum                        = { default-features = false, path = "../../../frame/dvm/ethereum" }
+dvm-rpc-primitives                  = { default-features = false, path = "../../../frame/dvm/rpc/primitives" }
 ethereum-primitives                 = { default-features = false, path = "../../../primitives/ethereum-primitives" }
 # substrate
 frame-executive                            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
@@ -45,6 +47,7 @@ pallet-authority-discovery                 = { default-features = false, git = "
 pallet-authorship                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 pallet-babe                                = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 pallet-collective                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-evm                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 pallet-finality-tracker                    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 pallet-grandpa                             = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 pallet-im-online                           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
@@ -80,8 +83,7 @@ wasm-builder-runner = { package = "substrate-wasm-builder-runner", git = "https:
 
 [features]
 default = ["std"]
-
-std = [
+std     = [
 	"codec/std",
 	"serde",
 	"darwinia-balances/std",
@@ -103,6 +105,8 @@ std = [
 	"darwinia-treasury/std",
 	"darwinia-tron-backing/std",
 	"darwinia-vesting/std",
+	"dvm-ethereum/std",
+	"dvm-rpc-primitives/std",
 	"ethereum-primitives/std",
 	"frame-executive/std",
 	"frame-support/std",
@@ -112,6 +116,7 @@ std = [
 	"pallet-authorship/std",
 	"pallet-babe/std",
 	"pallet-collective/std",
+	"pallet-evm/std",
 	"pallet-finality-tracker/std",
 	"pallet-grandpa/std",
 	"pallet-im-online/std",
