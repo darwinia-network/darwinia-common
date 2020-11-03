@@ -4499,7 +4499,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "frame-system-rpc-runtime-api",
- "log",
  "pallet-authority-discovery",
  "pallet-authorship",
  "pallet-babe",
