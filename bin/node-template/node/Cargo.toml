@@ -8,7 +8,7 @@ license     = "Unlicense"
 name        = "node-template"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "1.0.0"
+version     = "1.2.2"
 
 [[bin]]
 name = "node-template"
