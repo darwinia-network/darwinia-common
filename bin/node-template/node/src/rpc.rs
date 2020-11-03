@@ -14,26 +14,15 @@
 #![warn(missing_docs)]
 
 // --- substrate ---
-pub use jsonrpc_pubsub::manager::SubscriptionManager;
-pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
+pub use sc_rpc::DenyUnsafe;
 
 // --- std ---
-use std::{fmt, sync::Arc};
-// --- substrate ---
-use sp_api::ProvideRuntimeApi;
+use std::sync::Arc;
 // --- darwinia ---
 use node_template_runtime::{
 	opaque::Block,
 	primitives::{AccountId, Balance, BlockNumber, Hash, Nonce, Power},
 };
-// dvm
-use dvm_rpc::{EthApi, EthApiServer, EthPubSubApi, EthPubSubApiServer, NetApi, NetApiServer};
-use sc_client_api::{
-	backend::{AuxStore, Backend, StateBackend, StorageProvider},
-	client::BlockchainEvents,
-};
-use sc_network::NetworkService;
-use sp_runtime::traits::BlakeTwo256;
 
 /// A type representing all RPC extensions.
 pub type RpcExtension = jsonrpc_core::IoHandler<sc_rpc::Metadata>;
@@ -73,14 +62,14 @@ pub struct FullDeps<C, P, SC, B> {
 	pub select_chain: SC,
 	/// Whether to deny unsafe calls
 	pub deny_unsafe: sc_rpc::DenyUnsafe,
-	/// The Node authority flag
-	pub is_authority: bool,
-	/// Network service
-	pub network: Arc<NetworkService<Block, Hash>>,
 	/// BABE specific dependencies.
 	pub babe: BabeDeps,
 	/// GRANDPA specific dependencies.
 	pub grandpa: GrandpaDeps<B>,
+	/// The Node authority flag
+	pub is_authority: bool,
+	/// Network service
+	pub network: Arc<sc_network::NetworkService<Block, Hash>>,
 }
 
 /// Light client extra dependencies.
@@ -96,18 +85,20 @@ pub struct LightDeps<C, F, P> {
 }
 
 /// Instantiate all RPC extensions.
-pub fn create_full<C, P, SC, B, BE>(
+pub fn create_full<C, P, SC, B>(
 	deps: FullDeps<C, P, SC, B>,
-	subscription_task_executor: SubscriptionTaskExecutor,
+	subscription_task_executor: sc_rpc::SubscriptionTaskExecutor,
 ) -> RpcExtension
 where
-	BE: Backend<Block> + 'static,
-	BE::State: StateBackend<BlakeTwo256>,
-	C: 'static + Send + Sync,
-	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE> + AuxStore,
-	C: sp_blockchain::HeaderBackend<Block>
+	C: 'static
+		+ Send
+		+ Sync
+		+ sp_api::ProvideRuntimeApi<Block>
+		+ sc_client_api::AuxStore
+		+ sc_client_api::BlockchainEvents<Block>
+		+ sc_client_api::StorageProvider<Block, B>
+		+ sp_blockchain::HeaderBackend<Block>
 		+ sp_blockchain::HeaderMetadata<Block, Error = sp_blockchain::Error>,
-	C: BlockchainEvents<Block>,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: sc_consensus_babe::BabeApi<Block>,
@@ -115,14 +106,15 @@ where
 	C::Api: darwinia_balances_rpc::BalancesRuntimeApi<Block, AccountId, Balance>,
 	C::Api: darwinia_header_mmr_rpc::HeaderMMRRuntimeApi<Block, Hash>,
 	C::Api: darwinia_staking_rpc::StakingRuntimeApi<Block, AccountId, Power>,
-	P: 'static + sp_transaction_pool::TransactionPool,
-	<C::Api as sp_api::ApiErrorExt>::Error: fmt::Debug,
-	P: sp_transaction_pool::TransactionPool<Block = Block> + Sync + Send + 'static,
 	C::Api: dvm_rpc_primitives::EthereumRuntimeRPCApi<Block>,
+	<C::Api as sp_api::ApiErrorExt>::Error: std::fmt::Debug,
+	P: 'static + Sync + Send + sp_transaction_pool::TransactionPool<Block = Block>,
 	SC: 'static + sp_consensus::SelectChain<Block>,
 	B: 'static + Send + Sync + sc_client_api::Backend<Block>,
 	B::State: sc_client_api::StateBackend<sp_runtime::traits::HashFor<Block>>,
 {
+	// --- crates ---
+	use jsonrpc_pubsub::manager::SubscriptionManager;
 	// --- substrate ---
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
 	use sc_consensus_babe_rpc::{BabeApi, BabeRpcHandler};
@@ -132,6 +124,7 @@ where
 	use darwinia_balances_rpc::{Balances, BalancesApi};
 	use darwinia_header_mmr_rpc::{HeaderMMR, HeaderMMRApi};
 	use darwinia_staking_rpc::{Staking, StakingApi};
+	use dvm_rpc::{EthApi, EthApiServer, EthPubSubApi, EthPubSubApiServer, NetApi, NetApiServer};
 
 	let FullDeps {
 		client,
@@ -189,20 +182,19 @@ where
 	io.extend_with(BalancesApi::to_delegate(Balances::new(client.clone())));
 	io.extend_with(HeaderMMRApi::to_delegate(HeaderMMR::new(client.clone())));
 	io.extend_with(StakingApi::to_delegate(Staking::new(client.clone())));
-
 	io.extend_with(EthApiServer::to_delegate(EthApi::new(
 		client.clone(),
 		pool.clone(),
 		node_template_runtime::TransactionConverter,
 		is_authority,
 	)));
-	io.extend_with(NetApiServer::to_delegate(NetApi::new(client.clone())));
 	io.extend_with(EthPubSubApiServer::to_delegate(EthPubSubApi::new(
 		pool.clone(),
 		client.clone(),
 		network.clone(),
 		SubscriptionManager::new(Arc::new(subscription_task_executor)),
 	)));
+	io.extend_with(NetApiServer::to_delegate(NetApi::new(client)));
 
 	io
 }
@@ -210,9 +202,11 @@ where
 /// Instantiate all RPC extensions for light node.
 pub fn create_light<C, P, F>(deps: LightDeps<C, F, P>) -> RpcExtension
 where
-	C: 'static + Send + Sync,
-	C: ProvideRuntimeApi<Block>,
-	C: sp_blockchain::HeaderBackend<Block>,
+	C: 'static
+		+ Send
+		+ Sync
+		+ sp_api::ProvideRuntimeApi<Block>
+		+ sp_blockchain::HeaderBackend<Block>,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	P: 'static + sp_transaction_pool::TransactionPool,
