@@ -14,7 +14,7 @@
 #![warn(missing_docs)]
 
 // --- substrate ---
-pub use sc_rpc::DenyUnsafe;
+pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
 
 // --- std ---
 use std::sync::Arc;
@@ -62,14 +62,14 @@ pub struct FullDeps<C, P, SC, B> {
 	pub select_chain: SC,
 	/// Whether to deny unsafe calls
 	pub deny_unsafe: sc_rpc::DenyUnsafe,
-	/// BABE specific dependencies.
-	pub babe: BabeDeps,
-	/// GRANDPA specific dependencies.
-	pub grandpa: GrandpaDeps<B>,
 	/// The Node authority flag
 	pub is_authority: bool,
 	/// Network service
 	pub network: Arc<sc_network::NetworkService<Block, Hash>>,
+	/// BABE specific dependencies.
+	pub babe: BabeDeps,
+	/// GRANDPA specific dependencies.
+	pub grandpa: GrandpaDeps<B>,
 }
 
 /// Light client extra dependencies.

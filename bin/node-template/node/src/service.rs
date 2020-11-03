@@ -18,6 +18,7 @@ use sc_finality_grandpa::{
 	LinkHalf, SharedVoterState as GrandpaSharedVoterState,
 	VotingRulesBuilder as GrandpaVotingRulesBuilder,
 };
+use sc_network::NetworkService;
 use sc_service::{
 	config::{KeystoreConfig, PrometheusConfig},
 	BuildNetworkParams, Configuration, Error as ServiceError, NoopRpcExtensionBuilder,
@@ -34,8 +35,10 @@ use sp_runtime::traits::BlakeTwo256;
 use sp_trie::PrefixedMemoryDB;
 use substrate_prometheus_endpoint::Registry;
 // --- darwinia ---
-use crate::rpc::{self, BabeDeps, FullDeps, GrandpaDeps, LightDeps};
-// dvm
+use crate::rpc::{
+	self, BabeDeps, DenyUnsafe, FullDeps, GrandpaDeps, LightDeps, RpcExtension,
+	SubscriptionTaskExecutor,
+};
 use dvm_consensus::FrontierBlockImport;
 
 use node_template_runtime::{
@@ -154,6 +157,12 @@ fn new_partial<RuntimeApi, Executor>(
 		DefaultImportQueue<Block, FullClient<RuntimeApi, Executor>>,
 		FullPool<Block, FullClient<RuntimeApi, Executor>>,
 		(
+			impl Fn(
+				DenyUnsafe,
+				bool,
+				Arc<NetworkService<Block, Hash>>,
+				SubscriptionTaskExecutor,
+			) -> RpcExtension,
 			(
 				BabeBlockImport<
 					Block,
@@ -223,11 +232,48 @@ where
 		config.prometheus_registry(),
 		CanAuthorWithNativeVersion::new(client.executor().clone()),
 	)?;
+	let justification_stream = grandpa_link.justification_stream();
+	let shared_authority_set = grandpa_link.shared_authority_set().clone();
 	let shared_voter_state = GrandpaSharedVoterState::empty();
 	let finality_proof_provider =
 		GrandpaFinalityProofProvider::new_for_service(backend.clone(), client.clone());
 	let import_setup = (babe_import.clone(), grandpa_link, babe_link.clone());
 	let rpc_setup = (shared_voter_state.clone(), finality_proof_provider.clone());
+	let babe_config = babe_link.config().clone();
+	let shared_epoch_changes = babe_link.epoch_changes().clone();
+	let subscription_task_executor =
+		sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
+	let rpc_extensions_builder = {
+		let client = client.clone();
+		let keystore = keystore.clone();
+		let transaction_pool = transaction_pool.clone();
+		let select_chain = select_chain.clone();
+
+		move |deny_unsafe, is_authority, network, subscription_executor| -> RpcExtension {
+			let deps = FullDeps {
+				client: client.clone(),
+				pool: transaction_pool.clone(),
+				select_chain: select_chain.clone(),
+				deny_unsafe,
+				is_authority,
+				network,
+				babe: BabeDeps {
+					babe_config: babe_config.clone(),
+					shared_epoch_changes: shared_epoch_changes.clone(),
+					keystore: keystore.clone(),
+				},
+				grandpa: GrandpaDeps {
+					shared_voter_state: shared_voter_state.clone(),
+					shared_authority_set: shared_authority_set.clone(),
+					justification_stream: justification_stream.clone(),
+					subscription_executor,
+					finality_provider: finality_proof_provider.clone(),
+				},
+			};
+
+			rpc::create_full(deps, subscription_task_executor.clone())
+		}
+	};
 
 	Ok(PartialComponents {
 		client,
@@ -238,7 +284,7 @@ where
 		import_queue,
 		transaction_pool,
 		inherent_data_providers,
-		other: (import_setup, rpc_setup),
+		other: (rpc_extensions_builder, import_setup, rpc_setup),
 	})
 }
 
@@ -267,7 +313,7 @@ where
 		import_queue,
 		transaction_pool,
 		inherent_data_providers,
-		other: (import_setup, rpc_setup),
+		other: (rpc_extensions_builder, import_setup, rpc_setup),
 	} = new_partial::<RuntimeApi, Executor>(&mut config)?;
 	let prometheus_registry = config.prometheus_registry().cloned();
 	let (shared_voter_state, finality_proof_provider) = rpc_setup;
@@ -294,59 +340,6 @@ where
 		);
 	}
 
-	let grandpa_hard_forks = vec![];
-	let (grandpa_block_import, grandpa_link) =
-		sc_finality_grandpa::block_import_with_authority_set_hard_forks(
-			client.clone(),
-			&(client.clone() as Arc<_>),
-			select_chain.clone(),
-			grandpa_hard_forks,
-		)?;
-	let (_, babe_link) = sc_consensus_babe::block_import(
-		BabeConfig::get_or_compute(&*client)?,
-		grandpa_block_import,
-		client.clone(),
-	)?;
-	let justification_stream = grandpa_link.justification_stream();
-	let shared_authority_set = grandpa_link.shared_authority_set().clone();
-	let shared_epoch_changes = babe_link.epoch_changes().clone();
-	let babe_config = babe_link.config().clone();
-	let subscription_task_executor =
-		sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
-
-	let rpc_extensions_builder = {
-		let client = client.clone();
-		let keystore = keystore.clone();
-		let transaction_pool = transaction_pool.clone();
-		let select_chain = select_chain.clone();
-		let network = network.clone();
-		let shared_voter_state = shared_voter_state.clone();
-		Box::new(move |deny_unsafe, subscriptions| {
-			let deps = FullDeps {
-				client: client.clone(),
-				pool: transaction_pool.clone(),
-				select_chain: select_chain.clone(),
-				deny_unsafe,
-				is_authority,
-				network: network.clone(),
-				babe: BabeDeps {
-					babe_config: babe_config.clone(),
-					shared_epoch_changes: shared_epoch_changes.clone(),
-					keystore: keystore.clone(),
-				},
-				grandpa: GrandpaDeps {
-					shared_voter_state: shared_voter_state.clone(),
-					shared_authority_set: shared_authority_set.clone(),
-					justification_stream: justification_stream.clone(),
-					subscription_executor: subscriptions,
-					finality_provider: finality_proof_provider.clone(),
-				},
-			};
-
-			rpc::create_full(deps, subscription_task_executor.clone())
-		})
-	};
-
 	let telemetry_connection_sinks = TelemetryConnectionSinks::default();
 	sc_service::spawn_tasks(SpawnTasksParams {
 		config,
@@ -354,7 +347,22 @@ where
 		client: client.clone(),
 		keystore: keystore.clone(),
 		network: network.clone(),
-		rpc_extensions_builder: Box::new(rpc_extensions_builder),
+		rpc_extensions_builder: {
+			let wrap_rpc_extensions_builder = {
+				let network = network.clone();
+
+				move |deny_unsafe, subscription_executor| -> RpcExtension {
+					rpc_extensions_builder(
+						deny_unsafe,
+						is_authority,
+						network.clone(),
+						subscription_executor,
+					)
+				}
+			};
+
+			Box::new(wrap_rpc_extensions_builder)
+		},
 		transaction_pool: transaction_pool.clone(),
 		task_manager: &mut task_manager,
 		on_demand: None,
