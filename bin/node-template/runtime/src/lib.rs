@@ -1515,7 +1515,7 @@ impl_runtime_apis! {
 
 	impl dvm_rpc_primitives::EthereumRuntimeRPCApi<Block> for Runtime {
 		fn chain_id() -> u64 {
-			ChainId::get()
+			<Runtime as pallet_evm::Trait>::ChainId::get()
 		}
 
 		fn account_basic(address: H160) -> EVMAccount {
@@ -1523,7 +1523,7 @@ impl_runtime_apis! {
 		}
 
 		fn gas_price() -> U256 {
-			FixedGasPrice::min_gas_price()
+			<Runtime as pallet_evm::Trait>::FeeCalculator::min_gas_price()
 		}
 
 		fn account_code_at(address: H160) -> Vec<u8> {
