@@ -22,6 +22,7 @@ jsonrpc-pubsub      = "15.1.0"
 log                 = "0.4.11"
 rlp                 = "0.4"
 sha3                = "0.8"
+rustc-hex = { version = "2.1.0", default-features = false }
 # darwinia
 dvm-consensus      = { path = "../consensus" }
 dvm-rpc-core       = { path = "core" }

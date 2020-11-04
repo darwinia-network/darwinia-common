@@ -1707,6 +1707,7 @@ dependencies = [
  "log",
  "parity-scale-codec",
  "rlp 0.4.6",
+ "rustc-hex",
  "sc-client-api",
  "sc-network",
  "sc-rpc",
