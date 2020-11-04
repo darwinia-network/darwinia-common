@@ -29,6 +29,7 @@ use jsonrpc_core::{
 	BoxFuture, Result,
 };
 use sc_client_api::backend::{AuxStore, Backend, StateBackend, StorageProvider};
+use sc_network::{ExHashT, NetworkService};
 use sha3::{Digest, Keccak256};
 use sp_api::{BlockId, ProvideRuntimeApi};
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
@@ -41,20 +42,28 @@ use std::{marker::PhantomData, sync::Arc};
 
 pub use dvm_rpc_core::{EthApiServer, NetApiServer};
 
-pub struct EthApi<B: BlockT, C, P, CT, BE> {
+pub struct EthApi<B: BlockT, C, P, CT, BE, H: ExHashT> {
 	pool: Arc<P>,
 	client: Arc<C>,
 	convert_transaction: CT,
+	network: Arc<NetworkService<B, H>>,
 	is_authority: bool,
 	_marker: PhantomData<(B, BE)>,
 }
 
-impl<B: BlockT, C, P, CT, BE> EthApi<B, C, P, CT, BE> {
-	pub fn new(client: Arc<C>, pool: Arc<P>, convert_transaction: CT, is_authority: bool) -> Self {
+impl<B: BlockT, C, P, CT, BE, H: ExHashT> EthApi<B, C, P, CT, BE, H> {
+	pub fn new(
+		client: Arc<C>,
+		pool: Arc<P>,
+		convert_transaction: CT,
+		network: Arc<NetworkService<B, H>>,
+		is_authority: bool,
+	) -> Self {
 		Self {
 			client,
 			pool,
 			convert_transaction,
+			network,
 			is_authority,
 			_marker: PhantomData,
 		}
@@ -176,7 +185,7 @@ fn transaction_build(
 	}
 }
 
-impl<B, C, P, CT, BE> EthApi<B, C, P, CT, BE>
+impl<B, C, P, CT, BE, H: ExHashT> EthApi<B, C, P, CT, BE, H>
 where
 	C: ProvideRuntimeApi<B> + StorageProvider<B, BE> + AuxStore,
 	C: HeaderBackend<B> + HeaderMetadata<B, Error = BlockChainError> + 'static,
@@ -224,7 +233,7 @@ where
 	}
 }
 
-impl<B, C, P, CT, BE> EthApiT for EthApi<B, C, P, CT, BE>
+impl<B, C, P, CT, BE, H: ExHashT> EthApiT for EthApi<B, C, P, CT, BE, H>
 where
 	C: ProvideRuntimeApi<B> + StorageProvider<B, BE> + AuxStore,
 	C: HeaderBackend<B> + HeaderMetadata<B, Error = BlockChainError> + 'static,
@@ -241,21 +250,27 @@ where
 	}
 
 	fn syncing(&self) -> Result<SyncStatus> {
-		let block_number = U256::from(
-			self.client
-				.info()
-				.best_number
-				.clone()
-				.unique_saturated_into(),
-		);
-
-		Ok(SyncStatus::Info(SyncInfo {
-			starting_block: U256::zero(),
-			current_block: block_number,
-			highest_block: block_number,
-			warp_chunks_amount: None,
-			warp_chunks_processed: None,
-		}))
+		if self.network.is_major_syncing() {
+			let block_number = U256::from(
+				self.client
+					.info()
+					.best_number
+					.clone()
+					.unique_saturated_into(),
+			);
+			Ok(SyncStatus::Info(SyncInfo {
+				starting_block: U256::zero(),
+				current_block: block_number,
+				// TODO `highest_block` is not correct, should load `best_seen_block` from NetworkWorker,
+				// but afaik that is not currently possible in Substrate:
+				// https://github.com/paritytech/substrate/issues/7311
+				highest_block: block_number,
+				warp_chunks_amount: None,
+				warp_chunks_processed: None,
+			}))
+		} else {
+			Ok(SyncStatus::None)
+		}
 	}
 
 	fn hashrate(&self) -> Result<U256> {
