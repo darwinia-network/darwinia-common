@@ -163,14 +163,13 @@ fn testnet_genesis(
 ) -> GenesisConfig {
 	let init_evm_account_id =
 		fixed_hex_bytes_unchecked!("0x6be02d1d3665660d22ff9624b7be0551ee1ac91b", 20).into();
-	let init_evm_balance = U256::from(u128::MAX).overflowing_add(U256::from(100)).0;
 	let mut evm_accounts = BTreeMap::new();
 
 	evm_accounts.insert(
 		init_evm_account_id,
 		pallet_evm::GenesisAccount {
 			nonce: 0.into(),
-			balance: init_evm_balance,
+			balance: 123_456_789_000_000_000_006u128.into(),
 			storage: BTreeMap::new(),
 			code: vec![],
 		},
