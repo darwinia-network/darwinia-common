@@ -15,14 +15,14 @@ impl<T: crate::Trait + darwinia_balances::Trait<darwinia_balances::Instance0>> A
 		let helper = U256::from(10).overflowing_pow(U256::from(9)).0;
 
 		// Get balance from T::Currency
-		let balance = T::Currency::free_balance(&account_id);
-		let balance = U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(balance));
+		let balance: U256 = T::Currency::free_balance(&account_id)
+			.unique_saturated_into()
+			.into();
 
 		// Get remaining balance from dvm
-		let remaining_balance = crate::Module::<T>::remaining_balance(&account_id);
-		let remaining_balance = U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(
-			remaining_balance,
-		));
+		let remaining_balance: U256 = crate::Module::<T>::remaining_balance(&account_id)
+			.unique_saturated_into()
+			.into();
 
 		// Final balance = balance * 10^9 + remaining_balance
 		let final_balance = U256::from(balance * helper)
@@ -30,7 +30,7 @@ impl<T: crate::Trait + darwinia_balances::Trait<darwinia_balances::Instance0>> A
 			.0;
 
 		EVMAccount {
-			nonce: U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(nonce)),
+			nonce: nonce.unique_saturated_into().into(),
 			balance: final_balance,
 		}
 	}

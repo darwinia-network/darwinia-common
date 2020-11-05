@@ -33,7 +33,7 @@ use frame_system::ensure_none;
 use sha3::{Digest, Keccak256};
 use sp_runtime::{
 	generic::DigestItem,
-	traits::UniqueSaturatedInto,
+	traits::{Saturating, UniqueSaturatedInto},
 	transaction_validity::{
 		InvalidTransaction, TransactionSource, TransactionValidity, ValidTransaction,
 	},
@@ -45,7 +45,7 @@ pub use dvm_rpc_primitives::TransactionStatus;
 pub use ethereum::{Block, Log, Receipt, Transaction, TransactionAction};
 use frame_support::traits::Currency;
 use pallet_evm::{AccountBasicMapping, AddressMapping};
-use sp_runtime::traits::{CheckedAdd, CheckedSub};
+use sp_runtime::traits::CheckedSub;
 
 #[cfg(all(feature = "std", test))]
 mod tests;
@@ -323,9 +323,7 @@ impl<T: Trait> Module<T> {
 	/// Inc remaining balance
 	pub fn inc_remain_balance(account_id: &T::AccountId, value: T::Balance) {
 		let remain_balance = Self::remaining_balance(account_id);
-		let updated_balance = remain_balance
-			.checked_add(&value)
-			.expect("Inc remain balance, panic!");
+		let updated_balance = remain_balance.saturating_add(value);
 		<RemainingBalance<T>>::insert(account_id, updated_balance);
 	}
 
