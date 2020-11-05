@@ -40,6 +40,9 @@ impl<T: crate::Trait + darwinia_balances::Trait<darwinia_balances::Instance0>> A
 		let account_id = <T as pallet_evm::Trait>::AddressMapping::into_account_id(*address);
 		let current = T::AccountBasicMapping::account_basic(address);
 		let helper = U256::from(10).overflowing_pow(U256::from(9)).0;
+		let dvm_balance: U256 = crate::Module::<T>::remaining_balance(&account_id)
+			.unique_saturated_into()
+			.into();
 
 		if current.nonce < new.nonce {
 			// ASSUME: in one single EVM transaction, the nonce will not increase more than
@@ -51,24 +54,56 @@ impl<T: crate::Trait + darwinia_balances::Trait<darwinia_balances::Instance0>> A
 
 		if current.balance > new.balance {
 			let diff = current.balance - new.balance;
-			let (balance, remaining_balance) = diff.div_mod(helper);
+			let (diff_balance, diff_remaining_balance) = diff.div_mod(helper);
 
-			// Update balances
-			T::Currency::slash(&account_id, balance.low_u128().unique_saturated_into());
-			let value = <T as darwinia_balances::Trait<darwinia_balances::Instance0>>::Balance::unique_saturated_from(
-				remaining_balance.low_u128(),
-			);
-			let _ = crate::Module::<T>::dec_remain_balance(&account_id, value);
+			// If the dvm storage < diff remaining balance, we can not do sub operation directly.
+			// Otherwise, slash T::Currency, dec dvm storage balance directly.
+			if dvm_balance < diff_remaining_balance {
+				let remaining_balance = dvm_balance
+					.saturating_add(U256::from(1) * helper)
+					.saturating_sub(diff_remaining_balance);
+
+				T::Currency::slash(
+					&account_id,
+					(diff_balance + 1).low_u128().unique_saturated_into(),
+				);
+				let value = <T as darwinia_balances::Trait<darwinia_balances::Instance0>>::Balance::unique_saturated_from(
+					remaining_balance.low_u128(),
+				);
+				crate::Module::<T>::set_remaining_balance(&account_id, value);
+			} else {
+				T::Currency::slash(&account_id, diff_balance.low_u128().unique_saturated_into());
+				let value = <T as darwinia_balances::Trait<darwinia_balances::Instance0>>::Balance::unique_saturated_from(
+					diff_remaining_balance.low_u128(),
+				);
+				crate::Module::<T>::dec_remain_balance(&account_id, value);
+			}
 		} else if current.balance < new.balance {
 			let diff = new.balance - current.balance;
-			let (balance, remaining_balance) = diff.div_mod(helper);
+			let (diff_balance, diff_remaining_balance) = diff.div_mod(helper);
 
-			// Update balances
-			T::Currency::deposit_creating(&account_id, balance.low_u128().unique_saturated_into());
-			let value = <T as darwinia_balances::Trait<darwinia_balances::Instance0>>::Balance::unique_saturated_from(
-				remaining_balance.low_u128(),
-			);
-			crate::Module::<T>::inc_remain_balance(&account_id, value);
+			// If dvm storage balance + diff remaining balance > helper, we must update T::Currency balance.
+			if dvm_balance + diff_remaining_balance >= helper {
+				let remaining_balance = dvm_balance + diff_remaining_balance - helper;
+
+				T::Currency::deposit_creating(
+					&account_id,
+					(diff_balance + 1).low_u128().unique_saturated_into(),
+				);
+				let value = <T as darwinia_balances::Trait<darwinia_balances::Instance0>>::Balance::unique_saturated_from(
+					remaining_balance.low_u128(),
+				);
+				crate::Module::<T>::set_remaining_balance(&account_id, value);
+			} else {
+				T::Currency::deposit_creating(
+					&account_id,
+					diff_balance.low_u128().unique_saturated_into(),
+				);
+				let value = <T as darwinia_balances::Trait<darwinia_balances::Instance0>>::Balance::unique_saturated_from(
+					diff_remaining_balance.low_u128(),
+				);
+				crate::Module::<T>::inc_remain_balance(&account_id, value);
+			}
 		}
 	}
 }

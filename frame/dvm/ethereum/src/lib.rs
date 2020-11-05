@@ -45,7 +45,6 @@ pub use dvm_rpc_primitives::TransactionStatus;
 pub use ethereum::{Block, Log, Receipt, Transaction, TransactionAction};
 use frame_support::traits::Currency;
 use pallet_evm::{AccountBasicMapping, AddressMapping};
-use sp_runtime::traits::CheckedSub;
 
 #[cfg(all(feature = "std", test))]
 mod tests;
@@ -320,6 +319,11 @@ impl<T: Trait> Module<T> {
 		<RemainingBalance<T>>::get(account_id)
 	}
 
+	// Set the remaining balance for evm address
+	pub fn set_remaining_balance(account_id: &T::AccountId, value: T::Balance) {
+		<RemainingBalance<T>>::insert(account_id, value)
+	}
+
 	/// Inc remaining balance
 	pub fn inc_remain_balance(account_id: &T::AccountId, value: T::Balance) {
 		let remain_balance = Self::remaining_balance(account_id);
@@ -328,13 +332,10 @@ impl<T: Trait> Module<T> {
 	}
 
 	/// Dec remaining balance
-	pub fn dec_remain_balance(account_id: &T::AccountId, value: T::Balance) -> DispatchResult {
+	pub fn dec_remain_balance(account_id: &T::AccountId, value: T::Balance) {
 		let remain_balance = Self::remaining_balance(account_id);
-		let updated_balance = remain_balance
-			.checked_sub(&value)
-			.ok_or(<Error<T>>::InsufficientRemainBalance)?;
+		let updated_balance = remain_balance.saturating_sub(value);
 		<RemainingBalance<T>>::insert(account_id, updated_balance);
-		Ok(())
 	}
 
 	/// Get the author using the FindAuthor trait.
