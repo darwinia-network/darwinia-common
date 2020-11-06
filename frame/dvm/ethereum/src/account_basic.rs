@@ -12,7 +12,9 @@ impl<T: crate::Trait + darwinia_balances::Trait<darwinia_balances::Instance0>> A
 	fn account_basic(address: &H160) -> EVMAccount {
 		let account_id = <T as pallet_evm::Trait>::AddressMapping::into_account_id(*address);
 		let nonce = frame_system::Module::<T>::account_nonce(&account_id);
-		let helper = U256::from(10).overflowing_pow(U256::from(9)).0;
+		let helper = U256::from(10)
+			.checked_pow(U256::from(9))
+			.unwrap_or(U256::MAX);
 
 		// Get balance from T::Currency
 		let balance: U256 = T::Currency::free_balance(&account_id)
@@ -26,8 +28,8 @@ impl<T: crate::Trait + darwinia_balances::Trait<darwinia_balances::Instance0>> A
 
 		// Final balance = balance * 10^9 + remaining_balance
 		let final_balance = U256::from(balance * helper)
-			.overflowing_add(remaining_balance)
-			.0;
+			.checked_add(remaining_balance)
+			.unwrap_or_default();
 
 		EVMAccount {
 			nonce: nonce.unique_saturated_into().into(),
@@ -39,7 +41,9 @@ impl<T: crate::Trait + darwinia_balances::Trait<darwinia_balances::Instance0>> A
 	fn mutate_account_basic(address: &H160, new: EVMAccount) {
 		let account_id = <T as pallet_evm::Trait>::AddressMapping::into_account_id(*address);
 		let current = T::AccountBasicMapping::account_basic(address);
-		let helper = U256::from(10).overflowing_pow(U256::from(9)).0;
+		let helper = U256::from(10)
+			.checked_pow(U256::from(9))
+			.unwrap_or(U256::MAX);
 		let dvm_balance: U256 = crate::Module::<T>::remaining_balance(&account_id)
 			.unique_saturated_into()
 			.into();
