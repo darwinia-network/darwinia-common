@@ -151,8 +151,6 @@ decl_error! {
 		Reverted,
 		/// If call itself fails
 		FailedExecution,
-		/// Not enought remaining balance
-		InsufficientRemainBalance,
 	}
 }
 
