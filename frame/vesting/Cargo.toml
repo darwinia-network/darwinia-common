@@ -15,10 +15,10 @@ codec      = { package = "parity-scale-codec", version = "1.3.5", default-featur
 enumflags2 = { version = "0.6.2" }
 serde      = { version = "1.0.117", optional = true }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "branch-for-dvm" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "branch-for-dvm" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "branch-for-dvm" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "branch-for-dvm" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 # darwinia
 darwinia-support = { default-features = false, path = "../support" }
 
@@ -26,9 +26,9 @@ darwinia-support = { default-features = false, path = "../support" }
 # crates
 hex-literal = "0.3.1"
 # substrate
-sp-core    = { git = "https://github.com/darwinia-network/substrate.git", branch = "branch-for-dvm" }
-sp-io      = { git = "https://github.com/darwinia-network/substrate.git", branch = "branch-for-dvm" }
-sp-storage = { git = "https://github.com/darwinia-network/substrate.git", branch = "branch-for-dvm" }
+sp-core    = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-io      = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-storage = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 # darwinia
 darwinia-balances = { path = "../balances" }
 
