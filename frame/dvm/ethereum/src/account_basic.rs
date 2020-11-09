@@ -14,7 +14,7 @@ impl<T: crate::Trait + darwinia_balances::Trait<darwinia_balances::Instance0>> A
 		let nonce = frame_system::Module::<T>::account_nonce(&account_id);
 		let helper = U256::from(10)
 			.checked_pow(U256::from(9))
-			.unwrap_or(U256::MAX);
+			.unwrap_or(U256::from(0));
 
 		// Get balance from T::Currency
 		let balance: U256 = T::Currency::free_balance(&account_id)
@@ -59,7 +59,6 @@ impl<T: crate::Trait + darwinia_balances::Trait<darwinia_balances::Instance0>> A
 		if current.balance > new.balance {
 			let diff = current.balance - new.balance;
 			let (diff_balance, diff_remaining_balance) = diff.div_mod(helper);
-
 			// If the dvm storage < diff remaining balance, we can not do sub operation directly.
 			// Otherwise, slash T::Currency, dec dvm storage balance directly.
 			if dvm_balance < diff_remaining_balance {
