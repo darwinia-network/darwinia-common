@@ -17,6 +17,7 @@
 //! Test utilities
 
 use super::*;
+use crate::account_basic::DVMAccountBasicMapping;
 use crate::{Module, Trait};
 use ethereum::{TransactionAction, TransactionSignature};
 use frame_support::{impl_outer_origin, parameter_types, weights::Weight, ConsensusEngineId};
@@ -162,6 +163,7 @@ impl pallet_evm::Trait for Test {
 	type Event = ();
 	type Precompiles = ();
 	type ChainId = ChainId;
+	type AccountBasicMapping = DVMAccountBasicMapping<Self>;
 }
 
 impl Trait for Test {
