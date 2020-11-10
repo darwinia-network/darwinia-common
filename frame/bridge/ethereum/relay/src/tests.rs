@@ -13,10 +13,10 @@ fn store_relay_header_parcel_should_work() {
 		assert!(EthereumRelay::best_confirmed_block_number() != 100);
 
 		assert_eq!(ethereum_relay_header_parcel.header.number, 100);
-		assert_ok!(EthereumRelay::confirm_relay_header_parcel_with_reason(
+		EthereumRelay::confirm_relay_header_parcel_with_reason(
 			ethereum_relay_header_parcel.clone(),
 			vec![]
-		));
+		);
 
 		assert_eq!(EthereumRelay::confirmed_header_parcel_of(100).unwrap(), ethereum_relay_header_parcel);
 		assert!(EthereumRelay::confirmed_block_numbers().contains(&100));
@@ -30,10 +30,10 @@ fn verify_relay_proofs_should_work() {
 		let ethereum_relay_header_parcel_100: EthereumRelayHeaderParcel =
 			serde_json::from_str(LAST_CONFIRM).unwrap();
 
-		assert_ok!(EthereumRelay::confirm_relay_header_parcel_with_reason(
+		EthereumRelay::confirm_relay_header_parcel_with_reason(
 			ethereum_relay_header_parcel_100.clone(),
-			vec![]
-		));
+			vec![],
+		);
 
 		let ethereum_relay_header_parcel_103: EthereumRelayHeaderParcel =
 			serde_json::from_str(HEADER_103).unwrap();
@@ -79,10 +79,10 @@ fn verify_relay_chain_should_work() {
 		.best_confirmed_block_number(100)
 		.build()
 		.execute_with(|| {
-			assert_ok!(EthereumRelay::confirm_relay_header_parcel_with_reason(
+			EthereumRelay::confirm_relay_header_parcel_with_reason(
 				serde_json::from_str(LAST_CONFIRM).unwrap(),
-				vec![]
-			));
+				vec![],
+			);
 
 			// Should work for random sample points order
 
