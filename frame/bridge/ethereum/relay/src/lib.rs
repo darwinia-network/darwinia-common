@@ -412,7 +412,7 @@ decl_module! {
 					if approve_threashold >= T::ApproveThreshold::get() {
 						Self::confirm_relay_header_parcel_with_reason(
 							pending_relay_header_parcels.remove(i).1, 	b"Confirmed By Tech.Comm".to_vec()
-						)?;
+						);
 					} else if reject_threashold >= T::RejectThreshold::get() {
 						pending_relay_header_parcels.remove(i);
 
@@ -635,17 +635,10 @@ impl<T: Trait> Module<T> {
 	pub fn confirm_relay_header_parcel_with_reason(
 		relay_header_parcel: EthereumRelayHeaderParcel,
 		reason: Vec<u8>,
-	) -> DispatchResult {
-		let relay_block_number = relay_header_parcel.header.number;
-
-		ensure!(
-			relay_block_number > Self::best_confirmed_block_number(),
-			<Error<T>>::HeaderInv
-		);
-
-		Self::update_confirmeds_with_reason(relay_header_parcel, reason);
-
-		Ok(())
+	) {
+		if relay_header_parcel.header.number > Self::best_confirmed_block_number() {
+			Self::update_confirmeds_with_reason(relay_header_parcel, reason);
+		}
 	}
 
 	pub fn system_approve_pending_relay_header_parcels(
@@ -654,8 +647,7 @@ impl<T: Trait> Module<T> {
 		<PendingRelayHeaderParcels<T>>::mutate(|parcels| {
 			parcels.retain(|(at, parcel, _)| {
 				if *at == now {
-					// TODO: handle error
-					let _ = Self::confirm_relay_header_parcel_with_reason(
+					Self::confirm_relay_header_parcel_with_reason(
 						parcel.to_owned(),
 						b"Not Enough Technical Member Online, Confirmed By System".to_vec(),
 					);
