@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Substrate.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::internal_err;
+use crate::{handle_call_error, internal_err};
 use dvm_rpc_core::types::{
 	Block, BlockNumber, BlockTransactions, Bytes, CallRequest, Filter, Index, Log, Receipt, Rich,
 	RichBlock, SyncInfo, SyncStatus, Transaction, VariadicValue, Work,
@@ -29,6 +29,7 @@ use jsonrpc_core::{
 	BoxFuture, Result,
 };
 use sc_client_api::backend::{AuxStore, Backend, StateBackend, StorageProvider};
+use sc_network::{ExHashT, NetworkService};
 use sha3::{Digest, Keccak256};
 use sp_api::{BlockId, ProvideRuntimeApi};
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
@@ -41,20 +42,28 @@ use std::{marker::PhantomData, sync::Arc};
 
 pub use dvm_rpc_core::{EthApiServer, NetApiServer};
 
-pub struct EthApi<B: BlockT, C, P, CT, BE> {
+pub struct EthApi<B: BlockT, C, P, CT, BE, H: ExHashT> {
 	pool: Arc<P>,
 	client: Arc<C>,
 	convert_transaction: CT,
+	network: Arc<NetworkService<B, H>>,
 	is_authority: bool,
 	_marker: PhantomData<(B, BE)>,
 }
 
-impl<B: BlockT, C, P, CT, BE> EthApi<B, C, P, CT, BE> {
-	pub fn new(client: Arc<C>, pool: Arc<P>, convert_transaction: CT, is_authority: bool) -> Self {
+impl<B: BlockT, C, P, CT, BE, H: ExHashT> EthApi<B, C, P, CT, BE, H> {
+	pub fn new(
+		client: Arc<C>,
+		pool: Arc<P>,
+		convert_transaction: CT,
+		network: Arc<NetworkService<B, H>>,
+		is_authority: bool,
+	) -> Self {
 		Self {
 			client,
 			pool,
 			convert_transaction,
+			network,
 			is_authority,
 			_marker: PhantomData,
 		}
@@ -176,7 +185,7 @@ fn transaction_build(
 	}
 }
 
-impl<B, C, P, CT, BE> EthApi<B, C, P, CT, BE>
+impl<B, C, P, CT, BE, H: ExHashT> EthApi<B, C, P, CT, BE, H>
 where
 	C: ProvideRuntimeApi<B> + StorageProvider<B, BE> + AuxStore,
 	C: HeaderBackend<B> + HeaderMetadata<B, Error = BlockChainError> + 'static,
@@ -224,7 +233,7 @@ where
 	}
 }
 
-impl<B, C, P, CT, BE> EthApiT for EthApi<B, C, P, CT, BE>
+impl<B, C, P, CT, BE, H: ExHashT> EthApiT for EthApi<B, C, P, CT, BE, H>
 where
 	C: ProvideRuntimeApi<B> + StorageProvider<B, BE> + AuxStore,
 	C: HeaderBackend<B> + HeaderMetadata<B, Error = BlockChainError> + 'static,
@@ -241,21 +250,27 @@ where
 	}
 
 	fn syncing(&self) -> Result<SyncStatus> {
-		let block_number = U256::from(
-			self.client
-				.info()
-				.best_number
-				.clone()
-				.unique_saturated_into(),
-		);
-
-		Ok(SyncStatus::Info(SyncInfo {
-			starting_block: U256::zero(),
-			current_block: block_number,
-			highest_block: block_number,
-			warp_chunks_amount: None,
-			warp_chunks_processed: None,
-		}))
+		if self.network.is_major_syncing() {
+			let block_number = U256::from(
+				self.client
+					.info()
+					.best_number
+					.clone()
+					.unique_saturated_into(),
+			);
+			Ok(SyncStatus::Info(SyncInfo {
+				starting_block: U256::zero(),
+				current_block: block_number,
+				// TODO `highest_block` is not correct, should load `best_seen_block` from NetworkWorker,
+				// but afaik that is not currently possible in Substrate:
+				// https://github.com/paritytech/substrate/issues/7311
+				highest_block: block_number,
+				warp_chunks_amount: None,
+				warp_chunks_processed: None,
+			}))
+		} else {
+			Ok(SyncStatus::None)
+		}
 	}
 
 	fn hashrate(&self) -> Result<U256> {
@@ -511,29 +526,39 @@ where
 	fn call(&self, request: CallRequest, _: Option<BlockNumber>) -> Result<Bytes> {
 		let hash = self.client.info().best_hash;
 
-		let from = request.from.unwrap_or_default();
-		let to = request.to.unwrap_or_default();
-		let gas_price = request.gas_price;
-		let gas_limit = request.gas.unwrap_or(U256::max_value());
-		let value = request.value.unwrap_or_default();
-		let data = request.data.map(|d| d.0).unwrap_or_default();
-		let nonce = request.nonce;
+		let CallRequest {
+			from,
+			to,
+			gas_price,
+			gas,
+			value,
+			data,
+			nonce,
+		} = request;
+
+		let gas_limit = gas.unwrap_or(U256::max_value()); // TODO: set a limit
+		let data = data.map(|d| d.0).unwrap_or_default();
+
+		let action = match to {
+			Some(to) => ethereum::TransactionAction::Call(to),
+			_ => ethereum::TransactionAction::Create,
+		};
 
 		let (ret, _) = self
 			.client
 			.runtime_api()
 			.call(
 				&BlockId::Hash(hash),
-				from,
+				from.unwrap_or_default(),
 				data,
-				value,
+				value.unwrap_or_default(),
 				gas_limit,
 				gas_price,
 				nonce,
-				ethereum::TransactionAction::Call(to),
+				action,
 			)
 			.map_err(|err| internal_err(format!("internal error: {:?}", err)))?
-			.map_err(|err| internal_err(format!("executing call failed: {:?}", err)))?;
+			.map_err(handle_call_error)?;
 
 		Ok(Bytes(ret))
 	}
@@ -541,31 +566,39 @@ where
 	fn estimate_gas(&self, request: CallRequest, _: Option<BlockNumber>) -> Result<U256> {
 		let hash = self.client.info().best_hash;
 
-		let from = request.from.unwrap_or_default();
-		let gas_price = request.gas_price;
-		let gas_limit = request.gas.unwrap_or(U256::max_value()); // TODO: this isn't safe
-		let value = request.value.unwrap_or_default();
-		let data = request.data.map(|d| d.0).unwrap_or_default();
-		let nonce = request.nonce;
+		let CallRequest {
+			from,
+			to,
+			gas_price,
+			gas,
+			value,
+			data,
+			nonce,
+		} = request;
+
+		let gas_limit = gas.unwrap_or(U256::max_value()); // TODO: set a limit
+		let data = data.map(|d| d.0).unwrap_or_default();
+
+		let action = match to {
+			Some(to) => ethereum::TransactionAction::Call(to),
+			_ => ethereum::TransactionAction::Create,
+		};
 
 		let (_, used_gas) = self
 			.client
 			.runtime_api()
 			.call(
 				&BlockId::Hash(hash),
-				from,
+				from.unwrap_or_default(),
 				data,
-				value,
+				value.unwrap_or_default(),
 				gas_limit,
 				gas_price,
 				nonce,
-				match request.to {
-					Some(to) => ethereum::TransactionAction::Call(to),
-					_ => ethereum::TransactionAction::Create,
-				},
+				action,
 			)
 			.map_err(|err| internal_err(format!("internal error: {:?}", err)))?
-			.map_err(|err| internal_err(format!("executing call failed: {:?}", err)))?;
+			.map_err(handle_call_error)?;
 
 		Ok(used_gas)
 	}

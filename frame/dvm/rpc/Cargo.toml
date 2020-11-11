@@ -21,6 +21,7 @@ jsonrpc-derive      = "15.1.0"
 jsonrpc-pubsub      = "15.1.0"
 log                 = "0.4.11"
 rlp                 = "0.4"
+rustc-hex           = { version = "2.1.0" }
 sha3                = "0.8"
 # darwinia
 dvm-consensus      = { path = "../consensus" }

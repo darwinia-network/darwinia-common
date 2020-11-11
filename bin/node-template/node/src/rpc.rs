@@ -187,12 +187,13 @@ where
 		client.clone(),
 		pool.clone(),
 		TransactionConverter,
+		network.clone(),
 		is_authority,
 	)));
 	io.extend_with(EthPubSubApiServer::to_delegate(EthPubSubApi::new(
-		pool.clone(),
+		pool,
 		client.clone(),
-		network.clone(),
+		network,
 		SubscriptionManager::new(Arc::new(subscription_task_executor)),
 	)));
 	io.extend_with(NetApiServer::to_delegate(NetApi::new(client)));

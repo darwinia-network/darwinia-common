@@ -23,7 +23,7 @@ jsonrpc-core   = { version = "15.1.0" }
 jsonrpc-pubsub = { version = "15.1.0" }
 log            = { version = "0.4.11" }
 structopt      = { version = "0.3.20" }
-tokio          = { version = "0.3.1", optional = true, features = ["rt-multi-thread"] }
+tokio          = { version = "0.3.3", optional = true, features = ["rt-multi-thread"] }
 # darwinia
 array-bytes                         = { path = "../../../primitives/array-bytes" }
 darwinia-balances-rpc               = { path = "../../../frame/balances/rpc" }
