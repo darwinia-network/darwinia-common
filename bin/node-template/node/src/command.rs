@@ -186,6 +186,24 @@ pub fn run() -> sc_cli::Result<()> {
 				Ok((cmd.run(client, backend), task_manager))
 			})
 		}
+		Some(Subcommand::Benchmark(cmd)) => {
+			if cfg!(feature = "runtime-benchmarks") {
+				let runner = cli.create_runner(cmd)?;
+				let chain_spec = &runner.config().chain_spec;
+
+				set_default_ss58_version(chain_spec);
+
+				runner.sync_run(|config| {
+					cmd.run::<service::node_template_runtime::Block, service::NodeTemplateExecutor>(
+						config,
+					)
+				})
+			} else {
+				Err("Benchmarking wasn't enabled when building the node. \
+				You can enable it with `--features runtime-benchmarks`."
+					.into())
+			}
+		}
 		Some(Subcommand::Key(cmd)) => cmd.run(),
 		Some(Subcommand::Sign(cmd)) => cmd.run(),
 		Some(Subcommand::Verify(cmd)) => cmd.run(),

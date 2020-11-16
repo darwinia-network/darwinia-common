@@ -59,10 +59,18 @@ type LightBackend = sc_service::TLightBackendWithHash<Block, BlakeTwo256>;
 type LightClient<RuntimeApi, Executor> =
 	sc_service::TLightClientWithBackend<Block, RuntimeApi, Executor, LightBackend>;
 
+#[cfg(not(features = "runtime-benchmarks"))]
 native_executor_instance!(
 	pub NodeTemplateExecutor,
 	node_template_runtime::api::dispatch,
 	node_template_runtime::native_version,
+);
+#[cfg(features = "runtime-benchmarks")]
+native_executor_instance!(
+	pub NodeTemplateExecutor,
+	node_template_runtime::api::dispatch,
+	node_template_runtime::native_version,
+	frame_benchmarking::benchmarking::HostFunctions,
 );
 
 /// A set of APIs that darwinia-like runtimes must implement.

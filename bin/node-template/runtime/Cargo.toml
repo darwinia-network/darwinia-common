@@ -16,6 +16,7 @@ serde             = { version = "1.0.117", optional = true }
 smallvec          = { version = "1.4.2" }
 static_assertions = { version = "1.1.0" }
 # darwinia
+array-bytes                         = { default-features = false, optional = true, path = "../../../primitives/array-bytes" }
 darwinia-balances                   = { default-features = false, path = "../../../frame/balances" }
 darwinia-balances-rpc-runtime-api   = { default-features = false, path = "../../../frame/balances/rpc/runtime-api" }
 darwinia-claims                     = { default-features = false, path = "../../../frame/claims" }
@@ -39,9 +40,11 @@ dvm-ethereum                        = { default-features = false, path = "../../
 dvm-rpc-primitives                  = { default-features = false, path = "../../../frame/dvm/rpc/primitives" }
 ethereum-primitives                 = { default-features = false, path = "../../../primitives/ethereum-primitives" }
 # substrate
+frame-benchmarking                         = { default-features = false, optional = true, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 frame-executive                            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 frame-support                              = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 frame-system                               = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+frame-system-benchmarking                  = { default-features = false, optional = true, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 frame-system-rpc-runtime-api               = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 pallet-authority-discovery                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 pallet-authorship                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
@@ -147,4 +150,12 @@ std     = [
 	"sp-version/std",
 ]
 
-with-tracing = ["frame-executive/with-tracing"]
+runtime-benchmarks = [
+	"array-bytes",
+	"frame-benchmarking",
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"frame-system-benchmarking",
+	"pallet-timestamp/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+]

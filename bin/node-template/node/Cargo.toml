@@ -18,12 +18,12 @@ name = "node-template"
 node-template-runtime = { path = "../runtime" }
 # crates
 codec          = { package = "parity-scale-codec", version = "1.3.5" }
-futures        = { version = "0.3.7" }
+futures        = { version = "0.3.8" }
 jsonrpc-core   = { version = "15.1.0" }
 jsonrpc-pubsub = { version = "15.1.0" }
 log            = { version = "0.4.11" }
 structopt      = { version = "0.3.20" }
-tokio          = { version = "0.3.1", optional = true, features = ["rt-multi-thread"] }
+tokio          = { version = "0.3.3", optional = true, features = ["rt-multi-thread"] }
 # darwinia
 array-bytes                         = { path = "../../../primitives/array-bytes" }
 darwinia-balances-rpc               = { path = "../../../frame/balances/rpc" }
@@ -40,6 +40,8 @@ dvm-consensus                       = { path = "../../../frame/dvm/consensus" }
 dvm-rpc                             = { path = "../../../frame/dvm/rpc" }
 dvm-rpc-primitives                  = { path = "../../../frame/dvm/rpc/primitives" }
 # substrate
+frame-benchmarking                         = { optional = true, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+frame-benchmarking-cli                     = { optional = true, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 frame-system-rpc-runtime-api               = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 pallet-evm                                 = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 pallet-im-online                           = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
@@ -98,3 +100,9 @@ cli       = [
 db        = ["sc-service/db"]
 full-node = []
 wasmtime  = ["sc-cli/wasmtime"]
+
+runtime-benchmarks = [
+	"frame-benchmarking",
+	"frame-benchmarking-cli",
+	"node-template-runtime/runtime-benchmarks",
+]
