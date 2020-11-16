@@ -425,8 +425,8 @@ use impls::*;
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("node-template"),
-	impl_name: create_runtime_str!("node-template"),
+	spec_name: create_runtime_str!("Pangolin"),
+	impl_name: create_runtime_str!("Darwinia Pangolin"),
 	authoring_version: 1,
 	spec_version: 1,
 	impl_version: 1,

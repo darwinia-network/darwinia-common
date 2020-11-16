@@ -43,9 +43,9 @@ pub fn properties() -> Properties {
 
 	properties.insert("ss58Format".into(), 42.into());
 	properties.insert("tokenDecimals".into(), 9.into());
-	properties.insert("tokenSymbol".into(), "CRING".into());
+	properties.insert("tokenSymbol".into(), "PRING".into());
 	properties.insert("ktonTokenDecimals".into(), 9.into());
-	properties.insert("ktonTokenSymbol".into(), "CKTON".into());
+	properties.insert("ktonTokenSymbol".into(), "PKTON".into());
 
 	properties
 }
