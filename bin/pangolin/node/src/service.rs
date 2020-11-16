@@ -589,8 +589,7 @@ pub fn pangolin_new_full(
 	),
 	ServiceError,
 > {
-	let (components, client) =
-		new_full::<pangolin_runtime::RuntimeApi, PangolinExecutor>(config)?;
+	let (components, client) = new_full::<pangolin_runtime::RuntimeApi, PangolinExecutor>(config)?;
 
 	Ok((components, client))
 }

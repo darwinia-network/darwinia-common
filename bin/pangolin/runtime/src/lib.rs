@@ -16,7 +16,7 @@ pub mod constants {
 	pub const CAP: Balance = 10_000_000_000 * COIN;
 	pub const TOTAL_POWER: Power = 1_000_000_000;
 
-	pub const MILLISECS_PER_BLOCK: Moment = 3000;
+	pub const MILLISECS_PER_BLOCK: Moment = 6000;
 	pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
 	pub const BLOCKS_PER_SESSION: BlockNumber = MINUTES;
 	pub const SESSIONS_PER_ERA: SessionIndex = 3;
@@ -334,11 +334,9 @@ pub mod wasm {
 	include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 	#[cfg(all(feature = "std", not(any(target_arch = "x86_64", target_arch = "x86"))))]
-	pub const WASM_BINARY: &[u8] =
-		include_bytes!("../../../../wasm/pangolin_runtime.compact.wasm");
+	pub const WASM_BINARY: &[u8] = include_bytes!("../../../../wasm/pangolin_runtime.compact.wasm");
 	#[cfg(all(feature = "std", not(any(target_arch = "x86_64", target_arch = "x86"))))]
-	pub const WASM_BINARY_BLOATY: &[u8] =
-		include_bytes!("../../../../wasm/pangolin_runtime.wasm");
+	pub const WASM_BINARY_BLOATY: &[u8] = include_bytes!("../../../../wasm/pangolin_runtime.wasm");
 
 	#[cfg(feature = "std")]
 	/// Wasm binary unwrapped. If built with `BUILD_DUMMY_WASM_BINARY`, the function panics.
