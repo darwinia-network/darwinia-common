@@ -1,6 +1,7 @@
 // --- std ---
 use std::collections::BTreeMap;
 // --- substrate ---
+use pallet_evm::GenesisAccount;
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_service::{ChainType, Properties};
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
@@ -109,7 +110,7 @@ pub fn pangolin_build_spec_config() -> PangolinChainSpec {
 			let mut evm_accounts = BTreeMap::new();
 			evm_accounts.insert(
 				fixed_hex_bytes_unchecked!("0x68898db1012808808c903f390909c52d9f706749", 20).into(),
-				pallet_evm::GenesisAccount {
+				GenesisAccount {
 					nonce: 0.into(),
 					balance: 20_000_000_000_000_000_000_000_000u128.into(),
 					storage: BTreeMap::new(),
@@ -151,7 +152,7 @@ fn pangolin_build_spcec_genesis(
 	)>,
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
-	evm_accounts: BTreeMap<H160, pallet_evm::GenesisAccount>,
+	evm_accounts: BTreeMap<H160, GenesisAccount>,
 ) -> GenesisConfig {
 	GenesisConfig {
 		frame_system: Some(SystemConfig {
@@ -278,7 +279,7 @@ pub fn pangolin_development_config() -> PangolinChainSpec {
 			for account_id in initial_evm_account.iter() {
 				evm_accounts.insert(
 					*account_id,
-					pallet_evm::GenesisAccount {
+					GenesisAccount {
 						nonce: 0.into(),
 						balance: 123_456_789_000_000_000_090u128.into(),
 						storage: BTreeMap::new(),
@@ -318,7 +319,7 @@ fn testnet_genesis(
 	)>,
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
-	evm_accounts: BTreeMap<H160, pallet_evm::GenesisAccount>,
+	evm_accounts: BTreeMap<H160, GenesisAccount>,
 ) -> GenesisConfig {
 	GenesisConfig {
 		frame_system: Some(SystemConfig {
