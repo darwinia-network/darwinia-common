@@ -106,23 +106,17 @@ pub fn pangolin_build_spec_config() -> PangolinChainSpec {
 				"0x72819fbc1b93196fa230243947c1726cbea7e33044c7eb6f736ff345561f9e4c";
 			let root_key: AccountId = fixed_hex_bytes_unchecked!(ROOT, 32).into();
 
-			let initial_evm_account: Vec<H160> =
-				vec![
-					fixed_hex_bytes_unchecked!("0x68898db1012808808c903f390909c52d9f706749", 20)
-						.into(),
-				];
 			let mut evm_accounts = BTreeMap::new();
-			for account_id in initial_evm_account.iter() {
-				evm_accounts.insert(
-					*account_id,
-					pallet_evm::GenesisAccount {
-						nonce: 0.into(),
-						balance: 20_000_000_000_000_000_000_000_000u128.into(),
-						storage: BTreeMap::new(),
-						code: vec![],
-					},
-				);
-			}
+			evm_accounts.insert(
+				fixed_hex_bytes_unchecked!("0x68898db1012808808c903f390909c52d9f706749", 20).into(),
+				pallet_evm::GenesisAccount {
+					nonce: 0.into(),
+					balance: 20_000_000_000_000_000_000_000_000u128.into(),
+					storage: BTreeMap::new(),
+					code: vec![],
+				},
+			);
+
 			pangolin_build_spcec_genesis(
 				vec![
 					get_authority_keys_from_seed("Alice"),
