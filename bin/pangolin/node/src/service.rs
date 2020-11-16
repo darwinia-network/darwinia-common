@@ -3,7 +3,7 @@
 // --- substrate ---
 pub use sc_executor::NativeExecutor;
 // --- darwinia ---
-pub use node_template_runtime;
+pub use pangolin_runtime;
 
 // --- std ---
 use std::{sync::Arc, time::Duration};
@@ -41,7 +41,7 @@ use crate::rpc::{
 };
 use dvm_consensus::FrontierBlockImport;
 
-use node_template_runtime::{
+use pangolin_runtime::{
 	opaque::Block,
 	primitives::{AccountId, Balance, Hash, Nonce, Power},
 };
@@ -60,9 +60,9 @@ type LightClient<RuntimeApi, Executor> =
 	sc_service::TLightClientWithBackend<Block, RuntimeApi, Executor, LightBackend>;
 
 native_executor_instance!(
-	pub NodeTemplateExecutor,
-	node_template_runtime::api::dispatch,
-	node_template_runtime::native_version,
+	pub PangolinExecutor,
+	pangolin_runtime::api::dispatch,
+	pangolin_runtime::native_version,
 );
 
 /// A set of APIs that darwinia-like runtimes must implement.
@@ -107,9 +107,9 @@ where
 {
 }
 
-/// node-template client abstraction, this super trait only pulls in functionality required for
-/// node-template internal crates like node-template-collator.
-pub trait NodeTemplateClient<Block, Backend, Runtime>:
+/// pangolin client abstraction, this super trait only pulls in functionality required for
+/// pangolin internal crates like pangolin-collator.
+pub trait PangolinClient<Block, Backend, Runtime>:
 	Sized
 	+ Send
 	+ Sync
@@ -123,7 +123,7 @@ where
 	Runtime: sp_api::ConstructRuntimeApi<Block, Self>,
 {
 }
-impl<Block, Backend, Runtime, Client> NodeTemplateClient<Block, Backend, Runtime> for Client
+impl<Block, Backend, Runtime, Client> PangolinClient<Block, Backend, Runtime> for Client
 where
 	Backend: sc_client_api::Backend<Block>,
 	Block: sp_runtime::traits::Block,
@@ -140,7 +140,7 @@ where
 
 fn set_prometheus_registry(config: &mut Configuration) -> Result<(), ServiceError> {
 	if let Some(PrometheusConfig { registry, .. }) = config.prometheus_config.as_mut() {
-		*registry = Registry::new_custom(Some("node-template".into()), None)?;
+		*registry = Registry::new_custom(Some("pangolin".into()), None)?;
 	}
 
 	Ok(())
@@ -578,24 +578,24 @@ where
 	Ok((client, backend, import_queue, task_manager))
 }
 
-/// Create a new node-template service for a full node.
+/// Create a new pangolin service for a full node.
 #[cfg(feature = "full-node")]
-pub fn node_template_new_full(
+pub fn pangolin_new_full(
 	config: Configuration,
 ) -> Result<
 	(
 		TaskManager,
-		Arc<impl NodeTemplateClient<Block, FullBackend, node_template_runtime::RuntimeApi>>,
+		Arc<impl PangolinClient<Block, FullBackend, pangolin_runtime::RuntimeApi>>,
 	),
 	ServiceError,
 > {
 	let (components, client) =
-		new_full::<node_template_runtime::RuntimeApi, NodeTemplateExecutor>(config)?;
+		new_full::<pangolin_runtime::RuntimeApi, PangolinExecutor>(config)?;
 
 	Ok((components, client))
 }
 
-/// Create a new node-template service for a light client.
-pub fn node_template_new_light(config: Configuration) -> Result<TaskManager, ServiceError> {
-	new_light::<node_template_runtime::RuntimeApi, NodeTemplateExecutor>(config)
+/// Create a new pangolin service for a light client.
+pub fn pangolin_new_light(config: Configuration) -> Result<TaskManager, ServiceError> {
+	new_light::<pangolin_runtime::RuntimeApi, PangolinExecutor>(config)
 }

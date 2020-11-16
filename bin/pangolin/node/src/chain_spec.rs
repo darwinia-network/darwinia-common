@@ -15,13 +15,13 @@ use sp_runtime::{
 use array_bytes::fixed_hex_bytes_unchecked;
 use darwinia_claims::ClaimsList;
 use darwinia_ethereum_relay::DagsMerkleRootsLoader as DagsMerkleRootsLoaderR;
-use node_template_runtime::{BalancesConfig as RingConfig, *};
+use pangolin_runtime::{BalancesConfig as RingConfig, *};
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
-/// Specialized `NodeTemplateChainSpec`. This is a specialization of the general Substrate ChainSpec type.
-pub type NodeTemplateChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
+/// Specialized `PangolinChainSpec`. This is a specialization of the general Substrate ChainSpec type.
+pub type PangolinChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
 
 fn session_keys(
 	babe: BabeId,
@@ -88,8 +88,8 @@ pub fn get_authority_keys_from_seed(
 	)
 }
 
-pub fn node_template_development_config() -> NodeTemplateChainSpec {
-	NodeTemplateChainSpec::from_genesis(
+pub fn pangolin_development_config() -> PangolinChainSpec {
+	PangolinChainSpec::from_genesis(
 		"Development",
 		"dev",
 		ChainType::Development,
@@ -113,8 +113,8 @@ pub fn node_template_development_config() -> NodeTemplateChainSpec {
 	)
 }
 
-pub fn node_template_local_testnet_config() -> NodeTemplateChainSpec {
-	NodeTemplateChainSpec::from_genesis(
+pub fn pangolin_local_testnet_config() -> PangolinChainSpec {
+	PangolinChainSpec::from_genesis(
 		"Local Testnet",
 		"local_testnet",
 		ChainType::Local,
@@ -237,7 +237,7 @@ fn testnet_genesis(
 		pallet_membership_Instance0: Some(Default::default()),
 		darwinia_claims: Some(ClaimsConfig {
 			claims_list: ClaimsList::from_file(
-				"bin/node-template/node/res/claims-list.json",
+				"bin/pangolin/node/res/claims-list.json",
 				"CLAIMS_LIST_PATH",
 			),
 		}),
@@ -277,7 +277,7 @@ fn testnet_genesis(
 				b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00".into()
 			),
 			dags_merkle_roots_loader: DagsMerkleRootsLoaderR::from_file(
-				"bin/node-template/node/res/dags-merkle-roots.json",
+				"bin/pangolin/node/res/dags-merkle-roots.json",
 				"DAG_MERKLE_ROOTS_PATH",
 			),
 			..Default::default()

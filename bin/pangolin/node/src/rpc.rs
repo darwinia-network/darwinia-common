@@ -19,7 +19,7 @@ pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
 // --- std ---
 use std::sync::Arc;
 // --- darwinia ---
-use node_template_runtime::{
+use pangolin_runtime::{
 	opaque::Block,
 	primitives::{AccountId, Balance, BlockNumber, Hash, Nonce, Power},
 };
@@ -125,7 +125,7 @@ where
 	use darwinia_header_mmr_rpc::{HeaderMMR, HeaderMMRApi};
 	use darwinia_staking_rpc::{Staking, StakingApi};
 	use dvm_rpc::{EthApi, EthApiServer, EthPubSubApi, EthPubSubApiServer, NetApi, NetApiServer};
-	use node_template_runtime::TransactionConverter;
+	use pangolin_runtime::TransactionConverter;
 
 	let FullDeps {
 		client,

@@ -1,21 +1,21 @@
 [package]
 authors     = ["Anonymous"]
 build       = "build.rs"
-description = "Darwinia Node template"
+description = "Darwinia Node Pangolin"
 edition     = "2018"
 homepage    = "https://darwinia.network/"
 license     = "Unlicense"
-name        = "node-template"
+name        = "pangolin"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "1.2.2"
 
 [[bin]]
-name = "node-template"
+name = "pangolin"
 
 [dependencies]
 # anonymous
-node-template-runtime = { path = "../runtime" }
+pangolin-runtime = { path = "../runtime" }
 # crates
 codec          = { package = "parity-scale-codec", version = "1.3.5" }
 futures        = { version = "0.3.7" }

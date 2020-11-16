@@ -13,7 +13,7 @@ use darwinia_cli::{Configuration, DarwiniaCli};
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
-		"Node Template".into()
+		"Darwinia Pangolin".into()
 	}
 
 	fn impl_version() -> String {
@@ -37,29 +37,29 @@ impl SubstrateCli for Cli {
 	}
 
 	fn executable_name() -> String {
-		"node-template".into()
+		"pangolin".into()
 	}
 
 	fn native_runtime_version(_spec: &Box<dyn sc_service::ChainSpec>) -> &'static RuntimeVersion {
-		&service::node_template_runtime::VERSION
+		&service::pangolin_runtime::VERSION
 	}
 
 	fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
 		let id = if id == "" {
 			let n = get_exec_name().unwrap_or_default();
-			["node-template"]
+			["pangolin"]
 				.iter()
 				.cloned()
 				.find(|&chain| n.starts_with(chain))
-				.unwrap_or("node-template")
+				.unwrap_or("pangolin")
 		} else {
 			id
 		};
 
 		Ok(match id {
-			"node-template-dev" | "dev" => Box::new(chain_spec::node_template_development_config()),
-			"node-template-local" => Box::new(chain_spec::node_template_local_testnet_config()),
-			path => Box::new(chain_spec::NodeTemplateChainSpec::from_json_file(
+			"pangolin-dev" | "dev" => Box::new(chain_spec::pangolin_development_config()),
+			"pangolin-local" => Box::new(chain_spec::pangolin_local_testnet_config()),
+			path => Box::new(chain_spec::PangolinChainSpec::from_json_file(
 				PathBuf::from(path),
 			)?),
 		})
@@ -102,8 +102,8 @@ pub fn run() -> sc_cli::Result<()> {
 			set_default_ss58_version(chain_spec);
 
 			runner.run_node_until_exit(|config| match config.role {
-				Role::Light => service::node_template_new_light(config),
-				_ => service::node_template_new_full(config).map(|(components, _)| components),
+				Role::Light => service::pangolin_new_light(config),
+				_ => service::pangolin_new_full(config).map(|(components, _)| components),
 			})
 		}
 		Some(Subcommand::BuildSpec(cmd)) => {
@@ -120,8 +120,8 @@ pub fn run() -> sc_cli::Result<()> {
 
 			runner.async_run(|mut config| {
 				let (client, _, import_queue, task_manager) = service::new_chain_ops::<
-					service::node_template_runtime::RuntimeApi,
-					service::NodeTemplateExecutor,
+					service::pangolin_runtime::RuntimeApi,
+					service::PangolinExecutor,
 				>(&mut config)?;
 				Ok((cmd.run(client, import_queue), task_manager))
 			})
@@ -134,8 +134,8 @@ pub fn run() -> sc_cli::Result<()> {
 
 			runner.async_run(|mut config| {
 				let (client, _, _, task_manager) = service::new_chain_ops::<
-					service::node_template_runtime::RuntimeApi,
-					service::NodeTemplateExecutor,
+					service::pangolin_runtime::RuntimeApi,
+					service::PangolinExecutor,
 				>(&mut config)?;
 				Ok((cmd.run(client, config.database), task_manager))
 			})
@@ -148,8 +148,8 @@ pub fn run() -> sc_cli::Result<()> {
 
 			runner.async_run(|mut config| {
 				let (client, _, _, task_manager) = service::new_chain_ops::<
-					service::node_template_runtime::RuntimeApi,
-					service::NodeTemplateExecutor,
+					service::pangolin_runtime::RuntimeApi,
+					service::PangolinExecutor,
 				>(&mut config)?;
 				Ok((cmd.run(client, config.chain_spec), task_manager))
 			})
@@ -162,8 +162,8 @@ pub fn run() -> sc_cli::Result<()> {
 
 			runner.async_run(|mut config| {
 				let (client, _, import_queue, task_manager) = service::new_chain_ops::<
-					service::node_template_runtime::RuntimeApi,
-					service::NodeTemplateExecutor,
+					service::pangolin_runtime::RuntimeApi,
+					service::PangolinExecutor,
 				>(&mut config)?;
 				Ok((cmd.run(client, import_queue), task_manager))
 			})
@@ -180,8 +180,8 @@ pub fn run() -> sc_cli::Result<()> {
 
 			runner.async_run(|mut config| {
 				let (client, backend, _, task_manager) = service::new_chain_ops::<
-					service::node_template_runtime::RuntimeApi,
-					service::NodeTemplateExecutor,
+					service::pangolin_runtime::RuntimeApi,
+					service::PangolinExecutor,
 				>(&mut config)?;
 				Ok((cmd.run(client, backend), task_manager))
 			})
