@@ -39,12 +39,8 @@ use crate::rpc::{
 	self, BabeDeps, DenyUnsafe, FullDeps, GrandpaDeps, LightDeps, RpcExtension,
 	SubscriptionTaskExecutor,
 };
+use drml_primitives::{AccountId, Balance, Hash, Nonce, OpaqueBlock as Block, Power};
 use dvm_consensus::FrontierBlockImport;
-
-use pangolin_runtime::{
-	opaque::Block,
-	primitives::{AccountId, Balance, Hash, Nonce, Power},
-};
 
 type FullBackend = sc_service::TFullBackend<Block>;
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
@@ -580,7 +576,7 @@ where
 
 /// Create a new DRML service for a full node.
 #[cfg(feature = "full-node")]
-pub fn pangolin_new_full(
+pub fn drml_new_full(
 	config: Configuration,
 ) -> Result<
 	(
@@ -595,6 +591,6 @@ pub fn pangolin_new_full(
 }
 
 /// Create a new DRML service for a light client.
-pub fn pangolin_new_light(config: Configuration) -> Result<TaskManager, ServiceError> {
+pub fn drml_new_light(config: Configuration) -> Result<TaskManager, ServiceError> {
 	new_light::<pangolin_runtime::RuntimeApi, PangolinExecutor>(config)
 }

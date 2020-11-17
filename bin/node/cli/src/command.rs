@@ -103,8 +103,8 @@ pub fn run() -> sc_cli::Result<()> {
 			set_default_ss58_version(chain_spec);
 
 			runner.run_node_until_exit(|config| match config.role {
-				Role::Light => service::pangolin_new_light(config),
-				_ => service::pangolin_new_full(config).map(|(components, _)| components),
+				Role::Light => service::drml_new_light(config),
+				_ => service::drml_new_full(config).map(|(components, _)| components),
 			})
 		}
 		Some(Subcommand::BuildSpec(cmd)) => {

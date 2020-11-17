@@ -6,7 +6,7 @@
 
 pub mod constants {
 	// --- darwinia ---
-	use super::{primitives::*, *};
+	use crate::*;
 
 	pub const NANO: Balance = 1;
 	pub const MICRO: Balance = 1_000 * NANO;
@@ -39,7 +39,7 @@ pub mod impls {
 
 	pub mod relay {
 		// --- darwinia ---
-		use crate::{impls::*, *};
+		use crate::*;
 		use darwinia_relay_primitives::*;
 		use ethereum_primitives::EthereumBlockNumber;
 
@@ -96,7 +96,7 @@ pub mod impls {
 	};
 	use sp_runtime::traits::Convert;
 	// --- darwinia ---
-	use crate::{primitives::*, *};
+	use crate::*;
 
 	darwinia_support::impl_account_data! {
 		struct AccountData<Balance>
@@ -179,154 +179,6 @@ pub mod impls {
 	}
 }
 
-pub mod opaque {
-	//! Opaque types. These are used by the CLI to instantiate machinery that don't need to know
-	//! the specifics of the runtime. They can then be made to be agnostic over specific formats
-	//! of data like extrinsics, allowing for them to continue syncing the network through upgrades
-	//! to even the core data structures.
-
-	// --- substrate ---
-	pub use sp_runtime::{generic, traits::BlakeTwo256, OpaqueExtrinsic as UncheckedExtrinsic};
-	// --- darwinia ---
-	use crate::primitives::*;
-
-	/// Opaque block header type.
-	pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
-	/// Opaque block type.
-	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-	/// Opaque block identifier type.
-	pub type BlockId = generic::BlockId<Block>;
-}
-
-pub mod primitives {
-	/// App-specific crypto used for reporting equivocation/misbehavior in BABE and
-	/// GRANDPA. Any rewards for misbehavior reporting will be paid out to this
-	/// account.
-	pub mod report {
-		// --- substrate ---
-		use frame_system::offchain::AppCrypto;
-		use sp_core::crypto::{key_types, KeyTypeId};
-		// --- crates ---
-		use crate::primitives::{Signature, Verify};
-
-		/// Key type for the reporting module. Used for reporting BABE and GRANDPA
-		/// equivocations.
-		pub const KEY_TYPE: KeyTypeId = key_types::REPORTING;
-
-		mod app {
-			// --- substrate ---
-			use sp_application_crypto::{app_crypto, sr25519};
-
-			app_crypto!(sr25519, super::KEY_TYPE);
-		}
-
-		/// Identity of the equivocation/misbehavior reporter.
-		pub type ReporterId = app::Public;
-
-		/// An `AppCrypto` type to allow submitting signed transactions using the reporting
-		/// application key as signer.
-		pub struct ReporterAppCrypto;
-		impl AppCrypto<<Signature as Verify>::Signer, Signature> for ReporterAppCrypto {
-			type RuntimeAppPublic = ReporterId;
-			type GenericPublic = sp_core::sr25519::Public;
-			type GenericSignature = sp_core::sr25519::Signature;
-		}
-	}
-
-	// --- substrate ---
-	use frame_support::traits::Currency;
-	use sp_runtime::{
-		generic,
-		traits::{BlakeTwo256, IdentifyAccount, Verify},
-		MultiSignature,
-	};
-	// --- darwinia ---
-	use crate::*;
-
-	/// An index to a block.
-	pub type BlockNumber = u32;
-
-	/// An instant or duration in time.
-	pub type Moment = u64;
-
-	/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
-	pub type Signature = MultiSignature;
-
-	/// Some way of identifying an account on the chain. We intentionally make it equivalent
-	/// to the public key of our transaction signing scheme.
-	pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-
-	/// The type for looking up accounts. We don't expect more than 4 billion of them, but you
-	/// never know...
-	pub type AccountIndex = u32;
-
-	/// Balance of an account.
-	pub type Balance = u128;
-
-	/// Index of a transaction in the chain.
-	pub type Nonce = u32;
-
-	/// A hash of some data used by the chain.
-	pub type Hash = H256;
-
-	/// Digest item type.
-	pub type DigestItem = generic::DigestItem<Hash>;
-
-	/// Power of an account.
-	pub type Power = u32;
-
-	/// Alias Balances Module as Ring Module.
-	pub type Ring = Balances;
-
-	pub type NegativeImbalance = <Ring as Currency<AccountId>>::NegativeImbalance;
-
-	/// The address format for describing accounts.
-	pub type Address = AccountId;
-
-	/// Block header type as expected by this runtime.
-	pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
-
-	/// Block type as expected by this runtime.
-	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-
-	/// A Block signed with a Justification
-	pub type SignedBlock = generic::SignedBlock<Block>;
-
-	/// BlockId type as expected by this runtime.
-	pub type BlockId = generic::BlockId<Block>;
-
-	/// The SignedExtension to the basic transaction logic.
-	pub type SignedExtra = (
-		frame_system::CheckSpecVersion<Runtime>,
-		frame_system::CheckTxVersion<Runtime>,
-		frame_system::CheckGenesis<Runtime>,
-		frame_system::CheckEra<Runtime>,
-		frame_system::CheckNonce<Runtime>,
-		frame_system::CheckWeight<Runtime>,
-		pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
-		darwinia_ethereum_relay::CheckEthereumRelayHeaderParcel<Runtime>,
-	);
-
-	/// Unchecked extrinsic type as expected by this runtime.
-	pub type UncheckedExtrinsic =
-		generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
-
-	/// The payload being signed in transactions.
-	pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
-
-	/// Extrinsic type that has already been checked.
-	pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, Nonce, Call>;
-
-	/// Executive: handles dispatch to the various modules.
-	pub type Executive = frame_executive::Executive<
-		Runtime,
-		Block,
-		frame_system::ChainContext<Runtime>,
-		Runtime,
-		AllModules,
-	>;
-}
-
 pub mod wasm {
 	//! Make the WASM binary available.
 
@@ -357,7 +209,6 @@ mod weights;
 
 // --- darwinia ---
 pub use darwinia_staking::StakerStatus;
-pub use primitives::*;
 pub use wasm::*;
 
 // --- crates ---
@@ -367,7 +218,8 @@ use static_assertions::const_assert;
 use frame_support::{
 	construct_runtime, debug, parameter_types,
 	traits::{
-		ChangeMembers, FindAuthor, InstanceFilter, KeyOwnerProofSystem, LockIdentifier, Randomness,
+		ChangeMembers, Currency, FindAuthor, InstanceFilter, KeyOwnerProofSystem, LockIdentifier,
+		Randomness,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -400,8 +252,8 @@ use sp_runtime::{
 		SaturatedConversion, Saturating,
 	},
 	transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, FixedPointNumber, ModuleId, Perbill, Percent, Permill, Perquintill,
-	RuntimeDebug,
+	ApplyExtrinsicResult, FixedPointNumber, ModuleId, OpaqueExtrinsic, Perbill, Percent, Permill,
+	Perquintill, RuntimeDebug,
 };
 use sp_staking::SessionIndex;
 use sp_std::prelude::*;
@@ -414,12 +266,50 @@ use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDis
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
 use darwinia_staking::EraIndex;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
+use drml_primitives::*;
 use dvm_ethereum::{
 	account_basic::DVMAccountBasicMapping,
 	precompiles::{ConcatAddressMapping, NativeTransfer},
 };
 use dvm_rpc_primitives::TransactionStatus;
 use impls::*;
+
+/// The address format for describing accounts.
+type Address = AccountId;
+/// Block header type as expected by this runtime.
+type Header = generic::Header<BlockNumber, BlakeTwo256>;
+/// Block type as expected by this runtime.
+type Block = generic::Block<Header, UncheckedExtrinsic>;
+/// The SignedExtension to the basic transaction logic.
+type SignedExtra = (
+	frame_system::CheckSpecVersion<Runtime>,
+	frame_system::CheckTxVersion<Runtime>,
+	frame_system::CheckGenesis<Runtime>,
+	frame_system::CheckEra<Runtime>,
+	frame_system::CheckNonce<Runtime>,
+	frame_system::CheckWeight<Runtime>,
+	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
+	darwinia_ethereum_relay::CheckEthereumRelayHeaderParcel<Runtime>,
+);
+/// Unchecked extrinsic type as expected by this runtime.
+type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+/// Executive: handles dispatch to the various modules.
+type Executive = frame_executive::Executive<
+	Runtime,
+	Block,
+	frame_system::ChainContext<Runtime>,
+	Runtime,
+	AllModules,
+	// CustomOnRuntimeUpgrade,
+>;
+/// The payload being signed in transactions.
+type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
+
+type Ring = Balances;
+
+type NegativeImbalance = <darwinia_balances::Module<Runtime, RingInstance> as Currency<
+	<Runtime as frame_system::Trait>::AccountId,
+>>::NegativeImbalance;
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
@@ -1198,7 +1088,7 @@ construct_runtime!(
 	pub enum Runtime
 	where
 		Block = Block,
-		NodeBlock = opaque::Block,
+		NodeBlock = OpaqueBlock,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
 		// Basic stuff; balances is uncallable initially.
@@ -1585,17 +1475,13 @@ impl dvm_rpc_primitives::ConvertTransaction<UncheckedExtrinsic> for TransactionC
 		)
 	}
 }
-impl dvm_rpc_primitives::ConvertTransaction<opaque::UncheckedExtrinsic> for TransactionConverter {
-	fn convert_transaction(
-		&self,
-		transaction: dvm_ethereum::Transaction,
-	) -> opaque::UncheckedExtrinsic {
+impl dvm_rpc_primitives::ConvertTransaction<OpaqueExtrinsic> for TransactionConverter {
+	fn convert_transaction(&self, transaction: dvm_ethereum::Transaction) -> OpaqueExtrinsic {
 		let extrinsic = UncheckedExtrinsic::new_unsigned(
 			<dvm_ethereum::Call<Runtime>>::transact(transaction).into(),
 		);
 		let encoded = extrinsic.encode();
 
-		opaque::UncheckedExtrinsic::decode(&mut &encoded[..])
-			.expect("Encoded extrinsic is always valid")
+		OpaqueExtrinsic::decode(&mut &encoded[..]).expect("Encoded extrinsic is always valid")
 	}
 }
