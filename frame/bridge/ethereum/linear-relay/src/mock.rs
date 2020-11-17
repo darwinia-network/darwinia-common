@@ -281,7 +281,7 @@ impl ExtBuilder {
 			number_of_blocks_finality: 30,
 			number_of_blocks_safe: 10,
 			dags_merkle_roots_loader: DagsMerkleRootsLoader::from_file(
-				"../../../../bin/node-template/node/res/dags_merkle_roots.json",
+				"../../../../bin/pangolin/node/res/dags_merkle_roots.json",
 				"DAG_MERKLE_ROOTS_PATH",
 			),
 			..Default::default()
