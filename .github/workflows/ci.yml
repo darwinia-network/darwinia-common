@@ -2,7 +2,7 @@ name: CI
 on:
   push:
     branches:
-      - develop
+      - pangolin
       - master
   pull_request:
     branches:
@@ -25,16 +25,6 @@ jobs:
           toolchain: nightly-2020-09-20
           override: true
           target: wasm32-unknown-unknown
-
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
 
       - name: Overall test
         run: cargo test
