@@ -18,8 +18,8 @@ pub mod constants {
 
 	pub const MILLISECS_PER_BLOCK: Moment = 6000;
 	pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
-	pub const BLOCKS_PER_SESSION: BlockNumber = MINUTES;
-	pub const SESSIONS_PER_ERA: SessionIndex = 3;
+	pub const BLOCKS_PER_SESSION: BlockNumber = 10 * MINUTES;
+	pub const SESSIONS_PER_ERA: SessionIndex = 6;
 
 	// Time is measured by number of blocks.
 	pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
