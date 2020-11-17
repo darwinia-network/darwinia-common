@@ -1636,7 +1636,7 @@ dependencies = [
 
 [[package]]
 name = "drml"
-version = "1.2.2"
+version = "1.0.0"
 dependencies = [
  "array-bytes",
  "darwinia-balances-rpc",
