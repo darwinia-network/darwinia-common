@@ -4843,6 +4843,7 @@ name = "pallet-collective"
 version = "2.0.0"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library#7314a78d49d0dc3862c6ef7c8115cb1b3d0c0fd2"
 dependencies = [
+ "frame-benchmarking 2.0.0 (git+https://github.com/darwinia-network/substrate.git?branch=common-library)",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
@@ -4919,6 +4920,7 @@ name = "pallet-im-online"
 version = "2.0.0"
 source = "git+https://github.com/AsceticBear/substrate.git?branch=branch-for-dvm#50a2e0c3a06fd5ea5c0b8156019d092478a78bae"
 dependencies = [
+ "frame-benchmarking 2.0.0 (git+https://github.com/AsceticBear/substrate.git?branch=branch-for-dvm)",
  "frame-support",
  "frame-system",
  "pallet-authorship",
@@ -4967,6 +4969,7 @@ name = "pallet-proxy"
 version = "2.0.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library#7314a78d49d0dc3862c6ef7c8115cb1b3d0c0fd2"
 dependencies = [
+ "frame-benchmarking 2.0.0 (git+https://github.com/darwinia-network/substrate.git?branch=common-library)",
  "frame-support",
  "frame-system",
  "parity-scale-codec",

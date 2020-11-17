@@ -1639,11 +1639,16 @@ impl_runtime_apis! {
 				array_bytes::hex_bytes_unchecked("26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7").into(),
 			];
 
-			let mut batches = Vec::<BenchmarkBatch>::new();
+			let mut batches = <Vec<BenchmarkBatch>>::new();
 			let params = (&config, &whitelist);
 
+			add_benchmark!(params, batches, pallet_collective, Council);
+			add_benchmark!(params, batches, pallet_grandpa, Grandpa);
+			// add_benchmark!(params, batches, pallet_im_online, ImOnline);
+			add_benchmark!(params, batches, pallet_proxy, Proxy);
+			add_benchmark!(params, batches, pallet_scheduler, Scheduler);
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
-			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
+			// add_benchmark!(params, batches, pallet_timestamp, Timestamp);
 
 			if batches.is_empty() {
 				return Err("Benchmark not found for this pallet.".into());
