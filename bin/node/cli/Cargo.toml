@@ -1,7 +1,7 @@
 [package]
 authors     = ["Darwinia Network <hello@darwinia.network>"]
 build       = "build.rs"
-description = "Darwinia Common Client Node"
+description = "Darwinia Runtime Module Library Node"
 edition     = "2018"
 homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"

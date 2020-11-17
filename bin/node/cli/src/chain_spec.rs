@@ -111,7 +111,7 @@ fn pangolin_build_spec_genesis() -> GenesisConfig {
 	const GENESIS_VALIDATOR: &'static str = "Alice";
 	const GENESIS_VALIDATOR_STASH: &'static str = "Alice//stash";
 	const GENESIS_VALIDATOR_BOND: Balance = COIN;
-	const EVM: &'static str = "0x68898db1012808808c903f390909c52d9f706749";
+	const GENESIS_EVM_ACCOUNT: &'static str = "0x68898db1012808808c903f390909c52d9f706749";
 
 	const TOKEN_REDEEM_ADDRESS: &'static str = "0x49262B932E439271d05634c32978294C7Ea15d0C";
 	const DEPOSIT_REDEEM_ADDRESS: &'static str = "0x6EF538314829EfA8386Fc43386cB13B4e0A67D1e";
@@ -119,7 +119,7 @@ fn pangolin_build_spec_genesis() -> GenesisConfig {
 	const KTON_TOKEN_ADDRESS: &'static str = "0x1994100c58753793D52c6f457f189aa3ce9cEe94";
 
 	let root = AccountId::from(fixed_hex_bytes_unchecked!(ROOT, 32));
-	let evm = fixed_hex_bytes_unchecked!(EVM, 20).into();
+	let evm = fixed_hex_bytes_unchecked!(GENESIS_EVM_ACCOUNT, 20).into();
 	let initial_authorities = vec![get_authority_keys_from_seed(GENESIS_VALIDATOR)];
 	let endowed_accounts = vec![
 		(root.clone(), 1 << 56),
