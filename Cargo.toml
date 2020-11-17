@@ -1,8 +1,8 @@
 [workspace]
 members = [
 	# node
-	"bin/pangolin/node",
-	"bin/pangolin/runtime",
+	"bin/node/cli",
+	"bin/node/runtime/pangolin",
 	# client
 	"client/cli",
 	# frame
