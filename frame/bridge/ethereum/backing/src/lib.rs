@@ -1,5 +1,7 @@
 //! Prototype module for cross chain assets backing.
 
+// TODO: https://github.com/darwinia-network/darwinia-common/issues/372
+#![allow(unused)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "128"]
 

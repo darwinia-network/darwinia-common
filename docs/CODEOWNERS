@@ -19,8 +19,9 @@
 #   an email.
 # - The latest matching rule, if multiple, takes precedence.
 
-/bin/node-template/node/ @AurevoirXavier
-/bin/node-template/runtime/ @AurevoirXavier
+/bin/node/cli/ @AurevoirXavier
+/bin/node/primitive/ @AurevoirXavier
+/bin/node/runtime/pangolin @AsceticBear @AurevoirXavier
 
 /client/cli/ @AurevoirXavier
 
