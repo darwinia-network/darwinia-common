@@ -170,7 +170,7 @@ impl ExtBuilder {
 				b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00".into()
 			),
 			dags_merkle_roots_loader: DagsMerkleRootsLoader::from_file(
-				"../../../../bin/node-template/node/res/dags_merkle_roots.json",
+				"../../../../bin/res/ethereum/dags-merkle-roots.json",
 				"DAG_MERKLE_ROOTS_PATH",
 			),
 			..Default::default()
