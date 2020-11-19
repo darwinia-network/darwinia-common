@@ -226,12 +226,12 @@ decl_module! {
 				// Should never fail, usable balance will always keep account live
 				T::KtonCurrency::transfer(&user, &Self::account_id(), kton_to_lock, KeepAlive)?;
 
-				let raw_event = RawEvent::LockKton(T::ModuleId::get().0, user.clone(), kton_to_lock);
+				let raw_event = RawEvent::LockKton(T::ModuleId::get().0, user, kton_to_lock);
 				let module_event: <T as Trait>::Event = raw_event.clone().into();
 				let system_event: <T as frame_system::Trait>::Event = module_event.into();
 
 				<LockAssetEvents<T>>::append(system_event);
-				Self::deposit_event(RawEvent::LockKton(T::ModuleId::get().0, user, kton_to_lock));
+				Self::deposit_event(raw_event);
 			}
 		}
 
