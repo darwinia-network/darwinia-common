@@ -85,6 +85,7 @@ macro_rules! decl_tests {
 			type OnDepositRedeem = Staking;
 			type RingCurrency = Ring;
 			type KtonCurrency = Kton;
+			type AdvancedFee = ();
 			type WeightInfo = ();
 		}
 
