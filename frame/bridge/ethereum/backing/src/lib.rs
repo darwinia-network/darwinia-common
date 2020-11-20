@@ -44,7 +44,7 @@ use sp_runtime::{
 };
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
-use sp_std::{convert::TryFrom, vec};
+use sp_std::{convert::TryFrom, prelude::*};
 // --- darwinia ---
 use array_bytes::array_unchecked;
 use darwinia_support::{
@@ -206,12 +206,16 @@ decl_module! {
 			#[compact] kton_value: KtonBalance<T>,
 		) {
 			let user = ensure_signed(origin)?;
+			let module_account = Self::account_id();
+
+			// 50 Ring for fee
+			// https://github.com/darwinia-network/darwinia-common/pull/377#issuecomment-730369387
+			T::RingCurrency::transfer(&user, &module_account, 50_000_000_000.into(), KeepAlive)?;
 
 			if !ring_value.is_zero() {
 				let ring_to_lock = ring_value.min(T::RingCurrency::usable_balance(&user));
 
-				// Should never fail, usable balance will always keep account live
-				T::RingCurrency::transfer(&user, &Self::account_id(), ring_to_lock, KeepAlive)?;
+				T::RingCurrency::transfer(&user, &module_account, ring_to_lock, KeepAlive)?;
 
 				let raw_event = RawEvent::LockRing(T::ModuleId::get().0, user.clone(), ring_to_lock);
 				let module_event: <T as Trait>::Event = raw_event.clone().into();
@@ -223,8 +227,7 @@ decl_module! {
 			if !kton_value.is_zero() {
 				let kton_to_lock = kton_value.min(T::KtonCurrency::usable_balance(&user));
 
-				// Should never fail, usable balance will always keep account live
-				T::KtonCurrency::transfer(&user, &Self::account_id(), kton_to_lock, KeepAlive)?;
+				T::KtonCurrency::transfer(&user, &module_account, kton_to_lock, KeepAlive)?;
 
 				let raw_event = RawEvent::LockKton(T::ModuleId::get().0, user, kton_to_lock);
 				let module_event: <T as Trait>::Event = raw_event.clone().into();
