@@ -70,6 +70,8 @@ pub trait Trait: frame_system::Trait {
 
 	type KtonCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
+	type AdvancedFee: Get<RingBalance<Self>>;
+
 	/// Weight information for the extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
 }
@@ -210,7 +212,7 @@ decl_module! {
 
 			// 50 Ring for fee
 			// https://github.com/darwinia-network/darwinia-common/pull/377#issuecomment-730369387
-			T::RingCurrency::transfer(&user, &module_account, 50_000_000_000.into(), KeepAlive)?;
+			T::RingCurrency::transfer(&user, &module_account, T::AdvancedFee::get(), KeepAlive)?;
 
 			if !ring_value.is_zero() {
 				let ring_to_lock = ring_value.min(T::RingCurrency::usable_balance(&user));
