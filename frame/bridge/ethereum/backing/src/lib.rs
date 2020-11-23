@@ -58,6 +58,8 @@ pub trait Trait: frame_system::Trait {
 	/// The ethereum backing module id, used for deriving its sovereign account ID.
 	type ModuleId: Get<ModuleId>;
 
+	type EthereumBackingFeeModuleId: Get<ModuleId>;
+
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
 	type RedeemAccountId: From<[u8; 32]> + Into<Self::AccountId>;
@@ -163,6 +165,10 @@ decl_storage! {
 				&<Module<T>>::account_id(),
 				T::KtonCurrency::minimum_balance() + config.kton_locked,
 			);
+			let _ = T::RingCurrency::make_free_balance_be(
+				&<Module<T>>::fee_account_id(),
+				T::RingCurrency::minimum_balance(),
+			);
 		});
 	}
 }
@@ -178,6 +184,15 @@ decl_module! {
 		const ModuleId: ModuleId = T::ModuleId::get();
 
 		fn deposit_event() = default;
+
+		fn on_runtime_upgrade() -> frame_support::weights::Weight {
+			let _ = T::RingCurrency::make_free_balance_be(
+				&<Module<T>>::fee_account_id(),
+				T::RingCurrency::minimum_balance(),
+			);
+
+			0
+		}
 
 		/// Redeem balances
 		///
@@ -207,16 +222,16 @@ decl_module! {
 			#[compact] kton_value: KtonBalance<T>,
 		) {
 			let user = ensure_signed(origin)?;
-			let module_account = Self::account_id();
+			let fee_account = Self::fee_account_id();
 
 			// 50 Ring for fee
 			// https://github.com/darwinia-network/darwinia-common/pull/377#issuecomment-730369387
-			T::RingCurrency::transfer(&user, &module_account, T::AdvancedFee::get(), KeepAlive)?;
+			T::RingCurrency::transfer(&user, &fee_account, T::AdvancedFee::get(), KeepAlive)?;
 
 			if !ring_value.is_zero() {
 				let ring_to_lock = ring_value.min(T::RingCurrency::usable_balance(&user));
 
-				T::RingCurrency::transfer(&user, &module_account, ring_to_lock, KeepAlive)?;
+				T::RingCurrency::transfer(&user, &fee_account, ring_to_lock, KeepAlive)?;
 
 				let raw_event = RawEvent::LockRing(user.clone(), ring_to_lock);
 				let module_event: <T as Trait>::Event = raw_event.clone().into();
@@ -228,7 +243,7 @@ decl_module! {
 			if !kton_value.is_zero() {
 				let kton_to_lock = kton_value.min(T::KtonCurrency::usable_balance(&user));
 
-				T::KtonCurrency::transfer(&user, &module_account, kton_to_lock, KeepAlive)?;
+				T::KtonCurrency::transfer(&user, &fee_account, kton_to_lock, KeepAlive)?;
 
 				let raw_event = RawEvent::LockKton(user, kton_to_lock);
 				let module_event: <T as Trait>::Event = raw_event.clone().into();
@@ -291,6 +306,10 @@ impl<T: Trait> Module<T> {
 	/// value and only call this once.
 	pub fn account_id() -> T::AccountId {
 		T::ModuleId::get().into_account()
+	}
+
+	pub fn fee_account_id() -> T::AccountId {
+		T::EthereumBackingFeeModuleId::get().into_account()
 	}
 
 	pub fn account_id_try_from_bytes(bytes: &[u8]) -> Result<T::AccountId, DispatchError> {

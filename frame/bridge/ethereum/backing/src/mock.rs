@@ -75,10 +75,12 @@ macro_rules! decl_tests {
 		#[derive(Clone, PartialEq, Eq, Debug)]
 		pub struct Test;
 		parameter_types! {
-			pub const EthBackingModuleId: ModuleId = ModuleId(*b"da/backi");
+			pub const EthereumBackingModuleId: ModuleId = ModuleId(*b"da/backi");
+			pub const EthereumBackingFeeModuleId: ModuleId = ModuleId(*b"da/ethfe"):
 		}
 		impl Trait for Test {
-			type ModuleId = EthBackingModuleId;
+			type ModuleId = EthereumBackingModuleId;
+			type EthereumBackingFeeModuleId = EthereumBackingFeeModuleId;
 			type Event = ();
 			type RedeemAccountId = AccountId;
 			type EthereumRelay = EthereumRelay;
