@@ -83,7 +83,6 @@ impl WeightInfo for () {}
 decl_event! {
 	pub enum Event<T>
 	where
-		ModuleId = [u8; 8],
 		AccountId = AccountId<T>,
 		RingBalance = RingBalance<T>,
 		KtonBalance = KtonBalance<T>,
@@ -94,10 +93,10 @@ decl_event! {
 		RedeemKton(AccountId, Balance, EthereumTransactionIndex),
 		/// Someone redeem a deposit. [account, deposit id, amount, transaction index]
 		RedeemDeposit(AccountId, DepositId, RingBalance, EthereumTransactionIndex),
-		/// Someone lock some *RING*. [module id, account, amount]
-		LockRing(ModuleId, AccountId, RingBalance),
-		/// Someone lock some *KTON*. [module id, account, amount]
-		LockKton(ModuleId, AccountId, KtonBalance),
+		/// Someone lock some *RING*. [account, amount]
+		LockRing(AccountId, RingBalance),
+		/// Someone lock some *KTON*. [account, amount]
+		LockKton(AccountId, KtonBalance),
 	}
 }
 
@@ -219,7 +218,7 @@ decl_module! {
 
 				T::RingCurrency::transfer(&user, &module_account, ring_to_lock, KeepAlive)?;
 
-				let raw_event = RawEvent::LockRing(T::ModuleId::get().0, user.clone(), ring_to_lock);
+				let raw_event = RawEvent::LockRing(user.clone(), ring_to_lock);
 				let module_event: <T as Trait>::Event = raw_event.clone().into();
 				let system_event: <T as frame_system::Trait>::Event = module_event.into();
 
@@ -231,7 +230,7 @@ decl_module! {
 
 				T::KtonCurrency::transfer(&user, &module_account, kton_to_lock, KeepAlive)?;
 
-				let raw_event = RawEvent::LockKton(T::ModuleId::get().0, user, kton_to_lock);
+				let raw_event = RawEvent::LockKton(user, kton_to_lock);
 				let module_event: <T as Trait>::Event = raw_event.clone().into();
 				let system_event: <T as frame_system::Trait>::Event = module_event.into();
 
