@@ -1288,6 +1288,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-ecdsa-authorities"
+version = "1.2.2"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+]
+
+[[package]]
 name = "darwinia-elections-phragmen"
 version = "1.2.2"
 dependencies = [
@@ -1703,7 +1713,7 @@ dependencies = [
 
 [[package]]
 name = "drml-primitives"
-version = "1.2.2"
+version = "1.0.0"
 dependencies = [
  "sp-core",
  "sp-runtime",
@@ -5009,7 +5019,7 @@ dependencies = [
 
 [[package]]
 name = "pangolin-runtime"
-version = "1.2.2"
+version = "1.0.0"
 dependencies = [
  "darwinia-balances",
  "darwinia-balances-rpc-runtime-api",
