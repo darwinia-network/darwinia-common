@@ -76,7 +76,7 @@ macro_rules! decl_tests {
 		pub struct Test;
 		parameter_types! {
 			pub const EthereumBackingModuleId: ModuleId = ModuleId(*b"da/backi");
-			pub const EthereumBackingFeeModuleId: ModuleId = ModuleId(*b"da/ethfe"):
+			pub const EthereumBackingFeeModuleId: ModuleId = ModuleId(*b"da/ethfe");
 		}
 		impl Trait for Test {
 			type ModuleId = EthereumBackingModuleId;
