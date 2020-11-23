@@ -420,14 +420,14 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 				}
 			} else {
 				// Should never enter this condition
-				error!(target: "relayer-game", "   >  Extended Relay Rroposal - NOT EXISTED");
+				error!(target: "relayer-game", "   >  Extended Relay Proposal - NOT EXISTED");
 
 				return None;
 			}
 		}
 
 		// Should never enter this condition
-		error!(target: "relayer-game", "   >  Extended Relay Rroposal - NOT EXISTED");
+		error!(target: "relayer-game", "   >  Extended Relay Proposal - NOT EXISTED");
 
 		None
 	}
@@ -598,14 +598,14 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 							}
 						} else {
 							// Should never enter this condition
-							error!(target: "relayer-game", "   >  Extended Relay Rroposal - NOT EXISTED");
+							error!(target: "relayer-game", "   >  Extended Relay Proposal - NOT EXISTED");
 
 							return None;
 						}
 					}
 
 					// Should never enter this condition
-					error!(target: "relayer-game", "   >  Extended Relay Rroposal - NOT EXISTED");
+					error!(target: "relayer-game", "   >  Extended Relay Proposal - NOT EXISTED");
 
 					None
 				}
