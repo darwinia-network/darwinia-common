@@ -971,16 +971,20 @@ impl darwinia_crab_backing::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const EthBackingModuleId: ModuleId = ModuleId(*b"da/ethbk");
+	pub const EthereumBackingModuleId: ModuleId = ModuleId(*b"da/ethbk");
+	pub const EthereumBackingFeeModuleId: ModuleId = ModuleId(*b"da/ethfe");
+	pub const AdvancedFee: Balance = 50 * COIN;
 }
 impl darwinia_ethereum_backing::Trait for Runtime {
-	type ModuleId = EthBackingModuleId;
+	type ModuleId = EthereumBackingModuleId;
+	type EthereumBackingFeeModuleId = EthereumBackingFeeModuleId;
 	type Event = Event;
 	type RedeemAccountId = AccountId;
 	type EthereumRelay = EthereumRelay;
 	type OnDepositRedeem = Staking;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
+	type AdvancedFee = AdvancedFee;
 	type WeightInfo = ();
 }
 
