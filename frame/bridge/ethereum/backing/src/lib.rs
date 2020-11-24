@@ -18,14 +18,12 @@ mod types {
 	pub type Balance = u128;
 	pub type DepositId = U256;
 
-	pub type RingBalance<T> =
-		<<T as Trait>::RingCurrency as Currency<<T as frame_system::Trait>::AccountId>>::Balance;
-	#[cfg(feature = "std")]
-	pub type KtonBalance<T> =
-		<<T as Trait>::KtonCurrency as Currency<<T as frame_system::Trait>::AccountId>>::Balance;
+	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
+	pub type RingBalance<T> = <<T as Trait>::RingCurrency as Currency<AccountId<T>>>::Balance;
+	pub type KtonBalance<T> = <<T as Trait>::KtonCurrency as Currency<AccountId<T>>>::Balance;
 
 	pub type EthereumReceiptProofThing<T> = <<T as Trait>::EthereumRelay as EthereumReceipt<
-		<T as frame_system::Trait>::AccountId,
+		AccountId<T>,
 		RingBalance<T>,
 	>>::EthereumReceiptProofThing;
 }
@@ -41,12 +39,12 @@ use frame_support::{
 };
 use frame_system::{ensure_root, ensure_signed};
 use sp_runtime::{
-	traits::{AccountIdConversion, SaturatedConversion, Saturating},
+	traits::{AccountIdConversion, SaturatedConversion, Saturating, Zero},
 	DispatchError, DispatchResult, ModuleId, RuntimeDebug,
 };
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
-use sp_std::{convert::TryFrom, vec};
+use sp_std::{convert::TryFrom, prelude::*};
 // --- darwinia ---
 use array_bytes::array_unchecked;
 use darwinia_support::{
@@ -57,8 +55,10 @@ use ethereum_primitives::{receipt::EthereumTransactionIndex, EthereumAddress, U2
 use types::*;
 
 pub trait Trait: frame_system::Trait {
-	/// The backing's module id, used for deriving its sovereign account ID.
+	/// The ethereum backing module id, used for deriving its sovereign account ID.
 	type ModuleId: Get<ModuleId>;
+
+	type EthereumBackingFeeModuleId: Get<ModuleId>;
 
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
@@ -72,6 +72,8 @@ pub trait Trait: frame_system::Trait {
 
 	type KtonCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
+	type AdvancedFee: Get<RingBalance<Self>>;
+
 	/// Weight information for the extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
 }
@@ -83,15 +85,20 @@ impl WeightInfo for () {}
 decl_event! {
 	pub enum Event<T>
 	where
-		<T as frame_system::Trait>::AccountId,
+		AccountId = AccountId<T>,
 		RingBalance = RingBalance<T>,
+		KtonBalance = KtonBalance<T>,
 	{
-		/// Some one redeem some *RING*. [account, amount, transaction index]
+		/// Someone redeem some *RING*. [account, amount, transaction index]
 		RedeemRing(AccountId, Balance, EthereumTransactionIndex),
-		/// Some one redeem some *KTON*. [account, amount, transaction index]
+		/// Someone redeem some *KTON*. [account, amount, transaction index]
 		RedeemKton(AccountId, Balance, EthereumTransactionIndex),
-		/// Some one redeem a deposit. [account, deposit id, amount, transaction index]
+		/// Someone redeem a deposit. [account, deposit id, amount, transaction index]
 		RedeemDeposit(AccountId, DepositId, RingBalance, EthereumTransactionIndex),
+		/// Someone lock some *RING*. [account, amount]
+		LockRing(AccountId, RingBalance),
+		/// Someone lock some *KTON*. [account, amount]
+		LockKton(AccountId, KtonBalance),
 	}
 }
 
@@ -140,6 +147,10 @@ decl_storage! {
 		pub KtonTokenAddress get(fn kton_token_address) config(): EthereumAddress;
 
 		pub RedeemStatus get(fn redeem_status): bool = true;
+
+		pub LockAssetEvents
+			get(fn lock_asset_events)
+			: Vec<<T as frame_system::Trait>::Event>;
 	}
 	add_extra_genesis {
 		config(ring_locked): RingBalance<T>;
@@ -150,10 +161,13 @@ decl_storage! {
 				&<Module<T>>::account_id(),
 				T::RingCurrency::minimum_balance() + config.ring_locked,
 			);
-
 			let _ = T::KtonCurrency::make_free_balance_be(
 				&<Module<T>>::account_id(),
 				T::KtonCurrency::minimum_balance() + config.kton_locked,
+			);
+			let _ = T::RingCurrency::make_free_balance_be(
+				&<Module<T>>::fee_account_id(),
+				T::RingCurrency::minimum_balance(),
 			);
 		});
 	}
@@ -166,10 +180,19 @@ decl_module! {
 	{
 		type Error = Error<T>;
 
-		/// The treasury's module id, used for deriving its sovereign account ID.
+		/// The ethereum backing module id, used for deriving its sovereign account ID.
 		const ModuleId: ModuleId = T::ModuleId::get();
 
 		fn deposit_event() = default;
+
+		fn on_runtime_upgrade() -> frame_support::weights::Weight {
+			let _ = T::RingCurrency::make_free_balance_be(
+				&<Module<T>>::fee_account_id(),
+				T::RingCurrency::minimum_balance(),
+			);
+
+			0
+		}
 
 		/// Redeem balances
 		///
@@ -187,6 +210,47 @@ decl_module! {
 				}
 			} else {
 				Err(<Error<T>>::RedeemDis)?;
+			}
+		}
+
+		/// Lock some balances into the module account
+		/// which very similar to lock some assets into the contract on ethereum side
+		#[weight = 10_000_000]
+		pub fn lock(
+			origin,
+			#[compact] ring_value: RingBalance<T>,
+			#[compact] kton_value: KtonBalance<T>,
+		) {
+			let user = ensure_signed(origin)?;
+			let fee_account = Self::fee_account_id();
+
+			// 50 Ring for fee
+			// https://github.com/darwinia-network/darwinia-common/pull/377#issuecomment-730369387
+			T::RingCurrency::transfer(&user, &fee_account, T::AdvancedFee::get(), KeepAlive)?;
+
+			if !ring_value.is_zero() {
+				let ring_to_lock = ring_value.min(T::RingCurrency::usable_balance(&user));
+
+				T::RingCurrency::transfer(&user, &fee_account, ring_to_lock, KeepAlive)?;
+
+				let raw_event = RawEvent::LockRing(user.clone(), ring_to_lock);
+				let module_event: <T as Trait>::Event = raw_event.clone().into();
+				let system_event: <T as frame_system::Trait>::Event = module_event.into();
+
+				<LockAssetEvents<T>>::append(system_event);
+				Self::deposit_event(raw_event);
+			}
+			if !kton_value.is_zero() {
+				let kton_to_lock = kton_value.min(T::KtonCurrency::usable_balance(&user));
+
+				T::KtonCurrency::transfer(&user, &fee_account, kton_to_lock, KeepAlive)?;
+
+				let raw_event = RawEvent::LockKton(user, kton_to_lock);
+				let module_event: <T as Trait>::Event = raw_event.clone().into();
+				let system_event: <T as frame_system::Trait>::Event = module_event.into();
+
+				<LockAssetEvents<T>>::append(system_event);
+				Self::deposit_event(raw_event);
 			}
 		}
 
@@ -242,6 +306,10 @@ impl<T: Trait> Module<T> {
 	/// value and only call this once.
 	pub fn account_id() -> T::AccountId {
 		T::ModuleId::get().into_account()
+	}
+
+	pub fn fee_account_id() -> T::AccountId {
+		T::EthereumBackingFeeModuleId::get().into_account()
 	}
 
 	pub fn account_id_try_from_bytes(bytes: &[u8]) -> Result<T::AccountId, DispatchError> {
