@@ -1829,6 +1829,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "dvm-vm"
+version = "1.2.2"
+dependencies = [
+ "darwinia-balances",
+ "evm",
+ "frame-support",
+ "frame-system",
+ "impl-trait-for-tuples 0.1.3",
+ "pallet-balances 2.0.0 (git+https://github.com/darwinia-network/substrate.git?branch=common-library)",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "primitive-types 0.7.2",
+ "ripemd160",
+ "rlp 0.4.6",
+ "serde",
+ "sha3 0.8.2",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 2.0.0 (git+https://github.com/darwinia-network/substrate.git?branch=common-library)",
+]
+
+[[package]]
 name = "dyn-clonable"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
