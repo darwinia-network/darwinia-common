@@ -24,11 +24,11 @@ sha3           = { version = "0.8", default-features = false }
 darwinia-balances        = { default-features = false, path = "../../../frame/balances" }
 darwinia-support         = { default-features = false, path = "../../../frame/support" }
 dvm-consensus-primitives = { default-features = false, path = "../consensus/primitives" }
+dvm-evm = { default-features = false, path = "../evm" }
 dvm-rpc-primitives       = { default-features = false, path = "../rpc/primitives" }
 # substrate
 frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-pallet-evm       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-core          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-io            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
@@ -63,12 +63,12 @@ darwinia-std  = [
 	"darwinia-balances/std",
 	"darwinia-support/std",
 	"dvm-consensus-primitives/std",
+	"dvm-evm/std",
 	"dvm-rpc-primitives/std",
 ]
 substrate-std = [
 	"frame-support/std",
 	"frame-system/std",
-	"pallet-evm/std",
 	"pallet-timestamp/std",
 	"sp-core/std",
 	"sp-io/std",
