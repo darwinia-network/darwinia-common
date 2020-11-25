@@ -205,6 +205,10 @@ decl_module! {
 
 		fn deposit_event() = default;
 
+		fn initialize() {
+			<LockAssetEvents<T>>::kill();
+		}
+
 		fn on_runtime_upgrade() -> frame_support::weights::Weight {
 			let _ = T::RingCurrency::make_free_balance_be(
 				&<Module<T>>::fee_account_id(),
