@@ -205,7 +205,7 @@ decl_module! {
 
 		fn deposit_event() = default;
 
-		fn initialize() {
+		fn on_initialize() {
 			<LockAssetEvents<T>>::kill();
 		}
 
