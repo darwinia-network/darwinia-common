@@ -48,7 +48,7 @@ use sp_runtime::{
 use sp_std::borrow::ToOwned;
 use sp_std::{collections::btree_map::BTreeMap, prelude::*};
 // --- darwinia ---
-use darwinia_relay_primitives::*;
+use darwinia_relay_primitives::relayer_game::*;
 use darwinia_support::balance::lock::*;
 use types::*;
 

@@ -219,7 +219,7 @@ use frame_support::{impl_outer_origin, parameter_types, traits::OnFinalize};
 use sp_runtime::RuntimeDebug;
 // --- darwinia ---
 use crate::*;
-use darwinia_relay_primitives::*;
+use darwinia_relay_primitives::relayer_game::*;
 use mock_relay::{MockRelayBlockNumber, MockRelayHeader};
 
 pub type AccountId = u64;
