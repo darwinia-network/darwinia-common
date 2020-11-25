@@ -1,4 +1,4 @@
-[package]
+	[package]
 authors     = ["Darwinia Network <hello@darwinia.network>"]
 description = "Runtime primitives for Ethereum RPC (web3) compatibility layer for Darwinia."
 edition     = "2018"
@@ -12,10 +12,11 @@ version     = "1.2.2"
 [dependencies]
 # crates
 codec          = { package = "parity-scale-codec", version = "1.3.5", default-features = false }
-ethereum       = { version = "0.3", default-features = false, features = ["codec"] }
+ethereum       = { version = "0.4", default-features = false, features = ["with-codec"] }
 ethereum-types = { version = "0.9", default-features = false }
 # darwinia
-darwinia-evm   = { default-features = false, path = "../../evm" }
+darwinia-evm              = { default-features = false, path = "../../evm" }
+darwinia-evm-primitives   = { default-features = false, path = "../../evm/primitives" }
 # substrate
 sp-api     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
@@ -32,7 +33,8 @@ std = [
 ]
 
 darwinia-std  = [
-	"darwinia-evm/std"
+	"darwinia-evm/std",
+	"darwinia-evm-primitives/std"
 ]
 crates-std    = [
 	"codec/std",

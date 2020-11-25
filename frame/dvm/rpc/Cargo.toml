@@ -12,7 +12,7 @@ version     = "1.2.2"
 [dependencies]
 # crates
 codec               = { package = "parity-scale-codec", version = "1.3.5" }
-ethereum            = { version = "0.3", features = ["codec"] }
+ethereum            = { version = "0.4", features = ["with-codec"] }
 ethereum-types      = "0.9.0"
 futures             = { version = "0.3.7", features = ["compat"] }
 jsonrpc-core        = "15.1.0"
@@ -24,7 +24,9 @@ rlp                 = "0.4"
 rustc-hex           = { version = "2.1.0" }
 sha3                = "0.8"
 # darwinia
+darwinia-evm       = { path = "../evm"}
 dvm-consensus      = { path = "../consensus" }
+dvm-ethereum       = { path = "../ethereum"}
 dvm-rpc-core       = { path = "core" }
 dvm-rpc-primitives = { path = "primitives" }
 # substrate

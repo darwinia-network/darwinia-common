@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Substrate.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::{handle_call_error, internal_err};
+use crate::{error_on_execution_failure, internal_err};
 use dvm_rpc_core::types::{
 	Block, BlockNumber, BlockTransactions, Bytes, CallRequest, Filter, Index, Log, Receipt, Rich,
 	RichBlock, SyncInfo, SyncStatus, Transaction, VariadicValue, Work,
@@ -91,7 +91,7 @@ fn rich_block_build(
 			number: Some(block.header.number),
 			gas_used: block.header.gas_used,
 			gas_limit: block.header.gas_limit,
-			extra_data: Bytes(block.header.extra_data.as_bytes().to_vec()),
+			extra_data: Bytes(block.header.extra_data.clone()),
 			logs_bloom: Some(block.header.logs_bloom),
 			timestamp: U256::from(block.header.timestamp / 1000),
 			difficulty: block.header.difficulty,
@@ -539,28 +539,47 @@ where
 		let gas_limit = gas.unwrap_or(U256::max_value()); // TODO: set a limit
 		let data = data.map(|d| d.0).unwrap_or_default();
 
-		let action = match to {
-			Some(to) => ethereum::TransactionAction::Call(to),
-			_ => ethereum::TransactionAction::Create,
-		};
+		match to {
+			Some(to) => {
+				let info = self
+					.client
+					.runtime_api()
+					.call(
+						&BlockId::Hash(hash),
+						from.unwrap_or_default(),
+						to,
+						data,
+						value.unwrap_or_default(),
+						gas_limit,
+						gas_price,
+						nonce,
+					)
+					.map_err(|err| internal_err(format!("runtime error: {:?}", err)))?
+					.map_err(|err| internal_err(format!("execution fatal: {:?}", err)))?;
+				error_on_execution_failure(&info.exit_reason, &info.value)?;
+				Ok(Bytes(info.value))
+			}
+			None => {
+				let info = self
+					.client
+					.runtime_api()
+					.create(
+						&BlockId::Hash(hash),
+						from.unwrap_or_default(),
+						data,
+						value.unwrap_or_default(),
+						gas_limit,
+						gas_price,
+						nonce,
+					)
+					.map_err(|err| internal_err(format!("runtime error: {:?}", err)))?
+					.map_err(|err| internal_err(format!("execution fatal: {:?}", err)))?;
 
-		let (ret, _) = self
-			.client
-			.runtime_api()
-			.call(
-				&BlockId::Hash(hash),
-				from.unwrap_or_default(),
-				data,
-				value.unwrap_or_default(),
-				gas_limit,
-				gas_price,
-				nonce,
-				action,
-			)
-			.map_err(|err| internal_err(format!("internal error: {:?}", err)))?
-			.map_err(handle_call_error)?;
+				error_on_execution_failure(&info.exit_reason, &[])?;
 
-		Ok(Bytes(ret))
+				Ok(Bytes(info.value[..].to_vec()))
+			}
+		}
 	}
 
 	fn estimate_gas(&self, request: CallRequest, _: Option<BlockNumber>) -> Result<U256> {
@@ -579,26 +598,45 @@ where
 		let gas_limit = gas.unwrap_or(U256::max_value()); // TODO: set a limit
 		let data = data.map(|d| d.0).unwrap_or_default();
 
-		let action = match to {
-			Some(to) => ethereum::TransactionAction::Call(to),
-			_ => ethereum::TransactionAction::Create,
-		};
+		let used_gas = match to {
+			Some(to) => {
+				let info = self
+					.client
+					.runtime_api()
+					.call(
+						&BlockId::Hash(hash),
+						from.unwrap_or_default(),
+						to,
+						data,
+						value.unwrap_or_default(),
+						gas_limit,
+						gas_price,
+						nonce,
+					)
+					.map_err(|err| internal_err(format!("runtime error: {:?}", err)))?
+					.map_err(|err| internal_err(format!("execution fatal: {:?}", err)))?;
 
-		let (_, used_gas) = self
-			.client
-			.runtime_api()
-			.call(
-				&BlockId::Hash(hash),
-				from.unwrap_or_default(),
-				data,
-				value.unwrap_or_default(),
-				gas_limit,
-				gas_price,
-				nonce,
-				action,
-			)
-			.map_err(|err| internal_err(format!("internal error: {:?}", err)))?
-			.map_err(handle_call_error)?;
+				info.used_gas
+			}
+			None => {
+				let info = self
+					.client
+					.runtime_api()
+					.create(
+						&BlockId::Hash(hash),
+						from.unwrap_or_default(),
+						data,
+						value.unwrap_or_default(),
+						gas_limit,
+						gas_price,
+						nonce,
+					)
+					.map_err(|err| internal_err(format!("runtime error: {:?}", err)))?
+					.map_err(|err| internal_err(format!("execution fatal: {:?}", err)))?;
+
+				info.used_gas
+			}
+		};
 
 		Ok(used_gas)
 	}

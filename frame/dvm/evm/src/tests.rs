@@ -119,6 +119,7 @@ impl Trait for Test {
 	type Event = Event<Test>;
 	type Precompiles = ();
 	type ChainId = SystemChainId;
+	type Runner = crate::runner::stack::Runner<Self>;
 	type AccountBasicMapping = RawAccountBasicMapping<Test>;
 }
 

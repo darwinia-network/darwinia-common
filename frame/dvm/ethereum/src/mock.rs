@@ -163,6 +163,7 @@ impl darwinia_evm::Trait for Test {
 	type Event = ();
 	type Precompiles = ();
 	type ChainId = ChainId;
+	type Runner = darwinia_evm::runner::stack::Runner<Self>;
 	type AccountBasicMapping = DVMAccountBasicMapping<Self>;
 }
 

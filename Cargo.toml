@@ -20,6 +20,8 @@ members = [
 	"frame/bridge/tron/backing",
 	"frame/claims",
 	"frame/democracy",
+	"frame/dvm/evm",
+	"frame/dvm/evm/primitives",
 	"frame/dvm/ethereum",
 	"frame/dvm/evm",
 	"frame/dvm/rpc",

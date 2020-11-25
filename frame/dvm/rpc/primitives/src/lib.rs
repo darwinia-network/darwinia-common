@@ -17,7 +17,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
-use ethereum::{Block as EthereumBlock, Log, TransactionAction};
+use ethereum::{Block as EthereumBlock, Log};
 use ethereum_types::Bloom;
 use sp_core::{H160, H256, U256};
 use sp_std::vec::Vec;
@@ -53,7 +53,7 @@ sp_api::decl_runtime_apis! {
 		/// Returns runtime defined darwinia_evm::ChainId.
 		fn chain_id() -> u64;
 		/// Returns darwinia_evm::Accounts by address.
-		fn account_basic(address: H160) -> darwinia_evm::Account;
+		fn account_basic(address: H160) -> darwinia_evm_primitives::Account;
 		/// Returns FixedGasPrice::min_gas_price
 		fn gas_price() -> U256;
 		/// For a given account address, returns darwinia_evm::AccountCodes.
@@ -65,13 +65,22 @@ sp_api::decl_runtime_apis! {
 		/// Returns a pallet_ethereum::call response.
 		fn call(
 			from: H160,
+			to: H160,
 			data: Vec<u8>,
 			value: U256,
 			gas_limit: U256,
 			gas_price: Option<U256>,
 			nonce: Option<U256>,
-			action: TransactionAction
-		) -> Result<(Vec<u8>, U256), (sp_runtime::DispatchError, Vec<u8>)>;
+		) -> Result<darwinia_evm_primitives::CallInfo, sp_runtime::DispatchError>;
+		/// Returns a frame_ethereum::create response.
+		fn create(
+			from: H160,
+			data: Vec<u8>,
+			value: U256,
+			gas_limit: U256,
+			gas_price: Option<U256>,
+			nonce: Option<U256>,
+		) -> Result<darwinia_evm_primitives::CreateInfo, sp_runtime::DispatchError>;
 		/// Return the current block.
 		fn current_block() -> Option<EthereumBlock>;
 		/// Return the current receipt.

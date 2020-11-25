@@ -263,6 +263,7 @@ use sp_version::RuntimeVersion;
 // --- darwinia ---
 use constants::*;
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
+use darwinia_evm::Runner;
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
 use darwinia_staking::EraIndex;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
@@ -1069,6 +1070,7 @@ impl darwinia_evm::Trait for Runtime {
 	);
 	type ChainId = ChainId;
 	type AccountBasicMapping = DVMAccountBasicMapping<Self>;
+	type Runner = darwinia_evm::runner::stack::Runner<Self>;
 }
 
 type EthereumRelayAuthoritiesInstance = darwinia_relay_authorities::Instance0;
@@ -1440,12 +1442,12 @@ impl_runtime_apis! {
 			<Runtime as darwinia_evm::Trait>::ChainId::get()
 		}
 
-		fn account_basic(address: H160) -> EVMAccount {
-			<Runtime as darwinia_evm::Trait>::AccountBasicMapping::account_basic(&address)
-		}
-
 		fn gas_price() -> U256 {
 			<Runtime as darwinia_evm::Trait>::FeeCalculator::min_gas_price()
+		}
+
+		fn account_basic(address: H160) -> EVMAccount {
+			<Runtime as darwinia_evm::Trait>::AccountBasicMapping::account_basic(&address)
 		}
 
 		fn account_code_at(address: H160) -> Vec<u8> {
@@ -1464,15 +1466,42 @@ impl_runtime_apis! {
 
 		fn call(
 			from: H160,
+			to: H160,
 			data: Vec<u8>,
 			value: U256,
 			gas_limit: U256,
 			gas_price: Option<U256>,
 			nonce: Option<U256>,
-			action: dvm_ethereum::TransactionAction,
-		) -> Result<(Vec<u8>, U256), (sp_runtime::DispatchError, Vec<u8>)> {
-			<dvm_ethereum::Module<Runtime>>::call(from, data, value, gas_limit.low_u32(), gas_price.unwrap_or_default(), nonce, action)
+		) -> Result<darwinia_evm::CallInfo, sp_runtime::DispatchError> {
+			<Runtime as darwinia_evm::Trait>::Runner::call(
+				from,
+				to,
+				data,
+				value,
+				gas_limit.low_u32(),
+				gas_price,
+				nonce,
+			).map_err(|err| err.into())
 		}
+
+		fn create(
+			from: H160,
+			data: Vec<u8>,
+			value: U256,
+			gas_limit: U256,
+			gas_price: Option<U256>,
+			nonce: Option<U256>,
+		) -> Result<darwinia_evm::CreateInfo, sp_runtime::DispatchError> {
+			<Runtime as darwinia_evm::Trait>::Runner::create(
+				from,
+				data,
+				value,
+				gas_limit.low_u32(),
+				gas_price,
+				nonce,
+			).map_err(|err| err.into())
+		}
+
 
 		fn current_transaction_statuses() -> Option<Vec<TransactionStatus>> {
 			Ethereum::current_transaction_statuses()

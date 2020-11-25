@@ -3,6 +3,7 @@ use darwinia_evm::{AddressMapping, ExitError, ExitSucceed, Precompile};
 use frame_support::traits::ExistenceRequirement;
 use sp_core::H160;
 use sp_runtime::traits::{BlakeTwo256, Hash};
+use sp_std::borrow::Cow;
 use sp_std::marker::PhantomData;
 use sp_std::prelude::*;
 
@@ -59,7 +60,7 @@ impl<T: Trait> Precompile for NativeTransfer<T> {
 		target_gas: Option<usize>,
 	) -> core::result::Result<(ExitSucceed, Vec<u8>, usize), ExitError> {
 		if input.len() != 177 {
-			Err(ExitError::Other("InputDataLenErr"))
+			Err(ExitError::Other(Cow::Borrowed("InputDataLenErr")))
 		} else {
 			let cost = ensure_linear_cost(target_gas, input.len(), 60, 12)?;
 
@@ -84,18 +85,22 @@ impl<T: Trait> Precompile for NativeTransfer<T> {
 				match result {
 					Ok(()) => Ok((ExitSucceed::Returned, vec![], cost)),
 					Err(error) => match error {
-						sp_runtime::DispatchError::BadOrigin => Err(ExitError::Other("BadOrigin")),
-						sp_runtime::DispatchError::CannotLookup => {
-							Err(ExitError::Other("CannotLookup"))
+						sp_runtime::DispatchError::BadOrigin => {
+							Err(ExitError::Other(Cow::Borrowed("BadOrigin")))
 						}
-						sp_runtime::DispatchError::Other(message) => Err(ExitError::Other(message)),
+						sp_runtime::DispatchError::CannotLookup => {
+							Err(ExitError::Other(Cow::Borrowed("CannotLookup")))
+						}
+						sp_runtime::DispatchError::Other(message) => {
+							Err(ExitError::Other(Cow::Borrowed(message)))
+						}
 						sp_runtime::DispatchError::Module { message, .. } => {
-							Err(ExitError::Other(message.unwrap()))
+							Err(ExitError::Other(Cow::Borrowed(message.unwrap())))
 						}
 					},
 				}
 			} else {
-				Err(ExitError::Other("BadSignature"))
+				Err(ExitError::Other(Cow::Borrowed("BadSignature")))
 			}
 		}
 	}
