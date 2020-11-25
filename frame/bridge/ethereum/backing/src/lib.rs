@@ -54,6 +54,7 @@ use ethabi::{Event as EthEvent, EventParam as EthEventParam, ParamType, RawLog};
 use frame_support::{
 	debug, decl_error, decl_event, decl_module, decl_storage, ensure,
 	traits::{Currency, ExistenceRequirement::KeepAlive, Get},
+	weights::Weight,
 };
 use frame_system::{ensure_root, ensure_signed};
 use sp_runtime::{
@@ -205,8 +206,10 @@ decl_module! {
 
 		fn deposit_event() = default;
 
-		fn on_initialize() {
+		fn on_initialize(_n: T::BlockNumber) -> Weight {
 			<LockAssetEvents<T>>::kill();
+
+			0
 		}
 
 		fn on_runtime_upgrade() -> frame_support::weights::Weight {
