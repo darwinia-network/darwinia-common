@@ -1,15 +1,18 @@
+use crate::{AccountBasicMapping, AccountCodes, AccountStorages, Event, Module, Trait};
+use codec::{Decode, Encode};
+use evm::backend::{Apply, ApplyBackend, Backend as BackendT};
+use frame_support::traits::Get;
+use frame_support::{
+	debug,
+	storage::{StorageDoubleMap, StorageMap},
+};
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
+use sha3::{Digest, Keccak256};
+use sp_core::{H160, H256, U256};
+use sp_runtime::traits::UniqueSaturatedInto;
 use sp_std::marker::PhantomData;
 use sp_std::vec::Vec;
-#[cfg(feature = "std")]
-use serde::{Serialize, Deserialize};
-use codec::{Encode, Decode};
-use sp_core::{U256, H256, H160};
-use sp_runtime::traits::UniqueSaturatedInto;
-use frame_support::traits::Get;
-use frame_support::{debug, storage::{StorageMap, StorageDoubleMap}};
-use sha3::{Keccak256, Digest};
-use evm::backend::{Backend as BackendT, ApplyBackend, Apply};
-use crate::{Trait, AccountStorages, AccountCodes, Module, Event, AccountBasicMapping};
 
 #[derive(Clone, Eq, PartialEq, Encode, Decode, Default)]
 #[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
@@ -52,13 +55,20 @@ pub struct Backend<'vicinity, T> {
 impl<'vicinity, T> Backend<'vicinity, T> {
 	/// Create a new backend with given vicinity.
 	pub fn new(vicinity: &'vicinity Vicinity) -> Self {
-		Self { vicinity, _marker: PhantomData }
+		Self {
+			vicinity,
+			_marker: PhantomData,
+		}
 	}
 }
 
 impl<'vicinity, T: Trait> BackendT for Backend<'vicinity, T> {
-	fn gas_price(&self) -> U256 { self.vicinity.gas_price }
-	fn origin(&self) -> H160 { self.vicinity.origin }
+	fn gas_price(&self) -> U256 {
+		self.vicinity.gas_price
+	}
+	fn origin(&self) -> H160 {
+		self.vicinity.origin
+	}
 
 	fn block_hash(&self, number: U256) -> H256 {
 		if number > U256::from(u32::max_value()) {
@@ -126,25 +136,28 @@ impl<'vicinity, T: Trait> BackendT for Backend<'vicinity, T> {
 }
 
 impl<'vicinity, T: Trait> ApplyBackend for Backend<'vicinity, T> {
-	fn apply<A, I, L>(
-		&mut self,
-		values: A,
-		logs: L,
-		delete_empty: bool,
-	) where
-		A: IntoIterator<Item=Apply<I>>,
-		I: IntoIterator<Item=(H256, H256)>,
-		L: IntoIterator<Item=evm::backend::Log>,
+	fn apply<A, I, L>(&mut self, values: A, logs: L, delete_empty: bool)
+	where
+		A: IntoIterator<Item = Apply<I>>,
+		I: IntoIterator<Item = (H256, H256)>,
+		L: IntoIterator<Item = evm::backend::Log>,
 	{
 		for apply in values {
 			match apply {
 				Apply::Modify {
-					address, basic, code, storage, reset_storage,
+					address,
+					basic,
+					code,
+					storage,
+					reset_storage,
 				} => {
-					T::AccountBasicMapping::mutate_account_basic(&address, Account {
-						nonce: basic.nonce,
-						balance: basic.balance,
-					});
+					T::AccountBasicMapping::mutate_account_basic(
+						&address,
+						Account {
+							nonce: basic.nonce,
+							balance: basic.balance,
+						},
+					);
 
 					if let Some(code) = code {
 						debug::debug!(
@@ -184,7 +197,7 @@ impl<'vicinity, T: Trait> ApplyBackend for Backend<'vicinity, T> {
 					if delete_empty {
 						Module::<T>::remove_account_if_empty(&address);
 					}
-				},
+				}
 				Apply::Delete { address } => {
 					debug::debug!(
 						target: "evm",
@@ -192,7 +205,7 @@ impl<'vicinity, T: Trait> ApplyBackend for Backend<'vicinity, T> {
 						address
 					);
 					Module::<T>::remove_account(&address)
-				},
+				}
 			}
 		}
 

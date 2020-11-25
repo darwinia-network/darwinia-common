@@ -17,11 +17,11 @@
 
 //! Builtin precompiles.
 
-use sp_std::{cmp::min, vec::Vec};
-use sp_core::H160;
 use evm::{ExitError, ExitSucceed};
-use ripemd160::Digest;
 use impl_trait_for_tuples::impl_for_tuples;
+use ripemd160::Digest;
+use sp_core::H160;
+use sp_std::{cmp::min, vec::Vec};
 
 /// Custom precompiles to be used by EVM engine.
 pub trait Precompiles {
@@ -76,15 +76,18 @@ fn ensure_linear_cost(
 	target_gas: Option<usize>,
 	len: usize,
 	base: usize,
-	word: usize
+	word: usize,
 ) -> Result<usize, ExitError> {
-	let cost = base.checked_add(
-		word.checked_mul(len.saturating_add(31) / 32).ok_or(ExitError::OutOfGas)?
-	).ok_or(ExitError::OutOfGas)?;
+	let cost = base
+		.checked_add(
+			word.checked_mul(len.saturating_add(31) / 32)
+				.ok_or(ExitError::OutOfGas)?,
+		)
+		.ok_or(ExitError::OutOfGas)?;
 
 	if let Some(target_gas) = target_gas {
 		if cost > target_gas {
-			return Err(ExitError::OutOfGas)
+			return Err(ExitError::OutOfGas);
 		}
 	}
 
