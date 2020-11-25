@@ -35,8 +35,11 @@ mod types {
 
 	pub type Balance = u128;
 	pub type DepositId = U256;
+	pub type MMRRoot = H256;
+	pub type EcdsaPublicKey = H160;
 
 	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
+	pub type BlockNumber<T> = <T as frame_system::Trait>::BlockNumber;
 	pub type RingBalance<T> = <<T as Trait>::RingCurrency as Currency<AccountId<T>>>::Balance;
 	pub type KtonBalance<T> = <<T as Trait>::KtonCurrency as Currency<AccountId<T>>>::Balance;
 
@@ -57,6 +60,7 @@ use frame_support::{
 	weights::Weight,
 };
 use frame_system::{ensure_root, ensure_signed};
+use sp_core::{blake2_256, H160, H256};
 use sp_runtime::{
 	traits::{AccountIdConversion, SaturatedConversion, Saturating, Zero},
 	DispatchError, DispatchResult, ModuleId, RuntimeDebug,
@@ -66,6 +70,7 @@ use sp_std::borrow::ToOwned;
 use sp_std::{convert::TryFrom, prelude::*};
 // --- darwinia ---
 use array_bytes::array_unchecked;
+use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::{
 	balance::lock::*,
 	traits::{EthereumReceipt, OnDepositRedeem},
@@ -170,6 +175,10 @@ decl_storage! {
 		pub LockAssetEvents
 			get(fn lock_asset_events)
 			: Vec<<T as frame_system::Trait>::Event>;
+
+		pub SignaturesToRelay
+			get(fn signatures_to_relay_of)
+			: map hasher(identity) BlockNumber<T> => Option<Vec<(Signature, EcdsaPublicKey)>>
 	}
 	add_extra_genesis {
 		config(ring_locked): RingBalance<T>;
@@ -206,7 +215,7 @@ decl_module! {
 
 		fn deposit_event() = default;
 
-		fn on_initialize(_n: T::BlockNumber) -> Weight {
+		fn on_initialize(_n: BlockNumber<T>) -> Weight {
 			<LockAssetEvents<T>>::kill();
 
 			0
@@ -711,6 +720,46 @@ impl<T: Trait> Module<T> {
 		));
 
 		Ok(())
+	}
+}
+
+impl<T: Trait> Backable for Module<T> {
+	type BlockNumber = BlockNumber<T>;
+	type Message = MMRRoot;
+	type Signer = EcdsaPublicKey;
+
+	fn signatures_to_relay_of(
+		block_number: Self::BlockNumber,
+	) -> Option<Vec<(Signature, Self::Signer)>> {
+		Self::signatures_to_relay_of(block_number)
+	}
+
+	fn verify_signature(
+		signature: Signature,
+		message: Self::Message,
+		signer: Self::Signer,
+	) -> bool {
+		// let message = secp256k1::Message::parse(&blake2_256(message.as_ref()));
+		// let signature = (
+		// 	if let Ok(signature) = secp256k1::Signature::parse_slice(&signature.0[0..64]) {
+		// 		signature
+		// 	} else {
+		// 		return false;
+		// 	},
+		// 	if let Ok(recovery_id) =
+		// 		secp256k1::recovery::RecoveryId::parse(signature.0[64]).map_err(|_| ())
+		// 	{
+		// 		recovery_id
+		// 	} else {
+		// 		return false;
+		// 	},
+		// );
+
+		// if let Ok(actual) = secp256k1::recovery::recover(&message, &signature.0, &signature.1) {
+		// 	&signer.0 == &actual.serialize_compressed()
+		// } else {
+			false
+		// }
 	}
 }
 

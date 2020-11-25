@@ -8,7 +8,7 @@ use sp_runtime::{traits::Dispatchable, AccountId32};
 use crate::*;
 use array_bytes::hex_bytes_unchecked;
 use darwinia_ethereum_relay::{EthereumRelayHeaderParcel, EthereumRelayProofs, MMRProof};
-use darwinia_relay_primitives::*;
+use darwinia_relay_primitives::relayer_game::*;
 use darwinia_staking::{RewardDestination, StakingBalance, StakingLedger, TimeDepositItem};
 use darwinia_support::balance::lock::StakingLock;
 use ethereum_primitives::{

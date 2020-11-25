@@ -1,10 +1,10 @@
 [package]
 authors     = ["Darwinia Network <hello@darwinia.network>"]
-description = "FRAME pallet to manager ecdsa authorities"
+description = "Relayer Authorities Protocal Implementation"
 edition     = "2018"
 homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"
-name        = "darwinia-ecdsa-authorities"
+name        = "darwinia-relay-authorities"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "1.2.2"
@@ -14,9 +14,12 @@ version     = "1.2.2"
 codec = { package = "parity-scale-codec", version = "1.3.5", default-features = false }
 serde = { version = "1.0.117", optional = true }
 # darwinia
+darwinia-relay-primitives = { default-features = false, path = "../../../primitives/relay" }
+darwinia-support          = { default-features = false, path = "../../support" }
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 [dev-dependencies]
 
@@ -33,8 +36,12 @@ crates-std    = [
 	"codec/std",
 	"serde",
 ]
-darwinia-std  = []
+darwinia-std  = [
+	"darwinia-relay-primitives/std",
+	"darwinia-support/std",
+]
 substrate-std = [
 	"frame-support/std",
 	"frame-system/std",
+	"sp-runtime/std",
 ]
