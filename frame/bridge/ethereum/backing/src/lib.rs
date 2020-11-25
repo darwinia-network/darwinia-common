@@ -148,7 +148,7 @@ decl_error! {
 		// /// Usable Balance for Paying Redeem Fee - INSUFFICIENT
 		// FeeIns,
 		/// Redeem - DISABLED
-		RedeemDis
+		RedeemDis,
 	}
 }
 
