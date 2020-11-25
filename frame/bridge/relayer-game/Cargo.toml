@@ -24,7 +24,7 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 
 [dev-dependencies]
 # crates
-env_logger = { version = "0.8.1" }
+env_logger = { version = "0.8.2" }
 # darwinia
 darwinia-balances = { path = "../../balances" }
 # substrate

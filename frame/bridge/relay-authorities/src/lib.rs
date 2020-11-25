@@ -32,8 +32,6 @@ mod types {
 	pub type Signer<T, I> = <<T as Trait<I>>::BackableChain as Backable>::Signer;
 }
 
-// --- crates ---
-use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
 	decl_error, decl_module, decl_storage,

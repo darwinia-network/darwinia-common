@@ -20,6 +20,8 @@
 
 // --- crates ---
 use codec::FullCodec;
+// --- substrate ---
+use sp_std::prelude::*;
 
 pub type Signature = Vec<u8>;
 

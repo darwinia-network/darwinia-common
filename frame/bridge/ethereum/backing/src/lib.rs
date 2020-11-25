@@ -60,7 +60,7 @@ use frame_support::{
 	weights::Weight,
 };
 use frame_system::{ensure_root, ensure_signed};
-use sp_core::{blake2_256, H160, H256};
+use sp_core::{H160, H256};
 use sp_runtime::{
 	traits::{AccountIdConversion, SaturatedConversion, Saturating, Zero},
 	DispatchError, DispatchResult, ModuleId, RuntimeDebug,
@@ -758,7 +758,7 @@ impl<T: Trait> Backable for Module<T> {
 		// if let Ok(actual) = secp256k1::recovery::recover(&message, &signature.0, &signature.1) {
 		// 	&signer.0 == &actual.serialize_compressed()
 		// } else {
-			false
+		false
 		// }
 	}
 }
