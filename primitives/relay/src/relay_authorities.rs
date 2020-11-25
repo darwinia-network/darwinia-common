@@ -18,12 +18,15 @@
 
 //! Relayer Game Primitives
 
+// --- crates ---
+use codec::FullCodec;
+
 pub type Signature = Vec<u8>;
 
 pub trait Backable {
 	type BlockNumber;
 	type Message;
-	type Signer;
+	type Signer: Default + FullCodec;
 
 	fn signatures_to_relay_of(
 		block_number: Self::BlockNumber,
