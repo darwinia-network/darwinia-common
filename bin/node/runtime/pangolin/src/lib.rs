@@ -977,7 +977,7 @@ parameter_types! {
 }
 impl darwinia_ethereum_backing::Trait for Runtime {
 	type ModuleId = EthereumBackingModuleId;
-	type EthereumBackingFeeModuleId = EthereumBackingFeeModuleId;
+	type FeeModuleId = EthereumBackingFeeModuleId;
 	type Event = Event;
 	type RedeemAccountId = AccountId;
 	type EthereumRelay = EthereumRelay;

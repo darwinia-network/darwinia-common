@@ -1,3 +1,21 @@
+// This file is part of Darwinia.
+//
+// Copyright (C) 2018-2020 Darwinia Network
+// SPDX-License-Identifier: GPL-3.0
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia.  If not, see <https://www.gnu.org/licenses/>.
+
 //! Prototype module for cross chain assets backing.
 
 // TODO: https://github.com/darwinia-network/darwinia-common/issues/372
@@ -58,7 +76,7 @@ pub trait Trait: frame_system::Trait {
 	/// The ethereum backing module id, used for deriving its sovereign account ID.
 	type ModuleId: Get<ModuleId>;
 
-	type EthereumBackingFeeModuleId: Get<ModuleId>;
+	type FeeModuleId: Get<ModuleId>;
 
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
@@ -182,6 +200,8 @@ decl_module! {
 
 		/// The ethereum backing module id, used for deriving its sovereign account ID.
 		const ModuleId: ModuleId = T::ModuleId::get();
+
+		const FeeModuleId: ModuleId = T::FeeModuleId::get();
 
 		fn deposit_event() = default;
 
@@ -309,7 +329,7 @@ impl<T: Trait> Module<T> {
 	}
 
 	pub fn fee_account_id() -> T::AccountId {
-		T::EthereumBackingFeeModuleId::get().into_account()
+		T::FeeModuleId::get().into_account()
 	}
 
 	pub fn account_id_try_from_bytes(bytes: &[u8]) -> Result<T::AccountId, DispatchError> {
