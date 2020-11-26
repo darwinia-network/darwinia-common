@@ -268,8 +268,8 @@ parameter_types! {
 	pub const RelayerGameLockId: LockIdentifier = *b"da/rgame";
 }
 impl Trait for Test {
-	type LockId = RelayerGameLockId;
 	type RingCurrency = Ring;
+	type LockId = RelayerGameLockId;
 	type RingSlash = ();
 	type RelayerGameAdjustor = RelayerGameAdjustor;
 	type RelayableChain = Relay;

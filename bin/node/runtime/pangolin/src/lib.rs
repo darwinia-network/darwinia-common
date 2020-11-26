@@ -1021,8 +1021,8 @@ parameter_types! {
 	pub const EthereumRelayerGameLockId: LockIdentifier = *b"ethrgame";
 }
 impl darwinia_relayer_game::Trait<EthereumRelayerGameInstance> for Runtime {
-	type LockId = EthereumRelayerGameLockId;
 	type RingCurrency = Ring;
+	type LockId = EthereumRelayerGameLockId;
 	type RingSlash = Treasury;
 	type RelayerGameAdjustor = relay::EthereumRelayerGameAdjustor;
 	type RelayableChain = EthereumRelay;

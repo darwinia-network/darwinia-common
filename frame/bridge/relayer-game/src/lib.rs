@@ -53,10 +53,10 @@ use darwinia_support::balance::lock::*;
 use types::*;
 
 pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
-	type LockId: Get<LockIdentifier>;
-
 	/// The currency use for stake
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+
+	type LockId: Get<LockIdentifier>;
 
 	/// Handler for the unbalanced *RING* reduction when slashing a relayer.
 	type RingSlash: OnUnbalanced<RingNegativeImbalance<Self, I>>;
@@ -176,6 +176,8 @@ decl_module! {
 		origin: T::Origin
 	{
 		type Error = Error<T, I>;
+
+		const LOCK_ID: LockIdentifier = T::LockId::get();
 
 		const MAX_ACTIVE_GAMES: u8 = T::RelayerGameAdjustor::max_active_games();
 
