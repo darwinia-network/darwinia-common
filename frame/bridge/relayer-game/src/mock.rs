@@ -264,7 +264,11 @@ darwinia_support::impl_account_data! {
 
 #[derive(Clone, Eq, PartialEq)]
 pub struct Test;
+parameter_types! {
+	pub const RelayerGameLockId: LockIdentifier = *b"da/rgame";
+}
 impl Trait for Test {
+	type LockId = RelayerGameLockId;
 	type RingCurrency = Ring;
 	type RingSlash = ();
 	type RelayerGameAdjustor = RelayerGameAdjustor;

@@ -996,6 +996,7 @@ type EnsureRootOrHalfTechnicalComittee = EnsureOneOf<
 parameter_types! {
 	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
 	pub const EthereumNetwork: ethereum_primitives::EthereumNetworkType = ethereum_primitives::EthereumNetworkType::Ropsten;
+	pub const ConfirmPeriod: BlockNumber = 200;
 	pub const ApproveThreshold: Perbill = Perbill::from_percent(60);
 	pub const RejectThreshold: Perbill = Perbill::from_percent(1);
 }
@@ -1017,9 +1018,10 @@ impl darwinia_ethereum_relay::Trait for Runtime {
 
 type EthereumRelayerGameInstance = darwinia_relayer_game::Instance0;
 parameter_types! {
-	pub const ConfirmPeriod: BlockNumber = 200;
+	pub const EthereumRelayerGameLockId: LockIdentifier = *b"ethrgame";
 }
 impl darwinia_relayer_game::Trait<EthereumRelayerGameInstance> for Runtime {
+	type LockId = EthereumRelayerGameLockId;
 	type RingCurrency = Ring;
 	type RingSlash = Treasury;
 	type RelayerGameAdjustor = relay::EthereumRelayerGameAdjustor;

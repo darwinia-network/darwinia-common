@@ -38,7 +38,7 @@ mod types {
 use frame_support::{
 	debug::*,
 	decl_error, decl_module, decl_storage, ensure,
-	traits::{Currency, OnUnbalanced},
+	traits::{Currency, Get, OnUnbalanced},
 };
 use sp_runtime::{
 	traits::{Saturating, Zero},
@@ -52,9 +52,9 @@ use darwinia_relay_primitives::relayer_game::*;
 use darwinia_support::balance::lock::*;
 use types::*;
 
-pub const RELAYER_GAME_ID: LockIdentifier = *b"da/rgame";
-
 pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
+	type LockId: Get<LockIdentifier>;
+
 	/// The currency use for stake
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
@@ -274,12 +274,12 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		let stakes = calc_stakes(Self::stakes_of(relayer));
 
 		if stakes.is_zero() {
-			T::RingCurrency::remove_lock(RELAYER_GAME_ID, relayer);
+			T::RingCurrency::remove_lock(T::LockId::get(), relayer);
 
 			<Stakes<T, I>>::take(relayer);
 		} else {
 			T::RingCurrency::set_lock(
-				RELAYER_GAME_ID,
+				T::LockId::get(),
 				relayer,
 				LockFor::Common { amount: stakes },
 				WithdrawReasons::all(),
