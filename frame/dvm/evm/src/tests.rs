@@ -7,9 +7,13 @@ use sp_core::{Blake2Hasher, H256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	Perbill,
+	Perbill, RuntimeDebug,
 };
 use std::{collections::BTreeMap, str::FromStr};
+
+type Balance = u64;
+type RingInstance = darwinia_balances::Instance0;
+type KtonInstance = darwinia_balances::Instance1;
 
 impl_outer_origin! {
 	pub enum Origin for Test where system = frame_system {}
@@ -21,7 +25,19 @@ impl_outer_dispatch! {
 	}
 }
 
-#[derive(Clone, Eq, PartialEq)]
+darwinia_support::impl_account_data! {
+	struct AccountData<Balance>
+	for
+		RingInstance,
+		KtonInstance
+	where
+		Balance = Balance
+	{
+		// other data
+	}
+}
+
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub struct Test;
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
@@ -51,7 +67,7 @@ impl frame_system::Trait for Test {
 	type AvailableBlockRatio = AvailableBlockRatio;
 	type Version = ();
 	type PalletInfo = ();
-	type AccountData = pallet_balances::AccountData<u64>;
+	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
@@ -60,13 +76,15 @@ impl frame_system::Trait for Test {
 parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;
 }
-impl pallet_balances::Trait for Test {
-	type MaxLocks = ();
-	type Balance = u64;
+impl darwinia_balances::Trait<RingInstance> for Test {
+	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = ();
 	type ExistentialDeposit = ExistentialDeposit;
+	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
+	type MaxLocks = ();
+	type OtherCurrencies = ();
 	type WeightInfo = ();
 }
 
@@ -105,7 +123,7 @@ impl Trait for Test {
 }
 
 type System = frame_system::Module<Test>;
-type Balances = pallet_balances::Module<Test>;
+type Balances = darwinia_balances::Module<Test, RingInstance>;
 type EVM = Module<Test>;
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
@@ -137,7 +155,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		},
 	);
 
-	pallet_balances::GenesisConfig::<Test>::default()
+	darwinia_balances::GenesisConfig::<Test, RingInstance>::default()
 		.assimilate_storage(&mut t)
 		.unwrap();
 	GenesisConfig { accounts }

@@ -20,7 +20,7 @@ rlp                   = { version = "0.4", default-features = false }
 serde                 = { version = "1.0.101", optional = true, features = ["derive"] }
 sha3                  = { version = "0.8", default-features = false }
 # darwinia
-darwinia-balances = { default-features = false, path = "../../../frame/balances" }
+darwinia-balances     = { default-features = false, path = "../../../frame/balances" }
 # substrate
 frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
@@ -31,7 +31,7 @@ sp-runtime       = { default-features = false, git = "https://github.com/darwini
 sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 [dev-dependencies]
-pallet-balances = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+darwinia-support = { features = ["easy-testing"], path = "../../../frame/support" }
 
 [features]
 default = ["std"]
@@ -48,12 +48,12 @@ crates-std    = [
 ]
 darwinia-std  = [
 	"darwinia-balances/std",
+	"darwinia-support/std",
 ]
 substrate-std = [
 	"evm/std",
 	"frame-support/std",
 	"frame-system/std",
-	"pallet-balances/std",
 	"pallet-timestamp/std",
 	"primitive-types/std",
 	"ripemd160/std",
