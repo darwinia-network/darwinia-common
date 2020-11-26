@@ -22,9 +22,9 @@ serde          = { version = "1.0.117", optional = true }
 sha3           = { version = "0.8", default-features = false }
 # darwinia
 darwinia-balances        = { default-features = false, path = "../../../frame/balances" }
+darwinia-evm 			 = { default-features = false, path = "../evm" }
 darwinia-support         = { default-features = false, path = "../../../frame/support" }
 dvm-consensus-primitives = { default-features = false, path = "../consensus/primitives" }
-dvm-evm 				 = { default-features = false, path = "../evm" }
 dvm-rpc-primitives       = { default-features = false, path = "../rpc/primitives" }
 # substrate
 frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
@@ -61,9 +61,9 @@ crates-std    = [
 ]
 darwinia-std  = [
 	"darwinia-balances/std",
+	"darwinia-evm/std",
 	"darwinia-support/std",
 	"dvm-consensus-primitives/std",
-	"dvm-evm/std",
 	"dvm-rpc-primitives/std",
 ]
 substrate-std = [

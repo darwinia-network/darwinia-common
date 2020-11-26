@@ -215,7 +215,9 @@ pub use wasm::*;
 use codec::{Decode, Encode};
 use static_assertions::const_assert;
 // --- substrate ---
-use dvm_evm::{Account as EVMAccount, AccountBasicMapping, EnsureAddressTruncated, FeeCalculator};
+use darwinia_evm::{
+	Account as EVMAccount, AccountBasicMapping, EnsureAddressTruncated, FeeCalculator,
+};
 use frame_support::{
 	construct_runtime, debug, parameter_types,
 	traits::{
@@ -1048,7 +1050,7 @@ impl FeeCalculator for FixedGasPrice {
 parameter_types! {
 	pub const ChainId: u64 = 43;
 }
-impl dvm_evm::Trait for Runtime {
+impl darwinia_evm::Trait for Runtime {
 	type FeeCalculator = FixedGasPrice;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
@@ -1056,10 +1058,10 @@ impl dvm_evm::Trait for Runtime {
 	type Currency = Balances;
 	type Event = Event;
 	type Precompiles = (
-		dvm_evm::precompiles::ECRecover,
-		dvm_evm::precompiles::Sha256,
-		dvm_evm::precompiles::Ripemd160,
-		dvm_evm::precompiles::Identity,
+		darwinia_evm::precompiles::ECRecover,
+		darwinia_evm::precompiles::Sha256,
+		darwinia_evm::precompiles::Ripemd160,
+		darwinia_evm::precompiles::Identity,
 		NativeTransfer<Self>,
 	);
 	type ChainId = ChainId;
@@ -1149,7 +1151,7 @@ construct_runtime!(
 
 		HeaderMMR: darwinia_header_mmr::{Module, Call, Storage},
 
-		EVM: dvm_evm::{Module, Config, Call, Storage, Event<T>},
+		EVM: darwinia_evm::{Module, Config, Call, Storage, Event<T>},
 		Ethereum: dvm_ethereum::{Module, Call, Storage, Event, Config, ValidateUnsigned},
 	}
 );
@@ -1406,19 +1408,19 @@ impl_runtime_apis! {
 
 	impl dvm_rpc_primitives::EthereumRuntimeRPCApi<Block> for Runtime {
 		fn chain_id() -> u64 {
-			<Runtime as dvm_evm::Trait>::ChainId::get()
+			<Runtime as darwinia_evm::Trait>::ChainId::get()
 		}
 
 		fn account_basic(address: H160) -> EVMAccount {
-			<Runtime as dvm_evm::Trait>::AccountBasicMapping::account_basic(&address)
+			<Runtime as darwinia_evm::Trait>::AccountBasicMapping::account_basic(&address)
 		}
 
 		fn gas_price() -> U256 {
-			<Runtime as dvm_evm::Trait>::FeeCalculator::min_gas_price()
+			<Runtime as darwinia_evm::Trait>::FeeCalculator::min_gas_price()
 		}
 
 		fn account_code_at(address: H160) -> Vec<u8> {
-			dvm_evm::Module::<Runtime>::account_codes(address)
+			darwinia_evm::Module::<Runtime>::account_codes(address)
 		}
 
 		fn author() -> H160 {
@@ -1428,7 +1430,7 @@ impl_runtime_apis! {
 		fn storage_at(address: H160, index: U256) -> H256 {
 			let mut tmp = [0u8; 32];
 			index.to_big_endian(&mut tmp);
-			dvm_evm::Module::<Runtime>::account_storages(address, H256::from_slice(&tmp[..]))
+			darwinia_evm::Module::<Runtime>::account_storages(address, H256::from_slice(&tmp[..]))
 		}
 
 		fn call(

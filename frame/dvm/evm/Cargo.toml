@@ -4,7 +4,7 @@ description = "FRAME EVM contracts pallet"
 edition     = "2018"
 homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"
-name        = "dvm-evm"
+name        = "darwinia-evm"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "1.2.2"
@@ -20,7 +20,7 @@ ripemd160             = { version = "0.9", default-features = false }
 rlp                   = { version = "0.4", default-features = false }
 sha3                  = { version = "0.8", default-features = false }
 # darwinia
-darwinia-balances    = { default-features = false, path = "../../../frame/balances" }
+darwinia-balances     = { default-features = false, path = "../../../frame/balances" }
 # substrate
 frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }

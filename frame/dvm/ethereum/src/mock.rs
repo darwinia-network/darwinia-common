@@ -19,7 +19,7 @@
 use super::*;
 use crate::account_basic::DVMAccountBasicMapping;
 use crate::{Module, Trait};
-use dvm_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator};
+use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator};
 use ethereum::{TransactionAction, TransactionSignature};
 use frame_support::{impl_outer_origin, parameter_types, weights::Weight, ConsensusEngineId};
 use rlp::*;
@@ -154,7 +154,7 @@ impl AddressMapping<AccountId32> for HashedAddressMapping {
 	}
 }
 
-impl dvm_evm::Trait for Test {
+impl darwinia_evm::Trait for Test {
 	type FeeCalculator = FixedGasPrice;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
@@ -176,7 +176,7 @@ impl Trait for Test {
 pub type System = frame_system::Module<Test>;
 pub type Balances = darwinia_balances::Module<Test, RingInstance>;
 pub type Ethereum = Module<Test>;
-pub type Evm = dvm_evm::Module<Test>;
+pub type Evm = darwinia_evm::Module<Test>;
 
 pub struct AccountInfo {
 	pub address: H160,

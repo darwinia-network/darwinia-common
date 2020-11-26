@@ -25,6 +25,7 @@ darwinia-democracy                  = { default-features = false, path = "../../
 darwinia-elections-phragmen         = { default-features = false, path = "../../../../frame/elections-phragmen" }
 darwinia-ethereum-backing           = { default-features = false, path = "../../../../frame/bridge/ethereum/backing" }
 darwinia-ethereum-relay             = { default-features = false, path = "../../../../frame/bridge/ethereum/relay" }
+darwinia-evm                        = { default-features = false, path = "../../../../frame/dvm/evm" }
 darwinia-header-mmr                 = { default-features = false, path = "../../../../frame/header-mmr" }
 darwinia-header-mmr-rpc-runtime-api = { default-features = false, path = "../../../../frame/header-mmr/rpc/runtime-api" }
 darwinia-relay-primitives           = { default-features = false, path = "../../../../primitives/relay" }
@@ -37,7 +38,6 @@ darwinia-tron-backing               = { default-features = false, path = "../../
 darwinia-vesting                    = { default-features = false, path = "../../../../frame/vesting" }
 drml-primitives                     = { default-features = false, path = "../../primitives" }
 dvm-ethereum                        = { default-features = false, path = "../../../../frame/dvm/ethereum" }
-dvm-evm                        		= { default-features = false, path = "../../../../frame/dvm/evm" }
 dvm-rpc-primitives                  = { default-features = false, path = "../../../../frame/dvm/rpc/primitives" }
 ethereum-primitives                 = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
 # substrate
@@ -96,6 +96,7 @@ std     = [
 	"darwinia-elections-phragmen/std",
 	"darwinia-ethereum-backing/std",
 	"darwinia-ethereum-relay/std",
+	"darwinia-evm/std",
 	"darwinia-header-mmr/std",
 	"darwinia-header-mmr-rpc-runtime-api/std",
 	"darwinia-relay-primitives/std",
@@ -108,7 +109,6 @@ std     = [
 	"darwinia-vesting/std",
 	"drml-primitives/std",
 	"dvm-ethereum/std",
-	"dvm-evm/std",
 	"dvm-rpc-primitives/std",
 	"ethereum-primitives/std",
 	"frame-executive/std",

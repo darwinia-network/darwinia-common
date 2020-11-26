@@ -1,7 +1,7 @@
 // --- std ---
 use std::collections::BTreeMap;
 // --- substrate ---
-use dvm_evm::GenesisAccount;
+use darwinia_evm::GenesisAccount;
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_service::{ChainType, Properties};
 use sc_telemetry::TelemetryEndpoints;
@@ -207,7 +207,7 @@ fn pangolin_build_spec_genesis() -> GenesisConfig {
 			backed_ring: 1 << 56,
 			backed_kton: 1 << 56,
 		}),
-		dvm_evm: Some(EVMConfig {
+		darwinia_evm: Some(EVMConfig {
 			accounts: evm_accounts,
 		}),
 		dvm_ethereum: Some(Default::default()),
@@ -362,7 +362,7 @@ fn pangolin_development_genesis(
 			backed_ring: 1 << 56,
 			backed_kton: 1 << 56,
 		}),
-		dvm_evm: Some(EVMConfig {
+		darwinia_evm: Some(EVMConfig {
 			accounts: evm_accounts,
 		}),
 		dvm_ethereum: Some(Default::default()),

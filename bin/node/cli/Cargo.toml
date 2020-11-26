@@ -30,6 +30,7 @@ darwinia-balances-rpc-runtime-api   = { path = "../../../frame/balances/rpc/runt
 darwinia-claims                     = { path = "../../../frame/claims" }
 darwinia-cli                        = { optional = true, path = "../../../client/cli" }
 darwinia-ethereum-relay             = { path = "../../../frame/bridge/ethereum/relay" }
+darwinia-evm                        = { path = "../../../frame/dvm/evm" }
 darwinia-header-mmr-rpc             = { path = "../../../frame/header-mmr/rpc" }
 darwinia-header-mmr-rpc-runtime-api = { path = "../../../frame/header-mmr/rpc/runtime-api" }
 darwinia-staking                    = { path = "../../../frame/staking" }
@@ -37,7 +38,6 @@ darwinia-staking-rpc                = { path = "../../../frame/staking/rpc" }
 darwinia-staking-rpc-runtime-api    = { path = "../../../frame/staking/rpc/runtime-api" }
 drml-primitives                     = { path = "../primitives" }
 dvm-consensus                       = { path = "../../../frame/dvm/consensus" }
-dvm-evm                             = { path = "../../../frame/dvm/evm" }
 dvm-rpc                             = { path = "../../../frame/dvm/rpc" }
 dvm-rpc-primitives                  = { path = "../../../frame/dvm/rpc/primitives" }
 pangolin-runtime                    = { path = "../runtime/pangolin" }
