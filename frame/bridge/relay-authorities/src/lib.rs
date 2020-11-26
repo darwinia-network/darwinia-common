@@ -25,7 +25,6 @@ mod types {
 	use crate::*;
 
 	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
-	pub type BlockNumber<T> = <T as frame_system::Trait>::BlockNumber;
 	pub type RingBalance<T, I> = <RingCurrency<T, I> as Currency<AccountId<T>>>::Balance;
 	pub type RingCurrency<T, I> = <T as Trait<I>>::RingCurrency;
 
@@ -39,7 +38,6 @@ use frame_support::{
 	traits::{Currency, EnsureOrigin, Get, LockIdentifier},
 };
 use frame_system::{ensure_root, ensure_signed};
-use sp_runtime::DispatchResult;
 // --- darwinia ---
 use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::balance::lock::*;
