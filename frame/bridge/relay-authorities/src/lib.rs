@@ -30,17 +30,16 @@ mod types {
 	pub type RingCurrency<T, I> = <T as Trait<I>>::RingCurrency;
 
 	pub type Signer<T, I> = <<T as Trait<I>>::BackableChain as Backable>::Signer;
+	pub type RelayAuthorityT<T, I> = RelayAuthority<AccountId<T>, Signer<T, I>>;
 }
 
-// --- crates ---
-use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
 	decl_error, decl_module, decl_storage, ensure,
-	traits::{Currency, EnsureOrigin, Get},
+	traits::{Currency, EnsureOrigin, Get, LockIdentifier},
 };
-use frame_system::ensure_signed;
-use sp_runtime::{DispatchResult, RuntimeDebug};
+use frame_system::{ensure_root, ensure_signed};
+use sp_runtime::DispatchResult;
 // --- darwinia ---
 use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::balance::lock::*;
@@ -48,6 +47,8 @@ use types::*;
 
 pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+
+	type LockId: Get<LockIdentifier>;
 
 	type TermDuration: Get<Self::BlockNumber>;
 
@@ -67,20 +68,17 @@ impl WeightInfo for () {}
 
 decl_error! {
 	pub enum Error for Module<T: Trait<I>, I: Instance> {
+		/// Candidate - ALREADY EXISTED
+		CandidateAE,
 		/// Bond - INSUFFICIENT
-		InsufficientBond,
+		BondIns,
 	}
 }
 
 decl_storage! {
 	trait Store for Module<T: Trait<I>, I: Instance = DefaultInstance> as DarwiniaRelayAuthorities {
-		pub Candidates
-			get(fn candidates)
-			: Vec<RelayAuthorityCandidate<AccountId<T>, RingBalance<T, I>, Signer<T, I>>>;
-
-		pub Authorities
-			get(fn authority)
-			: map hasher(blake2_128_concat) AccountId<T> => Option<Signer<T, I>>;
+		pub Candidates get(fn candidates): Vec<RelayAuthorityT<T, I>>;
+		pub Authorities get(fn authorities): Vec<RelayAuthorityT<T, I>>;
 	}
 }
 
@@ -91,46 +89,50 @@ decl_module! {
 	{
 		type Error = Error<T, I>;
 
+		const LOCK_ID: LockIdentifier = T::LockId::get();
+
 		#[weight = 10_000_000]
 		pub fn request_authority(
 			origin,
 			bond: RingBalance<T, I>,
 			signer: Signer<T, I>,
 		) {
-			let authority_candidate = ensure_signed(origin)?;
+			let account_id = ensure_signed(origin)?;
 
-			ensure!(<RingCurrency<T, I>>::usable_balance(&authority_candidate) > bond, <Error<T, I>>::InsufficientBond);
+			ensure!(
+				<Candidates<T, I>>::get()
+					.into_iter()
+					.position(|relay_authority| relay_authority.account_id == account_id)
+					.is_some(),
+				<Error<T, I>>::CandidateAE
+			);
+			ensure!(
+				<RingCurrency<T, I>>::usable_balance(&account_id) > bond,
+				<Error<T, I>>::BondIns
+			);
 
-
+			<RingCurrency<T, I>>::set_lock(
+				T::LockId::get(),
+				&account_id,
+				LockFor::Common { amount: bond },
+				WithdrawReasons::all()
+			);
+			<Candidates<T, I>>::append(RelayAuthority { account_id, signer });
 		}
 
 		#[weight = 10_000_000]
-		pub fn add_authority(origin) {
-		}
+		pub fn approve_authority(origin, candidate_index: u32) {}
 
 		#[weight = 10_000_000]
-		pub fn remove_authority(origin) {
-
-		}
+		pub fn remove_authority(origin, authority_index: u32) {}
 
 		#[weight = 10_000_000]
-		pub fn reset_authorities(origin) {
+		pub fn reset_authorities(origin, authorities: Vec<RelayAuthorityT<T, I>>) {
+			ensure_root(origin)?;
 
+			<Authorities<T, I>>::put(authorities);
 		}
 	}
 }
 
-impl<T: Trait<I>, I: Instance> Module<T, I> {
-	pub fn ensure_authority() -> DispatchResult {
-		Ok(())
-	}
-}
-
-// Avoid duplicate type
-// Use `RelayAuthorityCandidate` instead `Candidate`
-#[derive(Clone, Encode, Decode, RuntimeDebug)]
-pub struct RelayAuthorityCandidate<AccountId, RingBalance, Signer> {
-	account_id: AccountId,
-	bond: RingBalance,
-	signer: Signer,
-}
+impl<T: Trait<I>, I: Instance> Module<T, I> {}

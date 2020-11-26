@@ -21,8 +21,9 @@
 // --- std ---
 use core::fmt::Debug;
 // --- crates ---
-use codec::FullCodec;
+use codec::{Decode, Encode, FullCodec};
 // --- substrate ---
+use sp_runtime::RuntimeDebug;
 use sp_std::prelude::*;
 
 pub trait Backable {
@@ -39,4 +40,12 @@ pub trait Backable {
 		message: impl AsRef<[u8]>,
 		signer: Self::Signer,
 	) -> bool;
+}
+
+// Avoid duplicate type
+// Use `RelayAuthority` instead `Authority`
+#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
+pub struct RelayAuthority<AccountId, Signer> {
+	pub account_id: AccountId,
+	pub signer: Signer,
 }
