@@ -71,7 +71,6 @@ pub fn hex_bytes_unchecked<S: AsRef<str>>(s: S) -> Vec<u8> {
 	let s = s.as_ref();
 	(if s.starts_with("0x") { 2 } else { 0 }..s.len())
 		.step_by(2)
-		.map(|i| u8::from_str_radix(&s[i..i + 2], 16))
-		.collect::<Result<Vec<u8>, _>>()
-		.unwrap_or_default()
+		.map(|i| u8::from_str_radix(&s[i..i + 2], 16).unwrap_or_default())
+		.collect()
 }
