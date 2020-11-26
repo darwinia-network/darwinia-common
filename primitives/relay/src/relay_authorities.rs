@@ -23,17 +23,18 @@ use codec::FullCodec;
 // --- substrate ---
 use sp_std::prelude::*;
 
-pub type Signature = Vec<u8>;
-
 pub trait Backable {
 	type BlockNumber;
-	type Message;
+	type Signature;
 	type Signer: Default + FullCodec;
 
 	fn signatures_to_relay_of(
 		block_number: Self::BlockNumber,
-	) -> Option<Vec<(Signature, Self::Signer)>>;
+	) -> Option<Vec<(Self::Signature, Self::Signer)>>;
 
-	fn verify_signature(signature: Signature, message: Self::Message, signer: Self::Signer)
-		-> bool;
+	fn verify_signature(
+		signature: Self::Signature,
+		message: impl AsRef<[u8]>,
+		signer: Self::Signer,
+	) -> bool;
 }

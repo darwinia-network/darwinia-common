@@ -36,7 +36,6 @@ mod types {
 	pub type Balance = u128;
 	pub type DepositId = U256;
 	pub type MMRRoot = H256;
-	pub type EcdsaPublicKey = H160;
 
 	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
 	pub type BlockNumber<T> = <T as frame_system::Trait>::BlockNumber;
@@ -60,7 +59,11 @@ use frame_support::{
 	weights::Weight,
 };
 use frame_system::{ensure_root, ensure_signed};
-use sp_core::{H160, H256};
+use sp_core::{
+	crypto::Pair as TraitPair,
+	ecdsa::{Pair as EcdsaPair, Public as EcdsaPublicKey, Signature as EcdsaSignature},
+	hashing, H256,
+};
 use sp_runtime::{
 	traits::{AccountIdConversion, SaturatedConversion, Saturating, Zero},
 	DispatchError, DispatchResult, ModuleId, RuntimeDebug,
@@ -178,7 +181,7 @@ decl_storage! {
 
 		pub SignaturesToRelay
 			get(fn signatures_to_relay_of)
-			: map hasher(identity) BlockNumber<T> => Option<Vec<(Signature, EcdsaPublicKey)>>
+			: map hasher(identity) BlockNumber<T> => Option<Vec<(EcdsaSignature, EcdsaPublicKey)>>
 	}
 	add_extra_genesis {
 		config(ring_locked): RingBalance<T>;
@@ -725,41 +728,21 @@ impl<T: Trait> Module<T> {
 
 impl<T: Trait> Backable for Module<T> {
 	type BlockNumber = BlockNumber<T>;
-	type Message = MMRRoot;
+	type Signature = EcdsaSignature;
 	type Signer = EcdsaPublicKey;
 
 	fn signatures_to_relay_of(
 		block_number: Self::BlockNumber,
-	) -> Option<Vec<(Signature, Self::Signer)>> {
+	) -> Option<Vec<(Self::Signature, Self::Signer)>> {
 		Self::signatures_to_relay_of(block_number)
 	}
 
 	fn verify_signature(
-		signature: Signature,
-		message: Self::Message,
+		signature: Self::Signature,
+		message: impl AsRef<[u8]>,
 		signer: Self::Signer,
 	) -> bool {
-		// let message = secp256k1::Message::parse(&blake2_256(message.as_ref()));
-		// let signature = (
-		// 	if let Ok(signature) = secp256k1::Signature::parse_slice(&signature.0[0..64]) {
-		// 		signature
-		// 	} else {
-		// 		return false;
-		// 	},
-		// 	if let Ok(recovery_id) =
-		// 		secp256k1::recovery::RecoveryId::parse(signature.0[64]).map_err(|_| ())
-		// 	{
-		// 		recovery_id
-		// 	} else {
-		// 		return false;
-		// 	},
-		// );
-
-		// if let Ok(actual) = secp256k1::recovery::recover(&message, &signature.0, &signature.1) {
-		// 	&signer.0 == &actual.serialize_compressed()
-		// } else {
-		false
-		// }
+		<EcdsaPair as TraitPair>::verify(&signature, message, &signer)
 	}
 }
 

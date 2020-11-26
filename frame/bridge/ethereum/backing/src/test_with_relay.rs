@@ -384,3 +384,22 @@ fn set_redeem_status_should_work() {
 		);
 	});
 }
+
+#[test]
+fn verify_signature_should_work() {
+	use array_bytes::hex_bytes_unchecked;
+	use sp_core::{crypto::Pair as TraitPair, ecdsa::Pair as EcdsaPair};
+
+	let ecdsa_pair = EcdsaPair::generate_with_phrase(None).0;
+	// mmr root
+	// https://darwinia-cc1.subscan.io/block/867461?tab=log
+	let message =
+		hex_bytes_unchecked("0x4a549d48431a083a72c4a936f2f08cb668cf5e47b4bbd86b284f40c57864cd78");
+	let signature = ecdsa_pair.sign(&message);
+
+	assert!(EthereumBacking::verify_signature(
+		signature,
+		message,
+		ecdsa_pair.public()
+	));
+}
