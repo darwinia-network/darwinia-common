@@ -60,10 +60,10 @@ use frame_support::{
 };
 use frame_system::{ensure_root, ensure_signed};
 use sp_core::{
-	crypto::Pair as TraitPair,
-	ecdsa::{Pair as EcdsaPair, Public as EcdsaPublicKey, Signature as EcdsaSignature},
-	hashing, H256,
+	ecdsa::{Public as EcdsaPublicKey, Signature as EcdsaSignature},
+	H256,
 };
+use sp_io::{crypto, hashing};
 use sp_runtime::{
 	traits::{AccountIdConversion, SaturatedConversion, Saturating, Zero},
 	DispatchError, DispatchResult, ModuleId, RuntimeDebug,
@@ -742,7 +742,14 @@ impl<T: Trait> Backable for Module<T> {
 		message: impl AsRef<[u8]>,
 		signer: Self::Signer,
 	) -> bool {
-		<EcdsaPair as TraitPair>::verify(&signature, message, &signer)
+		if let Ok(recovered_signer) = crypto::secp256k1_ecdsa_recover_compressed(
+			signature.as_ref(),
+			&hashing::blake2_256(message.as_ref()),
+		) {
+			recovered_signer == signer.0
+		} else {
+			false
+		}
 	}
 }
 

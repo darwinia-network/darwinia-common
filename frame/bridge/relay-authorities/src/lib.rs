@@ -27,17 +27,20 @@ mod types {
 	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
 	pub type BlockNumber<T> = <T as frame_system::Trait>::BlockNumber;
 	pub type RingBalance<T, I> = <RingCurrency<T, I> as Currency<AccountId<T>>>::Balance;
-	type RingCurrency<T, I> = <T as Trait<I>>::RingCurrency;
+	pub type RingCurrency<T, I> = <T as Trait<I>>::RingCurrency;
 
 	pub type Signer<T, I> = <<T as Trait<I>>::BackableChain as Backable>::Signer;
 }
 
+// --- crates ---
+use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
-	decl_error, decl_module, decl_storage,
-	traits::{Currency, Get},
+	decl_error, decl_module, decl_storage, ensure,
+	traits::{Currency, EnsureOrigin, Get},
 };
-use sp_runtime::DispatchResult;
+use frame_system::ensure_signed;
+use sp_runtime::{DispatchResult, RuntimeDebug};
 // --- darwinia ---
 use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::balance::lock::*;
@@ -50,6 +53,12 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 
 	type BackableChain: Backable;
 
+	type AddOrigin: EnsureOrigin<Self::Origin>;
+
+	type RemoveOrigin: EnsureOrigin<Self::Origin>;
+
+	type ResetOrigin: EnsureOrigin<Self::Origin>;
+
 	type WeightInfo: WeightInfo;
 }
 
@@ -58,16 +67,20 @@ impl WeightInfo for () {}
 
 decl_error! {
 	pub enum Error for Module<T: Trait<I>, I: Instance> {
-		/// TODO
-		TODO,
+		/// Bond - INSUFFICIENT
+		InsufficientBond,
 	}
 }
 
 decl_storage! {
 	trait Store for Module<T: Trait<I>, I: Instance = DefaultInstance> as DarwiniaRelayAuthorities {
+		pub Candidates
+			get(fn candidates)
+			: Vec<RelayAuthorityCandidate<AccountId<T>, RingBalance<T, I>, Signer<T, I>>>;
+
 		pub Authorities
 			get(fn authority)
-			: map hasher(blake2_128_concat) AccountId<T> => Signer<T, I>;
+			: map hasher(blake2_128_concat) AccountId<T> => Option<Signer<T, I>>;
 	}
 }
 
@@ -77,6 +90,33 @@ decl_module! {
 		origin: T::Origin
 	{
 		type Error = Error<T, I>;
+
+		#[weight = 10_000_000]
+		pub fn request_authority(
+			origin,
+			bond: RingBalance<T, I>,
+			signer: Signer<T, I>,
+		) {
+			let authority_candidate = ensure_signed(origin)?;
+
+			ensure!(<RingCurrency<T, I>>::usable_balance(&authority_candidate) > bond, <Error<T, I>>::InsufficientBond);
+
+
+		}
+
+		#[weight = 10_000_000]
+		pub fn add_authority(origin) {
+		}
+
+		#[weight = 10_000_000]
+		pub fn remove_authority(origin) {
+
+		}
+
+		#[weight = 10_000_000]
+		pub fn reset_authorities(origin) {
+
+		}
 	}
 }
 
@@ -84,4 +124,13 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	pub fn ensure_authority() -> DispatchResult {
 		Ok(())
 	}
+}
+
+// Avoid duplicate type
+// Use `RelayAuthorityCandidate` instead `Candidate`
+#[derive(Clone, Encode, Decode, RuntimeDebug)]
+pub struct RelayAuthorityCandidate<AccountId, RingBalance, Signer> {
+	account_id: AccountId,
+	bond: RingBalance,
+	signer: Signer,
 }

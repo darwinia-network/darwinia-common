@@ -18,6 +18,8 @@
 
 //! Relayer Game Primitives
 
+// --- std ---
+use core::fmt::Debug;
 // --- crates ---
 use codec::FullCodec;
 // --- substrate ---
@@ -26,7 +28,7 @@ use sp_std::prelude::*;
 pub trait Backable {
 	type BlockNumber;
 	type Signature;
-	type Signer: Default + FullCodec;
+	type Signer: Clone + Debug + PartialEq + FullCodec;
 
 	fn signatures_to_relay_of(
 		block_number: Self::BlockNumber,
