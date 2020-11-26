@@ -1322,6 +1322,7 @@ dependencies = [
  "ethereum-primitives",
  "frame-support",
  "frame-system",
+ "libsecp256k1",
  "pallet-session",
  "pallet-timestamp",
  "parity-scale-codec",

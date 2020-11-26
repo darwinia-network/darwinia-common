@@ -24,12 +24,13 @@ ethabi = { default-features = false, git = "https://github.com/darwinia-network/
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 [dev-dependencies]
+# crates
+libsecp256k1 = { version = "0.3.5" }
 # darwinia
 darwinia-balances              = { path = "../../../../frame/balances" }
 darwinia-ethereum-linear-relay = { path = "../linear-relay" }
@@ -43,6 +44,7 @@ rlp = { package = "rlp", git = "https://github.com/darwinia-network/parity-commo
 # substrate
 pallet-session   = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 pallet-timestamp = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-core          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-staking       = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 [features]
@@ -70,7 +72,6 @@ github-std    = ["ethabi/std"]
 substrate-std = [
 	"frame-support/std",
 	"frame-system/std",
-	"sp-core/std",
 	"sp-io/std",
 	"sp-runtime/std",
 	"sp-std/std",

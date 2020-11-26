@@ -35,7 +35,6 @@ mod types {
 
 	pub type Balance = u128;
 	pub type DepositId = U256;
-	pub type MMRRoot = H256;
 
 	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
 	pub type BlockNumber<T> = <T as frame_system::Trait>::BlockNumber;
@@ -46,6 +45,9 @@ mod types {
 		AccountId<T>,
 		RingBalance<T>,
 	>>::EthereumReceiptProofThing;
+
+	pub type EcdsaSignature = [u8; 65];
+	pub type EcdsaAddress = [u8; 20];
 }
 
 // --- crates ---
@@ -59,10 +61,6 @@ use frame_support::{
 	weights::Weight,
 };
 use frame_system::{ensure_root, ensure_signed};
-use sp_core::{
-	ecdsa::{Public as EcdsaPublicKey, Signature as EcdsaSignature},
-	H256,
-};
 use sp_io::{crypto, hashing};
 use sp_runtime::{
 	traits::{AccountIdConversion, SaturatedConversion, Saturating, Zero},
@@ -181,7 +179,7 @@ decl_storage! {
 
 		pub SignaturesToRelay
 			get(fn signatures_to_relay_of)
-			: map hasher(identity) BlockNumber<T> => Option<Vec<(EcdsaSignature, EcdsaPublicKey)>>
+			: map hasher(identity) BlockNumber<T> => Option<Vec<(EcdsaSignature, EcdsaAddress)>>
 	}
 	add_extra_genesis {
 		config(ring_locked): RingBalance<T>;
@@ -729,7 +727,7 @@ impl<T: Trait> Module<T> {
 impl<T: Trait> Backable for Module<T> {
 	type BlockNumber = BlockNumber<T>;
 	type Signature = EcdsaSignature;
-	type Signer = EcdsaPublicKey;
+	type Signer = EcdsaAddress;
 
 	fn signatures_to_relay_of(
 		block_number: Self::BlockNumber,
@@ -742,11 +740,10 @@ impl<T: Trait> Backable for Module<T> {
 		message: impl AsRef<[u8]>,
 		signer: Self::Signer,
 	) -> bool {
-		if let Ok(recovered_signer) = crypto::secp256k1_ecdsa_recover_compressed(
-			signature.as_ref(),
-			&hashing::blake2_256(message.as_ref()),
-		) {
-			recovered_signer == signer.0
+		if let Ok(public_key) =
+			crypto::secp256k1_ecdsa_recover(&signature, &hashing::blake2_256(message.as_ref()))
+		{
+			hashing::keccak_256(&public_key)[12..] == signer
 		} else {
 			false
 		}

@@ -1,9 +1,11 @@
 //! Tests for ethereum-backing.
 
+// --- crates ---
+use secp256k1::{PublicKey, SecretKey};
 // --- substrate ---
 use frame_support::{assert_err, assert_ok, traits::Contains};
 use frame_system::EnsureRoot;
-use sp_core::{crypto::Pair as TraitPair, ecdsa::Pair as EcdsaPair};
+use sp_core::{crypto::Pair as TraitPair, ecdsa::Pair as EcdsaPair, hashing};
 use sp_runtime::{traits::Dispatchable, AccountId32};
 // --- darwinia ---
 use crate::*;
@@ -388,16 +390,25 @@ fn set_redeem_status_should_work() {
 
 #[test]
 fn verify_signature_should_work() {
-	let ecdsa_pair = EcdsaPair::generate_with_phrase(None).0;
+	let (ecdsa_pair, _, ecdsa_seed) = EcdsaPair::generate_with_phrase(None);
 	// mmr root
 	// https://darwinia-cc1.subscan.io/block/867461?tab=log
 	let message =
 		hex_bytes_unchecked("0x4a549d48431a083a72c4a936f2f08cb668cf5e47b4bbd86b284f40c57864cd78");
 	let signature = ecdsa_pair.sign(&message);
+	let address = {
+		let secret_key = SecretKey::parse_slice(&ecdsa_seed).unwrap();
+		let public_key = PublicKey::from_secret_key(&secret_key);
+		let mut address = [0; 20];
+
+		address.copy_from_slice(&hashing::keccak_256(&public_key.serialize()[1..65])[12..]);
+
+		address
+	};
 
 	assert!(EthereumBacking::verify_signature(
-		signature,
+		signature.0,
 		message,
-		ecdsa_pair.public()
+		address
 	));
 }
