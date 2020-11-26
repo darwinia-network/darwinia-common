@@ -4,6 +4,7 @@
 use frame_support::{assert_err, assert_ok, traits::Contains};
 use frame_system::EnsureRoot;
 use sp_runtime::{traits::Dispatchable, AccountId32};
+use sp_core::{crypto::Pair as TraitPair, ecdsa::Pair as EcdsaPair};
 // --- darwinia ---
 use crate::*;
 use array_bytes::hex_bytes_unchecked;
@@ -387,9 +388,6 @@ fn set_redeem_status_should_work() {
 
 #[test]
 fn verify_signature_should_work() {
-	use array_bytes::hex_bytes_unchecked;
-	use sp_core::{crypto::Pair as TraitPair, ecdsa::Pair as EcdsaPair};
-
 	let ecdsa_pair = EcdsaPair::generate_with_phrase(None).0;
 	// mmr root
 	// https://darwinia-cc1.subscan.io/block/867461?tab=log
