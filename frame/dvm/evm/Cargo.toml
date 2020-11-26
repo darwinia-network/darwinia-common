@@ -48,7 +48,6 @@ crates-std    = [
 ]
 darwinia-std  = [
 	"darwinia-balances/std",
-	"darwinia-support/std",
 ]
 substrate-std = [
 	"evm/std",
