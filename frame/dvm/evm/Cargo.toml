@@ -45,7 +45,6 @@ std = [
 crates-std    = [
 	"codec/std",
 	"serde",
-
 ]
 darwinia-std  = [
 	"darwinia-balances/std",

@@ -24,7 +24,7 @@ sha3           = { version = "0.8", default-features = false }
 darwinia-balances        = { default-features = false, path = "../../../frame/balances" }
 darwinia-support         = { default-features = false, path = "../../../frame/support" }
 dvm-consensus-primitives = { default-features = false, path = "../consensus/primitives" }
-dvm-evm = { default-features = false, path = "../evm" }
+dvm-evm 				 = { default-features = false, path = "../evm" }
 dvm-rpc-primitives       = { default-features = false, path = "../rpc/primitives" }
 # substrate
 frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }

@@ -36,8 +36,8 @@ darwinia-treasury                   = { default-features = false, path = "../../
 darwinia-tron-backing               = { default-features = false, path = "../../../../frame/bridge/tron/backing" }
 darwinia-vesting                    = { default-features = false, path = "../../../../frame/vesting" }
 drml-primitives                     = { default-features = false, path = "../../primitives" }
-dvm-evm                        		= { default-features = false, path = "../../../../frame/dvm/evm" }
 dvm-ethereum                        = { default-features = false, path = "../../../../frame/dvm/ethereum" }
+dvm-evm                        		= { default-features = false, path = "../../../../frame/dvm/evm" }
 dvm-rpc-primitives                  = { default-features = false, path = "../../../../frame/dvm/rpc/primitives" }
 ethereum-primitives                 = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
 # substrate
@@ -107,8 +107,8 @@ std     = [
 	"darwinia-tron-backing/std",
 	"darwinia-vesting/std",
 	"drml-primitives/std",
-	"dvm-evm/std",
 	"dvm-ethereum/std",
+	"dvm-evm/std",
 	"dvm-rpc-primitives/std",
 	"ethereum-primitives/std",
 	"frame-executive/std",
