@@ -44,8 +44,28 @@ pub trait Backable {
 
 // Avoid duplicate type
 // Use `RelayAuthority` instead `Authority`
-#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
-pub struct RelayAuthority<AccountId, Signer> {
+#[derive(Clone, Encode, Decode, RuntimeDebug)]
+pub struct RelayAuthority<AccountId, Signer, RingBalance, BlockNumber> {
 	pub account_id: AccountId,
 	pub signer: Signer,
+	pub bond: RingBalance,
+	pub term: BlockNumber,
+}
+impl<AccountId, Signer, RingBalance, BlockNumber> PartialEq
+	for RelayAuthority<AccountId, Signer, RingBalance, BlockNumber>
+where
+	AccountId: PartialEq,
+{
+	fn eq(&self, other: &Self) -> bool {
+		self.account_id == other.account_id
+	}
+}
+impl<AccountId, Signer, RingBalance, BlockNumber> PartialEq<AccountId>
+	for RelayAuthority<AccountId, Signer, RingBalance, BlockNumber>
+where
+	AccountId: PartialEq,
+{
+	fn eq(&self, account_id: &AccountId) -> bool {
+		&self.account_id == account_id
+	}
 }
