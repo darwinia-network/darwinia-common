@@ -41,10 +41,10 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 
+use darwinia_evm::{AccountBasicMapping, AddressMapping};
 pub use dvm_rpc_primitives::TransactionStatus;
 pub use ethereum::{Block, Log, Receipt, Transaction, TransactionAction};
 use frame_support::traits::Currency;
-use pallet_evm::{AccountBasicMapping, AddressMapping};
 
 #[cfg(all(feature = "std", test))]
 mod tests;
@@ -70,7 +70,7 @@ pub trait Trait:
 	frame_system::Trait<Hash = H256>
 	+ darwinia_balances::Trait<RingInstance>
 	+ pallet_timestamp::Trait
-	+ pallet_evm::Trait
+	+ darwinia_evm::Trait
 {
 	/// The overarching event type.
 	type Event: From<Event> + Into<<Self as frame_system::Trait>::Event>;
@@ -216,7 +216,7 @@ impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
 			})?;
 
 			let account_data =
-				<T as pallet_evm::Trait>::AccountBasicMapping::account_basic(&origin);
+				<T as darwinia_evm::Trait>::AccountBasicMapping::account_basic(&origin);
 
 			if transaction.nonce < account_data.nonce {
 				return InvalidTransaction::Stale.into();
@@ -464,9 +464,9 @@ impl<T: Trait> Module<T> {
 		nonce: Option<U256>,
 		action: TransactionAction,
 		apply_state: bool,
-	) -> Result<(ExitReason, ReturnValue, U256, Vec<pallet_evm::Log>), pallet_evm::Error<T>> {
+	) -> Result<(ExitReason, ReturnValue, U256, Vec<darwinia_evm::Log>), darwinia_evm::Error<T>> {
 		match action {
-			TransactionAction::Call(target) => pallet_evm::Module::<T>::execute_call(
+			TransactionAction::Call(target) => darwinia_evm::Module::<T>::execute_call(
 				source,
 				target,
 				data,
@@ -484,7 +484,7 @@ impl<T: Trait> Module<T> {
 					logs,
 				)
 			}),
-			TransactionAction::Create => pallet_evm::Module::<T>::execute_create(
+			TransactionAction::Create => darwinia_evm::Module::<T>::execute_create(
 				source,
 				data,
 				value,

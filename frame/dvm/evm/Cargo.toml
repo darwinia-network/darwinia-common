@@ -1,31 +1,26 @@
 [package]
 authors     = ["Darwinia Network <hello@darwinia.network>"]
-description = "Ethereum compatibility full block processing emulation pallet for Darwinia."
+description = "FRAME EVM contracts pallet"
 edition     = "2018"
 homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"
-name        = "dvm-ethereum"
+name        = "darwinia-evm"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "1.2.2"
 
 [dependencies]
 # crates
-codec          = { package = "parity-scale-codec", version = "1.3.5", default-features = false }
-ethereum       = { version = "0.3", default-features = false, features = ["codec"] }
-ethereum-types = { version = "0.9", default-features = false }
-evm            = { version = "0.17.0", default-features = false }
-libsecp256k1   = { version = "0.3", default-features = false }
-rlp            = { version = "0.4", default-features = false }
-rustc-hex      = { version = "2.1.0", default-features = false }
-serde          = { version = "1.0.117", optional = true }
-sha3           = { version = "0.8", default-features = false }
+codec                 = { package = "parity-scale-codec", version = "1.3.4", default-features = false }
+evm                   = { version = "0.17", default-features = false }
+impl-trait-for-tuples = { version = "0.1" }
+primitive-types       = { version = "0.7.0", default-features = false, features = ["rlp", "byteorder"] }
+ripemd160             = { version = "0.9", default-features = false }
+rlp                   = { version = "0.4", default-features = false }
+serde                 = { version = "1.0.101", optional = true, features = ["derive"] }
+sha3                  = { version = "0.8", default-features = false }
 # darwinia
-darwinia-balances        = { default-features = false, path = "../../../frame/balances" }
-darwinia-evm             = { default-features = false, path = "../evm" }
-darwinia-support         = { default-features = false, path = "../../../frame/support" }
-dvm-consensus-primitives = { default-features = false, path = "../consensus/primitives" }
-dvm-rpc-primitives       = { default-features = false, path = "../rpc/primitives" }
+darwinia-balances     = { default-features = false, path = "../../../frame/balances" }
 # substrate
 frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
@@ -36,8 +31,7 @@ sp-runtime       = { default-features = false, git = "https://github.com/darwini
 sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 [dev-dependencies]
-# crates
-hex-literal = "0.3.1"
+darwinia-support = { features = ["easy-testing"], path = "../../../frame/support" }
 
 [features]
 default = ["std"]
@@ -50,26 +44,20 @@ std = [
 
 crates-std    = [
 	"codec/std",
-	"ethereum/std",
-	"ethereum-types/std",
-	"evm/std",
-	"libsecp256k1/std",
-	"rlp/std",
-	"rustc-hex/std",
 	"serde",
-	"sha3/std",
 ]
 darwinia-std  = [
 	"darwinia-balances/std",
-	"darwinia-evm/std",
-	"darwinia-support/std",
-	"dvm-consensus-primitives/std",
-	"dvm-rpc-primitives/std",
 ]
 substrate-std = [
+	"evm/std",
 	"frame-support/std",
 	"frame-system/std",
 	"pallet-timestamp/std",
+	"primitive-types/std",
+	"ripemd160/std",
+	"rlp/std",
+	"sha3/std",
 	"sp-core/std",
 	"sp-io/std",
 	"sp-runtime/std",

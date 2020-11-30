@@ -59,7 +59,7 @@ fn transaction_should_increment_nonce() {
 			default_erc20_creation_transaction(alice),
 		));
 		assert_eq!(
-			<Test as pallet_evm::Trait>::AccountBasicMapping::account_basic(&alice.address).nonce,
+			<Test as darwinia_evm::Trait>::AccountBasicMapping::account_basic(&alice.address).nonce,
 			U256::from(1)
 		);
 	});

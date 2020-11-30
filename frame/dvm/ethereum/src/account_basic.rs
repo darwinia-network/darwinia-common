@@ -1,5 +1,5 @@
+use darwinia_evm::{Account as EVMAccount, AccountBasicMapping, AddressMapping};
 use frame_support::traits::Currency;
-use pallet_evm::{Account as EVMAccount, AccountBasicMapping, AddressMapping};
 use sp_core::{H160, U256};
 use sp_runtime::traits::{UniqueSaturatedFrom, UniqueSaturatedInto};
 
@@ -10,7 +10,7 @@ impl<T: crate::Trait + darwinia_balances::Trait<darwinia_balances::Instance0>> A
 {
 	/// Get the account basic in EVM format.
 	fn account_basic(address: &H160) -> EVMAccount {
-		let account_id = <T as pallet_evm::Trait>::AddressMapping::into_account_id(*address);
+		let account_id = <T as darwinia_evm::Trait>::AddressMapping::into_account_id(*address);
 		let nonce = frame_system::Module::<T>::account_nonce(&account_id);
 		let helper = U256::from(10)
 			.checked_pow(U256::from(9))
@@ -39,7 +39,7 @@ impl<T: crate::Trait + darwinia_balances::Trait<darwinia_balances::Instance0>> A
 
 	/// Mutate the basic account
 	fn mutate_account_basic(address: &H160, new: EVMAccount) {
-		let account_id = <T as pallet_evm::Trait>::AddressMapping::into_account_id(*address);
+		let account_id = <T as darwinia_evm::Trait>::AddressMapping::into_account_id(*address);
 		let current = T::AccountBasicMapping::account_basic(address);
 		let helper = U256::from(10)
 			.checked_pow(U256::from(9))
