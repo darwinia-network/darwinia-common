@@ -26,11 +26,12 @@ jobs:
           override: true
           target: wasm32-unknown-unknown
 
-      # - name: Overall test
-      #   run: cargo test
+      - name: Overall test
+        run: cargo test
       
   dvm-rpc-test:
-    name: Run dvm rpc Test
+    name: Run DVM RPC Test
+    if: "!contains(github.event.head_commit.message, 'skip dvm')"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -45,9 +46,7 @@ jobs:
         run: | 
             cargo build --release
             ./target/release/drml --dev --tmp &
-            ps -aux|grep drml
-            sleep 100
-            ps -aux|grep drml
+            sleep 60
 
       - name: Set up node env 
         uses: actions/setup-node@v1
@@ -56,11 +55,3 @@ jobs:
 
       - name: Run dvm tests
         run: cd frame/dvm/script_tests/ && npm install && npm test
-
-  clean:
-    needs: dvm-rpc-test
-    name: Stop Node
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - run:  pkill -f drml 
