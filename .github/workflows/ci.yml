@@ -12,8 +12,8 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build-and-test:
-    name: Build and Test
+  test:
+    name: Run Tests
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -26,5 +26,41 @@ jobs:
           override: true
           target: wasm32-unknown-unknown
 
-      - name: Overall test
-        run: cargo test
+      # - name: Overall test
+      #   run: cargo test
+      
+  dvm-rpc-test:
+    name: Run dvm rpc Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly-2020-09-20
+          override: true
+          target: wasm32-unknown-unknown
+
+      - name: Build and Run node
+        run: | 
+            cargo build --release
+            ./target/release/drml --dev --tmp &
+            ps -aux|grep drml
+            sleep 100
+            ps -aux|grep drml
+
+      - name: Set up node env 
+        uses: actions/setup-node@v1
+        with:
+          node-version: 10
+
+      - name: Run dvm tests
+        run: cd frame/dvm/script_tests/ && npm install && npm test
+
+  clean:
+    needs: dvm-rpc-test
+    name: Stop Node
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run:  pkill -f drml 
