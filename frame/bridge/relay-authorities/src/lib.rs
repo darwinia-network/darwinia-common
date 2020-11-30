@@ -238,7 +238,8 @@ decl_module! {
 		#[weight = 10_000_000]
 		pub fn sign(origin) {
 			let account_id = ensure_signed(origin)?;
-			let authority = find_authority::<T, I>(&account_id).ok_or(<Error<T>>::AuthorityR)?;
+			let authority = find_authority::<T, I>(&<Authorities<T, I>>::get(), &account_id)
+				.ok_or(<Error<T, I>>::AuthorityR)?;
 
 			// TODO
 		}
