@@ -30,8 +30,7 @@ jobs:
         run: cargo test
       
   dvm-rpc-test:
-    name: Run DVM RPC Test
-    if: "!contains(github.event.head_commit.message, 'skip dvm')"
+    name: Run DVM RPC Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
