@@ -384,7 +384,8 @@ decl_module! {
 					Err(DispatchError::BadOrigin)?
 				}
 			};
-			let res: Result<(), DispatchError> = <PendingRelayHeaderParcels<T>>::try_mutate(|pending_relay_header_parcels| {
+
+			<PendingRelayHeaderParcels<T>>::try_mutate(|pending_relay_header_parcels| {
 				if let Some(i) =
 					pending_relay_header_parcels
 						.iter()
@@ -439,13 +440,11 @@ decl_module! {
 						));
 					}
 
-					Ok(())
+					DispatchResult::Ok(())
 				} else {
 					Err(<Error<T>>::PendingRelayHeaderParcelNE)?
 				}
-			});
-
-			res?;
+			})?;
 
 			Self::deposit_event(RawEvent::GuardVoted(ethereum_block_number, aye));
 		}
