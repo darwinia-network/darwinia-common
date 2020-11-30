@@ -1389,6 +1389,7 @@ dependencies = [
  "array-bytes",
  "ckb-merkle-mountain-range",
  "darwinia-header-mmr-rpc-runtime-api",
+ "darwinia-relay-primitives",
  "darwinia-support",
  "frame-support",
  "frame-system",

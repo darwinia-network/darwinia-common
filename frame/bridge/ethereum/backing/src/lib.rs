@@ -99,6 +99,10 @@ pub trait Trait: frame_system::Trait {
 
 	type AdvancedFee: Get<RingBalance<Self>>;
 
+	type EcdsaAuthorities: RelayAuthorityProtocol<Self::Hash>;
+
+	type DarwiniaMMR: MMR<Self::Hash>;
+
 	/// Weight information for the extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
 }
@@ -176,10 +180,6 @@ decl_storage! {
 		pub LockAssetEvents
 			get(fn lock_asset_events)
 			: Vec<<T as frame_system::Trait>::Event>;
-
-		pub SignaturesToRelay
-			get(fn signatures_to_relay_of)
-			: map hasher(identity) BlockNumber<T> => Option<Vec<(EcdsaSignature, EcdsaAddress)>>
 	}
 	add_extra_genesis {
 		config(ring_locked): RingBalance<T>;
@@ -265,6 +265,8 @@ decl_module! {
 			// https://github.com/darwinia-network/darwinia-common/pull/377#issuecomment-730369387
 			T::RingCurrency::transfer(&user, &fee_account, T::AdvancedFee::get(), KeepAlive)?;
 
+			let mut locked = false;
+
 			if !ring_value.is_zero() {
 				let ring_to_lock = ring_value.min(T::RingCurrency::usable_balance(&user));
 
@@ -273,6 +275,8 @@ decl_module! {
 				let raw_event = RawEvent::LockRing(user.clone(), ring_to_lock);
 				let module_event: <T as Trait>::Event = raw_event.clone().into();
 				let system_event: <T as frame_system::Trait>::Event = module_event.into();
+
+				locked = true;
 
 				<LockAssetEvents<T>>::append(system_event);
 				Self::deposit_event(raw_event);
@@ -286,8 +290,16 @@ decl_module! {
 				let module_event: <T as Trait>::Event = raw_event.clone().into();
 				let system_event: <T as frame_system::Trait>::Event = module_event.into();
 
+				locked = true;
+
 				<LockAssetEvents<T>>::append(system_event);
 				Self::deposit_event(raw_event);
+			}
+
+			if locked {
+				if let Some(mmr_root) = T::DarwiniaMMR::get_root() {
+					T::EcdsaAuthorities::new_mmr_to_sign(mmr_root);
+				}
 			}
 		}
 
@@ -724,24 +736,17 @@ impl<T: Trait> Module<T> {
 	}
 }
 
-impl<T: Trait> Backable for Module<T> {
-	type BlockNumber = BlockNumber<T>;
+impl<T: Trait> Sign<BlockNumber<T>> for Module<T> {
 	type Signature = EcdsaSignature;
 	type Signer = EcdsaAddress;
 
-	fn signatures_to_relay_of(
-		block_number: Self::BlockNumber,
-	) -> Option<Vec<(Self::Signature, Self::Signer)>> {
-		Self::signatures_to_relay_of(block_number)
-	}
-
 	fn verify_signature(
-		signature: Self::Signature,
+		signature: &Self::Signature,
 		message: impl AsRef<[u8]>,
 		signer: Self::Signer,
 	) -> bool {
 		if let Ok(public_key) =
-			crypto::secp256k1_ecdsa_recover(&signature, &hashing::blake2_256(message.as_ref()))
+			crypto::secp256k1_ecdsa_recover(signature, &hashing::blake2_256(message.as_ref()))
 		{
 			hashing::keccak_256(&public_key)[12..] == signer
 		} else {

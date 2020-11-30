@@ -26,20 +26,23 @@ use codec::{Decode, Encode, FullCodec};
 use sp_runtime::RuntimeDebug;
 use sp_std::prelude::*;
 
-pub trait Backable {
-	type BlockNumber;
-	type Signature;
+pub trait Sign<BlockNumber> {
+	type Signature: Clone + Debug + PartialEq + FullCodec;
 	type Signer: Clone + Debug + PartialEq + FullCodec;
 
-	fn signatures_to_relay_of(
-		block_number: Self::BlockNumber,
-	) -> Option<Vec<(Self::Signature, Self::Signer)>>;
-
 	fn verify_signature(
-		signature: Self::Signature,
+		signature: &Self::Signature,
 		message: impl AsRef<[u8]>,
 		signer: Self::Signer,
 	) -> bool;
+}
+
+pub trait RelayAuthorityProtocol<MMRRoot> {
+	fn new_mmr_to_sign(mmr_root: MMRRoot);
+}
+
+pub trait MMR<Root> {
+	fn get_root() -> Option<Root>;
 }
 
 // Avoid duplicate type
