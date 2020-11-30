@@ -29,7 +29,7 @@ describe('Test Transfer Balance', function () {
         expect(balanceTo).to.be.equal('0');
     });
 
-    it("Transfer balance", async function () {
+    it("Transfer balance 1", async function () {
         const createTransaction = await web3.eth.accounts.signTransaction(
             {
                 from: addressFrom,
@@ -44,10 +44,10 @@ describe('Test Transfer Balance', function () {
             createTransaction.rawTransaction
         );
 
-        // expect(createReceipt.transactionHash).to.be.equal("-0x8e2d28db17a285c9203b0b290ba4eac5216b4867e70da45eecdf05cc4ddc02ea");
+        expect(createReceipt.transactionHash).to.be.equal("0xa0e737d9b7e89cf24ec6737206d7f6b1499639342ca37decbd5370bcae694256");
     }).timeout(10000);
 
-    it('Get accounts balance after transfer', async function () {
+    it('Get accounts balance after transfer balance 1', async function () {
         const balanceFrom = web3.utils.fromWei(
             await web3.eth.getBalance(addressFrom),
             'ether'
@@ -61,7 +61,7 @@ describe('Test Transfer Balance', function () {
         expect(balanceTo).to.be.equal('10');
     });
 
-    it("Transfer 100 wei test", async function() {
+    it("Transfer balance 2", async function() {
         const createTransaction = await web3.eth.accounts.signTransaction(
             {
                 from: addressFrom,
@@ -77,7 +77,7 @@ describe('Test Transfer Balance', function () {
 
     }).timeout(10000)
 
-    it('Get accounts balance after transfer wei', async function () {
+    it('Get accounts balance after transfer balance 2', async function () {
         const balanceFrom = web3.utils.fromWei(
             await web3.eth.getBalance(addressFrom),
             'ether'
