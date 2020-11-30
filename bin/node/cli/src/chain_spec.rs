@@ -1,7 +1,6 @@
 // --- std ---
 use std::collections::BTreeMap;
 // --- substrate ---
-use darwinia_evm::GenesisAccount;
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_service::{ChainType, Properties};
 use sc_telemetry::TelemetryEndpoints;
@@ -17,6 +16,7 @@ use sp_runtime::{
 use array_bytes::fixed_hex_bytes_unchecked;
 use darwinia_claims::ClaimsList;
 use darwinia_ethereum_relay::DagsMerkleRootsLoader as DagsMerkleRootsLoaderR;
+use darwinia_evm::GenesisAccount;
 use drml_primitives::*;
 use pangolin_runtime::{constants::COIN, BalancesConfig as RingConfig, *};
 

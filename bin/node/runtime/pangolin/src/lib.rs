@@ -208,6 +208,9 @@ pub mod wasm {
 mod weights;
 
 // --- darwinia ---
+use darwinia_evm::{
+	Account as EVMAccount, AccountBasicMapping, EnsureAddressTruncated, FeeCalculator,
+};
 pub use darwinia_staking::StakerStatus;
 pub use wasm::*;
 
@@ -215,9 +218,6 @@ pub use wasm::*;
 use codec::{Decode, Encode};
 use static_assertions::const_assert;
 // --- substrate ---
-use darwinia_evm::{
-	Account as EVMAccount, AccountBasicMapping, EnsureAddressTruncated, FeeCalculator,
-};
 use frame_support::{
 	construct_runtime, debug, parameter_types,
 	traits::{
