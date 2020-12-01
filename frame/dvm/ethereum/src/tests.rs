@@ -319,6 +319,8 @@ fn call_should_handle_errors() {
 			Some(U256::from(1)),
 			Some(U256::from(2)),
 			TransactionAction::Call(H160::from_slice(&contract_address)),
-		).ok().unwrap();
+		)
+		.ok()
+		.unwrap();
 	});
 }

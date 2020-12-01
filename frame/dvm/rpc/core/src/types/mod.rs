@@ -40,7 +40,9 @@ pub use self::block::{Block, BlockTransactions, Header, Rich, RichBlock, RichHea
 pub use self::block_number::BlockNumber;
 pub use self::bytes::Bytes;
 pub use self::call_request::CallRequest;
-pub use self::filter::{Filter, FilterAddress, FilterChanges, Topic, VariadicValue};
+pub use self::filter::{
+	Filter, FilterAddress, FilterChanges, FilteredParams, Topic, VariadicValue,
+};
 pub use self::index::Index;
 pub use self::log::Log;
 pub use self::receipt::Receipt;
