@@ -27,7 +27,6 @@ mod log;
 mod receipt;
 mod sync;
 mod transaction;
-mod transaction_condition;
 mod transaction_request;
 mod work;
 
@@ -51,6 +50,5 @@ pub use self::sync::{
 	PipProtocolInfo, SyncInfo, SyncStatus, TransactionStats,
 };
 pub use self::transaction::{LocalTransactionStatus, RichRawTransaction, Transaction};
-pub use self::transaction_condition::TransactionCondition;
 pub use self::transaction_request::TransactionRequest;
 pub use self::work::Work;

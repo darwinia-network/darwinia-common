@@ -14,15 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Substrate.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::{error_on_execution_failure, internal_err};
+use crate::{error_on_execution_failure, internal_err, EthSigner};
 use codec::{self, Encode};
 use dvm_rpc_core::types::{
 	Block, BlockNumber, BlockTransactions, Bytes, CallRequest, Filter, FilteredParams, Index, Log,
-	Receipt, Rich, RichBlock, SyncInfo, SyncStatus, Transaction, VariadicValue, Work,
+	Receipt, Rich, RichBlock, SyncInfo, SyncStatus, Transaction, VariadicValue, Work, TransactionRequest
 };
 use dvm_rpc_core::{EthApi as EthApiT, NetApi as NetApiT};
 use dvm_rpc_primitives::{ConvertTransaction, EthereumRuntimeRPCApi, TransactionStatus};
-use ethereum::{Block as EthereumBlock, Transaction as EthereumTransaction};
+use ethereum::{Block as EthereumBlock, Transaction as EthereumTransaction, TransactionMessage as EthereumTransactionMessage,};
 use ethereum_types::{H160, H256, H512, H64, U256, U64};
 use futures::future::TryFutureExt;
 use jsonrpc_core::{
@@ -49,6 +49,7 @@ pub struct EthApi<B: BlockT, C, P, CT, BE, H: ExHashT> {
 	convert_transaction: CT,
 	network: Arc<NetworkService<B, H>>,
 	is_authority: bool,
+	signers: Vec<Box<dyn EthSigner>>,
 	_marker: PhantomData<(B, BE)>,
 }
 
@@ -66,6 +67,7 @@ impl<B: BlockT, C, P, CT, BE, H: ExHashT> EthApi<B, C, P, CT, BE, H> {
 			convert_transaction,
 			network,
 			is_authority,
+			signers: Vec::new(),
 			_marker: PhantomData,
 		}
 	}
@@ -149,9 +151,7 @@ fn transaction_build(
 	sig[0..32].copy_from_slice(&transaction.signature.r()[..]);
 	sig[32..64].copy_from_slice(&transaction.signature.s()[..]);
 	sig[64] = transaction.signature.standard_v();
-	msg.copy_from_slice(
-		&transaction.message_hash(transaction.signature.chain_id().map(u64::from))[..],
-	);
+	msg.copy_from_slice(&EthereumTransactionMessage::from(transaction.clone()).hash()[..]);
 
 	let pubkey = match sp_io::crypto::secp256k1_ecdsa_recover(&sig, &msg) {
 		Ok(p) => Some(H512::from(p)),
@@ -182,7 +182,6 @@ fn transaction_build(
 		v: U256::from(transaction.signature.v()),
 		r: U256::from(transaction.signature.r().as_bytes()),
 		s: U256::from(transaction.signature.s().as_bytes()),
-		condition: None, // TODO
 	}
 }
 
@@ -315,7 +314,11 @@ where
 	}
 
 	fn accounts(&self) -> Result<Vec<H160>> {
-		Ok(vec![])
+		let mut accounts = Vec::new();
+		for signer in &self.signers {
+			accounts.append(&mut signer.accounts());
+		}
+		Ok(accounts)
 	}
 
 	fn block_number(&self) -> Result<U256> {
@@ -521,6 +524,83 @@ where
 				.into());
 		}
 		Ok(Bytes(vec![]))
+	}
+
+	fn send_transaction(&self, request: TransactionRequest) -> BoxFuture<H256> {
+		let from = match request.from {
+			Some(from) => from,
+			None => {
+				let accounts = match self.accounts() {
+					Ok(accounts) => accounts,
+					Err(e) => return Box::new(future::result(Err(e))),
+				};
+
+				match accounts.get(0) {
+					Some(account) => account.clone(),
+					None => return Box::new(future::result(Err(internal_err("no signer available")))),
+				}
+			},
+		};
+
+		let nonce = match request.nonce {
+			Some(nonce) => nonce,
+			None => {
+				match self.transaction_count(from, None) {
+					Ok(nonce) => nonce,
+					Err(e) => return Box::new(future::result(Err(e))),
+				}
+			},
+		};
+
+		let chain_id = match self.chain_id() {
+			Ok(chain_id) => chain_id,
+			Err(e) => return Box::new(future::result(Err(e))),
+		};
+
+		let message = ethereum::TransactionMessage {
+			nonce,
+			gas_price: request.gas_price.unwrap_or(U256::from(1)),
+			gas_limit: request.gas.unwrap_or(U256::max_value()),
+			value: request.value.unwrap_or(U256::zero()),
+			input: request.data.map(|s| s.into_vec()).unwrap_or_default(),
+			action: match request.to {
+				Some(to) => ethereum::TransactionAction::Call(to),
+				None => ethereum::TransactionAction::Create,
+			},
+			chain_id: chain_id.map(|s| s.as_u64()),
+		};
+
+		let mut transaction = None;
+
+		for signer in &self.signers {
+			if signer.accounts().contains(&from) {
+				match signer.sign(message) {
+					Ok(t) => transaction = Some(t),
+					Err(e) => return Box::new(future::result(Err(e))),
+				}
+				break
+			}
+		}
+
+		let transaction = match transaction {
+			Some(transaction) => transaction,
+			None => return Box::new(future::result(Err(internal_err("no signer available")))),
+		};
+		let transaction_hash = H256::from_slice(
+			Keccak256::digest(&rlp::encode(&transaction)).as_slice()
+		);
+		let hash = self.client.info().best_hash;
+		Box::new(
+			self.pool
+				.submit_one(
+					&BlockId::hash(hash),
+					TransactionSource::Local,
+					self.convert_transaction.convert_transaction(transaction),
+				)
+				.compat()
+				.map(move |_| transaction_hash)
+				.map_err(|err| internal_err(format!("submit transaction to pool failed: {:?}", err)))
+		)
 	}
 
 	fn send_raw_transaction(&self, bytes: Bytes) -> BoxFuture<H256> {

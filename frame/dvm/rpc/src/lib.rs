@@ -17,6 +17,7 @@
 mod eth;
 mod eth_pubsub;
 
+use ethereum_types::H160;
 pub use eth::{EthApi, EthApiServer, NetApi, NetApiServer};
 pub use eth_pubsub::{EthPubSubApi, EthPubSubApiServer};
 
@@ -50,4 +51,12 @@ pub fn error_on_execution_failure(reason: &ExitReason, data: &[u8]) -> Result<()
 			data: Some(Value::String("0x".to_string())),
 		}),
 	}
+}
+
+/// A generic Ethereum signer.
+pub trait EthSigner: Send + Sync {
+	/// Available accounts from this signer.
+	fn accounts(&self) -> Vec<H160>;
+	/// Sign a transaction message using the given account in message.
+	fn sign(&self, message: ethereum::TransactionMessage) -> Result<ethereum::Transaction, Error>;
 }

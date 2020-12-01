@@ -1842,8 +1842,10 @@ dependencies = [
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "jsonrpc-pubsub",
+ "libsecp256k1",
  "log",
  "parity-scale-codec",
+ "rand 0.7.3",
  "rlp 0.4.6",
  "rustc-hex",
  "sc-client-api",
@@ -2094,9 +2096,9 @@ dependencies = [
 
 [[package]]
 name = "ethereum"
-version = "0.4.2"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df706418ff7d3874b9506424b04ea0bef569a2b39412b43a27ea86e679be108e"
+checksum = "01ea35e1b0845310ade8eb048d401b0b899b8eff05c4d2a3454d29ef4eb1b8af"
 dependencies = [
  "ethereum-types 0.9.2",
  "hash-db",

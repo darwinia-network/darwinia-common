@@ -16,7 +16,7 @@
 
 //! `TransactionRequest` type
 
-use crate::types::{Bytes, TransactionCondition};
+use crate::types::Bytes;
 use ethereum_types::{H160, U256};
 use serde::{Deserialize, Serialize};
 
@@ -39,6 +39,4 @@ pub struct TransactionRequest {
 	pub data: Option<Bytes>,
 	/// Transaction's nonce
 	pub nonce: Option<U256>,
-	/// Delay until this block condition.
-	pub condition: Option<TransactionCondition>,
 }

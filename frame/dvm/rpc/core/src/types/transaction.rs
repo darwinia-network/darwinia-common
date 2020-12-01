@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Open Ethereum.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::types::{Bytes, TransactionCondition};
+use crate::types::Bytes;
 use ethereum_types::{H160, H256, H512, U256, U64};
 use serde::ser::SerializeStruct;
 use serde::{Serialize, Serializer};
@@ -61,8 +61,6 @@ pub struct Transaction {
 	pub r: U256,
 	/// The S field of the signature.
 	pub s: U256,
-	/// Transaction activates at specified block.
-	pub condition: Option<TransactionCondition>,
 }
 
 /// Local Transaction Status

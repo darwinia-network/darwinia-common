@@ -44,7 +44,7 @@ use sp_std::prelude::*;
 use darwinia_evm::{AccountBasicMapping, AddressMapping, Runner};
 use darwinia_evm_primitives::CallOrCreateInfo;
 pub use dvm_rpc_primitives::TransactionStatus;
-pub use ethereum::{Block, Log, Receipt, Transaction, TransactionAction};
+pub use ethereum::{Block, Log, Receipt, Transaction, TransactionAction, TransactionMessage};
 use frame_support::traits::Currency;
 
 #[cfg(all(feature = "std", test))]
@@ -254,7 +254,7 @@ impl<T: Trait> Module<T> {
 		sig[0..32].copy_from_slice(&transaction.signature.r()[..]);
 		sig[32..64].copy_from_slice(&transaction.signature.s()[..]);
 		sig[64] = transaction.signature.standard_v();
-		msg.copy_from_slice(&transaction.message_hash(Some(T::ChainId::get()))[..]);
+		msg.copy_from_slice(&TransactionMessage::from(transaction.clone()).hash()[..]);
 
 		let pubkey = sp_io::crypto::secp256k1_ecdsa_recover(&sig, &msg).ok()?;
 		Some(H160::from(H256::from_slice(
