@@ -1,6 +1,6 @@
 pub use codec::Decode;
+use darwinia_evm::{AddressMapping, ExitError, ExitSucceed, Precompile};
 use frame_support::traits::ExistenceRequirement;
-use pallet_evm::{AddressMapping, ExitError, ExitSucceed, Precompile};
 use sp_core::H160;
 use sp_runtime::traits::{BlakeTwo256, Hash};
 use sp_std::marker::PhantomData;

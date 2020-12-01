@@ -50,17 +50,17 @@ impl Default for TransactionStatus {
 sp_api::decl_runtime_apis! {
 	/// API necessary for Ethereum-compatibility layer.
 	pub trait EthereumRuntimeRPCApi {
-		/// Returns runtime defined pallet_evm::ChainId.
+		/// Returns runtime defined darwinia_evm::ChainId.
 		fn chain_id() -> u64;
-		/// Returns pallet_evm::Accounts by address.
-		fn account_basic(address: H160) -> pallet_evm::Account;
+		/// Returns darwinia_evm::Accounts by address.
+		fn account_basic(address: H160) -> darwinia_evm::Account;
 		/// Returns FixedGasPrice::min_gas_price
 		fn gas_price() -> U256;
-		/// For a given account address, returns pallet_evm::AccountCodes.
+		/// For a given account address, returns darwinia_evm::AccountCodes.
 		fn account_code_at(address: H160) -> Vec<u8>;
 		/// Returns the converted FindAuthor::find_author authority id.
 		fn author() -> H160;
-		/// For a given account address and index, returns pallet_evm::AccountStorages.
+		/// For a given account address and index, returns darwinia_evm::AccountStorages.
 		fn storage_at(address: H160, index: U256) -> H256;
 		/// Returns a pallet_ethereum::call response.
 		fn call(
