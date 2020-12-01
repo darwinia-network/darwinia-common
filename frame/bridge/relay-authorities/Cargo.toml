@@ -19,7 +19,6 @@ darwinia-support          = { default-features = false, path = "../../support" }
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 [dev-dependencies]
@@ -44,6 +43,5 @@ darwinia-std  = [
 substrate-std = [
 	"frame-support/std",
 	"frame-system/std",
-	"sp-io/std",
 	"sp-runtime/std",
 ]
