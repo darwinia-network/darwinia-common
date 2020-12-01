@@ -16,7 +16,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia.  If not, see <https://www.gnu.org/licenses/>.
 
-//! # Ecdsa Authorities Module
+//! # Relay Authorities Module
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -51,6 +51,9 @@ use sp_runtime::{
 	traits::{Hash as HashT, Saturating},
 	DispatchError, DispatchResult, Perbill,
 };
+#[cfg(not(feature = "std"))]
+use sp_std::borrow::ToOwned;
+use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::balance::lock::*;

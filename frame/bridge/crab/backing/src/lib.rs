@@ -4,12 +4,15 @@
 
 mod types {
 	// --- darwinia ---
+	#[cfg(feature = "std")]
 	use crate::*;
 
 	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
 
+	#[cfg(feature = "std")]
 	pub type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
 
+	#[cfg(feature = "std")]
 	type RingCurrency<T> = <T as Trait>::RingCurrency;
 }
 
