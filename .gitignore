@@ -23,4 +23,4 @@ Cargo.toml.bak
 expand.rs
 
 # Js
-**/node_modules/
+node_modules/
