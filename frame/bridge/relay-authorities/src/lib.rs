@@ -91,7 +91,7 @@ decl_event! {
 		RelaySignature = RelaySignature<T, I>,
 	{
 		SignedMMRRoot(MMRRoot, Vec<(AccountId, RelaySignature)>),
-		SignedAuthoritySet(Vec<AccountId>, Vec<(AccountId, RelaySignature)>),
+		SignedAuthoritySet(Vec<(AccountId, RelaySignature)>),
 	}
 }
 
@@ -379,11 +379,41 @@ decl_module! {
 			}
 		}
 
+		// No-op if already submitted
 		#[weight = 10_000_000]
-		pub fn submit_member_set_signature(origin, signature: RelaySignature<T, I>) {
+		pub fn submit_authorities_signature(origin, signature: RelaySignature<T, I>) {
 			let authority = ensure_signed(origin)?;
 
 			ensure!(Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
+
+			let (hashed_authorities_set, mut signatures) = <AuthoritiesToSign<T, I>>::get();
+
+			if signatures.iter().position(|(authority_, _)| authority_ == &authority).is_some() {
+				return Ok(());
+			}
+
+			let authorities = <Authorities<T, I>>::get();
+			let signer = find_signer::<T, I>(
+				&authorities,
+				&authority
+			).ok_or(<Error<T, I>>::AuthorityNE)?;
+
+			ensure!(
+				T::Sign::verify_signature(&signature, hashed_authorities_set, signer),
+				 <Error<T, I>>::SignatureInv
+			);
+
+			signatures.push((authority, signature));
+
+			if Perbill::from_rational_approximation(signatures.len() as u32 + 1, authorities.len() as _)
+				>= T::SignThreshold::get()
+			{
+				<AuthoritiesToSign<T, I>>::kill();
+
+				Self::deposit_event(RawEvent::SignedAuthoritySet(signatures));
+			} else {
+				<AuthoritiesToSign<T, I>>::put((hashed_authorities_set, signatures));
+			}
 		}
 	}
 }
@@ -429,7 +459,7 @@ where
 						.as_slice(),
 				);
 
-				// TODO: also remove his signature
+				// TODO: also remove his signature?
 				<RingCurrency<T, I>>::remove_lock(T::LockId::get(), &account_id);
 
 				Ok(removed_authority)
