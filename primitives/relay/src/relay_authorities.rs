@@ -40,9 +40,19 @@ pub trait Sign<BlockNumber> {
 pub trait RelayAuthorityProtocol<MMRRoot> {
 	fn new_mmr_to_sign(mmr_root: MMRRoot);
 }
+// Only for test
+impl<MMRRoot> RelayAuthorityProtocol<MMRRoot> for () {
+	fn new_mmr_to_sign(_: MMRRoot) {}
+}
 
 pub trait MMR<Root> {
 	fn get_root() -> Option<Root>;
+}
+// Only for test
+impl<Root> MMR<Root> for () {
+	fn get_root() -> Option<Root> {
+		None
+	}
 }
 
 // Avoid duplicate type

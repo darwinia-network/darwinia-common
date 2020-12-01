@@ -407,7 +407,7 @@ fn verify_signature_should_work() {
 	};
 
 	assert!(EthereumBacking::verify_signature(
-		signature.0,
+		&signature.0,
 		message,
 		address
 	));

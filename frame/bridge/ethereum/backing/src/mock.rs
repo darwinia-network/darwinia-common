@@ -88,6 +88,8 @@ macro_rules! decl_tests {
 			type RingCurrency = Ring;
 			type KtonCurrency = Kton;
 			type AdvancedFee = ();
+			type EcdsaAuthorities = ();
+			type DarwiniaMMR = ();
 			type WeightInfo = ();
 		}
 
