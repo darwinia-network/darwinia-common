@@ -89,11 +89,12 @@ decl_event! {
 	pub enum Event<T, I: Instance = DefaultInstance>
 	where
 		AccountId = AccountId<T>,
+		Hash = Hash<T>,
 		MMRRoot = MMRRoot<T>,
 		RelaySignature = RelaySignature<T, I>,
 	{
 		SignedMMRRoot(MMRRoot, Vec<(AccountId, RelaySignature)>),
-		SignedAuthoritySet(Vec<(AccountId, RelaySignature)>),
+		SignedAuthoritySet(Hash, Vec<(AccountId, RelaySignature)>),
 	}
 }
 
@@ -415,7 +416,10 @@ decl_module! {
 			{
 				<AuthoritiesToSign<T, I>>::kill();
 
-				Self::deposit_event(RawEvent::SignedAuthoritySet(signatures));
+				Self::deposit_event(RawEvent::SignedAuthoritySet(
+					hashed_authorities_set,
+					signatures
+				));
 			} else {
 				<AuthoritiesToSign<T, I>>::put((hashed_authorities_set, signatures));
 			}
