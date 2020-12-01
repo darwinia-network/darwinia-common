@@ -1439,6 +1439,7 @@ dependencies = [
  "parity-scale-codec",
  "serde",
  "sp-runtime",
+ "sp-std 2.0.0 (git+https://github.com/darwinia-network/substrate.git?branch=common-library)",
 ]
 
 [[package]]
@@ -5037,6 +5038,7 @@ dependencies = [
  "darwinia-ethereum-relay",
  "darwinia-header-mmr",
  "darwinia-header-mmr-rpc-runtime-api",
+ "darwinia-relay-authorities",
  "darwinia-relay-primitives",
  "darwinia-relayer-game",
  "darwinia-staking",

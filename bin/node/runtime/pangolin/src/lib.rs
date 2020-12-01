@@ -985,6 +985,8 @@ impl darwinia_ethereum_backing::Trait for Runtime {
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 	type AdvancedFee = AdvancedFee;
+	type EcdsaAuthorities = EthereumRelayAuthorities;
+	type DarwiniaMMR = HeaderMMR;
 	type WeightInfo = ();
 }
 
@@ -1068,6 +1070,29 @@ impl pallet_evm::Trait for Runtime {
 	);
 	type ChainId = ChainId;
 	type AccountBasicMapping = DVMAccountBasicMapping<Self>;
+}
+
+type EthereumRelayAuthoritiesInstance = darwinia_relay_authorities::Instance0;
+parameter_types! {
+	pub const EthereumRelayAuthoritiesLockId: LockIdentifier = *b"ethrauth";
+	pub const EthereumRelayAuthoritiesTermDuration: BlockNumber = 30 * DAYS;
+	pub const MaxCandidates: usize = 7;
+	pub const SignThreshold: Perbill = Perbill::from_percent(60);
+	pub const SubmitDuration: BlockNumber = 100;
+}
+impl darwinia_relay_authorities::Trait<EthereumRelayAuthoritiesInstance> for Runtime {
+	type Event = Event;
+	type RingCurrency = Ring;
+	type LockId = EthereumRelayAuthoritiesLockId;
+	type TermDuration = EthereumRelayAuthoritiesTermDuration;
+	type MaxCandidates = MaxCandidates;
+	type AddOrigin = ApproveOrigin;
+	type RemoveOrigin = ApproveOrigin;
+	type ResetOrigin = ApproveOrigin;
+	type Sign = EthereumBacking;
+	type SignThreshold = SignThreshold;
+	type SubmitDuration = SubmitDuration;
+	type WeightInfo = ();
 }
 
 pub struct EthereumFindAuthor<F>(sp_std::marker::PhantomData<F>);
@@ -1155,6 +1180,8 @@ construct_runtime!(
 
 		EVM: pallet_evm::{Module, Config, Call, Storage, Event<T>},
 		Ethereum: dvm_ethereum::{Module, Call, Storage, Event, Config, ValidateUnsigned},
+
+		EthereumRelayAuthorities: darwinia_relay_authorities::<Instance0>::{Module, Call, Storage, Event<T>},
 	}
 );
 
