@@ -87,6 +87,7 @@ decl_event! {
 		RelaySignature = RelaySignature<T, I>,
 	{
 		SignedMMRRoot(MMRRoot, Vec<(AccountId, RelaySignature)>),
+		SignedAuthoritySet(Vec<AccountId>, Vec<(AccountId, RelaySignature)>),
 	}
 }
 
@@ -200,7 +201,7 @@ decl_module! {
 						<Error<T, I>>::BondIns
 					);
 
-					// slash the weed out?
+					// TODO: slash the weed out?
 					let weep_out = candidates.pop().unwrap();
 
 					<RingCurrency<T, I>>::remove_lock(T::LockId::get(), &weep_out.account_id);
@@ -236,6 +237,8 @@ decl_module! {
 		pub fn renounce_authority(origin) {
 			let account_id = ensure_signed(origin)?;
 
+			ensure!(!<OnMemberChange<I>>::get(), <Error<T, I>>::OnMemberChangeDis);
+
 			<Authorities<T, I>>::try_mutate(|authorities| {
 				if let Some(position) = authorities
 					.iter()
@@ -256,6 +259,8 @@ decl_module! {
 		pub fn add_authority(origin, account_id: AccountId<T>) {
 			T::AddOrigin::ensure_origin(origin)?;
 
+			ensure!(!<OnMemberChange<I>>::get(), <Error<T, I>>::OnMemberChangeDis);
+
 			let mut authority = Self::remove_candidate_by_id(&account_id)?;
 			authority.term = <frame_system::Module<T>>::block_number() + T::TermDuration::get();
 
@@ -268,6 +273,8 @@ decl_module! {
 		#[weight = 10_000_000]
 		pub fn remove_authority(origin, account_id: AccountId<T>) {
 			T::RemoveOrigin::ensure_origin(origin)?;
+
+			ensure!(!<OnMemberChange<I>>::get(), <Error<T, I>>::OnMemberChangeDis);
 
 			let _ = Self::remove_authority_by_id(&account_id);
 		}
@@ -283,14 +290,28 @@ decl_module! {
 			}
 		}
 
-		// Dangerous! Authorities don't need to bond any asset
+		// Dangerous!
+		//
+		// Authorities don't need to bond any asset
+		//
+		// This operation is forced to set the authorities,
+		// without the member change signature requirement
 		#[weight = 10_000_000]
 		pub fn reset_authorities(origin, authorities: Vec<RelayAuthorityT<T, I>>) {
 			T::ResetOrigin::ensure_origin(origin)?;
 
-			<Authorities<T, I>>::put(authorities);
+			ensure!(!<OnMemberChange<I>>::get(), <Error<T, I>>::OnMemberChangeDis);
 
-			// TODO on authorities changed
+			<Authorities<T, I>>::mutate(|old_authorities| {
+				for authority in old_authorities.iter() {
+					<RingCurrency<T, I>>::remove_lock(
+						T::LockId::get(),
+						&authority.account_id
+					);
+				}
+
+				*old_authorities = authorities;
+			});
 		}
 
 		// No-op if already submitted
