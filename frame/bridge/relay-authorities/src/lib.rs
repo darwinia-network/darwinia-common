@@ -163,27 +163,7 @@ decl_module! {
 		fn deposit_event() = default;
 
 		fn on_initialize(now: BlockNumber<T>) -> Weight {
-			if Self::on_authorities_change() {
-
-			} else {
-				if let Some(closed_submit) = Self::closed_mmr_root_submit_of(now) {
-					let authorities = <Authorities<T, I>>::get();
-
-					if let Some(signatures) = <SignedMMRRoots<T, I>>::get(&closed_submit) {
-						// for (authority, _) in signatures {
-							// if let None = authorities
-							// 	.iter()
-							// 	.find(|authority_| authority_ == authority)
-							// {
-							// 	<RingCurrency<T, I>>::slash(&authority, );
-							// }
-						// }
-					} else {
-						// Should never enter this condition
-						// TODO: error log
-					}
-				}
-			}
+			Self::check_submit_deadline(now);
 
 			0
 		}
@@ -525,6 +505,40 @@ where
 				Err(<Error<T, I>>::CandidateNE)
 			}
 		})?)
+	}
+
+	pub fn check_submit_deadline(at: BlockNumber<T>) {
+		let find_and_slash_misbehavior = |signatures: Vec<(AccountId<T>, RelaySignature<T, I>)>| {
+			for RelayAuthority {
+				account_id, stake, ..
+			} in <Authorities<T, I>>::get()
+			{
+				if let None = signatures
+					.iter()
+					.position(|(authority, _)| authority == &account_id)
+				{
+					<RingCurrency<T, I>>::slash(&account_id, stake);
+				}
+			}
+		};
+		let (on_authorities_change, deadline) = <AuthoritiesState<T, I>>::get();
+
+		if on_authorities_change {
+			if deadline == at {
+				let (_, signatures) = <AuthoritiesToSign<T, I>>::get();
+
+				find_and_slash_misbehavior(signatures);
+			}
+		} else {
+			if let Some(closed_submit) = Self::closed_mmr_root_submit_of(at) {
+				if let Some((_, signatures)) = <SignedMMRRoots<T, I>>::get(&closed_submit) {
+					find_and_slash_misbehavior(signatures);
+				} else {
+					// Should never enter this condition
+					// TODO: error log
+				}
+			}
+		}
 	}
 }
 
