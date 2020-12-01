@@ -15,6 +15,7 @@
 // along with Substrate.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::{error_on_execution_failure, internal_err};
+use codec::{self, Encode};
 use dvm_rpc_core::types::{
 	Block, BlockNumber, BlockTransactions, Bytes, CallRequest, Filter, Index, Log, Receipt, Rich,
 	RichBlock, SyncInfo, SyncStatus, Transaction, VariadicValue, Work,
@@ -36,10 +37,9 @@ use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_runtime::traits::BlakeTwo256;
 use sp_runtime::traits::{Block as BlockT, One, Saturating, UniqueSaturatedInto, Zero};
 use sp_runtime::transaction_validity::TransactionSource;
-use sp_transaction_pool::{TransactionPool, InPoolTransaction};
+use sp_transaction_pool::{InPoolTransaction, TransactionPool};
 use std::collections::BTreeMap;
 use std::{marker::PhantomData, sync::Arc};
-use codec::{self, Encode};
 
 pub use dvm_rpc_core::{EthApiServer, NetApiServer};
 
@@ -421,9 +421,13 @@ where
 		if let Some(BlockNumber::Pending) = number {
 			// Find future nonce
 			let id = BlockId::hash(self.client.info().best_hash);
-			let nonce: U256 = self.client.runtime_api()
+			let nonce: U256 = self
+				.client
+				.runtime_api()
 				.account_basic(&id, address)
-				.map_err(|err| internal_err(format!("fetch runtime account basic failed: {:?}", err)))?
+				.map_err(|err| {
+					internal_err(format!("fetch runtime account basic failed: {:?}", err))
+				})?
 				.nonce;
 
 			let mut current_nonce = nonce;

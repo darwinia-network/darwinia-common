@@ -310,8 +310,8 @@ fn call_should_handle_errors() {
 			CallOrCreateInfo::Create(_) => panic!("expected call info"),
 		}
 
-		// calling bar will revert
-		let err = Ethereum::execute(
+		// calling should always succeed even if the inner EVM execution fails.
+		Ethereum::execute(
 			alice.address,
 			bar,
 			U256::zero(),
@@ -319,8 +319,6 @@ fn call_should_handle_errors() {
 			Some(U256::from(1)),
 			Some(U256::from(2)),
 			TransactionAction::Call(H160::from_slice(&contract_address)),
-		)
-		.ok()
-		.unwrap();
+		).ok().unwrap();
 	});
 }
