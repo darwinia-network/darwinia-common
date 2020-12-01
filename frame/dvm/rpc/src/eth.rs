@@ -616,6 +616,8 @@ where
 					.map_err(|err| internal_err(format!("runtime error: {:?}", err)))?
 					.map_err(|err| internal_err(format!("execution fatal: {:?}", err)))?;
 
+				error_on_execution_failure(&info.exit_reason, &info.value)?;
+
 				info.used_gas
 			}
 			None => {
@@ -633,6 +635,8 @@ where
 					)
 					.map_err(|err| internal_err(format!("runtime error: {:?}", err)))?
 					.map_err(|err| internal_err(format!("execution fatal: {:?}", err)))?;
+
+				error_on_execution_failure(&info.exit_reason, &[])?;
 
 				info.used_gas
 			}
