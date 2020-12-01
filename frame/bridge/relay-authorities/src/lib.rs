@@ -134,7 +134,7 @@ decl_storage! {
 		// 	is on authorities change,
 		// 	signature submit deadline,
 		// )
-		pub AuthoritiesState get(fn authorities_state): (bool, BlockNumber<T>);
+		pub AuthoritiesState get(fn authorities_state): (bool, BlockNumber<T>) = (false, 0.into());
 
 		pub MMRRootsToSign get(fn mmr_roots_to_sign): Vec<MMRRoot<T>>;
 
@@ -355,6 +355,7 @@ decl_module! {
 					}
 				);
 				<SignedMMRRoots<T, I>>::remove(&mmr_root);
+				<ClosedMMRRootSubmits<T, I>>::remove(&deadline);
 
 				// TODO: clean the mmr root which was contains in this mmr root?
 
@@ -398,6 +399,7 @@ decl_module! {
 				>= T::SignThreshold::get()
 			{
 				<AuthoritiesToSign<T, I>>::kill();
+				<AuthoritiesState<T, I>>::kill();
 
 				Self::deposit_event(RawEvent::SignedAuthoritySet(
 					hashed_authorities_set,
@@ -536,6 +538,11 @@ where
 			if let Some(closed_submit) = Self::closed_mmr_root_submit_of(at) {
 				if let Some((_, signatures)) = <SignedMMRRoots<T, I>>::get(&closed_submit) {
 					find_and_slash_misbehavior(signatures);
+
+					<AuthoritiesState<T, I>>::put((
+						true,
+						<frame_system::Module<T>>::block_number() + T::SubmitDuration::get(),
+					));
 				} else {
 					// Should never enter this condition
 					// TODO: error log

@@ -1462,7 +1462,7 @@ dependencies = [
  "parity-scale-codec",
  "serde",
  "sp-runtime",
- "sp-std 2.0.0 (git+https://github.com/darwinia-network/substrate.git?branch=common-library)",
+ "sp-std 2.0.0",
 ]
 
 [[package]]
