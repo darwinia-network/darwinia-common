@@ -273,6 +273,7 @@ impl FilteredParams {
 						out = false;
 						if log.topics.starts_with(&replaced[..]) {
 							out = true;
+							break;
 						}
 					}
 				}
