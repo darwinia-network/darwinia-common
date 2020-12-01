@@ -51,7 +51,7 @@ pub trait MMR<Root> {
 pub struct RelayAuthority<AccountId, Signer, RingBalance, BlockNumber> {
 	pub account_id: AccountId,
 	pub signer: Signer,
-	pub bond: RingBalance,
+	pub stake: RingBalance,
 	pub term: BlockNumber,
 }
 impl<AccountId, Signer, RingBalance, BlockNumber> PartialEq

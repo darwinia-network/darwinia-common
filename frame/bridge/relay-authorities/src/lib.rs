@@ -30,12 +30,15 @@ mod types {
 	pub type RingBalance<T, I> = <RingCurrency<T, I> as Currency<AccountId<T>>>::Balance;
 	pub type RingCurrency<T, I> = <T as Trait<I>>::RingCurrency;
 
+	pub type Hash = [u8; 32];
 	pub type Signer<T, I> = <<T as Trait<I>>::Sign as Sign<BlockNumber<T>>>::Signer;
 	pub type RelaySignature<T, I> = <<T as Trait<I>>::Sign as Sign<BlockNumber<T>>>::Signature;
 	pub type RelayAuthorityT<T, I> =
 		RelayAuthority<AccountId<T>, Signer<T, I>, RingBalance<T, I>, BlockNumber<T>>;
 }
 
+// --- crates ---
+use codec::Encode;
 // --- substrate ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
@@ -44,6 +47,7 @@ use frame_support::{
 	StorageValue,
 };
 use frame_system::ensure_signed;
+use sp_io::hashing;
 use sp_runtime::{DispatchError, DispatchResult, Perbill};
 // --- darwinia ---
 use darwinia_relay_primitives::relay_authorities::*;
@@ -69,7 +73,7 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 
 	type Sign: Sign<Self::BlockNumber>;
 
-	type ApproveThreshold: Get<Perbill>;
+	type SignThreshold: Get<Perbill>;
 
 	type SubmitDuration: Get<Self::BlockNumber>;
 
@@ -103,10 +107,10 @@ decl_error! {
 		AuthorityNE,
 		/// Authority - IN TERM
 		AuthorityIT,
-		/// Bond - INSUFFICIENT
-		BondIns,
-		/// On Member Change - DISABLED
-		OnMemberChangeDis,
+		/// Stake - INSUFFICIENT
+		StakeIns,
+		/// On Authorities Change - DISABLED
+		OnAuthoritiesChangeDis,
 		/// MMR Root -NOT EXISTED
 		MMRRootNE,
 		/// Signature - INVALID
@@ -117,8 +121,14 @@ decl_error! {
 decl_storage! {
 	trait Store for Module<T: Trait<I>, I: Instance = DefaultInstance> as DarwiniaRelayAuthorities {
 		pub Candidates get(fn candidates): Vec<RelayAuthorityT<T, I>>;
-		pub OldAuthorities get(fn old_authorities): Vec<RelayAuthorityT<T, I>>;
 		pub Authorities get(fn authorities): Vec<RelayAuthorityT<T, I>>;
+		pub OldAuthorities get(fn old_authorities): Vec<RelayAuthorityT<T, I>>;
+
+		// (
+		// 	is on authorities change,
+		// 	signature submitted deadline,
+		// )
+		pub AuthoritiesState get(fn authorities_state): (bool, BlockNumber<T>);
 
 		pub MMRRootsToSign
 			get(fn mmr_root_to_sign_of)
@@ -130,7 +140,9 @@ decl_storage! {
 			: map hasher(identity) BlockNumber<T>
 			=> Option<MMRRoot<T>>;
 
-		pub OnMemberChange get(fn on_member_change): bool;
+		pub AuthoritiesToSign
+			get(fn authorities_to_sign)
+			: (Hash, Vec<(AccountId<T>, RelaySignature<T, I>)>);
 	}
 }
 
@@ -153,7 +165,7 @@ decl_module! {
 					for (authority, _) in signatures {
 						// if let None = authorities
 						// 	.iter()
-						// 	.find(|authority_| authority_.account_id == authority)
+						// 	.find(|authority_| authority_ == authority)
 						// {
 						// 	<RingCurrency<T, I>>::slash(&authority, );
 						// }
@@ -170,7 +182,7 @@ decl_module! {
 		#[weight = 10_000_000]
 		pub fn request_authority(
 			origin,
-			bond: RingBalance<T, I>,
+			stake: RingBalance<T, I>,
 			signer: Signer<T, I>,
 		) {
 			let account_id = ensure_signed(origin)?;
@@ -180,8 +192,8 @@ decl_module! {
 				<Error<T, I>>::AuthorityAE
 			);
 			ensure!(
-				<RingCurrency<T, I>>::usable_balance(&account_id) > bond,
-				<Error<T, I>>::BondIns
+				<RingCurrency<T, I>>::usable_balance(&account_id) > stake,
+				<Error<T, I>>::StakeIns
 			);
 
 			<Candidates<T, I>>::try_mutate(|candidates| {
@@ -192,13 +204,13 @@ decl_module! {
 
 				if candidates.len() == T::MaxCandidates::get() {
 					ensure!(
-						bond >
+						stake >
 							candidates
 								.iter()
-								.map(|candidate| candidate.bond)
+								.map(|candidate| candidate.stake)
 								.max()
 								.unwrap_or(0.into()),
-						<Error<T, I>>::BondIns
+						<Error<T, I>>::StakeIns
 					);
 
 					// TODO: slash the weed out?
@@ -210,14 +222,14 @@ decl_module! {
 				<RingCurrency<T, I>>::set_lock(
 					T::LockId::get(),
 					&account_id,
-					LockFor::Common { amount: bond },
+					LockFor::Common { amount: stake },
 					WithdrawReasons::all()
 				);
 
 				candidates.push(RelayAuthority {
 					account_id,
 					signer,
-					bond,
+					stake,
 					term: 0.into()
 				});
 
@@ -237,7 +249,7 @@ decl_module! {
 		pub fn renounce_authority(origin) {
 			let account_id = ensure_signed(origin)?;
 
-			ensure!(!<OnMemberChange<I>>::get(), <Error<T, I>>::OnMemberChangeDis);
+			ensure!(!Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
 
 			<Authorities<T, I>>::try_mutate(|authorities| {
 				if let Some(position) = authorities
@@ -245,9 +257,19 @@ decl_module! {
 					.position(|authority| authority == &account_id)
 				{
 					if authorities[position].term <= <frame_system::Module<T>>::block_number() {
-						Self::on_authorities_change(authorities);
+						let old_authorities = authorities.clone();
+						let removed_authority = authorities.remove(position);
 
-						return Ok(authorities.remove(position));
+						Self::update_authorities_state(
+							&old_authorities,
+							authorities
+								.iter()
+								.map(|authority| &authority.account_id)
+								.collect::<Vec<_>>()
+								.as_slice()
+						);
+
+						return Ok(removed_authority);
 					}
 				}
 
@@ -259,7 +281,7 @@ decl_module! {
 		pub fn add_authority(origin, account_id: AccountId<T>) {
 			T::AddOrigin::ensure_origin(origin)?;
 
-			ensure!(!<OnMemberChange<I>>::get(), <Error<T, I>>::OnMemberChangeDis);
+			ensure!(!Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
 
 			let mut authority = Self::remove_candidate_by_id(&account_id)?;
 			authority.term = <frame_system::Module<T>>::block_number() + T::TermDuration::get();
@@ -274,7 +296,7 @@ decl_module! {
 		pub fn remove_authority(origin, account_id: AccountId<T>) {
 			T::RemoveOrigin::ensure_origin(origin)?;
 
-			ensure!(!<OnMemberChange<I>>::get(), <Error<T, I>>::OnMemberChangeDis);
+			ensure!(!Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
 
 			let _ = Self::remove_authority_by_id(&account_id);
 		}
@@ -292,15 +314,15 @@ decl_module! {
 
 		// Dangerous!
 		//
-		// Authorities don't need to bond any asset
+		// Authorities don't need to stake any asset
 		//
 		// This operation is forced to set the authorities,
-		// without the member change signature requirement
+		// without the authorities change signature requirement
 		#[weight = 10_000_000]
 		pub fn reset_authorities(origin, authorities: Vec<RelayAuthorityT<T, I>>) {
 			T::ResetOrigin::ensure_origin(origin)?;
 
-			ensure!(!<OnMemberChange<I>>::get(), <Error<T, I>>::OnMemberChangeDis);
+			ensure!(!Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
 
 			<Authorities<T, I>>::mutate(|old_authorities| {
 				for authority in old_authorities.iter() {
@@ -323,7 +345,7 @@ decl_module! {
 		) {
 			let authority = ensure_signed(origin)?;
 
-			ensure!(!<OnMemberChange<I>>::get(), <Error<T, I>>::OnMemberChangeDis);
+			ensure!(!Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
 
 			let mut signatures = <MMRRootsToSign<T, I>>::get(&mmr_root).ok_or(<Error<T, I>>::MMRRootNE)?;
 
@@ -345,7 +367,7 @@ decl_module! {
 			signatures.push((authority, signature));
 
 			if Perbill::from_rational_approximation(signatures.len() as u32 + 1, authorities.len() as _)
-				>= T::ApproveThreshold::get()
+				>= T::SignThreshold::get()
 			{
 				<MMRRootsToSign<T, I>>::remove(&mmr_root);
 
@@ -361,7 +383,7 @@ decl_module! {
 		pub fn submit_member_set_signature(origin, signature: RelaySignature<T, I>) {
 			let authority = ensure_signed(origin)?;
 
-			ensure!(<OnMemberChange<I>>::get(), <Error<T, I>>::OnMemberChangeDis);
+			ensure!(Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
 		}
 	}
 }
@@ -371,9 +393,23 @@ where
 	T: Trait<I>,
 	I: Instance,
 {
-	pub fn on_authorities_change(old_authorities: &[RelayAuthorityT<T, I>]) {
+	pub fn on_authorities_change() -> bool {
+		<AuthoritiesState<T, I>>::get().0
+	}
+
+	pub fn update_authorities_state(
+		old_authorities: &[RelayAuthorityT<T, I>],
+		new_authorities: &[&AccountId<T>],
+	) {
 		<OldAuthorities<T, I>>::put(old_authorities);
-		<OnMemberChange<I>>::put(true);
+		<AuthoritiesState<T, I>>::put((
+			true,
+			<frame_system::Module<T>>::block_number() + T::SubmitDuration::get(),
+		));
+		<AuthoritiesToSign<T, I>>::put((
+			hashing::blake2_256(&new_authorities.encode()),
+			<Vec<(AccountId<T>, RelaySignature<T, I>)>>::new(),
+		));
 	}
 
 	pub fn remove_authority_by_id(
@@ -381,14 +417,22 @@ where
 	) -> Result<RelayAuthorityT<T, I>, DispatchError> {
 		Ok(<Authorities<T, I>>::try_mutate(|authorities| {
 			if let Some(position) = find_authority_position::<T, I>(&authorities, &account_id) {
-				Self::on_authorities_change(authorities);
+				let old_authorities = authorities.clone();
+				let removed_authority = authorities.remove(position);
 
-				let authority = authorities.remove(position);
+				Self::update_authorities_state(
+					&old_authorities,
+					authorities
+						.iter()
+						.map(|authority| &authority.account_id)
+						.collect::<Vec<_>>()
+						.as_slice(),
+				);
 
 				// TODO: also remove his signature
 				<RingCurrency<T, I>>::remove_lock(T::LockId::get(), &account_id);
 
-				Ok(authority)
+				Ok(removed_authority)
 			} else {
 				Err(<Error<T, I>>::AuthorityNE)
 			}
