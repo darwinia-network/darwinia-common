@@ -35,7 +35,7 @@ use sp_runtime::{
 	generic::DigestItem,
 	traits::{Saturating, UniqueSaturatedInto},
 	transaction_validity::{
-		InvalidTransaction, TransactionSource, TransactionValidity, ValidTransaction,
+		InvalidTransaction, TransactionSource, TransactionValidity, ValidTransactionBuilder,
 	},
 	DispatchError,
 };
@@ -275,8 +275,8 @@ impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
 				return InvalidTransaction::Payment.into();
 			}
 
-			let mut builder = ValidTransaction::with_tag_prefix("Ethereum")
-				.and_provides((&origin, transaction.nonce));
+			let mut builder = ValidTransactionBuilder::default()
+				.and_provides((origin, transaction.nonce));
 
 			if transaction.nonce > account_data.nonce {
 				if let Some(prev_nonce) = transaction.nonce.checked_sub(1.into()) {

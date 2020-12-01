@@ -36,9 +36,10 @@ use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_runtime::traits::BlakeTwo256;
 use sp_runtime::traits::{Block as BlockT, One, Saturating, UniqueSaturatedInto, Zero};
 use sp_runtime::transaction_validity::TransactionSource;
-use sp_transaction_pool::TransactionPool;
+use sp_transaction_pool::{TransactionPool, InPoolTransaction};
 use std::collections::BTreeMap;
 use std::{marker::PhantomData, sync::Arc};
+use codec::{self, Encode};
 
 pub use dvm_rpc_core::{EthApiServer, NetApiServer};
 
@@ -417,6 +418,28 @@ where
 	}
 
 	fn transaction_count(&self, address: H160, number: Option<BlockNumber>) -> Result<U256> {
+		if let Some(BlockNumber::Pending) = number {
+			// Find future nonce
+			let id = BlockId::hash(self.client.info().best_hash);
+			let nonce: U256 = self.client.runtime_api()
+				.account_basic(&id, address)
+				.map_err(|err| internal_err(format!("fetch runtime account basic failed: {:?}", err)))?
+				.nonce;
+
+			let mut current_nonce = nonce;
+			let mut current_tag = (address, nonce).encode();
+			for tx in self.pool.ready() {
+				// since transactions in `ready()` need to be ordered by nonce
+				// it's fine to continue with current iterator.
+				if tx.provides().get(0) == Some(&current_tag) {
+					current_nonce = current_nonce.saturating_add(1.into());
+					current_tag = (address, current_nonce).encode();
+				}
+			}
+
+			return Ok(current_nonce);
+		}
+
 		let id = match self.native_block_id(number)? {
 			Some(id) => id,
 			None => return Ok(U256::zero()),
