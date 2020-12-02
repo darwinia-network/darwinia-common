@@ -951,9 +951,9 @@ where
 							})
 							.collect()
 					},
-					state_root: Some(receipt.state_root),
+					status_code: Some(U64::from(receipt.state_root.to_low_u64_be())),
 					logs_bloom: receipt.logs_bloom,
-					status_code: None,
+					state_root: None,
 				}));
 			}
 			_ => Ok(None),
