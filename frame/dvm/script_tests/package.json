@@ -17,7 +17,7 @@
     "mocha": "^8.2.0"
   },
   "scripts": {
-    "test": "mocha tests/**/*.js --reporter spec --timeout 10000"
+    "test": "mocha --recursive tests --reporter spec --timeout 10000"
   },
   "keywords": [],
   "author": "",

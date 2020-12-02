@@ -25,11 +25,10 @@ describe('Test Block RPC', function () {
 			//parentHash: "0x2cc74f91423ba20e9bb0b2c7d8924eacd14bc98aa1daad078f8844e529221cde",
 			receiptsRoot: "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
 			// size: 501,
-			stateRoot: "0x0000000000000000000000000000000000000000000000000000000000000000",
 			timestamp: 0,
 			totalDifficulty: null,
 			//transactions: [],
-			transactionsRoot: "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+			transactionsRoot: "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
 			//uncles: []
 		});
 
