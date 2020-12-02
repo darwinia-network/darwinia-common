@@ -1056,6 +1056,7 @@ parameter_types! {
 }
 impl darwinia_evm::Trait for Runtime {
 	type FeeCalculator = FixedGasPrice;
+	type GasToWeight = ();
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
 	type AddressMapping = ConcatAddressMapping;

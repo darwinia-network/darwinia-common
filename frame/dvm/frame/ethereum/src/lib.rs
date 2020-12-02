@@ -27,7 +27,8 @@ use dvm_consensus_primitives::{ConsensusLog, FRONTIER_ENGINE_ID};
 use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
 use evm::ExitReason;
 use frame_support::{
-	decl_error, decl_event, decl_module, decl_storage, traits::FindAuthor, traits::Get,
+	decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResultWithPostInfo,
+	traits::FindAuthor, traits::Get, weights::Weight,
 };
 use frame_system::ensure_none;
 use sha3::{Digest, Keccak256};
@@ -41,7 +42,7 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 
-use darwinia_evm::{AccountBasicMapping, AddressMapping, Runner};
+use darwinia_evm::{AccountBasicMapping, AddressMapping, GasToWeight, Runner};
 use darwinia_evm_primitives::CallOrCreateInfo;
 pub use dvm_rpc_primitives::TransactionStatus;
 pub use ethereum::{Block, Log, Receipt, Transaction, TransactionAction, TransactionMessage};
@@ -125,8 +126,8 @@ decl_module! {
 		fn deposit_event() = default;
 
 		/// Transact an Ethereum transaction.
-		#[weight = 0]
-		fn transact(origin, transaction: ethereum::Transaction) {
+		#[weight = <T as darwinia_evm::Trait>::GasToWeight::gas_to_weight(transaction.gas_limit.low_u32())]
+		fn transact(origin, transaction: ethereum::Transaction) -> DispatchResultWithPostInfo {
 			ensure_none(origin)?;
 
 			let source = Self::recover_signer(&transaction)
@@ -196,13 +197,14 @@ decl_module! {
 			Pending::append((transaction, status, receipt));
 
 			Self::deposit_event(Event::Executed(source, transaction_hash,reason));
+			Ok(Some(T::GasToWeight::gas_to_weight(used_gas.low_u32())).into())
 		}
 
 		fn on_finalize(n: T::BlockNumber) {
 			<Module<T>>::store_block();
 		}
 
-		fn on_initialize(n: T::BlockNumber) -> frame_support::weights::Weight {
+		fn on_initialize(n: T::BlockNumber) -> Weight {
 			Pending::kill();
 			0
 		}
