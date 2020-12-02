@@ -21,7 +21,7 @@ use dvm_rpc_core::types::{
 	Receipt, Rich, RichBlock, SyncInfo, SyncStatus, Transaction, TransactionRequest, VariadicValue,
 	Work,
 };
-use dvm_rpc_core::{EthApi as EthApiT, NetApi as NetApiT};
+use dvm_rpc_core::{EthApi as EthApiT, NetApi as NetApiT, Web3Api as Web3ApiT};
 use dvm_rpc_primitives::{ConvertTransaction, EthereumRuntimeRPCApi, TransactionStatus};
 use ethereum::{
 	Block as EthereumBlock, Transaction as EthereumTransaction,
@@ -36,7 +36,7 @@ use jsonrpc_core::{
 use sc_client_api::backend::{AuxStore, Backend, StateBackend, StorageProvider};
 use sc_network::{ExHashT, NetworkService};
 use sha3::{Digest, Keccak256};
-use sp_api::{BlockId, ProvideRuntimeApi};
+use sp_api::{BlockId, Core, ProvideRuntimeApi};
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_runtime::traits::BlakeTwo256;
 use sp_runtime::traits::{Block as BlockT, One, Saturating, UniqueSaturatedInto, Zero};
@@ -45,7 +45,7 @@ use sp_transaction_pool::{InPoolTransaction, TransactionPool};
 use std::collections::BTreeMap;
 use std::{marker::PhantomData, sync::Arc};
 
-pub use dvm_rpc_core::{EthApiServer, NetApiServer};
+pub use dvm_rpc_core::{EthApiServer, NetApiServer, Web3ApiServer};
 
 pub struct EthApi<B: BlockT, C, P, CT, BE, H: ExHashT> {
 	pool: Arc<P>,
@@ -1142,5 +1142,51 @@ where
 			.chain_id(&BlockId::Hash(hash))
 			.map_err(|_| internal_err("fetch runtime chain id failed"))?
 			.to_string())
+	}
+}
+
+pub struct Web3Api<B, C> {
+	client: Arc<C>,
+	_marker: PhantomData<B>,
+}
+
+impl<B, C> Web3Api<B, C> {
+	pub fn new(client: Arc<C>) -> Self {
+		Self {
+			client,
+			_marker: PhantomData,
+		}
+	}
+}
+
+impl<B, C> Web3ApiT for Web3Api<B, C>
+where
+	C: ProvideRuntimeApi<B> + AuxStore,
+	C::Api: EthereumRuntimeRPCApi<B>,
+	C: HeaderBackend<B> + HeaderMetadata<B, Error = BlockChainError> + 'static,
+	C: Send + Sync + 'static,
+	B: BlockT<Hash = H256> + Send + Sync + 'static,
+{
+	fn client_version(&self) -> Result<String> {
+		let hash = self.client.info().best_hash;
+		let version = self
+			.client
+			.runtime_api()
+			.version(&BlockId::Hash(hash))
+			.map_err(|err| internal_err(format!("fetch runtime version failed: {:?}", err)))?;
+		Ok(format!(
+			"{spec_name}/v{spec_version}.{impl_version}/{pkg_name}-{pkg_version}",
+			spec_name = version.spec_name,
+			spec_version = version.spec_version,
+			impl_version = version.impl_version,
+			pkg_name = env!("CARGO_PKG_NAME"),
+			pkg_version = env!("CARGO_PKG_VERSION")
+		))
+	}
+
+	fn sha3(&self, input: Bytes) -> Result<H256> {
+		Ok(H256::from_slice(
+			Keccak256::digest(&input.into_vec()).as_slice(),
+		))
 	}
 }

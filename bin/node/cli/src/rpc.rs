@@ -121,7 +121,10 @@ where
 	use darwinia_balances_rpc::{Balances, BalancesApi};
 	use darwinia_header_mmr_rpc::{HeaderMMR, HeaderMMRApi};
 	use darwinia_staking_rpc::{Staking, StakingApi};
-	use dvm_rpc::{EthApi, EthApiServer, EthPubSubApi, EthPubSubApiServer, NetApi, NetApiServer};
+	use dvm_rpc::{
+		EthApi, EthApiServer, EthPubSubApi, EthPubSubApiServer, NetApi, NetApiServer, Web3Api,
+		Web3ApiServer,
+	};
 	use pangolin_runtime::TransactionConverter;
 
 	let FullDeps {
@@ -193,7 +196,8 @@ where
 		network,
 		SubscriptionManager::new(Arc::new(subscription_task_executor)),
 	)));
-	io.extend_with(NetApiServer::to_delegate(NetApi::new(client)));
+	io.extend_with(NetApiServer::to_delegate(NetApi::new(client.clone())));
+	io.extend_with(Web3ApiServer::to_delegate(Web3Api::new(client)));
 
 	io
 }
