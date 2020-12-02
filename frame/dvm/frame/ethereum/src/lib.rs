@@ -24,7 +24,7 @@
 
 use codec::Encode;
 use dvm_consensus_primitives::{ConsensusLog, FRONTIER_ENGINE_ID};
-use ethereum_types::{Bloom, H160, H256, H64, U256};
+use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
 use evm::ExitReason;
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, traits::FindAuthor, traits::Get,
@@ -155,8 +155,15 @@ decl_module! {
 						from: source,
 						to,
 						contract_address: None,
-						logs: info.logs,
-						logs_bloom: Bloom::default(), // TODO: feed in bloom.
+						logs: info.logs.clone(),
+						logs_bloom: {
+							let mut bloom: Bloom = Bloom::default();
+							Self::logs_bloom(
+								info.logs,
+								&mut bloom
+							);
+							bloom
+						},
 					}, info.used_gas)
 				},
 				CallOrCreateInfo::Create(info) => {
@@ -166,8 +173,15 @@ decl_module! {
 						from: source,
 						to,
 						contract_address: Some(info.value),
-						logs: info.logs,
-						logs_bloom: Bloom::default(), // TODO: feed in bloom.
+						logs: info.logs.clone(),
+						logs_bloom: {
+							let mut bloom: Bloom = Bloom::default();
+							Self::logs_bloom(
+								info.logs,
+								&mut bloom
+							);
+							bloom
+						},
 					}, info.used_gas)
 				},
 			};
@@ -175,7 +189,7 @@ decl_module! {
 			let receipt = ethereum::Receipt {
 				state_root: H256::default(), // TODO: should be okay / error status.
 				used_gas,
-				logs_bloom: Bloom::default(), // TODO: set this.
+				logs_bloom: status.clone().logs_bloom,
 				logs: status.clone().logs,
 			};
 
@@ -266,10 +280,12 @@ impl<T: Trait> Module<T> {
 		let mut transactions = Vec::new();
 		let mut statuses = Vec::new();
 		let mut receipts = Vec::new();
+		let mut logs_bloom = Bloom::default();
 		for (transaction, status, receipt) in Pending::get() {
 			transactions.push(transaction);
 			statuses.push(status);
-			receipts.push(receipt);
+			receipts.push(receipt.clone());
+			Self::logs_bloom(receipt.logs.clone(), &mut logs_bloom);
 		}
 
 		let ommers = Vec::<ethereum::Header>::new();
@@ -281,7 +297,7 @@ impl<T: Trait> Module<T> {
 			receipts_root: H256::from_slice(
 				Keccak256::digest(&rlp::encode_list(&receipts)[..]).as_slice(),
 			), // TODO: check receipts hash.
-			logs_bloom: Bloom::default(), // TODO: gather the logs bloom from receipts.
+			logs_bloom,
 			difficulty: U256::zero(),
 			number: U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(
 				frame_system::Module::<T>::block_number(),
@@ -344,6 +360,15 @@ impl<T: Trait> Module<T> {
 		let remain_balance = Self::remaining_balance(account_id);
 		let updated_balance = remain_balance.saturating_sub(value);
 		<RemainingBalance<T>>::insert(account_id, updated_balance);
+	}
+
+	fn logs_bloom(logs: Vec<Log>, bloom: &mut Bloom) {
+		for log in logs {
+			bloom.accrue(BloomInput::Raw(&log.address[..]));
+			for topic in log.topics {
+				bloom.accrue(BloomInput::Raw(&topic[..]));
+			}
+		}
 	}
 
 	/// Get the author using the FindAuthor trait.
