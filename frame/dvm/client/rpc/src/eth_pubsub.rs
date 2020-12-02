@@ -11,7 +11,7 @@ use sp_runtime::traits::{BlakeTwo256, Block as BlockT, UniqueSaturatedInto};
 use sp_storage::{StorageData, StorageKey};
 use sp_transaction_pool::TransactionPool;
 use std::collections::BTreeMap;
-use std::{marker::PhantomData, sync::Arc};
+use std::{iter, marker::PhantomData, sync::Arc};
 
 use codec::Decode;
 use dvm_rpc_core::types::{
@@ -20,7 +20,14 @@ use dvm_rpc_core::types::{
 };
 use dvm_rpc_core::EthPubSubApi::{self as EthPubSubApiT};
 use ethereum_types::{H256, U256};
-use jsonrpc_pubsub::{manager::SubscriptionManager, typed::Subscriber, SubscriptionId};
+use jsonrpc_pubsub::{
+	manager::{IdProvider, SubscriptionManager},
+	typed::Subscriber,
+	SubscriptionId,
+};
+use rand::distributions::Alphanumeric;
+use rand::{thread_rng, Rng};
+use rustc_hex::ToHex;
 use sha3::{Digest, Keccak256};
 
 pub use dvm_rpc_core::EthPubSubApiServer;
@@ -34,11 +41,35 @@ use jsonrpc_core::{
 
 use sc_network::{ExHashT, NetworkService};
 
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+pub struct HexEncodedIdProvider {
+	len: usize,
+}
+
+impl Default for HexEncodedIdProvider {
+	fn default() -> Self {
+		Self { len: 16 }
+	}
+}
+
+impl IdProvider for HexEncodedIdProvider {
+	type Id = String;
+	fn next_id(&self) -> Self::Id {
+		let mut rng = thread_rng();
+		let id: String = iter::repeat(())
+			.map(|()| rng.sample(Alphanumeric))
+			.take(self.len)
+			.collect();
+		let out: String = id.as_bytes().to_hex();
+		format!("0x{}", out)
+	}
+}
+
 pub struct EthPubSubApi<B: BlockT, P, C, BE, H: ExHashT> {
 	_pool: Arc<P>,
 	client: Arc<C>,
 	network: Arc<NetworkService<B, H>>,
-	subscriptions: SubscriptionManager,
+	subscriptions: SubscriptionManager<HexEncodedIdProvider>,
 	_marker: PhantomData<(B, BE)>,
 }
 impl<B: BlockT, P, C, BE, H: ExHashT> EthPubSubApi<B, P, C, BE, H> {
@@ -46,7 +77,7 @@ impl<B: BlockT, P, C, BE, H: ExHashT> EthPubSubApi<B, P, C, BE, H> {
 		_pool: Arc<P>,
 		client: Arc<C>,
 		network: Arc<NetworkService<B, H>>,
-		subscriptions: SubscriptionManager,
+		subscriptions: SubscriptionManager<HexEncodedIdProvider>,
 	) -> Self {
 		Self {
 			_pool,

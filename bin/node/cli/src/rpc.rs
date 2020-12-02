@@ -122,8 +122,8 @@ where
 	use darwinia_header_mmr_rpc::{HeaderMMR, HeaderMMRApi};
 	use darwinia_staking_rpc::{Staking, StakingApi};
 	use dvm_rpc::{
-		EthApi, EthApiServer, EthPubSubApi, EthPubSubApiServer, NetApi, NetApiServer, Web3Api,
-		Web3ApiServer,
+		EthApi, EthApiServer, EthPubSubApi, EthPubSubApiServer, HexEncodedIdProvider, NetApi,
+		NetApiServer, Web3Api, Web3ApiServer,
 	};
 	use pangolin_runtime::TransactionConverter;
 
@@ -194,7 +194,10 @@ where
 		pool,
 		client.clone(),
 		network.clone(),
-		SubscriptionManager::new(Arc::new(subscription_task_executor)),
+		SubscriptionManager::<HexEncodedIdProvider>::with_id_provider(
+			HexEncodedIdProvider::default(),
+			Arc::new(subscription_task_executor),
+		),
 	)));
 	io.extend_with(NetApiServer::to_delegate(NetApi::new(
 		client.clone(),
