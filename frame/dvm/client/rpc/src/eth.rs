@@ -1102,21 +1102,24 @@ where
 	}
 }
 
-pub struct NetApi<B, BE, C> {
+pub struct NetApi<B: BlockT, BE, C, H: ExHashT> {
 	client: Arc<C>,
-	_marker: PhantomData<(B, BE)>,
+	network: Arc<NetworkService<B, H>>,
+	_marker: PhantomData<BE>,
 }
 
-impl<B, BE, C> NetApi<B, BE, C> {
-	pub fn new(client: Arc<C>) -> Self {
+impl<B: BlockT, BE, C, H: ExHashT> NetApi<B, BE, C, H> {
+	pub fn new(client: Arc<C>, network: Arc<NetworkService<B, H>>) -> Self {
 		Self {
 			client,
+			network,
 			_marker: PhantomData,
 		}
 	}
 }
 
-impl<B, BE, C> NetApiT for NetApi<B, BE, C>
+// impl<B, BE, C> NetApiT for NetApi<B, BE, C>
+impl<B: BlockT, BE, C, H: ExHashT> NetApiT for NetApi<B, BE, C, H>
 where
 	C: ProvideRuntimeApi<B> + StorageProvider<B, BE> + AuxStore,
 	C: HeaderBackend<B> + HeaderMetadata<B, Error = BlockChainError> + 'static,
@@ -1131,7 +1134,7 @@ where
 	}
 
 	fn peer_count(&self) -> Result<String> {
-		Ok("0".to_string())
+		Ok((self.network.num_connected() as u32).to_string())
 	}
 
 	fn version(&self) -> Result<String> {

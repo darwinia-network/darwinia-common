@@ -193,10 +193,13 @@ where
 	io.extend_with(EthPubSubApiServer::to_delegate(EthPubSubApi::new(
 		pool,
 		client.clone(),
-		network,
+		network.clone(),
 		SubscriptionManager::new(Arc::new(subscription_task_executor)),
 	)));
-	io.extend_with(NetApiServer::to_delegate(NetApi::new(client.clone())));
+	io.extend_with(NetApiServer::to_delegate(NetApi::new(
+		client.clone(),
+		network.clone(),
+	)));
 	io.extend_with(Web3ApiServer::to_delegate(Web3Api::new(client)));
 
 	io
