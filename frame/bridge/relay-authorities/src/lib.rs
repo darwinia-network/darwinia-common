@@ -533,16 +533,16 @@ where
 				let (_, signatures) = <AuthoritiesToSign<T, I>>::get();
 
 				find_and_slash_misbehavior(signatures);
+
+				<AuthoritiesState<T, I>>::put((
+					true,
+					<frame_system::Module<T>>::block_number() + T::SubmitDuration::get(),
+				));
 			}
 		} else {
 			if let Some(closed_submit) = Self::closed_mmr_root_submit_of(at) {
 				if let Some((_, signatures)) = <SignedMMRRoots<T, I>>::get(&closed_submit) {
 					find_and_slash_misbehavior(signatures);
-
-					<AuthoritiesState<T, I>>::put((
-						true,
-						<frame_system::Module<T>>::block_number() + T::SubmitDuration::get(),
-					));
 				} else {
 					// Should never enter this condition
 					// TODO: error log
