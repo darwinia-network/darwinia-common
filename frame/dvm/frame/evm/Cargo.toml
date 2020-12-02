@@ -22,8 +22,8 @@ rlp                   	= { version = "0.4", default-features = false }
 serde                 	= { version = "1.0.101", optional = true, features = ["derive"] }
 sha3                  	= { version = "0.8", default-features = false }
 # darwinia
-darwinia-balances       = { default-features = false, path = "../../../frame/balances" }
-darwinia-evm-primitives = { default-features = false, path = "./primitives" }
+darwinia-balances       = { default-features = false, path = "../../../balances" }
+darwinia-evm-primitives = { default-features = false, path = "../../primitives/evm" }
 # substrate
 frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
@@ -34,7 +34,7 @@ sp-runtime       = { default-features = false, git = "https://github.com/darwini
 sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 [dev-dependencies]
-darwinia-support = { features = ["easy-testing"], path = "../../../frame/support" }
+darwinia-support = { features = ["easy-testing"], path = "../../../support" }
 
 [features]
 default = ["std"]

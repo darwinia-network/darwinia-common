@@ -17,9 +17,9 @@
 mod eth;
 mod eth_pubsub;
 
-use ethereum_types::H160;
 pub use eth::{EthApi, EthApiServer, NetApi, NetApiServer};
 pub use eth_pubsub::{EthPubSubApi, EthPubSubApiServer};
+use ethereum_types::H160;
 
 use darwinia_evm::ExitReason;
 use jsonrpc_core::{Error, ErrorCode, Value};

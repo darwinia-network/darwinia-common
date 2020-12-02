@@ -22,7 +22,7 @@ use jsonrpc_derive::rpc;
 
 use crate::types::{
 	BlockNumber, Bytes, CallRequest, Filter, FilterChanges, Index, Log, Receipt, RichBlock,
-	SyncStatus, Transaction, Work, TransactionRequest,
+	SyncStatus, Transaction, TransactionRequest, Work,
 };
 pub use rpc_impl_EthApi::gen_server::EthApi as EthApiServer;
 

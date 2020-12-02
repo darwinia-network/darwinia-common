@@ -18,11 +18,15 @@ use crate::{error_on_execution_failure, internal_err, EthSigner};
 use codec::{self, Encode};
 use dvm_rpc_core::types::{
 	Block, BlockNumber, BlockTransactions, Bytes, CallRequest, Filter, FilteredParams, Index, Log,
-	Receipt, Rich, RichBlock, SyncInfo, SyncStatus, Transaction, VariadicValue, Work, TransactionRequest
+	Receipt, Rich, RichBlock, SyncInfo, SyncStatus, Transaction, TransactionRequest, VariadicValue,
+	Work,
 };
 use dvm_rpc_core::{EthApi as EthApiT, NetApi as NetApiT};
 use dvm_rpc_primitives::{ConvertTransaction, EthereumRuntimeRPCApi, TransactionStatus};
-use ethereum::{Block as EthereumBlock, Transaction as EthereumTransaction, TransactionMessage as EthereumTransactionMessage,};
+use ethereum::{
+	Block as EthereumBlock, Transaction as EthereumTransaction,
+	TransactionMessage as EthereumTransactionMessage,
+};
 use ethereum_types::{H160, H256, H512, H64, U256, U64};
 use futures::future::TryFutureExt;
 use jsonrpc_core::{
@@ -537,18 +541,18 @@ where
 
 				match accounts.get(0) {
 					Some(account) => account.clone(),
-					None => return Box::new(future::result(Err(internal_err("no signer available")))),
+					None => {
+						return Box::new(future::result(Err(internal_err("no signer available"))))
+					}
 				}
-			},
+			}
 		};
 
 		let nonce = match request.nonce {
 			Some(nonce) => nonce,
-			None => {
-				match self.transaction_count(from, None) {
-					Ok(nonce) => nonce,
-					Err(e) => return Box::new(future::result(Err(e))),
-				}
+			None => match self.transaction_count(from, None) {
+				Ok(nonce) => nonce,
+				Err(e) => return Box::new(future::result(Err(e))),
 			},
 		};
 
@@ -578,7 +582,7 @@ where
 					Ok(t) => transaction = Some(t),
 					Err(e) => return Box::new(future::result(Err(e))),
 				}
-				break
+				break;
 			}
 		}
 
@@ -586,9 +590,8 @@ where
 			Some(transaction) => transaction,
 			None => return Box::new(future::result(Err(internal_err("no signer available")))),
 		};
-		let transaction_hash = H256::from_slice(
-			Keccak256::digest(&rlp::encode(&transaction)).as_slice()
-		);
+		let transaction_hash =
+			H256::from_slice(Keccak256::digest(&rlp::encode(&transaction)).as_slice());
 		let hash = self.client.info().best_hash;
 		Box::new(
 			self.pool
@@ -599,7 +602,9 @@ where
 				)
 				.compat()
 				.map(move |_| transaction_hash)
-				.map_err(|err| internal_err(format!("submit transaction to pool failed: {:?}", err)))
+				.map_err(|err| {
+					internal_err(format!("submit transaction to pool failed: {:?}", err))
+				}),
 		)
 	}
 
