@@ -111,27 +111,69 @@ decl_error! {
 
 decl_storage! {
 	trait Store for Module<T: Trait<I>, I: Instance = DefaultInstance> as DarwiniaRelayAuthorities {
+		/// Anyone can request to be an authority with some stake
+		/// Also submit your signer at the same time (for ethereum: your ethereum address in H160 format)
+		///
+		/// Once you requested, you'll enter the candidates
+		///
+		/// This request can be canceled at any time
 		pub Candidates get(fn candidates): Vec<RelayAuthorityT<T, I>>;
+
+		/// Authority must elect from candidates
+		///
+		/// Only council or root can be the voter of the election
+		///
+		/// Once you become an authority, you must serve for a specific term. Before that, you can't renounce
 		pub Authorities get(fn authorities): Vec<RelayAuthorityT<T, I>>;
+
+		/// A snapshot for the old authorities while authorities changed
 		pub OldAuthorities get(fn old_authorities): Vec<RelayAuthorityT<T, I>>;
 
+		/// A term index counter, play the same role as nonce in extrinsic
 		pub AuthorityTerm get(fn authority_term): u32;
-		// (
-		// 	is on authorities change,
-		// 	signature submit deadline,
-		// )
+
+		/// The state of current authorities set
+		///
+		/// Tuple Params
+		/// 	1. is on authority change
+		/// 	1. the authorities change signature submit deadline, this will be delay indefinitely if can't collect enough signatures
 		pub AuthoritiesState get(fn authorities_state): (bool, BlockNumber<T>) = (false, 0.into());
 
+		/// The authorities change requirements
+		///
+		/// Once the signatures count reaches the sign threshold storage will be killed then raise a signed event
+		///
+		/// Params
+		/// 	1. the message to sign
+		/// 	1. collected signatures
 		pub AuthoritiesToSign
 			get(fn authorities_to_sign)
 			: (Vec<u8>, Vec<(AccountId<T>, RelaySignature<T, I>)>);
+
+		/// The `MMRRootsToSign` keys cache
+		///
+		/// Only use for update the `MMRRootsToSign` once the authorities changed
 		pub MMRRootsToSignKeys get(fn mmr_root_to_sign_keys): Vec<BlockNumber<T>>;
+
+		/// All the relay requirements from the backing module here
+		///
+		/// If the map's key has existed, it means the mmr root relay requirement is valid
+		///
+		/// Once the signatures count reaches the sign threshold storage will be killed then raise a signed event
+		///
+		/// Params
+		/// 	1. collected signatures
 		pub MMRRootsToSign
 			get(fn mmr_root_to_sign_of)
 			: map hasher(identity) BlockNumber<T>
 			=> Option<Vec<(AccountId<T>, RelaySignature<T, I>)>>;
 
+		/// A cache for the old authorities who was renounce or kicked from authorities
+		///
+		/// Remove their lock while the submit authorities change signatures finished
 		pub OldAuthoritiesLockToRemove get(fn old_authorities_lock_to_remove): Vec<AccountId<T>>;
+
+		/// The mmr root signature submit duration, will be delayed if on authorities change
 		pub SubmitDuration get(fn submit_duration): BlockNumber<T> = T::SubmitDuration::get();
 	}
 }
@@ -147,12 +189,20 @@ decl_module! {
 
 		fn deposit_event() = default;
 
+		// Deal with the slash thing. If authority didn't do his job before the deadline
 		fn on_initialize(now: BlockNumber<T>) -> Weight {
 			Self::check_misbehavior(now);
 
 			0
 		}
 
+		/// Request to be an authority
+		///
+		/// This will be failed if match one of these sections:
+		/// - already is a candidate
+		/// - already is an authority
+		/// - insufficient stake, required at least more than the last candidate's
+		///   if too there're many candidates in the candidates' queue
 		#[weight = 10_000_000]
 		pub fn request_authority(
 			origin,
@@ -211,14 +261,20 @@ decl_module! {
 			})?;
 		}
 
-		// No-op if can't find
+		/// This would never fail. No-op if can't find the request
 		#[weight = 10_000_000]
 		pub fn cancel_request(origin) {
 			let account_id = ensure_signed(origin)?;
 			let _ = Self::remove_candidate_by_id(&account_id);
 		}
 
-		// No-op if can't find
+		/// Renounce the authority for you
+		///
+		/// This call is disallowed during the authorities change
+		///
+		/// No-op if can't find the authority
+		///
+		/// Will fail if you still in the term
 		#[weight = 10_000_000]
 		pub fn renounce_authority(origin) {
 			let account_id = ensure_signed(origin)?;
@@ -235,6 +291,11 @@ decl_module! {
 			)?;
 		}
 
+		/// Require add origin
+		///
+		/// Add an authority from the candidates
+		///
+		/// This call is disallowed during the authorities change
 		#[weight = 10_000_000]
 		pub fn add_authority(origin, account_id: AccountId<T>) {
 			T::AddOrigin::ensure_origin(origin)?;
@@ -251,7 +312,11 @@ decl_module! {
 			// Self::start_authorities_state();
 		}
 
-		// No-op if can't find
+		/// Require remove origin
+		///
+		/// This call is disallowed during the authorities change
+		///
+		/// No-op if can't find the authority
 		#[weight = 10_000_000]
 		pub fn remove_authority(origin, account_id: AccountId<T>) {
 			T::RemoveOrigin::ensure_origin(origin)?;
@@ -261,6 +326,9 @@ decl_module! {
 			let _ = Self::remove_authority_by_id_with(&account_id, |_| None);
 		}
 
+		/// Require reset origin
+		///
+		/// Clear the candidates. Also, remember to release the stake
 		#[weight = 10_000_000]
 		pub fn kill_candidates(origin) {
 			T::ResetOrigin::ensure_origin(origin)?;
@@ -272,6 +340,15 @@ decl_module! {
 			}
 		}
 
+		/// Require authority origin
+		///
+		/// This call is disallowed during the authorities change
+		///
+		/// No-op if already submit
+		///
+		/// Verify
+		/// - the relay requirement is valid
+		/// - the signature is signed by the submitter
 		#[weight = 10_000_000]
 		pub fn submit_signed_mmr_root(
 			origin,
@@ -310,17 +387,24 @@ decl_module! {
 			if Perbill::from_rational_approximation(signatures.len() as u32 + 1, authorities.len() as _)
 				>= T::SignThreshold::get()
 			{
-				<MMRRootsToSign<T, I>>::remove(block_number);
-
 				// TODO: clean the mmr root which was contains in this mmr root?
 
+				Self::finish_collect_mmr_root_sign(block_number);
 				Self::deposit_event(RawEvent::SignedMMRRoot(mmr_root, signatures));
 			} else {
 				<MMRRootsToSign<T, I>>::insert(block_number, signatures);
 			}
 		}
 
-		// No-op if already submit
+		/// Require authority origin
+		///
+		/// This call is only allowed during the authorities change
+		///
+		/// No-op if already submit
+		///
+		/// Verify
+		/// - the relay requirement is valid
+		/// - the signature is signed by the submitter
 		#[weight = 10_000_000]
 		pub fn submit_authorities_signature(origin, signature: RelaySignature<T, I>) {
 			let old_authority = ensure_signed(origin)?;
@@ -370,50 +454,6 @@ where
 	T: Trait<I>,
 	I: Instance,
 {
-	pub fn on_authorities_change() -> bool {
-		<AuthoritiesState<T, I>>::get().0
-	}
-
-	pub fn start_authorities_state(
-		old_authorities: &[RelayAuthorityT<T, I>],
-		new_authorities: &[RelayAuthorityT<T, I>],
-	) {
-		<OldAuthorities<T, I>>::put(old_authorities);
-		<AuthoritiesToSign<T, I>>::put((
-			{
-				// The message is composed of:
-				// 	(4 bytes `term`) + concat(list(20 bytes `ethereum address`))
-				let mut authorities_to_sign = <AuthorityTerm<I>>::get().to_le_bytes().to_vec();
-
-				for authority in new_authorities {
-					authorities_to_sign.extend_from_slice(authority.signer.as_ref());
-				}
-
-				authorities_to_sign
-			},
-			<Vec<(AccountId<T>, RelaySignature<T, I>)>>::new(),
-		));
-
-		let submit_duration = T::SubmitDuration::get();
-
-		<AuthoritiesState<T, I>>::put((
-			true,
-			<frame_system::Module<T>>::block_number() + submit_duration,
-		));
-		<SubmitDuration<T, I>>::mutate(|submit_duration_| *submit_duration_ += submit_duration);
-	}
-
-	pub fn finish_authorities_change() {
-		<AuthoritiesToSign<T, I>>::kill();
-		<AuthoritiesState<T, I>>::kill();
-
-		for account_id in <OldAuthoritiesLockToRemove<T, I>>::take() {
-			<RingCurrency<T, I>>::remove_lock(T::LockId::get(), &account_id);
-		}
-
-		<SubmitDuration<T, I>>::kill();
-	}
-
 	pub fn remove_authority_by_id_with<F>(
 		account_id: &AccountId<T>,
 		is_able_to_remove: F,
@@ -472,6 +512,62 @@ where
 				Err(<Error<T, I>>::CandidateNE)
 			}
 		})?)
+	}
+
+	pub fn on_authorities_change() -> bool {
+		<AuthoritiesState<T, I>>::get().0
+	}
+
+	pub fn start_authorities_state(
+		old_authorities: &[RelayAuthorityT<T, I>],
+		new_authorities: &[RelayAuthorityT<T, I>],
+	) {
+		<OldAuthorities<T, I>>::put(old_authorities);
+		<AuthoritiesToSign<T, I>>::put((
+			{
+				// The message is composed of:
+				// 	(4 bytes `term`) + concat(list(20 bytes `ethereum address`))
+				let mut authorities_to_sign = <AuthorityTerm<I>>::get().to_le_bytes().to_vec();
+
+				for authority in new_authorities {
+					authorities_to_sign.extend_from_slice(authority.signer.as_ref());
+				}
+
+				authorities_to_sign
+			},
+			<Vec<(AccountId<T>, RelaySignature<T, I>)>>::new(),
+		));
+
+		let submit_duration = T::SubmitDuration::get();
+
+		<AuthoritiesState<T, I>>::put((
+			true,
+			<frame_system::Module<T>>::block_number() + submit_duration,
+		));
+		<SubmitDuration<T, I>>::mutate(|submit_duration_| *submit_duration_ += submit_duration);
+	}
+
+	pub fn finish_authorities_change() {
+		<AuthoritiesToSign<T, I>>::kill();
+		<AuthoritiesState<T, I>>::kill();
+
+		for account_id in <OldAuthoritiesLockToRemove<T, I>>::take() {
+			<RingCurrency<T, I>>::remove_lock(T::LockId::get(), &account_id);
+		}
+
+		<SubmitDuration<T, I>>::kill();
+	}
+
+	pub fn finish_collect_mmr_root_sign(block_number: BlockNumber<T>) {
+		<MMRRootsToSign<T, I>>::remove(block_number);
+		<MMRRootsToSignKeys<T, I>>::mutate(|mmr_roots_to_sign_keys| {
+			if let Some(position) = mmr_roots_to_sign_keys
+				.iter()
+				.position(|key| key == &block_number)
+			{
+				mmr_roots_to_sign_keys.remove(position);
+			}
+		});
 	}
 
 	pub fn check_misbehavior(at: BlockNumber<T>) {
