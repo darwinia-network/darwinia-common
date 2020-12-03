@@ -1,7 +1,9 @@
 const expect = require('chai').expect;
 const Web3 = require('web3');
+const utils = require('./utils');
 
 const web3 = new Web3('http://localhost:9933');
+
 
 describe('Test Web3 API', function () {
 
@@ -14,20 +16,8 @@ describe('Test Web3 API', function () {
         const data = web3.utils.stringToHex("hello");
         const local_hash = web3.utils.sha3("hello");
 
-        web3.currentProvider.send({
-            method: "web3_sha3",
-            params: [data],
-            jsonrpc: "2.0",
-            id: 1
-        }, function (error, result) {
-            if (error) {
-                reject(
-                    `Failed to send custom request (${method} (${params.join(",")})): ${
-                        error.message || error.toString()
-                    }`
-                );
-            }
-            expect(result.result).to.be.equal(local_hash);
-        })
+        const hash = await utils.customRequest("web3_sha3", [data]);
+        expect(hash.result).to.be.equal(local_hash);
     });
 });
+
