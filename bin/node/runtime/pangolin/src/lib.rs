@@ -986,7 +986,6 @@ impl darwinia_ethereum_backing::Trait for Runtime {
 	type KtonCurrency = Kton;
 	type AdvancedFee = AdvancedFee;
 	type EcdsaAuthorities = EthereumRelayAuthorities;
-	type DarwiniaMMR = HeaderMMR;
 	type WeightInfo = ();
 }
 
@@ -1089,6 +1088,7 @@ impl darwinia_relay_authorities::Trait<EthereumRelayAuthoritiesInstance> for Run
 	type AddOrigin = ApproveOrigin;
 	type RemoveOrigin = ApproveOrigin;
 	type ResetOrigin = ApproveOrigin;
+	type DarwiniaMMR = HeaderMMR;
 	type Sign = EthereumBacking;
 	type SignThreshold = SignThreshold;
 	type SubmitDuration = SubmitDuration;

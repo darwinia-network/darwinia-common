@@ -89,7 +89,6 @@ macro_rules! decl_tests {
 			type KtonCurrency = Kton;
 			type AdvancedFee = ();
 			type EcdsaAuthorities = ();
-			type DarwiniaMMR = ();
 			type WeightInfo = ();
 		}
 
