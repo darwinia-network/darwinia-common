@@ -295,9 +295,10 @@ decl_module! {
 			}
 
 			if locked {
-				T::EcdsaAuthorities::new_mmr_to_sign(
-					<frame_system::Module<T>>::block_number() + 1.into()
-				);
+				T::EcdsaAuthorities::new_mmr_to_sign((
+					<frame_system::Module<T>>::block_number().saturated_into()
+						/ 10 * 10 + 10
+				).saturated_into());
 			}
 		}
 
