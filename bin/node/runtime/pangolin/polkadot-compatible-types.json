@@ -230,6 +230,7 @@
 		"stake": "Balance",
 		"term": "BlockNumber"
 	},
+	"MMRRoot": "Hash",
 	"__[pangolin.runtime]__": {
 		"ProxyType": {
 			"_enum": {
