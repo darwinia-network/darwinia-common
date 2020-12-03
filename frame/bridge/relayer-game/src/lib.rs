@@ -150,7 +150,7 @@ decl_storage! {
 
 		/// All the closed rounds here
 		///
-		/// Record the closed rounds endpoint which use for settlling or updating
+		/// Record the closed rounds endpoint which use for settling or updating
 		/// Settle or update a game will be scheduled which will start at this moment
 		pub GamesToUpdate
 			get(fn games_to_update_at)

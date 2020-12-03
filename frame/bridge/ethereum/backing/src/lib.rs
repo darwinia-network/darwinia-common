@@ -99,9 +99,7 @@ pub trait Trait: frame_system::Trait {
 
 	type AdvancedFee: Get<RingBalance<Self>>;
 
-	type EcdsaAuthorities: RelayAuthorityProtocol<Self::Hash>;
-
-	type DarwiniaMMR: MMR<Self::Hash>;
+	type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber>;
 
 	/// Weight information for the extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
@@ -297,9 +295,9 @@ decl_module! {
 			}
 
 			if locked {
-				if let Some(mmr_root) = T::DarwiniaMMR::get_root() {
-					T::EcdsaAuthorities::new_mmr_to_sign(mmr_root);
-				}
+				T::EcdsaAuthorities::new_mmr_to_sign(
+					<frame_system::Module<T>>::block_number() + 1.into()
+				);
 			}
 		}
 

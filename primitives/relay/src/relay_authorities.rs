@@ -37,12 +37,12 @@ pub trait Sign<BlockNumber> {
 	) -> bool;
 }
 
-pub trait RelayAuthorityProtocol<MMRRoot> {
-	fn new_mmr_to_sign(mmr_root: MMRRoot);
+pub trait RelayAuthorityProtocol<BlockNumber> {
+	fn new_mmr_to_sign(block_number: BlockNumber);
 }
 // Only for test
-impl<MMRRoot> RelayAuthorityProtocol<MMRRoot> for () {
-	fn new_mmr_to_sign(_: MMRRoot) {}
+impl<BlockNumber> RelayAuthorityProtocol<BlockNumber> for () {
+	fn new_mmr_to_sign(_: BlockNumber) {}
 }
 
 pub trait MMR<Root> {

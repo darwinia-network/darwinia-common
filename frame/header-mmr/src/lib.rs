@@ -221,13 +221,10 @@ impl<T: Trait> MMRStore<T::Hash> for ModuleMMRStore<T> {
 }
 
 impl<T: Trait> MMRT<T::Hash> for Module<T> {
-	fn get_root() -> Option<T::Hash> {
+	fn get_root(block_number: u64) -> Option<T::Hash> {
 		let store = <ModuleMMRStore<T>>::default();
-		let parent_hash = <frame_system::Module<T>>::parent_hash();
-		let mut mmr = <MMR<_, MMRMerge<T>, _>>::new(MMRCounter::get(), store);
-
-		// Update MMR and add mmr root to digest of block header
-		let _ = mmr.push(parent_hash);
+		let mmr_size = leaf_index_to_mmr_size(block_number);
+		let mmr = <MMR<_, MMRMerge<T>, _>>::new(mmr_size, store);
 
 		if let Ok(mmr_root) = mmr.get_root() {
 			Some(mmr_root)
