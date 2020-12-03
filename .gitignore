@@ -21,3 +21,6 @@ release/
 .cargo-ok
 Cargo.toml.bak
 expand.rs
+
+# Js
+node_modules/
