@@ -122,10 +122,10 @@ decl_event! {
 		RedeemKton(AccountId, Balance, EthereumTransactionIndex),
 		/// Someone redeem a deposit. [account, deposit id, amount, transaction index]
 		RedeemDeposit(AccountId, DepositId, RingBalance, EthereumTransactionIndex),
-		/// Someone lock some *RING*. [account, amount]
-		LockRing(AccountId, RingBalance),
-		/// Someone lock some *KTON*. [account, amount]
-		LockKton(AccountId, KtonBalance),
+		/// Someone lock some *RING*. [account, ecdsa address, asset type, amount]
+		LockRing(AccountId, EcdsaAddress, u8, RingBalance),
+		/// Someone lock some *KTON*. [account, ecdsa address, asset type, amount]
+		LockKton(AccountId, EcdsaAddress, u8, KtonBalance),
 	}
 }
 
@@ -255,6 +255,7 @@ decl_module! {
 			origin,
 			#[compact] ring_value: RingBalance<T>,
 			#[compact] kton_value: KtonBalance<T>,
+			ecdsa_address: EcdsaAddress,
 		) {
 			let user = ensure_signed(origin)?;
 			let fee_account = Self::fee_account_id();
@@ -270,7 +271,7 @@ decl_module! {
 
 				T::RingCurrency::transfer(&user, &fee_account, ring_to_lock, KeepAlive)?;
 
-				let raw_event = RawEvent::LockRing(user.clone(), ring_to_lock);
+				let raw_event = RawEvent::LockRing(user.clone(), ecdsa_address.clone(), 0, ring_to_lock);
 				let module_event: <T as Trait>::Event = raw_event.clone().into();
 				let system_event: <T as frame_system::Trait>::Event = module_event.into();
 
@@ -284,7 +285,7 @@ decl_module! {
 
 				T::KtonCurrency::transfer(&user, &fee_account, kton_to_lock, KeepAlive)?;
 
-				let raw_event = RawEvent::LockKton(user, kton_to_lock);
+				let raw_event = RawEvent::LockKton(user, ecdsa_address, 1, kton_to_lock);
 				let module_event: <T as Trait>::Event = raw_event.clone().into();
 				let system_event: <T as frame_system::Trait>::Event = module_event.into();
 
