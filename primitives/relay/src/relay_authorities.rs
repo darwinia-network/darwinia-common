@@ -45,12 +45,12 @@ impl<BlockNumber> RelayAuthorityProtocol<BlockNumber> for () {
 	fn new_mmr_to_sign(_: BlockNumber) {}
 }
 
-pub trait MMR<Root> {
-	fn get_root() -> Option<Root>;
+pub trait MMR<BlockNumber, Root> {
+	fn get_root(block_number: BlockNumber) -> Option<Root>;
 }
 // Only for test
-impl<Root> MMR<Root> for () {
-	fn get_root() -> Option<Root> {
+impl<BlockNumber, Root> MMR<BlockNumber, Root> for () {
+	fn get_root(_: BlockNumber) -> Option<Root> {
 		None
 	}
 }
