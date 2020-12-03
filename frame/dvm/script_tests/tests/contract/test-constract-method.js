@@ -1,5 +1,5 @@
 // Run the transfer balance firstly.
-require("../test-transfer-balance.js");
+require("../test-transfer.js");
 
 const expect = require('chai').expect;
 const Web3 = require('web3');
