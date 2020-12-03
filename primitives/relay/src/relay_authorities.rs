@@ -28,7 +28,7 @@ use sp_std::prelude::*;
 
 pub trait Sign<BlockNumber> {
 	type Signature: Clone + Debug + PartialEq + FullCodec;
-	type Signer: Clone + Debug + PartialEq + FullCodec;
+	type Signer: AsRef<[u8]> + Clone + Debug + PartialEq + FullCodec;
 
 	fn verify_signature(
 		signature: &Self::Signature,

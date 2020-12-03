@@ -26,8 +26,7 @@ mod types {
 
 	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
 	pub type BlockNumber<T> = <T as frame_system::Trait>::BlockNumber;
-	pub type Hash<T> = <T as frame_system::Trait>::Hash;
-	pub type MMRRoot<T> = Hash<T>;
+	pub type MMRRoot<T> = <T as frame_system::Trait>::Hash;
 	pub type RingBalance<T, I> = <RingCurrency<T, I> as Currency<AccountId<T>>>::Balance;
 	pub type RingCurrency<T, I> = <T as Trait<I>>::RingCurrency;
 
@@ -82,12 +81,11 @@ decl_event! {
 	pub enum Event<T, I: Instance = DefaultInstance>
 	where
 		AccountId = AccountId<T>,
-		Hash = Hash<T>,
 		MMRRoot = MMRRoot<T>,
 		RelaySignature = RelaySignature<T, I>,
 	{
 		SignedMMRRoot(MMRRoot, Vec<(AccountId, RelaySignature)>),
-		SignedAuthoritySet(Hash, Vec<(AccountId, RelaySignature)>),
+		SignedAuthoritySet(Vec<u8>, Vec<(AccountId, RelaySignature)>),
 	}
 }
 
@@ -122,22 +120,22 @@ decl_storage! {
 		pub Authorities get(fn authorities): Vec<RelayAuthorityT<T, I>>;
 		pub OldAuthorities get(fn old_authorities): Vec<RelayAuthorityT<T, I>>;
 
+		pub AuthorityTerm get(fn authority_term): u32;
 		// (
 		// 	is on authorities change,
 		// 	signature submit deadline,
 		// )
 		pub AuthoritiesState get(fn authorities_state): (bool, BlockNumber<T>) = (false, 0.into());
 
+		pub AuthoritiesToSign
+			get(fn authorities_to_sign)
+			: (Vec<u8>, Vec<(AccountId<T>, RelaySignature<T, I>)>);
 		pub MMRRootsToSign
 			get(fn mmr_root_to_sign_of)
 			: map hasher(identity) BlockNumber<T>
 			=> Option<(BlockNumber<T>, Vec<(AccountId<T>, RelaySignature<T, I>)>)>;
 
 		pub SubmitDuration get(fn submit_duration): BlockNumber<T> = T::SubmitDuration::get();
-
-		pub AuthoritiesToSign
-			get(fn authorities_to_sign)
-			: (Hash<T>, Vec<(AccountId<T>, RelaySignature<T, I>)>);
 	}
 }
 
@@ -347,50 +345,51 @@ decl_module! {
 			}
 		}
 
-	// 	// No-op if already submit
-	// 	#[weight = 10_000_000]
-	// 	pub fn submit_authorities_signature(origin, signature: RelaySignature<T, I>) {
-	// 		let old_authority = ensure_signed(origin)?;
+		// No-op if already submit
+		#[weight = 10_000_000]
+		pub fn submit_authorities_signature(origin, signature: RelaySignature<T, I>) {
+			let old_authority = ensure_signed(origin)?;
 
-	// 		ensure!(Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
+			ensure!(Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
 
-	// 		let (hashed_authorities_set, mut signatures) = <AuthoritiesToSign<T, I>>::get();
+			let (new_authorities_set, mut signatures) = <AuthoritiesToSign<T, I>>::get();
 
-	// 		if signatures
-	// 			.iter()
-	// 			.position(|(old_authority_, _)| old_authority_ == &old_authority)
-	// 			.is_some()
-	// 		{
-	// 			return Ok(());
-	// 		}
+			if signatures
+				.iter()
+				.position(|(old_authority_, _)| old_authority_ == &old_authority)
+				.is_some()
+			{
+				return Ok(());
+			}
 
-	// 		let old_authorities = <OldAuthorities<T, I>>::get();
-	// 		let signer = find_signer::<T, I>(
-	// 			&old_authorities,
-	// 			&old_authority
-	// 		).ok_or(<Error<T, I>>::AuthorityNE)?;
+			let old_authorities = <OldAuthorities<T, I>>::get();
+			let signer = find_signer::<T, I>(
+				&old_authorities,
+				&old_authority
+			).ok_or(<Error<T, I>>::AuthorityNE)?;
 
-	// 		ensure!(
-	// 			T::Sign::verify_signature(&signature, hashed_authorities_set, signer),
-	// 			 <Error<T, I>>::SignatureInv
-	// 		);
+			ensure!(
+				T::Sign::verify_signature(&signature, &new_authorities_set, signer),
+				 <Error<T, I>>::SignatureInv
+			);
 
-	// 		signatures.push((old_authority, signature));
+			signatures.push((old_authority, signature));
 
-	// 		if Perbill::from_rational_approximation(signatures.len() as u32 + 1, old_authorities.len() as _)
-	// 			>= T::SignThreshold::get()
-	// 		{
-	// 			<AuthoritiesToSign<T, I>>::kill();
-	// 			<AuthoritiesState<T, I>>::kill();
+			if Perbill::from_rational_approximation(signatures.len() as u32 + 1, old_authorities.len() as _)
+				>= T::SignThreshold::get()
+			{
+				<AuthoritiesToSign<T, I>>::kill();
+				<AuthoritiesState<T, I>>::kill();
 
-	// 			Self::deposit_event(RawEvent::SignedAuthoritySet(
-	// 				hashed_authorities_set,
-	// 				signatures
-	// 			));
-	// 		} else {
-	// 			<AuthoritiesToSign<T, I>>::put((hashed_authorities_set, signatures));
-	// 		}
-	// 	}
+				// Self::finish_authorities_change
+				Self::deposit_event(RawEvent::SignedAuthoritySet(
+					new_authorities_set,
+					signatures
+				));
+			} else {
+				<AuthoritiesToSign<T, I>>::put((new_authorities_set, signatures));
+			}
+		}
 	}
 }
 
@@ -405,15 +404,22 @@ where
 
 	pub fn update_authorities_state(
 		old_authorities: &[RelayAuthorityT<T, I>],
-		new_authorities: &[&AccountId<T>],
+		new_authorities: &[RelayAuthorityT<T, I>],
 	) -> BlockNumber<T> {
 		<OldAuthorities<T, I>>::put(old_authorities);
 
 		let deadline = <frame_system::Module<T>>::block_number() + T::SubmitDuration::get();
 
 		<AuthoritiesState<T, I>>::put((true, deadline));
+
+		let mut authorities_to_sign = <AuthorityTerm<I>>::get().to_le_bytes().to_vec();
+
+		for authority in new_authorities {
+			authorities_to_sign.extend_from_slice(authority.signer.as_ref());
+		}
+
 		<AuthoritiesToSign<T, I>>::put((
-			T::Hashing::hash(&new_authorities.encode()),
+			authorities_to_sign,
 			<Vec<(AccountId<T>, RelaySignature<T, I>)>>::new(),
 		));
 
@@ -435,14 +441,7 @@ where
 
 				let old_authorities = authorities.clone();
 				let removed_authority = authorities.remove(position);
-				let new_deadline = Self::update_authorities_state(
-					&old_authorities,
-					authorities
-						.iter()
-						.map(|authority| &authority.account_id)
-						.collect::<Vec<_>>()
-						.as_slice(),
-				);
+				let new_deadline = Self::update_authorities_state(&old_authorities, &authorities);
 
 				// TODO: optimize DB R/W, but it's ok in real case, since the set won't grow so large
 				// for mmr_root in <MMRRootsToSign<T, I>>::get() {
