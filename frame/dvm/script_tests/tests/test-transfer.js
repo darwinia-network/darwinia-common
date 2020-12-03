@@ -29,6 +29,11 @@ describe('Test Transfer Balance', function () {
         expect(balanceTo).to.be.equal('0');
     });
 
+    it('Get nonce before transfer', async function () {
+        expect(await web3.eth.getTransactionCount(addressFrom, 'latest')).to.eq(0);
+        expect(await web3.eth.getTransactionCount(addressFrom, 'earliest')).to.eq(0);
+    });
+
     it("Transfer balance 1", async function () {
         const createTransaction = await web3.eth.accounts.signTransaction(
             {
@@ -61,7 +66,11 @@ describe('Test Transfer Balance', function () {
         expect(balanceTo).to.be.equal('10');
     });
 
-    it("Transfer balance 2", async function() {
+    it('Get nonce after transfer balance 1', async function () {
+        expect(await web3.eth.getTransactionCount(addressFrom, 'latest')).to.eq(1);
+    });
+
+    it("Transfer balance 2", async function () {
         const createTransaction = await web3.eth.accounts.signTransaction(
             {
                 from: addressFrom,
@@ -91,4 +100,7 @@ describe('Test Transfer Balance', function () {
         expect(balanceTo).to.be.equal('0.0000000000000001');
     });
 
+    it('Get nonce after transfer balance 2', async function () {
+        expect(await web3.eth.getTransactionCount(addressFrom, 'latest')).to.eq(2);
+    });
 });
