@@ -36,8 +36,6 @@ mod types {
 		RelayAuthority<AccountId<T>, Signer<T, I>, RingBalance<T, I>, BlockNumber<T>>;
 }
 
-// --- crates ---
-use codec::Encode;
 // --- substrate ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
@@ -46,10 +44,7 @@ use frame_support::{
 	StorageValue,
 };
 use frame_system::ensure_signed;
-use sp_runtime::{
-	traits::{Hash as HashT, Saturating},
-	DispatchError, DispatchResult, Perbill,
-};
+use sp_runtime::{DispatchError, DispatchResult, Perbill};
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
 use sp_std::prelude::*;
@@ -130,11 +125,13 @@ decl_storage! {
 		pub AuthoritiesToSign
 			get(fn authorities_to_sign)
 			: (Vec<u8>, Vec<(AccountId<T>, RelaySignature<T, I>)>);
+		pub MMRRootsToSignKeys get(fn mmr_root_to_sign_keys): Vec<BlockNumber<T>>;
 		pub MMRRootsToSign
 			get(fn mmr_root_to_sign_of)
 			: map hasher(identity) BlockNumber<T>
-			=> Option<(BlockNumber<T>, Vec<(AccountId<T>, RelaySignature<T, I>)>)>;
+			=> Option<Vec<(AccountId<T>, RelaySignature<T, I>)>>;
 
+		pub OldAuthoritiesLockToRemove get(fn old_authorities_lock_to_remove): Vec<AccountId<T>>;
 		pub SubmitDuration get(fn submit_duration): BlockNumber<T> = T::SubmitDuration::get();
 	}
 }
@@ -151,7 +148,7 @@ decl_module! {
 		fn deposit_event() = default;
 
 		fn on_initialize(now: BlockNumber<T>) -> Weight {
-			Self::check_submit_deadline(now);
+			Self::check_misbehavior(now);
 
 			0
 		}
@@ -245,11 +242,13 @@ decl_module! {
 			ensure!(!Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
 
 			let mut authority = Self::remove_candidate_by_id(&account_id)?;
+
 			authority.term = <frame_system::Module<T>>::block_number() + T::TermDuration::get();
 
 			// Won't check duplicated here, MUST make this authority sure is unique
 			// As we already make a check in `request_authority`
 			<Authorities<T, I>>::append(authority);
+			// Self::start_authorities_state();
 		}
 
 		// No-op if can't find
@@ -273,30 +272,6 @@ decl_module! {
 			}
 		}
 
-		// Dangerous!
-		//
-		// Authorities don't need to stake any asset
-		//
-		// This operation is forced to set the authorities,
-		// without the authorities change signature requirement
-		#[weight = 10_000_000]
-		pub fn reset_authorities(origin, authorities: Vec<RelayAuthorityT<T, I>>) {
-			T::ResetOrigin::ensure_origin(origin)?;
-
-			ensure!(!Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
-
-			<Authorities<T, I>>::mutate(|old_authorities| {
-				for authority in old_authorities.iter() {
-					<RingCurrency<T, I>>::remove_lock(
-						T::LockId::get(),
-						&authority.account_id
-					);
-				}
-
-				*old_authorities = authorities;
-			});
-		}
-
 		#[weight = 10_000_000]
 		pub fn submit_signed_mmr_root(
 			origin,
@@ -309,7 +284,7 @@ decl_module! {
 			// Not allow to submit during the authorities set change
 			ensure!(!Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
 
-			let (deadline, mut signatures) =
+			let mut signatures =
 				<MMRRootsToSign<T, I>>::get(block_number).ok_or(<Error<T, I>>::ScheduledSignNE)?;
 
 			// No-op if was already submitted
@@ -341,7 +316,7 @@ decl_module! {
 
 				Self::deposit_event(RawEvent::SignedMMRRoot(mmr_root, signatures));
 			} else {
-				<MMRRootsToSign<T, I>>::insert(block_number, (deadline, signatures));
+				<MMRRootsToSign<T, I>>::insert(block_number, signatures);
 			}
 		}
 
@@ -378,10 +353,7 @@ decl_module! {
 			if Perbill::from_rational_approximation(signatures.len() as u32 + 1, old_authorities.len() as _)
 				>= T::SignThreshold::get()
 			{
-				<AuthoritiesToSign<T, I>>::kill();
-				<AuthoritiesState<T, I>>::kill();
-
-				// Self::finish_authorities_change
+				Self::finish_authorities_change();
 				Self::deposit_event(RawEvent::SignedAuthoritySet(
 					new_authorities_set,
 					signatures
@@ -402,28 +374,44 @@ where
 		<AuthoritiesState<T, I>>::get().0
 	}
 
-	pub fn update_authorities_state(
+	pub fn start_authorities_state(
 		old_authorities: &[RelayAuthorityT<T, I>],
 		new_authorities: &[RelayAuthorityT<T, I>],
-	) -> BlockNumber<T> {
+	) {
 		<OldAuthorities<T, I>>::put(old_authorities);
-
-		let deadline = <frame_system::Module<T>>::block_number() + T::SubmitDuration::get();
-
-		<AuthoritiesState<T, I>>::put((true, deadline));
-
-		let mut authorities_to_sign = <AuthorityTerm<I>>::get().to_le_bytes().to_vec();
-
-		for authority in new_authorities {
-			authorities_to_sign.extend_from_slice(authority.signer.as_ref());
-		}
-
 		<AuthoritiesToSign<T, I>>::put((
-			authorities_to_sign,
+			{
+				// The message is composed of:
+				// 	(4 bytes `term`) + concat(list(20 bytes `ethereum address`))
+				let mut authorities_to_sign = <AuthorityTerm<I>>::get().to_le_bytes().to_vec();
+
+				for authority in new_authorities {
+					authorities_to_sign.extend_from_slice(authority.signer.as_ref());
+				}
+
+				authorities_to_sign
+			},
 			<Vec<(AccountId<T>, RelaySignature<T, I>)>>::new(),
 		));
 
-		deadline
+		let submit_duration = T::SubmitDuration::get();
+
+		<AuthoritiesState<T, I>>::put((
+			true,
+			<frame_system::Module<T>>::block_number() + submit_duration,
+		));
+		<SubmitDuration<T, I>>::mutate(|submit_duration_| *submit_duration_ += submit_duration);
+	}
+
+	pub fn finish_authorities_change() {
+		<AuthoritiesToSign<T, I>>::kill();
+		<AuthoritiesState<T, I>>::kill();
+
+		for account_id in <OldAuthoritiesLockToRemove<T, I>>::take() {
+			<RingCurrency<T, I>>::remove_lock(T::LockId::get(), &account_id);
+		}
+
+		<SubmitDuration<T, I>>::kill();
 	}
 
 	pub fn remove_authority_by_id_with<F>(
@@ -441,34 +429,27 @@ where
 
 				let old_authorities = authorities.clone();
 				let removed_authority = authorities.remove(position);
-				let new_deadline = Self::update_authorities_state(&old_authorities, &authorities);
+
+				Self::start_authorities_state(&old_authorities, &authorities);
 
 				// TODO: optimize DB R/W, but it's ok in real case, since the set won't grow so large
-				// for mmr_root in <MMRRootsToSign<T, I>>::get() {
-				// 	if let Some((deadline, mut signatures)) = <MMRRootsToSign<T, I>>::get(&mmr_root)
-				// 	{
-				// 		if let Some(position) = signatures
-				// 			.iter()
-				// 			.position(|(authority, _)| authority == account_id)
-				// 		{
-				// 			signatures.remove(position);
-				// 		}
+				for key in <MMRRootsToSignKeys<T, I>>::get() {
+					if let Some(mut signatures) = <MMRRootsToSign<T, I>>::get(key) {
+						if let Some(position) = signatures
+							.iter()
+							.position(|(authority, _)| authority == account_id)
+						{
+							signatures.remove(position);
+						}
 
-				// 		<MMRRootsToSign<T, I>>::insert(&mmr_root, (new_deadline, signatures));
+						<MMRRootsToSign<T, I>>::insert(key, signatures);
+					} else {
+						// Should never enter this condition
+						// TODO: error log
+					}
+				}
 
-				// 		// if let Some(mmr_root) = <ClosedMMRRootSubmits<T, I>>::take(&deadline) {
-				// 		// 	<ClosedMMRRootSubmits<T, I>>::insert(new_deadline, mmr_root);
-				// 		// } else {
-				// 		// 	// Should never enter this condition
-				// 		// 	// TODO: error log
-				// 		// }
-				// 	} else {
-				// 		// Should never enter this condition
-				// 		// TODO: error log
-				// 	}
-				// }
-
-				<RingCurrency<T, I>>::remove_lock(T::LockId::get(), account_id);
+				<OldAuthoritiesLockToRemove<T, I>>::append(account_id);
 
 				return Ok(removed_authority);
 			}
@@ -493,43 +474,47 @@ where
 		})?)
 	}
 
-	pub fn check_submit_deadline(at: BlockNumber<T>) {
-		// let find_and_slash_misbehavior = |signatures: Vec<(AccountId<T>, RelaySignature<T, I>)>| {
-		// 	for RelayAuthority {
-		// 		account_id, stake, ..
-		// 	} in <Authorities<T, I>>::get()
-		// 	{
-		// 		if let None = signatures
-		// 			.iter()
-		// 			.position(|(authority, _)| authority == &account_id)
-		// 		{
-		// 			<RingCurrency<T, I>>::slash(&account_id, stake);
-		// 		}
-		// 	}
-		// };
-		// let (on_authorities_change, deadline) = <AuthoritiesState<T, I>>::get();
+	pub fn check_misbehavior(at: BlockNumber<T>) {
+		let find_and_slash_misbehavior = |signatures: Vec<(AccountId<T>, RelaySignature<T, I>)>| {
+			for RelayAuthority {
+				account_id, stake, ..
+			} in <Authorities<T, I>>::get()
+			{
+				if let None = signatures
+					.iter()
+					.position(|(authority, _)| authority == &account_id)
+				{
+					<RingCurrency<T, I>>::slash(&account_id, stake);
+				}
+			}
+		};
+		let (on_authorities_change, deadline) = <AuthoritiesState<T, I>>::get();
 
-		// if on_authorities_change {
-		// 	if deadline == at {
-		// 		let (_, signatures) = <AuthoritiesToSign<T, I>>::get();
+		if on_authorities_change {
+			if deadline == at {
+				let (_, signatures) = <AuthoritiesToSign<T, I>>::get();
 
-		// 		find_and_slash_misbehavior(signatures);
+				find_and_slash_misbehavior(signatures);
 
-		// 		<AuthoritiesState<T, I>>::put((
-		// 			true,
-		// 			<frame_system::Module<T>>::block_number() + T::SubmitDuration::get(),
-		// 		));
-		// 	}
-		// } else {
-		// 	if let Some(closed_submit) = Self::closed_mmr_root_submit_of(at) {
-		// 		if let Some((_, signatures)) = <MMRRootsToSign<T, I>>::get(&closed_submit) {
-		// 			find_and_slash_misbehavior(signatures);
-		// 		} else {
-		// 			// Should never enter this condition
-		// 			// TODO: error log
-		// 		}
-		// 	}
-		// }
+				let submit_duration = T::SubmitDuration::get();
+
+				<AuthoritiesState<T, I>>::put((
+					true,
+					<frame_system::Module<T>>::block_number() + submit_duration,
+				));
+				<SubmitDuration<T, I>>::mutate(|submit_duration_| {
+					*submit_duration_ += submit_duration
+				});
+			}
+		} else {
+			if let Some(signatures) = <MMRRootsToSign<T, I>>::take(
+				<frame_system::Module<T>>::block_number() - <SubmitDuration<T, I>>::get(),
+			) {
+				find_and_slash_misbehavior(signatures);
+
+				// TODO: delay or discard?
+			}
+		}
 	}
 }
 
@@ -545,23 +530,9 @@ where
 				return Err(());
 			}
 
-			let (on_authorities_change, authorities_submit_deadline) =
-				<AuthoritiesState<T, I>>::get();
-			let now = <frame_system::Module<T>>::block_number();
-			let mut mmr_root_submit_deadline = now + T::SubmitDuration::get();
+			<MMRRootsToSignKeys<T, I>>::append(block_number);
 
-			// Delay if on authorities change
-			if on_authorities_change {
-				mmr_root_submit_deadline += authorities_submit_deadline.saturating_sub(now);
-			}
-
-			<MMRRootsToSign<T, I>>::insert(
-				block_number,
-				(
-					mmr_root_submit_deadline,
-					<Vec<(AccountId<T>, RelaySignature<T, I>)>>::new(),
-				),
-			);
+			*signed_mmr_root = Some(<Vec<(AccountId<T>, RelaySignature<T, I>)>>::new());
 
 			Ok(())
 		});
