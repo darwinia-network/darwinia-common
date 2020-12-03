@@ -61,29 +61,17 @@ use types::*;
 
 pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	type Event: From<Event<Self, I>> + Into<<Self as frame_system::Trait>::Event>;
-
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
-
 	type LockId: Get<LockIdentifier>;
-
 	type TermDuration: Get<Self::BlockNumber>;
-
 	type MaxCandidates: Get<usize>;
-
 	type AddOrigin: EnsureOrigin<Self::Origin>;
-
 	type RemoveOrigin: EnsureOrigin<Self::Origin>;
-
 	type ResetOrigin: EnsureOrigin<Self::Origin>;
-
-	type DarwiniaMMR: MMR<Self::Hash>;
-
+	type DarwiniaMMR: MMR<Self::BlockNumber, Self::Hash>;
 	type Sign: Sign<Self::BlockNumber>;
-
 	type SignThreshold: Get<Perbill>;
-
 	type SubmitDuration: Get<Self::BlockNumber>;
-
 	type WeightInfo: WeightInfo;
 }
 
@@ -119,8 +107,10 @@ decl_error! {
 		StakeIns,
 		/// On Authorities Change - DISABLED
 		OnAuthoritiesChangeDis,
-		/// MMR Root -NOT EXISTED
-		MMRRootNE,
+		/// Scheduled Sign -NOT EXISTED
+		ScheduledSignNE,
+		/// Darwinia MMR Root - NOT READY YET
+		DarwiniaMMRRootNRY,
 		/// Signature - INVALID
 		SignatureInv,
 	}
@@ -138,8 +128,8 @@ decl_storage! {
 		// )
 		pub AuthoritiesState get(fn authorities_state): (bool, BlockNumber<T>) = (false, 0.into());
 
-		pub SignedMMRRoots
-			get(fn signed_mmr_root_of)
+		pub MMRRootsToSign
+			get(fn mmr_root_to_sign_of)
 			: map hasher(identity) BlockNumber<T>
 			=> Option<(BlockNumber<T>, Vec<(AccountId<T>, RelaySignature<T, I>)>)>;
 
@@ -309,58 +299,53 @@ decl_module! {
 			});
 		}
 
-	// 	// No-op if already submit
-	// 	#[weight = 10_000_000]
-	// 	pub fn submit_mmr_root_signature(
-	// 		origin,
-	// 		mmr_root: MMRRoot<T>,
-	// 		signature: RelaySignature<T, I>
-	// 	) {
-	// 		let authority = ensure_signed(origin)?;
+		#[weight = 10_000_000]
+		pub fn submit_signed_mmr_root(
+			origin,
+			block_number: BlockNumber<T>,
+			mmr_root: MMRRoot<T>,
+			signature: RelaySignature<T, I>
+		) {
+			let authority = ensure_signed(origin)?;
 
-	// 		ensure!(!Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
+			// Not allow to submit during the authorities set change
+			ensure!(!Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
 
-	// 		let (deadline, mut signatures) =
-	// 			<SignedMMRRoots<T, I>>::get(&mmr_root).ok_or(<Error<T, I>>::MMRRootNE)?;
+			let (deadline, mut signatures) =
+				<MMRRootsToSign<T, I>>::get(block_number).ok_or(<Error<T, I>>::ScheduledSignNE)?;
 
-	// 		if signatures.iter().position(|(authority_, _)| authority_ == &authority).is_some() {
-	// 			return Ok(());
-	// 		}
+			// No-op if was already submitted
+			if signatures.iter().position(|(authority_, _)| authority_ == &authority).is_some() {
+				return Ok(());
+			}
 
-	// 		let authorities = <Authorities<T, I>>::get();
-	// 		let signer = find_signer::<T, I>(
-	// 			&authorities,
-	// 			&authority
-	// 		).ok_or(<Error<T, I>>::AuthorityNE)?;
+			let authorities = <Authorities<T, I>>::get();
+			let signer = find_signer::<T, I>(
+				&authorities,
+				&authority
+			).ok_or(<Error<T, I>>::AuthorityNE)?;
+			let mmr_root =
+				T::DarwiniaMMR::get_root(block_number).ok_or(<Error<T, I>>::DarwiniaMMRRootNRY)?;
 
-	// 		ensure!(
-	// 			T::Sign::verify_signature(&signature, mmr_root, signer),
-	// 			 <Error<T, I>>::SignatureInv
-	// 		);
+			ensure!(
+				T::Sign::verify_signature(&signature, mmr_root, signer),
+				 <Error<T, I>>::SignatureInv
+			);
 
-	// 		signatures.push((authority, signature));
+			signatures.push((authority, signature));
 
-	// 		if Perbill::from_rational_approximation(signatures.len() as u32 + 1, authorities.len() as _)
-	// 			>= T::SignThreshold::get()
-	// 		{
-	// 			// <MMRRootsToSign<T, I>>::mutate(|mmr_roots_to_sign|
-	// 			// 	if let Some(position) = mmr_roots_to_sign
-	// 			// 		.iter()
-	// 			// 		.position(|mmr_root_| mmr_root_ == &mmr_root)
-	// 			// 	{
-	// 			// 		mmr_roots_to_sign.remove(position);
-	// 			// 	}
-	// 			// );
-	// 			<SignedMMRRoots<T, I>>::remove(&mmr_root);
-	// 			// <ClosedMMRRootSubmits<T, I>>::remove(&deadline);
+			if Perbill::from_rational_approximation(signatures.len() as u32 + 1, authorities.len() as _)
+				>= T::SignThreshold::get()
+			{
+				<MMRRootsToSign<T, I>>::remove(block_number);
 
-	// 			// TODO: clean the mmr root which was contains in this mmr root?
+				// TODO: clean the mmr root which was contains in this mmr root?
 
-	// 			Self::deposit_event(RawEvent::SignedMMRRoot(mmr_root, signatures));
-	// 		} else {
-	// 			<SignedMMRRoots<T, I>>::insert(&mmr_root, (deadline, signatures));
-	// 		}
-	// 	}
+				Self::deposit_event(RawEvent::SignedMMRRoot(mmr_root, signatures));
+			} else {
+				<MMRRootsToSign<T, I>>::insert(block_number, (deadline, signatures));
+			}
+		}
 
 	// 	// No-op if already submit
 	// 	#[weight = 10_000_000]
@@ -461,7 +446,7 @@ where
 
 				// TODO: optimize DB R/W, but it's ok in real case, since the set won't grow so large
 				// for mmr_root in <MMRRootsToSign<T, I>>::get() {
-				// 	if let Some((deadline, mut signatures)) = <SignedMMRRoots<T, I>>::get(&mmr_root)
+				// 	if let Some((deadline, mut signatures)) = <MMRRootsToSign<T, I>>::get(&mmr_root)
 				// 	{
 				// 		if let Some(position) = signatures
 				// 			.iter()
@@ -470,7 +455,7 @@ where
 				// 			signatures.remove(position);
 				// 		}
 
-				// 		<SignedMMRRoots<T, I>>::insert(&mmr_root, (new_deadline, signatures));
+				// 		<MMRRootsToSign<T, I>>::insert(&mmr_root, (new_deadline, signatures));
 
 				// 		// if let Some(mmr_root) = <ClosedMMRRootSubmits<T, I>>::take(&deadline) {
 				// 		// 	<ClosedMMRRootSubmits<T, I>>::insert(new_deadline, mmr_root);
@@ -538,7 +523,7 @@ where
 		// 	}
 		// } else {
 		// 	if let Some(closed_submit) = Self::closed_mmr_root_submit_of(at) {
-		// 		if let Some((_, signatures)) = <SignedMMRRoots<T, I>>::get(&closed_submit) {
+		// 		if let Some((_, signatures)) = <MMRRootsToSign<T, I>>::get(&closed_submit) {
 		// 			find_and_slash_misbehavior(signatures);
 		// 		} else {
 		// 			// Should never enter this condition
@@ -555,7 +540,7 @@ where
 	I: Instance,
 {
 	fn new_mmr_to_sign(block_number: BlockNumber<T>) {
-		let _ = <SignedMMRRoots<T, I>>::try_mutate(block_number, |signed_mmr_root| {
+		let _ = <MMRRootsToSign<T, I>>::try_mutate(block_number, |signed_mmr_root| {
 			// No-op if the sign was already scheduled
 			if signed_mmr_root.is_some() {
 				return Err(());
@@ -571,7 +556,7 @@ where
 				mmr_root_submit_deadline += authorities_submit_deadline.saturating_sub(now);
 			}
 
-			<SignedMMRRoots<T, I>>::insert(
+			<MMRRootsToSign<T, I>>::insert(
 				block_number,
 				(
 					mmr_root_submit_deadline,
