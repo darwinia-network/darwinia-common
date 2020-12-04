@@ -1,3 +1,21 @@
+// This file is part of Darwinia.
+//
+// Copyright (C) 2018-2020 Darwinia Network
+// SPDX-License-Identifier: GPL-3.0
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia.  If not, see <https://www.gnu.org/licenses/>.
+
 //! Prototype module for cross chain assets backing.
 
 // TODO: https://github.com/darwinia-network/darwinia-common/issues/372
@@ -19,6 +37,7 @@ mod types {
 	pub type DepositId = U256;
 
 	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
+	pub type BlockNumber<T> = <T as frame_system::Trait>::BlockNumber;
 	pub type RingBalance<T> = <<T as Trait>::RingCurrency as Currency<AccountId<T>>>::Balance;
 	pub type KtonBalance<T> = <<T as Trait>::KtonCurrency as Currency<AccountId<T>>>::Balance;
 
@@ -26,6 +45,9 @@ mod types {
 		AccountId<T>,
 		RingBalance<T>,
 	>>::EthereumReceiptProofThing;
+
+	pub type EcdsaSignature = [u8; 65];
+	pub type EcdsaAddress = [u8; 20];
 }
 
 // --- crates ---
@@ -36,8 +58,10 @@ use ethabi::{Event as EthEvent, EventParam as EthEventParam, ParamType, RawLog};
 use frame_support::{
 	debug, decl_error, decl_event, decl_module, decl_storage, ensure,
 	traits::{Currency, ExistenceRequirement::KeepAlive, Get},
+	weights::Weight,
 };
 use frame_system::{ensure_root, ensure_signed};
+use sp_io::{crypto, hashing};
 use sp_runtime::{
 	traits::{AccountIdConversion, SaturatedConversion, Saturating, Zero},
 	DispatchError, DispatchResult, ModuleId, RuntimeDebug,
@@ -47,6 +71,7 @@ use sp_std::borrow::ToOwned;
 use sp_std::{convert::TryFrom, prelude::*};
 // --- darwinia ---
 use array_bytes::array_unchecked;
+use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::{
 	balance::lock::*,
 	traits::{EthereumReceipt, OnDepositRedeem},
@@ -58,7 +83,7 @@ pub trait Trait: frame_system::Trait {
 	/// The ethereum backing module id, used for deriving its sovereign account ID.
 	type ModuleId: Get<ModuleId>;
 
-	type EthereumBackingFeeModuleId: Get<ModuleId>;
+	type FeeModuleId: Get<ModuleId>;
 
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
@@ -73,6 +98,8 @@ pub trait Trait: frame_system::Trait {
 	type KtonCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
 	type AdvancedFee: Get<RingBalance<Self>>;
+
+	type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber>;
 
 	/// Weight information for the extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
@@ -95,10 +122,10 @@ decl_event! {
 		RedeemKton(AccountId, Balance, EthereumTransactionIndex),
 		/// Someone redeem a deposit. [account, deposit id, amount, transaction index]
 		RedeemDeposit(AccountId, DepositId, RingBalance, EthereumTransactionIndex),
-		/// Someone lock some *RING*. [account, amount]
-		LockRing(AccountId, RingBalance),
-		/// Someone lock some *KTON*. [account, amount]
-		LockKton(AccountId, KtonBalance),
+		/// Someone lock some *RING*. [account, ecdsa address, asset type, amount]
+		LockRing(AccountId, EcdsaAddress, u8, RingBalance),
+		/// Someone lock some *KTON*. [account, ecdsa address, asset type, amount]
+		LockKton(AccountId, EcdsaAddress, u8, KtonBalance),
 	}
 }
 
@@ -130,7 +157,7 @@ decl_error! {
 		// /// Usable Balance for Paying Redeem Fee - INSUFFICIENT
 		// FeeIns,
 		/// Redeem - DISABLED
-		RedeemDis
+		RedeemDis,
 	}
 }
 
@@ -183,7 +210,15 @@ decl_module! {
 		/// The ethereum backing module id, used for deriving its sovereign account ID.
 		const ModuleId: ModuleId = T::ModuleId::get();
 
+		const FeeModuleId: ModuleId = T::FeeModuleId::get();
+
 		fn deposit_event() = default;
+
+		fn on_initialize(_n: BlockNumber<T>) -> Weight {
+			<LockAssetEvents<T>>::kill();
+
+			0
+		}
 
 		fn on_runtime_upgrade() -> frame_support::weights::Weight {
 			let _ = T::RingCurrency::make_free_balance_be(
@@ -220,6 +255,7 @@ decl_module! {
 			origin,
 			#[compact] ring_value: RingBalance<T>,
 			#[compact] kton_value: KtonBalance<T>,
+			ecdsa_address: EcdsaAddress,
 		) {
 			let user = ensure_signed(origin)?;
 			let fee_account = Self::fee_account_id();
@@ -228,14 +264,18 @@ decl_module! {
 			// https://github.com/darwinia-network/darwinia-common/pull/377#issuecomment-730369387
 			T::RingCurrency::transfer(&user, &fee_account, T::AdvancedFee::get(), KeepAlive)?;
 
+			let mut locked = false;
+
 			if !ring_value.is_zero() {
 				let ring_to_lock = ring_value.min(T::RingCurrency::usable_balance(&user));
 
 				T::RingCurrency::transfer(&user, &fee_account, ring_to_lock, KeepAlive)?;
 
-				let raw_event = RawEvent::LockRing(user.clone(), ring_to_lock);
+				let raw_event = RawEvent::LockRing(user.clone(), ecdsa_address.clone(), 0, ring_to_lock);
 				let module_event: <T as Trait>::Event = raw_event.clone().into();
 				let system_event: <T as frame_system::Trait>::Event = module_event.into();
+
+				locked = true;
 
 				<LockAssetEvents<T>>::append(system_event);
 				Self::deposit_event(raw_event);
@@ -245,12 +285,21 @@ decl_module! {
 
 				T::KtonCurrency::transfer(&user, &fee_account, kton_to_lock, KeepAlive)?;
 
-				let raw_event = RawEvent::LockKton(user, kton_to_lock);
+				let raw_event = RawEvent::LockKton(user, ecdsa_address, 1, kton_to_lock);
 				let module_event: <T as Trait>::Event = raw_event.clone().into();
 				let system_event: <T as frame_system::Trait>::Event = module_event.into();
 
+				locked = true;
+
 				<LockAssetEvents<T>>::append(system_event);
 				Self::deposit_event(raw_event);
+			}
+
+			if locked {
+				T::EcdsaAuthorities::new_mmr_to_sign((
+					<frame_system::Module<T>>::block_number().saturated_into()
+						/ 10 * 10 + 10
+				).saturated_into());
 			}
 		}
 
@@ -309,7 +358,7 @@ impl<T: Trait> Module<T> {
 	}
 
 	pub fn fee_account_id() -> T::AccountId {
-		T::EthereumBackingFeeModuleId::get().into_account()
+		T::FeeModuleId::get().into_account()
 	}
 
 	pub fn account_id_try_from_bytes(bytes: &[u8]) -> Result<T::AccountId, DispatchError> {
@@ -684,6 +733,25 @@ impl<T: Trait> Module<T> {
 		));
 
 		Ok(())
+	}
+}
+
+impl<T: Trait> Sign<BlockNumber<T>> for Module<T> {
+	type Signature = EcdsaSignature;
+	type Signer = EcdsaAddress;
+
+	fn verify_signature(
+		signature: &Self::Signature,
+		message: impl AsRef<[u8]>,
+		signer: Self::Signer,
+	) -> bool {
+		if let Ok(public_key) =
+			crypto::secp256k1_ecdsa_recover(signature, &hashing::blake2_256(message.as_ref()))
+		{
+			hashing::keccak_256(&public_key)[12..] == signer
+		} else {
+			false
+		}
 	}
 }
 

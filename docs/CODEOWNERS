@@ -34,6 +34,7 @@
 /frame/bridge/ethereum/linear-relay/ @AurevoirXavier @clearloop @HackFisher
 /frame/bridge/ethereum/offchain/ @AurevoirXavier @yanganto
 /frame/bridge/ethereum/relay/ @AurevoirXavier @HackFisher @yanganto
+/frame/bridge/relay-authorities/ @AurevoirXavier
 /frame/bridge/relayer-game/ @AurevoirXavier @yanganto
 
 /frame/claims/ @AurevoirXavier @HackFisher
@@ -52,6 +53,5 @@
 
 /primitives/array-bytes/ @AurevoirXavier
 /primitives/ethereum-primitives/ @AurevoirXavier @HackFisher
-/primitives/relay/ @AurevoirXavier
 /primitives/merkle-patricia-trie/ @HackFisher
 /primitives/relay/ @AurevoirXavier

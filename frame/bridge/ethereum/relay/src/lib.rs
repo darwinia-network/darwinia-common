@@ -1,3 +1,21 @@
+// This file is part of Darwinia.
+//
+// Copyright (C) 2018-2020 Darwinia Network
+// SPDX-License-Identifier: GPL-3.0
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia.  If not, see <https://www.gnu.org/licenses/>.
+
 //! # Darwinia Ethereum Relay Module
 
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -52,7 +70,7 @@ use sp_std::{convert::From, marker::PhantomData, prelude::*};
 // --- darwinia ---
 use crate::mmr::{leaf_index_to_mmr_size, leaf_index_to_pos, MMRMerge, MerkleProof};
 use array_bytes::array_unchecked;
-use darwinia_relay_primitives::*;
+use darwinia_relay_primitives::relayer_game::*;
 use darwinia_support::{
 	balance::lock::LockableCurrency, traits::EthereumReceipt as EthereumReceiptT,
 };
@@ -366,7 +384,8 @@ decl_module! {
 					Err(DispatchError::BadOrigin)?
 				}
 			};
-			let res: Result<(), DispatchError> = <PendingRelayHeaderParcels<T>>::try_mutate(|pending_relay_header_parcels| {
+
+			<PendingRelayHeaderParcels<T>>::try_mutate(|pending_relay_header_parcels| {
 				if let Some(i) =
 					pending_relay_header_parcels
 						.iter()
@@ -421,13 +440,11 @@ decl_module! {
 						));
 					}
 
-					Ok(())
+					DispatchResult::Ok(())
 				} else {
 					Err(<Error<T>>::PendingRelayHeaderParcelNE)?
 				}
-			});
-
-			res?;
+			})?;
 
 			Self::deposit_event(RawEvent::GuardVoted(ethereum_block_number, aye));
 		}

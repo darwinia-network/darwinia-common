@@ -7,7 +7,7 @@ license    = "Unlicense"
 name       = "pangolin-runtime"
 readme     = "README.md"
 repository = "https://github.com/darwinia-network/darwinia-common/"
-version    = "1.2.2"
+version    = "1.0.0"
 
 [dependencies]
 # crates
@@ -28,6 +28,7 @@ darwinia-ethereum-relay             = { default-features = false, path = "../../
 darwinia-evm                        = { default-features = false, path = "../../../../frame/dvm/evm" }
 darwinia-header-mmr                 = { default-features = false, path = "../../../../frame/header-mmr" }
 darwinia-header-mmr-rpc-runtime-api = { default-features = false, path = "../../../../frame/header-mmr/rpc/runtime-api" }
+darwinia-relay-authorities          = { default-features = false, path = "../../../../frame/bridge/relay-authorities" }
 darwinia-relay-primitives           = { default-features = false, path = "../../../../primitives/relay" }
 darwinia-relayer-game               = { default-features = false, path = "../../../../frame/bridge/relayer-game" }
 darwinia-staking                    = { default-features = false, path = "../../../../frame/staking" }
@@ -99,6 +100,7 @@ std     = [
 	"darwinia-evm/std",
 	"darwinia-header-mmr/std",
 	"darwinia-header-mmr-rpc-runtime-api/std",
+	"darwinia-relay-authorities/std",
 	"darwinia-relay-primitives/std",
 	"darwinia-relayer-game/std",
 	"darwinia-staking/std",

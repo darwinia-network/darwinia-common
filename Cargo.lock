@@ -1322,6 +1322,7 @@ dependencies = [
  "ethereum-primitives",
  "frame-support",
  "frame-system",
+ "libsecp256k1",
  "pallet-session",
  "pallet-timestamp",
  "parity-scale-codec",
@@ -1411,6 +1412,7 @@ dependencies = [
  "array-bytes",
  "ckb-merkle-mountain-range",
  "darwinia-header-mmr-rpc-runtime-api",
+ "darwinia-relay-primitives",
  "darwinia-support",
  "frame-support",
  "frame-system",
@@ -1450,6 +1452,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-relay-authorities"
+version = "1.2.2"
+dependencies = [
+ "darwinia-relay-primitives",
+ "darwinia-support",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "sp-runtime",
+ "sp-std 2.0.0",
+]
+
+[[package]]
 name = "darwinia-relay-primitives"
 version = "1.2.2"
 dependencies = [
@@ -1466,7 +1482,7 @@ dependencies = [
  "darwinia-balances",
  "darwinia-relay-primitives",
  "darwinia-support",
- "env_logger 0.8.1",
+ "env_logger 0.8.2",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
@@ -1726,7 +1742,7 @@ dependencies = [
 
 [[package]]
 name = "drml-primitives"
-version = "1.2.2"
+version = "1.0.0"
 dependencies = [
  "sp-core",
  "sp-runtime",
@@ -1942,9 +1958,9 @@ dependencies = [
 
 [[package]]
 name = "env_logger"
-version = "0.8.1"
+version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "54532e3223c5af90a6a757c90b5c5521564b07e5e7a958681bcd2afad421cdcd"
+checksum = "f26ecb66b4bdca6c1409b40fb255eefc2bd4f6d135dab3c3124f80ffa2a9661e"
 dependencies = [
  "atty",
  "humantime 2.0.1",
@@ -4977,7 +4993,7 @@ dependencies = [
 
 [[package]]
 name = "pangolin-runtime"
-version = "1.2.2"
+version = "1.0.0"
 dependencies = [
  "darwinia-balances",
  "darwinia-balances-rpc-runtime-api",
@@ -4991,6 +5007,7 @@ dependencies = [
  "darwinia-evm",
  "darwinia-header-mmr",
  "darwinia-header-mmr-rpc-runtime-api",
+ "darwinia-relay-authorities",
  "darwinia-relay-primitives",
  "darwinia-relayer-game",
  "darwinia-staking",

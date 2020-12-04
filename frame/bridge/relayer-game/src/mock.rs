@@ -219,7 +219,7 @@ use frame_support::{impl_outer_origin, parameter_types, traits::OnFinalize};
 use sp_runtime::RuntimeDebug;
 // --- darwinia ---
 use crate::*;
-use darwinia_relay_primitives::*;
+use darwinia_relay_primitives::relayer_game::*;
 use mock_relay::{MockRelayBlockNumber, MockRelayHeader};
 
 pub type AccountId = u64;
@@ -264,8 +264,12 @@ darwinia_support::impl_account_data! {
 
 #[derive(Clone, Eq, PartialEq)]
 pub struct Test;
+parameter_types! {
+	pub const RelayerGameLockId: LockIdentifier = *b"da/rgame";
+}
 impl Trait for Test {
 	type RingCurrency = Ring;
+	type LockId = RelayerGameLockId;
 	type RingSlash = ();
 	type RelayerGameAdjustor = RelayerGameAdjustor;
 	type RelayableChain = Relay;

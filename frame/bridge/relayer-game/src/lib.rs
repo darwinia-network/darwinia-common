@@ -38,7 +38,7 @@ mod types {
 use frame_support::{
 	debug::*,
 	decl_error, decl_module, decl_storage, ensure,
-	traits::{Currency, OnUnbalanced},
+	traits::{Currency, Get, OnUnbalanced},
 };
 use sp_runtime::{
 	traits::{Saturating, Zero},
@@ -48,15 +48,15 @@ use sp_runtime::{
 use sp_std::borrow::ToOwned;
 use sp_std::{collections::btree_map::BTreeMap, prelude::*};
 // --- darwinia ---
-use darwinia_relay_primitives::*;
+use darwinia_relay_primitives::relayer_game::*;
 use darwinia_support::balance::lock::*;
 use types::*;
-
-pub const RELAYER_GAME_ID: LockIdentifier = *b"da/rgame";
 
 pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	/// The currency use for stake
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+
+	type LockId: Get<LockIdentifier>;
 
 	/// Handler for the unbalanced *RING* reduction when slashing a relayer.
 	type RingSlash: OnUnbalanced<RingNegativeImbalance<Self, I>>;
@@ -150,7 +150,7 @@ decl_storage! {
 
 		/// All the closed rounds here
 		///
-		/// Record the closed rounds endpoint which use for settlling or updating
+		/// Record the closed rounds endpoint which use for settling or updating
 		/// Settle or update a game will be scheduled which will start at this moment
 		pub GamesToUpdate
 			get(fn games_to_update_at)
@@ -176,6 +176,8 @@ decl_module! {
 		origin: T::Origin
 	{
 		type Error = Error<T, I>;
+
+		const LOCK_ID: LockIdentifier = T::LockId::get();
 
 		const MAX_ACTIVE_GAMES: u8 = T::RelayerGameAdjustor::max_active_games();
 
@@ -274,12 +276,12 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		let stakes = calc_stakes(Self::stakes_of(relayer));
 
 		if stakes.is_zero() {
-			T::RingCurrency::remove_lock(RELAYER_GAME_ID, relayer);
+			T::RingCurrency::remove_lock(T::LockId::get(), relayer);
 
 			<Stakes<T, I>>::take(relayer);
 		} else {
 			T::RingCurrency::set_lock(
-				RELAYER_GAME_ID,
+				T::LockId::get(),
 				relayer,
 				LockFor::Common { amount: stakes },
 				WithdrawReasons::all(),
@@ -420,14 +422,14 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 				}
 			} else {
 				// Should never enter this condition
-				error!(target: "relayer-game", "   >  Extended Relay Rroposal - NOT EXISTED");
+				error!(target: "relayer-game", "   >  Extended Relay Proposal - NOT EXISTED");
 
 				return None;
 			}
 		}
 
 		// Should never enter this condition
-		error!(target: "relayer-game", "   >  Extended Relay Rroposal - NOT EXISTED");
+		error!(target: "relayer-game", "   >  Extended Relay Proposal - NOT EXISTED");
 
 		None
 	}
@@ -598,14 +600,14 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 							}
 						} else {
 							// Should never enter this condition
-							error!(target: "relayer-game", "   >  Extended Relay Rroposal - NOT EXISTED");
+							error!(target: "relayer-game", "   >  Extended Relay Proposal - NOT EXISTED");
 
 							return None;
 						}
 					}
 
 					// Should never enter this condition
-					error!(target: "relayer-game", "   >  Extended Relay Rroposal - NOT EXISTED");
+					error!(target: "relayer-game", "   >  Extended Relay Proposal - NOT EXISTED");
 
 					None
 				}

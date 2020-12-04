@@ -40,7 +40,7 @@ pub mod impls {
 	pub mod relay {
 		// --- darwinia ---
 		use crate::*;
-		use darwinia_relay_primitives::*;
+		use darwinia_relay_primitives::relayer_game::*;
 		use ethereum_primitives::EthereumBlockNumber;
 
 		pub struct EthereumRelayerGameAdjustor;
@@ -977,7 +977,7 @@ parameter_types! {
 }
 impl darwinia_ethereum_backing::Trait for Runtime {
 	type ModuleId = EthereumBackingModuleId;
-	type EthereumBackingFeeModuleId = EthereumBackingFeeModuleId;
+	type FeeModuleId = EthereumBackingFeeModuleId;
 	type Event = Event;
 	type RedeemAccountId = AccountId;
 	type EthereumRelay = EthereumRelay;
@@ -985,6 +985,7 @@ impl darwinia_ethereum_backing::Trait for Runtime {
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 	type AdvancedFee = AdvancedFee;
+	type EcdsaAuthorities = EthereumRelayAuthorities;
 	type WeightInfo = ();
 }
 
@@ -996,6 +997,7 @@ type EnsureRootOrHalfTechnicalComittee = EnsureOneOf<
 parameter_types! {
 	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
 	pub const EthereumNetwork: ethereum_primitives::EthereumNetworkType = ethereum_primitives::EthereumNetworkType::Ropsten;
+	pub const ConfirmPeriod: BlockNumber = 200;
 	pub const ApproveThreshold: Perbill = Perbill::from_percent(60);
 	pub const RejectThreshold: Perbill = Perbill::from_percent(1);
 }
@@ -1017,10 +1019,11 @@ impl darwinia_ethereum_relay::Trait for Runtime {
 
 type EthereumRelayerGameInstance = darwinia_relayer_game::Instance0;
 parameter_types! {
-	pub const ConfirmPeriod: BlockNumber = 200;
+	pub const EthereumRelayerGameLockId: LockIdentifier = *b"ethrgame";
 }
 impl darwinia_relayer_game::Trait<EthereumRelayerGameInstance> for Runtime {
 	type RingCurrency = Ring;
+	type LockId = EthereumRelayerGameLockId;
 	type RingSlash = Treasury;
 	type RelayerGameAdjustor = relay::EthereumRelayerGameAdjustor;
 	type RelayableChain = EthereumRelay;
@@ -1066,6 +1069,30 @@ impl darwinia_evm::Trait for Runtime {
 	);
 	type ChainId = ChainId;
 	type AccountBasicMapping = DVMAccountBasicMapping<Self>;
+}
+
+type EthereumRelayAuthoritiesInstance = darwinia_relay_authorities::Instance0;
+parameter_types! {
+	pub const EthereumRelayAuthoritiesLockId: LockIdentifier = *b"ethrauth";
+	pub const EthereumRelayAuthoritiesTermDuration: BlockNumber = 30 * DAYS;
+	pub const MaxCandidates: usize = 7;
+	pub const SignThreshold: Perbill = Perbill::from_percent(60);
+	pub const SubmitDuration: BlockNumber = 100;
+}
+impl darwinia_relay_authorities::Trait<EthereumRelayAuthoritiesInstance> for Runtime {
+	type Event = Event;
+	type RingCurrency = Ring;
+	type LockId = EthereumRelayAuthoritiesLockId;
+	type TermDuration = EthereumRelayAuthoritiesTermDuration;
+	type MaxCandidates = MaxCandidates;
+	type AddOrigin = ApproveOrigin;
+	type RemoveOrigin = ApproveOrigin;
+	type ResetOrigin = ApproveOrigin;
+	type DarwiniaMMR = HeaderMMR;
+	type Sign = EthereumBacking;
+	type SignThreshold = SignThreshold;
+	type SubmitDuration = SubmitDuration;
+	type WeightInfo = ();
 }
 
 pub struct EthereumFindAuthor<F>(sp_std::marker::PhantomData<F>);
@@ -1153,6 +1180,8 @@ construct_runtime!(
 
 		EVM: darwinia_evm::{Module, Config, Call, Storage, Event<T>},
 		Ethereum: dvm_ethereum::{Module, Call, Storage, Event, Config, ValidateUnsigned},
+
+		EthereumRelayAuthorities: darwinia_relay_authorities::<Instance0>::{Module, Call, Storage, Event<T>},
 	}
 );
 

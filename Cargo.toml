@@ -16,6 +16,7 @@ members = [
 	"frame/bridge/ethereum/linear-relay",
 	"frame/bridge/ethereum/relay",
 	"frame/bridge/relayer-game",
+	"frame/bridge/relay-authorities",
 	"frame/bridge/tron/backing",
 	"frame/claims",
 	"frame/democracy",

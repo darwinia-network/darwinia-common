@@ -1,3 +1,21 @@
+// This file is part of Darwinia.
+//
+// Copyright (C) 2018-2020 Darwinia Network
+// SPDX-License-Identifier: GPL-3.0
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia.  If not, see <https://www.gnu.org/licenses/>.
+
 //! # Chain MMR Pallet
 //!
 //! ## Overview
@@ -45,18 +63,19 @@ mod tests;
 use serde::Serialize;
 
 // --- github ---
-use merkle_mountain_range::{leaf_index_to_mmr_size, leaf_index_to_pos, MMRStore, MMR};
+use merkle_mountain_range::{leaf_index_to_mmr_size, leaf_index_to_pos, MMRStore, Result, MMR};
 // --- substrate ---
 use codec::{Decode, Encode};
 use frame_support::{debug::error, decl_module, decl_storage};
 use sp_runtime::{
 	generic::{DigestItem, OpaqueDigestItemId},
 	traits::{Hash, Header},
-	RuntimeDebug,
+	RuntimeDebug, SaturatedConversion,
 };
 use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia ---
 use darwinia_header_mmr_rpc_runtime_api::{Proof, RuntimeDispatchInfo};
+use darwinia_relay_primitives::MMR as MMRT;
 use darwinia_support::impl_rpc;
 
 pub const MMR_ROOT_LOG_ID: [u8; 4] = *b"MMRR";
@@ -90,7 +109,7 @@ decl_module! {
 		fn on_finalize(block_number: T::BlockNumber) {
 			let store = <ModuleMMRStore<T>>::default();
 			let parent_hash = <frame_system::Module<T>>::parent_hash();
-			let mut mmr = <MMR<_, MMRMerge<T>, _>>::new(<MMRCounter>::get(), store);
+			let mut mmr = <MMR<_, MMRMerge<T>, _>>::new(MMRCounter::get(), store);
 
 			// Update MMR and add mmr root to digest of block header
 			let _ = mmr.push(parent_hash);
@@ -111,46 +130,6 @@ decl_module! {
 				error!("[darwinia-header-mmr] FAILED to Calculate MMR");
 			}
 		}
-	}
-}
-
-pub struct MMRMerge<T>(PhantomData<T>);
-impl<T: Trait> merkle_mountain_range::Merge for MMRMerge<T> {
-	type Item = <T as frame_system::Trait>::Hash;
-	fn merge(lhs: &Self::Item, rhs: &Self::Item) -> Self::Item {
-		let encodable = (lhs, rhs);
-		<T as frame_system::Trait>::Hashing::hash_of(&encodable)
-	}
-}
-
-pub struct ModuleMMRStore<T>(PhantomData<T>);
-impl<T> Default for ModuleMMRStore<T> {
-	fn default() -> Self {
-		ModuleMMRStore(sp_std::marker::PhantomData)
-	}
-}
-
-impl<T: Trait> MMRStore<T::Hash> for ModuleMMRStore<T> {
-	fn get_elem(&self, pos: u64) -> merkle_mountain_range::Result<Option<T::Hash>> {
-		Ok(Some(<Module<T>>::mmr_node_list(pos)))
-	}
-
-	fn append(&mut self, pos: u64, elems: Vec<T::Hash>) -> merkle_mountain_range::Result<()> {
-		let mmr_count = MMRCounter::get();
-		if pos != mmr_count {
-			// Must be append only.
-			Err(merkle_mountain_range::Error::InconsistentStore)?;
-		}
-		let elems_len = elems.len() as u64;
-
-		for (i, elem) in elems.into_iter().enumerate() {
-			<MMRNodeList<T>>::insert(mmr_count + i as u64, elem);
-		}
-
-		// increment counter
-		MMRCounter::put(mmr_count + elems_len);
-
-		Ok(())
 	}
 }
 
@@ -198,5 +177,59 @@ impl<T: Trait> Module<T> {
 		header
 			.digest()
 			.convert_first(|l| l.try_to(id).and_then(filter_log))
+	}
+}
+
+pub struct MMRMerge<T>(PhantomData<T>);
+impl<T: Trait> merkle_mountain_range::Merge for MMRMerge<T> {
+	type Item = <T as frame_system::Trait>::Hash;
+
+	fn merge(lhs: &Self::Item, rhs: &Self::Item) -> Self::Item {
+		let encodable = (lhs, rhs);
+		<T as frame_system::Trait>::Hashing::hash_of(&encodable)
+	}
+}
+
+pub struct ModuleMMRStore<T>(PhantomData<T>);
+impl<T> Default for ModuleMMRStore<T> {
+	fn default() -> Self {
+		ModuleMMRStore(sp_std::marker::PhantomData)
+	}
+}
+impl<T: Trait> MMRStore<T::Hash> for ModuleMMRStore<T> {
+	fn get_elem(&self, pos: u64) -> Result<Option<T::Hash>> {
+		Ok(Some(<Module<T>>::mmr_node_list(pos)))
+	}
+
+	fn append(&mut self, pos: u64, elems: Vec<T::Hash>) -> Result<()> {
+		let mmr_count = MMRCounter::get();
+		if pos != mmr_count {
+			// Must be append only.
+			Err(merkle_mountain_range::Error::InconsistentStore)?;
+		}
+		let elems_len = elems.len() as u64;
+
+		for (i, elem) in elems.into_iter().enumerate() {
+			<MMRNodeList<T>>::insert(mmr_count + i as u64, elem);
+		}
+
+		// increment counter
+		MMRCounter::put(mmr_count + elems_len);
+
+		Ok(())
+	}
+}
+
+impl<T: Trait> MMRT<T::BlockNumber, T::Hash> for Module<T> {
+	fn get_root(block_number: T::BlockNumber) -> Option<T::Hash> {
+		let store = <ModuleMMRStore<T>>::default();
+		let mmr_size = leaf_index_to_mmr_size(block_number.saturated_into() as _);
+		let mmr = <MMR<_, MMRMerge<T>, _>>::new(mmr_size, store);
+
+		if let Ok(mmr_root) = mmr.get_root() {
+			Some(mmr_root)
+		} else {
+			None
+		}
 	}
 }

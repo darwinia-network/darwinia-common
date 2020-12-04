@@ -1,10 +1,10 @@
 [package]
 authors     = ["Darwinia Network <hello@darwinia.network>"]
-description = "Pallet for logging MMR into header digest"
+description = "Relayer Authorities Protocal Implementation"
 edition     = "2018"
 homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"
-name        = "darwinia-header-mmr"
+name        = "darwinia-relay-authorities"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "1.2.2"
@@ -14,11 +14,8 @@ version     = "1.2.2"
 codec = { package = "parity-scale-codec", version = "1.3.5", default-features = false }
 serde = { version = "1.0.117", optional = true }
 # darwinia
-darwinia-header-mmr-rpc-runtime-api = { default-features = false, path = "./rpc/runtime-api" }
-darwinia-relay-primitives           = { default-features = false, path = "../../primitives/relay" }
-darwinia-support                    = { default-features = false, path = "../support" }
-# github
-merkle-mountain-range = { package = "ckb-merkle-mountain-range", default-features = false, git = "https://github.com/darwinia-network/merkle-mountain-range.git" }
+darwinia-relay-primitives = { default-features = false, path = "../../../primitives/relay" }
+darwinia-support          = { default-features = false, path = "../../support" }
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
@@ -26,13 +23,6 @@ sp-runtime    = { default-features = false, git = "https://github.com/darwinia-n
 sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 [dev-dependencies]
-# crates
-serde_json = { version = "1.0.59" }
-# darwinia
-array-bytes = { path = "../../primitives/array-bytes" }
-# substrate
-sp-core = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-io   = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 [features]
 default = ["std"]
@@ -40,7 +30,6 @@ default = ["std"]
 std = [
 	"crates-std",
 	"darwinia-std",
-	"github-std",
 	"substrate-std",
 ]
 
@@ -49,11 +38,9 @@ crates-std    = [
 	"serde",
 ]
 darwinia-std  = [
-	"darwinia-header-mmr-rpc-runtime-api/std",
 	"darwinia-relay-primitives/std",
 	"darwinia-support/std",
 ]
-github-std    = ["merkle-mountain-range/std"]
 substrate-std = [
 	"frame-support/std",
 	"frame-system/std",

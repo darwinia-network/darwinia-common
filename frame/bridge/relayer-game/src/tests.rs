@@ -360,7 +360,7 @@ fn lock_should_work() {
 					assert_eq!(
 						Ring::locks(relayer),
 						vec![BalanceLock {
-							id: RELAYER_GAME_ID,
+							id: <Test as Trait>::LockId::get(),
 							lock_for: LockFor::Common { amount: stakes },
 							lock_reasons: LockReasons::All
 						}]

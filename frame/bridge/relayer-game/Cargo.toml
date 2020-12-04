@@ -1,6 +1,6 @@
 [package]
 authors     = ["Darwinia Network <hello@darwinia.network>"]
-description = "Relayer Game"
+description = "Relayer Game Protocal Implementation"
 edition     = "2018"
 homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"
@@ -24,7 +24,7 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 
 [dev-dependencies]
 # crates
-env_logger = { version = "0.8.1" }
+env_logger = { version = "0.8.2" }
 # darwinia
 darwinia-balances = { path = "../../balances" }
 # substrate

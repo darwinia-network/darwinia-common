@@ -80,7 +80,7 @@ macro_rules! decl_tests {
 		}
 		impl Trait for Test {
 			type ModuleId = EthereumBackingModuleId;
-			type EthereumBackingFeeModuleId = EthereumBackingFeeModuleId;
+			type FeeModuleId = EthereumBackingFeeModuleId;
 			type Event = ();
 			type RedeemAccountId = AccountId;
 			type EthereumRelay = EthereumRelay;
@@ -88,6 +88,7 @@ macro_rules! decl_tests {
 			type RingCurrency = Ring;
 			type KtonCurrency = Kton;
 			type AdvancedFee = ();
+			type EcdsaAuthorities = ();
 			type WeightInfo = ();
 		}
 
