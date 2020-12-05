@@ -11,6 +11,16 @@ use sp_runtime::{
 use crate::*;
 use darwinia_ethereum_linear_relay::EthereumNetworkType;
 
+type AccountId = <<MultiSignature as Verify>::Signer as IdentifyAccount>::AccountId;
+type Balance = u128;
+type Extrinsic = TestXt<Call, ()>;
+
+pub type System = frame_system::Module<Test>;
+pub type Ring = darwinia_balances::Module<Test, RingInstance>;
+pub type EthereumRelay = darwinia_ethereum_linear_relay::Module<Test>;
+
+pub type EthOffchain = Module<Test>;
+
 impl_outer_dispatch! {
 	pub enum Call for Test where origin: Origin {
 		darwinia_ethereum_linear_relay::EthereumRelay,
@@ -22,35 +32,7 @@ impl_outer_origin! {
 	pub enum Origin for Test where system = frame_system {}
 }
 
-darwinia_support::impl_account_data! {
-	pub struct AccountData<Balance>
-	for
-		RingInstance,
-		KtonInstance
-	where
-		Balance = Balance
-	{
-		// other data
-	}
-}
-
-type AccountId = <<MultiSignature as Verify>::Signer as IdentifyAccount>::AccountId;
-type Balance = u128;
-type Extrinsic = TestXt<Call, ()>;
-
-pub type RingInstance = darwinia_balances::Instance0;
-pub type _RingError = darwinia_balances::Error<Test, RingInstance>;
-pub type Ring = darwinia_balances::Module<Test, RingInstance>;
-
-pub type KtonInstance = darwinia_balances::Instance1;
-pub type _KtonError = darwinia_balances::Error<Test, KtonInstance>;
-pub type _Kton = darwinia_balances::Module<Test, KtonInstance>;
-
-pub type System = frame_system::Module<Test>;
-pub type EthereumRelay = darwinia_ethereum_linear_relay::Module<Test>;
-
-pub type EthOffchain = Module<Test>;
-pub type _OffchainError = Error<Test>;
+darwinia_support::impl_test_account_data! {}
 
 static mut SHADOW_SERVICE: Option<ShadowService> = None;
 

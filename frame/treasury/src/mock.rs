@@ -21,28 +21,10 @@ use crate::*;
 
 type Balance = u64;
 
-pub type RingInstance = darwinia_balances::Instance0;
-pub type _RingError = darwinia_balances::Error<Test, RingInstance>;
-pub type Ring = darwinia_balances::Module<Test, RingInstance>;
-
-pub type KtonInstance = darwinia_balances::Instance1;
-pub type _KtonError = darwinia_balances::Error<Test, KtonInstance>;
-pub type Kton = darwinia_balances::Module<Test, KtonInstance>;
-
 pub type System = frame_system::Module<Test>;
 pub type Treasury = Module<Test>;
-
-darwinia_support::impl_account_data! {
-	struct AccountData<Balance>
-	for
-		RingInstance,
-		KtonInstance
-	where
-		Balance = Balance
-	{
-		// other data
-	}
-}
+pub type Ring = darwinia_balances::Module<Test, RingInstance>;
+pub type Kton = darwinia_balances::Module<Test, KtonInstance>;
 
 thread_local! {
 	static TEN_TO_FOURTEEN: RefCell<Vec<u128>> = RefCell::new(vec![10, 11, 12, 13, 14]);
@@ -60,6 +42,8 @@ impl_outer_event! {
 impl_outer_origin! {
 	pub enum Origin for Test where system = frame_system {}
 }
+
+darwinia_support::impl_test_account_data! {}
 
 #[derive(Clone, Eq, PartialEq)]
 pub struct Test;

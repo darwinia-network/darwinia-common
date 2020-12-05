@@ -18,12 +18,9 @@ type AccountId = u64;
 type BlockNumber = u64;
 type Balance = u128;
 
-pub type RingInstance = darwinia_balances::Instance0;
-pub type KtonInstance = darwinia_balances::Instance1;
-
 pub type System = frame_system::Module<Test>;
-pub type EthereumRelay = Module<Test>;
 pub type Ring = darwinia_balances::Module<Test, RingInstance>;
+pub type EthereumRelay = Module<Test>;
 
 pub(crate) type RingError = darwinia_balances::Error<Test, RingInstance>;
 
@@ -42,17 +39,7 @@ impl_outer_dispatch! {
 	}
 }
 
-darwinia_support::impl_account_data! {
-	pub struct AccountData<Balance>
-	for
-		RingInstance,
-		KtonInstance
-	where
-		Balance = Balance
-	{
-		// other data
-	}
-}
+darwinia_support::impl_test_account_data! {}
 
 // Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
 #[derive(Clone, PartialEq, Eq, Debug)]

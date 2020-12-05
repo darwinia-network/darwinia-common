@@ -21,16 +21,13 @@ use crate::*;
 pub type AccountId = u64;
 pub type Balance = u128;
 
-pub type RingInstance = darwinia_balances::Instance0;
-pub type RingError = darwinia_balances::Error<Test, RingInstance>;
-pub type Ring = darwinia_balances::Module<Test, RingInstance>;
-
-pub type KtonInstance = darwinia_balances::Instance1;
-
 pub type System = frame_system::Module<Test>;
-
+pub type Ring = darwinia_balances::Module<Test, RingInstance>;
 pub type CrabIssuing = Module<Test>;
+
 pub type CrabIssuingError = Error<Test>;
+pub type RingError = darwinia_balances::Error<Test, RingInstance>;
+
 
 impl_outer_origin! {
 	pub enum Origin for Test where system = frame_system {}
@@ -44,17 +41,7 @@ impl_outer_event! {
 	}
 }
 
-darwinia_support::impl_account_data! {
-	struct AccountData<Balance>
-	for
-		RingInstance,
-		KtonInstance
-	where
-		Balance = Balance
-	{
-		// other data
-	}
-}
+darwinia_support::impl_test_account_data! {}
 
 #[derive(Clone, Eq, PartialEq)]
 pub struct Test;

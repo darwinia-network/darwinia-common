@@ -16,12 +16,9 @@ pub type AccountId = u64;
 pub type BlockNumber = u64;
 pub type Balance = u128;
 
-pub type RingInstance = darwinia_balances::Instance0;
-pub type KtonInstance = darwinia_balances::Instance1;
-
 pub type System = frame_system::Module<Test>;
-pub type EthereumRelay = Module<Test>;
 pub type Ring = darwinia_balances::Module<Test, RingInstance>;
+pub type EthereumRelay = Module<Test>;
 
 thread_local! {
 	static BEST_CONFIRMED_BLOCK_NUMBER: RefCell<EthereumBlockNumber> = RefCell::new(0);
@@ -39,16 +36,7 @@ impl_outer_dispatch! {
 	}
 }
 
-darwinia_support::impl_account_data! {
-	pub struct AccountData<Balance>
-	for
-		RingInstance,
-		KtonInstance
-	where
-		Balance = Balance
-	{
-	}
-}
+darwinia_support::impl_test_account_data! {}
 
 pub struct ConfirmPeriod;
 impl Get<BlockNumber> for ConfirmPeriod {

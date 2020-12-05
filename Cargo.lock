@@ -1455,12 +1455,15 @@ dependencies = [
 name = "darwinia-relay-authorities"
 version = "1.2.2"
 dependencies = [
+ "darwinia-balances",
  "darwinia-relay-primitives",
  "darwinia-support",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
  "serde",
+ "sp-core",
+ "sp-io",
  "sp-runtime",
  "sp-std 2.0.0",
 ]

@@ -409,27 +409,15 @@ mod tests {
 
 	type Balance = u64;
 
-	type RingInstance = darwinia_balances::Instance0;
-	type RingError = darwinia_balances::Error<Test, RingInstance>;
 	type Ring = darwinia_balances::Module<Test, RingInstance>;
 
-	type KtonInstance = darwinia_balances::Instance1;
+	type RingError = darwinia_balances::Error<Test, RingInstance>;
 
 	impl_outer_origin! {
 		pub enum Origin for Test where system = frame_system {}
 	}
 
-	darwinia_support::impl_account_data! {
-		struct AccountData<Balance>
-		for
-			RingInstance,
-			KtonInstance
-		where
-			Balance = Balance
-		{
-			// other data
-		}
-	}
+	darwinia_support::impl_test_account_data! {}
 
 	#[derive(Clone, Eq, PartialEq)]
 	pub struct Test;

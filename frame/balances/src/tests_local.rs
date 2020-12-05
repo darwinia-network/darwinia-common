@@ -18,17 +18,14 @@ use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill, RuntimeDebug};
 // --- darwinia ---
-use crate::{tests::*, *};
+use crate::{self as darwinia_balances, tests::*, *};
 
 type Balance = u64;
 
-type RingInstance = Instance0;
-type RingError = Error<Test, RingInstance>;
 type Ring = Module<Test, RingInstance>;
-
-type KtonInstance = Instance1;
-type _KtonError = Error<Test, KtonInstance>;
 type Kton = Module<Test, KtonInstance>;
+
+type RingError = Error<Test, RingInstance>;
 
 thread_local! {
 	static EXISTENTIAL_DEPOSIT: RefCell<Balance> = RefCell::new(0);
@@ -46,17 +43,7 @@ impl_outer_event! {
 	}
 }
 
-darwinia_support::impl_account_data! {
-	struct AccountData<Balance>
-	for
-		RingInstance,
-		KtonInstance
-	where
-		Balance = Balance
-	{
-		// other data
-	}
-}
+darwinia_support::impl_test_account_data! {}
 
 pub struct ExistentialDeposit;
 impl Get<Balance> for ExistentialDeposit {
