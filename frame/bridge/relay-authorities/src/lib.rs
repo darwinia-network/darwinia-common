@@ -275,7 +275,10 @@ decl_module! {
 		#[weight = 10_000_000]
 		pub fn cancel_request(origin) {
 			let account_id = ensure_signed(origin)?;
-			let _ = Self::remove_candidate_by_id(&account_id);
+			let _ = Self::remove_candidate_by_id_with(
+				&account_id,
+				|| <RingCurrency<T, I>>::remove_lock(T::LockId::get(), &account_id)
+			);
 		}
 
 		// TODO: not allow to renounce, if there's only one authority
@@ -314,7 +317,7 @@ decl_module! {
 
 			ensure!(!Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
 
-			let mut authority = Self::remove_candidate_by_id(&account_id)?;
+			let mut authority = Self::remove_candidate_by_id_with(&account_id, || ())?;
 
 			authority.term = <frame_system::Module<T>>::block_number() + T::TermDuration::get();
 
@@ -491,6 +494,8 @@ where
 
 				Self::start_authorities_state(&old_authorities, &authorities);
 
+				<RingCurrency<T, I>>::remove_lock(T::LockId::get(), account_id);
+
 				// TODO: optimize DB R/W, but it's ok in real case, since the set won't grow so large
 				for key in <MMRRootsToSignKeys<T, I>>::get() {
 					if let Some(mut signatures) = <MMRRootsToSign<T, I>>::get(key) {
@@ -517,16 +522,18 @@ where
 		})?)
 	}
 
-	pub fn remove_candidate_by_id(
+	pub fn remove_candidate_by_id_with<F>(
 		account_id: &AccountId<T>,
-	) -> Result<RelayAuthorityT<T, I>, DispatchError> {
+		maybe_remove_lock: F,
+	) -> Result<RelayAuthorityT<T, I>, DispatchError>
+	where
+		F: Fn(),
+	{
 		Ok(<Candidates<T, I>>::try_mutate(|candidates| {
 			if let Some(position) = find_authority_position::<T, I>(&candidates, account_id) {
-				let candidate = candidates.remove(position);
+				maybe_remove_lock();
 
-				<RingCurrency<T, I>>::remove_lock(T::LockId::get(), account_id);
-
-				Ok(candidate)
+				Ok(candidates.remove(position))
 			} else {
 				Err(<Error<T, I>>::CandidateNE)
 			}
