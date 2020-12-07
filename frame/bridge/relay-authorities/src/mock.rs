@@ -34,14 +34,16 @@ use sp_runtime::{
 use crate::*;
 use darwinia_relay_primitives::relay_authorities::Sign as SignT;
 
+pub type BlockNumber = u64;
 pub type AccountId = u64;
 pub type Index = u64;
-pub type BlockNumber = u64;
 pub type Balance = u128;
 
 pub type System = frame_system::Module<Test>;
 pub type Ring = darwinia_balances::Module<Test, RingInstance>;
 pub type RelayAuthorities = Module<Test>;
+
+pub type RelayAuthoritiesError = Error<Test, DefaultInstance>;
 
 impl_outer_origin! {
 	pub enum Origin for Test {}
@@ -143,8 +145,18 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 }
 
 pub fn new_test_ext() -> TestExternalities {
-	frame_system::GenesisConfig::default()
+	let mut storage = frame_system::GenesisConfig::default()
 		.build_storage::<Test>()
-		.unwrap()
-		.into()
+		.unwrap();
+
+	darwinia_balances::GenesisConfig::<Test, RingInstance> {
+		balances: (1..10)
+			.map(|i: AccountId| vec![(i, 100 * i as Balance), (10 * i, 1000 * i as Balance)])
+			.flatten()
+			.collect(),
+	}
+	.assimilate_storage(&mut storage)
+	.unwrap();
+
+	storage.into()
 }
