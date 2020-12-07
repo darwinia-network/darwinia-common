@@ -54,6 +54,7 @@ fn insufficient_stake_should_fail() {
 		let _ = Ring::deposit_creating(&123, 11);
 		assert_ok!(request_authority_with_stake(123, 11));
 
+		// The minimum stake was removed, since there's a max candidates limitation
 		assert!(RelayAuthorities::candidates()
 			.iter()
 			.position(|candidate| candidate == &1)
