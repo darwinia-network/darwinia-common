@@ -36,19 +36,9 @@ use codec::{Decode, Encode};
 impl_outer_origin! {
 	pub enum Origin for Test where system = frame_system {}
 }
+darwinia_support::impl_test_account_data! {}
 
 type Balance = u64;
-darwinia_support::impl_account_data! {
-	struct AccountData<Balance>
-	for
-		RingInstance,
-		KtonInstance
-	where
-		Balance = Balance
-	{
-		// other data
-	}
-}
 
 // For testing the pallet, we construct most of a mock runtime. This means
 // first constructing a configuration type (`Test`) which `impl`s each of the
@@ -96,8 +86,6 @@ parameter_types! {
 	pub const ExistentialDeposit: u64 = 500;
 }
 
-type RingInstance = darwinia_balances::Instance0;
-type KtonInstance = darwinia_balances::Instance1;
 impl darwinia_balances::Trait<RingInstance> for Test {
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;

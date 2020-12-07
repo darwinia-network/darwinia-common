@@ -12,8 +12,6 @@ use sp_runtime::{
 use std::{collections::BTreeMap, str::FromStr};
 
 type Balance = u64;
-type RingInstance = darwinia_balances::Instance0;
-type KtonInstance = darwinia_balances::Instance1;
 
 impl_outer_origin! {
 	pub enum Origin for Test where system = frame_system {}
@@ -25,17 +23,7 @@ impl_outer_dispatch! {
 	}
 }
 
-darwinia_support::impl_account_data! {
-	struct AccountData<Balance>
-	for
-		RingInstance,
-		KtonInstance
-	where
-		Balance = Balance
-	{
-		// other data
-	}
-}
+darwinia_support::impl_test_account_data! {}
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct Test;

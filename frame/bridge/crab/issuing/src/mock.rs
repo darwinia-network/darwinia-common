@@ -28,7 +28,6 @@ pub type CrabIssuing = Module<Test>;
 pub type CrabIssuingError = Error<Test>;
 pub type RingError = darwinia_balances::Error<Test, RingInstance>;
 
-
 impl_outer_origin! {
 	pub enum Origin for Test where system = frame_system {}
 }
