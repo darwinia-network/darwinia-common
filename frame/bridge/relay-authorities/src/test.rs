@@ -2,17 +2,9 @@
 use frame_support::{assert_err, assert_ok};
 // --- darwinia ---
 use crate::{
-	mock::{AccountId, BlockNumber, *},
+	mock::{BlockNumber, *},
 	*,
 };
-
-fn request_authority(account_id: AccountId) -> DispatchResult {
-	RelayAuthorities::request_authority(Origin::signed(account_id), 1, [0; 20])
-}
-
-fn request_authority_with_stake(account_id: AccountId, stake: Balance) -> DispatchResult {
-	RelayAuthorities::request_authority(Origin::signed(account_id), stake, [0; 20])
-}
 
 #[test]
 fn duplicate_request_should_fail() {
@@ -67,7 +59,9 @@ fn cancel_request_should_work() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(request_authority(1));
 		assert!(!RelayAuthorities::candidates().is_empty());
+		assert!(!Ring::locks(&1).is_empty());
 		assert_ok!(RelayAuthorities::cancel_request(Origin::signed(1)));
+		assert!(Ring::locks(&1).is_empty());
 
 		for i in 1..=<MaxCandidates as Get<usize>>::get() as _ {
 			assert_ok!(request_authority(i));
@@ -85,6 +79,7 @@ fn renounce_authority_should_work() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(request_authority(1));
 		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 1));
+		assert!(!Ring::locks(&1).is_empty());
 
 		assert_err!(
 			RelayAuthorities::renounce_authority(Origin::signed(1)),
@@ -107,6 +102,7 @@ fn renounce_authority_should_work() {
 		System::set_block_number(term_duration + 1);
 
 		assert_ok!(RelayAuthorities::renounce_authority(Origin::signed(1)));
+		assert!(Ring::locks(&1).is_empty());
 	});
 }
 
@@ -118,8 +114,10 @@ fn add_authority_should_work() {
 			RelayAuthoritiesError::CandidateNE
 		);
 
+		assert!(Ring::locks(&1).is_empty());
 		assert_ok!(request_authority(1));
 		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 1));
+		assert!(!Ring::locks(&1).is_empty());
 	});
 }
 
@@ -128,6 +126,7 @@ fn remove_authority_should_work() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(request_authority(1));
 		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 1));
+		assert!(!Ring::locks(&1).is_empty());
 		assert_err!(
 			RelayAuthorities::remove_authority(Origin::root(), 1),
 			RelayAuthoritiesError::OnAuthoritiesChangeDis
@@ -136,5 +135,6 @@ fn remove_authority_should_work() {
 		RelayAuthorities::finish_authorities_change();
 
 		assert_ok!(RelayAuthorities::remove_authority(Origin::root(), 1));
+		assert!(Ring::locks(&1).is_empty());
 	});
 }

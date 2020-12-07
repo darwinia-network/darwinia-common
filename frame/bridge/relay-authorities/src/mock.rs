@@ -160,3 +160,11 @@ pub fn new_test_ext() -> TestExternalities {
 
 	storage.into()
 }
+
+pub fn request_authority(account_id: AccountId) -> DispatchResult {
+	RelayAuthorities::request_authority(Origin::signed(account_id), 1, [0; 20])
+}
+
+pub fn request_authority_with_stake(account_id: AccountId, stake: Balance) -> DispatchResult {
+	RelayAuthorities::request_authority(Origin::signed(account_id), stake, [0; 20])
+}
