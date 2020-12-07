@@ -2,7 +2,7 @@
 use frame_support::{assert_err, assert_ok};
 // --- darwinia ---
 use crate::{
-	mock::{AccountId, *},
+	mock::{AccountId, BlockNumber, *},
 	*,
 };
 
@@ -77,5 +77,28 @@ fn cancel_request_should_work() {
 			.iter()
 			.position(|candidate| candidate == &3)
 			.is_none())
+	});
+}
+
+#[test]
+fn renounce_authority_should_work() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(request_authority(1));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 1));
+
+		let term_duration = <TermDuration as Get<BlockNumber>>::get();
+
+		for i in 0..=term_duration {
+			System::set_block_number(term_duration);
+
+			assert_err!(
+				RelayAuthorities::renounce_authority(Origin::signed(1)),
+				RelayAuthoritiesError::AuthorityIT
+			);
+		}
+
+		System::set_block_number(term_duration + 1);
+
+		assert_ok!(RelayAuthorities::renounce_authority(Origin::signed(1)));
 	});
 }
