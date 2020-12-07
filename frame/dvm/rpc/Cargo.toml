@@ -39,7 +39,7 @@ std = [
 
 darwinia-std  = [
 	"darwinia-evm/std",
-	"darwinia-evm-primitives/std"
+	"darwinia-evm-primitives/std",
 ]
 crates-std    = [
 	"codec/std",

@@ -14,11 +14,11 @@ use std::collections::BTreeMap;
 use std::{iter, marker::PhantomData, sync::Arc};
 
 use codec::Decode;
+use dvm_rpc_core::EthPubSubApi::{self as EthPubSubApiT};
 use dvm_rpc_core_primitives::{
 	pubsub::{Kind, Params, PubSubSyncStatus, Result as PubSubResult},
 	Bytes, FilteredParams, Header, Log, Rich,
 };
-use dvm_rpc_core::EthPubSubApi::{self as EthPubSubApiT};
 use ethereum_types::{H256, U256};
 use jsonrpc_pubsub::{
 	manager::{IdProvider, SubscriptionManager},

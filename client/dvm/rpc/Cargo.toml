@@ -26,12 +26,12 @@ rlp                 = "0.4"
 rustc-hex           = { version = "2.1.0" }
 sha3                = "0.8"
 # darwinia
-darwinia-evm       = { path = "../../../frame/evm"}
-dvm-consensus      = { path = "../consensus" }
-dvm-ethereum       = { path = "../../../frame/dvm"}
-dvm-rpc-core       = { path = "../../../frame/dvm/rpc" }
-dvm-rpc-runtime-api = { path = "../../../frame/dvm/rpc/runtime-api" }
+darwinia-evm             = { path = "../../../frame/evm"}
+dvm-consensus            = { path = "../consensus" }
+dvm-ethereum             = { path = "../../../frame/dvm"}
+dvm-rpc-core             = { path = "../../../frame/dvm/rpc" }
 dvm-rpc-core-primitives  = { path = "../../../primitives/dvm-rpc-core" }
+dvm-rpc-runtime-api      = { path = "../../../frame/dvm/rpc/runtime-api" }
 # substrate
 sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sc-network          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
