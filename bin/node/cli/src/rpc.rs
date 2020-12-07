@@ -201,7 +201,7 @@ where
 	)));
 	io.extend_with(NetApiServer::to_delegate(NetApi::new(
 		client.clone(),
-		network.clone(),
+		network,
 	)));
 	io.extend_with(Web3ApiServer::to_delegate(Web3Api::new(client)));
 
