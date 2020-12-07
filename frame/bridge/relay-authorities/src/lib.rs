@@ -231,19 +231,24 @@ decl_module! {
 					<Error<T, I>>::CandidateAE
 				);
 
+				// Max candidates can't be zero
 				if candidates.len() == T::MaxCandidates::get() {
-					ensure!(
-						stake >
-							candidates
-								.iter()
-								.map(|candidate| candidate.stake)
-								.max()
-								.unwrap_or(0.into()),
-						<Error<T, I>>::StakeIns
-					);
+					let mut minimum_stake = candidates[0].stake;
+					let mut position = 0;
+
+					for (i, candidate) in candidates.iter().skip(1).enumerate() {
+						let stake = candidate.stake;
+
+						if stake < minimum_stake {
+							minimum_stake = stake;
+							position = i;
+						}
+					}
+
+					ensure!(stake > minimum_stake, <Error<T, I>>::StakeIns);
 
 					// TODO: slash the weed out?
-					let weep_out = candidates.pop().unwrap();
+					let weep_out = candidates.remove(position);
 
 					<RingCurrency<T, I>>::remove_lock(T::LockId::get(), &weep_out.account_id);
 				}
