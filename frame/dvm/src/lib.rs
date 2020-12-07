@@ -44,7 +44,7 @@ use sp_std::prelude::*;
 
 use darwinia_evm::{AccountBasicMapping, AddressMapping, GasToWeight, Runner};
 use darwinia_evm_primitives::CallOrCreateInfo;
-pub use dvm_rpc_primitives::TransactionStatus;
+pub use dvm_rpc_runtime_api::TransactionStatus;
 pub use ethereum::{Block, Log, Receipt, Transaction, TransactionAction, TransactionMessage};
 use frame_support::traits::Currency;
 

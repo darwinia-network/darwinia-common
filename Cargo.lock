@@ -1709,7 +1709,7 @@ dependencies = [
  "drml-primitives",
  "dvm-consensus",
  "dvm-rpc",
- "dvm-rpc-primitives",
+ "dvm-rpc-runtime-api",
  "frame-system-rpc-runtime-api",
  "futures 0.3.8",
  "jsonrpc-core",
@@ -1806,7 +1806,7 @@ dependencies = [
  "darwinia-evm-primitives",
  "darwinia-support",
  "dvm-consensus-primitives",
- "dvm-rpc-primitives",
+ "dvm-rpc-runtime-api",
  "ethereum",
  "ethereum-types 0.9.2",
  "evm",
@@ -1834,7 +1834,8 @@ dependencies = [
  "dvm-consensus",
  "dvm-ethereum",
  "dvm-rpc-core",
- "dvm-rpc-primitives",
+ "dvm-rpc-core-primitives",
+ "dvm-rpc-runtime-api",
  "ethereum",
  "ethereum-types 0.9.2",
  "futures 0.3.8",
@@ -1865,6 +1866,25 @@ dependencies = [
 name = "dvm-rpc-core"
 version = "1.2.2"
 dependencies = [
+ "darwinia-evm",
+ "darwinia-evm-primitives",
+ "dvm-rpc-core-primitives",
+ "ethereum",
+ "ethereum-types 0.9.2",
+ "jsonrpc-core",
+ "jsonrpc-derive",
+ "jsonrpc-pubsub",
+ "parity-scale-codec",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
+ "sp-std 2.0.0",
+]
+
+[[package]]
+name = "dvm-rpc-core-primitives"
+version = "1.2.2"
+dependencies = [
  "ethereum-types 0.9.2",
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -1876,7 +1896,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "dvm-rpc-primitives"
+name = "dvm-rpc-runtime-api"
 version = "1.2.2"
 dependencies = [
  "darwinia-evm",
@@ -5029,7 +5049,7 @@ dependencies = [
  "darwinia-vesting",
  "drml-primitives",
  "dvm-ethereum",
- "dvm-rpc-primitives",
+ "dvm-rpc-runtime-api",
  "ethereum-primitives",
  "frame-executive",
  "frame-support",

@@ -17,7 +17,7 @@
 use std::collections::BTreeMap;
 use std::ops::Deref;
 
-use crate::types::{Bytes, Transaction};
+use crate::{Bytes, Transaction};
 use ethereum_types::{Bloom as H2048, H160, H256, U256};
 use serde::ser::Error;
 use serde::{Serialize, Serializer};

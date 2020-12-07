@@ -16,7 +16,7 @@
 
 //! `TransactionRequest` type
 
-use crate::types::Bytes;
+use crate::Bytes;
 use ethereum_types::{H160, U256};
 use serde::{Deserialize, Serialize};
 

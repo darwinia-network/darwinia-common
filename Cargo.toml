@@ -8,7 +8,6 @@ members = [
 	"client/cli",
 	"client/dvm/consensus",
 	"client/dvm/rpc",
-	"client/dvm/rpc-core",
 	# frame
 	"frame/balances",
 	"frame/balances/rpc",
@@ -25,6 +24,7 @@ members = [
 	"frame/democracy",
 	"frame/dvm",
 	"frame/dvm/rpc",
+	"frame/dvm/rpc/runtime-api",
 	"frame/elections-phragmen",
 	"frame/evm",
 	"frame/header-mmr",
@@ -42,6 +42,7 @@ members = [
 	"primitives/merkle-patricia-trie",
 	"primitives/relay",
 	"primitives/consensus",
+	"primitives/dvm-rpc-core",
 	"primitives/evm",
 ]
 

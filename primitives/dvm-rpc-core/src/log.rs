@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Open Ethereum.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::types::Bytes;
+use crate::Bytes;
 use ethereum_types::{H160, H256, U256};
 use serde::Serialize;
 

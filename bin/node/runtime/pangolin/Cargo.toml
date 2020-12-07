@@ -39,7 +39,7 @@ darwinia-tron-backing               = { default-features = false, path = "../../
 darwinia-vesting                    = { default-features = false, path = "../../../../frame/vesting" }
 drml-primitives                     = { default-features = false, path = "../../primitives" }
 dvm-ethereum                        = { default-features = false, path = "../../../../frame/dvm" }
-dvm-rpc-primitives                  = { default-features = false, path = "../../../../frame/dvm/rpc" }
+dvm-rpc-runtime-api                  = { default-features = false, path = "../../../../frame/dvm/rpc/runtime-api" }
 ethereum-primitives                 = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
 # substrate
 frame-executive                            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
@@ -111,7 +111,7 @@ std     = [
 	"darwinia-vesting/std",
 	"drml-primitives/std",
 	"dvm-ethereum/std",
-	"dvm-rpc-primitives/std",
+	"dvm-rpc-runtime-api/std",
 	"ethereum-primitives/std",
 	"frame-executive/std",
 	"frame-support/std",

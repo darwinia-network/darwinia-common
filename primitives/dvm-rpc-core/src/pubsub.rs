@@ -16,7 +16,7 @@
 
 //! Pub-Sub types.
 
-use crate::types::{Filter, Log, RichHeader};
+use crate::{Filter, Log, RichHeader};
 use ethereum_types::H256;
 use serde::de::Error;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};

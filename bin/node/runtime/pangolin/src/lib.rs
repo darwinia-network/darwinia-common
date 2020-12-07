@@ -272,7 +272,7 @@ use dvm_ethereum::{
 	account_basic::DVMAccountBasicMapping,
 	precompiles::{ConcatAddressMapping, NativeTransfer},
 };
-use dvm_rpc_primitives::TransactionStatus;
+use dvm_rpc_runtime_api::TransactionStatus;
 use impls::*;
 
 /// The address format for describing accounts.
@@ -1438,7 +1438,7 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl dvm_rpc_primitives::EthereumRuntimeRPCApi<Block> for Runtime {
+	impl dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block> for Runtime {
 		fn chain_id() -> u64 {
 			<Runtime as darwinia_evm::Trait>::ChainId::get()
 		}
@@ -1531,14 +1531,14 @@ impl_runtime_apis! {
 }
 
 pub struct TransactionConverter;
-impl dvm_rpc_primitives::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
+impl dvm_rpc_runtime_api::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
 	fn convert_transaction(&self, transaction: dvm_ethereum::Transaction) -> UncheckedExtrinsic {
 		UncheckedExtrinsic::new_unsigned(
 			<dvm_ethereum::Call<Runtime>>::transact(transaction).into(),
 		)
 	}
 }
-impl dvm_rpc_primitives::ConvertTransaction<OpaqueExtrinsic> for TransactionConverter {
+impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionConverter {
 	fn convert_transaction(&self, transaction: dvm_ethereum::Transaction) -> OpaqueExtrinsic {
 		let extrinsic = UncheckedExtrinsic::new_unsigned(
 			<dvm_ethereum::Call<Runtime>>::transact(transaction).into(),

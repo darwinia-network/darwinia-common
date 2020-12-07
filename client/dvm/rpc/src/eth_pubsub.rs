@@ -14,7 +14,7 @@ use std::collections::BTreeMap;
 use std::{iter, marker::PhantomData, sync::Arc};
 
 use codec::Decode;
-use dvm_rpc_core::types::{
+use dvm_rpc_core_primitives::{
 	pubsub::{Kind, Params, PubSubSyncStatus, Result as PubSubResult},
 	Bytes, FilteredParams, Header, Log, Rich,
 };
@@ -33,7 +33,7 @@ use sha3::{Digest, Keccak256};
 pub use dvm_rpc_core::EthPubSubApiServer;
 use futures::{StreamExt as _, TryStreamExt as _};
 
-use dvm_rpc_primitives::{EthereumRuntimeRPCApi, TransactionStatus};
+use dvm_rpc_runtime_api::{EthereumRuntimeRPCApi, TransactionStatus};
 use jsonrpc_core::{
 	futures::{Future, Sink},
 	Result as JsonRpcResult,

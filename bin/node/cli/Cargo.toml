@@ -39,7 +39,7 @@ darwinia-staking-rpc-runtime-api    = { path = "../../../frame/staking/rpc/runti
 drml-primitives                     = { path = "../primitives" }
 dvm-consensus                       = { path = "../../../client/dvm/consensus" }
 dvm-rpc                             = { path = "../../../client/dvm/rpc" }
-dvm-rpc-primitives                  = { path = "../../../frame/dvm/rpc" }
+dvm-rpc-runtime-api                  = { path = "../../../frame/dvm/rpc/runtime-api" }
 pangolin-runtime                    = { path = "../runtime/pangolin" }
 # substrate
 frame-system-rpc-runtime-api               = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
