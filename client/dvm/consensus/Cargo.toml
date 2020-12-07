@@ -17,7 +17,7 @@ ethereum    = { version = "0.5", features = ["with-codec"] }
 futures     = { version = "0.3.7", features = ["compat"] }
 log         = "0.4.11"
 # darwinia
-dvm-consensus-primitives = { path = "../../primitives/consensus/" }
+dvm-consensus-primitives = { path = "../../../primitives/consensus/" }
 # substrate
 prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }

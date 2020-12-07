@@ -1,6 +1,6 @@
 [package]
 authors     = ["Darwinia Network <hello@darwinia.network>"]
-description = "Primitives for Dvm consensus"
+description = "Primitives for DVM consensus"
 edition     = "2018"
 homepage    = "https://substrate.dev"
 license     = "Apache-2.0"
