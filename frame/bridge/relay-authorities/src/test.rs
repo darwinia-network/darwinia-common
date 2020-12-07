@@ -61,3 +61,21 @@ fn insufficient_stake_should_fail() {
 			.is_none());
 	});
 }
+
+#[test]
+fn cancel_request_should_work() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(request_authority(1));
+		assert!(!RelayAuthorities::candidates().is_empty());
+		assert_ok!(RelayAuthorities::cancel_request(Origin::signed(1)));
+
+		for i in 1..=<MaxCandidates as Get<usize>>::get() as _ {
+			assert_ok!(request_authority(i));
+		}
+		assert_ok!(RelayAuthorities::cancel_request(Origin::signed(3)));
+		assert!(RelayAuthorities::candidates()
+			.iter()
+			.position(|candidate| candidate == &3)
+			.is_none())
+	});
+}
