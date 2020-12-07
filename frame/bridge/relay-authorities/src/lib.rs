@@ -320,8 +320,13 @@ decl_module! {
 
 			// Won't check duplicated here, MUST make this authority sure is unique
 			// As we already make a check in `request_authority`
-			<Authorities<T, I>>::append(authority);
-			// Self::start_authorities_state();
+			<Authorities<T, I>>::mutate(|authorities| {
+				let old_authorities = authorities.clone();
+
+				authorities.push(authority);
+
+				Self::start_authorities_state(&old_authorities, &authorities);
+			});
 		}
 
 		// TODO: remove several authorities once
