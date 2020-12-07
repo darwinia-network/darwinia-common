@@ -86,6 +86,13 @@ fn renounce_authority_should_work() {
 		assert_ok!(request_authority(1));
 		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 1));
 
+		assert_err!(
+			RelayAuthorities::renounce_authority(Origin::signed(1)),
+			RelayAuthoritiesError::OnAuthoritiesChangeDis
+		);
+
+		RelayAuthorities::finish_authorities_change();
+
 		let term_duration = <TermDuration as Get<BlockNumber>>::get();
 
 		for i in 0..=term_duration {
@@ -100,5 +107,22 @@ fn renounce_authority_should_work() {
 		System::set_block_number(term_duration + 1);
 
 		assert_ok!(RelayAuthorities::renounce_authority(Origin::signed(1)));
+	});
+}
+
+#[test]
+fn add_authority_should_fail() {
+	new_test_ext().execute_with(|| {
+		assert_err!(
+			RelayAuthorities::add_authority(Origin::root(), 1),
+			RelayAuthoritiesError::CandidateNE
+		);
+
+		assert_ok!(request_authority(1));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 1));
+		assert_err!(
+			RelayAuthorities::remove_authority(Origin::root(), 1),
+			RelayAuthoritiesError::OnAuthoritiesChangeDis
+		);
 	});
 }
