@@ -600,6 +600,8 @@ where
 					.position(|(authority, _)| authority == &account_id)
 				{
 					<RingCurrency<T, I>>::slash(&account_id, stake);
+
+					// TODO: how to deal with the slashed authority
 				}
 			}
 		};
