@@ -14,37 +14,23 @@
 // You should have received a copy of the GNU General Public License
 // along with Open Ethereum.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Eth PUB-SUB rpc interface.
-
+//! Web3 rpc interface.
+use ethereum_types::H256;
 use jsonrpc_core::Result;
 use jsonrpc_derive::rpc;
-use jsonrpc_pubsub::{typed, SubscriptionId};
 
-use dvm_rpc_core_primitives::pubsub;
+use dvm_rpc_core_primitives::Bytes;
 
-pub use rpc_impl_EthPubSubApi::gen_server::EthPubSubApi as EthPubSubApiServer;
+pub use rpc_impl_Web3Api::gen_server::Web3Api as Web3ApiServer;
 
-/// Eth PUB-SUB rpc interface.
+/// Web3 rpc interface.
 #[rpc(server)]
-pub trait EthPubSubApi {
-	/// RPC Metadata
-	type Metadata;
+pub trait Web3Api {
+	/// Returns current client version.
+	#[rpc(name = "web3_clientVersion")]
+	fn client_version(&self) -> Result<String>;
 
-	/// Subscribe to Eth subscription.
-	#[pubsub(subscription = "eth_subscription", subscribe, name = "eth_subscribe")]
-	fn subscribe(
-		&self,
-		_: Self::Metadata,
-		_: typed::Subscriber<pubsub::Result>,
-		_: pubsub::Kind,
-		_: Option<pubsub::Params>,
-	);
-
-	/// Unsubscribe from existing Eth subscription.
-	#[pubsub(
-		subscription = "eth_subscription",
-		unsubscribe,
-		name = "eth_unsubscribe"
-	)]
-	fn unsubscribe(&self, _: Option<Self::Metadata>, _: SubscriptionId) -> Result<bool>;
+	/// Returns sha3 of the given data
+	#[rpc(name = "web3_sha3")]
+	fn sha3(&self, _: Bytes) -> Result<H256>;
 }

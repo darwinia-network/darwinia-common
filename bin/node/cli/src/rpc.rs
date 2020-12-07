@@ -103,7 +103,7 @@ where
 	C::Api: darwinia_balances_rpc::BalancesRuntimeApi<Block, AccountId, Balance>,
 	C::Api: darwinia_header_mmr_rpc::HeaderMMRRuntimeApi<Block, Hash>,
 	C::Api: darwinia_staking_rpc::StakingRuntimeApi<Block, AccountId, Power>,
-	C::Api: dvm_rpc_primitives::EthereumRuntimeRPCApi<Block>,
+	C::Api: dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
 	<C::Api as sp_api::ApiErrorExt>::Error: std::fmt::Debug,
 	P: 'static + Sync + Send + sp_transaction_pool::TransactionPool<Block = Block>,
 	SC: 'static + sp_consensus::SelectChain<Block>,
@@ -121,7 +121,10 @@ where
 	use darwinia_balances_rpc::{Balances, BalancesApi};
 	use darwinia_header_mmr_rpc::{HeaderMMR, HeaderMMRApi};
 	use darwinia_staking_rpc::{Staking, StakingApi};
-	use dvm_rpc::{EthApi, EthApiServer, EthPubSubApi, EthPubSubApiServer, NetApi, NetApiServer};
+	use dvm_rpc::{
+		EthApi, EthApiServer, EthPubSubApi, EthPubSubApiServer, HexEncodedIdProvider, NetApi,
+		NetApiServer, Web3Api, Web3ApiServer,
+	};
 	use pangolin_runtime::TransactionConverter;
 
 	let FullDeps {
@@ -190,10 +193,17 @@ where
 	io.extend_with(EthPubSubApiServer::to_delegate(EthPubSubApi::new(
 		pool,
 		client.clone(),
-		network,
-		SubscriptionManager::new(Arc::new(subscription_task_executor)),
+		network.clone(),
+		SubscriptionManager::<HexEncodedIdProvider>::with_id_provider(
+			HexEncodedIdProvider::default(),
+			Arc::new(subscription_task_executor),
+		),
 	)));
-	io.extend_with(NetApiServer::to_delegate(NetApi::new(client)));
+	io.extend_with(NetApiServer::to_delegate(NetApi::new(
+		client.clone(),
+		network,
+	)));
+	io.extend_with(Web3ApiServer::to_delegate(Web3Api::new(client)));
 
 	io
 }

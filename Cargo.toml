@@ -6,6 +6,8 @@ members = [
 	"bin/node/runtime/pangolin",
 	# client
 	"client/cli",
+	"client/dvm/consensus",
+	"client/dvm/rpc",
 	# frame
 	"frame/balances",
 	"frame/balances/rpc",
@@ -20,14 +22,11 @@ members = [
 	"frame/bridge/tron/backing",
 	"frame/claims",
 	"frame/democracy",
-	"frame/dvm/ethereum",
-	"frame/dvm/evm",
+	"frame/dvm",
 	"frame/dvm/rpc",
-	"frame/dvm/rpc/core",
-	"frame/dvm/rpc/primitives",
-	"frame/dvm/consensus",
-	"frame/dvm/consensus/primitives",
+	"frame/dvm/rpc/runtime-api",
 	"frame/elections-phragmen",
+	"frame/evm",
 	"frame/header-mmr",
 	"frame/header-mmr/rpc",
 	"frame/header-mmr/rpc/runtime-api",
@@ -42,6 +41,9 @@ members = [
 	"primitives/ethereum-primitives",
 	"primitives/merkle-patricia-trie",
 	"primitives/relay",
+	"primitives/consensus",
+	"primitives/dvm-rpc-core",
+	"primitives/evm",
 ]
 
 # The list of dependencies below (which can be both direct and indirect dependencies) are crates

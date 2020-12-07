@@ -77,7 +77,7 @@ pub trait RuntimeApiCollection:
 	+ darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance>
 	+ darwinia_header_mmr_rpc_runtime_api::HeaderMMRApi<Block, Hash>
 	+ darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>
-	+ dvm_rpc_primitives::EthereumRuntimeRPCApi<Block>
+	+ dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>
 where
 	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
 {
@@ -98,7 +98,7 @@ where
 		+ darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance>
 		+ darwinia_header_mmr_rpc_runtime_api::HeaderMMRApi<Block, Hash>
 		+ darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>
-		+ dvm_rpc_primitives::EthereumRuntimeRPCApi<Block>,
+		+ dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
 	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
 {
 }
