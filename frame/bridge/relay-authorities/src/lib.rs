@@ -278,6 +278,7 @@ decl_module! {
 			let _ = Self::remove_candidate_by_id(&account_id);
 		}
 
+		// TODO: not allow to renounce, if there's only one authority
 		/// Renounce the authority for you
 		///
 		/// This call is disallowed during the authorities change
@@ -293,7 +294,7 @@ decl_module! {
 
 			Self::remove_authority_by_id_with(
 				&account_id,
-				|authority| if authority.term <= <frame_system::Module<T>>::block_number() {
+				|authority| if authority.term >= <frame_system::Module<T>>::block_number() {
 					Some(<Error<T, I>>::AuthorityIT)
 				} else {
 					None
@@ -301,6 +302,7 @@ decl_module! {
 			)?;
 		}
 
+		// TODO: add several authorities once
 		/// Require add origin
 		///
 		/// Add an authority from the candidates
@@ -322,6 +324,8 @@ decl_module! {
 			// Self::start_authorities_state();
 		}
 
+		// TODO: remove several authorities once
+		// TODO: not allow to renounce, if there's only one authority
 		/// Require remove origin
 		///
 		/// This call is disallowed during the authorities change
