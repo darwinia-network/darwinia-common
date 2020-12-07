@@ -15,8 +15,8 @@ codec      = { package = "parity-scale-codec", version = "1.3.4", default-featur
 evm        = { version = "0.18", default-features = false, features = ["with-codec"] }
 serde      = { version = "1.0.101", optional = true, features = ["derive"] }
 # substrate
-sp-core  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-std   = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 [features]
 default = ["std"]
