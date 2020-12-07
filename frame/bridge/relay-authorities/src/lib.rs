@@ -41,6 +41,8 @@ mod types {
 		RelayAuthority<AccountId<T>, Signer<T, I>, RingBalance<T, I>, BlockNumber<T>>;
 }
 
+// --- crates ---
+use codec::Encode;
 // --- substrate ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
@@ -81,11 +83,14 @@ decl_event! {
 	pub enum Event<T, I: Instance = DefaultInstance>
 	where
 		AccountId = AccountId<T>,
+		BlockNumber = BlockNumber<T>,
 		MMRRoot = MMRRoot<T>,
 		RelaySignature = RelaySignature<T, I>,
 	{
-		SignedMMRRoot(MMRRoot, Vec<(AccountId, RelaySignature)>),
-		SignedAuthoritySet(Vec<u8>, Vec<(AccountId, RelaySignature)>),
+		/// MMR Root Signed. [block number, mmr root, message, signatures]
+		MMRRootSigned(BlockNumber, MMRRoot, Vec<u8>, Vec<(AccountId, RelaySignature)>),
+		/// Authorities Signed. [term, message, signatures]
+		AuthoritiesSetSigned(u32, Vec<u8>, Vec<(AccountId, RelaySignature)>),
 	}
 }
 
@@ -396,11 +401,17 @@ decl_module! {
 				&authorities,
 				&authority
 			).ok_or(<Error<T, I>>::AuthorityNE)?;
-			let mmr_root =
-				T::DarwiniaMMR::get_root(block_number).ok_or(<Error<T, I>>::DarwiniaMMRRootNRY)?;
+			// The message is composed of:
+			//
+			// codec(spec_name: String, block number: BlockNumber, mmr_root: Hash)
+			let message = (
+				T::Version::get().spec_name,
+				block_number,
+				T::DarwiniaMMR::get_root(block_number).ok_or(<Error<T, I>>::DarwiniaMMRRootNRY)?
+			).encode();
 
 			ensure!(
-				T::Sign::verify_signature(&signature, mmr_root, signer),
+				T::Sign::verify_signature(&signature, &message, signer),
 				 <Error<T, I>>::SignatureInv
 			);
 
@@ -412,7 +423,7 @@ decl_module! {
 				// TODO: clean the mmr root which was contains in this mmr root?
 
 				Self::finish_collect_mmr_root_sign(block_number);
-				Self::deposit_event(RawEvent::SignedMMRRoot(mmr_root, signatures));
+				Self::deposit_event(RawEvent::MMRRootSigned(block_number, mmr_root, message, signatures));
 			} else {
 				<MMRRootsToSign<T, I>>::insert(block_number, signatures);
 			}
@@ -433,7 +444,7 @@ decl_module! {
 
 			ensure!(Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
 
-			let (new_authorities_set, mut signatures) = <AuthoritiesToSign<T, I>>::get();
+			let (message, mut signatures) = <AuthoritiesToSign<T, I>>::get();
 
 			if signatures
 				.iter()
@@ -450,7 +461,7 @@ decl_module! {
 			).ok_or(<Error<T, I>>::AuthorityNE)?;
 
 			ensure!(
-				T::Sign::verify_signature(&signature, &new_authorities_set, signer),
+				T::Sign::verify_signature(&signature, &message, signer),
 				 <Error<T, I>>::SignatureInv
 			);
 
@@ -460,12 +471,13 @@ decl_module! {
 				>= T::SignThreshold::get()
 			{
 				Self::finish_authorities_change();
-				Self::deposit_event(RawEvent::SignedAuthoritySet(
-					new_authorities_set,
+				Self::deposit_event(RawEvent::AuthoritiesSetSigned(
+					<AuthorityTerm<I>>::get(),
+					message,
 					signatures
 				));
 			} else {
-				<AuthoritiesToSign<T, I>>::put((new_authorities_set, signatures));
+				<AuthoritiesToSign<T, I>>::put((message, signatures));
 			}
 		}
 	}
@@ -550,17 +562,18 @@ where
 	) {
 		<OldAuthorities<T, I>>::put(old_authorities);
 		<AuthoritiesToSign<T, I>>::put((
-			{
-				// The message is composed of:
-				// 	(4 bytes `term`) + concat(list(20 bytes `ethereum address`))
-				let mut authorities_to_sign = <AuthorityTerm<I>>::get().to_le_bytes().to_vec();
-
-				for authority in new_authorities {
-					authorities_to_sign.extend_from_slice(authority.signer.as_ref());
-				}
-
-				authorities_to_sign
-			},
+			// The message is composed of:
+			//
+			// codec(spec_name: String, term: u32, new authorities: Vec<Signer>)
+			(
+				T::Version::get().spec_name,
+				<AuthorityTerm<I>>::get(),
+				new_authorities
+					.iter()
+					.map(|authority| authority.signer.clone())
+					.collect::<Vec<_>>(),
+			)
+				.encode(),
 			<Vec<(AccountId<T>, RelaySignature<T, I>)>>::new(),
 		));
 
