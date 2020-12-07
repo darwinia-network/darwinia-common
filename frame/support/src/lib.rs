@@ -2,6 +2,7 @@
 
 pub mod macros;
 pub mod structs;
+pub mod testing;
 pub mod traits;
 
 pub mod balance {

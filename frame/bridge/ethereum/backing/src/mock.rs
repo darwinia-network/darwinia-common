@@ -30,17 +30,11 @@ macro_rules! decl_tests {
 
 		type Extrinsic = TestXt<Call, ()>;
 
-		type RingInstance = darwinia_balances::Instance0;
-		type _RingError = darwinia_balances::Error<Test, RingInstance>;
-		type Ring = darwinia_balances::Module<Test, RingInstance>;
-
-		type KtonInstance = darwinia_balances::Instance1;
-		type _KtonError = darwinia_balances::Error<Test, KtonInstance>;
-		type Kton = darwinia_balances::Module<Test, KtonInstance>;
-
 		type Session = pallet_session::Module<Test>;
 		type System = frame_system::Module<Test>;
 		type Timestamp = pallet_timestamp::Module<Test>;
+		type Ring = darwinia_balances::Module<Test, RingInstance>;
+		type Kton = darwinia_balances::Module<Test, KtonInstance>;
 		type Staking = darwinia_staking::Module<Test>;
 		type EthereumBacking = Module<Test>;
 
@@ -60,17 +54,7 @@ macro_rules! decl_tests {
 			}
 		}
 
-		darwinia_support::impl_account_data! {
-			struct AccountData<Balance>
-			for
-				RingInstance,
-				KtonInstance
-			where
-				Balance = Balance
-			{
-				// other data
-			}
-		}
+		darwinia_support::impl_test_account_data! {}
 
 		#[derive(Clone, PartialEq, Eq, Debug)]
 		pub struct Test;

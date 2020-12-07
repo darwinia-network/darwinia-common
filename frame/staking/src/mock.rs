@@ -2,17 +2,8 @@
 
 #![allow(unused)]
 
-mod alias {
-	pub mod staking {
-		// Re-export needed for `impl_outer_event!`.
-		pub use super::super::*;
-	}
-
-	// --- substrate ---
-	pub use frame_system as system;
-	pub use pallet_session as session;
-	// --- darwinia ---
-	pub use darwinia_balances as balances;
+mod staking {
+	pub use crate::Event;
 }
 
 // --- std ---
@@ -38,7 +29,6 @@ use sp_staking::{
 };
 // --- darwinia ---
 use crate::*;
-use alias::*;
 
 pub(crate) type AccountId = u64;
 pub(crate) type AccountIndex = u64;
@@ -47,20 +37,15 @@ pub(crate) type Balance = u128;
 
 pub(crate) type Extrinsic = TestXt<Call, ()>;
 
-pub(crate) type RingInstance = darwinia_balances::Instance0;
-pub(crate) type RingError = darwinia_balances::Error<Test, RingInstance>;
-pub(crate) type Ring = darwinia_balances::Module<Test, RingInstance>;
-
-pub(crate) type KtonInstance = darwinia_balances::Instance1;
-pub(crate) type _KtonError = darwinia_balances::Error<Test, KtonInstance>;
-pub(crate) type Kton = darwinia_balances::Module<Test, KtonInstance>;
-
 pub(crate) type System = frame_system::Module<Test>;
 pub(crate) type Session = pallet_session::Module<Test>;
 pub(crate) type Timestamp = pallet_timestamp::Module<Test>;
-
-pub(crate) type StakingError = Error<Test>;
+pub(crate) type Ring = darwinia_balances::Module<Test, RingInstance>;
+pub(crate) type Kton = darwinia_balances::Module<Test, KtonInstance>;
 pub(crate) type Staking = Module<Test>;
+
+pub(crate) type RingError = darwinia_balances::Error<Test, RingInstance>;
+pub(crate) type StakingError = Error<Test>;
 
 pub(crate) const NANO: Balance = 1;
 pub(crate) const MICRO: Balance = 1_000 * NANO;
@@ -91,29 +76,19 @@ impl_outer_dispatch! {
 
 impl_outer_event! {
 	pub enum MetaEvent for Test {
-		system <T>,
-		session,
-		balances Instance0<T>,
-		balances Instance1<T>,
+		frame_system <T>,
+		pallet_session,
+		darwinia_balances Instance0<T>,
+		darwinia_balances Instance1<T>,
 		staking <T>,
 	}
 }
 
 impl_outer_origin! {
-	pub enum Origin for Test where system = system {}
+	pub enum Origin for Test where system = frame_system {}
 }
 
-darwinia_support::impl_account_data! {
-	struct AccountData<Balance>
-	for
-		RingInstance,
-		KtonInstance
-	where
-		Balance = Balance
-	{
-		// other data
-	}
-}
+darwinia_support::impl_test_account_data! {}
 
 /// Another session handler struct to test on_disabled.
 pub struct OtherSessionHandler;

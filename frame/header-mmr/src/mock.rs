@@ -15,16 +15,12 @@ impl_outer_origin! {
 	pub enum Origin for Test where system = frame_system {}
 }
 
-// --- substrate ---
 pub type System = frame_system::Module<Test>;
-
-// --- darwinia ---
 pub type HeaderMMR = Module<Test>;
 
 // Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
 #[derive(Clone, PartialEq, Eq, Debug, Decode, Encode)]
 pub struct Test;
-
 impl Trait for Test {}
 
 parameter_types! {

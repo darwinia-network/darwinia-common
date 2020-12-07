@@ -36,9 +36,6 @@ mod voting;
 type BlockNumber = u64;
 type Balance = u64;
 
-type RingInstance = darwinia_balances::Instance0;
-type KtonInstance = darwinia_balances::Instance1;
-
 const AYE: Vote = Vote {
 	aye: true,
 	conviction: Conviction::None,
@@ -83,17 +80,7 @@ impl_outer_event! {
 	}
 }
 
-darwinia_support::impl_account_data! {
-	struct AccountData<Balance>
-	for
-		RingInstance,
-		KtonInstance
-	where
-		Balance = Balance
-	{
-		// other data
-	}
-}
+darwinia_support::impl_test_account_data! {}
 
 // Test that a fitlered call can be dispatched.
 pub struct BaseFilter;

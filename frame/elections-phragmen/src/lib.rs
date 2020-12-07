@@ -1086,30 +1086,11 @@ mod tests {
 	};
 	use substrate_test_utils::assert_eq_uvec;
 	// --- darwinia ---
-	use crate as elections_phragmen;
-	use elections_phragmen::*;
+	use crate::{self as elections_phragmen, *};
 
 	type Balance = u64;
 
-	type RingInstance = darwinia_balances::Instance0;
-	type _RingError = darwinia_balances::Error<Test, RingInstance>;
-	type _Ring = darwinia_balances::Module<Test, RingInstance>;
-
-	type KtonInstance = darwinia_balances::Instance1;
-	type _KtonError = darwinia_balances::Error<Test, KtonInstance>;
-	type _Kton = darwinia_balances::Module<Test, KtonInstance>;
-
-	darwinia_support::impl_account_data! {
-		struct AccountData<Balance>
-		for
-			RingInstance,
-			KtonInstance
-		where
-			Balance = Balance
-		{
-			// other data
-		}
-	}
+	darwinia_support::impl_test_account_data! {}
 
 	parameter_types! {
 		pub const BlockHashCount: u64 = 250;
