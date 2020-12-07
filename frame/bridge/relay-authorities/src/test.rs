@@ -111,7 +111,7 @@ fn renounce_authority_should_work() {
 }
 
 #[test]
-fn add_authority_should_fail() {
+fn add_authority_should_work() {
 	new_test_ext().execute_with(|| {
 		assert_err!(
 			RelayAuthorities::add_authority(Origin::root(), 1),
@@ -120,9 +120,21 @@ fn add_authority_should_fail() {
 
 		assert_ok!(request_authority(1));
 		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 1));
+	});
+}
+
+#[test]
+fn remove_authority_should_work() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(request_authority(1));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 1));
 		assert_err!(
 			RelayAuthorities::remove_authority(Origin::root(), 1),
 			RelayAuthoritiesError::OnAuthoritiesChangeDis
 		);
+
+		RelayAuthorities::finish_authorities_change();
+
+		assert_ok!(RelayAuthorities::remove_authority(Origin::root(), 1));
 	});
 }
