@@ -18,15 +18,15 @@ evm            = { version = "0.18.0", features = ["with-codec"], default-featur
 libsecp256k1   = { version = "0.3", default-features = false }
 rlp            = { version = "0.4", default-features = false }
 rustc-hex      = { version = "2.1.0", default-features = false }
-serde          = { version = "1.0.117", optional = true }
+serde          = { version = "1.0.118", optional = true }
 sha3           = { version = "0.8", default-features = false }
 # darwinia
 darwinia-balances        = { default-features = false, path = "../balances" }
 darwinia-evm             = { default-features = false, path = "../evm" }
-darwinia-evm-primitives  = { default-features = false, path = "../../primitives/evm"}
+darwinia-evm-primitives  = { default-features = false, path = "../../primitives/evm" }
 darwinia-support         = { default-features = false, path = "../support" }
 dvm-consensus-primitives = { default-features = false, path = "../../primitives/consensus" }
-dvm-rpc-runtime-api       = { default-features = false, path = "./rpc/runtime-api" }
+dvm-rpc-runtime-api      = { default-features = false, path = "./rpc/runtime-api" }
 # substrate
 frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
