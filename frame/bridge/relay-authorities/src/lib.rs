@@ -406,7 +406,7 @@ decl_module! {
 			// codec(spec_name: String, block number: BlockNumber, mmr_root: Hash)
 			let message = {
 				#[derive(Encode)]
-				struct S<BlockNumber, MMRRoot>
+				struct _S<BlockNumber, MMRRoot>
 				where
 					BlockNumber: Encode,
 					MMRRoot: Encode,
@@ -417,7 +417,7 @@ decl_module! {
 					_3: MMRRoot,
 				}
 
-				S {
+				_S {
 					_1: T::Version::get().spec_name,
 					_2: block_number,
 					_3: T::DarwiniaMMR::get_root(block_number).ok_or(<Error<T, I>>::DarwiniaMMRRootNRY)?
@@ -581,7 +581,7 @@ where
 			// codec(spec_name: String, term: u32, new authorities: Vec<Signer>)
 			{
 				#[derive(Encode)]
-				struct S<AccountId>
+				struct _S<AccountId>
 				where
 					AccountId: Encode,
 				{
@@ -591,7 +591,7 @@ where
 					_3: Vec<AccountId>,
 				}
 
-				S {
+				_S {
 					_1: T::Version::get().spec_name,
 					_2: <AuthorityTerm<I>>::get(),
 					_3: new_authorities
