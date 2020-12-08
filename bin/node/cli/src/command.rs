@@ -2,7 +2,6 @@
 use std::path::PathBuf;
 // --- substrate ---
 use sc_cli::{Role, RunCmd, RuntimeVersion, SubstrateCli};
-use sp_core::crypto::Ss58AddressFormat;
 // --- darwinia ---
 use crate::{
 	chain_spec,
@@ -87,10 +86,6 @@ fn get_exec_name() -> Option<String> {
 		.and_then(|s| s.into_string().ok())
 }
 
-fn set_default_ss58_version(_spec: &Box<dyn sc_service::ChainSpec>) {
-	sp_core::crypto::set_default_ss58_version(Ss58AddressFormat::DarwiniaAccount);
-}
-
 /// Parse command line arguments into service configuration.
 pub fn run() -> sc_cli::Result<()> {
 	let cli = Cli::from_args();
@@ -98,9 +93,6 @@ pub fn run() -> sc_cli::Result<()> {
 	match &cli.subcommand {
 		None => {
 			let runner = Configuration::create_runner(cli)?;
-			let chain_spec = &runner.config().chain_spec;
-
-			set_default_ss58_version(chain_spec);
 
 			runner.run_node_until_exit(|config| match config.role {
 				Role::Light => service::drml_new_light(config),
@@ -115,9 +107,6 @@ pub fn run() -> sc_cli::Result<()> {
 		// Some(Subcommand::BuildSyncSpec(cmd)) => {}
 		Some(Subcommand::CheckBlock(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			let chain_spec = &runner.config().chain_spec;
-
-			set_default_ss58_version(chain_spec);
 
 			runner.async_run(|mut config| {
 				let (client, _, import_queue, task_manager) = service::new_chain_ops::<
@@ -129,9 +118,6 @@ pub fn run() -> sc_cli::Result<()> {
 		}
 		Some(Subcommand::ExportBlocks(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			let chain_spec = &runner.config().chain_spec;
-
-			set_default_ss58_version(chain_spec);
 
 			runner.async_run(|mut config| {
 				let (client, _, _, task_manager) = service::new_chain_ops::<
@@ -143,9 +129,6 @@ pub fn run() -> sc_cli::Result<()> {
 		}
 		Some(Subcommand::ExportState(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			let chain_spec = &runner.config().chain_spec;
-
-			set_default_ss58_version(chain_spec);
 
 			runner.async_run(|mut config| {
 				let (client, _, _, task_manager) = service::new_chain_ops::<
@@ -157,9 +140,6 @@ pub fn run() -> sc_cli::Result<()> {
 		}
 		Some(Subcommand::ImportBlocks(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			let chain_spec = &runner.config().chain_spec;
-
-			set_default_ss58_version(chain_spec);
 
 			runner.async_run(|mut config| {
 				let (client, _, import_queue, task_manager) = service::new_chain_ops::<
@@ -175,9 +155,6 @@ pub fn run() -> sc_cli::Result<()> {
 		}
 		Some(Subcommand::Revert(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			let chain_spec = &runner.config().chain_spec;
-
-			set_default_ss58_version(chain_spec);
 
 			runner.async_run(|mut config| {
 				let (client, backend, _, task_manager) = service::new_chain_ops::<
