@@ -166,7 +166,7 @@ fn encode_message_should_work() {
 
 	// The message is composed of:
 	//
-	// codec(spec_name: RuntimeString, block number: BlockNumber, mmr_root: Hash)
+	// codec(spec_name: RuntimeString, block number: Compact<BlockNumber>, mmr_root: Hash)
 	let message = {
 		_S {
 			_1: RuntimeString::from("DRML"),
@@ -179,7 +179,7 @@ fn encode_message_should_work() {
 
 	// The message is composed of:
 	//
-	// codec(spec_name: RuntimeString, term: u32, new authorities: Vec<Signer>)
+	// codec(spec_name: RuntimeString, term: Compact<u32>, new authorities: Vec<Signer>)
 	let message = {
 		_S {
 			_1: RuntimeString::from("DRML"),
