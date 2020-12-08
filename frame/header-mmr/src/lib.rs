@@ -78,7 +78,7 @@ use darwinia_header_mmr_rpc_runtime_api::{Proof, RuntimeDispatchInfo};
 use darwinia_relay_primitives::MMR as MMRT;
 use darwinia_support::impl_rpc;
 
-pub const MMR_ROOT_LOG_ID: [u8; 4] = *b"MMRR";
+pub const PARENT_MMR_ROOT_LOG_ID: [u8; 4] = *b"MMRR";
 
 #[cfg_attr(feature = "std", derive(Serialize))]
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug)]
@@ -86,7 +86,7 @@ pub struct MerkleMountainRangeRootLog<Hash> {
 	/// Specific prefix to identify the mmr root log in the digest items with Other type.
 	pub prefix: [u8; 4],
 	/// The merkle mountain range root hash.
-	pub mmr_root: Hash,
+	pub parent_mmr_root: Hash,
 }
 
 pub trait Trait: frame_system::Trait {}
@@ -114,11 +114,11 @@ decl_module! {
 			// Update MMR and add mmr root to digest of block header
 			let _ = mmr.push(parent_hash);
 
-			if let Ok(mmr_root) = mmr.get_root() {
+			if let Ok(parent_mmr_root) = mmr.get_root() {
 				if mmr.commit().is_ok() {
 					let mmr_root_log = MerkleMountainRangeRootLog::<T::Hash> {
-						prefix: MMR_ROOT_LOG_ID,
-						mmr_root: mmr_root.into()
+						prefix: PARENT_MMR_ROOT_LOG_ID,
+						parent_mmr_root: parent_mmr_root.into()
 					};
 					let mmr_item = DigestItem::Other(mmr_root_log.encode());
 
@@ -139,17 +139,19 @@ impl<T: Trait> Module<T> {
 			block_number_of_member_leaf: u64,
 			block_number_of_last_leaf: u64,
 		) -> RuntimeDispatchInfo<T::Hash> {
-			if block_number_of_member_leaf < block_number_of_last_leaf {
+			if block_number_of_member_leaf <= block_number_of_last_leaf {
 				let store = <ModuleMMRStore<T>>::default();
 				let mmr_size = leaf_index_to_mmr_size(block_number_of_last_leaf);
-				let mmr = <MMR<_, MMRMerge<T>, _>>::new(mmr_size, store);
-				let pos = leaf_index_to_pos(block_number_of_member_leaf);
+				if mmr_size <= MMRCounter::get() {
+					let mmr = <MMR<_, MMRMerge<T>, _>>::new(mmr_size, store);
+					let pos = leaf_index_to_pos(block_number_of_member_leaf);
 
-				if let Ok(merkle_proof) = mmr.gen_proof(vec![pos]) {
-					return RuntimeDispatchInfo {
-						mmr_size,
-						proof: Proof(merkle_proof.proof_items().to_vec()),
-					};
+					if let Ok(merkle_proof) = mmr.gen_proof(vec![pos]) {
+						return RuntimeDispatchInfo {
+							mmr_size,
+							proof: Proof(merkle_proof.proof_items().to_vec()),
+						};
+					}
 				}
 			}
 
@@ -161,14 +163,14 @@ impl<T: Trait> Module<T> {
 	}
 
 	// TODO: For future rpc calls
-	fn _find_mmr_root(header: T::Header) -> Option<T::Hash> {
+	fn _find_parent_mmr_root(header: T::Header) -> Option<T::Hash> {
 		let id = OpaqueDigestItemId::Other;
 
 		let filter_log =
-			|MerkleMountainRangeRootLog { prefix, mmr_root }: MerkleMountainRangeRootLog<
+			|MerkleMountainRangeRootLog { prefix, parent_mmr_root }: MerkleMountainRangeRootLog<
 				T::Hash,
 			>| match prefix {
-				MMR_ROOT_LOG_ID => Some(mmr_root),
+				PARENT_MMR_ROOT_LOG_ID => Some(parent_mmr_root),
 				_ => None,
 			};
 

@@ -59,18 +59,18 @@ fn test_insert_header() {
 		assert_eq!(pos, leaf_index_to_pos(h1));
 		assert_eq!(prove_elem, HeaderMMR::mmr_node_list(pos));
 
-		let mmr_root = HeaderMMR::_find_mmr_root(headers[h2 as usize - 1].clone())
+		let parent_mmr_root = HeaderMMR::_find_parent_mmr_root(headers[h2 as usize - 1].clone())
 			.expect("Header mmr get failed");
 
 		let store = <ModuleMMRStore<Test>>::default();
-		let mmr = MMR::<_, MMRMerge<Test>, _>::new(leaf_index_to_pos(h2), store);
+		let mmr = MMR::<_, MMRMerge<Test>, _>::new(leaf_index_to_mmr_size(h2 - 1), store);
 
-		assert_eq!(mmr.get_root().expect("Get Root Failed"), mmr_root);
+		assert_eq!(mmr.get_root().expect("Get Root Failed"), parent_mmr_root);
 
 		let proof = mmr.gen_proof(vec![pos]).expect("gen proof");
 
 		let result = proof
-			.verify(mmr_root, vec![(pos, prove_elem)])
+			.verify(parent_mmr_root, vec![(pos, prove_elem)])
 			.expect("verify");
 		assert!(result);
 	});
