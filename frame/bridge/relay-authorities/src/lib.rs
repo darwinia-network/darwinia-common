@@ -42,7 +42,7 @@ mod types {
 }
 
 // --- crates ---
-use codec::Encode;
+use codec::{Compact, Encode};
 // --- substrate ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
@@ -406,7 +406,7 @@ decl_module! {
 			// codec(spec_name: String, block number: BlockNumber, mmr_root: Hash)
 			let message = (
 				T::Version::get().spec_name,
-				block_number,
+				Compact(block_number),
 				T::DarwiniaMMR::get_root(block_number).ok_or(<Error<T, I>>::DarwiniaMMRRootNRY)?
 			).encode();
 
@@ -567,7 +567,7 @@ where
 			// codec(spec_name: String, term: u32, new authorities: Vec<Signer>)
 			(
 				T::Version::get().spec_name,
-				<AuthorityTerm<I>>::get(),
+				Compact(<AuthorityTerm<I>>::get()),
 				new_authorities
 					.iter()
 					.map(|authority| authority.signer.clone())
