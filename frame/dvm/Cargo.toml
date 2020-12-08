@@ -18,7 +18,7 @@ evm            = { version = "0.18.0", features = ["with-codec"], default-featur
 libsecp256k1   = { version = "0.3", default-features = false }
 rlp            = { version = "0.4", default-features = false }
 rustc-hex      = { version = "2.1.0", default-features = false }
-serde          = { version = "1.0.117", optional = true }
+serde          = { version = "1.0.118", optional = true }
 sha3           = { version = "0.8", default-features = false }
 # darwinia
 darwinia-balances        = { default-features = false, path = "../balances" }
