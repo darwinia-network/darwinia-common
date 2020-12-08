@@ -194,7 +194,7 @@
 	"__[pallet.header-mmr]__": {},
 	"MerkleMountainRangeRootLog": {
 		"prefix": "[u8; 4; Prefix]",
-		"mmr_root": "Hash"
+		"parent_mmr_root": "Hash"
 	},
 	"__[primitives.relay]__": {},
 	"RelayHeaderId": "EthereumBlockNumber",

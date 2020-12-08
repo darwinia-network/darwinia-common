@@ -86,7 +86,7 @@ pub struct MerkleMountainRangeRootLog<Hash> {
 	/// Specific prefix to identify the mmr root log in the digest items with Other type.
 	pub prefix: [u8; 4],
 	/// The merkle mountain range root hash.
-	pub mmr_root: Hash,
+	pub parent_mmr_root: Hash,
 }
 
 pub trait Trait: frame_system::Trait {}
@@ -118,7 +118,7 @@ decl_module! {
 				if mmr.commit().is_ok() {
 					let mmr_root_log = MerkleMountainRangeRootLog::<T::Hash> {
 						prefix: PARENT_MMR_ROOT_LOG_ID,
-						mmr_root: parent_mmr_root.into()
+						parent_mmr_root: parent_mmr_root.into()
 					};
 					let mmr_item = DigestItem::Other(mmr_root_log.encode());
 
@@ -167,10 +167,10 @@ impl<T: Trait> Module<T> {
 		let id = OpaqueDigestItemId::Other;
 
 		let filter_log =
-			|MerkleMountainRangeRootLog { prefix, mmr_root }: MerkleMountainRangeRootLog<
+			|MerkleMountainRangeRootLog { prefix, parent_mmr_root }: MerkleMountainRangeRootLog<
 				T::Hash,
 			>| match prefix {
-				PARENT_MMR_ROOT_LOG_ID => Some(mmr_root),
+				PARENT_MMR_ROOT_LOG_ID => Some(parent_mmr_root),
 				_ => None,
 			};
 

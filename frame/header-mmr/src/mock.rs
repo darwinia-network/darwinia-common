@@ -67,7 +67,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 pub fn header_mmr_log(hash: H256) -> DigestItem<H256> {
 	let mmr_root_log = MerkleMountainRangeRootLog::<H256> {
 		prefix: PARENT_MMR_ROOT_LOG_ID,
-		mmr_root: hash,
+		parent_mmr_root: hash,
 	};
 
 	DigestItem::Other(mmr_root_log.encode())
