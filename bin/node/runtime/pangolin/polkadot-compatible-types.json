@@ -224,7 +224,7 @@
 		"ayes": "Vec<AccountId>",
 		"nays": "Vec<AccountId>"
 	},
-	"RelayAuthority": {
+	"RelayAuthorityT": {
 		"account_id": "AccountId",
 		"signer": "Signer",
 		"stake": "Balance",
