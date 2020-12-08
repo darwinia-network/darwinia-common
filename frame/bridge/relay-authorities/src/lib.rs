@@ -51,7 +51,7 @@ use frame_support::{
 	StorageValue,
 };
 use frame_system::ensure_signed;
-use sp_runtime::{DispatchError, DispatchResult, Perbill, RuntimeString};
+use sp_runtime::{DispatchError, DispatchResult, Perbill};
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
 use sp_std::prelude::*;
@@ -405,18 +405,6 @@ decl_module! {
 			//
 			// codec(spec_name: String, block number: BlockNumber, mmr_root: Hash)
 			let message = {
-				#[derive(Encode)]
-				struct _S<BlockNumber, MMRRoot>
-				where
-					BlockNumber: Encode,
-					MMRRoot: Encode,
-				{
-					_1: RuntimeString,
-					#[codec(compact)]
-					_2: BlockNumber,
-					_3: MMRRoot,
-				}
-
 				_S {
 					_1: T::Version::get().spec_name,
 					_2: block_number,
@@ -580,17 +568,6 @@ where
 			//
 			// codec(spec_name: String, term: u32, new authorities: Vec<Signer>)
 			{
-				#[derive(Encode)]
-				struct _S<AccountId>
-				where
-					AccountId: Encode,
-				{
-					_1: RuntimeString,
-					#[codec(compact)]
-					_2: u32,
-					_3: Vec<AccountId>,
-				}
-
 				_S {
 					_1: T::Version::get().spec_name,
 					_2: <AuthorityTerm<I>>::get(),
@@ -732,4 +709,17 @@ where
 	} else {
 		None
 	}
+}
+
+#[derive(Encode)]
+struct _S<_1, _2, _3>
+where
+	_1: Encode,
+	_2: Encode,
+	_3: Encode,
+{
+	_1: _1,
+	#[codec(compact)]
+	_2: _2,
+	_3: _3,
 }
