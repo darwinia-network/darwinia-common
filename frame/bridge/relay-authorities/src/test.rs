@@ -158,3 +158,35 @@ fn kill_candidates_should_work() {
 		assert!(RelayAuthorities::candidates().is_empty());
 	});
 }
+
+#[test]
+fn encode_message_should_work() {
+	// --- substrate ---
+	use sp_runtime::RuntimeString;
+
+	// The message is composed of:
+	//
+	// codec(spec_name: String, block number: BlockNumber, mmr_root: Hash)
+	let message = {
+		_S {
+			_1: RuntimeString::from("DRML"),
+			_2: 789u32,
+			_3: [0u8; 32],
+		}
+		.encode()
+	};
+	println!("{:?}", message);
+
+	// The message is composed of:
+	//
+	// codec(spec_name: String, term: u32, new authorities: Vec<Signer>)
+	let message = {
+		_S {
+			_1: RuntimeString::from("DRML"),
+			_2: 789u32,
+			_3: vec![[7u8; 20], [8u8; 20], [9u8; 20]],
+		}
+		.encode()
+	};
+	println!("{:?}", message);
+}

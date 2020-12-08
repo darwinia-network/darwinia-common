@@ -409,7 +409,8 @@ decl_module! {
 					_1: T::Version::get().spec_name,
 					_2: block_number,
 					_3: T::DarwiniaMMR::get_root(block_number).ok_or(<Error<T, I>>::DarwiniaMMRRootNRY)?
-				}.encode()
+				}
+				.encode()
 			};
 
 			ensure!(
