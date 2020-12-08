@@ -53,4 +53,4 @@ jobs:
           node-version: 10
 
       - name: Run dvm tests
-        run: cd frame/dvm/script_tests/ && npm install && npm test
+        run: cd script_tests/ && npm install && npm test

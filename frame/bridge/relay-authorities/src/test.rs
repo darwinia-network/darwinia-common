@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // --- substrate ---
 use frame_support::{assert_err, assert_ok};
 // --- darwinia ---
@@ -158,3 +159,6 @@ fn kill_candidates_should_work() {
 		assert!(RelayAuthorities::candidates().is_empty());
 	});
 }
+=======
+
+>>>>>>> origin/master

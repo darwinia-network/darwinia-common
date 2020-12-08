@@ -1,40 +1,54 @@
 [package]
 authors     = ["Darwinia Network <hello@darwinia.network>"]
-description = "Ethereum RPC (web3) compatibility layer for Darwinia."
+description = "Runtime primitives for Ethereum RPC (web3) compatibility layer for Darwinia."
 edition     = "2018"
 homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"
-name        = "dvm-rpc"
+name        = "dvm-rpc-core"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "1.2.2"
 
 [dependencies]
 # crates
-codec               = { package = "parity-scale-codec", version = "1.3.5" }
-ethereum            = { version = "0.3", features = ["codec"] }
-ethereum-types      = "0.9.0"
-futures             = { version = "0.3.7", features = ["compat"] }
-jsonrpc-core        = "15.1.0"
-jsonrpc-core-client = "15.1.0"
-jsonrpc-derive      = "15.1.0"
-jsonrpc-pubsub      = "15.1.0"
-log                 = "0.4.11"
-rlp                 = "0.4"
-rustc-hex           = { version = "2.1.0" }
-sha3                = "0.8"
+codec          = { package = "parity-scale-codec", version = "1.3.5", default-features = false }
+ethereum       = { version = "0.5", default-features = false, features = ["with-codec"] }
+ethereum-types = { version = "0.9", default-features = false }
+jsonrpc-core   = { version = "15.1.0" }
+jsonrpc-derive = { version = "15.1.0" }
+jsonrpc-pubsub = { version = "15.1.0" }
+
 # darwinia
-dvm-consensus      = { path = "../consensus" }
-dvm-rpc-core       = { path = "core" }
-dvm-rpc-primitives = { path = "primitives" }
+darwinia-evm            = { default-features = false, path = "../../evm" }
+darwinia-evm-primitives = { default-features = false, path = "../../../primitives/evm" }
+dvm-rpc-core-primitives = { default-features = false, path = "../../../primitives/dvm-rpc-core" }
 # substrate
-sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sc-network          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sc-rpc              = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sc-service          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-api              = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-io               = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-storage          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-api     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+
+[features]
+default = ["std"]
+
+std = [
+	"crates-std",
+	"darwinia-std",
+	"substrate-std",
+]
+
+crates-std    = [
+	"codec/std",
+	"ethereum/std",
+	"ethereum-types/std",
+]
+darwinia-std  = [
+	"darwinia-evm/std",
+	"darwinia-evm-primitives/std",
+]
+substrate-std = [
+	"sp-api/std",
+	"sp-core/std",
+	"sp-runtime/std",
+	"sp-std/std",
+]

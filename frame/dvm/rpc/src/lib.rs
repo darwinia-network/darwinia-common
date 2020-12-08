@@ -1,43 +1,9 @@
-// Copyright 2017-2020 Parity Technologies (UK) Ltd.
-// This file is part of Frontier.
-
-// Substrate is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// Substrate is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Substrate.  If not, see <http://www.gnu.org/licenses/>.
-
 mod eth;
 mod eth_pubsub;
+mod net;
+mod web3;
 
-pub use eth::{EthApi, EthApiServer, NetApi, NetApiServer};
+pub use eth::{EthApi, EthApiServer, EthFilterApi};
 pub use eth_pubsub::{EthPubSubApi, EthPubSubApiServer};
-
-use jsonrpc_core::{Error, ErrorCode, Value};
-use rustc_hex::ToHex;
-
-pub fn internal_err<T: ToString>(message: T) -> Error {
-	Error {
-		code: ErrorCode::InternalError,
-		message: message.to_string(),
-		data: None,
-	}
-}
-
-pub fn handle_call_error((err, data): (sp_runtime::DispatchError, Vec<u8>)) -> Error {
-	let error: &'static str = err.into();
-	// TODO: trim error message
-	let msg = String::from_utf8_lossy(&data);
-	Error {
-		code: ErrorCode::InternalError,
-		message: format!("{}: {}", error.to_lowercase(), msg),
-		data: Some(Value::String(data.to_hex())),
-	}
-}
+pub use net::{NetApi, NetApiServer};
+pub use web3::{Web3Api, Web3ApiServer};

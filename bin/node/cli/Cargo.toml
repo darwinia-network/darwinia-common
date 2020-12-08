@@ -21,8 +21,8 @@ futures        = { version = "0.3.8" }
 jsonrpc-core   = { version = "15.1.0" }
 jsonrpc-pubsub = { version = "15.1.0" }
 log            = { version = "0.4.11" }
-structopt      = { version = "0.3.20" }
-tokio          = { version = "0.3.3", optional = true, features = ["rt-multi-thread"] }
+structopt      = { version = "0.3.21" }
+tokio          = { version = "0.3.5", optional = true, features = ["rt-multi-thread"] }
 # darwinia
 array-bytes                         = { path = "../../../primitives/array-bytes" }
 darwinia-balances-rpc               = { path = "../../../frame/balances/rpc" }
@@ -30,16 +30,16 @@ darwinia-balances-rpc-runtime-api   = { path = "../../../frame/balances/rpc/runt
 darwinia-claims                     = { path = "../../../frame/claims" }
 darwinia-cli                        = { optional = true, path = "../../../client/cli" }
 darwinia-ethereum-relay             = { path = "../../../frame/bridge/ethereum/relay" }
-darwinia-evm                        = { path = "../../../frame/dvm/evm" }
+darwinia-evm                        = { path = "../../../frame/evm" }
 darwinia-header-mmr-rpc             = { path = "../../../frame/header-mmr/rpc" }
 darwinia-header-mmr-rpc-runtime-api = { path = "../../../frame/header-mmr/rpc/runtime-api" }
 darwinia-staking                    = { path = "../../../frame/staking" }
 darwinia-staking-rpc                = { path = "../../../frame/staking/rpc" }
 darwinia-staking-rpc-runtime-api    = { path = "../../../frame/staking/rpc/runtime-api" }
 drml-primitives                     = { path = "../primitives" }
-dvm-consensus                       = { path = "../../../frame/dvm/consensus" }
-dvm-rpc                             = { path = "../../../frame/dvm/rpc" }
-dvm-rpc-primitives                  = { path = "../../../frame/dvm/rpc/primitives" }
+dvm-consensus                       = { path = "../../../client/dvm/consensus" }
+dvm-rpc                             = { path = "../../../client/dvm/rpc" }
+dvm-rpc-runtime-api                 = { path = "../../../frame/dvm/rpc/runtime-api" }
 pangolin-runtime                    = { path = "../runtime/pangolin" }
 # substrate
 frame-system-rpc-runtime-api               = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }

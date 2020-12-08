@@ -12,8 +12,8 @@ version    = "1.0.0"
 [dependencies]
 # crates
 codec             = { package = "parity-scale-codec", version = "1.3.5", default-features = false }
-serde             = { version = "1.0.117", optional = true }
-smallvec          = { version = "1.4.2" }
+serde             = { version = "1.0.118", optional = true }
+smallvec          = { version = "1.5.1" }
 static_assertions = { version = "1.1.0" }
 # darwinia
 darwinia-balances                   = { default-features = false, path = "../../../../frame/balances" }
@@ -25,7 +25,7 @@ darwinia-democracy                  = { default-features = false, path = "../../
 darwinia-elections-phragmen         = { default-features = false, path = "../../../../frame/elections-phragmen" }
 darwinia-ethereum-backing           = { default-features = false, path = "../../../../frame/bridge/ethereum/backing" }
 darwinia-ethereum-relay             = { default-features = false, path = "../../../../frame/bridge/ethereum/relay" }
-darwinia-evm                        = { default-features = false, path = "../../../../frame/dvm/evm" }
+darwinia-evm                        = { default-features = false, path = "../../../../frame/evm" }
 darwinia-header-mmr                 = { default-features = false, path = "../../../../frame/header-mmr" }
 darwinia-header-mmr-rpc-runtime-api = { default-features = false, path = "../../../../frame/header-mmr/rpc/runtime-api" }
 darwinia-relay-authorities          = { default-features = false, path = "../../../../frame/bridge/relay-authorities" }
@@ -38,8 +38,8 @@ darwinia-treasury                   = { default-features = false, path = "../../
 darwinia-tron-backing               = { default-features = false, path = "../../../../frame/bridge/tron/backing" }
 darwinia-vesting                    = { default-features = false, path = "../../../../frame/vesting" }
 drml-primitives                     = { default-features = false, path = "../../primitives" }
-dvm-ethereum                        = { default-features = false, path = "../../../../frame/dvm/ethereum" }
-dvm-rpc-primitives                  = { default-features = false, path = "../../../../frame/dvm/rpc/primitives" }
+dvm-ethereum                        = { default-features = false, path = "../../../../frame/dvm" }
+dvm-rpc-runtime-api                 = { default-features = false, path = "../../../../frame/dvm/rpc/runtime-api" }
 ethereum-primitives                 = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
 # substrate
 frame-executive                            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
@@ -111,7 +111,7 @@ std     = [
 	"darwinia-vesting/std",
 	"drml-primitives/std",
 	"dvm-ethereum/std",
-	"dvm-rpc-primitives/std",
+	"dvm-rpc-runtime-api/std",
 	"ethereum-primitives/std",
 	"frame-executive/std",
 	"frame-support/std",
