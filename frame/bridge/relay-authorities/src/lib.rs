@@ -42,7 +42,7 @@ mod types {
 }
 
 // --- crates ---
-use codec::{Compact, Encode};
+use codec::Encode;
 // --- substrate ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
@@ -51,7 +51,7 @@ use frame_support::{
 	StorageValue,
 };
 use frame_system::ensure_signed;
-use sp_runtime::{DispatchError, DispatchResult, Perbill};
+use sp_runtime::{DispatchError, DispatchResult, Perbill, RuntimeString};
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
 use sp_std::prelude::*;
@@ -404,11 +404,25 @@ decl_module! {
 			// The message is composed of:
 			//
 			// codec(spec_name: String, block number: BlockNumber, mmr_root: Hash)
-			let message = (
-				T::Version::get().spec_name,
-				Compact(block_number),
-				T::DarwiniaMMR::get_root(block_number).ok_or(<Error<T, I>>::DarwiniaMMRRootNRY)?
-			).encode();
+			let message = {
+				#[derive(Encode)]
+				struct S<BlockNumber, MMRRoot>
+				where
+					BlockNumber: Encode,
+					MMRRoot: Encode,
+				{
+					_1: RuntimeString,
+					#[codec(compact)]
+					_2: BlockNumber,
+					_3: MMRRoot,
+				}
+
+				S {
+					_1: T::Version::get().spec_name,
+					_2: block_number,
+					_3: T::DarwiniaMMR::get_root(block_number).ok_or(<Error<T, I>>::DarwiniaMMRRootNRY)?
+				}.encode()
+			};
 
 			ensure!(
 				T::Sign::verify_signature(&signature, &message, signer),
@@ -565,15 +579,28 @@ where
 			// The message is composed of:
 			//
 			// codec(spec_name: String, term: u32, new authorities: Vec<Signer>)
-			(
-				T::Version::get().spec_name,
-				Compact(<AuthorityTerm<I>>::get()),
-				new_authorities
-					.iter()
-					.map(|authority| authority.signer.clone())
-					.collect::<Vec<_>>(),
-			)
-				.encode(),
+			{
+				#[derive(Encode)]
+				struct S<AccountId>
+				where
+					AccountId: Encode,
+				{
+					_1: RuntimeString,
+					#[codec(compact)]
+					_2: u32,
+					_3: Vec<AccountId>,
+				}
+
+				S {
+					_1: T::Version::get().spec_name,
+					_2: <AuthorityTerm<I>>::get(),
+					_3: new_authorities
+						.iter()
+						.map(|authority| authority.signer.clone())
+						.collect::<Vec<_>>(),
+				}
+				.encode()
+			},
 			<Vec<(AccountId<T>, RelaySignature<T, I>)>>::new(),
 		));
 
