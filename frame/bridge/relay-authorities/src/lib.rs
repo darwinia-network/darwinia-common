@@ -444,7 +444,7 @@ decl_module! {
 		/// - the relay requirement is valid
 		/// - the signature is signed by the submitter
 		#[weight = 10_000_000]
-		pub fn submit_authorities_signature(origin, signature: RelaySignature<T, I>) {
+		pub fn submit_signed_authorities(origin, signature: RelaySignature<T, I>) {
 			let old_authority = ensure_signed(origin)?;
 
 			ensure!(Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
