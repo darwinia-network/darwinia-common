@@ -166,13 +166,13 @@ impl<T: Trait> Module<T> {
 	fn _find_parent_mmr_root(header: T::Header) -> Option<T::Hash> {
 		let id = OpaqueDigestItemId::Other;
 
-		let filter_log =
-			|MerkleMountainRangeRootLog { prefix, parent_mmr_root }: MerkleMountainRangeRootLog<
-				T::Hash,
-			>| match prefix {
-				PARENT_MMR_ROOT_LOG_ID => Some(parent_mmr_root),
-				_ => None,
-			};
+		let filter_log = |MerkleMountainRangeRootLog {
+		                      prefix,
+		                      parent_mmr_root,
+		                  }: MerkleMountainRangeRootLog<T::Hash>| match prefix {
+			PARENT_MMR_ROOT_LOG_ID => Some(parent_mmr_root),
+			_ => None,
+		};
 
 		// find the first other digest with the right prefix which converts to
 		// the right kind of mmr root log.

@@ -71,6 +71,7 @@ sp_api::decl_runtime_apis! {
 			gas_limit: U256,
 			gas_price: Option<U256>,
 			nonce: Option<U256>,
+			estimate: bool,
 		) -> Result<darwinia_evm_primitives::CallInfo, sp_runtime::DispatchError>;
 		/// Returns a frame_ethereum::create response.
 		fn create(
@@ -80,6 +81,7 @@ sp_api::decl_runtime_apis! {
 			gas_limit: U256,
 			gas_price: Option<U256>,
 			nonce: Option<U256>,
+			estimate: bool,
 		) -> Result<darwinia_evm_primitives::CreateInfo, sp_runtime::DispatchError>;
 		/// Return the current block.
 		fn current_block() -> Option<EthereumBlock>;

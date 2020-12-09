@@ -63,6 +63,7 @@ fn transaction_should_increment_nonce() {
 			Some(t.gas_price),
 			Some(t.nonce),
 			t.action,
+			None,
 		));
 		assert_eq!(
 			<Test as darwinia_evm::Trait>::AccountBasicMapping::account_basic(&alice.address).nonce,
@@ -117,6 +118,7 @@ fn transaction_with_invalid_nonce_should_not_work() {
 			Some(t.gas_price),
 			Some(t.nonce),
 			t.action,
+			None,
 		));
 
 		transaction.nonce = U256::from(0);
@@ -147,6 +149,7 @@ fn contract_constructor_should_get_executed() {
 			Some(t.gas_price),
 			Some(t.nonce),
 			t.action,
+			None,
 		));
 		assert_eq!(
 			Evm::account_storages(erc20_address, alice_storage_address),
@@ -214,6 +217,7 @@ fn contract_should_be_created_at_given_address() {
 			Some(t.gas_price),
 			Some(t.nonce),
 			t.action,
+			None,
 		));
 		assert_ne!(Evm::account_codes(erc20_address).len(), 0);
 	});
@@ -236,6 +240,7 @@ fn transaction_should_generate_correct_gas_used() {
 			Some(t.gas_price),
 			Some(t.nonce),
 			t.action,
+			None,
 		)
 		.unwrap();
 
@@ -282,6 +287,7 @@ fn call_should_handle_errors() {
 			Some(t.gas_price),
 			Some(t.nonce),
 			t.action,
+			None,
 		));
 
 		let contract_address: Vec<u8> =
@@ -298,6 +304,7 @@ fn call_should_handle_errors() {
 			Some(U256::from(1)),
 			Some(U256::from(1)),
 			TransactionAction::Call(H160::from_slice(&contract_address)),
+			None,
 		)
 		.unwrap();
 		match info {
@@ -319,6 +326,7 @@ fn call_should_handle_errors() {
 			Some(U256::from(1)),
 			Some(U256::from(2)),
 			TransactionAction::Call(H160::from_slice(&contract_address)),
+			None,
 		)
 		.ok()
 		.unwrap();
