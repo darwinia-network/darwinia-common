@@ -89,6 +89,8 @@ decl_event! {
 	{
 		/// MMR Root Signed. [block number, mmr root, message, signatures]
 		MMRRootSigned(BlockNumber, MMRRoot, Vec<u8>, Vec<(AccountId, RelaySignature)>),
+		/// New Authorities. [message to sign]
+		NewAuthorities(Vec<u8>),
 		/// Authorities Signed. [term, message, signatures]
 		AuthoritiesSetSigned(u32, Vec<u8>, Vec<(AccountId, RelaySignature)>),
 	}
@@ -564,23 +566,28 @@ where
 		new_authorities: &[RelayAuthorityT<T, I>],
 	) {
 		<OldAuthorities<T, I>>::put(old_authorities);
+
+		// The message is composed of:
+		//
+		// codec(spec_name: String, term: u32, new authorities: Vec<Signer>)
+		let message = {
+			_S {
+				_1: T::Version::get().spec_name,
+				_2: <AuthorityTerm<I>>::get(),
+				_3: new_authorities
+					.iter()
+					.map(|authority| authority.signer.clone())
+					.collect::<Vec<_>>(),
+			}
+			.encode()
+		};
+
 		<AuthoritiesToSign<T, I>>::put((
-			// The message is composed of:
-			//
-			// codec(spec_name: String, term: u32, new authorities: Vec<Signer>)
-			{
-				_S {
-					_1: T::Version::get().spec_name,
-					_2: <AuthorityTerm<I>>::get(),
-					_3: new_authorities
-						.iter()
-						.map(|authority| authority.signer.clone())
-						.collect::<Vec<_>>(),
-				}
-				.encode()
-			},
+			&message,
 			<Vec<(AccountId<T>, RelaySignature<T, I>)>>::new(),
 		));
+
+		Self::deposit_event(RawEvent::NewAuthorities(message));
 
 		let submit_duration = T::SubmitDuration::get();
 
