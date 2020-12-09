@@ -41,6 +41,8 @@ mod types {
 		RelayAuthority<AccountId<T>, Signer<T, I>, RingBalance<T, I>, BlockNumber<T>>;
 }
 
+// --- crates ---
+use codec::Encode;
 // --- substrate ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
@@ -81,11 +83,16 @@ decl_event! {
 	pub enum Event<T, I: Instance = DefaultInstance>
 	where
 		AccountId = AccountId<T>,
+		BlockNumber = BlockNumber<T>,
 		MMRRoot = MMRRoot<T>,
 		RelaySignature = RelaySignature<T, I>,
 	{
-		SignedMMRRoot(MMRRoot, Vec<(AccountId, RelaySignature)>),
-		SignedAuthoritySet(Vec<u8>, Vec<(AccountId, RelaySignature)>),
+		/// MMR Root Signed. [block number, mmr root, message, signatures]
+		MMRRootSigned(BlockNumber, MMRRoot, Vec<u8>, Vec<(AccountId, RelaySignature)>),
+		/// New Authorities. [message to sign]
+		NewAuthorities(Vec<u8>),
+		/// Authorities Signed. [term, message, signatures]
+		AuthoritiesSetSigned(u32, Vec<u8>, Vec<(AccountId, RelaySignature)>),
 	}
 }
 
@@ -231,19 +238,24 @@ decl_module! {
 					<Error<T, I>>::CandidateAE
 				);
 
+				// Max candidates can't be zero
 				if candidates.len() == T::MaxCandidates::get() {
-					ensure!(
-						stake >
-							candidates
-								.iter()
-								.map(|candidate| candidate.stake)
-								.max()
-								.unwrap_or(0.into()),
-						<Error<T, I>>::StakeIns
-					);
+					let mut minimum_stake = candidates[0].stake;
+					let mut position = 0;
+
+					for (i, candidate) in candidates.iter().skip(1).enumerate() {
+						let stake = candidate.stake;
+
+						if stake < minimum_stake {
+							minimum_stake = stake;
+							position = i;
+						}
+					}
+
+					ensure!(stake > minimum_stake, <Error<T, I>>::StakeIns);
 
 					// TODO: slash the weed out?
-					let weep_out = candidates.pop().unwrap();
+					let weep_out = candidates.remove(position);
 
 					<RingCurrency<T, I>>::remove_lock(T::LockId::get(), &weep_out.account_id);
 				}
@@ -270,9 +282,13 @@ decl_module! {
 		#[weight = 10_000_000]
 		pub fn cancel_request(origin) {
 			let account_id = ensure_signed(origin)?;
-			let _ = Self::remove_candidate_by_id(&account_id);
+			let _ = Self::remove_candidate_by_id_with(
+				&account_id,
+				|| <RingCurrency<T, I>>::remove_lock(T::LockId::get(), &account_id)
+			);
 		}
 
+		// TODO: not allow to renounce, if there's only one authority
 		/// Renounce the authority for you
 		///
 		/// This call is disallowed during the authorities change
@@ -288,7 +304,7 @@ decl_module! {
 
 			Self::remove_authority_by_id_with(
 				&account_id,
-				|authority| if authority.term <= <frame_system::Module<T>>::block_number() {
+				|authority| if authority.term >= <frame_system::Module<T>>::block_number() {
 					Some(<Error<T, I>>::AuthorityIT)
 				} else {
 					None
@@ -296,6 +312,7 @@ decl_module! {
 			)?;
 		}
 
+		// TODO: add several authorities once
 		/// Require add origin
 		///
 		/// Add an authority from the candidates
@@ -307,16 +324,23 @@ decl_module! {
 
 			ensure!(!Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
 
-			let mut authority = Self::remove_candidate_by_id(&account_id)?;
+			let mut authority = Self::remove_candidate_by_id_with(&account_id, || ())?;
 
 			authority.term = <frame_system::Module<T>>::block_number() + T::TermDuration::get();
 
 			// Won't check duplicated here, MUST make this authority sure is unique
 			// As we already make a check in `request_authority`
-			<Authorities<T, I>>::append(authority);
-			// Self::start_authorities_state();
+			<Authorities<T, I>>::mutate(|authorities| {
+				let old_authorities = authorities.clone();
+
+				authorities.push(authority);
+
+				Self::start_authorities_change(&old_authorities, &authorities);
+			});
 		}
 
+		// TODO: remove several authorities once
+		// TODO: not allow to renounce, if there's only one authority
 		/// Require remove origin
 		///
 		/// This call is disallowed during the authorities change
@@ -379,11 +403,20 @@ decl_module! {
 				&authorities,
 				&authority
 			).ok_or(<Error<T, I>>::AuthorityNE)?;
-			let mmr_root =
-				T::DarwiniaMMR::get_root(block_number).ok_or(<Error<T, I>>::DarwiniaMMRRootNRY)?;
+			// The message is composed of:
+			//
+			// codec(spec_name: String, block number: BlockNumber, mmr_root: Hash)
+			let message = {
+				_S {
+					_1: T::Version::get().spec_name,
+					_2: block_number,
+					_3: T::DarwiniaMMR::get_root(block_number).ok_or(<Error<T, I>>::DarwiniaMMRRootNRY)?
+				}
+				.encode()
+			};
 
 			ensure!(
-				T::Sign::verify_signature(&signature, mmr_root, signer),
+				T::Sign::verify_signature(&signature, &message, signer),
 				 <Error<T, I>>::SignatureInv
 			);
 
@@ -395,7 +428,7 @@ decl_module! {
 				// TODO: clean the mmr root which was contains in this mmr root?
 
 				Self::finish_collect_mmr_root_sign(block_number);
-				Self::deposit_event(RawEvent::SignedMMRRoot(mmr_root, signatures));
+				Self::deposit_event(RawEvent::MMRRootSigned(block_number, mmr_root, message, signatures));
 			} else {
 				<MMRRootsToSign<T, I>>::insert(block_number, signatures);
 			}
@@ -411,12 +444,12 @@ decl_module! {
 		/// - the relay requirement is valid
 		/// - the signature is signed by the submitter
 		#[weight = 10_000_000]
-		pub fn submit_authorities_signature(origin, signature: RelaySignature<T, I>) {
+		pub fn submit_signed_authorities(origin, signature: RelaySignature<T, I>) {
 			let old_authority = ensure_signed(origin)?;
 
 			ensure!(Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
 
-			let (new_authorities_set, mut signatures) = <AuthoritiesToSign<T, I>>::get();
+			let (message, mut signatures) = <AuthoritiesToSign<T, I>>::get();
 
 			if signatures
 				.iter()
@@ -433,7 +466,7 @@ decl_module! {
 			).ok_or(<Error<T, I>>::AuthorityNE)?;
 
 			ensure!(
-				T::Sign::verify_signature(&signature, &new_authorities_set, signer),
+				T::Sign::verify_signature(&signature, &message, signer),
 				 <Error<T, I>>::SignatureInv
 			);
 
@@ -443,12 +476,13 @@ decl_module! {
 				>= T::SignThreshold::get()
 			{
 				Self::finish_authorities_change();
-				Self::deposit_event(RawEvent::SignedAuthoritySet(
-					new_authorities_set,
+				Self::deposit_event(RawEvent::AuthoritiesSetSigned(
+					<AuthorityTerm<I>>::get(),
+					message,
 					signatures
 				));
 			} else {
-				<AuthoritiesToSign<T, I>>::put((new_authorities_set, signatures));
+				<AuthoritiesToSign<T, I>>::put((message, signatures));
 			}
 		}
 	}
@@ -475,7 +509,9 @@ where
 				let old_authorities = authorities.clone();
 				let removed_authority = authorities.remove(position);
 
-				Self::start_authorities_state(&old_authorities, &authorities);
+				Self::start_authorities_change(&old_authorities, &authorities);
+
+				<RingCurrency<T, I>>::remove_lock(T::LockId::get(), account_id);
 
 				// TODO: optimize DB R/W, but it's ok in real case, since the set won't grow so large
 				for key in <MMRRootsToSignKeys<T, I>>::get() {
@@ -503,16 +539,18 @@ where
 		})?)
 	}
 
-	pub fn remove_candidate_by_id(
+	pub fn remove_candidate_by_id_with<F>(
 		account_id: &AccountId<T>,
-	) -> Result<RelayAuthorityT<T, I>, DispatchError> {
+		maybe_remove_lock: F,
+	) -> Result<RelayAuthorityT<T, I>, DispatchError>
+	where
+		F: Fn(),
+	{
 		Ok(<Candidates<T, I>>::try_mutate(|candidates| {
 			if let Some(position) = find_authority_position::<T, I>(&candidates, account_id) {
-				let candidate = candidates.remove(position);
+				maybe_remove_lock();
 
-				<RingCurrency<T, I>>::remove_lock(T::LockId::get(), account_id);
-
-				Ok(candidate)
+				Ok(candidates.remove(position))
 			} else {
 				Err(<Error<T, I>>::CandidateNE)
 			}
@@ -523,25 +561,33 @@ where
 		<AuthoritiesState<T, I>>::get().0
 	}
 
-	pub fn start_authorities_state(
+	pub fn start_authorities_change(
 		old_authorities: &[RelayAuthorityT<T, I>],
 		new_authorities: &[RelayAuthorityT<T, I>],
 	) {
 		<OldAuthorities<T, I>>::put(old_authorities);
+
+		// The message is composed of:
+		//
+		// codec(spec_name: String, term: u32, new authorities: Vec<Signer>)
+		let message = {
+			_S {
+				_1: T::Version::get().spec_name,
+				_2: <AuthorityTerm<I>>::get(),
+				_3: new_authorities
+					.iter()
+					.map(|authority| authority.signer.clone())
+					.collect::<Vec<_>>(),
+			}
+			.encode()
+		};
+
 		<AuthoritiesToSign<T, I>>::put((
-			{
-				// The message is composed of:
-				// 	(4 bytes `term`) + concat(list(20 bytes `ethereum address`))
-				let mut authorities_to_sign = <AuthorityTerm<I>>::get().to_le_bytes().to_vec();
-
-				for authority in new_authorities {
-					authorities_to_sign.extend_from_slice(authority.signer.as_ref());
-				}
-
-				authorities_to_sign
-			},
+			&message,
 			<Vec<(AccountId<T>, RelaySignature<T, I>)>>::new(),
 		));
+
+		Self::deposit_event(RawEvent::NewAuthorities(message));
 
 		let submit_duration = T::SubmitDuration::get();
 
@@ -586,6 +632,8 @@ where
 					.position(|(authority, _)| authority == &account_id)
 				{
 					<RingCurrency<T, I>>::slash(&account_id, stake);
+
+					// TODO: how to deal with the slashed authority
 				}
 			}
 		};
@@ -669,4 +717,17 @@ where
 	} else {
 		None
 	}
+}
+
+#[derive(Encode)]
+struct _S<_1, _2, _3>
+where
+	_1: Encode,
+	_2: Encode,
+	_3: Encode,
+{
+	_1: _1,
+	#[codec(compact)]
+	_2: _2,
+	_3: _3,
 }
