@@ -357,20 +357,6 @@ decl_module! {
 
 		fn deposit_event() = default;
 
-		/// Withdraw balance from EVM into currency/balances module.
-		#[weight = 0]
-		fn withdraw(origin, address: H160, value: BalanceOf<T>) {
-			let destination = T::WithdrawOrigin::ensure_address_origin(&address, origin)?;
-			let address_account_id = T::AddressMapping::into_account_id(address);
-
-			T::Currency::transfer(
-				&address_account_id,
-				&destination,
-				value,
-				ExistenceRequirement::AllowDeath
-			)?;
-		}
-
 		/// Issue an EVM call operation. This is similar to a message call transaction in Ethereum.
 		#[weight = T::GasToWeight::gas_to_weight(*gas_limit)]
 		fn call(
