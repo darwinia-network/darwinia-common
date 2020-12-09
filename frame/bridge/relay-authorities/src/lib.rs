@@ -335,7 +335,7 @@ decl_module! {
 
 				authorities.push(authority);
 
-				Self::start_authorities_state(&old_authorities, &authorities);
+				Self::start_authorities_change(&old_authorities, &authorities);
 			});
 		}
 
@@ -509,7 +509,7 @@ where
 				let old_authorities = authorities.clone();
 				let removed_authority = authorities.remove(position);
 
-				Self::start_authorities_state(&old_authorities, &authorities);
+				Self::start_authorities_change(&old_authorities, &authorities);
 
 				<RingCurrency<T, I>>::remove_lock(T::LockId::get(), account_id);
 
@@ -561,7 +561,7 @@ where
 		<AuthoritiesState<T, I>>::get().0
 	}
 
-	pub fn start_authorities_state(
+	pub fn start_authorities_change(
 		old_authorities: &[RelayAuthorityT<T, I>],
 		new_authorities: &[RelayAuthorityT<T, I>],
 	) {
