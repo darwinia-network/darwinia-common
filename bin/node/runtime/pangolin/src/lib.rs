@@ -1476,7 +1476,7 @@ impl_runtime_apis! {
 			estimate: bool,
 		) -> Result<darwinia_evm::CallInfo, sp_runtime::DispatchError> {
 			let config = if estimate {
-				let mut config = <Runtime as pallet_evm::Trait>::config().clone();
+				let mut config = <Runtime as darwinia_evm::Trait>::config().clone();
 				config.estimate = true;
 				Some(config)
 			} else {
@@ -1491,7 +1491,7 @@ impl_runtime_apis! {
 				gas_limit.low_u32(),
 				gas_price,
 				nonce,
-				config.as_ref().unwrap_or(<Runtime as pallet_evm::Trait>::config()),
+				config.as_ref().unwrap_or(<Runtime as darwinia_evm::Trait>::config()),
 			).map_err(|err| err.into())
 		}
 
@@ -1505,7 +1505,7 @@ impl_runtime_apis! {
 			estimate: bool,
 		) -> Result<darwinia_evm::CreateInfo, sp_runtime::DispatchError> {
 			let config = if estimate {
-				let mut config = <Runtime as pallet_evm::Trait>::config().clone();
+				let mut config = <Runtime as darwinia_evm::Trait>::config().clone();
 				config.estimate = true;
 				Some(config)
 			} else {
@@ -1519,7 +1519,7 @@ impl_runtime_apis! {
 				gas_limit.low_u32(),
 				gas_price,
 				nonce,
-				config.as_ref().unwrap_or(<Runtime as pallet_evm::Trait>::config()),
+				config.as_ref().unwrap_or(<Runtime as darwinia_evm::Trait>::config()),
 			).map_err(|err| err.into())
 		}
 
