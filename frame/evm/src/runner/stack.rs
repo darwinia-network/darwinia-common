@@ -50,6 +50,7 @@ impl<T: Trait> Runner<T> {
 		gas_limit: u32,
 		gas_price: Option<U256>,
 		nonce: Option<U256>,
+		config: &evm::Config,
 		f: F,
 	) -> Result<ExecutionInfo<R>, Error<T>>
 	where
@@ -76,7 +77,7 @@ impl<T: Trait> Runner<T> {
 		let mut executor = StackExecutor::new_with_precompile(
 			&backend,
 			gas_limit as usize,
-			T::config(),
+			config,
 			T::Precompiles::execute,
 		);
 
@@ -138,8 +139,9 @@ impl<T: Trait> RunnerT<T> for Runner<T> {
 		gas_limit: u32,
 		gas_price: Option<U256>,
 		nonce: Option<U256>,
+		config: &evm::Config,
 	) -> Result<CallInfo, Self::Error> {
-		Self::execute(source, value, gas_limit, gas_price, nonce, |executor| {
+		Self::execute(source, value, gas_limit, gas_price, nonce, config, |executor| {
 			executor.transact_call(source, target, value, input, gas_limit as usize)
 		})
 	}
@@ -151,8 +153,9 @@ impl<T: Trait> RunnerT<T> for Runner<T> {
 		gas_limit: u32,
 		gas_price: Option<U256>,
 		nonce: Option<U256>,
+		config: &evm::Config,
 	) -> Result<CreateInfo, Self::Error> {
-		Self::execute(source, value, gas_limit, gas_price, nonce, |executor| {
+		Self::execute(source, value, gas_limit, gas_price, nonce,config, |executor| {
 			let address = executor.create_address(evm::CreateScheme::Legacy { caller: source });
 			(
 				executor.transact_create(source, value, init, gas_limit as usize),
@@ -169,9 +172,10 @@ impl<T: Trait> RunnerT<T> for Runner<T> {
 		gas_limit: u32,
 		gas_price: Option<U256>,
 		nonce: Option<U256>,
+		config: &evm::Config,
 	) -> Result<CreateInfo, Self::Error> {
 		let code_hash = H256::from_slice(Keccak256::digest(&init).as_slice());
-		Self::execute(source, value, gas_limit, gas_price, nonce, |executor| {
+		Self::execute(source, value, gas_limit, gas_price, nonce, config, |executor| {
 			let address = executor.create_address(evm::CreateScheme::Create2 {
 				caller: source,
 				code_hash,
