@@ -87,7 +87,7 @@ decl_event! {
 		MMRRoot = MMRRoot<T>,
 		RelaySignature = RelaySignature<T, I>,
 	{
-		/// A  New MMR Root Request to be Signed. [block number]
+		/// A New MMR Root Request to be Signed. [block number]
 		NewMMRRoot(BlockNumber),
 		/// MMR Root Signed. [block number, mmr root, message, signatures]
 		MMRRootSigned(BlockNumber, MMRRoot, Vec<u8>, Vec<(AccountId, RelaySignature)>),
