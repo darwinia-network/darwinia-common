@@ -33,7 +33,7 @@ pub use evm::{ExitError, ExitFatal, ExitReason, ExitRevert, ExitSucceed};
 use codec::{Decode, Encode};
 use evm::Config;
 use frame_support::dispatch::DispatchResultWithPostInfo;
-use frame_support::traits::{Currency, ExistenceRequirement, Get};
+use frame_support::traits::{Currency, Get};
 use frame_support::weights::{Pays, PostDispatchInfo, Weight};
 use frame_support::{decl_error, decl_event, decl_module, decl_storage};
 use frame_system::RawOrigin;
