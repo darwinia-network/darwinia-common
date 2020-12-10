@@ -869,8 +869,10 @@ decl_event!(
 		/// An account has unbonded this amount. [amount, now]
 		UnbondKton(KtonBalance, BlockNumber),
 
+		/// Someone claimed his deposits. [stash]
+		DepositsClaimed(AccountId),
 		/// Someone claimed his deposits with some *KTON*s punishment. [stash, forfeit]
-		ClaimDepositsWithPunish(AccountId, KtonBalance),
+		DepositsClaimedWithPunish(AccountId, KtonBalance),
 	}
 );
 
@@ -1090,8 +1092,12 @@ decl_module! {
 		fn integrity_test() {
 			sp_io::TestExternalities::new_empty().execute_with(||
 				assert!(
-					T::SlashDeferDuration::get() < T::BondingDurationInEra::get() || T::BondingDurationInEra::get() == 0,
-					"As per documentation, slash defer duration ({}) should be less than bonding duration ({}).",
+					T::SlashDeferDuration::get()
+						< T::BondingDurationInEra::get()
+						|| T::BondingDurationInEra::get()
+						== 0,
+					"As per documentation, \
+					slash defer duration ({}) should be less than bonding duration ({}).",
 					T::SlashDeferDuration::get(),
 					T::BondingDurationInEra::get(),
 				)
@@ -1302,7 +1308,7 @@ decl_module! {
 			let start_time = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
 			let promise_month = promise_month.max(1).min(36);
 			let expire_time = start_time + promise_month as TsInMs * MONTH_IN_MILLISECONDS;
-			let mut ledger = Self::clear_mature_deposits(ledger);
+			let mut ledger = Self::clear_mature_deposits(ledger).0;
 			let StakingLedger {
 				stash,
 				active_ring,
@@ -1366,7 +1372,9 @@ decl_module! {
 			ensure!(Self::era_election_status().is_closed(), <Error<T>>::CallNotAllowed);
 
 			let controller = ensure_signed(origin)?;
-			let mut ledger = Self::clear_mature_deposits(Self::ledger(&controller).ok_or(<Error<T>>::NotController)?);
+			let mut ledger = Self::clear_mature_deposits(
+					Self::ledger(&controller).ok_or(<Error<T>>::NotController)?
+			).0;
 			let StakingLedger {
 				active_ring,
 				active_deposit_ring,
@@ -1389,7 +1397,8 @@ decl_module! {
 			//	 1. `(a as u32 + b as u32) < c`
 			//	 2. `let c_ = a as u32 + b as u32; c_ < c`
 			ensure!(
-				(ring_staking_lock.unbondings.len() + kton_staking_lock.unbondings.len()) < MAX_UNLOCKING_CHUNKS,
+				(ring_staking_lock.unbondings.len() + kton_staking_lock.unbondings.len())
+					< MAX_UNLOCKING_CHUNKS,
 				<Error<T>>::NoMoreChunks,
 			);
 
@@ -1521,9 +1530,13 @@ decl_module! {
 		#[weight = 50 * WEIGHT_PER_MICROS + T::DbWeight::get().reads_writes(2, 2)]
 		fn claim_mature_deposits(origin) {
 			let controller = ensure_signed(origin)?;
-			let ledger = Self::clear_mature_deposits(Self::ledger(&controller).ok_or(<Error<T>>::NotController)?);
+			let (ledger, mutated) = Self::clear_mature_deposits(
+				Self::ledger(&controller).ok_or(<Error<T>>::NotController)?
+			);
 
-			<Ledger<T>>::insert(controller, ledger);
+			if mutated {
+				<Ledger<T>>::insert(controller, ledger);
+			}
 		}
 
 		/// Claim deposits while the depositing time has not been exceeded, the ring
@@ -1570,18 +1583,26 @@ decl_module! {
 
 					let kton_slash = {
 						let plan_duration_in_months = {
-							let plan_duration_in_milliseconds = item.expire_time.saturating_sub(item.start_time);
+							let plan_duration_in_milliseconds =
+								item.expire_time.saturating_sub(item.start_time);
+
 							plan_duration_in_milliseconds / MONTH_IN_MILLISECONDS
 						};
 						let passed_duration_in_months = {
-							let passed_duration_in_milliseconds = now.saturating_sub(item.start_time);
+							let passed_duration_in_milliseconds =
+								now.saturating_sub(item.start_time);
+
 							passed_duration_in_milliseconds / MONTH_IN_MILLISECONDS
 						};
 
 						(
-							inflation::compute_kton_reward::<T>(item.value, plan_duration_in_months as _)
+							inflation::compute_kton_reward::<T>(
+								item.value, plan_duration_in_months as _
+							)
 							-
-							inflation::compute_kton_reward::<T>(item.value, passed_duration_in_months as _)
+							inflation::compute_kton_reward::<T>(
+								item.value, passed_duration_in_months as _
+							)
 						).max(1.into()) * 3.into()
 					};
 
@@ -1606,7 +1627,7 @@ decl_module! {
 
 			if claim_deposits_with_punish.0 {
 				Self::deposit_event(
-					RawEvent::ClaimDepositsWithPunish(
+					RawEvent::DepositsClaimedWithPunish(
 						ledger.stash.clone(),
 						claim_deposits_with_punish.1,
 					));
@@ -2200,24 +2221,32 @@ impl<T: Trait> Module<T> {
 	}
 
 	/// Turn the expired deposit items into normal bond
-	pub fn clear_mature_deposits(mut ledger: StakingLedgerT<T>) -> StakingLedgerT<T> {
+	pub fn clear_mature_deposits(mut ledger: StakingLedgerT<T>) -> (StakingLedgerT<T>, bool) {
 		let now = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
 		let StakingLedger {
+			stash,
 			active_deposit_ring,
 			deposit_items,
 			..
 		} = &mut ledger;
+		let mut mutated = false;
 
 		deposit_items.retain(|item| {
 			if item.expire_time > now {
 				true
 			} else {
+				mutated = true;
 				*active_deposit_ring = active_deposit_ring.saturating_sub(item.value);
+
 				false
 			}
 		});
 
-		ledger
+		if mutated {
+			Self::deposit_event(RawEvent::DepositsClaimed(stash.to_owned()));
+		}
+
+		(ledger, mutated)
 	}
 
 	// power is a mixture of ring and kton
