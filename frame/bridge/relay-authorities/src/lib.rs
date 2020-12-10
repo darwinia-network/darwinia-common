@@ -87,11 +87,13 @@ decl_event! {
 		MMRRoot = MMRRoot<T>,
 		RelaySignature = RelaySignature<T, I>,
 	{
-		/// MMR Root Signed. [block number, mmr root, message, signatures]
+		/// A New MMR Root Request to be Signed. [block number of the mmr root to sign]
+		NewMMRRoot(BlockNumber),
+		/// MMR Root Signed. [block number of the mmr root, mmr root, message to sign, signatures]
 		MMRRootSigned(BlockNumber, MMRRoot, Vec<u8>, Vec<(AccountId, RelaySignature)>),
-		/// New Authorities. [message to sign]
+		/// A New Authorities Request to be Signed. [message to sign]
 		NewAuthorities(Vec<u8>),
-		/// Authorities Signed. [term, message, signatures]
+		/// Authorities Signed. [term, message to sign, signatures]
 		AuthoritiesSetSigned(u32, Vec<u8>, Vec<(AccountId, RelaySignature)>),
 	}
 }
@@ -682,6 +684,8 @@ where
 			<MMRRootsToSignKeys<T, I>>::append(block_number);
 
 			*signed_mmr_root = Some(<Vec<(AccountId<T>, RelaySignature<T, I>)>>::new());
+
+			Self::deposit_event(RawEvent::NewMMRRoot(block_number));
 
 			Ok(())
 		});
