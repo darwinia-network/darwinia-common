@@ -190,6 +190,30 @@ decl_storage! {
 		/// The mmr root signature submit duration, will be delayed if on authorities change
 		pub SubmitDuration get(fn submit_duration): BlockNumber<T> = T::SubmitDuration::get();
 	}
+	add_extra_genesis {
+		config(authorities): Vec<(AccountId<T>, Signer<T, I>, RingBalance<T, I>)>;
+		build(|config| {
+			let mut authorities = vec![];
+
+			for (account_id, signer, stake) in config.authorities.iter() {
+				T::RingCurrency::set_lock(
+					T::LockId::get(),
+					account_id,
+					LockFor::Common { amount: *stake },
+					WithdrawReasons::all(),
+				);
+
+				authorities.push(RelayAuthority {
+					account_id: account_id.to_owned(),
+					signer: signer.to_owned(),
+					stake: *stake,
+					term: <frame_system::Module<T>>::block_number() + T::TermDuration::get()
+				});
+			}
+
+			<Authorities<T, I>>::put(authorities);
+		});
+	}
 }
 
 decl_module! {
