@@ -317,7 +317,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("Pangolin"),
 	impl_name: create_runtime_str!("Pangolin"),
 	authoring_version: 1,
-	spec_version: 2,
+	spec_version: 3,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -1578,6 +1578,9 @@ impl frame_support::traits::OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 		use array_bytes::fixed_hex_bytes_unchecked;
 		use darwinia_relay_primitives::relay_authorities::RelayAuthority;
 		use darwinia_support::balance::lock::{LockFor, LockableCurrency, WithdrawReasons};
+
+		take_storage_value(b"Instance0DarwiniaRelayAuthorities", b"OldAuthorities", &[]);
+		EthereumRelayAuthorities::finish_authorities_change();
 
 		let account_id = fixed_hex_bytes_unchecked!(
 			"0x72819fbc1b93196fa230243947c1726cbea7e33044c7eb6f736ff345561f9e4c",
