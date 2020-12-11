@@ -1579,7 +1579,11 @@ impl frame_support::traits::OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 		use darwinia_relay_primitives::relay_authorities::RelayAuthority;
 		use darwinia_support::balance::lock::{LockFor, LockableCurrency, WithdrawReasons};
 
-		take_storage_value(b"Instance0DarwiniaRelayAuthorities", b"OldAuthorities", &[]);
+		take_storage_value::<Vec<RelayAuthority<AccountId, [u8; 20], Balance, BlockNumber>>>(
+			b"Instance0DarwiniaRelayAuthorities",
+			b"OldAuthorities",
+			&[],
+		);
 		EthereumRelayAuthorities::finish_authorities_change();
 
 		let account_id = fixed_hex_bytes_unchecked!(
