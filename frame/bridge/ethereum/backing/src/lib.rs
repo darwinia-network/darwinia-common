@@ -220,15 +220,6 @@ decl_module! {
 			0
 		}
 
-		fn on_runtime_upgrade() -> frame_support::weights::Weight {
-			let _ = T::RingCurrency::make_free_balance_be(
-				&<Module<T>>::fee_account_id(),
-				T::RingCurrency::minimum_balance(),
-			);
-
-			0
-		}
-
 		/// Redeem balances
 		///
 		/// # <weight>
