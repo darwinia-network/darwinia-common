@@ -301,7 +301,7 @@ type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllModules,
-	// CustomOnRuntimeUpgrade,
+	CustomOnRuntimeUpgrade,
 >;
 /// The payload being signed in transactions.
 type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
@@ -1184,7 +1184,7 @@ construct_runtime!(
 		EVM: darwinia_evm::{Module, Config, Call, Storage, Event<T>},
 		Ethereum: dvm_ethereum::{Module, Call, Storage, Event, Config, ValidateUnsigned},
 
-		EthereumRelayAuthorities: darwinia_relay_authorities::<Instance0>::{Module, Call, Storage, Event<T>},
+		EthereumRelayAuthorities: darwinia_relay_authorities::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
 	}
 );
 
@@ -1566,5 +1566,46 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 		let encoded = extrinsic.encode();
 
 		OpaqueExtrinsic::decode(&mut &encoded[..]).expect("Encoded extrinsic is always valid")
+	}
+}
+
+pub struct CustomOnRuntimeUpgrade;
+impl frame_support::traits::OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
+	fn on_runtime_upgrade() -> frame_support::weights::Weight {
+		// --- substrate ---
+		use frame_support::migration::*;
+		// --- darwinia ---
+		use array_bytes::fixed_hex_bytes_unchecked;
+		use darwinia_relay_primitives::relay_authorities::RelayAuthority;
+		use darwinia_support::balance::lock::{LockFor, LockableCurrency, WithdrawReasons};
+
+		let account_id = fixed_hex_bytes_unchecked!(
+			"0x72819fbc1b93196fa230243947c1726cbea7e33044c7eb6f736ff345561f9e4c",
+			32
+		)
+		.into();
+		let signer = fixed_hex_bytes_unchecked!("0x6aA70f55E5D770898Dd45aa1b7078b8A80AAbD6C", 20);
+		let stake = 1;
+
+		Ring::set_lock(
+			EthereumRelayAuthoritiesLockId::get(),
+			&account_id,
+			LockFor::Common { amount: stake },
+			WithdrawReasons::all(),
+		);
+
+		put_storage_value(
+			b"Instance0DarwiniaRelayAuthorities",
+			b"Authorities",
+			&[],
+			vec![RelayAuthority {
+				account_id,
+				signer,
+				stake,
+				term: System::block_number() + EthereumRelayAuthoritiesTermDuration::get(),
+			}],
+		);
+
+		<Runtime as frame_system::Trait>::MaximumBlockWeight::get()
 	}
 }

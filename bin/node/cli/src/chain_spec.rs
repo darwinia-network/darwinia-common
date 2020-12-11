@@ -112,6 +112,8 @@ fn pangolin_build_spec_genesis() -> GenesisConfig {
 	const GENESIS_VALIDATOR_STASH: &'static str = "Alice//stash";
 	const GENESIS_VALIDATOR_BOND: Balance = COIN;
 	const GENESIS_EVM_ACCOUNT: &'static str = "0x68898db1012808808c903f390909c52d9f706749";
+	const GENESIS_ETHEREUM_RELAY_AUTHORITY_SIGNER: &'static str =
+		"0x6aA70f55E5D770898Dd45aa1b7078b8A80AAbD6C";
 
 	const TOKEN_REDEEM_ADDRESS: &'static str = "0x49262B932E439271d05634c32978294C7Ea15d0C";
 	const DEPOSIT_REDEEM_ADDRESS: &'static str = "0x6EF538314829EfA8386Fc43386cB13B4e0A67D1e";
@@ -177,7 +179,7 @@ fn pangolin_build_spec_genesis() -> GenesisConfig {
 		pallet_membership_Instance0: Some(Default::default()),
 		darwinia_claims: Some(Default::default()),
 		darwinia_vesting: Some(Default::default()),
-		pallet_sudo: Some(SudoConfig { key: root }),
+		pallet_sudo: Some(SudoConfig { key: root.clone() }),
 		darwinia_crab_issuing: Some(CrabIssuingConfig {
 			total_mapped_ring: 1 << 56
 		}),
@@ -211,6 +213,9 @@ fn pangolin_build_spec_genesis() -> GenesisConfig {
 			accounts: evm_accounts,
 		}),
 		dvm_ethereum: Some(Default::default()),
+		darwinia_relay_authorities_Instance0: Some(EthereumRelayAuthoritiesConfig {
+			authorities: vec![(root, fixed_hex_bytes_unchecked!(GENESIS_ETHEREUM_RELAY_AUTHORITY_SIGNER, 20), 1)]
+		}),
 	}
 }
 
@@ -271,6 +276,9 @@ fn pangolin_development_genesis(
 	endowed_accounts: Vec<AccountId>,
 	evm_accounts: BTreeMap<H160, GenesisAccount>,
 ) -> GenesisConfig {
+	const GENESIS_ETHEREUM_RELAY_AUTHORITY_SIGNER: &'static str =
+		"0x6aA70f55E5D770898Dd45aa1b7078b8A80AAbD6C";
+
 	const TOKEN_REDEEM_ADDRESS: &'static str = "0x49262B932E439271d05634c32978294C7Ea15d0C";
 	const DEPOSIT_REDEEM_ADDRESS: &'static str = "0x6EF538314829EfA8386Fc43386cB13B4e0A67D1e";
 	const RING_TOKEN_ADDRESS: &'static str = "0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0";
@@ -332,7 +340,7 @@ fn pangolin_development_genesis(
 			),
 		}),
 		darwinia_vesting: Some(Default::default()),
-		pallet_sudo: Some(SudoConfig { key: root_key }),
+		pallet_sudo: Some(SudoConfig { key: root_key.clone() }),
 		darwinia_crab_issuing: Some(CrabIssuingConfig {
 			total_mapped_ring: 1 << 56
 		}),
@@ -366,5 +374,8 @@ fn pangolin_development_genesis(
 			accounts: evm_accounts,
 		}),
 		dvm_ethereum: Some(Default::default()),
+		darwinia_relay_authorities_Instance0: Some(EthereumRelayAuthoritiesConfig {
+			authorities: vec![(root_key, fixed_hex_bytes_unchecked!(GENESIS_ETHEREUM_RELAY_AUTHORITY_SIGNER, 20), 1)]
+		}),
 	}
 }
