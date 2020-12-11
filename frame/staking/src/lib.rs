@@ -378,6 +378,8 @@ use sp_staking::{
 	offence::{Offence, OffenceDetails, OffenceError, OnOffenceHandler, ReportOffence},
 	SessionIndex,
 };
+#[cfg(not(feature = "std"))]
+use sp_std::borrow::ToOwned;
 use sp_std::{
 	collections::btree_map::BTreeMap, convert::TryInto, marker::PhantomData, mem::size_of,
 	prelude::*,
