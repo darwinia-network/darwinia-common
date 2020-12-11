@@ -1,11 +1,8 @@
 //! Tests for ethereum-backing.
 
-// --- crates ---
-use secp256k1::{PublicKey, SecretKey};
 // --- substrate ---
 use frame_support::{assert_err, assert_ok, traits::Contains};
 use frame_system::EnsureRoot;
-use sp_core::{crypto::Pair as TraitPair, ecdsa::Pair as EcdsaPair, hashing};
 use sp_runtime::{traits::Dispatchable, AccountId32};
 // --- darwinia ---
 use crate::*;
@@ -390,25 +387,9 @@ fn set_redeem_status_should_work() {
 
 #[test]
 fn verify_signature_should_work() {
-	let (ecdsa_pair, _, ecdsa_seed) = EcdsaPair::generate_with_phrase(None);
-	// mmr root
-	// https://darwinia-cc1.subscan.io/block/867461?tab=log
-	let message =
-		hex_bytes_unchecked("0x4a549d48431a083a72c4a936f2f08cb668cf5e47b4bbd86b284f40c57864cd78");
-	let signature = ecdsa_pair.sign(&message);
-	let address = {
-		let secret_key = SecretKey::parse_slice(&ecdsa_seed).unwrap();
-		let public_key = PublicKey::from_secret_key(&secret_key);
-		let mut address = [0; 20];
-
-		address.copy_from_slice(&hashing::keccak_256(&public_key.serialize()[1..65])[12..]);
-
-		address
-	};
-
 	assert!(EthereumBacking::verify_signature(
-		&signature.0,
-		message,
-		address
+		&fixed_hex_bytes_unchecked!("0x3400f4f42d5a6e6f4f5dc0a33f7965688982ee18611555214b674bcdcf3110f81fe678258b480f0d4bdd976b0fbda55730f9abd4c65e1ebc76d432857fe78cbb1c", 65),
+		hex_bytes_unchecked("0x2050616e676f6c696e3a4d0600b2b23bbc9753bf407d4205bfb75edc7d86bbd694628bbf077882d85fba0cd5be"),
+	 	fixed_hex_bytes_unchecked!("0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266", 20)
 	));
 }
