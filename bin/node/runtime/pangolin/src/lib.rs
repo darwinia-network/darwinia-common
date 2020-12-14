@@ -437,6 +437,7 @@ impl InstanceFilter<Call> for ProxyType {
 				Call::EthereumRelay(..) // Specifically omitting the entire EthereumBacking pallet
 				                        // Specifically omitting the entire TronBacking pallet
 				                        // Specifically omitting the entire CrabIssuing pallet
+				                        // Specifically omitting the entire EthereumRelayAuthorities pallet
 			),
 			ProxyType::Governance => matches!(
 				c,
@@ -446,7 +447,12 @@ impl InstanceFilter<Call> for ProxyType {
 					| Call::Treasury(..)
 			),
 			ProxyType::Staking => matches!(c, Call::Staking(..)),
-			ProxyType::EthereumBridge => matches!(c, Call::EthereumRelay(..)),
+			ProxyType::EthereumBridge => matches!(
+				c,
+				Call::EthereumBacking(..)
+					| Call::EthereumRelay(..)
+					| Call::EthereumRelayAuthorities(..)
+			),
 		}
 	}
 	fn is_superset(&self, o: &Self) -> bool {
