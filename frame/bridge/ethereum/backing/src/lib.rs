@@ -736,9 +736,26 @@ impl<T: Trait> Sign<BlockNumber<T>> for Module<T> {
 		message: impl AsRef<[u8]>,
 		signer: Self::Signer,
 	) -> bool {
-		if let Ok(public_key) =
-			crypto::secp256k1_ecdsa_recover(signature, &hashing::blake2_256(message.as_ref()))
-		{
+		fn eth_signable_message(message: &[u8]) -> Vec<u8> {
+			let mut l = message.len();
+			let mut rev = Vec::new();
+
+			while l > 0 {
+				rev.push(b'0' + (l % 10) as u8);
+				l /= 10;
+			}
+
+			let mut v = b"\x19Ethereum Signed Message:\n".to_vec();
+
+			v.extend(rev.into_iter().rev());
+			v.extend_from_slice(message);
+
+			v
+		}
+
+		let message = hashing::keccak_256(&eth_signable_message(message.as_ref()));
+
+		if let Ok(public_key) = crypto::secp256k1_ecdsa_recover(signature, &message) {
 			hashing::keccak_256(&public_key)[12..] == signer
 		} else {
 			false
