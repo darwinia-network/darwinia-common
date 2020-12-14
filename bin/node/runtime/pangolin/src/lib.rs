@@ -437,6 +437,7 @@ impl InstanceFilter<Call> for ProxyType {
 				Call::EthereumRelay(..) // Specifically omitting the entire EthereumBacking pallet
 				                        // Specifically omitting the entire TronBacking pallet
 				                        // Specifically omitting the entire CrabIssuing pallet
+				                        // Specifically omitting the entire EthereumRelayAuthorities pallet
 			),
 			ProxyType::Governance => matches!(
 				c,
