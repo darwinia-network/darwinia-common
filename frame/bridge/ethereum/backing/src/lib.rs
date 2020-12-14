@@ -212,6 +212,8 @@ decl_module! {
 
 		const FeeModuleId: ModuleId = T::FeeModuleId::get();
 
+		const AdvancedFee: RingBalance<T> = T::AdvancedFee::get();
+
 		fn deposit_event() = default;
 
 		fn on_initialize(_n: BlockNumber<T>) -> Weight {
