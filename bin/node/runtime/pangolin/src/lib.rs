@@ -446,7 +446,12 @@ impl InstanceFilter<Call> for ProxyType {
 					| Call::Treasury(..)
 			),
 			ProxyType::Staking => matches!(c, Call::Staking(..)),
-			ProxyType::EthereumBridge => matches!(c, Call::EthereumRelay(..)),
+			ProxyType::EthereumBridge => matches!(
+				c,
+				Call::EthereumBacking(..)
+					| Call::EthereumRelay(..)
+					| Call::EthereumRelayAuthorities(..)
+			),
 		}
 	}
 	fn is_superset(&self, o: &Self) -> bool {
