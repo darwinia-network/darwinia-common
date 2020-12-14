@@ -29,8 +29,6 @@ sp-runtime    = { default-features = false, git = "https://github.com/darwinia-n
 sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 [dev-dependencies]
-# crates
-libsecp256k1 = { version = "0.3.5" }
 # darwinia
 darwinia-balances              = { path = "../../../../frame/balances" }
 darwinia-ethereum-linear-relay = { path = "../linear-relay" }
