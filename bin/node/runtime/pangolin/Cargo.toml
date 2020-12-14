@@ -16,7 +16,6 @@ serde             = { version = "1.0.118", optional = true }
 smallvec          = { version = "1.5.1" }
 static_assertions = { version = "1.1.0" }
 # darwinia
-array-bytes                         = { default-features = false, path = "../../../../primitives/array-bytes" }
 darwinia-balances                   = { default-features = false, path = "../../../../frame/balances" }
 darwinia-balances-rpc-runtime-api   = { default-features = false, path = "../../../../frame/balances/rpc/runtime-api" }
 darwinia-claims                     = { default-features = false, path = "../../../../frame/claims" }
@@ -89,7 +88,6 @@ default = ["std"]
 std     = [
 	"codec/std",
 	"serde",
-	"array-bytes/std",
 	"darwinia-balances/std",
 	"darwinia-balances-rpc-runtime-api/std",
 	"darwinia-claims/std",
