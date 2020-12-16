@@ -91,7 +91,7 @@ fn renounce_authority_should_work() {
 		let term_duration = <TermDuration as Get<BlockNumber>>::get();
 
 		for i in 0..=term_duration {
-			System::set_block_number(term_duration);
+			System::set_block_number(i);
 
 			assert_err!(
 				RelayAuthorities::renounce_authority(Origin::signed(1)),
