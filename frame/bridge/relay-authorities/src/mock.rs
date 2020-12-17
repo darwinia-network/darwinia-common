@@ -24,7 +24,7 @@ use codec::{Decode, Encode};
 use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
 use frame_system::EnsureRoot;
 use sp_core::H256;
-use sp_io::TestExternalities;
+use sp_io::{hashing, TestExternalities};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
@@ -55,20 +55,21 @@ darwinia_support::impl_test_account_data! {}
 pub struct Test;
 pub struct DarwiniaMMR;
 impl MMR<BlockNumber, H256> for DarwiniaMMR {
-	fn get_root(block_number: BlockNumber) -> Option<H256> {
+	fn get_root(_: BlockNumber) -> Option<H256> {
 		unimplemented!()
 	}
 }
 pub struct Sign;
 impl SignT<BlockNumber> for Sign {
 	type Signature = [u8; 65];
+	type Message = [u8; 32];
 	type Signer = [u8; 20];
 
-	fn verify_signature(
-		signature: &Self::Signature,
-		message: impl AsRef<[u8]>,
-		signer: Self::Signer,
-	) -> bool {
+	fn hash(raw_message: impl AsRef<[u8]>) -> Self::Message {
+		hashing::blake2_256(raw_message.as_ref())
+	}
+
+	fn verify_signature(_: &Self::Signature, _: &Self::Message, _: &Self::Signer) -> bool {
 		unimplemented!()
 	}
 }

@@ -35,10 +35,12 @@ mod types {
 	pub type RingBalance<T, I> = <RingCurrency<T, I> as Currency<AccountId<T>>>::Balance;
 	pub type RingCurrency<T, I> = <T as Trait<I>>::RingCurrency;
 
-	pub type Signer<T, I> = <<T as Trait<I>>::Sign as Sign<BlockNumber<T>>>::Signer;
-	pub type RelaySignature<T, I> = <<T as Trait<I>>::Sign as Sign<BlockNumber<T>>>::Signature;
+	pub type RelayAuthoritySigner<T, I> = <<T as Trait<I>>::Sign as Sign<BlockNumber<T>>>::Signer;
+	pub type RelayAuthorityMessage<T, I> = <<T as Trait<I>>::Sign as Sign<BlockNumber<T>>>::Message;
+	pub type RelayAuthoritySignature<T, I> =
+		<<T as Trait<I>>::Sign as Sign<BlockNumber<T>>>::Signature;
 	pub type RelayAuthorityT<T, I> =
-		RelayAuthority<AccountId<T>, Signer<T, I>, RingBalance<T, I>, BlockNumber<T>>;
+		RelayAuthority<AccountId<T>, RelayAuthoritySigner<T, I>, RingBalance<T, I>, BlockNumber<T>>;
 }
 
 // --- crates ---
@@ -85,16 +87,17 @@ decl_event! {
 		AccountId = AccountId<T>,
 		BlockNumber = BlockNumber<T>,
 		MMRRoot = MMRRoot<T>,
-		RelaySignature = RelaySignature<T, I>,
+		RelayAuthorityMessage = RelayAuthorityMessage<T, I>,
+		RelayAuthoritySignature = RelayAuthoritySignature<T, I>,
 	{
 		/// A New MMR Root Request to be Signed. [block number of the mmr root to sign]
 		NewMMRRoot(BlockNumber),
 		/// MMR Root Signed. [block number of the mmr root, mmr root, message to sign, signatures]
-		MMRRootSigned(BlockNumber, MMRRoot, Vec<u8>, Vec<(AccountId, RelaySignature)>),
+		MMRRootSigned(BlockNumber, MMRRoot, RelayAuthorityMessage, Vec<(AccountId, RelayAuthoritySignature)>),
 		/// A New Authorities Request to be Signed. [message to sign]
-		NewAuthorities(Vec<u8>),
+		NewAuthorities(RelayAuthorityMessage),
 		/// Authorities Signed. [term, message to sign, signatures]
-		AuthoritiesSetSigned(u32, Vec<u8>, Vec<(AccountId, RelaySignature)>),
+		AuthoritiesSetSigned(u32, RelayAuthorityMessage, Vec<(AccountId, RelayAuthoritySignature)>),
 	}
 }
 
@@ -162,7 +165,7 @@ decl_storage! {
 		/// 	1. collected signatures
 		pub AuthoritiesToSign
 			get(fn authorities_to_sign)
-			: (Vec<u8>, Vec<(AccountId<T>, RelaySignature<T, I>)>);
+			: (RelayAuthorityMessage<T, I>, Vec<(AccountId<T>, RelayAuthoritySignature<T, I>)>);
 
 		/// The `MMRRootsToSign` keys cache
 		///
@@ -180,7 +183,7 @@ decl_storage! {
 		pub MMRRootsToSign
 			get(fn mmr_root_to_sign_of)
 			: map hasher(identity) BlockNumber<T>
-			=> Option<Vec<(AccountId<T>, RelaySignature<T, I>)>>;
+			=> Option<Vec<(AccountId<T>, RelayAuthoritySignature<T, I>)>>;
 
 		/// A cache for the old authorities who was renounce or kicked from authorities
 		///
@@ -191,7 +194,7 @@ decl_storage! {
 		pub SubmitDuration get(fn submit_duration): BlockNumber<T> = T::SubmitDuration::get();
 	}
 	add_extra_genesis {
-		config(authorities): Vec<(AccountId<T>, Signer<T, I>, RingBalance<T, I>)>;
+		config(authorities): Vec<(AccountId<T>, RelayAuthoritySigner<T, I>, RingBalance<T, I>)>;
 		build(|config| {
 			let mut authorities = vec![];
 
@@ -245,7 +248,7 @@ decl_module! {
 		pub fn request_authority(
 			origin,
 			stake: RingBalance<T, I>,
-			signer: Signer<T, I>,
+			signer: RelayAuthoritySigner<T, I>,
 		) {
 			let account_id = ensure_signed(origin)?;
 
@@ -409,7 +412,7 @@ decl_module! {
 			origin,
 			block_number: BlockNumber<T>,
 			mmr_root: MMRRoot<T>,
-			signature: RelaySignature<T, I>
+			signature: RelayAuthoritySignature<T, I>
 		) {
 			let authority = ensure_signed(origin)?;
 
@@ -431,18 +434,18 @@ decl_module! {
 			).ok_or(<Error<T, I>>::AuthorityNE)?;
 			// The message is composed of:
 			//
-			// codec(spec_name: String, block number: BlockNumber, mmr_root: Hash)
-			let message = {
-				_S {
+			// hash(codec(spec_name: String, block number: Compact<BlockNumber>, mmr_root: Hash))
+			let message = T::Sign::hash(
+				&_S {
 					_1: T::Version::get().spec_name,
 					_2: block_number,
 					_3: T::DarwiniaMMR::get_root(block_number).ok_or(<Error<T, I>>::DarwiniaMMRRootNRY)?
 				}
 				.encode()
-			};
+			);
 
 			ensure!(
-				T::Sign::verify_signature(&signature, &message, signer),
+				T::Sign::verify_signature(&signature, &message, &signer),
 				 <Error<T, I>>::SignatureInv
 			);
 
@@ -470,7 +473,7 @@ decl_module! {
 		/// - the relay requirement is valid
 		/// - the signature is signed by the submitter
 		#[weight = 10_000_000]
-		pub fn submit_signed_authorities(origin, signature: RelaySignature<T, I>) {
+		pub fn submit_signed_authorities(origin, signature: RelayAuthoritySignature<T, I>) {
 			let old_authority = ensure_signed(origin)?;
 
 			ensure!(Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
@@ -492,7 +495,7 @@ decl_module! {
 			).ok_or(<Error<T, I>>::AuthorityNE)?;
 
 			ensure!(
-				T::Sign::verify_signature(&signature, &message, signer),
+				T::Sign::verify_signature(&signature, &message, &signer),
 				 <Error<T, I>>::SignatureInv
 			);
 
@@ -595,9 +598,9 @@ where
 
 		// The message is composed of:
 		//
-		// codec(spec_name: String, term: u32, new authorities: Vec<Signer>)
-		let message = {
-			_S {
+		// hash(codec(spec_name: String, term: Compact<u32>, new authorities: Vec<Signer>))
+		let message = T::Sign::hash(
+			&_S {
 				_1: T::Version::get().spec_name,
 				_2: <AuthorityTerm<I>>::get(),
 				_3: new_authorities
@@ -605,12 +608,12 @@ where
 					.map(|authority| authority.signer.clone())
 					.collect::<Vec<_>>(),
 			}
-			.encode()
-		};
+			.encode(),
+		);
 
 		<AuthoritiesToSign<T, I>>::put((
 			&message,
-			<Vec<(AccountId<T>, RelaySignature<T, I>)>>::new(),
+			<Vec<(AccountId<T>, RelayAuthoritySignature<T, I>)>>::new(),
 		));
 
 		Self::deposit_event(RawEvent::NewAuthorities(message));
@@ -648,21 +651,22 @@ where
 	}
 
 	pub fn check_misbehavior(at: BlockNumber<T>) {
-		let find_and_slash_misbehavior = |signatures: Vec<(AccountId<T>, RelaySignature<T, I>)>| {
-			for RelayAuthority {
-				account_id, stake, ..
-			} in <Authorities<T, I>>::get()
-			{
-				if let None = signatures
-					.iter()
-					.position(|(authority, _)| authority == &account_id)
+		let find_and_slash_misbehavior =
+			|signatures: Vec<(AccountId<T>, RelayAuthoritySignature<T, I>)>| {
+				for RelayAuthority {
+					account_id, stake, ..
+				} in <Authorities<T, I>>::get()
 				{
-					<RingCurrency<T, I>>::slash(&account_id, stake);
+					if let None = signatures
+						.iter()
+						.position(|(authority, _)| authority == &account_id)
+					{
+						<RingCurrency<T, I>>::slash(&account_id, stake);
 
-					// TODO: how to deal with the slashed authority
+						// TODO: how to deal with the slashed authority
+					}
 				}
-			}
-		};
+			};
 		let (on_authorities_change, deadline) = <AuthoritiesState<T, I>>::get();
 
 		if on_authorities_change {
@@ -707,7 +711,7 @@ where
 
 			<MMRRootsToSignKeys<T, I>>::append(block_number);
 
-			*signed_mmr_root = Some(<Vec<(AccountId<T>, RelaySignature<T, I>)>>::new());
+			*signed_mmr_root = Some(<Vec<(AccountId<T>, RelayAuthoritySignature<T, I>)>>::new());
 
 			Self::deposit_event(RawEvent::NewMMRRoot(block_number));
 
@@ -732,7 +736,7 @@ where
 pub fn find_signer<T, I>(
 	authorities: &[RelayAuthorityT<T, I>],
 	account_id: &AccountId<T>,
-) -> Option<Signer<T, I>>
+) -> Option<RelayAuthoritySigner<T, I>>
 where
 	T: Trait<I>,
 	I: Instance,

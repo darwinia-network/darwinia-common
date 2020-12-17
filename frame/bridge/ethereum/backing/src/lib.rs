@@ -47,6 +47,7 @@ mod types {
 	>>::EthereumReceiptProofThing;
 
 	pub type EcdsaSignature = [u8; 65];
+	pub type EcdsaMessage = [u8; 32];
 	pub type EcdsaAddress = [u8; 20];
 }
 
@@ -731,12 +732,17 @@ impl<T: Trait> Module<T> {
 
 impl<T: Trait> Sign<BlockNumber<T>> for Module<T> {
 	type Signature = EcdsaSignature;
+	type Message = EcdsaMessage;
 	type Signer = EcdsaAddress;
+
+	fn hash(raw_message: impl AsRef<[u8]>) -> Self::Message {
+		hashing::keccak_256(raw_message.as_ref())
+	}
 
 	fn verify_signature(
 		signature: &Self::Signature,
-		message: impl AsRef<[u8]>,
-		signer: Self::Signer,
+		message: &Self::Message,
+		signer: &Self::Signer,
 	) -> bool {
 		fn eth_signable_message(message: &[u8]) -> Vec<u8> {
 			let mut l = message.len();
@@ -755,10 +761,10 @@ impl<T: Trait> Sign<BlockNumber<T>> for Module<T> {
 			v
 		}
 
-		let message = hashing::keccak_256(&eth_signable_message(message.as_ref()));
+		let message = hashing::keccak_256(&eth_signable_message(message));
 
 		if let Ok(public_key) = crypto::secp256k1_ecdsa_recover(signature, &message) {
-			hashing::keccak_256(&public_key)[12..] == signer
+			hashing::keccak_256(&public_key)[12..] == *signer
 		} else {
 			false
 		}

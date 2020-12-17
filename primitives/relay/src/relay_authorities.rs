@@ -28,12 +28,15 @@ use sp_std::prelude::*;
 
 pub trait Sign<BlockNumber> {
 	type Signature: Clone + Debug + PartialEq + FullCodec;
-	type Signer: AsRef<[u8]> + Clone + Debug + PartialEq + FullCodec;
+	type Message: Clone + Debug + Default + PartialEq + FullCodec;
+	type Signer: Clone + Debug + PartialEq + FullCodec;
+
+	fn hash(raw_message: impl AsRef<[u8]>) -> Self::Message;
 
 	fn verify_signature(
 		signature: &Self::Signature,
-		message: impl AsRef<[u8]>,
-		signer: Self::Signer,
+		message: &Self::Message,
+		signer: &Self::Signer,
 	) -> bool;
 }
 
