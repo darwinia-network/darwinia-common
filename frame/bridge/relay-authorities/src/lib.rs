@@ -87,6 +87,7 @@ decl_event! {
 		AccountId = AccountId<T>,
 		BlockNumber = BlockNumber<T>,
 		MMRRoot = MMRRoot<T>,
+		RelayAuthoritySigner = RelayAuthoritySigner<T, I>,
 		RelayAuthorityMessage = RelayAuthorityMessage<T, I>,
 		RelayAuthoritySignature = RelayAuthoritySignature<T, I>,
 	{
@@ -96,8 +97,8 @@ decl_event! {
 		MMRRootSigned(BlockNumber, MMRRoot, RelayAuthorityMessage, Vec<(AccountId, RelayAuthoritySignature)>),
 		/// A New Authorities Request to be Signed. [message to sign]
 		NewAuthorities(RelayAuthorityMessage),
-		/// Authorities Signed. [term, message to sign, signatures]
-		AuthoritiesSetSigned(u32, RelayAuthorityMessage, Vec<(AccountId, RelayAuthoritySignature)>),
+		/// Authorities Signed. [term, new authorities, message to sign, signatures]
+		AuthoritiesSetSigned(u32, Vec<RelayAuthoritySigner>, RelayAuthorityMessage, Vec<(AccountId, RelayAuthoritySignature)>),
 	}
 }
 
@@ -507,6 +508,10 @@ decl_module! {
 				Self::finish_authorities_change();
 				Self::deposit_event(RawEvent::AuthoritiesSetSigned(
 					<AuthorityTerm<I>>::get(),
+					<Authorities<T, I>>::get()
+						.into_iter()
+						.map(|authority| authority.signer)
+						.collect(),
 					message,
 					signatures
 				));
