@@ -87,17 +87,18 @@ decl_event! {
 		AccountId = AccountId<T>,
 		BlockNumber = BlockNumber<T>,
 		MMRRoot = MMRRoot<T>,
+		RelayAuthoritySigner = RelayAuthoritySigner<T, I>,
 		RelayAuthorityMessage = RelayAuthorityMessage<T, I>,
 		RelayAuthoritySignature = RelayAuthoritySignature<T, I>,
 	{
 		/// A New MMR Root Request to be Signed. [block number of the mmr root to sign]
 		NewMMRRoot(BlockNumber),
-		/// MMR Root Signed. [block number of the mmr root, mmr root, message to sign, signatures]
-		MMRRootSigned(BlockNumber, MMRRoot, RelayAuthorityMessage, Vec<(AccountId, RelayAuthoritySignature)>),
+		/// MMR Root Signed. [block number of the mmr root, mmr root, signatures]
+		MMRRootSigned(BlockNumber, MMRRoot, Vec<(AccountId, RelayAuthoritySignature)>),
 		/// A New Authorities Request to be Signed. [message to sign]
 		NewAuthorities(RelayAuthorityMessage),
-		/// Authorities Signed. [term, message to sign, signatures]
-		AuthoritiesSetSigned(u32, RelayAuthorityMessage, Vec<(AccountId, RelayAuthoritySignature)>),
+		/// Authorities Signed. [term, new authorities, signatures]
+		AuthoritiesSetSigned(u32, Vec<RelayAuthoritySigner>, Vec<(AccountId, RelayAuthoritySignature)>),
 	}
 }
 
@@ -457,7 +458,7 @@ decl_module! {
 				// TODO: clean the mmr root which was contains in this mmr root?
 
 				Self::finish_collect_mmr_root_sign(block_number);
-				Self::deposit_event(RawEvent::MMRRootSigned(block_number, mmr_root, message, signatures));
+				Self::deposit_event(RawEvent::MMRRootSigned(block_number, mmr_root, signatures));
 			} else {
 				<MMRRootsToSign<T, I>>::insert(block_number, signatures);
 			}
@@ -507,7 +508,10 @@ decl_module! {
 				Self::finish_authorities_change();
 				Self::deposit_event(RawEvent::AuthoritiesSetSigned(
 					<AuthorityTerm<I>>::get(),
-					message,
+					<Authorities<T, I>>::get()
+						.into_iter()
+						.map(|authority| authority.signer)
+						.collect(),
 					signatures
 				));
 			} else {
