@@ -114,6 +114,7 @@ decl_event! {
 	pub enum Event<T>
 	where
 		AccountId = AccountId<T>,
+		BlockNumber = BlockNumber<T>,
 		RingBalance = RingBalance<T>,
 		KtonBalance = KtonBalance<T>,
 	{
@@ -124,9 +125,9 @@ decl_event! {
 		/// Someone redeem a deposit. [account, deposit id, amount, transaction index]
 		RedeemDeposit(AccountId, DepositId, RingBalance, EthereumTransactionIndex),
 		/// Someone lock some *RING*. [account, ecdsa address, asset type, amount]
-		LockRing(AccountId, EcdsaAddress, u8, RingBalance),
+		LockRing(BlockNumber, AccountId, EcdsaAddress, u8, RingBalance),
 		/// Someone lock some *KTON*. [account, ecdsa address, asset type, amount]
-		LockKton(AccountId, EcdsaAddress, u8, KtonBalance),
+		LockKton(BlockNumber, AccountId, EcdsaAddress, u8, KtonBalance),
 	}
 }
 
@@ -259,13 +260,14 @@ decl_module! {
 			T::RingCurrency::transfer(&user, &fee_account, T::AdvancedFee::get(), KeepAlive)?;
 
 			let mut locked = false;
+			let block_number = <frame_system::Module<T>>::block_number();
 
 			if !ring_value.is_zero() {
 				let ring_to_lock = ring_value.min(T::RingCurrency::usable_balance(&user));
 
 				T::RingCurrency::transfer(&user, &fee_account, ring_to_lock, KeepAlive)?;
 
-				let raw_event = RawEvent::LockRing(user.clone(), ecdsa_address.clone(), 0, ring_to_lock);
+				let raw_event = RawEvent::LockRing(block_number, user.clone(), ecdsa_address.clone(), 0, ring_to_lock);
 				let module_event: <T as Trait>::Event = raw_event.clone().into();
 				let system_event: <T as frame_system::Trait>::Event = module_event.into();
 
@@ -279,7 +281,7 @@ decl_module! {
 
 				T::KtonCurrency::transfer(&user, &fee_account, kton_to_lock, KeepAlive)?;
 
-				let raw_event = RawEvent::LockKton(user, ecdsa_address, 1, kton_to_lock);
+				let raw_event = RawEvent::LockKton(block_number, user, ecdsa_address, 1, kton_to_lock);
 				let module_event: <T as Trait>::Event = raw_event.clone().into();
 				let system_event: <T as frame_system::Trait>::Event = module_event.into();
 
