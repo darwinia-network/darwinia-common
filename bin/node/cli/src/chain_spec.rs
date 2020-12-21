@@ -214,7 +214,7 @@ fn pangolin_build_spec_genesis() -> GenesisConfig {
 		}),
 		dvm_ethereum: Some(Default::default()),
 		darwinia_relay_authorities_Instance0: Some(EthereumRelayAuthoritiesConfig {
-			authorities: vec![(root, fixed_hex_bytes_unchecked!(GENESIS_ETHEREUM_RELAY_AUTHORITY_SIGNER, 20), 1)]
+			authorities: vec![(root, fixed_hex_bytes_unchecked!(GENESIS_ETHEREUM_RELAY_AUTHORITY_SIGNER, 20).into(), 1)]
 		}),
 	}
 }
@@ -375,7 +375,7 @@ fn pangolin_development_genesis(
 		}),
 		dvm_ethereum: Some(Default::default()),
 		darwinia_relay_authorities_Instance0: Some(EthereumRelayAuthoritiesConfig {
-			authorities: vec![(root_key, fixed_hex_bytes_unchecked!(GENESIS_ETHEREUM_RELAY_AUTHORITY_SIGNER, 20), 1)]
+			authorities: vec![(root_key, fixed_hex_bytes_unchecked!(GENESIS_ETHEREUM_RELAY_AUTHORITY_SIGNER, 20).into(), 1)]
 		}),
 	}
 }
