@@ -1,9 +1,10 @@
 [workspace]
 members = [
 	# node
-	"bin/node/cli",
-	"bin/node/primitives",
-	"bin/node/runtime/pangolin",
+	# bear - Skip temperary
+	# "bin/node/cli",
+	# "bin/node/primitives",
+	# "bin/node/runtime/pangolin",
 	# client
 	"client/cli",
 	"client/dvm/consensus",

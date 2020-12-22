@@ -155,9 +155,15 @@ dependencies = [
 
 [[package]]
 name = "arc-swap"
+<<<<<<< HEAD
 version = "0.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dabe5a181f83789739c194cbe5a897dde195078fac08568d09221fd6137a7ba8"
+=======
+version = "0.4.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4d25d88fd6b8041580a654f9d0c581a047baee2b3efee13275f2fc392fc75034"
+>>>>>>> Skip pangolin compile to easy compiler
 
 [[package]]
 name = "array-bytes"
@@ -1709,81 +1715,6 @@ checksum = "c4d33be9473d06f75f58220f71f7a9317aca647dc061dbd3c361b0bef505fbea"
 dependencies = [
  "byteorder 1.3.4",
  "quick-error",
-]
-
-[[package]]
-name = "drml"
-version = "1.0.7"
-dependencies = [
- "array-bytes",
- "darwinia-balances-rpc",
- "darwinia-balances-rpc-runtime-api",
- "darwinia-claims",
- "darwinia-cli",
- "darwinia-ethereum-relay",
- "darwinia-evm",
- "darwinia-header-mmr-rpc",
- "darwinia-header-mmr-rpc-runtime-api",
- "darwinia-staking",
- "darwinia-staking-rpc",
- "darwinia-staking-rpc-runtime-api",
- "drml-primitives",
- "dvm-consensus",
- "dvm-rpc",
- "dvm-rpc-runtime-api",
- "frame-system-rpc-runtime-api",
- "futures 0.3.8",
- "jsonrpc-core",
- "jsonrpc-pubsub",
- "log",
- "pallet-im-online",
- "pallet-transaction-payment-rpc",
- "pallet-transaction-payment-rpc-runtime-api",
- "pangolin-runtime",
- "parity-scale-codec",
- "sc-basic-authorship",
- "sc-cli",
- "sc-client-api",
- "sc-consensus",
- "sc-consensus-babe",
- "sc-consensus-babe-rpc",
- "sc-consensus-epochs",
- "sc-executor",
- "sc-finality-grandpa",
- "sc-finality-grandpa-rpc",
- "sc-keystore",
- "sc-network",
- "sc-rpc",
- "sc-service",
- "sc-telemetry",
- "sc-transaction-pool",
- "sp-api",
- "sp-authority-discovery",
- "sp-block-builder",
- "sp-blockchain",
- "sp-consensus",
- "sp-consensus-babe",
- "sp-core",
- "sp-finality-grandpa",
- "sp-inherents",
- "sp-offchain",
- "sp-runtime",
- "sp-session",
- "sp-transaction-pool",
- "sp-trie",
- "structopt",
- "substrate-build-script-utils",
- "substrate-frame-rpc-system",
- "substrate-prometheus-endpoint",
- "tokio 0.3.6",
-]
-
-[[package]]
-name = "drml-primitives"
-version = "1.0.7"
-dependencies = [
- "sp-core",
- "sp-runtime",
 ]
 
 [[package]]
@@ -5028,78 +4959,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pangolin-runtime"
-version = "1.0.7"
-dependencies = [
- "darwinia-balances",
- "darwinia-balances-rpc-runtime-api",
- "darwinia-claims",
- "darwinia-crab-backing",
- "darwinia-crab-issuing",
- "darwinia-democracy",
- "darwinia-elections-phragmen",
- "darwinia-ethereum-backing",
- "darwinia-ethereum-relay",
- "darwinia-evm",
- "darwinia-header-mmr",
- "darwinia-header-mmr-rpc-runtime-api",
- "darwinia-relay-authorities",
- "darwinia-relay-primitives",
- "darwinia-relayer-game",
- "darwinia-staking",
- "darwinia-staking-rpc-runtime-api",
- "darwinia-support",
- "darwinia-treasury",
- "darwinia-tron-backing",
- "darwinia-vesting",
- "drml-primitives",
- "dvm-ethereum",
- "dvm-rpc-runtime-api",
- "ethereum-primitives",
- "frame-executive",
- "frame-support",
- "frame-system",
- "frame-system-rpc-runtime-api",
- "pallet-authority-discovery",
- "pallet-authorship",
- "pallet-babe",
- "pallet-collective",
- "pallet-finality-tracker",
- "pallet-grandpa",
- "pallet-im-online",
- "pallet-membership",
- "pallet-offences",
- "pallet-proxy",
- "pallet-randomness-collective-flip",
- "pallet-scheduler",
- "pallet-session",
- "pallet-sudo",
- "pallet-timestamp",
- "pallet-transaction-payment",
- "pallet-transaction-payment-rpc-runtime-api",
- "parity-scale-codec",
- "serde",
- "smallvec 1.6.0",
- "sp-api",
- "sp-application-crypto",
- "sp-authority-discovery",
- "sp-block-builder",
- "sp-consensus-babe",
- "sp-core",
- "sp-inherents",
- "sp-io",
- "sp-offchain",
- "sp-runtime",
- "sp-session",
- "sp-staking",
- "sp-std 2.0.0",
- "sp-transaction-pool",
- "sp-version",
- "static_assertions 1.1.0",
- "substrate-wasm-builder-runner",
-]
-
-[[package]]
 name = "parity-db"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7561,7 +7420,7 @@ dependencies = [
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
  "substrate-prometheus-endpoint",
- "tokio 0.3.5",
+ "tokio 0.3.6",
 ]
 
 [[package]]
@@ -8550,7 +8409,7 @@ dependencies = [
  "substrate-prometheus-endpoint",
  "tang-node-primitives",
  "tang-node-runtime",
- "tokio 0.3.5",
+ "tokio 0.3.6",
 ]
 
 [[package]]
