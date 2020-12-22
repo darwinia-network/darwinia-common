@@ -57,7 +57,7 @@ fn test_insert_header() {
 
 		let pos = 19;
 		assert_eq!(pos, leaf_index_to_pos(h1));
-		assert_eq!(prove_elem, HeaderMMR::mmr_node_list(pos));
+		assert_eq!(prove_elem, HeaderMMR::mmr_node_list(pos).unwrap());
 
 		let parent_mmr_root = HeaderMMR::_find_parent_mmr_root(headers[h2 as usize - 1].clone())
 			.expect("Header mmr get failed");
