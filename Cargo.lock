@@ -601,6 +601,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "bp-message-dispatch"
+version = "0.1.0"
+source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#140d5d205ec2ad50801ad64c80cbf1ba01e9dd66"
+dependencies = [
+ "bp-runtime",
+ "parity-scale-codec",
+]
+
+[[package]]
+name = "bp-message-lane"
+version = "0.1.0"
+source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#140d5d205ec2ad50801ad64c80cbf1ba01e9dd66"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "sp-std 2.0.0",
+]
+
+[[package]]
+name = "bp-runtime"
+version = "0.1.0"
+source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#140d5d205ec2ad50801ad64c80cbf1ba01e9dd66"
+dependencies = [
+ "frame-support",
+ "num-traits",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 2.0.0",
+]
+
+[[package]]
 name = "bs58"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4716,6 +4750,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-bridge-call-dispatch"
+version = "0.1.0"
+source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#140d5d205ec2ad50801ad64c80cbf1ba01e9dd66"
+dependencies = [
+ "bp-message-dispatch",
+ "bp-runtime",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-runtime",
+ "sp-std 2.0.0",
+]
+
+[[package]]
 name = "pallet-collective"
 version = "2.0.0"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library#7314a78d49d0dc3862c6ef7c8115cb1b3d0c0fd2"
@@ -4802,6 +4851,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-message-lane"
+version = "0.1.0"
+source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#140d5d205ec2ad50801ad64c80cbf1ba01e9dd66"
+dependencies = [
+ "bp-message-lane",
+ "bp-runtime",
+ "frame-support",
+ "frame-system",
+ "num-traits",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-runtime",
+ "sp-std 2.0.0",
+]
+
+[[package]]
 name = "pallet-offences"
 version = "2.0.0"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library#7314a78d49d0dc3862c6ef7c8115cb1b3d0c0fd2"
@@ -4875,6 +4941,37 @@ dependencies = [
  "sp-runtime",
  "sp-session",
  "sp-staking",
+ "sp-std 2.0.0",
+ "sp-trie",
+]
+
+[[package]]
+name = "pallet-shift-session-manager"
+version = "0.1.0"
+source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#140d5d205ec2ad50801ad64c80cbf1ba01e9dd66"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-session",
+ "parity-scale-codec",
+ "sp-staking",
+ "sp-std 2.0.0",
+]
+
+[[package]]
+name = "pallet-substrate-bridge"
+version = "0.1.0"
+source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#140d5d205ec2ad50801ad64c80cbf1ba01e9dd66"
+dependencies = [
+ "bp-runtime",
+ "finality-grandpa",
+ "frame-support",
+ "frame-system",
+ "hash-db",
+ "parity-scale-codec",
+ "serde",
+ "sp-finality-grandpa",
+ "sp-runtime",
  "sp-std 2.0.0",
  "sp-trie",
 ]
@@ -8370,6 +8467,7 @@ dependencies = [
  "jsonrpc-pubsub",
  "log",
  "pallet-im-online",
+ "pallet-substrate-bridge",
  "pallet-transaction-payment-rpc",
  "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec",
@@ -8456,16 +8554,20 @@ dependencies = [
  "pallet-authority-discovery",
  "pallet-authorship",
  "pallet-babe",
+ "pallet-bridge-call-dispatch",
  "pallet-collective",
  "pallet-finality-tracker",
  "pallet-grandpa",
  "pallet-im-online",
  "pallet-membership",
+ "pallet-message-lane",
  "pallet-offences",
  "pallet-proxy",
  "pallet-randomness-collective-flip",
  "pallet-scheduler",
  "pallet-session",
+ "pallet-shift-session-manager",
+ "pallet-substrate-bridge",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",

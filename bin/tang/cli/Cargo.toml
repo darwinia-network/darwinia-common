@@ -39,9 +39,11 @@ darwinia-staking-rpc-runtime-api    = { path = "../../../frame/staking/rpc/runti
 dvm-consensus                       = { path = "../../../client/dvm/consensus" }
 dvm-rpc                             = { path = "../../../client/dvm/rpc" }
 dvm-rpc-runtime-api                 = { path = "../../../frame/dvm/rpc/runtime-api" }
+# Sub bridge
 # TODO: format
 tang-node-primitives                     = { path = "../primitives" }
 tang-node-runtime                    = { path = "../runtime" }
+pallet-substrate-bridge = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
 # substrate
 frame-system-rpc-runtime-api               = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 pallet-im-online                           = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }

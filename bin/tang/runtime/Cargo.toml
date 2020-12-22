@@ -38,8 +38,15 @@ darwinia-support                    = { default-features = false, path = "../../
 darwinia-treasury                   = { default-features = false, path = "../../../frame/treasury" }
 darwinia-tron-backing               = { default-features = false, path = "../../../frame/bridge/tron/backing" }
 darwinia-vesting                    = { default-features = false, path = "../../../frame/vesting" }
+
+# Sub Bridge
 # TODO: format
 tang-node-primitives                     = { default-features = false, path = "../primitives" }
+pallet-bridge-call-dispatch 		     = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear", default-features = false }
+pallet-message-lane 					 = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear", default-features = false }
+pallet-shift-session-manager             = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear", default-features = false }
+pallet-substrate-bridge 				 = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear", default-features = false }
+
 dvm-ethereum                        = { default-features = false, path = "../../../frame/dvm" }
 dvm-rpc-runtime-api                 = { default-features = false, path = "../../../frame/dvm/rpc/runtime-api" }
 ethereum-primitives                 = { default-features = false, path = "../../../primitives/ethereum-primitives" }
@@ -112,8 +119,13 @@ std     = [
 	"darwinia-treasury/std",
 	"darwinia-tron-backing/std",
 	"darwinia-vesting/std",
+	# Sub bridge
 	# TODO: format
 	"tang-node-primitives/std",
+	"pallet-bridge-call-dispatch/std",
+	"pallet-message-lane/std",
+	"pallet-shift-session-manager/std",
+	"pallet-substrate-bridge/std",
 	"dvm-ethereum/std",
 	"dvm-rpc-runtime-api/std",
 	"ethereum-primitives/std",
