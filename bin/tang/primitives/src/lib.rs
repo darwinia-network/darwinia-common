@@ -8,7 +8,7 @@ use sp_core::H256;
 use sp_runtime::{
 	generic,
 	traits::{BlakeTwo256, IdentifyAccount, Verify},
-	MultiSignature, OpaqueExtrinsic, MultiSigner
+	MultiSignature, MultiSigner, OpaqueExtrinsic,
 };
 
 use bp_message_lane::MessageNonce;

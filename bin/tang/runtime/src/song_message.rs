@@ -1,14 +1,17 @@
 use crate::Runtime;
 
-use bridge_runtime_common::messages::{self, ChainWithMessageLanes, MessageBridge};
-use frame_support::{RuntimeDebug, weights::{Weight, WeightToFeePolynomial},};
-use bp_runtime::InstanceId;
-use sp_std::{convert::TryFrom, ops::RangeInclusive};
 use bp_message_lane::{
 	source_chain::TargetHeaderChain,
 	target_chain::{ProvedMessages, SourceHeaderChain},
 	InboundLaneData, LaneId, Message, MessageNonce,
 };
+use bp_runtime::InstanceId;
+use bridge_runtime_common::messages::{self, ChainWithMessageLanes, MessageBridge};
+use frame_support::{
+	weights::{Weight, WeightToFeePolynomial},
+	RuntimeDebug,
+};
+use sp_std::{convert::TryFrom, ops::RangeInclusive};
 
 /// Bridge-with-Song instance id.
 pub const SONG_BRIDGE_INSTANCE: InstanceId = *b"song";
@@ -36,8 +39,8 @@ pub type FromSongMessageDispatch = messages::target::FromBridgedChainMessageDisp
 type FromSongMessagesProof = messages::target::FromBridgedChainMessagesProof<WithSongMessageBridge>;
 
 /// Messages delivery proof for Tang -> Song messages.
-type ToSongMessagesDeliveryProof = messages::source::FromBridgedChainMessagesDeliveryProof<WithSongMessageBridge>;
-
+type ToSongMessagesDeliveryProof =
+	messages::source::FromBridgedChainMessagesDeliveryProof<WithSongMessageBridge>;
 
 /// Tang <-> Song message bridge.
 #[derive(RuntimeDebug, Clone, Copy)]
@@ -159,6 +162,9 @@ impl SourceHeaderChain<song_node_primitives::Balance> for Song {
 		proof: Self::MessagesProof,
 		max_messages: MessageNonce,
 	) -> Result<ProvedMessages<Message<song_node_primitives::Balance>>, Self::Error> {
-		messages::target::verify_messages_proof::<WithSongMessageBridge, Runtime>(proof, max_messages)
+		messages::target::verify_messages_proof::<WithSongMessageBridge, Runtime>(
+			proof,
+			max_messages,
+		)
 	}
 }

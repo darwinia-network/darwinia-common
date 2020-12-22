@@ -186,7 +186,8 @@ pub mod wasm {
 	include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 	#[cfg(all(feature = "std", not(any(target_arch = "x86_64", target_arch = "x86"))))]
-	pub const WASM_BINARY: &[u8] = include_bytes!("../../../../wasm/song_node_runtime.compact.wasm");
+	pub const WASM_BINARY: &[u8] =
+		include_bytes!("../../../../wasm/song_node_runtime.compact.wasm");
 	#[cfg(all(feature = "std", not(any(target_arch = "x86_64", target_arch = "x86"))))]
 	pub const WASM_BINARY_BLOATY: &[u8] = include_bytes!("../../../../wasm/song_node_runtime.wasm");
 
@@ -267,13 +268,13 @@ use darwinia_evm::Runner;
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
 use darwinia_staking::EraIndex;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
-use song_node_primitives::*;
 use dvm_ethereum::{
 	account_basic::DVMAccountBasicMapping,
 	precompiles::{ConcatAddressMapping, NativeTransfer},
 };
 use dvm_rpc_runtime_api::TransactionStatus;
 use impls::*;
+use song_node_primitives::*;
 
 /// The address format for describing accounts.
 type Address = AccountId;

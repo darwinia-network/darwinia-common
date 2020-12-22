@@ -39,8 +39,8 @@ use crate::rpc::{
 	self, BabeDeps, DenyUnsafe, FullDeps, GrandpaDeps, LightDeps, RpcExtension,
 	SubscriptionTaskExecutor,
 };
-use tang_node_primitives::{AccountId, Balance, Hash, Nonce, OpaqueBlock as Block, Power};
 use dvm_consensus::FrontierBlockImport;
+use tang_node_primitives::{AccountId, Balance, Hash, Nonce, OpaqueBlock as Block, Power};
 
 type FullBackend = sc_service::TFullBackend<Block>;
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;

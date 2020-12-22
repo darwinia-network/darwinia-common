@@ -4,16 +4,16 @@
 #![warn(missing_docs)]
 
 // --- substrate ---
+use bp_message_lane::MessageNonce;
+use bp_runtime::Chain;
+use frame_support::weights::Weight;
+use sp_core::Hasher as HasherT;
 use sp_core::H256;
 use sp_runtime::{
 	generic,
 	traits::{BlakeTwo256, IdentifyAccount, Verify},
-	MultiSignature, OpaqueExtrinsic, MultiSigner
+	MultiSignature, MultiSigner, OpaqueExtrinsic,
 };
-use bp_runtime::Chain;
-use sp_core::Hasher as HasherT;
-use bp_message_lane::MessageNonce;
-use frame_support::weights::Weight;
 
 /// An index to a block.
 /// 32-bits will allow for 136 years of blocks assuming 1 block per second.
@@ -84,7 +84,8 @@ pub const MAXIMUM_BLOCK_WEIGHT: Weight = 2_000_000_000_000;
 pub const AVAILABLE_BLOCK_RATIO: u32 = 75;
 /// Maximal weight of single Rialto extrinsic (65% of maximum block weight = 75% for regular
 /// transactions minus 10% for initialization).
-pub const MAXIMUM_EXTRINSIC_WEIGHT: Weight = MAXIMUM_BLOCK_WEIGHT / 100 * (AVAILABLE_BLOCK_RATIO as Weight - 10);
+pub const MAXIMUM_EXTRINSIC_WEIGHT: Weight =
+	MAXIMUM_BLOCK_WEIGHT / 100 * (AVAILABLE_BLOCK_RATIO as Weight - 10);
 /// Maximal size of Song block.
 pub const MAXIMUM_BLOCK_SIZE: u32 = 5 * 1024 * 1024;
 /// Maximal size of single normal Song extrinsic (75% of maximal block size).
