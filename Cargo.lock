@@ -635,6 +635,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "bridge-runtime-common"
+version = "0.1.0"
+source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#140d5d205ec2ad50801ad64c80cbf1ba01e9dd66"
+dependencies = [
+ "bp-message-dispatch",
+ "bp-message-lane",
+ "bp-runtime",
+ "frame-support",
+ "hash-db",
+ "pallet-bridge-call-dispatch",
+ "pallet-message-lane",
+ "pallet-substrate-bridge",
+ "parity-scale-codec",
+ "sp-runtime",
+ "sp-std 2.0.0",
+ "sp-trie",
+]
+
+[[package]]
 name = "bs58"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7524,6 +7543,9 @@ dependencies = [
 name = "song-node-primitives"
 version = "1.0.1"
 dependencies = [
+ "bp-message-lane",
+ "bp-runtime",
+ "frame-support",
  "sp-core",
  "sp-runtime",
 ]
@@ -8514,6 +8536,8 @@ dependencies = [
 name = "tang-node-primitives"
 version = "1.0.1"
 dependencies = [
+ "bp-message-lane",
+ "bp-runtime",
  "sp-core",
  "sp-runtime",
 ]
@@ -8523,6 +8547,9 @@ name = "tang-node-runtime"
 version = "1.0.1"
 dependencies = [
  "array-bytes",
+ "bp-message-lane",
+ "bp-runtime",
+ "bridge-runtime-common",
  "darwinia-balances",
  "darwinia-balances-rpc-runtime-api",
  "darwinia-claims",
@@ -8554,6 +8581,7 @@ dependencies = [
  "pallet-authority-discovery",
  "pallet-authorship",
  "pallet-babe",
+ "pallet-balances",
  "pallet-bridge-call-dispatch",
  "pallet-collective",
  "pallet-finality-tracker",
@@ -8575,6 +8603,7 @@ dependencies = [
  "parity-scale-codec",
  "serde",
  "smallvec 1.5.1",
+ "song-node-primitives",
  "sp-api",
  "sp-application-crypto",
  "sp-authority-discovery",
@@ -9205,7 +9234,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04f8ab788026715fa63b31960869617cba39117e520eb415b0139543e325ab59"
 dependencies = [
  "cfg-if 0.1.10",
- "rand 0.7.3",
+ "rand 0.3.23",
  "static_assertions 1.1.0",
 ]
 

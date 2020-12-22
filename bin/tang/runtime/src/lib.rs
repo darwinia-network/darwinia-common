@@ -186,7 +186,8 @@ pub mod wasm {
 	include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 	#[cfg(all(feature = "std", not(any(target_arch = "x86_64", target_arch = "x86"))))]
-	pub const WASM_BINARY: &[u8] = include_bytes!("../../../../wasm/tang_node_runtime.compact.wasm");
+	pub const WASM_BINARY: &[u8] =
+		include_bytes!("../../../../wasm/tang_node_runtime.compact.wasm");
 	#[cfg(all(feature = "std", not(any(target_arch = "x86_64", target_arch = "x86"))))]
 	pub const WASM_BINARY_BLOATY: &[u8] = include_bytes!("../../../../wasm/tang_node_runtime.wasm");
 
@@ -204,6 +205,7 @@ pub mod wasm {
 	}
 }
 
+pub mod song_message;
 /// Weights for pallets used in the runtime.
 mod weights;
 
@@ -252,8 +254,8 @@ use sp_runtime::{
 		SaturatedConversion, Saturating,
 	},
 	transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, FixedPointNumber, ModuleId, OpaqueExtrinsic, Perbill, Percent, Permill,
-	Perquintill, RuntimeDebug,
+	ApplyExtrinsicResult, FixedPointNumber, ModuleId, MultiSignature, MultiSigner, OpaqueExtrinsic,
+	Perbill, Percent, Permill, Perquintill, RuntimeDebug,
 };
 use sp_staking::SessionIndex;
 use sp_std::prelude::*;
@@ -267,13 +269,13 @@ use darwinia_evm::Runner;
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
 use darwinia_staking::EraIndex;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
-use tang_node_primitives::*;
 use dvm_ethereum::{
 	account_basic::DVMAccountBasicMapping,
 	precompiles::{ConcatAddressMapping, NativeTransfer},
 };
 use dvm_rpc_runtime_api::TransactionStatus;
 use impls::*;
+use tang_node_primitives::*;
 
 /// The address format for describing accounts.
 type Address = AccountId;
@@ -1118,6 +1120,62 @@ impl dvm_ethereum::Trait for Runtime {
 	type RingCurrency = Balances;
 }
 
+// Sub bridge
+impl pallet_bridge_call_dispatch::Trait for Runtime {
+	type Event = Event;
+	type MessageId = (bp_message_lane::LaneId, bp_message_lane::MessageNonce);
+	type Call = Call;
+	type SourceChainAccountId = song_node_primitives::AccountId;
+	type TargetChainAccountPublic = MultiSigner;
+	type TargetChainSignature = MultiSignature;
+	type AccountIdConverter = tang_node_primitives::AccountIdConverter;
+}
+
+impl pallet_substrate_bridge::Trait for Runtime {
+	type BridgedChain = song_node_primitives::Song;
+}
+
+impl pallet_shift_session_manager::Trait for Runtime {}
+
+parameter_types! {
+	pub const MaxMessagesToPruneAtOnce: bp_message_lane::MessageNonce = 8;
+	pub const MaxUnrewardedRelayerEntriesAtInboundLane: bp_message_lane::MessageNonce =
+	tang_node_primitives::MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE;
+	pub const MaxUnconfirmedMessagesAtInboundLane: bp_message_lane::MessageNonce =
+	tang_node_primitives::MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE;
+	pub const MaxMessagesInDeliveryTransaction: bp_message_lane::MessageNonce =
+	tang_node_primitives::MAX_MESSAGES_IN_DELIVERY_TRANSACTION;
+}
+
+impl pallet_message_lane::Trait for Runtime {
+	type Event = Event;
+	type MaxMessagesToPruneAtOnce = MaxMessagesToPruneAtOnce;
+	type MaxUnrewardedRelayerEntriesAtInboundLane = MaxUnrewardedRelayerEntriesAtInboundLane;
+	type MaxUnconfirmedMessagesAtInboundLane = MaxUnconfirmedMessagesAtInboundLane;
+	type MaxMessagesInDeliveryTransaction = MaxMessagesInDeliveryTransaction;
+
+	type OutboundPayload = crate::song_message::ToSongMessagePayload;
+	type OutboundMessageFee = Balance;
+
+	type InboundPayload = crate::song_message::FromSongMessagePayload;
+	type InboundMessageFee = song_node_primitives::Balance;
+	type InboundRelayer = song_node_primitives::AccountId;
+
+	type AccountIdConverter = tang_node_primitives::AccountIdConverter;
+
+	type TargetHeaderChain = crate::song_message::Song;
+	type LaneMessageVerifier = crate::song_message::ToSongMessageVerifier;
+	type MessageDeliveryAndDispatchPayment =
+		pallet_message_lane::instant_payments::InstantCurrencyPayments<
+			AccountId,
+			// RingInstance::Module<Runtime>,
+			<darwinia_balances::Instance0 as darwinia_balances::Trait>::Module<Runtime>,
+		>;
+
+	type SourceHeaderChain = crate::song_message::Song;
+	type MessageDispatch = crate::song_message::FromSongMessageDispatch;
+}
+
 construct_runtime!(
 	pub enum Runtime
 	where
@@ -1185,6 +1243,13 @@ construct_runtime!(
 		Ethereum: dvm_ethereum::{Module, Call, Storage, Event, Config, ValidateUnsigned},
 
 		EthereumRelayAuthorities: darwinia_relay_authorities::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
+
+		// Sub bridge
+		BridgeSong: pallet_substrate_bridge::{Module, Call, Storage, Config<T>},
+		BridgeRialtoMessageLane: pallet_message_lane::{Module, Call, Event<T>},
+		BridgeCallDispatch: pallet_bridge_call_dispatch::{Module, Event<T>},
+		ShiftSessionManager: pallet_shift_session_manager::{Module},
+
 	}
 );
 
