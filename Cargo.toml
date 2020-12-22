@@ -44,6 +44,14 @@ members = [
 	"primitives/evm",
 	"primitives/merkle-patricia-trie",
 	"primitives/relay",
+	# sub-bridge
+	# TODO: FORMAT
+	"bin/tang/cli",
+	"bin/tang/primitives",
+	"bin/tang/runtime",
+	"bin/song/cli",
+	"bin/song/primitives",
+	"bin/song/runtime",
 ]
 
 # The list of dependencies below (which can be both direct and indirect dependencies) are crates
