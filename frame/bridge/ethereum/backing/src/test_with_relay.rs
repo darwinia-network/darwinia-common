@@ -390,6 +390,6 @@ fn verify_signature_should_work() {
 	assert!(EthereumBacking::verify_signature(
 		&fixed_hex_bytes_unchecked!("0x0806e7b411a8808c1384bd8abe3b506403981d3ece6b16cd29d3f2789eea1ab61635b3b971bf5584bdc70c42b2a4a2659b354dfc542943c030630168825976491c", 65),
 		&fixed_hex_bytes_unchecked!("0x71e2f60faf6c7264cca14fb1a01260a787b4d18039cd8cd680aaff1e118c711d", 32),
-	 	&fixed_hex_bytes_unchecked!("0x6aA70f55E5D770898Dd45aa1b7078b8A80AAbD6C", 20)
+	 	&fixed_hex_bytes_unchecked!("0x6aA70f55E5D770898Dd45aa1b7078b8A80AAbD6C", 20).into()
 	));
 }

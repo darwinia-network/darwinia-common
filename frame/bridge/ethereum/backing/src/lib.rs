@@ -48,7 +48,6 @@ mod types {
 
 	pub type EcdsaSignature = [u8; 65];
 	pub type EcdsaMessage = [u8; 32];
-	pub type EcdsaAddress = [u8; 20];
 }
 
 // --- crates ---
@@ -123,10 +122,10 @@ decl_event! {
 		RedeemKton(AccountId, Balance, EthereumTransactionIndex),
 		/// Someone redeem a deposit. [account, deposit id, amount, transaction index]
 		RedeemDeposit(AccountId, DepositId, RingBalance, EthereumTransactionIndex),
-		/// Someone lock some *RING*. [account, ecdsa address, asset type, amount]
-		LockRing(AccountId, EcdsaAddress, u8, RingBalance),
-		/// Someone lock some *KTON*. [account, ecdsa address, asset type, amount]
-		LockKton(AccountId, EcdsaAddress, u8, KtonBalance),
+		/// Someone lock some *RING*. [account, ethereum account, asset address, amount]
+		LockRing(AccountId, EthereumAddress, EthereumAddress, RingBalance),
+		/// Someone lock some *KTON*. [account, ethereum account, asset address, amount]
+		LockKton(AccountId, EthereumAddress, EthereumAddress, KtonBalance),
 	}
 }
 
@@ -249,7 +248,7 @@ decl_module! {
 			origin,
 			#[compact] ring_value: RingBalance<T>,
 			#[compact] kton_value: KtonBalance<T>,
-			ecdsa_address: EcdsaAddress,
+			ethereum_account: EthereumAddress,
 		) {
 			let user = ensure_signed(origin)?;
 			let fee_account = Self::fee_account_id();
@@ -265,7 +264,12 @@ decl_module! {
 
 				T::RingCurrency::transfer(&user, &fee_account, ring_to_lock, KeepAlive)?;
 
-				let raw_event = RawEvent::LockRing(user.clone(), ecdsa_address.clone(), 0, ring_to_lock);
+				let raw_event = RawEvent::LockRing(
+					user.clone(),
+					ethereum_account.clone(),
+					RingTokenAddress::get(),
+					ring_to_lock
+				);
 				let module_event: <T as Trait>::Event = raw_event.clone().into();
 				let system_event: <T as frame_system::Trait>::Event = module_event.into();
 
@@ -279,7 +283,12 @@ decl_module! {
 
 				T::KtonCurrency::transfer(&user, &fee_account, kton_to_lock, KeepAlive)?;
 
-				let raw_event = RawEvent::LockKton(user, ecdsa_address, 1, kton_to_lock);
+				let raw_event = RawEvent::LockKton(
+					user,
+					ethereum_account,
+					KtonTokenAddress::get(),
+					kton_to_lock
+				);
 				let module_event: <T as Trait>::Event = raw_event.clone().into();
 				let system_event: <T as frame_system::Trait>::Event = module_event.into();
 
@@ -733,7 +742,7 @@ impl<T: Trait> Module<T> {
 impl<T: Trait> Sign<BlockNumber<T>> for Module<T> {
 	type Signature = EcdsaSignature;
 	type Message = EcdsaMessage;
-	type Signer = EcdsaAddress;
+	type Signer = EthereumAddress;
 
 	fn hash(raw_message: impl AsRef<[u8]>) -> Self::Message {
 		hashing::keccak_256(raw_message.as_ref())
@@ -764,7 +773,7 @@ impl<T: Trait> Sign<BlockNumber<T>> for Module<T> {
 		let message = hashing::keccak_256(&eth_signable_message(message));
 
 		if let Ok(public_key) = crypto::secp256k1_ecdsa_recover(signature, &message) {
-			hashing::keccak_256(&public_key)[12..] == *signer
+			hashing::keccak_256(&public_key)[12..] == signer.0
 		} else {
 			false
 		}

@@ -131,7 +131,6 @@
 		"hash": "Option<H256>"
 	},
 	"EthereumAddress": "H160",
-	"EcdsaAddress": "[u8; 20; EcdsaAddress]",
 	"EcdsaMessage": "[u8; 32; EcdsaMessage]",
 	"Bloom": "[u8; 256; Bloom]",
 	"H128": "[u8; 16; H128]",
@@ -177,7 +176,7 @@
 		"mmr_proof": "Vec<H256>"
 	},
 	"__[TODO.Generalize]__": "",
-	"RelayAuthoritySigner": "EcdsaAddress",
+	"RelayAuthoritySigner": "EthereumAddress",
 	"RelayAuthorityMessage": "EcdsaMessage",
 	"RelayAuthoritySignature": "EcdsaSignature",
 	"__[pallet.claims]__": {},

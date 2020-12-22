@@ -94,7 +94,7 @@ pub trait Trait: frame_system::Trait {}
 decl_storage! {
 	trait Store for Module<T: Trait> as DarwiniaHeaderMMR {
 		/// MMR struct of the previous blocks, from first(genesis) to parent hash.
-		pub MMRNodeList get(fn mmr_node_list): map hasher(identity) u64 => T::Hash;
+		pub MMRNodeList get(fn mmr_node_list): map hasher(identity) u64 => Option<T::Hash>;
 
 		/// The MMR size and length of the mmr node list
 		pub MMRCounter get(fn mmr_counter): u64;
@@ -200,7 +200,7 @@ impl<T> Default for ModuleMMRStore<T> {
 }
 impl<T: Trait> MMRStore<T::Hash> for ModuleMMRStore<T> {
 	fn get_elem(&self, pos: u64) -> Result<Option<T::Hash>> {
-		Ok(Some(<Module<T>>::mmr_node_list(pos)))
+		Ok(<Module<T>>::mmr_node_list(pos))
 	}
 
 	fn append(&mut self, pos: u64, elems: Vec<T::Hash>) -> Result<()> {
