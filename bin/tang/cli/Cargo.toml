@@ -44,6 +44,12 @@ dvm-rpc-runtime-api                 = { path = "../../../frame/dvm/rpc/runtime-a
 tang-node-primitives                     = { path = "../primitives" }
 tang-node-runtime                    = { path = "../runtime" }
 pallet-substrate-bridge = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+pallet-message-lane-rpc = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+bp-runtime              = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+bp-message-lane         = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+
+
+
 # substrate
 frame-system-rpc-runtime-api               = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 pallet-im-online                           = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }

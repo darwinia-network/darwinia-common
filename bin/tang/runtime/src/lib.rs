@@ -1147,7 +1147,6 @@ parameter_types! {
 	tang_node_primitives::MAX_MESSAGES_IN_DELIVERY_TRANSACTION;
 }
 
-use darwinia_balances::Instance0;
 impl pallet_message_lane::Trait for Runtime {
 	type Event = Event;
 	type MaxMessagesToPruneAtOnce = MaxMessagesToPruneAtOnce;

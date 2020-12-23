@@ -4887,6 +4887,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-message-lane-rpc"
+version = "0.1.0"
+source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#140d5d205ec2ad50801ad64c80cbf1ba01e9dd66"
+dependencies = [
+ "bp-message-lane",
+ "bp-runtime",
+ "derive_more",
+ "futures 0.3.8",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "sc-client-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-trie",
+]
+
+[[package]]
 name = "pallet-offences"
 version = "2.0.0"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library#7314a78d49d0dc3862c6ef7c8115cb1b3d0c0fd2"
@@ -8471,6 +8491,8 @@ name = "tang-node"
 version = "1.0.1"
 dependencies = [
  "array-bytes",
+ "bp-message-lane",
+ "bp-runtime",
  "darwinia-balances-rpc",
  "darwinia-balances-rpc-runtime-api",
  "darwinia-claims",
@@ -8491,6 +8513,7 @@ dependencies = [
  "jsonrpc-pubsub",
  "log",
  "pallet-im-online",
+ "pallet-message-lane-rpc",
  "pallet-substrate-bridge",
  "pallet-transaction-payment-rpc",
  "pallet-transaction-payment-rpc-runtime-api",
@@ -9235,7 +9258,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04f8ab788026715fa63b31960869617cba39117e520eb415b0139543e325ab59"
 dependencies = [
  "cfg-if 0.1.10",
- "rand 0.3.23",
+ "rand 0.7.3",
  "static_assertions 1.1.0",
 ]
 
