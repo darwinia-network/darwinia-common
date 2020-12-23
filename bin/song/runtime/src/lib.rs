@@ -1672,8 +1672,6 @@ impl_runtime_apis! {
 			BridgeTangMessageLane::inbound_unrewarded_relayers_state(lane)
 		}
 	}
-
-
 }
 
 pub struct TransactionConverter;

@@ -13,7 +13,7 @@ use sp_runtime::{
 
 use bp_message_lane::{LaneId, MessageNonce, UnrewardedRelayersState};
 use bp_runtime::Chain;
-use frame_support::{weights::Weight, RuntimeDebug};
+use frame_support::weights::Weight;
 use sp_std::prelude::*;
 
 /// An index to a block.

@@ -41,7 +41,7 @@ type ToTangMessagesDeliveryProof =
 	messages::source::FromBridgedChainMessagesDeliveryProof<WithTangMessageBridge>;
 
 /// Bridge-with-Song instance id.
-pub const Song_BRIDGE_INSTANCE: InstanceId = *b"song";
+pub const SONG_BRIDGE_INSTANCE: InstanceId = *b"song";
 
 /// Tang <-> Song message bridge.
 #[derive(RuntimeDebug, Clone, Copy)]
@@ -168,4 +168,27 @@ impl SourceHeaderChain<tang_node_primitives::Balance> for Tang {
 			max_messages,
 		)
 	}
+}
+
+/// Storage key of the Song -> Tang message in the runtime storage.
+pub fn message_key(lane: &LaneId, nonce: MessageNonce) -> StorageKey {
+	pallet_message_lane::storage_keys::message_key::<
+		Runtime,
+		<Song as ChainWithMessageLanes>::MessageLaneInstance,
+	>(lane, nonce)
+}
+
+/// Storage key of the Song -> Tang message lane state in the runtime storage.
+pub fn outbound_lane_data_key(lane: &LaneId) -> StorageKey {
+	pallet_message_lane::storage_keys::outbound_lane_data_key::<
+		<Song as ChainWithMessageLanes>::MessageLaneInstance,
+	>(lane)
+}
+
+/// Storage key of the Tang -> Song message lane state in the runtime storage.
+pub fn inbound_lane_data_key(lane: &LaneId) -> StorageKey {
+	pallet_message_lane::storage_keys::inbound_lane_data_key::<
+		Runtime,
+		<Song as ChainWithMessageLanes>::MessageLaneInstance,
+	>(lane)
 }

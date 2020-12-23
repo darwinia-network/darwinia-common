@@ -7,7 +7,7 @@
 use bp_message_lane::{LaneId, MessageNonce, UnrewardedRelayersState};
 use bp_runtime::Chain;
 use frame_support::weights::Weight;
-use sp_core::Hasher as HasherT;
+use sp_core::H256;
 use sp_runtime::{
 	generic,
 	traits::{BlakeTwo256, Convert, IdentifyAccount, Verify},
@@ -38,7 +38,7 @@ pub type AccountId = <AccountPublic as IdentifyAccount>::AccountId;
 pub type AccountIndex = u32;
 
 /// A hash of some data used by the relay chain.
-pub type Hash = <BlakeTwo256 as HasherT>::Out;
+pub type Hash = H256;
 
 /// Index of a transaction in the relay chain. 32-bit should be plenty.
 pub type Nonce = u32;
