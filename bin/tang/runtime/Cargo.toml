@@ -51,7 +51,6 @@ bp-message-lane 				         = { git = "https://github.com/AsceticBear/parity-br
 bridge-runtime-common 				     = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear", default-features = false }
 bp-runtime 				     			 = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear", default-features = false }
 # TODO: replace with darwinia balances
-pallet-balances                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 
 dvm-ethereum                        = { default-features = false, path = "../../../frame/dvm" }
@@ -128,11 +127,17 @@ std     = [
 	"darwinia-vesting/std",
 	# Sub bridge
 	# TODO: format
+	# start
 	"tang-node-primitives/std",
+	"song-node-primitives/std",
 	"pallet-bridge-call-dispatch/std",
 	"pallet-message-lane/std",
 	"pallet-shift-session-manager/std",
 	"pallet-substrate-bridge/std",
+	"bp-message-lane/std",
+	"bridge-runtime-common/std",
+	"bp-runtime/std",
+	# end
 	"dvm-ethereum/std",
 	"dvm-rpc-runtime-api/std",
 	"ethereum-primitives/std",

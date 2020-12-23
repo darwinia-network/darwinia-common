@@ -1246,10 +1246,9 @@ construct_runtime!(
 
 		// Sub bridge
 		BridgeSong: pallet_substrate_bridge::{Module, Call, Storage, Config<T>},
-		BridgeRialtoMessageLane: pallet_message_lane::{Module, Call, Event<T>},
+		BridgeSongMessageLane: pallet_message_lane::{Module, Call, Event<T>},
 		BridgeCallDispatch: pallet_bridge_call_dispatch::{Module, Event<T>},
 		ShiftSessionManager: pallet_shift_session_manager::{Module},
-
 	}
 );
 
@@ -1611,6 +1610,68 @@ impl_runtime_apis! {
 				Ethereum::current_receipts(),
 				Ethereum::current_transaction_statuses()
 			)
+		}
+	}
+
+	impl song_node_primitives::SongHeaderApi<Block> for Runtime {
+		fn best_blocks() -> Vec<(song_node_primitives::BlockNumber, song_node_primitives::Hash)> {
+			BridgeSong::best_headers()
+		}
+
+		fn finalized_block() -> (song_node_primitives::BlockNumber, song_node_primitives::Hash) {
+			let header = BridgeSong::best_finalized();
+			(header.number, header.hash())
+		}
+
+		fn incomplete_headers() -> Vec<(song_node_primitives::BlockNumber, song_node_primitives::Hash)> {
+			BridgeSong::require_justifications()
+		}
+
+		fn is_known_block(hash: song_node_primitives::Hash) -> bool {
+			BridgeSong::is_known_header(hash)
+		}
+
+		fn is_finalized_block(hash: song_node_primitives::Hash) -> bool {
+			BridgeSong::is_finalized_header(hash)
+		}
+	}
+
+	impl song_node_primitives::ToSongOutboundLaneApi<Block> for Runtime {
+		fn messages_dispatch_weight(
+			lane: bp_message_lane::LaneId,
+			begin: bp_message_lane::MessageNonce,
+			end: bp_message_lane::MessageNonce,
+		) -> Vec<(bp_message_lane::MessageNonce, Weight, u32)> {
+			(begin..=end).filter_map(|nonce| {
+				let encoded_payload = BridgeSongMessageLane::outbound_message_payload(lane, nonce)?;
+				let decoded_payload = song_message::ToSongMessagePayload::decode(
+					&mut &encoded_payload[..]
+				).ok()?;
+				Some((nonce, decoded_payload.weight, encoded_payload.len() as _))
+			})
+			.collect()
+		}
+
+		fn latest_received_nonce(lane: bp_message_lane::LaneId) -> bp_message_lane::MessageNonce {
+			BridgeSongMessageLane::outbound_latest_received_nonce(lane)
+		}
+
+		fn latest_generated_nonce(lane: bp_message_lane::LaneId) -> bp_message_lane::MessageNonce {
+			BridgeSongMessageLane::outbound_latest_generated_nonce(lane)
+		}
+	}
+
+	impl song_node_primitives::FromSongInboundLaneApi<Block> for Runtime {
+		fn latest_received_nonce(lane: bp_message_lane::LaneId) -> bp_message_lane::MessageNonce {
+			BridgeSongMessageLane::inbound_latest_received_nonce(lane)
+		}
+
+		fn latest_confirmed_nonce(lane: bp_message_lane::LaneId) -> bp_message_lane::MessageNonce {
+			BridgeSongMessageLane::inbound_latest_confirmed_nonce(lane)
+		}
+
+		fn unrewarded_relayers_state(lane: bp_message_lane::LaneId) -> bp_message_lane::UnrewardedRelayersState {
+			BridgeSongMessageLane::inbound_unrewarded_relayers_state(lane)
 		}
 	}
 }

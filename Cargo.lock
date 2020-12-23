@@ -7546,8 +7546,10 @@ dependencies = [
  "bp-message-lane",
  "bp-runtime",
  "frame-support",
+ "sp-api",
  "sp-core",
  "sp-runtime",
+ "sp-std 2.0.0",
 ]
 
 [[package]]
@@ -8581,7 +8583,6 @@ dependencies = [
  "pallet-authority-discovery",
  "pallet-authorship",
  "pallet-babe",
- "pallet-balances",
  "pallet-bridge-call-dispatch",
  "pallet-collective",
  "pallet-finality-tracker",
