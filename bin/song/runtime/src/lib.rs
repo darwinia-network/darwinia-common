@@ -1610,6 +1610,70 @@ impl_runtime_apis! {
 			)
 		}
 	}
+
+	impl tang_node_primitives::TangHeaderApi<Block> for Runtime {
+		fn best_blocks() -> Vec<(tang_node_primitives::BlockNumber, tang_node_primitives::Hash)> {
+			BridgeTang::best_headers()
+		}
+
+		fn finalized_block() -> (tang_node_primitives::BlockNumber, tang_node_primitives::Hash) {
+			let header = BridgeTang::best_finalized();
+			(header.number, header.hash())
+		}
+
+		fn incomplete_headers() -> Vec<(tang_node_primitives::BlockNumber, tang_node_primitives::Hash)> {
+			BridgeTang::require_justifications()
+		}
+
+		fn is_known_block(hash: tang_node_primitives::Hash) -> bool {
+			BridgeTang::is_known_header(hash)
+		}
+
+		fn is_finalized_block(hash: tang_node_primitives::Hash) -> bool {
+			BridgeTang::is_finalized_header(hash)
+		}
+	}
+
+	impl tang_node_primitives::ToTangOutboundLaneApi<Block> for Runtime {
+		fn messages_dispatch_weight(
+			lane: bp_message_lane::LaneId,
+			begin: bp_message_lane::MessageNonce,
+			end: bp_message_lane::MessageNonce,
+		) -> Vec<(bp_message_lane::MessageNonce, Weight, u32)> {
+			(begin..=end).filter_map(|nonce| {
+				let encoded_payload = BridgeTangMessageLane::outbound_message_payload(lane, nonce)?;
+				let decoded_payload = tang_message::ToTangMessagePayload::decode(
+					&mut &encoded_payload[..]
+				).ok()?;
+				Some((nonce, decoded_payload.weight, encoded_payload.len() as _))
+			})
+			.collect()
+		}
+
+		fn latest_received_nonce(lane: bp_message_lane::LaneId) -> bp_message_lane::MessageNonce {
+			BridgeTangMessageLane::outbound_latest_received_nonce(lane)
+		}
+
+		fn latest_generated_nonce(lane: bp_message_lane::LaneId) -> bp_message_lane::MessageNonce {
+			BridgeTangMessageLane::outbound_latest_generated_nonce(lane)
+		}
+	}
+
+	impl tang_node_primitives::FromTangInboundLaneApi<Block> for Runtime {
+		fn latest_received_nonce(lane: bp_message_lane::LaneId) -> bp_message_lane::MessageNonce {
+			BridgeTangMessageLane::inbound_latest_received_nonce(lane)
+		}
+
+		fn latest_confirmed_nonce(lane: bp_message_lane::LaneId) -> bp_message_lane::MessageNonce {
+			BridgeTangMessageLane::inbound_latest_confirmed_nonce(lane)
+		}
+
+		fn unrewarded_relayers_state(lane: bp_message_lane::LaneId) -> bp_message_lane::UnrewardedRelayersState {
+			BridgeTangMessageLane::inbound_unrewarded_relayers_state(lane)
+		}
+	}
+
+
 }
 
 pub struct TransactionConverter;
