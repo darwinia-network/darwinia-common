@@ -239,6 +239,7 @@ where
 	let shared_epoch_changes = babe_link.epoch_changes().clone();
 	let subscription_task_executor =
 		sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
+
 	let rpc_extensions_builder = {
 		let client = client.clone();
 		let keystore = keystore.clone();
