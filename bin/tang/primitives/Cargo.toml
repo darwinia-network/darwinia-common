@@ -12,6 +12,7 @@ version     = "1.0.1"
 # substrate primitives
 sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 bp-runtime          = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
 bp-message-lane 	= { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear", default-features = false }

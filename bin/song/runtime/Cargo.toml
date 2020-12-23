@@ -38,8 +38,6 @@ darwinia-support                    = { default-features = false, path = "../../
 darwinia-treasury                   = { default-features = false, path = "../../../frame/treasury" }
 darwinia-tron-backing               = { default-features = false, path = "../../../frame/bridge/tron/backing" }
 darwinia-vesting                    = { default-features = false, path = "../../../frame/vesting" }
-# TODO: FORMAT
-song-node-primitives                     = { default-features = false, path = "../primitives" }
 dvm-ethereum                        = { default-features = false, path = "../../../frame/dvm" }
 dvm-rpc-runtime-api                 = { default-features = false, path = "../../../frame/dvm/rpc/runtime-api" }
 ethereum-primitives                 = { default-features = false, path = "../../../primitives/ethereum-primitives" }
@@ -81,6 +79,19 @@ sp-std                                     = { default-features = false, git = "
 sp-transaction-pool                        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-version                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
+# Sub Bridge
+# TODO: format
+song-node-primitives                     = { default-features = false, path = "../primitives" }
+tang-node-primitives                     = { default-features = false, path = "../../tang/primitives" }
+pallet-bridge-call-dispatch 		     = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear", default-features = false }
+pallet-message-lane 					 = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear", default-features = false }
+pallet-shift-session-manager             = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear", default-features = false }
+pallet-substrate-bridge 				 = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear", default-features = false }
+bp-message-lane 				         = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear", default-features = false }
+bridge-runtime-common 				     = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear", default-features = false }
+bp-runtime 				     			 = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear", default-features = false }
+
+
 [build-dependencies]
 # substrate
 wasm-builder-runner = { package = "substrate-wasm-builder-runner", git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
@@ -113,8 +124,19 @@ std     = [
 	"darwinia-tron-backing/std",
 	"darwinia-vesting/std",
 	# "drml-primitives/std",
-	# TODO: FORMAT
+	# Sub bridge
+	# TODO: format
+	# start
+	"tang-node-primitives/std",
 	"song-node-primitives/std",
+	"pallet-bridge-call-dispatch/std",
+	"pallet-message-lane/std",
+	"pallet-shift-session-manager/std",
+	"pallet-substrate-bridge/std",
+	"bp-message-lane/std",
+	"bridge-runtime-common/std",
+	"bp-runtime/std",
+	# end
 	"dvm-ethereum/std",
 	"dvm-rpc-runtime-api/std",
 	"ethereum-primitives/std",

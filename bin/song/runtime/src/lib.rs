@@ -205,6 +205,7 @@ pub mod wasm {
 	}
 }
 
+pub mod tang_message;
 /// Weights for pallets used in the runtime.
 mod weights;
 
@@ -253,8 +254,8 @@ use sp_runtime::{
 		SaturatedConversion, Saturating,
 	},
 	transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, FixedPointNumber, ModuleId, OpaqueExtrinsic, Perbill, Percent, Permill,
-	Perquintill, RuntimeDebug,
+	ApplyExtrinsicResult, FixedPointNumber, ModuleId, MultiSignature, MultiSigner, OpaqueExtrinsic,
+	Perbill, Percent, Permill, Perquintill, RuntimeDebug,
 };
 use sp_staking::SessionIndex;
 use sp_std::prelude::*;
@@ -1119,6 +1120,61 @@ impl dvm_ethereum::Trait for Runtime {
 	type RingCurrency = Balances;
 }
 
+impl pallet_substrate_bridge::Trait for Runtime {
+	type BridgedChain = tang_node_primitives::Tang;
+}
+
+impl pallet_bridge_call_dispatch::Trait for Runtime {
+	type Event = Event;
+	type MessageId = (bp_message_lane::LaneId, bp_message_lane::MessageNonce);
+	type Call = Call;
+	type SourceChainAccountId = tang_node_primitives::AccountId;
+	type TargetChainAccountPublic = MultiSigner;
+	type TargetChainSignature = MultiSignature;
+	type AccountIdConverter = song_node_primitives::AccountIdConverter;
+}
+
+// TODO: Can we remove this?
+impl pallet_shift_session_manager::Trait for Runtime {}
+
+parameter_types! {
+	pub const MaxMessagesToPruneAtOnce: bp_message_lane::MessageNonce = 8;
+	pub const MaxUnrewardedRelayerEntriesAtInboundLane: bp_message_lane::MessageNonce =
+		song_node_primitives::MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE;
+	pub const MaxUnconfirmedMessagesAtInboundLane: bp_message_lane::MessageNonce =
+		song_node_primitives::MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE;
+	pub const MaxMessagesInDeliveryTransaction: bp_message_lane::MessageNonce =
+		song_node_primitives::MAX_MESSAGES_IN_DELIVERY_TRANSACTION;
+}
+
+impl pallet_message_lane::Trait for Runtime {
+	type Event = Event;
+	type MaxMessagesToPruneAtOnce = MaxMessagesToPruneAtOnce;
+	type MaxUnrewardedRelayerEntriesAtInboundLane = MaxUnrewardedRelayerEntriesAtInboundLane;
+	type MaxUnconfirmedMessagesAtInboundLane = MaxUnconfirmedMessagesAtInboundLane;
+	type MaxMessagesInDeliveryTransaction = MaxMessagesInDeliveryTransaction;
+
+	type OutboundPayload = crate::tang_message::ToTangMessagePayload;
+	type OutboundMessageFee = Balance;
+
+	type InboundPayload = crate::tang_message::FromTangMessagePayload;
+	type InboundMessageFee = tang_node_primitives::Balance;
+	type InboundRelayer = tang_node_primitives::AccountId;
+
+	type AccountIdConverter = song_node_primitives::AccountIdConverter;
+
+	type TargetHeaderChain = crate::tang_message::Tang;
+	type LaneMessageVerifier = crate::tang_message::ToTangMessageVerifier;
+	type MessageDeliveryAndDispatchPayment =
+		pallet_message_lane::instant_payments::InstantCurrencyPayments<
+			AccountId,
+			darwinia_balances::Module<Runtime, RingInstance>,
+		>;
+
+	type SourceHeaderChain = crate::tang_message::Tang;
+	type MessageDispatch = crate::tang_message::FromTangMessageDispatch;
+}
+
 construct_runtime!(
 	pub enum Runtime
 	where
@@ -1186,6 +1242,11 @@ construct_runtime!(
 		Ethereum: dvm_ethereum::{Module, Call, Storage, Event, Config, ValidateUnsigned},
 
 		EthereumRelayAuthorities: darwinia_relay_authorities::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
+
+		BridgeTang: pallet_substrate_bridge::{Module, Call, Storage, Config<T>},
+		BridgeCallDispatch: pallet_bridge_call_dispatch::{Module, Event<T>},
+		BridgeTangMessageLane: pallet_message_lane::{Module, Call, Event<T>},
+		ShiftSessionManager: pallet_shift_session_manager::{Module},
 	}
 );
 

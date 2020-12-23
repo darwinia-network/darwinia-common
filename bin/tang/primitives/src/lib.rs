@@ -12,6 +12,8 @@ use sp_runtime::{
 };
 
 use bp_message_lane::MessageNonce;
+use bp_runtime::Chain;
+use frame_support::{weights::Weight, RuntimeDebug};
 
 /// An index to a block.
 /// 32-bits will allow for 136 years of blocks assuming 1 block per second.
@@ -62,6 +64,20 @@ pub type OpaqueBlock = generic::Block<Header, OpaqueExtrinsic>;
 /// Public key of the chain account that may be used to verify signatures.
 pub type AccountSigner = MultiSigner;
 
+/// The type of an object that can produce hashes on Song.
+pub type Hasher = BlakeTwo256;
+
+/// Tang chain
+pub struct Tang;
+
+impl Chain for Tang {
+	type BlockNumber = BlockNumber;
+	type Hash = Hash;
+	// TODO: why this hasher
+	type Hasher = Hasher;
+	type Header = Header;
+}
+
 /// Convert a 256-bit hash into an AccountId.
 pub struct AccountIdConverter;
 
@@ -78,3 +94,16 @@ pub const MAX_MESSAGES_IN_DELIVERY_TRANSACTION: MessageNonce = 1024;
 pub const MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE: MessageNonce = 1024;
 /// Maximal number of unconfirmed messages at inbound lane.
 pub const MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE: MessageNonce = 1024;
+
+/// Maximal weight of single Millau block.
+pub const MAXIMUM_BLOCK_WEIGHT: Weight = 10_000_000_000;
+/// Portion of block reserved for regular transactions.
+pub const AVAILABLE_BLOCK_RATIO: u32 = 75;
+/// Maximal weight of single Millau extrinsic (65% of maximum block weight = 75% for regular
+/// transactions minus 10% for initialization).
+pub const MAXIMUM_EXTRINSIC_WEIGHT: Weight =
+	MAXIMUM_BLOCK_WEIGHT / 100 * (AVAILABLE_BLOCK_RATIO as Weight - 10);
+/// Maximal size of Millau block.
+pub const MAXIMUM_BLOCK_SIZE: u32 = 2 * 1024 * 1024;
+/// Maximal size of single normal Millau extrinsic (75% of maximal block size).
+pub const MAXIMUM_EXTRINSIC_SIZE: u32 = MAXIMUM_BLOCK_SIZE / 100 * AVAILABLE_BLOCK_RATIO;

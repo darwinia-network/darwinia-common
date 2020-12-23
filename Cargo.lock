@@ -7577,6 +7577,9 @@ name = "song-node-runtime"
 version = "1.0.1"
 dependencies = [
  "array-bytes",
+ "bp-message-lane",
+ "bp-runtime",
+ "bridge-runtime-common",
  "darwinia-balances",
  "darwinia-balances-rpc-runtime-api",
  "darwinia-claims",
@@ -7608,16 +7611,20 @@ dependencies = [
  "pallet-authority-discovery",
  "pallet-authorship",
  "pallet-babe",
+ "pallet-bridge-call-dispatch",
  "pallet-collective",
  "pallet-finality-tracker",
  "pallet-grandpa",
  "pallet-im-online",
  "pallet-membership",
+ "pallet-message-lane",
  "pallet-offences",
  "pallet-proxy",
  "pallet-randomness-collective-flip",
  "pallet-scheduler",
  "pallet-session",
+ "pallet-shift-session-manager",
+ "pallet-substrate-bridge",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
@@ -7643,6 +7650,7 @@ dependencies = [
  "sp-version",
  "static_assertions 1.1.0",
  "substrate-wasm-builder-runner",
+ "tang-node-primitives",
 ]
 
 [[package]]
@@ -8563,6 +8571,7 @@ version = "1.0.1"
 dependencies = [
  "bp-message-lane",
  "bp-runtime",
+ "frame-support",
  "sp-core",
  "sp-runtime",
 ]

@@ -10,7 +10,7 @@ use frame_support::weights::Weight;
 use sp_core::Hasher as HasherT;
 use sp_runtime::{
 	generic,
-	traits::{BlakeTwo256, IdentifyAccount, Verify},
+	traits::{BlakeTwo256, Convert, IdentifyAccount, Verify},
 	MultiSignature, MultiSigner, OpaqueExtrinsic,
 };
 use sp_std::prelude::*;
@@ -90,6 +90,23 @@ pub const MAXIMUM_EXTRINSIC_WEIGHT: Weight =
 pub const MAXIMUM_BLOCK_SIZE: u32 = 5 * 1024 * 1024;
 /// Maximal size of single normal Song extrinsic (75% of maximal block size).
 pub const MAXIMUM_EXTRINSIC_SIZE: u32 = MAXIMUM_BLOCK_SIZE / 100 * AVAILABLE_BLOCK_RATIO;
+
+// TODO: may need to be updated after https://github.com/paritytech/parity-bridges-common/issues/78
+/// Maximal number of messages in single delivery transaction.
+pub const MAX_MESSAGES_IN_DELIVERY_TRANSACTION: MessageNonce = 128;
+/// Maximal number of unrewarded relayer entries at inbound lane.
+pub const MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE: MessageNonce = 128;
+/// Maximal number of unconfirmed messages at inbound lane.
+pub const MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE: MessageNonce = 128;
+
+/// Convert a 256-bit hash into an AccountId.
+pub struct AccountIdConverter;
+
+impl Convert<sp_core::H256, AccountId> for AccountIdConverter {
+	fn convert(hash: sp_core::H256) -> AccountId {
+		hash.to_fixed_bytes().into()
+	}
+}
 
 sp_api::decl_runtime_apis! {
 	/// API for querying information about Song headers from the Bridge Pallet instance.
