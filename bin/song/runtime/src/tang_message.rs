@@ -63,7 +63,7 @@ impl MessageBridge for WithTangMessageBridge {
 		// we don't want to relay too large messages + keep reserve for future upgrades
 		let upper_limit = tang_node_primitives::MAXIMUM_EXTRINSIC_WEIGHT / 2;
 
-		// given Millau chain parameters (`TransactionByteFee`, `WeightToFee`, `FeeMultiplierUpdate`),
+		// given Tang chain parameters (`TransactionByteFee`, `WeightToFee`, `FeeMultiplierUpdate`),
 		// the minimal weight of the message may be computed as message.length()
 		let lower_limit = Weight::try_from(message_payload.len()).unwrap_or(Weight::MAX);
 

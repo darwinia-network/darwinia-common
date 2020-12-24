@@ -306,9 +306,9 @@ where
 mod tests {
 	use super::*;
 	use crate::headers_pipeline::sync_params;
-	use crate::millau_headers_to_rialto::MillauHeadersToRialto;
+	use crate::tang_headers_to_song::TangHeadersToSong;
 
-	fn parent_hash(index: u8) -> bp_millau::Hash {
+	fn parent_hash(index: u8) -> tang_node_primitives::Hash {
 		if index == 1 {
 			Default::default()
 		} else {
@@ -316,12 +316,12 @@ mod tests {
 		}
 	}
 
-	fn header_hash(index: u8) -> bp_millau::Hash {
+	fn header_hash(index: u8) -> tang_node_primitives::Hash {
 		header(index).hash()
 	}
 
-	fn header(index: u8) -> bp_millau::Header {
-		bp_millau::Header::new(
+	fn header(index: u8) -> tang_node_primitives::Header {
+		tang_node_primitives::Header::new(
 			index as _,
 			Default::default(),
 			Default::default(),
@@ -340,7 +340,7 @@ mod tests {
 		.into_iter()
 		.collect();
 
-		remove_obsolete::<MillauHeadersToRialto>(&mut queue, HeaderId(2, header_hash(2)));
+		remove_obsolete::<TangHeadersToSong>(&mut queue, HeaderId(2, header_hash(2)));
 
 		assert_eq!(
 			queue,
@@ -359,7 +359,7 @@ mod tests {
 		]
 		.into_iter()
 		.collect();
-		let mut sync = HeadersSync::<MillauHeadersToRialto>::new(sync_params());
+		let mut sync = HeadersSync::<TangHeadersToSong>::new(sync_params());
 		sync.headers_mut().header_response(header(1).into());
 		sync.headers_mut().header_response(header(2).into());
 		sync.headers_mut().header_response(header(3).into());
@@ -380,7 +380,7 @@ mod tests {
 		]
 		.into_iter()
 		.collect();
-		let mut sync = HeadersSync::<MillauHeadersToRialto>::new(sync_params());
+		let mut sync = HeadersSync::<TangHeadersToSong>::new(sync_params());
 		sync.headers_mut().header_response(header(1).into());
 		sync.headers_mut().header_response(header(2).into());
 		sync.headers_mut().header_response(header(3).into());
