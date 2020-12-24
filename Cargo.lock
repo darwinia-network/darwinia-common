@@ -332,12 +332,24 @@ checksum = "e91831deabf0d6d7ec49552e489aed63b7456a7a3c46cff62adad428110b0af0"
 
 [[package]]
 name = "async-tls"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6ce6977f57fa68da77ffe5542950d47e9c23d65f5bc7cb0a9f8700996913eec7"
+dependencies = [
+ "futures 0.3.8",
+ "rustls 0.16.0",
+ "webpki",
+ "webpki-roots 0.17.0",
+]
+
+[[package]]
+name = "async-tls"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "df097e3f506bec0e1a24f06bb3c962c228f36671de841ff579cb99f371772634"
 dependencies = [
  "futures 0.3.8",
- "rustls",
+ "rustls 0.18.1",
  "webpki",
  "webpki-roots 0.19.0",
 ]
@@ -389,6 +401,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cdb031dd78e28731d87d56cc8ffef4a8f36ca26c38fe2de700543e627f8a464a"
 
 [[package]]
+name = "backoff"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "721c249ab59cbc483ad4294c9ee2671835c1e43e9ffc277e6b4ecfef733cfdc5"
+dependencies = [
+ "instant",
+ "rand 0.7.3",
+]
+
+[[package]]
 name = "backtrace"
 version = "0.3.55"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -403,10 +425,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "base-x"
+version = "0.2.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a4521f3e3d031370679b3b140beb36dfe4801b09ac77e30c61941f97df3ef28b"
+
+[[package]]
 name = "base58"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5024ee8015f02155eee35c711107ddd9a9bf3cb689cf2a9089c97e79b6e1ae83"
+
+[[package]]
+name = "base64"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b25d992356d2eb0ed82172f5248873db5560c4721f564b13cb5193bda5e668e"
+dependencies = [
+ "byteorder 1.3.4",
+]
 
 [[package]]
 name = "base64"
@@ -807,7 +844,7 @@ dependencies = [
  "libc",
  "num-integer",
  "num-traits",
- "time",
+ "time 0.1.44",
  "winapi 0.3.9",
 ]
 
@@ -1761,6 +1798,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "discard"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "212d0f5754cb6769937f4501cc0e67f4f4483c8d2c3e1e922ee9edbe4ab4c7c0"
+
+[[package]]
 name = "dns-parser"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1769,6 +1812,12 @@ dependencies = [
  "byteorder 1.3.4",
  "quick-error",
 ]
+
+[[package]]
+name = "doc-comment"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fea41bba32d969b513997752735605054bc0dfa92b4c56bf1189f2e174be7a10"
 
 [[package]]
 name = "dvm-consensus"
@@ -2446,7 +2495,7 @@ dependencies = [
  "frame-system",
  "linregress",
  "parity-scale-codec",
- "paste",
+ "paste 0.1.18",
  "sp-api",
  "sp-io",
  "sp-runtime",
@@ -2494,7 +2543,7 @@ dependencies = [
  "log",
  "once_cell 1.5.2",
  "parity-scale-codec",
- "paste",
+ "paste 0.1.18",
  "serde",
  "smallvec 1.6.0",
  "sp-arithmetic",
@@ -3003,6 +3052,16 @@ dependencies = [
 
 [[package]]
 name = "hashbrown"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "96282e96bfcd3da0d3aa9938bedf1e50df3269b6db08b4876d2da0bb1a0841cf"
+dependencies = [
+ "ahash 0.3.8",
+ "autocfg 1.0.1",
+]
+
+[[package]]
+name = "hashbrown"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e91b62f79061a0bc2e046024cb7ba44b08419ed238ecbd9adbd787434b9e8c25"
@@ -3018,6 +3077,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d7afe4a420e3fe79967a00898cc1f4db7c8a49a9333a29f8a4bd76a253d5cd04"
 dependencies = [
  "ahash 0.4.7",
+]
+
+[[package]]
+name = "headers-relay"
+version = "0.1.0"
+source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#140d5d205ec2ad50801ad64c80cbf1ba01e9dd66"
+dependencies = [
+ "async-std",
+ "async-trait",
+ "backoff",
+ "futures 0.3.8",
+ "linked-hash-map",
+ "log",
+ "num-traits",
+ "parking_lot 0.11.1",
+ "relay-utils",
 ]
 
 [[package]]
@@ -3175,7 +3250,7 @@ dependencies = [
  "log",
  "net2",
  "rustc_version",
- "time",
+ "time 0.1.44",
  "tokio 0.1.22",
  "tokio-buf",
  "tokio-executor 0.1.10",
@@ -3222,7 +3297,7 @@ dependencies = [
  "futures-util",
  "hyper 0.13.9",
  "log",
- "rustls",
+ "rustls 0.18.1",
  "rustls-native-certs",
  "tokio 0.2.24",
  "tokio-rustls",
@@ -3555,6 +3630,46 @@ dependencies = [
  "parity-ws",
  "parking_lot 0.10.2",
  "slab",
+]
+
+[[package]]
+name = "jsonrpsee"
+version = "1.0.0"
+source = "git+https://github.com/svyatonik/jsonrpsee.git?branch=shared-client-in-rpc-api#1597b09c4a9140cd0f1320948c7a8fb237af58fb"
+dependencies = [
+ "async-std",
+ "async-tls 0.6.0",
+ "bs58 0.3.1",
+ "bytes 0.5.6",
+ "fnv",
+ "futures 0.3.8",
+ "futures-timer 3.0.2",
+ "globset",
+ "hashbrown 0.7.2",
+ "jsonrpsee-proc-macros",
+ "lazy_static",
+ "log",
+ "parking_lot 0.10.2",
+ "pin-project 0.4.27",
+ "rand 0.7.3",
+ "serde",
+ "serde_json",
+ "smallvec 1.5.1",
+ "soketto 0.3.2",
+ "thiserror",
+ "url 2.2.0",
+ "webpki",
+]
+
+[[package]]
+name = "jsonrpsee-proc-macros"
+version = "1.0.0"
+source = "git+https://github.com/svyatonik/jsonrpsee.git?branch=shared-client-in-rpc-api#1597b09c4a9140cd0f1320948c7a8fb237af58fb"
+dependencies = [
+ "Inflector",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -4063,15 +4178,15 @@ version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d650534ebd99f48f6fa292ed5db10d30df2444943afde4407ceeddab8e513fca"
 dependencies = [
- "async-tls",
+ "async-tls 0.8.0",
  "either",
  "futures 0.3.8",
  "libp2p-core",
  "log",
  "quicksink",
- "rustls",
+ "rustls 0.18.1",
  "rw-stream-sink",
- "soketto",
+ "soketto 0.4.2",
  "url 2.2.0",
  "webpki",
  "webpki-roots 0.18.0",
@@ -4333,6 +4448,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "messages-relay"
+version = "0.1.0"
+source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#140d5d205ec2ad50801ad64c80cbf1ba01e9dd66"
+dependencies = [
+ "async-std",
+ "async-trait",
+ "bp-message-lane",
+ "futures 0.3.8",
+ "hex",
+ "log",
+ "parking_lot 0.11.1",
+ "relay-utils",
+]
+
+[[package]]
 name = "minicbor"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4559,6 +4689,15 @@ checksum = "ffb4262d26ed83a1c0a33a38fe2bb15797329c85770da05e6b828ddb782627af"
 dependencies = [
  "memchr",
  "version_check",
+]
+
+[[package]]
+name = "ntapi"
+version = "0.3.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3f6bb902e437b6d86e03cce10a7e2af662292c5dfef23b65899ea3ac9354ad44"
+dependencies = [
+ "winapi 0.3.9",
 ]
 
 [[package]]
@@ -5342,6 +5481,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "paste"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c5d65c4d95931acda4498f675e332fcbdc9a06705cd07086c510e9b6009cd1c1"
+
+[[package]]
 name = "paste-impl"
 version = "0.1.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6037,6 +6182,88 @@ dependencies = [
 ]
 
 [[package]]
+name = "relay-song-client"
+version = "0.1.0"
+dependencies = [
+ "darwinia-ethereum-relay",
+ "frame-support",
+ "frame-system",
+ "headers-relay",
+ "pallet-transaction-payment",
+ "parity-scale-codec",
+ "relay-substrate-client",
+ "relay-utils",
+ "song-node-primitives",
+ "song-node-runtime",
+ "sp-core",
+ "sp-keyring",
+ "sp-runtime",
+]
+
+[[package]]
+name = "relay-substrate-client"
+version = "0.1.0"
+source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#140d5d205ec2ad50801ad64c80cbf1ba01e9dd66"
+dependencies = [
+ "async-std",
+ "async-trait",
+ "bp-message-lane",
+ "bp-runtime",
+ "frame-support",
+ "frame-system",
+ "futures 0.3.8",
+ "headers-relay",
+ "jsonrpsee",
+ "log",
+ "num-traits",
+ "pallet-balances",
+ "parity-scale-codec",
+ "rand 0.7.3",
+ "relay-utils",
+ "sp-core",
+ "sp-runtime",
+ "sp-std 2.0.0",
+ "sp-trie",
+ "sp-version",
+]
+
+[[package]]
+name = "relay-tang-client"
+version = "0.1.0"
+dependencies = [
+ "darwinia-ethereum-relay",
+ "frame-support",
+ "frame-system",
+ "headers-relay",
+ "pallet-transaction-payment",
+ "parity-scale-codec",
+ "relay-substrate-client",
+ "relay-utils",
+ "sp-core",
+ "sp-keyring",
+ "sp-runtime",
+ "tang-node-primitives",
+ "tang-node-runtime",
+]
+
+[[package]]
+name = "relay-utils"
+version = "0.1.0"
+source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#140d5d205ec2ad50801ad64c80cbf1ba01e9dd66"
+dependencies = [
+ "ansi_term 0.12.1",
+ "async-std",
+ "backoff",
+ "env_logger 0.7.1",
+ "futures 0.3.8",
+ "log",
+ "num-traits",
+ "substrate-prometheus-endpoint",
+ "sysinfo",
+ "time 0.2.23",
+]
+
+[[package]]
 name = "remove_dir_all"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6176,6 +6403,19 @@ dependencies = [
 
 [[package]]
 name = "rustls"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b25a18b1bf7387f0145e7f8324e700805aade3842dd3db2e74e4cdeb4677c09e"
+dependencies = [
+ "base64 0.10.1",
+ "log",
+ "ring",
+ "sct",
+ "webpki",
+]
+
+[[package]]
+name = "rustls"
 version = "0.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5d1126dcf58e93cee7d098dbda643b5f92ed724f1f6a63007c1116eed6700c81"
@@ -6194,7 +6434,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "629d439a7672da82dd955498445e496ee2096fe2117b9f796558a43fdb9e59b8"
 dependencies = [
  "openssl-probe",
- "rustls",
+ "rustls 0.18.1",
  "schannel",
  "security-framework",
 ]
@@ -6354,7 +6594,7 @@ dependencies = [
  "sp-version",
  "structopt",
  "substrate-prometheus-endpoint",
- "time",
+ "time 0.1.44",
  "tokio 0.2.24",
  "tracing",
  "tracing-log",
@@ -7293,6 +7533,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "sha1"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2579985fda508104f7587689507983eadd6a6e84dd35d6d115361f530916fa0d"
+
+[[package]]
 name = "sha2"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7474,6 +7720,25 @@ dependencies = [
  "cfg-if 1.0.0",
  "libc",
  "winapi 0.3.9",
+]
+
+[[package]]
+name = "soketto"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1c9dab3f95c9ebdf3a88268c19af668f637a3c5039c2c56ff2d40b1b2d64a25b"
+dependencies = [
+ "base64 0.11.0",
+ "bytes 0.5.6",
+ "futures 0.3.8",
+ "http 0.2.1",
+ "httparse",
+ "log",
+ "rand 0.7.3",
+ "sha1",
+ "smallvec 1.5.1",
+ "static_assertions 1.1.0",
+ "thiserror",
 ]
 
 [[package]]
@@ -8052,7 +8317,7 @@ dependencies = [
  "log",
  "parity-scale-codec",
  "parity-util-mem",
- "paste",
+ "paste 0.1.18",
  "rand 0.7.3",
  "serde",
  "sp-application-crypto",
@@ -8271,6 +8536,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 
 [[package]]
+name = "standback"
+version = "0.2.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cf906c8b8fc3f6ecd1046e01da1d8ddec83e48c8b08b84dcc02b585a6bedf5a8"
+dependencies = [
+ "version_check",
+]
+
+[[package]]
 name = "static_assertions"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8290,6 +8564,55 @@ checksum = "10102ac8d55e35db2b3fafc26f81ba8647da2e15879ab686a67e6d19af2685e8"
 dependencies = [
  "rand 0.5.6",
 ]
+
+[[package]]
+name = "stdweb"
+version = "0.4.20"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d022496b16281348b52d0e30ae99e01a73d737b2f45d38fed4edf79f9325a1d5"
+dependencies = [
+ "discard",
+ "rustc_version",
+ "stdweb-derive",
+ "stdweb-internal-macros",
+ "stdweb-internal-runtime",
+ "wasm-bindgen",
+]
+
+[[package]]
+name = "stdweb-derive"
+version = "0.5.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c87a60a40fccc84bef0652345bbbbbe20a605bf5d0ce81719fc476f5c03b50ef"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "serde",
+ "serde_derive",
+ "syn",
+]
+
+[[package]]
+name = "stdweb-internal-macros"
+version = "0.2.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "58fa5ff6ad0d98d1ffa8cb115892b6e69d67799f6763e162a1c9db421dc22e11"
+dependencies = [
+ "base-x",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "sha1",
+ "syn",
+]
+
+[[package]]
+name = "stdweb-internal-runtime"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "213701ba3370744dcd1a12960caa4843b3d68b4d1c0a5d575e0d65b2ee9d16c0"
 
 [[package]]
 name = "stream-cipher"
@@ -8429,6 +8752,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "substrate-relay"
+version = "0.1.0"
+dependencies = [
+ "async-std",
+ "async-trait",
+ "bp-message-lane",
+ "bp-runtime",
+ "frame-support",
+ "futures 0.3.8",
+ "headers-relay",
+ "hex",
+ "log",
+ "messages-relay",
+ "num-traits",
+ "pallet-bridge-call-dispatch",
+ "pallet-substrate-bridge",
+ "parity-scale-codec",
+ "paste 1.0.4",
+ "relay-song-client",
+ "relay-substrate-client",
+ "relay-tang-client",
+ "relay-utils",
+ "song-node-primitives",
+ "song-node-runtime",
+ "sp-core",
+ "sp-finality-grandpa",
+ "sp-runtime",
+ "sp-trie",
+ "structopt",
+ "tang-node-primitives",
+ "tang-node-runtime",
+]
+
+[[package]]
 name = "substrate-test-utils"
 version = "2.0.0"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library#7314a78d49d0dc3862c6ef7c8115cb1b3d0c0fd2"
@@ -8486,6 +8843,21 @@ dependencies = [
  "quote",
  "syn",
  "unicode-xid",
+]
+
+[[package]]
+name = "sysinfo"
+version = "0.15.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "67330cbee3b2a819e3365a773f05e884a136603687f812bf24db5b6c3d76b696"
+dependencies = [
+ "cfg-if 0.1.10",
+ "doc-comment",
+ "libc",
+ "ntapi",
+ "once_cell 1.5.2",
+ "rayon",
+ "winapi 0.3.9",
 ]
 
 [[package]]
@@ -8747,6 +9119,44 @@ dependencies = [
 ]
 
 [[package]]
+name = "time"
+version = "0.2.23"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bcdaeea317915d59b2b4cd3b5efcd156c309108664277793f5351700c02ce98b"
+dependencies = [
+ "const_fn",
+ "libc",
+ "standback",
+ "stdweb",
+ "time-macros",
+ "version_check",
+ "winapi 0.3.9",
+]
+
+[[package]]
+name = "time-macros"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "957e9c6e26f12cb6d0dd7fc776bb67a706312e7299aed74c8dd5b17ebb27e2f1"
+dependencies = [
+ "proc-macro-hack",
+ "time-macros-impl",
+]
+
+[[package]]
+name = "time-macros-impl"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e5c3be1edfad6027c69f5491cf4cb310d1a71ecd6af742788c6ff8bced86b8fa"
+dependencies = [
+ "proc-macro-hack",
+ "proc-macro2",
+ "quote",
+ "standback",
+ "syn",
+]
+
+[[package]]
 name = "tiny-bip39"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8989,7 +9399,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e12831b255bcfa39dc0436b01e19fea231a37db570686c06ee72c423479f889a"
 dependencies = [
  "futures-core",
- "rustls",
+ "rustls 0.18.1",
  "tokio 0.2.24",
  "webpki",
 ]
@@ -9817,6 +10227,15 @@ checksum = "b8e38c0608262c46d4a56202ebabdeb094cef7e560ca7a226c6bf055188aa4ea"
 dependencies = [
  "ring",
  "untrusted",
+]
+
+[[package]]
+name = "webpki-roots"
+version = "0.17.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a262ae37dd9d60f60dd473d1158f9fbebf110ba7b6a5051c8160460f6043718b"
+dependencies = [
+ "webpki",
 ]
 
 [[package]]

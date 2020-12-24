@@ -85,7 +85,9 @@ impl TransactionSignScheme for Tang {
 					pallet_transaction_payment::ChargeTransactionPayment::<
 						tang_node_runtime::Runtime,
 					>::from(0),
-					darwinia_ethereum_relay::CheckEthereumRelayHeaderParcel::<tang_node_runtime::Runtime>::new(),
+					darwinia_ethereum_relay::CheckEthereumRelayHeaderParcel::<
+						tang_node_runtime::Runtime,
+					>::new(),
 				),
 				(
 					tang_node_runtime::VERSION.spec_version,

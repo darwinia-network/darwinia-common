@@ -4,8 +4,6 @@ version = "0.1.0"
 edition = "2018"
 # TODO: more infos
 
-[workspace]
-
 [dependencies]
 async-std = "1.8.0"
 async-trait = "0.1.42"

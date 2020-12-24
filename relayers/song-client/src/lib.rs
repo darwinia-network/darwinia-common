@@ -53,9 +53,9 @@ impl ChainWithBalances for Song {
 
 	fn account_info_storage_key(account_id: &Self::AccountId) -> StorageKey {
 		use frame_support::storage::generator::StorageMap;
-		StorageKey(frame_system::Account::<song_node_runtime::Runtime>::storage_map_final_key(
-			account_id,
-		))
+		StorageKey(
+			frame_system::Account::<song_node_runtime::Runtime>::storage_map_final_key(account_id),
+		)
 	}
 }
 
@@ -70,34 +70,46 @@ impl TransactionSignScheme for Song {
 		signer_nonce: <Self::Chain as Chain>::Index,
 		call: <Self::Chain as Chain>::Call,
 	) -> Self::SignedTransaction {
-		let raw_payload = SignedPayload::from_raw(
-			call,
-			(
-				frame_system::CheckSpecVersion::<song_node_runtime::Runtime>::new(),
-				frame_system::CheckTxVersion::<song_node_runtime::Runtime>::new(),
-				frame_system::CheckGenesis::<song_node_runtime::Runtime>::new(),
-				frame_system::CheckEra::<song_node_runtime::Runtime>::from(sp_runtime::generic::Era::Immortal),
-				frame_system::CheckNonce::<song_node_runtime::Runtime>::from(signer_nonce),
-				frame_system::CheckWeight::<song_node_runtime::Runtime>::new(),
-				pallet_transaction_payment::ChargeTransactionPayment::<song_node_runtime::Runtime>::from(0),
-				darwinia_ethereum_relay::CheckEthereumRelayHeaderParcel::<song_node_runtime::Runtime>::new(),
-			),
-			(
-				song_node_runtime::VERSION.spec_version,
-				song_node_runtime::VERSION.transaction_version,
-				*client.genesis_hash(),
-				*client.genesis_hash(),
-				(),
-				(),
-				(),
-				(),
-			),
-		);
+		let raw_payload =
+			SignedPayload::from_raw(
+				call,
+				(
+					frame_system::CheckSpecVersion::<song_node_runtime::Runtime>::new(),
+					frame_system::CheckTxVersion::<song_node_runtime::Runtime>::new(),
+					frame_system::CheckGenesis::<song_node_runtime::Runtime>::new(),
+					frame_system::CheckEra::<song_node_runtime::Runtime>::from(
+						sp_runtime::generic::Era::Immortal,
+					),
+					frame_system::CheckNonce::<song_node_runtime::Runtime>::from(signer_nonce),
+					frame_system::CheckWeight::<song_node_runtime::Runtime>::new(),
+					pallet_transaction_payment::ChargeTransactionPayment::<
+						song_node_runtime::Runtime,
+					>::from(0),
+					darwinia_ethereum_relay::CheckEthereumRelayHeaderParcel::<
+						song_node_runtime::Runtime,
+					>::new(),
+				),
+				(
+					song_node_runtime::VERSION.spec_version,
+					song_node_runtime::VERSION.transaction_version,
+					*client.genesis_hash(),
+					*client.genesis_hash(),
+					(),
+					(),
+					(),
+					(),
+				),
+			);
 		let signature = raw_payload.using_encoded(|payload| signer.sign(payload));
 		let signer: sp_runtime::MultiSigner = signer.public().into();
 		let (call, extra, _) = raw_payload.deconstruct();
 
-		song_node_runtime::UncheckedExtrinsic::new_signed(call, signer.into_account(), signature.into(), extra)
+		song_node_runtime::UncheckedExtrinsic::new_signed(
+			call,
+			signer.into_account(),
+			signature.into(),
+			extra,
+		)
 	}
 }
 
@@ -110,7 +122,10 @@ pub struct SigningParams {
 
 impl SigningParams {
 	/// Create signing params from SURI and password.
-	pub fn from_suri(suri: &str, password: Option<&str>) -> Result<Self, sp_core::crypto::SecretStringError> {
+	pub fn from_suri(
+		suri: &str,
+		password: Option<&str>,
+	) -> Result<Self, sp_core::crypto::SecretStringError> {
 		Ok(SigningParams {
 			signer: sp_core::sr25519::Pair::from_string(suri, password)?,
 		})

@@ -53,6 +53,10 @@ members = [
 	"bin/song/cli",
 	"bin/song/primitives",
 	"bin/song/runtime",
+	# client
+	"relayers/song-client",
+	"relayers/tang-client",
+	"relayers/substrate"
 ]
 
 # The list of dependencies below (which can be both direct and indirect dependencies) are crates

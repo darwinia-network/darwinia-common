@@ -17,7 +17,7 @@ use array_bytes::fixed_hex_bytes_unchecked;
 use darwinia_claims::ClaimsList;
 use darwinia_ethereum_relay::DagsMerkleRootsLoader as DagsMerkleRootsLoaderR;
 use darwinia_evm::GenesisAccount;
-use song_node_primitives::*;
+use song_node_primitives::{AccountId, Balance, Signature};
 use song_node_runtime::{constants::COIN, BalancesConfig as RingConfig, *};
 
 pub type SongChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
