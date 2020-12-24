@@ -314,6 +314,9 @@ type NegativeImbalance = <darwinia_balances::Module<Runtime, RingInstance> as Cu
 	<Runtime as frame_system::Trait>::AccountId,
 >>::NegativeImbalance;
 
+pub use pallet_message_lane::Call as MessageLaneCall;
+pub use pallet_substrate_bridge::Call as BridgeTangCall;
+
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("Song"),

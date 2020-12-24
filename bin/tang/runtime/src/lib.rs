@@ -278,13 +278,13 @@ use impls::*;
 use tang_node_primitives::*;
 
 /// The address format for describing accounts.
-type Address = AccountId;
+pub type Address = AccountId;
 /// Block header type as expected by this runtime.
-type Header = generic::Header<BlockNumber, BlakeTwo256>;
+pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 /// Block type as expected by this runtime.
-type Block = generic::Block<Header, UncheckedExtrinsic>;
+pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 /// The SignedExtension to the basic transaction logic.
-type SignedExtra = (
+pub type SignedExtra = (
 	frame_system::CheckSpecVersion<Runtime>,
 	frame_system::CheckTxVersion<Runtime>,
 	frame_system::CheckGenesis<Runtime>,
@@ -295,7 +295,7 @@ type SignedExtra = (
 	darwinia_ethereum_relay::CheckEthereumRelayHeaderParcel<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
-type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
 /// Executive: handles dispatch to the various modules.
 type Executive = frame_executive::Executive<
 	Runtime,
@@ -305,8 +305,27 @@ type Executive = frame_executive::Executive<
 	AllModules,
 	CustomOnRuntimeUpgrade,
 >;
+
+pub use pallet_message_lane::Call as MessageLaneCall;
+pub use pallet_substrate_bridge::Call as BridgeSongCall;
+
 /// The payload being signed in transactions.
-type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
+pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
+/// An index to a block.
+pub type BlockNumber = tang_node_primitives::BlockNumber;
+/// Index of a transaction in the chain.
+pub type Index = u32;
+/// A hash of some data used by the chain.
+pub type Hash = tang_node_primitives::Hash;
+/// Hashing algorithm used by the chain.
+pub type Hashing = tang_node_primitives::Hasher;
+/// Some way of identifying an account on the chain. We intentionally make it equivalent
+/// to the public key of our transaction signing scheme.
+pub type AccountId = tang_node_primitives::AccountId;
+/// Balance of an account.
+pub type Balance = tang_node_primitives::Balance;
+/// A Block signed with a Justification
+pub type SignedBlock = generic::SignedBlock<Block>;
 
 type Ring = Balances;
 
