@@ -277,8 +277,6 @@ use impls::*;
 
 /// The address format for describing accounts.
 type Address = AccountId;
-/// Block header type as expected by this runtime.
-type Header = generic::Header<BlockNumber, BlakeTwo256>;
 /// Block type as expected by this runtime.
 type Block = generic::Block<Header, UncheckedExtrinsic>;
 /// The SignedExtension to the basic transaction logic.
@@ -358,7 +356,7 @@ impl frame_system::Trait for Runtime {
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = generic::Header<BlockNumber, BlakeTwo256>;
+	type Header = Header;
 	type Event = Event;
 	type BlockHashCount = BlockHashCount;
 	type MaximumBlockWeight = MaximumBlockWeight;
