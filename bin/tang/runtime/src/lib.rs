@@ -306,8 +306,11 @@ type Executive = frame_executive::Executive<
 	CustomOnRuntimeUpgrade,
 >;
 
+pub use darwinia_balances::Call as BalancesCall;
+pub use frame_system::Call as SystemCall;
 pub use pallet_message_lane::Call as MessageLaneCall;
 pub use pallet_substrate_bridge::Call as BridgeSongCall;
+pub use pallet_sudo::Call as SudoCall;
 
 /// The payload being signed in transactions.
 pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;

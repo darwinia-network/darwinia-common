@@ -113,8 +113,8 @@ where
 				Some(id.1),
 			)
 			.await?;
-		let latest_received_nonce: MessageNonce =
-			Decode::decode(&mut &encoded_response.0[..]).map_err(SubstrateError::ResponseParseFailed)?;
+		let latest_received_nonce: MessageNonce = Decode::decode(&mut &encoded_response.0[..])
+			.map_err(SubstrateError::ResponseParseFailed)?;
 		Ok((id, latest_received_nonce))
 	}
 
@@ -130,8 +130,8 @@ where
 				Some(id.1),
 			)
 			.await?;
-		let latest_received_nonce: MessageNonce =
-			Decode::decode(&mut &encoded_response.0[..]).map_err(SubstrateError::ResponseParseFailed)?;
+		let latest_received_nonce: MessageNonce = Decode::decode(&mut &encoded_response.0[..])
+			.map_err(SubstrateError::ResponseParseFailed)?;
 		Ok((id, latest_received_nonce))
 	}
 
@@ -148,7 +148,8 @@ where
 			)
 			.await?;
 		let unrewarded_relayers_state: UnrewardedRelayersState =
-			Decode::decode(&mut &encoded_response.0[..]).map_err(SubstrateError::ResponseParseFailed)?;
+			Decode::decode(&mut &encoded_response.0[..])
+				.map_err(SubstrateError::ResponseParseFailed)?;
 		Ok((id, unrewarded_relayers_state))
 	}
 

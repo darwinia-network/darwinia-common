@@ -329,8 +329,11 @@ type NegativeImbalance = <darwinia_balances::Module<Runtime, RingInstance> as Cu
 	<Runtime as frame_system::Trait>::AccountId,
 >>::NegativeImbalance;
 
+pub use darwinia_balances::Call as BalancesCall;
+pub use frame_system::Call as SystemCall;
 pub use pallet_message_lane::Call as MessageLaneCall;
 pub use pallet_substrate_bridge::Call as BridgeTangCall;
+pub use pallet_sudo::Call as SudoCall;
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {

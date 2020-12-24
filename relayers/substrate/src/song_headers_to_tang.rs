@@ -18,18 +18,18 @@
 
 use crate::{
 	headers_pipeline::{SubstrateHeadersSyncPipeline, SubstrateHeadersToSubstrate},
-	TangClient, SongClient,
+	SongClient, TangClient,
 };
 
 use async_trait::async_trait;
+use headers_relay::sync_types::QueuedHeader;
+use relay_song_client::{HeaderId as SongHeaderId, Song, SyncHeader as SongSyncHeader};
+use relay_substrate_client::{Error as SubstrateError, TransactionSignScheme};
+use relay_tang_client::{BridgeSongCall, SigningParams as TangSigningParams, Tang};
 use song_node_primitives::{
 	BEST_SONG_BLOCKS_METHOD, FINALIZED_SONG_BLOCK_METHOD, INCOMPLETE_SONG_HEADERS_METHOD,
 	IS_KNOWN_SONG_BLOCK_METHOD,
 };
-use headers_relay::sync_types::QueuedHeader;
-use relay_tang_client::{BridgeSongCall, Tang, SigningParams as TangSigningParams};
-use relay_song_client::{HeaderId as SongHeaderId, Song, SyncHeader as SongSyncHeader};
-use relay_substrate_client::{Error as SubstrateError, TransactionSignScheme};
 use sp_core::Pair;
 use sp_runtime::Justification;
 
@@ -51,10 +51,18 @@ impl SubstrateHeadersSyncPipeline for SongHeadersToTang {
 		&self,
 		header: QueuedSongHeader,
 	) -> Result<Self::SignedTransaction, SubstrateError> {
-		let account_id = self.target_sign.signer.public().as_array_ref().clone().into();
+		let account_id = self
+			.target_sign
+			.signer
+			.public()
+			.as_array_ref()
+			.clone()
+			.into();
 		let nonce = self.target_client.next_account_index(account_id).await?;
-		let call = BridgeSongCall::import_signed_header(header.header().clone().into_inner()).into();
-		let transaction = Tang::sign_transaction(&self.target_client, &self.target_sign.signer, nonce, call);
+		let call =
+			BridgeSongCall::import_signed_header(header.header().clone().into_inner()).into();
+		let transaction =
+			Tang::sign_transaction(&self.target_client, &self.target_sign.signer, nonce, call);
 		Ok(transaction)
 	}
 
@@ -63,10 +71,17 @@ impl SubstrateHeadersSyncPipeline for SongHeadersToTang {
 		id: SongHeaderId,
 		completion: Justification,
 	) -> Result<Self::SignedTransaction, SubstrateError> {
-		let account_id = self.target_sign.signer.public().as_array_ref().clone().into();
+		let account_id = self
+			.target_sign
+			.signer
+			.public()
+			.as_array_ref()
+			.clone()
+			.into();
 		let nonce = self.target_client.next_account_index(account_id).await?;
 		let call = BridgeSongCall::finalize_header(id.1, completion).into();
-		let transaction = Tang::sign_transaction(&self.target_client, &self.target_sign.signer, nonce, call);
+		let transaction =
+			Tang::sign_transaction(&self.target_client, &self.target_sign.signer, nonce, call);
 		Ok(transaction)
 	}
 }

@@ -5,7 +5,7 @@ use bp_message_lane::{
 	target_chain::{ProvedMessages, SourceHeaderChain},
 	InboundLaneData, LaneId, Message, MessageNonce,
 };
-use bp_runtime::{InstanceId, MILLAU_BRIDGE_INSTANCE};
+use bp_runtime::InstanceId;
 use bridge_runtime_common::messages::{self, ChainWithMessageLanes, MessageBridge};
 use frame_support::{
 	weights::{Weight, WeightToFeePolynomial},
@@ -40,15 +40,15 @@ type FromTangMessagesProof = messages::target::FromBridgedChainMessagesProof<Wit
 type ToTangMessagesDeliveryProof =
 	messages::source::FromBridgedChainMessagesDeliveryProof<WithTangMessageBridge>;
 
-/// Bridge-with-Song instance id.
-pub const SONG_BRIDGE_INSTANCE: InstanceId = *b"song";
+/// Bridge-with-TANG instance id.
+pub const TANG_BRIDGE_INSTANCE: InstanceId = *b"tang";
 
 /// Tang <-> Song message bridge.
 #[derive(RuntimeDebug, Clone, Copy)]
 pub struct WithTangMessageBridge;
 
 impl MessageBridge for WithTangMessageBridge {
-	const INSTANCE: InstanceId = MILLAU_BRIDGE_INSTANCE;
+	const INSTANCE: InstanceId = TANG_BRIDGE_INSTANCE;
 
 	const RELAYER_FEE_PERCENT: u32 = 10;
 

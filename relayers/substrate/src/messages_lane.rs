@@ -70,7 +70,12 @@ pub trait SubstrateMessageLane: MessageLane {
 
 /// Substrate-to-Substrate message lane.
 #[derive(Debug)]
-pub struct SubstrateMessageLaneToSubstrate<Source: Chain, SourceSignParams, Target: Chain, TargetSignParams> {
+pub struct SubstrateMessageLaneToSubstrate<
+	Source: Chain,
+	SourceSignParams,
+	Target: Chain,
+	TargetSignParams,
+> {
 	/// Client for the source Substrate chain.
 	pub(crate) source_client: Client<Source>,
 	/// Parameters required to sign transactions for source chain.

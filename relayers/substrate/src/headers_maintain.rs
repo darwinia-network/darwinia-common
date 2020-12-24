@@ -47,7 +47,11 @@ use sp_runtime::{traits::Header as HeaderT, Justification};
 use std::{collections::VecDeque, marker::PhantomData, task::Poll};
 
 /// Substrate-to-Substrate headers synchronization maintain procedure.
-pub struct SubstrateHeadersToSubstrateMaintain<P: SubstrateHeadersSyncPipeline, SourceChain, TargetChain: Chain> {
+pub struct SubstrateHeadersToSubstrateMaintain<
+	P: SubstrateHeadersSyncPipeline,
+	SourceChain,
+	TargetChain: Chain,
+> {
 	pipeline: P,
 	target_client: Client<TargetChain>,
 	justifications: Arc<Mutex<Justifications<P>>>,
@@ -67,7 +71,11 @@ impl<P: SubstrateHeadersSyncPipeline, SourceChain, TargetChain: Chain>
 	SubstrateHeadersToSubstrateMaintain<P, SourceChain, TargetChain>
 {
 	/// Create new maintain procedure.
-	pub fn new(pipeline: P, target_client: Client<TargetChain>, justifications: JustificationsSubscription) -> Self {
+	pub fn new(
+		pipeline: P,
+		target_client: Client<TargetChain>,
+		justifications: JustificationsSubscription,
+	) -> Self {
 		SubstrateHeadersToSubstrateMaintain {
 			pipeline,
 			target_client,
@@ -81,7 +89,8 @@ impl<P: SubstrateHeadersSyncPipeline, SourceChain, TargetChain: Chain>
 }
 
 #[async_trait]
-impl<P, SourceChain, TargetChain> SyncMaintain<P> for SubstrateHeadersToSubstrateMaintain<P, SourceChain, TargetChain>
+impl<P, SourceChain, TargetChain> SyncMaintain<P>
+	for SubstrateHeadersToSubstrateMaintain<P, SourceChain, TargetChain>
 where
 	SourceChain: Chain,
 	<SourceChain::Header as HeaderT>::Number: Into<P::Number>,
@@ -190,9 +199,13 @@ where
 			};
 
 			// decode justification target
-			let target = pallet_substrate_bridge::decode_justification_target::<SourceHeader>(&justification);
+			let target = pallet_substrate_bridge::decode_justification_target::<SourceHeader>(
+				&justification,
+			);
 			let target = match target {
-				Ok((target_hash, target_number)) => HeaderId(target_number.into(), target_hash.into()),
+				Ok((target_hash, target_number)) => {
+					HeaderId(target_number.into(), target_hash.into())
+				}
 				Err(error) => {
 					log::warn!(
 						target: "bridge",
@@ -245,7 +258,8 @@ where
 	while let Some((target, justification)) = queue.pop_front() {
 		// if we're waiting for this justification, report it
 		if sync.headers().requires_completion_data(&target) {
-			sync.headers_mut().completion_response(&target, Some(justification));
+			sync.headers_mut()
+				.completion_response(&target, Some(justification));
 			// we won't submit previous justifications as we going to submit justification for
 			// next header
 			selected_justification = None;
@@ -281,8 +295,8 @@ where
 	let data = Bytes(Vec::new());
 
 	let encoded_response = client.state_call(call, data, None).await?;
-	let decoded_response: (P::Number, P::Hash) =
-		Decode::decode(&mut &encoded_response.0[..]).map_err(SubstrateError::ResponseParseFailed)?;
+	let decoded_response: (P::Number, P::Hash) = Decode::decode(&mut &encoded_response.0[..])
+		.map_err(SubstrateError::ResponseParseFailed)?;
 
 	let best_header_id = HeaderId(decoded_response.0, decoded_response.1);
 	Ok(best_header_id)

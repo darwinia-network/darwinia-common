@@ -16,7 +16,9 @@
 
 //! Substrate-to-Substrate headers sync entrypoint.
 
-use crate::{headers_maintain::SubstrateHeadersToSubstrateMaintain, headers_target::SubstrateHeadersTarget};
+use crate::{
+	headers_maintain::SubstrateHeadersToSubstrateMaintain, headers_target::SubstrateHeadersTarget,
+};
 
 use async_trait::async_trait;
 use codec::Encode;
@@ -62,7 +64,12 @@ pub trait SubstrateHeadersSyncPipeline: HeadersSyncPipeline {
 
 /// Substrate-to-Substrate headers pipeline.
 #[derive(Debug, Clone)]
-pub struct SubstrateHeadersToSubstrate<SourceChain, SourceSyncHeader, TargetChain: Chain, TargetSign> {
+pub struct SubstrateHeadersToSubstrate<
+	SourceChain,
+	SourceSyncHeader,
+	TargetChain: Chain,
+	TargetSign,
+> {
 	/// Client for the target chain.
 	pub(crate) target_client: Client<TargetChain>,
 	/// Data required to sign target chain transactions.
@@ -89,8 +96,8 @@ impl<SourceChain, SourceSyncHeader, TargetChain, TargetSign> HeadersSyncPipeline
 where
 	SourceChain: Clone + Chain,
 	BlockNumberOf<SourceChain>: BlockNumberBase,
-	SourceSyncHeader:
-		SourceHeader<HashOf<SourceChain>, BlockNumberOf<SourceChain>> + std::ops::Deref<Target = SourceChain::Header>,
+	SourceSyncHeader: SourceHeader<HashOf<SourceChain>, BlockNumberOf<SourceChain>>
+		+ std::ops::Deref<Target = SourceChain::Header>,
 	TargetChain: Clone + Chain,
 	TargetSign: Clone + Send + Sync,
 {

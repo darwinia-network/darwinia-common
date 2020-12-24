@@ -25,7 +25,9 @@ use codec::Decode;
 use pallet_substrate_bridge::InitializationData;
 use relay_substrate_client::{Chain, Client};
 use sp_core::Bytes;
-use sp_finality_grandpa::{AuthorityList as GrandpaAuthoritiesSet, SetId as GrandpaAuthoritiesSetId};
+use sp_finality_grandpa::{
+	AuthorityList as GrandpaAuthoritiesSet, SetId as GrandpaAuthoritiesSetId,
+};
 
 /// Submit headers-bridge initialization transaction.
 pub async fn initialize<SourceChain: Chain, TargetChain: Chain>(
@@ -34,7 +36,9 @@ pub async fn initialize<SourceChain: Chain, TargetChain: Chain>(
 	raw_initial_header: Option<Bytes>,
 	raw_initial_authorities_set: Option<Bytes>,
 	initial_authorities_set_id: Option<GrandpaAuthoritiesSetId>,
-	prepare_initialize_transaction: impl FnOnce(InitializationData<SourceChain::Header>) -> Result<Bytes, String>,
+	prepare_initialize_transaction: impl FnOnce(
+		InitializationData<SourceChain::Header>,
+	) -> Result<Bytes, String>,
 ) {
 	let result = do_initialize(
 		source_client,
@@ -71,7 +75,9 @@ async fn do_initialize<SourceChain: Chain, TargetChain: Chain>(
 	raw_initial_header: Option<Bytes>,
 	raw_initial_authorities_set: Option<Bytes>,
 	initial_authorities_set_id: Option<GrandpaAuthoritiesSetId>,
-	prepare_initialize_transaction: impl FnOnce(InitializationData<SourceChain::Header>) -> Result<Bytes, String>,
+	prepare_initialize_transaction: impl FnOnce(
+		InitializationData<SourceChain::Header>,
+	) -> Result<Bytes, String>,
 ) -> Result<TargetChain::Hash, String> {
 	let initialization_data = prepare_initialization_data(
 		source_client,
@@ -84,7 +90,13 @@ async fn do_initialize<SourceChain: Chain, TargetChain: Chain>(
 	let initialization_tx_hash = target_client
 		.submit_extrinsic(initialization_tx)
 		.await
-		.map_err(|err| format!("Failed to submit {} transaction: {:?}", TargetChain::NAME, err))?;
+		.map_err(|err| {
+			format!(
+				"Failed to submit {} transaction: {:?}",
+				TargetChain::NAME,
+				err
+			)
+		})?;
 	Ok(initialization_tx_hash)
 }
 
@@ -99,11 +111,23 @@ async fn prepare_initialization_data<SourceChain: Chain>(
 
 	let initial_header = match raw_initial_header {
 		Some(raw_initial_header) => SourceChain::Header::decode(&mut &raw_initial_header.0[..])
-			.map_err(|err| format!("Failed to decode {} initial header: {:?}", SourceChain::NAME, err))?,
+			.map_err(|err| {
+				format!(
+					"Failed to decode {} initial header: {:?}",
+					SourceChain::NAME,
+					err
+				)
+			})?,
 		None => source_client
 			.header_by_hash(source_genesis_hash)
 			.await
-			.map_err(|err| format!("Failed to retrive {} genesis header: {:?}", SourceChain::NAME, err))?,
+			.map_err(|err| {
+				format!(
+					"Failed to retrive {} genesis header: {:?}",
+					SourceChain::NAME,
+					err
+				)
+			})?,
 	};
 
 	let raw_initial_authorities_set = match raw_initial_authorities_set {

@@ -30,141 +30,141 @@ pub fn parse_args() -> Command {
 #[derive(StructOpt)]
 #[structopt(about = "Substrate-to-Substrate relay")]
 pub enum Command {
-	/// Initialize Millau headers bridge in Rialto.
-	InitializeMillauHeadersBridgeInRialto {
+	/// Initialize Tang headers bridge in Song.
+	InitializeTangHeadersBridgeInSong {
 		#[structopt(flatten)]
-		millau: MillauConnectionParams,
+		tang: TangConnectionParams,
 		#[structopt(flatten)]
-		rialto: RialtoConnectionParams,
+		song: SongConnectionParams,
 		#[structopt(flatten)]
-		rialto_sign: RialtoSigningParams,
+		song_sign: SongSigningParams,
 		#[structopt(flatten)]
-		millau_bridge_params: MillauBridgeInitializationParams,
+		tang_bridge_params: TangBridgeInitializationParams,
 	},
-	/// Relay Millau headers to Rialto.
-	MillauHeadersToRialto {
+	/// Relay Tang headers to Song.
+	TangHeadersToSong {
 		#[structopt(flatten)]
-		millau: MillauConnectionParams,
+		tang: TangConnectionParams,
 		#[structopt(flatten)]
-		rialto: RialtoConnectionParams,
+		song: SongConnectionParams,
 		#[structopt(flatten)]
-		rialto_sign: RialtoSigningParams,
+		song_sign: SongSigningParams,
 		#[structopt(flatten)]
 		prometheus_params: PrometheusParams,
 	},
-	/// Initialize Rialto headers bridge in Millau.
-	InitializeRialtoHeadersBridgeInMillau {
+	/// Initialize Song headers bridge in Tang.
+	InitializeSongHeadersBridgeInTang {
 		#[structopt(flatten)]
-		rialto: RialtoConnectionParams,
+		song: SongConnectionParams,
 		#[structopt(flatten)]
-		millau: MillauConnectionParams,
+		tang: TangConnectionParams,
 		#[structopt(flatten)]
-		millau_sign: MillauSigningParams,
+		tang_sign: TangSigningParams,
 		#[structopt(flatten)]
-		rialto_bridge_params: RialtoBridgeInitializationParams,
+		song_bridge_params: SongBridgeInitializationParams,
 	},
-	/// Relay Rialto headers to Millau.
-	RialtoHeadersToMillau {
+	/// Relay Song headers to Tang.
+	SongHeadersToTang {
 		#[structopt(flatten)]
-		rialto: RialtoConnectionParams,
+		song: SongConnectionParams,
 		#[structopt(flatten)]
-		millau: MillauConnectionParams,
+		tang: TangConnectionParams,
 		#[structopt(flatten)]
-		millau_sign: MillauSigningParams,
+		tang_sign: TangSigningParams,
 		#[structopt(flatten)]
 		prometheus_params: PrometheusParams,
 	},
-	/// Serve given lane of Millau -> Rialto messages.
-	MillauMessagesToRialto {
+	/// Serve given lane of Tang -> Song messages.
+	TangMessagesToSong {
 		#[structopt(flatten)]
-		millau: MillauConnectionParams,
+		tang: TangConnectionParams,
 		#[structopt(flatten)]
-		millau_sign: MillauSigningParams,
+		tang_sign: TangSigningParams,
 		#[structopt(flatten)]
-		rialto: RialtoConnectionParams,
+		song: SongConnectionParams,
 		#[structopt(flatten)]
-		rialto_sign: RialtoSigningParams,
+		song_sign: SongSigningParams,
 		#[structopt(flatten)]
 		prometheus_params: PrometheusParams,
 		/// Hex-encoded id of lane that should be served by relay.
 		#[structopt(long)]
 		lane: HexLaneId,
 	},
-	/// Submit message to given Millau -> Rialto lane.
-	SubmitMillauToRialtoMessage {
+	/// Submit message to given Tang -> Song lane.
+	SubmitTangToSongMessage {
 		#[structopt(flatten)]
-		millau: MillauConnectionParams,
+		tang: TangConnectionParams,
 		#[structopt(flatten)]
-		millau_sign: MillauSigningParams,
+		tang_sign: TangSigningParams,
 		#[structopt(flatten)]
-		rialto_sign: RialtoSigningParams,
+		song_sign: SongSigningParams,
 		/// Hex-encoded lane id.
 		#[structopt(long)]
 		lane: HexLaneId,
 		/// Delivery and dispatch fee.
 		#[structopt(long)]
-		fee: bp_millau::Balance,
+		fee: tang_node_primitives::Balance,
 		/// Message type.
 		#[structopt(subcommand)]
-		message: ToRialtoMessage,
+		message: ToSongMessage,
 		/// The origin to use when dispatching the message on the target chain.
 		#[structopt(long, possible_values = &Origins::variants())]
 		origin: Origins,
 	},
-	/// Serve given lane of Rialto -> Millau messages.
-	RialtoMessagesToMillau {
+	/// Serve given lane of Song -> Tang messages.
+	SongMessagesToTang {
 		#[structopt(flatten)]
-		rialto: RialtoConnectionParams,
+		song: SongConnectionParams,
 		#[structopt(flatten)]
-		rialto_sign: RialtoSigningParams,
+		song_sign: SongSigningParams,
 		#[structopt(flatten)]
-		millau: MillauConnectionParams,
+		tang: TangConnectionParams,
 		#[structopt(flatten)]
-		millau_sign: MillauSigningParams,
+		tang_sign: TangSigningParams,
 		#[structopt(flatten)]
 		prometheus_params: PrometheusParams,
 		/// Hex-encoded id of lane that should be served by relay.
 		#[structopt(long)]
 		lane: HexLaneId,
 	},
-	/// Submit message to given Rialto -> Millau lane.
-	SubmitRialtoToMillauMessage {
+	/// Submit message to given Song -> Tang lane.
+	SubmitSongToTangMessage {
 		#[structopt(flatten)]
-		rialto: RialtoConnectionParams,
+		song: SongConnectionParams,
 		#[structopt(flatten)]
-		rialto_sign: RialtoSigningParams,
+		song_sign: SongSigningParams,
 		#[structopt(flatten)]
-		millau_sign: MillauSigningParams,
+		tang_sign: TangSigningParams,
 		/// Hex-encoded lane id.
 		#[structopt(long)]
 		lane: HexLaneId,
 		/// Message type.
-		#[structopt(long, possible_values = &ToMillauMessage::variants())]
-		message: ToMillauMessage,
+		#[structopt(long, possible_values = &ToTangMessage::variants())]
+		message: ToTangMessage,
 		/// Delivery and dispatch fee.
 		#[structopt(long)]
-		fee: bp_rialto::Balance,
+		fee: song_node_primitives::Balance,
 	},
 }
 
-/// All possible messages that may be delivered to the Rialto chain.
+/// All possible messages that may be delivered to the Song chain.
 #[derive(StructOpt, Debug)]
-pub enum ToRialtoMessage {
+pub enum ToSongMessage {
 	/// Make an on-chain remark (comment).
 	Remark,
 	/// Transfer the specified `amount` of native tokens to a particular `recipient`.
 	Transfer {
 		#[structopt(long)]
-		recipient: bp_rialto::AccountId,
+		recipient: song_node_primitives::AccountId,
 		#[structopt(long)]
-		amount: bp_rialto::Balance,
+		amount: song_node_primitives::Balance,
 	},
 }
 
 arg_enum! {
 	#[derive(Debug)]
-	/// All possible messages that may be delivered to the Millau chain.
-	pub enum ToMillauMessage {
+	/// All possible messages that may be delivered to the Tang chain.
+	pub enum ToTangMessage {
 		Remark,
 	}
 }
@@ -268,5 +268,5 @@ macro_rules! declare_chain_options {
 	};
 }
 
-declare_chain_options!(Rialto, rialto);
-declare_chain_options!(Millau, millau);
+declare_chain_options!(Song, song);
+declare_chain_options!(Tang, tang);

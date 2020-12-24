@@ -31,8 +31,8 @@ messages-relay = { git = "https://github.com/AsceticBear/parity-bridges-common.g
 pallet-bridge-call-dispatch = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
 pallet-substrate-bridge     = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
 
-relay-tang-client         = { path = "../tang" }
-relay-song-client         = { path = "../song" }
+relay-tang-client         = { path = "../tang-client" }
+relay-song-client         = { path = "../song-client" }
 
 relay-utils                 = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
 relay-substrate-client      = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }

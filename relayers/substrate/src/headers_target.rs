@@ -62,7 +62,8 @@ where
 
 		let encoded_response = self.client.state_call(call, data, None).await?;
 		let decoded_response: Vec<(P::Number, P::Hash)> =
-			Decode::decode(&mut &encoded_response.0[..]).map_err(SubstrateError::ResponseParseFailed)?;
+			Decode::decode(&mut &encoded_response.0[..])
+				.map_err(SubstrateError::ResponseParseFailed)?;
 
 		// If we parse an empty list of headers it means that bridge pallet has not been initalized
 		// yet. Otherwise we expect to always have at least one header.
@@ -72,18 +73,24 @@ where
 			.map(|(num, hash)| HeaderId(*num, *hash))
 	}
 
-	async fn is_known_header(&self, id: HeaderIdOf<P>) -> Result<(HeaderIdOf<P>, bool), Self::Error> {
+	async fn is_known_header(
+		&self,
+		id: HeaderIdOf<P>,
+	) -> Result<(HeaderIdOf<P>, bool), Self::Error> {
 		let call = P::IS_KNOWN_BLOCK_METHOD.into();
 		let data = Bytes(id.1.encode());
 
 		let encoded_response = self.client.state_call(call, data, None).await?;
-		let is_known_block: bool =
-			Decode::decode(&mut &encoded_response.0[..]).map_err(SubstrateError::ResponseParseFailed)?;
+		let is_known_block: bool = Decode::decode(&mut &encoded_response.0[..])
+			.map_err(SubstrateError::ResponseParseFailed)?;
 
 		Ok((id, is_known_block))
 	}
 
-	async fn submit_headers(&self, mut headers: Vec<QueuedHeader<P>>) -> SubmittedHeaders<HeaderIdOf<P>, Self::Error> {
+	async fn submit_headers(
+		&self,
+		mut headers: Vec<QueuedHeader<P>>,
+	) -> SubmittedHeaders<HeaderIdOf<P>, Self::Error> {
 		debug_assert_eq!(
 			headers.len(),
 			1,
@@ -120,7 +127,8 @@ where
 
 		let encoded_response = self.client.state_call(call, data, None).await?;
 		let decoded_response: Vec<(P::Number, P::Hash)> =
-			Decode::decode(&mut &encoded_response.0[..]).map_err(SubstrateError::ResponseParseFailed)?;
+			Decode::decode(&mut &encoded_response.0[..])
+				.map_err(SubstrateError::ResponseParseFailed)?;
 
 		let incomplete_headers = decoded_response
 			.into_iter()
@@ -134,12 +142,18 @@ where
 		id: HeaderIdOf<P>,
 		completion: Justification,
 	) -> Result<HeaderIdOf<P>, Self::Error> {
-		let tx = self.pipeline.make_complete_header_transaction(id, completion).await?;
+		let tx = self
+			.pipeline
+			.make_complete_header_transaction(id, completion)
+			.await?;
 		self.client.submit_extrinsic(Bytes(tx.encode())).await?;
 		Ok(id)
 	}
 
-	async fn requires_extra(&self, header: QueuedHeader<P>) -> Result<(HeaderIdOf<P>, bool), Self::Error> {
+	async fn requires_extra(
+		&self,
+		header: QueuedHeader<P>,
+	) -> Result<(HeaderIdOf<P>, bool), Self::Error> {
 		Ok((header.id(), false))
 	}
 }

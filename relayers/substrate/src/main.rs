@@ -21,20 +21,17 @@
 use codec::Encode;
 use frame_support::weights::GetDispatchInfo;
 use pallet_bridge_call_dispatch::{CallOrigin, MessagePayload};
-use relay_kusama_client::Kusama;
-use relay_millau_client::{Millau, SigningParams as MillauSigningParams};
-use relay_rialto_client::{Rialto, SigningParams as RialtoSigningParams};
+use relay_song_client::{SigningParams as SongSigningParams, Song};
 use relay_substrate_client::{ConnectionParams, TransactionSignScheme};
+use relay_tang_client::{SigningParams as TangSigningParams, Tang};
 use relay_utils::initialize::initialize_relay;
 use sp_core::{Bytes, Pair};
 use sp_runtime::traits::IdentifyAccount;
 
-/// Kusama node client.
-pub type KusamaClient = relay_substrate_client::Client<Kusama>;
-/// Millau node client.
-pub type MillauClient = relay_substrate_client::Client<Millau>;
-/// Rialto node client.
-pub type RialtoClient = relay_substrate_client::Client<Rialto>;
+/// Tang node client.
+pub type TangClient = relay_substrate_client::Client<Tang>;
+/// Song node client.
+pub type SongClient = relay_substrate_client::Client<Song>;
 
 mod cli;
 mod headers_initialize;
@@ -44,10 +41,10 @@ mod headers_target;
 mod messages_lane;
 mod messages_source;
 mod messages_target;
-mod millau_headers_to_rialto;
-mod millau_messages_to_rialto;
-mod rialto_headers_to_millau;
-mod rialto_messages_to_millau;
+mod song_headers_to_tang;
+mod song_messages_to_tang;
+mod tang_headers_to_song;
+mod tang_messages_to_song;
 
 fn main() {
 	initialize_relay();
@@ -60,45 +57,46 @@ fn main() {
 
 async fn run_command(command: cli::Command) -> Result<(), String> {
 	match command {
-		cli::Command::InitializeMillauHeadersBridgeInRialto {
-			millau,
-			rialto,
-			rialto_sign,
-			millau_bridge_params,
+		cli::Command::InitializeTangHeadersBridgeInSong {
+			tang,
+			song,
+			song_sign,
+			tang_bridge_params,
 		} => {
-			let millau_client = MillauClient::new(ConnectionParams {
-				host: millau.millau_host,
-				port: millau.millau_port,
+			let tang_client = TangClient::new(ConnectionParams {
+				host: tang.tang_host,
+				port: tang.tang_port,
 			})
 			.await?;
-			let rialto_client = RialtoClient::new(ConnectionParams {
-				host: rialto.rialto_host,
-				port: rialto.rialto_port,
+			let song_client = SongClient::new(ConnectionParams {
+				host: song.song_host,
+				port: song.song_port,
 			})
 			.await?;
-			let rialto_sign = RialtoSigningParams::from_suri(
-				&rialto_sign.rialto_signer,
-				rialto_sign.rialto_signer_password.as_deref(),
+			let song_sign = SongSigningParams::from_suri(
+				&song_sign.song_signer,
+				song_sign.song_signer_password.as_deref(),
 			)
-			.map_err(|e| format!("Failed to parse rialto-signer: {:?}", e))?;
-			let rialto_signer_next_index = rialto_client
-				.next_account_index(rialto_sign.signer.public().into())
+			.map_err(|e| format!("Failed to parse song-signer: {:?}", e))?;
+			let song_signer_next_index = song_client
+				.next_account_index(song_sign.signer.public().into())
 				.await?;
 
 			headers_initialize::initialize(
-				millau_client,
-				rialto_client.clone(),
-				millau_bridge_params.millau_initial_header,
-				millau_bridge_params.millau_initial_authorities,
-				millau_bridge_params.millau_initial_authorities_set_id,
+				tang_client,
+				song_client.clone(),
+				tang_bridge_params.tang_initial_header,
+				tang_bridge_params.tang_initial_authorities,
+				tang_bridge_params.tang_initial_authorities_set_id,
 				move |initialization_data| {
 					Ok(Bytes(
-						Rialto::sign_transaction(
-							&rialto_client,
-							&rialto_sign.signer,
-							rialto_signer_next_index,
-							millau_runtime::SudoCall::sudo(Box::new(
-								rialto_runtime::BridgeMillauCall::initialize(initialization_data).into(),
+						Song::sign_transaction(
+							&song_client,
+							&song_sign.signer,
+							song_signer_next_index,
+							tang_node_runtime::SudoCall::sudo(Box::new(
+								song_node_runtime::BridgeTangCall::initialize(initialization_data)
+									.into(),
 							))
 							.into(),
 						)
@@ -108,68 +106,75 @@ async fn run_command(command: cli::Command) -> Result<(), String> {
 			)
 			.await;
 		}
-		cli::Command::MillauHeadersToRialto {
-			millau,
-			rialto,
-			rialto_sign,
+		cli::Command::TangHeadersToSong {
+			tang,
+			song,
+			song_sign,
 			prometheus_params,
 		} => {
-			let millau_client = MillauClient::new(ConnectionParams {
-				host: millau.millau_host,
-				port: millau.millau_port,
+			let tang_client = TangClient::new(ConnectionParams {
+				host: tang.tang_host,
+				port: tang.tang_port,
 			})
 			.await?;
-			let rialto_client = RialtoClient::new(ConnectionParams {
-				host: rialto.rialto_host,
-				port: rialto.rialto_port,
+			let song_client = SongClient::new(ConnectionParams {
+				host: song.song_host,
+				port: song.song_port,
 			})
 			.await?;
-			let rialto_sign = RialtoSigningParams::from_suri(
-				&rialto_sign.rialto_signer,
-				rialto_sign.rialto_signer_password.as_deref(),
+			let song_sign = SongSigningParams::from_suri(
+				&song_sign.song_signer,
+				song_sign.song_signer_password.as_deref(),
 			)
-			.map_err(|e| format!("Failed to parse rialto-signer: {:?}", e))?;
-			millau_headers_to_rialto::run(millau_client, rialto_client, rialto_sign, prometheus_params.into()).await;
+			.map_err(|e| format!("Failed to parse song-signer: {:?}", e))?;
+			tang_headers_to_song::run(
+				tang_client,
+				song_client,
+				song_sign,
+				prometheus_params.into(),
+			)
+			.await;
 		}
-		cli::Command::InitializeRialtoHeadersBridgeInMillau {
-			rialto,
-			millau,
-			millau_sign,
-			rialto_bridge_params,
+		cli::Command::InitializeSongHeadersBridgeInTang {
+			song,
+			tang,
+			tang_sign,
+			song_bridge_params,
 		} => {
-			let rialto_client = RialtoClient::new(ConnectionParams {
-				host: rialto.rialto_host,
-				port: rialto.rialto_port,
+			let song_client = SongClient::new(ConnectionParams {
+				host: song.song_host,
+				port: song.song_port,
 			})
 			.await?;
-			let millau_client = MillauClient::new(ConnectionParams {
-				host: millau.millau_host,
-				port: millau.millau_port,
+			let tang_client = TangClient::new(ConnectionParams {
+				host: tang.tang_host,
+				port: tang.tang_port,
 			})
 			.await?;
-			let millau_sign = MillauSigningParams::from_suri(
-				&millau_sign.millau_signer,
-				millau_sign.millau_signer_password.as_deref(),
+			let tang_sign = TangSigningParams::from_suri(
+				&tang_sign.tang_signer,
+				tang_sign.tang_signer_password.as_deref(),
 			)
-			.map_err(|e| format!("Failed to parse millau-signer: {:?}", e))?;
-			let millau_signer_next_index = millau_client
-				.next_account_index(millau_sign.signer.public().into())
+			.map_err(|e| format!("Failed to parse tang-signer: {:?}", e))?;
+			let tang_signer_next_index = tang_client
+				.next_account_index(tang_sign.signer.public().into())
 				.await?;
 
 			headers_initialize::initialize(
-				rialto_client,
-				millau_client.clone(),
-				rialto_bridge_params.rialto_initial_header,
-				rialto_bridge_params.rialto_initial_authorities,
-				rialto_bridge_params.rialto_initial_authorities_set_id,
+				song_client,
+				tang_client.clone(),
+				song_bridge_params.song_initial_header,
+				song_bridge_params.song_initial_authorities,
+				song_bridge_params.song_initial_authorities_set_id,
 				move |initialization_data| {
 					Ok(Bytes(
-						Millau::sign_transaction(
-							&millau_client,
-							&millau_sign.signer,
-							millau_signer_next_index,
-							millau_runtime::SudoCall::sudo(Box::new(
-								millau_runtime::BridgeRialtoCall::initialize(initialization_data).into(),
+						Tang::sign_transaction(
+							&tang_client,
+							&tang_sign.signer,
+							tang_signer_next_index,
+							tang_node_runtime::SudoCall::sudo(Box::new(
+								tang_node_runtime::BridgeSongCall::initialize(initialization_data)
+									.into(),
 							))
 							.into(),
 						)
@@ -179,278 +184,296 @@ async fn run_command(command: cli::Command) -> Result<(), String> {
 			)
 			.await;
 		}
-		cli::Command::RialtoHeadersToMillau {
-			rialto,
-			millau,
-			millau_sign,
+		cli::Command::SongHeadersToTang {
+			song,
+			tang,
+			tang_sign,
 			prometheus_params,
 		} => {
-			let rialto_client = RialtoClient::new(ConnectionParams {
-				host: rialto.rialto_host,
-				port: rialto.rialto_port,
+			let song_client = SongClient::new(ConnectionParams {
+				host: song.song_host,
+				port: song.song_port,
 			})
 			.await?;
-			let millau_client = MillauClient::new(ConnectionParams {
-				host: millau.millau_host,
-				port: millau.millau_port,
+			let tang_client = TangClient::new(ConnectionParams {
+				host: tang.tang_host,
+				port: tang.tang_port,
 			})
 			.await?;
-			let millau_sign = MillauSigningParams::from_suri(
-				&millau_sign.millau_signer,
-				millau_sign.millau_signer_password.as_deref(),
+			let tang_sign = TangSigningParams::from_suri(
+				&tang_sign.tang_signer,
+				tang_sign.tang_signer_password.as_deref(),
 			)
-			.map_err(|e| format!("Failed to parse millau-signer: {:?}", e))?;
+			.map_err(|e| format!("Failed to parse tang-signer: {:?}", e))?;
 
-			rialto_headers_to_millau::run(rialto_client, millau_client, millau_sign, prometheus_params.into()).await;
+			song_headers_to_tang::run(
+				song_client,
+				tang_client,
+				tang_sign,
+				prometheus_params.into(),
+			)
+			.await;
 		}
-		cli::Command::MillauMessagesToRialto {
-			millau,
-			millau_sign,
-			rialto,
-			rialto_sign,
+		cli::Command::TangMessagesToSong {
+			tang,
+			tang_sign,
+			song,
+			song_sign,
 			prometheus_params,
 			lane,
 		} => {
-			let millau_client = MillauClient::new(ConnectionParams {
-				host: millau.millau_host,
-				port: millau.millau_port,
+			let tang_client = TangClient::new(ConnectionParams {
+				host: tang.tang_host,
+				port: tang.tang_port,
 			})
 			.await?;
-			let millau_sign = MillauSigningParams::from_suri(
-				&millau_sign.millau_signer,
-				millau_sign.millau_signer_password.as_deref(),
+			let tang_sign = TangSigningParams::from_suri(
+				&tang_sign.tang_signer,
+				tang_sign.tang_signer_password.as_deref(),
 			)
-			.map_err(|e| format!("Failed to parse millau-signer: {:?}", e))?;
-			let rialto_client = RialtoClient::new(ConnectionParams {
-				host: rialto.rialto_host,
-				port: rialto.rialto_port,
+			.map_err(|e| format!("Failed to parse tang-signer: {:?}", e))?;
+			let song_client = SongClient::new(ConnectionParams {
+				host: song.song_host,
+				port: song.song_port,
 			})
 			.await?;
-			let rialto_sign = RialtoSigningParams::from_suri(
-				&rialto_sign.rialto_signer,
-				rialto_sign.rialto_signer_password.as_deref(),
+			let song_sign = SongSigningParams::from_suri(
+				&song_sign.song_signer,
+				song_sign.song_signer_password.as_deref(),
 			)
-			.map_err(|e| format!("Failed to parse rialto-signer: {:?}", e))?;
+			.map_err(|e| format!("Failed to parse song-signer: {:?}", e))?;
 
-			millau_messages_to_rialto::run(
-				millau_client,
-				millau_sign,
-				rialto_client,
-				rialto_sign,
+			tang_messages_to_song::run(
+				tang_client,
+				tang_sign,
+				song_client,
+				song_sign,
 				lane.into(),
 				prometheus_params.into(),
 			);
 		}
-		cli::Command::SubmitMillauToRialtoMessage {
-			millau,
-			millau_sign,
-			rialto_sign,
+		cli::Command::SubmitTangToSongMessage {
+			tang,
+			tang_sign,
+			song_sign,
 			lane,
 			message,
 			fee,
 			origin,
 			..
 		} => {
-			let millau_client = MillauClient::new(ConnectionParams {
-				host: millau.millau_host,
-				port: millau.millau_port,
+			let tang_client = TangClient::new(ConnectionParams {
+				host: tang.tang_host,
+				port: tang.tang_port,
 			})
 			.await?;
-			let millau_sign = MillauSigningParams::from_suri(
-				&millau_sign.millau_signer,
-				millau_sign.millau_signer_password.as_deref(),
+			let tang_sign = TangSigningParams::from_suri(
+				&tang_sign.tang_signer,
+				tang_sign.tang_signer_password.as_deref(),
 			)
-			.map_err(|e| format!("Failed to parse millau-signer: {:?}", e))?;
-			let rialto_sign = RialtoSigningParams::from_suri(
-				&rialto_sign.rialto_signer,
-				rialto_sign.rialto_signer_password.as_deref(),
+			.map_err(|e| format!("Failed to parse tang-signer: {:?}", e))?;
+			let song_sign = SongSigningParams::from_suri(
+				&song_sign.song_signer,
+				song_sign.song_signer_password.as_deref(),
 			)
-			.map_err(|e| format!("Failed to parse rialto-signer: {:?}", e))?;
+			.map_err(|e| format!("Failed to parse song-signer: {:?}", e))?;
 
-			let rialto_call = match message {
-				cli::ToRialtoMessage::Remark => rialto_runtime::Call::System(rialto_runtime::SystemCall::remark(
-					format!(
-						"Unix time: {}",
-						std::time::SystemTime::now()
-							.duration_since(std::time::SystemTime::UNIX_EPOCH)
-							.unwrap_or_default()
-							.as_secs(),
-					)
-					.as_bytes()
-					.to_vec(),
-				)),
-				cli::ToRialtoMessage::Transfer { recipient, amount } => {
-					rialto_runtime::Call::Balances(rialto_runtime::BalancesCall::transfer(recipient, amount))
+			let song_call = match message {
+				cli::ToSongMessage::Remark => {
+					song_node_runtime::Call::System(song_node_runtime::SystemCall::remark(
+						format!(
+							"Unix time: {}",
+							std::time::SystemTime::now()
+								.duration_since(std::time::SystemTime::UNIX_EPOCH)
+								.unwrap_or_default()
+								.as_secs(),
+						)
+						.as_bytes()
+						.to_vec(),
+					))
+				}
+				cli::ToSongMessage::Transfer { recipient, amount } => {
+					song_node_runtime::Call::Balances(song_node_runtime::BalancesCall::transfer(
+						recipient, amount,
+					))
 				}
 			};
 
-			let rialto_call_weight = rialto_call.get_dispatch_info().weight;
-			let millau_sender_public: bp_millau::AccountSigner = millau_sign.signer.public().clone().into();
-			let millau_account_id: bp_millau::AccountId = millau_sender_public.into_account();
-			let rialto_origin_public = rialto_sign.signer.public();
+			let song_call_weight = song_call.get_dispatch_info().weight;
+			let tang_sender_public: tang_node_primitives::AccountSigner =
+				tang_sign.signer.public().clone().into();
+			let tang_account_id: tang_node_primitives::AccountId =
+				tang_sender_public.into_account();
+			let song_origin_public = song_sign.signer.public();
 
 			let payload = match origin {
 				cli::Origins::Root => MessagePayload {
-					spec_version: rialto_runtime::VERSION.spec_version,
-					weight: rialto_call_weight,
+					spec_version: song_node_runtime::VERSION.spec_version,
+					weight: song_call_weight,
 					origin: CallOrigin::SourceRoot,
-					call: rialto_call.encode(),
+					call: song_call.encode(),
 				},
 				cli::Origins::Source => MessagePayload {
-					spec_version: rialto_runtime::VERSION.spec_version,
-					weight: rialto_call_weight,
-					origin: CallOrigin::SourceAccount(millau_account_id),
-					call: rialto_call.encode(),
+					spec_version: song_node_runtime::VERSION.spec_version,
+					weight: song_call_weight,
+					origin: CallOrigin::SourceAccount(tang_account_id),
+					call: song_call.encode(),
 				},
 				cli::Origins::Target => {
-					let mut rialto_origin_signature_message = Vec::new();
-					rialto_call.encode_to(&mut rialto_origin_signature_message);
-					millau_account_id.encode_to(&mut rialto_origin_signature_message);
-					let rialto_origin_signature = rialto_sign.signer.sign(&rialto_origin_signature_message);
+					let mut song_origin_signature_message = Vec::new();
+					song_call.encode_to(&mut song_origin_signature_message);
+					tang_account_id.encode_to(&mut song_origin_signature_message);
+					let song_origin_signature =
+						song_sign.signer.sign(&song_origin_signature_message);
 
 					MessagePayload {
-						spec_version: rialto_runtime::VERSION.spec_version,
-						weight: rialto_call_weight,
+						spec_version: song_node_runtime::VERSION.spec_version,
+						weight: song_call_weight,
 						origin: CallOrigin::TargetAccount(
-							millau_account_id.clone(),
-							rialto_origin_public.into(),
-							rialto_origin_signature.into(),
+							tang_account_id.clone(),
+							song_origin_public.into(),
+							song_origin_signature.into(),
 						),
-						call: rialto_call.encode(),
+						call: song_call.encode(),
 					}
 				}
 			};
 
-			let millau_call = millau_runtime::Call::BridgeRialtoMessageLane(
-				millau_runtime::MessageLaneCall::send_message(lane.into(), payload, fee),
+			let tang_call = tang_node_runtime::Call::BridgeSongMessageLane(
+				tang_node_runtime::MessageLaneCall::send_message(lane.into(), payload, fee),
 			);
 
-			let signed_millau_call = Millau::sign_transaction(
-				&millau_client,
-				&millau_sign.signer,
-				millau_client
-					.next_account_index(millau_sign.signer.public().clone().into())
+			let signed_tang_call = Tang::sign_transaction(
+				&tang_client,
+				&tang_sign.signer,
+				tang_client
+					.next_account_index(tang_sign.signer.public().clone().into())
 					.await?,
-				millau_call,
+				tang_call,
 			);
 
-			millau_client
-				.submit_extrinsic(Bytes(signed_millau_call.encode()))
+			tang_client
+				.submit_extrinsic(Bytes(signed_tang_call.encode()))
 				.await?;
 		}
-		cli::Command::RialtoMessagesToMillau {
-			rialto,
-			rialto_sign,
-			millau,
-			millau_sign,
+		cli::Command::SongMessagesToTang {
+			song,
+			song_sign,
+			tang,
+			tang_sign,
 			prometheus_params,
 			lane,
 		} => {
-			let rialto_client = RialtoClient::new(ConnectionParams {
-				host: rialto.rialto_host,
-				port: rialto.rialto_port,
+			let song_client = SongClient::new(ConnectionParams {
+				host: song.song_host,
+				port: song.song_port,
 			})
 			.await?;
-			let rialto_sign = RialtoSigningParams::from_suri(
-				&rialto_sign.rialto_signer,
-				rialto_sign.rialto_signer_password.as_deref(),
+			let song_sign = SongSigningParams::from_suri(
+				&song_sign.song_signer,
+				song_sign.song_signer_password.as_deref(),
 			)
-			.map_err(|e| format!("Failed to parse rialto-signer: {:?}", e))?;
-			let millau_client = MillauClient::new(ConnectionParams {
-				host: millau.millau_host,
-				port: millau.millau_port,
+			.map_err(|e| format!("Failed to parse song-signer: {:?}", e))?;
+			let tang_client = TangClient::new(ConnectionParams {
+				host: tang.tang_host,
+				port: tang.tang_port,
 			})
 			.await?;
-			let millau_sign = MillauSigningParams::from_suri(
-				&millau_sign.millau_signer,
-				millau_sign.millau_signer_password.as_deref(),
+			let tang_sign = TangSigningParams::from_suri(
+				&tang_sign.tang_signer,
+				tang_sign.tang_signer_password.as_deref(),
 			)
-			.map_err(|e| format!("Failed to parse millau-signer: {:?}", e))?;
+			.map_err(|e| format!("Failed to parse tang-signer: {:?}", e))?;
 
-			rialto_messages_to_millau::run(
-				rialto_client,
-				rialto_sign,
-				millau_client,
-				millau_sign,
+			song_messages_to_tang::run(
+				song_client,
+				song_sign,
+				tang_client,
+				tang_sign,
 				lane.into(),
 				prometheus_params.into(),
 			);
 		}
-		cli::Command::SubmitRialtoToMillauMessage {
-			rialto,
-			rialto_sign,
-			millau_sign,
+		cli::Command::SubmitSongToTangMessage {
+			song,
+			song_sign,
+			tang_sign,
 			lane,
 			message,
 			fee,
 		} => {
-			let rialto_client = RialtoClient::new(ConnectionParams {
-				host: rialto.rialto_host,
-				port: rialto.rialto_port,
+			let song_client = SongClient::new(ConnectionParams {
+				host: song.song_host,
+				port: song.song_port,
 			})
 			.await?;
-			let rialto_sign = RialtoSigningParams::from_suri(
-				&rialto_sign.rialto_signer,
-				rialto_sign.rialto_signer_password.as_deref(),
+			let song_sign = SongSigningParams::from_suri(
+				&song_sign.song_signer,
+				song_sign.song_signer_password.as_deref(),
 			)
-			.map_err(|e| format!("Failed to parse rialto-signer: {:?}", e))?;
-			let millau_sign = MillauSigningParams::from_suri(
-				&millau_sign.millau_signer,
-				millau_sign.millau_signer_password.as_deref(),
+			.map_err(|e| format!("Failed to parse song-signer: {:?}", e))?;
+			let tang_sign = TangSigningParams::from_suri(
+				&tang_sign.tang_signer,
+				tang_sign.tang_signer_password.as_deref(),
 			)
-			.map_err(|e| format!("Failed to parse millau-signer: {:?}", e))?;
+			.map_err(|e| format!("Failed to parse tang-signer: {:?}", e))?;
 
-			let millau_call = match message {
-				cli::ToMillauMessage::Remark => millau_runtime::Call::System(millau_runtime::SystemCall::remark(
-					format!(
-						"Unix time: {}",
-						std::time::SystemTime::now()
-							.duration_since(std::time::SystemTime::UNIX_EPOCH)
-							.unwrap_or_default()
-							.as_secs(),
-					)
-					.as_bytes()
-					.to_vec(),
-				)),
+			let tang_call = match message {
+				cli::ToTangMessage::Remark => {
+					tang_node_runtime::Call::System(tang_node_runtime::SystemCall::remark(
+						format!(
+							"Unix time: {}",
+							std::time::SystemTime::now()
+								.duration_since(std::time::SystemTime::UNIX_EPOCH)
+								.unwrap_or_default()
+								.as_secs(),
+						)
+						.as_bytes()
+						.to_vec(),
+					))
+				}
 			};
-			let millau_call_weight = millau_call.get_dispatch_info().weight;
+			let tang_call_weight = tang_call.get_dispatch_info().weight;
 
-			let rialto_sender_public: bp_rialto::AccountSigner = rialto_sign.signer.public().clone().into();
-			let rialto_account_id: bp_rialto::AccountId = rialto_sender_public.into_account();
-			let millau_origin_public = millau_sign.signer.public();
+			let song_sender_public: song_node_primitives::AccountSigner =
+				song_sign.signer.public().clone().into();
+			let song_account_id: song_node_primitives::AccountId =
+				song_sender_public.into_account();
+			let tang_origin_public = tang_sign.signer.public();
 
-			let mut millau_origin_signature_message = Vec::new();
-			millau_call.encode_to(&mut millau_origin_signature_message);
-			rialto_account_id.encode_to(&mut millau_origin_signature_message);
-			let millau_origin_signature = millau_sign.signer.sign(&millau_origin_signature_message);
+			let mut tang_origin_signature_message = Vec::new();
+			tang_call.encode_to(&mut tang_origin_signature_message);
+			song_account_id.encode_to(&mut tang_origin_signature_message);
+			let tang_origin_signature = tang_sign.signer.sign(&tang_origin_signature_message);
 
-			let rialto_call =
-				rialto_runtime::Call::BridgeMillauMessageLane(rialto_runtime::MessageLaneCall::send_message(
+			let song_call = song_node_runtime::Call::BridgeTangMessageLane(
+				song_node_runtime::MessageLaneCall::send_message(
 					lane.into(),
 					MessagePayload {
-						spec_version: millau_runtime::VERSION.spec_version,
-						weight: millau_call_weight,
+						spec_version: tang_node_runtime::VERSION.spec_version,
+						weight: tang_call_weight,
 						origin: CallOrigin::TargetAccount(
-							rialto_account_id,
-							millau_origin_public.into(),
-							millau_origin_signature.into(),
+							song_account_id,
+							tang_origin_public.into(),
+							tang_origin_signature.into(),
 						),
-						call: millau_call.encode(),
+						call: tang_call.encode(),
 					},
 					fee,
-				));
-
-			let signed_rialto_call = Rialto::sign_transaction(
-				&rialto_client,
-				&rialto_sign.signer,
-				rialto_client
-					.next_account_index(rialto_sign.signer.public().clone().into())
-					.await?,
-				rialto_call,
+				),
 			);
 
-			rialto_client
-				.submit_extrinsic(Bytes(signed_rialto_call.encode()))
+			let signed_song_call = Song::sign_transaction(
+				&song_client,
+				&song_sign.signer,
+				song_client
+					.next_account_index(song_sign.signer.public().clone().into())
+					.await?,
+				song_call,
+			);
+
+			song_client
+				.submit_extrinsic(Bytes(signed_song_call.encode()))
 				.await?;
 		}
 	}
