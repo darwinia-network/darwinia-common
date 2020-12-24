@@ -78,11 +78,11 @@ impl Chain for Song {
 	type Header = Header;
 }
 
-/// Maximal weight of single Rialto block.
+/// Maximal weight of single Song block.
 pub const MAXIMUM_BLOCK_WEIGHT: Weight = 2_000_000_000_000;
 /// Portion of block reserved for regular transactions.
 pub const AVAILABLE_BLOCK_RATIO: u32 = 75;
-/// Maximal weight of single Rialto extrinsic (65% of maximum block weight = 75% for regular
+/// Maximal weight of single Song extrinsic (65% of maximum block weight = 75% for regular
 /// transactions minus 10% for initialization).
 pub const MAXIMUM_EXTRINSIC_WEIGHT: Weight =
 	MAXIMUM_BLOCK_WEIGHT / 100 * (AVAILABLE_BLOCK_RATIO as Weight - 10);
@@ -98,6 +98,35 @@ pub const MAX_MESSAGES_IN_DELIVERY_TRANSACTION: MessageNonce = 128;
 pub const MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE: MessageNonce = 128;
 /// Maximal number of unconfirmed messages at inbound lane.
 pub const MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE: MessageNonce = 128;
+
+/// Name of the `SongHeaderApi::best_blocks` runtime method.
+pub const BEST_SONG_BLOCKS_METHOD: &str = "SongHeaderApi_best_blocks";
+/// Name of the `SongHeaderApi::finalized_block` runtime method.
+pub const FINALIZED_SONG_BLOCK_METHOD: &str = "SongHeaderApi_finalized_block";
+/// Name of the `SongHeaderApi::is_known_block` runtime method.
+pub const IS_KNOWN_SONG_BLOCK_METHOD: &str = "SongHeaderApi_is_known_block";
+/// Name of the `SongHeaderApi::incomplete_headers` runtime method.
+pub const INCOMPLETE_SONG_HEADERS_METHOD: &str = "SongHeaderApi_incomplete_headers";
+
+/// Name of the `ToSongOutboundLaneApi::messages_dispatch_weight` runtime method.
+pub const TO_SONG_MESSAGES_DISPATCH_WEIGHT_METHOD: &str =
+	"ToSongOutboundLaneApi_messages_dispatch_weight";
+/// Name of the `ToSongOutboundLaneApi::latest_generated_nonce` runtime method.
+pub const TO_SONG_LATEST_GENERATED_NONCE_METHOD: &str =
+	"ToSongOutboundLaneApi_latest_generated_nonce";
+/// Name of the `ToSongOutboundLaneApi::latest_received_nonce` runtime method.
+pub const TO_SONG_LATEST_RECEIVED_NONCE_METHOD: &str =
+	"ToSongOutboundLaneApi_latest_received_nonce";
+
+/// Name of the `FromSongInboundLaneApi::latest_received_nonce` runtime method.
+pub const FROM_SONG_LATEST_RECEIVED_NONCE_METHOD: &str =
+	"FromSongInboundLaneApi_latest_received_nonce";
+/// Name of the `FromSongInboundLaneApi::latest_onfirmed_nonce` runtime method.
+pub const FROM_SONG_LATEST_CONFIRMED_NONCE_METHOD: &str =
+	"FromSongInboundLaneApi_latest_confirmed_nonce";
+/// Name of the `FromSongInboundLaneApi::unrewarded_relayers_state` runtime method.
+pub const FROM_SONG_UNREWARDED_RELAYERS_STATE: &str =
+	"FromSongInboundLaneApi_unrewarded_relayers_state";
 
 /// Convert a 256-bit hash into an AccountId.
 pub struct AccountIdConverter;

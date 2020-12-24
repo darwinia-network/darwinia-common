@@ -109,6 +109,35 @@ pub const MAXIMUM_BLOCK_SIZE: u32 = 2 * 1024 * 1024;
 /// Maximal size of single normal Tang extrinsic (75% of maximal block size).
 pub const MAXIMUM_EXTRINSIC_SIZE: u32 = MAXIMUM_BLOCK_SIZE / 100 * AVAILABLE_BLOCK_RATIO;
 
+/// Name of the `TangHeaderApi::best_block` runtime method.
+pub const BEST_TANG_BLOCKS_METHOD: &str = "TangHeaderApi_best_blocks";
+/// Name of the `TangHeaderApi::finalized_block` runtime method.
+pub const FINALIZED_TANG_BLOCK_METHOD: &str = "TangHeaderApi_finalized_block";
+/// Name of the `TangHeaderApi::is_known_block` runtime method.
+pub const IS_KNOWN_TANG_BLOCK_METHOD: &str = "TangHeaderApi_is_known_block";
+/// Name of the `TangHeaderApi::incomplete_headers` runtime method.
+pub const INCOMPLETE_TANG_HEADERS_METHOD: &str = "TangHeaderApi_incomplete_headers";
+
+/// Name of the `ToTangOutboundLaneApi::messages_dispatch_weight` runtime method.
+pub const TO_TANG_MESSAGES_DISPATCH_WEIGHT_METHOD: &str =
+	"ToTangOutboundLaneApi_messages_dispatch_weight";
+/// Name of the `ToTangOutboundLaneApi::latest_received_nonce` runtime method.
+pub const TO_TANG_LATEST_RECEIVED_NONCE_METHOD: &str =
+	"ToTangOutboundLaneApi_latest_received_nonce";
+/// Name of the `ToTangOutboundLaneApi::latest_generated_nonce` runtime method.
+pub const TO_TANG_LATEST_GENERATED_NONCE_METHOD: &str =
+	"ToTangOutboundLaneApi_latest_generated_nonce";
+
+/// Name of the `FromTangInboundLaneApi::latest_received_nonce` runtime method.
+pub const FROM_TANG_LATEST_RECEIVED_NONCE_METHOD: &str =
+	"FromTangInboundLaneApi_latest_received_nonce";
+/// Name of the `FromTangInboundLaneApi::latest_onfirmed_nonce` runtime method.
+pub const FROM_TANG_LATEST_CONFIRMED_NONCE_METHOD: &str =
+	"FromTangInboundLaneApi_latest_confirmed_nonce";
+/// Name of the `FromTangInboundLaneApi::unrewarded_relayers_state` runtime method.
+pub const FROM_TANG_UNREWARDED_RELAYERS_STATE: &str =
+	"FromTangInboundLaneApi_unrewarded_relayers_state";
+
 sp_api::decl_runtime_apis! {
 	/// API for querying information about Tang headers from the Bridge Pallet instance.
 	///

@@ -14,75 +14,75 @@
 // You should have received a copy of the GNU General Public License
 // along with Parity Bridges Common.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Millau-to-Rialto headers sync entrypoint.
+//! Tang-to-Song headers sync entrypoint.
 
 use crate::{
 	headers_pipeline::{SubstrateHeadersSyncPipeline, SubstrateHeadersToSubstrate},
-	MillauClient, RialtoClient,
+	TangClient, SongClient,
 };
 
 use async_trait::async_trait;
-use bp_millau::{
-	BEST_MILLAU_BLOCKS_METHOD, FINALIZED_MILLAU_BLOCK_METHOD, INCOMPLETE_MILLAU_HEADERS_METHOD,
-	IS_KNOWN_MILLAU_BLOCK_METHOD,
+use tang_node_primitives::{
+	BEST_TANG_BLOCKS_METHOD, FINALIZED_TANG_BLOCK_METHOD, INCOMPLETE_TANG_HEADERS_METHOD,
+	IS_KNOWN_TANG_BLOCK_METHOD,
 };
 use headers_relay::sync_types::QueuedHeader;
-use relay_millau_client::{HeaderId as MillauHeaderId, Millau, SyncHeader as MillauSyncHeader};
-use relay_rialto_client::{BridgeMillauCall, Rialto, SigningParams as RialtoSigningParams};
+use relay_tang_client::{HeaderId as TangHeaderId, Tang, SyncHeader as TangSyncHeader};
+use relay_song_client::{BridgeTangCall, Song, SigningParams as SongSigningParams};
 use relay_substrate_client::{Error as SubstrateError, TransactionSignScheme};
 use sp_core::Pair;
 use sp_runtime::Justification;
 
-/// Millau-to-Rialto headers sync pipeline.
-pub(crate) type MillauHeadersToRialto =
-	SubstrateHeadersToSubstrate<Millau, MillauSyncHeader, Rialto, RialtoSigningParams>;
-/// Millau header in-the-queue.
-type QueuedMillauHeader = QueuedHeader<MillauHeadersToRialto>;
+/// Tang-to-Song headers sync pipeline.
+pub(crate) type TangHeadersToSong =
+	SubstrateHeadersToSubstrate<Tang, TangSyncHeader, Song, SongSigningParams>;
+/// Tang header in-the-queue.
+type QueuedTangHeader = QueuedHeader<TangHeadersToSong>;
 
 #[async_trait]
-impl SubstrateHeadersSyncPipeline for MillauHeadersToRialto {
-	const BEST_BLOCK_METHOD: &'static str = BEST_MILLAU_BLOCKS_METHOD;
-	const FINALIZED_BLOCK_METHOD: &'static str = FINALIZED_MILLAU_BLOCK_METHOD;
-	const IS_KNOWN_BLOCK_METHOD: &'static str = IS_KNOWN_MILLAU_BLOCK_METHOD;
-	const INCOMPLETE_HEADERS_METHOD: &'static str = INCOMPLETE_MILLAU_HEADERS_METHOD;
+impl SubstrateHeadersSyncPipeline for TangHeadersToSong {
+	const BEST_BLOCK_METHOD: &'static str = BEST_TANG_BLOCKS_METHOD;
+	const FINALIZED_BLOCK_METHOD: &'static str = FINALIZED_TANG_BLOCK_METHOD;
+	const IS_KNOWN_BLOCK_METHOD: &'static str = IS_KNOWN_TANG_BLOCK_METHOD;
+	const INCOMPLETE_HEADERS_METHOD: &'static str = INCOMPLETE_TANG_HEADERS_METHOD;
 
-	type SignedTransaction = <Rialto as TransactionSignScheme>::SignedTransaction;
+	type SignedTransaction = <Song as TransactionSignScheme>::SignedTransaction;
 
 	async fn make_submit_header_transaction(
 		&self,
-		header: QueuedMillauHeader,
+		header: QueuedTangHeader,
 	) -> Result<Self::SignedTransaction, SubstrateError> {
 		let account_id = self.target_sign.signer.public().as_array_ref().clone().into();
 		let nonce = self.target_client.next_account_index(account_id).await?;
-		let call = BridgeMillauCall::import_signed_header(header.header().clone().into_inner()).into();
-		let transaction = Rialto::sign_transaction(&self.target_client, &self.target_sign.signer, nonce, call);
+		let call = BridgeTangCall::import_signed_header(header.header().clone().into_inner()).into();
+		let transaction = Song::sign_transaction(&self.target_client, &self.target_sign.signer, nonce, call);
 		Ok(transaction)
 	}
 
 	async fn make_complete_header_transaction(
 		&self,
-		id: MillauHeaderId,
+		id: TangHeaderId,
 		completion: Justification,
 	) -> Result<Self::SignedTransaction, SubstrateError> {
 		let account_id = self.target_sign.signer.public().as_array_ref().clone().into();
 		let nonce = self.target_client.next_account_index(account_id).await?;
-		let call = BridgeMillauCall::finalize_header(id.1, completion).into();
-		let transaction = Rialto::sign_transaction(&self.target_client, &self.target_sign.signer, nonce, call);
+		let call = BridgeTangCall::finalize_header(id.1, completion).into();
+		let transaction = Song::sign_transaction(&self.target_client, &self.target_sign.signer, nonce, call);
 		Ok(transaction)
 	}
 }
 
-/// Run Millau-to-Rialto headers sync.
+/// Run Tang-to-Song headers sync.
 pub async fn run(
-	millau_client: MillauClient,
-	rialto_client: RialtoClient,
-	rialto_sign: RialtoSigningParams,
+	tang_client: TangClient,
+	song_client: SongClient,
+	song_sign: SongSigningParams,
 	metrics_params: Option<relay_utils::metrics::MetricsParams>,
 ) {
 	crate::headers_pipeline::run(
-		MillauHeadersToRialto::new(rialto_client.clone(), rialto_sign),
-		millau_client,
-		rialto_client,
+		TangHeadersToSong::new(song_client.clone(), song_sign),
+		tang_client,
+		song_client,
 		metrics_params,
 	)
 	.await;
