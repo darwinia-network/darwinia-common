@@ -250,13 +250,31 @@ pub fn tang_development_config() -> TangChainSpec {
 			}
 
 			tang_development_genesis(
-				vec![get_authority_keys_from_seed("Alice")],
+				vec![
+					get_authority_keys_from_seed("Alice"),
+					get_authority_keys_from_seed("Bob"),
+					get_authority_keys_from_seed("Charlie"),
+					get_authority_keys_from_seed("Dave"),
+					get_authority_keys_from_seed("Eve"),
+				],
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				vec![
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
 					get_account_id_from_seed::<sr25519::Public>("Bob"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie"),
+					get_account_id_from_seed::<sr25519::Public>("Dave"),
+					get_account_id_from_seed::<sr25519::Public>("Eve"),
+					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+					get_account_id_from_seed::<sr25519::Public>("George"),
+					get_account_id_from_seed::<sr25519::Public>("Harry"),
 					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
 					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+					get_account_id_from_seed::<sr25519::Public>("George//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Harry//stash"),
 				],
 				evm_accounts,
 			)
