@@ -56,7 +56,7 @@ type LightClient<RuntimeApi, Executor> =
 	sc_service::TLightClientWithBackend<Block, RuntimeApi, Executor, LightBackend>;
 
 native_executor_instance!(
-	pub PangolinExecutor,
+	pub SongExecutor,
 	song_node_runtime::api::dispatch,
 	song_node_runtime::native_version,
 );
@@ -585,12 +585,12 @@ pub fn drml_new_full(
 	),
 	ServiceError,
 > {
-	let (components, client) = new_full::<song_node_runtime::RuntimeApi, PangolinExecutor>(config)?;
+	let (components, client) = new_full::<song_node_runtime::RuntimeApi, SongExecutor>(config)?;
 
 	Ok((components, client))
 }
 
 /// Create a new DRML service for a light client.
 pub fn drml_new_light(config: Configuration) -> Result<TaskManager, ServiceError> {
-	new_light::<song_node_runtime::RuntimeApi, PangolinExecutor>(config)
+	new_light::<song_node_runtime::RuntimeApi, SongExecutor>(config)
 }

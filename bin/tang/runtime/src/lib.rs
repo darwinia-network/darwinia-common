@@ -316,8 +316,8 @@ type NegativeImbalance = <darwinia_balances::Module<Runtime, RingInstance> as Cu
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("Pangolin"),
-	impl_name: create_runtime_str!("Pangolin"),
+	spec_name: create_runtime_str!("Tang"),
+	impl_name: create_runtime_str!("Tang"),
 	authoring_version: 1,
 	spec_version: 2,
 	impl_version: 1,

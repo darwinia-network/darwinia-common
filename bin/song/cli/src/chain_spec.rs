@@ -20,17 +20,17 @@ use darwinia_evm::GenesisAccount;
 use song_node_primitives::*;
 use song_node_runtime::{constants::COIN, BalancesConfig as RingConfig, *};
 
-pub type PangolinChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
+pub type SongChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
 
 type AccountPublic = <Signature as Verify>::Signer;
 
-const PANGOLIN_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
+const SONG_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
-pub fn pangolin_config() -> Result<PangolinChainSpec, String> {
-	PangolinChainSpec::from_json_bytes(&include_bytes!("../../../res/pangolin/pangolin.json")[..])
+pub fn song_config() -> Result<SongChainSpec, String> {
+	SongChainSpec::from_json_bytes(&include_bytes!("../../../res/pangolin/pangolin.json")[..])
 }
 
-pub fn pangolin_session_keys(
+pub fn song_session_keys(
 	babe: BabeId,
 	grandpa: GrandpaId,
 	im_online: ImOnlineId,
@@ -89,16 +89,16 @@ pub fn get_authority_keys_from_seed(
 	)
 }
 
-pub fn pangolin_build_spec_config() -> PangolinChainSpec {
-	PangolinChainSpec::from_genesis(
-		"Pangolin",
-		"pangolin",
+pub fn song_build_spec_config() -> SongChainSpec {
+	SongChainSpec::from_genesis(
+		"Song",
+		"song",
 		ChainType::Live,
-		pangolin_build_spec_genesis,
+		song_build_spec_genesis,
 		vec![],
 		Some(
-			TelemetryEndpoints::new(vec![(PANGOLIN_TELEMETRY_URL.to_string(), 0)])
-				.expect("Pangolin telemetry url is valid; qed"),
+			TelemetryEndpoints::new(vec![(SONG_TELEMETRY_URL.to_string(), 0)])
+				.expect("Song telemetry url is valid; qed"),
 		),
 		None,
 		Some(properties()),
@@ -106,7 +106,7 @@ pub fn pangolin_build_spec_config() -> PangolinChainSpec {
 	)
 }
 
-fn pangolin_build_spec_genesis() -> GenesisConfig {
+fn song_build_spec_genesis() -> GenesisConfig {
 	const ROOT: &'static str = "0x72819fbc1b93196fa230243947c1726cbea7e33044c7eb6f736ff345561f9e4c";
 	const GENESIS_VALIDATOR: &'static str = "Alice";
 	const GENESIS_VALIDATOR_STASH: &'static str = "Alice//stash";
@@ -166,7 +166,7 @@ fn pangolin_build_spec_genesis() -> GenesisConfig {
 			keys: initial_authorities
 				.iter()
 				.cloned()
-				.map(|x| (x.0.clone(), x.0, pangolin_session_keys(x.2, x.3, x.4, x.5)))
+				.map(|x| (x.0.clone(), x.0, song_session_keys(x.2, x.3, x.4, x.5)))
 				.collect(),
 		}),
 		pallet_grandpa: Some(Default::default()),
@@ -225,10 +225,10 @@ fn pangolin_build_spec_genesis() -> GenesisConfig {
 	}
 }
 
-pub fn pangolin_development_config() -> PangolinChainSpec {
-	PangolinChainSpec::from_genesis(
+pub fn song_development_config() -> SongChainSpec {
+	SongChainSpec::from_genesis(
 		"Development",
-		"pangolin_dev",
+		"song_dev",
 		ChainType::Development,
 		|| {
 			let initial_evm_account = vec![
@@ -249,7 +249,7 @@ pub fn pangolin_development_config() -> PangolinChainSpec {
 				);
 			}
 
-			pangolin_development_genesis(
+			song_development_genesis(
 				vec![get_authority_keys_from_seed("Alice")],
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				vec![
@@ -269,7 +269,7 @@ pub fn pangolin_development_config() -> PangolinChainSpec {
 	)
 }
 
-fn pangolin_development_genesis(
+fn song_development_genesis(
 	initial_authorities: Vec<(
 		AccountId,
 		AccountId,
@@ -328,7 +328,7 @@ fn pangolin_development_genesis(
 			keys: initial_authorities
 				.iter()
 				.cloned()
-				.map(|x| (x.0.clone(), x.0, pangolin_session_keys(x.2, x.3, x.4, x.5)))
+				.map(|x| (x.0.clone(), x.0, song_session_keys(x.2, x.3, x.4, x.5)))
 				.collect(),
 		}),
 		pallet_grandpa: Some(Default::default()),

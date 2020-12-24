@@ -46,22 +46,22 @@ impl SubstrateCli for Cli {
 	fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
 		let id = if id == "" {
 			let n = get_exec_name().unwrap_or_default();
-			["pangolin"]
+			["tang"]
 				.iter()
 				.cloned()
 				.find(|&chain| n.starts_with(chain))
-				.unwrap_or("pangolin")
+				.unwrap_or("tang")
 		} else {
 			id
 		};
 
 		Ok(match id {
-			"pangolin" => Box::new(chain_spec::pangolin_config()?),
-			"pangolin-dev" | "dev" => Box::new(chain_spec::pangolin_development_config()),
-			"pangolin-genesis" => Box::new(chain_spec::pangolin_build_spec_config()),
-			path => Box::new(chain_spec::PangolinChainSpec::from_json_file(
-				PathBuf::from(path),
-			)?),
+			"tang" => Box::new(chain_spec::tang_config()?),
+			"tang-dev" | "dev" => Box::new(chain_spec::tang_development_config()),
+			"tang-genesis" => Box::new(chain_spec::tang_build_spec_config()),
+			path => Box::new(chain_spec::TangChainSpec::from_json_file(PathBuf::from(
+				path,
+			))?),
 		})
 	}
 }
@@ -111,7 +111,7 @@ pub fn run() -> sc_cli::Result<()> {
 			runner.async_run(|mut config| {
 				let (client, _, import_queue, task_manager) = service::new_chain_ops::<
 					service::tang_node_runtime::RuntimeApi,
-					service::PangolinExecutor,
+					service::TangExecutor,
 				>(&mut config)?;
 				Ok((cmd.run(client, import_queue), task_manager))
 			})
@@ -122,7 +122,7 @@ pub fn run() -> sc_cli::Result<()> {
 			runner.async_run(|mut config| {
 				let (client, _, _, task_manager) = service::new_chain_ops::<
 					service::tang_node_runtime::RuntimeApi,
-					service::PangolinExecutor,
+					service::TangExecutor,
 				>(&mut config)?;
 				Ok((cmd.run(client, config.database), task_manager))
 			})
@@ -133,7 +133,7 @@ pub fn run() -> sc_cli::Result<()> {
 			runner.async_run(|mut config| {
 				let (client, _, _, task_manager) = service::new_chain_ops::<
 					service::tang_node_runtime::RuntimeApi,
-					service::PangolinExecutor,
+					service::TangExecutor,
 				>(&mut config)?;
 				Ok((cmd.run(client, config.chain_spec), task_manager))
 			})
@@ -144,7 +144,7 @@ pub fn run() -> sc_cli::Result<()> {
 			runner.async_run(|mut config| {
 				let (client, _, import_queue, task_manager) = service::new_chain_ops::<
 					service::tang_node_runtime::RuntimeApi,
-					service::PangolinExecutor,
+					service::TangExecutor,
 				>(&mut config)?;
 				Ok((cmd.run(client, import_queue), task_manager))
 			})
@@ -159,7 +159,7 @@ pub fn run() -> sc_cli::Result<()> {
 			runner.async_run(|mut config| {
 				let (client, backend, _, task_manager) = service::new_chain_ops::<
 					service::tang_node_runtime::RuntimeApi,
-					service::PangolinExecutor,
+					service::TangExecutor,
 				>(&mut config)?;
 				Ok((cmd.run(client, backend), task_manager))
 			})
