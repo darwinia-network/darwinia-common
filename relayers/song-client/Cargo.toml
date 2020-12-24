@@ -1,19 +1,24 @@
 [package]
-name = "relay-rialto-client"
+name = "relay-song-client"
 version = "0.1.0"
-authors = ["Parity Technologies <admin@parity.io>"]
 edition = "2018"
-license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
+# TODO: more info
+
+[workspace]
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "1.3.4" }
-headers-relay = { path = "../headers-relay" }
-relay-substrate-client = { path = "../substrate-client" }
-relay-utils = { path = "../utils" }
+
+headers-relay               = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+relay-substrate-client      = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+relay-utils                 = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
 
 # Bridge dependencies
 
-rialto-runtime = { path = "../../bin/rialto/runtime" }
+song-node-runtime    = { path = "../../bin/song/runtime" }
+song-node-primitives = { path = "../../bin/song/primitives" }
+darwinia-ethereum-relay = {path = "../../frame/bridge/ethereum/relay"}
+
 
 # Substrate Dependencies
 
