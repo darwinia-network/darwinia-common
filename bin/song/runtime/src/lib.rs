@@ -692,7 +692,8 @@ impl pallet_session::Trait for Runtime {
 	type ValidatorIdOf = darwinia_staking::StashOf<Self>;
 	type ShouldEndSession = Babe;
 	type NextSessionRotation = Babe;
-	type SessionManager = pallet_session::historical::NoteHistoricalRoot<Self, Staking>;
+	// type SessionManager = pallet_session::historical::NoteHistoricalRoot<Self, Staking>;
+	type SessionManager = pallet_shift_session_manager::Module<Runtime>;
 	type SessionHandler = <SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = SessionKeys;
 	type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
@@ -1414,9 +1415,10 @@ impl_runtime_apis! {
 			_set_id: fg_primitives::SetId,
 			authority_id: GrandpaId,
 		) -> Option<fg_primitives::OpaqueKeyOwnershipProof> {
-			Historical::prove((fg_primitives::KEY_TYPE, authority_id))
-				.map(|p| p.encode())
-				.map(fg_primitives::OpaqueKeyOwnershipProof::new)
+			// Historical::prove((fg_primitives::KEY_TYPE, authority_id))
+			// 	.map(|p| p.encode())
+			// 	.map(fg_primitives::OpaqueKeyOwnershipProof::new)
+			None
 		}
 	}
 
