@@ -117,6 +117,7 @@ fn pangolin_build_spec_genesis() -> GenesisConfig {
 
 	const TOKEN_REDEEM_ADDRESS: &'static str = "0x49262B932E439271d05634c32978294C7Ea15d0C";
 	const DEPOSIT_REDEEM_ADDRESS: &'static str = "0x6EF538314829EfA8386Fc43386cB13B4e0A67D1e";
+	const SET_AUTHORITIES_ADDRESS: &'static str = "0x0000000000000000000000000000000000000000";
 	const RING_TOKEN_ADDRESS: &'static str = "0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0";
 	const KTON_TOKEN_ADDRESS: &'static str = "0x1994100c58753793D52c6f457f189aa3ce9cEe94";
 
@@ -189,6 +190,7 @@ fn pangolin_build_spec_genesis() -> GenesisConfig {
 		darwinia_ethereum_backing: Some(EthereumBackingConfig {
 			token_redeem_address: fixed_hex_bytes_unchecked!(TOKEN_REDEEM_ADDRESS, 20).into(),
 			deposit_redeem_address: fixed_hex_bytes_unchecked!(DEPOSIT_REDEEM_ADDRESS, 20).into(),
+			set_authorities_address: fixed_hex_bytes_unchecked!(SET_AUTHORITIES_ADDRESS, 20).into(),
 			ring_token_address: fixed_hex_bytes_unchecked!(RING_TOKEN_ADDRESS, 20).into(),
 			kton_token_address: fixed_hex_bytes_unchecked!(KTON_TOKEN_ADDRESS, 20).into(),
 			ring_locked: 1 << 56,
@@ -281,6 +283,7 @@ fn pangolin_development_genesis(
 
 	const TOKEN_REDEEM_ADDRESS: &'static str = "0x49262B932E439271d05634c32978294C7Ea15d0C";
 	const DEPOSIT_REDEEM_ADDRESS: &'static str = "0x6EF538314829EfA8386Fc43386cB13B4e0A67D1e";
+	const SET_AUTHORITIES_ADDRESS: &'static str = "0x0000000000000000000000000000000000000000";
 	const RING_TOKEN_ADDRESS: &'static str = "0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0";
 	const KTON_TOKEN_ADDRESS: &'static str = "0x1994100c58753793D52c6f457f189aa3ce9cEe94";
 
@@ -350,6 +353,7 @@ fn pangolin_development_genesis(
 		darwinia_ethereum_backing: Some(EthereumBackingConfig {
 			token_redeem_address: fixed_hex_bytes_unchecked!(TOKEN_REDEEM_ADDRESS, 20).into(),
 			deposit_redeem_address: fixed_hex_bytes_unchecked!(DEPOSIT_REDEEM_ADDRESS, 20).into(),
+			set_authorities_address: fixed_hex_bytes_unchecked!(SET_AUTHORITIES_ADDRESS, 20).into(),
 			ring_token_address: fixed_hex_bytes_unchecked!(RING_TOKEN_ADDRESS, 20).into(),
 			kton_token_address: fixed_hex_bytes_unchecked!(KTON_TOKEN_ADDRESS, 20).into(),
 			ring_locked: 1 << 56,
