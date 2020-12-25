@@ -1,13 +1,14 @@
 [package]
-authors    = ["Darwinia Network <hello@darwinia.network>"]
-build      = "build.rs"
-edition    = "2018"
-homepage   = "https://darwinia.network/"
-license    = "Unlicense"
-name       = "pangolin-runtime"
-readme     = "README.md"
-repository = "https://github.com/darwinia-network/darwinia-common/"
-version    = "1.0.2"
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+build       = "build.rs"
+description = "Darwinia Runtime Module Library Runtime"
+edition     = "2018"
+homepage    = "https://darwinia.network/"
+license     = "Unlicense"
+name        = "pangolin-runtime"
+readme      = "README.md"
+repository  = "https://github.com/darwinia-network/darwinia-common/"
+version     = "1.0.2"
 
 [dependencies]
 # crates

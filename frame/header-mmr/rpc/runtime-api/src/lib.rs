@@ -6,6 +6,8 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+// -- std ---
+use core::fmt::Debug;
 // --- crates ---
 use codec::{Codec, Decode, Encode};
 // --- substrate ---
@@ -36,7 +38,7 @@ impl_runtime_dispatch_info! {
 decl_runtime_apis! {
 	pub trait HeaderMMRApi<Hash>
 	where
-		Hash: core::fmt::Debug + Codec + MaybeDisplay + MaybeFromStr,
+		Hash: Debug + Codec + MaybeDisplay + MaybeFromStr,
 	{
 		fn gen_proof(
 			block_number_of_member_leaf: u64,
@@ -48,4 +50,4 @@ decl_runtime_apis! {
 #[derive(Debug, Default, Eq, PartialEq, Encode, Decode)]
 pub struct Proof<Hash>(pub Vec<Hash>)
 where
-	Hash: core::fmt::Debug;
+	Hash: Debug;
