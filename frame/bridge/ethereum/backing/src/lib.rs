@@ -76,7 +76,10 @@ use darwinia_support::{
 	balance::lock::*,
 	traits::{EthereumReceipt, OnDepositRedeem},
 };
-use ethereum_primitives::{receipt::EthereumTransactionIndex, EthereumAddress, U256};
+use ethereum_primitives::{
+	receipt::{EthereumTransactionIndex, LogEntry},
+	EthereumAddress, U256,
+};
 use types::*;
 
 pub trait Trait: frame_system::Trait {
@@ -98,6 +101,8 @@ pub trait Trait: frame_system::Trait {
 	type KtonCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
 	type AdvancedFee: Get<RingBalance<Self>>;
+
+	type SyncReward: Get<RingBalance<Self>>;
 
 	type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber>;
 
@@ -143,6 +148,8 @@ decl_error! {
 		AddressCF,
 		/// Asset - ALREADY REDEEMED
 		AssetAR,
+		/// Authorities Set - ALREADY SYNCED
+		AuthoritiesSetAR,
 		/// EthereumReceipt Proof - INVALID
 		ReceiptProofInv,
 		/// Eth Log - PARSING FAILED
@@ -165,10 +172,11 @@ decl_storage! {
 	trait Store for Module<T: Trait> as DarwiniaEthereumBacking {
 		pub VerifiedProof
 			get(fn verified_proof)
-			: map hasher(blake2_128_concat) EthereumTransactionIndex => Option<bool>;
+			: map hasher(blake2_128_concat) EthereumTransactionIndex => bool = false;
 
 		pub TokenRedeemAddress get(fn token_redeem_address) config(): EthereumAddress;
 		pub DepositRedeemAddress get(fn deposit_redeem_address) config(): EthereumAddress;
+		pub SetAuthoritiesAddress get(fn set_authorities_address) config(): EthereumAddress;
 
 		pub RingTokenAddress get(fn ring_token_address) config(): EthereumAddress;
 		pub KtonTokenAddress get(fn kton_token_address) config(): EthereumAddress;
@@ -214,6 +222,8 @@ decl_module! {
 
 		const AdvancedFee: RingBalance<T> = T::AdvancedFee::get();
 
+		const SyncReward: RingBalance<T> = T::SyncReward::get();
+
 		fn deposit_event() = default;
 
 		fn on_initialize(_n: BlockNumber<T>) -> Weight {
@@ -231,7 +241,7 @@ decl_module! {
 		pub fn redeem(origin, act: RedeemFor, proof: EthereumReceiptProofThing<T>) {
 			let redeemer = ensure_signed(origin)?;
 
-			if Self::redeem_status() {
+			if RedeemStatus::get() {
 				match act {
 					RedeemFor::Token => Self::redeem_token(&redeemer, &proof)?,
 					RedeemFor::Deposit => Self::redeem_deposit(&redeemer, &proof)?,
@@ -304,6 +314,25 @@ decl_module! {
 						/ 10 * 10 + 10
 				).saturated_into());
 			}
+		}
+
+		#[weight = 10_000_000]
+		fn sync_authorities_set(origin, proof: EthereumReceiptProofThing<T>) {
+			let bridger = ensure_signed(origin)?;
+			let tx_index = T::EthereumRelay::gen_receipt_index(&proof);
+
+			ensure!(!VerifiedProof::contains_key(tx_index), <Error<T>>::AuthoritiesSetAR);
+
+			let beneficiary = Self::parse_authorities_set_proof(&proof)?;
+
+			T::RingCurrency::transfer(
+				&Self::fee_account_id(),
+				&beneficiary,
+				T::SyncReward::get(), KeepAlive
+			)?;
+			T::EcdsaAuthorities::finish_authorities_change();
+
+			VerifiedProof::insert(tx_index, true);
 		}
 
 		/// Set a new ring redeem address.
@@ -416,8 +445,7 @@ impl<T: Trait> Module<T> {
 				.logs
 				.into_iter()
 				.find(|x| {
-					x.address == Self::token_redeem_address()
-						&& x.topics[0] == eth_event.signature()
+					x.address == TokenRedeemAddress::get() && x.topics[0] == eth_event.signature()
 				})
 				.ok_or(<Error<T>>::LogEntryNE)?;
 			let log = RawLog {
@@ -439,12 +467,12 @@ impl<T: Trait> Module<T> {
 				.ok_or(<Error<T>>::AddressCF)?;
 
 			ensure!(
-				token_address == Self::ring_token_address()
-					|| token_address == Self::kton_token_address(),
+				token_address == RingTokenAddress::get()
+					|| token_address == RingTokenAddress::get(),
 				<Error<T>>::AssetAR
 			);
 
-			token_address == Self::ring_token_address()
+			token_address == RingTokenAddress::get()
 		};
 
 		let redeemed_amount = {
@@ -459,14 +487,14 @@ impl<T: Trait> Module<T> {
 			Balance::try_from(amount)?
 		};
 		let darwinia_account = {
-			let raw_subkey = result.params[3]
+			let raw_account_id = result.params[3]
 				.value
 				.clone()
 				.to_bytes()
 				.ok_or(<Error<T>>::BytesCF)?;
-			debug::trace!(target: "ethereum-backing", "[ethereum-backing] Raw Subkey: {:?}", raw_subkey);
+			debug::trace!(target: "ethereum-backing", "[ethereum-backing] Raw Account: {:?}", raw_account_id);
 
-			Self::account_id_try_from_bytes(&raw_subkey)?
+			Self::account_id_try_from_bytes(&raw_account_id)?
 		};
 		debug::trace!(target: "ethereum-backing", "[ethereum-backing] Darwinia Account: {:?}", darwinia_account);
 
@@ -537,8 +565,7 @@ impl<T: Trait> Module<T> {
 				.logs
 				.iter()
 				.find(|&x| {
-					x.address == Self::deposit_redeem_address()
-						&& x.topics[0] == eth_event.signature()
+					x.address == DepositRedeemAddress::get() && x.topics[0] == eth_event.signature()
 				})
 				.ok_or(<Error<T>>::LogEntryNE)?;
 			let log = RawLog {
@@ -585,14 +612,14 @@ impl<T: Trait> Module<T> {
 			<RingBalance<T>>::saturated_from(redeemed_ring.saturated_into())
 		};
 		let darwinia_account = {
-			let raw_subkey = result.params[6]
+			let raw_account_id = result.params[6]
 				.value
 				.clone()
 				.to_bytes()
 				.ok_or(<Error<T>>::BytesCF)?;
-			debug::trace!(target: "ethereum-backing", "[ethereum-backing] Raw Subkey: {:?}", raw_subkey);
+			debug::trace!(target: "ethereum-backing", "[ethereum-backing] Raw Account: {:?}", raw_account_id);
 
-			Self::account_id_try_from_bytes(&raw_subkey)?
+			Self::account_id_try_from_bytes(&raw_account_id)?
 		};
 		debug::trace!(target: "ethereum-backing", "[ethereum-backing] Darwinia Account: {:?}", darwinia_account);
 
@@ -604,6 +631,64 @@ impl<T: Trait> Module<T> {
 			months,
 			fee,
 		))
+	}
+
+	fn parse_authorities_set_proof(
+		proof_record: &EthereumReceiptProofThing<T>,
+	) -> Result<AccountId<T>, DispatchError> {
+		let log = {
+			let verified_receipt = T::EthereumRelay::verify_receipt(proof_record)
+				.map_err(|_| <Error<T>>::ReceiptProofInv)?;
+			let eth_event = EthEvent {
+				name: "SetAuthoritiesEvent".into(),
+				inputs: vec![
+					EthEventParam {
+						name: "nonce".into(),
+						kind: ParamType::Uint(32),
+						indexed: true,
+					},
+					EthEventParam {
+						name: "authorities".into(),
+						kind: ParamType::Array(Box::new(ParamType::Address)),
+						indexed: false,
+					},
+					EthEventParam {
+						name: "beneficiary".into(),
+						kind: ParamType::FixedBytes(32),
+						indexed: false,
+					},
+				],
+				anonymous: false,
+			};
+			let LogEntry { topics, data, .. } = verified_receipt
+				.logs
+				.into_iter()
+				.find(|x| {
+					x.address == SetAuthoritiesAddress::get()
+						&& x.topics[0] == eth_event.signature()
+				})
+				.ok_or(<Error<T>>::LogEntryNE)?;
+
+			eth_event
+				.parse_log(RawLog {
+					topics: vec![topics[0]],
+					data,
+				})
+				.map_err(|_| <Error<T>>::EthLogPF)?
+		};
+		let beneficiary = {
+			let raw_account_id = log.params[2]
+				.value
+				.clone()
+				.to_bytes()
+				.ok_or(<Error<T>>::BytesCF)?;
+
+			debug::trace!(target: "ethereum-backing", "[ethereum-backing] Raw Account: {:?}", raw_account_id);
+
+			Self::account_id_try_from_bytes(&raw_account_id)?
+		};
+
+		Ok(beneficiary)
 	}
 
 	fn redeem_token(

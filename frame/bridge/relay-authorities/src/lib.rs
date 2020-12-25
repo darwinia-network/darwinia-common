@@ -98,7 +98,7 @@ decl_event! {
 		/// A New Authorities Request to be Signed. [message to sign]
 		NewAuthorities(RelayAuthorityMessage),
 		/// Authorities Signed. [term, new authorities, signatures]
-		AuthoritiesSetSigned(u32, Vec<RelayAuthoritySigner>, Vec<(AccountId, RelayAuthoritySignature)>),
+		AuthoritiesSetSigned(Term, Vec<RelayAuthoritySigner>, Vec<(AccountId, RelayAuthoritySignature)>),
 	}
 }
 
@@ -148,7 +148,7 @@ decl_storage! {
 		pub OldAuthorities get(fn old_authorities): Vec<RelayAuthorityT<T, I>>;
 
 		/// A term index counter, play the same role as nonce in extrinsic
-		pub AuthorityTerm get(fn authority_term): u32;
+		pub AuthorityTerm get(fn authority_term): Term,;
 
 		/// The state of current authorities set
 		///
@@ -505,7 +505,7 @@ decl_module! {
 			if Perbill::from_rational_approximation(signatures.len() as u32 + 1, old_authorities.len() as _)
 				>= T::SignThreshold::get()
 			{
-				Self::finish_authorities_change();
+				Self::wait_target_chain_authorities_change();
 				Self::deposit_event(RawEvent::AuthoritiesSetSigned(
 					<AuthorityTerm<I>>::get(),
 					<Authorities<T, I>>::get()
@@ -631,9 +631,9 @@ where
 		<SubmitDuration<T, I>>::mutate(|submit_duration_| *submit_duration_ += submit_duration);
 	}
 
-	pub fn finish_authorities_change() {
+	pub fn wait_target_chain_authorities_change() {
 		<AuthoritiesToSign<T, I>>::kill();
-		<AuthoritiesState<T, I>>::kill();
+		<AuthoritiesState<T, I>>::mutate(|authorities_state| authorities_state.1 = 0);
 
 		for account_id in <OldAuthoritiesLockToRemove<T, I>>::take() {
 			<RingCurrency<T, I>>::remove_lock(T::LockId::get(), &account_id);
@@ -721,6 +721,10 @@ where
 
 			Ok(())
 		});
+	}
+
+	fn finish_authorities_change() {
+		<AuthoritiesState<T, I>>::kill();
 	}
 }
 
