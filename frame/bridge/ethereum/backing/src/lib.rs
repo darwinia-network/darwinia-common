@@ -14,7 +14,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Darwinia.  If not, see <https://www.gnu.org/licenses/>.
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 //! Prototype module for cross chain assets backing.
 
@@ -306,8 +306,6 @@ decl_module! {
 			}
 		}
 
-		// --- Root Call ---
-
 		/// Set a new ring redeem address.
 		///
 		/// The dispatch origin of this call must be _Root_.
@@ -350,8 +348,6 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
-	// --- Immutable ---
-
 	/// The account ID of the backing pot.
 	///
 	/// This actually does computation. If you need to keep using it, then make sure you cache the
@@ -609,8 +605,6 @@ impl<T: Trait> Module<T> {
 			fee,
 		))
 	}
-
-	// --- Mutable ---
 
 	fn redeem_token(
 		redeemer: &T::AccountId,
