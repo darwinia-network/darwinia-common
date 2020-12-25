@@ -148,7 +148,7 @@ decl_storage! {
 		pub OldAuthorities get(fn old_authorities): Vec<RelayAuthorityT<T, I>>;
 
 		/// A term index counter, play the same role as nonce in extrinsic
-		pub AuthorityTerm get(fn authority_term): Term,;
+		pub AuthorityTerm get(fn authority_term): Term;
 
 		/// The state of current authorities set
 		///
@@ -633,7 +633,7 @@ where
 
 	pub fn wait_target_chain_authorities_change() {
 		<AuthoritiesToSign<T, I>>::kill();
-		<AuthoritiesState<T, I>>::mutate(|authorities_state| authorities_state.1 = 0);
+		<AuthoritiesState<T, I>>::mutate(|authorities_state| authorities_state.1 = 0.into());
 
 		for account_id in <OldAuthoritiesLockToRemove<T, I>>::take() {
 			<RingCurrency<T, I>>::remove_lock(T::LockId::get(), &account_id);
