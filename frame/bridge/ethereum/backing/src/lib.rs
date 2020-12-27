@@ -468,7 +468,7 @@ impl<T: Trait> Module<T> {
 
 			ensure!(
 				token_address == RingTokenAddress::get()
-					|| token_address == RingTokenAddress::get(),
+					|| token_address == KtonTokenAddress::get(),
 				<Error<T>>::AssetAR
 			);
 
