@@ -26,6 +26,8 @@ use codec::{Decode, Encode, FullCodec};
 use sp_runtime::RuntimeDebug;
 use sp_std::prelude::*;
 
+pub type Term = u32;
+
 pub trait Sign<BlockNumber> {
 	type Signature: Clone + Debug + PartialEq + FullCodec;
 	type Message: Clone + Debug + Default + PartialEq + FullCodec;
@@ -42,10 +44,14 @@ pub trait Sign<BlockNumber> {
 
 pub trait RelayAuthorityProtocol<BlockNumber> {
 	fn new_mmr_to_sign(block_number: BlockNumber);
+
+	fn finish_authorities_change();
 }
 // Only for test
 impl<BlockNumber> RelayAuthorityProtocol<BlockNumber> for () {
 	fn new_mmr_to_sign(_: BlockNumber) {}
+
+	fn finish_authorities_change() {}
 }
 
 pub trait MMR<BlockNumber, Root> {
