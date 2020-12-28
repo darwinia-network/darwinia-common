@@ -94,7 +94,7 @@ async fn run_command(command: cli::Command) -> Result<(), String> {
 							&song_client,
 							&song_sign.signer,
 							song_signer_next_index,
-							tang_node_runtime::SudoCall::sudo(Box::new(
+							song_node_runtime::SudoCall::sudo(Box::new(
 								song_node_runtime::BridgeTangCall::initialize(initialization_data)
 									.into(),
 							))
