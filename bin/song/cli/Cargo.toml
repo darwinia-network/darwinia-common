@@ -40,8 +40,12 @@ dvm-consensus                       = { path = "../../../client/dvm/consensus" }
 dvm-rpc                             = { path = "../../../client/dvm/rpc" }
 dvm-rpc-runtime-api                 = { path = "../../../frame/dvm/rpc/runtime-api" }
 # TODO: FORMAT
+# sub-sub bridge
 song-node-primitives                     = { path = "../primitives" }
 song-node-runtime                    = { path = "../runtime" }
+pallet-message-lane-rpc = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+bp-runtime              = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+bp-message-lane         = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
 # substrate
 frame-system-rpc-runtime-api               = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 pallet-im-online                           = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }

@@ -69,6 +69,7 @@ pub struct FullDeps<C, P, SC, B> {
 	pub babe: BabeDeps,
 	/// GRANDPA specific dependencies.
 	pub grandpa: GrandpaDeps<B>,
+	pub backend: Arc<B>,
 }
 
 /// Light client extra dependencies.
@@ -138,6 +139,7 @@ where
 		network,
 		babe,
 		grandpa,
+		backend,
 	} = deps;
 	let mut io = jsonrpc_core::IoHandler::default();
 
@@ -206,6 +208,61 @@ where
 		network,
 	)));
 	io.extend_with(Web3ApiServer::to_delegate(Web3Api::new(client)));
+
+	use bp_message_lane::{LaneId, MessageNonce};
+	use bp_runtime::InstanceId;
+	use pallet_message_lane_rpc::{MessageLaneApi, MessageLaneRpcHandler};
+	use song_node_runtime::tang_message::TANG_BRIDGE_INSTANCE;
+	use sp_core::storage::StorageKey;
+
+	/// Song runtime from message-lane RPC point of view.
+	struct SongMessageLaneKeys;
+	impl pallet_message_lane_rpc::Runtime for SongMessageLaneKeys {
+		fn message_key(
+			&self,
+			instance: &InstanceId,
+			lane: &LaneId,
+			nonce: MessageNonce,
+		) -> Option<StorageKey> {
+			match *instance {
+				TANG_BRIDGE_INSTANCE => {
+					Some(song_node_runtime::tang_message::message_key(lane, nonce))
+				}
+				_ => None,
+			}
+		}
+
+		fn outbound_lane_data_key(
+			&self,
+			instance: &InstanceId,
+			lane: &LaneId,
+		) -> Option<StorageKey> {
+			match *instance {
+				TANG_BRIDGE_INSTANCE => Some(
+					song_node_runtime::tang_message::outbound_lane_data_key(lane),
+				),
+				_ => None,
+			}
+		}
+
+		fn inbound_lane_data_key(
+			&self,
+			instance: &InstanceId,
+			lane: &LaneId,
+		) -> Option<StorageKey> {
+			match *instance {
+				TANG_BRIDGE_INSTANCE => {
+					Some(song_node_runtime::tang_message::inbound_lane_data_key(lane))
+				}
+				_ => None,
+			}
+		}
+	}
+	io.extend_with(MessageLaneApi::to_delegate(MessageLaneRpcHandler::new(
+		// no backend here, how to do with it
+		backend.clone(),
+		Arc::new(SongMessageLaneKeys),
+	)));
 
 	io
 }
