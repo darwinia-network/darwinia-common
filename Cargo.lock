@@ -1719,7 +1719,7 @@ dependencies = [
 
 [[package]]
 name = "drml"
-version = "1.0.6"
+version = "1.0.7"
 dependencies = [
  "array-bytes 1.2.3",
  "darwinia-balances-rpc",
@@ -1786,7 +1786,7 @@ dependencies = [
 
 [[package]]
 name = "drml-primitives"
-version = "1.0.6"
+version = "1.0.7"
 dependencies = [
  "sp-core",
  "sp-runtime",
@@ -5060,7 +5060,7 @@ dependencies = [
 
 [[package]]
 name = "pangolin-runtime"
-version = "1.0.6"
+version = "1.0.7"
 dependencies = [
  "array-bytes 0.3.0",
  "darwinia-balances",
