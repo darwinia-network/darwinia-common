@@ -12,7 +12,7 @@
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with Open Ethereum.  If not, see <http://www.gnu.org/licenses/>.
+// along with Open Ethereum. If not, see <http://www.gnu.org/licenses/>.
 
 //! Web3 rpc interface.
 use ethereum_types::H256;
