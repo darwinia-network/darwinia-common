@@ -634,6 +634,7 @@ where
 	pub fn wait_target_chain_authorities_change() {
 		<AuthoritiesToSign<T, I>>::kill();
 		<AuthoritiesState<T, I>>::mutate(|authorities_state| authorities_state.1 = 0.into());
+		<AuthorityTerm<I>>::mutate(|authority_term| *authority_term += 1);
 
 		for account_id in <OldAuthoritiesLockToRemove<T, I>>::take() {
 			<RingCurrency<T, I>>::remove_lock(T::LockId::get(), &account_id);
