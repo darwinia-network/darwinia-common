@@ -1,7 +1,7 @@
 [package]
 authors     = ["Darwinia Network <hello@darwinia.network>"]
 build       = "build.rs"
-description = "Darwinia Runtime Module Library Node"
+description = "Darwinia Tang Node"
 edition     = "2018"
 homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"
@@ -10,7 +10,6 @@ readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "1.0.1"
 
-# TODO: Consider rename this repo to darwinia-runtime-module-library
 [[bin]]
 name = "tang-node"
 
@@ -39,17 +38,6 @@ darwinia-staking-rpc-runtime-api    = { path = "../../../frame/staking/rpc/runti
 dvm-consensus                       = { path = "../../../client/dvm/consensus" }
 dvm-rpc                             = { path = "../../../client/dvm/rpc" }
 dvm-rpc-runtime-api                 = { path = "../../../frame/dvm/rpc/runtime-api" }
-# Sub bridge
-# TODO: format
-tang-node-primitives                     = { path = "../primitives" }
-tang-node-runtime                    = { path = "../runtime" }
-pallet-substrate-bridge = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
-pallet-message-lane-rpc = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
-bp-runtime              = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
-bp-message-lane         = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
-
-
-
 # substrate
 frame-system-rpc-runtime-api               = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 pallet-im-online                           = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
@@ -87,8 +75,13 @@ sp-transaction-pool                        = { git = "https://github.com/darwini
 sp-trie                                    = { features = ["memory-tracker"], git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 substrate-frame-rpc-system                 = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 substrate-prometheus-endpoint              = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-
-
+# sub-sub bridge
+tang-node-primitives                       = { path = "../primitives" }
+tang-node-runtime                          = { path = "../runtime" }
+pallet-message-lane-rpc 				   = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+pallet-substrate-bridge 				   = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+bp-message-lane         				   = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+bp-runtime              				   = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
 
 [build-dependencies]
 # substrate

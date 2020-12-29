@@ -1,6 +1,6 @@
 [package]
 authors     = ["Darwinia Network <hello@darwinia.network>"]
-description = "DRML node runtime primitives"
+description = "Tang node runtime primitives"
 edition     = "2018"
 homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"
@@ -10,14 +10,14 @@ version     = "1.0.1"
 
 [dependencies]
 # substrate primitives
-sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-std    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-api    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-
+sp-core        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-std         = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-api         = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-runtime     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+frame-support  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+# sub-sub bridge
+bp-message-lane 	= { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
 bp-runtime          = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
-bp-message-lane 	= { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear", default-features = false }
 
 [features]
 default = ["std"]

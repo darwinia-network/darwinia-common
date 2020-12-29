@@ -38,21 +38,6 @@ darwinia-support                    = { default-features = false, path = "../../
 darwinia-treasury                   = { default-features = false, path = "../../../frame/treasury" }
 darwinia-tron-backing               = { default-features = false, path = "../../../frame/bridge/tron/backing" }
 darwinia-vesting                    = { default-features = false, path = "../../../frame/vesting" }
-
-# Sub Bridge
-# TODO: format
-song-node-primitives                     = { default-features = false, path = "../primitives" }
-tang-node-primitives                     = { default-features = false, path = "../../tang/primitives" }
-pallet-bridge-call-dispatch 		     = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear", default-features = false }
-pallet-message-lane 					 = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear", default-features = false }
-pallet-shift-session-manager             = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear", default-features = false }
-pallet-substrate-bridge 				 = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear", default-features = false }
-bp-message-lane 				         = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear", default-features = false }
-bridge-runtime-common 				     = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear", default-features = false }
-bp-runtime 				     			 = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear", default-features = false }
-# TODO: replace with darwinia balances
-
-
 dvm-ethereum                        = { default-features = false, path = "../../../frame/dvm" }
 dvm-rpc-runtime-api                 = { default-features = false, path = "../../../frame/dvm/rpc/runtime-api" }
 ethereum-primitives                 = { default-features = false, path = "../../../primitives/ethereum-primitives" }
@@ -93,6 +78,16 @@ sp-staking                                 = { default-features = false, git = "
 sp-std                                     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-transaction-pool                        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-version                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+# sub-sub bridge
+bp-message-lane 				         = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+bp-runtime 				     			 = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+bridge-runtime-common 				     = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+pallet-bridge-call-dispatch 		     = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+pallet-message-lane 					 = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+pallet-shift-session-manager             = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+pallet-substrate-bridge 				 = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+song-node-primitives                     = { default-features = false, path = "../primitives" }
+tang-node-primitives                     = { default-features = false, path = "../../tang/primitives" }
 
 [build-dependencies]
 # substrate
@@ -103,7 +98,9 @@ default = ["std"]
 std     = [
 	"codec/std",
 	"serde",
-	"array-bytes/std",
+	"array-bytes/std","bp-message-lane/std",
+	"bp-runtime/std",
+	"bridge-runtime-common/std",
 	"darwinia-balances/std",
 	"darwinia-balances-rpc-runtime-api/std",
 	"darwinia-claims/std",
@@ -125,19 +122,6 @@ std     = [
 	"darwinia-treasury/std",
 	"darwinia-tron-backing/std",
 	"darwinia-vesting/std",
-	# Sub bridge
-	# TODO: format
-	# start
-	"tang-node-primitives/std",
-	"song-node-primitives/std",
-	"pallet-bridge-call-dispatch/std",
-	"pallet-message-lane/std",
-	"pallet-shift-session-manager/std",
-	"pallet-substrate-bridge/std",
-	"bp-message-lane/std",
-	"bridge-runtime-common/std",
-	"bp-runtime/std",
-	# end
 	"dvm-ethereum/std",
 	"dvm-rpc-runtime-api/std",
 	"ethereum-primitives/std",
@@ -148,20 +132,24 @@ std     = [
 	"pallet-authority-discovery/std",
 	"pallet-authorship/std",
 	"pallet-babe/std",
+	"pallet-bridge-call-dispatch/std",
 	"pallet-collective/std",
 	"pallet-finality-tracker/std",
 	"pallet-grandpa/std",
 	"pallet-im-online/std",
 	"pallet-membership/std",
+	"pallet-message-lane/std",
 	"pallet-offences/std",
 	"pallet-proxy/std",
 	"pallet-randomness-collective-flip/std",
 	"pallet-scheduler/std",
 	"pallet-session/std",
+	"pallet-shift-session-manager/std",
+	"pallet-substrate-bridge/std",
 	"pallet-sudo/std",
 	"pallet-timestamp/std",
-	"pallet-transaction-payment/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
+	"pallet-transaction-payment/std",
 	"sp-api/std",
 	"sp-application-crypto/std",
 	"sp-authority-discovery/std",
@@ -177,6 +165,8 @@ std     = [
 	"sp-std/std",
 	"sp-transaction-pool/std",
 	"sp-version/std",
+	"tang-node-primitives/std",
+	"song-node-primitives/std",
 ]
 
 with-tracing = ["frame-executive/with-tracing"]

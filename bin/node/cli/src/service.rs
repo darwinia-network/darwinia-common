@@ -244,7 +244,6 @@ where
 		let keystore = keystore.clone();
 		let transaction_pool = transaction_pool.clone();
 		let select_chain = select_chain.clone();
-		let backend = backend.clone();
 
 		move |deny_unsafe, is_authority, network, subscription_executor| -> RpcExtension {
 			let deps = FullDeps {
@@ -266,7 +265,6 @@ where
 					subscription_executor,
 					finality_provider: finality_proof_provider.clone(),
 				},
-				backend: backend.clone(),
 			};
 
 			rpc::create_full(deps, subscription_task_executor.clone())

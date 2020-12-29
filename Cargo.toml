@@ -1,10 +1,16 @@
 [workspace]
 members = [
 	# node
-	# bear - Skip temperary
-	# "bin/node/cli",
-	# "bin/node/primitives",
-	# "bin/node/runtime/pangolin",
+	"bin/node/cli",
+	"bin/node/primitives",
+	"bin/node/runtime/pangolin",
+	# sub-sub node
+	"bin/song/cli",
+	"bin/song/primitives",
+	"bin/song/runtime",
+	"bin/tang/cli",
+	"bin/tang/primitives",
+	"bin/tang/runtime",
 	# client
 	"client/cli",
 	"client/dvm/consensus",
@@ -45,15 +51,7 @@ members = [
 	"primitives/evm",
 	"primitives/merkle-patricia-trie",
 	"primitives/relay",
-	# sub-bridge
-	# TODO: FORMAT
-	"bin/tang/cli",
-	"bin/tang/primitives",
-	"bin/tang/runtime",
-	"bin/song/cli",
-	"bin/song/primitives",
-	"bin/song/runtime",
-	# client
+	# sub-sub relay
 	"relayers/song-client",
 	"relayers/tang-client",
 	"relayers/substrate"
