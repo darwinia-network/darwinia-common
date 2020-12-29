@@ -84,4 +84,25 @@ describe('Test Block RPC', function () {
 
 		expect(block.timestamp - previous_block.timestamp).to.be.eq(6);
 	});
+
+	it("should get transactions count by block number ", async function () {
+		expect(await web3.eth.getBlockTransactionCount(0)).to.equal(0);
+	});
+
+	it("should get transactions count by earliest block", async function () {
+		expect(await web3.eth.getBlockTransactionCount("earliest")).to.equal(0);
+	});
+
+	it("should get transactions count by latest block", async function () {
+		expect(await web3.eth.getBlockTransactionCount("latest")).to.equal(0);
+	});
+
+	it("should get transactions count by pending block", async function () {
+		expect(await web3.eth.getBlockTransactionCount("pending")).to.equal(0);
+	});
+
+	it("should return null if the block doesnt exist", async function () {
+		expect(await web3.eth.getBlockTransactionCount("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")).to.null;
+	});
+
 });

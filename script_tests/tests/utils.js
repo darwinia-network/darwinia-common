@@ -22,4 +22,8 @@ function customRequest(method, params) {
     })
 }
 
-exports.customRequest = customRequest;
+function fromDecimal(number){
+    return '0x' + new BigNumber((number).toString(10),10).toString(16);
+},
+
+exports.customRequest = {customRequest, fromDecimal};

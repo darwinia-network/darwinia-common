@@ -20,4 +20,8 @@ describe('Test RPC Constants', function () {
   it("block author should be 0x0000000000000000000000000000000000000000", async function () {
     expect(await web3.eth.getCoinbase()).to.equal("0x0000000000000000000000000000000000000000");
   });
+
+  it("should gas price is 0x0", async function () {
+    expect(await web3.eth.getGasPrice()).to.equal('0');
+  });
 });
