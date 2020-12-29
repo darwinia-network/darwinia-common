@@ -1,26 +1,22 @@
 const expect = require('chai').expect;
+const assert = require('chai').assert;
 const Web3 = require('web3');
 const utils = require('./utils');
-
+const conf = require('./config.js');
 
 describe('Test Net API', function () {
 
-    it.skip("should get current network ID", async function () {
-        var method = 'eth_getFilterLogs',
-        var params = [{
-            "fromBlock": utils.fromDecimal(log.block.blockHeader.number),
-            "toBlock": utils.fromDecimal(log.block.blockHeader.number)
+    it('should return a list of logs, when asking without defining an address and using toBlock "latest"', async function () {
+        const params = [{
+            "fromBlock": '0x0',
+            "toBlock": 'latest'
         }]
-        utils.customRequest('', )
-        expect(await web3.eth.net.getId()).to.be.equal("43");
+        const filterId = await utils.customRequest('eth_newFilter', params);
+        assert.isNumber(filterId);
+        const logs = await utils.customRequest('eth_getFilterLogs', [filterId]);
+        console.log(logs);
+        await utils.customRequest('eth_uninstallFilter', [filterId]);
     });
 
-    it("should check if the node is listening for peer", async function () {
-        expect(await web3.eth.net.isListening()).to.be.equal(true);
-    });
-
-    it("should get the number of peers connected to", async function () {
-        expect(await web3.eth.net.getPeerCount()).to.be.equal(0);
-    });
 });
 

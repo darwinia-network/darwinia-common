@@ -7,8 +7,8 @@ const web3 = new Web3(conf.host);
 
 describe('Test Net API', function () {
 
-    it.skip("should get current network ID", async function () {
-        expect(await web3.eth.net.getId()).to.be.equal("43");
+    it("should get current network ID", async function () {
+        expect(await web3.eth.net.getId()).to.be.equal(43);
     });
 
     it("should check if the node is listening for peer", async function () {

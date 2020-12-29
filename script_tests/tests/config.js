@@ -1,6 +1,7 @@
 const _ = require('underscore')
 
 const config = {
+  rpcMessageId: 1,
   host: 'ws://localhost:9944',
   // host: 'ws://t1.hkg.itering.com:9944',
   address: '0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b',
