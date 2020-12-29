@@ -177,7 +177,7 @@
 	},
 	"EthereumRelayHeaderParcel": {
 		"header": "EthereumHeader",
-		"mmr_root": "H256"
+		"parent_mmr_root": "H256"
 	},
 	"EthereumRelayProofs": {
 		"ethash_proof": "Vec<EthashProof>",
@@ -240,6 +240,7 @@
 			"_enum": {
 				"Any": null,
 				"NonTransfer": null,
+				"Governance": null,
 				"Staking": null,
 				"EthereumBridge": null
 			}
