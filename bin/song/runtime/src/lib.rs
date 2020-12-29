@@ -693,8 +693,7 @@ impl pallet_session::Trait for Runtime {
 	type ValidatorIdOf = darwinia_staking::StashOf<Self>;
 	type ShouldEndSession = Babe;
 	type NextSessionRotation = Babe;
-	// type SessionManager = pallet_session::historical::NoteHistoricalRoot<Self, Staking>;
-	type SessionManager = pallet_shift_session_manager::Module<Runtime>;
+	type SessionManager = pallet_session::historical::NoteHistoricalRoot<Self, Staking>;
 	type SessionHandler = <SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = SessionKeys;
 	type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
@@ -1158,8 +1157,6 @@ impl pallet_substrate_bridge::Trait for Runtime {
 	type BridgedChain = tang_node_primitives::Tang;
 }
 
-impl pallet_shift_session_manager::Trait for Runtime {}
-
 parameter_types! {
 	pub const MaxMessagesToPruneAtOnce: bp_message_lane::MessageNonce = 8;
 	pub const MaxUnrewardedRelayerEntriesAtInboundLane: bp_message_lane::MessageNonce =
@@ -1270,7 +1267,6 @@ construct_runtime!(
 		BridgeCallDispatch: pallet_bridge_call_dispatch::{Module, Event<T>},
 		BridgeTang: pallet_substrate_bridge::{Module, Call, Storage, Config<T>},
 		BridgeTangMessageLane: pallet_message_lane::{Module, Call, Event<T>},
-		ShiftSessionManager: pallet_shift_session_manager::{Module},
 	}
 );
 
