@@ -1,7 +1,6 @@
 const expect = require('chai').expect;
 const Web3 = require('web3');
 const utils = require('./utils');
-console.log(utils);
 
 const web3 = new Web3('http://localhost:9933');
 

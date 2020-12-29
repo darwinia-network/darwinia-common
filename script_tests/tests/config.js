@@ -517,69 +517,6 @@ const config = {
 			"type": "function"
 		}
 	],
-  logs: [{
-      eventName: "log4a", // for debug purposes only
-      call: '0x9dc2c8f5',
-      anonymous: true,
-      indexArgs: [true, 'msg.sender', '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'],
-      args: [-23, 42]
-  },{
-      eventName: "log4",
-      call: '0xfd408767',
-      anonymous: false,
-      indexArgs: [true, 'msg.sender', '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'],
-      args: [-23, 42]
-  },{
-      eventName: "log3a",
-      call: '0xe8beef5b',
-      anonymous: true,
-      indexArgs: [true, 'msg.sender', '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'],
-      args: [42]
-  },{
-      eventName: "log3",
-      call: '0xf38b0600',
-      anonymous: false,
-      indexArgs: [true, 'msg.sender', '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'],
-      args: [42]
-  },{
-      eventName: "log2a",
-      call: '0x76bc21d9',
-      anonymous: true,
-      indexArgs: [true, 'msg.sender'],
-      args: [42]
-  },{
-      eventName: "log2",
-      call: '0x102accc1',
-      anonymous: false,
-      indexArgs: [true, 'msg.sender'],
-      args: [42]
-  },{
-      eventName: "log1a",
-      call: '0x4e7ad367',
-      anonymous: true,
-      indexArgs: [true],
-      args: [42]
-  },{
-      eventName: "log1",
-      call: '0xb61c0503',
-      anonymous: false,
-      indexArgs: [true],
-      args: [42]
-  },{
-      eventName: "log0a",
-      call: '0xa6780857',
-      anonymous: true,
-      indexArgs: [],
-      args: [42]
-  },{
-      eventName: "log0",
-      call: '0x65538c73',
-      anonymous: false,
-      indexArgs: [],
-      args: [42]
-  }]  
 }
-
-config.logs.reverse();
 
 module.exports = config;

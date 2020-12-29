@@ -105,4 +105,8 @@ describe('Test Block RPC', function () {
 		expect(await web3.eth.getBlockTransactionCount("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")).to.null;
 	});
 
+  it('should return null when no uncle was found', async function(){
+    expect(await web3.eth.getUncle(0, 0)).to.be.null
+  });
+
 });
