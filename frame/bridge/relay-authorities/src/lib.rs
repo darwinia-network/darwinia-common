@@ -231,7 +231,7 @@ decl_module! {
 
 		const TermDuration: BlockNumber<T> = T::TermDuration::get();
 
-		const MaxCandidates: usize = T::MaxCandidates::get();
+		const MaxCandidates: u32 = T::MaxCandidates::get() as _;
 
 		const SignThreshold: Perbill = T::SignThreshold::get();
 
