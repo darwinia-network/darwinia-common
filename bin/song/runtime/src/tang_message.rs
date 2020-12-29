@@ -14,17 +14,20 @@ use frame_support::{
 use sp_core::storage::StorageKey;
 use sp_std::{convert::TryFrom, ops::RangeInclusive};
 
+/// Bridge-with-Tang instance id.
+pub const TANG_BRIDGE_INSTANCE: InstanceId = *b"tang";
+
 /// Message payload for Song -> Tang messages.
 pub type ToTangMessagePayload =
 	messages::source::FromThisChainMessagePayload<WithTangMessageBridge>;
 
-/// Message verifier for Song -> Tang messages.
-pub type ToTangMessageVerifier =
-	messages::source::FromThisChainMessageVerifier<WithTangMessageBridge>;
-
 /// Message payload for Tang -> Song messages.
 pub type FromTangMessagePayload =
 	messages::target::FromBridgedChainMessagePayload<WithTangMessageBridge>;
+
+/// Message verifier for Song -> Tang messages.
+pub type ToTangMessageVerifier =
+	messages::source::FromThisChainMessageVerifier<WithTangMessageBridge>;
 
 /// Call-dispatch based message dispatch for Tang -> Song messages.
 pub type FromTangMessageDispatch = messages::target::FromBridgedChainMessageDispatch<
@@ -40,10 +43,7 @@ type FromTangMessagesProof = messages::target::FromBridgedChainMessagesProof<Wit
 type ToTangMessagesDeliveryProof =
 	messages::source::FromBridgedChainMessagesDeliveryProof<WithTangMessageBridge>;
 
-/// Bridge-with-TANG instance id.
-pub const TANG_BRIDGE_INSTANCE: InstanceId = *b"tang";
-
-/// Tang <-> Song message bridge.
+/// Song <-> Tang message bridge.
 #[derive(RuntimeDebug, Clone, Copy)]
 pub struct WithTangMessageBridge;
 
@@ -135,7 +135,7 @@ impl TargetHeaderChain<ToTangMessagePayload, tang_node_primitives::AccountId> fo
 	type Error = &'static str;
 	// The proof is:
 	// - hash of the header this proof has been created with;
-	// - the storage proof of one or several keys;
+	// - the storage proof or one or several keys;
 	// - id of the lane we prove state of.
 	type MessagesDeliveryProof = ToTangMessagesDeliveryProof;
 
@@ -154,7 +154,7 @@ impl SourceHeaderChain<tang_node_primitives::Balance> for Tang {
 	type Error = &'static str;
 	// The proof is:
 	// - hash of the header this proof has been created with;
-	// - the storage proof of one or several keys;
+	// - the storage proof or one or several keys;
 	// - id of the lane we prove messages for;
 	// - inclusive range of messages nonces that are proved.
 	type MessagesProof = FromTangMessagesProof;

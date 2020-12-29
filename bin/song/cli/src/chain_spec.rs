@@ -17,14 +17,14 @@ use array_bytes::fixed_hex_bytes_unchecked;
 use darwinia_claims::ClaimsList;
 use darwinia_ethereum_relay::DagsMerkleRootsLoader as DagsMerkleRootsLoaderR;
 use darwinia_evm::GenesisAccount;
-use song_node_primitives::{derive_account_from_tang_id, AccountId, Balance, Signature};
+use song_node_primitives::{AccountId, Balance, Signature};
 use song_node_runtime::{constants::COIN, BalancesConfig as RingConfig, *};
 
 pub type SongChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
 
 type AccountPublic = <Signature as Verify>::Signer;
 
-const SONG_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
+const TANG_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
 pub fn song_config() -> Result<SongChainSpec, String> {
 	SongChainSpec::from_json_bytes(&include_bytes!("../../../res/pangolin/pangolin.json")[..])
@@ -97,7 +97,7 @@ pub fn song_build_spec_config() -> SongChainSpec {
 		song_build_spec_genesis,
 		vec![],
 		Some(
-			TelemetryEndpoints::new(vec![(SONG_TELEMETRY_URL.to_string(), 0)])
+			TelemetryEndpoints::new(vec![(TANG_TELEMETRY_URL.to_string(), 0)])
 				.expect("Song telemetry url is valid; qed"),
 		),
 		None,
@@ -275,10 +275,6 @@ pub fn song_development_config() -> SongChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 					get_account_id_from_seed::<sr25519::Public>("George//stash"),
 					get_account_id_from_seed::<sr25519::Public>("Harry//stash"),
-					derive_account_from_tang_id(bp_runtime::SourceAccount::Root),
-					derive_account_from_tang_id(bp_runtime::SourceAccount::Account(
-						get_account_id_from_seed::<sr25519::Public>("Dave"),
-					)),
 				],
 				evm_accounts,
 			)

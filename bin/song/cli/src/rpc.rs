@@ -212,8 +212,8 @@ where
 	use bp_message_lane::{LaneId, MessageNonce};
 	use bp_runtime::InstanceId;
 	use pallet_message_lane_rpc::{MessageLaneApi, MessageLaneRpcHandler};
-	use song_node_runtime::tang_message::TANG_BRIDGE_INSTANCE;
 	use sp_core::storage::StorageKey;
+	use song_node_runtime::tang_message::TANG_BRIDGE_INSTANCE;
 
 	/// Song runtime from message-lane RPC point of view.
 	struct SongMessageLaneKeys;
@@ -258,6 +258,7 @@ where
 			}
 		}
 	}
+
 	io.extend_with(MessageLaneApi::to_delegate(MessageLaneRpcHandler::new(
 		// no backend here, how to do with it
 		backend.clone(),

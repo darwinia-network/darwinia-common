@@ -10,11 +10,11 @@ version     = "1.0.1"
 
 [dependencies]
 # substrate primitives
-sp-core        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-std         = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-api         = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-runtime     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-frame-support  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-std    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-api    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 bp-runtime          = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
 bp-message-lane 	= { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear", default-features = false }
@@ -26,10 +26,10 @@ std = ["substrate-primitives-std"]
 
 substrate-primitives-std = [
 	"sp-core/std",
-	"sp-std/std",
 	"sp-runtime/std",
 	"sp-api/std",
-	"frame-support/std",
+	"sp-std/std",
+	"sp-runtime/std",
 	"bp-runtime/std",
 	"bp-message-lane/std",
 ]

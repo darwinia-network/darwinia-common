@@ -7785,6 +7785,7 @@ dependencies = [
  "log",
  "pallet-im-online",
  "pallet-message-lane-rpc",
+ "pallet-substrate-bridge",
  "pallet-transaction-payment-rpc",
  "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec",

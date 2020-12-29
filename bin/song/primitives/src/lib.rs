@@ -4,15 +4,16 @@
 #![warn(missing_docs)]
 
 // --- substrate ---
-use bp_message_lane::{LaneId, MessageNonce, UnrewardedRelayersState};
-use bp_runtime::Chain;
-use frame_support::weights::Weight;
 use sp_core::H256;
 use sp_runtime::{
 	generic,
-	traits::{BlakeTwo256, Convert, IdentifyAccount, Verify},
+	traits::{BlakeTwo256, IdentifyAccount, Verify},
 	MultiSignature, MultiSigner, OpaqueExtrinsic,
 };
+
+use bp_message_lane::{LaneId, MessageNonce, UnrewardedRelayersState};
+use bp_runtime::Chain;
+use frame_support::weights::Weight;
 use sp_std::prelude::*;
 
 /// An index to a block.
@@ -61,11 +62,11 @@ pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 /// Block type.
 pub type OpaqueBlock = generic::Block<Header, OpaqueExtrinsic>;
 
-/// The type of an object that can produce hashes on Song.
-pub type Hasher = BlakeTwo256;
-
 /// Public key of the chain account that may be used to verify signatures.
 pub type AccountSigner = MultiSigner;
+
+/// The type of an object that can produce hashes on Song.
+pub type Hasher = BlakeTwo256;
 
 /// Song chain
 pub struct Song;
@@ -78,8 +79,25 @@ impl Chain for Song {
 	type Header = Header;
 }
 
+/// Convert a 256-bit hash into an AccountId.
+pub struct AccountIdConverter;
+
+impl sp_runtime::traits::Convert<sp_core::H256, AccountId> for AccountIdConverter {
+	fn convert(hash: sp_core::H256) -> AccountId {
+		hash.to_fixed_bytes().into()
+	}
+}
+
+// TODO: may need to be updated after https://github.com/paritytech/parity-bridges-common/issues/78
+/// Maximal number of messages in single delivery transaction.
+pub const MAX_MESSAGES_IN_DELIVERY_TRANSACTION: MessageNonce = 1024;
+/// Maximal number of unrewarded relayer entries at inbound lane.
+pub const MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE: MessageNonce = 1024;
+/// Maximal number of unconfirmed messages at inbound lane.
+pub const MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE: MessageNonce = 1024;
+
 /// Maximal weight of single Song block.
-pub const MAXIMUM_BLOCK_WEIGHT: Weight = 2_000_000_000_000;
+pub const MAXIMUM_BLOCK_WEIGHT: Weight = 10_000_000_000;
 /// Portion of block reserved for regular transactions.
 pub const AVAILABLE_BLOCK_RATIO: u32 = 75;
 /// Maximal weight of single Song extrinsic (65% of maximum block weight = 75% for regular
@@ -87,19 +105,11 @@ pub const AVAILABLE_BLOCK_RATIO: u32 = 75;
 pub const MAXIMUM_EXTRINSIC_WEIGHT: Weight =
 	MAXIMUM_BLOCK_WEIGHT / 100 * (AVAILABLE_BLOCK_RATIO as Weight - 10);
 /// Maximal size of Song block.
-pub const MAXIMUM_BLOCK_SIZE: u32 = 5 * 1024 * 1024;
+pub const MAXIMUM_BLOCK_SIZE: u32 = 2 * 1024 * 1024;
 /// Maximal size of single normal Song extrinsic (75% of maximal block size).
 pub const MAXIMUM_EXTRINSIC_SIZE: u32 = MAXIMUM_BLOCK_SIZE / 100 * AVAILABLE_BLOCK_RATIO;
 
-// TODO: may need to be updated after https://github.com/paritytech/parity-bridges-common/issues/78
-/// Maximal number of messages in single delivery transaction.
-pub const MAX_MESSAGES_IN_DELIVERY_TRANSACTION: MessageNonce = 128;
-/// Maximal number of unrewarded relayer entries at inbound lane.
-pub const MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE: MessageNonce = 128;
-/// Maximal number of unconfirmed messages at inbound lane.
-pub const MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE: MessageNonce = 128;
-
-/// Name of the `SongHeaderApi::best_blocks` runtime method.
+/// Name of the `SongHeaderApi::best_block` runtime method.
 pub const BEST_SONG_BLOCKS_METHOD: &str = "SongHeaderApi_best_blocks";
 /// Name of the `SongHeaderApi::finalized_block` runtime method.
 pub const FINALIZED_SONG_BLOCK_METHOD: &str = "SongHeaderApi_finalized_block";
@@ -111,12 +121,12 @@ pub const INCOMPLETE_SONG_HEADERS_METHOD: &str = "SongHeaderApi_incomplete_heade
 /// Name of the `ToSongOutboundLaneApi::messages_dispatch_weight` runtime method.
 pub const TO_SONG_MESSAGES_DISPATCH_WEIGHT_METHOD: &str =
 	"ToSongOutboundLaneApi_messages_dispatch_weight";
-/// Name of the `ToSongOutboundLaneApi::latest_generated_nonce` runtime method.
-pub const TO_SONG_LATEST_GENERATED_NONCE_METHOD: &str =
-	"ToSongOutboundLaneApi_latest_generated_nonce";
 /// Name of the `ToSongOutboundLaneApi::latest_received_nonce` runtime method.
 pub const TO_SONG_LATEST_RECEIVED_NONCE_METHOD: &str =
 	"ToSongOutboundLaneApi_latest_received_nonce";
+/// Name of the `ToSongOutboundLaneApi::latest_generated_nonce` runtime method.
+pub const TO_SONG_LATEST_GENERATED_NONCE_METHOD: &str =
+	"ToSongOutboundLaneApi_latest_generated_nonce";
 
 /// Name of the `FromSongInboundLaneApi::latest_received_nonce` runtime method.
 pub const FROM_SONG_LATEST_RECEIVED_NONCE_METHOD: &str =
@@ -127,28 +137,6 @@ pub const FROM_SONG_LATEST_CONFIRMED_NONCE_METHOD: &str =
 /// Name of the `FromSongInboundLaneApi::unrewarded_relayers_state` runtime method.
 pub const FROM_SONG_UNREWARDED_RELAYERS_STATE: &str =
 	"FromSongInboundLaneApi_unrewarded_relayers_state";
-
-/// Convert a 256-bit hash into an AccountId.
-pub struct AccountIdConverter;
-
-impl Convert<sp_core::H256, AccountId> for AccountIdConverter {
-	fn convert(hash: sp_core::H256) -> AccountId {
-		hash.to_fixed_bytes().into()
-	}
-}
-
-// We use this to get the account on Song (target) which is derived from Tang's (source)
-// account. We do this so we can fund the derived account on Song at Genesis to it can pay
-// transaction fees.
-//
-// The reason we can use the same `AccountId` type for both chains is because they share the same
-// development seed phrase.
-//
-// Note that this should only be used for testing.
-pub fn derive_account_from_tang_id(id: bp_runtime::SourceAccount<AccountId>) -> AccountId {
-	let encoded_id = bp_runtime::derive_account_id(*b"tang", id);
-	AccountIdConverter::convert(encoded_id)
-}
 
 sp_api::decl_runtime_apis! {
 	/// API for querying information about Song headers from the Bridge Pallet instance.

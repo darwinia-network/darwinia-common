@@ -305,6 +305,13 @@ type Executive = frame_executive::Executive<
 	AllModules,
 	CustomOnRuntimeUpgrade,
 >;
+
+pub use darwinia_balances::Call as BalancesCall;
+pub use frame_system::Call as SystemCall;
+pub use pallet_message_lane::Call as MessageLaneCall;
+pub use pallet_substrate_bridge::Call as BridgeTangCall;
+pub use pallet_sudo::Call as SudoCall;
+
 /// The payload being signed in transactions.
 pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 /// An index to a block.
@@ -328,12 +335,6 @@ type Ring = Balances;
 type NegativeImbalance = <darwinia_balances::Module<Runtime, RingInstance> as Currency<
 	<Runtime as frame_system::Trait>::AccountId,
 >>::NegativeImbalance;
-
-pub use darwinia_balances::Call as BalancesCall;
-pub use frame_system::Call as SystemCall;
-pub use pallet_message_lane::Call as MessageLaneCall;
-pub use pallet_substrate_bridge::Call as BridgeTangCall;
-pub use pallet_sudo::Call as SudoCall;
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
@@ -1142,10 +1143,7 @@ impl dvm_ethereum::Trait for Runtime {
 	type RingCurrency = Balances;
 }
 
-impl pallet_substrate_bridge::Trait for Runtime {
-	type BridgedChain = tang_node_primitives::Tang;
-}
-
+// Sub bridge
 impl pallet_bridge_call_dispatch::Trait for Runtime {
 	type Event = Event;
 	type MessageId = (bp_message_lane::LaneId, bp_message_lane::MessageNonce);
@@ -1156,17 +1154,20 @@ impl pallet_bridge_call_dispatch::Trait for Runtime {
 	type AccountIdConverter = song_node_primitives::AccountIdConverter;
 }
 
-// TODO: Can we remove this?
+impl pallet_substrate_bridge::Trait for Runtime {
+	type BridgedChain = tang_node_primitives::Tang;
+}
+
 impl pallet_shift_session_manager::Trait for Runtime {}
 
 parameter_types! {
 	pub const MaxMessagesToPruneAtOnce: bp_message_lane::MessageNonce = 8;
 	pub const MaxUnrewardedRelayerEntriesAtInboundLane: bp_message_lane::MessageNonce =
-		song_node_primitives::MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE;
+	song_node_primitives::MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE;
 	pub const MaxUnconfirmedMessagesAtInboundLane: bp_message_lane::MessageNonce =
-		song_node_primitives::MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE;
+	song_node_primitives::MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE;
 	pub const MaxMessagesInDeliveryTransaction: bp_message_lane::MessageNonce =
-		song_node_primitives::MAX_MESSAGES_IN_DELIVERY_TRANSACTION;
+	song_node_primitives::MAX_MESSAGES_IN_DELIVERY_TRANSACTION;
 }
 
 impl pallet_message_lane::Trait for Runtime {
@@ -1265,9 +1266,10 @@ construct_runtime!(
 
 		EthereumRelayAuthorities: darwinia_relay_authorities::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
 
+		// Sub bridge
 		BridgeTang: pallet_substrate_bridge::{Module, Call, Storage, Config<T>},
-		BridgeCallDispatch: pallet_bridge_call_dispatch::{Module, Event<T>},
 		BridgeTangMessageLane: pallet_message_lane::{Module, Call, Event<T>},
+		BridgeCallDispatch: pallet_bridge_call_dispatch::{Module, Event<T>},
 		ShiftSessionManager: pallet_shift_session_manager::{Module},
 	}
 );
