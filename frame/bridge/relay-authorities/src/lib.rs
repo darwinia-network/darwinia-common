@@ -227,7 +227,15 @@ decl_module! {
 	{
 		type Error = Error<T, I>;
 
-		const LOCK_ID: LockIdentifier = T::LockId::get();
+		const LockId: LockIdentifier = T::LockId::get();
+
+		const TermDuration: BlockNumber<T> = T::TermDuration::get();
+
+		const MaxCandidates: u32 = T::MaxCandidates::get() as _;
+
+		const SignThreshold: Perbill = T::SignThreshold::get();
+
+		const SubmitDuration: BlockNumber<T> = T::SubmitDuration::get();
 
 		fn deposit_event() = default;
 
@@ -634,6 +642,7 @@ where
 	pub fn wait_target_chain_authorities_change() {
 		<AuthoritiesToSign<T, I>>::kill();
 		<AuthoritiesState<T, I>>::mutate(|authorities_state| authorities_state.1 = 0.into());
+		<AuthorityTerm<I>>::mutate(|authority_term| *authority_term += 1);
 
 		for account_id in <OldAuthoritiesLockToRemove<T, I>>::take() {
 			<RingCurrency<T, I>>::remove_lock(T::LockId::get(), &account_id);
