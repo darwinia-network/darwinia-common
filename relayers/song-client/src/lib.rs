@@ -40,7 +40,7 @@ impl ChainBase for Song {
 
 impl Chain for Song {
 	const NAME: &'static str = "Song";
-	const AVERAGE_BLOCK_INTERVAL: Duration = Duration::from_secs(5);
+	const AVERAGE_BLOCK_INTERVAL: Duration = Duration::from_secs(6);
 
 	type AccountId = song_node_runtime::AccountId;
 	type Index = song_node_runtime::Index;

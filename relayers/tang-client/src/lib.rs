@@ -40,7 +40,7 @@ impl ChainBase for Tang {
 
 impl Chain for Tang {
 	const NAME: &'static str = "Tang";
-	const AVERAGE_BLOCK_INTERVAL: Duration = Duration::from_secs(5);
+	const AVERAGE_BLOCK_INTERVAL: Duration = Duration::from_secs(6);
 
 	type AccountId = tang_node_runtime::AccountId;
 	type Index = tang_node_runtime::Index;
