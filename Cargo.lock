@@ -640,7 +640,7 @@ dependencies = [
 [[package]]
 name = "bp-message-dispatch"
 version = "0.1.0"
-source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#29408b259879d37ad9623eb4369badf4f4d32e90"
+source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#5bf5b9333257ca35c0de4023b122e0509c5e52f9"
 dependencies = [
  "bp-runtime",
  "parity-scale-codec",
@@ -649,7 +649,7 @@ dependencies = [
 [[package]]
 name = "bp-message-lane"
 version = "0.1.0"
-source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#29408b259879d37ad9623eb4369badf4f4d32e90"
+source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#5bf5b9333257ca35c0de4023b122e0509c5e52f9"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -660,7 +660,7 @@ dependencies = [
 [[package]]
 name = "bp-runtime"
 version = "0.1.0"
-source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#29408b259879d37ad9623eb4369badf4f4d32e90"
+source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#5bf5b9333257ca35c0de4023b122e0509c5e52f9"
 dependencies = [
  "frame-support",
  "num-traits",
@@ -674,7 +674,7 @@ dependencies = [
 [[package]]
 name = "bridge-runtime-common"
 version = "0.1.0"
-source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#29408b259879d37ad9623eb4369badf4f4d32e90"
+source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#5bf5b9333257ca35c0de4023b122e0509c5e52f9"
 dependencies = [
  "bp-message-dispatch",
  "bp-message-lane",
@@ -3157,7 +3157,7 @@ dependencies = [
 [[package]]
 name = "headers-relay"
 version = "0.1.0"
-source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#29408b259879d37ad9623eb4369badf4f4d32e90"
+source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#5bf5b9333257ca35c0de4023b122e0509c5e52f9"
 dependencies = [
  "async-std",
  "async-trait",
@@ -4525,7 +4525,7 @@ dependencies = [
 [[package]]
 name = "messages-relay"
 version = "0.1.0"
-source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#29408b259879d37ad9623eb4369badf4f4d32e90"
+source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#5bf5b9333257ca35c0de4023b122e0509c5e52f9"
 dependencies = [
  "async-std",
  "async-trait",
@@ -4985,7 +4985,7 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-call-dispatch"
 version = "0.1.0"
-source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#29408b259879d37ad9623eb4369badf4f4d32e90"
+source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#5bf5b9333257ca35c0de4023b122e0509c5e52f9"
 dependencies = [
  "bp-message-dispatch",
  "bp-runtime",
@@ -5086,7 +5086,7 @@ dependencies = [
 [[package]]
 name = "pallet-message-lane"
 version = "0.1.0"
-source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#29408b259879d37ad9623eb4369badf4f4d32e90"
+source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#5bf5b9333257ca35c0de4023b122e0509c5e52f9"
 dependencies = [
  "bp-message-lane",
  "bp-runtime",
@@ -5103,7 +5103,7 @@ dependencies = [
 [[package]]
 name = "pallet-message-lane-rpc"
 version = "0.1.0"
-source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#29408b259879d37ad9623eb4369badf4f4d32e90"
+source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#5bf5b9333257ca35c0de4023b122e0509c5e52f9"
 dependencies = [
  "bp-message-lane",
  "bp-runtime",
@@ -5201,7 +5201,7 @@ dependencies = [
 [[package]]
 name = "pallet-shift-session-manager"
 version = "0.1.0"
-source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#29408b259879d37ad9623eb4369badf4f4d32e90"
+source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#5bf5b9333257ca35c0de4023b122e0509c5e52f9"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5214,7 +5214,7 @@ dependencies = [
 [[package]]
 name = "pallet-substrate-bridge"
 version = "0.1.0"
-source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#29408b259879d37ad9623eb4369badf4f4d32e90"
+source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#5bf5b9333257ca35c0de4023b122e0509c5e52f9"
 dependencies = [
  "bp-runtime",
  "finality-grandpa",
@@ -6351,7 +6351,7 @@ dependencies = [
 [[package]]
 name = "relay-substrate-client"
 version = "0.1.0"
-source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#29408b259879d37ad9623eb4369badf4f4d32e90"
+source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#5bf5b9333257ca35c0de4023b122e0509c5e52f9"
 dependencies = [
  "async-std",
  "async-trait",
@@ -6397,7 +6397,7 @@ dependencies = [
 [[package]]
 name = "relay-utils"
 version = "0.1.0"
-source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#29408b259879d37ad9623eb4369badf4f4d32e90"
+source = "git+https://github.com/AsceticBear/parity-bridges-common.git?branch=bear#5bf5b9333257ca35c0de4023b122e0509c5e52f9"
 dependencies = [
  "ansi_term 0.12.1",
  "async-std",

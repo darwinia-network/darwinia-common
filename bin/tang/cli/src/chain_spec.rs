@@ -17,7 +17,7 @@ use array_bytes::fixed_hex_bytes_unchecked;
 use darwinia_claims::ClaimsList;
 use darwinia_ethereum_relay::DagsMerkleRootsLoader as DagsMerkleRootsLoaderR;
 use darwinia_evm::GenesisAccount;
-use tang_node_primitives::{AccountId, Balance, Signature};
+use tang_node_primitives::{derive_account_from_song_id, AccountId, Balance, Signature};
 use tang_node_runtime::{constants::COIN, BalancesConfig as RingConfig, *};
 
 pub type TangChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
@@ -275,6 +275,9 @@ pub fn tang_development_config() -> TangChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 					get_account_id_from_seed::<sr25519::Public>("George//stash"),
 					get_account_id_from_seed::<sr25519::Public>("Harry//stash"),
+					derive_account_from_song_id(bp_runtime::SourceAccount::Account(
+						get_account_id_from_seed::<sr25519::Public>("Dave"),
+					)),
 				],
 				evm_accounts,
 			)
