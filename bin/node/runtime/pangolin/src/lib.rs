@@ -299,7 +299,7 @@ type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllModules,
-	// CustomOnRuntimeUpgrade,
+	CustomOnRuntimeUpgrade,
 >;
 /// The payload being signed in transactions.
 type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
@@ -315,7 +315,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("Pangolin"),
 	impl_name: create_runtime_str!("Pangolin"),
 	authoring_version: 1,
-	spec_version: 3,
+	spec_version: 7,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -1575,12 +1575,19 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 	}
 }
 
-// pub struct CustomOnRuntimeUpgrade;
-// impl frame_support::traits::OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
-// 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-// 		// --- substrate ---
-// 		use frame_support::migration::*;
+pub struct CustomOnRuntimeUpgrade;
+impl frame_support::traits::OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
+	fn on_runtime_upgrade() -> frame_support::weights::Weight {
+		// --- substrate ---
+		use frame_support::migration::*;
 
-// 		<Runtime as frame_system::Trait>::MaximumBlockWeight::get()
-// 	}
-// }
+		put_storage_value(
+			b"DarwiniaEthereumBacking",
+			b"SetAuthoritiesAddress",
+			&[],
+			array_bytes::hex_str_array_unchecked!("0xE4A2892599Ad9527D76Ce6E26F93620FA7396D85", 20),
+		);
+
+		<Runtime as frame_system::Trait>::MaximumBlockWeight::get()
+	}
+}

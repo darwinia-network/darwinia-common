@@ -53,8 +53,11 @@ impl ExtBuilder {
 				20
 			)
 			.into(),
-			// TODO
-			set_authorities_address: Default::default(),
+			set_authorities_address: fixed_hex_bytes_unchecked!(
+				"0xE4A2892599Ad9527D76Ce6E26F93620FA7396D85",
+				20
+			)
+			.into(),
 			ring_token_address: fixed_hex_bytes_unchecked!(
 				"0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0",
 				20

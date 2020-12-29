@@ -81,7 +81,7 @@ impl WeightInfo for () {}
 
 decl_error! {
 	pub enum Error for Module<T: Trait<I>, I: Instance> {
-		/// Relay Parcel - ALREADY RELAIED
+		/// Relay Parcel - ALREADY RELAYED
 		RelayParcelAR,
 		/// Round - MISMATCHED
 		RoundMis,
@@ -701,9 +701,9 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 						relay_header_parcels.push(relay_header_parcel);
 					}
 				}
-				// No relayer response for the lastest round
+				// No relayer response for the latest round
 				(_, 0) => {
-					trace!(target: "relayer-game", "   >  All Relayers Abstain, Settle Abanbon");
+					trace!(target: "relayer-game", "   >  All Relayers Abstain, Settle Abandon");
 
 					Self::settle_abandon(&game_id);
 				}
