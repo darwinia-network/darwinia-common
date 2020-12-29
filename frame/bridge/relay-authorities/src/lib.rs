@@ -227,7 +227,15 @@ decl_module! {
 	{
 		type Error = Error<T, I>;
 
-		const LOCK_ID: LockIdentifier = T::LockId::get();
+		const LockId: LockIdentifier = T::LockId::get();
+
+		const TermDuration: BlockNumber<T> = T::TermDuration::get();
+
+		const MaxCandidates: usize = T::MaxCandidates::get();
+
+		const SignThreshold: PerBill = T::SignThreshold::get();
+
+		const SubmitDuration: BlockNumber<T> = T::SubmitDuration::get();
 
 		fn deposit_event() = default;
 
