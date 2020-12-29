@@ -233,7 +233,7 @@ decl_module! {
 
 		const MaxCandidates: usize = T::MaxCandidates::get();
 
-		const SignThreshold: PerBill = T::SignThreshold::get();
+		const SignThreshold: Perbill = T::SignThreshold::get();
 
 		const SubmitDuration: BlockNumber<T> = T::SubmitDuration::get();
 
