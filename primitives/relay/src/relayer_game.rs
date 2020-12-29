@@ -55,7 +55,6 @@ pub trait Relayable {
 
 	// TODO: optimize this
 	fn verify_relay_proofs(
-		// TODO: doc
 		// This Id is use for getting the mmr root's block's number
 		// For ethereum
 		// 	header id = block number

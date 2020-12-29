@@ -1,17 +1,17 @@
 [package]
-authors     = ["Darwinia Network <hello@darwinia.network>"]
-build       = "build.rs"
-description = "Darwinia Runtime Module Library Runtime"
-edition     = "2018"
-homepage    = "https://darwinia.network/"
-license     = "Unlicense"
-name        = "pangolin-runtime"
-readme      = "README.md"
-repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "1.0.2"
+authors    = ["Darwinia Network <hello@darwinia.network>"]
+build      = "build.rs"
+edition    = "2018"
+homepage   = "https://darwinia.network/"
+license    = "Unlicense"
+name       = "pangolin-runtime"
+readme     = "README.md"
+repository = "https://github.com/darwinia-network/darwinia-common/"
+version    = "1.0.7"
 
 [dependencies]
 # crates
+array-bytes       = { version = "0.3.0" }
 codec             = { package = "parity-scale-codec", version = "1.3.5", default-features = false }
 serde             = { version = "1.0.118", optional = true }
 smallvec          = { version = "1.5.1" }

@@ -14,13 +14,9 @@ mod types {
 	pub type AddressT = [u8; 20];
 
 	pub type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
-	// TODO: support *KTON*
-	// pub type KtonBalance<T> = <KtonCurrency<T> as Currency<AccountId<T>>>::Balance;
 
 	type AccountId<T> = <T as frame_system::Trait>::AccountId;
 	type RingCurrency<T> = <T as Trait>::RingCurrency;
-	// TODO: support *KTON*
-	// type KtonCurrency<T> = <T as Trait>::KtonCurrency;
 }
 
 // --- crates ---
@@ -60,10 +56,6 @@ pub trait Trait: frame_system::Trait {
 
 	/// The *RING* currency.
 	type RingCurrency: LockableCurrency<Self::AccountId>;
-
-	// TODO: support *KTON*
-	// /// The *KTON* currency.
-	// type KtonCurrency: Currency<Self::AccountId>;
 
 	type MoveClaimOrigin: EnsureOrigin<Self::Origin>;
 }
