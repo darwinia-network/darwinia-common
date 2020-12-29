@@ -645,7 +645,7 @@ impl<T: Trait> Module<T> {
 					EthEventParam {
 						name: "nonce".into(),
 						kind: ParamType::Uint(32),
-						indexed: true,
+						indexed: false,
 					},
 					EthEventParam {
 						name: "authorities".into(),
@@ -680,7 +680,7 @@ impl<T: Trait> Module<T> {
 			let raw_account_id = log.params[2]
 				.value
 				.clone()
-				.to_bytes()
+				.to_fixed_bytes()
 				.ok_or(<Error<T>>::BytesCF)?;
 
 			debug::trace!(target: "ethereum-backing", "[ethereum-backing] Raw Account: {:?}", raw_account_id);
