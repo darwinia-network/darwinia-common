@@ -1,6 +1,6 @@
 [package]
 authors     = ["Darwinia Network <hello@darwinia.network>"]
-description = "Minimal array/bytes operation for runtime"
+description = "Relayer for sub-sub bridge"
 edition     = "2018"
 homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"

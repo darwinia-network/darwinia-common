@@ -10,11 +10,11 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentifyAccount, Verify},
 	MultiSignature, MultiSigner, OpaqueExtrinsic,
 };
+use sp_std::prelude::*;
 
 use bp_message_lane::{LaneId, MessageNonce, UnrewardedRelayersState};
 use bp_runtime::Chain;
 use frame_support::weights::Weight;
-use sp_std::prelude::*;
 
 /// An index to a block.
 /// 32-bits will allow for 136 years of blocks assuming 1 block per second.
@@ -74,7 +74,6 @@ pub struct Tang;
 impl Chain for Tang {
 	type BlockNumber = BlockNumber;
 	type Hash = Hash;
-	// TODO: why this hasher
 	type Hasher = Hasher;
 	type Header = Header;
 }

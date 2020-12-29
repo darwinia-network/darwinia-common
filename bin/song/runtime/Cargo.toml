@@ -79,15 +79,15 @@ sp-std                                     = { default-features = false, git = "
 sp-transaction-pool                        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-version                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 # sub-sub bridge
-bp-message-lane 				         = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
-bp-runtime 				     			 = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
-bridge-runtime-common 				     = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
-pallet-bridge-call-dispatch 		     = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
-pallet-message-lane 					 = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
-pallet-shift-session-manager             = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
-pallet-substrate-bridge 				 = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
-song-node-primitives                     = { default-features = false, path = "../primitives" }
-tang-node-primitives                     = { default-features = false, path = "../../tang/primitives" }
+bp-message-lane                            = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+bp-runtime                                 = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+bridge-runtime-common                      = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+pallet-bridge-call-dispatch                = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+pallet-message-lane                        = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+pallet-shift-session-manager               = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+pallet-substrate-bridge                    = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+song-node-primitives                       = { default-features = false, path = "../primitives" }
+tang-node-primitives                       = { default-features = false, path = "../../tang/primitives" }
 
 [build-dependencies]
 # substrate
@@ -150,6 +150,7 @@ std     = [
 	"pallet-timestamp/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-transaction-payment/std",
+	"song-node-primitives/std",
 	"sp-api/std",
 	"sp-application-crypto/std",
 	"sp-authority-discovery/std",
@@ -166,7 +167,6 @@ std     = [
 	"sp-transaction-pool/std",
 	"sp-version/std",
 	"tang-node-primitives/std",
-	"song-node-primitives/std",
 ]
 
 with-tracing = ["frame-executive/with-tracing"]

@@ -1143,7 +1143,7 @@ impl dvm_ethereum::Trait for Runtime {
 	type RingCurrency = Balances;
 }
 
-// Sub bridge
+// sub-sub bridge
 impl pallet_bridge_call_dispatch::Trait for Runtime {
 	type Event = Event;
 	type MessageId = (bp_message_lane::LaneId, bp_message_lane::MessageNonce);
@@ -1266,10 +1266,10 @@ construct_runtime!(
 
 		EthereumRelayAuthorities: darwinia_relay_authorities::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
 
-		// Sub bridge
+		// Sub-sub bridge
+		BridgeCallDispatch: pallet_bridge_call_dispatch::{Module, Event<T>},
 		BridgeTang: pallet_substrate_bridge::{Module, Call, Storage, Config<T>},
 		BridgeTangMessageLane: pallet_message_lane::{Module, Call, Event<T>},
-		BridgeCallDispatch: pallet_bridge_call_dispatch::{Module, Event<T>},
 		ShiftSessionManager: pallet_shift_session_manager::{Module},
 	}
 );

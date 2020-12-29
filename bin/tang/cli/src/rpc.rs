@@ -69,6 +69,7 @@ pub struct FullDeps<C, P, SC, B> {
 	pub babe: BabeDeps,
 	/// GRANDPA specific dependencies.
 	pub grandpa: GrandpaDeps<B>,
+	/// Full client backend
 	pub backend: Arc<B>,
 }
 

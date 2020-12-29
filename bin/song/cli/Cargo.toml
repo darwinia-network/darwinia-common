@@ -78,10 +78,10 @@ substrate-prometheus-endpoint              = { git = "https://github.com/darwini
 # sub-sub bridge
 song-node-primitives                = { path = "../primitives" }
 song-node-runtime                   = { path = "../runtime" }
-pallet-message-lane-rpc				= { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
-pallet-substrate-bridge 			= { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
-bp-message-lane         			= { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
-bp-runtime              			= { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+pallet-message-lane-rpc             = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+pallet-substrate-bridge             = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+bp-message-lane                     = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+bp-runtime                          = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
 
 
 [build-dependencies]
