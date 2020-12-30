@@ -167,6 +167,12 @@ checksum = "4d25d88fd6b8041580a654f9d0c581a047baee2b3efee13275f2fc392fc75034"
 
 [[package]]
 name = "array-bytes"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "43759f68cc29a37659a6b7a48a49674e03a888b6d41f36f4204c36d0d09a51de"
+
+[[package]]
+name = "array-bytes"
 version = "1.2.3"
 dependencies = [
  "sp-std 2.0.0",
@@ -1332,7 +1338,7 @@ dependencies = [
 name = "darwinia-claims"
 version = "1.2.3"
 dependencies = [
- "array-bytes",
+ "array-bytes 1.2.3",
  "darwinia-balances",
  "darwinia-support",
  "frame-support",
@@ -1428,7 +1434,7 @@ dependencies = [
 name = "darwinia-ethereum-backing"
 version = "1.2.3"
 dependencies = [
- "array-bytes",
+ "array-bytes 1.2.3",
  "darwinia-balances",
  "darwinia-ethereum-linear-relay",
  "darwinia-ethereum-relay",
@@ -1457,7 +1463,7 @@ dependencies = [
 name = "darwinia-ethereum-linear-relay"
 version = "1.2.3"
 dependencies = [
- "array-bytes",
+ "array-bytes 1.2.3",
  "darwinia-balances",
  "darwinia-support",
  "ethereum-primitives",
@@ -1478,7 +1484,7 @@ dependencies = [
 name = "darwinia-ethereum-relay"
 version = "1.2.3"
 dependencies = [
- "array-bytes",
+ "array-bytes 1.2.3",
  "blake2-rfc",
  "ckb-merkle-mountain-range",
  "darwinia-balances",
@@ -1540,7 +1546,7 @@ dependencies = [
 name = "darwinia-header-mmr"
 version = "1.2.3"
 dependencies = [
- "array-bytes",
+ "array-bytes 1.2.3",
  "ckb-merkle-mountain-range",
  "darwinia-header-mmr-rpc-runtime-api",
  "darwinia-relay-primitives",
@@ -1821,9 +1827,9 @@ checksum = "fea41bba32d969b513997752735605054bc0dfa92b4c56bf1189f2e174be7a10"
 
 [[package]]
 name = "drml"
-version = "1.0.1"
+version = "1.0.7"
 dependencies = [
- "array-bytes",
+ "array-bytes 1.2.3",
  "darwinia-balances-rpc",
  "darwinia-balances-rpc-runtime-api",
  "darwinia-claims",
@@ -1883,12 +1889,12 @@ dependencies = [
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
  "substrate-prometheus-endpoint",
- "tokio 0.3.5",
+ "tokio 0.3.6",
 ]
 
 [[package]]
 name = "drml-primitives"
-version = "1.0.1"
+version = "1.0.7"
 dependencies = [
  "sp-core",
  "sp-runtime",
@@ -2264,7 +2270,7 @@ dependencies = [
 name = "ethereum-primitives"
 version = "1.2.3"
 dependencies = [
- "array-bytes",
+ "array-bytes 1.2.3",
  "ethash",
  "ethbloom 0.8.1",
  "ethereum-types 0.8.0",
@@ -5310,9 +5316,9 @@ dependencies = [
 
 [[package]]
 name = "pangolin-runtime"
-version = "1.0.1"
+version = "1.0.7"
 dependencies = [
- "array-bytes",
+ "array-bytes 0.3.0",
  "darwinia-balances",
  "darwinia-balances-rpc-runtime-api",
  "darwinia-claims",
@@ -7909,7 +7915,7 @@ dependencies = [
 name = "song-node"
 version = "1.0.1"
 dependencies = [
- "array-bytes",
+ "array-bytes 1.2.3",
  "bp-message-lane",
  "bp-runtime",
  "darwinia-balances-rpc",
@@ -7993,7 +7999,7 @@ dependencies = [
 name = "song-node-runtime"
 version = "1.0.1"
 dependencies = [
- "array-bytes",
+ "array-bytes 1.2.3",
  "bp-message-lane",
  "bp-runtime",
  "bridge-runtime-common",
@@ -9022,7 +9028,7 @@ checksum = "f764005d11ee5f36500a149ace24e00e3da98b0158b3e2d53a7495660d3f4d60"
 name = "tang-node"
 version = "1.0.1"
 dependencies = [
- "array-bytes",
+ "array-bytes 1.2.3",
  "bp-message-lane",
  "bp-runtime",
  "darwinia-balances-rpc",
@@ -9106,7 +9112,7 @@ dependencies = [
 name = "tang-node-runtime"
 version = "1.0.1"
 dependencies = [
- "array-bytes",
+ "array-bytes 1.2.3",
  "bp-message-lane",
  "bp-runtime",
  "bridge-runtime-common",

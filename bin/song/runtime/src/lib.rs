@@ -999,6 +999,7 @@ parameter_types! {
 	pub const EthereumBackingModuleId: ModuleId = ModuleId(*b"da/ethbk");
 	pub const EthereumBackingFeeModuleId: ModuleId = ModuleId(*b"da/ethfe");
 	pub const AdvancedFee: Balance = 50 * COIN;
+	pub const SyncReward: Balance = 1000 * COIN;
 }
 impl darwinia_ethereum_backing::Trait for Runtime {
 	type ModuleId = EthereumBackingModuleId;
@@ -1010,6 +1011,7 @@ impl darwinia_ethereum_backing::Trait for Runtime {
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 	type AdvancedFee = AdvancedFee;
+	type SyncReward = SyncReward;
 	type EcdsaAuthorities = EthereumRelayAuthorities;
 	type WeightInfo = ();
 }
@@ -1411,7 +1413,7 @@ impl_runtime_apis! {
 
 		fn generate_key_ownership_proof(
 			_set_id: fg_primitives::SetId,
-			authority_id: GrandpaId,
+			_authority_id: GrandpaId,
 		) -> Option<fg_primitives::OpaqueKeyOwnershipProof> {
 			// Historical::prove((fg_primitives::KEY_TYPE, authority_id))
 			// 	.map(|p| p.encode())
