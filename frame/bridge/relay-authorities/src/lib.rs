@@ -53,7 +53,7 @@ use frame_support::{
 	StorageValue,
 };
 use frame_system::ensure_signed;
-use sp_runtime::{DispatchError, DispatchResult, Perbill};
+use sp_runtime::{DispatchError, DispatchResult, Perbill, SaturatedConversion};
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
 use sp_std::prelude::*;
@@ -166,7 +166,7 @@ decl_storage! {
 		/// 	1. collected signatures
 		pub AuthoritiesToSign
 			get(fn authorities_to_sign)
-			: (RelayAuthorityMessage<T, I>, Vec<(AccountId<T>, RelayAuthoritySignature<T, I>)>);
+			: Option<(RelayAuthorityMessage<T, I>, Vec<(AccountId<T>, RelayAuthoritySignature<T, I>)>)>;
 
 		/// The `MMRRootsToSign` keys cache
 		///
@@ -487,7 +487,14 @@ decl_module! {
 
 			ensure!(Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
 
-			let (message, mut signatures) = <AuthoritiesToSign<T, I>>::get();
+			let (message, mut signatures) = if let Some(signatures) = <AuthoritiesToSign<T, I>>::get() {
+				signatures
+			} else {
+				// Should never enter this condition
+				// TODO: error log
+
+				return Ok(());
+			};
 
 			if signatures
 				.iter()
@@ -525,6 +532,31 @@ decl_module! {
 			} else {
 				<AuthoritiesToSign<T, I>>::put((message, signatures));
 			}
+		}
+
+		#[weight = 10_000_000]
+		pub fn kill_authorities(origin) {
+			T::ResetOrigin::ensure_origin(origin)?;
+
+			let lock_id = T::LockId::get();
+
+			for RelayAuthority { account_id, .. } in <Authorities<T, I>>::take() {
+				<RingCurrency<T, I>>::remove_lock(lock_id, &account_id);
+			}
+
+			<OldAuthorities<T, I>>::kill();
+			<AuthorityTerm<I>>::mutate(|term| *term += 1);
+			<AuthoritiesState<T, I>>::kill();
+			<AuthoritiesToSign<T, I>>::kill();
+			{
+				<MMRRootsToSign<T, I>>::remove_all();
+				let schedule = (
+					<frame_system::Module<T>>::block_number().saturated_into() / 10 * 10 + 10
+				).saturated_into();
+				<MMRRootsToSignKeys<T, I>>::mutate(|schedules| *schedules = vec![schedule]);
+				Self::new_mmr_to_sign(schedule);
+			}
+			<SubmitDuration<T, I>>::kill();
 		}
 	}
 }
@@ -684,9 +716,12 @@ where
 
 		if on_authorities_change {
 			if deadline == at {
-				let (_, signatures) = <AuthoritiesToSign<T, I>>::get();
-
-				find_and_slash_misbehavior(signatures);
+				if let Some((_, signatures)) = <AuthoritiesToSign<T, I>>::get() {
+					find_and_slash_misbehavior(signatures);
+				} else {
+					// Should never enter this condition
+					// TODO: error log
+				}
 
 				let submit_duration = T::SubmitDuration::get();
 
