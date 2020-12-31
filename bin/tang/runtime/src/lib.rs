@@ -1413,12 +1413,11 @@ impl_runtime_apis! {
 
 		fn generate_key_ownership_proof(
 			_set_id: fg_primitives::SetId,
-			_authority_id: GrandpaId,
+			authority_id: GrandpaId,
 		) -> Option<fg_primitives::OpaqueKeyOwnershipProof> {
-			// Historical::prove((fg_primitives::KEY_TYPE, authority_id))
-			// 	.map(|p| p.encode())
-			// 	.map(fg_primitives::OpaqueKeyOwnershipProof::new)
-			None
+			Historical::prove((fg_primitives::KEY_TYPE, authority_id))
+				.map(|p| p.encode())
+				.map(fg_primitives::OpaqueKeyOwnershipProof::new)
 		}
 	}
 
