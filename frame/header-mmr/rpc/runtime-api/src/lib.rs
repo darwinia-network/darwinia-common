@@ -6,7 +6,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-// -- std ---
+// -- core ---
 use core::fmt::{self, Debug, Display};
 // --- crates ---
 use codec::{Codec, Decode, Encode};
