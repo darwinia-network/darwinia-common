@@ -7,7 +7,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 // -- std ---
-use core::fmt::Debug;
+use core::fmt::{self, Debug, Display};
 // --- crates ---
 use codec::{Codec, Decode, Encode};
 // --- substrate ---
@@ -22,18 +22,18 @@ impl_runtime_dispatch_info! {
 		mmr_size: u64,
 		proof: Proof<Hash>
 	}
-
-	fn custom_serializer() -> closure {
-		|t| {
-			let s = format!("{:?}", t);
-			if s.len() > 6 {
-				(&s[6..s.len() - 1]).to_owned()
-			} else {
-				s
-			}
-		}
-	}
 }
+
+// fn custom_serializer() -> closure {
+// 	|t| {
+// 		let s = format!("{:?}", t);
+// 		if s.len() > 6 {
+// 			(&s[6..s.len() - 1]).to_owned()
+// 		} else {
+// 			s
+// 		}
+// 	}
+// }
 
 decl_runtime_apis! {
 	pub trait HeaderMMRApi<Hash>
@@ -47,7 +47,21 @@ decl_runtime_apis! {
 	}
 }
 
-#[derive(Debug, Default, Eq, PartialEq, Encode, Decode)]
-pub struct Proof<Hash>(pub Vec<Hash>)
+#[derive(Default, Eq, PartialEq, Encode, Decode)]
+pub struct Proof<Hash>(pub Vec<Hash>);
+impl<Hash> Debug for Proof<Hash>
 where
-	Hash: Debug;
+	Hash: Debug,
+{
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		write!(f, "{:?}", self.0)
+	}
+}
+impl<Hash> Display for Proof<Hash>
+where
+	Hash: Debug,
+{
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		write!(f, "{:?}", self)
+	}
+}
