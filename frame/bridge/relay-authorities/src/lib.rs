@@ -548,12 +548,15 @@ decl_module! {
 			<AuthorityTerm<I>>::mutate(|term| *term += 1);
 			<AuthoritiesState<T, I>>::kill();
 			<AuthoritiesToSign<T, I>>::kill();
+			{
+				<MMRRootsToSign<T, I>>::remove_all();
+				let schedule = (
+					<frame_system::Module<T>>::block_number().saturated_into() / 10 * 10 + 10
+				).saturated_into();
+				<MMRRootsToSignKeys<T, I>>::mutate(|schedules| *schedules = vec![schedule]);
+				Self::new_mmr_to_sign(schedule);
+			}
 			<SubmitDuration<T, I>>::kill();
-			<MMRRootsToSign<T, I>>::remove_all();
-
-			Self::new_mmr_to_sign((
-				<frame_system::Module<T>>::block_number().saturated_into() / 10 * 10 + 10
-			).saturated_into());
 		}
 	}
 }
