@@ -24,17 +24,6 @@ impl_runtime_dispatch_info! {
 	}
 }
 
-// fn custom_serializer() -> closure {
-// 	|t| {
-// 		let s = format!("{:?}", t);
-// 		if s.len() > 6 {
-// 			(&s[6..s.len() - 1]).to_owned()
-// 		} else {
-// 			s
-// 		}
-// 	}
-// }
-
 decl_runtime_apis! {
 	pub trait HeaderMMRApi<Hash>
 	where
