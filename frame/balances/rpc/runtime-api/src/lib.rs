@@ -6,6 +6,8 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+// --- core ---
+use core::fmt::Debug;
 // --- crates ---
 use codec::{Codec, Decode, Encode};
 // --- substrate ---
@@ -24,7 +26,7 @@ decl_runtime_apis! {
 	pub trait BalancesApi<AccountId, Balance>
 	where
 		AccountId: Codec,
-		Balance: Codec + MaybeDisplay + MaybeFromStr,
+		Balance: Debug + Codec + MaybeDisplay + MaybeFromStr,
 	{
 		fn usable_balance(instance: u8, who: AccountId) -> RuntimeDispatchInfo<Balance>;
 	}

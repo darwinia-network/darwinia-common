@@ -18,7 +18,7 @@
 
 //! Relay Authorities Primitives
 
-// --- std ---
+// --- core ---
 use core::fmt::Debug;
 // --- crates ---
 use codec::{Decode, Encode, FullCodec};

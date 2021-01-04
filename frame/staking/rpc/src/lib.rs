@@ -3,6 +3,8 @@
 // --- darwinia ---
 pub use darwinia_staking_rpc_runtime_api::StakingApi as StakingRuntimeApi;
 
+// --- core ---
+use core::fmt::Debug;
 // --- std ---
 use std::sync::Arc;
 // --- crates ---
@@ -48,7 +50,7 @@ where
 	Client::Api: StakingRuntimeApi<Block, AccountId, Power>,
 	Block: BlockT,
 	AccountId: Codec,
-	Power: Codec + MaybeDisplay + MaybeFromStr,
+	Power: Debug + Codec + MaybeDisplay + MaybeFromStr,
 {
 	fn power_of(&self, who: AccountId) -> Result<RuntimeDispatchInfo<Power>> {
 		let api = self.client.runtime_api();

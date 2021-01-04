@@ -6,6 +6,8 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+// --- core ---
+use core::fmt::Debug;
 // --- crates ---
 use codec::{Codec, Decode, Encode};
 // --- substrate ---
@@ -24,7 +26,7 @@ decl_runtime_apis! {
 	pub trait StakingApi<AccountId, Power>
 	where
 		AccountId: Codec,
-		Power: Codec + MaybeDisplay + MaybeFromStr,
+		Power: Debug + Codec + MaybeDisplay + MaybeFromStr,
 	{
 		fn power_of(who: AccountId) -> RuntimeDispatchInfo<Power>;
 	}

@@ -124,59 +124,10 @@ macro_rules! impl_genesis {
 }
 
 // TODO: https://github.com/serde-rs/serde/issues/1634
-// serde(bound(serialize = concat!(stringify!($ftype), ": std::fmt::Display")))
+// serde(bound(serialize = concat!(stringify!($ftype), ": core::fmt::Display")))
 // serde(bound(deserialize = concat!(stringify!($ftype), ": std::str::FromStr")))
 #[macro_export]
 macro_rules! impl_runtime_dispatch_info {
-	(
-		$(pub)? struct $sname:ident$(<$($gtype:ident),+>)? {
-			$($(pub)? $fname:ident: $ftype:ty),+
-		}
-
-		fn custom_serializer() -> closure {
-			$($custom_serializer:tt)*
-		}
-	) => {
-		#[cfg(feature = "std")]
-		use serde::{Serialize, Serializer};
-
-		#[cfg(not(feature = "std"))]
-		#[derive(Debug, Default, Eq, PartialEq, Encode, Decode)]
-		pub struct $sname$(<$($gtype),+>)?
-		$(
-		where
-			$($gtype: core::fmt::Debug),+
-		)?
-		{
-			$(
-				pub $fname: $ftype
-			),+
-		}
-
-		#[cfg(feature = "std")]
-		#[derive(Debug, Default, Eq, PartialEq, Encode, Decode, Serialize)]
-		#[serde(rename_all = "camelCase")]
-		pub struct $sname$(<$($gtype),+>)?
-		$(
-		where
-			$($gtype: core::fmt::Debug),+
-		)?
-		{
-			$(
-				#[serde(serialize_with = "serialize_as_string")]
-				#[serde(deserialize_with = "deserialize_from_string")]
-				pub $fname: $ftype
-			),+
-		}
-
-		#[cfg(feature = "std")]
-		fn serialize_as_string<S: Serializer, T: std::fmt::Debug>(
-			t: &T,
-			serializer: S,
-		) -> Result<S::Ok, S::Error> {
-			serializer.serialize_str(&($($custom_serializer)*)(t))
-		}
-	};
 	(
 		$(pub)? struct $sname:ident$(<$($gtype:ident),+>)? {
 			$($(pub)? $fname:ident: $ftype:ty),+
@@ -199,7 +150,7 @@ macro_rules! impl_runtime_dispatch_info {
 		pub struct $sname$(<$($gtype),+>)?
 		$(
 		where
-			$($gtype: std::fmt::Display),+
+			$($gtype: core::fmt::Debug + core::fmt::Display),+
 		)?
 		{
 			$(
@@ -209,10 +160,14 @@ macro_rules! impl_runtime_dispatch_info {
 		}
 
 		#[cfg(feature = "std")]
-		fn serialize_as_string<S: Serializer, T: std::fmt::Display>(
+		fn serialize_as_string<S, T>(
 			t: &T,
 			serializer: S,
-		) -> Result<S::Ok, S::Error> {
+		) -> Result<S::Ok, S::Error>
+		where
+			S: Serializer,
+			T: core::fmt::Display
+		{
 			serializer.serialize_str(&t.to_string())
 		}
 	};
@@ -230,7 +185,7 @@ macro_rules! impl_rpc {
 		pub fn $fnname($($params)*) -> $respname$(<$($gtype),+>)?
 		$(
 		where
-			$($gtype: std::fmt::Display + std::str::FromStr),+
+			$($gtype: core::fmt::Display + std::str::FromStr),+
 		)?
 		{
 			$($fnbody)*
