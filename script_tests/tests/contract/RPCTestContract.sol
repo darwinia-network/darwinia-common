@@ -60,10 +60,6 @@ contract JSON_Test {
 		myAddress = _address;
 	}
 
-	//function setBytes0(bytes0 _bytes0) {
-	//    myBytes0 = _bytes0;
-	//}
-
 	function setBytes32(bytes32 _bytes32) public {
 		myBytes32 = _bytes32;
 	}
@@ -91,10 +87,6 @@ contract JSON_Test {
 	function getAddress() public view returns (address ret) {
 		return myAddress;
 	}
-
-	//function getBytes0() returns (bytes0 ret) {
-	//    return myBytes0;
-	//}
 
 	function getBytes32() public view returns (bytes32 ret) {
 		return myBytes32;
@@ -168,6 +160,5 @@ contract JSON_Test {
 	int256 myInt256;
 	uint256 myUint256;
 	address myAddress;
-	//bytes0 myBytes0;
 	bytes32 myBytes32;
 }
