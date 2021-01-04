@@ -10,6 +10,10 @@ opcodes.options.from = conf.address;
 opcodes.options.gas = conf.gas;
 
 describe("Test Solidity OpCodes", function () {
+  after(() => {
+    web3.currentProvider.disconnect();
+  });
+
 	it("Should run without errors the majorit of opcodes", async () => {
 		const instance = await opcodes
 			.deploy({

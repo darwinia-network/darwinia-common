@@ -1,12 +1,19 @@
 const expect = require("chai").expect;
 const assert = require("chai").assert;
-const Web3 = require("web3");
 const utils = require("./utils");
 const conf = require("./config.js");
 
 let currentFilterId = null;
 
 describe("Test filter API", function () {
+  before(() => {
+    utils.open();
+  });
+  
+  after(() => {
+    utils.close();
+  });
+
 	afterEach(async () => {
 		if (currentFilterId) {
 			const res = await utils.customRequest("eth_uninstallFilter", [currentFilterId]);

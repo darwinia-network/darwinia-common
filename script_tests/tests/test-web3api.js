@@ -5,6 +5,14 @@ const utils = require("./utils");
 const web3 = new Web3("http://localhost:9933");
 
 describe("Test Web3 API", function () {
+  before(() => {
+    utils.open();
+  });
+  
+  after(() => {
+    utils.close();
+  });
+
 	it.skip("should get client version", async function () {
 		const version = await web3.eth.getNodeInfo();
 		expect(version).to.be.equal("Pangolin/v2.1/dvm-rpc-1.2.2");
