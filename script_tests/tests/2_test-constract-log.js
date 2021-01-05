@@ -10,9 +10,9 @@ jsontest.options.from = conf.address;
 jsontest.options.gas = conf.gas;
 
 describe("Test Contract Log", function () {
-  after(() => {
-    web3.currentProvider.disconnect();
-  });
+	after(() => {
+		web3.currentProvider.disconnect();
+	});
 
 	it("Deploy json test contract", async function () {
 		const instance = await jsontest
