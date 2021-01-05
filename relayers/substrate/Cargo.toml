@@ -20,16 +20,16 @@ num-traits = "0.2"
 paste = "1.0"
 structopt = "0.3"
 # Bridge dependencies
-bp-message-lane             = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
-bp-runtime                  = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
-headers-relay               = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
-messages-relay              = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
-pallet-bridge-call-dispatch = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
-pallet-substrate-bridge     = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+bp-message-lane             = { git = "https://github.com/darwinia-network/parity-bridges-common.git", branch = "darwinia" }
+bp-runtime                  = { git = "https://github.com/darwinia-network/parity-bridges-common.git", branch = "darwinia" }
+headers-relay               = { git = "https://github.com/darwinia-network/parity-bridges-common.git", branch = "darwinia" }
+messages-relay              = { git = "https://github.com/darwinia-network/parity-bridges-common.git", branch = "darwinia" }
+pallet-bridge-call-dispatch = { git = "https://github.com/darwinia-network/parity-bridges-common.git", branch = "darwinia" }
+pallet-substrate-bridge     = { git = "https://github.com/darwinia-network/parity-bridges-common.git", branch = "darwinia" }
 relay-song-client           = { path = "../song-client" }
-relay-substrate-client      = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+relay-substrate-client      = { git = "https://github.com/darwinia-network/parity-bridges-common.git", branch = "darwinia" }
 relay-tang-client           = { path = "../tang-client" }
-relay-utils                 = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+relay-utils                 = { git = "https://github.com/darwinia-network/parity-bridges-common.git", branch = "darwinia" }
 song-node-runtime           = { path = "../../bin/song/runtime" }
 song-node-primitives        = { path = "../../bin/song/primitives" }
 tang-node-runtime           = { path = "../../bin/tang/runtime" }

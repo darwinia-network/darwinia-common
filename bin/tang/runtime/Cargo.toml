@@ -81,13 +81,13 @@ sp-version                                 = { default-features = false, git = "
 # sub-sub bridge
 tang-node-primitives					   = { default-features = false, path = "../primitives" }
 song-node-primitives                       = { default-features = false, path = "../../song/primitives" }
-pallet-bridge-call-dispatch                = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear"}
-pallet-message-lane                        = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear"}
-pallet-shift-session-manager               = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear"}
-pallet-substrate-bridge                    = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear"}
-bp-message-lane                            = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear"}
-bridge-runtime-common                      = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear"}
-bp-runtime                                 = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear"}
+pallet-bridge-call-dispatch                = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common.git", branch = "darwinia"}
+pallet-message-lane                        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common.git", branch = "darwinia"}
+pallet-shift-session-manager               = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common.git", branch = "darwinia"}
+pallet-substrate-bridge                    = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common.git", branch = "darwinia"}
+bp-message-lane                            = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common.git", branch = "darwinia"}
+bridge-runtime-common                      = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common.git", branch = "darwinia"}
+bp-runtime                                 = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common.git", branch = "darwinia"}
 
 [build-dependencies]
 # substrate

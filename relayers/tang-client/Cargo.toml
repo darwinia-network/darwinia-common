@@ -11,9 +11,9 @@ version     = "1.2.3"
 
 [dependencies]
 codec                       = { package = "parity-scale-codec", version = "1.3.4" }
-headers-relay               = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
-relay-substrate-client      = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
-relay-utils                 = { git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+headers-relay               = { git = "https://github.com/darwinia-network/parity-bridges-common.git", branch = "darwinia" }
+relay-substrate-client      = { git = "https://github.com/darwinia-network/parity-bridges-common.git", branch = "darwinia" }
+relay-utils                 = { git = "https://github.com/darwinia-network/parity-bridges-common.git", branch = "darwinia" }
 # Supported Chains
 darwinia-ethereum-relay     = {path = "../../frame/bridge/ethereum/relay"}
 tang-node-primitives        = { path = "../../bin/tang/primitives" }

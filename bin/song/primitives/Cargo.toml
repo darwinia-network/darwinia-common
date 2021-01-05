@@ -16,8 +16,8 @@ sp-api    		= { default-features = false, git = "https://github.com/darwinia-net
 sp-runtime 		= { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 frame-support 	= { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 # sub-sub bridge
-bp-runtime      = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
-bp-message-lane = { default-features = false, git = "https://github.com/AsceticBear/parity-bridges-common.git", branch = "bear" }
+bp-runtime      = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common.git", branch = "darwinia" }
+bp-message-lane = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common.git", branch = "darwinia" }
 
 [features]
 default = ["std"]
