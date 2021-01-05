@@ -421,8 +421,14 @@ fn lock_should_work() {
 			Ring::free_balance(&fee_account_id),
 			fee_account_balance + advanced_fee
 		);
-		assert_eq!(Ring::free_balance(&module_account_id), module_account_ring + lock_balance);
-		assert_eq!(Kton::free_balance(&module_account_id), module_account_kton + lock_balance);
+		assert_eq!(
+			Ring::free_balance(&module_account_id),
+			module_account_ring + lock_balance
+		);
+		assert_eq!(
+			Kton::free_balance(&module_account_id),
+			module_account_kton + lock_balance
+		);
 	});
 }
 
