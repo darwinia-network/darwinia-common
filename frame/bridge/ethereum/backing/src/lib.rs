@@ -272,7 +272,7 @@ decl_module! {
 			if !ring_value.is_zero() {
 				let ring_to_lock = ring_value.min(T::RingCurrency::usable_balance(&user));
 
-				T::RingCurrency::transfer(&user, &fee_account, ring_to_lock, KeepAlive)?;
+				T::RingCurrency::transfer(&user, &Self::account_id(), ring_to_lock, KeepAlive)?;
 
 				let raw_event = RawEvent::LockRing(
 					user.clone(),
@@ -291,7 +291,7 @@ decl_module! {
 			if !kton_value.is_zero() {
 				let kton_to_lock = kton_value.min(T::KtonCurrency::usable_balance(&user));
 
-				T::KtonCurrency::transfer(&user, &fee_account, kton_to_lock, KeepAlive)?;
+				T::KtonCurrency::transfer(&user, &Self::account_id(), kton_to_lock, KeepAlive)?;
 
 				let raw_event = RawEvent::LockKton(
 					user,
