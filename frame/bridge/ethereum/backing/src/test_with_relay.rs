@@ -391,6 +391,42 @@ fn set_redeem_status_should_work() {
 }
 
 #[test]
+fn lock_should_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		let account = Default::default();
+		let e_account = Default::default();
+		let init_balance = 100;
+		let lock_balance = 10;
+		let _ = Ring::deposit_creating(&account, init_balance);
+		let _ = Kton::deposit_creating(&account, init_balance);
+		let fee_account_id = <Module<Test>>::fee_account_id();
+		let fee_account_balance = Ring::free_balance(&fee_account_id);
+		let module_account_id = <Module<Test>>::account_id();
+		let module_account_ring = Ring::free_balance(&module_account_id);
+		let module_account_kton = Kton::free_balance(&module_account_id);
+		let advanced_fee = <Test as Trait>::AdvancedFee::get();
+
+		assert_ok!(EthereumBacking::lock(
+			Origin::signed(account.clone()),
+			lock_balance,
+			lock_balance,
+			e_account
+		));
+		assert_eq!(
+			Ring::free_balance(&account),
+			init_balance - lock_balance - advanced_fee
+		);
+		assert_eq!(Kton::free_balance(&account), init_balance - lock_balance);
+		assert_eq!(
+			Ring::free_balance(&fee_account_id),
+			fee_account_balance + advanced_fee
+		);
+		assert_eq!(Ring::free_balance(&module_account_id), module_account_ring + lock_balance);
+		assert_eq!(Kton::free_balance(&module_account_id), module_account_kton + lock_balance);
+	});
+}
+
+#[test]
 fn verify_signature_should_work() {
 	assert!(EthereumBacking::verify_signature(
 		&fixed_hex_bytes_unchecked!("0x0806e7b411a8808c1384bd8abe3b506403981d3ece6b16cd29d3f2789eea1ab61635b3b971bf5584bdc70c42b2a4a2659b354dfc542943c030630168825976491c", 65),
