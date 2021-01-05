@@ -3,6 +3,8 @@
 // --- darwinia ---
 pub use darwinia_balances_rpc_runtime_api::BalancesApi as BalancesRuntimeApi;
 
+// --- core ---
+use core::fmt::Debug;
 // --- std ---
 use std::sync::Arc;
 // --- crates ---
@@ -48,7 +50,7 @@ where
 	Client::Api: BalancesRuntimeApi<Block, AccountId, Balance>,
 	Block: BlockT,
 	AccountId: Codec,
-	Balance: Codec + MaybeDisplay + MaybeFromStr,
+	Balance: Debug + Codec + MaybeDisplay + MaybeFromStr,
 {
 	fn usable_balance(&self, instance: u8, who: AccountId) -> Result<RuntimeDispatchInfo<Balance>> {
 		let api = self.client.runtime_api();
