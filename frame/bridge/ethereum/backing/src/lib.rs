@@ -324,11 +324,16 @@ decl_module! {
 			ensure!(!VerifiedProof::contains_key(tx_index), <Error<T>>::AuthoritiesSetAR);
 
 			let beneficiary = Self::parse_authorities_set_proof(&proof)?;
+			let fee_account = Self::fee_account_id();
+			let sync_reward = T::SyncReward::get().min(
+				T::RingCurrency::usable_balance(&fee_account) - T::RingCurrency::minimum_balance()
+			);
 
 			T::RingCurrency::transfer(
-				&Self::fee_account_id(),
+				&fee_account,
 				&beneficiary,
-				T::SyncReward::get(), KeepAlive
+				sync_reward,
+				KeepAlive
 			)?;
 			T::EcdsaAuthorities::finish_authorities_change();
 
