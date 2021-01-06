@@ -337,8 +337,9 @@ decl_module! {
 					sync_reward,
 					KeepAlive
 				)?;
-				T::EcdsaAuthorities::finish_authorities_change();
 			}
+
+			T::EcdsaAuthorities::finish_authorities_change();
 
 			VerifiedProof::insert(tx_index, true);
 		}
