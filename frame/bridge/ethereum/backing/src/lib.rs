@@ -326,16 +326,19 @@ decl_module! {
 			let beneficiary = Self::parse_authorities_set_proof(&proof)?;
 			let fee_account = Self::fee_account_id();
 			let sync_reward = T::SyncReward::get().min(
-				T::RingCurrency::usable_balance(&fee_account) - T::RingCurrency::minimum_balance()
+				T::RingCurrency::usable_balance(&fee_account)
+					.saturating_sub(T::RingCurrency::minimum_balance())
 			);
 
-			T::RingCurrency::transfer(
-				&fee_account,
-				&beneficiary,
-				sync_reward,
-				KeepAlive
-			)?;
-			T::EcdsaAuthorities::finish_authorities_change();
+			if !sync_reward.is_zero() {
+				T::RingCurrency::transfer(
+					&fee_account,
+					&beneficiary,
+					sync_reward,
+					KeepAlive
+				)?;
+				T::EcdsaAuthorities::finish_authorities_change();
+			}
 
 			VerifiedProof::insert(tx_index, true);
 		}
