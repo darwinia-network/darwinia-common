@@ -520,7 +520,6 @@ decl_module! {
 			if Perbill::from_rational_approximation(signatures.len() as u32 + 1, old_authorities.len() as _)
 				>= T::SignThreshold::get()
 			{
-				Self::wait_target_chain_authorities_change();
 				Self::deposit_event(RawEvent::AuthoritiesSetSigned(
 					<AuthorityTerm<I>>::get(),
 					<Authorities<T, I>>::get()
@@ -529,6 +528,7 @@ decl_module! {
 						.collect(),
 					signatures
 				));
+				Self::wait_target_chain_authorities_change();
 			} else {
 				<AuthoritiesToSign<T, I>>::put((message, signatures));
 			}
