@@ -252,13 +252,7 @@ pub fn song_development_config() -> SongChainSpec {
 			}
 
 			song_development_genesis(
-				vec![
-					get_authority_keys_from_seed("Alice"),
-					get_authority_keys_from_seed("Bob"),
-					get_authority_keys_from_seed("Charlie"),
-					get_authority_keys_from_seed("Dave"),
-					get_authority_keys_from_seed("Eve"),
-				],
+				vec![get_authority_keys_from_seed("Alice")],
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				vec![
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
