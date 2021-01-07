@@ -61,6 +61,7 @@ macro_rules! decl_tests {
 		parameter_types! {
 			pub const EthereumBackingModuleId: ModuleId = ModuleId(*b"da/backi");
 			pub const EthereumBackingFeeModuleId: ModuleId = ModuleId(*b"da/ethfe");
+			pub const AdvancedFee: Balance = 1;
 		}
 		impl Trait for Test {
 			type ModuleId = EthereumBackingModuleId;
@@ -71,7 +72,7 @@ macro_rules! decl_tests {
 			type OnDepositRedeem = Staking;
 			type RingCurrency = Ring;
 			type KtonCurrency = Kton;
-			type AdvancedFee = ();
+			type AdvancedFee = AdvancedFee;
 			type SyncReward = ();
 			type EcdsaAuthorities = ();
 			type WeightInfo = ();

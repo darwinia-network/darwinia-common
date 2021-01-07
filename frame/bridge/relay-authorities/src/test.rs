@@ -2,7 +2,7 @@
 use frame_support::{assert_err, assert_ok};
 // --- darwinia ---
 use crate::{
-	mock::{AccountId, BlockNumber, *},
+	mock::{AccountId, BlockNumber, Event, *},
 	*,
 };
 
@@ -189,4 +189,30 @@ fn encode_message_should_work() {
 		.encode()
 	};
 	println!("{:?}", message);
+}
+
+#[test]
+fn authorities_set_signed_event_should_work() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+
+		assert_ok!(request_authority(1));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 1));
+
+		events();
+
+		assert_ok!(RelayAuthorities::submit_signed_authorities(
+			Origin::signed(9),
+			[0; 65]
+		));
+
+		assert_eq!(
+			relay_authorities_events(),
+			vec![Event::relay_authorities(RawEvent::AuthoritiesSetSigned(
+				0,
+				vec![Default::default(), Default::default()],
+				vec![(9, [0; 65])]
+			))]
+		);
+	});
 }

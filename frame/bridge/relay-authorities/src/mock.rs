@@ -18,10 +18,15 @@
 
 //! # Mock file for relay authorities
 
+pub mod relay_authorities {
+	// --- darwinia ---
+	pub use crate::Event;
+}
+
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
-use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
+use frame_support::{impl_outer_event, impl_outer_origin, parameter_types, weights::Weight};
 use frame_system::EnsureRoot;
 use sp_core::H256;
 use sp_io::{hashing, TestExternalities};
@@ -49,6 +54,14 @@ impl_outer_origin! {
 	pub enum Origin for Test {}
 }
 
+impl_outer_event! {
+	pub enum Event for Test {
+		frame_system <T>,
+		darwinia_balances Instance0<T>,
+		relay_authorities <T>,
+	}
+}
+
 darwinia_support::impl_test_account_data! {}
 
 #[derive(Clone, Eq, PartialEq)]
@@ -70,7 +83,7 @@ impl SignT<BlockNumber> for Sign {
 	}
 
 	fn verify_signature(_: &Self::Signature, _: &Self::Message, _: &Self::Signer) -> bool {
-		unimplemented!()
+		true
 	}
 }
 parameter_types! {
@@ -81,7 +94,7 @@ parameter_types! {
 	pub const SubmitDuration: BlockNumber = 3;
 }
 impl Trait for Test {
-	type Event = ();
+	type Event = Event;
 	type RingCurrency = Ring;
 	type LockId = LockId;
 	type TermDuration = TermDuration;
@@ -113,7 +126,7 @@ impl frame_system::Trait for Test {
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = ();
+	type Event = Event;
 	type BlockHashCount = BlockHashCount;
 	type MaximumBlockWeight = MaximumBlockWeight;
 	type DbWeight = ();
@@ -136,7 +149,7 @@ parameter_types! {
 impl darwinia_balances::Trait<RingInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
-	type Event = ();
+	type Event = Event;
 	type ExistentialDeposit = ();
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
@@ -158,8 +171,31 @@ pub fn new_test_ext() -> TestExternalities {
 	}
 	.assimilate_storage(&mut storage)
 	.unwrap();
+	GenesisConfig::<Test> {
+		authorities: vec![(9, Default::default(), 1)],
+	}
+	.assimilate_storage(&mut storage)
+	.unwrap();
 
 	storage.into()
+}
+
+pub fn events() -> Vec<Event> {
+	let events = System::events()
+		.into_iter()
+		.map(|evt| evt.event)
+		.collect::<Vec<_>>();
+
+	System::reset_events();
+
+	events
+}
+
+pub fn relay_authorities_events() -> Vec<Event> {
+	events()
+		.into_iter()
+		.filter(|e| matches!(e, Event::relay_authorities(_)))
+		.collect()
 }
 
 pub fn request_authority(account_id: AccountId) -> DispatchResult {

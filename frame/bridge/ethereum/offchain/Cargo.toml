@@ -28,7 +28,7 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 
 [dev-dependencies]
 # crates
-serde_json = { version = "1.0.60" }
+serde_json = { version = "1.0.61" }
 # darwinia
 darwinia-balances   = { path = "../../../../frame/balances" }
 ethereum-primitives = { features = ["deserialize"], path = "../../../../primitives/ethereum-primitives" }
