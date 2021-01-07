@@ -1,15 +1,14 @@
-const expect = require('chai').expect;
-const Web3 = require('web3');
+const expect = require("chai").expect;
+const Web3 = require("web3");
 
-const web3 = new Web3('http://localhost:9933');
+const web3 = new Web3("http://localhost:9933");
 
-describe('Test Block RPC', function () {
-
-	it('The block number should not be zero', async function () {
+describe("Test Block RPC", function () {
+	it("The block number should not be zero", async function () {
 		expect(await web3.eth.getBlockNumber()).to.not.equal(0);
 	});
 
-	it('Should return the genesis block', async function () {
+	it("Should return the genesis block", async function () {
 		const block = await web3.eth.getBlock(0);
 		expect(block).to.include({
 			author: "0x0000000000000000000000000000000000000000",
@@ -42,7 +41,9 @@ describe('Test Block RPC', function () {
 	it("should have empty uncles and correct sha3Uncles", async function () {
 		const block = await web3.eth.getBlock(0);
 		expect(block.uncles).to.be.a("array").empty;
-		expect(block.sha3Uncles).to.equal("0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347");
+		expect(block.sha3Uncles).to.equal(
+			"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"
+		);
 	});
 
 	it("should have empty transactions and correct transactionRoot", async function () {
@@ -83,5 +84,33 @@ describe('Test Block RPC', function () {
 		const previous_block = await web3.eth.getBlock(previous_block_number);
 
 		expect(block.timestamp - previous_block.timestamp).to.be.eq(6);
+	});
+
+	it("should get transactions count by block number ", async function () {
+		expect(await web3.eth.getBlockTransactionCount(0)).to.equal(0);
+	});
+
+	it("should get transactions count by earliest block", async function () {
+		expect(await web3.eth.getBlockTransactionCount("earliest")).to.equal(0);
+	});
+
+	it("should get transactions count by latest block", async function () {
+		expect(await web3.eth.getBlockTransactionCount("latest")).to.equal(0);
+	});
+
+	it("should get transactions count by pending block", async function () {
+		expect(await web3.eth.getBlockTransactionCount("pending")).to.equal(null);
+	});
+
+	it("should return null if the block doesnt exist", async function () {
+		expect(
+			await web3.eth.getBlockTransactionCount(
+				"0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+			)
+		).to.null;
+	});
+
+	it("should return null when no uncle was found", async function () {
+		expect(await web3.eth.getUncle(0, 0)).to.be.null;
 	});
 });
