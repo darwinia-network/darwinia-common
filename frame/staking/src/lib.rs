@@ -2506,7 +2506,7 @@ impl<T: Trait> Module<T> {
 	///
 	/// BE CAREFUL:
 	/// 	This will also update the stash lock.
-	/// 	Please don't modify the locks' staking amount outside this function.
+	/// 	DO NOT modify the locks' staking amount outside this function.
 	fn update_ledger(controller: &T::AccountId, ledger: &mut StakingLedgerT<T>) {
 		let StakingLedger {
 			active_ring,
