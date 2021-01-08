@@ -128,16 +128,7 @@ where
 
 	#[inline]
 	pub fn update(&mut self, at: Moment) {
-		let mut locked_amount = self.staking_amount;
-
-		self.unbondings.retain(|unbonding| {
-			let valid = unbonding.valid_at(at);
-			if valid {
-				locked_amount = locked_amount.saturating_add(unbonding.amount);
-			}
-
-			valid
-		});
+		self.unbondings.retain(|unbonding| unbonding.valid_at(at));
 	}
 }
 
