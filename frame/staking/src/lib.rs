@@ -2015,7 +2015,7 @@ decl_module! {
 
 			ensure!(
 				!ledger.ring_staking_lock.unbondings.is_empty()
-					&& !ledger.kton_staking_lock.unbondings.is_empty(),
+					|| !ledger.kton_staking_lock.unbondings.is_empty(),
 				<Error<T>>::NoUnlockChunk
 			);
 

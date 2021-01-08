@@ -1338,13 +1338,325 @@ fn too_many_unbond_calls_should_not_work() {
 	})
 }
 
-// #[deprecated]
-// #[test]
-// fn rebond_works() {}
+#[test]
+fn rebond_works() {
+	// * Should test
+	// * Given an account being bonded [and chosen as a validator](not mandatory)
+	// * it can unbond a portion of its funds from the stash account.
+	// * it can re-bond a portion of the funds scheduled to unlock.
+	ExtBuilder::default()
+		.nominate(false)
+		.build()
+		.execute_with(|| {
+			// Set payee to controller. avoids confusion
+			assert_ok!(Staking::set_payee(
+				Origin::signed(10),
+				RewardDestination::Controller
+			));
 
-// #[deprecated]
-// #[test]
-// fn rebond_is_fifo() {}
+			// Give account 11 some large free balance greater than total
+			let _ = Ring::make_free_balance_be(&11, 1000000);
+
+			// confirm that 10 is a normal validator and gets paid at the end of the era.
+			start_era(1);
+
+			// Initial state of 10
+			assert_eq!(
+				Staking::ledger(&10),
+				Some(StakingLedger {
+					stash: 11,
+					active_ring: 1000,
+					ring_staking_lock: StakingLock {
+						staking_amount: 1000,
+						unbondings: vec![]
+					},
+					..Default::default()
+				})
+			);
+
+			start_era(2);
+			assert_eq!(Staking::active_era().unwrap().index, 2);
+
+			// Try to rebond some funds. We get an error since no fund is unbonded.
+			assert_noop!(
+				Staking::rebond(Origin::signed(10), 500, 0),
+				<Error<Test>>::NoUnlockChunk,
+			);
+
+			// Unbond almost all of the funds in stash.
+			Staking::unbond(Origin::signed(10), StakingBalance::RingBalance(900)).unwrap();
+			assert_eq!(
+				Staking::ledger(&10),
+				Some(StakingLedger {
+					stash: 11,
+					active_ring: 100,
+					ring_staking_lock: StakingLock {
+						staking_amount: 100,
+						unbondings: vec![Unbonding {
+							amount: 900,
+							until: System::block_number() + BondingDurationInBlockNumber::get(),
+						}]
+					},
+					..Default::default()
+				})
+			);
+
+			// Re-bond all the funds unbonded.
+			Staking::rebond(Origin::signed(10), 900, 0).unwrap();
+			assert_eq!(
+				Staking::ledger(&10),
+				Some(StakingLedger {
+					stash: 11,
+					active_ring: 1000,
+					ring_staking_lock: StakingLock {
+						staking_amount: 1000,
+						unbondings: vec![]
+					},
+					..Default::default()
+				})
+			);
+
+			// Unbond almost all of the funds in stash.
+			Staking::unbond(Origin::signed(10), StakingBalance::RingBalance(900)).unwrap();
+			assert_eq!(
+				Staking::ledger(&10),
+				Some(StakingLedger {
+					stash: 11,
+					active_ring: 100,
+					ring_staking_lock: StakingLock {
+						staking_amount: 100,
+						unbondings: vec![Unbonding {
+							amount: 900,
+							until: System::block_number() + BondingDurationInBlockNumber::get(),
+						}]
+					},
+					..Default::default()
+				})
+			);
+
+			// Re-bond part of the funds unbonded.
+			Staking::rebond(Origin::signed(10), 500, 0).unwrap();
+			assert_eq!(
+				Staking::ledger(&10),
+				Some(StakingLedger {
+					stash: 11,
+					active_ring: 600,
+					ring_staking_lock: StakingLock {
+						staking_amount: 600,
+						unbondings: vec![Unbonding {
+							amount: 400,
+							until: System::block_number() + BondingDurationInBlockNumber::get(),
+						}]
+					},
+					..Default::default()
+				})
+			);
+
+			// Re-bond the remainder of the funds unbonded.
+			Staking::rebond(Origin::signed(10), 500, 0).unwrap();
+			assert_eq!(
+				Staking::ledger(&10),
+				Some(StakingLedger {
+					stash: 11,
+					active_ring: 1000,
+					ring_staking_lock: StakingLock {
+						staking_amount: 1000,
+						unbondings: vec![]
+					},
+					..Default::default()
+				})
+			);
+
+			// Unbond parts of the funds in stash.
+			Staking::unbond(Origin::signed(10), StakingBalance::RingBalance(300)).unwrap();
+			Staking::unbond(Origin::signed(10), StakingBalance::RingBalance(300)).unwrap();
+			Staking::unbond(Origin::signed(10), StakingBalance::RingBalance(300)).unwrap();
+			assert_eq!(
+				Staking::ledger(&10),
+				Some(StakingLedger {
+					stash: 11,
+					active_ring: 100,
+					ring_staking_lock: StakingLock {
+						staking_amount: 100,
+						unbondings: vec![
+							Unbonding {
+								amount: 300,
+								until: System::block_number() + BondingDurationInBlockNumber::get(),
+							},
+							Unbonding {
+								amount: 300,
+								until: System::block_number() + BondingDurationInBlockNumber::get(),
+							},
+							Unbonding {
+								amount: 300,
+								until: System::block_number() + BondingDurationInBlockNumber::get(),
+							}
+						]
+					},
+					..Default::default()
+				})
+			);
+
+			// Re-bond part of the funds unbonded.
+			Staking::rebond(Origin::signed(10), 500, 0).unwrap();
+			assert_eq!(
+				Staking::ledger(&10),
+				Some(StakingLedger {
+					stash: 11,
+					active_ring: 600,
+					ring_staking_lock: StakingLock {
+						staking_amount: 600,
+						unbondings: vec![
+							Unbonding {
+								amount: 300,
+								until: System::block_number() + BondingDurationInBlockNumber::get(),
+							},
+							Unbonding {
+								amount: 100,
+								until: System::block_number() + BondingDurationInBlockNumber::get(),
+							}
+						]
+					},
+					..Default::default()
+				})
+			);
+		});
+}
+
+#[test]
+fn rebond_is_fifo() {
+	// Rebond should proceed by reversing the most recent bond operations.
+	ExtBuilder::default()
+		.nominate(false)
+		.build()
+		.execute_with(|| {
+			// Set payee to controller. avoids confusion
+			assert_ok!(Staking::set_payee(
+				Origin::signed(10),
+				RewardDestination::Controller
+			));
+
+			// Give account 11 some large free balance greater than total
+			let _ = Ring::make_free_balance_be(&11, 1000000);
+
+			// confirm that 10 is a normal validator and gets paid at the end of the era.
+			start_era(1);
+
+			// Initial state of 10
+			assert_eq!(
+				Staking::ledger(&10),
+				Some(StakingLedger {
+					stash: 11,
+					active_ring: 1000,
+					ring_staking_lock: StakingLock {
+						staking_amount: 1000,
+						unbondings: vec![]
+					},
+					..Default::default()
+				})
+			);
+
+			start_era(2);
+
+			// Unbond some of the funds in stash.
+			Staking::unbond(Origin::signed(10), StakingBalance::RingBalance(400)).unwrap();
+			assert_eq!(
+				Staking::ledger(&10),
+				Some(StakingLedger {
+					stash: 11,
+					active_ring: 600,
+					ring_staking_lock: StakingLock {
+						staking_amount: 600,
+						unbondings: vec![Unbonding {
+							amount: 400,
+							until: 6 + BondingDurationInBlockNumber::get(),
+						}]
+					},
+					..Default::default()
+				})
+			);
+
+			start_era(3);
+
+			// Unbond more of the funds in stash.
+			Staking::unbond(Origin::signed(10), StakingBalance::RingBalance(300)).unwrap();
+			assert_eq!(
+				Staking::ledger(&10),
+				Some(StakingLedger {
+					stash: 11,
+					active_ring: 300,
+					ring_staking_lock: StakingLock {
+						staking_amount: 300,
+						unbondings: vec![
+							Unbonding {
+								amount: 400,
+								until: 6 + BondingDurationInBlockNumber::get(),
+							},
+							Unbonding {
+								amount: 300,
+								until: 9 + BondingDurationInBlockNumber::get(),
+							},
+						]
+					},
+					..Default::default()
+				})
+			);
+
+			start_era(4);
+
+			// Unbond yet more of the funds in stash.
+			Staking::unbond(Origin::signed(10), StakingBalance::RingBalance(200)).unwrap();
+			assert_eq!(
+				Staking::ledger(&10),
+				Some(StakingLedger {
+					stash: 11,
+					active_ring: 100,
+					ring_staking_lock: StakingLock {
+						staking_amount: 100,
+						unbondings: vec![
+							Unbonding {
+								amount: 400,
+								until: 6 + BondingDurationInBlockNumber::get(),
+							},
+							Unbonding {
+								amount: 300,
+								until: 9 + BondingDurationInBlockNumber::get(),
+							},
+							Unbonding {
+								amount: 200,
+								until: 12 + BondingDurationInBlockNumber::get(),
+							},
+						]
+					},
+					..Default::default()
+				})
+			);
+
+			// Re-bond half of the unbonding funds.
+			Staking::rebond(Origin::signed(10), 400, 0).unwrap();
+			assert_eq!(
+				Staking::ledger(&10),
+				Some(StakingLedger {
+					stash: 11,
+					active_ring: 500,
+					ring_staking_lock: StakingLock {
+						staking_amount: 500,
+						unbondings: vec![
+							Unbonding {
+								amount: 400,
+								until: 6 + BondingDurationInBlockNumber::get(),
+							},
+							Unbonding {
+								amount: 100,
+								until: 9 + BondingDurationInBlockNumber::get(),
+							},
+						]
+					},
+					..Default::default()
+				})
+			);
+		});
+}
 
 #[test]
 fn reward_to_stake_works() {
@@ -3430,7 +3742,7 @@ fn test_max_nominator_rewarded_per_validator_and_cant_steal_someone_else_reward(
 #[test]
 fn set_history_depth_works() {
 	ExtBuilder::default().build_and_execute(|| {
-		mock::start_era(10);
+		start_era(10);
 		Staking::set_history_depth(Origin::root(), 20, 0).unwrap();
 		assert!(<Staking as Store>::ErasTotalStake::contains_key(10 - 4));
 		assert!(<Staking as Store>::ErasTotalStake::contains_key(10 - 5));
@@ -3467,12 +3779,12 @@ fn test_payout_stakers() {
 				);
 			}
 
-			mock::start_era(1);
+			start_era(1);
 			Staking::reward_by_ids(vec![(11, 1)]);
 			// Compute total payout now for whole duration as other parameter won't change
 			let total_payout_0 = current_total_payout_for_duration(3 * 1000);
 			assert!(total_payout_0 > 100); // Test is meaningful if reward something
-			mock::start_era(2);
+			start_era(2);
 			assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11, 1));
 
 			// Top 64 nominators of validator 11 automatically paid out, including the validator
@@ -3506,7 +3818,7 @@ fn test_payout_stakers() {
 				// Compute total payout now for whole duration as other parameter won't change
 				let total_payout_0 = current_total_payout_for_duration(3 * 1000);
 				assert!(total_payout_0 > 100); // Test is meaningful if reward something
-				mock::start_era(i);
+				start_era(i);
 				assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11, i - 1));
 			}
 
@@ -3530,7 +3842,7 @@ fn test_payout_stakers() {
 				// Compute total payout now for whole duration as other parameter won't change
 				let total_payout_0 = current_total_payout_for_duration(3 * 1000);
 				assert!(total_payout_0 > 100); // Test is meaningful if reward something
-				mock::start_era(i);
+				start_era(i);
 			}
 
 			// We clean it up as history passes
@@ -3590,12 +3902,12 @@ fn payout_stakers_handles_basic_errors() {
 				);
 			}
 
-			mock::start_era(1);
+			start_era(1);
 			Staking::reward_by_ids(vec![(11, 1)]);
 			// Compute total payout now for whole duration as other parameter won't change
 			let total_payout_0 = current_total_payout_for_duration(3 * 1000);
 			assert!(total_payout_0 > 100); // Test is meaningful if reward something
-			mock::start_era(2);
+			start_era(2);
 
 			// Wrong Era, too big
 			assert_noop!(
@@ -3613,7 +3925,7 @@ fn payout_stakers_handles_basic_errors() {
 				// Compute total payout now for whole duration as other parameter won't change
 				let total_payout_0 = current_total_payout_for_duration(3 * 1000);
 				assert!(total_payout_0 > 100); // Test is meaningful if reward something
-				mock::start_era(i);
+				start_era(i);
 			}
 			// We are at era 99, with history depth of 84
 			// We should be able to payout era 15 through 98 (84 total eras), but not 14 or 99.
@@ -3805,12 +4117,12 @@ fn payout_creates_controller() {
 			assert_ok!(Ring::transfer(Origin::signed(1337), 1234, 100));
 			assert_eq!(Ring::free_balance(1337), 0);
 
-			mock::start_era(1);
+			start_era(1);
 			Staking::reward_by_ids(vec![(11, 1)]);
 			// Compute total payout now for whole duration as other parameter won't change
 			let total_payout_0 = current_total_payout_for_duration(3 * 1000);
 			assert!(total_payout_0 > 100); // Test is meaningful if reward something
-			mock::start_era(2);
+			start_era(2);
 			assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11, 1));
 
 			// Controller is created
@@ -3839,12 +4151,12 @@ fn payout_to_any_account_works() {
 			// Reward Destination account doesn't exist
 			assert_eq!(Ring::free_balance(42), 0);
 
-			mock::start_era(1);
+			start_era(1);
 			Staking::reward_by_ids(vec![(11, 1)]);
 			// Compute total payout now for whole duration as other parameter won't change
 			let total_payout_0 = current_total_payout_for_duration(3 * 1000);
 			assert!(total_payout_0 > 100); // Test is meaningful if reward something
-			mock::start_era(2);
+			start_era(2);
 			assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11, 1));
 
 			// Payment is successful
