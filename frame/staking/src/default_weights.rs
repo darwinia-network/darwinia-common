@@ -96,6 +96,13 @@ impl crate::WeightInfo for () {
 			.saturating_add(DbWeight::get().reads((5 as Weight).saturating_mul(n as Weight)))
 			.saturating_add(DbWeight::get().writes((3 as Weight).saturating_mul(n as Weight)))
 	}
+	fn rebond(l: u32) -> Weight {
+		(71316000 as Weight)
+			.saturating_add((142000 as Weight).saturating_mul(l as Weight))
+			.saturating_add(DbWeight::get().reads(4 as Weight))
+			.saturating_add(DbWeight::get().writes(3 as Weight))
+	}
+
 	fn set_history_depth(e: u32) -> Weight {
 		(0 as Weight)
 			.saturating_add((51901000 as Weight).saturating_mul(e as Weight))

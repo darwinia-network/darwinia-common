@@ -351,7 +351,10 @@ use frame_support::{
 		Currency, EnsureOrigin, EstimateNextNewSession, ExistenceRequirement::KeepAlive, Get,
 		Imbalance, OnUnbalanced, UnixTime,
 	},
-	weights::{constants::WEIGHT_PER_MICROS, Weight},
+	weights::{
+		constants::{WEIGHT_PER_MICROS, WEIGHT_PER_NANOS},
+		Weight,
+	},
 };
 use frame_system::{ensure_none, ensure_root, ensure_signed, offchain::SendTransactionTypes};
 use sp_npos_elections::{
@@ -576,6 +579,8 @@ pub trait WeightInfo {
 	fn cancel_deferred_slash(s: u32) -> Weight;
 	fn payout_stakers_alive_staked(n: u32) -> Weight;
 	fn payout_stakers_dead_controller(n: u32) -> Weight;
+
+	fn rebond(l: u32) -> Weight;
 	fn set_history_depth(e: u32) -> Weight;
 	fn reap_stash(s: u32) -> Weight;
 	fn new_era(v: u32, n: u32) -> Weight;
@@ -899,6 +904,8 @@ decl_error! {
 		InsufficientValue,
 		/// Can not schedule more unlock chunks.
 		NoMoreChunks,
+		/// Can not rebond without unlocking chunks.
+		NoUnlockChunk,
 		/// Attempting to target a stash that still has funds.
 		FundedTarget,
 		/// Invalid era to reward.
@@ -1297,7 +1304,7 @@ decl_module! {
 		/// - Read: Era Election Status, Bonded, Ledger, [Origin Account]
 		/// - Write: [Origin Account], Ledger
 		/// # </weight>
-		#[weight = T::WeightInfo::unbond()]
+		#[weight = T::WeightInfo::deposit_extra()]
 		fn deposit_extra(origin, value: RingBalance<T>, promise_month: u8) {
 			let stash = ensure_signed(origin)?;
 			let controller = Self::bonded(&stash).ok_or(<Error<T>>::NotStash)?;
@@ -1982,6 +1989,55 @@ decl_module! {
 
 			ensure_signed(origin)?;
 			Self::do_payout_stakers(validator_stash, era)
+		}
+
+		/// Rebond a portion of the stash scheduled to be unlocked.
+		///
+		/// The dispatch origin must be signed by the controller, and it can be only called when
+		/// [`EraElectionStatus`] is `Closed`.
+		///
+		/// # <weight>
+		/// - Time complexity: O(L), where L is unlocking chunks
+		/// - Bounded by `MAX_UNLOCKING_CHUNKS`.
+		/// - Storage changes: Can't increase storage, only decrease it.
+		/// ---------------
+		/// - DB Weight:
+		///     - Reads: EraElectionStatus, Ledger, Locks, [Origin Account]
+		///     - Writes: [Origin Account], Locks, Ledger
+		/// # </weight>
+		#[weight = T::WeightInfo::rebond(MAX_UNLOCKING_CHUNKS as u32)]
+		fn rebond(
+			origin,
+			#[compact] plan_to_rebond_ring: RingBalance<T>,
+			#[compact] plan_to_rebond_kton: KtonBalance<T>
+		) -> DispatchResultWithPostInfo {
+			ensure!(Self::era_election_status().is_closed(), <Error<T>>::CallNotAllowed);
+
+			let controller = ensure_signed(origin)?;
+			let mut ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
+			let now = <frame_system::Module<T>>::block_number();
+
+			ledger.ring_staking_lock.update(now);
+			ledger.kton_staking_lock.update(now);
+
+			ensure!(
+				!ledger.ring_staking_lock.unbondings.is_empty()
+					&& !ledger.kton_staking_lock.unbondings.is_empty(),
+				<Error<T>>::NoUnlockChunk
+			);
+
+			ledger.rebond(plan_to_rebond_ring, plan_to_rebond_kton);
+
+			// Self::update_ledger(&controller, &ledger);
+
+			Ok(Some(
+				35 * WEIGHT_PER_MICROS
+					+ 50 * WEIGHT_PER_NANOS * (
+						ledger.ring_staking_lock.unbondings.len() as Weight
+							+ ledger.kton_staking_lock.unbondings.len() as Weight
+					)
+					+ T::DbWeight::get().reads_writes(3, 2)
+			).into())
 		}
 
 		/// Set `HistoryDepth` value. This function will delete any history information
@@ -2669,12 +2725,12 @@ impl<T: Trait> Module<T> {
 		// candidates.
 		let snapshot_validators_length = <SnapshotValidators<T>>::decode_len()
 			.map(|l| l as u32)
-			.ok_or_else(|| Error::<T>::SnapshotUnavailable)?;
+			.ok_or_else(|| <Error<T>>::SnapshotUnavailable)?;
 
 		// size of the solution must be correct.
 		ensure!(
 			snapshot_validators_length == u32::from(election_size.validators),
-			Error::<T>::OffchainElectionBogusElectionSize,
+			<Error<T>>::OffchainElectionBogusElectionSize,
 		);
 
 		// check the winner length only here and when we know the length of the snapshot validators
@@ -2801,7 +2857,7 @@ impl<T: Trait> Module<T> {
 
 		// build the support map thereof in order to evaluate.
 		let supports = build_support_map::<T::AccountId>(&winners, &staked_assignments)
-			.map_err(|_| Error::<T>::OffchainElectionBogusEdge)?;
+			.map_err(|_| <Error<T>>::OffchainElectionBogusEdge)?;
 
 		// Check if the score is the same as the claimed one.
 		let submitted_score = evaluate_support(&supports);
@@ -3978,6 +4034,51 @@ where
 
 	pub fn kton_locked_amount_at(&self, at: BlockNumber) -> KtonBalance {
 		self.kton_staking_lock.locked_amount(at)
+	}
+
+	/// Re-bond funds that were scheduled for unlocking.
+	fn rebond(&mut self, plan_to_rebond_ring: RingBalance, plan_to_rebond_kton: KtonBalance) {
+		fn update<Balance, _M>(
+			bonded: &mut Balance,
+			lock: &mut StakingLock<Balance, _M>,
+			plan_to_rebond: Balance,
+		) where
+			Balance: Copy + AtLeast32BitUnsigned + Saturating,
+		{
+			let mut rebonded = Balance::zero();
+
+			while let Some(Unbonding { amount, .. }) = lock.unbondings.last_mut() {
+				let new_rebonded = rebonded.saturating_add(*amount);
+
+				if new_rebonded <= plan_to_rebond {
+					rebonded = new_rebonded;
+					*bonded = bonded.saturating_add(*amount);
+
+					lock.unbondings.pop();
+				} else {
+					let diff = plan_to_rebond.saturating_sub(rebonded);
+
+					rebonded = rebonded.saturating_add(diff);
+					*bonded = bonded.saturating_add(diff);
+					*amount = amount.saturating_sub(diff);
+				}
+
+				if rebonded >= plan_to_rebond {
+					break;
+				}
+			}
+		}
+
+		update(
+			&mut self.active_ring,
+			&mut self.ring_staking_lock,
+			plan_to_rebond_ring,
+		);
+		update(
+			&mut self.active_kton,
+			&mut self.kton_staking_lock,
+			plan_to_rebond_kton,
+		);
 	}
 
 	/// Slash the validator for a given amount of balance. This can grow the value
