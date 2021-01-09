@@ -122,6 +122,8 @@ decl_error! {
 		ScheduledSignNE,
 		/// Darwinia MMR Root - NOT READY YET
 		DarwiniaMMRRootNRY,
+		/// MMR Root - INVALID
+		MMRRootInv,
 		/// Signature - INVALID
 		SignatureInv,
 	}
@@ -441,6 +443,13 @@ decl_module! {
 				&authorities,
 				&authority
 			).ok_or(<Error<T, I>>::AuthorityNE)?;
+
+			ensure!(
+				T::DarwiniaMMR::get_root(block_number).ok_or(<Error<T, I>>::DarwiniaMMRRootNRY)?
+					== mmr_root,
+				<Error<T, I>>::MMRRootInv
+			);
+
 			// The message is composed of:
 			//
 			// hash(codec(spec_name: String, block number: Compact<BlockNumber>, mmr_root: Hash))
@@ -448,7 +457,7 @@ decl_module! {
 				&_S {
 					_1: T::Version::get().spec_name,
 					_2: block_number,
-					_3: T::DarwiniaMMR::get_root(block_number).ok_or(<Error<T, I>>::DarwiniaMMRRootNRY)?
+					_3: mmr_root
 				}
 				.encode()
 			);
@@ -460,7 +469,7 @@ decl_module! {
 
 			signatures.push((authority, signature));
 
-			if Perbill::from_rational_approximation(signatures.len() as u32 + 1, authorities.len() as _)
+			if Perbill::from_rational_approximation(signatures.len() as u32, authorities.len() as _)
 				>= T::SignThreshold::get()
 			{
 				// TODO: clean the mmr root which was contains in this mmr root?
