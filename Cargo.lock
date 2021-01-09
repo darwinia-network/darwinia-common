@@ -155,21 +155,9 @@ dependencies = [
 
 [[package]]
 name = "arc-swap"
-<<<<<<< HEAD
-version = "0.4.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dabe5a181f83789739c194cbe5a897dde195078fac08568d09221fd6137a7ba8"
-=======
 version = "0.4.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4d25d88fd6b8041580a654f9d0c581a047baee2b3efee13275f2fc392fc75034"
->>>>>>> Skip pangolin compile to easy compiler
-
-[[package]]
-name = "array-bytes"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "43759f68cc29a37659a6b7a48a49674e03a888b6d41f36f4204c36d0d09a51de"
 
 [[package]]
 name = "array-bytes"
@@ -1338,7 +1326,7 @@ dependencies = [
 name = "darwinia-claims"
 version = "1.2.3"
 dependencies = [
- "array-bytes 1.2.3",
+ "array-bytes",
  "darwinia-balances",
  "darwinia-support",
  "frame-support",
@@ -1434,7 +1422,7 @@ dependencies = [
 name = "darwinia-ethereum-backing"
 version = "1.2.3"
 dependencies = [
- "array-bytes 1.2.3",
+ "array-bytes",
  "darwinia-balances",
  "darwinia-ethereum-linear-relay",
  "darwinia-ethereum-relay",
@@ -1463,7 +1451,7 @@ dependencies = [
 name = "darwinia-ethereum-linear-relay"
 version = "1.2.3"
 dependencies = [
- "array-bytes 1.2.3",
+ "array-bytes",
  "darwinia-balances",
  "darwinia-support",
  "ethereum-primitives",
@@ -1484,7 +1472,7 @@ dependencies = [
 name = "darwinia-ethereum-relay"
 version = "1.2.3"
 dependencies = [
- "array-bytes 1.2.3",
+ "array-bytes",
  "blake2-rfc",
  "ckb-merkle-mountain-range",
  "darwinia-balances",
@@ -1546,7 +1534,7 @@ dependencies = [
 name = "darwinia-header-mmr"
 version = "1.2.3"
 dependencies = [
- "array-bytes 1.2.3",
+ "array-bytes",
  "ckb-merkle-mountain-range",
  "darwinia-header-mmr-rpc-runtime-api",
  "darwinia-relay-primitives",
@@ -1829,7 +1817,7 @@ checksum = "fea41bba32d969b513997752735605054bc0dfa92b4c56bf1189f2e174be7a10"
 name = "drml"
 version = "1.0.7"
 dependencies = [
- "array-bytes 1.2.3",
+ "array-bytes",
  "darwinia-balances-rpc",
  "darwinia-balances-rpc-runtime-api",
  "darwinia-claims",
@@ -2270,7 +2258,7 @@ dependencies = [
 name = "ethereum-primitives"
 version = "1.2.3"
 dependencies = [
- "array-bytes 1.2.3",
+ "array-bytes",
  "ethash",
  "ethbloom 0.8.1",
  "ethereum-types 0.8.0",
@@ -3735,7 +3723,7 @@ dependencies = [
  "rand 0.7.3",
  "serde",
  "serde_json",
- "smallvec 1.5.1",
+ "smallvec 1.6.0",
  "soketto 0.3.2",
  "thiserror",
  "url 2.2.0",
@@ -5318,7 +5306,6 @@ dependencies = [
 name = "pangolin-runtime"
 version = "1.0.7"
 dependencies = [
- "array-bytes 0.3.0",
  "darwinia-balances",
  "darwinia-balances-rpc-runtime-api",
  "darwinia-claims",
@@ -5367,7 +5354,7 @@ dependencies = [
  "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec",
  "serde",
- "smallvec 1.5.1",
+ "smallvec 1.6.0",
  "sp-api",
  "sp-application-crypto",
  "sp-authority-discovery",
@@ -7885,12 +7872,12 @@ dependencies = [
  "base64 0.11.0",
  "bytes 0.5.6",
  "futures 0.3.8",
- "http 0.2.1",
+ "http 0.2.2",
  "httparse",
  "log",
  "rand 0.7.3",
  "sha1",
- "smallvec 1.5.1",
+ "smallvec 1.6.0",
  "static_assertions 1.1.0",
  "thiserror",
 ]
@@ -7915,7 +7902,7 @@ dependencies = [
 name = "song-node"
 version = "1.0.1"
 dependencies = [
- "array-bytes 1.2.3",
+ "array-bytes",
  "bp-message-lane",
  "bp-runtime",
  "darwinia-balances-rpc",
@@ -7999,7 +7986,7 @@ dependencies = [
 name = "song-node-runtime"
 version = "1.0.1"
 dependencies = [
- "array-bytes 1.2.3",
+ "array-bytes",
  "bp-message-lane",
  "bp-runtime",
  "bridge-runtime-common",
@@ -8054,7 +8041,7 @@ dependencies = [
  "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec",
  "serde",
- "smallvec 1.5.1",
+ "smallvec 1.6.0",
  "song-node-primitives",
  "sp-api",
  "sp-application-crypto",
@@ -9028,7 +9015,7 @@ checksum = "f764005d11ee5f36500a149ace24e00e3da98b0158b3e2d53a7495660d3f4d60"
 name = "tang-node"
 version = "1.0.1"
 dependencies = [
- "array-bytes 1.2.3",
+ "array-bytes",
  "bp-message-lane",
  "bp-runtime",
  "darwinia-balances-rpc",
@@ -9112,7 +9099,7 @@ dependencies = [
 name = "tang-node-runtime"
 version = "1.0.1"
 dependencies = [
- "array-bytes 1.2.3",
+ "array-bytes",
  "bp-message-lane",
  "bp-runtime",
  "bridge-runtime-common",
@@ -9167,7 +9154,7 @@ dependencies = [
  "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec",
  "serde",
- "smallvec 1.5.1",
+ "smallvec 1.6.0",
  "song-node-primitives",
  "sp-api",
  "sp-application-crypto",
