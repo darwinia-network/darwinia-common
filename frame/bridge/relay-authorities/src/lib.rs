@@ -420,7 +420,6 @@ decl_module! {
 		pub fn submit_signed_mmr_root(
 			origin,
 			block_number: BlockNumber<T>,
-			mmr_root: MMRRoot<T>,
 			signature: RelayAuthoritySignature<T, I>
 		) {
 			let authority = ensure_signed(origin)?;
@@ -441,6 +440,9 @@ decl_module! {
 				&authorities,
 				&authority
 			).ok_or(<Error<T, I>>::AuthorityNE)?;
+			let mmr_root =
+				T::DarwiniaMMR::get_root(block_number).ok_or(<Error<T, I>>::DarwiniaMMRRootNRY)?;
+
 			// The message is composed of:
 			//
 			// hash(codec(spec_name: String, block number: Compact<BlockNumber>, mmr_root: Hash))
@@ -448,7 +450,7 @@ decl_module! {
 				&_S {
 					_1: T::Version::get().spec_name,
 					_2: block_number,
-					_3: T::DarwiniaMMR::get_root(block_number).ok_or(<Error<T, I>>::DarwiniaMMRRootNRY)?
+					_3: mmr_root
 				}
 				.encode()
 			);
@@ -460,7 +462,7 @@ decl_module! {
 
 			signatures.push((authority, signature));
 
-			if Perbill::from_rational_approximation(signatures.len() as u32 + 1, authorities.len() as _)
+			if Perbill::from_rational_approximation(signatures.len() as u32, authorities.len() as _)
 				>= T::SignThreshold::get()
 			{
 				// TODO: clean the mmr root which was contains in this mmr root?

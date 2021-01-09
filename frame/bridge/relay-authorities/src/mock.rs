@@ -69,7 +69,7 @@ pub struct Test;
 pub struct DarwiniaMMR;
 impl MMR<BlockNumber, H256> for DarwiniaMMR {
 	fn get_root(_: BlockNumber) -> Option<H256> {
-		unimplemented!()
+		Some(Default::default())
 	}
 }
 pub struct Sign;
