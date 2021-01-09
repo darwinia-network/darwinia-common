@@ -212,14 +212,12 @@ fn mmr_root_signed_event_should_work() {
 		assert_ok!(RelayAuthorities::submit_signed_mmr_root(
 			Origin::signed(9),
 			10,
-			Default::default(),
 			[0; 65],
 		));
 		assert!(relay_authorities_events().is_empty());
 		assert_ok!(RelayAuthorities::submit_signed_mmr_root(
 			Origin::signed(1),
 			10,
-			Default::default(),
 			[0; 65],
 		));
 		assert_eq!(

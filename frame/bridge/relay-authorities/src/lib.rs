@@ -122,8 +122,6 @@ decl_error! {
 		ScheduledSignNE,
 		/// Darwinia MMR Root - NOT READY YET
 		DarwiniaMMRRootNRY,
-		/// MMR Root - INVALID
-		MMRRootInv,
 		/// Signature - INVALID
 		SignatureInv,
 	}
@@ -422,7 +420,6 @@ decl_module! {
 		pub fn submit_signed_mmr_root(
 			origin,
 			block_number: BlockNumber<T>,
-			mmr_root: MMRRoot<T>,
 			signature: RelayAuthoritySignature<T, I>
 		) {
 			let authority = ensure_signed(origin)?;
@@ -443,12 +440,8 @@ decl_module! {
 				&authorities,
 				&authority
 			).ok_or(<Error<T, I>>::AuthorityNE)?;
-
-			ensure!(
-				T::DarwiniaMMR::get_root(block_number).ok_or(<Error<T, I>>::DarwiniaMMRRootNRY)?
-					== mmr_root,
-				<Error<T, I>>::MMRRootInv
-			);
+			let mmr_root =
+				T::DarwiniaMMR::get_root(block_number).ok_or(<Error<T, I>>::DarwiniaMMRRootNRY)?;
 
 			// The message is composed of:
 			//
