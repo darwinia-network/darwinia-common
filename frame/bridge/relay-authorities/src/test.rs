@@ -192,6 +192,48 @@ fn encode_message_should_work() {
 }
 
 #[test]
+fn mmr_root_signed_event_should_work() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+
+		assert_ok!(request_authority(1));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 1));
+		assert_ok!(RelayAuthorities::submit_signed_authorities(
+			Origin::signed(9),
+			[0; 65]
+		));
+
+		RelayAuthorities::finish_authorities_change();
+		events();
+
+		RelayAuthorities::new_mmr_to_sign(10);
+		events();
+
+		assert_ok!(RelayAuthorities::submit_signed_mmr_root(
+			Origin::signed(9),
+			10,
+			Default::default(),
+			[0; 65],
+		));
+		assert!(relay_authorities_events().is_empty());
+		assert_ok!(RelayAuthorities::submit_signed_mmr_root(
+			Origin::signed(1),
+			10,
+			Default::default(),
+			[0; 65],
+		));
+		assert_eq!(
+			relay_authorities_events(),
+			vec![Event::relay_authorities(RawEvent::MMRRootSigned(
+				10,
+				Default::default(),
+				vec![(9, [0; 65]), (1, [0; 65])]
+			))]
+		);
+	});
+}
+
+#[test]
 fn authorities_set_signed_event_should_work() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
