@@ -351,7 +351,10 @@ use frame_support::{
 		Currency, EnsureOrigin, EstimateNextNewSession, ExistenceRequirement::KeepAlive, Get,
 		Imbalance, OnUnbalanced, UnixTime,
 	},
-	weights::{constants::WEIGHT_PER_MICROS, Weight},
+	weights::{
+		constants::{WEIGHT_PER_MICROS, WEIGHT_PER_NANOS},
+		Weight,
+	},
 };
 use frame_system::{ensure_none, ensure_root, ensure_signed, offchain::SendTransactionTypes};
 use sp_npos_elections::{
@@ -576,6 +579,8 @@ pub trait WeightInfo {
 	fn cancel_deferred_slash(s: u32) -> Weight;
 	fn payout_stakers_alive_staked(n: u32) -> Weight;
 	fn payout_stakers_dead_controller(n: u32) -> Weight;
+
+	fn rebond(l: u32) -> Weight;
 	fn set_history_depth(e: u32) -> Weight;
 	fn reap_stash(s: u32) -> Weight;
 	fn new_era(v: u32, n: u32) -> Weight;
@@ -899,6 +904,8 @@ decl_error! {
 		InsufficientValue,
 		/// Can not schedule more unlock chunks.
 		NoMoreChunks,
+		/// Can not rebond without unlocking chunks.
+		NoUnlockChunk,
 		/// Attempting to target a stash that still has funds.
 		FundedTarget,
 		/// Invalid era to reward.
@@ -1297,7 +1304,7 @@ decl_module! {
 		/// - Read: Era Election Status, Bonded, Ledger, [Origin Account]
 		/// - Write: [Origin Account], Ledger
 		/// # </weight>
-		#[weight = T::WeightInfo::unbond()]
+		#[weight = T::WeightInfo::deposit_extra()]
 		fn deposit_extra(origin, value: RingBalance<T>, promise_month: u8) {
 			let stash = ensure_signed(origin)?;
 			let controller = Self::bonded(&stash).ok_or(<Error<T>>::NotStash)?;
@@ -1385,8 +1392,6 @@ decl_module! {
 				kton_staking_lock,
 				..
 			} = &mut ledger;
-			let origin_active_ring = *active_ring;
-			let origin_active_kton = *active_kton;
 			let now = <frame_system::Module<T>>::block_number();
 
 			ring_staking_lock.update(now);
@@ -1480,12 +1485,7 @@ decl_module! {
 				},
 			}
 
-			Self::update_ledger(
-				&controller,
-				Some(origin_active_ring),
-				Some(origin_active_kton),
-				&mut ledger
-			);
+			Self::update_ledger(&controller, &mut ledger);
 
 			// TODO: https://github.com/darwinia-network/darwinia-common/issues/96
 			// FIXME: https://github.com/darwinia-network/darwinia-common/issues/121
@@ -1984,6 +1984,55 @@ decl_module! {
 			Self::do_payout_stakers(validator_stash, era)
 		}
 
+		/// Rebond a portion of the stash scheduled to be unlocked.
+		///
+		/// The dispatch origin must be signed by the controller, and it can be only called when
+		/// [`EraElectionStatus`] is `Closed`.
+		///
+		/// # <weight>
+		/// - Time complexity: O(L), where L is unlocking chunks
+		/// - Bounded by `MAX_UNLOCKING_CHUNKS`.
+		/// - Storage changes: Can't increase storage, only decrease it.
+		/// ---------------
+		/// - DB Weight:
+		///     - Reads: EraElectionStatus, Ledger, Locks, [Origin Account]
+		///     - Writes: [Origin Account], Locks, Ledger
+		/// # </weight>
+		#[weight = T::WeightInfo::rebond(MAX_UNLOCKING_CHUNKS as u32)]
+		fn rebond(
+			origin,
+			#[compact] plan_to_rebond_ring: RingBalance<T>,
+			#[compact] plan_to_rebond_kton: KtonBalance<T>
+		) -> DispatchResultWithPostInfo {
+			ensure!(Self::era_election_status().is_closed(), <Error<T>>::CallNotAllowed);
+
+			let controller = ensure_signed(origin)?;
+			let mut ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
+			let now = <frame_system::Module<T>>::block_number();
+
+			ledger.ring_staking_lock.update(now);
+			ledger.kton_staking_lock.update(now);
+
+			ensure!(
+				!ledger.ring_staking_lock.unbondings.is_empty()
+					|| !ledger.kton_staking_lock.unbondings.is_empty(),
+				<Error<T>>::NoUnlockChunk
+			);
+
+			ledger.rebond(plan_to_rebond_ring, plan_to_rebond_kton);
+
+			Self::update_ledger(&controller, &mut ledger);
+
+			Ok(Some(
+				35 * WEIGHT_PER_MICROS
+					+ 50 * WEIGHT_PER_NANOS * (
+						ledger.ring_staking_lock.unbondings.len() as Weight
+							+ ledger.kton_staking_lock.unbondings.len() as Weight
+					)
+					+ T::DbWeight::get().reads_writes(3, 2)
+			).into())
+		}
+
 		/// Set `HistoryDepth` value. This function will delete any history information
 		/// when `HistoryDepth` is reduced.
 		///
@@ -2185,7 +2234,6 @@ impl<T: Trait> Module<T> {
 			deposit_items,
 			..
 		} = &mut ledger;
-		let origin_active_ring = *active_ring;
 
 		let start_time = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
 		let mut expire_time = start_time;
@@ -2208,18 +2256,16 @@ impl<T: Trait> Module<T> {
 			});
 		}
 
-		Self::update_ledger(&controller, Some(origin_active_ring), None, &mut ledger);
+		Self::update_ledger(&controller, &mut ledger);
 
 		(start_time, expire_time)
 	}
 
 	/// Update the ledger while bonding controller with *KTON*
 	fn bond_kton(controller: &T::AccountId, value: KtonBalance<T>, mut ledger: StakingLedgerT<T>) {
-		let origin_active_kton = ledger.active_kton;
-
 		ledger.active_kton += value;
 
-		Self::update_ledger(&controller, None, Some(origin_active_kton), &mut ledger);
+		Self::update_ledger(&controller, &mut ledger);
 	}
 
 	/// Turn the expired deposit items into normal bond
@@ -2458,19 +2504,10 @@ impl<T: Trait> Module<T> {
 
 	/// Update the ledger for a controller.
 	///
-	/// This will also update the stash lock.
-	fn update_ledger(
-		controller: &T::AccountId,
-		// The origin active ring, none means
-		// there's no change on this field during this update,
-		// just ignore it
-		maybe_origin_active_ring: Option<RingBalance<T>>,
-		// The origin active kton, none means
-		// there's no change on this field during this update,
-		// just ignore it
-		maybe_origin_active_kton: Option<KtonBalance<T>>,
-		ledger: &mut StakingLedgerT<T>,
-	) {
+	/// BE CAREFUL:
+	/// 	This will also update the stash lock.
+	/// 	DO NOT modify the locks' staking amount outside this function.
+	fn update_ledger(controller: &T::AccountId, ledger: &mut StakingLedgerT<T>) {
 		let StakingLedger {
 			active_ring,
 			active_kton,
@@ -2480,19 +2517,17 @@ impl<T: Trait> Module<T> {
 		} = ledger;
 
 		if *active_ring != ring_staking_lock.staking_amount {
+			let origin_active_ring = ring_staking_lock.staking_amount;
+
 			ring_staking_lock.staking_amount = *active_ring;
 
-			// If the active ring != staking amount, there must be a difference
-			// The origin active ring MUST be some, but better safe here
-			if let Some(origin_active_ring) = maybe_origin_active_ring {
-				<RingPool<T>>::mutate(|pool| {
-					if origin_active_ring > *active_ring {
-						*pool = pool.saturating_sub(origin_active_ring - *active_ring);
-					} else {
-						*pool = pool.saturating_add(*active_ring - origin_active_ring);
-					}
-				});
-			}
+			<RingPool<T>>::mutate(|pool| {
+				if origin_active_ring > *active_ring {
+					*pool = pool.saturating_sub(origin_active_ring - *active_ring);
+				} else {
+					*pool = pool.saturating_add(*active_ring - origin_active_ring);
+				}
+			});
 
 			T::RingCurrency::set_lock(
 				STAKING_ID,
@@ -2503,19 +2538,17 @@ impl<T: Trait> Module<T> {
 		}
 
 		if *active_kton != kton_staking_lock.staking_amount {
+			let origin_active_kton = kton_staking_lock.staking_amount;
+
 			kton_staking_lock.staking_amount = *active_kton;
 
-			// If the active kton != staking amount, there must be a difference
-			// The origin active kton MUST be some, but better safe here
-			if let Some(origin_active_kton) = maybe_origin_active_kton {
-				<KtonPool<T>>::mutate(|pool| {
-					if origin_active_kton > *active_kton {
-						*pool = pool.saturating_sub(origin_active_kton - *active_kton);
-					} else {
-						*pool = pool.saturating_add(*active_kton - origin_active_kton);
-					}
-				});
-			}
+			<KtonPool<T>>::mutate(|pool| {
+				if origin_active_kton > *active_kton {
+					*pool = pool.saturating_sub(origin_active_kton - *active_kton);
+				} else {
+					*pool = pool.saturating_add(*active_kton - origin_active_kton);
+				}
+			});
 
 			T::KtonCurrency::set_lock(
 				STAKING_ID,
@@ -2552,11 +2585,9 @@ impl<T: Trait> Module<T> {
 					let r = T::RingCurrency::deposit_into_existing(stash, amount).ok();
 
 					if r.is_some() {
-						let origin_active_ring = l.active_ring;
-
 						l.active_ring += amount;
 
-						Self::update_ledger(&c, Some(origin_active_ring), None, &mut l);
+						Self::update_ledger(&c, &mut l);
 					}
 
 					r
@@ -2669,12 +2700,12 @@ impl<T: Trait> Module<T> {
 		// candidates.
 		let snapshot_validators_length = <SnapshotValidators<T>>::decode_len()
 			.map(|l| l as u32)
-			.ok_or_else(|| Error::<T>::SnapshotUnavailable)?;
+			.ok_or_else(|| <Error<T>>::SnapshotUnavailable)?;
 
 		// size of the solution must be correct.
 		ensure!(
 			snapshot_validators_length == u32::from(election_size.validators),
-			Error::<T>::OffchainElectionBogusElectionSize,
+			<Error<T>>::OffchainElectionBogusElectionSize,
 		);
 
 		// check the winner length only here and when we know the length of the snapshot validators
@@ -2801,7 +2832,7 @@ impl<T: Trait> Module<T> {
 
 		// build the support map thereof in order to evaluate.
 		let supports = build_support_map::<T::AccountId>(&winners, &staked_assignments)
-			.map_err(|_| Error::<T>::OffchainElectionBogusEdge)?;
+			.map_err(|_| <Error<T>>::OffchainElectionBogusEdge)?;
 
 		// Check if the score is the same as the claimed one.
 		let submitted_score = evaluate_support(&supports);
@@ -3565,7 +3596,6 @@ impl<T: Trait> OnDepositRedeem<T::AccountId, RingBalance<T>> for Module<T> {
 				deposit_items,
 				..
 			} = &mut ledger;
-			let origin_active_ring = *active_ring;
 
 			*active_ring = active_ring.saturating_add(amount);
 			*active_deposit_ring = active_deposit_ring.saturating_add(amount);
@@ -3575,7 +3605,7 @@ impl<T: Trait> OnDepositRedeem<T::AccountId, RingBalance<T>> for Module<T> {
 				expire_time,
 			});
 
-			Self::update_ledger(&controller, Some(origin_active_ring), None, &mut ledger);
+			Self::update_ledger(&controller, &mut ledger);
 		} else {
 			ensure!(
 				!<Bonded<T>>::contains_key(&stash),
@@ -3613,7 +3643,7 @@ impl<T: Trait> OnDepositRedeem<T::AccountId, RingBalance<T>> for Module<T> {
 				..Default::default()
 			};
 
-			Self::update_ledger(controller, Some(0.into()), None, &mut ledger);
+			Self::update_ledger(controller, &mut ledger);
 		};
 
 		Self::deposit_event(RawEvent::BondRing(amount, start_time, expire_time));
@@ -3978,6 +4008,51 @@ where
 
 	pub fn kton_locked_amount_at(&self, at: BlockNumber) -> KtonBalance {
 		self.kton_staking_lock.locked_amount(at)
+	}
+
+	/// Re-bond funds that were scheduled for unlocking.
+	fn rebond(&mut self, plan_to_rebond_ring: RingBalance, plan_to_rebond_kton: KtonBalance) {
+		fn update<Balance, _M>(
+			bonded: &mut Balance,
+			lock: &mut StakingLock<Balance, _M>,
+			plan_to_rebond: Balance,
+		) where
+			Balance: Copy + AtLeast32BitUnsigned + Saturating,
+		{
+			let mut rebonded = Balance::zero();
+
+			while let Some(Unbonding { amount, .. }) = lock.unbondings.last_mut() {
+				let new_rebonded = rebonded.saturating_add(*amount);
+
+				if new_rebonded <= plan_to_rebond {
+					rebonded = new_rebonded;
+					*bonded = bonded.saturating_add(*amount);
+
+					lock.unbondings.pop();
+				} else {
+					let diff = plan_to_rebond.saturating_sub(rebonded);
+
+					rebonded = rebonded.saturating_add(diff);
+					*bonded = bonded.saturating_add(diff);
+					*amount = amount.saturating_sub(diff);
+				}
+
+				if rebonded >= plan_to_rebond {
+					break;
+				}
+			}
+		}
+
+		update(
+			&mut self.active_ring,
+			&mut self.ring_staking_lock,
+			plan_to_rebond_ring,
+		);
+		update(
+			&mut self.active_kton,
+			&mut self.kton_staking_lock,
+			plan_to_rebond_kton,
+		);
 	}
 
 	/// Slash the validator for a given amount of balance. This can grow the value
