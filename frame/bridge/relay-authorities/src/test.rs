@@ -165,10 +165,10 @@ fn authority_term_should_work() {
 		let max_candidates = <MaxCandidates as Get<usize>>::get();
 
 		for i in 1..=max_candidates {
+			assert_eq!(RelayAuthorities::authority_term(), i as Term - 1);
 			assert_ok!(request_authority(i as _));
 			assert_ok!(RelayAuthorities::add_authority(Origin::root(), i as _));
 
-			assert_eq!(RelayAuthorities::authority_term(), i as Term - 1);
 			RelayAuthorities::finish_authorities_change();
 			assert_eq!(RelayAuthorities::authority_term(), i as Term);
 		}
