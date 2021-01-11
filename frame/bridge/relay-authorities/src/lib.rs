@@ -492,9 +492,6 @@ decl_module! {
 			let (message, mut signatures) = if let Some(signatures) = <AuthoritiesToSign<T, I>>::get() {
 				signatures
 			} else {
-				// Should never enter this condition
-				// TODO: error log
-
 				return Ok(());
 			};
 
@@ -547,7 +544,6 @@ decl_module! {
 			}
 
 			<OldAuthorities<T, I>>::kill();
-			<AuthorityTerm<I>>::mutate(|term| *term += 1);
 			<AuthoritiesState<T, I>>::kill();
 			<AuthoritiesToSign<T, I>>::kill();
 			{
@@ -676,7 +672,6 @@ where
 	pub fn wait_target_chain_authorities_change() {
 		<AuthoritiesToSign<T, I>>::kill();
 		<AuthoritiesState<T, I>>::mutate(|authorities_state| authorities_state.1 = 0.into());
-		<AuthorityTerm<I>>::mutate(|authority_term| *authority_term += 1);
 
 		for account_id in <OldAuthoritiesLockToRemove<T, I>>::take() {
 			<RingCurrency<T, I>>::remove_lock(T::LockId::get(), &account_id);
@@ -771,6 +766,7 @@ where
 
 	fn finish_authorities_change() {
 		<AuthoritiesState<T, I>>::kill();
+		<AuthorityTerm<I>>::mutate(|authority_term| *authority_term += 1);
 	}
 }
 
