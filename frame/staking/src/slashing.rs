@@ -703,7 +703,6 @@ pub fn do_slash<T: Trait>(
 		Some(ledger) => ledger,
 		None => return, // nothing to do.
 	};
-	let (origin_active_ring, origin_active_kton) = (ledger.active_ring, ledger.active_kton);
 	let (slash_ring, slash_kton) = ledger.slash(
 		value.r,
 		value.k,
@@ -738,12 +737,7 @@ pub fn do_slash<T: Trait>(
 	}
 
 	if slashed {
-		<Module<T>>::update_ledger(
-			&controller,
-			Some(origin_active_ring),
-			Some(origin_active_kton),
-			&mut ledger,
-		);
+		<Module<T>>::update_ledger(&controller, &mut ledger);
 		<Module<T>>::deposit_event(RawEvent::Slash(stash.clone(), value.r, value.k));
 	}
 }

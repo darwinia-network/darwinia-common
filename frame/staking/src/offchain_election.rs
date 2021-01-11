@@ -487,6 +487,9 @@ mod test {
 		fn payout_stakers_alive_staked(n: u32) -> Weight {
 			unimplemented!()
 		}
+		fn rebond(l: u32) -> Weight {
+			unimplemented!()
+		}
 		fn set_history_depth(e: u32) -> Weight {
 			unimplemented!()
 		}
