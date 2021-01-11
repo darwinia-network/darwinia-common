@@ -254,5 +254,9 @@ fn authorities_set_signed_event_should_work() {
 				vec![(9, [0; 65])]
 			))]
 		);
+
+		RelayAuthorities::finish_authorities_change();
+
+		assert_eq!(RelayAuthorities::authority_term(), 1);
 	});
 }
