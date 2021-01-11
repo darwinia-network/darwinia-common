@@ -160,6 +160,22 @@ fn kill_candidates_should_work() {
 }
 
 #[test]
+fn authority_term_should_work() {
+	new_test_ext().execute_with(|| {
+		let max_candidates = <MaxCandidates as Get<usize>>::get();
+
+		for i in 1..=max_candidates {
+			assert_ok!(request_authority(i as _));
+			assert_ok!(RelayAuthorities::add_authority(Origin::root(), i as _));
+
+			assert_eq!(RelayAuthorities::authority_term(), i as Term - 1);
+			RelayAuthorities::finish_authorities_change();
+			assert_eq!(RelayAuthorities::authority_term(), i as Term);
+		}
+	});
+}
+
+#[test]
 fn encode_message_should_work() {
 	// --- substrate ---
 	use sp_runtime::RuntimeString;
@@ -254,9 +270,5 @@ fn authorities_set_signed_event_should_work() {
 				vec![(9, [0; 65])]
 			))]
 		);
-
-		RelayAuthorities::finish_authorities_change();
-
-		assert_eq!(RelayAuthorities::authority_term(), 1);
 	});
 }
