@@ -2019,15 +2019,15 @@ decl_module! {
 				<Error<T>>::NoUnlockChunk
 			);
 
-			let active_ring = ledger.active_ring;
-			let active_kton = ledger.active_kton;
+			let origin_active_ring = ledger.active_ring;
+			let origin_active_kton = ledger.active_kton;
 
 			ledger.rebond(plan_to_rebond_ring, plan_to_rebond_kton);
 
 			Self::update_ledger(&controller, &mut ledger);
 
-			let rebond_ring = active_ring.saturating_sub(ledger.active_ring);
-			let rebond_kton = active_kton.saturating_sub(ledger.active_kton);
+			let rebond_ring = ledger.active_ring.saturating_sub(origin_active_ring);
+			let rebond_kton = ledger.active_kton.saturating_sub(origin_active_kton);
 
 			if !rebond_ring.is_zero() {
 				let now = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
