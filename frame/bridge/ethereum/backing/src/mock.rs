@@ -58,6 +58,19 @@ macro_rules! decl_tests {
 
 		#[derive(Clone, PartialEq, Eq, Debug)]
 		pub struct Test;
+		// Only for test
+		pub struct EcdsaAuthorities;
+		impl RelayAuthorityProtocol<BlockNumber> for EcdsaAuthorities {
+			type Signer = EthereumAddress;
+
+			fn new_mmr_to_sign(_: BlockNumber) {}
+
+			fn check_authorities(_: Vec<Self::Signer>) -> DispatchResult {
+				Ok(())
+			}
+
+			fn finish_authorities_change() {}
+		}
 		parameter_types! {
 			pub const EthereumBackingModuleId: ModuleId = ModuleId(*b"da/backi");
 			pub const EthereumBackingFeeModuleId: ModuleId = ModuleId(*b"da/ethfe");
@@ -74,7 +87,7 @@ macro_rules! decl_tests {
 			type KtonCurrency = Kton;
 			type AdvancedFee = AdvancedFee;
 			type SyncReward = ();
-			type EcdsaAuthorities = ();
+			type EcdsaAuthorities = EcdsaAuthorities;
 			type WeightInfo = ();
 		}
 

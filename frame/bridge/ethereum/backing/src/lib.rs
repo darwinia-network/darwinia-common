@@ -104,7 +104,7 @@ pub trait Trait: frame_system::Trait {
 
 	type SyncReward: Get<RingBalance<Self>>;
 
-	type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber>;
+	type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber, Signer = EthereumAddress>;
 
 	/// Weight information for the extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
@@ -144,6 +144,8 @@ decl_error! {
 		BytesCF,
 		/// Int - CONVERSION FAILED
 		IntCF,
+		/// Array - CONVERSION FAILED
+		ArrayCF,
 		/// Address - CONVERSION FAILED
 		AddressCF,
 		/// Asset - ALREADY REDEEMED
@@ -323,7 +325,10 @@ decl_module! {
 
 			ensure!(!VerifiedProof::contains_key(tx_index), <Error<T>>::AuthoritiesSetAR);
 
-			let beneficiary = Self::parse_authorities_set_proof(&proof)?;
+			let (authorities, beneficiary) = Self::parse_authorities_set_proof(&proof)?;
+
+			T::EcdsaAuthorities::check_authorities(authorities)?;
+
 			let fee_account = Self::fee_account_id();
 			let sync_reward = T::SyncReward::get().min(
 				T::RingCurrency::usable_balance(&fee_account)
@@ -644,13 +649,14 @@ impl<T: Trait> Module<T> {
 
 	fn parse_authorities_set_proof(
 		proof_record: &EthereumReceiptProofThing<T>,
-	) -> Result<AccountId<T>, DispatchError> {
+	) -> Result<(Vec<EthereumAddress>, AccountId<T>), DispatchError> {
 		let log = {
 			let verified_receipt = T::EthereumRelay::verify_receipt(proof_record)
 				.map_err(|_| <Error<T>>::ReceiptProofInv)?;
 			let eth_event = EthEvent {
 				name: "SetAuthoritiesEvent".into(),
 				inputs: vec![
+					// TODO: Should we verify the nonce?
 					EthEventParam {
 						name: "nonce".into(),
 						kind: ParamType::Uint(32),
@@ -685,6 +691,20 @@ impl<T: Trait> Module<T> {
 				})
 				.map_err(|_| <Error<T>>::EthLogPF)?
 		};
+		let authorities = {
+			let mut authorities = vec![];
+
+			for token in log.params[1]
+				.value
+				.clone()
+				.to_array()
+				.ok_or(<Error<T>>::ArrayCF)?
+			{
+				authorities.push(token.to_address().ok_or(<Error<T>>::AddressCF)?);
+			}
+
+			authorities
+		};
 		let beneficiary = {
 			let raw_account_id = log.params[2]
 				.value
@@ -697,7 +717,7 @@ impl<T: Trait> Module<T> {
 			Self::account_id_try_from_bytes(&raw_account_id)?
 		};
 
-		Ok(beneficiary)
+		Ok((authorities, beneficiary))
 	}
 
 	fn redeem_token(

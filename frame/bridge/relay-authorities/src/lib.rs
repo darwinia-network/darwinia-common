@@ -124,6 +124,8 @@ decl_error! {
 		DarwiniaMMRRootNRY,
 		/// Signature - INVALID
 		SignatureInv,
+		/// Authorities - MISMATCHED
+		AuthoritiesMis,
 	}
 }
 
@@ -747,6 +749,8 @@ where
 	T: Trait<I>,
 	I: Instance,
 {
+	type Signer = RelayAuthoritySigner<T, I>;
+
 	fn new_mmr_to_sign(block_number: BlockNumber<T>) {
 		let _ = <MMRRootsToSign<T, I>>::try_mutate(block_number, |signed_mmr_root| {
 			// No-op if the sign was already scheduled
@@ -762,6 +766,22 @@ where
 
 			Ok(())
 		});
+	}
+
+	fn check_authorities(mut authorities: Vec<Self::Signer>) -> DispatchResult {
+		let mut chain_authorities = <Authorities<T, I>>::get()
+			.into_iter()
+			.map(|authority| authority.signer)
+			.collect::<Vec<_>>();
+
+		authorities.sort();
+		chain_authorities.sort();
+
+		if authorities == chain_authorities {
+			Ok(())
+		} else {
+			Err(<Error<T, I>>::AuthoritiesMis)?
+		}
 	}
 
 	fn finish_authorities_change() {
