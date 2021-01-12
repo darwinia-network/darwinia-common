@@ -104,7 +104,7 @@ pub trait Trait: frame_system::Trait {
 
 	type SyncReward: Get<RingBalance<Self>>;
 
-	type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber>;
+	type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber, Signer = EthereumAddress>;
 
 	/// Weight information for the extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
@@ -144,6 +144,8 @@ decl_error! {
 		BytesCF,
 		/// Int - CONVERSION FAILED
 		IntCF,
+		/// Array - CONVERSION FAILED
+		ArrayCF,
 		/// Address - CONVERSION FAILED
 		AddressCF,
 		/// Asset - ALREADY REDEEMED
@@ -323,7 +325,10 @@ decl_module! {
 
 			ensure!(!VerifiedProof::contains_key(tx_index), <Error<T>>::AuthoritiesSetAR);
 
-			let beneficiary = Self::parse_authorities_set_proof(&proof)?;
+			let (term, authorities, beneficiary) = Self::parse_authorities_set_proof(&proof)?;
+
+			T::EcdsaAuthorities::check_sync_result(term, authorities)?;
+
 			let fee_account = Self::fee_account_id();
 			let sync_reward = T::SyncReward::get().min(
 				T::RingCurrency::usable_balance(&fee_account)
@@ -642,9 +647,12 @@ impl<T: Trait> Module<T> {
 		))
 	}
 
+	// event SetAuthritiesEvent(uint32 nonce, address[] authorities, bytes32 benifit);
+	// https://github.com/darwinia-network/darwinia-bridge-on-ethereum/blob/51839e614c0575e431eabfd5c70b84f6aa37826a/contracts/Relay.sol#L22
+	// https://ropsten.etherscan.io/tx/0x652528b9421ecb495610a734a4ab70d054b5510dbbf3a9d5c7879c43c7dde4e9#eventlog
 	fn parse_authorities_set_proof(
 		proof_record: &EthereumReceiptProofThing<T>,
-	) -> Result<AccountId<T>, DispatchError> {
+	) -> Result<(Term, Vec<EthereumAddress>, AccountId<T>), DispatchError> {
 		let log = {
 			let verified_receipt = T::EthereumRelay::verify_receipt(proof_record)
 				.map_err(|_| <Error<T>>::ReceiptProofInv)?;
@@ -685,6 +693,26 @@ impl<T: Trait> Module<T> {
 				})
 				.map_err(|_| <Error<T>>::EthLogPF)?
 		};
+		let term = log.params[0]
+			.value
+			.clone()
+			.to_uint()
+			.ok_or(<Error<T>>::BytesCF)?
+			.saturated_into();
+		let authorities = {
+			let mut authorities = vec![];
+
+			for token in log.params[1]
+				.value
+				.clone()
+				.to_array()
+				.ok_or(<Error<T>>::ArrayCF)?
+			{
+				authorities.push(token.to_address().ok_or(<Error<T>>::AddressCF)?);
+			}
+
+			authorities
+		};
 		let beneficiary = {
 			let raw_account_id = log.params[2]
 				.value
@@ -697,7 +725,7 @@ impl<T: Trait> Module<T> {
 			Self::account_id_try_from_bytes(&raw_account_id)?
 		};
 
-		Ok(beneficiary)
+		Ok((term, authorities, beneficiary))
 	}
 
 	fn redeem_token(

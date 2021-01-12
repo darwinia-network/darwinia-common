@@ -23,7 +23,7 @@ use core::fmt::Debug;
 // --- crates ---
 use codec::{Decode, Encode, FullCodec};
 // --- substrate ---
-use sp_runtime::RuntimeDebug;
+use sp_runtime::{DispatchResult, RuntimeDebug};
 use sp_std::prelude::*;
 
 pub type Term = u32;
@@ -31,7 +31,7 @@ pub type Term = u32;
 pub trait Sign<BlockNumber> {
 	type Signature: Clone + Debug + PartialEq + FullCodec;
 	type Message: Clone + Debug + Default + PartialEq + FullCodec;
-	type Signer: Clone + Debug + PartialEq + FullCodec;
+	type Signer: Clone + Debug + Ord + PartialEq + FullCodec;
 
 	fn hash(raw_message: impl AsRef<[u8]>) -> Self::Message;
 
@@ -43,15 +43,13 @@ pub trait Sign<BlockNumber> {
 }
 
 pub trait RelayAuthorityProtocol<BlockNumber> {
+	type Signer;
+
 	fn new_mmr_to_sign(block_number: BlockNumber);
 
-	fn finish_authorities_change();
-}
-// Only for test
-impl<BlockNumber> RelayAuthorityProtocol<BlockNumber> for () {
-	fn new_mmr_to_sign(_: BlockNumber) {}
+	fn check_sync_result(term: Term, authorities: Vec<Self::Signer>) -> DispatchResult;
 
-	fn finish_authorities_change() {}
+	fn finish_authorities_change();
 }
 
 pub trait MMR<BlockNumber, Root> {

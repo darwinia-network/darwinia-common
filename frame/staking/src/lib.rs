@@ -2019,9 +2019,24 @@ decl_module! {
 				<Error<T>>::NoUnlockChunk
 			);
 
+			let origin_active_ring = ledger.active_ring;
+			let origin_active_kton = ledger.active_kton;
+
 			ledger.rebond(plan_to_rebond_ring, plan_to_rebond_kton);
 
 			Self::update_ledger(&controller, &mut ledger);
+
+			let rebond_ring = ledger.active_ring.saturating_sub(origin_active_ring);
+			let rebond_kton = ledger.active_kton.saturating_sub(origin_active_kton);
+
+			if !rebond_ring.is_zero() {
+				let now = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
+
+				Self::deposit_event(RawEvent::BondRing(rebond_ring, now, now));
+			}
+			if !rebond_kton.is_zero() {
+				Self::deposit_event(RawEvent::BondKton(rebond_kton));
+			}
 
 			Ok(Some(
 				35 * WEIGHT_PER_MICROS
