@@ -282,12 +282,14 @@ fn authorities_set_signed_event_should_work() {
 			Origin::signed(9),
 			[0; 65]
 		));
+		// Not enough signatures, `1 / 2 < 60%`
 		assert!(relay_authorities_events().is_empty());
 		assert_ok!(RelayAuthorities::submit_signed_authorities(
 			Origin::signed(1),
 			[0; 65]
 		));
 
+		// Enough signatures, `2 / 2 > 60%`
 		assert_eq!(
 			relay_authorities_events(),
 			vec![Event::relay_authorities(RawEvent::AuthoritiesSetSigned(
