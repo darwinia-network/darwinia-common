@@ -58,7 +58,6 @@ macro_rules! decl_tests {
 
 		#[derive(Clone, PartialEq, Eq, Debug)]
 		pub struct Test;
-		// Only for test
 		pub struct EcdsaAuthorities;
 		impl RelayAuthorityProtocol<BlockNumber> for EcdsaAuthorities {
 			type Signer = EthereumAddress;
