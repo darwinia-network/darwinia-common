@@ -220,10 +220,10 @@ fn mmr_root_signed_event_should_work() {
 		));
 
 		RelayAuthorities::finish_authorities_change();
-		events();
+		System::reset_events();
 
 		RelayAuthorities::new_mmr_to_sign(10);
-		events();
+		System::reset_events();
 
 		assert_ok!(RelayAuthorities::submit_signed_mmr_root(
 			Origin::signed(9),
@@ -255,7 +255,7 @@ fn authorities_set_signed_event_should_work() {
 		assert_ok!(request_authority(1));
 		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 1));
 
-		events();
+		System::reset_events();
 
 		assert_ok!(RelayAuthorities::submit_signed_authorities(
 			Origin::signed(9),
@@ -276,7 +276,7 @@ fn authorities_set_signed_event_should_work() {
 		assert_ok!(request_authority(2));
 		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 2));
 
-		events();
+		System::reset_events();
 
 		assert_ok!(RelayAuthorities::submit_signed_authorities(
 			Origin::signed(9),
