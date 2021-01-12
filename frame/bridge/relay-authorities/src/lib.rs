@@ -124,6 +124,8 @@ decl_error! {
 		DarwiniaMMRRootNRY,
 		/// Signature - INVALID
 		SignatureInv,
+		/// Term - MISMATCHED
+		TermMis,
 		/// Authorities - MISMATCHED
 		AuthoritiesMis,
 	}
@@ -768,7 +770,9 @@ where
 		});
 	}
 
-	fn check_authorities(mut authorities: Vec<Self::Signer>) -> DispatchResult {
+	fn check_sync_result(term: Term, mut authorities: Vec<Self::Signer>) -> DispatchResult {
+		ensure!(term == <AuthorityTerm<I>>::get(), <Error<T, I>>::TermMis);
+
 		let mut chain_authorities = <Authorities<T, I>>::get()
 			.into_iter()
 			.map(|authority| authority.signer)

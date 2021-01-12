@@ -65,7 +65,7 @@ macro_rules! decl_tests {
 
 			fn new_mmr_to_sign(_: BlockNumber) {}
 
-			fn check_authorities(_: Vec<Self::Signer>) -> DispatchResult {
+			fn check_sync_result(_: Term, _: Vec<Self::Signer>) -> DispatchResult {
 				Ok(())
 			}
 

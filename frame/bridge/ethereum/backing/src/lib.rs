@@ -325,9 +325,9 @@ decl_module! {
 
 			ensure!(!VerifiedProof::contains_key(tx_index), <Error<T>>::AuthoritiesSetAR);
 
-			let (authorities, beneficiary) = Self::parse_authorities_set_proof(&proof)?;
+			let (term, authorities, beneficiary) = Self::parse_authorities_set_proof(&proof)?;
 
-			T::EcdsaAuthorities::check_authorities(authorities)?;
+			T::EcdsaAuthorities::check_sync_result(term, authorities)?;
 
 			let fee_account = Self::fee_account_id();
 			let sync_reward = T::SyncReward::get().min(
@@ -647,16 +647,18 @@ impl<T: Trait> Module<T> {
 		))
 	}
 
+	// event SetAuthritiesEvent(uint32 nonce, address[] authorities, bytes32 benifit);
+	// https://github.com/darwinia-network/darwinia-bridge-on-ethereum/blob/51839e614c0575e431eabfd5c70b84f6aa37826a/contracts/Relay.sol#L22
+	// https://ropsten.etherscan.io/tx/0x652528b9421ecb495610a734a4ab70d054b5510dbbf3a9d5c7879c43c7dde4e9#eventlog
 	fn parse_authorities_set_proof(
 		proof_record: &EthereumReceiptProofThing<T>,
-	) -> Result<(Vec<EthereumAddress>, AccountId<T>), DispatchError> {
+	) -> Result<(Term, Vec<EthereumAddress>, AccountId<T>), DispatchError> {
 		let log = {
 			let verified_receipt = T::EthereumRelay::verify_receipt(proof_record)
 				.map_err(|_| <Error<T>>::ReceiptProofInv)?;
 			let eth_event = EthEvent {
 				name: "SetAuthoritiesEvent".into(),
 				inputs: vec![
-					// TODO: Should we verify the nonce?
 					EthEventParam {
 						name: "nonce".into(),
 						kind: ParamType::Uint(32),
@@ -691,6 +693,12 @@ impl<T: Trait> Module<T> {
 				})
 				.map_err(|_| <Error<T>>::EthLogPF)?
 		};
+		let term = log.params[0]
+			.value
+			.clone()
+			.to_uint()
+			.ok_or(<Error<T>>::BytesCF)?
+			.saturated_into();
 		let authorities = {
 			let mut authorities = vec![];
 
@@ -717,7 +725,7 @@ impl<T: Trait> Module<T> {
 			Self::account_id_try_from_bytes(&raw_account_id)?
 		};
 
-		Ok((authorities, beneficiary))
+		Ok((term, authorities, beneficiary))
 	}
 
 	fn redeem_token(

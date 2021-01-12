@@ -47,7 +47,7 @@ pub trait RelayAuthorityProtocol<BlockNumber> {
 
 	fn new_mmr_to_sign(block_number: BlockNumber);
 
-	fn check_authorities(authorities: Vec<Self::Signer>) -> DispatchResult;
+	fn check_sync_result(term: Term, authorities: Vec<Self::Signer>) -> DispatchResult;
 
 	fn finish_authorities_change();
 }
