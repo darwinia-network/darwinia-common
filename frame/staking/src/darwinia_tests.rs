@@ -1979,3 +1979,76 @@ fn bond_values_when_some_value_unbonding() {
 		);
 	});
 }
+
+#[test]
+fn rebond_event_should_work() {
+	ExtBuilder::default()
+		.nominate(false)
+		.build()
+		.execute_with(|| {
+			assert_ok!(Staking::set_payee(
+				Origin::signed(10),
+				RewardDestination::Controller
+			));
+
+			let _ = Ring::make_free_balance_be(&11, 1000000);
+
+			start_era(1);
+
+			assert_eq!(
+				Staking::ledger(&10),
+				Some(StakingLedger {
+					stash: 11,
+					active_ring: 1000,
+					ring_staking_lock: StakingLock {
+						staking_amount: 1000,
+						unbondings: vec![]
+					},
+					..Default::default()
+				})
+			);
+
+			start_era(2);
+
+			Staking::unbond(Origin::signed(10), StakingBalance::RingBalance(400)).unwrap();
+			assert_eq!(
+				Staking::ledger(&10),
+				Some(StakingLedger {
+					stash: 11,
+					active_ring: 600,
+					ring_staking_lock: StakingLock {
+						staking_amount: 600,
+						unbondings: vec![Unbonding {
+							amount: 400,
+							until: 6 + BondingDurationInBlockNumber::get(),
+						}]
+					},
+					..Default::default()
+				})
+			);
+
+			System::reset_events();
+
+			// Re-bond half of the unbonding funds.
+			Staking::rebond(Origin::signed(10), 200, 0).unwrap();
+			assert_eq!(
+				Staking::ledger(&10),
+				Some(StakingLedger {
+					stash: 11,
+					active_ring: 800,
+					ring_staking_lock: StakingLock {
+						staking_amount: 800,
+						unbondings: vec![Unbonding {
+							amount: 200,
+							until: 6 + BondingDurationInBlockNumber::get(),
+						},]
+					},
+					..Default::default()
+				})
+			);
+			assert_eq!(
+				staking_events(),
+				vec![RawEvent::BondRing(200, 36000, 36000)]
+			);
+		});
+}
