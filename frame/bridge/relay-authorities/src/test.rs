@@ -270,5 +270,31 @@ fn authorities_set_signed_event_should_work() {
 				vec![(9, [0; 65])]
 			))]
 		);
+
+		RelayAuthorities::finish_authorities_change();
+
+		assert_ok!(request_authority(2));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 2));
+
+		events();
+
+		assert_ok!(RelayAuthorities::submit_signed_authorities(
+			Origin::signed(9),
+			[0; 65]
+		));
+		assert!(relay_authorities_events().is_empty());
+		assert_ok!(RelayAuthorities::submit_signed_authorities(
+			Origin::signed(1),
+			[0; 65]
+		));
+
+		assert_eq!(
+			relay_authorities_events(),
+			vec![Event::relay_authorities(RawEvent::AuthoritiesSetSigned(
+				1,
+				vec![Default::default(), Default::default(), Default::default()],
+				vec![(9, [0; 65]), (1, [0; 65])]
+			))]
+		);
 	});
 }
