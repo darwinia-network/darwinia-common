@@ -3324,7 +3324,7 @@ impl<T: Trait> Module<T> {
 		<ErasValidatorPrefs<T>>::remove_prefix(era_index);
 		<ErasValidatorReward<T>>::remove(era_index);
 		<ErasRewardPoints<T>>::remove(era_index);
-		<ErasTotalStake>::remove(era_index);
+		ErasTotalStake::remove(era_index);
 		ErasStartSessionIndex::remove(era_index);
 	}
 
