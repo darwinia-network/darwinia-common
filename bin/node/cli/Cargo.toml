@@ -56,7 +56,6 @@ sc-consensus-epochs                        = { git = "https://github.com/darwini
 sc-executor                                = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
 sc-finality-grandpa                        = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
 sc-finality-grandpa-rpc                    = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
-sc-keystore                                = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
 sc-network                                 = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
 sc-rpc                                     = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
 sc-service                                 = { optional = true, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
@@ -71,6 +70,7 @@ sp-consensus-babe                          = { git = "https://github.com/darwini
 sp-core                                    = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
 sp-finality-grandpa                        = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
 sp-inherents                               = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
+sp-keystore                                = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
 sp-offchain                                = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
 sp-runtime                                 = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
 sp-session                                 = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }

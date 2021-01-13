@@ -29,7 +29,6 @@ use sp_api::ConstructRuntimeApi;
 use sp_consensus::{
 	import_queue::BasicQueue, CanAuthorWithNativeVersion, DefaultImportQueue, NeverCanAuthor,
 };
-use sp_core::traits::BareCryptoStorePtr;
 use sp_inherents::InherentDataProviders;
 use sp_runtime::traits::BlakeTwo256;
 use sp_trie::PrefixedMemoryDB;
@@ -190,7 +189,7 @@ where
 	set_prometheus_registry(config)?;
 
 	let inherent_data_providers = InherentDataProviders::new();
-	let (client, backend, keystore, task_manager) =
+	let (client, backend, keystore_container, task_manager) =
 		sc_service::new_full_parts::<Block, RuntimeApi, Executor>(&config)?;
 	let client = Arc::new(client);
 	let select_chain = LongestChain::new(backend.clone());
@@ -241,7 +240,7 @@ where
 		sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 	let rpc_extensions_builder = {
 		let client = client.clone();
-		let keystore = keystore.clone();
+		let keystore = keystore_container.sync_keystore();
 		let transaction_pool = transaction_pool.clone();
 		let select_chain = select_chain.clone();
 
@@ -275,7 +274,7 @@ where
 		client,
 		backend,
 		task_manager,
-		keystore,
+		keystore_container,
 		select_chain,
 		import_queue,
 		transaction_pool,
@@ -304,7 +303,7 @@ where
 		client,
 		backend,
 		mut task_manager,
-		keystore,
+		keystore_container,
 		select_chain,
 		import_queue,
 		transaction_pool,
@@ -341,7 +340,7 @@ where
 		config,
 		backend: backend.clone(),
 		client: client.clone(),
-		keystore: keystore.clone(),
+		keystore: keystore_container.sync_keystore(),
 		network: network.clone(),
 		rpc_extensions_builder: {
 			let wrap_rpc_extensions_builder = {
@@ -378,7 +377,7 @@ where
 			prometheus_registry.as_ref(),
 		);
 		let babe_config = BabeParams {
-			keystore: keystore.clone(),
+			keystore: keystore_container.sync_keystore(),
 			client: client.clone(),
 			select_chain,
 			block_import,
@@ -397,7 +396,7 @@ where
 	}
 
 	let keystore = if is_authority {
-		Some(keystore.clone() as BareCryptoStorePtr)
+		Some(keystore_container.sync_keystore())
 	} else {
 		None
 	};
@@ -446,7 +445,7 @@ where
 {
 	set_prometheus_registry(&mut config)?;
 
-	let (client, backend, keystore, mut task_manager, on_demand) =
+	let (client, backend, keystore_container, mut task_manager, on_demand) =
 		sc_service::new_light_parts::<Block, RuntimeApi, Executor>(&config)?;
 	let select_chain = LongestChain::new(backend.clone());
 	let transaction_pool = Arc::new(BasicPool::new_light(
@@ -524,7 +523,7 @@ where
 		task_manager: &mut task_manager,
 		telemetry_connection_sinks: TelemetryConnectionSinks::default(),
 		config,
-		keystore,
+		keystore: keystore_container.sync_keystore(),
 		backend,
 		transaction_pool,
 		client,
