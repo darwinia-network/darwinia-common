@@ -94,9 +94,11 @@ pub fn run() -> sc_cli::Result<()> {
 		None => {
 			let runner = Configuration::create_runner(cli)?;
 
-			runner.run_node_until_exit(|config| match config.role {
-				Role::Light => service::drml_new_light(config),
-				_ => service::drml_new_full(config).map(|(components, _)| components),
+			runner.run_node_until_exit(|config| async move {
+				match config.role {
+					Role::Light => service::drml_new_light(config),
+					_ => service::drml_new_full(config).map(|(components, _)| components),
+				}
 			})
 		}
 		Some(Subcommand::BuildSpec(cmd)) => {
