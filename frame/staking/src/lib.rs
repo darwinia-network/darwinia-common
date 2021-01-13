@@ -342,14 +342,12 @@ use codec::{Decode, Encode, HasCompact};
 // --- substrate ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage,
-	dispatch::{
-		DispatchErrorWithPostInfo, DispatchResultWithPostInfo, IsSubType, WithPostDispatchInfo,
-	},
+	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo, WithPostDispatchInfo},
 	ensure,
 	storage::IterableStorageMap,
 	traits::{
 		Currency, EnsureOrigin, EstimateNextNewSession, ExistenceRequirement::KeepAlive, Get,
-		Imbalance, OnUnbalanced, UnixTime,
+		Imbalance, IsSubType, OnUnbalanced, UnixTime,
 	},
 	weights::{
 		constants::{WEIGHT_PER_MICROS, WEIGHT_PER_NANOS},
