@@ -50,7 +50,6 @@ pallet-authority-discovery                 = { default-features = false, git = "
 pallet-authorship                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
 pallet-babe                                = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
 pallet-collective                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
-pallet-finality-tracker                    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
 pallet-grandpa                             = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
 pallet-im-online                           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
 pallet-membership                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
@@ -121,7 +120,6 @@ std     = [
 	"pallet-authorship/std",
 	"pallet-babe/std",
 	"pallet-collective/std",
-	"pallet-finality-tracker/std",
 	"pallet-grandpa/std",
 	"pallet-im-online/std",
 	"pallet-membership/std",

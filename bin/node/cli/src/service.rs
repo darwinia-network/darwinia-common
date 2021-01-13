@@ -417,7 +417,6 @@ where
 			config: grandpa_config,
 			link: link_half,
 			network: network.clone(),
-			inherent_data_providers: inherent_data_providers.clone(),
 			telemetry_on_connect: Some(telemetry_connection_sinks.on_connect_stream()),
 			voting_rule: GrandpaVotingRulesBuilder::default().build(),
 			prometheus_registry,
@@ -429,11 +428,7 @@ where
 			sc_finality_grandpa::run_grandpa_voter(grandpa_config)?,
 		);
 	} else {
-		sc_finality_grandpa::setup_disabled_grandpa(
-			client.clone(),
-			&inherent_data_providers,
-			network.clone(),
-		)?;
+		sc_finality_grandpa::setup_disabled_grandpa(network.clone())?;
 	}
 
 	network_starter.start_network();
