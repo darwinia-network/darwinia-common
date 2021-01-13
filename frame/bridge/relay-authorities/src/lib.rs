@@ -124,6 +124,10 @@ decl_error! {
 		DarwiniaMMRRootNRY,
 		/// Signature - INVALID
 		SignatureInv,
+		/// Term - MISMATCHED
+		TermMis,
+		/// Authorities - MISMATCHED
+		AuthoritiesMis,
 	}
 }
 
@@ -492,9 +496,6 @@ decl_module! {
 			let (message, mut signatures) = if let Some(signatures) = <AuthoritiesToSign<T, I>>::get() {
 				signatures
 			} else {
-				// Should never enter this condition
-				// TODO: error log
-
 				return Ok(());
 			};
 
@@ -519,9 +520,10 @@ decl_module! {
 
 			signatures.push((old_authority, signature));
 
-			if Perbill::from_rational_approximation(signatures.len() as u32 + 1, old_authorities.len() as _)
+			if Perbill::from_rational_approximation(signatures.len() as u32, old_authorities.len() as _)
 				>= T::SignThreshold::get()
 			{
+				Self::wait_target_chain_authorities_change();
 				Self::deposit_event(RawEvent::AuthoritiesSetSigned(
 					<AuthorityTerm<I>>::get(),
 					<Authorities<T, I>>::get()
@@ -530,7 +532,6 @@ decl_module! {
 						.collect(),
 					signatures
 				));
-				Self::wait_target_chain_authorities_change();
 			} else {
 				<AuthoritiesToSign<T, I>>::put((message, signatures));
 			}
@@ -547,7 +548,6 @@ decl_module! {
 			}
 
 			<OldAuthorities<T, I>>::kill();
-			<AuthorityTerm<I>>::mutate(|term| *term += 1);
 			<AuthoritiesState<T, I>>::kill();
 			<AuthoritiesToSign<T, I>>::kill();
 			{
@@ -676,7 +676,6 @@ where
 	pub fn wait_target_chain_authorities_change() {
 		<AuthoritiesToSign<T, I>>::kill();
 		<AuthoritiesState<T, I>>::mutate(|authorities_state| authorities_state.1 = 0.into());
-		<AuthorityTerm<I>>::mutate(|authority_term| *authority_term += 1);
 
 		for account_id in <OldAuthoritiesLockToRemove<T, I>>::take() {
 			<RingCurrency<T, I>>::remove_lock(T::LockId::get(), &account_id);
@@ -752,6 +751,8 @@ where
 	T: Trait<I>,
 	I: Instance,
 {
+	type Signer = RelayAuthoritySigner<T, I>;
+
 	fn new_mmr_to_sign(block_number: BlockNumber<T>) {
 		let _ = <MMRRootsToSign<T, I>>::try_mutate(block_number, |signed_mmr_root| {
 			// No-op if the sign was already scheduled
@@ -769,8 +770,27 @@ where
 		});
 	}
 
+	fn check_sync_result(term: Term, mut authorities: Vec<Self::Signer>) -> DispatchResult {
+		ensure!(term == <AuthorityTerm<I>>::get(), <Error<T, I>>::TermMis);
+
+		let mut chain_authorities = <Authorities<T, I>>::get()
+			.into_iter()
+			.map(|authority| authority.signer)
+			.collect::<Vec<_>>();
+
+		authorities.sort();
+		chain_authorities.sort();
+
+		if authorities == chain_authorities {
+			Ok(())
+		} else {
+			Err(<Error<T, I>>::AuthoritiesMis)?
+		}
+	}
+
 	fn finish_authorities_change() {
 		<AuthoritiesState<T, I>>::kill();
+		<AuthorityTerm<I>>::mutate(|authority_term| *authority_term += 1);
 	}
 }
 

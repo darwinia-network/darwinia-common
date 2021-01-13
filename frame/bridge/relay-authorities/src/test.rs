@@ -160,6 +160,22 @@ fn kill_candidates_should_work() {
 }
 
 #[test]
+fn authority_term_should_work() {
+	new_test_ext().execute_with(|| {
+		let max_candidates = <MaxCandidates as Get<usize>>::get();
+
+		for i in 1..=max_candidates {
+			assert_eq!(RelayAuthorities::authority_term(), i as Term - 1);
+			assert_ok!(request_authority(i as _));
+			assert_ok!(RelayAuthorities::add_authority(Origin::root(), i as _));
+
+			RelayAuthorities::finish_authorities_change();
+			assert_eq!(RelayAuthorities::authority_term(), i as Term);
+		}
+	});
+}
+
+#[test]
 fn encode_message_should_work() {
 	// --- substrate ---
 	use sp_runtime::RuntimeString;
@@ -204,10 +220,10 @@ fn mmr_root_signed_event_should_work() {
 		));
 
 		RelayAuthorities::finish_authorities_change();
-		events();
+		System::reset_events();
 
 		RelayAuthorities::new_mmr_to_sign(10);
-		events();
+		System::reset_events();
 
 		assert_ok!(RelayAuthorities::submit_signed_mmr_root(
 			Origin::signed(9),
@@ -239,7 +255,7 @@ fn authorities_set_signed_event_should_work() {
 		assert_ok!(request_authority(1));
 		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 1));
 
-		events();
+		System::reset_events();
 
 		assert_ok!(RelayAuthorities::submit_signed_authorities(
 			Origin::signed(9),
@@ -252,6 +268,34 @@ fn authorities_set_signed_event_should_work() {
 				0,
 				vec![Default::default(), Default::default()],
 				vec![(9, [0; 65])]
+			))]
+		);
+
+		RelayAuthorities::finish_authorities_change();
+
+		assert_ok!(request_authority(2));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 2));
+
+		System::reset_events();
+
+		assert_ok!(RelayAuthorities::submit_signed_authorities(
+			Origin::signed(9),
+			[0; 65]
+		));
+		// Not enough signatures, `1 / 2 < 60%`
+		assert!(relay_authorities_events().is_empty());
+		assert_ok!(RelayAuthorities::submit_signed_authorities(
+			Origin::signed(1),
+			[0; 65]
+		));
+
+		// Enough signatures, `2 / 2 > 60%`
+		assert_eq!(
+			relay_authorities_events(),
+			vec![Event::relay_authorities(RawEvent::AuthoritiesSetSigned(
+				1,
+				vec![Default::default(), Default::default(), Default::default()],
+				vec![(9, [0; 65]), (1, [0; 65])]
 			))]
 		);
 	});
