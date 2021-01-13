@@ -94,7 +94,6 @@ pub mod impls {
 		traits::{Currency, Imbalance, OnUnbalanced},
 		weights::{WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
 	};
-	use sp_runtime::traits::Convert;
 	// --- darwinia ---
 	use crate::*;
 
@@ -104,7 +103,7 @@ pub mod impls {
 			RingInstance,
 			KtonInstance
 		where
-			Balance = u128
+			Balance = Balance
 		{
 			// other data
 		}
@@ -114,25 +113,6 @@ pub mod impls {
 	impl OnUnbalanced<NegativeImbalance> for Author {
 		fn on_nonzero_unbalanced(amount: NegativeImbalance) {
 			Ring::resolve_creating(&Authorship::author(), amount);
-		}
-	}
-
-	/// Struct that handles the conversion of Balance -> `u64`. This is used for staking's election
-	/// calculation.
-	pub struct CurrencyToVoteHandler;
-	impl CurrencyToVoteHandler {
-		fn factor() -> Balance {
-			(Balances::total_issuance() / u64::max_value() as Balance).max(1)
-		}
-	}
-	impl Convert<Balance, u64> for CurrencyToVoteHandler {
-		fn convert(x: Balance) -> u64 {
-			(x / Self::factor()) as u64
-		}
-	}
-	impl Convert<u128, Balance> for CurrencyToVoteHandler {
-		fn convert(x: u128) -> Balance {
-			x * Self::factor()
 		}
 	}
 
@@ -222,7 +202,7 @@ use frame_support::{
 	construct_runtime, debug, parameter_types,
 	traits::{
 		ChangeMembers, Currency, FindAuthor, InstanceFilter, KeyOwnerProofSystem, LockIdentifier,
-		Randomness,
+		Randomness, U128CurrencyToVote,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -825,7 +805,7 @@ impl darwinia_elections_phragmen::Trait for Runtime {
 	// NOTE: this implies that council's genesis members cannot be set directly and must come from
 	// this module.
 	type InitializeMembers = Council;
-	type CurrencyToVote = CurrencyToVoteHandler;
+	type CurrencyToVote = U128CurrencyToVote;
 	type CandidacyBond = CandidacyBond;
 	type VotingBond = VotingBond;
 	type LoserCandidate = Treasury;
