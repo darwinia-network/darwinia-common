@@ -374,6 +374,7 @@ where
 	if role.is_authority() {
 		let can_author_with = CanAuthorWithNativeVersion::new(client.executor().clone());
 		let proposer = ProposerFactory::new(
+			task_manager.spawn_handle(),
 			client.clone(),
 			transaction_pool,
 			prometheus_registry.as_ref(),
