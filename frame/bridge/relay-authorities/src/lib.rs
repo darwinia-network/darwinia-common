@@ -159,7 +159,9 @@ decl_storage! {
 		/// Tuple Params
 		/// 	1. is on authority change
 		/// 	1. the authorities change signature submit deadline, this will be delay indefinitely if can't collect enough signatures
-		pub AuthoritiesState get(fn authorities_state): (bool, BlockNumber<T>) = (false, 0.into());
+		pub AuthoritiesState
+			get(fn authorities_state)
+			: (bool, BlockNumber<T>) = (false, 0u32.into());
 
 		/// The authorities change requirements
 		///
@@ -313,7 +315,7 @@ decl_module! {
 					account_id,
 					signer,
 					stake,
-					term: 0.into()
+					term: 0u32.into()
 				});
 
 				DispatchResult::Ok(())
@@ -553,7 +555,7 @@ decl_module! {
 			{
 				<MMRRootsToSign<T, I>>::remove_all();
 				let schedule = (
-					<frame_system::Module<T>>::block_number().saturated_into() / 10 * 10 + 10
+					<frame_system::Module<T>>::block_number().saturated_into::<u64>() / 10 * 10 + 10
 				).saturated_into();
 				<MMRRootsToSignKeys<T, I>>::mutate(|schedules| *schedules = vec![schedule]);
 				Self::new_mmr_to_sign(schedule);
@@ -675,7 +677,7 @@ where
 
 	pub fn wait_target_chain_authorities_change() {
 		<AuthoritiesToSign<T, I>>::kill();
-		<AuthoritiesState<T, I>>::mutate(|authorities_state| authorities_state.1 = 0.into());
+		<AuthoritiesState<T, I>>::mutate(|authorities_state| authorities_state.1 = 0u32.into());
 
 		for account_id in <OldAuthoritiesLockToRemove<T, I>>::take() {
 			<RingCurrency<T, I>>::remove_lock(T::LockId::get(), &account_id);

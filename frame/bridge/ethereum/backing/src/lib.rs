@@ -312,7 +312,7 @@ decl_module! {
 
 			if locked {
 				T::EcdsaAuthorities::new_mmr_to_sign((
-					<frame_system::Module<T>>::block_number().saturated_into()
+					<frame_system::Module<T>>::block_number().saturated_into::<u64>()
 						/ 10 * 10 + 10
 				).saturated_into());
 			}
@@ -623,7 +623,7 @@ impl<T: Trait> Module<T> {
 				.map(|x| x / U256::from(1_000_000_000u64))
 				.ok_or(<Error<T>>::IntCF)?;
 
-			<RingBalance<T>>::saturated_from(redeemed_ring.saturated_into())
+			<RingBalance<T>>::saturated_from(redeemed_ring.saturated_into::<u128>())
 		};
 		let darwinia_account = {
 			let raw_account_id = result.params[6]

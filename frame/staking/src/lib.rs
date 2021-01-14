@@ -1603,7 +1603,7 @@ decl_module! {
 							inflation::compute_kton_reward::<T>(
 								item.value, passed_duration_in_months as _
 							)
-						).max(1.into()) * 3.into()
+						).max(1u32.into()) * 3u32.into()
 					};
 
 					// check total free balance and locked one
