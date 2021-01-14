@@ -466,7 +466,7 @@ fn verify_new_authorities() {
 					Origin::signed(Default::default()),
 					test_receipt_proof_thing,
 				),
-				<Error<Test>>::AuthoritySetAR
+				<Error<Test>>::AuthoritiesChangeAR
 			);
 		});
 }

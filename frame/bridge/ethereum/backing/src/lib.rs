@@ -150,8 +150,8 @@ decl_error! {
 		AddressCF,
 		/// Asset - ALREADY REDEEMED
 		AssetAR,
-		/// Authority Set - ALREADY SYNCED
-		AuthoritySetAR,
+		/// Authorities Change - ALREADY SYNCED
+		AuthoritiesChangeAR,
 		/// EthereumReceipt Proof - INVALID
 		ReceiptProofInv,
 		/// Eth Log - PARSING FAILED
@@ -323,7 +323,7 @@ decl_module! {
 			let bridger = ensure_signed(origin)?;
 			let tx_index = T::EthereumRelay::gen_receipt_index(&proof);
 
-			ensure!(!VerifiedProof::contains_key(tx_index), <Error<T>>::AuthoritySetAR);
+			ensure!(!VerifiedProof::contains_key(tx_index), <Error<T>>::AuthoritiesChangeAR);
 
 			let (term, authorities, beneficiary) = Self::parse_authorities_set_proof(&proof)?;
 
