@@ -226,6 +226,10 @@
 		"stake": "Balance",
 		"term": "BlockNumber"
 	},
+	"ScheduledAuthoritiesChange": {
+		"next_authorities": "Vec<RelayAuthorityT>",
+		"deadline": "BlockNumber"
+	},
 	"MMRRoot": "Hash",
 	"__[pangolin.runtime]__": {
 		"ProxyType": {

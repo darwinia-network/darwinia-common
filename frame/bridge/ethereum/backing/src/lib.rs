@@ -150,8 +150,8 @@ decl_error! {
 		AddressCF,
 		/// Asset - ALREADY REDEEMED
 		AssetAR,
-		/// Authorities Set - ALREADY SYNCED
-		AuthoritiesSetAR,
+		/// Authority Set - ALREADY SYNCED
+		AuthoritySetAR,
 		/// EthereumReceipt Proof - INVALID
 		ReceiptProofInv,
 		/// Eth Log - PARSING FAILED
@@ -311,7 +311,7 @@ decl_module! {
 			}
 
 			if locked {
-				T::EcdsaAuthorities::new_mmr_to_sign((
+				T::EcdsaAuthorities::schedule_mmr_root((
 					<frame_system::Module<T>>::block_number().saturated_into()
 						/ 10 * 10 + 10
 				).saturated_into());
@@ -319,15 +319,15 @@ decl_module! {
 		}
 
 		#[weight = 10_000_000]
-		fn sync_authorities_set(origin, proof: EthereumReceiptProofThing<T>) {
+		fn sync_authorities_change(origin, proof: EthereumReceiptProofThing<T>) {
 			let bridger = ensure_signed(origin)?;
 			let tx_index = T::EthereumRelay::gen_receipt_index(&proof);
 
-			ensure!(!VerifiedProof::contains_key(tx_index), <Error<T>>::AuthoritiesSetAR);
+			ensure!(!VerifiedProof::contains_key(tx_index), <Error<T>>::AuthoritySetAR);
 
 			let (term, authorities, beneficiary) = Self::parse_authorities_set_proof(&proof)?;
 
-			T::EcdsaAuthorities::check_sync_result(term, authorities)?;
+			T::EcdsaAuthorities::check_authorities_change_to_sync(term, authorities)?;
 
 			let fee_account = Self::fee_account_id();
 			let sync_reward = T::SyncReward::get().min(
@@ -344,7 +344,7 @@ decl_module! {
 				)?;
 			}
 
-			T::EcdsaAuthorities::finish_authorities_change();
+			T::EcdsaAuthorities::sync_authorities_change();
 
 			VerifiedProof::insert(tx_index, true);
 		}

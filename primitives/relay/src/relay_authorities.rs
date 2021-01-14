@@ -31,7 +31,7 @@ pub type Term = u32;
 pub trait Sign<BlockNumber> {
 	type Signature: Clone + Debug + PartialEq + FullCodec;
 	type Message: Clone + Debug + Default + PartialEq + FullCodec;
-	type Signer: Clone + Debug + Ord + PartialEq + FullCodec;
+	type Signer: Clone + Debug + Default + Ord + PartialEq + FullCodec;
 
 	fn hash(raw_message: impl AsRef<[u8]>) -> Self::Message;
 
@@ -45,11 +45,11 @@ pub trait Sign<BlockNumber> {
 pub trait RelayAuthorityProtocol<BlockNumber> {
 	type Signer;
 
-	fn new_mmr_to_sign(block_number: BlockNumber);
+	fn schedule_mmr_root(block_number: BlockNumber);
 
-	fn check_sync_result(term: Term, authorities: Vec<Self::Signer>) -> DispatchResult;
+	fn check_authorities_change_to_sync(term: Term, authorities: Vec<Self::Signer>) -> DispatchResult;
 
-	fn finish_authorities_change();
+	fn sync_authorities_change();
 }
 
 pub trait MMR<BlockNumber, Root> {
@@ -88,4 +88,13 @@ where
 	fn eq(&self, account_id: &AccountId) -> bool {
 		&self.account_id == account_id
 	}
+}
+
+/// The scheduled change of authority set
+#[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug)]
+pub struct ScheduledAuthoritiesChange<AccountId, Signer, RingBalance, BlockNumber> {
+	/// The new authorities after the change
+	pub next_authorities: Vec<RelayAuthority<AccountId, Signer, RingBalance, BlockNumber>>,
+	/// The deadline of the previous authorities to sign for the next authorities
+	pub deadline: BlockNumber,
 }

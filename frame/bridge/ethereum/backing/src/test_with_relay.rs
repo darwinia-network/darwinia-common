@@ -456,17 +456,17 @@ fn verify_new_authorities() {
 			EthereumRelay::confirm_relay_header_parcel_with_reason(relay_header_parcel, vec![]);
 
 			assert_ok!(
-				EthereumBacking::sync_authorities_set(
+				EthereumBacking::sync_authorities_change(
 					Origin::signed(Default::default()),
 					test_receipt_proof_thing.clone(),
 				)
 			);
 			assert_err!(
-				EthereumBacking::sync_authorities_set(
+				EthereumBacking::sync_authorities_change(
 					Origin::signed(Default::default()),
 					test_receipt_proof_thing,
 				),
-				<Error<Test>>::AuthoritiesSetAR
+				<Error<Test>>::AuthoritySetAR
 			);
 		});
 }
