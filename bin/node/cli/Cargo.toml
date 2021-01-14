@@ -17,7 +17,7 @@ name = "drml"
 [dependencies]
 # crates
 codec          = { package = "parity-scale-codec", version = "1.3.5" }
-futures        = { version = "0.3.8" }
+futures        = { version = "=0.3.8" }
 jsonrpc-core   = { version = "15.1.0" }
 jsonrpc-pubsub = { version = "15.1.0" }
 log            = { version = "0.4.13" }
