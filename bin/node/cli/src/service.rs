@@ -288,6 +288,7 @@ where
 #[cfg(feature = "full-node")]
 fn new_full<RuntimeApi, Executor>(
 	mut config: Configuration,
+	authority_discovery_disabled: bool,
 ) -> Result<(TaskManager, Arc<FullClient<RuntimeApi, Executor>>), ServiceError>
 where
 	Executor: 'static + NativeExecutionDispatch,
@@ -421,7 +422,7 @@ where
 			network: network.clone(),
 			telemetry_on_connect: Some(telemetry_connection_sinks.on_connect_stream()),
 			voting_rule: GrandpaVotingRulesBuilder::default().build(),
-			prometheus_registry,
+			prometheus_registry: prometheus_registry.clone(),
 			shared_voter_state,
 		};
 
@@ -431,6 +432,35 @@ where
 		);
 	} else {
 		sc_finality_grandpa::setup_disabled_grandpa(network.clone())?;
+	}
+
+	if role.is_authority() && !authority_discovery_disabled {
+		use futures::StreamExt;
+		use sc_network::Event;
+
+		let authority_discovery_role =
+			sc_authority_discovery::Role::PublishAndDiscover(keystore_container.keystore());
+		let dht_event_stream =
+			network
+				.event_stream("authority-discovery")
+				.filter_map(|e| async move {
+					match e {
+						Event::Dht(e) => Some(e),
+						_ => None,
+					}
+				});
+		let (authority_discovery_worker, _service) = sc_authority_discovery::new_worker_and_service(
+			client.clone(),
+			network,
+			Box::pin(dht_event_stream),
+			authority_discovery_role,
+			prometheus_registry,
+		);
+
+		task_manager.spawn_handle().spawn(
+			"authority-discovery-worker",
+			authority_discovery_worker.run(),
+		);
 	}
 
 	network_starter.start_network();
@@ -575,6 +605,7 @@ where
 #[cfg(feature = "full-node")]
 pub fn drml_new_full(
 	config: Configuration,
+	authority_discovery_disabled: bool,
 ) -> Result<
 	(
 		TaskManager,
@@ -582,7 +613,10 @@ pub fn drml_new_full(
 	),
 	ServiceError,
 > {
-	let (components, client) = new_full::<pangolin_runtime::RuntimeApi, PangolinExecutor>(config)?;
+	let (components, client) = new_full::<pangolin_runtime::RuntimeApi, PangolinExecutor>(
+		config,
+		authority_discovery_disabled,
+	)?;
 
 	Ok((components, client))
 }

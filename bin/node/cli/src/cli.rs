@@ -1,7 +1,7 @@
 // --- crates ---
 use structopt::StructOpt;
 // --- substrate ---
-use sc_cli::{KeySubcommand, RunCmd, SignCmd, VanityCmd, VerifyCmd};
+use sc_cli::{KeySubcommand, SignCmd, VanityCmd, VerifyCmd};
 
 /// An overarching CLI command definition.
 #[derive(Debug, StructOpt)]
@@ -17,6 +17,32 @@ pub struct Cli {
 	/// Load the boot configuration json file from <PATH>. Command line input will be overwritten by this.
 	#[structopt(long = "conf", value_name = "PATH")]
 	pub conf: Option<std::path::PathBuf>,
+}
+
+#[allow(missing_docs)]
+#[derive(Debug, StructOpt)]
+pub struct RunCmd {
+	#[allow(missing_docs)]
+	#[structopt(flatten)]
+	pub base: sc_cli::RunCmd,
+
+	// TODO: darwinia-cli
+	/// Disable the authority discovery module on validator or sentry nodes.
+	///
+	/// Enabled by default on validator and sentry nodes. Always disabled on non
+	/// validator or sentry nodes.
+	///
+	/// When enabled:
+	///
+	/// (1) As a validator node: Make oneself discoverable by publishing either
+	///     ones own network addresses, or the ones of ones sentry nodes
+	///     (configured via the `sentry-nodes` flag).
+	///
+	/// (2) As a validator or sentry node: Discover addresses of validators or
+	///     addresses of their sentry nodes and maintain a permanent connection
+	///     to a subset.
+	#[structopt(long = "disable-authority-discovery")]
+	pub authority_discovery_disabled: bool,
 }
 
 /// Possible subcommands of the main binary.

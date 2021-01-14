@@ -46,7 +46,9 @@ frame-system-rpc-runtime-api               = { git = "https://github.com/darwini
 pallet-im-online                           = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
 pallet-transaction-payment-rpc             = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
 pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
+sc-authority-discovery                     = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
 sc-basic-authorship                        = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
+sc-chain-spec                              = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
 sc-cli                                     = { optional = true, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
 sc-client-api                              = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
 sc-consensus                               = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
