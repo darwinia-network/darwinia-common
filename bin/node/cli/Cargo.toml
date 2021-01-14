@@ -59,6 +59,7 @@ sc-finality-grandpa-rpc                    = { git = "https://github.com/darwini
 sc-network                                 = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
 sc-rpc                                     = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
 sc-service                                 = { optional = true, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
+sc-sync-state-rpc                          = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
 sc-telemetry                               = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
 sc-transaction-pool                        = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
 sp-api                                     = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }

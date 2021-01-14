@@ -57,6 +57,8 @@ pub struct FullDeps<C, P, SC, B> {
 	pub pool: Arc<P>,
 	/// The SelectChain Strategy
 	pub select_chain: SC,
+	/// A copy of the chain spec.
+	pub chain_spec: Box<dyn sc_chain_spec::ChainSpec>,
 	/// Whether to deny unsafe calls
 	pub deny_unsafe: sc_rpc::DenyUnsafe,
 	/// The Node authority flag
@@ -115,7 +117,8 @@ where
 	// --- substrate ---
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
 	use sc_consensus_babe_rpc::{BabeApi, BabeRpcHandler};
-	use sc_finality_grandpa_rpc::GrandpaRpcHandler;
+	use sc_finality_grandpa_rpc::{GrandpaApi, GrandpaRpcHandler};
+	use sc_sync_state_rpc::{SyncStateRpcApi, SyncStateRpcHandler};
 	use substrate_frame_rpc_system::{FullSystem, SystemApi};
 	// --- darwinia ---
 	use darwinia_balances_rpc::{Balances, BalancesApi};
@@ -131,6 +134,7 @@ where
 		client,
 		pool,
 		select_chain,
+		chain_spec,
 		deny_unsafe,
 		is_authority,
 		network,
@@ -147,39 +151,40 @@ where
 	io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(
 		client.clone(),
 	)));
-	{
-		let BabeDeps {
-			keystore,
-			babe_config,
-			shared_epoch_changes,
-		} = babe;
-		io.extend_with(BabeApi::to_delegate(BabeRpcHandler::new(
-			client.clone(),
-			shared_epoch_changes,
-			keystore,
-			babe_config,
-			select_chain,
-			deny_unsafe,
-		)));
-	};
-	{
-		let GrandpaDeps {
-			shared_voter_state,
-			shared_authority_set,
-			justification_stream,
-			subscription_executor,
-			finality_provider,
-		} = grandpa;
-		io.extend_with(sc_finality_grandpa_rpc::GrandpaApi::to_delegate(
-			GrandpaRpcHandler::new(
-				shared_authority_set,
-				shared_voter_state,
-				justification_stream,
-				subscription_executor,
-				finality_provider,
-			),
-		));
-	}
+	let BabeDeps {
+		keystore,
+		babe_config,
+		shared_epoch_changes,
+	} = babe;
+	io.extend_with(BabeApi::to_delegate(BabeRpcHandler::new(
+		client.clone(),
+		shared_epoch_changes.clone(),
+		keystore,
+		babe_config,
+		select_chain,
+		deny_unsafe,
+	)));
+	let GrandpaDeps {
+		shared_voter_state,
+		shared_authority_set,
+		justification_stream,
+		subscription_executor,
+		finality_provider,
+	} = grandpa;
+	io.extend_with(GrandpaApi::to_delegate(GrandpaRpcHandler::new(
+		shared_authority_set.clone(),
+		shared_voter_state,
+		justification_stream,
+		subscription_executor,
+		finality_provider,
+	)));
+	io.extend_with(SyncStateRpcApi::to_delegate(SyncStateRpcHandler::new(
+		chain_spec,
+		client.clone(),
+		shared_authority_set,
+		shared_epoch_changes,
+		deny_unsafe,
+	)));
 	io.extend_with(BalancesApi::to_delegate(Balances::new(client.clone())));
 	io.extend_with(HeaderMMRApi::to_delegate(HeaderMMR::new(client.clone())));
 	io.extend_with(StakingApi::to_delegate(Staking::new(client.clone())));
