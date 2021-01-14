@@ -19,10 +19,10 @@ ethereum-types = { version = "0.9", default-features = false }
 darwinia-evm            = { default-features = false, path = "../../../evm" }
 darwinia-evm-primitives = { default-features = false, path = "../../../../primitives/evm" }
 # substrate
-sp-api     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
-sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
-sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
+sp-api     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 [features]
 default = ["std"]

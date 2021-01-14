@@ -33,13 +33,13 @@ dvm-rpc-core            = { path = "../../../frame/dvm/rpc" }
 dvm-rpc-core-primitives = { path = "../../../primitives/dvm-rpc-core" }
 dvm-rpc-runtime-api     = { path = "../../../frame/dvm/rpc/runtime-api" }
 # substrate
-sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
-sc-network          = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
-sc-rpc              = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
-sc-service          = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
-sp-api              = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
-sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
-sp-io               = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
-sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
-sp-storage          = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
-sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
+sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-network          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-rpc              = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-service          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-api              = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-io               = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-storage          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }

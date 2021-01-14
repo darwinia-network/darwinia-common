@@ -17,18 +17,18 @@ serde = { version = "1.0.118", optional = true }
 darwinia-relay-primitives = { default-features = false, path = "../../../primitives/relay" }
 darwinia-support          = { default-features = false, path = "../../support" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 [dev-dependencies]
 # darwinia
 darwinia-balances = { path = "../../balances" }
 darwinia-support  = { path = "../../support" }
 # substrate
-sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
-sp-io   = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.1.0-darwinia" }
+sp-core = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-io   = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 [features]
 default = ["std"]
