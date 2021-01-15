@@ -85,25 +85,21 @@ use types::*;
 pub trait Trait: frame_system::Trait {
 	/// The ethereum backing module id, used for deriving its sovereign account ID.
 	type ModuleId: Get<ModuleId>;
-
 	type FeeModuleId: Get<ModuleId>;
 
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
 	type RedeemAccountId: From<[u8; 32]> + Into<Self::AccountId>;
-
 	type EthereumRelay: EthereumReceipt<Self::AccountId, RingBalance<Self>>;
-
 	type OnDepositRedeem: OnDepositRedeem<Self::AccountId, RingBalance<Self>>;
 
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
-
 	type KtonCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
+	type RingLockLimit: Get<RingBalance<Self>>;
+	type KtonLockLimit: Get<KtonBalance<Self>>;
 	type AdvancedFee: Get<RingBalance<Self>>;
-
 	type SyncReward: Get<RingBalance<Self>>;
-
 	type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber, Signer = EthereumAddress>;
 
 	/// Weight information for the extrinsics in this pallet.
@@ -167,6 +163,10 @@ decl_error! {
 		// FeeIns,
 		/// Redeem - DISABLED
 		RedeemDis,
+		/// Ring Lock - LIMITED
+		RingLockLim,
+		/// Kton Lock - LIMITED
+		KtonLockLim,
 	}
 }
 
@@ -274,6 +274,8 @@ decl_module! {
 			if !ring_value.is_zero() {
 				let ring_to_lock = ring_value.min(T::RingCurrency::usable_balance(&user));
 
+				ensure!(ring_to_lock < T::RingLockLimit::get(), <Error<T>>::RingLockLim);
+
 				T::RingCurrency::transfer(&user, &Self::account_id(), ring_to_lock, KeepAlive)?;
 
 				let raw_event = RawEvent::LockRing(
@@ -292,6 +294,8 @@ decl_module! {
 			}
 			if !kton_value.is_zero() {
 				let kton_to_lock = kton_value.min(T::KtonCurrency::usable_balance(&user));
+
+				ensure!(kton_to_lock < T::KtonLockLimit::get(), <Error<T>>::KtonLockLim);
 
 				T::KtonCurrency::transfer(&user, &Self::account_id(), kton_to_lock, KeepAlive)?;
 
