@@ -979,6 +979,8 @@ impl darwinia_crab_backing::Trait for Runtime {
 parameter_types! {
 	pub const EthereumBackingModuleId: ModuleId = ModuleId(*b"da/ethbk");
 	pub const EthereumBackingFeeModuleId: ModuleId = ModuleId(*b"da/ethfe");
+	pub const RingLockLimit: Balance = 10_000_000 * COIN;
+	pub const KtonLockLimit: Balance = 1000 * COIN;
 	pub const AdvancedFee: Balance = 50 * COIN;
 	pub const SyncReward: Balance = 1000 * COIN;
 }
@@ -991,6 +993,8 @@ impl darwinia_ethereum_backing::Trait for Runtime {
 	type OnDepositRedeem = Staking;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
+	type RingLockLimit = RingLockLimit;
+	type KtonLockLimit = KtonLockLimit;
 	type AdvancedFee = AdvancedFee;
 	type SyncReward = SyncReward;
 	type EcdsaAuthorities = EthereumRelayAuthorities;
