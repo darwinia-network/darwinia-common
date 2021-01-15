@@ -121,6 +121,8 @@ decl_error! {
 		AuthorityNE,
 		/// Authority - IN TERM
 		AuthorityIT,
+		/// Authorities Count - TOO LOW
+		AuthoritiesCountTL,
 		/// Stake - INSUFFICIENT
 		StakeIns,
 		/// On Authorities Change - DISABLED
@@ -380,7 +382,6 @@ decl_module! {
 			Self::schedule_authorities_change(next_authorities);
 		}
 
-		// TODO: not allow to renounce, if there's only one authority
 		/// Renounce the authority for you
 		///
 		/// This call is disallowed during the authorities change
@@ -394,8 +395,8 @@ decl_module! {
 
 			ensure!(!Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
 
-			let next_authorities = Self::remove_authority_by_id_with(
-				&account_id,
+			let next_authorities = Self::remove_authority_by_ids_with(
+				vec![account_id],
 				|authority| if authority.term >= <frame_system::Module<T>>::block_number() {
 					Some(<Error<T, I>>::AuthorityIT)
 				} else {
@@ -403,21 +404,27 @@ decl_module! {
 				}
 			)?;
 
+			if next_authorities.is_empty() {
+				Err(<Error<T, I>>::AuthoritiesCountTL)?;
+			}
+
 			Self::schedule_authorities_change(next_authorities);
 		}
 
-		// TODO: remove several authorities once
-		// TODO: not allow to remove, if there's only one authority
 		/// Require remove origin
 		///
 		/// This call is disallowed during the authorities change
 		#[weight = 10_000_000]
-		pub fn remove_authority(origin, account_id: AccountId<T>) {
+		pub fn remove_authority(origin, account_ids: Vec<AccountId<T>>) {
 			T::RemoveOrigin::ensure_origin(origin)?;
 
 			ensure!(!Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
 
-			let next_authorities = Self::remove_authority_by_id_with(&account_id, |_| None)?;
+			let next_authorities = Self::remove_authority_by_ids_with(account_ids, |_| None)?;
+
+			if next_authorities.is_empty() {
+				Err(<Error<T, I>>::AuthoritiesCountTL)?;
+			}
 
 			Self::schedule_authorities_change(next_authorities);
 		}
@@ -595,47 +602,6 @@ where
 	T: Trait<I>,
 	I: Instance,
 {
-	pub fn remove_authority_by_id_with<F>(
-		account_id: &AccountId<T>,
-		f: F,
-	) -> Result<Vec<RelayAuthorityT<T, I>>, DispatchError>
-	where
-		F: Fn(&RelayAuthorityT<T, I>) -> Option<Error<T, I>>,
-	{
-		let mut authorities = <Authorities<T, I>>::get();
-
-		if let Some(position) = find_authority_position::<T, I>(&authorities, account_id) {
-			if let Some(e) = f(&authorities[position]) {
-				Err(e)?;
-			}
-
-			authorities.remove(position);
-
-			<RingCurrency<T, I>>::remove_lock(T::LockId::get(), account_id);
-
-			// TODO: optimize DB R/W, but it's ok in real case, since the set won't grow so large
-			for key in <MMRRootsToSignKeys<T, I>>::get() {
-				if let Some(mut signatures) = <MMRRootsToSign<T, I>>::get(key) {
-					if let Some(position) = signatures
-						.iter()
-						.position(|(authority, _)| authority == account_id)
-					{
-						signatures.remove(position);
-					}
-
-					<MMRRootsToSign<T, I>>::insert(key, signatures);
-				} else {
-					// Should never enter this condition
-					// TODO: error log
-				}
-			}
-
-			return Ok(authorities);
-		}
-
-		Err(<Error<T, I>>::AuthorityNE)?
-	}
-
 	pub fn remove_candidate_by_id_with<F>(
 		account_id: &AccountId<T>,
 		f: F,
@@ -652,6 +618,56 @@ where
 				Err(<Error<T, I>>::CandidateNE)
 			}
 		})?)
+	}
+
+	pub fn remove_authority_by_ids_with<F>(
+		account_ids: Vec<AccountId<T>>,
+		f: F,
+	) -> Result<Vec<RelayAuthorityT<T, I>>, DispatchError>
+	where
+		F: Fn(&RelayAuthorityT<T, I>) -> Option<Error<T, I>>,
+	{
+		let mut authorities = <Authorities<T, I>>::get();
+		let mut remove_authorities = vec![];
+
+		for account_id in account_ids.iter() {
+			let position = find_authority_position::<T, I>(&authorities, account_id)
+				.ok_or(<Error<T, I>>::AuthorityNE)?;
+
+			if let Some(e) = f(&authorities[position]) {
+				Err(e)?;
+			}
+
+			authorities.remove(position);
+			<RingCurrency<T, I>>::remove_lock(T::LockId::get(), account_id);
+
+			remove_authorities.push(account_id);
+		}
+
+		if remove_authorities.is_empty() {
+			Err(<Error<T, I>>::AuthorityNE)?
+		}
+
+		// TODO: optimize DB R/W, but it's ok in real case, since the set won't grow so large
+		for key in <MMRRootsToSignKeys<T, I>>::get() {
+			if let Some(mut signatures) = <MMRRootsToSign<T, I>>::get(key) {
+				for account_id in &remove_authorities {
+					if let Some(position) = signatures
+						.iter()
+						.position(|(authority, _)| &authority == account_id)
+					{
+						signatures.remove(position);
+					}
+
+					<MMRRootsToSign<T, I>>::insert(key, &signatures);
+				}
+			} else {
+				// Should never enter this condition
+				// TODO: error log
+			}
+		}
+
+		Ok(authorities)
 	}
 
 	pub fn on_authorities_change() -> bool {

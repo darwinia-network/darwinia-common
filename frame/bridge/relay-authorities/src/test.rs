@@ -176,15 +176,86 @@ fn remove_authority_should_work() {
 		assert_ok!(RelayAuthorities::add_authority(Origin::root(), vec![1]));
 		assert!(!Ring::locks(1).is_empty());
 		assert_err!(
-			RelayAuthorities::remove_authority(Origin::root(), 1),
+			RelayAuthorities::remove_authority(Origin::root(), vec![1]),
 			RelayAuthoritiesError::OnAuthoritiesChangeDis
 		);
 
 		RelayAuthorities::apply_authorities_change().unwrap();
 		RelayAuthorities::sync_authorities_change();
 
-		assert_ok!(RelayAuthorities::remove_authority(Origin::root(), 1));
+		assert_err!(
+			RelayAuthorities::remove_authority(Origin::root(), vec![10]),
+			RelayAuthoritiesError::AuthorityNE
+		);
+		assert_ok!(RelayAuthorities::remove_authority(Origin::root(), vec![1]));
 		assert!(Ring::locks(1).is_empty());
+
+		RelayAuthorities::apply_authorities_change().unwrap();
+		RelayAuthorities::sync_authorities_change();
+
+		assert_err!(
+			RelayAuthorities::remove_authority(Origin::root(), vec![9]),
+			RelayAuthoritiesError::AuthoritiesCountTL
+		);
+
+		assert_ok!(request_authority(3));
+		assert_ok!(request_authority(4));
+		assert_ok!(request_authority(5));
+		assert_ok!(RelayAuthorities::add_authority(
+			Origin::root(),
+			vec![3, 4, 5]
+		));
+
+		RelayAuthorities::apply_authorities_change().unwrap();
+		RelayAuthorities::sync_authorities_change();
+
+		assert_eq!(
+			RelayAuthorities::authorities(),
+			vec![
+				RelayAuthority {
+					account_id: 9,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				},
+				RelayAuthority {
+					account_id: 3,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				},
+				RelayAuthority {
+					account_id: 4,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				},
+				RelayAuthority {
+					account_id: 5,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				}
+			]
+		);
+
+		assert_ok!(RelayAuthorities::remove_authority(
+			Origin::root(),
+			vec![9, 4, 5]
+		));
+
+		RelayAuthorities::apply_authorities_change().unwrap();
+		RelayAuthorities::sync_authorities_change();
+
+		assert_eq!(
+			RelayAuthorities::authorities(),
+			vec![RelayAuthority {
+				account_id: 3,
+				signer: [0; 20],
+				stake: 1,
+				term: 10
+			}]
+		);
 	});
 }
 
