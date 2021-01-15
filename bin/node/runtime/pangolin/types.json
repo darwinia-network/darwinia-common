@@ -200,6 +200,7 @@
 		"parent_mmr_root": "Hash"
 	},
 	"__[primitives.relay]__": {},
+	"OpCode": "[u8; 4; OpCode]",
 	"Term": "u32",
 	"RelayHeaderId": "EthereumBlockNumber",
 	"RelayHeaderParcel": "EthereumRelayHeaderParcel",

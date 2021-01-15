@@ -79,6 +79,7 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	type ResetOrigin: EnsureOrigin<Self::Origin>;
 	type DarwiniaMMR: MMR<Self::BlockNumber, Self::Hash>;
 	type Sign: Sign<Self::BlockNumber>;
+	type OpCodes: Get<(OpCode, OpCode)>;
 	type SignThreshold: Get<Perbill>;
 	type SubmitDuration: Get<Self::BlockNumber>;
 	type WeightInfo: WeightInfo;
@@ -458,12 +459,20 @@ decl_module! {
 
 			// The message is composed of:
 			//
-			// hash(codec(spec_name: String, block number: Compact<BlockNumber>, mmr_root: Hash))
+			// hash(
+			// 	codec(
+			// 		spec_name: String,
+			// 		op_code: OpCode,
+			// 		block number: Compact<BlockNumber>,
+			// 		mmr_root: Hash
+			// 	)
+			// )
 			let message = T::Sign::hash(
 				&_S {
 					_1: T::Version::get().spec_name,
-					_2: block_number,
-					_3: mmr_root
+					_2: T::OpCodes::get().0,
+					_3: block_number,
+					_4: mmr_root
 				}
 				.encode()
 			);
@@ -643,12 +652,20 @@ where
 	pub fn schedule_authorities_change(next_authorities: Vec<RelayAuthorityT<T, I>>) {
 		// The message is composed of:
 		//
-		// hash(codec(spec_name: String, term: Compact<u32>, next authorities: Vec<Signer>))
+		// hash(
+		// 	codec(
+		// 		spec_name: String,
+		// 		op_code: OpCode,
+		// 		term: Compact<u32>,
+		// 		next authorities: Vec<Signer>
+		// 	)
+		// )
 		let message = T::Sign::hash(
 			&_S {
 				_1: T::Version::get().spec_name,
-				_2: <AuthorityTerm<I>>::get(),
-				_3: next_authorities
+				_2: T::OpCodes::get().1,
+				_3: <AuthorityTerm<I>>::get(),
+				_4: next_authorities
 					.iter()
 					.map(|authority| authority.signer.clone())
 					.collect::<Vec<_>>(),
@@ -677,7 +694,8 @@ where
 		<NextAuthorities<T, I>>::mutate(|maybe_scheduled_authorities_change| {
 			if let Some(scheduled_authorities_change) = maybe_scheduled_authorities_change {
 				<Authorities<T, I>>::mutate(|authorities| {
-					let next_authorities = mem::take(&mut scheduled_authorities_change.next_authorities);
+					let next_authorities =
+						mem::take(&mut scheduled_authorities_change.next_authorities);
 					let previous_authorities = mem::replace(authorities, next_authorities);
 
 					for RelayAuthority { account_id, .. } in previous_authorities {
@@ -832,17 +850,4 @@ where
 	} else {
 		None
 	}
-}
-
-#[derive(Encode)]
-struct _S<_1, _2, _3>
-where
-	_1: Encode,
-	_2: Encode,
-	_3: Encode,
-{
-	_1: _1,
-	#[codec(compact)]
-	_2: _2,
-	_3: _3,
 }

@@ -26,6 +26,7 @@ use codec::{Decode, Encode, FullCodec};
 use sp_runtime::{DispatchResult, RuntimeDebug};
 use sp_std::prelude::*;
 
+pub type OpCode = [u8; 4];
 pub type Term = u32;
 
 pub trait Sign<BlockNumber> {
@@ -89,6 +90,22 @@ where
 		&self.account_id == account_id
 	}
 }
+
+#[derive(Encode)]
+pub struct _S<_1, _2, _3, _4>
+where
+	_1: Encode,
+	_2: Encode,
+	_3: Encode,
+	_4: Encode,
+{
+	pub _1: _1,
+	pub _2: _2,
+	#[codec(compact)]
+	pub _3: _3,
+	pub _4: _4,
+}
+
 
 /// The scheduled change of authority set
 #[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug)]
