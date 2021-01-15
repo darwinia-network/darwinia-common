@@ -265,6 +265,7 @@ use constants::*;
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
 use darwinia_evm::Runner;
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
+use darwinia_relay_primitives::relay_authorities::OpCode;
 use darwinia_staking::EraIndex;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
 use drml_primitives::*;
@@ -1085,6 +1086,10 @@ parameter_types! {
 	pub const EthereumRelayAuthoritiesLockId: LockIdentifier = *b"ethrauth";
 	pub const EthereumRelayAuthoritiesTermDuration: BlockNumber = 30 * DAYS;
 	pub const MaxCandidates: usize = 7;
+	pub const OpCodes: (OpCode, OpCode) = (
+		[71, 159, 189, 249],
+		[180, 188, 244, 151]
+	);
 	pub const SignThreshold: Perbill = Perbill::from_percent(60);
 	pub const SubmitDuration: BlockNumber = 100;
 }
@@ -1099,6 +1104,7 @@ impl darwinia_relay_authorities::Trait<EthereumRelayAuthoritiesInstance> for Run
 	type ResetOrigin = ApproveOrigin;
 	type DarwiniaMMR = HeaderMMR;
 	type Sign = EthereumBacking;
+	type OpCodes = OpCodes;
 	type SignThreshold = SignThreshold;
 	type SubmitDuration = SubmitDuration;
 	type WeightInfo = ();
