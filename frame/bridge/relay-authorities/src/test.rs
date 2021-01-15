@@ -187,7 +187,14 @@ fn encode_message_should_work() {
 
 	// The message is composed of:
 	//
-	// codec(spec_name: RuntimeString, block number: Compact<BlockNumber>, mmr_root: Hash)
+	// hash(
+	// 	codec(
+	// 		spec_name: String,
+	// 		op_code: OpCode,
+	// 		block number: Compact<BlockNumber>,
+	// 		mmr_root: Hash
+	// 	)
+	// )
 	let message = {
 		_S {
 			_1: RuntimeString::from("DRML"),
@@ -201,7 +208,14 @@ fn encode_message_should_work() {
 
 	// The message is composed of:
 	//
-	// codec(spec_name: RuntimeString, term: Compact<u32>, new authorities: Vec<Signer>)
+	// hash(
+	// 	codec(
+	// 		spec_name: String,
+	// 		op_code: OpCode,
+	// 		term: Compact<u32>,
+	// 		next authorities: Vec<Signer>
+	// 	)
+	// )
 	let message = {
 		_S {
 			_1: RuntimeString::from("DRML"),
