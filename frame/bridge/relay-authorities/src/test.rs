@@ -205,6 +205,7 @@ fn encode_message_should_work() {
 		.encode()
 	};
 	println!("{:?}", message);
+	println!("{}", array_bytes::hex_str("0x", message));
 
 	// The message is composed of:
 	//
@@ -226,6 +227,7 @@ fn encode_message_should_work() {
 		.encode()
 	};
 	println!("{:?}", message);
+	println!("{}", array_bytes::hex_str("0x", message));
 }
 
 #[test]
