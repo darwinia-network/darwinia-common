@@ -2,7 +2,7 @@
 use frame_support::{assert_err, assert_ok};
 // --- darwinia ---
 use crate::{
-	mock::{AccountId, BlockNumber, Event, *},
+	mock::{AccountId, BlockNumber, Event, SubmitDuration, *},
 	*,
 };
 
@@ -89,7 +89,7 @@ fn renounce_authority_should_work() {
 			RelayAuthoritiesError::OnAuthoritiesChangeDis
 		);
 
-		RelayAuthorities::apply_authorities_change();
+		RelayAuthorities::apply_authorities_change().unwrap();
 		RelayAuthorities::sync_authorities_change();
 
 		let term_duration = <TermDuration as Get<BlockNumber>>::get();
@@ -136,7 +136,7 @@ fn remove_authority_should_work() {
 			RelayAuthoritiesError::OnAuthoritiesChangeDis
 		);
 
-		RelayAuthorities::apply_authorities_change();
+		RelayAuthorities::apply_authorities_change().unwrap();
 		RelayAuthorities::sync_authorities_change();
 
 		assert_ok!(RelayAuthorities::remove_authority(Origin::root(), 1));
@@ -362,7 +362,7 @@ fn schedule_authorities_change_should_work() {
 			})
 		);
 
-		RelayAuthorities::apply_authorities_change();
+		RelayAuthorities::apply_authorities_change().unwrap();
 
 		assert_eq!(
 			RelayAuthorities::authorities(),
@@ -409,5 +409,89 @@ fn schedule_authorities_change_should_work() {
 			]
 		);
 		assert!(RelayAuthorities::next_authorities().is_none());
+	});
+}
+
+#[test]
+fn kill_authorities_and_force_new_term_should_work() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(request_authority(1));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 1));
+
+		RelayAuthorities::apply_authorities_change().unwrap();
+		RelayAuthorities::sync_authorities_change();
+
+		assert_eq!(
+			RelayAuthorities::authorities(),
+			vec![
+				RelayAuthority {
+					account_id: 9,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				},
+				RelayAuthority {
+					account_id: 1,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				}
+			]
+		);
+		assert!(RelayAuthorities::next_authorities().is_none());
+		assert_eq!(RelayAuthorities::submit_duration(), SubmitDuration::get());
+
+		assert_err!(
+			RelayAuthorities::force_new_term(Origin::root()),
+			RelayAuthoritiesError::NextAuthoritiesNE
+		);
+
+		assert_ok!(request_authority(2));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 2));
+
+		assert_ok!(RelayAuthorities::force_new_term(Origin::root()));
+
+		assert_eq!(
+			RelayAuthorities::authorities(),
+			vec![
+				RelayAuthority {
+					account_id: 9,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				},
+				RelayAuthority {
+					account_id: 1,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				},
+				RelayAuthority {
+					account_id: 2,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				}
+			]
+		);
+		assert!(RelayAuthorities::next_authorities().is_none());
+		assert_eq!(RelayAuthorities::submit_duration(), SubmitDuration::get());
+
+		assert_ok!(RelayAuthorities::kill_authorities(Origin::root()));
+		assert_ok!(request_authority(3));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 3));
+		assert_ok!(RelayAuthorities::force_new_term(Origin::root()));
+
+		assert_eq!(
+			RelayAuthorities::authorities(),
+			vec![RelayAuthority {
+				account_id: 3,
+				signer: [0; 20],
+				stake: 1,
+				term: 10
+			},]
+		);
+		assert!(RelayAuthorities::next_authorities().is_none());
+		assert_eq!(RelayAuthorities::submit_duration(), SubmitDuration::get());
 	});
 }

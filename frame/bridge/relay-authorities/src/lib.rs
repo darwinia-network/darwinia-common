@@ -135,6 +135,8 @@ decl_error! {
 		TermMis,
 		/// Authorities - MISMATCHED
 		AuthoritiesMis,
+		/// Next Authorities - NOT EXISTED
+		NextAuthoritiesNE,
 	}
 }
 
@@ -541,7 +543,7 @@ decl_module! {
 			if Perbill::from_rational_approximation(signatures.len() as u32, authorities.len() as _)
 				>= T::SignThreshold::get()
 			{
-				Self::apply_authorities_change();
+				Self::apply_authorities_change()?;
 				Self::deposit_event(RawEvent::AuthoritiesChangeSigned(
 					<AuthorityTerm<I>>::get(),
 					<Authorities<T, I>>::get()
@@ -555,7 +557,6 @@ decl_module! {
 			}
 		}
 
-		// FIXME
 		#[weight = 10_000_000]
 		pub fn kill_authorities(origin) {
 			T::ResetOrigin::ensure_origin(origin)?;
@@ -577,6 +578,15 @@ decl_module! {
 				Self::schedule_mmr_root(schedule);
 			}
 			<SubmitDuration<T, I>>::kill();
+		}
+
+		#[weight = 10_000_000]
+		pub fn force_new_term(origin) {
+			T::ResetOrigin::ensure_origin(origin)?;
+
+			Self::apply_authorities_change()?;
+
+			<NextAuthorities<T, I>>::kill();
 		}
 	}
 }
@@ -689,25 +699,28 @@ where
 		Self::deposit_event(RawEvent::ScheduleAuthoritiesChange(message));
 	}
 
-	pub fn apply_authorities_change() {
+	pub fn apply_authorities_change() -> DispatchResult {
 		<AuthoritiesToSign<T, I>>::kill();
-		<NextAuthorities<T, I>>::mutate(|maybe_scheduled_authorities_change| {
-			if let Some(scheduled_authorities_change) = maybe_scheduled_authorities_change {
-				<Authorities<T, I>>::mutate(|authorities| {
-					let next_authorities =
-						mem::take(&mut scheduled_authorities_change.next_authorities);
-					let previous_authorities = mem::replace(authorities, next_authorities);
+		<NextAuthorities<T, I>>::try_mutate(|maybe_scheduled_authorities_change| {
+			let scheduled_authorities_change = maybe_scheduled_authorities_change
+				.as_mut()
+				.ok_or(<Error<T, I>>::NextAuthoritiesNE)?;
 
-					for RelayAuthority { account_id, .. } in previous_authorities {
-						<RingCurrency<T, I>>::remove_lock(T::LockId::get(), &account_id);
-					}
-				});
-			} else {
-				// Should never enter this condition
-				// TODO: error log
-			}
-		});
+			<Authorities<T, I>>::mutate(|authorities| {
+				let next_authorities =
+					mem::take(&mut scheduled_authorities_change.next_authorities);
+				let previous_authorities = mem::replace(authorities, next_authorities);
+
+				for RelayAuthority { account_id, .. } in previous_authorities {
+					<RingCurrency<T, I>>::remove_lock(T::LockId::get(), &account_id);
+				}
+			});
+
+			DispatchResult::Ok(())
+		})?;
 		<SubmitDuration<T, I>>::kill();
+
+		Ok(())
 	}
 
 	pub fn mmr_root_signed(block_number: BlockNumber<T>) {
