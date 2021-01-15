@@ -433,6 +433,35 @@ fn lock_should_work() {
 }
 
 #[test]
+fn lock_limit_should_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		let account = Default::default();
+		let lock_balance = 10_000;
+		let _ = Ring::deposit_creating(&account, lock_balance);
+		let _ = Kton::deposit_creating(&account, lock_balance);
+
+		assert_err!(
+			EthereumBacking::lock(
+				Origin::signed(account.clone()),
+				lock_balance,
+				0,
+				Default::default()
+			),
+			<Error<Test>>::RingLockLim
+		);
+		assert_err!(
+			EthereumBacking::lock(
+				Origin::signed(account.clone()),
+				0,
+				lock_balance,
+				Default::default()
+			),
+			<Error<Test>>::KtonLockLim
+		);
+	});
+}
+
+#[test]
 fn verify_signature_should_work() {
 	assert!(EthereumBacking::verify_signature(
 		&fixed_hex_bytes_unchecked!("0x0806e7b411a8808c1384bd8abe3b506403981d3ece6b16cd29d3f2789eea1ab61635b3b971bf5584bdc70c42b2a4a2659b354dfc542943c030630168825976491c", 65),
@@ -456,17 +485,17 @@ fn verify_new_authorities() {
 			EthereumRelay::confirm_relay_header_parcel_with_reason(relay_header_parcel, vec![]);
 
 			assert_ok!(
-				EthereumBacking::sync_authorities_set(
+				EthereumBacking::sync_authorities_change(
 					Origin::signed(Default::default()),
 					test_receipt_proof_thing.clone(),
 				)
 			);
 			assert_err!(
-				EthereumBacking::sync_authorities_set(
+				EthereumBacking::sync_authorities_change(
 					Origin::signed(Default::default()),
 					test_receipt_proof_thing,
 				),
-				<Error<Test>>::AuthoritiesSetAR
+				<Error<Test>>::AuthoritiesChangeAR
 			);
 		});
 }

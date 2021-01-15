@@ -62,17 +62,19 @@ macro_rules! decl_tests {
 		impl RelayAuthorityProtocol<BlockNumber> for EcdsaAuthorities {
 			type Signer = EthereumAddress;
 
-			fn new_mmr_to_sign(_: BlockNumber) {}
+			fn schedule_mmr_root(_: BlockNumber) {}
 
-			fn check_sync_result(_: Term, _: Vec<Self::Signer>) -> DispatchResult {
+			fn check_authorities_change_to_sync(_: Term, _: Vec<Self::Signer>) -> DispatchResult {
 				Ok(())
 			}
 
-			fn finish_authorities_change() {}
+			fn sync_authorities_change() {}
 		}
 		parameter_types! {
 			pub const EthereumBackingModuleId: ModuleId = ModuleId(*b"da/backi");
 			pub const EthereumBackingFeeModuleId: ModuleId = ModuleId(*b"da/ethfe");
+			pub const RingLockLimit: Balance = 1000;
+			pub const KtonLockLimit: Balance = 1000;
 			pub const AdvancedFee: Balance = 1;
 		}
 		impl Trait for Test {
@@ -84,6 +86,8 @@ macro_rules! decl_tests {
 			type OnDepositRedeem = Staking;
 			type RingCurrency = Ring;
 			type KtonCurrency = Kton;
+			type RingLockLimit = RingLockLimit;
+			type KtonLockLimit = KtonLockLimit;
 			type AdvancedFee = AdvancedFee;
 			type SyncReward = ();
 			type EcdsaAuthorities = EcdsaAuthorities;

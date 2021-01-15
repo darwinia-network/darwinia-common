@@ -23,6 +23,8 @@ sp-runtime    = { default-features = false, git = "https://github.com/darwinia-n
 sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 [dev-dependencies]
+# crates
+array-bytes = { version = "0.3.0" }
 # darwinia
 darwinia-balances = { path = "../../balances" }
 darwinia-support  = { path = "../../support" }

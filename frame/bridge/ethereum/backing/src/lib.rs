@@ -85,25 +85,21 @@ use types::*;
 pub trait Trait: frame_system::Trait {
 	/// The ethereum backing module id, used for deriving its sovereign account ID.
 	type ModuleId: Get<ModuleId>;
-
 	type FeeModuleId: Get<ModuleId>;
 
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
 	type RedeemAccountId: From<[u8; 32]> + Into<Self::AccountId>;
-
 	type EthereumRelay: EthereumReceipt<Self::AccountId, RingBalance<Self>>;
-
 	type OnDepositRedeem: OnDepositRedeem<Self::AccountId, RingBalance<Self>>;
 
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
-
 	type KtonCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
+	type RingLockLimit: Get<RingBalance<Self>>;
+	type KtonLockLimit: Get<KtonBalance<Self>>;
 	type AdvancedFee: Get<RingBalance<Self>>;
-
 	type SyncReward: Get<RingBalance<Self>>;
-
 	type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber, Signer = EthereumAddress>;
 
 	/// Weight information for the extrinsics in this pallet.
@@ -150,8 +146,8 @@ decl_error! {
 		AddressCF,
 		/// Asset - ALREADY REDEEMED
 		AssetAR,
-		/// Authorities Set - ALREADY SYNCED
-		AuthoritiesSetAR,
+		/// Authorities Change - ALREADY SYNCED
+		AuthoritiesChangeAR,
 		/// EthereumReceipt Proof - INVALID
 		ReceiptProofInv,
 		/// Eth Log - PARSING FAILED
@@ -167,6 +163,10 @@ decl_error! {
 		// FeeIns,
 		/// Redeem - DISABLED
 		RedeemDis,
+		/// Ring Lock - LIMITED
+		RingLockLim,
+		/// Kton Lock - LIMITED
+		KtonLockLim,
 	}
 }
 
@@ -274,6 +274,8 @@ decl_module! {
 			if !ring_value.is_zero() {
 				let ring_to_lock = ring_value.min(T::RingCurrency::usable_balance(&user));
 
+				ensure!(ring_to_lock < T::RingLockLimit::get(), <Error<T>>::RingLockLim);
+
 				T::RingCurrency::transfer(&user, &Self::account_id(), ring_to_lock, KeepAlive)?;
 
 				let raw_event = RawEvent::LockRing(
@@ -293,6 +295,8 @@ decl_module! {
 			if !kton_value.is_zero() {
 				let kton_to_lock = kton_value.min(T::KtonCurrency::usable_balance(&user));
 
+				ensure!(kton_to_lock < T::KtonLockLimit::get(), <Error<T>>::KtonLockLim);
+
 				T::KtonCurrency::transfer(&user, &Self::account_id(), kton_to_lock, KeepAlive)?;
 
 				let raw_event = RawEvent::LockKton(
@@ -311,7 +315,7 @@ decl_module! {
 			}
 
 			if locked {
-				T::EcdsaAuthorities::new_mmr_to_sign((
+				T::EcdsaAuthorities::schedule_mmr_root((
 					<frame_system::Module<T>>::block_number().saturated_into()
 						/ 10 * 10 + 10
 				).saturated_into());
@@ -319,15 +323,15 @@ decl_module! {
 		}
 
 		#[weight = 10_000_000]
-		fn sync_authorities_set(origin, proof: EthereumReceiptProofThing<T>) {
+		fn sync_authorities_change(origin, proof: EthereumReceiptProofThing<T>) {
 			let bridger = ensure_signed(origin)?;
 			let tx_index = T::EthereumRelay::gen_receipt_index(&proof);
 
-			ensure!(!VerifiedProof::contains_key(tx_index), <Error<T>>::AuthoritiesSetAR);
+			ensure!(!VerifiedProof::contains_key(tx_index), <Error<T>>::AuthoritiesChangeAR);
 
 			let (term, authorities, beneficiary) = Self::parse_authorities_set_proof(&proof)?;
 
-			T::EcdsaAuthorities::check_sync_result(term, authorities)?;
+			T::EcdsaAuthorities::check_authorities_change_to_sync(term, authorities)?;
 
 			let fee_account = Self::fee_account_id();
 			let sync_reward = T::SyncReward::get().min(
@@ -344,7 +348,7 @@ decl_module! {
 				)?;
 			}
 
-			T::EcdsaAuthorities::finish_authorities_change();
+			T::EcdsaAuthorities::sync_authorities_change();
 
 			VerifiedProof::insert(tx_index, true);
 		}

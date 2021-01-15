@@ -2,7 +2,7 @@
 use frame_support::{assert_err, assert_ok};
 // --- darwinia ---
 use crate::{
-	mock::{AccountId, BlockNumber, Event, *},
+	mock::{AccountId, BlockNumber, Event, SubmitDuration, *},
 	*,
 };
 
@@ -13,10 +13,13 @@ fn duplicate_request_should_fail() {
 		// Already in candidates
 		assert_err!(request_authority(1), RelayAuthoritiesError::CandidateAE);
 
-		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 1));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), vec![1]));
 
-		// Already is authority
+		// Already in next authorities
 		assert_err!(request_authority(1), RelayAuthoritiesError::AuthorityAE);
+
+		// Already in authorities
+		assert_err!(request_authority(9), RelayAuthoritiesError::AuthorityAE);
 	});
 }
 
@@ -78,7 +81,7 @@ fn cancel_request_should_work() {
 fn renounce_authority_should_work() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(request_authority(1));
-		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 1));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), vec![1]));
 		assert!(!Ring::locks(1).is_empty());
 
 		assert_err!(
@@ -86,7 +89,8 @@ fn renounce_authority_should_work() {
 			RelayAuthoritiesError::OnAuthoritiesChangeDis
 		);
 
-		RelayAuthorities::finish_authorities_change();
+		RelayAuthorities::apply_authorities_change().unwrap();
+		RelayAuthorities::sync_authorities_change();
 
 		let term_duration = <TermDuration as Get<BlockNumber>>::get();
 
@@ -110,14 +114,58 @@ fn renounce_authority_should_work() {
 fn add_authority_should_work() {
 	new_test_ext().execute_with(|| {
 		assert_err!(
-			RelayAuthorities::add_authority(Origin::root(), 1),
+			RelayAuthorities::add_authority(Origin::root(), vec![1]),
 			RelayAuthoritiesError::CandidateNE
 		);
 
 		assert!(Ring::locks(1).is_empty());
+		assert!(Ring::locks(2).is_empty());
+		assert!(Ring::locks(3).is_empty());
+		assert!(RelayAuthorities::next_authorities().is_none());
+
 		assert_ok!(request_authority(1));
-		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 1));
+		assert_ok!(request_authority(2));
+		assert_ok!(request_authority(3));
+
+		assert_ok!(RelayAuthorities::add_authority(
+			Origin::root(),
+			vec![1, 2, 3]
+		));
+
 		assert!(!Ring::locks(1).is_empty());
+		assert!(!Ring::locks(2).is_empty());
+		assert!(!Ring::locks(3).is_empty());
+		assert_eq!(
+			RelayAuthorities::next_authorities()
+				.unwrap()
+				.next_authorities,
+			vec![
+				RelayAuthority {
+					account_id: 9,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				},
+				RelayAuthority {
+					account_id: 1,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				},
+				RelayAuthority {
+					account_id: 2,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				},
+				RelayAuthority {
+					account_id: 3,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				}
+			]
+		);
 	});
 }
 
@@ -125,17 +173,89 @@ fn add_authority_should_work() {
 fn remove_authority_should_work() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(request_authority(1));
-		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 1));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), vec![1]));
 		assert!(!Ring::locks(1).is_empty());
 		assert_err!(
-			RelayAuthorities::remove_authority(Origin::root(), 1),
+			RelayAuthorities::remove_authority(Origin::root(), vec![1]),
 			RelayAuthoritiesError::OnAuthoritiesChangeDis
 		);
 
-		RelayAuthorities::finish_authorities_change();
+		RelayAuthorities::apply_authorities_change().unwrap();
+		RelayAuthorities::sync_authorities_change();
 
-		assert_ok!(RelayAuthorities::remove_authority(Origin::root(), 1));
+		assert_err!(
+			RelayAuthorities::remove_authority(Origin::root(), vec![10]),
+			RelayAuthoritiesError::AuthorityNE
+		);
+		assert_ok!(RelayAuthorities::remove_authority(Origin::root(), vec![1]));
 		assert!(Ring::locks(1).is_empty());
+
+		RelayAuthorities::apply_authorities_change().unwrap();
+		RelayAuthorities::sync_authorities_change();
+
+		assert_err!(
+			RelayAuthorities::remove_authority(Origin::root(), vec![9]),
+			RelayAuthoritiesError::AuthoritiesCountTL
+		);
+
+		assert_ok!(request_authority(3));
+		assert_ok!(request_authority(4));
+		assert_ok!(request_authority(5));
+		assert_ok!(RelayAuthorities::add_authority(
+			Origin::root(),
+			vec![3, 4, 5]
+		));
+
+		RelayAuthorities::apply_authorities_change().unwrap();
+		RelayAuthorities::sync_authorities_change();
+
+		assert_eq!(
+			RelayAuthorities::authorities(),
+			vec![
+				RelayAuthority {
+					account_id: 9,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				},
+				RelayAuthority {
+					account_id: 3,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				},
+				RelayAuthority {
+					account_id: 4,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				},
+				RelayAuthority {
+					account_id: 5,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				}
+			]
+		);
+
+		assert_ok!(RelayAuthorities::remove_authority(
+			Origin::root(),
+			vec![9, 4, 5]
+		));
+
+		RelayAuthorities::apply_authorities_change().unwrap();
+		RelayAuthorities::sync_authorities_change();
+
+		assert_eq!(
+			RelayAuthorities::authorities(),
+			vec![RelayAuthority {
+				account_id: 3,
+				signer: [0; 20],
+				stake: 1,
+				term: 10
+			}]
+		);
 	});
 }
 
@@ -167,9 +287,12 @@ fn authority_term_should_work() {
 		for i in 1..=max_candidates {
 			assert_eq!(RelayAuthorities::authority_term(), i as Term - 1);
 			assert_ok!(request_authority(i as _));
-			assert_ok!(RelayAuthorities::add_authority(Origin::root(), i as _));
+			assert_ok!(RelayAuthorities::add_authority(
+				Origin::root(),
+				vec![i as _]
+			));
 
-			RelayAuthorities::finish_authorities_change();
+			RelayAuthorities::sync_authorities_change();
 			assert_eq!(RelayAuthorities::authority_term(), i as Term);
 		}
 	});
@@ -182,29 +305,47 @@ fn encode_message_should_work() {
 
 	// The message is composed of:
 	//
-	// codec(spec_name: RuntimeString, block number: Compact<BlockNumber>, mmr_root: Hash)
+	// hash(
+	// 	codec(
+	// 		spec_name: String,
+	// 		op_code: OpCode,
+	// 		block number: Compact<BlockNumber>,
+	// 		mmr_root: Hash
+	// 	)
+	// )
 	let message = {
 		_S {
 			_1: RuntimeString::from("DRML"),
-			_2: 789u32,
-			_3: [0u8; 32],
+			_2: array_bytes::hex_str_array_unchecked!("0x479fbdf9", 4),
+			_3: 789u32,
+			_4: [0u8; 32],
 		}
 		.encode()
 	};
 	println!("{:?}", message);
+	println!("{}", array_bytes::hex_str("0x", message));
 
 	// The message is composed of:
 	//
-	// codec(spec_name: RuntimeString, term: Compact<u32>, new authorities: Vec<Signer>)
+	// hash(
+	// 	codec(
+	// 		spec_name: String,
+	// 		op_code: OpCode,
+	// 		term: Compact<u32>,
+	// 		next authorities: Vec<Signer>
+	// 	)
+	// )
 	let message = {
 		_S {
 			_1: RuntimeString::from("DRML"),
-			_2: 789u32,
-			_3: vec![[7u8; 20], [8u8; 20], [9u8; 20]],
+			_2: array_bytes::hex_str_array_unchecked!("0xb4bcf497", 4),
+			_3: 789u32,
+			_4: vec![[7u8; 20], [8u8; 20], [9u8; 20]],
 		}
 		.encode()
 	};
 	println!("{:?}", message);
+	println!("{}", array_bytes::hex_str("0x", message));
 }
 
 #[test]
@@ -213,16 +354,16 @@ fn mmr_root_signed_event_should_work() {
 		System::set_block_number(1);
 
 		assert_ok!(request_authority(1));
-		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 1));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), vec![1]));
 		assert_ok!(RelayAuthorities::submit_signed_authorities(
 			Origin::signed(9),
 			[0; 65]
 		));
 
-		RelayAuthorities::finish_authorities_change();
+		RelayAuthorities::sync_authorities_change();
 		System::reset_events();
 
-		RelayAuthorities::new_mmr_to_sign(10);
+		RelayAuthorities::schedule_mmr_root(10);
 		System::reset_events();
 
 		assert_ok!(RelayAuthorities::submit_signed_mmr_root(
@@ -248,12 +389,12 @@ fn mmr_root_signed_event_should_work() {
 }
 
 #[test]
-fn authorities_set_signed_event_should_work() {
+fn authorities_change_signed_event_should_work() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
 
 		assert_ok!(request_authority(1));
-		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 1));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), vec![1]));
 
 		System::reset_events();
 
@@ -264,17 +405,17 @@ fn authorities_set_signed_event_should_work() {
 
 		assert_eq!(
 			relay_authorities_events(),
-			vec![Event::relay_authorities(RawEvent::AuthoritiesSetSigned(
+			vec![Event::relay_authorities(RawEvent::AuthoritiesChangeSigned(
 				0,
 				vec![Default::default(), Default::default()],
 				vec![(9, [0; 65])]
 			))]
 		);
 
-		RelayAuthorities::finish_authorities_change();
+		RelayAuthorities::sync_authorities_change();
 
 		assert_ok!(request_authority(2));
-		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 2));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), vec![2]));
 
 		System::reset_events();
 
@@ -292,11 +433,183 @@ fn authorities_set_signed_event_should_work() {
 		// Enough signatures, `2 / 2 > 60%`
 		assert_eq!(
 			relay_authorities_events(),
-			vec![Event::relay_authorities(RawEvent::AuthoritiesSetSigned(
+			vec![Event::relay_authorities(RawEvent::AuthoritiesChangeSigned(
 				1,
 				vec![Default::default(), Default::default(), Default::default()],
 				vec![(9, [0; 65]), (1, [0; 65])]
 			))]
 		);
+	});
+}
+
+#[test]
+fn schedule_authorities_change_should_work() {
+	new_test_ext().execute_with(|| {
+		assert!(RelayAuthorities::next_authorities().is_none());
+
+		assert_ok!(request_authority(1));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), vec![1]));
+
+		assert_eq!(
+			RelayAuthorities::authorities(),
+			vec![RelayAuthority {
+				account_id: 9,
+				signer: [0; 20],
+				stake: 1,
+				term: 10
+			}]
+		);
+		assert_eq!(
+			RelayAuthorities::next_authorities(),
+			Some(ScheduledAuthoritiesChange {
+				next_authorities: vec![
+					RelayAuthority {
+						account_id: 9,
+						signer: [0; 20],
+						stake: 1,
+						term: 10
+					},
+					RelayAuthority {
+						account_id: 1,
+						signer: [0; 20],
+						stake: 1,
+						term: 10
+					}
+				],
+				deadline: 3
+			})
+		);
+
+		RelayAuthorities::apply_authorities_change().unwrap();
+
+		assert_eq!(
+			RelayAuthorities::authorities(),
+			vec![
+				RelayAuthority {
+					account_id: 9,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				},
+				RelayAuthority {
+					account_id: 1,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				}
+			]
+		);
+		assert_eq!(
+			RelayAuthorities::next_authorities(),
+			Some(ScheduledAuthoritiesChange {
+				next_authorities: vec![],
+				deadline: 3
+			})
+		);
+
+		RelayAuthorities::sync_authorities_change();
+
+		assert_eq!(
+			RelayAuthorities::authorities(),
+			vec![
+				RelayAuthority {
+					account_id: 9,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				},
+				RelayAuthority {
+					account_id: 1,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				}
+			]
+		);
+		assert!(RelayAuthorities::next_authorities().is_none());
+	});
+}
+
+#[test]
+fn kill_authorities_and_force_new_term_should_work() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(request_authority(1));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), vec![1]));
+
+		RelayAuthorities::apply_authorities_change().unwrap();
+		RelayAuthorities::sync_authorities_change();
+
+		assert_eq!(
+			RelayAuthorities::authorities(),
+			vec![
+				RelayAuthority {
+					account_id: 9,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				},
+				RelayAuthority {
+					account_id: 1,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				}
+			]
+		);
+		assert!(RelayAuthorities::next_authorities().is_none());
+		assert_eq!(RelayAuthorities::submit_duration(), SubmitDuration::get());
+
+		assert_err!(
+			RelayAuthorities::force_new_term(Origin::root()),
+			RelayAuthoritiesError::NextAuthoritiesNE
+		);
+
+		assert_ok!(request_authority(2));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), vec![2]));
+
+		assert_ok!(RelayAuthorities::force_new_term(Origin::root()));
+
+		assert_eq!(
+			RelayAuthorities::authorities(),
+			vec![
+				RelayAuthority {
+					account_id: 9,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				},
+				RelayAuthority {
+					account_id: 1,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				},
+				RelayAuthority {
+					account_id: 2,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				}
+			]
+		);
+		assert!(RelayAuthorities::next_authorities().is_none());
+		assert_eq!(RelayAuthorities::submit_duration(), SubmitDuration::get());
+
+		assert_ok!(RelayAuthorities::kill_authorities(Origin::root()));
+		assert_ok!(request_authority(3));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), vec![3]));
+		assert_ok!(RelayAuthorities::force_new_term(Origin::root()));
+
+		assert_eq!(
+			RelayAuthorities::authorities(),
+			vec![RelayAuthority {
+				account_id: 3,
+				signer: [0; 20],
+				stake: 1,
+				term: 10
+			},]
+		);
+		assert!(RelayAuthorities::next_authorities().is_none());
+		assert_eq!(RelayAuthorities::submit_duration(), SubmitDuration::get());
 	});
 }
