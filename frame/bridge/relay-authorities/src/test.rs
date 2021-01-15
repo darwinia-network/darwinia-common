@@ -13,7 +13,7 @@ fn duplicate_request_should_fail() {
 		// Already in candidates
 		assert_err!(request_authority(1), RelayAuthoritiesError::CandidateAE);
 
-		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 1));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), vec![1]));
 
 		// Already in next authorities
 		assert_err!(request_authority(1), RelayAuthoritiesError::AuthorityAE);
@@ -81,7 +81,7 @@ fn cancel_request_should_work() {
 fn renounce_authority_should_work() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(request_authority(1));
-		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 1));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), vec![1]));
 		assert!(!Ring::locks(1).is_empty());
 
 		assert_err!(
@@ -114,14 +114,58 @@ fn renounce_authority_should_work() {
 fn add_authority_should_work() {
 	new_test_ext().execute_with(|| {
 		assert_err!(
-			RelayAuthorities::add_authority(Origin::root(), 1),
+			RelayAuthorities::add_authority(Origin::root(), vec![1]),
 			RelayAuthoritiesError::CandidateNE
 		);
 
 		assert!(Ring::locks(1).is_empty());
+		assert!(Ring::locks(2).is_empty());
+		assert!(Ring::locks(3).is_empty());
+		assert!(RelayAuthorities::next_authorities().is_none());
+
 		assert_ok!(request_authority(1));
-		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 1));
+		assert_ok!(request_authority(2));
+		assert_ok!(request_authority(3));
+
+		assert_ok!(RelayAuthorities::add_authority(
+			Origin::root(),
+			vec![1, 2, 3]
+		));
+
 		assert!(!Ring::locks(1).is_empty());
+		assert!(!Ring::locks(2).is_empty());
+		assert!(!Ring::locks(3).is_empty());
+		assert_eq!(
+			RelayAuthorities::next_authorities()
+				.unwrap()
+				.next_authorities,
+			vec![
+				RelayAuthority {
+					account_id: 9,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				},
+				RelayAuthority {
+					account_id: 1,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				},
+				RelayAuthority {
+					account_id: 2,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				},
+				RelayAuthority {
+					account_id: 3,
+					signer: [0; 20],
+					stake: 1,
+					term: 10
+				}
+			]
+		);
 	});
 }
 
@@ -129,7 +173,7 @@ fn add_authority_should_work() {
 fn remove_authority_should_work() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(request_authority(1));
-		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 1));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), vec![1]));
 		assert!(!Ring::locks(1).is_empty());
 		assert_err!(
 			RelayAuthorities::remove_authority(Origin::root(), 1),
@@ -172,7 +216,10 @@ fn authority_term_should_work() {
 		for i in 1..=max_candidates {
 			assert_eq!(RelayAuthorities::authority_term(), i as Term - 1);
 			assert_ok!(request_authority(i as _));
-			assert_ok!(RelayAuthorities::add_authority(Origin::root(), i as _));
+			assert_ok!(RelayAuthorities::add_authority(
+				Origin::root(),
+				vec![i as _]
+			));
 
 			RelayAuthorities::sync_authorities_change();
 			assert_eq!(RelayAuthorities::authority_term(), i as Term);
@@ -236,7 +283,7 @@ fn mmr_root_signed_event_should_work() {
 		System::set_block_number(1);
 
 		assert_ok!(request_authority(1));
-		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 1));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), vec![1]));
 		assert_ok!(RelayAuthorities::submit_signed_authorities(
 			Origin::signed(9),
 			[0; 65]
@@ -276,7 +323,7 @@ fn authorities_change_signed_event_should_work() {
 		System::set_block_number(1);
 
 		assert_ok!(request_authority(1));
-		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 1));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), vec![1]));
 
 		System::reset_events();
 
@@ -297,7 +344,7 @@ fn authorities_change_signed_event_should_work() {
 		RelayAuthorities::sync_authorities_change();
 
 		assert_ok!(request_authority(2));
-		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 2));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), vec![2]));
 
 		System::reset_events();
 
@@ -330,7 +377,7 @@ fn schedule_authorities_change_should_work() {
 		assert!(RelayAuthorities::next_authorities().is_none());
 
 		assert_ok!(request_authority(1));
-		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 1));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), vec![1]));
 
 		assert_eq!(
 			RelayAuthorities::authorities(),
@@ -416,7 +463,7 @@ fn schedule_authorities_change_should_work() {
 fn kill_authorities_and_force_new_term_should_work() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(request_authority(1));
-		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 1));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), vec![1]));
 
 		RelayAuthorities::apply_authorities_change().unwrap();
 		RelayAuthorities::sync_authorities_change();
@@ -447,7 +494,7 @@ fn kill_authorities_and_force_new_term_should_work() {
 		);
 
 		assert_ok!(request_authority(2));
-		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 2));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), vec![2]));
 
 		assert_ok!(RelayAuthorities::force_new_term(Origin::root()));
 
@@ -479,7 +526,7 @@ fn kill_authorities_and_force_new_term_should_work() {
 
 		assert_ok!(RelayAuthorities::kill_authorities(Origin::root()));
 		assert_ok!(request_authority(3));
-		assert_ok!(RelayAuthorities::add_authority(Origin::root(), 3));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), vec![3]));
 		assert_ok!(RelayAuthorities::force_new_term(Origin::root()));
 
 		assert_eq!(

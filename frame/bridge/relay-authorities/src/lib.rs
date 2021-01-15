@@ -352,31 +352,30 @@ decl_module! {
 			}
 		}
 
-		// TODO: add several authorities once
 		/// Require add origin
 		///
 		/// Add an authority from the candidates
 		///
 		/// This call is disallowed during the authorities change
 		#[weight = 10_000_000]
-		pub fn add_authority(origin, account_id: AccountId<T>) {
+		pub fn add_authority(origin, account_ids: Vec<AccountId<T>>) {
 			T::AddOrigin::ensure_origin(origin)?;
 
 			ensure!(!Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
-
-			let mut authority = Self::remove_candidate_by_id_with(&account_id, || ())?;
-
-			authority.term = <frame_system::Module<T>>::block_number() + T::TermDuration::get();
-
 			// Won't check duplicated here, MUST make this authority sure is unique
 			// As we already make a check in `request_authority`
 			let next_authorities = {
 				let mut authorities = <Authorities<T, I>>::get();
-				authorities.push(authority);
+
+				for account_id in account_ids {
+					let mut authority = Self::remove_candidate_by_id_with(&account_id, || ())?;
+					authority.term = <frame_system::Module<T>>::block_number() + T::TermDuration::get();
+
+					authorities.push(authority);
+				}
 
 				authorities
 			};
-
 
 			Self::schedule_authorities_change(next_authorities);
 		}
