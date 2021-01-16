@@ -292,6 +292,7 @@ fn authority_term_should_work() {
 				vec![i as _]
 			));
 
+			RelayAuthorities::apply_authorities_change().unwrap();
 			RelayAuthorities::sync_authorities_change().unwrap();
 			assert_eq!(RelayAuthorities::next_term(), i as Term);
 		}
@@ -360,6 +361,7 @@ fn mmr_root_signed_event_should_work() {
 			[0; 65]
 		));
 
+		RelayAuthorities::apply_authorities_change().unwrap();
 		RelayAuthorities::sync_authorities_change().unwrap();
 		System::reset_events();
 
@@ -412,6 +414,7 @@ fn authorities_change_signed_event_should_work() {
 			))]
 		);
 
+		RelayAuthorities::apply_authorities_change().unwrap();
 		RelayAuthorities::sync_authorities_change().unwrap();
 
 		assert_ok!(request_authority(2));
@@ -488,6 +491,7 @@ fn schedule_authorities_change_should_work() {
 			Some(schedule_authorities_change.clone())
 		);
 
+		RelayAuthorities::apply_authorities_change().unwrap();
 		RelayAuthorities::sync_authorities_change().unwrap();
 
 		assert_eq!(
@@ -579,5 +583,41 @@ fn kill_authorities_and_force_new_term_should_work() {
 		);
 		assert!(RelayAuthorities::next_authorities().is_none());
 		assert_eq!(RelayAuthorities::submit_duration(), SubmitDuration::get());
+	});
+}
+
+#[test]
+fn lock_after_authorities_change_should_work() {
+	new_test_ext().execute_with(|| {
+		assert!(!Ring::locks(9).is_empty());
+		assert!(Ring::locks(1).is_empty());
+		assert!(Ring::locks(2).is_empty());
+
+		assert_ok!(request_authority(1));
+		assert_ok!(request_authority(2));
+		assert_ok!(RelayAuthorities::add_authority(Origin::root(), vec![1, 2]));
+
+		assert!(!Ring::locks(9).is_empty());
+		assert!(!Ring::locks(1).is_empty());
+		assert!(!Ring::locks(2).is_empty());
+
+		RelayAuthorities::apply_authorities_change().unwrap();
+		RelayAuthorities::sync_authorities_change().unwrap();
+
+		assert!(!Ring::locks(9).is_empty());
+		assert!(!Ring::locks(1).is_empty());
+		assert!(!Ring::locks(2).is_empty());
+
+		assert_ok!(RelayAuthorities::remove_authority(
+			Origin::root(),
+			vec![9, 2]
+		));
+
+		RelayAuthorities::apply_authorities_change().unwrap();
+		RelayAuthorities::sync_authorities_change().unwrap();
+
+		assert!(Ring::locks(9).is_empty());
+		assert!(!Ring::locks(1).is_empty());
+		assert!(Ring::locks(2).is_empty());
 	});
 }
