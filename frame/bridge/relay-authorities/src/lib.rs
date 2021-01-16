@@ -164,7 +164,7 @@ decl_storage! {
 		pub NextAuthorities get(fn next_authorities): Option<ScheduledAuthoritiesChangeT<T, I>>;
 
 		/// A term index counter, play the same role as nonce in extrinsic
-		pub NextAuthorityTerm get(fn authority_term): Term;
+		pub NextTerm get(fn next_term): Term;
 
 		/// The authorities change requirements
 		///
@@ -551,7 +551,7 @@ decl_module! {
 			{
 				Self::apply_authorities_change()?;
 				Self::deposit_event(RawEvent::AuthoritiesChangeSigned(
-					<NextAuthorityTerm<I>>::get(),
+					<NextTerm<I>>::get(),
 					<NextAuthorities<T, I>>::get()
 						.ok_or(<Error<T, I>>::NextAuthoritiesNE)?
 						.next_authorities
@@ -692,7 +692,7 @@ where
 			&_S {
 				_1: T::Version::get().spec_name,
 				_2: T::OpCodes::get().1,
-				_3: <NextAuthorityTerm<I>>::get(),
+				_3: <NextTerm<I>>::get(),
 				_4: next_authorities
 					.iter()
 					.map(|authority| authority.signer.clone())
@@ -833,7 +833,7 @@ where
 		mut authorities: Vec<Self::Signer>,
 	) -> DispatchResult {
 		ensure!(
-			term == <NextAuthorityTerm<I>>::get(),
+			term == <NextTerm<I>>::get(),
 			<Error<T, I>>::TermMis
 		);
 
@@ -858,7 +858,7 @@ where
 			.next_authorities;
 
 		<Authorities<T, I>>::put(next_authorities);
-		<NextAuthorityTerm<I>>::mutate(|authority_term| *authority_term += 1);
+		<NextTerm<I>>::mutate(|next_term| *next_term += 1);
 
 		Ok(())
 	}

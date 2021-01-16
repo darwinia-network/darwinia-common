@@ -285,7 +285,7 @@ fn authority_term_should_work() {
 		let max_candidates = <MaxCandidates as Get<usize>>::get();
 
 		for i in 1..=max_candidates {
-			assert_eq!(RelayAuthorities::authority_term(), i as Term - 1);
+			assert_eq!(RelayAuthorities::next_term(), i as Term - 1);
 			assert_ok!(request_authority(i as _));
 			assert_ok!(RelayAuthorities::add_authority(
 				Origin::root(),
@@ -293,7 +293,7 @@ fn authority_term_should_work() {
 			));
 
 			RelayAuthorities::sync_authorities_change().unwrap();
-			assert_eq!(RelayAuthorities::authority_term(), i as Term);
+			assert_eq!(RelayAuthorities::next_term(), i as Term);
 		}
 	});
 }
@@ -495,25 +495,6 @@ fn schedule_authorities_change_should_work() {
 			schedule_authorities_change.next_authorities
 		);
 		assert!(RelayAuthorities::next_authorities().is_none());
-	});
-}
-
-#[test]
-fn term_should_work() {
-	new_test_ext().execute_with(|| {
-		assert_eq!(RelayAuthorities::authority_term(), 0);
-
-		for i in 1u32..=8 {
-			assert_ok!(request_authority(i as _));
-			assert_ok!(RelayAuthorities::add_authority(
-				Origin::root(),
-				vec![i as _]
-			));
-			RelayAuthorities::apply_authorities_change().unwrap();
-			RelayAuthorities::sync_authorities_change().unwrap();
-
-			assert_eq!(RelayAuthorities::authority_term(), i);
-		}
 	});
 }
 
