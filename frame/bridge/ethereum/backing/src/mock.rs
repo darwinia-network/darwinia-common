@@ -68,7 +68,7 @@ macro_rules! decl_tests {
 				Ok(())
 			}
 
-			fn sync_authorities_change() {}
+			fn sync_authorities_change() -> DispatchResult {}
 		}
 		parameter_types! {
 			pub const EthereumBackingModuleId: ModuleId = ModuleId(*b"da/backi");

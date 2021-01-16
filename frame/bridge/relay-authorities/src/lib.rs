@@ -62,7 +62,7 @@ use frame_system::ensure_signed;
 use sp_runtime::{DispatchError, DispatchResult, Perbill, SaturatedConversion};
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
-use sp_std::{mem, prelude::*};
+use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::balance::lock::*;
@@ -715,24 +715,27 @@ where
 	}
 
 	pub fn apply_authorities_change() -> DispatchResult {
+		let next_authorities = <NextAuthorities<T, I>>::get()
+			.ok_or(<Error<T, I>>::NextAuthoritiesNE)?
+			.next_authorities;
+		let authorities = <Authorities<T, I>>::get();
+
+		for RelayAuthority { account_id, .. } in authorities {
+			if next_authorities
+				.iter()
+				.position(
+					|RelayAuthority {
+					     account_id: account_id_,
+					     ..
+					 }| account_id_ == &account_id,
+				)
+				.is_none()
+			{
+				<RingCurrency<T, I>>::remove_lock(T::LockId::get(), &account_id);
+			}
+		}
+
 		<AuthoritiesToSign<T, I>>::kill();
-		<NextAuthorities<T, I>>::try_mutate(|maybe_scheduled_authorities_change| {
-			let scheduled_authorities_change = maybe_scheduled_authorities_change
-				.as_mut()
-				.ok_or(<Error<T, I>>::NextAuthoritiesNE)?;
-
-			<Authorities<T, I>>::mutate(|authorities| {
-				let next_authorities =
-					mem::take(&mut scheduled_authorities_change.next_authorities);
-				let previous_authorities = mem::replace(authorities, next_authorities);
-
-				for RelayAuthority { account_id, .. } in previous_authorities {
-					<RingCurrency<T, I>>::remove_lock(T::LockId::get(), &account_id);
-				}
-			});
-
-			DispatchResult::Ok(())
-		})?;
 		<SubmitDuration<T, I>>::kill();
 
 		Ok(())
@@ -843,9 +846,15 @@ where
 		}
 	}
 
-	fn sync_authorities_change() {
-		<NextAuthorities<T, I>>::kill();
+	fn sync_authorities_change() -> DispatchResult {
+		let next_authorities = <NextAuthorities<T, I>>::take()
+			.ok_or(<Error<T, I>>::NextAuthoritiesNE)?
+			.next_authorities;
+
+		<Authorities<T, I>>::put(next_authorities);
 		<AuthorityTerm<I>>::mutate(|authority_term| *authority_term += 1);
+
+		Ok(())
 	}
 }
 

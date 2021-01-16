@@ -48,9 +48,12 @@ pub trait RelayAuthorityProtocol<BlockNumber> {
 
 	fn schedule_mmr_root(block_number: BlockNumber);
 
-	fn check_authorities_change_to_sync(term: Term, authorities: Vec<Self::Signer>) -> DispatchResult;
+	fn check_authorities_change_to_sync(
+		term: Term,
+		authorities: Vec<Self::Signer>,
+	) -> DispatchResult;
 
-	fn sync_authorities_change();
+	fn sync_authorities_change() -> DispatchResult;
 }
 
 pub trait MMR<BlockNumber, Root> {
@@ -105,7 +108,6 @@ where
 	pub _3: _3,
 	pub _4: _4,
 }
-
 
 /// The scheduled change of authority set
 #[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug)]

@@ -348,7 +348,7 @@ decl_module! {
 				)?;
 			}
 
-			T::EcdsaAuthorities::sync_authorities_change();
+			T::EcdsaAuthorities::sync_authorities_change()?;
 
 			VerifiedProof::insert(tx_index, true);
 		}
