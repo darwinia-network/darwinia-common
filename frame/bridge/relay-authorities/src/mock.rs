@@ -104,6 +104,7 @@ impl Trait for Test {
 	type ResetOrigin = EnsureRoot<Self::AccountId>;
 	type DarwiniaMMR = DarwiniaMMR;
 	type Sign = Sign;
+	type OpCodes = ();
 	type SignThreshold = SignThreshold;
 	type SubmitDuration = SubmitDuration;
 	type WeightInfo = ();

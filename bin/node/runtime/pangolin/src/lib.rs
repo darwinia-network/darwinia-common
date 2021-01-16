@@ -245,6 +245,7 @@ use constants::*;
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
 use darwinia_evm::Runner;
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
+use darwinia_relay_primitives::relay_authorities::OpCode;
 use darwinia_staking::EraIndex;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
 use drml_primitives::*;
@@ -947,6 +948,8 @@ impl darwinia_crab_backing::Trait for Runtime {
 parameter_types! {
 	pub const EthereumBackingModuleId: ModuleId = ModuleId(*b"da/ethbk");
 	pub const EthereumBackingFeeModuleId: ModuleId = ModuleId(*b"da/ethfe");
+	pub const RingLockLimit: Balance = 10_000_000 * COIN;
+	pub const KtonLockLimit: Balance = 1000 * COIN;
 	pub const AdvancedFee: Balance = 50 * COIN;
 	pub const SyncReward: Balance = 1000 * COIN;
 }
@@ -959,6 +962,8 @@ impl darwinia_ethereum_backing::Trait for Runtime {
 	type OnDepositRedeem = Staking;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
+	type RingLockLimit = RingLockLimit;
+	type KtonLockLimit = KtonLockLimit;
 	type AdvancedFee = AdvancedFee;
 	type SyncReward = SyncReward;
 	type EcdsaAuthorities = EthereumRelayAuthorities;
@@ -1054,6 +1059,10 @@ parameter_types! {
 	pub const EthereumRelayAuthoritiesLockId: LockIdentifier = *b"ethrauth";
 	pub const EthereumRelayAuthoritiesTermDuration: BlockNumber = 30 * DAYS;
 	pub const MaxCandidates: usize = 7;
+	pub const OpCodes: (OpCode, OpCode) = (
+		[71, 159, 189, 249],
+		[180, 188, 244, 151]
+	);
 	pub const SignThreshold: Perbill = Perbill::from_percent(60);
 	pub const SubmitDuration: BlockNumber = 100;
 }
@@ -1068,6 +1077,7 @@ impl darwinia_relay_authorities::Trait<EthereumRelayAuthoritiesInstance> for Run
 	type ResetOrigin = ApproveOrigin;
 	type DarwiniaMMR = HeaderMMR;
 	type Sign = EthereumBacking;
+	type OpCodes = OpCodes;
 	type SignThreshold = SignThreshold;
 	type SubmitDuration = SubmitDuration;
 	type WeightInfo = ();
