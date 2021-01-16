@@ -164,7 +164,7 @@ decl_storage! {
 		pub NextAuthorities get(fn next_authorities): Option<ScheduledAuthoritiesChangeT<T, I>>;
 
 		/// A term index counter, play the same role as nonce in extrinsic
-		pub AuthorityTerm get(fn authority_term): Term;
+		pub NextAuthorityTerm get(fn authority_term): Term;
 
 		/// The authorities change requirements
 		///
@@ -551,8 +551,10 @@ decl_module! {
 			{
 				Self::apply_authorities_change()?;
 				Self::deposit_event(RawEvent::AuthoritiesChangeSigned(
-					<AuthorityTerm<I>>::get(),
-					<Authorities<T, I>>::get()
+					<NextAuthorityTerm<I>>::get(),
+					<NextAuthorities<T, I>>::get()
+						.ok_or(<Error<T, I>>::NextAuthoritiesNE)?
+						.next_authorities
 						.into_iter()
 						.map(|authority| authority.signer)
 						.collect(),
@@ -591,6 +593,7 @@ decl_module! {
 			T::ResetOrigin::ensure_origin(origin)?;
 
 			Self::apply_authorities_change()?;
+			Self::sync_authorities_change()?;
 
 			<NextAuthorities<T, I>>::kill();
 		}
@@ -689,7 +692,7 @@ where
 			&_S {
 				_1: T::Version::get().spec_name,
 				_2: T::OpCodes::get().1,
-				_3: <AuthorityTerm<I>>::get(),
+				_3: <NextAuthorityTerm<I>>::get(),
 				_4: next_authorities
 					.iter()
 					.map(|authority| authority.signer.clone())
@@ -829,7 +832,10 @@ where
 		term: Term,
 		mut authorities: Vec<Self::Signer>,
 	) -> DispatchResult {
-		ensure!(term == <AuthorityTerm<I>>::get(), <Error<T, I>>::TermMis);
+		ensure!(
+			term == <NextAuthorityTerm<I>>::get(),
+			<Error<T, I>>::TermMis
+		);
 
 		let mut chain_authorities = <Authorities<T, I>>::get()
 			.into_iter()
@@ -852,7 +858,7 @@ where
 			.next_authorities;
 
 		<Authorities<T, I>>::put(next_authorities);
-		<AuthorityTerm<I>>::mutate(|authority_term| *authority_term += 1);
+		<NextAuthorityTerm<I>>::mutate(|authority_term| *authority_term += 1);
 
 		Ok(())
 	}
