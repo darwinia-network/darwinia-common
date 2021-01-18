@@ -62,7 +62,7 @@ use frame_system::ensure_signed;
 use sp_runtime::{DispatchError, DispatchResult, Perbill, SaturatedConversion};
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
-use sp_std::{mem, prelude::*};
+use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::balance::lock::*;
@@ -164,7 +164,7 @@ decl_storage! {
 		pub NextAuthorities get(fn next_authorities): Option<ScheduledAuthoritiesChangeT<T, I>>;
 
 		/// A term index counter, play the same role as nonce in extrinsic
-		pub AuthorityTerm get(fn authority_term): Term;
+		pub NextTerm get(fn next_term): Term;
 
 		/// The authorities change requirements
 		///
@@ -551,8 +551,10 @@ decl_module! {
 			{
 				Self::apply_authorities_change()?;
 				Self::deposit_event(RawEvent::AuthoritiesChangeSigned(
-					<AuthorityTerm<I>>::get(),
-					<Authorities<T, I>>::get()
+					<NextTerm<I>>::get(),
+					<NextAuthorities<T, I>>::get()
+						.ok_or(<Error<T, I>>::NextAuthoritiesNE)?
+						.next_authorities
 						.into_iter()
 						.map(|authority| authority.signer)
 						.collect(),
@@ -591,6 +593,7 @@ decl_module! {
 			T::ResetOrigin::ensure_origin(origin)?;
 
 			Self::apply_authorities_change()?;
+			Self::sync_authorities_change()?;
 
 			<NextAuthorities<T, I>>::kill();
 		}
@@ -689,7 +692,7 @@ where
 			&_S {
 				_1: T::Version::get().spec_name,
 				_2: T::OpCodes::get().1,
-				_3: <AuthorityTerm<I>>::get(),
+				_3: <NextTerm<I>>::get(),
 				_4: next_authorities
 					.iter()
 					.map(|authority| authority.signer.clone())
@@ -715,24 +718,27 @@ where
 	}
 
 	pub fn apply_authorities_change() -> DispatchResult {
+		let next_authorities = <NextAuthorities<T, I>>::get()
+			.ok_or(<Error<T, I>>::NextAuthoritiesNE)?
+			.next_authorities;
+		let authorities = <Authorities<T, I>>::get();
+
+		for RelayAuthority { account_id, .. } in authorities {
+			if next_authorities
+				.iter()
+				.position(
+					|RelayAuthority {
+					     account_id: account_id_,
+					     ..
+					 }| account_id_ == &account_id,
+				)
+				.is_none()
+			{
+				<RingCurrency<T, I>>::remove_lock(T::LockId::get(), &account_id);
+			}
+		}
+
 		<AuthoritiesToSign<T, I>>::kill();
-		<NextAuthorities<T, I>>::try_mutate(|maybe_scheduled_authorities_change| {
-			let scheduled_authorities_change = maybe_scheduled_authorities_change
-				.as_mut()
-				.ok_or(<Error<T, I>>::NextAuthoritiesNE)?;
-
-			<Authorities<T, I>>::mutate(|authorities| {
-				let next_authorities =
-					mem::take(&mut scheduled_authorities_change.next_authorities);
-				let previous_authorities = mem::replace(authorities, next_authorities);
-
-				for RelayAuthority { account_id, .. } in previous_authorities {
-					<RingCurrency<T, I>>::remove_lock(T::LockId::get(), &account_id);
-				}
-			});
-
-			DispatchResult::Ok(())
-		})?;
 		<SubmitDuration<T, I>>::kill();
 
 		Ok(())
@@ -826,7 +832,10 @@ where
 		term: Term,
 		mut authorities: Vec<Self::Signer>,
 	) -> DispatchResult {
-		ensure!(term == <AuthorityTerm<I>>::get(), <Error<T, I>>::TermMis);
+		ensure!(
+			term == <NextTerm<I>>::get(),
+			<Error<T, I>>::TermMis
+		);
 
 		let mut chain_authorities = <Authorities<T, I>>::get()
 			.into_iter()
@@ -843,9 +852,15 @@ where
 		}
 	}
 
-	fn sync_authorities_change() {
-		<NextAuthorities<T, I>>::kill();
-		<AuthorityTerm<I>>::mutate(|authority_term| *authority_term += 1);
+	fn sync_authorities_change() -> DispatchResult {
+		let next_authorities = <NextAuthorities<T, I>>::take()
+			.ok_or(<Error<T, I>>::NextAuthoritiesNE)?
+			.next_authorities;
+
+		<Authorities<T, I>>::put(next_authorities);
+		<NextTerm<I>>::mutate(|next_term| *next_term += 1);
+
+		Ok(())
 	}
 }
 
