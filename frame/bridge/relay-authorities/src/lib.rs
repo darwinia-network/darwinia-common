@@ -837,15 +837,17 @@ where
 			<Error<T, I>>::TermMis
 		);
 
-		let mut chain_authorities = <Authorities<T, I>>::get()
+		let mut next_authorities = <NextAuthorities<T, I>>::get()
+			.ok_or(<Error<T, I>>::NextAuthoritiesNE)?
+			.next_authorities
 			.into_iter()
 			.map(|authority| authority.signer)
 			.collect::<Vec<_>>();
 
 		authorities.sort();
-		chain_authorities.sort();
+		next_authorities.sort();
 
-		if authorities == chain_authorities {
+		if authorities == next_authorities {
 			Ok(())
 		} else {
 			Err(<Error<T, I>>::AuthoritiesMis)?
