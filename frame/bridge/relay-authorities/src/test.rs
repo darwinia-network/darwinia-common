@@ -358,7 +358,7 @@ fn mmr_root_signed_event_should_work() {
 		assert_ok!(RelayAuthorities::add_authority(Origin::root(), vec![1]));
 		assert_ok!(RelayAuthorities::submit_signed_authorities(
 			Origin::signed(9),
-			[0; 65]
+			DEFAULT_SIGNATURE
 		));
 
 		RelayAuthorities::apply_authorities_change().unwrap();
@@ -371,20 +371,20 @@ fn mmr_root_signed_event_should_work() {
 		assert_ok!(RelayAuthorities::submit_signed_mmr_root(
 			Origin::signed(9),
 			10,
-			[0; 65],
+			DEFAULT_SIGNATURE,
 		));
 		assert!(relay_authorities_events().is_empty());
 		assert_ok!(RelayAuthorities::submit_signed_mmr_root(
 			Origin::signed(1),
 			10,
-			[0; 65],
+			DEFAULT_SIGNATURE,
 		));
 		assert_eq!(
 			relay_authorities_events(),
 			vec![Event::relay_authorities(RawEvent::MMRRootSigned(
 				10,
-				Default::default(),
-				vec![(9, [0; 65]), (1, [0; 65])]
+				DEFAULT_MMR_ROOT,
+				vec![(9, DEFAULT_SIGNATURE), (1, DEFAULT_SIGNATURE)]
 			))]
 		);
 	});
@@ -402,15 +402,15 @@ fn authorities_change_signed_event_should_work() {
 
 		assert_ok!(RelayAuthorities::submit_signed_authorities(
 			Origin::signed(9),
-			[0; 65]
+			DEFAULT_SIGNATURE
 		));
 
 		assert_eq!(
 			relay_authorities_events(),
 			vec![Event::relay_authorities(RawEvent::AuthoritiesChangeSigned(
 				0,
-				vec![Default::default(), Default::default()],
-				vec![(9, [0; 65])]
+				vec![signer_of(9), signer_of(1)],
+				vec![(9, DEFAULT_SIGNATURE)]
 			))]
 		);
 
@@ -424,13 +424,13 @@ fn authorities_change_signed_event_should_work() {
 
 		assert_ok!(RelayAuthorities::submit_signed_authorities(
 			Origin::signed(9),
-			[0; 65]
+			DEFAULT_SIGNATURE
 		));
 		// Not enough signatures, `1 / 2 < 60%`
 		assert!(relay_authorities_events().is_empty());
 		assert_ok!(RelayAuthorities::submit_signed_authorities(
 			Origin::signed(1),
-			[0; 65]
+			DEFAULT_SIGNATURE
 		));
 
 		// Enough signatures, `2 / 2 > 60%`
@@ -438,8 +438,8 @@ fn authorities_change_signed_event_should_work() {
 			relay_authorities_events(),
 			vec![Event::relay_authorities(RawEvent::AuthoritiesChangeSigned(
 				1,
-				vec![Default::default(), Default::default(), Default::default()],
-				vec![(9, [0; 65]), (1, [0; 65])]
+				vec![signer_of(9), signer_of(1), signer_of(2)],
+				vec![(9, DEFAULT_SIGNATURE), (1, DEFAULT_SIGNATURE)]
 			))]
 		);
 	});
@@ -619,5 +619,53 @@ fn lock_after_authorities_change_should_work() {
 		assert!(Ring::locks(9).is_empty());
 		assert!(!Ring::locks(1).is_empty());
 		assert!(Ring::locks(2).is_empty());
+	});
+}
+
+#[test]
+fn check_authorities_change_to_sync_should_work() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(request_authority(1));
+		assert_ok!(request_authority(2));
+		assert_ok!(request_authority(3));
+		assert_ok!(RelayAuthorities::add_authority(
+			Origin::root(),
+			vec![1, 2, 3]
+		));
+		RelayAuthorities::apply_authorities_change().unwrap();
+
+		assert_err!(
+			RelayAuthorities::check_authorities_change_to_sync(
+				0,
+				vec![signer_of(1), signer_of(2), signer_of(3)]
+			),
+			RelayAuthoritiesError::AuthoritiesMis
+		);
+		assert_err!(
+			RelayAuthorities::check_authorities_change_to_sync(
+				0,
+				vec![signer_of(3), signer_of(1), signer_of(2)]
+			),
+			RelayAuthoritiesError::AuthoritiesMis
+		);
+		assert_err!(
+			RelayAuthorities::check_authorities_change_to_sync(
+				0,
+				vec![signer_of(3), signer_of(2), signer_of(1)]
+			),
+			RelayAuthoritiesError::AuthoritiesMis
+		);
+		assert_ok!(RelayAuthorities::check_authorities_change_to_sync(
+			0,
+			vec![signer_of(9), signer_of(1), signer_of(2), signer_of(3)]
+		));
+		assert_ok!(RelayAuthorities::check_authorities_change_to_sync(
+			0,
+			vec![signer_of(9), signer_of(3), signer_of(2), signer_of(1)]
+		));
+		assert_ok!(RelayAuthorities::check_authorities_change_to_sync(
+			0,
+			vec![signer_of(1), signer_of(3), signer_of(9), signer_of(2)]
+		));
 	});
 }

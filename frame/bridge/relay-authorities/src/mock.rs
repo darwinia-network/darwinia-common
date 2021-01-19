@@ -50,6 +50,9 @@ pub type RelayAuthorities = Module<Test>;
 
 pub type RelayAuthoritiesError = Error<Test, DefaultInstance>;
 
+pub const DEFAULT_MMR_ROOT: H256 = H256([0; 32]);
+pub const DEFAULT_SIGNATURE: [u8; 65] = [0; 65];
+
 impl_outer_origin! {
 	pub enum Origin for Test {}
 }
@@ -173,7 +176,7 @@ pub fn new_test_ext() -> TestExternalities {
 	.assimilate_storage(&mut storage)
 	.unwrap();
 	GenesisConfig::<Test> {
-		authorities: vec![(9, Default::default(), 1)],
+		authorities: vec![(9, signer_of(9), 1)],
 	}
 	.assimilate_storage(&mut storage)
 	.unwrap();
@@ -200,9 +203,13 @@ pub fn relay_authorities_events() -> Vec<Event> {
 }
 
 pub fn request_authority(account_id: AccountId) -> DispatchResult {
-	RelayAuthorities::request_authority(Origin::signed(account_id), 1, [0; 20])
+	RelayAuthorities::request_authority(Origin::signed(account_id), 1, signer_of(account_id))
 }
 
 pub fn request_authority_with_stake(account_id: AccountId, stake: Balance) -> DispatchResult {
-	RelayAuthorities::request_authority(Origin::signed(account_id), stake, [0; 20])
+	RelayAuthorities::request_authority(Origin::signed(account_id), stake, signer_of(account_id))
+}
+
+pub fn signer_of(account_id: AccountId) -> [u8; 20] {
+	[account_id as _; 20]
 }
