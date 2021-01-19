@@ -52,11 +52,10 @@ use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
 	traits::{
 		ChangeMembers, Contains, Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, Get,
-		ReservableCurrency,
+		IsSubType, ReservableCurrency,
 	},
 	unsigned::{TransactionValidity, TransactionValidityError},
 	weights::Weight,
-	IsSubType,
 };
 use frame_system::ensure_signed;
 use sp_runtime::{

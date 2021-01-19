@@ -1,7 +1,10 @@
 use darwinia_evm::{Account as EVMAccount, AccountBasicMapping, AddressMapping};
 use frame_support::traits::Currency;
 use sp_core::{H160, U256};
-use sp_runtime::traits::{UniqueSaturatedFrom, UniqueSaturatedInto};
+use sp_runtime::{
+	traits::{UniqueSaturatedFrom, UniqueSaturatedInto},
+	SaturatedConversion,
+};
 
 pub struct DVMAccountBasicMapping<T>(sp_std::marker::PhantomData<T>);
 
@@ -18,12 +21,12 @@ impl<T: crate::Trait + darwinia_balances::Trait<darwinia_balances::Instance0>> A
 
 		// Get balance from T::Currency
 		let balance: U256 = T::Currency::free_balance(&account_id)
-			.unique_saturated_into()
+			.saturated_into::<u128>()
 			.into();
 
 		// Get remaining balance from dvm
 		let remaining_balance: U256 = crate::Module::<T>::remaining_balance(&account_id)
-			.unique_saturated_into()
+			.saturated_into::<u128>()
 			.into();
 
 		// Final balance = balance * 10^9 + remaining_balance
@@ -32,7 +35,7 @@ impl<T: crate::Trait + darwinia_balances::Trait<darwinia_balances::Instance0>> A
 			.unwrap_or_default();
 
 		EVMAccount {
-			nonce: nonce.unique_saturated_into().into(),
+			nonce: nonce.saturated_into::<u128>().into(),
 			balance: final_balance,
 		}
 	}
@@ -45,7 +48,7 @@ impl<T: crate::Trait + darwinia_balances::Trait<darwinia_balances::Instance0>> A
 			.checked_pow(U256::from(9))
 			.unwrap_or(U256::MAX);
 		let dvm_balance: U256 = crate::Module::<T>::remaining_balance(&account_id)
-			.unique_saturated_into()
+			.saturated_into::<u128>()
 			.into();
 
 		if current.nonce < new.nonce {

@@ -71,8 +71,7 @@ use frame_support::{
 	debug::trace,
 	decl_error, decl_event, decl_module, decl_storage, ensure,
 	traits::Get,
-	traits::{Currency, ExistenceRequirement::KeepAlive, ReservableCurrency},
-	IsSubType,
+	traits::{Currency, ExistenceRequirement::KeepAlive, IsSubType, ReservableCurrency},
 };
 use frame_system::{ensure_root, ensure_signed};
 use sp_runtime::{
@@ -332,11 +331,11 @@ decl_module! {
 			let points = Self::relayer_points(&relayer);
 			let total_points = Self::total_points();
 
-			let max_payout = Self::pot().saturated_into();
+			let max_payout = Self::pot().saturated_into::<u128>();
 
 			ensure!(total_points > 0 && points > 0 && max_payout > 0 && total_points >= points, <Error<T>>::PayoutNPF);
 
-			let payout : Balance<T> = (points as u128 * max_payout / (total_points  as u128)).saturated_into();
+			let payout = <Balance<T>>::saturated_from(points as u128 * max_payout / (total_points  as u128));
 			let module_account = Self::account_id();
 
 			T::Currency::transfer(&module_account, &relayer, payout, KeepAlive)?;

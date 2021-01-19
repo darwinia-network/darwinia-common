@@ -37,12 +37,12 @@ macro_rules! gen_paired_account {
 			StakingBalance::RingBalance(50 * COIN),
 			RewardDestination::Stash,
 			$how_long,
-			));
+		));
 		assert_ok!(Staking::bond_extra(
 			Origin::signed($stash),
 			StakingBalance::KtonBalance(50 * COIN),
 			$how_long
-			));
+		));
 	};
 	($stash:ident($stash_id:expr), $controller:ident($controller_id:expr), $how_long:expr) => {
 		#[allow(non_snake_case, unused)]
@@ -58,12 +58,12 @@ macro_rules! gen_paired_account {
 			StakingBalance::RingBalance(50 * COIN),
 			RewardDestination::Stash,
 			$how_long,
-			));
+		));
 		assert_ok!(Staking::bond_extra(
 			Origin::signed($stash),
 			StakingBalance::KtonBalance(50 * COIN),
 			$how_long,
-			));
+		));
 	};
 	($stash:ident($stash_id:expr), $controller:ident($controller_id:expr)) => {
 		#[allow(non_snake_case, unused)]

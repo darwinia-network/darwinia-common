@@ -1183,8 +1183,8 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		let bounty = Bounty {
 			proposer,
 			value,
-			fee: 0.into(),
-			curator_deposit: 0.into(),
+			fee: 0u32.into(),
+			curator_deposit: 0u32.into(),
 			bond,
 			status: BountyStatus::Proposed,
 		};
