@@ -53,9 +53,7 @@ mod tests;
 
 #[cfg(all(feature = "std", test))]
 mod mock;
-// Precomile contract for dvm
 pub mod account_basic;
-pub mod precompiles;
 
 #[derive(Eq, PartialEq, Clone, sp_runtime::RuntimeDebug)]
 pub enum ReturnValue {
