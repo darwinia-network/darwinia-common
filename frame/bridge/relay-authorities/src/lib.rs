@@ -830,12 +830,9 @@ where
 
 	fn check_authorities_change_to_sync(
 		term: Term,
-		mut authorities: Vec<Self::Signer>,
+		mut authorities_change_to_sync: Vec<Self::Signer>,
 	) -> DispatchResult {
-		ensure!(
-			term == <NextTerm<I>>::get(),
-			<Error<T, I>>::TermMis
-		);
+		ensure!(term == <NextTerm<I>>::get(), <Error<T, I>>::TermMis);
 
 		let mut next_authorities = <NextAuthorities<T, I>>::get()
 			.ok_or(<Error<T, I>>::NextAuthoritiesNE)?
@@ -844,10 +841,10 @@ where
 			.map(|authority| authority.signer)
 			.collect::<Vec<_>>();
 
-		authorities.sort();
+		authorities_change_to_sync.sort();
 		next_authorities.sort();
 
-		if authorities == next_authorities {
+		if authorities_change_to_sync == next_authorities {
 			Ok(())
 		} else {
 			Err(<Error<T, I>>::AuthoritiesMis)?
