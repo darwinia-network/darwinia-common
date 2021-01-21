@@ -24,6 +24,9 @@ pub mod precompiles;
 pub mod runner;
 mod tests;
 
+#[cfg(feature = "blake2f")]
+pub mod eip_152;
+
 pub use crate::precompiles::{Precompile, Precompiles};
 pub use crate::runner::Runner;
 pub use darwinia_evm_primitives::{Account, CallInfo, CreateInfo, ExecutionInfo, Log, Vicinity};

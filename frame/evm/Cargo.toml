@@ -21,6 +21,10 @@ ripemd160             = { version = "0.9", default-features = false }
 rlp                   = { version = "0.4", default-features = false }
 serde                 = { version = "1.0.118", optional = true, features = ["derive"] }
 sha3                  = { version = "0.8", default-features = false }
+num 			      = { version = "0.3", features = ["alloc"], default-features = false, optional = true }
+ethereum-types        = { version = "0.9.2", default-features = false, optional = true }
+bn = { package        = "substrate-bn", version = "0.5", default-features = false, optional = true }
+ed25519-dalek         = { version = "1.0.0", features = ["alloc", "u64_backend"], default-features = false, optional = true }
 # darwinia
 darwinia-balances       = { default-features = false, path = "../balances" }
 darwinia-evm-primitives = { default-features = false, path = "../../primitives/evm" }
@@ -37,7 +41,11 @@ sp-std           = { default-features = false, git = "https://github.com/darwini
 darwinia-support = { features = ["easy-testing"], path = "../support" }
 
 [features]
-default = ["std"]
+default = ["std", "modexp", "ed25519", "bn128", "blake2f"]
+blake2f = []
+modexp = ["num"]
+ed25519 = ["ed25519-dalek"]
+bn128 = ["bn", "ethereum-types"]
 
 std = [
 	"crates-std",
