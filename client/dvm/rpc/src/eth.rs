@@ -41,6 +41,7 @@ use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_runtime::traits::BlakeTwo256;
 use sp_runtime::traits::{Block as BlockT, One, Saturating, UniqueSaturatedInto, Zero};
 use sp_runtime::transaction_validity::TransactionSource;
+use sp_runtime::SaturatedConversion;
 use sp_transaction_pool::{InPoolTransaction, TransactionPool};
 use std::collections::BTreeMap;
 use std::{marker::PhantomData, sync::Arc};
@@ -260,7 +261,7 @@ where
 					.info()
 					.best_number
 					.clone()
-					.unique_saturated_into(),
+					.saturated_into::<u128>(),
 			);
 			Ok(SyncStatus::Info(SyncInfo {
 				starting_block: U256::zero(),
@@ -331,7 +332,7 @@ where
 				.info()
 				.best_number
 				.clone()
-				.unique_saturated_into(),
+				.saturated_into::<u128>(),
 		))
 	}
 

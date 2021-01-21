@@ -342,14 +342,12 @@ use codec::{Decode, Encode, HasCompact};
 // --- substrate ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage,
-	dispatch::{
-		DispatchErrorWithPostInfo, DispatchResultWithPostInfo, IsSubType, WithPostDispatchInfo,
-	},
+	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo, WithPostDispatchInfo},
 	ensure,
 	storage::IterableStorageMap,
 	traits::{
 		Currency, EnsureOrigin, EstimateNextNewSession, ExistenceRequirement::KeepAlive, Get,
-		Imbalance, OnUnbalanced, UnixTime,
+		Imbalance, IsSubType, OnUnbalanced, UnixTime,
 	},
 	weights::{
 		constants::{WEIGHT_PER_MICROS, WEIGHT_PER_NANOS},
@@ -1605,7 +1603,7 @@ decl_module! {
 							inflation::compute_kton_reward::<T>(
 								item.value, passed_duration_in_months as _
 							)
-						).max(1.into()) * 3.into()
+						).max(1u32.into()) * 3u32.into()
 					};
 
 					// check total free balance and locked one
@@ -3324,7 +3322,7 @@ impl<T: Trait> Module<T> {
 		<ErasValidatorPrefs<T>>::remove_prefix(era_index);
 		<ErasValidatorReward<T>>::remove(era_index);
 		<ErasRewardPoints<T>>::remove(era_index);
-		<ErasTotalStake>::remove(era_index);
+		ErasTotalStake::remove(era_index);
 		ErasStartSessionIndex::remove(era_index);
 	}
 

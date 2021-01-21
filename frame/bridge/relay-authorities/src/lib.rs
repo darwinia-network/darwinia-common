@@ -323,7 +323,7 @@ decl_module! {
 					account_id,
 					signer,
 					stake,
-					term: 0.into()
+					term: 0u32.into()
 				});
 
 				DispatchResult::Ok(())
@@ -580,7 +580,7 @@ decl_module! {
 			{
 				<MMRRootsToSign<T, I>>::remove_all();
 				let schedule = (
-					<frame_system::Module<T>>::block_number().saturated_into() / 10 * 10 + 10
+					<frame_system::Module<T>>::block_number().saturated_into::<u64>() / 10 * 10 + 10
 				).saturated_into();
 				<MMRRootsToSignKeys<T, I>>::mutate(|schedules| *schedules = vec![schedule]);
 				Self::schedule_mmr_root(schedule);

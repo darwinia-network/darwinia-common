@@ -557,7 +557,7 @@ impl<'vicinity, 'config, T: Trait> HandlerT for Handler<'vicinity, 'config, T> {
 				match $e {
 					Ok(v) => v,
 					Err(e) => return Capture::Exit((e.into(), None, Vec::new())),
-					}
+				}
 			};
 		}
 
@@ -585,8 +585,8 @@ impl<'vicinity, 'config, T: Trait> HandlerT for Handler<'vicinity, 'config, T> {
 								None,
 								Vec::new(),
 							)))
-							}
 						}
+					}
 				};
 			}
 
@@ -667,7 +667,7 @@ impl<'vicinity, 'config, T: Trait> HandlerT for Handler<'vicinity, 'config, T> {
 				match $e {
 					Ok(v) => v,
 					Err(e) => return Capture::Exit((e.into(), Vec::new())),
-					}
+				}
 			};
 		}
 
@@ -694,8 +694,8 @@ impl<'vicinity, 'config, T: Trait> HandlerT for Handler<'vicinity, 'config, T> {
 								e.into(),
 								Vec::new(),
 							)))
-							}
 						}
+					}
 				};
 			}
 
