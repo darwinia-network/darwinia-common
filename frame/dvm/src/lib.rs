@@ -312,7 +312,7 @@ impl<T: Trait> Module<T> {
 			number: U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(
 				frame_system::Module::<T>::block_number(),
 			)),
-			gas_limit: U256::zero(), // TODO: set this using Ethereum's gas limit change algorithm.
+			gas_limit: U256::from(u32::max_value()), // TODO: set this using Ethereum's gas limit change algorithm.
 			gas_used: receipts
 				.clone()
 				.into_iter()
