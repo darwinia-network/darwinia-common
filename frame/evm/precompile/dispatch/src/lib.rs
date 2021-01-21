@@ -22,7 +22,7 @@ extern crate alloc;
 use alloc::vec::Vec;
 use codec::Decode;
 use core::marker::PhantomData;
-use darwinia_evm::AddressMapping;
+use darwinia_evm::{AddressMapping, GasWeightMapping};
 use darwinia_evm_primitives::Precompile;
 use evm::{Context, ExitError, ExitSucceed};
 use frame_support::{
@@ -55,7 +55,7 @@ where
 		}
 
 		if let Some(gas) = target_gas {
-			let valid_weight = info.weight <= gas as u64;
+			let valid_weight = info.weight <= T::GasWeightMapping::gas_to_weight(gas);
 			if !valid_weight {
 				return Err(ExitError::OutOfGas);
 			}
@@ -65,7 +65,7 @@ where
 
 		match call.dispatch(Some(origin).into()) {
 			Ok(post_info) => {
-				let cost = post_info.actual_weight.unwrap_or(info.weight) as usize;
+				let cost = T::GasWeightMapping::weight_to_gas(post_info.actual_weight.unwrap_or(info.weight));
 				Ok((ExitSucceed::Stopped, Default::default(), cost))
 			}
 			Err(_) => Err(ExitError::Other("dispatch execution failed".into())),

@@ -42,7 +42,7 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 
-use darwinia_evm::{AccountBasicMapping, AddressMapping, GasToWeight, Runner};
+use darwinia_evm::{AccountBasicMapping, AddressMapping, GasWeightMapping, Runner};
 use darwinia_evm_primitives::CallOrCreateInfo;
 pub use dvm_rpc_runtime_api::TransactionStatus;
 pub use ethereum::{Block, Log, Receipt, Transaction, TransactionAction, TransactionMessage};
@@ -126,7 +126,7 @@ decl_module! {
 		fn deposit_event() = default;
 
 		/// Transact an Ethereum transaction.
-		#[weight = <T as darwinia_evm::Trait>::GasToWeight::gas_to_weight(transaction.gas_limit.low_u32())]
+		#[weight = <T as darwinia_evm::Trait>::GasWeightMapping::gas_to_weight(transaction.gas_limit.unique_saturated_into())]
 		fn transact(origin, transaction: ethereum::Transaction) -> DispatchResultWithPostInfo {
 			ensure_none(origin)?;
 
@@ -203,7 +203,7 @@ decl_module! {
 			Pending::append((transaction, status, receipt));
 
 			Self::deposit_event(Event::Executed(source, contract_address.unwrap_or_default(), transaction_hash, reason));
-			Ok(Some(T::GasToWeight::gas_to_weight(used_gas.low_u32())).into())
+			Ok(Some(T::GasWeightMapping::gas_to_weight(used_gas.unique_saturated_into())).into())
 		}
 
 		fn on_finalize(n: T::BlockNumber) {
