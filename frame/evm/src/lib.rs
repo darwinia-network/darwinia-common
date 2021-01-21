@@ -20,16 +20,14 @@
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub mod precompiles;
 pub mod runner;
 mod tests;
 
-#[cfg(feature = "blake2f")]
-pub mod eip_152;
-
-pub use crate::precompiles::{Precompile, Precompiles};
 pub use crate::runner::Runner;
-pub use darwinia_evm_primitives::{Account, CallInfo, CreateInfo, ExecutionInfo, Log, Vicinity};
+pub use darwinia_evm_primitives::{
+	Account, CallInfo, CreateInfo, ExecutionInfo, LinearCostPrecompile, Log, Precompile,
+	PrecompileSet, Vicinity,
+};
 pub use evm::{ExitError, ExitFatal, ExitReason, ExitRevert, ExitSucceed};
 
 #[cfg(feature = "std")]
@@ -262,7 +260,7 @@ pub trait Trait: frame_system::Trait + pallet_timestamp::Trait {
 	/// The overarching event type.
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 	/// Precompiles associated with this EVM engine.
-	type Precompiles: Precompiles;
+	type Precompiles: PrecompileSet;
 	/// Chain ID of EVM.
 	type ChainId: Get<u64>;
 	/// EVM execution runner.

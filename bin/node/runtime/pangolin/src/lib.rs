@@ -1062,6 +1062,7 @@ impl FeeCalculator for FixedGasPrice {
 		0.into()
 	}
 }
+
 parameter_types! {
 	pub const ChainId: u64 = 43;
 }
@@ -1074,10 +1075,10 @@ impl darwinia_evm::Trait for Runtime {
 	type Currency = Balances;
 	type Event = Event;
 	type Precompiles = (
-		darwinia_evm::precompiles::ECRecover,
-		darwinia_evm::precompiles::Sha256,
-		darwinia_evm::precompiles::Ripemd160,
-		darwinia_evm::precompiles::Identity,
+		pallet_evm_precompile_simple::ECRecover,
+		pallet_evm_precompile_simple::Sha256,
+		pallet_evm_precompile_simple::Ripemd160,
+		pallet_evm_precompile_simple::Identity,
 		NativeTransfer<Self>,
 	);
 	type ChainId = ChainId;

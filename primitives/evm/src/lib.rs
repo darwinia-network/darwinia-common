@@ -17,6 +17,8 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+mod precompile;
+
 // crates
 use codec::{Decode, Encode};
 pub use evm::backend::{Basic as Account, Log};
@@ -24,6 +26,7 @@ use evm::ExitReason;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 // substrate
+pub use precompile::{LinearCostPrecompile, Precompile, PrecompileSet};
 use sp_core::{H160, U256};
 use sp_std::vec::Vec;
 

@@ -18,9 +18,8 @@
 //! Native EVM runner.
 
 use crate::{
-	precompiles::Precompiles, AccountBasicMapping, AccountCodes, AccountStorages, AddressMapping,
-	CallInfo, CreateInfo, Error, Event, FeeCalculator, Log, Module, Runner as RunnerT, Trait,
-	Vicinity,
+	AccountBasicMapping, AccountCodes, AccountStorages, AddressMapping, CallInfo, CreateInfo,
+	Error, Event, FeeCalculator, Log, Module, PrecompileSet, Runner as RunnerT, Trait, Vicinity,
 };
 use evm::{
 	Capture, Context, CreateScheme, ExitError, ExitReason, ExitSucceed, ExternalOpcode, Opcode,

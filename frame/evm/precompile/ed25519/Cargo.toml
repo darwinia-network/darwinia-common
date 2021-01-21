@@ -1,0 +1,27 @@
+[package]
+name = "pallet-evm-precompile-ed25519"
+version = "2.0.0"
+authors = ["Parity Technologies <admin@parity.io>"]
+edition = "2018"
+license = "Apache-2.0"
+homepage = "https://substrate.dev"
+repository = "https://github.com/paritytech/substrate/"
+description = "ED25519 precompiles for EVM pallet."
+
+[dependencies]
+sp-core                  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-io                    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+darwinia-evm-primitives  = { default-features = false, path = "../../../../primitives/evm" }
+evm						 = { version = "0.19.0", default-features = false, features = ["with-codec"] }
+ed25519-dalek			 = { version = "1.0.0", features = ["alloc", "u64_backend"], default-features = false }
+
+[features]
+default = ["std"]
+
+std = [
+	"sp-core/std",
+	"sp-io/std",
+	"darwinia-evm-primitives/std",
+	"evm/std",
+	"ed25519-dalek/std",
+] 
