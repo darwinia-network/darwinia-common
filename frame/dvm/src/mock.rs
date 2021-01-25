@@ -20,6 +20,7 @@ use super::*;
 use crate::account_basic::DVMAccountBasicMapping;
 use crate::{Module, Trait};
 use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator};
+use dvm_rpc_runtime_api::EthereumExt;
 use ethereum::{TransactionAction, TransactionSignature};
 use frame_support::{impl_outer_origin, parameter_types, weights::Weight, ConsensusEngineId};
 use rlp::*;
@@ -51,6 +52,7 @@ parameter_types! {
 	pub const MaximumBlockLength: u32 = 2 * 1024;
 	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
 }
+
 impl frame_system::Trait for Test {
 	type BaseCallFilter = ();
 	type SystemWeightInfo = ();
@@ -156,9 +158,12 @@ impl darwinia_evm::Trait for Test {
 	type AccountBasicMapping = DVMAccountBasicMapping<Self>;
 }
 
+impl EthereumExt for Test {}
+
 impl Trait for Test {
 	type Event = ();
 	type FindAuthor = EthereumFindAuthor;
+	type Extension = Self;
 	type AddressMapping = HashedAddressMapping;
 	type RingCurrency = Balances;
 }

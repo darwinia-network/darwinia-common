@@ -44,7 +44,7 @@ use sp_std::prelude::*;
 
 use darwinia_evm::{AccountBasicMapping, AddressMapping, GasWeightMapping, Runner};
 use darwinia_evm_primitives::CallOrCreateInfo;
-pub use dvm_rpc_runtime_api::TransactionStatus;
+pub use dvm_rpc_runtime_api::{EthereumExt, TransactionStatus};
 pub use ethereum::{Block, Log, Receipt, Transaction, TransactionAction, TransactionMessage};
 use frame_support::traits::Currency;
 
@@ -78,6 +78,8 @@ pub trait Trait:
 	type Event: From<Event> + Into<<Self as frame_system::Trait>::Event>;
 	/// Find author for Ethereum.
 	type FindAuthor: FindAuthor<H160>;
+	/// User configurable functions.
+	type Extension: EthereumExt;
 	type AddressMapping: AddressMapping<Self::AccountId>;
 	type RingCurrency: Currency<Self::AccountId>;
 }
@@ -325,12 +327,7 @@ impl<T: Trait> Module<T> {
 			nonce: H64::default(),
 		};
 		let mut block = ethereum::Block::new(partial_header, transactions.clone(), ommers);
-		block.header.state_root = {
-			let mut input = [0u8; 64];
-			input[..32].copy_from_slice(&frame_system::Module::<T>::parent_hash()[..]);
-			input[32..64].copy_from_slice(&block.header.hash()[..]);
-			H256::from_slice(Keccak256::digest(&input).as_slice())
-		};
+		block.header.state_root = T::Extension::eth_state_root();
 
 		let mut transaction_hashes = Vec::new();
 
