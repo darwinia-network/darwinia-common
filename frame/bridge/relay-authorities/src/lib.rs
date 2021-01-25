@@ -645,8 +645,6 @@ where
 			}
 
 			authorities.remove(position);
-			<RingCurrency<T, I>>::remove_lock(T::LockId::get(), account_id);
-
 			remove_authorities.push(account_id);
 		}
 
