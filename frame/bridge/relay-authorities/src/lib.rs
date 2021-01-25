@@ -93,6 +93,7 @@ decl_event! {
 	where
 		AccountId = AccountId<T>,
 		BlockNumber = BlockNumber<T>,
+		RingBalance = RingBalance<T, I>,
 		MMRRoot = MMRRoot<T>,
 		RelayAuthoritySigner = RelayAuthoritySigner<T, I>,
 		RelayAuthorityMessage = RelayAuthorityMessage<T, I>,
@@ -106,6 +107,8 @@ decl_event! {
 		ScheduleAuthoritiesChange(RelayAuthorityMessage),
 		/// The Next Authorities Signed. [term, next authorities, signatures]
 		AuthoritiesChangeSigned(Term, Vec<RelayAuthoritySigner>, Vec<(AccountId, RelayAuthoritySignature)>),
+		/// Slash on Misbehavior. [who, slashed]
+		SlashOnMisbehavior(AccountId, RingBalance),
 	}
 }
 
