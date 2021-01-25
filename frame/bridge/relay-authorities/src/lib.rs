@@ -59,7 +59,7 @@ use frame_support::{
 	StorageValue,
 };
 use frame_system::ensure_signed;
-use sp_runtime::{DispatchError, DispatchResult, Perbill, SaturatedConversion};
+use sp_runtime::{traits::Zero, DispatchError, DispatchResult, Perbill, SaturatedConversion};
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
 use sp_std::prelude::*;
@@ -759,19 +759,34 @@ where
 	pub fn check_misbehavior(now: BlockNumber<T>) {
 		let find_and_slash_misbehavior =
 			|signatures: Vec<(AccountId<T>, RelayAuthoritySignature<T, I>)>| {
-				for RelayAuthority {
-					account_id, stake, ..
-				} in <Authorities<T, I>>::get()
-				{
-					if let None = signatures
-						.iter()
-						.position(|(authority, _)| authority == &account_id)
-					{
-						<RingCurrency<T, I>>::slash(&account_id, stake);
+				let _ = <Authorities<T, I>>::try_mutate(|authorities| {
+					let mut storage_changed = false;
 
-						// TODO: how to deal with the slashed authority
+					for RelayAuthority {
+						account_id, stake, ..
+					} in authorities.iter_mut()
+					{
+						if let None = signatures
+							.iter()
+							.position(|(authority, _)| authority == account_id)
+						{
+							if !stake.is_zero() {
+								<RingCurrency<T, I>>::slash(account_id, *stake);
+
+								*stake = 0.into();
+								storage_changed = true;
+							}
+
+							// TODO: how to deal with the slashed authority
+						}
 					}
-				}
+
+					if storage_changed {
+						Ok(())
+					} else {
+						Err(())
+					}
+				});
 			};
 
 		if let Some(mut scheduled_authorities_change) = <NextAuthorities<T, I>>::get() {
@@ -793,9 +808,19 @@ where
 				});
 			}
 		} else {
-			if let Some(signatures) =
-				<MMRRootsToSign<T, I>>::take(now - <SubmitDuration<T, I>>::get())
-			{
+			let at = now - <SubmitDuration<T, I>>::get();
+
+			if let Some(signatures) = <MMRRootsToSign<T, I>>::take(at) {
+				let _ = <MMRRootsToSignKeys<T, I>>::try_mutate(|keys| {
+					if let Some(position) = keys.iter().position(|key| key == &at) {
+						keys.remove(position);
+
+						Ok(())
+					} else {
+						Err(())
+					}
+				});
+
 				find_and_slash_misbehavior(signatures);
 
 				// TODO: delay or discard?
