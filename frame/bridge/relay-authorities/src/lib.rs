@@ -775,21 +775,21 @@ where
 							.position(|(authority, _)| authority == account_id)
 							.is_none()
 						{
+							Self::deposit_event(RawEvent::SlashOnMisbehavior(
+								account_id.to_owned(),
+								*stake,
+							));
+
 							if !stake.is_zero() {
 								// Can not set lock 0, so remove the lock
 								T::RingCurrency::remove_lock(T::LockId::get(), account_id);
 								<RingCurrency<T, I>>::slash(account_id, *stake);
 
-								Self::deposit_event(RawEvent::SlashOnMisbehavior(
-									account_id.to_owned(),
-									*stake,
-								));
-
 								*stake = 0.into();
 								storage_changed = true;
 							}
 
-							// TODO: how to deal with the slashed authority
+							// TODO: schedule a new set
 						}
 					}
 
@@ -835,7 +835,7 @@ where
 
 				find_and_slash_misbehavior(signatures);
 
-				// TODO: delay or discard?
+				// TODO: schedule a new mmr root (greatest one in the keys)
 			}
 		}
 	}
