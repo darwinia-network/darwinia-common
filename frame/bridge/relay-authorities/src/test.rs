@@ -708,6 +708,7 @@ fn slash_should_work() {
 		// First time miss signature
 		System::reset_events();
 		run_to_block(SubmitDuration::get() + 1);
+
 		assert_eq!(
 			relay_authorities_events(),
 			vec![
@@ -725,8 +726,17 @@ fn slash_should_work() {
 
 		// N times miss signature (only slash on the first time)
 		for i in 2..10 {
-			run_to_block(SubmitDuration::get() * i + i);
-			assert_eq!(relay_authorities_events(), vec![]);
+			System::reset_events();
+			run_to_block(SubmitDuration::get() * i + 1);
+
+			assert_eq!(
+				relay_authorities_events(),
+				vec![
+					Event::relay_authorities(RawEvent::SlashOnMisbehavior(9, 0)),
+					Event::relay_authorities(RawEvent::SlashOnMisbehavior(1, 0)),
+					Event::relay_authorities(RawEvent::SlashOnMisbehavior(2, 0)),
+				]
+			);
 			assert!(Ring::locks(9).is_empty());
 			assert!(Ring::locks(1).is_empty());
 			assert!(Ring::locks(2).is_empty());
