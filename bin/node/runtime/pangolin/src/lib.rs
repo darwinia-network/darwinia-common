@@ -270,7 +270,7 @@ use darwinia_staking::EraIndex;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
 use drml_primitives::*;
 use dvm_ethereum::{account_basic::DVMAccountBasicMapping, precompiles::ConcatAddressMapping};
-use dvm_rpc_runtime_api::{EthereumExt, TransactionStatus};
+use dvm_rpc_runtime_api::TransactionStatus;
 use impls::*;
 
 /// The address format for describing accounts.
@@ -1126,12 +1126,10 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 	}
 }
 
-impl EthereumExt for Runtime {}
-
 impl dvm_ethereum::Trait for Runtime {
 	type Event = Event;
 	type FindAuthor = EthereumFindAuthor<Babe>;
-	type Extension = Self;
+	type StateRoot = dvm_ethereum::IntermediateStateRoot;
 	type AddressMapping = ConcatAddressMapping;
 	type RingCurrency = Balances;
 }

@@ -22,7 +22,7 @@
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use codec::Encode;
+use codec::{Decode, Encode};
 use dvm_consensus_primitives::{ConsensusLog, FRONTIER_ENGINE_ID};
 use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
 use evm::ExitReason;
@@ -44,7 +44,7 @@ use sp_std::prelude::*;
 
 use darwinia_evm::{AccountBasicMapping, AddressMapping, GasWeightMapping, Runner};
 use darwinia_evm_primitives::CallOrCreateInfo;
-pub use dvm_rpc_runtime_api::{EthereumExt, TransactionStatus};
+pub use dvm_rpc_runtime_api::TransactionStatus;
 pub use ethereum::{Block, Log, Receipt, Transaction, TransactionAction, TransactionMessage};
 use frame_support::traits::Currency;
 
@@ -67,6 +67,15 @@ pub enum ReturnValue {
 pub type BalanceOf<T> = <T as darwinia_balances::Trait>::Balance;
 type RingInstance = darwinia_balances::Instance0;
 
+pub struct IntermediateStateRoot;
+
+impl Get<H256> for IntermediateStateRoot {
+	fn get() -> H256 {
+		H256::decode(&mut &sp_io::storage::root()[..])
+			.expect("Node is configured to use the same hash; qed")
+	}
+}
+
 /// Trait for Ethereum pallet.
 pub trait Trait:
 	frame_system::Trait<Hash = H256>
@@ -78,8 +87,8 @@ pub trait Trait:
 	type Event: From<Event> + Into<<Self as frame_system::Trait>::Event>;
 	/// Find author for Ethereum.
 	type FindAuthor: FindAuthor<H160>;
-	/// User configurable functions.
-	type Extension: EthereumExt;
+	/// How Ethereum state root is calculated.
+	type StateRoot: Get<H256>;
 	type AddressMapping: AddressMapping<Self::AccountId>;
 	type RingCurrency: Currency<Self::AccountId>;
 }
@@ -327,7 +336,7 @@ impl<T: Trait> Module<T> {
 			nonce: H64::default(),
 		};
 		let mut block = ethereum::Block::new(partial_header, transactions.clone(), ommers);
-		block.header.state_root = T::Extension::eth_state_root();
+		block.header.state_root = T::StateRoot::get();
 
 		let mut transaction_hashes = Vec::new();
 
