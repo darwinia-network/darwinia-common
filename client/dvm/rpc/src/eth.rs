@@ -1046,23 +1046,19 @@ where
 						transaction_log_index: None,
 						removed: false,
 					};
-					let mut add: bool = false;
-					if let (Some(VariadicValue::Single(_)), Some(VariadicValue::Multiple(_))) =
-						(filter.address.clone(), filter.topics.clone())
-					{
-						if !params.filter_address(&log) && params.filter_topics(&log) {
-							add = true;
+					let mut add: bool = true;
+					if let (Some(_), Some(_)) = (filter.address.clone(), filter.topics.clone()) {
+						if !params.filter_address(&log) || !params.filter_topics(&log) {
+							add = false;
 						}
-					} else if let Some(VariadicValue::Single(_)) = filter.address {
+					} else if let Some(_) = filter.address {
 						if !params.filter_address(&log) {
-							add = true;
+							add = false;
 						}
-					} else if let Some(VariadicValue::Multiple(_)) = &filter.topics {
-						if params.filter_topics(&log) {
-							add = true;
+					} else if let Some(_) = &filter.topics {
+						if !params.filter_topics(&log) {
+							add = false;
 						}
-					} else {
-						add = true;
 					}
 					if add {
 						log.block_hash = Some(block_hash);
