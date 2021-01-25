@@ -59,7 +59,10 @@ use frame_support::{
 	StorageValue,
 };
 use frame_system::ensure_signed;
-use sp_runtime::{DispatchError, DispatchResult, Perbill, SaturatedConversion};
+use sp_runtime::{
+	traits::{Saturating, Zero},
+	DispatchError, DispatchResult, Perbill, SaturatedConversion,
+};
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
 use sp_std::prelude::*;
@@ -93,6 +96,7 @@ decl_event! {
 	where
 		AccountId = AccountId<T>,
 		BlockNumber = BlockNumber<T>,
+		RingBalance = RingBalance<T, I>,
 		MMRRoot = MMRRoot<T>,
 		RelayAuthoritySigner = RelayAuthoritySigner<T, I>,
 		RelayAuthorityMessage = RelayAuthorityMessage<T, I>,
@@ -106,6 +110,8 @@ decl_event! {
 		ScheduleAuthoritiesChange(RelayAuthorityMessage),
 		/// The Next Authorities Signed. [term, next authorities, signatures]
 		AuthoritiesChangeSigned(Term, Vec<RelayAuthoritySigner>, Vec<(AccountId, RelayAuthoritySignature)>),
+		/// Slash on Misbehavior. [who, slashed]
+		SlashOnMisbehavior(AccountId, RingBalance),
 	}
 }
 
@@ -360,7 +366,7 @@ decl_module! {
 		///
 		/// This call is disallowed during the authorities change
 		#[weight = 10_000_000]
-		pub fn add_authority(origin, account_ids: Vec<AccountId<T>>) {
+		pub fn add_authorities(origin, account_ids: Vec<AccountId<T>>) {
 			T::AddOrigin::ensure_origin(origin)?;
 
 			ensure!(!Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
@@ -415,7 +421,7 @@ decl_module! {
 		///
 		/// This call is disallowed during the authorities change
 		#[weight = 10_000_000]
-		pub fn remove_authority(origin, account_ids: Vec<AccountId<T>>) {
+		pub fn remove_authorities(origin, account_ids: Vec<AccountId<T>>) {
 			T::RemoveOrigin::ensure_origin(origin)?;
 
 			ensure!(!Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
@@ -642,8 +648,6 @@ where
 			}
 
 			authorities.remove(position);
-			<RingCurrency<T, I>>::remove_lock(T::LockId::get(), account_id);
-
 			remove_authorities.push(account_id);
 		}
 
@@ -759,19 +763,42 @@ where
 	pub fn check_misbehavior(now: BlockNumber<T>) {
 		let find_and_slash_misbehavior =
 			|signatures: Vec<(AccountId<T>, RelayAuthoritySignature<T, I>)>| {
-				for RelayAuthority {
-					account_id, stake, ..
-				} in <Authorities<T, I>>::get()
-				{
-					if let None = signatures
-						.iter()
-						.position(|(authority, _)| authority == &account_id)
-					{
-						<RingCurrency<T, I>>::slash(&account_id, stake);
+				let _ = <Authorities<T, I>>::try_mutate(|authorities| {
+					let mut storage_changed = false;
 
-						// TODO: how to deal with the slashed authority
+					for RelayAuthority {
+						account_id, stake, ..
+					} in authorities.iter_mut()
+					{
+						if signatures
+							.iter()
+							.position(|(authority, _)| authority == account_id)
+							.is_none()
+						{
+							Self::deposit_event(RawEvent::SlashOnMisbehavior(
+								account_id.to_owned(),
+								*stake,
+							));
+
+							if !stake.is_zero() {
+								// Can not set lock 0, so remove the lock
+								T::RingCurrency::remove_lock(T::LockId::get(), account_id);
+								<RingCurrency<T, I>>::slash(account_id, *stake);
+
+								*stake = 0.into();
+								storage_changed = true;
+							}
+
+							// TODO: schedule a new set
+						}
 					}
-				}
+
+					if storage_changed {
+						Ok(())
+					} else {
+						Err(())
+					}
+				});
 			};
 
 		if let Some(mut scheduled_authorities_change) = <NextAuthorities<T, I>>::get() {
@@ -793,12 +820,22 @@ where
 				});
 			}
 		} else {
-			if let Some(signatures) =
-				<MMRRootsToSign<T, I>>::take(now - <SubmitDuration<T, I>>::get())
-			{
+			let at = now.saturating_sub(<SubmitDuration<T, I>>::get());
+
+			if let Some(signatures) = <MMRRootsToSign<T, I>>::take(at) {
+				let _ = <MMRRootsToSignKeys<T, I>>::try_mutate(|keys| {
+					if let Some(position) = keys.iter().position(|key| key == &at) {
+						keys.remove(position);
+
+						Ok(())
+					} else {
+						Err(())
+					}
+				});
+
 				find_and_slash_misbehavior(signatures);
 
-				// TODO: delay or discard?
+				// TODO: schedule a new mmr root (greatest one in the keys)
 			}
 		}
 	}
