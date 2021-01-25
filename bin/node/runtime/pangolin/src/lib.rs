@@ -269,10 +269,7 @@ use darwinia_relay_primitives::relay_authorities::OpCode;
 use darwinia_staking::EraIndex;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
 use drml_primitives::*;
-use dvm_ethereum::{
-	account_basic::DVMAccountBasicMapping,
-	precompiles::{ConcatAddressMapping, NativeTransfer},
-};
+use dvm_ethereum::{account_basic::DVMAccountBasicMapping, precompiles::ConcatAddressMapping};
 use dvm_rpc_runtime_api::TransactionStatus;
 use impls::*;
 
@@ -1079,7 +1076,7 @@ impl darwinia_evm::Trait for Runtime {
 		pallet_evm_precompile_simple::Sha256,
 		pallet_evm_precompile_simple::Ripemd160,
 		pallet_evm_precompile_simple::Identity,
-		NativeTransfer<Self>,
+		// NativeTransfer<Self>,
 	);
 	type ChainId = ChainId;
 	type AccountBasicMapping = DVMAccountBasicMapping<Self>;

@@ -12,7 +12,7 @@ description = "Simple precompiles for EVM pallet."
 sp-core                  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-io                    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 darwinia-evm-primitives = { default-features = false, path = "../../../../primitives/evm" }
-evm = { version = "0.19.0", default-features = false, features = ["with-codec"] }
+evm = { version = "0.20.0", default-features = false, features = ["with-codec"] }
 ripemd160 = { version = "0.9", default-features = false }
 
 [features]

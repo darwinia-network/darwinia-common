@@ -32,6 +32,7 @@ members = [
 	"frame/evm/precompile/ed25519",
 	"frame/evm/precompile/bn128",
 	"frame/evm/precompile/blake2",
+	"frame/evm/precompile/dispatch",
 	"frame/header-mmr",
 	"frame/header-mmr/rpc",
 	"frame/header-mmr/rpc/runtime-api",

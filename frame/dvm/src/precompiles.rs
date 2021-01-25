@@ -51,59 +51,59 @@ fn ensure_linear_cost(
 }
 
 /// Precompile for withdrawing from evm address
-pub struct NativeTransfer<T>(PhantomData<T>);
+// pub struct NativeTransfer<T>(PhantomData<T>);
 
-impl<T: Trait> Precompile for NativeTransfer<T> {
-	fn execute(
-		input: &[u8],
-		target_gas: Option<usize>,
-	) -> core::result::Result<(ExitSucceed, Vec<u8>, usize), ExitError> {
-		if input.len() != 177 {
-			Err(ExitError::Other("InputDataLenErr".into()))
-		} else {
-			let cost = ensure_linear_cost(target_gas, input.len(), 60, 12)?;
+// impl<T: Trait> Precompile for NativeTransfer<T> {
+// 	fn execute(
+// 		input: &[u8],
+// 		target_gas: Option<usize>,
+// 	) -> core::result::Result<(ExitSucceed, Vec<u8>, usize), ExitError> {
+// 		if input.len() != 177 {
+// 			Err(ExitError::Other("InputDataLenErr".into()))
+// 		} else {
+// 			let cost = ensure_linear_cost(target_gas, input.len(), 60, 12)?;
 
-			let params = decode_params(input);
-			// from account id
-			let from =
-				<T as Trait>::AddressMapping::into_account_id(H160::from_slice(&params.from));
-			// to account id
-			let to = AccountId32::from(params.to);
-			let to = <T as frame_system::Trait>::AccountId::decode(&mut to.as_ref()).unwrap();
-			// value
-			let value = u128::from_be_bytes(params.value);
-			let value  = <<T as Trait>::RingCurrency as Currency<T::AccountId>>::Balance::unique_saturated_from(value);
+// 			let params = decode_params(input);
+// 			// from account id
+// 			let from =
+// 				<T as Trait>::AddressMapping::into_account_id(H160::from_slice(&params.from));
+// 			// to account id
+// 			let to = AccountId32::from(params.to);
+// 			let to = <T as frame_system::Trait>::AccountId::decode(&mut to.as_ref()).unwrap();
+// 			// value
+// 			let value = u128::from_be_bytes(params.value);
+// 			let value  = <<T as Trait>::RingCurrency as Currency<T::AccountId>>::Balance::unique_saturated_from(value);
 
-			if params.is_valid_signature() {
-				let result = <T as Trait>::RingCurrency::transfer(
-					&from,
-					&to,
-					value,
-					ExistenceRequirement::KeepAlive,
-				);
-				match result {
-					Ok(()) => Ok((ExitSucceed::Returned, vec![], cost)),
-					Err(error) => match error {
-						sp_runtime::DispatchError::BadOrigin => {
-							Err(ExitError::Other("BadOrigin".into()))
-						}
-						sp_runtime::DispatchError::CannotLookup => {
-							Err(ExitError::Other("CannotLookup".into()))
-						}
-						sp_runtime::DispatchError::Other(message) => {
-							Err(ExitError::Other(message.into()))
-						}
-						sp_runtime::DispatchError::Module { message, .. } => {
-							Err(ExitError::Other(message.unwrap_or("Module Error").into()))
-						}
-					},
-				}
-			} else {
-				Err(ExitError::Other("BadSignature".into()))
-			}
-		}
-	}
-}
+// 			if params.is_valid_signature() {
+// 				let result = <T as Trait>::RingCurrency::transfer(
+// 					&from,
+// 					&to,
+// 					value,
+// 					ExistenceRequirement::KeepAlive,
+// 				);
+// 				match result {
+// 					Ok(()) => Ok((ExitSucceed::Returned, vec![], cost)),
+// 					Err(error) => match error {
+// 						sp_runtime::DispatchError::BadOrigin => {
+// 							Err(ExitError::Other("BadOrigin".into()))
+// 						}
+// 						sp_runtime::DispatchError::CannotLookup => {
+// 							Err(ExitError::Other("CannotLookup".into()))
+// 						}
+// 						sp_runtime::DispatchError::Other(message) => {
+// 							Err(ExitError::Other(message.into()))
+// 						}
+// 						sp_runtime::DispatchError::Module { message, .. } => {
+// 							Err(ExitError::Other(message.unwrap_or("Module Error").into()))
+// 						}
+// 					},
+// 				}
+// 			} else {
+// 				Err(ExitError::Other("BadSignature".into()))
+// 			}
+// 		}
+// 	}
+// }
 
 struct Params {
 	from: [u8; 20],
