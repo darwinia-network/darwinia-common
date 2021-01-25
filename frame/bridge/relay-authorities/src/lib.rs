@@ -59,7 +59,10 @@ use frame_support::{
 	StorageValue,
 };
 use frame_system::ensure_signed;
-use sp_runtime::{traits::Zero, DispatchError, DispatchResult, Perbill, SaturatedConversion};
+use sp_runtime::{
+	traits::{Saturating, Zero},
+	DispatchError, DispatchResult, Perbill, SaturatedConversion,
+};
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
 use sp_std::prelude::*;
@@ -767,12 +770,20 @@ where
 						account_id, stake, ..
 					} in authorities.iter_mut()
 					{
-						if let None = signatures
+						if signatures
 							.iter()
 							.position(|(authority, _)| authority == account_id)
+							.is_none()
 						{
 							if !stake.is_zero() {
+								// Can not set lock 0, so remove the lock
+								T::RingCurrency::remove_lock(T::LockId::get(), account_id);
 								<RingCurrency<T, I>>::slash(account_id, *stake);
+
+								Self::deposit_event(RawEvent::SlashOnMisbehavior(
+									account_id.to_owned(),
+									*stake,
+								));
 
 								*stake = 0.into();
 								storage_changed = true;

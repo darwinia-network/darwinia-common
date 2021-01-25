@@ -676,3 +676,63 @@ fn check_authorities_change_to_sync_should_work() {
 		));
 	});
 }
+
+#[test]
+fn slash_should_work() {
+	new_test_ext().execute_with(|| {
+		run_to_block(1);
+
+		assert_eq!(Ring::total_balance(&9), 900);
+		assert_eq!(Ring::total_balance(&1), 100);
+		assert_eq!(Ring::total_balance(&2), 200);
+
+		assert_ok!(request_authority_with_stake(1, 50));
+		assert_ok!(request_authority_with_stake(2, 60));
+		assert_ok!(RelayAuthorities::add_authorities(
+			Origin::root(),
+			vec![1, 2]
+		));
+
+		RelayAuthorities::apply_authorities_change().unwrap();
+		RelayAuthorities::sync_authorities_change().unwrap();
+
+		assert_ok!(RelayAuthorities::remove_authorities(
+			Origin::root(),
+			vec![9]
+		));
+
+		assert!(!Ring::locks(9).is_empty());
+		assert!(!Ring::locks(1).is_empty());
+		assert!(!Ring::locks(2).is_empty());
+
+		// First time miss signature
+		System::reset_events();
+		run_to_block(SubmitDuration::get() + 1);
+		assert_eq!(
+			relay_authorities_events(),
+			vec![
+				Event::relay_authorities(RawEvent::SlashOnMisbehavior(9, 1)),
+				Event::relay_authorities(RawEvent::SlashOnMisbehavior(1, 50)),
+				Event::relay_authorities(RawEvent::SlashOnMisbehavior(2, 60)),
+			]
+		);
+		assert!(Ring::locks(9).is_empty());
+		assert!(Ring::locks(1).is_empty());
+		assert!(Ring::locks(2).is_empty());
+		assert_eq!(Ring::total_balance(&9), 899);
+		assert_eq!(Ring::total_balance(&1), 50);
+		assert_eq!(Ring::total_balance(&2), 140);
+
+		// N times miss signature (only slash on the first time)
+		for i in 2..10 {
+			run_to_block(SubmitDuration::get() * i + i);
+			assert_eq!(relay_authorities_events(), vec![]);
+			assert!(Ring::locks(9).is_empty());
+			assert!(Ring::locks(1).is_empty());
+			assert!(Ring::locks(2).is_empty());
+			assert_eq!(Ring::total_balance(&9), 899);
+			assert_eq!(Ring::total_balance(&1), 50);
+			assert_eq!(Ring::total_balance(&2), 140);
+		}
+	});
+}
