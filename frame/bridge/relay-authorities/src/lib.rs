@@ -360,7 +360,7 @@ decl_module! {
 		///
 		/// This call is disallowed during the authorities change
 		#[weight = 10_000_000]
-		pub fn add_authority(origin, account_ids: Vec<AccountId<T>>) {
+		pub fn add_authorities(origin, account_ids: Vec<AccountId<T>>) {
 			T::AddOrigin::ensure_origin(origin)?;
 
 			ensure!(!Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
@@ -415,7 +415,7 @@ decl_module! {
 		///
 		/// This call is disallowed during the authorities change
 		#[weight = 10_000_000]
-		pub fn remove_authority(origin, account_ids: Vec<AccountId<T>>) {
+		pub fn remove_authorities(origin, account_ids: Vec<AccountId<T>>) {
 			T::RemoveOrigin::ensure_origin(origin)?;
 
 			ensure!(!Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
