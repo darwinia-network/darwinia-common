@@ -65,7 +65,9 @@ where
 
 		match call.dispatch(Some(origin).into()) {
 			Ok(post_info) => {
-				let cost = T::GasWeightMapping::weight_to_gas(post_info.actual_weight.unwrap_or(info.weight));
+				let cost = T::GasWeightMapping::weight_to_gas(
+					post_info.actual_weight.unwrap_or(info.weight),
+				);
 				Ok((ExitSucceed::Stopped, Default::default(), cost))
 			}
 			Err(_) => Err(ExitError::Other("dispatch execution failed".into())),

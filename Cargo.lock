@@ -4916,6 +4916,7 @@ version = "2.0.0"
 dependencies = [
  "darwinia-evm-primitives",
  "evm",
+ "hex",
  "num",
  "sp-core",
  "sp-io",
