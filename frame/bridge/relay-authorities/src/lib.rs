@@ -808,7 +808,7 @@ where
 				});
 			}
 		} else {
-			let at = now - <SubmitDuration<T, I>>::get();
+			let at = now.saturating_sub(<SubmitDuration<T, I>>::get());
 
 			if let Some(signatures) = <MMRRootsToSign<T, I>>::take(at) {
 				let _ = <MMRRootsToSignKeys<T, I>>::try_mutate(|keys| {
