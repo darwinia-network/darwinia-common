@@ -89,6 +89,8 @@ pub trait Trait:
 	type FindAuthor: FindAuthor<H160>;
 	/// How Ethereum state root is calculated.
 	type StateRoot: Get<H256>;
+	/// The block gas limit. Can be a simple constant, or an adjustment algorithm in another pallet.
+	type BlockGasLimit: Get<U256>;
 	type AddressMapping: AddressMapping<Self::AccountId>;
 	type RingCurrency: Currency<Self::AccountId>;
 }
@@ -323,7 +325,7 @@ impl<T: Trait> Module<T> {
 			number: U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(
 				frame_system::Module::<T>::block_number(),
 			)),
-			gas_limit: U256::from(u32::max_value()), // TODO: set this using Ethereum's gas limit change algorithm.
+			gas_limit: T::BlockGasLimit::get(),
 			gas_used: receipts
 				.clone()
 				.into_iter()

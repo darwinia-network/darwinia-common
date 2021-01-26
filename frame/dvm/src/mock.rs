@@ -157,10 +157,15 @@ impl darwinia_evm::Trait for Test {
 	type AccountBasicMapping = DVMAccountBasicMapping<Self>;
 }
 
+parameter_types! {
+	pub const BlockGasLimit: U256 = U256::MAX;
+}
+
 impl Trait for Test {
 	type Event = ();
 	type FindAuthor = EthereumFindAuthor;
 	type StateRoot = IntermediateStateRoot;
+	type BlockGasLimit = BlockGasLimit;
 	type AddressMapping = HashedAddressMapping;
 	type RingCurrency = Balances;
 }

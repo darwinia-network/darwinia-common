@@ -1126,10 +1126,15 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 	}
 }
 
+parameter_types! {
+	pub BlockGasLimit: U256 = U256::from(u32::max_value());
+}
+
 impl dvm_ethereum::Trait for Runtime {
 	type Event = Event;
 	type FindAuthor = EthereumFindAuthor<Babe>;
 	type StateRoot = dvm_ethereum::IntermediateStateRoot;
+	type BlockGasLimit = BlockGasLimit;
 	type AddressMapping = ConcatAddressMapping;
 	type RingCurrency = Balances;
 }
