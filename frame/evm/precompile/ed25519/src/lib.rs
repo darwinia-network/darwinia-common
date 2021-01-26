@@ -20,7 +20,7 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use core::{cmp::min, convert::TryFrom};
+use core::convert::TryFrom;
 use darwinia_evm_primitives::LinearCostPrecompile;
 use ed25519_dalek::{PublicKey, Signature, Verifier};
 use evm::{ExitError, ExitSucceed};

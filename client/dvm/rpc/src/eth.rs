@@ -19,8 +19,7 @@ use codec::{self, Encode};
 use dvm_rpc_core::{EthApi as EthApiT, NetApi as NetApiT, Web3Api as Web3ApiT};
 use dvm_rpc_core_primitives::{
 	Block, BlockNumber, BlockTransactions, Bytes, CallRequest, Filter, FilteredParams, Index, Log,
-	Receipt, Rich, RichBlock, SyncInfo, SyncStatus, Transaction, TransactionRequest, VariadicValue,
-	Work,
+	Receipt, Rich, RichBlock, SyncInfo, SyncStatus, Transaction, TransactionRequest, Work,
 };
 use dvm_rpc_runtime_api::{ConvertTransaction, EthereumRuntimeRPCApi, TransactionStatus};
 use ethereum::{

@@ -263,13 +263,13 @@ use sp_version::RuntimeVersion;
 // --- darwinia ---
 use constants::*;
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
-use darwinia_evm::{Runner, ConcatAddressMapping};
+use darwinia_evm::{ConcatAddressMapping, Runner};
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
 use darwinia_relay_primitives::relay_authorities::OpCode;
 use darwinia_staking::EraIndex;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
 use drml_primitives::*;
-use dvm_ethereum::{account_basic::DVMAccountBasicMapping};
+use dvm_ethereum::account_basic::DVMAccountBasicMapping;
 use dvm_rpc_runtime_api::TransactionStatus;
 use impls::*;
 

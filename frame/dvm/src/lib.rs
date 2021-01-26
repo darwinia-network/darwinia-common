@@ -51,9 +51,9 @@ use frame_support::traits::Currency;
 #[cfg(all(feature = "std", test))]
 mod tests;
 
+pub mod account_basic;
 #[cfg(all(feature = "std", test))]
 mod mock;
-pub mod account_basic;
 
 #[derive(Eq, PartialEq, Clone, sp_runtime::RuntimeDebug)]
 pub enum ReturnValue {
