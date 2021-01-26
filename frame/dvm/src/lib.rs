@@ -91,7 +91,9 @@ pub trait Trait:
 	type StateRoot: Get<H256>;
 	/// The block gas limit. Can be a simple constant, or an adjustment algorithm in another pallet.
 	type BlockGasLimit: Get<U256>;
+	// How evm address convert to darwinia address
 	type AddressMapping: AddressMapping<Self::AccountId>;
+	// Balance module
 	type RingCurrency: Currency<Self::AccountId>;
 }
 

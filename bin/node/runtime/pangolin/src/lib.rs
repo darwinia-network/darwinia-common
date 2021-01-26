@@ -1072,10 +1072,10 @@ impl darwinia_evm::Trait for Runtime {
 	type Currency = Balances;
 	type Event = Event;
 	type Precompiles = (
-		pallet_evm_precompile_simple::ECRecover,
-		pallet_evm_precompile_simple::Sha256,
-		pallet_evm_precompile_simple::Ripemd160,
-		pallet_evm_precompile_simple::Identity,
+		darwinia_evm_precompile_simple::ECRecover,
+		darwinia_evm_precompile_simple::Sha256,
+		darwinia_evm_precompile_simple::Ripemd160,
+		darwinia_evm_precompile_simple::Identity,
 		// NativeTransfer<Self>,
 	);
 	type ChainId = ChainId;

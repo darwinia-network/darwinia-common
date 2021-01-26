@@ -1434,6 +1434,74 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-evm-precompile-blake2"
+version = "1.3.0"
+dependencies = [
+ "darwinia-evm-primitives",
+ "evm",
+ "sp-core",
+ "sp-io",
+]
+
+[[package]]
+name = "darwinia-evm-precompile-bn128"
+version = "1.3.0"
+dependencies = [
+ "darwinia-evm-primitives",
+ "evm",
+ "sp-core",
+ "sp-io",
+ "substrate-bn",
+]
+
+[[package]]
+name = "darwinia-evm-precompile-dispatch"
+version = "1.3.0"
+dependencies = [
+ "darwinia-evm",
+ "darwinia-evm-primitives",
+ "evm",
+ "frame-support",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-io",
+]
+
+[[package]]
+name = "darwinia-evm-precompile-ed25519"
+version = "1.3.0"
+dependencies = [
+ "darwinia-evm-primitives",
+ "ed25519-dalek",
+ "evm",
+ "sp-core",
+ "sp-io",
+]
+
+[[package]]
+name = "darwinia-evm-precompile-modexp"
+version = "1.3.0"
+dependencies = [
+ "darwinia-evm-primitives",
+ "evm",
+ "hex",
+ "num",
+ "sp-core",
+ "sp-io",
+]
+
+[[package]]
+name = "darwinia-evm-precompile-simple"
+version = "1.3.0"
+dependencies = [
+ "darwinia-evm-primitives",
+ "evm",
+ "ripemd160",
+ "sp-core",
+ "sp-io",
+]
+
+[[package]]
 name = "darwinia-evm-primitives"
 version = "1.3.0"
 dependencies = [
@@ -4867,74 +4935,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-evm-precompile-blake2"
-version = "2.0.0"
-dependencies = [
- "darwinia-evm-primitives",
- "evm",
- "sp-core",
- "sp-io",
-]
-
-[[package]]
-name = "pallet-evm-precompile-bn128"
-version = "2.0.0"
-dependencies = [
- "darwinia-evm-primitives",
- "evm",
- "sp-core",
- "sp-io",
- "substrate-bn",
-]
-
-[[package]]
-name = "pallet-evm-precompile-dispatch"
-version = "2.0.0"
-dependencies = [
- "darwinia-evm",
- "darwinia-evm-primitives",
- "evm",
- "frame-support",
- "parity-scale-codec",
- "sp-core",
- "sp-io",
-]
-
-[[package]]
-name = "pallet-evm-precompile-ed25519"
-version = "2.0.0"
-dependencies = [
- "darwinia-evm-primitives",
- "ed25519-dalek",
- "evm",
- "sp-core",
- "sp-io",
-]
-
-[[package]]
-name = "pallet-evm-precompile-modexp"
-version = "2.0.0"
-dependencies = [
- "darwinia-evm-primitives",
- "evm",
- "hex",
- "num",
- "sp-core",
- "sp-io",
-]
-
-[[package]]
-name = "pallet-evm-precompile-simple"
-version = "2.0.0"
-dependencies = [
- "darwinia-evm-primitives",
- "evm",
- "ripemd160",
- "sp-core",
- "sp-io",
-]
-
-[[package]]
 name = "pallet-finality-tracker"
 version = "2.0.0"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library#7314a78d49d0dc3862c6ef7c8115cb1b3d0c0fd2"
@@ -5176,6 +5176,7 @@ dependencies = [
  "darwinia-ethereum-backing",
  "darwinia-ethereum-relay",
  "darwinia-evm",
+ "darwinia-evm-precompile-simple",
  "darwinia-header-mmr",
  "darwinia-header-mmr-rpc-runtime-api",
  "darwinia-relay-authorities",
@@ -5199,7 +5200,6 @@ dependencies = [
  "pallet-authorship",
  "pallet-babe",
  "pallet-collective",
- "pallet-evm-precompile-simple",
  "pallet-finality-tracker",
  "pallet-grandpa",
  "pallet-im-online",

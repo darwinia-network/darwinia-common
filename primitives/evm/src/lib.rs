@@ -23,10 +23,10 @@ mod precompile;
 use codec::{Decode, Encode};
 pub use evm::backend::{Basic as Account, Log};
 use evm::ExitReason;
+pub use precompile::{LinearCostPrecompile, Precompile, PrecompileSet};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 // substrate
-pub use precompile::{LinearCostPrecompile, Precompile, PrecompileSet};
 use sp_core::{H160, U256};
 use sp_std::vec::Vec;
 
