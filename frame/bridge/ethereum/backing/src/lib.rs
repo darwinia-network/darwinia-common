@@ -337,6 +337,7 @@ decl_module! {
 
 			T::EcdsaAuthorities::check_authorities_change_to_sync(term, authorities)?;
 			T::EcdsaAuthorities::sync_authorities_change()?;
+
 			VerifiedProof::insert(tx_index, true);
 
 			let fee_account = Self::fee_account_id();
