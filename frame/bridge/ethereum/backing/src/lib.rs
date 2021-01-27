@@ -75,6 +75,7 @@ use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::{
 	balance::lock::*,
 	traits::{EthereumReceipt, OnDepositRedeem},
+	utilities,
 };
 use ethereum_primitives::{
 	receipt::{EthereumTransactionIndex, LogEntry},
@@ -264,55 +265,58 @@ decl_module! {
 		) {
 			let user = ensure_signed(origin)?;
 			let fee_account = Self::fee_account_id();
+			let locked = utilities::with_transaction_result(|| {
+				// 50 Ring for fee
+				// https://github.com/darwinia-network/darwinia-common/pull/377#issuecomment-730369387
+				T::RingCurrency::transfer(&user, &fee_account, T::AdvancedFee::get(), KeepAlive)?;
 
-			// 50 Ring for fee
-			// https://github.com/darwinia-network/darwinia-common/pull/377#issuecomment-730369387
-			T::RingCurrency::transfer(&user, &fee_account, T::AdvancedFee::get(), KeepAlive)?;
+				let mut locked = false;
 
-			let mut locked = false;
+				if !ring_value.is_zero() {
+					let ring_to_lock = ring_value.min(T::RingCurrency::usable_balance(&user));
 
-			if !ring_value.is_zero() {
-				let ring_to_lock = ring_value.min(T::RingCurrency::usable_balance(&user));
+					ensure!(ring_to_lock < T::RingLockLimit::get(), <Error<T>>::RingLockLim);
 
-				ensure!(ring_to_lock < T::RingLockLimit::get(), <Error<T>>::RingLockLim);
+					T::RingCurrency::transfer(&user, &Self::account_id(), ring_to_lock, KeepAlive)?;
 
-				T::RingCurrency::transfer(&user, &Self::account_id(), ring_to_lock, KeepAlive)?;
+					let raw_event = RawEvent::LockRing(
+						user.clone(),
+						ethereum_account.clone(),
+						RingTokenAddress::get(),
+						ring_to_lock
+					);
+					let module_event: <T as Trait>::Event = raw_event.clone().into();
+					let system_event: <T as frame_system::Trait>::Event = module_event.into();
 
-				let raw_event = RawEvent::LockRing(
-					user.clone(),
-					ethereum_account.clone(),
-					RingTokenAddress::get(),
-					ring_to_lock
-				);
-				let module_event: <T as Trait>::Event = raw_event.clone().into();
-				let system_event: <T as frame_system::Trait>::Event = module_event.into();
+					locked = true;
 
-				locked = true;
+					<LockAssetEvents<T>>::append(system_event);
+					Self::deposit_event(raw_event);
+				}
+				if !kton_value.is_zero() {
+					let kton_to_lock = kton_value.min(T::KtonCurrency::usable_balance(&user));
 
-				<LockAssetEvents<T>>::append(system_event);
-				Self::deposit_event(raw_event);
-			}
-			if !kton_value.is_zero() {
-				let kton_to_lock = kton_value.min(T::KtonCurrency::usable_balance(&user));
+					ensure!(kton_to_lock < T::KtonLockLimit::get(), <Error<T>>::KtonLockLim);
 
-				ensure!(kton_to_lock < T::KtonLockLimit::get(), <Error<T>>::KtonLockLim);
+					T::KtonCurrency::transfer(&user, &Self::account_id(), kton_to_lock, KeepAlive)?;
 
-				T::KtonCurrency::transfer(&user, &Self::account_id(), kton_to_lock, KeepAlive)?;
+					let raw_event = RawEvent::LockKton(
+						user,
+						ethereum_account,
+						KtonTokenAddress::get(),
+						kton_to_lock
+					);
+					let module_event: <T as Trait>::Event = raw_event.clone().into();
+					let system_event: <T as frame_system::Trait>::Event = module_event.into();
 
-				let raw_event = RawEvent::LockKton(
-					user,
-					ethereum_account,
-					KtonTokenAddress::get(),
-					kton_to_lock
-				);
-				let module_event: <T as Trait>::Event = raw_event.clone().into();
-				let system_event: <T as frame_system::Trait>::Event = module_event.into();
+					locked = true;
 
-				locked = true;
+					<LockAssetEvents<T>>::append(system_event);
+					Self::deposit_event(raw_event);
+				}
 
-				<LockAssetEvents<T>>::append(system_event);
-				Self::deposit_event(raw_event);
-			}
+				Ok(locked)
+			})?;
 
 			if locked {
 				T::EcdsaAuthorities::schedule_mmr_root((
@@ -322,6 +326,10 @@ decl_module! {
 			}
 		}
 
+		// Transfer should always return ok
+		// Even it failed, still finish the syncing
+		//
+		// But should not dispatch the reward if the syncing failed
 		#[weight = 10_000_000]
 		fn sync_authorities_change(origin, proof: EthereumReceiptProofThing<T>) {
 			let bridger = ensure_signed(origin)?;
@@ -332,6 +340,9 @@ decl_module! {
 			let (term, authorities, beneficiary) = Self::parse_authorities_set_proof(&proof)?;
 
 			T::EcdsaAuthorities::check_authorities_change_to_sync(term, authorities)?;
+			T::EcdsaAuthorities::sync_authorities_change()?;
+
+			VerifiedProof::insert(tx_index, true);
 
 			let fee_account = Self::fee_account_id();
 			let sync_reward = T::SyncReward::get().min(
@@ -347,10 +358,6 @@ decl_module! {
 					KeepAlive
 				)?;
 			}
-
-			T::EcdsaAuthorities::sync_authorities_change()?;
-
-			VerifiedProof::insert(tx_index, true);
 		}
 
 		/// Set a new ring redeem address.

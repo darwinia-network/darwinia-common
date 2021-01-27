@@ -19,7 +19,7 @@
 //! Tests for ethereum-backing.
 
 // --- substrate ---
-use frame_support::{assert_err, assert_ok, traits::Contains};
+use frame_support::{assert_err, assert_noop, assert_ok, traits::Contains};
 use frame_system::EnsureRoot;
 use sp_runtime::{traits::Dispatchable, AccountId32};
 // --- darwinia ---
@@ -447,6 +447,40 @@ fn lock_should_work() {
 			Kton::free_balance(&module_account_id),
 			module_account_kton + lock_balance
 		);
+	});
+}
+
+#[test]
+fn lock_failed_rollback_transaction_should_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		let account = Default::default();
+		let e_account = Default::default();
+		let init_balance = 10000;
+		let lock_ring = RingLockLimit::get() - 1;
+		let lock_kton = KtonLockLimit::get() + 1;
+		let _ = Ring::deposit_creating(&account, init_balance);
+		let _ = Kton::deposit_creating(&account, init_balance);
+		let fee_account_id = <Module<Test>>::fee_account_id();
+		let fee_account_balance = Ring::free_balance(&fee_account_id);
+		let module_account_id = <Module<Test>>::account_id();
+		let module_account_ring = Ring::free_balance(&module_account_id);
+		let module_account_kton = Kton::free_balance(&module_account_id);
+		let advanced_fee = <Test as Trait>::AdvancedFee::get();
+
+		assert_noop!(
+			EthereumBacking::lock(
+				Origin::signed(account.clone()),
+				lock_ring,
+				lock_kton,
+				e_account
+			),
+			<Error<Test>>::KtonLockLim
+		);
+		assert_eq!(Ring::free_balance(&account), init_balance);
+		assert_eq!(Kton::free_balance(&account), init_balance);
+		assert_eq!(Ring::free_balance(&fee_account_id), fee_account_balance);
+		assert_eq!(Ring::free_balance(&module_account_id), module_account_ring);
+		assert_eq!(Kton::free_balance(&module_account_id), module_account_kton);
 	});
 }
 
