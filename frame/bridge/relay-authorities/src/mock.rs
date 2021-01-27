@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2020 Darwinia Network
+// Copyright (C) 2018-2021 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -26,7 +26,9 @@ pub mod relay_authorities {
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
-use frame_support::{impl_outer_event, impl_outer_origin, parameter_types, weights::Weight};
+use frame_support::{
+	impl_outer_event, impl_outer_origin, parameter_types, traits::OnInitialize, weights::Weight,
+};
 use frame_system::EnsureRoot;
 use sp_core::H256;
 use sp_io::{hashing, TestExternalities};
@@ -182,6 +184,13 @@ pub fn new_test_ext() -> TestExternalities {
 	.unwrap();
 
 	storage.into()
+}
+
+pub fn run_to_block(n: BlockNumber) {
+	for b in System::block_number() + 1..=n {
+		System::set_block_number(b);
+		RelayAuthorities::on_initialize(b);
+	}
 }
 
 pub fn events() -> Vec<Event> {
