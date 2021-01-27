@@ -322,6 +322,10 @@ decl_module! {
 			}
 		}
 
+		// Transfer should always return ok
+		// Even it failed, still finish the syncing
+		//
+		// But should not dispatch the reward if the syncing failed
 		#[weight = 10_000_000]
 		fn sync_authorities_change(origin, proof: EthereumReceiptProofThing<T>) {
 			let bridger = ensure_signed(origin)?;
@@ -332,6 +336,8 @@ decl_module! {
 			let (term, authorities, beneficiary) = Self::parse_authorities_set_proof(&proof)?;
 
 			T::EcdsaAuthorities::check_authorities_change_to_sync(term, authorities)?;
+			T::EcdsaAuthorities::sync_authorities_change()?;
+			VerifiedProof::insert(tx_index, true);
 
 			let fee_account = Self::fee_account_id();
 			let sync_reward = T::SyncReward::get().min(
@@ -347,10 +353,6 @@ decl_module! {
 					KeepAlive
 				)?;
 			}
-
-			T::EcdsaAuthorities::sync_authorities_change()?;
-
-			VerifiedProof::insert(tx_index, true);
 		}
 
 		/// Set a new ring redeem address.
