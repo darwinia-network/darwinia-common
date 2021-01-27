@@ -43,3 +43,6 @@ sp-io               = { git = "https://github.com/darwinia-network/substrate.git
 sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-storage          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+
+[features]
+rpc_binary_search_estimate = []

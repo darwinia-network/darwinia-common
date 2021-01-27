@@ -68,6 +68,13 @@ impl<'a> Visitor<'a> for IndexVisitor {
 	{
 		self.visit_str(value.as_ref())
 	}
+
+	fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E>
+	where
+		E: Error,
+	{
+		Ok(Index(value as usize))
+	}
 }
 
 #[cfg(test)]
@@ -76,9 +83,9 @@ mod tests {
 	use serde_json;
 
 	#[test]
-	fn block_number_deserialization() {
-		let s = r#"["0xa", "10"]"#;
+	fn index_deserialization() {
+		let s = r#"["0xa", "10", 42]"#;
 		let deserialized: Vec<Index> = serde_json::from_str(s).unwrap();
-		assert_eq!(deserialized, vec![Index(10), Index(10)]);
+		assert_eq!(deserialized, vec![Index(10), Index(10), Index(42)]);
 	}
 }
