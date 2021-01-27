@@ -265,8 +265,7 @@ decl_module! {
 		) {
 			let user = ensure_signed(origin)?;
 			let fee_account = Self::fee_account_id();
-
-			utilities::with_transaction_result(|| {
+			let locked = utilities::with_transaction_result(|| {
 				// 50 Ring for fee
 				// https://github.com/darwinia-network/darwinia-common/pull/377#issuecomment-730369387
 				T::RingCurrency::transfer(&user, &fee_account, T::AdvancedFee::get(), KeepAlive)?;
@@ -316,15 +315,15 @@ decl_module! {
 					Self::deposit_event(raw_event);
 				}
 
-				if locked {
-					T::EcdsaAuthorities::schedule_mmr_root((
-						<frame_system::Module<T>>::block_number().saturated_into()
-							/ 10 * 10 + 10
-					).saturated_into());
-				}
+				Ok(locked)
+			})?;
 
-				Ok(())
-			});
+			if locked {
+				T::EcdsaAuthorities::schedule_mmr_root((
+					<frame_system::Module<T>>::block_number().saturated_into()
+						/ 10 * 10 + 10
+				).saturated_into());
+			}
 		}
 
 		// Transfer should always return ok
