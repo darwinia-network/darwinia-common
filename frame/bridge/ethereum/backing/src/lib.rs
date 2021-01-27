@@ -273,7 +273,10 @@ decl_module! {
 				let mut locked = false;
 
 				if !ring_value.is_zero() {
-					let ring_to_lock = ring_value.min(T::RingCurrency::usable_balance(&user));
+					let ring_to_lock = ring_value.min(
+						T::RingCurrency::usable_balance(&user)
+							.saturating_sub(T::RingCurrency::minimum_balance())
+					);
 
 					ensure!(ring_to_lock < T::RingLockLimit::get(), <Error<T>>::RingLockLim);
 
@@ -294,7 +297,10 @@ decl_module! {
 					Self::deposit_event(raw_event);
 				}
 				if !kton_value.is_zero() {
-					let kton_to_lock = kton_value.min(T::KtonCurrency::usable_balance(&user));
+					let kton_to_lock = kton_value.min(
+						T::KtonCurrency::usable_balance(&user)
+							.saturating_sub(T::KtonCurrency::minimum_balance())
+					);
 
 					ensure!(kton_to_lock < T::KtonLockLimit::get(), <Error<T>>::KtonLockLim);
 
