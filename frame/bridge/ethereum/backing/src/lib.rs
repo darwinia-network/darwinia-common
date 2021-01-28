@@ -57,7 +57,7 @@ use ethabi::{Event as EthEvent, EventParam as EthEventParam, ParamType, RawLog};
 // --- substrate ---
 use frame_support::{
 	debug, decl_error, decl_event, decl_module, decl_storage, ensure,
-	traits::{Currency, ExistenceRequirement::KeepAlive, Get},
+	traits::{Currency, ExistenceRequirement::*, Get},
 	weights::Weight,
 };
 use frame_system::{ensure_root, ensure_signed};
@@ -256,11 +256,13 @@ decl_module! {
 
 		/// Lock some balances into the module account
 		/// which very similar to lock some assets into the contract on ethereum side
+		///
+		/// This might kill the account just like `balances::transfer`
 		#[weight = 10_000_000]
 		pub fn lock(
 			origin,
-			#[compact] ring_value: RingBalance<T>,
-			#[compact] kton_value: KtonBalance<T>,
+			#[compact] ring_to_lock: RingBalance<T>,
+			#[compact] kton_to_lock: KtonBalance<T>,
 			ethereum_account: EthereumAddress,
 		) {
 			let user = ensure_signed(origin)?;
@@ -272,12 +274,14 @@ decl_module! {
 
 				let mut locked = false;
 
-				if !ring_value.is_zero() {
-					let ring_to_lock = ring_value.min(T::RingCurrency::usable_balance(&user));
-
+				if !ring_to_lock.is_zero() {
 					ensure!(ring_to_lock < T::RingLockLimit::get(), <Error<T>>::RingLockLim);
 
-					T::RingCurrency::transfer(&user, &Self::account_id(), ring_to_lock, KeepAlive)?;
+					T::RingCurrency::transfer(
+						&user, &Self::account_id(),
+						ring_to_lock,
+						AllowDeath
+					)?;
 
 					let raw_event = RawEvent::LockRing(
 						user.clone(),
@@ -293,12 +297,15 @@ decl_module! {
 					<LockAssetEvents<T>>::append(system_event);
 					Self::deposit_event(raw_event);
 				}
-				if !kton_value.is_zero() {
-					let kton_to_lock = kton_value.min(T::KtonCurrency::usable_balance(&user));
-
+				if !kton_to_lock.is_zero() {
 					ensure!(kton_to_lock < T::KtonLockLimit::get(), <Error<T>>::KtonLockLim);
 
-					T::KtonCurrency::transfer(&user, &Self::account_id(), kton_to_lock, KeepAlive)?;
+					T::KtonCurrency::transfer(
+						&user,
+						&Self::account_id(),
+						kton_to_lock,
+						AllowDeath
+					)?;
 
 					let raw_event = RawEvent::LockKton(
 						user,
