@@ -16,7 +16,7 @@ describe("Test Net API", function () {
 		expect(await web3.eth.net.isListening()).to.be.equal(true);
 	});
 
-	it.skip("should get the number of peers connected to", async function () {
+	it("should get the number of peers connected to", async function () {
 		expect(await web3.eth.net.getPeerCount()).to.be.equal(0);
 	});
 });

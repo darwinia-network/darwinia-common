@@ -20,13 +20,14 @@
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub mod precompiles;
 pub mod runner;
 mod tests;
 
-pub use crate::precompiles::{Precompile, Precompiles};
 pub use crate::runner::Runner;
-pub use darwinia_evm_primitives::{Account, CallInfo, CreateInfo, ExecutionInfo, Log, Vicinity};
+pub use darwinia_evm_primitives::{
+	Account, CallInfo, CreateInfo, ExecutionInfo, LinearCostPrecompile, Log, Precompile,
+	PrecompileSet, Vicinity,
+};
 pub use evm::{ExitError, ExitFatal, ExitReason, ExitRevert, ExitSucceed};
 
 #[cfg(feature = "std")]
@@ -174,6 +175,24 @@ impl<H: Hasher<Out = H256>> AddressMapping<AccountId32> for HashedAddressMapping
 	}
 }
 
+pub struct ConcatAddressMapping;
+
+/// The ConcatAddressMapping used for transfer from evm 20-length to substrate 32-length address
+/// The concat rule inclued three parts:
+/// 1. AccountId Prefix: concat("dvm", "0x00000000000000"), length: 11 byetes
+/// 2. Evm address: the original evm address, length: 20 bytes
+/// 3. CheckSum:  byte_xor(AccountId Prefix + Evm address), length: 1 bytes
+impl AddressMapping<AccountId32> for ConcatAddressMapping {
+	fn into_account_id(address: H160) -> AccountId32 {
+		let mut data = [0u8; 32];
+		data[0..4].copy_from_slice(b"dvm:");
+		data[11..31].copy_from_slice(&address[..]);
+		let checksum: u8 = data[1..31].iter().fold(data[0], |sum, &byte| sum ^ byte);
+		data[31] = checksum;
+		AccountId32::from(data)
+	}
+}
+
 pub trait AccountBasicMapping {
 	fn account_basic(address: &H160) -> Account;
 	fn mutate_account_basic(address: &H160, new: Account);
@@ -218,13 +237,16 @@ impl<T: Trait> AccountBasicMapping for RawAccountBasicMapping<T> {
 }
 
 /// A mapping function that converts Ethereum gas to Substrate weight
-pub trait GasToWeight {
-	fn gas_to_weight(gas: u32) -> Weight;
+pub trait GasWeightMapping {
+	fn gas_to_weight(gas: usize) -> Weight;
+	fn weight_to_gas(weight: Weight) -> usize;
 }
-
-impl GasToWeight for () {
-	fn gas_to_weight(gas: u32) -> Weight {
+impl GasWeightMapping for () {
+	fn gas_to_weight(gas: usize) -> Weight {
 		gas as Weight
+	}
+	fn weight_to_gas(weight: Weight) -> usize {
+		weight as usize
 	}
 }
 
@@ -244,7 +266,7 @@ pub trait Trait: frame_system::Trait + pallet_timestamp::Trait {
 	/// Calculator for current gas price.
 	type FeeCalculator: FeeCalculator;
 	/// Maps Ethereum gas to Substrate weight.
-	type GasToWeight: GasToWeight;
+	type GasWeightMapping: GasWeightMapping;
 
 	/// Allow the origin to call on behalf of given address.
 	type CallOrigin: EnsureAddressOrigin<Self::Origin>;
@@ -259,7 +281,7 @@ pub trait Trait: frame_system::Trait + pallet_timestamp::Trait {
 	/// The overarching event type.
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 	/// Precompiles associated with this EVM engine.
-	type Precompiles: Precompiles;
+	type Precompiles: PrecompileSet;
 	/// Chain ID of EVM.
 	type ChainId: Get<u64>;
 	/// EVM execution runner.
@@ -358,7 +380,7 @@ decl_module! {
 		fn deposit_event() = default;
 
 		/// Issue an EVM call operation. This is similar to a message call transaction in Ethereum.
-		#[weight = T::GasToWeight::gas_to_weight(*gas_limit)]
+		#[weight = T::GasWeightMapping::gas_to_weight(*gas_limit as usize)]
 		fn call(
 			origin,
 			source: H160,
@@ -392,14 +414,14 @@ decl_module! {
 			};
 
 			Ok(PostDispatchInfo {
-				actual_weight: Some(T::GasToWeight::gas_to_weight(info.used_gas.low_u32())),
+				actual_weight: Some(T::GasWeightMapping::gas_to_weight(info.used_gas.unique_saturated_into())),
 				pays_fee: Pays::No,
 			})
 		}
 
 		/// Issue an EVM create operation. This is similar to a contract creation transaction in
 		/// Ethereum.
-		#[weight = T::GasToWeight::gas_to_weight(*gas_limit)]
+		#[weight = T::GasWeightMapping::gas_to_weight(*gas_limit as usize)]
 		fn create(
 			origin,
 			source: H160,
@@ -438,13 +460,13 @@ decl_module! {
 			}
 
 			Ok(PostDispatchInfo {
-				actual_weight: Some(T::GasToWeight::gas_to_weight(info.used_gas.low_u32())),
+				actual_weight: Some(T::GasWeightMapping::gas_to_weight(info.used_gas.unique_saturated_into())),
 				pays_fee: Pays::No,
 			})
 		}
 
 		/// Issue an EVM create2 operation.
-		#[weight = T::GasToWeight::gas_to_weight(*gas_limit)]
+		#[weight = T::GasWeightMapping::gas_to_weight(*gas_limit as usize)]
 		fn create2(
 			origin,
 			source: H160,
@@ -485,7 +507,7 @@ decl_module! {
 			}
 
 			Ok(PostDispatchInfo {
-				actual_weight: Some(T::GasToWeight::gas_to_weight(info.used_gas.low_u32())),
+				actual_weight: Some(T::GasWeightMapping::gas_to_weight(info.used_gas.unique_saturated_into())),
 				pays_fee: Pays::No,
 			})
 		}

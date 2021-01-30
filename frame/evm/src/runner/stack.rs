@@ -17,10 +17,10 @@
 
 //! EVM stack-based runner.
 
-use crate::precompiles::Precompiles;
 use crate::runner::Runner as RunnerT;
 use crate::{
-	AccountBasicMapping, AccountCodes, AccountStorages, Error, Event, FeeCalculator, Module, Trait,
+	AccountBasicMapping, AccountCodes, AccountStorages, Error, Event, FeeCalculator, Module,
+	PrecompileSet, Trait,
 };
 use darwinia_evm_primitives::{Account, CallInfo, CreateInfo, ExecutionInfo, Log, Vicinity};
 use evm::backend::{Apply, ApplyBackend, Backend as BackendT};

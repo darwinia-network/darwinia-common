@@ -261,16 +261,13 @@ use sp_version::RuntimeVersion;
 // --- darwinia ---
 use constants::*;
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
-use darwinia_evm::Runner;
+use darwinia_evm::{ConcatAddressMapping, Runner};
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
 use darwinia_relay_primitives::relay_authorities::OpCode;
 use darwinia_staking::EraIndex;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
 use drml_primitives::*;
-use dvm_ethereum::{
-	account_basic::DVMAccountBasicMapping,
-	precompiles::{ConcatAddressMapping, NativeTransfer},
-};
+use dvm_ethereum::account_basic::DVMAccountBasicMapping;
 use dvm_rpc_runtime_api::TransactionStatus;
 use impls::*;
 
@@ -1049,23 +1046,23 @@ impl FeeCalculator for FixedGasPrice {
 		0.into()
 	}
 }
+
 parameter_types! {
 	pub const ChainId: u64 = 43;
 }
 impl darwinia_evm::Trait for Runtime {
 	type FeeCalculator = FixedGasPrice;
-	type GasToWeight = ();
+	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
 	type AddressMapping = ConcatAddressMapping;
 	type Currency = Balances;
 	type Event = Event;
 	type Precompiles = (
-		darwinia_evm::precompiles::ECRecover,
-		darwinia_evm::precompiles::Sha256,
-		darwinia_evm::precompiles::Ripemd160,
-		darwinia_evm::precompiles::Identity,
-		NativeTransfer<Self>,
+		darwinia_evm_precompile_simple::ECRecover,
+		darwinia_evm_precompile_simple::Sha256,
+		darwinia_evm_precompile_simple::Ripemd160,
+		darwinia_evm_precompile_simple::Identity,
 	);
 	type ChainId = ChainId;
 	type AccountBasicMapping = DVMAccountBasicMapping<Self>;
@@ -1114,9 +1111,15 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 		None
 	}
 }
+
+parameter_types! {
+	pub BlockGasLimit: U256 = U256::from(u32::max_value());
+}
 impl dvm_ethereum::Trait for Runtime {
 	type Event = Event;
 	type FindAuthor = EthereumFindAuthor<Babe>;
+	type StateRoot = dvm_ethereum::IntermediateStateRoot;
+	type BlockGasLimit = BlockGasLimit;
 	type AddressMapping = ConcatAddressMapping;
 	type RingCurrency = Balances;
 }

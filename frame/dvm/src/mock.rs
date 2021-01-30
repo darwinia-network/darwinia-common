@@ -18,7 +18,7 @@
 
 use super::*;
 use crate::account_basic::DVMAccountBasicMapping;
-use crate::{Module, Trait};
+use crate::{IntermediateStateRoot, Module, Trait};
 use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator};
 use ethereum::{TransactionAction, TransactionSignature};
 use frame_support::{impl_outer_origin, parameter_types, weights::Weight, ConsensusEngineId};
@@ -51,6 +51,7 @@ parameter_types! {
 	pub const MaximumBlockLength: u32 = 2 * 1024;
 	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
 }
+
 impl frame_system::Trait for Test {
 	type BaseCallFilter = ();
 	type SystemWeightInfo = ();
@@ -144,7 +145,7 @@ impl AddressMapping<AccountId32> for HashedAddressMapping {
 
 impl darwinia_evm::Trait for Test {
 	type FeeCalculator = FixedGasPrice;
-	type GasToWeight = ();
+	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
 	type AddressMapping = HashedAddressMapping;
@@ -156,9 +157,15 @@ impl darwinia_evm::Trait for Test {
 	type AccountBasicMapping = DVMAccountBasicMapping<Self>;
 }
 
+parameter_types! {
+	pub const BlockGasLimit: U256 = U256::MAX;
+}
+
 impl Trait for Test {
 	type Event = ();
 	type FindAuthor = EthereumFindAuthor;
+	type StateRoot = IntermediateStateRoot;
+	type BlockGasLimit = BlockGasLimit;
 	type AddressMapping = HashedAddressMapping;
 	type RingCurrency = Balances;
 }

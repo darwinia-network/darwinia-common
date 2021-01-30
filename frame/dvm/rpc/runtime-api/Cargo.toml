@@ -21,6 +21,7 @@ darwinia-evm-primitives = { default-features = false, path = "../../../../primit
 # substrate
 sp-api     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
 sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
 sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
 sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
 
@@ -47,6 +48,7 @@ crates-std = [
 substrate-std = [
 	"sp-api/std",
 	"sp-core/std",
+	"sp-io/std",
 	"sp-runtime/std",
 	"sp-std/std",
 ]

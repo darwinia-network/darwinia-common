@@ -22,7 +22,7 @@
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use codec::Encode;
+use codec::{Decode, Encode};
 use dvm_consensus_primitives::{ConsensusLog, FRONTIER_ENGINE_ID};
 use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
 use evm::ExitReason;
@@ -42,7 +42,7 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 
-use darwinia_evm::{AccountBasicMapping, AddressMapping, GasToWeight, Runner};
+use darwinia_evm::{AccountBasicMapping, AddressMapping, GasWeightMapping, Runner};
 use darwinia_evm_primitives::CallOrCreateInfo;
 pub use dvm_rpc_runtime_api::TransactionStatus;
 pub use ethereum::{Block, Log, Receipt, Transaction, TransactionAction, TransactionMessage};
@@ -51,11 +51,9 @@ use frame_support::traits::Currency;
 #[cfg(all(feature = "std", test))]
 mod tests;
 
+pub mod account_basic;
 #[cfg(all(feature = "std", test))]
 mod mock;
-// Precomile contract for dvm
-pub mod account_basic;
-pub mod precompiles;
 
 #[derive(Eq, PartialEq, Clone, sp_runtime::RuntimeDebug)]
 pub enum ReturnValue {
@@ -66,6 +64,15 @@ pub enum ReturnValue {
 /// A type alias for the balance type from this pallet's point of view.
 pub type BalanceOf<T> = <T as darwinia_balances::Trait>::Balance;
 type RingInstance = darwinia_balances::Instance0;
+
+pub struct IntermediateStateRoot;
+
+impl Get<H256> for IntermediateStateRoot {
+	fn get() -> H256 {
+		H256::decode(&mut &sp_io::storage::root()[..])
+			.expect("Node is configured to use the same hash; qed")
+	}
+}
 
 /// Trait for Ethereum pallet.
 pub trait Trait:
@@ -78,7 +85,13 @@ pub trait Trait:
 	type Event: From<Event> + Into<<Self as frame_system::Trait>::Event>;
 	/// Find author for Ethereum.
 	type FindAuthor: FindAuthor<H160>;
+	/// How Ethereum state root is calculated.
+	type StateRoot: Get<H256>;
+	/// The block gas limit. Can be a simple constant, or an adjustment algorithm in another pallet.
+	type BlockGasLimit: Get<U256>;
+	// How evm address convert to darwinia address
 	type AddressMapping: AddressMapping<Self::AccountId>;
+	// Balance module
 	type RingCurrency: Currency<Self::AccountId>;
 }
 
@@ -126,7 +139,7 @@ decl_module! {
 		fn deposit_event() = default;
 
 		/// Transact an Ethereum transaction.
-		#[weight = <T as darwinia_evm::Trait>::GasToWeight::gas_to_weight(transaction.gas_limit.low_u32())]
+		#[weight = <T as darwinia_evm::Trait>::GasWeightMapping::gas_to_weight(transaction.gas_limit.unique_saturated_into())]
 		fn transact(origin, transaction: ethereum::Transaction) -> DispatchResultWithPostInfo {
 			ensure_none(origin)?;
 
@@ -203,7 +216,7 @@ decl_module! {
 			Pending::append((transaction, status, receipt));
 
 			Self::deposit_event(Event::Executed(source, contract_address.unwrap_or_default(), transaction_hash, reason));
-			Ok(Some(T::GasToWeight::gas_to_weight(used_gas.low_u32())).into())
+			Ok(Some(T::GasWeightMapping::gas_to_weight(used_gas.unique_saturated_into())).into())
 		}
 
 		fn on_finalize(n: T::BlockNumber) {
@@ -230,11 +243,13 @@ impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
 
 	fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
 		if let Call::transact(transaction) = call {
-			if transaction.signature.chain_id().unwrap_or_default() != T::ChainId::get() {
-				return InvalidTransaction::Custom(
-					TransactionValidationError::InvalidChainId as u8,
-				)
-				.into();
+			if let Some(chain_id) = transaction.signature.chain_id() {
+				if chain_id != T::ChainId::get() {
+					return InvalidTransaction::Custom(
+						TransactionValidationError::InvalidChainId as u8,
+					)
+					.into();
+				}
 			}
 
 			let origin = Self::recover_signer(&transaction).ok_or_else(|| {
@@ -310,7 +325,7 @@ impl<T: Trait> Module<T> {
 			number: U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(
 				frame_system::Module::<T>::block_number(),
 			)),
-			gas_limit: U256::zero(), // TODO: set this using Ethereum's gas limit change algorithm.
+			gas_limit: T::BlockGasLimit::get(),
 			gas_used: receipts
 				.clone()
 				.into_iter()
@@ -323,12 +338,7 @@ impl<T: Trait> Module<T> {
 			nonce: H64::default(),
 		};
 		let mut block = ethereum::Block::new(partial_header, transactions.clone(), ommers);
-		block.header.state_root = {
-			let mut input = [0u8; 64];
-			input[..32].copy_from_slice(&frame_system::Module::<T>::parent_hash()[..]);
-			input[32..64].copy_from_slice(&block.header.hash()[..]);
-			H256::from_slice(Keccak256::digest(&input).as_slice())
-		};
+		block.header.state_root = T::StateRoot::get();
 
 		let mut transaction_hashes = Vec::new();
 
