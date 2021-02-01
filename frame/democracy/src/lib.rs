@@ -1314,7 +1314,7 @@ impl<T: Trait> Module<T> {
 			DEMOCRACY_ID,
 			who,
 			vote.balance(),
-			WithdrawReason::Transfer.into(),
+			WithdrawReasons::TRANSFER,
 		)?;
 		ReferendumInfoOf::<T>::insert(ref_index, ReferendumInfo::Ongoing(status));
 		Ok(())
@@ -1478,7 +1478,7 @@ impl<T: Trait> Module<T> {
 			let votes = Self::increase_upstream_delegation(&target, conviction.votes(balance));
 			// Extend the lock to `balance` (rather than setting it) since we don't know what other
 			// votes are in place.
-			T::Currency::extend_lock(DEMOCRACY_ID, &who, balance, WithdrawReason::Transfer.into())?;
+			T::Currency::extend_lock(DEMOCRACY_ID, &who, balance, WithdrawReasons::TRANSFER)?;
 			Ok(votes)
 		})?;
 		Self::deposit_event(Event::<T>::Delegated(who, target));
@@ -1533,7 +1533,7 @@ impl<T: Trait> Module<T> {
 				LockFor::Common {
 					amount: lock_needed,
 				},
-				WithdrawReason::Transfer.into(),
+				WithdrawReasons::TRANSFER,
 			);
 		}
 	}

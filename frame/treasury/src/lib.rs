@@ -175,7 +175,7 @@ use frame_support::{
 	traits::{
 		Contains, ContainsLengthBound, Currency, EnsureOrigin,
 		ExistenceRequirement::{AllowDeath, KeepAlive},
-		Get, Imbalance, OnUnbalanced, ReservableCurrency, WithdrawReason,
+		Get, Imbalance, OnUnbalanced, ReservableCurrency, WithdrawReasons,
 	},
 	weights::{DispatchClass, Weight},
 	Parameter,
@@ -1450,7 +1450,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		if let Err(problem) = T::RingCurrency::settle(
 			&Self::account_id(),
 			imbalance_ring,
-			WithdrawReason::Transfer.into(),
+			WithdrawReasons::TRANSFER,
 			KeepAlive,
 		) {
 			print("Inconsistent state - couldn't settle imbalance for funds spent by treasury");
@@ -1461,7 +1461,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		if let Err(problem) = T::KtonCurrency::settle(
 			&Self::account_id(),
 			imbalance_kton,
-			WithdrawReason::Transfer.into(),
+			WithdrawReasons::TRANSFER,
 			KeepAlive,
 		) {
 			print("Inconsistent state - couldn't settle imbalance for funds spent by treasury");

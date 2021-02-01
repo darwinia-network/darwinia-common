@@ -176,7 +176,7 @@ macro_rules! decl_tests {
 						LockFor::Common {
 							amount: Balance::max_value(),
 						},
-						WithdrawReasons::none(),
+						WithdrawReasons::empty(),
 					);
 					Ring::set_lock(ID_2, &1, LockFor::Common { amount: 0 }, WithdrawReasons::all());
 					assert_ok!(<Ring as Currency<_>>::transfer(&1, &2, 1, AllowDeath));
@@ -220,7 +220,7 @@ macro_rules! decl_tests {
 						ID_1,
 						&1,
 						LockFor::Common { amount: 10 },
-						WithdrawReason::Reserve.into(),
+						WithdrawReasons::RESERVE,
 					);
 					assert_noop!(
 						<Ring as Currency<_>>::transfer(&1, &2, 1, AllowDeath),
@@ -255,7 +255,7 @@ macro_rules! decl_tests {
 						ID_1,
 						&1,
 						LockFor::Common { amount: 10 },
-						WithdrawReason::TransactionPayment.into(),
+						WithdrawReasons::TRANSACTION_PAYMENT,
 					);
 					assert_ok!(<Ring as Currency<_>>::transfer(&1, &2, 1, AllowDeath));
 					assert_ok!(<Ring as ReservableCurrency<_>>::reserve(&1, 1));
@@ -282,61 +282,61 @@ macro_rules! decl_tests {
 				});
 		}
 
-		// #[test]
-		// fn lock_block_number_extension_should_work() {
-		// 	<$ext_builder>::default()
-		// 		.existential_deposit(1)
-		// 		.monied(true)
-		// 		.build()
-		// 		.execute_with(|| {
-		// 			Ring::set_lock(ID_1, &1, LockFor::Common { amount: 10 }, WithdrawReasons::all());
-		// 			assert_noop!(
-		// 				<Ring as Currency<_>>::transfer(&1, &2, 6, AllowDeath),
-		// 				RingError::LiquidityRestrictions
-		// 			);
-		// 			Ring::extend_lock(ID_1, &1, 10, WithdrawReasons::all());
-		// 			assert_noop!(
-		// 				<Ring as Currency<_>>::transfer(&1, &2, 6, AllowDeath),
-		// 				RingError::LiquidityRestrictions
-		// 			);
-		// 			System::set_block_number(2);
-		// 			Ring::extend_lock(ID_1, &1, 10, WithdrawReasons::all());
-		// 			assert_noop!(
-		// 				<Ring as Currency<_>>::transfer(&1, &2, 3, AllowDeath),
-		// 				RingError::LiquidityRestrictions
-		// 			);
-		// 		});
-		// }
+		#[test]
+		fn lock_block_number_extension_should_work() {
+			<$ext_builder>::default()
+				.existential_deposit(1)
+				.monied(true)
+				.build()
+				.execute_with(|| {
+					Ring::set_lock(ID_1, &1, LockFor::Common { amount: 10 }, WithdrawReasons::all());
+					assert_noop!(
+						<Ring as Currency<_>>::transfer(&1, &2, 6, AllowDeath),
+						RingError::LiquidityRestrictions
+					);
+					Ring::extend_lock(ID_1, &1, 10, WithdrawReasons::all()).unwrap();
+					assert_noop!(
+						<Ring as Currency<_>>::transfer(&1, &2, 6, AllowDeath),
+						RingError::LiquidityRestrictions
+					);
+					System::set_block_number(2);
+					Ring::extend_lock(ID_1, &1, 10, WithdrawReasons::all()).unwrap();
+					assert_noop!(
+						<Ring as Currency<_>>::transfer(&1, &2, 3, AllowDeath),
+						RingError::LiquidityRestrictions
+					);
+				});
+		}
 
-		// #[test]
-		// fn lock_reasons_extension_should_work() {
-		// 	<$ext_builder>::default()
-		// 		.existential_deposit(1)
-		// 		.monied(true)
-		// 		.build()
-		// 		.execute_with(|| {
-		// 			Ring::set_lock(
-		// 				ID_1,
-		// 				&1,
-		// 				LockFor::Common { amount: 10 },
-		// 				WithdrawReason::Transfer.into(),
-		// 			);
-		// 			assert_noop!(
-		// 				<Ring as Currency<_>>::transfer(&1, &2, 6, AllowDeath),
-		// 				RingError::LiquidityRestrictions
-		// 			);
-		// 			Ring::extend_lock(ID_1, &1, 10, WithdrawReasons::none());
-		// 			assert_noop!(
-		// 				<Ring as Currency<_>>::transfer(&1, &2, 6, AllowDeath),
-		// 				RingError::LiquidityRestrictions
-		// 			);
-		// 			Ring::extend_lock(ID_1, &1, 10, WithdrawReason::Reserve.into());
-		// 			assert_noop!(
-		// 				<Ring as Currency<_>>::transfer(&1, &2, 6, AllowDeath),
-		// 				RingError::LiquidityRestrictions
-		// 			);
-		// 		});
-		// }
+		#[test]
+		fn lock_reasons_extension_should_work() {
+			<$ext_builder>::default()
+				.existential_deposit(1)
+				.monied(true)
+				.build()
+				.execute_with(|| {
+					Ring::set_lock(
+						ID_1,
+						&1,
+						LockFor::Common { amount: 10 },
+						WithdrawReasons::TRANSFER,
+					);
+					assert_noop!(
+						<Ring as Currency<_>>::transfer(&1, &2, 6, AllowDeath),
+						RingError::LiquidityRestrictions
+					);
+					Ring::extend_lock(ID_1, &1, 10, WithdrawReasons::empty()).unwrap();
+					assert_noop!(
+						<Ring as Currency<_>>::transfer(&1, &2, 6, AllowDeath),
+						RingError::LiquidityRestrictions
+					);
+					Ring::extend_lock(ID_1, &1, 10, WithdrawReasons::RESERVE).unwrap();
+					assert_noop!(
+						<Ring as Currency<_>>::transfer(&1, &2, 6, AllowDeath),
+						RingError::LiquidityRestrictions
+					);
+				});
+		}
 
 		#[test]
 		fn default_indexing_on_new_accounts_should_not_work2() {

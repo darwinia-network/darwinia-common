@@ -28,7 +28,7 @@ pub mod balance {
 		// --- darwinia ---
 		pub use crate::structs::{BalanceLock, LockFor, LockReasons, StakingLock, Unbonding};
 		pub use crate::traits::{
-			LockIdentifier, LockableCurrency, VestingSchedule, WithdrawReason, WithdrawReasons,
+			LockIdentifier, LockableCurrency, VestingSchedule, WithdrawReasons,
 		};
 	}
 

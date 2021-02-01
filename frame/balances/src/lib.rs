@@ -1001,7 +1001,7 @@ where
 				Self::ensure_can_withdraw(
 					transactor,
 					value,
-					WithdrawReason::Transfer.into(),
+					WithdrawReasons::TRANSFER,
 					from_account.free(),
 				)?;
 
@@ -1222,8 +1222,7 @@ where
 			.free()
 			.checked_sub(&value)
 			.map_or(false, |new_balance| {
-				Self::ensure_can_withdraw(who, value, WithdrawReason::Reserve.into(), new_balance)
-					.is_ok()
+				Self::ensure_can_withdraw(who, value, WithdrawReasons::RESERVE, new_balance).is_ok()
 			})
 	}
 
@@ -1276,7 +1275,7 @@ where
 			Self::ensure_can_withdraw(
 				&who,
 				value.clone(),
-				WithdrawReason::Reserve.into(),
+				WithdrawReasons::RESERVE,
 				account.free(),
 			)
 		})?;
@@ -1411,7 +1410,7 @@ where
 				staking_lock.locked_amount(<frame_system::Module<T>>::block_number())
 			}
 		}
-		.is_zero() || reasons.is_none()
+		.is_zero() || reasons.is_empty()
 		{
 			return;
 		}
@@ -1438,7 +1437,7 @@ where
 		amount: T::Balance,
 		reasons: WithdrawReasons,
 	) -> DispatchResult {
-		if amount.is_zero() || reasons.is_none() {
+		if amount.is_zero() || reasons.is_empty() {
 			return Ok(());
 		}
 

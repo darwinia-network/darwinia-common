@@ -23,7 +23,7 @@ use num_traits::Zero;
 use sp_runtime::{traits::AtLeast32BitUnsigned, RuntimeDebug};
 use sp_std::{ops::BitOr, prelude::*};
 // --- darwinia ---
-use crate::balance::lock::{LockIdentifier, WithdrawReason, WithdrawReasons};
+use crate::balance::lock::{LockIdentifier, WithdrawReasons};
 
 /// Frozen balance information for an account.
 pub struct FrozenBalance<Balance> {
@@ -68,9 +68,9 @@ pub enum LockReasons {
 }
 impl From<WithdrawReasons> for LockReasons {
 	fn from(r: WithdrawReasons) -> LockReasons {
-		if r == WithdrawReasons::from(WithdrawReason::TransactionPayment) {
+		if r == WithdrawReasons::TRANSACTION_PAYMENT {
 			LockReasons::Fee
-		} else if r.contains(WithdrawReason::TransactionPayment) {
+		} else if r.contains(WithdrawReasons::TRANSACTION_PAYMENT) {
 			LockReasons::All
 		} else {
 			LockReasons::Misc

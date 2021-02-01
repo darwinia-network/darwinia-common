@@ -141,7 +141,7 @@ decl_storage! {
 					per_block: per_block,
 					starting_block: begin
 				});
-				let reasons = WithdrawReason::Transfer | WithdrawReason::Reserve;
+				let reasons = WithdrawReasons::TRANSFER | WithdrawReasons::RESERVE;
 				T::Currency::set_lock(VESTING_ID, who, LockFor::Common { amount: locked }, reasons);
 			}
 		})
@@ -319,7 +319,7 @@ impl<T: Trait> Module<T> {
 			Vesting::<T>::remove(&who);
 			Self::deposit_event(RawEvent::VestingCompleted(who));
 		} else {
-			let reasons = WithdrawReason::Transfer | WithdrawReason::Reserve;
+			let reasons = WithdrawReasons::TRANSFER | WithdrawReasons::RESERVE;
 			T::Currency::set_lock(
 				VESTING_ID,
 				&who,

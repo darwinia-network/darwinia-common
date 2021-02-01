@@ -362,7 +362,7 @@ decl_module! {
 				T::ModuleId::get(),
 				&who,
 				LockFor::Common { amount: locked_balance },
-				WithdrawReasons::except(WithdrawReason::TransactionPayment),
+				WithdrawReasons::except(WithdrawReasons::TRANSACTION_PAYMENT),
 			);
 
 			Voting::<T>::insert(&who, (locked_balance, votes));
