@@ -55,6 +55,7 @@ sc-consensus                               = { git = "https://github.com/darwini
 sc-consensus-babe                          = { git = "https://github.com/darwinia-network/substrate.git", rev = "5d307871e98319874a8898e4138d6d42fe214719" }
 sc-consensus-babe-rpc                      = { git = "https://github.com/darwinia-network/substrate.git", rev = "5d307871e98319874a8898e4138d6d42fe214719" }
 sc-consensus-epochs                        = { git = "https://github.com/darwinia-network/substrate.git", rev = "5d307871e98319874a8898e4138d6d42fe214719" }
+sc-consensus-slots                         = { git = "https://github.com/darwinia-network/substrate.git", rev = "5d307871e98319874a8898e4138d6d42fe214719" }
 sc-executor                                = { git = "https://github.com/darwinia-network/substrate.git", rev = "5d307871e98319874a8898e4138d6d42fe214719" }
 sc-finality-grandpa                        = { git = "https://github.com/darwinia-network/substrate.git", rev = "5d307871e98319874a8898e4138d6d42fe214719" }
 sc-finality-grandpa-rpc                    = { git = "https://github.com/darwinia-network/substrate.git", rev = "5d307871e98319874a8898e4138d6d42fe214719" }

@@ -318,6 +318,8 @@ where
 	let role = config.role.clone();
 	let is_authority = role.is_authority();
 	let force_authoring = config.force_authoring;
+	let backoff_authoring_blocks =
+		Some(sc_consensus_slots::BackoffAuthoringOnFinalizedHeadLagging::default());
 	let disable_grandpa = config.disable_grandpa;
 	let name = config.network.node_name.clone();
 	let PartialComponents {
@@ -407,6 +409,7 @@ where
 			sync_oracle: network.clone(),
 			inherent_data_providers: inherent_data_providers.clone(),
 			force_authoring,
+			backoff_authoring_blocks,
 			babe_link,
 			can_author_with,
 		};
