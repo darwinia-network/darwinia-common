@@ -19,13 +19,13 @@ log         = { version = "0.4.13" }
 # darwinia
 dvm-consensus-primitives = { path = "../../../primitives/consensus/" }
 # substrate
-prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
-sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
-sp-api              = { git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
-sp-block-builder    = { git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
-sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
-sp-consensus        = { git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
-sp-core             = { git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
-sp-inherents        = { git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
-sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
-sp-timestamp        = { git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
+prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/darwinia-network/substrate.git", rev = "f74de63d23214b530ac24ac3ea4ead1180e22e83" }
+sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", rev = "f74de63d23214b530ac24ac3ea4ead1180e22e83" }
+sp-api              = { git = "https://github.com/darwinia-network/substrate.git", rev = "f74de63d23214b530ac24ac3ea4ead1180e22e83" }
+sp-block-builder    = { git = "https://github.com/darwinia-network/substrate.git", rev = "f74de63d23214b530ac24ac3ea4ead1180e22e83" }
+sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", rev = "f74de63d23214b530ac24ac3ea4ead1180e22e83" }
+sp-consensus        = { git = "https://github.com/darwinia-network/substrate.git", rev = "f74de63d23214b530ac24ac3ea4ead1180e22e83" }
+sp-core             = { git = "https://github.com/darwinia-network/substrate.git", rev = "f74de63d23214b530ac24ac3ea4ead1180e22e83" }
+sp-inherents        = { git = "https://github.com/darwinia-network/substrate.git", rev = "f74de63d23214b530ac24ac3ea4ead1180e22e83" }
+sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", rev = "f74de63d23214b530ac24ac3ea4ead1180e22e83" }
+sp-timestamp        = { git = "https://github.com/darwinia-network/substrate.git", rev = "f74de63d23214b530ac24ac3ea4ead1180e22e83" }

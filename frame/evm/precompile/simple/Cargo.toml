@@ -15,8 +15,8 @@ darwinia-evm-primitives  = { default-features = false, path = "../../../../primi
 evm                      = { version = "0.20.0", default-features = false, features = ["with-codec"] }
 ripemd160                = { version = "0.9", default-features = false }
 # substrate
-sp-core                  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
-sp-io                    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
+sp-core                  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "f74de63d23214b530ac24ac3ea4ead1180e22e83" }
+sp-io                    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "f74de63d23214b530ac24ac3ea4ead1180e22e83" }
 
 [features]
 default = ["std"]

@@ -16,9 +16,9 @@ serde = { version = "1.0.118", optional = true, features = ["derive"] }
 # darwinia
 darwinia-support = { default-features = false, path = "../../../support" }
 # substrate
-sp-api     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
-sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
+sp-api     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "f74de63d23214b530ac24ac3ea4ead1180e22e83" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "f74de63d23214b530ac24ac3ea4ead1180e22e83" }
+sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "f74de63d23214b530ac24ac3ea4ead1180e22e83" }
 
 [features]
 default = ["std"]
