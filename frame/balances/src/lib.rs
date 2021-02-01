@@ -661,16 +661,17 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 // wrapping these imbalances in a private module is necessary to ensure absolute privacy
 // of the inner member.
 mod imbalances {
+	// --- substrate ---
 	use sp_std::mem;
-
+	// --- darwinia ---
 	use crate::*;
 
 	/// Opaque, move-only struct with private fields that serves as a token denoting that
 	/// funds have been created without any equal and opposite accounting.
 	#[must_use]
-	pub struct PositiveImbalance<T: Subtrait<I>, I: Instance = DefaultInstance>(T::Balance);
+	pub struct PositiveImbalance<T: Trait<I>, I: Instance = DefaultInstance>(T::Balance);
 
-	impl<T: Subtrait<I>, I: Instance> PositiveImbalance<T, I> {
+	impl<T: Trait<I>, I: Instance> PositiveImbalance<T, I> {
 		/// Create a new positive imbalance from a balance.
 		pub fn new(amount: T::Balance) -> Self {
 			PositiveImbalance(amount)
@@ -680,9 +681,9 @@ mod imbalances {
 	/// Opaque, move-only struct with private fields that serves as a token denoting that
 	/// funds have been destroyed without any equal and opposite accounting.
 	#[must_use]
-	pub struct NegativeImbalance<T: Subtrait<I>, I: Instance = DefaultInstance>(T::Balance);
+	pub struct NegativeImbalance<T: Trait<I>, I: Instance = DefaultInstance>(T::Balance);
 
-	impl<T: Subtrait<I>, I: Instance> NegativeImbalance<T, I> {
+	impl<T: Trait<I>, I: Instance> NegativeImbalance<T, I> {
 		/// Create a new negative imbalance from a balance.
 		pub fn new(amount: T::Balance) -> Self {
 			NegativeImbalance(amount)
@@ -791,85 +792,19 @@ mod imbalances {
 		}
 	}
 
-	impl<T: Subtrait<I>, I: Instance> Drop for PositiveImbalance<T, I> {
+	impl<T: Trait<I>, I: Instance> Drop for PositiveImbalance<T, I> {
 		/// Basic drop handler will just square up the total issuance.
 		fn drop(&mut self) {
-			<super::TotalIssuance<super::ElevatedTrait<T, I>, I>>::mutate(|v| {
-				*v = v.saturating_add(self.0)
-			});
+			<TotalIssuance<T, I>>::mutate(|v| *v = v.saturating_add(self.0));
 		}
 	}
 
-	impl<T: Subtrait<I>, I: Instance> Drop for NegativeImbalance<T, I> {
+	impl<T: Trait<I>, I: Instance> Drop for NegativeImbalance<T, I> {
 		/// Basic drop handler will just square up the total issuance.
 		fn drop(&mut self) {
-			<super::TotalIssuance<super::ElevatedTrait<T, I>, I>>::mutate(|v| {
-				*v = v.saturating_sub(self.0)
-			});
+			<TotalIssuance<T, I>>::mutate(|v| *v = v.saturating_sub(self.0));
 		}
 	}
-}
-
-// TODO: #2052
-// Somewhat ugly hack in order to gain access to module's `increase_total_issuance_by`
-// using only the Subtrait (which defines only the types that are not dependent
-// on Positive/NegativeImbalance). Subtrait must be used otherwise we end up with a
-// circular dependency with Trait having some types be dependent on PositiveImbalance<Trait>
-// and PositiveImbalance itself depending back on Trait for its Drop impl (and thus
-// its type declaration).
-// This works as long as `increase_total_issuance_by` doesn't use the Imbalance
-// types (basically for charging fees).
-// This should eventually be refactored so that the type item that
-// depends on the Imbalance type (DustRemoval) is placed in its own pallet.
-struct ElevatedTrait<T: Subtrait<I>, I: Instance>(T, I);
-impl<T: Subtrait<I>, I: Instance> Clone for ElevatedTrait<T, I> {
-	fn clone(&self) -> Self {
-		unimplemented!()
-	}
-}
-impl<T: Subtrait<I>, I: Instance> PartialEq for ElevatedTrait<T, I> {
-	fn eq(&self, _: &Self) -> bool {
-		unimplemented!()
-	}
-}
-impl<T: Subtrait<I>, I: Instance> Eq for ElevatedTrait<T, I> {}
-impl<T: Subtrait<I>, I: Instance> frame_system::Trait for ElevatedTrait<T, I> {
-	type BaseCallFilter = T::BaseCallFilter;
-	type Origin = T::Origin;
-	type Call = T::Call;
-	type Index = T::Index;
-	type BlockNumber = T::BlockNumber;
-	type Hash = T::Hash;
-	type Hashing = T::Hashing;
-	type AccountId = T::AccountId;
-	type Lookup = T::Lookup;
-	type Header = T::Header;
-	type Event = ();
-	type BlockHashCount = T::BlockHashCount;
-	type MaximumBlockWeight = T::MaximumBlockWeight;
-	type DbWeight = T::DbWeight;
-	type BlockExecutionWeight = T::BlockExecutionWeight;
-	type ExtrinsicBaseWeight = T::ExtrinsicBaseWeight;
-	type MaximumExtrinsicWeight = T::MaximumBlockWeight;
-	type MaximumBlockLength = T::MaximumBlockLength;
-	type AvailableBlockRatio = T::AvailableBlockRatio;
-	type Version = T::Version;
-	type PalletInfo = T::PalletInfo;
-	type AccountData = T::AccountData;
-	type OnNewAccount = T::OnNewAccount;
-	type OnKilledAccount = T::OnKilledAccount;
-	type SystemWeightInfo = T::SystemWeightInfo;
-}
-impl<T: Subtrait<I>, I: Instance> Trait<I> for ElevatedTrait<T, I> {
-	type Balance = T::Balance;
-	type DustRemoval = ();
-	type Event = ();
-	type ExistentialDeposit = T::ExistentialDeposit;
-	type BalanceInfo = T::BalanceInfo;
-	type AccountStore = T::AccountStore;
-	type MaxLocks = T::MaxLocks;
-	type OtherCurrencies = T::OtherCurrencies;
-	type WeightInfo = <T as Subtrait<I>>::WeightInfo;
 }
 
 impl<T: Trait<I>, I: Instance> Currency<T::AccountId> for Module<T, I>
