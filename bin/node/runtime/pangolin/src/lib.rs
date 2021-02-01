@@ -246,7 +246,7 @@ use sp_core::{
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		BlakeTwo256, Block as BlockT, ConvertInto, IdentityLookup, NumberFor, OpaqueKeys,
+		AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, NumberFor, OpaqueKeys,
 		SaturatedConversion, Saturating,
 	},
 	transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
@@ -272,7 +272,7 @@ use dvm_rpc_runtime_api::TransactionStatus;
 use impls::*;
 
 /// The address format for describing accounts.
-type Address = AccountId;
+type Address = MultiAddress<AccountId, ()>;
 /// Block type as expected by this runtime.
 type Block = generic::Block<Header, UncheckedExtrinsic>;
 /// The SignedExtension to the basic transaction logic.
@@ -351,7 +351,7 @@ impl frame_system::Trait for Runtime {
 	type Hash = Hash;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
-	type Lookup = IdentityLookup<Self::AccountId>;
+	type Lookup = AccountIdLookup<AccountId, ()>;
 	type Header = Header;
 	type Event = Event;
 	type BlockHashCount = BlockHashCount;
