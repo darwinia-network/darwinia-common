@@ -209,11 +209,11 @@ macro_rules! stream_build {
 		match $context
 			.client
 			.storage_changes_notification_stream(Some(&[key]), None)
-		{
+			{
 			Ok(stream) => Some(stream),
 			Err(_err) => None,
-		}
-	}};
+			}
+		}};
 }
 
 impl<B: BlockT, P, C, BE, H: ExHashT> EthPubSubApiT for EthPubSubApi<B, P, C, BE, H>

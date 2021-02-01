@@ -1310,12 +1310,7 @@ impl<T: Trait> Module<T> {
 		})?;
 		// Extend the lock to `balance` (rather than setting it) since we don't know what other
 		// votes are in place.
-		T::Currency::extend_lock(
-			DEMOCRACY_ID,
-			who,
-			vote.balance(),
-			WithdrawReasons::TRANSFER,
-		)?;
+		T::Currency::extend_lock(DEMOCRACY_ID, who, vote.balance(), WithdrawReasons::TRANSFER)?;
 		ReferendumInfoOf::<T>::insert(ref_index, ReferendumInfo::Ongoing(status));
 		Ok(())
 	}
