@@ -250,8 +250,8 @@ use sp_runtime::{
 		SaturatedConversion, Saturating,
 	},
 	transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, FixedPointNumber, ModuleId, OpaqueExtrinsic, Perbill, Percent, Permill,
-	Perquintill, RuntimeDebug,
+	ApplyExtrinsicResult, FixedPointNumber, ModuleId, MultiAddress, OpaqueExtrinsic, Perbill,
+	Percent, Permill, Perquintill, RuntimeDebug,
 };
 use sp_staking::SessionIndex;
 use sp_std::prelude::*;
@@ -1233,7 +1233,7 @@ where
 			.ok()?;
 		let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;
 		let (call, extra, _) = raw_payload.deconstruct();
-		Some((call, (account, signature, extra)))
+		Some((call, (account.into(), signature, extra)))
 	}
 }
 impl frame_system::offchain::SigningTypes for Runtime {
