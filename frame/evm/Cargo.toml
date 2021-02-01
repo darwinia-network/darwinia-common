@@ -23,13 +23,13 @@ sha3                  = { version = "0.8", default-features = false }
 darwinia-balances       = { default-features = false, path = "../balances" }
 darwinia-evm-primitives = { default-features = false, path = "../../primitives/evm" }
 # substrate
-frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "5d307871e98319874a8898e4138d6d42fe214719" }
-frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "5d307871e98319874a8898e4138d6d42fe214719" }
-pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "5d307871e98319874a8898e4138d6d42fe214719" }
-sp-core          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "5d307871e98319874a8898e4138d6d42fe214719" }
-sp-io            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "5d307871e98319874a8898e4138d6d42fe214719" }
-sp-runtime       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "5d307871e98319874a8898e4138d6d42fe214719" }
-sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "5d307871e98319874a8898e4138d6d42fe214719" }
+frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
+frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
+pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
+sp-core          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
+sp-io            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
+sp-runtime       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
+sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
 
 [dev-dependencies]
 darwinia-support = { features = ["easy-testing"], path = "../support" }

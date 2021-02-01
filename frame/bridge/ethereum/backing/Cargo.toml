@@ -22,11 +22,11 @@ ethereum-primitives       = { default-features = false, path = "../../../../prim
 # github
 ethabi = { default-features = false, git = "https://github.com/darwinia-network/ethabi.git", branch = "with_no_std" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "5d307871e98319874a8898e4138d6d42fe214719" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "5d307871e98319874a8898e4138d6d42fe214719" }
-sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "5d307871e98319874a8898e4138d6d42fe214719" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "5d307871e98319874a8898e4138d6d42fe214719" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "5d307871e98319874a8898e4138d6d42fe214719" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
+sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
 
 [dev-dependencies]
 # darwinia
@@ -40,10 +40,10 @@ ethereum-primitives            = { features = ["deserialize"], path = "../../../
 # github
 rlp = { package = "rlp", git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
-pallet-session   = { git = "https://github.com/darwinia-network/substrate.git", rev = "5d307871e98319874a8898e4138d6d42fe214719" }
-pallet-timestamp = { git = "https://github.com/darwinia-network/substrate.git", rev = "5d307871e98319874a8898e4138d6d42fe214719" }
-sp-core          = { git = "https://github.com/darwinia-network/substrate.git", rev = "5d307871e98319874a8898e4138d6d42fe214719" }
-sp-staking       = { git = "https://github.com/darwinia-network/substrate.git", rev = "5d307871e98319874a8898e4138d6d42fe214719" }
+pallet-session   = { git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
+pallet-timestamp = { git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
+sp-core          = { git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
+sp-staking       = { git = "https://github.com/darwinia-network/substrate.git", rev = "095d0f06a42b66a92f28d097499a69e3f170d59d" }
 
 [features]
 default = ["std"]
