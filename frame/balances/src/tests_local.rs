@@ -33,6 +33,7 @@ use frame_support::{
 	weights::{DispatchInfo, IdentityFee, Weight},
 };
 use frame_system as system;
+use pallet_transaction_payment::CurrencyAdapter;
 use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill, RuntimeDebug};
 // --- darwinia ---
@@ -110,8 +111,7 @@ parameter_types! {
 	pub const TransactionByteFee: Balance = 1;
 }
 impl pallet_transaction_payment::Trait for Test {
-	type Currency = Ring;
-	type OnTransactionPayment = ();
+	type OnChargeTransaction = CurrencyAdapter<Ring, ()>;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = IdentityFee<u64>;
 	type FeeMultiplierUpdate = ();
