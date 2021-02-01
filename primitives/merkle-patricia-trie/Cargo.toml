@@ -20,7 +20,7 @@ hashbrown = { version = "0.9.1" }
 hash = { package = "keccak-hash", default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 rlp  = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }
 
 [dev-dependencies]
 # crates

@@ -18,6 +18,6 @@ jsonrpc-derive      = { version = "15.1.0" }
 # darwinia
 darwinia-header-mmr-rpc-runtime-api = { path = "./runtime-api" }
 # substrate
-sp-api        = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-blockchain = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-runtime    = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-api        = { git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }
+sp-blockchain = { git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }
+sp-runtime    = { git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }

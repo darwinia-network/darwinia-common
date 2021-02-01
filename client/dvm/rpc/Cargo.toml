@@ -33,16 +33,16 @@ dvm-rpc-core            = { path = "../../../frame/dvm/rpc" }
 dvm-rpc-core-primitives = { path = "../../../primitives/dvm-rpc-core" }
 dvm-rpc-runtime-api     = { path = "../../../frame/dvm/rpc/runtime-api" }
 # substrate
-sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sc-network          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sc-rpc              = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sc-service          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-api              = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-io               = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-storage          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }
+sc-network          = { git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }
+sc-rpc              = { git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }
+sc-service          = { git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }
+sp-api              = { git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }
+sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }
+sp-io               = { git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }
+sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }
+sp-storage          = { git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }
+sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }
 
 [features]
 rpc_binary_search_estimate = []

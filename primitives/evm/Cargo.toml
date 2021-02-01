@@ -16,8 +16,8 @@ evm                   = { version = "0.20.0", default-features = false, features
 impl-trait-for-tuples = "0.1"
 serde                 = { version = "1.0.118", optional = true, features = ["derive"] }
 # substrate
-sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-std  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }
+sp-std  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }
 
 [features]
 default = ["std"]

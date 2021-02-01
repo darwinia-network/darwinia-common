@@ -28,13 +28,13 @@ darwinia-support         = { default-features = false, path = "../support" }
 dvm-consensus-primitives = { default-features = false, path = "../../primitives/consensus" }
 dvm-rpc-runtime-api      = { default-features = false, path = "./rpc/runtime-api" }
 # substrate
-frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-core          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-io            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-runtime       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }
+frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }
+pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }
+sp-core          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }
+sp-io            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }
+sp-runtime       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }
+sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }
 
 [dev-dependencies]
 # crates

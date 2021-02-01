@@ -28,9 +28,9 @@ primitive-types = { default-features = false, features = ["codec", "rlp"], git =
 rlp             = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 rlp-derive      = { git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
-sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }
+sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }
 
 [dev-dependencies]
 # crates
@@ -39,7 +39,7 @@ serde_json    = { version = "1.0.61" }
 # github
 triehash = { git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
-frame-support = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+frame-support = { git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }
 
 [features]
 default = ["std"]
