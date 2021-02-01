@@ -17,9 +17,9 @@ darwinia-evm             = { default-features = false, path = "../../../evm" }
 darwinia-evm-primitives  = { default-features = false, path = "../../../../primitives/evm" }
 evm                      = { version = "0.20.0", default-features = false, features = ["with-codec"] }
 # substrate
-frame-support            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }
-sp-core                  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }
-sp-io                    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "179e02b7595559c3c093edf09bebd5d62fc2e0f7" }
+frame-support            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "5d307871e98319874a8898e4138d6d42fe214719" }
+sp-core                  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "5d307871e98319874a8898e4138d6d42fe214719" }
+sp-io                    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "5d307871e98319874a8898e4138d6d42fe214719" }
 
 [features]
 default = ["std"]
