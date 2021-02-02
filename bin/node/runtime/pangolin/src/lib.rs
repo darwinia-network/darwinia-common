@@ -188,14 +188,14 @@ pub mod wasm {
 	#[cfg(all(feature = "std", not(any(target_arch = "x86_64", target_arch = "x86"))))]
 	pub const WASM_BINARY_BLOATY: &[u8] = include_bytes!("../../../../wasm/pangolin_runtime.wasm");
 
-	#[cfg(feature = "std")]
 	/// Wasm binary unwrapped. If built with `BUILD_DUMMY_WASM_BINARY`, the function panics.
+	#[cfg(feature = "std")]
 	pub fn wasm_binary_unwrap() -> &'static [u8] {
 		#[cfg(all(feature = "std", any(target_arch = "x86_64", target_arch = "x86")))]
 		return WASM_BINARY.expect(
 			"Development wasm binary is not available. This means the client is \
-							built with `BUILD_DUMMY_WASM_BINARY` flag and it is only usable for \
-							production chains. Please rebuild with the flag disabled.",
+			built with `SKIP_WASM_BUILD` flag and it is only usable for \
+			production chains. Please rebuild with the flag disabled.",
 		);
 		#[cfg(all(feature = "std", not(any(target_arch = "x86_64", target_arch = "x86"))))]
 		return WASM_BINARY;
@@ -303,7 +303,7 @@ type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 type Ring = Balances;
 
 type NegativeImbalance = <darwinia_balances::Module<Runtime, RingInstance> as Currency<
-	<Runtime as frame_system::Trait>::AccountId,
+	<Runtime as frame_system::Config>::AccountId,
 >>::NegativeImbalance;
 
 /// This runtime version.
@@ -342,7 +342,7 @@ parameter_types! {
 const_assert!(
 	AvailableBlockRatio::get().deconstruct() >= AVERAGE_ON_INITIALIZE_WEIGHT.deconstruct()
 );
-impl frame_system::Trait for Runtime {
+impl frame_system::Config for Runtime {
 	type BaseCallFilter = ();
 	type Origin = Origin;
 	type Call = Call;
@@ -1579,6 +1579,6 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 // 		// --- substrate ---
 // 		use frame_support::migration::*;
 
-// 		<Runtime as frame_system::Trait>::MaximumBlockWeight::get()
+// 		<Runtime as frame_system::Config>::MaximumBlockWeight::get()
 // 	}
 // }
