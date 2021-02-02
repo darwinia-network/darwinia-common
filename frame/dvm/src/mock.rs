@@ -18,7 +18,7 @@
 
 use super::*;
 use crate::account_basic::DVMAccountBasicMapping;
-use crate::{IntermediateStateRoot, Module, Config};
+use crate::{Config, IntermediateStateRoot, Module};
 use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator};
 use ethereum::{TransactionAction, TransactionSignature};
 use frame_support::{impl_outer_origin, parameter_types, weights::Weight, ConsensusEngineId};

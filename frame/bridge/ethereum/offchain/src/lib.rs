@@ -99,8 +99,8 @@ pub const ETH_OFFCHAIN: KeyTypeId = KeyTypeId(*b"etho");
 /// A dummy endpoint, point this to shadow service
 const ETH_RESOURCE: &'static [u8] = b"http://shadow.darwinia.network/";
 
-pub trait Trait:
-	CreateSignedTransaction<EthereumRelayCall<Self>> + darwinia_ethereum_linear_relay::Trait
+pub trait Config:
+	CreateSignedTransaction<EthereumRelayCall<Self>> + darwinia_ethereum_linear_relay::Config
 {
 	type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
 
@@ -108,7 +108,7 @@ pub trait Trait:
 }
 
 decl_error! {
-	pub enum Error for Module<T: Trait> {
+	pub enum Error for Module<T: Config> {
 		/// API Response - UNEXPECTED
 		APIRespUnexp,
 
@@ -125,7 +125,7 @@ decl_error! {
 }
 
 decl_module! {
-	pub struct Module<T: Trait> for enum Call
+	pub struct Module<T: Config> for enum Call
 	where
 		origin: T::Origin
 	{
@@ -151,7 +151,7 @@ decl_module! {
 	}
 }
 
-impl<T: Trait> Module<T> {
+impl<T: Config> Module<T> {
 	/// The `relay_header` is try to get Ethereum blocks with merkle proofs from shadow service
 	/// The default communication will transfer data with scale encoding,
 	/// if there are issue to communicate with scale encoding, the failback communication will

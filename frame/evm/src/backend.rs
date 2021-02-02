@@ -1,4 +1,4 @@
-use crate::{AccountBasicMapping, AccountCodes, AccountStorages, Event, Module, Trait};
+use crate::{AccountBasicMapping, AccountCodes, AccountStorages, Config, Event, Module};
 use codec::{Decode, Encode};
 use evm::backend::{Apply, ApplyBackend, Backend as BackendT};
 use frame_support::traits::Get;
@@ -62,7 +62,7 @@ impl<'vicinity, T> Backend<'vicinity, T> {
 	}
 }
 
-impl<'vicinity, T: Trait> BackendT for Backend<'vicinity, T> {
+impl<'vicinity, T: Config> BackendT for Backend<'vicinity, T> {
 	fn gas_price(&self) -> U256 {
 		self.vicinity.gas_price
 	}
@@ -135,7 +135,7 @@ impl<'vicinity, T: Trait> BackendT for Backend<'vicinity, T> {
 	}
 }
 
-impl<'vicinity, T: Trait> ApplyBackend for Backend<'vicinity, T> {
+impl<'vicinity, T: Config> ApplyBackend for Backend<'vicinity, T> {
 	fn apply<A, I, L>(&mut self, values: A, logs: L, delete_empty: bool)
 	where
 		A: IntoIterator<Item = Apply<I>>,
