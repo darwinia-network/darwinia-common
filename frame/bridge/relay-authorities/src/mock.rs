@@ -98,7 +98,7 @@ parameter_types! {
 	pub const SignThreshold: Perbill = Perbill::from_percent(60);
 	pub const SubmitDuration: BlockNumber = 3;
 }
-impl Trait for Test {
+impl Config for Test {
 	type Event = Event;
 	type RingCurrency = Ring;
 	type LockId = LockId;
@@ -121,7 +121,7 @@ parameter_types! {
 	pub const MaximumBlockLength: u32 = 2 * 1024;
 	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
 }
-impl frame_system::Trait for Test {
+impl frame_system::Config for Test {
 	type BaseCallFilter = ();
 	type Origin = Origin;
 	type Call = ();
@@ -152,7 +152,7 @@ impl frame_system::Trait for Test {
 parameter_types! {
 	pub const MaxLocks: u32 = 1024;
 }
-impl darwinia_balances::Trait<RingInstance> for Test {
+impl darwinia_balances::Config<RingInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = Event;

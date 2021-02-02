@@ -72,7 +72,7 @@ parameter_types! {
 	pub const MaximumBlockLength: u32 = 2 * 1024;
 	pub const AvailableBlockRatio: Perbill = Perbill::one();
 }
-impl frame_system::Trait for Test {
+impl frame_system::Config for Test {
 	type BaseCallFilter = ();
 	type Origin = Origin;
 	type Call = ();
@@ -126,7 +126,7 @@ impl ContainsLengthBound for TenToFourteen {
 parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;
 }
-impl darwinia_balances::Trait<KtonInstance> for Test {
+impl darwinia_balances::Config<KtonInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = Event;
@@ -137,7 +137,7 @@ impl darwinia_balances::Trait<KtonInstance> for Test {
 	type OtherCurrencies = ();
 	type WeightInfo = ();
 }
-impl darwinia_balances::Trait<RingInstance> for Test {
+impl darwinia_balances::Config<RingInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = Event;
@@ -167,7 +167,7 @@ parameter_types! {
 	pub const SpendPeriod: u64 = 2;
 	pub const Burn: Permill = Permill::from_percent(50);
 }
-impl Trait for Test {
+impl Config for Test {
 	type ModuleId = TreasuryModuleId;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;

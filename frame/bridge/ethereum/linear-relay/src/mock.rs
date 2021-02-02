@@ -65,7 +65,7 @@ pub struct Test;
 parameter_types! {
 	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethli");
 }
-impl Trait for Test {
+impl Config for Test {
 	type ModuleId = EthereumRelayModuleId;
 	type Event = ();
 	type EthereumNetwork = EthereumNetwork;
@@ -80,7 +80,7 @@ parameter_types! {
 	pub const MaximumBlockLength: u32 = 2 * 1024;
 	pub const AvailableBlockRatio: Perbill = Perbill::one();
 }
-impl frame_system::Trait for Test {
+impl frame_system::Config for Test {
 	type BaseCallFilter = ();
 	type Origin = Origin;
 	type Call = Call;
@@ -108,7 +108,7 @@ impl frame_system::Trait for Test {
 	type SystemWeightInfo = ();
 }
 
-impl darwinia_balances::Trait<RingInstance> for Test {
+impl darwinia_balances::Config<RingInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = ();

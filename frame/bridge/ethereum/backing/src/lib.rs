@@ -36,12 +36,12 @@ mod types {
 	pub type Balance = u128;
 	pub type DepositId = U256;
 
-	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
-	pub type BlockNumber<T> = <T as frame_system::Trait>::BlockNumber;
-	pub type RingBalance<T> = <<T as Trait>::RingCurrency as Currency<AccountId<T>>>::Balance;
-	pub type KtonBalance<T> = <<T as Trait>::KtonCurrency as Currency<AccountId<T>>>::Balance;
+	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
+	pub type BlockNumber<T> = <T as frame_system::Config>::BlockNumber;
+	pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
+	pub type KtonBalance<T> = <<T as Config>::KtonCurrency as Currency<AccountId<T>>>::Balance;
 
-	pub type EthereumReceiptProofThing<T> = <<T as Trait>::EthereumRelay as EthereumReceipt<
+	pub type EthereumReceiptProofThing<T> = <<T as Config>::EthereumRelay as EthereumReceipt<
 		AccountId<T>,
 		RingBalance<T>,
 	>>::EthereumReceiptProofThing;
@@ -83,12 +83,12 @@ use ethereum_primitives::{
 };
 use types::*;
 
-pub trait Trait: frame_system::Trait {
+pub trait Config: frame_system::Config {
 	/// The ethereum backing module id, used for deriving its sovereign account ID.
 	type ModuleId: Get<ModuleId>;
 	type FeeModuleId: Get<ModuleId>;
 
-	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
 	type RedeemAccountId: From<[u8; 32]> + Into<Self::AccountId>;
 	type EthereumRelay: EthereumReceipt<Self::AccountId, RingBalance<Self>>;
@@ -132,7 +132,7 @@ decl_event! {
 }
 
 decl_error! {
-	pub enum Error for Module<T: Trait> {
+	pub enum Error for Module<T: Config> {
 		/// Address Length - MISMATCHED
 		AddrLenMis,
 		/// Pubkey Prefix - MISMATCHED
@@ -172,7 +172,7 @@ decl_error! {
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait> as DarwiniaEthereumBacking {
+	trait Store for Module<T: Config> as DarwiniaEthereumBacking {
 		pub VerifiedProof
 			get(fn verified_proof)
 			: map hasher(blake2_128_concat) EthereumTransactionIndex => bool = false;
@@ -188,7 +188,7 @@ decl_storage! {
 
 		pub LockAssetEvents
 			get(fn lock_asset_events)
-			: Vec<<T as frame_system::Trait>::Event>;
+			: Vec<<T as frame_system::Config>::Event>;
 	}
 	add_extra_genesis {
 		config(ring_locked): RingBalance<T>;
@@ -212,7 +212,7 @@ decl_storage! {
 }
 
 decl_module! {
-	pub struct Module<T: Trait> for enum Call
+	pub struct Module<T: Config> for enum Call
 	where
 		origin: T::Origin
 	{
@@ -289,8 +289,8 @@ decl_module! {
 						RingTokenAddress::get(),
 						ring_to_lock
 					);
-					let module_event: <T as Trait>::Event = raw_event.clone().into();
-					let system_event: <T as frame_system::Trait>::Event = module_event.into();
+					let module_event: <T as Config>::Event = raw_event.clone().into();
+					let system_event: <T as frame_system::Config>::Event = module_event.into();
 
 					locked = true;
 
@@ -313,8 +313,8 @@ decl_module! {
 						KtonTokenAddress::get(),
 						kton_to_lock
 					);
-					let module_event: <T as Trait>::Event = raw_event.clone().into();
-					let system_event: <T as frame_system::Trait>::Event = module_event.into();
+					let module_event: <T as Config>::Event = raw_event.clone().into();
+					let system_event: <T as frame_system::Config>::Event = module_event.into();
 
 					locked = true;
 
@@ -408,7 +408,7 @@ decl_module! {
 	}
 }
 
-impl<T: Trait> Module<T> {
+impl<T: Config> Module<T> {
 	/// The account ID of the backing pot.
 	///
 	/// This actually does computation. If you need to keep using it, then make sure you cache the
@@ -873,7 +873,7 @@ impl<T: Trait> Module<T> {
 	}
 }
 
-impl<T: Trait> Sign<BlockNumber<T>> for Module<T> {
+impl<T: Config> Sign<BlockNumber<T>> for Module<T> {
 	type Signature = EcdsaSignature;
 	type Message = EcdsaMessage;
 	type Signer = EthereumAddress;

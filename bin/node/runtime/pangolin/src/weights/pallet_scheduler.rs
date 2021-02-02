@@ -9,7 +9,7 @@ use frame_support::{traits::Get, weights::Weight};
 use sp_std::marker::PhantomData;
 
 pub struct WeightInfo<T>(PhantomData<T>);
-impl<T: frame_system::Trait> pallet_scheduler::WeightInfo for WeightInfo<T> {
+impl<T: frame_system::Config> pallet_scheduler::WeightInfo for WeightInfo<T> {
 	fn schedule(s: u32) -> Weight {
 		(32_493_000 as Weight)
 			.saturating_add((49_000 as Weight).saturating_mul(s as Weight))

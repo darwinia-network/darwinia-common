@@ -18,15 +18,16 @@
 //! Native EVM runner.
 
 use crate::{
-	AccountBasicMapping, AccountCodes, AccountStorages, AddressMapping, CallInfo, CreateInfo,
-	Error, Event, FeeCalculator, Log, Module, PrecompileSet, Runner as RunnerT, Trait, Vicinity,
+	AccountBasicMapping, AccountCodes, AccountStorages, AddressMapping, CallInfo, Config,
+	CreateInfo, Error, Event, FeeCalculator, Log, Module, PrecompileSet, Runner as RunnerT,
+	Vicinity,
 };
 use evm::{
 	Capture, Context, CreateScheme, ExitError, ExitReason, ExitSucceed, ExternalOpcode, Opcode,
 	Runtime, Stack, Transfer,
 };
 use evm_gasometer::{self as gasometer, Gasometer};
-use evm_runtime::{Config, Handler as HandlerT};
+use evm_runtime::{Config as EvmConfig, Handler as HandlerT};
 use frame_support::{
 	ensure,
 	storage::{StorageDoubleMap, StorageMap},
@@ -41,11 +42,11 @@ use sp_std::{
 };
 
 #[derive(Default)]
-pub struct Runner<T: Trait> {
+pub struct Runner<T: Config> {
 	_marker: PhantomData<T>,
 }
 
-impl<T: Trait> RunnerT<T> for Runner<T> {
+impl<T: Config> RunnerT<T> for Runner<T> {
 	type Error = Error<T>;
 
 	fn call(
@@ -279,9 +280,9 @@ fn l64(gas: usize) -> usize {
 	gas - gas / 64
 }
 
-pub struct Handler<'vicinity, 'config, T: Trait> {
+pub struct Handler<'vicinity, 'config, T: Config> {
 	vicinity: &'vicinity Vicinity,
-	config: &'config Config,
+	config: &'config EvmConfig,
 	gasometer: Gasometer<'config>,
 	deleted: BTreeSet<H160>,
 	logs: Vec<Log>,
@@ -295,13 +296,13 @@ pub struct Handler<'vicinity, 'config, T: Trait> {
 	_marker: PhantomData<T>,
 }
 
-impl<'vicinity, 'config, T: Trait> Handler<'vicinity, 'config, T> {
+impl<'vicinity, 'config, T: Config> Handler<'vicinity, 'config, T> {
 	/// Create a new handler with given vicinity.
 	pub fn new_with_precompile(
 		vicinity: &'vicinity Vicinity,
 		gas_limit: usize,
 		is_static: bool,
-		config: &'config Config,
+		config: &'config EvmConfig,
 		precompile: fn(
 			H160,
 			&[u8],
@@ -411,7 +412,7 @@ impl<'vicinity, 'config, T: Trait> Handler<'vicinity, 'config, T> {
 	}
 }
 
-impl<'vicinity, 'config, T: Trait> HandlerT for Handler<'vicinity, 'config, T> {
+impl<'vicinity, 'config, T: Config> HandlerT for Handler<'vicinity, 'config, T> {
 	type CreateInterrupt = Infallible;
 	type CreateFeedback = Infallible;
 	type CallInterrupt = Infallible;
@@ -775,7 +776,7 @@ impl<'vicinity, 'config, T: Trait> HandlerT for Handler<'vicinity, 'config, T> {
 	}
 }
 
-impl<'vicinity, 'config, T: Trait> Drop for Handler<'vicinity, 'config, T> {
+impl<'vicinity, 'config, T: Config> Drop for Handler<'vicinity, 'config, T> {
 	fn drop(&mut self) {
 		let mut deleted = BTreeSet::new();
 		mem::swap(&mut deleted, &mut self.deleted);

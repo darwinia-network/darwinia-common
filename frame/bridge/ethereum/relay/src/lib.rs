@@ -33,12 +33,12 @@ mod types {
 	// --- darwinia ---
 	use crate::*;
 
-	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
-	pub type BlockNumber<T> = <T as frame_system::Trait>::BlockNumber;
+	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
+	pub type BlockNumber<T> = <T as frame_system::Config>::BlockNumber;
 
 	pub type RingBalance<T> = <CurrencyT<T> as Currency<AccountId<T>>>::Balance;
 
-	type CurrencyT<T> = <T as Trait>::Currency;
+	type CurrencyT<T> = <T as Config>::Currency;
 }
 
 // --- core ---
@@ -85,11 +85,11 @@ use types::*;
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/dags_merkle_roots.rs"));
 
-pub trait Trait: frame_system::Trait {
+pub trait Config: frame_system::Config {
 	/// The ethereum-relay's module id, used for deriving its sovereign account ID.
 	type ModuleId: Get<ModuleId>;
 
-	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
 	type EthereumNetwork: Get<EthereumNetworkType>;
 
@@ -162,7 +162,7 @@ decl_event! {
 }
 
 decl_error! {
-	pub enum Error for Module<T: Trait> {
+	pub enum Error for Module<T: Config> {
 		/// Header - INVALID
 		HeaderInv,
 		/// Confirmed Blocks - CONFLICT
@@ -199,7 +199,7 @@ darwinia_support::impl_genesis! {
 	}
 }
 decl_storage! {
-	trait Store for Module<T: Trait> as DarwiniaEthereumRelay {
+	trait Store for Module<T: Config> as DarwiniaEthereumRelay {
 		/// Confirmed ethereum header parcel
 		pub ConfirmedHeaderParcels
 			get(fn confirmed_header_parcel_of)
@@ -273,7 +273,7 @@ decl_storage! {
 }
 
 decl_module! {
-	pub struct Module<T: Trait> for enum Call
+	pub struct Module<T: Config> for enum Call
 	where
 		origin: T::Origin
 	{
@@ -561,7 +561,7 @@ decl_module! {
 	}
 }
 
-impl<T: Trait> Module<T> {
+impl<T: Config> Module<T> {
 	/// The account ID of the ethereum relay pot.
 	///
 	/// This actually does computation. If you need to keep using it, then make sure you cache the
@@ -680,7 +680,7 @@ impl<T: Trait> Module<T> {
 	}
 }
 
-impl<T: Trait> Relayable for Module<T> {
+impl<T: Config> Relayable for Module<T> {
 	type RelayHeaderId = EthereumBlockNumber;
 	type RelayHeaderParcel = EthereumRelayHeaderParcel;
 	type RelayProofs = EthereumRelayProofs;
@@ -891,7 +891,7 @@ impl<T: Trait> Relayable for Module<T> {
 	}
 }
 
-impl<T: Trait> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
+impl<T: Config> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
 	type EthereumReceiptProofThing = (EthereumHeader, EthereumReceiptProof, MMRProof);
 
 	fn account_id() -> AccountId<T> {
@@ -991,13 +991,13 @@ pub struct MMRProof {
 }
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq)]
-pub struct CheckEthereumRelayHeaderParcel<T: Trait>(PhantomData<T>);
-impl<T: Trait> CheckEthereumRelayHeaderParcel<T> {
+pub struct CheckEthereumRelayHeaderParcel<T: Config>(PhantomData<T>);
+impl<T: Config> CheckEthereumRelayHeaderParcel<T> {
 	pub fn new() -> Self {
 		Self(Default::default())
 	}
 }
-impl<T: Trait> Debug for CheckEthereumRelayHeaderParcel<T> {
+impl<T: Config> Debug for CheckEthereumRelayHeaderParcel<T> {
 	#[cfg(feature = "std")]
 	fn fmt(&self, f: &mut Formatter) -> FmtResult {
 		write!(f, "CheckEthereumRelayHeaderParcel")
@@ -1008,10 +1008,10 @@ impl<T: Trait> Debug for CheckEthereumRelayHeaderParcel<T> {
 		Ok(())
 	}
 }
-impl<T: Send + Sync + Trait> SignedExtension for CheckEthereumRelayHeaderParcel<T> {
+impl<T: Send + Sync + Config> SignedExtension for CheckEthereumRelayHeaderParcel<T> {
 	const IDENTIFIER: &'static str = "CheckEthereumRelayHeaderParcel";
 	type AccountId = T::AccountId;
-	type Call = <T as Trait>::Call;
+	type Call = <T as Config>::Call;
 	type AdditionalSigned = ();
 	type Pre = ();
 
@@ -1062,7 +1062,7 @@ impl<T: Send + Sync + Trait> SignedExtension for CheckEthereumRelayHeaderParcel<
 	}
 }
 
-impl<T: Trait> ChangeMembers<AccountId<T>> for Module<T> {
+impl<T: Config> ChangeMembers<AccountId<T>> for Module<T> {
 	fn change_members_sorted(_: &[T::AccountId], outgoing: &[T::AccountId], _: &[T::AccountId]) {
 		let _ = <PendingRelayHeaderParcels<T>>::try_mutate(|pending_relay_header_parcels| {
 			let mut changed = false;

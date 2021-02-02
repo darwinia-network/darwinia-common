@@ -65,7 +65,7 @@ pub struct Test;
 parameter_types! {
 	pub const CrabIssuingModuleId: ModuleId = ModuleId(*b"da/crabi");
 }
-impl Trait for Test {
+impl Config for Test {
 	type Event = Event;
 	type ModuleId = CrabIssuingModuleId;
 	type RingCurrency = Ring;
@@ -79,7 +79,7 @@ parameter_types! {
 	pub const MinimumPeriod: u64 = 5;
 	pub const AvailableBlockRatio: Perbill = Perbill::one();
 }
-impl frame_system::Trait for Test {
+impl frame_system::Config for Test {
 	type BaseCallFilter = ();
 	type Origin = Origin;
 	type Call = ();
@@ -110,7 +110,7 @@ impl frame_system::Trait for Test {
 parameter_types! {
 	pub const ExistentialDeposit: Balance = 0;
 }
-impl darwinia_balances::Trait<RingInstance> for Test {
+impl darwinia_balances::Config<RingInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = Event;

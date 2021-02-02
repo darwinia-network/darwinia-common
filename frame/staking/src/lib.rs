@@ -20,7 +20,7 @@
 //!
 //! The Staking module is used to manage funds at stake by network maintainers.
 //!
-//! - [`staking::Trait`](./trait.Trait.html)
+//! - [`staking::Config`](./trait.Config.html)
 //! - [`Call`](./enum.Call.html)
 //! - [`Module`](./struct.Module.html)
 //!
@@ -107,7 +107,7 @@
 //! valid behavior_ while _punishing any misbehavior or lack of availability_.
 //!
 //! `payout_stakers` call. Any account can call `payout_stakers`, which pays the reward to the
-//! validator as well as its nominators. Only the [`Trait::MaxNominatorRewardedPerValidator`]
+//! validator as well as its nominators. Only the [`Config::MaxNominatorRewardedPerValidator`]
 //! biggest stakers can claim their reward. This is to limit the i/o cost to mutate storage for each
 //! nominator's account.
 //!
@@ -154,10 +154,10 @@
 //! use frame_system::ensure_signed;
 //! use darwinia_staking as staking;
 //!
-//! pub trait Trait: staking::Trait {}
+//! pub trait Config: staking::Config {}
 //!
 //! decl_module! {
-//! 	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+//! 	pub struct Module<T: Config> for enum Call where origin: T::Origin {
 //! 		/// Reward a validator.
 //! 		#[weight = 0]
 //! 		pub fn reward_myself(origin) -> dispatch::DispatchResult {
@@ -175,7 +175,7 @@
 //! ### Era payout
 //!
 //! The era payout is computed using yearly inflation curve defined at
-//! [`T::RewardCurve`](./trait.Trait.html#associatedtype.RewardCurve) as such:
+//! [`T::RewardCurve`](./trait.Config.html#associatedtype.RewardCurve) as such:
 //!
 //! ```nocompile
 //! staker_payout = yearly_inflation(npos_token_staked / total_tokens) * total_tokens / era_per_year
@@ -186,7 +186,7 @@
 //! remaining_payout = max_yearly_inflation * total_tokens / era_per_year - staker_payout
 //! ```
 //! The remaining reward is send to the configurable end-point
-//! [`T::RewardRemainder`](./trait.Trait.html#associatedtype.RewardRemainder).
+//! [`T::RewardRemainder`](./trait.Config.html#associatedtype.RewardRemainder).
 //!
 //! ### Reward Calculation
 //!
@@ -232,7 +232,7 @@
 //!
 //! The controller account can free a portion (or all) of the funds using the
 //! [`unbond`](enum.Call.html#variant.unbond) call. Note that the funds are not immediately
-//! accessible. Instead, a duration denoted by [`BondingDuration`](./trait.Trait.html#associatedtype.BondingDuration)
+//! accessible. Instead, a duration denoted by [`BondingDuration`](./trait.Config.html#associatedtype.BondingDuration)
 //! (in number of eras) must pass until the funds can actually be removed. Once the
 //! `BondingDurationInEra` is over, the [`withdraw_unbonded`](./enum.Call.html#variant.withdraw_unbonded)
 //! call can be used to actually withdraw the funds.
@@ -324,8 +324,8 @@ mod types {
 	/// time scale is milliseconds.
 	pub type TsInMs = u64;
 
-	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
-	pub type BlockNumber<T> = <T as frame_system::Trait>::BlockNumber;
+	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
+	pub type BlockNumber<T> = <T as frame_system::Config>::BlockNumber;
 
 	/// The balance type of this module.
 	pub type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
@@ -348,8 +348,8 @@ mod types {
 	pub type ExposureT<T> = Exposure<AccountId<T>, RingBalance<T>, KtonBalance<T>>;
 	pub type ElectionResultT<T> = ElectionResult<AccountId<T>, RingBalance<T>, KtonBalance<T>>;
 
-	type RingCurrency<T> = <T as Trait>::RingCurrency;
-	type KtonCurrency<T> = <T as Trait>::KtonCurrency;
+	type RingCurrency<T> = <T as Config>::RingCurrency;
+	type KtonCurrency<T> = <T as Config>::KtonCurrency;
 }
 
 // --- darwinia ---
@@ -436,9 +436,9 @@ const MONTH_IN_MINUTES: TsInMs = 30 * 24 * 60;
 const MONTH_IN_MILLISECONDS: TsInMs = MONTH_IN_MINUTES * 60 * 1000;
 const STAKING_ID: LockIdentifier = *b"da/staki";
 
-pub trait Trait: frame_system::Trait + SendTransactionTypes<Call<Self>> {
+pub trait Config: frame_system::Config + SendTransactionTypes<Call<Self>> {
 	/// The overarching event type.
-	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
 	type ModuleId: Get<ModuleId>;
 
@@ -539,8 +539,8 @@ pub trait Trait: frame_system::Trait + SendTransactionTypes<Call<Self>> {
 
 /// Means for interacting with a specialized version of the `session` trait.
 ///
-/// This is needed because `Staking` sets the `ValidatorIdOf` of the `pallet_session::Trait`
-pub trait SessionInterface<AccountId>: frame_system::Trait {
+/// This is needed because `Staking` sets the `ValidatorIdOf` of the `pallet_session::Config`
+pub trait SessionInterface<AccountId>: frame_system::Config {
 	/// Disable a given validator by stash ID.
 	///
 	/// Returns `true` if new era should be forced at the end of this session.
@@ -552,10 +552,10 @@ pub trait SessionInterface<AccountId>: frame_system::Trait {
 	/// Prune historical session tries up to but not including the given index.
 	fn prune_historical_up_to(up_to: SessionIndex);
 }
-impl<T: Trait> SessionInterface<AccountId<T>> for T
+impl<T: Config> SessionInterface<AccountId<T>> for T
 where
-	T: pallet_session::Trait<ValidatorId = AccountId<T>>,
-	T: pallet_session::historical::Trait<
+	T: pallet_session::Config<ValidatorId = AccountId<T>>,
+	T: pallet_session::historical::Config<
 		FullIdentification = Exposure<AccountId<T>, RingBalance<T>, KtonBalance<T>>,
 		FullIdentificationOf = ExposureOf<T>,
 	>,
@@ -604,7 +604,7 @@ pub trait WeightInfo {
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait> as DarwiniaStaking {
+	trait Store for Module<T: Config> as DarwiniaStaking {
 		/// Number of eras to keep in history.
 		///
 		/// Information is kept for eras in `[current_era - history_depth; current_era]`.
@@ -901,7 +901,7 @@ decl_event!(
 
 decl_error! {
 	/// Error for the staking module.
-	pub enum Error for Module<T: Trait> {
+	pub enum Error for Module<T: Config> {
 		/// Not a controller account.
 		NotController,
 		/// Not a stash account.
@@ -973,7 +973,7 @@ decl_error! {
 }
 
 decl_module! {
-	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+	pub struct Module<T: Config> for enum Call where origin: T::Origin {
 		type Error = Error<T>;
 
 		const ModuleId: ModuleId = T::ModuleId::get();
@@ -2246,7 +2246,7 @@ decl_module! {
 	}
 }
 
-impl<T: Trait> Module<T> {
+impl<T: Config> Module<T> {
 	pub fn account_id() -> T::AccountId {
 		T::ModuleId::get().into_account()
 	}
@@ -3420,7 +3420,7 @@ impl<T: Trait> Module<T> {
 	}
 }
 
-impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
+impl<T: Config> pallet_session::SessionManager<T::AccountId> for Module<T> {
 	fn new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
 		Self::new_session(new_index)
 	}
@@ -3432,7 +3432,7 @@ impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
 	}
 }
 
-impl<T: Trait> pallet_session::historical::SessionManager<T::AccountId, ExposureT<T>>
+impl<T: Config> pallet_session::historical::SessionManager<T::AccountId, ExposureT<T>>
 	for Module<T>
 {
 	fn new_session(new_index: SessionIndex) -> Option<Vec<(T::AccountId, ExposureT<T>)>> {
@@ -3459,12 +3459,12 @@ impl<T: Trait> pallet_session::historical::SessionManager<T::AccountId, Exposure
 }
 
 /// This is intended to be used with `FilterHistoricalOffences`.
-impl<T: Trait>
+impl<T: Config>
 	OnOffenceHandler<T::AccountId, pallet_session::historical::IdentificationTuple<T>, Weight>
 	for Module<T>
 where
-	T: pallet_session::Trait<ValidatorId = AccountId<T>>,
-	T: pallet_session::historical::Trait<
+	T: pallet_session::Config<ValidatorId = AccountId<T>>,
+	T: pallet_session::historical::Config<
 		FullIdentification = ExposureT<T>,
 		FullIdentificationOf = ExposureOf<T>,
 	>,
@@ -3602,7 +3602,7 @@ where
 	}
 }
 
-impl<T: Trait> OnDepositRedeem<T::AccountId, RingBalance<T>> for Module<T> {
+impl<T: Config> OnDepositRedeem<T::AccountId, RingBalance<T>> for Module<T> {
 	fn on_deposit_redeem(
 		backing: &T::AccountId,
 		stash: &T::AccountId,
@@ -3684,7 +3684,7 @@ impl<T: Trait> OnDepositRedeem<T::AccountId, RingBalance<T>> for Module<T> {
 }
 
 #[allow(deprecated)]
-impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
+impl<T: Config> frame_support::unsigned::ValidateUnsigned for Module<T> {
 	type Call = Call<T>;
 	fn validate_unsigned(source: TransactionSource, call: &Self::Call) -> TransactionValidity {
 		if let Call::submit_election_solution_unsigned(_, _, score, era, _) = call {
@@ -3768,7 +3768,7 @@ impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
 /// * 1 point to the producer of each referenced uncle block.
 impl<T> pallet_authorship::EventHandler<T::AccountId, T::BlockNumber> for Module<T>
 where
-	T: Trait + pallet_authorship::Trait + pallet_session::Trait,
+	T: Config + pallet_authorship::Config + pallet_session::Config,
 {
 	fn note_author(author: T::AccountId) {
 		Self::reward_by_ids(vec![(author, 20)]);
@@ -3784,7 +3784,7 @@ where
 /// A `Convert` implementation that finds the stash of the given controller account,
 /// if any.
 pub struct StashOf<T>(PhantomData<T>);
-impl<T: Trait> Convert<T::AccountId, Option<T::AccountId>> for StashOf<T> {
+impl<T: Config> Convert<T::AccountId, Option<T::AccountId>> for StashOf<T> {
 	fn convert(controller: T::AccountId) -> Option<T::AccountId> {
 		<Module<T>>::ledger(&controller).map(|l| l.stash)
 	}
@@ -3796,7 +3796,7 @@ impl<T: Trait> Convert<T::AccountId, Option<T::AccountId>> for StashOf<T> {
 /// Active exposure is the exposure of the validator set currently validating, i.e. in
 /// `active_era`. It can differ from the latest planned exposure in `current_era`.
 pub struct ExposureOf<T>(PhantomData<T>);
-impl<T: Trait> Convert<T::AccountId, Option<ExposureT<T>>> for ExposureOf<T> {
+impl<T: Config> Convert<T::AccountId, Option<ExposureT<T>>> for ExposureOf<T> {
 	fn convert(validator: T::AccountId) -> Option<ExposureT<T>> {
 		if let Some(active_era) = <Module<T>>::active_era() {
 			Some(<Module<T>>::eras_stakers(active_era.index, &validator))
@@ -3813,7 +3813,7 @@ pub struct FilterHistoricalOffences<T, R> {
 impl<T, Reporter, Offender, R, O> ReportOffence<Reporter, Offender, O>
 	for FilterHistoricalOffences<Module<T>, R>
 where
-	T: Trait,
+	T: Config,
 	R: ReportOffence<Reporter, Offender, O>,
 	O: Offence<Offender>,
 {

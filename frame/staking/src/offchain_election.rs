@@ -33,8 +33,8 @@ use sp_runtime::{
 use sp_std::{convert::TryInto, prelude::*};
 // --- darwinia ---
 use crate::{
-	Call, CompactAssignments, ElectionSize, Module, NominatorIndex, Nominators, OffchainAccuracy,
-	Trait, ValidatorIndex, WeightInfo,
+	Call, CompactAssignments, Config, ElectionSize, Module, NominatorIndex, Nominators,
+	OffchainAccuracy, ValidatorIndex, WeightInfo,
 };
 
 /// Error types related to the offchain election machinery.
@@ -75,7 +75,7 @@ pub(crate) const DEFAULT_LONGEVITY: u64 = 25;
 /// don't run twice within a window of length [`OFFCHAIN_REPEAT`].
 ///
 /// Returns `Ok(())` if offchain worker should happen, `Err(reason)` otherwise.
-pub(crate) fn set_check_offchain_execution_status<T: Trait>(
+pub(crate) fn set_check_offchain_execution_status<T: Config>(
 	now: T::BlockNumber,
 ) -> Result<(), &'static str> {
 	let storage = StorageValueRef::persistent(&OFFCHAIN_HEAD_DB);
@@ -112,7 +112,7 @@ pub(crate) fn set_check_offchain_execution_status<T: Trait>(
 /// The internal logic of the offchain worker of this module. This runs the phragmen election,
 /// compacts and reduces the solution, computes the score and submits it back to the chain as an
 /// unsigned transaction, without any signature.
-pub(crate) fn compute_offchain_election<T: Trait>() -> Result<(), OffchainElectionError> {
+pub(crate) fn compute_offchain_election<T: Config>() -> Result<(), OffchainElectionError> {
 	let iters = get_balancing_iters::<T>();
 	// compute raw solution. Note that we use `OffchainAccuracy`.
 	let ElectionResult {
@@ -150,7 +150,7 @@ pub(crate) fn compute_offchain_election<T: Trait>() -> Result<(), OffchainElecti
 /// Get a random number of iterations to run the balancing.
 ///
 /// Uses the offchain seed to generate a random number.
-pub fn get_balancing_iters<T: Trait>() -> usize {
+pub fn get_balancing_iters<T: Config>() -> usize {
 	match T::MaxIterations::get() {
 		0 => 0,
 		max @ _ => {
@@ -258,7 +258,7 @@ pub fn maximum_compact_len<W: crate::WeightInfo>(
 ///
 /// Indeed, the score must be computed **after** this step. If this step reduces the score too much,
 /// then the solution will be discarded.
-pub fn trim_to_weight<T: Trait, FN>(
+pub fn trim_to_weight<T: Config, FN>(
 	maximum_allowed_voters: u32,
 	mut compact: CompactAssignments,
 	nominator_index: FN,
@@ -318,7 +318,7 @@ where
 /// Takes an election result and spits out some data that can be submitted to the chain.
 ///
 /// This does a lot of stuff; read the inline comments.
-pub fn prepare_submission<T: Trait>(
+pub fn prepare_submission<T: Config>(
 	assignments: Vec<Assignment<T::AccountId, OffchainAccuracy>>,
 	winners: Vec<(T::AccountId, ExtendedBalance)>,
 	do_reduce: bool,

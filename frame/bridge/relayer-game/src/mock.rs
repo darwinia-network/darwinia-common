@@ -32,7 +32,7 @@ pub mod mock_relay {
 	use crate::{mock::*, *};
 
 	decl_storage! {
-		trait Store for Module<T: Trait> as DarwiniaRelay {
+		trait Store for Module<T: Config> as DarwiniaRelay {
 			pub ConfirmedBlockNumbers get(fn best_confirmed_block_number): MockRelayBlockNumber;
 
 			pub ConfirmedHeaders
@@ -68,13 +68,13 @@ pub mod mock_relay {
 	}
 
 	decl_module! {
-		pub struct Module<T: Trait> for enum Call
+		pub struct Module<T: Config> for enum Call
 		where
 			origin: T::Origin
 		{}
 	}
 
-	impl<T: Trait> Relayable for Module<T> {
+	impl<T: Config> Relayable for Module<T> {
 		type RelayHeaderId = MockRelayBlockNumber;
 		type RelayHeaderParcel = MockRelayHeader;
 		type RelayProofs = ();
@@ -271,7 +271,7 @@ pub struct Test;
 parameter_types! {
 	pub const RelayerGameLockId: LockIdentifier = *b"da/rgame";
 }
-impl Trait for Test {
+impl Config for Test {
 	type RingCurrency = Ring;
 	type LockId = RelayerGameLockId;
 	type RingSlash = ();
@@ -280,7 +280,7 @@ impl Trait for Test {
 	type WeightInfo = ();
 }
 
-impl frame_system::Trait for Test {
+impl frame_system::Config for Test {
 	type BaseCallFilter = ();
 	type Origin = Origin;
 	type Call = ();
@@ -311,7 +311,7 @@ impl frame_system::Trait for Test {
 parameter_types! {
 	pub const ExistentialDeposit: Balance = 1;
 }
-impl darwinia_balances::Trait<RingInstance> for Test {
+impl darwinia_balances::Config<RingInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = ();

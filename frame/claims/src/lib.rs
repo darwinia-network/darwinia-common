@@ -33,8 +33,8 @@ mod types {
 
 	pub type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
 
-	type AccountId<T> = <T as frame_system::Trait>::AccountId;
-	type RingCurrency<T> = <T as Trait>::RingCurrency;
+	type AccountId<T> = <T as frame_system::Config>::AccountId;
+	type RingCurrency<T> = <T as Config>::RingCurrency;
 }
 
 // --- crates ---
@@ -65,8 +65,8 @@ use sp_std::prelude::*;
 use darwinia_support::balance::lock::*;
 use types::*;
 
-pub trait Trait: frame_system::Trait {
-	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+pub trait Config: frame_system::Config {
+	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
 	type ModuleId: Get<ModuleId>;
 
@@ -81,7 +81,7 @@ pub trait Trait: frame_system::Trait {
 decl_event!(
 	pub enum Event<T>
 	where
-		<T as frame_system::Trait>::AccountId,
+		<T as frame_system::Config>::AccountId,
 		RingBalance = RingBalance<T>,
 	{
 		/// Someone claimed some *RING*s. [account, address, amount]
@@ -90,7 +90,7 @@ decl_event!(
 );
 
 decl_error! {
-	pub enum Error for Module<T: Trait> {
+	pub enum Error for Module<T: Config> {
 		/// Invalid Ethereum signature.
 		InvalidSignature,
 		/// Ethereum address has no claim.
@@ -106,7 +106,7 @@ decl_error! {
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait> as DarwiniaClaims {
+	trait Store for Module<T: Config> as DarwiniaClaims {
 		ClaimsFromEth
 			get(fn claims_from_eth)
 			: map hasher(identity) AddressT => Option<RingBalance<T>>;
@@ -164,7 +164,7 @@ decl_storage! {
 }
 
 decl_module! {
-	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+	pub struct Module<T: Config> for enum Call where origin: T::Origin {
 		type Error = Error<T>;
 
 		const ModuleId: ModuleId = T::ModuleId::get();
@@ -344,7 +344,7 @@ decl_module! {
 	}
 }
 
-impl<T: Trait> Module<T> {
+impl<T: Config> Module<T> {
 	fn account_id() -> T::AccountId {
 		T::ModuleId::get().into_account()
 	}
@@ -412,7 +412,7 @@ impl<T: Trait> Module<T> {
 	}
 }
 
-impl<T: Trait> sp_runtime::traits::ValidateUnsigned for Module<T> {
+impl<T: Config> sp_runtime::traits::ValidateUnsigned for Module<T> {
 	type Call = Call<T>;
 
 	fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
@@ -543,7 +543,7 @@ mod secp_utils {
 		res
 	}
 
-	pub fn eth_sig<T: Trait>(
+	pub fn eth_sig<T: Config>(
 		secret: &secp256k1::SecretKey,
 		what: &[u8],
 		signed_message: &[u8],
@@ -559,7 +559,7 @@ mod secp_utils {
 		EcdsaSignature(r)
 	}
 
-	pub fn tron_sig<T: Trait>(
+	pub fn tron_sig<T: Config>(
 		secret: &secp256k1::SecretKey,
 		what: &[u8],
 		signed_message: &[u8],
@@ -619,7 +619,7 @@ mod tests {
 	ord_parameter_types! {
 		pub const Six: u64 = 6;
 	}
-	impl Trait for Test {
+	impl Config for Test {
 		type Event = ();
 		type ModuleId = ClaimsModuleId;
 		type Prefix = Prefix;
@@ -633,7 +633,7 @@ mod tests {
 		pub const MaximumBlockLength: u32 = 4 * 1024 * 1024;
 		pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
 	}
-	impl frame_system::Trait for Test {
+	impl frame_system::Config for Test {
 		type BaseCallFilter = ();
 		type Origin = Origin;
 		type Call = ();
@@ -666,7 +666,7 @@ mod tests {
 	parameter_types! {
 		pub const ExistentialDeposit: Balance = 1;
 	}
-	impl darwinia_balances::Trait<RingInstance> for Test {
+	impl darwinia_balances::Config<RingInstance> for Test {
 		type Balance = Balance;
 		type DustRemoval = ();
 		type Event = ();

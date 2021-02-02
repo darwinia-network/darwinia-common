@@ -33,7 +33,7 @@ parameter_types! {
 	pub const MaximumBlockLength: u32 = 2 * 1024;
 	pub const AvailableBlockRatio: Perbill = Perbill::one();
 }
-impl frame_system::Trait for Test {
+impl frame_system::Config for Test {
 	type BaseCallFilter = ();
 	type Origin = Origin;
 	type Index = u64;
@@ -64,7 +64,7 @@ impl frame_system::Trait for Test {
 parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;
 }
-impl darwinia_balances::Trait<RingInstance> for Test {
+impl darwinia_balances::Config<RingInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = ();
@@ -79,7 +79,7 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 parameter_types! {
 	pub const MinimumPeriod: u64 = 1000;
 }
-impl pallet_timestamp::Trait for Test {
+impl pallet_timestamp::Config for Test {
 	type Moment = u64;
 	type OnTimestampSet = ();
 	type MinimumPeriod = MinimumPeriod;
@@ -95,7 +95,7 @@ impl FeeCalculator for FixedGasPrice {
 	}
 }
 
-impl Trait for Test {
+impl Config for Test {
 	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressRoot<Self::AccountId>;
@@ -183,7 +183,7 @@ fn fail_call_return_ok() {
 #[test]
 fn mutate_account_works() {
 	new_test_ext().execute_with(|| {
-		<Test as Trait>::AccountBasicMapping::mutate_account_basic(
+		<Test as Config>::AccountBasicMapping::mutate_account_basic(
 			&H160::from_str("1000000000000000000000000000000000000001").unwrap(),
 			Account {
 				nonce: U256::from(10),
@@ -192,7 +192,7 @@ fn mutate_account_works() {
 		);
 
 		assert_eq!(
-			<Test as Trait>::AccountBasicMapping::account_basic(
+			<Test as Config>::AccountBasicMapping::account_basic(
 				&H160::from_str("1000000000000000000000000000000000000001").unwrap()
 			),
 			Account {

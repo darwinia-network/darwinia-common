@@ -1,6 +1,6 @@
 //! # Vesting Module
 //!
-//! - [`vesting::Trait`](./trait.Trait.html)
+//! - [`vesting::Config`](./trait.Config.html)
 //! - [`Call`](./enum.Call.html)
 //!
 //! ## Overview
@@ -26,7 +26,7 @@
 //!   "vested" so far.
 //!
 //! [`Call`]: ./enum.Call.html
-//! [`Trait`]: ./trait.Trait.html
+//! [`Config`]: ./trait.Config.html
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -47,9 +47,9 @@ use sp_std::{fmt::Debug, prelude::*};
 use darwinia_support::balance::lock::*;
 
 type BalanceOf<T> =
-	<<T as Trait>::Currency as Currency<<T as frame_system::Trait>::AccountId>>::Balance;
+	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 type MaxLocksOf<T> =
-	<<T as Trait>::Currency as LockableCurrency<<T as frame_system::Trait>::AccountId>>::MaxLocks;
+	<<T as Config>::Currency as LockableCurrency<<T as frame_system::Config>::AccountId>>::MaxLocks;
 
 pub trait WeightInfo {
 	fn vest_locked(l: u32) -> Weight;
@@ -60,9 +60,9 @@ pub trait WeightInfo {
 	fn force_vested_transfer(l: u32) -> Weight;
 }
 
-pub trait Trait: frame_system::Trait {
+pub trait Config: frame_system::Config {
 	/// The overarching event type.
-	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
 	/// The currency trait.
 	type Currency: LockableCurrency<Self::AccountId>;
@@ -113,7 +113,7 @@ impl<Balance: AtLeast32BitUnsigned + Copy, BlockNumber: AtLeast32BitUnsigned + C
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait> as Vesting {
+	trait Store for Module<T: Config> as Vesting {
 		/// Information regarding the vesting of a given account.
 		pub Vesting get(fn vesting):
 			map hasher(blake2_128_concat) T::AccountId
@@ -151,7 +151,7 @@ decl_storage! {
 decl_event!(
 	pub enum Event<T>
 	where
-		AccountId = <T as frame_system::Trait>::AccountId,
+		AccountId = <T as frame_system::Config>::AccountId,
 		Balance = BalanceOf<T>,
 	{
 		/// The amount vested has been updated. This could indicate more funds are available. The
@@ -165,7 +165,7 @@ decl_event!(
 
 decl_error! {
 	/// Error for the vesting module.
-	pub enum Error for Module<T: Trait> {
+	pub enum Error for Module<T: Config> {
 		/// The account given is not vesting.
 		NotVesting,
 		/// An existing vesting schedule already exists for this account that cannot be clobbered.
@@ -177,7 +177,7 @@ decl_error! {
 
 decl_module! {
 	/// Vesting module declaration.
-	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+	pub struct Module<T: Config> for enum Call where origin: T::Origin {
 		type Error = Error<T>;
 
 		/// The minimum amount to be transferred to create a new vesting schedule.
@@ -306,7 +306,7 @@ decl_module! {
 	}
 }
 
-impl<T: Trait> Module<T> {
+impl<T: Config> Module<T> {
 	/// (Re)set or remove the module's currency lock on `who`'s account in accordance with their
 	/// current unvested amount.
 	fn update_lock(who: T::AccountId) -> DispatchResult {
@@ -332,7 +332,7 @@ impl<T: Trait> Module<T> {
 	}
 }
 
-impl<T: Trait> VestingSchedule<T::AccountId> for Module<T>
+impl<T: Config> VestingSchedule<T::AccountId> for Module<T>
 where
 	BalanceOf<T>: MaybeSerializeDeserialize + Debug,
 {
@@ -427,7 +427,7 @@ mod tests {
 		pub const MaximumBlockLength: u32 = 2 * 1024;
 		pub const AvailableBlockRatio: Perbill = Perbill::one();
 	}
-	impl frame_system::Trait for Test {
+	impl frame_system::Config for Test {
 		type BaseCallFilter = ();
 		type Origin = Origin;
 		type Index = u64;
@@ -457,7 +457,7 @@ mod tests {
 	parameter_types! {
 		pub const MaxLocks: u32 = 10;
 	}
-	impl darwinia_balances::Trait<RingInstance> for Test {
+	impl darwinia_balances::Config<RingInstance> for Test {
 		type Balance = Balance;
 		type DustRemoval = ();
 		type Event = ();
@@ -471,7 +471,7 @@ mod tests {
 	parameter_types! {
 		pub const MinVestedTransfer: u64 = 256 * 2;
 	}
-	impl Trait for Test {
+	impl Config for Test {
 		type Event = ();
 		type Currency = Ring;
 		type BlockNumberToBalance = Identity;

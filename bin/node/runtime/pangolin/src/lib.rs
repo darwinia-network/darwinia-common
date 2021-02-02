@@ -373,7 +373,7 @@ impl frame_system::Config for Runtime {
 parameter_types! {
 	pub const MaxScheduledPerBlock: u32 = 50;
 }
-impl pallet_scheduler::Trait for Runtime {
+impl pallet_scheduler::Config for Runtime {
 	type Event = Event;
 	type Origin = Origin;
 	type PalletsOrigin = OriginCaller;
@@ -468,7 +468,7 @@ parameter_types! {
 	pub const AnnouncementDepositFactor: Balance = deposit(0, 66);
 	pub const MaxPending: u16 = 32;
 }
-impl pallet_proxy::Trait for Runtime {
+impl pallet_proxy::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 	type Currency = Balances;
@@ -487,7 +487,7 @@ parameter_types! {
 	pub const EpochDuration: u64 = BLOCKS_PER_SESSION as _;
 	pub const ExpectedBlockTime: Moment = MILLISECS_PER_BLOCK;
 }
-impl pallet_babe::Trait for Runtime {
+impl pallet_babe::Config for Runtime {
 	type EpochDuration = EpochDuration;
 	type ExpectedBlockTime = ExpectedBlockTime;
 	type EpochChangeTrigger = pallet_babe::ExternalTrigger;
@@ -508,7 +508,7 @@ impl pallet_babe::Trait for Runtime {
 parameter_types! {
 	pub const MinimumPeriod: Moment = SLOT_DURATION / 2;
 }
-impl pallet_timestamp::Trait for Runtime {
+impl pallet_timestamp::Config for Runtime {
 	type Moment = Moment;
 	type OnTimestampSet = Babe;
 	type MinimumPeriod = MinimumPeriod;
@@ -520,7 +520,7 @@ parameter_types! {
 	pub const ExistentialDeposit: Balance = 1 * COIN;
 	pub const MaxLocks: u32 = 50;
 }
-impl darwinia_balances::Trait<RingInstance> for Runtime {
+impl darwinia_balances::Config<RingInstance> for Runtime {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = Event;
@@ -532,7 +532,7 @@ impl darwinia_balances::Trait<RingInstance> for Runtime {
 	type WeightInfo = weights::darwinia_balances::WeightInfo<Runtime>;
 }
 type KtonInstance = darwinia_balances::Instance1;
-impl darwinia_balances::Trait<KtonInstance> for Runtime {
+impl darwinia_balances::Config<KtonInstance> for Runtime {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = Event;
@@ -561,7 +561,7 @@ parameter_types! {
 	/// See `multiplier_can_grow_from_zero`.
 	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000_000u128);
 }
-impl pallet_transaction_payment::Trait for Runtime {
+impl pallet_transaction_payment::Config for Runtime {
 	type OnChargeTransaction = CurrencyAdapter<Ring, DealWithFees>;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = WeightToFee;
@@ -571,7 +571,7 @@ impl pallet_transaction_payment::Trait for Runtime {
 parameter_types! {
 	pub const UncleGenerations: BlockNumber = 5;
 }
-impl pallet_authorship::Trait for Runtime {
+impl pallet_authorship::Config for Runtime {
 	type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Babe>;
 	type UncleGenerations = UncleGenerations;
 	type FilterUncle = ();
@@ -598,7 +598,7 @@ parameter_types! {
 	pub const Cap: Balance = CAP;
 	pub const TotalPower: Power = TOTAL_POWER;
 }
-impl darwinia_staking::Trait for Runtime {
+impl darwinia_staking::Config for Runtime {
 	type Event = Event;
 	type ModuleId = StakingModuleId;
 	type UnixTime = Timestamp;
@@ -638,14 +638,14 @@ impl darwinia_staking::Trait for Runtime {
 parameter_types! {
 	pub OffencesWeightSoftLimit: Weight = Perbill::from_percent(60) * MaximumBlockWeight::get();
 }
-impl pallet_offences::Trait for Runtime {
+impl pallet_offences::Config for Runtime {
 	type Event = Event;
 	type IdentificationTuple = pallet_session::historical::IdentificationTuple<Self>;
 	type OnOffenceHandler = Staking;
 	type WeightSoftLimit = OffencesWeightSoftLimit;
 }
 
-impl pallet_session::historical::Trait for Runtime {
+impl pallet_session::historical::Config for Runtime {
 	type FullIdentification = darwinia_staking::Exposure<AccountId, Balance, Balance>;
 	type FullIdentificationOf = darwinia_staking::ExposureOf<Runtime>;
 }
@@ -661,7 +661,7 @@ impl_opaque_keys! {
 parameter_types! {
 	pub const DisabledValidatorsThreshold: Perbill = Perbill::from_percent(17);
 }
-impl pallet_session::Trait for Runtime {
+impl pallet_session::Config for Runtime {
 	type Event = Event;
 	type ValidatorId = AccountId;
 	type ValidatorIdOf = darwinia_staking::StashOf<Self>;
@@ -674,7 +674,7 @@ impl pallet_session::Trait for Runtime {
 	type WeightInfo = weights::pallet_session::WeightInfo<Runtime>;
 }
 
-impl pallet_grandpa::Trait for Runtime {
+impl pallet_grandpa::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 	type KeyOwnerProof =
@@ -693,7 +693,7 @@ parameter_types! {
 	pub const SessionDuration: BlockNumber = BLOCKS_PER_SESSION as _;
 	pub const ImOnlineUnsignedPriority: TransactionPriority = TransactionPriority::max_value();
 }
-impl pallet_im_online::Trait for Runtime {
+impl pallet_im_online::Config for Runtime {
 	type AuthorityId = ImOnlineId;
 	type Event = Event;
 	type SessionDuration = SessionDuration;
@@ -702,7 +702,7 @@ impl pallet_im_online::Trait for Runtime {
 	type WeightInfo = weights::pallet_im_online::WeightInfo<Runtime>;
 }
 
-impl pallet_authority_discovery::Trait for Runtime {}
+impl pallet_authority_discovery::Config for Runtime {}
 
 type EnsureRootOrHalfCouncil = EnsureOneOf<
 	AccountId,
@@ -721,7 +721,7 @@ parameter_types! {
 	pub const MaxVotes: u32 = 100;
 	pub const MaxProposals: u32 = 100;
 }
-impl darwinia_democracy::Trait for Runtime {
+impl darwinia_democracy::Config for Runtime {
 	type Proposal = Call;
 	type Event = Event;
 	type Currency = Ring;
@@ -781,7 +781,7 @@ parameter_types! {
 // Make sure that there are no more than `MaxMembers` members elected via elections-phragmen.
 const_assert!(DesiredMembers::get() <= CouncilMaxMembers::get());
 type CouncilCollective = pallet_collective::Instance0;
-impl pallet_collective::Trait<CouncilCollective> for Runtime {
+impl pallet_collective::Config<CouncilCollective> for Runtime {
 	type Origin = Origin;
 	type Proposal = Call;
 	type Event = Event;
@@ -792,7 +792,7 @@ impl pallet_collective::Trait<CouncilCollective> for Runtime {
 	type WeightInfo = weights::pallet_collective::WeightInfo<Runtime>;
 }
 type TechnicalCollective = pallet_collective::Instance1;
-impl pallet_collective::Trait<TechnicalCollective> for Runtime {
+impl pallet_collective::Config<TechnicalCollective> for Runtime {
 	type Origin = Origin;
 	type Proposal = Call;
 	type Event = Event;
@@ -812,7 +812,7 @@ parameter_types! {
 	/// Daily council elections.
 	pub const TermDuration: BlockNumber = 24 * HOURS;
 }
-impl darwinia_elections_phragmen::Trait for Runtime {
+impl darwinia_elections_phragmen::Config for Runtime {
 	type Event = Event;
 	type ModuleId = ElectionsPhragmenModuleId;
 	type Currency = Ring;
@@ -848,7 +848,7 @@ type EnsureRootOrMoreThanHalfCouncil = EnsureOneOf<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>,
 >;
-impl pallet_membership::Trait<pallet_membership::Instance0> for Runtime {
+impl pallet_membership::Config<pallet_membership::Instance0> for Runtime {
 	type Event = Event;
 	type AddOrigin = EnsureRootOrMoreThanHalfCouncil;
 	type RemoveOrigin = EnsureRootOrMoreThanHalfCouncil;
@@ -882,7 +882,7 @@ parameter_types! {
 	pub const BountyCuratorDeposit: Permill = Permill::from_percent(50);
 	pub const BountyValueMinimum: Balance = 2 * COIN;
 }
-impl darwinia_treasury::Trait for Runtime {
+impl darwinia_treasury::Config for Runtime {
 	type ModuleId = TreasuryModuleId;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
@@ -916,7 +916,7 @@ parameter_types! {
 	pub const ClaimsModuleId: ModuleId = ModuleId(*b"da/claim");
 	pub Prefix: &'static [u8] = b"Pay RINGs to the template account:";
 }
-impl darwinia_claims::Trait for Runtime {
+impl darwinia_claims::Config for Runtime {
 	type Event = Event;
 	type ModuleId = ClaimsModuleId;
 	type Prefix = Prefix;
@@ -927,7 +927,7 @@ impl darwinia_claims::Trait for Runtime {
 parameter_types! {
 	pub const MinVestedTransfer: Balance = 100 * MILLI;
 }
-impl darwinia_vesting::Trait for Runtime {
+impl darwinia_vesting::Config for Runtime {
 	type Event = Event;
 	type Currency = Ring;
 	type BlockNumberToBalance = ConvertInto;
@@ -935,7 +935,7 @@ impl darwinia_vesting::Trait for Runtime {
 	type WeightInfo = ();
 }
 
-impl pallet_sudo::Trait for Runtime {
+impl pallet_sudo::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 }
@@ -943,7 +943,7 @@ impl pallet_sudo::Trait for Runtime {
 parameter_types! {
 	pub const CrabIssuingModuleId: ModuleId = ModuleId(*b"da/crais");
 }
-impl darwinia_crab_issuing::Trait for Runtime {
+impl darwinia_crab_issuing::Config for Runtime {
 	type Event = Event;
 	type ModuleId = CrabIssuingModuleId;
 	type RingCurrency = Ring;
@@ -953,7 +953,7 @@ impl darwinia_crab_issuing::Trait for Runtime {
 parameter_types! {
 	pub const CrabBackingModuleId: ModuleId = ModuleId(*b"da/crabk");
 }
-impl darwinia_crab_backing::Trait for Runtime {
+impl darwinia_crab_backing::Config for Runtime {
 	type ModuleId = CrabBackingModuleId;
 	type RingCurrency = Ring;
 	type WeightInfo = ();
@@ -967,7 +967,7 @@ parameter_types! {
 	pub const AdvancedFee: Balance = 50 * COIN;
 	pub const SyncReward: Balance = 1000 * COIN;
 }
-impl darwinia_ethereum_backing::Trait for Runtime {
+impl darwinia_ethereum_backing::Config for Runtime {
 	type ModuleId = EthereumBackingModuleId;
 	type FeeModuleId = EthereumBackingFeeModuleId;
 	type Event = Event;
@@ -996,7 +996,7 @@ parameter_types! {
 	pub const ApproveThreshold: Perbill = Perbill::from_percent(60);
 	pub const RejectThreshold: Perbill = Perbill::from_percent(1);
 }
-impl darwinia_ethereum_relay::Trait for Runtime {
+impl darwinia_ethereum_relay::Config for Runtime {
 	type ModuleId = EthereumRelayModuleId;
 	type Event = Event;
 	type EthereumNetwork = EthereumNetwork;
@@ -1016,7 +1016,7 @@ type EthereumRelayerGameInstance = darwinia_relayer_game::Instance0;
 parameter_types! {
 	pub const EthereumRelayerGameLockId: LockIdentifier = *b"ethrgame";
 }
-impl darwinia_relayer_game::Trait<EthereumRelayerGameInstance> for Runtime {
+impl darwinia_relayer_game::Config<EthereumRelayerGameInstance> for Runtime {
 	type RingCurrency = Ring;
 	type LockId = EthereumRelayerGameLockId;
 	type RingSlash = Treasury;
@@ -1028,14 +1028,14 @@ impl darwinia_relayer_game::Trait<EthereumRelayerGameInstance> for Runtime {
 parameter_types! {
 	pub const TronBackingModuleId: ModuleId = ModuleId(*b"da/trobk");
 }
-impl darwinia_tron_backing::Trait for Runtime {
+impl darwinia_tron_backing::Config for Runtime {
 	type ModuleId = TronBackingModuleId;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 	type WeightInfo = ();
 }
 
-impl darwinia_header_mmr::Trait for Runtime {}
+impl darwinia_header_mmr::Config for Runtime {}
 
 /// Fixed gas price of `1`.
 pub struct FixedGasPrice;
@@ -1049,7 +1049,7 @@ impl FeeCalculator for FixedGasPrice {
 parameter_types! {
 	pub const ChainId: u64 = 43;
 }
-impl darwinia_evm::Trait for Runtime {
+impl darwinia_evm::Config for Runtime {
 	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressTruncated;
@@ -1080,7 +1080,7 @@ parameter_types! {
 	pub const SignThreshold: Perbill = Perbill::from_percent(60);
 	pub const SubmitDuration: BlockNumber = 100;
 }
-impl darwinia_relay_authorities::Trait<EthereumRelayAuthoritiesInstance> for Runtime {
+impl darwinia_relay_authorities::Config<EthereumRelayAuthoritiesInstance> for Runtime {
 	type Event = Event;
 	type RingCurrency = Ring;
 	type LockId = EthereumRelayAuthoritiesLockId;
@@ -1114,7 +1114,7 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 parameter_types! {
 	pub BlockGasLimit: U256 = U256::from(u32::max_value());
 }
-impl dvm_ethereum::Trait for Runtime {
+impl dvm_ethereum::Config for Runtime {
 	type Event = Event;
 	type FindAuthor = EthereumFindAuthor<Babe>;
 	type StateRoot = dvm_ethereum::IntermediateStateRoot;
@@ -1444,15 +1444,15 @@ impl_runtime_apis! {
 
 	impl dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block> for Runtime {
 		fn chain_id() -> u64 {
-			<Runtime as darwinia_evm::Trait>::ChainId::get()
+			<Runtime as darwinia_evm::Config>::ChainId::get()
 		}
 
 		fn gas_price() -> U256 {
-			<Runtime as darwinia_evm::Trait>::FeeCalculator::min_gas_price()
+			<Runtime as darwinia_evm::Config>::FeeCalculator::min_gas_price()
 		}
 
 		fn account_basic(address: H160) -> EVMAccount {
-			<Runtime as darwinia_evm::Trait>::AccountBasicMapping::account_basic(&address)
+			<Runtime as darwinia_evm::Config>::AccountBasicMapping::account_basic(&address)
 		}
 
 		fn account_code_at(address: H160) -> Vec<u8> {
@@ -1480,14 +1480,14 @@ impl_runtime_apis! {
 			estimate: bool,
 		) -> Result<darwinia_evm::CallInfo, sp_runtime::DispatchError> {
 			let config = if estimate {
-				let mut config = <Runtime as darwinia_evm::Trait>::config().clone();
+				let mut config = <Runtime as darwinia_evm::Config>::config().clone();
 				config.estimate = true;
 				Some(config)
 			} else {
 				None
 			};
 
-			<Runtime as darwinia_evm::Trait>::Runner::call(
+			<Runtime as darwinia_evm::Config>::Runner::call(
 				from,
 				to,
 				data,
@@ -1495,7 +1495,7 @@ impl_runtime_apis! {
 				gas_limit.low_u32(),
 				gas_price,
 				nonce,
-				config.as_ref().unwrap_or(<Runtime as darwinia_evm::Trait>::config()),
+				config.as_ref().unwrap_or(<Runtime as darwinia_evm::Config>::config()),
 			).map_err(|err| err.into())
 		}
 
@@ -1509,21 +1509,21 @@ impl_runtime_apis! {
 			estimate: bool,
 		) -> Result<darwinia_evm::CreateInfo, sp_runtime::DispatchError> {
 			let config = if estimate {
-				let mut config = <Runtime as darwinia_evm::Trait>::config().clone();
+				let mut config = <Runtime as darwinia_evm::Config>::config().clone();
 				config.estimate = true;
 				Some(config)
 			} else {
 				None
 			};
 
-			<Runtime as darwinia_evm::Trait>::Runner::create(
+			<Runtime as darwinia_evm::Config>::Runner::create(
 				from,
 				data,
 				value,
 				gas_limit.low_u32(),
 				gas_price,
 				nonce,
-				config.as_ref().unwrap_or(<Runtime as darwinia_evm::Trait>::config()),
+				config.as_ref().unwrap_or(<Runtime as darwinia_evm::Config>::config()),
 			).map_err(|err| err.into())
 		}
 

@@ -30,13 +30,13 @@ use frame_support::{
 	weights::{DispatchClass, Pays},
 };
 
-pub struct Dispatch<T: darwinia_evm::Trait> {
+pub struct Dispatch<T: darwinia_evm::Config> {
 	_marker: PhantomData<T>,
 }
 
 impl<T> Precompile for Dispatch<T>
 where
-	T: darwinia_evm::Trait,
+	T: darwinia_evm::Config,
 	T::Call: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Decode,
 	<T::Call as Dispatchable>::Origin: From<Option<T::AccountId>>,
 {

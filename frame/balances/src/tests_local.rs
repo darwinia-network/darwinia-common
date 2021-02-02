@@ -80,7 +80,7 @@ parameter_types! {
 	pub const MaximumBlockLength: u32 = 2 * 1024;
 	pub const AvailableBlockRatio: Perbill = Perbill::one();
 }
-impl frame_system::Trait for Test {
+impl frame_system::Config for Test {
 	type BaseCallFilter = ();
 	type Origin = Origin;
 	type Call = CallWithDispatchInfo;
@@ -110,13 +110,13 @@ impl frame_system::Trait for Test {
 parameter_types! {
 	pub const TransactionByteFee: Balance = 1;
 }
-impl pallet_transaction_payment::Trait for Test {
+impl pallet_transaction_payment::Config for Test {
 	type OnChargeTransaction = CurrencyAdapter<Ring, ()>;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = IdentityFee<u64>;
 	type FeeMultiplierUpdate = ();
 }
-impl Trait<RingInstance> for Test {
+impl Config<RingInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = Event;
@@ -133,7 +133,7 @@ impl Trait<RingInstance> for Test {
 	type OtherCurrencies = (Kton,);
 	type WeightInfo = ();
 }
-impl Trait<KtonInstance> for Test {
+impl Config<KtonInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = Event;

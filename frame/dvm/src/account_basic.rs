@@ -8,12 +8,12 @@ use sp_runtime::{
 
 pub struct DVMAccountBasicMapping<T>(sp_std::marker::PhantomData<T>);
 
-impl<T: crate::Trait + darwinia_balances::Trait<darwinia_balances::Instance0>> AccountBasicMapping
+impl<T: crate::Config + darwinia_balances::Config<darwinia_balances::Instance0>> AccountBasicMapping
 	for DVMAccountBasicMapping<T>
 {
 	/// Get the account basic in EVM format.
 	fn account_basic(address: &H160) -> EVMAccount {
-		let account_id = <T as darwinia_evm::Trait>::AddressMapping::into_account_id(*address);
+		let account_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(*address);
 		let nonce = frame_system::Module::<T>::account_nonce(&account_id);
 		let helper = U256::from(10)
 			.checked_pow(U256::from(9))
@@ -42,7 +42,7 @@ impl<T: crate::Trait + darwinia_balances::Trait<darwinia_balances::Instance0>> A
 
 	/// Mutate the basic account
 	fn mutate_account_basic(address: &H160, new: EVMAccount) {
-		let account_id = <T as darwinia_evm::Trait>::AddressMapping::into_account_id(*address);
+		let account_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(*address);
 		let current = T::AccountBasicMapping::account_basic(address);
 		let helper = U256::from(10)
 			.checked_pow(U256::from(9))
@@ -73,13 +73,13 @@ impl<T: crate::Trait + darwinia_balances::Trait<darwinia_balances::Instance0>> A
 					&account_id,
 					(diff_balance + 1).low_u128().unique_saturated_into(),
 				);
-				let value = <T as darwinia_balances::Trait<darwinia_balances::Instance0>>::Balance::unique_saturated_from(
+				let value = <T as darwinia_balances::Config<darwinia_balances::Instance0>>::Balance::unique_saturated_from(
 					remaining_balance.low_u128(),
 				);
 				crate::Module::<T>::set_remaining_balance(&account_id, value);
 			} else {
 				T::Currency::slash(&account_id, diff_balance.low_u128().unique_saturated_into());
-				let value = <T as darwinia_balances::Trait<darwinia_balances::Instance0>>::Balance::unique_saturated_from(
+				let value = <T as darwinia_balances::Config<darwinia_balances::Instance0>>::Balance::unique_saturated_from(
 					diff_remaining_balance.low_u128(),
 				);
 				crate::Module::<T>::dec_remain_balance(&account_id, value);
@@ -96,7 +96,7 @@ impl<T: crate::Trait + darwinia_balances::Trait<darwinia_balances::Instance0>> A
 					&account_id,
 					(diff_balance + 1).low_u128().unique_saturated_into(),
 				);
-				let value = <T as darwinia_balances::Trait<darwinia_balances::Instance0>>::Balance::unique_saturated_from(
+				let value = <T as darwinia_balances::Config<darwinia_balances::Instance0>>::Balance::unique_saturated_from(
 					remaining_balance.low_u128(),
 				);
 				crate::Module::<T>::set_remaining_balance(&account_id, value);
@@ -105,7 +105,7 @@ impl<T: crate::Trait + darwinia_balances::Trait<darwinia_balances::Instance0>> A
 					&account_id,
 					diff_balance.low_u128().unique_saturated_into(),
 				);
-				let value = <T as darwinia_balances::Trait<darwinia_balances::Instance0>>::Balance::unique_saturated_from(
+				let value = <T as darwinia_balances::Config<darwinia_balances::Instance0>>::Balance::unique_saturated_from(
 					diff_remaining_balance.low_u128(),
 				);
 				crate::Module::<T>::inc_remain_balance(&account_id, value);

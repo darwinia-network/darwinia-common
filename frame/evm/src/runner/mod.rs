@@ -18,12 +18,12 @@
 pub mod builtin;
 pub mod stack;
 
-use crate::Trait;
+use crate::Config;
 use darwinia_evm_primitives::{CallInfo, CreateInfo};
 use sp_core::{H160, H256, U256};
 use sp_std::vec::Vec;
 
-pub trait Runner<T: Trait> {
+pub trait Runner<T: Config> {
 	type Error: Into<sp_runtime::DispatchError>;
 
 	fn call(

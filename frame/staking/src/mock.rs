@@ -161,7 +161,7 @@ parameter_types! {
 	pub const Cap: Balance = CAP;
 	pub const TotalPower: Power = TOTAL_POWER;
 }
-impl Trait for Test {
+impl Config for Test {
 	type Event = MetaEvent;
 	type ModuleId = StakingModuleId;
 	type UnixTime = SuppressUnixTimeWarning;
@@ -197,7 +197,7 @@ parameter_types! {
 	pub const MaximumBlockLength: u32 = 2 * 1024;
 	pub const AvailableBlockRatio: Perbill = Perbill::one();
 }
-impl frame_system::Trait for Test {
+impl frame_system::Config for Test {
 	type BaseCallFilter = ();
 	type Origin = Origin;
 	type Call = Call;
@@ -234,7 +234,7 @@ parameter_types! {
 	pub const Offset: BlockNumber = 0;
 	pub const DisabledValidatorsThreshold: Perbill = Perbill::from_percent(25);
 }
-impl pallet_session::Trait for Test {
+impl pallet_session::Config for Test {
 	type Event = MetaEvent;
 	type ValidatorId = AccountId;
 	type ValidatorIdOf = StashOf<Test>;
@@ -247,7 +247,7 @@ impl pallet_session::Trait for Test {
 	type WeightInfo = ();
 }
 
-impl pallet_session::historical::Trait for Test {
+impl pallet_session::historical::Config for Test {
 	type FullIdentification = Exposure<AccountId, Balance, Balance>;
 	type FullIdentificationOf = ExposureOf<Test>;
 }
@@ -255,7 +255,7 @@ impl pallet_session::historical::Trait for Test {
 parameter_types! {
 	pub const UncleGenerations: u64 = 0;
 }
-impl pallet_authorship::Trait for Test {
+impl pallet_authorship::Config for Test {
 	type FindAuthor = Author11;
 	type UncleGenerations = UncleGenerations;
 	type FilterUncle = ();
@@ -265,7 +265,7 @@ impl pallet_authorship::Trait for Test {
 parameter_types! {
 	pub const MinimumPeriod: u64 = 5;
 }
-impl pallet_timestamp::Trait for Test {
+impl pallet_timestamp::Config for Test {
 	type Moment = u64;
 	type OnTimestampSet = ();
 	type MinimumPeriod = MinimumPeriod;
@@ -275,7 +275,7 @@ impl pallet_timestamp::Trait for Test {
 parameter_types! {
 	pub const MaxLocks: u32 = 1024;
 }
-impl darwinia_balances::Trait<RingInstance> for Test {
+impl darwinia_balances::Config<RingInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = MetaEvent;
@@ -286,7 +286,7 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 	type OtherCurrencies = ();
 	type WeightInfo = ();
 }
-impl darwinia_balances::Trait<KtonInstance> for Test {
+impl darwinia_balances::Config<KtonInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = MetaEvent;
@@ -818,14 +818,14 @@ pub(crate) fn current_total_payout_for_duration(era_duration: TsInMs) -> Balance
 	inflation::compute_total_payout::<Test>(
 		era_duration,
 		Staking::living_time(),
-		<Test as Trait>::Cap::get() - Ring::total_issuance(),
+		<Test as Config>::Cap::get() - Ring::total_issuance(),
 		Perbill::from_percent(50),
 	)
 	.0
 }
 
 pub(crate) fn reward_all_elected() {
-	let rewards = <Test as Trait>::SessionInterface::validators()
+	let rewards = <Test as Config>::SessionInterface::validators()
 		.into_iter()
 		.map(|v| (v, 1));
 

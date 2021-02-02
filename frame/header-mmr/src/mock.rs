@@ -39,7 +39,7 @@ pub type HeaderMMR = Module<Test>;
 // Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
 #[derive(Clone, PartialEq, Eq, Debug, Decode, Encode)]
 pub struct Test;
-impl Trait for Test {}
+impl Config for Test {}
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
@@ -47,7 +47,7 @@ parameter_types! {
 	pub const MaximumBlockLength: u32 = 2 * 1024;
 	pub const AvailableBlockRatio: Perbill = Perbill::one();
 }
-impl frame_system::Trait for Test {
+impl frame_system::Config for Test {
 	type BaseCallFilter = ();
 	type Origin = Origin;
 	type Call = ();

@@ -18,7 +18,7 @@
 
 use super::*;
 use crate::account_basic::DVMAccountBasicMapping;
-use crate::{IntermediateStateRoot, Module, Trait};
+use crate::{IntermediateStateRoot, Module, Config};
 use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator};
 use ethereum::{TransactionAction, TransactionSignature};
 use frame_support::{impl_outer_origin, parameter_types, weights::Weight, ConsensusEngineId};
@@ -52,7 +52,7 @@ parameter_types! {
 	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
 }
 
-impl frame_system::Trait for Test {
+impl frame_system::Config for Test {
 	type BaseCallFilter = ();
 	type SystemWeightInfo = ();
 	type Origin = Origin;
@@ -87,7 +87,7 @@ parameter_types! {
 	pub const ExistentialDeposit: u64 = 500;
 }
 
-impl darwinia_balances::Trait<RingInstance> for Test {
+impl darwinia_balances::Config<RingInstance> for Test {
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
@@ -103,7 +103,7 @@ parameter_types! {
 	pub const MinimumPeriod: u64 = 6000 / 2;
 }
 
-impl pallet_timestamp::Trait for Test {
+impl pallet_timestamp::Config for Test {
 	type Moment = u64;
 	type OnTimestampSet = ();
 	type MinimumPeriod = MinimumPeriod;
@@ -143,7 +143,7 @@ impl AddressMapping<AccountId32> for HashedAddressMapping {
 	}
 }
 
-impl darwinia_evm::Trait for Test {
+impl darwinia_evm::Config for Test {
 	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressTruncated;
@@ -161,7 +161,7 @@ parameter_types! {
 	pub const BlockGasLimit: U256 = U256::MAX;
 }
 
-impl Trait for Test {
+impl Config for Test {
 	type Event = ();
 	type FindAuthor = EthereumFindAuthor;
 	type StateRoot = IntermediateStateRoot;

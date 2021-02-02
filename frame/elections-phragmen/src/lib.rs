@@ -60,7 +60,7 @@
 //!
 //! ### Module Information
 //!
-//! - [`election_sp_phragmen::Trait`](./trait.Trait.html)
+//! - [`election_sp_phragmen::Config`](./trait.Config.html)
 //! - [`Call`](./enum.Call.html)
 //! - [`Module`](./struct.Module.html)
 
@@ -96,9 +96,10 @@ use darwinia_support::balance::lock::*;
 pub const MAXIMUM_VOTE: usize = 16;
 
 type BalanceOf<T> =
-	<<T as Trait>::Currency as Currency<<T as frame_system::Trait>::AccountId>>::Balance;
-type NegativeImbalanceOf<T> =
-	<<T as Trait>::Currency as Currency<<T as frame_system::Trait>::AccountId>>::NegativeImbalance;
+	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+type NegativeImbalanceOf<T> = <<T as Config>::Currency as Currency<
+	<T as frame_system::Config>::AccountId,
+>>::NegativeImbalance;
 
 /// An indication that the renouncing account currently has which of the below roles.
 #[derive(Encode, Decode, Clone, PartialEq, RuntimeDebug)]
@@ -138,9 +139,9 @@ pub trait WeightInfo {
 	fn remove_member_wrong_refund() -> Weight;
 }
 
-pub trait Trait: frame_system::Trait {
+pub trait Config: frame_system::Config {
 	/// The overarching event type.c
-	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
 	/// Identifier for the elections-phragmen pallet's lock
 	type ModuleId: Get<LockIdentifier>;
@@ -190,7 +191,7 @@ pub trait Trait: frame_system::Trait {
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait> as DarwiniaPhragmenElection {
+	trait Store for Module<T: Config> as DarwiniaPhragmenElection {
 		// ---- State
 		/// The current elected membership. Sorted based on account id.
 		pub Members get(fn members): Vec<(T::AccountId, BalanceOf<T>)>;
@@ -248,7 +249,7 @@ decl_storage! {
 }
 
 decl_error! {
-	pub enum Error for Module<T: Trait> {
+	pub enum Error for Module<T: Config> {
 		/// Cannot vote when no candidates or members exist.
 		UnableToVote,
 		/// Must vote for at least one candidate.
@@ -287,7 +288,7 @@ decl_error! {
 }
 
 decl_module! {
-	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+	pub struct Module<T: Config> for enum Call where origin: T::Origin {
 		type Error = Error<T>;
 
 		const CandidacyBond: BalanceOf<T> = T::CandidacyBond::get();
@@ -664,7 +665,7 @@ decl_module! {
 decl_event!(
 	pub enum Event<T> where
 		Balance = BalanceOf<T>,
-		<T as frame_system::Trait>::AccountId,
+		<T as frame_system::Config>::AccountId,
 	{
 		/// A new term with \[new_members\]. This indicates that enough candidates existed to run the
 		/// election, not that enough have has been elected. The inner value must be examined for
@@ -691,7 +692,7 @@ decl_event!(
 	}
 );
 
-impl<T: Trait> Module<T> {
+impl<T: Config> Module<T> {
 	/// Attempts to remove a member `who`. If a runner-up exists, it is used as the replacement and
 	/// Ok(true). is returned.
 	///
@@ -1062,7 +1063,7 @@ impl<T: Trait> Module<T> {
 	}
 }
 
-impl<T: Trait> Contains<T::AccountId> for Module<T> {
+impl<T: Config> Contains<T::AccountId> for Module<T> {
 	fn contains(who: &T::AccountId) -> bool {
 		Self::is_member(who)
 	}
@@ -1083,7 +1084,7 @@ impl<T: Trait> Contains<T::AccountId> for Module<T> {
 	}
 }
 
-impl<T: Trait> ContainsLengthBound for Module<T> {
+impl<T: Config> ContainsLengthBound for Module<T> {
 	fn min_len() -> usize {
 		0
 	}
@@ -1124,7 +1125,7 @@ mod tests {
 		pub const MaximumBlockLength: u32 = 2 * 1024;
 		pub const AvailableBlockRatio: Perbill = Perbill::one();
 	}
-	impl frame_system::Trait for Test {
+	impl frame_system::Config for Test {
 		type BaseCallFilter = ();
 		type Origin = Origin;
 		type Call = Call;
@@ -1155,7 +1156,7 @@ mod tests {
 	parameter_types! {
 		pub const ExistentialDeposit: Balance = 1;
 	}
-	impl darwinia_balances::Trait<RingInstance> for Test {
+	impl darwinia_balances::Config<RingInstance> for Test {
 		type Balance = Balance;
 		type DustRemoval = ();
 		type Event = Event;
@@ -1254,7 +1255,7 @@ mod tests {
 		pub const ElectionsPhragmenModuleId: LockIdentifier = *b"da/phrel";
 		pub const CandidacyBond: Balance = 3;
 	}
-	impl Trait for Test {
+	impl Config for Test {
 		type ModuleId = ElectionsPhragmenModuleId;
 		type Event = Event;
 		type Currency = Balances;

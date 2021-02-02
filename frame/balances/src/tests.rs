@@ -22,7 +22,7 @@
 pub struct CallWithDispatchInfo;
 impl sp_runtime::traits::Dispatchable for CallWithDispatchInfo {
 	type Origin = ();
-	type Trait = ();
+	type Config = ();
 	type Info = frame_support::weights::DispatchInfo;
 	type PostInfo = frame_support::weights::PostDispatchInfo;
 
@@ -45,7 +45,7 @@ macro_rules! decl_tests {
 
 		pub type System = frame_system::Module<$test>;
 
-		pub const CALL: &<$test as frame_system::Trait>::Call = &$crate::tests::CallWithDispatchInfo;
+		pub const CALL: &<$test as frame_system::Config>::Call = &$crate::tests::CallWithDispatchInfo;
 
 		const ID_1: LockIdentifier = *b"1       ";
 		const ID_2: LockIdentifier = *b"2       ";
@@ -91,7 +91,7 @@ macro_rules! decl_tests {
 				.execute_with(|| {
 					assert_eq!(Ring::free_balance(1), 10);
 					assert_ok!(<Ring as Currency<_>>::transfer(&1, &2, 10, AllowDeath));
-					assert!(!<<Test as Trait<RingInstance>>::AccountStore as StoredMap<
+					assert!(!<<Test as Config<RingInstance>>::AccountStore as StoredMap<
 						Balance,
 						AccountData<Balance>,
 					>>::is_explicit(&1));

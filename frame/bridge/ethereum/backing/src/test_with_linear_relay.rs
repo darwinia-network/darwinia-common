@@ -39,7 +39,7 @@ parameter_types! {
 	pub const EthereumLinearRelayModuleId: ModuleId = ModuleId(*b"da/ethli");
 	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Ropsten;
 }
-impl darwinia_ethereum_linear_relay::Trait for Test {
+impl darwinia_ethereum_linear_relay::Config for Test {
 	type ModuleId = EthereumLinearRelayModuleId;
 	type Event = ();
 	type EthereumNetwork = EthereumNetwork;

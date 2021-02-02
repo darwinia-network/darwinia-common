@@ -97,7 +97,7 @@ macro_rules! decl_tests {
 			pub const KtonLockLimit: Balance = 1000;
 			pub const AdvancedFee: Balance = 1;
 		}
-		impl Trait for Test {
+		impl Config for Test {
 			type ModuleId = EthereumBackingModuleId;
 			type FeeModuleId = EthereumBackingFeeModuleId;
 			type Event = ();
@@ -120,7 +120,7 @@ macro_rules! decl_tests {
 			pub const MaximumBlockLength: u32 = 2 * 1024;
 			pub const AvailableBlockRatio: Perbill = Perbill::one();
 		}
-		impl frame_system::Trait for Test {
+		impl frame_system::Config for Test {
 			type BaseCallFilter = ();
 			type Origin = Origin;
 			type Call = Call;
@@ -148,7 +148,7 @@ macro_rules! decl_tests {
 			type SystemWeightInfo = ();
 		}
 
-		impl pallet_timestamp::Trait for Test {
+		impl pallet_timestamp::Config for Test {
 			type Moment = u64;
 			type OnTimestampSet = ();
 			type MinimumPeriod = ();
@@ -159,7 +159,7 @@ macro_rules! decl_tests {
 			pub const Period: BlockNumber = 1;
 			pub const Offset: BlockNumber = 0;
 		}
-		impl pallet_session::Trait for Test {
+		impl pallet_session::Config for Test {
 			type Event = ();
 			type ValidatorId = AccountId;
 			type ValidatorIdOf = ();
@@ -172,12 +172,12 @@ macro_rules! decl_tests {
 			type WeightInfo = ();
 		}
 
-		impl pallet_session::historical::Trait for Test {
+		impl pallet_session::historical::Config for Test {
 			type FullIdentification = Exposure<AccountId, Balance, Balance>;
 			type FullIdentificationOf = ExposureOf<Test>;
 		}
 
-		impl darwinia_balances::Trait<KtonInstance> for Test {
+		impl darwinia_balances::Config<KtonInstance> for Test {
 			type Balance = Balance;
 			type DustRemoval = ();
 			type Event = ();
@@ -188,7 +188,7 @@ macro_rules! decl_tests {
 			type OtherCurrencies = ();
 			type WeightInfo = ();
 		}
-		impl darwinia_balances::Trait<RingInstance> for Test {
+		impl darwinia_balances::Config<RingInstance> for Test {
 			type Balance = Balance;
 			type DustRemoval = ();
 			type Event = ();
@@ -203,7 +203,7 @@ macro_rules! decl_tests {
 		parameter_types! {
 			pub const StakingModuleId: ModuleId = ModuleId(*b"da/staki");
 		}
-		impl darwinia_staking::Trait for Test {
+		impl darwinia_staking::Config for Test {
 			type Event = ();
 			type ModuleId = StakingModuleId;
 			type UnixTime = Timestamp;

@@ -57,9 +57,9 @@ mod types {
 
 	pub type Balance<T> = <CurrencyT<T> as Currency<AccountId<T>>>::Balance;
 
-	type AccountId<T> = <T as frame_system::Trait>::AccountId;
+	type AccountId<T> = <T as frame_system::Config>::AccountId;
 
-	type CurrencyT<T> = <T as Trait>::Currency;
+	type CurrencyT<T> = <T as Config>::Currency;
 }
 
 // --- crates ---
@@ -98,11 +98,11 @@ use types::*;
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/dags_merkle_roots.rs"));
 
-pub trait Trait: frame_system::Trait {
+pub trait Config: frame_system::Config {
 	/// The ethereum-linear-relay's module id, used for deriving its sovereign account ID.
 	type ModuleId: Get<ModuleId>;
 
-	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
 	type EthereumNetwork: Get<EthereumNetworkType>;
 
@@ -118,7 +118,7 @@ pub trait Trait: frame_system::Trait {
 decl_event! {
 	pub enum Event<T>
 	where
-		<T as frame_system::Trait>::AccountId,
+		<T as frame_system::Config>::AccountId,
 		Balance = Balance<T>,
 	{
 		SetGenesisHeader(EthereumHeader, u64),
@@ -132,7 +132,7 @@ decl_event! {
 }
 
 decl_error! {
-	pub enum Error for Module<T: Trait> {
+	pub enum Error for Module<T: Config> {
 		/// Account - NO PRIVILEGES
 		AccountNP,
 
@@ -183,7 +183,7 @@ darwinia_support::impl_genesis! {
 	}
 }
 decl_storage! {
-	trait Store for Module<T: Trait> as DarwiniaEthereumLinearRelay {
+	trait Store for Module<T: Config> as DarwiniaEthereumLinearRelay {
 		/// Anchor block that works as genesis block
 		pub GenesisHeader get(fn begin_header): Option<EthereumHeader>;
 
@@ -247,7 +247,7 @@ decl_storage! {
 }
 
 decl_module! {
-	pub struct Module<T: Trait> for enum Call
+	pub struct Module<T: Config> for enum Call
 	where
 		origin: T::Origin
 	{
@@ -475,7 +475,7 @@ decl_module! {
 	}
 }
 
-impl<T: Trait> Module<T> {
+impl<T: Config> Module<T> {
 	/// The account ID of the ethereum linear relay pot.
 	///
 	/// This actually does computation. If you need to keep using it, then make sure you cache the
@@ -721,7 +721,7 @@ impl<T: Trait> Module<T> {
 	}
 }
 
-impl<T: Trait> EthereumReceiptT<T::AccountId, Balance<T>> for Module<T> {
+impl<T: Config> EthereumReceiptT<T::AccountId, Balance<T>> for Module<T> {
 	type EthereumReceiptProofThing = EthereumReceiptProof;
 
 	fn account_id() -> T::AccountId {
@@ -779,13 +779,13 @@ impl WeightInfo for () {}
 /// `SignedExtension` that checks if a transaction has duplicate header hash to avoid coincidence
 /// header between several relayers
 #[derive(Encode, Decode, Clone, Eq, PartialEq)]
-pub struct CheckEthereumRelayHeaderParcel<T: Trait + Send + Sync>(sp_std::marker::PhantomData<T>);
-impl<T: Trait + Send + Sync> Default for CheckEthereumRelayHeaderParcel<T> {
+pub struct CheckEthereumRelayHeaderParcel<T: Config + Send + Sync>(sp_std::marker::PhantomData<T>);
+impl<T: Config + Send + Sync> Default for CheckEthereumRelayHeaderParcel<T> {
 	fn default() -> Self {
 		Self(sp_std::marker::PhantomData)
 	}
 }
-impl<T: Trait + Send + Sync> sp_std::fmt::Debug for CheckEthereumRelayHeaderParcel<T> {
+impl<T: Config + Send + Sync> sp_std::fmt::Debug for CheckEthereumRelayHeaderParcel<T> {
 	#[cfg(feature = "std")]
 	fn fmt(&self, f: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
 		write!(f, "CheckEthereumRelayHeaderParcel")
@@ -796,10 +796,10 @@ impl<T: Trait + Send + Sync> sp_std::fmt::Debug for CheckEthereumRelayHeaderParc
 		Ok(())
 	}
 }
-impl<T: Trait + Send + Sync> SignedExtension for CheckEthereumRelayHeaderParcel<T> {
+impl<T: Config + Send + Sync> SignedExtension for CheckEthereumRelayHeaderParcel<T> {
 	const IDENTIFIER: &'static str = "CheckEthereumRelayHeaderParcel";
 	type AccountId = T::AccountId;
-	type Call = <T as Trait>::Call;
+	type Call = <T as Config>::Call;
 	type AdditionalSigned = ();
 	type Pre = ();
 

@@ -32,7 +32,7 @@ pub use evm::{ExitError, ExitFatal, ExitReason, ExitRevert, ExitSucceed};
 
 #[cfg(feature = "std")]
 use codec::{Decode, Encode};
-use evm::Config;
+use evm::Config as EvmConfig;
 use frame_support::dispatch::DispatchResultWithPostInfo;
 use frame_support::traits::{Currency, Get};
 use frame_support::weights::{Pays, PostDispatchInfo, Weight};
@@ -49,9 +49,9 @@ use sp_std::vec::Vec;
 
 /// Type alias for currency balance.
 pub type BalanceOf<T> =
-	<<T as Trait>::Currency as Currency<<T as frame_system::Trait>::AccountId>>::Balance;
+	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
-/// Trait that outputs the current transaction gas price.
+/// Config that outputs the current transaction gas price.
 pub trait FeeCalculator {
 	/// Return the minimal required gas price.
 	fn min_gas_price() -> U256;
@@ -200,7 +200,7 @@ pub trait AccountBasicMapping {
 
 pub struct RawAccountBasicMapping<T>(sp_std::marker::PhantomData<T>);
 
-impl<T: Trait> AccountBasicMapping for RawAccountBasicMapping<T> {
+impl<T: Config> AccountBasicMapping for RawAccountBasicMapping<T> {
 	/// Get the account basic in EVM format.
 	fn account_basic(address: &H160) -> Account {
 		let account_id = T::AddressMapping::into_account_id(*address);
@@ -259,10 +259,10 @@ impl Get<u64> for SystemChainId {
 	}
 }
 
-static ISTANBUL_CONFIG: Config = Config::istanbul();
+static ISTANBUL_CONFIG: EvmConfig = EvmConfig::istanbul();
 
 /// EVM module trait
-pub trait Trait: frame_system::Trait + pallet_timestamp::Trait {
+pub trait Config: frame_system::Config + pallet_timestamp::Config {
 	/// Calculator for current gas price.
 	type FeeCalculator: FeeCalculator;
 	/// Maps Ethereum gas to Substrate weight.
@@ -279,7 +279,7 @@ pub trait Trait: frame_system::Trait + pallet_timestamp::Trait {
 	type Currency: Currency<Self::AccountId>;
 
 	/// The overarching event type.
-	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 	/// Precompiles associated with this EVM engine.
 	type Precompiles: PrecompileSet;
 	/// Chain ID of EVM.
@@ -290,7 +290,7 @@ pub trait Trait: frame_system::Trait + pallet_timestamp::Trait {
 	type AccountBasicMapping: AccountBasicMapping;
 
 	/// EVM config used in the module.
-	fn config() -> &'static Config {
+	fn config() -> &'static EvmConfig {
 		&ISTANBUL_CONFIG
 	}
 }
@@ -310,7 +310,7 @@ pub struct GenesisAccount {
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait> as DarwiniaEVM {
+	trait Store for Module<T: Config> as DarwiniaEVM {
 		AccountCodes get(fn account_codes): map hasher(blake2_128_concat) H160 => Vec<u8>;
 		AccountStorages get(fn account_storages):
 			double_map hasher(blake2_128_concat) H160, hasher(blake2_128_concat) H256 => H256;
@@ -337,7 +337,7 @@ decl_storage! {
 decl_event! {
 	/// EVM events
 	pub enum Event<T> where
-		<T as frame_system::Trait>::AccountId,
+		<T as frame_system::Config>::AccountId,
 	{
 		/// Ethereum events from contracts.
 		Log(Log),
@@ -357,7 +357,7 @@ decl_event! {
 }
 
 decl_error! {
-	pub enum Error for Module<T: Trait> {
+	pub enum Error for Module<T: Config> {
 		/// Not enough balance to perform action
 		BalanceLow,
 		/// Calculating total fee overflowed
@@ -374,7 +374,7 @@ decl_error! {
 }
 
 decl_module! {
-	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+	pub struct Module<T: Config> for enum Call where origin: T::Origin {
 		type Error = Error<T>;
 
 		fn deposit_event() = default;
@@ -514,7 +514,7 @@ decl_module! {
 	}
 }
 
-impl<T: Trait> Module<T> {
+impl<T: Config> Module<T> {
 	fn remove_account(address: &H160) {
 		AccountCodes::remove(address);
 		AccountStorages::remove_prefix(address);

@@ -47,7 +47,7 @@ parameter_types! {
 	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
 	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Ropsten;
 }
-impl darwinia_ethereum_relay::Trait for Test {
+impl darwinia_ethereum_relay::Config for Test {
 	type ModuleId = EthereumRelayModuleId;
 	type Event = ();
 	type EthereumNetwork = EthereumNetwork;
@@ -422,7 +422,7 @@ fn lock_should_work() {
 		let module_account_id = <Module<Test>>::account_id();
 		let module_account_ring = Ring::free_balance(&module_account_id);
 		let module_account_kton = Kton::free_balance(&module_account_id);
-		let advanced_fee = <Test as Trait>::AdvancedFee::get();
+		let advanced_fee = <Test as Config>::AdvancedFee::get();
 
 		assert_ok!(EthereumBacking::lock(
 			Origin::signed(account.clone()),
@@ -465,7 +465,7 @@ fn lock_failed_rollback_transaction_should_work() {
 		let module_account_id = <Module<Test>>::account_id();
 		let module_account_ring = Ring::free_balance(&module_account_id);
 		let module_account_kton = Kton::free_balance(&module_account_id);
-		let advanced_fee = <Test as Trait>::AdvancedFee::get();
+		let advanced_fee = <Test as Config>::AdvancedFee::get();
 
 		assert_noop!(
 			EthereumBacking::lock(
