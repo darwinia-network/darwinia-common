@@ -34,7 +34,7 @@ use sc_executor::{native_executor_instance, NativeExecutionDispatch};
 use sc_finality_grandpa::{
 	Config as GrandpaConfig, FinalityProofProvider as GrandpaFinalityProofProvider, GrandpaParams,
 	LinkHalf, SharedVoterState as GrandpaSharedVoterState,
-	VotingRulesBuilder as GrandpaVotingRulesBuilder,
+	VotingRulesBuilder as GrandpaVotingRulesBuilder, GRANDPA_PROTOCOL_NAME,
 };
 use sc_network::NetworkService;
 use sc_service::{
@@ -330,6 +330,12 @@ where
 	} = new_partial::<RuntimeApi, Executor>(&mut config)?;
 	let prometheus_registry = config.prometheus_registry().cloned();
 	let shared_voter_state = rpc_setup;
+
+	config
+		.network
+		.notifications_protocols
+		.push(GRANDPA_PROTOCOL_NAME.into());
+
 	let (network, network_status_sinks, system_rpc_tx, network_starter) =
 		sc_service::build_network(BuildNetworkParams {
 			config: &config,
@@ -444,8 +450,6 @@ where
 			"grandpa-voter",
 			sc_finality_grandpa::run_grandpa_voter(grandpa_config)?,
 		);
-	} else {
-		sc_finality_grandpa::setup_disabled_grandpa(network.clone())?;
 	}
 
 	if role.is_authority() && !authority_discovery_disabled {
@@ -494,6 +498,12 @@ where
 
 	let (client, backend, keystore_container, mut task_manager, on_demand) =
 		sc_service::new_light_parts::<Block, RuntimeApi, Executor>(&config)?;
+
+	config
+		.network
+		.notifications_protocols
+		.push(GRANDPA_PROTOCOL_NAME.into());
+
 	let select_chain = LongestChain::new(backend.clone());
 	let transaction_pool = Arc::new(BasicPool::new_light(
 		config.transaction_pool.clone(),
