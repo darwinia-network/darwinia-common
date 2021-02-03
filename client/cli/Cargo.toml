@@ -14,7 +14,7 @@ version     = "1.3.0"
 serde = { version = "1.0.118", features = ["derive"] }
 toml  = { version = "0.5.7" }
 # substrate
-sc-cli        = { git = "https://github.com/darwinia-network/substrate.git", rev = "f4d4244ed6f09675f09c6e1afa96c2b595a689bf" }
-sc-client-api = { git = "https://github.com/darwinia-network/substrate.git", rev = "f4d4244ed6f09675f09c6e1afa96c2b595a689bf" }
-sc-service    = { git = "https://github.com/darwinia-network/substrate.git", rev = "f4d4244ed6f09675f09c6e1afa96c2b595a689bf" }
-sc-tracing    = { git = "https://github.com/darwinia-network/substrate.git", rev = "f4d4244ed6f09675f09c6e1afa96c2b595a689bf" }
+sc-cli        = { git = "https://github.com/darwinia-network/substrate.git", rev = "332399d16668a6c769f1a7db154bb9ea3b50e61c" }
+sc-client-api = { git = "https://github.com/darwinia-network/substrate.git", rev = "332399d16668a6c769f1a7db154bb9ea3b50e61c" }
+sc-service    = { git = "https://github.com/darwinia-network/substrate.git", rev = "332399d16668a6c769f1a7db154bb9ea3b50e61c" }
+sc-tracing    = { git = "https://github.com/darwinia-network/substrate.git", rev = "332399d16668a6c769f1a7db154bb9ea3b50e61c" }
