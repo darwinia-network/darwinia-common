@@ -178,7 +178,11 @@ pub mod mock_relay {
 
 			Self {
 				number,
-				hash: GENESIS_TIME.with(|v| v.to_owned()).elapsed().as_nanos(),
+				hash: GENESIS_TIME
+					.with(|v| v.to_owned())
+					.borrow()
+					.elapsed()
+					.as_nanos(),
 				parent_hash,
 				valid,
 			}
@@ -196,7 +200,11 @@ pub mod mock_relay {
 			let mut parent_hash = if continous_valid {
 				0
 			} else {
-				GENESIS_TIME.with(|v| v.to_owned()).elapsed().as_nanos()
+				GENESIS_TIME
+					.with(|v| v.to_owned())
+					.borrow()
+					.elapsed()
+					.as_nanos()
 			};
 			let mut chain = vec![Self::gen(start, parent_hash, validations[0])];
 
@@ -229,7 +237,7 @@ pub mod mock_relay {
 }
 
 // --- std ---
-use std::{cell::RefCell, time::Instant};
+use std::time::Instant;
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
@@ -251,12 +259,6 @@ pub type Relay = mock_relay::Module<Test>;
 pub type RelayerGameError = Error<Test, DefaultInstance>;
 pub type RelayerGame = Module<Test, DefaultInstance>;
 
-thread_local! {
-	static GENESIS_TIME: Instant = Instant::now();
-	pub static CHALLENGE_TIME: RefCell<BlockNumber> = RefCell::new(6);
-	static ESTIMATE_BOND: RefCell<Balance> = RefCell::new(1);
-}
-
 impl_outer_origin! {
 	pub enum Origin for Test
 	where
@@ -270,6 +272,9 @@ darwinia_support::impl_test_account_data! {}
 pub struct Test;
 parameter_types! {
 	pub const RelayerGameLockId: LockIdentifier = *b"da/rgame";
+	pub static GenesisTime: Instant = Instant::now();
+	pub static ChallengeTime: BlockNumber = 6;
+	pub static EstimateBond: Balance = 1;
 }
 impl Config for Test {
 	type RingCurrency = Ring;

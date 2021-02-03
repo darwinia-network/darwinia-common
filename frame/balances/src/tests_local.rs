@@ -22,14 +22,12 @@ mod balances {
 	pub use crate::{Event, Instance0, Instance1};
 }
 
-// --- std ---
-use std::cell::RefCell;
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
 	impl_outer_event, impl_outer_origin, parameter_types,
-	traits::{Get, StorageMapShim},
+	traits::StorageMapShim,
 	weights::{DispatchInfo, IdentityFee, Weight},
 };
 use frame_system as system;
@@ -46,10 +44,6 @@ type Kton = Module<Test, KtonInstance>;
 
 type RingError = Error<Test, RingInstance>;
 
-thread_local! {
-	static EXISTENTIAL_DEPOSIT: RefCell<Balance> = RefCell::new(0);
-}
-
 impl_outer_origin! {
 	pub enum Origin for Test {}
 }
@@ -64,13 +58,6 @@ impl_outer_event! {
 
 darwinia_support::impl_test_account_data! {}
 
-pub struct ExistentialDeposit;
-impl Get<Balance> for ExistentialDeposit {
-	fn get() -> Balance {
-		EXISTENTIAL_DEPOSIT.with(|v| *v.borrow())
-	}
-}
-
 // Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Test;
@@ -79,6 +66,7 @@ parameter_types! {
 	pub const MaximumBlockWeight: Weight = 1024;
 	pub const MaximumBlockLength: u32 = 2 * 1024;
 	pub const AvailableBlockRatio: Perbill = Perbill::one();
+	pub static ExistentialDeposit: u64 = 0;
 }
 impl frame_system::Config for Test {
 	type BaseCallFilter = ();

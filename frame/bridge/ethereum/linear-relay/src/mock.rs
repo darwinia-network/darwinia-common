@@ -19,7 +19,7 @@
 //! Mock file for ethereum-linear-relay.
 
 // --- std ---
-use std::{cell::RefCell, fs::File};
+use std::fs::File;
 // --- crates ---
 use serde::Deserialize;
 // --- substrate ---
@@ -42,10 +42,6 @@ pub type EthereumRelay = Module<Test>;
 
 pub(crate) type RingError = darwinia_balances::Error<Test, RingInstance>;
 
-thread_local! {
-	static ETH_NETWORK: RefCell<EthereumNetworkType> = RefCell::new(EthereumNetworkType::Ropsten);
-}
-
 impl_outer_origin! {
 	pub enum Origin for Test where system = frame_system {}
 }
@@ -64,6 +60,7 @@ darwinia_support::impl_test_account_data! {}
 pub struct Test;
 parameter_types! {
 	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethli");
+	pub static EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Ropsten;
 }
 impl Config for Test {
 	type ModuleId = EthereumRelayModuleId;
@@ -249,13 +246,6 @@ impl HeaderWithProof {
 	}
 }
 
-pub struct EthereumNetwork;
-impl Get<EthereumNetworkType> for EthereumNetwork {
-	fn get() -> EthereumNetworkType {
-		ETH_NETWORK.with(|v| v.borrow().to_owned())
-	}
-}
-
 pub struct ExtBuilder {
 	eth_network: EthereumNetworkType,
 }
@@ -272,7 +262,7 @@ impl ExtBuilder {
 		self
 	}
 	pub fn set_associated_constants(&self) {
-		ETH_NETWORK.with(|v| v.replace(self.eth_network.clone()));
+		ETHEREUM_NETWORK.with(|v| v.replace(self.eth_network.clone()));
 	}
 
 	pub fn build(self) -> sp_io::TestExternalities {

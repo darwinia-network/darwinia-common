@@ -21,8 +21,6 @@
 #[macro_export]
 macro_rules! decl_tests {
 	() => {
-		// --- std ---
-		use std::cell::RefCell;
 		// --- substrate ---
 		use frame_support::{
 			impl_outer_dispatch, impl_outer_origin, parameter_types, weights::Weight,
@@ -55,11 +53,6 @@ macro_rules! decl_tests {
 		type Kton = darwinia_balances::Module<Test, KtonInstance>;
 		type Staking = darwinia_staking::Module<Test>;
 		type EthereumBacking = Module<Test>;
-
-		thread_local! {
-			static EXISTENTIAL_DEPOSIT: RefCell<Balance> = RefCell::new(0);
-			static SLASH_DEFER_DURATION: RefCell<EraIndex> = RefCell::new(0);
-		}
 
 		impl_outer_origin! {
 			pub enum Origin for Test where system = frame_system {}

@@ -75,17 +75,6 @@ pub(crate) const TOTAL_POWER: Power = 1_000_000_000;
 
 pub const INIT_TIMESTAMP: TsInMs = 30_000;
 
-thread_local! {
-	static SESSION: RefCell<(Vec<AccountId>, HashSet<AccountId>)> = RefCell::new(Default::default());
-	static SESSION_PER_ERA: RefCell<SessionIndex> = RefCell::new(3);
-	static EXISTENTIAL_DEPOSIT: RefCell<Balance> = RefCell::new(0);
-	static SLASH_DEFER_DURATION: RefCell<EraIndex> = RefCell::new(0);
-	static ELECTION_LOOKAHEAD: RefCell<BlockNumber> = RefCell::new(0);
-	static PERIOD: RefCell<BlockNumber> = RefCell::new(1);
-	static MAX_ITERATIONS: RefCell<u32> = RefCell::new(0);
-	pub static RING_REWARD_REMAINDER_UNBALANCED: RefCell<Balance> = RefCell::new(0);
-}
-
 impl_outer_dispatch! {
 	pub enum Call for Test where origin: Origin {
 		staking::Staking,
@@ -125,13 +114,13 @@ impl pallet_session::OneSessionHandler<AccountId> for OtherSessionHandler {
 		I: Iterator<Item = (&'a AccountId, Self::Key)>,
 		AccountId: 'a,
 	{
-		SESSION.with(|x| {
+		SESSION_VALIDATORS.with(|x| {
 			*x.borrow_mut() = (validators.map(|x| x.0.clone()).collect(), HashSet::new())
 		});
 	}
 
 	fn on_disabled(validator_index: usize) {
-		SESSION.with(|d| {
+		SESSION_VALIDATORS.with(|d| {
 			let mut d = d.borrow_mut();
 			let value = d.0[validator_index];
 			d.1.insert(value);
@@ -144,7 +133,7 @@ impl sp_runtime::BoundToRuntimeAppPublic for OtherSessionHandler {
 
 pub fn is_disabled(controller: AccountId) -> bool {
 	let stash = Staking::ledger(&controller).unwrap().stash;
-	SESSION.with(|d| d.borrow().1.contains(&stash))
+	SESSION_VALIDATORS.with(|d| d.borrow().1.contains(&stash))
 }
 
 // Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
@@ -160,6 +149,14 @@ parameter_types! {
 	pub const OffchainSolutionWeightLimit: Weight = MaximumBlockWeight::get();
 	pub const Cap: Balance = CAP;
 	pub const TotalPower: Power = TOTAL_POWER;
+	pub static SessionsPerEra: SessionIndex = 3;
+	pub static ExistentialDeposit: Balance = 0;
+	pub static SlashDeferDuration: EraIndex = 0;
+	pub static ElectionLookahead: BlockNumber = 0;
+	pub static Period: BlockNumber = 1;
+	pub static MaxIterations: u32 = 0;
+	pub static SessionValidators: (Vec<AccountId>, HashSet<AccountId>) = Default::default();
+	pub static RingRewardRemainderUnbalanced: Balance = 0;
 }
 impl Config for Test {
 	type Event = MetaEvent;
@@ -309,7 +306,7 @@ where
 pub struct ExtBuilder {
 	session_length: BlockNumber,
 	election_lookahead: BlockNumber,
-	session_per_era: SessionIndex,
+	sessions_per_era: SessionIndex,
 	existential_deposit: Balance,
 	validator_pool: bool,
 	nominate: bool,
@@ -330,7 +327,7 @@ impl Default for ExtBuilder {
 		Self {
 			session_length: 1,
 			election_lookahead: 0,
-			session_per_era: 3,
+			sessions_per_era: 3,
 			existential_deposit: 1,
 			validator_pool: false,
 			nominate: true,
@@ -349,8 +346,8 @@ impl Default for ExtBuilder {
 }
 
 impl ExtBuilder {
-	pub fn session_per_era(mut self, length: SessionIndex) -> Self {
-		self.session_per_era = length;
+	pub fn sessions_per_era(mut self, length: SessionIndex) -> Self {
+		self.sessions_per_era = length;
 		self
 	}
 	pub fn election_lookahead(mut self, look: BlockNumber) -> Self {
@@ -416,14 +413,14 @@ impl ExtBuilder {
 		self
 	}
 	pub fn offchain_election_ext(self) -> Self {
-		self.session_per_era(4)
+		self.sessions_per_era(4)
 			.session_length(5)
 			.election_lookahead(3)
 	}
 	pub fn set_associated_constants(&self) {
 		EXISTENTIAL_DEPOSIT.with(|v| *v.borrow_mut() = self.existential_deposit);
 		SLASH_DEFER_DURATION.with(|v| *v.borrow_mut() = self.slash_defer_duration);
-		SESSION_PER_ERA.with(|v| *v.borrow_mut() = self.session_per_era);
+		SESSIONS_PER_ERA.with(|v| *v.borrow_mut() = self.sessions_per_era);
 		ELECTION_LOOKAHEAD.with(|v| *v.borrow_mut() = self.election_lookahead);
 		PERIOD.with(|v| *v.borrow_mut() = self.session_length);
 		MAX_ITERATIONS.with(|v| *v.borrow_mut() = self.max_offchain_iterations);
@@ -554,7 +551,7 @@ impl ExtBuilder {
 		let mut ext = sp_io::TestExternalities::from(storage);
 		ext.execute_with(|| {
 			let validators = Session::validators();
-			SESSION.with(|x| *x.borrow_mut() = (validators.clone(), HashSet::new()));
+			SESSION_VALIDATORS.with(|x| *x.borrow_mut() = (validators.clone(), HashSet::new()));
 		});
 		// We consider all test to start after timestamp is initialized
 		// This must be ensured by having `timestamp::on_initialize` called before
@@ -570,53 +567,6 @@ impl ExtBuilder {
 		let mut ext = self.build();
 		ext.execute_with(test);
 		ext.execute_with(post_conditions);
-	}
-}
-
-pub struct ExistentialDeposit;
-impl Get<Balance> for ExistentialDeposit {
-	fn get() -> Balance {
-		EXISTENTIAL_DEPOSIT.with(|v| *v.borrow())
-	}
-}
-
-pub struct SessionsPerEra;
-impl Get<SessionIndex> for SessionsPerEra {
-	fn get() -> SessionIndex {
-		SESSION_PER_ERA.with(|v| *v.borrow())
-	}
-}
-impl Get<BlockNumber> for SessionsPerEra {
-	fn get() -> BlockNumber {
-		SESSION_PER_ERA.with(|v| *v.borrow() as BlockNumber)
-	}
-}
-
-pub struct ElectionLookahead;
-impl Get<BlockNumber> for ElectionLookahead {
-	fn get() -> BlockNumber {
-		ELECTION_LOOKAHEAD.with(|v| *v.borrow())
-	}
-}
-
-pub struct Period;
-impl Get<BlockNumber> for Period {
-	fn get() -> BlockNumber {
-		PERIOD.with(|v| *v.borrow())
-	}
-}
-
-pub struct SlashDeferDuration;
-impl Get<EraIndex> for SlashDeferDuration {
-	fn get() -> EraIndex {
-		SLASH_DEFER_DURATION.with(|v| *v.borrow())
-	}
-}
-
-pub struct MaxIterations;
-impl Get<u32> for MaxIterations {
-	fn get() -> u32 {
-		MAX_ITERATIONS.with(|v| *v.borrow())
 	}
 }
 

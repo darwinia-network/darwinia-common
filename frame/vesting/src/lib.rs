@@ -396,7 +396,7 @@ mod tests {
 	use super::*;
 
 	use frame_support::{
-		assert_noop, assert_ok, impl_outer_origin, parameter_types, traits::Get, weights::Weight,
+		assert_noop, assert_ok, impl_outer_origin, parameter_types, weights::Weight,
 	};
 	use frame_system::RawOrigin;
 	use sp_core::H256;
@@ -405,7 +405,6 @@ mod tests {
 		traits::{BadOrigin, BlakeTwo256, Identity, IdentityLookup},
 		Perbill,
 	};
-	use std::cell::RefCell;
 
 	type Balance = u64;
 
@@ -470,6 +469,7 @@ mod tests {
 	}
 	parameter_types! {
 		pub const MinVestedTransfer: u64 = 256 * 2;
+		pub static ExistentialDeposit: u64 = 0;
 	}
 	impl Config for Test {
 		type Event = ();
@@ -480,16 +480,6 @@ mod tests {
 	}
 	type System = frame_system::Module<Test>;
 	type Vesting = Module<Test>;
-
-	thread_local! {
-		static EXISTENTIAL_DEPOSIT: RefCell<u64> = RefCell::new(0);
-	}
-	pub struct ExistentialDeposit;
-	impl Get<u64> for ExistentialDeposit {
-		fn get() -> u64 {
-			EXISTENTIAL_DEPOSIT.with(|v| *v.borrow())
-		}
-	}
 
 	pub struct ExtBuilder {
 		existential_deposit: u64,

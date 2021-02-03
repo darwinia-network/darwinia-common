@@ -18,8 +18,6 @@
 
 //! Mock file for ethereum-relay.
 
-// --- std ---
-use std::cell::RefCell;
 // --- substrate ---
 use frame_support::{
 	impl_outer_dispatch, impl_outer_origin, parameter_types, traits::OnInitialize, weights::Weight,
@@ -38,11 +36,6 @@ pub type System = frame_system::Module<Test>;
 pub type Ring = darwinia_balances::Module<Test, RingInstance>;
 pub type EthereumRelay = Module<Test>;
 
-thread_local! {
-	static BEST_CONFIRMED_BLOCK_NUMBER: RefCell<EthereumBlockNumber> = RefCell::new(0);
-	static CONFIRM_PERIOD: RefCell<BlockNumber> = RefCell::new(0);
-}
-
 impl_outer_origin! {
 	pub enum Origin for Test where system = frame_system {}
 }
@@ -56,13 +49,6 @@ impl_outer_dispatch! {
 
 darwinia_support::impl_test_account_data! {}
 
-pub struct ConfirmPeriod;
-impl Get<BlockNumber> for ConfirmPeriod {
-	fn get() -> BlockNumber {
-		CONFIRM_PERIOD.with(|v| *v.borrow())
-	}
-}
-
 // Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Test;
@@ -75,6 +61,8 @@ impl Contains<AccountId> for UnusedTechnicalMembership {
 parameter_types! {
 	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
 	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Mainnet;
+	pub static BestConfirmedBlockNumber: EthereumBlockNumber = 0;
+	pub static ConfirmPeriod: BlockNumber = 0;
 }
 impl Config for Test {
 	type ModuleId = EthereumRelayModuleId;

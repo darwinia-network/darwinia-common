@@ -1,7 +1,5 @@
 //! The crate's tests.
 
-// --- std ---
-use std::cell::RefCell;
 // --- crates ---
 use codec::Encode;
 // --- substrate ---
@@ -165,6 +163,8 @@ parameter_types! {
 	pub const CooloffPeriod: u64 = 2;
 	pub const MaxVotes: u32 = 100;
 	pub const MaxProposals: u32 = MAX_PROPOSALS;
+	pub static PreimageByteDeposit: u64 = 0;
+	pub static InstantAllowed: bool = false;
 }
 ord_parameter_types! {
 	pub const One: u64 = 1;
@@ -182,22 +182,7 @@ impl Contains<u64> for OneToFive {
 	#[cfg(feature = "runtime-benchmarks")]
 	fn add(_m: &u64) {}
 }
-thread_local! {
-	static PREIMAGE_BYTE_DEPOSIT: RefCell<u64> = RefCell::new(0);
-	static INSTANT_ALLOWED: RefCell<bool> = RefCell::new(false);
-}
-pub struct PreimageByteDeposit;
-impl Get<u64> for PreimageByteDeposit {
-	fn get() -> u64 {
-		PREIMAGE_BYTE_DEPOSIT.with(|v| *v.borrow())
-	}
-}
-pub struct InstantAllowed;
-impl Get<bool> for InstantAllowed {
-	fn get() -> bool {
-		INSTANT_ALLOWED.with(|v| *v.borrow())
-	}
-}
+
 impl super::Config for Test {
 	type Proposal = Call;
 	type Event = Event;

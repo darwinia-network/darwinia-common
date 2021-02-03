@@ -1097,8 +1097,6 @@ impl<T: Config> ContainsLengthBound for Module<T> {
 
 #[cfg(test)]
 mod tests {
-	// --- std ---
-	use std::cell::RefCell;
 	// --- crates ---
 	use codec::{Decode, Encode};
 	// --- substrate ---
@@ -1168,46 +1166,6 @@ mod tests {
 		type OtherCurrencies = ();
 	}
 
-	thread_local! {
-		static VOTING_BOND: RefCell<Balance> = RefCell::new(2);
-		static DESIRED_MEMBERS: RefCell<u32> = RefCell::new(2);
-		static DESIRED_RUNNERS_UP: RefCell<u32> = RefCell::new(2);
-		static TERM_DURATION: RefCell<u64> = RefCell::new(5);
-	}
-
-	pub struct VotingBond;
-	impl Get<Balance> for VotingBond {
-		fn get() -> Balance {
-			VOTING_BOND.with(|v| *v.borrow())
-		}
-	}
-
-	pub struct DesiredMembers;
-	impl Get<u32> for DesiredMembers {
-		fn get() -> u32 {
-			DESIRED_MEMBERS.with(|v| *v.borrow())
-		}
-	}
-
-	pub struct DesiredRunnersUp;
-	impl Get<u32> for DesiredRunnersUp {
-		fn get() -> u32 {
-			DESIRED_RUNNERS_UP.with(|v| *v.borrow())
-		}
-	}
-
-	pub struct TermDuration;
-	impl Get<u64> for TermDuration {
-		fn get() -> u64 {
-			TERM_DURATION.with(|v| *v.borrow())
-		}
-	}
-
-	thread_local! {
-		pub static MEMBERS: RefCell<Vec<u64>> = RefCell::new(vec![]);
-		pub static PRIME: RefCell<Option<u64>> = RefCell::new(None);
-	}
-
 	pub struct TestChangeMembers;
 	impl ChangeMembers<u64> for TestChangeMembers {
 		fn change_members_sorted(incoming: &[u64], outgoing: &[u64], new: &[u64]) {
@@ -1254,6 +1212,12 @@ mod tests {
 	parameter_types! {
 		pub const ElectionsPhragmenModuleId: LockIdentifier = *b"da/phrel";
 		pub const CandidacyBond: Balance = 3;
+		pub static VotingBond: u64 = 2;
+		pub static DesiredMembers: u32 = 2;
+		pub static DesiredRunnersUp: u32 = 2;
+		pub static TermDuration: u64 = 5;
+		pub static Members: Vec<u64> = vec![];
+		pub static Prime: Option<u64> = None;
 	}
 	impl Config for Test {
 		type ModuleId = ElectionsPhragmenModuleId;

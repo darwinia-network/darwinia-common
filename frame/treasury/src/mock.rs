@@ -24,8 +24,6 @@ mod treasury {
 	pub use super::super::*;
 }
 
-// --- std ---
-use std::cell::RefCell;
 // --- substrate ---
 use frame_support::{impl_outer_event, impl_outer_origin, parameter_types, weights::Weight};
 use sp_core::H256;
@@ -43,10 +41,6 @@ pub type System = frame_system::Module<Test>;
 pub type Treasury = Module<Test>;
 pub type Ring = darwinia_balances::Module<Test, RingInstance>;
 pub type Kton = darwinia_balances::Module<Test, KtonInstance>;
-
-thread_local! {
-	static TEN_TO_FOURTEEN: RefCell<Vec<u128>> = RefCell::new(vec![10, 11, 12, 13, 14]);
-}
 
 impl_outer_event! {
 	pub enum Event for Test {
@@ -71,6 +65,7 @@ parameter_types! {
 	pub const MaximumBlockWeight: Weight = 1024;
 	pub const MaximumBlockLength: u32 = 2 * 1024;
 	pub const AvailableBlockRatio: Perbill = Perbill::one();
+	pub static TenToFourteen: Vec<u128> = vec![10, 11, 12, 13, 14];
 }
 impl frame_system::Config for Test {
 	type BaseCallFilter = ();
@@ -100,8 +95,8 @@ impl frame_system::Config for Test {
 	type SystemWeightInfo = ();
 }
 
-pub struct TenToFourteen;
-impl Contains<u128> for TenToFourteen {
+pub struct Tippers;
+impl Contains<u128> for Tippers {
 	fn sorted_members() -> Vec<u128> {
 		TEN_TO_FOURTEEN.with(|v| v.borrow().clone())
 	}
@@ -114,7 +109,7 @@ impl Contains<u128> for TenToFourteen {
 		})
 	}
 }
-impl ContainsLengthBound for TenToFourteen {
+impl ContainsLengthBound for Tippers {
 	fn min_len() -> usize {
 		0
 	}
@@ -173,7 +168,7 @@ impl Config for Test {
 	type KtonCurrency = Kton;
 	type ApproveOrigin = frame_system::EnsureRoot<u128>;
 	type RejectOrigin = frame_system::EnsureRoot<u128>;
-	type Tippers = TenToFourteen;
+	type Tippers = Tippers;
 	type TipCountdown = TipCountdown;
 	type TipFindersFee = TipFindersFee;
 	type TipReportDepositBase = TipReportDepositBase;
