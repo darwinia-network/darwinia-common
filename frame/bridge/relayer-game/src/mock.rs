@@ -287,6 +287,9 @@ impl Config for Test {
 
 impl frame_system::Config for Test {
 	type BaseCallFilter = ();
+	type BlockWeights = ();
+	type BlockLength = ();
+	type DbWeight = ();
 	type Origin = Origin;
 	type Call = ();
 	type Index = u64;
@@ -298,13 +301,6 @@ impl frame_system::Config for Test {
 	type Header = sp_runtime::testing::Header;
 	type Event = ();
 	type BlockHashCount = ();
-	type MaximumBlockWeight = ();
-	type DbWeight = ();
-	type BlockExecutionWeight = ();
-	type ExtrinsicBaseWeight = ();
-	type MaximumExtrinsicWeight = ();
-	type MaximumBlockLength = ();
-	type AvailableBlockRatio = ();
 	type Version = ();
 	type PalletInfo = ();
 	type AccountData = AccountData<Balance>;

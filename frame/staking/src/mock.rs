@@ -146,7 +146,7 @@ parameter_types! {
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
 	pub const UnsignedPriority: u64 = 1 << 20;
 	pub const MinSolutionScoreBump: Perbill = Perbill::zero();
-	pub const OffchainSolutionWeightLimit: Weight = MaximumBlockWeight::get();
+	pub OffchainSolutionWeightLimit: Weight = BlockWeights::get().max_block;
 	pub const Cap: Balance = CAP;
 	pub const TotalPower: Power = TOTAL_POWER;
 	pub static SessionsPerEra: SessionIndex = 3;
@@ -189,13 +189,16 @@ impl Config for Test {
 }
 
 parameter_types! {
-	pub const BlockHashCount: u64 = 250;
-	pub const MaximumBlockWeight: Weight = frame_support::weights::constants::WEIGHT_PER_SECOND * 2;
-	pub const MaximumBlockLength: u32 = 2 * 1024;
-	pub const AvailableBlockRatio: Perbill = Perbill::one();
+	pub BlockWeights: frame_system::limits::BlockWeights =
+		frame_system::limits::BlockWeights::simple_max(
+			frame_support::weights::constants::WEIGHT_PER_SECOND * 2
+		);
 }
 impl frame_system::Config for Test {
 	type BaseCallFilter = ();
+	type BlockWeights = BlockWeights;
+	type BlockLength = ();
+	type DbWeight = RocksDbWeight;
 	type Origin = Origin;
 	type Call = Call;
 	type Index = AccountIndex;
@@ -206,14 +209,7 @@ impl frame_system::Config for Test {
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = MetaEvent;
-	type BlockHashCount = BlockHashCount;
-	type MaximumBlockWeight = MaximumBlockWeight;
-	type DbWeight = RocksDbWeight;
-	type BlockExecutionWeight = ();
-	type ExtrinsicBaseWeight = ();
-	type MaximumExtrinsicWeight = MaximumBlockWeight;
-	type MaximumBlockLength = MaximumBlockLength;
-	type AvailableBlockRatio = AvailableBlockRatio;
+	type BlockHashCount = ();
 	type Version = ();
 	type PalletInfo = ();
 	type AccountData = AccountData<Balance>;

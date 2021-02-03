@@ -619,7 +619,7 @@ decl_module! {
 		#[weight = if *has_replacement {
 			T::WeightInfo::remove_member_with_replacement()
 		} else {
-			T::MaximumBlockWeight::get()
+			T::BlockWeights::get().max_block
 		}]
 		fn remove_member(
 			origin,
@@ -840,7 +840,7 @@ impl<T: Config> Module<T> {
 		if !Self::term_duration().is_zero() {
 			if (block_number % Self::term_duration()).is_zero() {
 				Self::do_phragmen();
-				return T::MaximumBlockWeight::get();
+				return T::BlockWeights::get().max_block;
 			}
 		}
 		0
@@ -1100,14 +1100,12 @@ mod tests {
 	// --- crates ---
 	use codec::{Decode, Encode};
 	// --- substrate ---
-	use frame_support::{
-		assert_err_with_weight, assert_noop, assert_ok, parameter_types, weights::Weight,
-	};
+	use frame_support::{assert_err_with_weight, assert_noop, assert_ok, parameter_types};
 	use sp_core::H256;
 	use sp_runtime::{
 		testing::Header,
 		traits::{BlakeTwo256, Block as BlockT, IdentityLookup},
-		BuildStorage, DispatchResult, Perbill, RuntimeDebug,
+		BuildStorage, DispatchResult, RuntimeDebug,
 	};
 	use substrate_test_utils::assert_eq_uvec;
 	// --- darwinia ---
@@ -1117,14 +1115,11 @@ mod tests {
 
 	darwinia_support::impl_test_account_data! {}
 
-	parameter_types! {
-		pub const BlockHashCount: u64 = 250;
-		pub const MaximumBlockWeight: Weight = 1024;
-		pub const MaximumBlockLength: u32 = 2 * 1024;
-		pub const AvailableBlockRatio: Perbill = Perbill::one();
-	}
 	impl frame_system::Config for Test {
 		type BaseCallFilter = ();
+		type BlockWeights = ();
+		type BlockLength = ();
+		type DbWeight = ();
 		type Origin = Origin;
 		type Call = Call;
 		type Index = u64;
@@ -1135,14 +1130,7 @@ mod tests {
 		type Lookup = IdentityLookup<Self::AccountId>;
 		type Header = Header;
 		type Event = Event;
-		type BlockHashCount = BlockHashCount;
-		type MaximumBlockWeight = MaximumBlockWeight;
-		type DbWeight = ();
-		type BlockExecutionWeight = ();
-		type ExtrinsicBaseWeight = ();
-		type MaximumExtrinsicWeight = MaximumBlockWeight;
-		type MaximumBlockLength = MaximumBlockLength;
-		type AvailableBlockRatio = AvailableBlockRatio;
+		type BlockHashCount = ();
 		type Version = ();
 		type PalletInfo = ();
 		type AccountData = AccountData<Balance>;

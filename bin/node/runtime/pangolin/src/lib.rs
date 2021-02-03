@@ -326,7 +326,15 @@ pub fn native_version() -> NativeVersion {
 	}
 }
 
-const AVERAGE_ON_INITIALIZE_WEIGHT: Perbill = Perbill::from_percent(10);
+/// We assume that an on-initialize consumes 2.5% of the weight on average, hence a single extrinsic
+/// will not be allowed to consume more than `AvailableBlockRatio - 2.5%`.
+const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(25);
+/// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used
+/// by  Operational  extrinsics.
+const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
+/// We allow for 2 seconds of compute with a 6 second average block time.
+const MAXIMUM_BLOCK_WEIGHT: Weight = 2 * WEIGHT_PER_SECOND;
+const_assert!(NORMAL_DISPATCH_RATIO.deconstruct() >= AVERAGE_ON_INITIALIZE_RATIO.deconstruct());
 parameter_types! {
 	pub const BlockHashCount: BlockNumber = 2400;
 	/// We allow for 2 seconds of compute with a 6 second average block time.

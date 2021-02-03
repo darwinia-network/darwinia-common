@@ -72,13 +72,6 @@ impl Config for Test {
 	type WeightInfo = ();
 }
 
-parameter_types! {
-	pub const BlockHashCount: u64 = 250;
-	pub const MaximumBlockWeight: Weight = 1024;
-	pub const MaximumBlockLength: u32 = 2 * 1024;
-	pub const MinimumPeriod: u64 = 5;
-	pub const AvailableBlockRatio: Perbill = Perbill::one();
-}
 impl frame_system::Config for Test {
 	type BaseCallFilter = ();
 	type Origin = Origin;
@@ -92,13 +85,6 @@ impl frame_system::Config for Test {
 	type Header = Header;
 	type Event = Event;
 	type BlockHashCount = ();
-	type MaximumBlockWeight = ();
-	type DbWeight = ();
-	type BlockExecutionWeight = ();
-	type ExtrinsicBaseWeight = ();
-	type MaximumExtrinsicWeight = ();
-	type MaximumBlockLength = ();
-	type AvailableBlockRatio = ();
 	type Version = ();
 	type PalletInfo = ();
 	type AccountData = AccountData<Balance>;

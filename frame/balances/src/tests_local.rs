@@ -33,7 +33,7 @@ use frame_support::{
 use frame_system as system;
 use pallet_transaction_payment::CurrencyAdapter;
 use sp_core::H256;
-use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill, RuntimeDebug};
+use sp_runtime::{testing::Header, traits::IdentityLookup, RuntimeDebug};
 // --- darwinia ---
 use crate::{self as darwinia_balances, tests::*, *};
 
@@ -62,14 +62,14 @@ darwinia_support::impl_test_account_data! {}
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Test;
 parameter_types! {
-	pub const BlockHashCount: Balance = 250;
-	pub const MaximumBlockWeight: Weight = 1024;
-	pub const MaximumBlockLength: u32 = 2 * 1024;
-	pub const AvailableBlockRatio: Perbill = Perbill::one();
-	pub static ExistentialDeposit: u64 = 0;
+	pub BlockWeights: frame_system::limits::BlockWeights =
+		frame_system::limits::BlockWeights::simple_max(1024);
 }
 impl frame_system::Config for Test {
 	type BaseCallFilter = ();
+	type BlockWeights = BlockWeights;
+	type BlockLength = ();
+	type DbWeight = ();
 	type Origin = Origin;
 	type Call = CallWithDispatchInfo;
 	type Index = Balance;
@@ -80,14 +80,7 @@ impl frame_system::Config for Test {
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = Event;
-	type BlockHashCount = BlockHashCount;
-	type MaximumBlockWeight = MaximumBlockWeight;
-	type DbWeight = ();
-	type BlockExecutionWeight = ();
-	type ExtrinsicBaseWeight = ();
-	type MaximumExtrinsicWeight = MaximumBlockWeight;
-	type MaximumBlockLength = MaximumBlockLength;
-	type AvailableBlockRatio = AvailableBlockRatio;
+	type BlockHashCount = ();
 	type Version = ();
 	type PalletInfo = ();
 	type AccountData = AccountData<Balance>;
@@ -95,6 +88,7 @@ impl frame_system::Config for Test {
 	type OnKilledAccount = Ring;
 	type SystemWeightInfo = ();
 }
+
 parameter_types! {
 	pub const TransactionByteFee: Balance = 1;
 }
@@ -103,6 +97,10 @@ impl pallet_transaction_payment::Config for Test {
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = IdentityFee<u64>;
 	type FeeMultiplierUpdate = ();
+}
+
+parameter_types! {
+	pub static ExistentialDeposit: u64 = 0;
 }
 impl Config<RingInstance> for Test {
 	type Balance = Balance;

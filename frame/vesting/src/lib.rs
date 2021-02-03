@@ -395,15 +395,12 @@ where
 mod tests {
 	use super::*;
 
-	use frame_support::{
-		assert_noop, assert_ok, impl_outer_origin, parameter_types, weights::Weight,
-	};
+	use frame_support::{assert_noop, assert_ok, impl_outer_origin, parameter_types};
 	use frame_system::RawOrigin;
 	use sp_core::H256;
 	use sp_runtime::{
 		testing::Header,
 		traits::{BadOrigin, BlakeTwo256, Identity, IdentityLookup},
-		Perbill,
 	};
 
 	type Balance = u64;
@@ -420,14 +417,12 @@ mod tests {
 
 	#[derive(Clone, Eq, PartialEq)]
 	pub struct Test;
-	parameter_types! {
-		pub const BlockHashCount: u64 = 250;
-		pub const MaximumBlockWeight: Weight = 1024;
-		pub const MaximumBlockLength: u32 = 2 * 1024;
-		pub const AvailableBlockRatio: Perbill = Perbill::one();
-	}
+
 	impl frame_system::Config for Test {
 		type BaseCallFilter = ();
+		type BlockWeights = ();
+		type BlockLength = ();
+		type DbWeight = ();
 		type Origin = Origin;
 		type Index = u64;
 		type BlockNumber = u64;
@@ -438,14 +433,7 @@ mod tests {
 		type Lookup = IdentityLookup<Self::AccountId>;
 		type Header = Header;
 		type Event = ();
-		type BlockHashCount = BlockHashCount;
-		type MaximumBlockWeight = MaximumBlockWeight;
-		type DbWeight = ();
-		type BlockExecutionWeight = ();
-		type ExtrinsicBaseWeight = ();
-		type MaximumExtrinsicWeight = MaximumBlockWeight;
-		type MaximumBlockLength = MaximumBlockLength;
-		type AvailableBlockRatio = AvailableBlockRatio;
+		type BlockHashCount = ();
 		type Version = ();
 		type PalletInfo = ();
 		type AccountData = AccountData<Balance>;

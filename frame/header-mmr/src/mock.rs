@@ -23,9 +23,9 @@
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
-use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
+use frame_support::{impl_outer_origin, parameter_types};
 use sp_core::H256;
-use sp_runtime::{testing::Header, traits::IdentityLookup, DigestItem, Perbill};
+use sp_runtime::{testing::Header, traits::IdentityLookup, DigestItem};
 // --- darwinia ---
 use crate::*;
 
@@ -41,14 +41,11 @@ pub type HeaderMMR = Module<Test>;
 pub struct Test;
 impl Config for Test {}
 
-parameter_types! {
-	pub const BlockHashCount: u64 = 250;
-	pub const MaximumBlockWeight: Weight = 1024;
-	pub const MaximumBlockLength: u32 = 2 * 1024;
-	pub const AvailableBlockRatio: Perbill = Perbill::one();
-}
 impl frame_system::Config for Test {
 	type BaseCallFilter = ();
+	type BlockWeights = ();
+	type BlockLength = ();
+	type DbWeight = ();
 	type Origin = Origin;
 	type Call = ();
 	type Index = u64;
@@ -59,14 +56,7 @@ impl frame_system::Config for Test {
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = ();
-	type BlockHashCount = BlockHashCount;
-	type MaximumBlockWeight = MaximumBlockWeight;
-	type DbWeight = ();
-	type BlockExecutionWeight = ();
-	type ExtrinsicBaseWeight = ();
-	type MaximumExtrinsicWeight = MaximumBlockWeight;
-	type MaximumBlockLength = MaximumBlockLength;
-	type AvailableBlockRatio = AvailableBlockRatio;
+	type BlockHashCount = ();
 	type Version = ();
 	type PalletInfo = ();
 	type AccountData = ();

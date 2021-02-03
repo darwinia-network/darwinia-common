@@ -1099,7 +1099,7 @@ decl_module! {
 		}
 
 		/// Enact a proposal from a referendum. For now we just make the weight be the maximum.
-		#[weight = T::MaximumBlockWeight::get()]
+		#[weight = T::BlockWeights::get().max_block]
 		fn enact_proposal(origin, proposal_hash: T::Hash, index: ReferendumIndex) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::do_enact_proposal(proposal_hash, index)
@@ -1700,6 +1700,7 @@ impl<T: Config> Module<T> {
 	/// - Db reads per R: `DepositOf`, `ReferendumInfoOf`
 	/// # </weight>
 	fn begin_block(now: T::BlockNumber) -> Result<Weight, DispatchError> {
+		let max_block_weight = T::BlockWeights::get().max_block;
 		let mut weight = 0;
 
 		// pick out another public referendum if it's time.
@@ -1707,7 +1708,7 @@ impl<T: Config> Module<T> {
 			// Errors come from the queue being empty. we don't really care about that, and even if
 			// we did, there is nothing we can do here.
 			let _ = Self::launch_next(now);
-			weight = T::MaximumBlockWeight::get();
+			weight = max_block_weight;
 		}
 
 		let next = Self::lowest_unbaked();
@@ -1718,7 +1719,7 @@ impl<T: Config> Module<T> {
 		for (index, info) in Self::maturing_referenda_at_inner(now, next..last).into_iter() {
 			let approved = Self::bake_referendum(now, index, info)?;
 			ReferendumInfoOf::<T>::insert(index, ReferendumInfo::Finished { end: now, approved });
-			weight = T::MaximumBlockWeight::get();
+			weight = max_block_weight;
 		}
 
 		Ok(weight)

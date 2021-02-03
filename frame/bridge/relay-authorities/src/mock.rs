@@ -26,16 +26,14 @@ pub mod relay_authorities {
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
-use frame_support::{
-	impl_outer_event, impl_outer_origin, parameter_types, traits::OnInitialize, weights::Weight,
-};
+use frame_support::{impl_outer_event, impl_outer_origin, parameter_types, traits::OnInitialize};
 use frame_system::EnsureRoot;
 use sp_core::H256;
 use sp_io::{hashing, TestExternalities};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	Perbill, RuntimeDebug,
+	RuntimeDebug,
 };
 // --- darwinia ---
 use crate::*;
@@ -115,14 +113,11 @@ impl Config for Test {
 	type WeightInfo = ();
 }
 
-parameter_types! {
-	pub const BlockHashCount: u64 = 250;
-	pub const MaximumBlockWeight: Weight = 1024;
-	pub const MaximumBlockLength: u32 = 2 * 1024;
-	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
-}
 impl frame_system::Config for Test {
 	type BaseCallFilter = ();
+	type BlockWeights = ();
+	type BlockLength = ();
+	type DbWeight = ();
 	type Origin = Origin;
 	type Call = ();
 	type Index = Index;
@@ -133,14 +128,7 @@ impl frame_system::Config for Test {
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = Event;
-	type BlockHashCount = BlockHashCount;
-	type MaximumBlockWeight = MaximumBlockWeight;
-	type DbWeight = ();
-	type BlockExecutionWeight = ();
-	type ExtrinsicBaseWeight = ();
-	type MaximumExtrinsicWeight = MaximumBlockWeight;
-	type MaximumBlockLength = MaximumBlockLength;
-	type AvailableBlockRatio = AvailableBlockRatio;
+	type BlockHashCount = ();
 	type Version = ();
 	type PalletInfo = ();
 	type AccountData = AccountData<Balance>;
