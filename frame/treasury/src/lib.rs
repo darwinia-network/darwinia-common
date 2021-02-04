@@ -131,12 +131,14 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-mod default_weights;
-
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
 mod tests;
+
+pub mod weights;
+// --- darwinia ---
+pub use weights::WeightInfo;
 
 mod types {
 	// --- darwinia ---
@@ -1499,30 +1501,6 @@ impl<T: Config<I>, I: Instance> OnUnbalancedKton<KtonNegativeImbalance<T, I>> fo
 		Self::deposit_event(RawEvent::DepositKton(numeric_amount));
 	}
 }
-
-pub trait WeightInfo {
-	fn propose_spend() -> Weight;
-	fn reject_proposal() -> Weight;
-	fn approve_proposal() -> Weight;
-	fn report_awesome(r: u32) -> Weight;
-	fn retract_tip() -> Weight;
-	fn tip_new(r: u32, t: u32) -> Weight;
-	fn tip(t: u32) -> Weight;
-	fn close_tip(t: u32) -> Weight;
-	fn propose_bounty(r: u32) -> Weight;
-	fn approve_bounty() -> Weight;
-	fn propose_curator() -> Weight;
-	fn unassign_curator() -> Weight;
-	fn accept_curator() -> Weight;
-	fn award_bounty() -> Weight;
-	fn claim_bounty() -> Weight;
-	fn close_bounty_proposed() -> Weight;
-	fn close_bounty_active() -> Weight;
-	fn extend_bounty_expiry() -> Weight;
-	fn on_initialize_proposals(p: u32) -> Weight;
-	fn on_initialize_bounties(b: u32) -> Weight;
-}
-
 /// The status of a bounty proposal.
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug)]
 pub enum BountyStatus<AccountId, BlockNumber> {

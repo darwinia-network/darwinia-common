@@ -20,6 +20,10 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod weights;
+// --- darwinia ---
+pub use weights::WeightInfo;
+
 mod types {
 	// --- darwinia ---
 	#[cfg(feature = "std")]
@@ -50,9 +54,6 @@ pub trait Config: frame_system::Config {
 
 	type WeightInfo: WeightInfo;
 }
-
-pub trait WeightInfo {}
-impl WeightInfo for () {}
 
 decl_storage! {
 	trait Store for Module<T: Config> as DarwiniaCrabBacking {}

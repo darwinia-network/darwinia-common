@@ -153,12 +153,12 @@
 #[cfg(test)]
 #[macro_use]
 mod tests;
-// #[cfg(test)]
-// mod tests_composite;
 #[cfg(test)]
 mod tests_local;
 
-mod default_weight;
+pub mod weights;
+// --- darwinia ---
+pub use weights::WeightInfo;
 
 // --- darwinia ---
 pub use imbalances::{NegativeImbalance, PositiveImbalance};
@@ -173,7 +173,6 @@ use frame_support::{
 		ExistenceRequirement::KeepAlive, Get, Imbalance, IsDeadAccount, OnKilledAccount,
 		OnUnbalanced, ReservableCurrency, SignedImbalance, StoredMap, TryDrop,
 	},
-	weights::Weight,
 	Parameter, StorageValue,
 };
 use frame_system::{ensure_root, ensure_signed};
@@ -192,14 +191,6 @@ use darwinia_support::{
 	impl_rpc,
 	traits::BalanceInfo,
 };
-
-pub trait WeightInfo {
-	fn transfer() -> Weight;
-	fn transfer_keep_alive() -> Weight;
-	fn set_balance_creating() -> Weight;
-	fn set_balance_killing() -> Weight;
-	fn force_transfer() -> Weight;
-}
 
 pub trait Subtrait<I: Instance = DefaultInstance>: frame_system::Config {
 	/// The balance of an account.

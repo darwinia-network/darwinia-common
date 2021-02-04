@@ -202,9 +202,6 @@ pub mod wasm {
 	}
 }
 
-/// Weights for pallets used in the runtime.
-mod weights;
-
 // --- darwinia ---
 use darwinia_evm::{
 	Account as EVMAccount, AccountBasicMapping, EnsureAddressTruncated, FeeCalculator,
@@ -383,7 +380,7 @@ impl frame_system::Config for Runtime {
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
-	type SystemWeightInfo = weights::frame_system::WeightInfo<Runtime>;
+	type SystemWeightInfo = frame_system::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -399,7 +396,7 @@ impl pallet_scheduler::Config for Runtime {
 	type MaximumWeight = MaximumSchedulerWeight;
 	type ScheduleOrigin = EnsureRoot<AccountId>;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
-	type WeightInfo = weights::pallet_scheduler::WeightInfo<Runtime>;
+	type WeightInfo = pallet_scheduler::weights::SubstrateWeight<Runtime>;
 }
 
 /// The type used to represent the kinds of proxying allowed.
@@ -498,7 +495,7 @@ impl pallet_proxy::Config for Runtime {
 	type CallHasher = BlakeTwo256;
 	type AnnouncementDepositBase = AnnouncementDepositBase;
 	type AnnouncementDepositFactor = AnnouncementDepositFactor;
-	type WeightInfo = weights::pallet_proxy::WeightInfo<Runtime>;
+	type WeightInfo = pallet_proxy::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -530,7 +527,7 @@ impl pallet_timestamp::Config for Runtime {
 	type Moment = Moment;
 	type OnTimestampSet = Babe;
 	type MinimumPeriod = MinimumPeriod;
-	type WeightInfo = weights::pallet_timestamp::WeightInfo<Runtime>;
+	type WeightInfo = pallet_timestamp::weights::SubstrateWeight<Runtime>;
 }
 
 type RingInstance = darwinia_balances::Instance0;
@@ -547,7 +544,7 @@ impl darwinia_balances::Config<RingInstance> for Runtime {
 	type AccountStore = System;
 	type MaxLocks = MaxLocks;
 	type OtherCurrencies = (Kton,);
-	type WeightInfo = weights::darwinia_balances::WeightInfo<Runtime>;
+	type WeightInfo = darwinia_balances::weights::SubstrateWeight<Runtime>;
 }
 type KtonInstance = darwinia_balances::Instance1;
 impl darwinia_balances::Config<KtonInstance> for Runtime {
@@ -559,7 +556,7 @@ impl darwinia_balances::Config<KtonInstance> for Runtime {
 	type AccountStore = System;
 	type MaxLocks = MaxLocks;
 	type OtherCurrencies = (Ring,);
-	type WeightInfo = weights::darwinia_balances::WeightInfo<Runtime>;
+	type WeightInfo = darwinia_balances::weights::SubstrateWeight<Runtime>;
 }
 
 /// Parameterized slow adjusting fee updated based on
@@ -651,7 +648,7 @@ impl darwinia_staking::Config for Runtime {
 	type KtonReward = ();
 	type Cap = Cap;
 	type TotalPower = TotalPower;
-	type WeightInfo = weights::darwinia_staking::WeightInfo<Runtime>;
+	type WeightInfo = darwinia_staking::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -691,7 +688,7 @@ impl pallet_session::Config for Runtime {
 	type SessionHandler = <SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = SessionKeys;
 	type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
-	type WeightInfo = weights::pallet_session::WeightInfo<Runtime>;
+	type WeightInfo = pallet_session::weights::SubstrateWeight<Runtime>;
 }
 
 impl pallet_grandpa::Config for Runtime {
@@ -719,7 +716,7 @@ impl pallet_im_online::Config for Runtime {
 	type SessionDuration = SessionDuration;
 	type ReportUnresponsiveness = Offences;
 	type UnsignedPriority = ImOnlineUnsignedPriority;
-	type WeightInfo = weights::pallet_im_online::WeightInfo<Runtime>;
+	type WeightInfo = pallet_im_online::weights::SubstrateWeight<Runtime>;
 }
 
 impl pallet_authority_discovery::Config for Runtime {}
@@ -787,7 +784,7 @@ impl darwinia_democracy::Config for Runtime {
 	type MaxVotes = MaxVotes;
 	type OperationalPreimageOrigin = pallet_collective::EnsureMember<AccountId, CouncilCollective>;
 	type MaxProposals = MaxProposals;
-	type WeightInfo = weights::darwinia_democracy::WeightInfo<Runtime>;
+	type WeightInfo = darwinia_democracy::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -809,7 +806,7 @@ impl pallet_collective::Config<CouncilCollective> for Runtime {
 	type MaxProposals = CouncilMaxProposals;
 	type MaxMembers = CouncilMaxMembers;
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
-	type WeightInfo = weights::pallet_collective::WeightInfo<Runtime>;
+	type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
 }
 type TechnicalCollective = pallet_collective::Instance1;
 impl pallet_collective::Config<TechnicalCollective> for Runtime {
@@ -820,7 +817,7 @@ impl pallet_collective::Config<TechnicalCollective> for Runtime {
 	type MaxProposals = TechnicalMaxProposals;
 	type MaxMembers = TechnicalMaxMembers;
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
-	type WeightInfo = weights::pallet_collective::WeightInfo<Runtime>;
+	type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -849,7 +846,7 @@ impl darwinia_elections_phragmen::Config for Runtime {
 	type DesiredMembers = DesiredMembers;
 	type DesiredRunnersUp = DesiredRunnersUp;
 	type TermDuration = TermDuration;
-	type WeightInfo = weights::darwinia_elections_phragmen::WeightInfo<Runtime>;
+	type WeightInfo = darwinia_elections_phragmen::weights::SubstrateWeight<Runtime>;
 }
 
 pub struct MembershipChangedGroup;
@@ -929,7 +926,7 @@ impl darwinia_treasury::Config for Runtime {
 	type BountyValueMinimum = BountyValueMinimum;
 	type RingBurnDestination = ();
 	type KtonBurnDestination = ();
-	type WeightInfo = weights::darwinia_treasury::WeightInfo<Runtime>;
+	type WeightInfo = darwinia_treasury::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {

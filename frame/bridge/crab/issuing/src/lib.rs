@@ -20,6 +20,10 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod weights;
+// --- darwinia ---
+pub use weights::WeightInfo;
+
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
@@ -56,9 +60,6 @@ pub trait Config: frame_system::Config {
 
 	type WeightInfo: WeightInfo;
 }
-
-pub trait WeightInfo {}
-impl WeightInfo for () {}
 
 decl_event! {
 	pub enum Event<T>

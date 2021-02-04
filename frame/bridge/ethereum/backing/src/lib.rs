@@ -23,6 +23,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "128"]
 
+pub mod weights;
+// --- darwinia ---
+pub use weights::WeightInfo;
+
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
@@ -106,10 +110,6 @@ pub trait Config: frame_system::Config {
 	/// Weight information for the extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
 }
-
-// TODO: https://github.com/darwinia-network/darwinia-common/issues/209
-pub trait WeightInfo {}
-impl WeightInfo for () {}
 
 decl_event! {
 	pub enum Event<T>

@@ -135,6 +135,10 @@
 #![recursion_limit = "128"]
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod weights;
+// --- darwinia ---
+pub use weights::WeightInfo;
+
 // --- crates ---
 use codec::{Decode, Encode, Input};
 // --- substrate ---
@@ -159,7 +163,6 @@ use sp_std::prelude::*;
 use darwinia_support::balance::lock::*;
 
 mod conviction;
-mod default_weight;
 mod types;
 mod vote;
 mod vote_threshold;
@@ -189,34 +192,6 @@ type BalanceOf<T> =
 type NegativeImbalanceOf<T> = <<T as Config>::Currency as Currency<
 	<T as frame_system::Config>::AccountId,
 >>::NegativeImbalance;
-
-pub trait WeightInfo {
-	fn propose() -> Weight;
-	fn second(s: u32) -> Weight;
-	fn vote_new(r: u32) -> Weight;
-	fn vote_existing(r: u32) -> Weight;
-	fn emergency_cancel() -> Weight;
-	fn blacklist(p: u32) -> Weight;
-	fn external_propose(v: u32) -> Weight;
-	fn external_propose_majority() -> Weight;
-	fn external_propose_default() -> Weight;
-	fn fast_track() -> Weight;
-	fn veto_external(v: u32) -> Weight;
-	fn cancel_referendum() -> Weight;
-	fn cancel_proposal(p: u32) -> Weight;
-	fn cancel_queued(r: u32) -> Weight;
-	fn on_initialize_base(r: u32) -> Weight;
-	fn delegate(r: u32) -> Weight;
-	fn undelegate(r: u32) -> Weight;
-	fn clear_public_proposals() -> Weight;
-	fn note_preimage(b: u32) -> Weight;
-	fn note_imminent_preimage(b: u32) -> Weight;
-	fn reap_preimage(b: u32) -> Weight;
-	fn unlock_remove(r: u32) -> Weight;
-	fn unlock_set(r: u32) -> Weight;
-	fn remove_vote(r: u32) -> Weight;
-	fn remove_other_vote(r: u32) -> Weight;
-}
 
 pub trait Config: frame_system::Config + Sized {
 	type Proposal: Parameter + Dispatchable<Origin = Self::Origin> + From<Call<Self>>;

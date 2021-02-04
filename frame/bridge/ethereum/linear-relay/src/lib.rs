@@ -46,6 +46,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "128"]
 
+pub mod weights;
+// --- darwinia ---
+pub use weights::WeightInfo;
+
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
@@ -771,10 +775,6 @@ impl<T: Config> EthereumReceiptT<T::AccountId, Balance<T>> for Module<T> {
 		(proof.header_hash, proof.index)
 	}
 }
-
-// TODO: https://github.com/darwinia-network/darwinia-common/issues/209
-pub trait WeightInfo {}
-impl WeightInfo for () {}
 
 /// `SignedExtension` that checks if a transaction has duplicate header hash to avoid coincidence
 /// header between several relayers
