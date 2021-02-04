@@ -363,6 +363,19 @@ decl_storage! {
 					"the balance of any account should always be at least the existential deposit.",
 				)
 			}
+
+			// ensure no duplicates exist.
+			let endowed_accounts = config.balances
+				.iter()
+				.map(|(x, _)| x)
+				.cloned()
+				.collect::<std::collections::BTreeSet<_>>();
+
+			assert!(
+				endowed_accounts.len() == config.balances.len(),
+				"duplicate balances in genesis."
+			);
+
 			for &(ref who, free) in config.balances.iter() {
 				let mut account_data = T::AccountStore::get(who);
 				account_data.set_free(free);
