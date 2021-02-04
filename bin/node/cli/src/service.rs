@@ -36,6 +36,7 @@ use sc_finality_grandpa::{
 	LinkHalf, SharedVoterState as GrandpaSharedVoterState,
 	VotingRulesBuilder as GrandpaVotingRulesBuilder, GRANDPA_PROTOCOL_NAME,
 };
+use sc_keystore::LocalKeystore;
 use sc_network::NetworkService;
 use sc_service::{
 	config::{KeystoreConfig, PrometheusConfig},
@@ -201,6 +202,11 @@ where
 	RuntimeApi::RuntimeApi:
 		RuntimeApiCollection<StateBackend = StateBackendFor<FullBackend, Block>>,
 {
+	if config.keystore_remote.is_some() {
+		return Err(ServiceError::Other(
+			format!("Remote Keystores are not supported.")))
+	}
+
 	set_prometheus_registry(config)?;
 
 	let inherent_data_providers = InherentDataProviders::new();
@@ -298,6 +304,13 @@ where
 	})
 }
 
+fn remote_keystore(_url: &String) -> Result<Arc<LocalKeystore>, &'static str> {
+	// FIXME: here would the concrete keystore be built,
+	//        must return a concrete type (NOT `LocalKeystore`) that
+	//        implements `CryptoStore` and `SyncCryptoStore`
+	Err("Remote Keystore not supported.")
+}
+
 #[cfg(feature = "full-node")]
 fn new_full<RuntimeApi, Executor>(
 	mut config: Configuration,
@@ -321,13 +334,24 @@ where
 		client,
 		backend,
 		mut task_manager,
-		keystore_container,
+		mut keystore_container,
 		select_chain,
 		import_queue,
 		transaction_pool,
 		inherent_data_providers,
 		other: (rpc_extensions_builder, import_setup, rpc_setup),
 	} = new_partial::<RuntimeApi, Executor>(&mut config)?;
+
+	if let Some(url) = &config.keystore_remote {
+		match remote_keystore(url) {
+			Ok(k) => keystore_container.set_remote_keystore(k),
+			Err(e) => {
+				return Err(ServiceError::Other(
+					format!("Error hooking up remote keystore for {}: {}", url, e)))
+			}
+		};
+	}
+
 	let prometheus_registry = config.prometheus_registry().cloned();
 	let shared_voter_state = rpc_setup;
 
