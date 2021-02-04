@@ -26,12 +26,12 @@ pub mod crab_issuing {
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
-use frame_support::{impl_outer_event, impl_outer_origin, parameter_types, weights::Weight};
+use frame_support::{impl_outer_event, impl_outer_origin, parameter_types};
 use sp_io::TestExternalities;
 use sp_runtime::{
 	testing::{Header, H256},
 	traits::{BlakeTwo256, IdentityLookup},
-	Perbill, RuntimeDebug,
+	RuntimeDebug,
 };
 // --- darwinia ---
 use crate::*;
@@ -74,6 +74,9 @@ impl Config for Test {
 
 impl frame_system::Config for Test {
 	type BaseCallFilter = ();
+	type BlockWeights = ();
+	type BlockLength = ();
+	type DbWeight = ();
 	type Origin = Origin;
 	type Call = ();
 	type Index = u64;

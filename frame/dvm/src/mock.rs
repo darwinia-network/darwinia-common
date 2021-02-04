@@ -21,14 +21,14 @@ use crate::account_basic::DVMAccountBasicMapping;
 use crate::{Config, IntermediateStateRoot, Module};
 use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator};
 use ethereum::{TransactionAction, TransactionSignature};
-use frame_support::{impl_outer_origin, parameter_types, weights::Weight, ConsensusEngineId};
+use frame_support::{impl_outer_origin, parameter_types, ConsensusEngineId};
 use rlp::*;
 use sp_core::{H160, H256, U256};
 use sp_runtime::AccountId32;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	ModuleId, Perbill, RuntimeDebug,
+	ModuleId, RuntimeDebug,
 };
 
 use codec::{Decode, Encode};
@@ -45,15 +45,12 @@ type Balance = u64;
 // configuration traits of pallets we want to use.
 #[derive(Clone, Eq, PartialEq)]
 pub struct Test;
-parameter_types! {
-	pub const BlockHashCount: u64 = 250;
-	pub const MaximumBlockWeight: Weight = 1024;
-	pub const MaximumBlockLength: u32 = 2 * 1024;
-	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
-}
 
 impl frame_system::Config for Test {
 	type BaseCallFilter = ();
+	type BlockWeights = ();
+	type BlockLength = ();
+	type DbWeight = ();
 	type SystemWeightInfo = ();
 	type Origin = Origin;
 	type Call = ();
@@ -65,14 +62,7 @@ impl frame_system::Config for Test {
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = ();
-	type BlockHashCount = BlockHashCount;
-	type MaximumBlockWeight = MaximumBlockWeight;
-	type DbWeight = ();
-	type BlockExecutionWeight = ();
-	type ExtrinsicBaseWeight = ();
-	type MaximumExtrinsicWeight = MaximumBlockWeight;
-	type MaximumBlockLength = MaximumBlockLength;
-	type AvailableBlockRatio = AvailableBlockRatio;
+	type BlockHashCount = ();
 	type Version = ();
 	type PalletInfo = ();
 	type AccountData = AccountData<Balance>;

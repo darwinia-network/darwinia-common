@@ -314,7 +314,6 @@ impl Configuration {
 			);
 			quick_if_let!(cmd.import_params, self.import_config, unsafe_pruning);
 			quick_if_let!(cmd.import_params, self.import_config, state_cache_size);
-			quick_if_let!(cmd.import_params, self.import_config, Some(tracing_targets));
 
 			quick_if_let!(cmd.network_params, self.network_config, bootnodes);
 			quick_if_let!(cmd.network_params, self.network_config, reserved_nodes);
@@ -570,9 +569,6 @@ struct ImportConfig {
 
 	/// Specify the state cache size.
 	state_cache_size: Option<usize>,
-
-	/// Comma separated list of targets for tracing.
-	tracing_targets: Option<String>,
 
 	/// Receiver to process tracing messages.
 	tracing_receiver: Option<TracingReceiver>,
