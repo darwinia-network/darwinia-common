@@ -1203,7 +1203,7 @@ decl_module! {
 						value,
 						promise_month,
 						ledger,
-					);
+					)?;
 
 					Self::deposit_event(RawEvent::BondRing(value, start_time, expire_time));
 				},
@@ -1211,7 +1211,7 @@ decl_module! {
 					let stash_balance = T::KtonCurrency::free_balance(&stash);
 					let value = value.min(stash_balance);
 
-					Self::bond_kton(&controller, value, ledger);
+					Self::bond_kton(&controller, value, ledger)?;
 					Self::deposit_event(RawEvent::BondKton(value));
 				},
 			}
@@ -1261,7 +1261,7 @@ decl_module! {
 							extra,
 							promise_month,
 							ledger,
-						);
+						)?;
 
 						Self::deposit_event(RawEvent::BondRing(extra, start_time, expire_time));
 					}
@@ -1274,7 +1274,7 @@ decl_module! {
 					) {
 						let extra = extra.min(max_additional);
 
-						Self::bond_kton(&controller, extra, ledger);
+						Self::bond_kton(&controller, extra, ledger)?;
 						Self::deposit_event(RawEvent::BondKton(extra));
 					}
 				},
@@ -2016,6 +2016,13 @@ decl_module! {
 
 			ledger.rebond(plan_to_rebond_ring, plan_to_rebond_kton);
 
+			// last check: the new active amount of ledger must be more than ED.
+			ensure!(
+				ledger.active_ring >= T::RingCurrency::minimum_balance()
+					|| ledger.active_kton >= T::KtonCurrency::minimum_balance(),
+				<Error<T>>::InsufficientValue
+			);
+
 			Self::update_ledger(&controller, &mut ledger);
 
 			let rebond_ring = ledger.active_ring.saturating_sub(origin_active_ring);
@@ -2234,11 +2241,12 @@ impl<T: Config> Module<T> {
 		value: RingBalance<T>,
 		promise_month: u8,
 		mut ledger: StakingLedgerT<T>,
-	) -> (TsInMs, TsInMs) {
+	) -> Result<(TsInMs, TsInMs), DispatchError> {
 		let StakingLedger {
 			active_ring,
 			active_deposit_ring,
 			deposit_items,
+			active_kton,
 			..
 		} = &mut ledger;
 
@@ -2246,6 +2254,14 @@ impl<T: Config> Module<T> {
 		let mut expire_time = start_time;
 
 		*active_ring = active_ring.saturating_add(value);
+
+		// last check: the new active amount of ledger must be more than ED.
+		ensure!(
+			*active_ring >= T::RingCurrency::minimum_balance()
+				|| *active_kton >= T::KtonCurrency::minimum_balance(),
+			<Error<T>>::InsufficientValue
+		);
+
 		// if stash promise to an extra-lock
 		// there will be extra reward (*KTON*), which can also be used for staking
 		if promise_month > 0 {
@@ -2265,14 +2281,27 @@ impl<T: Config> Module<T> {
 
 		Self::update_ledger(&controller, &mut ledger);
 
-		(start_time, expire_time)
+		Ok((start_time, expire_time))
 	}
 
 	/// Update the ledger while bonding controller with *KTON*
-	fn bond_kton(controller: &T::AccountId, value: KtonBalance<T>, mut ledger: StakingLedgerT<T>) {
-		ledger.active_kton += value;
+	fn bond_kton(
+		controller: &T::AccountId,
+		value: KtonBalance<T>,
+		mut ledger: StakingLedgerT<T>,
+	) -> DispatchResult {
+		ledger.active_kton = ledger.active_kton.saturating_add(value);
+
+		// last check: the new active amount of ledger must be more than ED.
+		ensure!(
+			ledger.active_ring >= T::RingCurrency::minimum_balance()
+				|| ledger.active_kton >= T::KtonCurrency::minimum_balance(),
+			<Error<T>>::InsufficientValue
+		);
 
 		Self::update_ledger(&controller, &mut ledger);
+
+		Ok(())
 	}
 
 	/// Turn the expired deposit items into normal bond
