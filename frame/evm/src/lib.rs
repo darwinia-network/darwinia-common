@@ -34,7 +34,7 @@ pub use evm::{ExitError, ExitFatal, ExitReason, ExitRevert, ExitSucceed};
 use codec::{Decode, Encode};
 use evm::Config;
 use frame_support::dispatch::DispatchResultWithPostInfo;
-use frame_support::traits::{Currency, Get};
+use frame_support::traits::{Currency, ExistenceRequirement, Get, WithdrawReasons};
 use frame_support::weights::{Pays, PostDispatchInfo, Weight};
 use frame_support::{decl_error, decl_event, decl_module, decl_storage};
 use frame_system::RawOrigin;
@@ -533,5 +533,34 @@ impl<T: Trait> Module<T> {
 		if Self::is_account_empty(address) {
 			Self::remove_account(address);
 		}
+	}
+
+	/// Withdraw fee.
+	pub fn withdraw_fee(address: &H160, value: U256) -> Result<(), Error<T>> {
+		let account_id = T::AddressMapping::into_account_id(*address);
+
+		drop(
+			T::Currency::withdraw(
+				&account_id,
+				value.low_u128().unique_saturated_into(),
+				// WithdrawReasons::FEE,
+				// TODO: FIX ME AFTER SUBSTRATE UPDATED
+				WithdrawReasons::all(),
+				ExistenceRequirement::AllowDeath,
+			)
+			.map_err(|_| Error::<T>::BalanceLow)?,
+		);
+
+		Ok(())
+	}
+
+	/// Deposit fee.
+	pub fn deposit_fee(address: &H160, value: U256) {
+		let account_id = T::AddressMapping::into_account_id(*address);
+
+		drop(T::Currency::deposit_creating(
+			&account_id,
+			value.low_u128().unique_saturated_into(),
+		));
 	}
 }
