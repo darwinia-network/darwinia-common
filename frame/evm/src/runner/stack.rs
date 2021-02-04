@@ -22,14 +22,14 @@ use crate::{
 	AccountBasicMapping, AccountCodes, AccountStorages, AddressMapping, Error, Event,
 	FeeCalculator, Module, PrecompileSet, Trait,
 };
-use darwinia_evm_primitives::{CallInfo, CreateInfo, ExecutionInfo, Log, Vicinity};
+use darwinia_evm_primitives::{Account, CallInfo, CreateInfo, ExecutionInfo, Log, Vicinity};
 use evm::backend::Backend as BackendT;
 use evm::executor::{StackExecutor, StackState as StackStateT, StackSubstateMetadata};
 use evm::{ExitError, ExitReason, Transfer};
 use frame_support::{
 	debug, ensure,
 	storage::{StorageDoubleMap, StorageMap},
-	traits::{Currency, ExistenceRequirement, Get},
+	traits::Get,
 };
 use sha3::{Digest, Keccak256};
 use sp_core::{H160, H256, U256};
@@ -494,16 +494,27 @@ impl<'vicinity, 'config, T: Trait> StackStateT<'config>
 	}
 
 	fn transfer(&mut self, transfer: Transfer) -> Result<(), ExitError> {
-		let source = T::AddressMapping::into_account_id(transfer.source);
-		let target = T::AddressMapping::into_account_id(transfer.target);
+		let source_account = T::AccountBasicMapping::account_basic(&transfer.source);
+		let target_account = T::AccountBasicMapping::account_basic(&transfer.target);
 
-		T::Currency::transfer(
-			&source,
-			&target,
-			transfer.value.low_u128().unique_saturated_into(),
-			ExistenceRequirement::AllowDeath,
-		)
-		.map_err(|_| ExitError::OutOfFund)
+		let new_source_balance = source_account.balance.saturating_sub(transfer.value);
+		let new_target_balance = target_account.balance.saturating_add(transfer.value);
+
+		T::AccountBasicMapping::mutate_account_basic(
+			&transfer.source,
+			Account {
+				nonce: source_account.nonce,
+				balance: new_source_balance,
+			},
+		);
+		T::AccountBasicMapping::mutate_account_basic(
+			&transfer.target,
+			Account {
+				nonce: target_account.nonce,
+				balance: new_target_balance,
+			},
+		);
+		Ok(())
 	}
 
 	fn reset_balance(&mut self, _address: H160) {
