@@ -15,15 +15,15 @@ codec      = { package = "parity-scale-codec", version = "1.3.5", default-featur
 serde      = { version = "1.0.118", optional = true }
 serde_json = { version = "1.0.61", optional = true }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "332399d16668a6c769f1a7db154bb9ea3b50e61c" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "332399d16668a6c769f1a7db154bb9ea3b50e61c" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "332399d16668a6c769f1a7db154bb9ea3b50e61c" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9599f39a15007eba3bcc38d0eddb8af08de2b2b9" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9599f39a15007eba3bcc38d0eddb8af08de2b2b9" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9599f39a15007eba3bcc38d0eddb8af08de2b2b9" }
 # darwinia
 darwinia-support = { optional = true, path = "../../../support" }
 
 [dev-dependencies]
 # substrate
-sp-io = { git = "https://github.com/darwinia-network/substrate.git", rev = "332399d16668a6c769f1a7db154bb9ea3b50e61c" }
+sp-io = { git = "https://github.com/darwinia-network/substrate.git", rev = "9599f39a15007eba3bcc38d0eddb8af08de2b2b9" }
 # darwinia
 darwinia-balances = { path = "../../../balances" }
 darwinia-support  = { path = "../../../support" }

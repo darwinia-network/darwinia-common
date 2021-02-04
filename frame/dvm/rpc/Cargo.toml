@@ -23,10 +23,10 @@ darwinia-evm            = { default-features = false, path = "../../evm" }
 darwinia-evm-primitives = { default-features = false, path = "../../../primitives/evm" }
 dvm-rpc-core-primitives = { default-features = false, path = "../../../primitives/dvm-rpc-core" }
 # substrate
-sp-api     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "332399d16668a6c769f1a7db154bb9ea3b50e61c" }
-sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "332399d16668a6c769f1a7db154bb9ea3b50e61c" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "332399d16668a6c769f1a7db154bb9ea3b50e61c" }
-sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "332399d16668a6c769f1a7db154bb9ea3b50e61c" }
+sp-api     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9599f39a15007eba3bcc38d0eddb8af08de2b2b9" }
+sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9599f39a15007eba3bcc38d0eddb8af08de2b2b9" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9599f39a15007eba3bcc38d0eddb8af08de2b2b9" }
+sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9599f39a15007eba3bcc38d0eddb8af08de2b2b9" }
 
 [features]
 default = ["std"]

@@ -15,8 +15,8 @@ darwinia-evm-primitives  = { default-features = false, path = "../../../../primi
 ed25519-dalek			 = { version = "1.0.0", features = ["alloc", "u64_backend"], default-features = false }
 evm                      = { version = "0.20.0", default-features = false, features = ["with-codec"] }
 # substrate
-sp-core                  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "332399d16668a6c769f1a7db154bb9ea3b50e61c" }
-sp-io                    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "332399d16668a6c769f1a7db154bb9ea3b50e61c" }
+sp-core                  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9599f39a15007eba3bcc38d0eddb8af08de2b2b9" }
+sp-io                    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9599f39a15007eba3bcc38d0eddb8af08de2b2b9" }
 
 [features]
 default = ["std"]
