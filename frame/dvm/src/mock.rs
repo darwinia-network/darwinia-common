@@ -83,7 +83,7 @@ impl frame_system::Trait for Test {
 parameter_types! {
 	// For weight estimation, we assume that the most locks on an individual account will be 50.
 	// This number may need to be adjusted in the future if this assumption no longer holds true.
-	pub const MaxLocks: u32 = 50;
+	pub const MaxLocks: u32 = 10;
 	pub const ExistentialDeposit: u64 = 500;
 }
 
@@ -151,7 +151,13 @@ impl darwinia_evm::Trait for Test {
 	type AddressMapping = HashedAddressMapping;
 	type Currency = Balances;
 	type Event = ();
-	type Precompiles = ();
+	type Precompiles = (
+		darwinia_evm_precompile_simple::ECRecover,
+		darwinia_evm_precompile_simple::Sha256,
+		darwinia_evm_precompile_simple::Ripemd160,
+		darwinia_evm_precompile_simple::Identity,
+		darwinia_evm_precompile_withdraw::WithDraw<Self>,
+	);
 	type ChainId = ChainId;
 	type Runner = darwinia_evm::runner::stack::Runner<Self>;
 	type AccountBasicMapping = DVMAccountBasicMapping<Self>;
@@ -210,7 +216,7 @@ pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExtern
 		.collect::<Vec<_>>();
 
 	let balances: Vec<_> = (0..accounts_len)
-		.map(|i| (pairs[i].account_id.clone(), 10_000_000))
+		.map(|i| (pairs[i].account_id.clone(), 100_000_000_000))
 		.collect();
 
 	darwinia_balances::GenesisConfig::<Test, RingInstance> { balances }
