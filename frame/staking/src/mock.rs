@@ -74,6 +74,7 @@ pub(crate) const CAP: Balance = 10_000_000_000 * COIN;
 pub(crate) const TOTAL_POWER: Power = 1_000_000_000;
 
 pub const INIT_TIMESTAMP: TsInMs = 30_000;
+pub const BLOCK_TIME: u64 = 1_000;
 
 impl_outer_dispatch! {
 	pub enum Call for Test where origin: Origin {
@@ -150,10 +151,10 @@ parameter_types! {
 	pub const Cap: Balance = CAP;
 	pub const TotalPower: Power = TOTAL_POWER;
 	pub static SessionsPerEra: SessionIndex = 3;
-	pub static ExistentialDeposit: Balance = 0;
+	pub static ExistentialDeposit: Balance = 1;
 	pub static SlashDeferDuration: EraIndex = 0;
 	pub static ElectionLookahead: BlockNumber = 0;
-	pub static Period: BlockNumber = 1;
+	pub static Period: BlockNumber = 5;
 	pub static MaxIterations: u32 = 0;
 	pub static SessionValidators: (Vec<AccountId>, HashSet<AccountId>) = Default::default();
 	pub static RingRewardRemainderUnbalanced: Balance = 0;
@@ -224,7 +225,6 @@ sp_runtime::impl_opaque_keys! {
 	}
 }
 parameter_types! {
-	pub const Offset: BlockNumber = 0;
 	pub const DisabledValidatorsThreshold: Perbill = Perbill::from_percent(25);
 }
 impl pallet_session::Config for Test {
@@ -300,20 +300,15 @@ where
 }
 
 pub struct ExtBuilder {
-	session_length: BlockNumber,
-	election_lookahead: BlockNumber,
-	sessions_per_era: SessionIndex,
-	existential_deposit: Balance,
 	validator_pool: bool,
 	nominate: bool,
 	validator_count: u32,
 	minimum_validator_count: u32,
-	slash_defer_duration: EraIndex,
 	fair: bool,
 	num_validators: Option<u32>,
 	invulnerables: Vec<AccountId>,
 	has_stakers: bool,
-	max_offchain_iterations: u32,
+	initialize_first_session: bool,
 	init_ring: bool,
 	init_kton: bool,
 }
@@ -321,20 +316,15 @@ pub struct ExtBuilder {
 impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {
-			session_length: 1,
-			election_lookahead: 0,
-			sessions_per_era: 3,
-			existential_deposit: 1,
 			validator_pool: false,
 			nominate: true,
 			validator_count: 2,
 			minimum_validator_count: 0,
-			slash_defer_duration: 0,
 			fair: true,
 			num_validators: None,
 			invulnerables: vec![],
 			has_stakers: true,
-			max_offchain_iterations: 0,
+			initialize_first_session: true,
 			init_ring: true,
 			init_kton: false,
 		}
@@ -342,20 +332,20 @@ impl Default for ExtBuilder {
 }
 
 impl ExtBuilder {
-	pub fn sessions_per_era(mut self, length: SessionIndex) -> Self {
-		self.sessions_per_era = length;
+	pub fn sessions_per_era(self, length: SessionIndex) -> Self {
+		SESSIONS_PER_ERA.with(|v| *v.borrow_mut() = length);
 		self
 	}
-	pub fn election_lookahead(mut self, look: BlockNumber) -> Self {
-		self.election_lookahead = look;
+	pub fn election_lookahead(self, look: BlockNumber) -> Self {
+		ELECTION_LOOKAHEAD.with(|v| *v.borrow_mut() = look);
 		self
 	}
-	pub fn session_length(mut self, length: BlockNumber) -> Self {
-		self.session_length = length;
+	pub fn period(self, length: BlockNumber) -> Self {
+		PERIOD.with(|v| *v.borrow_mut() = length);
 		self
 	}
-	pub fn existential_deposit(mut self, existential_deposit: Balance) -> Self {
-		self.existential_deposit = existential_deposit;
+	pub fn existential_deposit(self, existential_deposit: Balance) -> Self {
+		EXISTENTIAL_DEPOSIT.with(|v| *v.borrow_mut() = existential_deposit);
 		self
 	}
 	pub fn validator_pool(mut self, validator_pool: bool) -> Self {
@@ -375,7 +365,7 @@ impl ExtBuilder {
 		self
 	}
 	pub fn slash_defer_duration(mut self, eras: EraIndex) -> Self {
-		self.slash_defer_duration = eras;
+		SLASH_DEFER_DURATION.with(|v| *v.borrow_mut() = eras);
 		self
 	}
 	pub fn fair(mut self, is_fair: bool) -> Self {
@@ -395,8 +385,8 @@ impl ExtBuilder {
 		self.init_ring = has;
 		self
 	}
-	pub fn max_offchain_iterations(mut self, iterations: u32) -> Self {
-		self.max_offchain_iterations = iterations;
+	pub fn max_offchain_iterations(self, iterations: u32) -> Self {
+		MAX_ITERATIONS.with(|v| *v.borrow_mut() = iterations);
 		self
 	}
 	pub fn init_ring(mut self, init_ring: bool) -> Self {
@@ -409,26 +399,27 @@ impl ExtBuilder {
 		self
 	}
 	pub fn offchain_election_ext(self) -> Self {
-		self.sessions_per_era(4)
-			.session_length(5)
-			.election_lookahead(3)
+		self.session_per_era(4).period(5).election_lookahead(3)
 	}
-	pub fn set_associated_constants(&self) {
-		EXISTENTIAL_DEPOSIT.with(|v| *v.borrow_mut() = self.existential_deposit);
-		SLASH_DEFER_DURATION.with(|v| *v.borrow_mut() = self.slash_defer_duration);
-		SESSIONS_PER_ERA.with(|v| *v.borrow_mut() = self.sessions_per_era);
-		ELECTION_LOOKAHEAD.with(|v| *v.borrow_mut() = self.election_lookahead);
-		PERIOD.with(|v| *v.borrow_mut() = self.session_length);
-		MAX_ITERATIONS.with(|v| *v.borrow_mut() = self.max_offchain_iterations);
+	pub fn initialize_first_session(mut self, init: bool) -> Self {
+		self.initialize_first_session = init;
+		self
+	}
+	pub fn offset(self, offset: BlockNumber) -> Self {
+		OFFSET.with(|v| *v.borrow_mut() = offset);
+		self
 	}
 	pub fn build(self) -> sp_io::TestExternalities {
 		sp_tracing::try_init_simple();
-		self.set_associated_constants();
 		let mut storage = frame_system::GenesisConfig::default()
 			.build_storage::<Test>()
 			.unwrap();
 
-		let balance_factor = if self.existential_deposit > 1 { 256 } else { 1 };
+		let balance_factor = if ExistentialDeposit::get() > 1 {
+			256
+		} else {
+			1
+		};
 
 		let num_validators = self.num_validators.unwrap_or(self.validator_count);
 		let validators = (0..num_validators)
@@ -549,13 +540,18 @@ impl ExtBuilder {
 			let validators = Session::validators();
 			SESSION_VALIDATORS.with(|x| *x.borrow_mut() = (validators.clone(), HashSet::new()));
 		});
-		// We consider all test to start after timestamp is initialized
-		// This must be ensured by having `timestamp::on_initialize` called before
-		// `staking::on_initialize`
-		ext.execute_with(|| {
-			System::set_block_number(1);
-			Timestamp::set_timestamp(INIT_TIMESTAMP);
-		});
+
+		if self.initialize_first_session {
+			// We consider all test to start after timestamp is initialized This must be ensured by
+			// having `timestamp::on_initialize` called before `staking::on_initialize`. Also, if
+			// session length is 1, then it is already triggered.
+			ext.execute_with(|| {
+				System::set_block_number(1);
+				Session::on_initialize(1);
+				Staking::on_initialize(1);
+				Timestamp::set_timestamp(INIT_TIMESTAMP);
+			});
+		}
 
 		ext
 	}
@@ -598,14 +594,6 @@ fn post_conditions() {
 	check_nominators();
 	check_exposures();
 	check_ledgers();
-}
-
-pub(crate) fn current_era() -> EraIndex {
-	Staking::current_era().unwrap()
-}
-
-pub(crate) fn active_era() -> EraIndex {
-	Staking::active_era().unwrap().index
 }
 
 fn check_ledgers() {
@@ -707,6 +695,14 @@ pub fn assert_ledger_consistent(controller: AccountId) {
 	);
 }
 
+pub(crate) fn active_era() -> EraIndex {
+	Staking::active_era().unwrap().index
+}
+
+pub(crate) fn current_era() -> EraIndex {
+	Staking::current_era().unwrap()
+}
+
 fn bond(stash: AccountId, controller: AccountId, val: StakingBalanceT<Test>) {
 	match val {
 		StakingBalance::RingBalance(r) => {
@@ -745,16 +741,40 @@ pub(crate) fn bond_nominator(
 	assert_ok!(Staking::nominate(Origin::signed(controller), target));
 }
 
+/// Progress to the given block, triggering session and era changes as we progress.
+///
+/// This will finalize the previous block, initialize up to the given block, essentially simulating
+/// a block import/propose process where we first initialize the block, then execute some stuff (not
+/// in the function), and then finalize the block.
 pub(crate) fn run_to_block(n: BlockNumber) {
 	Staking::on_finalize(System::block_number());
 	for b in System::block_number() + 1..=n {
 		System::set_block_number(b);
 		Session::on_initialize(b);
 		Staking::on_initialize(b);
+		Timestamp::set_timestamp(System::block_number() * BLOCK_TIME + INIT_TIMESTAMP);
 		if b != n {
 			Staking::on_finalize(System::block_number());
 		}
 	}
+}
+
+/// Progresses from the current block number (whatever that may be) to the `P * session_index + 1`.
+pub(crate) fn start_session(session_index: SessionIndex) {
+	let end: u64 = if Offset::get().is_zero() {
+		(session_index as u64) * Period::get()
+	} else {
+		Offset::get() + (session_index.saturating_sub(1) as u64) * Period::get()
+	};
+	run_to_block(end);
+	// session must have progressed properly.
+	assert_eq!(
+		Session::current_index(),
+		session_index,
+		"current session index = {}, expected = {}",
+		Session::current_index(),
+		session_index,
+	);
 }
 
 pub(crate) fn advance_session() {
@@ -762,26 +782,13 @@ pub(crate) fn advance_session() {
 	start_session(current_index + 1);
 }
 
-pub(crate) fn start_session(session_index: SessionIndex) {
-	assert_eq!(
-		<Period as Get<BlockNumber>>::get(),
-		1,
-		"start_session can only be used with session length 1."
-	);
-	for i in Session::current_index()..session_index {
-		Staking::on_finalize(System::block_number());
-		System::set_block_number((i + 1).into());
-		Timestamp::set_timestamp(System::block_number() * 1000 + INIT_TIMESTAMP);
-		Session::on_initialize(System::block_number());
-		Staking::on_initialize(System::block_number());
-	}
-
-	assert_eq!(Session::current_index(), session_index);
-}
-
-pub(crate) fn start_era(era_index: EraIndex) {
+/// Progress until the given era.
+pub(crate) fn start_active_era(era_index: EraIndex) {
 	start_session((era_index * <SessionsPerEra as Get<u32>>::get()).into());
-	assert_eq!(Staking::current_era().unwrap(), era_index);
+	assert_eq!(active_era(), era_index);
+	// One way or another, current_era must have changed before the active era, so they must match
+	// at this point.
+	assert_eq!(current_era(), active_era());
 }
 
 pub(crate) fn current_total_payout_for_duration(era_duration: TsInMs) -> Balance {
@@ -792,6 +799,27 @@ pub(crate) fn current_total_payout_for_duration(era_duration: TsInMs) -> Balance
 		Perbill::from_percent(50),
 	)
 	.0
+}
+
+/// Time it takes to finish a session.
+///
+/// Note, if you see `time_per_session() - BLOCK_TIME`, it is fine. This is because we set the
+/// timestamp after on_initialize, so the timestamp is always one block old.
+pub(crate) fn time_per_session() -> u64 {
+	Period::get() * BLOCK_TIME
+}
+
+/// Time it takes to finish an era.
+///
+/// Note, if you see `time_per_era() - BLOCK_TIME`, it is fine. This is because we set the
+/// timestamp after on_initialize, so the timestamp is always one block old.
+pub(crate) fn time_per_era() -> u64 {
+	time_per_session() * SessionsPerEra::get() as u64
+}
+
+/// Time that will be calculated for the reward per era.
+pub(crate) fn reward_time_per_era() -> u64 {
+	time_per_era() - BLOCK_TIME
 }
 
 pub(crate) fn reward_all_elected() {
