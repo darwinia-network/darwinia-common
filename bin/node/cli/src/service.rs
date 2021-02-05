@@ -203,8 +203,9 @@ where
 		RuntimeApiCollection<StateBackend = StateBackendFor<FullBackend, Block>>,
 {
 	if config.keystore_remote.is_some() {
-		return Err(ServiceError::Other(
-			format!("Remote Keystores are not supported.")))
+		return Err(ServiceError::Other(format!(
+			"Remote Keystores are not supported."
+		)));
 	}
 
 	set_prometheus_registry(config)?;
@@ -346,8 +347,10 @@ where
 		match remote_keystore(url) {
 			Ok(k) => keystore_container.set_remote_keystore(k),
 			Err(e) => {
-				return Err(ServiceError::Other(
-					format!("Error hooking up remote keystore for {}: {}", url, e)))
+				return Err(ServiceError::Other(format!(
+					"Error hooking up remote keystore for {}: {}",
+					url, e
+				)))
 			}
 		};
 	}
