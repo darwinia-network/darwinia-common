@@ -34,7 +34,7 @@ pub use evm::{ExitError, ExitFatal, ExitReason, ExitRevert, ExitSucceed};
 use codec::{Decode, Encode};
 use evm::Config;
 use frame_support::dispatch::DispatchResultWithPostInfo;
-use frame_support::traits::{Currency, ExistenceRequirement, Get, WithdrawReason};
+use frame_support::traits::{Currency, Get};
 use frame_support::weights::{Pays, PostDispatchInfo, Weight};
 use frame_support::{decl_error, decl_event, decl_module, decl_storage};
 use frame_system::RawOrigin;
@@ -536,29 +536,30 @@ impl<T: Trait> Module<T> {
 	}
 
 	/// Withdraw fee.
-	pub fn withdraw_fee(address: &H160, value: U256) -> Result<(), Error<T>> {
-		let account_id = T::AddressMapping::into_account_id(*address);
+	pub fn withdraw_fee(address: &H160, value: U256) {
+		let account = T::AccountBasicMapping::account_basic(address);
+		let new_account_balance = account.balance.saturating_sub(value);
 
-		drop(
-			T::Currency::withdraw(
-				&account_id,
-				value.low_u128().unique_saturated_into(),
-				WithdrawReason::Fee.into(),
-				ExistenceRequirement::AllowDeath,
-			)
-			.map_err(|_| Error::<T>::BalanceLow)?,
+		T::AccountBasicMapping::mutate_account_basic(
+			&address,
+			Account {
+				nonce: account.nonce,
+				balance: new_account_balance,
+			},
 		);
-
-		Ok(())
 	}
 
 	/// Deposit fee.
 	pub fn deposit_fee(address: &H160, value: U256) {
-		let account_id = T::AddressMapping::into_account_id(*address);
+		let account = T::AccountBasicMapping::account_basic(address);
+		let new_account_balance = account.balance.saturating_add(value);
 
-		drop(T::Currency::deposit_creating(
-			&account_id,
-			value.low_u128().unique_saturated_into(),
-		));
+		T::AccountBasicMapping::mutate_account_basic(
+			&address,
+			Account {
+				nonce: account.nonce,
+				balance: new_account_balance,
+			},
+		);
 	}
 }

@@ -90,7 +90,8 @@ impl<T: Trait> Runner<T> {
 			source_account.balance >= total_payment,
 			Error::<T>::BalanceLow
 		);
-		Module::<T>::withdraw_fee(&source, total_fee)?;
+
+		Module::<T>::withdraw_fee(&source, total_fee);
 
 		if let Some(nonce) = nonce {
 			ensure!(source_account.nonce == nonce, Error::<T>::InvalidNonce);
@@ -514,6 +515,7 @@ impl<'vicinity, 'config, T: Trait> StackStateT<'config>
 				balance: new_target_balance,
 			},
 		);
+
 		Ok(())
 	}
 
