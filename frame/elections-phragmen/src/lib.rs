@@ -199,6 +199,10 @@ decl_storage! {
 	} add_extra_genesis {
 		config(members): Vec<(T::AccountId, BalanceOf<T>)>;
 		build(|config: &GenesisConfig<T>| {
+			assert!(
+				config.members.len() as u32 <= T::DesiredMembers::get(),
+				"Cannot accept more than DesiredMembers genesis member",
+			);
 			let members = config.members.iter().map(|(ref member, ref stake)| {
 				// make sure they have enough stake
 				assert!(
