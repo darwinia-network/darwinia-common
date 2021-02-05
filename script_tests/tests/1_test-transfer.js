@@ -83,4 +83,56 @@ describe("Test Transfer Balance", function () {
 	it("Get nonce after transfer balance 2", async function () {
 		expect(await web3.eth.getTransactionCount(addressFrom, "latest")).to.eq(2);
 	});
+
+	it("Transfer balance 3", async function () {
+		const createTransaction = await web3.eth.accounts.signTransaction(
+			{
+				from: addressFrom,
+				to: addressTo,
+				value: web3.utils.toWei("50", "ether"),
+				gas: "5000000000",
+			},
+			privKey
+		);
+
+		const createReceipt = await web3.eth.sendSignedTransaction(
+			createTransaction.rawTransaction
+		);
+
+		expect(createReceipt.transactionHash).to.be.equal(
+			"0x55bfc4e08a28b386b00f1f43e3ece364b6fc23d10265ad565fab83f7b0b0782f"
+		);
+	}).timeout(10000);
+
+	it("Get accounts balance after transfer balance 3", async function () {
+		const balanceFrom = web3.utils.fromWei(await web3.eth.getBalance(addressFrom), "ether");
+		const balanceTo = await web3.utils.fromWei(await web3.eth.getBalance(addressTo), "ether");
+
+		expect(balanceFrom).to.be.equal("63.45678899999999999");
+		expect(balanceTo).to.be.equal("60");
+	});
+
+	it("Withdraw value from sender", async function () {
+		// target address = "723908ee9dc8e509d4b93251bd57f68c09bd9d04471c193fabd8f26c54284a4b(5EeUFyFjHsCJB8TaGXi1PkMgqkxMctcxw8hvfmNdCYGC76xj)";
+		// value = 30
+		const addressTo = "0x0000000000000000000000000000000000000005";
+		const input = "005ed0b200000000000000000000000000000000000000000000000000000000723908ee9dc8e509d4b93251bd57f68c09bd9d04471c193fabd8f26c54284a4b1e00000000000000000000000000000000000000000000000000000000000000";
+		const createTransaction = await web3.eth.accounts.signTransaction(
+			{
+				from: addressFrom,
+				to: addressTo,
+				gas: "5000000000",
+				data: input,
+			},
+			privKey
+		);
+		const createReceipt = await web3.eth.sendSignedTransaction(
+			createTransaction.rawTransaction
+		);
+	}).timeout(10000);
+
+	it("Get sender balance after withdraw", async function () {
+		const balanceFrom = web3.utils.fromWei(await web3.eth.getBalance(addressFrom), "ether");
+		expect(balanceFrom).to.be.equal("33.45678899999999999");
+	});
 });

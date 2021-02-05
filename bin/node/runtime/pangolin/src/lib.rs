@@ -1094,6 +1094,7 @@ impl darwinia_evm::Trait for Runtime {
 		darwinia_evm_precompile_simple::Sha256,
 		darwinia_evm_precompile_simple::Ripemd160,
 		darwinia_evm_precompile_simple::Identity,
+		darwinia_evm_precompile_withdraw::WithDraw<Self>,
 	);
 	type ChainId = ChainId;
 	type AccountBasicMapping = DVMAccountBasicMapping<Self>;

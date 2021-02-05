@@ -33,6 +33,7 @@ members = [
 	"frame/evm/precompile/ed25519",
 	"frame/evm/precompile/modexp",
 	"frame/evm/precompile/simple",
+	"frame/evm/precompile/withdraw",
 	"frame/header-mmr",
 	"frame/header-mmr/rpc",
 	"frame/header-mmr/rpc/runtime-api",
