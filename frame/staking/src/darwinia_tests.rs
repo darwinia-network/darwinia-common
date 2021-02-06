@@ -101,7 +101,7 @@ fn slash_ledger_should_work() {
 		.validator_count(1)
 		.build()
 		.execute_with(|| {
-			start_era(0);
+			start_active_era(0);
 
 			assert_eq_uvec!(validator_controllers(), vec![20]);
 
@@ -125,16 +125,13 @@ fn slash_ledger_should_work() {
 				ValidatorPrefs::default()
 			));
 
-			start_era(1);
+			start_active_era(1);
 
 			assert_eq_uvec!(validator_controllers(), vec![777]);
 
 			on_offence_now(
 				&[OffenceDetails {
-					offender: (
-						account_id,
-						Staking::eras_stakers(Staking::active_era().unwrap().index, account_id),
-					),
+					offender: (account_id, Staking::eras_stakers(active_era(), account_id)),
 					reporters: vec![],
 				}],
 				&[Perbill::from_percent(90)],
@@ -703,7 +700,7 @@ fn slash_also_slash_unbondings() {
 		.validator_count(1)
 		.build()
 		.execute_with(|| {
-			start_era(0);
+			start_active_era(0);
 
 			let (account_id, bond) = (777, COIN);
 			let _ = Ring::deposit_creating(&account_id, bond);
@@ -725,7 +722,7 @@ fn slash_also_slash_unbondings() {
 				.ring_staking_lock
 				.clone();
 
-			start_era(1);
+			start_active_era(1);
 
 			assert_ok!(Staking::unbond(
 				Origin::signed(account_id),
@@ -736,10 +733,7 @@ fn slash_also_slash_unbondings() {
 
 			on_offence_now(
 				&[OffenceDetails {
-					offender: (
-						account_id,
-						Staking::eras_stakers(Staking::active_era().unwrap().index, account_id),
-					),
+					offender: (account_id, Staking::eras_stakers(active_era(), account_id)),
 					reporters: vec![],
 				}],
 				&[Perbill::from_percent(100)],
@@ -786,7 +780,7 @@ fn check_stash_already_bonded_and_controller_already_paired() {
 #[test]
 fn pool_should_be_increased_and_decreased_correctly() {
 	ExtBuilder::default().build().execute_with(|| {
-		start_era(0);
+		start_active_era(0);
 
 		let mut ring_pool = Staking::ring_pool();
 		let mut kton_pool = Staking::kton_pool();
@@ -847,27 +841,21 @@ fn pool_should_be_increased_and_decreased_correctly() {
 			ValidatorPrefs::default()
 		));
 
-		start_era(1);
+		start_active_era(1);
 
 		assert_eq_uvec!(validator_controllers(), vec![controller_1, controller_2]);
 
 		// slash: 37.5Ring 50Kton
 		on_offence_now(
 			&[OffenceDetails {
-				offender: (
-					stash_1,
-					Staking::eras_stakers(Staking::active_era().unwrap().index, stash_1),
-				),
+				offender: (stash_1, Staking::eras_stakers(active_era(), stash_1)),
 				reporters: vec![],
 			}],
 			&[Perbill::from_percent(100)],
 		);
 		on_offence_now(
 			&[OffenceDetails {
-				offender: (
-					stash_2,
-					Staking::eras_stakers(Staking::active_era().unwrap().index, stash_2),
-				),
+				offender: (stash_2, Staking::eras_stakers(active_era(), stash_2)),
 				reporters: vec![],
 			}],
 			&[Perbill::from_percent(100)],
@@ -888,13 +876,13 @@ fn pool_should_be_increased_and_decreased_correctly() {
 				RewardDestination::Staked
 			));
 
-			start_era(1);
+			start_active_era(1);
 
 			Staking::reward_by_ids(vec![(11, 1)]);
-			let payout = current_total_payout_for_duration(3 * 1000);
+			let payout = current_total_payout_for_duration(reward_time_per_era());
 			assert!(payout > 100);
 
-			start_era(2);
+			start_active_era(2);
 
 			let ring_pool = Staking::ring_pool();
 			assert_ok!(Staking::payout_stakers(Origin::signed(10), 11, 1));
@@ -2011,7 +1999,7 @@ fn rebond_event_should_work() {
 
 			let _ = Ring::make_free_balance_be(&11, 1000000);
 
-			start_era(1);
+			run_to_block(5);
 
 			assert_eq!(
 				Staking::ledger(&10),
@@ -2026,7 +2014,7 @@ fn rebond_event_should_work() {
 				})
 			);
 
-			start_era(2);
+			run_to_block(6);
 
 			Staking::unbond(Origin::signed(10), StakingBalance::RingBalance(400)).unwrap();
 			assert_eq!(
@@ -2038,7 +2026,7 @@ fn rebond_event_should_work() {
 						staking_amount: 600,
 						unbondings: vec![Unbonding {
 							amount: 400,
-							until: 6 + BondingDurationInBlockNumber::get(),
+							until: 6 + bonding_duration_in_blocks(),
 						}]
 					},
 					..Default::default()

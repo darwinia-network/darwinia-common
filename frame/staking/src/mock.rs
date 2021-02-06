@@ -143,7 +143,6 @@ pub struct Test;
 parameter_types! {
 	pub const StakingModuleId: ModuleId = ModuleId(*b"da/staki");
 	pub const BondingDurationInEra: EraIndex = 3;
-	pub const BondingDurationInBlockNumber: BlockNumber = 9;
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
 	pub const UnsignedPriority: u64 = 1 << 20;
 	pub const MinSolutionScoreBump: Perbill = Perbill::zero();
@@ -151,10 +150,10 @@ parameter_types! {
 	pub const Cap: Balance = CAP;
 	pub const TotalPower: Power = TOTAL_POWER;
 	pub static SessionsPerEra: SessionIndex = 3;
+	pub static BondingDurationInBlockNumber: BlockNumber = bonding_duration_in_blocks();
 	pub static ExistentialDeposit: Balance = 1;
 	pub static SlashDeferDuration: EraIndex = 0;
 	pub static ElectionLookahead: BlockNumber = 0;
-	pub static Period: BlockNumber = 5;
 	pub static MaxIterations: u32 = 0;
 	pub static SessionValidators: (Vec<AccountId>, HashSet<AccountId>) = Default::default();
 	pub static RingRewardRemainderUnbalanced: Balance = 0;
@@ -226,6 +225,8 @@ sp_runtime::impl_opaque_keys! {
 }
 parameter_types! {
 	pub const DisabledValidatorsThreshold: Perbill = Perbill::from_percent(25);
+	pub static Period: BlockNumber = 5;
+	pub static Offset: BlockNumber = 0;
 }
 impl pallet_session::Config for Test {
 	type Event = MetaEvent;
@@ -399,7 +400,7 @@ impl ExtBuilder {
 		self
 	}
 	pub fn offchain_election_ext(self) -> Self {
-		self.session_per_era(4).period(5).election_lookahead(3)
+		self.sessions_per_era(4).period(5).election_lookahead(3)
 	}
 	pub fn initialize_first_session(mut self, init: bool) -> Self {
 		self.initialize_first_session = init;
@@ -791,14 +792,24 @@ pub(crate) fn start_active_era(era_index: EraIndex) {
 	assert_eq!(current_era(), active_era());
 }
 
-pub(crate) fn current_total_payout_for_duration(era_duration: TsInMs) -> Balance {
+pub(crate) fn current_total_payout_for_duration(duration: TsInMs) -> Balance {
 	inflation::compute_total_payout::<Test>(
-		era_duration,
+		duration,
 		Staking::living_time(),
 		<Test as Config>::Cap::get() - Ring::total_issuance(),
 		Perbill::from_percent(50),
 	)
 	.0
+}
+
+pub(crate) fn maximum_payout_for_duration(duration: u64) -> Balance {
+	inflation::compute_total_payout::<Test>(
+		duration,
+		Staking::living_time(),
+		<Test as Config>::Cap::get() - Ring::total_issuance(),
+		Perbill::from_percent(50),
+	)
+	.1
 }
 
 /// Time it takes to finish a session.
@@ -820,6 +831,10 @@ pub(crate) fn time_per_era() -> u64 {
 /// Time that will be calculated for the reward per era.
 pub(crate) fn reward_time_per_era() -> u64 {
 	time_per_era() - BLOCK_TIME
+}
+
+pub(crate) fn bonding_duration_in_blocks() -> BlockNumber {
+	BondingDurationInEra::get() as BlockNumber * Period::get()
 }
 
 pub(crate) fn reward_all_elected() {
@@ -855,7 +870,7 @@ pub(crate) fn on_offence_in_era(
 		}
 	}
 
-	if Staking::active_era().unwrap().index == era {
+	if active_era() == era {
 		Staking::on_offence(
 			offenders,
 			slash_fraction,
@@ -874,7 +889,7 @@ pub(crate) fn on_offence_now(
 	>],
 	slash_fraction: &[Perbill],
 ) {
-	let now = Staking::active_era().unwrap().index;
+	let now = active_era();
 	on_offence_in_era(offenders, slash_fraction, now)
 }
 
@@ -883,7 +898,7 @@ pub(crate) fn add_slash(who: &AccountId) {
 		&[OffenceDetails {
 			offender: (
 				who.clone(),
-				Staking::eras_stakers(Staking::active_era().unwrap().index, who.clone()),
+				Staking::eras_stakers(active_era(), who.clone()),
 			),
 			reporters: vec![],
 		}],
@@ -1149,10 +1164,10 @@ macro_rules! assert_session_era {
 			$session,
 		);
 		assert_eq!(
-			Staking::active_era().unwrap().index,
+			active_era(),
 			$era,
 			"wrong active era {} != {}",
-			Staking::active_era().unwrap().index,
+			active_era(),
 			$era,
 		);
 	};
