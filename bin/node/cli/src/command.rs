@@ -119,6 +119,7 @@ pub fn run() -> sc_cli::Result<()> {
 					_ => service::drml_new_full(config, authority_discovery_disabled)
 						.map(|(components, _)| components),
 				}
+				.map_err(sc_cli::Error::Service)
 			})
 		}
 		Some(Subcommand::BuildSpec(cmd)) => {
