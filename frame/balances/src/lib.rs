@@ -967,7 +967,7 @@ where
 	/// Slash a target account `who`, returning the negative imbalance created and any left over
 	/// amount that could not be slashed.
 	///
-	/// Is a no-op if `value` to be slashed is zero.
+	/// Is a no-op if `value` to be slashed is zero or the account does not exist.
 	///
 	/// NOTE: `slash()` prefers free balance, but assumes that reserve balance can be drawn
 	/// from in extreme circumstances. `can_slash()` should be used prior to `slash()` to avoid having
@@ -976,6 +976,9 @@ where
 	fn slash(who: &T::AccountId, value: Self::Balance) -> (Self::NegativeImbalance, Self::Balance) {
 		if value.is_zero() {
 			return (NegativeImbalance::zero(), Zero::zero());
+		}
+		if Self::is_dead_account(&who) {
+			return (NegativeImbalance::zero(), value);
 		}
 
 		Self::mutate_account(who, |account| {
@@ -1168,13 +1171,16 @@ where
 	/// Slash from reserved balance, returning the negative imbalance created,
 	/// and any amount that was unable to be slashed.
 	///
-	/// Is a no-op if the value to be slashed is zero.
+	/// Is a no-op if the value to be slashed is zero or the account does not exist.
 	fn slash_reserved(
 		who: &T::AccountId,
 		value: Self::Balance,
 	) -> (Self::NegativeImbalance, Self::Balance) {
 		if value.is_zero() {
 			return (NegativeImbalance::zero(), Zero::zero());
+		}
+		if Self::is_dead_account(&who) {
+			return (NegativeImbalance::zero(), value);
 		}
 
 		Self::mutate_account(who, |account| {
@@ -1229,6 +1235,9 @@ where
 	fn unreserve(who: &T::AccountId, value: Self::Balance) -> Self::Balance {
 		if value.is_zero() {
 			return Zero::zero();
+		}
+		if Self::is_dead_account(&who) {
+			return value;
 		}
 
 		let actual = Self::mutate_account(who, |account| {

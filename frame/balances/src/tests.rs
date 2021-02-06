@@ -36,7 +36,7 @@ macro_rules! decl_tests {
 	($test:ty, $ext_builder:ty, $existential_deposit:expr) => {
 		// --- substrate ---
 		use frame_support::{
-			assert_err, assert_noop, assert_ok,
+			assert_err, assert_noop, assert_storage_noop, assert_ok,
 			traits::{Currency, ExistenceRequirement::AllowDeath, ReservableCurrency, StoredMap},
 		};
 		use frame_system::RawOrigin;
@@ -793,6 +793,29 @@ macro_rules! decl_tests {
 					assert!(Ring::is_dead_account(&1));
 					assert_eq!(Ring::free_balance(1), 0);
 					assert_eq!(Ring::reserved_balance(1), 0);
+				});
+		}
+
+		#[test]
+		fn operations_on_dead_account_should_not_change_state() {
+			// These functions all use `mutate_account` which may introduce a storage change when
+			// the account never existed to begin with, and shouldn't exist in the end.
+			<$ext_builder>::default()
+				.existential_deposit(0)
+				.build()
+				.execute_with(|| {
+					assert!(!<Test as Config<RingInstance>>::AccountStore::is_explicit(&1337));
+
+					// Unreserve
+					assert_storage_noop!(assert_eq!(Ring::unreserve(&1337, 42), 42));
+					// Reserve
+					assert_noop!(Ring::reserve(&1337, 42), RingError::InsufficientBalance);
+					// Slash Reserve
+					assert_storage_noop!(assert_eq!(Ring::slash_reserved(&1337, 42).1, 42));
+					// Repatriate Reserve
+					assert_noop!(Ring::repatriate_reserved(&1337, &1338, 42, Status::Free), RingError::DeadAccount);
+					// Slash
+					assert_storage_noop!(assert_eq!(Ring::slash(&1337, 42).1, 42));
 				});
 		}
 	};
