@@ -417,9 +417,9 @@ fn lock_should_work() {
 		let lock_balance = 10;
 		let _ = Ring::deposit_creating(&account, init_balance);
 		let _ = Kton::deposit_creating(&account, init_balance);
-		let fee_account_id = <Module<Test>>::fee_account_id();
+		let fee_account_id = EthereumBacking::fee_account_id();
 		let fee_account_balance = Ring::free_balance(&fee_account_id);
-		let module_account_id = <Module<Test>>::account_id();
+		let module_account_id = EthereumBacking::account_id();
 		let module_account_ring = Ring::free_balance(&module_account_id);
 		let module_account_kton = Kton::free_balance(&module_account_id);
 		let advanced_fee = <Test as Config>::AdvancedFee::get();
@@ -460,9 +460,9 @@ fn lock_failed_rollback_transaction_should_work() {
 		let lock_kton = KtonLockLimit::get() + 1;
 		let _ = Ring::deposit_creating(&account, init_balance);
 		let _ = Kton::deposit_creating(&account, init_balance);
-		let fee_account_id = <Module<Test>>::fee_account_id();
+		let fee_account_id = EthereumBacking::fee_account_id();
 		let fee_account_balance = Ring::free_balance(&fee_account_id);
-		let module_account_id = <Module<Test>>::account_id();
+		let module_account_id = EthereumBacking::account_id();
 		let module_account_ring = Ring::free_balance(&module_account_id);
 		let module_account_kton = Kton::free_balance(&module_account_id);
 		let advanced_fee = <Test as Config>::AdvancedFee::get();
