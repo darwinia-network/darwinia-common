@@ -43,45 +43,45 @@ dvm-ethereum                        = { default-features = false, path = "../../
 dvm-rpc-runtime-api                 = { default-features = false, path = "../../../../frame/dvm/rpc/runtime-api" }
 ethereum-primitives                 = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
 # substrate
-frame-executive                            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-frame-support                              = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-frame-system                               = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-frame-system-rpc-runtime-api               = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-pallet-authority-discovery                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-pallet-authorship                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-pallet-babe                                = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-pallet-collective                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-pallet-grandpa                             = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-pallet-im-online                           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-pallet-membership                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-pallet-offences                            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-pallet-proxy                               = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-pallet-randomness-collective-flip          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-pallet-scheduler                           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-pallet-session                             = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-pallet-sudo                                = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-pallet-timestamp                           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-pallet-transaction-payment                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-pallet-transaction-payment-rpc-runtime-api = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-sp-api                                     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-sp-application-crypto                      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-sp-authority-discovery                     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-sp-block-builder                           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-sp-consensus-babe                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-sp-core                                    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-sp-inherents                               = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-sp-io                                      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-sp-offchain                                = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-sp-runtime                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-sp-session                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-sp-staking                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-sp-std                                     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-sp-transaction-pool                        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-sp-version                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
+frame-executive                            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+frame-support                              = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+frame-system                               = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+frame-system-rpc-runtime-api               = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+pallet-authority-discovery                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+pallet-authorship                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+pallet-babe                                = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+pallet-collective                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+pallet-grandpa                             = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+pallet-im-online                           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+pallet-membership                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+pallet-offences                            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+pallet-proxy                               = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+pallet-randomness-collective-flip          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+pallet-scheduler                           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+pallet-session                             = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+pallet-sudo                                = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+pallet-timestamp                           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+pallet-transaction-payment                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+pallet-transaction-payment-rpc-runtime-api = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+sp-api                                     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+sp-application-crypto                      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+sp-authority-discovery                     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+sp-block-builder                           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+sp-consensus-babe                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+sp-core                                    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+sp-inherents                               = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+sp-io                                      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+sp-offchain                                = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+sp-runtime                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+sp-session                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+sp-staking                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+sp-std                                     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+sp-transaction-pool                        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+sp-version                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
 
 [build-dependencies]
 # substrate
-substrate-wasm-builder = { git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
+substrate-wasm-builder = { git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
 
 [features]
 default = ["std"]

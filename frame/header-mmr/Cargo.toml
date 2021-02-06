@@ -20,10 +20,10 @@ darwinia-support                    = { default-features = false, path = "../sup
 # github
 merkle-mountain-range = { package = "ckb-merkle-mountain-range", default-features = false, git = "https://github.com/darwinia-network/merkle-mountain-range.git" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
 
 [dev-dependencies]
 # crates
@@ -31,8 +31,8 @@ serde_json = { version = "1.0.61" }
 # darwinia
 array-bytes = { path = "../../primitives/array-bytes" }
 # substrate
-sp-core = { git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
-sp-io   = { git = "https://github.com/darwinia-network/substrate.git", rev = "9e2d7b74742f7b1db7e09a00d423f613787d19a8" }
+sp-core = { git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+sp-io   = { git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
 
 [features]
 default = ["std"]
