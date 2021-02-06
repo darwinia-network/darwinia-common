@@ -17,19 +17,19 @@ evm-gasometer         = { version = "0.20.0", default-features = false }
 evm-runtime           = { version = "0.20.0", default-features = false }
 primitive-types       = { version = "0.7.0", default-features = false, features = ["rlp", "byteorder"] }
 rlp                   = { version = "0.4", default-features = false }
-serde                 = { version = "1.0.118", optional = true, features = ["derive"] }
+serde                 = { version = "1.0.123", optional = true, features = ["derive"] }
 sha3                  = { version = "0.8", default-features = false }
 # darwinia
 darwinia-balances       = { default-features = false, path = "../balances" }
 darwinia-evm-primitives = { default-features = false, path = "../../primitives/evm" }
 # substrate
-frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
-frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
-pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
-sp-core          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
-sp-io            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
-sp-runtime       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
-sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7" }
+frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7" }
+pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7" }
+sp-core          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7" }
+sp-io            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7" }
+sp-runtime       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7" }
+sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7" }
 
 [dev-dependencies]
 darwinia-support = { features = ["easy-testing"], path = "../support" }

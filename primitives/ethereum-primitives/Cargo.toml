@@ -13,7 +13,7 @@ version     = "1.3.0"
 # crates
 codec  = { package = "parity-scale-codec", version = "1.3.5", default-features = false, features = ["derive"] }
 ethash = { default-features = false, git = "https://github.com/darwinia-network/rust-ethash" }
-serde  = { version = "1.0.118", optional = true, features = ["derive"] }
+serde  = { version = "1.0.123", optional = true, features = ["derive"] }
 # darwinia
 array-bytes          = { default-features = false, path = "../array-bytes" }
 merkle-patricia-trie = { default-features = false, path = "../merkle-patricia-trie" }
@@ -28,18 +28,18 @@ primitive-types = { default-features = false, features = ["codec", "rlp"], git =
 rlp             = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 rlp-derive      = { git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
-sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
-sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7" }
+sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7" }
 
 [dev-dependencies]
 # crates
 keccak-hasher = { version = "0.15.3" }
-serde_json    = { version = "1.0.61" }
+serde_json    = { version = "1.0.62" }
 # github
 triehash = { git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
-frame-support = { git = "https://github.com/darwinia-network/substrate.git", rev = "9c5fc1caf63bc24eff0e6ef0b3d033cd14359ab0" }
+frame-support = { git = "https://github.com/darwinia-network/substrate.git", rev = "2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7" }
 
 [features]
 default = ["std"]
