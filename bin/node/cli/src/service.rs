@@ -34,7 +34,7 @@ use sc_executor::{native_executor_instance, NativeExecutionDispatch};
 use sc_finality_grandpa::{
 	Config as GrandpaConfig, FinalityProofProvider as GrandpaFinalityProofProvider, GrandpaParams,
 	LinkHalf, SharedVoterState as GrandpaSharedVoterState,
-	VotingRulesBuilder as GrandpaVotingRulesBuilder, GRANDPA_PROTOCOL_NAME,
+	VotingRulesBuilder as GrandpaVotingRulesBuilder,
 };
 use sc_keystore::LocalKeystore;
 use sc_network::NetworkService;
@@ -358,10 +358,7 @@ where
 	let prometheus_registry = config.prometheus_registry().cloned();
 	let shared_voter_state = rpc_setup;
 
-	config
-		.network
-		.notifications_protocols
-		.push(GRANDPA_PROTOCOL_NAME.into());
+	config.network.extra_sets.push(sc_finality_grandpa::grandpa_peers_set_config());
 
 	let (network, network_status_sinks, system_rpc_tx, network_starter) =
 		sc_service::build_network(BuildNetworkParams {
@@ -526,10 +523,7 @@ where
 	let (client, backend, keystore_container, mut task_manager, on_demand) =
 		sc_service::new_light_parts::<Block, RuntimeApi, Executor>(&config)?;
 
-	config
-		.network
-		.notifications_protocols
-		.push(GRANDPA_PROTOCOL_NAME.into());
+		config.network.extra_sets.push(sc_finality_grandpa::grandpa_peers_set_config());
 
 	let select_chain = LongestChain::new(backend.clone());
 	let transaction_pool = Arc::new(BasicPool::new_light(
