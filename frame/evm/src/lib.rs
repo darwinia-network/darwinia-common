@@ -534,4 +534,32 @@ impl<T: Trait> Module<T> {
 			Self::remove_account(address);
 		}
 	}
+
+	/// Withdraw fee.
+	pub fn withdraw_fee(address: &H160, value: U256) {
+		let account = T::AccountBasicMapping::account_basic(address);
+		let new_account_balance = account.balance.saturating_sub(value);
+
+		T::AccountBasicMapping::mutate_account_basic(
+			&address,
+			Account {
+				nonce: account.nonce,
+				balance: new_account_balance,
+			},
+		);
+	}
+
+	/// Deposit fee.
+	pub fn deposit_fee(address: &H160, value: U256) {
+		let account = T::AccountBasicMapping::account_basic(address);
+		let new_account_balance = account.balance.saturating_add(value);
+
+		T::AccountBasicMapping::mutate_account_basic(
+			&address,
+			Account {
+				nonce: account.nonce,
+				balance: new_account_balance,
+			},
+		);
+	}
 }
