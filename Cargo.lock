@@ -1479,6 +1479,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-evm-precompile-empty"
+version = "1.3.0"
+dependencies = [
+ "darwinia-evm-primitives",
+ "evm",
+]
+
+[[package]]
 name = "darwinia-evm-precompile-modexp"
 version = "1.3.0"
 dependencies = [
@@ -5191,6 +5199,7 @@ dependencies = [
  "darwinia-ethereum-backing",
  "darwinia-ethereum-relay",
  "darwinia-evm",
+ "darwinia-evm-precompile-empty",
  "darwinia-evm-precompile-simple",
  "darwinia-evm-precompile-withdraw",
  "darwinia-header-mmr",

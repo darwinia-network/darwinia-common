@@ -31,6 +31,7 @@ members = [
 	"frame/evm/precompile/bn128",
 	"frame/evm/precompile/dispatch",
 	"frame/evm/precompile/ed25519",
+	"frame/evm/precompile/empty",
 	"frame/evm/precompile/modexp",
 	"frame/evm/precompile/simple",
 	"frame/evm/precompile/withdraw",
