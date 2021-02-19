@@ -18,7 +18,10 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::traits::{Currency, ExistenceRequirement};
+use frame_support::{
+	ensure,
+	traits::{Currency, ExistenceRequirement},
+};
 use sp_core::U256;
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_std::marker::PhantomData;
@@ -41,13 +44,10 @@ pub struct WithDraw<T: Trait> {
 
 impl<T: Trait> Precompile for WithDraw<T> {
 	/// The Withdraw process is divided into two part:
-	/// 1. parse the withdrawal address and amount from the input parameter and get the caller address from the context
-	/// 2. transfer from caller to withdrawal address
+	/// 1. parse the withdrawal address from the input parameter and get the contract address and value from the context
+	/// 2. transfer from the contract address to withdrawal address
 	///
-	/// Input data encode rule:
-	/// Part1: 32-bit prefix code, used for smart contract calls
-	/// Part2: 32-bit substrate withdrawal public key
-	/// Part3: 32-bit withdrawal amount, is encoded with U256 little-endian format
+	/// Input data: 32-bit substrate withdrawal public key
 	fn execute(
 		input: &[u8],
 		_: Option<usize>,
@@ -59,16 +59,22 @@ impl<T: Trait> Precompile for WithDraw<T> {
 		let helper = U256::from(10)
 			.checked_pow(U256::from(9))
 			.unwrap_or(U256::MAX);
-		let value = input.value.saturating_mul(helper);
-		let from_address = T::AddressMapping::into_account_id(context.caller);
+		let contract_address = T::AddressMapping::into_account_id(context.address);
+		let context_value = context.apparent_value.div_mod(helper).0;
+		let context_value = context_value.low_u128().unique_saturated_into();
 
 		let result = T::Currency::transfer(
-			&from_address,
+			&contract_address,
 			&input.dest,
-			value.low_u128().unique_saturated_into(),
+			context_value,
 			ExistenceRequirement::AllowDeath,
 		);
 
+		ensure!(
+			<T as Trait>::Currency::free_balance(&contract_address)
+				== 0u128.unique_saturated_into(),
+			ExitError::Other("The contract balance should be zero after transfer".into())
+		);
 		match result {
 			Ok(()) => Ok((ExitSucceed::Returned, vec![], 10000)),
 			Err(error) => match error {
@@ -88,22 +94,17 @@ impl<T: Trait> Precompile for WithDraw<T> {
 #[derive(Debug, PartialEq, Eq)]
 pub struct InputData<T: frame_system::Trait> {
 	pub dest: AccountId<T>,
-	pub value: U256,
 }
 
 impl<T: frame_system::Trait> InputData<T> {
 	pub fn decode(data: &[u8]) -> Result<Self, ExitError> {
-		if data.len() == 96 {
+		if data.len() == 32 {
 			let mut dest_bytes = [0u8; 32];
-			dest_bytes.copy_from_slice(&data[32..64]);
-
-			let mut value_bytes = [0u8; 32];
-			value_bytes.copy_from_slice(&data[64..96]);
+			dest_bytes.copy_from_slice(&data[0..32]);
 
 			return Ok(InputData {
 				dest: <T as frame_system::Trait>::AccountId::decode(&mut dest_bytes.as_ref())
 					.map_err(|_| ExitError::Other("Invalid destination address".into()))?,
-				value: U256::from_little_endian(&value_bytes),
 			});
 		}
 		Err(ExitError::Other("Invalid input data length".into()))

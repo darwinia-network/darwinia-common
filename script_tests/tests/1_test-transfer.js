@@ -113,17 +113,16 @@ describe("Test Transfer Balance", function () {
 	});
 
 	it("Withdraw value from sender", async function () {
-		// target address = "723908ee9dc8e509d4b93251bd57f68c09bd9d04471c193fabd8f26c54284a4b(5EeUFyFjHsCJB8TaGXi1PkMgqkxMctcxw8hvfmNdCYGC76xj)";
-		// value = 30
 		const addressTo = "0x0000000000000000000000000000000000000005";
-		const input =
-			"005ed0b200000000000000000000000000000000000000000000000000000000723908ee9dc8e509d4b93251bd57f68c09bd9d04471c193fabd8f26c54284a4b1e00000000000000000000000000000000000000000000000000000000000000";
+		// target address = "723908ee9dc8e509d4b93251bd57f68c09bd9d04471c193fabd8f26c54284a4b(5EeUFyFjHsCJB8TaGXi1PkMgqkxMctcxw8hvfmNdCYGC76xj)";
+		const input = "723908ee9dc8e509d4b93251bd57f68c09bd9d04471c193fabd8f26c54284a4b";
 		const createTransaction = await web3.eth.accounts.signTransaction(
 			{
 				from: addressFrom,
 				to: addressTo,
 				gas: "5000000000",
 				data: input,
+				value: web3.utils.toWei("30", "ether"),
 			},
 			privKey
 		);
