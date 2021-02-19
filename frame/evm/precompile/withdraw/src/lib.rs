@@ -32,13 +32,22 @@ use evm::{Context, ExitError, ExitSucceed};
 
 type AccountId<T> = <T as frame_system::Trait>::AccountId;
 
-// WithDraw Precompile Contract, used to withdraw balance from evm account to darwinia account
-// address: 0000000000000000000000000000000000000005
+/// WithDraw Precompile Contract, used to withdraw balance from evm account to darwinia account
+///
+/// The contract address: 0000000000000000000000000000000000000005
 pub struct WithDraw<T: Trait> {
 	_maker: PhantomData<T>,
 }
 
 impl<T: Trait> Precompile for WithDraw<T> {
+	/// The Withdraw process is divided into two part:
+	/// 1. parse the withdrawal address and amount from the input parameter and get the caller address from the context
+	/// 2. transfer from caller to withdrawal address
+	///
+	/// Input data encode rule:
+	/// Part1: 32-bit prefix code, used for smart contract calls
+	/// Part2: 32-bit substrate withdrawal public key
+	/// Part3: 32-bit withdrawal amount, is encoded with U256 little-endian format
 	fn execute(
 		input: &[u8],
 		_: Option<usize>,
