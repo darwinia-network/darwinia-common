@@ -18,10 +18,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::{
-	ensure,
-	traits::{Currency, ExistenceRequirement},
-};
+use frame_support::traits::{Currency, ExistenceRequirement};
 use sp_core::U256;
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_std::marker::PhantomData;
@@ -70,11 +67,6 @@ impl<T: Trait> Precompile for WithDraw<T> {
 			ExistenceRequirement::AllowDeath,
 		);
 
-		ensure!(
-			<T as Trait>::Currency::free_balance(&contract_address)
-				== 0u128.unique_saturated_into(),
-			ExitError::Other("The contract balance should be zero after transfer".into())
-		);
 		match result {
 			Ok(()) => Ok((ExitSucceed::Returned, vec![], 10000)),
 			Err(error) => match error {
