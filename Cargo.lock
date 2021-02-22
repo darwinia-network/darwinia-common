@@ -1934,7 +1934,6 @@ dependencies = [
  "darwinia-balances",
  "darwinia-evm",
  "darwinia-evm-precompile",
- "darwinia-evm-precompile-withdraw",
  "darwinia-evm-primitives",
  "darwinia-support",
  "dvm-consensus-primitives",

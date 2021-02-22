@@ -377,10 +377,9 @@ fn withdraw_with_enough_balance() {
 		);
 		// Check the target balance
 		let input_bytes: Vec<u8> = FromHex::from_hex(WITH_DRAW_INPUT).unwrap();
-		let input_data =
-			darwinia_evm_precompile_withdraw::InputData::<Test>::decode(&input_bytes).unwrap();
+		let dest = <Test as frame_system::Trait>::AccountId::decode(&mut &input_bytes[..]).unwrap();
 		assert_eq!(
-			<Test as Trait>::RingCurrency::free_balance(input_data.dest),
+			<Test as Trait>::RingCurrency::free_balance(dest),
 			30000000000
 		);
 	});
