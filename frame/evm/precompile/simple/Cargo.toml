@@ -12,8 +12,8 @@ version     = "1.3.0"
 [dependencies]
 # crates
 darwinia-evm-primitives  = { default-features = false, path = "../../../../primitives/evm" }
-evm                      = { version = "0.20.0", default-features = false, features = ["with-codec"] }
-ripemd160                = { version = "0.9", default-features = false }
+evm                      = { default-features = false, git = "https://github.com/darwinia-network/evm.git", branch = "darwinia", features = ["with-codec"] }
+ripemd160                = { default-features = false, version = "0.9" }
 # substrate
 sp-core                  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 sp-io                    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }

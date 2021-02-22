@@ -15,7 +15,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod builtin;
 pub mod stack;
 
 use crate::Trait;
