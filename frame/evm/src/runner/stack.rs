@@ -19,13 +19,8 @@
 
 use crate::runner::Runner as RunnerT;
 use crate::{
-<<<<<<< HEAD
-	AccountBasicMapping, AccountCodes, AccountStorages, Error, Event, FeeCalculator, Module,
-	PrecompileSet, Trait,
-=======
 	AccountBasicMapping, AccountCodes, AccountStorages, AddressMapping, Error, Event,
 	FeeCalculator, Module, PrecompileSet, Trait,
->>>>>>> master
 };
 use darwinia_evm_primitives::{Account, CallInfo, CreateInfo, ExecutionInfo, Log, Vicinity};
 use evm::backend::Backend as BackendT;
