@@ -38,7 +38,7 @@ sp-std           = { default-features = false, git = "https://github.com/darwini
 
 [dev-dependencies]
 # crates
-darwinia-evm-precompile-simple    = { default-features = false, path = "../evm/precompile/contracts/simple" }
+darwinia-evm-precompile    = { default-features = false, path = "../evm/precompile" }
 darwinia-evm-precompile-withdraw  = { default-features = false, path = "../evm/precompile/contracts/withdraw" }
 
 [features]
@@ -65,7 +65,7 @@ darwinia-std  = [
 	"darwinia-balances/std",
 	"darwinia-evm/std",
 	"darwinia-evm-primitives/std",
-	"darwinia-evm-precompile-simple/std",
+	"darwinia-evm-precompile/std",
 	"darwinia-evm-precompile-withdraw/std",
 	"darwinia-support/std",
 	"dvm-consensus-primitives/std",

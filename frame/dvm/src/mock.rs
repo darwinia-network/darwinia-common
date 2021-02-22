@@ -151,13 +151,7 @@ impl darwinia_evm::Trait for Test {
 	type AddressMapping = HashedAddressMapping;
 	type Currency = Balances;
 	type Event = ();
-	type Precompiles = (
-		darwinia_evm_precompile_simple::ECRecover,
-		darwinia_evm_precompile_simple::Sha256,
-		darwinia_evm_precompile_simple::Ripemd160,
-		darwinia_evm_precompile_simple::Identity,
-		darwinia_evm_precompile_withdraw::WithDraw<Self>,
-	);
+	type Precompiles = darwinia_evm_precompile::DarwiniaPrecompiles<Self>;
 	type ChainId = ChainId;
 	type Runner = darwinia_evm::runner::stack::Runner<Self>;
 	type AccountBasicMapping = DVMAccountBasicMapping<Self>;
