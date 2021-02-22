@@ -787,7 +787,7 @@ where
 								T::RingCurrency::remove_lock(T::LockId::get(), account_id);
 								<RingCurrency<T, I>>::slash(account_id, *stake);
 
-								*stake = 0.into();
+								*stake = 0u32.into();
 								storage_changed = true;
 							}
 
