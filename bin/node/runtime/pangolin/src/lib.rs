@@ -1133,64 +1133,63 @@ construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
 		// Basic stuff; balances is uncallable initially.
-		System: frame_system::{Module, Call, Storage, Config, Event<T>},
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
+		System: frame_system::{Module, Call, Storage, Config, Event<T>} = 0,
+		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage} = 1,
 
 		// Must be before session.
-		Babe: pallet_babe::{Module, Call, Storage, Config, Inherent, ValidateUnsigned},
+		Babe: pallet_babe::{Module, Call, Storage, Config, Inherent, ValidateUnsigned} = 2,
 
-		Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
-		Balances: darwinia_balances::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
-		Kton: darwinia_balances::<Instance1>::{Module, Call, Storage, Config<T>, Event<T>},
-		TransactionPayment: pallet_transaction_payment::{Module, Storage},
+		Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent} = 3,
+		Balances: darwinia_balances::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>} = 4,
+		Kton: darwinia_balances::<Instance1>::{Module, Call, Storage, Config<T>, Event<T>} = 5,
+		TransactionPayment: pallet_transaction_payment::{Module, Storage} = 6,
 
 		// Consensus support.
-		Authorship: pallet_authorship::{Module, Call, Storage, Inherent},
-		Staking: darwinia_staking::{Module, Call, Storage, Config<T>, Event<T>, ValidateUnsigned},
-		Offences: pallet_offences::{Module, Call, Storage, Event},
-		Historical: pallet_session_historical::{Module},
-		Session: pallet_session::{Module, Call, Storage, Config<T>, Event},
-		Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event, ValidateUnsigned},
-		ImOnline: pallet_im_online::{Module, Call, Storage, Config<T>, Event<T>, ValidateUnsigned},
-		AuthorityDiscovery: pallet_authority_discovery::{Module, Call, Config},
+		Authorship: pallet_authorship::{Module, Call, Storage, Inherent} = 7,
+		Staking: darwinia_staking::{Module, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 8,
+		Offences: pallet_offences::{Module, Call, Storage, Event} = 9,
+		Historical: pallet_session_historical::{Module} = 10,
+		Session: pallet_session::{Module, Call, Storage, Config<T>, Event} = 11,
+		Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event, ValidateUnsigned} = 12,
+		ImOnline: pallet_im_online::{Module, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 13,
+		AuthorityDiscovery: pallet_authority_discovery::{Module, Call, Config} = 14,
 
 		// Governance stuff; uncallable initially.
-		Democracy: darwinia_democracy::{Module, Call, Storage, Config, Event<T>},
-		Council: pallet_collective::<Instance0>::{Module, Call, Storage, Origin<T>, Config<T>, Event<T>},
-		TechnicalCommittee: pallet_collective::<Instance1>::{Module, Call, Storage, Origin<T>, Config<T>, Event<T>},
-		ElectionsPhragmen: darwinia_elections_phragmen::{Module, Call, Storage, Config<T>, Event<T>},
-		TechnicalMembership: pallet_membership::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
-		Treasury: darwinia_treasury::{Module, Call, Storage, Event<T>},
+		Democracy: darwinia_democracy::{Module, Call, Storage, Config, Event<T>} = 15,
+		Council: pallet_collective::<Instance0>::{Module, Call, Storage, Origin<T>, Config<T>, Event<T>} = 16,
+		TechnicalCommittee: pallet_collective::<Instance1>::{Module, Call, Storage, Origin<T>, Config<T>, Event<T>} = 17,
+		ElectionsPhragmen: darwinia_elections_phragmen::{Module, Call, Storage, Config<T>, Event<T>} = 18,
+		TechnicalMembership: pallet_membership::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>} = 19,
+		Treasury: darwinia_treasury::{Module, Call, Storage, Event<T>} = 20,
 
 		// Claims. Usable initially.
-		Claims: darwinia_claims::{Module, Call, Storage, Config, Event<T>, ValidateUnsigned},
+		Claims: darwinia_claims::{Module, Call, Storage, Config, Event<T>, ValidateUnsigned} = 21,
 
 		// Vesting. Usable initially, but removed once all vesting is finished.
-		Vesting: darwinia_vesting::{Module, Call, Storage, Event<T>, Config<T>},
+		Vesting: darwinia_vesting::{Module, Call, Storage, Event<T>, Config<T>} = 22,
 
 		// System scheduler.
-		Scheduler: pallet_scheduler::{Module, Call, Storage, Event<T>},
+		Scheduler: pallet_scheduler::{Module, Call, Storage, Event<T>} = 23,
 
 		// Proxy module. Late addition.
-		Proxy: pallet_proxy::{Module, Call, Storage, Event<T>} = 30,
+		Proxy: pallet_proxy::{Module, Call, Storage, Event<T>} = 24,
 
-		Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>},
+		Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>} = 25,
 
-		CrabIssuing: darwinia_crab_issuing::{Module, Call, Storage, Config, Event<T>},
-		CrabBacking: darwinia_crab_backing::{Module, Storage, Config<T>},
+		HeaderMMR: darwinia_header_mmr::{Module, Call, Storage} = 26,
 
-		EthereumRelayerGame: darwinia_relayer_game::<Instance0>::{Module, Storage},
-		EthereumRelay: darwinia_ethereum_relay::{Module, Call, Storage, Config<T>, Event<T>},
-		EthereumBacking: darwinia_ethereum_backing::{Module, Call, Storage, Config<T>, Event<T>},
+		CrabIssuing: darwinia_crab_issuing::{Module, Call, Storage, Config, Event<T>} = 27,
+		CrabBacking: darwinia_crab_backing::{Module, Storage, Config<T>} = 28,
 
-		TronBacking: darwinia_tron_backing::{Module, Storage, Config<T>},
+		EthereumRelay: darwinia_ethereum_relay::{Module, Call, Storage, Config<T>, Event<T>} = 29,
+		EthereumBacking: darwinia_ethereum_backing::{Module, Call, Storage, Config<T>, Event<T>} = 30,
+		EthereumRelayerGame: darwinia_relayer_game::<Instance0>::{Module, Storage} = 31,
+		EthereumRelayAuthorities: darwinia_relay_authorities::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>} = 32,
 
-		HeaderMMR: darwinia_header_mmr::{Module, Call, Storage},
+		TronBacking: darwinia_tron_backing::{Module, Storage, Config<T>} = 33,
 
-		EVM: darwinia_evm::{Module, Config, Call, Storage, Event<T>},
-		Ethereum: dvm_ethereum::{Module, Call, Storage, Event, Config, ValidateUnsigned},
-
-		EthereumRelayAuthorities: darwinia_relay_authorities::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
+		EVM: darwinia_evm::{Module, Config, Call, Storage, Event<T>} = 34,
+		Ethereum: dvm_ethereum::{Module, Call, Storage, Event, Config, ValidateUnsigned} = 35,
 	}
 );
 
