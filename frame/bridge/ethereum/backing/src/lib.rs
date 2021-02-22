@@ -327,7 +327,7 @@ decl_module! {
 
 			if locked {
 				T::EcdsaAuthorities::schedule_mmr_root((
-					<frame_system::Module<T>>::block_number().saturated_into()
+					<frame_system::Module<T>>::block_number().saturated_into::<u32>()
 						/ 10 * 10 + 10
 				).saturated_into());
 			}

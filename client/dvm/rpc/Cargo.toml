@@ -33,16 +33,16 @@ dvm-rpc-core            = { path = "../../../frame/dvm/rpc" }
 dvm-rpc-core-primitives = { path = "../../../primitives/dvm-rpc-core" }
 dvm-rpc-runtime-api     = { path = "../../../frame/dvm/rpc/runtime-api" }
 # substrate
-sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sc-network          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sc-rpc              = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sc-service          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-api              = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-io               = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-storage          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-network          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-rpc              = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-service          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-api              = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-io               = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-storage          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 [features]
 rpc_binary_search_estimate = []

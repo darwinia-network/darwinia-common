@@ -225,7 +225,7 @@ decl_storage! {
 				if let Ok(header) = rlp::decode(&header) {
 					<Module<T>>::init_genesis_header(&header, *total_difficulty).unwrap();
 				} else {
-					panic!(<&str>::from(<Error<T>>::RlpDcF));
+					panic!("{}", <&str>::from(<Error<T>>::RlpDcF));
 				}
 			}
 
