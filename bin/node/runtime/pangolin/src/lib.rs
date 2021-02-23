@@ -1058,13 +1058,7 @@ impl darwinia_evm::Trait for Runtime {
 	type AddressMapping = ConcatAddressMapping;
 	type Currency = Balances;
 	type Event = Event;
-	type Precompiles = (
-		darwinia_evm_precompile_simple::ECRecover,
-		darwinia_evm_precompile_simple::Sha256,
-		darwinia_evm_precompile_simple::Ripemd160,
-		darwinia_evm_precompile_simple::Identity,
-		darwinia_evm_precompile_withdraw::WithDraw<Self>,
-	);
+	type Precompiles = darwinia_evm_precompile::DarwiniaPrecompiles<Self>;
 	type ChainId = ChainId;
 	type AccountBasicMapping = DVMAccountBasicMapping<Self>;
 	type Runner = darwinia_evm::runner::stack::Runner<Self>;
