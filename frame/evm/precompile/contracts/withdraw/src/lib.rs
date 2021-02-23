@@ -34,7 +34,7 @@ type AccountId<T> = <T as frame_system::Trait>::AccountId;
 
 /// WithDraw Precompile Contract, used to withdraw balance from evm account to darwinia account
 ///
-/// The contract address: 0000000000000000000000000000000000000005
+/// The contract address: 0000000000000000000000000000000000000015
 pub struct WithDraw<T: Trait> {
 	_maker: PhantomData<T>,
 }
