@@ -39,6 +39,6 @@ pub type DarwiniaPrecompiles<Runtime> = (
 	darwinia_evm_precompile_empty::Empty,      // 0x0000000000000000000000000000000000000012
 	darwinia_evm_precompile_empty::Empty,      // 0x0000000000000000000000000000000000000013
 	darwinia_evm_precompile_empty::Empty,      // 0x0000000000000000000000000000000000000014
-	darwinia_evm_precompile_withdraw::WithDraw<Runtime>, 		// 0x0000000000000000000000000000000000000015
-	darwinia_evm_precompile_kton::Kton<Runtime>, 				// 0x0000000000000000000000000000000000000016
+	darwinia_evm_precompile_withdraw::WithDraw<Runtime>, // 0x0000000000000000000000000000000000000015
+	darwinia_evm_precompile_kton::Kton<Runtime>, // 0x0000000000000000000000000000000000000016
 );
