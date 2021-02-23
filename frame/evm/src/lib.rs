@@ -275,8 +275,10 @@ pub trait Trait: frame_system::Trait + pallet_timestamp::Trait {
 
 	/// Mapping from address to account id.
 	type AddressMapping: AddressMapping<Self::AccountId>;
-	/// Currency type for withdraw and balance storage.
+	/// Ring Currency type
 	type RingCurrency: Currency<Self::AccountId>;
+	/// Kton Currency type
+	type KtonCurrency: Currency<Self::AccountId>;
 
 	/// The overarching event type.
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;

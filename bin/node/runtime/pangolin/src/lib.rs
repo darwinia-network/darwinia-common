@@ -1057,6 +1057,7 @@ impl darwinia_evm::Trait for Runtime {
 	type WithdrawOrigin = EnsureAddressTruncated;
 	type AddressMapping = ConcatAddressMapping;
 	type RingCurrency = Ring;
+	type KtonCurrency = Kton;
 	type Event = Event;
 	type Precompiles = darwinia_evm_precompile::DarwiniaPrecompiles<Self>;
 	type ChainId = ChainId;
