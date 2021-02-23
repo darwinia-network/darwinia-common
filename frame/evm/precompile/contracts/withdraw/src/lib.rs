@@ -60,7 +60,7 @@ impl<T: Trait> Precompile for WithDraw<T> {
 		let context_value = context.apparent_value.div_mod(helper).0;
 		let context_value = context_value.low_u128().unique_saturated_into();
 
-		let result = T::Currency::transfer(
+		let result = T::RingCurrency::transfer(
 			&contract_address,
 			&input.dest,
 			context_value,

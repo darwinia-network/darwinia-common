@@ -1056,7 +1056,7 @@ impl darwinia_evm::Trait for Runtime {
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
 	type AddressMapping = ConcatAddressMapping;
-	type Currency = Balances;
+	type RingCurrency = Ring;
 	type Event = Event;
 	type Precompiles = darwinia_evm_precompile::DarwiniaPrecompiles<Self>;
 	type ChainId = ChainId;
@@ -1116,7 +1116,7 @@ impl dvm_ethereum::Trait for Runtime {
 	type StateRoot = dvm_ethereum::IntermediateStateRoot;
 	type BlockGasLimit = BlockGasLimit;
 	type AddressMapping = ConcatAddressMapping;
-	type RingCurrency = Balances;
+	type RingCurrency = Ring;
 }
 
 construct_runtime!(
