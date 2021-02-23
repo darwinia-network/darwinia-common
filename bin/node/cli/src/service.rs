@@ -47,7 +47,6 @@ use sp_api::ConstructRuntimeApi;
 use sp_consensus::{
 	import_queue::BasicQueue, CanAuthorWithNativeVersion, DefaultImportQueue, NeverCanAuthor,
 };
-use sp_core::traits::BareCryptoStorePtr;
 use sp_inherents::InherentDataProviders;
 use sp_runtime::traits::BlakeTwo256;
 use sp_trie::PrefixedMemoryDB;
@@ -208,7 +207,7 @@ where
 	set_prometheus_registry(config)?;
 
 	let inherent_data_providers = InherentDataProviders::new();
-	let (client, backend, keystore, task_manager) =
+	let (client, backend, keystore_container, task_manager) =
 		sc_service::new_full_parts::<Block, RuntimeApi, Executor>(&config)?;
 	let client = Arc::new(client);
 	let select_chain = LongestChain::new(backend.clone());
@@ -259,15 +258,17 @@ where
 		sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 	let rpc_extensions_builder = {
 		let client = client.clone();
-		let keystore = keystore.clone();
+		let keystore = keystore_container.sync_keystore();
 		let transaction_pool = transaction_pool.clone();
 		let select_chain = select_chain.clone();
+		let chain_spec = config.chain_spec.cloned_box();
 
 		move |deny_unsafe, is_authority, network, subscription_executor| -> RpcExtension {
 			let deps = FullDeps {
 				client: client.clone(),
 				pool: transaction_pool.clone(),
 				select_chain: select_chain.clone(),
+				chain_spec: chain_spec.cloned_box(),
 				deny_unsafe,
 				is_authority,
 				network,
@@ -293,7 +294,7 @@ where
 		client,
 		backend,
 		task_manager,
-		keystore,
+		keystore_container,
 		select_chain,
 		import_queue,
 		transaction_pool,
@@ -305,6 +306,7 @@ where
 #[cfg(feature = "full-node")]
 fn new_full<RuntimeApi, Executor>(
 	mut config: Configuration,
+	authority_discovery_disabled: bool,
 ) -> Result<(TaskManager, Arc<FullClient<RuntimeApi, Executor>>), ServiceError>
 where
 	Executor: 'static + NativeExecutionDispatch,
@@ -322,7 +324,7 @@ where
 		client,
 		backend,
 		mut task_manager,
-		keystore,
+		keystore_container,
 		select_chain,
 		import_queue,
 		transaction_pool,
@@ -359,7 +361,7 @@ where
 		config,
 		backend: backend.clone(),
 		client: client.clone(),
-		keystore: keystore.clone(),
+		keystore: keystore_container.sync_keystore(),
 		network: network.clone(),
 		rpc_extensions_builder: {
 			let wrap_rpc_extensions_builder = {
@@ -391,12 +393,13 @@ where
 	if role.is_authority() {
 		let can_author_with = CanAuthorWithNativeVersion::new(client.executor().clone());
 		let proposer = ProposerFactory::new(
+			task_manager.spawn_handle(),
 			client.clone(),
 			transaction_pool,
 			prometheus_registry.as_ref(),
 		);
 		let babe_config = BabeParams {
-			keystore: keystore.clone(),
+			keystore: keystore_container.sync_keystore(),
 			client: client.clone(),
 			select_chain,
 			block_import,
@@ -415,7 +418,7 @@ where
 	}
 
 	let keystore = if is_authority {
-		Some(keystore.clone() as BareCryptoStorePtr)
+		Some(keystore_container.sync_keystore())
 	} else {
 		None
 	};
@@ -435,10 +438,9 @@ where
 			config: grandpa_config,
 			link: link_half,
 			network: network.clone(),
-			inherent_data_providers: inherent_data_providers.clone(),
 			telemetry_on_connect: Some(telemetry_connection_sinks.on_connect_stream()),
 			voting_rule: GrandpaVotingRulesBuilder::default().build(),
-			prometheus_registry,
+			prometheus_registry: prometheus_registry.clone(),
 			shared_voter_state,
 		};
 
@@ -447,11 +449,36 @@ where
 			sc_finality_grandpa::run_grandpa_voter(grandpa_config)?,
 		);
 	} else {
-		sc_finality_grandpa::setup_disabled_grandpa(
+		sc_finality_grandpa::setup_disabled_grandpa(network.clone())?;
+	}
+
+	if role.is_authority() && !authority_discovery_disabled {
+		use futures::StreamExt;
+		use sc_network::Event;
+
+		let authority_discovery_role =
+			sc_authority_discovery::Role::PublishAndDiscover(keystore_container.keystore());
+		let dht_event_stream =
+			network
+				.event_stream("authority-discovery")
+				.filter_map(|e| async move {
+					match e {
+						Event::Dht(e) => Some(e),
+						_ => None,
+					}
+				});
+		let (authority_discovery_worker, _service) = sc_authority_discovery::new_worker_and_service(
 			client.clone(),
-			&inherent_data_providers,
-			network.clone(),
-		)?;
+			network,
+			Box::pin(dht_event_stream),
+			authority_discovery_role,
+			prometheus_registry,
+		);
+
+		task_manager.spawn_handle().spawn(
+			"authority-discovery-worker",
+			authority_discovery_worker.run(),
+		);
 	}
 
 	network_starter.start_network();
@@ -469,7 +496,7 @@ where
 {
 	set_prometheus_registry(&mut config)?;
 
-	let (client, backend, keystore, mut task_manager, on_demand) =
+	let (client, backend, keystore_container, mut task_manager, on_demand) =
 		sc_service::new_light_parts::<Block, RuntimeApi, Executor>(&config)?;
 	let select_chain = LongestChain::new(backend.clone());
 	let transaction_pool = Arc::new(BasicPool::new_light(
@@ -547,7 +574,7 @@ where
 		task_manager: &mut task_manager,
 		telemetry_connection_sinks: TelemetryConnectionSinks::default(),
 		config,
-		keystore,
+		keystore: keystore_container.sync_keystore(),
 		backend,
 		transaction_pool,
 		client,
@@ -596,6 +623,7 @@ where
 #[cfg(feature = "full-node")]
 pub fn drml_new_full(
 	config: Configuration,
+	authority_discovery_disabled: bool,
 ) -> Result<
 	(
 		TaskManager,
@@ -603,7 +631,10 @@ pub fn drml_new_full(
 	),
 	ServiceError,
 > {
-	let (components, client) = new_full::<pangolin_runtime::RuntimeApi, PangolinExecutor>(config)?;
+	let (components, client) = new_full::<pangolin_runtime::RuntimeApi, PangolinExecutor>(
+		config,
+		authority_discovery_disabled,
+	)?;
 
 	Ok((components, client))
 }

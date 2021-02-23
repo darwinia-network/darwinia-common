@@ -7,13 +7,13 @@ license    = "Unlicense"
 name       = "pangolin-runtime"
 readme     = "README.md"
 repository = "https://github.com/darwinia-network/darwinia-common/"
-version    = "1.0.10"
+version    = "1.0.12"
 
 [dependencies]
 # crates
 codec             = { package = "parity-scale-codec", version = "1.3.5", default-features = false }
 serde             = { version = "1.0.118", optional = true }
-smallvec          = { version = "1.6.0" }
+smallvec          = { version = "1.6.1" }
 static_assertions = { version = "1.1.0" }
 # darwinia
 darwinia-balances                   = { default-features = false, path = "../../../../frame/balances" }
@@ -52,7 +52,6 @@ pallet-authority-discovery                 = { default-features = false, git = "
 pallet-authorship                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 pallet-babe                                = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 pallet-collective                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-pallet-finality-tracker                    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 pallet-grandpa                             = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 pallet-im-online                           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 pallet-membership                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
@@ -125,7 +124,6 @@ std     = [
 	"pallet-authorship/std",
 	"pallet-babe/std",
 	"pallet-collective/std",
-	"pallet-finality-tracker/std",
 	"pallet-grandpa/std",
 	"pallet-im-online/std",
 	"pallet-membership/std",

@@ -225,7 +225,7 @@ impl<T: Trait> MMRStore<T::Hash> for ModuleMMRStore<T> {
 impl<T: Trait> MMRT<T::BlockNumber, T::Hash> for Module<T> {
 	fn get_root(block_number: T::BlockNumber) -> Option<T::Hash> {
 		let store = <ModuleMMRStore<T>>::default();
-		let mmr_size = leaf_index_to_mmr_size(block_number.saturated_into() as _);
+		let mmr_size = leaf_index_to_mmr_size(block_number.saturated_into::<u64>() as _);
 		let mmr = <MMR<_, MMRMerge<T>, _>>::new(mmr_size, store);
 
 		if let Ok(mmr_root) = mmr.get_root() {

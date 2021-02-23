@@ -89,11 +89,11 @@ impl DarwiniaCli for Cli {
 	}
 
 	fn base(&self) -> &RunCmd {
-		&self.run
+		&self.run.base
 	}
 
 	fn mut_base(&mut self) -> &mut RunCmd {
-		&mut self.run
+		&mut self.run.base
 	}
 }
 
@@ -110,19 +110,21 @@ pub fn run() -> sc_cli::Result<()> {
 
 	match &cli.subcommand {
 		None => {
+			let authority_discovery_disabled = cli.run.authority_discovery_disabled;
 			let runner = Configuration::create_runner(cli)?;
 
-			runner.run_node_until_exit(|config| match config.role {
-				Role::Light => service::drml_new_light(config),
-				_ => service::drml_new_full(config).map(|(components, _)| components),
+			runner.run_node_until_exit(|config| async move {
+				match config.role {
+					Role::Light => service::drml_new_light(config),
+					_ => service::drml_new_full(config, authority_discovery_disabled)
+						.map(|(components, _)| components),
+				}
 			})
 		}
 		Some(Subcommand::BuildSpec(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
 		}
-		// substrate 6804, #6999
-		// Some(Subcommand::BuildSyncSpec(cmd)) => {}
 		Some(Subcommand::CheckBlock(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 

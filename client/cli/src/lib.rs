@@ -344,11 +344,6 @@ impl Configuration {
 				self.network_config.node_key_config,
 				Some(node_key_file)
 			);
-			quick_if_let!(
-				cmd.network_params,
-				self.network_config,
-				no_yamux_flow_control
-			);
 			quick_if_let!(cmd.network_params, self.network_config, discover_local);
 
 			quick_if_let!(cmd.pool_config, self.pool_config, pool_limit);
@@ -897,10 +892,6 @@ struct NetworkConfig {
 	#[allow(missing_docs)]
 	#[serde(flatten)]
 	node_key_config: NodeKeyConfig,
-
-	/// Disable the yamux flow control. This option will be removed in the future once there is
-	/// enough confidence that this feature is properly working.
-	no_yamux_flow_control: Option<bool>,
 
 	/// Enable peer discovery on local networks.
 	///

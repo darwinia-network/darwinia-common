@@ -29,7 +29,6 @@ impl<T: frame_system::Trait> darwinia_treasury::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
-	// WARNING! Some components were not used: ["r"]
 	fn retract_tip() -> Weight {
 		(82970000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
