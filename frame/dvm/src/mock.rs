@@ -99,6 +99,18 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 	type BalanceInfo = AccountData<Balance>;
 }
 
+impl darwinia_balances::Trait<KtonInstance> for Test {
+	type DustRemoval = ();
+	type ExistentialDeposit = ExistentialDeposit;
+	type AccountStore = System;
+	type MaxLocks = ();
+	type OtherCurrencies = ();
+	type WeightInfo = ();
+	type Balance = Balance;
+	type Event = ();
+	type BalanceInfo = AccountData<Balance>;
+}
+
 parameter_types! {
 	pub const MinimumPeriod: u64 = 6000 / 2;
 }
@@ -149,7 +161,8 @@ impl darwinia_evm::Trait for Test {
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
 	type AddressMapping = HashedAddressMapping;
-	type Currency = Balances;
+	type RingCurrency = Ring;
+	type KtonCurrency = Kton;
 	type Event = ();
 	type Precompiles = darwinia_evm_precompile::DarwiniaPrecompiles<Self>;
 	type ChainId = ChainId;
@@ -167,11 +180,12 @@ impl Trait for Test {
 	type StateRoot = IntermediateStateRoot;
 	type BlockGasLimit = BlockGasLimit;
 	type AddressMapping = HashedAddressMapping;
-	type RingCurrency = Balances;
+	type RingCurrency = Ring;
 }
 
 pub type System = frame_system::Module<Test>;
-pub type Balances = darwinia_balances::Module<Test, RingInstance>;
+pub type Ring = darwinia_balances::Module<Test, RingInstance>;
+pub type Kton = darwinia_balances::Module<Test, KtonInstance>;
 pub type Ethereum = Module<Test>;
 pub type Evm = darwinia_evm::Module<Test>;
 

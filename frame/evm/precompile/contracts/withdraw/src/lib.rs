@@ -34,7 +34,7 @@ type AccountId<T> = <T as frame_system::Trait>::AccountId;
 
 /// WithDraw Precompile Contract, used to withdraw balance from evm account to darwinia account
 ///
-/// The contract address: 0000000000000000000000000000000000000005
+/// The contract address: 0000000000000000000000000000000000000015
 pub struct WithDraw<T: Trait> {
 	_maker: PhantomData<T>,
 }
@@ -60,7 +60,7 @@ impl<T: Trait> Precompile for WithDraw<T> {
 		let context_value = context.apparent_value.div_mod(helper).0;
 		let context_value = context_value.low_u128().unique_saturated_into();
 
-		let result = T::Currency::transfer(
+		let result = T::RingCurrency::transfer(
 			&contract_address,
 			&input.dest,
 			context_value,
