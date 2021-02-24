@@ -1538,6 +1538,10 @@ impl<T: Config<I>, I: Instance> DustCollector<T::AccountId> for Module<T, I> {
 
 		if !dropped.is_zero() {
 			T::DustRemoval::on_unbalanced(NegativeImbalance::new(dropped));
+			if let Err(e) = <frame_system::Module<T>>::dec_providers(who) {
+				frame_support::debug::print!("Logic error: Unexpected {:?}", e);
+			}
+			Self::deposit_event(RawEvent::DustLost(who.clone(), dropped));
 		}
 	}
 }

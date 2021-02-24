@@ -285,6 +285,7 @@ fn dust_collector_should_work() {
 			assert_eq!(
 				events(),
 				[
+					Event::balances_Instance0(RawEvent::DustLost(1, 99)),
 					Event::balances_Instance1(RawEvent::DustLost(1, 99)),
 					Event::system(system::RawEvent::KilledAccount(1)),
 				]

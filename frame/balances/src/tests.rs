@@ -66,6 +66,10 @@ macro_rules! decl_tests {
 			evt
 		}
 
+		fn last_event() -> Event {
+			system::Module::<Test>::events().pop().expect("Event expected").event
+		}
+
 		#[test]
 		fn basic_locking_should_work() {
 			<$ext_builder>::default()
@@ -781,6 +785,269 @@ macro_rules! decl_tests {
 					// The account should be dead.
 					assert_eq!(Ring::free_balance(1), 0);
 					assert_eq!(Ring::reserved_balance(1), 0);
+				});
+		}
+
+		#[test]
+		fn emit_events_with_reserve_and_unreserve() {
+			<$ext_builder>::default()
+				.build()
+				.execute_with(|| {
+					let _ = Ring::deposit_creating(&1, 100);
+
+					System::set_block_number(2);
+					let _ = Ring::reserve(&1, 10);
+
+					assert_eq!(
+						last_event(),
+						Event::balances_Instance0(RawEvent::Reserved(1, 10)),
+					);
+
+					System::set_block_number(3);
+					let _ = Ring::unreserve(&1, 5);
+
+					assert_eq!(
+						last_event(),
+						Event::balances_Instance0(RawEvent::Unreserved(1, 5)),
+					);
+
+					System::set_block_number(4);
+					let _ = Ring::unreserve(&1, 6);
+
+					// should only unreserve 5
+					assert_eq!(
+						last_event(),
+						Event::balances_Instance0(RawEvent::Unreserved(1, 5)),
+					);
+				});
+		}
+
+		#[test]
+		fn emit_events_with_existential_deposit() {
+			<$ext_builder>::default()
+				.existential_deposit(100)
+				.build()
+				.execute_with(|| {
+					assert_ok!(Ring::set_balance(RawOrigin::Root.into(), 1, 100, 0));
+
+					assert_eq!(
+						events(),
+						[
+							Event::system(frame_system::RawEvent::NewAccount(1)),
+							Event::balances_Instance0(RawEvent::Endowed(1, 100)),
+							Event::balances_Instance0(RawEvent::BalanceSet(1, 100, 0)),
+						]
+					);
+
+					let _ = Ring::slash(&1, 1);
+
+					assert_eq!(
+						events(),
+						[
+							Event::balances_Instance0(RawEvent::DustLost(1, 99)),
+							Event::system(frame_system::RawEvent::KilledAccount(1))
+						]
+					);
+				});
+		}
+
+		#[test]
+		fn emit_events_with_no_existential_deposit_suicide() {
+			<$ext_builder>::default()
+				.existential_deposit(1)
+				.build()
+				.execute_with(|| {
+					assert_ok!(Ring::set_balance(RawOrigin::Root.into(), 1, 100, 0));
+
+					assert_eq!(
+						events(),
+						[
+							Event::system(frame_system::RawEvent::NewAccount(1)),
+							Event::balances_Instance0(RawEvent::Endowed(1, 100)),
+							Event::balances_Instance0(RawEvent::BalanceSet(1, 100, 0)),
+						]
+					);
+
+					let _ = Ring::slash(&1, 100);
+
+					assert_eq!(
+						events(),
+						[
+							Event::system(frame_system::RawEvent::KilledAccount(1))
+						]
+					);
+				});
+		}
+
+		#[test]
+		fn slash_loop_works() {
+			<$ext_builder>::default()
+				.existential_deposit(100)
+				.build()
+				.execute_with(|| {
+					/* User has no reference counter, so they can die in these scenarios */
+
+					// SCENARIO: Slash would not kill account.
+					assert_ok!(Ring::set_balance(Origin::root(), 1, 1_000, 0));
+					// Slashed completed in full
+					assert_eq!(Ring::slash(&1, 900), (NegativeImbalance::new(900), 0));
+					// Account is still alive
+					assert!(System::account_exists(&1));
+
+					// SCENARIO: Slash will kill account because not enough balance left.
+					assert_ok!(Ring::set_balance(Origin::root(), 1, 1_000, 0));
+					// Slashed completed in full
+					assert_eq!(Ring::slash(&1, 950), (NegativeImbalance::new(950), 0));
+					// Account is killed
+					assert!(!System::account_exists(&1));
+
+					// SCENARIO: Over-slash will kill account, and report missing slash amount.
+					assert_ok!(Ring::set_balance(Origin::root(), 1, 1_000, 0));
+					// Slashed full free_balance, and reports 300 not slashed
+					assert_eq!(Ring::slash(&1, 1_300), (NegativeImbalance::new(1000), 300));
+					// Account is dead
+					assert!(!System::account_exists(&1));
+
+					// SCENARIO: Over-slash can take from reserved, but keep alive.
+					assert_ok!(Ring::set_balance(Origin::root(), 1, 1_000, 400));
+					// Slashed full free_balance and 300 of reserved balance
+					assert_eq!(Ring::slash(&1, 1_300), (NegativeImbalance::new(1300), 0));
+					// Account is still alive
+					assert!(System::account_exists(&1));
+
+					// SCENARIO: Over-slash can take from reserved, and kill.
+					assert_ok!(Ring::set_balance(Origin::root(), 1, 1_000, 350));
+					// Slashed full free_balance and 300 of reserved balance
+					assert_eq!(Ring::slash(&1, 1_300), (NegativeImbalance::new(1300), 0));
+					// Account is dead because 50 reserved balance is not enough to keep alive
+					assert!(!System::account_exists(&1));
+
+					// SCENARIO: Over-slash can take as much as possible from reserved, kill, and report missing amount.
+					assert_ok!(Ring::set_balance(Origin::root(), 1, 1_000, 250));
+					// Slashed full free_balance and 300 of reserved balance
+					assert_eq!(Ring::slash(&1, 1_300), (NegativeImbalance::new(1250), 50));
+					// Account is super dead
+					assert!(!System::account_exists(&1));
+
+					/* User will now have a reference counter on them, keeping them alive in these scenarios */
+
+					// SCENARIO: Slash would not kill account.
+					assert_ok!(Ring::set_balance(Origin::root(), 1, 1_000, 0));
+					assert_ok!(System::inc_consumers(&1)); // <-- Reference counter added here is enough for all tests
+					// Slashed completed in full
+					assert_eq!(Ring::slash(&1, 900), (NegativeImbalance::new(900), 0));
+					// Account is still alive
+					assert!(System::account_exists(&1));
+
+					// SCENARIO: Slash will take as much as possible without killing account.
+					assert_ok!(Ring::set_balance(Origin::root(), 1, 1_000, 0));
+					// Slashed completed in full
+					assert_eq!(Ring::slash(&1, 950), (NegativeImbalance::new(900), 50));
+					// Account is still alive
+					assert!(System::account_exists(&1));
+
+					// SCENARIO: Over-slash will not kill account, and report missing slash amount.
+					assert_ok!(Ring::set_balance(Origin::root(), 1, 1_000, 0));
+					// Slashed full free_balance minus ED, and reports 400 not slashed
+					assert_eq!(Ring::slash(&1, 1_300), (NegativeImbalance::new(900), 400));
+					// Account is still alive
+					assert!(System::account_exists(&1));
+
+					// SCENARIO: Over-slash can take from reserved, but keep alive.
+					assert_ok!(Ring::set_balance(Origin::root(), 1, 1_000, 400));
+					// Slashed full free_balance and 300 of reserved balance
+					assert_eq!(Ring::slash(&1, 1_300), (NegativeImbalance::new(1300), 0));
+					// Account is still alive
+					assert!(System::account_exists(&1));
+
+					// SCENARIO: Over-slash can take from reserved, but keep alive.
+					assert_ok!(Ring::set_balance(Origin::root(), 1, 1_000, 350));
+					// Slashed full free_balance and 250 of reserved balance to leave ED
+					assert_eq!(Ring::slash(&1, 1_300), (NegativeImbalance::new(1250), 50));
+					// Account is still alive
+					assert!(System::account_exists(&1));
+
+					// SCENARIO: Over-slash can take as much as possible from reserved and report missing amount.
+					assert_ok!(Ring::set_balance(Origin::root(), 1, 1_000, 250));
+					// Slashed full free_balance and 300 of reserved balance
+					assert_eq!(Ring::slash(&1, 1_300), (NegativeImbalance::new(1150), 150));
+					// Account is still alive
+					assert!(System::account_exists(&1));
+
+					// Slash on non-existent account is okay.
+					assert_eq!(Ring::slash(&12345, 1_300), (NegativeImbalance::new(0), 1300));
+				});
+		}
+
+		#[test]
+		fn slash_reserved_loop_works() {
+			<$ext_builder>::default()
+				.existential_deposit(100)
+				.build()
+				.execute_with(|| {
+					/* User has no reference counter, so they can die in these scenarios */
+
+					// SCENARIO: Slash would not kill account.
+					assert_ok!(Ring::set_balance(Origin::root(), 1, 50, 1_000));
+					// Slashed completed in full
+					assert_eq!(Ring::slash_reserved(&1, 900), (NegativeImbalance::new(900), 0));
+					// Account is still alive
+					assert!(System::account_exists(&1));
+
+					// SCENARIO: Slash would kill account.
+					assert_ok!(Ring::set_balance(Origin::root(), 1, 50, 1_000));
+					// Slashed completed in full
+					assert_eq!(Ring::slash_reserved(&1, 1_000), (NegativeImbalance::new(1_000), 0));
+					// Account is dead
+					assert!(!System::account_exists(&1));
+
+					// SCENARIO: Over-slash would kill account, and reports left over slash.
+					assert_ok!(Ring::set_balance(Origin::root(), 1, 50, 1_000));
+					// Slashed completed in full
+					assert_eq!(Ring::slash_reserved(&1, 1_300), (NegativeImbalance::new(1_000), 300));
+					// Account is dead
+					assert!(!System::account_exists(&1));
+
+					// SCENARIO: Over-slash does not take from free balance.
+					assert_ok!(Ring::set_balance(Origin::root(), 1, 300, 1_000));
+					// Slashed completed in full
+					assert_eq!(Ring::slash_reserved(&1, 1_300), (NegativeImbalance::new(1_000), 300));
+					// Account is alive because of free balance
+					assert!(System::account_exists(&1));
+
+					/* User has a reference counter, so they cannot die */
+
+					// SCENARIO: Slash would not kill account.
+					assert_ok!(Ring::set_balance(Origin::root(), 1, 50, 1_000));
+					assert_ok!(System::inc_consumers(&1)); // <-- Reference counter added here is enough for all tests
+					// Slashed completed in full
+					assert_eq!(Ring::slash_reserved(&1, 900), (NegativeImbalance::new(900), 0));
+					// Account is still alive
+					assert!(System::account_exists(&1));
+
+					// SCENARIO: Slash as much as possible without killing.
+					assert_ok!(Ring::set_balance(Origin::root(), 1, 50, 1_000));
+					// Slashed as much as possible
+					assert_eq!(Ring::slash_reserved(&1, 1_000), (NegativeImbalance::new(950), 50));
+					// Account is still alive
+					assert!(System::account_exists(&1));
+
+					// SCENARIO: Over-slash reports correctly, where reserved is needed to keep alive.
+					assert_ok!(Ring::set_balance(Origin::root(), 1, 50, 1_000));
+					// Slashed as much as possible
+					assert_eq!(Ring::slash_reserved(&1, 1_300), (NegativeImbalance::new(950), 350));
+					// Account is still alive
+					assert!(System::account_exists(&1));
+
+					// SCENARIO: Over-slash reports correctly, where full reserved is removed.
+					assert_ok!(Ring::set_balance(Origin::root(), 1, 200, 1_000));
+					// Slashed as much as possible
+					assert_eq!(Ring::slash_reserved(&1, 1_300), (NegativeImbalance::new(1_000), 300));
+					// Account is still alive
+					assert!(System::account_exists(&1));
+
+					// Slash on non-existent account is okay.
+					assert_eq!(Ring::slash_reserved(&12345, 1_300), (NegativeImbalance::new(0), 1300));
 				});
 		}
 
