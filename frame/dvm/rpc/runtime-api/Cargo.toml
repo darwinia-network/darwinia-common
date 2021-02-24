@@ -19,11 +19,11 @@ ethereum-types = { version = "0.9", default-features = false }
 darwinia-evm            = { default-features = false, path = "../../../evm" }
 darwinia-evm-primitives = { default-features = false, path = "../../../../primitives/evm" }
 # substrate
-sp-api     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7" }
-sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7" }
-sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7" }
-sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7" }
+sp-api     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
 
 [features]
 default = ["std"]

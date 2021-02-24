@@ -17,9 +17,9 @@ num-traits            = { version = "0.2.14", default-features = false }
 # darwinia
 ethereum-primitives = { default-features = false, path = "../../primitives/ethereum-primitives" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", rev = "2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
 
 
 [features]

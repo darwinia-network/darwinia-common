@@ -19,13 +19,13 @@ log         = { version = "0.4.13" }
 # darwinia
 dvm-consensus-primitives = { path = "../../../primitives/consensus/" }
 # substrate
-prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/darwinia-network/substrate.git", rev = "2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7" }
-sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", rev = "2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7" }
-sp-api              = { git = "https://github.com/darwinia-network/substrate.git", rev = "2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7" }
-sp-block-builder    = { git = "https://github.com/darwinia-network/substrate.git", rev = "2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7" }
-sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", rev = "2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7" }
-sp-consensus        = { git = "https://github.com/darwinia-network/substrate.git", rev = "2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7" }
-sp-core             = { git = "https://github.com/darwinia-network/substrate.git", rev = "2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7" }
-sp-inherents        = { git = "https://github.com/darwinia-network/substrate.git", rev = "2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7" }
-sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", rev = "2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7" }
-sp-timestamp        = { git = "https://github.com/darwinia-network/substrate.git", rev = "2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7" }
+prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-api              = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-block-builder    = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-consensus        = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-core             = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-inherents        = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-timestamp        = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
