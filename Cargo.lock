@@ -1477,7 +1477,7 @@ name = "darwinia-evm-primitives"
 version = "1.3.0"
 dependencies = [
  "evm",
- "impl-trait-for-tuples 0.1.3",
+ "impl-trait-for-tuples 0.2.0",
  "parity-scale-codec",
  "serde",
  "sp-core",
