@@ -47,7 +47,7 @@ pub trait Precompile {
 	) -> core::result::Result<(ExitSucceed, Vec<u8>, usize), ExitError>;
 }
 
-#[impl_for_tuples(16)]
+#[impl_for_tuples(30)]
 #[tuple_types_no_default_trait_bound]
 impl PrecompileSet for Tuple {
 	for_tuples!( where #( Tuple: Precompile )* );

@@ -75,6 +75,17 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 	type OtherCurrencies = ();
 	type WeightInfo = ();
 }
+impl darwinia_balances::Trait<KtonInstance> for Test {
+	type Balance = Balance;
+	type DustRemoval = ();
+	type Event = ();
+	type ExistentialDeposit = ExistentialDeposit;
+	type BalanceInfo = AccountData<Balance>;
+	type AccountStore = System;
+	type MaxLocks = ();
+	type OtherCurrencies = ();
+	type WeightInfo = ();
+}
 
 parameter_types! {
 	pub const MinimumPeriod: u64 = 1000;
@@ -102,7 +113,8 @@ impl Trait for Test {
 	type WithdrawOrigin = EnsureAddressNever<Self::AccountId>;
 
 	type AddressMapping = HashedAddressMapping<Blake2Hasher>;
-	type Currency = Balances;
+	type RingCurrency = Ring;
+	type KtonCurrency = Kton;
 
 	type Event = Event<Test>;
 	type Precompiles = ();
@@ -112,7 +124,8 @@ impl Trait for Test {
 }
 
 type System = frame_system::Module<Test>;
-type Balances = darwinia_balances::Module<Test, RingInstance>;
+type Ring = darwinia_balances::Module<Test, RingInstance>;
+type Kton = darwinia_balances::Module<Test, KtonInstance>;
 type EVM = Module<Test>;
 
 pub fn new_test_ext() -> sp_io::TestExternalities {

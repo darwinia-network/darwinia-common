@@ -1,0 +1,25 @@
+[package]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+description = "Withdraw precompile for EVM pallet."
+edition     = "2018"
+homepage    = "https://darwinia.network/"
+license     = "GPL-3.0"
+name        = "darwinia-evm-precompile"
+readme      = "README.md"
+repository  = "https://github.com/darwinia-network/darwinia-common/"
+version     = "1.3.0"
+
+[dependencies]
+# darwinia
+darwinia-evm-precompile-empty	   = { default-features = false, path = "contracts/empty" }
+darwinia-evm-precompile-simple     = { default-features = false, path = "contracts/simple" }
+darwinia-evm-precompile-withdraw   = { default-features = false, path = "contracts/withdraw" }
+
+[features]
+default = ["std"]
+
+std = [
+	"darwinia-evm-precompile-empty/std",
+	"darwinia-evm-precompile-simple/std",
+	"darwinia-evm-precompile-withdraw/std",
+]

@@ -49,7 +49,7 @@ use sp_std::vec::Vec;
 
 /// Type alias for currency balance.
 pub type BalanceOf<T> =
-	<<T as Trait>::Currency as Currency<<T as frame_system::Trait>::AccountId>>::Balance;
+	<<T as Trait>::RingCurrency as Currency<<T as frame_system::Trait>::AccountId>>::Balance;
 
 /// Trait that outputs the current transaction gas price.
 pub trait FeeCalculator {
@@ -206,7 +206,7 @@ impl<T: Trait> AccountBasicMapping for RawAccountBasicMapping<T> {
 		let account_id = T::AddressMapping::into_account_id(*address);
 
 		let nonce = frame_system::Module::<T>::account_nonce(&account_id);
-		let balance = T::Currency::free_balance(&account_id);
+		let balance = T::RingCurrency::free_balance(&account_id);
 
 		Account {
 			nonce: U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(nonce)),
@@ -228,10 +228,10 @@ impl<T: Trait> AccountBasicMapping for RawAccountBasicMapping<T> {
 
 		if current.balance > new.balance {
 			let diff = current.balance - new.balance;
-			T::Currency::slash(&account_id, diff.low_u128().unique_saturated_into());
+			T::RingCurrency::slash(&account_id, diff.low_u128().unique_saturated_into());
 		} else if current.balance < new.balance {
 			let diff = new.balance - current.balance;
-			T::Currency::deposit_creating(&account_id, diff.low_u128().unique_saturated_into());
+			T::RingCurrency::deposit_creating(&account_id, diff.low_u128().unique_saturated_into());
 		}
 	}
 }
@@ -275,8 +275,10 @@ pub trait Trait: frame_system::Trait + pallet_timestamp::Trait {
 
 	/// Mapping from address to account id.
 	type AddressMapping: AddressMapping<Self::AccountId>;
-	/// Currency type for withdraw and balance storage.
-	type Currency: Currency<Self::AccountId>;
+	/// Ring Currency type
+	type RingCurrency: Currency<Self::AccountId>;
+	/// Kton Currency type
+	type KtonCurrency: Currency<Self::AccountId>;
 
 	/// The overarching event type.
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
