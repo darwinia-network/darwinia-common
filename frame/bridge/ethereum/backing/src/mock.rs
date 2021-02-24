@@ -129,6 +129,7 @@ macro_rules! decl_tests {
 			type OnNewAccount = ();
 			type OnKilledAccount = ();
 			type SystemWeightInfo = ();
+			type SS58Prefix = ();
 		}
 
 		impl pallet_timestamp::Config for Test {

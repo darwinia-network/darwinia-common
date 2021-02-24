@@ -51,7 +51,6 @@ impl frame_system::Config for Test {
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
-	type SystemWeightInfo = ();
 	type Origin = Origin;
 	type Call = ();
 	type Index = u64;
@@ -68,6 +67,8 @@ impl frame_system::Config for Test {
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
+	type SystemWeightInfo = ();
+	type SS58Prefix = ();
 }
 
 parameter_types! {
