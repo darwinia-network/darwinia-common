@@ -37,7 +37,7 @@ macro_rules! decl_tests {
 		// --- substrate ---
 		use frame_support::{
 			assert_err, assert_noop, assert_storage_noop, assert_ok,
-			traits::{Currency, ExistenceRequirement::AllowDeath, ReservableCurrency, StoredMap},
+			traits::{Currency, ExistenceRequirement::AllowDeath, ReservableCurrency},
 		};
 		use frame_system::RawOrigin;
 		use pallet_transaction_payment::{ChargeTransactionPayment, Multiplier};
@@ -91,10 +91,8 @@ macro_rules! decl_tests {
 				.execute_with(|| {
 					assert_eq!(Ring::free_balance(1), 10);
 					assert_ok!(<Ring as Currency<_>>::transfer(&1, &2, 10, AllowDeath));
-					assert!(!<<Test as Config<RingInstance>>::AccountStore as StoredMap<
-						Balance,
-						AccountData<Balance>,
-					>>::is_explicit(&1));
+					// Check that the account is dead.
+					assert!(!<frame_system::Account<Test>>::contains_key(&1));
 				});
 		}
 
@@ -345,14 +343,12 @@ macro_rules! decl_tests {
 				.monied(true)
 				.build()
 				.execute_with(|| {
-					assert_eq!(Ring::is_dead_account(&5), true);
 					// account 5 should not exist
 					// ext_deposit is 10, value is 9, not satisfies for ext_deposit
 					assert_noop!(
 						Ring::transfer(Some(1).into(), 5, 9),
 						RingError::ExistentialDeposit,
 					);
-					assert_eq!(Ring::is_dead_account(&5), true); // account 5 should not exist
 					assert_eq!(Ring::free_balance(1), 100);
 				});
 		}
@@ -365,31 +361,25 @@ macro_rules! decl_tests {
 				.build()
 				.execute_with(|| {
 					System::inc_account_nonce(&2);
-					assert_eq!(Ring::is_dead_account(&2), false);
-					assert_eq!(Ring::is_dead_account(&5), true);
 					assert_eq!(Ring::total_balance(&2), 256 * 20);
 
 					assert_ok!(Ring::reserve(&2, 256 * 19 + 1)); // account 2 becomes mostly reserved
 					assert_eq!(Ring::free_balance(2), 255); // "free" account deleted."
 					assert_eq!(Ring::total_balance(&2), 256 * 20); // reserve still exists.
-					assert_eq!(Ring::is_dead_account(&2), false);
 					assert_eq!(System::account_nonce(&2), 1);
 
 					// account 4 tries to take index 1 for account 5.
 					assert_ok!(Ring::transfer(Some(4).into(), 5, 256 * 1 + 0x69));
 					assert_eq!(Ring::total_balance(&5), 256 * 1 + 0x69);
-					assert_eq!(Ring::is_dead_account(&5), false);
 
 					assert!(Ring::slash(&2, 256 * 19 + 2).1.is_zero()); // account 2 gets slashed
 																// "reserve" account reduced to 255 (below ED) so account deleted
 					assert_eq!(Ring::total_balance(&2), 0);
 					assert_eq!(System::account_nonce(&2), 0); // nonce zero
-					assert_eq!(Ring::is_dead_account(&2), true);
 
 					// account 4 tries to take index 1 again for account 6.
 					assert_ok!(Ring::transfer(Some(4).into(), 6, 256 * 1 + 0x69));
 					assert_eq!(Ring::total_balance(&6), 256 * 1 + 0x69);
-					assert_eq!(Ring::is_dead_account(&6), false);
 				});
 		}
 
@@ -497,7 +487,7 @@ macro_rules! decl_tests {
 		fn refunding_balance_should_work() {
 			<$ext_builder>::default().build().execute_with(|| {
 				let _ = Ring::deposit_creating(&1, 42);
-				Ring::mutate_account(&1, |a| a.reserved = 69);
+				assert!(Ring::mutate_account(&1, |a| a.reserved = 69).is_ok());
 				Ring::unreserve(&1, 69);
 				assert_eq!(Ring::free_balance(1), 111);
 				assert_eq!(Ring::reserved_balance(1), 0);
@@ -714,7 +704,6 @@ macro_rules! decl_tests {
 						Ring::transfer_keep_alive(Some(1).into(), 2, 100),
 						RingError::KeepAlive
 					);
-					assert_eq!(Ring::is_dead_account(&1), false);
 					assert_eq!(Ring::total_balance(&1), 100);
 					assert_eq!(Ring::total_balance(&2), 0);
 				});
@@ -790,7 +779,6 @@ macro_rules! decl_tests {
 					// Reserve some free balance
 					let _ = Ring::slash(&1, 1);
 					// The account should be dead.
-					assert!(Ring::is_dead_account(&1));
 					assert_eq!(Ring::free_balance(1), 0);
 					assert_eq!(Ring::reserved_balance(1), 0);
 				});
@@ -804,7 +792,7 @@ macro_rules! decl_tests {
 				.existential_deposit(0)
 				.build()
 				.execute_with(|| {
-					assert!(!<Test as Config<RingInstance>>::AccountStore::is_explicit(&1337));
+					assert!(!<frame_system::Account<Test>>::contains_key(&1337));
 
 					// Unreserve
 					assert_storage_noop!(assert_eq!(Ring::unreserve(&1337, 42), 42));

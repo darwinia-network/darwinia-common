@@ -85,7 +85,7 @@ impl frame_system::Config for Test {
 	type PalletInfo = ();
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
-	type OnKilledAccount = Ring;
+	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
 	type SS58Prefix = ();
 }
@@ -111,8 +111,7 @@ impl Config<RingInstance> for Test {
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = StorageMapShim<
 		Account<Test, RingInstance>,
-		frame_system::CallOnCreatedAccount<Test>,
-		frame_system::CallKillAccount<Test>,
+		frame_system::Provider<Test>,
 		Balance,
 		AccountData<Balance>,
 	>;
@@ -128,8 +127,7 @@ impl Config<KtonInstance> for Test {
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = StorageMapShim<
 		Account<Test, KtonInstance>,
-		frame_system::CallOnCreatedAccount<Test>,
-		frame_system::CallKillAccount<Test>,
+		frame_system::Provider<Test>,
 		Balance,
 		AccountData<Balance>,
 	>;
@@ -197,7 +195,7 @@ decl_tests! { Test, ExtBuilder, EXISTENTIAL_DEPOSIT }
 #[test]
 fn emit_events_with_no_existential_deposit_suicide_with_dust() {
 	<ExtBuilder>::default()
-		.existential_deposit(0)
+		.existential_deposit(2)
 		.build()
 		.execute_with(|| {
 			assert_ok!(Ring::set_balance(RawOrigin::Root.into(), 1, 100, 0));
@@ -211,12 +209,12 @@ fn emit_events_with_no_existential_deposit_suicide_with_dust() {
 				]
 			);
 
-			let _ = Ring::slash(&1, 99);
+			let _ = Ring::slash(&1, 98);
 
 			// no events
 			assert_eq!(events(), []);
 
-			assert_ok!(System::suicide(Origin::signed(1)));
+			let _ = Ring::slash(&1, 1);
 
 			assert_eq!(
 				events(),
@@ -273,7 +271,6 @@ fn dust_collector_should_work() {
 					Event::system(system::RawEvent::NewAccount(1)),
 					Event::balances_Instance0(RawEvent::Endowed(1, 100)),
 					Event::balances_Instance0(RawEvent::BalanceSet(1, 100, 0)),
-					Event::system(system::RawEvent::NewAccount(1)),
 					Event::balances_Instance1(RawEvent::Endowed(1, 100)),
 					Event::balances_Instance1(RawEvent::BalanceSet(1, 100, 0)),
 				]
@@ -289,7 +286,6 @@ fn dust_collector_should_work() {
 				events(),
 				[
 					Event::balances_Instance1(RawEvent::DustLost(1, 99)),
-					Event::balances_Instance0(RawEvent::DustLost(1, 99)),
 					Event::system(system::RawEvent::KilledAccount(1)),
 				]
 			);
