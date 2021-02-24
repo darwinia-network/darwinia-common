@@ -185,9 +185,9 @@ pub fn run() -> sc_cli::Result<()> {
 				Ok((cmd.run(client, backend), task_manager))
 			})
 		}
-		Some(Subcommand::Key(cmd)) => cmd.run(),
-		Some(Subcommand::Sign(cmd)) => cmd.run(),
-		Some(Subcommand::Verify(cmd)) => cmd.run(),
-		Some(Subcommand::Vanity(cmd)) => cmd.run(),
+		Some(Subcommand::Key(cmd)) => cmd.run(&cli),
+		Some(Subcommand::Sign(cmd)) => cmd.run(&cli),
+		Some(Subcommand::Verify(cmd)) => cmd.run(&cli),
+		Some(Subcommand::Vanity(cmd)) => cmd.run(&cli),
 	}
 }
