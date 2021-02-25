@@ -2110,9 +2110,19 @@ decl_module! {
 		/// # </weight>
 		#[weight = T::WeightInfo::reap_stash(*num_slashing_spans)]
 		fn reap_stash(_origin, stash: T::AccountId, num_slashing_spans: u32) {
-			let at_minimum =
-				(T::RingCurrency::total_balance(&stash) == T::RingCurrency::minimum_balance())
-					&& (T::KtonCurrency::total_balance(&stash) == T::KtonCurrency::minimum_balance());
+			let total_ring = T::RingCurrency::total_balance(&stash);
+			let minimum_ring = T::RingCurrency::minimum_balance();
+			let total_kton = T::KtonCurrency::total_balance(&stash);
+			let minimum_kton = T::KtonCurrency::minimum_balance();
+			let at_minimum = (
+				total_ring == minimum_ring
+				&&
+				total_kton <= minimum_kton
+			) || (
+				total_kton == minimum_kton
+				&&
+				total_ring <= minimum_ring
+			);
 
 			ensure!(at_minimum, <Error<T>>::FundedTarget);
 
