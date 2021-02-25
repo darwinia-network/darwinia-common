@@ -186,7 +186,7 @@ fn kton_should_reward_even_does_not_own_kton_before() {
 	// Tests that validator storage items are cleaned up when stash is empty
 	// Tests that storage items are untouched when controller is empty
 	ExtBuilder::default()
-		.init_ring(false)
+		.has_stakers(false)
 		.build()
 		.execute_with(|| {
 			let account_id = 777;

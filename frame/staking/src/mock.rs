@@ -311,7 +311,6 @@ pub struct ExtBuilder {
 	invulnerables: Vec<AccountId>,
 	has_stakers: bool,
 	initialize_first_session: bool,
-	init_ring: bool,
 	init_kton: bool,
 }
 
@@ -327,7 +326,6 @@ impl Default for ExtBuilder {
 			invulnerables: vec![],
 			has_stakers: true,
 			initialize_first_session: true,
-			init_ring: true,
 			init_kton: false,
 		}
 	}
@@ -384,20 +382,14 @@ impl ExtBuilder {
 	}
 	pub fn has_stakers(mut self, has: bool) -> Self {
 		self.has_stakers = has;
-		self.init_ring = has;
 		self
 	}
 	pub fn max_offchain_iterations(self, iterations: u32) -> Self {
 		MAX_ITERATIONS.with(|v| *v.borrow_mut() = iterations);
 		self
 	}
-	pub fn init_ring(mut self, init_ring: bool) -> Self {
-		self.init_ring = init_ring;
-		self.has_stakers = init_ring;
-		self
-	}
-	pub fn init_kton(mut self, init_kton: bool) -> Self {
-		self.init_kton = init_kton;
+	pub fn init_kton(mut self, init: bool) -> Self {
+		self.init_kton = init;
 		self
 	}
 	pub fn offchain_election_ext(self) -> Self {
@@ -430,37 +422,35 @@ impl ExtBuilder {
 			.map(|x| ((x + 1) * 10 + 1) as AccountId)
 			.collect::<Vec<_>>();
 
-		if self.init_ring {
-			let _ = darwinia_balances::GenesisConfig::<Test, RingInstance> {
-				balances: vec![
-					(1, 10 * balance_factor),
-					(2, 20 * balance_factor),
-					(3, 300 * balance_factor),
-					(4, 400 * balance_factor),
-					(10, balance_factor),
-					(11, balance_factor * 1000),
-					(20, balance_factor),
-					(21, balance_factor * 2000),
-					(30, balance_factor),
-					(31, balance_factor * 2000),
-					(40, balance_factor),
-					(41, balance_factor * 2000),
-					(50, balance_factor),
-					(51, balance_factor * 2000),
-					(60, balance_factor),
-					(61, balance_factor * 2000),
-					(70, balance_factor),
-					(71, balance_factor * 2000),
-					(80, balance_factor),
-					(81, balance_factor * 2000),
-					(100, 2000 * balance_factor),
-					(101, 2000 * balance_factor),
-					// This allows us to have a total_payout different from 0.
-					(999, 1_000_000_000_000),
-				],
-			}
-			.assimilate_storage(&mut storage);
+		let _ = darwinia_balances::GenesisConfig::<Test, RingInstance> {
+			balances: vec![
+				(1, 10 * balance_factor),
+				(2, 20 * balance_factor),
+				(3, 300 * balance_factor),
+				(4, 400 * balance_factor),
+				(10, balance_factor),
+				(11, balance_factor * 1000),
+				(20, balance_factor),
+				(21, balance_factor * 2000),
+				(30, balance_factor),
+				(31, balance_factor * 2000),
+				(40, balance_factor),
+				(41, balance_factor * 2000),
+				(50, balance_factor),
+				(51, balance_factor * 2000),
+				(60, balance_factor),
+				(61, balance_factor * 2000),
+				(70, balance_factor),
+				(71, balance_factor * 2000),
+				(80, balance_factor),
+				(81, balance_factor * 2000),
+				(100, 2000 * balance_factor),
+				(101, 2000 * balance_factor),
+				// This allows us to have a total_payout different from 0.
+				(999, 1_000_000_000_000),
+			],
 		}
+		.assimilate_storage(&mut storage);
 		if self.init_kton {
 			let _ = darwinia_balances::GenesisConfig::<Test, KtonInstance> {
 				balances: vec![
