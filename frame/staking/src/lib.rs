@@ -272,6 +272,14 @@
 // TODO: offchain phragmen test https://github.com/darwinia-network/darwinia-common/issues/97
 // #[cfg(features = "testing-utils")]
 // pub mod testing_utils;
+#[cfg(test)]
+mod darwinia_tests;
+#[cfg(test)]
+mod inflation_tests;
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod substrate_tests;
 
 pub mod weights;
 // --- darwinia ---
@@ -281,14 +289,28 @@ pub mod inflation;
 pub mod offchain_election;
 pub mod slashing;
 
-#[cfg(test)]
-mod darwinia_tests;
-#[cfg(test)]
-mod inflation_tests;
-#[cfg(test)]
-mod mock;
-#[cfg(test)]
-mod substrate_tests;
+pub mod migrations {
+	use super::*;
+
+	#[derive(Decode)]
+	struct OldValidatorPrefs {
+		#[codec(compact)]
+		pub commission: Perbill
+	}
+	impl OldValidatorPrefs {
+		fn upgraded(self) -> ValidatorPrefs {
+			ValidatorPrefs {
+				commission: self.commission,
+				.. Default::default()
+			}
+		}
+	}
+	pub fn migrate_to_blockable<T: Config>() -> frame_support::weights::Weight {
+		<Validators<T>>::translate::<OldValidatorPrefs, _>(|_, p| Some(p.upgraded()));
+		<ErasValidatorPrefs<T>>::translate::<OldValidatorPrefs, _>(|_, _, p| Some(p.upgraded()));
+		T::BlockWeights::get().max_block
+	}
+}
 
 mod types {
 	// --- darwinia ---
@@ -580,6 +602,140 @@ where
 	}
 }
 
+decl_event!(
+	pub enum Event<T>
+	where
+		AccountId = AccountId<T>,
+		BlockNumber = BlockNumber<T>,
+		RingBalance = RingBalance<T>,
+		KtonBalance = KtonBalance<T>,
+	{
+		/// The era payout has been set; the first balance is the validator-payout; the second is
+		/// the remainder from the maximum amount of reward.
+		/// [era_index, validator_payout, remainder]
+		EraPayout(EraIndex, RingBalance, RingBalance),
+
+		/// The staker has been rewarded by this amount. [stash, amount]
+		Reward(AccountId, RingBalance),
+
+		/// One validator (and its nominators) has been slashed by the given amount.
+		/// [validator, amount, amount]
+		Slash(AccountId, RingBalance, KtonBalance),
+		/// An old slashing report from a prior era was discarded because it could
+		/// not be processed. [session_index]
+		OldSlashingReportDiscarded(SessionIndex),
+
+		/// A new set of stakers was elected with the given [compute].
+		StakingElection(ElectionCompute),
+
+		/// A new solution for the upcoming election has been stored. [compute]
+		SolutionStored(ElectionCompute),
+
+		/// An account has bonded this amount. [amount, start, end]
+		///
+		/// NOTE: This event is only emitted when funds are bonded via a dispatchable. Notably,
+		/// it will not be emitted for staking rewards when they are added to stake.
+		BondRing(RingBalance, TsInMs, TsInMs),
+		/// An account has bonded this amount. [amount, start, end]
+		///
+		/// NOTE: This event is only emitted when funds are bonded via a dispatchable. Notably,
+		/// it will not be emitted for staking rewards when they are added to stake.
+		BondKton(KtonBalance),
+
+		/// An account has unbonded this amount. [amount, now]
+		UnbondRing(RingBalance, BlockNumber),
+		/// An account has unbonded this amount. [amount, now]
+		UnbondKton(KtonBalance, BlockNumber),
+
+		/// A nominator has been kicked from a validator. \[nominator, stash\]
+		Kicked(AccountId, AccountId),
+
+		/// Someone claimed his deposits. [stash]
+		DepositsClaimed(AccountId),
+		/// Someone claimed his deposits with some *KTON*s punishment. [stash, forfeit]
+		DepositsClaimedWithPunish(AccountId, KtonBalance),
+	}
+);
+
+decl_error! {
+	/// Error for the staking module.
+	pub enum Error for Module<T: Config> {
+		/// Not a controller account.
+		NotController,
+		/// Not a stash account.
+		NotStash,
+		/// Stash is already bonded.
+		AlreadyBonded,
+		/// Controller is already paired.
+		AlreadyPaired,
+		/// Targets cannot be empty.
+		EmptyTargets,
+		/// Duplicate index.
+		DuplicateIndex,
+		/// Slash record index out of bounds.
+		InvalidSlashIndex,
+		/// Can not bond with value less than minimum balance.
+		InsufficientValue,
+		/// Can not schedule more unlock chunks.
+		NoMoreChunks,
+		/// Can not rebond without unlocking chunks.
+		NoUnlockChunk,
+		/// Attempting to target a stash that still has funds.
+		FundedTarget,
+		/// Invalid era to reward.
+		InvalidEraToReward,
+		/// Invalid number of nominations.
+		InvalidNumberOfNominations,
+		/// Items are not sorted and unique.
+		NotSortedAndUnique,
+		/// Rewards for this era have already been claimed for this validator.
+		AlreadyClaimed,
+		/// The submitted result is received out of the open window.
+		OffchainElectionEarlySubmission,
+		/// The submitted result is not as good as the one stored on chain.
+		OffchainElectionWeakSubmission,
+		/// The snapshot data of the current window is missing.
+		SnapshotUnavailable,
+		/// Incorrect number of winners were presented.
+		OffchainElectionBogusWinnerCount,
+		/// One of the submitted winners is not an active candidate on chain (index is out of range
+		/// in snapshot).
+		OffchainElectionBogusWinner,
+		/// Error while building the assignment type from the compact. This can happen if an index
+		/// is invalid, or if the weights _overflow_.
+		OffchainElectionBogusCompact,
+		/// One of the submitted nominators is not an active nominator on chain.
+		OffchainElectionBogusNominator,
+		/// One of the submitted nominators has an edge to which they have not voted on chain.
+		OffchainElectionBogusNomination,
+		/// One of the submitted nominators has an edge which is submitted before the last non-zero
+		/// slash of the target.
+		OffchainElectionSlashedNomination,
+		/// A self vote must only be originated from a validator to ONLY themselves.
+		OffchainElectionBogusSelfVote,
+		/// The submitted result has unknown edges that are not among the presented winners.
+		OffchainElectionBogusEdge,
+		/// The claimed score does not match with the one computed from the data.
+		OffchainElectionBogusScore,
+		/// The election size is invalid.
+		OffchainElectionBogusElectionSize,
+		/// The call is not allowed at the given time due to restrictions of election period.
+		CallNotAllowed,
+		/// Incorrect previous history depth input provided.
+		IncorrectHistoryDepth,
+		/// Incorrect number of slashing spans provided.
+		IncorrectSlashingSpans,
+		/// Internal state has become somehow corrupted and the operation cannot continue.
+		BadState,
+		/// Too many nomination targets supplied.
+		TooManyTargets,
+		/// A nomination target was supplied that was blocked or otherwise not a validator.
+		BadTarget,
+		/// Payout - INSUFFICIENT
+		PayoutIns,
+	}
+}
+
 decl_storage! {
 	trait Store for Module<T: Config> as DarwiniaStaking {
 		/// Number of eras to keep in history.
@@ -770,6 +926,9 @@ decl_storage! {
 		/// forcing into account.
 		pub IsCurrentSessionFinal get(fn is_current_session_final): bool = false;
 
+		/// This is set to v5.0.0 for new networks.
+		StorageVersion build(|_: &GenesisConfig<T>| Releases::V5_0_0): Releases;
+
 		/// The chain's running time form genesis in milliseconds,
 		/// use for calculate darwinia era payout
 		pub LivingTime get(fn living_time): TsInMs;
@@ -827,133 +986,6 @@ decl_storage! {
 	}
 }
 
-decl_event!(
-	pub enum Event<T>
-	where
-		AccountId = AccountId<T>,
-		BlockNumber = BlockNumber<T>,
-		RingBalance = RingBalance<T>,
-		KtonBalance = KtonBalance<T>,
-	{
-		/// The era payout has been set; the first balance is the validator-payout; the second is
-		/// the remainder from the maximum amount of reward.
-		/// [era_index, validator_payout, remainder]
-		EraPayout(EraIndex, RingBalance, RingBalance),
-
-		/// The staker has been rewarded by this amount. [stash, amount]
-		Reward(AccountId, RingBalance),
-
-		/// One validator (and its nominators) has been slashed by the given amount.
-		/// [validator, amount, amount]
-		Slash(AccountId, RingBalance, KtonBalance),
-		/// An old slashing report from a prior era was discarded because it could
-		/// not be processed. [session_index]
-		OldSlashingReportDiscarded(SessionIndex),
-
-		/// A new set of stakers was elected with the given [compute].
-		StakingElection(ElectionCompute),
-
-		/// A new solution for the upcoming election has been stored. [compute]
-		SolutionStored(ElectionCompute),
-
-		/// An account has bonded this amount. [amount, start, end]
-		///
-		/// NOTE: This event is only emitted when funds are bonded via a dispatchable. Notably,
-		/// it will not be emitted for staking rewards when they are added to stake.
-		BondRing(RingBalance, TsInMs, TsInMs),
-		/// An account has bonded this amount. [amount, start, end]
-		///
-		/// NOTE: This event is only emitted when funds are bonded via a dispatchable. Notably,
-		/// it will not be emitted for staking rewards when they are added to stake.
-		BondKton(KtonBalance),
-
-		/// An account has unbonded this amount. [amount, now]
-		UnbondRing(RingBalance, BlockNumber),
-		/// An account has unbonded this amount. [amount, now]
-		UnbondKton(KtonBalance, BlockNumber),
-
-		/// Someone claimed his deposits. [stash]
-		DepositsClaimed(AccountId),
-		/// Someone claimed his deposits with some *KTON*s punishment. [stash, forfeit]
-		DepositsClaimedWithPunish(AccountId, KtonBalance),
-	}
-);
-
-decl_error! {
-	/// Error for the staking module.
-	pub enum Error for Module<T: Config> {
-		/// Not a controller account.
-		NotController,
-		/// Not a stash account.
-		NotStash,
-		/// Stash is already bonded.
-		AlreadyBonded,
-		/// Controller is already paired.
-		AlreadyPaired,
-		/// Targets cannot be empty.
-		EmptyTargets,
-		/// Duplicate index.
-		DuplicateIndex,
-		/// Slash record index out of bounds.
-		InvalidSlashIndex,
-		/// Can not bond with value less than minimum balance.
-		InsufficientValue,
-		/// Can not schedule more unlock chunks.
-		NoMoreChunks,
-		/// Can not rebond without unlocking chunks.
-		NoUnlockChunk,
-		/// Attempting to target a stash that still has funds.
-		FundedTarget,
-		/// Invalid era to reward.
-		InvalidEraToReward,
-		/// Invalid number of nominations.
-		InvalidNumberOfNominations,
-		/// Items are not sorted and unique.
-		NotSortedAndUnique,
-		/// Rewards for this era have already been claimed for this validator.
-		AlreadyClaimed,
-		/// The submitted result is received out of the open window.
-		OffchainElectionEarlySubmission,
-		/// The submitted result is not as good as the one stored on chain.
-		OffchainElectionWeakSubmission,
-		/// The snapshot data of the current window is missing.
-		SnapshotUnavailable,
-		/// Incorrect number of winners were presented.
-		OffchainElectionBogusWinnerCount,
-		/// One of the submitted winners is not an active candidate on chain (index is out of range
-		/// in snapshot).
-		OffchainElectionBogusWinner,
-		/// Error while building the assignment type from the compact. This can happen if an index
-		/// is invalid, or if the weights _overflow_.
-		OffchainElectionBogusCompact,
-		/// One of the submitted nominators is not an active nominator on chain.
-		OffchainElectionBogusNominator,
-		/// One of the submitted nominators has an edge to which they have not voted on chain.
-		OffchainElectionBogusNomination,
-		/// One of the submitted nominators has an edge which is submitted before the last non-zero
-		/// slash of the target.
-		OffchainElectionSlashedNomination,
-		/// A self vote must only be originated from a validator to ONLY themselves.
-		OffchainElectionBogusSelfVote,
-		/// The submitted result has unknown edges that are not among the presented winners.
-		OffchainElectionBogusEdge,
-		/// The claimed score does not match with the one computed from the data.
-		OffchainElectionBogusScore,
-		/// The election size is invalid.
-		OffchainElectionBogusElectionSize,
-		/// The call is not allowed at the given time due to restrictions of election period.
-		CallNotAllowed,
-		/// Incorrect previous history depth input provided.
-		IncorrectHistoryDepth,
-		/// Incorrect number of slashing spans provided.
-		IncorrectSlashingSpans,
-		/// Internal state has become somehow corrupted and the operation cannot continue.
-		BadState,
-		/// Payout - INSUFFICIENT
-		PayoutIns,
-	}
-}
-
 decl_module! {
 	pub struct Module<T: Config> for enum Call where origin: T::Origin {
 		type Error = Error<T>;
@@ -1005,6 +1037,15 @@ decl_module! {
 		const TotalPower: Power = T::TotalPower::get();
 
 		fn deposit_event() = default;
+
+		fn on_runtime_upgrade() -> frame_support::weights::Weight {
+			if StorageVersion::get() == Releases::V4_0_0 {
+				StorageVersion::put(Releases::V5_0_0);
+				migrations::migrate_to_blockable::<T>()
+			} else {
+				0
+			}
+		}
 
 		/// sets `ElectionStatus` to `Open(now)` where `now` is the block number at which the
 		/// election window has opened, if we are at the last session and less blocks than
@@ -1691,10 +1732,17 @@ decl_module! {
 			let stash = &ledger.stash;
 
 			ensure!(!targets.is_empty(), <Error<T>>::EmptyTargets);
+			ensure!(targets.len() <= MAX_NOMINATIONS, Error::<T>::TooManyTargets);
 
-			let targets = targets.into_iter()
-				.take(MAX_NOMINATIONS)
-				.map(|t| T::Lookup::lookup(t))
+			let old = <Nominators<T>>::get(stash).map_or_else(Vec::new, |x| x.targets);
+			let targets = targets
+				.into_iter()
+				.map(|t| T::Lookup::lookup(t).map_err(DispatchError::from))
+				.map(|n| n.and_then(|n| if old.contains(&n) || !<Validators<T>>::get(&n).blocked {
+					Ok(n)
+				} else {
+					Err(<Error<T>>::BadTarget.into())
+				}))
 				.collect::<Result<Vec<T::AccountId>, _>>()?;
 			let nominations = Nominations {
 				targets,
@@ -2244,6 +2292,42 @@ decl_module! {
 			);
 
 			Ok(adjustments)
+		}
+
+		/// Remove the given nominations from the calling validator.
+		///
+		/// Effects will be felt at the beginning of the next era.
+		///
+		/// The dispatch origin for this call must be _Signed_ by the controller, not the stash.
+		/// And, it can be only called when [`EraElectionStatus`] is `Closed`. The controller
+		/// account should represent a validator.
+		///
+		/// - `who`: A list of nominator stash accounts who are nominating this validator which
+		///   should no longer be nominating this validator.
+		///
+		/// Note: Making this call only makes sense if you first set the validator preferences to
+		/// block any further nominations.
+		#[weight = T::WeightInfo::kick(who.len() as u32)]
+		pub fn kick(origin, who: Vec<<T::Lookup as StaticLookup>::Source>) -> DispatchResult {
+			let controller = ensure_signed(origin)?;
+			ensure!(Self::era_election_status().is_closed(), <Error<T>>::CallNotAllowed);
+			let ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
+			let stash = &ledger.stash;
+
+			for nom_stash in who.into_iter()
+				.map(T::Lookup::lookup)
+				.collect::<Result<Vec<T::AccountId>, _>>()?
+				.into_iter()
+			{
+				<Nominators<T>>::mutate(&nom_stash, |maybe_nom| if let Some(ref mut nom) = maybe_nom {
+					if let Some(pos) = nom.targets.iter().position(|v| v == stash) {
+						nom.targets.swap_remove(pos);
+						Self::deposit_event(RawEvent::Kicked(nom_stash.clone(), stash.clone()));
+					}
+				});
+			}
+
+			Ok(())
 		}
 	}
 }
@@ -3884,6 +3968,23 @@ where
 	}
 }
 
+// A value placed in storage that represents the current version of the Staking storage. This value
+// is used by the `on_runtime_upgrade` logic to determine whether we run storage migration logic.
+// This should match directly with the semantic versions of the Rust crate.
+#[derive(Encode, Decode, Clone, Copy, PartialEq, Eq, RuntimeDebug)]
+enum Releases {
+	V1_0_0Ancient,
+	V2_0_0,
+	V3_0_0,
+	V4_0_0,
+	V5_0_0,
+}
+impl Default for Releases {
+	fn default() -> Self {
+		Releases::V5_0_0
+	}
+}
+
 /// Indicates the initial status of the staker.
 #[derive(RuntimeDebug)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
@@ -4025,11 +4126,16 @@ pub struct ValidatorPrefs {
 	/// nominators.
 	#[codec(compact)]
 	pub commission: Perbill,
+	/// Whether or not this validator is accepting more nominations. If `true`, then no nominator
+	/// who is not already nominating this validator may nominate them. By default, validators
+	/// are accepting nominations.
+	pub blocked: bool,
 }
 impl Default for ValidatorPrefs {
 	fn default() -> Self {
 		ValidatorPrefs {
 			commission: Perbill::zero(),
+			blocked: false,
 		}
 	}
 }
