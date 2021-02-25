@@ -1004,7 +1004,7 @@ fn on_deposit_redeem_should_work() {
 				RewardDestination::default(),
 			);
 			assert!(Staking::ledger(unbonded_account).is_none());
-			assert!(System::account(unbonded_account).refcount == 0);
+			assert!(System::account(unbonded_account).providers == 0);
 
 			assert_ok!(Staking::on_deposit_redeem(
 				&backing_account,
@@ -1043,7 +1043,7 @@ fn on_deposit_redeem_should_work() {
 				}
 			);
 			assert_eq!(Staking::ring_pool(), ring_pool + deposit_amount);
-			assert!(System::account(unbonded_account).refcount != 0);
+			assert!(System::account(unbonded_account).providers != 0);
 		}
 
 		// Already bonded

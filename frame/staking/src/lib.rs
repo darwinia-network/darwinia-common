@@ -232,10 +232,11 @@
 //!
 //! The controller account can free a portion (or all) of the funds using the
 //! [`unbond`](enum.Call.html#variant.unbond) call. Note that the funds are not immediately
-//! accessible. Instead, a duration denoted by [`BondingDuration`](./trait.Config.html#associatedtype.BondingDuration)
-//! (in number of eras) must pass until the funds can actually be removed. Once the
-//! `BondingDurationInEra` is over, the [`withdraw_unbonded`](./enum.Call.html#variant.withdraw_unbonded)
-//! call can be used to actually withdraw the funds.
+//! accessible. Instead, a duration denoted by
+//! [`BondingDuration`](./trait.Config.html#associatedtype.BondingDuration) (in number of eras) must
+//! pass until the funds can actually be removed. Once the `BondingDuration` is over, the
+//! [`withdraw_unbonded`](./enum.Call.html#variant.withdraw_unbonded) call can be used to actually
+//! withdraw the funds.
 //!
 //! Note that there is a limitation to the number of fund-chunks that can be scheduled to be
 //! unlocked in the future via [`unbond`](enum.Call.html#variant.unbond). In case this maximum
@@ -377,9 +378,9 @@ use frame_support::{
 };
 use frame_system::{ensure_none, ensure_root, ensure_signed, offchain::SendTransactionTypes};
 use sp_npos_elections::{
-	build_support_map, evaluate_support, generate_solution_type, is_score_better, seq_phragmen,
-	Assignment, ElectionResult as PrimitiveElectionResult, ElectionScore, ExtendedBalance,
-	SupportMap, VoteWeight, VotingLimit,
+	generate_solution_type, is_score_better, seq_phragmen, to_support_map, Assignment,
+	CompactSolution, ElectionResult as PrimitiveElectionResult, ElectionScore, EvaluateSupport,
+	ExtendedBalance, PerThing128, SupportMap, VoteWeight,
 };
 use sp_runtime::{
 	helpers_128bit::multiply_by_rational,
@@ -391,8 +392,8 @@ use sp_runtime::{
 		InvalidTransaction, TransactionPriority, TransactionSource, TransactionValidity,
 		TransactionValidityError, ValidTransaction,
 	},
-	DispatchError, DispatchResult, InnerOf, ModuleId, PerThing, PerU16, Perbill, Percent,
-	Perquintill, RuntimeDebug,
+	DispatchError, DispatchResult, InnerOf, ModuleId, PerU16, Perbill, Percent, Perquintill,
+	RuntimeDebug,
 };
 #[cfg(feature = "std")]
 use sp_runtime::{Deserialize, Serialize};
@@ -428,7 +429,7 @@ macro_rules! log {
 	};
 }
 
-pub const MAX_NOMINATIONS: usize = <CompactAssignments as VotingLimit>::LIMIT;
+pub const MAX_NOMINATIONS: usize = <CompactAssignments as CompactSolution>::LIMIT;
 
 pub(crate) const MAX_UNLOCKING_CHUNKS: usize = 32;
 /// Maximum number of stakers that can be stored in a snapshot.
@@ -946,6 +947,8 @@ decl_error! {
 		IncorrectHistoryDepth,
 		/// Incorrect number of slashing spans provided.
 		IncorrectSlashingSpans,
+		/// Internal state has become somehow corrupted and the operation cannot continue.
+		BadState,
 		/// Payout - INSUFFICIENT
 		PayoutIns,
 	}
@@ -1178,12 +1181,12 @@ decl_module! {
 				}
 			}
 
+			<frame_system::Module<T>>::inc_consumers(&stash).map_err(|_| Error::<T>::BadState)?;
+
 			// You're auto-bonded forever, here. We might improve this by only bonding when
 			// you actually validate/nominate and remove once you unbond __everything__.
 			<Bonded<T>>::insert(&stash, &controller);
 			<Payee<T>>::insert(&stash, payee);
-
-			<frame_system::Module<T>>::inc_ref(&stash);
 
 			let ledger = StakingLedger {
 				stash: stash.clone(),
@@ -2090,9 +2093,9 @@ decl_module! {
 			}
 		}
 
-		/// Remove all data structure concerning a staker/stash once its balance is zero.
+		/// Remove all data structure concerning a staker/stash once its balance is at the minimum.
 		/// This is essentially equivalent to `withdraw_unbonded` except it can be called by anyone
-		/// and the target `stash` must have no funds left.
+		/// and the target `stash` must have no funds left beyond the ED.
 		///
 		/// This can be called from any origin.
 		///
@@ -2107,8 +2110,11 @@ decl_module! {
 		/// # </weight>
 		#[weight = T::WeightInfo::reap_stash(*num_slashing_spans)]
 		fn reap_stash(_origin, stash: T::AccountId, num_slashing_spans: u32) {
-			ensure!(T::RingCurrency::total_balance(&stash).is_zero(), <Error<T>>::FundedTarget);
-			ensure!(T::KtonCurrency::total_balance(&stash).is_zero(), <Error<T>>::FundedTarget);
+			let at_minimum =
+				(T::RingCurrency::total_balance(&stash) == T::RingCurrency::minimum_balance())
+					&& (T::KtonCurrency::total_balance(&stash) == T::KtonCurrency::minimum_balance());
+
+			ensure!(at_minimum, <Error<T>>::FundedTarget);
 
 			Self::kill_stash(&stash, num_slashing_spans)?;
 			T::RingCurrency::remove_lock(STAKING_ID, &stash);
@@ -2167,7 +2173,7 @@ decl_module! {
 		#[weight = T::WeightInfo::submit_solution_better(
 			size.validators.into(),
 			size.nominators.into(),
-			compact.len() as u32,
+			compact.voter_count() as u32,
 			winners.len() as u32,
 		)]
 		pub fn submit_election_solution(
@@ -2201,7 +2207,7 @@ decl_module! {
 		#[weight = T::WeightInfo::submit_solution_better(
 			size.validators.into(),
 			size.nominators.into(),
-			compact.len() as u32,
+			compact.voter_count() as u32,
 			winners.len() as u32,
 		)]
 		pub fn submit_election_solution_unsigned(
@@ -2870,11 +2876,11 @@ impl<T: Config> Module<T> {
 			sp_npos_elections::assignment_ratio_to_staked(assignments, |s| Self::power_of(s) as _);
 
 		// build the support map thereof in order to evaluate.
-		let supports = build_support_map::<T::AccountId>(&winners, &staked_assignments)
+		let supports = to_support_map::<T::AccountId>(&winners, &staked_assignments)
 			.map_err(|_| <Error<T>>::OffchainElectionBogusEdge)?;
 
 		// Check if the score is the same as the claimed one.
-		let submitted_score = evaluate_support(&supports);
+		let submitted_score = (&supports).evaluate();
 		ensure!(
 			submitted_score == claimed_score,
 			<Error<T>>::OffchainElectionBogusScore
@@ -3147,7 +3153,7 @@ impl<T: Config> Module<T> {
 					Self::power_of(s) as _
 				});
 
-			let supports = build_support_map::<T::AccountId>(&elected_stashes, &staked_assignments)
+			let supports = to_support_map::<T::AccountId>(&elected_stashes, &staked_assignments)
 				.map_err(|_| {
 					log!(
 						error,
@@ -3183,7 +3189,7 @@ impl<T: Config> Module<T> {
 	/// Self votes are added and nominations before the most recent slashing span are ignored.
 	///
 	/// No storage item is updated.
-	pub fn do_phragmen<Accuracy: PerThing>(
+	pub fn do_phragmen<Accuracy: PerThing128>(
 		iterations: usize,
 	) -> Option<PrimitiveElectionResult<T::AccountId, Accuracy>>
 	where
@@ -3238,7 +3244,7 @@ impl<T: Config> Module<T> {
 				all_nominators,
 				Some((iterations, 0)), // exactly run `iterations` rounds.
 			)
-			.map_err(|err| log!(error, "Call to seq-phragmen failed due to {}", err))
+			.map_err(|err| log!(error, "Call to seq-phragmen failed due to {:?}", err))
 			.ok()
 		}
 	}
@@ -3339,7 +3345,7 @@ impl<T: Config> Module<T> {
 		<Validators<T>>::remove(stash);
 		<Nominators<T>>::remove(stash);
 
-		<frame_system::Module<T>>::dec_ref(stash);
+		<frame_system::Module<T>>::dec_consumers(stash);
 
 		Ok(())
 	}
@@ -3684,7 +3690,7 @@ impl<T: Config> OnDepositRedeem<T::AccountId, RingBalance<T>> for Module<T> {
 			<Bonded<T>>::insert(&stash, controller);
 			<Payee<T>>::insert(&stash, RewardDestination::Stash);
 
-			<frame_system::Module<T>>::inc_ref(&stash);
+			<frame_system::Module<T>>::inc_consumers(&stash).map_err(|_| Error::<T>::BadState)?;
 
 			let mut ledger = StakingLedger {
 				stash: stash.clone(),
