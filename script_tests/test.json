@@ -1,0 +1,17 @@
+[
+	{
+		"type": "function",
+		"inputs": [
+			{
+				"name": "to",
+				"type": "bytes32"
+			},
+			{
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "withdraw",
+		"outputs": []
+	}
+]
