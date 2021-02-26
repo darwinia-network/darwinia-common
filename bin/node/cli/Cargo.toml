@@ -59,6 +59,7 @@ sc-consensus-slots                         = { git = "https://github.com/darwini
 sc-executor                                = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
 sc-finality-grandpa                        = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
 sc-finality-grandpa-rpc                    = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sc-finality-grandpa-warp-sync              = { optional = true, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
 sc-keystore                                = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
 sc-network                                 = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
 sc-rpc                                     = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
@@ -100,6 +101,7 @@ cli       = [
 	"tokio",
 	"darwinia-cli",
 	"sc-cli",
+	"sc-finality-grandpa-warp-sync",
 	"sc-service",
 ]
 db        = ["sc-service/db"]
