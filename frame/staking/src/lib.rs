@@ -295,13 +295,13 @@ pub mod migrations {
 	#[derive(Decode)]
 	struct OldValidatorPrefs {
 		#[codec(compact)]
-		pub commission: Perbill
+		pub commission: Perbill,
 	}
 	impl OldValidatorPrefs {
 		fn upgraded(self) -> ValidatorPrefs {
 			ValidatorPrefs {
 				commission: self.commission,
-				.. Default::default()
+				..Default::default()
 			}
 		}
 	}

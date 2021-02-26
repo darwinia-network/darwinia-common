@@ -12,12 +12,12 @@ version     = "1.3.0"
 
 [dependencies]
 # crates
-bn                       = { package = "substrate-bn", version = "0.5", default-features = false }
-darwinia-evm-primitives  = { default-features = false, path = "../../../../primitives/evm" }
-evm                      = { version = "0.20.0", default-features = false, features = ["with-codec"] }
+bn                      = { package = "substrate-bn", version = "0.5", default-features = false }
+darwinia-evm-primitives = { default-features = false, path = "../../../../primitives/evm" }
+evm                     = { version = "0.20.0", default-features = false, features = ["with-codec"] }
 # substrate
-sp-core                  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-io                    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-io   = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
 
 [features]
 default = ["std"]

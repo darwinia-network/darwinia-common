@@ -338,7 +338,14 @@ impl<T: Config> Module<T> {
 			nonce: H64::default(),
 		};
 		let mut block = ethereum::Block::new(partial_header, transactions.clone(), ommers);
-		block.header.state_root = T::StateRoot::get();
+		// TODO: Switch to `T::StateRoot::get` after upgrade substrate to https://github.com/paritytech/substrate/pull/7714
+		// block.header.state_root = T::StateRoot::get();
+		block.header.state_root = {
+			let mut input = [0u8; 64];
+			input[..32].copy_from_slice(&frame_system::Module::<T>::parent_hash()[..]);
+			input[32..64].copy_from_slice(&block.header.hash()[..]);
+			H256::from_slice(Keccak256::digest(&input).as_slice())
+		};
 
 		let mut transaction_hashes = Vec::new();
 

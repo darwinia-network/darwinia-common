@@ -684,9 +684,7 @@ mod tests {
 			.build_storage::<Test>()
 			.unwrap();
 		// We use default for brevity, but you can configure as desired if needed.
-		RingConfig::default()
-			.assimilate_storage(&mut t)
-			.unwrap();
+		RingConfig::default().assimilate_storage(&mut t).unwrap();
 		GenesisConfig {
 			claims_list: ClaimsList {
 				dot: vec![Account {

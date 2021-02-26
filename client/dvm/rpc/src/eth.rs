@@ -255,13 +255,9 @@ where
 
 	fn syncing(&self) -> Result<SyncStatus> {
 		if self.network.is_major_syncing() {
-			let block_number = U256::from(
-				self.client
-					.info()
-					.best_number
-					.clone()
-					.saturated_into::<u128>(),
-			);
+			let block_number = U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(
+				self.client.info().best_number.clone(),
+			));
 			Ok(SyncStatus::Info(SyncInfo {
 				starting_block: U256::zero(),
 				current_block: block_number,
@@ -327,11 +323,9 @@ where
 
 	fn block_number(&self) -> Result<U256> {
 		Ok(U256::from(
-			self.client
-				.info()
-				.best_number
-				.clone()
-				.saturated_into::<u128>(),
+			UniqueSaturatedInto::<u128>::unique_saturated_into(
+				self.client.info().best_number.clone(),
+			),
 		))
 	}
 

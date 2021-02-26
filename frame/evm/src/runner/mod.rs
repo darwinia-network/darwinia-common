@@ -15,7 +15,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod builtin;
 pub mod stack;
 
 use crate::Config;
@@ -31,7 +30,7 @@ pub trait Runner<T: Config> {
 		target: H160,
 		input: Vec<u8>,
 		value: U256,
-		gas_limit: u32,
+		gas_limit: u64,
 		gas_price: Option<U256>,
 		nonce: Option<U256>,
 		config: &evm::Config,
@@ -41,7 +40,7 @@ pub trait Runner<T: Config> {
 		source: H160,
 		init: Vec<u8>,
 		value: U256,
-		gas_limit: u32,
+		gas_limit: u64,
 		gas_price: Option<U256>,
 		nonce: Option<U256>,
 		config: &evm::Config,
@@ -52,7 +51,7 @@ pub trait Runner<T: Config> {
 		init: Vec<u8>,
 		salt: H256,
 		value: U256,
-		gas_limit: u32,
+		gas_limit: u64,
 		gas_price: Option<U256>,
 		nonce: Option<U256>,
 		config: &evm::Config,

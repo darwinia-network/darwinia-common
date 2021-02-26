@@ -49,7 +49,7 @@ use sp_std::vec::Vec;
 
 /// Type alias for currency balance.
 pub type BalanceOf<T> =
-	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+	<<T as Config>::RingCurrency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 /// Config that outputs the current transaction gas price.
 pub trait FeeCalculator {
@@ -206,7 +206,7 @@ impl<T: Config> AccountBasicMapping for RawAccountBasicMapping<T> {
 		let account_id = T::AddressMapping::into_account_id(*address);
 
 		let nonce = frame_system::Module::<T>::account_nonce(&account_id);
-		let balance = T::Currency::free_balance(&account_id);
+		let balance = T::RingCurrency::free_balance(&account_id);
 
 		Account {
 			nonce: U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(nonce)),
@@ -228,34 +228,25 @@ impl<T: Config> AccountBasicMapping for RawAccountBasicMapping<T> {
 
 		if current.balance > new.balance {
 			let diff = current.balance - new.balance;
-			T::Currency::slash(&account_id, diff.low_u128().unique_saturated_into());
+			T::RingCurrency::slash(&account_id, diff.low_u128().unique_saturated_into());
 		} else if current.balance < new.balance {
 			let diff = new.balance - current.balance;
-			T::Currency::deposit_creating(&account_id, diff.low_u128().unique_saturated_into());
+			T::RingCurrency::deposit_creating(&account_id, diff.low_u128().unique_saturated_into());
 		}
 	}
 }
 
 /// A mapping function that converts Ethereum gas to Substrate weight
 pub trait GasWeightMapping {
-	fn gas_to_weight(gas: usize) -> Weight;
-	fn weight_to_gas(weight: Weight) -> usize;
+	fn gas_to_weight(gas: u64) -> Weight;
+	fn weight_to_gas(weight: Weight) -> u64;
 }
 impl GasWeightMapping for () {
-	fn gas_to_weight(gas: usize) -> Weight {
+	fn gas_to_weight(gas: u64) -> Weight {
 		gas as Weight
 	}
-	fn weight_to_gas(weight: Weight) -> usize {
-		weight as usize
-	}
-}
-
-/// Substrate system chain ID.
-pub struct SystemChainId;
-
-impl Get<u64> for SystemChainId {
-	fn get() -> u64 {
-		sp_io::misc::chain_id()
+	fn weight_to_gas(weight: Weight) -> u64 {
+		weight
 	}
 }
 
@@ -275,8 +266,10 @@ pub trait Config: frame_system::Config + pallet_timestamp::Config {
 
 	/// Mapping from address to account id.
 	type AddressMapping: AddressMapping<Self::AccountId>;
-	/// Currency type for withdraw and balance storage.
-	type Currency: Currency<Self::AccountId>;
+	/// Ring Currency type
+	type RingCurrency: Currency<Self::AccountId>;
+	/// Kton Currency type
+	type KtonCurrency: Currency<Self::AccountId>;
 
 	/// The overarching event type.
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
@@ -380,14 +373,14 @@ decl_module! {
 		fn deposit_event() = default;
 
 		/// Issue an EVM call operation. This is similar to a message call transaction in Ethereum.
-		#[weight = T::GasWeightMapping::gas_to_weight(*gas_limit as usize)]
+		#[weight = T::GasWeightMapping::gas_to_weight(*gas_limit)]
 		fn call(
 			origin,
 			source: H160,
 			target: H160,
 			input: Vec<u8>,
 			value: U256,
-			gas_limit: u32,
+			gas_limit: u64,
 			gas_price: U256,
 			nonce: Option<U256>,
 		) -> DispatchResultWithPostInfo {
@@ -421,13 +414,13 @@ decl_module! {
 
 		/// Issue an EVM create operation. This is similar to a contract creation transaction in
 		/// Ethereum.
-		#[weight = T::GasWeightMapping::gas_to_weight(*gas_limit as usize)]
+		#[weight = T::GasWeightMapping::gas_to_weight(*gas_limit)]
 		fn create(
 			origin,
 			source: H160,
 			init: Vec<u8>,
 			value: U256,
-			gas_limit: u32,
+			gas_limit: u64,
 			gas_price: U256,
 			nonce: Option<U256>,
 		) -> DispatchResultWithPostInfo {
@@ -466,14 +459,14 @@ decl_module! {
 		}
 
 		/// Issue an EVM create2 operation.
-		#[weight = T::GasWeightMapping::gas_to_weight(*gas_limit as usize)]
+		#[weight = T::GasWeightMapping::gas_to_weight(*gas_limit)]
 		fn create2(
 			origin,
 			source: H160,
 			init: Vec<u8>,
 			salt: H256,
 			value: U256,
-			gas_limit: u32,
+			gas_limit: u64,
 			gas_price: U256,
 			nonce: Option<U256>,
 		) -> DispatchResultWithPostInfo {
@@ -533,5 +526,33 @@ impl<T: Config> Module<T> {
 		if Self::is_account_empty(address) {
 			Self::remove_account(address);
 		}
+	}
+
+	/// Withdraw fee.
+	pub fn withdraw_fee(address: &H160, value: U256) {
+		let account = T::AccountBasicMapping::account_basic(address);
+		let new_account_balance = account.balance.saturating_sub(value);
+
+		T::AccountBasicMapping::mutate_account_basic(
+			&address,
+			Account {
+				nonce: account.nonce,
+				balance: new_account_balance,
+			},
+		);
+	}
+
+	/// Deposit fee.
+	pub fn deposit_fee(address: &H160, value: U256) {
+		let account = T::AccountBasicMapping::account_basic(address);
+		let new_account_balance = account.balance.saturating_add(value);
+
+		T::AccountBasicMapping::mutate_account_basic(
+			&address,
+			Account {
+				nonce: account.nonce,
+				balance: new_account_balance,
+			},
+		);
 	}
 }

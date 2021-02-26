@@ -18,7 +18,7 @@
 
 use super::*;
 use crate::account_basic::DVMAccountBasicMapping;
-use crate::{Config, IntermediateStateRoot, Module};
+use crate::{IntermediateStateRoot, Module, Trait};
 use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator};
 use ethereum::{TransactionAction, TransactionSignature};
 use frame_support::{impl_outer_origin, parameter_types, ConsensusEngineId};
@@ -45,8 +45,14 @@ type Balance = u64;
 // configuration traits of pallets we want to use.
 #[derive(Clone, Eq, PartialEq)]
 pub struct Test;
+parameter_types! {
+	pub const BlockHashCount: u64 = 250;
+	pub const MaximumBlockWeight: Weight = 1024;
+	pub const MaximumBlockLength: u32 = 2 * 1024;
+	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
+}
 
-impl frame_system::Config for Test {
+impl frame_system::Trait for Test {
 	type BaseCallFilter = ();
 	type BlockWeights = ();
 	type BlockLength = ();
@@ -74,11 +80,23 @@ impl frame_system::Config for Test {
 parameter_types! {
 	// For weight estimation, we assume that the most locks on an individual account will be 50.
 	// This number may need to be adjusted in the future if this assumption no longer holds true.
-	pub const MaxLocks: u32 = 50;
+	pub const MaxLocks: u32 = 10;
 	pub const ExistentialDeposit: u64 = 500;
 }
 
 impl darwinia_balances::Config<RingInstance> for Test {
+	type DustRemoval = ();
+	type ExistentialDeposit = ExistentialDeposit;
+	type AccountStore = System;
+	type MaxLocks = ();
+	type OtherCurrencies = ();
+	type WeightInfo = ();
+	type Balance = Balance;
+	type Event = ();
+	type BalanceInfo = AccountData<Balance>;
+}
+
+impl darwinia_balances::Trait<KtonInstance> for Test {
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
@@ -140,9 +158,10 @@ impl darwinia_evm::Config for Test {
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
 	type AddressMapping = HashedAddressMapping;
-	type Currency = Balances;
+	type RingCurrency = Ring;
+	type KtonCurrency = Kton;
 	type Event = ();
-	type Precompiles = ();
+	type Precompiles = darwinia_evm_precompile::DarwiniaPrecompiles<Self>;
 	type ChainId = ChainId;
 	type Runner = darwinia_evm::runner::stack::Runner<Self>;
 	type AccountBasicMapping = DVMAccountBasicMapping<Self>;
@@ -158,11 +177,12 @@ impl Config for Test {
 	type StateRoot = IntermediateStateRoot;
 	type BlockGasLimit = BlockGasLimit;
 	type AddressMapping = HashedAddressMapping;
-	type RingCurrency = Balances;
+	type RingCurrency = Ring;
 }
 
 pub type System = frame_system::Module<Test>;
-pub type Balances = darwinia_balances::Module<Test, RingInstance>;
+pub type Ring = darwinia_balances::Module<Test, RingInstance>;
+pub type Kton = darwinia_balances::Module<Test, KtonInstance>;
 pub type Ethereum = Module<Test>;
 pub type Evm = darwinia_evm::Module<Test>;
 
@@ -173,7 +193,7 @@ pub struct AccountInfo {
 }
 
 fn address_build(seed: u8) -> AccountInfo {
-	let private_key = H256::from_slice(&[(seed + 1) as u8; 32]); //H256::from_low_u64_be((i + 1) as u64);
+	let private_key = H256::from_slice(&[(seed + 1) as u8; 32]); //H256::from_lowdarwinia_balances::GenesisConfig::<Test, RingInstance> + 1) as u64);
 	let secret_key = secp256k1::SecretKey::parse_slice(&private_key[..]).unwrap();
 	let public_key = &secp256k1::PublicKey::from_secret_key(&secret_key).serialize()[1..65];
 	let address = H160::from(H256::from_slice(&Keccak256::digest(public_key)[..]));
@@ -201,7 +221,7 @@ pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExtern
 		.collect::<Vec<_>>();
 
 	let balances: Vec<_> = (0..accounts_len)
-		.map(|i| (pairs[i].account_id.clone(), 10_000_000))
+		.map(|i| (pairs[i].account_id.clone(), 100_000_000_000))
 		.collect();
 
 	RingConfig { balances }
