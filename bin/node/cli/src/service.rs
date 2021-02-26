@@ -255,7 +255,6 @@ where
 	let shared_voter_state = GrandpaSharedVoterState::empty();
 	let finality_proof_provider = FinalityProofProvider::new_for_service(
 		backend.clone(),
-		client.clone(),
 		Some(shared_authority_set.clone()),
 	);
 	let import_setup = (babe_import.clone(), grandpa_link, babe_link.clone());
