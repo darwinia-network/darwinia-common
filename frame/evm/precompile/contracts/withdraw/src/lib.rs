@@ -78,6 +78,7 @@ impl<T: Config> Precompile for WithDraw<T> {
 				sp_runtime::DispatchError::Module { message, .. } => {
 					Err(ExitError::Other(message.unwrap_or("Module Error").into()))
 				}
+				_ => Err(ExitError::Other("Module Error".into())),
 			},
 		}
 	}

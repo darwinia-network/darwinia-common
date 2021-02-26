@@ -16,7 +16,7 @@ evm             = { default-features = false, version = "0.22.0", features = ["w
 evm-gasometer   = { default-features = false, version = "0.22.0" }
 evm-runtime     = { default-features = false, version = "0.22.0" }
 primitive-types = { default-features = false, version = "0.8.0", features = ["rlp", "byteorder"] }
-rlp             = { default-features = false, version = "0.4" }
+rlp             = { default-features = false, version = "0.5.0" }
 serde           = { default-features = false, version = "1.0.123", optional = true, features = ["derive"] }
 sha3            = { default-features = false, version = "0.8" }
 # darwinia
