@@ -27,6 +27,7 @@ sp-std            = { default-features = false, git = "https://github.com/darwin
 hex-literal = { version = "0.3.1" }
 # darwinia
 darwinia-balances = { path = "../balances" }
+darwinia-support  = { path = "../support", features = ["easy-testing"] }
 # substrate
 sp-core              = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
 sp-io                = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
