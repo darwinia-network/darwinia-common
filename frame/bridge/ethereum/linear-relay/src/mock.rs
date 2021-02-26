@@ -37,10 +37,7 @@ type BlockNumber = u64;
 type Balance = u128;
 
 pub type System = frame_system::Module<Test>;
-pub type Ring = darwinia_balances::Module<Test, RingInstance>;
 pub type EthereumRelay = Module<Test>;
-
-pub(crate) type RingError = darwinia_balances::Error<Test, RingInstance>;
 
 impl_outer_origin! {
 	pub enum Origin for Test where system = frame_system {}

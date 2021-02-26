@@ -67,7 +67,7 @@ macro_rules! decl_tests {
 		}
 
 		fn last_event() -> Event {
-			system::Module::<Test>::events().pop().expect("Event expected").event
+			frame_system::Module::<Test>::events().pop().expect("Event expected").event
 		}
 
 		#[test]
@@ -833,7 +833,7 @@ macro_rules! decl_tests {
 					assert_eq!(
 						events(),
 						[
-							Event::system(frame_system::Event::NewAccount(1)),
+							Event::frame_system(frame_system::Event::NewAccount(1)),
 							Event::balances_Instance0(RawEvent::Endowed(1, 100)),
 							Event::balances_Instance0(RawEvent::BalanceSet(1, 100, 0)),
 						]
@@ -845,7 +845,7 @@ macro_rules! decl_tests {
 						events(),
 						[
 							Event::balances_Instance0(RawEvent::DustLost(1, 99)),
-							Event::system(frame_system::Event::KilledAccount(1))
+							Event::frame_system(frame_system::Event::KilledAccount(1))
 						]
 					);
 				});
@@ -862,7 +862,7 @@ macro_rules! decl_tests {
 					assert_eq!(
 						events(),
 						[
-							Event::system(frame_system::Event::NewAccount(1)),
+							Event::frame_system(frame_system::Event::NewAccount(1)),
 							Event::balances_Instance0(RawEvent::Endowed(1, 100)),
 							Event::balances_Instance0(RawEvent::BalanceSet(1, 100, 0)),
 						]
@@ -873,7 +873,7 @@ macro_rules! decl_tests {
 					assert_eq!(
 						events(),
 						[
-							Event::system(frame_system::Event::KilledAccount(1))
+							Event::frame_system(frame_system::Event::KilledAccount(1))
 						]
 					);
 				});

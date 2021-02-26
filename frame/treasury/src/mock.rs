@@ -39,8 +39,6 @@ type Balance = u64;
 
 pub type System = frame_system::Module<Test>;
 pub type Treasury = Module<Test>;
-pub type Ring = darwinia_balances::Module<Test, RingInstance>;
-pub type Kton = darwinia_balances::Module<Test, KtonInstance>;
 
 impl_outer_event! {
 	pub enum Event for Test {
@@ -190,13 +188,13 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		.build_storage::<Test>()
 		.unwrap();
 
-	darwinia_balances::GenesisConfig::<Test, RingInstance> {
+	RingConfig {
 		// Total issuance will be 200 with treasury account initialized at ED.
 		balances: vec![(0, 100), (1, 98), (2, 1)],
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
-	darwinia_balances::GenesisConfig::<Test, KtonInstance> {
+	KtonConfig {
 		// Total issuance will be 200 with treasury account initialized at ED.
 		balances: vec![(0, 100), (1, 98), (2, 1)],
 	}

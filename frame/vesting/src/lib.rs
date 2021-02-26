@@ -405,10 +405,6 @@ mod tests {
 
 	type Balance = u64;
 
-	type Ring = darwinia_balances::Module<Test, RingInstance>;
-
-	type RingError = darwinia_balances::Error<Test, RingInstance>;
-
 	impl_outer_origin! {
 		pub enum Origin for Test where system = frame_system {}
 	}
@@ -490,7 +486,7 @@ mod tests {
 			let mut t = frame_system::GenesisConfig::default()
 				.build_storage::<Test>()
 				.unwrap();
-			darwinia_balances::GenesisConfig::<Test, RingInstance> {
+			RingConfig {
 				balances: vec![
 					(1, 10 * self.existential_deposit),
 					(2, 20 * self.existential_deposit),

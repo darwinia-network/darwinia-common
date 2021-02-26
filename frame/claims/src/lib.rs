@@ -596,7 +596,6 @@ mod tests {
 
 	type Balance = u64;
 
-	type Ring = darwinia_balances::Module<Test, RingInstance>;
 	type System = frame_system::Module<Test>;
 	type Claims = Module<Test>;
 
@@ -685,7 +684,7 @@ mod tests {
 			.build_storage::<Test>()
 			.unwrap();
 		// We use default for brevity, but you can configure as desired if needed.
-		darwinia_balances::GenesisConfig::<Test, RingInstance>::default()
+		RingConfig::default()
 			.assimilate_storage(&mut t)
 			.unwrap();
 		GenesisConfig {

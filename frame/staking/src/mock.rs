@@ -58,11 +58,8 @@ pub(crate) type Extrinsic = TestXt<Call, ()>;
 pub(crate) type System = frame_system::Module<Test>;
 pub(crate) type Session = pallet_session::Module<Test>;
 pub(crate) type Timestamp = pallet_timestamp::Module<Test>;
-pub(crate) type Ring = darwinia_balances::Module<Test, RingInstance>;
-pub(crate) type Kton = darwinia_balances::Module<Test, KtonInstance>;
 pub(crate) type Staking = Module<Test>;
 
-pub(crate) type RingError = darwinia_balances::Error<Test, RingInstance>;
 pub(crate) type StakingError = Error<Test>;
 
 pub(crate) const NANO: Balance = 1;
@@ -422,7 +419,7 @@ impl ExtBuilder {
 			.map(|x| ((x + 1) * 10 + 1) as AccountId)
 			.collect::<Vec<_>>();
 
-		let _ = darwinia_balances::GenesisConfig::<Test, RingInstance> {
+		let _ = RingConfig {
 			balances: vec![
 				(1, 10 * balance_factor),
 				(2, 20 * balance_factor),
@@ -452,7 +449,7 @@ impl ExtBuilder {
 		}
 		.assimilate_storage(&mut storage);
 		if self.init_kton {
-			let _ = darwinia_balances::GenesisConfig::<Test, KtonInstance> {
+			let _ = KtonConfig {
 				balances: vec![
 					(1, 10 * balance_factor),
 					(2, 20 * balance_factor),

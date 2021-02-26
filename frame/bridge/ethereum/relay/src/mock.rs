@@ -33,7 +33,6 @@ pub type BlockNumber = u64;
 pub type Balance = u128;
 
 pub type System = frame_system::Module<Test>;
-pub type Ring = darwinia_balances::Module<Test, RingInstance>;
 pub type EthereumRelay = Module<Test>;
 
 impl_outer_origin! {

@@ -30,7 +30,6 @@ use frame_support::{
 	traits::StorageMapShim,
 	weights::{DispatchInfo, IdentityFee, Weight},
 };
-use frame_system as system;
 use pallet_transaction_payment::CurrencyAdapter;
 use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, RuntimeDebug};
@@ -39,18 +38,13 @@ use crate::{self as darwinia_balances, tests::*, *};
 
 type Balance = u64;
 
-type Ring = Module<Test, RingInstance>;
-type Kton = Module<Test, KtonInstance>;
-
-type RingError = Error<Test, RingInstance>;
-
 impl_outer_origin! {
 	pub enum Origin for Test {}
 }
 
 impl_outer_event! {
 	pub enum Event for Test {
-		system <T>,
+		frame_system <T>,
 		balances Instance0<T>,
 		balances Instance1<T>,
 	}
@@ -203,7 +197,7 @@ fn emit_events_with_no_existential_deposit_suicide_with_dust() {
 			assert_eq!(
 				events(),
 				[
-					Event::system(frame_system::Event::NewAccount(1)),
+					Event::frame_system(frame_system::Event::NewAccount(1)),
 					Event::balances_Instance0(RawEvent::Endowed(1, 100)),
 					Event::balances_Instance0(RawEvent::BalanceSet(1, 100, 0)),
 				]
@@ -220,7 +214,7 @@ fn emit_events_with_no_existential_deposit_suicide_with_dust() {
 				events(),
 				[
 					Event::balances_Instance0(RawEvent::DustLost(1, 1)),
-					Event::system(frame_system::Event::KilledAccount(1))
+					Event::frame_system(frame_system::Event::KilledAccount(1))
 				]
 			);
 		});
@@ -239,7 +233,7 @@ fn dust_collector_should_work() {
 			assert_eq!(
 				events(),
 				[
-					Event::system(system::RawEvent::NewAccount(1)),
+					Event::frame_system(frame_system::Event::NewAccount(1)),
 					Event::balances_Instance0(RawEvent::Endowed(1, 100)),
 					Event::balances_Instance0(RawEvent::BalanceSet(1, 100, 0)),
 				]
@@ -251,7 +245,7 @@ fn dust_collector_should_work() {
 				events(),
 				[
 					Event::balances_Instance0(RawEvent::DustLost(1, 99)),
-					Event::system(system::RawEvent::KilledAccount(1))
+					Event::frame_system(frame_system::Event::KilledAccount(1))
 				]
 			);
 
@@ -268,7 +262,7 @@ fn dust_collector_should_work() {
 			assert_eq!(
 				events(),
 				[
-					Event::system(system::RawEvent::NewAccount(1)),
+					Event::frame_system(frame_system::Event::NewAccount(1)),
 					Event::balances_Instance0(RawEvent::Endowed(1, 100)),
 					Event::balances_Instance0(RawEvent::BalanceSet(1, 100, 0)),
 					Event::balances_Instance1(RawEvent::Endowed(1, 100)),
@@ -287,7 +281,7 @@ fn dust_collector_should_work() {
 				[
 					Event::balances_Instance0(RawEvent::DustLost(1, 99)),
 					Event::balances_Instance1(RawEvent::DustLost(1, 99)),
-					Event::system(system::RawEvent::KilledAccount(1)),
+					Event::frame_system(frame_system::Event::KilledAccount(1)),
 				]
 			);
 		});

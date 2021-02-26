@@ -437,12 +437,12 @@ fn inexistent_account_works() {
 	let mut t = frame_system::GenesisConfig::default()
 		.build_storage::<Test>()
 		.unwrap();
-	darwinia_balances::GenesisConfig::<Test, RingInstance> {
+	RingConfig {
 		balances: vec![(0, 100), (1, 99), (2, 1)],
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
-	darwinia_balances::GenesisConfig::<Test, KtonInstance> {
+	KtonConfig {
 		balances: vec![(0, 100), (1, 99), (2, 1)],
 	}
 	.assimilate_storage(&mut t)
@@ -1367,13 +1367,13 @@ fn genesis_funding_works() {
 		.build_storage::<Test>()
 		.unwrap();
 	let initial_funding = 100;
-	darwinia_balances::GenesisConfig::<Test, RingInstance> {
+	RingConfig {
 		// Total issuance will be 200 with treasury account initialized with 100.
 		balances: vec![(0, 100), (Treasury::account_id(), initial_funding)],
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
-	darwinia_balances::GenesisConfig::<Test, KtonInstance> {
+	KtonConfig {
 		// Total issuance will be 200 with treasury account initialized with 100.
 		balances: vec![(0, 100), (Treasury::account_id(), initial_funding)],
 	}

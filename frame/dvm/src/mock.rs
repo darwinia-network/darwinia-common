@@ -204,7 +204,7 @@ pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExtern
 		.map(|i| (pairs[i].account_id.clone(), 10_000_000))
 		.collect();
 
-	darwinia_balances::GenesisConfig::<Test, RingInstance> { balances }
+	RingConfig { balances }
 		.assimilate_storage(&mut ext)
 		.unwrap();
 

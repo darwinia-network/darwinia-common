@@ -20,7 +20,13 @@
 macro_rules! impl_test_account_data {
 	() => {
 		pub type RingInstance = darwinia_balances::Instance0;
+		pub type RingError = darwinia_balances::Error<Test, RingInstance>;
+		pub type RingConfig = darwinia_balances::GenesisConfig<Test, RingInstance>;
+		pub type Ring = darwinia_balances::Module<Test, RingInstance>;
 		pub type KtonInstance = darwinia_balances::Instance1;
+		pub type KtonError = darwinia_balances::Error<Test, KtonInstance>;
+		pub type KtonConfig = darwinia_balances::GenesisConfig<Test, KtonInstance>;
+		pub type Kton = darwinia_balances::Module<Test, KtonInstance>;
 
 		$crate::impl_account_data! {
 			struct AccountData<Balance>

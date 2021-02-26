@@ -49,8 +49,6 @@ macro_rules! decl_tests {
 		type Session = pallet_session::Module<Test>;
 		type System = frame_system::Module<Test>;
 		type Timestamp = pallet_timestamp::Module<Test>;
-		type Ring = darwinia_balances::Module<Test, RingInstance>;
-		type Kton = darwinia_balances::Module<Test, KtonInstance>;
 		type Staking = darwinia_staking::Module<Test>;
 		type EthereumBacking = Module<Test>;
 

@@ -45,7 +45,6 @@ pub type Index = u64;
 pub type Balance = u128;
 
 pub type System = frame_system::Module<Test>;
-pub type Ring = darwinia_balances::Module<Test, RingInstance>;
 pub type RelayAuthorities = Module<Test>;
 
 pub type RelayAuthoritiesError = Error<Test, DefaultInstance>;
@@ -158,7 +157,7 @@ pub fn new_test_ext() -> TestExternalities {
 		.build_storage::<Test>()
 		.unwrap();
 
-	darwinia_balances::GenesisConfig::<Test, RingInstance> {
+	RingConfig {
 		balances: (1..10)
 			.map(|i: AccountId| vec![(i, 100 * i as Balance), (10 * i, 1000 * i as Balance)])
 			.flatten()

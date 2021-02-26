@@ -34,7 +34,6 @@ type Balance = u128;
 type Extrinsic = TestXt<Call, ()>;
 
 pub type System = frame_system::Module<Test>;
-pub type Ring = darwinia_balances::Module<Test, RingInstance>;
 pub type EthereumRelay = darwinia_ethereum_linear_relay::Module<Test>;
 
 pub type EthOffchain = Module<Test>;

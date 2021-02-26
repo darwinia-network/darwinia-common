@@ -136,7 +136,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		},
 	);
 
-	darwinia_balances::GenesisConfig::<Test, RingInstance>::default()
+	RingConfig::default()
 		.assimilate_storage(&mut t)
 		.unwrap();
 	GenesisConfig { accounts }

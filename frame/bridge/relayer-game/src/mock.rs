@@ -253,7 +253,6 @@ pub type BlockNumber = u64;
 pub type Balance = u128;
 
 pub type System = frame_system::Module<Test>;
-pub type Ring = darwinia_balances::Module<Test, RingInstance>;
 pub type Relay = mock_relay::Module<Test>;
 
 pub type RelayerGameError = Error<Test, DefaultInstance>;
@@ -387,7 +386,7 @@ impl ExtBuilder {
 			.build_storage::<Test>()
 			.unwrap();
 
-		darwinia_balances::GenesisConfig::<Test, RingInstance> {
+		RingConfig {
 			balances: (1..10)
 				.map(|i: AccountId| vec![(i, 100 * i as Balance), (10 * i, 1000 * i as Balance)])
 				.flatten()
