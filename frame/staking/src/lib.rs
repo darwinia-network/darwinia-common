@@ -414,8 +414,7 @@ use sp_runtime::{
 		InvalidTransaction, TransactionPriority, TransactionSource, TransactionValidity,
 		TransactionValidityError, ValidTransaction,
 	},
-	DispatchError, DispatchResult, InnerOf, ModuleId, PerU16, Perbill, Percent, Perquintill,
-	RuntimeDebug,
+	DispatchError, DispatchResult, ModuleId, PerU16, Perbill, Percent, Perquintill, RuntimeDebug,
 };
 #[cfg(feature = "std")]
 use sp_runtime::{Deserialize, Serialize};
@@ -3285,10 +3284,7 @@ impl<T: Config> Module<T> {
 	/// No storage item is updated.
 	pub fn do_phragmen<Accuracy: PerThing128>(
 		iterations: usize,
-	) -> Option<PrimitiveElectionResult<T::AccountId, Accuracy>>
-	where
-		ExtendedBalance: From<InnerOf<Accuracy>>,
-	{
+	) -> Option<PrimitiveElectionResult<T::AccountId, Accuracy>> {
 		let mut all_nominators: Vec<(T::AccountId, VoteWeight, Vec<T::AccountId>)> = vec![];
 		let mut all_validators = vec![];
 		for (validator, _) in <Validators<T>>::iter() {

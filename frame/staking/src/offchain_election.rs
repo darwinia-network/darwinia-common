@@ -27,9 +27,7 @@ use sp_npos_elections::{
 	reduce, to_support_map, Assignment, CompactSolution, ElectionResult, ElectionScore,
 	EvaluateSupport, ExtendedBalance,
 };
-use sp_runtime::{
-	offchain::storage::StorageValueRef, traits::TrailingZeroInput, PerThing, RuntimeDebug,
-};
+use sp_runtime::{offchain::storage::StorageValueRef, traits::TrailingZeroInput, RuntimeDebug};
 use sp_std::{convert::TryInto, prelude::*};
 // --- darwinia ---
 use crate::{
@@ -334,10 +332,7 @@ pub fn prepare_submission<T: Config>(
 		ElectionSize,
 	),
 	OffchainElectionError,
->
-where
-	ExtendedBalance: From<<OffchainAccuracy as PerThing>::Inner>,
-{
+> {
 	// make sure that the snapshot is available.
 	let snapshot_validators =
 		<Module<T>>::snapshot_validators().ok_or(OffchainElectionError::SnapshotUnavailable)?;
