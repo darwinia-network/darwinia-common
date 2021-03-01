@@ -253,10 +253,8 @@ where
 	let justification_stream = grandpa_link.justification_stream();
 	let shared_authority_set = grandpa_link.shared_authority_set().clone();
 	let shared_voter_state = GrandpaSharedVoterState::empty();
-	let finality_proof_provider = FinalityProofProvider::new_for_service(
-		backend.clone(),
-		Some(shared_authority_set.clone()),
-	);
+	let finality_proof_provider =
+		FinalityProofProvider::new_for_service(backend.clone(), Some(shared_authority_set.clone()));
 	let import_setup = (babe_import.clone(), grandpa_link, babe_link.clone());
 	let rpc_setup = shared_voter_state.clone();
 	let babe_config = babe_link.config().clone();
