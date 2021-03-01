@@ -41,7 +41,7 @@ use sc_network::NetworkService;
 use sc_service::{
 	config::{KeystoreConfig, PrometheusConfig},
 	BuildNetworkParams, Configuration, Error as ServiceError, NoopRpcExtensionBuilder,
-	PartialComponents, RpcHandlers, SpawnTasksParams, TaskManager, TelemetryConnectionSinks,
+	PartialComponents, RpcHandlers, SpawnTasksParams, TaskManager,
 };
 use sc_telemetry::{TelemetryConnectionNotifier, TelemetrySpan};
 use sc_transaction_pool::{BasicPool, FullPool};
@@ -253,8 +253,10 @@ where
 	let justification_stream = grandpa_link.justification_stream();
 	let shared_authority_set = grandpa_link.shared_authority_set().clone();
 	let shared_voter_state = GrandpaSharedVoterState::empty();
-	let finality_proof_provider =
-		FinalityProofProvider::new_for_service(backend.clone(), Some(shared_authority_set.clone()));
+	let finality_proof_provider = GrandpaFinalityProofProvider::new_for_service(
+		backend.clone(),
+		Some(shared_authority_set.clone()),
+	);
 	let import_setup = (babe_import.clone(), grandpa_link, babe_link.clone());
 	let rpc_setup = shared_voter_state.clone();
 	let babe_config = babe_link.config().clone();
@@ -643,7 +645,7 @@ where
 
 	network_starter.start_network();
 
-	Ok(task_manager, rpc_handlers, telemetry_connection_notifier)
+	Ok((task_manager, rpc_handlers, telemetry_connection_notifier))
 }
 
 /// Builds a new object suitable for chain operations.
@@ -686,15 +688,16 @@ pub fn drml_new_full(
 	(
 		TaskManager,
 		Arc<impl DRMLClient<Block, FullBackend, pangolin_runtime::RuntimeApi>>,
+		RpcHandlers,
 	),
 	ServiceError,
 > {
-	let (components, client) = new_full::<pangolin_runtime::RuntimeApi, PangolinExecutor>(
-		config,
-		authority_discovery_disabled,
-	)?;
+	let (components, client, rpc_handlers) = new_full::<
+		pangolin_runtime::RuntimeApi,
+		PangolinExecutor,
+	>(config, authority_discovery_disabled)?;
 
-	Ok((components, client))
+	Ok((components, client, rpc_handlers))
 }
 
 /// Create a new DRML service for a light client.

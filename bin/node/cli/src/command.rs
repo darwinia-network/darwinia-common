@@ -115,9 +115,11 @@ pub fn run() -> sc_cli::Result<()> {
 
 			runner.run_node_until_exit(|config| async move {
 				match config.role {
-					Role::Light => service::drml_new_light(config),
+					Role::Light => {
+						service::drml_new_light(config).map(|(task_manager, _, _)| task_manager)
+					}
 					_ => service::drml_new_full(config, authority_discovery_disabled)
-						.map(|(components, _)| components),
+						.map(|(task_manager, _, _)| task_manager),
 				}
 				.map_err(sc_cli::Error::Service)
 			})
@@ -186,8 +188,8 @@ pub fn run() -> sc_cli::Result<()> {
 			})
 		}
 		Some(Subcommand::Key(cmd)) => cmd.run(&cli),
-		Some(Subcommand::Sign(cmd)) => cmd.run(&cli),
-		Some(Subcommand::Verify(cmd)) => cmd.run(&cli),
-		Some(Subcommand::Vanity(cmd)) => cmd.run(&cli),
+		Some(Subcommand::Sign(cmd)) => cmd.run(),
+		Some(Subcommand::Verify(cmd)) => cmd.run(),
+		Some(Subcommand::Vanity(cmd)) => cmd.run(),
 	}
 }
