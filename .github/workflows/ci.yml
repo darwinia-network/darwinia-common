@@ -6,6 +6,7 @@ on:
       - master
   pull_request:
     branches:
+      - pangolin
       - master
 
 env:
@@ -27,7 +28,7 @@ jobs:
           target: wasm32-unknown-unknown
 
       - name: Overall test
-        run: cargo test
+        run: cargo t
 
   dvm-rpc-test:
     name: Run DVM RPC Tests
@@ -43,8 +44,7 @@ jobs:
 
       - name: Build and Run node
         run: |
-            cargo build --release
-            ./target/release/drml --dev --tmp &
+            cargo r -- --dev --tmp &
             sleep 60
 
       - name: Set up node env
