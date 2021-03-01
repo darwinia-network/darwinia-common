@@ -18,43 +18,35 @@
 
 //! Test utilities
 
-mod balances {
-	pub use crate::{Event, Instance0, Instance1};
-}
-
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
-	impl_outer_event, impl_outer_origin, parameter_types,
+	assert_ok, construct_runtime, parameter_types,
 	traits::StorageMapShim,
 	weights::{DispatchInfo, IdentityFee, Weight},
 };
+use frame_system::{
+	mocking::{MockBlock, MockUncheckedExtrinsic},
+	RawOrigin,
+};
 use pallet_transaction_payment::CurrencyAdapter;
 use sp_core::H256;
-use sp_runtime::{testing::Header, traits::IdentityLookup, RuntimeDebug};
+use sp_runtime::{
+	testing::Header,
+	traits::{BlakeTwo256, IdentityLookup},
+	RuntimeDebug,
+};
 // --- darwinia ---
-use crate::{self as darwinia_balances, tests::*, *};
+use crate::{self as darwinia_balances, *};
 
 type Balance = u64;
 
-impl_outer_origin! {
-	pub enum Origin for Test {}
-}
-
-impl_outer_event! {
-	pub enum Event for Test {
-		frame_system <T>,
-		balances Instance0<T>,
-		balances Instance1<T>,
-	}
-}
+type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
+type Block = MockBlock<Test>;
 
 darwinia_support::impl_test_account_data! {}
 
-// Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
-#[derive(Clone, PartialEq, Eq, Debug)]
-pub struct Test;
 parameter_types! {
 	pub BlockWeights: frame_system::limits::BlockWeights =
 		frame_system::limits::BlockWeights::simple_max(1024);
@@ -65,18 +57,18 @@ impl frame_system::Config for Test {
 	type BlockLength = ();
 	type DbWeight = ();
 	type Origin = Origin;
-	type Call = CallWithDispatchInfo;
+	type Call = Call;
 	type Index = Balance;
 	type BlockNumber = Balance;
 	type Hash = H256;
-	type Hashing = ::sp_runtime::traits::BlakeTwo256;
+	type Hashing = BlakeTwo256;
 	type AccountId = Balance;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = Event;
 	type BlockHashCount = ();
 	type Version = ();
-	type PalletInfo = ();
+	type PalletInfo = PalletInfo;
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
@@ -130,6 +122,19 @@ impl Config<KtonInstance> for Test {
 	type WeightInfo = ();
 }
 
+construct_runtime! {
+	pub enum Test
+	where
+		Block = Block,
+		NodeBlock = Block,
+		UncheckedExtrinsic = UncheckedExtrinsic
+	{
+		System: frame_system::{Module, Call, Storage, Config, Event<T>},
+		Ring: darwinia_balances::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
+		Kton: darwinia_balances::<Instance1>::{Module, Call, Storage, Config<T>, Event<T>},
+	}
+}
+
 pub struct ExtBuilder {
 	existential_deposit: Balance,
 	monied: bool,
@@ -162,7 +167,7 @@ impl ExtBuilder {
 		let mut t = frame_system::GenesisConfig::default()
 			.build_storage::<Test>()
 			.unwrap();
-		GenesisConfig::<Test, RingInstance> {
+		darwinia_balances::GenesisConfig::<Test, RingInstance> {
 			balances: if self.monied {
 				vec![
 					(1, 10 * self.existential_deposit),
@@ -198,8 +203,8 @@ fn emit_events_with_no_existential_deposit_suicide_with_dust() {
 				events(),
 				[
 					Event::frame_system(frame_system::Event::NewAccount(1)),
-					Event::balances_Instance0(RawEvent::Endowed(1, 100)),
-					Event::balances_Instance0(RawEvent::BalanceSet(1, 100, 0)),
+					Event::darwinia_balances_Instance0(RawEvent::Endowed(1, 100)),
+					Event::darwinia_balances_Instance0(RawEvent::BalanceSet(1, 100, 0)),
 				]
 			);
 
@@ -213,7 +218,7 @@ fn emit_events_with_no_existential_deposit_suicide_with_dust() {
 			assert_eq!(
 				events(),
 				[
-					Event::balances_Instance0(RawEvent::DustLost(1, 1)),
+					Event::darwinia_balances_Instance0(RawEvent::DustLost(1, 1)),
 					Event::frame_system(frame_system::Event::KilledAccount(1))
 				]
 			);
@@ -234,8 +239,8 @@ fn dust_collector_should_work() {
 				events(),
 				[
 					Event::frame_system(frame_system::Event::NewAccount(1)),
-					Event::balances_Instance0(RawEvent::Endowed(1, 100)),
-					Event::balances_Instance0(RawEvent::BalanceSet(1, 100, 0)),
+					Event::darwinia_balances_Instance0(RawEvent::Endowed(1, 100)),
+					Event::darwinia_balances_Instance0(RawEvent::BalanceSet(1, 100, 0)),
 				]
 			);
 
@@ -244,7 +249,7 @@ fn dust_collector_should_work() {
 			assert_eq!(
 				events(),
 				[
-					Event::balances_Instance0(RawEvent::DustLost(1, 99)),
+					Event::darwinia_balances_Instance0(RawEvent::DustLost(1, 99)),
 					Event::frame_system(frame_system::Event::KilledAccount(1))
 				]
 			);
@@ -263,10 +268,10 @@ fn dust_collector_should_work() {
 				events(),
 				[
 					Event::frame_system(frame_system::Event::NewAccount(1)),
-					Event::balances_Instance0(RawEvent::Endowed(1, 100)),
-					Event::balances_Instance0(RawEvent::BalanceSet(1, 100, 0)),
-					Event::balances_Instance1(RawEvent::Endowed(1, 100)),
-					Event::balances_Instance1(RawEvent::BalanceSet(1, 100, 0)),
+					Event::darwinia_balances_Instance0(RawEvent::Endowed(1, 100)),
+					Event::darwinia_balances_Instance0(RawEvent::BalanceSet(1, 100, 0)),
+					Event::darwinia_balances_Instance1(RawEvent::Endowed(1, 100)),
+					Event::darwinia_balances_Instance1(RawEvent::BalanceSet(1, 100, 0)),
 				]
 			);
 
@@ -279,8 +284,8 @@ fn dust_collector_should_work() {
 			assert_eq!(
 				events(),
 				[
-					Event::balances_Instance0(RawEvent::DustLost(1, 99)),
-					Event::balances_Instance1(RawEvent::DustLost(1, 99)),
+					Event::darwinia_balances_Instance0(RawEvent::DustLost(1, 99)),
+					Event::darwinia_balances_Instance1(RawEvent::DustLost(1, 99)),
 					Event::frame_system(frame_system::Event::KilledAccount(1)),
 				]
 			);

@@ -1141,7 +1141,7 @@ impl dvm_ethereum::Config for Runtime {
 	type RingCurrency = Ring;
 }
 
-construct_runtime!(
+construct_runtime! {
 	pub enum Runtime
 	where
 		Block = Block,
@@ -1204,10 +1204,10 @@ construct_runtime!(
 
 		TronBacking: darwinia_tron_backing::{Module, Storage, Config<T>} = 33,
 
-		EVM: darwinia_evm::{Module, Config, Call, Storage, Event<T>} = 34,
-		Ethereum: dvm_ethereum::{Module, Call, Storage, Event, Config, ValidateUnsigned} = 35,
+		EVM: darwinia_evm::{Module, Call, Storage, Config, Event<T>} = 34,
+		Ethereum: dvm_ethereum::{Module, Call, Storage, Config, Event, ValidateUnsigned} = 35,
 	}
-);
+}
 
 impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
 where

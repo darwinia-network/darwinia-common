@@ -18,34 +18,19 @@
 
 //! Macro for creating the tests for the module.
 
-#[derive(Debug)]
-pub struct CallWithDispatchInfo;
-impl sp_runtime::traits::Dispatchable for CallWithDispatchInfo {
-	type Origin = ();
-	type Config = ();
-	type Info = frame_support::weights::DispatchInfo;
-	type PostInfo = frame_support::weights::PostDispatchInfo;
-
-	fn dispatch(self, _origin: Self::Origin) -> sp_runtime::DispatchResultWithInfo<Self::PostInfo> {
-		panic!("Do not use dummy implementation for dispatch.");
-	}
-}
-
 #[macro_export]
 macro_rules! decl_tests {
 	($test:ty, $ext_builder:ty, $existential_deposit:expr) => {
 		// --- substrate ---
 		use frame_support::{
-			assert_err, assert_noop, assert_storage_noop, assert_ok,
+			assert_err, assert_noop, assert_storage_noop,
 			traits::{Currency, ExistenceRequirement::AllowDeath, ReservableCurrency},
 		};
-		use frame_system::RawOrigin;
 		use pallet_transaction_payment::{ChargeTransactionPayment, Multiplier};
 		use sp_runtime::{FixedPointNumber, traits::{SignedExtension, BadOrigin}};
 
-		pub type System = frame_system::Module<$test>;
-
-		pub const CALL: &<$test as frame_system::Config>::Call = &$crate::tests::CallWithDispatchInfo;
+		pub const CALL: &<$test as frame_system::Config>::Call =
+			&Call::Ring(darwinia_balances::Call::transfer(0, 0));
 
 		const ID_1: LockIdentifier = *b"1       ";
 		const ID_2: LockIdentifier = *b"2       ";
@@ -720,7 +705,7 @@ macro_rules! decl_tests {
 			let mut t = frame_system::GenesisConfig::default()
 				.build_storage::<$test>()
 				.unwrap();
-			let _ = GenesisConfig::<$test, RingInstance> {
+			let _ = darwinia_balances::GenesisConfig::<$test, RingInstance> {
 				balances: vec![(1, 10)],
 			}
 			.assimilate_storage(&mut t)
@@ -731,7 +716,7 @@ macro_rules! decl_tests {
 		#[should_panic = "duplicate balances in genesis."]
 		fn cannot_set_genesis_value_twice() {
 			let mut t = frame_system::GenesisConfig::default().build_storage::<$test>().unwrap();
-			let _ = GenesisConfig::<$test, RingInstance> {
+			let _ = darwinia_balances::GenesisConfig::<$test, RingInstance> {
 				balances: vec![(1, 10), (2, 20), (1, 15)],
 			}.assimilate_storage(&mut t).unwrap();
 		}
@@ -800,7 +785,7 @@ macro_rules! decl_tests {
 
 					assert_eq!(
 						last_event(),
-						Event::balances_Instance0(RawEvent::Reserved(1, 10)),
+						Event::darwinia_balances_Instance0(RawEvent::Reserved(1, 10)),
 					);
 
 					System::set_block_number(3);
@@ -808,7 +793,7 @@ macro_rules! decl_tests {
 
 					assert_eq!(
 						last_event(),
-						Event::balances_Instance0(RawEvent::Unreserved(1, 5)),
+						Event::darwinia_balances_Instance0(RawEvent::Unreserved(1, 5)),
 					);
 
 					System::set_block_number(4);
@@ -817,7 +802,7 @@ macro_rules! decl_tests {
 					// should only unreserve 5
 					assert_eq!(
 						last_event(),
-						Event::balances_Instance0(RawEvent::Unreserved(1, 5)),
+						Event::darwinia_balances_Instance0(RawEvent::Unreserved(1, 5)),
 					);
 				});
 		}
@@ -834,8 +819,8 @@ macro_rules! decl_tests {
 						events(),
 						[
 							Event::frame_system(frame_system::Event::NewAccount(1)),
-							Event::balances_Instance0(RawEvent::Endowed(1, 100)),
-							Event::balances_Instance0(RawEvent::BalanceSet(1, 100, 0)),
+							Event::darwinia_balances_Instance0(RawEvent::Endowed(1, 100)),
+							Event::darwinia_balances_Instance0(RawEvent::BalanceSet(1, 100, 0)),
 						]
 					);
 
@@ -844,7 +829,7 @@ macro_rules! decl_tests {
 					assert_eq!(
 						events(),
 						[
-							Event::balances_Instance0(RawEvent::DustLost(1, 99)),
+							Event::darwinia_balances_Instance0(RawEvent::DustLost(1, 99)),
 							Event::frame_system(frame_system::Event::KilledAccount(1))
 						]
 					);
@@ -863,8 +848,8 @@ macro_rules! decl_tests {
 						events(),
 						[
 							Event::frame_system(frame_system::Event::NewAccount(1)),
-							Event::balances_Instance0(RawEvent::Endowed(1, 100)),
-							Event::balances_Instance0(RawEvent::BalanceSet(1, 100, 0)),
+							Event::darwinia_balances_Instance0(RawEvent::Endowed(1, 100)),
+							Event::darwinia_balances_Instance0(RawEvent::BalanceSet(1, 100, 0)),
 						]
 					);
 
