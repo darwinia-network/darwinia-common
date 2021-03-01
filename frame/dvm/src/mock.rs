@@ -18,7 +18,7 @@
 
 use super::*;
 use crate::account_basic::DVMAccountBasicMapping;
-use crate::{IntermediateStateRoot, Module, Trait};
+use crate::{Config, IntermediateStateRoot, Module};
 use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator};
 use ethereum::{TransactionAction, TransactionSignature};
 use frame_support::{impl_outer_origin, parameter_types, ConsensusEngineId};
@@ -28,7 +28,7 @@ use sp_runtime::AccountId32;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	ModuleId, RuntimeDebug,
+	ModuleId, Perbill, RuntimeDebug,
 };
 
 use codec::{Decode, Encode};
@@ -52,7 +52,7 @@ parameter_types! {
 	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
 }
 
-impl frame_system::Trait for Test {
+impl frame_system::Config for Test {
 	type BaseCallFilter = ();
 	type BlockWeights = ();
 	type BlockLength = ();
@@ -96,7 +96,7 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type BalanceInfo = AccountData<Balance>;
 }
 
-impl darwinia_balances::Trait<KtonInstance> for Test {
+impl darwinia_balances::Config<KtonInstance> for Test {
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
@@ -181,8 +181,6 @@ impl Config for Test {
 }
 
 pub type System = frame_system::Module<Test>;
-pub type Ring = darwinia_balances::Module<Test, RingInstance>;
-pub type Kton = darwinia_balances::Module<Test, KtonInstance>;
 pub type Ethereum = Module<Test>;
 pub type Evm = darwinia_evm::Module<Test>;
 
@@ -236,7 +234,7 @@ pub fn contract_address(sender: H160, nonce: u64) -> H160 {
 	rlp.append(&sender);
 	rlp.append(&nonce);
 
-	H160::from_slice(&Keccak256::digest(rlp.out().as_slice())[12..])
+	H160::from_slice(&Keccak256::digest(&rlp.out())[12..])
 }
 
 pub fn storage_address(sender: H160, slot: H256) -> H256 {
@@ -271,7 +269,7 @@ impl UnsignedTransaction {
 	fn signing_hash(&self) -> H256 {
 		let mut stream = RlpStream::new();
 		self.signing_rlp_append(&mut stream);
-		H256::from_slice(&Keccak256::digest(&stream.drain()).as_slice())
+		H256::from_slice(&Keccak256::digest(&stream.out()).as_slice())
 	}
 
 	pub fn sign(&self, key: &H256) -> Transaction {

@@ -372,15 +372,16 @@ fn withdraw_with_enough_balance() {
 
 		// Check caller balance
 		assert_eq!(
-			<Test as darwinia_evm::Trait>::AccountBasicMapping::account_basic(&alice.address)
+			<Test as darwinia_evm::Config>::AccountBasicMapping::account_basic(&alice.address)
 				.balance,
 			U256::from(70_000_000_000_000_000_000u128)
 		);
 		// Check the target balance
 		let input_bytes: Vec<u8> = FromHex::from_hex(WITH_DRAW_INPUT).unwrap();
-		let dest = <Test as frame_system::Trait>::AccountId::decode(&mut &input_bytes[..]).unwrap();
+		let dest =
+			<Test as frame_system::Config>::AccountId::decode(&mut &input_bytes[..]).unwrap();
 		assert_eq!(
-			<Test as Trait>::RingCurrency::free_balance(dest),
+			<Test as Config>::RingCurrency::free_balance(dest),
 			30000000000
 		);
 	});
@@ -418,14 +419,15 @@ fn withdraw_without_enough_balance_should_fail() {
 
 		// Check caller balance
 		assert_eq!(
-			<Test as darwinia_evm::Trait>::AccountBasicMapping::account_basic(&alice.address)
+			<Test as darwinia_evm::Config>::AccountBasicMapping::account_basic(&alice.address)
 				.balance,
 			U256::from(100000000000000000000u128)
 		);
 		// Check target balance
 		let input_bytes: Vec<u8> = FromHex::from_hex(WITH_DRAW_INPUT).unwrap();
-		let dest = <Test as frame_system::Trait>::AccountId::decode(&mut &input_bytes[..]).unwrap();
-		assert_eq!(<Test as Trait>::RingCurrency::free_balance(&dest), 0);
+		let dest =
+			<Test as frame_system::Config>::AccountId::decode(&mut &input_bytes[..]).unwrap();
+		assert_eq!(<Test as Config>::RingCurrency::free_balance(&dest), 0);
 	});
 }
 #[test]
@@ -451,13 +453,14 @@ fn withdraw_with_invalid_input_length_should_failed() {
 
 		// Check caller balance
 		assert_eq!(
-			<Test as darwinia_evm::Trait>::AccountBasicMapping::account_basic(&alice.address)
+			<Test as darwinia_evm::Config>::AccountBasicMapping::account_basic(&alice.address)
 				.balance,
 			U256::from(100000000000000000000u128)
 		);
 		// Check target balance
 		let input_bytes: Vec<u8> = FromHex::from_hex(WITH_DRAW_INPUT).unwrap();
-		let dest = <Test as frame_system::Trait>::AccountId::decode(&mut &input_bytes[..]).unwrap();
-		assert_eq!(<Test as Trait>::RingCurrency::free_balance(&dest), 0);
+		let dest =
+			<Test as frame_system::Config>::AccountId::decode(&mut &input_bytes[..]).unwrap();
+		assert_eq!(<Test as Config>::RingCurrency::free_balance(&dest), 0);
 	});
 }

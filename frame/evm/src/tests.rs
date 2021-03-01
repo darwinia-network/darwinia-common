@@ -67,7 +67,7 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type OtherCurrencies = ();
 	type WeightInfo = ();
 }
-impl darwinia_balances::Trait<KtonInstance> for Test {
+impl darwinia_balances::Config<KtonInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = ();
@@ -116,8 +116,6 @@ impl Config for Test {
 }
 
 type System = frame_system::Module<Test>;
-type Ring = darwinia_balances::Module<Test, RingInstance>;
-type Kton = darwinia_balances::Module<Test, KtonInstance>;
 type EVM = Module<Test>;
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
