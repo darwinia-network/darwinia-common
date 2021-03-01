@@ -22,13 +22,13 @@ jobs:
 
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly-2020-09-20
+          toolchain: nightly
           override: true
           target: wasm32-unknown-unknown
 
       - name: Overall test
         run: cargo test
-      
+
   dvm-rpc-test:
     name: Run DVM RPC Tests
     runs-on: ubuntu-latest
@@ -37,17 +37,17 @@ jobs:
 
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly-2020-09-20
+          toolchain: nightly
           override: true
           target: wasm32-unknown-unknown
 
       - name: Build and Run node
-        run: | 
+        run: |
             cargo build --release
             ./target/release/drml --dev --tmp &
             sleep 60
 
-      - name: Set up node env 
+      - name: Set up node env
         uses: actions/setup-node@v1
         with:
           node-version: 10
