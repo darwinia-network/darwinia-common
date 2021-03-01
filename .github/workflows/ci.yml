@@ -44,6 +44,7 @@ jobs:
 
       - name: Build and Run node
         run: |
+            cargo b
             cargo r -- --dev --tmp &
             sleep 60
 
