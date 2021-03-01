@@ -825,7 +825,10 @@ impl pallet_collective::Config<TechnicalCollective> for Runtime {
 parameter_types! {
 	pub const ElectionsPhragmenModuleId: LockIdentifier = *b"da/phrel";
 	pub const CandidacyBond: Balance = 1 * COIN;
-	pub const VotingBond: Balance = 5 * MILLI;
+	// 1 storage item created, key size is 32 bytes, value size is 16+16.
+	pub const VotingBondBase: Balance = deposit(1, 64);
+	// additional data per vote is 32 bytes (account id).
+	pub const VotingBondFactor: Balance = deposit(0, 32);
 	pub const DesiredMembers: u32 = 13;
 	pub const DesiredRunnersUp: u32 = 7;
 	/// Daily council elections.
@@ -841,9 +844,9 @@ impl darwinia_elections_phragmen::Config for Runtime {
 	type InitializeMembers = Council;
 	type CurrencyToVote = U128CurrencyToVote;
 	type CandidacyBond = CandidacyBond;
-	type VotingBond = VotingBond;
+	type VotingBondBase = VotingBondBase;
+	type VotingBondFactor = VotingBondFactor;
 	type LoserCandidate = Treasury;
-	type BadReport = Treasury;
 	type KickedMember = Treasury;
 	type DesiredMembers = DesiredMembers;
 	type DesiredRunnersUp = DesiredRunnersUp;
@@ -1129,7 +1132,7 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 parameter_types! {
 	pub BlockGasLimit: U256 = U256::from(u32::max_value());
 }
-impl dvm_ethereum::Trait for Runtime {
+impl dvm_ethereum::Config for Runtime {
 	type Event = Event;
 	type FindAuthor = EthereumFindAuthor<Babe>;
 	type StateRoot = dvm_ethereum::IntermediateStateRoot;
