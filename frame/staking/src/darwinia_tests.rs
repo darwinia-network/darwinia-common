@@ -1225,7 +1225,7 @@ fn staking_with_kton_with_unbondings() {
 
 		assert_err!(
 			Kton::transfer(Origin::signed(stash), controller, 1),
-			RingError::LiquidityRestrictions,
+			KtonError::LiquidityRestrictions,
 		);
 
 		System::set_block_number(unbond_start + BondingDurationInBlockNumber::get());
@@ -1513,7 +1513,7 @@ fn unbound_values_in_twice() {
 
 		assert_err!(
 			Kton::transfer(Origin::signed(stash), controller, unbond_value_1),
-			RingError::LiquidityRestrictions,
+			KtonError::LiquidityRestrictions,
 		);
 		assert_ok!(Kton::transfer(
 			Origin::signed(stash),
@@ -1524,7 +1524,7 @@ fn unbound_values_in_twice() {
 
 		assert_err!(
 			Kton::transfer(Origin::signed(stash), controller, unbond_value_1 + 1),
-			RingError::LiquidityRestrictions,
+			KtonError::LiquidityRestrictions,
 		);
 		System::set_block_number(BondingDurationInBlockNumber::get() + unbond_start_1);
 		assert_ok!(Kton::transfer(

@@ -20,20 +20,17 @@
 
 #![allow(unused)]
 
-mod staking {
-	pub use crate::Event;
-}
-
 // --- std ---
 use std::{cell::RefCell, collections::HashSet};
 // --- substrate ---
 use frame_support::{
-	assert_ok, impl_outer_dispatch, impl_outer_event, impl_outer_origin, parameter_types,
+	assert_ok, parameter_types,
 	storage::IterableStorageMap,
 	traits::{Currency, FindAuthor, Get, OnFinalize, OnInitialize},
 	weights::{constants::RocksDbWeight, Weight},
 	StorageValue,
 };
+use frame_system::mocking::{MockBlock, MockUncheckedExtrinsic};
 use sp_core::H256;
 use sp_npos_elections::{reduce, StakedAssignment};
 use sp_runtime::{
@@ -46,19 +43,16 @@ use sp_staking::{
 	SessionIndex,
 };
 // --- darwinia ---
-use crate::*;
+use crate::{self as darwinia_staking, *};
 
 pub(crate) type AccountId = u64;
 pub(crate) type AccountIndex = u64;
 pub(crate) type BlockNumber = u64;
 pub(crate) type Balance = u128;
 
-pub(crate) type Extrinsic = TestXt<Call, ()>;
-
-pub(crate) type System = frame_system::Module<Test>;
-pub(crate) type Session = pallet_session::Module<Test>;
-pub(crate) type Timestamp = pallet_timestamp::Module<Test>;
-pub(crate) type Staking = Module<Test>;
+type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
+type Block = MockBlock<Test>;
+type Extrinsic = TestXt<Call, ()>;
 
 pub(crate) type StakingError = Error<Test>;
 
@@ -72,26 +66,6 @@ pub(crate) const TOTAL_POWER: Power = 1_000_000_000;
 
 pub const INIT_TIMESTAMP: TsInMs = 30_000;
 pub const BLOCK_TIME: u64 = 1_000;
-
-impl_outer_dispatch! {
-	pub enum Call for Test where origin: Origin {
-		staking::Staking,
-	}
-}
-
-impl_outer_event! {
-	pub enum MetaEvent for Test {
-		frame_system <T>,
-		pallet_session,
-		darwinia_balances Instance0<T>,
-		darwinia_balances Instance1<T>,
-		staking <T>,
-	}
-}
-
-impl_outer_origin! {
-	pub enum Origin for Test where system = frame_system {}
-}
 
 darwinia_support::impl_test_account_data! {}
 
@@ -134,57 +108,6 @@ pub fn is_disabled(controller: AccountId) -> bool {
 	SESSION_VALIDATORS.with(|d| d.borrow().1.contains(&stash))
 }
 
-// Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
-#[derive(Clone, PartialEq, Eq, Debug)]
-pub struct Test;
-parameter_types! {
-	pub const StakingModuleId: ModuleId = ModuleId(*b"da/staki");
-	pub const BondingDurationInEra: EraIndex = 3;
-	pub const MaxNominatorRewardedPerValidator: u32 = 64;
-	pub const UnsignedPriority: u64 = 1 << 20;
-	pub const MinSolutionScoreBump: Perbill = Perbill::zero();
-	pub OffchainSolutionWeightLimit: Weight = BlockWeights::get().max_block;
-	pub const Cap: Balance = CAP;
-	pub const TotalPower: Power = TOTAL_POWER;
-	pub static SessionsPerEra: SessionIndex = 3;
-	pub static BondingDurationInBlockNumber: BlockNumber = bonding_duration_in_blocks();
-	pub static ExistentialDeposit: Balance = 1;
-	pub static SlashDeferDuration: EraIndex = 0;
-	pub static ElectionLookahead: BlockNumber = 0;
-	pub static MaxIterations: u32 = 0;
-	pub static SessionValidators: (Vec<AccountId>, HashSet<AccountId>) = Default::default();
-	pub static RingRewardRemainderUnbalanced: Balance = 0;
-}
-impl Config for Test {
-	type Event = MetaEvent;
-	type ModuleId = StakingModuleId;
-	type UnixTime = SuppressUnixTimeWarning;
-	type SessionsPerEra = SessionsPerEra;
-	type BondingDurationInEra = BondingDurationInEra;
-	type BondingDurationInBlockNumber = BondingDurationInBlockNumber;
-	type SlashDeferDuration = SlashDeferDuration;
-	type SlashCancelOrigin = frame_system::EnsureRoot<Self::AccountId>;
-	type SessionInterface = Self;
-	type NextNewSession = Session;
-	type ElectionLookahead = ElectionLookahead;
-	type Call = Call;
-	type MaxIterations = MaxIterations;
-	type MinSolutionScoreBump = MinSolutionScoreBump;
-	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
-	type UnsignedPriority = UnsignedPriority;
-	type OffchainSolutionWeightLimit = OffchainSolutionWeightLimit;
-	type RingCurrency = Ring;
-	type RingRewardRemainder = RingRewardRemainderMock;
-	type RingSlash = ();
-	type RingReward = ();
-	type KtonCurrency = Kton;
-	type KtonSlash = ();
-	type KtonReward = ();
-	type Cap = Cap;
-	type TotalPower = TotalPower;
-	type WeightInfo = ();
-}
-
 parameter_types! {
 	pub BlockWeights: frame_system::limits::BlockWeights =
 		frame_system::limits::BlockWeights::simple_max(
@@ -205,10 +128,10 @@ impl frame_system::Config for Test {
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = MetaEvent;
+	type Event = Event;
 	type BlockHashCount = ();
 	type Version = ();
-	type PalletInfo = ();
+	type PalletInfo = PalletInfo;
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
@@ -227,7 +150,7 @@ parameter_types! {
 	pub static Offset: BlockNumber = 0;
 }
 impl pallet_session::Config for Test {
-	type Event = MetaEvent;
+	type Event = Event;
 	type ValidatorId = AccountId;
 	type ValidatorIdOf = StashOf<Test>;
 	type ShouldEndSession = pallet_session::PeriodicSessions<Period, Offset>;
@@ -270,7 +193,7 @@ parameter_types! {
 impl darwinia_balances::Config<RingInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
-	type Event = MetaEvent;
+	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
@@ -281,12 +204,60 @@ impl darwinia_balances::Config<RingInstance> for Test {
 impl darwinia_balances::Config<KtonInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
-	type Event = MetaEvent;
+	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
 	type MaxLocks = MaxLocks;
 	type OtherCurrencies = ();
+	type WeightInfo = ();
+}
+
+parameter_types! {
+	pub const StakingModuleId: ModuleId = ModuleId(*b"da/staki");
+	pub const BondingDurationInEra: EraIndex = 3;
+	pub const MaxNominatorRewardedPerValidator: u32 = 64;
+	pub const UnsignedPriority: u64 = 1 << 20;
+	pub const MinSolutionScoreBump: Perbill = Perbill::zero();
+	pub OffchainSolutionWeightLimit: Weight = BlockWeights::get().max_block;
+	pub const Cap: Balance = CAP;
+	pub const TotalPower: Power = TOTAL_POWER;
+	pub static SessionsPerEra: SessionIndex = 3;
+	pub static BondingDurationInBlockNumber: BlockNumber = bonding_duration_in_blocks();
+	pub static ExistentialDeposit: Balance = 1;
+	pub static SlashDeferDuration: EraIndex = 0;
+	pub static ElectionLookahead: BlockNumber = 0;
+	pub static MaxIterations: u32 = 0;
+	pub static SessionValidators: (Vec<AccountId>, HashSet<AccountId>) = Default::default();
+	pub static RingRewardRemainderUnbalanced: Balance = 0;
+}
+impl Config for Test {
+	type Event = Event;
+	type ModuleId = StakingModuleId;
+	type UnixTime = SuppressUnixTimeWarning;
+	type SessionsPerEra = SessionsPerEra;
+	type BondingDurationInEra = BondingDurationInEra;
+	type BondingDurationInBlockNumber = BondingDurationInBlockNumber;
+	type SlashDeferDuration = SlashDeferDuration;
+	type SlashCancelOrigin = frame_system::EnsureRoot<Self::AccountId>;
+	type SessionInterface = Self;
+	type NextNewSession = Session;
+	type ElectionLookahead = ElectionLookahead;
+	type Call = Call;
+	type MaxIterations = MaxIterations;
+	type MinSolutionScoreBump = MinSolutionScoreBump;
+	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
+	type UnsignedPriority = UnsignedPriority;
+	type OffchainSolutionWeightLimit = OffchainSolutionWeightLimit;
+	type RingCurrency = Ring;
+	type RingRewardRemainder = RingRewardRemainderMock;
+	type RingSlash = ();
+	type RingReward = ();
+	type KtonCurrency = Kton;
+	type KtonSlash = ();
+	type KtonReward = ();
+	type Cap = Cap;
+	type TotalPower = TotalPower;
 	type WeightInfo = ();
 }
 
@@ -297,6 +268,21 @@ where
 	type Extrinsic = Extrinsic;
 	type OverarchingCall = Call;
 }
+
+frame_support::construct_runtime!(
+	pub enum Test where
+		Block = Block,
+		NodeBlock = Block,
+		UncheckedExtrinsic = UncheckedExtrinsic,
+	{
+		System: frame_system::{Module, Call, Config, Storage, Event<T>},
+		Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
+		Ring: darwinia_balances::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
+		Kton: darwinia_balances::<Instance1>::{Module, Call, Storage, Config<T>, Event<T>},
+		Staking: darwinia_staking::{Module, Call, Config<T>, Storage, Event<T>, ValidateUnsigned},
+		Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
+	}
+);
 
 pub struct ExtBuilder {
 	validator_pool: bool,
@@ -310,24 +296,6 @@ pub struct ExtBuilder {
 	initialize_first_session: bool,
 	init_kton: bool,
 }
-
-impl Default for ExtBuilder {
-	fn default() -> Self {
-		Self {
-			validator_pool: false,
-			nominate: true,
-			validator_count: 2,
-			minimum_validator_count: 0,
-			fair: true,
-			num_validators: None,
-			invulnerables: vec![],
-			has_stakers: true,
-			initialize_first_session: true,
-			init_kton: false,
-		}
-	}
-}
-
 impl ExtBuilder {
 	pub fn sessions_per_era(self, length: SessionIndex) -> Self {
 		SESSIONS_PER_ERA.with(|v| *v.borrow_mut() = length);
@@ -419,7 +387,7 @@ impl ExtBuilder {
 			.map(|x| ((x + 1) * 10 + 1) as AccountId)
 			.collect::<Vec<_>>();
 
-		let _ = RingConfig {
+		let _ = darwinia_balances::GenesisConfig::<Test, RingInstance> {
 			balances: vec![
 				(1, 10 * balance_factor),
 				(2, 20 * balance_factor),
@@ -449,7 +417,7 @@ impl ExtBuilder {
 		}
 		.assimilate_storage(&mut storage);
 		if self.init_kton {
-			let _ = KtonConfig {
+			let _ = darwinia_balances::GenesisConfig::<Test, KtonInstance> {
 				balances: vec![
 					(1, 10 * balance_factor),
 					(2, 20 * balance_factor),
@@ -506,7 +474,7 @@ impl ExtBuilder {
 				),
 			];
 		}
-		let _ = GenesisConfig::<Test> {
+		let _ = darwinia_staking::GenesisConfig::<Test> {
 			history_depth: 84,
 			stakers,
 			validator_count: self.validator_count,
@@ -558,6 +526,22 @@ impl ExtBuilder {
 		let mut ext = self.build();
 		ext.execute_with(test);
 		ext.execute_with(post_conditions);
+	}
+}
+impl Default for ExtBuilder {
+	fn default() -> Self {
+		Self {
+			validator_pool: false,
+			nominate: true,
+			validator_count: 2,
+			minimum_validator_count: 0,
+			fair: true,
+			num_validators: None,
+			invulnerables: vec![],
+			has_stakers: true,
+			initialize_first_session: true,
+			init_kton: false,
+		}
 	}
 }
 
@@ -1130,12 +1114,12 @@ pub(crate) fn make_all_reward_payment(era: EraIndex) {
 	}
 }
 
-pub(crate) fn staking_events() -> Vec<Event<Test>> {
+pub(crate) fn staking_events() -> Vec<darwinia_staking::Event<Test>> {
 	System::events()
 		.into_iter()
 		.map(|r| r.event)
 		.filter_map(|e| {
-			if let MetaEvent::staking(inner) = e {
+			if let Event::darwinia_staking(inner) = e {
 				Some(inner)
 			} else {
 				None

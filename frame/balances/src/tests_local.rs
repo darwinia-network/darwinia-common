@@ -22,7 +22,7 @@
 use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
-	assert_ok, construct_runtime, parameter_types,
+	assert_ok, parameter_types,
 	traits::StorageMapShim,
 	weights::{DispatchInfo, IdentityFee, Weight},
 };
@@ -122,7 +122,7 @@ impl Config<KtonInstance> for Test {
 	type WeightInfo = ();
 }
 
-construct_runtime! {
+frame_support::construct_runtime! {
 	pub enum Test
 	where
 		Block = Block,
