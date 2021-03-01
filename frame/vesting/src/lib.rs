@@ -393,10 +393,13 @@ where
 
 #[cfg(test)]
 mod tests {
-	use super::*;
+	use crate::{self as darwinia_vesting, *};
 
-	use frame_support::{assert_noop, assert_ok, impl_outer_origin, parameter_types};
-	use frame_system::RawOrigin;
+	use frame_support::{assert_noop, assert_ok, parameter_types};
+	use frame_system::{
+		mocking::{MockBlock, MockUncheckedExtrinsic},
+		RawOrigin,
+	};
 	use sp_core::H256;
 	use sp_runtime::{
 		testing::Header,
@@ -405,14 +408,10 @@ mod tests {
 
 	type Balance = u64;
 
-	impl_outer_origin! {
-		pub enum Origin for Test where system = frame_system {}
-	}
+	type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
+	type Block = MockBlock<Test>;
 
 	darwinia_support::impl_test_account_data! {}
-
-	#[derive(Clone, Eq, PartialEq)]
-	pub struct Test;
 
 	impl frame_system::Config for Test {
 		type BaseCallFilter = ();
@@ -423,28 +422,29 @@ mod tests {
 		type Index = u64;
 		type BlockNumber = u64;
 		type Hash = H256;
-		type Call = ();
+		type Call = Call;
 		type Hashing = BlakeTwo256;
 		type AccountId = u64;
 		type Lookup = IdentityLookup<Self::AccountId>;
 		type Header = Header;
-		type Event = ();
+		type Event = Event;
 		type BlockHashCount = ();
 		type Version = ();
-		type PalletInfo = ();
+		type PalletInfo = PalletInfo;
 		type AccountData = AccountData<Balance>;
 		type OnNewAccount = ();
 		type OnKilledAccount = ();
 		type SystemWeightInfo = ();
 		type SS58Prefix = ();
 	}
+
 	parameter_types! {
 		pub const MaxLocks: u32 = 10;
 	}
 	impl darwinia_balances::Config<RingInstance> for Test {
 		type Balance = Balance;
 		type DustRemoval = ();
-		type Event = ();
+		type Event = Event;
 		type ExistentialDeposit = ExistentialDeposit;
 		type BalanceInfo = AccountData<Balance>;
 		type AccountStore = System;
@@ -452,19 +452,30 @@ mod tests {
 		type OtherCurrencies = ();
 		type WeightInfo = ();
 	}
+
 	parameter_types! {
 		pub const MinVestedTransfer: u64 = 256 * 2;
 		pub static ExistentialDeposit: u64 = 0;
 	}
 	impl Config for Test {
-		type Event = ();
+		type Event = Event;
 		type Currency = Ring;
 		type BlockNumberToBalance = Identity;
 		type MinVestedTransfer = MinVestedTransfer;
 		type WeightInfo = ();
 	}
-	type System = frame_system::Module<Test>;
-	type Vesting = Module<Test>;
+
+	frame_support::construct_runtime!(
+		pub enum Test where
+			Block = Block,
+			NodeBlock = Block,
+			UncheckedExtrinsic = UncheckedExtrinsic,
+		{
+			System: frame_system::{Module, Call, Config, Storage, Event<T>},
+			Ring: darwinia_balances::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
+			Vesting: darwinia_vesting::{Module, Call, Storage, Event<T>, Config<T>},
+		}
+	);
 
 	pub struct ExtBuilder {
 		existential_deposit: u64,
@@ -497,7 +508,7 @@ mod tests {
 			}
 			.assimilate_storage(&mut t)
 			.unwrap();
-			GenesisConfig::<Test> {
+			darwinia_vesting::GenesisConfig::<Test> {
 				vesting: vec![
 					(1, 0, 10, 5 * self.existential_deposit),
 					(2, 10, 20, 0),
