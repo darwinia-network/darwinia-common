@@ -23,9 +23,9 @@ dependencies = [
 
 [[package]]
 name = "adler"
-version = "1.0.1"
+version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bedc89c5c7b5550ffb9372eb5c5ffc7f9f705cc3f4a128bd4669b9745f555093"
+checksum = "f26201604c87b1e01bd3d98f8d5d9a8fcbb815e8cedb41ffccbeb4bf593a35fe"
 
 [[package]]
 name = "aead"
@@ -1175,7 +1175,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-transaction-payment",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-core",
  "sp-io",
@@ -1191,7 +1191,7 @@ dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
  "jsonrpc-derive",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sp-api",
  "sp-blockchain",
  "sp-runtime",
@@ -1202,7 +1202,7 @@ name = "darwinia-balances-rpc-runtime-api"
 version = "1.3.0"
 dependencies = [
  "darwinia-support",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-api",
  "sp-runtime",
@@ -1218,7 +1218,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "libsecp256k1",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "serde_json",
  "sp-core",
@@ -1245,7 +1245,7 @@ version = "1.3.0"
 dependencies = [
  "frame-support",
  "frame-system",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-runtime",
 ]
@@ -1258,7 +1258,7 @@ dependencies = [
  "darwinia-support",
  "frame-support",
  "frame-system",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "serde_json",
  "sp-io",
@@ -1275,7 +1275,7 @@ dependencies = [
  "frame-system",
  "hex-literal",
  "pallet-scheduler",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-core",
  "sp-io",
@@ -1294,7 +1294,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-core",
  "sp-io",
@@ -1322,7 +1322,7 @@ dependencies = [
  "frame-system",
  "pallet-session",
  "pallet-timestamp",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "rlp 0.4.4",
  "serde",
  "serde_json",
@@ -1344,7 +1344,7 @@ dependencies = [
  "ethereum-types 0.8.0",
  "frame-support",
  "frame-system",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "rlp 0.4.4",
  "serde",
  "serde_json",
@@ -1369,7 +1369,7 @@ dependencies = [
  "ethereum-types 0.8.0",
  "frame-support",
  "frame-system",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "rlp 0.4.4",
  "serde",
  "serde_json",
@@ -1392,7 +1392,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-timestamp",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "primitive-types 0.8.0",
  "rlp 0.5.0",
  "serde",
@@ -1441,7 +1441,7 @@ dependencies = [
  "darwinia-evm-primitives",
  "evm",
  "frame-support",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sp-core",
  "sp-io",
 ]
@@ -1498,7 +1498,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-timestamp",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "ripemd160",
  "sp-core",
  "sp-io",
@@ -1512,7 +1512,7 @@ version = "1.3.0"
 dependencies = [
  "evm",
  "impl-trait-for-tuples 0.2.1",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-core",
  "sp-std 2.0.1",
@@ -1529,7 +1529,7 @@ dependencies = [
  "darwinia-support",
  "frame-support",
  "frame-system",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "serde_json",
  "sp-core",
@@ -1546,7 +1546,7 @@ dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
  "jsonrpc-derive",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sp-api",
  "sp-blockchain",
  "sp-runtime",
@@ -1557,7 +1557,7 @@ name = "darwinia-header-mmr-rpc-runtime-api"
 version = "1.3.0"
 dependencies = [
  "darwinia-support",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-api",
  "sp-runtime",
@@ -1574,7 +1574,7 @@ dependencies = [
  "darwinia-support",
  "frame-support",
  "frame-system",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-core",
  "sp-io",
@@ -1587,7 +1587,7 @@ name = "darwinia-relay-primitives"
 version = "1.3.0"
 dependencies = [
  "frame-support",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sp-runtime",
  "sp-std 2.0.1",
 ]
@@ -1602,7 +1602,7 @@ dependencies = [
  "env_logger 0.8.3",
  "frame-support",
  "frame-system",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-core",
  "sp-io",
@@ -1622,7 +1622,7 @@ dependencies = [
  "pallet-authorship",
  "pallet-session",
  "pallet-timestamp",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "rand_chacha 0.2.2",
  "serde",
  "sp-arithmetic",
@@ -1647,7 +1647,7 @@ dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
  "jsonrpc-derive",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sp-api",
  "sp-blockchain",
  "sp-runtime",
@@ -1658,7 +1658,7 @@ name = "darwinia-staking-rpc-runtime-api"
 version = "1.3.0"
 dependencies = [
  "darwinia-support",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-api",
  "sp-runtime",
@@ -1672,7 +1672,7 @@ dependencies = [
  "frame-support",
  "impl-trait-for-tuples 0.2.1",
  "num-traits",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sp-runtime",
  "sp-std 2.0.1",
 ]
@@ -1685,7 +1685,7 @@ dependencies = [
  "darwinia-support",
  "frame-support",
  "frame-system",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-core",
  "sp-io",
@@ -1700,7 +1700,7 @@ version = "1.3.0"
 dependencies = [
  "frame-support",
  "frame-system",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-runtime",
 ]
@@ -1715,7 +1715,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-core",
  "sp-io",
@@ -1828,7 +1828,7 @@ dependencies = [
  "pallet-transaction-payment-rpc",
  "pallet-transaction-payment-rpc-runtime-api",
  "pangolin-runtime",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sc-authority-discovery",
  "sc-basic-authorship",
  "sc-chain-spec",
@@ -1889,7 +1889,7 @@ dependencies = [
  "ethereum",
  "futures 0.3.13",
  "log",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sc-client-api",
  "sp-api",
  "sp-block-builder",
@@ -1906,7 +1906,7 @@ dependencies = [
 name = "dvm-consensus-primitives"
 version = "1.3.0"
 dependencies = [
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sp-core",
  "sp-runtime",
  "sp-std 2.0.1",
@@ -1930,7 +1930,7 @@ dependencies = [
  "frame-system",
  "libsecp256k1",
  "pallet-timestamp",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "rlp 0.5.0",
  "rustc-hex",
  "serde",
@@ -1960,7 +1960,7 @@ dependencies = [
  "jsonrpc-pubsub",
  "libsecp256k1",
  "log",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "rand 0.7.3",
  "rlp 0.5.0",
  "rustc-hex",
@@ -1989,7 +1989,7 @@ dependencies = [
  "jsonrpc-core",
  "jsonrpc-derive",
  "jsonrpc-pubsub",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sp-api",
  "sp-core",
  "sp-runtime",
@@ -2018,7 +2018,7 @@ dependencies = [
  "darwinia-evm-primitives",
  "ethereum",
  "ethereum-types 0.10.0",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sp-api",
  "sp-core",
  "sp-io",
@@ -2251,7 +2251,7 @@ dependencies = [
  "ethereum-types 0.10.0",
  "hash-db",
  "hash256-std-hasher",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "rlp 0.5.0",
  "rlp-derive 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde",
@@ -2274,7 +2274,7 @@ dependencies = [
  "keccak-hash",
  "keccak-hasher",
  "merkle-patricia-trie",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "primitive-types 0.6.2",
  "rlp 0.4.4",
  "rlp-derive 0.1.0 (git+https://github.com/darwinia-network/parity-common.git)",
@@ -2368,7 +2368,7 @@ dependencies = [
  "evm-gasometer",
  "evm-runtime",
  "log",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "primitive-types 0.8.0",
  "rlp 0.5.0",
  "serde",
@@ -2381,7 +2381,7 @@ version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aa225f553e9380c498f5beb4ba6e5d455b147a133d371b550f0326b92c95cc17"
 dependencies = [
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "primitive-types 0.8.0",
  "serde",
 ]
@@ -2490,7 +2490,7 @@ dependencies = [
  "futures-timer 2.0.2",
  "log",
  "num-traits",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "parking_lot 0.9.0",
 ]
 
@@ -2572,7 +2572,7 @@ name = "fork-tree"
 version = "2.0.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
 ]
 
 [[package]]
@@ -2593,7 +2593,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "linregress",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "paste",
  "sp-api",
  "sp-io",
@@ -2610,7 +2610,7 @@ source = "git+https://github.com/darwinia-network/substrate.git?branch=common-li
 dependencies = [
  "frame-support",
  "frame-system",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-core",
  "sp-io",
@@ -2624,7 +2624,7 @@ name = "frame-metadata"
 version = "12.0.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-core",
  "sp-std 2.0.1",
@@ -2641,7 +2641,7 @@ dependencies = [
  "impl-trait-for-tuples 0.2.1",
  "log",
  "once_cell",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "paste",
  "serde",
  "smallvec 1.6.1",
@@ -2696,7 +2696,7 @@ source = "git+https://github.com/darwinia-network/substrate.git?branch=common-li
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples 0.2.1",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-core",
  "sp-io",
@@ -2710,7 +2710,7 @@ name = "frame-system-rpc-runtime-api"
 version = "2.0.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sp-api",
 ]
 
@@ -3378,7 +3378,7 @@ name = "impl-codec"
 version = "0.4.2"
 source = "git+https://github.com/darwinia-network/parity-common.git#12a86aa8af8ff5ccd5c953074aa893c716cf85b5"
 dependencies = [
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
 ]
 
 [[package]]
@@ -3387,7 +3387,7 @@ version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1be51a921b067b0eaca2fad532d9400041561aa922221cc65f95a85641c6bf53"
 dependencies = [
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
 ]
 
 [[package]]
@@ -3568,9 +3568,9 @@ dependencies = [
 
 [[package]]
 name = "js-sys"
-version = "0.3.47"
+version = "0.3.48"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5cfb73131c35423a367daf8cbd24100af0d077668c8c2943f0e7dd775fef0f65"
+checksum = "dc9f84f9b115ce7843d60706df1422a916680bfdfcbdb0447c5614ff9d7e4d78"
 dependencies = [
  "wasm-bindgen",
 ]
@@ -4451,18 +4451,18 @@ dependencies = [
 
 [[package]]
 name = "minicbor"
-version = "0.7.1"
+version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3265a9f5210bb726f81ef9c456ae0aff5321cd95748c0e71889b0e19d8f0332b"
+checksum = "1c2b2c73f9640fccab53947e2b3474d5071fcbc8f82cac51ddf6c8041a30a9ea"
 dependencies = [
  "minicbor-derive",
 ]
 
 [[package]]
 name = "minicbor-derive"
-version = "0.6.1"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "130b9455e28a3f308f6579671816a6f2621e2e0cbf55dc2f886345bef699481e"
+checksum = "19ce18b5423c573a13e80cb3046ea0af6379ef725dc3af4886bdb8f4e5093068"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4871,7 +4871,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-session",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-application-crypto",
  "sp-authority-discovery",
@@ -4887,7 +4887,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "impl-trait-for-tuples 0.2.1",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sp-authorship",
  "sp-inherents",
  "sp-runtime",
@@ -4905,7 +4905,7 @@ dependencies = [
  "pallet-authorship",
  "pallet-session",
  "pallet-timestamp",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-application-crypto",
  "sp-consensus-babe",
@@ -4927,7 +4927,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-runtime",
  "sp-std 2.0.1",
@@ -4940,7 +4940,7 @@ source = "git+https://github.com/darwinia-network/substrate.git?branch=common-li
 dependencies = [
  "frame-support",
  "frame-system",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-core",
  "sp-io",
@@ -4958,7 +4958,7 @@ dependencies = [
  "frame-system",
  "pallet-authorship",
  "pallet-session",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-application-crypto",
  "sp-core",
@@ -4978,7 +4978,7 @@ dependencies = [
  "frame-system",
  "pallet-authorship",
  "pallet-session",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-application-crypto",
  "sp-core",
@@ -4995,7 +4995,7 @@ source = "git+https://github.com/darwinia-network/substrate.git?branch=common-li
 dependencies = [
  "frame-support",
  "frame-system",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-io",
  "sp-runtime",
@@ -5010,7 +5010,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-balances",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-runtime",
  "sp-staking",
@@ -5024,7 +5024,7 @@ source = "git+https://github.com/darwinia-network/substrate.git?branch=common-li
 dependencies = [
  "frame-support",
  "frame-system",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-core",
  "sp-io",
@@ -5039,7 +5039,7 @@ source = "git+https://github.com/darwinia-network/substrate.git?branch=common-li
 dependencies = [
  "frame-support",
  "frame-system",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "safe-mix",
  "sp-runtime",
  "sp-std 2.0.1",
@@ -5053,7 +5053,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-io",
  "sp-runtime",
@@ -5069,7 +5069,7 @@ dependencies = [
  "frame-system",
  "impl-trait-for-tuples 0.1.3",
  "pallet-timestamp",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-core",
  "sp-io",
@@ -5087,7 +5087,7 @@ source = "git+https://github.com/darwinia-network/substrate.git?branch=common-li
 dependencies = [
  "frame-support",
  "frame-system",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-io",
  "sp-runtime",
@@ -5103,7 +5103,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "impl-trait-for-tuples 0.2.1",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-inherents",
  "sp-runtime",
@@ -5118,7 +5118,7 @@ source = "git+https://github.com/darwinia-network/substrate.git?branch=common-li
 dependencies = [
  "frame-support",
  "frame-system",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "smallvec 1.6.1",
  "sp-core",
@@ -5136,7 +5136,7 @@ dependencies = [
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "pallet-transaction-payment-rpc-runtime-api",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sp-api",
  "sp-blockchain",
  "sp-core",
@@ -5150,7 +5150,7 @@ version = "2.0.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
  "pallet-transaction-payment",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sp-api",
  "sp-runtime",
 ]
@@ -5205,7 +5205,7 @@ dependencies = [
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "smallvec 1.6.1",
  "sp-api",
@@ -5261,33 +5261,33 @@ dependencies = [
 
 [[package]]
 name = "parity-scale-codec"
-version = "1.3.6"
+version = "1.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "79602888a81ace83e3d1d4b2873286c1f5f906c84db667594e8db8da3506c383"
+checksum = "a4b26b16c7687c3075982af47719e481815df30bc544f7a6690763a25ca16e9d"
 dependencies = [
  "arrayvec 0.5.2",
  "bitvec",
  "byte-slice-cast 0.3.5",
- "parity-scale-codec-derive 1.2.2",
+ "parity-scale-codec-derive 1.2.3",
  "serde",
 ]
 
 [[package]]
 name = "parity-scale-codec"
-version = "2.0.0"
+version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "75c823fdae1bb5ff5708ee61a62697e6296175dc671710876871c853f48592b3"
+checksum = "0cd3dab59b5cf4bc81069ade0fc470341a1ef3ad5fa73e5a8943bed2ec12b2e8"
 dependencies = [
  "arrayvec 0.5.2",
  "byte-slice-cast 1.0.0",
- "parity-scale-codec-derive 2.0.0",
+ "parity-scale-codec-derive 2.0.1",
 ]
 
 [[package]]
 name = "parity-scale-codec-derive"
-version = "1.2.2"
+version = "1.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "198db82bb1c18fc00176004462dd809b2a6d851669550aa17af6dacd21ae0c14"
+checksum = "c41512944b1faff334a5f1b9447611bf4ef40638ccb6328173dacefb338e878c"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -5297,9 +5297,9 @@ dependencies = [
 
 [[package]]
 name = "parity-scale-codec-derive"
-version = "2.0.0"
+version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9029e65297c7fd6d7013f0579e193ec2b34ae78eabca854c9417504ad8a2d214"
+checksum = "fa04976a81fde04924b40cc4036c4d12841e8bb04325a5cf2ada75731a150a7d"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -6455,7 +6455,7 @@ dependencies = [
  "futures-timer 3.0.2",
  "libp2p",
  "log",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "prost 0.7.0",
  "prost-build",
  "rand 0.7.3",
@@ -6479,7 +6479,7 @@ dependencies = [
  "futures 0.3.13",
  "futures-timer 3.0.2",
  "log",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sc-block-builder",
  "sc-client-api",
  "sc-proposer-metrics",
@@ -6499,7 +6499,7 @@ name = "sc-block-builder"
 version = "0.8.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sc-client-api",
  "sp-api",
  "sp-block-builder",
@@ -6517,7 +6517,7 @@ version = "2.0.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
  "impl-trait-for-tuples 0.2.1",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sc-chain-spec-derive",
  "sc-consensus-babe",
  "sc-consensus-epochs",
@@ -6555,7 +6555,7 @@ dependencies = [
  "libp2p",
  "log",
  "names",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "rand 0.7.3",
  "regex",
  "rpassword",
@@ -6593,7 +6593,7 @@ dependencies = [
  "kvdb",
  "lazy_static",
  "log",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "parking_lot 0.11.1",
  "sc-executor",
  "sp-api",
@@ -6628,7 +6628,7 @@ dependencies = [
  "linked-hash-map",
  "log",
  "parity-db",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "parity-util-mem",
  "parking_lot 0.11.1",
  "sc-client-api",
@@ -6670,7 +6670,7 @@ dependencies = [
  "num-bigint 0.2.6",
  "num-rational 0.2.4",
  "num-traits",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "parking_lot 0.11.1",
  "pdqselect",
  "rand 0.7.3",
@@ -6731,7 +6731,7 @@ version = "0.8.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
  "fork-tree",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "parking_lot 0.11.1",
  "sc-client-api",
  "sp-blockchain",
@@ -6746,7 +6746,7 @@ dependencies = [
  "futures 0.3.13",
  "futures-timer 3.0.2",
  "log",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "parking_lot 0.11.1",
  "sc-client-api",
  "sc-telemetry",
@@ -6787,7 +6787,7 @@ dependencies = [
  "lazy_static",
  "libsecp256k1",
  "log",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "parity-wasm 0.41.0",
  "parking_lot 0.11.1",
  "sc-executor-common",
@@ -6813,7 +6813,7 @@ version = "0.8.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
  "derive_more",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "parity-wasm 0.41.0",
  "sp-allocator",
  "sp-core",
@@ -6829,7 +6829,7 @@ version = "0.8.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
  "log",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sc-executor-common",
  "sp-allocator",
  "sp-core",
@@ -6844,7 +6844,7 @@ version = "0.8.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
  "log",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "parity-wasm 0.41.0",
  "pwasm-utils",
  "sc-executor-common",
@@ -6868,7 +6868,7 @@ dependencies = [
  "futures-timer 3.0.2",
  "linked-hash-map",
  "log",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "parking_lot 0.11.1",
  "pin-project 0.4.27",
  "rand 0.7.3",
@@ -6907,7 +6907,7 @@ dependencies = [
  "jsonrpc-derive",
  "jsonrpc-pubsub",
  "log",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sc-client-api",
  "sc-finality-grandpa",
  "sc-rpc",
@@ -6927,7 +6927,7 @@ dependencies = [
  "futures 0.3.13",
  "log",
  "num-traits",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "parking_lot 0.11.1",
  "prost 0.6.1",
  "sc-client-api",
@@ -6983,7 +6983,7 @@ source = "git+https://github.com/darwinia-network/substrate.git?branch=common-li
 dependencies = [
  "hash-db",
  "lazy_static",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "parking_lot 0.11.1",
  "sc-client-api",
  "sc-executor",
@@ -7021,7 +7021,7 @@ dependencies = [
  "log",
  "lru",
  "nohash-hasher",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "parking_lot 0.11.1",
  "pin-project 0.4.27",
  "prost 0.7.0",
@@ -7076,7 +7076,7 @@ dependencies = [
  "hyper-rustls",
  "log",
  "num_cpus",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "parking_lot 0.11.1",
  "rand 0.7.3",
  "sc-client-api",
@@ -7122,7 +7122,7 @@ dependencies = [
  "jsonrpc-core",
  "jsonrpc-pubsub",
  "log",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "parking_lot 0.11.1",
  "sc-block-builder",
  "sc-client-api",
@@ -7158,7 +7158,7 @@ dependencies = [
  "jsonrpc-derive",
  "jsonrpc-pubsub",
  "log",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "parking_lot 0.11.1",
  "serde",
  "serde_json",
@@ -7203,7 +7203,7 @@ dependencies = [
  "jsonrpc-pubsub",
  "lazy_static",
  "log",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "parity-util-mem",
  "parking_lot 0.11.1",
  "pin-project 0.4.27",
@@ -7257,7 +7257,7 @@ version = "0.8.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
  "log",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "parity-util-mem",
  "parity-util-mem-derive",
  "parking_lot 0.11.1",
@@ -7378,7 +7378,7 @@ dependencies = [
  "futures-diagnose",
  "intervalier",
  "log",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "parity-util-mem",
  "parking_lot 0.11.1",
  "sc-client-api",
@@ -7573,9 +7573,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.63"
+version = "1.0.64"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "43535db9747a4ba938c0ce0a98cc631a46ebf943c9e1d604e091df6007620bf6"
+checksum = "799e97dc9fdae36a5c8b8f2cae9ce2ee9fdce2058c57a93e6099d919fd982f79"
 dependencies = [
  "itoa",
  "ryu",
@@ -7793,7 +7793,7 @@ version = "2.0.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
  "hash-db",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sp-api-proc-macro",
  "sp-core",
  "sp-runtime",
@@ -7820,7 +7820,7 @@ name = "sp-application-crypto"
 version = "2.0.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-core",
  "sp-io",
@@ -7834,7 +7834,7 @@ source = "git+https://github.com/darwinia-network/substrate.git?branch=common-li
 dependencies = [
  "integer-sqrt",
  "num-traits",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-debug-derive",
  "sp-std 2.0.1",
@@ -7845,7 +7845,7 @@ name = "sp-authority-discovery"
 version = "2.0.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sp-api",
  "sp-application-crypto",
  "sp-runtime",
@@ -7857,7 +7857,7 @@ name = "sp-authorship"
 version = "2.0.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sp-inherents",
  "sp-runtime",
  "sp-std 2.0.1",
@@ -7868,7 +7868,7 @@ name = "sp-block-builder"
 version = "2.0.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sp-api",
  "sp-inherents",
  "sp-runtime",
@@ -7883,7 +7883,7 @@ dependencies = [
  "futures 0.3.13",
  "log",
  "lru",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "parking_lot 0.11.1",
  "sp-api",
  "sp-consensus",
@@ -7911,7 +7911,7 @@ dependencies = [
  "futures-timer 3.0.2",
  "libp2p",
  "log",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "parking_lot 0.11.1",
  "serde",
  "sp-api",
@@ -7934,7 +7934,7 @@ version = "0.8.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
  "merlin",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sp-api",
  "sp-application-crypto",
  "sp-consensus",
@@ -7953,7 +7953,7 @@ name = "sp-consensus-slots"
 version = "0.8.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sp-runtime",
 ]
 
@@ -7962,7 +7962,7 @@ name = "sp-consensus-vrf"
 version = "0.8.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "schnorrkel",
  "sp-core",
  "sp-runtime",
@@ -7989,7 +7989,7 @@ dependencies = [
  "log",
  "merlin",
  "num-traits",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "parity-util-mem",
  "parking_lot 0.11.1",
  "primitive-types 0.8.0",
@@ -8038,7 +8038,7 @@ version = "0.8.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
  "environmental",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sp-std 2.0.1",
  "sp-storage",
 ]
@@ -8050,7 +8050,7 @@ source = "git+https://github.com/darwinia-network/substrate.git?branch=common-li
 dependencies = [
  "finality-grandpa",
  "log",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-api",
  "sp-application-crypto",
@@ -8065,7 +8065,7 @@ name = "sp-inherents"
 version = "2.0.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "parking_lot 0.11.1",
  "sp-core",
  "sp-std 2.0.1",
@@ -8081,7 +8081,7 @@ dependencies = [
  "hash-db",
  "libsecp256k1",
  "log",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "parking_lot 0.11.1",
  "sp-core",
  "sp-externalities",
@@ -8116,7 +8116,7 @@ dependencies = [
  "derive_more",
  "futures 0.3.13",
  "merlin",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "parking_lot 0.11.1",
  "schnorrkel",
  "serde",
@@ -8129,7 +8129,7 @@ name = "sp-npos-elections"
 version = "2.0.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-arithmetic",
  "sp-core",
@@ -8184,7 +8184,7 @@ dependencies = [
  "hash256-std-hasher",
  "impl-trait-for-tuples 0.2.1",
  "log",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "parity-util-mem",
  "paste",
  "rand 0.7.3",
@@ -8202,7 +8202,7 @@ version = "2.0.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
  "impl-trait-for-tuples 0.2.1",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "primitive-types 0.8.0",
  "sp-externalities",
  "sp-runtime-interface-proc-macro",
@@ -8239,7 +8239,7 @@ name = "sp-session"
 version = "2.0.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sp-api",
  "sp-core",
  "sp-runtime",
@@ -8252,7 +8252,7 @@ name = "sp-staking"
 version = "2.0.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sp-runtime",
  "sp-std 2.0.1",
 ]
@@ -8265,7 +8265,7 @@ dependencies = [
  "hash-db",
  "log",
  "num-traits",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "parking_lot 0.11.1",
  "rand 0.7.3",
  "smallvec 1.6.1",
@@ -8295,7 +8295,7 @@ version = "2.0.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
  "impl-serde 0.3.1",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "ref-cast",
  "serde",
  "sp-debug-derive",
@@ -8321,7 +8321,7 @@ version = "2.0.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
  "impl-trait-for-tuples 0.2.1",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sp-api",
  "sp-inherents",
  "sp-runtime",
@@ -8335,7 +8335,7 @@ version = "2.0.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
  "log",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sp-std 2.0.1",
  "tracing",
  "tracing-core",
@@ -8350,7 +8350,7 @@ dependencies = [
  "derive_more",
  "futures 0.3.13",
  "log",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-api",
  "sp-blockchain",
@@ -8365,7 +8365,7 @@ source = "git+https://github.com/darwinia-network/substrate.git?branch=common-li
 dependencies = [
  "hash-db",
  "memory-db",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sp-core",
  "sp-std 2.0.1",
  "trie-db",
@@ -8390,7 +8390,7 @@ version = "2.0.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
  "impl-serde 0.3.1",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "serde",
  "sp-runtime",
  "sp-std 2.0.1",
@@ -8402,7 +8402,7 @@ version = "2.0.1"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=common-library-alpha#2d597fc2a2ccbeae0e5b832b976d2ca9558fc2c7"
 dependencies = [
  "impl-trait-for-tuples 0.2.1",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sp-std 2.0.1",
  "wasmi",
 ]
@@ -8549,7 +8549,7 @@ name = "substrate-fixed"
 version = "0.5.6"
 source = "git+https://github.com/encointer/substrate-fixed?branch=master#b33d186888c60f38adafcfc0ec3a21aab263aef1"
 dependencies = [
- "parity-scale-codec 2.0.0",
+ "parity-scale-codec 2.0.1",
  "typenum",
 ]
 
@@ -8564,7 +8564,7 @@ dependencies = [
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "log",
- "parity-scale-codec 1.3.6",
+ "parity-scale-codec 1.3.7",
  "sc-client-api",
  "sc-rpc-api",
  "serde",
@@ -9256,7 +9256,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04f8ab788026715fa63b31960869617cba39117e520eb415b0139543e325ab59"
 dependencies = [
  "cfg-if 0.1.10",
- "rand 0.5.6",
+ "rand 0.7.3",
  "static_assertions 1.1.0",
 ]
 
@@ -9534,9 +9534,9 @@ checksum = "1a143597ca7c7793eff794def352d41792a93c481eb1042423ff7ff72ba2c31f"
 
 [[package]]
 name = "wasm-bindgen"
-version = "0.2.70"
+version = "0.2.71"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "55c0f7123de74f0dab9b7d00fd614e7b19349cd1e2f5252bbe9b1754b59433be"
+checksum = "7ee1280240b7c461d6a0071313e08f34a60b0365f14260362e5a2b17d1d31aa7"
 dependencies = [
  "cfg-if 1.0.0",
  "wasm-bindgen-macro",
@@ -9544,9 +9544,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-backend"
-version = "0.2.70"
+version = "0.2.71"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7bc45447f0d4573f3d65720f636bbcc3dd6ce920ed704670118650bcd47764c7"
+checksum = "5b7d8b6942b8bb3a9b0e73fc79b98095a27de6fa247615e59d096754a3bc2aa8"
 dependencies = [
  "bumpalo",
  "lazy_static",
@@ -9559,9 +9559,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-futures"
-version = "0.4.20"
+version = "0.4.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3de431a2910c86679c34283a33f66f4e4abd7e0aec27b6669060148872aadf94"
+checksum = "8e67a5806118af01f0d9045915676b22aaebecf4178ae7021bc171dab0b897ab"
 dependencies = [
  "cfg-if 1.0.0",
  "js-sys",
@@ -9571,9 +9571,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-macro"
-version = "0.2.70"
+version = "0.2.71"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3b8853882eef39593ad4174dd26fc9865a64e84026d223f63bb2c42affcbba2c"
+checksum = "e5ac38da8ef716661f0f36c0d8320b89028efe10c7c0afde65baffb496ce0d3b"
 dependencies = [
  "quote",
  "wasm-bindgen-macro-support",
@@ -9581,9 +9581,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-macro-support"
-version = "0.2.70"
+version = "0.2.71"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4133b5e7f2a531fa413b3a1695e925038a05a71cf67e87dafa295cb645a01385"
+checksum = "cc053ec74d454df287b9374ee8abb36ffd5acb95ba87da3ba5b7d3fe20eb401e"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -9594,9 +9594,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-shared"
-version = "0.2.70"
+version = "0.2.71"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd4945e4943ae02d15c13962b38a5b1e81eadd4b71214eee75af64a4d6a4fd64"
+checksum = "7d6f8ec44822dd71f5f221a5847fb34acd9060535c1211b70a05844c0f6383b1"
 
 [[package]]
 name = "wasm-gc-api"
@@ -9834,9 +9834,9 @@ dependencies = [
 
 [[package]]
 name = "web-sys"
-version = "0.3.47"
+version = "0.3.48"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c40dc691fc48003eba817c38da7113c15698142da971298003cac3ef175680b3"
+checksum = "ec600b26223b2948cedfde2a0aa6756dcf1fef616f43d7b3097aaf53a6c4d92b"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
