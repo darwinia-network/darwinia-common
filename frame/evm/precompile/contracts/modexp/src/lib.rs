@@ -144,7 +144,7 @@ mod tests {
 	#[test]
 	fn test_empty_input() -> std::result::Result<(), ExitError> {
 		let input: [u8; 0] = [];
-		let cost: usize = 1;
+		let cost: u64 = 1;
 
 		match Modexp::execute(&input, cost) {
 			Ok((_, _)) => {
@@ -169,7 +169,7 @@ mod tests {
 		)
 		.expect("Decode failed");
 
-		let cost: usize = 1;
+		let cost: u64 = 1;
 
 		match Modexp::execute(&input, cost) {
 			Ok((_, _)) => {
@@ -194,7 +194,7 @@ mod tests {
 		)
 		.expect("Decode failed");
 
-		let cost: usize = 1;
+		let cost: u64 = 1;
 
 		match Modexp::execute(&input, cost) {
 			Ok((_, _)) => {
@@ -221,7 +221,7 @@ mod tests {
 
 		// 3 ^ 5 % 7 == 5
 
-		let cost: usize = 1;
+		let cost: u64 = 1;
 
 		match Modexp::execute(&input, cost) {
 			Ok((_, output)) => {
@@ -250,7 +250,7 @@ mod tests {
 
 		// 59999 ^ 21 % 14452 = 10055
 
-		let cost: usize = 1;
+		let cost: u64 = 1;
 
 		match Modexp::execute(&input, cost) {
 			Ok((_, output)) => {
@@ -277,7 +277,7 @@ mod tests {
 		)
 		.expect("Decode failed");
 
-		let cost: usize = 1;
+		let cost: u64 = 1;
 
 		match Modexp::execute(&input, cost) {
 			Ok((_, output)) => {

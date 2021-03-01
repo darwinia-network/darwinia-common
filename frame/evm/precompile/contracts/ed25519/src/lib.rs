@@ -66,7 +66,7 @@ mod tests {
 	#[test]
 	fn test_empty_input() -> std::result::Result<(), ExitError> {
 		let input: [u8; 0] = [];
-		let cost: usize = 1;
+		let cost: u64 = 1;
 
 		match Ed25519Verify::execute(&input, cost) {
 			Ok((_, _)) => {
@@ -109,7 +109,7 @@ mod tests {
 		input.extend_from_slice(&signature.to_bytes());
 		assert_eq!(input.len(), 128);
 
-		let cost: usize = 1;
+		let cost: u64 = 1;
 
 		match Ed25519Verify::execute(&input, cost) {
 			Ok((_, output)) => {

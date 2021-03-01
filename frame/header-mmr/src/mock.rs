@@ -87,7 +87,6 @@ pub fn initialize_block(number: u64, parent_hash: H256) {
 		&number,
 		&parent_hash,
 		&Default::default(),
-		&Default::default(),
 		Default::default(),
 	);
 }
