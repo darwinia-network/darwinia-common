@@ -36,10 +36,10 @@ use sp_std::marker::PhantomData;
 use sp_std::prelude::*;
 use sp_std::vec::Vec;
 
-use darwinia_evm::{AddressMapping, Runner, Trait};
+use darwinia_evm::{AddressMapping, Config, Runner};
 use darwinia_evm_primitives::Precompile;
 
-type AccountId<T> = <T as frame_system::Trait>::AccountId;
+type AccountId<T> = <T as frame_system::Config>::AccountId;
 
 const TRANSFER_AND_CALL_ACTION: &[u8] = b"transfer_and_call(address,address,uint256)";
 const WITHDRAW_ACTION: &[u8] = b"withdraw(bytes32,uint256)";
@@ -47,11 +47,11 @@ const KTON_PRECOMPILE: &str = "0000000000000000000000000000000000000016";
 /// Kton Precompile Contract is used to support the exchange of KTON native asset between darwinia and dvm contract
 ///
 /// The contract address: 0000000000000000000000000000000000000016
-pub struct Kton<T: Trait> {
+pub struct Kton<T: Config> {
 	_maker: PhantomData<T>,
 }
 
-impl<T: Trait> Precompile for Kton<T> {
+impl<T: Config> Precompile for Kton<T> {
 	/// There are two actions, one is `transfer_and_call` and the other is `withdraw`
 	/// 1. Transfer_and_call Action, triggered by the user sending a transaction to the kton precompile
 	/// 	   special evm address, eg(0000000000000000000000000000000000000016). and transfer the sender's
@@ -64,9 +64,9 @@ impl<T: Trait> Precompile for Kton<T> {
 	///     - p2: The withdraw value
 	fn execute(
 		input: &[u8],
-		target_limit: Option<usize>,
+		target_limit: Option<u64>,
 		context: &Context,
-	) -> core::result::Result<(ExitSucceed, Vec<u8>, usize), ExitError> {
+	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
 		let helper = U256::from(10)
 			.checked_pow(U256::from(9))
 			.unwrap_or(U256::MAX);
@@ -98,7 +98,7 @@ impl<T: Trait> Precompile for Kton<T> {
 					tacd.wkton_address,
 					raw_input.to_vec(),
 					U256::zero(),
-					target_limit.unwrap_or_default() as u32,
+					target_limit.unwrap_or_default(),
 					None,
 					None,
 					T::config(),
@@ -123,7 +123,7 @@ impl<T: Trait> Precompile for Kton<T> {
 }
 
 /// Action about KTON precompile
-pub enum Action<T: frame_system::Trait> {
+pub enum Action<T: frame_system::Config> {
 	/// Transfer from substrate account to wkton contract
 	TransferAndCall(CallData),
 	/// Withdraw from wkton contract to substrate account
@@ -131,7 +131,7 @@ pub enum Action<T: frame_system::Trait> {
 }
 
 /// which action depends on the function selector
-pub fn which_action<T: frame_system::Trait>(input_data: &[u8]) -> Result<Action<T>, ExitError> {
+pub fn which_action<T: frame_system::Config>(input_data: &[u8]) -> Result<Action<T>, ExitError> {
 	let transfer_and_call_action = &sha3::Keccak256::digest(&TRANSFER_AND_CALL_ACTION)[0..4];
 	let withdraw_action = &sha3::Keccak256::digest(&WITHDRAW_ACTION)[0..4];
 	if hex::encode(&input_data[0..4]) == hex::encode(transfer_and_call_action) {
@@ -165,19 +165,21 @@ impl CallData {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct WithdrawData<T: frame_system::Trait> {
+pub struct WithdrawData<T: frame_system::Config> {
 	pub to_account_id: AccountId<T>,
 	pub kton_value: U256,
 }
 
-impl<T: frame_system::Trait> WithdrawData<T> {
+impl<T: frame_system::Config> WithdrawData<T> {
 	pub fn decode(data: &[u8]) -> Result<Self, ExitError> {
 		let tokens = ethabi::decode(&[ParamType::FixedBytes(32), ParamType::Uint(256)], &data)
 			.map_err(|_| ExitError::Other("ethabi decoded error".into()))?;
 		match (tokens[0].clone(), tokens[1].clone()) {
 			(Token::FixedBytes(address), Token::Uint(eth_value)) => Ok(WithdrawData {
-				to_account_id: <T as frame_system::Trait>::AccountId::decode(&mut address.as_ref())
-					.map_err(|_| ExitError::Other("Invalid destination address".into()))?,
+				to_account_id: <T as frame_system::Config>::AccountId::decode(
+					&mut address.as_ref(),
+				)
+				.map_err(|_| ExitError::Other("Invalid destination address".into()))?,
 				kton_value: util::e2s_u256(eth_value),
 			}),
 			_ => Err(ExitError::Other("Invlid withdraw input data".into())),
