@@ -44,7 +44,7 @@ type AccountId<T> = <T as frame_system::Trait>::AccountId;
 const TRANSFER_AND_CALL_ACTION: &[u8] = b"transfer_and_call(address,address,uint256)";
 const WITHDRAW_ACTION: &[u8] = b"withdraw(bytes32,uint256)";
 const KTON_PRECOMPILE: &str = "0000000000000000000000000000000000000016";
-/// Kton Precompile Contract
+/// Kton Precompile Contract is used to support the exchange of KTON native asset between darwinia and dvm contract
 ///
 /// The contract address: 0000000000000000000000000000000000000016
 pub struct Kton<T: Trait> {
@@ -52,7 +52,16 @@ pub struct Kton<T: Trait> {
 }
 
 impl<T: Trait> Precompile for Kton<T> {
-	// The execute process of Kton precompile
+	/// There are two actions, one is `transfer_and_call` and the other is `withdraw`
+	/// 1. Transfer_and_call Action, triggered by the user sending a transaction to the kton precompile
+	/// 	   special evm address, eg(0000000000000000000000000000000000000016). and transfer the sender's
+	///     kton balance to the deployed wkton contract in dvm. The input contain two parts:
+	///     - p1: The wkton address, it is important to note that if this address is wrong, the balance cannot be recovered.
+	///     - p2: The transfer value
+	/// 2. WithDraw Action, the user sends transaction to wkton contract triggering this kton precompile to be called
+	///     within the wkton contract, and transfer the balance from wkton balanceof to the darwinia network. The input contain two parts:
+	///     - p1: The to account id, a withdraw darwinia public key.
+	///     - p2: The withdraw value
 	fn execute(
 		input: &[u8],
 		target_limit: Option<usize>,
@@ -113,7 +122,7 @@ impl<T: Trait> Precompile for Kton<T> {
 	}
 }
 
-// Action about KTON
+/// Action about KTON precompile
 pub enum Action<T: frame_system::Trait> {
 	/// Transfer from substrate account to wkton contract
 	TransferAndCall(CallData),
@@ -121,7 +130,7 @@ pub enum Action<T: frame_system::Trait> {
 	Withdraw(WithdrawData<T>),
 }
 
-// which action depends on the function selector
+/// which action depends on the function selector
 pub fn which_action<T: frame_system::Trait>(input_data: &[u8]) -> Result<Action<T>, ExitError> {
 	let transfer_and_call_action = &sha3::Keccak256::digest(&TRANSFER_AND_CALL_ACTION)[0..4];
 	let withdraw_action = &sha3::Keccak256::digest(&WITHDRAW_ACTION)[0..4];
@@ -146,14 +155,10 @@ impl CallData {
 		let tokens = ethabi::decode(&[ParamType::Address, ParamType::Uint(256)], &data)
 			.map_err(|_| ExitError::Other("ethabi decoded error".into()))?;
 		match (tokens[0].clone(), tokens[1].clone()) {
-			(Token::Address(eth_wkton_address), Token::Uint(eth_value)) => {
-				let wkton_address = util::e2s_address(eth_wkton_address);
-				let value = util::e2s_u256(eth_value);
-				Ok(CallData {
-					wkton_address,
-					value,
-				})
-			}
+			(Token::Address(eth_wkton_address), Token::Uint(eth_value)) => Ok(CallData {
+				wkton_address: util::e2s_address(eth_wkton_address),
+				value: util::e2s_u256(eth_value),
+			}),
 			_ => Err(ExitError::Other("Invlid call data".into())),
 		}
 	}
