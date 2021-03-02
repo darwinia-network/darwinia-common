@@ -22,10 +22,10 @@ ethereum-primitives = { default-features = false, path = "../../../../primitives
 ethereum-types = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 rlp            = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 [dev-dependencies]
 # darwinia
@@ -33,8 +33,8 @@ array-bytes         = { path = "../../../../primitives/array-bytes" }
 darwinia-balances   = { path = "../../../../frame/balances" }
 ethereum-primitives = { features = ["deserialize"], path = "../../../../primitives/ethereum-primitives" }
 # substrate
-sp-core = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-io   = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-core = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-io   = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 [features]
 default = ["std"]

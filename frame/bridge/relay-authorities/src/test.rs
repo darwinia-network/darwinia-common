@@ -429,11 +429,13 @@ fn authorities_change_signed_event_should_work() {
 
 		assert_eq!(
 			relay_authorities_events(),
-			vec![Event::darwinia_relay_authorities(RawEvent::AuthoritiesChangeSigned(
-				0,
-				vec![signer_of(9), signer_of(1)],
-				vec![(9, DEFAULT_SIGNATURE)]
-			))]
+			vec![Event::darwinia_relay_authorities(
+				RawEvent::AuthoritiesChangeSigned(
+					0,
+					vec![signer_of(9), signer_of(1)],
+					vec![(9, DEFAULT_SIGNATURE)]
+				)
+			)]
 		);
 
 		RelayAuthorities::apply_authorities_change().unwrap();
@@ -458,11 +460,13 @@ fn authorities_change_signed_event_should_work() {
 		// Enough signatures, `2 / 2 > 60%`
 		assert_eq!(
 			relay_authorities_events(),
-			vec![Event::darwinia_relay_authorities(RawEvent::AuthoritiesChangeSigned(
-				1,
-				vec![signer_of(9), signer_of(1), signer_of(2)],
-				vec![(9, DEFAULT_SIGNATURE), (1, DEFAULT_SIGNATURE)]
-			))]
+			vec![Event::darwinia_relay_authorities(
+				RawEvent::AuthoritiesChangeSigned(
+					1,
+					vec![signer_of(9), signer_of(1), signer_of(2)],
+					vec![(9, DEFAULT_SIGNATURE), (1, DEFAULT_SIGNATURE)]
+				)
+			)]
 		);
 	});
 }
