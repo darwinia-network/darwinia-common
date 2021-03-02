@@ -63,7 +63,9 @@ mod tests;
 use serde::Serialize;
 
 // --- github ---
-use merkle_mountain_range::{leaf_index_to_mmr_size, leaf_index_to_pos, MMRStore, Result, MMR};
+use merkle_mountain_range::{
+	leaf_index_to_mmr_size, leaf_index_to_pos, MMRStore, Result as MMRResult, MMR,
+};
 // --- substrate ---
 use codec::{Decode, Encode};
 use frame_support::{debug::error, decl_module, decl_storage};
@@ -199,11 +201,11 @@ impl<T> Default for ModuleMMRStore<T> {
 	}
 }
 impl<T: Config> MMRStore<T::Hash> for ModuleMMRStore<T> {
-	fn get_elem(&self, pos: u64) -> Result<Option<T::Hash>> {
+	fn get_elem(&self, pos: u64) -> MMRResult<Option<T::Hash>> {
 		Ok(<Module<T>>::mmr_node_list(pos))
 	}
 
-	fn append(&mut self, pos: u64, elems: Vec<T::Hash>) -> Result<()> {
+	fn append(&mut self, pos: u64, elems: Vec<T::Hash>) -> MMRResult<()> {
 		let mmr_count = MMRCounter::get();
 		if pos != mmr_count {
 			// Must be append only.

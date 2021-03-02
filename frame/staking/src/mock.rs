@@ -30,7 +30,7 @@ use frame_support::{
 	weights::{constants::RocksDbWeight, Weight},
 	StorageValue,
 };
-use frame_system::mocking::{MockBlock, MockUncheckedExtrinsic};
+use frame_system::mocking::*;
 use sp_core::H256;
 use sp_npos_elections::{reduce, StakedAssignment};
 use sp_runtime::{
@@ -50,8 +50,8 @@ pub(crate) type AccountIndex = u64;
 pub(crate) type BlockNumber = u64;
 pub(crate) type Balance = u128;
 
-type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 type Block = MockBlock<Test>;
+type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 type Extrinsic = TestXt<Call, ()>;
 
 pub(crate) type StakingError = Error<Test>;
@@ -269,8 +269,9 @@ where
 	type OverarchingCall = Call;
 }
 
-frame_support::construct_runtime!(
-	pub enum Test where
+frame_support::construct_runtime! {
+	pub enum Test
+	where
 		Block = Block,
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
@@ -282,7 +283,7 @@ frame_support::construct_runtime!(
 		Staking: darwinia_staking::{Module, Call, Config<T>, Storage, Event<T>, ValidateUnsigned},
 		Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
 	}
-);
+}
 
 pub struct ExtBuilder {
 	validator_pool: bool,

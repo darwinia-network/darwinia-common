@@ -26,10 +26,7 @@ use frame_support::{
 	traits::StorageMapShim,
 	weights::{DispatchInfo, IdentityFee, Weight},
 };
-use frame_system::{
-	mocking::{MockBlock, MockUncheckedExtrinsic},
-	RawOrigin,
-};
+use frame_system::{mocking::*, RawOrigin};
 use pallet_transaction_payment::CurrencyAdapter;
 use sp_core::H256;
 use sp_runtime::{
@@ -42,8 +39,8 @@ use crate::{self as darwinia_balances, *};
 
 type Balance = u64;
 
-type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 type Block = MockBlock<Test>;
+type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 
 darwinia_support::impl_test_account_data! {}
 

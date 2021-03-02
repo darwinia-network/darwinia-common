@@ -21,25 +21,20 @@
 #![cfg(test)]
 
 // --- crates ---
-use codec::{Decode, Encode};
+use codec::Encode;
 // --- substrate ---
-use frame_support::impl_outer_origin;
+use frame_system::mocking::*;
 use sp_core::H256;
-use sp_runtime::{testing::Header, traits::IdentityLookup, DigestItem};
+use sp_runtime::{
+	testing::Header,
+	traits::{BlakeTwo256, IdentityLookup},
+	DigestItem,
+};
 // --- darwinia ---
-use crate::*;
+use crate::{self as darwinia_header_mmr, *};
 
-impl_outer_origin! {
-	pub enum Origin for Test where system = frame_system {}
-}
-
-pub type System = frame_system::Module<Test>;
-pub type HeaderMMR = Module<Test>;
-
-// Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
-#[derive(Clone, PartialEq, Eq, Debug, Decode, Encode)]
-pub struct Test;
-impl Config for Test {}
+type Block = MockBlock<Test>;
+type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 
 impl frame_system::Config for Test {
 	type BaseCallFilter = ();
@@ -47,23 +42,37 @@ impl frame_system::Config for Test {
 	type BlockLength = ();
 	type DbWeight = ();
 	type Origin = Origin;
-	type Call = ();
+	type Call = Call;
 	type Index = u64;
 	type BlockNumber = u64;
 	type Hash = H256;
-	type Hashing = sp_runtime::traits::BlakeTwo256;
+	type Hashing = BlakeTwo256;
 	type AccountId = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = ();
 	type BlockHashCount = ();
 	type Version = ();
-	type PalletInfo = ();
+	type PalletInfo = PalletInfo;
 	type AccountData = ();
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
 	type SS58Prefix = ();
+}
+
+impl Config for Test {}
+
+frame_support::construct_runtime! {
+	pub enum Test
+	where
+		Block = Block,
+		NodeBlock = Block,
+		UncheckedExtrinsic = UncheckedExtrinsic,
+	{
+		System: frame_system::{Module, Call, Storage, Config},
+		HeaderMMR: darwinia_header_mmr::{Module, Call, Storage},
+	}
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {

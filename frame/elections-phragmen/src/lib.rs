@@ -1199,7 +1199,7 @@ mod tests {
 	pub type Block = sp_runtime::generic::Block<Header, UncheckedExtrinsic>;
 	pub type UncheckedExtrinsic = sp_runtime::generic::UncheckedExtrinsic<u32, u64, Call, ()>;
 
-	frame_support::construct_runtime!(
+	frame_support::construct_runtime! {
 		pub enum Test where
 			Block = Block,
 			NodeBlock = Block,
@@ -1209,7 +1209,7 @@ mod tests {
 			Balances: darwinia_balances::<Instance0>::{Module, Call, Event<T>, Config<T>},
 			Elections: elections_phragmen::{Module, Call, Event<T>, Config<T>},
 		}
-	);
+	}
 
 	pub struct ExtBuilder {
 		balance_factor: u64,

@@ -396,10 +396,7 @@ mod tests {
 	use crate::{self as darwinia_vesting, *};
 
 	use frame_support::{assert_noop, assert_ok, parameter_types};
-	use frame_system::{
-		mocking::{MockBlock, MockUncheckedExtrinsic},
-		RawOrigin,
-	};
+	use frame_system::{mocking::*, RawOrigin};
 	use sp_core::H256;
 	use sp_runtime::{
 		testing::Header,
@@ -408,8 +405,8 @@ mod tests {
 
 	type Balance = u64;
 
-	type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 	type Block = MockBlock<Test>;
+	type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 
 	darwinia_support::impl_test_account_data! {}
 
@@ -465,8 +462,9 @@ mod tests {
 		type WeightInfo = ();
 	}
 
-	frame_support::construct_runtime!(
-		pub enum Test where
+	frame_support::construct_runtime! {
+		pub enum Test
+		where
 			Block = Block,
 			NodeBlock = Block,
 			UncheckedExtrinsic = UncheckedExtrinsic,
@@ -475,7 +473,7 @@ mod tests {
 			Ring: darwinia_balances::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
 			Vesting: darwinia_vesting::{Module, Call, Storage, Event<T>, Config<T>},
 		}
-	);
+	}
 
 	pub struct ExtBuilder {
 		existential_deposit: u64,

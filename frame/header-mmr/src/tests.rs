@@ -23,7 +23,6 @@
 // --- substrate ---
 use frame_support::traits::OnFinalize;
 use sp_runtime::testing::{Digest, H256};
-
 // --- darwinia ---
 use crate::{mock::*, *};
 use array_bytes::fixed_hex_bytes_unchecked as hh;
