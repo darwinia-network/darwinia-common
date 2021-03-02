@@ -582,48 +582,28 @@ mod tests {
 	use codec::Encode;
 	// --- substrate ---
 	use frame_support::{
-		assert_err, assert_noop, assert_ok, dispatch::DispatchError::BadOrigin, impl_outer_origin,
+		assert_err, assert_noop, assert_ok, dispatch::DispatchError::BadOrigin,
 		ord_parameter_types, parameter_types,
 	};
+	use frame_system::mocking::*;
 	use sp_core::H256;
 	use sp_runtime::{
 		testing::Header,
 		traits::{BlakeTwo256, IdentityLookup},
 	};
 	// --- darwinia ---
-	use crate::{secp_utils::*, *};
+	use crate::{self as darwinia_claims, secp_utils::*, *};
 	use array_bytes::fixed_hex_bytes_unchecked;
 
 	type Balance = u64;
 
-	type System = frame_system::Module<Test>;
-	type Claims = Module<Test>;
+	type Block = MockBlock<Test>;
+	type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 
 	const ETHEREUM_SIGNED_MESSAGE: &'static [u8] = b"\x19Ethereum Signed Message:\n";
 	const TRON_SIGNED_MESSAGE: &'static [u8] = b"\x19TRON Signed Message:\n";
 
-	impl_outer_origin! {
-		pub enum Origin for Test {}
-	}
-
-	darwinia_support::impl_test_account_data! { deprecated }
-
-	#[derive(Clone, Eq, PartialEq)]
-	pub struct Test;
-	parameter_types! {
-		pub const ClaimsModuleId: ModuleId = ModuleId(*b"da/claim");
-		pub Prefix: &'static [u8] = b"Pay RUSTs to the TEST account:";
-	}
-	ord_parameter_types! {
-		pub const Six: u64 = 6;
-	}
-	impl Config for Test {
-		type Event = ();
-		type ModuleId = ClaimsModuleId;
-		type Prefix = Prefix;
-		type RingCurrency = Ring;
-		type MoveClaimOrigin = frame_system::EnsureSignedBy<Six, u64>;
-	}
+	darwinia_support::impl_test_account_data! {}
 
 	impl frame_system::Config for Test {
 		type BaseCallFilter = ();
@@ -631,20 +611,18 @@ mod tests {
 		type BlockLength = ();
 		type DbWeight = ();
 		type Origin = Origin;
-		type Call = ();
+		type Call = Call;
 		type Index = u64;
 		type BlockNumber = u64;
 		type Hash = H256;
 		type Hashing = BlakeTwo256;
-		// The testing primitives are very useful for avoiding having to work with signatures
-		// or public keys. `u64` is used as the `AccountId` and no `Signature`s are required.
 		type AccountId = u64;
 		type Lookup = IdentityLookup<Self::AccountId>;
 		type Header = Header;
 		type Event = ();
 		type BlockHashCount = ();
 		type Version = ();
-		type PalletInfo = ();
+		type PalletInfo = PalletInfo;
 		type AccountData = AccountData<Balance>;
 		type OnNewAccount = ();
 		type OnKilledAccount = ();
@@ -667,6 +645,34 @@ mod tests {
 		type OtherCurrencies = ();
 	}
 
+	parameter_types! {
+		pub const ClaimsModuleId: ModuleId = ModuleId(*b"da/claim");
+		pub Prefix: &'static [u8] = b"Pay RUSTs to the TEST account:";
+	}
+	ord_parameter_types! {
+		pub const Six: u64 = 6;
+	}
+	impl Config for Test {
+		type Event = ();
+		type ModuleId = ClaimsModuleId;
+		type Prefix = Prefix;
+		type RingCurrency = Ring;
+		type MoveClaimOrigin = frame_system::EnsureSignedBy<Six, u64>;
+	}
+
+	frame_support::construct_runtime! {
+		pub enum Test
+		where
+			Block = Block,
+			NodeBlock = Block,
+			UncheckedExtrinsic = UncheckedExtrinsic
+		{
+			System: frame_system::{Module, Call, Config, Storage},
+			Ring: darwinia_balances::<Instance0>::{Module, Call, Storage, Config<T>},
+			Claims: darwinia_claims::{Module, Call, Storage, Config}
+		}
+	}
+
 	fn alice() -> secp256k1::SecretKey {
 		secp256k1::SecretKey::parse(&keccak_256(b"Alice")).unwrap()
 	}
@@ -684,8 +690,10 @@ mod tests {
 			.build_storage::<Test>()
 			.unwrap();
 		// We use default for brevity, but you can configure as desired if needed.
-		RingConfig::default().assimilate_storage(&mut t).unwrap();
-		GenesisConfig {
+		<darwinia_balances::GenesisConfig<Test, RingInstance>>::default()
+			.assimilate_storage(&mut t)
+			.unwrap();
+		darwinia_claims::GenesisConfig {
 			claims_list: ClaimsList {
 				dot: vec![Account {
 					address: EthereumAddress(addr(&alice())),
@@ -1013,7 +1021,7 @@ mod tests {
 			assert_eq!(
 				Claims::validate_unsigned(
 					source,
-					&Call::claim(
+					&darwinia_claims::Call::claim(
 						1,
 						OtherSignature::Eth(eth_sig::<Test>(
 							&alice(),
@@ -1033,14 +1041,14 @@ mod tests {
 			assert_eq!(
 				Claims::validate_unsigned(
 					source,
-					&Call::claim(0, OtherSignature::Eth(EcdsaSignature([0; 65])))
+					&darwinia_claims::Call::claim(0, OtherSignature::Eth(EcdsaSignature([0; 65])))
 				),
 				InvalidTransaction::Custom(ValidityError::InvalidSignature as _).into(),
 			);
 			assert_eq!(
 				Claims::validate_unsigned(
 					source,
-					&Call::claim(
+					&darwinia_claims::Call::claim(
 						1,
 						OtherSignature::Eth(eth_sig::<Test>(
 							&carol(),
@@ -1054,7 +1062,7 @@ mod tests {
 			assert_eq!(
 				Claims::validate_unsigned(
 					source,
-					&Call::claim(
+					&darwinia_claims::Call::claim(
 						0,
 						OtherSignature::Eth(eth_sig::<Test>(
 							&carol(),
