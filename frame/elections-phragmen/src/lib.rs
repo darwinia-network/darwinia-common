@@ -1068,7 +1068,7 @@ mod tests {
 	use substrate_test_utils::assert_eq_uvec;
 
 	type Balance = u64;
-	darwinia_support::impl_test_account_data! {}
+	darwinia_support::impl_test_account_data! { deprecated }
 	parameter_types! {
 		pub const ExistentialDeposit: Balance = 1;
 		pub const MaxLocks: u32 = 1024;

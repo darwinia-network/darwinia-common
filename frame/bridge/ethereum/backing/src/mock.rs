@@ -63,7 +63,7 @@ macro_rules! decl_tests {
 			}
 		}
 
-		darwinia_support::impl_test_account_data! {}
+		darwinia_support::impl_test_account_data! { deprecated }
 
 		#[derive(Clone, PartialEq, Eq, Debug)]
 		pub struct Test;

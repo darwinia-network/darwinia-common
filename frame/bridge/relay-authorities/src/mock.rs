@@ -64,7 +64,7 @@ impl_outer_event! {
 	}
 }
 
-darwinia_support::impl_test_account_data! {}
+darwinia_support::impl_test_account_data! { deprecated }
 
 #[derive(Clone, Eq, PartialEq)]
 pub struct Test;

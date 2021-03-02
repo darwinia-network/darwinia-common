@@ -23,7 +23,7 @@ impl_outer_dispatch! {
 	}
 }
 
-darwinia_support::impl_test_account_data! {}
+darwinia_support::impl_test_account_data! { deprecated }
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct Test;

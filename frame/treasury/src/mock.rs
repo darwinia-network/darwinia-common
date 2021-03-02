@@ -53,7 +53,7 @@ impl_outer_origin! {
 	pub enum Origin for Test where system = frame_system {}
 }
 
-darwinia_support::impl_test_account_data! {}
+darwinia_support::impl_test_account_data! { deprecated }
 
 #[derive(Clone, Eq, PartialEq)]
 pub struct Test;

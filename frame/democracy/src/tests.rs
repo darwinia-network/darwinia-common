@@ -78,7 +78,7 @@ impl_outer_event! {
 	}
 }
 
-darwinia_support::impl_test_account_data! {}
+darwinia_support::impl_test_account_data! { deprecated }
 
 // Test that a fitlered call can be dispatched.
 pub struct BaseFilter;

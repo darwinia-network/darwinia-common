@@ -50,7 +50,7 @@ impl_outer_dispatch! {
 	}
 }
 
-darwinia_support::impl_test_account_data! {}
+darwinia_support::impl_test_account_data! { deprecated }
 
 // Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
 #[derive(Clone, PartialEq, Eq, Debug)]
