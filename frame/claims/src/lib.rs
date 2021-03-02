@@ -667,7 +667,7 @@ mod tests {
 			NodeBlock = Block,
 			UncheckedExtrinsic = UncheckedExtrinsic
 		{
-			System: frame_system::{Module, Call, Config, Storage},
+			System: frame_system::{Module, Call, Storage, Config},
 			Ring: darwinia_balances::<Instance0>::{Module, Call, Storage, Config<T>},
 			Claims: darwinia_claims::{Module, Call, Storage, Config}
 		}

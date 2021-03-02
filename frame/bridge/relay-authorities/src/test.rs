@@ -403,7 +403,7 @@ fn mmr_root_signed_event_should_work() {
 		));
 		assert_eq!(
 			relay_authorities_events(),
-			vec![Event::relay_authorities(RawEvent::MMRRootSigned(
+			vec![Event::darwinia_relay_authorities(RawEvent::MMRRootSigned(
 				10,
 				DEFAULT_MMR_ROOT,
 				vec![(9, DEFAULT_SIGNATURE), (1, DEFAULT_SIGNATURE)]
@@ -429,7 +429,7 @@ fn authorities_change_signed_event_should_work() {
 
 		assert_eq!(
 			relay_authorities_events(),
-			vec![Event::relay_authorities(RawEvent::AuthoritiesChangeSigned(
+			vec![Event::darwinia_relay_authorities(RawEvent::AuthoritiesChangeSigned(
 				0,
 				vec![signer_of(9), signer_of(1)],
 				vec![(9, DEFAULT_SIGNATURE)]
@@ -458,7 +458,7 @@ fn authorities_change_signed_event_should_work() {
 		// Enough signatures, `2 / 2 > 60%`
 		assert_eq!(
 			relay_authorities_events(),
-			vec![Event::relay_authorities(RawEvent::AuthoritiesChangeSigned(
+			vec![Event::darwinia_relay_authorities(RawEvent::AuthoritiesChangeSigned(
 				1,
 				vec![signer_of(9), signer_of(1), signer_of(2)],
 				vec![(9, DEFAULT_SIGNATURE), (1, DEFAULT_SIGNATURE)]
@@ -730,9 +730,9 @@ fn slash_should_work() {
 		assert_eq!(
 			relay_authorities_events(),
 			vec![
-				Event::relay_authorities(RawEvent::SlashOnMisbehavior(9, 1)),
-				Event::relay_authorities(RawEvent::SlashOnMisbehavior(1, 50)),
-				Event::relay_authorities(RawEvent::SlashOnMisbehavior(2, 60)),
+				Event::darwinia_relay_authorities(RawEvent::SlashOnMisbehavior(9, 1)),
+				Event::darwinia_relay_authorities(RawEvent::SlashOnMisbehavior(1, 50)),
+				Event::darwinia_relay_authorities(RawEvent::SlashOnMisbehavior(2, 60)),
 			]
 		);
 		assert!(Ring::locks(9).is_empty());
@@ -750,9 +750,9 @@ fn slash_should_work() {
 			assert_eq!(
 				relay_authorities_events(),
 				vec![
-					Event::relay_authorities(RawEvent::SlashOnMisbehavior(9, 0)),
-					Event::relay_authorities(RawEvent::SlashOnMisbehavior(1, 0)),
-					Event::relay_authorities(RawEvent::SlashOnMisbehavior(2, 0)),
+					Event::darwinia_relay_authorities(RawEvent::SlashOnMisbehavior(9, 0)),
+					Event::darwinia_relay_authorities(RawEvent::SlashOnMisbehavior(1, 0)),
+					Event::darwinia_relay_authorities(RawEvent::SlashOnMisbehavior(2, 0)),
 				]
 			);
 			assert!(Ring::locks(9).is_empty());

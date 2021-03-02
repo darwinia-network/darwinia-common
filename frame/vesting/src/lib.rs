@@ -469,7 +469,7 @@ mod tests {
 			NodeBlock = Block,
 			UncheckedExtrinsic = UncheckedExtrinsic,
 		{
-			System: frame_system::{Module, Call, Config, Storage, Event<T>},
+			System: frame_system::{Module, Call, Storage, Config, Event<T>},
 			Ring: darwinia_balances::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
 			Vesting: darwinia_vesting::{Module, Call, Storage, Event<T>, Config<T>},
 		}
