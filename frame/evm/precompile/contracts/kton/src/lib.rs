@@ -21,20 +21,23 @@
 mod util;
 
 use codec::Decode;
-use frame_support::traits::{Currency, ExistenceRequirement};
+use core::str::FromStr;
+use ethabi::{Function, Param, ParamType, Token};
+use evm::{Context, ExitError, ExitSucceed};
+use frame_support::{
+	ensure,
+	traits::{Currency, ExistenceRequirement},
+};
 use sha3::Digest;
 use sp_core::{H160, U256};
 use sp_runtime::traits::UniqueSaturatedInto;
+use sp_std::borrow::ToOwned;
 use sp_std::marker::PhantomData;
 use sp_std::prelude::*;
 use sp_std::vec::Vec;
 
-use core::str::FromStr;
 use darwinia_evm::{AddressMapping, Runner, Trait};
 use darwinia_evm_primitives::Precompile;
-use ethabi::{Function, Param, ParamType, Token};
-use evm::{Context, ExitError, ExitSucceed};
-use sp_std::borrow::ToOwned;
 
 type AccountId<T> = <T as frame_system::Trait>::AccountId;
 
@@ -64,11 +67,16 @@ impl<T: Trait> Precompile for Kton<T> {
 			Action::TransferAndCall(tacd) => {
 				// 1. Transfer kton from sender to kton erc20 contract
 				let wkton_account_id = T::AddressMapping::into_account_id(tacd.wkton_address);
-				let transfer_value = tacd.value.saturating_mul(helper);
+				let transfer_value = tacd.value.saturating_mul(helper).low_u128();
+				ensure!(
+					T::KtonCurrency::free_balance(&con_caller)
+						>= transfer_value.unique_saturated_into(),
+					ExitError::OutOfFund
+				);
 				T::KtonCurrency::transfer(
 					&con_caller,
 					&wkton_account_id,
-					transfer_value.low_u128().unique_saturated_into(),
+					transfer_value.unique_saturated_into(),
 					ExistenceRequirement::AllowDeath,
 				)
 				.map_err(|_| ExitError::Other("Transfer in Kton precompile failed".into()))?;
