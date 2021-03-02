@@ -64,7 +64,6 @@ darwinia-std  = [
 	"darwinia-balances/std",
 	"darwinia-evm/std",
 	"darwinia-evm-primitives/std",
-	"darwinia-evm-precompile/std",
 	"darwinia-support/std",
 	"dvm-consensus-primitives/std",
 	"dvm-rpc-runtime-api/std",

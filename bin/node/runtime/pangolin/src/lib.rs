@@ -985,6 +985,11 @@ impl darwinia_ethereum_backing::Trait for Runtime {
 	type WeightInfo = ();
 }
 
+impl darwinia_ethereum_issuing::Trait for Runtime {
+	type Event = Event;
+    type SysdvmCaller = Ethereum;
+}
+
 type EnsureRootOrHalfTechnicalComittee = EnsureOneOf<
 	AccountId,
 	EnsureRoot<AccountId>,
@@ -1185,6 +1190,7 @@ construct_runtime!(
 
 		EVM: darwinia_evm::{Module, Config, Call, Storage, Event<T>} = 34,
 		Ethereum: dvm_ethereum::{Module, Call, Storage, Event, Config, ValidateUnsigned} = 35,
+		EthereumIssuing: darwinia_ethereum_issuing::{Module, Call, Storage, Event<T>} = 36,
 	}
 );
 
