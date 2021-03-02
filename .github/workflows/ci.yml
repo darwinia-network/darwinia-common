@@ -44,9 +44,9 @@ jobs:
 
       - name: Build and Run node
         run: |
-            cargo b
-            cargo r -- --dev --tmp &
-            sleep 60
+          cargo build
+          ./target/release/drml --dev --tmp &
+          sleep 60
 
       - name: Set up node env
         uses: actions/setup-node@v1
