@@ -82,7 +82,7 @@ impl<T: Trait> Precompile for Kton<T> {
 				.map_err(|_| ExitError::Other("Transfer in Kton precompile failed".into()))?;
 
 				// 2. Call wkton sol contract deposit
-				let raw_input = make_call_data(tacd.to_address, tacd.value)?;
+				let raw_input = make_call_data(context.caller, tacd.value)?;
 				let precompile_address = H160::from_str(KTON_PRECOMPILE).unwrap();
 				T::Runner::call(
 					precompile_address,
@@ -138,29 +138,19 @@ pub fn which_action<T: frame_system::Trait>(input_data: &[u8]) -> Result<Action<
 #[derive(Debug, PartialEq, Eq)]
 pub struct CallData {
 	wkton_address: H160,
-	to_address: H160,
 	value: U256,
 }
 
 impl CallData {
 	pub fn decode(data: &[u8]) -> Result<Self, ExitError> {
-		let tokens = ethabi::decode(
-			&[ParamType::Address, ParamType::Address, ParamType::Uint(256)],
-			&data,
-		)
-		.map_err(|_| ExitError::Other("ethabi decoded error".into()))?;
-		match (tokens[0].clone(), tokens[1].clone(), tokens[2].clone()) {
-			(
-				Token::Address(eth_wkton_address),
-				Token::Address(eth_to_address),
-				Token::Uint(eth_value),
-			) => {
+		let tokens = ethabi::decode(&[ParamType::Address, ParamType::Uint(256)], &data)
+			.map_err(|_| ExitError::Other("ethabi decoded error".into()))?;
+		match (tokens[0].clone(), tokens[1].clone()) {
+			(Token::Address(eth_wkton_address), Token::Uint(eth_value)) => {
 				let wkton_address = util::e2s_address(eth_wkton_address);
-				let to_address = util::e2s_address(eth_to_address);
 				let value = util::e2s_u256(eth_value);
 				Ok(CallData {
 					wkton_address,
-					to_address,
 					value,
 				})
 			}
