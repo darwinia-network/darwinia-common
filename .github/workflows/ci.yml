@@ -45,7 +45,7 @@ jobs:
       - name: Build and Run node
         run: |
           cargo b
-          ./target/debug/drml --dev --tmp &
+          cargo r -- --dev --tmp &
           sleep 60
 
       - name: Set up node env
