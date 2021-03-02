@@ -191,7 +191,7 @@ pub struct AccountInfo {
 }
 
 fn address_build(seed: u8) -> AccountInfo {
-	let private_key = H256::from_slice(&[(seed + 1) as u8; 32]); //H256::from_lowdarwinia_balances::GenesisConfig::<Test, RingInstance> + 1) as u64);
+	let private_key = H256::from_slice(&[(seed + 1) as u8; 32]); //H256::from_low + 1) as u64);
 	let secret_key = secp256k1::SecretKey::parse_slice(&private_key[..]).unwrap();
 	let public_key = &secp256k1::PublicKey::from_secret_key(&secret_key).serialize()[1..65];
 	let address = H160::from(H256::from_slice(&Keccak256::digest(public_key)[..]));
