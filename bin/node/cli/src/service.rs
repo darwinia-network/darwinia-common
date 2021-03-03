@@ -218,6 +218,7 @@ where
 	let select_chain = LongestChain::new(backend.clone());
 	let transaction_pool = BasicPool::new_full(
 		config.transaction_pool.clone(),
+		config.role.is_authority().into(),
 		config.prometheus_registry(),
 		task_manager.spawn_handle(),
 		client.clone(),
