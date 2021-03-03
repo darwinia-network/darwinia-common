@@ -219,11 +219,11 @@ decl_module! {
 			Ok(Some(T::GasWeightMapping::gas_to_weight(used_gas.unique_saturated_into())).into())
 		}
 
-		fn on_finalize(n: T::BlockNumber) {
+		fn on_finalize(_block_number: T::BlockNumber) {
 			<Module<T>>::store_block();
 		}
 
-		fn on_initialize(n: T::BlockNumber) -> Weight {
+		fn on_initialize(_block_number: T::BlockNumber) -> Weight {
 			Pending::kill();
 			0
 		}
