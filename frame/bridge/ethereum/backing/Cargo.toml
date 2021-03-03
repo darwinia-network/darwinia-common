@@ -22,11 +22,11 @@ ethereum-primitives       = { default-features = false, path = "../../../../prim
 # github
 ethabi = { default-features = false, git = "https://github.com/darwinia-network/ethabi.git", branch = "with_no_std" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
 
 [dev-dependencies]
 # darwinia
@@ -40,10 +40,10 @@ ethereum-primitives            = { features = ["deserialize"], path = "../../../
 # github
 rlp = { package = "rlp", git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
-pallet-session   = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-pallet-timestamp = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-core          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-staking       = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-session   = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+pallet-timestamp = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-core          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-staking       = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
 
 [features]
 default = ["std"]

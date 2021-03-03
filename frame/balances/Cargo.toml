@@ -17,16 +17,16 @@ serde = { version = "1.0.123", optional = true }
 darwinia-balances-rpc-runtime-api = { default-features = false, path = "./rpc/runtime-api" }
 darwinia-support                  = { default-features = false, path = "../support" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
 
 [dev-dependencies]
 # substrate
-pallet-transaction-payment = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-core                    = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-io                      = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-transaction-payment = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-core                    = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-io                      = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
 
 [features]
 default = ["std"]

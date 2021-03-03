@@ -15,15 +15,15 @@ codec      = { package = "parity-scale-codec", version = "2.0.0", default-featur
 serde      = { version = "1.0.123", optional = true }
 serde_json = { version = "1.0.62", optional = true }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
 # darwinia
 darwinia-support = { optional = true, path = "../../../support" }
 
 [dev-dependencies]
 # substrate
-sp-io = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-io = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
 # darwinia
 darwinia-balances = { path = "../../../balances" }
 darwinia-support  = { path = "../../../support" }
