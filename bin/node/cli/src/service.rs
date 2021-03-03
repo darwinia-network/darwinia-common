@@ -43,7 +43,7 @@ use sc_service::{
 	BuildNetworkParams, Configuration, Error as ServiceError, NoopRpcExtensionBuilder,
 	PartialComponents, RpcHandlers, SpawnTasksParams, TaskManager,
 };
-use sc_telemetry::{TelemetryConnectionNotifier, TelemetrySpan};
+use sc_telemetry::TelemetryConnectionNotifier;
 use sc_transaction_pool::{BasicPool, FullPool};
 use sp_api::ConstructRuntimeApi;
 use sp_consensus::{
@@ -192,7 +192,6 @@ fn new_partial<RuntimeApi, Executor>(
 				BabeLink<Block>,
 			),
 			GrandpaSharedVoterState,
-			Option<TelemetrySpan>,
 		),
 	>,
 	ServiceError,
@@ -213,7 +212,7 @@ where
 	set_prometheus_registry(config)?;
 
 	let inherent_data_providers = InherentDataProviders::new();
-	let (client, backend, keystore_container, task_manager, telemetry_span) =
+	let (client, backend, keystore_container, task_manager) =
 		sc_service::new_full_parts::<Block, RuntimeApi, Executor>(&config)?;
 	let client = Arc::new(client);
 	let select_chain = LongestChain::new(backend.clone());
@@ -305,12 +304,7 @@ where
 		import_queue,
 		transaction_pool,
 		inherent_data_providers,
-		other: (
-			rpc_extensions_builder,
-			import_setup,
-			rpc_setup,
-			telemetry_span,
-		),
+		other: (rpc_extensions_builder, import_setup, rpc_setup),
 	})
 }
 
@@ -356,7 +350,7 @@ where
 		import_queue,
 		transaction_pool,
 		inherent_data_providers,
-		other: (rpc_extensions_builder, import_setup, rpc_setup, telemetry_span),
+		other: (rpc_extensions_builder, import_setup, rpc_setup),
 	} = new_partial::<RuntimeApi, Executor>(&mut config)?;
 
 	if let Some(url) = &config.keystore_remote {
@@ -436,7 +430,6 @@ where
 			task_manager: &mut task_manager,
 			on_demand: None,
 			remote_blockchain: None,
-			telemetry_span,
 			network_status_sinks,
 			system_rpc_tx,
 		})?;
@@ -557,7 +550,7 @@ where
 {
 	set_prometheus_registry(&mut config)?;
 
-	let (client, backend, keystore_container, mut task_manager, on_demand, telemetry_span) =
+	let (client, backend, keystore_container, mut task_manager, on_demand) =
 		sc_service::new_light_parts::<Block, RuntimeApi, Executor>(&config)?;
 
 	config
@@ -640,7 +633,6 @@ where
 			network,
 			network_status_sinks,
 			system_rpc_tx,
-			telemetry_span,
 		})?;
 
 	network_starter.start_network();
