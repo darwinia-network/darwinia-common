@@ -108,7 +108,7 @@ decl_module! {
 	where
 		origin: T::Origin
 	{
-		fn on_finalize(block_number: T::BlockNumber) {
+		fn on_finalize(_block_number: T::BlockNumber) {
 			let store = <ModuleMMRStore<T>>::default();
 			let parent_hash = <frame_system::Module<T>>::parent_hash();
 			let mut mmr = <MMR<_, MMRMerge<T>, _>>::new(MMRCounter::get(), store);
