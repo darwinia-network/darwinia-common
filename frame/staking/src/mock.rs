@@ -26,7 +26,7 @@ use std::{cell::RefCell, collections::HashSet};
 use frame_support::{
 	assert_ok, parameter_types,
 	storage::IterableStorageMap,
-	traits::{Currency, FindAuthor, Get, OnFinalize, OnInitialize},
+	traits::{Currency, FindAuthor, Get, OnFinalize, OnInitialize, OneSessionHandler},
 	weights::{constants::RocksDbWeight, Weight},
 	StorageValue,
 };
@@ -71,7 +71,7 @@ darwinia_support::impl_test_account_data! {}
 
 /// Another session handler struct to test on_disabled.
 pub struct OtherSessionHandler;
-impl pallet_session::OneSessionHandler<AccountId> for OtherSessionHandler {
+impl OneSessionHandler<AccountId> for OtherSessionHandler {
 	type Key = UintAuthorityId;
 
 	fn on_genesis_session<'a, I: 'a>(_: I)
