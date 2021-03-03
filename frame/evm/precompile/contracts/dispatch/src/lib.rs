@@ -30,21 +30,21 @@ use frame_support::{
 	weights::{DispatchClass, Pays},
 };
 
-pub struct Dispatch<T: darwinia_evm::Trait> {
+pub struct Dispatch<T: darwinia_evm::Config> {
 	_marker: PhantomData<T>,
 }
 
 impl<T> Precompile for Dispatch<T>
 where
-	T: darwinia_evm::Trait,
+	T: darwinia_evm::Config,
 	T::Call: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Decode,
 	<T::Call as Dispatchable>::Origin: From<Option<T::AccountId>>,
 {
 	fn execute(
 		input: &[u8],
-		target_gas: Option<usize>,
+		target_gas: Option<u64>,
 		context: &Context,
-	) -> core::result::Result<(ExitSucceed, Vec<u8>, usize), ExitError> {
+	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
 		let call = T::Call::decode(&mut &input[..])
 			.map_err(|_| ExitError::Other("decode failed".into()))?;
 		let info = call.get_dispatch_info();

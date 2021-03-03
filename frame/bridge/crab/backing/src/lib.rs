@@ -10,7 +10,7 @@
 //
 // Darwinia is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -20,18 +20,22 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod weights;
+// --- darwinia ---
+pub use weights::WeightInfo;
+
 mod types {
 	// --- darwinia ---
 	#[cfg(feature = "std")]
 	use crate::*;
 
-	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
+	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 
 	#[cfg(feature = "std")]
 	pub type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
 
 	#[cfg(feature = "std")]
-	type RingCurrency<T> = <T as Trait>::RingCurrency;
+	type RingCurrency<T> = <T as Config>::RingCurrency;
 }
 
 // --- substrate ---
@@ -43,7 +47,7 @@ use sp_runtime::{traits::AccountIdConversion, ModuleId};
 // --- darwinia ---
 use types::*;
 
-pub trait Trait: frame_system::Trait {
+pub trait Config: frame_system::Config {
 	type ModuleId: Get<ModuleId>;
 
 	type RingCurrency: Currency<AccountId<Self>>;
@@ -51,11 +55,8 @@ pub trait Trait: frame_system::Trait {
 	type WeightInfo: WeightInfo;
 }
 
-pub trait WeightInfo {}
-impl WeightInfo for () {}
-
 decl_storage! {
-	trait Store for Module<T: Trait> as DarwiniaCrabBacking {}
+	trait Store for Module<T: Config> as DarwiniaCrabBacking {}
 
 	add_extra_genesis {
 		config(backed_ring): RingBalance<T>;
@@ -69,7 +70,7 @@ decl_storage! {
 }
 
 decl_module! {
-	pub struct Module<T: Trait> for enum Call
+	pub struct Module<T: Config> for enum Call
 	where
 		origin: T::Origin
 	{
@@ -77,7 +78,7 @@ decl_module! {
 	}
 }
 
-impl<T: Trait> Module<T> {
+impl<T: Config> Module<T> {
 	pub fn account_id() -> T::AccountId {
 		T::ModuleId::get().into_account()
 	}

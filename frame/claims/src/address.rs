@@ -10,7 +10,7 @@
 //
 // Darwinia is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -48,12 +48,20 @@ macro_rules! impl_address {
 				D: Deserializer<'de>,
 			{
 				let base_string = String::deserialize(deserializer)?;
-				let offset = if base_string.starts_with($prefix) { 2 } else { 0 };
+				let offset = if base_string.starts_with($prefix) {
+					2
+				} else {
+					0
+				};
 				let s = &base_string[offset..];
 				if s.len() != 40 {
-					Err(serde::de::Error::custom(
-						concat!("Bad length of ", $sname, " address (should be 42 including '", $prefix, "')"),
-					))?;
+					Err(serde::de::Error::custom(concat!(
+						"Bad length of ",
+						$sname,
+						" address (should be 42 including '",
+						$prefix,
+						"')"
+					)))?;
 				}
 
 				Ok($name(fixed_hex_bytes_unchecked!(s, 20)))

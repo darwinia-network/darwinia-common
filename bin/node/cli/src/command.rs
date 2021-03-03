@@ -10,7 +10,7 @@
 //
 // Darwinia is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -115,10 +115,13 @@ pub fn run() -> sc_cli::Result<()> {
 
 			runner.run_node_until_exit(|config| async move {
 				match config.role {
-					Role::Light => service::drml_new_light(config),
+					Role::Light => {
+						service::drml_new_light(config).map(|(task_manager, _, _)| task_manager)
+					}
 					_ => service::drml_new_full(config, authority_discovery_disabled)
-						.map(|(components, _)| components),
+						.map(|(task_manager, _, _)| task_manager),
 				}
+				.map_err(sc_cli::Error::Service)
 			})
 		}
 		Some(Subcommand::BuildSpec(cmd)) => {
@@ -184,7 +187,7 @@ pub fn run() -> sc_cli::Result<()> {
 				Ok((cmd.run(client, backend), task_manager))
 			})
 		}
-		Some(Subcommand::Key(cmd)) => cmd.run(),
+		Some(Subcommand::Key(cmd)) => cmd.run(&cli),
 		Some(Subcommand::Sign(cmd)) => cmd.run(),
 		Some(Subcommand::Verify(cmd)) => cmd.run(),
 		Some(Subcommand::Vanity(cmd)) => cmd.run(),

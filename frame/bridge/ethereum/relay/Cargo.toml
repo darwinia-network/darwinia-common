@@ -13,9 +13,9 @@ version     = "1.3.0"
 [dependencies]
 # crates
 blake2-rfc = { version = "0.2.18", default-features = false }
-codec      = { package = "parity-scale-codec", version = "1.3.5", default-features = false }
-serde      = { version = "1.0.118", optional = true }
-serde_json = { version = "1.0.61", optional = true }
+codec      = { package = "parity-scale-codec", version = "1.3.6", default-features = false }
+serde      = { version = "1.0.123", optional = true }
+serde_json = { version = "1.0.62", optional = true }
 # darwinia
 array-bytes               = { default-features = false, path = "../../../../primitives/array-bytes" }
 darwinia-relay-primitives = { default-features = false, path = "../../../../primitives/relay" }

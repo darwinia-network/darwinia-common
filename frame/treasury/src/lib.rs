@@ -10,7 +10,7 @@
 //
 // Darwinia is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -21,7 +21,7 @@
 //! The Treasury module provides a "pot" of funds that can be managed by stakeholders in the
 //! system and a structure for making spending proposals from this pot.
 //!
-//! - [`treasury::Trait`](./trait.Trait.html)
+//! - [`treasury::Config`](./trait.Config.html)
 //! - [`Call`](./enum.Call.html)
 //!
 //! ## Overview
@@ -39,7 +39,7 @@
 //! given without first having a pre-determined stakeholder group come to consensus on how much
 //! should be paid.
 //!
-//! A group of `Tippers` is determined through the config `Trait`. After half of these have declared
+//! A group of `Tippers` is determined through the config `Config`. After half of these have declared
 //! some amount that they believe a particular reported reason deserves, then a countdown period is
 //! entered where any remaining members can declare their tip amounts also. After the close of the
 //! countdown period, the median of all declared tips is paid to the reported beneficiary, along
@@ -103,8 +103,6 @@
 //!
 //! General spending/proposal protocol:
 //! - `propose_spend` - Make a spending proposal and stake the required deposit.
-//! - `set_pot` - Set the spendable balance of funds.
-//! - `configure` - Configure the module's proposal requirements.
 //! - `reject_proposal` - Reject a proposal, slashing the deposit.
 //! - `approve_proposal` - Accept the proposal, returning the deposit.
 //!
@@ -133,12 +131,14 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-mod default_weights;
-
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
 mod tests;
+
+pub mod weights;
+// --- darwinia ---
+pub use weights::WeightInfo;
 
 mod types {
 	// --- darwinia ---
@@ -160,9 +160,9 @@ mod types {
 	pub type KtonNegativeImbalance<T, I> =
 		<KtonCurrency<T, I> as Currency<AccountId<T>>>::NegativeImbalance;
 
-	type AccountId<T> = <T as frame_system::Trait>::AccountId;
-	type RingCurrency<T, I> = <T as Trait<I>>::RingCurrency;
-	type KtonCurrency<T, I> = <T as Trait<I>>::KtonCurrency;
+	type AccountId<T> = <T as frame_system::Config>::AccountId;
+	type RingCurrency<T, I> = <T as Config<I>>::RingCurrency;
+	type KtonCurrency<T, I> = <T as Config<I>>::KtonCurrency;
 }
 
 // --- crates ---
@@ -177,7 +177,7 @@ use frame_support::{
 	traits::{
 		Contains, ContainsLengthBound, Currency, EnsureOrigin,
 		ExistenceRequirement::{AllowDeath, KeepAlive},
-		Get, Imbalance, OnUnbalanced, ReservableCurrency, WithdrawReason,
+		Get, Imbalance, OnUnbalanced, ReservableCurrency, WithdrawReasons,
 	},
 	weights::{DispatchClass, Weight},
 	Parameter,
@@ -194,7 +194,7 @@ use sp_std::prelude::*;
 use darwinia_support::balance::{lock::LockableCurrency, OnUnbalancedKton};
 use types::*;
 
-pub trait Trait<I = DefaultInstance>: frame_system::Trait {
+pub trait Config<I = DefaultInstance>: frame_system::Config {
 	/// The treasury's module id, used for deriving its sovereign account ID.
 	type ModuleId: Get<ModuleId>;
 
@@ -230,7 +230,7 @@ pub trait Trait<I = DefaultInstance>: frame_system::Trait {
 	type DataDepositPerByte: Get<RingBalance<Self, I>>;
 
 	/// The overarching event type.
-	type Event: From<Event<Self, I>> + Into<<Self as frame_system::Trait>::Event>;
+	type Event: From<Event<Self, I>> + Into<<Self as frame_system::Config>::Event>;
 
 	/// Handler for the unbalanced decrease when slashing for a rejected proposal or bounty.
 	type OnSlashRing: OnUnbalanced<RingNegativeImbalance<Self, I>>;
@@ -281,7 +281,7 @@ pub trait Trait<I = DefaultInstance>: frame_system::Trait {
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait<I>, I: Instance = DefaultInstance> as DarwiniaTreasury {
+	trait Store for Module<T: Config<I>, I: Instance = DefaultInstance> as DarwiniaTreasury {
 		/// Number of proposals that have been made.
 		ProposalCount get(fn proposal_count): ProposalIndex;
 
@@ -356,8 +356,8 @@ decl_storage! {
 decl_event!(
 	pub enum Event<T, I = DefaultInstance>
 	where
-		<T as frame_system::Trait>::AccountId,
-		<T as frame_system::Trait>::Hash,
+		<T as frame_system::Config>::AccountId,
+		<T as frame_system::Config>::Hash,
 		RingBalance = RingBalance<T, I>,
 		KtonBalance = KtonBalance<T, I>,
 	{
@@ -404,7 +404,7 @@ decl_event!(
 
 decl_error! {
 	/// Error for the treasury module.
-	pub enum Error for Module<T: Trait<I>, I: Instance> {
+	pub enum Error for Module<T: Config<I>, I: Instance> {
 		/// Proposer's balance is too low.
 		InsufficientProposersBalance,
 		/// No proposal or bounty at that index.
@@ -436,7 +436,7 @@ decl_error! {
 }
 
 decl_module! {
-	pub struct Module<T: Trait<I>, I: Instance = DefaultInstance> for enum Call
+	pub struct Module<T: Config<I>, I: Instance = DefaultInstance> for enum Call
 	where
 		origin: T::Origin
 	{
@@ -1148,7 +1148,7 @@ decl_module! {
 	}
 }
 
-impl<T: Trait<I>, I: Instance> Module<T, I> {
+impl<T: Config<I>, I: Instance> Module<T, I> {
 	// Add public immutables and private mutables.
 
 	/// The account ID of the treasury pot.
@@ -1452,7 +1452,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		if let Err(problem) = T::RingCurrency::settle(
 			&Self::account_id(),
 			imbalance_ring,
-			WithdrawReason::Transfer.into(),
+			WithdrawReasons::TRANSFER,
 			KeepAlive,
 		) {
 			print("Inconsistent state - couldn't settle imbalance for funds spent by treasury");
@@ -1463,7 +1463,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 		if let Err(problem) = T::KtonCurrency::settle(
 			&Self::account_id(),
 			imbalance_kton,
-			WithdrawReason::Transfer.into(),
+			WithdrawReasons::TRANSFER,
 			KeepAlive,
 		) {
 			print("Inconsistent state - couldn't settle imbalance for funds spent by treasury");
@@ -1480,7 +1480,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	}
 }
 
-impl<T: Trait<I>, I: Instance> OnUnbalanced<RingNegativeImbalance<T, I>> for Module<T, I> {
+impl<T: Config<I>, I: Instance> OnUnbalanced<RingNegativeImbalance<T, I>> for Module<T, I> {
 	fn on_nonzero_unbalanced(amount: RingNegativeImbalance<T, I>) {
 		let numeric_amount = amount.peek();
 
@@ -1491,7 +1491,7 @@ impl<T: Trait<I>, I: Instance> OnUnbalanced<RingNegativeImbalance<T, I>> for Mod
 	}
 }
 // FIXME: Ugly hack due to https://github.com/rust-lang/rust/issues/31844#issuecomment-557918823
-impl<T: Trait<I>, I: Instance> OnUnbalancedKton<KtonNegativeImbalance<T, I>> for Module<T, I> {
+impl<T: Config<I>, I: Instance> OnUnbalancedKton<KtonNegativeImbalance<T, I>> for Module<T, I> {
 	fn on_nonzero_unbalanced(amount: KtonNegativeImbalance<T, I>) {
 		let numeric_amount = amount.peek();
 
@@ -1501,30 +1501,6 @@ impl<T: Trait<I>, I: Instance> OnUnbalancedKton<KtonNegativeImbalance<T, I>> for
 		Self::deposit_event(RawEvent::DepositKton(numeric_amount));
 	}
 }
-
-pub trait WeightInfo {
-	fn propose_spend() -> Weight;
-	fn reject_proposal() -> Weight;
-	fn approve_proposal() -> Weight;
-	fn report_awesome(r: u32) -> Weight;
-	fn retract_tip() -> Weight;
-	fn tip_new(r: u32, t: u32) -> Weight;
-	fn tip(t: u32) -> Weight;
-	fn close_tip(t: u32) -> Weight;
-	fn propose_bounty(r: u32) -> Weight;
-	fn approve_bounty() -> Weight;
-	fn propose_curator() -> Weight;
-	fn unassign_curator() -> Weight;
-	fn accept_curator() -> Weight;
-	fn award_bounty() -> Weight;
-	fn claim_bounty() -> Weight;
-	fn close_bounty_proposed() -> Weight;
-	fn close_bounty_active() -> Weight;
-	fn extend_bounty_expiry() -> Weight;
-	fn on_initialize_proposals(p: u32) -> Weight;
-	fn on_initialize_bounties(b: u32) -> Weight;
-}
-
 /// The status of a bounty proposal.
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug)]
 pub enum BountyStatus<AccountId, BlockNumber> {

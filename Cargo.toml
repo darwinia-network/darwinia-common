@@ -77,7 +77,6 @@ aesni            = { opt-level = 3 }
 blake2           = { opt-level = 3 }
 blake2-rfc       = { opt-level = 3 }
 blake2b_simd     = { opt-level = 3 }
-blake2s_simd     = { opt-level = 3 }
 crc32fast        = { opt-level = 3 }
 crossbeam-deque  = { opt-level = 3 }
 crossbeam-queue  = { opt-level = 3 }

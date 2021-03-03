@@ -27,10 +27,10 @@ use evm::{ExitError, ExitSucceed};
 pub struct Empty;
 
 impl LinearCostPrecompile for Empty {
-	const BASE: usize = 0;
-	const WORD: usize = 0;
+	const BASE: u64 = 0;
+	const WORD: u64 = 0;
 
-	fn execute(_: &[u8], _: usize) -> core::result::Result<(ExitSucceed, Vec<u8>), ExitError> {
+	fn execute(_: &[u8], _: u64) -> core::result::Result<(ExitSucceed, Vec<u8>), ExitError> {
 		Err(ExitError::Other("Not implement yet".into()))
 	}
 }

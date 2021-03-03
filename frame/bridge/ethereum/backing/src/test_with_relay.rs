@@ -10,7 +10,7 @@
 //
 // Darwinia is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -47,7 +47,7 @@ parameter_types! {
 	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
 	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Ropsten;
 }
-impl darwinia_ethereum_relay::Trait for Test {
+impl darwinia_ethereum_relay::Config for Test {
 	type ModuleId = EthereumRelayModuleId;
 	type Event = ();
 	type EthereumNetwork = EthereumNetwork;
@@ -417,12 +417,12 @@ fn lock_should_work() {
 		let lock_balance = 10;
 		let _ = Ring::deposit_creating(&account, init_balance);
 		let _ = Kton::deposit_creating(&account, init_balance);
-		let fee_account_id = <Module<Test>>::fee_account_id();
+		let fee_account_id = EthereumBacking::fee_account_id();
 		let fee_account_balance = Ring::free_balance(&fee_account_id);
-		let module_account_id = <Module<Test>>::account_id();
+		let module_account_id = EthereumBacking::account_id();
 		let module_account_ring = Ring::free_balance(&module_account_id);
 		let module_account_kton = Kton::free_balance(&module_account_id);
-		let advanced_fee = <Test as Trait>::AdvancedFee::get();
+		let advanced_fee = <Test as Config>::AdvancedFee::get();
 
 		assert_ok!(EthereumBacking::lock(
 			Origin::signed(account.clone()),
@@ -460,12 +460,12 @@ fn lock_failed_rollback_transaction_should_work() {
 		let lock_kton = KtonLockLimit::get() + 1;
 		let _ = Ring::deposit_creating(&account, init_balance);
 		let _ = Kton::deposit_creating(&account, init_balance);
-		let fee_account_id = <Module<Test>>::fee_account_id();
+		let fee_account_id = EthereumBacking::fee_account_id();
 		let fee_account_balance = Ring::free_balance(&fee_account_id);
-		let module_account_id = <Module<Test>>::account_id();
+		let module_account_id = EthereumBacking::account_id();
 		let module_account_ring = Ring::free_balance(&module_account_id);
 		let module_account_kton = Kton::free_balance(&module_account_id);
-		let advanced_fee = <Test as Trait>::AdvancedFee::get();
+		let advanced_fee = <Test as Config>::AdvancedFee::get();
 
 		assert_noop!(
 			EthereumBacking::lock(

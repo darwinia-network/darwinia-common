@@ -18,10 +18,10 @@
 
 use super::*;
 use crate::account_basic::DVMAccountBasicMapping;
-use crate::{IntermediateStateRoot, Module, Trait};
+use crate::{Config, IntermediateStateRoot, Module};
 use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator};
 use ethereum::{TransactionAction, TransactionSignature};
-use frame_support::{impl_outer_origin, parameter_types, weights::Weight, ConsensusEngineId};
+use frame_support::{impl_outer_origin, parameter_types, ConsensusEngineId};
 use rlp::*;
 use sp_core::{H160, H256, U256};
 use sp_runtime::AccountId32;
@@ -36,7 +36,7 @@ use codec::{Decode, Encode};
 impl_outer_origin! {
 	pub enum Origin for Test where system = frame_system {}
 }
-darwinia_support::impl_test_account_data! {}
+darwinia_support::impl_test_account_data! { deprecated }
 
 type Balance = u64;
 
@@ -52,9 +52,11 @@ parameter_types! {
 	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
 }
 
-impl frame_system::Trait for Test {
+impl frame_system::Config for Test {
 	type BaseCallFilter = ();
-	type SystemWeightInfo = ();
+	type BlockWeights = ();
+	type BlockLength = ();
+	type DbWeight = ();
 	type Origin = Origin;
 	type Call = ();
 	type Index = u64;
@@ -65,19 +67,14 @@ impl frame_system::Trait for Test {
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = ();
-	type BlockHashCount = BlockHashCount;
-	type MaximumBlockWeight = MaximumBlockWeight;
-	type DbWeight = ();
-	type BlockExecutionWeight = ();
-	type ExtrinsicBaseWeight = ();
-	type MaximumExtrinsicWeight = MaximumBlockWeight;
-	type MaximumBlockLength = MaximumBlockLength;
-	type AvailableBlockRatio = AvailableBlockRatio;
+	type BlockHashCount = ();
 	type Version = ();
 	type PalletInfo = ();
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
+	type SystemWeightInfo = ();
+	type SS58Prefix = ();
 }
 
 parameter_types! {
@@ -87,7 +84,7 @@ parameter_types! {
 	pub const ExistentialDeposit: u64 = 500;
 }
 
-impl darwinia_balances::Trait<RingInstance> for Test {
+impl darwinia_balances::Config<RingInstance> for Test {
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
@@ -99,7 +96,7 @@ impl darwinia_balances::Trait<RingInstance> for Test {
 	type BalanceInfo = AccountData<Balance>;
 }
 
-impl darwinia_balances::Trait<KtonInstance> for Test {
+impl darwinia_balances::Config<KtonInstance> for Test {
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
@@ -115,7 +112,7 @@ parameter_types! {
 	pub const MinimumPeriod: u64 = 6000 / 2;
 }
 
-impl pallet_timestamp::Trait for Test {
+impl pallet_timestamp::Config for Test {
 	type Moment = u64;
 	type OnTimestampSet = ();
 	type MinimumPeriod = MinimumPeriod;
@@ -155,7 +152,7 @@ impl AddressMapping<AccountId32> for HashedAddressMapping {
 	}
 }
 
-impl darwinia_evm::Trait for Test {
+impl darwinia_evm::Config for Test {
 	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressTruncated;
@@ -174,7 +171,7 @@ parameter_types! {
 	pub const BlockGasLimit: U256 = U256::MAX;
 }
 
-impl Trait for Test {
+impl Config for Test {
 	type Event = ();
 	type FindAuthor = EthereumFindAuthor;
 	type StateRoot = IntermediateStateRoot;
@@ -184,8 +181,6 @@ impl Trait for Test {
 }
 
 pub type System = frame_system::Module<Test>;
-pub type Ring = darwinia_balances::Module<Test, RingInstance>;
-pub type Kton = darwinia_balances::Module<Test, KtonInstance>;
 pub type Ethereum = Module<Test>;
 pub type Evm = darwinia_evm::Module<Test>;
 
@@ -196,7 +191,7 @@ pub struct AccountInfo {
 }
 
 fn address_build(seed: u8) -> AccountInfo {
-	let private_key = H256::from_slice(&[(seed + 1) as u8; 32]); //H256::from_low_u64_be((i + 1) as u64);
+	let private_key = H256::from_slice(&[(seed + 1) as u8; 32]); //H256::from_low + 1) as u64);
 	let secret_key = secp256k1::SecretKey::parse_slice(&private_key[..]).unwrap();
 	let public_key = &secp256k1::PublicKey::from_secret_key(&secret_key).serialize()[1..65];
 	let address = H160::from(H256::from_slice(&Keccak256::digest(public_key)[..]));
@@ -227,7 +222,7 @@ pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExtern
 		.map(|i| (pairs[i].account_id.clone(), 100_000_000_000))
 		.collect();
 
-	darwinia_balances::GenesisConfig::<Test, RingInstance> { balances }
+	RingConfig { balances }
 		.assimilate_storage(&mut ext)
 		.unwrap();
 
@@ -239,7 +234,7 @@ pub fn contract_address(sender: H160, nonce: u64) -> H160 {
 	rlp.append(&sender);
 	rlp.append(&nonce);
 
-	H160::from_slice(&Keccak256::digest(rlp.out().as_slice())[12..])
+	H160::from_slice(&Keccak256::digest(&rlp.out())[12..])
 }
 
 pub fn storage_address(sender: H160, slot: H256) -> H256 {
@@ -274,7 +269,7 @@ impl UnsignedTransaction {
 	fn signing_hash(&self) -> H256 {
 		let mut stream = RlpStream::new();
 		self.signing_rlp_append(&mut stream);
-		H256::from_slice(&Keccak256::digest(&stream.drain()).as_slice())
+		H256::from_slice(&Keccak256::digest(&stream.out()).as_slice())
 	}
 
 	pub fn sign(&self, key: &H256) -> Transaction {

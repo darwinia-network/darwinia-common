@@ -10,7 +10,7 @@
 //
 // Darwinia is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -291,7 +291,7 @@ fn pangolin_development_genesis(
 		AuthorityDiscoveryId,
 	)>,
 	root_key: AccountId,
-	endowed_accounts: Vec<AccountId>,
+	mut endowed_accounts: Vec<AccountId>,
 	evm_accounts: BTreeMap<H160, GenesisAccount>,
 ) -> GenesisConfig {
 	const GENESIS_ETHEREUM_RELAY_AUTHORITY_SIGNER: &'static str =
@@ -302,6 +302,12 @@ fn pangolin_development_genesis(
 	const SET_AUTHORITIES_ADDRESS: &'static str = "0xE4A2892599Ad9527D76Ce6E26F93620FA7396D85";
 	const RING_TOKEN_ADDRESS: &'static str = "0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0";
 	const KTON_TOKEN_ADDRESS: &'static str = "0x1994100c58753793D52c6f457f189aa3ce9cEe94";
+
+	initial_authorities.iter().for_each(|x| {
+		if !endowed_accounts.contains(&x.0) {
+			endowed_accounts.push(x.0.clone())
+		}
+	});
 
 	GenesisConfig {
 		frame_system: Some(SystemConfig {

@@ -8,7 +8,7 @@
 
 // Substrate is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
@@ -178,7 +178,7 @@ fn transaction_build(
 		gas: transaction.gas_limit,
 		input: Bytes(transaction.clone().input),
 		creates: status.contract_address,
-		raw: Bytes(rlp::encode(&transaction)),
+		raw: Bytes(rlp::encode(&transaction).to_vec()),
 		public_key: pubkey,
 		chain_id: transaction.signature.chain_id().map(U64::from),
 		standard_v: U256::from(transaction.signature.standard_v()),

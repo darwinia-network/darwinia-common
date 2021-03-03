@@ -10,7 +10,7 @@
 //
 // Darwinia is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -23,7 +23,6 @@
 // --- substrate ---
 use frame_support::traits::OnFinalize;
 use sp_runtime::testing::{Digest, H256};
-
 // --- darwinia ---
 use crate::{mock::*, *};
 use array_bytes::fixed_hex_bytes_unchecked as hh;

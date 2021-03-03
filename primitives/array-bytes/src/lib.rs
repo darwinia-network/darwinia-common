@@ -10,7 +10,7 @@
 //
 // Darwinia is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -30,16 +30,16 @@ macro_rules! fixed_hex_bytes_unchecked {
 		let slice = $crate::hex_bytes_unchecked($str);
 		if slice.len() == $len {
 			bytes.copy_from_slice(&slice);
-			};
+		};
 		bytes
-		}};
+	}};
 }
 
 #[macro_export]
 macro_rules! array_unchecked {
 	($source:expr, $offset:expr, $len:expr) => {{
 		unsafe { (*($source[$offset..$offset + $len].as_ptr() as *const [_; $len])) }
-		}};
+	}};
 }
 
 /// convert number to bytes base on radix `n`
