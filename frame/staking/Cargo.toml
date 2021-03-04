@@ -21,17 +21,17 @@ darwinia-support                 = { default-features = false, path = "../suppor
 # github
 substrate-fixed = { default-features = false, git = "https://github.com/encointer/substrate-fixed", branch = "master" }
 # substrate
-frame-support     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-frame-system      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-pallet-authorship = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-pallet-session    = { default-features = false, features = ["historical"], git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-arithmetic     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-core           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-io             = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-npos-elections = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-runtime        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-staking        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-std            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+frame-support     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
+frame-system      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
+pallet-authorship = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
+pallet-session    = { default-features = false, features = ["historical"], git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
+sp-arithmetic     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
+sp-core           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
+sp-io             = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
+sp-npos-elections = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
+sp-runtime        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
+sp-staking        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
+sp-std            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
 
 [dev-dependencies]
 # crates
@@ -40,10 +40,10 @@ rand_chacha = { version = "0.2" }
 darwinia-balances = { path = "../../frame/balances" }
 darwinia-support  = { features = ["easy-testing"], path = "../support" }
 # substrate
-pallet-timestamp     = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-storage           = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-tracing           = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-substrate-test-utils = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+pallet-timestamp     = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
+sp-storage           = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
+sp-tracing           = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
+substrate-test-utils = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
 
 [features]
 default = ["std"]

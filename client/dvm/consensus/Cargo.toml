@@ -19,13 +19,13 @@ log         = { version = "0.4.13" }
 # darwinia
 dvm-consensus-primitives = { path = "../../../primitives/consensus/" }
 # substrate
-prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-api              = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-block-builder    = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-consensus        = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-core             = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-inherents        = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-timestamp        = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
+sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
+sp-api              = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
+sp-block-builder    = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
+sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
+sp-consensus        = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
+sp-core             = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
+sp-inherents        = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
+sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
+sp-timestamp        = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }

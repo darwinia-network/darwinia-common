@@ -16,11 +16,11 @@ serde = { version = "1.0.123", optional = true, features = ["derive"] }
 # darwinia
 darwinia-support = { default-features = false, path = "../support" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
+sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
 
 [dev-dependencies]
 # crates
@@ -29,10 +29,10 @@ hex-literal = "0.3.1"
 darwinia-balances = { path = "../balances" }
 darwinia-support  = { features = ["easy-testing"], path = "../support" }
 # substrate
-pallet-scheduler     = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-core              = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-sp-storage           = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
-substrate-test-utils = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library-alpha" }
+pallet-scheduler     = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
+sp-core              = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
+sp-storage           = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
+substrate-test-utils = { git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }
 
 [features]
 default = ["std"]
