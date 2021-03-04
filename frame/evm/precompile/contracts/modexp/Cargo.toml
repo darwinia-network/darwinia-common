@@ -13,7 +13,7 @@ version     = "1.3.0"
 [dependencies]
 # crates
 darwinia-evm-primitives = { default-features = false, path = "../../../../../primitives/evm" }
-evm                     = { version = "0.22.0", default-features = false, features = ["with-codec"] }
+evm                     = { version = "0.24.0", default-features = false, features = ["with-codec"] }
 num                     = { version = "0.3", default-features = false, features = ["alloc"] }
 # substrate
 sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-0.9.6" }

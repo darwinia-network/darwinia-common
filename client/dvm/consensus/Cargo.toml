@@ -13,7 +13,7 @@ version     = "1.3.0"
 # crates
 codec       = { package = "parity-scale-codec", version = "2.0.0", features = ["derive"] }
 derive_more = { version = "0.99.11" }
-ethereum    = { version = "0.6.0", features = ["with-codec"] }
+ethereum    = { version = "0.7.1", features = ["with-codec"] }
 futures     = { version = "0.3.12", features = ["compat"] }
 log         = { version = "0.4.13" }
 # darwinia
