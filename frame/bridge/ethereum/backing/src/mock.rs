@@ -92,7 +92,6 @@ macro_rules! decl_tests {
 			type ModuleId = EthereumBackingModuleId;
 			type FeeModuleId = EthereumBackingFeeModuleId;
 			type Event = ();
-			type RedeemAccountId = AccountId;
 			type EthereumRelay = EthereumRelay;
 			type OnDepositRedeem = Staking;
 			type RingCurrency = Ring;

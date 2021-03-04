@@ -16,6 +16,7 @@ name = "drml"
 
 [dependencies]
 # crates
+array-bytes    = { version = "0.3.0" }
 codec          = { package = "parity-scale-codec", version = "1.3.6" }
 futures        = { version = "0.3.12" }
 jsonrpc-core   = { version = "15.1.0" }
@@ -24,7 +25,6 @@ log            = { version = "0.4.13" }
 structopt      = { version = "0.3.21" }
 tokio          = { version = "0.3.6", optional = true, features = ["rt-multi-thread"] }
 # darwinia
-array-bytes                         = { path = "../../../primitives/array-bytes" }
 darwinia-balances-rpc               = { path = "../../../frame/balances/rpc" }
 darwinia-balances-rpc-runtime-api   = { path = "../../../frame/balances/rpc/runtime-api" }
 darwinia-claims                     = { path = "../../../frame/claims" }

@@ -20,7 +20,6 @@
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 // --- darwinia ---
 use crate::AddressT;
-use array_bytes::{fixed_hex_bytes_unchecked, hex_string_unchecked};
 
 macro_rules! impl_address {
 	($name:ident, $sname:expr, $prefix:expr) => {
@@ -38,8 +37,7 @@ macro_rules! impl_address {
 			where
 				S: Serializer,
 			{
-				let hex: String = hex_string_unchecked(&self.0, $prefix).into_iter().collect();
-				serializer.serialize_str(&hex)
+				serializer.serialize_str(&array_bytes::hex_str($prefix, &self.0))
 			}
 		}
 		impl<'de> Deserialize<'de> for $name {
@@ -64,7 +62,7 @@ macro_rules! impl_address {
 					)))?;
 				}
 
-				Ok($name(fixed_hex_bytes_unchecked!(s, 20)))
+				Ok($name(array_bytes::hex_str_array_unchecked!(s, 20)))
 			}
 		}
 	};

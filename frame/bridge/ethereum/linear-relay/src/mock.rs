@@ -28,7 +28,6 @@ use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, RuntimeDebug};
 // --- darwinia ---
 use crate::*;
-use array_bytes::{fixed_hex_bytes_unchecked, hex_bytes_unchecked};
 use ethereum_primitives::receipt::LogEntry;
 use ethereum_types::H512;
 
@@ -150,14 +149,19 @@ impl BlockWithProof {
 
 		BlockWithProof {
 			proof_length: raw_block_with_proof.proof_length,
-			merkle_root: fixed_hex_bytes_unchecked!(&raw_block_with_proof.merkle_root, 16).into(),
-			header_rlp: hex_bytes_unchecked(&raw_block_with_proof.header_rlp),
+			merkle_root: array_bytes::hex_str_array_unchecked!(
+				&raw_block_with_proof.merkle_root,
+				16
+			)
+			.into(),
+			header_rlp: array_bytes::bytes_unchecked(&raw_block_with_proof.header_rlp),
 			merkle_proofs: raw_block_with_proof
 				.merkle_proofs
 				.iter()
 				.cloned()
 				.map(|raw_merkle_proof| {
-					fixed_hex_bytes_unchecked!(&zero_padding(raw_merkle_proof, 16), 16).into()
+					array_bytes::hex_str_array_unchecked!(&zero_padding(raw_merkle_proof, 16), 16)
+						.into()
 				})
 				.collect(),
 			elements: raw_block_with_proof
@@ -165,7 +169,7 @@ impl BlockWithProof {
 				.iter()
 				.cloned()
 				.map(|raw_element| {
-					fixed_hex_bytes_unchecked!(&zero_padding(raw_element, 32), 32).into()
+					array_bytes::hex_str_array_unchecked!(&zero_padding(raw_element, 32), 32).into()
 				})
 				.collect(),
 		}
@@ -223,11 +227,11 @@ impl HeaderWithProof {
 			serde_json::from_reader(File::open(path).unwrap()).unwrap();
 		Self {
 			header: Decode::decode::<&[u8]>(
-				&mut &hex_bytes_unchecked(raw_shadow_service_response.result.eth_header)[..],
+				&mut &array_bytes::bytes_unchecked(raw_shadow_service_response.result.eth_header)[..],
 			)
 			.unwrap(),
 			proof: Decode::decode::<&[u8]>(
-				&mut &hex_bytes_unchecked(raw_shadow_service_response.result.proof)[..],
+				&mut &array_bytes::bytes_unchecked(raw_shadow_service_response.result.proof)[..],
 			)
 			.unwrap(),
 		}
@@ -319,9 +323,12 @@ pub fn mock_canonical_receipt() -> EthereumReceiptProof {
 			.trim_start_matches("0x")
 			.parse()
 			.unwrap(),
-		proof: hex_bytes_unchecked(receipt["proof"].as_str().unwrap()),
-		header_hash: fixed_hex_bytes_unchecked!(receipt["header_hash"].as_str().unwrap(), 32)
-			.into(),
+		proof: array_bytes::bytes_unchecked(receipt["proof"].as_str().unwrap()),
+		header_hash: array_bytes::hex_str_array_unchecked!(
+			receipt["header_hash"].as_str().unwrap(),
+			32
+		)
+		.into(),
 	}
 }
 
@@ -333,14 +340,17 @@ pub fn mock_receipt_logs() -> Vec<LogEntry> {
 		.unwrap()
 		.iter()
 		.map(|log| LogEntry {
-			address: fixed_hex_bytes_unchecked!(log["address"].as_str().unwrap(), 20).into(),
+			address: array_bytes::hex_str_array_unchecked!(log["address"].as_str().unwrap(), 20)
+				.into(),
 			topics: log["topics"]
 				.as_array()
 				.unwrap()
 				.iter()
-				.map(|topic| fixed_hex_bytes_unchecked!(topic.as_str().unwrap(), 32).into())
+				.map(|topic| {
+					array_bytes::hex_str_array_unchecked!(topic.as_str().unwrap(), 32).into()
+				})
 				.collect(),
-			data: hex_bytes_unchecked(log["data"].as_str().unwrap()),
+			data: array_bytes::bytes_unchecked(log["data"].as_str().unwrap()),
 		})
 		.collect()
 }
@@ -354,7 +364,7 @@ pub const MAINNET_GENESIS_HEADER: &'static str = r#"
 	"gasUsed": "0x0",
 	"hash": "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3",
 	"logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-	"miner": "0x11bbe8db4e347b4e8c937c1c8370e4b5ed33adb3db69cbdb7a38e1e50b1b82fa",
+	"miner": "0x0000000000000000000000000000000000000000",
 	"mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
 	"nonce": "0x0000000000000042",
 	"number": "0x0",

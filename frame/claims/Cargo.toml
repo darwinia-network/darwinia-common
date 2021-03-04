@@ -11,11 +11,11 @@ version     = "1.3.0"
 
 [dependencies]
 # crates
-codec      = { package = "parity-scale-codec", version = "1.3.6", default-features = false, features = ["derive"] }
-serde      = { version = "1.0.123", optional = true }
-serde_json = { version = "1.0.62", optional = true }
+array-bytes = { version = "0.3.0" }
+codec       = { package = "parity-scale-codec", version = "1.3.6", default-features = false, features = ["derive"] }
+serde       = { version = "1.0.123", optional = true }
+serde_json  = { version = "1.0.62", optional = true }
 # darwinia
-array-bytes      = { default-features = false, path = "../../primitives/array-bytes" }
 darwinia-support = { default-features = false, path = "../support" }
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
@@ -47,7 +47,6 @@ crates-std    = [
 	"serde_json",
 ]
 darwinia-std  = [
-	"array-bytes/std",
 	"darwinia-support/std",
 ]
 substrate-std = [
