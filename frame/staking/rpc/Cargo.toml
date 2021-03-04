@@ -11,7 +11,7 @@ version     = "1.3.0"
 
 [dependencies]
 # crates
-codec               = { package = "parity-scale-codec", version = "1.3.6" }
+codec               = { package = "parity-scale-codec", version = "1.3.7" }
 jsonrpc-core        = { version = "15.1.0" }
 jsonrpc-core-client = { version = "15.1.0" }
 jsonrpc-derive      = { version = "15.1.0" }
