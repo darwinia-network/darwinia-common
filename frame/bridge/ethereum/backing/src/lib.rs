@@ -423,7 +423,7 @@ impl<T: Config> Module<T> {
 	pub fn account_id_try_from_bytes(bytes: &[u8]) -> Result<T::AccountId, DispatchError> {
 		ensure!(bytes.len() == 32, <Error<T>>::AddrLenMis);
 
-		let redeem_account_id: T::RedeemAccountId = array_bytes::array!(bytes, 32).into();
+		let redeem_account_id: T::RedeemAccountId = array_bytes::dyn2array!(bytes, 32).into();
 
 		Ok(redeem_account_id.into())
 	}
