@@ -37,7 +37,7 @@ macro_rules! impl_address {
 			where
 				S: Serializer,
 			{
-				serializer.serialize_str(&array_bytes::hex_str($prefix, &self.0))
+				serializer.serialize_str(&array_bytes::bytes2hex($prefix, &self.0))
 			}
 		}
 		impl<'de> Deserialize<'de> for $name {
@@ -62,7 +62,7 @@ macro_rules! impl_address {
 					)))?;
 				}
 
-				Ok($name(array_bytes::hex_str_array_unchecked!(s, 20)))
+				Ok($name(array_bytes::hex2array_unchecked!(s, 20)))
 			}
 		}
 	};

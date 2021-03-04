@@ -136,8 +136,8 @@ fn pangolin_build_spec_genesis() -> GenesisConfig {
 	const RING_TOKEN_ADDRESS: &'static str = "0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0";
 	const KTON_TOKEN_ADDRESS: &'static str = "0x1994100c58753793D52c6f457f189aa3ce9cEe94";
 
-	let root = AccountId::from(array_bytes::hex_str_array_unchecked!(ROOT, 32));
-	let evm = array_bytes::hex_str_array_unchecked!(GENESIS_EVM_ACCOUNT, 20).into();
+	let root = AccountId::from(array_bytes::hex2array_unchecked!(ROOT, 32));
+	let evm = array_bytes::hex2array_unchecked!(GENESIS_EVM_ACCOUNT, 20).into();
 	let initial_authorities = vec![get_authority_keys_from_seed(GENESIS_VALIDATOR)];
 	let endowed_accounts = vec![
 		(root.clone(), 1 << 56),
@@ -203,11 +203,11 @@ fn pangolin_build_spec_genesis() -> GenesisConfig {
 			backed_ring: 1 << 56
 		}),
 		darwinia_ethereum_backing: Some(EthereumBackingConfig {
-			token_redeem_address: array_bytes::hex_str_array_unchecked!(TOKEN_REDEEM_ADDRESS, 20).into(),
-			deposit_redeem_address: array_bytes::hex_str_array_unchecked!(DEPOSIT_REDEEM_ADDRESS, 20).into(),
-			set_authorities_address: array_bytes::hex_str_array_unchecked!(SET_AUTHORITIES_ADDRESS, 20).into(),
-			ring_token_address: array_bytes::hex_str_array_unchecked!(RING_TOKEN_ADDRESS, 20).into(),
-			kton_token_address: array_bytes::hex_str_array_unchecked!(KTON_TOKEN_ADDRESS, 20).into(),
+			token_redeem_address: array_bytes::hex2array_unchecked!(TOKEN_REDEEM_ADDRESS, 20).into(),
+			deposit_redeem_address: array_bytes::hex2array_unchecked!(DEPOSIT_REDEEM_ADDRESS, 20).into(),
+			set_authorities_address: array_bytes::hex2array_unchecked!(SET_AUTHORITIES_ADDRESS, 20).into(),
+			ring_token_address: array_bytes::hex2array_unchecked!(RING_TOKEN_ADDRESS, 20).into(),
+			kton_token_address: array_bytes::hex2array_unchecked!(KTON_TOKEN_ADDRESS, 20).into(),
 			ring_locked: 1 << 56,
 			kton_locked: 1 << 56,
 		}),
@@ -231,7 +231,7 @@ fn pangolin_build_spec_genesis() -> GenesisConfig {
 		}),
 		dvm_ethereum: Some(Default::default()),
 		darwinia_relay_authorities_Instance0: Some(EthereumRelayAuthoritiesConfig {
-			authorities: vec![(root, array_bytes::hex_str_array_unchecked!(GENESIS_ETHEREUM_RELAY_AUTHORITY_SIGNER, 20).into(), 1)]
+			authorities: vec![(root, array_bytes::hex2array_unchecked!(GENESIS_ETHEREUM_RELAY_AUTHORITY_SIGNER, 20).into(), 1)]
 		}),
 	}
 }
@@ -243,16 +243,10 @@ pub fn pangolin_development_config() -> PangolinChainSpec {
 		ChainType::Development,
 		|| {
 			let initial_evm_account = vec![
-				array_bytes::hex_str_array_unchecked!(
-					"0x6be02d1d3665660d22ff9624b7be0551ee1ac91b",
-					20
-				)
-				.into(),
-				array_bytes::hex_str_array_unchecked!(
-					"0xB90168C8CBcd351D069ffFdA7B71cd846924d551",
-					20
-				)
-				.into(),
+				array_bytes::hex2array_unchecked!("0x6be02d1d3665660d22ff9624b7be0551ee1ac91b", 20)
+					.into(),
+				array_bytes::hex2array_unchecked!("0xB90168C8CBcd351D069ffFdA7B71cd846924d551", 20)
+					.into(),
 			];
 			let mut evm_accounts = BTreeMap::new();
 
@@ -380,11 +374,11 @@ fn pangolin_development_genesis(
 			backed_ring: 1 << 56
 		}),
 		darwinia_ethereum_backing: Some(EthereumBackingConfig {
-			token_redeem_address: array_bytes::hex_str_array_unchecked!(TOKEN_REDEEM_ADDRESS, 20).into(),
-			deposit_redeem_address: array_bytes::hex_str_array_unchecked!(DEPOSIT_REDEEM_ADDRESS, 20).into(),
-			set_authorities_address: array_bytes::hex_str_array_unchecked!(SET_AUTHORITIES_ADDRESS, 20).into(),
-			ring_token_address: array_bytes::hex_str_array_unchecked!(RING_TOKEN_ADDRESS, 20).into(),
-			kton_token_address: array_bytes::hex_str_array_unchecked!(KTON_TOKEN_ADDRESS, 20).into(),
+			token_redeem_address: array_bytes::hex2array_unchecked!(TOKEN_REDEEM_ADDRESS, 20).into(),
+			deposit_redeem_address: array_bytes::hex2array_unchecked!(DEPOSIT_REDEEM_ADDRESS, 20).into(),
+			set_authorities_address: array_bytes::hex2array_unchecked!(SET_AUTHORITIES_ADDRESS, 20).into(),
+			ring_token_address: array_bytes::hex2array_unchecked!(RING_TOKEN_ADDRESS, 20).into(),
+			kton_token_address: array_bytes::hex2array_unchecked!(KTON_TOKEN_ADDRESS, 20).into(),
 			ring_locked: 1 << 56,
 			kton_locked: 1 << 56,
 		}),
@@ -408,7 +402,7 @@ fn pangolin_development_genesis(
 		}),
 		dvm_ethereum: Some(Default::default()),
 		darwinia_relay_authorities_Instance0: Some(EthereumRelayAuthoritiesConfig {
-			authorities: vec![(root_key, array_bytes::hex_str_array_unchecked!(GENESIS_ETHEREUM_RELAY_AUTHORITY_SIGNER, 20).into(), 1)]
+			authorities: vec![(root_key, array_bytes::hex2array_unchecked!(GENESIS_ETHEREUM_RELAY_AUTHORITY_SIGNER, 20).into(), 1)]
 		}),
 	}
 }

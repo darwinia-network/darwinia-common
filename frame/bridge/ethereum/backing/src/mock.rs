@@ -32,7 +32,6 @@ macro_rules! decl_tests {
 			ModuleId, {KeyTypeId, MultiSignature, Perbill},
 		};
 		// --- darwinia ---
-		use array_bytes::fixed_hex_bytes_unchecked;
 		use darwinia_staking::{EraIndex, Exposure, ExposureOf};
 
 		type Balance = u128;
@@ -92,6 +91,7 @@ macro_rules! decl_tests {
 			type ModuleId = EthereumBackingModuleId;
 			type FeeModuleId = EthereumBackingFeeModuleId;
 			type Event = ();
+			type RedeemAccountId = AccountId;
 			type EthereumRelay = EthereumRelay;
 			type OnDepositRedeem = Staking;
 			type RingCurrency = Ring;

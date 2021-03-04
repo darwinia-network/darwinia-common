@@ -130,7 +130,7 @@ fn test_mmr_root() {
 	let mut mmr = <MMR<_, MMRMerge<Test>, _>>::new(0, store);
 	(0..10).for_each(|i| {
 		let cur = HEADERS_N_ROOTS[i];
-		mmr.push(array_bytes::hex_str_array_unchecked!(cur.0, 32).into())
+		mmr.push(array_bytes::hex2array_unchecked!(cur.0, 32).into())
 			.unwrap();
 		assert_eq!(
 			&format!("{:?}", mmr.get_root().expect("get root failed"))[2..],
@@ -142,8 +142,8 @@ fn test_mmr_root() {
 #[test]
 fn test_mmr_merge() {
 	let res = MMRMerge::<Test>::merge(
-		&array_bytes::hex_str_array_unchecked!(HEADERS_N_ROOTS[0].0, 32).into(),
-		&array_bytes::hex_str_array_unchecked!(HEADERS_N_ROOTS[1].0, 32).into(),
+		&array_bytes::hex2array_unchecked!(HEADERS_N_ROOTS[0].0, 32).into(),
+		&array_bytes::hex2array_unchecked!(HEADERS_N_ROOTS[1].0, 32).into(),
 	);
 	assert_eq!(
 		format!("{:?}", res),

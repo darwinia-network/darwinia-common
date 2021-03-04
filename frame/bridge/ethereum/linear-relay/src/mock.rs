@@ -149,18 +149,15 @@ impl BlockWithProof {
 
 		BlockWithProof {
 			proof_length: raw_block_with_proof.proof_length,
-			merkle_root: array_bytes::hex_str_array_unchecked!(
-				&raw_block_with_proof.merkle_root,
-				16
-			)
-			.into(),
-			header_rlp: array_bytes::bytes_unchecked(&raw_block_with_proof.header_rlp),
+			merkle_root: array_bytes::hex2array_unchecked!(&raw_block_with_proof.merkle_root, 16)
+				.into(),
+			header_rlp: array_bytes::hex2bytes_unchecked(&raw_block_with_proof.header_rlp),
 			merkle_proofs: raw_block_with_proof
 				.merkle_proofs
 				.iter()
 				.cloned()
 				.map(|raw_merkle_proof| {
-					array_bytes::hex_str_array_unchecked!(&zero_padding(raw_merkle_proof, 16), 16)
+					array_bytes::hex2array_unchecked!(&zero_padding(raw_merkle_proof, 16), 16)
 						.into()
 				})
 				.collect(),
@@ -169,7 +166,7 @@ impl BlockWithProof {
 				.iter()
 				.cloned()
 				.map(|raw_element| {
-					array_bytes::hex_str_array_unchecked!(&zero_padding(raw_element, 32), 32).into()
+					array_bytes::hex2array_unchecked!(&zero_padding(raw_element, 32), 32).into()
 				})
 				.collect(),
 		}
@@ -227,11 +224,13 @@ impl HeaderWithProof {
 			serde_json::from_reader(File::open(path).unwrap()).unwrap();
 		Self {
 			header: Decode::decode::<&[u8]>(
-				&mut &array_bytes::bytes_unchecked(raw_shadow_service_response.result.eth_header)[..],
+				&mut &array_bytes::hex2bytes_unchecked(
+					raw_shadow_service_response.result.eth_header,
+				)[..],
 			)
 			.unwrap(),
 			proof: Decode::decode::<&[u8]>(
-				&mut &array_bytes::bytes_unchecked(raw_shadow_service_response.result.proof)[..],
+				&mut &array_bytes::hex2bytes_unchecked(raw_shadow_service_response.result.proof)[..],
 			)
 			.unwrap(),
 		}
@@ -323,8 +322,8 @@ pub fn mock_canonical_receipt() -> EthereumReceiptProof {
 			.trim_start_matches("0x")
 			.parse()
 			.unwrap(),
-		proof: array_bytes::bytes_unchecked(receipt["proof"].as_str().unwrap()),
-		header_hash: array_bytes::hex_str_array_unchecked!(
+		proof: array_bytes::hex2bytes_unchecked(receipt["proof"].as_str().unwrap()),
+		header_hash: array_bytes::hex2array_unchecked!(
 			receipt["header_hash"].as_str().unwrap(),
 			32
 		)
@@ -340,17 +339,14 @@ pub fn mock_receipt_logs() -> Vec<LogEntry> {
 		.unwrap()
 		.iter()
 		.map(|log| LogEntry {
-			address: array_bytes::hex_str_array_unchecked!(log["address"].as_str().unwrap(), 20)
-				.into(),
+			address: array_bytes::hex2array_unchecked!(log["address"].as_str().unwrap(), 20).into(),
 			topics: log["topics"]
 				.as_array()
 				.unwrap()
 				.iter()
-				.map(|topic| {
-					array_bytes::hex_str_array_unchecked!(topic.as_str().unwrap(), 32).into()
-				})
+				.map(|topic| array_bytes::hex2array_unchecked!(topic.as_str().unwrap(), 32).into())
 				.collect(),
-			data: array_bytes::bytes_unchecked(log["data"].as_str().unwrap()),
+			data: array_bytes::hex2bytes_unchecked(log["data"].as_str().unwrap()),
 		})
 		.collect()
 }
