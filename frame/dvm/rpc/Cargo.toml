@@ -23,10 +23,10 @@ darwinia-evm            = { default-features = false, path = "../../evm" }
 darwinia-evm-primitives = { default-features = false, path = "../../../primitives/evm" }
 dvm-rpc-core-primitives = { default-features = false, path = "../../../primitives/dvm-rpc-core" }
 # substrate
-sp-api     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-api     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
+sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
+sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
 
 [features]
 default = ["std"]
