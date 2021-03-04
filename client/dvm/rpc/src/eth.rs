@@ -33,7 +33,7 @@ use jsonrpc_core::{
 use sc_client_api::backend::{AuxStore, Backend, StateBackend, StorageProvider};
 use sc_network::{ExHashT, NetworkService};
 use sha3::{Digest, Keccak256};
-use sp_api::{BlockId, Core, ProvideRuntimeApi};
+use sp_api::{BlockId, Core, HeaderT, ProvideRuntimeApi};
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_runtime::traits::BlakeTwo256;
 use sp_runtime::traits::{Block as BlockT, One, Saturating, UniqueSaturatedInto, Zero};
@@ -236,17 +236,47 @@ where
 		};
 		let out: Vec<H256> = hashes
 			.into_iter()
-			.filter_map(|h| {
-				if let Ok(Some(_)) = self.client.header(BlockId::Hash(h)) {
-					Some(h)
-				} else {
-					None
-				}
-			})
+			.filter_map(|h| if self.is_canon(h) { Some(h) } else { None })
 			.collect();
 
 		if out.len() == 1 {
 			return Ok(Some(BlockId::Hash(out[0])));
+		}
+		Ok(None)
+	}
+
+	fn is_canon(&self, target_hash: H256) -> bool {
+		if let Ok(Some(number)) = self.client.number(target_hash) {
+			if let Ok(Some(header)) = self.client.header(BlockId::Number(number)) {
+				return header.hash() == target_hash;
+			}
+		}
+		false
+	}
+
+	fn load_transactions(&self, transaction_hash: H256) -> Result<Option<(H256, u32)>> {
+		let mut transactions: Vec<(H256, u32)> = Vec::new();
+		match dvm_consensus::load_transaction_metadata(self.client.as_ref(), transaction_hash)
+			.map_err(|err| internal_err(format!("fetch aux store failed: {:?}", err)))?
+		{
+			Some(metadata) => {
+				for (block_hash, index) in metadata {
+					match self
+						.load_hash(block_hash)
+						.map_err(|err| internal_err(format!("{:?}", err)))?
+					{
+						Some(_) => {
+							transactions.push((block_hash, index));
+						}
+						_ => {}
+					};
+				}
+			}
+			None => return Ok(None),
+		};
+
+		if transactions.len() == 1 {
+			return Ok(Some(transactions[0]));
 		}
 		Ok(None)
 	}
@@ -843,22 +873,22 @@ where
 	}
 
 	fn transaction_by_hash(&self, hash: H256) -> Result<Option<Transaction>> {
-		let (hash, index) =
-			match dvm_consensus::load_transaction_metadata(self.client.as_ref(), hash)
-				.map_err(|err| internal_err(format!("fetch aux store failed: {:?})", err)))?
-			{
-				Some((hash, index)) => (hash, index as usize),
-				None => {
-					if let Some(pending) = &self.pending_transactions {
-						if let Ok(locked) = &mut pending.lock() {
-							if let Some(pending_transaction) = locked.get(&hash) {
-								return Ok(Some(pending_transaction.transaction.clone()));
-							}
+		let (hash, index) = match self
+			.load_transactions(hash)
+			.map_err(|err| internal_err(format!("{:?}", err)))?
+		{
+			Some((hash, index)) => (hash, index as usize),
+			None => {
+				if let Some(pending) = &self.pending_transactions {
+					if let Ok(locked) = &mut pending.lock() {
+						if let Some(pending_transaction) = locked.get(&hash) {
+							return Ok(Some(pending_transaction.transaction.clone()));
 						}
 					}
-					return Ok(None);
 				}
-			};
+				return Ok(None);
+			}
+		};
 
 		let id = match self
 			.load_hash(hash)
@@ -957,13 +987,13 @@ where
 	}
 
 	fn transaction_receipt(&self, hash: H256) -> Result<Option<Receipt>> {
-		let (hash, index) =
-			match dvm_consensus::load_transaction_metadata(self.client.as_ref(), hash)
-				.map_err(|err| internal_err(format!("fetch aux store failed : {:?}", err)))?
-			{
-				Some((hash, index)) => (hash, index as usize),
-				None => return Ok(None),
-			};
+		let (hash, index) = match self
+			.load_transactions(hash)
+			.map_err(|err| internal_err(format!("{:?}", err)))?
+		{
+			Some((hash, index)) => (hash, index as usize),
+			None => return Ok(None),
+		};
 
 		let id = match self
 			.load_hash(hash)
