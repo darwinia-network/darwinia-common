@@ -20,7 +20,22 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use ethereum_types::{U256, H160};
+#[macro_use]
+extern crate alloc;
+
+use ethereum_types::{
+    U256,
+    H160,
+    Address as EthereumAddress
+};
+use ethabi::{
+    Param,
+    param_type::ParamType,
+    Function,
+    token::Token,
+    Result as AbiResult,
+    Bytes,
+};
 
 pub struct Abi {
 }
@@ -34,8 +49,8 @@ impl From<[u8; 20]> for Address {
     }
 }
 
-impl From<Address> for ethereum_types::Address {
-    fn from(addr: Address) -> ethereum_types::Address {
+impl From<Address> for EthereumAddress {
+    fn from(addr: Address) -> EthereumAddress {
         H160(addr.0)
     }
 }
@@ -53,19 +68,18 @@ impl From<Amount> for U256  {
 }
 
 impl Abi {
-    /// get mint function
-    pub fn mint_function() -> ethabi::Function {
+    fn mint() -> Function {
         let inputs = vec![
-            ethabi::Param {
+            Param {
                 name: "account".into(), 
-                kind: ethabi::param_type::ParamType::Address,
+                kind: ParamType::Address,
             },
-            ethabi::Param {
+            Param {
                 name: "amount".into(),
-                kind: ethabi::param_type::ParamType::Uint(256),
+                kind: ParamType::Uint(256),
             }];
 
-        ethabi::Function {
+        Function {
             name: "mint".into(),
             inputs: inputs,
             outputs: vec![],
@@ -73,10 +87,53 @@ impl Abi {
         }
     }
 
-    pub fn encode_mint(target: Address, amount: Amount) -> ethabi::Result<ethabi::Bytes> {
-        let mint = Self::mint_function();
-        let account = ethabi::token::Token::Address(target.into());
-        let value = ethabi::token::Token::Uint(amount.into());
+    fn create_erc20() -> Function {
+        let inputs = vec![
+            Param { name: "name".into(), kind: ParamType::String },
+            Param { name: "symbol".into(), kind: ParamType::String },
+            Param { name: "decimals".into(), kind: ParamType::Uint(8) },
+            Param { name: "backing".into(), kind: ParamType::Address },
+            Param { name: "source".into(), kind: ParamType::Address }
+        ];
+
+        let outputs = vec![
+            Param {
+                name: "token".into(),
+                kind: ParamType::Address,
+            }
+        ];
+
+        Function {
+            name: "createERC20Contract".into(),
+            inputs: inputs,
+            outputs: outputs,
+            constant: false,
+        }
+    }
+
+    /// encode mint function for erc20
+    pub fn encode_mint(target: Address, amount: Amount) -> AbiResult<Bytes> {
+        let mint = Self::mint();
+        let account = Token::Address(target.into());
+        let value = Token::Uint(amount.into());
         mint.encode_input(vec![account, value].as_slice())
+    }
+
+    /// encode erc20 create function
+    pub fn encode_create_erc20(
+        name: &str,
+        symbol: &str,
+        decimals: u8,
+        backing: Address,
+        source: Address) -> AbiResult<Bytes> {
+        let create = Self::create_erc20();
+        create.encode_input(
+            vec![
+            Token::String(name.into()),
+            Token::String(symbol.into()),
+            Token::Uint(U256::from(decimals)),
+            Token::Address(backing.into()),
+            Token::Address(source.into())
+            ].as_slice())
     }
 }

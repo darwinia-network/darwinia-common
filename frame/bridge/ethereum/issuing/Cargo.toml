@@ -1,6 +1,6 @@
 [package]
 authors     = ["Darwinia Network <hello@darwinia.network>"]
-description = "FRAME pallet to back Ethereum assets"
+description = "FRAME pallet to issuing Ethereum assets"
 edition     = "2018"
 homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"
@@ -16,6 +16,7 @@ darwinia-evm-precompile = { default-features = false, path = "../../../evm/preco
 dvm-ethereum = { default-features = false, path = "../../../dvm" }
 ethereum-types = { default-features = false, version = "0.9.0" }
 rustc-hex      = { default-features = false, version = "2.1.0" }
+hex                      = { default-features = false, version = "0.4" }
 darwinia-ethereum-issuing-contract = { default-features = false, path = "contract" }
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
