@@ -1840,7 +1840,9 @@ dependencies = [
  "darwinia-staking-rpc-runtime-api",
  "drml-primitives",
  "dvm-consensus",
+ "dvm-consensus-primitives",
  "dvm-rpc",
+ "dvm-rpc-core-primitives",
  "dvm-rpc-runtime-api",
  "frame-system-rpc-runtime-api",
  "futures 0.3.13",
@@ -1909,7 +1911,6 @@ version = "1.3.0"
 dependencies = [
  "derive_more",
  "dvm-consensus-primitives",
- "ethereum",
  "futures 0.3.13",
  "log",
  "parity-scale-codec 1.3.7",
@@ -3362,14 +3363,6 @@ dependencies = [
 [[package]]
 name = "impl-codec"
 version = "0.4.2"
-source = "git+https://github.com/darwinia-network/parity-common.git#12a86aa8af8ff5ccd5c953074aa893c716cf85b5"
-dependencies = [
- "parity-scale-codec 1.3.7",
-]
-
-[[package]]
-name = "impl-codec"
-version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1be51a921b067b0eaca2fad532d9400041561aa922221cc65f95a85641c6bf53"
 dependencies = [
@@ -3377,11 +3370,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "impl-rlp"
-version = "0.2.1"
+name = "impl-codec"
+version = "0.4.2"
 source = "git+https://github.com/darwinia-network/parity-common.git#12a86aa8af8ff5ccd5c953074aa893c716cf85b5"
 dependencies = [
- "rlp 0.4.4",
+ "parity-scale-codec 1.3.7",
 ]
 
 [[package]]
@@ -3391,6 +3384,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f7a72f11830b52333f36e3b09a288333888bf54380fd0ac0790a3c31ab0f3c5"
 dependencies = [
  "rlp 0.4.6",
+]
+
+[[package]]
+name = "impl-rlp"
+version = "0.2.1"
+source = "git+https://github.com/darwinia-network/parity-common.git#12a86aa8af8ff5ccd5c953074aa893c716cf85b5"
+dependencies = [
+ "rlp 0.4.4",
 ]
 
 [[package]]
@@ -6258,7 +6259,8 @@ dependencies = [
 [[package]]
 name = "rlp-derive"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-common.git#12a86aa8af8ff5ccd5c953074aa893c716cf85b5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e33d7b2abe0c340d8797fe2907d3f20d3b5ea5908683618bfe80df7f621f672a"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -6268,8 +6270,7 @@ dependencies = [
 [[package]]
 name = "rlp-derive"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e33d7b2abe0c340d8797fe2907d3f20d3b5ea5908683618bfe80df7f621f672a"
+source = "git+https://github.com/darwinia-network/parity-common.git#12a86aa8af8ff5ccd5c953074aa893c716cf85b5"
 dependencies = [
  "proc-macro2",
  "quote",

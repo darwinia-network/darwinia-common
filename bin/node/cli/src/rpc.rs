@@ -38,6 +38,7 @@ pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
 use std::sync::Arc;
 // --- darwinia ---
 use drml_primitives::{AccountId, Balance, BlockNumber, Hash, Nonce, OpaqueBlock as Block, Power};
+use dvm_rpc_core_primitives::PendingTransactions;
 
 /// A type representing all RPC extensions.
 pub type RpcExtension = jsonrpc_core::IoHandler<sc_rpc::Metadata>;
@@ -83,6 +84,8 @@ pub struct FullDeps<C, P, SC, B> {
 	pub is_authority: bool,
 	/// Network service
 	pub network: Arc<sc_network::NetworkService<Block, Hash>>,
+	/// Ethereum pending transactions.
+	pub pending_transactions: PendingTransactions,
 	/// BABE specific dependencies.
 	pub babe: BabeDeps,
 	/// GRANDPA specific dependencies.
@@ -156,6 +159,7 @@ where
 		deny_unsafe,
 		is_authority,
 		network,
+		pending_transactions,
 		babe,
 		grandpa,
 	} = deps;
@@ -211,6 +215,7 @@ where
 		pool.clone(),
 		TransactionConverter,
 		network.clone(),
+		pending_transactions.clone(),
 		is_authority,
 	)));
 	io.extend_with(EthPubSubApiServer::to_delegate(EthPubSubApi::new(

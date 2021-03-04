@@ -118,7 +118,7 @@ where
 					block
 						.auxiliary
 						.extend(insert.iter().map(|(k, v)| (k.to_vec(), Some(v.to_vec()))))
-				}
+					}
 			};
 		}
 

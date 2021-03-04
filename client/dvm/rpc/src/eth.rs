@@ -14,18 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with Substrate. If not, see <http://www.gnu.org/licenses/>.
 
-use crate::{error_on_execution_failure, internal_err, EthSigner};
+use crate::{error_on_execution_failure, internal_err, public_key, EthSigner};
 use codec::{self, Encode};
 use dvm_rpc_core::{EthApi as EthApiT, NetApi as NetApiT, Web3Api as Web3ApiT};
 use dvm_rpc_core_primitives::{
 	Block, BlockNumber, BlockTransactions, Bytes, CallRequest, Filter, FilteredParams, Index, Log,
-	Receipt, Rich, RichBlock, SyncInfo, SyncStatus, Transaction, TransactionRequest, Work,
+	PendingTransaction, PendingTransactions, Receipt, Rich, RichBlock, SyncInfo, SyncStatus,
+	Transaction, TransactionRequest, Work,
 };
 use dvm_rpc_runtime_api::{ConvertTransaction, EthereumRuntimeRPCApi, TransactionStatus};
-use ethereum::{
-	Block as EthereumBlock, Transaction as EthereumTransaction,
-	TransactionMessage as EthereumTransactionMessage,
-};
+use ethereum::{Block as EthereumBlock, Transaction as EthereumTransaction};
 use ethereum_types::{H160, H256, H512, H64, U256, U64};
 use futures::future::TryFutureExt;
 use jsonrpc_core::{
@@ -51,6 +49,7 @@ pub struct EthApi<B: BlockT, C, P, CT, BE, H: ExHashT> {
 	client: Arc<C>,
 	convert_transaction: CT,
 	network: Arc<NetworkService<B, H>>,
+	pending_transactions: PendingTransactions,
 	is_authority: bool,
 	signers: Vec<Box<dyn EthSigner>>,
 	_marker: PhantomData<(B, BE)>,
@@ -62,6 +61,7 @@ impl<B: BlockT, C, P, CT, BE, H: ExHashT> EthApi<B, C, P, CT, BE, H> {
 		pool: Arc<P>,
 		convert_transaction: CT,
 		network: Arc<NetworkService<B, H>>,
+		pending_transactions: PendingTransactions,
 		is_authority: bool,
 	) -> Self {
 		Self {
@@ -69,6 +69,7 @@ impl<B: BlockT, C, P, CT, BE, H: ExHashT> EthApi<B, C, P, CT, BE, H> {
 			pool,
 			convert_transaction,
 			network,
+			pending_transactions,
 			is_authority,
 			signers: Vec::new(),
 			_marker: PhantomData,
@@ -117,8 +118,8 @@ fn rich_block_build(
 							.map(|(index, transaction)| {
 								transaction_build(
 									transaction.clone(),
-									block.clone(),
-									statuses[index].clone().unwrap_or_default(),
+									Some(block.clone()),
+									Some(statuses[index].clone().unwrap_or_default()),
 								)
 							})
 							.collect(),
@@ -146,40 +147,55 @@ fn rich_block_build(
 
 fn transaction_build(
 	transaction: EthereumTransaction,
-	block: EthereumBlock,
-	status: TransactionStatus,
+	block: Option<EthereumBlock>,
+	status: Option<TransactionStatus>,
 ) -> Transaction {
-	let mut sig = [0u8; 65];
-	let mut msg = [0u8; 32];
-	sig[0..32].copy_from_slice(&transaction.signature.r()[..]);
-	sig[32..64].copy_from_slice(&transaction.signature.s()[..]);
-	sig[64] = transaction.signature.standard_v();
-	msg.copy_from_slice(&EthereumTransactionMessage::from(transaction.clone()).hash()[..]);
-
-	let pubkey = match sp_io::crypto::secp256k1_ecdsa_recover(&sig, &msg) {
-		Ok(p) => Some(H512::from(p)),
+	let pubkey = match public_key(&transaction) {
+		Ok(p) => Some(p),
 		Err(_e) => None,
 	};
 
 	Transaction {
 		hash: H256::from_slice(Keccak256::digest(&rlp::encode(&transaction)).as_slice()),
 		nonce: transaction.nonce,
-		block_hash: Some(H256::from_slice(
-			Keccak256::digest(&rlp::encode(&block.header)).as_slice(),
-		)),
-		block_number: Some(block.header.number),
-		transaction_index: Some(U256::from(
-			UniqueSaturatedInto::<u32>::unique_saturated_into(status.transaction_index),
-		)),
-		from: status.from,
-		to: status.to,
+		block_hash: block.as_ref().map_or(None, |block| {
+			Some(H256::from_slice(
+				Keccak256::digest(&rlp::encode(&block.header)).as_slice(),
+			))
+		}),
+		block_number: block.as_ref().map(|block| block.header.number),
+		transaction_index: status.as_ref().map(|status| {
+			U256::from(UniqueSaturatedInto::<u32>::unique_saturated_into(
+				status.transaction_index,
+			))
+		}),
+		from: status.as_ref().map_or(
+			{
+				match pubkey {
+					Some(pk) => H160::from(H256::from_slice(Keccak256::digest(&pk).as_slice())),
+					_ => H160::default(),
+				}
+			},
+			|status| status.from,
+		),
+		to: status.as_ref().map_or(
+			{
+				match transaction.action {
+					ethereum::TransactionAction::Call(to) => Some(to),
+					_ => None,
+				}
+			},
+			|status| status.to,
+		),
 		value: transaction.value,
 		gas_price: transaction.gas_price,
 		gas: transaction.gas_limit,
 		input: Bytes(transaction.clone().input),
-		creates: status.contract_address,
+		creates: status
+			.as_ref()
+			.map_or(None, |status| status.contract_address),
 		raw: Bytes(rlp::encode(&transaction).to_vec()),
-		public_key: pubkey,
+		public_key: pubkey.as_ref().map(|pk| H512::from(pk)),
 		chain_id: transaction.signature.chain_id().map(U64::from),
 		standard_v: U256::from(transaction.signature.standard_v()),
 		v: U256::from(transaction.signature.v()),
@@ -586,15 +602,31 @@ where
 		let transaction_hash =
 			H256::from_slice(Keccak256::digest(&rlp::encode(&transaction)).as_slice());
 		let hash = self.client.info().best_hash;
+		let number = self.client.info().best_number;
+		let pending = self.pending_transactions.clone();
 		Box::new(
 			self.pool
 				.submit_one(
 					&BlockId::hash(hash),
 					TransactionSource::Local,
-					self.convert_transaction.convert_transaction(transaction),
+					self.convert_transaction
+						.convert_transaction(transaction.clone()),
 				)
 				.compat()
-				.map(move |_| transaction_hash)
+				.map(move |_| {
+					if let Some(pending) = pending {
+						if let Ok(locked) = &mut pending.lock() {
+							locked.insert(
+								transaction_hash,
+								PendingTransaction::new(
+									transaction_build(transaction, None, None),
+									UniqueSaturatedInto::<u64>::unique_saturated_into(number),
+								),
+							);
+						}
+					}
+					transaction_hash
+				})
 				.map_err(|err| {
 					internal_err(format!("submit transaction to pool failed: {:?}", err))
 				}),
@@ -613,15 +645,31 @@ where
 		let transaction_hash =
 			H256::from_slice(Keccak256::digest(&rlp::encode(&transaction)).as_slice());
 		let hash = self.client.info().best_hash;
+		let number = self.client.info().best_number;
+		let pending = self.pending_transactions.clone();
 		Box::new(
 			self.pool
 				.submit_one(
 					&BlockId::hash(hash),
 					TransactionSource::Local,
-					self.convert_transaction.convert_transaction(transaction),
+					self.convert_transaction
+						.convert_transaction(transaction.clone()),
 				)
 				.compat()
-				.map(move |_| transaction_hash)
+				.map(move |_| {
+					if let Some(pending) = pending {
+						if let Ok(locked) = &mut pending.lock() {
+							locked.insert(
+								transaction_hash,
+								PendingTransaction::new(
+									transaction_build(transaction, None, None),
+									UniqueSaturatedInto::<u64>::unique_saturated_into(number),
+								),
+							);
+						}
+					}
+					transaction_hash
+				})
 				.map_err(|err| {
 					internal_err(format!("submit transaction to pool failed: {:?}", err))
 				}),
@@ -800,7 +848,16 @@ where
 				.map_err(|err| internal_err(format!("fetch aux store failed: {:?})", err)))?
 			{
 				Some((hash, index)) => (hash, index as usize),
-				None => return Ok(None),
+				None => {
+					if let Some(pending) = &self.pending_transactions {
+						if let Ok(locked) = &mut pending.lock() {
+							if let Some(pending_transaction) = locked.get(&hash) {
+								return Ok(Some(pending_transaction.transaction.clone()));
+							}
+						}
+					}
+					return Ok(None);
+				}
 			};
 
 		let id = match self
@@ -825,8 +882,8 @@ where
 		match (block, statuses) {
 			(Some(block), Some(statuses)) => Ok(Some(transaction_build(
 				block.transactions[index].clone(),
-				block,
-				statuses[index].clone(),
+				Some(block),
+				Some(statuses[index].clone()),
 			))),
 			_ => Ok(None),
 		}
@@ -860,8 +917,8 @@ where
 		match (block, statuses) {
 			(Some(block), Some(statuses)) => Ok(Some(transaction_build(
 				block.transactions[index].clone(),
-				block,
-				statuses[index].clone(),
+				Some(block),
+				Some(statuses[index].clone()),
 			))),
 			_ => Ok(None),
 		}
@@ -892,8 +949,8 @@ where
 		match (block, statuses) {
 			(Some(block), Some(statuses)) => Ok(Some(transaction_build(
 				block.transactions[index].clone(),
-				block,
-				statuses[index].clone(),
+				Some(block),
+				Some(statuses[index].clone()),
 			))),
 			_ => Ok(None),
 		}

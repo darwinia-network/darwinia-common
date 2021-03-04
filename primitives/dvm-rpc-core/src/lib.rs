@@ -49,6 +49,9 @@ pub use self::sync::{
 	ChainStatus, EthProtocolInfo, PeerInfo, PeerNetworkInfo, PeerProtocolsInfo, Peers,
 	PipProtocolInfo, SyncInfo, SyncStatus, TransactionStats,
 };
-pub use self::transaction::{LocalTransactionStatus, RichRawTransaction, Transaction};
+pub use self::transaction::{
+	LocalTransactionStatus, PendingTransaction, PendingTransactions, RichRawTransaction,
+	Transaction,
+};
 pub use self::transaction_request::TransactionRequest;
 pub use self::work::Work;

@@ -38,7 +38,9 @@ darwinia-staking-rpc                = { path = "../../../frame/staking/rpc" }
 darwinia-staking-rpc-runtime-api    = { path = "../../../frame/staking/rpc/runtime-api" }
 drml-primitives                     = { path = "../primitives" }
 dvm-consensus                       = { path = "../../../client/dvm/consensus" }
+dvm-consensus-primitives            = { path = "../../../primitives/consensus" }
 dvm-rpc                             = { path = "../../../client/dvm/rpc" }
+dvm-rpc-core-primitives             = { path = "../../../primitives/dvm-rpc-core" }
 dvm-rpc-runtime-api                 = { path = "../../../frame/dvm/rpc/runtime-api" }
 pangolin-runtime                    = { path = "../runtime/pangolin" }
 # substrate
