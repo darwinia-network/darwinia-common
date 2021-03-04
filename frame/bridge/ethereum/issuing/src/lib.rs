@@ -27,17 +27,26 @@ use frame_support::{
 	traits::{Currency, ExistenceRequirement::*, Get},
 	weights::Weight,
     dispatch::DispatchResultWithPostInfo,
+    parameter_types,
 };
 use frame_system::{ensure_root, ensure_signed};
 use ethereum_types::{H160, H256, U256};
 use dvm_ethereum::TransactionAction;
-use core::str::FromStr;
 use rustc_hex::{FromHex, ToHex};
 use dvm_ethereum::TransactionSignature;
 
-use darwinia_support::{
-	traits::SystemDvmCaller as SystemDvmCallerT,
+use sp_std::vec::Vec;
+
+use sp_runtime::{
+    DispatchError,
 };
+
+use darwinia_support::{
+	traits::DvmRawTransactor as DvmRawTransactorT,
+};
+
+const ISSUING_ACCOUNT: &str = "1000000000000000000000000000000000000001";
+const MAPPING_FACTORY_ADDRESS: &str = "55D8ECEE33841AaCcb890085AcC7eE0d8A92b5eF";
 
 mod types {
     pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
@@ -47,7 +56,15 @@ use types::*;
 
 pub trait Trait: frame_system::Trait {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
-	type SysdvmCaller: SystemDvmCallerT<dvm_ethereum::Transaction, DispatchResultWithPostInfo>;
+	type DvmCaller: DvmRawTransactorT<H160, dvm_ethereum::Transaction, DispatchResultWithPostInfo>;
+}
+
+decl_error! {
+	/// Issuing pallet errors.
+	pub enum Error for Module<T: Trait> {
+		/// Invalid Issuing System Account
+		InvalidIssuingAccount,
+	}
 }
 
 decl_event! {
@@ -78,30 +95,65 @@ decl_module! {
         }
 
         #[weight = 10_000_000]
-        pub fn test_call(origin) {
+        pub fn test_call(origin, amount: U256) {
             debug::info!(target: "darwinia-issuing", "start to call tx");
 			ensure_signed(origin)?;
-            let transaction = dvm_ethereum::Transaction {
-                nonce: U256::zero(),
-                gas_price: U256::from(1),
-                gas_limit: U256::from(0x100000),
-                action: dvm_ethereum::TransactionAction::Call(H160::from_str("55D8ECEE33841AaCcb890085AcC7eE0d8A92b5eF").unwrap()),
-                value: U256::zero(),
-                input: FromHex::from_hex("40c10f190000000000000000000000004ad6e21bef59268f2ccf10bfa18c20c8c13ed8590000000000000000000000000000000000000000000000000de0b6b3a7640000").unwrap(),
-                signature: TransactionSignature::new(
-                    0x78,
-                    H256::from_slice(&[55u8; 32]),
-                    H256::from_slice(&[55u8; 32]),
-                ).unwrap(),
-            };
-            let result = T::SysdvmCaller::sys_transact(transaction);
+            //let mint = Self::mint_function();
+            let recvaddr: Vec<u8> = FromHex::from_hex(MAPPING_FACTORY_ADDRESS).unwrap();
+            let receiver: ethereum_types::Address = H160::from_slice(&recvaddr);
+            let bytes = darwinia_ethereum_issuing_contract::Abi::encode_mint(receiver.0.into(), amount.0.into());
+            debug::info!(target: "darwinia-issuing", "mint bytes {:?}", bytes);
+            let mapping_factory_address: Vec<u8> = FromHex::from_hex(MAPPING_FACTORY_ADDRESS).unwrap();
+            let issuing_address: Vec<u8> = FromHex::from_hex(ISSUING_ACCOUNT).unwrap();
+
+            let transaction = Self::unsigned_transaction(H160::from_slice(&mapping_factory_address), FromHex::from_hex("40c10f190000000000000000000000004ad6e21bef59268f2ccf10bfa18c20c8c13ed8590000000000000000000000000000000000000000000000000de0b6b3a7640000").unwrap());
+            let issuing_account = H160::from_slice(&issuing_address);
+            let result = T::DvmCaller::raw_transact(issuing_account, transaction).map_err(|e| -> &'static str {e.into()} )?;
             debug::info!(
                 target: "darwinia-issuing",
                 "sys call return {:?}",
                 result
             );
-
         }
     }
+}
+
+impl<T: Trait> Module<T> {
+    /// get dvm ethereum unsigned transaction
+    pub fn unsigned_transaction(target: H160, input: Vec<u8>) -> dvm_ethereum::Transaction {
+        dvm_ethereum::Transaction {
+            nonce: U256::zero(),
+            gas_price: U256::from(1),
+            gas_limit: U256::from(0x100000),
+            action: dvm_ethereum::TransactionAction::Call(target),
+            value: U256::zero(),
+            input: input,
+            signature: TransactionSignature::new(
+                0x0,
+                H256::from_slice(&[0u8; 32]),
+                H256::from_slice(&[0u8; 32]),
+            ).unwrap(),
+        }
+    }
+
+    // get mint function
+    //pub fn mint_function() -> ethabi::Function {
+        //let inputs = vec![
+            //ethabi::Param {
+                //name: "account".into(), 
+                //kind: ethabi::param_type::ParamType::Address,
+            //},
+            //ethabi::Param {
+                //name: "amount".into(),
+                //kind: ethabi::param_type::ParamType::Uint(256),
+            //}];
+
+        //ethabi::Function {
+            //name: "mint".into(),
+            //inputs: inputs,
+            //outputs: vec![],
+            //constant: false,
+        //}
+    //}
 }
 

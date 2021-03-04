@@ -97,6 +97,7 @@ std     = [
 	"darwinia-democracy/std",
 	"darwinia-elections-phragmen/std",
 	"darwinia-ethereum-backing/std",
+	"darwinia-ethereum-issuing/std",
 	"darwinia-ethereum-relay/std",
 	"darwinia-evm/std",
 	"darwinia-evm-precompile/std",

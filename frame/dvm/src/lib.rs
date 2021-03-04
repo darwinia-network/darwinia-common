@@ -47,10 +47,9 @@ use darwinia_evm_primitives::CallOrCreateInfo;
 pub use dvm_rpc_runtime_api::TransactionStatus;
 pub use ethereum::{Block, Log, Receipt, Transaction, TransactionAction, TransactionMessage, TransactionSignature};
 use frame_support::traits::Currency;
-use core::str::FromStr;
 
 use darwinia_support::{
-	traits::SystemDvmCaller as SystemDvmCallerT,
+	traits::DvmRawTransactor as DvmRawTransactorT,
 };
 
 #[cfg(all(feature = "std", test))]
@@ -151,77 +150,7 @@ decl_module! {
 			let source = Self::recover_signer(&transaction)
 				.ok_or_else(|| Error::<T>::InvalidSignature)?;
 
-			let transaction_hash = H256::from_slice(
-				Keccak256::digest(&rlp::encode(&transaction)).as_slice()
-			);
-			let transaction_index = Pending::get().len() as u32;
-
-			let (to, contract_address, info) = Self::execute(
-				source,
-				transaction.input.clone(),
-				transaction.value,
-				transaction.gas_limit,
-				Some(transaction.gas_price),
-				Some(transaction.nonce),
-				transaction.action,
-				None,
-			)?;
-
-			let (reason, status, used_gas) = match info {
-				CallOrCreateInfo::Call(info) => {
-					(info.exit_reason, TransactionStatus {
-						transaction_hash,
-						transaction_index,
-						from: source,
-						to,
-						contract_address: None,
-						logs: info.logs.clone(),
-						logs_bloom: {
-							let mut bloom: Bloom = Bloom::default();
-							Self::logs_bloom(
-								info.logs,
-								&mut bloom
-							);
-							bloom
-						},
-					}, info.used_gas)
-				},
-				CallOrCreateInfo::Create(info) => {
-					(info.exit_reason, TransactionStatus {
-						transaction_hash,
-						transaction_index,
-						from: source,
-						to,
-						contract_address: Some(info.value),
-						logs: info.logs.clone(),
-						logs_bloom: {
-							let mut bloom: Bloom = Bloom::default();
-							Self::logs_bloom(
-								info.logs,
-								&mut bloom
-							);
-							bloom
-						},
-					}, info.used_gas)
-				},
-			};
-
-			let receipt = ethereum::Receipt {
-				state_root: match reason {
-					ExitReason::Succeed(_) => H256::from_low_u64_be(1),
-					ExitReason::Error(_) => H256::from_low_u64_le(0),
-					ExitReason::Revert(_) => H256::from_low_u64_le(0),
-					ExitReason::Fatal(_) => H256::from_low_u64_le(0),
-				},
-				used_gas,
-				logs_bloom: status.clone().logs_bloom,
-				logs: status.clone().logs,
-			};
-
-			Pending::append((transaction, status, receipt));
-
-			Self::deposit_event(Event::Executed(source, contract_address.unwrap_or_default(), transaction_hash, reason));
-			Ok(Some(T::GasWeightMapping::gas_to_weight(used_gas.unique_saturated_into())).into())
+            Self::raw_transact(source, transaction)
 		}
 
 		fn on_finalize(n: T::BlockNumber) {
@@ -289,14 +218,13 @@ impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
 	}
 }
 
-impl<T: Trait> SystemDvmCallerT<ethereum::Transaction, DispatchResultWithPostInfo> for Module<T> {
+impl<T: Trait> DvmRawTransactorT<H160, ethereum::Transaction, DispatchResultWithPostInfo> for Module<T> {
     /// Transact a System Ethereum transaction.
-    fn sys_transact(transaction: ethereum::Transaction) -> DispatchResultWithPostInfo {
-        //ensure_none(origin)?;
+    fn raw_transact(source: H160, transaction: ethereum::Transaction) -> DispatchResultWithPostInfo {
 
         //let source = Self::recover_signer(&transaction)
         //.ok_or_else(|| Error::<T>::InvalidSignature)?;
-        let source = H160::from_str("20bb04D3062a7AE56AD948de00c1Ca91928eF843").unwrap();
+        //let source = H160::from_str("20bb04D3062a7AE56AD948de00c1Ca91928eF843").unwrap();
 
         let transaction_hash = H256::from_slice(
             Keccak256::digest(&rlp::encode(&transaction)).as_slice()

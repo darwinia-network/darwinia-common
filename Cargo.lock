@@ -1375,6 +1375,7 @@ dependencies = [
 name = "darwinia-ethereum-issuing"
 version = "1.0.0"
 dependencies = [
+ "darwinia-ethereum-issuing-contract",
  "darwinia-evm-precompile",
  "darwinia-support",
  "dvm-ethereum",
@@ -1383,8 +1384,21 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "rustc-hex",
- "serde",
- "serde_json",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 2.0.0",
+]
+
+[[package]]
+name = "darwinia-ethereum-issuing-contract"
+version = "1.0.0"
+dependencies = [
+ "ethabi",
+ "ethereum-types 0.8.0",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "rustc-hex",
  "sp-io",
  "sp-runtime",
  "sp-std 2.0.0",
@@ -9276,7 +9290,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04f8ab788026715fa63b31960869617cba39117e520eb415b0139543e325ab59"
 dependencies = [
  "cfg-if 0.1.10",
- "rand 0.3.23",
+ "rand 0.7.3",
  "static_assertions 1.1.0",
 ]
 

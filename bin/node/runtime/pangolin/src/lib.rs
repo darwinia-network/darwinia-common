@@ -987,7 +987,7 @@ impl darwinia_ethereum_backing::Trait for Runtime {
 
 impl darwinia_ethereum_issuing::Trait for Runtime {
 	type Event = Event;
-    type SysdvmCaller = Ethereum;
+    type DvmCaller = Ethereum;
 }
 
 type EnsureRootOrHalfTechnicalComittee = EnsureOneOf<

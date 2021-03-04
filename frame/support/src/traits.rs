@@ -181,7 +181,7 @@ pub trait EthereumReceipt<AccountId, Balance> {
 	fn gen_receipt_index(proof: &Self::EthereumReceiptProofThing) -> EthereumTransactionIndex;
 }
 
-pub trait SystemDvmCaller<Transaction, ResultInfo> {
-    fn sys_transact(transaction: Transaction) -> ResultInfo;
+pub trait DvmRawTransactor<Source, Transaction, ResultInfo> {
+    fn raw_transact(source: Source, transaction: Transaction) -> ResultInfo;
 }
 
