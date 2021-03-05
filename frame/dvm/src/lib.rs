@@ -347,24 +347,14 @@ impl<T: Config> Module<T> {
 			H256::from_slice(Keccak256::digest(&input).as_slice())
 		};
 
-		let mut transaction_hashes = Vec::new();
-
-		for t in &transactions {
-			let transaction_hash = H256::from_slice(Keccak256::digest(&rlp::encode(t)).as_slice());
-			transaction_hashes.push(transaction_hash);
-		}
-
 		CurrentBlock::put(block.clone());
 		CurrentReceipts::put(receipts.clone());
 		CurrentTransactionStatuses::put(statuses.clone());
 
 		let digest = DigestItem::<T::Hash>::Consensus(
 			FRONTIER_ENGINE_ID,
-			ConsensusLog::EndBlock {
-				block_hash: block.header.hash(),
-				transaction_hashes,
-			}
-			.encode(),
+			ConsensusLog::PostHashes(dvm_consensus_primitives::PostHashes::from_block(block))
+				.encode(),
 		);
 		frame_system::Module::<T>::deposit_log(digest.into());
 	}
