@@ -25,6 +25,7 @@ rand                = { version = "0.7" }
 rlp                 = { version = "0.5.0" }
 rustc-hex           = { version = "2.1.0" }
 sha3                = { version = "0.8" }
+dvm-db = { path = "../db" }
 # darwinia
 darwinia-evm            = { path = "../../../frame/evm" }
 dvm-consensus           = { path = "../consensus" }

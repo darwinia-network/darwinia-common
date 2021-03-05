@@ -88,6 +88,8 @@ pub struct FullDeps<C, P, SC, B> {
 	pub pending_transactions: PendingTransactions,
 	/// EthFilterApi pool.
 	pub filter_pool: Option<FilterPool>,
+	/// Backend.
+	pub backend: Arc<dvm_db::Backend<Block>>,
 	/// BABE specific dependencies.
 	pub babe: BabeDeps,
 	/// GRANDPA specific dependencies.
@@ -163,6 +165,7 @@ where
 		network,
 		pending_transactions,
 		filter_pool,
+		backend,
 		babe,
 		grandpa,
 	} = deps;
@@ -219,6 +222,7 @@ where
 		TransactionConverter,
 		network.clone(),
 		pending_transactions.clone(),
+		backend,
 		is_authority,
 	)));
 	if let Some(filter_pool) = filter_pool {

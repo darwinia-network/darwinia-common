@@ -16,10 +16,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-mod aux_schema;
-
-pub use crate::aux_schema::{load_block_hash, load_transaction_metadata};
-
 use dvm_consensus_primitives::{ConsensusLog, FRONTIER_ENGINE_ID};
 use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
 use log::*;
@@ -62,6 +58,7 @@ impl std::convert::From<Error> for ConsensusError {
 pub struct FrontierBlockImport<B: BlockT, I, C> {
 	inner: I,
 	client: Arc<C>,
+	backend: Arc<dvm_db::Backend<B>>,
 	enabled: bool,
 	_marker: PhantomData<B>,
 }
@@ -71,6 +68,7 @@ impl<Block: BlockT, I: Clone + BlockImport<Block>, C> Clone for FrontierBlockImp
 		FrontierBlockImport {
 			inner: self.inner.clone(),
 			client: self.client.clone(),
+			backend: self.backend.clone(),
 			enabled: self.enabled,
 			_marker: PhantomData,
 		}
@@ -86,10 +84,11 @@ where
 	C::Api: EthereumRuntimeRPCApi<B>,
 	C::Api: BlockBuilderApi<B, Error = sp_blockchain::Error>,
 {
-	pub fn new(inner: I, client: Arc<C>, enabled: bool) -> Self {
+	pub fn new(inner: I, client: Arc<C>, backend: Arc<dvm_db::Backend<B>>, enabled: bool) -> Self {
 		Self {
 			inner,
 			client,
+			backend,
 			enabled,
 			_marker: PhantomData,
 		}
@@ -143,27 +142,14 @@ where
 				}
 			};
 
-			let res = aux_schema::write_block_hash(
-				client.as_ref(),
-				post_hashes.block_hash,
-				hash,
-				insert_closure!(),
-			);
+			let mapping_commitment = dvm_db::MappingCommitment {
+				block_hash: hash,
+				ethereum_block_hash: post_hashes.block_hash,
+				ethereum_transaction_hashes: post_hashes.transaction_hashes,
+			};
+			let res = self.backend.mapping_db().write_hashes(mapping_commitment);
 			if res.is_err() {
 				trace!(target: "frontier-consensus", "{:?}", res);
-			}
-
-			for (index, transaction_hash) in post_hashes.transaction_hashes.into_iter().enumerate()
-			{
-				let res = aux_schema::write_transaction_metadata(
-					client.as_ref(),
-					transaction_hash,
-					(post_hashes.block_hash, index as u32),
-					insert_closure!(),
-				);
-				if res.is_err() {
-					trace!(target: "frontier-consensus", "{:?}", res);
-				}
 			}
 
 			// On importing block 1 we also map the genesis block in the auxiliary.
@@ -175,13 +161,13 @@ where
 						.runtime_api()
 						.current_block(&id)
 						.map_err(|_| Error::RuntimeApiCallFailed)?;
-					let block_hash = block.unwrap().header.hash();
-					let res = aux_schema::write_block_hash(
-						client.as_ref(),
-						block_hash,
-						header.hash(),
-						insert_closure!(),
-					);
+					let block_hash = block.unwrap().header.hash(); // TODO: shouldn't use unwrap
+					let mapping_commitment = dvm_db::MappingCommitment::<B> {
+						block_hash: header.hash(),
+						ethereum_block_hash: block_hash,
+						ethereum_transaction_hashes: Vec::new(),
+					};
+					let res = self.backend.mapping_db().write_hashes(mapping_commitment);
 					if res.is_err() {
 						trace!(target: "frontier-consensus", "{:?}", res);
 					}

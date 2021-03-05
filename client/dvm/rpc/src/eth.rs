@@ -53,6 +53,7 @@ pub struct EthApi<B: BlockT, C, P, CT, BE, H: ExHashT> {
 	convert_transaction: CT,
 	network: Arc<NetworkService<B, H>>,
 	pending_transactions: PendingTransactions,
+	backend: Arc<dvm_db::Backend<B>>,
 	is_authority: bool,
 	signers: Vec<Box<dyn EthSigner>>,
 	_marker: PhantomData<(B, BE)>,
@@ -65,6 +66,7 @@ impl<B: BlockT, C, P, CT, BE, H: ExHashT> EthApi<B, C, P, CT, BE, H> {
 		convert_transaction: CT,
 		network: Arc<NetworkService<B, H>>,
 		pending_transactions: PendingTransactions,
+		backend: Arc<dvm_db::Backend<B>>,
 		is_authority: bool,
 	) -> Self {
 		Self {
@@ -73,6 +75,7 @@ impl<B: BlockT, C, P, CT, BE, H: ExHashT> EthApi<B, C, P, CT, BE, H> {
 			convert_transaction,
 			network,
 			pending_transactions,
+			backend,
 			is_authority,
 			signers: Vec::new(),
 			_marker: PhantomData,
@@ -289,12 +292,11 @@ where
 
 	// Asumes there is only one mapped canonical block in the AuxStore, otherwise something is wrong
 	fn load_hash(&self, hash: H256) -> Result<Option<BlockId<B>>> {
-		let hashes = match dvm_consensus::load_block_hash::<B, _>(self.client.as_ref(), hash)
-			.map_err(|err| internal_err(format!("fetch aux store failed: {:?}", err)))?
-		{
-			Some(hashes) => hashes,
-			None => return Ok(None),
-		};
+		let hashes = self
+			.backend
+			.mapping_db()
+			.block_hashes(&hash)
+			.map_err(|err| internal_err(format!("fetch aux store failed: {:?}", err)))?;
 		let out: Vec<H256> = hashes
 			.into_iter()
 			.filter_map(|h| if self.is_canon(h) { Some(h) } else { None })
@@ -316,30 +318,20 @@ where
 	}
 
 	fn load_transactions(&self, transaction_hash: H256) -> Result<Option<(H256, u32)>> {
-		let mut transactions: Vec<(H256, u32)> = Vec::new();
-		match dvm_consensus::load_transaction_metadata(self.client.as_ref(), transaction_hash)
-			.map_err(|err| internal_err(format!("fetch aux store failed: {:?}", err)))?
-		{
-			Some(metadata) => {
-				for (block_hash, index) in metadata {
-					match self
-						.load_hash(block_hash)
-						.map_err(|err| internal_err(format!("{:?}", err)))?
-					{
-						Some(_) => {
-							transactions.push((block_hash, index));
-						}
-						_ => {}
-					};
-				}
-			}
-			None => return Ok(None),
-		};
+		let transaction_metadata = self
+			.backend
+			.mapping_db()
+			.transaction_metadata(&transaction_hash)
+			.map_err(|err| internal_err(format!("fetch aux store failed: {:?}", err)))?;
 
-		if transactions.len() == 1 {
-			return Ok(Some(transactions[0]));
+		if transaction_metadata.len() == 1 {
+			Ok(Some((
+				transaction_metadata[0].ethereum_block_hash,
+				transaction_metadata[0].ethereum_index,
+			)))
+		} else {
+			Ok(None)
 		}
-		Ok(None)
 	}
 }
 
