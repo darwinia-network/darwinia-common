@@ -25,7 +25,7 @@ pub use pangolin_runtime;
 
 // --- std ---
 use std::{
-	collections::HashMap,
+	collections::{BTreeMap, HashMap},
 	sync::{Arc, Mutex},
 	time::Duration,
 };
@@ -64,7 +64,7 @@ use crate::rpc::{
 };
 use drml_primitives::{AccountId, Balance, Hash, Nonce, OpaqueBlock as Block, Power};
 use dvm_consensus::FrontierBlockImport;
-use dvm_rpc_core_primitives::PendingTransactions;
+use dvm_rpc_core_primitives::{FilterPool, PendingTransactions};
 
 type FullBackend = sc_service::TFullBackend<Block>;
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
@@ -199,6 +199,7 @@ fn new_partial<RuntimeApi, Executor>(
 			GrandpaSharedVoterState,
 			Option<TelemetrySpan>,
 			PendingTransactions,
+			Option<FilterPool>,
 		),
 	>,
 	ServiceError,
@@ -230,6 +231,7 @@ where
 		client.clone(),
 	);
 	let pending_transactions: PendingTransactions = Some(Arc::new(Mutex::new(HashMap::new())));
+	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
 	let grandpa_hard_forks = vec![];
 	let (grandpa_block_import, grandpa_link) =
 		sc_finality_grandpa::block_import_with_authority_set_hard_forks(
@@ -274,6 +276,7 @@ where
 		let keystore = keystore_container.sync_keystore();
 		let transaction_pool = transaction_pool.clone();
 		let pending = pending_transactions.clone();
+		let filter_pool = filter_pool.clone();
 		let select_chain = select_chain.clone();
 		let chain_spec = config.chain_spec.cloned_box();
 
@@ -287,6 +290,7 @@ where
 				is_authority,
 				network,
 				pending_transactions: pending.clone(),
+				filter_pool: filter_pool.clone(),
 				babe: BabeDeps {
 					babe_config: babe_config.clone(),
 					shared_epoch_changes: shared_epoch_changes.clone(),
@@ -320,6 +324,7 @@ where
 			rpc_setup,
 			telemetry_span,
 			pending_transactions,
+			filter_pool,
 		),
 	})
 }
@@ -367,7 +372,14 @@ where
 		transaction_pool,
 		inherent_data_providers,
 		other:
-			(rpc_extensions_builder, import_setup, rpc_setup, telemetry_span, pending_transactions),
+			(
+				rpc_extensions_builder,
+				import_setup,
+				rpc_setup,
+				telemetry_span,
+				pending_transactions,
+				filter_pool,
+			),
 	} = new_partial::<RuntimeApi, Executor>(&mut config)?;
 
 	if let Some(url) = &config.keystore_remote {
@@ -453,6 +465,30 @@ where
 		})?;
 
 	let (block_import, link_half, babe_link) = import_setup;
+
+	// Spawn Frontier EthFilterApi maintenance task.
+	if filter_pool.is_some() {
+		use futures::StreamExt;
+		// Each filter is allowed to stay in the pool for 100 blocks.
+		const FILTER_RETAIN_THRESHOLD: u64 = 100;
+		task_manager.spawn_essential_handle().spawn(
+			"frontier-filter-pool",
+			client
+				.import_notification_stream()
+				.for_each(move |notification| {
+					if let Ok(locked) = &mut filter_pool.clone().unwrap().lock() {
+						let imported_number: u64 = notification.header.number as u64;
+						for (k, v) in locked.clone().iter() {
+							let lifespan_limit = v.at_block + FILTER_RETAIN_THRESHOLD;
+							if lifespan_limit <= imported_number {
+								locked.remove(&k);
+							}
+						}
+					}
+					futures::future::ready(())
+				}),
+		);
+	}
 
 	// Spawn Frontier pending transactions maintenance task (as essential, otherwise we leak).
 	if pending_transactions.is_some() {

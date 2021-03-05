@@ -25,6 +25,7 @@ use dvm_rpc_core_primitives::{
 	SyncStatus, Transaction, TransactionRequest, Work,
 };
 pub use rpc_impl_EthApi::gen_server::EthApi as EthApiServer;
+pub use rpc_impl_EthFilterApi::gen_server::EthFilterApi as EthFilterApiServer;
 
 /// Eth rpc interface.
 #[rpc(server)]
@@ -191,11 +192,11 @@ pub trait EthFilterApi {
 
 	/// Returns filter changes since last poll.
 	#[rpc(name = "eth_getFilterChanges")]
-	fn filter_changes(&self, _: Index) -> BoxFuture<FilterChanges>;
+	fn filter_changes(&self, _: Index) -> Result<FilterChanges>;
 
 	/// Returns all logs matching given filter (in a range 'from' - 'to').
 	#[rpc(name = "eth_getFilterLogs")]
-	fn filter_logs(&self, _: Index) -> BoxFuture<Vec<Log>>;
+	fn filter_logs(&self, _: Index) -> Result<Vec<Log>>;
 
 	/// Uninstalls filter.
 	#[rpc(name = "eth_uninstallFilter")]

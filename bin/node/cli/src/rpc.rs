@@ -38,7 +38,7 @@ pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
 use std::sync::Arc;
 // --- darwinia ---
 use drml_primitives::{AccountId, Balance, BlockNumber, Hash, Nonce, OpaqueBlock as Block, Power};
-use dvm_rpc_core_primitives::PendingTransactions;
+use dvm_rpc_core_primitives::{FilterPool, PendingTransactions};
 
 /// A type representing all RPC extensions.
 pub type RpcExtension = jsonrpc_core::IoHandler<sc_rpc::Metadata>;
@@ -86,6 +86,8 @@ pub struct FullDeps<C, P, SC, B> {
 	pub network: Arc<sc_network::NetworkService<Block, Hash>>,
 	/// Ethereum pending transactions.
 	pub pending_transactions: PendingTransactions,
+	/// EthFilterApi pool.
+	pub filter_pool: Option<FilterPool>,
 	/// BABE specific dependencies.
 	pub babe: BabeDeps,
 	/// GRANDPA specific dependencies.
@@ -146,8 +148,8 @@ where
 	use darwinia_header_mmr_rpc::{HeaderMMR, HeaderMMRApi};
 	use darwinia_staking_rpc::{Staking, StakingApi};
 	use dvm_rpc::{
-		EthApi, EthApiServer, EthPubSubApi, EthPubSubApiServer, HexEncodedIdProvider, NetApi,
-		NetApiServer, Web3Api, Web3ApiServer,
+		EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, EthPubSubApi, EthPubSubApiServer,
+		HexEncodedIdProvider, NetApi, NetApiServer, Web3Api, Web3ApiServer,
 	};
 	use pangolin_runtime::TransactionConverter;
 
@@ -160,6 +162,7 @@ where
 		is_authority,
 		network,
 		pending_transactions,
+		filter_pool,
 		babe,
 		grandpa,
 	} = deps;
@@ -218,6 +221,13 @@ where
 		pending_transactions.clone(),
 		is_authority,
 	)));
+	if let Some(filter_pool) = filter_pool {
+		io.extend_with(EthFilterApiServer::to_delegate(EthFilterApi::new(
+			client.clone(),
+			filter_pool.clone(),
+			500 as usize, // max stored filters
+		)));
+	}
 	io.extend_with(EthPubSubApiServer::to_delegate(EthPubSubApi::new(
 		pool,
 		client.clone(),
