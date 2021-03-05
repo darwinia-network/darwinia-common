@@ -11,7 +11,7 @@ version     = "1.3.0"
 
 [dependencies]
 # crates
-codec = { package = "parity-scale-codec", version = "1.3.6", default-features = false }
+codec = { package = "parity-scale-codec", version = "1.3.7", default-features = false }
 # darwinia
 array-bytes                    = { default-features = false, path = "../../../../primitives/array-bytes" }
 darwinia-ethereum-linear-relay = { default-features = false, path = "../linear-relay" }
@@ -20,11 +20,11 @@ ethereum-primitives            = { default-features = false, path = "../../../..
 # github
 rlp = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
+sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
 
 [dev-dependencies]
 # crates
@@ -33,8 +33,8 @@ serde_json = { version = "1.0.62" }
 darwinia-balances   = { path = "../../../../frame/balances" }
 ethereum-primitives = { features = ["deserialize"], path = "../../../../primitives/ethereum-primitives" }
 # substrate
-sp-core = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-io   = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
+sp-io   = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
 
 [features]
 default = ["std"]
