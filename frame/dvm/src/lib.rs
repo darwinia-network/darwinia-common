@@ -42,7 +42,7 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 
-use darwinia_evm::{AccountBasicMapping, AddressMapping, GasWeightMapping, Runner};
+use darwinia_evm::{AccountBasicMapping, AddressMapping, FeeCalculator, GasWeightMapping, Runner};
 use darwinia_evm_primitives::CallOrCreateInfo;
 pub use dvm_rpc_runtime_api::TransactionStatus;
 pub use ethereum::{Block, Log, Receipt, Transaction, TransactionAction, TransactionMessage};
@@ -264,7 +264,12 @@ impl<T: Config> frame_support::unsigned::ValidateUnsigned for Module<T> {
 			}
 
 			let fee = transaction.gas_price.saturating_mul(transaction.gas_limit);
-			if account_data.balance < fee {
+			let total_payment = transaction.value.saturating_add(fee);
+			if account_data.balance < total_payment {
+				return InvalidTransaction::Payment.into();
+			}
+
+			if transaction.gas_price < T::FeeCalculator::min_gas_price() {
 				return InvalidTransaction::Payment.into();
 			}
 
