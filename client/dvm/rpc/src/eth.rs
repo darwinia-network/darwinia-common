@@ -916,6 +916,10 @@ where
 					Err(_) => {
 						lower = mid;
 						mid = (lower + upper + 1) / 2;
+
+						if mid == lower {
+							break;
+						}
 					}
 				}
 			}
