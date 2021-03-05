@@ -26,6 +26,7 @@ extern crate alloc;
 use ethereum_types::{
     U256,
     H160,
+    H256,
     Address as EthereumAddress
 };
 use ethabi::{
@@ -35,16 +36,22 @@ use ethabi::{
     token::Token,
     Result as AbiResult,
     Bytes,
+    RawLog,
+    EventParam,
 };
+
+pub use ethabi::{Log, Event};
+use sp_std::vec::Vec;
 
 pub struct Abi {
 }
 
 pub struct Address([u8; 20]);
 pub struct Amount([u64; 4]);
+pub struct Topic([u8; 32]);
 
 impl From<[u8; 20]> for Address {
-    fn from(bytes: [u8; 20]) -> Address {
+    fn from(bytes: [u8; 20]) -> Self {
         Self(bytes)
     }
 }
@@ -56,7 +63,7 @@ impl From<Address> for EthereumAddress {
 }
 
 impl From<[u64; 4]> for Amount {
-    fn from(bytes: [u64; 4]) -> Amount {
+    fn from(bytes: [u64; 4]) -> Self {
         Self(bytes)
     }
 }
@@ -64,6 +71,18 @@ impl From<[u64; 4]> for Amount {
 impl From<Amount> for U256  {
     fn from(value: Amount) -> U256 {
         U256(value.0)
+    }
+}
+
+impl From<[u8; 32]> for Topic {
+    fn from(bytes: [u8; 32]) -> Self {
+        Self(bytes)
+    }
+}
+
+impl From<Topic> for H256 {
+    fn from(topic: Topic) -> H256 {
+        H256(topic.0)
     }
 }
 
@@ -111,6 +130,61 @@ impl Abi {
         }
     }
 
+    /// register event
+    pub fn register_event() -> Event {
+        Event {
+            name: "NewTokenRegisted".into(),
+            inputs: vec![
+                EventParam {
+                    name: "token".into(),
+                    kind: ParamType::Address,
+                    indexed: true,
+                },
+                EventParam {
+                    name: "name".into(),
+                    kind: ParamType::String,
+                    indexed: false,
+                },
+                EventParam {
+                    name: "symbol".into(),
+                    kind: ParamType::String,
+                    indexed: false,
+                },
+                EventParam {
+                    name: "decimals".into(),
+                    kind: ParamType::Uint(8),
+                    indexed: false,
+                }
+            ],
+            anonymous: false,
+        }
+    }
+
+    /// backing event
+    pub fn backing_event() -> Event {
+        Event {
+            name: "BackingLock".into(),
+            inputs: vec![
+                EventParam {
+                    name: "token".into(),
+                    kind: ParamType::Address,
+                    indexed: true,
+                },
+                EventParam {
+                    name: "amount".into(),
+                    kind: ParamType::Uint(256),
+                    indexed: false,
+                },
+                EventParam {
+                    name: "recipient".into(),
+                    kind: ParamType::Address,
+                    indexed: false,
+                },
+            ],
+            anonymous: false,
+        }
+    }
+
     /// encode mint function for erc20
     pub fn encode_mint(target: Address, amount: Amount) -> AbiResult<Bytes> {
         let mint = Self::mint();
@@ -135,5 +209,19 @@ impl Abi {
             Token::Address(backing.into()),
             Token::Address(source.into())
             ].as_slice())
+    }
+
+    /// parse token register event
+    pub fn parse_event(topics: Vec<Topic>, data: Vec<u8>, eth_event: Event) -> AbiResult<Log> {
+        //let eth_event = Self::register_event();
+        let log = RawLog {
+            topics: topics
+                .into_iter()
+                .map(|t| -> H256 {
+                    t.into()
+                }).collect(),
+            data: data.clone(),
+        };
+        eth_event.parse_log(log)
     }
 }

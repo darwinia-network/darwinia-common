@@ -34,31 +34,49 @@ use ethereum_types::{H160, H256, U256, Address};
 use dvm_ethereum::TransactionAction;
 use rustc_hex::{FromHex, ToHex};
 use dvm_ethereum::TransactionSignature;
+use darwinia_evm::{AccountBasicMapping, GasWeightMapping};
 
 use sp_std::vec::Vec;
 
 use sp_runtime::{
     DispatchError,
+    DispatchResult,
 };
 
 use darwinia_support::{
-	traits::DvmRawTransactor as DvmRawTransactorT,
+	balance::lock::*,
+	traits::{EthereumReceipt, DvmRawTransactor as DvmRawTransactorT},
 };
 
-use darwinia_ethereum_issuing_contract::Abi;
+use darwinia_ethereum_issuing_contract::{Abi, Topic, Log as EthLog, Event as EthEvent};
 
 const ISSUING_ACCOUNT: &str = "1000000000000000000000000000000000000001";
 const MAPPING_FACTORY_ADDRESS: &str = "55D8ECEE33841AaCcb890085AcC7eE0d8A92b5eF";
 
 mod types {
+	use crate::*;
+
     pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
+    pub type RingBalance<T> = <<T as Trait>::RingCurrency as Currency<AccountId<T>>>::Balance;
+    pub type EthereumReceiptProofThing<T> = <<T as Trait>::EthereumRelay as EthereumReceipt<
+        AccountId<T>,
+        RingBalance<T>,
+    >>::EthereumReceiptProofThing;
 }
 
+use ethereum_primitives::{
+	receipt::{EthereumTransactionIndex, LogEntry},
+	EthereumAddress,
+};
 use types::*;
 
-pub trait Trait: frame_system::Trait {
+pub trait Trait: frame_system::Trait
+    + darwinia_evm::Trait
+{
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 	type DvmCaller: DvmRawTransactorT<H160, dvm_ethereum::Transaction, DispatchResultWithPostInfo>;
+    type EthereumRelay: EthereumReceipt<Self::AccountId, RingBalance<Self>>;
+	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 }
 
 decl_error! {
@@ -66,6 +84,24 @@ decl_error! {
 	pub enum Error for Module<T: Trait> {
 		/// Invalid Issuing System Account
 		InvalidIssuingAccount,
+        /// assert ar
+        AssetAR,
+        /// ReceiptProofInv
+        ReceiptProofInv,
+        /// LogEntryNE
+        LogEntryNE,
+        /// EthLogPF
+        EthLogPF,
+        /// StringCF
+        StringCF,
+        /// Unit
+        UintCF,
+		/// Address - CONVERSION FAILED
+		AddressCF,
+        /// encode erc20 tx failed
+        InvalidEncodeERC20,
+        /// encode mint tx failed
+        InvalidMintEcoding
 	}
 }
 
@@ -76,12 +112,19 @@ decl_event! {
 	{
         /// test
         Test(AccountId),
+        /// erc20 created
+        CreateErc20(EthereumAddress),
 	}
 }
 
 decl_storage! {
 	trait Store for Module<T: Trait> as DarwiniaEthereumIssuing {
 		pub TestNumber get(fn test_number): u128 = 1001;
+		pub MappingFactoryAddress get(fn mapping_factory_address) config(): EthereumAddress;
+		pub TokenBackingAddress get(fn token_backing_address) config(): EthereumAddress;
+		pub VerifiedProof
+			get(fn verified_proof)
+			: map hasher(blake2_128_concat) EthereumTransactionIndex => bool = false;
     }
 }
 
@@ -90,7 +133,49 @@ decl_module! {
 	where
 		origin: T::Origin
 	{
-		#[weight = 10_000_000]
+		fn deposit_event() = default;
+
+		#[weight = <T as darwinia_evm::Trait>::GasWeightMapping::gas_to_weight(0x100000)]
+        pub fn register_erc20(origin, proof: EthereumReceiptProofThing<T>) {
+            let tx_index = T::EthereumRelay::gen_receipt_index(&proof);
+            ensure!(!VerifiedProof::contains_key(tx_index), <Error<T>>::AssetAR);
+            let verified_receipt = T::EthereumRelay::verify_receipt(&proof)
+                .map_err(|_| <Error<T>>::ReceiptProofInv)?;
+
+            let register_event = Abi::register_event();
+            let backing_event = Abi::backing_event();
+            let log_entry = verified_receipt
+                .logs
+                .into_iter()
+                .find(|x| {
+                    x.address == TokenBackingAddress::get() &&
+                        ( x.topics[0] == register_event.signature()
+                          || x.topics[0] == backing_event.signature() )
+                })
+            .ok_or(<Error<T>>::LogEntryNE)?;
+
+            let (input, target) = if log_entry.topics[0] == register_event.signature() {
+                let ethlog = Self::parse_event(register_event, log_entry)?;
+                let bytes = Self::process_erc20_creation(ethlog)?;
+                (bytes, MappingFactoryAddress::get())
+            } else {
+                let ethlog = Self::parse_event(backing_event, log_entry)?;
+                Self::process_token_issuing(ethlog)?
+            };
+            
+            let account = Self::issuing_account();
+            let basic = <T as darwinia_evm::Trait>::AccountBasicMapping::account_basic(&account);
+            let transaction = Self::unsigned_transaction(basic.nonce, MappingFactoryAddress::get().0.into(), input);
+            let result = T::DvmCaller::raw_transact(account, transaction).map_err(|e| -> &'static str {e.into()} )?;
+
+            VerifiedProof::insert(tx_index, true);
+
+            //Self::deposit_event(RawEvent::CreateErc20(token_address));
+            //todo
+            //transfer some ring to system account and refund when finished
+        }
+
+        #[weight = 10_000_000]
         pub fn set_number(origin, number: u128) {
 			ensure_signed(origin)?;
 			TestNumber::put(number);
@@ -157,6 +242,91 @@ impl<T: Trait> Module<T> {
                 H256::from_slice(&[55u8; 32]),
             ).unwrap(),
         }
+    }
+
+    /// issuing system account send dvm transaction
+    pub fn issuing_account() -> H160 {
+        let issuing_address: Vec<u8> = FromHex::from_hex(ISSUING_ACCOUNT).unwrap();
+        H160::from_slice(&issuing_address)
+    }
+
+    fn parse_event(event: EthEvent, log_entry: LogEntry) -> Result<EthLog, DispatchError> {
+        let ethlog = Abi::parse_event(
+            log_entry
+            .topics
+            .into_iter()
+            .map(|t| -> Topic {
+                t.0.into()
+            }).collect(),
+            log_entry
+            .data
+            .clone(),
+            event
+            ).map_err(|_| <Error<T>>::EthLogPF)?;
+        Ok(ethlog)
+    }
+
+    fn process_erc20_creation(result: EthLog) -> Result<Vec<u8>, DispatchError> {
+        let name = result.params[1]
+                .value
+                .clone()
+                .to_string()
+                .ok_or(<Error<T>>::StringCF)?;
+        let symbol = result.params[2]
+            .value
+            .clone()
+            .to_string()
+            .ok_or(<Error<T>>::StringCF)?;
+        let decimals = result.params[3]
+            .value
+            .clone()
+            .to_uint()
+            .ok_or(<Error<T>>::UintCF)?;
+        let token_address = result.params[0]
+            .value
+            .clone()
+            .to_address()
+            .ok_or(<Error<T>>::AddressCF)?;
+
+        let input = Abi::encode_create_erc20(
+            &name,
+            &symbol,
+            decimals.as_u32() as u8,
+            TokenBackingAddress::get().0.into(),
+            token_address.0.into()
+        ).map_err(|_| Error::<T>::InvalidEncodeERC20)?;
+
+		Ok(input)
+    }
+
+    fn process_token_issuing(result: EthLog) -> Result<(Vec<u8>, EthereumAddress), DispatchError> {
+        let token_address = result.params[0]
+            .value
+            .clone()
+            .to_address()
+            .ok_or(<Error<T>>::AddressCF)?;
+        let dtoken_address = result.params[1]
+            .value
+            .clone()
+            .to_address()
+            .ok_or(<Error<T>>::AddressCF)?;
+        let amount = result.params[2]
+            .value
+            .clone()
+            .to_uint()
+            .ok_or(<Error<T>>::UintCF)?;
+        let recipient = result.params[3]
+            .value
+            .clone()
+            .to_address()
+            .ok_or(<Error<T>>::AddressCF)?;
+
+        let input = Abi::encode_mint(
+            dtoken_address.0.into(),
+            amount.0.into()
+        ).map_err(|_| Error::<T>::InvalidMintEcoding)?;
+
+		Ok((input, recipient))
     }
 }
 

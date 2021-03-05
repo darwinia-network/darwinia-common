@@ -221,11 +221,6 @@ impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
 impl<T: Trait> DvmRawTransactorT<H160, ethereum::Transaction, DispatchResultWithPostInfo> for Module<T> {
     /// Transact a System Ethereum transaction.
     fn raw_transact(source: H160, transaction: ethereum::Transaction) -> DispatchResultWithPostInfo {
-
-        //let source = Self::recover_signer(&transaction)
-        //.ok_or_else(|| Error::<T>::InvalidSignature)?;
-        //let source = H160::from_str("20bb04D3062a7AE56AD948de00c1Ca91928eF843").unwrap();
-
         let transaction_hash = H256::from_slice(
             Keccak256::digest(&rlp::encode(&transaction)).as_slice()
             );

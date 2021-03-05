@@ -988,6 +988,8 @@ impl darwinia_ethereum_backing::Trait for Runtime {
 impl darwinia_ethereum_issuing::Trait for Runtime {
 	type Event = Event;
     type DvmCaller = Ethereum;
+	type EthereumRelay = EthereumRelay;
+	type RingCurrency = Ring;
 }
 
 type EnsureRootOrHalfTechnicalComittee = EnsureOneOf<
