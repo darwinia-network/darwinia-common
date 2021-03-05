@@ -509,8 +509,27 @@ decl_module! {
 
 impl<T: Config> Module<T> {
 	fn remove_account(address: &H160) {
+		if AccountCodes::contains_key(address) {
+			let account_id = T::AddressMapping::into_account_id(*address);
+			frame_system::Module::<T>::dec_ref(&account_id);
+		}
+
 		AccountCodes::remove(address);
 		AccountStorages::remove_prefix(address);
+	}
+
+	/// Create an account.
+	pub fn create_account(address: H160, code: Vec<u8>) {
+		if code.is_empty() {
+			return;
+		}
+
+		if !AccountCodes::contains_key(&address) {
+			let account_id = T::AddressMapping::into_account_id(address);
+			frame_system::Module::<T>::inc_ref(&account_id);
+		}
+
+		AccountCodes::insert(address, code);
 	}
 
 	/// Check whether an account is empty.
