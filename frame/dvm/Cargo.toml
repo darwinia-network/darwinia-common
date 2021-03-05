@@ -11,7 +11,7 @@ version     = "1.3.0"
 
 [dependencies]
 # crates
-codec          = { package = "parity-scale-codec", version = "1.3.6", default-features = false }
+codec          = { package = "parity-scale-codec", version = "1.3.7", default-features = false }
 ethereum       = { version = "0.6.0", default-features = false, features = ["with-codec"] }
 ethereum-types = { version = "0.10.0", default-features = false }
 evm            = { version = "0.22.0", default-features = false, features = ["with-codec"] }
@@ -28,13 +28,13 @@ darwinia-support         = { default-features = false, path = "../support" }
 dvm-consensus-primitives = { default-features = false, path = "../../primitives/consensus" }
 dvm-rpc-runtime-api      = { default-features = false, path = "./rpc/runtime-api" }
 # substrate
-frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-core          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-io            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-runtime       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
+frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
+pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
+sp-core          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
+sp-io            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
+sp-runtime       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
+sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
 
 [dev-dependencies]
 # crates
