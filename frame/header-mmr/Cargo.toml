@@ -27,9 +27,8 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 
 [dev-dependencies]
 # crates
-serde_json = { version = "1.0.62" }
-# darwinia
-array-bytes = { path = "../../primitives/array-bytes" }
+array-bytes = { version = "1.1.0" }
+serde_json  = { version = "1.0.62" }
 # substrate
 sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
 sp-io   = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }

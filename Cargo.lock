@@ -131,16 +131,9 @@ dependencies = [
 
 [[package]]
 name = "array-bytes"
-version = "0.3.0"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "43759f68cc29a37659a6b7a48a49674e03a888b6d41f36f4204c36d0d09a51de"
-
-[[package]]
-name = "array-bytes"
-version = "1.3.0"
-dependencies = [
- "sp-std 2.0.1",
-]
+checksum = "d709a11595cecbc902e04927043d6b472a13f65fe3c47bfb89a6d3a7b0a9d5b5"
 
 [[package]]
 name = "arrayref"
@@ -299,7 +292,7 @@ dependencies = [
  "memchr",
  "num_cpus",
  "once_cell",
- "pin-project-lite 0.2.5",
+ "pin-project-lite 0.2.6",
  "pin-utils",
  "slab",
  "wasm-bindgen-futures",
@@ -332,7 +325,7 @@ dependencies = [
  "futures-sink",
  "futures-util",
  "memchr",
- "pin-project-lite 0.2.5",
+ "pin-project-lite 0.2.6",
 ]
 
 [[package]]
@@ -345,7 +338,7 @@ dependencies = [
  "futures-sink",
  "futures-util",
  "memchr",
- "pin-project-lite 0.2.5",
+ "pin-project-lite 0.2.6",
 ]
 
 [[package]]
@@ -1212,7 +1205,7 @@ dependencies = [
 name = "darwinia-claims"
 version = "1.3.0"
 dependencies = [
- "array-bytes 1.3.0",
+ "array-bytes",
  "darwinia-balances",
  "darwinia-support",
  "frame-support",
@@ -1308,7 +1301,7 @@ dependencies = [
 name = "darwinia-ethereum-backing"
 version = "1.3.0"
 dependencies = [
- "array-bytes 1.3.0",
+ "array-bytes",
  "darwinia-balances",
  "darwinia-ethereum-linear-relay",
  "darwinia-ethereum-relay",
@@ -1337,7 +1330,7 @@ dependencies = [
 name = "darwinia-ethereum-linear-relay"
 version = "1.3.0"
 dependencies = [
- "array-bytes 1.3.0",
+ "array-bytes",
  "darwinia-balances",
  "darwinia-support",
  "ethereum-primitives",
@@ -1358,7 +1351,7 @@ dependencies = [
 name = "darwinia-ethereum-relay"
 version = "1.3.0"
 dependencies = [
- "array-bytes 1.3.0",
+ "array-bytes",
  "blake2-rfc",
  "ckb-merkle-mountain-range",
  "darwinia-balances",
@@ -1545,7 +1538,7 @@ dependencies = [
 name = "darwinia-header-mmr"
 version = "1.3.0"
 dependencies = [
- "array-bytes 1.3.0",
+ "array-bytes",
  "ckb-merkle-mountain-range",
  "darwinia-header-mmr-rpc-runtime-api",
  "darwinia-relay-primitives",
@@ -1591,7 +1584,7 @@ dependencies = [
 name = "darwinia-relay-authorities"
 version = "1.3.0"
 dependencies = [
- "array-bytes 0.3.0",
+ "array-bytes",
  "darwinia-balances",
  "darwinia-relay-primitives",
  "darwinia-support",
@@ -1826,7 +1819,7 @@ dependencies = [
 name = "drml"
 version = "1.0.12"
 dependencies = [
- "array-bytes 1.3.0",
+ "array-bytes",
  "darwinia-balances-rpc",
  "darwinia-balances-rpc-runtime-api",
  "darwinia-claims",
@@ -2274,7 +2267,7 @@ dependencies = [
 name = "ethereum-primitives"
 version = "1.3.0"
 dependencies = [
- "array-bytes 1.3.0",
+ "array-bytes",
  "ethash",
  "ethbloom 0.8.1",
  "ethereum-types 0.8.0",
@@ -2826,7 +2819,7 @@ dependencies = [
  "futures-io",
  "memchr",
  "parking",
- "pin-project-lite 0.2.5",
+ "pin-project-lite 0.2.6",
  "waker-fn",
 ]
 
@@ -2891,7 +2884,7 @@ dependencies = [
  "futures-sink",
  "futures-task",
  "memchr",
- "pin-project-lite 0.2.5",
+ "pin-project-lite 0.2.6",
  "pin-utils",
  "proc-macro-hack",
  "proc-macro-nested",
@@ -5588,9 +5581,9 @@ checksum = "257b64915a082f7811703966789728173279bdebb956b143dbcd23f6f970a777"
 
 [[package]]
 name = "pin-project-lite"
-version = "0.2.5"
+version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0cf491442e4b033ed1c722cb9f0df5fcfcf4de682466c46469c36bc47dc5548a"
+checksum = "dc0e1f259c92177c30a4c9d177246edd0a3568b25756a977d0632cf8fa37e905"
 
 [[package]]
 name = "pin-utils"
@@ -8843,7 +8836,7 @@ checksum = "46409491c9375a693ce7032101970a54f8a2010efb77e13f70788f0d84489e39"
 dependencies = [
  "autocfg",
  "num_cpus",
- "pin-project-lite 0.2.5",
+ "pin-project-lite 0.2.6",
  "slab",
 ]
 
@@ -9098,7 +9091,7 @@ checksum = "01ebdc2bb4498ab1ab5f5b73c5803825e60199229ccba0698170e3be0e7f959f"
 dependencies = [
  "cfg-if 1.0.0",
  "log",
- "pin-project-lite 0.2.5",
+ "pin-project-lite 0.2.6",
  "tracing-attributes",
  "tracing-core",
 ]
