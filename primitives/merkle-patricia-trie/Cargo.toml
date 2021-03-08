@@ -20,7 +20,7 @@ hashbrown = { version = "0.9.1" }
 hash = { package = "keccak-hash", default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 rlp  = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.0" }
 
 [dev-dependencies]
 # crates
