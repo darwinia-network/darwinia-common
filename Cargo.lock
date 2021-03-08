@@ -1604,6 +1604,7 @@ version = "1.3.0"
 dependencies = [
  "frame-support",
  "parity-scale-codec 1.3.7",
+ "primitive-relayer-game",
  "sp-runtime",
  "sp-std 2.0.1",
 ]
@@ -5670,6 +5671,15 @@ name = "ppv-lite86"
 version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ac74c624d6b2d21f425f752262f42188365d7b8ff1aff74c82e45136510a4857"
+
+[[package]]
+name = "primitive-relayer-game"
+version = "0.1.0"
+source = "git+https://github.com/darwinia-network/primitives.git#37653fbdf9ad3bf8790258f26d75b076e95802d0"
+dependencies = [
+ "parity-scale-codec 1.3.7",
+ "sp-runtime",
+]
 
 [[package]]
 name = "primitive-types"

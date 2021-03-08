@@ -176,16 +176,7 @@ pub trait RelayerGameProtocol {
 	) -> Result<(Self::RelayHeaderId, u32, u32), DispatchError>;
 }
 
-/// Game id, round and the index under the round point to a unique affirmation AKA affirmation id
-#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
-pub struct RelayAffirmationId<RelayHeaderId> {
-	/// Game id aka relay header id
-	pub game_id: RelayHeaderId,
-	/// Round index
-	pub round: u32,
-	/// Index of a affirmation list which under a round
-	pub index: u32,
-}
+pub use primitive_relayer_game::RelayAffirmationId;
 
 #[derive(Clone, Encode, Decode, RuntimeDebug)]
 pub struct RelayAffirmation<RelayHeaderParcel, Relayer, Balance, RelayHeaderId> {
