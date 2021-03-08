@@ -1381,6 +1381,7 @@ dependencies = [
  "darwinia-ethereum-relay",
  "darwinia-evm",
  "darwinia-evm-precompile",
+ "darwinia-evm-primitives",
  "darwinia-relay-primitives",
  "darwinia-relayer-game",
  "darwinia-staking",

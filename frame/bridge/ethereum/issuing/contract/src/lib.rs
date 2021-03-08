@@ -224,4 +224,38 @@ impl Abi {
         };
         eth_event.parse_log(log)
     }
+
+    /// get mapped token from source
+    pub fn mapping_token() -> Function {
+        let inputs = vec![
+            Param { name: "backing".into(), kind: ParamType::Address },
+            Param { name: "source".into(), kind: ParamType::Address }
+        ];
+
+        let outputs = vec![
+            Param {
+                name: "target".into(),
+                kind: ParamType::Address,
+            }
+        ];
+
+        Function {
+            name: "mappingToken".into(),
+            inputs: inputs,
+            outputs: outputs,
+            constant: true,
+        }
+    }
+
+    /// encode mapping token function
+    pub fn encode_mapping_token (
+        backing: Address,
+        source: Address) -> AbiResult<Bytes> {
+        let mapping = Self::mapping_token();
+        mapping.encode_input(
+            vec![
+            Token::Address(backing.into()),
+            Token::Address(source.into())
+            ].as_slice())
+    }
 }

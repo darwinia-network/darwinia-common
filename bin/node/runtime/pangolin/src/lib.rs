@@ -990,6 +990,7 @@ impl darwinia_ethereum_issuing::Trait for Runtime {
     type DvmCaller = Ethereum;
 	type EthereumRelay = EthereumRelay;
 	type RingCurrency = Ring;
+	type EcdsaAuthorities = EthereumRelayAuthorities;
 }
 
 type EnsureRootOrHalfTechnicalComittee = EnsureOneOf<

@@ -35,12 +35,15 @@ use dvm_ethereum::TransactionAction;
 use rustc_hex::{FromHex, ToHex};
 use dvm_ethereum::TransactionSignature;
 use darwinia_evm::{AccountBasicMapping, GasWeightMapping};
+use darwinia_relay_primitives::relay_authorities::*;
+use darwinia_evm_primitives::CallOrCreateInfo;
 
 use sp_std::vec::Vec;
 
 use sp_runtime::{
     DispatchError,
     DispatchResult,
+    SaturatedConversion,
 };
 
 use darwinia_support::{
@@ -56,6 +59,7 @@ const MAPPING_FACTORY_ADDRESS: &str = "55D8ECEE33841AaCcb890085AcC7eE0d8A92b5eF"
 mod types {
 	use crate::*;
 
+	pub type BlockNumber<T> = <T as frame_system::Trait>::BlockNumber;
     pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
     pub type RingBalance<T> = <<T as Trait>::RingCurrency as Currency<AccountId<T>>>::Balance;
     pub type EthereumReceiptProofThing<T> = <<T as Trait>::EthereumRelay as EthereumReceipt<
@@ -77,6 +81,7 @@ pub trait Trait: frame_system::Trait
 	type DvmCaller: DvmRawTransactorT<H160, dvm_ethereum::Transaction, DispatchResultWithPostInfo>;
     type EthereumRelay: EthereumReceipt<Self::AccountId, RingBalance<Self>>;
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+	type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber, Signer = EthereumAddress>;
 }
 
 decl_error! {
@@ -101,7 +106,9 @@ decl_error! {
         /// encode erc20 tx failed
         InvalidEncodeERC20,
         /// encode mint tx failed
-        InvalidMintEcoding
+        InvalidMintEcoding,
+        /// invalid ethereum address length
+        InvalidAddressLen,
 	}
 }
 
@@ -114,6 +121,8 @@ decl_event! {
         Test(AccountId),
         /// erc20 created
         CreateErc20(EthereumAddress),
+        /// burn event
+        BurnToken(EthereumAddress, EthereumAddress, U256),
 	}
 }
 
@@ -136,7 +145,7 @@ decl_module! {
 		fn deposit_event() = default;
 
 		#[weight = <T as darwinia_evm::Trait>::GasWeightMapping::gas_to_weight(0x100000)]
-        pub fn register_erc20(origin, proof: EthereumReceiptProofThing<T>) {
+        pub fn register_or_issuing_erc20(origin, proof: EthereumReceiptProofThing<T>) {
             let tx_index = T::EthereumRelay::gen_receipt_index(&proof);
             ensure!(!VerifiedProof::contains_key(tx_index), <Error<T>>::AssetAR);
             let verified_receipt = T::EthereumRelay::verify_receipt(&proof)
@@ -222,6 +231,24 @@ decl_module! {
                 "sys call return {:?}",
                 result
             );
+        }
+
+        #[weight = 10_000_000]
+        pub fn test_call(origin) {
+            debug::info!(target: "darwinia-issuing", "start to call api");
+			ensure_signed(origin)?;
+            let mapping_factory_address: Vec<u8> = FromHex::from_hex(MAPPING_FACTORY_ADDRESS).unwrap();
+            let factory_address: Address = H160::from_slice(&mapping_factory_address);
+            let backing: Address = H160::from_slice(&mapping_factory_address);
+            let source: Address = H160::from_slice(&mapping_factory_address);
+            let bytes = Abi::encode_mapping_token(backing.0.into(), source.0.into())
+                .map_err(|_| Error::<T>::InvalidIssuingAccount)?;
+            debug::info!(target: "darwinia-issuing", "mapping token bytes {:?}", hex::encode(&bytes));
+            let transaction = Self::unsigned_transaction(U256::from(1), factory_address, bytes);
+            let issuing_address: Vec<u8> = FromHex::from_hex(ISSUING_ACCOUNT).unwrap();
+            let issuing_account = H160::from_slice(&issuing_address);
+            let result = T::DvmCaller::raw_call(issuing_account, transaction).map_err(|e| -> &'static str {e.into()} )?;
+            debug::info!(target: "darwinia-issuing", "mapping token result {:?}", H160::from_slice(&result.as_slice()[12..]));
         }
     }
 }
@@ -327,6 +354,45 @@ impl<T: Trait> Module<T> {
         ).map_err(|_| Error::<T>::InvalidMintEcoding)?;
 
 		Ok((input, recipient))
+    }
+
+    pub fn mapped_token_address (
+        backing: EthereumAddress,
+        source: EthereumAddress,
+    ) -> Result<H160, DispatchError> {
+        let mapping_factory_address: Vec<u8> = FromHex::from_hex(MAPPING_FACTORY_ADDRESS).unwrap();
+        let factory_address: Address = H160::from_slice(&mapping_factory_address);
+        let bytes = Abi::encode_mapping_token(backing.0.into(), source.0.into())
+            .map_err(|_| Error::<T>::InvalidIssuingAccount)?;
+        let transaction = Self::unsigned_transaction(U256::from(1), factory_address, bytes);
+        let issuing_address: Vec<u8> = FromHex::from_hex(ISSUING_ACCOUNT).unwrap();
+        let issuing_account = H160::from_slice(&issuing_address);
+        let mapped_address = T::DvmCaller::raw_call(issuing_account, transaction).map_err(|e| -> &'static str {e.into()} )?;
+        if mapped_address.len() != 32 {
+            return Err(Error::<T>::InvalidAddressLen.into());
+        }
+        Ok(H160::from_slice(&mapped_address.as_slice()[12..]))
+    }
+
+    pub fn burn_token(
+        backing: EthereumAddress,
+        source: EthereumAddress,
+        token: EthereumAddress,
+        ethereum_account: EthereumAddress,
+        amount: U256
+    ) -> DispatchResult {
+        let mapped_address = Self::mapped_token_address(backing, source)?;
+
+        if mapped_address == token.0.into() {
+            let raw_event = RawEvent::BurnToken(source, ethereum_account, amount);
+
+            Self::deposit_event(raw_event);
+            T::EcdsaAuthorities::schedule_mmr_root((
+                    <frame_system::Module<T>>::block_number().saturated_into::<u32>()
+                    /10 * 10 + 10
+                    ).saturated_into());
+        }
+        Ok(())
     }
 }
 

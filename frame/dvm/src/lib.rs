@@ -133,6 +133,8 @@ decl_error! {
 	pub enum Error for Module<T: Trait> {
 		/// Signature is invalid.
 		InvalidSignature,
+        /// Call return create result
+        InvalidCallResultType,
 	}
 }
 
@@ -292,6 +294,28 @@ impl<T: Trait> DvmRawTransactorT<H160, ethereum::Transaction, DispatchResultWith
 
         Self::deposit_event(Event::Executed(source, contract_address.unwrap_or_default(), transaction_hash, reason));
         Ok(Some(T::GasWeightMapping::gas_to_weight(used_gas.unique_saturated_into())).into())
+    }
+
+    fn raw_call(source: H160, transaction: ethereum::Transaction) -> Result<Vec<u8>, DispatchError> {
+        let (_, _, info) = Self::execute(
+            source,
+            transaction.input.clone(),
+            transaction.value,
+            transaction.gas_limit,
+            None,
+            None,
+            transaction.action,
+            None,
+            )?;
+
+        match info {
+            CallOrCreateInfo::Call(info) => {
+                Ok(info.value)
+            }
+            _ => {
+                Err(Error::<T>::InvalidCallResultType.into())
+            }
+        }
     }
 }
 
