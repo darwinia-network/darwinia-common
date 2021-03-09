@@ -24,7 +24,6 @@ use frame_system::EnsureRoot;
 use sp_runtime::{traits::Dispatchable, AccountId32};
 // --- darwinia ---
 use crate::*;
-use array_bytes::hex_bytes_unchecked;
 use darwinia_ethereum_relay::{EthereumRelayHeaderParcel, EthereumRelayProofs, MMRProof};
 use darwinia_relay_primitives::relayer_game::*;
 use darwinia_staking::{RewardDestination, StakingBalance, StakingLedger, TimeDepositItem};
@@ -121,27 +120,27 @@ impl ExtBuilder {
 			.unwrap();
 
 		GenesisConfig::<Test> {
-			token_redeem_address: fixed_hex_bytes_unchecked!(
+			token_redeem_address: array_bytes::hex2array_unchecked!(
 				"0x49262B932E439271d05634c32978294C7Ea15d0C",
 				20
 			)
 			.into(),
-			deposit_redeem_address: fixed_hex_bytes_unchecked!(
+			deposit_redeem_address: array_bytes::hex2array_unchecked!(
 				"0x6EF538314829EfA8386Fc43386cB13B4e0A67D1e",
 				20
 			)
 			.into(),
-			set_authorities_address: fixed_hex_bytes_unchecked!(
+			set_authorities_address: array_bytes::hex2array_unchecked!(
 				"0xE4A2892599Ad9527D76Ce6E26F93620FA7396D85",
 				20
 			)
 			.into(),
-			ring_token_address: fixed_hex_bytes_unchecked!(
+			ring_token_address: array_bytes::hex2array_unchecked!(
 				"0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0",
 				20
 			)
 			.into(),
-			kton_token_address: fixed_hex_bytes_unchecked!(
+			kton_token_address: array_bytes::hex2array_unchecked!(
 				"0x1994100c58753793D52c6f457f189aa3ce9cEe94",
 				20
 			)
@@ -185,7 +184,7 @@ fn verify_parse_token_redeem_proof() {
 			EthereumRelay::confirm_relay_header_parcel_with_reason(relay_header_parcel, vec![]);
 
 			let expect_account_id = EthereumBacking::account_id_try_from_bytes(
-				&hex_bytes_unchecked("0xe44664996ab7b5d86c12e9d5ac3093f5b2efc9172cb7ce298cd6c3c51002c318"),
+				&array_bytes::hex2bytes_unchecked("0xe44664996ab7b5d86c12e9d5ac3093f5b2efc9172cb7ce298cd6c3c51002c318"),
 			).unwrap();
 
 			assert_eq!(
@@ -209,7 +208,7 @@ fn verify_redeem_ring() {
 			EthereumRelay::confirm_relay_header_parcel_with_reason(relay_header_parcel, vec![]);
 
 			let expect_account_id = EthereumBacking::account_id_try_from_bytes(
-				&hex_bytes_unchecked("0xe44664996ab7b5d86c12e9d5ac3093f5b2efc9172cb7ce298cd6c3c51002c318"),
+				&array_bytes::hex2bytes_unchecked("0xe44664996ab7b5d86c12e9d5ac3093f5b2efc9172cb7ce298cd6c3c51002c318"),
 			).unwrap();
 			let id1 = AccountId32::from([0; 32]);
 			let ring_locked_before = EthereumBacking::pot::<Ring>();
@@ -249,7 +248,7 @@ fn verify_redeem_kton() {
 			EthereumRelay::confirm_relay_header_parcel_with_reason(relay_header_parcel, vec![]);
 
 			let expect_account_id = EthereumBacking::account_id_try_from_bytes(
-				&hex_bytes_unchecked("0xe44664996ab7b5d86c12e9d5ac3093f5b2efc9172cb7ce298cd6c3c51002c318"),
+				&array_bytes::hex2bytes_unchecked("0xe44664996ab7b5d86c12e9d5ac3093f5b2efc9172cb7ce298cd6c3c51002c318"),
 			).unwrap();
 			// 0.123456789123456789 KTON
 			assert_eq!(
@@ -304,7 +303,7 @@ fn verify_redeem_deposit() {
 
 			let ring_locked_before = EthereumBacking::pot::<Ring>();
 			let expect_account_id = EthereumBacking::account_id_try_from_bytes(
-				&hex_bytes_unchecked("0xe44664996ab7b5d86c12e9d5ac3093f5b2efc9172cb7ce298cd6c3c51002c318"),
+				&array_bytes::hex2bytes_unchecked("0xe44664996ab7b5d86c12e9d5ac3093f5b2efc9172cb7ce298cd6c3c51002c318"),
 			).unwrap();
 			let id1 = AccountId32::from([0; 32]);
 			let controller = AccountId32::from([1; 32]);
@@ -516,9 +515,9 @@ fn lock_limit_should_work() {
 #[test]
 fn verify_signature_should_work() {
 	assert!(EthereumBacking::verify_signature(
-		&fixed_hex_bytes_unchecked!("0x0806e7b411a8808c1384bd8abe3b506403981d3ece6b16cd29d3f2789eea1ab61635b3b971bf5584bdc70c42b2a4a2659b354dfc542943c030630168825976491c", 65),
-		&fixed_hex_bytes_unchecked!("0x71e2f60faf6c7264cca14fb1a01260a787b4d18039cd8cd680aaff1e118c711d", 32),
-	 	&fixed_hex_bytes_unchecked!("0x6aA70f55E5D770898Dd45aa1b7078b8A80AAbD6C", 20).into()
+		&array_bytes::hex2array_unchecked!("0x0806e7b411a8808c1384bd8abe3b506403981d3ece6b16cd29d3f2789eea1ab61635b3b971bf5584bdc70c42b2a4a2659b354dfc542943c030630168825976491c", 65),
+		&array_bytes::hex2array_unchecked!("0x71e2f60faf6c7264cca14fb1a01260a787b4d18039cd8cd680aaff1e118c711d", 32),
+	 	&array_bytes::hex2array_unchecked!("0x6aA70f55E5D770898Dd45aa1b7078b8A80AAbD6C", 20).into()
 	));
 }
 
