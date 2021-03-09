@@ -43,7 +43,7 @@ use sc_service::{
 	BuildNetworkParams, Configuration, Error as ServiceError, NoopRpcExtensionBuilder,
 	PartialComponents, RpcHandlers, SpawnTasksParams, TaskManager,
 };
-use sc_telemetry::TelemetryConnectionNotifier;
+use sc_telemetry::{TelemetryConnectionNotifier, TelemetrySpan};
 use sc_transaction_pool::{BasicPool, FullPool};
 use sp_api::ConstructRuntimeApi;
 use sp_consensus::{
@@ -404,6 +404,8 @@ where
 		);
 	}
 
+	let telemetry_span = TelemetrySpan::new();
+	let _telemetry_span_entered = telemetry_span.enter();
 	let (rpc_handlers, telemetry_connection_notifier) =
 		sc_service::spawn_tasks(SpawnTasksParams {
 			config,
@@ -433,6 +435,7 @@ where
 			remote_blockchain: None,
 			network_status_sinks,
 			system_rpc_tx,
+			telemetry_span: Some(telemetry_span.clone()),
 		})?;
 
 	let (block_import, link_half, babe_link) = import_setup;
@@ -619,7 +622,8 @@ where
 		pool: transaction_pool.clone(),
 	};
 	let rpc_extension = rpc::create_light(light_deps);
-
+	let telemetry_span = TelemetrySpan::new();
+	let _telemetry_span_entered = telemetry_span.enter();
 	let (rpc_handlers, telemetry_connection_notifier) =
 		sc_service::spawn_tasks(SpawnTasksParams {
 			on_demand: Some(on_demand),
@@ -634,6 +638,7 @@ where
 			network,
 			network_status_sinks,
 			system_rpc_tx,
+			telemetry_span: Some(telemetry_span.clone()),
 		})?;
 
 	network_starter.start_network();
