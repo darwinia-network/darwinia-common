@@ -1193,7 +1193,7 @@ construct_runtime!(
 
 		EVM: darwinia_evm::{Module, Config, Call, Storage, Event<T>} = 34,
 		Ethereum: dvm_ethereum::{Module, Call, Storage, Event, Config, ValidateUnsigned} = 35,
-		EthereumIssuing: darwinia_ethereum_issuing::{Module, Call, Storage, Event<T>} = 36,
+		EthereumIssuing: darwinia_ethereum_issuing::{Module, Call, Storage, Config, Event<T>} = 36,
 	}
 );
 

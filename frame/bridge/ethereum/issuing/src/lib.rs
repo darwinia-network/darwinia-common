@@ -131,8 +131,8 @@ decl_storage! {
 		pub TestNumber get(fn test_number): u128 = 1001;
 		pub MappingFactoryAddress get(fn mapping_factory_address) config(): EthereumAddress;
 		pub TokenBackingAddress get(fn token_backing_address) config(): EthereumAddress;
-		pub VerifiedProof
-			get(fn verified_proof)
+		pub VerifiedIssuingProof
+			get(fn verified_issuing_proof)
 			: map hasher(blake2_128_concat) EthereumTransactionIndex => bool = false;
     }
 }
@@ -147,7 +147,7 @@ decl_module! {
 		#[weight = <T as darwinia_evm::Trait>::GasWeightMapping::gas_to_weight(0x100000)]
         pub fn register_or_issuing_erc20(origin, proof: EthereumReceiptProofThing<T>) {
             let tx_index = T::EthereumRelay::gen_receipt_index(&proof);
-            ensure!(!VerifiedProof::contains_key(tx_index), <Error<T>>::AssetAR);
+            ensure!(!VerifiedIssuingProof::contains_key(tx_index), <Error<T>>::AssetAR);
             let verified_receipt = T::EthereumRelay::verify_receipt(&proof)
                 .map_err(|_| <Error<T>>::ReceiptProofInv)?;
 
@@ -177,7 +177,7 @@ decl_module! {
             let transaction = Self::unsigned_transaction(basic.nonce, MappingFactoryAddress::get().0.into(), input);
             let result = T::DvmCaller::raw_transact(account, transaction).map_err(|e| -> &'static str {e.into()} )?;
 
-            VerifiedProof::insert(tx_index, true);
+            VerifiedIssuingProof::insert(tx_index, true);
 
             //Self::deposit_event(RawEvent::CreateErc20(token_address));
             //todo
@@ -294,6 +294,7 @@ impl<T: Trait> Module<T> {
     }
 
     fn process_erc20_creation(result: EthLog) -> Result<Vec<u8>, DispatchError> {
+        debug::info!(target: "darwinia-issuing", "start to process_erc20_creation");
         let name = result.params[1]
                 .value
                 .clone()
