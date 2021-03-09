@@ -115,7 +115,7 @@ impl frame_system::Config for Test {
 	type Event = Event;
 	type BlockHashCount = ();
 	type Version = ();
-	type PalletInfo = ();
+	type PalletInfo = PalletInfo;
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
