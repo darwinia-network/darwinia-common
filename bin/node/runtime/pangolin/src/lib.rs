@@ -504,6 +504,8 @@ impl pallet_proxy::Config for Runtime {
 parameter_types! {
 	pub const EpochDuration: u64 = BLOCKS_PER_SESSION as _;
 	pub const ExpectedBlockTime: Moment = MILLISECS_PER_BLOCK;
+	pub const ReportLongevity: u64 =
+		BondingDurationInEra::get() as u64 * SessionsPerEra::get() as u64 * EpochDuration::get();
 }
 impl pallet_babe::Config for Runtime {
 	type EpochDuration = EpochDuration;
@@ -519,7 +521,7 @@ impl pallet_babe::Config for Runtime {
 		pallet_babe::AuthorityId,
 	)>>::IdentificationTuple;
 	type HandleEquivocation =
-		pallet_babe::EquivocationHandler<Self::KeyOwnerIdentification, Offences>;
+		pallet_babe::EquivocationHandler<Self::KeyOwnerIdentification, Offences, ReportLongevity>;
 	type WeightInfo = ();
 }
 
@@ -704,8 +706,11 @@ impl pallet_grandpa::Config for Runtime {
 		GrandpaId,
 	)>>::IdentificationTuple;
 	type KeyOwnerProofSystem = Historical;
-	type HandleEquivocation =
-		pallet_grandpa::EquivocationHandler<Self::KeyOwnerIdentification, Offences>;
+	type HandleEquivocation = pallet_grandpa::EquivocationHandler<
+		Self::KeyOwnerIdentification,
+		Offences,
+		ReportLongevity,
+	>;
 	type WeightInfo = ();
 }
 
