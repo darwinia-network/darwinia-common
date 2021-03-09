@@ -477,7 +477,7 @@ where
 		name: Some(name),
 		observer_enabled: false,
 		keystore,
-		is_authority: role.is_network_authority(),
+		is_authority: role.is_authority(),
 	};
 	let enable_grandpa = !disable_grandpa;
 
