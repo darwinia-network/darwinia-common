@@ -329,7 +329,7 @@ fn call_should_handle_errors() {
 			CallOrCreateInfo::Call(info) => {
 				assert_eq!(
 					array_bytes::bytes2hex("0x", info.value),
-					"0000000000000000000000000000000000000000000000000000000000000001".to_owned()
+					"0x0000000000000000000000000000000000000000000000000000000000000001".to_owned()
 				);
 			}
 			CallOrCreateInfo::Create(_) => panic!("expected call info"),
