@@ -1001,7 +1001,7 @@ type EnsureRootOrHalfTechnicalComittee = EnsureOneOf<
 parameter_types! {
 	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
 	pub const EthereumNetwork: ethereum_primitives::EthereumNetworkType = ethereum_primitives::EthereumNetworkType::Ropsten;
-	pub const ConfirmPeriod: BlockNumber = 200;
+	pub const ConfirmPeriod: BlockNumber = 20;
 	pub const ApproveThreshold: Perbill = Perbill::from_percent(60);
 	pub const RejectThreshold: Perbill = Perbill::from_percent(1);
 }
