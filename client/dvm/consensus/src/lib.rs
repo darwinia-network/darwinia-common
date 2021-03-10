@@ -21,14 +21,14 @@ use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
 use log::*;
 use sc_client_api;
 use sc_client_api::{backend::AuxStore, BlockOf};
-use sp_api::{BlockId, ProvideRuntimeApi};
+use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder as BlockBuilderApi;
 use sp_blockchain::{well_known_cache_keys::Id as CacheKeyId, HeaderBackend, ProvideCache};
 use sp_consensus::{
 	BlockCheckParams, BlockImport, BlockImportParams, Error as ConsensusError, ImportResult,
 };
 use sp_runtime::generic::OpaqueDigestItemId;
-use sp_runtime::traits::{Block as BlockT, Header as HeaderT, One, Zero};
+use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::sync::Arc;
@@ -113,66 +113,14 @@ where
 
 	fn import_block(
 		&mut self,
-		mut block: BlockImportParams<B, Self::Transaction>,
+		block: BlockImportParams<B, Self::Transaction>,
 		new_cache: HashMap<CacheKeyId, Vec<u8>>,
 	) -> Result<ImportResult, Self::Error> {
-		macro_rules! insert_closure {
-			() => {
-				|insert| {
-					block
-						.auxiliary
-						.extend(insert.iter().map(|(k, v)| (k.to_vec(), Some(v.to_vec()))))
-				}
-			};
-		}
-
-		let client = self.client.clone();
-
 		if self.enabled {
-			let log = find_frontier_log::<B>(&block.header)?;
-			let hash = block.post_hash();
-
-			let post_hashes = match log {
-				ConsensusLog::PostHashes(post_hashes) => post_hashes,
-				ConsensusLog::PreBlock(block) => {
-					dvm_consensus_primitives::PostHashes::from_block(block)
-				}
-				ConsensusLog::PostBlock(block) => {
-					dvm_consensus_primitives::PostHashes::from_block(block)
-				}
-			};
-
-			let mapping_commitment = dvm_db::MappingCommitment {
-				block_hash: hash,
-				ethereum_block_hash: post_hashes.block_hash,
-				ethereum_transaction_hashes: post_hashes.transaction_hashes,
-			};
-			let res = self.backend.mapping_db().write_hashes(mapping_commitment);
-			if res.is_err() {
-				trace!(target: "frontier-consensus", "{:?}", res);
-			}
-
-			// On importing block 1 we also map the genesis block in the auxiliary.
-			if block.header.number().clone() == One::one() {
-				let id = BlockId::Number(Zero::zero());
-				if let Ok(Some(header)) = client.header(id) {
-					let block = self
-						.client
-						.runtime_api()
-						.current_block(&id)
-						.map_err(|_| Error::RuntimeApiCallFailed)?;
-					let block_hash = block.unwrap().header.hash(); // TODO: shouldn't use unwrap
-					let mapping_commitment = dvm_db::MappingCommitment::<B> {
-						block_hash: header.hash(),
-						ethereum_block_hash: block_hash,
-						ethereum_transaction_hashes: Vec::new(),
-					};
-					let res = self.backend.mapping_db().write_hashes(mapping_commitment);
-					if res.is_err() {
-						trace!(target: "frontier-consensus", "{:?}", res);
-					}
-				}
-			}
+			// We validate that there are only one frontier log. No other
+			// actions are needed and mapping syncing is delegated to a separate
+			// worker.
+			let _ = find_frontier_log::<B>(&block.header)?;
 		}
 
 		self.inner
@@ -181,7 +129,7 @@ where
 	}
 }
 
-fn find_frontier_log<B: BlockT>(header: &B::Header) -> Result<ConsensusLog, Error> {
+pub fn find_frontier_log<B: BlockT>(header: &B::Header) -> Result<ConsensusLog, Error> {
 	let mut frontier_log: Option<_> = None;
 	for log in header.digest().logs() {
 		trace!(target: "dvm-consensus", "Checking log {:?}, looking for ethereum block.", log);

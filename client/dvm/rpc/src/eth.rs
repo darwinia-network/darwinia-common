@@ -294,7 +294,7 @@ where
 	fn load_hash(&self, hash: H256) -> Result<Option<BlockId<B>>> {
 		let hashes = self
 			.backend
-			.mapping_db()
+			.mapping()
 			.block_hashes(&hash)
 			.map_err(|err| internal_err(format!("fetch aux store failed: {:?}", err)))?;
 		let out: Vec<H256> = hashes
@@ -320,7 +320,7 @@ where
 	fn load_transactions(&self, transaction_hash: H256) -> Result<Option<(H256, u32)>> {
 		let transaction_metadata = self
 			.backend
-			.mapping_db()
+			.mapping()
 			.transaction_metadata(&transaction_hash)
 			.map_err(|err| internal_err(format!("fetch aux store failed: {:?}", err)))?;
 

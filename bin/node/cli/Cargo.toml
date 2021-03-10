@@ -41,6 +41,7 @@ dvm-consensus                       = { path = "../../../client/dvm/consensus" }
 dvm-consensus-primitives            = { path = "../../../primitives/consensus" }
 dvm-rpc                             = { path = "../../../client/dvm/rpc" }
 dvm-db                              = { path = "../../../client/dvm/db" }
+dvm-mapping-sync                    = { path = "../../../client/dvm/mapping-sync" }
 dvm-rpc-core-primitives             = { path = "../../../primitives/dvm-rpc-core" }
 dvm-rpc-runtime-api                 = { path = "../../../frame/dvm/rpc/runtime-api" }
 pangolin-runtime                    = { path = "../runtime/pangolin" }

@@ -65,7 +65,9 @@ use crate::rpc::{
 };
 use drml_primitives::{AccountId, Balance, Hash, Nonce, OpaqueBlock as Block, Power};
 use dvm_consensus::FrontierBlockImport;
+use dvm_mapping_sync::MappingSyncWorker;
 use dvm_rpc_core_primitives::{FilterPool, PendingTransactions};
+use futures::StreamExt;
 
 type FullBackend = sc_service::TFullBackend<Block>;
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
@@ -467,6 +469,18 @@ where
 		);
 	}
 
+	task_manager.spawn_essential_handle().spawn(
+		"frontier-mapping-sync-worker",
+		MappingSyncWorker::new(
+			client.import_notification_stream(),
+			Duration::new(6, 0),
+			client.clone(),
+			backend.clone(),
+			frontier_backend.clone(),
+		)
+		.for_each(|()| futures::future::ready(())),
+	);
+
 	let (rpc_handlers, telemetry_connection_notifier) =
 		sc_service::spawn_tasks(SpawnTasksParams {
 			config,
@@ -503,7 +517,6 @@ where
 
 	// Spawn Frontier EthFilterApi maintenance task.
 	if filter_pool.is_some() {
-		use futures::StreamExt;
 		// Each filter is allowed to stay in the pool for 100 blocks.
 		const FILTER_RETAIN_THRESHOLD: u64 = 100;
 		task_manager.spawn_essential_handle().spawn(
@@ -528,7 +541,6 @@ where
 	// Spawn Frontier pending transactions maintenance task (as essential, otherwise we leak).
 	if pending_transactions.is_some() {
 		use dvm_consensus_primitives::{ConsensusLog, FRONTIER_ENGINE_ID};
-		use futures::StreamExt;
 		use sp_runtime::generic::OpaqueDigestItemId;
 
 		const TRANSACTION_RETAIN_THRESHOLD: u64 = 5;
@@ -640,7 +652,6 @@ where
 	}
 
 	if role.is_authority() && !authority_discovery_disabled {
-		use futures::StreamExt;
 		use sc_network::Event;
 
 		let authority_discovery_role =

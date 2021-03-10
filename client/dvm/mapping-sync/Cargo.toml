@@ -1,0 +1,26 @@
+[package]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+description = "Mapping sync logic for dvm."
+edition     = "2018"
+homepage    = "https://darwinia.network/"
+license     = "GPL-3.0"
+name        = "dvm-mapping-sync"
+readme      = "README.md"
+repository  = "https://github.com/darwinia-network/darwinia-common/"
+version     = "1.3.0"
+
+[dependencies]
+# substrate
+sp-runtime      = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
+sp-blockchain   = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
+sc-client-api   = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
+sp-api          = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
+
+dvm-consensus-primitives = { path = "../../../primitives/consensus/" }
+dvm-rpc-runtime-api      = { path = "../../../frame/dvm/rpc/runtime-api"}
+
+dvm-consensus    = { path = "../consensus" }
+dvm-db           = { path = "../db" }
+futures         = { version = "0.3.1", features = ["compat"] }
+futures-timer   = "3.0.1"
+log             = "0.4.8" 
