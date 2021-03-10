@@ -134,14 +134,10 @@ pub enum Action<T: frame_system::Config> {
 pub fn which_action<T: frame_system::Config>(input_data: &[u8]) -> Result<Action<T>, ExitError> {
 	let transfer_and_call_action = &sha3::Keccak256::digest(&TRANSFER_AND_CALL_ACTION)[0..4];
 	let withdraw_action = &sha3::Keccak256::digest(&WITHDRAW_ACTION)[0..4];
-	if array_bytes::bytes2hex("", &input_data[0..4])
-		== array_bytes::bytes2hex("", transfer_and_call_action)
-	{
+	if &input_data[0..4] == transfer_and_call_action {
 		let decoded_data = CallData::decode(&input_data[4..])?;
 		return Ok(Action::TransferAndCall(decoded_data));
-	} else if array_bytes::bytes2hex("", &input_data[0..4])
-		== array_bytes::bytes2hex("", withdraw_action)
-	{
+	} else if &input_data[0..4] == withdraw_action {
 		let decoded_data = WithdrawData::decode(&input_data[4..])?;
 		return Ok(Action::Withdraw(decoded_data));
 	}
