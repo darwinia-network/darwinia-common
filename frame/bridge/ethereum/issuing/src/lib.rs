@@ -34,7 +34,7 @@ use ethereum_types::{H160, H256, U256, Address};
 use dvm_ethereum::TransactionAction;
 use rustc_hex::{FromHex, ToHex};
 use dvm_ethereum::TransactionSignature;
-use darwinia_evm::{AccountBasicMapping, GasWeightMapping};
+use darwinia_evm::{AccountBasicMapping, GasWeightMapping, ContractHandler};
 use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_evm_primitives::CallOrCreateInfo;
 
@@ -51,7 +51,7 @@ use darwinia_support::{
 	traits::{EthereumReceipt, DvmRawTransactor as DvmRawTransactorT},
 };
 
-use darwinia_ethereum_issuing_contract::{Abi, Topic, Log as EthLog, Event as EthEvent};
+use darwinia_ethereum_issuing_contract::{Abi, TokenBurnInfo, Topic, Log as EthLog, Event as EthEvent};
 
 const ISSUING_ACCOUNT: &str = "1000000000000000000000000000000000000001";
 const MAPPING_FACTORY_ADDRESS: &str = "55D8ECEE33841AaCcb890085AcC7eE0d8A92b5eF";
@@ -109,6 +109,8 @@ decl_error! {
         InvalidMintEcoding,
         /// invalid ethereum address length
         InvalidAddressLen,
+        /// decode input value error
+        InvalidInputData,
 	}
 }
 
@@ -134,6 +136,7 @@ decl_storage! {
 		pub VerifiedIssuingProof
 			get(fn verified_issuing_proof)
 			: map hasher(blake2_128_concat) EthereumTransactionIndex => bool = false;
+        pub BurnTokenEvents get(fn burn_token_events): Vec<<T as frame_system::Trait>::Event>;
     }
 }
 
@@ -143,6 +146,11 @@ decl_module! {
 		origin: T::Origin
 	{
 		fn deposit_event() = default;
+
+        fn on_initialize(_n: BlockNumber<T>) -> Weight {
+            <BurnTokenEvents<T>>::kill();
+            0
+        }
 
 		#[weight = <T as darwinia_evm::Trait>::GasWeightMapping::gas_to_weight(0x100000)]
         pub fn register_or_issuing_erc20(origin, proof: EthereumReceiptProofThing<T>) {
@@ -386,6 +394,9 @@ impl<T: Trait> Module<T> {
 
         if mapped_address == token.0.into() {
             let raw_event = RawEvent::BurnToken(source, ethereum_account, amount);
+            let module_event: <T as Trait>::Event = raw_event.clone().into();
+            let system_event: <T as frame_system::Trait>::Event = module_event.into();
+            <BurnTokenEvents<T>>::append(system_event);
 
             Self::deposit_event(raw_event);
             T::EcdsaAuthorities::schedule_mmr_root((
@@ -393,6 +404,22 @@ impl<T: Trait> Module<T> {
                     /10 * 10 + 10
                     ).saturated_into());
         }
+        Ok(())
+    }
+}
+
+impl<T: Trait> ContractHandler for Module<T> {
+    /// handle
+    fn handle(address: H160, caller: H160, input: &[u8]) -> DispatchResult {
+        debug::info!(target: "darwinia-issuing", "handle erc20 token burn");
+        debug::info!(target: "darwinia-issuing", "address {:?} caller {:?}, input: {:?}", address, caller, input);
+        // check address: 0x00000000000000000000000000000016
+        // check caller: mapping(backing, source)
+
+        let burn_info = TokenBurnInfo::decode(input)
+            .map_err(|_|Error::<T>::InvalidInputData)?;
+        debug::info!(target: "darwinia-issuing", "burn-info {:?}", burn_info);
+        Self::burn_token(burn_info.backing, burn_info.source, caller.0.into(), burn_info.recipient, U256(burn_info.amount.0))?;
         Ok(())
     }
 }

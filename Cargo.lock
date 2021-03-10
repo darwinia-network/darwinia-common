@@ -1491,6 +1491,7 @@ name = "darwinia-evm-precompile"
 version = "1.3.0"
 dependencies = [
  "darwinia-evm-precompile-empty",
+ "darwinia-evm-precompile-issuing",
  "darwinia-evm-precompile-simple",
  "darwinia-evm-precompile-withdraw",
 ]
@@ -1546,6 +1547,24 @@ version = "1.3.0"
 dependencies = [
  "darwinia-evm-primitives",
  "evm",
+]
+
+[[package]]
+name = "darwinia-evm-precompile-issuing"
+version = "1.3.0"
+dependencies = [
+ "darwinia-evm",
+ "darwinia-evm-primitives",
+ "evm",
+ "frame-support",
+ "frame-system",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "ripemd160",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 2.0.0",
 ]
 
 [[package]]

@@ -1071,6 +1071,7 @@ impl darwinia_evm::Trait for Runtime {
 	type ChainId = ChainId;
 	type AccountBasicMapping = DVMAccountBasicMapping<Self>;
 	type Runner = darwinia_evm::runner::stack::Runner<Self>;
+    type ContractHandler = EthereumIssuing;
 }
 
 type EthereumRelayAuthoritiesInstance = darwinia_relay_authorities::Instance0;

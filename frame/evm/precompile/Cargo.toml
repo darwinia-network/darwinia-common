@@ -14,6 +14,7 @@ version     = "1.3.0"
 darwinia-evm-precompile-empty	   = { default-features = false, path = "contracts/empty" }
 darwinia-evm-precompile-simple     = { default-features = false, path = "contracts/simple" }
 darwinia-evm-precompile-withdraw   = { default-features = false, path = "contracts/withdraw" }
+darwinia-evm-precompile-issuing   = { default-features = false, path = "contracts/issuing" }
 
 [features]
 default = ["std"]

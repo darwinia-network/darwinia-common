@@ -44,6 +44,7 @@ use sp_core::{Hasher, H160, H256, U256};
 use sp_runtime::{
 	traits::{BadOrigin, UniqueSaturatedInto},
 	AccountId32,
+    DispatchResult,
 };
 use sp_std::vec::Vec;
 
@@ -259,6 +260,11 @@ impl Get<u64> for SystemChainId {
 	}
 }
 
+/// handle from evm contract
+pub trait ContractHandler {
+    fn handle(address: H160, caller: H160, input: &[u8]) -> DispatchResult;
+}
+
 static ISTANBUL_CONFIG: Config = Config::istanbul();
 
 /// EVM module trait
@@ -290,6 +296,8 @@ pub trait Trait: frame_system::Trait + pallet_timestamp::Trait {
 	type Runner: Runner<Self>;
 	/// The account basic mapping way
 	type AccountBasicMapping: AccountBasicMapping;
+    /// Contract caller
+    type ContractHandler: ContractHandler;
 
 	/// EVM config used in the module.
 	fn config() -> &'static Config {

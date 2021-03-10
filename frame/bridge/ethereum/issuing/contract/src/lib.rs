@@ -38,6 +38,8 @@ use ethabi::{
     Bytes,
     RawLog,
     EventParam,
+    Error,
+    ErrorKind,
 };
 
 pub use ethabi::{Log, Event};
@@ -259,3 +261,33 @@ impl Abi {
             ].as_slice())
     }
 }
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct TokenBurnInfo {
+    pub backing: H160,
+    pub source: H160,
+    pub recipient: H160,
+    pub amount: U256,
+}
+
+impl TokenBurnInfo {
+    pub fn decode(data: &[u8]) -> AbiResult<Self> {
+		let tokens = ethabi::decode(
+            &[
+                ParamType::Address, 
+                ParamType::Address,
+                ParamType::Address,
+                ParamType::Uint(256)
+            ], &data)?;
+        match (tokens[0].clone(), tokens[1].clone(), tokens[2].clone(), tokens[3].clone()) {
+            (Token::Address(backing), Token::Address(source), Token::Address(recipient), Token::Uint(amount)) => Ok(TokenBurnInfo {
+                backing: backing,
+                source: source,
+                recipient: recipient,
+                amount: amount,
+            }),
+            _ => Err(Error::ErrorKind(ErrorKind::InvalidData))
+        }
+    }
+}
+
