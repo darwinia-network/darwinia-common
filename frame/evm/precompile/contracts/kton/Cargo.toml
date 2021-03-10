@@ -16,9 +16,9 @@ darwinia-evm-primitives = { default-features = false, path = "../../../../../pri
 ethabi                  = { default-features = false, git = "https://github.com/darwinia-network/ethabi.git", branch = "with_no_std" }
 ethereum-types          = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 evm                     = { version = "0.22.0", default-features = false, features = ["with-codec"] }
-hex                     = { version = "0.4", default-features = false }
 ripemd160               = { version = "0.9", default-features = false }
 sha3                    = { version = "0.8", default-features = false }
+array-bytes             = { version = "1.1.0" }
 # darwinia
 darwinia-evm = { default-features = false, path = "../../../" }
 # substrate
