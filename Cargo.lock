@@ -4949,6 +4949,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-identity"
+version = "2.0.1"
+source = "git+https://github.com/darwinia-network/substrate.git?tag=v2.2.1-darwinia#466ac62ecd1f096606691f0ed24a0851cc7a2ac1"
+dependencies = [
+ "enumflags2",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec 1.3.7",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 2.0.1",
+]
+
+[[package]]
 name = "pallet-im-online"
 version = "2.0.1"
 source = "git+https://github.com/darwinia-network/substrate.git?tag=v2.2.1-darwinia#466ac62ecd1f096606691f0ed24a0851cc7a2ac1"
@@ -4976,6 +4992,21 @@ dependencies = [
  "frame-system",
  "parity-scale-codec 1.3.7",
  "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 2.0.1",
+]
+
+[[package]]
+name = "pallet-multisig"
+version = "2.0.1"
+source = "git+https://github.com/darwinia-network/substrate.git?tag=v2.2.1-darwinia#466ac62ecd1f096606691f0ed24a0851cc7a2ac1"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec 1.3.7",
+ "serde",
+ "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std 2.0.1",
@@ -5025,6 +5056,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-recovery"
+version = "2.0.1"
+source = "git+https://github.com/darwinia-network/substrate.git?tag=v2.2.1-darwinia#466ac62ecd1f096606691f0ed24a0851cc7a2ac1"
+dependencies = [
+ "enumflags2",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec 1.3.7",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 2.0.1",
+]
+
+[[package]]
 name = "pallet-scheduler"
 version = "2.0.1"
 source = "git+https://github.com/darwinia-network/substrate.git?tag=v2.2.1-darwinia#466ac62ecd1f096606691f0ed24a0851cc7a2ac1"
@@ -5057,6 +5103,20 @@ dependencies = [
  "sp-staking",
  "sp-std 2.0.1",
  "sp-trie",
+]
+
+[[package]]
+name = "pallet-society"
+version = "2.0.1"
+source = "git+https://github.com/darwinia-network/substrate.git?tag=v2.2.1-darwinia#466ac62ecd1f096606691f0ed24a0851cc7a2ac1"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec 1.3.7",
+ "rand_chacha 0.2.2",
+ "serde",
+ "sp-runtime",
+ "sp-std 2.0.1",
 ]
 
 [[package]]
@@ -5135,6 +5195,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-utility"
+version = "2.0.1"
+source = "git+https://github.com/darwinia-network/substrate.git?tag=v2.2.1-darwinia#466ac62ecd1f096606691f0ed24a0851cc7a2ac1"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec 1.3.7",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 2.0.1",
+]
+
+[[package]]
 name = "pangolin-runtime"
 version = "1.0.13"
 dependencies = [
@@ -5173,17 +5248,22 @@ dependencies = [
  "pallet-babe",
  "pallet-collective",
  "pallet-grandpa",
+ "pallet-identity",
  "pallet-im-online",
  "pallet-membership",
+ "pallet-multisig",
  "pallet-offences",
  "pallet-proxy",
  "pallet-randomness-collective-flip",
+ "pallet-recovery",
  "pallet-scheduler",
  "pallet-session",
+ "pallet-society",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
+ "pallet-utility",
  "parity-scale-codec 1.3.7",
  "serde",
  "smallvec 1.6.1",
@@ -9223,7 +9303,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04f8ab788026715fa63b31960869617cba39117e520eb415b0139543e325ab59"
 dependencies = [
  "cfg-if 0.1.10",
- "rand 0.7.3",
+ "rand 0.5.6",
  "static_assertions 1.1.0",
 ]
 

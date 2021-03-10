@@ -1142,6 +1142,96 @@ impl dvm_ethereum::Config for Runtime {
 	type RingCurrency = Ring;
 }
 
+impl pallet_utility::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type WeightInfo = ();
+}
+
+parameter_types! {
+	pub const SocietyModuleId: ModuleId = ModuleId(*b"da/socie");
+	pub const CandidateDeposit: Balance = 10 * COIN;
+	pub const WrongSideDeduction: Balance = 2 * COIN;
+	pub const MaxStrikes: u32 = 10;
+	pub const RotationPeriod: BlockNumber = 80 * HOURS;
+	pub const PeriodSpend: Balance = 500 * COIN;
+	pub const MaxLockDuration: BlockNumber = 36 * 30 * DAYS;
+	pub const ChallengePeriod: BlockNumber = 7 * DAYS;
+}
+impl pallet_society::Config for Runtime {
+	type Event = Event;
+	type ModuleId = SocietyModuleId;
+	type Currency = Ring;
+	type Randomness = RandomnessCollectiveFlip;
+	type CandidateDeposit = CandidateDeposit;
+	type WrongSideDeduction = WrongSideDeduction;
+	type MaxStrikes = MaxStrikes;
+	type PeriodSpend = PeriodSpend;
+	type MembershipChanged = ();
+	type RotationPeriod = RotationPeriod;
+	type MaxLockDuration = MaxLockDuration;
+	type FounderSetOrigin = EnsureRootOrMoreThanHalfCouncil;
+	type SuspensionJudgementOrigin = pallet_society::EnsureFounder<Runtime>;
+	type ChallengePeriod = ChallengePeriod;
+}
+
+parameter_types! {
+	// Minimum 100 bytes/PRING deposited (1 MILLI/byte)
+	pub const BasicDeposit: Balance = 10 * COIN;       // 258 bytes on-chain
+	pub const FieldDeposit: Balance = 250 * MILLI;     // 66 bytes on-chain
+	pub const SubAccountDeposit: Balance = 2 * COIN;   // 53 bytes on-chain
+	pub const MaxSubAccounts: u32 = 100;
+	pub const MaxAdditionalFields: u32 = 100;
+	pub const MaxRegistrars: u32 = 20;
+}
+impl pallet_identity::Config for Runtime {
+	type Event = Event;
+	type Currency = Ring;
+	type BasicDeposit = BasicDeposit;
+	type FieldDeposit = FieldDeposit;
+	type SubAccountDeposit = SubAccountDeposit;
+	type MaxSubAccounts = MaxSubAccounts;
+	type MaxAdditionalFields = MaxAdditionalFields;
+	type MaxRegistrars = MaxRegistrars;
+	type Slashed = Treasury;
+	type ForceOrigin = EnsureRootOrMoreThanHalfCouncil;
+	type RegistrarOrigin = EnsureRootOrMoreThanHalfCouncil;
+	type WeightInfo = ();
+}
+
+parameter_types! {
+	// One storage item; key size is 32; value is size 4+4+16+32 bytes = 56 bytes.
+	pub const DepositBase: Balance = deposit(1, 88);
+	// Additional storage item size of 32 bytes.
+	pub const DepositFactor: Balance = deposit(0, 32);
+	pub const MaxSignatories: u16 = 100;
+}
+impl pallet_multisig::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type Currency = Ring;
+	type DepositBase = DepositBase;
+	type DepositFactor = DepositFactor;
+	type MaxSignatories = MaxSignatories;
+	type WeightInfo = ();
+}
+
+parameter_types! {
+	pub const ConfigDepositBase: Balance = 5 * COIN;
+	pub const FriendDepositFactor: Balance = 50 * MILLI;
+	pub const MaxFriends: u16 = 9;
+	pub const RecoveryDeposit: Balance = 5 * COIN;
+}
+impl pallet_recovery::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type Currency = Ring;
+	type ConfigDepositBase = ConfigDepositBase;
+	type FriendDepositFactor = FriendDepositFactor;
+	type MaxFriends = MaxFriends;
+	type RecoveryDeposit = RecoveryDeposit;
+}
+
 construct_runtime! {
 	pub enum Runtime
 	where
@@ -1207,6 +1297,21 @@ construct_runtime! {
 
 		EVM: darwinia_evm::{Module, Call, Storage, Config, Event<T>} = 34,
 		Ethereum: dvm_ethereum::{Module, Call, Storage, Config, Event, ValidateUnsigned} = 35,
+
+		// Society module.
+		Society: pallet_society::{Module, Call, Storage, Event<T>} = 36,
+
+		// Utility module.
+		Utility: pallet_utility::{Module, Call, Event} = 37,
+
+		// Less simple identity module.
+		Identity: pallet_identity::{Module, Call, Storage, Event<T>} = 38,
+
+		// Multisig module. Late addition.
+		Multisig: pallet_multisig::{Module, Call, Storage, Event<T>} = 39,
+
+		// Social recovery module.
+		Recovery: pallet_recovery::{Module, Call, Storage, Event<T>} = 40
 	}
 }
 
