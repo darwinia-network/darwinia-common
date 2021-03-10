@@ -1176,7 +1176,7 @@ impl pallet_society::Config for Runtime {
 }
 
 parameter_types! {
-	// Minimum 100 bytes/CRING deposited (1 MILLI/byte)
+	// Minimum 100 bytes/PRING deposited (1 MILLI/byte)
 	pub const BasicDeposit: Balance = 10 * COIN;       // 258 bytes on-chain
 	pub const FieldDeposit: Balance = 250 * MILLI;     // 66 bytes on-chain
 	pub const SubAccountDeposit: Balance = 2 * COIN;   // 53 bytes on-chain
