@@ -31,7 +31,6 @@ pub use overrides::{SchemaV1Override, StorageOverride};
 
 use darwinia_evm::ExitReason;
 use jsonrpc_core::{Error, ErrorCode, Value};
-use rustc_hex::ToHex;
 
 pub fn internal_err<T: ToString>(message: T) -> Error {
 	Error {
@@ -63,7 +62,7 @@ pub fn error_on_execution_failure(reason: &ExitReason, data: &[u8]) -> Result<()
 			Err(Error {
 				code: ErrorCode::InternalError,
 				message,
-				data: Some(Value::String(data.to_hex())),
+				data: Some(Value::String(array_bytes::bytes2hex("0x", data))),
 			})
 		}
 		ExitReason::Fatal(e) => Err(Error {

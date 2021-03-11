@@ -19,6 +19,7 @@ evm                     = { version = "0.23.0", default-features = false, featur
 hex                     = { version = "0.4", default-features = false }
 ripemd160               = { version = "0.9", default-features = false }
 sha3                    = { version = "0.8", default-features = false }
+array-bytes             = { version = "1.1.0" }
 # darwinia
 darwinia-evm = { default-features = false, path = "../../../" }
 # substrate
