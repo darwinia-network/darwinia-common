@@ -9,10 +9,10 @@ frame_support::parameter_types! {
 	pub const CandidateDeposit: Balance = 10 * COIN;
 	pub const WrongSideDeduction: Balance = 2 * COIN;
 	pub const MaxStrikes: u32 = 10;
-	pub const RotationPeriod: BlockNumber = 80 * HOURS;
+	pub const RotationPeriod: BlockNumber = 3 * MINUTES;
 	pub const PeriodSpend: Balance = 500 * COIN;
-	pub const MaxLockDuration: BlockNumber = 36 * 30 * DAYS;
-	pub const ChallengePeriod: BlockNumber = 7 * DAYS;
+	pub const MaxLockDuration: BlockNumber = 3 * MINUTES;
+	pub const ChallengePeriod: BlockNumber = 3 * MINUTES;
 }
 impl Config for Runtime {
 	type Event = Event;

@@ -34,15 +34,15 @@ pub mod constants {
 	pub const CAP: Balance = 10_000_000_000 * COIN;
 	pub const TOTAL_POWER: Power = 1_000_000_000;
 
-	pub const MILLISECS_PER_BLOCK: Moment = 3000;
-	pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
-	pub const BLOCKS_PER_SESSION: BlockNumber = 10 * MINUTES;
-	pub const SESSIONS_PER_ERA: SessionIndex = 6;
-
 	// Time is measured by number of blocks.
 	pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 	pub const HOURS: BlockNumber = 60 * MINUTES;
 	pub const DAYS: BlockNumber = 24 * HOURS;
+
+	pub const MILLISECS_PER_BLOCK: Moment = 3000;
+	pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
+	pub const BLOCKS_PER_SESSION: BlockNumber = MINUTES / 2;
+	pub const SESSIONS_PER_ERA: SessionIndex = 6;
 
 	// 1 in 4 blocks (on average, not counting collisions) will be primary babe blocks.
 	pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);

@@ -14,7 +14,7 @@ frame_support::parameter_types! {
 	pub const DesiredMembers: u32 = 13;
 	pub const DesiredRunnersUp: u32 = 7;
 	/// Daily council elections.
-	pub const TermDuration: BlockNumber = 24 * HOURS;
+	pub const TermDuration: BlockNumber = 3 * MINUTES;
 }
 
 impl Config for Runtime {

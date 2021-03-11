@@ -9,13 +9,11 @@ use darwinia_staking::{weights::SubstrateWeight, Config, EraIndex};
 frame_support::parameter_types! {
 	pub const StakingModuleId: ModuleId = ModuleId(*b"da/staki");
 	pub const SessionsPerEra: SessionIndex = SESSIONS_PER_ERA;
-	pub const BondingDurationInEra: EraIndex = 14 * DAYS
-		/ (SESSIONS_PER_ERA as BlockNumber * BLOCKS_PER_SESSION);
-	pub const BondingDurationInBlockNumber: BlockNumber = 14 * DAYS;
-	pub const SlashDeferDuration: EraIndex = 14 * DAYS
-		/ (SESSIONS_PER_ERA as BlockNumber * BLOCKS_PER_SESSION) - 1;
+	pub const BondingDurationInEra: EraIndex = 2;
+	pub const BondingDurationInBlockNumber: BlockNumber = 2 * BLOCKS_PER_SESSION * SESSIONS_PER_ERA;
+	pub const SlashDeferDuration: EraIndex = 1;
 	// quarter of the last session will be for election.
-	pub const ElectionLookahead: BlockNumber = BLOCKS_PER_SESSION / 4;
+	pub const ElectionLookahead: BlockNumber = BLOCKS_PER_SESSION / 2;
 	pub const MaxIterations: u32 = 5;
 	pub MinSolutionScoreBump: Perbill = Perbill::from_rational_approximation(5u32, 10_000);
 	pub const MaxNominatorRewardedPerValidator: u32 = 128;

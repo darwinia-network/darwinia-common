@@ -6,7 +6,7 @@ use darwinia_claims::Config;
 
 frame_support::parameter_types! {
 	pub const ClaimsModuleId: ModuleId = ModuleId(*b"da/claim");
-	pub Prefix: &'static [u8] = b"Pay RINGs to the template account:";
+	pub Prefix: &'static [u8] = b"Pay PRINGs to the Pangolin account:";
 }
 impl Config for Runtime {
 	type Event = Event;
