@@ -23,8 +23,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
+use dp_storage::PALLET_ETHEREUM_SCHEMA;
 use dvm_consensus_primitives::{PostLog, PreLog, FRONTIER_ENGINE_ID};
-use dvm_storage::PALLET_ETHEREUM_SCHEMA;
 use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
 use evm::ExitReason;
 use frame_support::{

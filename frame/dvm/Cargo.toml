@@ -24,7 +24,7 @@ array-bytes    = { version = "1.1.0" }
 darwinia-balances        = { default-features = false, path = "../balances" }
 darwinia-evm             = { default-features = false, path = "../evm" }
 darwinia-evm-primitives  = { default-features = false, path = "../../primitives/evm" }
-dvm-storage  = { default-features = false, path = "../../primitives/dvm-storage" }
+dp-storage  = { default-features = false, path = "../../primitives/storage" }
 darwinia-support         = { default-features = false, path = "../support" }
 dvm-consensus-primitives = { default-features = false, path = "../../primitives/consensus" }
 dvm-rpc-runtime-api      = { default-features = false, path = "./rpc/runtime-api" }

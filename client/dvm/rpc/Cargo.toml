@@ -30,7 +30,7 @@ array-bytes         = { version = "1.1.0" }
 darwinia-evm            = { path = "../../../frame/evm" }
 dvm-consensus           = { path = "../consensus" }
 dvm-consensus-primitives = { path = "../../../primitives/consensus/" }
-dvm-storage = { path = "../../../primitives/dvm-storage/" }
+dp-storage = { path = "../../../primitives/storage/" }
 dvm-ethereum            = { path = "../../../frame/dvm" }
 dvm-rpc-core            = { path = "../../../frame/dvm/rpc" }
 dvm-rpc-core-primitives = { path = "../../../primitives/dvm-rpc-core" }
