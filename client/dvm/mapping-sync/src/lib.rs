@@ -20,7 +20,6 @@ mod worker;
 
 pub use worker::MappingSyncWorker;
 
-use dvm_consensus_primitives::ConsensusLog;
 use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
 use sc_client_api::BlockOf;
 use sp_api::ProvideRuntimeApi;
@@ -34,12 +33,9 @@ pub fn sync_block<Block: BlockT>(
 	backend: &dvm_db::Backend<Block>,
 	header: &Block::Header,
 ) -> Result<(), String> {
-	let log = dvm_consensus::find_frontier_log::<Block>(&header)?;
-	let post_hashes = match log {
-		ConsensusLog::PostHashes(post_hashes) => post_hashes,
-		ConsensusLog::PreBlock(block) => dvm_consensus_primitives::PostHashes::from_block(block),
-		ConsensusLog::PostBlock(block) => dvm_consensus_primitives::PostHashes::from_block(block),
-	};
+	let log =
+		dvm_consensus_primitives::find_log::<Block>(&header).map_err(|e| format!("{:?}", e))?;
+	let post_hashes = log.into_hashes();
 
 	let mapping_commitment = dvm_db::MappingCommitment {
 		block_hash: header.hash(),

@@ -23,7 +23,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
-use dvm_consensus_primitives::{ConsensusLog, FRONTIER_ENGINE_ID};
+use dvm_consensus_primitives::{PostLog, FRONTIER_ENGINE_ID};
 use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
 use evm::ExitReason;
 use frame_support::{
@@ -357,8 +357,7 @@ impl<T: Config> Module<T> {
 
 		let digest = DigestItem::<T::Hash>::Consensus(
 			FRONTIER_ENGINE_ID,
-			ConsensusLog::PostHashes(dvm_consensus_primitives::PostHashes::from_block(block))
-				.encode(),
+			PostLog::Hashes(dvm_consensus_primitives::Hashes::from_block(block)).encode(),
 		);
 		frame_system::Module::<T>::deposit_log(digest.into());
 	}
