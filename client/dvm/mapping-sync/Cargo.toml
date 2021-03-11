@@ -19,7 +19,7 @@ sp-api          = { git = "https://github.com/darwinia-network/substrate.git", t
 dp_consensus = { path = "../../../primitives/consensus/" }
 dvm-rpc-runtime-api      = { path = "../../../frame/dvm/rpc/runtime-api"}
 
-dvm-consensus    = { path = "../consensus" }
+dc_consensus    = { path = "../consensus" }
 dvm-db           = { path = "../db" }
 futures         = { version = "0.3.1", features = ["compat"] }
 futures-timer   = "3.0.1"

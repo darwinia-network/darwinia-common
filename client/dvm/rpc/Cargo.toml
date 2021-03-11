@@ -28,7 +28,7 @@ dvm-db = { path = "../db" }
 array-bytes         = { version = "1.1.0" }
 # darwinia
 darwinia-evm            = { path = "../../../frame/evm" }
-dvm-consensus           = { path = "../consensus" }
+dc_consensus           = { path = "../consensus" }
 dp_consensus = { path = "../../../primitives/consensus/" }
 dp-storage = { path = "../../../primitives/storage/" }
 dvm-ethereum            = { path = "../../../frame/dvm" }
