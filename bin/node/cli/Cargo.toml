@@ -44,6 +44,7 @@ dvm-db                              = { path = "../../../client/dvm/db" }
 dvm-mapping-sync                    = { path = "../../../client/dvm/mapping-sync" }
 dvm-rpc-core-primitives             = { path = "../../../primitives/dvm-rpc-core" }
 dvm-rpc-runtime-api                 = { path = "../../../frame/dvm/rpc/runtime-api" }
+dvm-ethereum                 = { path = "../../../frame/dvm" }
 pangolin-runtime                    = { path = "../runtime/pangolin" }
 # substrate
 frame-system-rpc-runtime-api               = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }

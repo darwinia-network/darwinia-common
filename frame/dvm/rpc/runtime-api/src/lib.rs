@@ -62,7 +62,7 @@ sp_api::decl_runtime_apis! {
 		fn author() -> H160;
 		/// For a given account address and index, returns darwinia_evm::AccountStorages.
 		fn storage_at(address: H160, index: U256) -> H256;
-		/// Returns a pallet_ethereum::call response.
+		/// Returns a dvm_ethereum::call response.
 		fn call(
 			from: H160,
 			to: H160,

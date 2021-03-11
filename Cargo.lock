@@ -1835,6 +1835,7 @@ dependencies = [
  "dvm-consensus",
  "dvm-consensus-primitives",
  "dvm-db",
+ "dvm-ethereum",
  "dvm-mapping-sync",
  "dvm-rpc",
  "dvm-rpc-core-primitives",
@@ -1974,6 +1975,7 @@ dependencies = [
  "darwinia-support",
  "dvm-consensus-primitives",
  "dvm-rpc-runtime-api",
+ "dvm-storage",
  "ethereum",
  "ethereum-types 0.10.0",
  "evm",
@@ -2021,6 +2023,7 @@ dependencies = [
  "dvm-rpc-core",
  "dvm-rpc-core-primitives",
  "dvm-rpc-runtime-api",
+ "dvm-storage",
  "ethereum",
  "ethereum-types 0.10.0",
  "futures 0.3.13",
@@ -2095,6 +2098,10 @@ dependencies = [
  "sp-runtime",
  "sp-std 2.0.1",
 ]
+
+[[package]]
+name = "dvm-storage"
+version = "1.4.0"
 
 [[package]]
 name = "dyn-clonable"

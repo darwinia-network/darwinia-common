@@ -24,6 +24,7 @@
 
 use codec::{Decode, Encode};
 use dvm_consensus_primitives::{PostLog, PreLog, FRONTIER_ENGINE_ID};
+use dvm_storage::PALLET_ETHEREUM_SCHEMA;
 use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
 use evm::ExitReason;
 use frame_support::{
@@ -60,6 +61,19 @@ mod mock;
 pub enum ReturnValue {
 	Bytes(Vec<u8>),
 	Hash(H160),
+}
+
+/// The schema version for Pallet Ethereum's storage
+#[derive(Clone, Debug, Encode, Decode, PartialEq, Eq, PartialOrd, Ord)]
+pub enum EthereumStorageSchema {
+	Undefined,
+	V1,
+}
+
+impl Default for EthereumStorageSchema {
+	fn default() -> Self {
+		Self::Undefined
+	}
 }
 
 /// A type alias for the balance type from this pallet's point of view.
@@ -113,6 +127,9 @@ decl_storage! {
 	add_extra_genesis {
 		build(|_config: &GenesisConfig| {
 			<Module<T>>::store_block(false);
+
+			// Initialize the storage schema at the well known key.
+			frame_support::storage::unhashed::put::<EthereumStorageSchema>(&PALLET_ETHEREUM_SCHEMA, &EthereumStorageSchema::V1);
 		});
 	}
 }

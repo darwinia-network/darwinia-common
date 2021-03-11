@@ -16,6 +16,7 @@
 
 mod eth;
 mod eth_pubsub;
+mod overrides;
 
 pub use eth::{
 	EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, EthTask, NetApi, NetApiServer, Web3Api,
@@ -26,6 +27,7 @@ use ethereum::{
 	Transaction as EthereumTransaction, TransactionMessage as EthereumTransactionMessage,
 };
 use ethereum_types::H160;
+pub use overrides::{SchemaV1Override, StorageOverride};
 
 use darwinia_evm::ExitReason;
 use jsonrpc_core::{Error, ErrorCode, Value};

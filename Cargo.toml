@@ -53,6 +53,7 @@ members = [
 	"primitives/consensus",
 	"primitives/dvm-rpc-core",
 	"primitives/ethereum-primitives",
+	"primitives/dvm-storage",
 	"primitives/evm",
 	"primitives/merkle-patricia-trie",
 	"primitives/relay",

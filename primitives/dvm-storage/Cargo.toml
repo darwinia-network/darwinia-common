@@ -1,0 +1,16 @@
+[package]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+description = "Storage primitives for Ethereum RPC (web3) compatibility layer for Substrate."
+edition     = "2018"
+homepage    = "https://substrate.dev"
+license     = "Apache-2.0"
+name        = "dvm-storage"
+readme      = "README.md"
+repository  = "https://github.com/darwinia-network/darwinia-common/"
+version     = "1.4.0"
+
+[dependencies]
+
+[features]
+default = ["std"]
+std = []

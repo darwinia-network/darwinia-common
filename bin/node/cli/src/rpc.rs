@@ -35,9 +35,12 @@
 pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
 
 // --- std ---
+use std::collections::BTreeMap;
 use std::sync::Arc;
 // --- darwinia ---
 use drml_primitives::{AccountId, Balance, BlockNumber, Hash, Nonce, OpaqueBlock as Block, Power};
+use dvm_ethereum::EthereumStorageSchema;
+use dvm_rpc::{SchemaV1Override, StorageOverride};
 use dvm_rpc_core_primitives::{FilterPool, PendingTransactions};
 
 /// A type representing all RPC extensions.
@@ -216,11 +219,19 @@ where
 	io.extend_with(BalancesApi::to_delegate(Balances::new(client.clone())));
 	io.extend_with(HeaderMMRApi::to_delegate(HeaderMMR::new(client.clone())));
 	io.extend_with(StakingApi::to_delegate(Staking::new(client.clone())));
+
+	let mut overrides = BTreeMap::new();
+	overrides.insert(
+		EthereumStorageSchema::V1,
+		Box::new(SchemaV1Override::new(client.clone()))
+			as Box<dyn StorageOverride<_> + Send + Sync>,
+	);
 	io.extend_with(EthApiServer::to_delegate(EthApi::new(
 		client.clone(),
 		pool.clone(),
 		TransactionConverter,
 		network.clone(),
+		overrides,
 		pending_transactions.clone(),
 		backend,
 		is_authority,
