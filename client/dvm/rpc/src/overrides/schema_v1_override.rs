@@ -18,7 +18,6 @@ use codec::Decode;
 use dvm_rpc_runtime_api::TransactionStatus;
 use ethereum::Block as EthereumBlock;
 use ethereum_types::{H160, H256, U256};
-use frame_support::debug;
 use sc_client_api::backend::{AuxStore, Backend, StateBackend, StorageProvider};
 use sp_api::BlockId;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
