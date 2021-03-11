@@ -51,7 +51,7 @@ use darwinia_support::{
 	traits::{EthereumReceipt, DvmRawTransactor as DvmRawTransactorT},
 };
 
-use darwinia_ethereum_issuing_contract::{Abi, TokenBurnInfo, Topic, Log as EthLog, Event as EthEvent};
+use darwinia_ethereum_issuing_contract::{Abi, TokenBurnInfo, TokenRegisterInfo, Topic, Log as EthLog, Event as EthEvent};
 
 const ISSUING_ACCOUNT: &str = "1000000000000000000000000000000000000001";
 const MAPPING_FACTORY_ADDRESS: &str = "55D8ECEE33841AaCcb890085AcC7eE0d8A92b5eF";
@@ -125,6 +125,8 @@ decl_event! {
         CreateErc20(EthereumAddress),
         /// burn event
         BurnToken(EthereumAddress, EthereumAddress, U256),
+        /// token registed event
+        TokenRegisted(u8, EthereumAddress, EthereumAddress, EthereumAddress),
 	}
 }
 
@@ -154,10 +156,14 @@ decl_module! {
 
 		#[weight = <T as darwinia_evm::Trait>::GasWeightMapping::gas_to_weight(0x100000)]
         pub fn register_or_issuing_erc20(origin, proof: EthereumReceiptProofThing<T>) {
+            debug::info!(target: "darwinia-issuing", "start to register_or_issuing_erc20");
             let tx_index = T::EthereumRelay::gen_receipt_index(&proof);
             ensure!(!VerifiedIssuingProof::contains_key(tx_index), <Error<T>>::AssetAR);
             let verified_receipt = T::EthereumRelay::verify_receipt(&proof)
-                .map_err(|_| <Error<T>>::ReceiptProofInv)?;
+                .map_err(|err| {
+                    debug::info!(target: "darwinia-issuing", "verify error {:?}", err);
+                    <Error<T>>::ReceiptProofInv
+                })?;
 
             let register_event = Abi::register_event();
             let backing_event = Abi::backing_event();
@@ -383,6 +389,23 @@ impl<T: Trait> Module<T> {
         Ok(H160::from_slice(&mapped_address.as_slice()[12..]))
     }
 
+    pub fn token_registed(
+        backing: EthereumAddress,
+        source: EthereumAddress,
+        target: EthereumAddress
+        ) -> DispatchResult {
+        let raw_event = RawEvent::TokenRegisted(0, backing, source, target);
+        let module_event: <T as Trait>::Event = raw_event.clone().into();
+        let system_event: <T as frame_system::Trait>::Event = module_event.into();
+        <BurnTokenEvents<T>>::append(system_event);
+        Self::deposit_event(raw_event);
+        T::EcdsaAuthorities::schedule_mmr_root((
+                <frame_system::Module<T>>::block_number().saturated_into::<u32>()
+                /10 * 10 + 10
+                ).saturated_into());
+        Ok(())
+    }
+
     pub fn burn_token(
         backing: EthereumAddress,
         source: EthereumAddress,
@@ -416,10 +439,17 @@ impl<T: Trait> ContractHandler for Module<T> {
         // check address: 0x00000000000000000000000000000016
         // check caller: mapping(backing, source)
 
-        let burn_info = TokenBurnInfo::decode(input)
-            .map_err(|_|Error::<T>::InvalidInputData)?;
-        debug::info!(target: "darwinia-issuing", "burn-info {:?}", burn_info);
-        Self::burn_token(burn_info.backing, burn_info.source, caller.0.into(), burn_info.recipient, U256(burn_info.amount.0))?;
+        if MappingFactoryAddress::get() == caller.0.into() {
+            let registed_info = TokenRegisterInfo::decode(input)
+                .map_err(|_|Error::<T>::InvalidInputData)?;
+            debug::info!(target: "darwinia-issuing", "registed-info {:?}", registed_info);
+            Self::token_registed(registed_info.0, registed_info.1, registed_info.2)?;
+        } else {
+            let burn_info = TokenBurnInfo::decode(input)
+                .map_err(|_|Error::<T>::InvalidInputData)?;
+            debug::info!(target: "darwinia-issuing", "burn-info {:?}", burn_info);
+            Self::burn_token(burn_info.backing, burn_info.source, caller.0.into(), burn_info.recipient, U256(burn_info.amount.0))?;
+        }
         Ok(())
     }
 }
