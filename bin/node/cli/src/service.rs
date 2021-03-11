@@ -274,7 +274,6 @@ where
 		grandpa_block_import.clone(),
 		client.clone(),
 		frontier_backend.clone(),
-		true,
 	);
 	let (babe_import, babe_link) = sc_consensus_babe::block_import(
 		BabeConfig::get_or_compute(&*client)?,
