@@ -64,7 +64,7 @@ pub struct EthApi<B: BlockT, C, P, CT, BE, H: ExHashT> {
 	overrides: BTreeMap<EthereumStorageSchema, Box<dyn StorageOverride<B> + Send + Sync>>,
 	fallback: Box<dyn StorageOverride<B> + Send + Sync>,
 	pending_transactions: PendingTransactions,
-	backend: Arc<dvm_db::Backend<B>>,
+	backend: Arc<dc_db::Backend<B>>,
 	is_authority: bool,
 	signers: Vec<Box<dyn EthSigner>>,
 	_marker: PhantomData<(B, BE)>,
@@ -84,7 +84,7 @@ where
 		network: Arc<NetworkService<B, H>>,
 		overrides: BTreeMap<EthereumStorageSchema, Box<dyn StorageOverride<B> + Send + Sync>>,
 		pending_transactions: PendingTransactions,
-		backend: Arc<dvm_db::Backend<B>>,
+		backend: Arc<dc_db::Backend<B>>,
 		is_authority: bool,
 	) -> Self {
 		Self {

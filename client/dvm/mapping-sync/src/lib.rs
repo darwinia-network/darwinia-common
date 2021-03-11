@@ -30,13 +30,13 @@ use sp_runtime::{
 };
 
 pub fn sync_block<Block: BlockT>(
-	backend: &dvm_db::Backend<Block>,
+	backend: &dc_db::Backend<Block>,
 	header: &Block::Header,
 ) -> Result<(), String> {
 	let log = dp_consensus::find_log(header.digest()).map_err(|e| format!("{:?}", e))?;
 	let post_hashes = log.into_hashes();
 
-	let mapping_commitment = dvm_db::MappingCommitment {
+	let mapping_commitment = dc_db::MappingCommitment {
 		block_hash: header.hash(),
 		ethereum_block_hash: post_hashes.block_hash,
 		ethereum_transaction_hashes: post_hashes.transaction_hashes,
@@ -48,7 +48,7 @@ pub fn sync_block<Block: BlockT>(
 
 pub fn sync_genesis_block<Block: BlockT, C>(
 	client: &C,
-	backend: &dvm_db::Backend<Block>,
+	backend: &dc_db::Backend<Block>,
 	header: &Block::Header,
 ) -> Result<(), String>
 where
@@ -65,7 +65,7 @@ where
 		.ok_or("Ethereum genesis block not found".to_string())?
 		.header
 		.hash();
-	let mapping_commitment = dvm_db::MappingCommitment::<Block> {
+	let mapping_commitment = dc_db::MappingCommitment::<Block> {
 		block_hash: header.hash(),
 		ethereum_block_hash: block_hash,
 		ethereum_transaction_hashes: Vec::new(),
@@ -78,7 +78,7 @@ where
 pub fn sync_one_level<Block: BlockT, C, B>(
 	client: &C,
 	substrate_backend: &B,
-	frontier_backend: &dvm_db::Backend<Block>,
+	frontier_backend: &dc_db::Backend<Block>,
 ) -> Result<bool, String>
 where
 	C: ProvideRuntimeApi<Block> + Send + Sync + HeaderBackend<Block> + BlockOf,
@@ -142,7 +142,7 @@ where
 pub fn sync_blocks<Block: BlockT, C, B>(
 	client: &C,
 	substrate_backend: &B,
-	frontier_backend: &dvm_db::Backend<Block>,
+	frontier_backend: &dc_db::Backend<Block>,
 	limit: usize,
 ) -> Result<bool, String>
 where

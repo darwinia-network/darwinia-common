@@ -1736,12 +1736,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3ee2393c4a91429dffb4bedf19f4d6abf27d8a732c8ce4980305d782e5426d57"
 
 [[package]]
+name = "dc-db"
+version = "1.3.0"
+dependencies = [
+ "kvdb",
+ "kvdb-rocksdb",
+ "parity-scale-codec 1.3.7",
+ "parking_lot 0.11.1",
+ "sp-core",
+ "sp-database",
+ "sp-runtime",
+]
+
+[[package]]
 name = "dc_consensus"
 version = "1.4.0"
 dependencies = [
+ "dc-db",
  "derive_more",
  "dp_consensus",
- "dvm-db",
  "dvm-rpc-runtime-api",
  "futures 0.3.13",
  "log",
@@ -1886,11 +1899,11 @@ dependencies = [
  "darwinia-staking",
  "darwinia-staking-rpc",
  "darwinia-staking-rpc-runtime-api",
+ "dc-db",
  "dc_consensus",
  "dp-rpc",
  "dp_consensus",
  "drml-primitives",
- "dvm-db",
  "dvm-ethereum",
  "dvm-mapping-sync",
  "dvm-rpc",
@@ -1957,19 +1970,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dvm-db"
-version = "1.3.0"
-dependencies = [
- "kvdb",
- "kvdb-rocksdb",
- "parity-scale-codec 1.3.7",
- "parking_lot 0.11.1",
- "sp-core",
- "sp-database",
- "sp-runtime",
-]
-
-[[package]]
 name = "dvm-dynamic-fee"
 version = "1.3.0"
 dependencies = [
@@ -2017,9 +2017,9 @@ dependencies = [
 name = "dvm-mapping-sync"
 version = "1.3.0"
 dependencies = [
+ "dc-db",
  "dc_consensus",
  "dp_consensus",
- "dvm-db",
  "dvm-rpc-runtime-api",
  "futures 0.3.13",
  "futures-timer 3.0.2",
@@ -2036,11 +2036,11 @@ version = "1.4.0"
 dependencies = [
  "array-bytes",
  "darwinia-evm",
+ "dc-db",
  "dc_consensus",
  "dp-rpc",
  "dp-storage",
  "dp_consensus",
- "dvm-db",
  "dvm-ethereum",
  "dvm-rpc-core",
  "dvm-rpc-runtime-api",

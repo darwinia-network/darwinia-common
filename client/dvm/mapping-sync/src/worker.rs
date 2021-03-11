@@ -41,7 +41,7 @@ pub struct MappingSyncWorker<Block: BlockT, C, B> {
 
 	client: Arc<C>,
 	substrate_backend: Arc<B>,
-	frontier_backend: Arc<dvm_db::Backend<Block>>,
+	frontier_backend: Arc<dc_db::Backend<Block>>,
 
 	have_next: bool,
 }
@@ -52,7 +52,7 @@ impl<Block: BlockT, C, B> MappingSyncWorker<Block, C, B> {
 		timeout: Duration,
 		client: Arc<C>,
 		substrate_backend: Arc<B>,
-		frontier_backend: Arc<dvm_db::Backend<Block>>,
+		frontier_backend: Arc<dc_db::Backend<Block>>,
 	) -> Self {
 		Self {
 			import_notifications,

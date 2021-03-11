@@ -92,7 +92,7 @@ pub struct FullDeps<C, P, SC, B> {
 	/// EthFilterApi pool.
 	pub filter_pool: Option<FilterPool>,
 	/// Backend.
-	pub backend: Arc<dvm_db::Backend<Block>>,
+	pub backend: Arc<dc_db::Backend<Block>>,
 	/// BABE specific dependencies.
 	pub babe: BabeDeps,
 	/// GRANDPA specific dependencies.

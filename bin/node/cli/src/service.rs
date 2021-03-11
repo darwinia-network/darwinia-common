@@ -170,9 +170,7 @@ fn set_prometheus_registry(config: &mut Configuration) -> Result<(), ServiceErro
 	Ok(())
 }
 
-pub fn open_frontier_backend(
-	config: &Configuration,
-) -> Result<Arc<dvm_db::Backend<Block>>, String> {
+pub fn open_frontier_backend(config: &Configuration) -> Result<Arc<dc_db::Backend<Block>>, String> {
 	let config_dir = config
 		.base_path
 		.as_ref()
@@ -183,9 +181,9 @@ pub fn open_frontier_backend(
 		});
 	let database_dir = config_dir.join("frontier").join("db");
 
-	Ok(Arc::new(dvm_db::Backend::<Block>::new(
-		&dvm_db::DatabaseSettings {
-			source: dvm_db::DatabaseSettingsSrc::RocksDb {
+	Ok(Arc::new(dc_db::Backend::<Block>::new(
+		&dc_db::DatabaseSettings {
+			source: dc_db::DatabaseSettingsSrc::RocksDb {
 				path: database_dir,
 				cache_size: 0,
 			},
@@ -227,7 +225,7 @@ fn new_partial<RuntimeApi, Executor>(
 			Option<TelemetrySpan>,
 			PendingTransactions,
 			Option<FilterPool>,
-			Arc<dvm_db::Backend<Block>>,
+			Arc<dc_db::Backend<Block>>,
 		),
 	>,
 	ServiceError,
