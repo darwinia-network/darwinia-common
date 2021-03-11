@@ -1817,6 +1817,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "dp-rpc"
+version = "1.4.0"
+dependencies = [
+ "ethereum-types 0.10.0",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "jsonrpc-pubsub",
+ "rustc-hex",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "dp-storage"
 version = "1.4.0"
 
@@ -1836,6 +1850,7 @@ dependencies = [
  "darwinia-staking",
  "darwinia-staking-rpc",
  "darwinia-staking-rpc-runtime-api",
+ "dp-rpc",
  "drml-primitives",
  "dvm-consensus",
  "dvm-consensus-primitives",
@@ -1843,7 +1858,6 @@ dependencies = [
  "dvm-ethereum",
  "dvm-mapping-sync",
  "dvm-rpc",
- "dvm-rpc-core-primitives",
  "dvm-rpc-runtime-api",
  "frame-system-rpc-runtime-api",
  "futures 0.3.13",
@@ -2022,13 +2036,13 @@ version = "1.4.0"
 dependencies = [
  "array-bytes",
  "darwinia-evm",
+ "dp-rpc",
  "dp-storage",
  "dvm-consensus",
  "dvm-consensus-primitives",
  "dvm-db",
  "dvm-ethereum",
  "dvm-rpc-core",
- "dvm-rpc-core-primitives",
  "dvm-rpc-runtime-api",
  "ethereum",
  "ethereum-types 0.10.0",
@@ -2061,7 +2075,7 @@ version = "1.4.0"
 dependencies = [
  "darwinia-evm",
  "dp-evm",
- "dvm-rpc-core-primitives",
+ "dp-rpc",
  "ethereum",
  "ethereum-types 0.10.0",
  "jsonrpc-core",
@@ -2072,20 +2086,6 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std 2.0.1",
-]
-
-[[package]]
-name = "dvm-rpc-core-primitives"
-version = "1.4.0"
-dependencies = [
- "ethereum-types 0.10.0",
- "jsonrpc-core",
- "jsonrpc-core-client",
- "jsonrpc-derive",
- "jsonrpc-pubsub",
- "rustc-hex",
- "serde",
- "serde_json",
 ]
 
 [[package]]

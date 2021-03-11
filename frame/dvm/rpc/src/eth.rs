@@ -20,7 +20,7 @@ use ethereum_types::{H160, H256, H64, U256, U64};
 use jsonrpc_core::{BoxFuture, Result};
 use jsonrpc_derive::rpc;
 
-use dvm_rpc_core_primitives::{
+use dp_rpc::{
 	BlockNumber, Bytes, CallRequest, Filter, FilterChanges, Index, Log, Receipt, RichBlock,
 	SyncStatus, Transaction, TransactionRequest, Work,
 };

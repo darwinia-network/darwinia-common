@@ -51,7 +51,7 @@ members = [
 	"frame/vesting",
 	# primitives
 	"primitives/consensus",
-	"primitives/dvm-rpc-core",
+	"primitives/rpc",
 	"primitives/ethereum-primitives",
 	"primitives/storage",
 	"primitives/evm",

@@ -38,10 +38,10 @@ pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
 use std::collections::BTreeMap;
 use std::sync::Arc;
 // --- darwinia ---
+use dp_rpc::{FilterPool, PendingTransactions};
 use drml_primitives::{AccountId, Balance, BlockNumber, Hash, Nonce, OpaqueBlock as Block, Power};
 use dvm_ethereum::EthereumStorageSchema;
 use dvm_rpc::{SchemaV1Override, StorageOverride};
-use dvm_rpc_core_primitives::{FilterPool, PendingTransactions};
 
 /// A type representing all RPC extensions.
 pub type RpcExtension = jsonrpc_core::IoHandler<sc_rpc::Metadata>;

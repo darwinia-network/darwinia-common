@@ -33,7 +33,7 @@ dvm-consensus-primitives = { path = "../../../primitives/consensus/" }
 dp-storage = { path = "../../../primitives/storage/" }
 dvm-ethereum            = { path = "../../../frame/dvm" }
 dvm-rpc-core            = { path = "../../../frame/dvm/rpc" }
-dvm-rpc-core-primitives = { path = "../../../primitives/dvm-rpc-core" }
+dp-rpc = { path = "../../../primitives/rpc" }
 dvm-rpc-runtime-api     = { path = "../../../frame/dvm/rpc/runtime-api" }
 # substrate
 sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }

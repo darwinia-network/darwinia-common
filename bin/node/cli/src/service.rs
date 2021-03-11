@@ -63,11 +63,11 @@ use crate::rpc::{
 	self, BabeDeps, DenyUnsafe, FullDeps, GrandpaDeps, LightDeps, RpcExtension,
 	SubscriptionTaskExecutor,
 };
+use dp_rpc::{FilterPool, PendingTransactions};
 use drml_primitives::{AccountId, Balance, Hash, Nonce, OpaqueBlock as Block, Power};
 use dvm_consensus::FrontierBlockImport;
 use dvm_mapping_sync::MappingSyncWorker;
 use dvm_rpc::EthTask;
-use dvm_rpc_core_primitives::{FilterPool, PendingTransactions};
 use futures::StreamExt;
 
 type FullBackend = sc_service::TFullBackend<Block>;
