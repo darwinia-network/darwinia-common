@@ -23,8 +23,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
+use dp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
 use dp_storage::PALLET_ETHEREUM_SCHEMA;
-use dvm_consensus_primitives::{PostLog, PreLog, FRONTIER_ENGINE_ID};
 use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
 use evm::ExitReason;
 use frame_support::{
@@ -164,7 +164,7 @@ decl_module! {
 			ensure_none(origin)?;
 
 			ensure!(
-				dvm_consensus_primitives::find_pre_log(&frame_system::Module::<T>::digest()).is_err(),
+				dp_consensus::find_pre_log(&frame_system::Module::<T>::digest()).is_err(),
 				Error::<T>::PreLogExists,
 			);
 
@@ -246,13 +246,13 @@ decl_module! {
 
 		fn on_finalize(_block_number: T::BlockNumber) {
 			<Module<T>>::store_block(
-				dvm_consensus_primitives::find_pre_log(&frame_system::Module::<T>::digest()).is_err(),
+				dp_consensus::find_pre_log(&frame_system::Module::<T>::digest()).is_err(),
 			);
 		}
 
 		fn on_initialize(_block_number: T::BlockNumber) -> Weight {
 			Pending::kill();
-			if let Ok(log) = dvm_consensus_primitives::find_pre_log(&frame_system::Module::<T>::digest()) {
+			if let Ok(log) = dp_consensus::find_pre_log(&frame_system::Module::<T>::digest()) {
 				let PreLog::Block(block) = log;
 
 				for transaction in block.transactions {
@@ -392,7 +392,7 @@ impl<T: Config> Module<T> {
 		if post_log {
 			let digest = DigestItem::<T::Hash>::Consensus(
 				FRONTIER_ENGINE_ID,
-				PostLog::Hashes(dvm_consensus_primitives::Hashes::from_block(block)).encode(),
+				PostLog::Hashes(dp_consensus::Hashes::from_block(block)).encode(),
 			);
 			frame_system::Module::<T>::deposit_log(digest.into());
 		}

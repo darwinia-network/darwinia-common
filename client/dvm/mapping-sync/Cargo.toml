@@ -16,7 +16,7 @@ sp-blockchain   = { git = "https://github.com/darwinia-network/substrate.git", t
 sc-client-api   = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
 sp-api          = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
 
-dvm-consensus-primitives = { path = "../../../primitives/consensus/" }
+dp_consensus = { path = "../../../primitives/consensus/" }
 dvm-rpc-runtime-api      = { path = "../../../frame/dvm/rpc/runtime-api"}
 
 dvm-consensus    = { path = "../consensus" }

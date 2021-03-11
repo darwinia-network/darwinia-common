@@ -17,7 +17,7 @@ dvm-db      = { path = "../db" }
 futures     = { version = "0.3.13", features = ["compat"] }
 log         = { version = "0.4.14" }
 # darwinia
-dvm-consensus-primitives = { path = "../../../primitives/consensus/" }
+dp_consensus = { path = "../../../primitives/consensus/" }
 dvm-rpc-runtime-api      = { path = "../../../frame/dvm/rpc/runtime-api"}
 # substrate
 prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }

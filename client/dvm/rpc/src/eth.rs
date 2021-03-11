@@ -1630,7 +1630,7 @@ where
 			if let Ok(mut pending_transactions) = pending_transactions.lock() {
 				// As pending transactions have a finite lifespan anyway
 				// we can ignore MultiplePostRuntimeLogs error checks.
-				let log = dvm_consensus_primitives::find_log(&notification.header.digest()).ok();
+				let log = dp_consensus::find_log(&notification.header.digest()).ok();
 				let post_hashes = log.map(|log| log.into_hashes());
 
 				if let Some(post_hashes) = post_hashes {

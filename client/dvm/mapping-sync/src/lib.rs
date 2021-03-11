@@ -33,8 +33,7 @@ pub fn sync_block<Block: BlockT>(
 	backend: &dvm_db::Backend<Block>,
 	header: &Block::Header,
 ) -> Result<(), String> {
-	let log =
-		dvm_consensus_primitives::find_log(header.digest()).map_err(|e| format!("{:?}", e))?;
+	let log = dp_consensus::find_log(header.digest()).map_err(|e| format!("{:?}", e))?;
 	let post_hashes = log.into_hashes();
 
 	let mapping_commitment = dvm_db::MappingCommitment {

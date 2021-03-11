@@ -16,7 +16,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use dvm_consensus_primitives::{ensure_log, FindLogError};
+use dp_consensus::{ensure_log, FindLogError};
 use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
 use sc_client_api;
 use sc_client_api::{backend::AuxStore, BlockOf};
