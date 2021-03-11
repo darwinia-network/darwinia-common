@@ -41,7 +41,7 @@ dc_consensus                       = { path = "../../../client/dvm/consensus" }
 dp_consensus            = { path = "../../../primitives/consensus" }
 dvm-rpc                             = { path = "../../../client/dvm/rpc" }
 dc-db                              = { path = "../../../client/dvm/db" }
-dvm-mapping-sync                    = { path = "../../../client/dvm/mapping-sync" }
+dc-mapping-sync                    = { path = "../../../client/dvm/mapping-sync" }
 dp-rpc             = { path = "../../../primitives/rpc" }
 dvm-rpc-runtime-api                 = { path = "../../../frame/dvm/rpc/runtime-api" }
 dvm-ethereum                 = { path = "../../../frame/dvm" }
