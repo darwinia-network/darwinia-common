@@ -1781,6 +1781,7 @@ dependencies = [
  "dvm-rpc-runtime-api",
  "ethereum",
  "ethereum-types 0.10.0",
+ "frame-support",
  "futures 0.3.13",
  "jsonrpc-core",
  "jsonrpc-core-client",

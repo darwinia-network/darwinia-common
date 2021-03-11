@@ -18,6 +18,7 @@ use codec::Decode;
 use dvm_rpc_runtime_api::TransactionStatus;
 use ethereum::Block as EthereumBlock;
 use ethereum_types::{H160, H256, U256};
+use frame_support::debug;
 use sc_client_api::backend::{AuxStore, Backend, StateBackend, StorageProvider};
 use sp_api::BlockId;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
@@ -82,7 +83,7 @@ where
 {
 	/// For a given account address, returns pallet_evm::AccountCodes.
 	fn account_code_at(&self, block: &BlockId<Block>, address: H160) -> Option<Vec<u8>> {
-		let mut key: Vec<u8> = storage_prefix_build(b"EVM", b"AccountCodes");
+		let mut key: Vec<u8> = storage_prefix_build(b"DarwiniaEVM", b"AccountCodes");
 		key.extend(blake2_128_extend(address.as_bytes()));
 		self.query_storage::<Vec<u8>>(block, &StorageKey(key))
 	}
@@ -92,7 +93,7 @@ where
 		let tmp: &mut [u8; 32] = &mut [0; 32];
 		index.to_little_endian(tmp);
 
-		let mut key: Vec<u8> = storage_prefix_build(b"EVM", b"AccountStorages");
+		let mut key: Vec<u8> = storage_prefix_build(b"DarwiniaEVM", b"AccountStorages");
 		key.extend(blake2_128_extend(address.as_bytes()));
 		key.extend(blake2_128_extend(tmp));
 

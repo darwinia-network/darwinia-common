@@ -484,10 +484,7 @@ where
 				.get(&schema)
 				.unwrap_or(&self.fallback)
 				.storage_at(&id, address, index)
-				.ok_or(internal_err(
-					"Fetching account storage through override failed",
-				))?
-				.into());
+				.unwrap_or_default());
 		}
 		Ok(H256::default())
 	}
