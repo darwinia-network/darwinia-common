@@ -19,6 +19,7 @@ use codec::{self, Encode};
 use dvm_rpc_core::{
 	EthApi as EthApiT, EthFilterApi as EthFilterApiT, NetApi as NetApiT, Web3Api as Web3ApiT,
 };
+pub use dvm_rpc_core::{EthApiServer, EthFilterApiServer, NetApiServer, Web3ApiServer};
 use dvm_rpc_core_primitives::{
 	Block, BlockNumber, BlockTransactions, Bytes, CallRequest, Filter, FilterChanges, FilterPool,
 	FilterPoolItem, FilterType, FilteredParams, Index, Log, PendingTransaction,
@@ -28,24 +29,29 @@ use dvm_rpc_core_primitives::{
 use dvm_rpc_runtime_api::{ConvertTransaction, EthereumRuntimeRPCApi, TransactionStatus};
 use ethereum::{Block as EthereumBlock, Transaction as EthereumTransaction};
 use ethereum_types::{H160, H256, H512, H64, U256, U64};
-use futures::future::TryFutureExt;
+use futures::{future::TryFutureExt, StreamExt};
 use jsonrpc_core::{
 	futures::future::{self, Future},
 	BoxFuture, Result,
 };
-use sc_client_api::backend::{AuxStore, Backend, StateBackend, StorageProvider};
+use sc_client_api::{
+	backend::{AuxStore, Backend, StateBackend, StorageProvider},
+	client::BlockchainEvents,
+};
 use sc_network::{ExHashT, NetworkService};
 use sha3::{Digest, Keccak256};
 use sp_api::{BlockId, Core, HeaderT, ProvideRuntimeApi};
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
+use sp_runtime::generic::OpaqueDigestItemId;
 use sp_runtime::traits::BlakeTwo256;
 use sp_runtime::traits::{Block as BlockT, One, Saturating, UniqueSaturatedInto, Zero};
 use sp_runtime::transaction_validity::TransactionSource;
 use sp_transaction_pool::{InPoolTransaction, TransactionPool};
-use std::collections::BTreeMap;
-use std::{marker::PhantomData, sync::Arc};
-
-pub use dvm_rpc_core::{EthApiServer, EthFilterApiServer, NetApiServer, Web3ApiServer};
+use std::collections::{BTreeMap, HashMap};
+use std::{
+	marker::PhantomData,
+	sync::{Arc, Mutex},
+};
 
 pub struct EthApi<B: BlockT, C, P, CT, BE, H: ExHashT> {
 	pool: Arc<P>,
@@ -1606,5 +1612,82 @@ where
 			Err(internal_err("Filter pool is not available."))
 		};
 		response
+	}
+}
+
+pub struct EthTask<B, C>(PhantomData<(B, C)>);
+
+impl<B, C> EthTask<B, C>
+where
+	C: ProvideRuntimeApi<B> + BlockchainEvents<B>,
+	B: BlockT,
+{
+	pub async fn pending_transaction_task(
+		client: Arc<C>,
+		pending_transactions: Arc<Mutex<HashMap<H256, PendingTransaction>>>,
+		retain_threshold: u64,
+	) {
+		let mut notification_st = client.import_notification_stream();
+
+		while let Some(notification) = notification_st.next().await {
+			if let Ok(mut pending_transactions) = pending_transactions.lock() {
+				// As pending transactions have a finite lifespan anyway
+				// we can ignore MultiplePostRuntimeLogs error checks.
+				let log = dvm_consensus_primitives::find_log(&notification.header.digest()).ok();
+				let post_hashes = log.map(|log| log.into_hashes());
+
+				if let Some(post_hashes) = post_hashes {
+					// Retain all pending transactions that were not
+					// processed in the current block.
+					pending_transactions
+						.retain(|&k, _| !post_hashes.transaction_hashes.contains(&k));
+				}
+
+				let imported_number: u64 = UniqueSaturatedInto::<u64>::unique_saturated_into(
+					*notification.header.number(),
+				);
+
+				pending_transactions.retain(|_, v| {
+					// Drop all the transactions that exceeded the given lifespan.
+					let lifespan_limit = v.at_block + retain_threshold;
+					lifespan_limit > imported_number
+				});
+			}
+		}
+	}
+
+	pub async fn filter_pool_task(
+		client: Arc<C>,
+		filter_pool: Arc<Mutex<BTreeMap<U256, FilterPoolItem>>>,
+		retain_threshold: u64,
+	) {
+		let mut notification_st = client.import_notification_stream();
+
+		while let Some(notification) = notification_st.next().await {
+			if let Ok(filter_pool) = &mut filter_pool.lock() {
+				let imported_number: u64 = UniqueSaturatedInto::<u64>::unique_saturated_into(
+					*notification.header.number(),
+				);
+
+				// BTreeMap::retain is unstable :c.
+				// 1. We collect all keys to remove.
+				// 2. We remove them.
+				let remove_list: Vec<_> = filter_pool
+					.iter()
+					.filter_map(|(&k, v)| {
+						let lifespan_limit = v.at_block + retain_threshold;
+						if lifespan_limit <= imported_number {
+							Some(k)
+						} else {
+							None
+						}
+					})
+					.collect();
+
+				for key in remove_list {
+					filter_pool.remove(&key);
+				}
+			}
+		}
 	}
 }

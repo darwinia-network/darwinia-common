@@ -18,7 +18,7 @@ mod eth;
 mod eth_pubsub;
 
 pub use eth::{
-	EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, NetApi, NetApiServer, Web3Api,
+	EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, EthTask, NetApi, NetApiServer, Web3Api,
 	Web3ApiServer,
 };
 pub use eth_pubsub::{EthPubSubApi, EthPubSubApiServer, HexEncodedIdProvider};

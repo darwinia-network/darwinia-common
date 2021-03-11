@@ -2015,6 +2015,7 @@ version = "1.4.0"
 dependencies = [
  "darwinia-evm",
  "dvm-consensus",
+ "dvm-consensus-primitives",
  "dvm-db",
  "dvm-ethereum",
  "dvm-rpc-core",
