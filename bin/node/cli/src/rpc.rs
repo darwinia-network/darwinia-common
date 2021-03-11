@@ -38,10 +38,10 @@ pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
 use std::collections::BTreeMap;
 use std::sync::Arc;
 // --- darwinia ---
+use dc_rpc::{SchemaV1Override, StorageOverride};
 use dp_rpc::{FilterPool, PendingTransactions};
 use drml_primitives::{AccountId, Balance, BlockNumber, Hash, Nonce, OpaqueBlock as Block, Power};
 use dvm_ethereum::EthereumStorageSchema;
-use dvm_rpc::{SchemaV1Override, StorageOverride};
 
 /// A type representing all RPC extensions.
 pub type RpcExtension = jsonrpc_core::IoHandler<sc_rpc::Metadata>;
@@ -152,7 +152,7 @@ where
 	use darwinia_balances_rpc::{Balances, BalancesApi};
 	use darwinia_header_mmr_rpc::{HeaderMMR, HeaderMMRApi};
 	use darwinia_staking_rpc::{Staking, StakingApi};
-	use dvm_rpc::{
+	use dc_rpc::{
 		EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, EthPubSubApi, EthPubSubApiServer,
 		HexEncodedIdProvider, NetApi, NetApiServer, Web3Api, Web3ApiServer,
 	};
