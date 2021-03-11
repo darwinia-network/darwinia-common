@@ -24,7 +24,7 @@ pub mod runner;
 mod tests;
 
 pub use crate::runner::Runner;
-pub use darwinia_evm_primitives::{
+pub use dp_evm::{
 	Account, CallInfo, CreateInfo, ExecutionInfo, LinearCostPrecompile, Log, Precompile,
 	PrecompileSet, Vicinity,
 };

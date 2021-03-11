@@ -22,7 +22,7 @@ use crate::{
 	AccountBasicMapping, AccountCodes, AccountStorages, AddressMapping, Config, Error, Event,
 	FeeCalculator, Module, PrecompileSet,
 };
-use darwinia_evm_primitives::{Account, CallInfo, CreateInfo, ExecutionInfo, Log, Vicinity};
+use dp_evm::{Account, CallInfo, CreateInfo, ExecutionInfo, Log, Vicinity};
 use evm::backend::Backend as BackendT;
 use evm::executor::{StackExecutor, StackState as StackStateT, StackSubstateMetadata};
 use evm::{ExitError, ExitReason, Transfer};

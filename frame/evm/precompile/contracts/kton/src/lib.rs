@@ -37,7 +37,7 @@ use sp_std::prelude::*;
 use sp_std::vec::Vec;
 
 use darwinia_evm::{AddressMapping, Config, Runner};
-use darwinia_evm_primitives::Precompile;
+use dp_evm::Precompile;
 
 type AccountId<T> = <T as frame_system::Config>::AccountId;
 
