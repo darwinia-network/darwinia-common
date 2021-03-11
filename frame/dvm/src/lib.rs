@@ -23,14 +23,15 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
-use dvm_consensus_primitives::{PostLog, FRONTIER_ENGINE_ID};
+use dvm_consensus_primitives::{PostLog, PreLog, FRONTIER_ENGINE_ID};
 use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
 use evm::ExitReason;
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResultWithPostInfo,
 	traits::FindAuthor, traits::Get, weights::Weight,
 };
-use frame_system::ensure_none;
+use frame_support::{ensure, traits::UnfilteredDispatchable};
+use frame_system::{ensure_none, RawOrigin};
 use sha3::{Digest, Keccak256};
 use sp_runtime::{
 	generic::DigestItem,
@@ -111,7 +112,7 @@ decl_storage! {
 	}
 	add_extra_genesis {
 		build(|_config: &GenesisConfig| {
-			<Module<T>>::store_block();
+			<Module<T>>::store_block(false);
 		});
 	}
 }
@@ -129,6 +130,8 @@ decl_error! {
 	pub enum Error for Module<T: Config> {
 		/// Signature is invalid.
 		InvalidSignature,
+		/// Pre-log is present, therefore transact is not allowed.
+		PreLogExists,
 	}
 }
 
@@ -142,6 +145,11 @@ decl_module! {
 		#[weight = <T as darwinia_evm::Config>::GasWeightMapping::gas_to_weight(transaction.gas_limit.unique_saturated_into())]
 		fn transact(origin, transaction: ethereum::Transaction) -> DispatchResultWithPostInfo {
 			ensure_none(origin)?;
+
+			ensure!(
+				dvm_consensus_primitives::find_pre_log(&frame_system::Module::<T>::digest()).is_err(),
+				Error::<T>::PreLogExists,
+			);
 
 			let source = Self::recover_signer(&transaction)
 				.ok_or_else(|| Error::<T>::InvalidSignature)?;
@@ -220,11 +228,20 @@ decl_module! {
 		}
 
 		fn on_finalize(_block_number: T::BlockNumber) {
-			<Module<T>>::store_block();
+			<Module<T>>::store_block(
+				dvm_consensus_primitives::find_pre_log(&frame_system::Module::<T>::digest()).is_err(),
+			);
 		}
 
 		fn on_initialize(_block_number: T::BlockNumber) -> Weight {
 			Pending::kill();
+			if let Ok(log) = dvm_consensus_primitives::find_pre_log(&frame_system::Module::<T>::digest()) {
+				let PreLog::Block(block) = log;
+
+				for transaction in block.transactions {
+					let _ = Call::<T>::transact(transaction).dispatch_bypass_filter(RawOrigin::None.into());
+				}
+			}
 			0
 		}
 	}
@@ -304,7 +321,7 @@ impl<T: Config> Module<T> {
 		)))
 	}
 
-	fn store_block() {
+	fn store_block(post_log: bool) {
 		let mut transactions = Vec::new();
 		let mut statuses = Vec::new();
 		let mut receipts = Vec::new();
@@ -355,11 +372,13 @@ impl<T: Config> Module<T> {
 		CurrentReceipts::put(receipts.clone());
 		CurrentTransactionStatuses::put(statuses.clone());
 
-		let digest = DigestItem::<T::Hash>::Consensus(
-			FRONTIER_ENGINE_ID,
-			PostLog::Hashes(dvm_consensus_primitives::Hashes::from_block(block)).encode(),
-		);
-		frame_system::Module::<T>::deposit_log(digest.into());
+		if post_log {
+			let digest = DigestItem::<T::Hash>::Consensus(
+				FRONTIER_ENGINE_ID,
+				PostLog::Hashes(dvm_consensus_primitives::Hashes::from_block(block)).encode(),
+			);
+			frame_system::Module::<T>::deposit_log(digest.into());
+		}
 	}
 
 	/// Get the remaining balance for evm address

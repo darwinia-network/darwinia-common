@@ -26,7 +26,7 @@ use sp_blockchain::{well_known_cache_keys::Id as CacheKeyId, HeaderBackend, Prov
 use sp_consensus::{
 	BlockCheckParams, BlockImport, BlockImportParams, Error as ConsensusError, ImportResult,
 };
-use sp_runtime::traits::Block as BlockT;
+use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::sync::Arc;
@@ -123,7 +123,7 @@ where
 		// We validate that there are only one frontier log. No other
 		// actions are needed and mapping syncing is delegated to a separate
 		// worker.
-		ensure_log::<B>(&block.header).map_err(|e| Error::from(e))?;
+		ensure_log(&block.header.digest()).map_err(|e| Error::from(e))?;
 
 		self.inner
 			.import_block(block, new_cache)
