@@ -1719,15 +1719,13 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 // }
 
 pub struct PhragmenElectionDepositRuntimeUpgrade;
-impl darwinia_elections_phragmen::migrations_3_0_0::V2ToV3
-	for PhragmenElectionDepositRuntimeUpgrade
-{
+impl darwinia_elections_phragmen::migrations_2_0_0::ToV2 for PhragmenElectionDepositRuntimeUpgrade {
 	type AccountId = AccountId;
 	type Balance = Balance;
 	type Module = ElectionsPhragmen;
 }
 impl frame_support::traits::OnRuntimeUpgrade for PhragmenElectionDepositRuntimeUpgrade {
 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-		darwinia_elections_phragmen::migrations_3_0_0::apply::<Self>(5 * MILLI, COIN)
+		darwinia_elections_phragmen::migrations_2_0_0::apply::<Self>(5 * MILLI, COIN)
 	}
 }
