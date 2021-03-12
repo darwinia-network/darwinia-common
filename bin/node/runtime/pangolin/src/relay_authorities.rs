@@ -18,7 +18,7 @@ frame_support::parameter_types! {
 		[180, 188, 244, 151]
 	);
 	pub const SignThreshold: Perbill = Perbill::from_percent(60);
-	pub const SubmitDuration: BlockNumber = 20;
+	pub const SubmitDuration: BlockNumber = 30;
 }
 impl Config<EthereumRelayAuthoritiesInstance> for Runtime {
 	type Event = Event;
