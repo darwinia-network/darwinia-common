@@ -44,7 +44,7 @@ describe("Test Contract Log", function () {
 		expect(data).to.be.equal(value);
 	}).timeout(80000);
 
-	it.skip("Get storage at index 0 after change", async function () {
+	it("Get storage at index 0 after change", async function () {
 		const data = await web3.eth.getStorageAt(jsontest.options.address, 0);
 		expect(data).to.be.equal(
 			"0x0000000000000000000000000000000000000000000000000000000000000001"
