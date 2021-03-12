@@ -124,8 +124,10 @@ decl_event! {
         /// erc20 created
         CreateErc20(EthereumAddress),
         /// burn event
-        BurnToken(EthereumAddress, EthereumAddress, U256),
+        /// type: 1, assetType: [0: native, 1: token], backing, recipient, source, target, value
+        BurnToken(u8, u8, EthereumAddress, EthereumAddress, EthereumAddress, EthereumAddress, U256),
         /// token registed event
+        /// type: u8 = 0, backing, source(origin erc20), target(mapped erc20)
         TokenRegisted(u8, EthereumAddress, EthereumAddress, EthereumAddress),
 	}
 }
@@ -188,8 +190,11 @@ decl_module! {
             
             let account = Self::issuing_account();
             let basic = <T as darwinia_evm::Trait>::AccountBasicMapping::account_basic(&account);
-            let transaction = Self::unsigned_transaction(basic.nonce, MappingFactoryAddress::get().0.into(), input);
-            let result = T::DvmCaller::raw_transact(account, transaction).map_err(|e| -> &'static str {e.into()} )?;
+            let transaction = Self::unsigned_transaction(basic.nonce, target.0.into(), input);
+            let result = T::DvmCaller::raw_transact(account, transaction).map_err(|e| -> &'static str {
+                debug::info!(target: "darwinia-issuing", "register_or_issuing_erc20 error {:?}", &e);
+                e.into()
+            } )?;
 
             VerifiedIssuingProof::insert(tx_index, true);
 
@@ -342,6 +347,7 @@ impl<T: Trait> Module<T> {
     }
 
     fn process_token_issuing(result: EthLog) -> Result<(Vec<u8>, EthereumAddress), DispatchError> {
+        debug::info!(target: "darwinia-issuing", "process_token_issuing");
         let token_address = result.params[0]
             .value
             .clone()
@@ -364,22 +370,21 @@ impl<T: Trait> Module<T> {
             .ok_or(<Error<T>>::AddressCF)?;
 
         let input = Abi::encode_mint(
-            dtoken_address.0.into(),
+            recipient.0.into(),
             amount.0.into()
         ).map_err(|_| Error::<T>::InvalidMintEcoding)?;
 
-		Ok((input, recipient))
+		Ok((input, dtoken_address))
     }
 
     pub fn mapped_token_address (
         backing: EthereumAddress,
         source: EthereumAddress,
     ) -> Result<H160, DispatchError> {
-        let mapping_factory_address: Vec<u8> = FromHex::from_hex(MAPPING_FACTORY_ADDRESS).unwrap();
-        let factory_address: Address = H160::from_slice(&mapping_factory_address);
+        let factory_address = MappingFactoryAddress::get();
         let bytes = Abi::encode_mapping_token(backing.0.into(), source.0.into())
             .map_err(|_| Error::<T>::InvalidIssuingAccount)?;
-        let transaction = Self::unsigned_transaction(U256::from(1), factory_address, bytes);
+        let transaction = Self::unsigned_transaction(U256::from(1), factory_address.0.into(), bytes);
         let issuing_address: Vec<u8> = FromHex::from_hex(ISSUING_ACCOUNT).unwrap();
         let issuing_account = H160::from_slice(&issuing_address);
         let mapped_address = T::DvmCaller::raw_call(issuing_account, transaction).map_err(|e| -> &'static str {e.into()} )?;
@@ -411,12 +416,18 @@ impl<T: Trait> Module<T> {
         source: EthereumAddress,
         token: EthereumAddress,
         ethereum_account: EthereumAddress,
-        amount: U256
+        amount: U256,
+        is_native: bool
     ) -> DispatchResult {
-        let mapped_address = Self::mapped_token_address(backing, source)?;
+        let mapped_address = Self::mapped_token_address(backing, source)
+            .map_err(|e| {
+                debug::info!(target: "darwinia-issuing", "mapped token address error {:?} ", e);
+                e
+            })?;
 
         if mapped_address == token.0.into() {
-            let raw_event = RawEvent::BurnToken(source, ethereum_account, amount);
+            let asset_type = if is_native {0} else {1};
+            let raw_event = RawEvent::BurnToken(1, asset_type, backing, ethereum_account, source, token, amount);
             let module_event: <T as Trait>::Event = raw_event.clone().into();
             let system_event: <T as frame_system::Trait>::Event = module_event.into();
             <BurnTokenEvents<T>>::append(system_event);
@@ -436,8 +447,7 @@ impl<T: Trait> ContractHandler for Module<T> {
     fn handle(address: H160, caller: H160, input: &[u8]) -> DispatchResult {
         debug::info!(target: "darwinia-issuing", "handle erc20 token burn");
         debug::info!(target: "darwinia-issuing", "address {:?} caller {:?}, input: {:?}", address, caller, input);
-        // check address: 0x00000000000000000000000000000016
-        // check caller: mapping(backing, source)
+        // todo check address: 0x00000000000000000000000000000016
 
         if MappingFactoryAddress::get() == caller.0.into() {
             let registed_info = TokenRegisterInfo::decode(input)
@@ -448,7 +458,7 @@ impl<T: Trait> ContractHandler for Module<T> {
             let burn_info = TokenBurnInfo::decode(input)
                 .map_err(|_|Error::<T>::InvalidInputData)?;
             debug::info!(target: "darwinia-issuing", "burn-info {:?}", burn_info);
-            Self::burn_token(burn_info.backing, burn_info.source, caller.0.into(), burn_info.recipient, U256(burn_info.amount.0))?;
+            Self::burn_token(burn_info.backing, burn_info.source, caller.0.into(), burn_info.recipient, U256(burn_info.amount.0), burn_info.is_native)?;
         }
         Ok(())
     }

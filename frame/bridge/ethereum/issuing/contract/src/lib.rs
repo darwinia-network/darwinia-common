@@ -173,6 +173,11 @@ impl Abi {
                     indexed: true,
                 },
                 EventParam {
+                    name: "target".into(),
+                    kind: ParamType::Address,
+                    indexed: false,
+                },
+                EventParam {
                     name: "amount".into(),
                     kind: ParamType::Uint(256),
                     indexed: false,
@@ -288,6 +293,7 @@ pub struct TokenBurnInfo {
     pub source: H160,
     pub recipient: H160,
     pub amount: U256,
+    pub is_native: bool,
 }
 
 impl TokenBurnInfo {
@@ -297,14 +303,16 @@ impl TokenBurnInfo {
                 ParamType::Address, 
                 ParamType::Address,
                 ParamType::Address,
-                ParamType::Uint(256)
+                ParamType::Uint(256),
+                ParamType::Bool
             ], &data)?;
-        match (tokens[0].clone(), tokens[1].clone(), tokens[2].clone(), tokens[3].clone()) {
-            (Token::Address(backing), Token::Address(source), Token::Address(recipient), Token::Uint(amount)) => Ok(TokenBurnInfo {
+        match (tokens[0].clone(), tokens[1].clone(), tokens[2].clone(), tokens[3].clone(), tokens[4].clone(),) {
+            (Token::Address(backing), Token::Address(source), Token::Address(recipient), Token::Uint(amount), Token::Bool(is_native)) => Ok(TokenBurnInfo {
                 backing: backing,
                 source: source,
                 recipient: recipient,
                 amount: amount,
+                is_native: is_native,
             }),
             _ => Err(Error::ErrorKind(ErrorKind::InvalidData))
         }
