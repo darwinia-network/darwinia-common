@@ -11,6 +11,7 @@ version     = "2.0.0"
 
 [dependencies]
 # crates
+array-bytes         = { version = "1.1.0" }
 codec               = { package = "parity-scale-codec", version = "1.3.7" }
 ethereum            = { version = "0.6.0", features = ["with-codec"] }
 ethereum-types      = { version = "0.10.0" }
@@ -24,17 +25,16 @@ log                 = { version = "0.4.14" }
 rand                = { version = "0.7" }
 rlp                 = { version = "0.5.0" }
 sha3                = { version = "0.8" }
-dc-db = { path = "../db" }
-array-bytes         = { version = "1.1.0" }
 # darwinia
-darwinia-evm            = { path = "../../../frame/evm" }
-dc_consensus           = { path = "../consensus" }
-dp_consensus = { path = "../../../primitives/consensus/" }
-dp-storage = { path = "../../../primitives/storage/" }
-dvm-ethereum            = { path = "../../../frame/dvm" }
-dvm-rpc-core            = { path = "../../../frame/dvm/rpc" }
-dp-rpc = { path = "../../../primitives/rpc" }
-dvm-rpc-runtime-api     = { path = "../../../frame/dvm/rpc/runtime-api" }
+darwinia-evm        = { path = "../../../frame/evm" }
+dc_consensus        = { path = "../consensus" }
+dc-db               = { path = "../db" }
+dp_consensus        = { path = "../../../primitives/consensus/" }
+dp-storage          = { path = "../../../primitives/storage/" }
+dvm-ethereum        = { path = "../../../frame/dvm" }
+dvm-rpc-core        = { path = "../../../frame/dvm/rpc" }
+dvm-rpc-runtime-api = { path = "../../../frame/dvm/rpc/runtime-api" }
+dp-rpc              = { path = "../../../primitives/rpc" }
 # substrate
 sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
 sc-network          = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }

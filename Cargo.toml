@@ -7,9 +7,9 @@ members = [
 	# client
 	"client/cli",
 	"client/dvm/consensus",
-	"client/dvm/rpc",
 	"client/dvm/db",
 	"client/dvm/mapping-sync",
+	"client/dvm/rpc",
 	# frame
 	"frame/balances",
 	"frame/balances/rpc",
@@ -51,12 +51,12 @@ members = [
 	"frame/vesting",
 	# primitives
 	"primitives/consensus",
-	"primitives/rpc",
 	"primitives/ethereum-primitives",
-	"primitives/storage",
 	"primitives/evm",
 	"primitives/merkle-patricia-trie",
 	"primitives/relay",
+	"primitives/rpc",
+	"primitives/storage",
 ]
 
 # The list of dependencies below (which can be both direct and indirect dependencies) are crates
