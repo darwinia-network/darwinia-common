@@ -1228,7 +1228,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-balances"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "darwinia-balances-rpc-runtime-api",
  "darwinia-support",
@@ -1245,7 +1245,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-balances-rpc"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "darwinia-balances-rpc-runtime-api",
  "jsonrpc-core",
@@ -1259,7 +1259,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-balances-rpc-runtime-api"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "darwinia-support",
  "parity-scale-codec 2.0.1",
@@ -1270,7 +1270,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-claims"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
@@ -1289,7 +1289,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-cli"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "sc-cli",
  "sc-client-api",
@@ -1301,7 +1301,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-crab-backing"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -1312,7 +1312,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-crab-issuing"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "darwinia-balances",
  "darwinia-support",
@@ -1327,7 +1327,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-democracy"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "darwinia-balances",
  "darwinia-support",
@@ -1347,7 +1347,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-elections-phragmen"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "darwinia-balances",
  "darwinia-support",
@@ -1366,7 +1366,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-ethereum-backing"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
@@ -1395,7 +1395,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-ethereum-linear-relay"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
@@ -1416,7 +1416,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-ethereum-relay"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "array-bytes",
  "blake2-rfc",
@@ -1441,7 +1441,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "darwinia-balances",
  "darwinia-evm-primitives",
@@ -1465,7 +1465,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "darwinia-evm-precompile-empty",
  "darwinia-evm-precompile-kton",
@@ -1475,7 +1475,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-blake2"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "darwinia-evm-primitives",
  "evm",
@@ -1485,7 +1485,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-bn128"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "darwinia-evm-primitives",
  "evm",
@@ -1496,7 +1496,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-dispatch"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "darwinia-evm",
  "darwinia-evm-primitives",
@@ -1509,7 +1509,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-ed25519"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "darwinia-evm-primitives",
  "ed25519-dalek",
@@ -1520,7 +1520,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-empty"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "darwinia-evm-primitives",
  "evm",
@@ -1528,8 +1528,9 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-kton"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
+ "array-bytes",
  "darwinia-evm",
  "darwinia-evm-primitives",
  "ethabi",
@@ -1537,7 +1538,6 @@ dependencies = [
  "evm",
  "frame-support",
  "frame-system",
- "hex",
  "pallet-timestamp",
  "parity-scale-codec 2.0.1",
  "ripemd160",
@@ -1550,7 +1550,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-modexp"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "darwinia-evm-primitives",
  "evm",
@@ -1562,7 +1562,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-simple"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "darwinia-evm-primitives",
  "evm",
@@ -1573,7 +1573,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-withdraw"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "darwinia-evm",
  "darwinia-evm-primitives",
@@ -1591,7 +1591,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-primitives"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "evm",
  "impl-trait-for-tuples",
@@ -1603,7 +1603,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-header-mmr"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "array-bytes",
  "ckb-merkle-mountain-range",
@@ -1623,7 +1623,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-header-mmr-rpc"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "darwinia-header-mmr-rpc-runtime-api",
  "jsonrpc-core",
@@ -1637,7 +1637,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-header-mmr-rpc-runtime-api"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "darwinia-support",
  "parity-scale-codec 2.0.1",
@@ -1649,7 +1649,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-relay-authorities"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
@@ -1667,7 +1667,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-relay-primitives"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "frame-support",
  "parity-scale-codec 2.0.1",
@@ -1677,7 +1677,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-relayer-game"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "darwinia-balances",
  "darwinia-relay-primitives",
@@ -1695,7 +1695,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-staking"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "darwinia-balances",
  "darwinia-staking-rpc-runtime-api",
@@ -1724,7 +1724,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-staking-rpc"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "darwinia-staking-rpc-runtime-api",
  "jsonrpc-core",
@@ -1738,7 +1738,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-staking-rpc-runtime-api"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "darwinia-support",
  "parity-scale-codec 2.0.1",
@@ -1749,7 +1749,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-support"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "ethereum-primitives",
  "frame-support",
@@ -1762,7 +1762,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-treasury"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "darwinia-balances",
  "darwinia-support",
@@ -1779,7 +1779,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-tron-backing"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -1790,7 +1790,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-vesting"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "darwinia-balances",
  "darwinia-support",
@@ -1915,7 +1915,7 @@ dependencies = [
 
 [[package]]
 name = "drml"
-version = "1.0.12"
+version = "2.0.0"
 dependencies = [
  "array-bytes",
  "darwinia-balances-rpc",
@@ -1988,7 +1988,7 @@ dependencies = [
 
 [[package]]
 name = "drml-primitives"
-version = "1.0.12"
+version = "2.0.0"
 dependencies = [
  "sp-core",
  "sp-runtime",
@@ -1996,7 +1996,7 @@ dependencies = [
 
 [[package]]
 name = "dvm-consensus"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "derive_more",
  "dvm-consensus-primitives",
@@ -2018,7 +2018,7 @@ dependencies = [
 
 [[package]]
 name = "dvm-consensus-primitives"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "parity-scale-codec 2.0.1",
  "sp-core",
@@ -2028,8 +2028,9 @@ dependencies = [
 
 [[package]]
 name = "dvm-ethereum"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
+ "array-bytes",
  "darwinia-balances",
  "darwinia-evm",
  "darwinia-evm-precompile",
@@ -2046,7 +2047,6 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec 2.0.1",
  "rlp 0.5.0",
- "rustc-hex",
  "serde",
  "sha3 0.8.2",
  "sp-core",
@@ -2057,8 +2057,9 @@ dependencies = [
 
 [[package]]
 name = "dvm-rpc"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
+ "array-bytes",
  "darwinia-evm",
  "dvm-consensus",
  "dvm-ethereum",
@@ -2077,7 +2078,6 @@ dependencies = [
  "parity-scale-codec 2.0.1",
  "rand 0.7.3",
  "rlp 0.5.0",
- "rustc-hex",
  "sc-client-api",
  "sc-network",
  "sc-rpc",
@@ -2093,7 +2093,7 @@ dependencies = [
 
 [[package]]
 name = "dvm-rpc-core"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "darwinia-evm",
  "darwinia-evm-primitives",
@@ -2112,7 +2112,7 @@ dependencies = [
 
 [[package]]
 name = "dvm-rpc-core-primitives"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "ethereum-types 0.10.0",
  "jsonrpc-core",
@@ -2126,7 +2126,7 @@ dependencies = [
 
 [[package]]
 name = "dvm-rpc-runtime-api"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "darwinia-evm",
  "darwinia-evm-primitives",
@@ -2363,7 +2363,7 @@ dependencies = [
 
 [[package]]
 name = "ethereum-primitives"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "array-bytes",
  "ethash",
@@ -4500,8 +4500,9 @@ checksum = "71d96e3f3c0b6325d8ccd83c33b28acb183edcb6c67938ba104ec546854b0882"
 
 [[package]]
 name = "merkle-patricia-trie"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
+ "array-bytes",
  "criterion",
  "ethereum-types 0.5.2",
  "hashbrown",
@@ -5053,6 +5054,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-identity"
+version = "3.0.0"
+source = "git+https://github.com/darwinia-network/substrate.git?tag=rococo-v1.0#743accbe3256de2fc615adcaa3ab03ebdbbb4dbd"
+dependencies = [
+ "enumflags2",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec 2.0.1",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 3.0.0",
+]
+
+[[package]]
 name = "pallet-im-online"
 version = "3.0.0"
 source = "git+https://github.com/darwinia-network/substrate.git?tag=rococo-v1.0#743accbe3256de2fc615adcaa3ab03ebdbbb4dbd"
@@ -5079,6 +5096,21 @@ dependencies = [
  "frame-system",
  "parity-scale-codec 2.0.1",
  "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 3.0.0",
+]
+
+[[package]]
+name = "pallet-multisig"
+version = "3.0.0"
+source = "git+https://github.com/darwinia-network/substrate.git?tag=rococo-v1.0#743accbe3256de2fc615adcaa3ab03ebdbbb4dbd"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec 2.0.1",
+ "serde",
+ "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std 3.0.0",
@@ -5128,6 +5160,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-recovery"
+version = "3.0.0"
+source = "git+https://github.com/darwinia-network/substrate.git?tag=rococo-v1.0#743accbe3256de2fc615adcaa3ab03ebdbbb4dbd"
+dependencies = [
+ "enumflags2",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec 2.0.1",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 3.0.0",
+]
+
+[[package]]
 name = "pallet-scheduler"
 version = "3.0.0"
 source = "git+https://github.com/darwinia-network/substrate.git?tag=rococo-v1.0#743accbe3256de2fc615adcaa3ab03ebdbbb4dbd"
@@ -5160,6 +5207,20 @@ dependencies = [
  "sp-staking",
  "sp-std 3.0.0",
  "sp-trie",
+]
+
+[[package]]
+name = "pallet-society"
+version = "3.0.0"
+source = "git+https://github.com/darwinia-network/substrate.git?tag=rococo-v1.0#743accbe3256de2fc615adcaa3ab03ebdbbb4dbd"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec 2.0.1",
+ "rand_chacha 0.2.2",
+ "serde",
+ "sp-runtime",
+ "sp-std 3.0.0",
 ]
 
 [[package]]
@@ -5238,8 +5299,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-utility"
+version = "3.0.0"
+source = "git+https://github.com/darwinia-network/substrate.git?tag=rococo-v1.0#743accbe3256de2fc615adcaa3ab03ebdbbb4dbd"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec 2.0.1",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 3.0.0",
+]
+
+[[package]]
 name = "pangolin-runtime"
-version = "1.0.12"
+version = "2.0.0"
 dependencies = [
  "darwinia-balances",
  "darwinia-balances-rpc-runtime-api",
@@ -5276,17 +5352,22 @@ dependencies = [
  "pallet-babe",
  "pallet-collective",
  "pallet-grandpa",
+ "pallet-identity",
  "pallet-im-online",
  "pallet-membership",
+ "pallet-multisig",
  "pallet-offences",
  "pallet-proxy",
  "pallet-randomness-collective-flip",
+ "pallet-recovery",
  "pallet-scheduler",
  "pallet-session",
+ "pallet-society",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
+ "pallet-utility",
  "parity-scale-codec 2.0.1",
  "serde",
  "smallvec 1.6.1",
@@ -7641,9 +7722,9 @@ dependencies = [
 
 [[package]]
 name = "serde"
-version = "1.0.123"
+version = "1.0.124"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "92d5161132722baa40d802cc70b15262b98258453e85e5d1d365c757c73869ae"
+checksum = "bd761ff957cb2a45fbb9ab3da6512de9de55872866160b23c25f1a841e99d29f"
 dependencies = [
  "serde_derive",
 ]
@@ -7660,9 +7741,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.123"
+version = "1.0.124"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9391c295d64fc0abb2c556bad848f33cb8296276b1ad2677d1ae1ace4f258f31"
+checksum = "1800f7693e94e186f5e25a28291ae1570da908aff7d97a095dec1e56ff99069b"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -9361,7 +9442,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04f8ab788026715fa63b31960869617cba39117e520eb415b0139543e325ab59"
 dependencies = [
  "cfg-if 0.1.10",
- "rand 0.7.3",
+ "rand 0.5.6",
  "static_assertions 1.1.0",
 ]
 

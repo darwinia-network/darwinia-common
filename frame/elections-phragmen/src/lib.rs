@@ -106,7 +106,7 @@ use darwinia_support::balance::lock::*;
 pub mod weights;
 pub use weights::WeightInfo;
 
-pub mod migrations_3_0_0;
+pub mod migrations_2_0_0;
 
 /// The maximum votes allowed per voter.
 pub const MAXIMUM_VOTE: usize = 16;
@@ -209,7 +209,7 @@ pub trait Config: frame_system::Config {
 }
 
 decl_storage! {
-	trait Store for Module<T: Config> as PhragmenElection {
+	trait Store for Module<T: Config> as DarwiniaPhragmenElection {
 		/// The current elected members.
 		///
 		/// Invariant: Always sorted based on account id.
