@@ -37,13 +37,13 @@ darwinia-staking                    = { path = "../../../frame/staking" }
 darwinia-staking-rpc                = { path = "../../../frame/staking/rpc" }
 darwinia-staking-rpc-runtime-api    = { path = "../../../frame/staking/rpc/runtime-api" }
 drml-primitives                     = { path = "../primitives" }
-dc-consensus                       	= { path = "../../../client/dvm/consensus" }
-dc-db								= { path = "../../../client/dvm/db" }
-dc-mapping-sync						= { path = "../../../client/dvm/mapping-sync" }
-dc-rpc								= { path = "../../../client/dvm/rpc" }
-dp_consensus						= { path = "../../../primitives/consensus" }
-dp-rpc								= { path = "../../../primitives/rpc" }
-dvm-ethereum						= { path = "../../../frame/dvm" }
+dc-consensus                        = { path = "../../../client/dvm/consensus" }
+dc-db                               = { path = "../../../client/dvm/db" }
+dc-mapping-sync                     = { path = "../../../client/dvm/mapping-sync" }
+dc-rpc                              = { path = "../../../client/dvm/rpc" }
+dp_consensus                        = { path = "../../../primitives/consensus" }
+dp-rpc                              = { path = "../../../primitives/rpc" }
+dvm-ethereum                        = { path = "../../../frame/dvm" }
 dvm-rpc-runtime-api                 = { path = "../../../frame/dvm/rpc/runtime-api" }
 pangolin-runtime                    = { path = "../runtime/pangolin" }
 # substrate
