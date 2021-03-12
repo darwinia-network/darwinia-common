@@ -15,8 +15,8 @@ version     = "2.0.0"
 darwinia-evm-primitives = { default-features = false, path = "../../../../../primitives/evm" }
 evm                     = { version = "0.22.0", default-features = false, features = ["with-codec"] }
 # substrate
-sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.0" }
-sp-io   = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.0" }
+sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+sp-io   = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
 
 [features]
 default = ["std"]

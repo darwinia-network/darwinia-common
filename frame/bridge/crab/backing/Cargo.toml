@@ -14,9 +14,9 @@ version     = "2.0.0"
 codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false }
 serde = { version = "1.0.124", optional = true }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.0" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.0" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.0" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
 
 [features]
 default = ["std"]

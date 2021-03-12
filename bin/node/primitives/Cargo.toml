@@ -11,8 +11,8 @@ version     = "2.0.0"
 
 [dependencies]
 # substrate
-sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.0" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.0" }
+sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
 
 [features]
 default = ["std"]
