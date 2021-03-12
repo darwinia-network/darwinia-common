@@ -23,6 +23,8 @@
 #![recursion_limit = "256"]
 
 pub mod constants {
+	// --- substrate ---
+	use sp_staking::SessionIndex;
 	// --- darwinia ---
 	use crate::*;
 
@@ -39,9 +41,9 @@ pub mod constants {
 	pub const HOURS: BlockNumber = 60 * MINUTES;
 	pub const DAYS: BlockNumber = 24 * HOURS;
 
-	pub const MILLISECS_PER_BLOCK: Moment = 3000;
+	pub const MILLISECS_PER_BLOCK: Moment = 6000;
 	pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
-	pub const BLOCKS_PER_SESSION: BlockNumber = MINUTES / 2;
+	pub const BLOCKS_PER_SESSION: BlockNumber = 3 * MINUTES;
 	pub const SESSIONS_PER_ERA: SessionIndex = 6;
 
 	// 1 in 4 blocks (on average, not counting collisions) will be primary babe blocks.
@@ -74,18 +76,18 @@ pub mod impls {
 			fn affirm_time(round: u32) -> Self::Moment {
 				match round {
 					// 1.5 mins
-					0 => 30,
+					0 => 15,
 					// 0.5 mins
-					_ => 6,
+					_ => 5,
 				}
 			}
 
 			fn complete_proofs_time(round: u32) -> Self::Moment {
 				match round {
 					// 1.5 mins
-					0 => 30,
+					0 => 15,
 					// 0.5 mins
-					_ => 6,
+					_ => 5,
 				}
 			}
 
@@ -346,7 +348,6 @@ use sp_runtime::{
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiAddress, OpaqueExtrinsic, Perbill, RuntimeDebug,
 };
-use sp_staking::SessionIndex;
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
