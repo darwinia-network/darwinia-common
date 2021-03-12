@@ -1736,6 +1736,29 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3ee2393c4a91429dffb4bedf19f4d6abf27d8a732c8ce4980305d782e5426d57"
 
 [[package]]
+name = "dc-consensus"
+version = "2.0.0"
+dependencies = [
+ "dc-db",
+ "derive_more",
+ "dp_consensus",
+ "dvm-rpc-runtime-api",
+ "futures 0.3.13",
+ "log",
+ "parity-scale-codec 1.3.7",
+ "sc-client-api",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-timestamp",
+ "substrate-prometheus-endpoint",
+]
+
+[[package]]
 name = "dc-db"
 version = "1.3.0"
 dependencies = [
@@ -1752,8 +1775,8 @@ dependencies = [
 name = "dc-mapping-sync"
 version = "1.3.0"
 dependencies = [
+ "dc-consensus",
  "dc-db",
- "dc_consensus",
  "dp_consensus",
  "dvm-rpc-runtime-api",
  "futures 0.3.13",
@@ -1771,8 +1794,8 @@ version = "2.0.0"
 dependencies = [
  "array-bytes",
  "darwinia-evm",
+ "dc-consensus",
  "dc-db",
- "dc_consensus",
  "dp-rpc",
  "dp-storage",
  "dp_consensus",
@@ -1802,29 +1825,6 @@ dependencies = [
  "sp-runtime",
  "sp-storage",
  "sp-transaction-pool",
-]
-
-[[package]]
-name = "dc_consensus"
-version = "2.0.0"
-dependencies = [
- "dc-db",
- "derive_more",
- "dp_consensus",
- "dvm-rpc-runtime-api",
- "futures 0.3.13",
- "log",
- "parity-scale-codec 1.3.7",
- "sc-client-api",
- "sp-api",
- "sp-block-builder",
- "sp-blockchain",
- "sp-consensus",
- "sp-core",
- "sp-inherents",
- "sp-runtime",
- "sp-timestamp",
- "substrate-prometheus-endpoint",
 ]
 
 [[package]]
@@ -1955,10 +1955,10 @@ dependencies = [
  "darwinia-staking",
  "darwinia-staking-rpc",
  "darwinia-staking-rpc-runtime-api",
+ "dc-consensus",
  "dc-db",
  "dc-mapping-sync",
  "dc-rpc",
- "dc_consensus",
  "dp-rpc",
  "dp_consensus",
  "drml-primitives",
