@@ -16,7 +16,7 @@ array-bytes = { version = "1.1.0" }
 blake2-rfc  = { version = "0.2.18", default-features = false }
 codec       = { package = "parity-scale-codec", version = "2.0.0", default-features = false }
 serde       = { version = "1.0.124", optional = true }
-serde_json  = { version = "1.0.62", optional = true }
+serde_json  = { version = "1.0.64", optional = true }
 # darwinia
 darwinia-relay-primitives = { default-features = false, path = "../../../../primitives/relay" }
 darwinia-relayer-game     = { default-features = false, path = "../../../bridge/relayer-game" }
@@ -24,8 +24,8 @@ darwinia-support          = { default-features = false, path = "../../../support
 ethereum-primitives       = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
 # github
 ckb-merkle-mountain-range = { default-features = false, git = "https://github.com/darwinia-network/merkle-mountain-range.git" }
-ethereum-types            = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
-rlp                       = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
+ethereum-types            = { version = "0.11.0", default-features = false }
+rlp                       = { version = "0.5.0", default-features = false }
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
