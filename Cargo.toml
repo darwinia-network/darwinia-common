@@ -1,14 +1,11 @@
 [workspace]
 members = [
-	# node
 	"bin/node/cli",
 	"bin/node/primitives",
 	"bin/node/runtime/pangolin",
-	# client
 	"client/cli",
 	"client/dvm/consensus",
 	"client/dvm/rpc",
-	# frame
 	"frame/balances",
 	"frame/balances/rpc",
 	"frame/balances/rpc/runtime-api",
@@ -46,9 +43,9 @@ members = [
 	"frame/support",
 	"frame/treasury",
 	"frame/vesting",
-	# primitives
 	"primitives/consensus",
 	"primitives/dvm-rpc-core",
+	"primitives/ethash",
 	"primitives/ethereum-primitives",
 	"primitives/evm",
 	"primitives/merkle-patricia-trie",
