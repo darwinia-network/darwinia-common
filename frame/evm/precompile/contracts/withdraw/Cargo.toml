@@ -16,7 +16,7 @@ evm         = { default-features = false, version = "0.23.0", features = ["with-
 ripemd160   = { default-features = false, version = "0.9" }
 # darwinia
 darwinia-evm = { default-features = false, path = "../../../" }
-dp-evm 		 = { default-features = false, path = "../../../../../primitives/evm" }
+dp-evm       = { default-features = false, path = "../../../../../primitives/evm" }
 # substrate
 frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
 frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
