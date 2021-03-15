@@ -13,6 +13,14 @@
 
 // You should have received a copy of the GNU General Public License
 // along with Substrate.  If not, see <http://www.gnu.org/licenses/>.
+
+// Something you need to know
+// Once the runtime upgrade that involves changes to the dvm pallet storage schema, you should:
+// 1. Add a new `EthereumStorageSchema` variant.
+// 2. Put it in the well known `Schema` substrate storage.
+// 3. Add a new `StorageOverride` implementor. (i.e. SchemaV2verride), DO NOT delete the previous `StorageOverride` implementor.
+// 4. Insert the new implementor to the `overrides` BTreeMap and upgrade the node client.
+
 mod schema_v1_override;
 
 pub use schema_v1_override::SchemaV1Override;
