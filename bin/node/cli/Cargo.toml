@@ -36,13 +36,13 @@ darwinia-header-mmr-rpc-runtime-api = { path = "../../../frame/header-mmr/rpc/ru
 darwinia-staking                    = { path = "../../../frame/staking" }
 darwinia-staking-rpc                = { path = "../../../frame/staking/rpc" }
 darwinia-staking-rpc-runtime-api    = { path = "../../../frame/staking/rpc/runtime-api" }
-drml-primitives                     = { path = "../primitives" }
 dc-consensus                        = { path = "../../../client/dvm/consensus" }
 dc-db                               = { path = "../../../client/dvm/db" }
 dc-mapping-sync                     = { path = "../../../client/dvm/mapping-sync" }
-dc-rpc                              = { path = "../../../client/dvm/rpc", features = ["rpc_binary_search_estimate"]}
-dp_consensus                        = { path = "../../../primitives/consensus" }
+dc-rpc                              = { path = "../../../client/dvm/rpc", features = ["rpc_binary_search_estimate"] }
 dp-rpc                              = { path = "../../../primitives/rpc" }
+dp_consensus                        = { path = "../../../primitives/consensus" }
+drml-primitives                     = { path = "../primitives" }
 dvm-ethereum                        = { path = "../../../frame/dvm" }
 dvm-rpc-runtime-api                 = { path = "../../../frame/dvm/rpc/runtime-api" }
 pangolin-runtime                    = { path = "../runtime/pangolin" }
