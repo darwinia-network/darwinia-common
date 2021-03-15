@@ -35,10 +35,8 @@
 pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
 
 // --- std ---
-use std::collections::BTreeMap;
-use std::sync::Arc;
+use std::{collections::BTreeMap, sync::Arc};
 // --- darwinia ---
-use dc_rpc::{SchemaV1Override, StorageOverride};
 use dp_rpc::{FilterPool, PendingTransactions};
 use drml_primitives::{AccountId, Balance, BlockNumber, Hash, Nonce, OpaqueBlock as Block, Power};
 use dvm_ethereum::EthereumStorageSchema;
@@ -87,16 +85,16 @@ pub struct FullDeps<C, P, SC, B> {
 	pub is_authority: bool,
 	/// Network service
 	pub network: Arc<sc_network::NetworkService<Block, Hash>>,
+	/// BABE specific dependencies.
+	pub babe: BabeDeps,
+	/// GRANDPA specific dependencies.
+	pub grandpa: GrandpaDeps<B>,
 	/// Ethereum pending transactions.
 	pub pending_transactions: PendingTransactions,
 	/// EthFilterApi pool.
 	pub filter_pool: Option<FilterPool>,
 	/// Backend.
 	pub backend: Arc<dc_db::Backend<Block>>,
-	/// BABE specific dependencies.
-	pub babe: BabeDeps,
-	/// GRANDPA specific dependencies.
-	pub grandpa: GrandpaDeps<B>,
 }
 
 /// Light client extra dependencies.
@@ -154,7 +152,8 @@ where
 	use darwinia_staking_rpc::{Staking, StakingApi};
 	use dc_rpc::{
 		EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, EthPubSubApi, EthPubSubApiServer,
-		HexEncodedIdProvider, NetApi, NetApiServer, Web3Api, Web3ApiServer,
+		HexEncodedIdProvider, NetApi, NetApiServer, SchemaV1Override, StorageOverride, Web3Api,
+		Web3ApiServer,
 	};
 	use pangolin_runtime::TransactionConverter;
 
@@ -166,11 +165,11 @@ where
 		deny_unsafe,
 		is_authority,
 		network,
+		babe,
+		grandpa,
 		pending_transactions,
 		filter_pool,
 		backend,
-		babe,
-		grandpa,
 	} = deps;
 	let mut io = jsonrpc_core::IoHandler::default();
 
