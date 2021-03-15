@@ -20,7 +20,6 @@
 
 // --- substrate ---
 pub use sc_executor::NativeExecutor;
-
 // --- darwinia ---
 pub use pangolin_runtime;
 
