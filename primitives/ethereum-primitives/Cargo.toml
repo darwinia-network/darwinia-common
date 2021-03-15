@@ -11,13 +11,9 @@ version     = "2.0.0"
 
 [dependencies]
 # crates
-array-bytes = { version = "1.1.0" }
-codec       = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
-ethash      = { default-features = false, path = "../ethash" }
-serde       = { version = "1.0.124", optional = true, features = ["derive"] }
-# darwinia
-merkle-patricia-trie = { default-features = false, path = "../merkle-patricia-trie" }
-# github
+array-bytes     = { version = "1.1.0" }
+codec           = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
+ethash          = { default-features = false, path = "../ethash" }
 ethbloom        = { version = "0.11.0", default-features = false, features = ["codec", "rlp"] }
 ethereum-types  = { version = "0.11.0", default-features = false, features = ["codec", "rlp"] }
 fixed-hash      = { version = "0.7.0", default-features = false }
@@ -27,6 +23,9 @@ keccak-hash     = { version = "0.7.0", default-features = false }
 primitive-types = { version = "0.9.0", default-features = false, features = ["codec", "rlp"] }
 rlp             = { version = "0.5.0", default-features = false }
 rlp-derive      = { version = "0.1.0" }
+serde           = { version = "1.0.124", optional = true, features = ["derive"] }
+# darwinia
+merkle-patricia-trie = { default-features = false, path = "../merkle-patricia-trie" }
 # substrate
 sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
 sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
@@ -46,20 +45,12 @@ default = ["std"]
 
 std = [
 	"crates-std",
-	"github-std",
 	"darwinia-std",
 	"substrate-std",
 ]
 
 crates-std    = [
 	"codec/std",
-	"serde",
-]
-darwinia-std  = [
-	"ethash/std",
-	"merkle-patricia-trie/std",
-]
-github-std    = [
 	"ethbloom/std",
 	"ethereum-types/std",
 	"ethereum-types/serialize",
@@ -69,6 +60,11 @@ github-std    = [
 	"keccak-hash/std",
 	"primitive-types/std",
 	"rlp/std",
+	"serde",
+]
+darwinia-std  = [
+	"ethash/std",
+	"merkle-patricia-trie/std",
 ]
 substrate-std = [
 	"sp-io/std",
