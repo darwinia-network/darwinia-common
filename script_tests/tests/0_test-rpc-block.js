@@ -83,7 +83,7 @@ describe("Test Block RPC", function () {
 		const previous_block_number = block.number - 1;
 		const previous_block = await web3.eth.getBlock(previous_block_number);
 
-		expect(block.timestamp - previous_block.timestamp).to.be.eq(3);
+		expect(block.timestamp - previous_block.timestamp).to.be.eq(6);
 	});
 
 	it("should get transactions count by block number ", async function () {

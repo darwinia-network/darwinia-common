@@ -40,7 +40,7 @@ drml-primitives                     = { path = "../primitives" }
 dc-consensus                        = { path = "../../../client/dvm/consensus" }
 dc-db                               = { path = "../../../client/dvm/db" }
 dc-mapping-sync                     = { path = "../../../client/dvm/mapping-sync" }
-dc-rpc                              = { path = "../../../client/dvm/rpc" }
+dc-rpc                              = { path = "../../../client/dvm/rpc", features = ["rpc_binary_search_estimate"]}
 dp_consensus                        = { path = "../../../primitives/consensus" }
 dp-rpc                              = { path = "../../../primitives/rpc" }
 dvm-ethereum                        = { path = "../../../frame/dvm" }
