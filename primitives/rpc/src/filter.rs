@@ -14,10 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Open Ethereum. If not, see <http://www.gnu.org/licenses/>.
 
-use ethereum_types::{H160, H256};
+use ethereum_types::{H160, H256, U256};
 use serde::de::{DeserializeOwned, Error};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{from_value, Value};
+use std::{
+	collections::BTreeMap,
+	sync::{Arc, Mutex},
+};
 
 use crate::{BlockNumber, Log};
 
@@ -267,8 +271,24 @@ impl FilteredParams {
 						}
 					}
 				}
-				VariadicValue::Multiple(_) => {
-					let replaced: Option<Vec<H256>> = self.replace(log, topic);
+				VariadicValue::Multiple(multi) => {
+					// Shrink the topics until the last item is Some.
+					let mut new_multi = multi;
+					while new_multi
+						.iter()
+						.last()
+						.unwrap_or(&Some(H256::default()))
+						.is_none()
+					{
+						new_multi.pop();
+					}
+					// We can discard right away any logs with lesser topics than the filter.
+					if new_multi.len() > log.topics.len() {
+						out = false;
+						break;
+					}
+					let replaced: Option<Vec<H256>> =
+						self.replace(log, VariadicValue::Multiple(new_multi));
 					if let Some(replaced) = replaced {
 						out = false;
 						if log.topics.starts_with(&replaced[..]) {
@@ -309,3 +329,20 @@ impl Serialize for FilterChanges {
 		}
 	}
 }
+
+#[derive(Debug, Clone)]
+pub enum FilterType {
+	Block,
+	PendingTransaction,
+	Log(Filter),
+}
+
+#[derive(Debug, Clone)]
+pub struct FilterPoolItem {
+	pub last_poll: BlockNumber,
+	pub filter_type: FilterType,
+	pub at_block: u64,
+}
+
+/// On-memory stored filters created through the `eth_newFilter` RPC.
+pub type FilterPool = Arc<Mutex<BTreeMap<U256, FilterPoolItem>>>;

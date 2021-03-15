@@ -22,16 +22,20 @@
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use codec::{Decode, Encode};
-use dvm_consensus_primitives::{ConsensusLog, FRONTIER_ENGINE_ID};
-use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
-use evm::ExitReason;
+// --- darwinia ---
+use darwinia_evm::{AccountBasicMapping, AddressMapping, FeeCalculator, GasWeightMapping, Runner};
+use dp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
+use dp_evm::CallOrCreateInfo;
+use dp_storage::PALLET_ETHEREUM_SCHEMA;
+pub use dvm_rpc_runtime_api::TransactionStatus;
+// --- substrate ---
+use frame_support::traits::Currency;
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResultWithPostInfo,
 	traits::FindAuthor, traits::Get, weights::Weight,
 };
-use frame_system::ensure_none;
-use sha3::{Digest, Keccak256};
+use frame_support::{ensure, traits::UnfilteredDispatchable};
+use frame_system::{ensure_none, RawOrigin};
 use sp_runtime::{
 	generic::DigestItem,
 	traits::{Saturating, UniqueSaturatedInto},
@@ -41,12 +45,12 @@ use sp_runtime::{
 	DispatchError,
 };
 use sp_std::prelude::*;
-
-use darwinia_evm::{AccountBasicMapping, AddressMapping, GasWeightMapping, Runner};
-use darwinia_evm_primitives::CallOrCreateInfo;
-pub use dvm_rpc_runtime_api::TransactionStatus;
+// --- std ---
+use codec::{Decode, Encode};
 pub use ethereum::{Block, Log, Receipt, Transaction, TransactionAction, TransactionMessage};
-use frame_support::traits::Currency;
+use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
+use evm::ExitReason;
+use sha3::{Digest, Keccak256};
 
 #[cfg(all(feature = "std", test))]
 mod tests;
@@ -59,6 +63,19 @@ mod mock;
 pub enum ReturnValue {
 	Bytes(Vec<u8>),
 	Hash(H160),
+}
+
+/// The schema version for Pallet Ethereum's storage
+#[derive(Clone, Debug, Encode, Decode, PartialEq, Eq, PartialOrd, Ord)]
+pub enum EthereumStorageSchema {
+	Undefined,
+	V1,
+}
+
+impl Default for EthereumStorageSchema {
+	fn default() -> Self {
+		Self::Undefined
+	}
 }
 
 /// A type alias for the balance type from this pallet's point of view.
@@ -111,7 +128,10 @@ decl_storage! {
 	}
 	add_extra_genesis {
 		build(|_config: &GenesisConfig| {
-			<Module<T>>::store_block();
+			<Module<T>>::store_block(false);
+
+			// Initialize the storage schema at the well known key.
+			frame_support::storage::unhashed::put::<EthereumStorageSchema>(&PALLET_ETHEREUM_SCHEMA, &EthereumStorageSchema::V1);
 		});
 	}
 }
@@ -129,6 +149,8 @@ decl_error! {
 	pub enum Error for Module<T: Config> {
 		/// Signature is invalid.
 		InvalidSignature,
+		/// Pre-log is present, therefore transact is not allowed.
+		PreLogExists,
 	}
 }
 
@@ -142,6 +164,11 @@ decl_module! {
 		#[weight = <T as darwinia_evm::Config>::GasWeightMapping::gas_to_weight(transaction.gas_limit.unique_saturated_into())]
 		fn transact(origin, transaction: ethereum::Transaction) -> DispatchResultWithPostInfo {
 			ensure_none(origin)?;
+
+			ensure!(
+				dp_consensus::find_pre_log(&frame_system::Module::<T>::digest()).is_err(),
+				Error::<T>::PreLogExists,
+			);
 
 			let source = Self::recover_signer(&transaction)
 				.ok_or_else(|| Error::<T>::InvalidSignature)?;
@@ -220,11 +247,20 @@ decl_module! {
 		}
 
 		fn on_finalize(_block_number: T::BlockNumber) {
-			<Module<T>>::store_block();
+			<Module<T>>::store_block(
+				dp_consensus::find_pre_log(&frame_system::Module::<T>::digest()).is_err(),
+			);
 		}
 
 		fn on_initialize(_block_number: T::BlockNumber) -> Weight {
 			Pending::kill();
+			if let Ok(log) = dp_consensus::find_pre_log(&frame_system::Module::<T>::digest()) {
+				let PreLog::Block(block) = log;
+
+				for transaction in block.transactions {
+					let _ = Call::<T>::transact(transaction).dispatch_bypass_filter(RawOrigin::None.into());
+				}
+			}
 			0
 		}
 	}
@@ -264,7 +300,12 @@ impl<T: Config> frame_support::unsigned::ValidateUnsigned for Module<T> {
 			}
 
 			let fee = transaction.gas_price.saturating_mul(transaction.gas_limit);
-			if account_data.balance < fee {
+			let total_payment = transaction.value.saturating_add(fee);
+			if account_data.balance < total_payment {
+				return InvalidTransaction::Payment.into();
+			}
+
+			if transaction.gas_price < T::FeeCalculator::min_gas_price() {
 				return InvalidTransaction::Payment.into();
 			}
 
@@ -299,7 +340,7 @@ impl<T: Config> Module<T> {
 		)))
 	}
 
-	fn store_block() {
+	fn store_block(post_log: bool) {
 		let mut transactions = Vec::new();
 		let mut statuses = Vec::new();
 		let mut receipts = Vec::new();
@@ -350,15 +391,13 @@ impl<T: Config> Module<T> {
 		CurrentReceipts::put(receipts.clone());
 		CurrentTransactionStatuses::put(statuses.clone());
 
-		let digest = DigestItem::<T::Hash>::Consensus(
-			FRONTIER_ENGINE_ID,
-			ConsensusLog::EndBlock {
-				block_hash: block.header.hash(),
-				transaction_hashes,
-			}
-			.encode(),
-		);
-		frame_system::Module::<T>::deposit_log(digest.into());
+		if post_log {
+			let digest = DigestItem::<T::Hash>::Consensus(
+				FRONTIER_ENGINE_ID,
+				PostLog::Hashes(dp_consensus::Hashes::from_block(block)).encode(),
+			);
+			frame_system::Module::<T>::deposit_log(digest.into());
+		}
 	}
 
 	/// Get the remaining balance for evm address

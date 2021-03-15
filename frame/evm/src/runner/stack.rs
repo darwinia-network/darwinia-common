@@ -22,19 +22,23 @@ use crate::{
 	AccountBasicMapping, AccountCodes, AccountStorages, AddressMapping, Config, Error, Event,
 	FeeCalculator, Module, PrecompileSet,
 };
-use darwinia_evm_primitives::{Account, CallInfo, CreateInfo, ExecutionInfo, Log, Vicinity};
-use evm::backend::Backend as BackendT;
-use evm::executor::{StackExecutor, StackState as StackStateT, StackSubstateMetadata};
-use evm::{ExitError, ExitReason, Transfer};
+
+// --- darwinia ---
+use dp_evm::{Account, CallInfo, CreateInfo, ExecutionInfo, Log, Vicinity};
+// --- substrate ---
 use frame_support::{
 	debug, ensure,
 	storage::{StorageDoubleMap, StorageMap},
 	traits::Get,
 };
-use sha3::{Digest, Keccak256};
 use sp_core::{H160, H256, U256};
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_std::{boxed::Box, collections::btree_set::BTreeSet, marker::PhantomData, mem, vec::Vec};
+// --- std ---
+use evm::backend::Backend as BackendT;
+use evm::executor::{StackExecutor, StackState as StackStateT, StackSubstateMetadata};
+use evm::{ExitError, ExitReason, Transfer};
+use sha3::{Digest, Keccak256};
 
 #[derive(Default)]
 pub struct Runner<T: Config> {
@@ -491,7 +495,7 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 			code.len(),
 			address
 		);
-		AccountCodes::insert(address, code);
+		Module::<T>::create_account(address, code);
 	}
 
 	fn transfer(&mut self, transfer: Transfer) -> Result<(), ExitError> {
