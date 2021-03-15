@@ -20,7 +20,7 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use darwinia_evm_primitives::LinearCostPrecompile;
+use dp_evm::LinearCostPrecompile;
 use evm::{ExitError, ExitSucceed};
 use num::{BigUint, FromPrimitive, One, ToPrimitive, Zero};
 

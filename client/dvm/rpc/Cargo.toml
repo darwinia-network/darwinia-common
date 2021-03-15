@@ -4,7 +4,7 @@ description = "Ethereum RPC (web3) compatibility layer for Darwinia."
 edition     = "2018"
 homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"
-name        = "dvm-rpc"
+name        = "dc-rpc"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "2.0.0"
@@ -12,7 +12,7 @@ version     = "2.0.0"
 [dependencies]
 # crates
 array-bytes         = { version = "1.1.0" }
-codec               = { package = "parity-scale-codec", version = "2.0.0" }
+codec               = { package = "parity-scale-codec", version = "2.0.1" }
 ethereum            = { version = "0.6.0", features = ["with-codec"] }
 ethereum-types      = { version = "0.10.0" }
 futures             = { version = "0.3.13", features = ["compat"] }
@@ -26,12 +26,15 @@ rand                = { version = "0.7" }
 rlp                 = { version = "0.5.0" }
 sha3                = { version = "0.8" }
 # darwinia
-darwinia-evm            = { path = "../../../frame/evm" }
-dvm-consensus           = { path = "../consensus" }
-dvm-ethereum            = { path = "../../../frame/dvm" }
-dvm-rpc-core            = { path = "../../../frame/dvm/rpc" }
-dvm-rpc-core-primitives = { path = "../../../primitives/dvm-rpc-core" }
-dvm-rpc-runtime-api     = { path = "../../../frame/dvm/rpc/runtime-api" }
+darwinia-evm        = { path = "../../../frame/evm" }
+dc-consensus        = { path = "../consensus" }
+dc-db               = { path = "../db" }
+dp_consensus        = { path = "../../../primitives/consensus/" }
+dp-storage          = { path = "../../../primitives/storage/" }
+dvm-ethereum        = { path = "../../../frame/dvm" }
+dvm-rpc-core        = { path = "../../../frame/dvm/rpc" }
+dvm-rpc-runtime-api = { path = "../../../frame/dvm/rpc/runtime-api" }
+dp-rpc              = { path = "../../../primitives/rpc" }
 # substrate
 sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
 sc-network          = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }

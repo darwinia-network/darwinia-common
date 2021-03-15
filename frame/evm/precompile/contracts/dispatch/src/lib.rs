@@ -23,7 +23,7 @@ use alloc::vec::Vec;
 use codec::Decode;
 use core::marker::PhantomData;
 use darwinia_evm::{AddressMapping, GasWeightMapping};
-use darwinia_evm_primitives::Precompile;
+use dp_evm::Precompile;
 use evm::{Context, ExitError, ExitSucceed};
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},

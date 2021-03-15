@@ -16,8 +16,14 @@ describe("Test RPC Constants", function () {
 		expect(await web3.eth.getAccounts()).to.eql([]);
 	});
 
-	it("block author should be 0x0000000000000000000000000000000000000000", async function () {
-		expect(await web3.eth.getCoinbase()).to.equal("0x0000000000000000000000000000000000000000");
+	it("The genesis block author should be 0x0000000000000000000000000000000000000000", async function () {
+		const block = await web3.eth.getBlock(0);
+		expect(block.author).to.equal("0x0000000000000000000000000000000000000000");
+	});
+
+	it("The block 1 author should be 0x15fdd31c61141abd04a99fd6822c8558854ccde3", async function () {
+		const block = await web3.eth.getBlock(1);
+		expect(block.author).to.equal("0x15fdd31c61141abd04a99fd6822c8558854ccde3");
 	});
 
 	it("should gas price is 0x0", async function () {

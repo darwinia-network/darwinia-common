@@ -17,7 +17,7 @@ name = "drml"
 [dependencies]
 # crates
 array-bytes    = { version = "1.1.0" }
-codec          = { package = "parity-scale-codec", version = "2.0.0" }
+codec          = { package = "parity-scale-codec", version = "2.0.1" }
 futures        = { version = "0.3.13" }
 jsonrpc-core   = { version = "15.1.0" }
 jsonrpc-pubsub = { version = "15.1.0" }
@@ -36,9 +36,14 @@ darwinia-header-mmr-rpc-runtime-api = { path = "../../../frame/header-mmr/rpc/ru
 darwinia-staking                    = { path = "../../../frame/staking" }
 darwinia-staking-rpc                = { path = "../../../frame/staking/rpc" }
 darwinia-staking-rpc-runtime-api    = { path = "../../../frame/staking/rpc/runtime-api" }
+dc-consensus                        = { path = "../../../client/dvm/consensus" }
+dc-db                               = { path = "../../../client/dvm/db" }
+dc-mapping-sync                     = { path = "../../../client/dvm/mapping-sync" }
+dc-rpc                              = { path = "../../../client/dvm/rpc", features = ["rpc_binary_search_estimate"] }
+dp-rpc                              = { path = "../../../primitives/rpc" }
+dp_consensus                        = { path = "../../../primitives/consensus" }
 drml-primitives                     = { path = "../primitives" }
-dvm-consensus                       = { path = "../../../client/dvm/consensus" }
-dvm-rpc                             = { path = "../../../client/dvm/rpc" }
+dvm-ethereum                        = { path = "../../../frame/dvm" }
 dvm-rpc-runtime-api                 = { path = "../../../frame/dvm/rpc/runtime-api" }
 pangolin-runtime                    = { path = "../runtime/pangolin" }
 # substrate
