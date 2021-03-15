@@ -180,7 +180,7 @@ pub fn open_frontier_backend(config: &Configuration) -> Result<Arc<dc_db::Backen
 			BasePath::from_project("", "", &crate::cli::Cli::executable_name())
 				.config_dir(config.chain_spec.id())
 		});
-	let database_dir = config_dir.join("frontier").join("db");
+	let database_dir = config_dir.join("dvm").join("db");
 
 	Ok(Arc::new(dc_db::Backend::<Block>::new(
 		&dc_db::DatabaseSettings {
