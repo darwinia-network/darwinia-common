@@ -3,7 +3,6 @@ use frame_support::{traits::FindAuthor, ConsensusEngineId};
 use sp_core::{crypto::Public, H160, U256};
 // --- darwinia ---
 use crate::*;
-use darwinia_evm::ConcatAddressMapping;
 use dvm_ethereum::{Config, IntermediateStateRoot};
 
 pub struct EthereumFindAuthor<F>(sp_std::marker::PhantomData<F>);
@@ -27,6 +26,5 @@ impl Config for Runtime {
 	type FindAuthor = EthereumFindAuthor<Babe>;
 	type StateRoot = IntermediateStateRoot;
 	type BlockGasLimit = BlockGasLimit;
-	type AddressMapping = ConcatAddressMapping;
 	type RingCurrency = Ring;
 }

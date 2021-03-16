@@ -23,7 +23,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 // --- darwinia ---
-use darwinia_evm::{AccountBasicMapping, AddressMapping, FeeCalculator, GasWeightMapping, Runner};
+use darwinia_evm::{AccountBasicMapping, FeeCalculator, GasWeightMapping, Runner};
 use dp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
 use dp_evm::CallOrCreateInfo;
 use dp_storage::PALLET_ETHEREUM_SCHEMA;
@@ -79,7 +79,6 @@ impl Default for EthereumStorageSchema {
 }
 
 /// A type alias for the balance type from this pallet's point of view.
-pub type BalanceOf<T> = <T as darwinia_balances::Config>::Balance;
 type RingInstance = darwinia_balances::Instance0;
 
 pub struct IntermediateStateRoot;
@@ -106,8 +105,6 @@ pub trait Config:
 	type StateRoot: Get<H256>;
 	/// The block gas limit. Can be a simple constant, or an adjustment algorithm in another pallet.
 	type BlockGasLimit: Get<U256>;
-	// How evm address convert to darwinia address
-	type AddressMapping: AddressMapping<Self::AccountId>;
 	// Balance module
 	type RingCurrency: Currency<Self::AccountId>;
 }
