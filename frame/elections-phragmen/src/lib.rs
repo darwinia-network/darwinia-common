@@ -2556,17 +2556,14 @@ mod tests {
 
 			// no replacement yet.
 			let unwrapped_error = Elections::remove_member(Origin::root(), 4, true).unwrap_err();
-			matches!(
+			assert!(matches!(
 				unwrapped_error.error,
 				DispatchError::Module {
 					message: Some("InvalidReplacement"),
 					..
 				}
-			);
-			matches!(
-				unwrapped_error.post_info.actual_weight,
-				Some(x) if x < <Test as frame_system::Config>::BlockWeights::get().max_block
-			);
+			));
+			assert!(unwrapped_error.post_info.actual_weight.is_some());
 		});
 
 		ExtBuilder::default()
@@ -2588,17 +2585,14 @@ mod tests {
 				// there is a replacement! and this one needs a weight refund.
 				let unwrapped_error =
 					Elections::remove_member(Origin::root(), 4, false).unwrap_err();
-				matches!(
+				assert!(matches!(
 					unwrapped_error.error,
 					DispatchError::Module {
 						message: Some("InvalidReplacement"),
 						..
 					}
-				);
-				matches!(
-					unwrapped_error.post_info.actual_weight,
-					Some(x) if x < <Test as frame_system::Config>::BlockWeights::get().max_block
-				);
+				));
+				assert!(unwrapped_error.post_info.actual_weight.is_some());
 			});
 	}
 
