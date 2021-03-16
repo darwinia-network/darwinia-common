@@ -22,7 +22,7 @@
 macro_rules! decl_tests {
 	($($pallet:tt)*) => {
 		// --- substrate ---
-		use frame_support::{parameter_types, weights::Weight};
+		use frame_support::weights::Weight;
 		use frame_system::mocking::*;
 		use sp_core::crypto::key_types;
 		use sp_runtime::{
@@ -30,6 +30,7 @@ macro_rules! decl_tests {
 			traits::{IdentifyAccount, IdentityLookup, OpaqueKeys, Verify},
 			ModuleId, {KeyTypeId, MultiSignature, Perbill},
 		};
+		use sp_election_providers::onchain;
 		// --- darwinia ---
 		use crate as darwinia_ethereum_backing;
 		use darwinia_staking::{EraIndex, Exposure, ExposureOf};
@@ -95,7 +96,7 @@ macro_rules! decl_tests {
 
 			fn on_disabled(_validator_index: usize) {}
 		}
-		parameter_types! {
+		frame_support::parameter_types! {
 			pub const Period: BlockNumber = 1;
 			pub const Offset: BlockNumber = 0;
 		}
@@ -140,7 +141,14 @@ macro_rules! decl_tests {
 			type WeightInfo = ();
 		}
 
-		parameter_types! {
+		impl onchain::Config for Test {
+			type AccountId = AccountId;
+			type BlockNumber = BlockNumber;
+			type Accuracy = Perbill;
+			type DataProvider = Staking;
+		}
+
+		frame_support::parameter_types! {
 			pub const StakingModuleId: ModuleId = ModuleId(*b"da/staki");
 		}
 		impl darwinia_staking::Config for Test {
@@ -161,6 +169,7 @@ macro_rules! decl_tests {
 			type MaxNominatorRewardedPerValidator = ();
 			type UnsignedPriority = ();
 			type OffchainSolutionWeightLimit = ();
+			type ElectionProvider = onchain::OnChainSequentialPhragmen<Self>;
 			type RingCurrency = Ring;
 			type RingRewardRemainder = ();
 			type RingSlash = ();
@@ -187,7 +196,7 @@ macro_rules! decl_tests {
 				Ok(())
 			}
 		}
-		parameter_types! {
+		frame_support::parameter_types! {
 			pub const EthereumBackingModuleId: ModuleId = ModuleId(*b"da/backi");
 			pub const EthereumBackingFeeModuleId: ModuleId = ModuleId(*b"da/ethfe");
 			pub const RingLockLimit: Balance = 1000;

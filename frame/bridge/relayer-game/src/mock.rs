@@ -241,7 +241,7 @@ use std::time::Instant;
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
-use frame_support::{parameter_types, traits::OnFinalize};
+use frame_support::traits::OnFinalize;
 use frame_system::mocking::*;
 use sp_runtime::RuntimeDebug;
 // --- darwinia ---
@@ -285,7 +285,7 @@ impl frame_system::Config for Test {
 	type SS58Prefix = ();
 }
 
-parameter_types! {
+frame_support::parameter_types! {
 	pub const ExistentialDeposit: Balance = 1;
 }
 impl darwinia_balances::Config<RingInstance> for Test {
@@ -326,7 +326,7 @@ impl AdjustableRelayerGame for RelayerGameAdjustor {
 		ESTIMATE_BOND.with(|v| v.borrow().to_owned())
 	}
 }
-parameter_types! {
+frame_support::parameter_types! {
 	pub const RelayerGameLockId: LockIdentifier = *b"da/rgame";
 	pub static GenesisTime: Instant = Instant::now();
 	pub static ChallengeTime: BlockNumber = 6;

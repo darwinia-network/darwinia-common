@@ -32,7 +32,7 @@ use ethereum_primitives::{
 
 decl_tests!(EthereumRelay: darwinia_ethereum_linear_relay::{Module, Call, Storage});
 
-parameter_types! {
+frame_support::parameter_types! {
 	pub const EthereumLinearRelayModuleId: ModuleId = ModuleId(*b"da/ethli");
 	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Ropsten;
 }

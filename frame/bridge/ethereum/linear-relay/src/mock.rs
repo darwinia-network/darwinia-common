@@ -23,7 +23,6 @@ use std::fs::File;
 // --- crates ---
 use serde::Deserialize;
 // --- substrate ---
-use frame_support::parameter_types;
 use frame_system::mocking::*;
 use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, RuntimeDebug};
@@ -78,7 +77,7 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type WeightInfo = ();
 }
 
-parameter_types! {
+frame_support::parameter_types! {
 	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethli");
 	pub static EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Ropsten;
 }

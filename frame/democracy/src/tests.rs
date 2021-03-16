@@ -4,12 +4,11 @@
 use codec::Encode;
 // --- substrate ---
 use frame_support::{
-	assert_noop, assert_ok, impl_outer_dispatch, impl_outer_event, impl_outer_origin,
-	ord_parameter_types, parameter_types,
+	assert_noop, assert_ok, ord_parameter_types,
 	traits::{Contains, Filter, OnInitialize},
 	weights::Weight,
 };
-use frame_system::{EnsureRoot, EnsureSignedBy};
+use frame_system::{mocking::*, EnsureRoot, EnsureSignedBy};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -17,7 +16,7 @@ use sp_runtime::{
 	Perbill,
 };
 // --- darwinia ---
-use super::*;
+use crate::{self as darwinia_democracy, *};
 use darwinia_balances::Error as BalancesError;
 
 mod cancellation;
@@ -30,6 +29,9 @@ mod preimage;
 mod public_proposals;
 mod scheduling;
 mod voting;
+
+type Block = MockBlock<Test>;
+type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 
 type BlockNumber = u64;
 type Balance = u64;
@@ -53,32 +55,7 @@ const BIG_NAY: Vote = Vote {
 
 const MAX_PROPOSALS: u32 = 100;
 
-impl_outer_origin! {
-	pub enum Origin for Test where system = frame_system {}
-}
-
-impl_outer_dispatch! {
-	pub enum Call for Test where origin: Origin {
-		frame_system::System,
-		pallet_balances::Balances,
-		democracy::Democracy,
-	}
-}
-
-mod democracy {
-	pub use crate::Event;
-}
-
-impl_outer_event! {
-	pub enum Event for Test {
-		system <T>,
-		darwinia_balances Instance0<T>,
-		pallet_scheduler <T>,
-		democracy <T>,
-	}
-}
-
-darwinia_support::impl_test_account_data! { deprecated }
+darwinia_support::impl_test_account_data! {}
 
 // Test that a fitlered call can be dispatched.
 pub struct BaseFilter;
@@ -90,11 +67,7 @@ impl Filter<Call> for BaseFilter {
 		)
 	}
 }
-
-// Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
-#[derive(Clone, Eq, PartialEq, Debug)]
-pub struct Test;
-parameter_types! {
+frame_support::parameter_types! {
 	pub BlockWeights: frame_system::limits::BlockWeights =
 		frame_system::limits::BlockWeights::simple_max(1_000_000);
 }
@@ -122,7 +95,7 @@ impl frame_system::Config for Test {
 	type SystemWeightInfo = ();
 	type SS58Prefix = ();
 }
-parameter_types! {
+frame_support::parameter_types! {
 	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) * BlockWeights::get().max_block;
 }
 impl pallet_scheduler::Config for Test {
@@ -135,7 +108,7 @@ impl pallet_scheduler::Config for Test {
 	type MaxScheduledPerBlock = ();
 	type WeightInfo = ();
 }
-parameter_types! {
+frame_support::parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;
 }
 impl darwinia_balances::Config<RingInstance> for Test {
@@ -149,7 +122,7 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type OtherCurrencies = ();
 	type WeightInfo = ();
 }
-parameter_types! {
+frame_support::parameter_types! {
 	pub const LaunchPeriod: u64 = 2;
 	pub const VotingPeriod: u64 = 2;
 	pub const FastTrackVotingPeriod: u64 = 2;
@@ -208,16 +181,31 @@ impl super::Config for Test {
 	type MaxProposals = MaxProposals;
 }
 
+frame_support::construct_runtime! {
+	pub enum Test where
+		Block = Block,
+		NodeBlock = Block,
+		UncheckedExtrinsic = UncheckedExtrinsic,
+	{
+		System: frame_system::{Module, Call, Config, Storage, Event<T>},
+		Balances: darwinia_balances::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
+		Scheduler: pallet_scheduler::{Module, Call, Storage, Config, Event<T>},
+		Democracy: darwinia_democracy::{Module, Call, Storage, Config, Event<T>},
+	}
+}
+
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default()
 		.build_storage::<Test>()
 		.unwrap();
-	RingConfig {
+	darwinia_balances::GenesisConfig::<Test, RingInstance> {
 		balances: vec![(1, 10), (2, 20), (3, 30), (4, 40), (5, 50), (6, 60)],
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
-	GenesisConfig::default().assimilate_storage(&mut t).unwrap();
+	darwinia_democracy::GenesisConfig::default()
+		.assimilate_storage(&mut t)
+		.unwrap();
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| System::set_block_number(1));
 	ext
@@ -228,11 +216,6 @@ pub fn new_test_ext_execute_with_cond(execute: impl FnOnce(bool) -> () + Clone) 
 	new_test_ext().execute_with(|| (execute.clone())(false));
 	new_test_ext().execute_with(|| execute(true));
 }
-
-type System = frame_system::Module<Test>;
-type Balances = darwinia_balances::Module<Test, RingInstance>;
-type Scheduler = pallet_scheduler::Module<Test>;
-type Democracy = Module<Test>;
 
 #[test]
 fn params_should_work() {

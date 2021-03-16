@@ -21,7 +21,7 @@
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
-use frame_support::{parameter_types, traits::OnInitialize};
+use frame_support::traits::OnInitialize;
 use frame_system::{mocking::*, EnsureRoot};
 use sp_core::H256;
 use sp_io::{hashing, TestExternalities};
@@ -74,7 +74,7 @@ impl frame_system::Config for Test {
 	type SS58Prefix = ();
 }
 
-parameter_types! {
+frame_support::parameter_types! {
 	pub const MaxLocks: u32 = 1024;
 }
 impl darwinia_balances::Config<RingInstance> for Test {
@@ -109,7 +109,7 @@ impl SignT<BlockNumber> for Sign {
 		true
 	}
 }
-parameter_types! {
+frame_support::parameter_types! {
 	pub const LockId: LockIdentifier = *b"lockidts";
 	pub const TermDuration: BlockNumber = 10;
 	pub const MaxCandidates: usize = 7;

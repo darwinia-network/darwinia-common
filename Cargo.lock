@@ -1375,6 +1375,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sp-core",
+ "sp-election-providers",
  "sp-io",
  "sp-runtime",
  "sp-staking",

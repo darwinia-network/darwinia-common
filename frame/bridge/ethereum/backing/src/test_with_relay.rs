@@ -40,7 +40,7 @@ impl Contains<AccountId> for UnusedTechnicalMembership {
 		unimplemented!()
 	}
 }
-parameter_types! {
+frame_support::parameter_types! {
 	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
 	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Ropsten;
 }

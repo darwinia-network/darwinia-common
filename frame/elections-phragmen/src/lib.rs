@@ -1061,9 +1061,8 @@ impl<T: Config> ContainsLengthBound for Module<T> {
 
 #[cfg(test)]
 mod tests {
-	use super::*;
-	use crate as elections_phragmen;
-	use frame_support::{assert_noop, assert_ok, parameter_types, traits::OnInitialize};
+	use crate::{self as elections_phragmen, *};
+	use frame_support::{assert_noop, assert_ok, traits::OnInitialize};
 	use sp_core::H256;
 	use sp_runtime::{
 		testing::Header,
@@ -1073,8 +1072,10 @@ mod tests {
 	use substrate_test_utils::assert_eq_uvec;
 
 	type Balance = u64;
-	darwinia_support::impl_test_account_data! { deprecated }
-	parameter_types! {
+
+	darwinia_support::impl_test_account_data! {}
+
+	frame_support::parameter_types! {
 		pub const ExistentialDeposit: Balance = 1;
 		pub const MaxLocks: u32 = 1024;
 	}
@@ -1090,7 +1091,7 @@ mod tests {
 		type WeightInfo = ();
 	}
 
-	parameter_types! {
+	frame_support::parameter_types! {
 		pub const BlockHashCount: u64 = 250;
 		pub BlockWeights: frame_system::limits::BlockWeights =
 			frame_system::limits::BlockWeights::simple_max(1024);
@@ -1179,7 +1180,7 @@ mod tests {
 		}
 	}
 
-	parameter_types! {
+	frame_support::parameter_types! {
 		pub const ElectionsPhragmenModuleId: LockIdentifier = *b"phrelect";
 	}
 
@@ -1271,7 +1272,7 @@ mod tests {
 					.collect::<Vec<_>>()
 			});
 			let mut ext: sp_io::TestExternalities = GenesisConfig {
-				darwinia_balances_Instance0: RingConfig {
+				darwinia_balances_Instance0: darwinia_balances::GenesisConfig::<Test, RingInstance> {
 					balances: vec![
 						(1, 10 * self.balance_factor),
 						(2, 20 * self.balance_factor),

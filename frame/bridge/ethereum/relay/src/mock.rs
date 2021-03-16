@@ -19,7 +19,7 @@
 //! Mock file for ethereum-relay.
 
 // --- substrate ---
-use frame_support::{parameter_types, traits::OnInitialize};
+use frame_support::traits::OnInitialize;
 use frame_system::{mocking::*, EnsureRoot};
 use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, RuntimeDebug};
@@ -78,7 +78,7 @@ impl Contains<AccountId> for UnusedTechnicalMembership {
 		vec![1, 2, 3]
 	}
 }
-parameter_types! {
+frame_support::parameter_types! {
 	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
 	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Mainnet;
 	pub static BestConfirmedBlockNumber: EthereumBlockNumber = 0;
