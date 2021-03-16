@@ -403,10 +403,10 @@ mod tests {
 		traits::{BadOrigin, BlakeTwo256, Identity, IdentityLookup},
 	};
 
-	type Balance = u64;
-
 	type Block = MockBlock<Test>;
 	type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
+
+	type Balance = u64;
 
 	darwinia_support::impl_test_account_data! {}
 

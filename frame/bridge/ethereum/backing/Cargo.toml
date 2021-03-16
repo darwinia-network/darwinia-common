@@ -13,6 +13,7 @@ version     = "2.0.0"
 # crates
 array-bytes = { version = "1.1.0" }
 codec       = { package = "parity-scale-codec", version = "2.0.1", default-features = false, features = ["derive"] }
+log         = { version = "0.4.14" }
 serde       = { version = "1.0.124", optional = true }
 serde_json  = { version = "1.0.62", optional = true }
 # darwinia
@@ -20,7 +21,7 @@ darwinia-relay-primitives = { default-features = false, path = "../../../../prim
 darwinia-support          = { default-features = false, path = "../../../support" }
 ethereum-primitives       = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
 # github
-ethabi = { default-features = false, git = "https://github.com/darwinia-network/ethabi.git", branch = "with_no_std" }
+ethabi = { default-features = false, git = "https://github.com/darwinia-network/ethabi.git", branch = "xavier-no-std" }
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
@@ -38,7 +39,7 @@ darwinia-relayer-game          = { path = "../../relayer-game" }
 darwinia-staking               = { path = "../../../../frame/staking" }
 ethereum-primitives            = { features = ["deserialize"], path = "../../../../primitives/ethereum-primitives" }
 # github
-rlp = { package = "rlp", git = "https://github.com/darwinia-network/parity-common.git" }
+rlp = { version = "0.5.0" }
 # substrate
 pallet-session   = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
 pallet-timestamp = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }

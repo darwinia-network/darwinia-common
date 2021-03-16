@@ -330,7 +330,6 @@ pub use wasm::*;
 use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
-	debug,
 	traits::{KeyOwnerProofSystem, Randomness},
 	weights::constants::ExtrinsicBaseWeight,
 };
@@ -530,7 +529,7 @@ where
 		);
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|e| {
-				debug::warn!("Unable to create signed payload: {:?}", e);
+				log::warn!("Unable to create signed payload: {:?}", e);
 			})
 			.ok()?;
 		let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;

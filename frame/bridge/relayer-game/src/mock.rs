@@ -241,48 +241,24 @@ use std::time::Instant;
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
-use frame_support::{impl_outer_origin, parameter_types, traits::OnFinalize};
+use frame_support::{parameter_types, traits::OnFinalize};
+use frame_system::mocking::*;
 use sp_runtime::RuntimeDebug;
 // --- darwinia ---
-use crate::*;
+use crate::{self as darwinia_relayer_game, *};
 use darwinia_relay_primitives::relayer_game::*;
 use mock_relay::{MockRelayBlockNumber, MockRelayHeader};
+
+pub type Block = MockBlock<Test>;
+pub type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 
 pub type AccountId = u64;
 pub type BlockNumber = u64;
 pub type Balance = u128;
 
-pub type System = frame_system::Module<Test>;
-pub type Relay = mock_relay::Module<Test>;
-
 pub type RelayerGameError = Error<Test, DefaultInstance>;
-pub type RelayerGame = Module<Test, DefaultInstance>;
 
-impl_outer_origin! {
-	pub enum Origin for Test
-	where
-		system = frame_system
-	{}
-}
-
-darwinia_support::impl_test_account_data! { deprecated }
-
-#[derive(Clone, Eq, PartialEq)]
-pub struct Test;
-parameter_types! {
-	pub const RelayerGameLockId: LockIdentifier = *b"da/rgame";
-	pub static GenesisTime: Instant = Instant::now();
-	pub static ChallengeTime: BlockNumber = 6;
-	pub static EstimateBond: Balance = 1;
-}
-impl Config for Test {
-	type RingCurrency = Ring;
-	type LockId = RelayerGameLockId;
-	type RingSlash = ();
-	type RelayerGameAdjustor = RelayerGameAdjustor;
-	type RelayableChain = Relay;
-	type WeightInfo = ();
-}
+darwinia_support::impl_test_account_data! {}
 
 impl frame_system::Config for Test {
 	type BaseCallFilter = ();
@@ -290,7 +266,7 @@ impl frame_system::Config for Test {
 	type BlockLength = ();
 	type DbWeight = ();
 	type Origin = Origin;
-	type Call = ();
+	type Call = Call;
 	type Index = u64;
 	type BlockNumber = BlockNumber;
 	type Hash = sp_core::H256;
@@ -348,6 +324,34 @@ impl AdjustableRelayerGame for RelayerGameAdjustor {
 
 	fn estimate_stake(_: u32, _: u32) -> Self::Balance {
 		ESTIMATE_BOND.with(|v| v.borrow().to_owned())
+	}
+}
+parameter_types! {
+	pub const RelayerGameLockId: LockIdentifier = *b"da/rgame";
+	pub static GenesisTime: Instant = Instant::now();
+	pub static ChallengeTime: BlockNumber = 6;
+	pub static EstimateBond: Balance = 1;
+}
+impl Config for Test {
+	type RingCurrency = Ring;
+	type LockId = RelayerGameLockId;
+	type RingSlash = ();
+	type RelayerGameAdjustor = RelayerGameAdjustor;
+	type RelayableChain = Relay;
+	type WeightInfo = ();
+}
+
+frame_support::construct_runtime! {
+	pub enum Test
+	where
+		Block = Block,
+		NodeBlock = Block,
+		UncheckedExtrinsic = UncheckedExtrinsic
+	{
+		System: frame_system::{Module, Call, Storage, Config},
+		Ring: darwinia_balances::<Instance0>::{Module, Call, Storage, Config<T>},
+		Relay: mock_relay::{Module, Storage},
+		RelayerGame: darwinia_relayer_game::{Module, Storage},
 	}
 }
 

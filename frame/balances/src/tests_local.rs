@@ -37,10 +37,10 @@ use sp_runtime::{
 // --- darwinia ---
 use crate::{self as darwinia_balances, *};
 
-type Balance = u64;
-
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
+
+type Balance = u64;
 
 darwinia_support::impl_test_account_data! {}
 

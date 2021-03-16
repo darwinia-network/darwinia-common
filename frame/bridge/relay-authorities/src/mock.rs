@@ -34,13 +34,13 @@ use sp_runtime::{
 use crate::{self as darwinia_relay_authorities, *};
 use darwinia_relay_primitives::relay_authorities::Sign as SignT;
 
+pub type Block = MockBlock<Test>;
+pub type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
+
 pub type BlockNumber = u64;
 pub type AccountId = u64;
 pub type Index = u64;
 pub type Balance = u128;
-
-type Block = MockBlock<Test>;
-type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 
 pub type RelayAuthoritiesError = Error<Test, DefaultInstance>;
 

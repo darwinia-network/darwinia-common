@@ -1234,6 +1234,7 @@ dependencies = [
  "darwinia-support",
  "frame-support",
  "frame-system",
+ "log",
  "pallet-transaction-payment",
  "parity-scale-codec 2.0.1",
  "serde",
@@ -1354,6 +1355,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
+ "log",
  "parity-scale-codec 2.0.1",
  "serde",
  "sp-core",
@@ -1376,14 +1378,15 @@ dependencies = [
  "darwinia-relayer-game",
  "darwinia-staking",
  "darwinia-support",
- "ethabi",
+ "ethabi 13.0.0",
  "ethereum-primitives",
  "frame-support",
  "frame-system",
+ "log",
  "pallet-session",
  "pallet-timestamp",
  "parity-scale-codec 2.0.1",
- "rlp 0.4.4",
+ "rlp 0.5.0",
  "serde",
  "serde_json",
  "sp-core",
@@ -1401,11 +1404,12 @@ dependencies = [
  "darwinia-balances",
  "darwinia-support",
  "ethereum-primitives",
- "ethereum-types 0.8.0",
+ "ethereum-types 0.11.0",
  "frame-support",
  "frame-system",
+ "log",
  "parity-scale-codec 2.0.1",
- "rlp 0.4.4",
+ "rlp 0.5.0",
  "serde",
  "serde_json",
  "sp-core",
@@ -1426,11 +1430,11 @@ dependencies = [
  "darwinia-relayer-game",
  "darwinia-support",
  "ethereum-primitives",
- "ethereum-types 0.8.0",
+ "ethereum-types 0.11.0",
  "frame-support",
  "frame-system",
  "parity-scale-codec 2.0.1",
- "rlp 0.4.4",
+ "rlp 0.5.0",
  "serde",
  "serde_json",
  "sp-core",
@@ -1533,7 +1537,7 @@ dependencies = [
  "array-bytes",
  "darwinia-evm",
  "dp-evm",
- "ethabi",
+ "ethabi 9.0.1",
  "ethereum-types 0.8.0",
  "evm",
  "frame-support",
@@ -1674,6 +1678,7 @@ dependencies = [
  "env_logger 0.8.3",
  "frame-support",
  "frame-system",
+ "log",
  "parity-scale-codec 2.0.1",
  "serde",
  "sp-core",
@@ -1691,6 +1696,7 @@ dependencies = [
  "darwinia-support",
  "frame-support",
  "frame-system",
+ "log",
  "pallet-authorship",
  "pallet-session",
  "pallet-timestamp",
@@ -1706,7 +1712,7 @@ dependencies = [
  "sp-std 3.0.0",
  "sp-storage",
  "sp-tracing",
- "static_assertions 1.1.0",
+ "static_assertions",
  "substrate-fixed",
  "substrate-test-utils",
 ]
@@ -2355,28 +2361,30 @@ dependencies = [
 ]
 
 [[package]]
-name = "ethash"
-version = "0.4.0"
-source = "git+https://github.com/darwinia-network/rust-ethash?branch=darwinia-v1#cd3918410be0484e436cab68ba803fe95fc905b5"
+name = "ethabi"
+version = "13.0.0"
+source = "git+https://github.com/darwinia-network/ethabi.git?branch=xavier-no-std#baacf174d5c2f12122c4ee3fe31506fb52069983"
 dependencies = [
- "byteorder",
- "ethereum-types 0.8.0",
- "primitive-types 0.6.2",
- "rlp 0.4.4",
+ "anyhow",
+ "ethereum-types 0.11.0",
+ "hex",
+ "serde",
+ "serde_json",
  "sha3 0.9.1",
+ "thiserror",
+ "uint 0.9.0",
 ]
 
 [[package]]
-name = "ethbloom"
-version = "0.6.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3932e82d64d347a045208924002930dc105a138995ccdc1479d0f05f0359f17c"
+name = "ethash"
+version = "0.4.0"
+source = "git+https://github.com/darwinia-network/rust-ethash#9014d7649c19800f3b37944a23dd499d207cf881"
 dependencies = [
- "crunchy",
- "fixed-hash 0.3.2",
- "impl-rlp 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "impl-serde 0.2.3",
- "tiny-keccak 1.5.0",
+ "byteorder",
+ "ethereum-types 0.11.0",
+ "primitive-types 0.9.0",
+ "rlp 0.5.0",
+ "sha3 0.9.1",
 ]
 
 [[package]]
@@ -2387,8 +2395,7 @@ dependencies = [
  "crunchy",
  "fixed-hash 0.5.2",
  "impl-codec 0.4.2 (git+https://github.com/darwinia-network/parity-common.git)",
- "impl-rlp 0.2.1 (git+https://github.com/darwinia-network/parity-common.git)",
- "impl-serde 0.3.0",
+ "impl-rlp 0.2.1",
  "tiny-keccak 2.0.2",
 ]
 
@@ -2415,7 +2422,7 @@ dependencies = [
  "fixed-hash 0.7.0",
  "impl-codec 0.5.0",
  "impl-rlp 0.3.0",
- "impl-serde 0.3.1",
+ "impl-serde",
  "tiny-keccak 2.0.2",
 ]
 
@@ -2430,10 +2437,10 @@ dependencies = [
  "hash256-std-hasher",
  "parity-scale-codec 1.3.7",
  "rlp 0.5.0",
- "rlp-derive 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rlp-derive",
  "serde",
  "sha3 0.9.1",
- "triehash 0.8.4",
+ "triehash",
 ]
 
 [[package]]
@@ -2448,10 +2455,10 @@ dependencies = [
  "hash256-std-hasher",
  "parity-scale-codec 2.0.1",
  "rlp 0.5.0",
- "rlp-derive 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rlp-derive",
  "serde",
  "sha3 0.9.1",
- "triehash 0.8.4",
+ "triehash",
 ]
 
 [[package]]
@@ -2460,39 +2467,25 @@ version = "2.0.0"
 dependencies = [
  "array-bytes",
  "ethash",
- "ethbloom 0.8.1",
- "ethereum-types 0.8.0",
- "fixed-hash 0.5.2",
+ "ethbloom 0.11.0",
+ "ethereum-types 0.11.0",
+ "fixed-hash 0.7.0",
  "frame-support",
- "impl-codec 0.4.2 (git+https://github.com/darwinia-network/parity-common.git)",
- "impl-rlp 0.2.1 (git+https://github.com/darwinia-network/parity-common.git)",
+ "impl-codec 0.5.0",
+ "impl-rlp 0.3.0",
  "keccak-hash",
  "keccak-hasher",
  "merkle-patricia-trie",
  "parity-scale-codec 2.0.1",
- "primitive-types 0.6.2",
- "rlp 0.4.4",
- "rlp-derive 0.1.0 (git+https://github.com/darwinia-network/parity-common.git)",
+ "primitive-types 0.9.0",
+ "rlp 0.5.0",
+ "rlp-derive",
  "serde",
  "serde_json",
  "sp-io",
  "sp-runtime",
  "sp-std 3.0.0",
- "triehash 0.8.2",
-]
-
-[[package]]
-name = "ethereum-types"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b054df51e53f253837ea422681215b42823c02824bde982699d0dceecf6165a1"
-dependencies = [
- "crunchy",
- "ethbloom 0.6.4",
- "ethereum-types-serialize",
- "fixed-hash 0.3.2",
- "serde",
- "uint 0.5.0",
+ "triehash",
 ]
 
 [[package]]
@@ -2503,8 +2496,7 @@ dependencies = [
  "ethbloom 0.8.1",
  "fixed-hash 0.5.2",
  "impl-codec 0.4.2 (git+https://github.com/darwinia-network/parity-common.git)",
- "impl-rlp 0.2.1 (git+https://github.com/darwinia-network/parity-common.git)",
- "impl-serde 0.3.0",
+ "impl-rlp 0.2.1",
  "primitive-types 0.6.2",
  "uint 0.8.2",
 ]
@@ -2533,18 +2525,9 @@ dependencies = [
  "fixed-hash 0.7.0",
  "impl-codec 0.5.0",
  "impl-rlp 0.3.0",
- "impl-serde 0.3.1",
+ "impl-serde",
  "primitive-types 0.9.0",
  "uint 0.9.0",
-]
-
-[[package]]
-name = "ethereum-types-serialize"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1873d77b32bc1891a79dad925f2acbc318ee942b38b9110f9dbc5fbeffcea350"
-dependencies = [
- "serde",
 ]
 
 [[package]]
@@ -2693,26 +2676,13 @@ dependencies = [
 
 [[package]]
 name = "fixed-hash"
-version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d1a683d1234507e4f3bf2736eeddf0de1dc65996dc0164d57eba0a74bcf29489"
-dependencies = [
- "byteorder",
- "heapsize",
- "rand 0.5.6",
- "rustc-hex",
- "static_assertions 0.2.5",
-]
-
-[[package]]
-name = "fixed-hash"
 version = "0.5.2"
 source = "git+https://github.com/darwinia-network/parity-common.git#12a86aa8af8ff5ccd5c953074aa893c716cf85b5"
 dependencies = [
  "byteorder",
  "rand 0.7.3",
  "rustc-hex",
- "static_assertions 1.1.0",
+ "static_assertions",
 ]
 
 [[package]]
@@ -2724,7 +2694,7 @@ dependencies = [
  "byteorder",
  "rand 0.8.3",
  "rustc-hex",
- "static_assertions 1.1.0",
+ "static_assertions",
 ]
 
 [[package]]
@@ -3294,15 +3264,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "heapsize"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1679e6ea370dee694f91f1dc469bf94cf8f52051d147aec3e1f9497c6fc22461"
-dependencies = [
- "winapi 0.3.9",
-]
-
-[[package]]
 name = "heck"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3607,37 +3568,11 @@ dependencies = [
 
 [[package]]
 name = "impl-rlp"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f7a72f11830b52333f36e3b09a288333888bf54380fd0ac0790a3c31ab0f3c5"
-dependencies = [
- "rlp 0.4.6",
-]
-
-[[package]]
-name = "impl-rlp"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f28220f89297a075ddc7245cd538076ee98b01f2a9c23a53a4f1105d5a322808"
 dependencies = [
  "rlp 0.5.0",
-]
-
-[[package]]
-name = "impl-serde"
-version = "0.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "58e3cae7e99c7ff5a995da2cf78dd0a5383740eda71d98cf7b1910c301ac69b8"
-dependencies = [
- "serde",
-]
-
-[[package]]
-name = "impl-serde"
-version = "0.3.0"
-source = "git+https://github.com/darwinia-network/parity-common.git#12a86aa8af8ff5ccd5c953074aa893c716cf85b5"
-dependencies = [
- "serde",
 ]
 
 [[package]]
@@ -3892,10 +3827,11 @@ checksum = "67c21572b4949434e4fc1e1978b99c5f77064153c59d998bf13ecd96fb5ecba7"
 
 [[package]]
 name = "keccak-hash"
-version = "0.4.1"
-source = "git+https://github.com/darwinia-network/parity-common.git#12a86aa8af8ff5ccd5c953074aa893c716cf85b5"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ae0386ec98c26dd721aaa3412bf3a817156ff3ee7cb6959503f8d1095f4ccc51"
 dependencies = [
- "primitive-types 0.6.2",
+ "primitive-types 0.9.0",
  "tiny-keccak 2.0.2",
 ]
 
@@ -3991,9 +3927,9 @@ checksum = "3576a87f2ba00f6f106fdfcd16db1d698d648a26ad8e0573cad8537c3c362d2a"
 
 [[package]]
 name = "libc"
-version = "0.2.88"
+version = "0.2.89"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "03b07a082330a35e43f63177cc01689da34fbffa0105e1246cf0311472cac73a"
+checksum = "538c092e5586f4cdd7dd8078c4a79220e3e168880218124dcbce860f0ea938c6"
 
 [[package]]
 name = "libloading"
@@ -4247,7 +4183,7 @@ dependencies = [
  "rand 0.7.3",
  "sha2 0.9.3",
  "snow",
- "static_assertions 1.1.0",
+ "static_assertions",
  "x25519-dalek",
  "zeroize",
 ]
@@ -4614,12 +4550,12 @@ version = "2.0.0"
 dependencies = [
  "array-bytes",
  "criterion",
- "ethereum-types 0.5.2",
+ "ethereum-types 0.11.0",
  "hashbrown",
  "hex",
  "keccak-hash",
- "rand 0.7.3",
- "rlp 0.4.4",
+ "rand 0.8.3",
+ "rlp 0.5.0",
  "sp-std 3.0.0",
  "uuid",
 ]
@@ -4792,9 +4728,9 @@ dependencies = [
 
 [[package]]
 name = "multimap"
-version = "0.8.2"
+version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1255076139a83bb467426e7f8d0134968a8118844faa755985e077cf31850333"
+checksum = "e5ce46fe64a9d73be07dcbe690a38ce1b293be448fd8ce1e6c1b8062c9f72c6a"
 
 [[package]]
 name = "multistream-select"
@@ -5465,6 +5401,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "frame-system-rpc-runtime-api",
+ "log",
  "pallet-authority-discovery",
  "pallet-authorship",
  "pallet-babe",
@@ -5504,7 +5441,7 @@ dependencies = [
  "sp-std 3.0.0",
  "sp-transaction-pool",
  "sp-version",
- "static_assertions 1.1.0",
+ "static_assertions",
  "substrate-wasm-builder",
 ]
 
@@ -5538,7 +5475,7 @@ dependencies = [
  "multihash",
  "percent-encoding 2.1.0",
  "serde",
- "static_assertions 1.1.0",
+ "static_assertions",
  "unsigned-varint 0.7.0",
  "url 2.2.1",
 ]
@@ -5991,8 +5928,7 @@ source = "git+https://github.com/darwinia-network/parity-common.git#12a86aa8af8f
 dependencies = [
  "fixed-hash 0.5.2",
  "impl-codec 0.4.2 (git+https://github.com/darwinia-network/parity-common.git)",
- "impl-rlp 0.2.1 (git+https://github.com/darwinia-network/parity-common.git)",
- "impl-serde 0.3.0",
+ "impl-rlp 0.2.1",
  "uint 0.8.2",
 ]
 
@@ -6017,7 +5953,7 @@ dependencies = [
  "fixed-hash 0.7.0",
  "impl-codec 0.5.0",
  "impl-rlp 0.3.0",
- "impl-serde 0.3.1",
+ "impl-serde",
  "uint 0.9.0",
 ]
 
@@ -6227,11 +6163,7 @@ version = "0.5.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c618c47cd3ebd209790115ab837de41425723956ad3ce2e6a7f09890947cacb9"
 dependencies = [
- "cloudabi",
- "fuchsia-cprng",
- "libc",
  "rand_core 0.3.1",
- "winapi 0.3.9",
 ]
 
 [[package]]
@@ -6557,31 +6489,12 @@ dependencies = [
 
 [[package]]
 name = "rlp"
-version = "0.4.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1190dcc8c3a512f1eef5d09bb8c84c7f39e1054e174d1795482e18f5272f2e73"
-dependencies = [
- "rustc-hex",
-]
-
-[[package]]
-name = "rlp"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e54369147e3e7796c9b885c7304db87ca3d09a0a98f72843d532868675bbfba8"
 dependencies = [
  "bytes 1.0.1",
  "rustc-hex",
-]
-
-[[package]]
-name = "rlp-derive"
-version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-common.git#12a86aa8af8ff5ccd5c953074aa893c716cf85b5"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]
@@ -6700,7 +6613,7 @@ checksum = "4da5fcb054c46f5a5dff833b129285a93d3f0179531735e6c866e8cc307d2020"
 dependencies = [
  "futures 0.3.13",
  "pin-project 0.4.27",
- "static_assertions 1.1.0",
+ "static_assertions",
 ]
 
 [[package]]
@@ -8281,7 +8194,7 @@ dependencies = [
  "hash-db",
  "hash256-std-hasher",
  "hex",
- "impl-serde 0.3.1",
+ "impl-serde",
  "lazy_static",
  "libsecp256k1",
  "log",
@@ -8508,7 +8421,7 @@ dependencies = [
  "sp-storage",
  "sp-tracing",
  "sp-wasm-interface",
- "static_assertions 1.1.0",
+ "static_assertions",
 ]
 
 [[package]]
@@ -8592,7 +8505,7 @@ name = "sp-storage"
 version = "3.0.0"
 source = "git+https://github.com/darwinia-network/substrate.git?tag=rococo-v1.1#645299e8b23ec5fa52935b1a6edbf36886e80141"
 dependencies = [
- "impl-serde 0.3.1",
+ "impl-serde",
  "parity-scale-codec 2.0.1",
  "ref-cast",
  "serde",
@@ -8687,7 +8600,7 @@ name = "sp-version"
 version = "3.0.0"
 source = "git+https://github.com/darwinia-network/substrate.git?tag=rococo-v1.1#645299e8b23ec5fa52935b1a6edbf36886e80141"
 dependencies = [
- "impl-serde 0.3.1",
+ "impl-serde",
  "parity-scale-codec 2.0.1",
  "serde",
  "sp-runtime",
@@ -8716,12 +8629,6 @@ name = "stable_deref_trait"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
-
-[[package]]
-name = "static_assertions"
-version = "0.2.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c19be23126415861cb3a23e501d34a708f7f9b2183c5252d690941c2e69199d5"
 
 [[package]]
 name = "static_assertions"
@@ -9530,15 +9437,6 @@ dependencies = [
 
 [[package]]
 name = "triehash"
-version = "0.8.2"
-source = "git+https://github.com/darwinia-network/parity-common.git#12a86aa8af8ff5ccd5c953074aa893c716cf85b5"
-dependencies = [
- "hash-db",
- "rlp 0.4.4",
-]
-
-[[package]]
-name = "triehash"
 version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a1631b201eb031b563d2e85ca18ec8092508e262a3196ce9bd10a67ec87b9f5c"
@@ -9561,7 +9459,7 @@ checksum = "04f8ab788026715fa63b31960869617cba39117e520eb415b0139543e325ab59"
 dependencies = [
  "cfg-if 0.1.10",
  "rand 0.7.3",
- "static_assertions 1.1.0",
+ "static_assertions",
 ]
 
 [[package]]
@@ -9578,25 +9476,13 @@ checksum = "56dee185309b50d1f11bfedef0fe6d036842e3fb77413abef29f8f8d1c5d4c1c"
 
 [[package]]
 name = "uint"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "082df6964410f6aa929a61ddfafc997e4f32c62c22490e439ac351cec827f436"
-dependencies = [
- "byteorder",
- "crunchy",
- "heapsize",
- "rustc-hex",
-]
-
-[[package]]
-name = "uint"
 version = "0.8.2"
 source = "git+https://github.com/darwinia-network/parity-common.git#12a86aa8af8ff5ccd5c953074aa893c716cf85b5"
 dependencies = [
  "byteorder",
  "crunchy",
  "rustc-hex",
- "static_assertions 1.1.0",
+ "static_assertions",
 ]
 
 [[package]]
@@ -9608,7 +9494,7 @@ dependencies = [
  "byteorder",
  "crunchy",
  "hex",
- "static_assertions 1.1.0",
+ "static_assertions",
 ]
 
 [[package]]
@@ -10288,7 +10174,7 @@ dependencies = [
  "nohash-hasher",
  "parking_lot 0.11.1",
  "rand 0.7.3",
- "static_assertions 1.1.0",
+ "static_assertions",
 ]
 
 [[package]]

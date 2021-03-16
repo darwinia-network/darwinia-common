@@ -29,12 +29,12 @@ sha3                = { version = "0.8" }
 darwinia-evm        = { path = "../../../frame/evm" }
 dc-consensus        = { path = "../consensus" }
 dc-db               = { path = "../db" }
-dp_consensus        = { path = "../../../primitives/consensus/" }
+dp-rpc              = { path = "../../../primitives/rpc" }
 dp-storage          = { path = "../../../primitives/storage/" }
+dp_consensus        = { path = "../../../primitives/consensus/" }
 dvm-ethereum        = { path = "../../../frame/dvm" }
 dvm-rpc-core        = { path = "../../../frame/dvm/rpc" }
 dvm-rpc-runtime-api = { path = "../../../frame/dvm/rpc/runtime-api" }
-dp-rpc              = { path = "../../../primitives/rpc" }
 # substrate
 sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
 sc-network          = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }

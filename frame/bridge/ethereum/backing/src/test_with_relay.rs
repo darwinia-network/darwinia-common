@@ -32,9 +32,7 @@ use ethereum_primitives::{
 	header::EthereumHeader, receipt::EthereumReceiptProof, EthereumBlockNumber, EthereumNetworkType,
 };
 
-type EthereumRelay = darwinia_ethereum_relay::Module<Test>;
-
-decl_tests!();
+decl_tests!(EthereumRelay: darwinia_ethereum_relay::{Module, Call, Storage});
 
 pub struct UnusedTechnicalMembership;
 impl Contains<AccountId> for UnusedTechnicalMembership {
@@ -119,7 +117,7 @@ impl ExtBuilder {
 			.build_storage::<Test>()
 			.unwrap();
 
-		GenesisConfig::<Test> {
+		darwinia_ethereum_backing::GenesisConfig::<Test> {
 			token_redeem_address: array_bytes::hex2array_unchecked!(
 				"0x49262B932E439271d05634c32978294C7Ea15d0C",
 				20
