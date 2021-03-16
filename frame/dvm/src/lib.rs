@@ -377,12 +377,6 @@ impl<T: Config> Module<T> {
 		};
 		let mut block = ethereum::Block::new(partial_header, transactions.clone(), ommers);
 		block.header.state_root = T::StateRoot::get();
-		let mut transaction_hashes = Vec::new();
-
-		for t in &transactions {
-			let transaction_hash = H256::from_slice(Keccak256::digest(&rlp::encode(t)).as_slice());
-			transaction_hashes.push(transaction_hash);
-		}
 
 		CurrentBlock::put(block.clone());
 		CurrentReceipts::put(receipts.clone());
