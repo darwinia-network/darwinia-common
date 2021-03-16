@@ -93,7 +93,7 @@ native_executor_instance!(
 
 /// A set of APIs that darwinia-like runtimes must implement.
 pub trait RuntimeApiCollection:
-	sp_api::ApiExt<Block, Error = sp_blockchain::Error>
+	sp_api::ApiExt<Block>
 	+ sp_api::Metadata<Block>
 	+ sp_authority_discovery::AuthorityDiscoveryApi<Block>
 	+ sp_block_builder::BlockBuilder<Block>
@@ -115,7 +115,7 @@ where
 impl<Api> RuntimeApiCollection for Api
 where
 	Api: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
-		+ sp_api::ApiExt<Block, Error = sp_blockchain::Error>
+		+ sp_api::ApiExt<Block>
 		+ sp_api::Metadata<Block>
 		+ sp_authority_discovery::AuthorityDiscoveryApi<Block>
 		+ sp_block_builder::BlockBuilder<Block>
@@ -140,7 +140,7 @@ pub trait DRMLClient<Block, Backend, Runtime>:
 	+ Send
 	+ Sync
 	+ sc_client_api::BlockchainEvents<Block>
-	+ sp_api::CallApiAt<Block, Error = sp_blockchain::Error, StateBackend = Backend::State>
+	+ sp_api::CallApiAt<Block>
 	+ sp_api::ProvideRuntimeApi<Block, Api = Runtime::RuntimeApi>
 	+ sp_blockchain::HeaderBackend<Block>
 where
@@ -156,7 +156,7 @@ where
 	Client: Sized
 		+ Send
 		+ Sync
-		+ sp_api::CallApiAt<Block, Error = sp_blockchain::Error, StateBackend = Backend::State>
+		+ sp_api::CallApiAt<Block>
 		+ sp_api::ProvideRuntimeApi<Block, Api = Runtime::RuntimeApi>
 		+ sp_blockchain::HeaderBackend<Block>
 		+ sc_client_api::BlockchainEvents<Block>,
