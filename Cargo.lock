@@ -1889,8 +1889,8 @@ dependencies = [
  "dvm-ethereum",
  "dvm-rpc-core",
  "dvm-rpc-runtime-api",
- "ethereum 0.6.0",
- "ethereum-types 0.10.0",
+ "ethereum 0.7.1",
+ "ethereum-types 0.11.0",
  "futures 0.3.13",
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -2010,7 +2010,7 @@ dependencies = [
 name = "dp-rpc"
 version = "2.0.0"
 dependencies = [
- "ethereum-types 0.10.0",
+ "ethereum-types 0.11.0",
  "jsonrpc-core",
  "jsonrpc-core-client",
  "jsonrpc-derive",
@@ -2174,8 +2174,8 @@ dependencies = [
  "darwinia-evm",
  "dp-evm",
  "dp-rpc",
- "ethereum 0.6.0",
- "ethereum-types 0.10.0",
+ "ethereum 0.7.1",
+ "ethereum-types 0.11.0",
  "jsonrpc-core",
  "jsonrpc-derive",
  "jsonrpc-pubsub",
@@ -2402,7 +2402,6 @@ dependencies = [
  "fixed-hash 0.7.0",
  "impl-codec 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "impl-rlp 0.3.0",
- "impl-serde 0.3.1",
  "tiny-keccak 2.0.2",
 ]
 
@@ -2520,7 +2519,6 @@ dependencies = [
  "fixed-hash 0.7.0",
  "impl-codec 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "impl-rlp 0.3.0",
- "impl-serde 0.3.1",
  "primitive-types 0.8.0",
  "uint 0.9.0",
 ]
@@ -6007,7 +6005,6 @@ dependencies = [
  "fixed-hash 0.7.0",
  "impl-codec 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "impl-rlp 0.3.0",
- "impl-serde 0.3.1",
  "uint 0.9.0",
 ]
 
