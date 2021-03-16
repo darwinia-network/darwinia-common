@@ -1271,7 +1271,7 @@ mod tests {
 					.collect::<Vec<_>>()
 			});
 			let mut ext: sp_io::TestExternalities = GenesisConfig {
-				darwinia_balances_Instance0: Some(RingConfig {
+				darwinia_balances_Instance0: RingConfig {
 					balances: vec![
 						(1, 10 * self.balance_factor),
 						(2, 20 * self.balance_factor),
@@ -1280,10 +1280,10 @@ mod tests {
 						(5, 50 * self.balance_factor),
 						(6, 60 * self.balance_factor),
 					],
-				}),
-				elections_phragmen: Some(elections_phragmen::GenesisConfig::<Test> {
+				},
+				elections_phragmen: elections_phragmen::GenesisConfig::<Test> {
 					members: self.genesis_members,
-				}),
+				},
 			}
 			.build_storage()
 			.unwrap()

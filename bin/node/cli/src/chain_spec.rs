@@ -159,14 +159,14 @@ fn pangolin_build_spec_genesis() -> GenesisConfig {
 	);
 
 	GenesisConfig {
-		frame_system: Some(SystemConfig {
+		frame_system: SystemConfig {
 			code: wasm_binary_unwrap().to_vec(),
 			changes_trie_config: Default::default(),
-		}),
-		pallet_babe: Some(Default::default()),
-		darwinia_balances_Instance0: Some(RingConfig { balances: endowed_accounts }),
-		darwinia_balances_Instance1: Some(Default::default()),
-		darwinia_staking: Some(StakingConfig {
+		},
+		pallet_babe: Default::default(),
+		darwinia_balances_Instance0: RingConfig { balances: endowed_accounts },
+		darwinia_balances_Instance1: Default::default(),
+		darwinia_staking: StakingConfig {
 			minimum_validator_count: 1,
 			validator_count: 7,
 			stakers: initial_authorities
@@ -177,32 +177,32 @@ fn pangolin_build_spec_genesis() -> GenesisConfig {
 			slash_reward_fraction: Perbill::from_percent(10),
 			payout_fraction: Perbill::from_percent(50),
 			..Default::default()
-		}),
-		pallet_session: Some(SessionConfig {
+		},
+		pallet_session: SessionConfig {
 			keys: initial_authorities
 				.iter()
 				.cloned()
 				.map(|x| (x.0.clone(), x.0, pangolin_session_keys(x.2, x.3, x.4, x.5)))
 				.collect(),
-		}),
-		pallet_grandpa: Some(Default::default()),
-		pallet_im_online: Some(Default::default()),
-		pallet_authority_discovery: Some(Default::default()),
-		darwinia_democracy: Some(Default::default()),
-		pallet_collective_Instance0: Some(Default::default()),
-		pallet_collective_Instance1: Some(Default::default()),
-		darwinia_elections_phragmen: Some(Default::default()),
-		pallet_membership_Instance0: Some(Default::default()),
-		darwinia_claims: Some(Default::default()),
-		darwinia_vesting: Some(Default::default()),
-		pallet_sudo: Some(SudoConfig { key: root.clone() }),
-		darwinia_crab_issuing: Some(CrabIssuingConfig {
+		},
+		pallet_grandpa: Default::default(),
+		pallet_im_online: Default::default(),
+		pallet_authority_discovery: Default::default(),
+		darwinia_democracy: Default::default(),
+		pallet_collective_Instance0: Default::default(),
+		pallet_collective_Instance1: Default::default(),
+		darwinia_elections_phragmen: Default::default(),
+		pallet_membership_Instance0: Default::default(),
+		darwinia_claims: Default::default(),
+		darwinia_vesting: Default::default(),
+		pallet_sudo: SudoConfig { key: root.clone() },
+		darwinia_crab_issuing: CrabIssuingConfig {
 			total_mapped_ring: 1 << 56
-		}),
-		darwinia_crab_backing: Some(CrabBackingConfig {
+		},
+		darwinia_crab_backing: CrabBackingConfig {
 			backed_ring: 1 << 56
-		}),
-		darwinia_ethereum_backing: Some(EthereumBackingConfig {
+		},
+		darwinia_ethereum_backing: EthereumBackingConfig {
 			token_redeem_address: array_bytes::hex2array_unchecked!(TOKEN_REDEEM_ADDRESS, 20).into(),
 			deposit_redeem_address: array_bytes::hex2array_unchecked!(DEPOSIT_REDEEM_ADDRESS, 20).into(),
 			set_authorities_address: array_bytes::hex2array_unchecked!(SET_AUTHORITIES_ADDRESS, 20).into(),
@@ -210,8 +210,8 @@ fn pangolin_build_spec_genesis() -> GenesisConfig {
 			kton_token_address: array_bytes::hex2array_unchecked!(KTON_TOKEN_ADDRESS, 20).into(),
 			ring_locked: 1 << 56,
 			kton_locked: 1 << 56,
-		}),
-		darwinia_ethereum_relay: Some(EthereumRelayConfig {
+		},
+		darwinia_ethereum_relay: EthereumRelayConfig {
 			genesis_header_info: (
 				vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 86, 232, 31, 23, 27, 204, 85, 166, 255, 131, 69, 230, 146, 192, 248, 110, 91, 72, 224, 27, 153, 108, 173, 192, 1, 98, 47, 181, 227, 99, 180, 33, 29, 204, 77, 232, 222, 199, 93, 122, 171, 133, 181, 103, 182, 204, 212, 26, 211, 18, 69, 27, 148, 138, 116, 19, 240, 161, 66, 253, 64, 212, 147, 71, 128, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 33, 123, 11, 188, 251, 114, 226, 213, 126, 40, 243, 60, 179, 97, 185, 152, 53, 19, 23, 119, 85, 220, 63, 51, 206, 62, 112, 34, 237, 98, 183, 123, 86, 232, 31, 23, 27, 204, 85, 166, 255, 131, 69, 230, 146, 192, 248, 110, 91, 72, 224, 27, 153, 108, 173, 192, 1, 98, 47, 181, 227, 99, 180, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 132, 160, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 136, 0, 0, 0, 0, 0, 0, 0, 66, 1, 65, 148, 16, 35, 104, 9, 35, 224, 254, 77, 116, 163, 75, 218, 200, 20, 31, 37, 64, 227, 174, 144, 98, 55, 24, 228, 125, 102, 209, 202, 74, 45],
 				b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00".into()
@@ -221,18 +221,18 @@ fn pangolin_build_spec_genesis() -> GenesisConfig {
 				"DAG_MERKLE_ROOTS_PATH",
 			),
 			..Default::default()
-		}),
-		darwinia_tron_backing: Some(TronBackingConfig {
+		},
+		darwinia_tron_backing: TronBackingConfig {
 			backed_ring: 1 << 56,
 			backed_kton: 1 << 56,
-		}),
-		darwinia_evm: Some(EVMConfig {
+		},
+		darwinia_evm: EVMConfig {
 			accounts: evm_accounts,
-		}),
-		dvm_ethereum: Some(Default::default()),
-		darwinia_relay_authorities_Instance0: Some(EthereumRelayAuthoritiesConfig {
+		},
+		dvm_ethereum: Default::default(),
+		darwinia_relay_authorities_Instance0: EthereumRelayAuthoritiesConfig {
 			authorities: vec![(root, array_bytes::hex2array_unchecked!(GENESIS_ETHEREUM_RELAY_AUTHORITY_SIGNER, 20).into(), 1)]
-		}),
+		},
 	}
 }
 
@@ -311,26 +311,26 @@ fn pangolin_development_genesis(
 	});
 
 	GenesisConfig {
-		frame_system: Some(SystemConfig {
+		frame_system: SystemConfig {
 			code: wasm_binary_unwrap().to_vec(),
 			changes_trie_config: Default::default(),
-		}),
-		pallet_babe: Some(Default::default()),
-		darwinia_balances_Instance0: Some(RingConfig {
+		},
+		pallet_babe: Default::default(),
+		darwinia_balances_Instance0: RingConfig {
 			balances: endowed_accounts
 				.iter()
 				.cloned()
 				.map(|k| (k, 1 << 56))
 				.collect(),
-		}),
-		darwinia_balances_Instance1: Some(KtonConfig {
+		},
+		darwinia_balances_Instance1: KtonConfig {
 			balances: endowed_accounts
 				.iter()
 				.cloned()
 				.map(|k| (k, 1 << 56))
 				.collect(),
-		}),
-		darwinia_staking: Some(StakingConfig {
+		},
+		darwinia_staking: StakingConfig {
 			minimum_validator_count: 1,
 			validator_count: 2,
 			stakers: initial_authorities
@@ -343,37 +343,37 @@ fn pangolin_development_genesis(
 			slash_reward_fraction: Perbill::from_percent(10),
 			payout_fraction: Perbill::from_percent(50),
 			..Default::default()
-		}),
-		pallet_session: Some(SessionConfig {
+		},
+		pallet_session: SessionConfig {
 			keys: initial_authorities
 				.iter()
 				.cloned()
 				.map(|x| (x.0.clone(), x.0, pangolin_session_keys(x.2, x.3, x.4, x.5)))
 				.collect(),
-		}),
-		pallet_grandpa: Some(Default::default()),
-		pallet_im_online: Some(Default::default()),
-		pallet_authority_discovery: Some(Default::default()),
-		darwinia_democracy: Some(Default::default()),
-		pallet_collective_Instance0: Some(Default::default()),
-		pallet_collective_Instance1: Some(Default::default()),
-		darwinia_elections_phragmen: Some(Default::default()),
-		pallet_membership_Instance0: Some(Default::default()),
-		darwinia_claims: Some(ClaimsConfig {
+		},
+		pallet_grandpa: Default::default(),
+		pallet_im_online: Default::default(),
+		pallet_authority_discovery: Default::default(),
+		darwinia_democracy: Default::default(),
+		pallet_collective_Instance0: Default::default(),
+		pallet_collective_Instance1: Default::default(),
+		darwinia_elections_phragmen: Default::default(),
+		pallet_membership_Instance0: Default::default(),
+		darwinia_claims: ClaimsConfig {
 			claims_list: ClaimsList::from_file(
 				"bin/res/claims-list.json",
 				"CLAIMS_LIST_PATH",
 			),
-		}),
-		darwinia_vesting: Some(Default::default()),
-		pallet_sudo: Some(SudoConfig { key: root_key.clone() }),
-		darwinia_crab_issuing: Some(CrabIssuingConfig {
+		},
+		darwinia_vesting: Default::default(),
+		pallet_sudo: SudoConfig { key: root_key.clone() },
+		darwinia_crab_issuing: CrabIssuingConfig {
 			total_mapped_ring: 1 << 56
-		}),
-		darwinia_crab_backing: Some(CrabBackingConfig {
+		},
+		darwinia_crab_backing: CrabBackingConfig {
 			backed_ring: 1 << 56
-		}),
-		darwinia_ethereum_backing: Some(EthereumBackingConfig {
+		},
+		darwinia_ethereum_backing: EthereumBackingConfig {
 			token_redeem_address: array_bytes::hex2array_unchecked!(TOKEN_REDEEM_ADDRESS, 20).into(),
 			deposit_redeem_address: array_bytes::hex2array_unchecked!(DEPOSIT_REDEEM_ADDRESS, 20).into(),
 			set_authorities_address: array_bytes::hex2array_unchecked!(SET_AUTHORITIES_ADDRESS, 20).into(),
@@ -381,8 +381,8 @@ fn pangolin_development_genesis(
 			kton_token_address: array_bytes::hex2array_unchecked!(KTON_TOKEN_ADDRESS, 20).into(),
 			ring_locked: 1 << 56,
 			kton_locked: 1 << 56,
-		}),
-		darwinia_ethereum_relay: Some(EthereumRelayConfig {
+		},
+		darwinia_ethereum_relay: EthereumRelayConfig {
 			genesis_header_info: (
 				vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 86, 232, 31, 23, 27, 204, 85, 166, 255, 131, 69, 230, 146, 192, 248, 110, 91, 72, 224, 27, 153, 108, 173, 192, 1, 98, 47, 181, 227, 99, 180, 33, 29, 204, 77, 232, 222, 199, 93, 122, 171, 133, 181, 103, 182, 204, 212, 26, 211, 18, 69, 27, 148, 138, 116, 19, 240, 161, 66, 253, 64, 212, 147, 71, 128, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 33, 123, 11, 188, 251, 114, 226, 213, 126, 40, 243, 60, 179, 97, 185, 152, 53, 19, 23, 119, 85, 220, 63, 51, 206, 62, 112, 34, 237, 98, 183, 123, 86, 232, 31, 23, 27, 204, 85, 166, 255, 131, 69, 230, 146, 192, 248, 110, 91, 72, 224, 27, 153, 108, 173, 192, 1, 98, 47, 181, 227, 99, 180, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 132, 160, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 136, 0, 0, 0, 0, 0, 0, 0, 66, 1, 65, 148, 16, 35, 104, 9, 35, 224, 254, 77, 116, 163, 75, 218, 200, 20, 31, 37, 64, 227, 174, 144, 98, 55, 24, 228, 125, 102, 209, 202, 74, 45],
 				b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00".into()
@@ -392,17 +392,17 @@ fn pangolin_development_genesis(
 				"DAG_MERKLE_ROOTS_PATH",
 			),
 			..Default::default()
-		}),
-		darwinia_tron_backing: Some(TronBackingConfig {
+		},
+		darwinia_tron_backing: TronBackingConfig {
 			backed_ring: 1 << 56,
 			backed_kton: 1 << 56,
-		}),
-		darwinia_evm: Some(EVMConfig {
+		},
+		darwinia_evm: EVMConfig {
 			accounts: evm_accounts,
-		}),
-		dvm_ethereum: Some(Default::default()),
-		darwinia_relay_authorities_Instance0: Some(EthereumRelayAuthoritiesConfig {
+		},
+		dvm_ethereum: Default::default(),
+		darwinia_relay_authorities_Instance0: EthereumRelayAuthoritiesConfig {
 			authorities: vec![(root_key, array_bytes::hex2array_unchecked!(GENESIS_ETHEREUM_RELAY_AUTHORITY_SIGNER, 20).into(), 1)]
-		}),
+		},
 	}
 }
