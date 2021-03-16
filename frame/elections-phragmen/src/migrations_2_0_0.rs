@@ -114,7 +114,7 @@ pub fn apply<T: ToV2>(old_voter_bond: T::Balance, old_candidacy_bond: T::Balance
 
 	if let Some(storage_version) = maybe_storage_version {
 		if storage_version >= PalletVersion::new(2, 0, 0) {
-			frame_support::debug::info!("Skipped");
+			log::info!("Skipped");
 
 			return 0;
 		}

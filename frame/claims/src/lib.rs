@@ -41,7 +41,7 @@ mod types {
 use codec::{Decode, Encode};
 // --- substrate ---
 #[cfg(feature = "std")]
-use frame_support::{debug::error, traits::WithdrawReasons};
+use frame_support::traits::WithdrawReasons;
 use frame_support::{
 	ensure,
 	traits::{Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, Get},
@@ -96,7 +96,7 @@ decl_error! {
 		/// Ethereum address has no claim.
 		SignerHasNoClaim,
 		/// There's not enough in the pot to pay out some unvested amount. Generally implies a logic
-		/// error.
+		/// log::error.
 		PotUnderflow,
 		/// Can NOT Move Claim to an EXISTED Address.
 		MoveToExistedAddress,
@@ -125,7 +125,7 @@ decl_storage! {
 			let mut total = <RingBalance<T>>::zero();
 
 			if dot.is_empty() && eth.is_empty() && tron.is_empty() {
-				error!("[darwinia-claims] Genesis Claims List is Set to EMPTY");
+				log::error!("[darwinia-claims] Genesis Claims List is Set to EMPTY");
 			} else {
 				// Eth Address
 				for Account { address, backed_ring } in dot {
