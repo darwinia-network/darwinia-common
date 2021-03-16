@@ -283,7 +283,7 @@ where
 		client.clone(),
 		select_chain.clone(),
 		inherent_data_providers.clone(),
-		&task_manager.spawn_handle(),
+		&task_manager.spawn_essential_handle(),
 		config.prometheus_registry(),
 		CanAuthorWithNativeVersion::new(client.executor().clone()),
 	)?;
@@ -684,7 +684,7 @@ where
 		client.clone(),
 		select_chain.clone(),
 		inherent_data_providers.clone(),
-		&task_manager.spawn_handle(),
+		&task_manager.spawn_essential_handle(),
 		config.prometheus_registry(),
 		NeverCanAuthor,
 	)?;
