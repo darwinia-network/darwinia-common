@@ -19,65 +19,21 @@
 //! Mock file for ethereum-relay.
 
 // --- substrate ---
-use frame_support::{
-	impl_outer_dispatch, impl_outer_origin, parameter_types, traits::OnInitialize,
-};
-use frame_system::EnsureRoot;
+use frame_support::{parameter_types, traits::OnInitialize};
+use frame_system::{mocking::*, EnsureRoot};
 use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, RuntimeDebug};
 // --- darwinia ---
-use crate::*;
+use crate::{self as darwinia_ethereum_relay, *};
+
+pub type Block = MockBlock<Test>;
+pub type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 
 pub type AccountId = u64;
 pub type BlockNumber = u64;
 pub type Balance = u128;
 
-pub type System = frame_system::Module<Test>;
-pub type EthereumRelay = Module<Test>;
-
-impl_outer_origin! {
-	pub enum Origin for Test where system = frame_system {}
-}
-
-impl_outer_dispatch! {
-	pub enum Call for Test where origin: Origin {
-		frame_system::System,
-		darwinia_ethereum_relay::EthereumRelay,
-	}
-}
-
-darwinia_support::impl_test_account_data! { deprecated }
-
-// Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
-#[derive(Clone, PartialEq, Eq, Debug)]
-pub struct Test;
-pub struct UnusedTechnicalMembership;
-impl Contains<AccountId> for UnusedTechnicalMembership {
-	fn sorted_members() -> Vec<AccountId> {
-		vec![1, 2, 3]
-	}
-}
-parameter_types! {
-	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
-	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Mainnet;
-	pub static BestConfirmedBlockNumber: EthereumBlockNumber = 0;
-	pub static ConfirmPeriod: BlockNumber = 0;
-}
-impl Config for Test {
-	type ModuleId = EthereumRelayModuleId;
-	type Event = ();
-	type EthereumNetwork = EthereumNetwork;
-	type Call = Call;
-	type Currency = Ring;
-	type RelayerGame = UnusedRelayerGame;
-	type ApproveOrigin = EnsureRoot<AccountId>;
-	type RejectOrigin = EnsureRoot<AccountId>;
-	type ConfirmPeriod = ConfirmPeriod;
-	type TechnicalMembership = UnusedTechnicalMembership;
-	type ApproveThreshold = ();
-	type RejectThreshold = ();
-	type WeightInfo = ();
-}
+darwinia_support::impl_test_account_data! {}
 
 impl frame_system::Config for Test {
 	type BaseCallFilter = ();
@@ -116,6 +72,47 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type WeightInfo = ();
 }
 
+pub struct UnusedTechnicalMembership;
+impl Contains<AccountId> for UnusedTechnicalMembership {
+	fn sorted_members() -> Vec<AccountId> {
+		vec![1, 2, 3]
+	}
+}
+parameter_types! {
+	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
+	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Mainnet;
+	pub static BestConfirmedBlockNumber: EthereumBlockNumber = 0;
+	pub static ConfirmPeriod: BlockNumber = 0;
+}
+impl Config for Test {
+	type ModuleId = EthereumRelayModuleId;
+	type Event = ();
+	type EthereumNetwork = EthereumNetwork;
+	type Call = Call;
+	type Currency = Ring;
+	type RelayerGame = UnusedRelayerGame;
+	type ApproveOrigin = EnsureRoot<AccountId>;
+	type RejectOrigin = EnsureRoot<AccountId>;
+	type ConfirmPeriod = ConfirmPeriod;
+	type TechnicalMembership = UnusedTechnicalMembership;
+	type ApproveThreshold = ();
+	type RejectThreshold = ();
+	type WeightInfo = ();
+}
+
+frame_support::construct_runtime! {
+	pub enum Test
+	where
+		Block = Block,
+		NodeBlock = Block,
+		UncheckedExtrinsic = UncheckedExtrinsic
+	{
+		System: frame_system::{Module, Call, Storage, Config},
+		Ring: darwinia_balances::<Instance0>::{Module, Call, Storage},
+		EthereumRelay: darwinia_ethereum_relay::{Module, Call, Storage, Config<T>},
+	}
+}
+
 pub struct ExtBuilder {
 	best_confirmed_block_number: EthereumBlockNumber,
 	confirm_period: BlockNumber,
@@ -148,7 +145,7 @@ impl ExtBuilder {
 			.build_storage::<Test>()
 			.unwrap();
 
-		GenesisConfig::<Test> {
+		darwinia_ethereum_relay::GenesisConfig::<Test> {
 			genesis_header_info: (
 				vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 86, 232, 31, 23, 27, 204, 85, 166, 255, 131, 69, 230, 146, 192, 248, 110, 91, 72, 224, 27, 153, 108, 173, 192, 1, 98, 47, 181, 227, 99, 180, 33, 29, 204, 77, 232, 222, 199, 93, 122, 171, 133, 181, 103, 182, 204, 212, 26, 211, 18, 69, 27, 148, 138, 116, 19, 240, 161, 66, 253, 64, 212, 147, 71, 128, 17, 187, 232, 219, 78, 52, 123, 78, 140, 147, 124, 28, 131, 112, 228, 181, 237, 51, 173, 179, 219, 105, 203, 219, 122, 56, 225, 229, 11, 27, 130, 250, 215, 248, 151, 79, 181, 172, 120, 217, 172, 9, 155, 154, 213, 1, 139, 237, 194, 206, 10, 114, 218, 209, 130, 122, 23, 9, 218, 48, 88, 15, 5, 68, 86, 232, 31, 23, 27, 204, 85, 166, 255, 131, 69, 230, 146, 192, 248, 110, 91, 72, 224, 27, 153, 108, 173, 192, 1, 98, 47, 181, 227, 99, 180, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 136, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 132, 160, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 136, 0, 0, 0, 0, 0, 0, 0, 66, 1, 212, 229, 103, 64, 248, 118, 174, 248, 192, 16, 184, 106, 64, 213, 245, 103, 69, 161, 24, 208, 144, 106, 52, 230, 154, 236, 140, 13, 177, 203, 143, 163],
 				b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00".into()
