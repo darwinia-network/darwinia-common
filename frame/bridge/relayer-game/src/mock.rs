@@ -249,12 +249,12 @@ use crate::{self as darwinia_relayer_game, *};
 use darwinia_relay_primitives::relayer_game::*;
 use mock_relay::{MockRelayBlockNumber, MockRelayHeader};
 
+pub type Block = MockBlock<Test>;
+pub type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
+
 pub type AccountId = u64;
 pub type BlockNumber = u64;
 pub type Balance = u128;
-
-pub type Block = MockBlock<Test>;
-pub type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 
 pub type RelayerGameError = Error<Test, DefaultInstance>;
 

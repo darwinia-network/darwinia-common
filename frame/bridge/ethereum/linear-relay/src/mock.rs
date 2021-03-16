@@ -32,12 +32,12 @@ use crate::{self as darwinia_ethereum_linear_relay, *};
 use ethereum_primitives::receipt::LogEntry;
 use ethereum_types::H512;
 
+type Block = MockBlock<Test>;
+type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
+
 type AccountId = u64;
 type BlockNumber = u64;
 type Balance = u128;
-
-type Block = MockBlock<Test>;
-type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 
 darwinia_support::impl_test_account_data! {}
 

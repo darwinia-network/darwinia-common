@@ -34,18 +34,17 @@ macro_rules! decl_tests {
 		use crate as darwinia_ethereum_backing;
 		use darwinia_staking::{EraIndex, Exposure, ExposureOf};
 
-		type Balance = u128;
-		type BlockNumber = u64;
+		type Block = MockBlock<Test>;
+		type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
+		type Extrinsic = TestXt<Call, ()>;
 
 		/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
 		type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 		/// Some way of identifying an account on the chain. We intentionally make it equivalent
 		/// to the public key of our transaction signing scheme.
 		type Signature = MultiSignature;
-
-		type Block = MockBlock<Test>;
-		type Extrinsic = TestXt<Call, ()>;
-		type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
+		type Balance = u128;
+		type BlockNumber = u64;
 
 		darwinia_support::impl_test_account_data! {}
 

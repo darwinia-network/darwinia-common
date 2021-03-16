@@ -594,10 +594,10 @@ mod tests {
 	// --- darwinia ---
 	use crate::{self as darwinia_claims, secp_utils::*, *};
 
-	type Balance = u64;
-
 	type Block = MockBlock<Test>;
 	type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
+
+	type Balance = u64;
 
 	const ETHEREUM_SIGNED_MESSAGE: &'static [u8] = b"\x19Ethereum Signed Message:\n";
 	const TRON_SIGNED_MESSAGE: &'static [u8] = b"\x19TRON Signed Message:\n";
