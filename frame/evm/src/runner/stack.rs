@@ -95,12 +95,11 @@ impl<T: Config> Runner<T> {
 			Error::<T>::BalanceLow
 		);
 
-		Module::<T>::withdraw_fee(&source, total_fee);
-
 		if let Some(nonce) = nonce {
 			ensure!(source_account.nonce == nonce, Error::<T>::InvalidNonce);
 		}
 
+		Module::<T>::withdraw_fee(&source, total_fee);
 		let (reason, retv) = f(&mut executor);
 
 		let used_gas = U256::from(executor.used_gas());

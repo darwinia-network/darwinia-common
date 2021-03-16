@@ -168,7 +168,6 @@ impl Config for Test {
 	type FindAuthor = EthereumFindAuthor;
 	type StateRoot = IntermediateStateRoot;
 	type BlockGasLimit = BlockGasLimit;
-	type AddressMapping = HashedAddressMapping;
 	type RingCurrency = Ring;
 }
 
