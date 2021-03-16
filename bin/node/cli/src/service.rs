@@ -441,7 +441,7 @@ where
 			task_manager.spawn_handle(),
 			backend.clone(),
 			import_setup.1.shared_authority_set().clone(),
-		)
+		),
 	);
 
 	let (network, network_status_sinks, system_rpc_tx, network_starter) =
