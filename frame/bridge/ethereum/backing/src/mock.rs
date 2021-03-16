@@ -20,11 +20,10 @@
 
 #[macro_export]
 macro_rules! decl_tests {
-	() => {
+	($($pallet:tt)*) => {
 		// --- substrate ---
-		use frame_support::{
-			impl_outer_dispatch, impl_outer_origin, parameter_types, weights::Weight,
-		};
+		use frame_support::{parameter_types, weights::Weight};
+		use frame_system::mocking::*;
 		use sp_core::crypto::key_types;
 		use sp_runtime::{
 			testing::{Header, TestXt, UintAuthorityId},
@@ -32,6 +31,7 @@ macro_rules! decl_tests {
 			ModuleId, {KeyTypeId, MultiSignature, Perbill},
 		};
 		// --- darwinia ---
+		use crate as darwinia_ethereum_backing;
 		use darwinia_staking::{EraIndex, Exposure, ExposureOf};
 
 		type Balance = u128;
@@ -43,66 +43,11 @@ macro_rules! decl_tests {
 		/// to the public key of our transaction signing scheme.
 		type Signature = MultiSignature;
 
+		type Block = MockBlock<Test>;
 		type Extrinsic = TestXt<Call, ()>;
+		type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 
-		type Session = pallet_session::Module<Test>;
-		type System = frame_system::Module<Test>;
-		type Timestamp = pallet_timestamp::Module<Test>;
-		type Staking = darwinia_staking::Module<Test>;
-		type EthereumBacking = Module<Test>;
-
-		impl_outer_origin! {
-			pub enum Origin for Test where system = frame_system {}
-		}
-
-		impl_outer_dispatch! {
-			pub enum Call for Test where origin: Origin {
-				darwinia_ethereum_relay::EthereumRelay,
-				darwinia_staking::Staking,
-			}
-		}
-
-		darwinia_support::impl_test_account_data! { deprecated }
-
-		#[derive(Clone, PartialEq, Eq, Debug)]
-		pub struct Test;
-		pub struct EcdsaAuthorities;
-		impl RelayAuthorityProtocol<BlockNumber> for EcdsaAuthorities {
-			type Signer = EthereumAddress;
-
-			fn schedule_mmr_root(_: BlockNumber) {}
-
-			fn check_authorities_change_to_sync(_: Term, _: Vec<Self::Signer>) -> DispatchResult {
-				Ok(())
-			}
-
-			fn sync_authorities_change() -> DispatchResult {
-				Ok(())
-			}
-		}
-		parameter_types! {
-			pub const EthereumBackingModuleId: ModuleId = ModuleId(*b"da/backi");
-			pub const EthereumBackingFeeModuleId: ModuleId = ModuleId(*b"da/ethfe");
-			pub const RingLockLimit: Balance = 1000;
-			pub const KtonLockLimit: Balance = 1000;
-			pub const AdvancedFee: Balance = 1;
-		}
-		impl Config for Test {
-			type ModuleId = EthereumBackingModuleId;
-			type FeeModuleId = EthereumBackingFeeModuleId;
-			type Event = ();
-			type RedeemAccountId = AccountId;
-			type EthereumRelay = EthereumRelay;
-			type OnDepositRedeem = Staking;
-			type RingCurrency = Ring;
-			type KtonCurrency = Kton;
-			type RingLockLimit = RingLockLimit;
-			type KtonLockLimit = KtonLockLimit;
-			type AdvancedFee = AdvancedFee;
-			type SyncReward = ();
-			type EcdsaAuthorities = EcdsaAuthorities;
-			type WeightInfo = ();
-		}
+		darwinia_support::impl_test_account_data! {}
 
 		impl frame_system::Config for Test {
 			type BaseCallFilter = ();
@@ -136,6 +81,21 @@ macro_rules! decl_tests {
 			type WeightInfo = ();
 		}
 
+		pub struct TestSessionHandler;
+		impl pallet_session::SessionHandler<AccountId> for TestSessionHandler {
+			const KEY_TYPE_IDS: &'static [KeyTypeId] = &[key_types::DUMMY];
+
+			fn on_genesis_session<Ks: OpaqueKeys>(_validators: &[(AccountId, Ks)]) {}
+
+			fn on_new_session<Ks: OpaqueKeys>(
+				_changed: bool,
+				_validators: &[(AccountId, Ks)],
+				_queued_validators: &[(AccountId, Ks)],
+			) {
+			}
+
+			fn on_disabled(_validator_index: usize) {}
+		}
 		parameter_types! {
 			pub const Period: BlockNumber = 1;
 			pub const Offset: BlockNumber = 0;
@@ -214,6 +174,44 @@ macro_rules! decl_tests {
 			type WeightInfo = ();
 		}
 
+		pub struct EcdsaAuthorities;
+		impl RelayAuthorityProtocol<BlockNumber> for EcdsaAuthorities {
+			type Signer = EthereumAddress;
+
+			fn schedule_mmr_root(_: BlockNumber) {}
+
+			fn check_authorities_change_to_sync(_: Term, _: Vec<Self::Signer>) -> DispatchResult {
+				Ok(())
+			}
+
+			fn sync_authorities_change() -> DispatchResult {
+				Ok(())
+			}
+		}
+		parameter_types! {
+			pub const EthereumBackingModuleId: ModuleId = ModuleId(*b"da/backi");
+			pub const EthereumBackingFeeModuleId: ModuleId = ModuleId(*b"da/ethfe");
+			pub const RingLockLimit: Balance = 1000;
+			pub const KtonLockLimit: Balance = 1000;
+			pub const AdvancedFee: Balance = 1;
+		}
+		impl Config for Test {
+			type ModuleId = EthereumBackingModuleId;
+			type FeeModuleId = EthereumBackingFeeModuleId;
+			type Event = ();
+			type RedeemAccountId = AccountId;
+			type EthereumRelay = EthereumRelay;
+			type OnDepositRedeem = Staking;
+			type RingCurrency = Ring;
+			type KtonCurrency = Kton;
+			type RingLockLimit = RingLockLimit;
+			type KtonLockLimit = KtonLockLimit;
+			type AdvancedFee = AdvancedFee;
+			type SyncReward = ();
+			type EcdsaAuthorities = EcdsaAuthorities;
+			type WeightInfo = ();
+		}
+
 		impl<LocalCall> frame_system::offchain::SendTransactionTypes<LocalCall> for Test
 		where
 			Call: From<LocalCall>,
@@ -222,20 +220,22 @@ macro_rules! decl_tests {
 			type OverarchingCall = Call;
 		}
 
-		pub struct TestSessionHandler;
-		impl pallet_session::SessionHandler<AccountId> for TestSessionHandler {
-			const KEY_TYPE_IDS: &'static [KeyTypeId] = &[key_types::DUMMY];
-
-			fn on_genesis_session<Ks: OpaqueKeys>(_validators: &[(AccountId, Ks)]) {}
-
-			fn on_new_session<Ks: OpaqueKeys>(
-				_changed: bool,
-				_validators: &[(AccountId, Ks)],
-				_queued_validators: &[(AccountId, Ks)],
-			) {
+		frame_support::construct_runtime! {
+			pub enum Test
+			where
+				Block = Block,
+				NodeBlock = Block,
+				UncheckedExtrinsic = UncheckedExtrinsic
+			{
+				System: frame_system::{Module, Call, Storage, Config},
+				Timestamp: pallet_timestamp::{Module, Call, Storage},
+				Ring: darwinia_balances::<Instance0>::{Module, Call, Storage},
+				Kton: darwinia_balances::<Instance1>::{Module, Call, Storage},
+				Staking: darwinia_staking::{Module, Call, Storage},
+				Session: pallet_session::{Module, Call, Storage},
+				EthereumBacking: darwinia_ethereum_backing::{Module, Call, Storage, Config<T>},
+				$($pallet)*,
 			}
-
-			fn on_disabled(_validator_index: usize) {}
 		}
 	};
 }
