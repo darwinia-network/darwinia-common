@@ -53,6 +53,7 @@ pallet-authority-discovery                 = { default-features = false, git = "
 pallet-authorship                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
 pallet-babe                                = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
 pallet-collective                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+pallet-election-provider-multi-phase       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
 pallet-grandpa                             = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
 pallet-identity                            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
 pallet-im-online                           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
@@ -130,6 +131,7 @@ std = [
 	"pallet-authorship/std",
 	"pallet-babe/std",
 	"pallet-collective/std",
+	"pallet-election-provider-multi-phase/std",
 	"pallet-grandpa/std",
 	"pallet-identity/std",
 	"pallet-im-online/std",

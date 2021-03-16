@@ -379,7 +379,7 @@ mod types {
 }
 
 // --- darwinia ---
-pub use types::EraIndex;
+pub use types::{CompactAssignments, EraIndex};
 
 // --- crates ---
 use codec::{Decode, Encode, HasCompact};
@@ -399,10 +399,11 @@ use frame_support::{
 	},
 };
 use frame_system::{ensure_none, ensure_root, ensure_signed, offchain::SendTransactionTypes};
+use sp_election_providers::ElectionProvider;
 use sp_npos_elections::{
-	generate_solution_type, is_score_better, seq_phragmen, to_support_map, Assignment,
+	generate_solution_type, is_score_better, seq_phragmen, to_supports, Assignment,
 	CompactSolution, ElectionResult as PrimitiveElectionResult, ElectionScore, EvaluateSupport,
-	ExtendedBalance, PerThing128, SupportMap, VoteWeight,
+	ExtendedBalance, PerThing128, Supports, VoteWeight,
 };
 use sp_runtime::{
 	helpers_128bit::multiply_by_rational,
@@ -445,14 +446,14 @@ macro_rules! log {
 	($level:tt, $patter:expr $(, $values:expr)* $(,)?) => {
 		log::$level!(
 			target: crate::LOG_TARGET,
-			$patter $(, $values)*
+			concat!("💸 ", $patter) $(, $values)*
 		)
 	};
 }
 
 pub const MAX_NOMINATIONS: usize = <CompactAssignments as CompactSolution>::LIMIT;
+pub const MAX_UNLOCKING_CHUNKS: usize = 32;
 
-pub(crate) const MAX_UNLOCKING_CHUNKS: usize = 32;
 /// Maximum number of stakers that can be stored in a snapshot.
 pub(crate) const MAX_VALIDATORS: usize = ValidatorIndex::max_value() as usize;
 pub(crate) const MAX_NOMINATORS: usize = NominatorIndex::max_value() as usize;
@@ -472,6 +473,14 @@ pub trait Config: frame_system::Config + SendTransactionTypes<Call<Self>> {
 	/// It is guaranteed to start being called from the first `on_finalize`. Thus value at genesis
 	/// is not used.
 	type UnixTime: UnixTime;
+
+	/// Something that provides the election functionality.
+	type ElectionProvider: sp_election_providers::ElectionProvider<
+		Self::AccountId,
+		Self::BlockNumber,
+		// we only accept an election provider that has staking as data provider.
+		DataProvider = Module<Self>,
+	>;
 
 	/// Number of sessions per era.
 	type SessionsPerEra: Get<SessionIndex>;
@@ -901,28 +910,45 @@ decl_storage! {
 		/// The earliest era for which we have a pending, unapplied slash.
 		EarliestUnappliedSlash: Option<EraIndex>;
 
+		/// The last planned session scheduled by the session pallet.
+		///
+		/// This is basically in sync with the call to [`SessionManager::new_session`].
+		pub CurrentPlannedSession get(fn current_planned_session): SessionIndex;
+
 		/// Snapshot of validators at the beginning of the current election window. This should only
 		/// have a value when [`EraElectionStatus`] == `ElectionStatus::Open(_)`.
+		///
+		/// TWO_PHASE_NOTE: should be removed once we switch to multi-phase.
 		pub SnapshotValidators get(fn snapshot_validators): Option<Vec<T::AccountId>>;
 
 		/// Snapshot of nominators at the beginning of the current election window. This should only
 		/// have a value when [`EraElectionStatus`] == `ElectionStatus::Open(_)`.
+		///
+		/// TWO_PHASE_NOTE: should be removed once we switch to multi-phase.
 		pub SnapshotNominators get(fn snapshot_nominators): Option<Vec<T::AccountId>>;
 
 		/// The next validator set. At the end of an era, if this is available (potentially from the
 		/// result of an offchain worker), it is immediately used. Otherwise, the on-chain election
 		/// is executed.
+		///
+		/// TWO_PHASE_NOTE: should be removed once we switch to multi-phase.
 		pub QueuedElected get(fn queued_elected): Option<ElectionResultT<T>>;
 
 		/// The score of the current [`QueuedElected`].
+		///
+		/// TWO_PHASE_NOTE: should be removed once we switch to multi-phase.
 		pub QueuedScore get(fn queued_score): Option<ElectionScore>;
 
 		/// Flag to control the execution of the offchain election. When `Open(_)`, we accept
 		/// solutions to be submitted.
+		///
+		/// TWO_PHASE_NOTE: should be removed once we switch to multi-phase.
 		pub EraElectionStatus get(fn era_election_status): ElectionStatus<T::BlockNumber>;
 
 		/// True if the current **planned** session is final. Note that this does not take era
 		/// forcing into account.
+		///
+		/// TWO_PHASE_NOTE: should be removed once we switch to multi-phase.
 		pub IsCurrentSessionFinal get(fn is_current_session_final): bool = false;
 
 		/// This is set to v5.0.0 for new networks.
@@ -1078,18 +1104,14 @@ decl_module! {
 									ElectionStatus::<T::BlockNumber>::Open(now)
 								);
 								add_weight(0, 1, 0);
-								log!(
-									info,
-									"💸 Election window is Open({:?}). Snapshot created",
-									now
-								);
+								log!(info, "Election window is Open({:?}). Snapshot created", now);
 							} else {
-								log!(warn, "💸 Failed to create snapshot at {:?}.", now);
+								log!(warn, "Failed to create snapshot at {:?}.", now);
 							}
 						}
 					}
 				} else {
-					log!(warn, "💸 Estimating next session change failed.");
+					log!(warn, "Estimating next session change failed.");
 				}
 				add_weight(0, 0, T::NextNewSession::weight(now))
 			}
@@ -1110,16 +1132,12 @@ decl_module! {
 			if Self::era_election_status().is_open_at(now) {
 				let offchain_status = set_check_offchain_execution_status::<T>(now);
 				if let Err(why) = offchain_status {
-					log!(
-						warn,
-						"💸 skipping offchain worker in open election window due to [{}]",
-						why
-					);
+					log!(warn, "skipping offchain worker in open election window due to [{}]", why);
 				} else {
 					if let Err(e) = compute_offchain_election::<T>() {
-						log!(error, "💸 Error in election offchain worker: {:?}", e);
+						log!(error, "Error in election offchain worker: {:?}", e);
 					} else {
-						log!(debug, "💸 Executed offchain worker thread without errors.");
+						log!(debug, "Executed offchain worker thread without errors.");
 					}
 				}
 
@@ -2496,7 +2514,7 @@ impl<T: Config> Module<T> {
 		{
 			log!(
 				warn,
-				"💸 Snapshot size too big [{} <> {}][{} <> {}].",
+				"Snapshot size too big [{} <> {}][{} <> {}].",
 				num_validators,
 				MAX_VALIDATORS,
 				num_nominators,
@@ -2901,7 +2919,7 @@ impl<T: Config> Module<T> {
 			.into_assignment(nominator_at, validator_at)
 			.map_err(|e| {
 				// log the error since it is not propagated into the runtime error.
-				log!(warn, "💸 un-compacting solution failed due to {:?}", e);
+				log!(warn, "un-compacting solution failed due to {:?}", e);
 				<Error<T>>::OffchainElectionBogusCompact
 			})?;
 
@@ -2918,7 +2936,7 @@ impl<T: Config> Module<T> {
 				// have bigger problems.
 				log!(
 					error,
-					"💸 detected an error in the staking locking and snapshot."
+					"detected an error in the staking locking and snapshot."
 				);
 				// abort.
 				return Err(<Error<T>>::OffchainElectionBogusNominator.into());
@@ -2971,7 +2989,7 @@ impl<T: Config> Module<T> {
 			sp_npos_elections::assignment_ratio_to_staked(assignments, |s| Self::power_of(s) as _);
 
 		// build the support map thereof in order to evaluate.
-		let supports = to_support_map::<T::AccountId>(&winners, &staked_assignments)
+		let supports = to_supports(&winners, &staked_assignments)
 			.map_err(|_| <Error<T>>::OffchainElectionBogusEdge)?;
 
 		// Check if the score is the same as the claimed one.
@@ -2982,10 +3000,11 @@ impl<T: Config> Module<T> {
 		);
 
 		// At last, alles Ok. Exposures and store the result.
-		let exposures = Self::collect_exposure(supports);
+		let exposures = Self::collect_exposures(supports);
 		log!(
 			info,
-			"💸 A better solution (with compute {:?} and score {:?}) has been validated and stored on chain.",
+			"A better solution (with compute {:?} and score {:?}) has been validated and stored \
+			 on chain.",
 			compute,
 			submitted_score,
 		);
@@ -3129,6 +3148,8 @@ impl<T: Config> Module<T> {
 
 		// Set staking information for new era.
 		let maybe_new_validators = Self::select_and_update_validators(current_era);
+		// TWO_PHASE_NOTE: use this later on.
+		let _unused_new_validators = Self::enact_election(current_era);
 
 		maybe_new_validators
 	}
@@ -3199,7 +3220,7 @@ impl<T: Config> Module<T> {
 
 			log!(
 				info,
-				"💸 new validator set of size {:?} has been elected via {:?} for era {:?}",
+				"new validator set of size {:?} has been elected via {:?} for staring era {:?}",
 				elected_stashes.len(),
 				compute,
 				current_era,
@@ -3248,17 +3269,17 @@ impl<T: Config> Module<T> {
 					Self::power_of(s) as _
 				});
 
-			let supports = to_support_map::<T::AccountId>(&elected_stashes, &staked_assignments)
+			let supports = to_supports(&elected_stashes, &staked_assignments)
 				.map_err(|_| {
 					log!(
 						error,
-						"💸 on-chain phragmen is failing due to a problem in the result. This must be a bug."
+						"on-chain phragmen is failing due to a problem in the result. This must be a bug."
 					)
 				})
 				.ok()?;
 
 			// collect exposures
-			let exposures = Self::collect_exposure(supports);
+			let exposures = Self::collect_exposures(supports);
 
 			// In order to keep the property required by `on_session_ending` that we must return the
 			// new validator set even if it's the same as the old, as long as any underlying
@@ -3325,7 +3346,7 @@ impl<T: Config> Module<T> {
 			// If we don't have enough candidates, nothing to do.
 			log!(
 				error,
-				"💸 Chain does not have enough staking candidates to operate. Era {:?}.",
+				"chain does not have enough staking candidates to operate. Era {:?}.",
 				Self::current_era()
 			);
 			None
@@ -3341,8 +3362,9 @@ impl<T: Config> Module<T> {
 		}
 	}
 
-	/// Consume a set of [`Supports`] from [`sp_npos_elections`] and collect them into a [`Exposure`]
-	fn collect_exposure(supports: SupportMap<T::AccountId>) -> Vec<(T::AccountId, ExposureT<T>)> {
+	/// Consume a set of [`Supports`] from [`sp_npos_elections`] and collect them into a
+	/// [`Exposure`].
+	fn collect_exposures(supports: Supports<T::AccountId>) -> Vec<(T::AccountId, ExposureT<T>)> {
 		supports
 			.into_iter()
 			.map(|(validator, support)| {
@@ -3416,6 +3438,90 @@ impl<T: Config> Module<T> {
 				(validator, exposure)
 			})
 			.collect::<Vec<(T::AccountId, ExposureT<T>)>>()
+	}
+
+	/// Process the output of the election.
+	///
+	/// This ensures enough validators have been elected, converts all supports to exposures and
+	/// writes them to the associated storage.
+	///
+	/// Returns `Err(())` if less than [`MinimumValidatorCount`] validators have been elected, `Ok`
+	/// otherwise.
+	// TWO_PHASE_NOTE: remove the dead code.
+	#[allow(dead_code)]
+	pub fn process_election(
+		flat_supports: sp_npos_elections::Supports<T::AccountId>,
+		current_era: EraIndex,
+	) -> Result<Vec<T::AccountId>, ()> {
+		let exposures = Self::collect_exposures(flat_supports);
+		let elected_stashes = exposures
+			.iter()
+			.cloned()
+			.map(|(x, _)| x)
+			.collect::<Vec<_>>();
+
+		if (elected_stashes.len() as u32) <= Self::minimum_validator_count() {
+			log!(
+				warn,
+				"chain does not have enough staking candidates to operate for era {:?}",
+				current_era,
+			);
+			return Err(());
+		}
+
+		// Populate Stakers and write slot stake.
+		let mut total_stake = 0;
+		exposures.into_iter().for_each(|(stash, exposure)| {
+			total_stake = total_stake.saturating_add(exposure.total_power);
+			<ErasStakers<T>>::insert(current_era, &stash, &exposure);
+
+			let mut exposure_clipped = exposure;
+			let clipped_max_len = T::MaxNominatorRewardedPerValidator::get() as usize;
+			if exposure_clipped.others.len() > clipped_max_len {
+				exposure_clipped
+					.others
+					.sort_by(|a, b| a.power.cmp(&b.power).reverse());
+				exposure_clipped.others.truncate(clipped_max_len);
+			}
+			<ErasStakersClipped<T>>::insert(&current_era, &stash, exposure_clipped);
+		});
+
+		// Insert current era staking information
+		ErasTotalStake::insert(&current_era, total_stake);
+
+		// collect the pref of all winners
+		for stash in &elected_stashes {
+			let pref = Self::validators(stash);
+			<ErasValidatorPrefs<T>>::insert(&current_era, stash, pref);
+		}
+
+		// emit event
+		// TWO_PHASE_NOTE: remove the inner value.
+		Self::deposit_event(RawEvent::StakingElection(ElectionCompute::Signed));
+
+		log!(
+			info,
+			"new validator set of size {:?} has been processed for era {:?}",
+			elected_stashes.len(),
+			current_era,
+		);
+
+		Ok(elected_stashes)
+	}
+
+	/// Enact and process the election using the `ElectionProvider` type.
+	///
+	/// This will also process the election, as noted in [`process_election`].
+	fn enact_election(_current_era: EraIndex) -> Option<Vec<T::AccountId>> {
+		let _outcome = T::ElectionProvider::elect().map(|_| ());
+		log!(
+			debug,
+			"Experimental election provider outputted {:?}",
+			_outcome
+		);
+		// TWO_PHASE_NOTE: This code path shall not return anything for now. Later on, redirect the
+		// results to `process_election`.
+		None
 	}
 
 	/// Remove all associated data of a stash account from the staking system.
@@ -3527,6 +3633,125 @@ impl<T: Config> Module<T> {
 	pub fn set_slash_reward_fraction(fraction: Perbill) {
 		SlashRewardFraction::put(fraction);
 	}
+
+	/// Get all of the voters that are eligible for the npos election.
+	///
+	/// This will use all on-chain nominators, and all the validators will inject a self vote.
+	///
+	/// ### Slashing
+	///
+	/// All nominations that have been submitted before the last non-zero slash of the validator are
+	/// auto-chilled.
+	///
+	/// Note that this is VERY expensive. Use with care.
+	pub fn get_npos_voters() -> Vec<(T::AccountId, VoteWeight, Vec<T::AccountId>)> {
+		let weight_of =
+			|account_id: &T::AccountId| -> VoteWeight { Self::power_of(account_id) as _ };
+		let mut all_voters = Vec::new();
+
+		for (validator, _) in <Validators<T>>::iter() {
+			// append self vote
+			let self_vote = (
+				validator.clone(),
+				weight_of(&validator),
+				vec![validator.clone()],
+			);
+			all_voters.push(self_vote);
+		}
+
+		for (nominator, nominations) in <Nominators<T>>::iter() {
+			let Nominations {
+				submitted_in,
+				mut targets,
+				suppressed: _,
+			} = nominations;
+
+			// Filter out nomination targets which were nominated before the most recent
+			// slashing span.
+			targets.retain(|stash| {
+				Self::slashing_spans(&stash)
+					.map_or(true, |spans| submitted_in >= spans.last_nonzero_slash())
+			});
+
+			let vote_weight = weight_of(&nominator);
+			all_voters.push((nominator, vote_weight, targets))
+		}
+
+		all_voters
+	}
+
+	pub fn get_npos_targets() -> Vec<T::AccountId> {
+		<Validators<T>>::iter().map(|(v, _)| v).collect::<Vec<_>>()
+	}
+}
+
+impl<T: Config> sp_election_providers::ElectionDataProvider<T::AccountId, T::BlockNumber>
+	for Module<T>
+{
+	fn desired_targets() -> u32 {
+		Self::validator_count()
+	}
+
+	fn voters() -> Vec<(T::AccountId, VoteWeight, Vec<T::AccountId>)> {
+		Self::get_npos_voters()
+	}
+
+	fn targets() -> Vec<T::AccountId> {
+		Self::get_npos_targets()
+	}
+
+	fn next_election_prediction(now: T::BlockNumber) -> T::BlockNumber {
+		let current_era = Self::current_era().unwrap_or(0);
+		let current_session = Self::current_planned_session();
+		let current_era_start_session_index =
+			Self::eras_start_session_index(current_era).unwrap_or(0);
+		let era_length = current_session
+			.saturating_sub(current_era_start_session_index)
+			.min(T::SessionsPerEra::get());
+
+		let session_length = T::NextNewSession::average_session_length();
+
+		let until_this_session_end = T::NextNewSession::estimate_next_new_session(now)
+			.unwrap_or_default()
+			.saturating_sub(now);
+
+		let sessions_left: T::BlockNumber = T::SessionsPerEra::get()
+			.saturating_sub(era_length)
+			// one session is computed in this_session_end.
+			.saturating_sub(1)
+			.into();
+
+		now.saturating_add(
+			until_this_session_end.saturating_add(sessions_left.saturating_mul(session_length)),
+		)
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn put_snapshot(
+		voters: Vec<(T::AccountId, VoteWeight, Vec<T::AccountId>)>,
+		targets: Vec<T::AccountId>,
+	) {
+		targets.into_iter().for_each(|v| {
+			<Validators<T>>::insert(
+				v,
+				ValidatorPrefs {
+					commission: Perbill::zero(),
+					blocked: false,
+				},
+			);
+		});
+
+		voters.into_iter().for_each(|(v, _s, t)| {
+			<Nominators<T>>::insert(
+				v,
+				Nominations {
+					targets: t,
+					submitted_in: 0,
+					suppressed: false,
+				},
+			);
+		});
+	}
 }
 
 impl<T: Config> pallet_session::SessionManager<T::AccountId> for Module<T> {
@@ -3537,6 +3762,7 @@ impl<T: Config> pallet_session::SessionManager<T::AccountId> for Module<T> {
 			<frame_system::Module<T>>::block_number(),
 			new_index,
 		);
+		CurrentPlannedSession::put(new_index);
 		Self::new_session(new_index)
 	}
 	fn end_session(end_index: SessionIndex) {
@@ -3586,15 +3812,15 @@ impl<T: Config> pallet_session::historical::SessionManager<T::AccountId, Exposur
 }
 
 /// This is intended to be used with `FilterHistoricalOffences`.
-impl<T: Config>
-	OnOffenceHandler<T::AccountId, pallet_session::historical::IdentificationTuple<T>, Weight>
+impl<T> OnOffenceHandler<T::AccountId, pallet_session::historical::IdentificationTuple<T>, Weight>
 	for Module<T>
 where
-	T: pallet_session::Config<ValidatorId = AccountId<T>>,
-	T: pallet_session::historical::Config<
-		FullIdentification = ExposureT<T>,
-		FullIdentificationOf = ExposureOf<T>,
-	>,
+	T: Config
+		+ pallet_session::Config<ValidatorId = AccountId<T>>
+		+ pallet_session::historical::Config<
+			FullIdentification = ExposureT<T>,
+			FullIdentificationOf = ExposureOf<T>,
+		>,
 	T::SessionHandler: pallet_session::SessionHandler<AccountId<T>>,
 	T::SessionManager: pallet_session::SessionManager<AccountId<T>>,
 	T::ValidatorIdOf: Convert<AccountId<T>, Option<AccountId<T>>>,
@@ -3725,6 +3951,7 @@ where
 	}
 
 	fn can_report() -> bool {
+		// TWO_PHASE_NOTE: we can get rid of this API
 		Self::era_election_status().is_closed()
 	}
 }
@@ -3834,7 +4061,7 @@ impl<T: Config> frame_support::unsigned::ValidateUnsigned for Module<T> {
 				let invalid = to_invalid(error_with_post_info);
 				log!(
 					debug,
-					"💸 validate unsigned pre dispatch checks failed due to error #{:?}.",
+					"validate unsigned pre dispatch checks failed due to error #{:?}.",
 					invalid,
 				);
 				return invalid.into();
@@ -3842,7 +4069,7 @@ impl<T: Config> frame_support::unsigned::ValidateUnsigned for Module<T> {
 
 			log!(
 				debug,
-				"💸 validateUnsigned succeeded for a solution at era {}.",
+				"validateUnsigned succeeded for a solution at era {}.",
 				era
 			);
 
