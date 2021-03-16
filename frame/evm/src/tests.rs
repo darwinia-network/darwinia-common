@@ -25,6 +25,18 @@ impl_outer_dispatch! {
 
 darwinia_support::impl_test_account_data! { deprecated }
 
+pub struct PalletInfo;
+
+impl frame_support::traits::PalletInfo for PalletInfo {
+	fn index<P: 'static>() -> Option<usize> {
+		return Some(0);
+	}
+
+	fn name<P: 'static>() -> Option<&'static str> {
+		return Some("TestName");
+	}
+}
+
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct Test;
 

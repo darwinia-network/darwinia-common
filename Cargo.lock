@@ -1448,8 +1448,8 @@ name = "darwinia-evm"
 version = "2.0.0"
 dependencies = [
  "darwinia-balances",
- "darwinia-evm-primitives",
  "darwinia-support",
+ "dp-evm",
  "evm",
  "evm-gasometer",
  "evm-runtime",
@@ -1457,7 +1457,7 @@ dependencies = [
  "frame-system",
  "pallet-timestamp",
  "parity-scale-codec 2.0.1",
- "primitive-types 0.8.0",
+ "primitive-types 0.9.0",
  "rlp 0.5.0",
  "serde",
  "sha3 0.8.2",
@@ -1481,7 +1481,7 @@ dependencies = [
 name = "darwinia-evm-precompile-blake2"
 version = "2.0.0"
 dependencies = [
- "darwinia-evm-primitives",
+ "dp-evm",
  "evm",
  "sp-core",
  "sp-io",
@@ -1491,7 +1491,7 @@ dependencies = [
 name = "darwinia-evm-precompile-bn128"
 version = "2.0.0"
 dependencies = [
- "darwinia-evm-primitives",
+ "dp-evm",
  "evm",
  "sp-core",
  "sp-io",
@@ -1503,7 +1503,7 @@ name = "darwinia-evm-precompile-dispatch"
 version = "2.0.0"
 dependencies = [
  "darwinia-evm",
- "darwinia-evm-primitives",
+ "dp-evm",
  "evm",
  "frame-support",
  "parity-scale-codec 2.0.1",
@@ -1515,7 +1515,7 @@ dependencies = [
 name = "darwinia-evm-precompile-ed25519"
 version = "2.0.0"
 dependencies = [
- "darwinia-evm-primitives",
+ "dp-evm",
  "ed25519-dalek",
  "evm",
  "sp-core",
@@ -1526,7 +1526,7 @@ dependencies = [
 name = "darwinia-evm-precompile-empty"
 version = "2.0.0"
 dependencies = [
- "darwinia-evm-primitives",
+ "dp-evm",
  "evm",
 ]
 
@@ -1536,12 +1536,13 @@ version = "2.0.0"
 dependencies = [
  "array-bytes",
  "darwinia-evm",
- "darwinia-evm-primitives",
+ "dp-evm",
  "ethabi 9.0.1",
  "ethereum-types 0.8.0",
  "evm",
  "frame-support",
  "frame-system",
+ "hex",
  "pallet-timestamp",
  "parity-scale-codec 2.0.1",
  "ripemd160",
@@ -1556,7 +1557,7 @@ dependencies = [
 name = "darwinia-evm-precompile-modexp"
 version = "2.0.0"
 dependencies = [
- "darwinia-evm-primitives",
+ "dp-evm",
  "evm",
  "hex",
  "num",
@@ -1568,7 +1569,7 @@ dependencies = [
 name = "darwinia-evm-precompile-simple"
 version = "2.0.0"
 dependencies = [
- "darwinia-evm-primitives",
+ "dp-evm",
  "evm",
  "ripemd160",
  "sp-core",
@@ -1580,7 +1581,7 @@ name = "darwinia-evm-precompile-withdraw"
 version = "2.0.0"
 dependencies = [
  "darwinia-evm",
- "darwinia-evm-primitives",
+ "dp-evm",
  "evm",
  "frame-support",
  "frame-system",
@@ -1590,18 +1591,6 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 3.0.0",
-]
-
-[[package]]
-name = "darwinia-evm-primitives"
-version = "2.0.0"
-dependencies = [
- "evm",
- "impl-trait-for-tuples",
- "parity-scale-codec 2.0.1",
- "serde",
- "sp-core",
  "sp-std 3.0.0",
 ]
 
@@ -1840,6 +1829,98 @@ dependencies = [
 ]
 
 [[package]]
+name = "dc-consensus"
+version = "2.0.0"
+dependencies = [
+ "dc-db",
+ "derive_more",
+ "dp_consensus",
+ "dvm-rpc-runtime-api",
+ "futures 0.3.13",
+ "log",
+ "parity-scale-codec 2.0.1",
+ "sc-client-api",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-timestamp",
+ "substrate-prometheus-endpoint",
+]
+
+[[package]]
+name = "dc-db"
+version = "2.0.0"
+dependencies = [
+ "kvdb",
+ "kvdb-rocksdb",
+ "parity-scale-codec 2.0.1",
+ "parking_lot 0.11.1",
+ "sp-core",
+ "sp-database",
+ "sp-runtime",
+]
+
+[[package]]
+name = "dc-mapping-sync"
+version = "2.0.0"
+dependencies = [
+ "dc-consensus",
+ "dc-db",
+ "dp_consensus",
+ "dvm-rpc-runtime-api",
+ "futures 0.3.13",
+ "futures-timer 3.0.2",
+ "log",
+ "sc-client-api",
+ "sp-api",
+ "sp-blockchain",
+ "sp-runtime",
+]
+
+[[package]]
+name = "dc-rpc"
+version = "2.0.0"
+dependencies = [
+ "array-bytes",
+ "darwinia-evm",
+ "dc-consensus",
+ "dc-db",
+ "dp-rpc",
+ "dp-storage",
+ "dp_consensus",
+ "dvm-ethereum",
+ "dvm-rpc-core",
+ "dvm-rpc-runtime-api",
+ "ethereum 0.7.1",
+ "ethereum-types 0.11.0",
+ "futures 0.3.13",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "jsonrpc-pubsub",
+ "libsecp256k1",
+ "log",
+ "parity-scale-codec 2.0.1",
+ "rand 0.7.3",
+ "rlp 0.5.0",
+ "sc-client-api",
+ "sc-network",
+ "sc-rpc",
+ "sc-service",
+ "sha3 0.8.2",
+ "sp-api",
+ "sp-blockchain",
+ "sp-io",
+ "sp-runtime",
+ "sp-storage",
+ "sp-transaction-pool",
+]
+
+[[package]]
 name = "derive_more"
 version = "0.99.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1920,6 +2001,49 @@ dependencies = [
 ]
 
 [[package]]
+name = "dp-evm"
+version = "2.0.0"
+dependencies = [
+ "evm",
+ "impl-trait-for-tuples",
+ "parity-scale-codec 2.0.1",
+ "serde",
+ "sp-core",
+ "sp-std 3.0.0",
+]
+
+[[package]]
+name = "dp-rpc"
+version = "2.0.0"
+dependencies = [
+ "ethereum-types 0.11.0",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "jsonrpc-pubsub",
+ "rustc-hex",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "dp-storage"
+version = "2.0.0"
+
+[[package]]
+name = "dp_consensus"
+version = "2.0.0"
+dependencies = [
+ "ethereum 0.7.1",
+ "parity-scale-codec 2.0.1",
+ "rlp 0.5.0",
+ "sha3 0.8.2",
+ "sp-core",
+ "sp-runtime",
+ "sp-std 3.0.0",
+]
+
+[[package]]
 name = "drml"
 version = "2.0.0"
 dependencies = [
@@ -1935,9 +2059,14 @@ dependencies = [
  "darwinia-staking",
  "darwinia-staking-rpc",
  "darwinia-staking-rpc-runtime-api",
+ "dc-consensus",
+ "dc-db",
+ "dc-mapping-sync",
+ "dc-rpc",
+ "dp-rpc",
+ "dp_consensus",
  "drml-primitives",
- "dvm-consensus",
- "dvm-rpc",
+ "dvm-ethereum",
  "dvm-rpc-runtime-api",
  "frame-system-rpc-runtime-api",
  "futures 0.3.13",
@@ -2001,33 +2130,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "dvm-consensus"
+name = "dvm-dynamic-fee"
 version = "2.0.0"
 dependencies = [
- "derive_more",
- "dvm-consensus-primitives",
- "ethereum",
- "futures 0.3.13",
- "log",
+ "frame-support",
+ "frame-system",
  "parity-scale-codec 2.0.1",
- "sc-client-api",
- "sp-api",
- "sp-block-builder",
- "sp-blockchain",
- "sp-consensus",
+ "serde",
  "sp-core",
  "sp-inherents",
- "sp-runtime",
- "sp-timestamp",
- "substrate-prometheus-endpoint",
-]
-
-[[package]]
-name = "dvm-consensus-primitives"
-version = "2.0.0"
-dependencies = [
- "parity-scale-codec 2.0.1",
- "sp-core",
  "sp-runtime",
  "sp-std 3.0.0",
 ]
@@ -2040,11 +2151,12 @@ dependencies = [
  "darwinia-balances",
  "darwinia-evm",
  "darwinia-evm-precompile",
- "darwinia-evm-primitives",
  "darwinia-support",
- "dvm-consensus-primitives",
+ "dp-evm",
+ "dp-storage",
+ "dp_consensus",
  "dvm-rpc-runtime-api",
- "ethereum",
+ "ethereum 0.6.0",
  "ethereum-types 0.10.0",
  "evm",
  "frame-support",
@@ -2062,50 +2174,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "dvm-rpc"
-version = "2.0.0"
-dependencies = [
- "array-bytes",
- "darwinia-evm",
- "dvm-consensus",
- "dvm-ethereum",
- "dvm-rpc-core",
- "dvm-rpc-core-primitives",
- "dvm-rpc-runtime-api",
- "ethereum",
- "ethereum-types 0.10.0",
- "futures 0.3.13",
- "jsonrpc-core",
- "jsonrpc-core-client",
- "jsonrpc-derive",
- "jsonrpc-pubsub",
- "libsecp256k1",
- "log",
- "parity-scale-codec 2.0.1",
- "rand 0.7.3",
- "rlp 0.5.0",
- "sc-client-api",
- "sc-network",
- "sc-rpc",
- "sc-service",
- "sha3 0.8.2",
- "sp-api",
- "sp-blockchain",
- "sp-io",
- "sp-runtime",
- "sp-storage",
- "sp-transaction-pool",
-]
-
-[[package]]
 name = "dvm-rpc-core"
 version = "2.0.0"
 dependencies = [
  "darwinia-evm",
- "darwinia-evm-primitives",
- "dvm-rpc-core-primitives",
- "ethereum",
- "ethereum-types 0.10.0",
+ "dp-evm",
+ "dp-rpc",
+ "ethereum 0.7.1",
+ "ethereum-types 0.11.0",
  "jsonrpc-core",
  "jsonrpc-derive",
  "jsonrpc-pubsub",
@@ -2117,26 +2193,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "dvm-rpc-core-primitives"
-version = "2.0.0"
-dependencies = [
- "ethereum-types 0.10.0",
- "jsonrpc-core",
- "jsonrpc-core-client",
- "jsonrpc-derive",
- "jsonrpc-pubsub",
- "rustc-hex",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "dvm-rpc-runtime-api"
 version = "2.0.0"
 dependencies = [
  "darwinia-evm",
- "darwinia-evm-primitives",
- "ethereum",
+ "dp-evm",
+ "ethereum 0.6.0",
  "ethereum-types 0.10.0",
  "parity-scale-codec 2.0.1",
  "sp-api",
@@ -2316,10 +2378,10 @@ dependencies = [
 [[package]]
 name = "ethash"
 version = "0.4.0"
+source = "git+https://github.com/darwinia-network/rust-ethash#9014d7649c19800f3b37944a23dd499d207cf881"
 dependencies = [
  "byteorder",
  "ethereum-types 0.11.0",
- "hex-literal",
  "primitive-types 0.9.0",
  "rlp 0.5.0",
  "sha3 0.9.1",
@@ -2347,7 +2409,6 @@ dependencies = [
  "fixed-hash 0.7.0",
  "impl-codec 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "impl-rlp 0.3.0",
- "impl-serde",
  "tiny-keccak 2.0.2",
 ]
 
@@ -2375,6 +2436,24 @@ dependencies = [
  "hash-db",
  "hash256-std-hasher",
  "parity-scale-codec 1.3.7",
+ "rlp 0.5.0",
+ "rlp-derive",
+ "serde",
+ "sha3 0.9.1",
+ "triehash",
+]
+
+[[package]]
+name = "ethereum"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "567ce064a8232c16e2b2c2173a936b91fbe35c2f2c5278871f5a1a31688b42e9"
+dependencies = [
+ "ethereum-types 0.11.0",
+ "funty",
+ "hash-db",
+ "hash256-std-hasher",
+ "parity-scale-codec 2.0.1",
  "rlp 0.5.0",
  "rlp-derive",
  "serde",
@@ -2432,7 +2511,6 @@ dependencies = [
  "fixed-hash 0.7.0",
  "impl-codec 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "impl-rlp 0.3.0",
- "impl-serde",
  "primitive-types 0.8.0",
  "uint 0.9.0",
 ]
@@ -2460,17 +2538,17 @@ checksum = "f7531096570974c3a9dcf9e4b8e1cede1ec26cf5046219fb3b9d897503b9be59"
 
 [[package]]
 name = "evm"
-version = "0.22.1"
+version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd540113f54cb8f20c74a594e3dc4422d69cb3df7c425ed7ed33c0383f780df0"
+checksum = "0467250a12bb144ad7b2f41e03e8675e38b971ab73f6d42ede6b78af07657e7b"
 dependencies = [
- "ethereum",
+ "ethereum 0.7.1",
  "evm-core",
  "evm-gasometer",
  "evm-runtime",
  "log",
- "parity-scale-codec 1.3.7",
- "primitive-types 0.8.0",
+ "parity-scale-codec 2.0.1",
+ "primitive-types 0.9.0",
  "rlp 0.5.0",
  "serde",
  "sha3 0.8.2",
@@ -2478,34 +2556,35 @@ dependencies = [
 
 [[package]]
 name = "evm-core"
-version = "0.22.0"
+version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa225f553e9380c498f5beb4ba6e5d455b147a133d371b550f0326b92c95cc17"
+checksum = "2f0db0394d7b497bf97be3d9ece9c828f8b7670a065fc9f3106c9598cce6556d"
 dependencies = [
- "parity-scale-codec 1.3.7",
- "primitive-types 0.8.0",
+ "funty",
+ "parity-scale-codec 2.0.1",
+ "primitive-types 0.9.0",
  "serde",
 ]
 
 [[package]]
 name = "evm-gasometer"
-version = "0.22.0"
+version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "08bdd70b8a66727a77b991eb8374374f38b076fd9d539244751c59ebac9c3082"
+checksum = "c617616408f87be6826bda72cee7625aa8cbc09b759f05b1dccd329fb61b2077"
 dependencies = [
  "evm-core",
  "evm-runtime",
- "primitive-types 0.8.0",
+ "primitive-types 0.9.0",
 ]
 
 [[package]]
 name = "evm-runtime"
-version = "0.22.0"
+version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "25ab3a3ea8ab273ef0f9237e13f5fa271b6deb19d604766b88325d8d807afcaf"
+checksum = "8447504daa86bc5a7ae982b9b5c53225aa0ebcfba636b785cf0f53406eaa4d87"
 dependencies = [
  "evm-core",
- "primitive-types 0.8.0",
+ "primitive-types 0.9.0",
  "sha3 0.8.2",
 ]
 
@@ -3848,9 +3927,9 @@ checksum = "3576a87f2ba00f6f106fdfcd16db1d698d648a26ad8e0573cad8537c3c362d2a"
 
 [[package]]
 name = "libc"
-version = "0.2.88"
+version = "0.2.89"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "03b07a082330a35e43f63177cc01689da34fbffa0105e1246cf0311472cac73a"
+checksum = "538c092e5586f4cdd7dd8078c4a79220e3e168880218124dcbce860f0ea938c6"
 
 [[package]]
 name = "libloading"
@@ -4649,9 +4728,9 @@ dependencies = [
 
 [[package]]
 name = "multimap"
-version = "0.8.2"
+version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1255076139a83bb467426e7f8d0134968a8118844faa755985e077cf31850333"
+checksum = "e5ce46fe64a9d73be07dcbe690a38ce1b293be448fd8ce1e6c1b8062c9f72c6a"
 
 [[package]]
 name = "multistream-select"
@@ -5862,7 +5941,6 @@ dependencies = [
  "fixed-hash 0.7.0",
  "impl-codec 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "impl-rlp 0.3.0",
- "impl-serde",
  "uint 0.9.0",
 ]
 
@@ -6323,9 +6401,9 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.4.4"
+version = "1.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "54fd1046a3107eb58f42de31d656fee6853e5d276c455fd943742dce89fc3dd3"
+checksum = "957056ecddbeba1b26965114e191d2e8589ce74db242b6ea25fc4062427a5c19"
 dependencies = [
  "aho-corasick",
  "memchr",
