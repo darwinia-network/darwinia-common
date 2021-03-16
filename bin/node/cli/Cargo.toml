@@ -89,6 +89,7 @@ sp-transaction-pool                        = { git = "https://github.com/darwini
 sp-trie                                    = { features = ["memory-tracker"], git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
 substrate-frame-rpc-system                 = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
 substrate-prometheus-endpoint              = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+try-runtime-cli                            = { optional = true, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
 
 [build-dependencies]
 # substrate
@@ -112,3 +113,9 @@ cli       = [
 db        = ["sc-service/db"]
 full-node = []
 wasmtime  = ["sc-cli/wasmtime"]
+# Enable features that allow the runtime to be tried and debugged. Name might be subject to change
+# in the near future.
+try-runtime = [
+	"pangolin-runtime/try-runtime",
+	"try-runtime-cli",
+]

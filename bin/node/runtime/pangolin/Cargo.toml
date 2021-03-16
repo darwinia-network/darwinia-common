@@ -48,6 +48,7 @@ frame-executive                            = { default-features = false, git = "
 frame-support                              = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
 frame-system                               = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
 frame-system-rpc-runtime-api               = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+frame-try-runtime                          = { optional = true, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
 pallet-authority-discovery                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
 pallet-authorship                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
 pallet-babe                                = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
@@ -91,7 +92,8 @@ substrate-wasm-builder = { git = "https://github.com/darwinia-network/substrate.
 
 [features]
 default = ["std"]
-std     = [
+
+std = [
 	"codec/std",
 	"serde",
 	"darwinia-balances/std",
@@ -162,4 +164,8 @@ std     = [
 	"sp-version/std",
 ]
 
+try-runtime  = [
+	"frame-executive/try-runtime",
+	"frame-try-runtime",
+]
 with-tracing = ["frame-executive/with-tracing"]
