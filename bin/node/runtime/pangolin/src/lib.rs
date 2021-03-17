@@ -246,6 +246,9 @@ pub use im_online::*;
 pub mod authority_discovery;
 pub use authority_discovery::*;
 
+pub mod header_mmr;
+pub use header_mmr::*;
+
 pub mod democracy;
 pub use democracy::*;
 
@@ -290,9 +293,6 @@ pub use proxy::*;
 
 pub mod multisig;
 pub use multisig::*;
-
-pub mod header_mmr;
-pub use header_mmr::*;
 
 pub mod crab_issuing;
 pub use crab_issuing::*;
@@ -443,45 +443,44 @@ frame_support::construct_runtime! {
 		Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event, ValidateUnsigned} = 13,
 		ImOnline: pallet_im_online::{Module, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 14,
 		AuthorityDiscovery: pallet_authority_discovery::{Module, Call, Config} = 15,
+		HeaderMMR: darwinia_header_mmr::{Module, Call, Storage} = 16,
 
 		// Governance stuff; uncallable initially.
-		Democracy: darwinia_democracy::{Module, Call, Storage, Config, Event<T>} = 16,
-		Council: pallet_collective::<Instance0>::{Module, Call, Storage, Origin<T>, Config<T>, Event<T>} = 17,
-		TechnicalCommittee: pallet_collective::<Instance1>::{Module, Call, Storage, Origin<T>, Config<T>, Event<T>} = 18,
-		ElectionsPhragmen: darwinia_elections_phragmen::{Module, Call, Storage, Config<T>, Event<T>} = 19,
-		TechnicalMembership: pallet_membership::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>} = 20,
-		Treasury: darwinia_treasury::{Module, Call, Storage, Event<T>} = 21,
+		Democracy: darwinia_democracy::{Module, Call, Storage, Config, Event<T>} = 17,
+		Council: pallet_collective::<Instance0>::{Module, Call, Storage, Origin<T>, Config<T>, Event<T>} = 18,
+		TechnicalCommittee: pallet_collective::<Instance1>::{Module, Call, Storage, Origin<T>, Config<T>, Event<T>} = 19,
+		ElectionsPhragmen: darwinia_elections_phragmen::{Module, Call, Storage, Config<T>, Event<T>} = 20,
+		TechnicalMembership: pallet_membership::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>} = 21,
+		Treasury: darwinia_treasury::{Module, Call, Storage, Event<T>} = 22,
 
-		Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>} = 22,
+		Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>} = 23,
 
 		// Claims. Usable initially.
-		Claims: darwinia_claims::{Module, Call, Storage, Config, Event<T>, ValidateUnsigned} = 23,
+		Claims: darwinia_claims::{Module, Call, Storage, Config, Event<T>, ValidateUnsigned} = 24,
 
 		// Vesting. Usable initially, but removed once all vesting is finished.
-		Vesting: darwinia_vesting::{Module, Call, Storage, Event<T>, Config<T>} = 24,
+		Vesting: darwinia_vesting::{Module, Call, Storage, Event<T>, Config<T>} = 25,
 
 		// Utility module.
-		Utility: pallet_utility::{Module, Call, Event} = 25,
+		Utility: pallet_utility::{Module, Call, Event} = 26,
 
 		// Less simple identity module.
-		Identity: pallet_identity::{Module, Call, Storage, Event<T>} = 26,
+		Identity: pallet_identity::{Module, Call, Storage, Event<T>} = 27,
 
 		// Society module.
-		Society: pallet_society::{Module, Call, Storage, Event<T>} = 27,
+		Society: pallet_society::{Module, Call, Storage, Event<T>} = 28,
 
 		// Social recovery module.
-		Recovery: pallet_recovery::{Module, Call, Storage, Event<T>} = 28,
+		Recovery: pallet_recovery::{Module, Call, Storage, Event<T>} = 29,
 
 		// System scheduler.
-		Scheduler: pallet_scheduler::{Module, Call, Storage, Event<T>} = 29,
+		Scheduler: pallet_scheduler::{Module, Call, Storage, Event<T>} = 30,
 
 		// Proxy module. Late addition.
-		Proxy: pallet_proxy::{Module, Call, Storage, Event<T>} = 30,
+		Proxy: pallet_proxy::{Module, Call, Storage, Event<T>} = 31,
 
 		// Multisig module. Late addition.
-		Multisig: pallet_multisig::{Module, Call, Storage, Event<T>} = 31,
-
-		HeaderMMR: darwinia_header_mmr::{Module, Call, Storage} = 32,
+		Multisig: pallet_multisig::{Module, Call, Storage, Event<T>} = 32,
 
 		CrabIssuing: darwinia_crab_issuing::{Module, Call, Storage, Config, Event<T>} = 33,
 		CrabBacking: darwinia_crab_backing::{Module, Storage, Config<T>} = 34,
