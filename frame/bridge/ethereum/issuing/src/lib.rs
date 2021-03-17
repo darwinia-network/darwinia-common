@@ -124,8 +124,8 @@ decl_event! {
         /// erc20 created
         CreateErc20(EthereumAddress),
         /// burn event
-        /// type: 1, assetType: [0: native, 1: token], backing, recipient, source, target, value
-        BurnToken(u8, u8, EthereumAddress, EthereumAddress, EthereumAddress, EthereumAddress, U256),
+        /// type: 1, backing, recipient, delegator, source, target, value
+        BurnToken(u8, EthereumAddress, EthereumAddress, EthereumAddress, EthereumAddress, EthereumAddress, U256),
         /// token registed event
         /// type: u8 = 0, backing, source(origin erc20), target(mapped erc20)
         TokenRegisted(u8, EthereumAddress, EthereumAddress, EthereumAddress),
@@ -179,18 +179,18 @@ decl_module! {
                 })
             .ok_or(<Error<T>>::LogEntryNE)?;
 
-            let (input, target) = if log_entry.topics[0] == register_event.signature() {
+            let input = if log_entry.topics[0] == register_event.signature() {
                 let ethlog = Self::parse_event(register_event, log_entry)?;
-                let bytes = Self::process_erc20_creation(ethlog)?;
-                (bytes, MappingFactoryAddress::get())
+                Self::process_erc20_creation(ethlog)?
             } else {
                 let ethlog = Self::parse_event(backing_event, log_entry)?;
                 Self::process_token_issuing(ethlog)?
             };
             
+            let contract = MappingFactoryAddress::get();
             let account = Self::issuing_account();
             let basic = <T as darwinia_evm::Trait>::AccountBasicMapping::account_basic(&account);
-            let transaction = Self::unsigned_transaction(basic.nonce, target.0.into(), input);
+            let transaction = Self::unsigned_transaction(basic.nonce, contract.0.into(), input);
             let result = T::DvmCaller::raw_transact(account, transaction).map_err(|e| -> &'static str {
                 debug::info!(target: "darwinia-issuing", "register_or_issuing_erc20 error {:?}", &e);
                 e.into()
@@ -207,6 +207,11 @@ decl_module! {
         pub fn set_number(origin, number: u128) {
 			ensure_signed(origin)?;
 			TestNumber::put(number);
+
+            T::EcdsaAuthorities::schedule_mmr_root((
+                    <frame_system::Module<T>>::block_number().saturated_into::<u32>()
+                    /10 * 10 + 10
+                    ).saturated_into());
         }
 
         #[weight = 10_000_000]
@@ -236,7 +241,7 @@ decl_module! {
 			ensure_signed(origin)?;
             let recvaddr: Vec<u8> = FromHex::from_hex(MAPPING_FACTORY_ADDRESS).unwrap();
             let receiver: Address = H160::from_slice(&recvaddr);
-            let bytes = Abi::encode_mint(receiver.0.into(), amount.0.into())
+            let bytes = Abi::encode_cross_receive(receiver.0.into(), receiver.0.into(), amount.0.into())
                 .map_err(|_| Error::<T>::InvalidIssuingAccount)?;
             debug::info!(target: "darwinia-issuing", "mint bytes {:?}", hex::encode(&bytes));
             let erc20: Vec<u8> = FromHex::from_hex("26c6Bb696E542Eb1fc90b2036777025BF3f5b656").unwrap();
@@ -346,7 +351,7 @@ impl<T: Trait> Module<T> {
 		Ok(input)
     }
 
-    fn process_token_issuing(result: EthLog) -> Result<(Vec<u8>, EthereumAddress), DispatchError> {
+    fn process_token_issuing(result: EthLog) -> Result<Vec<u8>, DispatchError> {
         debug::info!(target: "darwinia-issuing", "process_token_issuing");
         let token_address = result.params[0]
             .value
@@ -369,12 +374,13 @@ impl<T: Trait> Module<T> {
             .to_address()
             .ok_or(<Error<T>>::AddressCF)?;
 
-        let input = Abi::encode_mint(
+        let input = Abi::encode_cross_receive(
+            dtoken_address.0.into(),
             recipient.0.into(),
             amount.0.into()
         ).map_err(|_| Error::<T>::InvalidMintEcoding)?;
 
-		Ok((input, dtoken_address))
+		Ok(input)
     }
 
     pub fn mapped_token_address (
@@ -414,10 +420,9 @@ impl<T: Trait> Module<T> {
     pub fn burn_token(
         backing: EthereumAddress,
         source: EthereumAddress,
-        token: EthereumAddress,
-        ethereum_account: EthereumAddress,
+        recipient: EthereumAddress,
+        delegator: EthereumAddress,
         amount: U256,
-        is_native: bool
     ) -> DispatchResult {
         let mapped_address = Self::mapped_token_address(backing, source)
             .map_err(|e| {
@@ -425,19 +430,16 @@ impl<T: Trait> Module<T> {
                 e
             })?;
 
-        if mapped_address == token.0.into() {
-            let asset_type = if is_native {0} else {1};
-            let raw_event = RawEvent::BurnToken(1, asset_type, backing, ethereum_account, source, token, amount);
-            let module_event: <T as Trait>::Event = raw_event.clone().into();
-            let system_event: <T as frame_system::Trait>::Event = module_event.into();
-            <BurnTokenEvents<T>>::append(system_event);
+        let raw_event = RawEvent::BurnToken(1, backing, recipient, delegator, source, mapped_address.0.into(), amount);
+        let module_event: <T as Trait>::Event = raw_event.clone().into();
+        let system_event: <T as frame_system::Trait>::Event = module_event.into();
+        <BurnTokenEvents<T>>::append(system_event);
 
-            Self::deposit_event(raw_event);
-            T::EcdsaAuthorities::schedule_mmr_root((
-                    <frame_system::Module<T>>::block_number().saturated_into::<u32>()
-                    /10 * 10 + 10
-                    ).saturated_into());
-        }
+        Self::deposit_event(raw_event);
+        T::EcdsaAuthorities::schedule_mmr_root((
+                <frame_system::Module<T>>::block_number().saturated_into::<u32>()
+                /10 * 10 + 10
+                ).saturated_into());
         Ok(())
     }
 }
@@ -450,15 +452,17 @@ impl<T: Trait> ContractHandler for Module<T> {
         // todo check address: 0x00000000000000000000000000000016
 
         if MappingFactoryAddress::get() == caller.0.into() {
-            let registed_info = TokenRegisterInfo::decode(input)
-                .map_err(|_|Error::<T>::InvalidInputData)?;
-            debug::info!(target: "darwinia-issuing", "registed-info {:?}", registed_info);
-            Self::token_registed(registed_info.0, registed_info.1, registed_info.2)?;
-        } else {
-            let burn_info = TokenBurnInfo::decode(input)
-                .map_err(|_|Error::<T>::InvalidInputData)?;
-            debug::info!(target: "darwinia-issuing", "burn-info {:?}", burn_info);
-            Self::burn_token(burn_info.backing, burn_info.source, caller.0.into(), burn_info.recipient, U256(burn_info.amount.0), burn_info.is_native)?;
+            if input.len() == 3 * 32 {
+                let registed_info = TokenRegisterInfo::decode(input)
+                    .map_err(|_|Error::<T>::InvalidInputData)?;
+                debug::info!(target: "darwinia-issuing", "registed-info {:?}", registed_info);
+                Self::token_registed(registed_info.0, registed_info.1, registed_info.2)?;
+            } else {
+                let burn_info = TokenBurnInfo::decode(input)
+                    .map_err(|_|Error::<T>::InvalidInputData)?;
+                debug::info!(target: "darwinia-issuing", "burn-info {:?}", burn_info);
+                Self::burn_token(burn_info.backing, burn_info.source, burn_info.recipient, burn_info.delegator, U256(burn_info.amount.0))?;
+            }
         }
         Ok(())
     }

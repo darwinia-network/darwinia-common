@@ -89,10 +89,14 @@ impl From<Topic> for H256 {
 }
 
 impl Abi {
-    fn mint() -> Function {
+    fn cross_receive() -> Function {
         let inputs = vec![
             Param {
-                name: "account".into(), 
+                name: "token".into(),
+                kind: ParamType::Address,
+            },
+            Param {
+                name: "recipient".into(),
                 kind: ParamType::Address,
             },
             Param {
@@ -101,7 +105,7 @@ impl Abi {
             }];
 
         Function {
-            name: "mint".into(),
+            name: "crossReceive".into(),
             inputs: inputs,
             outputs: vec![],
             constant: false,
@@ -135,7 +139,7 @@ impl Abi {
     /// register event
     pub fn register_event() -> Event {
         Event {
-            name: "NewTokenRegisted".into(),
+            name: "NewTokenRegistered".into(),
             inputs: vec![
                 EventParam {
                     name: "token".into(),
@@ -193,11 +197,14 @@ impl Abi {
     }
 
     /// encode mint function for erc20
-    pub fn encode_mint(target: Address, amount: Amount) -> AbiResult<Bytes> {
-        let mint = Self::mint();
-        let account = Token::Address(target.into());
-        let value = Token::Uint(amount.into());
-        mint.encode_input(vec![account, value].as_slice())
+    pub fn encode_cross_receive(token: Address, recipient: Address, amount: Amount) -> AbiResult<Bytes> {
+        let receive = Self::cross_receive();
+        receive.encode_input(
+            vec![
+            Token::Address(token.into()),
+            Token::Address(recipient.into()),
+            Token::Uint(amount.into())
+            ].as_slice())
     }
 
     /// encode erc20 create function
@@ -292,8 +299,8 @@ pub struct TokenBurnInfo {
     pub backing: H160,
     pub source: H160,
     pub recipient: H160,
+    pub delegator: H160,
     pub amount: U256,
-    pub is_native: bool,
 }
 
 impl TokenBurnInfo {
@@ -303,16 +310,16 @@ impl TokenBurnInfo {
                 ParamType::Address, 
                 ParamType::Address,
                 ParamType::Address,
+                ParamType::Address,
                 ParamType::Uint(256),
-                ParamType::Bool
             ], &data)?;
         match (tokens[0].clone(), tokens[1].clone(), tokens[2].clone(), tokens[3].clone(), tokens[4].clone(),) {
-            (Token::Address(backing), Token::Address(source), Token::Address(recipient), Token::Uint(amount), Token::Bool(is_native)) => Ok(TokenBurnInfo {
+            (Token::Address(backing), Token::Address(source), Token::Address(recipient), Token::Address(delegator), Token::Uint(amount)) => Ok(TokenBurnInfo {
                 backing: backing,
                 source: source,
                 recipient: recipient,
-                amount: amount,
-                is_native: is_native,
+                delegator: delegator,
+                amount: amount
             }),
             _ => Err(Error::ErrorKind(ErrorKind::InvalidData))
         }
