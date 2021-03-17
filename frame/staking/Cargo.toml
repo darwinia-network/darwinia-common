@@ -22,19 +22,19 @@ darwinia-support                 = { default-features = false, path = "../suppor
 # github
 substrate-fixed = { default-features = false, git = "https://github.com/encointer/substrate-fixed", branch = "master" }
 # substrate
-frame-support         = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-frame-system          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-pallet-authorship     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-pallet-session        = { default-features = false, features = ["historical"], git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-arithmetic         = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-core               = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-election-providers = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-io                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+frame-support         = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
+frame-system          = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
+pallet-authorship     = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
+pallet-session        = { default-features = false, features = ["historical"], git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
+sp-arithmetic         = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
+sp-core               = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
+sp-election-providers = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
+sp-io                 = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
 # TWO_PHASE_NOTE:: ideally we should be able to get rid of this.
-sp-npos-elections     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-runtime            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-staking            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-std                = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+sp-npos-elections     = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
+sp-runtime            = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
+sp-staking            = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
+sp-std                = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
 
 [dev-dependencies]
 # crates
@@ -43,10 +43,10 @@ rand_chacha = { version = "0.2" }
 darwinia-balances = { path = "../../frame/balances" }
 darwinia-support  = { features = ["easy-testing"], path = "../support" }
 # substrate
-pallet-timestamp     = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-storage           = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-tracing           = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-substrate-test-utils = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+pallet-timestamp     = { git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
+sp-storage           = { git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
+sp-tracing           = { git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
+substrate-test-utils = { git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
 
 [features]
 default = ["std"]

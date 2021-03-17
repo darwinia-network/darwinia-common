@@ -16,8 +16,8 @@ evm                   = { version = "0.24.0", default-features = false, features
 impl-trait-for-tuples = { version = "0.2.1" }
 serde                 = { version = "1.0.124", optional = true, features = ["derive"] }
 # substrate
-sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-std  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
+sp-std  = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
 
 [features]
 default = ["std"]
