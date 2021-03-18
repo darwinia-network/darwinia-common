@@ -255,7 +255,7 @@ pub fn pangolin_development_config() -> PangolinChainSpec {
 					*account_id,
 					GenesisAccount {
 						nonce: 0.into(),
-						balance: 123_456_789_000_000_000_090u128.into(),
+						balance: 123_456_789_000_000_000_000_090u128.into(),
 						storage: BTreeMap::new(),
 						code: vec![],
 					},
