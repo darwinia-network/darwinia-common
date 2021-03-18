@@ -303,6 +303,9 @@ pub use ethereum_relay::*;
 pub mod ethereum_backing;
 pub use ethereum_backing::*;
 
+pub mod ethereum_issuing;
+pub use ethereum_issuing::*;
+
 pub mod relayer_game;
 pub use relayer_game::*;
 
@@ -491,6 +494,7 @@ frame_support::construct_runtime! {
 
 		EVM: darwinia_evm::{Module, Call, Storage, Config, Event<T>} = 39,
 		Ethereum: dvm_ethereum::{Module, Call, Storage, Config, Event, ValidateUnsigned} = 40,
+		EthereumIssuing: darwinia_ethereum_issuing::{Module, Call, Storage, Config, Event<T>} = 41,
 	}
 }
 
