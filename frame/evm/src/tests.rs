@@ -98,6 +98,14 @@ impl FeeCalculator for FixedGasPrice {
 	}
 }
 
+/// EmptyContractHandler
+pub struct EmptyContractHandler;
+impl ContractHandler for EmptyContractHandler {
+    fn handle(_address: H160, _caller: H160, _input: &[u8]) -> DispatchResult {
+        Ok(())
+    }
+}
+
 impl Config for Test {
 	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = ();
@@ -113,6 +121,7 @@ impl Config for Test {
 	type ChainId = ();
 	type Runner = crate::runner::stack::Runner<Self>;
 	type AccountBasicMapping = RawAccountBasicMapping<Test>;
+	type ContractHandler = EmptyContractHandler;
 }
 
 type System = frame_system::Module<Test>;

@@ -19,7 +19,7 @@
 use super::*;
 use crate::account_basic::DVMAccountBasicMapping;
 use crate::{Config, IntermediateStateRoot, Module};
-use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator};
+use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator, ContractHandler};
 use ethereum::{TransactionAction, TransactionSignature};
 use frame_support::{impl_outer_origin, parameter_types, ConsensusEngineId};
 use rlp::*;
@@ -28,7 +28,7 @@ use sp_runtime::AccountId32;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	ModuleId, Perbill, RuntimeDebug,
+	ModuleId, Perbill, RuntimeDebug, DispatchResult
 };
 
 use codec::{Decode, Encode};
@@ -126,6 +126,14 @@ impl FeeCalculator for FixedGasPrice {
 	}
 }
 
+/// EmptyContractHandler
+pub struct EmptyContractHandler;
+impl ContractHandler for EmptyContractHandler {
+    fn handle(_address: H160, _caller: H160, _input: &[u8]) -> DispatchResult {
+        Ok(())
+    }
+}
+
 pub struct EthereumFindAuthor;
 impl FindAuthor<H160> for EthereumFindAuthor {
 	fn find_author<'a, I>(_digests: I) -> Option<H160>
@@ -165,6 +173,7 @@ impl darwinia_evm::Config for Test {
 	type ChainId = ChainId;
 	type Runner = darwinia_evm::runner::stack::Runner<Self>;
 	type AccountBasicMapping = DVMAccountBasicMapping<Self>;
+	type ContractHandler = EmptyContractHandler;
 }
 
 parameter_types! {

@@ -136,7 +136,6 @@ decl_event! {
 
 decl_storage! {
 	trait Store for Module<T: Config> as DarwiniaEthereumIssuing {
-		pub TestNumber get(fn test_number): u128 = 1001;
 		pub MappingFactoryAddress get(fn mapping_factory_address) config(): EthereumAddress;
 		pub TokenBackingAddress get(fn token_backing_address) config(): EthereumAddress;
 		pub VerifiedIssuingProof
@@ -203,78 +202,6 @@ decl_module! {
 			//Self::deposit_event(RawEvent::CreateErc20(token_address));
 			//todo
 			//transfer some ring to system account and refund when finished
-		}
-
-		#[weight = 10_000_000]
-		pub fn set_number(origin, number: u128) {
-			ensure_signed(origin)?;
-			TestNumber::put(number);
-
-			T::EcdsaAuthorities::schedule_mmr_root((
-					<frame_system::Module<T>>::block_number().saturated_into::<u32>()
-					/10 * 10 + 10
-					).saturated_into());
-		}
-
-		#[weight = 10_000_000]
-		pub fn test_create_erc20(origin) {
-			debug::info!(target: "darwinia-issuing", "start to call tx");
-			ensure_signed(origin)?;
-			let mapping_factory_address: Vec<u8> = FromHex::from_hex(MAPPING_FACTORY_ADDRESS).unwrap();
-			let backing: Address = H160::from_slice(&mapping_factory_address);
-			let source: Address = H160::from_slice(&mapping_factory_address);
-			let bytes = Abi::encode_create_erc20("ring", "ring", 18, backing.0.into(), source.0.into())
-				.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
-			//debug::info!(target: "darwinia-issuing", "create erc20 bytes {:?}", hex::encode(&bytes));
-			let issuing_address: Vec<u8> = FromHex::from_hex(ISSUING_ACCOUNT).unwrap();
-			let transaction = Self::unsigned_transaction(U256::zero(), H160::from_slice(&mapping_factory_address), bytes);
-			let issuing_account = H160::from_slice(&issuing_address);
-			let result = T::DvmCaller::raw_transact(issuing_account, transaction).map_err(|e| -> &'static str {e.into()} )?;
-			debug::info!(
-				target: "darwinia-issuing",
-				"sys call return {:?}",
-				result
-			);
-		}
-
-		#[weight = 10_000_000]
-		pub fn test_mint(origin, amount: U256) {
-			debug::info!(target: "darwinia-issuing", "start to call tx");
-			ensure_signed(origin)?;
-			let recvaddr: Vec<u8> = FromHex::from_hex(MAPPING_FACTORY_ADDRESS).unwrap();
-			let receiver: Address = H160::from_slice(&recvaddr);
-			let bytes = Abi::encode_cross_receive(receiver.0.into(), receiver.0.into(), amount.0.into())
-				.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
-			//debug::info!(target: "darwinia-issuing", "mint bytes {:?}", hex::encode(&bytes));
-			let erc20: Vec<u8> = FromHex::from_hex("26c6Bb696E542Eb1fc90b2036777025BF3f5b656").unwrap();
-			let issuing_address: Vec<u8> = FromHex::from_hex(ISSUING_ACCOUNT).unwrap();
-
-			let transaction = Self::unsigned_transaction(U256::from(1), H160::from_slice(&erc20), bytes);
-			let issuing_account = H160::from_slice(&issuing_address);
-			let result = T::DvmCaller::raw_transact(issuing_account, transaction).map_err(|e| -> &'static str {e.into()} )?;
-			debug::info!(
-				target: "darwinia-issuing",
-				"sys call return {:?}",
-				result
-			);
-		}
-
-		#[weight = 10_000_000]
-		pub fn test_call(origin) {
-			debug::info!(target: "darwinia-issuing", "start to call api");
-			ensure_signed(origin)?;
-			let mapping_factory_address: Vec<u8> = FromHex::from_hex(MAPPING_FACTORY_ADDRESS).unwrap();
-			let factory_address: Address = H160::from_slice(&mapping_factory_address);
-			let backing: Address = H160::from_slice(&mapping_factory_address);
-			let source: Address = H160::from_slice(&mapping_factory_address);
-			let bytes = Abi::encode_mapping_token(backing.0.into(), source.0.into())
-				.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
-			//debug::info!(target: "darwinia-issuing", "mapping token bytes {:?}", hex::encode(&bytes));
-			let transaction = Self::unsigned_transaction(U256::from(1), factory_address, bytes);
-			let issuing_address: Vec<u8> = FromHex::from_hex(ISSUING_ACCOUNT).unwrap();
-			let issuing_account = H160::from_slice(&issuing_address);
-			let result = T::DvmCaller::raw_call(issuing_account, transaction).map_err(|e| -> &'static str {e.into()} )?;
-			debug::info!(target: "darwinia-issuing", "mapping token result {:?}", H160::from_slice(&result.as_slice()[12..]));
 		}
 	}
 }

@@ -32,7 +32,7 @@ use ethereum_types::{Address as EthereumAddress, H160, H256, U256};
 pub use ethabi::{Event, Log};
 use sp_std::vec::Vec;
 
-pub struct Abi {}
+pub struct Abi;
 
 pub struct Address([u8; 20]);
 pub struct Amount([u64; 4]);
