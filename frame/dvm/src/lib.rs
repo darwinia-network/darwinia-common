@@ -401,6 +401,11 @@ impl<T: Config> Module<T> {
 		<RemainingBalance<T>>::insert(account_id, value)
 	}
 
+	// Remove the remaining balance for evm address
+	pub fn remove_remaining_balance(account_id: &T::AccountId) {
+		<RemainingBalance<T>>::remove(account_id)
+	}
+
 	/// Inc remaining balance
 	pub fn inc_remaining_balance(account_id: &T::AccountId, value: T::Balance) {
 		let remain_balance = Self::remaining_balance(account_id);
