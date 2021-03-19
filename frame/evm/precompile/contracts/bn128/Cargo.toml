@@ -16,8 +16,8 @@ bn                      = { package = "substrate-bn", version = "0.5", default-f
 darwinia-evm-primitives = { default-features = false, path = "../../../../../primitives/evm" }
 evm                     = { version = "0.22.0", default-features = false, features = ["with-codec"] }
 # substrate
-sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-io   = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
+sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-0.9.6" }
+sp-io   = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-0.9.6" }
 
 [features]
 default = ["std"]

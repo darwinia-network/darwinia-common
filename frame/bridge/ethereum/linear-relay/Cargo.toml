@@ -22,10 +22,10 @@ ethereum-primitives = { default-features = false, path = "../../../../primitives
 ethereum-types = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 rlp            = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-0.9.6" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-0.9.6" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-0.9.6" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-0.9.6" }
 
 [dev-dependencies]
 # crates
@@ -34,8 +34,8 @@ array-bytes = { version = "1.1.0" }
 darwinia-balances   = { path = "../../../../frame/balances" }
 ethereum-primitives = { features = ["deserialize"], path = "../../../../primitives/ethereum-primitives" }
 # substrate
-sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-io   = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
+sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-0.9.6" }
+sp-io   = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-0.9.6" }
 
 [features]
 default = ["std"]

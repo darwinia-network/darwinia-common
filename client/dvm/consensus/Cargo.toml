@@ -19,13 +19,13 @@ log         = { version = "0.4.14" }
 # darwinia
 dvm-consensus-primitives = { path = "../../../primitives/consensus/" }
 # substrate
-prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-api              = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-block-builder    = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-consensus        = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-core             = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-inherents        = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-timestamp        = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
+prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-0.9.6" }
+sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-0.9.6" }
+sp-api              = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-0.9.6" }
+sp-block-builder    = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-0.9.6" }
+sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-0.9.6" }
+sp-consensus        = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-0.9.6" }
+sp-core             = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-0.9.6" }
+sp-inherents        = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-0.9.6" }
+sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-0.9.6" }
+sp-timestamp        = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-0.9.6" }

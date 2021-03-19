@@ -33,16 +33,16 @@ dvm-rpc-core            = { path = "../../../frame/dvm/rpc" }
 dvm-rpc-core-primitives = { path = "../../../primitives/dvm-rpc-core" }
 dvm-rpc-runtime-api     = { path = "../../../frame/dvm/rpc/runtime-api" }
 # substrate
-sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sc-network          = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sc-rpc              = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sc-service          = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-api              = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-io               = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-storage          = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
+sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-0.9.6" }
+sc-network          = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-0.9.6" }
+sc-rpc              = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-0.9.6" }
+sc-service          = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-0.9.6" }
+sp-api              = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-0.9.6" }
+sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-0.9.6" }
+sp-io               = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-0.9.6" }
+sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-0.9.6" }
+sp-storage          = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-0.9.6" }
+sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-0.9.6" }
 
 [features]
 rpc_binary_search_estimate = []
