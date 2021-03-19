@@ -16,7 +16,6 @@ describe("Test RPC Bloom", function () {
 				from: addressFrom,
 				data: TEST_CONTRACT_BYTECODE,
 				value: "0x00",
-				gas_price: "0x01",
 				gas: "4294967295",
 			},
 			privKey

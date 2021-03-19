@@ -34,7 +34,6 @@ describe("Test gas", function () {
 	it("eth_estimateGas for contract call", async function () {
 		const contract = new web3.eth.Contract([TEST_CONTRACT_ABI], FIRST_CONTRACT_ADDRESS, {
 			from: addressFrom,
-			gasPrice: "0x01",
 		});
 
 		expect(await contract.methods.multiply(3).estimateGas()).to.equal(21204);

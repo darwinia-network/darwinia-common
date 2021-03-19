@@ -17,7 +17,7 @@ describe("Test Transfer Balance", function () {
 		const balanceFrom = web3.utils.fromWei(await web3.eth.getBalance(addressFrom), "ether");
 		const balanceTo = await web3.utils.fromWei(await web3.eth.getBalance(addressTo), "ether");
 
-		expect(balanceFrom).to.be.equal("123.45678900000000009");
+		expect(balanceFrom).to.be.equal("123456.78900000000000009");
 		expect(balanceTo).to.be.equal("0");
 		expect(await web3.eth.getTransactionCount(addressFrom, "latest")).to.eq(0);
 		expect(await web3.eth.getTransactionCount(addressFrom, "earliest")).to.eq(0);
@@ -30,7 +30,6 @@ describe("Test Transfer Balance", function () {
 				to: addressTo,
 				value: web3.utils.toWei("10", "ether"),
 				gas: "5000000000",
-				gas_price: 1,
 			},
 			privKey
 		);
@@ -40,7 +39,7 @@ describe("Test Transfer Balance", function () {
 		);
 
 		expect(createReceipt.transactionHash).to.be.equal(
-			"0x820524e7e2797a1b231f06b66049de173e1e09a6b61c1ee1373434b41fb29554"
+			"0x040ef42bccbfa1af89c37d747f94d78465d7630d4c974436e55f36338f651327"
 		);
 	}).timeout(10000);
 
@@ -48,7 +47,7 @@ describe("Test Transfer Balance", function () {
 		const balanceFrom = web3.utils.fromWei(await web3.eth.getBalance(addressFrom), "ether");
 		const balanceTo = await web3.utils.fromWei(await web3.eth.getBalance(addressTo), "ether");
 
-		expect(balanceFrom).to.be.equal("113.45678899999997909");
+		expect(balanceFrom).to.be.equal("123446.78897900000000009");
 		expect(balanceTo).to.be.equal("10");
 		expect(await web3.eth.getTransactionCount(addressFrom, "latest")).to.eq(1);
 	});
@@ -60,7 +59,6 @@ describe("Test Transfer Balance", function () {
 				to: addressTo2,
 				value: web3.utils.toWei("100", "wei"),
 				gas: "5000000000",
-				gas_price: 1,
 			},
 			privKey
 		);
@@ -73,7 +71,7 @@ describe("Test Transfer Balance", function () {
 		const balanceFrom = web3.utils.fromWei(await web3.eth.getBalance(addressFrom), "ether");
 		const balanceTo = await web3.utils.fromWei(await web3.eth.getBalance(addressTo2), "ether");
 
-		expect(balanceFrom).to.be.equal("113.45678899999995799");
+		expect(balanceFrom).to.be.equal("123446.78895799999999999");
 		expect(balanceTo).to.be.equal("0.0000000000000001");
 		expect(await web3.eth.getTransactionCount(addressFrom, "latest")).to.eq(2);
 	});
@@ -85,7 +83,6 @@ describe("Test Transfer Balance", function () {
 				to: addressTo,
 				value: web3.utils.toWei("50", "ether"),
 				gas: "5000000000",
-				gas_price: 1,
 			},
 			privKey
 		);
@@ -95,7 +92,7 @@ describe("Test Transfer Balance", function () {
 		);
 
 		expect(createReceipt.transactionHash).to.be.equal(
-			"0x90febfff3a70204babfa857cb9baa9664badf56f826e696335ef12135d06a89f"
+			"0x0046e4a4c8bee087c2ef25ce9b3717eaf5dcd53c6eb6815cc8e887abc667c371"
 		);
 	}).timeout(10000);
 
@@ -103,7 +100,7 @@ describe("Test Transfer Balance", function () {
 		const balanceFrom = web3.utils.fromWei(await web3.eth.getBalance(addressFrom), "ether");
 		const balanceTo = await web3.utils.fromWei(await web3.eth.getBalance(addressTo), "ether");
 
-		expect(balanceFrom).to.be.equal("63.45678899999993699");
+		expect(balanceFrom).to.be.equal("123396.78893699999999999");
 		expect(balanceTo).to.be.equal("60");
 		expect(await web3.eth.getTransactionCount(addressFrom, "latest")).to.eq(3);
 	});
@@ -124,13 +121,13 @@ describe("Test Transfer Balance", function () {
 			createTransaction.rawTransaction
 		);
 		expect(createReceipt.transactionHash).to.be.equal(
-			"0x93b9bc903778f59d124da6ee112b0a5728ab911d00ea198788670be699dec4bf"
+			"0x2accb0157682d1ed3497aeb7056704e856da4842ceefe9c838fc990b802c5beb"
 		);
 	}).timeout(10000);
 
 	it("Check balance after transfer self", async function () {
 		const balanceFrom = web3.utils.fromWei(await web3.eth.getBalance(addressFrom), "ether");
-		expect(balanceFrom).to.be.equal("63.45678899999991599");
+		expect(balanceFrom).to.be.equal("123396.78891599999999999");
 		expect(await web3.eth.getTransactionCount(addressFrom, "latest")).to.eq(4);
 	});
 
@@ -144,7 +141,6 @@ describe("Test Transfer Balance", function () {
 				gas: "5000000000",
 				data: input,
 				value: web3.utils.toWei("30", "ether"),
-				gas_price: 1,
 			},
 			privKey
 		);
@@ -155,7 +151,7 @@ describe("Test Transfer Balance", function () {
 
 	it("Get sender balance after withdraw", async function () {
 		const balanceFrom = web3.utils.fromWei(await web3.eth.getBalance(addressFrom), "ether");
-		expect(balanceFrom).to.be.equal("33.456788999999884478");
+		expect(balanceFrom).to.be.equal("123366.78888448799999999");
 		expect(await web3.eth.getTransactionCount(addressFrom, "latest")).to.eq(5);
 	});
 });
