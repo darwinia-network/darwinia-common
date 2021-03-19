@@ -181,6 +181,14 @@ fn compute_kton_reward_should_work() {
 	}
 }
 
+#[test]
+fn kton_reward_algorithm_correct() {
+	const COIN: Balance = 1_000_000_000;
+	let kton_reward = compute_kton_reward::<Test>(10 * COIN, 36);
+	let slashed = kton_reward - compute_kton_reward::<Test>(10 * COIN, 14);
+	assert_eq!(slashed, 2456853);
+}
+
 #[ignore]
 #[test]
 fn print_total_payout_error_rate() {
