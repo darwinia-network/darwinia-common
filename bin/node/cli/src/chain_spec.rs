@@ -17,7 +17,7 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- std ---
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, marker::PhantomData};
 // --- substrate ---
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_service::{ChainType, Properties};
@@ -43,16 +43,19 @@ type AccountPublic = <Signature as Verify>::Signer;
 
 const PANGOLIN_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
+const COLLECTIVE_MEMBER: &'static str =
+	"0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d";
+
 const TOKEN_REDEEM_ADDRESS: &'static str = "0x49262B932E439271d05634c32978294C7Ea15d0C";
 const DEPOSIT_REDEEM_ADDRESS: &'static str = "0x6EF538314829EfA8386Fc43386cB13B4e0A67D1e";
 const SET_AUTHORITIES_ADDRESS: &'static str = "0xE4A2892599Ad9527D76Ce6E26F93620FA7396D85";
 const RING_TOKEN_ADDRESS: &'static str = "0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0";
 const KTON_TOKEN_ADDRESS: &'static str = "0x1994100c58753793D52c6f457f189aa3ce9cEe94";
-const GENESIS_ETHEREUM_RELAY_AUTHORITY: &'static str =
+const ETHEREUM_RELAY_AUTHORITY: &'static str =
 	"0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d";
-const GENESIS_ETHEREUM_RELAY_AUTHORITY_SIGNER: &'static str =
-	"0x6aA70f55E5D770898Dd45aa1b7078b8A80AAbD6C";
-const GENESIS_EVM_ACCOUNT: &'static str = "0x68898db1012808808c903f390909c52d9f706749";
+const ETHEREUM_RELAY_AUTHORITY_SIGNER: &'static str = "0x6aA70f55E5D770898Dd45aa1b7078b8A80AAbD6C";
+
+const EVM_ACCOUNT: &'static str = "0x68898db1012808808c903f390909c52d9f706749";
 
 pub fn pangolin_config() -> Result<PangolinChainSpec, String> {
 	PangolinChainSpec::from_json_bytes(&include_bytes!("../../../res/pangolin/pangolin.json")[..])
@@ -150,7 +153,7 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 	let evm_accounts = {
 		let mut map = BTreeMap::new();
 		map.insert(
-			array_bytes::hex2array_unchecked!(GENESIS_EVM_ACCOUNT, 20).into(),
+			array_bytes::hex2array_unchecked!(EVM_ACCOUNT, 20).into(),
 			GenesisAccount {
 				nonce: 0.into(),
 				balance: 20_000_000_000_000_000_000_000_000u128.into(),
@@ -193,8 +196,14 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 		pallet_im_online: Default::default(),
 		pallet_authority_discovery: Default::default(),
 		darwinia_democracy: Default::default(),
-		pallet_collective_Instance0: Default::default(),
-		pallet_collective_Instance1: Default::default(),
+		pallet_collective_Instance0: pangolin_runtime::CouncilConfig {
+			phantom: PhantomData::<pangolin_runtime::CouncilCollective>,
+			members: vec![array_bytes::hex2array_unchecked!(COLLECTIVE_MEMBER, 32).into()]
+		},
+		pallet_collective_Instance1: pangolin_runtime::TechnicalCommitteeConfig {
+			phantom: PhantomData::<pangolin_runtime::TechnicalCollective>,
+			members: vec![array_bytes::hex2array_unchecked!(COLLECTIVE_MEMBER, 32).into()]
+		},
 		darwinia_elections_phragmen: Default::default(),
 		pallet_membership_Instance0: Default::default(),
 		darwinia_claims: Default::default(),
@@ -228,8 +237,8 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 		},
 		darwinia_relay_authorities_Instance0: pangolin_runtime::EthereumRelayAuthoritiesConfig {
 			authorities: vec![(
-				array_bytes::hex2array_unchecked!(GENESIS_ETHEREUM_RELAY_AUTHORITY, 32).into(),
-				array_bytes::hex2array_unchecked!(GENESIS_ETHEREUM_RELAY_AUTHORITY_SIGNER, 20).into(),
+				array_bytes::hex2array_unchecked!(ETHEREUM_RELAY_AUTHORITY, 32).into(),
+				array_bytes::hex2array_unchecked!(ETHEREUM_RELAY_AUTHORITY_SIGNER, 20).into(),
 				1
 			)]
 		},
@@ -290,7 +299,7 @@ fn pangolin_development_genesis(
 	let evm_accounts = {
 		let mut map = BTreeMap::new();
 		map.insert(
-			array_bytes::hex2array_unchecked!(GENESIS_EVM_ACCOUNT, 20).into(),
+			array_bytes::hex2array_unchecked!(EVM_ACCOUNT, 20).into(),
 			GenesisAccount {
 				nonce: 0.into(),
 				balance: 20_000_000_000_000_000_000_000_000u128.into(),
@@ -347,8 +356,14 @@ fn pangolin_development_genesis(
 		pallet_im_online: Default::default(),
 		pallet_authority_discovery: Default::default(),
 		darwinia_democracy: Default::default(),
-		pallet_collective_Instance0: Default::default(),
-		pallet_collective_Instance1: Default::default(),
+		pallet_collective_Instance0: pangolin_runtime::CouncilConfig {
+			phantom: PhantomData::<pangolin_runtime::CouncilCollective>,
+			members: vec![array_bytes::hex2array_unchecked!(COLLECTIVE_MEMBER, 32).into()]
+		},
+		pallet_collective_Instance1: pangolin_runtime::TechnicalCommitteeConfig {
+			phantom: PhantomData::<pangolin_runtime::TechnicalCollective>,
+			members: vec![array_bytes::hex2array_unchecked!(COLLECTIVE_MEMBER, 32).into()]
+		},
 		darwinia_elections_phragmen: Default::default(),
 		pallet_membership_Instance0: Default::default(),
 		darwinia_claims: pangolin_runtime::ClaimsConfig {
@@ -387,8 +402,8 @@ fn pangolin_development_genesis(
 		},
 		darwinia_relay_authorities_Instance0: pangolin_runtime::EthereumRelayAuthoritiesConfig {
 			authorities: vec![(
-				array_bytes::hex2array_unchecked!(GENESIS_ETHEREUM_RELAY_AUTHORITY, 32).into(),
-				array_bytes::hex2array_unchecked!(GENESIS_ETHEREUM_RELAY_AUTHORITY_SIGNER, 20).into(),
+				array_bytes::hex2array_unchecked!(ETHEREUM_RELAY_AUTHORITY, 32).into(),
+				array_bytes::hex2array_unchecked!(ETHEREUM_RELAY_AUTHORITY_SIGNER, 20).into(),
 				1
 			)]
 		},
