@@ -216,7 +216,6 @@ fn print_total_payout_error_rate() {
 
 #[test]
 fn kton_slash_should_work() {
-	// let mut map = vec![];
 	let exp_slashes: [&[Balance]; 36] = [
 		&[76142],
 		&[152284, 76142],
