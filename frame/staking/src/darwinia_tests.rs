@@ -558,6 +558,7 @@ fn slash_value_for_unbond_despoit_claim_after_a_duration_should_correct() {
 		let (stash, controller) = (1001, 1000);
 		let promise_month = 36;
 		let bond_value = 10 * COIN;
+		let deposit_item_expire_time = INIT_TIMESTAMP + promise_month * MONTH_IN_MILLISECONDS;
 		let _ = Ring::deposit_creating(&stash, 1000 * COIN);
 
 		let mut ledger = StakingLedger {
@@ -567,7 +568,7 @@ fn slash_value_for_unbond_despoit_claim_after_a_duration_should_correct() {
 			deposit_items: vec![TimeDepositItem {
 				value: bond_value,
 				start_time: INIT_TIMESTAMP,
-				expire_time: INIT_TIMESTAMP + promise_month * MONTH_IN_MILLISECONDS,
+				expire_time: deposit_item_expire_time,
 			}],
 			ring_staking_lock: StakingLock {
 				staking_amount: bond_value,
@@ -585,39 +586,27 @@ fn slash_value_for_unbond_despoit_claim_after_a_duration_should_correct() {
 			promise_month as u8,
 		));
 		assert_eq!(Staking::ledger(controller).unwrap(), ledger);
-		assert_eq!(staking_events().len(), 1);
-		assert_eq!(
-			staking_events(),
-			vec![RawEvent::BondRing(
-				bond_value,
-				INIT_TIMESTAMP,
-				INIT_TIMESTAMP + promise_month * MONTH_IN_MILLISECONDS
-			)]
-		);
 
 		// set a fake blockchain time to simulate elapsed time
-		let ts = 14 * MONTH_IN_MILLISECONDS + INIT_TIMESTAMP;
-		Timestamp::set_timestamp(ts);
+		Timestamp::set_timestamp(Timestamp::now() + 14 * MONTH_IN_MILLISECONDS);
 		assert_ok!(Staking::try_claim_deposits_with_punish(
 			Origin::signed(controller),
-			INIT_TIMESTAMP + promise_month * MONTH_IN_MILLISECONDS,
+			deposit_item_expire_time,
 		));
 		// ledger no change cause no kton for punishment
-		assert_eq!(staking_events().len(), 1);
 		assert_eq!(Staking::ledger(controller).unwrap(), ledger);
 
 		// Set more kton balance to make it work.
-		let _ = Kton::deposit_creating(&stash, 100 * COIN);
+		let _ = Kton::deposit_creating(&stash, COIN);
+		let free_kton = Kton::free_balance(&stash);
 		assert_ok!(Staking::try_claim_deposits_with_punish(
 			Origin::signed(controller),
-			INIT_TIMESTAMP + promise_month * MONTH_IN_MILLISECONDS,
+			deposit_item_expire_time,
 		));
 
 		// should claim success
-		assert_eq!(staking_events().len(), 2);
-		let slashed: KtonBalance<Test> =
-			inflation::compute_kton_reward::<Test>(bond_value, 36 as u8)
-				- inflation::compute_kton_reward::<Test>(bond_value, 14 as u8);
+		let slashed: KtonBalance<Test> = inflation::compute_kton_reward::<Test>(bond_value, 36)
+			- inflation::compute_kton_reward::<Test>(bond_value, 14);
 		assert_eq!(
 			staking_events()[1],
 			RawEvent::DepositsClaimedWithPunish(ledger.stash.clone(), slashed * 3)
@@ -627,7 +616,7 @@ fn slash_value_for_unbond_despoit_claim_after_a_duration_should_correct() {
 		ledger.deposit_items.clear();
 
 		assert_eq!(Staking::ledger(controller).unwrap(), ledger);
-		assert_eq!(Kton::free_balance(&stash), 100 * COIN - slashed * 3);
+		assert_eq!(Kton::free_balance(&stash), free_kton - slashed * 3);
 	});
 }
 
