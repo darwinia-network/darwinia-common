@@ -307,7 +307,7 @@ pub struct GenesisAccount {
 }
 
 decl_storage! {
-	trait Store for Module<T: Config> as DarwiniaEVM {
+	trait Store for Module<T: Config> as EVM {
 		pub AccountCodes get(fn account_codes): map hasher(blake2_128_concat) H160 => Vec<u8>;
 		pub AccountStorages get(fn account_storages):
 			double_map hasher(blake2_128_concat) H160, hasher(blake2_128_concat) H256 => H256;
