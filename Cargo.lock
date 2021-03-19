@@ -2259,7 +2259,7 @@ dependencies = [
 [[package]]
 name = "ethash"
 version = "0.4.0"
-source = "git+https://github.com/darwinia-network/rust-ethash?branch=darwinia-v1#cd3918410be0484e436cab68ba803fe95fc905b5"
+source = "git+https://github.com/darwinia-network/rust-ethash?tag=v1.0.0#cd3918410be0484e436cab68ba803fe95fc905b5"
 dependencies = [
  "byteorder",
  "ethereum-types 0.8.0",
