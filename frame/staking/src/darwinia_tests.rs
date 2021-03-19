@@ -550,10 +550,8 @@ fn punished_claim_should_work() {
 		assert_eq!(Staking::ledger(controller).unwrap(), ledger);
 		assert_eq!(Kton::free_balance(&stash), COIN - 3);
 	});
-}
 
-#[test]
-fn slash_value_for_unbond_despoit_claim_after_a_duration_should_correct() {
+	// slash value for unbond deposit claim after a duration should correct
 	ExtBuilder::default().build().execute_with(|| {
 		let (stash, controller) = (1001, 1000);
 		let promise_month = 36;
@@ -650,7 +648,7 @@ fn deposit_zero_should_do_nothing() {
 		// NO-OP
 		assert_ok!(Staking::deposit_extra(Origin::signed(stash), COIN, 1));
 		assert_eq!(Staking::ledger(&controller).unwrap().deposit_items.len(), 1);
-	})
+	});
 }
 
 #[test]
