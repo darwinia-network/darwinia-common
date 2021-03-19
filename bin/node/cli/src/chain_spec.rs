@@ -55,7 +55,11 @@ const ETHEREUM_RELAY_AUTHORITY: &'static str =
 	"0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d";
 const ETHEREUM_RELAY_AUTHORITY_SIGNER: &'static str = "0x6aA70f55E5D770898Dd45aa1b7078b8A80AAbD6C";
 
-const EVM_ACCOUNT: &'static str = "0x68898db1012808808c903f390909c52d9f706749";
+const EVM_ACCOUNTS: [&'static str; 3] = [
+	"0x68898db1012808808c903f390909c52d9f706749",
+	"0x6be02d1d3665660d22ff9624b7be0551ee1ac91b",
+	"0xB90168C8CBcd351D069ffFdA7B71cd846924d551",
+];
 
 pub fn pangolin_config() -> Result<PangolinChainSpec, String> {
 	PangolinChainSpec::from_json_bytes(&include_bytes!("../../../res/pangolin/pangolin.json")[..])
@@ -152,15 +156,18 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 	];
 	let evm_accounts = {
 		let mut map = BTreeMap::new();
-		map.insert(
-			array_bytes::hex2array_unchecked!(EVM_ACCOUNT, 20).into(),
-			GenesisAccount {
-				nonce: 0.into(),
-				balance: 20_000_000_000_000_000_000_000_000u128.into(),
-				storage: BTreeMap::new(),
-				code: vec![],
-			},
-		);
+
+		for account in EVM_ACCOUNTS.iter() {
+			map.insert(
+				array_bytes::hex2array_unchecked!(account, 20).into(),
+				GenesisAccount {
+					nonce: 0.into(),
+					balance: 20_000_000_000_000_000_000_000_000u128.into(),
+					storage: BTreeMap::new(),
+					code: vec![],
+				},
+			);
+		}
 
 		map
 	};
@@ -298,15 +305,18 @@ fn pangolin_development_genesis(
 
 	let evm_accounts = {
 		let mut map = BTreeMap::new();
-		map.insert(
-			array_bytes::hex2array_unchecked!(EVM_ACCOUNT, 20).into(),
-			GenesisAccount {
-				nonce: 0.into(),
-				balance: 20_000_000_000_000_000_000_000_000u128.into(),
-				storage: BTreeMap::new(),
-				code: vec![],
-			},
-		);
+
+		for account in EVM_ACCOUNTS.iter() {
+			map.insert(
+				array_bytes::hex2array_unchecked!(account, 20).into(),
+				GenesisAccount {
+					nonce: 0.into(),
+					balance: 123_456_789_000_000_000_000_090u128.into(),
+					storage: BTreeMap::new(),
+					code: vec![],
+				},
+			);
+		}
 
 		map
 	};
