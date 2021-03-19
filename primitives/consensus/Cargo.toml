@@ -16,9 +16,9 @@ ethereum = { version = "0.7.1", default-features = false, features = ["with-code
 rlp      = { version = "0.5", default-features = false }
 sha3     = { version = "0.8", default-features = false }
 # substrate
-sp-core    = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
-sp-std     = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
+sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
 
 [features]
 default = ["std"]

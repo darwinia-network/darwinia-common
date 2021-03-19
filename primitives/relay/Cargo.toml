@@ -13,9 +13,9 @@ version     = "2.0.0"
 # crates
 codec = { package = "parity-scale-codec", version = "2.0.1", default-features = false }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
-sp-runtime    = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
-sp-std        = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
 
 [features]
 default = ["std"]

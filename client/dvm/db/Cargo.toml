@@ -16,6 +16,6 @@ kvdb         = { version = "0.9.0" }
 kvdb-rocksdb = { version = "0.11.0" }
 parking_lot  = { version = "0.11.1" }
 # substrate
-sp-core     = { git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
-sp-database = { git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
-sp-runtime  = { git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
+sp-core     = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+sp-database = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+sp-runtime  = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }

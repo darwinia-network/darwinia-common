@@ -18,10 +18,10 @@ serde = { version = "1.0.124", optional = true }
 darwinia-relay-primitives = { default-features = false, path = "../../../primitives/relay" }
 darwinia-support          = { default-features = false, path = "../../support" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
-frame-system  = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
-sp-runtime    = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
-sp-std        = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
 
 [dev-dependencies]
 # crates
@@ -29,8 +29,8 @@ env_logger = { version = "0.8.3" }
 # darwinia
 darwinia-balances = { path = "../../balances" }
 # substrate
-sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
-sp-io   = { git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
+sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+sp-io   = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
 
 [features]
 default = ["std"]

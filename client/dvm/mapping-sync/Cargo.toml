@@ -11,10 +11,10 @@ version     = "2.0.0"
 
 [dependencies]
 # substrate
-sp-api          = { git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
-sp-blockchain   = { git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
-sc-client-api   = { git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
-sp-runtime      = { git = "https://github.com/paritytech/substrate.git", branch = "rococo-v1" }
+sp-api          = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+sp-blockchain   = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+sc-client-api   = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+sp-runtime      = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
 # darwinia
 dc-consensus           = { path = "../consensus" }
 dc-db                  = { path = "../db" }
