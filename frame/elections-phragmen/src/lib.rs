@@ -106,8 +106,6 @@ use darwinia_support::balance::lock::*;
 pub mod weights;
 pub use weights::WeightInfo;
 
-pub mod migrations_2_0_0;
-
 /// The maximum votes allowed per voter.
 pub const MAXIMUM_VOTE: usize = 16;
 
