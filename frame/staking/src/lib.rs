@@ -289,29 +289,6 @@ pub mod inflation;
 pub mod offchain_election;
 pub mod slashing;
 
-pub mod migrations {
-	use super::*;
-
-	#[derive(Decode)]
-	struct OldValidatorPrefs {
-		#[codec(compact)]
-		pub commission: Perbill,
-	}
-	impl OldValidatorPrefs {
-		fn upgraded(self) -> ValidatorPrefs {
-			ValidatorPrefs {
-				commission: self.commission,
-				..Default::default()
-			}
-		}
-	}
-	pub fn migrate_to_blockable<T: Config>() -> frame_support::weights::Weight {
-		<Validators<T>>::translate::<OldValidatorPrefs, _>(|_, p| Some(p.upgraded()));
-		<ErasValidatorPrefs<T>>::translate::<OldValidatorPrefs, _>(|_, _, p| Some(p.upgraded()));
-		T::BlockWeights::get().max_block
-	}
-}
-
 mod types {
 	// --- darwinia ---
 	use crate::*;
@@ -1062,17 +1039,6 @@ decl_module! {
 		const TotalPower: Power = T::TotalPower::get();
 
 		fn deposit_event() = default;
-
-		fn on_runtime_upgrade() -> frame_support::weights::Weight {
-			if StorageVersion::get() == Releases::V4_0_0 || !StorageVersion::exists() {
-				log!(info, "Migrating Staking...");
-
-				StorageVersion::put(Releases::V5_0_0);
-				migrations::migrate_to_blockable::<T>()
-			} else {
-				0
-			}
-		}
 
 		/// sets `ElectionStatus` to `Open(now)` where `now` is the block number at which the
 		/// election window has opened, if we are at the last session and less blocks than
