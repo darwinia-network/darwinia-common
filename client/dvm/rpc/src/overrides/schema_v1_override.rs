@@ -84,7 +84,7 @@ where
 {
 	/// For a given account address, returns pallet_evm::AccountCodes.
 	fn account_code_at(&self, block: &BlockId<Block>, address: H160) -> Option<Vec<u8>> {
-		let mut key: Vec<u8> = storage_prefix_build(b"DarwiniaEVM", b"AccountCodes");
+		let mut key: Vec<u8> = storage_prefix_build(b"EVM", b"AccountCodes");
 		key.extend(blake2_128_extend(address.as_bytes()));
 		self.query_storage::<Vec<u8>>(block, &StorageKey(key))
 	}
@@ -94,7 +94,7 @@ where
 		let tmp: &mut [u8; 32] = &mut [0; 32];
 		index.to_little_endian(tmp);
 
-		let mut key: Vec<u8> = storage_prefix_build(b"DarwiniaEVM", b"AccountStorages");
+		let mut key: Vec<u8> = storage_prefix_build(b"EVM", b"AccountStorages");
 		key.extend(blake2_128_extend(address.as_bytes()));
 		key.extend(blake2_128_extend(tmp));
 

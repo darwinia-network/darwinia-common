@@ -403,14 +403,14 @@ impl<T: Config> Module<T> {
 	}
 
 	/// Inc remaining balance
-	pub fn inc_remain_balance(account_id: &T::AccountId, value: T::Balance) {
+	pub fn inc_remaining_balance(account_id: &T::AccountId, value: T::Balance) {
 		let remain_balance = Self::remaining_balance(account_id);
 		let updated_balance = remain_balance.saturating_add(value);
 		<RemainingBalance<T>>::insert(account_id, updated_balance);
 	}
 
 	/// Dec remaining balance
-	pub fn dec_remain_balance(account_id: &T::AccountId, value: T::Balance) {
+	pub fn dec_remaining_balance(account_id: &T::AccountId, value: T::Balance) {
 		let remain_balance = Self::remaining_balance(account_id);
 		let updated_balance = remain_balance.saturating_sub(value);
 		<RemainingBalance<T>>::insert(account_id, updated_balance);
