@@ -25,7 +25,7 @@ mod treasury {
 }
 
 // --- substrate ---
-use frame_support::{impl_outer_event, impl_outer_origin, parameter_types};
+use frame_system::mocking::*;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -33,41 +33,22 @@ use sp_runtime::{
 	ModuleId,
 };
 // --- darwinia ---
-use crate::*;
+use crate::{self as darwinia_treasury, *};
+
+type Block = MockBlock<Test>;
+type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 
 type Balance = u64;
 
-pub type System = frame_system::Module<Test>;
-pub type Treasury = Module<Test>;
+darwinia_support::impl_test_account_data! {}
 
-impl_outer_event! {
-	pub enum Event for Test {
-		frame_system <T>,
-		darwinia_balances Instance0<T>,
-		darwinia_balances Instance1<T>,
-		treasury <T>,
-	}
-}
-
-impl_outer_origin! {
-	pub enum Origin for Test where system = frame_system {}
-}
-
-darwinia_support::impl_test_account_data! { deprecated }
-
-#[derive(Clone, Eq, PartialEq)]
-pub struct Test;
-
-parameter_types! {
-	pub static TenToFourteen: Vec<u128> = vec![10, 11, 12, 13, 14];
-}
 impl frame_system::Config for Test {
 	type BaseCallFilter = ();
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
 	type Origin = Origin;
-	type Call = ();
+	type Call = Call;
 	type Index = u64;
 	type BlockNumber = u64;
 	type Hash = H256;
@@ -78,7 +59,7 @@ impl frame_system::Config for Test {
 	type Event = Event;
 	type BlockHashCount = ();
 	type Version = ();
-	type PalletInfo = ();
+	type PalletInfo = PalletInfo;
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
@@ -109,8 +90,9 @@ impl ContainsLengthBound for Tippers {
 	}
 }
 
-parameter_types! {
+frame_support::parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;
+	pub static TenToFourteen: Vec<u128> = vec![10, 11, 12, 13, 14];
 }
 impl darwinia_balances::Config<KtonInstance> for Test {
 	type Balance = Balance;
@@ -135,7 +117,7 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type WeightInfo = ();
 }
 
-parameter_types! {
+frame_support::parameter_types! {
 	pub const TreasuryModuleId: ModuleId = ModuleId(*b"da/trsry");
 	pub const TipCountdown: u64 = 1;
 	pub const TipFindersFee: Percent = Percent::from_percent(20);
@@ -183,24 +165,38 @@ impl Config for Test {
 	type WeightInfo = ();
 }
 
+frame_support::construct_runtime! {
+	pub enum Test
+	where
+		Block = Block,
+		NodeBlock = Block,
+		UncheckedExtrinsic = UncheckedExtrinsic
+	{
+		System: frame_system::{Module, Call, Storage, Config, Event<T>},
+		Ring: darwinia_balances::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
+		Kton: darwinia_balances::<Instance1>::{Module, Call, Storage, Config<T>, Event<T>},
+		Treasury: darwinia_treasury::{Module, Call, Storage, Config, Event<T>},
+	}
+}
+
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default()
 		.build_storage::<Test>()
 		.unwrap();
 
-	RingConfig {
+	darwinia_balances::GenesisConfig::<Test, RingInstance> {
 		// Total issuance will be 200 with treasury account initialized at ED.
 		balances: vec![(0, 100), (1, 98), (2, 1)],
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
-	KtonConfig {
+	darwinia_balances::GenesisConfig::<Test, KtonInstance> {
 		// Total issuance will be 200 with treasury account initialized at ED.
 		balances: vec![(0, 100), (1, 98), (2, 1)],
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
-	GenesisConfig::default()
+	darwinia_treasury::GenesisConfig::default()
 		.assimilate_storage::<Test, _>(&mut t)
 		.unwrap();
 
@@ -212,7 +208,7 @@ pub fn last_event() -> RawEvent<u128, H256, u64, u64, DefaultInstance> {
 		.into_iter()
 		.map(|r| r.event)
 		.filter_map(|e| {
-			if let Event::treasury(inner) = e {
+			if let Event::darwinia_treasury(inner) = e {
 				Some(inner)
 			} else {
 				None

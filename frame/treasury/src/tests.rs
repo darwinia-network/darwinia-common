@@ -22,7 +22,7 @@
 use frame_support::{assert_noop, assert_ok, traits::OnInitialize};
 use sp_runtime::traits::BlakeTwo256;
 // --- darwinia ---
-use crate::{mock::*, *};
+use crate::{self as darwinia_treasury, mock::*, *};
 
 #[test]
 fn genesis_config_works() {
@@ -1379,7 +1379,7 @@ fn genesis_funding_works() {
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
-	GenesisConfig::default()
+	darwinia_treasury::GenesisConfig::default()
 		.assimilate_storage::<Test, _>(&mut t)
 		.unwrap();
 	let mut t: sp_io::TestExternalities = t.into();
