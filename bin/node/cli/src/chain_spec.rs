@@ -24,7 +24,7 @@ use sc_service::{ChainType, Properties};
 use sc_telemetry::TelemetryEndpoints;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::AuthorityId as BabeId;
-use sp_core::{sr25519, Pair, Public};
+use sp_core::{crypto::UncheckedInto, sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::{
 	traits::{IdentifyAccount, Verify},
@@ -141,19 +141,64 @@ pub fn pangolin_build_spec_config() -> PangolinChainSpec {
 
 fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 	const ROOT: &'static str = "0x72819fbc1b93196fa230243947c1726cbea7e33044c7eb6f736ff345561f9e4c";
-	const GENESIS_VALIDATOR: &'static str = "Alice";
-	const GENESIS_VALIDATOR_STASH: &'static str = "Alice//stash";
 	const GENESIS_VALIDATOR_BOND: Balance = COIN;
 
+	struct Keys {
+		stash: AccountId,
+		session: pangolin_runtime::SessionKeys,
+	}
+	impl Keys {
+		fn new(sr25519: &str, ed25519: &str) -> Self {
+			let sr25519 = array_bytes::hex2array_unchecked!(sr25519, 32);
+			let ed25519 = array_bytes::hex2array_unchecked!(ed25519, 32);
+
+			Self {
+				stash: sr25519.into(),
+				session: pangolin_session_keys(
+					sr25519.unchecked_into(),
+					ed25519.unchecked_into(),
+					sr25519.unchecked_into(),
+					sr25519.unchecked_into(),
+				),
+			}
+		}
+	}
+
 	let root = AccountId::from(array_bytes::hex2array_unchecked!(ROOT, 32));
-	let initial_authorities = vec![get_authority_keys_from_seed(GENESIS_VALIDATOR)];
-	let endowed_accounts = vec![
-		(root.clone(), 1 << 56),
-		(
-			get_account_id_from_seed::<sr25519::Public>(GENESIS_VALIDATOR_STASH),
-			GENESIS_VALIDATOR_BOND,
+	let initial_authorities = vec![
+		Keys::new(
+			"0x9c43c00407c0a51e0d88ede9d531f165e370013b648e6b62f4b3bcff4689df02",
+			"0x63e122d962a835020bef656ad5a80dbcc994bb48a659f1af955552f4b3c27b09",
+		),
+		Keys::new(
+			"0x741a9f507722713ec0a5df1558ac375f62469b61d1f60fa60f5dedfc85425b2e",
+			"0x8a50704f41448fca63f608575debb626639ac00ad151a1db08af1368be9ccb1d",
+		),
+		Keys::new(
+			"0x2276a3162f1b63c21b3396c5846d43874c5b8ba69917d756142d460b2d70d036",
+			"0xb28fade2d023f08c0d5a131eac7d64a107a2660f22a0aca09b37a3f321259ef6",
+		),
+		Keys::new(
+			"0x7a8b265c416eab5fdf8e5a1b3c7635131ca7164fbe6f66d8a70feeeba7c4dd7f",
+			"0x305bafd512366e7fd535fdc144c7034b8683e1814d229c84a116f3cb27a97643",
+		),
+		Keys::new(
+			"0xe446c1f1f419cc0927ad3319e141501b02844dee6252d905aae406f0c7097d1a",
+			"0xc3c9880f6821b6e906c4396e54137297b1ee6c4c448b6a98abc5e29ffcdcec81",
+		),
+		Keys::new(
+			"0xae05263d9508581f657ce584184721884ee2886eb66765db0c4f5195aa1d4e21",
+			"0x1ed7de3855ffcce134d718b570febb49bbbbeb32ebbc8c319f44fb9f5690643a",
 		),
 	];
+	let endowed_accounts = vec![(root.clone(), 1 << 56)]
+		.into_iter()
+		.chain(
+			initial_authorities
+				.iter()
+				.map(|Keys { stash, .. }| (stash.to_owned(), GENESIS_VALIDATOR_BOND)),
+		)
+		.collect::<Vec<(AccountId, Balance)>>();
 	let evm_accounts = {
 		let mut map = BTreeMap::new();
 
@@ -185,8 +230,12 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 			validator_count: 7,
 			stakers: initial_authorities
 				.iter()
-				.cloned()
-				.map(|x| (x.0, x.1, GENESIS_VALIDATOR_BOND, pangolin_runtime::StakerStatus::Validator))
+				.map(|Keys { stash, .. }| (
+					stash.to_owned(),
+					stash.to_owned(),
+					GENESIS_VALIDATOR_BOND,
+					pangolin_runtime::StakerStatus::Validator
+				))
 				.collect(),
 			slash_reward_fraction: Perbill::from_percent(10),
 			payout_fraction: Perbill::from_percent(50),
@@ -195,8 +244,11 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 		pallet_session: pangolin_runtime::SessionConfig {
 			keys: initial_authorities
 				.iter()
-				.cloned()
-				.map(|x| (x.0.clone(), x.0, pangolin_session_keys(x.2, x.3, x.4, x.5)))
+				.map(|Keys { stash, session }| (
+					stash.to_owned(),
+					stash.to_owned(),
+					session.to_owned()
+				))
 				.collect(),
 		},
 		pallet_grandpa: Default::default(),
