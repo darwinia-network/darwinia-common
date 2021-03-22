@@ -1,8 +1,8 @@
 #![cfg(test)]
 
-use super::*;
-
-use frame_support::{assert_ok, impl_outer_dispatch, impl_outer_origin, parameter_types};
+use crate::{self as darwinia_evm, *};
+use frame_support::assert_ok;
+use frame_system::mocking::*;
 use sp_core::{Blake2Hasher, H256};
 use sp_runtime::{
 	testing::Header,
@@ -11,22 +11,12 @@ use sp_runtime::{
 };
 use std::{collections::BTreeMap, str::FromStr};
 
+type Block = MockBlock<Test>;
+type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
+
 type Balance = u64;
 
-impl_outer_origin! {
-	pub enum Origin for Test where system = frame_system {}
-}
-
-impl_outer_dispatch! {
-	pub enum OuterCall for Test where origin: Origin {
-		self::EVM,
-	}
-}
-
-darwinia_support::impl_test_account_data! { deprecated }
-
-#[derive(Clone, Eq, PartialEq, Debug)]
-pub struct Test;
+darwinia_support::impl_test_account_data! {}
 
 impl frame_system::Config for Test {
 	type BaseCallFilter = ();
@@ -37,15 +27,15 @@ impl frame_system::Config for Test {
 	type Index = u64;
 	type BlockNumber = u64;
 	type Hash = H256;
-	type Call = OuterCall;
+	type Call = Call;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId32;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = ();
+	type Event = Event;
 	type BlockHashCount = ();
 	type Version = ();
-	type PalletInfo = ();
+	type PalletInfo = PalletInfo;
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
@@ -53,13 +43,13 @@ impl frame_system::Config for Test {
 	type SS58Prefix = ();
 }
 
-parameter_types! {
+frame_support::parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;
 }
 impl darwinia_balances::Config<RingInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
-	type Event = ();
+	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
@@ -70,7 +60,7 @@ impl darwinia_balances::Config<RingInstance> for Test {
 impl darwinia_balances::Config<KtonInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
-	type Event = ();
+	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
@@ -79,7 +69,7 @@ impl darwinia_balances::Config<KtonInstance> for Test {
 	type WeightInfo = ();
 }
 
-parameter_types! {
+frame_support::parameter_types! {
 	pub const MinimumPeriod: u64 = 1000;
 }
 impl pallet_timestamp::Config for Test {
@@ -108,15 +98,26 @@ impl Config for Test {
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 
-	type Event = Event<Test>;
+	type Event = Event;
 	type Precompiles = ();
 	type ChainId = ();
 	type Runner = crate::runner::stack::Runner<Self>;
 	type AccountBasicMapping = RawAccountBasicMapping<Test>;
 }
 
-type System = frame_system::Module<Test>;
-type EVM = Module<Test>;
+frame_support::construct_runtime! {
+	pub enum Test where
+		Block = Block,
+		NodeBlock = Block,
+		UncheckedExtrinsic = UncheckedExtrinsic,
+	{
+		System: frame_system::{Module, Call, Config, Storage, Event<T>},
+		Timestamp: pallet_timestamp::{Module, Call, Storage},
+		Ring: darwinia_balances::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
+		Kton: darwinia_balances::<Instance1>::{Module, Call, Storage, Config<T>, Event<T>},
+		EVM: darwinia_evm::{Module, Call, Storage, Config, Event<T>},
+	}
+}
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default()
@@ -147,8 +148,13 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		},
 	);
 
-	RingConfig::default().assimilate_storage(&mut t).unwrap();
-	GenesisConfig { accounts }
+	<darwinia_balances::GenesisConfig<Test, RingInstance>>::default()
+		.assimilate_storage(&mut t)
+		.unwrap();
+	<darwinia_balances::GenesisConfig<Test, KtonInstance>>::default()
+		.assimilate_storage(&mut t)
+		.unwrap();
+	darwinia_evm::GenesisConfig { accounts }
 		.assimilate_storage::<Test>(&mut t)
 		.unwrap();
 	t.into()
