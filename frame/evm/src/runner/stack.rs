@@ -282,7 +282,6 @@ impl<'config> SubstrateStackSubstate<'config> {
 		mem::swap(&mut exited, self);
 
 		self.metadata.swallow_revert(exited.metadata)?;
-		self.logs.append(&mut exited.logs);
 
 		sp_io::storage::rollback_transaction();
 		Ok(())
@@ -293,7 +292,6 @@ impl<'config> SubstrateStackSubstate<'config> {
 		mem::swap(&mut exited, self);
 
 		self.metadata.swallow_discard(exited.metadata)?;
-		self.logs.append(&mut exited.logs);
 
 		sp_io::storage::rollback_transaction();
 		Ok(())
