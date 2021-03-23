@@ -95,9 +95,7 @@ impl Get<H256> for IntermediateStateRoot {
 
 /// Config for Ethereum pallet.
 pub trait Config:
-	frame_system::Config<Hash = H256>
-	+ pallet_timestamp::Config
-	+ darwinia_evm::Config
+	frame_system::Config<Hash = H256> + pallet_timestamp::Config + darwinia_evm::Config
 {
 	/// The overarching event type.
 	type Event: From<Event> + Into<<Self as frame_system::Config>::Event>;
