@@ -387,20 +387,14 @@ impl<T: Config> Module<T> {
 impl<T: Config> ContractHandler for Module<T> {
 	/// handle
 	fn handle(address: H160, caller: H160, input: &[u8]) -> DispatchResult {
-		debug::info!(target: "darwinia-issuing", "handle erc20 token burn");
-		debug::info!(target: "darwinia-issuing", "address {:?} caller {:?}, input: {:?}", address, caller, input);
-		// todo check address: 0x00000000000000000000000000000016
-
 		if MappingFactoryAddress::get() == caller.0.into() {
 			if input.len() == 3 * 32 {
 				let registed_info =
 					TokenRegisterInfo::decode(input).map_err(|_| Error::<T>::InvalidInputData)?;
-				debug::info!(target: "darwinia-issuing", "registed-info {:?}", registed_info);
 				Self::token_registed(registed_info.0, registed_info.1, registed_info.2)?;
 			} else {
 				let burn_info =
 					TokenBurnInfo::decode(input).map_err(|_| Error::<T>::InvalidInputData)?;
-				debug::info!(target: "darwinia-issuing", "burn-info {:?}", burn_info);
 				Self::burn_token(
 					burn_info.backing,
 					burn_info.source,
