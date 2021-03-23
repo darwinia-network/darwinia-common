@@ -80,8 +80,8 @@ const EVM_ACCOUNTS: &[&'static str] = &[
 	"0xbB3E51d20CA651fBE19b1a1C2a6C8B1A4d950437",
 ];
 const A_FEW_COINS: Balance = 1 << 44;
-const MANY_COINS: Balance = 1 << 50;
-const BUNCH_OF_COINS: Balance = 1 << 56;
+const MANY_COINS: Balance = A_FEW_COINS << 6;
+const BUNCH_OF_COINS: Balance = MANY_COINS << 6;
 
 const TOKEN_REDEEM_ADDRESS: &'static str = "0x49262B932E439271d05634c32978294C7Ea15d0C";
 const DEPOSIT_REDEEM_ADDRESS: &'static str = "0x6EF538314829EfA8386Fc43386cB13B4e0A67D1e";
