@@ -88,9 +88,7 @@ const DEPOSIT_REDEEM_ADDRESS: &'static str = "0x6EF538314829EfA8386Fc43386cB13B4
 const SET_AUTHORITIES_ADDRESS: &'static str = "0xD35Bb6F1bc1C84b53E0995c1830454AB7C4147f1";
 const RING_TOKEN_ADDRESS: &'static str = "0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0";
 const KTON_TOKEN_ADDRESS: &'static str = "0x1994100c58753793D52c6f457f189aa3ce9cEe94";
-const ETHEREUM_RELAY_AUTHORITY: &'static str =
-	"0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d";
-const ETHEREUM_RELAY_AUTHORITY_SIGNER: &'static str = "0x6aA70f55E5D770898Dd45aa1b7078b8A80AAbD6C";
+const ETHEREUM_RELAY_AUTHORITY_SIGNER: &'static str = "0x68898db1012808808c903f390909c52d9f706749";
 
 fn session_keys(
 	babe: BabeId,
@@ -347,7 +345,7 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 		},
 		darwinia_relay_authorities_Instance0: pangolin_runtime::EthereumRelayAuthoritiesConfig {
 			authorities: vec![(
-				array_bytes::hex2array_unchecked!(ETHEREUM_RELAY_AUTHORITY, 32).into(),
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				array_bytes::hex2array_unchecked!(ETHEREUM_RELAY_AUTHORITY_SIGNER, 20).into(),
 				1
 			)]
@@ -497,7 +495,7 @@ fn pangolin_development_genesis() -> pangolin_runtime::GenesisConfig {
 		},
 		darwinia_relay_authorities_Instance0: pangolin_runtime::EthereumRelayAuthoritiesConfig {
 			authorities: vec![(
-				array_bytes::hex2array_unchecked!(ETHEREUM_RELAY_AUTHORITY, 32).into(),
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				array_bytes::hex2array_unchecked!(ETHEREUM_RELAY_AUTHORITY_SIGNER, 20).into(),
 				1
 			)]
