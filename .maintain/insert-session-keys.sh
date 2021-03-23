@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# $1 is uri
+# $2, $3 is sr25519 private, public key
+# $2, $3 is ed25519 private, public key
+
 echo $1
 echo '{
 	"jsonrpc":"2.0",
