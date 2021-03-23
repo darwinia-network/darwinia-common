@@ -96,7 +96,6 @@ impl Get<H256> for IntermediateStateRoot {
 /// Config for Ethereum pallet.
 pub trait Config:
 	frame_system::Config<Hash = H256>
-	// + darwinia_balances::Config<RingInstance>
 	+ pallet_timestamp::Config
 	+ darwinia_evm::Config
 {
