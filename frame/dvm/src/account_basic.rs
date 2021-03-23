@@ -1,18 +1,11 @@
 use darwinia_evm::{Account as EVMAccount, AccountBasicMapping, AddressMapping};
 use frame_support::traits::Currency;
 use sp_core::{H160, U256};
-use sp_runtime::{
-	traits::{UniqueSaturatedFrom, UniqueSaturatedInto},
-	SaturatedConversion,
-};
-
-type RingInstance = darwinia_balances::Instance0;
+use sp_runtime::{traits::UniqueSaturatedInto, SaturatedConversion};
 
 pub struct DVMAccountBasicMapping<T>(sp_std::marker::PhantomData<T>);
 
-impl<T: crate::Config + darwinia_balances::Config<RingInstance>> AccountBasicMapping
-	for DVMAccountBasicMapping<T>
-{
+impl<T: crate::Config> AccountBasicMapping for DVMAccountBasicMapping<T> {
 	/// Get the account basic in EVM format.
 	fn account_basic(address: &H160) -> EVMAccount {
 		let account_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(*address);
@@ -83,18 +76,19 @@ impl<T: crate::Config + darwinia_balances::Config<RingInstance>> AccountBasicMap
 						&account_id,
 						(diff_balance + 1).low_u128().unique_saturated_into(),
 					);
-					let value = <T as darwinia_balances::Config<RingInstance>>::Balance::unique_saturated_from(
-						remaining_balance.low_u128(),
+					crate::Module::<T>::set_remaining_balance(
+						&account_id,
+						remaining_balance.low_u128().saturated_into(),
 					);
-					crate::Module::<T>::set_remaining_balance(&account_id, value);
 				} else {
 					<T as darwinia_evm::Config>::RingCurrency::slash(
 						&account_id,
 						diff_balance.low_u128().unique_saturated_into(),
 					);
-					let value = <T as darwinia_balances::Config<RingInstance>>::Balance::unique_saturated_from(
-					diff_remaining_balance.low_u128());
-					crate::Module::<T>::dec_remaining_balance(&account_id, value);
+					crate::Module::<T>::dec_remaining_balance(
+						&account_id,
+						diff_remaining_balance.low_u128().saturated_into(),
+					);
 				}
 			}
 			cb if cb < nb => {
@@ -109,19 +103,19 @@ impl<T: crate::Config + darwinia_balances::Config<RingInstance>> AccountBasicMap
 						&account_id,
 						(diff_balance + 1).low_u128().unique_saturated_into(),
 					);
-					let value = <T as darwinia_balances::Config<RingInstance>>::Balance::unique_saturated_from(
-						remaining_balance.low_u128(),
+					crate::Module::<T>::set_remaining_balance(
+						&account_id,
+						remaining_balance.low_u128().saturated_into(),
 					);
-					crate::Module::<T>::set_remaining_balance(&account_id, value);
 				} else {
 					<T as darwinia_evm::Config>::RingCurrency::deposit_creating(
 						&account_id,
 						diff_balance.low_u128().unique_saturated_into(),
 					);
-					let value = <T as darwinia_balances::Config<RingInstance>>::Balance::unique_saturated_from(
-						diff_remaining_balance.low_u128(),
+					crate::Module::<T>::inc_remaining_balance(
+						&account_id,
+						diff_remaining_balance.low_u128().saturated_into(),
 					);
-					crate::Module::<T>::inc_remaining_balance(&account_id, value);
 				}
 			}
 			_ => return,
