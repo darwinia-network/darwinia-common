@@ -80,7 +80,9 @@ impl Default for EthereumStorageSchema {
 }
 
 /// A type alias for the balance type from this pallet's point of view.
-type RingInstance = darwinia_balances::Instance0;
+type AccountId<T> = <T as frame_system::Config>::AccountId;
+type RingCurrency<T> = <T as Config>::RingCurrency;
+type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
 
 pub struct IntermediateStateRoot;
 
@@ -93,10 +95,7 @@ impl Get<H256> for IntermediateStateRoot {
 
 /// Config for Ethereum pallet.
 pub trait Config:
-	frame_system::Config<Hash = H256>
-	+ darwinia_balances::Config<RingInstance>
-	+ pallet_timestamp::Config
-	+ darwinia_evm::Config
+	frame_system::Config<Hash = H256> + pallet_timestamp::Config + darwinia_evm::Config
 {
 	/// The overarching event type.
 	type Event: From<Event> + Into<<Self as frame_system::Config>::Event>;
@@ -122,7 +121,7 @@ decl_storage! {
 		/// The current transaction statuses.
 		CurrentTransactionStatuses: Option<Vec<TransactionStatus>>;
 		/// Remaining balance for account
-		RemainingBalance get(fn get_remaining_balances): map hasher(blake2_128_concat) T::AccountId => T::Balance;
+		RemainingBalance get(fn get_remaining_balances): map hasher(blake2_128_concat) T::AccountId => RingBalance<T>;
 	}
 	add_extra_genesis {
 		build(|_config: &GenesisConfig| {
@@ -393,24 +392,29 @@ impl<T: Config> Module<T> {
 	}
 
 	/// Get the remaining balance for evm address
-	pub fn remaining_balance(account_id: &T::AccountId) -> T::Balance {
+	pub fn remaining_balance(account_id: &T::AccountId) -> RingBalance<T> {
 		<RemainingBalance<T>>::get(account_id)
 	}
 
 	// Set the remaining balance for evm address
-	pub fn set_remaining_balance(account_id: &T::AccountId, value: T::Balance) {
+	pub fn set_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
 		<RemainingBalance<T>>::insert(account_id, value)
 	}
 
+	// Remove the remaining balance for evm address
+	pub fn remove_remaining_balance(account_id: &T::AccountId) {
+		<RemainingBalance<T>>::remove(account_id)
+	}
+
 	/// Inc remaining balance
-	pub fn inc_remaining_balance(account_id: &T::AccountId, value: T::Balance) {
+	pub fn inc_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
 		let remain_balance = Self::remaining_balance(account_id);
 		let updated_balance = remain_balance.saturating_add(value);
 		<RemainingBalance<T>>::insert(account_id, updated_balance);
 	}
 
 	/// Dec remaining balance
-	pub fn dec_remaining_balance(account_id: &T::AccountId, value: T::Balance) {
+	pub fn dec_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
 		let remain_balance = Self::remaining_balance(account_id);
 		let updated_balance = remain_balance.saturating_sub(value);
 		<RemainingBalance<T>>::insert(account_id, updated_balance);
