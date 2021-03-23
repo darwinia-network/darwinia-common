@@ -219,7 +219,7 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 		darwinia_crab_issuing: pangolin_runtime::CrabIssuingConfig {
 			total_mapped_ring: 1 << 56
 		},
-		darwinia_crab_backing: pangolin_runtime::CrabBackingConfig {
+		darwinia_crab_backing: pangolin_runtime::DarwiniaCrabBackingConfig {
 			backed_ring: 1 << 56
 		},
 		darwinia_ethereum_relay: pangolin_runtime::EthereumRelayConfig {
@@ -387,7 +387,7 @@ fn pangolin_development_genesis(
 		darwinia_crab_issuing: pangolin_runtime::CrabIssuingConfig {
 			total_mapped_ring: 1 << 56
 		},
-		darwinia_crab_backing: pangolin_runtime::CrabBackingConfig {
+		darwinia_crab_backing: pangolin_runtime::DarwiniaCrabBackingConfig {
 			backed_ring: 1 << 56
 		},
 		darwinia_ethereum_relay: pangolin_runtime::EthereumRelayConfig {

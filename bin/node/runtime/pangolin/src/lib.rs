@@ -481,7 +481,7 @@ frame_support::construct_runtime! {
 		Multisig: pallet_multisig::{Module, Call, Storage, Event<T>} = 32,
 
 		CrabIssuing: darwinia_crab_issuing::{Module, Call, Storage, Config, Event<T>} = 33,
-		CrabBacking: darwinia_crab_backing::{Module, Storage, Config<T>} = 34,
+		DarwiniaCrabBacking: darwinia_crab_backing::{Module, Storage, Config<T>} = 34,
 
 		EthereumRelay: darwinia_ethereum_relay::{Module, Call, Storage, Config<T>, Event<T>} = 35,
 		EthereumBacking: darwinia_ethereum_backing::{Module, Call, Storage, Config<T>, Event<T>} = 36,
