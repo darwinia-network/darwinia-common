@@ -264,6 +264,11 @@ impl<T: Config> Module<T> {
 			.clone()
 			.to_uint()
 			.ok_or(<Error<T>>::UintCF)?;
+        let fee = result.params[4]
+            .value
+            .clone()
+            .to_uint()
+			.ok_or(<Error<T>>::UintCF)?;
 		let token_address = result.params[0]
 			.value
 			.clone()
@@ -279,6 +284,7 @@ impl<T: Config> Module<T> {
 		)
 		.map_err(|_| Error::<T>::InvalidEncodeERC20)?;
 
+		debug::info!(target: "darwinia-issuing", "register fee will be delived to fee pallet {}", fee);
 		Ok(input)
 	}
 
@@ -304,11 +310,17 @@ impl<T: Config> Module<T> {
 			.clone()
 			.to_address()
 			.ok_or(<Error<T>>::AddressCF)?;
+		let fee = result.params[4]
+			.value
+			.clone()
+			.to_uint()
+			.ok_or(<Error<T>>::UintCF)?;
 
 		let input =
 			Abi::encode_cross_receive(dtoken_address.0.into(), recipient.0.into(), amount.0.into())
 				.map_err(|_| Error::<T>::InvalidMintEcoding)?;
 
+		debug::info!(target: "darwinia-issuing", "transfer fee will be delived to fee pallet {}", fee);
 		Ok(input)
 	}
 

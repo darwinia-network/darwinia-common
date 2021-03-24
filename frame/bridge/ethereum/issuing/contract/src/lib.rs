@@ -136,7 +136,12 @@ impl Abi {
 		}
 	}
 
-	/// register event
+    /// this New Register Event comes from the outer chains
+    /// @params token: source erc20 token address
+    /// @params name:  source erc20 token name
+    /// @params symbol: source erc20 token symbol, which will added by m to generate mapped token
+    /// @params decimals: source erc20 token decimals
+    /// @params fee: register fee from the outer chain to darwinia
 	pub fn register_event() -> Event {
 		Event {
 			name: "NewTokenRegistered".into(),
@@ -161,12 +166,22 @@ impl Abi {
 					kind: ParamType::Uint(8),
 					indexed: false,
 				},
+				EventParam {
+					name: "fee".into(),
+					kind: ParamType::Uint(256),
+					indexed: false,
+				},
 			],
 			anonymous: false,
 		}
 	}
 
-	/// backing event
+    /// this Token Lock Event comes from the outer chains
+    /// @params token: source erc20 token address
+    /// @params target:  mapped erc20 token address
+    /// @params amount: transfer amount of the token
+    /// @params recipient: the receiver on darwinia of the asset
+    /// @params fee: transfer fee from the outer chain to darwinia
 	pub fn backing_event() -> Event {
 		Event {
 			name: "BackingLock".into(),
@@ -189,6 +204,11 @@ impl Abi {
 				EventParam {
 					name: "recipient".into(),
 					kind: ParamType::Address,
+					indexed: false,
+				},
+				EventParam {
+					name: "fee".into(),
+					kind: ParamType::Uint(256),
 					indexed: false,
 				},
 			],
@@ -270,7 +290,7 @@ impl Abi {
 		}
 	}
 
-	/// encode mapping token function
+	/// encode get mapping token info function
 	pub fn encode_mapping_token(backing: Address, source: Address) -> AbiResult<Bytes> {
 		let mapping = Self::mapping_token();
 		mapping.encode_input(
@@ -283,6 +303,9 @@ impl Abi {
 	}
 }
 
+/// token register info
+/// this is the response from darwinia after token registered
+/// and would be sent to the outer chain
 #[derive(Debug, PartialEq, Eq)]
 pub struct TokenRegisterInfo(pub H160, pub H160, pub H160);
 
@@ -301,6 +324,14 @@ impl TokenRegisterInfo {
 	}
 }
 
+/// token burn info
+/// this is the event proof from darwinia after some user burn their mapped token
+/// and would be sent to the outer chain to unlock the source token
+/// @backing: the backing address on the source chain
+/// @source: the source token address
+/// @recipient: the final receiver of the token to be unlocked on the source chain
+/// @delegator: the delegator receiver of the token, often is backing helper to unlock native token
+/// @amount: the amount of the burned token
 #[derive(Debug, PartialEq, Eq)]
 pub struct TokenBurnInfo {
 	pub backing: H160,
