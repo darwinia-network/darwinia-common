@@ -56,7 +56,6 @@ use darwinia_ethereum_issuing_contract::{
 };
 
 const ISSUING_ACCOUNT: &str = "1000000000000000000000000000000000000001";
-const MAPPING_FACTORY_ADDRESS: &str = "55D8ECEE33841AaCcb890085AcC7eE0d8A92b5eF";
 
 mod types {
 	use crate::*;
@@ -137,7 +136,6 @@ decl_event! {
 decl_storage! {
 	trait Store for Module<T: Config> as DarwiniaEthereumIssuing {
 		pub MappingFactoryAddress get(fn mapping_factory_address) config(): EthereumAddress;
-		pub TokenBackingAddress get(fn token_backing_address) config(): EthereumAddress;
 		pub VerifiedIssuingProof
 			get(fn verified_issuing_proof)
 			: map hasher(blake2_128_concat) EthereumTransactionIndex => bool = false;
@@ -158,7 +156,7 @@ decl_module! {
 		}
 
 		#[weight = <T as darwinia_evm::Config>::GasWeightMapping::gas_to_weight(0x100000)]
-		pub fn register_or_issuing_erc20(origin, proof: EthereumReceiptProofThing<T>) {
+		pub fn register_or_redeem_erc20(origin, backing: EthereumAddress, proof: EthereumReceiptProofThing<T>) {
 			debug::info!(target: "darwinia-issuing", "start to register_or_issuing_erc20");
 			let tx_index = T::EthereumRelay::gen_receipt_index(&proof);
 			ensure!(!VerifiedIssuingProof::contains_key(tx_index), <Error<T>>::AssetAR);
@@ -174,7 +172,7 @@ decl_module! {
 				.logs
 				.into_iter()
 				.find(|x| {
-					x.address == TokenBackingAddress::get() &&
+					x.address == backing &&
 						( x.topics[0] == register_event.signature()
 						  || x.topics[0] == backing_event.signature() )
 				})
@@ -182,7 +180,7 @@ decl_module! {
 
 			let input = if log_entry.topics[0] == register_event.signature() {
 				let ethlog = Self::parse_event(register_event, log_entry)?;
-				Self::process_erc20_creation(ethlog)?
+				Self::process_erc20_creation(backing, ethlog)?
 			} else {
 				let ethlog = Self::parse_event(backing_event, log_entry)?;
 				Self::process_token_issuing(ethlog)?
@@ -249,7 +247,7 @@ impl<T: Config> Module<T> {
 		Ok(ethlog)
 	}
 
-	fn process_erc20_creation(result: EthLog) -> Result<Vec<u8>, DispatchError> {
+	fn process_erc20_creation(backing: EthereumAddress, result: EthLog) -> Result<Vec<u8>, DispatchError> {
 		debug::info!(target: "darwinia-issuing", "start to process_erc20_creation");
 		let name = result.params[1]
 			.value
@@ -276,7 +274,7 @@ impl<T: Config> Module<T> {
 			&name,
 			&symbol,
 			decimals.as_u32() as u8,
-			TokenBackingAddress::get().0.into(),
+			backing.0.into(),
 			token_address.0.into(),
 		)
 		.map_err(|_| Error::<T>::InvalidEncodeERC20)?;
