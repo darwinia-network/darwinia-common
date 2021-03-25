@@ -460,7 +460,6 @@ where
 	if config.offchain_worker.enabled {
 		sc_service::build_offchain_workers(
 			&config,
-			backend.clone(),
 			task_manager.spawn_handle(),
 			client.clone(),
 			network.clone(),
@@ -706,7 +705,6 @@ where
 	if config.offchain_worker.enabled {
 		sc_service::build_offchain_workers(
 			&config,
-			backend.clone(),
 			task_manager.spawn_handle(),
 			client.clone(),
 			network.clone(),
