@@ -871,7 +871,7 @@ impl<T: Config> Relayable for Module<T> {
 			);
 		} else {
 			<PendingRelayHeaderParcels<T>>::append((
-				<frame_system::Module<T>>::block_number() + confirm_period,
+				<frame_system::Pallet<T>>::block_number() + confirm_period,
 				relay_header_parcel,
 				RelayVotingState::default(),
 			));

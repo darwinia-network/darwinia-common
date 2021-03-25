@@ -235,13 +235,13 @@ macro_rules! decl_tests {
 				NodeBlock = Block,
 				UncheckedExtrinsic = UncheckedExtrinsic
 			{
-				System: frame_system::{Module, Call, Storage, Config},
-				Timestamp: pallet_timestamp::{Module, Call, Storage},
-				Ring: darwinia_balances::<Instance0>::{Module, Call, Storage},
-				Kton: darwinia_balances::<Instance1>::{Module, Call, Storage},
-				Staking: darwinia_staking::{Module, Call, Storage},
-				Session: pallet_session::{Module, Call, Storage},
-				EthereumBacking: darwinia_ethereum_backing::{Module, Call, Storage, Config<T>},
+				System: frame_system::{Pallet, Call, Storage, Config},
+				Timestamp: pallet_timestamp::{Pallet, Call, Storage},
+				Ring: darwinia_balances::<Instance0>::{Pallet, Call, Storage},
+				Kton: darwinia_balances::<Instance1>::{Pallet, Call, Storage},
+				Staking: darwinia_staking::{Pallet, Call, Storage},
+				Session: pallet_session::{Pallet, Call, Storage},
+				EthereumBacking: darwinia_ethereum_backing::{Pallet, Call, Storage, Config<T>},
 				$($pallet)*,
 			}
 		}

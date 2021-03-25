@@ -162,7 +162,7 @@
 //! 		#[weight = 0]
 //! 		pub fn reward_myself(origin) -> dispatch::DispatchResult {
 //! 			let reported = ensure_signed(origin)?;
-//! 			<staking::Module<T>>::reward_by_ids(vec![(reported, 10)]);
+//! 			<staking::Pallet<T>>::reward_by_ids(vec![(reported, 10)]);
 //! 			Ok(())
 //! 		}
 //! 	}
@@ -575,15 +575,15 @@ where
 	T::ValidatorIdOf: Convert<AccountId<T>, Option<AccountId<T>>>,
 {
 	fn disable_validator(validator: &AccountId<T>) -> Result<bool, ()> {
-		<pallet_session::Module<T>>::disable(validator)
+		<pallet_session::Pallet<T>>::disable(validator)
 	}
 
 	fn validators() -> Vec<AccountId<T>> {
-		<pallet_session::Module<T>>::validators()
+		<pallet_session::Pallet<T>>::validators()
 	}
 
 	fn prune_historical_up_to(up_to: SessionIndex) {
-		<pallet_session::historical::Module<T>>::prune_up_to(up_to);
+		<pallet_session::historical::Pallet<T>>::prune_up_to(up_to);
 	}
 }
 
@@ -1210,7 +1210,7 @@ decl_module! {
 				}
 			}
 
-			<frame_system::Module<T>>::inc_consumers(&stash).map_err(|_| Error::<T>::BadState)?;
+			<frame_system::Pallet<T>>::inc_consumers(&stash).map_err(|_| Error::<T>::BadState)?;
 
 			// You're auto-bonded forever, here. We might improve this by only bonding when
 			// you actually validate/nominate and remove once you unbond __everything__.
@@ -1287,7 +1287,7 @@ decl_module! {
 					let stash_balance = T::RingCurrency::free_balance(&stash);
 
 					if let Some(extra) = stash_balance.checked_sub(
-						&ledger.ring_locked_amount_at(<frame_system::Module<T>>::block_number())
+						&ledger.ring_locked_amount_at(<frame_system::Pallet<T>>::block_number())
 					) {
 						let extra = extra.min(max_additional);
 						let (start_time, expire_time) = Self::bond_ring(
@@ -1305,7 +1305,7 @@ decl_module! {
 					let stash_balance = T::KtonCurrency::free_balance(&stash);
 
 					if let Some(extra) = stash_balance.checked_sub(
-						&ledger.kton_locked_amount_at(<frame_system::Module<T>>::block_number())
+						&ledger.kton_locked_amount_at(<frame_system::Pallet<T>>::block_number())
 					) {
 						let extra = extra.min(max_additional);
 
@@ -1419,7 +1419,7 @@ decl_module! {
 				kton_staking_lock,
 				..
 			} = &mut ledger;
-			let now = <frame_system::Module<T>>::block_number();
+			let now = <frame_system::Pallet<T>>::block_number();
 
 			ring_staking_lock.update(now);
 			kton_staking_lock.update(now);
@@ -2042,7 +2042,7 @@ decl_module! {
 
 			let controller = ensure_signed(origin)?;
 			let mut ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
-			let now = <frame_system::Module<T>>::block_number();
+			let now = <frame_system::Pallet<T>>::block_number();
 
 			ledger.ring_staking_lock.update(now);
 			ledger.kton_staking_lock.update(now);
@@ -3517,7 +3517,7 @@ impl<T: Config> Module<T> {
 		<Validators<T>>::remove(stash);
 		<Nominators<T>>::remove(stash);
 
-		<frame_system::Module<T>>::dec_consumers(stash);
+		<frame_system::Pallet<T>>::dec_consumers(stash);
 
 		Ok(())
 	}
@@ -3791,7 +3791,7 @@ impl<T: Config> pallet_session::SessionManager<T::AccountId> for Module<T> {
 		log!(
 			trace,
 			"[{:?}] planning new_session({})",
-			<frame_system::Module<T>>::block_number(),
+			<frame_system::Pallet<T>>::block_number(),
 			new_index,
 		);
 		CurrentPlannedSession::put(new_index);
@@ -3801,7 +3801,7 @@ impl<T: Config> pallet_session::SessionManager<T::AccountId> for Module<T> {
 		log!(
 			trace,
 			"[{:?}] ending end_session({})",
-			<frame_system::Module<T>>::block_number(),
+			<frame_system::Pallet<T>>::block_number(),
 			end_index,
 		);
 		Self::end_session(end_index)
@@ -3810,7 +3810,7 @@ impl<T: Config> pallet_session::SessionManager<T::AccountId> for Module<T> {
 		log!(
 			trace,
 			"[{:?}] starting start_session({})",
-			<frame_system::Module<T>>::block_number(),
+			<frame_system::Pallet<T>>::block_number(),
 			start_index,
 		);
 		Self::start_session(start_index)
@@ -4041,7 +4041,7 @@ impl<T: Config> OnDepositRedeem<T::AccountId, RingBalance<T>> for Module<T> {
 			<Bonded<T>>::insert(&stash, controller);
 			<Payee<T>>::insert(&stash, RewardDestination::Stash);
 
-			<frame_system::Module<T>>::inc_consumers(&stash).map_err(|_| Error::<T>::BadState)?;
+			<frame_system::Pallet<T>>::inc_consumers(&stash).map_err(|_| Error::<T>::BadState)?;
 
 			let mut ledger = StakingLedger {
 				stash: stash.clone(),
@@ -4161,7 +4161,7 @@ where
 	}
 	fn note_uncle(author: T::AccountId, _age: T::BlockNumber) {
 		Self::reward_by_ids(vec![
-			(<pallet_authorship::Module<T>>::author(), 2),
+			(<pallet_authorship::Pallet<T>>::author(), 2),
 			(author, 1),
 		]);
 	}

@@ -177,12 +177,12 @@ frame_support::construct_runtime! {
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Module, Call, Config, Storage},
-		Timestamp: pallet_timestamp::{Module, Call, Storage},
-		Ring: darwinia_balances::<Instance0>::{Module, Call, Storage, Config<T>},
-		Kton: darwinia_balances::<Instance1>::{Module, Call, Storage},
-		EVM: darwinia_evm::{Module, Call, Storage},
-		Ethereum: dvm_ethereum::{Module, Call, Storage},
+		System: frame_system::{Pallet, Call, Config, Storage},
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
+		Ring: darwinia_balances::<Instance0>::{Pallet, Call, Storage, Config<T>},
+		Kton: darwinia_balances::<Instance1>::{Pallet, Call, Storage},
+		EVM: darwinia_evm::{Pallet, Call, Storage},
+		Ethereum: dvm_ethereum::{Pallet, Call, Storage},
 	}
 }
 

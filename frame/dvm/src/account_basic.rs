@@ -10,7 +10,7 @@ impl<T: Config> AccountBasicMapping for DVMAccountBasicMapping<T> {
 	/// Get the account basic in EVM format.
 	fn account_basic(address: &H160) -> EVMAccount {
 		let account_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(*address);
-		let nonce = frame_system::Module::<T>::account_nonce(&account_id);
+		let nonce = <frame_system::Pallet<T>>::account_nonce(&account_id);
 		let helper = U256::from(10)
 			.checked_pow(U256::from(9))
 			.unwrap_or(U256::from(0));
@@ -56,7 +56,7 @@ impl<T: Config> AccountBasicMapping for DVMAccountBasicMapping<T> {
 			// ASSUME: in one single EVM transaction, the nonce will not increase more than
 			// `u128::max_value()`.
 			for _ in 0..(new.nonce - current.nonce).low_u128() {
-				frame_system::Module::<T>::inc_account_nonce(&account_id);
+				<frame_system::Pallet<T>>::inc_account_nonce(&account_id);
 			}
 		}
 
