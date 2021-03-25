@@ -22,7 +22,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 // --- substrate ---
-use darwinia_evm::{AccountBasicMapping, ContractHandler, GasWeightMapping};
+use darwinia_evm::{AccountBasicMapping, AddressMapping, ContractHandler, GasWeightMapping};
 use darwinia_relay_primitives::relay_authorities::*;
 use dp_evm::CallOrCreateInfo;
 use dvm_ethereum::TransactionAction;
@@ -40,7 +40,10 @@ use rustc_hex::{FromHex, ToHex};
 
 use sp_std::vec::Vec;
 
-use sp_runtime::{DispatchError, DispatchResult, ModuleId, SaturatedConversion};
+use sp_runtime::{
+	traits::{AccountIdConversion, Saturating},
+	AccountId32, DispatchError, DispatchResult, ModuleId, SaturatedConversion,
+};
 
 use darwinia_support::{
 	balance::lock::*,
@@ -54,8 +57,6 @@ pub use weights::WeightInfo;
 use darwinia_ethereum_issuing_contract::{
 	Abi, Event as EthEvent, Log as EthLog, TokenBurnInfo, TokenRegisterInfo, Topic,
 };
-
-const ISSUING_ACCOUNT: &str = "1000000000000000000000000000000000000001";
 
 mod types {
 	use crate::*;
@@ -83,6 +84,7 @@ pub trait Config: frame_system::Config + darwinia_evm::Config {
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 	type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber, Signer = EthereumAddress>;
 	type WeightInfo: WeightInfo;
+	type FeeEstimate: Get<RingBalance<Self>>;
 }
 
 decl_error! {
@@ -148,6 +150,8 @@ decl_module! {
 	where
 		origin: T::Origin
 	{
+		const FeeEstimate: RingBalance<T> = T::FeeEstimate::get();
+
 		fn deposit_event() = default;
 
 		fn on_initialize(_n: BlockNumber<T>) -> Weight {
@@ -158,6 +162,7 @@ decl_module! {
 		#[weight = <T as darwinia_evm::Config>::GasWeightMapping::gas_to_weight(0x100000)]
 		pub fn register_or_redeem_erc20(origin, backing: EthereumAddress, proof: EthereumReceiptProofThing<T>) {
 			debug::info!(target: "darwinia-issuing", "start to register_or_issuing_erc20");
+			let user = ensure_signed(origin)?;
 			let tx_index = T::EthereumRelay::gen_receipt_index(&proof);
 			ensure!(!VerifiedIssuingProof::contains_key(tx_index), <Error<T>>::AssetAR);
 			let verified_receipt = T::EthereumRelay::verify_receipt(&proof)
@@ -187,24 +192,35 @@ decl_module! {
 			};
 
 			let contract = MappingFactoryAddress::get();
-			let account = Self::issuing_account();
+			let account = Self::dvm_account_id();
 			let basic = <T as darwinia_evm::Config>::AccountBasicMapping::account_basic(&account);
+			let substrate_account = <T as darwinia_evm::Config>::AddressMapping::into_account_id(account.clone());
+
+			<T as Config>::RingCurrency::transfer(&user, &substrate_account, T::FeeEstimate::get(), KeepAlive)?;
 			let transaction = Self::unsigned_transaction(basic.nonce, contract.0.into(), input);
 			let result = T::DvmCaller::raw_transact(account, transaction).map_err(|e| -> &'static str {
 				debug::info!(target: "darwinia-issuing", "register_or_issuing_erc20 error {:?}", &e);
 				e.into()
 			} )?;
 
-			VerifiedIssuingProof::insert(tx_index, true);
+			let leaved_balance = <T as Config>::RingCurrency::free_balance(&substrate_account);
+			// we should reserve some balance to keepalive this system account
+			let maxrefund = leaved_balance.saturating_sub(<T as Config>::RingCurrency::minimum_balance());
 
-			//Self::deposit_event(RawEvent::CreateErc20(token_address));
-			//todo
-			//transfer some ring to system account and refund when finished
+			<T as Config>::RingCurrency::transfer(&substrate_account, &user, maxrefund, KeepAlive)?;
+			VerifiedIssuingProof::insert(tx_index, true);
 		}
 	}
 }
 
 impl<T: Config> Module<T> {
+	/// The account ID of the issuing pot.
+	pub fn dvm_account_id() -> H160 {
+		let account32: AccountId32 = T::ModuleId::get().into_account();
+		let account20: &[u8] = &account32.as_ref();
+		H160::from_slice(&account20[..20])
+	}
+
 	/// get dvm ethereum unsigned transaction
 	pub fn unsigned_transaction(
 		nonce: U256,
@@ -227,12 +243,6 @@ impl<T: Config> Module<T> {
 		}
 	}
 
-	/// issuing system account send dvm transaction
-	pub fn issuing_account() -> H160 {
-		let issuing_address: Vec<u8> = FromHex::from_hex(ISSUING_ACCOUNT).unwrap();
-		H160::from_slice(&issuing_address)
-	}
-
 	fn parse_event(event: EthEvent, log_entry: LogEntry) -> Result<EthLog, DispatchError> {
 		let ethlog = Abi::parse_event(
 			log_entry
@@ -247,7 +257,10 @@ impl<T: Config> Module<T> {
 		Ok(ethlog)
 	}
 
-	fn process_erc20_creation(backing: EthereumAddress, result: EthLog) -> Result<Vec<u8>, DispatchError> {
+	fn process_erc20_creation(
+		backing: EthereumAddress,
+		result: EthLog,
+	) -> Result<Vec<u8>, DispatchError> {
 		debug::info!(target: "darwinia-issuing", "start to process_erc20_creation");
 		let name = result.params[1]
 			.value
@@ -264,10 +277,10 @@ impl<T: Config> Module<T> {
 			.clone()
 			.to_uint()
 			.ok_or(<Error<T>>::UintCF)?;
-        let fee = result.params[4]
-            .value
-            .clone()
-            .to_uint()
+		let fee = result.params[4]
+			.value
+			.clone()
+			.to_uint()
 			.ok_or(<Error<T>>::UintCF)?;
 		let token_address = result.params[0]
 			.value
@@ -333,9 +346,8 @@ impl<T: Config> Module<T> {
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
 		let transaction =
 			Self::unsigned_transaction(U256::from(1), factory_address.0.into(), bytes);
-		let issuing_address: Vec<u8> = FromHex::from_hex(ISSUING_ACCOUNT).unwrap();
-		let issuing_account = H160::from_slice(&issuing_address);
-		let mapped_address = T::DvmCaller::raw_call(issuing_account, transaction)
+		let account = Self::dvm_account_id();
+		let mapped_address = T::DvmCaller::raw_call(account, transaction)
 			.map_err(|e| -> &'static str { e.into() })?;
 		if mapped_address.len() != 32 {
 			return Err(Error::<T>::InvalidAddressLen.into());
