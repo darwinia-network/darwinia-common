@@ -144,6 +144,7 @@ macro_rules! decl_tests {
 		impl onchain::Config for Test {
 			type AccountId = AccountId;
 			type BlockNumber = BlockNumber;
+			type BlockWeights = ();
 			type Accuracy = Perbill;
 			type DataProvider = Staking;
 		}
@@ -162,13 +163,7 @@ macro_rules! decl_tests {
 			type SlashCancelOrigin = frame_system::EnsureRoot<Self::AccountId>;
 			type SessionInterface = Self;
 			type NextNewSession = Session;
-			type ElectionLookahead = ();
-			type Call = Call;
-			type MaxIterations = ();
-			type MinSolutionScoreBump = ();
 			type MaxNominatorRewardedPerValidator = ();
-			type UnsignedPriority = ();
-			type OffchainSolutionWeightLimit = ();
 			type ElectionProvider = onchain::OnChainSequentialPhragmen<Self>;
 			type RingCurrency = Ring;
 			type RingRewardRemainder = ();
