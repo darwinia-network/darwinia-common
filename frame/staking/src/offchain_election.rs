@@ -28,7 +28,7 @@ use sp_npos_elections::{
 	EvaluateSupport, ExtendedBalance,
 };
 use sp_runtime::{offchain::storage::StorageValueRef, traits::TrailingZeroInput, RuntimeDebug};
-use sp_std::{convert::TryInto, prelude::*};
+use sp_std::{collections::btree_map::BTreeMap, convert::TryInto, prelude::*};
 // --- darwinia ---
 use crate::{
 	Call, CompactAssignments, Config, ElectionSize, Module, NominatorIndex, Nominators,
@@ -340,18 +340,28 @@ pub fn prepare_submission<T: Config>(
 	let snapshot_nominators =
 		<Module<T>>::snapshot_nominators().ok_or(OffchainElectionError::SnapshotUnavailable)?;
 
+	// indexing caches
+	let nominator_indices: BTreeMap<_, _> = snapshot_nominators
+		.iter()
+		.enumerate()
+		.map(|(idx, account_id)| (account_id, idx))
+		.collect();
+	let validator_indices: BTreeMap<_, _> = snapshot_validators
+		.iter()
+		.enumerate()
+		.map(|(idx, account_id)| (account_id, idx))
+		.collect();
+
 	// all helper closures that we'd ever need.
 	let nominator_index = |a: &T::AccountId| -> Option<NominatorIndex> {
-		snapshot_nominators
-			.iter()
-			.position(|x| x == a)
-			.and_then(|i| <usize as TryInto<NominatorIndex>>::try_into(i).ok())
+		nominator_indices
+			.get(a)
+			.and_then(|i| <usize as TryInto<NominatorIndex>>::try_into(*i).ok())
 	};
 	let validator_index = |a: &T::AccountId| -> Option<ValidatorIndex> {
-		snapshot_validators
-			.iter()
-			.position(|x| x == a)
-			.and_then(|i| <usize as TryInto<ValidatorIndex>>::try_into(i).ok())
+		validator_indices
+			.get(a)
+			.and_then(|i| <usize as TryInto<ValidatorIndex>>::try_into(*i).ok())
 	};
 	let nominator_at = |i: NominatorIndex| -> Option<T::AccountId> {
 		snapshot_nominators.get(i as usize).cloned()
