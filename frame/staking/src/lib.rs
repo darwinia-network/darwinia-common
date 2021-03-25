@@ -2719,6 +2719,7 @@ impl<T: Config> Module<T> {
 			RewardDestination::Account(dest_account) => {
 				Some(T::RingCurrency::deposit_creating(&dest_account, amount))
 			}
+			RewardDestination::None => None,
 		}
 	}
 
@@ -4199,6 +4200,8 @@ pub enum RewardDestination<AccountId> {
 	Controller,
 	/// Pay into a specified account.
 	Account(AccountId),
+	/// Receive no reward.
+	None,
 }
 impl<AccountId> Default for RewardDestination<AccountId> {
 	fn default() -> Self {
