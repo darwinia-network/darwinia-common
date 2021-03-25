@@ -52,7 +52,7 @@ use sc_service::{
 	BasePath, BuildNetworkParams, Configuration, Error as ServiceError, NoopRpcExtensionBuilder,
 	PartialComponents, RpcHandlers, SpawnTasksParams, TaskManager,
 };
-use sc_telemetry::{TelemetryConnectionNotifier, TelemetrySpan};
+use sc_telemetry::{Telemetry, TelemetryWorker};
 use sc_transaction_pool::{BasicPool, FullPool};
 use sp_api::ConstructRuntimeApi;
 use sp_consensus::{
@@ -224,6 +224,7 @@ fn new_partial<RuntimeApi, Executor>(
 				BabeLink<Block>,
 			),
 			GrandpaSharedVoterState,
+			Option<Telemetry>,
 			PendingTransactions,
 			Arc<Backend<Block>>,
 			Option<FilterPool>,
@@ -247,8 +248,25 @@ where
 	set_prometheus_registry(config)?;
 
 	let inherent_data_providers = InherentDataProviders::new();
+	let telemetry = config
+		.telemetry_endpoints
+		.clone()
+		.filter(|x| !x.is_empty())
+		.map(|endpoints| -> Result<_, sc_telemetry::Error> {
+			let worker = TelemetryWorker::new(16)?;
+			let telemetry = worker.handle().new_telemetry(endpoints);
+			Ok((worker, telemetry))
+		})
+		.transpose()?;
 	let (client, backend, keystore_container, task_manager) =
-		sc_service::new_full_parts::<Block, RuntimeApi, Executor>(&config)?;
+		sc_service::new_full_parts::<Block, RuntimeApi, Executor>(
+			&config,
+			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
+		)?;
+	let telemetry = telemetry.map(|(worker, telemetry)| {
+		task_manager.spawn_handle().spawn("telemetry", worker.run());
+		telemetry
+	});
 	let client = Arc::new(client);
 	let select_chain = LongestChain::new(backend.clone());
 	let transaction_pool = BasicPool::new_full(
@@ -266,6 +284,7 @@ where
 			&(client.clone() as Arc<_>),
 			select_chain.clone(),
 			grandpa_hard_forks,
+			telemetry.as_ref().map(|x| x.handle()),
 		)?;
 	let justification_import = grandpa_block_import.clone();
 	let frontier_block_import = FrontierBlockImport::new(
@@ -288,6 +307,7 @@ where
 		&task_manager.spawn_essential_handle(),
 		config.prometheus_registry(),
 		CanAuthorWithNativeVersion::new(client.executor().clone()),
+		telemetry.as_ref().map(|x| x.handle()),
 	)?;
 	let justification_stream = grandpa_link.justification_stream();
 	let shared_authority_set = grandpa_link.shared_authority_set().clone();
@@ -356,6 +376,7 @@ where
 			rpc_extensions_builder,
 			import_setup,
 			rpc_setup,
+			telemetry,
 			pending_transactions,
 			frontier_backend,
 			filter_pool,
@@ -410,6 +431,7 @@ where
 				rpc_extensions_builder,
 				import_setup,
 				rpc_setup,
+				mut telemetry,
 				pending_transactions,
 				frontier_backend,
 				filter_pool,
@@ -466,39 +488,36 @@ where
 		);
 	}
 
-	let telemetry_span = TelemetrySpan::new();
-	let _telemetry_span_entered = telemetry_span.enter();
-	let (rpc_handlers, telemetry_connection_notifier) =
-		sc_service::spawn_tasks(SpawnTasksParams {
-			config,
-			backend: backend.clone(),
-			client: client.clone(),
-			keystore: keystore_container.sync_keystore(),
-			network: network.clone(),
-			rpc_extensions_builder: {
-				let wrap_rpc_extensions_builder = {
-					let network = network.clone();
+	let rpc_handlers = sc_service::spawn_tasks(SpawnTasksParams {
+		config,
+		backend: backend.clone(),
+		client: client.clone(),
+		keystore: keystore_container.sync_keystore(),
+		network: network.clone(),
+		rpc_extensions_builder: {
+			let wrap_rpc_extensions_builder = {
+				let network = network.clone();
 
-					move |deny_unsafe, subscription_executor| -> RpcExtension {
-						rpc_extensions_builder(
-							deny_unsafe,
-							is_authority,
-							network.clone(),
-							subscription_executor,
-						)
-					}
-				};
+				move |deny_unsafe, subscription_executor| -> RpcExtension {
+					rpc_extensions_builder(
+						deny_unsafe,
+						is_authority,
+						network.clone(),
+						subscription_executor,
+					)
+				}
+			};
 
-				Box::new(wrap_rpc_extensions_builder)
-			},
-			transaction_pool: transaction_pool.clone(),
-			task_manager: &mut task_manager,
-			on_demand: None,
-			remote_blockchain: None,
-			network_status_sinks,
-			system_rpc_tx,
-			telemetry_span: Some(telemetry_span.clone()),
-		})?;
+			Box::new(wrap_rpc_extensions_builder)
+		},
+		transaction_pool: transaction_pool.clone(),
+		task_manager: &mut task_manager,
+		on_demand: None,
+		remote_blockchain: None,
+		network_status_sinks,
+		system_rpc_tx,
+		telemetry: telemetry.as_mut(),
+	})?;
 
 	let (block_import, link_half, babe_link) = import_setup;
 
@@ -509,6 +528,7 @@ where
 			client.clone(),
 			transaction_pool,
 			prometheus_registry.as_ref(),
+			telemetry.as_ref().map(|x| x.handle()),
 		);
 		let babe_config = BabeParams {
 			keystore: keystore_container.sync_keystore(),
@@ -523,6 +543,7 @@ where
 			babe_link,
 			can_author_with,
 			block_proposal_slot_portion: SlotProportion::new(0.5),
+			telemetry: telemetry.as_ref().map(|x| x.handle()),
 		};
 		let babe = sc_consensus_babe::start_babe(babe_config)?;
 
@@ -552,7 +573,7 @@ where
 			config: grandpa_config,
 			link: link_half,
 			network: network.clone(),
-			telemetry_on_connect: telemetry_connection_notifier.map(|x| x.on_connect_stream()),
+			telemetry: telemetry.as_ref().map(|x| x.handle()),
 			voting_rule: GrandpaVotingRulesBuilder::default().build(),
 			prometheus_registry: prometheus_registry.clone(),
 			shared_voter_state,
@@ -634,14 +655,7 @@ where
 
 fn new_light<RuntimeApi, Executor>(
 	mut config: Configuration,
-) -> Result<
-	(
-		TaskManager,
-		RpcHandlers,
-		Option<TelemetryConnectionNotifier>,
-	),
-	ServiceError,
->
+) -> Result<(TaskManager, RpcHandlers), ServiceError>
 where
 	Executor: 'static + NativeExecutionDispatch,
 	RuntimeApi:
@@ -651,8 +665,32 @@ where
 {
 	set_prometheus_registry(&mut config)?;
 
+	let telemetry = config
+		.telemetry_endpoints
+		.clone()
+		.filter(|x| !x.is_empty())
+		.map(|endpoints| -> Result<_, sc_telemetry::Error> {
+			#[cfg(feature = "browser")]
+			let transport = Some(sc_telemetry::ExtTransport::new(
+				libp2p_wasm_ext::ffi::websocket_transport(),
+			));
+			#[cfg(not(feature = "browser"))]
+			let transport = None;
+
+			let worker = TelemetryWorker::with_transport(16, transport)?;
+			let telemetry = worker.handle().new_telemetry(endpoints);
+			Ok((worker, telemetry))
+		})
+		.transpose()?;
 	let (client, backend, keystore_container, mut task_manager, on_demand) =
-		sc_service::new_light_parts::<Block, RuntimeApi, Executor>(&config)?;
+		sc_service::new_light_parts::<Block, RuntimeApi, Executor>(
+			&config,
+			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
+		)?;
+	let mut telemetry = telemetry.map(|(worker, telemetry)| {
+		task_manager.spawn_handle().spawn("telemetry", worker.run());
+		telemetry
+	});
 
 	config
 		.network
@@ -671,6 +709,7 @@ where
 		client.clone(),
 		&(client.clone() as Arc<_>),
 		select_chain.clone(),
+		telemetry.as_ref().map(|x| x.handle()),
 	)?;
 	let justification_import = grandpa_block_import.clone();
 	let (babe_block_import, babe_link) = sc_consensus_babe::block_import(
@@ -690,6 +729,7 @@ where
 		&task_manager.spawn_essential_handle(),
 		config.prometheus_registry(),
 		NeverCanAuthor,
+		telemetry.as_ref().map(|x| x.handle()),
 	)?;
 	let (network, network_status_sinks, system_rpc_tx, network_starter) =
 		sc_service::build_network(BuildNetworkParams {
@@ -718,28 +758,25 @@ where
 		pool: transaction_pool.clone(),
 	};
 	let rpc_extension = rpc::create_light(light_deps);
-	let telemetry_span = TelemetrySpan::new();
-	let _telemetry_span_entered = telemetry_span.enter();
-	let (rpc_handlers, telemetry_connection_notifier) =
-		sc_service::spawn_tasks(SpawnTasksParams {
-			on_demand: Some(on_demand),
-			remote_blockchain: Some(backend.remote_blockchain()),
-			rpc_extensions_builder: Box::new(NoopRpcExtensionBuilder(rpc_extension)),
-			task_manager: &mut task_manager,
-			config,
-			keystore: keystore_container.sync_keystore(),
-			backend,
-			transaction_pool,
-			client,
-			network,
-			network_status_sinks,
-			system_rpc_tx,
-			telemetry_span: Some(telemetry_span.clone()),
-		})?;
+	let rpc_handlers = sc_service::spawn_tasks(SpawnTasksParams {
+		on_demand: Some(on_demand),
+		remote_blockchain: Some(backend.remote_blockchain()),
+		rpc_extensions_builder: Box::new(NoopRpcExtensionBuilder(rpc_extension)),
+		task_manager: &mut task_manager,
+		config,
+		keystore: keystore_container.sync_keystore(),
+		backend,
+		transaction_pool,
+		client,
+		network,
+		network_status_sinks,
+		system_rpc_tx,
+		telemetry: telemetry.as_mut(),
+	})?;
 
 	network_starter.start_network();
 
-	Ok((task_manager, rpc_handlers, telemetry_connection_notifier))
+	Ok((task_manager, rpc_handlers))
 }
 
 /// Builds a new object suitable for chain operations.
@@ -795,15 +832,6 @@ pub fn drml_new_full(
 }
 
 /// Create a new DRML service for a light client.
-pub fn drml_new_light(
-	config: Configuration,
-) -> Result<
-	(
-		TaskManager,
-		RpcHandlers,
-		Option<TelemetryConnectionNotifier>,
-	),
-	ServiceError,
-> {
+pub fn drml_new_light(config: Configuration) -> Result<(TaskManager, RpcHandlers), ServiceError> {
 	new_light::<pangolin_runtime::RuntimeApi, PangolinExecutor>(config)
 }
