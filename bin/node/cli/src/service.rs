@@ -34,7 +34,9 @@ use futures::StreamExt;
 // --- substrate ---
 use sc_basic_authorship::ProposerFactory;
 use sc_cli::SubstrateCli;
-use sc_client_api::{BlockchainEvents, ExecutorProvider, RemoteBackend, StateBackendFor};
+use sc_client_api::{
+	BlockchainEvents, ExecutorProvider, RemoteBackend, SlotProportion, StateBackendFor,
+};
 use sc_consensus::LongestChain;
 use sc_consensus_babe::{BabeBlockImport, BabeLink, BabeParams, Config as BabeConfig};
 use sc_executor::{native_executor_instance, NativeExecutionDispatch};
@@ -521,6 +523,7 @@ where
 			backoff_authoring_blocks,
 			babe_link,
 			can_author_with,
+			block_proposal_slot_portion: SlotProportion::new(0.5),
 		};
 		let babe = sc_consensus_babe::start_babe(babe_config)?;
 
