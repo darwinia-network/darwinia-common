@@ -21,8 +21,10 @@
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
+use frame_support::traits::GenesisBuild;
 use frame_system::mocking::*;
 use sp_io::TestExternalities;
+use sp_runtime::ModuleId;
 use sp_runtime::{
 	testing::{Header, H256},
 	traits::{BlakeTwo256, IdentityLookup},
@@ -100,7 +102,7 @@ frame_support::construct_runtime! {
 	{
 		System: frame_system::{Module, Call, Storage, Config, Event<T>},
 		Ring: darwinia_balances::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
-		CrabIssuing: darwinia_crab_issuing::{Module, Call, Storage, Config, Event<T>},
+		DarwiniaCrabIssuing: darwinia_crab_issuing::{Module, Call, Storage, Config<T>, Event<T>},
 	}
 }
 
@@ -117,10 +119,12 @@ pub fn new_test_ext() -> TestExternalities {
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
-	darwinia_crab_issuing::GenesisConfig {
+
+	darwinia_crab_issuing::GenesisConfig::<Test> {
 		total_mapped_ring: 4_000,
+		phantom: std::marker::PhantomData,
 	}
-	.assimilate_storage::<Test>(&mut t)
+	.assimilate_storage(&mut t)
 	.unwrap();
 
 	t.into()

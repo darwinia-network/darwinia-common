@@ -20,9 +20,13 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub use pallet::*;
+
 pub mod weights;
 // --- darwinia ---
 pub use weights::WeightInfo;
+// --- substrate ---
+use frame_support::traits::Currency;
 
 #[cfg(test)]
 mod mock;
@@ -42,73 +46,76 @@ mod types {
 	type RingCurrency<T> = <T as Config>::RingCurrency;
 }
 
-// --- substrate ---
-use frame_support::{
-	decl_error, decl_event, decl_module, decl_storage,
-	traits::{Currency, Get},
-};
-use sp_runtime::{traits::AccountIdConversion, ModuleId};
-// --- darwinia ---
-use types::*;
+#[frame_support::pallet]
+pub mod pallet {
+	use super::*;
+	use frame_support::pallet_prelude::*;
+	use frame_support::traits::{Currency, Get};
+	use frame_system::pallet_prelude::*;
+	use sp_runtime::{traits::AccountIdConversion, ModuleId};
+	use types::*;
 
-pub trait Config: frame_system::Config {
-	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
+	/// Configure the pallet by specifying the parameters and types on which it depends.
+	#[pallet::config]
+	pub trait Config: frame_system::Config {
+		#[pallet::constant]
+		type ModuleId: Get<ModuleId>;
 
-	type ModuleId: Get<ModuleId>;
+		type RingCurrency: Currency<AccountId<Self>>;
 
-	type RingCurrency: Currency<AccountId<Self>>;
+		type WeightInfo: WeightInfo;
 
-	type WeightInfo: WeightInfo;
-}
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+	}
 
-decl_event! {
-	pub enum Event<T>
-	where
-		AccountId = AccountId<T>,
-		RingBalance = RingBalance<T>,
-	{
+	// Define the pallet struct placeholder, various pallet function are implemented on it.
+	#[pallet::pallet]
+	pub struct Pallet<T>(_);
+
+	#[pallet::error]
+	pub enum Error<T> {}
+
+	#[pallet::event]
+	pub enum Event<T: Config> {
 		/// Dummy Event. [who, swapped *CRING*, burned Mapped *RING*]
-		DummyEvent(AccountId, RingBalance, MappedRing),
-	}
-}
-
-decl_error! {
-	pub enum Error for Module<T: Config> {
-	}
-}
-
-decl_storage! {
-	trait Store for Module<T: Config> as DarwiniaCrabIssuing {
-		pub TotalMappedRing get(fn total_mapped_ring) config(): MappedRing;
+		DummyEvent(AccountId<T>, RingBalance<T>, MappedRing),
 	}
 
-	add_extra_genesis {
-		build(|config| {
+	#[pallet::storage]
+	#[pallet::getter(fn total_mapped_ring)]
+	pub(super) type TotalMappedRing<T: Config> = StorageValue<_, MappedRing>;
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
+
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {}
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T> {
+		pub total_mapped_ring: MappedRing,
+		pub phantom: std::marker::PhantomData<T>,
+	}
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self {
+				total_mapped_ring: Default::default(),
+				phantom: Default::default(),
+			}
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
 			let _ = T::RingCurrency::make_free_balance_be(
-				&<Module<T>>::account_id(),
+				&T::ModuleId::get().into_account(),
 				T::RingCurrency::minimum_balance(),
 			);
 
-			TotalMappedRing::put(config.total_mapped_ring);
-		});
-	}
-}
-
-decl_module! {
-	pub struct Module<T: Config> for enum Call
-	where
-		origin: T::Origin
-	{
-		type Error = Error<T>;
-
-		const ModuleId: ModuleId = T::ModuleId::get();
-
-		fn deposit_event() = default;
-	}
-}
-
-impl<T: Config> Module<T> {
-	pub fn account_id() -> T::AccountId {
-		T::ModuleId::get().into_account()
+			<TotalMappedRing<T>>::put(self.total_mapped_ring);
+		}
 	}
 }
