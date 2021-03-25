@@ -23,6 +23,7 @@
 // --- std ---
 use std::{cell::RefCell, collections::HashSet};
 // --- substrate ---
+use frame_election_provider_support::onchain;
 use frame_support::{
 	assert_ok, parameter_types,
 	storage::IterableStorageMap,
@@ -32,7 +33,6 @@ use frame_support::{
 };
 use frame_system::mocking::*;
 use sp_core::H256;
-use sp_election_providers::onchain;
 use sp_npos_elections::{reduce, StakedAssignment};
 use sp_runtime::{
 	testing::{Header, TestXt, UintAuthorityId},
@@ -217,6 +217,7 @@ impl darwinia_balances::Config<KtonInstance> for Test {
 impl onchain::Config for Test {
 	type AccountId = AccountId;
 	type BlockNumber = BlockNumber;
+	type BlockWeights = BlockWeights;
 	type Accuracy = Perbill;
 	type DataProvider = Staking;
 }

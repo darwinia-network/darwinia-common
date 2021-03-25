@@ -22,6 +22,7 @@
 macro_rules! decl_tests {
 	($($pallet:tt)*) => {
 		// --- substrate ---
+		use frame_election_provider_support::onchain;
 		use frame_support::weights::Weight;
 		use frame_system::mocking::*;
 		use sp_core::crypto::key_types;
@@ -30,7 +31,6 @@ macro_rules! decl_tests {
 			traits::{IdentifyAccount, IdentityLookup, OpaqueKeys, Verify},
 			ModuleId, {KeyTypeId, MultiSignature, Perbill},
 		};
-		use sp_election_providers::onchain;
 		// --- darwinia ---
 		use crate as darwinia_ethereum_backing;
 		use darwinia_staking::{EraIndex, Exposure, ExposureOf};
