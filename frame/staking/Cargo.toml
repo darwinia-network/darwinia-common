@@ -13,6 +13,7 @@ version     = "2.1.0"
 # crates
 codec             = { package = "parity-scale-codec", version = "2.0.1", default-features = false, features = ["derive"] }
 log               = { version = "0.4.14" }
+paste             = { version = "1.0.5" }
 serde             = { version = "1.0.124", optional = true }
 static_assertions = { version = "1.1.0" }
 # darwinia
@@ -29,11 +30,10 @@ pallet-session                  = { default-features = false, features = ["histo
 sp-arithmetic                   = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
 sp-core                         = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
 sp-io                           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-# TWO_PHASE_NOTE:: ideally we should be able to get rid of this.
-sp-npos-elections = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-sp-runtime        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-sp-staking        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-sp-std            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-npos-elections               = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-runtime                      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-staking                      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-std                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
 
 [dev-dependencies]
 # crates

@@ -442,7 +442,7 @@ frame_support::construct_runtime! {
 		// Consensus support.
 		Authorship: pallet_authorship::{Pallet, Call, Storage, Inherent} = 7,
 		ElectionProviderMultiPhase: pallet_election_provider_multi_phase::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 8,
-		Staking: darwinia_staking::{Pallet, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 9,
+		Staking: darwinia_staking::{Pallet, Call, Storage, Config<T>, Event<T>} = 9,
 		Offences: pallet_offences::{Pallet, Call, Storage, Event} = 10,
 		Historical: pallet_session_historical::{Pallet} = 11,
 		Session: pallet_session::{Pallet, Call, Storage, Config<T>, Event} = 12,
