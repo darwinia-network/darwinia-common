@@ -244,7 +244,10 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 			code: pangolin_runtime::wasm_binary_unwrap().to_vec(),
 			changes_trie_config: Default::default(),
 		},
-		pallet_babe: Default::default(),
+		pallet_babe: pangolin_runtime::BabeConfig {
+			authorities: vec![],
+			epoch_config: Some(pangolin_runtime::BABE_GENESIS_EPOCH_CONFIG)
+		},
 		darwinia_balances_Instance0: pangolin_runtime::BalancesConfig {
 			balances: vec![
 				(root.clone(), BUNCH_OF_COINS),
@@ -413,7 +416,10 @@ fn pangolin_development_genesis() -> pangolin_runtime::GenesisConfig {
 			code: pangolin_runtime::wasm_binary_unwrap().to_vec(),
 			changes_trie_config: Default::default(),
 		},
-		pallet_babe: Default::default(),
+		pallet_babe: pangolin_runtime::BabeConfig {
+			authorities: vec![],
+			epoch_config: Some(pangolin_runtime::BABE_GENESIS_EPOCH_CONFIG)
+		},
 		darwinia_balances_Instance0: pangolin_runtime::BalancesConfig {
 			balances: endowed_accounts
 				.clone()
