@@ -565,6 +565,7 @@ where
 		observer_enabled: false,
 		keystore,
 		is_authority: role.is_authority(),
+		telemetry: telemetry.as_ref().map(|x| x.handle()),
 	};
 	let enable_grandpa = !disable_grandpa;
 
