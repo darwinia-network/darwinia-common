@@ -1,6 +1,5 @@
 // --- substrate ---
-use frame_support::weights::{constants::BlockExecutionWeight, DispatchClass, Weight};
-use sp_runtime::{transaction_validity::TransactionPriority, ModuleId, Perbill};
+use sp_runtime::ModuleId;
 use sp_staking::SessionIndex;
 // --- darwinia ---
 use crate::*;
