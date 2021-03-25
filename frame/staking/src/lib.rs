@@ -361,7 +361,7 @@ pub use types::{CompactAssignments, EraIndex};
 // --- crates ---
 use codec::{Decode, Encode, HasCompact};
 // --- substrate ---
-use frame_election_provider_support::{data_provider,ElectionDataProvider, ElectionProvider};
+use frame_election_provider_support::{data_provider, ElectionDataProvider, ElectionProvider};
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage,
 	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo, WithPostDispatchInfo},
@@ -2428,7 +2428,7 @@ impl<T: Config> Module<T> {
 	// For *RING* power = ring_ratio * POWER_COUNT / 2
 	// For *KTON* power = kton_ratio * POWER_COUNT / 2
 	pub fn currency_to_power<S: TryInto<Balance>>(active: S, pool: S) -> Power {
-		(Perquintill::from_rational_approximation(
+		(Perquintill::from_rational(
 			active.saturated_into::<Balance>(),
 			pool.saturated_into::<Balance>().max(1),
 		) * (T::TotalPower::get() as Balance / 2)) as _
@@ -2562,7 +2562,7 @@ impl<T: Config> Module<T> {
 		// This is the fraction of the total reward that the validator and the
 		// nominators will get.
 		let validator_total_reward_part =
-			Perbill::from_rational_approximation(validator_reward_points, total_reward_points);
+			Perbill::from_rational(validator_reward_points, total_reward_points);
 
 		// This is how much validator + nominators are entitled to.
 		let validator_total_payout = validator_total_reward_part * era_payout;
@@ -2582,7 +2582,7 @@ impl<T: Config> Module<T> {
 		let validator_leftover_payout = validator_total_payout - validator_commission_payout;
 		// Now let's calculate how this is split to the validator.
 		let validator_exposure_part =
-			Perbill::from_rational_approximation(exposure.own_power, exposure.total_power);
+			Perbill::from_rational(exposure.own_power, exposure.total_power);
 		let validator_staking_payout = validator_exposure_part * validator_leftover_payout;
 
 		// Due to the `payout * percent` there might be some losses
@@ -2604,7 +2604,7 @@ impl<T: Config> Module<T> {
 		// Reward only the clipped exposures. Note this is not necessarily sorted.
 		for nominator in exposure.others.iter() {
 			let nominator_exposure_part =
-				Perbill::from_rational_approximation(nominator.power, exposure.total_power);
+				Perbill::from_rational(nominator.power, exposure.total_power);
 
 			let nominator_reward: RingBalance<T> =
 				nominator_exposure_part * validator_leftover_payout;

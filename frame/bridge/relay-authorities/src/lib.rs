@@ -500,7 +500,7 @@ decl_module! {
 
 			signatures.push((authority, signature));
 
-			if Perbill::from_rational_approximation(signatures.len() as u32, authorities.len() as _)
+			if Perbill::from_rational(signatures.len() as u32, authorities.len() as _)
 				>= T::SignThreshold::get()
 			{
 				// TODO: clean the mmr root which was contains in this mmr root?
@@ -554,7 +554,7 @@ decl_module! {
 
 			signatures.push((authority, signature));
 
-			if Perbill::from_rational_approximation(signatures.len() as u32, authorities.len() as _)
+			if Perbill::from_rational(signatures.len() as u32, authorities.len() as _)
 				>= T::SignThreshold::get()
 			{
 				Self::apply_authorities_change()?;

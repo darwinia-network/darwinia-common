@@ -15,7 +15,7 @@ frame_support::parameter_types! {
 	// quarter of the last session will be for election.
 	pub const ElectionLookahead: BlockNumber = BLOCKS_PER_SESSION / 2;
 	pub const MaxIterations: u32 = 5;
-	pub MinSolutionScoreBump: Perbill = Perbill::from_rational_approximation(5u32, 10_000);
+	pub MinSolutionScoreBump: Perbill = Perbill::from_rational(5u32, 10_000);
 	pub const MaxNominatorRewardedPerValidator: u32 = 128;
 	pub const StakingUnsignedPriority: TransactionPriority = TransactionPriority::max_value() / 2;
 	pub OffchainSolutionWeightLimit: Weight = RuntimeBlockWeights::get()
