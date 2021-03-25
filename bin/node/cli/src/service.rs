@@ -34,11 +34,11 @@ use futures::StreamExt;
 // --- substrate ---
 use sc_basic_authorship::ProposerFactory;
 use sc_cli::SubstrateCli;
-use sc_client_api::{
-	BlockchainEvents, ExecutorProvider, RemoteBackend, SlotProportion, StateBackendFor,
-};
+use sc_client_api::{BlockchainEvents, ExecutorProvider, RemoteBackend, StateBackendFor};
 use sc_consensus::LongestChain;
-use sc_consensus_babe::{BabeBlockImport, BabeLink, BabeParams, Config as BabeConfig};
+use sc_consensus_babe::{
+	BabeBlockImport, BabeLink, BabeParams, Config as BabeConfig, SlotProportion,
+};
 use sc_executor::{native_executor_instance, NativeExecutionDispatch};
 use sc_finality_grandpa::{
 	Config as GrandpaConfig, FinalityProofProvider as GrandpaFinalityProofProvider, GrandpaParams,
