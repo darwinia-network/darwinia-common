@@ -64,12 +64,19 @@ fn sign_transaction(account: &AccountInfo, unsign_tx: UnsignedTransaction) -> Tr
 }
 
 macro_rules! assert_balance {
-	($account_id:expr, $left:expr, $right:expr) => {
+	($evm_address:expr, $balance:expr, $left:expr, $right:expr) => {
+		let account_id =
+			<Test as darwinia_evm::Config>::AddressMapping::into_account_id($evm_address);
 		assert_eq!(
-			<Test as darwinia_evm::Config>::RingCurrency::free_balance($account_id),
+			<Test as darwinia_evm::Config>::AccountBasicMapping::account_basic(&$evm_address)
+				.balance,
+			$balance
+		);
+		assert_eq!(
+			<Test as darwinia_evm::Config>::RingCurrency::free_balance(&account_id),
 			$left
 		);
-		assert_eq!(Ethereum::remaining_balance($account_id), $right);
+		assert_eq!(Ethereum::remaining_balance(&account_id), $right);
 	};
 }
 
@@ -481,23 +488,16 @@ fn mutate_account_works_well() {
 	let (_, mut ext) = new_test_ext(1);
 	ext.execute_with(|| {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
-		let account_id = <Test as darwinia_evm::Config>::AddressMapping::into_account_id(test_addr);
+		let origin_balance = U256::from(123_456_789_000_000_090u128);
 		<Test as darwinia_evm::Config>::AccountBasicMapping::mutate_account_basic(
 			&test_addr,
 			Account {
-				nonce: U256::from(10),
-				balance: U256::from(123_456_789_000_000_090u128),
+				nonce: U256::from(0),
+				balance: origin_balance,
 			},
 		);
 
-		assert_eq!(
-			<Test as darwinia_evm::Config>::AccountBasicMapping::account_basic(&test_addr),
-			Account {
-				nonce: U256::from(10),
-				balance: U256::from(123_456_789_000_000_090u128),
-			}
-		);
-		assert_balance!(&account_id, 123456789, 90);
+		assert_balance!(test_addr, origin_balance, 123456789, 90);
 	});
 }
 
@@ -506,33 +506,25 @@ fn mutate_account_inc_balance_by_10() {
 	let (_, mut ext) = new_test_ext(1);
 	ext.execute_with(|| {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
-		let account_id = <Test as darwinia_evm::Config>::AddressMapping::into_account_id(test_addr);
 		// origin
 		let origin_balance = U256::from(600_000_000_090u128);
 		<Test as darwinia_evm::Config>::AccountBasicMapping::mutate_account_basic(
 			&test_addr,
 			Account {
-				nonce: U256::from(10),
+				nonce: U256::from(0),
 				balance: origin_balance,
 			},
 		);
 
-		let balance1 = origin_balance.saturating_add(U256::from(10));
+		let new_balance = origin_balance.saturating_add(U256::from(10));
 		<Test as darwinia_evm::Config>::AccountBasicMapping::mutate_account_basic(
 			&test_addr,
 			Account {
-				nonce: U256::from(10),
-				balance: balance1,
+				nonce: U256::from(0),
+				balance: new_balance,
 			},
 		);
-		assert_eq!(
-			<Test as darwinia_evm::Config>::AccountBasicMapping::account_basic(&test_addr),
-			Account {
-				nonce: U256::from(10),
-				balance: U256::from(600_000_000_100u128),
-			}
-		);
-		assert_balance!(&account_id, 600, 100);
+		assert_balance!(test_addr, new_balance, 600, 100);
 	});
 }
 
@@ -541,33 +533,25 @@ fn mutate_account_inc_balance_by_999_999_910() {
 	let (_, mut ext) = new_test_ext(1);
 	ext.execute_with(|| {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
-		let account_id = <Test as darwinia_evm::Config>::AddressMapping::into_account_id(test_addr);
 		// origin
 		let origin_balance = U256::from(600_000_000_090u128);
 		<Test as darwinia_evm::Config>::AccountBasicMapping::mutate_account_basic(
 			&test_addr,
 			Account {
-				nonce: U256::from(10),
+				nonce: U256::from(0),
 				balance: origin_balance,
 			},
 		);
 
-		let balance1 = origin_balance.saturating_add(U256::from(999999910u128));
+		let new_balance = origin_balance.saturating_add(U256::from(999999910u128));
 		<Test as darwinia_evm::Config>::AccountBasicMapping::mutate_account_basic(
 			&test_addr,
 			Account {
-				nonce: U256::from(10),
-				balance: balance1,
+				nonce: U256::from(0),
+				balance: new_balance,
 			},
 		);
-		assert_eq!(
-			<Test as darwinia_evm::Config>::AccountBasicMapping::account_basic(&test_addr),
-			Account {
-				nonce: U256::from(10),
-				balance: U256::from(601_000_000_000u128),
-			}
-		);
-		assert_balance!(&account_id, 601, 0);
+		assert_balance!(test_addr, new_balance, 601, 0);
 	});
 }
 
@@ -576,7 +560,6 @@ fn mutate_account_inc_by_1000_000_000() {
 	let (_, mut ext) = new_test_ext(1);
 	ext.execute_with(|| {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
-		let account_id = <Test as darwinia_evm::Config>::AddressMapping::into_account_id(test_addr);
 		// origin
 		let origin_balance = U256::from(600_000_000_090u128);
 		<Test as darwinia_evm::Config>::AccountBasicMapping::mutate_account_basic(
@@ -587,22 +570,15 @@ fn mutate_account_inc_by_1000_000_000() {
 			},
 		);
 
-		let balance1 = origin_balance.saturating_add(U256::from(1000_000_000u128));
+		let new_balance = origin_balance.saturating_add(U256::from(1000_000_000u128));
 		<Test as darwinia_evm::Config>::AccountBasicMapping::mutate_account_basic(
 			&test_addr,
 			Account {
-				nonce: U256::from(10),
-				balance: balance1,
+				nonce: U256::from(0),
+				balance: new_balance,
 			},
 		);
-		assert_eq!(
-			<Test as darwinia_evm::Config>::AccountBasicMapping::account_basic(&test_addr),
-			Account {
-				nonce: U256::from(10),
-				balance: U256::from(601_000_000_090u128),
-			}
-		);
-		assert_balance!(&account_id, 601, 90);
+		assert_balance!(test_addr, new_balance, 601, 90);
 	});
 }
 
@@ -611,26 +587,25 @@ fn mutate_account_dec_balance_by_90() {
 	let (_, mut ext) = new_test_ext(1);
 	ext.execute_with(|| {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
-		let account_id = <Test as darwinia_evm::Config>::AddressMapping::into_account_id(test_addr);
 		// origin
 		let origin_balance = U256::from(600_000_000_090u128);
 		<Test as darwinia_evm::Config>::AccountBasicMapping::mutate_account_basic(
 			&test_addr,
 			Account {
-				nonce: U256::from(10),
+				nonce: U256::from(0),
 				balance: origin_balance,
 			},
 		);
 
-		let balance1 = origin_balance.saturating_sub(U256::from(90));
+		let new_balance = origin_balance.saturating_sub(U256::from(90));
 		<Test as darwinia_evm::Config>::AccountBasicMapping::mutate_account_basic(
 			&test_addr,
 			Account {
-				nonce: U256::from(10),
-				balance: balance1,
+				nonce: U256::from(0),
+				balance: new_balance,
 			},
 		);
-		assert_balance!(&account_id, 600, 0);
+		assert_balance!(test_addr, new_balance, 600, 0);
 	});
 }
 #[test]
@@ -638,26 +613,25 @@ fn mutate_account_dec_balance_by_990() {
 	let (_, mut ext) = new_test_ext(1);
 	ext.execute_with(|| {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
-		let account_id = <Test as darwinia_evm::Config>::AddressMapping::into_account_id(test_addr);
 		// origin
 		let origin_balance = U256::from(600_000_000_090u128);
 		<Test as darwinia_evm::Config>::AccountBasicMapping::mutate_account_basic(
 			&test_addr,
 			Account {
-				nonce: U256::from(10),
+				nonce: U256::from(0),
 				balance: origin_balance,
 			},
 		);
 
-		let balance1 = origin_balance.saturating_sub(U256::from(990));
+		let new_balance = origin_balance.saturating_sub(U256::from(990));
 		<Test as darwinia_evm::Config>::AccountBasicMapping::mutate_account_basic(
 			&test_addr,
 			Account {
-				nonce: U256::from(10),
-				balance: balance1,
+				nonce: U256::from(0),
+				balance: new_balance,
 			},
 		);
-		assert_balance!(&account_id, 599, 1_000_000_090 - 990);
+		assert_balance!(test_addr, new_balance, 599, 1_000_000_090 - 990);
 	});
 }
 #[test]
@@ -665,26 +639,25 @@ fn mutate_account_dec_balance_existential_by_90() {
 	let (_, mut ext) = new_test_ext(1);
 	ext.execute_with(|| {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
-		let account_id = <Test as darwinia_evm::Config>::AddressMapping::into_account_id(test_addr);
 		// origin
 		let origin_balance = U256::from(500_000_000_090u128);
 		<Test as darwinia_evm::Config>::AccountBasicMapping::mutate_account_basic(
 			&test_addr,
 			Account {
-				nonce: U256::from(10),
+				nonce: U256::from(0),
 				balance: origin_balance,
 			},
 		);
 
-		let balance1 = origin_balance.saturating_sub(U256::from(90));
+		let new_balance = origin_balance.saturating_sub(U256::from(90));
 		<Test as darwinia_evm::Config>::AccountBasicMapping::mutate_account_basic(
 			&test_addr,
 			Account {
-				nonce: U256::from(10),
-				balance: balance1,
+				nonce: U256::from(0),
+				balance: new_balance,
 			},
 		);
-		assert_balance!(&account_id, 500, 0);
+		assert_balance!(test_addr, new_balance, 500, 0);
 	});
 }
 #[test]
@@ -692,25 +665,25 @@ fn mutate_account_dec_balance_existential_by_990() {
 	let (_, mut ext) = new_test_ext(1);
 	ext.execute_with(|| {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
-		let account_id = <Test as darwinia_evm::Config>::AddressMapping::into_account_id(test_addr);
 		// origin
 		let origin_balance = U256::from(500_000_000_090u128);
 		<Test as darwinia_evm::Config>::AccountBasicMapping::mutate_account_basic(
 			&test_addr,
 			Account {
-				nonce: U256::from(10),
+				nonce: U256::from(0),
 				balance: origin_balance,
 			},
 		);
 
-		let balance1 = origin_balance.saturating_sub(U256::from(990));
+		let new_balance = origin_balance.saturating_sub(U256::from(990));
 		<Test as darwinia_evm::Config>::AccountBasicMapping::mutate_account_basic(
 			&test_addr,
 			Account {
-				nonce: U256::from(10),
-				balance: balance1,
+				nonce: U256::from(0),
+				balance: new_balance,
 			},
 		);
-		assert_balance!(&account_id, 0, 0);
+
+		assert_balance!(test_addr, U256::zero(), 0, 0);
 	});
 }

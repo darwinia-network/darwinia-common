@@ -52,14 +52,6 @@ impl<T: Config> AccountBasicMapping for DVMAccountBasicMapping<T> {
 			.saturated_into::<u128>()
 			.into();
 
-		if current.nonce < new.nonce {
-			// ASSUME: in one single EVM transaction, the nonce will not increase more than
-			// `u128::max_value()`.
-			for _ in 0..(new.nonce - current.nonce).low_u128() {
-				<frame_system::Pallet<T>>::inc_account_nonce(&account_id);
-			}
-		}
-
 		let nb = new.balance;
 		match current.balance {
 			cb if cb > nb => {
