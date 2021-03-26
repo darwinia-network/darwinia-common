@@ -884,7 +884,7 @@ decl_storage! {
 		/// This is basically in sync with the call to [`SessionManager::new_session`].
 		pub CurrentPlannedSession get(fn current_planned_session): SessionIndex;
 
-		/// This is set to v5.0.0 for new networks.
+		/// This is set to v6.0.0 for new networks.
 		StorageVersion build(|_: &GenesisConfig<T>| Releases::V6_0_0): Releases;
 
 		/// The chain's running time form genesis in milliseconds,
