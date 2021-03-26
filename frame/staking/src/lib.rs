@@ -2681,60 +2681,66 @@ impl<T: Config> Module<T> {
 				let mut own_power = 0;
 				let mut total_power = 0;
 				let mut others = Vec::with_capacity(support.voters.len());
-				support.voters.into_iter().for_each(|(nominator, weight)| {
-					let origin_weight = Self::power_of(&nominator) as Balance;
-					let (origin_ring_balance, origin_kton_balance) = Self::stake_of(&nominator);
 
-					let ring_balance = if let Ok(ring_balance) =
-						helpers_128bit::multiply_by_rational(
-							origin_ring_balance.saturated_into(),
-							weight,
-							origin_weight,
-						) {
-						ring_balance.saturated_into()
-					} else {
-						log!(
-							error,
-							"[staking] Origin RING: {:?}, Weight: {:?}, Origin Weight: {:?}",
-							origin_ring_balance,
-							weight,
-							origin_weight
-						);
-						Zero::zero()
-					};
-					let kton_balance = if let Ok(kton_balance) =
-						helpers_128bit::multiply_by_rational(
-							origin_kton_balance.saturated_into(),
-							weight,
-							origin_weight,
-						) {
-						kton_balance.saturated_into()
-					} else {
-						log!(
-							error,
-							"[staking] Origin KTON: {:?}, Weight: {:?}, Origin Weight: {:?}",
-							origin_kton_balance,
-							weight,
-							origin_weight
-						);
-						Zero::zero()
-					};
-					let power = weight as Power;
+				support
+					.voters
+					.into_iter()
+					.for_each(|(nominator, power_u128)| {
+						// `T::TotalPower::get() == 1_000_000_000_u32`, will never overflow or get truncated; qed
+						let power = power_u128 as _;
+						let origin_power = Self::power_of(&nominator);
+						let origin_power_u128 = origin_power as _;
 
-					if nominator == validator {
-						own_ring_balance = own_ring_balance.saturating_add(ring_balance);
-						own_kton_balance = own_kton_balance.saturating_add(kton_balance);
-						own_power = own_power.saturating_add(power);
-					} else {
-						others.push(IndividualExposure {
-							who: nominator,
-							ring_balance,
-							kton_balance,
-							power,
-						});
-					}
-					total_power = total_power.saturating_add(power);
-				});
+						let (origin_ring_balance, origin_kton_balance) = Self::stake_of(&nominator);
+						let ring_balance = if let Ok(ring_balance) =
+							helpers_128bit::multiply_by_rational(
+								origin_ring_balance.saturated_into(),
+								power_u128,
+								origin_power_u128,
+							) {
+							ring_balance.saturated_into()
+						} else {
+							log!(
+								error,
+								"[staking] Origin RING: {:?}, Weight: {:?}, Origin Weight: {:?}",
+								origin_ring_balance,
+								power_u128,
+								origin_power_u128
+							);
+							Zero::zero()
+						};
+						let kton_balance = if let Ok(kton_balance) =
+							helpers_128bit::multiply_by_rational(
+								origin_kton_balance.saturated_into(),
+								power_u128,
+								origin_power_u128,
+							) {
+							kton_balance.saturated_into()
+						} else {
+							log!(
+								error,
+								"[staking] Origin KTON: {:?}, Weight: {:?}, Origin Weight: {:?}",
+								origin_kton_balance,
+								power_u128,
+								origin_power_u128
+							);
+							Zero::zero()
+						};
+
+						if nominator == validator {
+							own_ring_balance = own_ring_balance.saturating_add(ring_balance);
+							own_kton_balance = own_kton_balance.saturating_add(kton_balance);
+							own_power = own_power.saturating_add(power);
+						} else {
+							others.push(IndividualExposure {
+								who: nominator,
+								ring_balance,
+								kton_balance,
+								power,
+							});
+						}
+						total_power = total_power.saturating_add(power);
+					});
 
 				let exposure = Exposure {
 					own_ring_balance,
