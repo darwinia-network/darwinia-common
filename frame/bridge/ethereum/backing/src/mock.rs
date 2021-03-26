@@ -22,6 +22,7 @@
 macro_rules! decl_tests {
 	($($pallet:tt)*) => {
 		// --- substrate ---
+		use frame_election_provider_support::onchain;
 		use frame_support::weights::Weight;
 		use frame_system::mocking::*;
 		use sp_core::crypto::key_types;
@@ -30,7 +31,6 @@ macro_rules! decl_tests {
 			traits::{IdentifyAccount, IdentityLookup, OpaqueKeys, Verify},
 			ModuleId, {KeyTypeId, MultiSignature, Perbill},
 		};
-		use sp_election_providers::onchain;
 		// --- darwinia ---
 		use crate as darwinia_ethereum_backing;
 		use darwinia_staking::{EraIndex, Exposure, ExposureOf};
@@ -144,6 +144,7 @@ macro_rules! decl_tests {
 		impl onchain::Config for Test {
 			type AccountId = AccountId;
 			type BlockNumber = BlockNumber;
+			type BlockWeights = ();
 			type Accuracy = Perbill;
 			type DataProvider = Staking;
 		}
@@ -162,13 +163,7 @@ macro_rules! decl_tests {
 			type SlashCancelOrigin = frame_system::EnsureRoot<Self::AccountId>;
 			type SessionInterface = Self;
 			type NextNewSession = Session;
-			type ElectionLookahead = ();
-			type Call = Call;
-			type MaxIterations = ();
-			type MinSolutionScoreBump = ();
 			type MaxNominatorRewardedPerValidator = ();
-			type UnsignedPriority = ();
-			type OffchainSolutionWeightLimit = ();
 			type ElectionProvider = onchain::OnChainSequentialPhragmen<Self>;
 			type RingCurrency = Ring;
 			type RingRewardRemainder = ();
@@ -235,13 +230,13 @@ macro_rules! decl_tests {
 				NodeBlock = Block,
 				UncheckedExtrinsic = UncheckedExtrinsic
 			{
-				System: frame_system::{Module, Call, Storage, Config},
-				Timestamp: pallet_timestamp::{Module, Call, Storage},
-				Ring: darwinia_balances::<Instance0>::{Module, Call, Storage},
-				Kton: darwinia_balances::<Instance1>::{Module, Call, Storage},
-				Staking: darwinia_staking::{Module, Call, Storage},
-				Session: pallet_session::{Module, Call, Storage},
-				EthereumBacking: darwinia_ethereum_backing::{Module, Call, Storage, Config<T>},
+				System: frame_system::{Pallet, Call, Storage, Config},
+				Timestamp: pallet_timestamp::{Pallet, Call, Storage},
+				Ring: darwinia_balances::<Instance0>::{Pallet, Call, Storage},
+				Kton: darwinia_balances::<Instance1>::{Pallet, Call, Storage},
+				Staking: darwinia_staking::{Pallet, Call, Storage},
+				Session: pallet_session::{Pallet, Call, Storage},
+				EthereumBacking: darwinia_ethereum_backing::{Pallet, Call, Storage, Config<T>},
 				$($pallet)*,
 			}
 		}

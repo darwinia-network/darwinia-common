@@ -10,7 +10,7 @@ impl<T: Config> AccountBasicMapping for DVMAccountBasicMapping<T> {
 	/// Get the account basic in EVM format.
 	fn account_basic(address: &H160) -> EVMAccount {
 		let account_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(*address);
-		let nonce = frame_system::Module::<T>::account_nonce(&account_id);
+		let nonce = <frame_system::Pallet<T>>::account_nonce(&account_id);
 		let helper = U256::from(10)
 			.checked_pow(U256::from(9))
 			.unwrap_or(U256::from(0));

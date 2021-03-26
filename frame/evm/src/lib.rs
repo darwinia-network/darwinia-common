@@ -209,7 +209,7 @@ impl<T: Config> AccountBasicMapping for RawAccountBasicMapping<T> {
 	fn account_basic(address: &H160) -> Account {
 		let account_id = T::AddressMapping::into_account_id(*address);
 
-		let nonce = frame_system::Module::<T>::account_nonce(&account_id);
+		let nonce = <frame_system::Pallet<T>>::account_nonce(&account_id);
 		let balance = T::RingCurrency::free_balance(&account_id);
 
 		Account {
@@ -226,7 +226,7 @@ impl<T: Config> AccountBasicMapping for RawAccountBasicMapping<T> {
 			// ASSUME: in one single EVM transaction, the nonce will not increase more than
 			// `u128::max_value()`.
 			for _ in 0..(new.nonce - current.nonce).low_u128() {
-				frame_system::Module::<T>::inc_account_nonce(&account_id);
+				<frame_system::Pallet<T>>::inc_account_nonce(&account_id);
 			}
 		}
 
@@ -515,7 +515,7 @@ impl<T: Config> Module<T> {
 	fn remove_account(address: &H160) {
 		if AccountCodes::contains_key(address) {
 			let account_id = T::AddressMapping::into_account_id(*address);
-			let _ = frame_system::Module::<T>::dec_consumers(&account_id);
+			let _ = <frame_system::Pallet<T>>::dec_consumers(&account_id);
 		}
 
 		AccountCodes::remove(address);
@@ -530,7 +530,7 @@ impl<T: Config> Module<T> {
 
 		if !AccountCodes::contains_key(&address) {
 			let account_id = T::AddressMapping::into_account_id(address);
-			let _ = frame_system::Module::<T>::inc_consumers(&account_id);
+			let _ = <frame_system::Pallet<T>>::inc_consumers(&account_id);
 		}
 
 		AccountCodes::insert(address, code);

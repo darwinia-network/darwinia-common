@@ -548,7 +548,7 @@ mod secp_utils {
 		what: &[u8],
 		signed_message: &[u8],
 	) -> EcdsaSignature {
-		let msg = keccak_256(&<super::Module<T>>::eth_signable_message(
+		let msg = keccak_256(&<super::Pallet<T>>::eth_signable_message(
 			&to_ascii_hex(what)[..],
 			signed_message,
 		));
@@ -564,7 +564,7 @@ mod secp_utils {
 		what: &[u8],
 		signed_message: &[u8],
 	) -> EcdsaSignature {
-		let msg = keccak_256(&<super::Module<T>>::tron_signable_message(
+		let msg = keccak_256(&<super::Pallet<T>>::tron_signable_message(
 			&to_ascii_hex(what)[..],
 			signed_message,
 		));
@@ -666,9 +666,9 @@ mod tests {
 			NodeBlock = Block,
 			UncheckedExtrinsic = UncheckedExtrinsic
 		{
-			System: frame_system::{Module, Call, Storage, Config},
-			Ring: darwinia_balances::<Instance0>::{Module, Call, Storage, Config<T>},
-			Claims: darwinia_claims::{Module, Call, Storage, Config}
+			System: frame_system::{Pallet, Call, Storage, Config},
+			Ring: darwinia_balances::<Instance0>::{Pallet, Call, Storage, Config<T>},
+			Claims: darwinia_claims::{Pallet, Call, Storage, Config}
 		}
 	}
 
