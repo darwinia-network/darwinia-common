@@ -135,8 +135,7 @@ fn pangolin_build_spec_genesis() -> GenesisConfig {
 	const SET_AUTHORITIES_ADDRESS: &'static str = "0xE4A2892599Ad9527D76Ce6E26F93620FA7396D85";
 	const RING_TOKEN_ADDRESS: &'static str = "0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0";
 	const KTON_TOKEN_ADDRESS: &'static str = "0x1994100c58753793D52c6f457f189aa3ce9cEe94";
-	const TOKEN_BACKING_ADDRESS: &'static str = "0x3f5ae691ce531dd7afdf6ff21d5409f3156faca0";
-	const MAPPING_FACTORY_ADDRESS: &'static str = "0x55D8ECEE33841AaCcb890085AcC7eE0d8A92b5eF";
+	const MAPPING_FACTORY_ADDRESS: &'static str = "0x7C0437357a7ef3a8467C66E6352Be91dAbcB1199";
 
 	let root = AccountId::from(array_bytes::hex2array_unchecked!(ROOT, 32));
 	let evm = array_bytes::hex2array_unchecked!(GENESIS_EVM_ACCOUNT, 20).into();
@@ -214,7 +213,6 @@ fn pangolin_build_spec_genesis() -> GenesisConfig {
 			kton_locked: 1 << 56,
 		}),
 		darwinia_ethereum_issuing: Some(EthereumIssuingConfig {
-			token_backing_address: array_bytes::hex2array_unchecked!(TOKEN_BACKING_ADDRESS, 20).into(),
 			mapping_factory_address: array_bytes::hex2array_unchecked!(MAPPING_FACTORY_ADDRESS, 20).into(),
 		}),
 		darwinia_ethereum_relay: Some(EthereumRelayConfig {
@@ -309,8 +307,7 @@ fn pangolin_development_genesis(
 	const SET_AUTHORITIES_ADDRESS: &'static str = "0xE4A2892599Ad9527D76Ce6E26F93620FA7396D85";
 	const RING_TOKEN_ADDRESS: &'static str = "0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0";
 	const KTON_TOKEN_ADDRESS: &'static str = "0x1994100c58753793D52c6f457f189aa3ce9cEe94";
-	const TOKEN_BACKING_ADDRESS: &'static str = "0x3f5ae691ce531dd7afdf6ff21d5409f3156faca0";
-	const MAPPING_FACTORY_ADDRESS: &'static str = "0x55D8ECEE33841AaCcb890085AcC7eE0d8A92b5eF";
+	const MAPPING_FACTORY_ADDRESS: &'static str = "0x7C0437357a7ef3a8467C66E6352Be91dAbcB1199";
 
 	initial_authorities.iter().for_each(|x| {
 		if !endowed_accounts.contains(&x.0) {
@@ -391,7 +388,6 @@ fn pangolin_development_genesis(
 			kton_locked: 1 << 56,
 		}),
 		darwinia_ethereum_issuing: Some(EthereumIssuingConfig {
-			token_backing_address: array_bytes::hex2array_unchecked!(TOKEN_BACKING_ADDRESS, 20).into(),
 			mapping_factory_address: array_bytes::hex2array_unchecked!(MAPPING_FACTORY_ADDRESS, 20).into(),
 		}),
 		darwinia_ethereum_relay: Some(EthereumRelayConfig {
