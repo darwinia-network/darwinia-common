@@ -360,9 +360,9 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 		},
 		darwinia_evm: pangolin_runtime::EVMConfig { accounts: evm_accounts },
 		dvm_ethereum: Default::default(),
-		darwinia_ethereum_issuing: Some(EthereumIssuingConfig {
+		darwinia_ethereum_issuing: pangolin_runtime::EthereumIssuingConfig {
 			mapping_factory_address: array_bytes::hex2array_unchecked!(MAPPING_FACTORY_ADDRESS, 20).into(),
-		}),
+		},
 	}
 }
 
@@ -516,8 +516,8 @@ fn pangolin_development_genesis() -> pangolin_runtime::GenesisConfig {
 		},
 		darwinia_evm: pangolin_runtime::EVMConfig { accounts: evm_accounts },
 		dvm_ethereum: Default::default(),
-		darwinia_ethereum_issuing: Some(EthereumIssuingConfig {
+		darwinia_ethereum_issuing: pangolin_runtime::EthereumIssuingConfig {
 			mapping_factory_address: array_bytes::hex2array_unchecked!(MAPPING_FACTORY_ADDRESS, 20).into(),
-		}),
+		},
 	}
 }

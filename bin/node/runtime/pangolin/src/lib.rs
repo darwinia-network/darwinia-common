@@ -503,7 +503,7 @@ frame_support::construct_runtime! {
 
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 40,
 		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 41,
-		EthereumIssuing: darwinia_ethereum_issuing::{Module, Call, Storage, Config, Event<T>} = 42,
+		EthereumIssuing: darwinia_ethereum_issuing::{Pallet, Call, Storage, Config, Event<T>} = 42,
 	}
 }
 
