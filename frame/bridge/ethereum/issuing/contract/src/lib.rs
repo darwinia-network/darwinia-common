@@ -24,7 +24,7 @@
 extern crate alloc;
 
 use ethabi::{
-	param_type::ParamType, token::Token, Bytes, Error, ErrorKind, EventParam, Function, Param,
+	param_type::ParamType, token::Token, Bytes, Error, EventParam, Function, Param,
 	RawLog, Result as AbiResult,
 };
 use ethereum_types::{Address as EthereumAddress, H160, H256, U256};
@@ -319,7 +319,7 @@ impl TokenRegisterInfo {
 			(Token::Address(backing), Token::Address(source), Token::Address(target)) => {
 				Ok(TokenRegisterInfo(backing, source, target))
 			}
-			_ => Err(Error::ErrorKind(ErrorKind::InvalidData)),
+			_ => Err(Error::InvalidData),
 		}
 	}
 }
@@ -373,7 +373,7 @@ impl TokenBurnInfo {
 				delegator,
 				amount,
 			}),
-			_ => Err(Error::ErrorKind(ErrorKind::InvalidData)),
+			_ => Err(Error::InvalidData),
 		}
 	}
 }

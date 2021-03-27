@@ -265,27 +265,27 @@ impl<T: Config> Module<T> {
 		let name = result.params[1]
 			.value
 			.clone()
-			.to_string()
+			.into_string()
 			.ok_or(<Error<T>>::StringCF)?;
 		let symbol = result.params[2]
 			.value
 			.clone()
-			.to_string()
+			.into_string()
 			.ok_or(<Error<T>>::StringCF)?;
 		let decimals = result.params[3]
 			.value
 			.clone()
-			.to_uint()
+			.into_uint()
 			.ok_or(<Error<T>>::UintCF)?;
 		let fee = result.params[4]
 			.value
 			.clone()
-			.to_uint()
+			.into_uint()
 			.ok_or(<Error<T>>::UintCF)?;
 		let token_address = result.params[0]
 			.value
 			.clone()
-			.to_address()
+			.into_address()
 			.ok_or(<Error<T>>::AddressCF)?;
 
 		let input = Abi::encode_create_erc20(
@@ -306,27 +306,27 @@ impl<T: Config> Module<T> {
 		let token_address = result.params[0]
 			.value
 			.clone()
-			.to_address()
+			.into_address()
 			.ok_or(<Error<T>>::AddressCF)?;
 		let dtoken_address = result.params[1]
 			.value
 			.clone()
-			.to_address()
+			.into_address()
 			.ok_or(<Error<T>>::AddressCF)?;
 		let amount = result.params[2]
 			.value
 			.clone()
-			.to_uint()
+			.into_uint()
 			.ok_or(<Error<T>>::UintCF)?;
 		let recipient = result.params[3]
 			.value
 			.clone()
-			.to_address()
+			.into_address()
 			.ok_or(<Error<T>>::AddressCF)?;
 		let fee = result.params[4]
 			.value
 			.clone()
-			.to_uint()
+			.into_uint()
 			.ok_or(<Error<T>>::UintCF)?;
 
 		let input =
@@ -366,7 +366,7 @@ impl<T: Config> Module<T> {
 		<BurnTokenEvents<T>>::append(system_event);
 		Self::deposit_event(raw_event);
 		T::EcdsaAuthorities::schedule_mmr_root(
-			(<frame_system::Module<T>>::block_number().saturated_into::<u32>() / 10 * 10 + 10)
+			(<frame_system::Pallet<T>>::block_number().saturated_into::<u32>() / 10 * 10 + 10)
 				.saturated_into(),
 		);
 		Ok(())
@@ -399,7 +399,7 @@ impl<T: Config> Module<T> {
 
 		Self::deposit_event(raw_event);
 		T::EcdsaAuthorities::schedule_mmr_root(
-			(<frame_system::Module<T>>::block_number().saturated_into::<u32>() / 10 * 10 + 10)
+			(<frame_system::Pallet<T>>::block_number().saturated_into::<u32>() / 10 * 10 + 10)
 				.saturated_into(),
 		);
 		Ok(())

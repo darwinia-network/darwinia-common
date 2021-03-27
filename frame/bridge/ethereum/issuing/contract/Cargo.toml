@@ -13,8 +13,8 @@ version     = "1.0.0"
 # crates
 codec      = { package = "parity-scale-codec", version = "2.0.1", default-features = false, features = ["derive"] }
 rustc-hex      = { default-features = false, version = "2.1.0" }
-ethabi                   = { default-features = false, git = "https://github.com/darwinia-network/ethabi.git", branch = "with_no_std" }
-ethereum-types           = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
+ethabi = { default-features = false, git = "https://github.com/darwinia-network/ethabi.git", branch = "xavier-no-std" }
+ethereum-types = { default-features = false, version = "0.11.0" }
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
