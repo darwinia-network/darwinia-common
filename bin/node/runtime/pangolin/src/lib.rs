@@ -172,7 +172,7 @@ pub mod impls {
 			smallvec![WeightToFeeCoefficient {
 				degree: 1,
 				negative: false,
-				coeff_frac: Perbill::from_rational_approximation(p % q, q),
+				coeff_frac: Perbill::from_rational(p % q, q),
 				coeff_integer: p / q,
 			}]
 		}
@@ -222,6 +222,9 @@ pub use transaction_payment::*;
 pub mod authorship;
 pub use authorship::*;
 
+pub mod election_provider_multi_phase;
+pub use election_provider_multi_phase::*;
+
 pub mod staking;
 pub use staking::*;
 
@@ -242,6 +245,9 @@ pub use im_online::*;
 
 pub mod authority_discovery;
 pub use authority_discovery::*;
+
+pub mod header_mmr;
+pub use header_mmr::*;
 
 pub mod democracy;
 pub use democracy::*;
@@ -288,9 +294,6 @@ pub use proxy::*;
 pub mod multisig;
 pub use multisig::*;
 
-pub mod header_mmr;
-pub use header_mmr::*;
-
 pub mod crab_issuing;
 pub use crab_issuing::*;
 
@@ -323,17 +326,13 @@ pub use dvm::*;
 
 // --- darwinia ---
 pub use constants::*;
-use darwinia_evm::{Account as EVMAccount, FeeCalculator};
 pub use darwinia_staking::StakerStatus;
-pub use drml_primitives::*;
-pub use impls::*;
 pub use wasm::*;
 
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
-	debug,
 	traits::{KeyOwnerProofSystem, Randomness},
 	weights::constants::ExtrinsicBaseWeight,
 };
@@ -344,6 +343,7 @@ use pallet_transaction_payment::FeeDetails;
 use pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo as TransactionPaymentRuntimeDispatchInfo;
 use sp_api::impl_runtime_apis;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
+use sp_consensus_babe::{AllowedSlots, BabeEpochConfiguration};
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
 use sp_runtime::{
 	create_runtime_str, generic,
@@ -357,10 +357,12 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia ---
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
-use darwinia_evm::Runner;
+use darwinia_evm::{Account as EVMAccount, FeeCalculator, Runner};
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
+use drml_primitives::*;
 use dvm_rpc_runtime_api::TransactionStatus;
+use impls::*;
 
 /// The address format for describing accounts.
 type Address = MultiAddress<AccountId, ()>;
@@ -385,9 +387,9 @@ type Executive = frame_executive::Executive<
 	Block,
 	frame_system::ChainContext<Runtime>,
 	Runtime,
-	AllModules,
+	AllPallets,
+	// (),
 	// CustomOnRuntimeUpgrade,
-	PhragmenElectionDepositRuntimeUpgrade,
 >;
 /// The payload being signed in transactions.
 type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
@@ -399,10 +401,17 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("Pangolin"),
 	impl_name: create_runtime_str!("Pangolin"),
 	authoring_version: 1,
-	spec_version: 20,
+	// crate version ~2.1.0 := >=2.1.0, <2.2.0
+	spec_version: 211,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
+};
+
+/// The BABE epoch configuration at genesis.
+pub const BABE_GENESIS_EPOCH_CONFIG: BabeEpochConfiguration = BabeEpochConfiguration {
+	c: PRIMARY_PROBABILITY,
+	allowed_slots: AllowedSlots::PrimaryAndSecondaryPlainSlots,
 };
 
 /// The version information used to identify this runtime when compiled natively.
@@ -422,79 +431,79 @@ frame_support::construct_runtime! {
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
 		// Basic stuff; balances is uncallable initially.
-		System: frame_system::{Module, Call, Storage, Config, Event<T>} = 0,
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage} = 1,
+		System: frame_system::{Pallet, Call, Storage, Config, Event<T>} = 0,
+		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Call, Storage} = 1,
 
 		// Must be before session.
-		Babe: pallet_babe::{Module, Call, Storage, Config, Inherent, ValidateUnsigned} = 2,
+		Babe: pallet_babe::{Pallet, Call, Storage, Config, ValidateUnsigned} = 2,
 
-		Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent} = 3,
-		Balances: darwinia_balances::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>} = 4,
-		Kton: darwinia_balances::<Instance1>::{Module, Call, Storage, Config<T>, Event<T>} = 5,
-		TransactionPayment: pallet_transaction_payment::{Module, Storage} = 6,
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 3,
+		Balances: darwinia_balances::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>} = 4,
+		Kton: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>} = 5,
+		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 6,
 
 		// Consensus support.
-		Authorship: pallet_authorship::{Module, Call, Storage, Inherent} = 7,
-		Staking: darwinia_staking::{Module, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 8,
-		Offences: pallet_offences::{Module, Call, Storage, Event} = 9,
-		Historical: pallet_session_historical::{Module} = 10,
-		Session: pallet_session::{Module, Call, Storage, Config<T>, Event} = 11,
-		Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event, ValidateUnsigned} = 12,
-		ImOnline: pallet_im_online::{Module, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 13,
-		AuthorityDiscovery: pallet_authority_discovery::{Module, Call, Config} = 14,
+		Authorship: pallet_authorship::{Pallet, Call, Storage, Inherent} = 7,
+		ElectionProviderMultiPhase: pallet_election_provider_multi_phase::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 8,
+		Staking: darwinia_staking::{Pallet, Call, Storage, Config<T>, Event<T>} = 9,
+		Offences: pallet_offences::{Pallet, Call, Storage, Event} = 10,
+		Historical: pallet_session_historical::{Pallet} = 11,
+		Session: pallet_session::{Pallet, Call, Storage, Config<T>, Event} = 12,
+		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 13,
+		ImOnline: pallet_im_online::{Pallet, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 14,
+		AuthorityDiscovery: pallet_authority_discovery::{Pallet, Call, Config} = 15,
+		HeaderMMR: darwinia_header_mmr::{Pallet, Call, Storage} = 16,
 
 		// Governance stuff; uncallable initially.
-		Democracy: darwinia_democracy::{Module, Call, Storage, Config, Event<T>} = 15,
-		Council: pallet_collective::<Instance0>::{Module, Call, Storage, Origin<T>, Config<T>, Event<T>} = 16,
-		TechnicalCommittee: pallet_collective::<Instance1>::{Module, Call, Storage, Origin<T>, Config<T>, Event<T>} = 17,
-		ElectionsPhragmen: darwinia_elections_phragmen::{Module, Call, Storage, Config<T>, Event<T>} = 18,
-		TechnicalMembership: pallet_membership::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>} = 19,
-		Treasury: darwinia_treasury::{Module, Call, Storage, Event<T>} = 20,
+		Democracy: darwinia_democracy::{Pallet, Call, Storage, Config, Event<T>} = 17,
+		Council: pallet_collective::<Instance0>::{Pallet, Call, Storage, Origin<T>, Config<T>, Event<T>} = 18,
+		TechnicalCommittee: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Config<T>, Event<T>} = 19,
+		ElectionsPhragmen: darwinia_elections_phragmen::{Pallet, Call, Storage, Config<T>, Event<T>} = 20,
+		TechnicalMembership: pallet_membership::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>} = 21,
+		Treasury: darwinia_treasury::{Pallet, Call, Storage, Event<T>} = 22,
 
-		Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>} = 21,
+		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 23,
 
 		// Claims. Usable initially.
-		Claims: darwinia_claims::{Module, Call, Storage, Config, Event<T>, ValidateUnsigned} = 22,
+		Claims: darwinia_claims::{Pallet, Call, Storage, Config, Event<T>, ValidateUnsigned} = 24,
 
 		// Vesting. Usable initially, but removed once all vesting is finished.
-		Vesting: darwinia_vesting::{Module, Call, Storage, Event<T>, Config<T>} = 23,
+		Vesting: darwinia_vesting::{Pallet, Call, Storage, Event<T>, Config<T>} = 25,
 
 		// Utility module.
-		Utility: pallet_utility::{Module, Call, Event} = 24,
+		Utility: pallet_utility::{Pallet, Call, Event} = 26,
 
 		// Less simple identity module.
-		Identity: pallet_identity::{Module, Call, Storage, Event<T>} = 25,
+		Identity: pallet_identity::{Pallet, Call, Storage, Event<T>} = 27,
 
 		// Society module.
-		Society: pallet_society::{Module, Call, Storage, Event<T>} = 26,
+		Society: pallet_society::{Pallet, Call, Storage, Event<T>} = 28,
 
 		// Social recovery module.
-		Recovery: pallet_recovery::{Module, Call, Storage, Event<T>} = 27,
+		Recovery: pallet_recovery::{Pallet, Call, Storage, Event<T>} = 29,
 
 		// System scheduler.
-		Scheduler: pallet_scheduler::{Module, Call, Storage, Event<T>} = 28,
+		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 30,
 
 		// Proxy module. Late addition.
-		Proxy: pallet_proxy::{Module, Call, Storage, Event<T>} = 29,
+		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 31,
 
 		// Multisig module. Late addition.
-		Multisig: pallet_multisig::{Module, Call, Storage, Event<T>} = 30,
+		Multisig: pallet_multisig::{Pallet, Call, Storage, Event<T>} = 32,
 
-		HeaderMMR: darwinia_header_mmr::{Module, Call, Storage} = 31,
+		CrabIssuing: darwinia_crab_issuing::{Pallet, Call, Storage, Config, Event<T>} = 33,
+		CrabBacking: darwinia_crab_backing::{Pallet, Storage, Config<T>} = 34,
 
-		CrabIssuing: darwinia_crab_issuing::{Module, Call, Storage, Config, Event<T>} = 32,
-		CrabBacking: darwinia_crab_backing::{Module, Storage, Config<T>} = 33,
+		EthereumRelay: darwinia_ethereum_relay::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
+		EthereumBacking: darwinia_ethereum_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 36,
+		EthereumRelayerGame: darwinia_relayer_game::<Instance0>::{Pallet, Storage} = 37,
+		EthereumRelayAuthorities: darwinia_relay_authorities::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>} = 38,
 
-		EthereumRelay: darwinia_ethereum_relay::{Module, Call, Storage, Config<T>, Event<T>} = 34,
-		EthereumBacking: darwinia_ethereum_backing::{Module, Call, Storage, Config<T>, Event<T>} = 35,
-		EthereumRelayerGame: darwinia_relayer_game::<Instance0>::{Module, Storage} = 36,
-		EthereumRelayAuthorities: darwinia_relay_authorities::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>} = 37,
+		TronBacking: darwinia_tron_backing::{Pallet, Storage, Config<T>} = 39,
 
-		TronBacking: darwinia_tron_backing::{Module, Storage, Config<T>} = 38,
-
-		EVM: darwinia_evm::{Module, Call, Storage, Config, Event<T>} = 39,
-		Ethereum: dvm_ethereum::{Module, Call, Storage, Config, Event, ValidateUnsigned} = 40,
-		EthereumIssuing: darwinia_ethereum_issuing::{Module, Call, Storage, Config, Event<T>} = 41,
+		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 40,
+		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 41,
+		EthereumIssuing: darwinia_ethereum_issuing::{Module, Call, Storage, Config, Event<T>} = 42,
 	}
 }
 
@@ -534,7 +543,7 @@ where
 		);
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|e| {
-				debug::warn!("Unable to create signed payload: {:?}", e);
+				log::warn!("Unable to create signed payload: {:?}", e);
 			})
 			.ok()?;
 		let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;
@@ -562,7 +571,7 @@ impl_runtime_apis! {
 		}
 
 		fn execute_block(block: Block) {
-			Executive::execute_block(block)
+			Executive::execute_block(block);
 		}
 
 		fn initialize_block(header: &<Block as BlockT>::Header) {
@@ -599,7 +608,7 @@ impl_runtime_apis! {
 		}
 
 		fn random_seed() -> <Block as BlockT>::Hash {
-			RandomnessCollectiveFlip::random_seed()
+			pallet_babe::RandomnessFromOneEpochAgo::<Runtime>::random_seed().0
 		}
 	}
 
@@ -658,14 +667,14 @@ impl_runtime_apis! {
 			sp_consensus_babe::BabeGenesisConfiguration {
 				slot_duration: Babe::slot_duration(),
 				epoch_length: EpochDuration::get(),
-				c: PRIMARY_PROBABILITY,
+				c: BABE_GENESIS_EPOCH_CONFIG.c,
 				genesis_authorities: Babe::authorities(),
 				randomness: Babe::randomness(),
-				allowed_slots: sp_consensus_babe::AllowedSlots::PrimaryAndSecondaryPlainSlots,
+				allowed_slots: BABE_GENESIS_EPOCH_CONFIG.allowed_slots,
 			}
 		}
 
-		fn current_epoch_start() -> sp_consensus_babe::SlotNumber {
+		fn current_epoch_start() -> sp_consensus_babe::Slot {
 			Babe::current_epoch_start()
 		}
 
@@ -678,7 +687,7 @@ impl_runtime_apis! {
 		}
 
 		fn generate_key_ownership_proof(
-			_slot_number: sp_consensus_babe::SlotNumber,
+			_slot: sp_consensus_babe::Slot,
 			authority_id: sp_consensus_babe::AuthorityId,
 		) -> Option<sp_consensus_babe::OpaqueKeyOwnershipProof> {
 			Historical::prove((sp_consensus_babe::KEY_TYPE, authority_id))
@@ -873,6 +882,14 @@ impl_runtime_apis! {
 			)
 		}
 	}
+
+	#[cfg(feature = "try-runtime")]
+	impl frame_try_runtime::TryRuntime<Block> for Runtime {
+		fn on_runtime_upgrade() -> Result<(Weight, Weight), sp_runtime::RuntimeString> {
+			let weight = Executive::try_runtime_upgrade()?;
+			Ok((weight, RuntimeBlockWeights::get().max_block))
+		}
+	}
 }
 
 pub struct TransactionConverter;
@@ -903,15 +920,3 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 // 		MAXIMUM_BLOCK_WEIGHT
 // 	}
 // }
-
-pub struct PhragmenElectionDepositRuntimeUpgrade;
-impl darwinia_elections_phragmen::migrations_2_0_0::ToV2 for PhragmenElectionDepositRuntimeUpgrade {
-	type AccountId = AccountId;
-	type Balance = Balance;
-	type Module = ElectionsPhragmen;
-}
-impl frame_support::traits::OnRuntimeUpgrade for PhragmenElectionDepositRuntimeUpgrade {
-	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-		darwinia_elections_phragmen::migrations_2_0_0::apply::<Self>(5 * MILLI, COIN)
-	}
-}

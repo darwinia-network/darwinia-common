@@ -184,8 +184,8 @@ pub struct ConcatAddressMapping;
 /// The ConcatAddressMapping used for transfer from evm 20-length to substrate 32-length address
 /// The concat rule inclued three parts:
 /// 1. AccountId Prefix: concat("dvm", "0x00000000000000"), length: 11 byetes
-/// 2. Evm address: the original evm address, length: 20 bytes
-/// 3. CheckSum:  byte_xor(AccountId Prefix + Evm address), length: 1 bytes
+/// 2. EVM address: the original evm address, length: 20 bytes
+/// 3. CheckSum:  byte_xor(AccountId Prefix + EVM address), length: 1 bytes
 impl AddressMapping<AccountId32> for ConcatAddressMapping {
 	fn into_account_id(address: H160) -> AccountId32 {
 		let mut data = [0u8; 32];
@@ -209,7 +209,7 @@ impl<T: Config> AccountBasicMapping for RawAccountBasicMapping<T> {
 	fn account_basic(address: &H160) -> Account {
 		let account_id = T::AddressMapping::into_account_id(*address);
 
-		let nonce = frame_system::Module::<T>::account_nonce(&account_id);
+		let nonce = <frame_system::Pallet<T>>::account_nonce(&account_id);
 		let balance = T::RingCurrency::free_balance(&account_id);
 
 		Account {
@@ -226,7 +226,7 @@ impl<T: Config> AccountBasicMapping for RawAccountBasicMapping<T> {
 			// ASSUME: in one single EVM transaction, the nonce will not increase more than
 			// `u128::max_value()`.
 			for _ in 0..(new.nonce - current.nonce).low_u128() {
-				frame_system::Module::<T>::inc_account_nonce(&account_id);
+				<frame_system::Pallet<T>>::inc_account_nonce(&account_id);
 			}
 		}
 
@@ -314,7 +314,7 @@ pub struct GenesisAccount {
 }
 
 decl_storage! {
-	trait Store for Module<T: Config> as DarwiniaEVM {
+	trait Store for Module<T: Config> as EVM {
 		pub AccountCodes get(fn account_codes): map hasher(blake2_128_concat) H160 => Vec<u8>;
 		pub AccountStorages get(fn account_storages):
 			double_map hasher(blake2_128_concat) H160, hasher(blake2_128_concat) H256 => H256;
@@ -522,7 +522,7 @@ impl<T: Config> Module<T> {
 	fn remove_account(address: &H160) {
 		if AccountCodes::contains_key(address) {
 			let account_id = T::AddressMapping::into_account_id(*address);
-			let _ = frame_system::Module::<T>::dec_consumers(&account_id);
+			let _ = <frame_system::Pallet<T>>::dec_consumers(&account_id);
 		}
 
 		AccountCodes::remove(address);
@@ -537,7 +537,7 @@ impl<T: Config> Module<T> {
 
 		if !AccountCodes::contains_key(&address) {
 			let account_id = T::AddressMapping::into_account_id(address);
-			let _ = frame_system::Module::<T>::inc_consumers(&account_id);
+			let _ = <frame_system::Pallet<T>>::inc_consumers(&account_id);
 		}
 
 		AccountCodes::insert(address, code);

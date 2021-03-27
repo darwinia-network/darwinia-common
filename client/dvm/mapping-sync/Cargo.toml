@@ -7,14 +7,14 @@ license     = "GPL-3.0"
 name        = "dc-mapping-sync"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.0.0"
+version     = "2.1.0"
 
 [dependencies]
 # substrate
-sp-api          = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-blockchain   = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sc-client-api   = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-runtime      = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
+sp-api          = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-blockchain   = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sc-client-api   = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-runtime      = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
 # darwinia
 dc-consensus           = { path = "../consensus" }
 dc-db                  = { path = "../db" }
@@ -23,4 +23,4 @@ dvm-rpc-runtime-api    = { path = "../../../frame/dvm/rpc/runtime-api"}
 # crates
 futures         = { version = "0.3.1", features = ["compat"] }
 futures-timer   = "3.0.1"
-log             = "0.4.8" 
+log             = "0.4.8"

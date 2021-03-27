@@ -26,16 +26,17 @@
 use darwinia_evm::{AccountBasicMapping, FeeCalculator, GasWeightMapping, Runner};
 use dp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
 use dp_evm::CallOrCreateInfo;
+#[cfg(feature = "std")]
 use dp_storage::PALLET_ETHEREUM_SCHEMA;
 pub use dvm_rpc_runtime_api::TransactionStatus;
 // --- substrate ---
+use frame_support::ensure;
 use frame_support::traits::Currency;
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResultWithPostInfo,
 	traits::FindAuthor, traits::Get, weights::Weight,
 };
-use frame_support::{ensure, traits::UnfilteredDispatchable};
-use frame_system::{ensure_none, RawOrigin};
+use frame_system::ensure_none;
 use sp_runtime::{
 	generic::DigestItem,
 	traits::{Saturating, UniqueSaturatedInto},
@@ -83,7 +84,9 @@ impl Default for EthereumStorageSchema {
 }
 
 /// A type alias for the balance type from this pallet's point of view.
-type RingInstance = darwinia_balances::Instance0;
+type AccountId<T> = <T as frame_system::Config>::AccountId;
+type RingCurrency<T> = <T as Config>::RingCurrency;
+type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
 
 pub struct IntermediateStateRoot;
 
@@ -96,10 +99,7 @@ impl Get<H256> for IntermediateStateRoot {
 
 /// Config for Ethereum pallet.
 pub trait Config:
-	frame_system::Config<Hash = H256>
-	+ darwinia_balances::Config<RingInstance>
-	+ pallet_timestamp::Config
-	+ darwinia_evm::Config
+	frame_system::Config<Hash = H256> + pallet_timestamp::Config + darwinia_evm::Config
 {
 	/// The overarching event type.
 	type Event: From<Event> + Into<<Self as frame_system::Config>::Event>;
@@ -125,7 +125,7 @@ decl_storage! {
 		/// The current transaction statuses.
 		CurrentTransactionStatuses: Option<Vec<TransactionStatus>>;
 		/// Remaining balance for account
-		RemainingBalance get(fn get_remaining_balances): map hasher(blake2_128_concat) T::AccountId => T::Balance;
+		RemainingBalance get(fn get_remaining_balances): map hasher(blake2_128_concat) T::AccountId => RingBalance<T>;
 	}
 	add_extra_genesis {
 		build(|_config: &GenesisConfig| {
@@ -168,29 +168,22 @@ decl_module! {
 		fn transact(origin, transaction: ethereum::Transaction) -> DispatchResultWithPostInfo {
 			ensure_none(origin)?;
 
-			ensure!(
-				dp_consensus::find_pre_log(&frame_system::Module::<T>::digest()).is_err(),
-				Error::<T>::PreLogExists,
-			);
-
-			let source = Self::recover_signer(&transaction)
-				.ok_or_else(|| Error::<T>::InvalidSignature)?;
-			Self::raw_transact(source, transaction)
+			Self::do_transact(transaction)
 		}
 
 		fn on_finalize(_block_number: T::BlockNumber) {
 			<Module<T>>::store_block(
-				dp_consensus::find_pre_log(&frame_system::Module::<T>::digest()).is_err(),
+				dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
 			);
 		}
 
 		fn on_initialize(_block_number: T::BlockNumber) -> Weight {
 			Pending::kill();
-			if let Ok(log) = dp_consensus::find_pre_log(&frame_system::Module::<T>::digest()) {
+			if let Ok(log) = dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()) {
 				let PreLog::Block(block) = log;
 
 				for transaction in block.transactions {
-					let _ = Call::<T>::transact(transaction).dispatch_bypass_filter(RawOrigin::None.into());
+					Self::do_transact(transaction).expect("pre-block transaction verification failed; the block cannot be built");
 				}
 			}
 			0
@@ -296,7 +289,7 @@ impl<T: Config> Module<T> {
 			logs_bloom,
 			difficulty: U256::zero(),
 			number: U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(
-				frame_system::Module::<T>::block_number(),
+				<frame_system::Pallet<T>>::block_number(),
 			)),
 			gas_limit: T::BlockGasLimit::get(),
 			gas_used: receipts
@@ -304,7 +297,7 @@ impl<T: Config> Module<T> {
 				.into_iter()
 				.fold(U256::zero(), |acc, r| acc + r.used_gas),
 			timestamp: UniqueSaturatedInto::<u64>::unique_saturated_into(
-				pallet_timestamp::Module::<T>::get(),
+				<pallet_timestamp::Pallet<T>>::get(),
 			),
 			extra_data: Vec::new(),
 			mix_hash: H256::default(),
@@ -322,29 +315,34 @@ impl<T: Config> Module<T> {
 				FRONTIER_ENGINE_ID,
 				PostLog::Hashes(dp_consensus::Hashes::from_block(block)).encode(),
 			);
-			frame_system::Module::<T>::deposit_log(digest.into());
+			<frame_system::Pallet<T>>::deposit_log(digest.into());
 		}
 	}
 
 	/// Get the remaining balance for evm address
-	pub fn remaining_balance(account_id: &T::AccountId) -> T::Balance {
+	pub fn remaining_balance(account_id: &T::AccountId) -> RingBalance<T> {
 		<RemainingBalance<T>>::get(account_id)
 	}
 
 	// Set the remaining balance for evm address
-	pub fn set_remaining_balance(account_id: &T::AccountId, value: T::Balance) {
+	pub fn set_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
 		<RemainingBalance<T>>::insert(account_id, value)
 	}
 
+	// Remove the remaining balance for evm address
+	pub fn remove_remaining_balance(account_id: &T::AccountId) {
+		<RemainingBalance<T>>::remove(account_id)
+	}
+
 	/// Inc remaining balance
-	pub fn inc_remain_balance(account_id: &T::AccountId, value: T::Balance) {
+	pub fn inc_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
 		let remain_balance = Self::remaining_balance(account_id);
 		let updated_balance = remain_balance.saturating_add(value);
 		<RemainingBalance<T>>::insert(account_id, updated_balance);
 	}
 
 	/// Dec remaining balance
-	pub fn dec_remain_balance(account_id: &T::AccountId, value: T::Balance) {
+	pub fn dec_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
 		let remain_balance = Self::remaining_balance(account_id);
 		let updated_balance = remain_balance.saturating_sub(value);
 		<RemainingBalance<T>>::insert(account_id, updated_balance);
@@ -359,9 +357,19 @@ impl<T: Config> Module<T> {
 		}
 	}
 
+	fn do_transact(transaction: ethereum::Transaction) -> DispatchResultWithPostInfo {
+        ensure!(
+			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
+			Error::<T>::PreLogExists,
+		);
+		let source =
+			Self::recover_signer(&transaction).ok_or_else(|| Error::<T>::InvalidSignature)?;
+        Self::raw_transact(source, transaction)
+    }
+
 	/// Get the author using the FindAuthor trait.
 	pub fn find_author() -> H160 {
-		let digest = <frame_system::Module<T>>::digest();
+		let digest = <frame_system::Pallet<T>>::digest();
 		let pre_runtime_digests = digest.logs.iter().filter_map(|d| d.as_pre_runtime());
 
 		T::FindAuthor::find_author(pre_runtime_digests).unwrap_or_default()
@@ -439,7 +447,7 @@ impl<T: Config> DvmRawTransactorT<H160, ethereum::Transaction, DispatchResultWit
 		source: H160,
 		transaction: ethereum::Transaction,
 	) -> DispatchResultWithPostInfo {
-		let transaction_hash =
+        let transaction_hash =
 			H256::from_slice(Keccak256::digest(&rlp::encode(&transaction)).as_slice());
 		let transaction_index = Pending::get().len() as u32;
 

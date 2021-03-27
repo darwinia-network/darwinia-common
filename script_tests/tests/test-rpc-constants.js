@@ -26,8 +26,8 @@ describe("Test RPC Constants", function () {
 		expect(block.author).to.equal("0x15fdd31c61141abd04a99fd6822c8558854ccde3");
 	});
 
-	it("should gas price is 0x0", async function () {
-		expect(await web3.eth.getGasPrice()).to.equal("1");
+	it("should gas price", async function () {
+		expect(await web3.eth.getGasPrice()).to.equal("1000000000");
 	});
 
 	it("should protocal version is 1", async function () {

@@ -8,7 +8,7 @@ license     = "GPL-3.0"
 name        = "drml"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.0.0"
+version     = "2.1.0"
 
 # TODO: Consider rename this repo to darwinia-runtime-module-library
 [[bin]]
@@ -17,7 +17,7 @@ name = "drml"
 [dependencies]
 # crates
 array-bytes    = { version = "1.1.0" }
-codec          = { package = "parity-scale-codec", version = "1.3.7" }
+codec          = { package = "parity-scale-codec", version = "2.0.1" }
 futures        = { version = "0.3.13" }
 jsonrpc-core   = { version = "15.1.0" }
 jsonrpc-pubsub = { version = "15.1.0" }
@@ -47,52 +47,53 @@ dvm-ethereum                        = { path = "../../../frame/dvm" }
 dvm-rpc-runtime-api                 = { path = "../../../frame/dvm/rpc/runtime-api" }
 pangolin-runtime                    = { path = "../runtime/pangolin" }
 # substrate
-frame-system-rpc-runtime-api               = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-pallet-im-online                           = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-pallet-transaction-payment-rpc             = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sc-authority-discovery                     = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sc-basic-authorship                        = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sc-chain-spec                              = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sc-cli                                     = { optional = true, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sc-client-api                              = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sc-consensus                               = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sc-consensus-babe                          = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sc-consensus-babe-rpc                      = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sc-consensus-epochs                        = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sc-consensus-slots                         = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sc-executor                                = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sc-finality-grandpa                        = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sc-finality-grandpa-rpc                    = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sc-finality-grandpa-warp-sync              = { optional = true, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sc-keystore                                = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sc-network                                 = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sc-rpc                                     = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sc-service                                 = { optional = true, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sc-sync-state-rpc                          = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sc-telemetry                               = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sc-transaction-pool                        = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-api                                     = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-authority-discovery                     = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-block-builder                           = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-blockchain                              = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-consensus                               = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-consensus-babe                          = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-core                                    = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-finality-grandpa                        = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-inherents                               = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-keystore                                = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-offchain                                = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-runtime                                 = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-session                                 = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-transaction-pool                        = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-sp-trie                                    = { features = ["memory-tracker"], git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-substrate-frame-rpc-system                 = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
-substrate-prometheus-endpoint              = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
+frame-system-rpc-runtime-api               = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+pallet-im-online                           = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+pallet-transaction-payment-rpc             = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sc-authority-discovery                     = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sc-basic-authorship                        = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sc-chain-spec                              = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sc-cli                                     = { optional = true, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sc-client-api                              = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sc-consensus                               = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sc-consensus-babe                          = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sc-consensus-babe-rpc                      = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sc-consensus-epochs                        = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sc-consensus-slots                         = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sc-executor                                = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sc-finality-grandpa                        = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sc-finality-grandpa-rpc                    = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sc-finality-grandpa-warp-sync              = { optional = true, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sc-keystore                                = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sc-network                                 = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sc-rpc                                     = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sc-service                                 = { optional = true, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sc-sync-state-rpc                          = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sc-telemetry                               = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sc-transaction-pool                        = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-api                                     = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-authority-discovery                     = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-block-builder                           = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-blockchain                              = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-consensus                               = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-consensus-babe                          = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-core                                    = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-finality-grandpa                        = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-inherents                               = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-keystore                                = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-offchain                                = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-runtime                                 = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-session                                 = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-transaction-pool                        = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-trie                                    = { features = ["memory-tracker"], git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+substrate-frame-rpc-system                 = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+substrate-prometheus-endpoint              = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+try-runtime-cli                            = { optional = true, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
 
 [build-dependencies]
 # substrate
-substrate-build-script-utils = { git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
+substrate-build-script-utils = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
 
 [features]
 default = [
@@ -112,3 +113,9 @@ cli       = [
 db        = ["sc-service/db"]
 full-node = []
 wasmtime  = ["sc-cli/wasmtime"]
+# Enable features that allow the runtime to be tried and debugged. Name might be subject to change
+# in the near future.
+try-runtime = [
+	"pangolin-runtime/try-runtime",
+	"try-runtime-cli",
+]

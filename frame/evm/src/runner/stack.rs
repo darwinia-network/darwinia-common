@@ -27,7 +27,7 @@ use crate::{
 use dp_evm::{Account, CallInfo, CreateInfo, ExecutionInfo, Log, Vicinity};
 // --- substrate ---
 use frame_support::{
-	debug, ensure,
+	ensure,
 	storage::{StorageDoubleMap, StorageMap},
 	traits::Get,
 };
@@ -104,7 +104,7 @@ impl<T: Config> Runner<T> {
 
 		let used_gas = U256::from(executor.used_gas());
 		let actual_fee = executor.fee(gas_price);
-		debug::debug!(
+		log::debug!(
 			target: "evm",
 			"Execution {:?} [source: {:?}, value: {}, gas_limit: {}, actual_fee: {}]",
 			reason,
@@ -118,7 +118,7 @@ impl<T: Config> Runner<T> {
 		let state = executor.into_state();
 
 		for address in state.substate.deletes {
-			debug::debug!(
+			log::debug!(
 				target: "evm",
 				"Deleting account at {:?}",
 				address
@@ -126,20 +126,20 @@ impl<T: Config> Runner<T> {
 			Module::<T>::remove_account(&address)
 		}
 
-		for log in &state.substate.logs {
-			debug::trace!(
+		for substrate_log in &state.substate.logs {
+			log::trace!(
 				target: "evm",
 				"Inserting log for {:?}, topics ({}) {:?}, data ({}): {:?}]",
-				log.address,
-				log.topics.len(),
-				log.topics,
-				log.data.len(),
-				log.data
+				substrate_log.address,
+				substrate_log.topics.len(),
+				substrate_log.topics,
+				substrate_log.data.len(),
+				substrate_log.data
 			);
 			Module::<T>::deposit_event(Event::<T>::Log(Log {
-				address: log.address,
-				topics: log.topics.clone(),
-				data: log.data.clone(),
+				address: substrate_log.address,
+				topics: substrate_log.topics.clone(),
+				data: substrate_log.data.clone(),
 			}));
 		}
 
@@ -282,7 +282,6 @@ impl<'config> SubstrateStackSubstate<'config> {
 		mem::swap(&mut exited, self);
 
 		self.metadata.swallow_revert(exited.metadata)?;
-		self.logs.append(&mut exited.logs);
 
 		sp_io::storage::rollback_transaction();
 		Ok(())
@@ -293,7 +292,6 @@ impl<'config> SubstrateStackSubstate<'config> {
 		mem::swap(&mut exited, self);
 
 		self.metadata.swallow_discard(exited.metadata)?;
-		self.logs.append(&mut exited.logs);
 
 		sp_io::storage::rollback_transaction();
 		Ok(())
@@ -358,12 +356,12 @@ impl<'vicinity, 'config, T: Config> BackendT for SubstrateStackState<'vicinity, 
 			H256::default()
 		} else {
 			let number = T::BlockNumber::from(number.as_u32());
-			H256::from_slice(frame_system::Module::<T>::block_hash(number).as_ref())
+			H256::from_slice(<frame_system::Pallet<T>>::block_hash(number).as_ref())
 		}
 	}
 
 	fn block_number(&self) -> U256 {
-		let number: u128 = frame_system::Module::<T>::block_number().unique_saturated_into();
+		let number: u128 = <frame_system::Pallet<T>>::block_number().unique_saturated_into();
 		U256::from(number)
 	}
 
@@ -372,7 +370,7 @@ impl<'vicinity, 'config, T: Config> BackendT for SubstrateStackState<'vicinity, 
 	}
 
 	fn block_timestamp(&self) -> U256 {
-		let now: u128 = pallet_timestamp::Module::<T>::get().unique_saturated_into();
+		let now: u128 = <pallet_timestamp::Pallet<T>>::get().unique_saturated_into();
 		U256::from(now / 1000)
 	}
 
@@ -451,12 +449,12 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 
 	fn inc_nonce(&mut self, address: H160) {
 		let account_id = T::AddressMapping::into_account_id(address);
-		frame_system::Module::<T>::inc_account_nonce(&account_id);
+		<frame_system::Pallet<T>>::inc_account_nonce(&account_id);
 	}
 
 	fn set_storage(&mut self, address: H160, index: H256, value: H256) {
 		if value == H256::default() {
-			debug::debug!(
+			log::debug!(
 				target: "evm",
 				"Removing storage for {:?} [index: {:?}]",
 				address,
@@ -464,7 +462,7 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 			);
 			AccountStorages::remove(address, index);
 		} else {
-			debug::debug!(
+			log::debug!(
 				target: "evm",
 				"Updating storage for {:?} [index: {:?}, value: {:?}]",
 				address,
@@ -488,7 +486,7 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 	}
 
 	fn set_code(&mut self, address: H160, code: Vec<u8>) {
-		debug::debug!(
+		log::debug!(
 			target: "evm",
 			"Inserting code ({} bytes) at {:?}",
 			code.len(),
@@ -499,15 +497,11 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 
 	fn transfer(&mut self, transfer: Transfer) -> Result<(), ExitError> {
 		let source_account = T::AccountBasicMapping::account_basic(&transfer.source);
-		let target_account = T::AccountBasicMapping::account_basic(&transfer.target);
-
 		ensure!(
 			source_account.balance >= transfer.value,
 			ExitError::Other("Insufficient balance".into())
 		);
 		let new_source_balance = source_account.balance.saturating_sub(transfer.value);
-		let new_target_balance = target_account.balance.saturating_add(transfer.value);
-
 		T::AccountBasicMapping::mutate_account_basic(
 			&transfer.source,
 			Account {
@@ -515,6 +509,9 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 				balance: new_source_balance,
 			},
 		);
+
+		let target_account = T::AccountBasicMapping::account_basic(&transfer.target);
+		let new_target_balance = target_account.balance.saturating_add(transfer.value);
 		T::AccountBasicMapping::mutate_account_basic(
 			&transfer.target,
 			Account {

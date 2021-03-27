@@ -311,7 +311,7 @@ impl<T: Config> Module<T> {
 	/// current unvested amount.
 	fn update_lock(who: T::AccountId) -> DispatchResult {
 		let vesting = Self::vesting(&who).ok_or(Error::<T>::NotVesting)?;
-		let now = <frame_system::Module<T>>::block_number();
+		let now = <frame_system::Pallet<T>>::block_number();
 		let locked_now = vesting.locked_at::<T::BlockNumberToBalance>(now);
 
 		if locked_now.is_zero() {
@@ -342,7 +342,7 @@ where
 	/// Get the amount that is currently being vested and cannot be transferred out of this account.
 	fn vesting_balance(who: &T::AccountId) -> Option<BalanceOf<T>> {
 		if let Some(v) = Self::vesting(who) {
-			let now = <frame_system::Module<T>>::block_number();
+			let now = <frame_system::Pallet<T>>::block_number();
 			let locked_now = v.locked_at::<T::BlockNumberToBalance>(now);
 			Some(T::Currency::free_balance(who).min(locked_now))
 		} else {
@@ -395,7 +395,7 @@ where
 mod tests {
 	use crate::{self as darwinia_vesting, *};
 
-	use frame_support::{assert_noop, assert_ok, parameter_types};
+	use frame_support::{assert_noop, assert_ok};
 	use frame_system::{mocking::*, RawOrigin};
 	use sp_core::H256;
 	use sp_runtime::{
@@ -403,10 +403,10 @@ mod tests {
 		traits::{BadOrigin, BlakeTwo256, Identity, IdentityLookup},
 	};
 
-	type Balance = u64;
-
 	type Block = MockBlock<Test>;
 	type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
+
+	type Balance = u64;
 
 	darwinia_support::impl_test_account_data! {}
 
@@ -435,7 +435,7 @@ mod tests {
 		type SS58Prefix = ();
 	}
 
-	parameter_types! {
+	frame_support::parameter_types! {
 		pub const MaxLocks: u32 = 10;
 	}
 	impl darwinia_balances::Config<RingInstance> for Test {
@@ -450,7 +450,7 @@ mod tests {
 		type WeightInfo = ();
 	}
 
-	parameter_types! {
+	frame_support::parameter_types! {
 		pub const MinVestedTransfer: u64 = 256 * 2;
 		pub static ExistentialDeposit: u64 = 0;
 	}
@@ -469,9 +469,9 @@ mod tests {
 			NodeBlock = Block,
 			UncheckedExtrinsic = UncheckedExtrinsic,
 		{
-			System: frame_system::{Module, Call, Storage, Config, Event<T>},
-			Ring: darwinia_balances::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
-			Vesting: darwinia_vesting::{Module, Call, Storage, Event<T>, Config<T>},
+			System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
+			Ring: darwinia_balances::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>},
+			Vesting: darwinia_vesting::{Pallet, Call, Storage, Event<T>, Config<T>},
 		}
 	}
 

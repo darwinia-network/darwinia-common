@@ -21,7 +21,7 @@
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
-use frame_support::{parameter_types, traits::OnInitialize};
+use frame_support::traits::OnInitialize;
 use frame_system::{mocking::*, EnsureRoot};
 use sp_core::H256;
 use sp_io::{hashing, TestExternalities};
@@ -34,13 +34,13 @@ use sp_runtime::{
 use crate::{self as darwinia_relay_authorities, *};
 use darwinia_relay_primitives::relay_authorities::Sign as SignT;
 
+pub type Block = MockBlock<Test>;
+pub type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
+
 pub type BlockNumber = u64;
 pub type AccountId = u64;
 pub type Index = u64;
 pub type Balance = u128;
-
-type Block = MockBlock<Test>;
-type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 
 pub type RelayAuthoritiesError = Error<Test, DefaultInstance>;
 
@@ -74,7 +74,7 @@ impl frame_system::Config for Test {
 	type SS58Prefix = ();
 }
 
-parameter_types! {
+frame_support::parameter_types! {
 	pub const MaxLocks: u32 = 1024;
 }
 impl darwinia_balances::Config<RingInstance> for Test {
@@ -109,7 +109,7 @@ impl SignT<BlockNumber> for Sign {
 		true
 	}
 }
-parameter_types! {
+frame_support::parameter_types! {
 	pub const LockId: LockIdentifier = *b"lockidts";
 	pub const TermDuration: BlockNumber = 10;
 	pub const MaxCandidates: usize = 7;
@@ -140,9 +140,9 @@ frame_support::construct_runtime! {
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
-		System: frame_system::{Module, Call, Storage, Config, Event<T>},
-		Ring: darwinia_balances::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
-		RelayAuthorities: darwinia_relay_authorities::{Module, Call, Storage, Config<T>, Event<T>}
+		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
+		Ring: darwinia_balances::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		RelayAuthorities: darwinia_relay_authorities::{Pallet, Call, Storage, Config<T>, Event<T>}
 	}
 }
 

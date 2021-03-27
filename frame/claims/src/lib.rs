@@ -41,7 +41,7 @@ mod types {
 use codec::{Decode, Encode};
 // --- substrate ---
 #[cfg(feature = "std")]
-use frame_support::{debug::error, traits::WithdrawReasons};
+use frame_support::traits::WithdrawReasons;
 use frame_support::{
 	ensure,
 	traits::{Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, Get},
@@ -96,7 +96,7 @@ decl_error! {
 		/// Ethereum address has no claim.
 		SignerHasNoClaim,
 		/// There's not enough in the pot to pay out some unvested amount. Generally implies a logic
-		/// error.
+		/// log::error.
 		PotUnderflow,
 		/// Can NOT Move Claim to an EXISTED Address.
 		MoveToExistedAddress,
@@ -125,7 +125,7 @@ decl_storage! {
 			let mut total = <RingBalance<T>>::zero();
 
 			if dot.is_empty() && eth.is_empty() && tron.is_empty() {
-				error!("[darwinia-claims] Genesis Claims List is Set to EMPTY");
+				log::error!("[darwinia-claims] Genesis Claims List is Set to EMPTY");
 			} else {
 				// Eth Address
 				for Account { address, backed_ring } in dot {
@@ -548,7 +548,7 @@ mod secp_utils {
 		what: &[u8],
 		signed_message: &[u8],
 	) -> EcdsaSignature {
-		let msg = keccak_256(&<super::Module<T>>::eth_signable_message(
+		let msg = keccak_256(&<super::Pallet<T>>::eth_signable_message(
 			&to_ascii_hex(what)[..],
 			signed_message,
 		));
@@ -564,7 +564,7 @@ mod secp_utils {
 		what: &[u8],
 		signed_message: &[u8],
 	) -> EcdsaSignature {
-		let msg = keccak_256(&<super::Module<T>>::tron_signable_message(
+		let msg = keccak_256(&<super::Pallet<T>>::tron_signable_message(
 			&to_ascii_hex(what)[..],
 			signed_message,
 		));
@@ -594,10 +594,10 @@ mod tests {
 	// --- darwinia ---
 	use crate::{self as darwinia_claims, secp_utils::*, *};
 
-	type Balance = u64;
-
 	type Block = MockBlock<Test>;
 	type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
+
+	type Balance = u64;
 
 	const ETHEREUM_SIGNED_MESSAGE: &'static [u8] = b"\x19Ethereum Signed Message:\n";
 	const TRON_SIGNED_MESSAGE: &'static [u8] = b"\x19TRON Signed Message:\n";
@@ -666,9 +666,9 @@ mod tests {
 			NodeBlock = Block,
 			UncheckedExtrinsic = UncheckedExtrinsic
 		{
-			System: frame_system::{Module, Call, Storage, Config},
-			Ring: darwinia_balances::<Instance0>::{Module, Call, Storage, Config<T>},
-			Claims: darwinia_claims::{Module, Call, Storage, Config}
+			System: frame_system::{Pallet, Call, Storage, Config},
+			Ring: darwinia_balances::<Instance0>::{Pallet, Call, Storage, Config<T>},
+			Claims: darwinia_claims::{Pallet, Call, Storage, Config}
 		}
 	}
 
