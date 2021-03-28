@@ -36,7 +36,7 @@ pub mod pallet {
 		// --- darwinia ---
 		use super::*;
 
-		// Advance type
+		// Generic type
 		pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 		pub type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
 		type RingCurrency<T> = <T as Config>::RingCurrency;
@@ -102,4 +102,12 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {}
+}
+
+pub mod migration {
+	const OLD_PALLET_NAME: &[u8] = b"DarwiniaCrabIssuing";
+
+	pub fn migrate(new_pallet_name: &[u8]) {
+		frame_support::migration::move_pallet(OLD_PALLET_NAME, new_pallet_name);
+	}
 }
