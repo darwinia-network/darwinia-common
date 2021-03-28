@@ -33,12 +33,12 @@ use sp_runtime::{
 // --- darwinia ---
 use crate::{self as darwinia_crab_issuing, *};
 
+// Global primitives
 pub type Block = MockBlock<Test>;
 pub type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
-
 pub type AccountId = u64;
 pub type Balance = u128;
-
+// Pallet primitives
 pub type CrabIssuingError = Error<Test>;
 
 darwinia_support::impl_test_account_data! {}
@@ -102,7 +102,7 @@ frame_support::construct_runtime! {
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Ring: darwinia_balances::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>},
-		DarwiniaCrabIssuing: darwinia_crab_issuing::{Pallet, Call, Storage, Config<T>, Event<T>},
+		DarwiniaCrabIssuing: darwinia_crab_issuing::{Pallet, Call, Storage, Config, Event<T>},
 	}
 }
 
@@ -119,12 +119,12 @@ pub fn new_test_ext() -> TestExternalities {
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
-
-	darwinia_crab_issuing::GenesisConfig::<Test> {
-		total_mapped_ring: 4_000,
-		phantom: std::marker::PhantomData,
-	}
-	.assimilate_storage(&mut t)
+	<darwinia_crab_issuing::GenesisConfig as GenesisBuild<Test>>::assimilate_storage(
+		&darwinia_crab_issuing::GenesisConfig {
+			total_mapped_ring: 4_000,
+		},
+		&mut t,
+	)
 	.unwrap();
 
 	t.into()

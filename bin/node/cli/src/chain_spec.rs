@@ -324,7 +324,7 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 		darwinia_claims: Default::default(),
 		darwinia_vesting: Default::default(),
 		pallet_sudo: pangolin_runtime::SudoConfig { key: root.clone() },
-		darwinia_crab_issuing: pangolin_runtime::DarwiniaCrabIssuingConfig { total_mapped_ring: BUNCH_OF_COINS, phantom: std::marker::PhantomData },
+		darwinia_crab_issuing: pangolin_runtime::DarwiniaCrabIssuingConfig { total_mapped_ring: BUNCH_OF_COINS },
 		darwinia_crab_backing: pangolin_runtime::CrabBackingConfig { backed_ring: BUNCH_OF_COINS },
 		darwinia_ethereum_relay: pangolin_runtime::EthereumRelayConfig {
 			genesis_header_info: (
@@ -477,7 +477,7 @@ fn pangolin_development_genesis() -> pangolin_runtime::GenesisConfig {
 		},
 		darwinia_vesting: Default::default(),
 		pallet_sudo: pangolin_runtime::SudoConfig { key: root.clone() },
-		darwinia_crab_issuing: pangolin_runtime::DarwiniaCrabIssuingConfig { total_mapped_ring: BUNCH_OF_COINS, phantom: std::marker::PhantomData },
+		darwinia_crab_issuing: pangolin_runtime::DarwiniaCrabIssuingConfig { total_mapped_ring: BUNCH_OF_COINS },
 		darwinia_crab_backing: pangolin_runtime::CrabBackingConfig { backed_ring: BUNCH_OF_COINS },
 		darwinia_ethereum_relay: pangolin_runtime::EthereumRelayConfig {
 			genesis_header_info: (
