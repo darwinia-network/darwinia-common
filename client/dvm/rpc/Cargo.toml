@@ -36,16 +36,16 @@ dvm-ethereum        = { path = "../../../frame/dvm" }
 dvm-rpc-core        = { path = "../../../frame/dvm/rpc" }
 dvm-rpc-runtime-api = { path = "../../../frame/dvm/rpc/runtime-api" }
 # substrate
-sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sc-network          = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sc-rpc              = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sc-service          = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-api              = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-io               = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-storage          = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sc-network          = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sc-rpc              = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sc-service          = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-api              = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-io               = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-storage          = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
 
 [features]
 rpc_binary_search_estimate = []

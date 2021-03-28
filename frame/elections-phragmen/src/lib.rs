@@ -1209,9 +1209,9 @@ mod tests {
 			NodeBlock = Block,
 			UncheckedExtrinsic = UncheckedExtrinsic
 		{
-			System: frame_system::{Module, Call, Event<T>},
-			Balances: darwinia_balances::<Instance0>::{Module, Call, Event<T>, Config<T>},
-			Elections: elections_phragmen::{Module, Call, Event<T>, Config<T>},
+			System: frame_system::{Pallet, Call, Event<T>},
+			Balances: darwinia_balances::<Instance0>::{Pallet, Call, Event<T>, Config<T>},
+			Elections: elections_phragmen::{Pallet, Call, Event<T>, Config<T>},
 		}
 	}
 

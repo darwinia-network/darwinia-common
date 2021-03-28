@@ -18,16 +18,16 @@ serde = { version = "1.0.124", optional = true }
 darwinia-balances-rpc-runtime-api = { default-features = false, path = "./rpc/runtime-api" }
 darwinia-support                  = { default-features = false, path = "../support" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
 
 [dev-dependencies]
 # substrate
-pallet-transaction-payment = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-core                    = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-io                      = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+pallet-transaction-payment = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-core                    = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-io                      = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
 
 [features]
 default = ["std"]

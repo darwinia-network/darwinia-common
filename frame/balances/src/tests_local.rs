@@ -126,9 +126,9 @@ frame_support::construct_runtime! {
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
-		System: frame_system::{Module, Call, Storage, Config, Event<T>},
-		Ring: darwinia_balances::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
-		Kton: darwinia_balances::<Instance1>::{Module, Call, Storage, Config<T>, Event<T>},
+		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
+		Ring: darwinia_balances::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Kton: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
 	}
 }
 

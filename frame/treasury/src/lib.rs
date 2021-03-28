@@ -759,7 +759,7 @@ decl_module! {
 
 			let tip = <Tips<T, I>>::get(hash).ok_or(<Error<T, I>>::UnknownTip)?;
 			let n = tip.closes.as_ref().ok_or(<Error<T, I>>::StillOpen)?;
-			ensure!(<frame_system::Module<T>>::block_number() >= *n, <Error<T, I>>::Premature);
+			ensure!(<frame_system::Pallet<T>>::block_number() >= *n, <Error<T, I>>::Premature);
 			// closed.
 			<Reasons<T, I>>::remove(&tip.reason);
 			<Tips<T, I>>::remove(hash);
@@ -909,7 +909,7 @@ decl_module! {
 								// If the sender is not the curator, and the curator is inactive,
 								// slash the curator.
 								if sender != *curator {
-									let block_number = <frame_system::Module<T>>::block_number();
+									let block_number = <frame_system::Pallet<T>>::block_number();
 									if *update_due < block_number {
 										slash_curator(curator, &mut bounty.curator_deposit);
 										// Continue to change bounty status below...
@@ -966,7 +966,7 @@ decl_module! {
 						T::RingCurrency::reserve(curator, deposit)?;
 						bounty.curator_deposit = deposit;
 
-						let update_due = <frame_system::Module<T>>::block_number() + T::BountyUpdatePeriod::get();
+						let update_due = <frame_system::Pallet<T>>::block_number() + T::BountyUpdatePeriod::get();
 						bounty.status = BountyStatus::Active { curator: curator.clone(), update_due };
 
 						Ok(())
@@ -1001,7 +1001,7 @@ decl_module! {
 				bounty.status = BountyStatus::PendingPayout {
 					curator: signer,
 					beneficiary: beneficiary.clone(),
-					unlock_at: <frame_system::Module<T>>::block_number() + T::BountyDepositPayoutDelay::get(),
+					unlock_at: <frame_system::Pallet<T>>::block_number() + T::BountyDepositPayoutDelay::get(),
 				};
 
 				Ok(())
@@ -1022,7 +1022,7 @@ decl_module! {
 			<Bounties<T, I>>::try_mutate_exists(bounty_id, |maybe_bounty| -> DispatchResult {
 				let bounty = maybe_bounty.take().ok_or(<Error<T, I>>::InvalidIndex)?;
 				if let BountyStatus::PendingPayout { curator, beneficiary, unlock_at } = bounty.status {
-					ensure!(<frame_system::Module<T>>::block_number() >= unlock_at, <Error<T, I>>::Premature);
+					ensure!(<frame_system::Pallet<T>>::block_number() >= unlock_at, <Error<T, I>>::Premature);
 					let bounty_account = Self::bounty_account_id(bounty_id);
 					let balance = T::RingCurrency::free_balance(&bounty_account);
 					let fee = bounty.fee.min(balance); // just to be safe
@@ -1120,7 +1120,7 @@ decl_module! {
 				match bounty.status {
 					BountyStatus::Active { ref curator, ref mut update_due } => {
 						ensure!(*curator == signer, <Error<T, I>>::RequireCurator);
-						*update_due = (<frame_system::Module<T>>::block_number() + T::BountyUpdatePeriod::get()).max(*update_due);
+						*update_due = (<frame_system::Pallet<T>>::block_number() + T::BountyUpdatePeriod::get()).max(*update_due);
 					},
 					_ => return Err(<Error<T, I>>::UnexpectedStatus.into()),
 				}
@@ -1240,7 +1240,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 		Self::retain_active_tips(&mut tip.tips);
 		let threshold = (T::Tippers::count() + 1) / 2;
 		if tip.tips.len() >= threshold && tip.closes.is_none() {
-			tip.closes = Some(<frame_system::Module<T>>::block_number() + T::TipCountdown::get());
+			tip.closes = Some(<frame_system::Pallet<T>>::block_number() + T::TipCountdown::get());
 			true
 		} else {
 			false

@@ -6,9 +6,9 @@ use frame_support::traits::Currency;
 use frame_system::Config as SystemConfig;
 // --- darwinia ---
 use crate::*;
-use darwinia_balances::{weights::SubstrateWeight, Config, Module};
+use darwinia_balances::{weights::SubstrateWeight, Config, Pallet};
 
-pub type NegativeImbalance = <Module<Runtime, RingInstance> as Currency<
+pub type NegativeImbalance = <Pallet<Runtime, RingInstance> as Currency<
 	<Runtime as SystemConfig>::AccountId,
 >>::NegativeImbalance;
 

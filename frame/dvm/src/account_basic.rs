@@ -10,7 +10,7 @@ impl<T: Config> AccountBasicMapping for DVMAccountBasicMapping<T> {
 	/// Get the account basic in EVM format.
 	fn account_basic(address: &H160) -> EVMAccount {
 		let account_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(*address);
-		let nonce = frame_system::Module::<T>::account_nonce(&account_id);
+		let nonce = <frame_system::Pallet<T>>::account_nonce(&account_id);
 		let helper = U256::from(10)
 			.checked_pow(U256::from(9))
 			.unwrap_or(U256::from(0));
@@ -51,14 +51,6 @@ impl<T: Config> AccountBasicMapping for DVMAccountBasicMapping<T> {
 		let dvm_balance: U256 = crate::Module::<T>::remaining_balance(&account_id)
 			.saturated_into::<u128>()
 			.into();
-
-		if current.nonce < new.nonce {
-			// ASSUME: in one single EVM transaction, the nonce will not increase more than
-			// `u128::max_value()`.
-			for _ in 0..(new.nonce - current.nonce).low_u128() {
-				frame_system::Module::<T>::inc_account_nonce(&account_id);
-			}
-		}
 
 		let nb = new.balance;
 		match current.balance {
