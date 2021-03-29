@@ -24,8 +24,8 @@
 extern crate alloc;
 
 use ethabi::{
-	param_type::ParamType, token::Token, Bytes, Error, EventParam, Function, Param,
-	RawLog, Result as AbiResult,
+	param_type::ParamType, token::Token, Bytes, Error, EventParam, Function, Param, RawLog,
+	Result as AbiResult,
 };
 use ethereum_types::{Address as EthereumAddress, H160, H256, U256};
 
@@ -251,7 +251,10 @@ impl Abi {
 	}
 
 	/// encode get mapping token info function
-	pub fn encode_mapping_token(backing: EthereumAddress, source: EthereumAddress) -> AbiResult<Bytes> {
+	pub fn encode_mapping_token(
+		backing: EthereumAddress,
+		source: EthereumAddress,
+	) -> AbiResult<Bytes> {
 		let mapping = Self::mapping_token();
 		mapping.encode_input(
 			vec![

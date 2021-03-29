@@ -18,7 +18,7 @@
 
 use crate::{self as dvm_ethereum, account_basic::DVMAccountBasicMapping, *};
 use codec::{Decode, Encode};
-use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator, ContractHandler};
+use darwinia_evm::{AddressMapping, ContractHandler, EnsureAddressTruncated, FeeCalculator};
 use ethereum::{TransactionAction, TransactionSignature};
 use frame_support::ConsensusEngineId;
 use frame_system::mocking::*;
@@ -27,7 +27,7 @@ use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	AccountId32, ModuleId, Perbill, RuntimeDebug, DispatchResult,
+	AccountId32, DispatchResult, ModuleId, Perbill, RuntimeDebug,
 };
 
 darwinia_support::impl_test_account_data! {}
@@ -121,9 +121,9 @@ impl FeeCalculator for FixedGasPrice {
 /// EmptyContractHandler
 pub struct EmptyContractHandler;
 impl ContractHandler for EmptyContractHandler {
-    fn handle(_address: H160, _caller: H160, _input: &[u8]) -> DispatchResult {
-        Ok(())
-    }
+	fn handle(_address: H160, _caller: H160, _input: &[u8]) -> DispatchResult {
+		Ok(())
+	}
 }
 
 pub struct EthereumFindAuthor;

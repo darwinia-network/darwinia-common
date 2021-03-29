@@ -358,14 +358,14 @@ impl<T: Config> Module<T> {
 	}
 
 	fn do_transact(transaction: ethereum::Transaction) -> DispatchResultWithPostInfo {
-        ensure!(
+		ensure!(
 			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
 			Error::<T>::PreLogExists,
 		);
 		let source =
 			Self::recover_signer(&transaction).ok_or_else(|| Error::<T>::InvalidSignature)?;
-        Self::raw_transact(source, transaction)
-    }
+		Self::raw_transact(source, transaction)
+	}
 
 	/// Get the author using the FindAuthor trait.
 	pub fn find_author() -> H160 {
@@ -447,7 +447,7 @@ impl<T: Config> DvmRawTransactorT<H160, ethereum::Transaction, DispatchResultWit
 		source: H160,
 		transaction: ethereum::Transaction,
 	) -> DispatchResultWithPostInfo {
-        let transaction_hash =
+		let transaction_hash =
 			H256::from_slice(Keccak256::digest(&rlp::encode(&transaction)).as_slice());
 		let transaction_index = Pending::get().len() as u32;
 

@@ -11,12 +11,12 @@ version     = "2.1.0"
 
 [dependencies]
 # crates
-dp-evm  = { default-features = false, path = "../../../../../primitives/evm" }
-evm                     = { version = "0.24.0", default-features = false, features = ["with-codec"] }
+evm     = { default-features = false, version = "0.24.0", features = ["with-codec"] }
 # darwinia
-darwinia-evm             = { default-features = false, path = "../../../"}
+darwinia-evm	= { default-features = false, path = "../../../"}
+dp-evm  		= { default-features = false, path = "../../../../../primitives/evm" }
 # substrate
-sp-std                   = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
+sp-std          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
 
 [features]
 default = ["std"]
@@ -28,12 +28,12 @@ std = [
 ]
 
 crates-std = [
-	"dp-evm/std",
 	"evm/std",
 ]
 
 darwinia-std = [
 	"darwinia-evm/std",
+	"dp-evm/std",
 ]
 
 substrate-std = [

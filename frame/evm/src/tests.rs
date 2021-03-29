@@ -91,9 +91,9 @@ impl FeeCalculator for FixedGasPrice {
 /// EmptyContractHandler
 pub struct EmptyContractHandler;
 impl ContractHandler for EmptyContractHandler {
-    fn handle(_address: H160, _caller: H160, _input: &[u8]) -> DispatchResult {
-        Ok(())
-    }
+	fn handle(_address: H160, _caller: H160, _input: &[u8]) -> DispatchResult {
+		Ok(())
+	}
 }
 
 impl Config for Test {
