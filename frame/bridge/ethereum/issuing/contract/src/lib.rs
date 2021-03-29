@@ -27,11 +27,9 @@ use ethabi::{
 	param_type::ParamType, token::Token, Bytes, Error, EventParam, Function, Param, RawLog,
 	Result as AbiResult,
 };
-use ethereum_types::{Address as EthereumAddress, H160, H256, U256};
-
 pub use ethabi::{Event, Log};
+use ethereum_types::{Address as EthereumAddress, H160, H256, U256};
 use sp_std::vec::Vec;
-
 pub struct Abi;
 
 impl Abi {

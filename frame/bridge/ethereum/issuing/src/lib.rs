@@ -21,13 +21,12 @@
 #![allow(unused)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
-// --- substrate ---
-use darwinia_evm::{AccountBasicMapping, AddressMapping, ContractHandler, GasWeightMapping};
-use darwinia_relay_primitives::relay_authorities::*;
-use dp_evm::CallOrCreateInfo;
-use dvm_ethereum::TransactionAction;
-use dvm_ethereum::TransactionSignature;
+// --- crates ---
+pub mod weights;
 use ethereum_types::{Address, H160, H256, U256};
+use rustc_hex::{FromHex, ToHex};
+pub use weights::WeightInfo;
+// --- substrate ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage,
 	dispatch::DispatchResultWithPostInfo,
@@ -36,23 +35,20 @@ use frame_support::{
 	weights::Weight,
 };
 use frame_system::{ensure_root, ensure_signed};
-use rustc_hex::{FromHex, ToHex};
-
-use sp_std::vec::Vec;
-
 use sp_runtime::{
 	traits::{AccountIdConversion, Saturating},
 	AccountId32, DispatchError, DispatchResult, ModuleId, SaturatedConversion,
 };
-
+use sp_std::vec::Vec;
+// --- darwinia ---
+use darwinia_evm::{AccountBasicMapping, AddressMapping, ContractHandler, GasWeightMapping};
+use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::{
 	balance::lock::*,
 	traits::{DvmRawTransactor as DvmRawTransactorT, EthereumReceipt},
 };
-
-pub mod weights;
-// --- darwinia ---
-pub use weights::WeightInfo;
+use dp_evm::CallOrCreateInfo;
+use dvm_ethereum::{TransactionAction, TransactionSignature};
 
 use darwinia_ethereum_issuing_contract::{
 	Abi, Event as EthEvent, Log as EthLog, TokenBurnInfo, TokenRegisterInfo,

@@ -24,6 +24,7 @@
 
 // --- darwinia ---
 use darwinia_evm::{AccountBasicMapping, FeeCalculator, GasWeightMapping, Runner};
+use darwinia_support::traits::DvmRawTransactor as DvmRawTransactorT;
 use dp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
 use dp_evm::CallOrCreateInfo;
 #[cfg(feature = "std")]
@@ -54,8 +55,6 @@ pub use ethereum::{
 use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
 use evm::ExitReason;
 use sha3::{Digest, Keccak256};
-
-use darwinia_support::traits::DvmRawTransactor as DvmRawTransactorT;
 
 #[cfg(all(feature = "std", test))]
 mod tests;

@@ -11,7 +11,7 @@ version     = "1.0.0"
 
 [dependencies]
 # crates
-codec			= { package = "parity-scale-codec", version = "2.0.1", default-features = false, features = ["derive"] }
+codec           = { package = "parity-scale-codec", version = "2.0.1", default-features = false, features = ["derive"] }
 ethabi			= { default-features = false, git = "https://github.com/darwinia-network/ethabi.git", branch = "xavier-no-std" }
 ethereum-types 	= { default-features = false, version = "0.11.0" }
 rustc-hex      	= { default-features = false, version = "2.1.0" }
@@ -27,7 +27,7 @@ default = ["std"]
 
 std = [
     "crates-std",
-	"substrate-std",
+    "substrate-std",
 ]
 
 crates-std    = [
