@@ -254,7 +254,7 @@ impl GasWeightMapping for () {
 	}
 }
 
-/// from evm contract
+/// A contract handle for ethereum issuing
 pub trait ContractHandler {
 	fn handle(address: H160, caller: H160, input: &[u8]) -> DispatchResult;
 }

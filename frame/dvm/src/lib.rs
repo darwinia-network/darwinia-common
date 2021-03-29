@@ -150,8 +150,8 @@ decl_error! {
 		InvalidSignature,
 		/// Pre-log is present, therefore transact is not allowed.
 		PreLogExists,
-		/// Call return create result
-		InvalidCallResultType,
+		/// Call failed
+		InvalidCall,
 	}
 }
 
@@ -363,11 +363,13 @@ impl<T: Config> Module<T> {
 			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
 			Error::<T>::PreLogExists,
 		);
-		let source = if let Some(source) = sender {
-			source
-		} else {
-			Self::recover_signer(&transaction).ok_or_else(|| Error::<T>::InvalidSignature)?
-		};
+
+		// For transaction from ethereum issuing pallet, the sender set None to skip the signature verification.
+		let source = sender.map_or(
+			Self::recover_signer(&transaction).ok_or_else(|| Error::<T>::InvalidSignature)?,
+			|source| source,
+		);
+
 		let transaction_hash =
 			H256::from_slice(Keccak256::digest(&rlp::encode(&transaction)).as_slice());
 		let transaction_index = Pending::get().len() as u32;
@@ -446,7 +448,7 @@ impl<T: Config> Module<T> {
 		.into())
 	}
 
-	pub fn raw_call(
+	pub fn do_call(
 		source: H160,
 		transaction: ethereum::Transaction,
 	) -> Result<Vec<u8>, DispatchError> {
@@ -462,8 +464,11 @@ impl<T: Config> Module<T> {
 		)?;
 
 		match info {
-			CallOrCreateInfo::Call(info) => Ok(info.value),
-			_ => Err(Error::<T>::InvalidCallResultType.into()),
+			CallOrCreateInfo::Call(info) => match info.exit_reason {
+				ExitReason::Succeed(_) => Ok(info.value),
+				_ => Ok(vec![]),
+			},
+			_ => Err(Error::<T>::InvalidCall.into()),
 		}
 	}
 

@@ -337,7 +337,7 @@ impl<T: Config> Module<T> {
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
 		let transaction = Self::unsigned_transaction(U256::from(1), factory_address, bytes);
 		let account = Self::dvm_account_id();
-		let mapped_address = dvm_ethereum::Module::<T>::raw_call(account, transaction)
+		let mapped_address = dvm_ethereum::Module::<T>::do_call(account, transaction)
 			.map_err(|e| -> &'static str { e.into() })?;
 		if mapped_address.len() != 32 {
 			return Err(Error::<T>::InvalidAddressLen.into());
