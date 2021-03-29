@@ -22,7 +22,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 // --- substrate ---
-use darwinia_evm::{AccountBasicMapping, AddressMapping, ContractHandler, GasWeightMapping};
+use darwinia_evm::{AccountBasicMapping, AddressMapping, ContractHandler, GasWeightMapping, FeeCalculator};
 use darwinia_relay_primitives::relay_authorities::*;
 use dp_evm::CallOrCreateInfo;
 use dvm_ethereum::TransactionAction;
@@ -47,7 +47,7 @@ use sp_runtime::{
 
 use darwinia_support::{
 	balance::lock::*,
-	traits::{DvmRawTransactor as DvmRawTransactorT, EthereumReceipt},
+	traits::EthereumReceipt,
 };
 
 pub mod weights;
@@ -76,10 +76,9 @@ use ethereum_primitives::{
 };
 use types::*;
 
-pub trait Config: frame_system::Config + darwinia_evm::Config {
+pub trait Config: frame_system::Config + dvm_ethereum::Config {
 	type ModuleId: Get<ModuleId>;
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
-	type DvmCaller: DvmRawTransactorT<H160, dvm_ethereum::Transaction, DispatchResultWithPostInfo>;
 	type EthereumRelay: EthereumReceipt<Self::AccountId, RingBalance<Self>>;
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 	type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber, Signer = EthereumAddress>;
@@ -198,7 +197,7 @@ decl_module! {
 
 			<T as Config>::RingCurrency::transfer(&user, &substrate_account, T::FeeEstimate::get(), KeepAlive)?;
 			let transaction = Self::unsigned_transaction(basic.nonce, contract, input);
-			let result = T::DvmCaller::raw_transact(account, transaction).map_err(|e| -> &'static str {
+			let result = dvm_ethereum::Module::<T>::do_transact(transaction, Some(account)).map_err(|e| -> &'static str {
 				log::trace!(target: "darwinia-issuing", "register_or_issuing_erc20 error {:?}", &e);
 				e.into()
 			} )?;
@@ -230,7 +229,7 @@ impl<T: Config> Module<T> {
 	) -> dvm_ethereum::Transaction {
 		dvm_ethereum::Transaction {
 			nonce,
-			gas_price: U256::from(1),
+			gas_price: T::FeeCalculator::min_gas_price(),
 			gas_limit: U256::from(0x100000),
 			action: dvm_ethereum::TransactionAction::Call(target),
 			value: U256::zero(),
@@ -347,7 +346,7 @@ impl<T: Config> Module<T> {
 		let transaction =
 			Self::unsigned_transaction(U256::from(1), factory_address, bytes);
 		let account = Self::dvm_account_id();
-		let mapped_address = T::DvmCaller::raw_call(account, transaction)
+		let mapped_address = dvm_ethereum::Module::<T>::raw_call(account, transaction)
 			.map_err(|e| -> &'static str { e.into() })?;
 		if mapped_address.len() != 32 {
 			return Err(Error::<T>::InvalidAddressLen.into());

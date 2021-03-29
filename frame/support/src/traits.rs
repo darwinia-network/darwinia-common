@@ -180,8 +180,3 @@ pub trait EthereumReceipt<AccountId, Balance> {
 
 	fn gen_receipt_index(proof: &Self::EthereumReceiptProofThing) -> EthereumTransactionIndex;
 }
-
-pub trait DvmRawTransactor<Source, Transaction, TranResult> {
-	fn raw_transact(source: Source, transaction: Transaction) -> TranResult;
-	fn raw_call(source: Source, transaction: Transaction) -> Result<Vec<u8>, DispatchError>;
-}

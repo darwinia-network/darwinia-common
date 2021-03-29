@@ -55,8 +55,6 @@ use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
 use evm::ExitReason;
 use sha3::{Digest, Keccak256};
 
-use darwinia_support::traits::DvmRawTransactor as DvmRawTransactorT;
-
 #[cfg(all(feature = "std", test))]
 mod tests;
 
@@ -168,7 +166,7 @@ decl_module! {
 		fn transact(origin, transaction: ethereum::Transaction) -> DispatchResultWithPostInfo {
 			ensure_none(origin)?;
 
-			Self::do_transact(transaction)
+			Self::do_transact(transaction, None)
 		}
 
 		fn on_finalize(_block_number: T::BlockNumber) {
@@ -183,7 +181,7 @@ decl_module! {
 				let PreLog::Block(block) = log;
 
 				for transaction in block.transactions {
-					Self::do_transact(transaction).expect("pre-block transaction verification failed; the block cannot be built");
+					Self::do_transact(transaction, None).expect("pre-block transaction verification failed; the block cannot be built");
 				}
 			}
 			0
@@ -357,96 +355,16 @@ impl<T: Config> Module<T> {
 		}
 	}
 
-	fn do_transact(transaction: ethereum::Transaction) -> DispatchResultWithPostInfo {
+	pub fn do_transact(transaction: ethereum::Transaction, sender: Option<H160>) -> DispatchResultWithPostInfo {
         ensure!(
 			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
 			Error::<T>::PreLogExists,
 		);
-		let source =
-			Self::recover_signer(&transaction).ok_or_else(|| Error::<T>::InvalidSignature)?;
-        Self::raw_transact(source, transaction)
-    }
-
-	/// Get the author using the FindAuthor trait.
-	pub fn find_author() -> H160 {
-		let digest = <frame_system::Pallet<T>>::digest();
-		let pre_runtime_digests = digest.logs.iter().filter_map(|d| d.as_pre_runtime());
-
-		T::FindAuthor::find_author(pre_runtime_digests).unwrap_or_default()
-	}
-
-	/// Get the transaction status with given index.
-	pub fn current_transaction_statuses() -> Option<Vec<TransactionStatus>> {
-		CurrentTransactionStatuses::get()
-	}
-	/// Get current block.
-	pub fn current_block() -> Option<ethereum::Block> {
-		CurrentBlock::get()
-	}
-
-	/// Get current block hash
-	pub fn current_block_hash() -> Option<H256> {
-		Self::current_block().map(|block| block.header.hash())
-	}
-
-	/// Get receipts by number.
-	pub fn current_receipts() -> Option<Vec<ethereum::Receipt>> {
-		CurrentReceipts::get()
-	}
-
-	/// Execute an Ethereum transaction
-	pub fn execute(
-		from: H160,
-		input: Vec<u8>,
-		value: U256,
-		gas_limit: U256,
-		gas_price: Option<U256>,
-		nonce: Option<U256>,
-		action: TransactionAction,
-		config: Option<evm::Config>,
-	) -> Result<(Option<H160>, Option<H160>, CallOrCreateInfo), DispatchError> {
-		match action {
-			ethereum::TransactionAction::Call(target) => {
-				let res = T::Runner::call(
-					from,
-					target,
-					input.clone(),
-					value,
-					gas_limit.low_u64(),
-					gas_price,
-					nonce,
-					config.as_ref().unwrap_or(T::config()),
-				)
-				.map_err(Into::into)?;
-
-				Ok((Some(target), None, CallOrCreateInfo::Call(res)))
-			}
-			ethereum::TransactionAction::Create => {
-				let res = T::Runner::create(
-					from,
-					input.clone(),
-					value,
-					gas_limit.low_u64(),
-					gas_price,
-					nonce,
-					config.as_ref().unwrap_or(T::config()),
-				)
-				.map_err(Into::into)?;
-
-				Ok((None, Some(res.value), CallOrCreateInfo::Create(res)))
-			}
-		}
-	}
-}
-
-impl<T: Config> DvmRawTransactorT<H160, ethereum::Transaction, DispatchResultWithPostInfo>
-	for Module<T>
-{
-	/// Transact a System Ethereum transaction.
-	fn raw_transact(
-		source: H160,
-		transaction: ethereum::Transaction,
-	) -> DispatchResultWithPostInfo {
+		let source = if let Some(source) = sender {
+			source
+		} else {
+			Self::recover_signer(&transaction).ok_or_else(|| Error::<T>::InvalidSignature)?
+		};
         let transaction_hash =
 			H256::from_slice(Keccak256::digest(&rlp::encode(&transaction)).as_slice());
 		let transaction_index = Pending::get().len() as u32;
@@ -523,9 +441,80 @@ impl<T: Config> DvmRawTransactorT<H160, ethereum::Transaction, DispatchResultWit
 			used_gas.unique_saturated_into(),
 		))
 		.into())
+    }
+
+	/// Get the author using the FindAuthor trait.
+	pub fn find_author() -> H160 {
+		let digest = <frame_system::Pallet<T>>::digest();
+		let pre_runtime_digests = digest.logs.iter().filter_map(|d| d.as_pre_runtime());
+
+		T::FindAuthor::find_author(pre_runtime_digests).unwrap_or_default()
 	}
 
-	fn raw_call(
+	/// Get the transaction status with given index.
+	pub fn current_transaction_statuses() -> Option<Vec<TransactionStatus>> {
+		CurrentTransactionStatuses::get()
+	}
+	/// Get current block.
+	pub fn current_block() -> Option<ethereum::Block> {
+		CurrentBlock::get()
+	}
+
+	/// Get current block hash
+	pub fn current_block_hash() -> Option<H256> {
+		Self::current_block().map(|block| block.header.hash())
+	}
+
+	/// Get receipts by number.
+	pub fn current_receipts() -> Option<Vec<ethereum::Receipt>> {
+		CurrentReceipts::get()
+	}
+
+	/// Execute an Ethereum transaction
+	pub fn execute(
+		from: H160,
+		input: Vec<u8>,
+		value: U256,
+		gas_limit: U256,
+		gas_price: Option<U256>,
+		nonce: Option<U256>,
+		action: TransactionAction,
+		config: Option<evm::Config>,
+	) -> Result<(Option<H160>, Option<H160>, CallOrCreateInfo), DispatchError> {
+		match action {
+			ethereum::TransactionAction::Call(target) => {
+				let res = T::Runner::call(
+					from,
+					target,
+					input.clone(),
+					value,
+					gas_limit.low_u64(),
+					gas_price,
+					nonce,
+					config.as_ref().unwrap_or(T::config()),
+				)
+				.map_err(Into::into)?;
+
+				Ok((Some(target), None, CallOrCreateInfo::Call(res)))
+			}
+			ethereum::TransactionAction::Create => {
+				let res = T::Runner::create(
+					from,
+					input.clone(),
+					value,
+					gas_limit.low_u64(),
+					gas_price,
+					nonce,
+					config.as_ref().unwrap_or(T::config()),
+				)
+				.map_err(Into::into)?;
+
+				Ok((None, Some(res.value), CallOrCreateInfo::Create(res)))
+			}
+		}
+	}
+
+    pub fn raw_call(
 		source: H160,
 		transaction: ethereum::Transaction,
 	) -> Result<Vec<u8>, DispatchError> {
@@ -546,3 +535,4 @@ impl<T: Config> DvmRawTransactorT<H160, ethereum::Transaction, DispatchResultWit
 		}
 	}
 }
+

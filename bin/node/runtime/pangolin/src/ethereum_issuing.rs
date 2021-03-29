@@ -12,7 +12,6 @@ frame_support::parameter_types! {
 impl Config for Runtime {
 	type ModuleId = EthereumIssuingModuleId;
 	type Event = Event;
-	type DvmCaller = Ethereum;
 	type EthereumRelay = EthereumRelay;
 	type RingCurrency = Ring;
 	type EcdsaAuthorities = EthereumRelayAuthorities;
