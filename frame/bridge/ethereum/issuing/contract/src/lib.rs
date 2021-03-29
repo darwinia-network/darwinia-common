@@ -34,46 +34,6 @@ use sp_std::vec::Vec;
 
 pub struct Abi;
 
-pub struct Address([u8; 20]);
-pub struct Amount([u64; 4]);
-pub struct Topic([u8; 32]);
-
-impl From<[u8; 20]> for Address {
-	fn from(bytes: [u8; 20]) -> Self {
-		Self(bytes)
-	}
-}
-
-impl From<Address> for EthereumAddress {
-	fn from(addr: Address) -> EthereumAddress {
-		H160(addr.0)
-	}
-}
-
-impl From<[u64; 4]> for Amount {
-	fn from(bytes: [u64; 4]) -> Self {
-		Self(bytes)
-	}
-}
-
-impl From<Amount> for U256 {
-	fn from(value: Amount) -> U256 {
-		U256(value.0)
-	}
-}
-
-impl From<[u8; 32]> for Topic {
-	fn from(bytes: [u8; 32]) -> Self {
-		Self(bytes)
-	}
-}
-
-impl From<Topic> for H256 {
-	fn from(topic: Topic) -> H256 {
-		H256(topic.0)
-	}
-}
-
 impl Abi {
 	fn cross_receive() -> Function {
 		let inputs = vec![
@@ -218,9 +178,9 @@ impl Abi {
 
 	/// encode mint function for erc20
 	pub fn encode_cross_receive(
-		token: Address,
-		recipient: Address,
-		amount: Amount,
+		token: EthereumAddress,
+		recipient: EthereumAddress,
+		amount: U256,
 	) -> AbiResult<Bytes> {
 		let receive = Self::cross_receive();
 		receive.encode_input(
@@ -238,8 +198,8 @@ impl Abi {
 		name: &str,
 		symbol: &str,
 		decimals: u8,
-		backing: Address,
-		source: Address,
+		backing: EthereumAddress,
+		source: EthereumAddress,
 	) -> AbiResult<Bytes> {
 		let create = Self::create_erc20();
 		create.encode_input(
@@ -255,7 +215,7 @@ impl Abi {
 	}
 
 	/// parse token register event
-	pub fn parse_event(topics: Vec<Topic>, data: Vec<u8>, eth_event: Event) -> AbiResult<Log> {
+	pub fn parse_event(topics: Vec<H256>, data: Vec<u8>, eth_event: Event) -> AbiResult<Log> {
 		//let eth_event = Self::register_event();
 		let log = RawLog {
 			topics: topics.into_iter().map(|t| -> H256 { t.into() }).collect(),
@@ -291,7 +251,7 @@ impl Abi {
 	}
 
 	/// encode get mapping token info function
-	pub fn encode_mapping_token(backing: Address, source: Address) -> AbiResult<Bytes> {
+	pub fn encode_mapping_token(backing: EthereumAddress, source: EthereumAddress) -> AbiResult<Bytes> {
 		let mapping = Self::mapping_token();
 		mapping.encode_input(
 			vec![

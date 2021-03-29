@@ -55,7 +55,7 @@ pub mod weights;
 pub use weights::WeightInfo;
 
 use darwinia_ethereum_issuing_contract::{
-	Abi, Event as EthEvent, Log as EthLog, TokenBurnInfo, TokenRegisterInfo, Topic,
+	Abi, Event as EthEvent, Log as EthLog, TokenBurnInfo, TokenRegisterInfo,
 };
 
 mod types {
@@ -122,8 +122,8 @@ decl_event! {
 	where
 		AccountId = AccountId<T>,
 	{
-		/// test
-		Test(AccountId),
+        /// redeem transaction from ethereum
+		RegisteredOrRedeemed(AccountId, EthereumAddress),
 		/// erc20 created
 		CreateErc20(EthereumAddress),
 		/// burn event
@@ -197,7 +197,7 @@ decl_module! {
 			let substrate_account = <T as darwinia_evm::Config>::AddressMapping::into_account_id(account.clone());
 
 			<T as Config>::RingCurrency::transfer(&user, &substrate_account, T::FeeEstimate::get(), KeepAlive)?;
-			let transaction = Self::unsigned_transaction(basic.nonce, contract.0.into(), input);
+			let transaction = Self::unsigned_transaction(basic.nonce, contract, input);
 			let result = T::DvmCaller::raw_transact(account, transaction).map_err(|e| -> &'static str {
 				log::trace!(target: "darwinia-issuing", "register_or_issuing_erc20 error {:?}", &e);
 				e.into()
@@ -209,6 +209,7 @@ decl_module! {
 
 			<T as Config>::RingCurrency::transfer(&substrate_account, &user, maxrefund, KeepAlive)?;
 			VerifiedIssuingProof::insert(tx_index, true);
+            Self::deposit_event(RawEvent::RegisteredOrRedeemed(user, backing));
 		}
 	}
 }
@@ -248,7 +249,6 @@ impl<T: Config> Module<T> {
 			log_entry
 				.topics
 				.into_iter()
-				.map(|t| -> Topic { t.0.into() })
 				.collect(),
 			log_entry.data.clone(),
 			event,
@@ -292,8 +292,8 @@ impl<T: Config> Module<T> {
 			&name,
 			&symbol,
 			decimals.as_u32() as u8,
-			backing.0.into(),
-			token_address.0.into(),
+			backing,
+			token_address,
 		)
 		.map_err(|_| Error::<T>::InvalidEncodeERC20)?;
 
@@ -330,7 +330,7 @@ impl<T: Config> Module<T> {
 			.ok_or(<Error<T>>::UintCF)?;
 
 		let input =
-			Abi::encode_cross_receive(dtoken_address.0.into(), recipient.0.into(), amount.0.into())
+			Abi::encode_cross_receive(dtoken_address, recipient, amount)
 				.map_err(|_| Error::<T>::InvalidMintEcoding)?;
 
 		log::trace!(target: "darwinia-issuing", "transfer fee will be delived to fee pallet {}", fee);
@@ -342,10 +342,10 @@ impl<T: Config> Module<T> {
 		source: EthereumAddress,
 	) -> Result<H160, DispatchError> {
 		let factory_address = MappingFactoryAddress::get();
-		let bytes = Abi::encode_mapping_token(backing.0.into(), source.0.into())
+		let bytes = Abi::encode_mapping_token(backing, source)
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
 		let transaction =
-			Self::unsigned_transaction(U256::from(1), factory_address.0.into(), bytes);
+			Self::unsigned_transaction(U256::from(1), factory_address, bytes);
 		let account = Self::dvm_account_id();
 		let mapped_address = T::DvmCaller::raw_call(account, transaction)
 			.map_err(|e| -> &'static str { e.into() })?;
@@ -390,7 +390,7 @@ impl<T: Config> Module<T> {
 			recipient,
 			delegator,
 			source,
-			mapped_address.0.into(),
+			mapped_address,
 			amount,
 		);
 		let module_event: <T as Config>::Event = raw_event.clone().into();
@@ -409,7 +409,7 @@ impl<T: Config> Module<T> {
 impl<T: Config> ContractHandler for Module<T> {
 	/// handle
 	fn handle(address: H160, caller: H160, input: &[u8]) -> DispatchResult {
-        ensure!(MappingFactoryAddress::get() == caller.0.into(), <Error<T>>::AssetAR);
+        ensure!(MappingFactoryAddress::get() == caller, <Error<T>>::AssetAR);
         if input.len() == 3 * 32 {
             let registed_info =
                 TokenRegisterInfo::decode(input).map_err(|_| Error::<T>::InvalidInputData)?;
