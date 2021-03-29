@@ -409,23 +409,21 @@ impl<T: Config> Module<T> {
 impl<T: Config> ContractHandler for Module<T> {
 	/// handle
 	fn handle(address: H160, caller: H160, input: &[u8]) -> DispatchResult {
-		if MappingFactoryAddress::get() == caller.0.into() {
-			if input.len() == 3 * 32 {
-				let registed_info =
-					TokenRegisterInfo::decode(input).map_err(|_| Error::<T>::InvalidInputData)?;
-				Self::token_registed(registed_info.0, registed_info.1, registed_info.2)?;
-			} else {
-				let burn_info =
-					TokenBurnInfo::decode(input).map_err(|_| Error::<T>::InvalidInputData)?;
-				Self::burn_token(
-					burn_info.backing,
-					burn_info.source,
-					burn_info.recipient,
-					burn_info.delegator,
-					U256(burn_info.amount.0),
-				)?;
-			}
-		}
-		Ok(())
+        ensure!(MappingFactoryAddress::get() == caller.0.into(), <Error<T>>::AssetAR);
+        if input.len() == 3 * 32 {
+            let registed_info =
+                TokenRegisterInfo::decode(input).map_err(|_| Error::<T>::InvalidInputData)?;
+            Self::token_registed(registed_info.0, registed_info.1, registed_info.2)
+        } else {
+            let burn_info =
+                TokenBurnInfo::decode(input).map_err(|_| Error::<T>::InvalidInputData)?;
+            Self::burn_token(
+                burn_info.backing,
+                burn_info.source,
+                burn_info.recipient,
+                burn_info.delegator,
+                U256(burn_info.amount.0),
+                )
+        }
 	}
 }
