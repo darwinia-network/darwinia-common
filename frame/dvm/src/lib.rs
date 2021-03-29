@@ -365,7 +365,7 @@ impl<T: Config> Module<T> {
 		} else {
 			Self::recover_signer(&transaction).ok_or_else(|| Error::<T>::InvalidSignature)?
 		};
-        let transaction_hash =
+		let transaction_hash =
 			H256::from_slice(Keccak256::digest(&rlp::encode(&transaction)).as_slice());
 		let transaction_index = Pending::get().len() as u32;
 
@@ -441,7 +441,29 @@ impl<T: Config> Module<T> {
 			used_gas.unique_saturated_into(),
 		))
 		.into())
-    }
+
+	}
+
+    pub fn raw_call(
+		source: H160,
+		transaction: ethereum::Transaction,
+	) -> Result<Vec<u8>, DispatchError> {
+		let (_, _, info) = Self::execute(
+			source,
+			transaction.input.clone(),
+			transaction.value,
+			transaction.gas_limit,
+			None,
+			None,
+			transaction.action,
+			None,
+		)?;
+
+		match info {
+			CallOrCreateInfo::Call(info) => Ok(info.value),
+			_ => Err(Error::<T>::InvalidCallResultType.into()),
+		}
+	}
 
 	/// Get the author using the FindAuthor trait.
 	pub fn find_author() -> H160 {
@@ -511,27 +533,6 @@ impl<T: Config> Module<T> {
 
 				Ok((None, Some(res.value), CallOrCreateInfo::Create(res)))
 			}
-		}
-	}
-
-    pub fn raw_call(
-		source: H160,
-		transaction: ethereum::Transaction,
-	) -> Result<Vec<u8>, DispatchError> {
-		let (_, _, info) = Self::execute(
-			source,
-			transaction.input.clone(),
-			transaction.value,
-			transaction.gas_limit,
-			None,
-			None,
-			transaction.action,
-			None,
-		)?;
-
-		match info {
-			CallOrCreateInfo::Call(info) => Ok(info.value),
-			_ => Err(Error::<T>::InvalidCallResultType.into()),
 		}
 	}
 }

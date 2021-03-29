@@ -21,13 +21,12 @@
 #![allow(unused)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
-// --- substrate ---
-use darwinia_evm::{AccountBasicMapping, AddressMapping, ContractHandler, GasWeightMapping, FeeCalculator};
-use darwinia_relay_primitives::relay_authorities::*;
-use dp_evm::CallOrCreateInfo;
-use dvm_ethereum::TransactionAction;
-use dvm_ethereum::TransactionSignature;
+// --- crates ---
+pub mod weights;
 use ethereum_types::{Address, H160, H256, U256};
+use rustc_hex::{FromHex, ToHex};
+pub use weights::WeightInfo;
+// --- substrate ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage,
 	dispatch::DispatchResultWithPostInfo,
@@ -36,27 +35,23 @@ use frame_support::{
 	weights::Weight,
 };
 use frame_system::{ensure_root, ensure_signed};
-use rustc_hex::{FromHex, ToHex};
-
-use sp_std::vec::Vec;
-
 use sp_runtime::{
 	traits::{AccountIdConversion, Saturating},
 	AccountId32, DispatchError, DispatchResult, ModuleId, SaturatedConversion,
 };
-
+use sp_std::vec::Vec;
+// --- darwinia ---
+use darwinia_ethereum_issuing_contract::{
+	Abi, Event as EthEvent, Log as EthLog, TokenBurnInfo, TokenRegisterInfo,
+};
+use darwinia_evm::{AccountBasicMapping, AddressMapping, ContractHandler, GasWeightMapping, FeeCalculator};
+use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::{
 	balance::lock::*,
 	traits::EthereumReceipt,
 };
-
-pub mod weights;
-// --- darwinia ---
-pub use weights::WeightInfo;
-
-use darwinia_ethereum_issuing_contract::{
-	Abi, Event as EthEvent, Log as EthLog, TokenBurnInfo, TokenRegisterInfo,
-};
+use dp_evm::CallOrCreateInfo;
+use dvm_ethereum::{TransactionAction, TransactionSignature};
 
 mod types {
 	use crate::*;
@@ -121,7 +116,7 @@ decl_event! {
 	where
 		AccountId = AccountId<T>,
 	{
-        /// redeem transaction from ethereum
+		/// redeem transaction from ethereum
 		RegisteredOrRedeemed(AccountId, EthereumAddress),
 		/// erc20 created
 		CreateErc20(EthereumAddress),
@@ -208,7 +203,7 @@ decl_module! {
 
 			<T as Config>::RingCurrency::transfer(&substrate_account, &user, maxrefund, KeepAlive)?;
 			VerifiedIssuingProof::insert(tx_index, true);
-            Self::deposit_event(RawEvent::RegisteredOrRedeemed(user, backing));
+			Self::deposit_event(RawEvent::RegisteredOrRedeemed(user, backing));
 		}
 	}
 }
@@ -245,10 +240,7 @@ impl<T: Config> Module<T> {
 
 	fn parse_event(event: EthEvent, log_entry: LogEntry) -> Result<EthLog, DispatchError> {
 		let ethlog = Abi::parse_event(
-			log_entry
-				.topics
-				.into_iter()
-				.collect(),
+			log_entry.topics.into_iter().collect(),
 			log_entry.data.clone(),
 			event,
 		)
@@ -328,9 +320,8 @@ impl<T: Config> Module<T> {
 			.into_uint()
 			.ok_or(<Error<T>>::UintCF)?;
 
-		let input =
-			Abi::encode_cross_receive(dtoken_address, recipient, amount)
-				.map_err(|_| Error::<T>::InvalidMintEcoding)?;
+		let input = Abi::encode_cross_receive(dtoken_address, recipient, amount)
+			.map_err(|_| Error::<T>::InvalidMintEcoding)?;
 
 		log::trace!(target: "darwinia-issuing", "transfer fee will be delived to fee pallet {}", fee);
 		Ok(input)
@@ -343,8 +334,7 @@ impl<T: Config> Module<T> {
 		let factory_address = MappingFactoryAddress::get();
 		let bytes = Abi::encode_mapping_token(backing, source)
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
-		let transaction =
-			Self::unsigned_transaction(U256::from(1), factory_address, bytes);
+		let transaction = Self::unsigned_transaction(U256::from(1), factory_address, bytes);
 		let account = Self::dvm_account_id();
 		let mapped_address = dvm_ethereum::Module::<T>::raw_call(account, transaction)
 			.map_err(|e| -> &'static str { e.into() })?;
@@ -408,21 +398,21 @@ impl<T: Config> Module<T> {
 impl<T: Config> ContractHandler for Module<T> {
 	/// handle
 	fn handle(address: H160, caller: H160, input: &[u8]) -> DispatchResult {
-        ensure!(MappingFactoryAddress::get() == caller, <Error<T>>::AssetAR);
-        if input.len() == 3 * 32 {
-            let registed_info =
-                TokenRegisterInfo::decode(input).map_err(|_| Error::<T>::InvalidInputData)?;
-            Self::token_registed(registed_info.0, registed_info.1, registed_info.2)
-        } else {
-            let burn_info =
-                TokenBurnInfo::decode(input).map_err(|_| Error::<T>::InvalidInputData)?;
-            Self::burn_token(
-                burn_info.backing,
-                burn_info.source,
-                burn_info.recipient,
-                burn_info.delegator,
-                U256(burn_info.amount.0),
-                )
-        }
+		ensure!(MappingFactoryAddress::get() == caller, <Error<T>>::AssetAR);
+		if input.len() == 3 * 32 {
+			let registed_info =
+				TokenRegisterInfo::decode(input).map_err(|_| Error::<T>::InvalidInputData)?;
+			Self::token_registed(registed_info.0, registed_info.1, registed_info.2)
+		} else {
+			let burn_info =
+				TokenBurnInfo::decode(input).map_err(|_| Error::<T>::InvalidInputData)?;
+			Self::burn_token(
+				burn_info.backing,
+				burn_info.source,
+				burn_info.recipient,
+				burn_info.delegator,
+				U256(burn_info.amount.0),
+			)
+		}
 	}
 }
