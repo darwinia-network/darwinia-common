@@ -254,7 +254,7 @@ impl GasWeightMapping for () {
 	}
 }
 
-/// handle from evm contract
+/// from evm contract
 pub trait ContractHandler {
 	fn handle(address: H160, caller: H160, input: &[u8]) -> DispatchResult;
 }

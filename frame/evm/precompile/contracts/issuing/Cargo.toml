@@ -11,19 +11,11 @@ version     = "2.1.0"
 
 [dependencies]
 # crates
-codec                    = { default-features = false, package = "parity-scale-codec", version = "2.0.1" }
 dp-evm  = { default-features = false, path = "../../../../../primitives/evm" }
 evm                     = { version = "0.24.0", default-features = false, features = ["with-codec"] }
-ripemd160                = { default-features = false, version = "0.9.1" }
 # darwinia
 darwinia-evm             = { default-features = false, path = "../../../"}
 # substrate
-frame-support            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-frame-system             = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-pallet-timestamp         = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-sp-core                  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-sp-io                    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-sp-runtime               = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
 sp-std                   = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "v2.2.1-darwinia" }
 
 [features]
@@ -36,10 +28,8 @@ std = [
 ]
 
 crates-std = [
-	"codec/std",
 	"dp-evm/std",
 	"evm/std",
-	"ripemd160/std",
 ]
 
 darwinia-std = [
@@ -47,11 +37,5 @@ darwinia-std = [
 ]
 
 substrate-std = [
-	"frame-support/std",
-	"frame-system/std",
-	"pallet-timestamp/std",
-	"sp-core/std",
-	"sp-io/std",
-	"sp-runtime/std",
 	"sp-std/std",
 ]
