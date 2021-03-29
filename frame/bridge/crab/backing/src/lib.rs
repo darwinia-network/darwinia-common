@@ -20,62 +20,53 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub use pallet::*;
-
 pub mod weights;
-// --- darwinia ---
+
+pub use pallet::*;
 pub use weights::WeightInfo;
-
-use frame_support::traits::Currency;
-
-mod types {
-	// --- darwinia ---
-	use crate::*;
-
-	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-
-	type RingCurrency<T> = <T as Config>::RingCurrency;
-
-	pub type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
-}
 
 #[frame_support::pallet]
 pub mod pallet {
-	use super::*;
-	use frame_support::pallet_prelude::*;
-	use frame_support::traits::{Currency, Get};
+	pub mod types {
+		// --- darwinia ---
+		use super::*;
+
+		// Generic types
+		pub type AccountId<T> = <T as frame_system::Config>::AccountId;
+		pub type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
+		type RingCurrency<T> = <T as Config>::RingCurrency;
+	}
+	pub use types::*;
+
+	// --- substrate ---
+	use frame_support::{
+		pallet_prelude::*,
+		traits::{Currency, Get},
+	};
 	use frame_system::pallet_prelude::*;
 	use sp_runtime::{traits::AccountIdConversion, ModuleId};
-	use types::*;
+	// --- darwinia ---
+	use crate::weights::WeightInfo;
 
-	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
+		// --- substrate ---
+		type WeightInfo: WeightInfo;
+		// --- darwinia ---
 		#[pallet::constant]
 		type ModuleId: Get<ModuleId>;
-
 		type RingCurrency: Currency<AccountId<Self>>;
-
-		type WeightInfo: WeightInfo;
-
-		// no event for this pallet
 	}
 
-	// Define the pallet struct placeholder, various pallet function are implemented on it.
-	#[pallet::pallet]
-	pub struct Pallet<T>(_);
+	// No event
+	// No error
+	// No storage
 
-	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
-
-	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
-
+	#[cfg(feature = "std")]
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub backed_ring: RingBalance<T>,
 	}
-
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
@@ -84,7 +75,6 @@ pub mod pallet {
 			}
 		}
 	}
-
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
@@ -93,5 +83,20 @@ pub mod pallet {
 				T::RingCurrency::minimum_balance() + self.backed_ring,
 			);
 		}
+	}
+
+	#[pallet::pallet]
+	pub struct Pallet<T>(_);
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {}
+}
+
+pub mod migration {
+	const OLD_PALLET_NAME: &[u8] = b"DarwiniaCrabBacking";
+
+	pub fn migrate(new_pallet_name: &[u8]) {
+		frame_support::migration::move_pallet(OLD_PALLET_NAME, new_pallet_name);
 	}
 }
