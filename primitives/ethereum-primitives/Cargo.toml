@@ -27,9 +27,9 @@ serde           = { version = "1.0.124", optional = true, features = ["derive"] 
 ethash               = { default-features = false, git = "https://github.com/darwinia-network/rust-ethash" }
 merkle-patricia-trie = { default-features = false, path = "../merkle-patricia-trie" }
 # substrate
-sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
 
 [dev-dependencies]
 # crates
@@ -38,7 +38,7 @@ serde_json    = { version = "1.0.64" }
 # github
 triehash = { version = "0.8.4" }
 # substrate
-frame-support = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+frame-support = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
 
 [features]
 default = ["std"]

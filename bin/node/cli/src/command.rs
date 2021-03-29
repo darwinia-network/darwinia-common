@@ -116,7 +116,7 @@ pub fn run() -> sc_cli::Result<()> {
 			runner.run_node_until_exit(|config| async move {
 				match config.role {
 					Role::Light => {
-						service::drml_new_light(config).map(|(task_manager, _, _)| task_manager)
+						service::drml_new_light(config).map(|(task_manager, _)| task_manager)
 					}
 					_ => service::drml_new_full(config, authority_discovery_disabled)
 						.map(|(task_manager, _, _)| task_manager),

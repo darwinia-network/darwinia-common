@@ -32,7 +32,7 @@ use ethereum_primitives::{
 	header::EthereumHeader, receipt::EthereumReceiptProof, EthereumBlockNumber, EthereumNetworkType,
 };
 
-decl_tests!(EthereumRelay: darwinia_ethereum_relay::{Module, Call, Storage});
+decl_tests!(EthereumRelay: darwinia_ethereum_relay::{Pallet, Call, Storage});
 
 pub struct UnusedTechnicalMembership;
 impl Contains<AccountId> for UnusedTechnicalMembership {

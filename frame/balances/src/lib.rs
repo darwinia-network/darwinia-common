@@ -534,7 +534,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 
 	/// Get the frozen balance of an account.
 	fn frozen_balance(who: impl Borrow<T::AccountId>) -> FrozenBalance<T::Balance> {
-		let now = <frame_system::Module<T>>::block_number();
+		let now = <frame_system::Pallet<T>>::block_number();
 		let mut frozen_balance = <FrozenBalance<T::Balance>>::zero();
 		for lock in Self::locks(who.borrow()).iter() {
 			let locked_amount = match &lock.lock_for {
@@ -658,12 +658,12 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 			if existed {
 				// TODO: use Locks::<T, I>::hashed_key
 				// https://github.com/paritytech/substrate/issues/4969
-				<frame_system::Module<T>>::dec_consumers(who);
+				<frame_system::Pallet<T>>::dec_consumers(who);
 			}
 		} else {
 			Locks::<T, I>::insert(who, locks);
 			if !existed {
-				if <frame_system::Module<T>>::inc_consumers(who).is_err() {
+				if <frame_system::Pallet<T>>::inc_consumers(who).is_err() {
 					// No providers for the locks. This is impossible under normal circumstances
 					// since the funds that are under the lock will themselves be stored in the
 					// account and therefore will need a reference.
@@ -967,7 +967,7 @@ where
 				//   may not even be a provider.
 				let allow_death = existence_requirement == ExistenceRequirement::AllowDeath;
 				let allow_death =
-					allow_death && !<frame_system::Module<T>>::is_provider_required(transactor);
+					allow_death && !<frame_system::Pallet<T>>::is_provider_required(transactor);
 
 				ensure!(
 					allow_death
@@ -1414,7 +1414,7 @@ where
 		if match &lock_for {
 			LockFor::Common { amount } => *amount,
 			LockFor::Staking(staking_lock) => {
-				staking_lock.locked_amount(<frame_system::Module<T>>::block_number())
+				staking_lock.locked_amount(<frame_system::Pallet<T>>::block_number())
 			}
 		}
 		.is_zero() || reasons.is_empty()
@@ -1540,7 +1540,7 @@ impl<T: Config<I>, I: Instance> DustCollector<T::AccountId> for Module<T, I> {
 
 		if !dropped.is_zero() {
 			T::DustRemoval::on_unbalanced(NegativeImbalance::new(dropped));
-			if let Err(e) = <frame_system::Module<T>>::dec_providers(who) {
+			if let Err(e) = <frame_system::Pallet<T>>::dec_providers(who) {
 				log::error!("Logic error: Unexpected {:?}", e);
 			}
 			Self::deposit_event(RawEvent::DustLost(who.clone(), dropped));
