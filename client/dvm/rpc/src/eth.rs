@@ -365,6 +365,17 @@ where
 				transaction_metadata[0].ethereum_block_hash,
 				transaction_metadata[0].ethereum_index,
 			)))
+		} else if transaction_metadata.len() > 1 {
+			transaction_metadata
+				.iter()
+				.find(|meta| self.is_canon(meta.block_hash))
+				.map_or(
+					Ok(Some((
+						transaction_metadata[0].ethereum_block_hash,
+						transaction_metadata[0].ethereum_index,
+					))),
+					|meta| Ok(Some((meta.ethereum_block_hash, meta.ethereum_index))),
+				)
 		} else {
 			Ok(None)
 		}
