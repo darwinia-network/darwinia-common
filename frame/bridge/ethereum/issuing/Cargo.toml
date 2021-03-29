@@ -14,7 +14,6 @@ version     = "2.1.0"
 codec               = { package = "parity-scale-codec", version = "2.0.1", default-features = false, features = ["derive"] }
 ethereum-types      = { default-features = false, version = "0.11.0" }
 ethereum-primitives = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
-# hex                 = { default-features = false, version = "0.4" }
 log                 = { version = "0.4.14" }
 rustc-hex           = { default-features = false, version = "2.1.0" }
 serde               = { version = "1.0.124", optional = true }
@@ -30,19 +29,9 @@ dvm-ethereum                        = { default-features = false, path = "../../
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-# sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
 sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
 sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
 
-[dev-dependencies]
-# darwinia
-darwinia-balances              = { path = "../../../../frame/balances" }
-darwinia-ethereum-linear-relay = { path = "../linear-relay" }
-darwinia-ethereum-relay        = { features = ["deserialize"], path = "../relay" }
-darwinia-relay-primitives      = { path = "../../../../primitives/relay" }
-darwinia-relayer-game          = { path = "../../relayer-game" }
-darwinia-staking               = { path = "../../../../frame/staking" }
-ethereum-primitives            = { features = ["deserialize"], path = "../../../../primitives/ethereum-primitives" }
 
 [features]
 default = ["std"]
@@ -75,7 +64,6 @@ darwinia-std = [
 substrate-std = [
 	"frame-support/std",
 	"frame-system/std",
-	# "sp-io/std",
 	"sp-runtime/std",
 	"sp-std/std",
 ]

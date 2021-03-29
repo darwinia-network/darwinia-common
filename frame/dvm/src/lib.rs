@@ -355,8 +355,11 @@ impl<T: Config> Module<T> {
 		}
 	}
 
-	pub fn do_transact(transaction: ethereum::Transaction, sender: Option<H160>) -> DispatchResultWithPostInfo {
-        ensure!(
+	pub fn do_transact(
+		transaction: ethereum::Transaction,
+		sender: Option<H160>,
+	) -> DispatchResultWithPostInfo {
+		ensure!(
 			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
 			Error::<T>::PreLogExists,
 		);
@@ -441,10 +444,9 @@ impl<T: Config> Module<T> {
 			used_gas.unique_saturated_into(),
 		))
 		.into())
-
 	}
 
-    pub fn raw_call(
+	pub fn raw_call(
 		source: H160,
 		transaction: ethereum::Transaction,
 	) -> Result<Vec<u8>, DispatchError> {
@@ -536,4 +538,3 @@ impl<T: Config> Module<T> {
 		}
 	}
 }
-
