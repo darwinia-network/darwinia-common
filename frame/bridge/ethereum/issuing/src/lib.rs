@@ -41,6 +41,9 @@ use sp_runtime::{
 };
 use sp_std::vec::Vec;
 // --- darwinia ---
+use darwinia_ethereum_issuing_contract::{
+	Abi, Event as EthEvent, Log as EthLog, TokenBurnInfo, TokenRegisterInfo,
+};
 use darwinia_evm::{AccountBasicMapping, AddressMapping, ContractHandler, GasWeightMapping};
 use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::{
@@ -49,10 +52,6 @@ use darwinia_support::{
 };
 use dp_evm::CallOrCreateInfo;
 use dvm_ethereum::{TransactionAction, TransactionSignature};
-
-use darwinia_ethereum_issuing_contract::{
-	Abi, Event as EthEvent, Log as EthLog, TokenBurnInfo, TokenRegisterInfo,
-};
 
 mod types {
 	use crate::*;

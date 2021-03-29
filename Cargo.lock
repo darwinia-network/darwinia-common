@@ -1384,9 +1384,8 @@ dependencies = [
 
 [[package]]
 name = "darwinia-ethereum-issuing"
-version = "1.0.0"
+version = "2.1.0"
 dependencies = [
- "array-bytes",
  "darwinia-balances",
  "darwinia-ethereum-issuing-contract",
  "darwinia-ethereum-linear-relay",
@@ -1403,29 +1402,21 @@ dependencies = [
  "ethereum-types",
  "frame-support",
  "frame-system",
- "hex",
  "log",
  "parity-scale-codec",
  "rustc-hex",
  "serde",
  "serde_json",
- "sp-io",
  "sp-runtime",
  "sp-std 3.0.0",
 ]
 
 [[package]]
 name = "darwinia-ethereum-issuing-contract"
-version = "1.0.0"
+version = "2.1.0"
 dependencies = [
  "ethabi",
  "ethereum-types",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "rustc-hex",
- "sp-io",
- "sp-runtime",
  "sp-std 3.0.0",
 ]
 
