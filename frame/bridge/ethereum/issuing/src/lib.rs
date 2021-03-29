@@ -44,12 +44,11 @@ use sp_std::vec::Vec;
 use darwinia_ethereum_issuing_contract::{
 	Abi, Event as EthEvent, Log as EthLog, TokenBurnInfo, TokenRegisterInfo,
 };
-use darwinia_evm::{AccountBasicMapping, AddressMapping, ContractHandler, GasWeightMapping, FeeCalculator};
-use darwinia_relay_primitives::relay_authorities::*;
-use darwinia_support::{
-	balance::lock::*,
-	traits::EthereumReceipt,
+use darwinia_evm::{
+	AccountBasicMapping, AddressMapping, ContractHandler, FeeCalculator, GasWeightMapping,
 };
+use darwinia_relay_primitives::relay_authorities::*;
+use darwinia_support::{balance::lock::*, traits::EthereumReceipt};
 use dp_evm::CallOrCreateInfo;
 use dvm_ethereum::{TransactionAction, TransactionSignature};
 
@@ -132,6 +131,7 @@ decl_event! {
 decl_storage! {
 	trait Store for Module<T: Config> as DarwiniaEthereumIssuing {
 		pub MappingFactoryAddress get(fn mapping_factory_address) config(): EthereumAddress;
+		pub EthereumBackingAddress get(fn ethereum_backing_address) config(): EthereumAddress;
 		pub VerifiedIssuingProof
 			get(fn verified_issuing_proof)
 			: map hasher(blake2_128_concat) EthereumTransactionIndex => bool = false;
@@ -154,7 +154,7 @@ decl_module! {
 		}
 
 		#[weight = <T as darwinia_evm::Config>::GasWeightMapping::gas_to_weight(0x100000)]
-		pub fn register_or_redeem_erc20(origin, backing: EthereumAddress, proof: EthereumReceiptProofThing<T>) {
+		pub fn register_or_redeem_erc20(origin, proof: EthereumReceiptProofThing<T>) {
 			log::trace!(target: "darwinia-issuing", "start to register_or_issuing_erc20");
 			let user = ensure_signed(origin)?;
 			let tx_index = T::EthereumRelay::gen_receipt_index(&proof);
@@ -167,11 +167,12 @@ decl_module! {
 
 			let register_event = Abi::register_event();
 			let backing_event = Abi::backing_event();
+			let backing_address = EthereumBackingAddress::get();
 			let log_entry = verified_receipt
 				.logs
 				.into_iter()
 				.find(|x| {
-					x.address == backing &&
+					x.address == backing_address &&
 						( x.topics[0] == register_event.signature()
 						  || x.topics[0] == backing_event.signature() )
 				})
@@ -179,7 +180,7 @@ decl_module! {
 
 			let input = if log_entry.topics[0] == register_event.signature() {
 				let ethlog = Self::parse_event(register_event, log_entry)?;
-				Self::process_erc20_creation(backing, ethlog)?
+				Self::process_erc20_creation(backing_address, ethlog)?
 			} else {
 				let ethlog = Self::parse_event(backing_event, log_entry)?;
 				Self::process_token_issuing(ethlog)?
@@ -203,7 +204,7 @@ decl_module! {
 
 			<T as Config>::RingCurrency::transfer(&substrate_account, &user, maxrefund, KeepAlive)?;
 			VerifiedIssuingProof::insert(tx_index, true);
-			Self::deposit_event(RawEvent::RegisteredOrRedeemed(user, backing));
+			Self::deposit_event(RawEvent::RegisteredOrRedeemed(user, backing_address));
 		}
 	}
 }
