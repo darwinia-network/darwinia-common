@@ -107,6 +107,63 @@ pub mod pallet {
 pub mod migration {
 	const OLD_PALLET_NAME: &[u8] = b"DarwiniaCrabIssuing";
 
+	#[cfg(feature = "try-runtime")]
+	pub mod try_runtime {
+		// --- substrate ---
+		use frame_support::{pallet_prelude::*, traits::StorageInstance};
+		// --- darwinia ---
+		use crate::*;
+
+		macro_rules! generate_storage_types {
+			($prefix:expr, $name:ident => Value<$value:ty>) => {
+				paste::paste! {
+					type $name = StorageValue<[<$name Instance>], $value, ValueQuery>;
+
+					struct [<$name Instance>];
+					impl StorageInstance for [<$name Instance>] {
+						const STORAGE_PREFIX: &'static str = "TotalMappedRing";
+
+						fn pallet_prefix() -> &'static str { $prefix }
+					}
+				}
+			};
+		}
+
+		generate_storage_types!("DarwiniaCrabIssuing", OldTotalMappedRing => Value<()>);
+		generate_storage_types!("CrabIssuing", NewTotalMappedRing => Value<()>);
+
+		pub fn pre_migrate<T: Config>() -> Result<(), &'static str> {
+			log::info!(
+				"OldTotalMappedRing.exits()? {:?}",
+				OldTotalMappedRing::exists()
+			);
+			log::info!(
+				"NewTotalMappedRing.exits()? {:?}",
+				NewTotalMappedRing::exists()
+			);
+
+			assert!(OldTotalMappedRing::exists());
+			assert!(!NewTotalMappedRing::exists());
+
+			log::info!("Migrating `DarwiniaCrabIssuing` to `CrabIssuing`...");
+			migration::migrate(b"CrabIssuing");
+
+			log::info!(
+				"OldTotalMappedRing.exits()? {:?}",
+				OldTotalMappedRing::exists()
+			);
+			log::info!(
+				"NewTotalMappedRing.exits()? {:?}",
+				NewTotalMappedRing::exists()
+			);
+
+			assert!(!OldTotalMappedRing::exists());
+			assert!(NewTotalMappedRing::exists());
+
+			Ok(())
+		}
+	}
+
 	pub fn migrate(new_pallet_name: &[u8]) {
 		frame_support::migration::move_pallet(OLD_PALLET_NAME, new_pallet_name);
 	}
