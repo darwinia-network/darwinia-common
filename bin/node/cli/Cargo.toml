@@ -94,6 +94,7 @@ try-runtime-cli                            = { optional = true, git = "https://g
 [build-dependencies]
 # substrate
 substrate-build-script-utils = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+try-runtime-cli              = { optional = true, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
 
 [features]
 default = [
