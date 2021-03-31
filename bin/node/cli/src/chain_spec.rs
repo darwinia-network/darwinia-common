@@ -221,23 +221,23 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 		),
 	];
 	let collective_members = vec![get_account_id_from_seed::<sr25519::Public>("Alice")];
-	let evm_accounts = {
-		let mut map = BTreeMap::new();
+	// let evm_accounts = {
+	// 	let mut map = BTreeMap::new();
 
-		for account in EVM_ACCOUNTS.iter() {
-			map.insert(
-				array_bytes::hex2array_unchecked!(account, 20).into(),
-				GenesisAccount {
-					nonce: 0.into(),
-					balance: (MANY_COINS * (10 as Balance).pow(9)).into(),
-					storage: BTreeMap::new(),
-					code: vec![],
-				},
-			);
-		}
+	// 	for account in EVM_ACCOUNTS.iter() {
+	// 		map.insert(
+	// 			array_bytes::hex2array_unchecked!(account, 20).into(),
+	// 			GenesisAccount {
+	// 				nonce: 0.into(),
+	// 				balance: (MANY_COINS * (10 as Balance).pow(9)).into(),
+	// 				storage: BTreeMap::new(),
+	// 				code: vec![],
+	// 			},
+	// 		);
+	// 	}
 
-		map
-	};
+	// 	map
+	// };
 
 	pangolin_runtime::GenesisConfig {
 		frame_system: pangolin_runtime::SystemConfig {
@@ -252,6 +252,7 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 			balances: vec![
 				(root.clone(), BUNCH_OF_COINS),
 				(get_account_id_from_seed::<sr25519::Public>("Alice"), A_FEW_COINS),
+				(get_account_id_from_seed::<sr25519::Public>("Bob"), A_FEW_COINS),
 			]
 			.into_iter()
 			.chain(
@@ -357,8 +358,8 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 			backed_ring: BUNCH_OF_COINS,
 			backed_kton: BUNCH_OF_COINS,
 		},
-		darwinia_evm: pangolin_runtime::EVMConfig { accounts: evm_accounts },
-		dvm_ethereum: Default::default(),
+		// darwinia_evm: pangolin_runtime::EVMConfig { accounts: evm_accounts },
+		// dvm_ethereum: Default::default(),
 	}
 }
 
@@ -393,23 +394,23 @@ fn pangolin_development_genesis() -> pangolin_runtime::GenesisConfig {
 	)
 	.collect::<Vec<_>>();
 	let collective_members = vec![get_account_id_from_seed::<sr25519::Public>("Alice")];
-	let evm_accounts = {
-		let mut map = BTreeMap::new();
+	// let evm_accounts = {
+	// 	let mut map = BTreeMap::new();
 
-		for account in EVM_ACCOUNTS.iter() {
-			map.insert(
-				array_bytes::hex2array_unchecked!(account, 20).into(),
-				GenesisAccount {
-					nonce: 0.into(),
-					balance: (123_456_789_000_000_000_000_090 as Balance).into(),
-					storage: BTreeMap::new(),
-					code: vec![],
-				},
-			);
-		}
+	// 	for account in EVM_ACCOUNTS.iter() {
+	// 		map.insert(
+	// 			array_bytes::hex2array_unchecked!(account, 20).into(),
+	// 			GenesisAccount {
+	// 				nonce: 0.into(),
+	// 				balance: (123_456_789_000_000_000_000_090 as Balance).into(),
+	// 				storage: BTreeMap::new(),
+	// 				code: vec![],
+	// 			},
+	// 		);
+	// 	}
 
-		map
-	};
+	// 	map
+	// };
 
 	pangolin_runtime::GenesisConfig {
 		frame_system: pangolin_runtime::SystemConfig {
@@ -510,7 +511,7 @@ fn pangolin_development_genesis() -> pangolin_runtime::GenesisConfig {
 			backed_ring: BUNCH_OF_COINS,
 			backed_kton: BUNCH_OF_COINS,
 		},
-		darwinia_evm: pangolin_runtime::EVMConfig { accounts: evm_accounts },
-		dvm_ethereum: Default::default(),
+		// darwinia_evm: pangolin_runtime::EVMConfig { accounts: evm_accounts },
+		// dvm_ethereum: Default::default(),
 	}
 }

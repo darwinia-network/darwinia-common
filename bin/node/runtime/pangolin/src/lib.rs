@@ -209,6 +209,128 @@ pub mod wasm {
 }
 pub use wasm::*;
 
+<<<<<<< HEAD
+=======
+pub mod system;
+pub use system::*;
+
+pub mod babe;
+pub use babe::*;
+
+pub mod timestamp;
+pub use timestamp::*;
+
+pub mod balances;
+pub use balances::*;
+
+pub mod transaction_payment;
+pub use transaction_payment::*;
+
+pub mod authorship;
+pub use authorship::*;
+
+pub mod election_provider_multi_phase;
+pub use election_provider_multi_phase::*;
+
+pub mod staking;
+pub use staking::*;
+
+pub mod offences;
+pub use offences::*;
+
+pub mod session_historical;
+pub use session_historical::*;
+
+pub mod session;
+pub use session::*;
+
+pub mod grandpa;
+pub use grandpa::*;
+
+pub mod im_online;
+pub use im_online::*;
+
+pub mod authority_discovery;
+pub use authority_discovery::*;
+
+pub mod header_mmr;
+pub use header_mmr::*;
+
+pub mod democracy;
+pub use democracy::*;
+
+pub mod collective;
+pub use collective::*;
+
+pub mod elections_phragmen;
+pub use elections_phragmen::*;
+
+pub mod membership;
+pub use membership::*;
+
+pub mod treasury;
+pub use treasury::*;
+
+pub mod sudo;
+pub use sudo::*;
+
+pub mod claims;
+pub use claims::*;
+
+pub mod vesting;
+pub use vesting::*;
+
+pub mod utility;
+pub use utility::*;
+
+pub mod identity;
+pub use identity::*;
+
+pub mod society;
+pub use society::*;
+
+pub mod recovery;
+pub use recovery::*;
+
+pub mod scheduler;
+pub use scheduler::*;
+
+pub mod proxy;
+pub use proxy::*;
+
+pub mod multisig;
+pub use multisig::*;
+
+pub mod crab_issuing;
+pub use crab_issuing::*;
+
+pub mod crab_backing;
+pub use crab_backing::*;
+
+pub mod ethereum_relay;
+pub use ethereum_relay::*;
+
+pub mod ethereum_backing;
+pub use ethereum_backing::*;
+
+pub mod relayer_game;
+pub use relayer_game::*;
+
+pub mod relay_authorities;
+pub use relay_authorities::*;
+
+pub mod tron_backing;
+pub use tron_backing::*;
+
+// pub mod evm;
+// pub use evm::*;
+
+// pub mod dvm;
+// pub use dvm::*;
+
+// --- darwinia ---
+pub use constants::*;
+>>>>>>> Remove dvm part
 pub use darwinia_staking::StakerStatus;
 
 // --- crates ---
@@ -382,8 +504,8 @@ frame_support::construct_runtime! {
 
 		TronBacking: darwinia_tron_backing::{Pallet, Storage, Config<T>} = 39,
 
-		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 40,
-		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 41,
+		// EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 40,
+		// Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 41,
 	}
 }
 
@@ -649,118 +771,118 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block> for Runtime {
-		fn chain_id() -> u64 {
-			<Runtime as darwinia_evm::Config>::ChainId::get()
-		}
+	// impl dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block> for Runtime {
+	// 	fn chain_id() -> u64 {
+	// 		<Runtime as darwinia_evm::Config>::ChainId::get()
+	// 	}
 
-		fn gas_price() -> U256 {
-			<Runtime as darwinia_evm::Config>::FeeCalculator::min_gas_price()
-		}
+	// 	fn gas_price() -> U256 {
+	// 		<Runtime as darwinia_evm::Config>::FeeCalculator::min_gas_price()
+	// 	}
 
-		fn account_basic(address: H160) -> EVMAccount {
-			use darwinia_evm::AccountBasic;
+	// 	fn account_basic(address: H160) -> EVMAccount {
+	// 		use darwinia_evm::AccountBasic;
 
-			<Runtime as darwinia_evm::Config>::RingAccountBasic::account_basic(&address)
-		}
+	// 		<Runtime as darwinia_evm::Config>::RingAccountBasic::account_basic(&address)
+	// 	}
 
-		fn account_code_at(address: H160) -> Vec<u8> {
-			darwinia_evm::Module::<Runtime>::account_codes(address)
-		}
+	// 	fn account_code_at(address: H160) -> Vec<u8> {
+	// 		darwinia_evm::Module::<Runtime>::account_codes(address)
+	// 	}
 
-		fn author() -> H160 {
-			<dvm_ethereum::Module<Runtime>>::find_author()
-		}
+	// 	fn author() -> H160 {
+	// 		<dvm_ethereum::Module<Runtime>>::find_author()
+	// 	}
 
-		fn storage_at(address: H160, index: U256) -> H256 {
-			let mut tmp = [0u8; 32];
-			index.to_big_endian(&mut tmp);
-			darwinia_evm::Module::<Runtime>::account_storages(address, H256::from_slice(&tmp[..]))
-		}
+	// 	fn storage_at(address: H160, index: U256) -> H256 {
+	// 		let mut tmp = [0u8; 32];
+	// 		index.to_big_endian(&mut tmp);
+	// 		darwinia_evm::Module::<Runtime>::account_storages(address, H256::from_slice(&tmp[..]))
+	// 	}
 
-		fn call(
-			from: H160,
-			to: H160,
-			data: Vec<u8>,
-			value: U256,
-			gas_limit: U256,
-			gas_price: Option<U256>,
-			nonce: Option<U256>,
-			estimate: bool,
-		) -> Result<darwinia_evm::CallInfo, sp_runtime::DispatchError> {
-			let config = if estimate {
-				let mut config = <Runtime as darwinia_evm::Config>::config().clone();
-				config.estimate = true;
-				Some(config)
-			} else {
-				None
-			};
+	// 	fn call(
+	// 		from: H160,
+	// 		to: H160,
+	// 		data: Vec<u8>,
+	// 		value: U256,
+	// 		gas_limit: U256,
+	// 		gas_price: Option<U256>,
+	// 		nonce: Option<U256>,
+	// 		estimate: bool,
+	// 	) -> Result<darwinia_evm::CallInfo, sp_runtime::DispatchError> {
+	// 		let config = if estimate {
+	// 			let mut config = <Runtime as darwinia_evm::Config>::config().clone();
+	// 			config.estimate = true;
+	// 			Some(config)
+	// 		} else {
+	// 			None
+	// 		};
 
-			<Runtime as darwinia_evm::Config>::Runner::call(
-				from,
-				to,
-				data,
-				value,
-				gas_limit.low_u64(),
-				gas_price,
-				nonce,
-				config.as_ref().unwrap_or(<Runtime as darwinia_evm::Config>::config()),
-			).map_err(|err| err.into())
-		}
+	// 		<Runtime as darwinia_evm::Config>::Runner::call(
+	// 			from,
+	// 			to,
+	// 			data,
+	// 			value,
+	// 			gas_limit.low_u64(),
+	// 			gas_price,
+	// 			nonce,
+	// 			config.as_ref().unwrap_or(<Runtime as darwinia_evm::Config>::config()),
+	// 		).map_err(|err| err.into())
+	// 	}
 
-		fn create(
-			from: H160,
-			data: Vec<u8>,
-			value: U256,
-			gas_limit: U256,
-			gas_price: Option<U256>,
-			nonce: Option<U256>,
-			estimate: bool,
-		) -> Result<darwinia_evm::CreateInfo, sp_runtime::DispatchError> {
-			let config = if estimate {
-				let mut config = <Runtime as darwinia_evm::Config>::config().clone();
-				config.estimate = true;
-				Some(config)
-			} else {
-				None
-			};
+	// 	fn create(
+	// 		from: H160,
+	// 		data: Vec<u8>,
+	// 		value: U256,
+	// 		gas_limit: U256,
+	// 		gas_price: Option<U256>,
+	// 		nonce: Option<U256>,
+	// 		estimate: bool,
+	// 	) -> Result<darwinia_evm::CreateInfo, sp_runtime::DispatchError> {
+	// 		let config = if estimate {
+	// 			let mut config = <Runtime as darwinia_evm::Config>::config().clone();
+	// 			config.estimate = true;
+	// 			Some(config)
+	// 		} else {
+	// 			None
+	// 		};
 
-			<Runtime as darwinia_evm::Config>::Runner::create(
-				from,
-				data,
-				value,
-				gas_limit.low_u64(),
-				gas_price,
-				nonce,
-				config.as_ref().unwrap_or(<Runtime as darwinia_evm::Config>::config()),
-			).map_err(|err| err.into())
-		}
+	// 		<Runtime as darwinia_evm::Config>::Runner::create(
+	// 			from,
+	// 			data,
+	// 			value,
+	// 			gas_limit.low_u64(),
+	// 			gas_price,
+	// 			nonce,
+	// 			config.as_ref().unwrap_or(<Runtime as darwinia_evm::Config>::config()),
+	// 		).map_err(|err| err.into())
+	// 	}
 
 
-		fn current_transaction_statuses() -> Option<Vec<TransactionStatus>> {
-			Ethereum::current_transaction_statuses()
-		}
+	// 	fn current_transaction_statuses() -> Option<Vec<TransactionStatus>> {
+	// 		Ethereum::current_transaction_statuses()
+	// 	}
 
-		fn current_block() -> Option<dvm_ethereum::Block> {
-			Ethereum::current_block()
-		}
+	// 	fn current_block() -> Option<dvm_ethereum::Block> {
+	// 		Ethereum::current_block()
+	// 	}
 
-		fn current_receipts() -> Option<Vec<dvm_ethereum::Receipt>> {
-			Ethereum::current_receipts()
-		}
+	// 	fn current_receipts() -> Option<Vec<dvm_ethereum::Receipt>> {
+	// 		Ethereum::current_receipts()
+	// 	}
 
-		fn current_all() -> (
-			Option<dvm_ethereum::Block>,
-			Option<Vec<dvm_ethereum::Receipt>>,
-			Option<Vec<TransactionStatus>>
-		) {
-			(
-				Ethereum::current_block(),
-				Ethereum::current_receipts(),
-				Ethereum::current_transaction_statuses()
-			)
-		}
-	}
+	// 	fn current_all() -> (
+	// 		Option<dvm_ethereum::Block>,
+	// 		Option<Vec<dvm_ethereum::Receipt>>,
+	// 		Option<Vec<TransactionStatus>>
+	// 	) {
+	// 		(
+	// 			Ethereum::current_block(),
+	// 			Ethereum::current_receipts(),
+	// 			Ethereum::current_transaction_statuses()
+	// 		)
+	// 	}
+	// }
 
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
@@ -774,24 +896,24 @@ impl_runtime_apis! {
 	}
 }
 
-pub struct TransactionConverter;
-impl dvm_rpc_runtime_api::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
-	fn convert_transaction(&self, transaction: dvm_ethereum::Transaction) -> UncheckedExtrinsic {
-		UncheckedExtrinsic::new_unsigned(
-			<dvm_ethereum::Call<Runtime>>::transact(transaction).into(),
-		)
-	}
-}
-impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionConverter {
-	fn convert_transaction(&self, transaction: dvm_ethereum::Transaction) -> OpaqueExtrinsic {
-		let extrinsic = UncheckedExtrinsic::new_unsigned(
-			<dvm_ethereum::Call<Runtime>>::transact(transaction).into(),
-		);
-		let encoded = extrinsic.encode();
+// pub struct TransactionConverter;
+// impl dvm_rpc_runtime_api::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
+// 	fn convert_transaction(&self, transaction: dvm_ethereum::Transaction) -> UncheckedExtrinsic {
+// 		UncheckedExtrinsic::new_unsigned(
+// 			<dvm_ethereum::Call<Runtime>>::transact(transaction).into(),
+// 		)
+// 	}
+// }
+// impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionConverter {
+// 	fn convert_transaction(&self, transaction: dvm_ethereum::Transaction) -> OpaqueExtrinsic {
+// 		let extrinsic = UncheckedExtrinsic::new_unsigned(
+// 			<dvm_ethereum::Call<Runtime>>::transact(transaction).into(),
+// 		);
+// 		let encoded = extrinsic.encode();
 
-		OpaqueExtrinsic::decode(&mut &encoded[..]).expect("Encoded extrinsic is always valid")
-	}
-}
+// 		OpaqueExtrinsic::decode(&mut &encoded[..]).expect("Encoded extrinsic is always valid")
+// 	}
+// }
 
 pub struct CustomOnRuntimeUpgrade;
 impl frame_support::traits::OnRuntimeUpgrade for CustomOnRuntimeUpgrade {

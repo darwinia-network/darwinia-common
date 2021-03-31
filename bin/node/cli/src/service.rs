@@ -109,7 +109,7 @@ pub trait RuntimeApiCollection:
 	+ darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance>
 	+ darwinia_header_mmr_rpc_runtime_api::HeaderMMRApi<Block, Hash>
 	+ darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>
-	+ dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>
+// + dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>
 where
 	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
 {
@@ -129,8 +129,8 @@ where
 		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
 		+ darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance>
 		+ darwinia_header_mmr_rpc_runtime_api::HeaderMMRApi<Block, Hash>
-		+ darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>
-		+ dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
+		+ darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>,
+	// + dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
 	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
 {
 }
@@ -174,24 +174,24 @@ fn set_prometheus_registry(config: &mut Configuration) -> Result<(), ServiceErro
 	Ok(())
 }
 
-fn open_frontier_backend(config: &Configuration) -> Result<Arc<Backend<Block>>, String> {
-	let config_dir = config
-		.base_path
-		.as_ref()
-		.map(|base_path| base_path.config_dir(config.chain_spec.id()))
-		.unwrap_or_else(|| {
-			BasePath::from_project("", "", &crate::cli::Cli::executable_name())
-				.config_dir(config.chain_spec.id())
-		});
-	let database_dir = config_dir.join("dvm").join("db");
+// fn open_frontier_backend(config: &Configuration) -> Result<Arc<Backend<Block>>, String> {
+// 	let config_dir = config
+// 		.base_path
+// 		.as_ref()
+// 		.map(|base_path| base_path.config_dir(config.chain_spec.id()))
+// 		.unwrap_or_else(|| {
+// 			BasePath::from_project("", "", &crate::cli::Cli::executable_name())
+// 				.config_dir(config.chain_spec.id())
+// 		});
+// 	let database_dir = config_dir.join("dvm").join("db");
 
-	Ok(Arc::new(Backend::<Block>::new(&DatabaseSettings {
-		source: DatabaseSettingsSrc::RocksDb {
-			path: database_dir,
-			cache_size: 0,
-		},
-	})?))
-}
+// 	Ok(Arc::new(Backend::<Block>::new(&DatabaseSettings {
+// 		source: DatabaseSettingsSrc::RocksDb {
+// 			path: database_dir,
+// 			cache_size: 0,
+// 		},
+// 	})?))
+// }
 
 #[cfg(feature = "full-node")]
 fn new_partial<RuntimeApi, Executor>(
@@ -214,20 +214,21 @@ fn new_partial<RuntimeApi, Executor>(
 				BabeBlockImport<
 					Block,
 					FullClient<RuntimeApi, Executor>,
-					FrontierBlockImport<
-						Block,
-						FullGrandpaBlockImport<RuntimeApi, Executor>,
-						FullClient<RuntimeApi, Executor>,
-					>,
+					// FrontierBlockImport<
+					// 	Block,
+					// 	FullGrandpaBlockImport<RuntimeApi, Executor>,
+					// 	FullClient<RuntimeApi, Executor>,
+					// >,
+					FullGrandpaBlockImport<RuntimeApi, Executor>,
 				>,
 				LinkHalf<Block, FullClient<RuntimeApi, Executor>, FullSelectChain>,
 				BabeLink<Block>,
 			),
 			GrandpaSharedVoterState,
 			Option<Telemetry>,
-			PendingTransactions,
-			Arc<Backend<Block>>,
-			Option<FilterPool>,
+			// PendingTransactions,
+			// Arc<Backend<Block>>,
+			// Option<FilterPool>,
 		),
 	>,
 	ServiceError,
@@ -276,7 +277,7 @@ where
 		task_manager.spawn_handle(),
 		client.clone(),
 	);
-	let frontier_backend = open_frontier_backend(config)?;
+	// let frontier_backend = open_frontier_backend(config)?;
 	let grandpa_hard_forks = vec![];
 	let (grandpa_block_import, grandpa_link) =
 		sc_finality_grandpa::block_import_with_authority_set_hard_forks(
@@ -287,14 +288,15 @@ where
 			telemetry.as_ref().map(|x| x.handle()),
 		)?;
 	let justification_import = grandpa_block_import.clone();
-	let frontier_block_import = FrontierBlockImport::new(
-		grandpa_block_import.clone(),
-		client.clone(),
-		frontier_backend.clone(),
-	);
+	// let frontier_block_import = FrontierBlockImport::new(
+	// 	grandpa_block_import.clone(),
+	// 	client.clone(),
+	// 	frontier_backend.clone(),
+	// );
 	let (babe_import, babe_link) = sc_consensus_babe::block_import(
 		BabeConfig::get_or_compute(&*client)?,
-		frontier_block_import,
+		// frontier_block_import,
+		grandpa_block_import,
 		client.clone(),
 	)?;
 	let import_queue = sc_consensus_babe::import_queue(
@@ -321,17 +323,17 @@ where
 	let babe_config = babe_link.config().clone();
 	let shared_epoch_changes = babe_link.epoch_changes().clone();
 	let subscription_task_executor = SubscriptionTaskExecutor::new(task_manager.spawn_handle());
-	let pending_transactions: PendingTransactions = Some(Arc::new(Mutex::new(HashMap::new())));
-	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
+	// let pending_transactions: PendingTransactions = Some(Arc::new(Mutex::new(HashMap::new())));
+	// let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
 	let rpc_extensions_builder = {
 		let client = client.clone();
 		let keystore = keystore_container.sync_keystore();
 		let transaction_pool = transaction_pool.clone();
 		let select_chain = select_chain.clone();
 		let chain_spec = config.chain_spec.cloned_box();
-		let pending_transactions = pending_transactions.clone();
-		let frontier_backend = frontier_backend.clone();
-		let filter_pool = filter_pool.clone();
+		// let pending_transactions = pending_transactions.clone();
+		// let frontier_backend = frontier_backend.clone();
+		// let filter_pool = filter_pool.clone();
 
 		move |deny_unsafe, is_authority, network, subscription_executor| -> RpcExtension {
 			let deps = FullDeps {
@@ -354,9 +356,9 @@ where
 					subscription_executor,
 					finality_provider: finality_proof_provider.clone(),
 				},
-				pending_transactions: pending_transactions.clone(),
-				backend: frontier_backend.clone(),
-				filter_pool: filter_pool.clone(),
+				// pending_transactions: pending_transactions.clone(),
+				// backend: frontier_backend.clone(),
+				// filter_pool: filter_pool.clone(),
 			};
 
 			rpc::create_full(deps, subscription_task_executor.clone())
@@ -377,9 +379,9 @@ where
 			import_setup,
 			rpc_setup,
 			telemetry,
-			pending_transactions,
-			frontier_backend,
-			filter_pool,
+			// pending_transactions,
+			// frontier_backend,
+			// filter_pool,
 		),
 	})
 }
@@ -432,9 +434,9 @@ where
 				import_setup,
 				rpc_setup,
 				mut telemetry,
-				pending_transactions,
-				frontier_backend,
-				filter_pool,
+				// pending_transactions,
+				// frontier_backend,
+				// filter_pool,
 			),
 	} = new_partial::<RuntimeApi, Executor>(&mut config)?;
 
@@ -615,39 +617,39 @@ where
 	}
 
 	// Spawn Frontier pending transactions maintenance task (as essential, otherwise we leak).
-	if let Some(pending_transactions) = pending_transactions {
-		const TRANSACTION_RETAIN_THRESHOLD: u64 = 5;
-		task_manager.spawn_essential_handle().spawn(
-			"frontier-pending-transactions",
-			EthTask::pending_transaction_task(
-				Arc::clone(&client),
-				pending_transactions,
-				TRANSACTION_RETAIN_THRESHOLD,
-			),
-		);
-	}
+	// if let Some(pending_transactions) = pending_transactions {
+	// 	const TRANSACTION_RETAIN_THRESHOLD: u64 = 5;
+	// 	task_manager.spawn_essential_handle().spawn(
+	// 		"frontier-pending-transactions",
+	// 		EthTask::pending_transaction_task(
+	// 			Arc::clone(&client),
+	// 			pending_transactions,
+	// 			TRANSACTION_RETAIN_THRESHOLD,
+	// 		),
+	// 	);
+	// }
 
-	task_manager.spawn_essential_handle().spawn(
-		"frontier-mapping-sync-worker",
-		MappingSyncWorker::new(
-			client.import_notification_stream(),
-			Duration::new(6, 0),
-			client.clone(),
-			backend.clone(),
-			frontier_backend.clone(),
-		)
-		.for_each(|()| futures::future::ready(())),
-	);
+	// task_manager.spawn_essential_handle().spawn(
+	// 	"frontier-mapping-sync-worker",
+	// 	MappingSyncWorker::new(
+	// 		client.import_notification_stream(),
+	// 		Duration::new(6, 0),
+	// 		client.clone(),
+	// 		backend.clone(),
+	// 		frontier_backend.clone(),
+	// 	)
+	// 	.for_each(|()| futures::future::ready(())),
+	// );
 
-	// Spawn Frontier EthFilterApi maintenance task.
-	if let Some(filter_pool) = filter_pool {
-		// Each filter is allowed to stay in the pool for 100 blocks.
-		const FILTER_RETAIN_THRESHOLD: u64 = 100;
-		task_manager.spawn_essential_handle().spawn(
-			"frontier-filter-pool",
-			EthTask::filter_pool_task(Arc::clone(&client), filter_pool, FILTER_RETAIN_THRESHOLD),
-		);
-	}
+	// // Spawn Frontier EthFilterApi maintenance task.
+	// if let Some(filter_pool) = filter_pool {
+	// 	// Each filter is allowed to stay in the pool for 100 blocks.
+	// 	const FILTER_RETAIN_THRESHOLD: u64 = 100;
+	// 	task_manager.spawn_essential_handle().spawn(
+	// 		"frontier-filter-pool",
+	// 		EthTask::filter_pool_task(Arc::clone(&client), filter_pool, FILTER_RETAIN_THRESHOLD),
+	// 	);
+	// }
 
 	network_starter.start_network();
 

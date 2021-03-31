@@ -39,7 +39,7 @@ use std::{collections::BTreeMap, sync::Arc};
 // --- darwinia ---
 use dp_rpc::{FilterPool, PendingTransactions};
 use drml_primitives::{AccountId, Balance, BlockNumber, Hash, Nonce, OpaqueBlock as Block, Power};
-use dvm_ethereum::EthereumStorageSchema;
+// use dvm_ethereum::EthereumStorageSchema;
 
 /// A type representing all RPC extensions.
 pub type RpcExtension = jsonrpc_core::IoHandler<sc_rpc::Metadata>;
@@ -89,12 +89,12 @@ pub struct FullDeps<C, P, SC, B> {
 	pub babe: BabeDeps,
 	/// GRANDPA specific dependencies.
 	pub grandpa: GrandpaDeps<B>,
-	/// Ethereum pending transactions.
-	pub pending_transactions: PendingTransactions,
-	/// EthFilterApi pool.
-	pub filter_pool: Option<FilterPool>,
-	/// Backend.
-	pub backend: Arc<dc_db::Backend<Block>>,
+	// /// Ethereum pending transactions.
+	// pub pending_transactions: PendingTransactions,
+	// /// EthFilterApi pool.
+	// pub filter_pool: Option<FilterPool>,
+	// /// Backend.
+	// pub backend: Arc<dc_db::Backend<Block>>,
 }
 
 /// Light client extra dependencies.
@@ -131,14 +131,19 @@ where
 	C::Api: darwinia_balances_rpc::BalancesRuntimeApi<Block, AccountId, Balance>,
 	C::Api: darwinia_header_mmr_rpc::HeaderMMRRuntimeApi<Block, Hash>,
 	C::Api: darwinia_staking_rpc::StakingRuntimeApi<Block, AccountId, Power>,
+<<<<<<< HEAD
 	C::Api: dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
+=======
+	// C::Api: dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
+	// <C::Api as sp_api::ApiErrorExt>::Error: std::fmt::Debug,
+>>>>>>> Remove dvm part
 	P: 'static + Sync + Send + sp_transaction_pool::TransactionPool<Block = Block>,
 	SC: 'static + sp_consensus::SelectChain<Block>,
 	B: 'static + Send + Sync + sc_client_api::Backend<Block>,
 	B::State: sc_client_api::StateBackend<sp_runtime::traits::HashFor<Block>>,
 {
 	// --- crates ---
-	use jsonrpc_pubsub::manager::SubscriptionManager;
+	// use jsonrpc_pubsub::manager::SubscriptionManager;
 	// --- substrate ---
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
 	use sc_consensus_babe_rpc::{BabeApi, BabeRpcHandler};
@@ -149,12 +154,21 @@ where
 	use darwinia_balances_rpc::{Balances, BalancesApi};
 	use darwinia_header_mmr_rpc::{HeaderMMR, HeaderMMRApi};
 	use darwinia_staking_rpc::{Staking, StakingApi};
+<<<<<<< HEAD
 	use dc_rpc::{
 		EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, EthPubSubApi, EthPubSubApiServer,
 		HexEncodedIdProvider, NetApi, NetApiServer, OverrideHandle, RuntimeApiStorageOverride,
 		SchemaV1Override, StorageOverride, Web3Api, Web3ApiServer,
 	};
 	use pangolin_runtime::TransactionConverter;
+=======
+	// use dc_rpc::{
+	// 	EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, EthPubSubApi, EthPubSubApiServer,
+	// 	HexEncodedIdProvider, NetApi, NetApiServer, SchemaV1Override, StorageOverride, Web3Api,
+	// 	Web3ApiServer,
+	// };
+	// use pangolin_runtime::TransactionConverter;
+>>>>>>> Remove dvm part
 
 	let FullDeps {
 		client,
@@ -166,9 +180,9 @@ where
 		network,
 		babe,
 		grandpa,
-		pending_transactions,
-		filter_pool,
-		backend,
+		// pending_transactions,
+		// filter_pool,
+		// backend,
 	} = deps;
 	let mut io = jsonrpc_core::IoHandler::default();
 
@@ -218,50 +232,50 @@ where
 	io.extend_with(HeaderMMRApi::to_delegate(HeaderMMR::new(client.clone())));
 	io.extend_with(StakingApi::to_delegate(Staking::new(client.clone())));
 
-	let mut overrides_map = BTreeMap::new();
-	overrides_map.insert(
-		EthereumStorageSchema::V1,
-		Box::new(SchemaV1Override::new(client.clone()))
-			as Box<dyn StorageOverride<_> + Send + Sync>,
-	);
-	let overrides = Arc::new(OverrideHandle {
-		schemas: overrides_map,
-		fallback: Box::new(RuntimeApiStorageOverride::new(client.clone())),
-	});
+	// let mut overrides_map = BTreeMap::new();
+	// overrides_map.insert(
+	// 	EthereumStorageSchema::V1,
+	// 	Box::new(SchemaV1Override::new(client.clone()))
+	// 		as Box<dyn StorageOverride<_> + Send + Sync>,
+	// );
+	// let overrides = Arc::new(OverrideHandle {
+	// 	schemas: overrides_map,
+	// 	fallback: Box::new(RuntimeApiStorageOverride::new(client.clone())),
+	// });
 
-	io.extend_with(EthApiServer::to_delegate(EthApi::new(
-		client.clone(),
-		pool.clone(),
-		TransactionConverter,
-		network.clone(),
-		overrides.clone(),
-		pending_transactions.clone(),
-		backend,
-		is_authority,
-	)));
-	if let Some(filter_pool) = filter_pool {
-		io.extend_with(EthFilterApiServer::to_delegate(EthFilterApi::new(
-			client.clone(),
-			filter_pool.clone(),
-			500 as usize, // max stored filters
-			overrides.clone(),
-		)));
-	}
-	io.extend_with(EthPubSubApiServer::to_delegate(EthPubSubApi::new(
-		pool,
-		client.clone(),
-		network.clone(),
-		SubscriptionManager::<HexEncodedIdProvider>::with_id_provider(
-			HexEncodedIdProvider::default(),
-			Arc::new(subscription_task_executor),
-		),
-		overrides,
-	)));
-	io.extend_with(NetApiServer::to_delegate(NetApi::new(
-		client.clone(),
-		network,
-	)));
-	io.extend_with(Web3ApiServer::to_delegate(Web3Api::new(client)));
+	// io.extend_with(EthApiServer::to_delegate(EthApi::new(
+	// 	client.clone(),
+	// 	pool.clone(),
+	// 	TransactionConverter,
+	// 	network.clone(),
+	// 	overrides.clone(),
+	// 	pending_transactions.clone(),
+	// 	backend,
+	// 	is_authority,
+	// )));
+	// if let Some(filter_pool) = filter_pool {
+	// 	io.extend_with(EthFilterApiServer::to_delegate(EthFilterApi::new(
+	// 		client.clone(),
+	// 		filter_pool.clone(),
+	// 		500 as usize, // max stored filters
+	// 		overrides.clone(),
+	// 	)));
+	// }
+	// io.extend_with(EthPubSubApiServer::to_delegate(EthPubSubApi::new(
+	// 	pool,
+	// 	client.clone(),
+	// 	network.clone(),
+	// 	SubscriptionManager::<HexEncodedIdProvider>::with_id_provider(
+	// 		HexEncodedIdProvider::default(),
+	// 		Arc::new(subscription_task_executor),
+	// 	),
+	// 	overrides,
+	// )));
+	// io.extend_with(NetApiServer::to_delegate(NetApi::new(
+	// 	client.clone(),
+	// 	network,
+	// )));
+	// io.extend_with(Web3ApiServer::to_delegate(Web3Api::new(client)));
 
 	io
 }
