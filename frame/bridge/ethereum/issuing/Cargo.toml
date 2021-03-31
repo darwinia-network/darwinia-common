@@ -19,8 +19,8 @@ serde               = { version = "1.0.124", optional = true }
 serde_json          = { version = "1.0.62", optional = true }
 # darwinia
 ethereum-primitives                 = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
-darwinia-evm                        = { default-features = false, path = "../../../evm" }
 darwinia-ethereum-issuing-contract  = { default-features = false, path = "contract" }
+darwinia-evm                        = { default-features = false, path = "../../../evm" }
 darwinia-evm-precompile             = { default-features = false, path = "../../../evm/precompile" }
 darwinia-relay-primitives           = { default-features = false, path = "../../../../primitives/relay" }
 darwinia-support                    = { default-features = false, path = "../../../support" }

@@ -34,7 +34,6 @@ pub struct Issuing<T: Config> {
 }
 
 impl<T: Config> Precompile for Issuing<T> {
-	/// Input data: 32-bit substrate withdrawal public key
 	fn execute(
 		input: &[u8],
 		_: Option<u64>,
