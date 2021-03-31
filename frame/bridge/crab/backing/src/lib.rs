@@ -21,65 +21,69 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod weights;
-// --- darwinia ---
+
+pub use pallet::*;
 pub use weights::WeightInfo;
 
-mod types {
+#[frame_support::pallet]
+pub mod pallet {
+	pub mod types {
+		// --- darwinia ---
+		use super::*;
+
+		// Generic types
+		pub type AccountId<T> = <T as frame_system::Config>::AccountId;
+		pub type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
+		type RingCurrency<T> = <T as Config>::RingCurrency;
+	}
+	pub use types::*;
+
+	// --- substrate ---
+	use frame_support::{
+		pallet_prelude::*,
+		traits::{Currency, Get},
+	};
+	use frame_system::pallet_prelude::*;
+	use sp_runtime::{traits::AccountIdConversion, ModuleId};
 	// --- darwinia ---
+	use crate::weights::WeightInfo;
+
+	#[pallet::config]
+	pub trait Config: frame_system::Config {
+		// --- substrate ---
+		type WeightInfo: WeightInfo;
+		// --- darwinia ---
+		#[pallet::constant]
+		type ModuleId: Get<ModuleId>;
+		type RingCurrency: Currency<AccountId<Self>>;
+	}
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		pub backed_ring: RingBalance<T>,
+	}
 	#[cfg(feature = "std")]
-	use crate::*;
-
-	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-
-	#[cfg(feature = "std")]
-	pub type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
-
-	#[cfg(feature = "std")]
-	type RingCurrency<T> = <T as Config>::RingCurrency;
-}
-
-// --- substrate ---
-use frame_support::{
-	decl_module, decl_storage,
-	traits::{Currency, Get},
-};
-use sp_runtime::{traits::AccountIdConversion, ModuleId};
-// --- darwinia ---
-use types::*;
-
-pub trait Config: frame_system::Config {
-	type ModuleId: Get<ModuleId>;
-
-	type RingCurrency: Currency<AccountId<Self>>;
-
-	type WeightInfo: WeightInfo;
-}
-
-decl_storage! {
-	trait Store for Module<T: Config> as DarwiniaCrabBacking {}
-
-	add_extra_genesis {
-		config(backed_ring): RingBalance<T>;
-		build(|config| {
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self {
+				backed_ring: Default::default(),
+			}
+		}
+	}
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
 			let _ = T::RingCurrency::make_free_balance_be(
-				&<Module<T>>::account_id(),
-				T::RingCurrency::minimum_balance() + config.backed_ring
+				&T::ModuleId::get().into_account(),
+				T::RingCurrency::minimum_balance() + self.backed_ring,
 			);
-		});
+		}
 	}
-}
 
-decl_module! {
-	pub struct Module<T: Config> for enum Call
-	where
-		origin: T::Origin
-	{
-		const ModuleId: ModuleId = T::ModuleId::get();
-	}
-}
-
-impl<T: Config> Module<T> {
-	pub fn account_id() -> T::AccountId {
-		T::ModuleId::get().into_account()
-	}
+	#[pallet::pallet]
+	pub struct Pallet<T>(_);
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {}
 }
