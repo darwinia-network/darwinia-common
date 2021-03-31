@@ -202,7 +202,10 @@ pub fn run() -> sc_cli::Result<()> {
 					sc_service::TaskManager::new(config.task_executor.clone(), registry)
 						.map_err(|e| sc_cli::Error::Service(sc_service::Error::Prometheus(e)))?;
 
-				Ok((cmd.run::<Block, Executor>(config), task_manager))
+				Ok((
+					cmd.run::<service::pangolin_runtime::Block, service::PangolinExecutor>(config),
+					task_manager,
+				))
 			})
 		}
 	}

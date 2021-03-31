@@ -362,11 +362,11 @@ use dvm_rpc_runtime_api::TransactionStatus;
 use impls::*;
 
 /// The address format for describing accounts.
-type Address = MultiAddress<AccountId, ()>;
+pub type Address = MultiAddress<AccountId, ()>;
 /// Block type as expected by this runtime.
-type Block = generic::Block<Header, UncheckedExtrinsic>;
+pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 /// The SignedExtension to the basic transaction logic.
-type SignedExtra = (
+pub type SignedExtra = (
 	frame_system::CheckSpecVersion<Runtime>,
 	frame_system::CheckTxVersion<Runtime>,
 	frame_system::CheckGenesis<Runtime>,
@@ -377,19 +377,18 @@ type SignedExtra = (
 	darwinia_ethereum_relay::CheckEthereumRelayHeaderParcel<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
-type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
 /// Executive: handles dispatch to the various modules.
-type Executive = frame_executive::Executive<
+pub type Executive = frame_executive::Executive<
 	Runtime,
 	Block,
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPallets,
-	// (),
-	// CustomOnRuntimeUpgrade,
+	CustomOnRuntimeUpgrade,
 >;
 /// The payload being signed in transactions.
-type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
+pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 
 type Ring = Balances;
 
@@ -488,8 +487,8 @@ frame_support::construct_runtime! {
 		// Multisig module. Late addition.
 		Multisig: pallet_multisig::{Pallet, Call, Storage, Event<T>} = 32,
 
-		CrabIssuing: darwinia_crab_issuing::{Pallet, Call, Storage, Config, Event<T>} = 33,
-		DarwiniaCrabBacking: darwinia_crab_backing::{Pallet, Storage, Config<T>} = 34,
+		DarwiniaCrabIssuing: darwinia_crab_issuing::{Pallet, Call, Storage, Config, Event<T>} = 33,
+    DarwiniaCrabBacking: darwinia_crab_backing::{Pallet, Storage, Config<T>} = 34,
 
 		EthereumRelay: darwinia_ethereum_relay::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
 		EthereumBacking: darwinia_ethereum_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 36,
@@ -881,7 +880,10 @@ impl_runtime_apis! {
 
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
-		fn on_runtime_upgrade() -> Result<(Weight, Weight), sp_runtime::RuntimeString> {
+		fn on_runtime_upgrade() -> Result<
+			(frame_support::weights::Weight, frame_support::weights::Weight),
+			sp_runtime::RuntimeString
+		> {
 			let weight = Executive::try_runtime_upgrade()?;
 			Ok((weight, RuntimeBlockWeights::get().max_block))
 		}
@@ -907,12 +909,15 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 	}
 }
 
-// pub struct CustomOnRuntimeUpgrade;
-// impl frame_support::traits::OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
-// 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-// 		// --- substrate ---
-// 		use frame_support::migration::*;
+pub struct CustomOnRuntimeUpgrade;
+impl frame_support::traits::OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
+	#[cfg(feature = "try-runtime")]
+	fn pre_upgrade() -> Result<(), &'static str> {
+		darwinia_crab_issuing::migration::try_runtime::pre_migrate::<Runtime>()?;
+		darwinia_staking::migrations::v6::pre_migrate::<Runtime>()
+	}
 
-// 		MAXIMUM_BLOCK_WEIGHT
-// 	}
-// }
+	fn on_runtime_upgrade() -> frame_support::weights::Weight {
+		0
+	}
+}
