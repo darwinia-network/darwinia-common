@@ -21,7 +21,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod weights;
-// --- darwinia ---
+
+pub use pallet::*;
 pub use weights::WeightInfo;
 
 #[cfg(test)]
@@ -29,86 +30,141 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-mod types {
+#[frame_support::pallet]
+pub mod pallet {
+	pub mod types {
+		// --- darwinia ---
+		use super::*;
+
+		// Generic type
+		pub type AccountId<T> = <T as frame_system::Config>::AccountId;
+		pub type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
+		type RingCurrency<T> = <T as Config>::RingCurrency;
+		// Simple type
+		pub type MappedRing = u128;
+	}
+	pub use types::*;
+
+	// --- substrate ---
+	use frame_support::{
+		pallet_prelude::*,
+		traits::{Currency, Get},
+	};
+	use frame_system::pallet_prelude::*;
+	use sp_runtime::{traits::AccountIdConversion, ModuleId};
 	// --- darwinia ---
-	use crate::*;
+	use crate::weights::WeightInfo;
 
-	pub type MappedRing = u128;
-
-	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-
-	pub type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
-
-	type RingCurrency<T> = <T as Config>::RingCurrency;
-}
-
-// --- substrate ---
-use frame_support::{
-	decl_error, decl_event, decl_module, decl_storage,
-	traits::{Currency, Get},
-};
-use sp_runtime::{traits::AccountIdConversion, ModuleId};
-// --- darwinia ---
-use types::*;
-
-pub trait Config: frame_system::Config {
-	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
-
-	type ModuleId: Get<ModuleId>;
-
-	type RingCurrency: Currency<AccountId<Self>>;
-
-	type WeightInfo: WeightInfo;
-}
-
-decl_event! {
-	pub enum Event<T>
-	where
-		AccountId = AccountId<T>,
-		RingBalance = RingBalance<T>,
-	{
-		/// Dummy Event. [who, swapped *CRING*, burned Mapped *RING*]
-		DummyEvent(AccountId, RingBalance, MappedRing),
-	}
-}
-
-decl_error! {
-	pub enum Error for Module<T: Config> {
-	}
-}
-
-decl_storage! {
-	trait Store for Module<T: Config> as DarwiniaCrabIssuing {
-		pub TotalMappedRing get(fn total_mapped_ring) config(): MappedRing;
+	#[pallet::config]
+	pub trait Config: frame_system::Config {
+		// --- substrate ---
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type WeightInfo: WeightInfo;
+		// --- darwinia ---
+		#[pallet::constant]
+		type ModuleId: Get<ModuleId>;
+		type RingCurrency: Currency<AccountId<Self>>;
 	}
 
-	add_extra_genesis {
-		build(|config| {
+	#[pallet::event]
+	pub enum Event<T: Config> {
+		/// Dummy Event. \[who, swapped *CRING*, burned Mapped *RING*\]
+		DummyEvent(AccountId<T>, RingBalance<T>, MappedRing),
+	}
+
+	#[pallet::error]
+	pub enum Error<T> {}
+
+	#[pallet::storage]
+	#[pallet::getter(fn total_mapped_ring)]
+	pub type TotalMappedRing<T: Config> = StorageValue<_, MappedRing>;
+
+	#[cfg_attr(feature = "std", derive(Default))]
+	#[pallet::genesis_config]
+	pub struct GenesisConfig {
+		pub total_mapped_ring: MappedRing,
+	}
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig {
+		fn build(&self) {
 			let _ = T::RingCurrency::make_free_balance_be(
-				&<Module<T>>::account_id(),
+				&T::ModuleId::get().into_account(),
 				T::RingCurrency::minimum_balance(),
 			);
 
-			TotalMappedRing::put(config.total_mapped_ring);
-		});
+			<TotalMappedRing<T>>::put(self.total_mapped_ring);
+		}
 	}
+
+	#[pallet::pallet]
+	pub struct Pallet<T>(_);
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {}
 }
 
-decl_module! {
-	pub struct Module<T: Config> for enum Call
-	where
-		origin: T::Origin
-	{
-		type Error = Error<T>;
+pub mod migration {
+	const OLD_PALLET_NAME: &[u8] = b"DarwiniaCrabIssuing";
 
-		const ModuleId: ModuleId = T::ModuleId::get();
+	#[cfg(feature = "try-runtime")]
+	pub mod try_runtime {
+		// --- substrate ---
+		use frame_support::{pallet_prelude::*, traits::StorageInstance};
+		// --- darwinia ---
+		use crate::*;
 
-		fn deposit_event() = default;
+		macro_rules! generate_storage_types {
+			($prefix:expr, $name:ident => Value<$value:ty>) => {
+				paste::paste! {
+					type $name = StorageValue<[<$name Instance>], $value, ValueQuery>;
+
+					struct [<$name Instance>];
+					impl StorageInstance for [<$name Instance>] {
+						const STORAGE_PREFIX: &'static str = "TotalMappedRing";
+
+						fn pallet_prefix() -> &'static str { $prefix }
+					}
+				}
+			};
+		}
+
+		generate_storage_types!("DarwiniaCrabIssuing", OldTotalMappedRing => Value<()>);
+		generate_storage_types!("CrabIssuing", NewTotalMappedRing => Value<()>);
+
+		pub fn pre_migrate<T: Config>() -> Result<(), &'static str> {
+			log::info!(
+				"OldTotalMappedRing.exits()? {:?}",
+				OldTotalMappedRing::exists()
+			);
+			log::info!(
+				"NewTotalMappedRing.exits()? {:?}",
+				NewTotalMappedRing::exists()
+			);
+
+			assert!(OldTotalMappedRing::exists());
+			assert!(!NewTotalMappedRing::exists());
+
+			log::info!("Migrating `DarwiniaCrabIssuing` to `CrabIssuing`...");
+			migration::migrate(b"CrabIssuing");
+
+			log::info!(
+				"OldTotalMappedRing.exits()? {:?}",
+				OldTotalMappedRing::exists()
+			);
+			log::info!(
+				"NewTotalMappedRing.exits()? {:?}",
+				NewTotalMappedRing::exists()
+			);
+
+			assert!(!OldTotalMappedRing::exists());
+			assert!(NewTotalMappedRing::exists());
+
+			Ok(())
+		}
 	}
-}
 
-impl<T: Config> Module<T> {
-	pub fn account_id() -> T::AccountId {
-		T::ModuleId::get().into_account()
+	pub fn migrate(new_pallet_name: &[u8]) {
+		frame_support::migration::move_pallet(OLD_PALLET_NAME, new_pallet_name);
 	}
 }

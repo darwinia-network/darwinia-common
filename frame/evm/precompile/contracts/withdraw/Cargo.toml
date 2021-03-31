@@ -12,7 +12,7 @@ version     = "2.1.0"
 [dependencies]
 # crates
 codec     = { package = "parity-scale-codec", version = "2.0.1", default-features = false }
-evm       = { version = "0.24.0", features = ["with-codec"], default-features = false }
+evm       = { version = "0.25.0", features = ["with-codec"], default-features = false }
 ripemd160 = { version = "0.9", default-features = false }
 # darwinia
 darwinia-evm = { default-features = false, path = "../../../" }
