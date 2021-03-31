@@ -58,11 +58,6 @@ pub mod pallet {
 		type RingCurrency: Currency<AccountId<Self>>;
 	}
 
-	// No event
-	// No error
-	// No storage
-
-	#[cfg(feature = "std")]
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub backed_ring: RingBalance<T>,
@@ -91,12 +86,4 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {}
-}
-
-pub mod migration {
-	const OLD_PALLET_NAME: &[u8] = b"DarwiniaCrabBacking";
-
-	pub fn migrate(new_pallet_name: &[u8]) {
-		frame_support::migration::move_pallet(OLD_PALLET_NAME, new_pallet_name);
-	}
 }
