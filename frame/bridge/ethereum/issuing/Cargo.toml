@@ -13,12 +13,12 @@ version     = "2.1.0"
 # crates
 codec               = { package = "parity-scale-codec", version = "2.0.1", default-features = false, features = ["derive"] }
 ethereum-types      = { default-features = false, version = "0.11.0" }
-ethereum-primitives = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
 log                 = { version = "0.4.14" }
 rustc-hex           = { default-features = false, version = "2.1.0" }
 serde               = { version = "1.0.124", optional = true }
 serde_json          = { version = "1.0.62", optional = true }
 # darwinia
+ethereum-primitives                 = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
 darwinia-evm                        = { default-features = false, path = "../../../evm" }
 darwinia-ethereum-issuing-contract  = { default-features = false, path = "contract" }
 darwinia-evm-precompile             = { default-features = false, path = "../../../evm/precompile" }

@@ -18,7 +18,7 @@
 
 use crate::{self as dvm_ethereum, account_basic::DVMAccountBasicMapping, *};
 use codec::{Decode, Encode};
-use darwinia_evm::{AddressMapping, ContractHandler, EnsureAddressTruncated, FeeCalculator};
+use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator, IssuingHandler};
 use ethereum::{TransactionAction, TransactionSignature};
 use frame_support::ConsensusEngineId;
 use frame_system::mocking::*;
@@ -118,9 +118,9 @@ impl FeeCalculator for FixedGasPrice {
 	}
 }
 
-/// EmptyContractHandler
-pub struct EmptyContractHandler;
-impl ContractHandler for EmptyContractHandler {
+/// EmptyIssuingHandler
+pub struct EmptyIssuingHandler;
+impl IssuingHandler for EmptyIssuingHandler {
 	fn handle(_address: H160, _caller: H160, _input: &[u8]) -> DispatchResult {
 		Ok(())
 	}
@@ -165,7 +165,7 @@ impl darwinia_evm::Config for Test {
 	type ChainId = ChainId;
 	type Runner = darwinia_evm::runner::stack::Runner<Self>;
 	type AccountBasicMapping = DVMAccountBasicMapping<Self>;
-	type ContractHandler = EmptyContractHandler;
+	type IssuingHandler = EmptyIssuingHandler;
 }
 
 frame_support::parameter_types! {

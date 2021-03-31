@@ -32,5 +32,5 @@ impl Config for Runtime {
 	type ChainId = ChainId;
 	type AccountBasicMapping = DVMAccountBasicMapping<Self>;
 	type Runner = Runner<Self>;
-	type ContractHandler = EthereumIssuing;
+	type IssuingHandler = EthereumIssuing;
 }

@@ -255,7 +255,7 @@ impl GasWeightMapping for () {
 }
 
 /// A contract handle for ethereum issuing
-pub trait ContractHandler {
+pub trait IssuingHandler {
 	fn handle(address: H160, caller: H160, input: &[u8]) -> DispatchResult;
 }
 
@@ -290,8 +290,8 @@ pub trait Config: frame_system::Config + pallet_timestamp::Config {
 	type Runner: Runner<Self>;
 	/// The account basic mapping way
 	type AccountBasicMapping: AccountBasicMapping;
-	/// Contract caller
-	type ContractHandler: ContractHandler;
+	/// Issuing contracts handler
+	type IssuingHandler: IssuingHandler;
 
 	/// EVM config used in the module.
 	fn config() -> &'static EvmConfig {

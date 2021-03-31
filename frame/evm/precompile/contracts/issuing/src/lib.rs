@@ -21,7 +21,7 @@
 extern crate alloc;
 use alloc::vec::Vec;
 
-use darwinia_evm::{Config, ContractHandler};
+use darwinia_evm::{Config, IssuingHandler};
 use dp_evm::Precompile;
 use evm::{Context, ExitError, ExitSucceed};
 use sp_std::marker::PhantomData;
@@ -40,7 +40,7 @@ impl<T: Config> Precompile for Issuing<T> {
 		_: Option<u64>,
 		context: &Context,
 	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
-		T::ContractHandler::handle(context.address, context.caller, input)
+		T::IssuingHandler::handle(context.address, context.caller, input)
 			.map_err(|_| ExitError::Other("contract handle failed".into()))?;
 		Ok((ExitSucceed::Returned, Default::default(), 20000))
 	}

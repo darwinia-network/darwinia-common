@@ -45,7 +45,7 @@ use darwinia_ethereum_issuing_contract::{
 	Abi, Event as EthEvent, Log as EthLog, TokenBurnInfo, TokenRegisterInfo,
 };
 use darwinia_evm::{
-	AccountBasicMapping, AddressMapping, ContractHandler, FeeCalculator, GasWeightMapping,
+	AccountBasicMapping, AddressMapping, FeeCalculator, GasWeightMapping, IssuingHandler,
 };
 use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::{balance::lock::*, traits::EthereumReceipt};
@@ -396,7 +396,7 @@ impl<T: Config> Module<T> {
 	}
 }
 
-impl<T: Config> ContractHandler for Module<T> {
+impl<T: Config> IssuingHandler for Module<T> {
 	/// handle
 	fn handle(address: H160, caller: H160, input: &[u8]) -> DispatchResult {
 		ensure!(MappingFactoryAddress::get() == caller, <Error<T>>::AssetAR);
