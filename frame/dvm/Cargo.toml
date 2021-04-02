@@ -20,6 +20,7 @@ libsecp256k1   = { version = "0.3.5", default-features = false }
 rlp            = { version = "0.5.0", default-features = false }
 serde          = { version = "1.0.124", optional = true, default-features = false }
 sha3           = { version = "0.9.1", default-features = false }
+log            = { version = "0.4.14" }
 # darwinia
 darwinia-evm        = { default-features = false, path = "../evm" }
 darwinia-support    = { default-features = false, path = "../support" }

@@ -252,6 +252,7 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 			balances: vec![
 				(root.clone(), BUNCH_OF_COINS),
 				(get_account_id_from_seed::<sr25519::Public>("Alice"), A_FEW_COINS),
+				(get_account_id_from_seed::<sr25519::Public>("Bob"), A_FEW_COINS),
 			]
 			.into_iter()
 			.chain(
