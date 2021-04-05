@@ -777,7 +777,7 @@ impl_runtime_apis! {
 			// --- darwinia ---
 			use darwinia_evm::AccountBasicMapping;
 
-			<Runtime as darwinia_evm::Config>::AccountBasicMapping::account_basic(&address)
+			<Runtime as darwinia_evm::Config>::RingAccountBasicMapping::account_basic(&address)
 		}
 
 		fn account_code_at(address: H160) -> Vec<u8> {

@@ -218,7 +218,7 @@ impl<T: Config> frame_support::unsigned::ValidateUnsigned for Module<T> {
 			})?;
 
 			let account_data =
-				<T as darwinia_evm::Config>::AccountBasicMapping::account_basic(&origin);
+				<T as darwinia_evm::Config>::RingAccountBasicMapping::account_basic(&origin);
 
 			if transaction.nonce < account_data.nonce {
 				return InvalidTransaction::Stale.into();
@@ -320,33 +320,33 @@ impl<T: Config> Module<T> {
 	}
 
 	/// Get the remaining balance for evm address
-	pub fn remaining_balance(account_id: &T::AccountId) -> RingBalance<T> {
-		<RemainingRingBalance<T>>::get(account_id)
-	}
+	// pub fn remaining_balance(account_id: &T::AccountId) -> RingBalance<T> {
+	// 	<RemainingRingBalance<T>>::get(account_id)
+	// }
 
-	// Set the remaining balance for evm address
-	pub fn set_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
-		<RemainingRingBalance<T>>::insert(account_id, value)
-	}
+	// // Set the remaining balance for evm address
+	// pub fn set_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
+	// 	<RemainingRingBalance<T>>::insert(account_id, value)
+	// }
 
-	// Remove the remaining balance for evm address
-	pub fn remove_remaining_balance(account_id: &T::AccountId) {
-		<RemainingRingBalance<T>>::remove(account_id)
-	}
+	// // Remove the remaining balance for evm address
+	// pub fn remove_remaining_balance(account_id: &T::AccountId) {
+	// 	<RemainingRingBalance<T>>::remove(account_id)
+	// }
 
-	/// Inc remaining balance
-	pub fn inc_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
-		let remain_balance = Self::remaining_balance(account_id);
-		let updated_balance = remain_balance.saturating_add(value);
-		<RemainingRingBalance<T>>::insert(account_id, updated_balance);
-	}
+	// /// Inc remaining balance
+	// pub fn inc_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
+	// 	let remain_balance = Self::remaining_balance(account_id);
+	// 	let updated_balance = remain_balance.saturating_add(value);
+	// 	<RemainingRingBalance<T>>::insert(account_id, updated_balance);
+	// }
 
-	/// Dec remaining balance
-	pub fn dec_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
-		let remain_balance = Self::remaining_balance(account_id);
-		let updated_balance = remain_balance.saturating_sub(value);
-		<RemainingRingBalance<T>>::insert(account_id, updated_balance);
-	}
+	// /// Dec remaining balance
+	// pub fn dec_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
+	// 	let remain_balance = Self::remaining_balance(account_id);
+	// 	let updated_balance = remain_balance.saturating_sub(value);
+	// 	<RemainingRingBalance<T>>::insert(account_id, updated_balance);
+	// }
 
 	fn logs_bloom(logs: Vec<Log>, bloom: &mut Bloom) {
 		for log in logs {
@@ -512,5 +512,73 @@ impl<T: Config> Module<T> {
 				Ok((None, Some(res.value), CallOrCreateInfo::Create(res)))
 			}
 		}
+	}
+}
+
+pub struct RingStruct;
+impl<T: Config> account_basic::RemainBalanceOp<T, RingBalance<T>> for RingStruct {
+	/// Get the remaining balance for evm address
+	fn remaining_balance(account_id: &T::AccountId) -> RingBalance<T> {
+		<RemainingRingBalance<T>>::get(account_id)
+	}
+	/// Set the remaining balance for evm address
+	fn set_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
+		<RemainingRingBalance<T>>::insert(account_id, value)
+	}
+	/// Remove the remaining balance for evm address
+	fn remove_remaining_balance(account_id: &T::AccountId) {
+		<RemainingRingBalance<T>>::remove(account_id)
+	}
+	/// Inc remaining balance
+	fn inc_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
+		let remain_balance =
+			<Self as account_basic::RemainBalanceOp<T, RingBalance<T>>>::remaining_balance(
+				account_id,
+			);
+		let updated_balance = remain_balance.saturating_add(value);
+		<RemainingRingBalance<T>>::insert(account_id, updated_balance);
+	}
+	/// Dec remaining balance
+	fn dec_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
+		let remain_balance =
+			<Self as account_basic::RemainBalanceOp<T, RingBalance<T>>>::remaining_balance(
+				account_id,
+			);
+		let updated_balance = remain_balance.saturating_sub(value);
+		<RemainingRingBalance<T>>::insert(account_id, updated_balance);
+	}
+}
+
+pub struct KtonStruct;
+impl<T: Config> account_basic::RemainBalanceOp<T, KtonBalance<T>> for KtonStruct {
+	/// Get the remaining balance for evm address
+	fn remaining_balance(account_id: &T::AccountId) -> KtonBalance<T> {
+		<RemainingKtonBalance<T>>::get(account_id)
+	}
+	/// Set the remaining balance for evm address
+	fn set_remaining_balance(account_id: &T::AccountId, value: KtonBalance<T>) {
+		<RemainingKtonBalance<T>>::insert(account_id, value)
+	}
+	/// Remove the remaining balance for evm address
+	fn remove_remaining_balance(account_id: &T::AccountId) {
+		<RemainingKtonBalance<T>>::remove(account_id)
+	}
+	/// Inc remaining balance
+	fn inc_remaining_balance(account_id: &T::AccountId, value: KtonBalance<T>) {
+		let remain_balance =
+			<Self as account_basic::RemainBalanceOp<T, KtonBalance<T>>>::remaining_balance(
+				account_id,
+			);
+		let updated_balance = remain_balance.saturating_add(value);
+		<RemainingKtonBalance<T>>::insert(account_id, updated_balance);
+	}
+	/// Dec remaining balance
+	fn dec_remaining_balance(account_id: &T::AccountId, value: KtonBalance<T>) {
+		let remain_balance =
+			<Self as account_basic::RemainBalanceOp<T, KtonBalance<T>>>::remaining_balance(
+				account_id,
+			);
+		let updated_balance = remain_balance.saturating_sub(value);
+		<RemainingKtonBalance<T>>::insert(account_id, updated_balance);
 	}
 }

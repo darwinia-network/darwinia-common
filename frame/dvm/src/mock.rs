@@ -156,7 +156,8 @@ impl darwinia_evm::Config for Test {
 	type Precompiles = darwinia_evm_precompile::DarwiniaPrecompiles<Self>;
 	type ChainId = ChainId;
 	type Runner = darwinia_evm::runner::stack::Runner<Self>;
-	type AccountBasicMapping = DVMAccountBasicMapping<Self>;
+	type RingAccountBasicMapping = DVMAccountBasicMapping<Self, Ring, RingStruct>;
+	type KtonAccountBasicMapping = DVMAccountBasicMapping<Self, Kton, KtonStruct>;
 }
 
 frame_support::parameter_types! {
@@ -169,6 +170,7 @@ impl Config for Test {
 	type StateRoot = IntermediateStateRoot;
 	type BlockGasLimit = BlockGasLimit;
 	type RingCurrency = Ring;
+	type KtonCurrency = Kton;
 }
 
 frame_support::construct_runtime! {

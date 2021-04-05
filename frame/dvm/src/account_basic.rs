@@ -4,9 +4,26 @@ use frame_support::traits::Currency;
 use sp_core::{H160, U256};
 use sp_runtime::{traits::UniqueSaturatedInto, SaturatedConversion};
 
-pub struct DVMAccountBasicMapping<T>(sp_std::marker::PhantomData<T>);
+pub trait RemainBalanceOp<T: Config, B> {
+	/// Get the remaining balance for evm address
+	fn remaining_balance(account_id: &T::AccountId) -> B;
+	/// Set the remaining balance for evm address
+	fn set_remaining_balance(account_id: &T::AccountId, value: B);
+	/// Remove the remaining balance for evm address
+	fn remove_remaining_balance(account_id: &T::AccountId);
+	/// Inc remaining balance
+	fn inc_remaining_balance(account_id: &T::AccountId, value: B);
+	/// Dec remaining balance
+	fn dec_remaining_balance(account_id: &T::AccountId, value: B);
+}
 
-impl<T: Config> AccountBasicMapping for DVMAccountBasicMapping<T> {
+pub struct DVMAccountBasicMapping<T, C, S>(sp_std::marker::PhantomData<(T, C, S)>);
+
+impl<T: Config, C, S> AccountBasicMapping for DVMAccountBasicMapping<T, C, S>
+where
+	S: RemainBalanceOp<T, C::Balance>,
+	C: Currency<T::AccountId>,
+{
 	/// Get the account basic in EVM format.
 	fn account_basic(address: &H160) -> EVMAccount {
 		let account_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(*address);
@@ -16,12 +33,10 @@ impl<T: Config> AccountBasicMapping for DVMAccountBasicMapping<T> {
 			.unwrap_or(U256::from(0));
 
 		// Get balance from <T as darwinia_evm::Config>::RingCurrency
-		let balance: U256 = <T as Config>::RingCurrency::free_balance(&account_id)
-			.saturated_into::<u128>()
-			.into();
+		let balance: U256 = C::free_balance(&account_id).saturated_into::<u128>().into();
 
 		// Get remaining balance from dvm
-		let remaining_balance: U256 = crate::Module::<T>::remaining_balance(&account_id)
+		let remaining_balance: U256 = S::remaining_balance(&account_id)
 			.saturated_into::<u128>()
 			.into();
 
@@ -41,14 +56,13 @@ impl<T: Config> AccountBasicMapping for DVMAccountBasicMapping<T> {
 		let helper = U256::from(10)
 			.checked_pow(U256::from(9))
 			.unwrap_or(U256::MAX);
-		let existential_deposit: u128 = <T as Config>::RingCurrency::minimum_balance()
-			.saturated_into::<u128>()
-			.into();
+		let existential_deposit: u128 = C::minimum_balance().saturated_into::<u128>().into();
 		let existential_deposit_dvm = U256::from(existential_deposit) * helper;
 
 		let account_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(*address);
-		let current = T::AccountBasicMapping::account_basic(address);
-		let dvm_balance: U256 = crate::Module::<T>::remaining_balance(&account_id)
+		// let current = T::AccountBasicMapping::account_basic(address);
+		let current = Self::account_basic(address);
+		let dvm_balance: U256 = S::remaining_balance(&account_id)
 			.saturated_into::<u128>()
 			.into();
 
@@ -64,20 +78,17 @@ impl<T: Config> AccountBasicMapping for DVMAccountBasicMapping<T> {
 						.saturating_add(U256::from(1) * helper)
 						.saturating_sub(diff_remaining_balance);
 
-					<T as Config>::RingCurrency::slash(
+					C::slash(
 						&account_id,
 						(diff_balance + 1).low_u128().unique_saturated_into(),
 					);
-					crate::Module::<T>::set_remaining_balance(
+					S::set_remaining_balance(
 						&account_id,
 						remaining_balance.low_u128().saturated_into(),
 					);
 				} else {
-					<T as Config>::RingCurrency::slash(
-						&account_id,
-						diff_balance.low_u128().unique_saturated_into(),
-					);
-					crate::Module::<T>::dec_remaining_balance(
+					C::slash(&account_id, diff_balance.low_u128().unique_saturated_into());
+					S::dec_remaining_balance(
 						&account_id,
 						diff_remaining_balance.low_u128().saturated_into(),
 					);
@@ -91,20 +102,20 @@ impl<T: Config> AccountBasicMapping for DVMAccountBasicMapping<T> {
 				if dvm_balance + diff_remaining_balance >= helper {
 					let remaining_balance = dvm_balance + diff_remaining_balance - helper;
 
-					<T as Config>::RingCurrency::deposit_creating(
+					C::deposit_creating(
 						&account_id,
 						(diff_balance + 1).low_u128().unique_saturated_into(),
 					);
-					crate::Module::<T>::set_remaining_balance(
+					S::set_remaining_balance(
 						&account_id,
 						remaining_balance.low_u128().saturated_into(),
 					);
 				} else {
-					<T as Config>::RingCurrency::deposit_creating(
+					C::deposit_creating(
 						&account_id,
 						diff_balance.low_u128().unique_saturated_into(),
 					);
-					crate::Module::<T>::inc_remaining_balance(
+					S::inc_remaining_balance(
 						&account_id,
 						diff_remaining_balance.low_u128().saturated_into(),
 					);
@@ -112,9 +123,9 @@ impl<T: Config> AccountBasicMapping for DVMAccountBasicMapping<T> {
 			}
 			_ => return,
 		}
-		let after_mutate = T::AccountBasicMapping::account_basic(address);
+		let after_mutate = Self::account_basic(address);
 		if after_mutate.balance < existential_deposit_dvm {
-			crate::Module::<T>::remove_remaining_balance(&account_id);
+			S::remove_remaining_balance(&account_id);
 		}
 	}
 }

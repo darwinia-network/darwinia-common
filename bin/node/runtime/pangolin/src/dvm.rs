@@ -27,4 +27,5 @@ impl Config for Runtime {
 	type StateRoot = IntermediateStateRoot;
 	type BlockGasLimit = BlockGasLimit;
 	type RingCurrency = Ring;
+	type KtonCurrency = Kton;
 }
