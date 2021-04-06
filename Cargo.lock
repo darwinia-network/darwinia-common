@@ -1438,6 +1438,7 @@ dependencies = [
  "darwinia-balances",
  "darwinia-support",
  "dp-evm",
+ "dvm-ethereum",
  "evm",
  "evm-gasometer",
  "evm-runtime",

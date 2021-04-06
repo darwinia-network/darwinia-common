@@ -33,7 +33,7 @@ pub use dp_evm::{
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage,
 	dispatch::DispatchResultWithPostInfo,
-	traits::{Currency, Get},
+	traits::{Currency, ExistenceRequirement, Get},
 	weights::{Pays, PostDispatchInfo, Weight},
 };
 use frame_system::RawOrigin;
@@ -240,8 +240,21 @@ impl<T: Config> AccountBasic for RawAccountBasic<T> {
 		}
 	}
 
-	fn transfer(_source: &H160, _target: &H160, _value: U256) -> Result<(), ExitError> {
-		todo!();
+	fn transfer(source: &H160, target: &H160, value: U256) -> Result<(), ExitError> {
+		let source_account_id = T::AddressMapping::into_account_id(*source);
+		let target_account_id = T::AddressMapping::into_account_id(*target);
+		let value = value.low_u128().unique_saturated_into();
+		let res = T::RingCurrency::transfer(
+			&source_account_id,
+			&target_account_id,
+			value,
+			ExistenceRequirement::AllowDeath,
+		);
+
+		match res {
+			Ok(()) => Ok(()),
+			Err(_) => Err(ExitError::Other("Transfer error".into())),
+		}
 	}
 }
 
