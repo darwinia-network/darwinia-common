@@ -19,7 +19,7 @@
 
 use crate::runner::Runner as RunnerT;
 use crate::{
-	AccountBasicMapping, AccountCodes, AccountStorages, AddressMapping, Config, Error, Event,
+	AccountBasic, AccountCodes, AccountStorages, AddressMapping, Config, Error, Event,
 	FeeCalculator, Module, PrecompileSet,
 };
 
@@ -89,7 +89,7 @@ impl<T: Config> Runner<T> {
 		let total_payment = value
 			.checked_add(total_fee)
 			.ok_or(Error::<T>::PaymentOverflow)?;
-		let source_account = T::RingAccountBasicMapping::account_basic(&source);
+		let source_account = T::RingAccountBasic::account_basic(&source);
 		ensure!(
 			source_account.balance >= total_payment,
 			Error::<T>::BalanceLow
@@ -391,7 +391,7 @@ impl<'vicinity, 'config, T: Config> BackendT for SubstrateStackState<'vicinity, 
 	}
 
 	fn basic(&self, address: H160) -> evm::backend::Basic {
-		let account = T::RingAccountBasicMapping::account_basic(&address);
+		let account = T::RingAccountBasic::account_basic(&address);
 
 		evm::backend::Basic {
 			balance: account.balance,
@@ -496,13 +496,13 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 	}
 
 	fn transfer(&mut self, transfer: Transfer) -> Result<(), ExitError> {
-		let source_account = T::RingAccountBasicMapping::account_basic(&transfer.source);
+		let source_account = T::RingAccountBasic::account_basic(&transfer.source);
 		ensure!(
 			source_account.balance >= transfer.value,
 			ExitError::Other("Insufficient balance".into())
 		);
 		let new_source_balance = source_account.balance.saturating_sub(transfer.value);
-		T::RingAccountBasicMapping::mutate_account_basic(
+		T::RingAccountBasic::mutate_account_basic(
 			&transfer.source,
 			Account {
 				nonce: source_account.nonce,
@@ -510,9 +510,9 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 			},
 		);
 
-		let target_account = T::RingAccountBasicMapping::account_basic(&transfer.target);
+		let target_account = T::RingAccountBasic::account_basic(&transfer.target);
 		let new_target_balance = target_account.balance.saturating_add(transfer.value);
-		T::RingAccountBasicMapping::mutate_account_basic(
+		T::RingAccountBasic::mutate_account_basic(
 			&transfer.target,
 			Account {
 				nonce: target_account.nonce,

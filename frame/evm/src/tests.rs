@@ -102,7 +102,7 @@ impl Config for Test {
 	type Precompiles = ();
 	type ChainId = ();
 	type Runner = crate::runner::stack::Runner<Self>;
-	type AccountBasicMapping = RawAccountBasicMapping<Test>;
+	type AccountBasic = RawAccountBasic<Test>;
 }
 
 frame_support::construct_runtime! {

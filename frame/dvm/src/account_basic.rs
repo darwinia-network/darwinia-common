@@ -1,15 +1,15 @@
 use crate::Config;
-use darwinia_evm::{Account as EVMAccount, AccountBasicMapping, AddressMapping};
+use darwinia_evm::{Account as EVMAccount, AccountBasic, AddressMapping};
 use frame_support::traits::Currency;
 use sp_core::{H160, U256};
 use sp_runtime::{traits::UniqueSaturatedInto, SaturatedConversion};
 
 pub trait RemainBalanceOp<T: Config, B> {
-	/// Get the remaining balance for evm address
+	/// Get the remaining balance
 	fn remaining_balance(account_id: &T::AccountId) -> B;
-	/// Set the remaining balance for evm address
+	/// Set the remaining balance
 	fn set_remaining_balance(account_id: &T::AccountId, value: B);
-	/// Remove the remaining balance for evm address
+	/// Remove the remaining balance
 	fn remove_remaining_balance(account_id: &T::AccountId);
 	/// Inc remaining balance
 	fn inc_remaining_balance(account_id: &T::AccountId, value: B);
@@ -17,11 +17,11 @@ pub trait RemainBalanceOp<T: Config, B> {
 	fn dec_remaining_balance(account_id: &T::AccountId, value: B);
 }
 
-pub struct DVMAccountBasicMapping<T, C, S>(sp_std::marker::PhantomData<(T, C, S)>);
+pub struct DVMAccountBasic<T, C, RB>(sp_std::marker::PhantomData<(T, C, RB)>);
 
-impl<T: Config, C, S> AccountBasicMapping for DVMAccountBasicMapping<T, C, S>
+impl<T: Config, C, RB> AccountBasic for DVMAccountBasic<T, C, RB>
 where
-	S: RemainBalanceOp<T, C::Balance>,
+	RB: RemainBalanceOp<T, C::Balance>,
 	C: Currency<T::AccountId>,
 {
 	/// Get the account basic in EVM format.
@@ -32,11 +32,11 @@ where
 			.checked_pow(U256::from(9))
 			.unwrap_or(U256::from(0));
 
-		// Get balance from <T as darwinia_evm::Config>::RingCurrency
+		// Get balance from Currency
 		let balance: U256 = C::free_balance(&account_id).saturated_into::<u128>().into();
 
 		// Get remaining balance from dvm
-		let remaining_balance: U256 = S::remaining_balance(&account_id)
+		let remaining_balance: U256 = RB::remaining_balance(&account_id)
 			.saturated_into::<u128>()
 			.into();
 
@@ -60,9 +60,8 @@ where
 		let existential_deposit_dvm = U256::from(existential_deposit) * helper;
 
 		let account_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(*address);
-		// let current = T::AccountBasicMapping::account_basic(address);
 		let current = Self::account_basic(address);
-		let dvm_balance: U256 = S::remaining_balance(&account_id)
+		let dvm_balance: U256 = RB::remaining_balance(&account_id)
 			.saturated_into::<u128>()
 			.into();
 
@@ -72,7 +71,7 @@ where
 				let diff = cb - nb;
 				let (diff_balance, diff_remaining_balance) = diff.div_mod(helper);
 				// If the dvm storage < diff remaining balance, we can not do sub operation directly.
-				// Otherwise, slash <T as darwinia_evm::Config>::RingCurrency, dec dvm storage balance directly.
+				// Otherwise, slash Currency, dec dvm storage balance directly.
 				if dvm_balance < diff_remaining_balance {
 					let remaining_balance = dvm_balance
 						.saturating_add(U256::from(1) * helper)
@@ -82,13 +81,13 @@ where
 						&account_id,
 						(diff_balance + 1).low_u128().unique_saturated_into(),
 					);
-					S::set_remaining_balance(
+					RB::set_remaining_balance(
 						&account_id,
 						remaining_balance.low_u128().saturated_into(),
 					);
 				} else {
 					C::slash(&account_id, diff_balance.low_u128().unique_saturated_into());
-					S::dec_remaining_balance(
+					RB::dec_remaining_balance(
 						&account_id,
 						diff_remaining_balance.low_u128().saturated_into(),
 					);
@@ -98,7 +97,7 @@ where
 				let diff = nb - cb;
 				let (diff_balance, diff_remaining_balance) = diff.div_mod(helper);
 
-				// If dvm storage balance + diff remaining balance > helper, we must update <T as darwinia_evm::Config>::RingCurrency balance.
+				// If dvm storage balance + diff remaining balance > helper, we must update Currency balance.
 				if dvm_balance + diff_remaining_balance >= helper {
 					let remaining_balance = dvm_balance + diff_remaining_balance - helper;
 
@@ -106,7 +105,7 @@ where
 						&account_id,
 						(diff_balance + 1).low_u128().unique_saturated_into(),
 					);
-					S::set_remaining_balance(
+					RB::set_remaining_balance(
 						&account_id,
 						remaining_balance.low_u128().saturated_into(),
 					);
@@ -115,7 +114,7 @@ where
 						&account_id,
 						diff_balance.low_u128().unique_saturated_into(),
 					);
-					S::inc_remaining_balance(
+					RB::inc_remaining_balance(
 						&account_id,
 						diff_remaining_balance.low_u128().saturated_into(),
 					);
@@ -125,7 +124,7 @@ where
 		}
 		let after_mutate = Self::account_basic(address);
 		if after_mutate.balance < existential_deposit_dvm {
-			S::remove_remaining_balance(&account_id);
+			RB::remove_remaining_balance(&account_id);
 		}
 	}
 }

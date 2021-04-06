@@ -6,7 +6,7 @@ use darwinia_evm::{
 	runner::stack::Runner, ConcatAddressMapping, Config, EnsureAddressTruncated, FeeCalculator,
 };
 use darwinia_evm_precompile::DarwiniaPrecompiles;
-use dvm_ethereum::account_basic::DVMAccountBasicMapping;
+use dvm_ethereum::account_basic::DVMAccountBasic;
 use dvm_ethereum::{KtonRemainBalance, RingRemainBalance};
 
 /// Fixed gas price.
@@ -31,7 +31,7 @@ impl Config for Runtime {
 	type Event = Event;
 	type Precompiles = DarwiniaPrecompiles<Self>;
 	type ChainId = ChainId;
-	type RingAccountBasicMapping = DVMAccountBasicMapping<Self, Ring, RingRemainBalance>;
-	type KtonAccountBasicMapping = DVMAccountBasicMapping<Self, Kton, KtonRemainBalance>;
+	type RingAccountBasic = DVMAccountBasic<Self, Ring, RingRemainBalance>;
+	type KtonAccountBasic = DVMAccountBasic<Self, Kton, KtonRemainBalance>;
 	type Runner = Runner<Self>;
 }

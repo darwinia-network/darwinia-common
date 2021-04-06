@@ -16,7 +16,7 @@
 
 //! Test utilities
 
-use crate::{self as dvm_ethereum, account_basic::DVMAccountBasicMapping, *};
+use crate::{self as dvm_ethereum, account_basic::DVMAccountBasic, *};
 use codec::{Decode, Encode};
 use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator};
 use ethereum::{TransactionAction, TransactionSignature};
@@ -156,8 +156,8 @@ impl darwinia_evm::Config for Test {
 	type Precompiles = darwinia_evm_precompile::DarwiniaPrecompiles<Self>;
 	type ChainId = ChainId;
 	type Runner = darwinia_evm::runner::stack::Runner<Self>;
-	type RingAccountBasicMapping = DVMAccountBasicMapping<Self, Ring, RingRemainBalance>;
-	type KtonAccountBasicMapping = DVMAccountBasicMapping<Self, Kton, KtonRemainBalance>;
+	type RingAccountBasic = DVMAccountBasic<Self, Ring, RingRemainBalance>;
+	type KtonAccountBasic = DVMAccountBasic<Self, Kton, KtonRemainBalance>;
 }
 
 frame_support::parameter_types! {

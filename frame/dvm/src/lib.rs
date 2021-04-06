@@ -23,7 +23,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 // --- darwinia ---
-use darwinia_evm::{AccountBasicMapping, FeeCalculator, GasWeightMapping, Runner};
+use darwinia_evm::{AccountBasic, FeeCalculator, GasWeightMapping, Runner};
 use dp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
 use dp_evm::CallOrCreateInfo;
 #[cfg(feature = "std")]
@@ -218,7 +218,7 @@ impl<T: Config> frame_support::unsigned::ValidateUnsigned for Module<T> {
 			})?;
 
 			let account_data =
-				<T as darwinia_evm::Config>::RingAccountBasicMapping::account_basic(&origin);
+				<T as darwinia_evm::Config>::RingAccountBasic::account_basic(&origin);
 
 			if transaction.nonce < account_data.nonce {
 				return InvalidTransaction::Stale.into();
@@ -517,15 +517,15 @@ impl<T: Config> Module<T> {
 
 pub struct RingRemainBalance;
 impl<T: Config> account_basic::RemainBalanceOp<T, RingBalance<T>> for RingRemainBalance {
-	/// Get the remaining balance for evm address
+	/// Get the remaining balance
 	fn remaining_balance(account_id: &T::AccountId) -> RingBalance<T> {
 		<RemainingRingBalance<T>>::get(account_id)
 	}
-	/// Set the remaining balance for evm address
+	/// Set the remaining balance
 	fn set_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
 		<RemainingRingBalance<T>>::insert(account_id, value)
 	}
-	/// Remove the remaining balance for evm address
+	/// Remove the remaining balance
 	fn remove_remaining_balance(account_id: &T::AccountId) {
 		<RemainingRingBalance<T>>::remove(account_id)
 	}
@@ -551,15 +551,15 @@ impl<T: Config> account_basic::RemainBalanceOp<T, RingBalance<T>> for RingRemain
 
 pub struct KtonRemainBalance;
 impl<T: Config> account_basic::RemainBalanceOp<T, KtonBalance<T>> for KtonRemainBalance {
-	/// Get the remaining balance for evm address
+	/// Get the remaining balance
 	fn remaining_balance(account_id: &T::AccountId) -> KtonBalance<T> {
 		<RemainingKtonBalance<T>>::get(account_id)
 	}
-	/// Set the remaining balance for evm address
+	/// Set the remaining balance
 	fn set_remaining_balance(account_id: &T::AccountId, value: KtonBalance<T>) {
 		<RemainingKtonBalance<T>>::insert(account_id, value)
 	}
-	/// Remove the remaining balance for evm address
+	/// Remove the remaining balance
 	fn remove_remaining_balance(account_id: &T::AccountId) {
 		<RemainingKtonBalance<T>>::remove(account_id)
 	}
