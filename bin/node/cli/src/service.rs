@@ -214,11 +214,12 @@ fn new_partial<RuntimeApi, Executor>(
 				BabeBlockImport<
 					Block,
 					FullClient<RuntimeApi, Executor>,
-					FrontierBlockImport<
-						Block,
-						FullGrandpaBlockImport<RuntimeApi, Executor>,
-						FullClient<RuntimeApi, Executor>,
-					>,
+					// FrontierBlockImport<
+					// 	Block,
+					// 	FullGrandpaBlockImport<RuntimeApi, Executor>,
+					// 	FullClient<RuntimeApi, Executor>,
+					// >,
+					FullGrandpaBlockImport<RuntimeApi, Executor>,
 				>,
 				LinkHalf<Block, FullClient<RuntimeApi, Executor>, FullSelectChain>,
 				BabeLink<Block>,
@@ -294,7 +295,8 @@ where
 	);
 	let (babe_import, babe_link) = sc_consensus_babe::block_import(
 		BabeConfig::get_or_compute(&*client)?,
-		frontier_block_import,
+		// frontier_block_import,
+		grandpa_block_import,
 		client.clone(),
 	)?;
 	let import_queue = sc_consensus_babe::import_queue(
