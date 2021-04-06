@@ -34,7 +34,6 @@ sp-std           = { default-features = false, git = "https://github.com/darwini
 
 [dev-dependencies]
 darwinia-support = { features = ["easy-testing"], path = "../support" }
-dvm-ethereum = { default-features = false, path = "../dvm" }
 
 [features]
 default = ["std"]
