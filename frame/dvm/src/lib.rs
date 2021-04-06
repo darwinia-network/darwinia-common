@@ -319,35 +319,6 @@ impl<T: Config> Module<T> {
 		}
 	}
 
-	/// Get the remaining balance for evm address
-	// pub fn remaining_balance(account_id: &T::AccountId) -> RingBalance<T> {
-	// 	<RemainingRingBalance<T>>::get(account_id)
-	// }
-
-	// // Set the remaining balance for evm address
-	// pub fn set_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
-	// 	<RemainingRingBalance<T>>::insert(account_id, value)
-	// }
-
-	// // Remove the remaining balance for evm address
-	// pub fn remove_remaining_balance(account_id: &T::AccountId) {
-	// 	<RemainingRingBalance<T>>::remove(account_id)
-	// }
-
-	// /// Inc remaining balance
-	// pub fn inc_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
-	// 	let remain_balance = Self::remaining_balance(account_id);
-	// 	let updated_balance = remain_balance.saturating_add(value);
-	// 	<RemainingRingBalance<T>>::insert(account_id, updated_balance);
-	// }
-
-	// /// Dec remaining balance
-	// pub fn dec_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
-	// 	let remain_balance = Self::remaining_balance(account_id);
-	// 	let updated_balance = remain_balance.saturating_sub(value);
-	// 	<RemainingRingBalance<T>>::insert(account_id, updated_balance);
-	// }
-
 	fn logs_bloom(logs: Vec<Log>, bloom: &mut Bloom) {
 		for log in logs {
 			bloom.accrue(BloomInput::Raw(&log.address[..]));

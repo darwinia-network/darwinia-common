@@ -17,9 +17,9 @@ pub trait RemainBalanceOp<T: Config, B> {
 	fn dec_remaining_balance(account_id: &T::AccountId, value: B);
 }
 
-pub struct DVMAccountBasic<T, C, RB>(sp_std::marker::PhantomData<(T, C, RB)>);
+pub struct DvmAccountBasic<T, C, RB>(sp_std::marker::PhantomData<(T, C, RB)>);
 
-impl<T: Config, C, RB> AccountBasic for DVMAccountBasic<T, C, RB>
+impl<T: Config, C, RB> AccountBasic for DvmAccountBasic<T, C, RB>
 where
 	RB: RemainBalanceOp<T, C::Balance>,
 	C: Currency<T::AccountId>,
