@@ -51,10 +51,6 @@ pub use evm::{ExitError, ExitFatal, ExitReason, ExitRevert, ExitSucceed};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
-/// Type alias for currency balance.
-pub type BalanceOf<T> =
-	<<T as Config>::RingCurrency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
-
 /// Config that outputs the current transaction gas price.
 pub trait FeeCalculator {
 	/// Return the minimal required gas price.
@@ -340,6 +336,10 @@ decl_storage! {
 					balance: account.balance,
 					nonce: account.nonce,
 				});
+				T::KtonAccountBasic::mutate_account_basic(&address, Account {
+					balance: account.balance,
+					nonce: account.nonce,
+				});
 				AccountCodes::insert(address, &account.code);
 
 				for (index, value) in &account.storage {
@@ -561,6 +561,11 @@ impl<T: Config> Module<T> {
 		let code_len = AccountCodes::decode_len(address).unwrap_or(0);
 
 		account.nonce == U256::zero() && account.balance == U256::zero() && code_len == 0
+	}
+
+	pub fn is_contract_code_empty(address: &H160) -> bool {
+		let code_len = AccountCodes::decode_len(address).unwrap_or(0);
+		code_len == 0
 	}
 
 	/// Remove an account if its empty.

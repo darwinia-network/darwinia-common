@@ -24,20 +24,19 @@ use codec::Decode;
 use core::str::FromStr;
 use ethabi::{Function, Param, ParamType, Token};
 use evm::{Context, ExitError, ExitSucceed};
-use frame_support::{
-	ensure,
-	traits::{Currency, ExistenceRequirement},
-};
+use frame_support::{ensure, traits::Currency};
 use sha3::Digest;
 use sp_core::{H160, U256};
 use sp_runtime::traits::UniqueSaturatedInto;
+use sp_runtime::SaturatedConversion;
 use sp_std::borrow::ToOwned;
 use sp_std::marker::PhantomData;
 use sp_std::prelude::*;
 use sp_std::vec::Vec;
 
-use darwinia_evm::{AddressMapping, Config, Runner};
+use darwinia_evm::{Account, AccountBasic, Config, Module, Runner};
 use dp_evm::Precompile;
+use dvm_ethereum::{account_basic::RemainBalanceOp, KtonBalance, KtonRemainBalance};
 
 type AccountId<T> = <T as frame_system::Config>::AccountId;
 
@@ -51,7 +50,7 @@ pub struct Kton<T: Config> {
 	_maker: PhantomData<T>,
 }
 
-impl<T: Config> Precompile for Kton<T> {
+impl<T: Config + dvm_ethereum::Config> Precompile for Kton<T> {
 	/// There are two actions, one is `transfer_and_call` and the other is `withdraw`
 	/// 1. Transfer_and_call Action, triggered by the user sending a transaction to the kton precompile
 	/// 	   special evm address, eg(0000000000000000000000000000000000000016). and transfer the sender's
@@ -71,31 +70,38 @@ impl<T: Config> Precompile for Kton<T> {
 			.checked_pow(U256::from(9))
 			.unwrap_or(U256::MAX);
 		let action = which_action::<T>(&input)?;
-		let con_caller = T::AddressMapping::into_account_id(context.caller);
+		// let con_caller = T::AddressMapping::into_account_id(context.caller);
+
 		match action {
-			Action::TransferAndCall(tacd) => {
-				// 1. Transfer kton from sender to kton erc20 contract
-				let wkton_account_id = T::AddressMapping::into_account_id(tacd.wkton_address);
-				let transfer_value = tacd.value.saturating_mul(helper).low_u128();
+			Action::TransferAndCall(call_data) => {
+				// Ensure wkton is a contract
 				ensure!(
-					T::KtonCurrency::free_balance(&con_caller)
-						>= transfer_value.unique_saturated_into(),
+					!crate::Module::<T>::is_contract_code_empty(&call_data.wkton_address),
+					ExitError::Other("Wkton must be a contract!".into())
+				);
+				// Ensure context's apparent_value is zero, since the transfer value is encoded in input field
+				ensure!(
+					context.apparent_value == U256::zero(),
+					ExitError::Other("The value in tx must be zero!".into())
+				);
+				// Ensure caller's balance is enough
+				ensure!(
+					T::KtonAccountBasic::account_basic(&context.caller).balance >= call_data.value,
 					ExitError::OutOfFund
 				);
-				T::KtonCurrency::transfer(
-					&con_caller,
-					&wkton_account_id,
-					transfer_value.unique_saturated_into(),
-					ExistenceRequirement::AllowDeath,
-				)
-				.map_err(|_| ExitError::Other("Transfer in Kton precompile failed".into()))?;
 
-				// 2. Call wkton sol contract deposit
-				let raw_input = make_call_data(context.caller, tacd.value)?;
-				let precompile_address = H160::from_str(KTON_PRECOMPILE).unwrap();
+				// Transfer kton from sender to KTON wrapped contract
+				T::KtonAccountBasic::transfer(
+					&context.caller,
+					&call_data.wkton_address,
+					call_data.value,
+				)?;
+				// Call WKTON wrapped contract deposit
+				let precompile_address = H160::from_str(KTON_PRECOMPILE).unwrap_or_default();
+				let raw_input = make_call_data(context.caller, call_data.value)?;
 				T::Runner::call(
 					precompile_address,
-					tacd.wkton_address,
+					call_data.wkton_address,
 					raw_input.to_vec(),
 					U256::zero(),
 					target_limit.unwrap_or_default(),
@@ -108,14 +114,39 @@ impl<T: Config> Precompile for Kton<T> {
 				Ok((ExitSucceed::Returned, vec![], 20000))
 			}
 			Action::Withdraw(wd) => {
-				let withdraw_value = wd.kton_value.saturating_mul(helper);
-				T::KtonCurrency::transfer(
-					&con_caller,
+				// Ensure wkton is a contract
+				ensure!(
+					!crate::Module::<T>::is_contract_code_empty(&context.caller),
+					ExitError::Other("The caller must be wkton contract!".into())
+				);
+				// Ensure context's apparent_value is zero
+				ensure!(
+					context.apparent_value == U256::zero(),
+					ExitError::Other("The value in tx must be zero!".into())
+				);
+				// Ensure caller's balance is enough
+				let caller_kton = T::KtonAccountBasic::account_basic(&context.caller);
+				ensure!(caller_kton.balance >= wd.kton_value, ExitError::OutOfFund);
+
+				// Transfer
+				let new_wkton_balance = caller_kton.balance.saturating_sub(wd.kton_value);
+				T::KtonAccountBasic::mutate_account_basic(
+					&context.caller,
+					Account {
+						nonce: caller_kton.nonce,
+						balance: new_wkton_balance,
+					},
+				);
+				let (currency_value, remain_balance) = wd.kton_value.div_mod(helper);
+				<T as darwinia_evm::Config>::KtonCurrency::deposit_creating(
 					&wd.to_account_id,
-					withdraw_value.low_u128().unique_saturated_into(),
-					ExistenceRequirement::AllowDeath,
-				)
-				.map_err(|_| ExitError::Other("Withdraw in Kton precompile failed".into()))?;
+					currency_value.low_u128().unique_saturated_into(),
+				);
+				<KtonRemainBalance as RemainBalanceOp<T, KtonBalance<T>>>::inc_remaining_balance(
+					&wd.to_account_id,
+					remain_balance.low_u128().saturated_into(),
+				);
+
 				Ok((ExitSucceed::Returned, vec![], 20000))
 			}
 		}
