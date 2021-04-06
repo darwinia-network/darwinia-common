@@ -41,7 +41,7 @@ use dp_evm::Precompile;
 
 type AccountId<T> = <T as frame_system::Config>::AccountId;
 
-const TRANSFER_AND_CALL_ACTION: &[u8] = b"transfer_and_call(address,address,uint256)";
+const TRANSFER_AND_CALL_ACTION: &[u8] = b"transfer_and_call(address,uint256)";
 const WITHDRAW_ACTION: &[u8] = b"withdraw(bytes32,uint256)";
 const KTON_PRECOMPILE: &str = "0000000000000000000000000000000000000016";
 /// Kton Precompile Contract is used to support the exchange of KTON native asset between darwinia and dvm contract
