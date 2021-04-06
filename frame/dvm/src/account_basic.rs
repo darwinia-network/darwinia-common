@@ -1,5 +1,7 @@
 use crate::Config;
 use darwinia_evm::{Account as EVMAccount, AccountBasic, AddressMapping};
+use evm::ExitError;
+use frame_support::ensure;
 use frame_support::traits::Currency;
 use sp_core::{H160, U256};
 use sp_runtime::{traits::UniqueSaturatedInto, SaturatedConversion};
@@ -126,5 +128,30 @@ where
 		if after_mutate.balance < existential_deposit_dvm {
 			RB::remove_remaining_balance(&account_id);
 		}
+	}
+
+	fn transfer(source: &H160, target: &H160, value: U256) -> Result<(), ExitError> {
+		let source_account = Self::account_basic(source);
+		ensure!(source_account.balance >= value, ExitError::OutOfGas);
+		let new_source_balance = source_account.balance.saturating_sub(value);
+		Self::mutate_account_basic(
+			source,
+			EVMAccount {
+				nonce: source_account.nonce,
+				balance: new_source_balance,
+			},
+		);
+
+		let target_account = Self::account_basic(target);
+		let new_target_balance = target_account.balance.saturating_add(value);
+		Self::mutate_account_basic(
+			target,
+			EVMAccount {
+				nonce: target_account.nonce,
+				balance: new_target_balance,
+			},
+		);
+
+		Ok(())
 	}
 }

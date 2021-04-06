@@ -24,7 +24,7 @@ use crate::{
 };
 
 // --- darwinia ---
-use dp_evm::{Account, CallInfo, CreateInfo, ExecutionInfo, Log, Vicinity};
+use dp_evm::{CallInfo, CreateInfo, ExecutionInfo, Log, Vicinity};
 // --- substrate ---
 use frame_support::{
 	ensure,
@@ -496,29 +496,8 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 	}
 
 	fn transfer(&mut self, transfer: Transfer) -> Result<(), ExitError> {
-		let source_account = T::RingAccountBasic::account_basic(&transfer.source);
-		ensure!(
-			source_account.balance >= transfer.value,
-			ExitError::Other("Insufficient balance".into())
-		);
-		let new_source_balance = source_account.balance.saturating_sub(transfer.value);
-		T::RingAccountBasic::mutate_account_basic(
-			&transfer.source,
-			Account {
-				nonce: source_account.nonce,
-				balance: new_source_balance,
-			},
-		);
-
-		let target_account = T::RingAccountBasic::account_basic(&transfer.target);
-		let new_target_balance = target_account.balance.saturating_add(transfer.value);
-		T::RingAccountBasic::mutate_account_basic(
-			&transfer.target,
-			Account {
-				nonce: target_account.nonce,
-				balance: new_target_balance,
-			},
-		);
+		// Use Ring transfer
+		T::RingAccountBasic::transfer(&transfer.source, &transfer.target, transfer.value)?;
 
 		Ok(())
 	}

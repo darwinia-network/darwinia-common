@@ -200,6 +200,7 @@ impl AddressMapping<AccountId32> for ConcatAddressMapping {
 pub trait AccountBasic {
 	fn account_basic(address: &H160) -> Account;
 	fn mutate_account_basic(address: &H160, new: Account);
+	fn transfer(source: &H160, target: &H160, value: U256) -> Result<(), ExitError>;
 }
 
 pub struct RawAccountBasic<T>(sp_std::marker::PhantomData<T>);
@@ -237,6 +238,10 @@ impl<T: Config> AccountBasic for RawAccountBasic<T> {
 			let diff = new.balance - current.balance;
 			T::RingCurrency::deposit_creating(&account_id, diff.low_u128().unique_saturated_into());
 		}
+	}
+
+	fn transfer(_source: &H160, _target: &H160, _value: U256) -> Result<(), ExitError> {
+		todo!();
 	}
 }
 
