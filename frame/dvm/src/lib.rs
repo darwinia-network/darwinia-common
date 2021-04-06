@@ -515,8 +515,8 @@ impl<T: Config> Module<T> {
 	}
 }
 
-pub struct RingStruct;
-impl<T: Config> account_basic::RemainBalanceOp<T, RingBalance<T>> for RingStruct {
+pub struct RingRemainBalance;
+impl<T: Config> account_basic::RemainBalanceOp<T, RingBalance<T>> for RingRemainBalance {
 	/// Get the remaining balance for evm address
 	fn remaining_balance(account_id: &T::AccountId) -> RingBalance<T> {
 		<RemainingRingBalance<T>>::get(account_id)
@@ -549,8 +549,8 @@ impl<T: Config> account_basic::RemainBalanceOp<T, RingBalance<T>> for RingStruct
 	}
 }
 
-pub struct KtonStruct;
-impl<T: Config> account_basic::RemainBalanceOp<T, KtonBalance<T>> for KtonStruct {
+pub struct KtonRemainBalance;
+impl<T: Config> account_basic::RemainBalanceOp<T, KtonBalance<T>> for KtonRemainBalance {
 	/// Get the remaining balance for evm address
 	fn remaining_balance(account_id: &T::AccountId) -> KtonBalance<T> {
 		<RemainingKtonBalance<T>>::get(account_id)

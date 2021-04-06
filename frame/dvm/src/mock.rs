@@ -156,8 +156,8 @@ impl darwinia_evm::Config for Test {
 	type Precompiles = darwinia_evm_precompile::DarwiniaPrecompiles<Self>;
 	type ChainId = ChainId;
 	type Runner = darwinia_evm::runner::stack::Runner<Self>;
-	type RingAccountBasicMapping = DVMAccountBasicMapping<Self, Ring, RingStruct>;
-	type KtonAccountBasicMapping = DVMAccountBasicMapping<Self, Kton, KtonStruct>;
+	type RingAccountBasicMapping = DVMAccountBasicMapping<Self, Ring, RingRemainBalance>;
+	type KtonAccountBasicMapping = DVMAccountBasicMapping<Self, Kton, KtonRemainBalance>;
 }
 
 frame_support::parameter_types! {

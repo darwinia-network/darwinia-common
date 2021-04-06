@@ -7,7 +7,7 @@ use darwinia_evm::{
 };
 use darwinia_evm_precompile::DarwiniaPrecompiles;
 use dvm_ethereum::account_basic::DVMAccountBasicMapping;
-use dvm_ethereum::{KtonStruct, RingStruct};
+use dvm_ethereum::{KtonRemainBalance, RingRemainBalance};
 
 /// Fixed gas price.
 pub struct FixedGasPrice;
@@ -31,7 +31,7 @@ impl Config for Runtime {
 	type Event = Event;
 	type Precompiles = DarwiniaPrecompiles<Self>;
 	type ChainId = ChainId;
-	type RingAccountBasicMapping = DVMAccountBasicMapping<Self, Ring, RingStruct>;
-	type KtonAccountBasicMapping = DVMAccountBasicMapping<Self, Kton, KtonStruct>;
+	type RingAccountBasicMapping = DVMAccountBasicMapping<Self, Ring, RingRemainBalance>;
+	type KtonAccountBasicMapping = DVMAccountBasicMapping<Self, Kton, KtonRemainBalance>;
 	type Runner = Runner<Self>;
 }

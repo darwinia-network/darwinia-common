@@ -78,7 +78,7 @@ macro_rules! assert_balance {
 			$left
 		);
 		assert_eq!(
-			<RingStruct as RemainBalanceOp<Test, u64>>::remaining_balance(&account_id),
+			<RingRemainBalance as RemainBalanceOp<Test, u64>>::remaining_balance(&account_id),
 			$right
 		);
 	};
