@@ -1,4 +1,4 @@
-use crate::Config;
+use crate::{Config, KtonBalance, KtonRemainBalance, RingBalance, RingRemainBalance};
 use darwinia_evm::{Account as EVMAccount, AccountBasic, AddressMapping};
 use evm::ExitError;
 use frame_support::ensure;
@@ -32,7 +32,7 @@ where
 		let nonce = <frame_system::Pallet<T>>::account_nonce(&account_id);
 		let helper = U256::from(10)
 			.checked_pow(U256::from(9))
-			.unwrap_or(U256::from(0));
+			.unwrap_or_else(|| U256::from(0));
 
 		// Get balance from Currency
 		let balance: U256 = C::free_balance(&account_id).saturated_into::<u128>().into();
@@ -43,7 +43,7 @@ where
 			.into();
 
 		// Final balance = balance * 10^9 + remaining_balance
-		let final_balance = U256::from(balance * helper)
+		let final_balance = (balance * helper)
 			.checked_add(remaining_balance)
 			.unwrap_or_default();
 
@@ -58,8 +58,6 @@ where
 		let helper = U256::from(10)
 			.checked_pow(U256::from(9))
 			.unwrap_or(U256::MAX);
-		let existential_deposit: u128 = C::minimum_balance().saturated_into::<u128>().into();
-		let existential_deposit_dvm = U256::from(existential_deposit) * helper;
 
 		let account_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(*address);
 		let current = Self::account_basic(address);
@@ -124,9 +122,26 @@ where
 			}
 			_ => return,
 		}
-		let after_mutate = Self::account_basic(address);
-		if after_mutate.balance < existential_deposit_dvm {
-			RB::remove_remaining_balance(&account_id);
+
+		// Handle existential deposit
+		let ring_existential_deposit: u128 =
+			<T as Config>::RingCurrency::minimum_balance().saturated_into::<u128>();
+		let kton_existential_deposit: u128 =
+			<T as Config>::KtonCurrency::minimum_balance().saturated_into::<u128>();
+		let ring_existential_deposit = U256::from(ring_existential_deposit) * helper;
+		let kton_existential_deposit = U256::from(kton_existential_deposit) * helper;
+
+		let ring_account = T::RingAccountBasic::account_basic(address);
+		let kton_account = T::KtonAccountBasic::account_basic(address);
+		if ring_account.balance < ring_existential_deposit
+			&& kton_account.balance < kton_existential_deposit
+		{
+			<RingRemainBalance as RemainBalanceOp<T, RingBalance<T>>>::remove_remaining_balance(
+				&account_id,
+			);
+			<KtonRemainBalance as RemainBalanceOp<T, KtonBalance<T>>>::remove_remaining_balance(
+				&account_id,
+			);
 		}
 	}
 
