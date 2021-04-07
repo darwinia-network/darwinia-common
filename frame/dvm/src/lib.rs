@@ -128,7 +128,7 @@ decl_storage! {
 			<Module<T>>::store_block(false);
 
 			// Initialize the storage schema at the well known key.
-			frame_support::storage::unhashed::put::<EthereumStorageSchema>(&PALLET_ETHEREUM_SCHEMA, &EthereumStorageSchema::V1);
+			// frame_support::storage::unhashed::put::<EthereumStorageSchema>(&PALLET_ETHEREUM_SCHEMA, &EthereumStorageSchema::V1);
 		});
 	}
 }
