@@ -5,7 +5,7 @@ const expect = require("chai").expect;
 const Web3 = require("web3");
 const contractFile = require("./compile");
 
-const web3 = new Web3("http://localhost:9933");
+const web3 = new Web3("ws://localhost:9947");
 const address = "0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b";
 const privKey = "99B3C12287537E38C90A9219D4CB074A89A16E9CDB20BF85728EBD97C343E342"; // Genesis private key
 const bytecode = contractFile.evm.bytecode.object;

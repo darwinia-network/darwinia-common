@@ -283,7 +283,7 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 				.collect()
 		},
 		darwinia_staking: pangolin_runtime::StakingConfig {
-			minimum_validator_count: 6,
+			minimum_validator_count: 1,
 			validator_count: 6,
 			stakers: initial_authorities
 				.iter()

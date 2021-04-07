@@ -1,7 +1,7 @@
 const expect = require("chai").expect;
 const Web3 = require("web3");
 
-const web3 = new Web3("http://localhost:9933");
+const web3 = new Web3("ws://localhost:9947");
 
 describe("Test RPC Constants", function () {
 	it("Should have 0 hashrate", async function () {
@@ -16,12 +16,12 @@ describe("Test RPC Constants", function () {
 		expect(await web3.eth.getAccounts()).to.eql([]);
 	});
 
-	it("The genesis block author should be 0x0000000000000000000000000000000000000000", async function () {
+	it.skip("The genesis block author should be 0x0000000000000000000000000000000000000000", async function () {
 		const block = await web3.eth.getBlock(0);
 		expect(block.author).to.equal("0x0000000000000000000000000000000000000000");
 	});
 
-	it("The block 1 author should be 0x15fdd31c61141abd04a99fd6822c8558854ccde3", async function () {
+	it.skip("The block 1 author should be 0x15fdd31c61141abd04a99fd6822c8558854ccde3", async function () {
 		const block = await web3.eth.getBlock(1);
 		expect(block.author).to.equal("0x15fdd31c61141abd04a99fd6822c8558854ccde3");
 	});

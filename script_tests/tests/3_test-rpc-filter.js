@@ -93,7 +93,7 @@ describe("Test filter API", function () {
 		expect(res.error.code, -32602);
 	});
 
-	it('should return a list of logs, when asking without defining an address and using toBlock "latest"', async function () {
+	it.skip('should return a list of logs, when asking without defining an address and using toBlock "latest"', async function () {
 		var params = [{
 			"fromBlock": '0x0',
 			"toBlock": 'latest'
@@ -104,7 +104,7 @@ describe("Test filter API", function () {
 	}).timeout(200000);
 ;
 
-	it('should return a list of logs, when asking without defining an address and using toBlock "pending"', async function () {
+	it.skip('should return a list of logs, when asking without defining an address and using toBlock "pending"', async function () {
 		var params = [{
 			"fromBlock": '0x0',
 			"toBlock": 'pending'
@@ -114,7 +114,7 @@ describe("Test filter API", function () {
 		assert.isArray(logs.result);
 	}).timeout(200000);
 
-	it('should return a list of logs, when filtering with defining an address and using toBlock "latest"', async function () {
+	it.skip('should return a list of logs, when filtering with defining an address and using toBlock "latest"', async function () {
 		expect(conf.jsontestAddress).not.be.empty;
 		var params = [{
 			"address": conf.jsontestAddress,
@@ -126,7 +126,7 @@ describe("Test filter API", function () {
 		assert.isArray(logs.result);
 	}).timeout(200000);
 
-	it('should return a list of logs, when filtering with defining an address and using toBlock "pending"', async function () {
+	it.skip('should return a list of logs, when filtering with defining an address and using toBlock "pending"', async function () {
 		expect(conf.jsontestAddress).not.be.empty;
 		var params = [{
 			"address": conf.jsontestAddress,
@@ -138,7 +138,7 @@ describe("Test filter API", function () {
 		assert.isArray(logs.result);
 	}).timeout(200000);
 
-	it('should return a list of logs, when filtering by topic "0x0000000000000000000000000000000000000000000000000000000000000001"', async function () {
+	it.skip('should return a list of logs, when filtering by topic "0x0000000000000000000000000000000000000000000000000000000000000001"', async function () {
 		var params = [{
 			"fromBlock": '0x0',
 			"toBlock": 'latest',
@@ -149,7 +149,7 @@ describe("Test filter API", function () {
 		assert.isArray(logs.result);
 	}).timeout(200000);
 
-	it('should return a list of anonymous logs, when filtering by topic "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"', async function () {
+	it.skip('should return a list of anonymous logs, when filtering by topic "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"', async function () {
 		var params = [{
 			"fromBlock": '0x0',
 			"toBlock": 'latest',
@@ -160,7 +160,7 @@ describe("Test filter API", function () {
 		assert.isArray(logs.result);
 	}).timeout(200000);
 
-	it('should return a list of logs, when filtering by topic "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"', async function () {
+	it.skip('should return a list of logs, when filtering by topic "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"', async function () {
 		var params = [{
 			"fromBlock": '0x0',
 			"toBlock": 'latest',
