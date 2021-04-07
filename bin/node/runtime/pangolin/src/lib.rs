@@ -918,6 +918,13 @@ impl frame_support::traits::OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	}
 
 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
+		use dp_storage::PALLET_ETHEREUM_SCHEMA;
+		use dvm_ethereum::EthereumStorageSchema;
+
+		frame_support::storage::unhashed::put::<EthereumStorageSchema>(
+			&PALLET_ETHEREUM_SCHEMA,
+			&EthereumStorageSchema::V1,
+		);
 		0
 	}
 }

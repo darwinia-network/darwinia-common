@@ -5383,6 +5383,7 @@ dependencies = [
  "darwinia-treasury",
  "darwinia-tron-backing",
  "darwinia-vesting",
+ "dp-storage",
  "drml-primitives",
  "dvm-ethereum",
  "dvm-rpc-runtime-api",
