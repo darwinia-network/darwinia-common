@@ -103,8 +103,6 @@ pub trait Config:
 	type FindAuthor: FindAuthor<H160>;
 	/// How Ethereum state root is calculated.
 	type StateRoot: Get<H256>;
-	/// The block gas limit. Can be a simple constant, or an adjustment algorithm in another pallet.
-	type BlockGasLimit: Get<U256>;
 	// Balance module
 	type RingCurrency: Currency<Self::AccountId>;
 }

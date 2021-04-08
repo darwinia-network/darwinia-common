@@ -101,6 +101,7 @@ impl Config for Test {
 	type Event = Event;
 	type Precompiles = ();
 	type ChainId = ();
+	type BlockGasLimit = ();
 	type Runner = crate::runner::stack::Runner<Self>;
 	type AccountBasicMapping = RawAccountBasicMapping<Test>;
 }
