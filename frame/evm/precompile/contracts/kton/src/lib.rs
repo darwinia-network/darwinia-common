@@ -66,7 +66,6 @@ impl<T: Config + dvm_ethereum::Config> Precompile for Kton<T> {
 			.checked_pow(U256::from(9))
 			.unwrap_or(U256::MAX);
 		let action = which_action::<T>(&input)?;
-		// let con_caller = T::AddressMapping::into_account_id(context.caller);
 
 		match action {
 			Action::TransferAndCall(call_data) => {
