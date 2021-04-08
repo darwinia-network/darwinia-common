@@ -33,6 +33,152 @@ use ethereum::{
 use ethereum_types::H160;
 use jsonrpc_core::{Error, ErrorCode, Value};
 
+pub mod frontier_backend_client {
+
+	use super::internal_err;
+
+	use dp_rpc::BlockNumber;
+	use dp_storage::PALLET_ETHEREUM_SCHEMA;
+	use sc_client_api::backend::{Backend, StateBackend, StorageProvider};
+	use sp_api::{BlockId, HeaderT};
+	use sp_blockchain::HeaderBackend;
+	use sp_runtime::traits::{BlakeTwo256, Block as BlockT, UniqueSaturatedInto, Zero};
+	use sp_storage::StorageKey;
+
+	use codec::Decode;
+	use jsonrpc_core::Result as RpcResult;
+
+	use dvm_ethereum::EthereumStorageSchema;
+	use ethereum_types::H256;
+
+	pub fn native_block_id<B: BlockT, C>(
+		client: &C,
+		backend: &dc_db::Backend<B>,
+		number: Option<BlockNumber>,
+	) -> RpcResult<Option<BlockId<B>>>
+	where
+		B: BlockT,
+		C: HeaderBackend<B> + 'static,
+		B: BlockT<Hash = H256> + Send + Sync + 'static,
+		C: Send + Sync + 'static,
+	{
+		Ok(match number.unwrap_or(BlockNumber::Latest) {
+			BlockNumber::Hash { hash, .. } => {
+				load_hash::<B, C>(client, backend, hash).unwrap_or(None)
+			}
+			BlockNumber::Num(number) => Some(BlockId::Number(number.unique_saturated_into())),
+			BlockNumber::Latest => Some(BlockId::Hash(client.info().best_hash)),
+			BlockNumber::Earliest => Some(BlockId::Number(Zero::zero())),
+			BlockNumber::Pending => None,
+		})
+	}
+
+	// Asumes there is only one mapped canonical block in the AuxStore, otherwise something is wrong
+	pub fn load_hash<B: BlockT, C>(
+		client: &C,
+		backend: &dc_db::Backend<B>,
+		hash: H256,
+	) -> RpcResult<Option<BlockId<B>>>
+	where
+		B: BlockT,
+		C: HeaderBackend<B> + 'static,
+		B: BlockT<Hash = H256> + Send + Sync + 'static,
+		C: Send + Sync + 'static,
+	{
+		let hashes = backend
+			.mapping()
+			.block_hashes(&hash)
+			.map_err(|err| internal_err(format!("fetch aux store failed: {:?}", err)))?;
+		let out: Vec<H256> = hashes
+			.into_iter()
+			.filter_map(|h| {
+				if is_canon::<B, C>(client, h) {
+					Some(h)
+				} else {
+					None
+				}
+			})
+			.collect();
+
+		if out.len() == 1 {
+			return Ok(Some(BlockId::Hash(out[0])));
+		}
+		Ok(None)
+	}
+
+	pub fn onchain_storage_schema<B: BlockT, C, BE>(
+		client: &C,
+		at: BlockId<B>,
+	) -> EthereumStorageSchema
+	where
+		B: BlockT,
+		C: StorageProvider<B, BE>,
+		BE: Backend<B> + 'static,
+		BE::State: StateBackend<BlakeTwo256>,
+		B: BlockT<Hash = H256> + Send + Sync + 'static,
+		C: Send + Sync + 'static,
+	{
+		match client.storage(&at, &StorageKey(PALLET_ETHEREUM_SCHEMA.to_vec())) {
+			Ok(Some(bytes)) => Decode::decode(&mut &bytes.0[..])
+				.ok()
+				.unwrap_or(EthereumStorageSchema::Undefined),
+			_ => EthereumStorageSchema::Undefined,
+		}
+	}
+
+	pub fn is_canon<B: BlockT, C>(client: &C, target_hash: H256) -> bool
+	where
+		B: BlockT,
+		C: HeaderBackend<B> + 'static,
+		B: BlockT<Hash = H256> + Send + Sync + 'static,
+		C: Send + Sync + 'static,
+	{
+		if let Ok(Some(number)) = client.number(target_hash) {
+			if let Ok(Some(header)) = client.header(BlockId::Number(number)) {
+				return header.hash() == target_hash;
+			}
+		}
+		false
+	}
+
+	pub fn load_transactions<B: BlockT, C>(
+		client: &C,
+		backend: &dc_db::Backend<B>,
+		transaction_hash: H256,
+	) -> RpcResult<Option<(H256, u32)>>
+	where
+		B: BlockT,
+		C: HeaderBackend<B> + 'static,
+		B: BlockT<Hash = H256> + Send + Sync + 'static,
+		C: Send + Sync + 'static,
+	{
+		let transaction_metadata = backend
+			.mapping()
+			.transaction_metadata(&transaction_hash)
+			.map_err(|err| internal_err(format!("fetch aux store failed: {:?}", err)))?;
+
+		if transaction_metadata.len() == 1 {
+			Ok(Some((
+				transaction_metadata[0].ethereum_block_hash,
+				transaction_metadata[0].ethereum_index,
+			)))
+		} else if transaction_metadata.len() > 1 {
+			transaction_metadata
+				.iter()
+				.find(|meta| is_canon::<B, C>(client, meta.block_hash))
+				.map_or(
+					Ok(Some((
+						transaction_metadata[0].ethereum_block_hash,
+						transaction_metadata[0].ethereum_index,
+					))),
+					|meta| Ok(Some((meta.ethereum_block_hash, meta.ethereum_index))),
+				)
+		} else {
+			Ok(None)
+		}
+	}
+}
+
 pub fn internal_err<T: ToString>(message: T) -> Error {
 	Error {
 		code: ErrorCode::InternalError,
