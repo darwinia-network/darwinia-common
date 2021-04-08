@@ -27,12 +27,8 @@ use evm::{Context, ExitError, ExitSucceed};
 use frame_support::{ensure, traits::Currency};
 use sha3::Digest;
 use sp_core::{H160, U256};
-use sp_runtime::traits::UniqueSaturatedInto;
-use sp_runtime::SaturatedConversion;
-use sp_std::borrow::ToOwned;
-use sp_std::marker::PhantomData;
-use sp_std::prelude::*;
-use sp_std::vec::Vec;
+use sp_runtime::{traits::UniqueSaturatedInto, SaturatedConversion};
+use sp_std::{borrow::ToOwned, marker::PhantomData, prelude::*, vec::Vec};
 
 use darwinia_evm::{Account, AccountBasic, Config, Module, Runner};
 use dp_evm::Precompile;
