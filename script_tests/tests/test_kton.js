@@ -326,7 +326,6 @@ describe("Test Kton Precompile", function () {
 			})
 			.send();
 		jsontest.options.address = instance.options.address;
-		// console.log("contract address {}", jsontest.options.address);
 	}).timeout(10000);
 
 	it("Test Transfer and call 1", async function () {
@@ -334,12 +333,14 @@ describe("Test Kton Precompile", function () {
 		// p1: address, C2Bf5F29a4384b1aB0C063e1c666f02121B6084a
 		// p2: uint256, 000000000000000000000000000000000000000000000001a055690d9db80000（30_000_000_000_000_000_000）
 		var input =
-			"3225da29000000000000000000000000c2bf5f29a4384b1ab0c063e1c666f02121b6084a000000000000000000000000000000000000000000000001a055690d9db80000";
+			"3225da29000000000000000000000000" +
+			jsontest.options.address.slice(2) +
+			"000000000000000000000000000000000000000000000001a055690d9db80000";
 		const createTransaction = await web3.eth.accounts.signTransaction(
 			{
 				from: jsontest.options.from,
 				to: addressTo,
-				gas: "4294967294",
+				gas: conf.gas,
 				data: input,
 			},
 			conf.privKey
@@ -361,12 +362,14 @@ describe("Test Kton Precompile", function () {
 		// p1: address, C2Bf5F29a4384b1aB0C063e1c666f02121B6084a
 		// p2: uint256, 000000000000000000000000000000000000000000000001a055690d9db80000（30_000_000_000_000_000_000）
 		var input =
-			"3225da29000000000000000000000000c2bf5f29a4384b1ab0c063e1c666f02121b6084a000000000000000000000000000000000000000000000001a055690d9db80000";
+			"3225da29000000000000000000000000" +
+			jsontest.options.address.slice(2) +
+			"000000000000000000000000000000000000000000000001a055690d9db80000";
 		const createTransaction = await web3.eth.accounts.signTransaction(
 			{
 				from: jsontest.options.from,
 				to: addressTo,
-				gas: "4294967294",
+				gas: conf.gas,
 				data: input,
 			},
 			conf.privKey
