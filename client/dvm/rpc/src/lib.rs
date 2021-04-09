@@ -74,7 +74,6 @@ pub mod frontier_backend_client {
 		})
 	}
 
-	// Asumes there is only one mapped canonical block in the AuxStore, otherwise something is wrong
 	pub fn load_hash<B: BlockT, C>(
 		client: &C,
 		backend: &dc_db::Backend<B>,
@@ -86,23 +85,13 @@ pub mod frontier_backend_client {
 		B: BlockT<Hash = H256> + Send + Sync + 'static,
 		C: Send + Sync + 'static,
 	{
-		let hashes = backend
+		let substrate_hash = backend
 			.mapping()
-			.block_hashes(&hash)
+			.block_hash(&hash)
 			.map_err(|err| internal_err(format!("fetch aux store failed: {:?}", err)))?;
-		let out: Vec<H256> = hashes
-			.into_iter()
-			.filter_map(|h| {
-				if is_canon::<B, C>(client, h) {
-					Some(h)
-				} else {
-					None
-				}
-			})
-			.collect();
 
-		if out.len() == 1 {
-			return Ok(Some(BlockId::Hash(out[0])));
+		if let Some(substrate_hash) = substrate_hash {
+			return Ok(Some(BlockId::Hash(substrate_hash)));
 		}
 		Ok(None)
 	}
