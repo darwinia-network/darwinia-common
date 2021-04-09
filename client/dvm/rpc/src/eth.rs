@@ -1487,7 +1487,6 @@ where
 								.unwrap_or(&self.overrides.fallback);
 
 							let block = handler.current_block(&id);
-
 							if let Some(block) = block {
 								ethereum_hashes.push(block.header.hash())
 							}
@@ -1547,10 +1546,8 @@ where
 								.schemas
 								.get(&schema)
 								.unwrap_or(&self.overrides.fallback);
-
 							let block = handler.current_block(&id);
 							let statuses = handler.current_transaction_statuses(&id);
-
 							if let (Some(block), Some(statuses)) = (block, statuses) {
 								blocks_and_statuses.push((block, statuses));
 							}
