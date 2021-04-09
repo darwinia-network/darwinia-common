@@ -18,7 +18,7 @@ mod eth;
 mod eth_pubsub;
 mod overrides;
 
-pub use overrides::{SchemaV1Override, StorageOverride};
+pub use overrides::{OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, StorageOverride};
 // --- darwinia ---
 use darwinia_evm::ExitReason;
 // --- std ---
