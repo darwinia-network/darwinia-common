@@ -64,9 +64,7 @@ pub mod frontier_backend_client {
 		C: Send + Sync + 'static,
 	{
 		Ok(match number.unwrap_or(BlockNumber::Latest) {
-			BlockNumber::Hash { hash, .. } => {
-				load_hash::<B, C>(client, backend, hash).unwrap_or(None)
-			}
+			BlockNumber::Hash { hash, .. } => load_hash::<B>(backend, hash).unwrap_or(None),
 			BlockNumber::Num(number) => Some(BlockId::Number(number.unique_saturated_into())),
 			BlockNumber::Latest => Some(BlockId::Hash(client.info().best_hash)),
 			BlockNumber::Earliest => Some(BlockId::Number(Zero::zero())),
@@ -74,16 +72,13 @@ pub mod frontier_backend_client {
 		})
 	}
 
-	pub fn load_hash<B: BlockT, C>(
-		client: &C,
+	pub fn load_hash<B: BlockT>(
 		backend: &dc_db::Backend<B>,
 		hash: H256,
 	) -> RpcResult<Option<BlockId<B>>>
 	where
 		B: BlockT,
-		C: HeaderBackend<B> + 'static,
 		B: BlockT<Hash = H256> + Send + Sync + 'static,
-		C: Send + Sync + 'static,
 	{
 		let substrate_hash = backend
 			.mapping()
