@@ -50,7 +50,7 @@ use ethereum_types::{H160, H256, H512, H64, U256, U64};
 use futures::{future::TryFutureExt, StreamExt};
 use jsonrpc_core::{
 	futures::future::{self, Future},
-	BoxFuture, Result,
+	BoxFuture, ErrorCode, Result,
 };
 use sha3::{Digest, Keccak256};
 use std::collections::{BTreeMap, HashMap};
@@ -813,7 +813,7 @@ where
 	}
 
 	fn estimate_gas(&self, request: CallRequest, _: Option<BlockNumber>) -> Result<U256> {
-		let calculate_gas_used = |request| {
+		let calculate_gas_used = |request| -> Result<U256> {
 			let hash = self.client.info().best_hash;
 
 			let CallRequest {
@@ -905,13 +905,17 @@ where
 						mid = (lower + upper + 1) / 2;
 					}
 					// if Err -- we need more gas
-					Err(_) => {
-						lower = mid;
-						mid = (lower + upper + 1) / 2;
-
-						if mid == lower {
-							break;
+					Err(err) => {
+						// if Err == OutofGas or OutofFund, we need more gas
+						if err.code == ErrorCode::ServerError(0) {
+							lower = mid;
+							mid = (lower + upper + 1) / 2;
+							if mid == lower {
+								break;
+							}
 						}
+						// Other errors, return directly
+						return Err(err);
 					}
 				}
 			}

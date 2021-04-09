@@ -31,6 +31,7 @@ use ethereum::{
 	Transaction as EthereumTransaction, TransactionMessage as EthereumTransactionMessage,
 };
 use ethereum_types::H160;
+use evm::ExitError;
 use jsonrpc_core::{Error, ErrorCode, Value};
 
 pub mod frontier_backend_client {
@@ -189,11 +190,21 @@ pub fn internal_err<T: ToString>(message: T) -> Error {
 pub fn error_on_execution_failure(reason: &ExitReason, data: &[u8]) -> Result<(), Error> {
 	match reason {
 		ExitReason::Succeed(_) => Ok(()),
-		ExitReason::Error(e) => Err(Error {
-			code: ErrorCode::InternalError,
-			message: format!("evm error: {:?}", e),
-			data: Some(Value::String("0x".to_string())),
-		}),
+		ExitReason::Error(e) => {
+			if *e == ExitError::OutOfGas || *e == ExitError::OutOfFund {
+				// `ServerError(0)` will be useful in estimate gas
+				return Err(Error {
+					code: ErrorCode::ServerError(0),
+					message: format!("out of gas or fund"),
+					data: None,
+				});
+			}
+			Err(Error {
+				code: ErrorCode::InternalError,
+				message: format!("evm error: {:?}", e),
+				data: Some(Value::String("0x".to_string())),
+			})
+		}
 		ExitReason::Revert(_) => {
 			let mut message = "VM Exception while processing transaction: revert".to_string();
 			// A minimum size of error function selector (4) + offset (32) + string length (32)
