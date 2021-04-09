@@ -180,10 +180,10 @@ decl_module! {
 
 			let input = if log_entry.topics[0] == register_event.signature() {
 				let ethlog = Self::parse_event(register_event, log_entry)?;
-				Self::process_erc20_creation(backing_address, ethlog)?
+				Self::abi_encode_token_creation(backing_address, ethlog)?
 			} else {
 				let ethlog = Self::parse_event(backing_event, log_entry)?;
-				Self::process_token_issuing(ethlog)?
+				Self::abi_encode_token_redeem(ethlog)?
 			};
 
 			let contract = MappingFactoryAddress::get();
@@ -198,9 +198,9 @@ decl_module! {
 				e.into()
 			} )?;
 
-			let leaved_balance = <T as Config>::RingCurrency::free_balance(&substrate_account);
+			let remaining_balance = <T as Config>::RingCurrency::free_balance(&substrate_account);
 			// we should reserve some balance to keepalive this system account
-			let maxrefund = leaved_balance.saturating_sub(<T as Config>::RingCurrency::minimum_balance());
+			let maxrefund = remaining_balance.saturating_sub(<T as Config>::RingCurrency::minimum_balance());
 
 			<T as Config>::RingCurrency::transfer(&substrate_account, &user, maxrefund, KeepAlive)?;
 			VerifiedIssuingProof::insert(tx_index, true);
@@ -249,11 +249,11 @@ impl<T: Config> Module<T> {
 		Ok(ethlog)
 	}
 
-	fn process_erc20_creation(
+	fn abi_encode_token_creation(
 		backing: EthereumAddress,
 		result: EthLog,
 	) -> Result<Vec<u8>, DispatchError> {
-		log::trace!(target: "darwinia-issuing", "start to process_erc20_creation");
+		log::trace!(target: "darwinia-issuing", "start to abi_encode_token_creation");
 		let name = result.params[1]
 			.value
 			.clone()
@@ -293,8 +293,8 @@ impl<T: Config> Module<T> {
 		Ok(input)
 	}
 
-	fn process_token_issuing(result: EthLog) -> Result<Vec<u8>, DispatchError> {
-		log::trace!(target: "darwinia-issuing", "process_token_issuing");
+	fn abi_encode_token_redeem(result: EthLog) -> Result<Vec<u8>, DispatchError> {
+		log::trace!(target: "darwinia-issuing", "abi_encode_token_redeem");
 		let token_address = result.params[0]
 			.value
 			.clone()
@@ -345,7 +345,7 @@ impl<T: Config> Module<T> {
 		Ok(H160::from_slice(&mapped_address.as_slice()[12..]))
 	}
 
-	pub fn token_registed(
+	pub fn token_registered(
 		backing: EthereumAddress,
 		source: EthereumAddress,
 		target: EthereumAddress,
@@ -401,9 +401,9 @@ impl<T: Config> IssuingHandler for Module<T> {
 	fn handle(address: H160, caller: H160, input: &[u8]) -> DispatchResult {
 		ensure!(MappingFactoryAddress::get() == caller, <Error<T>>::AssetAR);
 		if input.len() == 3 * 32 {
-			let registed_info =
+			let register_info =
 				TokenRegisterInfo::decode(input).map_err(|_| Error::<T>::InvalidInputData)?;
-			Self::token_registed(registed_info.0, registed_info.1, registed_info.2)
+			Self::token_registered(register_info.0, register_info.1, register_info.2)
 		} else {
 			let burn_info =
 				TokenBurnInfo::decode(input).map_err(|_| Error::<T>::InvalidInputData)?;
