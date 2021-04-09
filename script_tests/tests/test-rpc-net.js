@@ -4,9 +4,6 @@ const conf = require("./config.js");
 const web3 = new Web3(conf.host);
 
 describe("Test Net API", function () {
-	after(() => {
-		web3.currentProvider.disconnect();
-	});
 
 	it("should get current network ID", async function () {
 		expect(await web3.eth.net.getId()).to.be.equal(43);

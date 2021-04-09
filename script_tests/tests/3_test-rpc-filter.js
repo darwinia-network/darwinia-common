@@ -7,16 +7,12 @@ const conf = require("./config.js");
 let currentFilterId = null;
 
 describe("Test filter API", function () {
-	beforeEach(() => {
-		utils.open();
-	});
 
 	afterEach(async () => {
 		if (currentFilterId) {
 			const res = await utils.customRequest("eth_uninstallFilter", [currentFilterId]);
 		}
 		currentFilterId = null;
-		utils.close();
 	});
 
 	it("should return a number as hexstring eth_newBlockFilter", async function () {
