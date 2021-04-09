@@ -26,4 +26,4 @@ function customRequest(method, params) {
 	});
 }
 
-module.exports = { customRequest, open, close };
+module.exports = { customRequest };
