@@ -189,6 +189,7 @@ enum TransactionValidationError {
 	UnknownError,
 	InvalidChainId,
 	InvalidSignature,
+	InvalidGasLimit,
 }
 
 impl<T: Config> frame_support::unsigned::ValidateUnsigned for Module<T> {
@@ -208,6 +209,13 @@ impl<T: Config> frame_support::unsigned::ValidateUnsigned for Module<T> {
 			let origin = Self::recover_signer(&transaction).ok_or_else(|| {
 				InvalidTransaction::Custom(TransactionValidationError::InvalidSignature as u8)
 			})?;
+
+			if transaction.gas_limit >= T::BlockGasLimit::get() {
+				return InvalidTransaction::Custom(
+					TransactionValidationError::InvalidGasLimit as u8,
+				)
+				.into();
+			}
 
 			let account_data =
 				<T as darwinia_evm::Config>::AccountBasicMapping::account_basic(&origin);
