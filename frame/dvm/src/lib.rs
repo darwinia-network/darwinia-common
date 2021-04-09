@@ -81,10 +81,10 @@ impl Default for EthereumStorageSchema {
 
 /// A type alias for the balance type from this pallet's point of view.
 type AccountId<T> = <T as frame_system::Config>::AccountId;
-type RingCurrency<T> = <T as Config>::RingCurrency;
-type KtonCurrency<T> = <T as Config>::KtonCurrency;
-type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
-type KtonBalance<T> = <KtonCurrency<T> as Currency<AccountId<T>>>::Balance;
+pub type RingCurrency<T> = <T as Config>::RingCurrency;
+pub type KtonCurrency<T> = <T as Config>::KtonCurrency;
+pub type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
+pub type KtonBalance<T> = <KtonCurrency<T> as Currency<AccountId<T>>>::Balance;
 
 pub struct IntermediateStateRoot;
 
