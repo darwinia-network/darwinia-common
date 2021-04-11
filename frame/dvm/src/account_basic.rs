@@ -1,5 +1,6 @@
 use crate::{Config, KtonBalance, KtonRemainBalance, RingBalance, RingRemainBalance};
 use darwinia_evm::{Account as EVMAccount, AccountBasic, AddressMapping};
+use darwinia_support::evm::POW_9;
 use evm::ExitError;
 use frame_support::ensure;
 use frame_support::traits::Currency;
@@ -30,9 +31,7 @@ where
 	fn account_basic(address: &H160) -> EVMAccount {
 		let account_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(*address);
 		let nonce = <frame_system::Pallet<T>>::account_nonce(&account_id);
-		let helper = U256::from(10)
-			.checked_pow(U256::from(9))
-			.unwrap_or_else(|| U256::from(0));
+		let helper = U256::from(POW_9);
 
 		// Get balance from Currency
 		let balance: U256 = C::free_balance(&account_id).saturated_into::<u128>().into();
@@ -55,9 +54,7 @@ where
 
 	/// Mutate the basic account
 	fn mutate_account_basic(address: &H160, new: EVMAccount) {
-		let helper = U256::from(10)
-			.checked_pow(U256::from(9))
-			.unwrap_or(U256::MAX);
+		let helper = U256::from(POW_9);
 
 		let account_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(*address);
 		let current = Self::account_basic(address);

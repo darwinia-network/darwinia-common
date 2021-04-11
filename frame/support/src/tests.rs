@@ -18,6 +18,16 @@
 
 // --- darwinia ---
 use crate::*;
+// --- substrate ---
+use sp_core::U256;
+
+#[test]
+fn const_pow_9_should_work() {
+	assert_eq!(
+		U256::from(10).checked_pow(U256::from(9)).unwrap(),
+		evm::POW_9.into()
+	)
+}
 
 /// Extract value from JSON response
 #[test]

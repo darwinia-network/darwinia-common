@@ -37,6 +37,10 @@ pub mod balance {
 	pub use crate::traits::{BalanceInfo, DustCollector, OnUnbalancedKton};
 }
 
+pub mod evm {
+	pub const POW_9: u32 = 1_000_000_000;
+}
+
 pub mod literal_procesor {
 	/// Extract the inner value from json str with specific field
 	pub fn extract_from_json_str<'a>(
