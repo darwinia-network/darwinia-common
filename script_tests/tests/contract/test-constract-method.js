@@ -35,7 +35,7 @@ describe("Test Contract", function () {
 			createTransaction.rawTransaction
 		);
 		create_contract = createReceipt.contractAddress;
-	}).timeout(10000);
+	}).timeout(80000);
 
 	it("Get Default Number", function () {
 		const get = async () => {

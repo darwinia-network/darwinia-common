@@ -33,7 +33,7 @@ pub use dp_evm::{
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage,
 	dispatch::DispatchResultWithPostInfo,
-	traits::{Currency, Get},
+	traits::{Currency, ExistenceRequirement, Get},
 	weights::{Pays, PostDispatchInfo, Weight},
 };
 use frame_system::RawOrigin;
@@ -50,10 +50,6 @@ use evm::Config as EvmConfig;
 pub use evm::{ExitError, ExitFatal, ExitReason, ExitRevert, ExitSucceed};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-
-/// Type alias for currency balance.
-pub type BalanceOf<T> =
-	<<T as Config>::RingCurrency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 /// Config that outputs the current transaction gas price.
 pub trait FeeCalculator {
@@ -197,14 +193,15 @@ impl AddressMapping<AccountId32> for ConcatAddressMapping {
 	}
 }
 
-pub trait AccountBasicMapping {
+pub trait AccountBasic {
 	fn account_basic(address: &H160) -> Account;
 	fn mutate_account_basic(address: &H160, new: Account);
+	fn transfer(source: &H160, target: &H160, value: U256) -> Result<(), ExitError>;
 }
 
-pub struct RawAccountBasicMapping<T>(sp_std::marker::PhantomData<T>);
+pub struct RawAccountBasic<T>(sp_std::marker::PhantomData<T>);
 
-impl<T: Config> AccountBasicMapping for RawAccountBasicMapping<T> {
+impl<T: Config> AccountBasic for RawAccountBasic<T> {
 	/// Get the account basic in EVM format.
 	fn account_basic(address: &H160) -> Account {
 		let account_id = T::AddressMapping::into_account_id(*address);
@@ -220,7 +217,7 @@ impl<T: Config> AccountBasicMapping for RawAccountBasicMapping<T> {
 
 	fn mutate_account_basic(address: &H160, new: Account) {
 		let account_id = T::AddressMapping::into_account_id(*address);
-		let current = T::AccountBasicMapping::account_basic(address);
+		let current = T::RingAccountBasic::account_basic(address);
 
 		if current.nonce < new.nonce {
 			// ASSUME: in one single EVM transaction, the nonce will not increase more than
@@ -236,6 +233,23 @@ impl<T: Config> AccountBasicMapping for RawAccountBasicMapping<T> {
 		} else if current.balance < new.balance {
 			let diff = new.balance - current.balance;
 			T::RingCurrency::deposit_creating(&account_id, diff.low_u128().unique_saturated_into());
+		}
+	}
+
+	fn transfer(source: &H160, target: &H160, value: U256) -> Result<(), ExitError> {
+		let source_account_id = T::AddressMapping::into_account_id(*source);
+		let target_account_id = T::AddressMapping::into_account_id(*target);
+		let value = value.low_u128().unique_saturated_into();
+		let res = T::RingCurrency::transfer(
+			&source_account_id,
+			&target_account_id,
+			value,
+			ExistenceRequirement::AllowDeath,
+		);
+
+		match res {
+			Ok(()) => Ok(()),
+			Err(_) => Err(ExitError::Other("Transfer error".into())),
 		}
 	}
 }
@@ -284,7 +298,8 @@ pub trait Config: frame_system::Config + pallet_timestamp::Config {
 	/// EVM execution runner.
 	type Runner: Runner<Self>;
 	/// The account basic mapping way
-	type AccountBasicMapping: AccountBasicMapping;
+	type RingAccountBasic: AccountBasic;
+	type KtonAccountBasic: AccountBasic;
 
 	/// EVM config used in the module.
 	fn config() -> &'static EvmConfig {
@@ -317,7 +332,11 @@ decl_storage! {
 		config(accounts): std::collections::BTreeMap<H160, GenesisAccount>;
 		build(|config: &GenesisConfig| {
 			for (address, account) in &config.accounts {
-				T::AccountBasicMapping::mutate_account_basic(&address, Account {
+				T::RingAccountBasic::mutate_account_basic(&address, Account {
+					balance: account.balance,
+					nonce: account.nonce,
+				});
+				T::KtonAccountBasic::mutate_account_basic(&address, Account {
 					balance: account.balance,
 					nonce: account.nonce,
 				});
@@ -538,10 +557,15 @@ impl<T: Config> Module<T> {
 
 	/// Check whether an account is empty.
 	pub fn is_account_empty(address: &H160) -> bool {
-		let account = T::AccountBasicMapping::account_basic(address);
+		let account = T::RingAccountBasic::account_basic(address);
 		let code_len = AccountCodes::decode_len(address).unwrap_or(0);
 
 		account.nonce == U256::zero() && account.balance == U256::zero() && code_len == 0
+	}
+
+	pub fn is_contract_code_empty(address: &H160) -> bool {
+		let code_len = AccountCodes::decode_len(address).unwrap_or(0);
+		code_len == 0
 	}
 
 	/// Remove an account if its empty.
@@ -553,10 +577,10 @@ impl<T: Config> Module<T> {
 
 	/// Withdraw fee.
 	pub fn withdraw_fee(address: &H160, value: U256) {
-		let account = T::AccountBasicMapping::account_basic(address);
+		let account = T::RingAccountBasic::account_basic(address);
 		let new_account_balance = account.balance.saturating_sub(value);
 
-		T::AccountBasicMapping::mutate_account_basic(
+		T::RingAccountBasic::mutate_account_basic(
 			&address,
 			Account {
 				nonce: account.nonce,
@@ -567,10 +591,10 @@ impl<T: Config> Module<T> {
 
 	/// Deposit fee.
 	pub fn deposit_fee(address: &H160, value: U256) {
-		let account = T::AccountBasicMapping::account_basic(address);
+		let account = T::RingAccountBasic::account_basic(address);
 		let new_account_balance = account.balance.saturating_add(value);
 
-		T::AccountBasicMapping::mutate_account_basic(
+		T::RingAccountBasic::mutate_account_basic(
 			&address,
 			Account {
 				nonce: account.nonce,

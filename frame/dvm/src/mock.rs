@@ -16,7 +16,7 @@
 
 //! Test utilities
 
-use crate::{self as dvm_ethereum, account_basic::DVMAccountBasicMapping, *};
+use crate::{self as dvm_ethereum, account_basic::DvmAccountBasic, *};
 use codec::{Decode, Encode};
 use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator};
 use ethereum::{TransactionAction, TransactionSignature};
@@ -153,10 +153,17 @@ impl darwinia_evm::Config for Test {
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 	type Event = ();
-	type Precompiles = darwinia_evm_precompile::DarwiniaPrecompiles<Self>;
+	type Precompiles = (
+		darwinia_evm_precompile_simple::ECRecover,
+		darwinia_evm_precompile_simple::Sha256,
+		darwinia_evm_precompile_simple::Ripemd160,
+		darwinia_evm_precompile_simple::Identity,
+		darwinia_evm_precompile_withdraw::WithDraw<Self>,
+	);
 	type ChainId = ChainId;
 	type Runner = darwinia_evm::runner::stack::Runner<Self>;
-	type AccountBasicMapping = DVMAccountBasicMapping<Self>;
+	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
+	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 }
 
 frame_support::parameter_types! {
@@ -169,6 +176,7 @@ impl Config for Test {
 	type StateRoot = IntermediateStateRoot;
 	type BlockGasLimit = BlockGasLimit;
 	type RingCurrency = Ring;
+	type KtonCurrency = Kton;
 }
 
 frame_support::construct_runtime! {
