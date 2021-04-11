@@ -774,7 +774,6 @@ impl_runtime_apis! {
 		}
 
 		fn account_basic(address: H160) -> EVMAccount {
-			// --- darwinia ---
 			use darwinia_evm::AccountBasic;
 
 			<Runtime as darwinia_evm::Config>::RingAccountBasic::account_basic(&address)
