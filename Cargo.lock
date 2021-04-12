@@ -1525,6 +1525,7 @@ version = "2.1.0"
 dependencies = [
  "array-bytes",
  "darwinia-evm",
+ "darwinia-support",
  "dp-evm",
  "dvm-ethereum",
  "ethabi",
@@ -1582,6 +1583,7 @@ name = "darwinia-evm-precompile-withdraw"
 version = "2.1.0"
 dependencies = [
  "darwinia-evm",
+ "darwinia-support",
  "dp-evm",
  "evm",
  "frame-support",
@@ -1755,6 +1757,7 @@ dependencies = [
  "impl-trait-for-tuples",
  "num-traits",
  "parity-scale-codec",
+ "sp-core",
  "sp-runtime",
  "sp-std",
 ]

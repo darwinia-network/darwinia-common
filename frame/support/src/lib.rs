@@ -37,32 +37,8 @@ pub mod balance {
 	pub use crate::traits::{BalanceInfo, DustCollector, OnUnbalancedKton};
 }
 
-pub mod utilities {
-	// --- substrate ---
-	use frame_support::storage::{self, TransactionOutcome};
-	use sp_runtime::DispatchError;
-
-	// Due to substrate version
-	// Copy from https://github.com/open-web3-stack/open-runtime-module-library/blob/master/utilities/src/lib.rs#L22
-	/// Execute the supplied function in a new storage transaction.
-	///
-	/// All changes to storage performed by the supplied function are discarded if
-	/// the returned outcome is `Result::Err`.
-	///
-	/// Transactions can be nested to any depth. Commits happen to the parent
-	/// transaction.
-	pub fn with_transaction_result<R>(
-		f: impl FnOnce() -> Result<R, DispatchError>,
-	) -> Result<R, DispatchError> {
-		storage::with_transaction(|| {
-			let res = f();
-			if res.is_ok() {
-				TransactionOutcome::Commit(res)
-			} else {
-				TransactionOutcome::Rollback(res)
-			}
-		})
-	}
+pub mod evm {
+	pub const POW_9: u32 = 1_000_000_000;
 }
 
 #[cfg(test)]
