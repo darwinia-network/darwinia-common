@@ -23,7 +23,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 // --- darwinia ---
-use darwinia_evm::{AccountBasicMapping, FeeCalculator, GasWeightMapping, Runner};
+use darwinia_evm::{AccountBasic, FeeCalculator, GasWeightMapping, Runner};
 use dp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
 use dp_evm::CallOrCreateInfo;
 #[cfg(feature = "std")]
@@ -39,7 +39,7 @@ use frame_support::{
 use frame_system::ensure_none;
 use sp_runtime::{
 	generic::DigestItem,
-	traits::{Saturating, UniqueSaturatedInto},
+	traits::UniqueSaturatedInto,
 	transaction_validity::{
 		InvalidTransaction, TransactionSource, TransactionValidity, ValidTransactionBuilder,
 	},
@@ -81,8 +81,10 @@ impl Default for EthereumStorageSchema {
 
 /// A type alias for the balance type from this pallet's point of view.
 type AccountId<T> = <T as frame_system::Config>::AccountId;
-type RingCurrency<T> = <T as Config>::RingCurrency;
-type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
+pub type RingCurrency<T> = <T as Config>::RingCurrency;
+pub type KtonCurrency<T> = <T as Config>::KtonCurrency;
+pub type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
+pub type KtonBalance<T> = <KtonCurrency<T> as Currency<AccountId<T>>>::Balance;
 
 pub struct IntermediateStateRoot;
 
@@ -105,6 +107,8 @@ pub trait Config:
 	type StateRoot: Get<H256>;
 	// Balance module
 	type RingCurrency: Currency<Self::AccountId>;
+	// KTON Balance module
+	type KtonCurrency: Currency<Self::AccountId>;
 }
 
 decl_storage! {
@@ -118,8 +122,10 @@ decl_storage! {
 		CurrentReceipts: Option<Vec<ethereum::Receipt>>;
 		/// The current transaction statuses.
 		CurrentTransactionStatuses: Option<Vec<TransactionStatus>>;
-		/// Remaining balance for account
-		RemainingBalance get(fn get_remaining_balances): map hasher(blake2_128_concat) T::AccountId => RingBalance<T>;
+		/// Remaining ring balance for account
+		RemainingRingBalance get(fn get_ring_remaining_balances): map hasher(blake2_128_concat) T::AccountId => RingBalance<T>;
+		/// Remaining kton balance for account
+		RemainingKtonBalance get(fn get_kton_remaining_balances): map hasher(blake2_128_concat) T::AccountId => KtonBalance<T>;
 	}
 	add_extra_genesis {
 		build(|_config: &GenesisConfig| {
@@ -218,7 +224,7 @@ impl<T: Config> frame_support::unsigned::ValidateUnsigned for Module<T> {
 			}
 
 			let account_data =
-				<T as darwinia_evm::Config>::AccountBasicMapping::account_basic(&origin);
+				<T as darwinia_evm::Config>::RingAccountBasic::account_basic(&origin);
 
 			if transaction.nonce < account_data.nonce {
 				return InvalidTransaction::Stale.into();
@@ -317,35 +323,6 @@ impl<T: Config> Module<T> {
 			);
 			<frame_system::Pallet<T>>::deposit_log(digest.into());
 		}
-	}
-
-	/// Get the remaining balance for evm address
-	pub fn remaining_balance(account_id: &T::AccountId) -> RingBalance<T> {
-		<RemainingBalance<T>>::get(account_id)
-	}
-
-	// Set the remaining balance for evm address
-	pub fn set_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
-		<RemainingBalance<T>>::insert(account_id, value)
-	}
-
-	// Remove the remaining balance for evm address
-	pub fn remove_remaining_balance(account_id: &T::AccountId) {
-		<RemainingBalance<T>>::remove(account_id)
-	}
-
-	/// Inc remaining balance
-	pub fn inc_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
-		let remain_balance = Self::remaining_balance(account_id);
-		let updated_balance = remain_balance.saturating_add(value);
-		<RemainingBalance<T>>::insert(account_id, updated_balance);
-	}
-
-	/// Dec remaining balance
-	pub fn dec_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
-		let remain_balance = Self::remaining_balance(account_id);
-		let updated_balance = remain_balance.saturating_sub(value);
-		<RemainingBalance<T>>::insert(account_id, updated_balance);
 	}
 
 	fn logs_bloom(logs: Vec<Log>, bloom: &mut Bloom) {

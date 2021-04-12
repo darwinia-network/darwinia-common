@@ -103,7 +103,8 @@ impl Config for Test {
 	type ChainId = ();
 	type BlockGasLimit = ();
 	type Runner = crate::runner::stack::Runner<Self>;
-	type AccountBasicMapping = RawAccountBasicMapping<Test>;
+	type RingAccountBasic = RawAccountBasic<Test>;
+	type KtonAccountBasic = RawAccountBasic<Test>;
 }
 
 frame_support::construct_runtime! {

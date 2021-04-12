@@ -23,4 +23,5 @@ impl Config for Runtime {
 	type FindAuthor = EthereumFindAuthor<Babe>;
 	type StateRoot = IntermediateStateRoot;
 	type RingCurrency = Ring;
+	type KtonCurrency = Kton;
 }
