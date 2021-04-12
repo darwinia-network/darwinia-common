@@ -50,7 +50,7 @@ pub fn sync_block<Block: BlockT>(
 			Ok(())
 		}
 		Err(FindLogError::NotFound) => {
-			let _ = backend.mapping().write_none(header.hash());
+			backend.mapping().write_none(header.hash())?;
 
 			Ok(())
 		}
