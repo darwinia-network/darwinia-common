@@ -16,10 +16,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-// --- darwinia ---
-use crate::*;
 // --- substrate ---
 use sp_core::U256;
+// --- darwinia ---
+use crate::*;
 
 #[test]
 fn const_pow_9_should_work() {
