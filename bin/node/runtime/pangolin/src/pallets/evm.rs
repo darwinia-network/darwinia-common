@@ -7,7 +7,7 @@ use darwinia_evm::{
 };
 use darwinia_evm_precompile::DarwiniaPrecompiles;
 use dvm_ethereum::account_basic::DvmAccountBasic;
-use dvm_ethereum::{KtonRemainBalance, RingRemainBalance};
+use dvm_ethereum::account_basic::{KtonRemainBalance, RingRemainBalance};
 
 /// Fixed gas price.
 pub struct FixedGasPrice;

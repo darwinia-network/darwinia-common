@@ -17,9 +17,10 @@
 
 //! Consensus extension module tests for BABE consensus.
 
-use super::*;
-use crate::account_basic::RemainBalanceOp;
-use crate::Call;
+use crate::{
+	account_basic::{RemainBalanceOp, RingRemainBalance},
+	Call, *,
+};
 use codec::Decode;
 use darwinia_evm::{Account, AddressMapping};
 use ethereum::TransactionSignature;
