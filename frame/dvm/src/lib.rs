@@ -105,7 +105,7 @@ pub trait Config:
 	type FindAuthor: FindAuthor<H160>;
 	/// How Ethereum state root is calculated.
 	type StateRoot: Get<H256>;
-	// Balance module
+	// RING Balance module
 	type RingCurrency: Currency<Self::AccountId>;
 	// KTON Balance module
 	type KtonCurrency: Currency<Self::AccountId>;
