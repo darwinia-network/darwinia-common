@@ -1,6 +1,6 @@
 // --- substrate ---
 use frame_support::{traits::FindAuthor, ConsensusEngineId};
-use sp_core::{crypto::Public, H160, U256};
+use sp_core::{crypto::Public, H160};
 // --- darwinia ---
 use crate::*;
 use dvm_ethereum::{Config, IntermediateStateRoot};
@@ -18,14 +18,10 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 		None
 	}
 }
-frame_support::parameter_types! {
-	pub BlockGasLimit: U256 = U256::from(u32::max_value());
-}
 impl Config for Runtime {
 	type Event = Event;
 	type FindAuthor = EthereumFindAuthor<Babe>;
 	type StateRoot = IntermediateStateRoot;
-	type BlockGasLimit = BlockGasLimit;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 }

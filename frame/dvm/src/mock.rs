@@ -136,6 +136,7 @@ frame_support::parameter_types! {
 	pub const TransactionByteFee: u64 = 1;
 	pub const ChainId: u64 = 42;
 	pub const EVMModuleId: ModuleId = ModuleId(*b"py/evmpa");
+	pub const BlockGasLimit: U256 = U256::MAX;
 }
 
 pub struct HashedAddressMapping;
@@ -165,20 +166,16 @@ impl darwinia_evm::Config for Test {
 		darwinia_evm_precompile_withdraw::WithDraw<Self>,
 	);
 	type ChainId = ChainId;
+	type BlockGasLimit = BlockGasLimit;
 	type Runner = darwinia_evm::runner::stack::Runner<Self>;
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
-}
-
-frame_support::parameter_types! {
-	pub const BlockGasLimit: U256 = U256::MAX;
 }
 
 impl Config for Test {
 	type Event = ();
 	type FindAuthor = EthereumFindAuthor;
 	type StateRoot = IntermediateStateRoot;
-	type BlockGasLimit = BlockGasLimit;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 }

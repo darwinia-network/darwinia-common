@@ -151,8 +151,8 @@ where
 	use darwinia_staking_rpc::{Staking, StakingApi};
 	use dc_rpc::{
 		EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, EthPubSubApi, EthPubSubApiServer,
-		HexEncodedIdProvider, NetApi, NetApiServer, SchemaV1Override, StorageOverride, Web3Api,
-		Web3ApiServer,
+		HexEncodedIdProvider, NetApi, NetApiServer, OverrideHandle, RuntimeApiStorageOverride,
+		SchemaV1Override, StorageOverride, Web3Api, Web3ApiServer,
 	};
 	use pangolin_runtime::TransactionConverter;
 
@@ -218,18 +218,23 @@ where
 	io.extend_with(HeaderMMRApi::to_delegate(HeaderMMR::new(client.clone())));
 	io.extend_with(StakingApi::to_delegate(Staking::new(client.clone())));
 
-	let mut overrides = BTreeMap::new();
-	overrides.insert(
+	let mut overrides_map = BTreeMap::new();
+	overrides_map.insert(
 		EthereumStorageSchema::V1,
 		Box::new(SchemaV1Override::new(client.clone()))
 			as Box<dyn StorageOverride<_> + Send + Sync>,
 	);
+	let overrides = Arc::new(OverrideHandle {
+		schemas: overrides_map,
+		fallback: Box::new(RuntimeApiStorageOverride::new(client.clone())),
+	});
+
 	io.extend_with(EthApiServer::to_delegate(EthApi::new(
 		client.clone(),
 		pool.clone(),
 		TransactionConverter,
 		network.clone(),
-		overrides,
+		overrides.clone(),
 		pending_transactions.clone(),
 		backend,
 		is_authority,
@@ -239,6 +244,7 @@ where
 			client.clone(),
 			filter_pool.clone(),
 			500 as usize, // max stored filters
+			overrides.clone(),
 		)));
 	}
 	io.extend_with(EthPubSubApiServer::to_delegate(EthPubSubApi::new(
@@ -249,6 +255,7 @@ where
 			HexEncodedIdProvider::default(),
 			Arc::new(subscription_task_executor),
 		),
+		overrides,
 	)));
 	io.extend_with(NetApiServer::to_delegate(NetApi::new(
 		client.clone(),

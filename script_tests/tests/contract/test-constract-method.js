@@ -4,6 +4,7 @@
 const expect = require("chai").expect;
 const Web3 = require("web3");
 const contractFile = require("./compile");
+const conf = require("../config.js");
 
 const web3 = new Web3("http://localhost:9933");
 const address = "0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b";
@@ -26,7 +27,7 @@ describe("Test Contract", function () {
 			{
 				from: address,
 				data: incrementerTx.encodeABI(),
-				gas: "4294967295",
+				gas: conf.gas,
 			},
 			privKey
 		);
@@ -61,7 +62,7 @@ describe("Test Contract", function () {
 				from: address,
 				to: create_contract,
 				data: encoded,
-				gas: "4294967295",
+				gas: conf.gas,
 			},
 			privKey
 		);
@@ -84,7 +85,7 @@ describe("Test Contract", function () {
 				from: address,
 				to: create_contract,
 				data: encoded,
-				gas: "4294967295",
+				gas: conf.gas,
 			},
 			privKey
 		);

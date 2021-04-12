@@ -105,8 +105,6 @@ pub trait Config:
 	type FindAuthor: FindAuthor<H160>;
 	/// How Ethereum state root is calculated.
 	type StateRoot: Get<H256>;
-	/// The block gas limit. Can be a simple constant, or an adjustment algorithm in another pallet.
-	type BlockGasLimit: Get<U256>;
 	// RING Balance module
 	type RingCurrency: Currency<Self::AccountId>;
 	// KTON Balance module
@@ -197,6 +195,7 @@ enum TransactionValidationError {
 	UnknownError,
 	InvalidChainId,
 	InvalidSignature,
+	InvalidGasLimit,
 }
 
 impl<T: Config> frame_support::unsigned::ValidateUnsigned for Module<T> {
@@ -216,6 +215,13 @@ impl<T: Config> frame_support::unsigned::ValidateUnsigned for Module<T> {
 			let origin = Self::recover_signer(&transaction).ok_or_else(|| {
 				InvalidTransaction::Custom(TransactionValidationError::InvalidSignature as u8)
 			})?;
+
+			if transaction.gas_limit >= T::BlockGasLimit::get() {
+				return InvalidTransaction::Custom(
+					TransactionValidationError::InvalidGasLimit as u8,
+				)
+				.into();
+			}
 
 			let account_data =
 				<T as darwinia_evm::Config>::RingAccountBasic::account_basic(&origin);

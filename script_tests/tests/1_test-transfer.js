@@ -1,6 +1,6 @@
 const expect = require("chai").expect;
 const Web3 = require("web3");
-
+const conf = require("./config.js");
 const web3 = new Web3("http://localhost:9933");
 
 const addressWithdrawPrecompile = "0x0000000000000000000000000000000000000015";
@@ -29,17 +29,13 @@ describe("Test Transfer Balance", function () {
 				from: addressFrom,
 				to: addressTo,
 				value: web3.utils.toWei("10", "ether"),
-				gas: "5000000000",
+				gas: conf.gas,
 			},
 			privKey
 		);
 
 		const createReceipt = await web3.eth.sendSignedTransaction(
 			createTransaction.rawTransaction
-		);
-
-		expect(createReceipt.transactionHash).to.be.equal(
-			"0x040ef42bccbfa1af89c37d747f94d78465d7630d4c974436e55f36338f651327"
 		);
 	}).timeout(10000);
 
@@ -58,7 +54,7 @@ describe("Test Transfer Balance", function () {
 				from: addressFrom,
 				to: addressTo2,
 				value: web3.utils.toWei("100", "wei"),
-				gas: "5000000000",
+				gas: conf.gas,
 			},
 			privKey
 		);
@@ -82,7 +78,7 @@ describe("Test Transfer Balance", function () {
 				from: addressFrom,
 				to: addressTo,
 				value: web3.utils.toWei("50", "ether"),
-				gas: "5000000000",
+				gas: conf.gas,
 			},
 			privKey
 		);
@@ -91,9 +87,6 @@ describe("Test Transfer Balance", function () {
 			createTransaction.rawTransaction
 		);
 
-		expect(createReceipt.transactionHash).to.be.equal(
-			"0x0046e4a4c8bee087c2ef25ce9b3717eaf5dcd53c6eb6815cc8e887abc667c371"
-		);
 	}).timeout(10000);
 
 	it("Check balance after transfer 50 ether", async function () {
@@ -111,7 +104,7 @@ describe("Test Transfer Balance", function () {
 				from: addressFrom,
 				to: addressFrom,
 				value: web3.utils.toWei("30", "ether"),
-				gas: "5000000000",
+				gas: conf.gas,
 				gas_price: 1,
 			},
 			privKey
@@ -119,9 +112,6 @@ describe("Test Transfer Balance", function () {
 
 		const createReceipt = await web3.eth.sendSignedTransaction(
 			createTransaction.rawTransaction
-		);
-		expect(createReceipt.transactionHash).to.be.equal(
-			"0x2accb0157682d1ed3497aeb7056704e856da4842ceefe9c838fc990b802c5beb"
 		);
 	}).timeout(10000);
 
@@ -138,7 +128,7 @@ describe("Test Transfer Balance", function () {
 			{
 				from: addressFrom,
 				to: addressWithdrawPrecompile,
-				gas: "5000000000",
+				gas: conf.gas,
 				data: input,
 				value: web3.utils.toWei("30", "ether"),
 			},
