@@ -16,7 +16,11 @@
 
 //! Test utilities
 
-use crate::{self as dvm_ethereum, account_basic::DvmAccountBasic, *};
+use crate::{
+	self as dvm_ethereum,
+	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
+	*,
+};
 use codec::{Decode, Encode};
 use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator};
 use ethereum::{TransactionAction, TransactionSignature};
