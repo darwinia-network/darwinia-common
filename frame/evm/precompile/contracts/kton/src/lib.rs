@@ -31,6 +31,7 @@ use sp_runtime::{traits::UniqueSaturatedInto, SaturatedConversion};
 use sp_std::{borrow::ToOwned, marker::PhantomData, prelude::*, vec::Vec};
 
 use darwinia_evm::{Account, AccountBasic, Config, Module, Runner};
+use darwinia_support::evm::POW_9;
 use dp_evm::Precompile;
 use dvm_ethereum::{
 	account_basic::{KtonRemainBalance, RemainBalanceOp},
@@ -65,9 +66,7 @@ impl<T: Config + dvm_ethereum::Config> Precompile for Kton<T> {
 		target_limit: Option<u64>,
 		context: &Context,
 	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
-		let helper = U256::from(10)
-			.checked_pow(U256::from(9))
-			.unwrap_or(U256::MAX);
+		let helper = U256::from(POW_9);
 		let action = which_action::<T>(&input)?;
 
 		match action {

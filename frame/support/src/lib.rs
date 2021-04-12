@@ -37,5 +37,9 @@ pub mod balance {
 	pub use crate::traits::{BalanceInfo, DustCollector, OnUnbalancedKton};
 }
 
+pub mod evm {
+	pub const POW_9: u32 = 1_000_000_000;
+}
+
 #[cfg(test)]
 mod tests;
