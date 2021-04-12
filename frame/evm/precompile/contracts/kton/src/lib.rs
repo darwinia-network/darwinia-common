@@ -33,7 +33,10 @@ use sp_std::{borrow::ToOwned, marker::PhantomData, prelude::*, vec::Vec};
 use darwinia_evm::{Account, AccountBasic, Config, Module, Runner};
 use darwinia_support::evm::POW_9;
 use dp_evm::Precompile;
-use dvm_ethereum::{account_basic::RemainBalanceOp, KtonBalance, KtonRemainBalance};
+use dvm_ethereum::{
+	account_basic::{KtonRemainBalance, RemainBalanceOp},
+	KtonBalance,
+};
 
 type AccountId<T> = <T as frame_system::Config>::AccountId;
 
