@@ -131,12 +131,8 @@ where
 	C::Api: darwinia_balances_rpc::BalancesRuntimeApi<Block, AccountId, Balance>,
 	C::Api: darwinia_header_mmr_rpc::HeaderMMRRuntimeApi<Block, Hash>,
 	C::Api: darwinia_staking_rpc::StakingRuntimeApi<Block, AccountId, Power>,
-<<<<<<< HEAD
-	C::Api: dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
-=======
 	// C::Api: dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
 	// <C::Api as sp_api::ApiErrorExt>::Error: std::fmt::Debug,
->>>>>>> Remove dvm part
 	P: 'static + Sync + Send + sp_transaction_pool::TransactionPool<Block = Block>,
 	SC: 'static + sp_consensus::SelectChain<Block>,
 	B: 'static + Send + Sync + sc_client_api::Backend<Block>,
@@ -154,21 +150,12 @@ where
 	use darwinia_balances_rpc::{Balances, BalancesApi};
 	use darwinia_header_mmr_rpc::{HeaderMMR, HeaderMMRApi};
 	use darwinia_staking_rpc::{Staking, StakingApi};
-<<<<<<< HEAD
-	use dc_rpc::{
-		EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, EthPubSubApi, EthPubSubApiServer,
-		HexEncodedIdProvider, NetApi, NetApiServer, OverrideHandle, RuntimeApiStorageOverride,
-		SchemaV1Override, StorageOverride, Web3Api, Web3ApiServer,
-	};
-	use pangolin_runtime::TransactionConverter;
-=======
 	// use dc_rpc::{
 	// 	EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, EthPubSubApi, EthPubSubApiServer,
 	// 	HexEncodedIdProvider, NetApi, NetApiServer, SchemaV1Override, StorageOverride, Web3Api,
 	// 	Web3ApiServer,
 	// };
 	// use pangolin_runtime::TransactionConverter;
->>>>>>> Remove dvm part
 
 	let FullDeps {
 		client,
