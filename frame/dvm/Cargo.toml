@@ -28,19 +28,19 @@ dp-storage          = { default-features = false, path = "../../primitives/stora
 dp_consensus        = { default-features = false, path = "../../primitives/consensus" }
 dvm-rpc-runtime-api = { default-features = false, path = "./rpc/runtime-api" }
 # substrate
-frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-sp-core          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-sp-io            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-sp-runtime       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-core          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-io            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-runtime       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
 
 [dev-dependencies]
 # darwinia
-darwinia-balances                   = { path = "../balances" }
-darwinia-evm-precompile-simple      = { path = "../evm/precompile/contracts/simple" }
-darwinia-evm-precompile-withdraw    = { path = "../evm/precompile/contracts/withdraw" }
+darwinia-balances                = { path = "../balances" }
+darwinia-evm-precompile-simple   = { path = "../evm/precompile/contracts/simple" }
+darwinia-evm-precompile-withdraw = { path = "../evm/precompile/contracts/withdraw" }
 
 [features]
 default = ["std"]
