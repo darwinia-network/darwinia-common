@@ -182,49 +182,6 @@ decl_module! {
 			VerifiedIssuingProof::insert(tx_index, true);
 			Self::deposit_event(RawEvent::RedeemErc20(user, backing_address));
 		}
-
-		#[weight = <T as darwinia_evm::Config>::GasWeightMapping::gas_to_weight(0x100000)]
-		pub fn register_or_redeem_erc20(origin, proof: EthereumReceiptProofThing<T>) {
-			log::info!(target: "darwinia-issuing", "start to register_or_issuing_erc20");
-			let user = ensure_signed(origin)?;
-			let tx_index = T::EthereumRelay::gen_receipt_index(&proof);
-			ensure!(!VerifiedIssuingProof::contains_key(tx_index), <Error<T>>::AssetAR);
-			let verified_receipt = T::EthereumRelay::verify_receipt(&proof)
-				.map_err(|err| {
-					log::info!(target: "darwinia-issuing", "verify error {:?}", err);
-					<Error<T>>::ReceiptProofInv
-				})?;
-
-			let register_event = Abi::register_event();
-			let backing_event = Abi::backing_event();
-			let backing_address = EthereumBackingAddress::get();
-			let log_entry = verified_receipt
-				.logs
-				.into_iter()
-				.find(|x| {
-					x.address == backing_address &&
-						( x.topics[0] == register_event.signature()
-						  || x.topics[0] == backing_event.signature() )
-				})
-			.ok_or(<Error<T>>::LogEntryNE)?;
-
-			let input = if log_entry.topics[0] == register_event.signature() {
-				let ethlog = Self::parse_event(register_event, log_entry)?;
-				Self::abi_encode_token_creation(backing_address, ethlog)?
-			} else {
-				let ethlog = Self::parse_event(backing_event, log_entry)?;
-				Self::abi_encode_token_redeem(ethlog)?
-			};
-
-			let contract = MappingFactoryAddress::get();
-			let transaction = Self::unsigned_transaction(contract, input);
-			let result = dvm_ethereum::Module::<T>::do_transact(transaction, false).map_err(|e| -> &'static str {
-				log::info!(target: "darwinia-issuing", "register_or_issuing_erc20 error {:?}", &e);
-				e.into()
-			} )?;
-
-			VerifiedIssuingProof::insert(tx_index, true);
-		}
 	}
 }
 
@@ -252,16 +209,6 @@ impl<T: Config> Module<T> {
 			)
 			.unwrap(),
 		}
-	}
-
-	fn parse_event(event: EthEvent, log_entry: LogEntry) -> Result<EthLog, DispatchError> {
-		let ethlog = Abi::parse_event(
-			log_entry.topics.into_iter().collect(),
-			log_entry.data.clone(),
-			event,
-		)
-		.map_err(|_| <Error<T>>::EthLogPF)?;
-		Ok(ethlog)
 	}
 
 	fn abi_encode_token_creation(
