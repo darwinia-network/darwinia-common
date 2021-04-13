@@ -166,7 +166,7 @@ decl_module! {
 		fn transact(origin, transaction: ethereum::Transaction) -> DispatchResultWithPostInfo {
 			ensure_none(origin)?;
 
-			Self::do_transact(transaction, None)
+			Self::do_transact(transaction, true)
 		}
 
 		fn on_finalize(_block_number: T::BlockNumber) {
@@ -181,7 +181,7 @@ decl_module! {
 				let PreLog::Block(block) = log;
 
 				for transaction in block.transactions {
-					Self::do_transact(transaction, None).expect("pre-block transaction verification failed; the block cannot be built");
+					Self::do_transact(transaction, true).expect("pre-block transaction verification failed; the block cannot be built");
 				}
 			}
 			0
@@ -357,18 +357,23 @@ impl<T: Config> Module<T> {
 
 	pub fn do_transact(
 		transaction: ethereum::Transaction,
-		sender: Option<H160>,
+		need_signer: bool,
 	) -> DispatchResultWithPostInfo {
 		ensure!(
 			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
 			Error::<T>::PreLogExists,
 		);
 
-		// For transaction from ethereum issuing pallet, the sender set None to skip the signature verification.
-		let source = sender.map_or(
-			Self::recover_signer(&transaction).ok_or_else(|| Error::<T>::InvalidSignature)?,
-			|source| source,
-		);
+		// For transaction from system caller such as ethereum issuing pallet, use 0x0 address to skip the signature verification.
+		let (source, gas_price, nonce) = if need_signer {
+			(
+				Self::recover_signer(&transaction).ok_or_else(|| Error::<T>::InvalidSignature)?,
+				Some(transaction.gas_price),
+				Some(transaction.nonce),
+			)
+		} else {
+			(H160::zero(), None, None)
+		};
 
 		let transaction_hash =
 			H256::from_slice(Keccak256::digest(&rlp::encode(&transaction)).as_slice());
@@ -379,8 +384,8 @@ impl<T: Config> Module<T> {
 			transaction.input.clone(),
 			transaction.value,
 			transaction.gas_limit,
-			Some(transaction.gas_price),
-			Some(transaction.nonce),
+			gas_price,
+			nonce,
 			transaction.action,
 			None,
 		)?;
@@ -448,18 +453,15 @@ impl<T: Config> Module<T> {
 		.into())
 	}
 
-	pub fn do_call(
-		source: H160,
-		transaction: ethereum::Transaction,
-	) -> Result<Vec<u8>, DispatchError> {
+	pub fn do_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
 		let (_, _, info) = Self::execute(
-			source,
-			transaction.input.clone(),
-			transaction.value,
-			transaction.gas_limit,
+			H160::zero(),
+			input.clone(),
+			U256::zero(),
+			U256::from(0x100000),
 			None,
 			None,
-			transaction.action,
+			TransactionAction::Call(contract),
 			None,
 		)?;
 

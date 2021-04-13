@@ -115,8 +115,10 @@ decl_event! {
 	where
 		AccountId = AccountId<T>,
 	{
-		/// redeem transaction from ethereum
-		RegisteredOrRedeemed(AccountId, EthereumAddress),
+		/// register new erc20 token
+		RegisterErc20(AccountId, EthereumAddress),
+		/// redeem erc20 token
+		RedeemErc20(AccountId, EthereumAddress),
 		/// erc20 created
 		CreateErc20(EthereumAddress),
 		/// burn event
@@ -154,14 +156,42 @@ decl_module! {
 		}
 
 		#[weight = <T as darwinia_evm::Config>::GasWeightMapping::gas_to_weight(0x100000)]
+		pub fn register_erc20(origin, proof: EthereumReceiptProofThing<T>) {
+			log::info!(target: "darwinia-issuing", "start to register erc20 token");
+			let user = ensure_signed(origin)?;
+			let (tx_index, ethlog) = Self::verify_and_parse_proof(
+				Abi::register_event(),
+				proof)?;
+			let backing_address = EthereumBackingAddress::get();
+			let input = Self::abi_encode_token_creation(backing_address, ethlog)?;
+			Self::call_mapping_factory(input)?;
+			VerifiedIssuingProof::insert(tx_index, true);
+			Self::deposit_event(RawEvent::RegisterErc20(user, backing_address));
+		}
+
+		#[weight = <T as darwinia_evm::Config>::GasWeightMapping::gas_to_weight(0x100000)]
+		pub fn redeem_erc20(origin, proof: EthereumReceiptProofThing<T>) {
+			log::info!(target: "darwinia-issuing", "start to redeem erc20 token");
+			let user = ensure_signed(origin)?;
+			let (tx_index, ethlog) = Self::verify_and_parse_proof(
+				Abi::register_event(),
+				proof)?;
+			let backing_address = EthereumBackingAddress::get();
+			let input = Self::abi_encode_token_redeem(ethlog)?;
+			Self::call_mapping_factory(input)?;
+			VerifiedIssuingProof::insert(tx_index, true);
+			Self::deposit_event(RawEvent::RedeemErc20(user, backing_address));
+		}
+
+		#[weight = <T as darwinia_evm::Config>::GasWeightMapping::gas_to_weight(0x100000)]
 		pub fn register_or_redeem_erc20(origin, proof: EthereumReceiptProofThing<T>) {
-			log::trace!(target: "darwinia-issuing", "start to register_or_issuing_erc20");
+			log::info!(target: "darwinia-issuing", "start to register_or_issuing_erc20");
 			let user = ensure_signed(origin)?;
 			let tx_index = T::EthereumRelay::gen_receipt_index(&proof);
 			ensure!(!VerifiedIssuingProof::contains_key(tx_index), <Error<T>>::AssetAR);
 			let verified_receipt = T::EthereumRelay::verify_receipt(&proof)
 				.map_err(|err| {
-					log::trace!(target: "darwinia-issuing", "verify error {:?}", err);
+					log::info!(target: "darwinia-issuing", "verify error {:?}", err);
 					<Error<T>>::ReceiptProofInv
 				})?;
 
@@ -187,24 +217,13 @@ decl_module! {
 			};
 
 			let contract = MappingFactoryAddress::get();
-			let account = Self::dvm_account_id();
-			let basic = <T as darwinia_evm::Config>::AccountBasicMapping::account_basic(&account);
-			let substrate_account = <T as darwinia_evm::Config>::AddressMapping::into_account_id(account.clone());
-
-			<T as Config>::RingCurrency::transfer(&user, &substrate_account, T::FeeEstimate::get(), KeepAlive)?;
-			let transaction = Self::unsigned_transaction(basic.nonce, contract, input);
-			let result = dvm_ethereum::Module::<T>::do_transact(transaction, Some(account)).map_err(|e| -> &'static str {
-				log::trace!(target: "darwinia-issuing", "register_or_issuing_erc20 error {:?}", &e);
+			let transaction = Self::unsigned_transaction(contract, input);
+			let result = dvm_ethereum::Module::<T>::do_transact(transaction, false).map_err(|e| -> &'static str {
+				log::info!(target: "darwinia-issuing", "register_or_issuing_erc20 error {:?}", &e);
 				e.into()
 			} )?;
 
-			let remaining_balance = <T as Config>::RingCurrency::free_balance(&substrate_account);
-			// we should reserve some balance to keepalive this system account
-			let maxrefund = remaining_balance.saturating_sub(<T as Config>::RingCurrency::minimum_balance());
-
-			<T as Config>::RingCurrency::transfer(&substrate_account, &user, maxrefund, KeepAlive)?;
 			VerifiedIssuingProof::insert(tx_index, true);
-			Self::deposit_event(RawEvent::RegisteredOrRedeemed(user, backing_address));
 		}
 	}
 }
@@ -218,13 +237,9 @@ impl<T: Config> Module<T> {
 	}
 
 	/// get dvm ethereum unsigned transaction
-	pub fn unsigned_transaction(
-		nonce: U256,
-		target: H160,
-		input: Vec<u8>,
-	) -> dvm_ethereum::Transaction {
+	pub fn unsigned_transaction(target: H160, input: Vec<u8>) -> dvm_ethereum::Transaction {
 		dvm_ethereum::Transaction {
-			nonce,
+			nonce: U256::zero(),
 			gas_price: T::FeeCalculator::min_gas_price(),
 			gas_limit: U256::from(0x100000),
 			action: dvm_ethereum::TransactionAction::Call(target),
@@ -253,7 +268,7 @@ impl<T: Config> Module<T> {
 		backing: EthereumAddress,
 		result: EthLog,
 	) -> Result<Vec<u8>, DispatchError> {
-		log::trace!(target: "darwinia-issuing", "start to abi_encode_token_creation");
+		log::info!(target: "darwinia-issuing", "start to abi_encode_token_creation");
 		let name = result.params[1]
 			.value
 			.clone()
@@ -289,12 +304,12 @@ impl<T: Config> Module<T> {
 		)
 		.map_err(|_| Error::<T>::InvalidEncodeERC20)?;
 
-		log::trace!(target: "darwinia-issuing", "register fee will be delived to fee pallet {}", fee);
+		log::info!(target: "darwinia-issuing", "register fee will be delived to fee pallet {}", fee);
 		Ok(input)
 	}
 
 	fn abi_encode_token_redeem(result: EthLog) -> Result<Vec<u8>, DispatchError> {
-		log::trace!(target: "darwinia-issuing", "abi_encode_token_redeem");
+		log::info!(target: "darwinia-issuing", "abi_encode_token_redeem");
 		let token_address = result.params[0]
 			.value
 			.clone()
@@ -324,7 +339,7 @@ impl<T: Config> Module<T> {
 		let input = Abi::encode_cross_receive(dtoken_address, recipient, amount)
 			.map_err(|_| Error::<T>::InvalidMintEcoding)?;
 
-		log::trace!(target: "darwinia-issuing", "transfer fee will be delived to fee pallet {}", fee);
+		log::info!(target: "darwinia-issuing", "transfer fee will be delived to fee pallet {}", fee);
 		Ok(input)
 	}
 
@@ -335,9 +350,7 @@ impl<T: Config> Module<T> {
 		let factory_address = MappingFactoryAddress::get();
 		let bytes = Abi::encode_mapping_token(backing, source)
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
-		let transaction = Self::unsigned_transaction(U256::from(1), factory_address, bytes);
-		let account = Self::dvm_account_id();
-		let mapped_address = dvm_ethereum::Module::<T>::do_call(account, transaction)
+		let mapped_address = dvm_ethereum::Module::<T>::do_call(factory_address, bytes)
 			.map_err(|e| -> &'static str { e.into() })?;
 		if mapped_address.len() != 32 {
 			return Err(Error::<T>::InvalidAddressLen.into());
@@ -345,7 +358,7 @@ impl<T: Config> Module<T> {
 		Ok(H160::from_slice(&mapped_address.as_slice()[12..]))
 	}
 
-	pub fn token_registered(
+	pub fn finish_token_registered(
 		backing: EthereumAddress,
 		source: EthereumAddress,
 		target: EthereumAddress,
@@ -370,7 +383,7 @@ impl<T: Config> Module<T> {
 		amount: U256,
 	) -> DispatchResult {
 		let mapped_address = Self::mapped_token_address(backing, source).map_err(|e| {
-			log::trace!(target: "darwinia-issuing", "mapped token address error {:?} ", e);
+			log::info!(target: "darwinia-issuing", "mapped token address error {:?} ", e);
 			e
 		})?;
 
@@ -394,16 +407,63 @@ impl<T: Config> Module<T> {
 		);
 		Ok(())
 	}
+
+	pub fn verify_and_parse_proof(
+		log_event: EthEvent,
+		proof: EthereumReceiptProofThing<T>,
+	) -> Result<(EthereumTransactionIndex, EthLog), DispatchError> {
+		let tx_index = T::EthereumRelay::gen_receipt_index(&proof);
+		ensure!(
+			!VerifiedIssuingProof::contains_key(tx_index),
+			<Error<T>>::AssetAR
+		);
+		let verified_receipt = T::EthereumRelay::verify_receipt(&proof).map_err(|err| {
+			log::info!(target: "darwinia-issuing", "verify error {:?}", err);
+			<Error<T>>::ReceiptProofInv
+		})?;
+
+		let backing_address = EthereumBackingAddress::get();
+		let log_entry = verified_receipt
+			.logs
+			.into_iter()
+			.find(|x| x.address == backing_address && x.topics[0] == log_event.signature())
+			.ok_or(<Error<T>>::LogEntryNE)?;
+
+		let ethlog = Abi::parse_event(
+			log_entry.topics.into_iter().collect(),
+			log_entry.data.clone(),
+			log_event,
+		)
+		.map_err(|_| <Error<T>>::EthLogPF)?;
+
+		Ok((tx_index, ethlog))
+	}
+
+	pub fn call_mapping_factory(input: Vec<u8>) -> DispatchResult {
+		let contract = MappingFactoryAddress::get();
+		let transaction = Self::unsigned_transaction(contract, input);
+		let result = dvm_ethereum::Module::<T>::do_transact(transaction, false).map_err(
+			|e| -> &'static str {
+				log::info!(target: "darwinia-issuing", "call mapping factory contract error {:?}", &e);
+				e.into()
+			},
+		)?;
+		Ok(())
+	}
 }
 
 impl<T: Config> IssuingHandler for Module<T> {
 	/// handle
 	fn handle(address: H160, caller: H160, input: &[u8]) -> DispatchResult {
 		ensure!(MappingFactoryAddress::get() == caller, <Error<T>>::AssetAR);
+		// in order to use a common precompile contract to deliver these issuing events
+		// we just use the len of input to distinguish which event.
+		// register-event: input-len = len(abi.encode(backing, source, token)) = 3 * 32
+		// burn-event: input-len = len(abi.encode(info.backing, info.source, recipient, delegator, amount)) = 5 * 32
 		if input.len() == 3 * 32 {
 			let register_info =
 				TokenRegisterInfo::decode(input).map_err(|_| Error::<T>::InvalidInputData)?;
-			Self::token_registered(register_info.0, register_info.1, register_info.2)
+			Self::finish_token_registered(register_info.0, register_info.1, register_info.2)
 		} else {
 			let burn_info =
 				TokenBurnInfo::decode(input).map_err(|_| Error::<T>::InvalidInputData)?;
