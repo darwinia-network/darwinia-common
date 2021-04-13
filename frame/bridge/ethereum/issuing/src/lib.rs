@@ -122,8 +122,8 @@ decl_event! {
 		/// erc20 created
 		CreateErc20(EthereumAddress),
 		/// burn event
-		/// type: 1, backing, recipient, delegator, source, target, value
-		BurnToken(u8, EthereumAddress, EthereumAddress, EthereumAddress, EthereumAddress, EthereumAddress, U256),
+		/// type: 1, backing, recipient, source, target, value
+		BurnToken(u8, EthereumAddress, EthereumAddress, EthereumAddress, EthereumAddress, U256),
 		/// token registed event
 		/// type: u8 = 0, backing, source(origin erc20), target(mapped erc20)
 		TokenRegisted(u8, EthereumAddress, EthereumAddress, EthereumAddress),
@@ -174,7 +174,7 @@ decl_module! {
 			log::info!(target: "darwinia-issuing", "start to redeem erc20 token");
 			let user = ensure_signed(origin)?;
 			let (tx_index, ethlog) = Self::verify_and_parse_proof(
-				Abi::register_event(),
+				Abi::backing_event(),
 				proof)?;
 			let backing_address = EthereumBackingAddress::get();
 			let input = Self::abi_encode_token_redeem(ethlog)?;
@@ -326,7 +326,6 @@ impl<T: Config> Module<T> {
 		backing: EthereumAddress,
 		source: EthereumAddress,
 		recipient: EthereumAddress,
-		delegator: EthereumAddress,
 		amount: U256,
 	) -> DispatchResult {
 		let mapped_address = Self::mapped_token_address(backing, source).map_err(|e| {
@@ -338,7 +337,6 @@ impl<T: Config> Module<T> {
 			1,
 			backing,
 			recipient,
-			delegator,
 			source,
 			mapped_address,
 			amount,
@@ -406,7 +404,7 @@ impl<T: Config> IssuingHandler for Module<T> {
 		// in order to use a common precompile contract to deliver these issuing events
 		// we just use the len of input to distinguish which event.
 		// register-event: input-len = len(abi.encode(backing, source, token)) = 3 * 32
-		// burn-event: input-len = len(abi.encode(info.backing, info.source, recipient, delegator, amount)) = 5 * 32
+		// burn-event: input-len = len(abi.encode(info.backing, info.source, recipient, amount)) = 4 * 32
 		if input.len() == 3 * 32 {
 			let register_info =
 				TokenRegisterInfo::decode(input).map_err(|_| Error::<T>::InvalidInputData)?;
@@ -418,7 +416,6 @@ impl<T: Config> IssuingHandler for Module<T> {
 				burn_info.backing,
 				burn_info.source,
 				burn_info.recipient,
-				burn_info.delegator,
 				U256(burn_info.amount.0),
 			)
 		}

@@ -291,14 +291,12 @@ impl TokenRegisterInfo {
 /// @backing: the backing address on the source chain
 /// @source: the source token address
 /// @recipient: the final receiver of the token to be unlocked on the source chain
-/// @delegator: the delegator receiver of the token, often is backing helper to unlock native token
 /// @amount: the amount of the burned token
 #[derive(Debug, PartialEq, Eq)]
 pub struct TokenBurnInfo {
 	pub backing: H160,
 	pub source: H160,
 	pub recipient: H160,
-	pub delegator: H160,
 	pub amount: U256,
 }
 
@@ -306,7 +304,6 @@ impl TokenBurnInfo {
 	pub fn decode(data: &[u8]) -> AbiResult<Self> {
 		let tokens = ethabi::decode(
 			&[
-				ParamType::Address,
 				ParamType::Address,
 				ParamType::Address,
 				ParamType::Address,
@@ -319,19 +316,16 @@ impl TokenBurnInfo {
 			tokens[1].clone(),
 			tokens[2].clone(),
 			tokens[3].clone(),
-			tokens[4].clone(),
 		) {
 			(
 				Token::Address(backing),
 				Token::Address(source),
 				Token::Address(recipient),
-				Token::Address(delegator),
 				Token::Uint(amount),
 			) => Ok(TokenBurnInfo {
 				backing,
 				source,
 				recipient,
-				delegator,
 				amount,
 			}),
 			_ => Err(Error::InvalidData),
