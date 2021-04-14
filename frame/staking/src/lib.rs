@@ -367,24 +367,6 @@ mod types {
 	/// Counter for the number of "reward" points earned by a given validator.
 	pub type RewardPoint = u32;
 
-	/// Data type used to index nominators in the compact type
-	pub type NominatorIndex = u32;
-	/// Data type used to index validators in the compact type.
-	pub type ValidatorIndex = u16;
-	// Ensure the size of both ValidatorIndex and NominatorIndex. They both need to be well below usize.
-	static_assertions::const_assert!(size_of::<ValidatorIndex>() <= size_of::<usize>());
-	static_assertions::const_assert!(size_of::<NominatorIndex>() <= size_of::<usize>());
-	static_assertions::const_assert!(size_of::<ValidatorIndex>() <= size_of::<u32>());
-	static_assertions::const_assert!(size_of::<NominatorIndex>() <= size_of::<u32>());
-
-	// Note: Maximum nomination limit is set here -- 16.
-	sp_npos_elections::generate_solution_type!(
-		#[compact]
-		pub struct CompactAssignments::<NominatorIndex, ValidatorIndex, OffchainAccuracy>(16)
-	);
-	/// Accuracy used for off-chain election. This better be small.
-	pub type OffchainAccuracy = PerU16;
-
 	/// Balance of an account.
 	pub type Balance = u128;
 	/// Power of an account.
@@ -422,13 +404,13 @@ mod types {
 }
 
 // --- darwinia ---
-pub use types::{CompactAssignments, EraIndex};
+pub use types::EraIndex;
 
 // --- crates ---
 use codec::{Decode, Encode, HasCompact};
 // --- substrate ---
 use frame_election_provider_support::{
-	data_provider, ElectionDataProvider, ElectionProvider, VoteWeight,
+	data_provider, ElectionDataProvider, ElectionProvider, Supports, VoteWeight,
 };
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage,
@@ -445,14 +427,13 @@ use frame_support::{
 	},
 };
 use frame_system::{ensure_root, ensure_signed, offchain::SendTransactionTypes};
-use sp_npos_elections::{CompactSolution, Supports};
 use sp_runtime::{
 	helpers_128bit,
 	traits::{
 		AccountIdConversion, AtLeast32BitUnsigned, CheckedSub, Convert, SaturatedConversion,
 		Saturating, StaticLookup, Zero,
 	},
-	DispatchError, DispatchResult, ModuleId, PerU16, Perbill, Percent, Perquintill, RuntimeDebug,
+	DispatchError, DispatchResult, ModuleId, Perbill, Percent, Perquintill, RuntimeDebug,
 };
 #[cfg(feature = "std")]
 use sp_runtime::{Deserialize, Serialize};
@@ -462,10 +443,7 @@ use sp_staking::{
 };
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
-use sp_std::{
-	collections::btree_map::BTreeMap, convert::TryInto, marker::PhantomData, mem::size_of,
-	prelude::*,
-};
+use sp_std::{collections::btree_map::BTreeMap, convert::TryInto, marker::PhantomData, prelude::*};
 // --- darwinia ---
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo;
 use darwinia_support::{
@@ -488,8 +466,6 @@ macro_rules! log {
 	};
 }
 
-/// Maximum number of stakers that can be stored in a snapshot.
-pub const MAX_NOMINATIONS: usize = <CompactAssignments as CompactSolution>::LIMIT;
 pub const MAX_UNLOCKING_CHUNKS: usize = 32;
 
 const MONTH_IN_MINUTES: TsInMs = 30 * 24 * 60;
@@ -497,6 +473,9 @@ const MONTH_IN_MILLISECONDS: TsInMs = MONTH_IN_MINUTES * 60 * 1000;
 const STAKING_ID: LockIdentifier = *b"da/staki";
 
 pub trait Config: frame_system::Config + SendTransactionTypes<Call<Self>> {
+	/// Maximum number of nominations per nominator.
+	const MAX_NOMINATIONS: u32;
+
 	/// The overarching event type.
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
@@ -946,6 +925,9 @@ decl_module! {
 	pub struct Module<T: Config> for enum Call where origin: T::Origin {
 		type Error = Error<T>;
 
+		/// Maximum number of nominations per nominator.
+		const MaxNominations: u32 = T::MAX_NOMINATIONS;
+
 		const ModuleId: ModuleId = T::ModuleId::get();
 
 		/// Number of sessions per era.
@@ -1010,15 +992,6 @@ decl_module! {
 					T::BondingDurationInEra::get(),
 				)
 			);
-
-			use sp_runtime::UpperOf;
-			// 1. Maximum sum of Vec<OffchainAccuracy> must fit into `UpperOf<OffchainAccuracy>`.
-			assert!(
-				<usize as TryInto<UpperOf<OffchainAccuracy>>>::try_into(MAX_NOMINATIONS)
-				.unwrap()
-				.checked_mul(<OffchainAccuracy>::one().deconstruct().try_into().unwrap())
-				.is_some()
-			);
 		}
 
 		/// Take the origin account as a stash and lock up `value` of its balance. `controller` will
@@ -1072,7 +1045,7 @@ decl_module! {
 				}
 			}
 
-			<frame_system::Pallet<T>>::inc_consumers(&stash).map_err(|_| Error::<T>::BadState)?;
+			<frame_system::Pallet<T>>::inc_consumers(&stash).map_err(|_| <Error<T>>::BadState)?;
 
 			// You're auto-bonded forever, here. We might improve this by only bonding when
 			// you actually validate/nominate and remove once you unbond __everything__.
@@ -1574,7 +1547,7 @@ decl_module! {
 			let stash = &ledger.stash;
 
 			ensure!(!targets.is_empty(), <Error<T>>::EmptyTargets);
-			ensure!(targets.len() <= MAX_NOMINATIONS, Error::<T>::TooManyTargets);
+			ensure!(targets.len() <= T::MAX_NOMINATIONS as usize, <Error<T>>::TooManyTargets);
 
 			let old = <Nominators<T>>::get(stash).map_or_else(Vec::new, |x| x.targets);
 			let targets = targets
@@ -2907,6 +2880,8 @@ impl<T: Config> Module<T> {
 }
 
 impl<T: Config> ElectionDataProvider<T::AccountId, T::BlockNumber> for Module<T> {
+	const MAXIMUM_VOTES_PER_VOTER: u32 = T::MAX_NOMINATIONS;
+
 	fn desired_targets() -> data_provider::Result<(u32, Weight)> {
 		Ok((
 			Self::validator_count(),
@@ -3273,7 +3248,7 @@ impl<T: Config> OnDepositRedeem<T::AccountId, RingBalance<T>> for Module<T> {
 			<Bonded<T>>::insert(&stash, controller);
 			<Payee<T>>::insert(&stash, RewardDestination::Stash);
 
-			<frame_system::Pallet<T>>::inc_consumers(&stash).map_err(|_| Error::<T>::BadState)?;
+			<frame_system::Pallet<T>>::inc_consumers(&stash).map_err(|_| <Error<T>>::BadState)?;
 
 			let mut ledger = StakingLedger {
 				stash: stash.clone(),

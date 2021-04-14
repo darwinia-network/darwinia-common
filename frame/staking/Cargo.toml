@@ -30,7 +30,6 @@ pallet-session                  = { default-features = false, features = ["histo
 sp-arithmetic                   = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
 sp-core                         = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
 sp-io                           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
-sp-npos-elections               = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
 sp-runtime                      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
 sp-staking                      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
 sp-std                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
@@ -75,7 +74,6 @@ substrate-std = [
 	"sp-arithmetic/std",
 	"sp-core/std",
 	"sp-io/std",
-	"sp-npos-elections/std",
 	"sp-runtime/std",
 	"sp-staking/std",
 	"sp-std/std",
