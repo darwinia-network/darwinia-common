@@ -153,6 +153,7 @@ macro_rules! decl_tests {
 			pub const StakingModuleId: ModuleId = ModuleId(*b"da/staki");
 		}
 		impl darwinia_staking::Config for Test {
+			const MAX_NOMINATIONS: u32 = 0;
 			type Event = ();
 			type ModuleId = StakingModuleId;
 			type UnixTime = Timestamp;
