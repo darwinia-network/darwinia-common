@@ -16,7 +16,11 @@
 
 //! Test utilities
 
-use crate::{self as dvm_ethereum, account_basic::DVMAccountBasicMapping, *};
+use crate::{
+	self as dvm_ethereum,
+	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
+	*,
+};
 use codec::{Decode, Encode};
 use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator, IssuingHandler};
 use ethereum::{TransactionAction, TransactionSignature};
@@ -140,6 +144,7 @@ frame_support::parameter_types! {
 	pub const TransactionByteFee: u64 = 1;
 	pub const ChainId: u64 = 42;
 	pub const EVMModuleId: ModuleId = ModuleId(*b"py/evmpa");
+	pub const BlockGasLimit: U256 = U256::MAX;
 }
 
 pub struct HashedAddressMapping;
@@ -161,23 +166,27 @@ impl darwinia_evm::Config for Test {
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 	type Event = ();
-	type Precompiles = darwinia_evm_precompile::DarwiniaPrecompiles<Self>;
+	type Precompiles = (
+		darwinia_evm_precompile_simple::ECRecover,
+		darwinia_evm_precompile_simple::Sha256,
+		darwinia_evm_precompile_simple::Ripemd160,
+		darwinia_evm_precompile_simple::Identity,
+		darwinia_evm_precompile_withdraw::WithDraw<Self>,
+	);
 	type ChainId = ChainId;
+	type BlockGasLimit = BlockGasLimit;
 	type Runner = darwinia_evm::runner::stack::Runner<Self>;
-	type AccountBasicMapping = DVMAccountBasicMapping<Self>;
+	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
+	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 	type IssuingHandler = EmptyIssuingHandler;
-}
-
-frame_support::parameter_types! {
-	pub const BlockGasLimit: U256 = U256::MAX;
 }
 
 impl Config for Test {
 	type Event = ();
 	type FindAuthor = EthereumFindAuthor;
 	type StateRoot = IntermediateStateRoot;
-	type BlockGasLimit = BlockGasLimit;
 	type RingCurrency = Ring;
+	type KtonCurrency = Kton;
 }
 
 frame_support::construct_runtime! {

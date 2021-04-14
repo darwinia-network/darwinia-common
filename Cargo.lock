@@ -1569,7 +1569,9 @@ version = "2.1.0"
 dependencies = [
  "array-bytes",
  "darwinia-evm",
+ "darwinia-support",
  "dp-evm",
+ "dvm-ethereum",
  "ethabi",
  "ethereum-types",
  "evm",
@@ -1625,6 +1627,7 @@ name = "darwinia-evm-precompile-withdraw"
 version = "2.1.0"
 dependencies = [
  "darwinia-evm",
+ "darwinia-support",
  "dp-evm",
  "evm",
  "frame-support",
@@ -1798,6 +1801,7 @@ dependencies = [
  "impl-trait-for-tuples",
  "num-traits",
  "parity-scale-codec",
+ "sp-core",
  "sp-runtime",
  "sp-std",
 ]
@@ -1944,6 +1948,7 @@ dependencies = [
  "dvm-rpc-runtime-api",
  "ethereum",
  "ethereum-types",
+ "evm",
  "futures 0.3.13",
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -2198,7 +2203,8 @@ dependencies = [
  "array-bytes",
  "darwinia-balances",
  "darwinia-evm",
- "darwinia-evm-precompile",
+ "darwinia-evm-precompile-simple",
+ "darwinia-evm-precompile-withdraw",
  "darwinia-support",
  "dp-evm",
  "dp-storage",

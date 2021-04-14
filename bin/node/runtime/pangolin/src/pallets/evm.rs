@@ -6,7 +6,8 @@ use darwinia_evm::{
 	runner::stack::Runner, ConcatAddressMapping, Config, EnsureAddressTruncated, FeeCalculator,
 };
 use darwinia_evm_precompile::DarwiniaPrecompiles;
-use dvm_ethereum::account_basic::DVMAccountBasicMapping;
+use dvm_ethereum::account_basic::DvmAccountBasic;
+use dvm_ethereum::account_basic::{KtonRemainBalance, RingRemainBalance};
 
 /// Fixed gas price.
 pub struct FixedGasPrice;
@@ -18,6 +19,7 @@ impl FeeCalculator for FixedGasPrice {
 }
 frame_support::parameter_types! {
 	pub const ChainId: u64 = 43;
+	pub BlockGasLimit: U256 = U256::from(u32::max_value());
 }
 impl Config for Runtime {
 	type FeeCalculator = FixedGasPrice;
@@ -30,7 +32,9 @@ impl Config for Runtime {
 	type Event = Event;
 	type Precompiles = DarwiniaPrecompiles<Self>;
 	type ChainId = ChainId;
-	type AccountBasicMapping = DVMAccountBasicMapping<Self>;
+	type BlockGasLimit = BlockGasLimit;
+	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
+	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 	type Runner = Runner<Self>;
 	type IssuingHandler = EthereumIssuing;
 }

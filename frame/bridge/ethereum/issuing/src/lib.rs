@@ -45,7 +45,7 @@ use darwinia_ethereum_issuing_contract::{
 	Abi, Event as EthEvent, Log as EthLog, TokenBurnInfo, TokenRegisterInfo,
 };
 use darwinia_evm::{
-	AccountBasicMapping, AddressMapping, FeeCalculator, GasWeightMapping, IssuingHandler,
+	AddressMapping, FeeCalculator, GasWeightMapping, IssuingHandler,
 };
 use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::{balance::lock::*, traits::EthereumReceipt};
