@@ -376,7 +376,8 @@ where
 		};
 		Vesting::<T>::insert(who, vesting_schedule);
 		// it can't fail, but even if somehow it did, we don't really care.
-		let _ = Self::update_lock(who.clone());
+		let res = Self::update_lock(who.clone());
+		debug_assert!(res.is_ok());
 		Ok(())
 	}
 
@@ -384,7 +385,8 @@ where
 	fn remove_vesting_schedule(who: &T::AccountId) {
 		Vesting::<T>::remove(who);
 		// it can't fail, but even if somehow it did, we don't really care.
-		let _ = Self::update_lock(who.clone());
+		let res = Self::update_lock(who.clone());
+		debug_assert!(res.is_ok());
 	}
 }
 
