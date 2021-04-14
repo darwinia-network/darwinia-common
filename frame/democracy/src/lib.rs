@@ -1,7 +1,7 @@
 //! # Democracy Pallet
 //!
-//! - [`democracy::Config`](./trait.Config.html)
-//! - [`Call`](./enum.Call.html)
+//! - [`Config`]
+//! - [`Call`]
 //!
 //! ## Overview
 //!
@@ -998,7 +998,8 @@ decl_module! {
 			ensure!(now >= since + voting + additional, Error::<T>::TooEarly);
 			ensure!(expiry.map_or(true, |e| now > e), Error::<T>::Imminent);
 
-			let _ = T::Currency::repatriate_reserved(&provider, &who, deposit, BalanceStatus::Free);
+			let res = T::Currency::repatriate_reserved(&provider, &who, deposit, BalanceStatus::Free);
+			debug_assert!(res.is_ok());
 			<Preimages<T>>::remove(&proposal_hash);
 			Self::deposit_event(RawEvent::PreimageReaped(proposal_hash, provider, deposit, who));
 		}
@@ -1598,7 +1599,8 @@ impl<T: Config> Module<T> {
 		}) = preimage
 		{
 			if let Ok(proposal) = T::Proposal::decode(&mut &data[..]) {
-				let _ = T::Currency::unreserve(&provider, deposit);
+				let err_amount = T::Currency::unreserve(&provider, deposit);
+				debug_assert!(err_amount.is_zero());
 				Self::deposit_event(RawEvent::PreimageUsed(proposal_hash, provider, deposit));
 
 				let ok = proposal

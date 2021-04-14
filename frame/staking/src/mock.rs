@@ -235,6 +235,7 @@ parameter_types! {
 	pub static RingRewardRemainderUnbalanced: Balance = 0;
 }
 impl Config for Test {
+	const MAX_NOMINATIONS: u32 = 16;
 	type Event = Event;
 	type ModuleId = StakingModuleId;
 	type UnixTime = SuppressUnixTimeWarning;

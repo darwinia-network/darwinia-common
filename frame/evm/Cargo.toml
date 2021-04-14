@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "darwinia-evm"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.1.0"
+version     = "2.2.0"
 
 [dependencies]
 # crates
@@ -18,19 +18,19 @@ evm-runtime     = { version = "0.25.0", default-features = false }
 log             = { version = "0.4.14" }
 primitive-types = { version = "0.9.0", default-features = false, features = ["rlp", "byteorder"] }
 rlp             = { version = "0.5.0", default-features = false }
-serde           = { version = "1.0.124", optional = true, default-features = false, features = ["derive"] }
+serde           = { version = "1.0.125", optional = true, default-features = false, features = ["derive"] }
 sha3            = { version = "0.8", default-features = false }
 # darwinia
 darwinia-balances = { default-features = false, path = "../balances" }
 dp-evm            = { default-features = false, path = "../../primitives/evm" }
 # substrate
-frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-sp-core          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-sp-io            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-sp-runtime       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-core          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-io            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-runtime       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
 
 [dev-dependencies]
 darwinia-support = { features = ["easy-testing"], path = "../support" }

@@ -7,14 +7,14 @@ license     = "GPL-3.0"
 name        = "darwinia-staking"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.1.0"
+version     = "2.2.0"
 
 [dependencies]
 # crates
 codec             = { package = "parity-scale-codec", version = "2.0.1", default-features = false, features = ["derive"] }
 log               = { version = "0.4.14" }
 paste             = { version = "1.0.5" }
-serde             = { version = "1.0.124", optional = true }
+serde             = { version = "1.0.125", optional = true }
 static_assertions = { version = "1.1.0" }
 # darwinia
 darwinia-staking-rpc-runtime-api = { default-features = false, path = "./rpc/runtime-api" }
@@ -22,18 +22,17 @@ darwinia-support                 = { default-features = false, path = "../suppor
 # github
 substrate-fixed = { default-features = false, git = "https://github.com/encointer/substrate-fixed", branch = "master" }
 # substrate
-frame-election-provider-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-frame-support                   = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-frame-system                    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-pallet-authorship               = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-pallet-session                  = { default-features = false, features = ["historical"], git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-sp-arithmetic                   = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-sp-core                         = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-sp-io                           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-sp-npos-elections               = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-sp-runtime                      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-sp-staking                      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-sp-std                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+frame-election-provider-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+frame-support                   = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+frame-system                    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+pallet-authorship               = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+pallet-session                  = { default-features = false, features = ["historical"], git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-arithmetic                   = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-core                         = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-io                           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-runtime                      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-staking                      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-std                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
 
 [dev-dependencies]
 # crates
@@ -42,10 +41,10 @@ rand_chacha = { version = "0.3.0" }
 darwinia-balances = { path = "../../frame/balances" }
 darwinia-support  = { features = ["easy-testing"], path = "../support" }
 # substrate
-pallet-timestamp     = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-sp-storage           = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-sp-tracing           = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
-substrate-test-utils = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.2" }
+pallet-timestamp     = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-storage           = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-tracing           = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+substrate-test-utils = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
 
 [features]
 default = ["std"]
@@ -75,7 +74,6 @@ substrate-std = [
 	"sp-arithmetic/std",
 	"sp-core/std",
 	"sp-io/std",
-	"sp-npos-elections/std",
 	"sp-runtime/std",
 	"sp-staking/std",
 	"sp-std/std",

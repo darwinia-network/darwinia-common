@@ -20,9 +20,9 @@
 //!
 //! The Staking module is used to manage funds at stake by network maintainers.
 //!
-//! - [`staking::Config`](./trait.Config.html)
-//! - [`Call`](./enum.Call.html)
-//! - [`Module`](./struct.Module.html)
+//! - [`Config`]
+//! - [`Call`]
+//! - [`Module`]
 //!
 //! ## Overview
 //!
@@ -66,16 +66,16 @@
 //! is paired with an active **controller** account, which issues instructions on how they shall be
 //! used.
 //!
-//! An account pair can become bonded using the [`bond`](./enum.Call.html#variant.bond) call.
+//! An account pair can become bonded using the [`bond`](Call::bond) call.
 //!
 //! Stash accounts can change their associated controller using the
-//! [`set_controller`](./enum.Call.html#variant.set_controller) call.
+//! [`set_controller`](Call::set_controller) call.
 //!
 //! There are three possible roles that any staked account pair can be in: `Validator`, `Nominator`
-//! and `Idle` (defined in [`StakerStatus`](./enum.StakerStatus.html)). There are three
+//! and `Idle` (defined in [`StakerStatus`]). There are three
 //! corresponding instructions to change between roles, namely:
-//! [`validate`](./enum.Call.html#variant.validate),
-//! [`nominate`](./enum.Call.html#variant.nominate), and [`chill`](./enum.Call.html#variant.chill).
+//! [`validate`](Call::validate),
+//! [`nominate`](Call::nominate), and [`chill`](Call::chill).
 //!
 //! #### Validating
 //!
@@ -87,7 +87,7 @@
 //! by nominators and their votes.
 //!
 //! An account can become a validator candidate via the
-//! [`validate`](./enum.Call.html#variant.validate) call.
+//! [`validate`](Call::validate) call.
 //!
 //! #### Nomination
 //!
@@ -99,7 +99,7 @@
 //! the misbehaving/offline validators as much as possible, simply because the nominators will also
 //! lose funds if they vote poorly.
 //!
-//! An account can become a nominator via the [`nominate`](enum.Call.html#variant.nominate) call.
+//! An account can become a nominator via the [`nominate`](Call::nominate) call.
 //!
 //! #### Rewards and Slash
 //!
@@ -127,7 +127,7 @@
 //! This means that if they are a nominator, they will not be considered as voters anymore and if
 //! they are validators, they will no longer be a candidate for the next election.
 //!
-//! An account can step back via the [`chill`](enum.Call.html#variant.chill) call.
+//! An account can step back via the [`chill`](Call::chill) call.
 //!
 //! ### Session managing
 //!
@@ -175,7 +175,7 @@
 //! ### Era payout
 //!
 //! The era payout is computed using yearly inflation curve defined at
-//! [`T::RewardCurve`](./trait.Config.html#associatedtype.RewardCurve) as such:
+//! [`Config::EraPayout`] as such:
 //!
 //! ```nocompile
 //! staker_payout = yearly_inflation(npos_token_staked / total_tokens) * total_tokens / era_per_year
@@ -186,7 +186,7 @@
 //! remaining_payout = max_yearly_inflation * total_tokens / era_per_year - staker_payout
 //! ```
 //! The remaining reward is send to the configurable end-point
-//! [`T::RewardRemainder`](./trait.Config.html#associatedtype.RewardRemainder).
+//! [`Config::RewardRemainder`].
 //!
 //! ### Reward Calculation
 //!
@@ -198,29 +198,29 @@
 //!
 //! Total reward is split among validators and their nominators depending on the number of points
 //! they received during the era. Points are added to a validator using
-//! [`reward_by_ids`](./enum.Call.html#variant.reward_by_ids) or
-//! [`reward_by_indices`](./enum.Call.html#variant.reward_by_indices).
+//! [`reward_by_ids`](Module::reward_by_ids).
 //!
-//! [`Module`](./struct.Module.html) implements
-//! [`pallet_authorship::EventHandler`](../pallet_authorship/trait.EventHandler.html) to add reward
+//! [`Module`] implements
+//! [`pallet_authorship::EventHandler`] to add reward
 //! points to block producer and block producer of referenced uncles.
 //!
 //! The validator and its nominator split their reward as following:
 //!
 //! The validator can declare an amount, named
-//! [`commission`](./struct.ValidatorPrefs.html#structfield.commission), that does not get shared
+//! [`commission`](ValidatorPrefs::commission), that does not get shared
 //! with the nominators at each reward payout through its
-//! [`ValidatorPrefs`](./struct.ValidatorPrefs.html). This value gets deducted from the total reward
+//! [`ValidatorPrefs`]. This value gets deducted from the total reward
 //! that is paid to the validator and its nominators. The remaining portion is split among the
 //! validator and all of the nominators that nominated the validator, proportional to the value
 //! staked behind this validator (_i.e._ dividing the
-//! [`own`](./struct.Exposure.html#structfield.own) or
-//! [`others`](./struct.Exposure.html#structfield.others) by
-//! [`total`](./struct.Exposure.html#structfield.total) in [`Exposure`](./struct.Exposure.html)).
+//! [`own`](Exposure::own) or
+//! [`others`](Exposure::others) by
+//! [`total`](Exposure::total) in [`Exposure`]).
 //!
 //! All entities who receive a reward have the option to choose their reward destination through the
-//! [`Payee`](./struct.Payee.html) storage item (see
-//! [`set_payee`](enum.Call.html#variant.set_payee)), to be one of the following:
+
+//! [`Payee`] storage item (see
+//! [`set_payee`](Call::set_payee)), to be one of the following:
 //!
 //! - Controller account, (obviously) not increasing the staked value.
 //! - Stash account, not increasing the staked value.
@@ -231,15 +231,13 @@
 //! Any funds already placed into stash can be the target of the following operations:
 //!
 //! The controller account can free a portion (or all) of the funds using the
-//! [`unbond`](enum.Call.html#variant.unbond) call. Note that the funds are not immediately
+//! [`unbond`](Call::unbond) call. Note that the funds are not immediately
 //! accessible. Instead, a duration denoted by
-//! [`BondingDuration`](./trait.Config.html#associatedtype.BondingDuration) (in number of eras) must
-//! pass until the funds can actually be removed. Once the `BondingDuration` is over, the
-//! [`withdraw_unbonded`](./enum.Call.html#variant.withdraw_unbonded) call can be used to actually
-//! withdraw the funds.
+//! [`Config::BondingDuration`] (in number of eras) must
+//! pass until the funds can actually be removed.
 //!
 //! Note that there is a limitation to the number of fund-chunks that can be scheduled to be
-//! unlocked in the future via [`unbond`](enum.Call.html#variant.unbond). In case this maximum
+//! unlocked in the future via [`unbond`](Call::unbond). In case this maximum
 //! (`MAX_UNLOCKING_CHUNKS`) is reached, the bonded account _must_ first wait until a successful
 //! call to `withdraw_unbonded` to remove some of the chunks.
 //!
@@ -256,7 +254,7 @@
 //!
 //! ## GenesisConfig
 //!
-//! The Staking module depends on the [`GenesisConfig`](./struct.GenesisConfig.html). The
+//! The Staking module depends on the [`GenesisConfig`]. The
 //! `GenesisConfig` is optional and allow to set some initial stakers.
 //!
 //! ## Related Modules
@@ -369,24 +367,6 @@ mod types {
 	/// Counter for the number of "reward" points earned by a given validator.
 	pub type RewardPoint = u32;
 
-	/// Data type used to index nominators in the compact type
-	pub type NominatorIndex = u32;
-	/// Data type used to index validators in the compact type.
-	pub type ValidatorIndex = u16;
-	// Ensure the size of both ValidatorIndex and NominatorIndex. They both need to be well below usize.
-	static_assertions::const_assert!(size_of::<ValidatorIndex>() <= size_of::<usize>());
-	static_assertions::const_assert!(size_of::<NominatorIndex>() <= size_of::<usize>());
-	static_assertions::const_assert!(size_of::<ValidatorIndex>() <= size_of::<u32>());
-	static_assertions::const_assert!(size_of::<NominatorIndex>() <= size_of::<u32>());
-
-	// Note: Maximum nomination limit is set here -- 16.
-	sp_npos_elections::generate_solution_type!(
-		#[compact]
-		pub struct CompactAssignments::<NominatorIndex, ValidatorIndex, OffchainAccuracy>(16)
-	);
-	/// Accuracy used for off-chain election. This better be small.
-	pub type OffchainAccuracy = PerU16;
-
 	/// Balance of an account.
 	pub type Balance = u128;
 	/// Power of an account.
@@ -424,13 +404,13 @@ mod types {
 }
 
 // --- darwinia ---
-pub use types::{CompactAssignments, EraIndex};
+pub use types::EraIndex;
 
 // --- crates ---
 use codec::{Decode, Encode, HasCompact};
 // --- substrate ---
 use frame_election_provider_support::{
-	data_provider, ElectionDataProvider, ElectionProvider, VoteWeight,
+	data_provider, ElectionDataProvider, ElectionProvider, Supports, VoteWeight,
 };
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage,
@@ -447,14 +427,13 @@ use frame_support::{
 	},
 };
 use frame_system::{ensure_root, ensure_signed, offchain::SendTransactionTypes};
-use sp_npos_elections::{CompactSolution, Supports};
 use sp_runtime::{
 	helpers_128bit,
 	traits::{
 		AccountIdConversion, AtLeast32BitUnsigned, CheckedSub, Convert, SaturatedConversion,
 		Saturating, StaticLookup, Zero,
 	},
-	DispatchError, DispatchResult, ModuleId, PerU16, Perbill, Percent, Perquintill, RuntimeDebug,
+	DispatchError, DispatchResult, ModuleId, Perbill, Percent, Perquintill, RuntimeDebug,
 };
 #[cfg(feature = "std")]
 use sp_runtime::{Deserialize, Serialize};
@@ -464,10 +443,7 @@ use sp_staking::{
 };
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
-use sp_std::{
-	collections::btree_map::BTreeMap, convert::TryInto, marker::PhantomData, mem::size_of,
-	prelude::*,
-};
+use sp_std::{collections::btree_map::BTreeMap, convert::TryInto, marker::PhantomData, prelude::*};
 // --- darwinia ---
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo;
 use darwinia_support::{
@@ -490,8 +466,6 @@ macro_rules! log {
 	};
 }
 
-/// Maximum number of stakers that can be stored in a snapshot.
-pub const MAX_NOMINATIONS: usize = <CompactAssignments as CompactSolution>::LIMIT;
 pub const MAX_UNLOCKING_CHUNKS: usize = 32;
 
 const MONTH_IN_MINUTES: TsInMs = 30 * 24 * 60;
@@ -499,6 +473,9 @@ const MONTH_IN_MILLISECONDS: TsInMs = MONTH_IN_MINUTES * 60 * 1000;
 const STAKING_ID: LockIdentifier = *b"da/staki";
 
 pub trait Config: frame_system::Config + SendTransactionTypes<Call<Self>> {
+	/// Maximum number of nominations per nominator.
+	const MAX_NOMINATIONS: u32;
+
 	/// The overarching event type.
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
@@ -948,6 +925,9 @@ decl_module! {
 	pub struct Module<T: Config> for enum Call where origin: T::Origin {
 		type Error = Error<T>;
 
+		/// Maximum number of nominations per nominator.
+		const MaxNominations: u32 = T::MAX_NOMINATIONS;
+
 		const ModuleId: ModuleId = T::ModuleId::get();
 
 		/// Number of sessions per era.
@@ -1012,15 +992,6 @@ decl_module! {
 					T::BondingDurationInEra::get(),
 				)
 			);
-
-			use sp_runtime::UpperOf;
-			// 1. Maximum sum of Vec<OffchainAccuracy> must fit into `UpperOf<OffchainAccuracy>`.
-			assert!(
-				<usize as TryInto<UpperOf<OffchainAccuracy>>>::try_into(MAX_NOMINATIONS)
-				.unwrap()
-				.checked_mul(<OffchainAccuracy>::one().deconstruct().try_into().unwrap())
-				.is_some()
-			);
 		}
 
 		/// Take the origin account as a stash and lock up `value` of its balance. `controller` will
@@ -1074,7 +1045,7 @@ decl_module! {
 				}
 			}
 
-			<frame_system::Pallet<T>>::inc_consumers(&stash).map_err(|_| Error::<T>::BadState)?;
+			<frame_system::Pallet<T>>::inc_consumers(&stash).map_err(|_| <Error<T>>::BadState)?;
 
 			// You're auto-bonded forever, here. We might improve this by only bonding when
 			// you actually validate/nominate and remove once you unbond __everything__.
@@ -1576,7 +1547,7 @@ decl_module! {
 			let stash = &ledger.stash;
 
 			ensure!(!targets.is_empty(), <Error<T>>::EmptyTargets);
-			ensure!(targets.len() <= MAX_NOMINATIONS, Error::<T>::TooManyTargets);
+			ensure!(targets.len() <= T::MAX_NOMINATIONS as usize, <Error<T>>::TooManyTargets);
 
 			let old = <Nominators<T>>::get(stash).map_or_else(Vec::new, |x| x.targets);
 			let targets = targets
@@ -2909,6 +2880,8 @@ impl<T: Config> Module<T> {
 }
 
 impl<T: Config> ElectionDataProvider<T::AccountId, T::BlockNumber> for Module<T> {
+	const MAXIMUM_VOTES_PER_VOTER: u32 = T::MAX_NOMINATIONS;
+
 	fn desired_targets() -> data_provider::Result<(u32, Weight)> {
 		Ok((
 			Self::validator_count(),
@@ -3275,7 +3248,7 @@ impl<T: Config> OnDepositRedeem<T::AccountId, RingBalance<T>> for Module<T> {
 			<Bonded<T>>::insert(&stash, controller);
 			<Payee<T>>::insert(&stash, RewardDestination::Stash);
 
-			<frame_system::Pallet<T>>::inc_consumers(&stash).map_err(|_| Error::<T>::BadState)?;
+			<frame_system::Pallet<T>>::inc_consumers(&stash).map_err(|_| <Error<T>>::BadState)?;
 
 			let mut ledger = StakingLedger {
 				stash: stash.clone(),
