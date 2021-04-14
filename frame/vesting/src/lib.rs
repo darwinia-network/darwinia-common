@@ -1,7 +1,7 @@
 //! # Vesting Module
 //!
-//! - [`vesting::Config`](./trait.Config.html)
-//! - [`Call`](./enum.Call.html)
+//! - [`Config`]
+//! - [`Call`]
 //!
 //! ## Overview
 //!
@@ -24,9 +24,6 @@
 //! - `vest` - Update the lock, reducing it in line with the amount "vested" so far.
 //! - `vest_other` - Update the lock of another account, reducing it in line with the amount
 //!   "vested" so far.
-//!
-//! [`Call`]: ./enum.Call.html
-//! [`Config`]: ./trait.Config.html
 
 #![cfg_attr(not(feature = "std"), no_std)]
 

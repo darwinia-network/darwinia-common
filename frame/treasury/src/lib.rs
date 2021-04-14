@@ -21,8 +21,8 @@
 //! The Treasury module provides a "pot" of funds that can be managed by stakeholders in the
 //! system and a structure for making spending proposals from this pot.
 //!
-//! - [`treasury::Config`](./trait.Config.html)
-//! - [`Call`](./enum.Call.html)
+//! - [`Config`]
+//! - [`Call`]
 //!
 //! ## Overview
 //!
@@ -127,7 +127,7 @@
 //!
 //! ## GenesisConfig
 //!
-//! The Treasury module depends on the [`GenesisConfig`](./struct.GenesisConfig.html).
+//! The Treasury module depends on the [`GenesisConfig`].
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
