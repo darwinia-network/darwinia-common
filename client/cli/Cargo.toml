@@ -11,7 +11,7 @@ version     = "2.1.0"
 
 [dependencies]
 # crates
-serde = { version = "1.0.124", features = ["derive"] }
+serde = { version = "1.0.125", features = ["derive"] }
 toml  = { version = "0.5.7" }
 # substrate
 sc-cli        = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }

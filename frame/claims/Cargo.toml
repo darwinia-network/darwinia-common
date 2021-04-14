@@ -14,8 +14,8 @@ version     = "2.1.0"
 array-bytes = { version = "1.1.0" }
 codec       = { package = "parity-scale-codec", version = "2.0.1", default-features = false, features = ["derive"] }
 log         = { version = "0.4.14" }
-serde       = { version = "1.0.124", optional = true }
-serde_json  = { version = "1.0.62", optional = true }
+serde       = { version = "1.0.125", optional = true }
+serde_json  = { version = "1.0.64", optional = true }
 # darwinia
 darwinia-support = { default-features = false, path = "../support" }
 # substrate

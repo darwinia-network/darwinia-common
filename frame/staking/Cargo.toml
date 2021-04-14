@@ -14,7 +14,7 @@ version     = "2.1.0"
 codec             = { package = "parity-scale-codec", version = "2.0.1", default-features = false, features = ["derive"] }
 log               = { version = "0.4.14" }
 paste             = { version = "1.0.5" }
-serde             = { version = "1.0.124", optional = true }
+serde             = { version = "1.0.125", optional = true }
 static_assertions = { version = "1.1.0" }
 # darwinia
 darwinia-staking-rpc-runtime-api = { default-features = false, path = "./rpc/runtime-api" }

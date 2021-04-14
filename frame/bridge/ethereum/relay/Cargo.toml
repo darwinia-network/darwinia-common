@@ -15,7 +15,7 @@ version     = "2.1.0"
 array-bytes = { version = "1.1.0" }
 blake2-rfc  = { version = "0.2.18", default-features = false }
 codec       = { package = "parity-scale-codec", version = "2.0.1", default-features = false }
-serde       = { version = "1.0.124", optional = true }
+serde       = { version = "1.0.125", optional = true }
 serde_json  = { version = "1.0.64", optional = true }
 # darwinia
 darwinia-relay-primitives = { default-features = false, path = "../../../../primitives/relay" }
