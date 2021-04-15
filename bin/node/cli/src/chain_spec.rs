@@ -348,6 +348,10 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 			ring_locked: BUNCH_OF_COINS,
 			kton_locked: BUNCH_OF_COINS,
 		},
+		darwinia_ethereum_issuing: pangolin_runtime::EthereumIssuingConfig {
+			mapping_factory_address: array_bytes::hex2array_unchecked!(MAPPING_FACTORY_ADDRESS, 20).into(),
+			ethereum_backing_address: array_bytes::hex2array_unchecked!(ETHEREUM_BACKING_ADDRESS, 20).into(),
+		},
 		darwinia_relay_authorities_Instance0: pangolin_runtime::EthereumRelayAuthoritiesConfig {
 			authorities: vec![(
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -361,10 +365,6 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 		},
 		darwinia_evm: pangolin_runtime::EVMConfig { accounts: evm_accounts },
 		dvm_ethereum: Default::default(),
-		darwinia_ethereum_issuing: pangolin_runtime::EthereumIssuingConfig {
-			mapping_factory_address: array_bytes::hex2array_unchecked!(MAPPING_FACTORY_ADDRESS, 20).into(),
-			ethereum_backing_address: array_bytes::hex2array_unchecked!(ETHEREUM_BACKING_ADDRESS, 20).into(),
-		},
 	}
 }
 
@@ -505,6 +505,10 @@ fn pangolin_development_genesis() -> pangolin_runtime::GenesisConfig {
 			ring_locked: BUNCH_OF_COINS,
 			kton_locked: BUNCH_OF_COINS,
 		},
+		darwinia_ethereum_issuing: pangolin_runtime::EthereumIssuingConfig {
+			mapping_factory_address: array_bytes::hex2array_unchecked!(MAPPING_FACTORY_ADDRESS, 20).into(),
+			ethereum_backing_address: array_bytes::hex2array_unchecked!(ETHEREUM_BACKING_ADDRESS, 20).into(),
+		},
 		darwinia_relay_authorities_Instance0: pangolin_runtime::EthereumRelayAuthoritiesConfig {
 			authorities: vec![(
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -518,9 +522,5 @@ fn pangolin_development_genesis() -> pangolin_runtime::GenesisConfig {
 		},
 		darwinia_evm: pangolin_runtime::EVMConfig { accounts: evm_accounts },
 		dvm_ethereum: Default::default(),
-		darwinia_ethereum_issuing: pangolin_runtime::EthereumIssuingConfig {
-			mapping_factory_address: array_bytes::hex2array_unchecked!(MAPPING_FACTORY_ADDRESS, 20).into(),
-			ethereum_backing_address: array_bytes::hex2array_unchecked!(ETHEREUM_BACKING_ADDRESS, 20).into(),
-		},
 	}
 }
