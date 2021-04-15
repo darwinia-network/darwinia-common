@@ -127,9 +127,9 @@ decl_event! {
 		/// burn event
 		/// type: 1, backing, recipient, source, target, value
 		BurnToken(u8, EthereumAddress, EthereumAddress, EthereumAddress, EthereumAddress, U256),
-		/// token registed event
+		/// token registered event
 		/// type: u8 = 0, backing, source(origin erc20), target(mapped erc20)
-		TokenRegisted(u8, EthereumAddress, EthereumAddress, EthereumAddress),
+		TokenRegistered(u8, EthereumAddress, EthereumAddress, EthereumAddress),
 	}
 }
 
@@ -312,7 +312,7 @@ impl<T: Config> Module<T> {
 		source: EthereumAddress,
 		target: EthereumAddress,
 	) -> DispatchResult {
-		let raw_event = RawEvent::TokenRegisted(0, backing, source, target);
+		let raw_event = RawEvent::TokenRegistered(0, backing, source, target);
 		let module_event: <T as Config>::Event = raw_event.clone().into();
 		let system_event: <T as frame_system::Config>::Event = module_event.into();
 		<BurnTokenEvents<T>>::append(system_event);
