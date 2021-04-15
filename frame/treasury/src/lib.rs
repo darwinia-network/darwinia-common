@@ -1404,7 +1404,8 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 							bounty.status = BountyStatus::Funded;
 
 							// return their deposit.
-							let err_amount = T::RingCurrency::unreserve(&bounty.proposer, bounty.bond);
+							let err_amount =
+								T::RingCurrency::unreserve(&bounty.proposer, bounty.bond);
 							debug_assert!(err_amount.is_zero());
 
 							// fund the bounty account
