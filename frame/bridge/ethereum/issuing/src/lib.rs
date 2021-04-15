@@ -21,11 +21,24 @@
 #![allow(unused)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
-// --- crates ---
 pub mod weights;
+pub use weights::WeightInfo;
+
+mod types {
+	use crate::*;
+
+	pub type BlockNumber<T> = <T as frame_system::Config>::BlockNumber;
+	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
+	pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
+	pub type EthereumReceiptProofThing<T> = <<T as Config>::EthereumRelay as EthereumReceipt<
+		AccountId<T>,
+		RingBalance<T>,
+	>>::EthereumReceiptProofThing;
+}
+
+// --- crates ---
 use ethereum_types::{Address, H160, H256, U256};
 use rustc_hex::{FromHex, ToHex};
-pub use weights::WeightInfo;
 // --- substrate ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage,
@@ -51,19 +64,6 @@ use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::{balance::lock::*, traits::EthereumReceipt};
 use dp_evm::CallOrCreateInfo;
 use dvm_ethereum::{TransactionAction, TransactionSignature};
-
-mod types {
-	use crate::*;
-
-	pub type BlockNumber<T> = <T as frame_system::Config>::BlockNumber;
-	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-	pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
-	pub type EthereumReceiptProofThing<T> = <<T as Config>::EthereumRelay as EthereumReceipt<
-		AccountId<T>,
-		RingBalance<T>,
-	>>::EthereumReceiptProofThing;
-}
-
 use ethereum_primitives::{
 	receipt::{EthereumTransactionIndex, LogEntry},
 	EthereumAddress,
