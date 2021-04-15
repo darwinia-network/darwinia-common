@@ -21,8 +21,8 @@
 //! The Treasury module provides a "pot" of funds that can be managed by stakeholders in the
 //! system and a structure for making spending proposals from this pot.
 //!
-//! - [`treasury::Config`](./trait.Config.html)
-//! - [`Call`](./enum.Call.html)
+//! - [`Config`]
+//! - [`Call`]
 //!
 //! ## Overview
 //!
@@ -127,7 +127,7 @@
 //!
 //! ## GenesisConfig
 //!
-//! The Treasury module depends on the [`GenesisConfig`](./struct.GenesisConfig.html).
+//! The Treasury module depends on the [`GenesisConfig`].
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -649,7 +649,8 @@ decl_module! {
 			<Reasons<T, I>>::remove(&tip.reason);
 			<Tips<T, I>>::remove(&hash);
 			if !tip.deposit.is_zero() {
-				let _ = T::RingCurrency::unreserve(&who, tip.deposit);
+				let err_amount = T::RingCurrency::unreserve(&who, tip.deposit);
+				debug_assert!(err_amount.is_zero());
 			}
 			Self::deposit_event(RawEvent::TipRetracted(hash));
 		}
@@ -920,7 +921,8 @@ decl_module! {
 								} else {
 									// Else this is the curator, willingly giving up their role.
 									// Give back their deposit.
-									let _ = T::RingCurrency::unreserve(&curator, bounty.curator_deposit);
+									let err_amount = T::RingCurrency::unreserve(&curator, bounty.curator_deposit);
+									debug_assert!(err_amount.is_zero());
 									// Continue to change bounty status below...
 								}
 							},
@@ -1027,9 +1029,13 @@ decl_module! {
 					let balance = T::RingCurrency::free_balance(&bounty_account);
 					let fee = bounty.fee.min(balance); // just to be safe
 					let payout = balance.saturating_sub(fee);
-					let _ = T::RingCurrency::unreserve(&curator, bounty.curator_deposit);
-					let _ = T::RingCurrency::transfer(&bounty_account, &curator, fee, AllowDeath); // should not fail
-					let _ = T::RingCurrency::transfer(&bounty_account, &beneficiary, payout, AllowDeath); // should not fail
+					let err_amount = T::RingCurrency::unreserve(&curator, bounty.curator_deposit);
+					debug_assert!(err_amount.is_zero());
+					let res = T::RingCurrency::transfer(&bounty_account, &curator, fee, AllowDeath); // should not fail
+					debug_assert!(res.is_ok());
+					let res = T::RingCurrency::transfer(&bounty_account, &beneficiary, payout, AllowDeath); // should not fail
+					debug_assert!(res.is_ok());
+
 					*maybe_bounty = None;
 
 					<BountyDescriptions<I>>::remove(bounty_id);
@@ -1079,7 +1085,8 @@ decl_module! {
 					},
 					BountyStatus::Active { curator, .. } => {
 						// Cancelled by council, refund deposit of the working curator.
-						let _ = T::RingCurrency::unreserve(&curator, bounty.curator_deposit);
+						let err_amount = T::RingCurrency::unreserve(&curator, bounty.curator_deposit);
+						debug_assert!(err_amount.is_zero());
 						// Then execute removal of the bounty below.
 					},
 					BountyStatus::PendingPayout { .. } => {
@@ -1096,7 +1103,8 @@ decl_module! {
 				<BountyDescriptions<I>>::remove(bounty_id);
 
 				let balance = T::RingCurrency::free_balance(&bounty_account);
-				let _ = T::RingCurrency::transfer(&bounty_account, &Self::account_id(), balance, AllowDeath); // should not fail
+				let res = T::RingCurrency::transfer(&bounty_account, &Self::account_id(), balance, AllowDeath); // should not fail
+				debug_assert!(res.is_ok());
 				*maybe_bounty = None;
 
 				Self::deposit_event(<Event<T, I>>::BountyCanceled(bounty_id));
@@ -1283,7 +1291,8 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 		let max_payout = Self::pot::<T::RingCurrency>();
 		let mut payout = tips[tips.len() / 2].1.min(max_payout);
 		if !tip.deposit.is_zero() {
-			let _ = T::RingCurrency::unreserve(&tip.finder, tip.deposit);
+			let err_amount = T::RingCurrency::unreserve(&tip.finder, tip.deposit);
+			debug_assert!(err_amount.is_zero());
 		}
 		if tip.finders_fee {
 			if tip.finder != tip.who {
@@ -1292,11 +1301,13 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 				payout -= finders_fee;
 				// this should go through given we checked it's at most the free balance, but still
 				// we only make a best-effort.
-				let _ = T::RingCurrency::transfer(&treasury, &tip.finder, finders_fee, KeepAlive);
+				let res = T::RingCurrency::transfer(&treasury, &tip.finder, finders_fee, KeepAlive);
+				debug_assert!(res.is_ok());
 			}
 		}
 		// same as above: best-effort only.
-		let _ = T::RingCurrency::transfer(&treasury, &tip.who, payout, KeepAlive);
+		let res = T::RingCurrency::transfer(&treasury, &tip.who, payout, KeepAlive);
+		debug_assert!(res.is_ok());
 		Self::deposit_event(RawEvent::TipClosed(hash, tip.who, payout));
 	}
 
@@ -1340,7 +1351,8 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 						budget_remaining_ring -= p.ring_value;
 
 						// return their deposit.
-						let _ = T::RingCurrency::unreserve(&p.proposer, p.ring_bond);
+						let err_amount = T::RingCurrency::unreserve(&p.proposer, p.ring_bond);
+						debug_assert!(err_amount.is_zero());
 
 						// provide the allocation.
 						imbalance_ring.subsume(T::RingCurrency::deposit_creating(
@@ -1352,7 +1364,8 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 						budget_remaining_kton -= p.kton_value;
 
 						// return their deposit.
-						let _ = T::KtonCurrency::unreserve(&p.proposer, p.kton_bond);
+						let err_amount = T::KtonCurrency::unreserve(&p.proposer, p.kton_bond);
+						debug_assert!(err_amount.is_zero());
 
 						// provide the allocation.
 						imbalance_kton.subsume(T::KtonCurrency::deposit_creating(
@@ -1391,7 +1404,8 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 							bounty.status = BountyStatus::Funded;
 
 							// return their deposit.
-							let _ = T::RingCurrency::unreserve(&bounty.proposer, bounty.bond);
+							let err_amount = T::RingCurrency::unreserve(&bounty.proposer, bounty.bond);
+							debug_assert!(err_amount.is_zero());
 
 							// fund the bounty account
 							imbalance_ring.subsume(T::RingCurrency::deposit_creating(

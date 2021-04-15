@@ -781,7 +781,7 @@ macro_rules! decl_tests {
 					let _ = Ring::deposit_creating(&1, 100);
 
 					System::set_block_number(2);
-					let _ = Ring::reserve(&1, 10);
+					assert_ok!(Ring::reserve(&1, 10));
 
 					assert_eq!(
 						last_event(),
@@ -789,7 +789,7 @@ macro_rules! decl_tests {
 					);
 
 					System::set_block_number(3);
-					let _ = Ring::unreserve(&1, 5);
+					assert!(Ring::unreserve(&1, 5).is_zero());
 
 					assert_eq!(
 						last_event(),
@@ -797,7 +797,7 @@ macro_rules! decl_tests {
 					);
 
 					System::set_block_number(4);
-					let _ = Ring::unreserve(&1, 6);
+					assert_eq!(Ring::unreserve(&1, 6), 1);
 
 					// should only unreserve 5
 					assert_eq!(
