@@ -38,7 +38,6 @@ mod types {
 
 // --- crates ---
 use ethereum_types::{Address, H160, H256, U256};
-use rustc_hex::{FromHex, ToHex};
 // --- substrate ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage,

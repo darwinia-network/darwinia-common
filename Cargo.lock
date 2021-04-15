@@ -1439,7 +1439,6 @@ dependencies = [
  "frame-system",
  "log",
  "parity-scale-codec",
- "rustc-hex",
  "serde",
  "serde_json",
  "sp-runtime",

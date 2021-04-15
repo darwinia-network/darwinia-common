@@ -14,7 +14,6 @@ version     = "2.2.0"
 codec          = { package = "parity-scale-codec", version = "2.0.1", default-features = false, features = ["derive"] }
 ethereum-types = { default-features = false, version = "0.11.0" }
 log            = { version = "0.4.14" }
-rustc-hex      = { default-features = false, version = "2.1.0" }
 serde          = { version = "1.0.125", optional = true }
 serde_json     = { version = "1.0.64", optional = true }
 # darwinia
@@ -32,7 +31,6 @@ frame-system  = { default-features = false, git = "https://github.com/darwinia-n
 sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
 sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
 
-
 [features]
 default = ["std"]
 
@@ -45,7 +43,6 @@ std = [
 crates-std = [
 	"codec/std",
 	"ethereum-types/std",
-	"rustc-hex/std",
 	"serde",
 	"serde_json",
 ]
