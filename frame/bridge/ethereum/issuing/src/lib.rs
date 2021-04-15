@@ -70,12 +70,16 @@ use ethereum_primitives::{
 };
 use types::*;
 
-pub trait Config: frame_system::Config + dvm_ethereum::Config {
-	type ModuleId: Get<ModuleId>;
+pub trait Config: dvm_ethereum::Config {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
-	type EthereumRelay: EthereumReceipt<Self::AccountId, RingBalance<Self>>;
+
+	type ModuleId: Get<ModuleId>;
+
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+
+	type EthereumRelay: EthereumReceipt<Self::AccountId, RingBalance<Self>>;
 	type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber, Signer = EthereumAddress>;
+
 	type WeightInfo: WeightInfo;
 }
 
