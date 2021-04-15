@@ -164,7 +164,7 @@ decl_module! {
 				proof)?;
 			let backing_address = EthereumBackingAddress::get();
 			let input = Self::abi_encode_token_creation(backing_address, ethlog)?;
-			Self::call_mapping_factory(input)?;
+			Self::transact_mapping_factory(input)?;
 			VerifiedIssuingProof::insert(tx_index, true);
 			Self::deposit_event(RawEvent::RegisterErc20(user, backing_address));
 		}
@@ -178,7 +178,7 @@ decl_module! {
 				proof)?;
 			let backing_address = EthereumBackingAddress::get();
 			let input = Self::abi_encode_token_redeem(ethlog)?;
-			Self::call_mapping_factory(input)?;
+			Self::transact_mapping_factory(input)?;
 			VerifiedIssuingProof::insert(tx_index, true);
 			Self::deposit_event(RawEvent::RedeemErc20(user, backing_address));
 		}
@@ -197,17 +197,18 @@ impl<T: Config> Module<T> {
 	pub fn unsigned_transaction(target: H160, input: Vec<u8>) -> dvm_ethereum::Transaction {
 		dvm_ethereum::Transaction {
 			nonce: U256::zero(),
-			gas_price: T::FeeCalculator::min_gas_price(),
+			gas_price: U256::zero(),
 			gas_limit: U256::from(0x100000),
 			action: dvm_ethereum::TransactionAction::Call(target),
 			value: U256::zero(),
 			input,
 			signature: TransactionSignature::new(
+				// v = CHAIN_ID * 2 + 36, and CHAIN_ID = 42 for pangolin
 				0x78,
 				H256::from_slice(&[55u8; 32]),
 				H256::from_slice(&[55u8; 32]),
 			)
-			.unwrap(),
+			.unwrap()
 		}
 	}
 
@@ -322,7 +323,7 @@ impl<T: Config> Module<T> {
 		Ok(())
 	}
 
-	pub fn burn_token(
+	pub fn deposit_burn_token_event(
 		backing: EthereumAddress,
 		source: EthereumAddress,
 		recipient: EthereumAddress,
@@ -384,7 +385,7 @@ impl<T: Config> Module<T> {
 		Ok((tx_index, ethlog))
 	}
 
-	pub fn call_mapping_factory(input: Vec<u8>) -> DispatchResult {
+	pub fn transact_mapping_factory(input: Vec<u8>) -> DispatchResult {
 		let contract = MappingFactoryAddress::get();
 		let transaction = Self::unsigned_transaction(contract, input);
 		let result = dvm_ethereum::Module::<T>::do_transact(transaction, false).map_err(
@@ -412,7 +413,7 @@ impl<T: Config> IssuingHandler for Module<T> {
 		} else {
 			let burn_info =
 				TokenBurnInfo::decode(input).map_err(|_| Error::<T>::InvalidInputData)?;
-			Self::burn_token(
+			Self::deposit_burn_token_event(
 				burn_info.backing,
 				burn_info.source,
 				burn_info.recipient,
