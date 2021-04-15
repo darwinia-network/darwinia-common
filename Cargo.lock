@@ -1424,7 +1424,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-ethereum-issuing"
-version = "2.1.0"
+version = "2.2.0"
 dependencies = [
  "darwinia-ethereum-issuing-contract",
  "darwinia-evm",
@@ -1448,7 +1448,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-ethereum-issuing-contract"
-version = "2.1.0"
+version = "2.2.0"
 dependencies = [
  "ethabi",
  "ethereum-types",
@@ -1593,7 +1593,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-issuing"
-version = "2.1.0"
+version = "2.2.0"
 dependencies = [
  "darwinia-evm",
  "dp-evm",
