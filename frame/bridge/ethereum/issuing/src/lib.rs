@@ -56,9 +56,7 @@ use sp_std::vec::Vec;
 use darwinia_ethereum_issuing_contract::{
 	Abi, Event as EthEvent, Log as EthLog, TokenBurnInfo, TokenRegisterInfo,
 };
-use darwinia_evm::{
-	AddressMapping, FeeCalculator, GasWeightMapping, IssuingHandler,
-};
+use darwinia_evm::{AddressMapping, FeeCalculator, GasWeightMapping, IssuingHandler};
 use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::{balance::lock::*, traits::EthereumReceipt};
 use dp_evm::CallOrCreateInfo;
@@ -203,12 +201,15 @@ impl<T: Config> Module<T> {
 			value: U256::zero(),
 			input,
 			signature: TransactionSignature::new(
-				// v = CHAIN_ID * 2 + 36, and CHAIN_ID = 42 for pangolin
-				0x78,
+				// Reference https://github.com/ethereum/EIPs/issues/155
+				//
+				// But this transaction is sent by darwinia-issuing system from `0x0`
+				// So ignore signature checking, simply set to `0`
+				0,
 				H256::from_slice(&[55u8; 32]),
 				H256::from_slice(&[55u8; 32]),
 			)
-			.unwrap()
+			.unwrap(),
 		}
 	}
 
@@ -334,14 +335,7 @@ impl<T: Config> Module<T> {
 			e
 		})?;
 
-		let raw_event = RawEvent::BurnToken(
-			1,
-			backing,
-			recipient,
-			source,
-			mapped_address,
-			amount,
-		);
+		let raw_event = RawEvent::BurnToken(1, backing, recipient, source, mapped_address, amount);
 		let module_event: <T as Config>::Event = raw_event.clone().into();
 		let system_event: <T as frame_system::Config>::Event = module_event.into();
 		<BurnTokenEvents<T>>::append(system_event);
