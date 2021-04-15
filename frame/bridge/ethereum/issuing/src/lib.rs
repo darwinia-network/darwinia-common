@@ -157,7 +157,7 @@ decl_module! {
 
 		#[weight = <T as darwinia_evm::Config>::GasWeightMapping::gas_to_weight(0x100000)]
 		pub fn register_erc20(origin, proof: EthereumReceiptProofThing<T>) {
-			log::info!(target: "darwinia-issuing", "start to register erc20 token");
+			log::debug!("start to register erc20 token");
 			let user = ensure_signed(origin)?;
 			let (tx_index, ethlog) = Self::verify_and_parse_proof(
 				Abi::register_event(),
@@ -171,7 +171,7 @@ decl_module! {
 
 		#[weight = <T as darwinia_evm::Config>::GasWeightMapping::gas_to_weight(0x100000)]
 		pub fn redeem_erc20(origin, proof: EthereumReceiptProofThing<T>) {
-			log::info!(target: "darwinia-issuing", "start to redeem erc20 token");
+			log::debug!("start to redeem erc20 token");
 			let user = ensure_signed(origin)?;
 			let (tx_index, ethlog) = Self::verify_and_parse_proof(
 				Abi::backing_event(),
@@ -216,7 +216,7 @@ impl<T: Config> Module<T> {
 		backing: EthereumAddress,
 		result: EthLog,
 	) -> Result<Vec<u8>, DispatchError> {
-		log::info!(target: "darwinia-issuing", "start to abi_encode_token_creation");
+		log::debug!("start to abi_encode_token_creation");
 		let name = result.params[1]
 			.value
 			.clone()
@@ -252,12 +252,12 @@ impl<T: Config> Module<T> {
 		)
 		.map_err(|_| Error::<T>::InvalidEncodeERC20)?;
 
-		log::info!(target: "darwinia-issuing", "register fee will be delived to fee pallet {}", fee);
+		log::debug!("register fee will be delived to fee pallet {}", fee);
 		Ok(input)
 	}
 
 	fn abi_encode_token_redeem(result: EthLog) -> Result<Vec<u8>, DispatchError> {
-		log::info!(target: "darwinia-issuing", "abi_encode_token_redeem");
+		log::debug!("abi_encode_token_redeem");
 		let token_address = result.params[0]
 			.value
 			.clone()
@@ -287,7 +287,7 @@ impl<T: Config> Module<T> {
 		let input = Abi::encode_cross_receive(dtoken_address, recipient, amount)
 			.map_err(|_| Error::<T>::InvalidMintEncoding)?;
 
-		log::info!(target: "darwinia-issuing", "transfer fee will be delived to fee pallet {}", fee);
+		log::debug!("transfer fee will be delived to fee pallet {}", fee);
 		Ok(input)
 	}
 
@@ -330,7 +330,7 @@ impl<T: Config> Module<T> {
 		amount: U256,
 	) -> DispatchResult {
 		let mapped_address = Self::mapped_token_address(backing, source).map_err(|e| {
-			log::info!(target: "darwinia-issuing", "mapped token address error {:?} ", e);
+			log::debug!("mapped token address error {:?} ", e);
 			e
 		})?;
 
@@ -364,7 +364,7 @@ impl<T: Config> Module<T> {
 			<Error<T>>::AssetAR
 		);
 		let verified_receipt = T::EthereumRelay::verify_receipt(&proof).map_err(|err| {
-			log::info!(target: "darwinia-issuing", "verify error {:?}", err);
+			log::debug!("verify error {:?}", err);
 			<Error<T>>::ReceiptProofInv
 		})?;
 
@@ -390,7 +390,7 @@ impl<T: Config> Module<T> {
 		let transaction = Self::unsigned_transaction(contract, input);
 		let result = dvm_ethereum::Module::<T>::do_transact(transaction, false).map_err(
 			|e| -> &'static str {
-				log::info!(target: "darwinia-issuing", "call mapping factory contract error {:?}", &e);
+				log::debug!("call mapping factory contract error {:?}", &e);
 				e.into()
 			},
 		)?;
