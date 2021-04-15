@@ -1596,7 +1596,6 @@ dependencies = [
  "darwinia-evm",
  "dp-evm",
  "evm",
- "sp-std",
 ]
 
 [[package]]

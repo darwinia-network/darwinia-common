@@ -19,12 +19,16 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate alloc;
-use alloc::vec::Vec;
 
+// --- core ---
+use core::marker::PhantomData;
+// --- alloc ---
+use alloc::vec::Vec;
+// --- crates ---
+use evm::{Context, ExitError, ExitSucceed};
+// --- darwinia ---
 use darwinia_evm::{Config, IssuingHandler};
 use dp_evm::Precompile;
-use evm::{Context, ExitError, ExitSucceed};
-use sp_std::marker::PhantomData;
 
 /// Issuing Precompile Contract, used to burn mapped token and generate a event proof in darwinia
 ///
@@ -32,13 +36,12 @@ use sp_std::marker::PhantomData;
 pub struct Issuing<T: Config> {
 	_maker: PhantomData<T>,
 }
-
 impl<T: Config> Precompile for Issuing<T> {
 	fn execute(
 		input: &[u8],
 		_: Option<u64>,
 		context: &Context,
-	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
+	) -> Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
 		T::IssuingHandler::handle(context.address, context.caller, input)
 			.map_err(|_| ExitError::Other("contract handle failed".into()))?;
 		Ok((ExitSucceed::Returned, Default::default(), 20000))
