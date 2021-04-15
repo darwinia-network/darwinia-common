@@ -105,7 +105,7 @@ decl_error! {
 		/// encode erc20 tx failed
 		InvalidEncodeERC20,
 		/// encode mint tx failed
-		InvalidMintEcoding,
+		InvalidMintEncoding,
 		/// invalid ethereum address length
 		InvalidAddressLen,
 		/// decode input value error
@@ -286,7 +286,7 @@ impl<T: Config> Module<T> {
 			.ok_or(<Error<T>>::UintCF)?;
 
 		let input = Abi::encode_cross_receive(dtoken_address, recipient, amount)
-			.map_err(|_| Error::<T>::InvalidMintEcoding)?;
+			.map_err(|_| Error::<T>::InvalidMintEncoding)?;
 
 		log::info!(target: "darwinia-issuing", "transfer fee will be delived to fee pallet {}", fee);
 		Ok(input)
