@@ -204,8 +204,8 @@ impl<T: Config> Module<T> {
 				// Reference https://github.com/ethereum/EIPs/issues/155
 				//
 				// But this transaction is sent by darwinia-issuing system from `0x0`
-				// So ignore signature checking, simply set to `0`
-				0,
+				// So ignore signature checking, simply set `chain_id` to `1`
+				1 * 2 + 36,
 				H256::from_slice(&[55u8; 32]),
 				H256::from_slice(&[55u8; 32]),
 			)
