@@ -400,7 +400,6 @@ impl<T: Config> Module<T> {
 }
 
 impl<T: Config> IssuingHandler for Module<T> {
-	/// handle
 	fn handle(address: H160, caller: H160, input: &[u8]) -> DispatchResult {
 		ensure!(MappingFactoryAddress::get() == caller, <Error<T>>::AssetAR);
 		// in order to use a common precompile contract to deliver these issuing events
