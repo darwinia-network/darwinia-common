@@ -77,7 +77,6 @@ pub trait Config: frame_system::Config + dvm_ethereum::Config {
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 	type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber, Signer = EthereumAddress>;
 	type WeightInfo: WeightInfo;
-	type FeeEstimate: Get<RingBalance<Self>>;
 }
 
 decl_error! {
@@ -146,8 +145,6 @@ decl_module! {
 	where
 		origin: T::Origin
 	{
-		const FeeEstimate: RingBalance<T> = T::FeeEstimate::get();
-
 		fn deposit_event() = default;
 
 		fn on_initialize(_n: BlockNumber<T>) -> Weight {
