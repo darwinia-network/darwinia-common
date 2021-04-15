@@ -11,24 +11,21 @@ version     = "2.2.0"
 
 [dependencies]
 # crates
-ethabi         = { default-features = false, git = "https://github.com/darwinia-network/ethabi.git", branch = "xavier-no-std" }
 ethereum-types = { default-features = false, version = "0.11.0" }
-# substrate
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+# github
+ethabi = { default-features = false, git = "https://github.com/darwinia-network/ethabi.git", branch = "xavier-no-std" }
 
 [features]
 default = ["std"]
 
 std = [
 	"crates-std",
-	"substrate-std",
+	"github-std",
 ]
 
 crates-std = [
-	"ethabi/std",
 	"ethereum-types/std",
 ]
-
-substrate-std = [
-	"sp-std/std",
+github-std = [
+	"ethabi/std",
 ]

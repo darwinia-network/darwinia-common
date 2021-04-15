@@ -1452,7 +1452,6 @@ version = "2.2.0"
 dependencies = [
  "ethabi",
  "ethereum-types",
- "sp-std",
 ]
 
 [[package]]
