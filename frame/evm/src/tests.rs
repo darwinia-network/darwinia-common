@@ -88,6 +88,14 @@ impl FeeCalculator for FixedGasPrice {
 	}
 }
 
+/// EmptyIssuingHandler
+pub struct EmptyIssuingHandler;
+impl IssuingHandler for EmptyIssuingHandler {
+	fn handle(_address: H160, _caller: H160, _input: &[u8]) -> DispatchResult {
+		Ok(())
+	}
+}
+
 impl Config for Test {
 	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = ();
@@ -103,6 +111,7 @@ impl Config for Test {
 	type ChainId = ();
 	type BlockGasLimit = ();
 	type Runner = crate::runner::stack::Runner<Self>;
+	type IssuingHandler = EmptyIssuingHandler;
 	type RingAccountBasic = RawAccountBasic<Test>;
 	type KtonAccountBasic = RawAccountBasic<Test>;
 }

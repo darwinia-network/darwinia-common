@@ -1423,6 +1423,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-ethereum-issuing"
+version = "2.2.0"
+dependencies = [
+ "darwinia-ethereum-issuing-contract",
+ "darwinia-evm",
+ "darwinia-evm-precompile",
+ "darwinia-relay-primitives",
+ "darwinia-support",
+ "dp-evm",
+ "dvm-ethereum",
+ "ethereum-primitives",
+ "ethereum-types",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "serde",
+ "serde_json",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "darwinia-ethereum-issuing-contract"
+version = "2.2.0"
+dependencies = [
+ "ethabi",
+ "ethereum-types",
+]
+
+[[package]]
 name = "darwinia-ethereum-linear-relay"
 version = "2.2.0"
 dependencies = [
@@ -1499,6 +1530,7 @@ name = "darwinia-evm-precompile"
 version = "2.2.0"
 dependencies = [
  "darwinia-evm-precompile-empty",
+ "darwinia-evm-precompile-issuing",
  "darwinia-evm-precompile-kton",
  "darwinia-evm-precompile-simple",
  "darwinia-evm-precompile-withdraw",
@@ -1553,6 +1585,15 @@ dependencies = [
 name = "darwinia-evm-precompile-empty"
 version = "2.2.0"
 dependencies = [
+ "dp-evm",
+ "evm",
+]
+
+[[package]]
+name = "darwinia-evm-precompile-issuing"
+version = "2.2.0"
+dependencies = [
+ "darwinia-evm",
  "dp-evm",
  "evm",
 ]
@@ -5523,6 +5564,7 @@ dependencies = [
  "darwinia-democracy",
  "darwinia-elections-phragmen",
  "darwinia-ethereum-backing",
+ "darwinia-ethereum-issuing",
  "darwinia-ethereum-relay",
  "darwinia-evm",
  "darwinia-evm-precompile",

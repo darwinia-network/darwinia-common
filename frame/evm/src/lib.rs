@@ -40,7 +40,7 @@ use frame_system::RawOrigin;
 use sp_core::{Hasher, H160, H256, U256};
 use sp_runtime::{
 	traits::{BadOrigin, UniqueSaturatedInto},
-	AccountId32,
+	AccountId32, DispatchResult,
 };
 use sp_std::vec::Vec;
 // --- std ---
@@ -268,6 +268,11 @@ impl GasWeightMapping for () {
 	}
 }
 
+/// A contract handle for ethereum issuing
+pub trait IssuingHandler {
+	fn handle(address: H160, caller: H160, input: &[u8]) -> DispatchResult;
+}
+
 static ISTANBUL_CONFIG: EvmConfig = EvmConfig::istanbul();
 
 /// EVM module trait
@@ -302,6 +307,8 @@ pub trait Config: frame_system::Config + pallet_timestamp::Config {
 	/// The account basic mapping way
 	type RingAccountBasic: AccountBasic;
 	type KtonAccountBasic: AccountBasic;
+	/// Issuing contracts handler
+	type IssuingHandler: IssuingHandler;
 
 	/// EVM config used in the module.
 	fn config() -> &'static EvmConfig {

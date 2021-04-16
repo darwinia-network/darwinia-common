@@ -48,7 +48,9 @@ use sp_runtime::{
 use sp_std::prelude::*;
 // --- std ---
 use codec::{Decode, Encode};
-pub use ethereum::{Block, Log, Receipt, Transaction, TransactionAction, TransactionMessage};
+pub use ethereum::{
+	Block, Log, Receipt, Transaction, TransactionAction, TransactionMessage, TransactionSignature,
+};
 use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
 use evm::ExitReason;
 use sha3::{Digest, Keccak256};
@@ -76,6 +78,53 @@ pub enum EthereumStorageSchema {
 impl Default for EthereumStorageSchema {
 	fn default() -> Self {
 		Self::Undefined
+	}
+}
+
+/// The ethereum transaction include recovered source account
+pub struct DVMTransaction {
+	/// source of the transaction
+	pub source: H160,
+	/// nonce wrapped by Option
+	pub nonce: Option<U256>,
+	/// gas price wrapped by Option
+	pub gas_price: Option<U256>,
+	/// the transaction defined in ethereum lib
+	pub tx: ethereum::Transaction,
+}
+
+impl DVMTransaction {
+	/// the internal transaction usually used by pallets
+	/// the source account is specified by 0x0 address
+	/// nonce is None means nonce automatically increased
+	/// gas_price is None means no need for gas fee
+	/// a default signature which will not be verified
+	pub fn internal_transaction(nonce: u64, target: H160, input: Vec<u8>) -> Self {
+		let transaction = ethereum::Transaction {
+			nonce: U256::from(nonce),
+			// Not used, and will be overwritten by None later.
+			gas_price: U256::zero(),
+			gas_limit: U256::from(0x100000),
+			action: TransactionAction::Call(target),
+			value: U256::zero(),
+			input,
+			signature: TransactionSignature::new(
+				// Reference https://github.com/ethereum/EIPs/issues/155
+				//
+				// But this transaction is sent by darwinia-issuing system from `0x0`
+				// So ignore signature checking, simply set `chain_id` to `1`
+				1 * 2 + 36,
+				H256::from_slice(&[55u8; 32]),
+				H256::from_slice(&[55u8; 32]),
+			)
+			.unwrap(),
+		};
+		Self {
+			source: H160::zero(),
+			nonce: None,
+			gas_price: None,
+			tx: transaction,
+		}
 	}
 }
 
@@ -126,6 +175,8 @@ decl_storage! {
 		RemainingRingBalance get(fn get_ring_remaining_balances): map hasher(blake2_128_concat) T::AccountId => RingBalance<T>;
 		/// Remaining kton balance for account
 		RemainingKtonBalance get(fn get_kton_remaining_balances): map hasher(blake2_128_concat) T::AccountId => KtonBalance<T>;
+		/// The nonce for internal transactions from system internal address(0x0).
+		pub InternalNonce: u64 = 0;
 	}
 	add_extra_genesis {
 		build(|_config: &GenesisConfig| {
@@ -152,6 +203,8 @@ decl_error! {
 		InvalidSignature,
 		/// Pre-log is present, therefore transact is not allowed.
 		PreLogExists,
+		/// Call failed
+		InvalidCall,
 	}
 }
 
@@ -271,6 +324,19 @@ impl<T: Config> Module<T> {
 		)))
 	}
 
+	fn convert_transaction(
+		transaction: ethereum::Transaction,
+	) -> Result<DVMTransaction, DispatchError> {
+		let source =
+			Self::recover_signer(&transaction).ok_or_else(|| Error::<T>::InvalidSignature)?;
+		Ok(DVMTransaction {
+			source,
+			nonce: Some(transaction.nonce),
+			gas_price: Some(transaction.gas_price),
+			tx: transaction,
+		})
+	}
+
 	fn store_block(post_log: bool) {
 		let mut transactions = Vec::new();
 		let mut statuses = Vec::new();
@@ -334,26 +400,63 @@ impl<T: Config> Module<T> {
 		}
 	}
 
-	fn do_transact(transaction: ethereum::Transaction) -> DispatchResultWithPostInfo {
+	pub fn internal_transact(target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo {
 		ensure!(
 			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
 			Error::<T>::PreLogExists,
 		);
-		let source =
-			Self::recover_signer(&transaction).ok_or_else(|| Error::<T>::InvalidSignature)?;
+		let internal_nonce = InternalNonce::get();
+		let transaction = DVMTransaction::internal_transaction(internal_nonce, target, input);
 
+		// Not check overflow here, it will go back to zero if overflow
+		InternalNonce::put(internal_nonce + 1);
+
+		Self::raw_transact(transaction)
+	}
+
+	pub fn do_transact(transaction: ethereum::Transaction) -> DispatchResultWithPostInfo {
+		ensure!(
+			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
+			Error::<T>::PreLogExists,
+		);
+		let transaction = Self::convert_transaction(transaction)?;
+		Self::raw_transact(transaction)
+	}
+
+	pub fn do_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
+		let (_, _, info) = Self::execute(
+			H160::zero(),
+			input.clone(),
+			U256::zero(),
+			U256::from(0x100000),
+			None,
+			None,
+			TransactionAction::Call(contract),
+			None,
+		)?;
+
+		match info {
+			CallOrCreateInfo::Call(info) => match info.exit_reason {
+				ExitReason::Succeed(_) => Ok(info.value),
+				_ => Ok(vec![]),
+			},
+			_ => Err(Error::<T>::InvalidCall.into()),
+		}
+	}
+
+	fn raw_transact(transaction: DVMTransaction) -> DispatchResultWithPostInfo {
 		let transaction_hash =
-			H256::from_slice(Keccak256::digest(&rlp::encode(&transaction)).as_slice());
+			H256::from_slice(Keccak256::digest(&rlp::encode(&transaction.tx)).as_slice());
 		let transaction_index = Pending::get().len() as u32;
 
 		let (to, contract_address, info) = Self::execute(
-			source,
-			transaction.input.clone(),
-			transaction.value,
-			transaction.gas_limit,
-			Some(transaction.gas_price),
-			Some(transaction.nonce),
-			transaction.action,
+			transaction.source,
+			transaction.tx.input.clone(),
+			transaction.tx.value,
+			transaction.tx.gas_limit,
+			transaction.gas_price,
+			transaction.nonce,
+			transaction.tx.action,
 			None,
 		)?;
 
@@ -363,7 +466,7 @@ impl<T: Config> Module<T> {
 				TransactionStatus {
 					transaction_hash,
 					transaction_index,
-					from: source,
+					from: transaction.source,
 					to,
 					contract_address: None,
 					logs: info.logs.clone(),
@@ -380,7 +483,7 @@ impl<T: Config> Module<T> {
 				TransactionStatus {
 					transaction_hash,
 					transaction_index,
-					from: source,
+					from: transaction.source,
 					to,
 					contract_address: Some(info.value),
 					logs: info.logs.clone(),
@@ -406,10 +509,10 @@ impl<T: Config> Module<T> {
 			logs: status.clone().logs,
 		};
 
-		Pending::append((transaction, status, receipt));
+		Pending::append((transaction.tx, status, receipt));
 
 		Self::deposit_event(Event::Executed(
-			source,
+			transaction.source,
 			contract_address.unwrap_or_default(),
 			transaction_hash,
 			reason,

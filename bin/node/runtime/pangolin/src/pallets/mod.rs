@@ -100,6 +100,9 @@ pub use ethereum_relay::*;
 pub mod ethereum_backing;
 pub use ethereum_backing::*;
 
+pub mod ethereum_issuing;
+pub use ethereum_issuing::*;
+
 pub mod relayer_game;
 pub use relayer_game::*;
 

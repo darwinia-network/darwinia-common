@@ -89,6 +89,8 @@ const SET_AUTHORITIES_ADDRESS: &'static str = "0xD35Bb6F1bc1C84b53E0995c1830454A
 const RING_TOKEN_ADDRESS: &'static str = "0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0";
 const KTON_TOKEN_ADDRESS: &'static str = "0x1994100c58753793D52c6f457f189aa3ce9cEe94";
 const ETHEREUM_RELAY_AUTHORITY_SIGNER: &'static str = "0x68898db1012808808c903f390909c52d9f706749";
+const MAPPING_FACTORY_ADDRESS: &'static str = "0x6b58D3903Ae8997A5dA02FAAd51333D4Bf6958cC";
+const ETHEREUM_BACKING_ADDRESS: &'static str = "0xbF6E8B2A6387952C39634f4cCF6Acf4FA2b99FA4";
 
 fn session_keys(
 	babe: BabeId,
@@ -346,6 +348,10 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 			ring_locked: BUNCH_OF_COINS,
 			kton_locked: BUNCH_OF_COINS,
 		},
+		darwinia_ethereum_issuing: pangolin_runtime::EthereumIssuingConfig {
+			mapping_factory_address: array_bytes::hex2array_unchecked!(MAPPING_FACTORY_ADDRESS, 20).into(),
+			ethereum_backing_address: array_bytes::hex2array_unchecked!(ETHEREUM_BACKING_ADDRESS, 20).into(),
+		},
 		darwinia_relay_authorities_Instance0: pangolin_runtime::EthereumRelayAuthoritiesConfig {
 			authorities: vec![(
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -498,6 +504,10 @@ fn pangolin_development_genesis() -> pangolin_runtime::GenesisConfig {
 			kton_token_address: array_bytes::hex2array_unchecked!(KTON_TOKEN_ADDRESS, 20).into(),
 			ring_locked: BUNCH_OF_COINS,
 			kton_locked: BUNCH_OF_COINS,
+		},
+		darwinia_ethereum_issuing: pangolin_runtime::EthereumIssuingConfig {
+			mapping_factory_address: array_bytes::hex2array_unchecked!(MAPPING_FACTORY_ADDRESS, 20).into(),
+			ethereum_backing_address: array_bytes::hex2array_unchecked!(ETHEREUM_BACKING_ADDRESS, 20).into(),
 		},
 		darwinia_relay_authorities_Instance0: pangolin_runtime::EthereumRelayAuthoritiesConfig {
 			authorities: vec![(
