@@ -17,6 +17,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
+use darwinia_support::evm::INTERNAL_CALLER;
 use ethereum::{Block as EthereumBlock, Log};
 use ethereum_types::Bloom;
 use sp_core::{H160, H256, U256};
@@ -84,7 +85,7 @@ impl DVMTransaction {
 			.unwrap(),
 		};
 		Self {
-			source: H160::zero(),
+			source: INTERNAL_CALLER,
 			gas_price: None,
 			tx: transaction,
 		}

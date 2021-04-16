@@ -24,6 +24,7 @@
 
 // --- darwinia ---
 use darwinia_evm::{AccountBasic, FeeCalculator, GasWeightMapping, Runner};
+use darwinia_support::evm::INTERNAL_CALLER;
 use dp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
 use dp_evm::CallOrCreateInfo;
 #[cfg(feature = "std")]
@@ -355,9 +356,9 @@ impl<T: Config> Module<T> {
 			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
 			Error::<T>::PreLogExists,
 		);
-		let internal_nonce =
-			<T as darwinia_evm::Config>::RingAccountBasic::account_basic(&H160::zero()).nonce;
-		let transaction = DVMTransaction::internal_transaction(internal_nonce, target, input);
+		let nonce =
+			<T as darwinia_evm::Config>::RingAccountBasic::account_basic(&INTERNAL_CALLER).nonce;
+		let transaction = DVMTransaction::internal_transaction(nonce, target, input);
 
 		Self::raw_transact(transaction)
 	}
@@ -373,7 +374,7 @@ impl<T: Config> Module<T> {
 
 	pub fn do_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
 		let (_, _, info) = Self::execute(
-			H160::zero(),
+			INTERNAL_CALLER,
 			input.clone(),
 			U256::zero(),
 			U256::from(0x100000),
