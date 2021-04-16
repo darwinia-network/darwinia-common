@@ -2286,6 +2286,7 @@ name = "dvm-rpc-runtime-api"
 version = "2.2.0"
 dependencies = [
  "darwinia-evm",
+ "darwinia-support",
  "dp-evm",
  "ethereum",
  "ethereum-types",

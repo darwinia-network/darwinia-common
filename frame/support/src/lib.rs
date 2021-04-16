@@ -38,7 +38,9 @@ pub mod balance {
 }
 
 pub mod evm {
+	use ethereum_primitives::H160;
 	pub const POW_9: u32 = 1_000_000_000;
+	pub const INTERNAL_CALLER: H160 = H160::zero();
 }
 
 #[cfg(test)]

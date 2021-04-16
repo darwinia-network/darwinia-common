@@ -24,11 +24,12 @@
 
 // --- darwinia ---
 use darwinia_evm::{AccountBasic, FeeCalculator, GasWeightMapping, Runner};
+use darwinia_support::evm::INTERNAL_CALLER;
 use dp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
 use dp_evm::CallOrCreateInfo;
 #[cfg(feature = "std")]
 use dp_storage::PALLET_ETHEREUM_SCHEMA;
-pub use dvm_rpc_runtime_api::TransactionStatus;
+pub use dvm_rpc_runtime_api::{DVMTransaction, TransactionStatus};
 // --- substrate ---
 use frame_support::ensure;
 use frame_support::traits::Currency;
@@ -81,53 +82,6 @@ impl Default for EthereumStorageSchema {
 	}
 }
 
-/// The ethereum transaction include recovered source account
-pub struct DVMTransaction {
-	/// source of the transaction
-	pub source: H160,
-	/// nonce wrapped by Option
-	pub nonce: Option<U256>,
-	/// gas price wrapped by Option
-	pub gas_price: Option<U256>,
-	/// the transaction defined in ethereum lib
-	pub tx: ethereum::Transaction,
-}
-
-impl DVMTransaction {
-	/// the internal transaction usually used by pallets
-	/// the source account is specified by 0x0 address
-	/// nonce is None means nonce automatically increased
-	/// gas_price is None means no need for gas fee
-	/// a default signature which will not be verified
-	pub fn internal_transaction(nonce: u64, target: H160, input: Vec<u8>) -> Self {
-		let transaction = ethereum::Transaction {
-			nonce: U256::from(nonce),
-			// Not used, and will be overwritten by None later.
-			gas_price: U256::zero(),
-			gas_limit: U256::from(0x100000),
-			action: TransactionAction::Call(target),
-			value: U256::zero(),
-			input,
-			signature: TransactionSignature::new(
-				// Reference https://github.com/ethereum/EIPs/issues/155
-				//
-				// But this transaction is sent by darwinia-issuing system from `0x0`
-				// So ignore signature checking, simply set `chain_id` to `1`
-				1 * 2 + 36,
-				H256::from_slice(&[55u8; 32]),
-				H256::from_slice(&[55u8; 32]),
-			)
-			.unwrap(),
-		};
-		Self {
-			source: H160::zero(),
-			nonce: None,
-			gas_price: None,
-			tx: transaction,
-		}
-	}
-}
-
 /// A type alias for the balance type from this pallet's point of view.
 type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type RingCurrency<T> = <T as Config>::RingCurrency;
@@ -175,8 +129,6 @@ decl_storage! {
 		RemainingRingBalance get(fn get_ring_remaining_balances): map hasher(blake2_128_concat) T::AccountId => RingBalance<T>;
 		/// Remaining kton balance for account
 		RemainingKtonBalance get(fn get_kton_remaining_balances): map hasher(blake2_128_concat) T::AccountId => KtonBalance<T>;
-		/// The nonce for internal transactions from system internal address(0x0).
-		pub InternalNonce: u64 = 0;
 	}
 	add_extra_genesis {
 		build(|_config: &GenesisConfig| {
@@ -324,14 +276,13 @@ impl<T: Config> Module<T> {
 		)))
 	}
 
-	fn convert_transaction(
+	fn to_dvm_transaction(
 		transaction: ethereum::Transaction,
 	) -> Result<DVMTransaction, DispatchError> {
 		let source =
 			Self::recover_signer(&transaction).ok_or_else(|| Error::<T>::InvalidSignature)?;
 		Ok(DVMTransaction {
 			source,
-			nonce: Some(transaction.nonce),
 			gas_price: Some(transaction.gas_price),
 			tx: transaction,
 		})
@@ -405,11 +356,9 @@ impl<T: Config> Module<T> {
 			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
 			Error::<T>::PreLogExists,
 		);
-		let internal_nonce = InternalNonce::get();
-		let transaction = DVMTransaction::internal_transaction(internal_nonce, target, input);
-
-		// Not check overflow here, it will go back to zero if overflow
-		InternalNonce::put(internal_nonce + 1);
+		let nonce =
+			<T as darwinia_evm::Config>::RingAccountBasic::account_basic(&INTERNAL_CALLER).nonce;
+		let transaction = DVMTransaction::new(nonce, target, input);
 
 		Self::raw_transact(transaction)
 	}
@@ -419,13 +368,13 @@ impl<T: Config> Module<T> {
 			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
 			Error::<T>::PreLogExists,
 		);
-		let transaction = Self::convert_transaction(transaction)?;
+		let transaction = Self::to_dvm_transaction(transaction)?;
 		Self::raw_transact(transaction)
 	}
 
 	pub fn do_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
 		let (_, _, info) = Self::execute(
-			H160::zero(),
+			INTERNAL_CALLER,
 			input.clone(),
 			U256::zero(),
 			U256::from(0x100000),
@@ -455,7 +404,7 @@ impl<T: Config> Module<T> {
 			transaction.tx.value,
 			transaction.tx.gas_limit,
 			transaction.gas_price,
-			transaction.nonce,
+			Some(transaction.tx.nonce),
 			transaction.tx.action,
 			None,
 		)?;
