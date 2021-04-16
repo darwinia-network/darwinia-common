@@ -48,7 +48,7 @@ impl Default for TransactionStatus {
 	}
 }
 
-/// The ethereum transaction include recovered source account
+/// The dvm transaction used by inner pallets, such as ethereum-issuing.
 pub struct DVMTransaction {
 	/// source of the transaction
 	pub source: H160,
@@ -60,8 +60,7 @@ pub struct DVMTransaction {
 
 impl DVMTransaction {
 	/// the internal transaction usually used by pallets
-	/// the source account is specified by 0x0 address
-	/// nonce is None means nonce automatically increased
+	/// the source account is specified by INTERNAL_CALLER
 	/// gas_price is None means no need for gas fee
 	/// a default signature which will not be verified
 	pub fn new(nonce: U256, target: H160, input: Vec<u8>) -> Self {
