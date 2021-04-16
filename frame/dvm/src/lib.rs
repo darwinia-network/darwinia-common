@@ -82,7 +82,7 @@ impl Default for EthereumStorageSchema {
 }
 
 /// The ethereum transaction include recovered source account
-pub struct EthereumTransaction {
+pub struct DVMTransaction {
 	/// source of the transaction
 	pub source: H160,
 	/// nonce wrapped by Option
@@ -93,7 +93,7 @@ pub struct EthereumTransaction {
 	pub tx: ethereum::Transaction,
 }
 
-impl EthereumTransaction {
+impl DVMTransaction {
 	/// the internal transaction usually used by pallets
 	/// the source account is specified by 0x0 address
 	/// nonce is None means nonce automatically increased
@@ -326,10 +326,10 @@ impl<T: Config> Module<T> {
 
 	fn convert_transaction(
 		transaction: ethereum::Transaction,
-	) -> Result<EthereumTransaction, DispatchError> {
+	) -> Result<DVMTransaction, DispatchError> {
 		let source =
 			Self::recover_signer(&transaction).ok_or_else(|| Error::<T>::InvalidSignature)?;
-		Ok(EthereumTransaction {
+		Ok(DVMTransaction {
 			source,
 			nonce: Some(transaction.nonce),
 			gas_price: Some(transaction.gas_price),
@@ -405,7 +405,7 @@ impl<T: Config> Module<T> {
 			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
 			Error::<T>::PreLogExists,
 		);
-		let transaction = EthereumTransaction::internal_transaction(target, input);
+		let transaction = DVMTransaction::internal_transaction(target, input);
 		Self::raw_transact(transaction)
 	}
 
@@ -439,7 +439,7 @@ impl<T: Config> Module<T> {
 		}
 	}
 
-	fn raw_transact(transaction: EthereumTransaction) -> DispatchResultWithPostInfo {
+	fn raw_transact(transaction: DVMTransaction) -> DispatchResultWithPostInfo {
 		let transaction_hash =
 			H256::from_slice(Keccak256::digest(&rlp::encode(&transaction.tx)).as_slice());
 		let transaction_index = Pending::get().len() as u32;
