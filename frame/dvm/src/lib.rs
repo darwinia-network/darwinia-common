@@ -101,8 +101,11 @@ impl EthereumTransaction {
 	/// a default signature which will not be verified
 	pub fn internal_transaction(target: H160, input: Vec<u8>) -> Self {
 		let transaction = ethereum::Transaction {
+			// TODO: constant nonce may cause tx hash collision, even though hash collision does not affect internal execution,
+			// hash collision could cause confusion on explorers.
 			nonce: U256::max_value(),
-			gas_price: U256::max_value(),
+			// Not used, and will be overwritten by None later.
+			gas_price: U256::zero(),
 			gas_limit: U256::from(0x100000),
 			action: TransactionAction::Call(target),
 			value: U256::zero(),
