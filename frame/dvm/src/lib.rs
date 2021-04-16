@@ -276,7 +276,7 @@ impl<T: Config> Module<T> {
 		)))
 	}
 
-	fn convert_transaction(
+	fn to_dvm_transaction(
 		transaction: ethereum::Transaction,
 	) -> Result<DVMTransaction, DispatchError> {
 		let source =
@@ -358,7 +358,7 @@ impl<T: Config> Module<T> {
 		);
 		let nonce =
 			<T as darwinia_evm::Config>::RingAccountBasic::account_basic(&INTERNAL_CALLER).nonce;
-		let transaction = DVMTransaction::internal_transaction(nonce, target, input);
+		let transaction = DVMTransaction::new(nonce, target, input);
 
 		Self::raw_transact(transaction)
 	}
@@ -368,7 +368,7 @@ impl<T: Config> Module<T> {
 			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
 			Error::<T>::PreLogExists,
 		);
-		let transaction = Self::convert_transaction(transaction)?;
+		let transaction = Self::to_dvm_transaction(transaction)?;
 		Self::raw_transact(transaction)
 	}
 

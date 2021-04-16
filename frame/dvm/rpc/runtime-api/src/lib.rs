@@ -64,7 +64,7 @@ impl DVMTransaction {
 	/// nonce is None means nonce automatically increased
 	/// gas_price is None means no need for gas fee
 	/// a default signature which will not be verified
-	pub fn internal_transaction(nonce: U256, target: H160, input: Vec<u8>) -> Self {
+	pub fn new(nonce: U256, target: H160, input: Vec<u8>) -> Self {
 		let transaction = ethereum::Transaction {
 			nonce,
 			// Not used, and will be overwritten by None later.
