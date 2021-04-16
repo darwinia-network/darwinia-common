@@ -99,11 +99,9 @@ impl DVMTransaction {
 	/// nonce is None means nonce automatically increased
 	/// gas_price is None means no need for gas fee
 	/// a default signature which will not be verified
-	pub fn internal_transaction(target: H160, input: Vec<u8>) -> Self {
+	pub fn internal_transaction(nonce: u64, target: H160, input: Vec<u8>) -> Self {
 		let transaction = ethereum::Transaction {
-			// TODO: constant nonce may cause tx hash collision, even though hash collision does not affect internal execution,
-			// hash collision could cause confusion on explorers.
-			nonce: U256::max_value(),
+			nonce: U256::from(nonce),
 			// Not used, and will be overwritten by None later.
 			gas_price: U256::zero(),
 			gas_limit: U256::from(0x100000),
@@ -177,6 +175,8 @@ decl_storage! {
 		RemainingRingBalance get(fn get_ring_remaining_balances): map hasher(blake2_128_concat) T::AccountId => RingBalance<T>;
 		/// Remaining kton balance for account
 		RemainingKtonBalance get(fn get_kton_remaining_balances): map hasher(blake2_128_concat) T::AccountId => KtonBalance<T>;
+		/// The nonce for internal transactions from system internal address(0x0).
+		pub InternalNonce: u64 = 0;
 	}
 	add_extra_genesis {
 		build(|_config: &GenesisConfig| {
@@ -405,7 +405,12 @@ impl<T: Config> Module<T> {
 			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
 			Error::<T>::PreLogExists,
 		);
-		let transaction = DVMTransaction::internal_transaction(target, input);
+		let internal_nonce = InternalNonce::get();
+		let transaction = DVMTransaction::internal_transaction(internal_nonce, target, input);
+
+		// Not check overflow here, it will go back to zero if overflow
+		InternalNonce::put(internal_nonce + 1);
+
 		Self::raw_transact(transaction)
 	}
 
