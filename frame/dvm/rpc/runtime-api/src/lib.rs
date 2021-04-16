@@ -47,6 +47,50 @@ impl Default for TransactionStatus {
 	}
 }
 
+/// The ethereum transaction include recovered source account
+pub struct DVMTransaction {
+	/// source of the transaction
+	pub source: H160,
+	/// gas price wrapped by Option
+	pub gas_price: Option<U256>,
+	/// the transaction defined in ethereum lib
+	pub tx: ethereum::Transaction,
+}
+
+impl DVMTransaction {
+	/// the internal transaction usually used by pallets
+	/// the source account is specified by 0x0 address
+	/// nonce is None means nonce automatically increased
+	/// gas_price is None means no need for gas fee
+	/// a default signature which will not be verified
+	pub fn internal_transaction(nonce: U256, target: H160, input: Vec<u8>) -> Self {
+		let transaction = ethereum::Transaction {
+			nonce,
+			// Not used, and will be overwritten by None later.
+			gas_price: U256::zero(),
+			gas_limit: U256::from(0x100000),
+			action: ethereum::TransactionAction::Call(target),
+			value: U256::zero(),
+			input,
+			signature: ethereum::TransactionSignature::new(
+				// Reference https://github.com/ethereum/EIPs/issues/155
+				//
+				// But this transaction is sent by darwinia-issuing system from `0x0`
+				// So ignore signature checking, simply set `chain_id` to `1`
+				1 * 2 + 36,
+				H256::from_slice(&[55u8; 32]),
+				H256::from_slice(&[55u8; 32]),
+			)
+			.unwrap(),
+		};
+		Self {
+			source: H160::zero(),
+			gas_price: None,
+			tx: transaction,
+		}
+	}
+}
+
 sp_api::decl_runtime_apis! {
 	/// API necessary for Ethereum-compatibility layer.
 	pub trait EthereumRuntimeRPCApi {

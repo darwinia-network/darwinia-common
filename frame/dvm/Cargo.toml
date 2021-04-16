@@ -65,6 +65,7 @@ darwinia-std  = [
 	"darwinia-evm/std",
 	"darwinia-support/std",
 	"dp-evm/std",
+	# "dp-rpc/std",
 	"dp_consensus/std",
 	"dvm-rpc-runtime-api/std",
 ]
