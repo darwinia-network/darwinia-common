@@ -81,6 +81,52 @@ impl Default for EthereumStorageSchema {
 	}
 }
 
+/// The ethereum transaction include recovered source account
+pub struct EthereumTransaction {
+	/// source of the transaction
+	pub source: H160,
+	/// nonce wrapped by Option
+	pub nonce: Option<U256>,
+	/// gas price wrapped by Option
+	pub gas_price: Option<U256>,
+	/// the transaction defined in ethereum lib
+	pub tx: ethereum::Transaction,
+}
+
+impl EthereumTransaction {
+	/// the internal transaction usually used by pallets
+	/// the source account is specified by 0x0 address
+	/// nonce is None means nonce automatically increased
+	/// gas_price is None means no need for gas fee
+	/// a default signature which will not be verified
+	pub fn internal_transaction(target: H160, input: Vec<u8>) -> Self {
+		let transaction = ethereum::Transaction {
+			nonce: U256::max_value(),
+			gas_price: U256::max_value(),
+			gas_limit: U256::from(0x100000),
+			action: TransactionAction::Call(target),
+			value: U256::zero(),
+			input,
+			signature: TransactionSignature::new(
+				// Reference https://github.com/ethereum/EIPs/issues/155
+				//
+				// But this transaction is sent by darwinia-issuing system from `0x0`
+				// So ignore signature checking, simply set `chain_id` to `1`
+				1 * 2 + 36,
+				H256::from_slice(&[55u8; 32]),
+				H256::from_slice(&[55u8; 32]),
+			)
+			.unwrap(),
+		};
+		Self {
+			source: H160::zero(),
+			nonce: None,
+			gas_price: None,
+			tx: transaction,
+		}
+	}
+}
+
 /// A type alias for the balance type from this pallet's point of view.
 type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type RingCurrency<T> = <T as Config>::RingCurrency;
@@ -170,7 +216,7 @@ decl_module! {
 		fn transact(origin, transaction: ethereum::Transaction) -> DispatchResultWithPostInfo {
 			ensure_none(origin)?;
 
-			Self::do_transact(transaction, true)
+			Self::do_transact(transaction)
 		}
 
 		fn on_finalize(_block_number: T::BlockNumber) {
@@ -185,7 +231,7 @@ decl_module! {
 				let PreLog::Block(block) = log;
 
 				for transaction in block.transactions {
-					Self::do_transact(transaction, true).expect("pre-block transaction verification failed; the block cannot be built");
+					Self::do_transact(transaction).expect("pre-block transaction verification failed; the block cannot be built");
 				}
 			}
 			0
@@ -275,6 +321,19 @@ impl<T: Config> Module<T> {
 		)))
 	}
 
+	fn convert_transaction(
+		transaction: ethereum::Transaction,
+	) -> Result<EthereumTransaction, DispatchError> {
+		let source =
+			Self::recover_signer(&transaction).ok_or_else(|| Error::<T>::InvalidSignature)?;
+		Ok(EthereumTransaction {
+			source,
+			nonce: Some(transaction.nonce),
+			gas_price: Some(transaction.gas_price),
+			tx: transaction,
+		})
+	}
+
 	fn store_block(post_log: bool) {
 		let mut transactions = Vec::new();
 		let mut statuses = Vec::new();
@@ -338,38 +397,58 @@ impl<T: Config> Module<T> {
 		}
 	}
 
-	pub fn do_transact(
-		transaction: ethereum::Transaction,
-		need_signer: bool,
-	) -> DispatchResultWithPostInfo {
+	pub fn internal_transact(target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo {
 		ensure!(
 			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
 			Error::<T>::PreLogExists,
 		);
+		let transaction = EthereumTransaction::internal_transaction(target, input);
+		Self::raw_transact(transaction)
+	}
 
-		// For transaction from system caller such as ethereum issuing pallet, use 0x0 address to skip the signature verification.
-		let (source, gas_price, nonce) = if need_signer {
-			(
-				Self::recover_signer(&transaction).ok_or_else(|| Error::<T>::InvalidSignature)?,
-				Some(transaction.gas_price),
-				Some(transaction.nonce),
-			)
-		} else {
-			(H160::zero(), None, None)
-		};
+	pub fn do_transact(transaction: ethereum::Transaction) -> DispatchResultWithPostInfo {
+		ensure!(
+			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
+			Error::<T>::PreLogExists,
+		);
+		let transaction = Self::convert_transaction(transaction)?;
+		Self::raw_transact(transaction)
+	}
 
+	pub fn do_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
+		let (_, _, info) = Self::execute(
+			H160::zero(),
+			input.clone(),
+			U256::zero(),
+			U256::from(0x100000),
+			None,
+			None,
+			TransactionAction::Call(contract),
+			None,
+		)?;
+
+		match info {
+			CallOrCreateInfo::Call(info) => match info.exit_reason {
+				ExitReason::Succeed(_) => Ok(info.value),
+				_ => Ok(vec![]),
+			},
+			_ => Err(Error::<T>::InvalidCall.into()),
+		}
+	}
+
+	fn raw_transact(transaction: EthereumTransaction) -> DispatchResultWithPostInfo {
 		let transaction_hash =
-			H256::from_slice(Keccak256::digest(&rlp::encode(&transaction)).as_slice());
+			H256::from_slice(Keccak256::digest(&rlp::encode(&transaction.tx)).as_slice());
 		let transaction_index = Pending::get().len() as u32;
 
 		let (to, contract_address, info) = Self::execute(
-			source,
-			transaction.input.clone(),
-			transaction.value,
-			transaction.gas_limit,
-			gas_price,
-			nonce,
-			transaction.action,
+			transaction.source,
+			transaction.tx.input.clone(),
+			transaction.tx.value,
+			transaction.tx.gas_limit,
+			transaction.gas_price,
+			transaction.nonce,
+			transaction.tx.action,
 			None,
 		)?;
 
@@ -379,7 +458,7 @@ impl<T: Config> Module<T> {
 				TransactionStatus {
 					transaction_hash,
 					transaction_index,
-					from: source,
+					from: transaction.source,
 					to,
 					contract_address: None,
 					logs: info.logs.clone(),
@@ -396,7 +475,7 @@ impl<T: Config> Module<T> {
 				TransactionStatus {
 					transaction_hash,
 					transaction_index,
-					from: source,
+					from: transaction.source,
 					to,
 					contract_address: Some(info.value),
 					logs: info.logs.clone(),
@@ -422,10 +501,10 @@ impl<T: Config> Module<T> {
 			logs: status.clone().logs,
 		};
 
-		Pending::append((transaction, status, receipt));
+		Pending::append((transaction.tx, status, receipt));
 
 		Self::deposit_event(Event::Executed(
-			source,
+			transaction.source,
 			contract_address.unwrap_or_default(),
 			transaction_hash,
 			reason,
@@ -434,27 +513,6 @@ impl<T: Config> Module<T> {
 			used_gas.unique_saturated_into(),
 		))
 		.into())
-	}
-
-	pub fn do_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
-		let (_, _, info) = Self::execute(
-			H160::zero(),
-			input.clone(),
-			U256::zero(),
-			U256::from(0x100000),
-			None,
-			None,
-			TransactionAction::Call(contract),
-			None,
-		)?;
-
-		match info {
-			CallOrCreateInfo::Call(info) => match info.exit_reason {
-				ExitReason::Succeed(_) => Ok(info.value),
-				_ => Ok(vec![]),
-			},
-			_ => Err(Error::<T>::InvalidCall.into()),
-		}
 	}
 
 	/// Get the author using the FindAuthor trait.

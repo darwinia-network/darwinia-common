@@ -56,11 +56,10 @@ use sp_std::vec::Vec;
 use darwinia_ethereum_issuing_contract::{
 	Abi, Event as EthEvent, Log as EthLog, TokenBurnInfo, TokenRegisterInfo,
 };
-use darwinia_evm::{AddressMapping, FeeCalculator, GasWeightMapping, IssuingHandler};
+use darwinia_evm::{GasWeightMapping, IssuingHandler};
 use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::{balance::lock::*, traits::EthereumReceipt};
 use dp_evm::CallOrCreateInfo;
-use dvm_ethereum::{TransactionAction, TransactionSignature};
 use ethereum_primitives::{
 	receipt::{EthereumTransactionIndex, LogEntry},
 	EthereumAddress,
@@ -189,28 +188,6 @@ impl<T: Config> Module<T> {
 		let account32: AccountId32 = T::ModuleId::get().into_account();
 		let account20: &[u8] = &account32.as_ref();
 		H160::from_slice(&account20[..20])
-	}
-
-	/// get dvm ethereum unsigned transaction
-	pub fn unsigned_transaction(target: H160, input: Vec<u8>) -> dvm_ethereum::Transaction {
-		dvm_ethereum::Transaction {
-			nonce: U256::zero(),
-			gas_price: U256::zero(),
-			gas_limit: U256::from(0x100000),
-			action: dvm_ethereum::TransactionAction::Call(target),
-			value: U256::zero(),
-			input,
-			signature: TransactionSignature::new(
-				// Reference https://github.com/ethereum/EIPs/issues/155
-				//
-				// But this transaction is sent by darwinia-issuing system from `0x0`
-				// So ignore signature checking, simply set `chain_id` to `1`
-				1 * 2 + 36,
-				H256::from_slice(&[55u8; 32]),
-				H256::from_slice(&[55u8; 32]),
-			)
-			.unwrap(),
-		}
 	}
 
 	fn abi_encode_token_creation(
@@ -381,8 +358,7 @@ impl<T: Config> Module<T> {
 
 	pub fn transact_mapping_factory(input: Vec<u8>) -> DispatchResult {
 		let contract = MappingFactoryAddress::get();
-		let transaction = Self::unsigned_transaction(contract, input);
-		let result = dvm_ethereum::Module::<T>::do_transact(transaction, false).map_err(
+		let result = dvm_ethereum::Module::<T>::internal_transact(contract, input).map_err(
 			|e| -> &'static str {
 				log::debug!("call mapping factory contract error {:?}", &e);
 				e.into()
