@@ -16,7 +16,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-// --- substrate ---
 pub use frame_support::traits::{LockIdentifier, VestingSchedule, WithdrawReasons};
 
 // --- core ---
