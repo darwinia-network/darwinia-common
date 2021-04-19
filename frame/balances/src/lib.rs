@@ -1567,3 +1567,83 @@ pub mod pallet {
 	}
 }
 pub use pallet::{imbalances::*, *};
+
+pub mod migration {
+	#[cfg(feature = "try-runtime")]
+	pub mod try_runtime {
+		// --- substrate ---
+		use frame_support::{pallet_prelude::*, traits::StorageInstance};
+		// --- darwinia ---
+		use crate::*;
+
+		macro_rules! generate_storage_types {
+			($prefix:expr, $storage:expr, $name:ident => Value<$value:ty>) => {
+				paste::paste! {
+					type $name = StorageValue<[<$name Instance>], $value, ValueQuery>;
+
+					struct [<$name Instance>];
+					impl StorageInstance for [<$name Instance>] {
+						const STORAGE_PREFIX: &'static str = $storage;
+
+						fn pallet_prefix() -> &'static str { $prefix }
+					}
+				}
+			};
+		}
+
+		generate_storage_types!("Instance0DarwiniaBalances", "TotalIssuance", OldRingTotalIssuance => Value<()>);
+		generate_storage_types!("Ring", "TotalIssuance", NewRingTotalIssuance => Value<()>);
+		generate_storage_types!("Instance0DarwiniaBalances", "Account", OldRingAccount => Value<()>);
+		generate_storage_types!("Ring", "Account", NewRingAccount => Value<()>);
+		generate_storage_types!("Instance0DarwiniaBalances", "Locks", OldRingLocks => Value<()>);
+		generate_storage_types!("Ring", "Locks", NewRingLocks => Value<()>);
+		generate_storage_types!("Instance1DarwiniaBalances", "TotalIssuance", OldKtonTotalIssuance => Value<()>);
+		generate_storage_types!("Kton", "TotalIssuance", NewKtonTotalIssuance => Value<()>);
+		generate_storage_types!("Instance1DarwiniaBalances", "Account", OldKtonAccount => Value<()>);
+		generate_storage_types!("Kton", "Account", NewKtonAccount => Value<()>);
+		generate_storage_types!("Instance1DarwiniaBalances", "Locks", OldKtonLocks => Value<()>);
+		generate_storage_types!("Kton", "Locks", NewKtonLocks => Value<()>);
+
+		pub fn pre_migrate<T: Config>() -> Result<(), &'static str> {
+			assert!(OldRingTotalIssuance::exists());
+			assert!(!NewRingTotalIssuance::exists());
+			assert!(OldRingAccount::exists());
+			assert!(!NewRingAccount::exists());
+			assert!(OldRingLocks::exists());
+			assert!(!NewRingLocks::exists());
+			assert!(OldKtonTotalIssuance::exists());
+			assert!(!NewKtonTotalIssuance::exists());
+			assert!(OldKtonAccount::exists());
+			assert!(!NewKtonAccount::exists());
+			assert!(OldKtonLocks::exists());
+			assert!(!NewKtonLocks::exists());
+
+			log::info!("Migrating `Instance0Darwinia` to `Ring`...");
+			migration::migrate(b"Instance0DarwiniaBalances", b"Ring");
+
+			log::info!("Migrating `Instance1Darwinia` to `Kton`...");
+			migration::migrate(b"Instance1DarwiniaBalances", b"Kton");
+
+			assert!(!OldRingTotalIssuance::exists());
+			assert!(NewRingTotalIssuance::exists());
+			assert!(!OldRingAccount::exists());
+			assert!(NewRingAccount::exists());
+			assert!(!OldRingLocks::exists());
+			assert!(NewRingLocks::exists());
+			assert!(!OldKtonTotalIssuance::exists());
+			assert!(NewKtonTotalIssuance::exists());
+			assert!(!OldKtonAccount::exists());
+			assert!(NewKtonAccount::exists());
+			assert!(!OldKtonLocks::exists());
+			assert!(NewKtonLocks::exists());
+
+			Ok(())
+		}
+	}
+
+	pub fn migrate(old_pallet_name: &[u8], new_pallet_name: &[u8]) {
+		// Ring: Instance0DarwiniaBalances
+		// Kton: Instance1DarwiniaBalances
+		frame_support::migration::move_pallet(old_pallet_name, new_pallet_name);
+	}
+}
