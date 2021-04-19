@@ -798,7 +798,7 @@ pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
-		darwinia_balances::migration::try_runtime::pre_migrate::<Runtime>()
+		darwinia_balances::migration::try_runtime::pre_migrate()
 	}
 
 	fn on_runtime_upgrade() -> Weight {

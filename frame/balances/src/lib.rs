@@ -1593,30 +1593,14 @@ pub mod migration {
 
 		generate_storage_types!("Instance0DarwiniaBalances", "TotalIssuance", OldRingTotalIssuance => Value<()>);
 		generate_storage_types!("Ring", "TotalIssuance", NewRingTotalIssuance => Value<()>);
-		generate_storage_types!("Instance0DarwiniaBalances", "Account", OldRingAccount => Value<()>);
-		generate_storage_types!("Ring", "Account", NewRingAccount => Value<()>);
-		generate_storage_types!("Instance0DarwiniaBalances", "Locks", OldRingLocks => Value<()>);
-		generate_storage_types!("Ring", "Locks", NewRingLocks => Value<()>);
 		generate_storage_types!("Instance1DarwiniaBalances", "TotalIssuance", OldKtonTotalIssuance => Value<()>);
 		generate_storage_types!("Kton", "TotalIssuance", NewKtonTotalIssuance => Value<()>);
-		generate_storage_types!("Instance1DarwiniaBalances", "Account", OldKtonAccount => Value<()>);
-		generate_storage_types!("Kton", "Account", NewKtonAccount => Value<()>);
-		generate_storage_types!("Instance1DarwiniaBalances", "Locks", OldKtonLocks => Value<()>);
-		generate_storage_types!("Kton", "Locks", NewKtonLocks => Value<()>);
 
-		pub fn pre_migrate<T: Config>() -> Result<(), &'static str> {
+		pub fn pre_migrate() -> Result<(), &'static str> {
 			assert!(OldRingTotalIssuance::exists());
 			assert!(!NewRingTotalIssuance::exists());
-			assert!(OldRingAccount::exists());
-			assert!(!NewRingAccount::exists());
-			assert!(OldRingLocks::exists());
-			assert!(!NewRingLocks::exists());
 			assert!(OldKtonTotalIssuance::exists());
 			assert!(!NewKtonTotalIssuance::exists());
-			assert!(OldKtonAccount::exists());
-			assert!(!NewKtonAccount::exists());
-			assert!(OldKtonLocks::exists());
-			assert!(!NewKtonLocks::exists());
 
 			log::info!("Migrating `Instance0Darwinia` to `Ring`...");
 			migration::migrate(b"Instance0DarwiniaBalances", b"Ring");
@@ -1626,16 +1610,8 @@ pub mod migration {
 
 			assert!(!OldRingTotalIssuance::exists());
 			assert!(NewRingTotalIssuance::exists());
-			assert!(!OldRingAccount::exists());
-			assert!(NewRingAccount::exists());
-			assert!(!OldRingLocks::exists());
-			assert!(NewRingLocks::exists());
 			assert!(!OldKtonTotalIssuance::exists());
 			assert!(NewKtonTotalIssuance::exists());
-			assert!(!OldKtonAccount::exists());
-			assert!(NewKtonAccount::exists());
-			assert!(!OldKtonLocks::exists());
-			assert!(NewKtonLocks::exists());
 
 			Ok(())
 		}
