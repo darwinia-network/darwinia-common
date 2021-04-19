@@ -282,8 +282,8 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("Pangolin"),
 	impl_name: create_runtime_str!("Pangolin"),
 	authoring_version: 1,
-	// crate version ~2.1.0 := >=2.1.0, <2.2.0
-	spec_version: 211,
+	// crate version ~2.2.0 := >=2.2.0, <2.3.0
+	spec_version: 220,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
