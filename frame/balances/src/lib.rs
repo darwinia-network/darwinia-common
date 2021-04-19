@@ -16,17 +16,17 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-//! # Balances Module
+//! # Balances Pallet
 //!
-//! The Balances module provides functionality for handling accounts and balances.
+//! The Balances pallet provides functionality for handling accounts and balances.
 //!
-//! - [`balances::Config`](./trait.Config.html)
-//! - [`Call`](./enum.Call.html)
-//! - [`Module`](./struct.Module.html)
+//! - [`Config`]
+//! - [`Call`]
+//! - [`Pallet`]
 //!
 //! ## Overview
 //!
-//! The Balances module provides functions for:
+//! The Balances pallet provides functions for:
 //!
 //! - Getting and setting free balances.
 //! - Retrieving total, reserved and unreserved balances.
@@ -44,7 +44,7 @@
 //!   fall below this, then the account is said to be dead; and it loses its functionality as well as any
 //!   prior history and all information on it is removed from the chain's state.
 //!   No account should ever have a total balance that is strictly between 0 and the existential
-//!   deposit (exclusive). If this ever happens, it indicates either a bug in this module or an
+//!   deposit (exclusive). If this ever happens, it indicates either a bug in this pallet or an
 //!   erroneous raw mutation of storage.
 //!
 //! - **Total Issuance:** The total number of units in existence in a system.
@@ -68,20 +68,18 @@
 //!
 //! ### Implementations
 //!
-//! The Balances module provides implementations for the following traits. If these traits provide the functionality
-//! that you need, then you can avoid coupling with the Balances module.
+//! The Balances pallet provides implementations for the following traits. If these traits provide the functionality
+//! that you need, then you can avoid coupling with the Balances pallet.
 //!
-//! - [`Currency`](../frame_support/traits/trait.Currency.html): Functions for dealing with a
+//! - [`Currency`](frame_support::traits::Currency): Functions for dealing with a
 //! fungible assets system.
-//! - [`ReservableCurrency`](../frame_support/traits/trait.ReservableCurrency.html):
+//! - [`ReservableCurrency`](frame_support::traits::ReservableCurrency):
 //! Functions for dealing with assets that can be reserved from an account.
-//! - [`LockableCurrency`](../frame_support/traits/trait.LockableCurrency.html): Functions for
+//! - [`LockableCurrency`](darwinia_support::traits::LockableCurrency): Functions for
 //! dealing with accounts that allow liquidity restrictions.
-//! - [`Imbalance`](../frame_support/traits/trait.Imbalance.html): Functions for handling
+//! - [`Imbalance`](frame_support::traits::Imbalance): Functions for handling
 //! imbalances between total issuance in the system and account balances. Must be used when a function
 //! creates new funds (e.g. a reward) or destroys some funds (e.g. a system fee).
-//! - [`IsDeadAccount`](../frame_support/traits/trait.IsDeadAccount.html): Determiner to say whether a
-//! given account is unused.
 //!
 //! ## Interface
 //!
@@ -92,11 +90,11 @@
 //!
 //! ## Usage
 //!
-//! The following examples show how to use the Balances module in your custom module.
+//! The following examples show how to use the Balances pallet in your custom pallet.
 //!
 //! ### Examples from the FRAME
 //!
-//! The Contract module uses the `Currency` trait to handle gas payment, and its types inherit from `Currency`:
+//! The Contract pallet uses the `Currency` trait to handle gas payment, and its types inherit from `Currency`:
 //!
 //! ```
 //! use frame_support::traits::Currency;
@@ -110,11 +108,12 @@
 //! # fn main() {}
 //! ```
 //!
-//! The Staking module uses the `LockableCurrency` trait to lock a stash account's funds:
+//! The Staking pallet uses the `LockableCurrency` trait to lock a stash account's funds:
 //!
 //! ```
-//! use frame_support::traits::{WithdrawReasons, LockableCurrency};
+//! use frame_support::traits::WithdrawReasons;
 //! use sp_runtime::traits::Bounded;
+//! use darwinia_support::traits::LockableCurrency;
 //! pub trait Config: frame_system::Config {
 //! 	type Currency: LockableCurrency<Self::AccountId, Moment=Self::BlockNumber>;
 //! }
@@ -142,7 +141,7 @@
 //!
 //! ## Genesis config
 //!
-//! The Balances module depends on the [`GenesisConfig`](./struct.GenesisConfig.html).
+//! The Balances pallet depends on the [`GenesisConfig`].
 //!
 //! ## Assumptions
 //!
@@ -157,11 +156,165 @@ mod tests;
 mod tests_local;
 
 pub mod weights;
-// --- darwinia ---
 pub use weights::WeightInfo;
 
-// --- darwinia ---
+// wrapping these imbalances in a private module is necessary to ensure absolute privacy
+// of the inner member.
+mod imbalances {
+	// --- substrate ---
+	use sp_std::mem;
+	// --- darwinia ---
+	use crate::*;
+
+	/// Opaque, move-only struct with private fields that serves as a token denoting that
+	/// funds have been created without any equal and opposite accounting.
+	#[must_use]
+	#[derive(RuntimeDebug, PartialEq, Eq)]
+	pub struct PositiveImbalance<T: Config<I>, I: Instance = DefaultInstance>(T::Balance);
+
+	impl<T: Config<I>, I: Instance> PositiveImbalance<T, I> {
+		/// Create a new positive imbalance from a balance.
+		pub fn new(amount: T::Balance) -> Self {
+			PositiveImbalance(amount)
+		}
+	}
+
+	/// Opaque, move-only struct with private fields that serves as a token denoting that
+	/// funds have been destroyed without any equal and opposite accounting.
+	#[must_use]
+	#[derive(RuntimeDebug, PartialEq, Eq)]
+	pub struct NegativeImbalance<T: Config<I>, I: Instance = DefaultInstance>(T::Balance);
+
+	impl<T: Config<I>, I: Instance> NegativeImbalance<T, I> {
+		/// Create a new negative imbalance from a balance.
+		pub fn new(amount: T::Balance) -> Self {
+			NegativeImbalance(amount)
+		}
+	}
+
+	impl<T: Config<I>, I: Instance> TryDrop for PositiveImbalance<T, I> {
+		fn try_drop(self) -> Result<(), Self> {
+			self.drop_zero()
+		}
+	}
+
+	impl<T: Config<I>, I: Instance> Imbalance<T::Balance> for PositiveImbalance<T, I> {
+		type Opposite = NegativeImbalance<T, I>;
+
+		fn zero() -> Self {
+			Self(Zero::zero())
+		}
+		fn drop_zero(self) -> Result<(), Self> {
+			if self.0.is_zero() {
+				Ok(())
+			} else {
+				Err(self)
+			}
+		}
+		fn split(self, amount: T::Balance) -> (Self, Self) {
+			let first = self.0.min(amount);
+			let second = self.0 - first;
+
+			mem::forget(self);
+			(Self(first), Self(second))
+		}
+		fn merge(mut self, other: Self) -> Self {
+			self.0 = self.0.saturating_add(other.0);
+			mem::forget(other);
+
+			self
+		}
+		fn subsume(&mut self, other: Self) {
+			self.0 = self.0.saturating_add(other.0);
+			mem::forget(other);
+		}
+		fn offset(self, other: Self::Opposite) -> Result<Self, Self::Opposite> {
+			let (a, b) = (self.0, other.0);
+			mem::forget((self, other));
+
+			if a >= b {
+				Ok(Self(a - b))
+			} else {
+				Err(NegativeImbalance::new(b - a))
+			}
+		}
+		fn peek(&self) -> T::Balance {
+			self.0.clone()
+		}
+	}
+
+	impl<T: Config<I>, I: Instance> TryDrop for NegativeImbalance<T, I> {
+		fn try_drop(self) -> Result<(), Self> {
+			self.drop_zero()
+		}
+	}
+
+	impl<T: Config<I>, I: Instance> Imbalance<T::Balance> for NegativeImbalance<T, I> {
+		type Opposite = PositiveImbalance<T, I>;
+
+		fn zero() -> Self {
+			Self(Zero::zero())
+		}
+		fn drop_zero(self) -> Result<(), Self> {
+			if self.0.is_zero() {
+				Ok(())
+			} else {
+				Err(self)
+			}
+		}
+		fn split(self, amount: T::Balance) -> (Self, Self) {
+			let first = self.0.min(amount);
+			let second = self.0 - first;
+
+			mem::forget(self);
+			(Self(first), Self(second))
+		}
+		fn merge(mut self, other: Self) -> Self {
+			self.0 = self.0.saturating_add(other.0);
+			mem::forget(other);
+
+			self
+		}
+		fn subsume(&mut self, other: Self) {
+			self.0 = self.0.saturating_add(other.0);
+			mem::forget(other);
+		}
+		fn offset(self, other: Self::Opposite) -> Result<Self, Self::Opposite> {
+			let (a, b) = (self.0, other.0);
+			mem::forget((self, other));
+
+			if a >= b {
+				Ok(Self(a - b))
+			} else {
+				Err(PositiveImbalance::new(b - a))
+			}
+		}
+		fn peek(&self) -> T::Balance {
+			self.0.clone()
+		}
+	}
+
+	impl<T: Config<I>, I: Instance> Drop for PositiveImbalance<T, I> {
+		/// Basic drop handler will just square up the total issuance.
+		fn drop(&mut self) {
+			<TotalIssuance<T, I>>::mutate(|v| *v = v.saturating_add(self.0));
+		}
+	}
+
+	impl<T: Config<I>, I: Instance> Drop for NegativeImbalance<T, I> {
+		/// Basic drop handler will just square up the total issuance.
+		fn drop(&mut self) {
+			<TotalIssuance<T, I>>::mutate(|v| *v = v.saturating_sub(self.0));
+		}
+	}
+}
 pub use imbalances::{NegativeImbalance, PositiveImbalance};
+
+// #[frame_support::pallet]
+// pub mod pallet {
+// 	use frame_support::pallet_prelude::*;
+// 	use frame_system::pallet_prelude::*;
+// }
 
 // --- crates ---
 use codec::{Codec, EncodeLike};
@@ -191,43 +344,6 @@ use darwinia_support::{
 	impl_rpc,
 	traits::BalanceInfo,
 };
-
-pub trait Subtrait<I: Instance = DefaultInstance>: frame_system::Config {
-	/// The balance of an account.
-	type Balance: Parameter
-		+ Member
-		+ AtLeast32BitUnsigned
-		+ Codec
-		+ Default
-		+ Copy
-		+ MaybeSerializeDeserialize
-		+ Debug;
-
-	/// The minimum amount required to keep an account open.
-	type ExistentialDeposit: Get<Self::Balance>;
-
-	/// The means of storing the balances of an account.
-	type AccountStore: StoredMap<Self::AccountId, Self::BalanceInfo>;
-
-	type BalanceInfo: BalanceInfo<Self::Balance, I>
-		+ Into<<Self as frame_system::Config>::AccountData>
-		+ Member
-		+ Codec
-		+ Clone
-		+ Default
-		+ EncodeLike;
-
-	/// The maximum number of locks that should exist on an account.
-	/// Not strictly enforced, but used for weight estimation.
-	type MaxLocks: Get<u32>;
-
-	/// Weight information for the extrinsics in this pallet.
-	type WeightInfo: WeightInfo;
-
-	// A handle to check if other curencies drop below existential deposit
-	type OtherCurrencies: DustCollector<Self::AccountId>;
-}
-
 pub trait Config<I: Instance = DefaultInstance>: frame_system::Config {
 	/// The balance of an account.
 	type Balance: Parameter
@@ -268,16 +384,6 @@ pub trait Config<I: Instance = DefaultInstance>: frame_system::Config {
 
 	/// Weight information for the extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
-}
-
-impl<T: Config<I>, I: Instance> Subtrait<I> for T {
-	type Balance = T::Balance;
-	type ExistentialDeposit = T::ExistentialDeposit;
-	type AccountStore = T::AccountStore;
-	type BalanceInfo = T::BalanceInfo;
-	type MaxLocks = T::MaxLocks;
-	type OtherCurrencies = T::OtherCurrencies;
-	type WeightInfo = <T as Config<I>>::WeightInfo;
 }
 
 decl_event!(
@@ -674,157 +780,6 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 					);
 				}
 			}
-		}
-	}
-}
-
-// wrapping these imbalances in a private module is necessary to ensure absolute privacy
-// of the inner member.
-mod imbalances {
-	// --- substrate ---
-	use sp_std::mem;
-	// --- darwinia ---
-	use crate::*;
-
-	/// Opaque, move-only struct with private fields that serves as a token denoting that
-	/// funds have been created without any equal and opposite accounting.
-	#[must_use]
-	#[derive(RuntimeDebug, PartialEq, Eq)]
-	pub struct PositiveImbalance<T: Config<I>, I: Instance = DefaultInstance>(T::Balance);
-
-	impl<T: Config<I>, I: Instance> PositiveImbalance<T, I> {
-		/// Create a new positive imbalance from a balance.
-		pub fn new(amount: T::Balance) -> Self {
-			PositiveImbalance(amount)
-		}
-	}
-
-	/// Opaque, move-only struct with private fields that serves as a token denoting that
-	/// funds have been destroyed without any equal and opposite accounting.
-	#[must_use]
-	#[derive(RuntimeDebug, PartialEq, Eq)]
-	pub struct NegativeImbalance<T: Config<I>, I: Instance = DefaultInstance>(T::Balance);
-
-	impl<T: Config<I>, I: Instance> NegativeImbalance<T, I> {
-		/// Create a new negative imbalance from a balance.
-		pub fn new(amount: T::Balance) -> Self {
-			NegativeImbalance(amount)
-		}
-	}
-
-	impl<T: Config<I>, I: Instance> TryDrop for PositiveImbalance<T, I> {
-		fn try_drop(self) -> Result<(), Self> {
-			self.drop_zero()
-		}
-	}
-
-	impl<T: Config<I>, I: Instance> Imbalance<T::Balance> for PositiveImbalance<T, I> {
-		type Opposite = NegativeImbalance<T, I>;
-
-		fn zero() -> Self {
-			Self(Zero::zero())
-		}
-		fn drop_zero(self) -> Result<(), Self> {
-			if self.0.is_zero() {
-				Ok(())
-			} else {
-				Err(self)
-			}
-		}
-		fn split(self, amount: T::Balance) -> (Self, Self) {
-			let first = self.0.min(amount);
-			let second = self.0 - first;
-
-			mem::forget(self);
-			(Self(first), Self(second))
-		}
-		fn merge(mut self, other: Self) -> Self {
-			self.0 = self.0.saturating_add(other.0);
-			mem::forget(other);
-
-			self
-		}
-		fn subsume(&mut self, other: Self) {
-			self.0 = self.0.saturating_add(other.0);
-			mem::forget(other);
-		}
-		fn offset(self, other: Self::Opposite) -> Result<Self, Self::Opposite> {
-			let (a, b) = (self.0, other.0);
-			mem::forget((self, other));
-
-			if a >= b {
-				Ok(Self(a - b))
-			} else {
-				Err(NegativeImbalance::new(b - a))
-			}
-		}
-		fn peek(&self) -> T::Balance {
-			self.0.clone()
-		}
-	}
-
-	impl<T: Config<I>, I: Instance> TryDrop for NegativeImbalance<T, I> {
-		fn try_drop(self) -> Result<(), Self> {
-			self.drop_zero()
-		}
-	}
-
-	impl<T: Config<I>, I: Instance> Imbalance<T::Balance> for NegativeImbalance<T, I> {
-		type Opposite = PositiveImbalance<T, I>;
-
-		fn zero() -> Self {
-			Self(Zero::zero())
-		}
-		fn drop_zero(self) -> Result<(), Self> {
-			if self.0.is_zero() {
-				Ok(())
-			} else {
-				Err(self)
-			}
-		}
-		fn split(self, amount: T::Balance) -> (Self, Self) {
-			let first = self.0.min(amount);
-			let second = self.0 - first;
-
-			mem::forget(self);
-			(Self(first), Self(second))
-		}
-		fn merge(mut self, other: Self) -> Self {
-			self.0 = self.0.saturating_add(other.0);
-			mem::forget(other);
-
-			self
-		}
-		fn subsume(&mut self, other: Self) {
-			self.0 = self.0.saturating_add(other.0);
-			mem::forget(other);
-		}
-		fn offset(self, other: Self::Opposite) -> Result<Self, Self::Opposite> {
-			let (a, b) = (self.0, other.0);
-			mem::forget((self, other));
-
-			if a >= b {
-				Ok(Self(a - b))
-			} else {
-				Err(PositiveImbalance::new(b - a))
-			}
-		}
-		fn peek(&self) -> T::Balance {
-			self.0.clone()
-		}
-	}
-
-	impl<T: Config<I>, I: Instance> Drop for PositiveImbalance<T, I> {
-		/// Basic drop handler will just square up the total issuance.
-		fn drop(&mut self) {
-			<TotalIssuance<T, I>>::mutate(|v| *v = v.saturating_add(self.0));
-		}
-	}
-
-	impl<T: Config<I>, I: Instance> Drop for NegativeImbalance<T, I> {
-		/// Basic drop handler will just square up the total issuance.
-		fn drop(&mut self) {
-			<TotalIssuance<T, I>>::mutate(|v| *v = v.saturating_sub(self.0));
 		}
 	}
 }
