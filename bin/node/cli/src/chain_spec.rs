@@ -67,6 +67,8 @@ const TEAM_MEMBERS: &[&'static str] = &[
 	"0x187c272f576b1999d6cf3dd529b59b832db12125b43e57fb088677eb0c570a6b",
 	// Xavier
 	"0xb4f7f03bebc56ebe96bc52ea5ed3159d45a0ce3a8d7f082983c33ef133274747",
+	// Xuelei
+	"0x88d388115bd0df43e805b029207cfa4925cecfb29026e345979d9b0004466c49",
 ];
 const EVM_ACCOUNTS: &[&'static str] = &[
 	"0x68898db1012808808c903f390909c52d9f706749",

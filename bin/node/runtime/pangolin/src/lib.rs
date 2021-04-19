@@ -215,8 +215,8 @@ pub use darwinia_staking::StakerStatus;
 use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
-	traits::{KeyOwnerProofSystem, Randomness},
-	weights::constants::ExtrinsicBaseWeight,
+	traits::{KeyOwnerProofSystem, OnRuntimeUpgrade, Randomness},
+	weights::{constants::ExtrinsicBaseWeight, Weight},
 };
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
@@ -282,8 +282,8 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("Pangolin"),
 	impl_name: create_runtime_str!("Pangolin"),
 	authoring_version: 1,
-	// crate version ~2.1.0 := >=2.1.0, <2.2.0
-	spec_version: 211,
+	// crate version ~2.2.0 := >=2.2.0, <2.3.0
+	spec_version: 220,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -766,7 +766,7 @@ impl_runtime_apis! {
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
 		fn on_runtime_upgrade() -> Result<
-			(frame_support::weights::Weight, frame_support::weights::Weight),
+			(Weight, Weight),
 			sp_runtime::RuntimeString
 		> {
 			let weight = Executive::try_runtime_upgrade()?;
@@ -795,13 +795,13 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 }
 
 pub struct CustomOnRuntimeUpgrade;
-impl frame_support::traits::OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
+impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
 		darwinia_balances::migration::try_runtime::pre_migrate::<Runtime>()
 	}
 
-	fn on_runtime_upgrade() -> frame_support::weights::Weight {
+	fn on_runtime_upgrade() -> Weight {
 		0
 	}
 }
