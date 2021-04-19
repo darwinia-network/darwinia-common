@@ -22,20 +22,25 @@
 use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
-	assert_ok, parameter_types,
-	traits::StorageMapShim,
+	assert_err, assert_noop, assert_ok, assert_storage_noop, parameter_types,
+	traits::{
+		BalanceStatus, Currency, ExistenceRequirement, GenesisBuild, LockIdentifier,
+		ReservableCurrency, StorageMapShim, WithdrawReasons,
+	},
 	weights::{DispatchInfo, IdentityFee, Weight},
+	StorageValue,
 };
 use frame_system::{mocking::*, RawOrigin};
-use pallet_transaction_payment::CurrencyAdapter;
+use pallet_transaction_payment::{ChargeTransactionPayment, CurrencyAdapter, Multiplier};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
-	RuntimeDebug,
+	traits::{BadOrigin, BlakeTwo256, IdentityLookup, SignedExtension, Zero},
+	FixedPointNumber, RuntimeDebug,
 };
 // --- darwinia ---
-use crate::{self as darwinia_balances, *};
+use crate::{self as darwinia_balances, pallet::*};
+use darwinia_support::balance::*;
 
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
@@ -200,8 +205,10 @@ fn emit_events_with_no_existential_deposit_suicide_with_dust() {
 				events(),
 				[
 					Event::frame_system(frame_system::Event::NewAccount(1)),
-					Event::darwinia_balances_Instance0(RawEvent::Endowed(1, 100)),
-					Event::darwinia_balances_Instance0(RawEvent::BalanceSet(1, 100, 0)),
+					Event::darwinia_balances_Instance0(darwinia_balances::Event::Endowed(1, 100)),
+					Event::darwinia_balances_Instance0(darwinia_balances::Event::BalanceSet(
+						1, 100, 0
+					)),
 				]
 			);
 
@@ -215,7 +222,7 @@ fn emit_events_with_no_existential_deposit_suicide_with_dust() {
 			assert_eq!(
 				events(),
 				[
-					Event::darwinia_balances_Instance0(RawEvent::DustLost(1, 1)),
+					Event::darwinia_balances_Instance0(darwinia_balances::Event::DustLost(1, 1)),
 					Event::frame_system(frame_system::Event::KilledAccount(1))
 				]
 			);
@@ -224,7 +231,7 @@ fn emit_events_with_no_existential_deposit_suicide_with_dust() {
 
 #[test]
 fn dust_collector_should_work() {
-	type AnotherBalance = Module<Test, Instance1>;
+	type AnotherBalance = Pallet<Test, Instance1>;
 
 	<ExtBuilder>::default()
 		.existential_deposit(100)
@@ -236,8 +243,10 @@ fn dust_collector_should_work() {
 				events(),
 				[
 					Event::frame_system(frame_system::Event::NewAccount(1)),
-					Event::darwinia_balances_Instance0(RawEvent::Endowed(1, 100)),
-					Event::darwinia_balances_Instance0(RawEvent::BalanceSet(1, 100, 0)),
+					Event::darwinia_balances_Instance0(darwinia_balances::Event::Endowed(1, 100)),
+					Event::darwinia_balances_Instance0(darwinia_balances::Event::BalanceSet(
+						1, 100, 0
+					)),
 				]
 			);
 
@@ -246,7 +255,7 @@ fn dust_collector_should_work() {
 			assert_eq!(
 				events(),
 				[
-					Event::darwinia_balances_Instance0(RawEvent::DustLost(1, 99)),
+					Event::darwinia_balances_Instance0(darwinia_balances::Event::DustLost(1, 99)),
 					Event::frame_system(frame_system::Event::KilledAccount(1))
 				]
 			);
@@ -265,10 +274,14 @@ fn dust_collector_should_work() {
 				events(),
 				[
 					Event::frame_system(frame_system::Event::NewAccount(1)),
-					Event::darwinia_balances_Instance0(RawEvent::Endowed(1, 100)),
-					Event::darwinia_balances_Instance0(RawEvent::BalanceSet(1, 100, 0)),
-					Event::darwinia_balances_Instance1(RawEvent::Endowed(1, 100)),
-					Event::darwinia_balances_Instance1(RawEvent::BalanceSet(1, 100, 0)),
+					Event::darwinia_balances_Instance0(darwinia_balances::Event::Endowed(1, 100)),
+					Event::darwinia_balances_Instance0(darwinia_balances::Event::BalanceSet(
+						1, 100, 0
+					)),
+					Event::darwinia_balances_Instance1(darwinia_balances::Event::Endowed(1, 100)),
+					Event::darwinia_balances_Instance1(darwinia_balances::Event::BalanceSet(
+						1, 100, 0
+					)),
 				]
 			);
 
@@ -281,8 +294,8 @@ fn dust_collector_should_work() {
 			assert_eq!(
 				events(),
 				[
-					Event::darwinia_balances_Instance0(RawEvent::DustLost(1, 99)),
-					Event::darwinia_balances_Instance1(RawEvent::DustLost(1, 99)),
+					Event::darwinia_balances_Instance0(darwinia_balances::Event::DustLost(1, 99)),
+					Event::darwinia_balances_Instance1(darwinia_balances::Event::DustLost(1, 99)),
 					Event::frame_system(frame_system::Event::KilledAccount(1)),
 				]
 			);
