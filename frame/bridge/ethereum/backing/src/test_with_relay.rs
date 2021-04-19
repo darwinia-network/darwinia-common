@@ -27,7 +27,7 @@ use crate::*;
 use darwinia_ethereum_relay::{EthereumRelayHeaderParcel, EthereumRelayProofs, MMRProof};
 use darwinia_relay_primitives::relayer_game::*;
 use darwinia_staking::{RewardDestination, StakingBalance, StakingLedger, TimeDepositItem};
-use darwinia_support::balance::lock::StakingLock;
+use darwinia_support::balance::*;
 use ethereum_primitives::{
 	header::EthereumHeader, receipt::EthereumReceiptProof, EthereumBlockNumber, EthereumNetworkType,
 };

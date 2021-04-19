@@ -241,7 +241,7 @@ use std::time::Instant;
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
-use frame_support::traits::OnFinalize;
+use frame_support::traits::{GenesisBuild, OnFinalize};
 use frame_system::mocking::*;
 use sp_runtime::RuntimeDebug;
 // --- darwinia ---

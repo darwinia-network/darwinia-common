@@ -59,7 +59,7 @@ mod types {
 // --- substrate ---
 use frame_support::{
 	decl_error, decl_module, decl_storage, ensure,
-	traits::{Currency, Get, OnUnbalanced},
+	traits::{Currency, Get, LockIdentifier, OnUnbalanced, WithdrawReasons},
 };
 use sp_runtime::{
 	traits::{Saturating, Zero},
@@ -70,7 +70,7 @@ use sp_std::borrow::ToOwned;
 use sp_std::{collections::btree_map::BTreeMap, prelude::*};
 // --- darwinia ---
 use darwinia_relay_primitives::relayer_game::*;
-use darwinia_support::balance::lock::*;
+use darwinia_support::balance::*;
 use types::*;
 
 pub trait Config<I: Instance = DefaultInstance>: frame_system::Config {

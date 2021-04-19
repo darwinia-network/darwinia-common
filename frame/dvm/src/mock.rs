@@ -24,7 +24,7 @@ use crate::{
 use codec::{Decode, Encode};
 use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator, IssuingHandler};
 use ethereum::{TransactionAction, TransactionSignature};
-use frame_support::ConsensusEngineId;
+use frame_support::{traits::GenesisBuild, ConsensusEngineId};
 use frame_system::mocking::*;
 use rlp::*;
 use sp_core::{H160, H256, U256};

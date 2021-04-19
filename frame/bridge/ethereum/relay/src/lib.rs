@@ -73,9 +73,7 @@ use sp_std::{convert::From, marker::PhantomData, prelude::*};
 // --- darwinia ---
 use crate::mmr::{leaf_index_to_mmr_size, leaf_index_to_pos, MMRMerge, MerkleProof};
 use darwinia_relay_primitives::relayer_game::*;
-use darwinia_support::{
-	balance::lock::LockableCurrency, traits::EthereumReceipt as EthereumReceiptT,
-};
+use darwinia_support::{balance::*, traits::EthereumReceipt as EthereumReceiptT};
 use ethereum_primitives::{
 	ethashproof::EthashProof,
 	header::EthereumHeader,
