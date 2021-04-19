@@ -1592,7 +1592,7 @@ pub mod migration {
 		}
 
 		generate_storage_types!("Instance0DarwiniaBalances", "TotalIssuance", OldRingTotalIssuance => Value<()>);
-		generate_storage_types!("Ring", "TotalIssuance", NewRingTotalIssuance => Value<()>);
+		generate_storage_types!("Balances", "TotalIssuance", NewRingTotalIssuance => Value<()>);
 		generate_storage_types!("Instance1DarwiniaBalances", "TotalIssuance", OldKtonTotalIssuance => Value<()>);
 		generate_storage_types!("Kton", "TotalIssuance", NewKtonTotalIssuance => Value<()>);
 
@@ -1602,8 +1602,8 @@ pub mod migration {
 			assert!(OldKtonTotalIssuance::exists());
 			assert!(!NewKtonTotalIssuance::exists());
 
-			log::info!("Migrating `Instance0Darwinia` to `Ring`...");
-			migration::migrate(b"Instance0DarwiniaBalances", b"Ring");
+			log::info!("Migrating `Instance0Darwinia` to `Balances`...");
+			migration::migrate(b"Instance0DarwiniaBalances", b"Balances");
 
 			log::info!("Migrating `Instance1Darwinia` to `Kton`...");
 			migration::migrate(b"Instance1DarwiniaBalances", b"Kton");
@@ -1618,7 +1618,7 @@ pub mod migration {
 	}
 
 	pub fn migrate(old_pallet_name: &[u8], new_pallet_name: &[u8]) {
-		// Ring: Instance0DarwiniaBalances
+		// Balances: Instance0DarwiniaBalances
 		// Kton: Instance1DarwiniaBalances
 		frame_support::migration::move_pallet(old_pallet_name, new_pallet_name);
 	}
