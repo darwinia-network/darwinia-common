@@ -802,6 +802,9 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	}
 
 	fn on_runtime_upgrade() -> Weight {
-		0
+		darwinia_balances::migration::migrate(b"Instance0DarwiniaBalances", b"Balances");
+		darwinia_balances::migration::migrate(b"Instance1DarwiniaBalances", b"Kton");
+
+		RuntimeBlockWeights::get().max_block
 	}
 }
