@@ -27,6 +27,7 @@ use darwinia_evm::{AccountBasic, FeeCalculator, GasWeightMapping, Runner};
 use darwinia_support::evm::INTERNAL_CALLER;
 use dp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
 use dp_evm::CallOrCreateInfo;
+use dp_storage::PALLET_ETHEREUM_SCHEMA;
 pub use dvm_rpc_runtime_api::{DVMTransaction, TransactionStatus};
 // --- substrate ---
 use frame_support::ensure;
