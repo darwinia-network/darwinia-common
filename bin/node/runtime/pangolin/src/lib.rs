@@ -799,7 +799,8 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
 		darwinia_crab_issuing::migration::try_runtime::pre_migrate::<Runtime>()?;
-		darwinia_staking::migrations::v6::pre_migrate::<Runtime>()
+		darwinia_staking::migrations::v6::pre_migrate::<Runtime>()?;
+		dvm_ethereum::migration::try_runtime::pre_migrate::<Runtime>()
 	}
 
 	fn on_runtime_upgrade() -> Weight {

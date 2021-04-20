@@ -543,3 +543,40 @@ impl<T: Config> Module<T> {
 		}
 	}
 }
+
+pub mod migration {
+	use crate::*;
+	use dp_storage::PALLET_ETHEREUM_SCHEMA;
+
+	#[cfg(feature = "try-runtime")]
+	pub mod try_runtime {
+		use super::*;
+
+		pub fn pre_migrate<T: Config>() -> Result<(), &'static str> {
+			// NOTE: Need to remove PALLET_ETHEREUM_SCHEMA initialisation in genesis before run test.
+			assert_eq!(
+				frame_support::storage::unhashed::get::<EthereumStorageSchema>(
+					&PALLET_ETHEREUM_SCHEMA,
+				),
+				None,
+			);
+
+			migration::migration();
+			assert_eq!(
+				frame_support::storage::unhashed::get::<EthereumStorageSchema>(
+					&PALLET_ETHEREUM_SCHEMA,
+				),
+				Some(EthereumStorageSchema::V1),
+			);
+			log::info!("Schema migration successfully!");
+
+			Ok(())
+		}
+	}
+	pub fn migration() {
+		frame_support::storage::unhashed::put::<EthereumStorageSchema>(
+			&PALLET_ETHEREUM_SCHEMA,
+			&EthereumStorageSchema::V1,
+		);
+	}
+}
