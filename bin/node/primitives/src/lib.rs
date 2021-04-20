@@ -74,3 +74,44 @@ pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 
 /// Block type.
 pub type OpaqueBlock = generic::Block<Header, OpaqueExtrinsic>;
+
+
+
+/// Human readable time units defined in terms of number of blocks.
+pub mod time_units {
+	use super::BlockNumber;
+
+	pub const MILLISECS_PER_BLOCK: u64 = 6000;
+	pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
+
+	pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
+	pub const HOURS: BlockNumber = MINUTES * 60;
+	pub const DAYS: BlockNumber = HOURS * 24;
+}
+
+/// Number of bytes, included in the signed Rialto transaction apart from the encoded call itself.
+///
+/// Can be computed by subtracting encoded call size from raw transaction size.
+pub const TX_EXTRA_BYTES: u32 = 103;
+
+/// Maximal size (in bytes) of encoded (using `Encode::encode()`) account id.
+pub const MAXIMAL_ENCODED_ACCOUNT_ID_SIZE: u32 = 32;
+
+/// Maximal number of unrewarded relayer entries at inbound lane.
+pub const MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE: MessageNonce = 128;
+
+/// Maximal number of unconfirmed messages at inbound lane.
+pub const MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE: MessageNonce = 128;
+
+/// Maximal weight of single message delivery confirmation transaction on Rialto chain.
+///
+/// This value is a result of `pallet_bridge_messages::Pallet::receive_messages_delivery_proof` weight formula computation
+/// for the case when single message is confirmed. The result then must be rounded up to account possible future
+/// runtime upgrades.
+pub const MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT: Weight = 2_000_000_000;
+
+/// Number of extra bytes (excluding size of storage value itself) of storage proof, built at
+/// Rialto chain. This mostly depends on number of entries (and their density) in the storage trie.
+/// Some reserve is reserved to account future chain growth.
+pub const EXTRA_STORAGE_PROOF_SIZE: u32 = 1024;
+

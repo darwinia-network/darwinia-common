@@ -57,6 +57,8 @@ pub use constants::*;
 
 pub mod pallets;
 pub use pallets::*;
+pub mod bridger;
+pub use bridger::*;
 
 pub mod impls {
 	//! Some configurable implementations as associated type for the substrate runtime.
@@ -384,6 +386,12 @@ frame_support::construct_runtime! {
 
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 40,
 		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 41,
+
+		// s2s bridger to millau chain
+		BridgeMillauGrandpa: pallet_bridge_grandpa::{Pallet, Call, Storage},
+		BridgeDispatch: pallet_bridge_dispatch::{Pallet, Event<T>},
+		BridgeMillauMessages: pallet_bridge_messages::{Pallet, Call, Storage, Event<T>},
+		ShiftSessionManager: pallet_shift_session_manager::{Pallet},
 	}
 }
 
@@ -772,6 +780,72 @@ impl_runtime_apis! {
 			Ok((weight, RuntimeBlockWeights::get().max_block))
 		}
 	}
+
+
+
+
+	impl bp_millau::MillauFinalityApi<Block> for Runtime {
+		fn best_finalized() -> (bp_millau::BlockNumber, bp_millau::Hash) {
+			let header = BridgeMillauGrandpa::best_finalized();
+			(header.number, header.hash())
+		}
+
+		fn is_known_header(hash: bp_millau::Hash) -> bool {
+			BridgeMillauGrandpa::is_known_header(hash)
+		}
+	}
+
+
+	impl bp_millau::ToMillauOutboundLaneApi<Block, Balance, ToMillauMessagePayload> for Runtime {
+		fn estimate_message_delivery_and_dispatch_fee(
+			_lane_id: bp_messages::LaneId,
+			payload: ToMillauMessagePayload,
+		) -> Option<Balance> {
+			estimate_message_dispatch_and_delivery_fee::<WithMillauMessageBridge>(
+				&payload,
+				WithMillauMessageBridge::RELAYER_FEE_PERCENT,
+			).ok()
+		}
+
+		fn messages_dispatch_weight(
+			lane: bp_messages::LaneId,
+			begin: bp_messages::MessageNonce,
+			end: bp_messages::MessageNonce,
+		) -> Vec<(bp_messages::MessageNonce, Weight, u32)> {
+			(begin..=end).filter_map(|nonce| {
+				let encoded_payload = BridgeMillauMessages::outbound_message_payload(lane, nonce)?;
+				let decoded_payload = millau_messages::ToMillauMessagePayload::decode(
+					&mut &encoded_payload[..]
+				).ok()?;
+				Some((nonce, decoded_payload.weight, encoded_payload.len() as _))
+			})
+			.collect()
+		}
+
+		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
+			BridgeMillauMessages::outbound_latest_received_nonce(lane)
+		}
+
+		fn latest_generated_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
+			BridgeMillauMessages::outbound_latest_generated_nonce(lane)
+		}
+	}
+
+	impl bp_millau::FromMillauInboundLaneApi<Block> for Runtime {
+		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
+			BridgeMillauMessages::inbound_latest_received_nonce(lane)
+		}
+
+		fn latest_confirmed_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
+			BridgeMillauMessages::inbound_latest_confirmed_nonce(lane)
+		}
+
+		fn unrewarded_relayers_state(lane: bp_messages::LaneId) -> bp_messages::UnrewardedRelayersState {
+			BridgeMillauMessages::inbound_unrewarded_relayers_state(lane)
+		}
+	}
+
+
 }
 
 pub struct TransactionConverter;
