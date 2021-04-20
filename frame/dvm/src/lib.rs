@@ -27,8 +27,6 @@ use darwinia_evm::{AccountBasic, FeeCalculator, GasWeightMapping, Runner};
 use darwinia_support::evm::INTERNAL_CALLER;
 use dp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
 use dp_evm::CallOrCreateInfo;
-#[cfg(feature = "std")]
-use dp_storage::PALLET_ETHEREUM_SCHEMA;
 pub use dvm_rpc_runtime_api::{DVMTransaction, TransactionStatus};
 // --- substrate ---
 use frame_support::ensure;
@@ -135,6 +133,7 @@ decl_storage! {
 			<Module<T>>::store_block(false);
 
 			// Initialize the storage schema at the well known key.
+			#[cfg(not(feature = "try-runtime"))]
 			frame_support::storage::unhashed::put::<EthereumStorageSchema>(&PALLET_ETHEREUM_SCHEMA, &EthereumStorageSchema::V1);
 		});
 	}
