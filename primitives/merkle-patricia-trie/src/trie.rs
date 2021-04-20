@@ -174,15 +174,23 @@ impl Trie for MerklePatriciaTrie {
 	///
 	/// insert data to memory db, and check root. if value exists, means ok .
 	fn verify_proof(root_hash: Vec<u8>, key: &[u8], proof: Proof) -> TrieResult<Option<Vec<u8>>> {
+		println!("1-1");
 		let memdb = Rc::new(MemoryDB::new());
 		for node_encoded in proof.nodes.into_iter() {
 			let hash = hasher_digest(&node_encoded);
+
+			if root_hash.eq(&hash) {
+				println!("1-1.5");
+			}
 
 			if root_hash.eq(&hash) || node_encoded.len() >= LENGTH {
 				memdb.insert(hash, node_encoded);
 			}
 		}
+		println!("1-2");
 		let trie = MerklePatriciaTrie::from(memdb, &root_hash)?;
+
+		println!("1-3");
 
 		trie.get(key)
 	}
