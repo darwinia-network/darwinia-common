@@ -18,8 +18,6 @@ mod eth;
 mod eth_pubsub;
 mod overrides;
 
-pub use overrides::{OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, StorageOverride};
-// --- std ---
 pub use eth::{
 	EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, EthTask, NetApi, NetApiServer, Web3Api,
 	Web3ApiServer,
@@ -31,6 +29,7 @@ use ethereum::{
 use ethereum_types::H160;
 use evm::{ExitError, ExitReason};
 use jsonrpc_core::{Error, ErrorCode, Value};
+pub use overrides::{OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, StorageOverride};
 
 pub mod frontier_backend_client {
 
