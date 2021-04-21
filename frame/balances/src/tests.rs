@@ -821,8 +821,8 @@ macro_rules! decl_tests {
 					assert_eq!(
 						events(),
 						[
-							Event::darwinia_balances_Instance0(darwinia_balances::Event::DustLost(1, 99)),
-							Event::frame_system(frame_system::Event::KilledAccount(1))
+							Event::frame_system(frame_system::Event::KilledAccount(1)),
+							Event::darwinia_balances_Instance0(darwinia_balances::Event::DustLost(1, 99))
 						]
 					);
 				});

@@ -172,7 +172,7 @@ pub mod pallet {
 		/// funds have been created without any equal and opposite accounting.
 		#[must_use]
 		#[derive(RuntimeDebug, PartialEq, Eq)]
-		pub struct PositiveImbalance<T: Config<I>, I: 'static>(T::Balance);
+		pub struct PositiveImbalance<T: Config<I>, I: 'static = ()>(T::Balance);
 
 		impl<T: Config<I>, I: 'static> PositiveImbalance<T, I> {
 			/// Create a new positive imbalance from a balance.
@@ -185,7 +185,7 @@ pub mod pallet {
 		/// funds have been destroyed without any equal and opposite accounting.
 		#[must_use]
 		#[derive(RuntimeDebug, PartialEq, Eq)]
-		pub struct NegativeImbalance<T: Config<I>, I: 'static>(T::Balance);
+		pub struct NegativeImbalance<T: Config<I>, I: 'static = ()>(T::Balance);
 
 		impl<T: Config<I>, I: 'static> NegativeImbalance<T, I> {
 			/// Create a new negative imbalance from a balance.
@@ -718,26 +718,28 @@ pub mod pallet {
 			T::AccountStore::get(&who)
 		}
 
-		/// Places the `free` and `reserved` parts of `new` into `account`. Also does any steps needed
-		/// after mutating an account. This includes DustRemoval unbalancing, in the case than the `new`
-		/// account's total balance is non-zero but below ED.
+		/// Handles any steps needed after mutating an account.
 		///
-		/// Returns the final free balance, iff the account was previously of total balance zero, known
-		/// as its "endowment".
-		fn post_mutation(who: &T::AccountId, new: T::BalanceInfo) -> Option<T::BalanceInfo> {
+		/// This includes DustRemoval unbalancing, in the case than the `new` account's total balance
+		/// is non-zero but below ED.
+		///
+		/// Returns two values:
+		/// - `Some` containing the the `new` account, iff the account has sufficient balance.
+		/// - `Some` containing the dust to be dropped, iff some dust should be dropped.
+		fn post_mutation(
+			who: &T::AccountId,
+			new: T::BalanceInfo,
+		) -> (Option<T::BalanceInfo>, Option<NegativeImbalance<T, I>>) {
 			let total = new.total();
 
 			if total < T::ExistentialDeposit::get() && T::OtherCurrencies::is_dust(who) {
-				T::OtherCurrencies::collect(who);
-
-				if !total.is_zero() {
-					T::DustRemoval::on_unbalanced(NegativeImbalance::new(total));
-					Self::deposit_event(Event::DustLost(who.clone(), total));
+				if total.is_zero() {
+					(None, None)
+				} else {
+					(None, Some(NegativeImbalance::new(total)))
 				}
-
-				None
 			} else {
-				Some(new)
+				(Some(new), None)
 			}
 		}
 
@@ -765,27 +767,49 @@ pub mod pallet {
 		///
 		/// NOTE: LOW-LEVEL: This will not attempt to maintain total issuance. It is expected that
 		/// the caller will do this.
-		fn try_mutate_account<R, E>(
+		fn try_mutate_account<R, E: From<StoredMapError>>(
 			who: &T::AccountId,
 			f: impl FnOnce(&mut T::BalanceInfo, bool) -> Result<R, E>,
-		) -> Result<R, E>
-		where
-			E: From<StoredMapError>,
-		{
-			T::AccountStore::try_mutate_exists(who, |maybe_account| {
+		) -> Result<R, E> {
+			Self::try_mutate_account_with_dust(who, f).map(|(result, dust_cleaner)| {
+				drop(dust_cleaner);
+				result
+			})
+		}
+
+		/// Mutate an account to some new value, or delete it entirely with `None`. Will enforce
+		/// `ExistentialDeposit` law, annulling the account as needed. This will do nothing if the
+		/// result of `f` is an `Err`.
+		///
+		/// It returns both the result from the closure, and an optional `DustCleaner` instance which
+		/// should be dropped once it is known that all nested mutates that could affect storage items
+		/// what the dust handler touches have completed.
+		///
+		/// NOTE: Doesn't do any preparatory work for creating a new account, so should only be used
+		/// when it is known that the account already exists.
+		///
+		/// NOTE: LOW-LEVEL: This will not attempt to maintain total issuance. It is expected that
+		/// the caller will do this.
+		fn try_mutate_account_with_dust<R, E: From<StoredMapError>>(
+			who: &T::AccountId,
+			f: impl FnOnce(&mut T::BalanceInfo, bool) -> Result<R, E>,
+		) -> Result<(R, DustCleaner<T, I>), E> {
+			let result = T::AccountStore::try_mutate_exists(who, |maybe_account| {
 				let is_new = maybe_account.is_none();
 				let mut account = maybe_account.take().unwrap_or_default();
 				f(&mut account, is_new).map(move |result| {
 					let maybe_endowed = if is_new { Some(account.free()) } else { None };
-					*maybe_account = Self::post_mutation(who, account);
-					(maybe_endowed, result)
+					let maybe_account_maybe_dust = Self::post_mutation(who, account);
+					*maybe_account = maybe_account_maybe_dust.0;
+					(maybe_endowed, maybe_account_maybe_dust.1, result)
 				})
-			})
-			.map(|(maybe_endowed, result)| {
+			});
+			result.map(|(maybe_endowed, maybe_dust, result)| {
 				if let Some(endowed) = maybe_endowed {
 					Self::deposit_event(Event::Endowed(who.clone(), endowed));
 				}
-				result
+				let dust_cleaner = DustCleaner(maybe_dust.map(|dust| (who.clone(), dust)));
+				(result, dust_cleaner)
 			})
 		}
 
@@ -926,54 +950,62 @@ pub mod pallet {
 				return Ok(());
 			}
 
-			Self::try_mutate_account(dest, |to_account, _| -> DispatchResult {
-				Self::try_mutate_account(transactor, |from_account, _| -> DispatchResult {
-					from_account.set_free(
-						from_account
-							.free()
-							.checked_sub(&value)
-							.ok_or(<Error<T, I>>::InsufficientBalance)?,
-					);
-
-					// NOTE: total stake being stored in the same type means that this could never overflow
-					// but better to be safe than sorry.
-					to_account.set_free(
-						to_account
-							.free()
-							.checked_add(&value)
-							.ok_or(<Error<T, I>>::Overflow)?,
-					);
-
-					let ed = T::ExistentialDeposit::get();
-
-					ensure!(
-						to_account.total() >= ed || !T::OtherCurrencies::is_dust(dest),
-						<Error<T, I>>::ExistentialDeposit
-					);
-
-					Self::ensure_can_withdraw(
+			Self::try_mutate_account_with_dust(
+				dest,
+				|to_account, _| -> Result<DustCleaner<T, I>, DispatchError> {
+					Self::try_mutate_account_with_dust(
 						transactor,
-						value,
-						WithdrawReasons::TRANSFER,
-						from_account.free(),
+						|from_account, _| -> DispatchResult {
+							from_account.set_free(
+								from_account
+									.free()
+									.checked_sub(&value)
+									.ok_or(<Error<T, I>>::InsufficientBalance)?,
+							);
+
+							// NOTE: total stake being stored in the same type means that this could never overflow
+							// but better to be safe than sorry.
+							to_account.set_free(
+								to_account
+									.free()
+									.checked_add(&value)
+									.ok_or(<Error<T, I>>::Overflow)?,
+							);
+
+							let ed = T::ExistentialDeposit::get();
+							ensure!(
+								to_account.total() >= ed || !T::OtherCurrencies::is_dust(dest),
+								<Error<T, I>>::ExistentialDeposit
+							);
+
+							Self::ensure_can_withdraw(
+								transactor,
+								value,
+								WithdrawReasons::TRANSFER,
+								from_account.free(),
+							)
+							.map_err(|_| <Error<T, I>>::LiquidityRestrictions)?;
+
+							// TODO: This is over-conservative. There may now be other providers, and this module
+							//   may not even be a provider.
+							let allow_death =
+								existence_requirement == ExistenceRequirement::AllowDeath;
+							let allow_death = allow_death
+								&& !<frame_system::Pallet<T>>::is_provider_required(transactor);
+							ensure!(
+								allow_death
+									|| from_account.free() >= ed || !T::OtherCurrencies::is_dust(
+									transactor
+								),
+								<Error<T, I>>::KeepAlive
+							);
+
+							Ok(())
+						},
 					)
-					.map_err(|_| Error::<T, I>::LiquidityRestrictions)?;
-
-					// TODO: This is over-conservative. There may now be other providers, and this module
-					//   may not even be a provider.
-					let allow_death = existence_requirement == ExistenceRequirement::AllowDeath;
-					let allow_death =
-						allow_death && !<frame_system::Pallet<T>>::is_provider_required(transactor);
-
-					ensure!(
-						allow_death
-							|| from_account.free() >= ed || !T::OtherCurrencies::is_dust(transactor),
-						<Error<T, I>>::KeepAlive
-					);
-
-					Ok(())
-				})
-			})?;
+					.map(|(_, maybe_dust_cleaner)| maybe_dust_cleaner)
+				},
+			)?;
 
 			// Emit transfer event.
 			Self::deposit_event(Event::Transfer(transactor.clone(), dest.clone(), value));
@@ -1357,38 +1389,40 @@ pub mod pallet {
 				};
 			}
 
-			let actual = Self::try_mutate_account(
-				beneficiary,
-				|to_account, is_new| -> Result<Self::Balance, DispatchError> {
-					ensure!(
-						!is_new || !T::OtherCurrencies::is_dust(beneficiary),
-						<Error<T, I>>::DeadAccount
-					);
-					Self::try_mutate_account(
-						slashed,
-						|from_account, _| -> Result<Self::Balance, DispatchError> {
-							let actual = cmp::min(from_account.reserved(), value);
-							match status {
-								BalanceStatus::Free => to_account.set_free(
-									to_account
-										.free()
-										.checked_add(&actual)
-										.ok_or(<Error<T, I>>::Overflow)?,
-								),
-								BalanceStatus::Reserved => to_account.set_reserved(
-									to_account
-										.reserved()
-										.checked_add(&actual)
-										.ok_or(<Error<T, I>>::Overflow)?,
-								),
-							}
-							let new_reserved = from_account.reserved() - actual;
-							from_account.set_reserved(new_reserved);
-							Ok(actual)
-						},
-					)
-				},
-			)?;
+			let ((actual, _maybe_one_dust), _maybe_other_dust) =
+				Self::try_mutate_account_with_dust(
+					beneficiary,
+					|to_account,
+					 is_new|
+					 -> Result<(Self::Balance, DustCleaner<T, I>), DispatchError> {
+						ensure!(
+							!is_new || !T::OtherCurrencies::is_dust(beneficiary),
+							<Error<T, I>>::DeadAccount
+						);
+						Self::try_mutate_account_with_dust(
+							slashed,
+							|from_account, _| -> Result<Self::Balance, DispatchError> {
+								let actual = cmp::min(from_account.reserved(), value);
+								match status {
+									BalanceStatus::Free => to_account.set_free(
+										to_account
+											.free()
+											.checked_add(&actual)
+											.ok_or(<Error<T, I>>::Overflow)?,
+									),
+									BalanceStatus::Reserved => to_account.set_reserved(
+										to_account
+											.reserved()
+											.checked_add(&actual)
+											.ok_or(<Error<T, I>>::Overflow)?,
+									),
+								}
+								from_account.set_reserved(from_account.reserved() - actual);
+								Ok(actual)
+							},
+						)
+					},
+				)?;
 
 			Self::deposit_event(Event::ReserveRepatriated(
 				slashed.clone(),
@@ -1563,6 +1597,22 @@ pub mod pallet {
 	impl Default for Releases {
 		fn default() -> Self {
 			Releases::V1_0_0
+		}
+	}
+
+	pub struct DustCleaner<T: Config<I>, I: 'static = ()>(
+		Option<(T::AccountId, NegativeImbalance<T, I>)>,
+	);
+	impl<T: Config<I>, I: 'static> Drop for DustCleaner<T, I> {
+		fn drop(&mut self) {
+			if let Some((who, dust)) = self.0.take() {
+				if T::OtherCurrencies::is_dust(&who) {
+					T::OtherCurrencies::collect(&who);
+
+					<Pallet<T, I>>::deposit_event(Event::DustLost(who, dust.peek()));
+					T::DustRemoval::on_unbalanced(dust);
+				}
+			}
 		}
 	}
 }
