@@ -3,7 +3,7 @@
 use crate::{self as darwinia_evm, *};
 use frame_support::{assert_ok, traits::GenesisBuild};
 use frame_system::mocking::*;
-use sp_core::{Blake2Hasher, H256};
+use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
@@ -138,13 +138,30 @@ impl<T: Config> AccountBasic for RawAccountBasic<T> {
 	}
 }
 
+/// Ensure that the origin is root.
+pub struct EnsureAddressRoot<AccountId>(sp_std::marker::PhantomData<AccountId>);
+
+impl<OuterOrigin, AccountId> EnsureAddressOrigin<OuterOrigin> for EnsureAddressRoot<AccountId>
+where
+	OuterOrigin: Into<Result<RawOrigin<AccountId>, OuterOrigin>> + From<RawOrigin<AccountId>>,
+{
+	type Success = ();
+
+	fn try_address_origin(_address: &H160, origin: OuterOrigin) -> Result<(), OuterOrigin> {
+		origin.into().and_then(|o| match o {
+			RawOrigin::Root => Ok(()),
+			r => Err(OuterOrigin::from(r)),
+		})
+	}
+}
+
 impl Config for Test {
 	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressRoot<Self::AccountId>;
-	type WithdrawOrigin = EnsureAddressNever<Self::AccountId>;
+	type WithdrawOrigin = EnsureAddressTruncated;
 
-	type AddressMapping = HashedAddressMapping<Blake2Hasher>;
+	type AddressMapping = ConcatAddressMapping;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 

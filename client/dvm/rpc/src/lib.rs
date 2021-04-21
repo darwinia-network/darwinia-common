@@ -19,8 +19,6 @@ mod eth_pubsub;
 mod overrides;
 
 pub use overrides::{OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, StorageOverride};
-// --- darwinia ---
-use darwinia_evm::ExitReason;
 // --- std ---
 pub use eth::{
 	EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, EthTask, NetApi, NetApiServer, Web3Api,
@@ -31,7 +29,7 @@ use ethereum::{
 	Transaction as EthereumTransaction, TransactionMessage as EthereumTransactionMessage,
 };
 use ethereum_types::H160;
-use evm::ExitError;
+use evm::{ExitError, ExitReason};
 use jsonrpc_core::{Error, ErrorCode, Value};
 
 pub mod frontier_backend_client {
