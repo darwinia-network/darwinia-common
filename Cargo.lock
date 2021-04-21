@@ -1966,7 +1966,6 @@ name = "dc-rpc"
 version = "2.2.0"
 dependencies = [
  "array-bytes",
- "darwinia-evm",
  "dc-consensus",
  "dc-db",
  "dp-rpc",

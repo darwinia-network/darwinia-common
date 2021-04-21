@@ -3,7 +3,7 @@
 use crate::{self as darwinia_evm, *};
 use frame_support::{assert_ok, traits::GenesisBuild};
 use frame_system::mocking::*;
-use sp_core::{Blake2Hasher, H256};
+use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
@@ -96,13 +96,72 @@ impl IssuingHandler for EmptyIssuingHandler {
 	}
 }
 
+pub struct RawAccountBasic<T>(sp_std::marker::PhantomData<T>);
+
+impl<T: Config> AccountBasic for RawAccountBasic<T> {
+	/// Get the account basic in EVM format.
+	fn account_basic(address: &H160) -> Account {
+		let account_id = T::AddressMapping::into_account_id(*address);
+
+		let nonce = <frame_system::Pallet<T>>::account_nonce(&account_id);
+		let balance = T::RingCurrency::free_balance(&account_id);
+
+		Account {
+			nonce: U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(nonce)),
+			balance: U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(balance)),
+		}
+	}
+
+	fn mutate_account_basic(address: &H160, new: Account) {
+		let account_id = T::AddressMapping::into_account_id(*address);
+		let current = T::RingAccountBasic::account_basic(address);
+
+		if current.nonce < new.nonce {
+			// ASSUME: in one single EVM transaction, the nonce will not increase more than
+			// `u128::max_value()`.
+			for _ in 0..(new.nonce - current.nonce).low_u128() {
+				<frame_system::Pallet<T>>::inc_account_nonce(&account_id);
+			}
+		}
+
+		if current.balance > new.balance {
+			let diff = current.balance - new.balance;
+			T::RingCurrency::slash(&account_id, diff.low_u128().unique_saturated_into());
+		} else if current.balance < new.balance {
+			let diff = new.balance - current.balance;
+			T::RingCurrency::deposit_creating(&account_id, diff.low_u128().unique_saturated_into());
+		}
+	}
+
+	fn transfer(_source: &H160, _target: &H160, _value: U256) -> Result<(), ExitError> {
+		Ok(())
+	}
+}
+
+/// Ensure that the origin is root.
+pub struct EnsureAddressRoot<AccountId>(sp_std::marker::PhantomData<AccountId>);
+
+impl<OuterOrigin, AccountId> EnsureAddressOrigin<OuterOrigin> for EnsureAddressRoot<AccountId>
+where
+	OuterOrigin: Into<Result<RawOrigin<AccountId>, OuterOrigin>> + From<RawOrigin<AccountId>>,
+{
+	type Success = ();
+
+	fn try_address_origin(_address: &H160, origin: OuterOrigin) -> Result<(), OuterOrigin> {
+		origin.into().and_then(|o| match o {
+			RawOrigin::Root => Ok(()),
+			r => Err(OuterOrigin::from(r)),
+		})
+	}
+}
+
 impl Config for Test {
 	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressRoot<Self::AccountId>;
-	type WithdrawOrigin = EnsureAddressNever<Self::AccountId>;
+	type WithdrawOrigin = EnsureAddressTruncated;
 
-	type AddressMapping = HashedAddressMapping<Blake2Hasher>;
+	type AddressMapping = ConcatAddressMapping;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 
