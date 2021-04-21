@@ -176,6 +176,7 @@ with-tracing = ["frame-executive/with-tracing"]
 try-runtime = [
 	"frame-executive/try-runtime",
 	"frame-try-runtime",
+	"darwinia-balances/try-runtime",
 	"darwinia-crab-issuing/try-runtime",
 	"darwinia-staking/try-runtime",
 ]

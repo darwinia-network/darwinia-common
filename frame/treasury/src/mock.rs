@@ -25,6 +25,7 @@ mod treasury {
 }
 
 // --- substrate ---
+use frame_support::traits::GenesisBuild;
 use frame_system::mocking::*;
 use sp_core::H256;
 use sp_runtime::{

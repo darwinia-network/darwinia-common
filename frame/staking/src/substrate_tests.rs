@@ -43,7 +43,7 @@ use crate::{
 	mock::{AccountId, Balance, *},
 	*,
 };
-use darwinia_support::balance::lock::*;
+use darwinia_support::balance::*;
 
 #[test]
 fn force_unstake_works() {

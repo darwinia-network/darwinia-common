@@ -25,7 +25,7 @@ use sp_runtime::{traits::Dispatchable, AccountId32};
 // --- darwinia ---
 use crate::*;
 use darwinia_staking::{RewardDestination, StakingBalance, StakingLedger, TimeDepositItem};
-use darwinia_support::balance::lock::StakingLock;
+use darwinia_support::balance::*;
 use ethereum_primitives::{
 	header::EthereumHeader, receipt::EthereumReceiptProof, EthereumNetworkType,
 };

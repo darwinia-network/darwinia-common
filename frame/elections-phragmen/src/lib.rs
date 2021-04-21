@@ -89,7 +89,7 @@ use frame_support::{
 	storage::{IterableStorageMap, StorageMap},
 	traits::{
 		ChangeMembers, Contains, ContainsLengthBound, Currency, CurrencyToVote, Get,
-		InitializeMembers, OnUnbalanced, ReservableCurrency,
+		InitializeMembers, LockIdentifier, OnUnbalanced, ReservableCurrency, WithdrawReasons,
 	},
 	weights::Weight,
 };
@@ -101,7 +101,7 @@ use sp_runtime::{
 };
 use sp_std::{cmp::Ordering, prelude::*};
 
-use darwinia_support::balance::lock::*;
+use darwinia_support::balance::*;
 
 pub mod weights;
 pub use weights::WeightInfo;

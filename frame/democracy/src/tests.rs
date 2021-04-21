@@ -5,7 +5,7 @@ use codec::Encode;
 // --- substrate ---
 use frame_support::{
 	assert_noop, assert_ok, ord_parameter_types,
-	traits::{Contains, Filter, OnInitialize},
+	traits::{Contains, Filter, GenesisBuild, OnInitialize},
 	weights::Weight,
 };
 use frame_system::{mocking::*, EnsureRoot, EnsureSignedBy};

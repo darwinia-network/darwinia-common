@@ -191,7 +191,7 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 // --- darwinia ---
-use darwinia_support::balance::{lock::LockableCurrency, OnUnbalancedKton};
+use darwinia_support::balance::*;
 use types::*;
 
 pub trait Config<I = DefaultInstance>: frame_system::Config {

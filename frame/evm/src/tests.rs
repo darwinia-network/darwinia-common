@@ -1,7 +1,7 @@
 #![cfg(test)]
 
 use crate::{self as darwinia_evm, *};
-use frame_support::assert_ok;
+use frame_support::{assert_ok, traits::GenesisBuild};
 use frame_system::mocking::*;
 use sp_core::{Blake2Hasher, H256};
 use sp_runtime::{
