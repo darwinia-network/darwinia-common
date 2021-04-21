@@ -222,8 +222,8 @@ fn emit_events_with_no_existential_deposit_suicide_with_dust() {
 			assert_eq!(
 				events(),
 				[
-					Event::darwinia_balances_Instance0(darwinia_balances::Event::DustLost(1, 1)),
-					Event::frame_system(frame_system::Event::KilledAccount(1))
+					Event::frame_system(frame_system::Event::KilledAccount(1)),
+					Event::darwinia_balances_Instance0(darwinia_balances::Event::DustLost(1, 1))
 				]
 			);
 		});
@@ -231,8 +231,6 @@ fn emit_events_with_no_existential_deposit_suicide_with_dust() {
 
 #[test]
 fn dust_collector_should_work() {
-	type AnotherBalance = Pallet<Test, Instance1>;
-
 	<ExtBuilder>::default()
 		.existential_deposit(100)
 		.build()
@@ -255,20 +253,15 @@ fn dust_collector_should_work() {
 			assert_eq!(
 				events(),
 				[
-					Event::darwinia_balances_Instance0(darwinia_balances::Event::DustLost(1, 99)),
-					Event::frame_system(frame_system::Event::KilledAccount(1))
+					Event::frame_system(frame_system::Event::KilledAccount(1)),
+					Event::darwinia_balances_Instance0(darwinia_balances::Event::DustLost(1, 99))
 				]
 			);
 
 			// ---
 
 			assert_ok!(Ring::set_balance(RawOrigin::Root.into(), 1, 100, 0));
-			assert_ok!(AnotherBalance::set_balance(
-				RawOrigin::Root.into(),
-				1,
-				100,
-				0
-			));
+			assert_ok!(Kton::set_balance(RawOrigin::Root.into(), 1, 100, 0));
 
 			assert_eq!(
 				events(),
@@ -289,14 +282,14 @@ fn dust_collector_should_work() {
 
 			assert_eq!(events(), []);
 
-			let _ = AnotherBalance::slash(&1, 1);
+			let _ = Kton::slash(&1, 1);
 
 			assert_eq!(
 				events(),
 				[
+					Event::frame_system(frame_system::Event::KilledAccount(1)),
 					Event::darwinia_balances_Instance0(darwinia_balances::Event::DustLost(1, 99)),
 					Event::darwinia_balances_Instance1(darwinia_balances::Event::DustLost(1, 99)),
-					Event::frame_system(frame_system::Event::KilledAccount(1)),
 				]
 			);
 		});
