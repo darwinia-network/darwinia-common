@@ -1,20 +1,22 @@
-// Copyright 2019-2021 Parity Technologies (UK) Ltd.
-// This file is part of Parity Bridges Common.
-
-// Parity Bridges Common is free software: you can redistribute it and/or modify
+// This file is part of Darwinia.
+//
+// Copyright (C) 2018-2021 Darwinia Network
+// SPDX-License-Identifier: GPL-3.0
+//
+// Darwinia is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-
-// Parity Bridges Common is distributed in the hope that it will be useful,
+//
+// Darwinia is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-
+//
 // You should have received a copy of the GNU General Public License
-// along with Parity Bridges Common.  If not, see <http://www.gnu.org/licenses/>.
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-//! Everything required to serve Millau <-> Rialto messages.
+//! Everything required to serve Millau <-> Pangolin messages.
 
 use crate::Runtime;
 
@@ -46,14 +48,14 @@ parameter_types! {
 // fixme: reminder #1: now the darwinia-common use darwinia-network/substrate@darwinia-v0.10.0#3655f9b but the darwinia-network/parity-bridges-common use darwinia-network/substrate@s2s#97f1b63 , so have different substrate version, there can't compile now, the darwinia-common need upgrade substrate version
 /// Storage key of the Rialto -> Millau message in the runtime storage.
 pub fn message_key(lane: &LaneId, nonce: MessageNonce) -> StorageKey {
-	pallet_bridge_messages::storage_keys::message_key::<Runtime, <Rialto as ChainWithMessages>::MessagesInstance>(
+	pallet_bridge_messages::storage_keys::message_key::<Runtime, <PangolinChainWithMessage as ChainWithMessages>::MessagesInstance>(
 		lane, nonce,
 	)
 }
 
 /// Storage key of the Rialto -> Millau message lane state in the runtime storage.
 pub fn outbound_lane_data_key(lane: &LaneId) -> StorageKey {
-	pallet_bridge_messages::storage_keys::outbound_lane_data_key::<<Rialto as ChainWithMessages>::MessagesInstance>(
+	pallet_bridge_messages::storage_keys::outbound_lane_data_key::<<PangolinChainWithMessage as ChainWithMessages>::MessagesInstance>(
 		lane,
 	)
 }
@@ -62,7 +64,7 @@ pub fn outbound_lane_data_key(lane: &LaneId) -> StorageKey {
 pub fn inbound_lane_data_key(lane: &LaneId) -> StorageKey {
 	pallet_bridge_messages::storage_keys::inbound_lane_data_key::<
 		Runtime,
-		<Rialto as ChainWithMessages>::MessagesInstance,
+		<PangolinChainWithMessage as ChainWithMessages>::MessagesInstance,
 	>(lane)
 }
 
@@ -100,7 +102,7 @@ impl MessageBridge for WithMillauMessageBridge {
 
 	const RELAYER_FEE_PERCENT: u32 = 10;
 
-	type ThisChain = Rialto;
+	type ThisChain = PangolinChainWithMessage;
 	type BridgedChain = Millau;
 
 	fn bridged_balance_to_this_balance(bridged_balance: bp_millau::Balance) -> drml_primitives::Balance {
@@ -109,12 +111,11 @@ impl MessageBridge for WithMillauMessageBridge {
 	}
 }
 
-// todo: there can be change name to PangolinChain, when there changed, in parity-bridges-common need change with this.
 /// Rialto chain from message lane point of view.
 #[derive(RuntimeDebug, Clone, Copy)]
-pub struct Rialto;
+pub struct PangolinChainWithMessage;
 
-impl messages::ChainWithMessages for Rialto {
+impl messages::ChainWithMessages for PangolinChainWithMessage {
 	type Hash = drml_primitives::Hash;
 	type AccountId = drml_primitives::AccountId;
 	type Signer = drml_primitives::AccountSigner;
@@ -125,7 +126,7 @@ impl messages::ChainWithMessages for Rialto {
 	type MessagesInstance = crate::WithMillauMessagesInstance;
 }
 
-impl messages::ThisChainWithMessages for Rialto {
+impl messages::ThisChainWithMessages for PangolinChainWithMessage {
 	type Call = crate::Call;
 
 	fn is_outbound_lane_enabled(lane: &LaneId) -> bool {
