@@ -9,7 +9,7 @@ use frame_system::{
 	Config,
 };
 use sp_runtime::{
-	traits::{AccountIdLookup, BlakeTwo256},
+	traits::AccountIdLookup,
 	Perbill,
 };
 use sp_version::RuntimeVersion;
@@ -62,7 +62,7 @@ impl Config for Runtime {
 	type Index = Nonce;
 	type BlockNumber = BlockNumber;
 	type Hash = Hash;
-	type Hashing = BlakeTwo256;
+	type Hashing = Hashing;
 	type AccountId = AccountId;
 	type Lookup = AccountIdLookup<AccountId, ()>;
 	type Header = Header;

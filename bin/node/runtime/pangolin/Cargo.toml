@@ -97,6 +97,7 @@ pallet-bridge-dispatch = { git = "https://github.com/darwinia-network/parity-bri
 pallet-bridge-grandpa = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-s2s", default-features = false }
 pallet-bridge-messages = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-s2s", default-features = false }
 pallet-shift-session-manager = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-s2s", default-features = false }
+relay-substrate-client = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-s2s" }
 
 
 [build-dependencies]
