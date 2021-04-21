@@ -22,19 +22,34 @@
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 
-// --- darwinia ---
-use darwinia_evm::{AccountBasic, FeeCalculator, GasWeightMapping, Runner};
-use darwinia_support::evm::INTERNAL_CALLER;
-use dp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
-use dp_evm::CallOrCreateInfo;
-use dp_storage::PALLET_ETHEREUM_SCHEMA;
+pub mod account_basic;
+
+pub use ethereum::{
+	Block, Log, Receipt, Transaction, TransactionAction, TransactionMessage, TransactionSignature,
+};
+
 pub use dvm_rpc_runtime_api::{DVMTransaction, TransactionStatus};
+
+#[cfg(all(feature = "std", test))]
+mod mock;
+#[cfg(all(feature = "std", test))]
+mod tests;
+
+// --- crates ---
+use codec::{Decode, Encode};
+use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
+use evm::ExitReason;
+use sha3::{Digest, Keccak256};
 // --- substrate ---
-use frame_support::ensure;
-use frame_support::traits::Currency;
+#[cfg(any(feature = "std", feature = "try-runtime"))]
+use frame_support::storage::unhashed;
 use frame_support::{
-	decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResultWithPostInfo,
-	traits::FindAuthor, traits::Get, weights::Weight,
+	decl_error, decl_event, decl_module, decl_storage,
+	dispatch::DispatchResultWithPostInfo,
+	ensure,
+	traits::FindAuthor,
+	traits::{Currency, Get},
+	weights::Weight,
 };
 use frame_system::ensure_none;
 use sp_runtime::{
@@ -46,40 +61,13 @@ use sp_runtime::{
 	DispatchError,
 };
 use sp_std::prelude::*;
-// --- std ---
-use codec::{Decode, Encode};
-pub use ethereum::{
-	Block, Log, Receipt, Transaction, TransactionAction, TransactionMessage, TransactionSignature,
-};
-use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
-use evm::ExitReason;
-use sha3::{Digest, Keccak256};
-
-#[cfg(all(feature = "std", test))]
-mod tests;
-
-pub mod account_basic;
-#[cfg(all(feature = "std", test))]
-mod mock;
-
-#[derive(Eq, PartialEq, Clone, sp_runtime::RuntimeDebug)]
-pub enum ReturnValue {
-	Bytes(Vec<u8>),
-	Hash(H160),
-}
-
-/// The schema version for Pallet Ethereum's storage
-#[derive(Clone, Debug, Encode, Decode, PartialEq, Eq, PartialOrd, Ord)]
-pub enum EthereumStorageSchema {
-	Undefined,
-	V1,
-}
-
-impl Default for EthereumStorageSchema {
-	fn default() -> Self {
-		Self::Undefined
-	}
-}
+// --- darwinia ---
+use darwinia_evm::{AccountBasic, FeeCalculator, GasWeightMapping, Runner};
+use darwinia_support::evm::INTERNAL_CALLER;
+use dp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
+use dp_evm::CallOrCreateInfo;
+#[cfg(any(feature = "std", feature = "try-runtime"))]
+use dp_storage::PALLET_ETHEREUM_SCHEMA;
 
 /// A type alias for the balance type from this pallet's point of view.
 type AccountId<T> = <T as frame_system::Config>::AccountId;
@@ -87,15 +75,6 @@ pub type RingCurrency<T> = <T as Config>::RingCurrency;
 pub type KtonCurrency<T> = <T as Config>::KtonCurrency;
 pub type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
 pub type KtonBalance<T> = <KtonCurrency<T> as Currency<AccountId<T>>>::Balance;
-
-pub struct IntermediateStateRoot;
-
-impl Get<H256> for IntermediateStateRoot {
-	fn get() -> H256 {
-		H256::decode(&mut &sp_io::storage::root()[..])
-			.expect("Node is configured to use the same hash; qed")
-	}
-}
 
 /// Config for Ethereum pallet.
 pub trait Config:
@@ -134,8 +113,7 @@ decl_storage! {
 			<Module<T>>::store_block(false);
 
 			// Initialize the storage schema at the well known key.
-			#[cfg(not(feature = "try-runtime"))]
-			frame_support::storage::unhashed::put::<EthereumStorageSchema>(&PALLET_ETHEREUM_SCHEMA, &EthereumStorageSchema::V1);
+			unhashed::put::<EthereumStorageSchema>(&PALLET_ETHEREUM_SCHEMA, &EthereumStorageSchema::V1);
 		});
 	}
 }
@@ -192,15 +170,6 @@ decl_module! {
 			0
 		}
 	}
-}
-
-#[repr(u8)]
-enum TransactionValidationError {
-	#[allow(dead_code)]
-	UnknownError,
-	InvalidChainId,
-	InvalidSignature,
-	InvalidGasLimit,
 }
 
 impl<T: Config> frame_support::unsigned::ValidateUnsigned for Module<T> {
@@ -544,39 +513,68 @@ impl<T: Config> Module<T> {
 	}
 }
 
+/// The schema version for Pallet Ethereum's storage
+#[derive(Clone, Debug, Encode, Decode, PartialEq, Eq, PartialOrd, Ord)]
+pub enum EthereumStorageSchema {
+	Undefined,
+	V1,
+}
+impl Default for EthereumStorageSchema {
+	fn default() -> Self {
+		Self::Undefined
+	}
+}
+
+#[derive(Eq, PartialEq, Clone, sp_runtime::RuntimeDebug)]
+pub enum ReturnValue {
+	Bytes(Vec<u8>),
+	Hash(H160),
+}
+
+#[repr(u8)]
+enum TransactionValidationError {
+	#[allow(dead_code)]
+	UnknownError,
+	InvalidChainId,
+	InvalidSignature,
+	InvalidGasLimit,
+}
+
+pub struct IntermediateStateRoot;
+impl Get<H256> for IntermediateStateRoot {
+	fn get() -> H256 {
+		H256::decode(&mut &sp_io::storage::root()[..])
+			.expect("Node is configured to use the same hash; qed")
+	}
+}
+
 pub mod migration {
+	// --- darwinia ---
 	use crate::*;
-	use dp_storage::PALLET_ETHEREUM_SCHEMA;
 
 	#[cfg(feature = "try-runtime")]
 	pub mod try_runtime {
-		use super::*;
+		// --- darwinia ---
+		use crate::*;
 
 		pub fn pre_migrate<T: Config>() -> Result<(), &'static str> {
 			// NOTE: Need to remove PALLET_ETHEREUM_SCHEMA initialisation in genesis before run test.
-			assert_eq!(
-				frame_support::storage::unhashed::get::<EthereumStorageSchema>(
-					&PALLET_ETHEREUM_SCHEMA,
-				),
-				None,
-			);
+			assert!(unhashed::get::<EthereumStorageSchema>(&PALLET_ETHEREUM_SCHEMA).is_none());
 
-			migration::migration();
+			migration::migrate();
+
 			assert_eq!(
-				frame_support::storage::unhashed::get::<EthereumStorageSchema>(
-					&PALLET_ETHEREUM_SCHEMA,
-				),
+				unhashed::get::<EthereumStorageSchema>(&PALLET_ETHEREUM_SCHEMA),
 				Some(EthereumStorageSchema::V1),
 			);
+
 			log::info!("Schema migration successfully!");
 
 			Ok(())
 		}
 	}
-	pub fn migration() {
-		frame_support::storage::unhashed::put::<EthereumStorageSchema>(
-			&PALLET_ETHEREUM_SCHEMA,
-			&EthereumStorageSchema::V1,
-		);
+
+	pub fn migrate() {
+		unhashed::put::<EthereumStorageSchema>(&PALLET_ETHEREUM_SCHEMA, &EthereumStorageSchema::V1);
 	}
 }
