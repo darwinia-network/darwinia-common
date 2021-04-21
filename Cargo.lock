@@ -1909,29 +1909,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dc-consensus"
-version = "2.2.0"
-dependencies = [
- "dc-db",
- "derive_more",
- "dp_consensus",
- "dvm-rpc-runtime-api",
- "futures 0.3.14",
- "log",
- "parity-scale-codec",
- "sc-client-api",
- "sp-api",
- "sp-block-builder",
- "sp-blockchain",
- "sp-consensus",
- "sp-core",
- "sp-inherents",
- "sp-runtime",
- "sp-timestamp",
- "substrate-prometheus-endpoint",
-]
-
-[[package]]
 name = "dc-db"
 version = "2.2.0"
 dependencies = [
@@ -1948,7 +1925,6 @@ dependencies = [
 name = "dc-mapping-sync"
 version = "2.2.0"
 dependencies = [
- "dc-consensus",
  "dc-db",
  "dp_consensus",
  "dvm-rpc-runtime-api",
@@ -1967,7 +1943,6 @@ version = "2.2.0"
 dependencies = [
  "array-bytes",
  "darwinia-evm",
- "dc-consensus",
  "dc-db",
  "dp-rpc",
  "dp-storage",
@@ -2141,7 +2116,6 @@ dependencies = [
  "darwinia-staking",
  "darwinia-staking-rpc",
  "darwinia-staking-rpc-runtime-api",
- "dc-consensus",
  "dc-db",
  "dc-mapping-sync",
  "dc-rpc",
