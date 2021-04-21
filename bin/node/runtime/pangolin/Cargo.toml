@@ -179,4 +179,5 @@ try-runtime = [
 	"darwinia-balances/try-runtime",
 	"darwinia-crab-issuing/try-runtime",
 	"darwinia-staking/try-runtime",
+	"dvm-ethereum/try-runtime",
 ]

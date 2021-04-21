@@ -2246,6 +2246,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "libsecp256k1",
+ "log",
  "pallet-timestamp",
  "parity-scale-codec",
  "rlp",
