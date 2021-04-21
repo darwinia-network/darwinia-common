@@ -57,8 +57,8 @@ pub use constants::*;
 
 pub mod pallets;
 pub use pallets::*;
-pub mod bridger;
-pub use bridger::*;
+pub mod bridge;
+pub use bridge::*;
 
 pub mod impls {
 	//! Some configurable implementations as associated type for the substrate runtime.
