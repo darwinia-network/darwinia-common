@@ -1,11 +1,11 @@
 
 
-mod bride;
+mod bridge;
 
 pub mod millau_messages;
 pub mod relay_client;
 
-pub use bride::*;
+pub use bridge::*;
 
 
 
