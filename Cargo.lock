@@ -1253,6 +1253,7 @@ dependencies = [
  "log",
  "pallet-transaction-payment",
  "parity-scale-codec",
+ "paste",
  "serde",
  "sp-core",
  "sp-io",

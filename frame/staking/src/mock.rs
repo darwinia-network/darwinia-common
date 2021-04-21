@@ -27,7 +27,9 @@ use frame_election_provider_support::onchain;
 use frame_support::{
 	assert_ok, parameter_types,
 	storage::IterableStorageMap,
-	traits::{Currency, FindAuthor, Get, OnFinalize, OnInitialize, OneSessionHandler},
+	traits::{
+		Currency, FindAuthor, GenesisBuild, Get, OnFinalize, OnInitialize, OneSessionHandler,
+	},
 	weights::constants::RocksDbWeight,
 	StorageValue,
 };

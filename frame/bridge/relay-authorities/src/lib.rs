@@ -59,7 +59,7 @@ use codec::Encode;
 // --- substrate ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
-	traits::{Currency, EnsureOrigin, Get, LockIdentifier},
+	traits::{Currency, EnsureOrigin, Get, LockIdentifier, WithdrawReasons},
 	weights::Weight,
 	StorageValue,
 };
@@ -73,7 +73,7 @@ use sp_std::borrow::ToOwned;
 use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_relay_primitives::relay_authorities::*;
-use darwinia_support::balance::lock::*;
+use darwinia_support::balance::*;
 use types::*;
 
 pub trait Config<I: Instance = DefaultInstance>: frame_system::Config {

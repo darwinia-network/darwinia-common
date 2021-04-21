@@ -24,15 +24,10 @@ pub mod testing;
 pub mod traits;
 
 pub mod balance {
-	pub mod lock {
-		pub use crate::structs::{BalanceLock, LockFor, LockReasons, StakingLock, Unbonding};
-		pub use crate::traits::{
-			LockIdentifier, LockableCurrency, VestingSchedule, WithdrawReasons,
-		};
-	}
-
-	pub use crate::structs::FrozenBalance;
-	pub use crate::traits::{BalanceInfo, DustCollector, OnUnbalancedKton};
+	pub use crate::structs::{
+		BalanceLock, FrozenBalance, LockFor, LockReasons, StakingLock, Unbonding,
+	};
+	pub use crate::traits::{BalanceInfo, DustCollector, LockableCurrency, OnUnbalancedKton};
 }
 
 pub mod evm {

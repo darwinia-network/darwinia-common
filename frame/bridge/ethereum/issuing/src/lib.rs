@@ -58,7 +58,7 @@ use darwinia_ethereum_issuing_contract::{
 };
 use darwinia_evm::{GasWeightMapping, IssuingHandler};
 use darwinia_relay_primitives::relay_authorities::*;
-use darwinia_support::{balance::lock::*, traits::EthereumReceipt};
+use darwinia_support::{balance::*, traits::EthereumReceipt};
 use dp_evm::CallOrCreateInfo;
 use ethereum_primitives::{
 	receipt::{EthereumTransactionIndex, LogEntry},

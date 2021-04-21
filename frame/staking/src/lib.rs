@@ -419,7 +419,7 @@ use frame_support::{
 	storage::IterableStorageMap,
 	traits::{
 		Currency, EnsureOrigin, EstimateNextNewSession, ExistenceRequirement::KeepAlive, Get,
-		Imbalance, OnUnbalanced, UnixTime,
+		Imbalance, LockIdentifier, OnUnbalanced, UnixTime, WithdrawReasons,
 	},
 	weights::{
 		constants::{WEIGHT_PER_MICROS, WEIGHT_PER_NANOS},
@@ -447,7 +447,7 @@ use sp_std::{collections::btree_map::BTreeMap, convert::TryInto, marker::Phantom
 // --- darwinia ---
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo;
 use darwinia_support::{
-	balance::lock::*,
+	balance::*,
 	impl_rpc,
 	traits::{OnDepositRedeem, OnUnbalancedKton},
 };

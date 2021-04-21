@@ -62,7 +62,7 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 // --- darwinia ---
-use darwinia_support::balance::lock::*;
+use darwinia_support::balance::*;
 use types::*;
 
 pub trait Config: frame_system::Config {
@@ -583,7 +583,7 @@ mod tests {
 	// --- substrate ---
 	use frame_support::{
 		assert_err, assert_noop, assert_ok, dispatch::DispatchError::BadOrigin,
-		ord_parameter_types, parameter_types,
+		ord_parameter_types, parameter_types, traits::GenesisBuild,
 	};
 	use frame_system::mocking::*;
 	use sp_core::H256;

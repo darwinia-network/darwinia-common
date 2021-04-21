@@ -23,7 +23,7 @@ use crate::{
 	mock::{mock_relay::*, BlockNumber, *},
 	*,
 };
-use darwinia_support::balance::lock::*;
+use darwinia_support::balance::*;
 
 // #[test]
 // fn events_should_work() {
