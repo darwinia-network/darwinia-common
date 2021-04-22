@@ -13,7 +13,7 @@ pub type NegativeImbalance = <Pallet<Runtime, RingInstance> as Currency<
 >>::NegativeImbalance;
 
 frame_support::parameter_types! {
-	pub const ExistentialDeposit: Balance = 1 * COIN;
+	pub const ExistentialDeposit: Balance = 0;
 	pub const MaxLocks: u32 = 50;
 }
 impl Config<RingInstance> for Runtime {
