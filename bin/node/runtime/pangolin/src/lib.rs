@@ -58,7 +58,7 @@ pub use constants::*;
 pub mod pallets;
 pub use pallets::*;
 pub mod bridge;
-pub use bridge::s2s::*;
+use bridge::s2s::*;
 
 pub mod impls {
 	//! Some configurable implementations as associated type for the substrate runtime.
@@ -247,6 +247,9 @@ use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispa
 use drml_primitives::*;
 use dvm_rpc_runtime_api::TransactionStatus;
 use impls::*;
+// --- s2s ---
+pub use pallet_bridge_grandpa::Call as BridgeGrandpaMillauCall;
+pub use pallet_bridge_messages::Call as MessagesCall;
 
 /// The address format for describing accounts.
 pub type Address = MultiAddress<AccountId, ()>;

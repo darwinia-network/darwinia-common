@@ -79,6 +79,7 @@ pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 pub type OpaqueBlock = generic::Block<Header, OpaqueExtrinsic>;
 
 
+// -- s2s --
 
 /// Human readable time units defined in terms of number of blocks.
 pub mod time_units {
@@ -117,4 +118,24 @@ pub const MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT: Weight = 2_000_000
 /// Rialto chain. This mostly depends on number of entries (and their density) in the storage trie.
 /// Some reserve is reserved to account future chain growth.
 pub const EXTRA_STORAGE_PROOF_SIZE: u32 = 1024;
+
+/// Name of the `RialtoFinalityApi::best_finalized` runtime method.
+pub const BEST_FINALIZED_PANGOLIN_HEADER_METHOD: &str = "PangolinFinalityApi_best_finalized";
+
+/// Name of the `FromPangolinInboundLaneApi::latest_received_nonce` runtime method.
+pub const FROM_PANGOLIN_LATEST_RECEIVED_NONCE_METHOD: &str = "FromPangolinInboundLaneApi_latest_received_nonce";
+/// Name of the `FromPangolinInboundLaneApi::latest_onfirmed_nonce` runtime method.
+pub const FROM_PANGOLIN_LATEST_CONFIRMED_NONCE_METHOD: &str = "FromPangolinInboundLaneApi_latest_confirmed_nonce";
+/// Name of the `FromPangolinInboundLaneApi::unrewarded_relayers_state` runtime method.
+pub const FROM_PANGOLIN_UNREWARDED_RELAYERS_STATE: &str = "FromPangolinInboundLaneApi_unrewarded_relayers_state";
+
+/// Name of the `ToPangolinOutboundLaneApi::estimate_message_delivery_and_dispatch_fee` runtime method.
+pub const TO_PANGOLIN_ESTIMATE_MESSAGE_FEE_METHOD: &str =
+	"ToPangolinOutboundLaneApi_estimate_message_delivery_and_dispatch_fee";
+/// Name of the `ToPangolinOutboundLaneApi::messages_dispatch_weight` runtime method.
+pub const TO_PANGOLIN_MESSAGES_DISPATCH_WEIGHT_METHOD: &str = "ToPangolinOutboundLaneApi_messages_dispatch_weight";
+/// Name of the `ToPangolinOutboundLaneApi::latest_generated_nonce` runtime method.
+pub const TO_PANGOLIN_LATEST_GENERATED_NONCE_METHOD: &str = "ToPangolinOutboundLaneApi_latest_generated_nonce";
+/// Name of the `ToPangolinOutboundLaneApi::latest_received_nonce` runtime method.
+pub const TO_PANGOLIN_LATEST_RECEIVED_NONCE_METHOD: &str = "ToPangolinOutboundLaneApi_latest_received_nonce";
 

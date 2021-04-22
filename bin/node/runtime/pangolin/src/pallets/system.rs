@@ -76,3 +76,17 @@ impl Config for Runtime {
 	type SystemWeightInfo = SubstrateWeight<Runtime>;
 	type SS58Prefix = SS58Prefix;
 }
+
+
+/// Get the maximum weight (compute time) that a Normal extrinsic on the Millau chain can use.
+pub fn max_extrinsic_weight() -> Weight {
+	BlockWeights::get()
+		.get(DispatchClass::Normal)
+		.max_extrinsic
+		.unwrap_or(Weight::MAX)
+}
+
+/// Get the maximum length in bytes that a Normal extrinsic on the Millau chain requires.
+pub fn max_extrinsic_size() -> u32 {
+	*BlockLength::get().max.get(DispatchClass::Normal)
+}
