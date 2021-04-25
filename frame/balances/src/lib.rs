@@ -994,7 +994,7 @@ pub mod pallet {
 								&& !<frame_system::Pallet<T>>::is_provider_required(transactor);
 							ensure!(
 								allow_death
-									|| from_account.free() >= ed || !T::OtherCurrencies::is_dust(
+									|| from_account.total() >= ed || !T::OtherCurrencies::is_dust(
 									transactor
 								),
 								<Error<T, I>>::KeepAlive

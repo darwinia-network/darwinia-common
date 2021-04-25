@@ -1050,5 +1050,18 @@ macro_rules! decl_tests {
 					assert_storage_noop!(assert_eq!(Ring::slash(&1337, 42).1, 42));
 				});
 		}
+
+		#[test]
+		fn transfer_keep_alive_all_free_succeed() {
+			<$ext_builder>::default()
+				.existential_deposit(100)
+				.build()
+				.execute_with(|| {
+					assert_ok!(Ring::set_balance(Origin::root(), 1, 100, 100));
+					assert_ok!(Ring::transfer_keep_alive(Some(1).into(), 2, 100));
+					assert_eq!(Ring::total_balance(&1), 100);
+					assert_eq!(Ring::total_balance(&2), 100);
+				});
+		}
 	};
 }
