@@ -4233,7 +4233,7 @@ fn cannot_rebond_to_lower_than_ed() {
 }
 
 #[test]
-fn cannot_bond_to_lower_than_ed() {
+fn cannot_bond_extra_to_lower_than_ed() {
 	ExtBuilder::default()
 		.existential_deposit(10)
 		.build_and_execute(|| {
@@ -4279,6 +4279,52 @@ fn cannot_bond_to_lower_than_ed() {
 			assert_noop!(
 				Staking::rebond(Origin::signed(20), 5, 0),
 				StakingError::InsufficientValue,
+			);
+		})
+}
+
+#[test]
+fn do_not_die_when_active_is_ed() {
+	let ed = 10;
+	ExtBuilder::default()
+		.existential_deposit(ed)
+		.build_and_execute(|| {
+			// initial stuff.
+			assert_eq!(
+				Staking::ledger(&20).unwrap(),
+				StakingLedger {
+					stash: 21,
+					active_ring: 1000,
+					ring_staking_lock: StakingLock {
+						staking_amount: 1000,
+						..Default::default()
+					},
+					..Default::default()
+				}
+			);
+
+			// unbond all of it except ed.
+			assert_ok!(Staking::unbond(
+				Origin::signed(20),
+				StakingBalance::RingBalance(1000 - ed)
+			));
+			start_active_era(3);
+
+			// initial stuff.
+			assert_eq!(
+				Staking::ledger(&20).unwrap(),
+				StakingLedger {
+					stash: 21,
+					active_ring: ed,
+					ring_staking_lock: StakingLock {
+						staking_amount: 10,
+						unbondings: vec![Unbonding {
+							amount: 990,
+							until: 16
+						}]
+					},
+					..Default::default()
+				}
 			);
 		})
 }
