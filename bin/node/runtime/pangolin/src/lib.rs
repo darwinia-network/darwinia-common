@@ -42,7 +42,11 @@ pub mod constants {
 	pub const DAYS: BlockNumber = 24 * HOURS;
 
 	pub const MILLISECS_PER_BLOCK: Moment = 6000;
+	// NOTE: Currently it is not possible to change the slot duration after the chain has started.
+	//       Attempting to do so will brick block production.
 	pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
+	// NOTE: Currently it is not possible to change the epoch duration after the chain has started.
+	//       Attempting to do so will brick block production.
 	pub const BLOCKS_PER_SESSION: BlockNumber = 3 * MINUTES;
 	pub const SESSIONS_PER_ERA: SessionIndex = 6;
 
