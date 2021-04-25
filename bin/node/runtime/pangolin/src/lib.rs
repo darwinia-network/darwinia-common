@@ -806,9 +806,9 @@ impl_runtime_apis! {
 			_lane_id: bp_messages::LaneId,
 			payload: ToMillauMessagePayload,
 		) -> Option<Balance> {
-			estimate_message_dispatch_and_delivery_fee::<WithMillauMessageBridge>(
+			estimate_message_dispatch_and_delivery_fee::<millau_messages::WithMillauMessageBridge>(
 				&payload,
-				WithMillauMessageBridge::RELAYER_FEE_PERCENT,
+				millau_messages::WithMillauMessageBridge::RELAYER_FEE_PERCENT,
 			).ok()
 		}
 

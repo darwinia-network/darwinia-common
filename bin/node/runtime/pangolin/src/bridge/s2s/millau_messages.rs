@@ -37,12 +37,12 @@ use sp_core::storage::StorageKey;
 use sp_runtime::{FixedPointNumber, FixedU128};
 use sp_std::{convert::TryFrom, ops::RangeInclusive};
 
-/// Initial value of `MillauToRialtoConversionRate` parameter.
-pub const INITIAL_MILLAU_TO_RIALTO_CONVERSION_RATE: FixedU128 = FixedU128::from_inner(FixedU128::DIV);
+/// Initial value of `MillauToPangolinConversionRate` parameter.
+pub const INITIAL_MILLAU_TO_PANGOLIN_CONVERSION_RATE: FixedU128 = FixedU128::from_inner(FixedU128::DIV);
 
 parameter_types! {
 	/// Millau to Rialto conversion rate. Initially we treat both tokens as equal.
-	pub storage MillauToRialtoConversionRate: FixedU128 = INITIAL_MILLAU_TO_RIALTO_CONVERSION_RATE;
+	pub storage MillauToPangolinConversionRate: FixedU128 = INITIAL_MILLAU_TO_PANGOLIN_CONVERSION_RATE;
 }
 
 // fixme: reminder #1: now the darwinia-common use darwinia-network/substrate@darwinia-v0.10.0#3655f9b but the darwinia-network/parity-bridges-common use darwinia-network/substrate@s2s#97f1b63 , so have different substrate version, there can't compile now, the darwinia-common need upgrade substrate version
@@ -106,7 +106,7 @@ impl MessageBridge for WithMillauMessageBridge {
 	type BridgedChain = Millau;
 
 	fn bridged_balance_to_this_balance(bridged_balance: bp_millau::Balance) -> drml_primitives::Balance {
-		drml_primitives::Balance::try_from(MillauToRialtoConversionRate::get().saturating_mul_int(bridged_balance))
+		drml_primitives::Balance::try_from(MillauToPangolinConversionRate::get().saturating_mul_int(bridged_balance))
 			.unwrap_or(drml_primitives::Balance::MAX)
 	}
 }
@@ -266,14 +266,14 @@ impl SourceHeaderChain<bp_millau::Balance> for Millau {
 #[derive(RuntimeDebug, Clone, Encode, Decode, PartialEq, Eq)]
 pub enum RialtoToMillauMessagesParameter {
 	/// The conversion formula we use is: `RialtoTokens = MillauTokens * conversion_rate`.
-	MillauToRialtoConversionRate(FixedU128),
+	MillauToPangolinConversionRate(FixedU128),
 }
 
 impl MessagesParameter for RialtoToMillauMessagesParameter {
 	fn save(&self) {
 		match *self {
-			RialtoToMillauMessagesParameter::MillauToRialtoConversionRate(ref conversion_rate) => {
-				MillauToRialtoConversionRate::set(conversion_rate)
+			RialtoToMillauMessagesParameter::MillauToPangolinConversionRate(ref conversion_rate) => {
+				MillauToPangolinConversionRate::set(conversion_rate)
 			}
 		}
 	}
