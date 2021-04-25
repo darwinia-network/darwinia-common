@@ -11,10 +11,10 @@ version     = "2.2.0"
 
 [dependencies]
 # substrate
-sc-client-api = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
-sp-api        = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
-sp-blockchain = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
-sp-runtime    = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sc-client-api = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-api        = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-blockchain = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-runtime    = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 # darwinia
 dc-db               = { path = "../db" }
 dp_consensus        = { path = "../../../primitives/consensus/" }
