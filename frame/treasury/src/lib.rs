@@ -191,7 +191,7 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 // --- darwinia ---
-use darwinia_support::balance::{lock::LockableCurrency, OnUnbalancedKton};
+use darwinia_support::balance::*;
 use types::*;
 
 pub trait Config<I = DefaultInstance>: frame_system::Config {
@@ -1404,7 +1404,8 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 							bounty.status = BountyStatus::Funded;
 
 							// return their deposit.
-							let err_amount = T::RingCurrency::unreserve(&bounty.proposer, bounty.bond);
+							let err_amount =
+								T::RingCurrency::unreserve(&bounty.proposer, bounty.bond);
 							debug_assert!(err_amount.is_zero());
 
 							// fund the bounty account

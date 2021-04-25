@@ -16,6 +16,6 @@ kvdb         = { version = "0.9.0" }
 kvdb-rocksdb = { version = "0.11.0" }
 parking_lot  = { version = "0.11.1" }
 # substrate
-sp-core     = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
-sp-database = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
-sp-runtime  = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-core     = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-database = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-runtime  = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }

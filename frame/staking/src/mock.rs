@@ -27,7 +27,9 @@ use frame_election_provider_support::onchain;
 use frame_support::{
 	assert_ok, parameter_types,
 	storage::IterableStorageMap,
-	traits::{Currency, FindAuthor, Get, OnFinalize, OnInitialize, OneSessionHandler},
+	traits::{
+		Currency, FindAuthor, GenesisBuild, Get, OnFinalize, OnInitialize, OneSessionHandler,
+	},
 	weights::constants::RocksDbWeight,
 	StorageValue,
 };
@@ -53,6 +55,8 @@ pub(crate) type Balance = u128;
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 type Extrinsic = TestXt<Call, ()>;
+pub(crate) type StakingCall = darwinia_staking::Call<Test>;
+pub(crate) type TestRuntimeCall = <Test as frame_system::Config>::Call;
 
 pub(crate) type StakingError = Error<Test>;
 
@@ -137,6 +141,7 @@ impl frame_system::Config for Test {
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
 	type SS58Prefix = ();
+	type OnSetCode = ();
 }
 
 sp_runtime::impl_opaque_keys! {

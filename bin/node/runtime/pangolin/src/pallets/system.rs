@@ -25,5 +25,6 @@ impl Config for Runtime {
 	type OnKilledAccount = ();
 	type SystemWeightInfo = SubstrateWeight<Runtime>;
 	type SS58Prefix = SS58Prefix;
+	type OnSetCode = ();
 }
 

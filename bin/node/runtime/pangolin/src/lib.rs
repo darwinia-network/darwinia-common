@@ -42,7 +42,11 @@ pub mod constants {
 	pub const DAYS: BlockNumber = 24 * HOURS;
 
 	pub const MILLISECS_PER_BLOCK: Moment = 6000;
+	// NOTE: Currently it is not possible to change the slot duration after the chain has started.
+	//       Attempting to do so will brick block production.
 	pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
+	// NOTE: Currently it is not possible to change the epoch duration after the chain has started.
+	//       Attempting to do so will brick block production.
 	pub const BLOCKS_PER_SESSION: BlockNumber = 3 * MINUTES;
 	pub const SESSIONS_PER_ERA: SessionIndex = 6;
 
@@ -217,8 +221,8 @@ pub use darwinia_staking::StakerStatus;
 use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
-	traits::{KeyOwnerProofSystem, Randomness},
-	weights::constants::ExtrinsicBaseWeight,
+	traits::{KeyOwnerProofSystem, OnRuntimeUpgrade, Randomness},
+	weights::{constants::ExtrinsicBaseWeight, Weight},
 };
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
@@ -289,8 +293,8 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("Pangolin"),
 	impl_name: create_runtime_str!("Pangolin"),
 	authoring_version: 1,
-	// crate version ~2.1.0 := >=2.1.0, <2.2.0
-	spec_version: 211,
+	// crate version ~2.2.0 := >=2.2.0, <2.3.0
+	spec_version: 221,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -384,6 +388,7 @@ frame_support::construct_runtime! {
 
 		EthereumRelay: darwinia_ethereum_relay::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
 		EthereumBacking: darwinia_ethereum_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 36,
+		EthereumIssuing: darwinia_ethereum_issuing::{Pallet, Call, Storage, Config, Event<T>} = 42,
 		EthereumRelayerGame: darwinia_relayer_game::<Instance0>::{Pallet, Storage} = 37,
 		EthereumRelayAuthorities: darwinia_relay_authorities::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>} = 38,
 
@@ -778,7 +783,7 @@ impl_runtime_apis! {
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
 		fn on_runtime_upgrade() -> Result<
-			(frame_support::weights::Weight, frame_support::weights::Weight),
+			(Weight, Weight),
 			sp_runtime::RuntimeString
 		> {
 			let weight = Executive::try_runtime_upgrade()?;
@@ -873,14 +878,16 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 }
 
 pub struct CustomOnRuntimeUpgrade;
-impl frame_support::traits::OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
+impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
-		darwinia_crab_issuing::migration::try_runtime::pre_migrate::<Runtime>()?;
-		darwinia_staking::migrations::v6::pre_migrate::<Runtime>()
+		darwinia_balances::migration::try_runtime::pre_migrate()
 	}
 
-	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-		0
+	fn on_runtime_upgrade() -> Weight {
+		darwinia_balances::migration::migrate(b"Instance0DarwiniaBalances", b"Balances");
+		darwinia_balances::migration::migrate(b"Instance1DarwiniaBalances", b"Kton");
+
+		RuntimeBlockWeights::get().max_block
 	}
 }

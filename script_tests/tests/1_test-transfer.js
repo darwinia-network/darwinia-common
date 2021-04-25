@@ -68,7 +68,7 @@ describe("Test Transfer Balance", function () {
 		const balanceTo = await web3.utils.fromWei(await web3.eth.getBalance(addressTo2), "ether");
 
 		expect(balanceFrom).to.be.equal("123446.78895799999999999");
-		expect(balanceTo).to.be.equal("0");
+		expect(balanceTo).to.be.equal("0.0000000000000001");
 		expect(await web3.eth.getTransactionCount(addressFrom, "latest")).to.eq(2);
 	});
 

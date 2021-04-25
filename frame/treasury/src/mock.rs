@@ -25,6 +25,7 @@ mod treasury {
 }
 
 // --- substrate ---
+use frame_support::traits::GenesisBuild;
 use frame_system::mocking::*;
 use sp_core::H256;
 use sp_runtime::{
@@ -65,6 +66,7 @@ impl frame_system::Config for Test {
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
 	type SS58Prefix = ();
+	type OnSetCode = ();
 }
 
 pub struct Tippers;

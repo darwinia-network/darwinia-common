@@ -30,7 +30,7 @@
 pub mod weights;
 
 use codec::{Decode, Encode};
-use darwinia_support::balance::lock::*;
+use darwinia_support::balance::*;
 use frame_support::traits::{
 	Currency, ExistenceRequirement, Get, LockIdentifier, VestingSchedule, WithdrawReasons,
 };
@@ -477,6 +477,7 @@ mod tests {
 		type OnKilledAccount = ();
 		type SystemWeightInfo = ();
 		type SS58Prefix = ();
+		type OnSetCode = ();
 	}
 
 	frame_support::parameter_types! {

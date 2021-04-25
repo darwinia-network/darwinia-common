@@ -24,21 +24,18 @@ pub mod testing;
 pub mod traits;
 
 pub mod balance {
-	pub mod lock {
-		// --- darwinia ---
-		pub use crate::structs::{BalanceLock, LockFor, LockReasons, StakingLock, Unbonding};
-		pub use crate::traits::{
-			LockIdentifier, LockableCurrency, VestingSchedule, WithdrawReasons,
-		};
-	}
-
-	// --- darwinia ---
-	pub use crate::structs::FrozenBalance;
-	pub use crate::traits::{BalanceInfo, DustCollector, OnUnbalancedKton};
+	pub use crate::structs::{
+		BalanceLock, FrozenBalance, LockFor, LockReasons, StakingLock, Unbonding,
+	};
+	pub use crate::traits::{BalanceInfo, DustCollector, LockableCurrency, OnUnbalancedKton};
 }
 
 pub mod evm {
+	// --- darwinia ---
+	use ethereum_primitives::H160;
+
 	pub const POW_9: u32 = 1_000_000_000;
+	pub const INTERNAL_CALLER: H160 = H160::zero();
 }
 
 #[cfg(test)]

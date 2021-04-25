@@ -148,7 +148,8 @@ use frame_support::{
 	ensure,
 	traits::{
 		schedule::{DispatchTime, Named as ScheduleNamed},
-		BalanceStatus, Currency, EnsureOrigin, Get, OnUnbalanced, ReservableCurrency,
+		BalanceStatus, Currency, EnsureOrigin, Get, LockIdentifier, OnUnbalanced,
+		ReservableCurrency, WithdrawReasons,
 	},
 	weights::{DispatchClass, Pays, Weight},
 	Parameter,
@@ -160,7 +161,7 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 // --- darwinia ---
-use darwinia_support::balance::lock::*;
+use darwinia_support::balance::*;
 
 mod conviction;
 mod types;

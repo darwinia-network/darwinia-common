@@ -89,7 +89,7 @@ use frame_support::{
 	storage::{IterableStorageMap, StorageMap},
 	traits::{
 		ChangeMembers, Contains, ContainsLengthBound, Currency, CurrencyToVote, Get,
-		InitializeMembers, OnUnbalanced, ReservableCurrency,
+		InitializeMembers, LockIdentifier, OnUnbalanced, ReservableCurrency, WithdrawReasons,
 	},
 	weights::Weight,
 };
@@ -101,7 +101,7 @@ use sp_runtime::{
 };
 use sp_std::{cmp::Ordering, prelude::*};
 
-use darwinia_support::balance::lock::*;
+use darwinia_support::balance::*;
 
 pub mod weights;
 pub use weights::WeightInfo;
@@ -1118,6 +1118,7 @@ mod tests {
 		type OnKilledAccount = ();
 		type SystemWeightInfo = ();
 		type SS58Prefix = ();
+		type OnSetCode = ();
 	}
 
 	frame_support::parameter_types! {
@@ -1345,7 +1346,6 @@ mod tests {
 	}
 
 	fn has_lock(who: &u64) -> u64 {
-		dbg!(Balances::locks(who));
 		Balances::locks(who)
 			.get(0)
 			.cloned()

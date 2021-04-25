@@ -76,7 +76,7 @@ use sp_std::{convert::TryFrom, prelude::*};
 // --- darwinia ---
 use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::{
-	balance::lock::*,
+	balance::*,
 	traits::{EthereumReceipt, OnDepositRedeem},
 };
 use ethereum_primitives::{

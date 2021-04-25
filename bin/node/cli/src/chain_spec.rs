@@ -18,6 +18,8 @@
 
 // --- std ---
 use std::{collections::BTreeMap, marker::PhantomData};
+// --- crates ---
+use rand::{seq::SliceRandom, Rng};
 // --- substrate ---
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_service::{ChainType, Properties};
@@ -67,6 +69,8 @@ const TEAM_MEMBERS: &[&'static str] = &[
 	"0x187c272f576b1999d6cf3dd529b59b832db12125b43e57fb088677eb0c570a6b",
 	// Xavier
 	"0xb4f7f03bebc56ebe96bc52ea5ed3159d45a0ce3a8d7f082983c33ef133274747",
+	// Xuelei
+	"0x88d388115bd0df43e805b029207cfa4925cecfb29026e345979d9b0004466c49",
 ];
 const EVM_ACCOUNTS: &[&'static str] = &[
 	"0x68898db1012808808c903f390909c52d9f706749",
@@ -89,6 +93,8 @@ const SET_AUTHORITIES_ADDRESS: &'static str = "0xD35Bb6F1bc1C84b53E0995c1830454A
 const RING_TOKEN_ADDRESS: &'static str = "0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0";
 const KTON_TOKEN_ADDRESS: &'static str = "0x1994100c58753793D52c6f457f189aa3ce9cEe94";
 const ETHEREUM_RELAY_AUTHORITY_SIGNER: &'static str = "0x68898db1012808808c903f390909c52d9f706749";
+const MAPPING_FACTORY_ADDRESS: &'static str = "0x6b58D3903Ae8997A5dA02FAAd51333D4Bf6958cC";
+const ETHEREUM_BACKING_ADDRESS: &'static str = "0xbF6E8B2A6387952C39634f4cCF6Acf4FA2b99FA4";
 
 fn session_keys(
 	babe: BabeId,
@@ -220,6 +226,7 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 			"0x1ed7de3855ffcce134d718b570febb49bbbbeb32ebbc8c319f44fb9f5690643a",
 		),
 	];
+	let initial_nominators = <Vec<AccountId>>::new();
 	let collective_members = vec![get_account_id_from_seed::<sr25519::Public>("Alice")];
 	let evm_accounts = {
 		let mut map = BTreeMap::new();
@@ -260,6 +267,11 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 					.map(|Keys { stash, .. }| (stash.to_owned(), A_FEW_COINS)),
 			)
 			.chain(
+				initial_nominators
+					.iter()
+					.map(|n| (n.to_owned(), A_FEW_COINS))
+			)
+			.chain(
 				TEAM_MEMBERS
 					.iter()
 					.map(|m| (array_bytes::hex2array_unchecked!(m, 32).into(), MANY_COINS)),
@@ -273,6 +285,11 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 					initial_authorities
 						.iter()
 						.map(|Keys { stash, .. }| (stash.to_owned(), A_FEW_COINS)),
+				)
+				.chain(
+					initial_nominators
+						.iter()
+						.map(|n| (n.to_owned(), A_FEW_COINS))
 				)
 				.chain(
 					TEAM_MEMBERS
@@ -292,6 +309,19 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 					A_FEW_COINS,
 					pangolin_runtime::StakerStatus::Validator
 				))
+				.chain(initial_nominators.iter().map(|n| {
+					let mut rng = rand::thread_rng();
+					let limit = (pangolin_runtime::MAX_NOMINATIONS as usize).min(initial_authorities.len());
+					let count = rng.gen::<usize>() % limit;
+					let nominations = initial_authorities
+						.as_slice()
+						.choose_multiple(&mut rng, count)
+						.into_iter()
+						.map(|c| c.stash.clone())
+						.collect::<Vec<_>>();
+
+					(n.clone(), n.clone(), A_FEW_COINS, pangolin_runtime::StakerStatus::Nominator(nominations))
+				}))
 				.collect(),
 			slash_reward_fraction: Perbill::from_percent(10),
 			payout_fraction: Perbill::from_percent(50),
@@ -345,6 +375,10 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 			kton_token_address: array_bytes::hex2array_unchecked!(KTON_TOKEN_ADDRESS, 20).into(),
 			ring_locked: BUNCH_OF_COINS,
 			kton_locked: BUNCH_OF_COINS,
+		},
+		darwinia_ethereum_issuing: pangolin_runtime::EthereumIssuingConfig {
+			mapping_factory_address: array_bytes::hex2array_unchecked!(MAPPING_FACTORY_ADDRESS, 20).into(),
+			ethereum_backing_address: array_bytes::hex2array_unchecked!(ETHEREUM_BACKING_ADDRESS, 20).into(),
 		},
 		darwinia_relay_authorities_Instance0: pangolin_runtime::EthereumRelayAuthoritiesConfig {
 			authorities: vec![(
@@ -498,6 +532,10 @@ fn pangolin_development_genesis() -> pangolin_runtime::GenesisConfig {
 			kton_token_address: array_bytes::hex2array_unchecked!(KTON_TOKEN_ADDRESS, 20).into(),
 			ring_locked: BUNCH_OF_COINS,
 			kton_locked: BUNCH_OF_COINS,
+		},
+		darwinia_ethereum_issuing: pangolin_runtime::EthereumIssuingConfig {
+			mapping_factory_address: array_bytes::hex2array_unchecked!(MAPPING_FACTORY_ADDRESS, 20).into(),
+			ethereum_backing_address: array_bytes::hex2array_unchecked!(ETHEREUM_BACKING_ADDRESS, 20).into(),
 		},
 		darwinia_relay_authorities_Instance0: pangolin_runtime::EthereumRelayAuthoritiesConfig {
 			authorities: vec![(

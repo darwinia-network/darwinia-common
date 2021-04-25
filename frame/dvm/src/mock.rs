@@ -22,16 +22,16 @@ use crate::{
 	*,
 };
 use codec::{Decode, Encode};
-use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator};
+use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator, IssuingHandler};
 use ethereum::{TransactionAction, TransactionSignature};
-use frame_support::ConsensusEngineId;
+use frame_support::{traits::GenesisBuild, ConsensusEngineId};
 use frame_system::mocking::*;
 use rlp::*;
 use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	AccountId32, ModuleId, Perbill, RuntimeDebug,
+	AccountId32, DispatchResult, ModuleId, Perbill, RuntimeDebug,
 };
 
 darwinia_support::impl_test_account_data! {}
@@ -71,6 +71,7 @@ impl frame_system::Config for Test {
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
 	type SS58Prefix = ();
+	type OnSetCode = ();
 }
 
 frame_support::parameter_types! {
@@ -122,6 +123,14 @@ impl FeeCalculator for FixedGasPrice {
 	}
 }
 
+/// EmptyIssuingHandler
+pub struct EmptyIssuingHandler;
+impl IssuingHandler for EmptyIssuingHandler {
+	fn handle(_address: H160, _caller: H160, _input: &[u8]) -> DispatchResult {
+		Ok(())
+	}
+}
+
 pub struct EthereumFindAuthor;
 impl FindAuthor<H160> for EthereumFindAuthor {
 	fn find_author<'a, I>(_digests: I) -> Option<H160>
@@ -170,6 +179,7 @@ impl darwinia_evm::Config for Test {
 	type Runner = darwinia_evm::runner::stack::Runner<Self>;
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
+	type IssuingHandler = EmptyIssuingHandler;
 }
 
 impl Config for Test {

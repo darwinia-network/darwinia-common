@@ -21,14 +21,6 @@
 #[macro_export]
 macro_rules! decl_tests {
 	($test:ty, $ext_builder:ty, $existential_deposit:expr) => {
-		// --- substrate ---
-		use frame_support::{
-			assert_err, assert_noop, assert_storage_noop,
-			traits::{Currency, ExistenceRequirement::AllowDeath, ReservableCurrency},
-		};
-		use pallet_transaction_payment::{ChargeTransactionPayment, Multiplier};
-		use sp_runtime::{FixedPointNumber, traits::{SignedExtension, BadOrigin}};
-
 		pub const CALL: &<$test as frame_system::Config>::Call =
 			&Call::Ring(darwinia_balances::Call::transfer(0, 0));
 
@@ -65,7 +57,7 @@ macro_rules! decl_tests {
 					assert_eq!(Ring::free_balance(1), 10);
 					Ring::set_lock(ID_1, &1, LockFor::Common { amount: 9 }, WithdrawReasons::all());
 					assert_noop!(
-						<Ring as Currency<_>>::transfer(&1, &2, 5, AllowDeath),
+						<Ring as Currency<_>>::transfer(&1, &2, 5, ExistenceRequirement::AllowDeath),
 						RingError::LiquidityRestrictions
 					);
 				});
@@ -79,7 +71,7 @@ macro_rules! decl_tests {
 				.build()
 				.execute_with(|| {
 					assert_eq!(Ring::free_balance(1), 10);
-					assert_ok!(<Ring as Currency<_>>::transfer(&1, &2, 10, AllowDeath));
+					assert_ok!(<Ring as Currency<_>>::transfer(&1, &2, 10, ExistenceRequirement::AllowDeath));
 					// Check that the account is dead.
 					assert!(!<frame_system::Account<Test>>::contains_key(&1));
 				});
@@ -93,7 +85,7 @@ macro_rules! decl_tests {
 				.build()
 				.execute_with(|| {
 					Ring::set_lock(ID_1, &1, LockFor::Common { amount: 5 }, WithdrawReasons::all());
-					assert_ok!(<Ring as Currency<_>>::transfer(&1, &2, 1, AllowDeath));
+					assert_ok!(<Ring as Currency<_>>::transfer(&1, &2, 1, ExistenceRequirement::AllowDeath));
 				});
 		}
 
@@ -113,7 +105,7 @@ macro_rules! decl_tests {
 						WithdrawReasons::all(),
 					);
 					Ring::remove_lock(ID_1, &1);
-					assert_ok!(<Ring as Currency<_>>::transfer(&1, &2, 1, AllowDeath));
+					assert_ok!(<Ring as Currency<_>>::transfer(&1, &2, 1, ExistenceRequirement::AllowDeath));
 				});
 		}
 
@@ -133,7 +125,7 @@ macro_rules! decl_tests {
 						WithdrawReasons::all(),
 					);
 					Ring::set_lock(ID_1, &1, LockFor::Common { amount: 5 }, WithdrawReasons::all());
-					assert_ok!(<Ring as Currency<_>>::transfer(&1, &2, 1, AllowDeath));
+					assert_ok!(<Ring as Currency<_>>::transfer(&1, &2, 1, ExistenceRequirement::AllowDeath));
 				});
 		}
 
@@ -146,7 +138,7 @@ macro_rules! decl_tests {
 				.execute_with(|| {
 					Ring::set_lock(ID_1, &1, LockFor::Common { amount: 5 }, WithdrawReasons::all());
 					Ring::set_lock(ID_2, &1, LockFor::Common { amount: 5 }, WithdrawReasons::all());
-					assert_ok!(<Ring as Currency<_>>::transfer(&1, &2, 1, AllowDeath));
+					assert_ok!(<Ring as Currency<_>>::transfer(&1, &2, 1, ExistenceRequirement::AllowDeath));
 				});
 		}
 
@@ -166,7 +158,7 @@ macro_rules! decl_tests {
 						WithdrawReasons::empty(),
 					);
 					Ring::set_lock(ID_2, &1, LockFor::Common { amount: 0 }, WithdrawReasons::all());
-					assert_ok!(<Ring as Currency<_>>::transfer(&1, &2, 1, AllowDeath));
+					assert_ok!(<Ring as Currency<_>>::transfer(&1, &2, 1, ExistenceRequirement::AllowDeath));
 				});
 		}
 
@@ -179,17 +171,17 @@ macro_rules! decl_tests {
 				.execute_with(|| {
 					Ring::set_lock(ID_1, &1, LockFor::Common { amount: 5 }, WithdrawReasons::all());
 					assert_noop!(
-						<Ring as Currency<_>>::transfer(&1, &2, 6, AllowDeath),
+						<Ring as Currency<_>>::transfer(&1, &2, 6, ExistenceRequirement::AllowDeath),
 						RingError::LiquidityRestrictions
 					);
 					assert_ok!(Ring::extend_lock(ID_1, &1, 2, WithdrawReasons::all()));
 					assert_noop!(
-						<Ring as Currency<_>>::transfer(&1, &2, 6, AllowDeath),
+						<Ring as Currency<_>>::transfer(&1, &2, 6, ExistenceRequirement::AllowDeath),
 						RingError::LiquidityRestrictions
 					);
 					assert_ok!(Ring::extend_lock(ID_1, &1, 8, WithdrawReasons::all()));
 					assert_noop!(
-						<Ring as Currency<_>>::transfer(&1, &2, 3, AllowDeath),
+						<Ring as Currency<_>>::transfer(&1, &2, 3, ExistenceRequirement::AllowDeath),
 						RingError::LiquidityRestrictions
 					);
 				});
@@ -210,7 +202,7 @@ macro_rules! decl_tests {
 						WithdrawReasons::RESERVE,
 					);
 					assert_noop!(
-						<Ring as Currency<_>>::transfer(&1, &2, 1, AllowDeath),
+						<Ring as Currency<_>>::transfer(&1, &2, 1, ExistenceRequirement::AllowDeath),
 						RingError::LiquidityRestrictions
 					);
 					assert_noop!(
@@ -244,7 +236,7 @@ macro_rules! decl_tests {
 						LockFor::Common { amount: 10 },
 						WithdrawReasons::TRANSACTION_PAYMENT,
 					);
-					assert_ok!(<Ring as Currency<_>>::transfer(&1, &2, 1, AllowDeath));
+					assert_ok!(<Ring as Currency<_>>::transfer(&1, &2, 1, ExistenceRequirement::AllowDeath));
 					assert_ok!(<Ring as ReservableCurrency<_>>::reserve(&1, 1));
 					assert!(
 						<ChargeTransactionPayment<$test> as SignedExtension>::pre_dispatch(
@@ -278,18 +270,18 @@ macro_rules! decl_tests {
 				.execute_with(|| {
 					Ring::set_lock(ID_1, &1, LockFor::Common { amount: 10 }, WithdrawReasons::all());
 					assert_noop!(
-						<Ring as Currency<_>>::transfer(&1, &2, 6, AllowDeath),
+						<Ring as Currency<_>>::transfer(&1, &2, 6, ExistenceRequirement::AllowDeath),
 						RingError::LiquidityRestrictions
 					);
 					Ring::extend_lock(ID_1, &1, 10, WithdrawReasons::all()).unwrap();
 					assert_noop!(
-						<Ring as Currency<_>>::transfer(&1, &2, 6, AllowDeath),
+						<Ring as Currency<_>>::transfer(&1, &2, 6, ExistenceRequirement::AllowDeath),
 						RingError::LiquidityRestrictions
 					);
 					System::set_block_number(2);
 					Ring::extend_lock(ID_1, &1, 10, WithdrawReasons::all()).unwrap();
 					assert_noop!(
-						<Ring as Currency<_>>::transfer(&1, &2, 3, AllowDeath),
+						<Ring as Currency<_>>::transfer(&1, &2, 3, ExistenceRequirement::AllowDeath),
 						RingError::LiquidityRestrictions
 					);
 				});
@@ -309,17 +301,17 @@ macro_rules! decl_tests {
 						WithdrawReasons::TRANSFER,
 					);
 					assert_noop!(
-						<Ring as Currency<_>>::transfer(&1, &2, 6, AllowDeath),
+						<Ring as Currency<_>>::transfer(&1, &2, 6, ExistenceRequirement::AllowDeath),
 						RingError::LiquidityRestrictions
 					);
 					Ring::extend_lock(ID_1, &1, 10, WithdrawReasons::empty()).unwrap();
 					assert_noop!(
-						<Ring as Currency<_>>::transfer(&1, &2, 6, AllowDeath),
+						<Ring as Currency<_>>::transfer(&1, &2, 6, ExistenceRequirement::AllowDeath),
 						RingError::LiquidityRestrictions
 					);
 					Ring::extend_lock(ID_1, &1, 10, WithdrawReasons::RESERVE).unwrap();
 					assert_noop!(
-						<Ring as Currency<_>>::transfer(&1, &2, 6, AllowDeath),
+						<Ring as Currency<_>>::transfer(&1, &2, 6, ExistenceRequirement::AllowDeath),
 						RingError::LiquidityRestrictions
 					);
 				});
@@ -548,7 +540,7 @@ macro_rules! decl_tests {
 				let _ = Ring::deposit_creating(&1, 110);
 				let _ = Ring::deposit_creating(&2, 1);
 				assert_ok!(Ring::reserve(&1, 110));
-				assert_ok!(Ring::repatriate_reserved(&1, &2, 41, Status::Free), 0);
+				assert_ok!(Ring::repatriate_reserved(&1, &2, 41, BalanceStatus::Free), 0);
 				assert_eq!(Ring::reserved_balance(1), 69);
 				assert_eq!(Ring::free_balance(1), 0);
 				assert_eq!(Ring::reserved_balance(2), 0);
@@ -562,7 +554,7 @@ macro_rules! decl_tests {
 				let _ = Ring::deposit_creating(&1, 110);
 				let _ = Ring::deposit_creating(&2, 1);
 				assert_ok!(Ring::reserve(&1, 110));
-				assert_ok!(Ring::repatriate_reserved(&1, &2, 41, Status::Reserved), 0);
+				assert_ok!(Ring::repatriate_reserved(&1, &2, 41, BalanceStatus::Reserved), 0);
 				assert_eq!(Ring::reserved_balance(1), 69);
 				assert_eq!(Ring::free_balance(1), 0);
 				assert_eq!(Ring::reserved_balance(2), 41);
@@ -576,7 +568,7 @@ macro_rules! decl_tests {
 				let _ = Ring::deposit_creating(&1, 111);
 				assert_ok!(Ring::reserve(&1, 111));
 				assert_noop!(
-					Ring::repatriate_reserved(&1, &2, 42, Status::Free),
+					Ring::repatriate_reserved(&1, &2, 42, BalanceStatus::Free),
 					RingError::DeadAccount
 				);
 			});
@@ -588,7 +580,7 @@ macro_rules! decl_tests {
 				let _ = Ring::deposit_creating(&1, 110);
 				let _ = Ring::deposit_creating(&2, 1);
 				assert_ok!(Ring::reserve(&1, 41));
-				assert_ok!(Ring::repatriate_reserved(&1, &2, 69, Status::Free), 28);
+				assert_ok!(Ring::repatriate_reserved(&1, &2, 69, BalanceStatus::Free), 28);
 				assert_eq!(Ring::reserved_balance(1), 0);
 				assert_eq!(Ring::free_balance(1), 69);
 				assert_eq!(Ring::reserved_balance(2), 0);
@@ -785,7 +777,7 @@ macro_rules! decl_tests {
 
 					assert_eq!(
 						last_event(),
-						Event::darwinia_balances_Instance0(RawEvent::Reserved(1, 10)),
+						Event::darwinia_balances_Instance0(darwinia_balances::Event::Reserved(1, 10)),
 					);
 
 					System::set_block_number(3);
@@ -793,7 +785,7 @@ macro_rules! decl_tests {
 
 					assert_eq!(
 						last_event(),
-						Event::darwinia_balances_Instance0(RawEvent::Unreserved(1, 5)),
+						Event::darwinia_balances_Instance0(darwinia_balances::Event::Unreserved(1, 5)),
 					);
 
 					System::set_block_number(4);
@@ -802,7 +794,7 @@ macro_rules! decl_tests {
 					// should only unreserve 5
 					assert_eq!(
 						last_event(),
-						Event::darwinia_balances_Instance0(RawEvent::Unreserved(1, 5)),
+						Event::darwinia_balances_Instance0(darwinia_balances::Event::Unreserved(1, 5)),
 					);
 				});
 		}
@@ -819,8 +811,8 @@ macro_rules! decl_tests {
 						events(),
 						[
 							Event::frame_system(frame_system::Event::NewAccount(1)),
-							Event::darwinia_balances_Instance0(RawEvent::Endowed(1, 100)),
-							Event::darwinia_balances_Instance0(RawEvent::BalanceSet(1, 100, 0)),
+							Event::darwinia_balances_Instance0(darwinia_balances::Event::Endowed(1, 100)),
+							Event::darwinia_balances_Instance0(darwinia_balances::Event::BalanceSet(1, 100, 0)),
 						]
 					);
 
@@ -829,8 +821,8 @@ macro_rules! decl_tests {
 					assert_eq!(
 						events(),
 						[
-							Event::darwinia_balances_Instance0(RawEvent::DustLost(1, 99)),
-							Event::frame_system(frame_system::Event::KilledAccount(1))
+							Event::frame_system(frame_system::Event::KilledAccount(1)),
+							Event::darwinia_balances_Instance0(darwinia_balances::Event::DustLost(1, 99))
 						]
 					);
 				});
@@ -848,8 +840,8 @@ macro_rules! decl_tests {
 						events(),
 						[
 							Event::frame_system(frame_system::Event::NewAccount(1)),
-							Event::darwinia_balances_Instance0(RawEvent::Endowed(1, 100)),
-							Event::darwinia_balances_Instance0(RawEvent::BalanceSet(1, 100, 0)),
+							Event::darwinia_balances_Instance0(darwinia_balances::Event::Endowed(1, 100)),
+							Event::darwinia_balances_Instance0(darwinia_balances::Event::BalanceSet(1, 100, 0)),
 						]
 					);
 
@@ -1053,9 +1045,22 @@ macro_rules! decl_tests {
 					// Slash Reserve
 					assert_storage_noop!(assert_eq!(Ring::slash_reserved(&1337, 42).1, 42));
 					// Repatriate Reserve
-					assert_noop!(Ring::repatriate_reserved(&1337, &1338, 42, Status::Free), RingError::DeadAccount);
+					assert_noop!(Ring::repatriate_reserved(&1337, &1338, 42, BalanceStatus::Free), RingError::DeadAccount);
 					// Slash
 					assert_storage_noop!(assert_eq!(Ring::slash(&1337, 42).1, 42));
+				});
+		}
+
+		#[test]
+		fn transfer_keep_alive_all_free_succeed() {
+			<$ext_builder>::default()
+				.existential_deposit(100)
+				.build()
+				.execute_with(|| {
+					assert_ok!(Ring::set_balance(Origin::root(), 1, 100, 100));
+					assert_ok!(Ring::transfer_keep_alive(Some(1).into(), 2, 100));
+					assert_eq!(Ring::total_balance(&1), 100);
+					assert_eq!(Ring::total_balance(&2), 100);
 				});
 		}
 	};

@@ -5,7 +5,7 @@ use codec::Encode;
 // --- substrate ---
 use frame_support::{
 	assert_noop, assert_ok, ord_parameter_types,
-	traits::{Contains, Filter, OnInitialize},
+	traits::{Contains, Filter, GenesisBuild, OnInitialize},
 	weights::Weight,
 };
 use frame_system::{mocking::*, EnsureRoot, EnsureSignedBy};
@@ -94,6 +94,7 @@ impl frame_system::Config for Test {
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
 	type SS58Prefix = ();
+	type OnSetCode = ();
 }
 frame_support::parameter_types! {
 	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) * BlockWeights::get().max_block;
