@@ -283,66 +283,6 @@ pub use weights::WeightInfo;
 pub mod inflation;
 pub mod slashing;
 
-pub mod migrations {
-	use super::*;
-
-	pub mod v6 {
-		use super::*;
-		use frame_support::{pallet_prelude::*, traits::Get, weights::Weight};
-
-		// NOTE: value type doesn't matter, we just set it to () here.
-		frame_support::generate_storage_alias!(SnapshotValidators => Value<()>);
-		frame_support::generate_storage_alias!(SnapshotNominators => Value<()>);
-		frame_support::generate_storage_alias!(QueuedElected => Value<()>);
-		frame_support::generate_storage_alias!(QueuedScore => Value<()>);
-		frame_support::generate_storage_alias!(EraElectionStatus => Value<()>);
-		frame_support::generate_storage_alias!(IsCurrentSessionFinal => Value<()>);
-
-		/// check to execute prior to migration.
-		pub fn pre_migrate<T: Config>() -> Result<(), &'static str> {
-			// these may or may not exist.
-			log!(
-				info,
-				"SnapshotValidators.exits()? {:?}",
-				SnapshotValidators::exists()
-			);
-			log!(
-				info,
-				"SnapshotNominators.exits()? {:?}",
-				SnapshotNominators::exists()
-			);
-			log!(info, "QueuedElected.exits()? {:?}", QueuedElected::exists());
-			log!(info, "QueuedScore.exits()? {:?}", QueuedScore::exists());
-			// these must exist.
-			assert!(
-				IsCurrentSessionFinal::exists(),
-				"IsCurrentSessionFinal storage item not found!"
-			);
-			assert!(
-				EraElectionStatus::exists(),
-				"EraElectionStatus storage item not found!"
-			);
-			Ok(())
-		}
-
-		/// Migrate storage to v6.
-		pub fn migrate<T: Config>() -> Weight {
-			log!(info, "Migrating staking to Releases::V6_0_0");
-
-			SnapshotValidators::kill();
-			SnapshotNominators::kill();
-			QueuedElected::kill();
-			QueuedScore::kill();
-			EraElectionStatus::kill();
-			IsCurrentSessionFinal::kill();
-
-			StorageVersion::put(Releases::V6_0_0);
-			log!(info, "Done.");
-			T::DbWeight::get().writes(6 + 1)
-		}
-	}
-}
-
 mod types {
 	// --- darwinia ---
 	use crate::*;
@@ -943,14 +883,6 @@ decl_module! {
 		const TotalPower: Power = T::TotalPower::get();
 
 		fn deposit_event() = default;
-
-		fn on_runtime_upgrade() -> Weight {
-			if StorageVersion::get() == Releases::V5_0_0 {
-				migrations::v6::migrate::<T>()
-			} else {
-				T::DbWeight::get().reads(1)
-			}
-		}
 
 		fn on_initialize(_now: T::BlockNumber) -> Weight {
 			// just return the weight of the on_finalize.
