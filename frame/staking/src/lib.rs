@@ -290,28 +290,13 @@ pub mod migrations {
 		use super::*;
 		use frame_support::{pallet_prelude::*, traits::Get, weights::Weight};
 
-		macro_rules! generate_storage_types {
-			($name:ident => Value<$value:ty>) => {
-				paste::paste! {
-					struct [<$name Instance>];
-					impl frame_support::traits::StorageInstance for [<$name Instance>] {
-						fn pallet_prefix() -> &'static str {
-							"DarwiniaStaking"
-						}
-						const STORAGE_PREFIX: &'static str = stringify!($name);
-					}
-					type $name = StorageValue<[<$name Instance>], $value, ValueQuery>;
-				}
-			};
-		}
-
 		// NOTE: value type doesn't matter, we just set it to () here.
-		generate_storage_types!(SnapshotValidators => Value<()>);
-		generate_storage_types!(SnapshotNominators => Value<()>);
-		generate_storage_types!(QueuedElected => Value<()>);
-		generate_storage_types!(QueuedScore => Value<()>);
-		generate_storage_types!(EraElectionStatus => Value<()>);
-		generate_storage_types!(IsCurrentSessionFinal => Value<()>);
+		frame_support::generate_storage_alias!(SnapshotValidators => Value<()>);
+		frame_support::generate_storage_alias!(SnapshotNominators => Value<()>);
+		frame_support::generate_storage_alias!(QueuedElected => Value<()>);
+		frame_support::generate_storage_alias!(QueuedScore => Value<()>);
+		frame_support::generate_storage_alias!(EraElectionStatus => Value<()>);
+		frame_support::generate_storage_alias!(IsCurrentSessionFinal => Value<()>);
 
 		/// check to execute prior to migration.
 		pub fn pre_migrate<T: Config>() -> Result<(), &'static str> {
