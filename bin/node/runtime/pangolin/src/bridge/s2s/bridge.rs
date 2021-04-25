@@ -2,12 +2,12 @@
 use crate::*;
 
 // --- s2s bridger ---
-pub use pallet_bridge_grandpa::Call as BridgeGrandpaMillauCall;
+pub use pallet_bridge_grandpa::Pallet as BridgeGrandpaMillauCall;
 pub use pallet_bridge_messages::Call as MessagesCall;
 // --- frame ---
 use frame_system::limits;
-use sp_runtime::traits::Convert;
 use sp_runtime::{MultiSigner, MultiSignature};
+use sp_runtime::traits::Convert;
 
 pub(crate) type WithMillauMessagesInstance = pallet_bridge_messages::DefaultInstance;
 
@@ -42,16 +42,6 @@ frame_support::parameter_types! {
 
 
 
-
-/// Convert a 256-bit hash into an AccountId.
-pub struct AccountIdConverter;
-
-impl Convert<sp_core::H256, AccountId> for AccountIdConverter {
-	fn convert(hash: sp_core::H256) -> AccountId {
-		hash.to_fixed_bytes().into()
-	}
-}
-
 // We use this to get the account on Rialto (target) which is derived from Millau's (source)
 // account. We do this so we can fund the derived account on Rialto at Genesis to it can pay
 // transaction fees.
@@ -78,7 +68,7 @@ impl pallet_bridge_grandpa::Config for Runtime {
 impl pallet_shift_session_manager::Config for Runtime {}
 
 
-impl pallet_bridge_messages::Config for Runtime {
+impl pallet_bridge_messages::Config<WithMillauMessagesInstance> for Runtime {
 	type Event = Event;
 	// todo: there need use real weight for pangolin
 	type WeightInfo = pallet_bridge_messages::weights::RialtoWeight<Runtime>;

@@ -22,10 +22,11 @@
 #![warn(missing_docs)]
 
 // --- substrate ---
+use bp_runtime::Chain;
 use sp_core::H256;
 use sp_runtime::{
 	generic,
-	traits::{AccountIdLookup, BlakeTwo256, IdentifyAccount, Verify},
+	traits::{AccountIdLookup, Convert, BlakeTwo256, IdentifyAccount, Verify},
 	MultiSignature, MultiSigner, OpaqueExtrinsic,
 	Perbill,
 };
@@ -39,6 +40,9 @@ use frame_system::{
 	Config,
 };
 use sp_version::RuntimeVersion;
+
+// --- s2s ---
+use bp_messages::{LaneId, MessageNonce, UnrewardedRelayersState};
 
 /// An index to a block.
 /// 32-bits will allow for 136 years of blocks assuming 1 block per second.
@@ -107,7 +111,7 @@ pub mod time_units {
 	pub const DAYS: BlockNumber = HOURS * 24;
 }
 
-/// Number of bytes, included in the signed Rialto transaction apart from the encoded call itself.
+/// Number of bytes, included in the signed Pangolin transaction apart from the encoded call itself.
 ///
 /// Can be computed by subtracting encoded call size from raw transaction size.
 pub const TX_EXTRA_BYTES: u32 = 103;
@@ -121,7 +125,7 @@ pub const MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE: MessageNonce = 128;
 /// Maximal number of unconfirmed messages at inbound lane.
 pub const MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE: MessageNonce = 128;
 
-/// Maximal weight of single message delivery confirmation transaction on Rialto chain.
+/// Maximal weight of single message delivery confirmation transaction on Pangolin chain.
 ///
 /// This value is a result of `pallet_bridge_messages::Pallet::receive_messages_delivery_proof` weight formula computation
 /// for the case when single message is confirmed. The result then must be rounded up to account possible future
@@ -129,11 +133,11 @@ pub const MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE: MessageNonce = 128;
 pub const MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT: Weight = 2_000_000_000;
 
 /// Number of extra bytes (excluding size of storage value itself) of storage proof, built at
-/// Rialto chain. This mostly depends on number of entries (and their density) in the storage trie.
+/// Pangolin chain. This mostly depends on number of entries (and their density) in the storage trie.
 /// Some reserve is reserved to account future chain growth.
 pub const EXTRA_STORAGE_PROOF_SIZE: u32 = 1024;
 
-/// Name of the `RialtoFinalityApi::best_finalized` runtime method.
+/// Name of the `PangolinFinalityApi::best_finalized` runtime method.
 pub const BEST_FINALIZED_PANGOLIN_HEADER_METHOD: &str = "PangolinFinalityApi_best_finalized";
 
 /// Name of the `FromPangolinInboundLaneApi::latest_received_nonce` runtime method.
@@ -154,13 +158,13 @@ pub const TO_PANGOLIN_LATEST_GENERATED_NONCE_METHOD: &str = "ToPangolinOutboundL
 pub const TO_PANGOLIN_LATEST_RECEIVED_NONCE_METHOD: &str = "ToPangolinOutboundLaneApi_latest_received_nonce";
 
 
-/// Increase of delivery transaction weight on Rialto chain with every additional message byte.
+/// Increase of delivery transaction weight on Pangolin chain with every additional message byte.
 ///
 /// This value is a result of `pallet_bridge_messages::WeightInfoExt::storage_proof_size_overhead(1)` call. The
 /// result then must be rounded up to account possible future runtime upgrades.
 pub const ADDITIONAL_MESSAGE_BYTE_DELIVERY_WEIGHT: Weight = 25_000;
 
-/// Weight of single regular message delivery transaction on Rialto chain.
+/// Weight of single regular message delivery transaction on Pangolin chain.
 ///
 /// This value is a result of `pallet_bridge_messages::Pallet::receive_messages_proof_weight()` call
 /// for the case when single message of `pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH` bytes is delivered.
@@ -177,9 +181,11 @@ const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(25);
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 /// We allow for 2 seconds of compute with a 6 second average block time.
 const MAXIMUM_BLOCK_WEIGHT: Weight = 2 * WEIGHT_PER_SECOND;
+
 static_assertions::const_assert!(
 	NORMAL_DISPATCH_RATIO.deconstruct() >= AVERAGE_ON_INITIALIZE_RATIO.deconstruct()
 );
+
 frame_support::parameter_types! {
 	pub const BlockHashCount: BlockNumber = 2400;
 	pub const Version: RuntimeVersion = VERSION;
@@ -209,7 +215,7 @@ frame_support::parameter_types! {
 
 /// Get the maximum weight (compute time) that a Normal extrinsic on the Millau chain can use.
 pub fn max_extrinsic_weight() -> Weight {
-	BlockWeights::get()
+	RuntimeBlockWeights::get()
 		.get(DispatchClass::Normal)
 		.max_extrinsic
 		.unwrap_or(Weight::MAX)
@@ -219,3 +225,114 @@ pub fn max_extrinsic_weight() -> Weight {
 pub fn max_extrinsic_size() -> u32 {
 	*BlockLength::get().max.get(DispatchClass::Normal)
 }
+
+
+
+/// Convert a 256-bit hash into an AccountId.
+pub struct AccountIdConverter;
+
+impl Convert<sp_core::H256, AccountId> for AccountIdConverter {
+	fn convert(hash: sp_core::H256) -> AccountId {
+		hash.to_fixed_bytes().into()
+	}
+}
+
+
+/// Pangolin chain.
+#[derive(RuntimeDebug)]
+pub struct PangolinSubstrateChain;
+
+impl Chain for PangolinSubstrateChain {
+	type BlockNumber = BlockNumber;
+	type Hash = Hash;
+	type Hasher = Hashing;
+	type Header = Header;
+}
+
+
+sp_api::decl_runtime_apis! {
+	/// API for querying information about Pangolin headers from the Bridge Pallet instance.
+	///
+	/// This API is implemented by runtimes that are bridging with the Pangolin chain, not the
+	/// Pangolin runtime itself.
+	pub trait PangolinHeaderApi {
+		/// Returns number and hash of the best blocks known to the bridge module.
+		///
+		/// Will return multiple headers if there are many headers at the same "best" height.
+		///
+		/// The caller should only submit an `import_header` transaction that makes
+		/// (or leads to making) other header the best one.
+		fn best_blocks() -> Vec<(BlockNumber, Hash)>;
+		/// Returns number and hash of the best finalized block known to the bridge module.
+		fn finalized_block() -> (BlockNumber, Hash);
+		/// Returns numbers and hashes of headers that require finality proofs.
+		///
+		/// An empty response means that there are no headers which currently require a
+		/// finality proof.
+		fn incomplete_headers() -> Vec<(BlockNumber, Hash)>;
+		/// Returns true if the header is known to the runtime.
+		fn is_known_block(hash: Hash) -> bool;
+		/// Returns true if the header is considered finalized by the runtime.
+		fn is_finalized_block(hash: Hash) -> bool;
+	}
+
+	/// API for querying information about the finalized Pangolin headers.
+	///
+	/// This API is implemented by runtimes that are bridging with the Pangolin chain, not the
+	/// Millau runtime itself.
+	pub trait PangolinFinalityApi {
+		/// Returns number and hash of the best finalized header known to the bridge module.
+		fn best_finalized() -> (BlockNumber, Hash);
+		/// Returns true if the header is known to the runtime.
+		fn is_known_header(hash: Hash) -> bool;
+	}
+
+	/// Outbound message lane API for messages that are sent to Pangolin chain.
+	///
+	/// This API is implemented by runtimes that are sending messages to Pangolin chain, not the
+	/// Pangolin runtime itself.
+	pub trait ToPangolinOutboundLaneApi<OutboundMessageFee: Parameter, OutboundPayload: Parameter> {
+		/// Estimate message delivery and dispatch fee that needs to be paid by the sender on
+		/// this chain.
+		///
+		/// Returns `None` if message is too expensive to be sent to Pangolin from this chain.
+		///
+		/// Please keep in mind that this method returns lowest message fee required for message
+		/// to be accepted to the lane. It may be good idea to pay a bit over this price to account
+		/// future exchange rate changes and guarantee that relayer would deliver your message
+		/// to the target chain.
+		fn estimate_message_delivery_and_dispatch_fee(
+			lane_id: LaneId,
+			payload: OutboundPayload,
+		) -> Option<OutboundMessageFee>;
+		/// Returns total dispatch weight and encoded payload size of all messages in given inclusive range.
+		///
+		/// If some (or all) messages are missing from the storage, they'll also will
+		/// be missing from the resulting vector. The vector is ordered by the nonce.
+		fn messages_dispatch_weight(
+			lane: LaneId,
+			begin: MessageNonce,
+			end: MessageNonce,
+		) -> Vec<(MessageNonce, Weight, u32)>;
+		/// Returns nonce of the latest message, received by bridged chain.
+		fn latest_received_nonce(lane: LaneId) -> MessageNonce;
+		/// Returns nonce of the latest message, generated by given lane.
+		fn latest_generated_nonce(lane: LaneId) -> MessageNonce;
+	}
+
+	/// Inbound message lane API for messages sent by Pangolin chain.
+	///
+	/// This API is implemented by runtimes that are receiving messages from Pangolin chain, not the
+	/// Pangolin runtime itself.
+	pub trait FromPangolinInboundLaneApi {
+		/// Returns nonce of the latest message, received by given lane.
+		fn latest_received_nonce(lane: LaneId) -> MessageNonce;
+		/// Nonce of latest message that has been confirmed to the bridged chain.
+		fn latest_confirmed_nonce(lane: LaneId) -> MessageNonce;
+		/// State of the unrewarded relayers set at given lane.
+		fn unrewarded_relayers_state(lane: LaneId) -> UnrewardedRelayersState;
+	}
+}
+
+
+
