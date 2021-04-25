@@ -55,6 +55,8 @@ pub(crate) type Balance = u128;
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 type Extrinsic = TestXt<Call, ()>;
+pub (crate) type StakingCall = darwinia_staking::Call<Test>;
+pub (crate) type TestRuntimeCall = <Test as frame_system::Config>::Call;
 
 pub(crate) type StakingError = Error<Test>;
 
