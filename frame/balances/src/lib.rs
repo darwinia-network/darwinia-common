@@ -156,6 +156,8 @@
 mod tests;
 #[cfg(test)]
 mod tests_local;
+#[cfg(test)]
+mod tests_reentrancy;
 
 pub mod weights;
 pub use weights::WeightInfo;
