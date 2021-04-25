@@ -2130,6 +2130,7 @@ dependencies = [
  "pallet-transaction-payment-rpc-runtime-api",
  "pangolin-runtime",
  "parity-scale-codec",
+ "rand 0.8.3",
  "sc-authority-discovery",
  "sc-basic-authorship",
  "sc-chain-spec",

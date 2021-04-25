@@ -6,6 +6,8 @@ use sp_staking::SessionIndex;
 use crate::*;
 use darwinia_staking::{weights::SubstrateWeight, Config, EraIndex};
 
+pub const MAX_NOMINATIONS: u32 = <NposCompactSolution16 as CompactSolution>::LIMIT as u32;
+
 frame_support::parameter_types! {
 	pub const StakingModuleId: ModuleId = ModuleId(*b"da/staki");
 	pub const SessionsPerEra: SessionIndex = SESSIONS_PER_ERA;
@@ -17,7 +19,7 @@ frame_support::parameter_types! {
 	pub const TotalPower: Power = TOTAL_POWER;
 }
 impl Config for Runtime {
-	const MAX_NOMINATIONS: u32 = <NposCompactSolution16 as CompactSolution>::LIMIT as u32;
+	const MAX_NOMINATIONS: u32 = MAX_NOMINATIONS;
 	type Event = Event;
 	type ModuleId = StakingModuleId;
 	type UnixTime = Timestamp;

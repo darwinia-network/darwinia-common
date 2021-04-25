@@ -18,6 +18,8 @@
 
 // --- std ---
 use std::{collections::BTreeMap, marker::PhantomData};
+// --- crates ---
+use rand::{seq::SliceRandom, Rng};
 // --- substrate ---
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_service::{ChainType, Properties};
@@ -224,6 +226,7 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 			"0x1ed7de3855ffcce134d718b570febb49bbbbeb32ebbc8c319f44fb9f5690643a",
 		),
 	];
+	let initial_nominators = <Vec<AccountId>>::new();
 	let collective_members = vec![get_account_id_from_seed::<sr25519::Public>("Alice")];
 	let evm_accounts = {
 		let mut map = BTreeMap::new();
@@ -264,6 +267,11 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 					.map(|Keys { stash, .. }| (stash.to_owned(), A_FEW_COINS)),
 			)
 			.chain(
+				initial_nominators
+					.iter()
+					.map(|n| (n.to_owned(), A_FEW_COINS))
+			)
+			.chain(
 				TEAM_MEMBERS
 					.iter()
 					.map(|m| (array_bytes::hex2array_unchecked!(m, 32).into(), MANY_COINS)),
@@ -277,6 +285,11 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 					initial_authorities
 						.iter()
 						.map(|Keys { stash, .. }| (stash.to_owned(), A_FEW_COINS)),
+				)
+				.chain(
+					initial_nominators
+						.iter()
+						.map(|n| (n.to_owned(), A_FEW_COINS))
 				)
 				.chain(
 					TEAM_MEMBERS
@@ -296,6 +309,19 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 					A_FEW_COINS,
 					pangolin_runtime::StakerStatus::Validator
 				))
+				.chain(initial_nominators.iter().map(|n| {
+					let mut rng = rand::thread_rng();
+					let limit = (pangolin_runtime::MAX_NOMINATIONS as usize).min(initial_authorities.len());
+					let count = rng.gen::<usize>() % limit;
+					let nominations = initial_authorities
+						.as_slice()
+						.choose_multiple(&mut rng, count)
+						.into_iter()
+						.map(|c| c.stash.clone())
+						.collect::<Vec<_>>();
+
+					(n.clone(), n.clone(), A_FEW_COINS, pangolin_runtime::StakerStatus::Nominator(nominations))
+				}))
 				.collect(),
 			slash_reward_fraction: Perbill::from_percent(10),
 			payout_fraction: Perbill::from_percent(50),
