@@ -12,16 +12,16 @@ version     = "2.2.0"
 [dependencies]
 
 # Bridge Dependencies
-bp-messages = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s", default-features = false }
-bp-runtime  = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s", default-features = false }
+bp-messages = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
+bp-runtime  = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
 
 # Substrate Based Dependencies
-frame-support = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s", default-features = false }
-frame-system  = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s", default-features = false }
-sp-api        = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s", default-features = false }
-sp-core       = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s", default-features = false }
-sp-runtime    = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s", default-features = false }
-sp-std        = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s", default-features = false }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-api        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 
 
 [features]

@@ -89,15 +89,15 @@ sp-std                                     = { default-features = false, git = "
 sp-transaction-pool                        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 sp-version                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 #s2s bridger
-bp-header-chain              = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s", default-features = false }
-bp-messages                  = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s", default-features = false }
-bp-millau                    = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s", default-features = false }
-bp-runtime                   = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s", default-features = false }
-bridge-runtime-common        = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s", default-features = false }
-pallet-bridge-dispatch       = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s", default-features = false }
-pallet-bridge-grandpa        = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s", default-features = false }
-pallet-bridge-messages       = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s", default-features = false }
-pallet-shift-session-manager = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s", default-features = false }
+bp-header-chain              = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
+bp-messages                  = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
+bp-millau                    = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
+bp-runtime                   = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
+bridge-runtime-common        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
+pallet-bridge-dispatch       = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
+pallet-bridge-grandpa        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
+pallet-bridge-messages       = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
+pallet-shift-session-manager = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
 relay-substrate-client       = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
 
 [build-dependencies]
@@ -184,11 +184,11 @@ std = [
 
 with-tracing = ["frame-executive/with-tracing"]
 
-try-runtime = [
-	"frame-executive/try-runtime",
-	"frame-try-runtime",
-	"darwinia-balances/try-runtime",
-	"darwinia-crab-issuing/try-runtime",
-	"darwinia-staking/try-runtime",
-	"dvm-ethereum/try-runtime",
-]
+# try-runtime = [
+# 	"frame-executive/try-runtime",
+# 	"frame-try-runtime",
+# 	"darwinia-balances/try-runtime",
+# 	"darwinia-crab-issuing/try-runtime",
+# 	"darwinia-staking/try-runtime",
+# 	"dvm-ethereum/try-runtime",
+# ]
