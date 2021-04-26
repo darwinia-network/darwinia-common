@@ -153,8 +153,8 @@ pub mod impls {
 				// for fees, 80% to treasury, 20% to author
 				let mut split = fees.ration(80, 20);
 				if let Some(tips) = fees_then_tips.next() {
-					// for tips, if any, 80% to treasury, 20% to author (though this can be anything)
-					tips.ration_merge_into(80, 20, &mut split);
+					// for tips, if any, 100% to author
+					tips.merge_into(&mut split.1);
 				}
 				Treasury::on_unbalanced(split.0);
 				ToAuthor::on_unbalanced(split.1);
