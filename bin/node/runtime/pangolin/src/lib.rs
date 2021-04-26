@@ -133,16 +133,22 @@ pub mod impls {
 		}
 	}
 
-	pub struct Author;
-	impl OnUnbalanced<NegativeImbalance> for Author {
-		fn on_nonzero_unbalanced(amount: NegativeImbalance) {
+	pub struct ToAuthor;
+	impl OnUnbalanced<RingNegativeImbalance> for ToAuthor {
+		fn on_nonzero_unbalanced(amount: RingNegativeImbalance) {
+			let numeric_amount = amount.peek();
+			let author = Authorship::author();
 			Ring::resolve_creating(&Authorship::author(), amount);
+			System::deposit_event(<darwinia_balances::Event<Runtime, RingInstance>>::Deposit(
+				author,
+				numeric_amount,
+			));
 		}
 	}
 
 	pub struct DealWithFees;
-	impl OnUnbalanced<NegativeImbalance> for DealWithFees {
-		fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance>) {
+	impl OnUnbalanced<RingNegativeImbalance> for DealWithFees {
+		fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = RingNegativeImbalance>) {
 			if let Some(fees) = fees_then_tips.next() {
 				// for fees, 80% to treasury, 20% to author
 				let mut split = fees.ration(80, 20);
@@ -151,7 +157,7 @@ pub mod impls {
 					tips.ration_merge_into(80, 20, &mut split);
 				}
 				Treasury::on_unbalanced(split.0);
-				Author::on_unbalanced(split.1);
+				ToAuthor::on_unbalanced(split.1);
 			}
 		}
 	}

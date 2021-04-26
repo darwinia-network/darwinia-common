@@ -8,7 +8,7 @@ use frame_system::Config as SystemConfig;
 use crate::*;
 use darwinia_balances::{weights::SubstrateWeight, Config, Pallet};
 
-pub type NegativeImbalance = <Pallet<Runtime, RingInstance> as Currency<
+pub type RingNegativeImbalance = <Pallet<Runtime, RingInstance> as Currency<
 	<Runtime as SystemConfig>::AccountId,
 >>::NegativeImbalance;
 
