@@ -56,16 +56,12 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		// --- substrate ---
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type WeightInfo: WeightInfo;
 		// --- darwinia ---
 		#[pallet::constant]
 		type ModuleId: Get<ModuleId>;
 		type RingCurrency: Currency<AccountId<Self>>;
 	}
-
-	#[pallet::event]
-	pub enum Event<T: Config> {}
 
 	#[pallet::storage]
 	#[pallet::getter(fn total_mapped_ring)]

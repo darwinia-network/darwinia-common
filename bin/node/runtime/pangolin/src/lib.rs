@@ -378,8 +378,8 @@ frame_support::construct_runtime! {
 		// Multisig module. Late addition.
 		Multisig: pallet_multisig::{Pallet, Call, Storage, Event<T>} = 32,
 
-		DarwiniaCrabIssuing: darwinia_crab_issuing::{Pallet, Call, Storage, Config, Event<T>} = 33,
-		DarwiniaCrabBacking: darwinia_crab_backing::{Pallet, Storage, Config<T>} = 34,
+		CrabIssuing: darwinia_crab_issuing::{Pallet, Call, Storage, Config} = 33,
+		CrabBacking: darwinia_crab_backing::{Pallet, Storage, Config<T>} = 34,
 
 		EthereumRelay: darwinia_ethereum_relay::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
 		EthereumBacking: darwinia_ethereum_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 36,
@@ -387,7 +387,7 @@ frame_support::construct_runtime! {
 		EthereumRelayerGame: darwinia_relayer_game::<Instance0>::{Pallet, Storage} = 37,
 		EthereumRelayAuthorities: darwinia_relay_authorities::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>} = 38,
 
-		TronBacking: darwinia_tron_backing::{Pallet, Storage, Config<T>} = 39,
+		TronBacking: darwinia_tron_backing::{Pallet, Config<T>} = 39,
 
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 40,
 		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 41,
