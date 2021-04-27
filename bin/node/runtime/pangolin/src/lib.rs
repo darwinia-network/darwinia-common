@@ -289,7 +289,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("Pangolin"),
 	authoring_version: 1,
 	// crate version ~2.2.0 := >=2.2.0, <2.3.0
-	spec_version: 222,
+	spec_version: 223,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -378,8 +378,8 @@ frame_support::construct_runtime! {
 		// Multisig module. Late addition.
 		Multisig: pallet_multisig::{Pallet, Call, Storage, Event<T>} = 32,
 
-		DarwiniaCrabIssuing: darwinia_crab_issuing::{Pallet, Call, Storage, Config, Event<T>} = 33,
-		DarwiniaCrabBacking: darwinia_crab_backing::{Pallet, Storage, Config<T>} = 34,
+		CrabIssuing: darwinia_crab_issuing::{Pallet, Call, Storage, Config} = 33,
+		CrabBacking: darwinia_crab_backing::{Pallet, Storage, Config<T>} = 34,
 
 		EthereumRelay: darwinia_ethereum_relay::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
 		EthereumBacking: darwinia_ethereum_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 36,
@@ -387,7 +387,7 @@ frame_support::construct_runtime! {
 		EthereumRelayerGame: darwinia_relayer_game::<Instance0>::{Pallet, Storage} = 37,
 		EthereumRelayAuthorities: darwinia_relay_authorities::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>} = 38,
 
-		TronBacking: darwinia_tron_backing::{Pallet, Storage, Config<T>} = 39,
+		TronBacking: darwinia_tron_backing::{Pallet, Config<T>} = 39,
 
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 40,
 		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 41,
@@ -804,12 +804,11 @@ pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
-		darwinia_balances::migration::try_runtime::pre_migrate()
+		darwinia_crab_issuing::migration::try_runtime::pre_migrate::<Runtime>()
 	}
 
 	fn on_runtime_upgrade() -> Weight {
-		darwinia_balances::migration::migrate(b"Instance0DarwiniaBalances", b"Balances");
-		darwinia_balances::migration::migrate(b"Instance1DarwiniaBalances", b"Kton");
+		darwinia_crab_issuing::migration::migrate(b"CrabIssuing");
 
 		RuntimeBlockWeights::get().max_block
 	}
