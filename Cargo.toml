@@ -56,6 +56,11 @@ members = [
 	"primitives/relay",
 	"primitives/rpc",
 	"primitives/storage",
+
+	"bin/millau/node",
+	"bin/millau/runtime",
+	"bin/millau/chain-millau",
+	"bin/millau/client-millau",
 ]
 
 # The list of dependencies below (which can be both direct and indirect dependencies) are crates

@@ -1,0 +1,64 @@
+[package]
+name = "millau-bridge-node"
+authors    = ["Darwinia Network <hello@darwinia.network>"]
+build      = "build.rs"
+edition    = "2018"
+homepage   = "https://darwinia.network/"
+license    = "Unlicense"
+readme     = "README.md"
+repository = "https://github.com/darwinia-network/darwinia-common/"
+version    = "2.2.0"
+
+[dependencies]
+jsonrpc-core = "15.1.0"
+structopt = "0.3.21"
+serde_json = "1.0.59"
+
+# Bridge dependencies
+
+bp-messages = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
+bp-millau= { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
+bp-runtime = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
+pallet-bridge-messages = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
+
+millau-runtime = { path = "../runtime" }
+
+# Substrate Dependencies
+
+frame-benchmarking = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+frame-benchmarking-cli = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+node-inspect = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+pallet-transaction-payment-rpc = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sc-basic-authorship = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sc-cli = { git = "https://github.com/darwinia-network/substrate", branch = "s2s", features = ["wasmtime"] }
+sc-client-api = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sc-consensus = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sc-consensus-aura = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sc-executor = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sc-finality-grandpa = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sc-finality-grandpa-rpc = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sc-keystore = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sc-rpc = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sc-service = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sc-telemetry = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sc-transaction-pool = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sp-consensus = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sp-consensus-aura = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sp-core = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sp-finality-grandpa = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sp-inherents = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sp-runtime = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+substrate-frame-rpc-system = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+
+[build-dependencies]
+substrate-build-script-utils = "3.0.0"
+frame-benchmarking-cli = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+
+[features]
+default = []
+
+# TODO: https://github.com/paritytech/parity-bridges-common/issues/390
+# I've left the feature flag here to test our CI configuration
+runtime-benchmarks = [
+	# "millau-runtime/runtime-benchmarks",
+]

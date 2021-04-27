@@ -1,0 +1,113 @@
+[package]
+name = "millau-runtime"
+authors    = ["Darwinia Network <hello@darwinia.network>"]
+build      = "build.rs"
+edition    = "2018"
+homepage   = "https://darwinia.network/"
+license    = "Unlicense"
+readme     = "README.md"
+repository = "https://github.com/darwinia-network/darwinia-common/"
+version    = "2.2.0"
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
+hex-literal = "0.3"
+serde = { version = "1.0.124", optional = true, features = ["derive"] }
+
+# Bridge dependencies
+
+bp-header-chain = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s", default-features = false }
+bp-messages = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s", default-features = false }
+bp-millau = { path = "../chain-millau", default-features = false }
+bp-rialto = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s", default-features = false }
+bp-runtime = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s", default-features = false }
+bp-westend = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s", default-features = false }
+bridge-runtime-common = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s", default-features = false }
+pallet-bridge-dispatch = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s", default-features = false }
+pallet-bridge-grandpa = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s", default-features = false }
+pallet-bridge-messages = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s", default-features = false }
+pallet-shift-session-manager = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s", default-features = false }
+
+#drml-primitives = { git = "https://github.com/darwinia-network/darwinia-common", branch = "feature/s2s", default-features = false }
+drml-primitives = { path = "../../node/primitives", default-features = false }
+
+# Substrate Dependencies
+
+frame-executive = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" , default-features = false }
+frame-support = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" , default-features = false }
+frame-system = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" , default-features = false }
+frame-system-rpc-runtime-api = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" , default-features = false }
+pallet-aura = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" , default-features = false }
+pallet-balances = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" , default-features = false }
+pallet-grandpa = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" , default-features = false }
+pallet-randomness-collective-flip = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" , default-features = false }
+pallet-session = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" , default-features = false }
+pallet-sudo = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" , default-features = false }
+pallet-timestamp = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" , default-features = false }
+pallet-transaction-payment = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" , default-features = false }
+pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" , default-features = false }
+sp-api = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" , default-features = false }
+sp-block-builder = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" , default-features = false }
+sp-consensus-aura = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" , default-features = false }
+sp-core = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" , default-features = false }
+sp-finality-grandpa = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" , default-features = false }
+sp-inherents = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" , default-features = false }
+sp-offchain = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" , default-features = false }
+sp-runtime = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" , default-features = false }
+sp-session = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" , default-features = false }
+sp-std = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" , default-features = false }
+sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" , default-features = false }
+sp-trie = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" , default-features = false }
+sp-version = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" , default-features = false }
+
+[build-dependencies]
+wasm-builder-runner = { package = "substrate-wasm-builder-runner", version = "2.0.0" }
+
+[features]
+default = ["std"]
+std = [
+	"bp-header-chain/std",
+	"bp-messages/std",
+	"bp-millau/std",
+	"bp-rialto/std",
+	"bp-runtime/std",
+	"bp-westend/std",
+	"bridge-runtime-common/std",
+	"codec/std",
+	"frame-executive/std",
+	"frame-support/std",
+	"frame-system-rpc-runtime-api/std",
+	"frame-system/std",
+	"pallet-aura/std",
+	"pallet-balances/std",
+	"pallet-bridge-dispatch/std",
+	"pallet-bridge-grandpa/std",
+	"pallet-bridge-messages/std",
+	"pallet-grandpa/std",
+	"pallet-randomness-collective-flip/std",
+	"pallet-session/std",
+	"pallet-shift-session-manager/std",
+	"pallet-sudo/std",
+	"pallet-timestamp/std",
+	"pallet-transaction-payment-rpc-runtime-api/std",
+	"pallet-transaction-payment/std",
+	"serde",
+	"sp-api/std",
+	"sp-block-builder/std",
+	"sp-consensus-aura/std",
+	"sp-core/std",
+	"sp-finality-grandpa/std",
+	"sp-inherents/std",
+	"sp-offchain/std",
+	"sp-runtime/std",
+	"sp-session/std",
+	"sp-std/std",
+	"sp-transaction-pool/std",
+	"sp-trie/std",
+	"sp-version/std",
+
+	"drml-primitives/std",
+]
+# TODO: https://github.com/paritytech/parity-bridges-common/issues/390
+# I've left the feature flag here to test our CI configuration
+runtime-benchmarks = []
