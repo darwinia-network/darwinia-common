@@ -804,12 +804,11 @@ pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
-		darwinia_balances::migration::try_runtime::pre_migrate()
+		darwinia_crab_issuing::migration::try_runtime::pre_migrate()
 	}
 
 	fn on_runtime_upgrade() -> Weight {
-		darwinia_balances::migration::migrate(b"Instance0DarwiniaBalances", b"Balances");
-		darwinia_balances::migration::migrate(b"Instance1DarwiniaBalances", b"Kton");
+		darwinia_crab_issuing::migration::migrate(b"CrabIssuing");
 
 		RuntimeBlockWeights::get().max_block
 	}
