@@ -199,7 +199,7 @@ decl_storage! {
 			);
 			let _ = T::KtonCurrency::make_free_balance_be(
 				&<Module<T>>::account_id(),
-				T::KtonCurrency::minimum_balance() + config.kton_locked,
+				config.kton_locked,
 			);
 			let _ = T::RingCurrency::make_free_balance_be(
 				&<Module<T>>::fee_account_id(),
