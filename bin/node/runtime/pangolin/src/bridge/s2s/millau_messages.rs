@@ -153,7 +153,7 @@ impl messages::ThisChainWithMessages for PangolinChainWithMessage {
 	fn transaction_payment(transaction: MessageTransaction<Weight>) -> drml_primitives::Balance {
 		// in our testnets, both per-byte fee and weight-to-fee are 1:1
 		messages::transaction_payment(
-			crate::pallets::system::RuntimeBlockWeights::get().get(DispatchClass::Normal).base_extrinsic,
+			drml_primitives::RuntimeBlockWeights::get().get(DispatchClass::Normal).base_extrinsic,
 			1,
 			FixedU128::zero(),
 			|weight| weight as _,

@@ -11,6 +11,8 @@ version     = "2.2.0"
 
 [dependencies]
 
+static_assertions = { version = "1.1.0" }
+
 # Bridge Dependencies
 bp-messages = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
 bp-runtime  = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
