@@ -14,14 +14,14 @@ use relay_substrate_client::{Chain, ChainBase, ChainWithBalances, TransactionSig
 use pangolin_runtime::*;
 
 /// Pangolin header id.
-pub type HeaderId = relay_utils::HeaderId<pangolin_runtime::Hash, pangolin_runtime::BlockNumber>;
+pub type HeaderId = relay_utils::HeaderId<drml_primitives::Hash, drml_primitives::BlockNumber>;
 
 
 /// Rialto signing params.
 pub type SigningParams = sp_core::sr25519::Pair;
 
 /// Rialto header type used in headers sync.
-pub type SyncHeader = relay_substrate_client::SyncHeader<pangolin_runtime::Header>;
+pub type SyncHeader = relay_substrate_client::SyncHeader<drml_primitives::Header>;
 
 
 /// Millau chain definition.
@@ -41,7 +41,7 @@ impl Chain for PangolinRelayChain {
 
 	type AccountId = drml_primitives::AccountId;
 	type Index = drml_primitives::Nonce;
-	type SignedBlock = SignedBlock;
+	type SignedBlock = pangolin_runtime::SignedBlock;
 	type Call = pangolin_runtime::Call;
 }
 
