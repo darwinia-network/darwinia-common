@@ -21,8 +21,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod weights;
-
-pub use pallet::*;
 pub use weights::WeightInfo;
 
 #[cfg(test)]
@@ -34,7 +32,7 @@ mod tests;
 pub mod pallet {
 	pub mod types {
 		// --- darwinia ---
-		use super::*;
+		use crate::pallet::*;
 
 		// Generic type
 		pub type AccountId<T> = <T as frame_system::Config>::AccountId;
@@ -67,13 +65,7 @@ pub mod pallet {
 	}
 
 	#[pallet::event]
-	pub enum Event<T: Config> {
-		/// Dummy Event. \[who, swapped *CRING*, burned Mapped *RING*\]
-		DummyEvent(AccountId<T>, RingBalance<T>, MappedRing),
-	}
-
-	#[pallet::error]
-	pub enum Error<T> {}
+	pub enum Event<T: Config> {}
 
 	#[pallet::storage]
 	#[pallet::getter(fn total_mapped_ring)]
@@ -88,7 +80,7 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
 			let _ = T::RingCurrency::make_free_balance_be(
-				&T::ModuleId::get().into_account(),
+				&<Pallet<T>>::account_id(),
 				T::RingCurrency::minimum_balance(),
 			);
 
@@ -102,7 +94,13 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		pub fn account_id() -> T::AccountId {
+			T::ModuleId::get().into_account()
+		}
+	}
 }
+pub use pallet::*;
 
 pub mod migration {
 	const OLD_PALLET_NAME: &[u8] = b"DarwiniaCrabIssuing";
