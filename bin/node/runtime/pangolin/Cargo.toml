@@ -90,6 +90,7 @@ sp-transaction-pool                        = { default-features = false, git = "
 sp-version                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 #s2s bridger
 bp-header-chain              = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
+bp-message-dispatch          = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
 bp-messages                  = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
 bp-millau                    = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
 bp-runtime                   = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
@@ -98,7 +99,6 @@ pallet-bridge-dispatch       = { default-features = false, git = "https://github
 pallet-bridge-grandpa        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
 pallet-bridge-messages       = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
 pallet-shift-session-manager = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
-relay-substrate-client       = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
 
 [build-dependencies]
 # substrate
@@ -180,6 +180,18 @@ std = [
 	"sp-std/std",
 	"sp-transaction-pool/std",
 	"sp-version/std",
+
+	"bp-header-chain/std",
+	"bp-message-dispatch/std",
+	"bp-messages/std",
+	"bp-millau/std",
+	"bp-runtime/std",
+	"bridge-runtime-common/std",
+	"pallet-bridge-dispatch/std",
+	"pallet-bridge-grandpa/std",
+	"pallet-bridge-messages/std",
+	"pallet-grandpa/std",
+	"pallet-shift-session-manager/std",
 ]
 
 with-tracing = ["frame-executive/with-tracing"]

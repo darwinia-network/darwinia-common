@@ -64,6 +64,9 @@ pub use pallets::*;
 pub mod bridge;
 use bridge::s2s::*;
 
+
+use bridge_runtime_common::messages::{source::estimate_message_dispatch_and_delivery_fee, MessageBridge};
+
 pub mod impls {
 	//! Some configurable implementations as associated type for the substrate runtime.
 
@@ -251,16 +254,11 @@ use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispa
 use drml_primitives::*;
 use dvm_rpc_runtime_api::TransactionStatus;
 use impls::*;
-// --- s2s ---
-pub use pallet_bridge_grandpa::Call as BridgeGrandpaMillauCall;
-pub use pallet_bridge_messages::Call as MessagesCall;
 
 /// The address format for describing accounts.
 pub type Address = MultiAddress<AccountId, ()>;
 /// Block type as expected by this runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-/// A Block signed with a Justification
-pub type SignedBlock = generic::SignedBlock<Block>;
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
 	frame_system::CheckSpecVersion<Runtime>,
@@ -398,10 +396,10 @@ frame_support::construct_runtime! {
 		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 41,
 
 		// s2s bridger to millau chain
-		BridgeMillauGrandpa: pallet_bridge_grandpa::{Pallet, Call, Storage},
-		BridgeDispatch: pallet_bridge_dispatch::{Pallet, Event<T>},
-		BridgeMillauMessages: pallet_bridge_messages::{Pallet, Call, Storage, Event<T>},
-		ShiftSessionManager: pallet_shift_session_manager::{Pallet},
+		BridgeMillauGrandpa: pallet_bridge_grandpa::{Pallet, Call, Storage} = 43,
+		BridgeDispatch: pallet_bridge_dispatch::{Pallet, Event<T>} = 44,
+		BridgeMillauMessages: pallet_bridge_messages::{Pallet, Call, Storage, Event<T>} = 45,
+		ShiftSessionManager: pallet_shift_session_manager::{Pallet} = 46,
 	}
 }
 
@@ -450,10 +448,12 @@ where
 		Some((call, (address, signature, extra)))
 	}
 }
+
 impl frame_system::offchain::SigningTypes for Runtime {
 	type Public = <Signature as sp_runtime::traits::Verify>::Signer;
 	type Signature = Signature;
 }
+
 impl<C> frame_system::offchain::SendTransactionTypes<C> for Runtime
 where
 	Call: From<C>,
@@ -806,10 +806,10 @@ impl_runtime_apis! {
 	}
 
 
-	impl bp_millau::ToMillauOutboundLaneApi<Block, Balance, ToMillauMessagePayload> for Runtime {
+	impl bp_millau::ToMillauOutboundLaneApi<Block, Balance, millau_messages::ToMillauMessagePayload> for Runtime {
 		fn estimate_message_delivery_and_dispatch_fee(
 			_lane_id: bp_messages::LaneId,
-			payload: ToMillauMessagePayload,
+			payload: millau_messages::ToMillauMessagePayload,
 		) -> Option<Balance> {
 			estimate_message_dispatch_and_delivery_fee::<millau_messages::WithMillauMessageBridge>(
 				&payload,

@@ -22,7 +22,15 @@
 #![warn(missing_docs)]
 
 // --- substrate ---
+use bp_messages::{LaneId, MessageNonce, UnrewardedRelayersState};
 use bp_runtime::Chain;
+use frame_support::{
+	weights:: {
+		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
+		DispatchClass, Weight,
+	},
+	Parameter, RuntimeDebug,
+};
 use sp_core::H256;
 use sp_runtime::{
 	generic,
@@ -30,19 +38,14 @@ use sp_runtime::{
 	MultiSignature, MultiSigner, OpaqueExtrinsic,
 	Perbill,
 };
-use frame_support::weights::{
-	constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-	DispatchClass, Weight,
-};
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	weights::SubstrateWeight,
 	Config,
 };
-use sp_version::RuntimeVersion;
 
-// --- s2s ---
-use bp_messages::{LaneId, MessageNonce, UnrewardedRelayersState};
+use sp_std::prelude::*;
+
 
 /// An index to a block.
 /// 32-bits will allow for 136 years of blocks assuming 1 block per second.
@@ -171,62 +174,6 @@ pub const ADDITIONAL_MESSAGE_BYTE_DELIVERY_WEIGHT: Weight = 25_000;
 /// The message must have dispatch weight set to zero. The result then must be rounded up to account
 /// possible future runtime upgrades.
 pub const DEFAULT_MESSAGE_DELIVERY_TX_WEIGHT: Weight = 1_000_000_000;
-
-
-/// We assume that an on-initialize consumes 2.5% of the weight on average, hence a single extrinsic
-/// will not be allowed to consume more than `AvailableBlockRatio - 2.5%`.
-const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(25);
-/// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used
-/// by  Operational  extrinsics.
-const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
-/// We allow for 2 seconds of compute with a 6 second average block time.
-const MAXIMUM_BLOCK_WEIGHT: Weight = 2 * WEIGHT_PER_SECOND;
-
-static_assertions::const_assert!(
-	NORMAL_DISPATCH_RATIO.deconstruct() >= AVERAGE_ON_INITIALIZE_RATIO.deconstruct()
-);
-
-frame_support::parameter_types! {
-	pub const BlockHashCount: BlockNumber = 2400;
-	pub const Version: RuntimeVersion = VERSION;
-	pub RuntimeBlockLength: BlockLength =
-		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
-	pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
-		.base_block(BlockExecutionWeight::get())
-		.for_class(DispatchClass::all(), |weights| {
-			weights.base_extrinsic = ExtrinsicBaseWeight::get();
-		})
-		.for_class(DispatchClass::Normal, |weights| {
-			weights.max_total = Some(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT);
-		})
-		.for_class(DispatchClass::Operational, |weights| {
-			weights.max_total = Some(MAXIMUM_BLOCK_WEIGHT);
-			// Operational transactions have some extra reserved space, so that they
-			// are included even if block reached `MAXIMUM_BLOCK_WEIGHT`.
-			weights.reserved = Some(
-				MAXIMUM_BLOCK_WEIGHT - NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT
-			);
-		})
-		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
-		.build_or_panic();
-	pub const SS58Prefix: u8 = 18;
-}
-
-
-/// Get the maximum weight (compute time) that a Normal extrinsic on the Millau chain can use.
-pub fn max_extrinsic_weight() -> Weight {
-	RuntimeBlockWeights::get()
-		.get(DispatchClass::Normal)
-		.max_extrinsic
-		.unwrap_or(Weight::MAX)
-}
-
-/// Get the maximum length in bytes that a Normal extrinsic on the Millau chain requires.
-pub fn max_extrinsic_size() -> u32 {
-	*BlockLength::get().max.get(DispatchClass::Normal)
-}
-
-
 
 /// Convert a 256-bit hash into an AccountId.
 pub struct AccountIdConverter;

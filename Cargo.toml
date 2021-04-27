@@ -1,6 +1,7 @@
 [workspace]
 members = [
 	"bin/node/cli",
+	"bin/node/client-pangolin",
 	"bin/node/primitives",
 	"bin/node/runtime/pangolin",
 	"client/cli",

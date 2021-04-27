@@ -1,5 +1,6 @@
 // --- darwinia ---
 use crate::*;
+use darwinia_balances::{Instance0 as RingInstance};
 
 // --- s2s bridger ---
 pub use pallet_bridge_grandpa::Pallet as BridgeGrandpaMillauCall;
@@ -90,7 +91,7 @@ impl pallet_bridge_messages::Config<WithMillauMessagesInstance> for Runtime {
 	type LaneMessageVerifier = crate::millau_messages::ToMillauMessageVerifier;
 	type MessageDeliveryAndDispatchPayment = pallet_bridge_messages::instant_payments::InstantCurrencyPayments<
 		Runtime,
-		darwinia_balances::Pallet<Runtime>,
+		darwinia_balances::Pallet<Runtime, RingInstance>,
 		GetDeliveryConfirmationTransactionFee,
 		RootAccountForPayments,
 	>;

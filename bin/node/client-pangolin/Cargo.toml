@@ -1,0 +1,31 @@
+[package]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+description = "DRML node runtime primitives"
+edition     = "2018"
+homepage    = "https://darwinia.network/"
+license     = "GPL-3.0"
+name        = "relay-pangolin-client"
+readme      = "README.md"
+repository  = "https://github.com/darwinia-network/darwinia-common/"
+version     = "2.2.0"
+
+[dependencies]
+codec                  = { package = "parity-scale-codec", version = "2.0.0" }
+headers-relay          = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
+relay-substrate-client = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
+relay-utils            = { git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
+
+# Bridge dependencies
+
+drml-primitives        = { default-features = false, path = "../primitives" }
+pangolin-runtime       = { path = "../runtime/pangolin" }
+
+
+# Substrate Dependencies
+
+frame-system               = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+frame-support              = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+pallet-transaction-payment = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sp-core                    = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sp-keyring                 = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sp-runtime                 = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
