@@ -57,9 +57,15 @@ pub mod pallet {
 	pub use types::*;
 
 	// --- substrate ---
-	use frame_support::{pallet_prelude::*, traits::Currency};
+	use frame_support::{
+		pallet_prelude::*,
+		traits::{Currency, ExistenceRequirement},
+	};
 	use frame_system::pallet_prelude::*;
-	use sp_runtime::{traits::AccountIdConversion, ModuleId};
+	use sp_runtime::{
+		traits::{AccountIdConversion, SaturatedConversion, Zero},
+		ModuleId,
+	};
 	// --- darwinia ---
 	use crate::weights::WeightInfo;
 	use darwinia_relay_primitives::relay_authorities::*;
@@ -96,6 +102,7 @@ pub mod pallet {
 	}
 
 	#[pallet::event]
+	#[pallet::generate_deposit(fn deposit_event)]
 	#[pallet::metadata(
 		AccountId<T> = "AccountId",
 		RingBalance<T> = "RingBalance",
@@ -265,11 +272,103 @@ pub mod pallet {
 		fn on_initialize(_: BlockNumber<T>) -> Weight {
 			<LockAssetEvents<T>>::kill();
 
-			0
+			T::DbWeight::get().writes(1)
 		}
 	}
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		/// Lock some balances into the module account
+		/// which very similar to lock some assets into the contract on ethereum side
+		///
+		/// This might kill the account just like `balances::transfer`
+		#[pallet::weight(10_000_000)]
+		#[frame_support::transactional]
+		pub fn lock(
+			origin: OriginFor<T>,
+			#[pallet::compact] ring_to_lock: RingBalance<T>,
+			#[pallet::compact] kton_to_lock: KtonBalance<T>,
+			ethereum_account: EthereumAddress,
+		) -> DispatchResultWithPostInfo {
+			let user = ensure_signed(origin)?;
+			let fee_account = Self::fee_account_id();
+
+			// 50 Ring for fee
+			// https://github.com/darwinia-network/darwinia-common/pull/377#issuecomment-730369387
+			T::RingCurrency::transfer(
+				&user,
+				&fee_account,
+				T::AdvancedFee::get(),
+				ExistenceRequirement::KeepAlive,
+			)?;
+
+			let mut locked = false;
+
+			if !ring_to_lock.is_zero() {
+				ensure!(
+					ring_to_lock < T::RingLockLimit::get(),
+					<Error<T>>::RingLockLim
+				);
+
+				T::RingCurrency::transfer(
+					&user,
+					&Self::account_id(),
+					ring_to_lock,
+					ExistenceRequirement::AllowDeath,
+				)?;
+
+				let event = Event::LockRing(
+					user.clone(),
+					ethereum_account.clone(),
+					<RingTokenAddress<T>>::get(),
+					ring_to_lock,
+				);
+				let module_event: <T as Config>::Event = event.clone().into();
+				let system_event: <T as frame_system::Config>::Event = module_event.into();
+
+				locked = true;
+
+				<LockAssetEvents<T>>::append(system_event);
+				Self::deposit_event(event);
+			}
+			if !kton_to_lock.is_zero() {
+				ensure!(
+					kton_to_lock < T::KtonLockLimit::get(),
+					<Error<T>>::KtonLockLim
+				);
+
+				T::KtonCurrency::transfer(
+					&user,
+					&Self::account_id(),
+					kton_to_lock,
+					ExistenceRequirement::AllowDeath,
+				)?;
+
+				let event = Event::LockKton(
+					user,
+					ethereum_account,
+					<KtonTokenAddress<T>>::get(),
+					kton_to_lock,
+				);
+				let module_event: <T as Config>::Event = event.clone().into();
+				let system_event: <T as frame_system::Config>::Event = module_event.into();
+
+				locked = true;
+
+				<LockAssetEvents<T>>::append(system_event);
+				Self::deposit_event(event);
+			}
+
+			if locked {
+				T::EcdsaAuthorities::schedule_mmr_root(
+					(<frame_system::Pallet<T>>::block_number().saturated_into::<u32>() / 10 * 10
+						+ 10)
+						.saturated_into(),
+				);
+			}
+
+			Ok(().into())
+		}
+	}
 	impl<T: Config> Pallet<T> {
 		pub fn account_id() -> T::AccountId {
 			T::ModuleId::get().into_account()
@@ -349,83 +448,6 @@ pub mod pallet {
 // 				}
 // 			} else {
 // 				Err(<Error<T>>::RedeemDis)?;
-// 			}
-// 		}
-
-// 		/// Lock some balances into the module account
-// 		/// which very similar to lock some assets into the contract on ethereum side
-// 		///
-// 		/// This might kill the account just like `balances::transfer`
-// 		#[weight = 10_000_000]
-// 		#[frame_support::transactional]
-// 		pub fn lock(
-// 			origin,
-// 			#[compact] ring_to_lock: RingBalance<T>,
-// 			#[compact] kton_to_lock: KtonBalance<T>,
-// 			ethereum_account: EthereumAddress,
-// 		) {
-// 			let user = ensure_signed(origin)?;
-// 			let fee_account = Self::fee_account_id();
-
-// 			// 50 Ring for fee
-// 			// https://github.com/darwinia-network/darwinia-common/pull/377#issuecomment-730369387
-// 			T::RingCurrency::transfer(&user, &fee_account, T::AdvancedFee::get(), KeepAlive)?;
-
-// 			let mut locked = false;
-
-// 			if !ring_to_lock.is_zero() {
-// 				ensure!(ring_to_lock < T::RingLockLimit::get(), <Error<T>>::RingLockLim);
-
-// 				T::RingCurrency::transfer(
-// 					&user, &Self::account_id(),
-// 					ring_to_lock,
-// 					AllowDeath
-// 				)?;
-
-// 				let raw_event = RawEvent::LockRing(
-// 					user.clone(),
-// 					ethereum_account.clone(),
-// 					RingTokenAddress::get(),
-// 					ring_to_lock
-// 				);
-// 				let module_event: <T as Config>::Event = raw_event.clone().into();
-// 				let system_event: <T as frame_system::Config>::Event = module_event.into();
-
-// 				locked = true;
-
-// 				<LockAssetEvents<T>>::append(system_event);
-// 				Self::deposit_event(raw_event);
-// 			}
-// 			if !kton_to_lock.is_zero() {
-// 				ensure!(kton_to_lock < T::KtonLockLimit::get(), <Error<T>>::KtonLockLim);
-
-// 				T::KtonCurrency::transfer(
-// 					&user,
-// 					&Self::account_id(),
-// 					kton_to_lock,
-// 					AllowDeath
-// 				)?;
-
-// 				let raw_event = RawEvent::LockKton(
-// 					user,
-// 					ethereum_account,
-// 					KtonTokenAddress::get(),
-// 					kton_to_lock
-// 				);
-// 				let module_event: <T as Config>::Event = raw_event.clone().into();
-// 				let system_event: <T as frame_system::Config>::Event = module_event.into();
-
-// 				locked = true;
-
-// 				<LockAssetEvents<T>>::append(system_event);
-// 				Self::deposit_event(raw_event);
-// 			}
-
-// 			if locked {
-// 				T::EcdsaAuthorities::schedule_mmr_root((
-// 					<frame_system::Pallet<T>>::block_number().saturated_into::<u32>()
-// 						/ 10 * 10 + 10
-// 				).saturated_into());
 // 			}
 // 		}
 
@@ -902,9 +924,9 @@ pub mod pallet {
 // 		VerifiedProof::insert(tx_index, true);
 
 // 		if is_ring {
-// 			Self::deposit_event(RawEvent::RedeemRing(darwinia_account, raw_amount, tx_index));
+// 			Self::deposit_event(Event::RedeemRing(darwinia_account, raw_amount, tx_index));
 // 		} else {
-// 			Self::deposit_event(RawEvent::RedeemKton(darwinia_account, raw_amount, tx_index));
+// 			Self::deposit_event(Event::RedeemKton(darwinia_account, raw_amount, tx_index));
 // 		}
 
 // 		Ok(())
@@ -946,7 +968,7 @@ pub mod pallet {
 // 		// TODO: Ignore Unit Interest for now
 // 		VerifiedProof::insert(tx_index, true);
 
-// 		<Module<T>>::deposit_event(RawEvent::RedeemDeposit(
+// 		<Module<T>>::deposit_event(Event::RedeemDeposit(
 // 			darwinia_account,
 // 			deposit_id,
 // 			redeemed_ring,
