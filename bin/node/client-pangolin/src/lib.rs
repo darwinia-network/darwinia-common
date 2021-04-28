@@ -95,7 +95,7 @@ impl TransactionSignScheme for PangolinRelayChain {
 
 		pangolin_runtime::UncheckedExtrinsic::new_signed(
 			call,
-			signer.into_account(),
+			sp_runtime::MultiAddress::Id(signer.into_account()),
 			signature.into(),
 			extra
 		)
