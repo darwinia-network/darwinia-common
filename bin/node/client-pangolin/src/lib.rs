@@ -102,7 +102,7 @@ impl TransactionSignScheme for PangolinRelayChain {
 			extra.4,
 			extra.5,
 			extra.6,
-			Default::default()
+			darwinia_ethereum_relay::CheckEthereumRelayHeaderParcel::<pangolin_runtime::Runtime>::new()
 		);
 		pangolin_runtime::UncheckedExtrinsic::new_signed(
 			call,

@@ -7186,6 +7186,7 @@ dependencies = [
 name = "relay-pangolin-client"
 version = "2.2.0"
 dependencies = [
+ "darwinia-ethereum-relay",
  "drml-primitives",
  "frame-support",
  "frame-system",
