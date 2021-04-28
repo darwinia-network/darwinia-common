@@ -214,6 +214,11 @@ pub mod pallet {
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
+		pub token_redeem_address: EthereumAddress,
+		pub deposit_redeem_address: EthereumAddress,
+		pub set_authorities_address: EthereumAddress,
+		pub ring_token_address: EthereumAddress,
+		pub kton_token_address: EthereumAddress,
 		pub backed_ring: RingBalance<T>,
 		pub backed_kton: KtonBalance<T>,
 	}
@@ -221,6 +226,11 @@ pub mod pallet {
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
 			Self {
+				token_redeem_address: Default::default(),
+				deposit_redeem_address: Default::default(),
+				set_authorities_address: Default::default(),
+				ring_token_address: Default::default(),
+				kton_token_address: Default::default(),
 				backed_ring: Default::default(),
 				backed_kton: Default::default(),
 			}
@@ -229,6 +239,12 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
+			<TokenRedeemAddress<T>>::put(self.token_redeem_address);
+			<DepositRedeemAddress<T>>::put(self.deposit_redeem_address);
+			<SetAuthoritiesAddress<T>>::put(self.set_authorities_address);
+			<RingTokenAddress<T>>::put(self.ring_token_address);
+			<KtonTokenAddress<T>>::put(self.kton_token_address);
+
 			let _ = T::RingCurrency::make_free_balance_be(
 				&<Pallet<T>>::account_id(),
 				T::RingCurrency::minimum_balance() + self.backed_ring,
