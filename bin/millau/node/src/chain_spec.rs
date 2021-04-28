@@ -135,7 +135,7 @@ impl Alternative {
 							get_account_id_from_seed::<sr25519::Public>("Harry//stash"),
 							pallet_bridge_messages::Pallet::<
 								millau_runtime::Runtime,
-								pallet_bridge_messages::DefaultInstance,
+								pallet_bridge_messages::Instance0,
 							>::relayer_fund_account_id(),
 							derive_account_from_rialto_id(bp_runtime::SourceAccount::Account(
 								get_account_id_from_seed::<sr25519::Public>("Dave"),

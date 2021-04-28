@@ -50,7 +50,7 @@ type ToPangolinMessagesDeliveryProof = messages::source::FromBridgedChainMessage
 pub type FromPangolinMessageDispatch = messages::target::FromBridgedChainMessageDispatch<
 	WithPangolinMessageBridge,
 	crate::Runtime,
-	crate::PangolinDispatchInstance,
+	crate::WithPangolinDispatchInstance,
 >;
 
 /// Millau <-> Pangolin message bridge.
@@ -135,7 +135,7 @@ impl messages::ChainWithMessages for PangolinChainWithMessagesInMillau {
 	type Balance = drml_primitives::Balance;
 
 	// todo: check it use WithPangolinMessagesInstance or DefaultInstance
-	type MessagesInstance = pallet_bridge_messages::DefaultInstance;
+	type MessagesInstance = crate::WithPangolinMessagesInstance;
 }
 
 impl messages::BridgedChainWithMessages for PangolinChainWithMessagesInMillau {
@@ -201,7 +201,7 @@ impl TargetHeaderChain<ToPangolinMessagePayload, drml_primitives::AccountId> for
 	fn verify_messages_delivery_proof(
 		proof: Self::MessagesDeliveryProof,
 	) -> Result<(LaneId, InboundLaneData<bp_millau::AccountId>), Self::Error> {
-		messages::source::verify_messages_delivery_proof::<WithPangolinMessageBridge, Runtime>(proof)
+		messages::source::verify_messages_delivery_proof::<WithPangolinMessageBridge, Runtime, crate::WithPangolinGrandpaInstance>(proof)
 	}
 }
 
@@ -218,7 +218,7 @@ impl SourceHeaderChain<drml_primitives::Balance> for PangolinChainWithMessagesIn
 		proof: Self::MessagesProof,
 		messages_count: u32,
 	) -> Result<ProvedMessages<Message<drml_primitives::Balance>>, Self::Error> {
-		messages::target::verify_messages_proof::<WithPangolinMessageBridge, Runtime>(proof, messages_count)
+		messages::target::verify_messages_proof::<WithPangolinMessageBridge, Runtime, crate::WithPangolinGrandpaInstance>(proof, messages_count)
 	}
 }
 

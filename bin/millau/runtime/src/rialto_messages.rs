@@ -16,7 +16,7 @@
 
 //! Everything required to serve Millau <-> Rialto messages.
 
-use crate::Runtime;
+use crate::{Runtime, WithRialtoGrandpaInstance};
 
 use bp_messages::{
 	source_chain::TargetHeaderChain,
@@ -64,7 +64,7 @@ type ToRialtoMessagesDeliveryProof = messages::source::FromBridgedChainMessagesD
 pub type FromRialtoMessageDispatch = messages::target::FromBridgedChainMessageDispatch<
 	WithRialtoMessageBridge,
 	crate::Runtime,
-	pallet_bridge_dispatch::DefaultInstance,
+	crate::WithRialtoDispatchInstance,
 >;
 
 /// Millau <-> Rialto message bridge.
@@ -148,7 +148,7 @@ impl messages::ChainWithMessages for Rialto {
 	type Weight = Weight;
 	type Balance = bp_rialto::Balance;
 
-	type MessagesInstance = pallet_bridge_messages::DefaultInstance;
+	type MessagesInstance = crate::WithRialtoMessagesInstance;
 }
 
 impl messages::BridgedChainWithMessages for Rialto {
@@ -214,7 +214,7 @@ impl TargetHeaderChain<ToRialtoMessagePayload, bp_rialto::AccountId> for Rialto 
 	fn verify_messages_delivery_proof(
 		proof: Self::MessagesDeliveryProof,
 	) -> Result<(LaneId, InboundLaneData<bp_millau::AccountId>), Self::Error> {
-		messages::source::verify_messages_delivery_proof::<WithRialtoMessageBridge, Runtime>(proof)
+		messages::source::verify_messages_delivery_proof::<WithRialtoMessageBridge, Runtime, crate::WithRialtoGrandpaInstance>(proof)
 	}
 }
 
@@ -231,7 +231,7 @@ impl SourceHeaderChain<bp_rialto::Balance> for Rialto {
 		proof: Self::MessagesProof,
 		messages_count: u32,
 	) -> Result<ProvedMessages<Message<bp_rialto::Balance>>, Self::Error> {
-		messages::target::verify_messages_proof::<WithRialtoMessageBridge, Runtime>(proof, messages_count)
+		messages::target::verify_messages_proof::<WithRialtoMessageBridge, Runtime, crate::WithRialtoGrandpaInstance>(proof, messages_count)
 	}
 }
 

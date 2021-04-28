@@ -212,7 +212,10 @@ impl frame_system::Config for Runtime {
 impl pallet_aura::Config for Runtime {
 	type AuthorityId = AuraId;
 }
-impl pallet_bridge_dispatch::Config for Runtime {
+
+pub type WithRialtoDispatchInstance = pallet_bridge_dispatch::Instance0;
+
+impl pallet_bridge_dispatch::Config<WithRialtoDispatchInstance> for Runtime {
 	type Event = Event;
 	type MessageId = (bp_messages::LaneId, bp_messages::MessageNonce);
 	type Call = Call;
@@ -224,9 +227,9 @@ impl pallet_bridge_dispatch::Config for Runtime {
 	type AccountIdConverter = bp_millau::AccountIdConverter;
 }
 
-pub type PangolinDispatchInstance = pallet_bridge_dispatch::Instance2;
+pub type WithPangolinDispatchInstance = pallet_bridge_dispatch::Instance2;
 
-impl pallet_bridge_dispatch::Config<PangolinDispatchInstance> for Runtime {
+impl pallet_bridge_dispatch::Config<WithPangolinDispatchInstance> for Runtime {
 	type Event = Event;
 	type MessageId = (bp_messages::LaneId, bp_messages::MessageNonce);
 	type Call = Call;
@@ -335,8 +338,8 @@ parameter_types! {
 	pub const HeadersToKeep: u32 = 7 * bp_millau::DAYS as u32;
 }
 
-pub type RialtoGrandpaInstance = ();
-impl pallet_bridge_grandpa::Config for Runtime {
+pub type WithRialtoGrandpaInstance = pallet_bridge_grandpa::Instance0;
+impl pallet_bridge_grandpa::Config<WithRialtoGrandpaInstance> for Runtime {
 	type BridgedChain = bp_rialto::Rialto;
 	type MaxRequests = MaxRequests;
 	type HeadersToKeep = HeadersToKeep;
@@ -355,8 +358,8 @@ impl pallet_bridge_grandpa::Config<WestendGrandpaInstance> for Runtime {
 	type WeightInfo = pallet_bridge_grandpa::weights::RialtoWeight<Runtime>;
 }
 
-pub type PangolinGrandpaInstance = pallet_bridge_grandpa::Instance2;
-impl pallet_bridge_grandpa::Config<PangolinGrandpaInstance> for Runtime {
+pub type WithPangolinGrandpaInstance = pallet_bridge_grandpa::Instance2;
+impl pallet_bridge_grandpa::Config<WithPangolinGrandpaInstance> for Runtime {
 	type BridgedChain = drml_primitives::PangolinSubstrateChain;
 	type MaxRequests = MaxRequests;
 	type HeadersToKeep = HeadersToKeep;
@@ -381,7 +384,7 @@ parameter_types! {
 }
 
 /// Instance of the messages pallet used to relay messages to/from Rialto chain.
-pub type WithRialtoMessagesInstance = pallet_bridge_messages::DefaultInstance;
+pub type WithRialtoMessagesInstance = pallet_bridge_messages::Instance0;
 
 impl pallet_bridge_messages::Config<WithRialtoMessagesInstance> for Runtime {
 	type Event = Event;
@@ -454,9 +457,9 @@ construct_runtime!(
 		NodeBlock = opaque::Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
-		BridgeRialtoMessages: pallet_bridge_messages::{Pallet, Call, Storage, Event<T>},
-		BridgeDispatch: pallet_bridge_dispatch::{Pallet, Event<T>},
-		BridgeRialtoGrandpa: pallet_bridge_grandpa::{Pallet, Call, Storage},
+		BridgeRialtoMessages: pallet_bridge_messages::<Instance0>::{Pallet, Call, Storage, Event<T>},
+		BridgeDispatch: pallet_bridge_dispatch::<Instance0>::{Pallet, Event<T>},
+		BridgeRialtoGrandpa: pallet_bridge_grandpa::<Instance0>::{Pallet, Call, Storage},
 		BridgeWestendGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Config<T>, Storage},
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Call, Storage},
