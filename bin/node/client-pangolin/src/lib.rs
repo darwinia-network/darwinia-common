@@ -79,6 +79,7 @@ impl TransactionSignScheme for PangolinRelayChain {
 				frame_system::CheckNonce::<pangolin_runtime::Runtime>::from(signer_nonce),
 				frame_system::CheckWeight::<pangolin_runtime::Runtime>::new(),
 				pallet_transaction_payment::ChargeTransactionPayment::<pangolin_runtime::Runtime>::from(0),
+				darwinia_ethereum_relay::CheckEthereumRelayHeaderParcel::<pangolin_runtime::Runtime>::new(),
 			),
 			(
 				pangolin_runtime::VERSION.spec_version,
@@ -94,21 +95,11 @@ impl TransactionSignScheme for PangolinRelayChain {
 		let signer: sp_runtime::MultiSigner = signer.public().into();
 		let (call, extra, _) = raw_payload.deconstruct();
 
-		let s2s_extra = (
-			extra.0,
-			extra.1,
-			extra.2,
-			extra.3,
-			extra.4,
-			extra.5,
-			extra.6,
-			darwinia_ethereum_relay::CheckEthereumRelayHeaderParcel::<pangolin_runtime::Runtime>::new()
-		);
 		pangolin_runtime::UncheckedExtrinsic::new_signed(
 			call,
 			sp_runtime::MultiAddress::Id(signer.into_account()),
 			signature.into(),
-			s2s_extra,
+			extra,
 		)
 	}
 }
