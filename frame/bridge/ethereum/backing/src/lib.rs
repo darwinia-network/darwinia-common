@@ -75,6 +75,23 @@ pub mod pallet {
 	};
 	use ethereum_primitives::{receipt::EthereumTransactionIndex, EthereumAddress, U256};
 
+	// TODO
+	// macro_rules! set_address_call {
+	// 	($call_name:ident, $address:ty) => {
+	// 		#[pallet::weight(10_000_000)]
+	// 		pub fn $call_name(
+	// 			origin: OriginFor<T>,
+	// 			new: EthereumAddress,
+	// 		) -> DispatchResultWithPostInfo {
+	// 			ensure_root(origin)?;
+
+	// 			$address::put(new);
+
+	// 			Ok(().into())
+	// 		}
+	// 	}
+	// }
+
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		// --- substrate ---
@@ -368,6 +385,93 @@ pub mod pallet {
 
 			Ok(().into())
 		}
+
+		/// Set a new ring redeem address.
+		///
+		/// The dispatch origin of this call must be _Root_.
+		///
+		/// - `new`: The new ring redeem address.
+		///
+		/// # <weight>
+		/// - `O(1)`.
+		/// # </weight>
+		#[pallet::weight(10_000_000)]
+		pub fn set_token_redeem_address(
+			origin: OriginFor<T>,
+			new: EthereumAddress,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+
+			<TokenRedeemAddress<T>>::put(new);
+
+			Ok(().into())
+		}
+
+		/// Set a new deposit redeem address.
+		///
+		/// The dispatch origin of this call must be _Root_.
+		///
+		/// - `new`: The new deposit redeem address.
+		///
+		/// # <weight>
+		/// - `O(1)`.
+		/// # </weight>
+		#[pallet::weight(10_000_000)]
+		pub fn set_deposit_redeem_address(
+			origin: OriginFor<T>,
+			new: EthereumAddress,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+
+			<DepositRedeemAddress<T>>::put(new);
+
+			Ok(().into())
+		}
+
+		#[pallet::weight(10_000_000)]
+		pub fn set_set_authorities_address(
+			origin: OriginFor<T>,
+			new: EthereumAddress,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+
+			<SetAuthoritiesAddress<T>>::put(new);
+
+			Ok(().into())
+		}
+
+		#[pallet::weight(10_000_000)]
+		pub fn set_ring_token_address(
+			origin: OriginFor<T>,
+			new: EthereumAddress,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+
+			<RingTokenAddress<T>>::put(new);
+
+			Ok(().into())
+		}
+
+		#[pallet::weight(10_000_000)]
+		pub fn set_kton_token_address(
+			origin: OriginFor<T>,
+			new: EthereumAddress,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+
+			<KtonTokenAddress<T>>::put(new);
+
+			Ok(().into())
+		}
+
+		#[pallet::weight(10_000_000)]
+		pub fn set_redeem_status(origin: OriginFor<T>, status: bool) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+
+			<RedeemStatus<T>>::put(status);
+
+			Ok(().into())
+		}
 	}
 	impl<T: Config> Pallet<T> {
 		pub fn account_id() -> T::AccountId {
@@ -485,44 +589,6 @@ pub mod pallet {
 // 			}
 // 		}
 
-// 		/// Set a new ring redeem address.
-// 		///
-// 		/// The dispatch origin of this call must be _Root_.
-// 		///
-// 		/// - `new`: The new ring redeem address.
-// 		///
-// 		/// # <weight>
-// 		/// - `O(1)`.
-// 		/// # </weight>
-// 		#[weight = 10_000_000]
-// 		pub fn set_token_redeem_address(origin, new: EthereumAddress) {
-// 			ensure_root(origin)?;
-
-// 			TokenRedeemAddress::put(new);
-// 		}
-
-// 		/// Set a new deposit redeem address.
-// 		///
-// 		/// The dispatch origin of this call must be _Root_.
-// 		///
-// 		/// - `new`: The new deposit redeem address.
-// 		///
-// 		/// # <weight>
-// 		/// - `O(1)`.
-// 		/// # </weight>
-// 		#[weight = 10_000_000]
-// 		pub fn set_deposit_redeem_address(origin, new: EthereumAddress) {
-// 			ensure_root(origin)?;
-
-// 			DepositRedeemAddress::put(new);
-// 		}
-
-// 		#[weight = 10_000_000]
-// 		pub fn set_redeem_status(origin, status: bool) {
-// 			ensure_root(origin)?;
-
-// 			RedeemStatus::put(status);
-// 		}
 // 	}
 // }
 
