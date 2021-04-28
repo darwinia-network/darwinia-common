@@ -62,11 +62,14 @@ pub mod pallet {
 		traits::{Currency, ExistenceRequirement},
 	};
 	use frame_system::pallet_prelude::*;
+	use sp_io::{crypto, hashing};
 	use sp_runtime::{
 		traits::{AccountIdConversion, SaturatedConversion, Saturating, Zero},
 		ModuleId,
 	};
-	use sp_std::convert::TryFrom;
+	#[cfg(not(feature = "std"))]
+	use sp_std::borrow::ToOwned;
+	use sp_std::{convert::TryFrom, prelude::*};
 	// --- darwinia ---
 	use crate::weights::WeightInfo;
 	use darwinia_relay_primitives::relay_authorities::*;
@@ -421,7 +424,7 @@ pub mod pallet {
 		//
 		// But should not dispatch the reward if the syncing failed
 		#[pallet::weight(10_000_000)]
-		fn sync_authorities_change(
+		pub fn sync_authorities_change(
 			origin: OriginFor<T>,
 			proof: EthereumReceiptProofThing<T>,
 		) -> DispatchResultWithPostInfo {
@@ -563,7 +566,7 @@ pub mod pallet {
 
 		/// Return the amount of money in the pot.
 		// The existential deposit is not part of the pot so backing account never gets deleted.
-		fn pot<C: LockableCurrency<T::AccountId>>() -> C::Balance {
+		pub fn pot<C: LockableCurrency<T::AccountId>>() -> C::Balance {
 			C::usable_balance(&Self::account_id())
 				// Must never be less than 0 but better be safe.
 				.saturating_sub(C::minimum_balance())
@@ -653,7 +656,7 @@ pub mod pallet {
 		// event BurnAndRedeem(address indexed token, address indexed from, uint256 amount, bytes receiver);
 		// Redeem RING https://ropsten.etherscan.io/tx/0x1d3ef601b9fa4a7f1d6259c658d0a10c77940fa5db9e10ab55397eb0ce88807d
 		// Redeem KTON https://ropsten.etherscan.io/tx/0x2878ae39a9e0db95e61164528bb1ec8684be194bdcc236848ff14d3fe5ba335d
-		fn parse_token_redeem_proof(
+		pub(super) fn parse_token_redeem_proof(
 			proof_record: &EthereumReceiptProofThing<T>,
 		) -> Result<(T::AccountId, (bool, Balance), RingBalance<T>), DispatchError> {
 			let verified_receipt = T::EthereumRelay::verify_receipt(proof_record)
@@ -1016,14 +1019,66 @@ pub mod pallet {
 		}
 	}
 
+	impl<T: Config> Sign<BlockNumber<T>> for Pallet<T> {
+		type Signature = EcdsaSignature;
+		type Message = EcdsaMessage;
+		type Signer = EthereumAddress;
+
+		fn hash(raw_message: impl AsRef<[u8]>) -> Self::Message {
+			hashing::keccak_256(raw_message.as_ref())
+		}
+
+		fn verify_signature(
+			signature: &Self::Signature,
+			message: &Self::Message,
+			signer: &Self::Signer,
+		) -> bool {
+			fn eth_signable_message(message: &[u8]) -> Vec<u8> {
+				let mut l = message.len();
+				let mut rev = Vec::new();
+
+				while l > 0 {
+					rev.push(b'0' + (l % 10) as u8);
+					l /= 10;
+				}
+
+				let mut v = b"\x19Ethereum Signed Message:\n".to_vec();
+
+				v.extend(rev.into_iter().rev());
+				v.extend_from_slice(message);
+
+				v
+			}
+
+			let message = hashing::keccak_256(&eth_signable_message(message));
+
+			if let Ok(public_key) = crypto::secp256k1_ecdsa_recover(signature, &message) {
+				hashing::keccak_256(&public_key)[12..] == signer.0
+			} else {
+				false
+			}
+		}
+	}
+
 	#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
 	pub enum RedeemFor {
 		Token,
 		Deposit,
 	}
 }
+pub use pallet::*;
 
-// decl_storage! {
-// trait Store for Module<T: Config> as DarwiniaEthereumBacking {
-// }
-// }
+pub mod migration {
+	const OLD_PALLET_NAME: &[u8] = b"DarwiniaEthereumBacking";
+
+	#[cfg(feature = "try-runtime")]
+	pub mod try_runtime {
+		pub fn pre_migrate<T: Config>() -> Result<(), &'static str> {
+			Ok(())
+		}
+	}
+
+	pub fn migrate(new_pallet_name: &[u8]) {
+		frame_support::migration::move_pallet(OLD_PALLET_NAME, new_pallet_name);
+	}
+}

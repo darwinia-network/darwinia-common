@@ -73,3 +73,7 @@ substrate-std = [
 	"sp-runtime/std",
 	"sp-std/std",
 ]
+
+try-runtime = [
+	"frame-support/try-runtime",
+]
