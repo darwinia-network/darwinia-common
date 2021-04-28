@@ -65,7 +65,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn total_mapped_ring)]
-	pub type TotalMappedRing<T: Config> = StorageValue<_, MappedRing>;
+	pub type TotalMappedRing<T> = StorageValue<_, MappedRing>;
 
 	#[cfg_attr(feature = "std", derive(Default))]
 	#[pallet::genesis_config]
