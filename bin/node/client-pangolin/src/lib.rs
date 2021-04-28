@@ -5,13 +5,14 @@ use codec::Encode;
 use sp_core::{Pair, storage::StorageKey};
 use sp_runtime::{
 	generic::SignedPayload,
-	traits::IdentifyAccount
+	traits::IdentifyAccount,
 };
 
 use relay_substrate_client::{Chain, ChainBase, ChainWithBalances, TransactionSignScheme};
 
 // --- darwinia ---
 use pangolin_runtime::*;
+use frame_support::traits::Len;
 
 /// Pangolin header id.
 pub type HeaderId = relay_utils::HeaderId<drml_primitives::Hash, drml_primitives::BlockNumber>;
@@ -93,11 +94,21 @@ impl TransactionSignScheme for PangolinRelayChain {
 		let signer: sp_runtime::MultiSigner = signer.public().into();
 		let (call, extra, _) = raw_payload.deconstruct();
 
+		let s2s_extra = (
+			extra.0, // frame_system::CheckSpecVersion<Runtime>,
+			extra.1, // frame_system::CheckTxVersion<Runtime>,
+			extra.2, // frame_system::CheckGenesis<Runtime>,
+			extra.3, // frame_system::CheckEra<Runtime>,
+			extra.4, // frame_system::CheckNonce<Runtime>,
+			extra.5, // frame_system::CheckWeight<Runtime>,
+			extra.6, // pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
+			// darwinia_ethereum_relay::CheckEthereumRelayHeaderParcel<Runtime>, // this is not need for s2s bridge
+			);
 		pangolin_runtime::UncheckedExtrinsic::new_signed(
 			call,
 			sp_runtime::MultiAddress::Id(signer.into_account()),
 			signature.into(),
-			extra
+			s2s_extra,
 		)
 	}
 }
