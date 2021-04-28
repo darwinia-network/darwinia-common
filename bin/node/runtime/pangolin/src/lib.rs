@@ -64,6 +64,10 @@ pub use pallets::*;
 pub mod bridge;
 use bridge::s2s::*;
 
+// --- s2s ---
+pub use frame_system::Call as SystemCall;
+pub use darwinia_balances::Call as BalanceRingCall;
+
 
 use bridge_runtime_common::messages::{source::estimate_message_dispatch_and_delivery_fee, MessageBridge};
 
