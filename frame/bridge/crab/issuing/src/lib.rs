@@ -34,12 +34,12 @@ pub mod pallet {
 		// --- darwinia ---
 		use crate::pallet::*;
 
+		// Simple type
+		pub type MappedRing = u128;
 		// Generic type
 		pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 		pub type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
 		type RingCurrency<T> = <T as Config>::RingCurrency;
-		// Simple type
-		pub type MappedRing = u128;
 	}
 	pub use types::*;
 

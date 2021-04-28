@@ -30,13 +30,12 @@ pub mod pallet {
 		#[cfg(feature = "std")]
 		use crate::pallet::*;
 
+		// Generic type
 		pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-
 		#[cfg(feature = "std")]
 		pub type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
 		#[cfg(feature = "std")]
 		pub type KtonBalance<T> = <KtonCurrency<T> as Currency<AccountId<T>>>::Balance;
-
 		#[cfg(feature = "std")]
 		type RingCurrency<T> = <T as Config>::RingCurrency;
 		#[cfg(feature = "std")]
