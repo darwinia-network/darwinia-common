@@ -10,7 +10,7 @@ use frame_system::limits;
 use sp_runtime::{MultiSigner, MultiSignature};
 use sp_runtime::traits::Convert;
 
-pub(crate) type WithMillauMessagesInstance = pallet_bridge_messages::DefaultInstance;
+pub type WithMillauMessagesInstance = pallet_bridge_messages::DefaultInstance;
 
 frame_support::parameter_types! {
 	// This is a pretty unscientific cap.
