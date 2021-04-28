@@ -63,7 +63,7 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 	use sp_runtime::{
-		traits::{AccountIdConversion, SaturatedConversion, Zero},
+		traits::{AccountIdConversion, SaturatedConversion, Saturating, Zero},
 		ModuleId,
 	};
 	// --- darwinia ---
@@ -73,7 +73,11 @@ pub mod pallet {
 		balance::*,
 		traits::{EthereumReceipt, OnDepositRedeem},
 	};
-	use ethereum_primitives::{receipt::EthereumTransactionIndex, EthereumAddress, U256};
+	use ethabi::{Event as EthEvent, EventParam as EthEventParam, ParamType, RawLog};
+	use ethereum_primitives::{
+		receipt::{EthereumTransactionIndex, LogEntry},
+		EthereumAddress, U256,
+	};
 
 	// TODO
 	// macro_rules! set_address_call {
@@ -386,6 +390,48 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		// Transfer should always return ok
+		// Even it failed, still finish the syncing
+		//
+		// But should not dispatch the reward if the syncing failed
+		#[pallet::weight(10_000_000)]
+		fn sync_authorities_change(
+			origin: OriginFor<T>,
+			proof: EthereumReceiptProofThing<T>,
+		) -> DispatchResultWithPostInfo {
+			let bridger = ensure_signed(origin)?;
+			let tx_index = T::EthereumRelay::gen_receipt_index(&proof);
+
+			ensure!(
+				!<VerifiedProof<T>>::contains_key(tx_index),
+				<Error<T>>::AuthoritiesChangeAR
+			);
+
+			let (term, authorities, beneficiary) = Self::parse_authorities_set_proof(&proof)?;
+
+			T::EcdsaAuthorities::check_authorities_change_to_sync(term, authorities)?;
+			T::EcdsaAuthorities::sync_authorities_change()?;
+
+			<VerifiedProof<T>>::insert(tx_index, true);
+
+			let fee_account = Self::fee_account_id();
+			let sync_reward = T::SyncReward::get().min(
+				T::RingCurrency::usable_balance(&fee_account)
+					.saturating_sub(T::RingCurrency::minimum_balance()),
+			);
+
+			if !sync_reward.is_zero() {
+				T::RingCurrency::transfer(
+					&fee_account,
+					&beneficiary,
+					sync_reward,
+					ExistenceRequirement::KeepAlive,
+				)?;
+			}
+
+			Ok(().into())
+		}
+
 		/// Set a new ring redeem address.
 		///
 		/// The dispatch origin of this call must be _Root_.
@@ -480,6 +526,95 @@ pub mod pallet {
 		pub fn fee_account_id() -> T::AccountId {
 			T::FeeModuleId::get().into_account()
 		}
+
+		pub fn account_id_try_from_bytes(bytes: &[u8]) -> Result<T::AccountId, DispatchError> {
+			ensure!(bytes.len() == 32, <Error<T>>::AddrLenMis);
+
+			let redeem_account_id: T::RedeemAccountId = array_bytes::dyn2array!(bytes, 32).into();
+
+			Ok(redeem_account_id.into())
+		}
+
+		// event SetAuthritiesEvent(uint32 nonce, address[] authorities, bytes32 benifit);
+		// https://github.com/darwinia-network/darwinia-bridge-on-ethereum/blob/51839e614c0575e431eabfd5c70b84f6aa37826a/contracts/Relay.sol#L22
+		// https://ropsten.etherscan.io/tx/0x652528b9421ecb495610a734a4ab70d054b5510dbbf3a9d5c7879c43c7dde4e9#eventlog
+		fn parse_authorities_set_proof(
+			proof_record: &EthereumReceiptProofThing<T>,
+		) -> Result<(Term, Vec<EthereumAddress>, AccountId<T>), DispatchError> {
+			let log = {
+				let verified_receipt = T::EthereumRelay::verify_receipt(proof_record)
+					.map_err(|_| <Error<T>>::ReceiptProofInv)?;
+				let eth_event = EthEvent {
+					name: "SetAuthoritiesEvent".into(),
+					inputs: vec![
+						EthEventParam {
+							name: "nonce".into(),
+							kind: ParamType::Uint(32),
+							indexed: false,
+						},
+						EthEventParam {
+							name: "authorities".into(),
+							kind: ParamType::Array(Box::new(ParamType::Address)),
+							indexed: false,
+						},
+						EthEventParam {
+							name: "beneficiary".into(),
+							kind: ParamType::FixedBytes(32),
+							indexed: false,
+						},
+					],
+					anonymous: false,
+				};
+				let LogEntry { topics, data, .. } = verified_receipt
+					.logs
+					.into_iter()
+					.find(|x| {
+						x.address == <SetAuthoritiesAddress<T>>::get()
+							&& x.topics[0] == eth_event.signature()
+					})
+					.ok_or(<Error<T>>::LogEntryNE)?;
+
+				eth_event
+					.parse_log(RawLog {
+						topics: vec![topics[0]],
+						data,
+					})
+					.map_err(|_| <Error<T>>::EthLogPF)?
+			};
+			let term = log.params[0]
+				.value
+				.clone()
+				.into_uint()
+				.ok_or(<Error<T>>::BytesCF)?
+				.saturated_into();
+			let authorities = {
+				let mut authorities = vec![];
+
+				for token in log.params[1]
+					.value
+					.clone()
+					.into_array()
+					.ok_or(<Error<T>>::ArrayCF)?
+				{
+					authorities.push(token.into_address().ok_or(<Error<T>>::AddressCF)?);
+				}
+
+				authorities
+			};
+			let beneficiary = {
+				let raw_account_id = log.params[2]
+					.value
+					.clone()
+					.into_fixed_bytes()
+					.ok_or(<Error<T>>::BytesCF)?;
+
+				log::trace!("[ethereum-backing] Raw Account: {:?}", raw_account_id);
+
+				Self::account_id_try_from_bytes(&raw_account_id)?
+			};
+
+			Ok((term, authorities, beneficiary))
+		}
 	}
 }
 
@@ -555,51 +690,8 @@ pub mod pallet {
 // 			}
 // 		}
 
-// 		// Transfer should always return ok
-// 		// Even it failed, still finish the syncing
-// 		//
-// 		// But should not dispatch the reward if the syncing failed
-// 		#[weight = 10_000_000]
-// 		fn sync_authorities_change(origin, proof: EthereumReceiptProofThing<T>) {
-// 			let bridger = ensure_signed(origin)?;
-// 			let tx_index = T::EthereumRelay::gen_receipt_index(&proof);
-
-// 			ensure!(!VerifiedProof::contains_key(tx_index), <Error<T>>::AuthoritiesChangeAR);
-
-// 			let (term, authorities, beneficiary) = Self::parse_authorities_set_proof(&proof)?;
-
-// 			T::EcdsaAuthorities::check_authorities_change_to_sync(term, authorities)?;
-// 			T::EcdsaAuthorities::sync_authorities_change()?;
-
-// 			VerifiedProof::insert(tx_index, true);
-
-// 			let fee_account = Self::fee_account_id();
-// 			let sync_reward = T::SyncReward::get().min(
-// 				T::RingCurrency::usable_balance(&fee_account)
-// 					.saturating_sub(T::RingCurrency::minimum_balance())
-// 			);
-
-// 			if !sync_reward.is_zero() {
-// 				T::RingCurrency::transfer(
-// 					&fee_account,
-// 					&beneficiary,
-// 					sync_reward,
-// 					KeepAlive
-// 				)?;
-// 			}
-// 		}
-
 // 	}
 // }
-
-// impl<T: Config> Module<T> {
-// 	pub fn account_id_try_from_bytes(bytes: &[u8]) -> Result<T::AccountId, DispatchError> {
-// 		ensure!(bytes.len() == 32, <Error<T>>::AddrLenMis);
-
-// 		let redeem_account_id: T::RedeemAccountId = array_bytes::dyn2array!(bytes, 32).into();
-
-// 		Ok(redeem_account_id.into())
-// 	}
 
 // 	/// Return the amount of money in the pot.
 // 	// The existential deposit is not part of the pot so backing account never gets deleted.
@@ -835,87 +927,6 @@ pub mod pallet {
 // 			months,
 // 			fee,
 // 		))
-// 	}
-
-// 	// event SetAuthritiesEvent(uint32 nonce, address[] authorities, bytes32 benifit);
-// 	// https://github.com/darwinia-network/darwinia-bridge-on-ethereum/blob/51839e614c0575e431eabfd5c70b84f6aa37826a/contracts/Relay.sol#L22
-// 	// https://ropsten.etherscan.io/tx/0x652528b9421ecb495610a734a4ab70d054b5510dbbf3a9d5c7879c43c7dde4e9#eventlog
-// 	fn parse_authorities_set_proof(
-// 		proof_record: &EthereumReceiptProofThing<T>,
-// 	) -> Result<(Term, Vec<EthereumAddress>, AccountId<T>), DispatchError> {
-// 		let log = {
-// 			let verified_receipt = T::EthereumRelay::verify_receipt(proof_record)
-// 				.map_err(|_| <Error<T>>::ReceiptProofInv)?;
-// 			let eth_event = EthEvent {
-// 				name: "SetAuthoritiesEvent".into(),
-// 				inputs: vec![
-// 					EthEventParam {
-// 						name: "nonce".into(),
-// 						kind: ParamType::Uint(32),
-// 						indexed: false,
-// 					},
-// 					EthEventParam {
-// 						name: "authorities".into(),
-// 						kind: ParamType::Array(Box::new(ParamType::Address)),
-// 						indexed: false,
-// 					},
-// 					EthEventParam {
-// 						name: "beneficiary".into(),
-// 						kind: ParamType::FixedBytes(32),
-// 						indexed: false,
-// 					},
-// 				],
-// 				anonymous: false,
-// 			};
-// 			let LogEntry { topics, data, .. } = verified_receipt
-// 				.logs
-// 				.into_iter()
-// 				.find(|x| {
-// 					x.address == SetAuthoritiesAddress::get()
-// 						&& x.topics[0] == eth_event.signature()
-// 				})
-// 				.ok_or(<Error<T>>::LogEntryNE)?;
-
-// 			eth_event
-// 				.parse_log(RawLog {
-// 					topics: vec![topics[0]],
-// 					data,
-// 				})
-// 				.map_err(|_| <Error<T>>::EthLogPF)?
-// 		};
-// 		let term = log.params[0]
-// 			.value
-// 			.clone()
-// 			.into_uint()
-// 			.ok_or(<Error<T>>::BytesCF)?
-// 			.saturated_into();
-// 		let authorities = {
-// 			let mut authorities = vec![];
-
-// 			for token in log.params[1]
-// 				.value
-// 				.clone()
-// 				.into_array()
-// 				.ok_or(<Error<T>>::ArrayCF)?
-// 			{
-// 				authorities.push(token.into_address().ok_or(<Error<T>>::AddressCF)?);
-// 			}
-
-// 			authorities
-// 		};
-// 		let beneficiary = {
-// 			let raw_account_id = log.params[2]
-// 				.value
-// 				.clone()
-// 				.into_fixed_bytes()
-// 				.ok_or(<Error<T>>::BytesCF)?;
-
-// 			log::trace!(target: "ethereum-backing", "[ethereum-backing] Raw Account: {:?}", raw_account_id);
-
-// 			Self::account_id_try_from_bytes(&raw_account_id)?
-// 		};
-
-// 		Ok((term, authorities, beneficiary))
 // 	}
 
 // 	fn redeem_token(
