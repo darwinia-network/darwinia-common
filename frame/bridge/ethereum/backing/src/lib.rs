@@ -261,7 +261,13 @@ pub mod pallet {
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
 	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_initialize(_: BlockNumber<T>) -> Weight {
+			<LockAssetEvents<T>>::kill();
+
+			0
+		}
+	}
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {}
 	impl<T: Config> Pallet<T> {
@@ -326,12 +332,6 @@ pub mod pallet {
 // 		const SyncReward: RingBalance<T> = T::SyncReward::get();
 
 // 		fn deposit_event() = default;
-
-// 		fn on_initialize(_n: BlockNumber<T>) -> Weight {
-// 			<LockAssetEvents<T>>::kill();
-
-// 			0
-// 		}
 
 // 		/// Redeem balances
 // 		///
