@@ -89,6 +89,7 @@ impl TransactionSignScheme for PangolinRelayChain {
 				(),
 				(),
 				(),
+				(),
 			),
 		);
 		let signature = raw_payload.using_encoded(|payload| signer.sign(payload));
