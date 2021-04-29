@@ -101,6 +101,13 @@ pub type AccountSigner = MultiSigner;
 
 // -- s2s --
 
+/// The target length of a session (how often authorities change) on Millau measured in of number of
+/// blocks.
+///
+/// Note that since this is a target sessions may change before/after this time depending on network
+/// conditions.
+pub const SESSION_LENGTH: BlockNumber = 5 * time_units::MINUTES;
+
 /// Human readable time units defined in terms of number of blocks.
 pub mod time_units {
 	use super::BlockNumber;
