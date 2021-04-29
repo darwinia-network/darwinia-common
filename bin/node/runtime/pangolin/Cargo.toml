@@ -92,13 +92,13 @@ sp-version                                 = { default-features = false, git = "
 bp-header-chain              = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
 bp-message-dispatch          = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
 bp-messages                  = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
-bp-millau                    = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
 bp-runtime                   = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
 bridge-runtime-common        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
 pallet-bridge-dispatch       = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
 pallet-bridge-grandpa        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
 pallet-bridge-messages       = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
 pallet-shift-session-manager = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
+bp-millau                    = { default-features = false, path = "../../../millau/chain-millau" }
 
 [build-dependencies]
 # substrate

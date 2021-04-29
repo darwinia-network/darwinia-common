@@ -6131,7 +6131,7 @@ dependencies = [
  "bp-header-chain",
  "bp-message-dispatch",
  "bp-messages",
- "bp-millau 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s)",
+ "bp-millau 0.1.0",
  "bp-runtime",
  "bridge-runtime-common",
  "darwinia-balances",
