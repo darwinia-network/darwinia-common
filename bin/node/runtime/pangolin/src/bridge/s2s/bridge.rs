@@ -3,14 +3,16 @@ use crate::*;
 use darwinia_balances::{Instance0 as RingInstance};
 
 // --- s2s bridger ---
-pub use pallet_bridge_grandpa::Pallet as BridgeGrandpaMillauCall;
+pub use pallet_bridge_grandpa::Call as BridgeGrandpaMillauCall;
 pub use pallet_bridge_messages::Call as MessagesCall;
 // --- frame ---
 use frame_system::limits;
 use sp_runtime::{MultiSigner, MultiSignature};
 use sp_runtime::traits::Convert;
 
-pub type WithMillauMessagesInstance = pallet_bridge_messages::DefaultInstance;
+pub type WithMillauMessagesInstance = pallet_bridge_messages::Instance2;
+pub type WithMillauGrandpaInstance = pallet_bridge_grandpa::Instance2;
+pub type WithMillauDispatchInstance = pallet_bridge_dispatch::Instance2;
 
 frame_support::parameter_types! {
 	// This is a pretty unscientific cap.
@@ -25,8 +27,6 @@ frame_support::parameter_types! {
 	// week.
 	pub const HeadersToKeep: u32 = 7 * drml_primitives::time_units::DAYS as u32;
 }
-
-
 
 
 frame_support::parameter_types! {
@@ -57,7 +57,7 @@ pub fn derive_account_from_millau_id(id: bp_runtime::SourceAccount<AccountId>) -
 }
 
 
-impl pallet_bridge_grandpa::Config for Runtime {
+impl pallet_bridge_grandpa::Config<WithMillauGrandpaInstance> for Runtime {
 	type BridgedChain = bp_millau::Millau;
 	type MaxRequests = MaxRequests;
 	type HeadersToKeep = HeadersToKeep;
@@ -101,7 +101,7 @@ impl pallet_bridge_messages::Config<WithMillauMessagesInstance> for Runtime {
 }
 
 
-impl pallet_bridge_dispatch::Config for Runtime {
+impl pallet_bridge_dispatch::Config<WithMillauDispatchInstance> for Runtime {
 	type Event = Event;
 	type MessageId = (bp_messages::LaneId, bp_messages::MessageNonce);
 	type Call = Call;

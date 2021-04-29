@@ -402,9 +402,9 @@ frame_support::construct_runtime! {
 		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 41,
 
 		// s2s bridger to millau chain
-		BridgeMillauGrandpa: pallet_bridge_grandpa::{Pallet, Call, Storage} = 43,
-		BridgeDispatch: pallet_bridge_dispatch::{Pallet, Event<T>} = 44,
-		BridgeMillauMessages: pallet_bridge_messages::{Pallet, Call, Storage, Event<T>} = 45,
+		BridgeMillauGrandpa: pallet_bridge_grandpa::<Instance2>::{Pallet, Call, Storage} = 43,
+		BridgeMillauDispatch: pallet_bridge_dispatch::<Instance2>::{Pallet, Event<T>} = 44,
+		BridgeMillauMessages: pallet_bridge_messages::<Instance2>::{Pallet, Call, Storage, Event<T>} = 45,
 		ShiftSessionManager: pallet_shift_session_manager::{Pallet} = 46,
 	}
 }

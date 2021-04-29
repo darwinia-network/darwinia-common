@@ -84,7 +84,7 @@ pub type FromMillauEncodedCall = messages::target::FromBridgedChainEncodedMessag
 pub type FromMillauMessageDispatch = messages::target::FromBridgedChainMessageDispatch<
 	WithMillauMessageBridge,
 	crate::Runtime,
-	pallet_bridge_dispatch::DefaultInstance,
+	crate::WithMillauDispatchInstance,
 >;
 
 /// Messages proof for Millau -> Rialto messages.
@@ -174,7 +174,7 @@ impl messages::ChainWithMessages for Millau {
 	type Weight = Weight;
 	type Balance = bp_millau::Balance;
 
-	type MessagesInstance = pallet_bridge_messages::DefaultInstance;
+	type MessagesInstance = crate::WithMillauMessagesInstance;
 }
 
 impl messages::BridgedChainWithMessages for Millau {
@@ -241,8 +241,7 @@ impl TargetHeaderChain<ToMillauMessagePayload, bp_millau::AccountId> for Millau 
 	fn verify_messages_delivery_proof(
 		proof: Self::MessagesDeliveryProof,
 	) -> Result<(LaneId, InboundLaneData<drml_primitives::AccountId>), Self::Error> {
-		//                                                                                   -- fixme: the best way is use specific instance
-		messages::source::verify_messages_delivery_proof::<WithMillauMessageBridge, Runtime, ()>(proof)
+		messages::source::verify_messages_delivery_proof::<WithMillauMessageBridge, Runtime, crate::WithMillauGrandpaInstance>(proof)
 	}
 }
 
@@ -259,8 +258,7 @@ impl SourceHeaderChain<bp_millau::Balance> for Millau {
 		proof: Self::MessagesProof,
 		messages_count: u32,
 	) -> Result<ProvedMessages<Message<bp_millau::Balance>>, Self::Error> {
-		//                                                                          -- fixme: the best way is use specific instance
-		messages::target::verify_messages_proof::<WithMillauMessageBridge, Runtime, ()>(proof, messages_count)
+		messages::target::verify_messages_proof::<WithMillauMessageBridge, Runtime, crate::WithMillauGrandpaInstance>(proof, messages_count)
 	}
 }
 
