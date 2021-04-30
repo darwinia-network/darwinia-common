@@ -347,8 +347,8 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 			set_authorities_address: array_bytes::hex2array_unchecked!(SET_AUTHORITIES_ADDRESS, 20).into(),
 			ring_token_address: array_bytes::hex2array_unchecked!(RING_TOKEN_ADDRESS, 20).into(),
 			kton_token_address: array_bytes::hex2array_unchecked!(KTON_TOKEN_ADDRESS, 20).into(),
-			ring_locked: BUNCH_OF_COINS,
-			kton_locked: BUNCH_OF_COINS,
+			backed_ring: BUNCH_OF_COINS,
+			backed_kton: BUNCH_OF_COINS,
 		},
 		darwinia_ethereum_issuing: pangolin_runtime::EthereumIssuingConfig {
 			mapping_factory_address: array_bytes::hex2array_unchecked!(MAPPING_FACTORY_ADDRESS, 20).into(),
@@ -504,8 +504,8 @@ fn pangolin_development_genesis() -> pangolin_runtime::GenesisConfig {
 			set_authorities_address: array_bytes::hex2array_unchecked!(SET_AUTHORITIES_ADDRESS, 20).into(),
 			ring_token_address: array_bytes::hex2array_unchecked!(RING_TOKEN_ADDRESS, 20).into(),
 			kton_token_address: array_bytes::hex2array_unchecked!(KTON_TOKEN_ADDRESS, 20).into(),
-			ring_locked: BUNCH_OF_COINS,
-			kton_locked: BUNCH_OF_COINS,
+			backed_ring: BUNCH_OF_COINS,
+			backed_kton: BUNCH_OF_COINS,
 		},
 		darwinia_ethereum_issuing: pangolin_runtime::EthereumIssuingConfig {
 			mapping_factory_address: array_bytes::hex2array_unchecked!(MAPPING_FACTORY_ADDRESS, 20).into(),
