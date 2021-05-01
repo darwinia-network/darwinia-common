@@ -238,3 +238,18 @@ pub mod pallet {
 	}
 }
 pub use pallet::*;
+
+pub mod migration {
+	const OLD_PALLET_NAME: &[u8] = b"DarwiniaHeaderMMR";
+
+	#[cfg(feature = "try-runtime")]
+	pub mod try_runtime {
+		pub fn pre_migrate<T: Config>() -> Result<(), &'static str> {
+			Ok(())
+		}
+	}
+
+	pub fn migrate(new_pallet_name: &[u8]) {
+		frame_support::migration::move_pallet(OLD_PALLET_NAME, new_pallet_name);
+	}
+}
