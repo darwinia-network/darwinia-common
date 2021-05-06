@@ -1,7 +1,6 @@
 [workspace]
 members = [
 	"bin/node/cli",
-	"bin/node/client-pangolin",
 	"bin/node/primitives",
 	"bin/node/runtime/pangolin",
 	"client/cli",
@@ -56,6 +55,7 @@ members = [
 	"primitives/relay",
 	"primitives/rpc",
 	"primitives/storage",
+	"relays/client-pangolin",
 ]
 
 # The list of dependencies below (which can be both direct and indirect dependencies) are crates

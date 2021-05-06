@@ -17,9 +17,9 @@ relay-utils            = { git = "https://github.com/darwinia-network/parity-bri
 
 # Bridge dependencies
 
-drml-primitives         = { default-features = false, path = "../primitives" }
-pangolin-runtime        = { path = "../runtime/pangolin" }
-darwinia-ethereum-relay = { default-features = false, path = "../../../frame/bridge/ethereum/relay" }
+drml-primitives         = { default-features = false, path = "../../bin/node/primitives" }
+pangolin-runtime        = { path = "../../bin/node/runtime/pangolin" }
+darwinia-ethereum-relay = { default-features = false, path = "../../frame/bridge/ethereum/relay" }
 
 
 # Substrate Dependencies
