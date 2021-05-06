@@ -38,7 +38,8 @@ use sp_runtime::{FixedPointNumber, FixedU128};
 use sp_std::{convert::TryFrom, ops::RangeInclusive};
 
 /// Initial value of `MillauToPangolinConversionRate` parameter.
-pub const INITIAL_MILLAU_TO_PANGOLIN_CONVERSION_RATE: FixedU128 = FixedU128::from_inner(FixedU128::DIV);
+pub const INITIAL_MILLAU_TO_PANGOLIN_CONVERSION_RATE: FixedU128 =
+	FixedU128::from_inner(FixedU128::DIV);
 
 parameter_types! {
 	/// Millau to Rialto conversion rate. Initially we treat both tokens as equal.
@@ -48,16 +49,17 @@ parameter_types! {
 // fixme: reminder #1: now the darwinia-common use darwinia-network/substrate@darwinia-v0.10.0#3655f9b but the darwinia-network/parity-bridges-common use darwinia-network/substrate@s2s#97f1b63 , so have different substrate version, there can't compile now, the darwinia-common need upgrade substrate version
 /// Storage key of the Rialto -> Millau message in the runtime storage.
 pub fn message_key(lane: &LaneId, nonce: MessageNonce) -> StorageKey {
-	pallet_bridge_messages::storage_keys::message_key::<Runtime, <PangolinChainWithMessage as ChainWithMessages>::MessagesInstance>(
-		lane, nonce,
-	)
+	pallet_bridge_messages::storage_keys::message_key::<
+		Runtime,
+		<PangolinChainWithMessage as ChainWithMessages>::MessagesInstance,
+	>(lane, nonce)
 }
 
 /// Storage key of the Rialto -> Millau message lane state in the runtime storage.
 pub fn outbound_lane_data_key(lane: &LaneId) -> StorageKey {
-	pallet_bridge_messages::storage_keys::outbound_lane_data_key::<<PangolinChainWithMessage as ChainWithMessages>::MessagesInstance>(
-		lane,
-	)
+	pallet_bridge_messages::storage_keys::outbound_lane_data_key::<
+		<PangolinChainWithMessage as ChainWithMessages>::MessagesInstance,
+	>(lane)
 }
 
 /// Storage key of the Millau -> Rialto message lane state in the runtime storage.
@@ -69,16 +71,20 @@ pub fn inbound_lane_data_key(lane: &LaneId) -> StorageKey {
 }
 
 /// Message payload for Rialto -> Millau messages.
-pub type ToMillauMessagePayload = messages::source::FromThisChainMessagePayload<WithMillauMessageBridge>;
+pub type ToMillauMessagePayload =
+	messages::source::FromThisChainMessagePayload<WithMillauMessageBridge>;
 
 /// Message verifier for Rialto -> Millau messages.
-pub type ToMillauMessageVerifier = messages::source::FromThisChainMessageVerifier<WithMillauMessageBridge>;
+pub type ToMillauMessageVerifier =
+	messages::source::FromThisChainMessageVerifier<WithMillauMessageBridge>;
 
 /// Message payload for Millau -> Rialto messages.
-pub type FromMillauMessagePayload = messages::target::FromBridgedChainMessagePayload<WithMillauMessageBridge>;
+pub type FromMillauMessagePayload =
+	messages::target::FromBridgedChainMessagePayload<WithMillauMessageBridge>;
 
 /// Encoded Rialto Call as it comes from Millau.
-pub type FromMillauEncodedCall = messages::target::FromBridgedChainEncodedMessageCall<WithMillauMessageBridge>;
+pub type FromMillauEncodedCall =
+	messages::target::FromBridgedChainEncodedMessageCall<WithMillauMessageBridge>;
 
 /// Call-dispatch based message dispatch for Millau -> Rialto messages.
 pub type FromMillauMessageDispatch = messages::target::FromBridgedChainMessageDispatch<
@@ -91,7 +97,8 @@ pub type FromMillauMessageDispatch = messages::target::FromBridgedChainMessageDi
 pub type FromMillauMessagesProof = messages::target::FromBridgedChainMessagesProof<bp_millau::Hash>;
 
 /// Messages delivery proof for Rialto -> Millau messages.
-pub type ToMillauMessagesDeliveryProof = messages::source::FromBridgedChainMessagesDeliveryProof<bp_millau::Hash>;
+pub type ToMillauMessagesDeliveryProof =
+	messages::source::FromBridgedChainMessagesDeliveryProof<bp_millau::Hash>;
 
 /// Millau <-> Rialto message bridge.
 #[derive(RuntimeDebug, Clone, Copy)]
@@ -105,9 +112,13 @@ impl MessageBridge for WithMillauMessageBridge {
 	type ThisChain = PangolinChainWithMessage;
 	type BridgedChain = Millau;
 
-	fn bridged_balance_to_this_balance(bridged_balance: bp_millau::Balance) -> drml_primitives::Balance {
-		drml_primitives::Balance::try_from(MillauToPangolinConversionRate::get().saturating_mul_int(bridged_balance))
-			.unwrap_or(drml_primitives::Balance::MAX)
+	fn bridged_balance_to_this_balance(
+		bridged_balance: bp_millau::Balance,
+	) -> drml_primitives::Balance {
+		drml_primitives::Balance::try_from(
+			MillauToPangolinConversionRate::get().saturating_mul_int(bridged_balance),
+		)
+		.unwrap_or(drml_primitives::Balance::MAX)
 	}
 }
 
@@ -138,22 +149,26 @@ impl messages::ThisChainWithMessages for PangolinChainWithMessage {
 	}
 
 	fn estimate_delivery_confirmation_transaction() -> MessageTransaction<Weight> {
-		let inbound_data_size =
-			InboundLaneData::<drml_primitives::AccountId>::encoded_size_hint(drml_primitives::MAXIMAL_ENCODED_ACCOUNT_ID_SIZE, 1)
-				.unwrap_or(u32::MAX);
+		let inbound_data_size = InboundLaneData::<crate::AccountId>::encoded_size_hint(
+			crate::MAXIMAL_ENCODED_ACCOUNT_ID_SIZE,
+			1,
+		)
+		.unwrap_or(u32::MAX);
 
 		MessageTransaction {
-			dispatch_weight: drml_primitives::MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
+			dispatch_weight: crate::MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
 			size: inbound_data_size
 				.saturating_add(bp_millau::EXTRA_STORAGE_PROOF_SIZE)
-				.saturating_add(drml_primitives::TX_EXTRA_BYTES),
+				.saturating_add(crate::TX_EXTRA_BYTES),
 		}
 	}
 
 	fn transaction_payment(transaction: MessageTransaction<Weight>) -> drml_primitives::Balance {
 		// in our testnets, both per-byte fee and weight-to-fee are 1:1
 		messages::transaction_payment(
-			drml_primitives::RuntimeBlockWeights::get().get(DispatchClass::Normal).base_extrinsic,
+			crate::RuntimeBlockWeights::get()
+				.get(DispatchClass::Normal)
+				.base_extrinsic,
 			1,
 			FixedU128::zero(),
 			|weight| weight as _,
@@ -184,7 +199,9 @@ impl messages::BridgedChainWithMessages for Millau {
 
 	fn message_weight_limits(_message_payload: &[u8]) -> RangeInclusive<Weight> {
 		// we don't want to relay too large messages + keep reserve for future upgrades
-		let upper_limit = messages::target::maximal_incoming_message_dispatch_weight(bp_millau::max_extrinsic_weight());
+		let upper_limit = messages::target::maximal_incoming_message_dispatch_weight(
+			bp_millau::max_extrinsic_weight(),
+		);
 
 		// we're charging for payload bytes in `WithMillauMessageBridge::transaction_payment` function
 		//
@@ -208,7 +225,7 @@ impl messages::BridgedChainWithMessages for Millau {
 				.saturating_add(bp_millau::DEFAULT_MESSAGE_DELIVERY_TX_WEIGHT)
 				.saturating_add(message_dispatch_weight),
 			size: message_payload_len
-				.saturating_add(drml_primitives::EXTRA_STORAGE_PROOF_SIZE)
+				.saturating_add(crate::EXTRA_STORAGE_PROOF_SIZE)
 				.saturating_add(bp_millau::TX_EXTRA_BYTES),
 		}
 	}
@@ -217,7 +234,9 @@ impl messages::BridgedChainWithMessages for Millau {
 		// fixme: same with reminder #1
 		// in our testnets, both per-byte fee and weight-to-fee are 1:1
 		messages::transaction_payment(
-			bp_millau::BlockWeights::get().get(DispatchClass::Normal).base_extrinsic,
+			bp_millau::BlockWeights::get()
+				.get(DispatchClass::Normal)
+				.base_extrinsic,
 			1,
 			FixedU128::zero(),
 			|weight| weight as _,
@@ -241,7 +260,11 @@ impl TargetHeaderChain<ToMillauMessagePayload, bp_millau::AccountId> for Millau 
 	fn verify_messages_delivery_proof(
 		proof: Self::MessagesDeliveryProof,
 	) -> Result<(LaneId, InboundLaneData<drml_primitives::AccountId>), Self::Error> {
-		messages::source::verify_messages_delivery_proof::<WithMillauMessageBridge, Runtime, crate::WithMillauGrandpaInstance>(proof)
+		messages::source::verify_messages_delivery_proof::<
+			WithMillauMessageBridge,
+			Runtime,
+			crate::WithMillauGrandpaInstance,
+		>(proof)
 	}
 }
 
@@ -258,7 +281,11 @@ impl SourceHeaderChain<bp_millau::Balance> for Millau {
 		proof: Self::MessagesProof,
 		messages_count: u32,
 	) -> Result<ProvedMessages<Message<bp_millau::Balance>>, Self::Error> {
-		messages::target::verify_messages_proof::<WithMillauMessageBridge, Runtime, crate::WithMillauGrandpaInstance>(proof, messages_count)
+		messages::target::verify_messages_proof::<
+			WithMillauMessageBridge,
+			Runtime,
+			crate::WithMillauGrandpaInstance,
+		>(proof, messages_count)
 	}
 }
 
@@ -272,9 +299,9 @@ pub enum RialtoToMillauMessagesParameter {
 impl MessagesParameter for RialtoToMillauMessagesParameter {
 	fn save(&self) {
 		match *self {
-			RialtoToMillauMessagesParameter::MillauToPangolinConversionRate(ref conversion_rate) => {
-				MillauToPangolinConversionRate::set(conversion_rate)
-			}
+			RialtoToMillauMessagesParameter::MillauToPangolinConversionRate(
+				ref conversion_rate,
+			) => MillauToPangolinConversionRate::set(conversion_rate),
 		}
 	}
 }

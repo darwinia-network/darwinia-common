@@ -2398,15 +2398,8 @@ dependencies = [
 name = "drml-primitives"
 version = "2.2.0"
 dependencies = [
- "bp-messages",
- "bp-runtime",
- "frame-support",
- "frame-system",
- "sp-api",
  "sp-core",
  "sp-runtime",
- "sp-std",
- "static_assertions",
 ]
 
 [[package]]
