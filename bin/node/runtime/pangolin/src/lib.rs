@@ -65,11 +65,12 @@ pub mod bridge;
 use bridge::s2s::*;
 
 // --- s2s ---
-pub use frame_system::Call as SystemCall;
 pub use darwinia_balances::Call as BalanceRingCall;
+pub use frame_system::Call as SystemCall;
 
-
-use bridge_runtime_common::messages::{source::estimate_message_dispatch_and_delivery_fee, MessageBridge};
+use bridge_runtime_common::messages::{
+	source::estimate_message_dispatch_and_delivery_fee, MessageBridge,
+};
 
 pub mod impls {
 	//! Some configurable implementations as associated type for the substrate runtime.
@@ -241,7 +242,7 @@ use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::{AllowedSlots, BabeEpochConfiguration};
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
 use sp_runtime::{
-	create_runtime_str, generic,
+	generic,
 	traits::{Block as BlockT, NumberFor, SaturatedConversion, StaticLookup},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiAddress, OpaqueExtrinsic, Perbill, RuntimeDebug,
@@ -294,8 +295,8 @@ type Ring = Balances;
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("Pangolin"),
-	impl_name: create_runtime_str!("Pangolin"),
+	spec_name: sp_runtime::create_runtime_str!("Pangolin"),
+	impl_name: sp_runtime::create_runtime_str!("Pangolin"),
 	authoring_version: 1,
 	// crate version ~2.2.0 := >=2.2.0, <2.3.0
 	spec_version: 221,

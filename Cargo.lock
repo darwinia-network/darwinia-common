@@ -5991,6 +5991,7 @@ dependencies = [
  "sp-version",
  "static_assertions",
  "substrate-wasm-builder",
+ "system-params",
 ]
 
 [[package]]
@@ -9495,6 +9496,16 @@ dependencies = [
  "once_cell",
  "rayon",
  "winapi 0.3.9",
+]
+
+[[package]]
+name = "system-params"
+version = "2.2.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "sp-runtime",
+ "static_assertions",
 ]
 
 [[package]]
