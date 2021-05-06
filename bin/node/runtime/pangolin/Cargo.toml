@@ -98,7 +98,7 @@ pallet-bridge-dispatch       = { default-features = false, git = "https://github
 pallet-bridge-grandpa        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
 pallet-bridge-messages       = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
 pallet-shift-session-manager = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
-bp-millau                    = { default-features = false, path = "../../../millau/chain-millau" }
+bp-millau                    = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
 
 [build-dependencies]
 # substrate
