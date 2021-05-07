@@ -33,6 +33,7 @@ use frame_support::{
 	weights::{DispatchClass, Weight},
 	RuntimeDebug,
 };
+use pangolin_runtime_params::s2s as s2s_params;
 use sp_core::storage::StorageKey;
 use sp_runtime::{FixedPointNumber, FixedU128};
 use sp_std::{convert::TryFrom, ops::RangeInclusive};
@@ -150,23 +151,23 @@ impl messages::ThisChainWithMessages for PangolinChainWithMessage {
 
 	fn estimate_delivery_confirmation_transaction() -> MessageTransaction<Weight> {
 		let inbound_data_size = InboundLaneData::<crate::AccountId>::encoded_size_hint(
-			crate::MAXIMAL_ENCODED_ACCOUNT_ID_SIZE,
+			s2s_params::MAXIMAL_ENCODED_ACCOUNT_ID_SIZE,
 			1,
 		)
 		.unwrap_or(u32::MAX);
 
 		MessageTransaction {
-			dispatch_weight: crate::MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
+			dispatch_weight: s2s_params::MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
 			size: inbound_data_size
 				.saturating_add(bp_millau::EXTRA_STORAGE_PROOF_SIZE)
-				.saturating_add(crate::TX_EXTRA_BYTES),
+				.saturating_add(s2s_params::TX_EXTRA_BYTES),
 		}
 	}
 
 	fn transaction_payment(transaction: MessageTransaction<Weight>) -> drml_primitives::Balance {
 		// in our testnets, both per-byte fee and weight-to-fee are 1:1
 		messages::transaction_payment(
-			crate::RuntimeBlockWeights::get()
+			pangolin_runtime_params::system::RuntimeBlockWeights::get()
 				.get(DispatchClass::Normal)
 				.base_extrinsic,
 			1,
@@ -225,7 +226,7 @@ impl messages::BridgedChainWithMessages for Millau {
 				.saturating_add(bp_millau::DEFAULT_MESSAGE_DELIVERY_TX_WEIGHT)
 				.saturating_add(message_dispatch_weight),
 			size: message_payload_len
-				.saturating_add(crate::EXTRA_STORAGE_PROOF_SIZE)
+				.saturating_add(s2s_params::EXTRA_STORAGE_PROOF_SIZE)
 				.saturating_add(bp_millau::TX_EXTRA_BYTES),
 		}
 	}

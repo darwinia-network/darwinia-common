@@ -642,7 +642,7 @@ dependencies = [
 [[package]]
 name = "bp-header-chain"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#378727abb7e931001239c5873932c21198c97bb2"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#ff680731ba4a21882ad86316a29d588a6c336e8b"
 dependencies = [
  "finality-grandpa",
  "frame-support",
@@ -657,7 +657,7 @@ dependencies = [
 [[package]]
 name = "bp-message-dispatch"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#378727abb7e931001239c5873932c21198c97bb2"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#ff680731ba4a21882ad86316a29d588a6c336e8b"
 dependencies = [
  "bp-runtime",
  "frame-support",
@@ -668,7 +668,7 @@ dependencies = [
 [[package]]
 name = "bp-messages"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#378727abb7e931001239c5873932c21198c97bb2"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#ff680731ba4a21882ad86316a29d588a6c336e8b"
 dependencies = [
  "bp-runtime",
  "frame-support",
@@ -680,7 +680,7 @@ dependencies = [
 [[package]]
 name = "bp-millau"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#378727abb7e931001239c5873932c21198c97bb2"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#ff680731ba4a21882ad86316a29d588a6c336e8b"
 dependencies = [
  "bp-messages",
  "bp-runtime",
@@ -703,7 +703,7 @@ dependencies = [
 [[package]]
 name = "bp-rialto"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#378727abb7e931001239c5873932c21198c97bb2"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#ff680731ba4a21882ad86316a29d588a6c336e8b"
 dependencies = [
  "bp-messages",
  "bp-runtime",
@@ -718,7 +718,7 @@ dependencies = [
 [[package]]
 name = "bp-runtime"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#378727abb7e931001239c5873932c21198c97bb2"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#ff680731ba4a21882ad86316a29d588a6c336e8b"
 dependencies = [
  "frame-support",
  "hash-db",
@@ -735,7 +735,7 @@ dependencies = [
 [[package]]
 name = "bp-test-utils"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#378727abb7e931001239c5873932c21198c97bb2"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#ff680731ba4a21882ad86316a29d588a6c336e8b"
 dependencies = [
  "bp-header-chain",
  "ed25519-dalek",
@@ -750,7 +750,7 @@ dependencies = [
 [[package]]
 name = "bridge-runtime-common"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#378727abb7e931001239c5873932c21198c97bb2"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#ff680731ba4a21882ad86316a29d588a6c336e8b"
 dependencies = [
  "bp-message-dispatch",
  "bp-messages",
@@ -2891,7 +2891,7 @@ dependencies = [
 [[package]]
 name = "finality-relay"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#378727abb7e931001239c5873932c21198c97bb2"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#ff680731ba4a21882ad86316a29d588a6c336e8b"
 dependencies = [
  "async-std",
  "async-trait",
@@ -3510,7 +3510,7 @@ dependencies = [
 [[package]]
 name = "headers-relay"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#378727abb7e931001239c5873932c21198c97bb2"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#ff680731ba4a21882ad86316a29d588a6c336e8b"
 dependencies = [
  "async-std",
  "async-trait",
@@ -5421,9 +5421,9 @@ checksum = "77af24da69f9d9341038eba93a073b1fdaaa1b788221b00a69bce9e762cb32de"
 
 [[package]]
 name = "openssl-sys"
-version = "0.9.62"
+version = "0.9.63"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fa52160d45fa2e7608d504b7c3a3355afed615e6d8b627a74458634ba21b69bd"
+checksum = "b6b0d6fb7d80f877617dfcb014e605e2b5ab2fb0afdf27935219bb6bd984cb98"
 dependencies = [
  "autocfg",
  "cc",
@@ -5514,7 +5514,7 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-dispatch"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#378727abb7e931001239c5873932c21198c97bb2"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#ff680731ba4a21882ad86316a29d588a6c336e8b"
 dependencies = [
  "bp-message-dispatch",
  "bp-runtime",
@@ -5530,7 +5530,7 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-grandpa"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#378727abb7e931001239c5873932c21198c97bb2"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#ff680731ba4a21882ad86316a29d588a6c336e8b"
 dependencies = [
  "bp-header-chain",
  "bp-runtime",
@@ -5551,7 +5551,7 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-messages"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#378727abb7e931001239c5873932c21198c97bb2"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#ff680731ba4a21882ad86316a29d588a6c336e8b"
 dependencies = [
  "bp-messages",
  "bp-rialto",
@@ -5786,7 +5786,7 @@ dependencies = [
 [[package]]
 name = "pallet-shift-session-manager"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#378727abb7e931001239c5873932c21198c97bb2"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#ff680731ba4a21882ad86316a29d588a6c336e8b"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5970,6 +5970,7 @@ dependencies = [
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-utility",
+ "pangolin-runtime-params",
  "parity-scale-codec",
  "serde",
  "smallvec 1.6.1",
@@ -5991,7 +5992,22 @@ dependencies = [
  "sp-version",
  "static_assertions",
  "substrate-wasm-builder",
- "system-params",
+]
+
+[[package]]
+name = "pangolin-runtime-params"
+version = "2.2.0"
+dependencies = [
+ "bp-messages",
+ "bp-runtime",
+ "drml-primitives",
+ "frame-support",
+ "frame-system",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+ "static_assertions",
 ]
 
 [[package]]
@@ -6925,7 +6941,7 @@ dependencies = [
 [[package]]
 name = "relay-substrate-client"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#378727abb7e931001239c5873932c21198c97bb2"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#ff680731ba4a21882ad86316a29d588a6c336e8b"
 dependencies = [
  "async-std",
  "async-trait",
@@ -6958,7 +6974,7 @@ dependencies = [
 [[package]]
 name = "relay-utils"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#378727abb7e931001239c5873932c21198c97bb2"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#ff680731ba4a21882ad86316a29d588a6c336e8b"
 dependencies = [
  "ansi_term 0.12.1",
  "async-std",
@@ -6997,9 +7013,9 @@ dependencies = [
 
 [[package]]
 name = "retain_mut"
-version = "0.1.2"
+version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53552c6c49e1e13f1a203ef0080ab3bbef0beb570a528993e83df057a9d9bba1"
+checksum = "e9c17925a9027d298a4603d286befe3f9dc0e8ed02523141914eb628798d6e5b"
 
 [[package]]
 name = "ring"
@@ -9496,16 +9512,6 @@ dependencies = [
  "once_cell",
  "rayon",
  "winapi 0.3.9",
-]
-
-[[package]]
-name = "system-params"
-version = "2.2.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "sp-runtime",
- "static_assertions",
 ]
 
 [[package]]

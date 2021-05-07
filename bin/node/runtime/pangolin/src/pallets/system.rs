@@ -1,4 +1,4 @@
-pub use system_params::*;
+pub use pangolin_runtime_params::system::*;
 
 // --- substrate ---
 use frame_support::weights::constants::RocksDbWeight;
