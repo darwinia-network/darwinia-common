@@ -289,7 +289,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("Pangolin"),
 	authoring_version: 1,
 	// crate version ~2.2.0 := >=2.2.0, <2.3.0
-	spec_version: 223,
+	spec_version: 224,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -804,13 +804,22 @@ pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
-		darwinia_crab_issuing::migration::try_runtime::pre_migrate::<Runtime>()?;
-		darwinia_ethereum_backing::migration::try_runtime::pre_migrate::<Runtime>()
+		Ok(())
 	}
 
 	fn on_runtime_upgrade() -> Weight {
-		darwinia_crab_issuing::migration::migrate(b"CrabIssuing");
-		darwinia_ethereum_backing::migration::migrate(b"EthereumBacking");
+		frame_support::migration::put_storage_value(
+			b"DarwiniaEthereumIssuing",
+			b"MappingFactoryAddress",
+			&[],
+			array_bytes::hex2array_unchecked!("0xcB8531Bc0B7C8F41B55CF4E94698C37b130597B9", 20),
+		);
+		frame_support::migration::put_storage_value(
+			b"DarwiniaEthereumIssuing",
+			b"EthereumBackingAddress",
+			&[],
+			array_bytes::hex2array_unchecked!("0xb2Bea2358d817dAE01B0FD0DC3aECB25910E65AA", 20),
+		);
 
 		RuntimeBlockWeights::get().max_block
 	}

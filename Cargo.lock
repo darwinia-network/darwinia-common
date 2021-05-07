@@ -5518,6 +5518,7 @@ dependencies = [
 name = "pangolin-runtime"
 version = "2.2.0"
 dependencies = [
+ "array-bytes",
  "darwinia-balances",
  "darwinia-balances-rpc-runtime-api",
  "darwinia-claims",
