@@ -808,6 +808,19 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	}
 
 	fn on_runtime_upgrade() -> Weight {
+		frame_support::migration::put_storage_value(
+			b"DarwiniaEthereumIssuing",
+			b"MappingFactoryAddress",
+			&[],
+			array_bytes::hex2array_unchecked!("0xcB8531Bc0B7C8F41B55CF4E94698C37b130597B9", 20),
+		);
+		frame_support::migration::put_storage_value(
+			b"DarwiniaEthereumIssuing",
+			b"EthereumBackingAddress",
+			&[],
+			array_bytes::hex2array_unchecked!("0xb2Bea2358d817dAE01B0FD0DC3aECB25910E65AA", 20),
+		);
+
 		RuntimeBlockWeights::get().max_block
 	}
 }
