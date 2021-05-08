@@ -236,27 +236,22 @@ impl<T: Config> Module<T> {
 
 	fn abi_encode_token_redeem(result: EthLog) -> Result<Vec<u8>, DispatchError> {
 		log::debug!("abi_encode_token_redeem");
-		let token_address = result.params[0]
+		let dtoken_address = result.params[2]
 			.value
 			.clone()
 			.into_address()
 			.ok_or(<Error<T>>::AddressCF)?;
-		let dtoken_address = result.params[1]
-			.value
-			.clone()
-			.into_address()
-			.ok_or(<Error<T>>::AddressCF)?;
-		let amount = result.params[2]
+		let amount = result.params[3]
 			.value
 			.clone()
 			.into_uint()
 			.ok_or(<Error<T>>::UintCF)?;
-		let recipient = result.params[3]
+		let recipient = result.params[4]
 			.value
 			.clone()
 			.into_address()
 			.ok_or(<Error<T>>::AddressCF)?;
-		let fee = result.params[4]
+		let fee = result.params[5]
 			.value
 			.clone()
 			.into_uint()
