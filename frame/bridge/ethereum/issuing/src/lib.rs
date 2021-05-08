@@ -236,27 +236,29 @@ impl<T: Config> Module<T> {
 
 	fn abi_encode_token_redeem(result: EthLog) -> Result<Vec<u8>, DispatchError> {
 		log::debug!("abi_encode_token_redeem");
-		let token_address = result.params[0]
+        // parse the following ethereum backing lock event
+        // BackingLock(address indexed sender, address source, address target, uint256 amount, address receiver, uint256 fee)
+        // @sender & @source are not used here
+        // @target(params[2]): the mapped token address
+        // @amount(params[3]): the token amount [wei]
+        // @receiver(params[4]): the dvm receiver address
+        // @fee(params[5]): the fee for this cross transfer
+		let dtoken_address = result.params[2]
 			.value
 			.clone()
 			.into_address()
 			.ok_or(<Error<T>>::AddressCF)?;
-		let dtoken_address = result.params[1]
-			.value
-			.clone()
-			.into_address()
-			.ok_or(<Error<T>>::AddressCF)?;
-		let amount = result.params[2]
+		let amount = result.params[3]
 			.value
 			.clone()
 			.into_uint()
 			.ok_or(<Error<T>>::UintCF)?;
-		let recipient = result.params[3]
+		let recipient = result.params[4]
 			.value
 			.clone()
 			.into_address()
 			.ok_or(<Error<T>>::AddressCF)?;
-		let fee = result.params[4]
+		let fee = result.params[5]
 			.value
 			.clone()
 			.into_uint()
