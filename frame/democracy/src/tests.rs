@@ -111,6 +111,7 @@ impl pallet_scheduler::Config for Test {
 }
 frame_support::parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;
+	pub const MaxLocks: u32 = 10;
 }
 impl darwinia_balances::Config<RingInstance> for Test {
 	type Balance = Balance;
@@ -119,7 +120,7 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
-	type MaxLocks = ();
+	type MaxLocks = MaxLocks;
 	type OtherCurrencies = ();
 	type WeightInfo = ();
 }
