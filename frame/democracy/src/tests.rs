@@ -5,7 +5,7 @@ use codec::Encode;
 // --- substrate ---
 use frame_support::{
 	assert_noop, assert_ok, ord_parameter_types,
-	traits::{Contains, Filter, GenesisBuild, OnInitialize},
+	traits::{Filter, GenesisBuild, OnInitialize, SortedMembers},
 	weights::Weight,
 };
 use frame_system::{mocking::*, EnsureRoot, EnsureSignedBy};
@@ -144,7 +144,7 @@ ord_parameter_types! {
 	pub const Six: u64 = 6;
 }
 pub struct OneToFive;
-impl Contains<u64> for OneToFive {
+impl SortedMembers<u64> for OneToFive {
 	fn sorted_members() -> Vec<u64> {
 		vec![1, 2, 3, 4, 5]
 	}

@@ -89,7 +89,8 @@ use frame_support::{
 	storage::{IterableStorageMap, StorageMap},
 	traits::{
 		ChangeMembers, Contains, ContainsLengthBound, Currency, CurrencyToVote, Get,
-		InitializeMembers, LockIdentifier, OnUnbalanced, ReservableCurrency, WithdrawReasons,
+		InitializeMembers, LockIdentifier, OnUnbalanced, ReservableCurrency, SortedMembers,
+		WithdrawReasons,
 	},
 	weights::Weight,
 };
@@ -1019,6 +1020,12 @@ impl<T: Config> Module<T> {
 }
 
 impl<T: Config> Contains<T::AccountId> for Module<T> {
+	fn contains(who: &T::AccountId) -> bool {
+		Self::is_member(who)
+	}
+}
+
+impl<T: Config> SortedMembers<T::AccountId> for Module<T> {
 	fn contains(who: &T::AccountId) -> bool {
 		Self::is_member(who)
 	}

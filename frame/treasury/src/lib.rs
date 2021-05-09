@@ -175,9 +175,9 @@ use frame_support::{
 	dispatch::DispatchResultWithPostInfo,
 	ensure, print,
 	traits::{
-		Contains, ContainsLengthBound, Currency, EnsureOrigin,
+		ContainsLengthBound, Currency, EnsureOrigin,
 		ExistenceRequirement::{AllowDeath, KeepAlive},
-		Get, Imbalance, OnUnbalanced, ReservableCurrency, WithdrawReasons,
+		Get, Imbalance, OnUnbalanced, ReservableCurrency, SortedMembers, WithdrawReasons,
 	},
 	weights::{DispatchClass, Weight},
 	PalletId, Parameter,
@@ -215,7 +215,7 @@ pub trait Config<I = DefaultInstance>: frame_system::Config {
 	/// Origin from which tippers must come.
 	///
 	/// `ContainsLengthBound::max_len` must be cost free (i.e. no storage read or heavy operation).
-	type Tippers: Contains<Self::AccountId> + ContainsLengthBound;
+	type Tippers: SortedMembers<Self::AccountId> + ContainsLengthBound;
 
 	/// The period for which a tip remains open after is has achieved threshold tippers.
 	type TipCountdown: Get<Self::BlockNumber>;
