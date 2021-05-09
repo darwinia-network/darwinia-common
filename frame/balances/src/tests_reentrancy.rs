@@ -87,7 +87,7 @@ impl pallet_transaction_payment::Config for Test {
 pub struct OnDustRemoval;
 impl OnUnbalanced<NegativeImbalance<Test, RingInstance>> for OnDustRemoval {
 	fn on_nonzero_unbalanced(amount: NegativeImbalance<Test, RingInstance>) {
-		let _ = Ring::resolve_into_existing(&1, amount);
+		assert_ok!(Ring::resolve_into_existing(&1, amount));
 	}
 }
 frame_support::parameter_types! {

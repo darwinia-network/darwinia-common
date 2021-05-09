@@ -219,7 +219,7 @@ macro_rules! decl_tests {
 						)
 						.is_err()
 					);
-					assert!(
+					assert_ok!(
 						<ChargeTransactionPayment<$test> as SignedExtension>::pre_dispatch(
 							ChargeTransactionPayment::from(0),
 							&1,
@@ -227,7 +227,6 @@ macro_rules! decl_tests {
 							&info_from_weight(1),
 							1,
 						)
-						.is_ok()
 					);
 
 					Ring::set_lock(
@@ -468,7 +467,7 @@ macro_rules! decl_tests {
 		fn refunding_balance_should_work() {
 			<$ext_builder>::default().build().execute_with(|| {
 				let _ = Ring::deposit_creating(&1, 42);
-				assert!(Ring::mutate_account(&1, |a| a.reserved = 69).is_ok());
+				assert_ok!(Ring::mutate_account(&1, |a| a.reserved = 69));
 				Ring::unreserve(&1, 69);
 				assert_eq!(Ring::free_balance(1), 111);
 				assert_eq!(Ring::reserved_balance(1), 0);
@@ -758,7 +757,8 @@ macro_rules! decl_tests {
 					assert_eq!(Ring::reserved_balance(1), 50);
 
 					// Reserve some free balance
-					let _ = Ring::slash(&1, 1);
+					let res = Ring::slash(&1, 1);
+					assert_eq!(res, (NegativeImbalance::new(1), 0));
 					// The account should be dead.
 					assert_eq!(Ring::free_balance(1), 0);
 					assert_eq!(Ring::reserved_balance(1), 0);
@@ -816,7 +816,8 @@ macro_rules! decl_tests {
 						]
 					);
 
-					let _ = Ring::slash(&1, 1);
+					let res = Ring::slash(&1, 1);
+					assert_eq!(res, (NegativeImbalance::new(1), 0));
 
 					assert_eq!(
 						events(),
@@ -845,7 +846,8 @@ macro_rules! decl_tests {
 						]
 					);
 
-					let _ = Ring::slash(&1, 100);
+					let res = Ring::slash(&1, 100);
+					assert_eq!(res, (NegativeImbalance::new(100), 0));
 
 					assert_eq!(
 						events(),

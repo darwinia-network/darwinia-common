@@ -538,7 +538,7 @@ fn no_candidate_emergency_condition() {
 			// set the minimum validator count.
 			<Staking as Store>::MinimumValidatorCount::put(10);
 
-			let _ = Staking::chill(Origin::signed(10));
+			assert_ok!(Staking::chill(Origin::signed(10)));
 
 			// trigger era
 			start_active_era(1);
