@@ -55,17 +55,18 @@ use ethereum_types::H128;
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
 	traits::{
-		ChangeMembers, Contains, Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, Get,
-		IsSubType, ReservableCurrency,
+		ChangeMembers, Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, Get, IsSubType,
+		ReservableCurrency, SortedMembers,
 	},
 	unsigned::{TransactionValidity, TransactionValidityError},
 	weights::Weight,
+	PalletId,
 };
 use frame_system::ensure_signed;
 use sp_runtime::{
 	traits::{AccountIdConversion, DispatchInfoOf, Dispatchable, SignedExtension, Zero},
 	transaction_validity::ValidTransaction,
-	DispatchError, DispatchResult, PalletId, Perbill, RuntimeDebug,
+	DispatchError, DispatchResult, Perbill, RuntimeDebug,
 };
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
@@ -117,7 +118,7 @@ pub trait Config: frame_system::Config {
 	/// automatically after this period
 	type ConfirmPeriod: Get<Self::BlockNumber>;
 
-	type TechnicalMembership: Contains<AccountId<Self>>;
+	type TechnicalMembership: SortedMembers<AccountId<Self>>;
 
 	type ApproveThreshold: Get<Perbill>;
 
