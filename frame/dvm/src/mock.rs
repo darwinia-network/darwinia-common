@@ -24,14 +24,14 @@ use crate::{
 use codec::{Decode, Encode};
 use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator, IssuingHandler};
 use ethereum::{TransactionAction, TransactionSignature};
-use frame_support::{traits::GenesisBuild, ConsensusEngineId};
+use frame_support::{traits::GenesisBuild, ConsensusEngineId, PalletId};
 use frame_system::mocking::*;
 use rlp::*;
 use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	AccountId32, DispatchResult, ModuleId, Perbill, RuntimeDebug,
+	AccountId32, DispatchResult, Perbill, RuntimeDebug,
 };
 
 darwinia_support::impl_test_account_data! {}
@@ -144,7 +144,7 @@ impl FindAuthor<H160> for EthereumFindAuthor {
 frame_support::parameter_types! {
 	pub const TransactionByteFee: u64 = 1;
 	pub const ChainId: u64 = 42;
-	pub const EVMModuleId: ModuleId = ModuleId(*b"py/evmpa");
+	pub const EVMPalletId: PalletId = PalletId(*b"py/evmpa");
 	pub const BlockGasLimit: U256 = U256::MAX;
 }
 

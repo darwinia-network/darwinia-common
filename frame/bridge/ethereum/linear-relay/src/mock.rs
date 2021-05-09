@@ -79,11 +79,11 @@ impl darwinia_balances::Config<RingInstance> for Test {
 }
 
 frame_support::parameter_types! {
-	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethli");
+	pub const EthereumRelayPalletId: PalletId = PalletId(*b"da/ethli");
 	pub static EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Ropsten;
 }
 impl Config for Test {
-	type ModuleId = EthereumRelayModuleId;
+	type PalletId = EthereumRelayPalletId;
 	type Event = ();
 	type EthereumNetwork = EthereumNetwork;
 	type Call = Call;

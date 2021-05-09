@@ -1,15 +1,15 @@
 // --- substrate ---
-use sp_runtime::ModuleId;
+use frame_support::PalletId;
 // --- darwinia ---
 use crate::*;
 use darwinia_ethereum_issuing::Config;
 
 frame_support::parameter_types! {
-	pub const EthereumIssuingModuleId: ModuleId = ModuleId(*b"da/ethis");
+	pub const EthereumIssuingPalletId: PalletId = PalletId(*b"da/ethis");
 }
 
 impl Config for Runtime {
-	type ModuleId = EthereumIssuingModuleId;
+	type PalletId = EthereumIssuingPalletId;
 	type Event = Event;
 	type EthereumRelay = EthereumRelay;
 	type RingCurrency = Ring;

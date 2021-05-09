@@ -47,6 +47,7 @@ use frame_support::{
 	traits::{Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, Get},
 	weights::{DispatchClass, Pays},
 	{decl_error, decl_event, decl_module, decl_storage},
+	PalletId
 };
 use frame_system::{ensure_none, ensure_root};
 use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};
@@ -58,7 +59,7 @@ use sp_runtime::{
 		InvalidTransaction, TransactionLongevity, TransactionSource, TransactionValidity,
 		ValidTransaction,
 	},
-	ModuleId, RuntimeDebug,
+	 RuntimeDebug,
 };
 use sp_std::prelude::*;
 // --- darwinia ---
@@ -68,7 +69,7 @@ use types::*;
 pub trait Config: frame_system::Config {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
-	type ModuleId: Get<ModuleId>;
+	type PalletId: Get<PalletId>;
 
 	type Prefix: Get<&'static [u8]>;
 
@@ -154,7 +155,7 @@ decl_storage! {
 				total + minimum_balance,
 			);
 			T::RingCurrency::set_lock(
-				T::ModuleId::get().0,
+				T::PalletId::get().0,
 				&<Module<T>>::account_id(),
 				LockFor::Common { amount: minimum_balance },
 				WithdrawReasons::all(),
@@ -167,7 +168,7 @@ decl_module! {
 	pub struct Module<T: Config> for enum Call where origin: T::Origin {
 		type Error = Error<T>;
 
-		const ModuleId: ModuleId = T::ModuleId::get();
+		const PalletId: PalletId = T::PalletId::get();
 
 		/// The Prefix that is used in signed Ethereum messages for this network
 		const Prefix: &[u8] = T::Prefix::get();
@@ -346,7 +347,7 @@ decl_module! {
 
 impl<T: Config> Module<T> {
 	fn account_id() -> T::AccountId {
-		T::ModuleId::get().into_account()
+		T::PalletId::get().into_account()
 	}
 
 	fn pot<C: LockableCurrency<T::AccountId>>() -> C::Balance {
@@ -646,7 +647,7 @@ mod tests {
 	}
 
 	parameter_types! {
-		pub const ClaimsModuleId: ModuleId = ModuleId(*b"da/claim");
+		pub const ClaimsPalletId: PalletId = PalletId(*b"da/claim");
 		pub Prefix: &'static [u8] = b"Pay RUSTs to the TEST account:";
 	}
 	ord_parameter_types! {
@@ -654,7 +655,7 @@ mod tests {
 	}
 	impl Config for Test {
 		type Event = ();
-		type ModuleId = ClaimsModuleId;
+		type PalletId = ClaimsPalletId;
 		type Prefix = Prefix;
 		type RingCurrency = Ring;
 		type MoveClaimOrigin = frame_system::EnsureSignedBy<Six, u64>;

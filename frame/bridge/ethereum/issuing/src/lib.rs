@@ -49,7 +49,7 @@ use frame_support::{
 use frame_system::{ensure_root, ensure_signed};
 use sp_runtime::{
 	traits::{AccountIdConversion, Saturating},
-	AccountId32, DispatchError, DispatchResult, ModuleId, SaturatedConversion,
+	AccountId32, DispatchError, DispatchResult, PalletId, SaturatedConversion,
 };
 use sp_std::vec::Vec;
 // --- darwinia ---
@@ -69,7 +69,7 @@ use types::*;
 pub trait Config: dvm_ethereum::Config {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
-	type ModuleId: Get<ModuleId>;
+	type PalletId: Get<PalletId>;
 
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
@@ -185,7 +185,7 @@ decl_module! {
 impl<T: Config> Module<T> {
 	/// The account ID of the issuing pot.
 	pub fn dvm_account_id() -> H160 {
-		let account32: AccountId32 = T::ModuleId::get().into_account();
+		let account32: AccountId32 = T::PalletId::get().into_account();
 		let account20: &[u8] = &account32.as_ref();
 		H160::from_slice(&account20[..20])
 	}

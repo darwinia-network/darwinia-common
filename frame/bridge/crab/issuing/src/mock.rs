@@ -21,10 +21,9 @@
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
-use frame_support::traits::GenesisBuild;
+use frame_support::{traits::GenesisBuild, PalletId};
 use frame_system::mocking::*;
 use sp_io::TestExternalities;
-use sp_runtime::ModuleId;
 use sp_runtime::{
 	testing::{Header, H256},
 	traits::{BlakeTwo256, IdentityLookup},
@@ -83,11 +82,11 @@ impl darwinia_balances::Config<RingInstance> for Test {
 }
 
 frame_support::parameter_types! {
-	pub const CrabIssuingModuleId: ModuleId = ModuleId(*b"da/crabi");
+	pub const CrabIssuingPalletId: PalletId = PalletId(*b"da/crabi");
 }
 impl Config for Test {
 	type WeightInfo = ();
-	type ModuleId = CrabIssuingModuleId;
+	type PalletId = CrabIssuingPalletId;
 	type RingCurrency = Ring;
 }
 

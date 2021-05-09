@@ -43,11 +43,11 @@ impl Contains<AccountId> for UnusedTechnicalMembership {
 	}
 }
 frame_support::parameter_types! {
-	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
+	pub const EthereumRelayPalletId: PalletId = PalletId(*b"da/ethrl");
 	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Ropsten;
 }
 impl darwinia_ethereum_relay::Config for Test {
-	type ModuleId = EthereumRelayModuleId;
+	type PalletId = EthereumRelayPalletId;
 	type Event = ();
 	type EthereumNetwork = EthereumNetwork;
 	type RelayerGame = UnusedRelayerGame;

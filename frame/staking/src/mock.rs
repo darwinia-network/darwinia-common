@@ -227,7 +227,7 @@ impl onchain::Config for Test {
 }
 
 parameter_types! {
-	pub const StakingModuleId: ModuleId = ModuleId(*b"da/staki");
+	pub const StakingPalletId: PalletId = PalletId(*b"da/staki");
 	pub const BondingDurationInEra: EraIndex = 3;
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
 	pub const Cap: Balance = CAP;
@@ -242,7 +242,7 @@ parameter_types! {
 impl Config for Test {
 	const MAX_NOMINATIONS: u32 = 16;
 	type Event = Event;
-	type ModuleId = StakingModuleId;
+	type PalletId = StakingPalletId;
 	type UnixTime = SuppressUnixTimeWarning;
 	type SessionsPerEra = SessionsPerEra;
 	type BondingDurationInEra = BondingDurationInEra;

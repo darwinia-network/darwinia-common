@@ -23,13 +23,13 @@ macro_rules! decl_tests {
 	($($pallet:tt)*) => {
 		// --- substrate ---
 		use frame_election_provider_support::onchain;
-		use frame_support::{weights::Weight, traits::{Currency, GenesisBuild}};
+		use frame_support::{weights::Weight, traits::{Currency, GenesisBuild}, PalletId};
 		use frame_system::mocking::*;
 		use sp_core::crypto::key_types;
 		use sp_runtime::{
 			testing::{Header, TestXt, UintAuthorityId},
 			traits::{IdentifyAccount, IdentityLookup, OpaqueKeys, Verify},
-			ModuleId, {KeyTypeId, MultiSignature, Perbill},
+		 	{KeyTypeId, MultiSignature, Perbill},
 			DispatchResult
 		};
 		// --- darwinia ---
@@ -154,12 +154,12 @@ macro_rules! decl_tests {
 		}
 
 		frame_support::parameter_types! {
-			pub const StakingModuleId: ModuleId = ModuleId(*b"da/staki");
+			pub const StakingPalletId: PalletId = PalletId(*b"da/staki");
 		}
 		impl darwinia_staking::Config for Test {
 			const MAX_NOMINATIONS: u32 = 0;
 			type Event = ();
-			type ModuleId = StakingModuleId;
+			type PalletId = StakingPalletId;
 			type UnixTime = Timestamp;
 			type SessionsPerEra = ();
 			type BondingDurationInEra = ();
@@ -197,15 +197,15 @@ macro_rules! decl_tests {
 			}
 		}
 		frame_support::parameter_types! {
-			pub const EthereumBackingModuleId: ModuleId = ModuleId(*b"da/backi");
-			pub const EthereumBackingFeeModuleId: ModuleId = ModuleId(*b"da/ethfe");
+			pub const EthereumBackingPalletId: PalletId = PalletId(*b"da/backi");
+			pub const EthereumBackingFeePalletId: PalletId = PalletId(*b"da/ethfe");
 			pub const RingLockLimit: Balance = 1000;
 			pub const KtonLockLimit: Balance = 1000;
 			pub const AdvancedFee: Balance = 1;
 		}
 		impl Config for Test {
-			type ModuleId = EthereumBackingModuleId;
-			type FeeModuleId = EthereumBackingFeeModuleId;
+			type PalletId = EthereumBackingPalletId;
+			type FeePalletId = EthereumBackingFeePalletId;
 			type Event = ();
 			type RedeemAccountId = AccountId;
 			type EthereumRelay = EthereumRelay;

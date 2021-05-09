@@ -350,6 +350,7 @@ use frame_support::{
 		constants::{WEIGHT_PER_MICROS, WEIGHT_PER_NANOS},
 		Weight, WithPostDispatchInfo,
 	},
+	PalletId,
 };
 use frame_system::{ensure_root, ensure_signed, offchain::SendTransactionTypes};
 use sp_runtime::{
@@ -358,7 +359,7 @@ use sp_runtime::{
 		AccountIdConversion, AtLeast32BitUnsigned, CheckedSub, Convert, SaturatedConversion,
 		Saturating, StaticLookup, Zero,
 	},
-	DispatchError, DispatchResult, ModuleId, Perbill, Percent, Perquintill, RuntimeDebug,
+	DispatchError, DispatchResult, Perbill, Percent, Perquintill, RuntimeDebug,
 };
 #[cfg(feature = "std")]
 use sp_runtime::{Deserialize, Serialize};
@@ -404,7 +405,7 @@ pub trait Config: frame_system::Config + SendTransactionTypes<Call<Self>> {
 	/// The overarching event type.
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
-	type ModuleId: Get<ModuleId>;
+	type PalletId: Get<PalletId>;
 
 	/// Time used for computing era duration.
 	///
@@ -853,7 +854,7 @@ decl_module! {
 		/// Maximum number of nominations per nominator.
 		const MaxNominations: u32 = T::MAX_NOMINATIONS;
 
-		const ModuleId: ModuleId = T::ModuleId::get();
+		const PalletId: PalletId = T::PalletId::get();
 
 		/// Number of sessions per era.
 		const SessionsPerEra: SessionIndex = T::SessionsPerEra::get();
@@ -1949,7 +1950,7 @@ decl_module! {
 
 impl<T: Config> Module<T> {
 	pub fn account_id() -> T::AccountId {
-		T::ModuleId::get().into_account()
+		T::PalletId::get().into_account()
 	}
 
 	/// Update the ledger while bonding ring and compute the *KTON* reward

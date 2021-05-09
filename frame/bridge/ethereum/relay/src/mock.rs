@@ -80,13 +80,13 @@ impl Contains<AccountId> for UnusedTechnicalMembership {
 	}
 }
 frame_support::parameter_types! {
-	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
+	pub const EthereumRelayPalletId: PalletId = PalletId(*b"da/ethrl");
 	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Mainnet;
 	pub static BestConfirmedBlockNumber: EthereumBlockNumber = 0;
 	pub static ConfirmPeriod: BlockNumber = 0;
 }
 impl Config for Test {
-	type ModuleId = EthereumRelayModuleId;
+	type PalletId = EthereumRelayPalletId;
 	type Event = ();
 	type EthereumNetwork = EthereumNetwork;
 	type Call = Call;

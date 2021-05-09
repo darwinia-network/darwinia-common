@@ -180,14 +180,14 @@ use frame_support::{
 		Get, Imbalance, OnUnbalanced, ReservableCurrency, WithdrawReasons,
 	},
 	weights::{DispatchClass, Weight},
-	Parameter,
+	PalletId, Parameter,
 };
 use frame_system::ensure_signed;
 use sp_runtime::{
 	traits::{
 		AccountIdConversion, AtLeast32BitUnsigned, BadOrigin, Hash, Saturating, StaticLookup, Zero,
 	},
-	DispatchResult, ModuleId, Percent, Permill, RuntimeDebug,
+	DispatchResult, Percent, Permill, RuntimeDebug,
 };
 use sp_std::prelude::*;
 // --- darwinia ---
@@ -196,7 +196,7 @@ use types::*;
 
 pub trait Config<I = DefaultInstance>: frame_system::Config {
 	/// The treasury's module id, used for deriving its sovereign account ID.
-	type ModuleId: Get<ModuleId>;
+	type PalletId: Get<PalletId>;
 
 	/// The staking *RING*.
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
@@ -470,7 +470,7 @@ decl_module! {
 		const DataDepositPerByte: RingBalance<T, I> = T::DataDepositPerByte::get();
 
 		/// The treasury's module id, used for deriving its sovereign account ID.
-		const ModuleId: ModuleId = T::ModuleId::get();
+		const PalletId: PalletId = T::PalletId::get();
 
 		/// The amount held on deposit for placing a bounty proposal.
 		const BountyDepositBase: RingBalance<T, I> = T::BountyDepositBase::get();
@@ -1164,14 +1164,14 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 	/// This actually does computation. If you need to keep using it, then make sure you cache the
 	/// value and only call this once.
 	pub fn account_id() -> T::AccountId {
-		T::ModuleId::get().into_account()
+		T::PalletId::get().into_account()
 	}
 
 	/// The account ID of a bounty account
 	pub fn bounty_account_id(id: BountyIndex) -> T::AccountId {
 		// only use two byte prefix to support 16 byte account id (used by test)
 		// "modl" ++ "py/trsry" ++ "bt" is 14 bytes, and two bytes remaining for bounty index
-		T::ModuleId::get().into_sub_account(("bt", id))
+		T::PalletId::get().into_sub_account(("bt", id))
 	}
 
 	/// Return the amount of money in the pot.

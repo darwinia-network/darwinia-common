@@ -82,7 +82,7 @@ use sp_runtime::{
 	transaction_validity::{
 		InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
 	},
-	DispatchError, DispatchResult, ModuleId, SaturatedConversion,
+	DispatchError, DispatchResult, PalletId, SaturatedConversion,
 };
 use sp_std::prelude::*;
 // --- darwinia ---
@@ -101,7 +101,7 @@ include!(concat!(env!("OUT_DIR"), "/dags_merkle_roots.rs"));
 
 pub trait Config: frame_system::Config {
 	/// The ethereum-linear-relay's module id, used for deriving its sovereign account ID.
-	type ModuleId: Get<ModuleId>;
+	type PalletId: Get<PalletId>;
 
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
@@ -254,7 +254,7 @@ decl_module! {
 	{
 		type Error = Error<T>;
 
-		const ModuleId: ModuleId = T::ModuleId::get();
+		const PalletId: PalletId = T::PalletId::get();
 
 		const EthereumNetwork: EthereumNetworkType = T::EthereumNetwork::get();
 
@@ -482,7 +482,7 @@ impl<T: Config> Module<T> {
 	/// This actually does computation. If you need to keep using it, then make sure you cache the
 	/// value and only call this once.
 	fn account_id() -> T::AccountId {
-		T::ModuleId::get().into_account()
+		T::PalletId::get().into_account()
 	}
 
 	/// Return the amount of money in the pot.

@@ -60,13 +60,11 @@ pub mod pallet {
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{Currency, ExistenceRequirement},
+		PalletId,
 	};
 	use frame_system::pallet_prelude::*;
 	use sp_io::{crypto, hashing};
-	use sp_runtime::{
-		traits::{AccountIdConversion, SaturatedConversion, Saturating, Zero},
-		ModuleId,
-	};
+	use sp_runtime::traits::{AccountIdConversion, SaturatedConversion, Saturating, Zero};
 	#[cfg(not(feature = "std"))]
 	use sp_std::borrow::ToOwned;
 	use sp_std::{convert::TryFrom, prelude::*};
@@ -107,9 +105,9 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 		// --- darwinia ---
 		#[pallet::constant]
-		type ModuleId: Get<ModuleId>;
+		type PalletId: Get<PalletId>;
 		#[pallet::constant]
-		type FeeModuleId: Get<ModuleId>;
+		type FeePalletId: Get<PalletId>;
 		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 		type KtonCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 		type RedeemAccountId: From<[u8; 32]> + Into<Self::AccountId>;
@@ -550,10 +548,10 @@ pub mod pallet {
 	}
 	impl<T: Config> Pallet<T> {
 		pub fn account_id() -> T::AccountId {
-			T::ModuleId::get().into_account()
+			T::PalletId::get().into_account()
 		}
 		pub fn fee_account_id() -> T::AccountId {
-			T::FeeModuleId::get().into_account()
+			T::FeePalletId::get().into_account()
 		}
 
 		pub fn account_id_try_from_bytes(bytes: &[u8]) -> Result<T::AccountId, DispatchError> {

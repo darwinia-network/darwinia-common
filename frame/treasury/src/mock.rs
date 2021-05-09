@@ -25,13 +25,12 @@ mod treasury {
 }
 
 // --- substrate ---
-use frame_support::traits::GenesisBuild;
+use frame_support::{traits::GenesisBuild, PalletId};
 use frame_system::mocking::*;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	ModuleId,
 };
 // --- darwinia ---
 use crate::{self as darwinia_treasury, *};
@@ -120,7 +119,7 @@ impl darwinia_balances::Config<RingInstance> for Test {
 }
 
 frame_support::parameter_types! {
-	pub const TreasuryModuleId: ModuleId = ModuleId(*b"da/trsry");
+	pub const TreasuryPalletId: PalletId = PalletId(*b"da/trsry");
 	pub const TipCountdown: u64 = 1;
 	pub const TipFindersFee: Percent = Percent::from_percent(20);
 	pub const TipReportDepositBase: Balance = 1;
@@ -138,7 +137,7 @@ frame_support::parameter_types! {
 	pub const Burn: Permill = Permill::from_percent(50);
 }
 impl Config for Test {
-	type ModuleId = TreasuryModuleId;
+	type PalletId = TreasuryPalletId;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 	type ApproveOrigin = frame_system::EnsureRoot<u128>;
