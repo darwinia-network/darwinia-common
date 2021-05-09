@@ -777,7 +777,7 @@ macro_rules! decl_tests {
 
 					assert_eq!(
 						last_event(),
-						Event::darwinia_balances_Instance0(darwinia_balances::Event::Reserved(1, 10)),
+						Event::darwinia_balances_Instance1(darwinia_balances::Event::Reserved(1, 10)),
 					);
 
 					System::set_block_number(3);
@@ -785,7 +785,7 @@ macro_rules! decl_tests {
 
 					assert_eq!(
 						last_event(),
-						Event::darwinia_balances_Instance0(darwinia_balances::Event::Unreserved(1, 5)),
+						Event::darwinia_balances_Instance1(darwinia_balances::Event::Unreserved(1, 5)),
 					);
 
 					System::set_block_number(4);
@@ -794,7 +794,7 @@ macro_rules! decl_tests {
 					// should only unreserve 5
 					assert_eq!(
 						last_event(),
-						Event::darwinia_balances_Instance0(darwinia_balances::Event::Unreserved(1, 5)),
+						Event::darwinia_balances_Instance1(darwinia_balances::Event::Unreserved(1, 5)),
 					);
 				});
 		}
@@ -811,8 +811,8 @@ macro_rules! decl_tests {
 						events(),
 						[
 							Event::frame_system(frame_system::Event::NewAccount(1)),
-							Event::darwinia_balances_Instance0(darwinia_balances::Event::Endowed(1, 100)),
-							Event::darwinia_balances_Instance0(darwinia_balances::Event::BalanceSet(1, 100, 0)),
+							Event::darwinia_balances_Instance1(darwinia_balances::Event::Endowed(1, 100)),
+							Event::darwinia_balances_Instance1(darwinia_balances::Event::BalanceSet(1, 100, 0)),
 						]
 					);
 
@@ -822,7 +822,7 @@ macro_rules! decl_tests {
 						events(),
 						[
 							Event::frame_system(frame_system::Event::KilledAccount(1)),
-							Event::darwinia_balances_Instance0(darwinia_balances::Event::DustLost(1, 99))
+							Event::darwinia_balances_Instance1(darwinia_balances::Event::DustLost(1, 99))
 						]
 					);
 				});
@@ -840,8 +840,8 @@ macro_rules! decl_tests {
 						events(),
 						[
 							Event::frame_system(frame_system::Event::NewAccount(1)),
-							Event::darwinia_balances_Instance0(darwinia_balances::Event::Endowed(1, 100)),
-							Event::darwinia_balances_Instance0(darwinia_balances::Event::BalanceSet(1, 100, 0)),
+							Event::darwinia_balances_Instance1(darwinia_balances::Event::Endowed(1, 100)),
+							Event::darwinia_balances_Instance1(darwinia_balances::Event::BalanceSet(1, 100, 0)),
 						]
 					);
 

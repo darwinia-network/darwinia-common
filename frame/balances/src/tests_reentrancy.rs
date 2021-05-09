@@ -117,7 +117,7 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Ring: darwinia_balances::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
 	}
 );
 
@@ -193,12 +193,12 @@ fn transfer_dust_removal_tst1_should_work() {
 			assert_eq!(System::events().len(), 11);
 
 			assert!(System::events().iter().any(|er| er.event
-				== Event::darwinia_balances_Instance0(crate::Event::Transfer(2, 3, 450))));
+				== Event::darwinia_balances_Instance1(crate::Event::Transfer(2, 3, 450))));
 
 			assert!(System::events()
 				.iter()
 				.any(|er| er.event
-					== Event::darwinia_balances_Instance0(crate::Event::DustLost(2, 50))));
+					== Event::darwinia_balances_Instance1(crate::Event::DustLost(2, 50))));
 		});
 }
 
@@ -229,12 +229,12 @@ fn transfer_dust_removal_tst2_should_work() {
 			assert_eq!(System::events().len(), 9);
 
 			assert!(System::events().iter().any(|er| er.event
-				== Event::darwinia_balances_Instance0(crate::Event::Transfer(2, 1, 450))));
+				== Event::darwinia_balances_Instance1(crate::Event::Transfer(2, 1, 450))));
 
 			assert!(System::events()
 				.iter()
 				.any(|er| er.event
-					== Event::darwinia_balances_Instance0(crate::Event::DustLost(2, 50))));
+					== Event::darwinia_balances_Instance1(crate::Event::DustLost(2, 50))));
 		});
 }
 
@@ -277,7 +277,7 @@ fn repatriating_reserved_balance_dust_removal_should_work() {
 			assert_eq!(System::events().len(), 10);
 
 			assert!(System::events().iter().any(|er| er.event
-				== Event::darwinia_balances_Instance0(crate::Event::ReserveRepatriated(
+				== Event::darwinia_balances_Instance1(crate::Event::ReserveRepatriated(
 					2,
 					1,
 					450,
@@ -286,7 +286,7 @@ fn repatriating_reserved_balance_dust_removal_should_work() {
 
 			assert_eq!(
 				last_event(),
-				Event::darwinia_balances_Instance0(crate::Event::DustLost(2, 50)),
+				Event::darwinia_balances_Instance1(crate::Event::DustLost(2, 50)),
 			);
 		});
 }

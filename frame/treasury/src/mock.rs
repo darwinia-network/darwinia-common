@@ -175,8 +175,8 @@ frame_support::construct_runtime! {
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
-		Ring: darwinia_balances::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Kton: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Treasury: darwinia_treasury::{Pallet, Call, Storage, Config, Event<T>},
 	}
 }

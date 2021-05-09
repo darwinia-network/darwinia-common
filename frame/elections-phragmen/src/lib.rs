@@ -1211,7 +1211,7 @@ mod tests {
 			UncheckedExtrinsic = UncheckedExtrinsic
 		{
 			System: frame_system::{Pallet, Call, Event<T>},
-			Balances: darwinia_balances::<Instance0>::{Pallet, Call, Event<T>, Config<T>},
+			Balances: darwinia_balances::<Instance1>::{Pallet, Call, Event<T>, Config<T>},
 			Elections: elections_phragmen::{Pallet, Call, Event<T>, Config<T>},
 		}
 	}
@@ -1271,7 +1271,7 @@ mod tests {
 					.collect::<Vec<_>>()
 			});
 			let mut ext: sp_io::TestExternalities = GenesisConfig {
-				darwinia_balances_Instance0: darwinia_balances::GenesisConfig::<Test, RingInstance> {
+				darwinia_balances_Instance1: darwinia_balances::GenesisConfig::<Test, RingInstance> {
 					balances: vec![
 						(1, 10 * self.balance_factor),
 						(2, 20 * self.balance_factor),

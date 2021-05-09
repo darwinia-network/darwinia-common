@@ -109,7 +109,7 @@ frame_support::construct_runtime! {
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
 		System: frame_system::{Pallet, Call, Storage, Config},
-		Ring: darwinia_balances::<Instance0>::{Pallet, Call, Storage},
+		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage},
 		EthereumRelay: darwinia_ethereum_relay::{Pallet, Call, Storage, Config<T>},
 	}
 }

@@ -189,7 +189,7 @@ frame_support::construct_runtime! {
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Balances: darwinia_balances::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Balances: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Config, Event<T>},
 		Democracy: darwinia_democracy::{Pallet, Call, Storage, Config, Event<T>},
 	}

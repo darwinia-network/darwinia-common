@@ -133,8 +133,8 @@ frame_support::construct_runtime! {
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
-		Ring: darwinia_balances::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Kton: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
 	}
 }
 
@@ -206,8 +206,8 @@ fn emit_events_with_no_existential_deposit_suicide_with_dust() {
 				events(),
 				[
 					Event::frame_system(frame_system::Event::NewAccount(1)),
-					Event::darwinia_balances_Instance0(darwinia_balances::Event::Endowed(1, 100)),
-					Event::darwinia_balances_Instance0(darwinia_balances::Event::BalanceSet(
+					Event::darwinia_balances_Instance1(darwinia_balances::Event::Endowed(1, 100)),
+					Event::darwinia_balances_Instance1(darwinia_balances::Event::BalanceSet(
 						1, 100, 0
 					)),
 				]
@@ -224,7 +224,7 @@ fn emit_events_with_no_existential_deposit_suicide_with_dust() {
 				events(),
 				[
 					Event::frame_system(frame_system::Event::KilledAccount(1)),
-					Event::darwinia_balances_Instance0(darwinia_balances::Event::DustLost(1, 1))
+					Event::darwinia_balances_Instance1(darwinia_balances::Event::DustLost(1, 1))
 				]
 			);
 		});
@@ -242,8 +242,8 @@ fn dust_collector_should_work() {
 				events(),
 				[
 					Event::frame_system(frame_system::Event::NewAccount(1)),
-					Event::darwinia_balances_Instance0(darwinia_balances::Event::Endowed(1, 100)),
-					Event::darwinia_balances_Instance0(darwinia_balances::Event::BalanceSet(
+					Event::darwinia_balances_Instance1(darwinia_balances::Event::Endowed(1, 100)),
+					Event::darwinia_balances_Instance1(darwinia_balances::Event::BalanceSet(
 						1, 100, 0
 					)),
 				]
@@ -255,7 +255,7 @@ fn dust_collector_should_work() {
 				events(),
 				[
 					Event::frame_system(frame_system::Event::KilledAccount(1)),
-					Event::darwinia_balances_Instance0(darwinia_balances::Event::DustLost(1, 99))
+					Event::darwinia_balances_Instance1(darwinia_balances::Event::DustLost(1, 99))
 				]
 			);
 
@@ -268,12 +268,12 @@ fn dust_collector_should_work() {
 				events(),
 				[
 					Event::frame_system(frame_system::Event::NewAccount(1)),
-					Event::darwinia_balances_Instance0(darwinia_balances::Event::Endowed(1, 100)),
-					Event::darwinia_balances_Instance0(darwinia_balances::Event::BalanceSet(
-						1, 100, 0
-					)),
 					Event::darwinia_balances_Instance1(darwinia_balances::Event::Endowed(1, 100)),
 					Event::darwinia_balances_Instance1(darwinia_balances::Event::BalanceSet(
+						1, 100, 0
+					)),
+					Event::darwinia_balances_Instance2(darwinia_balances::Event::Endowed(1, 100)),
+					Event::darwinia_balances_Instance2(darwinia_balances::Event::BalanceSet(
 						1, 100, 0
 					)),
 				]
@@ -289,8 +289,8 @@ fn dust_collector_should_work() {
 				events(),
 				[
 					Event::frame_system(frame_system::Event::KilledAccount(1)),
-					Event::darwinia_balances_Instance0(darwinia_balances::Event::DustLost(1, 99)),
 					Event::darwinia_balances_Instance1(darwinia_balances::Event::DustLost(1, 99)),
+					Event::darwinia_balances_Instance2(darwinia_balances::Event::DustLost(1, 99)),
 				]
 			);
 		});

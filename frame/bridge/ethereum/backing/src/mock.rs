@@ -237,8 +237,8 @@ macro_rules! decl_tests {
 			{
 				System: frame_system::{Pallet, Call, Storage, Config},
 				Timestamp: pallet_timestamp::{Pallet, Call, Storage},
-				Ring: darwinia_balances::<Instance0>::{Pallet, Call, Storage},
-				Kton: darwinia_balances::<Instance1>::{Pallet, Call, Storage},
+				Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage},
+				Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage},
 				Staking: darwinia_staking::{Pallet, Call, Storage},
 				Session: pallet_session::{Pallet, Call, Storage},
 				EthereumBacking: darwinia_ethereum_backing::{Pallet, Call, Storage, Config<T>},
