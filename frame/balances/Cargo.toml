@@ -14,7 +14,6 @@ version     = "2.2.0"
 codec = { package = "parity-scale-codec", version = "2.0.1", default-features = false }
 log   = { version = "0.4.14" }
 paste = { version = "1.0.5", optional = true }
-serde = { version = "1.0.125", optional = true }
 # darwinia
 darwinia-balances-rpc-runtime-api = { default-features = false, path = "./rpc/runtime-api" }
 darwinia-support                  = { default-features = false, path = "../support" }
@@ -41,7 +40,6 @@ std = [
 
 crates-std    = [
 	"codec/std",
-	"serde",
 ]
 darwinia-std  = [
 	"darwinia-balances-rpc-runtime-api/std",

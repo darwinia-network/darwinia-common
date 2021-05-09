@@ -13,7 +13,6 @@ version     = "2.2.0"
 # crates
 codec = { package = "parity-scale-codec", version = "2.0.1", default-features = false }
 log   = { version = "0.4.14" }
-serde = { version = "1.0.125", optional = true }
 # darwinia
 darwinia-relay-primitives = { default-features = false, path = "../../../primitives/relay" }
 darwinia-support          = { default-features = false, path = "../../support" }
@@ -43,7 +42,6 @@ std = [
 
 crates-std    = [
 	"codec/std",
-	"serde",
 ]
 darwinia-std  = [
 	"darwinia-relay-primitives/std",

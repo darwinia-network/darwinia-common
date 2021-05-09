@@ -1281,7 +1281,6 @@ dependencies = [
  "pallet-transaction-payment",
  "parity-scale-codec",
  "paste",
- "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -1352,7 +1351,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "parity-scale-codec",
- "serde",
  "sp-runtime",
 ]
 
@@ -1404,7 +1402,6 @@ dependencies = [
  "hex-literal",
  "log",
  "parity-scale-codec",
- "serde",
  "sp-core",
  "sp-io",
  "sp-npos-elections",
@@ -1757,7 +1754,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "parity-scale-codec",
- "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -1786,7 +1782,6 @@ dependencies = [
  "frame-system",
  "log",
  "parity-scale-codec",
- "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -1886,7 +1881,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "parity-scale-codec",
- "serde",
  "sp-runtime",
 ]
 
@@ -2220,7 +2214,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "parity-scale-codec",
- "serde",
  "sp-core",
  "sp-inherents",
  "sp-runtime",

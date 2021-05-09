@@ -12,7 +12,6 @@ version     = "2.2.0"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "2.0.1", default-features = false }
-serde = { version = "1.0.123", default-features = false, features = ["derive"], optional = true }
 
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
@@ -25,7 +24,6 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 default = ["std"]
 std     = [
 	"codec/std",
-	"serde",
 	"frame-support/std",
 	"frame-system/std",
 	"sp-core/std",
