@@ -46,8 +46,7 @@ use frame_support::{
 	ensure,
 	traits::{Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, Get},
 	weights::{DispatchClass, Pays},
-	{decl_error, decl_event, decl_module, decl_storage},
-	PalletId
+	PalletId, {decl_error, decl_event, decl_module, decl_storage},
 };
 use frame_system::{ensure_none, ensure_root};
 use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};
@@ -59,7 +58,7 @@ use sp_runtime::{
 		InvalidTransaction, TransactionLongevity, TransactionSource, TransactionValidity,
 		ValidTransaction,
 	},
-	 RuntimeDebug,
+	RuntimeDebug,
 };
 use sp_std::prelude::*;
 // --- darwinia ---

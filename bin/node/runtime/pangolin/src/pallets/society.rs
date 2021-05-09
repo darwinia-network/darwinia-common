@@ -1,6 +1,6 @@
 // --- substrate ---
-use pallet_society::{Config, EnsureFounder};
 use frame_support::PalletId;
+use pallet_society::{Config, EnsureFounder};
 // --- darwinia ---
 use crate::*;
 

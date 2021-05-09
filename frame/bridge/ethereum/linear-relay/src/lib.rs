@@ -75,6 +75,7 @@ use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
 	traits::Get,
 	traits::{Currency, ExistenceRequirement::KeepAlive, IsSubType, ReservableCurrency},
+	PalletId,
 };
 use frame_system::{ensure_root, ensure_signed};
 use sp_runtime::{
@@ -82,7 +83,7 @@ use sp_runtime::{
 	transaction_validity::{
 		InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
 	},
-	DispatchError, DispatchResult, PalletId, SaturatedConversion,
+	DispatchError, DispatchResult, SaturatedConversion,
 };
 use sp_std::prelude::*;
 // --- darwinia ---

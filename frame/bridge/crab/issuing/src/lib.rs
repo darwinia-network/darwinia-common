@@ -47,10 +47,10 @@ pub mod pallet {
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{Currency, Get},
-		PalletId
+		PalletId,
 	};
 	use frame_system::pallet_prelude::*;
-	use sp_runtime::{traits::AccountIdConversion};
+	use sp_runtime::traits::AccountIdConversion;
 	// --- darwinia ---
 	use crate::weights::WeightInfo;
 
