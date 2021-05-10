@@ -3267,11 +3267,8 @@ impl<T: Config> Convert<T::AccountId, Option<T::AccountId>> for StashOf<T> {
 pub struct ExposureOf<T>(PhantomData<T>);
 impl<T: Config> Convert<T::AccountId, Option<ExposureT<T>>> for ExposureOf<T> {
 	fn convert(validator: T::AccountId) -> Option<ExposureT<T>> {
-		if let Some(active_era) = <Module<T>>::active_era() {
-			Some(<Module<T>>::eras_stakers(active_era.index, &validator))
-		} else {
-			None
-		}
+		<Module<T>>::active_era()
+			.map(|active_era| <Module<T>>::eras_stakers(active_era.index, &validator))
 	}
 }
 
