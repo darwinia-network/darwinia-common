@@ -69,7 +69,7 @@ impl frame_system::Config for Test {
 }
 
 pub struct Tippers;
-impl Contains<u128> for Tippers {
+impl SortedMembers<u128> for Tippers {
 	fn sorted_members() -> Vec<u128> {
 		TEN_TO_FOURTEEN.with(|v| v.borrow().clone())
 	}

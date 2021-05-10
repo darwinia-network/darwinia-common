@@ -74,7 +74,7 @@ impl darwinia_balances::Config<RingInstance> for Test {
 }
 
 pub struct UnusedTechnicalMembership;
-impl Contains<AccountId> for UnusedTechnicalMembership {
+impl SortedMembers<AccountId> for UnusedTechnicalMembership {
 	fn sorted_members() -> Vec<AccountId> {
 		vec![1, 2, 3]
 	}

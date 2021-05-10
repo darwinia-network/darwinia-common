@@ -21,7 +21,7 @@
 // --- crates.io ---
 use codec::{Decode, Encode};
 // --- substrate ---
-use frame_support::{assert_err, assert_noop, assert_ok, traits::Contains};
+use frame_support::{assert_err, assert_noop, assert_ok, traits::SortedMembers};
 use frame_system::EnsureRoot;
 use sp_runtime::{traits::Dispatchable, AccountId32, DispatchError, RuntimeDebug};
 // --- darwinia ---
@@ -37,7 +37,7 @@ use ethereum_primitives::{
 decl_tests!(EthereumRelay: darwinia_ethereum_relay::{Pallet, Call, Storage});
 
 pub struct UnusedTechnicalMembership;
-impl Contains<AccountId> for UnusedTechnicalMembership {
+impl SortedMembers<AccountId> for UnusedTechnicalMembership {
 	fn sorted_members() -> Vec<AccountId> {
 		unimplemented!()
 	}
