@@ -1896,7 +1896,6 @@ dependencies = [
  "frame-system",
  "hex-literal",
  "parity-scale-codec",
- "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",

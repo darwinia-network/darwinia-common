@@ -13,7 +13,6 @@ version     = "2.2.0"
 # crates
 codec      = { package = "parity-scale-codec", version = "2.0.1", default-features = false, features = ["derive"] }
 enumflags2 = { version = "0.6.2" }
-serde      = { version = "1.0.125", optional = true }
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
@@ -43,7 +42,6 @@ std = [
 
 crates-std    = [
 	"codec/std",
-	"serde",
 ]
 darwinia-std  = ["darwinia-support/std"]
 substrate-std = [
