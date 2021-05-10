@@ -22,6 +22,7 @@ frame_support::parameter_types! {
 	pub const MaximumReasonLength: u32 = 16384;
 	pub const BountyCuratorDeposit: Permill = Permill::from_percent(50);
 	pub const BountyValueMinimum: Balance = 2 * COIN;
+	pub const MaxApprovals: u32 = 100;
 }
 impl Config for Runtime {
 	type PalletId = TreasuryPalletId;
@@ -50,5 +51,6 @@ impl Config for Runtime {
 	type BountyValueMinimum = BountyValueMinimum;
 	type RingBurnDestination = ();
 	type KtonBurnDestination = ();
+	type MaxApprovals = MaxApprovals;
 	type WeightInfo = SubstrateWeight<Runtime>;
 }

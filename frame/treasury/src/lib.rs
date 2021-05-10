@@ -171,6 +171,7 @@ use codec::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 // --- substrate ---
 use frame_support::{
+	bounded_vec::TryAppendValue,
 	decl_error, decl_event, decl_module, decl_storage,
 	dispatch::DispatchResultWithPostInfo,
 	ensure, print,
@@ -180,7 +181,7 @@ use frame_support::{
 		Get, Imbalance, OnUnbalanced, ReservableCurrency, SortedMembers, WithdrawReasons,
 	},
 	weights::{DispatchClass, Weight},
-	PalletId, Parameter,
+	BoundedVec, PalletId, Parameter,
 };
 use frame_system::ensure_signed;
 use sp_runtime::{
@@ -276,6 +277,9 @@ pub trait Config<I = DefaultInstance>: frame_system::Config {
 	/// Handler for the unbalanced decrease when treasury funds are burned.
 	type KtonBurnDestination: OnUnbalancedKton<KtonNegativeImbalance<Self, I>>;
 
+	/// The maximum number of approvals that can wait in the spending queue.
+	type MaxApprovals: Get<u32>;
+
 	/// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
 }
@@ -292,7 +296,7 @@ decl_storage! {
 			=> Option<TreasuryProposal<T::AccountId, RingBalance<T, I>, KtonBalance<T, I>>>;
 
 		/// Proposal indices that have been approved but not yet awarded.
-		Approvals get(fn approvals): Vec<ProposalIndex>;
+		pub Approvals get(fn approvals): BoundedVec<ProposalIndex, T::MaxApprovals>;
 
 		/// Tips that are not yet completed. Keyed by the hash of `(reason, who)` from the value.
 		/// This has the insecure enumerable hash function since the key itself is already
@@ -409,6 +413,8 @@ decl_error! {
 		InsufficientProposersBalance,
 		/// No proposal or bounty at that index.
 		InvalidIndex,
+		/// Too many approvals in the queue.
+		TooManyApprovals,
 		/// The reason given is just too big.
 		ReasonTooBig,
 		/// The tip was already found/started.
@@ -565,12 +571,12 @@ decl_module! {
 		/// - DbReads: `Proposals`, `Approvals`
 		/// - DbWrite: `Approvals`
 		/// # </weight>
-		#[weight = (T::WeightInfo::approve_proposal(), DispatchClass::Operational)]
+		#[weight = (T::WeightInfo::approve_proposal(T::MaxApprovals::get()), DispatchClass::Operational)]
 		fn approve_proposal(origin, #[compact] proposal_id: ProposalIndex) {
 			T::ApproveOrigin::ensure_origin(origin)?;
 
 			ensure!(<Proposals<T, I>>::contains_key(proposal_id), <Error<T, I>>::InvalidIndex);
-			<Approvals<I>>::append(proposal_id);
+			Approvals::<T, I>::try_append(proposal_id).map_err(|_| Error::<T, I>::TooManyApprovals)?;
 		}
 
 		/// Report something `reason` that deserves a tip and claim any eventual the finder's fee.
@@ -1329,7 +1335,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 		let mut missed_any_kton = false;
 		let mut imbalance_kton = <KtonPositiveImbalance<T, I>>::zero();
 
-		let proposals_len = <Approvals<I>>::mutate(|v| {
+		let proposals_len = <Approvals<T, I>>::mutate(|v| {
 			let proposals_approvals_len = v.len() as u32;
 			v.retain(|&index| {
 				// Should always be true, but shouldn't panic if false or we're screwed.

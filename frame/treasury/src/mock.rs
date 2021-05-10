@@ -135,6 +135,7 @@ frame_support::parameter_types! {
 	pub const KtonProposalBondMinimum: Balance = 1;
 	pub const SpendPeriod: u64 = 2;
 	pub const Burn: Permill = Permill::from_percent(50);
+	pub const MaxApprovals: u32 = 100;
 }
 impl Config for Test {
 	type PalletId = TreasuryPalletId;
@@ -163,6 +164,7 @@ impl Config for Test {
 	type MaximumReasonLength = MaximumReasonLength;
 	type RingBurnDestination = (); // Just gets burned.
 	type KtonBurnDestination = (); // Just gets burned.
+	type MaxApprovals = MaxApprovals;
 	type WeightInfo = ();
 }
 
