@@ -236,13 +236,13 @@ impl<T: Config> Module<T> {
 
 	fn abi_encode_token_redeem(result: EthLog) -> Result<Vec<u8>, DispatchError> {
 		log::debug!("abi_encode_token_redeem");
-        // parse the following ethereum backing lock event
-        // BackingLock(address indexed sender, address source, address target, uint256 amount, address receiver, uint256 fee)
-        // @sender & @source are not used here
-        // @target(params[2]): the mapped token address
-        // @amount(params[3]): the token amount [wei]
-        // @receiver(params[4]): the dvm receiver address
-        // @fee(params[5]): the fee for this cross transfer
+		// parse the following ethereum backing lock event
+		// BackingLock(address indexed sender, address source, address target, uint256 amount, address receiver, uint256 fee)
+		// @sender & @source are not used here
+		// @target(params[2]): the mapped token address
+		// @amount(params[3]): the token amount [wei]
+		// @receiver(params[4]): the dvm receiver address
+		// @fee(params[5]): the fee for this cross transfer
 		let dtoken_address = result.params[2]
 			.value
 			.clone()
@@ -315,7 +315,15 @@ impl<T: Config> Module<T> {
 			e
 		})?;
 
-		let raw_event = RawEvent::BurnToken(1, backing, sender, recipient, source, mapped_address, amount);
+		let raw_event = RawEvent::BurnToken(
+			1,
+			backing,
+			sender,
+			recipient,
+			source,
+			mapped_address,
+			amount,
+		);
 		let module_event: <T as Config>::Event = raw_event.clone().into();
 		let system_event: <T as frame_system::Config>::Event = module_event.into();
 		<BurnTokenEvents<T>>::append(system_event);
