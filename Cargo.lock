@@ -1891,7 +1891,6 @@ version = "2.2.0"
 dependencies = [
  "darwinia-balances",
  "darwinia-support",
- "enumflags2",
  "frame-support",
  "frame-system",
  "hex-literal",
