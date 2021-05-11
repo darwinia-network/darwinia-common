@@ -809,10 +809,6 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
 		darwinia_header_mmr::migration::try_runtime::pre_migrate::<Runtime>()?;
-		// darwinia_elections_phragmen::migrations::v2_3::pre_migration::<
-		// 	darwinia_elections_phragmen::Pallet<Runtime>,
-		// 	_,
-		// >("PhragmenElection");
 
 		Ok(())
 	}
@@ -822,11 +818,8 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 		use frame_support::migration;
 
 		darwinia_header_mmr::migration::migrate(b"HeaderMMR");
-		// darwinia_elections_phragmen::migrations::v2_3::migrate::<
-		// 	Runtime,
-		// 	darwinia_elections_phragmen::Pallet<Runtime>,
-		// 	_,
-		// >("PhragmenElection");
+
+		migration::move_pallet(b"DarwiniaPhragmenElection", b"PhragmenElection");
 
 		// https://github.com/paritytech/substrate/pull/8555
 		migration::move_pallet(b"Instance1Collective", b"Instance2Collective");
