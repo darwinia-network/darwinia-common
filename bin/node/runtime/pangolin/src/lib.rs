@@ -292,8 +292,8 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("Pangolin"),
 	impl_name: create_runtime_str!("Pangolin"),
 	authoring_version: 1,
-	// crate version ~2.2.0 := >=2.2.0, <2.3.0
-	spec_version: 224,
+	// crate version ~2.3.0 := >=2.3.0, <2.4.0
+	spec_version: 230,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -349,7 +349,7 @@ frame_support::construct_runtime! {
 		Democracy: darwinia_democracy::{Pallet, Call, Storage, Config, Event<T>} = 17,
 		Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Config<T>, Event<T>} = 18,
 		TechnicalCommittee: pallet_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Config<T>, Event<T>} = 19,
-		ElectionsPhragmen: darwinia_elections_phragmen::{Pallet, Call, Storage, Config<T>, Event<T>} = 20,
+		PhragmenElection: darwinia_elections_phragmen::{Pallet, Call, Storage, Config<T>, Event<T>} = 20,
 		TechnicalMembership: pallet_membership::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>} = 21,
 		Treasury: darwinia_treasury::{Pallet, Call, Storage, Event<T>} = 22,
 
@@ -809,10 +809,10 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
 		darwinia_header_mmr::migration::try_runtime::pre_migrate::<Runtime>()?;
-		darwinia_elections_phragmen::migrations::v2_3::pre_migration::<
-			darwinia_elections_phragmen::Pallet<Runtime>,
-			_,
-		>("ElectionsPhragmen");
+		// darwinia_elections_phragmen::migrations::v2_3::pre_migration::<
+		// 	darwinia_elections_phragmen::Pallet<Runtime>,
+		// 	_,
+		// >("PhragmenElection");
 
 		Ok(())
 	}
@@ -822,11 +822,11 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 		use frame_support::migration;
 
 		darwinia_header_mmr::migration::migrate(b"HeaderMMR");
-		darwinia_elections_phragmen::migrations::v2_3::migrate::<
-			Runtime,
-			darwinia_elections_phragmen::Pallet<Runtime>,
-			_,
-		>("ElectionsPhragmen");
+		// darwinia_elections_phragmen::migrations::v2_3::migrate::<
+		// 	Runtime,
+		// 	darwinia_elections_phragmen::Pallet<Runtime>,
+		// 	_,
+		// >("PhragmenElection");
 
 		// https://github.com/paritytech/substrate/pull/8555
 		migration::move_pallet(b"Instance1Collective", b"Instance2Collective");

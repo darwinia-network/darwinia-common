@@ -41,7 +41,7 @@ impl InstanceFilter<Call> for ProxyType {
 							Call::Democracy(..) |
 							Call::Council(..) |
 							Call::TechnicalCommittee(..) |
-							Call::ElectionsPhragmen(..) |
+							Call::PhragmenElection(..) |
 							Call::TechnicalMembership(..) |
 							Call::Treasury(..) |
 							Call::Sudo(..) |
@@ -74,7 +74,7 @@ impl InstanceFilter<Call> for ProxyType {
 				c,
 				Call::Democracy(..)
 					| Call::Council(..) | Call::TechnicalCommittee(..)
-					| Call::ElectionsPhragmen(..)
+					| Call::PhragmenElection(..)
 					| Call::Treasury(..)
 			),
 			ProxyType::Staking => matches!(c, Call::Staking(..)),

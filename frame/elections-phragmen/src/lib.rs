@@ -1286,11 +1286,11 @@ mod tests {
 	}
 
 	frame_support::parameter_types! {
-		pub const ElectionsPhragmenPalletId: LockIdentifier = *b"phrelect";
+		pub const PhragmenElectionPalletId: LockIdentifier = *b"phrelect";
 	}
 
 	impl Config for Test {
-		type PalletId = ElectionsPhragmenPalletId;
+		type PalletId = PhragmenElectionPalletId;
 		type Event = Event;
 		type Currency = Balances;
 		type CurrencyToVote = frame_support::traits::SaturatingCurrencyToVote;
@@ -1456,7 +1456,7 @@ mod tests {
 			.get(0)
 			.cloned()
 			.map(|lock| {
-				assert_eq!(lock.id, ElectionsPhragmenPalletId::get());
+				assert_eq!(lock.id, PhragmenElectionPalletId::get());
 				lock.locked_amount(None)
 			})
 			.unwrap_or_default()
