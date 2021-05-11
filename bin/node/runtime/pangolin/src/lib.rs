@@ -809,7 +809,12 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
 		darwinia_header_mmr::migration::try_runtime::pre_migrate::<Runtime>()?;
-		darwinia_elections_phragmen::migrations::v2_3::pre_migration()
+		darwinia_elections_phragmen::migrations::v2_3::pre_migration::<
+			darwinia_elections_phragmen::Pallet<Runtime>,
+			_,
+		>("ElectionsPhragmen");
+
+		Ok(())
 	}
 
 	fn on_runtime_upgrade() -> Weight {
