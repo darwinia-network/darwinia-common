@@ -179,6 +179,7 @@ try-runtime = [
 	"frame-try-runtime",
 	"darwinia-balances/try-runtime",
 	"darwinia-crab-issuing/try-runtime",
+	"darwinia-elections-phragmen/try-runtime",
 	"darwinia-ethereum-backing/try-runtime",
 	"darwinia-header-mmr/try-runtime",
 	"darwinia-staking/try-runtime",

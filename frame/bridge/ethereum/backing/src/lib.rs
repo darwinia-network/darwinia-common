@@ -1071,6 +1071,9 @@ pub mod migration {
 
 	#[cfg(feature = "try-runtime")]
 	pub mod try_runtime {
+		// --- darwinia ---
+		use crate::*;
+
 		pub fn pre_migrate<T: Config>() -> Result<(), &'static str> {
 			Ok(())
 		}
