@@ -808,11 +808,36 @@ pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
-		darwinia_header_mmr::migration::try_runtime::pre_migrate::<Runtime>()
+		darwinia_header_mmr::migration::try_runtime::pre_migrate::<Runtime>()?;
+		darwinia_elections_phragmen::migrations::v2_3::pre_migration()
 	}
 
 	fn on_runtime_upgrade() -> Weight {
+		// --- substrate ---
+		use frame_support::migration;
+
 		darwinia_header_mmr::migration::migrate(b"HeaderMMR");
+		darwinia_elections_phragmen::migrations::v2_3::migrate::<
+			Runtime,
+			darwinia_elections_phragmen::Pallet<Runtime>,
+			_,
+		>("ElectionsPhragmen");
+
+		// https://github.com/paritytech/substrate/pull/8555
+		migration::move_pallet(b"Instance1Collective", b"Instance2Collective");
+		migration::move_pallet(b"Instance0Collective", b"Instance1Collective");
+
+		migration::move_pallet(b"Instance0Membership", b"Instance1Membership");
+
+		migration::move_pallet(
+			b"Instance0DarwiniaRelayerGame",
+			b"Instance1DarwiniaRelayerGame",
+		);
+
+		migration::move_pallet(
+			b"Instance0DarwiniaRelayAuthorities",
+			b"Instance1DarwiniaRelayAuthorities",
+		);
 
 		RuntimeBlockWeights::get().max_block
 	}
