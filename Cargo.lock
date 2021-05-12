@@ -5509,6 +5509,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "pangolin-constants"
+version = "2.3.0"
+dependencies = [
+ "drml-primitives",
+ "sp-staking",
+]
+
+[[package]]
 name = "pangolin-runtime"
 version = "2.3.0"
 dependencies = [
@@ -5568,6 +5576,7 @@ dependencies = [
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-utility",
+ "pangolin-constants",
  "parity-scale-codec",
  "serde",
  "smallvec 1.6.1",
