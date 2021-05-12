@@ -17,10 +17,10 @@ log   = { version = "0.4.14" }
 darwinia-relay-primitives = { default-features = false, path = "../../../primitives/relay" }
 darwinia-support          = { default-features = false, path = "../../support" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 
 [dev-dependencies]
 # crates
@@ -29,8 +29,8 @@ serde      = { version = "1.0.125" }
 # darwinia
 darwinia-balances = { path = "../../balances" }
 # substrate
-sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
-sp-io   = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
+sp-core = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-io   = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 
 [features]
 default = ["std"]
