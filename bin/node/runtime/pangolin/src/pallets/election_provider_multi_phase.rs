@@ -1,14 +1,17 @@
 // --- substrate ---
 use frame_support::weights::{constants::BlockExecutionWeight, DispatchClass, Weight};
 use pallet_election_provider_multi_phase::{weights::SubstrateWeight, Config};
-use sp_runtime::transaction_validity::TransactionPriority;
+use sp_runtime::{transaction_validity::TransactionPriority, PerU16};
 // --- darwinia ---
 use crate::*;
 
 sp_npos_elections::generate_solution_type!(
 	#[compact]
-	pub struct NposCompactSolution16::<u32, u16, sp_runtime::PerU16>(16)
-	// -------------------- ^^ <NominatorIndex, ValidatorIndex, Accuracy>
+	pub struct NposCompactSolution16::<
+		VoterIndex = u32,
+		TargetIndex = u16,
+		Accuracy = PerU16,
+	>(16)
 );
 
 frame_support::parameter_types! {
@@ -30,6 +33,11 @@ frame_support::parameter_types! {
 		.get(DispatchClass::Normal)
 		.max_extrinsic.expect("Normal extrinsics have a weight limit configured; qed")
 		.saturating_sub(BlockExecutionWeight::get());
+	// Solution can occupy 90% of normal block size
+	pub MinerMaxLength: u32 = Perbill::from_rational(9u32, 10) *
+		*RuntimeBlockLength::get()
+		.max
+		.get(DispatchClass::Normal);
 }
 
 impl Config for Runtime {
@@ -40,6 +48,7 @@ impl Config for Runtime {
 	type SolutionImprovementThreshold = SolutionImprovementThreshold;
 	type MinerMaxIterations = MinerMaxIterations;
 	type MinerMaxWeight = MinerMaxWeight;
+	type MinerMaxLength = MinerMaxLength;
 	type MinerTxPriority = MultiPhaseUnsignedPriority;
 	type DataProvider = Staking;
 	type OnChainAccuracy = Perbill;

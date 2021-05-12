@@ -55,6 +55,8 @@ pub(crate) type Balance = u128;
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 type Extrinsic = TestXt<Call, ()>;
+pub(crate) type StakingCall = darwinia_staking::Call<Test>;
+pub(crate) type TestRuntimeCall = <Test as frame_system::Config>::Call;
 
 pub(crate) type StakingError = Error<Test>;
 
@@ -139,6 +141,7 @@ impl frame_system::Config for Test {
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
 	type SS58Prefix = ();
+	type OnSetCode = ();
 }
 
 sp_runtime::impl_opaque_keys! {
@@ -224,7 +227,7 @@ impl onchain::Config for Test {
 }
 
 parameter_types! {
-	pub const StakingModuleId: ModuleId = ModuleId(*b"da/staki");
+	pub const StakingPalletId: PalletId = PalletId(*b"da/staki");
 	pub const BondingDurationInEra: EraIndex = 3;
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
 	pub const Cap: Balance = CAP;
@@ -239,7 +242,7 @@ parameter_types! {
 impl Config for Test {
 	const MAX_NOMINATIONS: u32 = 16;
 	type Event = Event;
-	type ModuleId = StakingModuleId;
+	type PalletId = StakingPalletId;
 	type UnixTime = SuppressUnixTimeWarning;
 	type SessionsPerEra = SessionsPerEra;
 	type BondingDurationInEra = BondingDurationInEra;
@@ -279,8 +282,8 @@ frame_support::construct_runtime! {
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		Ring: darwinia_balances::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Kton: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Staking: darwinia_staking::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
 	}

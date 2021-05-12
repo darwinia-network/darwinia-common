@@ -1,5 +1,5 @@
 // --- darwinia ---
-pub use darwinia_relay_authorities::Instance0 as EthereumRelayAuthoritiesInstance;
+pub use darwinia_relay_authorities::Instance1 as EthereumRelayAuthoritiesInstance;
 
 // --- substrate ---
 use frame_support::traits::LockIdentifier;

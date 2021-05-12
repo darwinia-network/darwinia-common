@@ -32,6 +32,7 @@ use std::{
 // --- crates.io ---
 use futures::StreamExt;
 // --- substrate ---
+use sc_authority_discovery::WorkerConfig;
 use sc_basic_authorship::ProposerFactory;
 use sc_cli::SubstrateCli;
 use sc_client_api::{BlockchainEvents, ExecutorProvider, RemoteBackend, StateBackendFor};
@@ -442,6 +443,7 @@ where
 
 	let prometheus_registry = config.prometheus_registry().cloned();
 	let shared_voter_state = rpc_setup;
+	let auth_disc_publish_non_global_ips = config.network.allow_non_globals_in_dht;
 
 	config
 		.network
@@ -590,13 +592,18 @@ where
 						_ => None,
 					}
 				});
-		let (authority_discovery_worker, _service) = sc_authority_discovery::new_worker_and_service(
-			client.clone(),
-			network,
-			Box::pin(dht_event_stream),
-			authority_discovery_role,
-			prometheus_registry,
-		);
+		let (authority_discovery_worker, _service) =
+			sc_authority_discovery::new_worker_and_service_with_config(
+				WorkerConfig {
+					publish_non_global_ips: auth_disc_publish_non_global_ips,
+					..Default::default()
+				},
+				client.clone(),
+				network,
+				Box::pin(dht_event_stream),
+				authority_discovery_role,
+				prometheus_registry,
+			);
 
 		task_manager.spawn_handle().spawn(
 			"authority-discovery-worker",

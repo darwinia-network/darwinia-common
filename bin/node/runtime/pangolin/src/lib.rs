@@ -42,9 +42,13 @@ pub mod constants {
 	pub const DAYS: BlockNumber = 24 * HOURS;
 
 	pub const MILLISECS_PER_BLOCK: Moment = 6000;
+	// NOTE: Currently it is not possible to change the slot duration after the chain has started.
+	//       Attempting to do so will brick block production.
 	pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
-	pub const BLOCKS_PER_SESSION: BlockNumber = 3 * MINUTES;
-	pub const SESSIONS_PER_ERA: SessionIndex = 6;
+	// NOTE: Currently it is not possible to change the epoch duration after the chain has started.
+	//       Attempting to do so will brick block production.
+	pub const BLOCKS_PER_SESSION: BlockNumber = 10 * MINUTES;
+	pub const SESSIONS_PER_ERA: SessionIndex = 3;
 
 	// 1 in 4 blocks (on average, not counting collisions) will be primary babe blocks.
 	pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
@@ -288,8 +292,8 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("Pangolin"),
 	impl_name: create_runtime_str!("Pangolin"),
 	authoring_version: 1,
-	// crate version ~2.2.0 := >=2.2.0, <2.3.0
-	spec_version: 225,
+	// crate version ~2.3.0 := >=2.3.0, <2.4.0
+	spec_version: 2300,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -325,8 +329,8 @@ frame_support::construct_runtime! {
 		Babe: pallet_babe::{Pallet, Call, Storage, Config, ValidateUnsigned} = 2,
 
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 3,
-		Balances: darwinia_balances::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>} = 4,
-		Kton: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>} = 5,
+		Balances: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>} = 4,
+		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>} = 5,
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 6,
 
 		// Consensus support.
@@ -343,10 +347,10 @@ frame_support::construct_runtime! {
 
 		// Governance stuff; uncallable initially.
 		Democracy: darwinia_democracy::{Pallet, Call, Storage, Config, Event<T>} = 17,
-		Council: pallet_collective::<Instance0>::{Pallet, Call, Storage, Origin<T>, Config<T>, Event<T>} = 18,
-		TechnicalCommittee: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Config<T>, Event<T>} = 19,
-		ElectionsPhragmen: darwinia_elections_phragmen::{Pallet, Call, Storage, Config<T>, Event<T>} = 20,
-		TechnicalMembership: pallet_membership::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>} = 21,
+		Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Config<T>, Event<T>} = 18,
+		TechnicalCommittee: pallet_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Config<T>, Event<T>} = 19,
+		PhragmenElection: darwinia_elections_phragmen::{Pallet, Call, Storage, Config<T>, Event<T>} = 20,
+		TechnicalMembership: pallet_membership::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>} = 21,
 		Treasury: darwinia_treasury::{Pallet, Call, Storage, Event<T>} = 22,
 
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 23,
@@ -384,8 +388,8 @@ frame_support::construct_runtime! {
 		EthereumRelay: darwinia_ethereum_relay::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
 		EthereumBacking: darwinia_ethereum_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 36,
 		EthereumIssuing: darwinia_ethereum_issuing::{Pallet, Call, Storage, Config, Event<T>} = 42,
-		EthereumRelayerGame: darwinia_relayer_game::<Instance0>::{Pallet, Storage} = 37,
-		EthereumRelayAuthorities: darwinia_relay_authorities::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>} = 38,
+		EthereumRelayerGame: darwinia_relayer_game::<Instance1>::{Pallet, Storage} = 37,
+		EthereumRelayAuthorities: darwinia_relay_authorities::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>} = 38,
 
 		TronBacking: darwinia_tron_backing::{Pallet, Config<T>} = 39,
 
@@ -804,12 +808,33 @@ pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
-		darwinia_header_mmr::migration::try_runtime::pre_migrate::<Runtime>()
+		Ok(())
 	}
 
 	fn on_runtime_upgrade() -> Weight {
-		darwinia_header_mmr::migration::migrate(b"HeaderMMR");
+		// // --- substrate ---
+		// use frame_support::migration;
 
-		RuntimeBlockWeights::get().max_block
+		// migration::move_pallet(b"DarwiniaPhragmenElection", b"PhragmenElection");
+
+		// // https://github.com/paritytech/substrate/pull/8555
+		// migration::move_pallet(b"Instance1Collective", b"Instance2Collective");
+		// migration::move_pallet(b"Instance0Collective", b"Instance1Collective");
+
+		// migration::move_pallet(b"Instance0Membership", b"Instance1Membership");
+
+		// migration::move_pallet(
+		// 	b"Instance0DarwiniaRelayerGame",
+		// 	b"Instance1DarwiniaRelayerGame",
+		// );
+
+		// migration::move_pallet(
+		// 	b"Instance0DarwiniaRelayAuthorities",
+		// 	b"Instance1DarwiniaRelayAuthorities",
+		// );
+
+		// RuntimeBlockWeights::get().max_block
+
+		0
 	}
 }

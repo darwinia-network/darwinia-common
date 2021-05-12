@@ -1,5 +1,5 @@
 // --- darwinia ---
-pub use darwinia_balances::{Instance0 as RingInstance, Instance1 as KtonInstance};
+pub use darwinia_balances::{Instance1 as RingInstance, Instance2 as KtonInstance};
 
 // --- substrate ---
 use frame_support::traits::Currency;

@@ -19,9 +19,9 @@
 #[macro_export]
 macro_rules! impl_test_account_data {
 	() => {
-		pub type RingInstance = darwinia_balances::Instance0;
+		pub type RingInstance = darwinia_balances::Instance1;
 		pub type RingError = darwinia_balances::Error<Test, RingInstance>;
-		pub type KtonInstance = darwinia_balances::Instance1;
+		pub type KtonInstance = darwinia_balances::Instance2;
 		pub type KtonError = darwinia_balances::Error<Test, KtonInstance>;
 
 		$crate::impl_account_data! {

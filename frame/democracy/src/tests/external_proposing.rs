@@ -93,7 +93,10 @@ fn external_blacklisting_should_work() {
 		assert_ok!(Democracy::blacklist(Origin::root(), hash, None));
 
 		fast_forward_to(2);
-		assert!(Democracy::referendum_status(0).is_err());
+		assert_noop!(
+			Democracy::referendum_status(0),
+			Error::<Test>::ReferendumInvalid
+		);
 
 		assert_noop!(
 			Democracy::external_propose(Origin::signed(2), set_balance_proposal_hash_and_note(2),),

@@ -35,11 +35,11 @@ use ethereum_primitives::{
 decl_tests!(EthereumRelay: darwinia_ethereum_linear_relay::{Pallet, Call, Storage});
 
 frame_support::parameter_types! {
-	pub const EthereumLinearRelayModuleId: ModuleId = ModuleId(*b"da/ethli");
+	pub const EthereumLinearRelayPalletId: PalletId = PalletId(*b"da/ethli");
 	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Ropsten;
 }
 impl darwinia_ethereum_linear_relay::Config for Test {
-	type ModuleId = EthereumLinearRelayModuleId;
+	type PalletId = EthereumLinearRelayPalletId;
 	type Event = ();
 	type EthereumNetwork = EthereumNetwork;
 	type Call = Call;

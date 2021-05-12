@@ -7,14 +7,14 @@ license     = "GPL-3.0"
 name        = "dc-mapping-sync"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.2.0"
+version     = "2.3.0"
 
 [dependencies]
 # substrate
-sc-client-api = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
-sp-api        = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
-sp-blockchain = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
-sp-runtime    = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sc-client-api = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
+sp-api        = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
+sp-blockchain = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
+sp-runtime    = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
 # darwinia
 dc-db               = { path = "../db" }
 dp_consensus        = { path = "../../../primitives/consensus/" }

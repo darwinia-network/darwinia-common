@@ -25,13 +25,12 @@ mod treasury {
 }
 
 // --- substrate ---
-use frame_support::traits::GenesisBuild;
+use frame_support::{traits::GenesisBuild, PalletId};
 use frame_system::mocking::*;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	ModuleId,
 };
 // --- darwinia ---
 use crate::{self as darwinia_treasury, *};
@@ -66,10 +65,11 @@ impl frame_system::Config for Test {
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
 	type SS58Prefix = ();
+	type OnSetCode = ();
 }
 
 pub struct Tippers;
-impl Contains<u128> for Tippers {
+impl SortedMembers<u128> for Tippers {
 	fn sorted_members() -> Vec<u128> {
 		TEN_TO_FOURTEEN.with(|v| v.borrow().clone())
 	}
@@ -119,7 +119,7 @@ impl darwinia_balances::Config<RingInstance> for Test {
 }
 
 frame_support::parameter_types! {
-	pub const TreasuryModuleId: ModuleId = ModuleId(*b"da/trsry");
+	pub const TreasuryPalletId: PalletId = PalletId(*b"da/trsry");
 	pub const TipCountdown: u64 = 1;
 	pub const TipFindersFee: Percent = Percent::from_percent(20);
 	pub const TipReportDepositBase: Balance = 1;
@@ -135,9 +135,10 @@ frame_support::parameter_types! {
 	pub const KtonProposalBondMinimum: Balance = 1;
 	pub const SpendPeriod: u64 = 2;
 	pub const Burn: Permill = Permill::from_percent(50);
+	pub const MaxApprovals: u32 = 100;
 }
 impl Config for Test {
-	type ModuleId = TreasuryModuleId;
+	type PalletId = TreasuryPalletId;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 	type ApproveOrigin = frame_system::EnsureRoot<u128>;
@@ -163,6 +164,7 @@ impl Config for Test {
 	type MaximumReasonLength = MaximumReasonLength;
 	type RingBurnDestination = (); // Just gets burned.
 	type KtonBurnDestination = (); // Just gets burned.
+	type MaxApprovals = MaxApprovals;
 	type WeightInfo = ();
 }
 
@@ -174,8 +176,8 @@ frame_support::construct_runtime! {
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
-		Ring: darwinia_balances::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Kton: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Treasury: darwinia_treasury::{Pallet, Call, Storage, Config, Event<T>},
 	}
 }

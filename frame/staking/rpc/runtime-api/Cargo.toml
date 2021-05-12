@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "darwinia-staking-rpc-runtime-api"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.2.0"
+version     = "2.3.0"
 
 [dependencies]
 # crates
@@ -16,8 +16,8 @@ serde = { version = "1.0.125", optional = true, features = ["derive"] }
 # darwinia
 darwinia-support = { default-features = false, path = "../../../support" }
 # substrate
-sp-api     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-api     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
 
 [features]
 default = ["std"]

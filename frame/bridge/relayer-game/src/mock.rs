@@ -283,6 +283,7 @@ impl frame_system::Config for Test {
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
 	type SS58Prefix = ();
+	type OnSetCode = ();
 }
 
 frame_support::parameter_types! {
@@ -349,7 +350,7 @@ frame_support::construct_runtime! {
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
 		System: frame_system::{Pallet, Call, Storage, Config},
-		Ring: darwinia_balances::<Instance0>::{Pallet, Call, Storage, Config<T>},
+		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>},
 		Relay: mock_relay::{Pallet, Storage},
 		RelayerGame: darwinia_relayer_game::{Pallet, Storage},
 	}

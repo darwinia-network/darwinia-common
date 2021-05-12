@@ -42,9 +42,10 @@ pub mod pallet {
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{Currency, Get},
+		PalletId,
 	};
 	use frame_system::pallet_prelude::*;
-	use sp_runtime::{traits::AccountIdConversion, ModuleId};
+	use sp_runtime::traits::AccountIdConversion;
 	// --- darwinia ---
 	use crate::weights::WeightInfo;
 
@@ -54,7 +55,7 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 		// --- darwinia ---
 		#[pallet::constant]
-		type ModuleId: Get<ModuleId>;
+		type PalletId: Get<PalletId>;
 		type RingCurrency: Currency<AccountId<Self>>;
 	}
 
@@ -74,7 +75,7 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
 			let _ = T::RingCurrency::make_free_balance_be(
-				&T::ModuleId::get().into_account(),
+				&T::PalletId::get().into_account(),
 				T::RingCurrency::minimum_balance() + self.backed_ring,
 			);
 		}

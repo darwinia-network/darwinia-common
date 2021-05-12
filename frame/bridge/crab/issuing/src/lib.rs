@@ -47,9 +47,10 @@ pub mod pallet {
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{Currency, Get},
+		PalletId,
 	};
 	use frame_system::pallet_prelude::*;
-	use sp_runtime::{traits::AccountIdConversion, ModuleId};
+	use sp_runtime::traits::AccountIdConversion;
 	// --- darwinia ---
 	use crate::weights::WeightInfo;
 
@@ -59,7 +60,7 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 		// --- darwinia ---
 		#[pallet::constant]
-		type ModuleId: Get<ModuleId>;
+		type PalletId: Get<PalletId>;
 		type RingCurrency: Currency<AccountId<Self>>;
 	}
 
@@ -92,7 +93,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {}
 	impl<T: Config> Pallet<T> {
 		pub fn account_id() -> T::AccountId {
-			T::ModuleId::get().into_account()
+			T::PalletId::get().into_account()
 		}
 	}
 }

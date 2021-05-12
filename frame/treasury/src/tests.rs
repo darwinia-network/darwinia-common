@@ -1400,3 +1400,24 @@ fn genesis_funding_works() {
 		);
 	});
 }
+
+#[test]
+fn max_approvals_limited() {
+	new_test_ext().execute_with(|| {
+		Ring::make_free_balance_be(&Treasury::account_id(), u64::max_value());
+		Ring::make_free_balance_be(&0, u64::max_value());
+		Kton::make_free_balance_be(&0, u64::max_value());
+
+		for _ in 0..MaxApprovals::get() {
+			assert_ok!(Treasury::propose_spend(Origin::signed(0), 100, 0, 3));
+			assert_ok!(Treasury::approve_proposal(Origin::root(), 0));
+		}
+
+		// One too many will fail
+		assert_ok!(Treasury::propose_spend(Origin::signed(0), 100, 0, 3));
+		assert_noop!(
+			Treasury::approve_proposal(Origin::root(), 0),
+			Error::<Test, _>::TooManyApprovals
+		);
+	});
+}

@@ -18,6 +18,8 @@
 
 // --- std ---
 use std::{collections::BTreeMap, marker::PhantomData};
+// --- crates ---
+use rand::{seq::SliceRandom, Rng};
 // --- substrate ---
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_service::{ChainType, Properties};
@@ -224,6 +226,7 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 			"0x1ed7de3855ffcce134d718b570febb49bbbbeb32ebbc8c319f44fb9f5690643a",
 		),
 	];
+	let initial_nominators = <Vec<AccountId>>::new();
 	let collective_members = vec![get_account_id_from_seed::<sr25519::Public>("Alice")];
 	let evm_accounts = {
 		let mut map = BTreeMap::new();
@@ -252,7 +255,7 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 			authorities: vec![],
 			epoch_config: Some(pangolin_runtime::BABE_GENESIS_EPOCH_CONFIG)
 		},
-		darwinia_balances_Instance0: pangolin_runtime::BalancesConfig {
+		darwinia_balances_Instance1: pangolin_runtime::BalancesConfig {
 			balances: vec![
 				(root.clone(), BUNCH_OF_COINS),
 				(get_account_id_from_seed::<sr25519::Public>("Alice"), A_FEW_COINS),
@@ -264,19 +267,29 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 					.map(|Keys { stash, .. }| (stash.to_owned(), A_FEW_COINS)),
 			)
 			.chain(
+				initial_nominators
+					.iter()
+					.map(|n| (n.to_owned(), A_FEW_COINS))
+			)
+			.chain(
 				TEAM_MEMBERS
 					.iter()
 					.map(|m| (array_bytes::hex2array_unchecked!(m, 32).into(), MANY_COINS)),
 			)
 			.collect()
 		},
-		darwinia_balances_Instance1: pangolin_runtime::KtonConfig {
+		darwinia_balances_Instance2: pangolin_runtime::KtonConfig {
 			balances: vec![(root.clone(), BUNCH_OF_COINS)]
 				.into_iter()
 				.chain(
 					initial_authorities
 						.iter()
 						.map(|Keys { stash, .. }| (stash.to_owned(), A_FEW_COINS)),
+				)
+				.chain(
+					initial_nominators
+						.iter()
+						.map(|n| (n.to_owned(), A_FEW_COINS))
 				)
 				.chain(
 					TEAM_MEMBERS
@@ -296,6 +309,19 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 					A_FEW_COINS,
 					pangolin_runtime::StakerStatus::Validator
 				))
+				.chain(initial_nominators.iter().map(|n| {
+					let mut rng = rand::thread_rng();
+					let limit = (pangolin_runtime::MAX_NOMINATIONS as usize).min(initial_authorities.len());
+					let count = rng.gen::<usize>() % limit;
+					let nominations = initial_authorities
+						.as_slice()
+						.choose_multiple(&mut rng, count)
+						.into_iter()
+						.map(|c| c.stash.clone())
+						.collect::<Vec<_>>();
+
+					(n.clone(), n.clone(), A_FEW_COINS, pangolin_runtime::StakerStatus::Nominator(nominations))
+				}))
 				.collect(),
 			slash_reward_fraction: Perbill::from_percent(10),
 			payout_fraction: Perbill::from_percent(50),
@@ -315,16 +341,16 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 		pallet_im_online: Default::default(),
 		pallet_authority_discovery: Default::default(),
 		darwinia_democracy: Default::default(),
-		pallet_collective_Instance0: pangolin_runtime::CouncilConfig {
+		pallet_collective_Instance1: pangolin_runtime::CouncilConfig {
 			phantom: PhantomData::<pangolin_runtime::CouncilCollective>,
 			members: collective_members.clone(),
 		},
-		pallet_collective_Instance1: pangolin_runtime::TechnicalCommitteeConfig {
+		pallet_collective_Instance2: pangolin_runtime::TechnicalCommitteeConfig {
 			phantom: PhantomData::<pangolin_runtime::TechnicalCollective>,
 			members: collective_members
 		},
 		darwinia_elections_phragmen: Default::default(),
-		pallet_membership_Instance0: Default::default(),
+		pallet_membership_Instance1: Default::default(),
 		darwinia_claims: Default::default(),
 		darwinia_vesting: Default::default(),
 		pallet_sudo: pangolin_runtime::SudoConfig { key: root.clone() },
@@ -354,7 +380,7 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 			mapping_factory_address: array_bytes::hex2array_unchecked!(MAPPING_FACTORY_ADDRESS, 20).into(),
 			ethereum_backing_address: array_bytes::hex2array_unchecked!(ETHEREUM_BACKING_ADDRESS, 20).into(),
 		},
-		darwinia_relay_authorities_Instance0: pangolin_runtime::EthereumRelayAuthoritiesConfig {
+		darwinia_relay_authorities_Instance1: pangolin_runtime::EthereumRelayAuthoritiesConfig {
 			authorities: vec![(
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				array_bytes::hex2array_unchecked!(ETHEREUM_RELAY_AUTHORITY_SIGNER, 20).into(),
@@ -428,14 +454,14 @@ fn pangolin_development_genesis() -> pangolin_runtime::GenesisConfig {
 			authorities: vec![],
 			epoch_config: Some(pangolin_runtime::BABE_GENESIS_EPOCH_CONFIG)
 		},
-		darwinia_balances_Instance0: pangolin_runtime::BalancesConfig {
+		darwinia_balances_Instance1: pangolin_runtime::BalancesConfig {
 			balances: endowed_accounts
 				.clone()
 				.into_iter()
 				.map(|a| (a, MANY_COINS))
 				.collect()
 		},
-		darwinia_balances_Instance1: pangolin_runtime::KtonConfig {
+		darwinia_balances_Instance2: pangolin_runtime::KtonConfig {
 			balances: endowed_accounts
 				.clone()
 				.into_iter()
@@ -467,16 +493,16 @@ fn pangolin_development_genesis() -> pangolin_runtime::GenesisConfig {
 		pallet_im_online: Default::default(),
 		pallet_authority_discovery: Default::default(),
 		darwinia_democracy: Default::default(),
-		pallet_collective_Instance0: pangolin_runtime::CouncilConfig {
+		pallet_collective_Instance1: pangolin_runtime::CouncilConfig {
 			phantom: PhantomData::<pangolin_runtime::CouncilCollective>,
 			members: collective_members.clone(),
 		},
-		pallet_collective_Instance1: pangolin_runtime::TechnicalCommitteeConfig {
+		pallet_collective_Instance2: pangolin_runtime::TechnicalCommitteeConfig {
 			phantom: PhantomData::<pangolin_runtime::TechnicalCollective>,
 			members: collective_members
 		},
 		darwinia_elections_phragmen: Default::default(),
-		pallet_membership_Instance0: Default::default(),
+		pallet_membership_Instance1: Default::default(),
 		darwinia_claims: pangolin_runtime::ClaimsConfig {
 			claims_list: ClaimsList::from_file(
 				"bin/res/claims-list.json",
@@ -511,7 +537,7 @@ fn pangolin_development_genesis() -> pangolin_runtime::GenesisConfig {
 			mapping_factory_address: array_bytes::hex2array_unchecked!(MAPPING_FACTORY_ADDRESS, 20).into(),
 			ethereum_backing_address: array_bytes::hex2array_unchecked!(ETHEREUM_BACKING_ADDRESS, 20).into(),
 		},
-		darwinia_relay_authorities_Instance0: pangolin_runtime::EthereumRelayAuthoritiesConfig {
+		darwinia_relay_authorities_Instance1: pangolin_runtime::EthereumRelayAuthoritiesConfig {
 			authorities: vec![(
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				array_bytes::hex2array_unchecked!(ETHEREUM_RELAY_AUTHORITY_SIGNER, 20).into(),
