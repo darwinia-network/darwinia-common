@@ -808,16 +808,12 @@ pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
-		darwinia_header_mmr::migration::try_runtime::pre_migrate::<Runtime>()?;
-
 		Ok(())
 	}
 
 	fn on_runtime_upgrade() -> Weight {
 		// --- substrate ---
 		use frame_support::migration;
-
-		darwinia_header_mmr::migration::migrate(b"HeaderMMR");
 
 		migration::move_pallet(b"DarwiniaPhragmenElection", b"PhragmenElection");
 
