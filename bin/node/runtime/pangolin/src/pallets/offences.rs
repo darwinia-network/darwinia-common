@@ -1,5 +1,4 @@
 // --- substrate ---
-use frame_support::weights::Weight;
 use pallet_offences::Config;
 use pallet_session::historical::IdentificationTuple;
 // --- darwinia ---
