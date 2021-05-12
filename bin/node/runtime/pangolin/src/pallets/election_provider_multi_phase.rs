@@ -24,6 +24,7 @@ frame_support::parameter_types! {
 		pallet_election_provider_multi_phase::FallbackStrategy::OnChain;
 
 	pub SolutionImprovementThreshold: Perbill = Perbill::from_rational(1u32, 10_000);
+	pub OffchainRepeat: BlockNumber = 5;
 
 	// miner configs
 	pub const StakingUnsignedPriority: TransactionPriority = TransactionPriority::max_value() / 2;
@@ -46,6 +47,7 @@ impl Config for Runtime {
 	type SignedPhase = SignedPhase;
 	type UnsignedPhase = UnsignedPhase;
 	type SolutionImprovementThreshold = SolutionImprovementThreshold;
+	type OffchainRepeat = OffchainRepeat;
 	type MinerMaxIterations = MinerMaxIterations;
 	type MinerMaxWeight = MinerMaxWeight;
 	type MinerMaxLength = MinerMaxLength;
