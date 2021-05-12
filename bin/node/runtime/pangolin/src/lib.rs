@@ -47,8 +47,8 @@ pub mod constants {
 	pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
 	// NOTE: Currently it is not possible to change the epoch duration after the chain has started.
 	//       Attempting to do so will brick block production.
-	pub const BLOCKS_PER_SESSION: BlockNumber = 3 * MINUTES;
-	pub const SESSIONS_PER_ERA: SessionIndex = 6;
+	pub const BLOCKS_PER_SESSION: BlockNumber = 10 * MINUTES;
+	pub const SESSIONS_PER_ERA: SessionIndex = 3;
 
 	// 1 in 4 blocks (on average, not counting collisions) will be primary babe blocks.
 	pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
@@ -293,7 +293,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("Pangolin"),
 	authoring_version: 1,
 	// crate version ~2.3.0 := >=2.3.0, <2.4.0
-	spec_version: 230,
+	spec_version: 2300,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -812,27 +812,29 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	}
 
 	fn on_runtime_upgrade() -> Weight {
-		// --- substrate ---
-		use frame_support::migration;
+		// // --- substrate ---
+		// use frame_support::migration;
 
-		migration::move_pallet(b"DarwiniaPhragmenElection", b"PhragmenElection");
+		// migration::move_pallet(b"DarwiniaPhragmenElection", b"PhragmenElection");
 
-		// https://github.com/paritytech/substrate/pull/8555
-		migration::move_pallet(b"Instance1Collective", b"Instance2Collective");
-		migration::move_pallet(b"Instance0Collective", b"Instance1Collective");
+		// // https://github.com/paritytech/substrate/pull/8555
+		// migration::move_pallet(b"Instance1Collective", b"Instance2Collective");
+		// migration::move_pallet(b"Instance0Collective", b"Instance1Collective");
 
-		migration::move_pallet(b"Instance0Membership", b"Instance1Membership");
+		// migration::move_pallet(b"Instance0Membership", b"Instance1Membership");
 
-		migration::move_pallet(
-			b"Instance0DarwiniaRelayerGame",
-			b"Instance1DarwiniaRelayerGame",
-		);
+		// migration::move_pallet(
+		// 	b"Instance0DarwiniaRelayerGame",
+		// 	b"Instance1DarwiniaRelayerGame",
+		// );
 
-		migration::move_pallet(
-			b"Instance0DarwiniaRelayAuthorities",
-			b"Instance1DarwiniaRelayAuthorities",
-		);
+		// migration::move_pallet(
+		// 	b"Instance0DarwiniaRelayAuthorities",
+		// 	b"Instance1DarwiniaRelayAuthorities",
+		// );
 
-		RuntimeBlockWeights::get().max_block
+		// RuntimeBlockWeights::get().max_block
+
+		0
 	}
 }
