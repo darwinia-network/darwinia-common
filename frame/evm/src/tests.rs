@@ -160,7 +160,6 @@ impl Config for Test {
 	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressRoot<Self::AccountId>;
-	type WithdrawOrigin = EnsureAddressTruncated;
 
 	type AddressMapping = ConcatAddressMapping;
 	type RingCurrency = Ring;
