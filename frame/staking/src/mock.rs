@@ -281,6 +281,7 @@ frame_support::construct_runtime! {
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
+		Authorship: pallet_authorship::{Pallet, Call, Storage, Inherent},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
