@@ -8,9 +8,9 @@ frame_support::parameter_types! {
 	pub const PhragmenElectionPalletId: LockIdentifier = *b"da/phrel";
 	pub const CandidacyBond: Balance = 1 * COIN;
 	// 1 storage item created, key size is 32 bytes, value size is 16+16.
-	pub const VotingBondBase: Balance = constants::deposit(1, 64);
+	pub const VotingBondBase: Balance = pangolin_constants::deposit(1, 64);
 	// additional data per vote is 32 bytes (account id).
-	pub const VotingBondFactor: Balance = constants::deposit(0, 32);
+	pub const VotingBondFactor: Balance = pangolin_constants::deposit(0, 32);
 	pub const DesiredMembers: u32 = 13;
 	pub const DesiredRunnersUp: u32 = 7;
 	/// Daily council elections.
