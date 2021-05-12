@@ -35,16 +35,16 @@ dvm-ethereum        = { path = "../../../frame/dvm" }
 dvm-rpc-core        = { path = "../../../frame/dvm/rpc" }
 dvm-rpc-runtime-api = { path = "../../../frame/dvm/rpc/runtime-api" }
 # substrate
-sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
-sc-network          = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
-sc-rpc              = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
-sc-service          = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
-sp-api              = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
-sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
-sp-io               = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
-sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
-sp-storage          = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
-sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
+sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sc-network          = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sc-rpc              = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sc-service          = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-api              = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-io               = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-storage          = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 
 [features]
 rpc_binary_search_estimate = []
