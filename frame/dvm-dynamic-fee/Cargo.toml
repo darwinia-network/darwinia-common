@@ -14,12 +14,12 @@ version     = "2.2.0"
 codec = { package = "parity-scale-codec", version = "2.0.1", default-features = false }
 serde = { version = "1.0.123", default-features = false, features = ["derive"], optional = true }
 
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
-sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
-sp-inherents  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "s2s-v1.0" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "s2s-v1.0" }
+sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "s2s-v1.0" }
+sp-inherents  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "s2s-v1.0" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "s2s-v1.0" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "s2s-v1.0" }
 
 [features]
 default = ["std"]

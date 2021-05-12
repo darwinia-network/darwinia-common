@@ -20,12 +20,12 @@ bp-messages = { default-features = false, git = "https://github.com/darwinia-net
 bp-runtime  = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
 
 # Substrate Based Dependencies
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
-sp-api        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
-sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "s2s-v1.0" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "s2s-v1.0" }
+sp-api        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "s2s-v1.0" }
+sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "s2s-v1.0" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "s2s-v1.0" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "s2s-v1.0" }
 
 
 [features]
