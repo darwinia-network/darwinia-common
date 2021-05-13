@@ -1,11 +1,12 @@
 // --- substrate ---
-use sp_runtime::{ModuleId, Percent, Permill};
+use frame_support::PalletId;
+use sp_runtime::{Percent, Permill};
 // --- darwinia ---
 use crate::*;
 use darwinia_treasury::{weights::SubstrateWeight, Config};
 
 frame_support::parameter_types! {
-	pub const TreasuryModuleId: ModuleId = ModuleId(*b"da/trsry");
+	pub const TreasuryPalletId: PalletId = PalletId(*b"da/trsry");
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub const RingProposalBondMinimum: Balance = 20 * COIN;
 	pub const KtonProposalBondMinimum: Balance = 20 * COIN;
@@ -21,14 +22,15 @@ frame_support::parameter_types! {
 	pub const MaximumReasonLength: u32 = 16384;
 	pub const BountyCuratorDeposit: Permill = Permill::from_percent(50);
 	pub const BountyValueMinimum: Balance = 2 * COIN;
+	pub const MaxApprovals: u32 = 100;
 }
 impl Config for Runtime {
-	type ModuleId = TreasuryModuleId;
+	type PalletId = TreasuryPalletId;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 	type ApproveOrigin = ApproveOrigin;
 	type RejectOrigin = EnsureRootOrMoreThanHalfCouncil;
-	type Tippers = ElectionsPhragmen;
+	type Tippers = PhragmenElection;
 	type TipCountdown = TipCountdown;
 	type TipFindersFee = TipFindersFee;
 	type TipReportDepositBase = TipReportDepositBase;
@@ -49,5 +51,6 @@ impl Config for Runtime {
 	type BountyValueMinimum = BountyValueMinimum;
 	type RingBurnDestination = ();
 	type KtonBurnDestination = ();
+	type MaxApprovals = MaxApprovals;
 	type WeightInfo = SubstrateWeight<Runtime>;
 }

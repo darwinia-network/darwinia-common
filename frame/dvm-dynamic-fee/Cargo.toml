@@ -7,12 +7,11 @@ license     = "GPL-3.0"
 name        = "dvm-dynamic-fee"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.2.0"
+version     = "2.3.0"
 
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "2.0.1", default-features = false }
-serde = { version = "1.0.123", default-features = false, features = ["derive"], optional = true }
 
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
@@ -25,7 +24,6 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 default = ["std"]
 std     = [
 	"codec/std",
-	"serde",
 	"frame-support/std",
 	"frame-system/std",
 	"sp-core/std",

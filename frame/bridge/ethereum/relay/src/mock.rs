@@ -74,19 +74,19 @@ impl darwinia_balances::Config<RingInstance> for Test {
 }
 
 pub struct UnusedTechnicalMembership;
-impl Contains<AccountId> for UnusedTechnicalMembership {
+impl SortedMembers<AccountId> for UnusedTechnicalMembership {
 	fn sorted_members() -> Vec<AccountId> {
 		vec![1, 2, 3]
 	}
 }
 frame_support::parameter_types! {
-	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
+	pub const EthereumRelayPalletId: PalletId = PalletId(*b"da/ethrl");
 	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Mainnet;
 	pub static BestConfirmedBlockNumber: EthereumBlockNumber = 0;
 	pub static ConfirmPeriod: BlockNumber = 0;
 }
 impl Config for Test {
-	type ModuleId = EthereumRelayModuleId;
+	type PalletId = EthereumRelayPalletId;
 	type Event = ();
 	type EthereumNetwork = EthereumNetwork;
 	type Call = Call;
@@ -109,7 +109,7 @@ frame_support::construct_runtime! {
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
 		System: frame_system::{Pallet, Call, Storage, Config},
-		Ring: darwinia_balances::<Instance0>::{Pallet, Call, Storage},
+		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage},
 		EthereumRelay: darwinia_ethereum_relay::{Pallet, Call, Storage, Config<T>},
 	}
 }

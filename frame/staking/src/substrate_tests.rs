@@ -538,7 +538,7 @@ fn no_candidate_emergency_condition() {
 			// set the minimum validator count.
 			<Staking as Store>::MinimumValidatorCount::put(10);
 
-			let _ = Staking::chill(Origin::signed(10));
+			assert_ok!(Staking::chill(Origin::signed(10)));
 
 			// trigger era
 			start_active_era(1);
@@ -2471,7 +2471,7 @@ fn reward_from_authorship_event_handler_works() {
 	ExtBuilder::default().build_and_execute(|| {
 		use pallet_authorship::EventHandler;
 
-		assert_eq!(<pallet_authorship::Module<Test>>::author(), 11);
+		assert_eq!(<pallet_authorship::Pallet<Test>>::author(), 11);
 
 		Staking::note_author(11);
 		Staking::note_uncle(21, 1);
@@ -4107,7 +4107,7 @@ fn offences_weight_calculated_correctly() {
 		let zero_offence_weight = <Test as frame_system::Config>::DbWeight::get().reads_writes(4, 1);
 		assert_eq!(
 			Staking::on_offence(&[], &[Perbill::from_percent(50)], 0),
-			Ok(zero_offence_weight)
+			zero_offence_weight
 		);
 
 		// On Offence with N offenders, Unapplied: 4 Reads, 1 Write + 4 Reads, 5 Writes
@@ -4131,7 +4131,7 @@ fn offences_weight_calculated_correctly() {
 			.collect();
 		assert_eq!(
 			Staking::on_offence(&offenders, &[Perbill::from_percent(50)], 0),
-			Ok(n_offence_unapplied_weight)
+			n_offence_unapplied_weight
 		);
 
 		// On Offence with one offenders, Applied
@@ -4156,7 +4156,7 @@ fn offences_weight_calculated_correctly() {
 
 		assert_eq!(
 			Staking::on_offence(&one_offender, &[Perbill::from_percent(50)], 0),
-			Ok(one_offence_unapplied_weight)
+			one_offence_unapplied_weight
 		);
 	});
 }

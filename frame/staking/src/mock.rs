@@ -227,7 +227,7 @@ impl onchain::Config for Test {
 }
 
 parameter_types! {
-	pub const StakingModuleId: ModuleId = ModuleId(*b"da/staki");
+	pub const StakingPalletId: PalletId = PalletId(*b"da/staki");
 	pub const BondingDurationInEra: EraIndex = 3;
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
 	pub const Cap: Balance = CAP;
@@ -242,7 +242,7 @@ parameter_types! {
 impl Config for Test {
 	const MAX_NOMINATIONS: u32 = 16;
 	type Event = Event;
-	type ModuleId = StakingModuleId;
+	type PalletId = StakingPalletId;
 	type UnixTime = SuppressUnixTimeWarning;
 	type SessionsPerEra = SessionsPerEra;
 	type BondingDurationInEra = BondingDurationInEra;
@@ -281,9 +281,10 @@ frame_support::construct_runtime! {
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
+		Authorship: pallet_authorship::{Pallet, Call, Storage, Inherent},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		Ring: darwinia_balances::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Kton: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Staking: darwinia_staking::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
 	}
@@ -839,7 +840,7 @@ pub(crate) fn on_offence_in_era(
 	let bonded_eras = BondedEras::get();
 	for &(bonded_era, start_session) in bonded_eras.iter() {
 		if bonded_era == era {
-			let _ = Staking::on_offence(offenders, slash_fraction, start_session).unwrap();
+			let _ = Staking::on_offence(offenders, slash_fraction, start_session);
 			return;
 		} else if bonded_era > era {
 			break;
@@ -851,8 +852,7 @@ pub(crate) fn on_offence_in_era(
 			offenders,
 			slash_fraction,
 			Staking::eras_start_session_index(era).unwrap(),
-		)
-		.unwrap();
+		);
 	} else {
 		panic!("cannot slash in era {}", era);
 	}

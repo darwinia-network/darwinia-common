@@ -45,11 +45,12 @@ use frame_support::{
 	ensure, parameter_types,
 	traits::{Currency, ExistenceRequirement::*, Get},
 	weights::Weight,
+	PalletId,
 };
 use frame_system::{ensure_root, ensure_signed};
 use sp_runtime::{
 	traits::{AccountIdConversion, Saturating},
-	AccountId32, DispatchError, DispatchResult, ModuleId, SaturatedConversion,
+	AccountId32, DispatchError, DispatchResult, SaturatedConversion,
 };
 use sp_std::vec::Vec;
 // --- darwinia ---
@@ -69,7 +70,7 @@ use types::*;
 pub trait Config: dvm_ethereum::Config {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
-	type ModuleId: Get<ModuleId>;
+	type PalletId: Get<PalletId>;
 
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
@@ -115,14 +116,14 @@ decl_event! {
 		AccountId = AccountId<T>,
 	{
 		/// register new erc20 token
-		RegisterErc20(AccountId, EthereumAddress),
+		RegisterErc20(AccountId, EthereumAddress, EthereumTransactionIndex),
 		/// redeem erc20 token
-		RedeemErc20(AccountId, EthereumAddress),
+		RedeemErc20(AccountId, EthereumAddress, EthereumTransactionIndex),
 		/// erc20 created
 		CreateErc20(EthereumAddress),
 		/// burn event
-		/// type: 1, backing, recipient, source, target, value
-		BurnToken(u8, EthereumAddress, EthereumAddress, EthereumAddress, EthereumAddress, U256),
+		/// type: 1, backing, sender, recipient, source, target, value
+		BurnToken(u8, EthereumAddress, EthereumAddress, EthereumAddress, EthereumAddress, EthereumAddress, U256),
 		/// token registered event
 		/// type: u8 = 0, backing, source(origin erc20), target(mapped erc20)
 		TokenRegistered(u8, EthereumAddress, EthereumAddress, EthereumAddress),
@@ -163,7 +164,7 @@ decl_module! {
 			let input = Self::abi_encode_token_creation(backing_address, ethlog)?;
 			Self::transact_mapping_factory(input)?;
 			VerifiedIssuingProof::insert(tx_index, true);
-			Self::deposit_event(RawEvent::RegisterErc20(user, backing_address));
+			Self::deposit_event(RawEvent::RegisterErc20(user, backing_address, tx_index));
 		}
 
 		#[weight = <T as darwinia_evm::Config>::GasWeightMapping::gas_to_weight(0x100000)]
@@ -177,7 +178,7 @@ decl_module! {
 			let input = Self::abi_encode_token_redeem(ethlog)?;
 			Self::transact_mapping_factory(input)?;
 			VerifiedIssuingProof::insert(tx_index, true);
-			Self::deposit_event(RawEvent::RedeemErc20(user, backing_address));
+			Self::deposit_event(RawEvent::RedeemErc20(user, backing_address, tx_index));
 		}
 	}
 }
@@ -185,7 +186,7 @@ decl_module! {
 impl<T: Config> Module<T> {
 	/// The account ID of the issuing pot.
 	pub fn dvm_account_id() -> H160 {
-		let account32: AccountId32 = T::ModuleId::get().into_account();
+		let account32: AccountId32 = T::PalletId::get().into_account();
 		let account20: &[u8] = &account32.as_ref();
 		H160::from_slice(&account20[..20])
 	}
@@ -236,27 +237,29 @@ impl<T: Config> Module<T> {
 
 	fn abi_encode_token_redeem(result: EthLog) -> Result<Vec<u8>, DispatchError> {
 		log::debug!("abi_encode_token_redeem");
-		let token_address = result.params[0]
+		// parse the following ethereum backing lock event
+		// BackingLock(address indexed sender, address source, address target, uint256 amount, address receiver, uint256 fee)
+		// @sender & @source are not used here
+		// @target(params[2]): the mapped token address
+		// @amount(params[3]): the token amount [wei]
+		// @receiver(params[4]): the dvm receiver address
+		// @fee(params[5]): the fee for this cross transfer
+		let dtoken_address = result.params[2]
 			.value
 			.clone()
 			.into_address()
 			.ok_or(<Error<T>>::AddressCF)?;
-		let dtoken_address = result.params[1]
-			.value
-			.clone()
-			.into_address()
-			.ok_or(<Error<T>>::AddressCF)?;
-		let amount = result.params[2]
+		let amount = result.params[3]
 			.value
 			.clone()
 			.into_uint()
 			.ok_or(<Error<T>>::UintCF)?;
-		let recipient = result.params[3]
+		let recipient = result.params[4]
 			.value
 			.clone()
 			.into_address()
 			.ok_or(<Error<T>>::AddressCF)?;
-		let fee = result.params[4]
+		let fee = result.params[5]
 			.value
 			.clone()
 			.into_uint()
@@ -303,6 +306,7 @@ impl<T: Config> Module<T> {
 
 	pub fn deposit_burn_token_event(
 		backing: EthereumAddress,
+		sender: EthereumAddress,
 		source: EthereumAddress,
 		recipient: EthereumAddress,
 		amount: U256,
@@ -312,7 +316,15 @@ impl<T: Config> Module<T> {
 			e
 		})?;
 
-		let raw_event = RawEvent::BurnToken(1, backing, recipient, source, mapped_address, amount);
+		let raw_event = RawEvent::BurnToken(
+			1,
+			backing,
+			sender,
+			recipient,
+			source,
+			mapped_address,
+			amount,
+		);
 		let module_event: <T as Config>::Event = raw_event.clone().into();
 		let system_event: <T as frame_system::Config>::Event = module_event.into();
 		<BurnTokenEvents<T>>::append(system_event);
@@ -384,6 +396,7 @@ impl<T: Config> IssuingHandler for Module<T> {
 				TokenBurnInfo::decode(input).map_err(|_| Error::<T>::InvalidInputData)?;
 			Self::deposit_burn_token_event(
 				burn_info.backing,
+				burn_info.sender,
 				burn_info.source,
 				burn_info.recipient,
 				U256(burn_info.amount.0),

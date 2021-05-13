@@ -7,12 +7,11 @@ license     = "GPL-3.0"
 name        = "darwinia-tron-backing"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.2.0"
+version     = "2.3.0"
 
 [dependencies]
 # crates
 codec = { package = "parity-scale-codec", version = "2.0.1", default-features = false }
-serde = { version = "1.0.125", optional = true }
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
@@ -28,7 +27,6 @@ std = [
 
 crates-std    = [
 	"codec/std",
-	"serde/std",
 ]
 substrate-std = [
 	"frame-support/std",

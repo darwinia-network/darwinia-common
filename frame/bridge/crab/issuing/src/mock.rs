@@ -21,10 +21,9 @@
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
-use frame_support::traits::GenesisBuild;
+use frame_support::{traits::GenesisBuild, PalletId};
 use frame_system::mocking::*;
 use sp_io::TestExternalities;
-use sp_runtime::ModuleId;
 use sp_runtime::{
 	testing::{Header, H256},
 	traits::{BlakeTwo256, IdentityLookup},
@@ -38,8 +37,6 @@ pub type Block = MockBlock<Test>;
 pub type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 pub type AccountId = u64;
 pub type Balance = u128;
-// Pallet primitives
-pub type CrabIssuingError = Error<Test>;
 
 darwinia_support::impl_test_account_data! {}
 
@@ -85,13 +82,12 @@ impl darwinia_balances::Config<RingInstance> for Test {
 }
 
 frame_support::parameter_types! {
-	pub const CrabIssuingModuleId: ModuleId = ModuleId(*b"da/crabi");
+	pub const CrabIssuingPalletId: PalletId = PalletId(*b"da/crabi");
 }
 impl Config for Test {
-	type Event = Event;
-	type ModuleId = CrabIssuingModuleId;
-	type RingCurrency = Ring;
 	type WeightInfo = ();
+	type PalletId = CrabIssuingPalletId;
+	type RingCurrency = Ring;
 }
 
 frame_support::construct_runtime! {
@@ -102,8 +98,8 @@ frame_support::construct_runtime! {
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
-		Ring: darwinia_balances::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>},
-		DarwiniaCrabIssuing: darwinia_crab_issuing::{Pallet, Call, Storage, Config, Event<T>},
+		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		CrabIssuing: darwinia_crab_issuing::{Pallet, Call, Storage, Config},
 	}
 }
 
@@ -129,22 +125,4 @@ pub fn new_test_ext() -> TestExternalities {
 	.unwrap();
 
 	t.into()
-}
-
-pub fn events() -> Vec<Event> {
-	let events = System::events()
-		.into_iter()
-		.map(|evt| evt.event)
-		.collect::<Vec<_>>();
-
-	System::reset_events();
-
-	events
-}
-
-pub fn crab_issuing_events() -> Vec<Event> {
-	events()
-		.into_iter()
-		.filter(|e| matches!(e, Event::darwinia_crab_issuing(_)))
-		.collect()
 }

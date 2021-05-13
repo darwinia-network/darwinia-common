@@ -22,43 +22,6 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
-pub mod constants {
-	// --- substrate ---
-	use sp_staking::SessionIndex;
-	// --- darwinia ---
-	use crate::*;
-
-	pub const NANO: Balance = 1;
-	pub const MICRO: Balance = 1_000 * NANO;
-	pub const MILLI: Balance = 1_000 * MICRO;
-	pub const COIN: Balance = 1_000 * MILLI;
-
-	pub const CAP: Balance = 10_000_000_000 * COIN;
-	pub const TOTAL_POWER: Power = 1_000_000_000;
-
-	// Time is measured by number of blocks.
-	pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
-	pub const HOURS: BlockNumber = 60 * MINUTES;
-	pub const DAYS: BlockNumber = 24 * HOURS;
-
-	pub const MILLISECS_PER_BLOCK: Moment = 6000;
-	// NOTE: Currently it is not possible to change the slot duration after the chain has started.
-	//       Attempting to do so will brick block production.
-	pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
-	// NOTE: Currently it is not possible to change the epoch duration after the chain has started.
-	//       Attempting to do so will brick block production.
-	pub const BLOCKS_PER_SESSION: BlockNumber = 3 * MINUTES;
-	pub const SESSIONS_PER_ERA: SessionIndex = 6;
-
-	// 1 in 4 blocks (on average, not counting collisions) will be primary babe blocks.
-	pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
-
-	pub const fn deposit(items: u32, bytes: u32) -> Balance {
-		items as Balance * 20 * COIN + (bytes as Balance) * 100 * MICRO
-	}
-}
-pub use constants::*;
-
 pub mod pallets;
 pub use pallets::*;
 pub mod bridge;
@@ -147,25 +110,31 @@ pub mod impls {
 		}
 	}
 
-	pub struct Author;
-	impl OnUnbalanced<NegativeImbalance> for Author {
-		fn on_nonzero_unbalanced(amount: NegativeImbalance) {
+	pub struct ToAuthor;
+	impl OnUnbalanced<RingNegativeImbalance> for ToAuthor {
+		fn on_nonzero_unbalanced(amount: RingNegativeImbalance) {
+			let numeric_amount = amount.peek();
+			let author = Authorship::author();
 			Ring::resolve_creating(&Authorship::author(), amount);
+			System::deposit_event(<darwinia_balances::Event<Runtime, RingInstance>>::Deposit(
+				author,
+				numeric_amount,
+			));
 		}
 	}
 
 	pub struct DealWithFees;
-	impl OnUnbalanced<NegativeImbalance> for DealWithFees {
-		fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance>) {
+	impl OnUnbalanced<RingNegativeImbalance> for DealWithFees {
+		fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = RingNegativeImbalance>) {
 			if let Some(fees) = fees_then_tips.next() {
 				// for fees, 80% to treasury, 20% to author
 				let mut split = fees.ration(80, 20);
 				if let Some(tips) = fees_then_tips.next() {
-					// for tips, if any, 80% to treasury, 20% to author (though this can be anything)
-					tips.ration_merge_into(80, 20, &mut split);
+					// for tips, if any, 100% to author
+					tips.merge_into(&mut split.1);
 				}
 				Treasury::on_unbalanced(split.0);
-				Author::on_unbalanced(split.1);
+				ToAuthor::on_unbalanced(split.1);
 			}
 		}
 	}
@@ -229,7 +198,7 @@ pub use darwinia_staking::StakerStatus;
 use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
-	traits::{KeyOwnerProofSystem, OnRuntimeUpgrade, Randomness},
+	traits::{KeyOwnerProofSystem, OnRuntimeUpgrade},
 	weights::{constants::ExtrinsicBaseWeight, Weight},
 };
 use pallet_grandpa::{
@@ -242,7 +211,7 @@ use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::{AllowedSlots, BabeEpochConfiguration};
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
 use sp_runtime::{
-	generic,
+	create_runtime_str, generic,
 	traits::{Block as BlockT, NumberFor, SaturatedConversion, StaticLookup},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiAddress, OpaqueExtrinsic, Perbill, RuntimeDebug,
@@ -295,11 +264,11 @@ type Ring = Balances;
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: sp_runtime::create_runtime_str!("Pangolin"),
-	impl_name: sp_runtime::create_runtime_str!("Pangolin"),
+	spec_name: create_runtime_str!("Pangolin"),
+	impl_name: create_runtime_str!("Pangolin"),
 	authoring_version: 1,
-	// crate version ~2.2.0 := >=2.2.0, <2.3.0
-	spec_version: 221,
+	// crate version ~2.3.0 := >=2.3.0, <2.4.0
+	spec_version: 2300,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -335,8 +304,8 @@ frame_support::construct_runtime! {
 		Babe: pallet_babe::{Pallet, Call, Storage, Config, ValidateUnsigned} = 2,
 
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 3,
-		Balances: darwinia_balances::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>} = 4,
-		Kton: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>} = 5,
+		Balances: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>} = 4,
+		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>} = 5,
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 6,
 
 		// Consensus support.
@@ -353,10 +322,10 @@ frame_support::construct_runtime! {
 
 		// Governance stuff; uncallable initially.
 		Democracy: darwinia_democracy::{Pallet, Call, Storage, Config, Event<T>} = 17,
-		Council: pallet_collective::<Instance0>::{Pallet, Call, Storage, Origin<T>, Config<T>, Event<T>} = 18,
-		TechnicalCommittee: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Config<T>, Event<T>} = 19,
-		ElectionsPhragmen: darwinia_elections_phragmen::{Pallet, Call, Storage, Config<T>, Event<T>} = 20,
-		TechnicalMembership: pallet_membership::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>} = 21,
+		Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Config<T>, Event<T>} = 18,
+		TechnicalCommittee: pallet_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Config<T>, Event<T>} = 19,
+		PhragmenElection: darwinia_elections_phragmen::{Pallet, Call, Storage, Config<T>, Event<T>} = 20,
+		TechnicalMembership: pallet_membership::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>} = 21,
 		Treasury: darwinia_treasury::{Pallet, Call, Storage, Event<T>} = 22,
 
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 23,
@@ -388,16 +357,16 @@ frame_support::construct_runtime! {
 		// Multisig module. Late addition.
 		Multisig: pallet_multisig::{Pallet, Call, Storage, Event<T>} = 32,
 
-		DarwiniaCrabIssuing: darwinia_crab_issuing::{Pallet, Call, Storage, Config, Event<T>} = 33,
-		DarwiniaCrabBacking: darwinia_crab_backing::{Pallet, Storage, Config<T>} = 34,
+		CrabIssuing: darwinia_crab_issuing::{Pallet, Call, Storage, Config} = 33,
+		CrabBacking: darwinia_crab_backing::{Pallet, Storage, Config<T>} = 34,
 
 		EthereumRelay: darwinia_ethereum_relay::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
 		EthereumBacking: darwinia_ethereum_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 36,
 		EthereumIssuing: darwinia_ethereum_issuing::{Pallet, Call, Storage, Config, Event<T>} = 42,
-		EthereumRelayerGame: darwinia_relayer_game::<Instance0>::{Pallet, Storage} = 37,
-		EthereumRelayAuthorities: darwinia_relay_authorities::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>} = 38,
+		EthereumRelayerGame: darwinia_relayer_game::<Instance1>::{Pallet, Storage} = 37,
+		EthereumRelayAuthorities: darwinia_relay_authorities::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>} = 38,
 
-		TronBacking: darwinia_tron_backing::{Pallet, Storage, Config<T>} = 39,
+		TronBacking: darwinia_tron_backing::{Pallet, Config<T>} = 39,
 
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 40,
 		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 41,
@@ -455,12 +424,10 @@ where
 		Some((call, (address, signature, extra)))
 	}
 }
-
 impl frame_system::offchain::SigningTypes for Runtime {
 	type Public = <Signature as sp_runtime::traits::Verify>::Signer;
 	type Signature = Signature;
 }
-
 impl<C> frame_system::offchain::SendTransactionTypes<C> for Runtime
 where
 	Call: From<C>,
@@ -512,9 +479,6 @@ impl_runtime_apis! {
 			data.check_extrinsics(&block)
 		}
 
-		fn random_seed() -> <Block as BlockT>::Hash {
-			pallet_babe::RandomnessFromOneEpochAgo::<Runtime>::random_seed().0
-		}
 	}
 
 	impl sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block> for Runtime {
@@ -799,8 +763,6 @@ impl_runtime_apis! {
 	}
 
 
-
-
 	impl bp_millau::MillauFinalityApi<Block> for Runtime {
 		fn best_finalized() -> (bp_millau::BlockNumber, bp_millau::Hash) {
 			let header = BridgeMillauGrandpa::best_finalized();
@@ -862,7 +824,6 @@ impl_runtime_apis! {
 		}
 	}
 
-
 }
 
 pub struct TransactionConverter;
@@ -888,13 +849,33 @@ pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
-		darwinia_balances::migration::try_runtime::pre_migrate()
+		Ok(())
 	}
 
 	fn on_runtime_upgrade() -> Weight {
-		darwinia_balances::migration::migrate(b"Instance0DarwiniaBalances", b"Balances");
-		darwinia_balances::migration::migrate(b"Instance1DarwiniaBalances", b"Kton");
+		// // --- substrate ---
+		// use frame_support::migration;
 
-		RuntimeBlockWeights::get().max_block
+		// migration::move_pallet(b"DarwiniaPhragmenElection", b"PhragmenElection");
+
+		// // https://github.com/paritytech/substrate/pull/8555
+		// migration::move_pallet(b"Instance1Collective", b"Instance2Collective");
+		// migration::move_pallet(b"Instance0Collective", b"Instance1Collective");
+
+		// migration::move_pallet(b"Instance0Membership", b"Instance1Membership");
+
+		// migration::move_pallet(
+		// 	b"Instance0DarwiniaRelayerGame",
+		// 	b"Instance1DarwiniaRelayerGame",
+		// );
+
+		// migration::move_pallet(
+		// 	b"Instance0DarwiniaRelayAuthorities",
+		// 	b"Instance1DarwiniaRelayAuthorities",
+		// );
+
+		// RuntimeBlockWeights::get().max_block
+
+		0
 	}
 }

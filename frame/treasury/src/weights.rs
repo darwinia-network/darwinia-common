@@ -30,7 +30,7 @@ use sp_std::marker::PhantomData;
 pub trait WeightInfo {
 	fn propose_spend() -> Weight;
 	fn reject_proposal() -> Weight;
-	fn approve_proposal() -> Weight;
+	fn approve_proposal(p: u32) -> Weight;
 	fn report_awesome(r: u32) -> Weight;
 	fn retract_tip() -> Weight;
 	fn tip_new(r: u32, t: u32) -> Weight;
@@ -63,8 +63,10 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
-	fn approve_proposal() -> Weight {
+	fn approve_proposal(p: u32) -> Weight {
 		(13_622_000 as Weight)
+			// Standard Error: 1_000
+			.saturating_add((94_000 as Weight).saturating_mul(p as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -179,8 +181,10 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
 	}
-	fn approve_proposal() -> Weight {
+	fn approve_proposal(p: u32) -> Weight {
 		(13_622_000 as Weight)
+			// Standard Error: 1_000
+			.saturating_add((94_000 as Weight).saturating_mul(p as Weight))
 			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}

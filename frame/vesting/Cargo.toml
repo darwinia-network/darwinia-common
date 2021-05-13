@@ -7,13 +7,11 @@ license     = "GPL-3.0"
 name        = "darwinia-vesting"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.2.0"
+version     = "2.3.0"
 
 [dependencies]
 # crates
-codec      = { package = "parity-scale-codec", version = "2.0.1", default-features = false, features = ["derive"] }
-enumflags2 = { version = "0.6.2" }
-serde      = { version = "1.0.125", optional = true }
+codec = { package = "parity-scale-codec", version = "2.0.1", default-features = false, features = ["derive"] }
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
@@ -24,7 +22,7 @@ darwinia-support = { default-features = false, path = "../support" }
 
 [dev-dependencies]
 # crates
-hex-literal = "0.3.1"
+hex-literal = { version = "0.3.1" }
 # substrate
 sp-core    = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 sp-io      = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
@@ -43,7 +41,6 @@ std = [
 
 crates-std    = [
 	"codec/std",
-	"serde",
 ]
 darwinia-std  = ["darwinia-support/std"]
 substrate-std = [

@@ -1,6 +1,6 @@
 // --- substrate ---
 use frame_support::traits::ChangeMembers;
-use pallet_membership::{Config, Instance0};
+use pallet_membership::{weights::SubstrateWeight, Config, Instance1};
 // --- darwinia ---
 use crate::*;
 
@@ -15,7 +15,7 @@ impl ChangeMembers<AccountId> for MembershipChangedGroup {
 		EthereumRelay::change_members_sorted(incoming, outgoing, sorted_new);
 	}
 }
-impl Config<Instance0> for Runtime {
+impl Config<Instance1> for Runtime {
 	type Event = Event;
 	type AddOrigin = EnsureRootOrMoreThanHalfCouncil;
 	type RemoveOrigin = EnsureRootOrMoreThanHalfCouncil;
@@ -24,4 +24,6 @@ impl Config<Instance0> for Runtime {
 	type PrimeOrigin = EnsureRootOrMoreThanHalfCouncil;
 	type MembershipInitialized = TechnicalCommittee;
 	type MembershipChanged = MembershipChangedGroup;
+	type MaxMembers = TechnicalMaxMembers;
+	type WeightInfo = SubstrateWeight<Runtime>;
 }

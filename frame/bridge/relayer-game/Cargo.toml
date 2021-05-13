@@ -7,13 +7,12 @@ license     = "GPL-3.0"
 name        = "darwinia-relayer-game"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.2.0"
+version     = "2.3.0"
 
 [dependencies]
 # crates
 codec = { package = "parity-scale-codec", version = "2.0.1", default-features = false }
 log   = { version = "0.4.14" }
-serde = { version = "1.0.125", optional = true }
 # darwinia
 darwinia-relay-primitives = { default-features = false, path = "../../../primitives/relay" }
 darwinia-support          = { default-features = false, path = "../../support" }
@@ -26,6 +25,7 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 [dev-dependencies]
 # crates
 env_logger = { version = "0.8.3" }
+serde      = { version = "1.0.125" }
 # darwinia
 darwinia-balances = { path = "../../balances" }
 # substrate
@@ -43,7 +43,6 @@ std = [
 
 crates-std    = [
 	"codec/std",
-	"serde",
 ]
 darwinia-std  = [
 	"darwinia-relay-primitives/std",

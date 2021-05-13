@@ -32,6 +32,7 @@ use std::{
 // --- crates.io ---
 use futures::StreamExt;
 // --- substrate ---
+use sc_authority_discovery::WorkerConfig;
 use sc_basic_authorship::ProposerFactory;
 use sc_cli::SubstrateCli;
 use sc_client_api::{BlockchainEvents, ExecutorProvider, RemoteBackend, StateBackendFor};
@@ -58,8 +59,7 @@ use sp_api::ConstructRuntimeApi;
 use sp_consensus::{
 	import_queue::BasicQueue, CanAuthorWithNativeVersion, DefaultImportQueue, NeverCanAuthor,
 };
-use sp_inherents::InherentDataProviders;
-use sp_runtime::traits::BlakeTwo256;
+use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 use sp_trie::PrefixedMemoryDB;
 use substrate_prometheus_endpoint::Registry;
 // --- darwinia ---
@@ -242,7 +242,6 @@ where
 
 	set_prometheus_registry(config)?;
 
-	let inherent_data_providers = InherentDataProviders::new();
 	let telemetry = config
 		.telemetry_endpoints
 		.clone()
@@ -287,13 +286,25 @@ where
 		grandpa_block_import,
 		client.clone(),
 	)?;
+	let slot_duration = babe_link.config().slot_duration();
 	let import_queue = sc_consensus_babe::import_queue(
 		babe_link.clone(),
 		babe_import.clone(),
 		Some(Box::new(justification_import)),
 		client.clone(),
 		select_chain.clone(),
-		inherent_data_providers.clone(),
+		move |_, ()| async move {
+			let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
+			let slot =
+				sp_consensus_babe::inherents::InherentDataProvider::from_timestamp_and_duration(
+					*timestamp,
+					slot_duration,
+				);
+			let uncles =
+				sp_authorship::InherentDataProvider::<<Block as BlockT>::Header>::check_inherents();
+
+			Ok((timestamp, slot, uncles))
+		},
 		&task_manager.spawn_essential_handle(),
 		config.prometheus_registry(),
 		CanAuthorWithNativeVersion::new(client.executor().clone()),
@@ -361,7 +372,6 @@ where
 		select_chain,
 		import_queue,
 		transaction_pool,
-		inherent_data_providers,
 		other: (
 			rpc_extensions_builder,
 			import_setup,
@@ -415,7 +425,6 @@ where
 		select_chain,
 		import_queue,
 		transaction_pool,
-		inherent_data_providers,
 		other:
 			(
 				rpc_extensions_builder,
@@ -442,6 +451,7 @@ where
 
 	let prometheus_registry = config.prometheus_registry().cloned();
 	let shared_voter_state = rpc_setup;
+	let auth_disc_publish_non_global_ips = config.network.allow_non_globals_in_dht;
 
 	config
 		.network
@@ -513,6 +523,8 @@ where
 
 	if role.is_authority() {
 		let can_author_with = CanAuthorWithNativeVersion::new(client.executor().clone());
+		let client_clone = client.clone();
+		let slot_duration = babe_link.config().slot_duration();
 		let proposer = ProposerFactory::new(
 			task_manager.spawn_handle(),
 			client.clone(),
@@ -527,7 +539,23 @@ where
 			block_import,
 			env: proposer,
 			sync_oracle: network.clone(),
-			inherent_data_providers: inherent_data_providers.clone(),
+			create_inherent_data_providers: move |parent, ()| {
+				let client_clone = client_clone.clone();
+				async move {
+					let uncles = sc_consensus_uncles::create_uncles_inherent_data_provider(
+						&*client_clone,
+						parent,
+					)?;
+					let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
+					let slot =
+						sp_consensus_babe::inherents::InherentDataProvider::from_timestamp_and_duration(
+							*timestamp,
+							slot_duration,
+						);
+
+					Ok((timestamp, slot, uncles))
+				}
+			},
 			force_authoring,
 			backoff_authoring_blocks,
 			babe_link,
@@ -590,13 +618,18 @@ where
 						_ => None,
 					}
 				});
-		let (authority_discovery_worker, _service) = sc_authority_discovery::new_worker_and_service(
-			client.clone(),
-			network,
-			Box::pin(dht_event_stream),
-			authority_discovery_role,
-			prometheus_registry,
-		);
+		let (authority_discovery_worker, _service) =
+			sc_authority_discovery::new_worker_and_service_with_config(
+				WorkerConfig {
+					publish_non_global_ips: auth_disc_publish_non_global_ips,
+					..Default::default()
+				},
+				client.clone(),
+				network,
+				Box::pin(dht_event_stream),
+				authority_discovery_role,
+				prometheus_registry,
+			);
 
 		task_manager.spawn_handle().spawn(
 			"authority-discovery-worker",
@@ -708,7 +741,7 @@ where
 		grandpa_block_import,
 		client.clone(),
 	)?;
-	let inherent_data_providers = InherentDataProviders::new();
+	let slot_duration = babe_link.config().slot_duration();
 	// FIXME: pruning task isn't started since light client doesn't do `AuthoritySetup`.
 	let import_queue = sc_consensus_babe::import_queue(
 		babe_link,
@@ -716,7 +749,18 @@ where
 		Some(Box::new(justification_import)),
 		client.clone(),
 		select_chain.clone(),
-		inherent_data_providers.clone(),
+		move |_, ()| async move {
+			let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
+			let slot =
+				sp_consensus_babe::inherents::InherentDataProvider::from_timestamp_and_duration(
+					*timestamp,
+					slot_duration,
+				);
+			let uncles =
+				sp_authorship::InherentDataProvider::<<Block as BlockT>::Header>::check_inherents();
+
+			Ok((timestamp, slot, uncles))
+		},
 		&task_manager.spawn_essential_handle(),
 		config.prometheus_registry(),
 		NeverCanAuthor,

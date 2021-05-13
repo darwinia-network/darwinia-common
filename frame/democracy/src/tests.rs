@@ -5,7 +5,7 @@ use codec::Encode;
 // --- substrate ---
 use frame_support::{
 	assert_noop, assert_ok, ord_parameter_types,
-	traits::{Contains, Filter, GenesisBuild, OnInitialize},
+	traits::{Filter, GenesisBuild, OnInitialize, SortedMembers},
 	weights::Weight,
 };
 use frame_system::{mocking::*, EnsureRoot, EnsureSignedBy};
@@ -111,6 +111,7 @@ impl pallet_scheduler::Config for Test {
 }
 frame_support::parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;
+	pub const MaxLocks: u32 = 10;
 }
 impl darwinia_balances::Config<RingInstance> for Test {
 	type Balance = Balance;
@@ -119,7 +120,7 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
-	type MaxLocks = ();
+	type MaxLocks = MaxLocks;
 	type OtherCurrencies = ();
 	type WeightInfo = ();
 }
@@ -144,7 +145,7 @@ ord_parameter_types! {
 	pub const Six: u64 = 6;
 }
 pub struct OneToFive;
-impl Contains<u64> for OneToFive {
+impl SortedMembers<u64> for OneToFive {
 	fn sorted_members() -> Vec<u64> {
 		vec![1, 2, 3, 4, 5]
 	}
@@ -189,7 +190,7 @@ frame_support::construct_runtime! {
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Balances: darwinia_balances::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Balances: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Config, Event<T>},
 		Democracy: darwinia_democracy::{Pallet, Call, Storage, Config, Event<T>},
 	}

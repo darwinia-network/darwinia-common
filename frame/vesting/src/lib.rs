@@ -515,7 +515,7 @@ mod tests {
 			UncheckedExtrinsic = UncheckedExtrinsic,
 		{
 			System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
-			Ring: darwinia_balances::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>},
+			Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
 			Vesting: darwinia_vesting::{Pallet, Call, Storage, Event<T>, Config<T>},
 		}
 	}

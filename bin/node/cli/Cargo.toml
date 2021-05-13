@@ -8,7 +8,7 @@ license     = "GPL-3.0"
 name        = "drml"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.2.0"
+version     = "2.3.0"
 
 # TODO: Consider rename this repo to darwinia-runtime-module-library
 [[bin]]
@@ -61,6 +61,7 @@ sc-consensus-babe                          = { git = "https://github.com/darwini
 sc-consensus-babe-rpc                      = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 sc-consensus-epochs                        = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 sc-consensus-slots                         = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sc-consensus-uncles                        = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 sc-executor                                = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 sc-finality-grandpa                        = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 sc-finality-grandpa-rpc                    = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
@@ -74,27 +75,28 @@ sc-telemetry                               = { git = "https://github.com/darwini
 sc-transaction-pool                        = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 sp-api                                     = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 sp-authority-discovery                     = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-authorship                              = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 sp-block-builder                           = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 sp-blockchain                              = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 sp-consensus                               = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 sp-consensus-babe                          = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 sp-core                                    = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 sp-finality-grandpa                        = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
-sp-inherents                               = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 sp-keystore                                = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 sp-offchain                                = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 sp-runtime                                 = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 sp-session                                 = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-timestamp                               = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 sp-transaction-pool                        = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 sp-trie                                    = { features = ["memory-tracker"], git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 substrate-frame-rpc-system                 = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 substrate-prometheus-endpoint              = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
-# try-runtime-cli                            = { optional = true, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+try-runtime-cli                            = { optional = true, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 
 [build-dependencies]
 # substrate
 substrate-build-script-utils = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
-# try-runtime-cli              = { optional = true, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+try-runtime-cli              = { optional = true, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 
 [features]
 default = [
@@ -116,7 +118,7 @@ full-node = []
 wasmtime  = ["sc-cli/wasmtime"]
 # Enable features that allow the runtime to be tried and debugged. Name might be subject to change
 # in the near future.
-# try-runtime = [
-# 	"pangolin-runtime/try-runtime",
-# 	"try-runtime-cli",
-# ]
+#try-runtime = [
+#	"pangolin-runtime/try-runtime",
+#	"try-runtime-cli",
+#]

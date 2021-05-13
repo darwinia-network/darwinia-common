@@ -350,6 +350,7 @@ use frame_support::{
 		constants::{WEIGHT_PER_MICROS, WEIGHT_PER_NANOS},
 		Weight, WithPostDispatchInfo,
 	},
+	PalletId,
 };
 use frame_system::{ensure_root, ensure_signed, offchain::SendTransactionTypes};
 use sp_runtime::{
@@ -358,7 +359,7 @@ use sp_runtime::{
 		AccountIdConversion, AtLeast32BitUnsigned, CheckedSub, Convert, SaturatedConversion,
 		Saturating, StaticLookup, Zero,
 	},
-	DispatchError, DispatchResult, ModuleId, Perbill, Percent, Perquintill, RuntimeDebug,
+	DispatchError, DispatchResult, Perbill, Percent, Perquintill, RuntimeDebug,
 };
 #[cfg(feature = "std")]
 use sp_runtime::{Deserialize, Serialize};
@@ -404,7 +405,7 @@ pub trait Config: frame_system::Config + SendTransactionTypes<Call<Self>> {
 	/// The overarching event type.
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
-	type ModuleId: Get<ModuleId>;
+	type PalletId: Get<PalletId>;
 
 	/// Time used for computing era duration.
 	///
@@ -853,7 +854,7 @@ decl_module! {
 		/// Maximum number of nominations per nominator.
 		const MaxNominations: u32 = T::MAX_NOMINATIONS;
 
-		const ModuleId: ModuleId = T::ModuleId::get();
+		const PalletId: PalletId = T::PalletId::get();
 
 		/// Number of sessions per era.
 		const SessionsPerEra: SessionIndex = T::SessionsPerEra::get();
@@ -1949,7 +1950,7 @@ decl_module! {
 
 impl<T: Config> Module<T> {
 	pub fn account_id() -> T::AccountId {
-		T::ModuleId::get().into_account()
+		T::PalletId::get().into_account()
 	}
 
 	/// Update the ledger while bonding ring and compute the *KTON* reward
@@ -3020,11 +3021,7 @@ where
 		>],
 		slash_fraction: &[Perbill],
 		slash_session: SessionIndex,
-	) -> Result<Weight, ()> {
-		if !Self::can_report() {
-			return Err(());
-		}
-
+	) -> Weight {
 		let reward_proportion = SlashRewardFraction::get();
 		let mut consumed_weight: Weight = 0;
 		let mut add_db_reads_writes = |reads, writes| {
@@ -3036,7 +3033,7 @@ where
 			add_db_reads_writes(1, 0);
 			if active_era.is_none() {
 				// this offence need not be re-submitted.
-				return Ok(consumed_weight);
+				return consumed_weight;
 			}
 			active_era
 				.expect("value checked not to be `None`; qed")
@@ -3068,7 +3065,7 @@ where
 			{
 				Some(&(ref slash_era, _)) => *slash_era,
 				// before bonding period. defensive - should be filtered out.
-				None => return Ok(consumed_weight),
+				None => return consumed_weight,
 			}
 		};
 
@@ -3135,12 +3132,7 @@ where
 			}
 		}
 
-		Ok(consumed_weight)
-	}
-
-	fn can_report() -> bool {
-		// TODO: https://github.com/paritytech/substrate/issues/8343
-		true
+		consumed_weight
 	}
 }
 
@@ -3266,11 +3258,8 @@ impl<T: Config> Convert<T::AccountId, Option<T::AccountId>> for StashOf<T> {
 pub struct ExposureOf<T>(PhantomData<T>);
 impl<T: Config> Convert<T::AccountId, Option<ExposureT<T>>> for ExposureOf<T> {
 	fn convert(validator: T::AccountId) -> Option<ExposureT<T>> {
-		if let Some(active_era) = <Module<T>>::active_era() {
-			Some(<Module<T>>::eras_stakers(active_era.index, &validator))
-		} else {
-			None
-		}
+		<Module<T>>::active_era()
+			.map(|active_era| <Module<T>>::eras_stakers(active_era.index, &validator))
 	}
 }
 

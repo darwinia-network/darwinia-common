@@ -5,12 +5,12 @@ use crate::*;
 use darwinia_elections_phragmen::{weights::SubstrateWeight, Config};
 
 frame_support::parameter_types! {
-	pub const ElectionsPhragmenModuleId: LockIdentifier = *b"da/phrel";
+	pub const PhragmenElectionPalletId: LockIdentifier = *b"da/phrel";
 	pub const CandidacyBond: Balance = 1 * COIN;
 	// 1 storage item created, key size is 32 bytes, value size is 16+16.
-	pub const VotingBondBase: Balance = constants::deposit(1, 64);
+	pub const VotingBondBase: Balance = pangolin_constants::deposit(1, 64);
 	// additional data per vote is 32 bytes (account id).
-	pub const VotingBondFactor: Balance = constants::deposit(0, 32);
+	pub const VotingBondFactor: Balance = pangolin_constants::deposit(0, 32);
 	pub const DesiredMembers: u32 = 13;
 	pub const DesiredRunnersUp: u32 = 7;
 	/// Daily council elections.
@@ -19,7 +19,7 @@ frame_support::parameter_types! {
 
 impl Config for Runtime {
 	type Event = Event;
-	type ModuleId = ElectionsPhragmenModuleId;
+	type PalletId = PhragmenElectionPalletId;
 	type Currency = Ring;
 	type ChangeMembers = Council;
 	// NOTE: this implies that council's genesis members cannot be set directly and must come from

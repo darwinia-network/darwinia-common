@@ -129,4 +129,8 @@ impl<T: Config> ProvideInherent for Module<T> {
 	fn check_inherent(_call: &Self::Call, _data: &InherentData) -> result::Result<(), Self::Error> {
 		Ok(())
 	}
+
+	fn is_inherent(_: &Self::Call) -> bool {
+		true
+	}
 }
