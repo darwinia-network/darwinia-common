@@ -24,9 +24,9 @@ darwinia-ethereum-relay = { default-features = false, path = "../../frame/bridge
 
 # Substrate Dependencies
 
-frame-system               = { git = "https://github.com/darwinia-network/substrate", tag = "s2s-v1.0" }
-frame-support              = { git = "https://github.com/darwinia-network/substrate", tag = "s2s-v1.0" }
-pallet-transaction-payment = { git = "https://github.com/darwinia-network/substrate", tag = "s2s-v1.0" }
-sp-core                    = { git = "https://github.com/darwinia-network/substrate", tag = "s2s-v1.0" }
-sp-keyring                 = { git = "https://github.com/darwinia-network/substrate", tag = "s2s-v1.0" }
-sp-runtime                 = { git = "https://github.com/darwinia-network/substrate", tag = "s2s-v1.0" }
+frame-system               = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+frame-support              = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+pallet-transaction-payment = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-core                    = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-keyring                 = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-runtime                 = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }

@@ -11,8 +11,8 @@ version     = "2.2.0"
 
 [dependencies]
 # substrate
-sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "s2s-v1.0" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "s2s-v1.0" }
+sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 
 [features]
 default = ["std"]

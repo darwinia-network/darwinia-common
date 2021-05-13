@@ -20,7 +20,7 @@ hash        = { package = "keccak-hash", version = "0.7.0", default-features = f
 hashbrown   = { version = "0.9.1" }
 rlp         = { version = "0.5.0", default-features = false }
 # substrate
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "s2s-v1.0" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 
 [dev-dependencies]
 # crates

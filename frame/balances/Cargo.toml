@@ -19,16 +19,16 @@ serde = { version = "1.0.125", optional = true }
 darwinia-balances-rpc-runtime-api = { default-features = false, path = "./rpc/runtime-api" }
 darwinia-support                  = { default-features = false, path = "../support" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "s2s-v1.0" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "s2s-v1.0" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "s2s-v1.0" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "s2s-v1.0" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 
 [dev-dependencies]
 # substrate
-pallet-transaction-payment = { git = "https://github.com/darwinia-network/substrate.git", tag = "s2s-v1.0" }
-sp-core                    = { git = "https://github.com/darwinia-network/substrate.git", tag = "s2s-v1.0" }
-sp-io                      = { git = "https://github.com/darwinia-network/substrate.git", tag = "s2s-v1.0" }
+pallet-transaction-payment = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-core                    = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-io                      = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 
 [features]
 default = ["std"]
