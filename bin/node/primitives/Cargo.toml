@@ -17,9 +17,9 @@ sp-runtime = { default-features = false, git = "https://github.com/darwinia-netw
 [features]
 default = ["std"]
 
-std = ["substrate-primitives-std"]
+std = ["substrate-std"]
 
-substrate-primitives-std = [
+substrate-std = [
 	"sp-core/std",
 	"sp-runtime/std",
 ]
