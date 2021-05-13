@@ -5509,6 +5509,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "pangolin-bridge-primitives"
+version = "2.3.0"
+dependencies = [
+ "drml-primitives",
+ "sp-core",
+ "sp-runtime",
+]
+
+[[package]]
 name = "pangolin-constants"
 version = "2.3.0"
 dependencies = [

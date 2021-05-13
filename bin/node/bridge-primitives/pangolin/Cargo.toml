@@ -1,0 +1,34 @@
+[package]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+description = "DRML node bridge primitives"
+edition     = "2018"
+homepage    = "https://darwinia.network/"
+license     = "GPL-3.0"
+name        = "pangolin-bridge-primitives"
+readme      = "README.md"
+repository  = "https://github.com/darwinia-network/darwinia-common/"
+version     = "2.3.0"
+
+[dependencies]
+# darwinia
+drml-primitives = { default-features = false, path = "../../primitives" }
+# substrate
+sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+
+[features]
+default = ["std"]
+
+std = [
+	"darwinia-std",
+	"substrate-std",
+]
+
+darwinia-std = [
+	"drml-primitives/std",
+]
+
+substrate-std = [
+	"sp-core/std",
+	"sp-runtime/std",
+]
