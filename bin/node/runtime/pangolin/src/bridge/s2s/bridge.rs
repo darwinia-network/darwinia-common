@@ -1,6 +1,6 @@
 // --- darwinia ---
 use crate::*;
-use darwinia_balances::Instance0 as RingInstance;
+use darwinia_balances::Instance1 as RingInstance;
 use pangolin_runtime_params::s2s as s2s_params;
 
 // --- s2s bridger ---
@@ -12,9 +12,9 @@ use frame_support::{Parameter, RuntimeDebug};
 use sp_runtime::traits::Convert;
 use sp_runtime::{MultiSignature, MultiSigner};
 
-pub type WithMillauMessagesInstance = pallet_bridge_messages::Instance2;
-pub type WithMillauGrandpaInstance = pallet_bridge_grandpa::Instance2;
-pub type WithMillauDispatchInstance = pallet_bridge_dispatch::Instance2;
+pub type WithMillauMessagesInstance = pallet_bridge_messages::Instance4;
+pub type WithMillauGrandpaInstance = pallet_bridge_grandpa::Instance4;
+pub type WithMillauDispatchInstance = pallet_bridge_dispatch::Instance4;
 
 frame_support::parameter_types! {
 	// This is a pretty unscientific cap.

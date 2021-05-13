@@ -5794,6 +5794,7 @@ dependencies = [
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-utility",
+ "pangolin-constants",
  "pangolin-runtime-params",
  "parity-scale-codec",
  "serde",

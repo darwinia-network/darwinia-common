@@ -193,6 +193,7 @@ pub mod wasm {
 pub use wasm::*;
 
 pub use darwinia_staking::StakerStatus;
+pub use pangolin_constants::*;
 
 // --- crates ---
 use codec::{Decode, Encode};
@@ -372,9 +373,9 @@ frame_support::construct_runtime! {
 		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 41,
 
 		// s2s bridger to millau chain
-		BridgeMillauGrandpa: pallet_bridge_grandpa::<Instance2>::{Pallet, Call, Storage} = 43,
-		BridgeMillauDispatch: pallet_bridge_dispatch::<Instance2>::{Pallet, Event<T>} = 44,
-		BridgeMillauMessages: pallet_bridge_messages::<Instance2>::{Pallet, Call, Storage, Event<T>} = 45,
+		BridgeMillauGrandpa: pallet_bridge_grandpa::<Instance4>::{Pallet, Call, Storage} = 43,
+		BridgeMillauDispatch: pallet_bridge_dispatch::<Instance4>::{Pallet, Event<T>} = 44,
+		BridgeMillauMessages: pallet_bridge_messages::<Instance4>::{Pallet, Call, Storage, Event<T>} = 45,
 		ShiftSessionManager: pallet_shift_session_manager::{Pallet} = 46,
 	}
 }
