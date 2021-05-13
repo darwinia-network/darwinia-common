@@ -25,7 +25,7 @@ use bp_messages::{
 	target_chain::{ProvedMessages, SourceHeaderChain},
 	InboundLaneData, LaneId, Message, MessageNonce, Parameter as MessagesParameter,
 };
-use bp_runtime::{InstanceId, MILLAU_BRIDGE_INSTANCE};
+use bp_runtime::ChainId;
 use bridge_runtime_common::messages::{self, ChainWithMessages, MessageBridge, MessageTransaction};
 use codec::{Decode, Encode};
 use frame_support::{
@@ -107,8 +107,6 @@ pub type ToMillauMessagesDeliveryProof =
 pub struct WithMillauMessageBridge;
 
 impl MessageBridge for WithMillauMessageBridge {
-	const INSTANCE: InstanceId = MILLAU_BRIDGE_INSTANCE;
-
 	const RELAYER_FEE_PERCENT: u32 = 10;
 
 	type ThisChain = PangolinChainWithMessage;
@@ -129,6 +127,8 @@ impl MessageBridge for WithMillauMessageBridge {
 pub struct PangolinChainWithMessage;
 
 impl messages::ChainWithMessages for PangolinChainWithMessage {
+	const ID: ChainId = bp_runtime::PANGOLIN_CHAIN_ID;
+
 	type Hash = drml_primitives::Hash;
 	type AccountId = drml_primitives::AccountId;
 	type Signer = drml_primitives::AccountSigner;
@@ -184,6 +184,8 @@ impl messages::ThisChainWithMessages for PangolinChainWithMessage {
 pub struct Millau;
 
 impl messages::ChainWithMessages for Millau {
+	const ID: ChainId = bp_runtime::MILLAU_CHAIN_ID;
+
 	type Hash = bp_millau::Hash;
 	type AccountId = bp_millau::AccountId;
 	type Signer = bp_millau::AccountSigner;
