@@ -31,6 +31,9 @@ use drml_primitives::*;
 /// Bridge-with-Pangolin instance id.
 pub const PANGOLIN_CHAIN_ID: ChainId = *b"pagl";
 
+/// Maximal size (in bytes) of encoded (using `Encode::encode()`) account id.
+pub const MAXIMAL_ENCODED_ACCOUNT_ID_SIZE: u32 = 32;
+
 /// Number of extra bytes (excluding size of storage value itself) of storage proof, built at
 /// Pangolin chain. This mostly depends on number of entries (and their density) in the storage trie.
 /// Some reserve is reserved to account future chain growth.
@@ -52,6 +55,17 @@ pub const ADDITIONAL_MESSAGE_BYTE_DELIVERY_WEIGHT: Weight = 25_000;
 /// The message must have dispatch weight set to zero. The result then must be rounded up to account
 /// possible future runtime upgrades.
 pub const DEFAULT_MESSAGE_DELIVERY_TX_WEIGHT: Weight = 1_000_000_000;
+/// Maximal weight of single message delivery confirmation transaction on Pangolin chain.
+///
+/// This value is a result of `pallet_bridge_messages::Pallet::receive_messages_delivery_proof` weight formula computation
+/// for the case when single message is confirmed. The result then must be rounded up to account possible future
+/// runtime upgrades.
+pub const MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT: Weight = 2_000_000_000;
+
+/// Maximal number of unrewarded relayer entries at inbound lane.
+pub const MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE: MessageNonce = 128;
+/// Maximal number of unconfirmed messages at inbound lane.
+pub const MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE: MessageNonce = 128;
 
 /// Convert a 256-bit hash into an AccountId.
 pub struct AccountIdConverter;
