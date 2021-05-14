@@ -1,6 +1,6 @@
 [package]
 authors     = ["Darwinia Network <hello@darwinia.network>"]
-description = "DRML node bridge primitives"
+description = "Pangolin node bridge primitives"
 edition     = "2018"
 homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"
