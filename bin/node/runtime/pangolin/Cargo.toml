@@ -11,6 +11,7 @@ version    = "2.3.0"
 
 [dependencies]
 # crates
+array-bytes       = { version = "1.1.0" }
 codec             = { package = "parity-scale-codec", version = "2.0.1", default-features = false }
 log               = { version = "0.4.14" }
 serde             = { version = "1.0.125", optional = true }
@@ -44,8 +45,8 @@ drml-primitives                     = { default-features = false, path = "../../
 dvm-ethereum                        = { default-features = false, path = "../../../../frame/dvm" }
 dvm-rpc-runtime-api                 = { default-features = false, path = "../../../../frame/dvm/rpc/runtime-api" }
 ethereum-primitives                 = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
-pangolin-runtime-params             = { default-features = false, path = "src/params" }
 pangolin-constants                  = { default-features = false, path = "src/constants" }
+pangolin-runtime-system-params      = { default-features = false, path = "src/pallets/system/params" }
 # substrate
 frame-executive                            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 frame-support                              = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
@@ -139,7 +140,8 @@ std = [
 	"dvm-ethereum/std",
 	"dvm-rpc-runtime-api/std",
 	"ethereum-primitives/std",
-	"pangolin-runtime-params/std",
+	"pangolin-constants/std",
+	"pangolin-runtime-system-params/std",
 	"frame-executive/std",
 	"frame-support/std",
 	"frame-system/std",
@@ -198,15 +200,14 @@ std = [
 
 with-tracing = ["frame-executive/with-tracing"]
 
-#try-runtime = [
-#	"frame-executive/try-runtime",
-#	"frame-try-runtime",
-#	"darwinia-balances/try-runtime",
-#	"darwinia-crab-issuing/try-runtime",
-#	"darwinia-elections-phragmen/try-runtime",
-#	"darwinia-ethereum-backing/try-runtime",
-#	"darwinia-header-mmr/try-runtime",
-#	"darwinia-staking/try-runtime",
-#	"dvm-ethereum/try-runtime",
-#]
-
+try-runtime = [
+	"frame-executive/try-runtime",
+	"frame-try-runtime",
+	"darwinia-balances/try-runtime",
+	"darwinia-crab-issuing/try-runtime",
+	"darwinia-elections-phragmen/try-runtime",
+	"darwinia-ethereum-backing/try-runtime",
+	"darwinia-header-mmr/try-runtime",
+	"darwinia-staking/try-runtime",
+	"dvm-ethereum/try-runtime",
+]
