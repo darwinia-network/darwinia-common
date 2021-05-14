@@ -20,7 +20,7 @@
 
 // --- substrate ---
 use bp_messages::{LaneId, MessageNonce, UnrewardedRelayersState};
-use bp_runtime::ChainId;
+use bp_runtime::{ChainId, SourceAccount};
 use frame_support::{weights::Weight, Parameter};
 use sp_core::H256;
 use sp_runtime::{traits::Convert, RuntimeDebug};
@@ -69,6 +69,19 @@ impl bp_runtime::Chain for Pangolin {
 	type Hash = Hash;
 	type Hasher = Hashing;
 	type Header = Header;
+}
+
+/// We use this to get the account on Millau (target) which is derived from Pangolin's (source)
+/// account. We do this so we can fund the derived account on Millau at Genesis to it can pay
+/// transaction fees.
+///
+/// The reason we can use the same `AccountId` type for both chains is because they share the same
+/// development seed phrase.
+///
+/// Note that this should only be used for testing.
+pub fn derive_account_from_pangolin_id(id: SourceAccount<AccountId>) -> AccountId {
+	let encoded_id = bp_runtime::derive_account_id(PANGOLIN_CHAIN_ID, id);
+	AccountIdConverter::convert(encoded_id)
 }
 
 sp_api::decl_runtime_apis! {
