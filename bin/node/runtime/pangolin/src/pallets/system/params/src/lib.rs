@@ -1,20 +1,12 @@
+#![cfg_attr(not(feature = "std"), no_std)]
+
 // --- substrate ---
 use frame_support::weights::{
-	constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
+	constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
 	DispatchClass, Weight,
 };
-use frame_system::{
-	limits::{BlockLength, BlockWeights},
-	weights::SubstrateWeight,
-	Config,
-};
-use sp_runtime::{
-	traits::{AccountIdLookup, BlakeTwo256},
-	Perbill,
-};
-use sp_version::RuntimeVersion;
-// --- darwinia ---
-use crate::*;
+use frame_system::limits::{BlockLength, BlockWeights};
+use sp_runtime::Perbill;
 
 /// We assume that an on-initialize consumes 2.5% of the weight on average, hence a single extrinsic
 /// will not be allowed to consume more than `AvailableBlockRatio - 2.5%`.
@@ -24,12 +16,12 @@ const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(25);
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 /// We allow for 2 seconds of compute with a 6 second average block time.
 const MAXIMUM_BLOCK_WEIGHT: Weight = 2 * WEIGHT_PER_SECOND;
+
 static_assertions::const_assert!(
 	NORMAL_DISPATCH_RATIO.deconstruct() >= AVERAGE_ON_INITIALIZE_RATIO.deconstruct()
 );
+
 frame_support::parameter_types! {
-	pub const BlockHashCount: BlockNumber = 2400;
-	pub const Version: RuntimeVersion = VERSION;
 	pub RuntimeBlockLength: BlockLength =
 		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 	pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
@@ -50,30 +42,15 @@ frame_support::parameter_types! {
 		})
 		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
 		.build_or_panic();
-	pub const SS58Prefix: u8 = 18;
 }
-impl Config for Runtime {
-	type BaseCallFilter = ();
-	type BlockWeights = RuntimeBlockWeights;
-	type BlockLength = RuntimeBlockLength;
-	type DbWeight = RocksDbWeight;
-	type Origin = Origin;
-	type Call = Call;
-	type Index = Nonce;
-	type BlockNumber = BlockNumber;
-	type Hash = Hash;
-	type Hashing = BlakeTwo256;
-	type AccountId = AccountId;
-	type Lookup = AccountIdLookup<AccountId, ()>;
-	type Header = Header;
-	type Event = Event;
-	type BlockHashCount = BlockHashCount;
-	type Version = Version;
-	type PalletInfo = PalletInfo;
-	type AccountData = AccountData<Balance>;
-	type OnNewAccount = ();
-	type OnKilledAccount = ();
-	type SystemWeightInfo = SubstrateWeight<Runtime>;
-	type SS58Prefix = SS58Prefix;
-	type OnSetCode = ();
+
+pub fn max_extrinsic_weight() -> Weight {
+	RuntimeBlockWeights::get()
+		.get(DispatchClass::Normal)
+		.max_extrinsic
+		.unwrap_or(Weight::MAX)
+}
+
+pub fn max_extrinsic_size() -> u32 {
+	*RuntimeBlockLength::get().max.get(DispatchClass::Normal)
 }
