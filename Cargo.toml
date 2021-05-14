@@ -4,7 +4,6 @@ members = [
 	"bin/node/bridge-primitives/pangolin",
 	"bin/node/primitives",
 	"bin/node/runtime/pangolin",
-	"bin/node/runtime/pangolin/src/params",
 	"bin/node/runtime/pangolin/src/constants",
 	"bin/node/runtime/pangolin/src/pallets/system/params",
 	"client/cli",

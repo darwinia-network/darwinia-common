@@ -33,7 +33,7 @@ use frame_support::{
 	weights::{DispatchClass, Weight},
 	RuntimeDebug,
 };
-use pangolin_runtime_params::s2s as s2s_params;
+use pangolin_bridge_primitives as s2s_params;
 use sp_core::storage::StorageKey;
 use sp_runtime::traits::Zero;
 use sp_runtime::{FixedPointNumber, FixedU128};
@@ -168,7 +168,7 @@ impl messages::ThisChainWithMessages for PangolinChainWithMessage {
 	fn transaction_payment(transaction: MessageTransaction<Weight>) -> drml_primitives::Balance {
 		// in our testnets, both per-byte fee and weight-to-fee are 1:1
 		messages::transaction_payment(
-			pangolin_runtime_params::system::RuntimeBlockWeights::get()
+			pangolin_runtime_system_params::RuntimeBlockWeights::get()
 				.get(DispatchClass::Normal)
 				.base_extrinsic,
 			1,

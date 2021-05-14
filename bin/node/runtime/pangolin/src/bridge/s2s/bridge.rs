@@ -1,7 +1,7 @@
 // --- darwinia ---
 use crate::*;
 use darwinia_balances::Instance1 as RingInstance;
-use pangolin_runtime_params::s2s as s2s_params;
+use pangolin_bridge_primitives as s2s_params;
 
 // --- s2s bridger ---
 use bp_messages::{LaneId, MessageNonce, UnrewardedRelayersState};
