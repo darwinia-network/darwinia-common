@@ -22,7 +22,7 @@
 #![warn(missing_docs)]
 
 // --- substrate ---
-use sp_core::H256;
+use sp_core::{sr25519::Pair, H256};
 use sp_runtime::{
 	generic,
 	traits::{BlakeTwo256, IdentifyAccount, Verify},
@@ -35,6 +35,9 @@ pub type BlockNumber = u32;
 
 /// An instant or duration in time.
 pub type Moment = u64;
+
+/// DRML signing params.
+pub type SigningParams = Pair;
 
 /// Alias to type for a signature for a transaction on the relay chain. This allows one of several
 /// kinds of underlying crypto to be used, so isn't a fixed size when encoded.
