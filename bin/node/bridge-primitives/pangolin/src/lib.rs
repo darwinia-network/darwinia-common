@@ -67,6 +67,29 @@ pub const MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE: MessageNonce = 128;
 /// Maximal number of unconfirmed messages at inbound lane.
 pub const MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE: MessageNonce = 128;
 
+/// Name of the `FromPangolinInboundLaneApi::latest_received_nonce` runtime method.
+pub const FROM_PANGOLIN_LATEST_RECEIVED_NONCE_METHOD: &str =
+	"FromPangolinInboundLaneApi_latest_received_nonce";
+/// Name of the `FromPangolinInboundLaneApi::latest_onfirmed_nonce` runtime method.
+pub const FROM_PANGOLIN_LATEST_CONFIRMED_NONCE_METHOD: &str =
+	"FromPangolinInboundLaneApi_latest_confirmed_nonce";
+/// Name of the `FromPangolinInboundLaneApi::unrewarded_relayers_state` runtime method.
+pub const FROM_PANGOLIN_UNREWARDED_RELAYERS_STATE: &str =
+	"FromPangolinInboundLaneApi_unrewarded_relayers_state";
+
+/// Name of the `ToPangolinOutboundLaneApi::estimate_message_delivery_and_dispatch_fee` runtime method.
+pub const TO_PANGOLIN_ESTIMATE_MESSAGE_FEE_METHOD: &str =
+	"ToPangolinOutboundLaneApi_estimate_message_delivery_and_dispatch_fee";
+/// Name of the `ToPangolinOutboundLaneApi::messages_dispatch_weight` runtime method.
+pub const TO_PANGOLIN_MESSAGES_DISPATCH_WEIGHT_METHOD: &str =
+	"ToPangolinOutboundLaneApi_messages_dispatch_weight";
+/// Name of the `ToPangolinOutboundLaneApi::latest_generated_nonce` runtime method.
+pub const TO_PANGOLIN_LATEST_GENERATED_NONCE_METHOD: &str =
+	"ToPangolinOutboundLaneApi_latest_generated_nonce";
+/// Name of the `ToPangolinOutboundLaneApi::latest_received_nonce` runtime method.
+pub const TO_PANGOLIN_LATEST_RECEIVED_NONCE_METHOD: &str =
+	"ToPangolinOutboundLaneApi_latest_received_nonce";
+
 /// Convert a 256-bit hash into an AccountId.
 pub struct AccountIdConverter;
 impl Convert<H256, AccountId> for AccountIdConverter {
