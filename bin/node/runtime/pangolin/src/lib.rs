@@ -185,10 +185,16 @@ pub mod wasm {
 }
 pub use wasm::*;
 
-pub use darwinia_staking::StakerStatus;
 pub use pangolin_constants::*;
 
-// --- crates ---
+pub use darwinia_staking::StakerStatus;
+
+pub use darwinia_balances::Call as BalancesCall;
+pub use frame_system::Call as SystemCall;
+pub use pallet_bridge_grandpa::Call as BridgeGrandpaCall;
+pub use pallet_bridge_messages::Call as BridgeMessagesCall;
+
+// --- crates.io ---
 use codec::{Decode, Encode};
 // --- substrate ---
 use bridge_runtime_common::messages::MessageBridge;
@@ -215,11 +221,6 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-// --- s2s ---
-pub use darwinia_balances::Call as BalanceRingCall;
-pub use frame_system::Call as SystemCall;
-pub use pallet_bridge_grandpa::Call as BridgeGrandpaCall;
-pub use pallet_bridge_messages::Call as BridgeMessagesCall;
 // --- darwinia ---
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
 use darwinia_evm::{Account as EVMAccount, FeeCalculator, Runner};

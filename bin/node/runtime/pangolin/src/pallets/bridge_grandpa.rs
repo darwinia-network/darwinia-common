@@ -1,4 +1,4 @@
-pub use pallet_bridge_grandpa::Instance1 as MillauGrandpa;
+pub use pallet_bridge_grandpa::Instance1 as WithMillauGrandpa;
 
 // --- substrate ---
 use bp_millau::{Millau, DAYS};
@@ -18,7 +18,7 @@ frame_support::parameter_types! {
 	// week.
 	pub const HeadersToKeep: u32 = 7 * DAYS as u32;
 }
-impl Config<MillauGrandpa> for Runtime {
+impl Config<WithMillauGrandpa> for Runtime {
 	type BridgedChain = Millau;
 	type MaxRequests = MaxRequests;
 	type HeadersToKeep = HeadersToKeep;
