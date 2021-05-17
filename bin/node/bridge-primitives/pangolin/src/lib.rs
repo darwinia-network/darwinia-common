@@ -90,6 +90,9 @@ pub const TO_PANGOLIN_LATEST_GENERATED_NONCE_METHOD: &str =
 pub const TO_PANGOLIN_LATEST_RECEIVED_NONCE_METHOD: &str =
 	"ToPangolinOutboundLaneApi_latest_received_nonce";
 
+/// Name of the `PangolinFinalityApi::best_finalized` runtime method.
+pub const BEST_FINALIZED_PANGOLIN_HEADER_METHOD: &str = "PangolinFinalityApi_best_finalized";
+
 /// Convert a 256-bit hash into an AccountId.
 pub struct AccountIdConverter;
 impl Convert<H256, AccountId> for AccountIdConverter {
