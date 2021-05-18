@@ -22,6 +22,8 @@
 #![warn(missing_docs)]
 
 // --- substrate ---
+#[cfg(feature = "std")]
+use sp_core::sr25519::Pair;
 use sp_core::H256;
 use sp_runtime::{
 	generic,
@@ -35,6 +37,10 @@ pub type BlockNumber = u32;
 
 /// An instant or duration in time.
 pub type Moment = u64;
+
+/// DRML signing params.
+#[cfg(feature = "std")]
+pub type SigningParams = Pair;
 
 /// Alias to type for a signature for a transaction on the relay chain. This allows one of several
 /// kinds of underlying crypto to be used, so isn't a fixed size when encoded.
@@ -54,6 +60,9 @@ pub type AccountIndex = u32;
 /// A hash of some data used by the relay chain.
 pub type Hash = H256;
 
+/// Hashing algorithm used by the chain.
+pub type Hashing = BlakeTwo256;
+
 /// Index of a transaction in the relay chain. 32-bit should be plenty.
 pub type Nonce = u32;
 
@@ -70,7 +79,7 @@ pub type Balance = u128;
 pub type Power = u32;
 
 /// Header type.
-pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
+pub type Header = generic::Header<BlockNumber, Hashing>;
 
 /// Block type.
 pub type OpaqueBlock = generic::Block<Header, OpaqueExtrinsic>;

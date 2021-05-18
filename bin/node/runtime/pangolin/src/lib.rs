@@ -22,45 +22,11 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
-pub mod constants {
-	// --- substrate ---
-	use sp_staking::SessionIndex;
-	// --- darwinia ---
-	use crate::*;
-
-	pub const NANO: Balance = 1;
-	pub const MICRO: Balance = 1_000 * NANO;
-	pub const MILLI: Balance = 1_000 * MICRO;
-	pub const COIN: Balance = 1_000 * MILLI;
-
-	pub const CAP: Balance = 10_000_000_000 * COIN;
-	pub const TOTAL_POWER: Power = 1_000_000_000;
-
-	// Time is measured by number of blocks.
-	pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
-	pub const HOURS: BlockNumber = 60 * MINUTES;
-	pub const DAYS: BlockNumber = 24 * HOURS;
-
-	pub const MILLISECS_PER_BLOCK: Moment = 6000;
-	// NOTE: Currently it is not possible to change the slot duration after the chain has started.
-	//       Attempting to do so will brick block production.
-	pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
-	// NOTE: Currently it is not possible to change the epoch duration after the chain has started.
-	//       Attempting to do so will brick block production.
-	pub const BLOCKS_PER_SESSION: BlockNumber = 10 * MINUTES;
-	pub const SESSIONS_PER_ERA: SessionIndex = 3;
-
-	// 1 in 4 blocks (on average, not counting collisions) will be primary babe blocks.
-	pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
-
-	pub const fn deposit(items: u32, bytes: u32) -> Balance {
-		items as Balance * 20 * COIN + (bytes as Balance) * 100 * MICRO
-	}
-}
-pub use constants::*;
-
 pub mod pallets;
 pub use pallets::*;
+
+pub mod bridges;
+pub use bridges::*;
 
 pub mod impls {
 	//! Some configurable implementations as associated type for the substrate runtime.
@@ -219,13 +185,21 @@ pub mod wasm {
 }
 pub use wasm::*;
 
+pub use pangolin_constants::*;
+
 pub use darwinia_staking::StakerStatus;
 
-// --- crates ---
+pub use darwinia_balances::Call as BalancesCall;
+pub use frame_system::Call as SystemCall;
+pub use pallet_bridge_grandpa::Call as BridgeGrandpaCall;
+pub use pallet_bridge_messages::Call as BridgeMessagesCall;
+
+// --- crates.io ---
 use codec::{Decode, Encode};
 // --- substrate ---
+use bridge_runtime_common::messages::MessageBridge;
 use frame_support::{
-	traits::{KeyOwnerProofSystem, OnRuntimeUpgrade, Randomness},
+	traits::{KeyOwnerProofSystem, OnRuntimeUpgrade},
 	weights::{constants::ExtrinsicBaseWeight, Weight},
 };
 use pallet_grandpa::{
@@ -238,7 +212,7 @@ use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::{AllowedSlots, BabeEpochConfiguration};
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
 use sp_runtime::{
-	create_runtime_str, generic,
+	generic,
 	traits::{Block as BlockT, NumberFor, SaturatedConversion, StaticLookup},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiAddress, OpaqueExtrinsic, Perbill, RuntimeDebug,
@@ -260,6 +234,8 @@ use impls::*;
 pub type Address = MultiAddress<AccountId, ()>;
 /// Block type as expected by this runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+/// A Block signed with a Justification
+pub type SignedBlock = generic::SignedBlock<Block>;
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
 	frame_system::CheckSpecVersion<Runtime>,
@@ -289,11 +265,11 @@ type Ring = Balances;
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("Pangolin"),
-	impl_name: create_runtime_str!("Pangolin"),
+	spec_name: sp_runtime::create_runtime_str!("Pangolin"),
+	impl_name: sp_runtime::create_runtime_str!("Pangolin"),
 	authoring_version: 1,
-	// crate version ~2.3.0 := >=2.3.0, <2.4.0
-	spec_version: 2300,
+	// crate version ~2.4.0 := >=2.4.0, <2.5.0
+	spec_version: 2400,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -395,6 +371,11 @@ frame_support::construct_runtime! {
 
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 40,
 		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 41,
+
+		BridgeMillauMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 43,
+		BridgeMillauDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 44,
+		BridgeMillauGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 45,
+		ShiftSessionManager: pallet_shift_session_manager::{Pallet} = 46,
 	}
 }
 
@@ -496,10 +477,6 @@ impl_runtime_apis! {
 			data: sp_inherents::InherentData,
 		) -> sp_inherents::CheckInherentsResult {
 			data.check_extrinsics(&block)
-		}
-
-		fn random_seed() -> <Block as BlockT>::Hash {
-			pallet_babe::RandomnessFromOneEpochAgo::<Runtime>::random_seed().0
 		}
 	}
 
@@ -770,6 +747,68 @@ impl_runtime_apis! {
 				Ethereum::current_receipts(),
 				Ethereum::current_transaction_statuses()
 			)
+		}
+	}
+
+	impl bp_millau::MillauFinalityApi<Block> for Runtime {
+		fn best_finalized() -> (bp_millau::BlockNumber, bp_millau::Hash) {
+			let header = BridgeMillauGrandpa::best_finalized();
+			(header.number, header.hash())
+		}
+
+		fn is_known_header(hash: bp_millau::Hash) -> bool {
+			BridgeMillauGrandpa::is_known_header(hash)
+		}
+	}
+
+	impl bp_millau::ToMillauOutboundLaneApi<Block, Balance, millau_messages::ToMillauMessagePayload> for Runtime {
+		fn estimate_message_delivery_and_dispatch_fee(
+			_lane_id: bp_messages::LaneId,
+			payload: millau_messages::ToMillauMessagePayload,
+		) -> Option<Balance> {
+			bridge_runtime_common::messages::source::estimate_message_dispatch_and_delivery_fee
+				::<millau_messages::WithMillauMessageBridge>
+			(
+				&payload,
+				millau_messages::WithMillauMessageBridge::RELAYER_FEE_PERCENT,
+			).ok()
+		}
+
+		fn messages_dispatch_weight(
+			lane: bp_messages::LaneId,
+			begin: bp_messages::MessageNonce,
+			end: bp_messages::MessageNonce,
+		) -> Vec<(bp_messages::MessageNonce, Weight, u32)> {
+			(begin..=end).filter_map(|nonce| {
+				let encoded_payload = BridgeMillauMessages::outbound_message_payload(lane, nonce)?;
+				let decoded_payload = millau_messages::ToMillauMessagePayload::decode(
+					&mut &encoded_payload[..]
+				).ok()?;
+				Some((nonce, decoded_payload.weight, encoded_payload.len() as _))
+			})
+			.collect()
+		}
+
+		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
+			BridgeMillauMessages::outbound_latest_received_nonce(lane)
+		}
+
+		fn latest_generated_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
+			BridgeMillauMessages::outbound_latest_generated_nonce(lane)
+		}
+	}
+
+	impl bp_millau::FromMillauInboundLaneApi<Block> for Runtime {
+		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
+			BridgeMillauMessages::inbound_latest_received_nonce(lane)
+		}
+
+		fn latest_confirmed_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
+			BridgeMillauMessages::inbound_latest_confirmed_nonce(lane)
+		}
+
+		fn unrewarded_relayers_state(lane: bp_messages::LaneId) -> bp_messages::UnrewardedRelayersState {
+			BridgeMillauMessages::inbound_unrewarded_relayers_state(lane)
 		}
 	}
 

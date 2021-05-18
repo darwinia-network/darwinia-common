@@ -7,22 +7,22 @@ license     = "GPL-3.0"
 name        = "darwinia-elections-phragmen"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.3.0"
+version     = "2.4.0"
 
 [dependencies]
 # crates
-codec = { package = "parity-scale-codec", version = "2.0.1", default-features = false }
+codec = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
 log   = { version = "0.4.14" }
 # darwinia
 darwinia-support = { default-features = false, path = "../support" }
 # substrate
-frame-support     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
-frame-system      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
-sp-core           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
-sp-io             = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
-sp-npos-elections = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
-sp-runtime        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
-sp-std            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
+frame-support     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+frame-system      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-core           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-io             = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-npos-elections = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-runtime        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-std            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 
 [dev-dependencies]
 # crates
@@ -31,7 +31,7 @@ hex-literal = { version = "0.3.1" }
 darwinia-balances = { path = "../balances" }
 darwinia-support  = { path = "../support", features = ["easy-testing"] }
 # substrate
-substrate-test-utils = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
+substrate-test-utils = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 
 [features]
 default = ["std"]

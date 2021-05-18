@@ -7,12 +7,12 @@ license     = "GPL-3.0"
 name        = "ethereum-primitives"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.3.0"
+version     = "2.4.0"
 
 [dependencies]
 # crates
 array-bytes     = { version = "1.1.0" }
-codec           = { package = "parity-scale-codec", version = "2.0.1", default-features = false, features = ["derive"] }
+codec           = { package = "parity-scale-codec", version = "2.1.1", default-features = false, features = ["derive"] }
 ethbloom        = { version = "0.11.0", default-features = false, features = ["codec", "rlp"] }
 ethereum-types  = { version = "0.11.0", default-features = false, features = ["codec", "rlp"] }
 fixed-hash      = { version = "0.7.0", default-features = false }
@@ -22,14 +22,14 @@ keccak-hash     = { version = "0.7.0", default-features = false }
 primitive-types = { version = "0.9.0", default-features = false, features = ["codec", "rlp"] }
 rlp             = { version = "0.5.0", default-features = false }
 rlp-derive      = { version = "0.1.0" }
-serde           = { version = "1.0.125", optional = true, features = ["derive"] }
+serde           = { version = "1.0.126", optional = true, features = ["derive"] }
 # darwinia
 ethash               = { default-features = false, git = "https://github.com/darwinia-network/rust-ethash" }
 merkle-patricia-trie = { default-features = false, path = "../merkle-patricia-trie" }
 # substrate
-sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
-sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
+sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 
 [dev-dependencies]
 # crates
@@ -38,7 +38,7 @@ serde_json    = { version = "1.0.64" }
 # github
 triehash = { version = "0.8.4" }
 # substrate
-frame-support = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
+frame-support = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 
 [features]
 default = ["std"]

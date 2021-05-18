@@ -7,15 +7,15 @@ license     = "GPL-3.0"
 name        = "dc-db"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.3.0"
+version     = "2.4.0"
 
 [dependencies]
 # crates
-codec        = { package = "parity-scale-codec", version = "2.0.1", features = ["derive"] }
+codec        = { package = "parity-scale-codec", version = "2.1.1", features = ["derive"] }
 kvdb         = { version = "0.9.0" }
 kvdb-rocksdb = { version = "0.11.0" }
 parking_lot  = { version = "0.11.1" }
 # substrate
-sp-core     = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
-sp-database = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
-sp-runtime  = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
+sp-core     = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-database = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-runtime  = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }

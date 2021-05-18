@@ -1,8 +1,11 @@
 [workspace]
 members = [
 	"bin/node/cli",
+	"bin/node/bridge-primitives/pangolin",
 	"bin/node/primitives",
 	"bin/node/runtime/pangolin",
+	"bin/node/runtime/pangolin/src/constants",
+	"bin/node/runtime/pangolin/src/pallets/system/params",
 	"client/cli",
 	"client/dvm/db",
 	"client/dvm/mapping-sync",
@@ -23,7 +26,8 @@ members = [
 	"frame/claims",
 	"frame/democracy",
 	"frame/dvm",
-	"frame/dvm-dynamic-fee",
+	# FIXME: https://github.com/darwinia-network/darwinia-common/issues/619
+	# "frame/dvm-dynamic-fee",
 	"frame/dvm/rpc",
 	"frame/dvm/rpc/runtime-api",
 	"frame/elections-phragmen",

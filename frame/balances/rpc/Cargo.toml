@@ -7,17 +7,17 @@ license     = "GPL-3.0"
 name        = "darwinia-balances-rpc"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.3.0"
+version     = "2.4.0"
 
 [dependencies]
 # crates
-codec               = { package = "parity-scale-codec", version = "2.0.1" }
+codec               = { package = "parity-scale-codec", version = "2.1.1" }
 jsonrpc-core        = { version = "15.1.0" }
 jsonrpc-core-client = { version = "15.1.0" }
 jsonrpc-derive      = { version = "15.1.0" }
 # darwinia
 darwinia-balances-rpc-runtime-api = { path = "./runtime-api" }
 # substrate
-sp-api        = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
-sp-blockchain = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
-sp-runtime    = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.0" }
+sp-api        = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-blockchain = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-runtime    = { git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
