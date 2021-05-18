@@ -5595,19 +5595,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-shift-session-manager"
-version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=s2s#625d892afb732eebe8919ee5626b4aad64794a18"
-dependencies = [
- "frame-support",
- "frame-system",
- "pallet-session",
- "parity-scale-codec",
- "sp-staking",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-society"
 version = "3.0.0"
 source = "git+https://github.com/darwinia-network/substrate.git?branch=s2s#b094edafd1cd5d26e49ecbf92b0ce7553cfad717"
@@ -5791,7 +5778,6 @@ dependencies = [
  "pallet-recovery",
  "pallet-scheduler",
  "pallet-session",
- "pallet-shift-session-manager",
  "pallet-society",
  "pallet-sudo",
  "pallet-timestamp",

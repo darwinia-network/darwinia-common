@@ -126,6 +126,3 @@ pub use bridge_dispatch::*;
 
 pub mod bridge_grandpa;
 pub use bridge_grandpa::*;
-
-pub mod shift_session_manager;
-pub use shift_session_manager::*;
