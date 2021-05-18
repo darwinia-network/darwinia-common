@@ -63,6 +63,7 @@ use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 use sp_trie::PrefixedMemoryDB;
 use substrate_prometheus_endpoint::Registry;
 // --- darwinia ---
+use crate::cli::Cli;
 use crate::rpc::{
 	self, BabeDeps, DenyUnsafe, FullDeps, GrandpaDeps, LightDeps, RpcExtension,
 	SubscriptionTaskExecutor,
@@ -195,6 +196,7 @@ fn open_frontier_backend(config: &Configuration) -> Result<Arc<Backend<Block>>, 
 #[cfg(feature = "full-node")]
 fn new_partial<RuntimeApi, Executor>(
 	config: &mut Configuration,
+	cli: &Cli,
 ) -> Result<
 	PartialComponents<
 		FullClient<RuntimeApi, Executor>,
@@ -396,7 +398,7 @@ fn remote_keystore(_url: &String) -> Result<Arc<LocalKeystore>, &'static str> {
 #[cfg(feature = "full-node")]
 fn new_full<RuntimeApi, Executor>(
 	mut config: Configuration,
-	authority_discovery_disabled: bool,
+	cli: &Cli,
 ) -> Result<
 	(
 		TaskManager,
@@ -437,7 +439,7 @@ where
 				frontier_backend,
 				filter_pool,
 			),
-	} = new_partial::<RuntimeApi, Executor>(&mut config)?;
+	} = new_partial::<RuntimeApi, Executor>(&mut config, cli)?;
 
 	if let Some(url) = &config.keystore_remote {
 		match remote_keystore(url) {
@@ -606,7 +608,7 @@ where
 		);
 	}
 
-	if role.is_authority() && !authority_discovery_disabled {
+	if role.is_authority() && !cli.run.authority_discovery_disabled {
 		use sc_network::Event;
 
 		let authority_discovery_role =
@@ -820,6 +822,7 @@ where
 #[cfg(feature = "full-node")]
 pub fn new_chain_ops<Runtime, Dispatch>(
 	config: &mut Configuration,
+	cli: &Cli,
 ) -> Result<
 	(
 		Arc<FullClient<Runtime, Dispatch>>,
@@ -842,7 +845,7 @@ where
 		import_queue,
 		task_manager,
 		..
-	} = new_partial::<Runtime, Dispatch>(config)?;
+	} = new_partial::<Runtime, Dispatch>(config, cli)?;
 
 	Ok((client, backend, import_queue, task_manager))
 }
@@ -851,7 +854,7 @@ where
 #[cfg(feature = "full-node")]
 pub fn drml_new_full(
 	config: Configuration,
-	authority_discovery_disabled: bool,
+	cli: &Cli,
 ) -> Result<
 	(
 		TaskManager,
@@ -860,10 +863,8 @@ pub fn drml_new_full(
 	),
 	ServiceError,
 > {
-	let (components, client, rpc_handlers) = new_full::<
-		pangolin_runtime::RuntimeApi,
-		PangolinExecutor,
-	>(config, authority_discovery_disabled)?;
+	let (components, client, rpc_handlers) =
+		new_full::<pangolin_runtime::RuntimeApi, PangolinExecutor>(config, cli)?;
 
 	Ok((components, client, rpc_handlers))
 }

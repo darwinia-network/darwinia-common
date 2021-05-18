@@ -241,6 +241,7 @@ where
 		pending_transactions.clone(),
 		backend,
 		is_authority,
+		max_past_logs,
 	)));
 	if let Some(filter_pool) = filter_pool {
 		io.extend_with(EthFilterApiServer::to_delegate(EthFilterApi::new(

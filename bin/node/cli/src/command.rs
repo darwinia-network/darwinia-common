@@ -110,15 +110,13 @@ pub fn run() -> sc_cli::Result<()> {
 
 	match &cli.subcommand {
 		None => {
-			let authority_discovery_disabled = cli.run.authority_discovery_disabled;
-			let runner = Configuration::create_runner(cli)?;
-
+			let runner = Configuration::create_runner(Cli::from_args())?;
 			runner.run_node_until_exit(|config| async move {
 				match config.role {
 					Role::Light => {
 						service::drml_new_light(config).map(|(task_manager, _)| task_manager)
 					}
-					_ => service::drml_new_full(config, authority_discovery_disabled)
+					_ => service::drml_new_full(config, &cli)
 						.map(|(task_manager, _, _)| task_manager),
 				}
 				.map_err(sc_cli::Error::Service)
@@ -135,7 +133,7 @@ pub fn run() -> sc_cli::Result<()> {
 				let (client, _, import_queue, task_manager) = service::new_chain_ops::<
 					service::pangolin_runtime::RuntimeApi,
 					service::PangolinExecutor,
-				>(&mut config)?;
+				>(&mut config, &cli)?;
 				Ok((cmd.run(client, import_queue), task_manager))
 			})
 		}
@@ -146,7 +144,7 @@ pub fn run() -> sc_cli::Result<()> {
 				let (client, _, _, task_manager) = service::new_chain_ops::<
 					service::pangolin_runtime::RuntimeApi,
 					service::PangolinExecutor,
-				>(&mut config)?;
+				>(&mut config, &cli)?;
 				Ok((cmd.run(client, config.database), task_manager))
 			})
 		}
@@ -157,7 +155,7 @@ pub fn run() -> sc_cli::Result<()> {
 				let (client, _, _, task_manager) = service::new_chain_ops::<
 					service::pangolin_runtime::RuntimeApi,
 					service::PangolinExecutor,
-				>(&mut config)?;
+				>(&mut config, &cli)?;
 				Ok((cmd.run(client, config.chain_spec), task_manager))
 			})
 		}
@@ -168,7 +166,7 @@ pub fn run() -> sc_cli::Result<()> {
 				let (client, _, import_queue, task_manager) = service::new_chain_ops::<
 					service::pangolin_runtime::RuntimeApi,
 					service::PangolinExecutor,
-				>(&mut config)?;
+				>(&mut config, &cli)?;
 				Ok((cmd.run(client, import_queue), task_manager))
 			})
 		}
@@ -183,7 +181,7 @@ pub fn run() -> sc_cli::Result<()> {
 				let (client, backend, _, task_manager) = service::new_chain_ops::<
 					service::pangolin_runtime::RuntimeApi,
 					service::PangolinExecutor,
-				>(&mut config)?;
+				>(&mut config, &cli)?;
 				Ok((cmd.run(client, backend), task_manager))
 			})
 		}
