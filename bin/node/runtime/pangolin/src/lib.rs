@@ -212,7 +212,7 @@ use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::{AllowedSlots, BabeEpochConfiguration};
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
 use sp_runtime::{
-	create_runtime_str, generic,
+	generic,
 	traits::{Block as BlockT, NumberFor, SaturatedConversion, StaticLookup},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiAddress, OpaqueExtrinsic, Perbill, RuntimeDebug,
@@ -265,11 +265,11 @@ type Ring = Balances;
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("Pangolin"),
-	impl_name: create_runtime_str!("Pangolin"),
+	spec_name: sp_runtime::create_runtime_str!("Pangolin"),
+	impl_name: sp_runtime::create_runtime_str!("Pangolin"),
 	authoring_version: 1,
-	// crate version ~2.3.0 := >=2.3.0, <2.4.0
-	spec_version: 2300,
+	// crate version ~2.4.0 := >=2.4.0, <2.5.0
+	spec_version: 2400,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
