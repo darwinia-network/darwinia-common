@@ -11,7 +11,7 @@ version     = "2.4.0"
 
 [dependencies]
 # crates
-codec    = { package = "parity-scale-codec", version = "2.0.1", default-features = false, features = ["derive"] }
+codec    = { package = "parity-scale-codec", version = "2.1.1", default-features = false, features = ["derive"] }
 ethereum = { version = "0.7.1", default-features = false, features = ["with-codec"] }
 rlp      = { version = "0.5", default-features = false }
 sha3     = { version = "0.8", default-features = false }

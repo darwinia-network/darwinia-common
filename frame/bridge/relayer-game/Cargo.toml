@@ -11,7 +11,7 @@ version     = "2.4.0"
 
 [dependencies]
 # crates
-codec = { package = "parity-scale-codec", version = "2.0.1", default-features = false }
+codec = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
 log   = { version = "0.4.14" }
 # darwinia
 darwinia-relay-primitives = { default-features = false, path = "../../../primitives/relay" }
@@ -25,7 +25,7 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 [dev-dependencies]
 # crates
 env_logger = { version = "0.8.3" }
-serde      = { version = "1.0.125" }
+serde      = { version = "1.0.126" }
 # darwinia
 darwinia-balances = { path = "../../balances" }
 # substrate

@@ -11,8 +11,8 @@ version     = "2.4.0"
 
 [dependencies]
 # crates
-codec = { package = "parity-scale-codec", version = "2.0.1", default-features = false }
-serde = { version = "1.0.125", optional = true, features = ["derive"] }
+codec = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
+serde = { version = "1.0.126", optional = true, features = ["derive"] }
 # darwinia
 darwinia-support = { default-features = false, path = "../../../support" }
 # substrate

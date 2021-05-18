@@ -11,7 +11,7 @@ version     = "2.4.0"
 
 [dependencies]
 # crates
-codec = { package = "parity-scale-codec", version = "2.0.1", default-features = false, features = ["derive"] }
+codec = { package = "parity-scale-codec", version = "2.1.1", default-features = false, features = ["derive"] }
 # darwinia
 darwinia-relay-primitives = { default-features = false, path = "../../../primitives/relay" }
 darwinia-support          = { default-features = false, path = "../../support" }

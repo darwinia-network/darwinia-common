@@ -11,7 +11,7 @@ version     = "2.4.0"
 
 [dependencies]
 # crates
-codec        = { package = "parity-scale-codec", version = "2.0.1", features = ["derive"] }
+codec        = { package = "parity-scale-codec", version = "2.1.1", features = ["derive"] }
 kvdb         = { version = "0.9.0" }
 kvdb-rocksdb = { version = "0.11.0" }
 parking_lot  = { version = "0.11.1" }

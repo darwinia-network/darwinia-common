@@ -11,7 +11,7 @@ version     = "2.4.0"
 
 [dependencies]
 # crates
-codec = { package = "parity-scale-codec", version = "2.0.1", default-features = false }
+codec = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
 log   = { version = "0.4.14" }
 paste = { version = "1.0.5", optional = true }
 # darwinia
