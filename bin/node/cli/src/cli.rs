@@ -61,6 +61,10 @@ pub struct RunCmd {
 	///     to a subset.
 	#[structopt(long = "disable-authority-discovery")]
 	pub authority_discovery_disabled: bool,
+
+	/// Maximum number of logs in a query.
+	#[structopt(long, default_value = "10000")]
+	pub max_past_logs: u32,
 }
 
 /// Possible subcommands of the main binary.

@@ -39,7 +39,7 @@ use sc_network::{ExHashT, NetworkService};
 use sp_api::{BlockId, Core, HeaderT, ProvideRuntimeApi};
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_runtime::traits::BlakeTwo256;
-use sp_runtime::traits::{Block as BlockT, One, Saturating, UniqueSaturatedInto, Zero};
+use sp_runtime::traits::{Block as BlockT, NumberFor, One, Saturating, UniqueSaturatedInto, Zero};
 use sp_runtime::transaction_validity::TransactionSource;
 use sp_transaction_pool::{InPoolTransaction, TransactionPool};
 // --- std ---
@@ -56,6 +56,7 @@ use std::collections::{BTreeMap, HashMap};
 use std::{
 	marker::PhantomData,
 	sync::{Arc, Mutex},
+	time,
 };
 
 pub struct EthApi<B: BlockT, C, P, CT, BE, H: ExHashT> {
@@ -68,6 +69,7 @@ pub struct EthApi<B: BlockT, C, P, CT, BE, H: ExHashT> {
 	backend: Arc<dc_db::Backend<B>>,
 	is_authority: bool,
 	signers: Vec<Box<dyn EthSigner>>,
+	max_past_logs: u32,
 	_marker: PhantomData<(B, BE)>,
 }
 
@@ -87,6 +89,7 @@ where
 		pending_transactions: PendingTransactions,
 		backend: Arc<dc_db::Backend<B>>,
 		is_authority: bool,
+		max_past_logs: u32,
 	) -> Self {
 		Self {
 			client: client.clone(),
@@ -98,6 +101,7 @@ where
 			backend,
 			is_authority,
 			signers: Vec::new(),
+			max_past_logs,
 			_marker: PhantomData,
 		}
 	}
@@ -229,60 +233,123 @@ fn transaction_build(
 		s: U256::from(transaction.signature.s().as_bytes()),
 	}
 }
+fn filter_range_logs<B: BlockT, C, BE>(
+	client: &C,
+	overrides: &OverrideHandle<B>,
+	ret: &mut Vec<Log>,
+	max_past_logs: u32,
+	filter: &Filter,
+	from: NumberFor<B>,
+	to: NumberFor<B>,
+) -> Result<()>
+where
+	C: ProvideRuntimeApi<B> + StorageProvider<B, BE>,
+	C: HeaderBackend<B> + HeaderMetadata<B, Error = BlockChainError> + 'static,
+	C::Api: EthereumRuntimeRPCApi<B>,
+	BE: Backend<B> + 'static,
+	BE::State: StateBackend<BlakeTwo256>,
+	B: BlockT<Hash = H256> + Send + Sync + 'static,
+	C: Send + Sync + 'static,
+{
+	// Max request duration of 10 seconds.
+	let max_duration = time::Duration::from_secs(10);
+	let begin_request = time::Instant::now();
 
-fn logs_build(
-	filter: Filter,
-	blocks_and_statuses: Vec<(EthereumBlock, Vec<TransactionStatus>)>,
-) -> Vec<Log> {
-	let params = FilteredParams::new(Some(filter.clone()));
-	let mut ret = Vec::new();
-	for (block, statuses) in blocks_and_statuses {
-		let mut block_log_index: u32 = 0;
-		let block_hash =
-			H256::from_slice(Keccak256::digest(&rlp::encode(&block.header)).as_slice());
-		for status in statuses.iter() {
-			let logs = status.logs.clone();
-			let mut transaction_log_index: u32 = 0;
-			let transaction_hash = status.transaction_hash;
-			for ethereum_log in logs {
-				let mut log = Log {
-					address: ethereum_log.address.clone(),
-					topics: ethereum_log.topics.clone(),
-					data: Bytes(ethereum_log.data.clone()),
-					block_hash: None,
-					block_number: None,
-					transaction_hash: None,
-					transaction_index: None,
-					log_index: None,
-					transaction_log_index: None,
-					removed: false,
-				};
-				let mut add: bool = true;
-				if let (Some(_), Some(_)) = (filter.address.clone(), filter.topics.clone()) {
-					if !params.filter_address(&log) || !params.filter_topics(&log) {
-						add = false;
-					}
-				} else if let Some(_) = filter.address {
-					if !params.filter_address(&log) {
-						add = false;
-					}
-				} else if let Some(_) = &filter.topics {
-					if !params.filter_topics(&log) {
-						add = false;
-					}
+	let mut current_number = to;
+
+	while current_number >= from {
+		let id = BlockId::Number(current_number);
+
+		let schema = frontier_backend_client::onchain_storage_schema::<B, C, BE>(client, id);
+		let handler = overrides
+			.schemas
+			.get(&schema)
+			.unwrap_or(&overrides.fallback);
+
+		let block = handler.current_block(&id);
+
+		if let Some(block) = block {
+			if FilteredParams::in_bloom(block.header.logs_bloom, filter) {
+				let statuses = handler.current_transaction_statuses(&id);
+				if let Some(statuses) = statuses {
+					filter_block_logs(ret, filter, block, statuses);
 				}
-				if add {
-					log.block_hash = Some(block_hash);
-					log.block_number = Some(block.header.number.clone());
-					log.transaction_hash = Some(transaction_hash);
-					log.transaction_index = Some(U256::from(status.transaction_index));
-					log.log_index = Some(U256::from(block_log_index));
-					log.transaction_log_index = Some(U256::from(transaction_log_index));
-					ret.push(log);
-				}
-				transaction_log_index += 1;
-				block_log_index += 1;
 			}
+		}
+		// Check for restrictions
+		if ret.len() as u32 > max_past_logs {
+			return Err(internal_err(format!(
+				"query returned more than {} results",
+				max_past_logs
+			)));
+		}
+		if begin_request.elapsed() > max_duration {
+			return Err(internal_err(format!(
+				"query timeout of {} seconds exceeded",
+				max_duration.as_secs()
+			)));
+		}
+		if current_number == Zero::zero() {
+			break;
+		} else {
+			current_number = current_number.saturating_sub(One::one());
+		}
+	}
+	Ok(())
+}
+
+fn filter_block_logs<'a>(
+	ret: &'a mut Vec<Log>,
+	filter: &'a Filter,
+	block: EthereumBlock,
+	transaction_statuses: Vec<TransactionStatus>,
+) -> &'a Vec<Log> {
+	let params = FilteredParams::new(Some(filter.clone()));
+
+	let mut block_log_index: u32 = 0;
+	let block_hash = H256::from_slice(Keccak256::digest(&rlp::encode(&block.header)).as_slice());
+	for status in transaction_statuses.iter() {
+		let logs = status.logs.clone();
+		let mut transaction_log_index: u32 = 0;
+		let transaction_hash = status.transaction_hash;
+		for ethereum_log in logs {
+			let mut log = Log {
+				address: ethereum_log.address.clone(),
+				topics: ethereum_log.topics.clone(),
+				data: Bytes(ethereum_log.data.clone()),
+				block_hash: None,
+				block_number: None,
+				transaction_hash: None,
+				transaction_index: None,
+				log_index: None,
+				transaction_log_index: None,
+				removed: false,
+			};
+			let mut add: bool = true;
+			if let (Some(_), Some(_)) = (filter.address.clone(), filter.topics.clone()) {
+				if !params.filter_address(&log) || !params.filter_topics(&log) {
+					add = false;
+				}
+			} else if let Some(_) = filter.address {
+				if !params.filter_address(&log) {
+					add = false;
+				}
+			} else if let Some(_) = &filter.topics {
+				if !params.filter_topics(&log) {
+					add = false;
+				}
+			}
+			if add {
+				log.block_hash = Some(block_hash);
+				log.block_number = Some(block.header.number.clone());
+				log.transaction_hash = Some(transaction_hash);
+				log.transaction_index = Some(U256::from(status.transaction_index));
+				log.log_index = Some(U256::from(block_log_index));
+				log.transaction_log_index = Some(U256::from(transaction_log_index));
+				ret.push(log);
+			}
+			transaction_log_index += 1;
+			block_log_index += 1;
 		}
 	}
 	ret
@@ -1153,7 +1220,7 @@ where
 	}
 
 	fn logs(&self, filter: Filter) -> Result<Vec<Log>> {
-		let mut blocks_and_statuses = Vec::new();
+		let mut ret: Vec<Log> = Vec::new();
 		if let Some(hash) = filter.block_hash.clone() {
 			let id = match frontier_backend_client::load_hash::<B>(self.backend.as_ref(), hash)
 				.map_err(|err| internal_err(format!("{:?}", err)))?
@@ -1174,9 +1241,8 @@ where
 
 			let block = handler.current_block(&id);
 			let statuses = handler.current_transaction_statuses(&id);
-
 			if let (Some(block), Some(statuses)) = (block, statuses) {
-				blocks_and_statuses.push((block, statuses));
+				filter_block_logs(&mut ret, &filter, block, statuses);
 			}
 		} else {
 			let best_number = self.client.info().best_number;
@@ -1196,35 +1262,18 @@ where
 				.and_then(|v| v.to_min_block_num())
 				.map(|s| s.unique_saturated_into())
 				.unwrap_or(self.client.info().best_number);
-			while current_number >= from_number {
-				let id = BlockId::Number(current_number);
-
-				let schema = frontier_backend_client::onchain_storage_schema::<B, C, BE>(
-					self.client.as_ref(),
-					id,
-				);
-				let handler = self
-					.overrides
-					.schemas
-					.get(&schema)
-					.unwrap_or(&self.overrides.fallback);
-
-				let block = handler.current_block(&id);
-				let statuses = handler.current_transaction_statuses(&id);
-
-				if let (Some(block), Some(statuses)) = (block, statuses) {
-					blocks_and_statuses.push((block, statuses));
-				}
-
-				if current_number == Zero::zero() {
-					break;
-				} else {
-					current_number = current_number.saturating_sub(One::one());
-				}
-			}
+			let _ = filter_range_logs(
+				self.client.as_ref(),
+				&self.overrides,
+				&mut ret,
+				self.max_past_logs,
+				&filter,
+				from_number,
+				current_number,
+			)?;
 		}
 
-		Ok(logs_build(filter, blocks_and_statuses))
+		Ok(ret)
 	}
 
 	fn work(&self) -> Result<Work> {
@@ -1342,6 +1391,7 @@ pub struct EthFilterApi<B: BlockT, C, BE> {
 	filter_pool: FilterPool,
 	max_stored_filters: usize,
 	overrides: Arc<OverrideHandle<B>>,
+	max_past_logs: u32,
 	_marker: PhantomData<(B, BE)>,
 }
 
@@ -1359,12 +1409,14 @@ where
 		filter_pool: FilterPool,
 		max_stored_filters: usize,
 		overrides: Arc<OverrideHandle<B>>,
+		max_past_logs: u32,
 	) -> Self {
 		Self {
 			client: client.clone(),
 			filter_pool,
 			max_stored_filters,
 			overrides,
+			max_past_logs,
 			_marker: PhantomData,
 		}
 	}
@@ -1509,31 +1561,16 @@ where
 
 						let from_number = std::cmp::max(last_poll, filter_from);
 						// Build the response.
-						let mut blocks_and_statuses = Vec::new();
-						while current_number >= from_number {
-							let id = BlockId::Number(current_number);
-
-							let schema = frontier_backend_client::onchain_storage_schema::<B, C, BE>(
-								self.client.as_ref(),
-								id,
-							);
-							let handler = self
-								.overrides
-								.schemas
-								.get(&schema)
-								.unwrap_or(&self.overrides.fallback);
-							let block = handler.current_block(&id);
-							let statuses = handler.current_transaction_statuses(&id);
-							if let (Some(block), Some(statuses)) = (block, statuses) {
-								blocks_and_statuses.push((block, statuses));
-							}
-
-							if current_number == Zero::zero() {
-								break;
-							} else {
-								current_number = current_number.saturating_sub(One::one());
-							}
-						}
+						let mut ret: Vec<Log> = Vec::new();
+						let _ = filter_range_logs(
+							self.client.as_ref(),
+							&self.overrides,
+							&mut ret,
+							self.max_past_logs,
+							&filter,
+							from_number,
+							current_number,
+						)?;
 						// Update filter `last_poll`.
 						locked.insert(
 							key,
@@ -1543,10 +1580,7 @@ where
 								at_block: pool_item.at_block,
 							},
 						);
-						Ok(FilterChanges::Logs(logs_build(
-							filter.clone(),
-							blocks_and_statuses,
-						)))
+						Ok(FilterChanges::Logs(ret))
 					}
 					// Should never reach here.
 					_ => Err(internal_err("Method not available.")),
@@ -1592,34 +1626,17 @@ where
 							.map(|s| s.unique_saturated_into())
 							.unwrap_or(self.client.info().best_number);
 
-						let mut blocks_and_statuses = Vec::new();
-						while current_number >= from_number {
-							let id = BlockId::Number(current_number);
-
-							let schema = frontier_backend_client::onchain_storage_schema::<B, C, BE>(
-								self.client.as_ref(),
-								id,
-							);
-							let handler = self
-								.overrides
-								.schemas
-								.get(&schema)
-								.unwrap_or(&self.overrides.fallback);
-
-							let block = handler.current_block(&id);
-							let statuses = handler.current_transaction_statuses(&id);
-
-							if let (Some(block), Some(statuses)) = (block, statuses) {
-								blocks_and_statuses.push((block, statuses));
-							}
-
-							if current_number == Zero::zero() {
-								break;
-							} else {
-								current_number = current_number.saturating_sub(One::one());
-							}
-						}
-						Ok(logs_build(filter.clone(), blocks_and_statuses))
+						let mut ret: Vec<Log> = Vec::new();
+						let _ = filter_range_logs(
+							self.client.as_ref(),
+							&self.overrides,
+							&mut ret,
+							self.max_past_logs,
+							&filter,
+							from_number,
+							current_number,
+						)?;
+						Ok(ret)
 					}
 					_ => Err(internal_err(format!(
 						"Filter id {:?} is not a Log filter.",

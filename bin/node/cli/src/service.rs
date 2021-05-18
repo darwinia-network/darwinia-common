@@ -333,6 +333,7 @@ where
 		let pending_transactions = pending_transactions.clone();
 		let frontier_backend = frontier_backend.clone();
 		let filter_pool = filter_pool.clone();
+		let max_past_logs = cli.run.max_past_logs;
 
 		move |deny_unsafe, is_authority, network, subscription_executor| -> RpcExtension {
 			let deps = FullDeps {
@@ -358,6 +359,7 @@ where
 				pending_transactions: pending_transactions.clone(),
 				backend: frontier_backend.clone(),
 				filter_pool: filter_pool.clone(),
+				max_past_logs,
 			};
 
 			rpc::create_full(deps, subscription_task_executor.clone())
