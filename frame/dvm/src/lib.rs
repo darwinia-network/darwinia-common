@@ -153,7 +153,7 @@ decl_module! {
 			<Module<T>>::store_block(
 				dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(), U256::from(
 					UniqueSaturatedInto::<u128>::unique_saturated_into(
-						frame_system::Module::<T>::block_number()
+						frame_system::Pallet::<T>::block_number()
 					)
 				),
 			);
