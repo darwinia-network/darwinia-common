@@ -984,16 +984,17 @@ where
 					}
 					// if Err -- we need more gas
 					Err(err) => {
-						// if Err == OutofGas or OutofFund, we need more gas
+						// if Err == OutofGas, we need more gas
 						if err.code == ErrorCode::ServerError(0) {
 							lower = mid;
 							mid = (lower + upper + 1) / 2;
 							if mid == lower {
 								break;
 							}
+						} else {
+							// Other errors, return directly
+							return Err(err);
 						}
-						// Other errors, return directly
-						return Err(err);
 					}
 				}
 			}
