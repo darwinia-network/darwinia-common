@@ -1706,6 +1706,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-evm-precompile-curve25519"
+version = "2.4.0"
+dependencies = [
+ "curve25519-dalek 3.1.0",
+ "dp-evm",
+ "evm",
+ "sp-core",
+ "sp-io",
+]
+
+[[package]]
 name = "darwinia-evm-precompile-dispatch"
 version = "2.4.0"
 dependencies = [
