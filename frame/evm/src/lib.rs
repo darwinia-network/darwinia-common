@@ -149,7 +149,7 @@ pub trait IssuingHandler {
 }
 
 impl IssuingHandler for () {
-	fn handle(_address: H160, _caller: H160, _input: &[u8]) -> DispatchResult {
+	fn handle(_: H160, _: H160, _: &[u8]) -> DispatchResult {
 		Ok(())
 	}
 }
