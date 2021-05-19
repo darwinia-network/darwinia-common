@@ -94,7 +94,6 @@ decl_storage! {
 	trait Store for Module<T: Config> as Ethereum {
 		/// Current building block's transactions and receipts.
 		Pending: Vec<(ethereum::Transaction, TransactionStatus, ethereum::Receipt)>;
-
 		/// The current Ethereum block.
 		CurrentBlock: Option<ethereum::Block>;
 		/// The current Ethereum receipts.
@@ -108,7 +107,7 @@ decl_storage! {
 	}
 	add_extra_genesis {
 		build(|_config: &GenesisConfig| {
-			<Module<T>>::store_block(false);
+			<Module<T>>::store_block(false, U256::zero());
 
 			// Initialize the storage schema at the well known key.
 			unhashed::put::<EthereumStorageSchema>(&PALLET_ETHEREUM_SCHEMA, &EthereumStorageSchema::V1);
@@ -152,7 +151,11 @@ decl_module! {
 
 		fn on_finalize(_block_number: T::BlockNumber) {
 			<Module<T>>::store_block(
-				dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
+				dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(), U256::from(
+					UniqueSaturatedInto::<u128>::unique_saturated_into(
+						frame_system::Module::<T>::block_number()
+					)
+				),
 			);
 		}
 
@@ -255,7 +258,7 @@ impl<T: Config> Module<T> {
 		})
 	}
 
-	fn store_block(post_log: bool) {
+	fn store_block(post_log: bool, block_number: U256) {
 		let mut transactions = Vec::new();
 		let mut statuses = Vec::new();
 		let mut receipts = Vec::new();
@@ -278,9 +281,7 @@ impl<T: Config> Module<T> {
 			), // TODO: check receipts hash.
 			logs_bloom,
 			difficulty: U256::zero(),
-			number: U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(
-				<frame_system::Pallet<T>>::block_number(),
-			)),
+			number: block_number,
 			gas_limit: T::BlockGasLimit::get(),
 			gas_used: receipts
 				.clone()
