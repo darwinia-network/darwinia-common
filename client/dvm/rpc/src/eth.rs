@@ -21,7 +21,7 @@ use crate::{
 // --- darwinia ---
 use dp_rpc::{
 	Block, BlockNumber, BlockTransactions, Bytes, CallRequest, Filter, FilterChanges, FilterPool,
-	FilterPoolItem, FilterType, FilteredParams, Index, Log, PendingTransaction,
+	FilterPoolItem, FilterType, FilteredParams, Index, Log, PeerCount, PendingTransaction,
 	PendingTransactions, Receipt, Rich, RichBlock, SyncInfo, SyncStatus, Transaction,
 	TransactionRequest, Work,
 };
@@ -1306,14 +1306,20 @@ where
 pub struct NetApi<B: BlockT, BE, C, H: ExHashT> {
 	client: Arc<C>,
 	network: Arc<NetworkService<B, H>>,
+	peer_count_as_hex: bool,
 	_marker: PhantomData<BE>,
 }
 
 impl<B: BlockT, BE, C, H: ExHashT> NetApi<B, BE, C, H> {
-	pub fn new(client: Arc<C>, network: Arc<NetworkService<B, H>>) -> Self {
+	pub fn new(
+		client: Arc<C>,
+		network: Arc<NetworkService<B, H>>,
+		peer_count_as_hex: bool,
+	) -> Self {
 		Self {
 			client,
 			network,
+			peer_count_as_hex,
 			_marker: PhantomData,
 		}
 	}
@@ -1334,8 +1340,12 @@ where
 		Ok(true)
 	}
 
-	fn peer_count(&self) -> Result<u32> {
-		Ok(self.network.num_connected() as u32)
+	fn peer_count(&self) -> Result<PeerCount> {
+		let peer_count = self.network.num_connected();
+		Ok(match self.peer_count_as_hex {
+			true => PeerCount::String(format!("0x{:x}", peer_count)),
+			false => PeerCount::U32(peer_count as u32),
+		})
 	}
 
 	fn version(&self) -> Result<String> {
