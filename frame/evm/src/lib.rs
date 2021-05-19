@@ -147,6 +147,12 @@ impl GasWeightMapping for () {
 pub trait IssuingHandler {
 	fn handle(address: H160, caller: H160, input: &[u8]) -> DispatchResult;
 }
+/// A default empty issuingHandler, usually used in the test scenario.
+impl IssuingHandler for () {
+	fn handle(_: H160, _: H160, _: &[u8]) -> DispatchResult {
+		Ok(())
+	}
+}
 
 static ISTANBUL_CONFIG: EvmConfig = EvmConfig::istanbul();
 
