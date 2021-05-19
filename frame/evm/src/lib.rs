@@ -148,6 +148,12 @@ pub trait IssuingHandler {
 	fn handle(address: H160, caller: H160, input: &[u8]) -> DispatchResult;
 }
 
+impl IssuingHandler for () {
+	fn handle(_address: H160, _caller: H160, _input: &[u8]) -> DispatchResult {
+		Ok(())
+	}
+}
+
 static ISTANBUL_CONFIG: EvmConfig = EvmConfig::istanbul();
 
 /// EVM module trait
