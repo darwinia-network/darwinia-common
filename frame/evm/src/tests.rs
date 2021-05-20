@@ -89,14 +89,6 @@ impl FeeCalculator for FixedGasPrice {
 	}
 }
 
-/// EmptyIssuingHandler
-pub struct EmptyIssuingHandler;
-impl IssuingHandler for EmptyIssuingHandler {
-	fn handle(_address: H160, _caller: H160, _input: &[u8]) -> DispatchResult {
-		Ok(())
-	}
-}
-
 pub struct RawAccountBasic<T>(sp_std::marker::PhantomData<T>);
 
 impl<T: Config> AccountBasic for RawAccountBasic<T> {
@@ -170,7 +162,7 @@ impl Config for Test {
 	type ChainId = ();
 	type BlockGasLimit = ();
 	type Runner = crate::runner::stack::Runner<Self>;
-	type IssuingHandler = EmptyIssuingHandler;
+	type IssuingHandler = ();
 	type RingAccountBasic = RawAccountBasic<Test>;
 	type KtonAccountBasic = RawAccountBasic<Test>;
 }
