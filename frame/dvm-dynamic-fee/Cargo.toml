@@ -12,10 +12,9 @@ version     = "2.4.0"
 
 [dependencies]
 # crates
-async-trait = "0.1.42"
-# TODO FORMAT
-darwinia-evm        = { default-features = false, path = "../evm" }
-codec = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
+async-trait 	= "0.1.42"
+codec			= { package = "parity-scale-codec", version = "2.1.1", default-features = false }
+darwinia-evm    = { default-features = false, path = "../evm" }
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }

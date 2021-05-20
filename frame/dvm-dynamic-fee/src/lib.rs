@@ -27,7 +27,7 @@ use frame_support::{
 use frame_system::ensure_none;
 use sp_core::U256;
 #[cfg(feature = "std")]
-use sp_inherents::{Error, InherentDataProvider};
+use sp_inherents::Error;
 use sp_runtime::RuntimeDebug;
 use sp_std::{
 	cmp::{max, min},
@@ -110,10 +110,10 @@ pub const INHERENT_IDENTIFIER: InherentIdentifier = *b"dynfee0_";
 pub type InherentType = U256;
 
 #[cfg(feature = "std")]
-pub struct FeeDataProvider(pub InherentType);
+pub struct InherentDataProvider(pub InherentType);
 
 #[cfg(feature = "std")]
-impl FeeDataProvider {
+impl InherentDataProvider {
 	pub fn from_target_gas_price(price: InherentType) -> Self {
 		Self(price)
 	}
@@ -121,7 +121,7 @@ impl FeeDataProvider {
 
 #[cfg(feature = "std")]
 #[async_trait::async_trait]
-impl InherentDataProvider for FeeDataProvider {
+impl sp_inherents::InherentDataProvider for InherentDataProvider {
 	fn provide_inherent_data(&self, inherent_data: &mut InherentData) -> Result<(), Error> {
 		inherent_data.put_data(INHERENT_IDENTIFIER, &self.0)
 	}

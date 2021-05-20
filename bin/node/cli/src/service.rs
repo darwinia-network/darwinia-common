@@ -307,9 +307,9 @@ where
 			let uncles =
 				sp_authorship::InherentDataProvider::<<Block as BlockT>::Header>::check_inherents();
 
-			let dynamic_fee = dvm_dynamic_fee::FeeDataProvider::from_target_gas_price(U256::from(
-				target_gas_price,
-			));
+			let dynamic_fee = dvm_dynamic_fee::InherentDataProvider::from_target_gas_price(
+				U256::from(target_gas_price),
+			);
 
 			Ok((timestamp, slot, uncles, dynamic_fee))
 		},
@@ -564,7 +564,7 @@ where
 							slot_duration,
 						);
 
-					let dynamic_fee = dvm_dynamic_fee::FeeDataProvider::from_target_gas_price(
+					let dynamic_fee = dvm_dynamic_fee::InherentDataProvider::from_target_gas_price(
 						U256::from(target_gas_price),
 					);
 
