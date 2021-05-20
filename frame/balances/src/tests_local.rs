@@ -36,7 +36,7 @@ use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BadOrigin, BlakeTwo256, IdentityLookup, SignedExtension, Zero},
-	FixedPointNumber, RuntimeDebug,
+	ArithmeticError, FixedPointNumber, RuntimeDebug,
 };
 // --- darwinia ---
 use crate::{self as darwinia_balances, pallet::*};
