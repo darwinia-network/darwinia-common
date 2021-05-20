@@ -78,7 +78,6 @@ pallet-randomness-collective-flip          = { default-features = false, git = "
 pallet-recovery                            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 pallet-scheduler                           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 pallet-session                             = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
-pallet-shift-session-manager               = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
 pallet-society                             = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 pallet-sudo                                = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 pallet-timestamp                           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
@@ -171,7 +170,6 @@ std = [
 	"pallet-recovery/std",
 	"pallet-scheduler/std",
 	"pallet-session/std",
-	"pallet-shift-session-manager/std",
 	"pallet-society/std",
 	"pallet-sudo/std",
 	"pallet-timestamp/std",

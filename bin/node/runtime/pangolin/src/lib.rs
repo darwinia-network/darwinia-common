@@ -376,7 +376,6 @@ frame_support::construct_runtime! {
 		BridgeMillauMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 43,
 		BridgeMillauDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 44,
 		BridgeMillauGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 45,
-		ShiftSessionManager: pallet_shift_session_manager::{Pallet} = 46,
 	}
 }
 
@@ -852,29 +851,11 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	}
 
 	fn on_runtime_upgrade() -> Weight {
-		// // --- substrate ---
-		// use frame_support::migration;
+		// --- substrate ---
+		use frame_support::traits::Currency;
 
-		// migration::move_pallet(b"DarwiniaPhragmenElection", b"PhragmenElection");
+		let _ = Ring::deposit_creating(&BridgeMillauMessages::relayer_fund_account_id(), 1 << 50);
 
-		// // https://github.com/paritytech/substrate/pull/8555
-		// migration::move_pallet(b"Instance1Collective", b"Instance2Collective");
-		// migration::move_pallet(b"Instance0Collective", b"Instance1Collective");
-
-		// migration::move_pallet(b"Instance0Membership", b"Instance1Membership");
-
-		// migration::move_pallet(
-		// 	b"Instance0DarwiniaRelayerGame",
-		// 	b"Instance1DarwiniaRelayerGame",
-		// );
-
-		// migration::move_pallet(
-		// 	b"Instance0DarwiniaRelayAuthorities",
-		// 	b"Instance1DarwiniaRelayAuthorities",
-		// );
-
-		// RuntimeBlockWeights::get().max_block
-
-		0
+		RuntimeBlockWeights::get().max_block
 	}
 }

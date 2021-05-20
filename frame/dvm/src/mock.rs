@@ -123,14 +123,6 @@ impl FeeCalculator for FixedGasPrice {
 	}
 }
 
-/// EmptyIssuingHandler
-pub struct EmptyIssuingHandler;
-impl IssuingHandler for EmptyIssuingHandler {
-	fn handle(_address: H160, _caller: H160, _input: &[u8]) -> DispatchResult {
-		Ok(())
-	}
-}
-
 pub struct EthereumFindAuthor;
 impl FindAuthor<H160> for EthereumFindAuthor {
 	fn find_author<'a, I>(_digests: I) -> Option<H160>
@@ -178,7 +170,7 @@ impl darwinia_evm::Config for Test {
 	type Runner = darwinia_evm::runner::stack::Runner<Self>;
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
-	type IssuingHandler = EmptyIssuingHandler;
+	type IssuingHandler = ();
 }
 
 impl Config for Test {
