@@ -49,7 +49,7 @@ decl_storage! {
 
 	add_extra_genesis {
 		build(|_config: &GenesisConfig| {
-			MinGasPrice::set(U256::from(3_000_000_000u128));
+			MinGasPrice::set(U256::from(1_000_000_000u128));
 		});
 	}
 }
