@@ -19,12 +19,15 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
-use frame_support::{decl_event, decl_module, decl_storage, traits::Get};
+use frame_support::{
+	decl_event, decl_module, decl_storage,
+	inherent::{InherentData, InherentIdentifier, IsFatalError, ProvideInherent},
+	traits::Get,
+};
 use frame_system::ensure_none;
 use sp_core::U256;
 #[cfg(feature = "std")]
-use sp_inherents::ProvideInherentData;
-use sp_inherents::{InherentData, InherentIdentifier, IsFatalError, ProvideInherent};
+use sp_inherents::InherentDataProvider;
 use sp_runtime::RuntimeDebug;
 use sp_std::{
 	cmp::{max, min},
@@ -95,14 +98,11 @@ pub const INHERENT_IDENTIFIER: InherentIdentifier = *b"dynfee0_";
 pub type InherentType = U256;
 
 #[cfg(feature = "std")]
-pub struct InherentDataProvider(pub InherentType);
+pub struct FeeDataProvider(pub InherentType);
 
 #[cfg(feature = "std")]
-impl ProvideInherentData for InherentDataProvider {
-	fn inherent_identifier(&self) -> &'static InherentIdentifier {
-		&INHERENT_IDENTIFIER
-	}
-
+#[async_trait::async_trait]
+impl InherentDataProvider for FeeDataProvider {
 	fn provide_inherent_data(
 		&self,
 		inherent_data: &mut InherentData,
@@ -110,7 +110,11 @@ impl ProvideInherentData for InherentDataProvider {
 		inherent_data.put_data(INHERENT_IDENTIFIER, &self.0)
 	}
 
-	fn error_to_string(&self, _: &[u8]) -> Option<String> {
+	async fn try_handle_error(
+		&self,
+		_: &InherentIdentifier,
+		_: &[u8],
+	) -> Option<Result<(), sp_inherents::Error>> {
 		None
 	}
 }
