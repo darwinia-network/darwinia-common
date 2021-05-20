@@ -47,7 +47,7 @@
 /frame/dvm-dynamic-fee/ @AsceticBear @AurevoirXavier @HackFisher
 /frame/elections-phragmen/ @AurevoirXavier
 /frame/evm/ @AsceticBear @HackFisher
-/frame/evm/precompile @AsceticBear @HackFisher @xiaoch05
+/frame/evm/precompile/ @AsceticBear @HackFisher @xiaoch05
 /frame/header-mmr/ @AurevoirXavier @HackFisher
 /frame/staking/ @AurevoirXavier @HackFisher
 /frame/staking/rpc/ @AurevoirXavier
