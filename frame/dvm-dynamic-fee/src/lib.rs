@@ -43,14 +43,8 @@ pub trait Config: frame_system::Config {
 
 decl_storage! {
 	trait Store for Module<T: Config> as DynamicFee {
-		MinGasPrice get(fn min_gas_price) config(): U256;
+		MinGasPrice get(fn min_gas_price) config(): U256 = U256::from(1_000_000_000u128);
 		TargetMinGasPrice: Option<U256>;
-	}
-
-	add_extra_genesis {
-		build(|_config: &GenesisConfig| {
-			MinGasPrice::set(U256::from(1_000_000_000u128));
-		});
 	}
 }
 
