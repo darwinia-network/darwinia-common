@@ -27,7 +27,7 @@ use frame_support::{
 use frame_system::ensure_none;
 use sp_core::U256;
 #[cfg(feature = "std")]
-use sp_inherents::InherentDataProvider;
+use sp_inherents::{Error, InherentDataProvider};
 use sp_runtime::RuntimeDebug;
 use sp_std::{
 	cmp::{max, min},
@@ -45,6 +45,12 @@ decl_storage! {
 	trait Store for Module<T: Config> as DynamicFee {
 		MinGasPrice get(fn min_gas_price) config(): U256;
 		TargetMinGasPrice: Option<U256>;
+	}
+
+	add_extra_genesis {
+		build(|_config: &GenesisConfig| {
+			MinGasPrice::set(U256::from(3_000_000_000u128));
+		});
 	}
 }
 
@@ -84,6 +90,12 @@ decl_module! {
 	}
 }
 
+impl<T: Config> darwinia_evm::FeeCalculator for Module<T> {
+	fn min_gas_price() -> U256 {
+		MinGasPrice::get()
+	}
+}
+
 #[derive(Encode, Decode, RuntimeDebug)]
 pub enum InherentError {}
 
@@ -101,21 +113,30 @@ pub type InherentType = U256;
 pub struct FeeDataProvider(pub InherentType);
 
 #[cfg(feature = "std")]
+impl FeeDataProvider {
+	pub fn from_target_gas_price(price: InherentType) -> Self {
+		Self(price)
+	}
+}
+
+#[cfg(feature = "std")]
 #[async_trait::async_trait]
 impl InherentDataProvider for FeeDataProvider {
-	fn provide_inherent_data(
-		&self,
-		inherent_data: &mut InherentData,
-	) -> Result<(), sp_inherents::Error> {
+	fn provide_inherent_data(&self, inherent_data: &mut InherentData) -> Result<(), Error> {
 		inherent_data.put_data(INHERENT_IDENTIFIER, &self.0)
 	}
 
 	async fn try_handle_error(
 		&self,
-		_: &InherentIdentifier,
-		_: &[u8],
-	) -> Option<Result<(), sp_inherents::Error>> {
-		None
+		identifier: &InherentIdentifier,
+		error: &[u8],
+	) -> Option<Result<(), Error>> {
+		if *identifier != INHERENT_IDENTIFIER {
+			return None;
+		}
+
+		let error = InherentError::decode(&mut &error[..]).ok()?;
+		Some(Err(Error::Application(Box::from(format!("{:?}", error)))))
 	}
 }
 

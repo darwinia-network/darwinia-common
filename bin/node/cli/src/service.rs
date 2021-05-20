@@ -59,6 +59,7 @@ use sp_api::ConstructRuntimeApi;
 use sp_consensus::{
 	import_queue::BasicQueue, CanAuthorWithNativeVersion, DefaultImportQueue, NeverCanAuthor,
 };
+use sp_core::U256;
 use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 use sp_trie::PrefixedMemoryDB;
 use substrate_prometheus_endpoint::Registry;
@@ -289,6 +290,7 @@ where
 		client.clone(),
 	)?;
 	let slot_duration = babe_link.config().slot_duration();
+	let target_gas_price = cli.run.target_gas_price.clone();
 	let import_queue = sc_consensus_babe::import_queue(
 		babe_link.clone(),
 		babe_import.clone(),
@@ -305,7 +307,11 @@ where
 			let uncles =
 				sp_authorship::InherentDataProvider::<<Block as BlockT>::Header>::check_inherents();
 
-			Ok((timestamp, slot, uncles))
+			let dynamic_fee = dvm_dynamic_fee::FeeDataProvider::from_target_gas_price(U256::from(
+				target_gas_price,
+			));
+
+			Ok((timestamp, slot, uncles, dynamic_fee))
 		},
 		&task_manager.spawn_essential_handle(),
 		config.prometheus_registry(),
@@ -421,6 +427,7 @@ where
 		Some(sc_consensus_slots::BackoffAuthoringOnFinalizedHeadLagging::default());
 	let disable_grandpa = config.disable_grandpa;
 	let name = config.network.node_name.clone();
+	let target_gas_price = cli.run.target_gas_price.clone();
 	let PartialComponents {
 		client,
 		backend,
@@ -557,7 +564,11 @@ where
 							slot_duration,
 						);
 
-					Ok((timestamp, slot, uncles))
+					let dynamic_fee = dvm_dynamic_fee::FeeDataProvider::from_target_gas_price(
+						U256::from(target_gas_price),
+					);
+
+					Ok((timestamp, slot, uncles, dynamic_fee))
 				}
 			},
 			force_authoring,

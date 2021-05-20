@@ -112,12 +112,17 @@ pub use relay_authorities::*;
 pub mod tron_backing;
 pub use tron_backing::*;
 
+// DVM
 pub mod evm;
 pub use evm::*;
 
 pub mod dvm;
 pub use dvm::*;
 
+pub mod dynamic_fee;
+pub use dynamic_fee::*;
+
+// S2S bridges
 pub mod bridge_messages;
 pub use bridge_messages::*;
 

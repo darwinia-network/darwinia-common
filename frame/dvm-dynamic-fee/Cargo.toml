@@ -13,6 +13,8 @@ version     = "2.4.0"
 [dependencies]
 # crates
 async-trait = "0.1.42"
+# TODO FORMAT
+darwinia-evm        = { default-features = false, path = "../evm" }
 codec = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
@@ -32,4 +34,5 @@ std     = [
 	"sp-inherents/std",
 	"sp-runtime/std",
 	"sp-std/std",
+	"darwinia-evm/std"
 ]
