@@ -850,11 +850,6 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	}
 
 	fn on_runtime_upgrade() -> Weight {
-		// --- substrate ---
-		use frame_support::traits::Currency;
-
-		let _ = Ring::deposit_creating(&BridgeMillauMessages::relayer_fund_account_id(), 1 << 50);
-
-		RuntimeBlockWeights::get().max_block
+		0
 	}
 }
