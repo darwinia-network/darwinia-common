@@ -67,7 +67,7 @@ pub struct RunCmd {
 	pub max_past_logs: u32,
 
 	/// The dynamic-fee pallet target gas price set by block author
-	#[structopt(long, default_value = "3_000_000_000")]
+	#[structopt(long, default_value = "1000000000")]
 	pub target_gas_price: u64,
 }
 

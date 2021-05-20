@@ -37,7 +37,7 @@ describe("Test Transfer Balance", function () {
 		const createReceipt = await web3.eth.sendSignedTransaction(
 			createTransaction.rawTransaction
 		);
-	}).timeout(10000);
+	}).timeout(80000);
 
 	it("Check balance after transfer 10 ether", async function () {
 		const balanceFrom = web3.utils.fromWei(await web3.eth.getBalance(addressFrom), "ether");
@@ -61,7 +61,7 @@ describe("Test Transfer Balance", function () {
 		const createReceipt = await web3.eth.sendSignedTransaction(
 			createTransaction.rawTransaction
 		);
-	}).timeout(10000);
+	}).timeout(80000);
 
 	it("Check balance after transfer 100 wei", async function () {
 		const balanceFrom = web3.utils.fromWei(await web3.eth.getBalance(addressFrom), "ether");
@@ -87,7 +87,7 @@ describe("Test Transfer Balance", function () {
 			createTransaction.rawTransaction
 		);
 
-	}).timeout(10000);
+	}).timeout(80000);
 
 	it("Check balance after transfer 50 ether", async function () {
 		const balanceFrom = web3.utils.fromWei(await web3.eth.getBalance(addressFrom), "ether");
@@ -113,7 +113,7 @@ describe("Test Transfer Balance", function () {
 		const createReceipt = await web3.eth.sendSignedTransaction(
 			createTransaction.rawTransaction
 		);
-	}).timeout(10000);
+	}).timeout(80000);
 
 	it("Check balance after transfer self", async function () {
 		const balanceFrom = web3.utils.fromWei(await web3.eth.getBalance(addressFrom), "ether");
@@ -137,7 +137,7 @@ describe("Test Transfer Balance", function () {
 		const createReceipt = await web3.eth.sendSignedTransaction(
 			createTransaction.rawTransaction
 		);
-	}).timeout(10000);
+	}).timeout(80000);
 
 	it("Get sender balance after withdraw", async function () {
 		const balanceFrom = web3.utils.fromWei(await web3.eth.getBalance(addressFrom), "ether");
