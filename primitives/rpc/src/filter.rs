@@ -14,7 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Open Ethereum. If not, see <http://www.gnu.org/licenses/>.
 
-use ethereum_types::{H160, H256, U256};
+use core::convert::AsRef;
+use ethereum_types::{Bloom, BloomInput, H160, H256, U256};
 use serde::de::{DeserializeOwned, Error};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{from_value, Value};
@@ -67,6 +68,8 @@ pub type Topic = VariadicValue<Option<VariadicValue<Option<H256>>>>;
 /// FlatTopic, simplifies the matching logic.
 pub type FlatTopic = VariadicValue<Option<H256>>;
 
+pub type BloomFilter<'a> = Vec<Option<Bloom>>;
+
 /// Filter
 #[derive(Debug, PartialEq, Clone, Deserialize, Eq, Hash)]
 #[serde(deny_unknown_fields)]
@@ -89,7 +92,7 @@ pub struct Filter {
 #[derive(Debug)]
 pub struct FilteredParams {
 	pub filter: Option<Filter>,
-	flat_topics: Vec<FlatTopic>,
+	pub flat_topics: Vec<FlatTopic>,
 }
 
 impl Default for FilteredParams {
@@ -116,6 +119,66 @@ impl FilteredParams {
 			};
 		}
 		Self::default()
+	}
+	/// Checks the possible existance of an address or topic(s) in a Bloom.
+	/// Wildcards (VariadicValue::Null) are matched as positive.
+	pub fn bloom_filter<'a>(
+		address: &'a Option<FilterAddress>,
+		topics: &'a Option<Vec<FlatTopic>>,
+	) -> BloomFilter<'a> {
+		let mut blooms = BloomFilter::new();
+		// Address
+		if let Some(address) = address {
+			match address {
+				VariadicValue::Single(address) => {
+					let bloom: Bloom = BloomInput::Raw(address.as_ref()).into();
+					blooms.push(Some(bloom))
+				}
+				VariadicValue::Multiple(addresses) => {
+					for address in addresses.into_iter() {
+						let bloom: Bloom = BloomInput::Raw(address.as_ref()).into();
+						blooms.push(Some(bloom))
+					}
+				}
+				_ => blooms.push(None),
+			}
+		}
+		// Topics
+		if let Some(topics) = topics {
+			for flat in topics {
+				match flat {
+					VariadicValue::Single(topic) => {
+						if let Some(topic) = topic {
+							let bloom: Bloom = BloomInput::Raw(topic.as_ref()).into();
+							blooms.push(Some(bloom));
+						} else {
+							blooms.push(None);
+						}
+					}
+					_ => blooms.push(None),
+				}
+			}
+		}
+		blooms
+	}
+
+	/// Checks the possible existance of an address or topic(s) in a Bloom.
+	/// Wildcards (VariadicValue::Null) are matched as positive.
+	pub fn in_bloom(bloom: Bloom, bloom_input: &BloomFilter) -> bool {
+		if bloom_input.len() == 0 {
+			return true;
+		} else {
+			for inner in bloom_input {
+				// Wildcard (None) or matching topic.
+				if match inner {
+					Some(input) => bloom.contains_bloom(input),
+					None => true,
+				} {
+					return true;
+				}
+			}
+		}
+		false
 	}
 	/// Cartesian product for VariadicValue conditional indexed parameters.
 	/// Executed once on struct instance.

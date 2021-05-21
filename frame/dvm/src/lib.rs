@@ -94,7 +94,6 @@ decl_storage! {
 	trait Store for Module<T: Config> as Ethereum {
 		/// Current building block's transactions and receipts.
 		Pending: Vec<(ethereum::Transaction, TransactionStatus, ethereum::Receipt)>;
-
 		/// The current Ethereum block.
 		CurrentBlock: Option<ethereum::Block>;
 		/// The current Ethereum receipts.
@@ -108,7 +107,7 @@ decl_storage! {
 	}
 	add_extra_genesis {
 		build(|_config: &GenesisConfig| {
-			<Module<T>>::store_block(false);
+			<Module<T>>::store_block(false, U256::zero());
 
 			// Initialize the storage schema at the well known key.
 			unhashed::put::<EthereumStorageSchema>(&PALLET_ETHEREUM_SCHEMA, &EthereumStorageSchema::V1);
@@ -152,7 +151,11 @@ decl_module! {
 
 		fn on_finalize(_block_number: T::BlockNumber) {
 			<Module<T>>::store_block(
-				dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
+				dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(), U256::from(
+					UniqueSaturatedInto::<u128>::unique_saturated_into(
+						frame_system::Pallet::<T>::block_number()
+					)
+				),
 			);
 		}
 
@@ -208,12 +211,21 @@ impl<T: Config> frame_support::unsigned::ValidateUnsigned for Module<T> {
 				return InvalidTransaction::Payment.into();
 			}
 
-			if transaction.gas_price < T::FeeCalculator::min_gas_price() {
+			let min_gas_price = T::FeeCalculator::min_gas_price();
+
+			if transaction.gas_price < min_gas_price {
 				return InvalidTransaction::Payment.into();
 			}
 
-			let mut builder =
-				ValidTransactionBuilder::default().and_provides((origin, transaction.nonce));
+			let mut builder = ValidTransactionBuilder::default()
+				.and_provides((origin, transaction.nonce))
+				.priority(if min_gas_price == U256::zero() {
+					0
+				} else {
+					let target_gas =
+						(transaction.gas_limit * transaction.gas_price) / min_gas_price;
+					T::GasWeightMapping::gas_to_weight(target_gas.unique_saturated_into())
+				});
 
 			if transaction.nonce > account_data.nonce {
 				if let Some(prev_nonce) = transaction.nonce.checked_sub(1.into()) {
@@ -255,7 +267,7 @@ impl<T: Config> Module<T> {
 		})
 	}
 
-	fn store_block(post_log: bool) {
+	fn store_block(post_log: bool, block_number: U256) {
 		let mut transactions = Vec::new();
 		let mut statuses = Vec::new();
 		let mut receipts = Vec::new();
@@ -278,9 +290,7 @@ impl<T: Config> Module<T> {
 			), // TODO: check receipts hash.
 			logs_bloom,
 			difficulty: U256::zero(),
-			number: U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(
-				<frame_system::Pallet<T>>::block_number(),
-			)),
+			number: block_number,
 			gas_limit: T::BlockGasLimit::get(),
 			gas_used: receipts
 				.clone()
@@ -548,7 +558,7 @@ impl Get<H256> for IntermediateStateRoot {
 
 pub mod migration {
 	// --- darwinia ---
-	use crate::*;
+	// use crate::*;
 
 	#[cfg(feature = "try-runtime")]
 	pub mod try_runtime {
@@ -556,23 +566,9 @@ pub mod migration {
 		use crate::*;
 
 		pub fn pre_migrate<T: Config>() -> Result<(), &'static str> {
-			// NOTE: Need to remove PALLET_ETHEREUM_SCHEMA initialisation in genesis before run test.
-			assert!(unhashed::get::<EthereumStorageSchema>(&PALLET_ETHEREUM_SCHEMA).is_none());
-
-			migration::migrate();
-
-			assert_eq!(
-				unhashed::get::<EthereumStorageSchema>(&PALLET_ETHEREUM_SCHEMA),
-				Some(EthereumStorageSchema::V1),
-			);
-
-			log::info!("Schema migration successfully!");
-
 			Ok(())
 		}
 	}
 
-	pub fn migrate() {
-		unhashed::put::<EthereumStorageSchema>(&PALLET_ETHEREUM_SCHEMA, &EthereumStorageSchema::V1);
-	}
+	pub fn migrate() {}
 }

@@ -1706,6 +1706,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-evm-precompile-curve25519"
+version = "2.4.0"
+dependencies = [
+ "curve25519-dalek 3.1.0",
+ "dp-evm",
+ "evm",
+ "sp-core",
+ "sp-io",
+]
+
+[[package]]
 name = "darwinia-evm-precompile-dispatch"
 version = "2.4.0"
 dependencies = [
@@ -2270,6 +2281,7 @@ dependencies = [
  "dp-rpc",
  "dp_consensus",
  "drml-primitives",
+ "dvm-dynamic-fee",
  "dvm-ethereum",
  "dvm-rpc-runtime-api",
  "frame-system-rpc-runtime-api",
@@ -2335,6 +2347,21 @@ version = "2.4.0"
 dependencies = [
  "sp-core",
  "sp-runtime",
+]
+
+[[package]]
+name = "dvm-dynamic-fee"
+version = "2.4.0"
+dependencies = [
+ "async-trait",
+ "darwinia-evm",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -5750,6 +5777,7 @@ dependencies = [
  "darwinia-tron-backing",
  "darwinia-vesting",
  "drml-primitives",
+ "dvm-dynamic-fee",
  "dvm-ethereum",
  "dvm-rpc-runtime-api",
  "ethereum-primitives",
@@ -6467,15 +6495,6 @@ dependencies = [
  "rand_core 0.3.1",
  "rdrand",
  "winapi 0.3.9",
-]
-
-[[package]]
-name = "rand"
-version = "0.5.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c618c47cd3ebd209790115ab837de41425723956ad3ce2e6a7f09890947cacb9"
-dependencies = [
- "rand_core 0.3.1",
 ]
 
 [[package]]
@@ -9075,14 +9094,14 @@ dependencies = [
 
 [[package]]
 name = "substrate-bn"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "acb439bec2318e98b83f1e12ddaaf2082d6fc29becc3117714ccb575fa343bc1"
+checksum = "72b5bbfa79abbae15dd642ea8176a21a635ff3c00059961d1ea27ad04e5b441c"
 dependencies = [
  "byteorder",
  "crunchy",
  "lazy_static",
- "rand 0.5.6",
+ "rand 0.8.3",
  "rustc-hex",
 ]
 
@@ -9860,7 +9879,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04f8ab788026715fa63b31960869617cba39117e520eb415b0139543e325ab59"
 dependencies = [
  "cfg-if 0.1.10",
- "rand 0.7.3",
+ "rand 0.3.23",
  "static_assertions",
 ]
 
