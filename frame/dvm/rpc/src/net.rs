@@ -15,6 +15,7 @@
 // along with Open Ethereum. If not, see <http://www.gnu.org/licenses/>.
 
 //! Net rpc interface.
+use dp_rpc::PeerCount;
 use jsonrpc_core::Result;
 use jsonrpc_derive::rpc;
 
@@ -29,7 +30,7 @@ pub trait NetApi {
 
 	/// Returns number of peers connected to node.
 	#[rpc(name = "net_peerCount")]
-	fn peer_count(&self) -> Result<u32>;
+	fn peer_count(&self) -> Result<PeerCount>;
 
 	/// Returns true if client is actively listening for network connections.
 	/// Otherwise false.

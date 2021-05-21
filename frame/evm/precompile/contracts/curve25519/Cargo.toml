@@ -1,23 +1,26 @@
 [package]
 authors     = ["Darwinia Network <hello@darwinia.network>"]
-description = "BN128 precompiles for EVM pallet."
+description = "Curve25519 elliptic curve precompiles for EVM pallet."
 edition     = "2018"
 homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"
-name        = "darwinia-evm-precompile-bn128"
+name        = "darwinia-evm-precompile-curve25519"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "2.4.0"
 
-
 [dependencies]
 # crates
-bn     = { package = "substrate-bn", version = "0.6", default-features = false }
 dp-evm = { default-features = false, path = "../../../../../primitives/evm" }
-evm    = { version = "0.25.0", default-features = false, features = ["with-codec"] }
+evm	   = { version = "0.25.0", default-features = false, features = ["with-codec"] }
 # substrate
 sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
 sp-io   = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
+
+[dependencies.curve25519-dalek]
+version = "3.0.0"
+default-features = false
+features = ["u64_backend", "alloc"]
 
 [features]
 default = ["std"]
@@ -28,8 +31,8 @@ std = [
 ]
 
 crates-std = [
-	"dp-evm/std",
 	"evm/std",
+	"dp-evm/std",
 ]
 
 substrate-std = [

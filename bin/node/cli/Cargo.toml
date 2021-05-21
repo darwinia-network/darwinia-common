@@ -44,6 +44,7 @@ dp-rpc                              = { path = "../../../primitives/rpc" }
 dp_consensus                        = { path = "../../../primitives/consensus" }
 drml-primitives                     = { path = "../primitives" }
 dvm-ethereum                        = { path = "../../../frame/dvm" }
+dvm-dynamic-fee                     = { path = "../../../frame/dvm-dynamic-fee" }
 dvm-rpc-runtime-api                 = { path = "../../../frame/dvm/rpc/runtime-api" }
 pangolin-runtime                    = { path = "../runtime/pangolin" }
 # substrate

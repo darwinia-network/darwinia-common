@@ -11,8 +11,12 @@ version     = "2.4.0"
 
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
-
+# crates
+async-trait = { version = "0.1.42" }
+codec       = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
+# darwinia
+darwinia-evm = { default-features = false, path = "../evm" }
+# substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
 sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
@@ -22,8 +26,22 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 
 [features]
 default = ["std"]
-std     = [
+
+std = [
+	"crates-std",
+	"darwinia-std",
+	"substrate-std",
+]
+
+crates-std = [
 	"codec/std",
+]
+
+darwinia-std = [
+	"darwinia-evm/std",
+]
+
+substrate-std = [
 	"frame-support/std",
 	"frame-system/std",
 	"sp-core/std",

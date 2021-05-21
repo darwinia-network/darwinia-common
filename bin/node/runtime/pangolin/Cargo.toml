@@ -43,6 +43,7 @@ darwinia-tron-backing               = { default-features = false, path = "../../
 darwinia-vesting                    = { default-features = false, path = "../../../../frame/vesting" }
 drml-primitives                     = { default-features = false, path = "../../primitives" }
 dvm-ethereum                        = { default-features = false, path = "../../../../frame/dvm" }
+dvm-dynamic-fee                     = { default-features = false, path = "../../../../frame/dvm-dynamic-fee" }
 dvm-rpc-runtime-api                 = { default-features = false, path = "../../../../frame/dvm/rpc/runtime-api" }
 ethereum-primitives                 = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
 pangolin-bridge-primitives          = { default-features = false, path = "../../bridge-primitives/pangolin" }
@@ -135,6 +136,7 @@ std = [
 	"darwinia-vesting/std",
 	"drml-primitives/std",
 	"dvm-ethereum/std",
+	"dvm-dynamic-fee/std",
 	"dvm-rpc-runtime-api/std",
 	"ethereum-primitives/std",
 	"pangolin-bridge-primitives/std",

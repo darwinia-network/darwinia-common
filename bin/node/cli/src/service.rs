@@ -59,10 +59,12 @@ use sp_api::ConstructRuntimeApi;
 use sp_consensus::{
 	import_queue::BasicQueue, CanAuthorWithNativeVersion, DefaultImportQueue, NeverCanAuthor,
 };
+use sp_core::U256;
 use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 use sp_trie::PrefixedMemoryDB;
 use substrate_prometheus_endpoint::Registry;
 // --- darwinia ---
+use crate::cli::Cli;
 use crate::rpc::{
 	self, BabeDeps, DenyUnsafe, FullDeps, GrandpaDeps, LightDeps, RpcExtension,
 	SubscriptionTaskExecutor,
@@ -195,6 +197,7 @@ fn open_frontier_backend(config: &Configuration) -> Result<Arc<Backend<Block>>, 
 #[cfg(feature = "full-node")]
 fn new_partial<RuntimeApi, Executor>(
 	config: &mut Configuration,
+	cli: &Cli,
 ) -> Result<
 	PartialComponents<
 		FullClient<RuntimeApi, Executor>,
@@ -287,6 +290,7 @@ where
 		client.clone(),
 	)?;
 	let slot_duration = babe_link.config().slot_duration();
+	let target_gas_price = cli.run.target_gas_price.clone();
 	let import_queue = sc_consensus_babe::import_queue(
 		babe_link.clone(),
 		babe_import.clone(),
@@ -303,7 +307,11 @@ where
 			let uncles =
 				sp_authorship::InherentDataProvider::<<Block as BlockT>::Header>::check_inherents();
 
-			Ok((timestamp, slot, uncles))
+			let dynamic_fee = dvm_dynamic_fee::InherentDataProvider::from_target_gas_price(
+				U256::from(target_gas_price),
+			);
+
+			Ok((timestamp, slot, uncles, dynamic_fee))
 		},
 		&task_manager.spawn_essential_handle(),
 		config.prometheus_registry(),
@@ -333,6 +341,7 @@ where
 		let pending_transactions = pending_transactions.clone();
 		let frontier_backend = frontier_backend.clone();
 		let filter_pool = filter_pool.clone();
+		let max_past_logs = cli.run.max_past_logs;
 
 		move |deny_unsafe, is_authority, network, subscription_executor| -> RpcExtension {
 			let deps = FullDeps {
@@ -358,6 +367,7 @@ where
 				pending_transactions: pending_transactions.clone(),
 				backend: frontier_backend.clone(),
 				filter_pool: filter_pool.clone(),
+				max_past_logs,
 			};
 
 			rpc::create_full(deps, subscription_task_executor.clone())
@@ -394,7 +404,7 @@ fn remote_keystore(_url: &String) -> Result<Arc<LocalKeystore>, &'static str> {
 #[cfg(feature = "full-node")]
 fn new_full<RuntimeApi, Executor>(
 	mut config: Configuration,
-	authority_discovery_disabled: bool,
+	cli: &Cli,
 ) -> Result<
 	(
 		TaskManager,
@@ -417,6 +427,7 @@ where
 		Some(sc_consensus_slots::BackoffAuthoringOnFinalizedHeadLagging::default());
 	let disable_grandpa = config.disable_grandpa;
 	let name = config.network.node_name.clone();
+	let target_gas_price = cli.run.target_gas_price.clone();
 	let PartialComponents {
 		client,
 		backend,
@@ -435,7 +446,7 @@ where
 				frontier_backend,
 				filter_pool,
 			),
-	} = new_partial::<RuntimeApi, Executor>(&mut config)?;
+	} = new_partial::<RuntimeApi, Executor>(&mut config, cli)?;
 
 	if let Some(url) = &config.keystore_remote {
 		match remote_keystore(url) {
@@ -553,7 +564,11 @@ where
 							slot_duration,
 						);
 
-					Ok((timestamp, slot, uncles))
+					let dynamic_fee = dvm_dynamic_fee::InherentDataProvider::from_target_gas_price(
+						U256::from(target_gas_price),
+					);
+
+					Ok((timestamp, slot, uncles, dynamic_fee))
 				}
 			},
 			force_authoring,
@@ -604,7 +619,7 @@ where
 		);
 	}
 
-	if role.is_authority() && !authority_discovery_disabled {
+	if role.is_authority() && !cli.run.authority_discovery_disabled {
 		use sc_network::Event;
 
 		let authority_discovery_role =
@@ -818,6 +833,7 @@ where
 #[cfg(feature = "full-node")]
 pub fn new_chain_ops<Runtime, Dispatch>(
 	config: &mut Configuration,
+	cli: &Cli,
 ) -> Result<
 	(
 		Arc<FullClient<Runtime, Dispatch>>,
@@ -840,7 +856,7 @@ where
 		import_queue,
 		task_manager,
 		..
-	} = new_partial::<Runtime, Dispatch>(config)?;
+	} = new_partial::<Runtime, Dispatch>(config, cli)?;
 
 	Ok((client, backend, import_queue, task_manager))
 }
@@ -849,7 +865,7 @@ where
 #[cfg(feature = "full-node")]
 pub fn drml_new_full(
 	config: Configuration,
-	authority_discovery_disabled: bool,
+	cli: &Cli,
 ) -> Result<
 	(
 		TaskManager,
@@ -858,10 +874,8 @@ pub fn drml_new_full(
 	),
 	ServiceError,
 > {
-	let (components, client, rpc_handlers) = new_full::<
-		pangolin_runtime::RuntimeApi,
-		PangolinExecutor,
-	>(config, authority_discovery_disabled)?;
+	let (components, client, rpc_handlers) =
+		new_full::<pangolin_runtime::RuntimeApi, PangolinExecutor>(config, cli)?;
 
 	Ok((components, client, rpc_handlers))
 }
