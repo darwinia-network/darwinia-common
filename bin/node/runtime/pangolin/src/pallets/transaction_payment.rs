@@ -8,6 +8,7 @@ use crate::*;
 /// https://w3f-research.readthedocs.io/en/latest/polkadot/Token%20Economics.html#-2.-slow-adjusting-mechanism
 pub type SlowAdjustingFeeUpdate<R> =
 	TargetedFeeAdjustment<R, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
+
 frame_support::parameter_types! {
 	pub const TransactionByteFee: Balance = 10 * MICRO;
 	/// The portion of the `AvailableBlockRatio` that we adjust the fees with. Blocks filled less
@@ -21,6 +22,7 @@ frame_support::parameter_types! {
 	/// See `multiplier_can_grow_from_zero`.
 	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000_000u128);
 }
+
 impl Config for Runtime {
 	type OnChargeTransaction = CurrencyAdapter<Ring, DealWithFees>;
 	type TransactionByteFee = TransactionByteFee;

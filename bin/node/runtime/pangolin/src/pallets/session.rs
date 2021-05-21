@@ -1,12 +1,12 @@
 // --- substrate ---
 use pallet_session::{historical::NoteHistoricalRoot, weights::SubstrateWeight, Config};
-use sp_runtime::{impl_opaque_keys, traits::OpaqueKeys, Perbill};
+use sp_runtime::{traits::OpaqueKeys, Perbill};
 use sp_std::prelude::*;
 // --- darwinia ---
 use crate::*;
 use darwinia_staking::StashOf;
 
-impl_opaque_keys! {
+sp_runtime::impl_opaque_keys! {
 	pub struct SessionKeys {
 		pub babe: Babe,
 		pub grandpa: Grandpa,
@@ -14,9 +14,11 @@ impl_opaque_keys! {
 		pub authority_discovery: AuthorityDiscovery,
 	}
 }
+
 frame_support::parameter_types! {
 	pub const DisabledValidatorsThreshold: Perbill = Perbill::from_percent(17);
 }
+
 impl Config for Runtime {
 	type Event = Event;
 	type ValidatorId = AccountId;

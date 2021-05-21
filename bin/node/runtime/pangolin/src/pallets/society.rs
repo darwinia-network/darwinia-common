@@ -15,6 +15,7 @@ frame_support::parameter_types! {
 	pub const ChallengePeriod: BlockNumber = 3 * MINUTES;
 	pub const MaxCandidateIntake: u32 = 10;
 }
+
 impl Config for Runtime {
 	type Event = Event;
 	type PalletId = SocietyPalletId;

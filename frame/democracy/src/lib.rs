@@ -157,7 +157,7 @@ use frame_support::{
 use frame_system::{self as system, ensure_root, ensure_signed};
 use sp_runtime::{
 	traits::{Bounded, Dispatchable, Hash, Saturating, Zero},
-	DispatchError, DispatchResult, RuntimeDebug,
+	DispatchError, DispatchResult, RuntimeDebug, ArithmeticError
 };
 use sp_std::prelude::*;
 // --- darwinia ---
@@ -499,10 +499,6 @@ decl_error! {
 		NoPermission,
 		/// The account is already delegating.
 		AlreadyDelegating,
-		/// An unexpected integer overflow occurred.
-		Overflow,
-		/// An unexpected integer underflow occurred.
-		Underflow,
 		/// Too high a balance was provided that the account cannot afford.
 		InsufficientFunds,
 		/// The account is not currently delegating.
@@ -1262,7 +1258,7 @@ impl<T: Config> Module<T> {
 						status
 							.tally
 							.remove(votes[i].1)
-							.ok_or(Error::<T>::Underflow)?;
+							.ok_or(ArithmeticError::Underflow)?;
 						if let Some(approve) = votes[i].1.as_standard() {
 							status.tally.reduce(approve, *delegations);
 						}
@@ -1277,7 +1273,7 @@ impl<T: Config> Module<T> {
 					}
 				}
 				// Shouldn't be possible to fail, but we handle it gracefully.
-				status.tally.add(vote).ok_or(Error::<T>::Overflow)?;
+				status.tally.add(vote).ok_or(ArithmeticError::Overflow)?;
 				if let Some(approve) = vote.as_standard() {
 					status.tally.increase(approve, *delegations);
 				}
@@ -1322,7 +1318,7 @@ impl<T: Config> Module<T> {
 						status
 							.tally
 							.remove(votes[i].1)
-							.ok_or(Error::<T>::Underflow)?;
+							.ok_or(ArithmeticError::Underflow)?;
 						if let Some(approve) = votes[i].1.as_standard() {
 							status.tally.reduce(approve, *delegations);
 						}

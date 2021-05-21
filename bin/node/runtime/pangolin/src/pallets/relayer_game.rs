@@ -10,6 +10,7 @@ use darwinia_relayer_game::Config;
 frame_support::parameter_types! {
 	pub const EthereumRelayerGameLockId: LockIdentifier = *b"ethrgame";
 }
+
 impl Config<EthereumRelayerGameInstance> for Runtime {
 	type RingCurrency = Ring;
 	type LockId = EthereumRelayerGameLockId;

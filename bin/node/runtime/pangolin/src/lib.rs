@@ -193,6 +193,7 @@ pub use darwinia_balances::Call as BalancesCall;
 pub use frame_system::Call as SystemCall;
 pub use pallet_bridge_grandpa::Call as BridgeGrandpaCall;
 pub use pallet_bridge_messages::Call as BridgeMessagesCall;
+pub use pallet_sudo::Call as SudoCall;
 
 // --- crates.io ---
 use codec::{Decode, Encode};
@@ -269,7 +270,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: sp_runtime::create_runtime_str!("Pangolin"),
 	authoring_version: 1,
 	// crate version ~2.4.0 := >=2.4.0, <2.5.0
-	spec_version: 2400,
+	spec_version: 2401,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -851,11 +852,6 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	}
 
 	fn on_runtime_upgrade() -> Weight {
-		// --- substrate ---
-		use frame_support::traits::Currency;
-
-		let _ = Ring::deposit_creating(&BridgeMillauMessages::relayer_fund_account_id(), 1 << 50);
-
-		RuntimeBlockWeights::get().max_block
+		0
 	}
 }
