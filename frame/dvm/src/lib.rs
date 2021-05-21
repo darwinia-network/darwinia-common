@@ -558,7 +558,7 @@ impl Get<H256> for IntermediateStateRoot {
 
 pub mod migration {
 	// --- darwinia ---
-	use crate::*;
+	// use crate::*;
 
 	#[cfg(feature = "try-runtime")]
 	pub mod try_runtime {
@@ -566,23 +566,9 @@ pub mod migration {
 		use crate::*;
 
 		pub fn pre_migrate<T: Config>() -> Result<(), &'static str> {
-			// NOTE: Need to remove PALLET_ETHEREUM_SCHEMA initialisation in genesis before run test.
-			assert!(unhashed::get::<EthereumStorageSchema>(&PALLET_ETHEREUM_SCHEMA).is_none());
-
-			migration::migrate();
-
-			assert_eq!(
-				unhashed::get::<EthereumStorageSchema>(&PALLET_ETHEREUM_SCHEMA),
-				Some(EthereumStorageSchema::V1),
-			);
-
-			log::info!("Schema migration successfully!");
-
 			Ok(())
 		}
 	}
 
-	pub fn migrate() {
-		unhashed::put::<EthereumStorageSchema>(&PALLET_ETHEREUM_SCHEMA, &EthereumStorageSchema::V1);
-	}
+	pub fn migrate() {}
 }
