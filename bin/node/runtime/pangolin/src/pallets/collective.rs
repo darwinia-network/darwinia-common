@@ -41,8 +41,10 @@ frame_support::parameter_types! {
 	pub const TechnicalMaxProposals: u32 = 100;
 	pub const TechnicalMaxMembers: u32 = 100;
 }
+
 // Make sure that there are no more than `MaxMembers` members elected via elections-phragmen.
 static_assertions::const_assert!(DesiredMembers::get() <= CouncilMaxMembers::get());
+
 impl Config<CouncilCollective> for Runtime {
 	type Origin = Origin;
 	type Proposal = Call;

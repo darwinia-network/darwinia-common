@@ -13,6 +13,7 @@ frame_support::parameter_types! {
 	pub const ReportLongevity: u64 =
 		BondingDurationInEra::get() as u64 * SessionsPerEra::get() as u64 * EpochDuration::get();
 }
+
 impl Config for Runtime {
 	type EpochDuration = EpochDuration;
 	type ExpectedBlockTime = ExpectedBlockTime;

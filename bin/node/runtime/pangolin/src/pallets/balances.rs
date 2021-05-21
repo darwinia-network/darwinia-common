@@ -16,6 +16,7 @@ frame_support::parameter_types! {
 	pub const ExistentialDeposit: Balance = 0;
 	pub const MaxLocks: u32 = 50;
 }
+
 impl Config<RingInstance> for Runtime {
 	type Balance = Balance;
 	type DustRemoval = ();
