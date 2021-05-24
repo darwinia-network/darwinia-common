@@ -77,9 +77,7 @@ decl_module! {
 			target: U256,
 		) {
 			ensure_none(origin)?;
-
 			TargetMinGasPrice::set(Some(target));
-			Self::deposit_event(Event::TargetMinGasPriceSet(target));
 		}
 	}
 }
