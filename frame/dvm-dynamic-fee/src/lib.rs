@@ -17,11 +17,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-// #[cfg(test)]
-// mod mock;
-// #[cfg(test)]
-// mod tests;
-
 #[frame_support::pallet]
 pub mod pallet {
 	// --- core ---
@@ -56,16 +51,12 @@ pub mod pallet {
 	#[pallet::storage]
 	pub type TargetMinGasPrice<T> = StorageValue<_, U256, OptionQuery>;
 
-	#[cfg_attr(feature = "std", derive(Default))]
 	#[pallet::genesis_config]
-	pub struct GenesisConfig {
-		pub min_gas_price: U256,
-	}
+	#[derive(Default)]
+	pub struct GenesisConfig;
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
-		fn build(&self) {
-			<MinGasPrice<T>>::put(self.min_gas_price);
-		}
+		fn build(&self) {}
 	}
 
 	#[pallet::pallet]
@@ -108,6 +99,8 @@ pub mod pallet {
 			<MinGasPrice<T>>::get()
 		}
 	}
+
+	#[pallet::inherent]
 	impl<T: Config> ProvideInherent for Pallet<T> {
 		type Call = Call<T>;
 		type Error = InherentError;
@@ -116,7 +109,6 @@ pub mod pallet {
 
 		fn create_inherent(data: &InherentData) -> Option<Self::Call> {
 			let target = data.get_data::<InherentType>(&INHERENT_IDENTIFIER).ok()??;
-
 			Some(Call::note_min_gas_price_target(target))
 		}
 
