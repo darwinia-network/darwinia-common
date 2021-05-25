@@ -61,7 +61,7 @@ decl_module! {
 
 		fn on_initialize(_block_number: T::BlockNumber) -> Weight {
 			TargetMinGasPrice::kill();
-			0
+			T::DbWeight::get().writes(1)
 		}
 
 		fn on_finalize(_block_number: T::BlockNumber) {
@@ -75,7 +75,7 @@ decl_module! {
 			}
 		}
 
-		#[weight = 0]
+		#[weight = T::DbWeight::get().writes(1)]
 		fn note_min_gas_price_target(
 			origin,
 			target: U256,
