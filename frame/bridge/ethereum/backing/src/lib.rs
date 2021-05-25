@@ -1016,7 +1016,6 @@ pub mod pallet {
 			Ok((term, authorities, beneficiary))
 		}
 	}
-
 	impl<T: Config> Sign<BlockNumber<T>> for Pallet<T> {
 		type Signature = EcdsaSignature;
 		type Message = EcdsaMessage;
