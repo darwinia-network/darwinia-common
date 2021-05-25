@@ -270,7 +270,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: sp_runtime::create_runtime_str!("Pangolin"),
 	authoring_version: 1,
 	// crate version ~2.4.0 := >=2.4.0, <2.5.0
-	spec_version: 2401,
+	spec_version: 2402,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
