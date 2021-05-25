@@ -45,6 +45,7 @@ pub mod pallet {
 		PalletId,
 	};
 	use frame_system::pallet_prelude::*;
+	#[cfg(feature = "std")]
 	use sp_runtime::traits::AccountIdConversion;
 	// --- darwinia ---
 	use crate::weights::WeightInfo;
