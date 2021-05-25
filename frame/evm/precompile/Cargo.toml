@@ -16,6 +16,7 @@ darwinia-evm-precompile-issuing  = { default-features = false, path = "contracts
 darwinia-evm-precompile-kton     = { default-features = false, path = "contracts/kton" }
 darwinia-evm-precompile-simple   = { default-features = false, path = "contracts/simple" }
 darwinia-evm-precompile-withdraw = { default-features = false, path = "contracts/withdraw" }
+darwinia-evm-precompile-dispatch-wrapper = { default-features = false, path = "contracts/dispatch_wrapper" }
 
 [features]
 default = ["std"]
@@ -26,4 +27,5 @@ std = [
 	"darwinia-evm-precompile-kton/std",
 	"darwinia-evm-precompile-simple/std",
 	"darwinia-evm-precompile-withdraw/std",
+	"darwinia-evm-precompile-dispatch-wrapper/std",
 ]

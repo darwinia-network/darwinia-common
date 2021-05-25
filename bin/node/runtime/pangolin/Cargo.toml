@@ -38,6 +38,8 @@ darwinia-relayer-game               = { default-features = false, path = "../../
 darwinia-staking                    = { default-features = false, path = "../../../../frame/staking" }
 darwinia-staking-rpc-runtime-api    = { default-features = false, path = "../../../../frame/staking/rpc/runtime-api" }
 darwinia-support                    = { default-features = false, path = "../../../../frame/support" }
+darwinia-s2s-issuing                = { default-features = false, path = "../../../../frame/bridge/s2s/issuing" }
+darwinia-s2s-relay                  = { default-features = false, path = "../../../../frame/bridge/s2s/relay" }
 darwinia-treasury                   = { default-features = false, path = "../../../../frame/treasury" }
 darwinia-tron-backing               = { default-features = false, path = "../../../../frame/bridge/tron/backing" }
 darwinia-vesting                    = { default-features = false, path = "../../../../frame/vesting" }

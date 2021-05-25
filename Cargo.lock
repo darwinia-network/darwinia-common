@@ -1399,6 +1399,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-asset-primitives"
+version = "2.4.0"
+dependencies = [
+ "ethereum-primitives",
+ "parity-scale-codec",
+]
+
+[[package]]
 name = "darwinia-balances"
 version = "2.4.0"
 dependencies = [
@@ -1576,7 +1584,6 @@ version = "2.4.0"
 dependencies = [
  "darwinia-ethereum-issuing-contract",
  "darwinia-evm",
- "darwinia-evm-precompile",
  "darwinia-relay-primitives",
  "darwinia-support",
  "dp-evm",
@@ -1677,6 +1684,7 @@ dependencies = [
 name = "darwinia-evm-precompile"
 version = "2.4.0"
 dependencies = [
+ "darwinia-evm-precompile-dispatch-wrapper",
  "darwinia-evm-precompile-empty",
  "darwinia-evm-precompile-issuing",
  "darwinia-evm-precompile-kton",
@@ -1710,6 +1718,21 @@ name = "darwinia-evm-precompile-dispatch"
 version = "2.4.0"
 dependencies = [
  "darwinia-evm",
+ "dp-evm",
+ "evm",
+ "frame-support",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-io",
+]
+
+[[package]]
+name = "darwinia-evm-precompile-dispatch-wrapper"
+version = "2.4.0"
+dependencies = [
+ "darwinia-ethereum-issuing-contract",
+ "darwinia-evm",
+ "darwinia-s2s-issuing",
  "dp-evm",
  "evm",
  "frame-support",
@@ -1894,6 +1917,7 @@ name = "darwinia-relay-primitives"
 version = "2.4.0"
 dependencies = [
  "frame-support",
+ "hashbrown",
  "parity-scale-codec",
  "sp-runtime",
  "sp-std",
@@ -1914,6 +1938,54 @@ dependencies = [
  "serde",
  "sp-core",
  "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "darwinia-s2s-issuing"
+version = "2.4.0"
+dependencies = [
+ "darwinia-asset-primitives",
+ "darwinia-ethereum-issuing",
+ "darwinia-ethereum-issuing-contract",
+ "darwinia-evm",
+ "darwinia-relay-primitives",
+ "darwinia-support",
+ "dp-evm",
+ "dvm-ethereum",
+ "ethereum-primitives",
+ "ethereum-types",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "serde",
+ "serde_json",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "darwinia-s2s-relay"
+version = "2.4.0"
+dependencies = [
+ "darwinia-asset-primitives",
+ "darwinia-ethereum-issuing-contract",
+ "darwinia-evm",
+ "darwinia-evm-precompile",
+ "darwinia-relay-primitives",
+ "darwinia-support",
+ "dp-evm",
+ "dvm-ethereum",
+ "ethereum-primitives",
+ "ethereum-types",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "serde",
+ "serde_json",
  "sp-runtime",
  "sp-std",
 ]
@@ -5743,6 +5815,8 @@ dependencies = [
  "darwinia-relay-authorities",
  "darwinia-relay-primitives",
  "darwinia-relayer-game",
+ "darwinia-s2s-issuing",
+ "darwinia-s2s-relay",
  "darwinia-staking",
  "darwinia-staking-rpc-runtime-api",
  "darwinia-support",

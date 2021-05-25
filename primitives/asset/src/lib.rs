@@ -18,20 +18,4 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub mod relay_authorities;
-pub mod relayer_game;
-
-// --- darwinia ---
-pub use relay_authorities::*;
-pub use relayer_game::*;
-
-use codec::{Decode, Encode};
-
-pub trait Relay {
-    type RelayProof: Clone + PartialOrd;
-    type RelayMessage: Encode + Decode + Clone;
-    type VerifiedResult: Clone;
-    fn verify(proof: &Self::RelayProof) -> Self::VerifiedResult;
-    fn relay_message(message: &Self::RelayMessage);
-}
-
+pub mod token;

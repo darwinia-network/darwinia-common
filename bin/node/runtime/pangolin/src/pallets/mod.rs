@@ -82,6 +82,12 @@ pub use recovery::*;
 pub mod scheduler;
 pub use scheduler::*;
 
+pub mod s2s_issuing;
+pub use s2s_issuing::*;
+
+pub mod s2s_relay;
+pub use s2s_relay::*;
+
 pub mod proxy;
 pub use proxy::*;
 

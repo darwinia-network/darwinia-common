@@ -96,6 +96,10 @@ const ETHEREUM_RELAY_AUTHORITY_SIGNER: &'static str = "0x68898db1012808808c903f3
 const MAPPING_FACTORY_ADDRESS: &'static str = "0xcB8531Bc0B7C8F41B55CF4E94698C37b130597B9";
 const ETHEREUM_BACKING_ADDRESS: &'static str = "0xb2Bea2358d817dAE01B0FD0DC3aECB25910E65AA";
 
+// TODO the address is calculated by chain id and backing address
+const MILLAU_BACKING_SUBADDRESS: &'static str = "0x922b6854052ba1084c74dd323ee70047d58ae4eb068f20bc251831f1ec109030";
+const MILLAU_BACKING_ETHADDRESS: &'static str = "0x1000000000000000000000000000000000000001";
+
 fn session_keys(
 	babe: BabeId,
 	grandpa: GrandpaId,
@@ -393,6 +397,15 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 		},
 		darwinia_evm: pangolin_runtime::EVMConfig { accounts: evm_accounts },
 		dvm_ethereum: Default::default(),
+        darwinia_s2s_relay: pangolin_runtime::Substrate2SubstrateRelayConfig {
+            backings: vec![(
+				array_bytes::hex2array_unchecked!(MILLAU_BACKING_SUBADDRESS, 32).into(),
+                array_bytes::hex2array_unchecked!(MILLAU_BACKING_ETHADDRESS, 20).into()
+            )]
+        },
+        darwinia_s2s_issuing: pangolin_runtime::Substrate2SubstrateIssuingConfig {
+			mapping_factory_address: array_bytes::hex2array_unchecked!(MAPPING_FACTORY_ADDRESS, 20).into(),
+		},
 	}
 }
 
@@ -550,5 +563,14 @@ fn pangolin_development_genesis() -> pangolin_runtime::GenesisConfig {
 		},
 		darwinia_evm: pangolin_runtime::EVMConfig { accounts: evm_accounts },
 		dvm_ethereum: Default::default(),
+        darwinia_s2s_relay: pangolin_runtime::Substrate2SubstrateRelayConfig {
+            backings: vec![(
+				array_bytes::hex2array_unchecked!(MILLAU_BACKING_SUBADDRESS, 32).into(),
+                array_bytes::hex2array_unchecked!(MILLAU_BACKING_ETHADDRESS, 20).into()
+            )]
+        },
+        darwinia_s2s_issuing: pangolin_runtime::Substrate2SubstrateIssuingConfig {
+			mapping_factory_address: array_bytes::hex2array_unchecked!(MAPPING_FACTORY_ADDRESS, 20).into(),
+		},
 	}
 }

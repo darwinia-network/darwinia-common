@@ -42,4 +42,5 @@ pub type DarwiniaPrecompiles<Runtime> = (
 	darwinia_evm_precompile_withdraw::WithDraw<Runtime>, // 0x0000000000000000000000000000000000000015
 	darwinia_evm_precompile_kton::Kton<Runtime>, // 0x0000000000000000000000000000000000000016
 	darwinia_evm_precompile_issuing::Issuing<Runtime>, // 0x0000000000000000000000000000000000000017
+    darwinia_evm_precompile_dispatch_wrapper::DispatchWrapper<Runtime>, // 0x0000000000000000000000000000000000000018
 );

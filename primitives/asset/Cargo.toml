@@ -1,0 +1,29 @@
+[package]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+description = "Darwinia Relay Primitives"
+edition     = "2018"
+homepage    = "https://darwinia.network/"
+license     = "GPL-3.0"
+name        = "darwinia-asset-primitives"
+readme      = "README.md"
+repository  = "https://github.com/darwinia-network/darwinia-common/"
+version     = "2.4.0"
+
+[dependencies]
+# crates
+codec = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
+ethereum-primitives                = { default-features = false, path = "../ethereum-primitives" }
+
+[features]
+default = ["std"]
+
+std = [
+	"crates-std",
+	"darwinia-std",
+]
+
+crates-std    = ["codec/std"]
+
+darwinia-std = [
+	"ethereum-primitives/std",
+]

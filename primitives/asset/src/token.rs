@@ -16,22 +16,39 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg_attr(not(feature = "std"), no_std)]
+//! Token Primitives
 
-pub mod relay_authorities;
-pub mod relayer_game;
-
-// --- darwinia ---
-pub use relay_authorities::*;
-pub use relayer_game::*;
-
+// --- core ---
 use codec::{Decode, Encode};
+use ethereum_primitives::{
+    EthereumAddress,
+    U256
+};
 
-pub trait Relay {
-    type RelayProof: Clone + PartialOrd;
-    type RelayMessage: Encode + Decode + Clone;
-    type VerifiedResult: Clone;
-    fn verify(proof: &Self::RelayProof) -> Self::VerifiedResult;
-    fn relay_message(message: &Self::RelayMessage);
+/// used by token name and symbol
+pub type Bytes32 = [u8; 32];
+
+/// the token extra options
+#[derive(Encode, Decode, Clone, Debug, Eq, PartialEq)]
+pub struct TokenOption {
+    pub name: Bytes32,
+    pub symbol: Bytes32,
+    pub decimal: u8,
+}
+
+/// the token metadata
+#[derive(Encode, Decode, Clone, Debug, Eq, PartialEq)]
+pub struct TokenInfo {
+    pub address: EthereumAddress,
+    pub value: Option<U256>,
+    pub option: Option<TokenOption>,
+}
+
+/// the token defination, native or erc20
+#[derive(Encode, Decode, Clone, Debug, Eq, PartialEq)]
+pub enum Token {
+    // native ring, kton ...
+    Native(TokenInfo),
+    Erc20(TokenInfo),
 }
 
