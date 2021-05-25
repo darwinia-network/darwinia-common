@@ -157,7 +157,7 @@ use frame_support::{
 use frame_system::{self as system, ensure_root, ensure_signed};
 use sp_runtime::{
 	traits::{Bounded, Dispatchable, Hash, Saturating, Zero},
-	DispatchError, DispatchResult, RuntimeDebug, ArithmeticError
+	ArithmeticError, DispatchError, DispatchResult, RuntimeDebug,
 };
 use sp_std::prelude::*;
 // --- darwinia ---
