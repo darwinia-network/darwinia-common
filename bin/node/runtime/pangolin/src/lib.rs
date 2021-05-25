@@ -372,7 +372,7 @@ frame_support::construct_runtime! {
 
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 40,
 		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 41,
-		DynamicFee: dvm_dynamic_fee::{Pallet, Call, Storage, Config, Event, Inherent} = 47,
+		DynamicFee: dvm_dynamic_fee::{Pallet, Call, Storage, Config, Inherent} = 47,
 
 		BridgeMillauMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 43,
 		BridgeMillauDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 44,

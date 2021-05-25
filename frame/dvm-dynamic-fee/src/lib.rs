@@ -15,12 +15,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
 use frame_support::{
-	decl_event, decl_module, decl_storage,
+	decl_module, decl_storage,
 	inherent::{InherentData, InherentIdentifier, IsFatalError, ProvideInherent},
 	traits::Get,
 	weights::Weight,
@@ -36,29 +35,19 @@ use sp_std::{
 };
 
 pub trait Config: frame_system::Config {
-	/// The overarching event type.
-	type Event: From<Event> + Into<<Self as frame_system::Config>::Event>;
 	/// Bound divisor for min gas price.
 	type MinGasPriceBoundDivisor: Get<U256>;
 }
 
 decl_storage! {
 	trait Store for Module<T: Config> as DynamicFee {
-		MinGasPrice get(fn min_gas_price) config(): U256 = U256::from(1_000_000_000u128);
+		MinGasPrice get(fn min_gas_price) config(): U256 = 1_000_000_000_u128.into();
 		TargetMinGasPrice: Option<U256>;
 	}
 }
 
-decl_event!(
-	pub enum Event {
-		TargetMinGasPriceSet(U256),
-	}
-);
-
 decl_module! {
 	pub struct Module<T: Config> for enum Call where origin: T::Origin {
-		fn deposit_event() = default;
-
 		fn on_initialize(_block_number: T::BlockNumber) -> Weight {
 			TargetMinGasPrice::kill();
 			T::DbWeight::get().writes(1)
