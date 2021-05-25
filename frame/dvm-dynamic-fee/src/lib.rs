@@ -51,14 +51,6 @@ pub mod pallet {
 	#[pallet::storage]
 	pub type TargetMinGasPrice<T> = StorageValue<_, U256, OptionQuery>;
 
-	#[pallet::genesis_config]
-	#[derive(Default)]
-	pub struct GenesisConfig;
-	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig {
-		fn build(&self) {}
-	}
-
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
 	#[pallet::hooks]
