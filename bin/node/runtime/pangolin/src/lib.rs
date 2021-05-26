@@ -198,6 +198,7 @@ pub use pallet_sudo::Call as SudoCall;
 // --- crates.io ---
 use codec::{Decode, Encode};
 // --- substrate ---
+use bp_runtime::MILLAU_CHAIN_ID;
 use bridge_runtime_common::messages::MessageBridge;
 use frame_support::{
 	traits::{KeyOwnerProofSystem, OnRuntimeUpgrade},
@@ -872,6 +873,6 @@ where
 		pangolin_account_id,
 		millau_spec_version,
 		PANGOLIN_CHAIN_ID,
-		bp_runtime::MILLAU_CHAIN_ID,
+		MILLAU_CHAIN_ID,
 	)
 }

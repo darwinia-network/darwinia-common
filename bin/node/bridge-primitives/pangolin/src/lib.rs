@@ -20,7 +20,7 @@
 
 // --- substrate ---
 use bp_messages::{LaneId, MessageNonce, UnrewardedRelayersState};
-use bp_runtime::{ChainId, SourceAccount};
+use bp_runtime::{ChainId, SourceAccount, MILLAU_CHAIN_ID};
 use frame_support::{weights::Weight, Parameter};
 use sp_core::H256;
 use sp_runtime::{traits::Convert, RuntimeDebug};
@@ -126,7 +126,7 @@ pub fn derive_account_from_pangolin_id(id: SourceAccount<AccountId>) -> AccountI
 ///
 /// Note that this should only be used for testing.
 pub fn derive_account_from_millau_id(id: SourceAccount<AccountId>) -> AccountId {
-	let encoded_id = bp_runtime::derive_account_id(bp_runtime::MILLAU_CHAIN_ID, id);
+	let encoded_id = bp_runtime::derive_account_id(MILLAU_CHAIN_ID, id);
 	AccountIdConverter::convert(encoded_id)
 }
 
