@@ -22,7 +22,6 @@ frame-system  = { default-features = false, git = "https://github.com/darwinia-n
 sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
 sp-inherents  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
 sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
 
 [features]
 default = ["std"]
@@ -47,5 +46,4 @@ substrate-std = [
 	"sp-core/std",
 	"sp-inherents/std",
 	"sp-runtime/std",
-	"sp-std/std",
 ]

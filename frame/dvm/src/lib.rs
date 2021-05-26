@@ -41,11 +41,12 @@ use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
 use evm::ExitReason;
 use sha3::{Digest, Keccak256};
 // --- substrate ---
+#[cfg(feature = "std")]
+use frame_support::storage::unhashed;
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage,
 	dispatch::DispatchResultWithPostInfo,
 	ensure,
-	storage::unhashed,
 	traits::FindAuthor,
 	traits::{Currency, Get},
 	weights::Weight,
@@ -65,6 +66,7 @@ use darwinia_evm::{AccountBasic, FeeCalculator, GasWeightMapping, Runner};
 use darwinia_support::evm::INTERNAL_CALLER;
 use dp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
 use dp_evm::CallOrCreateInfo;
+#[cfg(feature = "std")]
 use dp_storage::PALLET_ETHEREUM_SCHEMA;
 
 /// A type alias for the balance type from this pallet's point of view.
