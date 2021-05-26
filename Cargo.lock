@@ -1476,6 +1476,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-bridge-ethereum-bsc"
+version = "2.4.0"
+dependencies = [
+ "bp-bsc",
+ "frame-support 3.0.0 (git+https://github.com/paritytech/substrate?branch=master)",
+ "frame-system 3.0.0 (git+https://github.com/paritytech/substrate?branch=master)",
+ "lazy_static",
+ "lru-cache",
+ "parity-scale-codec",
+ "parking_lot 0.7.1",
+ "sp-core 3.0.0 (git+https://github.com/paritytech/substrate?branch=master)",
+ "sp-io 3.0.0 (git+https://github.com/paritytech/substrate?branch=master)",
+ "sp-runtime 3.0.0 (git+https://github.com/paritytech/substrate?branch=master)",
+ "sp-std 3.0.0 (git+https://github.com/paritytech/substrate?branch=master)",
+]
+
+[[package]]
 name = "darwinia-claims"
 version = "2.4.0"
 dependencies = [
@@ -5534,23 +5551,6 @@ dependencies = [
  "sp-core 3.0.0 (git+https://github.com/darwinia-network/substrate.git?tag=darwinia-v0.11.1)",
  "sp-runtime 3.0.0 (git+https://github.com/darwinia-network/substrate.git?tag=darwinia-v0.11.1)",
  "sp-std 3.0.0 (git+https://github.com/darwinia-network/substrate.git?tag=darwinia-v0.11.1)",
-]
-
-[[package]]
-name = "pallet-bridge-ethereum-bsc"
-version = "0.1.0"
-dependencies = [
- "bp-bsc",
- "frame-support 3.0.0 (git+https://github.com/paritytech/substrate?branch=master)",
- "frame-system 3.0.0 (git+https://github.com/paritytech/substrate?branch=master)",
- "lazy_static",
- "lru-cache",
- "parity-scale-codec",
- "parking_lot 0.7.1",
- "sp-core 3.0.0 (git+https://github.com/paritytech/substrate?branch=master)",
- "sp-io 3.0.0 (git+https://github.com/paritytech/substrate?branch=master)",
- "sp-runtime 3.0.0 (git+https://github.com/paritytech/substrate?branch=master)",
- "sp-std 3.0.0 (git+https://github.com/paritytech/substrate?branch=master)",
 ]
 
 [[package]]

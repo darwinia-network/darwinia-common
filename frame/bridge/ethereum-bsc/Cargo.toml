@@ -4,10 +4,10 @@ description = "A Substrate Runtime module that is able to verify bsc headers and
 edition     = "2018"
 homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"
-name        = "pallet-bridge-ethereum-bsc"
+name        = "darwinia-bridge-ethereum-bsc"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "0.1.0"
+version     = "2.4.0"
 
 [dependencies]
 # crates.io
