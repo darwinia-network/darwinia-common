@@ -230,6 +230,7 @@ use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispa
 use drml_primitives::*;
 use dvm_rpc_runtime_api::TransactionStatus;
 use impls::*;
+use pangolin_bridge_primitives::PANGOLIN_CHAIN_ID;
 
 /// The address format for describing accounts.
 pub type Address = MultiAddress<AccountId, ()>;
@@ -860,7 +861,7 @@ pub fn pangolin_to_millau_account_ownership_digest<Call, AccountId, SpecVersion>
 	millau_call: &Call,
 	pangolin_account_id: AccountId,
 	millau_spec_version: SpecVersion,
-) -> sp_std::vec::Vec<u8>
+) -> Vec<u8>
 where
 	Call: Encode,
 	AccountId: Encode,
@@ -870,7 +871,7 @@ where
 		millau_call,
 		pangolin_account_id,
 		millau_spec_version,
-		pangolin_bridge_primitives::PANGOLIN_CHAIN_ID,
+		PANGOLIN_CHAIN_ID,
 		bp_runtime::MILLAU_CHAIN_ID,
 	)
 }
