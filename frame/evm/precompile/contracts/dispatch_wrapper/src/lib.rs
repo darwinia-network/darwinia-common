@@ -106,6 +106,7 @@ where
             .map_err(|_| ExitError::Other("decode burninfo failed".into()))?;
 
 		Ok(darwinia_s2s_issuing::Call::<T>::cross_send(
+			burn_info.backing,
 			burn_info.source,
 			burn_info.recipient,
             burn_info.amount,
