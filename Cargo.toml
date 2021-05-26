@@ -56,6 +56,7 @@ members = [
 	"frame/vesting",
 	"primitives/asset",
 	"primitives/consensus",
+	"primitives/contract",
 	"primitives/ethereum-primitives",
 	"primitives/evm",
 	"primitives/merkle-patricia-trie",

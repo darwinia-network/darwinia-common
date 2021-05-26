@@ -32,7 +32,7 @@ use frame_support::{
 
 // s2s issuing
 // todo, move issuing contract to primitives
-use darwinia_ethereum_issuing_contract::TokenBurnInfo;
+use darwinia_primitives_contract::mapping_token_factory::TokenBurnInfo;
 
 /// The contract address: 0000000000000000000000000000000000000018
 pub struct DispatchWrapper<T> {

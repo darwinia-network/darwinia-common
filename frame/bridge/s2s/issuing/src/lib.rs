@@ -52,7 +52,7 @@ use sp_runtime::{
 };
 use sp_std::vec::Vec;
 // --- darwinia ---
-use darwinia_ethereum_issuing_contract::Abi;
+use darwinia_primitives_contract::mapping_token_factory::MappingTokenFactory as mtf;
 use darwinia_evm::GasWeightMapping;
 use darwinia_asset_primitives::token::{Token, TokenInfo};
 use ethereum_primitives::EthereumAddress;
@@ -194,6 +194,10 @@ decl_module! {
 	}
 }
 
+pub fn event_selector() -> [u8;4] {
+    return [0x67, 0x74, 0x14, 0x8c];
+}
+
 impl<T: Config> Module<T> {
 	fn abi_encode_token_creation(
 		backing: EthereumAddress,
@@ -202,7 +206,8 @@ impl<T: Config> Module<T> {
         symbol: &str,
         decimal: u8
 	) -> Result<Vec<u8>, DispatchError> {
-        let input = Abi::encode_create_erc20(
+        let input = mtf::encode_create_erc20(
+            event_selector(),
 			name,
 			symbol,
 			decimal,
@@ -218,7 +223,7 @@ impl<T: Config> Module<T> {
         recipient: EthereumAddress,
         amount: U256
         ) -> Result<Vec<u8>, DispatchError> {
-		let input = Abi::encode_cross_receive(dtoken_address, recipient, amount)
+		let input = mtf::encode_cross_receive(dtoken_address, recipient, amount)
 			.map_err(|_| Error::<T>::InvalidMintEncoding)?;
 
 		Ok(input)
@@ -229,7 +234,7 @@ impl<T: Config> Module<T> {
 		source: EthereumAddress,
 	) -> Result<H160, DispatchError> {
 		let factory_address = MappingFactoryAddress::get();
-		let bytes = Abi::encode_mapping_token(backing, source)
+		let bytes = mtf::encode_mapping_token(backing, source)
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
 		let mapped_address = dvm_ethereum::Module::<T>::do_call(factory_address, bytes)
 			.map_err(|e| -> &'static str { e.into() })?;

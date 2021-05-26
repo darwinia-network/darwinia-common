@@ -1730,8 +1730,8 @@ dependencies = [
 name = "darwinia-evm-precompile-dispatch-wrapper"
 version = "2.4.0"
 dependencies = [
- "darwinia-ethereum-issuing-contract",
  "darwinia-evm",
+ "darwinia-primitives-contract",
  "darwinia-s2s-issuing",
  "dp-evm",
  "evm",
@@ -1896,6 +1896,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-primitives-contract"
+version = "2.4.0"
+dependencies = [
+ "ethabi",
+ "ethereum-types",
+ "sp-std",
+]
+
+[[package]]
 name = "darwinia-relay-authorities"
 version = "2.4.0"
 dependencies = [
@@ -1948,8 +1957,8 @@ version = "2.4.0"
 dependencies = [
  "darwinia-asset-primitives",
  "darwinia-ethereum-issuing",
- "darwinia-ethereum-issuing-contract",
  "darwinia-evm",
+ "darwinia-primitives-contract",
  "darwinia-relay-primitives",
  "darwinia-support",
  "dp-evm",
@@ -1970,6 +1979,7 @@ dependencies = [
 name = "darwinia-s2s-relay"
 version = "2.4.0"
 dependencies = [
+ "bp-messages",
  "darwinia-asset-primitives",
  "darwinia-ethereum-issuing-contract",
  "darwinia-evm",
@@ -1983,6 +1993,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
+ "pallet-bridge-messages",
  "parity-scale-codec",
  "serde",
  "serde_json",
