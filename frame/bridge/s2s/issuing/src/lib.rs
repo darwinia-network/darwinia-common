@@ -64,7 +64,11 @@ pub trait Config: dvm_ethereum::Config {
 	type PalletId: Get<PalletId>;
 
 	type WeightInfo: WeightInfo;
-    type BackingRelay: Relay<RelayProof = AccountId<Self>, VerifiedResult = Result<EthereumAddress, DispatchError>, RelayMessage=(Token, EthereumAddress)>;
+    type BackingRelay: Relay<
+        RelayProof = AccountId<Self>, 
+        VerifiedResult = Result<EthereumAddress, DispatchError>, 
+        RelayMessage=(EthereumAddress, Token, EthereumAddress),
+        RelayMessageResult = Result<(), DispatchError>>;
 }
 
 decl_error! {
@@ -169,7 +173,7 @@ decl_module! {
         }
 
         #[weight = 0]
-        pub fn cross_send(origin, token: EthereumAddress, recipient: EthereumAddress, amount: U256) {
+        pub fn cross_send(origin, backing: EthereumAddress, token: EthereumAddress, recipient: EthereumAddress, amount: U256) {
 			let user = ensure_signed(origin)?;
             // we must check this user comes from mapping token factory contract address with
             // precompile dispatch contract
@@ -177,11 +181,14 @@ decl_module! {
             let caller = <T as darwinia_evm::Config>::AddressMapping::into_account_id(factory_address);
             ensure!(caller == user, <Error<T>>::AssetAR);
 
-            let message = (Token::Native(TokenInfo {
-                address: token,
-                value: Some(amount),
-                option: None,
-            }), recipient);
+            let message = (
+                backing,
+                Token::Native(TokenInfo {
+                    address: token,
+                    value: Some(amount),
+                    option: None,
+                }),
+                recipient);
             T::BackingRelay::relay_message(&message);
         }
 	}

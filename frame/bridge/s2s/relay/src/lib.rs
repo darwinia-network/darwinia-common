@@ -24,24 +24,32 @@ use frame_support::{
 	PalletId,
 	weights::Weight,
 };
+//use frame_system::RawOrigin;
 
 use sp_runtime::DispatchError;
 
 pub mod weights;
+pub mod payload;
 pub use weights::WeightInfo;
 use darwinia_relay_primitives::Relay;
 
 use darwinia_asset_primitives::token::Token;
 use ethereum_primitives::EthereumAddress;
 
+//use bp_messages::LaneId;
+
+use sp_std::vec::Vec;
+
 mod types {
 	use crate::*;
 	pub type BlockNumber<T> = <T as frame_system::Config>::BlockNumber;
 	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-    pub type RelayMessage = (Token, EthereumAddress);
+    pub type RelayMessage = (EthereumAddress, Token, EthereumAddress);
 }
 
-pub trait Config: frame_system::Config {
+pub trait Config: 
+    frame_system::Config 
+{
 	/// The ethereum-relay's module id, used for deriving its sovereign account ID.
 	type PalletId: Get<PalletId>;
 
@@ -49,6 +57,8 @@ pub trait Config: frame_system::Config {
 
     /// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
+
+    //type MessageSenderT: MessageSender<Origin=Self::Origin, OutboundPayload=Self::OutboundPayload, OutboundMessageFee=Self::OutboundMessageFee>;
 }
 
 use types::*;
@@ -67,6 +77,10 @@ decl_error! {
 	pub enum Error for Module<T: Config> {
         /// The proof is not in backing list
 		InvalidProof,
+        /// Invalid Backing address
+        InvalidBackingAddr,
+        /// Encode Invalid
+        EncodeInv,
 	}
 }
 
@@ -75,13 +89,17 @@ decl_storage! {
 		pub BackingAddressList
 			get(fn backing_address_list)
 			: map hasher(identity) AccountId<T> => Option<EthereumAddress>;
+        pub BackingRuntimeIndex
+            get(fn backing_runtime_index)
+            : map hasher(identity) EthereumAddress => Option<i32>;
     }
 
     add_extra_genesis {
-		config(backings): Vec<(AccountId<T>, EthereumAddress)>;
+		config(backings): Vec<(AccountId<T>, EthereumAddress, i32)>;
 		build(|config: &GenesisConfig<T>| {
-			for (address, account) in &config.backings {
+			for (address, account, index) in &config.backings {
 				<BackingAddressList<T>>::insert(address, &account);
+                BackingRuntimeIndex::insert(account, index);
 			}
 		});
 	}
@@ -104,13 +122,27 @@ impl<T: Config> Relay for Module<T> {
     type RelayProof = AccountId<T>;
     type RelayMessage = RelayMessage;
     type VerifiedResult = Result<EthereumAddress, DispatchError>;
+    type RelayMessageResult = Result<(), DispatchError>;
     fn verify(proof: &Self::RelayProof) -> Self::VerifiedResult {
         let address = <BackingAddressList<T>>::get(proof).ok_or(<Error<T>>::InvalidProof)?;
         Ok(address)
     }
 
     // todo, use s2s relay message transaction
-    fn relay_message(_message: &Self::RelayMessage) {
+    fn relay_message(_message: &Self::RelayMessage) -> Self::RelayMessageResult {
+        //let msg = message.clone();
+        //let index = BackingRuntimeIndex::get(&msg.0).ok_or(<Error<T>>::InvalidBackingAddr)?;
+        //let encoded = payload::encode_relay_message(index, msg.1, msg.2)
+            //.map_err(|_| <Error<T>>::EncodeInv)?;
+        //let issuing_id: AccountId<T> = T::PalletId::get().into_account();
+        //pallet_bridge_messages::Pallet::<T>::send_message(
+        //T::MessageSenderT::send_message(
+			//RawOrigin::Signed(1),
+            //[0; 4],
+			//encoded,
+			//0,
+		//)?;
+        Ok(())
     }
 }
 

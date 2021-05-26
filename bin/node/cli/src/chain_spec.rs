@@ -400,7 +400,8 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
         darwinia_s2s_relay: pangolin_runtime::Substrate2SubstrateRelayConfig {
             backings: vec![(
 				array_bytes::hex2array_unchecked!(MILLAU_BACKING_SUBADDRESS, 32).into(),
-                array_bytes::hex2array_unchecked!(MILLAU_BACKING_ETHADDRESS, 20).into()
+                array_bytes::hex2array_unchecked!(MILLAU_BACKING_ETHADDRESS, 20).into(),
+                0
             )]
         },
         darwinia_s2s_issuing: pangolin_runtime::Substrate2SubstrateIssuingConfig {
@@ -566,7 +567,8 @@ fn pangolin_development_genesis() -> pangolin_runtime::GenesisConfig {
         darwinia_s2s_relay: pangolin_runtime::Substrate2SubstrateRelayConfig {
             backings: vec![(
 				array_bytes::hex2array_unchecked!(MILLAU_BACKING_SUBADDRESS, 32).into(),
-                array_bytes::hex2array_unchecked!(MILLAU_BACKING_ETHADDRESS, 20).into()
+                array_bytes::hex2array_unchecked!(MILLAU_BACKING_ETHADDRESS, 20).into(),
+                0
             )]
         },
         darwinia_s2s_issuing: pangolin_runtime::Substrate2SubstrateIssuingConfig {
