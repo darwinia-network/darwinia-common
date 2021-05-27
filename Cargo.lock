@@ -1954,6 +1954,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-s2s-backing"
+version = "2.4.0"
+dependencies = [
+ "array-bytes",
+ "darwinia-asset-primitives",
+ "darwinia-ethereum-issuing",
+ "darwinia-evm",
+ "darwinia-primitives-contract",
+ "darwinia-relay-primitives",
+ "darwinia-s2s-chain",
+ "darwinia-support",
+ "dp-evm",
+ "dvm-ethereum",
+ "ethereum-primitives",
+ "ethereum-types",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "serde",
+ "serde_json",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "darwinia-s2s-chain"
 version = "2.4.0"
 dependencies = [
@@ -1993,7 +2019,6 @@ dependencies = [
 name = "darwinia-s2s-relay"
 version = "2.4.0"
 dependencies = [
- "bp-messages",
  "darwinia-asset-primitives",
  "darwinia-ethereum-issuing-contract",
  "darwinia-evm",
@@ -2008,7 +2033,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
- "pallet-bridge-messages",
  "parity-scale-codec",
  "serde",
  "serde_json",

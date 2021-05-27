@@ -31,12 +31,24 @@ use ethereum_primitives::EthereumAddress;
 pub enum MillauRuntime {
 	/// s2s bridge backing pallet.
 	#[codec(index = 49)]
-	Millau2PangolinBacking(Millau2PangolinBackingCall),
+	Sub2SubBacking(MillauSub2SubBackingCall),
 }
 //
 #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
 #[allow(non_camel_case_types)]
-pub enum Millau2PangolinBackingCall {
+pub enum MillauSub2SubBackingCall {
+	#[codec(index = 0)]
+    cross_receive((Token, EthereumAddress)),
+}
+
+#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
+pub enum PangolinRuntime {
+    Sub2SubIssuing(PangolinSub2SubIssuingCall),
+}
+
+#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
+#[allow(non_camel_case_types)]
+pub enum PangolinSub2SubIssuingCall {
 	#[codec(index = 0)]
     cross_receive((Token, EthereumAddress)),
 }
@@ -49,9 +61,13 @@ pub fn encode_relay_message(
     recipient: EthereumAddress
     ) -> Result<Vec<u8>, ()> {
     match selector {
-        // millau2pangolin_backing_cross_receive(address,address)
-        [0x33, 0x08, 0xe8, 0x7a] => {
-            Ok(MillauRuntime::Millau2PangolinBacking(Millau2PangolinBackingCall::cross_receive((token, recipient))).encode())
+        // millau_backing_cross_receive(address,address)
+        [0x22, 0x4f, 0xdd, 0x11] => {
+            Ok(MillauRuntime::Sub2SubBacking(MillauSub2SubBackingCall::cross_receive((token, recipient))).encode())
+        }
+        // pangolin_issuing_cross_receive(address,address)
+        [0xa8, 0x0b, 0x03, 0x9a] => {
+            Ok(PangolinRuntime::Sub2SubIssuing(PangolinSub2SubIssuingCall::cross_receive((token, recipient))).encode())
         }
         _ => Err(())
     }

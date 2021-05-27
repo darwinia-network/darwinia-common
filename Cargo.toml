@@ -22,6 +22,7 @@ members = [
 	"frame/bridge/ethereum/relay",
 	"frame/bridge/relayer-game",
 	"frame/bridge/relay-authorities",
+	"frame/bridge/s2s/backing",
 	"frame/bridge/s2s/issuing",
 	"frame/bridge/s2s/relay",
 	"frame/bridge/s2s/chain",
