@@ -14,82 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Parity Bridges Common.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::{error::Error, *};
-use bp_bsc::{
-	BSCHeader, ADDRESS_LENGTH, DIFF_INTURN, DIFF_NOTURN, KECCAK_EMPTY_LIST_RLP, SIGNATURE_LENGTH,
-	VANITY_LENGTH,
-};
-use frame_support::traits::UnixTime;
-
-/// Perform basic checks that only require header itself.
-pub fn contextless_checks<T>(config: &BSCConfiguration, header: &BSCHeader) -> Result<(), Error>
-where
-	T: Config,
-{
-	// he genesis block is the always valid dead-end
-	if header.number == 0 {
-		return Ok(());
-	}
-	// Don't waste time checking blocks from the future
-	if is_timestamp_ahead::<T>(header.timestamp) {
-		return Err(Error::HeaderTimestampIsAhead);
-	}
-	// Check that the extra-data contains the vanity, validators and signature.
-	if header.extra_data.len() < VANITY_LENGTH {
-		return Err(Error::MissingVanity);
-	}
-	if header.extra_data.len() < VANITY_LENGTH + SIGNATURE_LENGTH {
-		return Err(Error::MissingSignature);
-	}
-	if header.number >= u64::max_value() {
-		return Err(Error::RidiculousNumber);
-	}
-	// Ensure that the extra-data contains a validator list on checkpoint, but none otherwise
-	let is_checkpoint = header.number % config.epoch_length == 0;
-	let validator_bytes_len = header.extra_data.len() - (VANITY_LENGTH + SIGNATURE_LENGTH);
-	if !is_checkpoint && validator_bytes_len != 0 {
-		return Err(Error::ExtraValidators);
-	}
-	// Checkpoint blocks must at least contain one validator
-	if is_checkpoint && validator_bytes_len == 0 {
-		return Err(Error::InvalidCheckpointValidators);
-	}
-	// Ensure that the validator bytes length is valid
-	if is_checkpoint && validator_bytes_len % ADDRESS_LENGTH != 0 {
-		return Err(Error::InvalidCheckpointValidators);
-	}
-	// Ensure that the mix digest is zero as we don't have fork protection currently
-	if !header.mix_digest.is_zero() {
-		return Err(Error::InvalidMixDigest);
-	}
-	// Ensure that the block doesn't contain any uncles which are meaningless in PoA
-	if header.uncle_hash != KECCAK_EMPTY_LIST_RLP {
-		return Err(Error::InvalidUncleHash);
-	}
-	// Ensure difficulty is valid
-	if header.difficulty != DIFF_INTURN && header.difficulty != DIFF_NOTURN {
-		return Err(Error::InvalidDifficulty);
-	}
-	// Ensure that none is empty
-	if !header.nonce.len() != 0 {
-		return Err(Error::InvalidNonce);
-	}
-	// Ensure that the block's difficulty is meaningful (may not be correct at this point)
-	if header.number > 0 && header.difficulty.is_zero() {
-		return Err(Error::InvalidDifficulty);
-	}
-	if header.gas_used > header.gas_limit {
-		return Err(Error::TooMuchGasUsed);
-	}
-	if header.gas_limit < config.min_gas_limit {
-		return Err(Error::InvalidGasLimit);
-	}
-	if header.gas_limit > config.max_gas_limit {
-		return Err(Error::InvalidGasLimit);
-	}
-
-	Ok(())
-}
+use crate::*;
+use bp_bsc::BSCHeader;
 
 /// Perform checks that require access to parent header.
 pub fn contextual_checks(
@@ -109,11 +35,4 @@ pub fn contextual_checks(
 	}
 
 	Ok(())
-}
-
-fn is_timestamp_ahead<T>(timestamp: u64) -> bool
-where
-	T: Config,
-{
-	T::UnixTime::now().as_millis() as u64 <= timestamp
 }

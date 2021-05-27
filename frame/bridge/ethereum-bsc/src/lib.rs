@@ -24,11 +24,11 @@ pub mod pallet {
 	use frame_support::{pallet_prelude::*, traits::UnixTime};
 	use frame_system::pallet_prelude::*;
 	use sp_core::U256;
-	use sp_runtime::RuntimeDebug;
+	use sp_runtime::{DispatchResult, RuntimeDebug};
 	use sp_std::collections::btree_set::BTreeSet;
 	// --- darwinia ---
 	use crate::*;
-	use bp_bsc::{Address, BSCHeader};
+	use bp_bsc::*;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -41,18 +41,55 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// Block number isn't sensible.
-		RidiculousNumber,
 		/// The size of submitted headers is not N/2+1
 		InvalidHeadersSize,
-		/// This header is not checkpoint,
+		/// Block number isn't sensible
+		RidiculousNumber,
+		/// This header is not checkpoint
 		NotCheckpoint,
 		/// Invalid signer
 		InvalidSigner,
-		/// Submitted headers not enough
-		HeadersNotEnough,
 		/// Signed recently
 		SignedRecently,
+		/// Submitted headers not enough
+		HeadersNotEnough,
+
+		/// Non empty nonce
+		/// InvalidNonce is returned if a block header nonce is non-empty
+		InvalidNonce,
+		/// Gas limit header field is invalid.
+		InvalidGasLimit,
+		/// Block has too much gas used.
+		TooMuchGasUsed,
+		/// Non empty uncle hash
+		/// InvalidUncleHash is returned if a block contains an non-empty uncle list
+		InvalidUncleHash,
+		/// Difficulty header field is invalid.
+		InvalidDifficulty,
+		/// Non-zero mix digest
+		/// InvalidMixDigest is returned if a block's mix digest is non-zero
+		InvalidMixDigest,
+		/// Header timestamp is ahead of on-chain timestamp
+		HeaderTimestampIsAhead,
+		/// Extra-data 32 byte vanity prefix missing
+		/// MissingVanity is returned if a block's extra-data section is shorter than
+		/// 32 bytes, which is required to store the validator(signer) vanity
+		///
+		/// Extra-data 32 byte vanity prefix missing
+		MissingVanity,
+		/// Extra-data 65 byte signature suffix missing
+		/// MissingSignature is returned if a block's extra-data section doesn't seem
+		/// to contain a 65 byte secp256k1 signature
+		MissingSignature,
+
+		/// Invalid validator list on checkpoint block
+		/// errInvalidCheckpointValidators is returned if a checkpoint block contains an
+		/// invalid list of validators (i.e. non divisible by 20 bytes)
+		InvalidCheckpointValidators,
+		/// Non-checkpoint block contains extra validator list
+		/// ExtraValidators is returned if non-checkpoint block contain validator data in
+		/// their extra-data fields
+		ExtraValidators,
 	}
 
 	#[pallet::storage]
@@ -89,6 +126,8 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			headers: Vec<BSCHeader>,
 		) -> DispatchResultWithPostInfo {
+			// TODO: should we ignore all checks while number equals 0?
+
 			// ensure not signed
 			frame_system::ensure_none(origin)?;
 
@@ -121,7 +160,7 @@ pub mod pallet {
 
 			// verify checkpoint
 			// basic checks
-			verification::contextless_checks::<T>(&cfg, checkpoint).map_err(|e| e.msg())?;
+			Self::contextless_checks(&cfg, checkpoint)?;
 			// check signer
 			let signer = utils::recover_creator(checkpoint).map_err(|e| e.msg())?;
 			ensure!(
@@ -136,7 +175,7 @@ pub mod pallet {
 			let mut recently = BTreeSet::<Address>::new();
 
 			for i in 1..headers.len() {
-				verification::contextless_checks::<T>(&cfg, &headers[i]).map_err(|e| e.msg())?;
+				Self::contextless_checks(&cfg, &headers[i])?;
 				// check parent
 				verification::contextual_checks(&cfg, &headers[i], &headers[i - 1])
 					.map_err(|e| e.msg())?;
@@ -202,7 +241,7 @@ pub mod pallet {
 
 			// verify checkpoint
 			// basic checks
-			verification::contextless_checks::<T>(&cfg, checkpoint).map_err(|e| e.msg())?;
+			Self::contextless_checks(&cfg, checkpoint)?;
 			// check signer
 			let signer = utils::recover_creator(checkpoint).map_err(|e| e.msg())?;
 			ensure!(
@@ -217,7 +256,7 @@ pub mod pallet {
 			let mut recently = BTreeSet::<Address>::new();
 
 			for i in 1..headers.len() {
-				verification::contextless_checks::<T>(&cfg, &headers[i]).map_err(|e| e.msg())?;
+				Self::contextless_checks(&cfg, &headers[i])?;
 				// check parent
 				verification::contextual_checks(&cfg, &headers[i], &headers[i - 1])
 					.map_err(|e| e.msg())?;
@@ -249,6 +288,86 @@ pub mod pallet {
 			T::OnHeadersSubmitted::on_invalid_headers_submitted(submitter);
 
 			Err(<Error<T>>::HeadersNotEnough)?
+		}
+	}
+	impl<T: Config> Pallet<T> {
+		fn is_timestamp_ahead(timestamp: u64) -> bool {
+			T::UnixTime::now().as_millis() as u64 <= timestamp
+		}
+
+		/// Perform basic checks that only require header itself.
+		fn contextless_checks(config: &BSCConfiguration, header: &BSCHeader) -> DispatchResult {
+			// he genesis block is the always valid dead-end
+			if header.number == 0 {
+				return Ok(());
+			}
+
+			// Ensure that nonce is empty
+			ensure!(header.nonce.is_empty(), <Error<T>>::InvalidNonce);
+
+			ensure!(
+				header.gas_limit >= config.min_gas_limit
+					&& header.gas_limit <= config.max_gas_limit,
+				<Error<T>>::InvalidGasLimit
+			);
+			ensure!(
+				header.gas_used <= header.gas_limit,
+				<Error<T>>::TooMuchGasUsed
+			);
+
+			// Ensure that the block doesn't contain any uncles which are meaningless in PoA
+			ensure!(
+				header.uncle_hash == KECCAK_EMPTY_LIST_RLP,
+				<Error<T>>::InvalidUncleHash
+			);
+
+			// Ensure difficulty is valid
+			ensure!(
+				header.difficulty == DIFF_INTURN || header.difficulty == DIFF_NOTURN,
+				<Error<T>>::InvalidDifficulty
+			);
+			// Ensure that the block's difficulty is meaningful (may not be correct at this point)
+			ensure!(!header.difficulty.is_zero(), <Error<T>>::InvalidDifficulty);
+
+			// Ensure that the mix digest is zero as we don't have fork protection currently
+			ensure!(header.mix_digest.is_zero(), <Error<T>>::InvalidMixDigest);
+
+			// Don't waste time checking blocks from the future
+			ensure!(
+				!Self::is_timestamp_ahead(header.timestamp),
+				<Error<T>>::HeaderTimestampIsAhead
+			);
+
+			// Check that the extra-data contains the vanity, validators and signature.
+			ensure!(
+				header.extra_data.len() > VANITY_LENGTH,
+				<Error<T>>::MissingVanity
+			);
+
+			let validator_bytes_len = header
+				.extra_data
+				.len()
+				.checked_sub((VANITY_LENGTH + SIGNATURE_LENGTH))
+				.ok_or(<Error<T>>::MissingSignature)?;
+			// Ensure that the extra-data contains a validator list on checkpoint, but none otherwise
+			let is_checkpoint = header.number % config.epoch_length == 0;
+
+			if is_checkpoint {
+				// Checkpoint blocks must at least contain one validator
+				ensure!(
+					validator_bytes_len != 0,
+					<Error<T>>::InvalidCheckpointValidators
+				);
+				// Ensure that the validator bytes length is valid
+				ensure!(
+					validator_bytes_len % ADDRESS_LENGTH == 0,
+					<Error<T>>::InvalidCheckpointValidators
+				);
+			} else {
+				ensure!(validator_bytes_len == 0, <Error<T>>::ExtraValidators);
+			}
+
+			Ok(())
 		}
 	}
 
@@ -293,6 +412,38 @@ pub mod pallet {
 }
 pub use pallet::*;
 
-mod error;
 mod utils;
 mod verification;
+
+use sp_runtime::RuntimeDebug;
+/// Header import error.
+#[derive(Clone, Copy, RuntimeDebug)]
+pub enum Error {
+	/// Block number isn't sensible.
+	RidiculousNumber,
+
+	/// UnknownAncestor is returned when validating a block requires an ancestor that is unknown.
+	UnknownAncestor,
+	/// Header timestamp too close
+	/// HeaderTimestampTooClose is returned when header timestamp is too close with parent's
+	HeaderTimestampTooClose,
+	/// Missing signers
+	CheckpointNoSigner,
+	/// EC_RECOVER error
+	RecoverPubkeyFail,
+	/// List of signers is invalid
+	CheckpointInvalidSigners(usize),
+}
+impl Error {
+	pub fn msg(&self) -> &'static str {
+		match *self {
+			Error::RidiculousNumber => "Header has too large number",
+			Error::UnknownAncestor => "Unknow ancestor",
+			Error::HeaderTimestampTooClose => "Header timestamp too close",
+			Error::CheckpointNoSigner => "Missing signers",
+			// TODO how to format this and return a static str?
+			Error::RecoverPubkeyFail => "Recover pubkey from signature error",
+			_ => "Unknown error.",
+		}
+	}
+}
