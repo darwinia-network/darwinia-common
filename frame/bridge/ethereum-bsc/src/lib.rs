@@ -24,11 +24,13 @@ pub mod pallet {
 	use frame_support::{pallet_prelude::*, traits::UnixTime};
 	use frame_system::pallet_prelude::*;
 	use sp_core::U256;
-	use sp_runtime::{DispatchResult, RuntimeDebug};
+	use sp_io::crypto;
+	use sp_runtime::{DispatchError, DispatchResult, RuntimeDebug};
 	use sp_std::collections::btree_set::BTreeSet;
 	// --- darwinia ---
 	use crate::*;
 	use bp_bsc::*;
+	use utils::*;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -81,7 +83,6 @@ pub mod pallet {
 		/// MissingSignature is returned if a block's extra-data section doesn't seem
 		/// to contain a 65 byte secp256k1 signature
 		MissingSignature,
-
 		/// Invalid validator list on checkpoint block
 		/// errInvalidCheckpointValidators is returned if a checkpoint block contains an
 		/// invalid list of validators (i.e. non divisible by 20 bytes)
@@ -90,6 +91,11 @@ pub mod pallet {
 		/// ExtraValidators is returned if non-checkpoint block contain validator data in
 		/// their extra-data fields
 		ExtraValidators,
+
+		/// EC_RECOVER error
+		///
+		/// Recover pubkey from signature error
+		RecoverPubkeyFail,
 	}
 
 	#[pallet::storage]
@@ -162,7 +168,7 @@ pub mod pallet {
 			// basic checks
 			Self::contextless_checks(&cfg, checkpoint)?;
 			// check signer
-			let signer = utils::recover_creator(checkpoint).map_err(|e| e.msg())?;
+			let signer = Self::recover_creator(checkpoint)?;
 			ensure!(
 				contains(&last_authority_set, signer),
 				<Error::<T>>::InvalidSigner
@@ -180,7 +186,7 @@ pub mod pallet {
 				verification::contextual_checks(&cfg, &headers[i], &headers[i - 1])
 					.map_err(|e| e.msg())?;
 				// who signed this header
-				let signer = utils::recover_creator(&headers[i]).map_err(|e| e.msg())?;
+				let signer = Self::recover_creator(&headers[i])?;
 				// signed must in last authority set
 				ensure!(
 					contains(&last_authority_set, signer),
@@ -225,7 +231,7 @@ pub mod pallet {
 			let checkpoint = &headers[0];
 
 			// get configuration
-			let cfg: BSCConfiguration = T::BSCConfiguration::get();
+			let cfg = T::BSCConfiguration::get();
 
 			// ensure valid header number
 			ensure!(
@@ -243,7 +249,7 @@ pub mod pallet {
 			// basic checks
 			Self::contextless_checks(&cfg, checkpoint)?;
 			// check signer
-			let signer = utils::recover_creator(checkpoint).map_err(|e| e.msg())?;
+			let signer = Self::recover_creator(checkpoint)?;
 			ensure!(
 				contains(&last_authority_set, signer),
 				<Error::<T>>::InvalidSigner
@@ -261,7 +267,7 @@ pub mod pallet {
 				verification::contextual_checks(&cfg, &headers[i], &headers[i - 1])
 					.map_err(|e| e.msg())?;
 				// who signed this header
-				let signer = utils::recover_creator(&headers[i]).map_err(|e| e.msg())?;
+				let signer = Self::recover_creator(&headers[i])?;
 				// signed must in last authority set
 				ensure!(
 					contains(&last_authority_set, signer),
@@ -347,7 +353,7 @@ pub mod pallet {
 			let validator_bytes_len = header
 				.extra_data
 				.len()
-				.checked_sub((VANITY_LENGTH + SIGNATURE_LENGTH))
+				.checked_sub(VANITY_LENGTH + SIGNATURE_LENGTH)
 				.ok_or(<Error<T>>::MissingSignature)?;
 			// Ensure that the extra-data contains a validator list on checkpoint, but none otherwise
 			let is_checkpoint = header.number % config.epoch_length == 0;
@@ -368,6 +374,48 @@ pub mod pallet {
 			}
 
 			Ok(())
+		}
+
+		/// Recover block creator from signature
+		pub fn recover_creator(header: &BSCHeader) -> Result<Address, DispatchError> {
+			// Initialization
+			let mut cache = CREATOR_BY_HASH.write();
+
+			if let Some(creator) = cache.get_mut(&header.compute_hash()) {
+				return Ok(*creator);
+			}
+
+			let data = &header.extra_data;
+			if data.len() < VANITY_LENGTH {
+				Err(<Error<T>>::MissingVanity)?;
+			}
+
+			if data.len() < VANITY_LENGTH + SIGNATURE_LENGTH {
+				Err(<Error<T>>::MissingSignature)?;
+			}
+
+			// Split `signed_extra data` and `signature`
+			let (signed_data_slice, signature_slice) = data.split_at(data.len() - SIGNATURE_LENGTH);
+
+			// TODO: handle panic
+			// convert `&[u8]` to `[u8; 65]`
+			let signature = {
+				let mut s = [0; SIGNATURE_LENGTH];
+				s.copy_from_slice(signature_slice);
+				s
+			};
+
+			// modify header and hash it
+			let unsigned_header = &mut header.clone();
+			unsigned_header.extra_data = signed_data_slice.to_vec();
+			let msg = unsigned_header.compute_hash();
+
+			let pubkey = crypto::secp256k1_ecdsa_recover(&signature, msg.as_fixed_bytes())
+				.map_err(|_| <Error<T>>::RecoverPubkeyFail)?;
+			let creator = bp_bsc::public_to_address(&pubkey);
+
+			cache.insert(header.compute_hash(), creator);
+			Ok(creator)
 		}
 	}
 
@@ -429,8 +477,7 @@ pub enum Error {
 	HeaderTimestampTooClose,
 	/// Missing signers
 	CheckpointNoSigner,
-	/// EC_RECOVER error
-	RecoverPubkeyFail,
+
 	/// List of signers is invalid
 	CheckpointInvalidSigners(usize),
 }
@@ -442,7 +489,6 @@ impl Error {
 			Error::HeaderTimestampTooClose => "Header timestamp too close",
 			Error::CheckpointNoSigner => "Missing signers",
 			// TODO how to format this and return a static str?
-			Error::RecoverPubkeyFail => "Recover pubkey from signature error",
 			_ => "Unknown error.",
 		}
 	}

@@ -15,62 +15,17 @@
 // along with OpenEthereum.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::*;
-use bp_bsc::{
-	public_to_address, Address, BSCHeader, ADDRESS_LENGTH, H160, SIGNATURE_LENGTH, VANITY_LENGTH,
-};
+use bp_bsc::{Address, BSCHeader, ADDRESS_LENGTH, H160, SIGNATURE_LENGTH, VANITY_LENGTH};
 use lru_cache::LruCache;
 use parking_lot::RwLock;
 use sp_core::H256;
-use sp_io::crypto::secp256k1_ecdsa_recover;
 
 /// How many recovered signature to cache in the memory.
 pub const CREATOR_CACHE_NUM: usize = 4096;
 lazy_static::lazy_static! {
 	/// key: header hash
 	/// value: creator address
-	static ref CREATOR_BY_HASH: RwLock<LruCache<H256, Address>> = RwLock::new(LruCache::new(CREATOR_CACHE_NUM));
-}
-
-/// Recover block creator from signature
-pub fn recover_creator(header: &BSCHeader) -> Result<Address, Error> {
-	unimplemented!()
-	// // Initialization
-	// let mut cache = CREATOR_BY_HASH.write();
-
-	// if let Some(creator) = cache.get_mut(&header.compute_hash()) {
-	// 	return Ok(*creator);
-	// }
-
-	// let data = &header.extra_data;
-	// if data.len() < VANITY_LENGTH {
-	// 	return Err(Error::MissingVanity);
-	// }
-
-	// if data.len() < VANITY_LENGTH + SIGNATURE_LENGTH {
-	// 	return Err(Error::MissingSignature);
-	// }
-
-	// // Split `signed_extra data` and `signature`
-	// let (signed_data_slice, signature_slice) = data.split_at(data.len() - SIGNATURE_LENGTH);
-
-	// // convert `&[u8]` to `[u8; 65]`
-	// let signature = {
-	// 	let mut s = [0; SIGNATURE_LENGTH];
-	// 	s.copy_from_slice(signature_slice);
-	// 	s
-	// };
-
-	// // modify header and hash it
-	// let unsigned_header = &mut header.clone();
-	// unsigned_header.extra_data = signed_data_slice.to_vec();
-	// let msg = unsigned_header.compute_hash();
-
-	// let pubkey = secp256k1_ecdsa_recover(&signature, msg.as_fixed_bytes())
-	// 	.map_err(|_| Error::RecoverPubkeyFail)?;
-	// let creator = public_to_address(&pubkey);
-
-	// cache.insert(header.compute_hash(), creator);
-	// Ok(creator)
+	pub static ref CREATOR_BY_HASH: RwLock<LruCache<H256, Address>> = RwLock::new(LruCache::new(CREATOR_CACHE_NUM));
 }
 
 /// Extract authority set from extra_data.
