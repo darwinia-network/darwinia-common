@@ -24,6 +24,7 @@ members = [
 	"frame/bridge/relay-authorities",
 	"frame/bridge/s2s/issuing",
 	"frame/bridge/s2s/relay",
+	"frame/bridge/s2s/chain",
 	"frame/bridge/tron/backing",
 	"frame/claims",
 	"frame/democracy",

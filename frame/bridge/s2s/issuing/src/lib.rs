@@ -26,6 +26,7 @@ pub use weights::WeightInfo;
 
 use darwinia_relay_primitives::{Relay, RelayAccount};
 use darwinia_evm::AddressMapping;
+use darwinia_s2s_chain::ChainSelector as TargetChain;
 
 use sp_runtime::traits::Dispatchable;
 
@@ -69,7 +70,7 @@ pub trait Config: dvm_ethereum::Config {
     type BackingRelay: Relay<
         RelayProof = AccountId<Self>, 
         VerifiedResult = Result<EthereumAddress, DispatchError>, 
-        RelayMessage=(EthereumAddress, Token, RelayAccount<Self::AccountId>),
+        RelayMessage=(TargetChain, Token, RelayAccount<Self::AccountId>),
         RelayMessageResult = Result<(), DispatchError>>;
 }
 
@@ -175,7 +176,7 @@ decl_module! {
         }
 
         #[weight = 0]
-        pub fn cross_send(origin, backing: EthereumAddress, token: EthereumAddress, recipient: AccountId<T>, amount: U256) {
+        pub fn cross_send(origin, target: TargetChain, token: EthereumAddress, recipient: AccountId<T>, amount: U256) {
 			let user = ensure_signed(origin)?;
             // we must check this user comes from mapping token factory contract address with
             // precompile dispatch contract
@@ -184,7 +185,7 @@ decl_module! {
             ensure!(caller == user, <Error<T>>::AssetAR);
 
             let message = (
-                backing,
+                target,
                 Token::Native(TokenInfo {
                     address: token,
                     value: Some(amount),

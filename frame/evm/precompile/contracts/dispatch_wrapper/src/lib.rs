@@ -39,6 +39,7 @@ pub struct DispatchWrapper<T> {
 	_marker: PhantomData<T>,
 }
 
+const SELECTOR_SIZE_BYTES: usize = 4;
 impl<T> Precompile for DispatchWrapper<T>
 where
     T: darwinia_evm::Config + darwinia_s2s_issuing::Config,
@@ -51,14 +52,13 @@ where
 		target_gas: Option<u64>,
 		context: &Context,
 	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
-        const SELECTOR_SIZE_BYTES: usize = 4;
 
         if input.len() < 4 {
 			return Err(ExitError::Other("input length less than 4 bytes".into()));
 		}
 
         let inner_call = match input[0..SELECTOR_SIZE_BYTES] {
-            [0x67, 0x74, 0x14, 0x8c] => Self::s2sissuing_cross_send(&input[SELECTOR_SIZE_BYTES..])?,
+            [0x33, 0x08, 0xe8, 0x7a] => Self::s2sissuing_cross_send(&input)?,
             _ => {
                 return Err(ExitError::Other(
                         "No wrapper method at selector given selector".into(),
@@ -102,12 +102,14 @@ where
     T::Call: From<darwinia_s2s_issuing::Call<T>>,
 {
     fn s2sissuing_cross_send(input: &[u8]) -> Result<darwinia_s2s_issuing::Call<T>, ExitError> {
-        let burn_info = TokenBurnInfo::decode(input)
+        let burn_info = TokenBurnInfo::decode(&input[SELECTOR_SIZE_BYTES..])
             .map_err(|_| ExitError::Other("decode burninfo failed".into()))?;
 
         let recipient = Self::account_id_try_from_bytes(burn_info.recipient.as_slice())?;
+        let mut selector: [u8; SELECTOR_SIZE_BYTES] = Default::default();
+        selector.copy_from_slice(&input[..SELECTOR_SIZE_BYTES]);
 		Ok(darwinia_s2s_issuing::Call::<T>::cross_send(
-			burn_info.backing,
+            selector,
 			burn_info.source,
 			recipient,
             burn_info.amount,

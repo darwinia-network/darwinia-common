@@ -29,7 +29,6 @@ use frame_support::{
 use sp_runtime::DispatchError;
 
 pub mod weights;
-pub mod payload;
 pub use weights::WeightInfo;
 use darwinia_relay_primitives::{
     Relay,
@@ -38,6 +37,7 @@ use darwinia_relay_primitives::{
 
 use darwinia_asset_primitives::token::Token;
 use ethereum_primitives::EthereumAddress;
+use darwinia_s2s_chain::ChainSelector;
 
 //use bp_messages::LaneId;
 
@@ -121,7 +121,7 @@ decl_module! {
 
 impl<T: Config> Relay for Module<T> {
     type RelayProof = AccountId<T>;
-    type RelayMessage = (EthereumAddress, Token, RelayAccount<AccountId<T>>);
+    type RelayMessage = (ChainSelector, Token, RelayAccount<AccountId<T>>);
     type VerifiedResult = Result<EthereumAddress, DispatchError>;
     type RelayMessageResult = Result<(), DispatchError>;
     fn verify(proof: &Self::RelayProof) -> Self::VerifiedResult {

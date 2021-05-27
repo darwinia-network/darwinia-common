@@ -16,7 +16,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-//! remote s2s backing Call module.
+//! s2s chain info include runtime and call method.
+#![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Encode, Decode};
 use sp_std::vec::Vec;
@@ -40,15 +41,18 @@ pub enum Millau2PangolinBackingCall {
     cross_receive((Token, EthereumAddress)),
 }
 
+pub type ChainSelector = [u8;4];
+
 pub fn encode_relay_message(
-    index: i32,
+    selector: ChainSelector,
     token: Token,
     recipient: EthereumAddress
     ) -> Result<Vec<u8>, ()> {
-    match index {
-        0 => {
+    match selector {
+        // millau2pangolin_backing_cross_receive(address,address)
+        [0x33, 0x08, 0xe8, 0x7a] => {
             Ok(MillauRuntime::Millau2PangolinBacking(Millau2PangolinBackingCall::cross_receive((token, recipient))).encode())
         }
-        _ => return Err(())
+        _ => Err(())
     }
 }

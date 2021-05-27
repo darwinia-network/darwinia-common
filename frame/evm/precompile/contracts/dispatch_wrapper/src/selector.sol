@@ -2,6 +2,6 @@
 pragma solidity >=0.6.0;
 
 interface ParachainStaking {
-    //0x6774148c
-    function s2sissuing_cross_send(address token, address recipient, uint256 amount) external view returns (bool);
+    //0x3308e87a
+    function millau2pangolin_backing_cross_receive(address,address) external view returns (bool);
 }
