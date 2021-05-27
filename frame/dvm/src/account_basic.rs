@@ -2,8 +2,7 @@ use crate::{Config, KtonBalance, RemainingKtonBalance, RemainingRingBalance, Rin
 use darwinia_evm::{Account as EVMAccount, AccountBasic, AddressMapping};
 use darwinia_support::evm::POW_9;
 use evm::ExitError;
-use frame_support::ensure;
-use frame_support::{storage::StorageMap, traits::Currency};
+use frame_support::{ensure, traits::Currency};
 use sp_core::{H160, U256};
 use sp_runtime::{
 	traits::{Saturating, UniqueSaturatedInto},
