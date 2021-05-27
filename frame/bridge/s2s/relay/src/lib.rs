@@ -89,18 +89,14 @@ decl_storage! {
 	trait Store for Module<T: Config> as Substrate2SubstrateRelay {
 		pub BackingAddressList
 			get(fn backing_address_list)
-			: map hasher(identity) AccountId<T> => Option<EthereumAddress>;
-        pub BackingRuntimeIndex
-            get(fn backing_runtime_index)
-            : map hasher(identity) EthereumAddress => Option<i32>;
+			: map hasher(identity) AccountId<T> => Option<(EthereumAddress, ChainSelector)>;
     }
 
     add_extra_genesis {
-		config(backings): Vec<(AccountId<T>, EthereumAddress, i32)>;
+		config(backings): Vec<(AccountId<T>, EthereumAddress, ChainSelector)>;
 		build(|config: &GenesisConfig<T>| {
-			for (address, account, index) in &config.backings {
-				<BackingAddressList<T>>::insert(address, &account);
-                BackingRuntimeIndex::insert(account, index);
+			for (address, account, selector) in &config.backings {
+				<BackingAddressList<T>>::insert(address, (account, selector));
 			}
 		});
 	}
@@ -122,7 +118,7 @@ decl_module! {
 impl<T: Config> Relay for Module<T> {
     type RelayProof = AccountId<T>;
     type RelayMessage = (ChainSelector, Token, RelayAccount<AccountId<T>>);
-    type VerifiedResult = Result<EthereumAddress, DispatchError>;
+    type VerifiedResult = Result<(EthereumAddress, ChainSelector), DispatchError>;
     type RelayMessageResult = Result<(), DispatchError>;
     fn verify(proof: &Self::RelayProof) -> Self::VerifiedResult {
         let address = <BackingAddressList<T>>::get(proof).ok_or(<Error<T>>::InvalidProof)?;

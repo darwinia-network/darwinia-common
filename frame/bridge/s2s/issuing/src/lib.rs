@@ -69,7 +69,7 @@ pub trait Config: dvm_ethereum::Config {
 	type WeightInfo: WeightInfo;
     type BackingRelay: Relay<
         RelayProof = AccountId<Self>, 
-        VerifiedResult = Result<EthereumAddress, DispatchError>, 
+        VerifiedResult = Result<(EthereumAddress, TargetChain), DispatchError>, 
         RelayMessage=(TargetChain, Token, RelayAccount<Self::AccountId>),
         RelayMessageResult = Result<(), DispatchError>>;
 }
@@ -131,7 +131,7 @@ decl_module! {
             // the s2s message relay has been verified this comes from the backing chain with the
             // chainID and backing sender address.
             // here only we need is to check the sender is in whitelist
-            let backing = T::BackingRelay::verify(&user)?;
+            let (backing, target) = T::BackingRelay::verify(&user)?;
             let (token, recipient) = message;
 
             let token_info = match token {
@@ -158,7 +158,7 @@ decl_module! {
                             .map_err(|_| Error::<T>::StringCF)?;
                         let symbol = sp_std::str::from_utf8(&option.symbol[..])
                             .map_err(|_| Error::<T>::StringCF)?;
-                        let input = Self::abi_encode_token_creation(backing, token_info.address, &name, &symbol, option.decimal)?; 
+                        let input = Self::abi_encode_token_creation(target, backing, token_info.address, &name, &symbol, option.decimal)?; 
                         Self::transact_mapping_factory(input)?;
                         // TODO check if we can get this address after create immediately
                         mapped_address = Self::mapped_token_address(backing, token_info.address)?;
@@ -197,12 +197,9 @@ decl_module! {
 	}
 }
 
-pub fn event_selector() -> [u8;4] {
-    return [0x67, 0x74, 0x14, 0x8c];
-}
-
 impl<T: Config> Module<T> {
 	fn abi_encode_token_creation(
+        target: TargetChain,
 		backing: EthereumAddress,
         address: EthereumAddress,
         name: &str,
@@ -210,7 +207,7 @@ impl<T: Config> Module<T> {
         decimal: u8
 	) -> Result<Vec<u8>, DispatchError> {
         let input = mtf::encode_create_erc20(
-            event_selector(),
+            target,
 			name,
 			symbol,
 			decimal,

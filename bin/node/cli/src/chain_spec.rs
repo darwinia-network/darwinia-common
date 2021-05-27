@@ -99,6 +99,8 @@ const ETHEREUM_BACKING_ADDRESS: &'static str = "0xb2Bea2358d817dAE01B0FD0DC3aECB
 // TODO the address is calculated by chain id and backing address
 const MILLAU_BACKING_SUBADDRESS: &'static str = "0x922b6854052ba1084c74dd323ee70047d58ae4eb068f20bc251831f1ec109030";
 const MILLAU_BACKING_ETHADDRESS: &'static str = "0x1000000000000000000000000000000000000001";
+const MILLAU_BACKING_RECEIVER: &'static str = "0x3308e87a";
+
 
 fn session_keys(
 	babe: BabeId,
@@ -401,7 +403,7 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
             backings: vec![(
 				array_bytes::hex2array_unchecked!(MILLAU_BACKING_SUBADDRESS, 32).into(),
                 array_bytes::hex2array_unchecked!(MILLAU_BACKING_ETHADDRESS, 20).into(),
-                0
+                array_bytes::hex2array_unchecked!(MILLAU_BACKING_RECEIVER, 4).into(),
             )]
         },
         darwinia_s2s_issuing: pangolin_runtime::Substrate2SubstrateIssuingConfig {
@@ -568,7 +570,7 @@ fn pangolin_development_genesis() -> pangolin_runtime::GenesisConfig {
             backings: vec![(
 				array_bytes::hex2array_unchecked!(MILLAU_BACKING_SUBADDRESS, 32).into(),
                 array_bytes::hex2array_unchecked!(MILLAU_BACKING_ETHADDRESS, 20).into(),
-                0
+                array_bytes::hex2array_unchecked!(MILLAU_BACKING_RECEIVER, 4).into(),
             )]
         },
         darwinia_s2s_issuing: pangolin_runtime::Substrate2SubstrateIssuingConfig {
