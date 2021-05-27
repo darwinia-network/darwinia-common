@@ -215,7 +215,7 @@ pub struct TokenBurnInfo {
 	pub backing: H160,
 	pub sender: H160,
 	pub source: H160,
-	pub recipient: H160,
+	pub recipient: Vec<u8>,
 	pub amount: U256,
 }
 
@@ -226,7 +226,7 @@ impl TokenBurnInfo {
 				ParamType::Address,
 				ParamType::Address,
 				ParamType::Address,
-				ParamType::Address,
+				ParamType::Bytes,
 				ParamType::Uint(256),
 			],
 			&data,
@@ -242,7 +242,7 @@ impl TokenBurnInfo {
 				Token::Address(backing),
 				Token::Address(sender),
 				Token::Address(source),
-				Token::Address(recipient),
+				Token::Bytes(recipient),
 				Token::Uint(amount),
 			) => Ok(TokenBurnInfo {
 				backing,

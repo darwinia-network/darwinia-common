@@ -105,11 +105,22 @@ where
         let burn_info = TokenBurnInfo::decode(input)
             .map_err(|_| ExitError::Other("decode burninfo failed".into()))?;
 
+        let recipient = Self::account_id_try_from_bytes(burn_info.recipient.as_slice())?;
 		Ok(darwinia_s2s_issuing::Call::<T>::cross_send(
 			burn_info.backing,
 			burn_info.source,
-			burn_info.recipient,
+			recipient,
             burn_info.amount,
 		))
 	}
+
+    fn account_id_try_from_bytes(bytes: &[u8]) -> Result<T::AccountId, ExitError> {
+        if bytes.len() != 32 {
+            return Err(ExitError::Other("Invalid AccountId Len".into()));
+        }
+
+        let account_id: T::ReceiverAccountId = array_bytes::dyn2array!(bytes, 32).into();
+
+        Ok(account_id.into())
+    }
 }

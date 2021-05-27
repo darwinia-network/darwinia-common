@@ -41,10 +41,8 @@ use ethereum_primitives::EthereumAddress;
 use sp_std::vec::Vec;
 
 mod types {
-	use crate::*;
 	pub type BlockNumber<T> = <T as frame_system::Config>::BlockNumber;
 	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-    pub type RelayMessage = (EthereumAddress, Token, EthereumAddress);
 }
 
 pub trait Config: 
@@ -120,7 +118,7 @@ decl_module! {
 
 impl<T: Config> Relay for Module<T> {
     type RelayProof = AccountId<T>;
-    type RelayMessage = RelayMessage;
+    type RelayMessage = (EthereumAddress, Token, AccountId<T>);
     type VerifiedResult = Result<EthereumAddress, DispatchError>;
     type RelayMessageResult = Result<(), DispatchError>;
     fn verify(proof: &Self::RelayProof) -> Self::VerifiedResult {

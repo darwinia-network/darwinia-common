@@ -1730,6 +1730,7 @@ dependencies = [
 name = "darwinia-evm-precompile-dispatch-wrapper"
 version = "2.4.0"
 dependencies = [
+ "array-bytes",
  "darwinia-evm",
  "darwinia-primitives-contract",
  "darwinia-s2s-issuing",

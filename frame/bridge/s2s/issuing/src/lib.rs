@@ -63,11 +63,13 @@ pub trait Config: dvm_ethereum::Config {
 
 	type PalletId: Get<PalletId>;
 
+    type ReceiverAccountId: From<[u8; 32]> + Into<Self::AccountId>;
+
 	type WeightInfo: WeightInfo;
     type BackingRelay: Relay<
         RelayProof = AccountId<Self>, 
         VerifiedResult = Result<EthereumAddress, DispatchError>, 
-        RelayMessage=(EthereumAddress, Token, EthereumAddress),
+        RelayMessage=(EthereumAddress, Token, Self::AccountId),
         RelayMessageResult = Result<(), DispatchError>>;
 }
 
@@ -173,7 +175,7 @@ decl_module! {
         }
 
         #[weight = 0]
-        pub fn cross_send(origin, backing: EthereumAddress, token: EthereumAddress, recipient: EthereumAddress, amount: U256) {
+        pub fn cross_send(origin, backing: EthereumAddress, token: EthereumAddress, recipient: AccountId<T>, amount: U256) {
 			let user = ensure_signed(origin)?;
             // we must check this user comes from mapping token factory contract address with
             // precompile dispatch contract
