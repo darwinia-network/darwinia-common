@@ -13,6 +13,7 @@ version     = "2.4.0"
 # crates
 codec = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
 hashbrown   = { version = "0.9.1" }
+ethereum-primitives                = { default-features = false, path = "../ethereum-primitives" }
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
@@ -24,6 +25,7 @@ default = ["std"]
 std = [
 	"crates-std",
 	"substrate-std",
+	"darwinia-std",
 ]
 
 crates-std    = ["codec/std"]
@@ -32,3 +34,7 @@ substrate-std = [
 	"sp-runtime/std",
 	"sp-std/std",
 ]
+darwinia-std = [
+	"ethereum-primitives/std",
+]
+

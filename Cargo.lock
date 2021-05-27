@@ -1926,6 +1926,7 @@ dependencies = [
 name = "darwinia-relay-primitives"
 version = "2.4.0"
 dependencies = [
+ "ethereum-primitives",
  "frame-support",
  "hashbrown",
  "parity-scale-codec",

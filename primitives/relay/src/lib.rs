@@ -24,6 +24,7 @@ pub mod relayer_game;
 // --- darwinia ---
 pub use relay_authorities::*;
 pub use relayer_game::*;
+use ethereum_primitives::EthereumAddress;
 
 use codec::{Decode, Encode};
 
@@ -34,5 +35,11 @@ pub trait Relay {
     type RelayMessageResult: Clone;
     fn verify(proof: &Self::RelayProof) -> Self::VerifiedResult;
     fn relay_message(message: &Self::RelayMessage) -> Self::RelayMessageResult;
+}
+
+#[derive(Encode, Decode, Clone, Debug, Eq, PartialEq)]
+pub enum RelayAccount<AccountId> {
+    EthereumAccount(EthereumAddress),
+    DarwiniaAccount(AccountId),
 }
 

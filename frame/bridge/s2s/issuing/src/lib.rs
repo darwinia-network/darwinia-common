@@ -24,7 +24,7 @@
 pub mod weights;
 pub use weights::WeightInfo;
 
-use darwinia_relay_primitives::Relay;
+use darwinia_relay_primitives::{Relay, RelayAccount};
 use darwinia_evm::AddressMapping;
 
 use sp_runtime::traits::Dispatchable;
@@ -69,7 +69,7 @@ pub trait Config: dvm_ethereum::Config {
     type BackingRelay: Relay<
         RelayProof = AccountId<Self>, 
         VerifiedResult = Result<EthereumAddress, DispatchError>, 
-        RelayMessage=(EthereumAddress, Token, Self::AccountId),
+        RelayMessage=(EthereumAddress, Token, RelayAccount<Self::AccountId>),
         RelayMessageResult = Result<(), DispatchError>>;
 }
 
@@ -190,7 +190,7 @@ decl_module! {
                     value: Some(amount),
                     option: None,
                 }),
-                recipient);
+                RelayAccount::DarwiniaAccount(recipient));
             T::BackingRelay::relay_message(&message);
         }
 	}
