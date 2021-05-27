@@ -16,7 +16,9 @@
 
 use crate::error::Error;
 
-use bp_bsc::{public_to_address, Address, BSCHeader, ADDRESS_LENGTH, H160, SIGNATURE_LENGTH, VANITY_LENGTH};
+use bp_bsc::{
+	public_to_address, Address, BSCHeader, ADDRESS_LENGTH, H160, SIGNATURE_LENGTH, VANITY_LENGTH,
+};
 use lru_cache::LruCache;
 use parking_lot::RwLock;
 use sp_core::H256;
@@ -63,7 +65,8 @@ pub fn recover_creator(header: &BSCHeader) -> Result<Address, Error> {
 	unsigned_header.extra_data = signed_data_slice.to_vec();
 	let msg = unsigned_header.compute_hash();
 
-	let pubkey = secp256k1_ecdsa_recover(&signature, msg.as_fixed_bytes()).map_err(|_| Error::RecoverPubkeyFail)?;
+	let pubkey = secp256k1_ecdsa_recover(&signature, msg.as_fixed_bytes())
+		.map_err(|_| Error::RecoverPubkeyFail)?;
 	let creator = public_to_address(&pubkey);
 
 	cache.insert(header.compute_hash(), creator);

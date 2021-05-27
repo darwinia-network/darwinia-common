@@ -14,24 +14,24 @@
 // You should have received a copy of the GNU General Public License
 // along with Parity Bridges Common.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::error::Error;
-use crate::{BSCConfiguration, ChainTime};
+use crate::{error::Error, *};
 use bp_bsc::{
-	BSCHeader, ADDRESS_LENGTH, DIFF_INTURN, DIFF_NOTURN, KECCAK_EMPTY_LIST_RLP, SIGNATURE_LENGTH, VANITY_LENGTH,
+	BSCHeader, ADDRESS_LENGTH, DIFF_INTURN, DIFF_NOTURN, KECCAK_EMPTY_LIST_RLP, SIGNATURE_LENGTH,
+	VANITY_LENGTH,
 };
+use frame_support::traits::UnixTime;
 
 /// Perform basic checks that only require header itself.
-pub fn contextless_checks<CT: ChainTime>(
-	config: &BSCConfiguration,
-	header: &BSCHeader,
-	chain_time: &CT,
-) -> Result<(), Error> {
+pub fn contextless_checks<T>(config: &BSCConfiguration, header: &BSCHeader) -> Result<(), Error>
+where
+	T: Config,
+{
 	// he genesis block is the always valid dead-end
 	if header.number == 0 {
 		return Ok(());
 	}
 	// Don't waste time checking blocks from the future
-	if chain_time.is_timestamp_ahead(header.timestamp) {
+	if is_timestamp_ahead::<T>(header.timestamp) {
 		return Err(Error::HeaderTimestampIsAhead);
 	}
 	// Check that the extra-data contains the vanity, validators and signature.
@@ -92,7 +92,11 @@ pub fn contextless_checks<CT: ChainTime>(
 }
 
 /// Perform checks that require access to parent header.
-pub fn contextual_checks(config: &BSCConfiguration, header: &BSCHeader, parent: &BSCHeader) -> Result<(), Error> {
+pub fn contextual_checks(
+	config: &BSCConfiguration,
+	header: &BSCHeader,
+	parent: &BSCHeader,
+) -> Result<(), Error> {
 	// parent sanity check
 	if parent.compute_hash() != header.parent_hash || parent.number + 1 != header.number {
 		return Err(Error::UnknownAncestor);
@@ -105,4 +109,11 @@ pub fn contextual_checks(config: &BSCConfiguration, header: &BSCHeader, parent: 
 	}
 
 	Ok(())
+}
+
+fn is_timestamp_ahead<T>(timestamp: u64) -> bool
+where
+	T: Config,
+{
+	T::UnixTime::now().as_millis() as u64 <= timestamp
 }

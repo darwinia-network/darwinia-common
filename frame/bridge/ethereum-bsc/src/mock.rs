@@ -17,7 +17,9 @@
 // From construct_runtime macro
 #![allow(clippy::from_over_into)]
 
-pub use crate::test_utils::{insert_header, validator_utils::*, validators_change_receipt, HeaderBuilder, GAS_LIMIT};
+pub use crate::test_utils::{
+	insert_header, validator_utils::*, validators_change_receipt, HeaderBuilder, GAS_LIMIT,
+};
 pub use bp_bsc::signatures::secret_to_address;
 
 use crate::{BSCConfiguration, ChainTime, Config, GenesisConfig as CrateGenesisConfig};
@@ -142,15 +144,4 @@ pub fn run_test_with_genesis<T>(
 			addresses,
 		})
 	})
-}
-
-/// Constant chain time
-#[derive(Default)]
-pub struct ConstChainTime;
-
-impl ChainTime for ConstChainTime {
-	fn is_timestamp_ahead(&self, timestamp: u64) -> bool {
-		let now = i32::max_value() as u64 / 2;
-		timestamp > now
-	}
 }

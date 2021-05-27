@@ -28,7 +28,10 @@ pub struct Mismatch<T> {
 
 impl<T: fmt::Display> fmt::Display for Mismatch<T> {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		f.write_fmt(format_args!("Expected {}, found {}", self.expect, self.found))
+		f.write_fmt(format_args!(
+			"Expected {}, found {}",
+			self.expect, self.found
+		))
 	}
 }
 
