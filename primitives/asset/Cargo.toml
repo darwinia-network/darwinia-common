@@ -1,6 +1,6 @@
 [package]
 authors     = ["Darwinia Network <hello@darwinia.network>"]
-description = "Darwinia Relay Primitives"
+description = "Darwinia Asset Primitives"
 edition     = "2018"
 homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"

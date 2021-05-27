@@ -26,8 +26,7 @@ pub use ethabi::{Event, Log};
 use ethereum_types::{Address as EthereumAddress, H160, U256};
 // --- github ---
 use ethabi::{
-	param_type::ParamType, token::Token, Bytes, Error, Function, Param,
-	Result as AbiResult,
+	param_type::ParamType, token::Token, Bytes, Error, Function, Param, Result as AbiResult,
 };
 
 use sp_std::prelude::*;
@@ -119,7 +118,7 @@ impl MappingTokenFactory {
 
 	/// encode erc20 create function
 	pub fn encode_create_erc20(
-        event_receiver: [u8;4],
+		event_receiver: [u8; 4],
 		name: &str,
 		symbol: &str,
 		decimals: u8,

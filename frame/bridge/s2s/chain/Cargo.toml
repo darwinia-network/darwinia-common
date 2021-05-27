@@ -1,6 +1,6 @@
 [package]
 authors     = ["Darwinia Network <hello@darwinia.network>"]
-description = "FRAME pallet to issuing Ethereum assets"
+description = "FRAME pallet to s2s chain"
 edition     = "2018"
 homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"

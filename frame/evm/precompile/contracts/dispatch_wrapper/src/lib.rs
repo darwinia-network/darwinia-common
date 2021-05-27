@@ -42,30 +42,29 @@ pub struct DispatchWrapper<T> {
 const SELECTOR_SIZE_BYTES: usize = 4;
 impl<T> Precompile for DispatchWrapper<T>
 where
-    T: darwinia_evm::Config + darwinia_s2s_issuing::Config,
-    T::Call: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Decode,
-    <T::Call as Dispatchable>::Origin: From<Option<T::AccountId>>,
-    T::Call: From<darwinia_s2s_issuing::Call<T>>,
+	T: darwinia_evm::Config + darwinia_s2s_issuing::Config,
+	T::Call: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Decode,
+	<T::Call as Dispatchable>::Origin: From<Option<T::AccountId>>,
+	T::Call: From<darwinia_s2s_issuing::Call<T>>,
 {
 	fn execute(
 		input: &[u8],
 		target_gas: Option<u64>,
 		context: &Context,
 	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
-
-        if input.len() < 4 {
+		if input.len() < 4 {
 			return Err(ExitError::Other("input length less than 4 bytes".into()));
 		}
 
-        let inner_call = match input[0..SELECTOR_SIZE_BYTES] {
-            [0x33, 0x08, 0xe8, 0x7a] => Self::s2sissuing_cross_send(&input)?,
-            _ => {
-                return Err(ExitError::Other(
-                        "No wrapper method at selector given selector".into(),
-                        ));
-            }
-        };
-        let call: T::Call = inner_call.into();
+		let inner_call = match input[0..SELECTOR_SIZE_BYTES] {
+			[0x33, 0x08, 0xe8, 0x7a] => Self::s2sissuing_cross_send(&input)?,
+			_ => {
+				return Err(ExitError::Other(
+					"No wrapper method at selector given selector".into(),
+				));
+			}
+		};
+		let call: T::Call = inner_call.into();
 		let info = call.get_dispatch_info();
 
 		let valid_call = info.pays_fee == Pays::Yes && info.class == DispatchClass::Normal;
@@ -99,30 +98,30 @@ where
 	T: darwinia_s2s_issuing::Config,
 	T::Call: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Decode,
 	<T::Call as Dispatchable>::Origin: From<Option<T::AccountId>>,
-    T::Call: From<darwinia_s2s_issuing::Call<T>>,
+	T::Call: From<darwinia_s2s_issuing::Call<T>>,
 {
-    fn s2sissuing_cross_send(input: &[u8]) -> Result<darwinia_s2s_issuing::Call<T>, ExitError> {
-        let burn_info = TokenBurnInfo::decode(&input[SELECTOR_SIZE_BYTES..])
-            .map_err(|_| ExitError::Other("decode burninfo failed".into()))?;
+	fn s2sissuing_cross_send(input: &[u8]) -> Result<darwinia_s2s_issuing::Call<T>, ExitError> {
+		let burn_info = TokenBurnInfo::decode(&input[SELECTOR_SIZE_BYTES..])
+			.map_err(|_| ExitError::Other("decode burninfo failed".into()))?;
 
-        let recipient = Self::account_id_try_from_bytes(burn_info.recipient.as_slice())?;
-        let mut selector: [u8; SELECTOR_SIZE_BYTES] = Default::default();
-        selector.copy_from_slice(&input[..SELECTOR_SIZE_BYTES]);
+		let recipient = Self::account_id_try_from_bytes(burn_info.recipient.as_slice())?;
+		let mut selector: [u8; SELECTOR_SIZE_BYTES] = Default::default();
+		selector.copy_from_slice(&input[..SELECTOR_SIZE_BYTES]);
 		Ok(darwinia_s2s_issuing::Call::<T>::cross_send(
-            selector,
+			selector,
 			burn_info.source,
 			recipient,
-            burn_info.amount,
+			burn_info.amount,
 		))
 	}
 
-    fn account_id_try_from_bytes(bytes: &[u8]) -> Result<T::AccountId, ExitError> {
-        if bytes.len() != 32 {
-            return Err(ExitError::Other("Invalid AccountId Len".into()));
-        }
+	fn account_id_try_from_bytes(bytes: &[u8]) -> Result<T::AccountId, ExitError> {
+		if bytes.len() != 32 {
+			return Err(ExitError::Other("Invalid AccountId Len".into()));
+		}
 
-        let account_id: T::ReceiverAccountId = array_bytes::dyn2array!(bytes, 32).into();
+		let account_id: T::ReceiverAccountId = array_bytes::dyn2array!(bytes, 32).into();
 
-        Ok(account_id.into())
-    }
+		Ok(account_id.into())
+	}
 }

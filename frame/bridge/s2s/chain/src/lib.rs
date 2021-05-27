@@ -19,10 +19,10 @@
 //! s2s chain info include runtime and call method.
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use codec::{Encode, Decode};
-use sp_std::vec::Vec;
+use codec::{Decode, Encode};
 use darwinia_asset_primitives::token::Token;
 use ethereum_primitives::EthereumAddress;
+use sp_std::vec::Vec;
 
 // here we must contruct a Backing Runtime Call to call backing pallet from the remote issuing
 // pallet, because also we have the other direction call from backing pallet to this issuing
@@ -38,37 +38,39 @@ pub enum MillauRuntime {
 #[allow(non_camel_case_types)]
 pub enum MillauSub2SubBackingCall {
 	#[codec(index = 0)]
-    cross_receive((Token, EthereumAddress)),
+	cross_receive((Token, EthereumAddress)),
 }
 
 #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
 pub enum PangolinRuntime {
-    Sub2SubIssuing(PangolinSub2SubIssuingCall),
+	Sub2SubIssuing(PangolinSub2SubIssuingCall),
 }
 
 #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
 #[allow(non_camel_case_types)]
 pub enum PangolinSub2SubIssuingCall {
 	#[codec(index = 0)]
-    cross_receive((Token, EthereumAddress)),
+	cross_receive((Token, EthereumAddress)),
 }
 
-pub type ChainSelector = [u8;4];
+pub type ChainSelector = [u8; 4];
 
 pub fn encode_relay_message(
-    selector: ChainSelector,
-    token: Token,
-    recipient: EthereumAddress
-    ) -> Result<Vec<u8>, ()> {
-    match selector {
-        // millau_backing_cross_receive(address,address)
-        [0x22, 0x4f, 0xdd, 0x11] => {
-            Ok(MillauRuntime::Sub2SubBacking(MillauSub2SubBackingCall::cross_receive((token, recipient))).encode())
-        }
-        // pangolin_issuing_cross_receive(address,address)
-        [0xa8, 0x0b, 0x03, 0x9a] => {
-            Ok(PangolinRuntime::Sub2SubIssuing(PangolinSub2SubIssuingCall::cross_receive((token, recipient))).encode())
-        }
-        _ => Err(())
-    }
+	selector: ChainSelector,
+	token: Token,
+	recipient: EthereumAddress,
+) -> Result<Vec<u8>, ()> {
+	match selector {
+		// millau_backing_cross_receive(address,address)
+		[0x22, 0x4f, 0xdd, 0x11] => Ok(MillauRuntime::Sub2SubBacking(
+			MillauSub2SubBackingCall::cross_receive((token, recipient)),
+		)
+		.encode()),
+		// pangolin_issuing_cross_receive(address,address)
+		[0xa8, 0x0b, 0x03, 0x9a] => Ok(PangolinRuntime::Sub2SubIssuing(
+			PangolinSub2SubIssuingCall::cross_receive((token, recipient)),
+		)
+		.encode()),
+		_ => Err(()),
+	}
 }
