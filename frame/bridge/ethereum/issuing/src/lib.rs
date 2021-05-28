@@ -27,7 +27,6 @@ pub use weights::WeightInfo;
 mod types {
 	use crate::*;
 
-	pub type BlockNumber<T> = <T as frame_system::Config>::BlockNumber;
 	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 	pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 	pub type EthereumReceiptProofThing<T> = <<T as Config>::EthereumRelay as EthereumReceipt<
@@ -47,7 +46,7 @@ use frame_support::{
 	weights::Weight,
 	PalletId,
 };
-use frame_system::{ensure_root, ensure_signed};
+use frame_system::{ensure_root, ensure_signed, pallet_prelude::*};
 use sp_runtime::{
 	traits::{AccountIdConversion, Saturating},
 	AccountId32, DispatchError, DispatchResult, SaturatedConversion,
@@ -148,7 +147,7 @@ decl_module! {
 	{
 		fn deposit_event() = default;
 
-		fn on_initialize(_n: BlockNumber<T>) -> Weight {
+		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
 			<BurnTokenEvents<T>>::kill();
 			0
 		}
