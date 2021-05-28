@@ -16,25 +16,38 @@ darwinia-evm-precompile-issuing  = { default-features = false, path = "contracts
 darwinia-evm-precompile-kton     = { default-features = false, path = "contracts/kton" }
 darwinia-evm-precompile-simple   = { default-features = false, path = "contracts/simple" }
 darwinia-evm-precompile-withdraw = { default-features = false, path = "contracts/withdraw" }
-
-dvm-ethereum = { default-features = false, path = "../../dvm" }
-sp-core 	 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
-sp-std   	 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
+dp-evm                           = { default-features = false, path = "../../../primitives/evm/"}
+dvm-ethereum                     = { default-features = false, path = "../../dvm" }
+# substate
+sp-core      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
+sp-std       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
+# crate
 evm          = { default-features = false, version = "0.25.0", features = ["with-codec"] }
-dp-evm 		 = { default-features = false, path = "../../../primitives/evm/"}
 
 [features]
 default = ["std"]
 
 std = [
+	"crates-std",
+	"darwinia-std",
+	"substrate-std",
+]
+
+crates-std = [
+	"evm/std",
+]
+
+darwinia-std = [
 	"darwinia-evm-precompile-empty/std",
 	"darwinia-evm-precompile-issuing/std",
 	"darwinia-evm-precompile-kton/std",
 	"darwinia-evm-precompile-simple/std",
 	"darwinia-evm-precompile-withdraw/std",
+	"dp-evm/std",
 	"dvm-ethereum/std",
+]
+
+substrate-std = [
 	"sp-core/std",
 	"sp-std/std",
-	"dp-evm/std",
-	"evm/std",
 ]

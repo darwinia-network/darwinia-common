@@ -18,10 +18,11 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use darwinia_evm_precompile_issuing::Issuing;
-use darwinia_evm_precompile_kton::Kton;
-use darwinia_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
-use darwinia_evm_precompile_withdraw::WithDraw;
+pub use darwinia_evm_precompile_issuing::Issuing;
+pub use darwinia_evm_precompile_kton::Kton;
+pub use darwinia_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
+pub use darwinia_evm_precompile_withdraw::WithDraw;
+
 use dp_evm::{Precompile, PrecompileSet};
 use evm::{Context, ExitError, ExitSucceed};
 use sp_core::H160;
