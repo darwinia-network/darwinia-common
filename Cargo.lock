@@ -1682,6 +1682,11 @@ dependencies = [
  "darwinia-evm-precompile-kton",
  "darwinia-evm-precompile-simple",
  "darwinia-evm-precompile-withdraw",
+ "dp-evm",
+ "dvm-ethereum",
+ "evm",
+ "sp-core",
+ "sp-std",
 ]
 
 [[package]]

@@ -18,28 +18,39 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub type DarwiniaPrecompiles<Runtime> = (
-	darwinia_evm_precompile_simple::ECRecover, // 0x0000000000000000000000000000000000000001
-	darwinia_evm_precompile_simple::Sha256,    // 0x0000000000000000000000000000000000000002
-	darwinia_evm_precompile_simple::Ripemd160, // 0x0000000000000000000000000000000000000003
-	darwinia_evm_precompile_simple::Identity,  // 0x0000000000000000000000000000000000000004
-	darwinia_evm_precompile_empty::Empty,      // 0x0000000000000000000000000000000000000005
-	darwinia_evm_precompile_empty::Empty,      // 0x0000000000000000000000000000000000000006
-	darwinia_evm_precompile_empty::Empty,      // 0x0000000000000000000000000000000000000007
-	darwinia_evm_precompile_empty::Empty,      // 0x0000000000000000000000000000000000000008
-	darwinia_evm_precompile_empty::Empty,      // 0x0000000000000000000000000000000000000009
-	darwinia_evm_precompile_empty::Empty,      // 0x000000000000000000000000000000000000000a
-	darwinia_evm_precompile_empty::Empty,      // 0x000000000000000000000000000000000000000b
-	darwinia_evm_precompile_empty::Empty,      // 0x000000000000000000000000000000000000000c
-	darwinia_evm_precompile_empty::Empty,      // 0x000000000000000000000000000000000000000d
-	darwinia_evm_precompile_empty::Empty,      // 0x000000000000000000000000000000000000000e
-	darwinia_evm_precompile_empty::Empty,      // 0x000000000000000000000000000000000000000f
-	darwinia_evm_precompile_empty::Empty,      // 0x0000000000000000000000000000000000000010
-	darwinia_evm_precompile_empty::Empty,      // 0x0000000000000000000000000000000000000011
-	darwinia_evm_precompile_empty::Empty,      // 0x0000000000000000000000000000000000000012
-	darwinia_evm_precompile_empty::Empty,      // 0x0000000000000000000000000000000000000013
-	darwinia_evm_precompile_empty::Empty,      // 0x0000000000000000000000000000000000000014
-	darwinia_evm_precompile_withdraw::WithDraw<Runtime>, // 0x0000000000000000000000000000000000000015
-	darwinia_evm_precompile_kton::Kton<Runtime>, // 0x0000000000000000000000000000000000000016
-	darwinia_evm_precompile_issuing::Issuing<Runtime>, // 0x0000000000000000000000000000000000000017
-);
+use darwinia_evm_precompile_issuing::Issuing;
+use darwinia_evm_precompile_kton::Kton;
+use darwinia_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
+use darwinia_evm_precompile_withdraw::WithDraw;
+use dp_evm::{Precompile, PrecompileSet};
+use evm::{Context, ExitError, ExitSucceed};
+use sp_core::H160;
+use sp_std::{marker::PhantomData, vec::Vec};
+
+pub struct DarwiniaPrecompiles<R>(PhantomData<R>);
+
+impl<R: dvm_ethereum::Config> PrecompileSet for DarwiniaPrecompiles<R> {
+	fn execute(
+		address: H160,
+		input: &[u8],
+		target_gas: Option<u64>,
+		context: &Context,
+	) -> Option<core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError>> {
+		match address {
+			// Ethereum precompiles
+			a if a == to_address(1) => Some(ECRecover::execute(input, target_gas, context)),
+			a if a == to_address(2) => Some(Sha256::execute(input, target_gas, context)),
+			a if a == to_address(3) => Some(Ripemd160::execute(input, target_gas, context)),
+			a if a == to_address(4) => Some(Identity::execute(input, target_gas, context)),
+			// Darwinia precompiles
+			a if a == to_address(21) => Some(WithDraw::<R>::execute(input, target_gas, context)),
+			a if a == to_address(22) => Some(Kton::<R>::execute(input, target_gas, context)),
+			a if a == to_address(23) => Some(Issuing::<R>::execute(input, target_gas, context)),
+			_ => None,
+		}
+	}
+}
+
+fn to_address(a: u64) -> H160 {
+	H160::from_low_u64_be(a)
+}
