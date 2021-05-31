@@ -59,24 +59,17 @@ impl<T: dvm_ethereum::Config> Precompile for Transfer<T> {
 		context: &Context,
 	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
 		match which_action::<T>(&input) {
-			Ok(Transfer::RingBack) => {
-				RingBack::<T>::transfer(&input, target_gas, context)?;
-			}
-			Ok(Transfer::KtonTransfer) => {
-				Kton::<T>::transfer(&input, target_gas, context)?;
-			}
-			_ => {
-				return Err(ExitError::Other("Invalid action".into()));
-			}
+			Ok(Transfer::RingBack) => RingBack::<T>::transfer(&input, target_gas, context),
+			Ok(Transfer::KtonTransfer) => Kton::<T>::transfer(&input, target_gas, context),
+			_ => Err(ExitError::Other("Invalid action".into())),
 		}
-		Err(ExitError::Other("Invalid action".into()))
 	}
 }
 
 fn which_action<T: dvm_ethereum::Config>(data: &[u8]) -> Result<Transfer<T>, ExitError> {
-	if data.len() == 32 {
-		return Ok(Transfer::RingBack);
+	if !kton::is_kton_action(data) {
+		Ok(Transfer::RingBack)
 	} else {
-		return Ok(Transfer::KtonTransfer);
+		Ok(Transfer::KtonTransfer)
 	}
 }

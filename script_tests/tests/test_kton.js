@@ -311,7 +311,7 @@ const abi = [
 const jsontest = new web3.eth.Contract(abi);
 jsontest.options.from = conf.address;
 jsontest.options.gas = conf.gas;
-const addressTo = "0x0000000000000000000000000000000000000016";
+const addressTo = "0x0000000000000000000000000000000000000015";
 
 describe("Test Kton Precompile", function () {
 	after(() => {

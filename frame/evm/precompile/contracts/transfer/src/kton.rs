@@ -31,7 +31,7 @@ pub enum Kton<T: frame_system::Config> {
 impl<T: frame_system::Config + dvm_ethereum::Config> Kton<T> {
 	pub fn transfer(
 		input: &[u8],
-		target_limit: Option<u64>,
+		target_gas: Option<u64>,
 		context: &Context,
 	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
 		let helper = U256::from(POW_9);
@@ -69,7 +69,7 @@ impl<T: frame_system::Config + dvm_ethereum::Config> Kton<T> {
 					call_data.wkton_address,
 					raw_input.to_vec(),
 					U256::zero(),
-					target_limit.unwrap_or_default(),
+					target_gas.unwrap_or_default(),
 					None,
 					None,
 					T::config(),
@@ -136,6 +136,12 @@ pub fn which_action<T: frame_system::Config>(input_data: &[u8]) -> Result<Kton<T
 		return Ok(Kton::Withdraw(decoded_data));
 	}
 	Err(ExitError::Other("Invalid Action！".into()))
+}
+
+pub fn is_kton_action(data: &[u8]) -> bool {
+	let transfer_and_call_action = &sha3::Keccak256::digest(&TRANSFER_AND_CALL_ACTION)[0..4];
+	let withdraw_action = &sha3::Keccak256::digest(&WITHDRAW_ACTION)[0..4];
+	&data[0..4] == transfer_and_call_action || &data[0..4] == withdraw_action
 }
 
 #[derive(Debug, PartialEq, Eq)]
