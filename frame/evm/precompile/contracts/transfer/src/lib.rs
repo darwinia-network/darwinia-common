@@ -22,8 +22,6 @@ mod kton;
 pub mod util;
 mod withdraw;
 
-use frame_support::traits::{Currency, ExistenceRequirement};
-use kton::Kton;
 use sha3::Digest;
 use sp_core::{H160, U256};
 use sp_runtime::traits::UniqueSaturatedInto;
@@ -37,8 +35,9 @@ use darwinia_support::evm::POW_9;
 use dp_evm::Precompile;
 use ethabi::{Function, Param, ParamType, Token};
 use evm::{Context, ExitError, ExitSucceed};
-use kton::KtonAction;
-use withdraw::WithDraw;
+
+use kton::Kton;
+use withdraw::RingBack;
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 
@@ -61,10 +60,10 @@ impl<T: dvm_ethereum::Config> Precompile for Transfer<T> {
 	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
 		match which_action::<T>(&input) {
 			Ok(Transfer::RingBack) => {
-				WithDraw::<T>::execute(&input, target_gas, context)?;
+				RingBack::<T>::transfer(&input, target_gas, context)?;
 			}
 			Ok(Transfer::KtonTransfer) => {
-				KtonAction::<T>::execute(&input, target_gas, context)?;
+				Kton::<T>::execute(&input, target_gas, context)?;
 			}
 			_ => {
 				return Err(ExitError::Other("Invalid action".into()));
@@ -75,6 +74,7 @@ impl<T: dvm_ethereum::Config> Precompile for Transfer<T> {
 }
 
 fn which_action<T: dvm_ethereum::Config>(data: &[u8]) -> Result<Transfer<T>, ExitError> {
+	// TODO: change the way of select action
 	if data.len() == 32 {
 		return Ok(Transfer::RingBack);
 	} else if data.len() == 68 {

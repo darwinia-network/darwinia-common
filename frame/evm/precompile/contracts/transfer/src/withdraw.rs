@@ -2,27 +2,23 @@ use crate::AccountId;
 use codec::Decode;
 use darwinia_evm::{AddressMapping, Config};
 use darwinia_support::evm::POW_9;
-use ethabi::{Function, Param, ParamType, Token};
 use evm::{Context, ExitError, ExitSucceed};
 use frame_support::traits::{Currency, ExistenceRequirement};
-use sp_core::{H160, U256};
+use sp_core::U256;
 use sp_runtime::traits::UniqueSaturatedInto;
-use sp_std::{borrow::ToOwned, marker::PhantomData, prelude::*, vec::Vec};
+use sp_std::{marker::PhantomData, prelude::*, vec::Vec};
 
-/// WithDraw Precompile Contract, used to withdraw balance from evm account to darwinia account
-///
-/// The contract address: 0000000000000000000000000000000000000015
-pub struct WithDraw<T: Config> {
+pub struct RingBack<T: Config> {
 	_maker: PhantomData<T>,
 }
 
-impl<T: Config> WithDraw<T> {
+impl<T: Config> RingBack<T> {
 	/// The Withdraw process is divided into two part:
 	/// 1. parse the withdrawal address from the input parameter and get the contract address and value from the context
 	/// 2. transfer from the contract address to withdrawal address
 	///
 	/// Input data: 32-bit substrate withdrawal public key
-	pub(crate) fn execute(
+	pub(crate) fn transfer(
 		input: &[u8],
 		_: Option<u64>,
 		context: &Context,

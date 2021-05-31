@@ -21,21 +21,14 @@ const TRANSFER_AND_CALL_ACTION: &[u8] = b"transfer_and_call(address,uint256)";
 const WITHDRAW_ACTION: &[u8] = b"withdraw(bytes32,uint256)";
 const KTON_PRECOMPILE: &str = "0000000000000000000000000000000000000016";
 
-/// Kton Precompile Contract is used to support the exchange of KTON native asset between darwinia and dvm contract
-///
-/// The contract address: 0000000000000000000000000000000000000016
-pub struct Kton<T: Config> {
-	_maker: PhantomData<T>,
-}
-
-pub enum KtonAction<T: frame_system::Config> {
+pub enum Kton<T: frame_system::Config> {
 	/// Transfer from substrate account to wkton contract
-	TransferAndCall(TACallData),
+	TransferAndCall(CallData),
 	/// Withdraw from wkton contract to substrate account
 	Withdraw(WithdrawData<T>),
 }
 
-impl<T: frame_system::Config + dvm_ethereum::Config> KtonAction<T> {
+impl<T: frame_system::Config + dvm_ethereum::Config> Kton<T> {
 	pub fn execute(
 		input: &[u8],
 		target_limit: Option<u64>,
@@ -45,7 +38,7 @@ impl<T: frame_system::Config + dvm_ethereum::Config> KtonAction<T> {
 		let action = which_action::<T>(&input)?;
 
 		match action {
-			KtonAction::TransferAndCall(call_data) => {
+			Kton::TransferAndCall(call_data) => {
 				// Ensure wkton is a contract
 				ensure!(
 					!Module::<T>::is_contract_code_empty(&call_data.wkton_address),
@@ -91,7 +84,7 @@ impl<T: frame_system::Config + dvm_ethereum::Config> KtonAction<T> {
 
 				Ok((ExitSucceed::Returned, vec![], 20000))
 			}
-			KtonAction::Withdraw(wd) => {
+			Kton::Withdraw(wd) => {
 				// Ensure wkton is a contract
 				ensure!(
 					!Module::<T>::is_contract_code_empty(&context.caller),
@@ -132,33 +125,31 @@ impl<T: frame_system::Config + dvm_ethereum::Config> KtonAction<T> {
 }
 
 /// which action depends on the function selector
-pub fn which_action<T: frame_system::Config>(
-	input_data: &[u8],
-) -> Result<KtonAction<T>, ExitError> {
+pub fn which_action<T: frame_system::Config>(input_data: &[u8]) -> Result<Kton<T>, ExitError> {
 	let transfer_and_call_action = &sha3::Keccak256::digest(&TRANSFER_AND_CALL_ACTION)[0..4];
 	let withdraw_action = &sha3::Keccak256::digest(&WITHDRAW_ACTION)[0..4];
 	if &input_data[0..4] == transfer_and_call_action {
-		let decoded_data = TACallData::decode(&input_data[4..])?;
-		return Ok(KtonAction::TransferAndCall(decoded_data));
+		let decoded_data = CallData::decode(&input_data[4..])?;
+		return Ok(Kton::TransferAndCall(decoded_data));
 	} else if &input_data[0..4] == withdraw_action {
 		let decoded_data = WithdrawData::decode(&input_data[4..])?;
-		return Ok(KtonAction::Withdraw(decoded_data));
+		return Ok(Kton::Withdraw(decoded_data));
 	}
 	Err(ExitError::Other("Invalid Action！".into()))
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct TACallData {
+pub struct CallData {
 	wkton_address: H160,
 	value: U256,
 }
 
-impl TACallData {
+impl CallData {
 	pub fn decode(data: &[u8]) -> Result<Self, ExitError> {
 		let tokens = ethabi::decode(&[ParamType::Address, ParamType::Uint(256)], &data)
 			.map_err(|_| ExitError::Other("ethabi decoded error".into()))?;
 		match (tokens[0].clone(), tokens[1].clone()) {
-			(Token::Address(eth_wkton_address), Token::Uint(eth_value)) => Ok(TACallData {
+			(Token::Address(eth_wkton_address), Token::Uint(eth_value)) => Ok(CallData {
 				wkton_address: util::e2s_address(eth_wkton_address),
 				value: util::e2s_u256(eth_value),
 			}),
@@ -191,17 +182,15 @@ impl<T: frame_system::Config> WithdrawData<T> {
 }
 
 /// which action depends on the function selector
-pub fn which_kton_action<T: frame_system::Config>(
-	input_data: &[u8],
-) -> Result<KtonAction<T>, ExitError> {
+pub fn which_kton_action<T: frame_system::Config>(input_data: &[u8]) -> Result<Kton<T>, ExitError> {
 	let transfer_and_call_action = &sha3::Keccak256::digest(&TRANSFER_AND_CALL_ACTION)[0..4];
 	let withdraw_action = &sha3::Keccak256::digest(&WITHDRAW_ACTION)[0..4];
 	if &input_data[0..4] == transfer_and_call_action {
-		let decoded_data = TACallData::decode(&input_data[4..])?;
-		return Ok(KtonAction::TransferAndCall(decoded_data));
+		let decoded_data = CallData::decode(&input_data[4..])?;
+		return Ok(Kton::TransferAndCall(decoded_data));
 	} else if &input_data[0..4] == withdraw_action {
 		let decoded_data = WithdrawData::decode(&input_data[4..])?;
-		return Ok(KtonAction::Withdraw(decoded_data));
+		return Ok(Kton::Withdraw(decoded_data));
 	}
 	Err(ExitError::Other("Invalid Action！".into()))
 }
