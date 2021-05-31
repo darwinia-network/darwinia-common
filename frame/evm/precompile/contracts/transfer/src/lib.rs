@@ -42,41 +42,44 @@ use withdraw::WithDraw;
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 
-pub enum TransferAction<T: Config> {
+/// Transfer Precompile Contract, used to support the exchange of KTON and RING tranfer.
+///
+/// The contract address: 0000000000000000000000000000000000000015
+pub enum Transfer<T> {
+	/// Transfer RING bach from dvm to darwinia
 	RingBack,
-	KtonAction,
+	/// Transfer KTON between darwinia and dvm contract
+	KtonTransfer,
 	_Impossible(PhantomData<T>),
 }
 
-impl<T: dvm_ethereum::Config + frame_system::Config> Precompile for TransferAction<T> {
+impl<T: dvm_ethereum::Config> Precompile for Transfer<T> {
 	fn execute(
 		input: &[u8],
 		target_gas: Option<u64>,
 		context: &Context,
 	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
 		match which_action::<T>(&input) {
-			Ok(TransferAction::RingBack) => {
+			Ok(Transfer::RingBack) => {
 				WithDraw::<T>::execute(&input, target_gas, context)?;
 			}
-			Ok(TransferAction::KtonAction) => {
+			Ok(Transfer::KtonTransfer) => {
 				KtonAction::<T>::execute(&input, target_gas, context)?;
 			}
 			_ => {
-				return Err(ExitError::Other("Invalid input data length".into()));
+				return Err(ExitError::Other("Invalid action".into()));
 			}
 		}
-		Err(ExitError::Other("Invalid input data length".into()))
+		Err(ExitError::Other("Invalid action".into()))
 	}
 }
 
-fn which_action<T: frame_system::Config + dvm_ethereum::Config>(
-	data: &[u8],
-) -> Result<TransferAction<T>, ExitError> {
+fn which_action<T: dvm_ethereum::Config>(data: &[u8]) -> Result<Transfer<T>, ExitError> {
 	if data.len() == 32 {
-		return Ok(TransferAction::RingBack);
+		return Ok(Transfer::RingBack);
 	} else if data.len() == 68 {
-		return Ok(TransferAction::KtonAction);
+		return Ok(Transfer::KtonTransfer);
 	} else {
-		return Err(ExitError::Other("Invalid input data length".into()));
+		return Err(ExitError::Other("Invalid action".into()));
 	}
 }

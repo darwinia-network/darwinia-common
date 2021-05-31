@@ -1679,7 +1679,6 @@ version = "2.4.0"
 dependencies = [
  "darwinia-evm-precompile-empty",
  "darwinia-evm-precompile-issuing",
- "darwinia-evm-precompile-kton",
  "darwinia-evm-precompile-simple",
  "darwinia-evm-precompile-transfer",
 ]
@@ -1755,32 +1754,6 @@ dependencies = [
  "darwinia-evm",
  "dp-evm",
  "evm",
-]
-
-[[package]]
-name = "darwinia-evm-precompile-kton"
-version = "2.4.0"
-dependencies = [
- "array-bytes",
- "darwinia-evm",
- "darwinia-support",
- "dp-evm",
- "dvm-ethereum",
- "ethabi",
- "ethereum-types",
- "evm",
- "frame-support",
- "frame-system",
- "hex",
- "log",
- "pallet-timestamp",
- "parity-scale-codec",
- "ripemd160",
- "sha3 0.9.1",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]

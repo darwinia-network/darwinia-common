@@ -38,7 +38,6 @@ members = [
 	"frame/evm/precompile/contracts/dispatch",
 	"frame/evm/precompile/contracts/ed25519",
 	"frame/evm/precompile/contracts/empty",
-	"frame/evm/precompile/contracts/kton",
 	"frame/evm/precompile/contracts/modexp",
 	"frame/evm/precompile/contracts/simple",
 	"frame/evm/precompile/contracts/transfer",
