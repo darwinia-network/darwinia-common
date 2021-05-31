@@ -19,8 +19,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 mod kton;
+mod ring;
 pub mod util;
-mod withdraw;
 
 use sha3::Digest;
 use sp_core::{H160, U256};
@@ -37,7 +37,7 @@ use ethabi::{Function, Param, ParamType, Token};
 use evm::{Context, ExitError, ExitSucceed};
 
 use kton::Kton;
-use withdraw::RingBack;
+use ring::RingBack;
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 
@@ -63,7 +63,7 @@ impl<T: dvm_ethereum::Config> Precompile for Transfer<T> {
 				RingBack::<T>::transfer(&input, target_gas, context)?;
 			}
 			Ok(Transfer::KtonTransfer) => {
-				Kton::<T>::execute(&input, target_gas, context)?;
+				Kton::<T>::transfer(&input, target_gas, context)?;
 			}
 			_ => {
 				return Err(ExitError::Other("Invalid action".into()));
@@ -74,12 +74,9 @@ impl<T: dvm_ethereum::Config> Precompile for Transfer<T> {
 }
 
 fn which_action<T: dvm_ethereum::Config>(data: &[u8]) -> Result<Transfer<T>, ExitError> {
-	// TODO: change the way of select action
 	if data.len() == 32 {
 		return Ok(Transfer::RingBack);
-	} else if data.len() == 68 {
-		return Ok(Transfer::KtonTransfer);
 	} else {
-		return Err(ExitError::Other("Invalid action".into()));
+		return Ok(Transfer::KtonTransfer);
 	}
 }

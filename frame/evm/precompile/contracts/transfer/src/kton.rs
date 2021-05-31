@@ -29,7 +29,7 @@ pub enum Kton<T: frame_system::Config> {
 }
 
 impl<T: frame_system::Config + dvm_ethereum::Config> Kton<T> {
-	pub fn execute(
+	pub fn transfer(
 		input: &[u8],
 		target_limit: Option<u64>,
 		context: &Context,
@@ -179,20 +179,6 @@ impl<T: frame_system::Config> WithdrawData<T> {
 			_ => Err(ExitError::Other("Invlid withdraw input data".into())),
 		}
 	}
-}
-
-/// which action depends on the function selector
-pub fn which_kton_action<T: frame_system::Config>(input_data: &[u8]) -> Result<Kton<T>, ExitError> {
-	let transfer_and_call_action = &sha3::Keccak256::digest(&TRANSFER_AND_CALL_ACTION)[0..4];
-	let withdraw_action = &sha3::Keccak256::digest(&WITHDRAW_ACTION)[0..4];
-	if &input_data[0..4] == transfer_and_call_action {
-		let decoded_data = CallData::decode(&input_data[4..])?;
-		return Ok(Kton::TransferAndCall(decoded_data));
-	} else if &input_data[0..4] == withdraw_action {
-		let decoded_data = WithdrawData::decode(&input_data[4..])?;
-		return Ok(Kton::Withdraw(decoded_data));
-	}
-	Err(ExitError::Other("Invalid Action！".into()))
 }
 
 fn make_call_data(
