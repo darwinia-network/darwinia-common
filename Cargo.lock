@@ -1681,7 +1681,7 @@ dependencies = [
  "darwinia-evm-precompile-issuing",
  "darwinia-evm-precompile-kton",
  "darwinia-evm-precompile-simple",
- "darwinia-evm-precompile-withdraw",
+ "darwinia-evm-precompile-transfer",
 ]
 
 [[package]]
@@ -1818,18 +1818,23 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-evm-precompile-withdraw"
+name = "darwinia-evm-precompile-transfer"
 version = "2.4.0"
 dependencies = [
  "darwinia-evm",
  "darwinia-support",
  "dp-evm",
+ "dvm-ethereum",
+ "ethabi",
+ "ethereum-types",
  "evm",
  "frame-support",
  "frame-system",
+ "log",
  "pallet-timestamp",
  "parity-scale-codec",
  "ripemd160",
+ "sha3 0.9.1",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -2371,7 +2376,7 @@ dependencies = [
  "darwinia-balances",
  "darwinia-evm",
  "darwinia-evm-precompile-simple",
- "darwinia-evm-precompile-withdraw",
+ "darwinia-evm-precompile-transfer",
  "darwinia-support",
  "dp-evm",
  "dp-storage",

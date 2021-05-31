@@ -41,7 +41,7 @@ sp-std           = { default-features = false, git = "https://github.com/darwini
 # darwinia
 darwinia-balances                = { path = "../balances" }
 darwinia-evm-precompile-simple   = { path = "../evm/precompile/contracts/simple" }
-darwinia-evm-precompile-withdraw = { path = "../evm/precompile/contracts/withdraw" }
+darwinia-evm-precompile-transfer = { path = "../evm/precompile/contracts/transfer" }
 
 [features]
 default = ["std"]

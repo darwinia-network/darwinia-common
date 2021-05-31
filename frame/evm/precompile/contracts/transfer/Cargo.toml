@@ -4,7 +4,7 @@ description = "Withdraw precompile for EVM pallet."
 edition     = "2018"
 homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"
-name        = "darwinia-evm-precompile-withdraw"
+name        = "darwinia-evm-precompile-transfer"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "2.4.0"
@@ -27,6 +27,12 @@ sp-io            = { default-features = false, git = "https://github.com/darwini
 sp-runtime       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
 sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
 
+ethabi           = { default-features = false, git = "https://github.com/darwinia-network/ethabi.git", branch = "xavier-no-std" }
+sha3           = { version = "0.9.1", default-features = false }
+ethereum-types = { version = "0.11.0", default-features = false }
+dvm-ethereum     = { default-features = false, path = "../../.././../dvm" }
+log            = { version = "0.4.14" }
+
 [features]
 default = ["std"]
 
@@ -40,12 +46,16 @@ crates-std = [
 	"codec/std",
 	"evm/std",
 	"ripemd160/std",
+	"sha3/std",
+	"ethereum-types/std",
 ]
 
 darwinia-std = [
 	"darwinia-evm/std",
 	"darwinia-support/std",
 	"dp-evm/std",
+	"ethabi/std",
+	"dvm-ethereum/std",
 ]
 
 substrate-std = [
