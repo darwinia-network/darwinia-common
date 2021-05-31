@@ -3,7 +3,7 @@ use sp_core::U256;
 // --- darwinia ---
 use crate::*;
 use darwinia_evm::{runner::stack::Runner, ConcatAddressMapping, Config, EnsureAddressTruncated};
-use darwinia_evm_precompile::DarwiniaPrecompiles;
+use darwinia_evm_precompile::PangolinPrecompiles;
 use dvm_ethereum::account_basic::DvmAccountBasic;
 use dvm_ethereum::account_basic::{KtonRemainBalance, RingRemainBalance};
 
@@ -20,7 +20,7 @@ impl Config for Runtime {
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 	type Event = Event;
-	type Precompiles = DarwiniaPrecompiles<Self>;
+	type Precompiles = PangolinPrecompiles<Self>;
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;

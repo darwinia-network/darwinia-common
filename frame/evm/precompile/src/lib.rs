@@ -28,9 +28,9 @@ use evm::{Context, ExitError, ExitSucceed};
 use sp_core::H160;
 use sp_std::{marker::PhantomData, vec::Vec};
 
-pub struct DarwiniaPrecompiles<R>(PhantomData<R>);
+pub struct PangolinPrecompiles<R>(PhantomData<R>);
 
-impl<R: dvm_ethereum::Config> PrecompileSet for DarwiniaPrecompiles<R> {
+impl<R: dvm_ethereum::Config> PrecompileSet for PangolinPrecompiles<R> {
 	fn execute(
 		address: H160,
 		input: &[u8],
