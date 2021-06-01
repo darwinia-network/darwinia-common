@@ -21,8 +21,7 @@ use sha3::Digest;
 
 const TRANSFER_AND_CALL_ACTION: &[u8] = b"transfer_and_call(address,uint256)";
 const WITHDRAW_ACTION: &[u8] = b"withdraw(bytes32,uint256)";
-// const KTON_PRECOMPILE: &str = "0000000000000000000000000000000000000016";
-const KTON_PRECOMPILE: &str = "0000000000000000000000000000000000000015";
+const CALLER_PRECOMPILE: &str = "0000000000000000000000000000000000000015";
 
 pub enum Kton<T: frame_system::Config> {
 	/// Transfer from substrate account to wkton contract
@@ -65,7 +64,7 @@ impl<T: frame_system::Config + dvm_ethereum::Config> Kton<T> {
 					call_data.value,
 				)?;
 				// Call WKTON wrapped contract deposit
-				let precompile_address = H160::from_str(KTON_PRECOMPILE).unwrap_or_default();
+				let precompile_address = H160::from_str(CALLER_PRECOMPILE).unwrap_or_default();
 				let raw_input = make_call_data(context.caller, call_data.value)?;
 				if let Ok(call_res) = T::Runner::call(
 					precompile_address,

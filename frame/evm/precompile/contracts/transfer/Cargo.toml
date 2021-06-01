@@ -46,14 +46,14 @@ std = [
 
 crates-std = [
 	"codec/std",
-	"evm/std",
+	"ethabi/std",
 	"ethereum-types/std",
+	"evm/std",
 	"ripemd160/std",
 	"sha3/std",
 ]
 
 darwinia-std = [
-	"ethabi/std",
 	"darwinia-evm/std",
 	"darwinia-support/std",
 	"dp-evm/std",
