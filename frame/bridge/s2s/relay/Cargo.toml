@@ -32,6 +32,9 @@ frame-support = { default-features = false, git = "https://github.com/darwinia-n
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
 sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+pallet-bridge-messages                     = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "xiaoch-s2s" }
+bp-messages                                = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "xiaoch-s2s" }
+bp-runtime                                 = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "xiaoch-s2s" }
 
 [features]
 default = ["std"]
@@ -66,4 +69,7 @@ substrate-std = [
 	"frame-system/std",
 	"sp-runtime/std",
 	"sp-std/std",
+	"pallet-bridge-messages/std",
+	"bp-messages/std",
+	"bp-runtime/std",
 ]

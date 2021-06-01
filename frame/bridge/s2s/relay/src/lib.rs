@@ -21,25 +21,29 @@
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, traits::Get, weights::Weight, PalletId,
 };
-//use frame_system::RawOrigin;
 
 use sp_runtime::DispatchError;
 
 pub mod weights;
 use darwinia_relay_primitives::{Relay, RelayAccount};
+use darwinia_support::traits::CallToPayload;
 pub use weights::WeightInfo;
 
 use darwinia_asset_primitives::token::Token;
 use darwinia_s2s_chain::ChainSelector;
 use ethereum_primitives::EthereumAddress;
+use sp_runtime::traits::AccountIdConversion;
+use frame_system::RawOrigin;
 
-//use bp_messages::LaneId;
+use frame_support::Parameter;
+use bp_runtime::Size;
 
-use sp_std::vec::Vec;
+use pallet_bridge_messages::MessageSender;
 
 mod types {
 	pub type BlockNumber<T> = <T as frame_system::Config>::BlockNumber;
 	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
+    pub type Balance = u128;
 }
 
 pub trait Config: frame_system::Config {
@@ -51,13 +55,17 @@ pub trait Config: frame_system::Config {
 	/// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
 
-	//type MessageSenderT: MessageSender<Origin=Self::Origin, OutboundPayload=Self::OutboundPayload, OutboundMessageFee=Self::OutboundMessageFee>;
+    type OutboundPayload: Parameter + Size;
+
+    type CallToPayload: CallToPayload<AccountId<Self>, Self::OutboundPayload>;
+
+    type MessageSenderT: MessageSender<Self::Origin, OutboundPayload=Self::OutboundPayload, OutboundMessageFee=Balance>;
 }
 
 use types::*;
 
 decl_event! {
-	pub enum Event<T>
+    pub enum Event<T>
 	where
 		AccountId = AccountId<T>,
 	{
@@ -67,7 +75,7 @@ decl_event! {
 }
 
 decl_error! {
-	pub enum Error for Module<T: Config> {
+    pub enum Error for Pallet<T: Config> {
 		/// The proof is not in backing list
 		InvalidProof,
 		/// Invalid Backing address
@@ -78,7 +86,7 @@ decl_error! {
 }
 
 decl_storage! {
-	trait Store for Module<T: Config> as Substrate2SubstrateRelay {
+    trait Store for Pallet<T: Config> as Substrate2SubstrateRelay {
 		pub BackingAddressList
 			get(fn backing_address_list)
 			: map hasher(identity) AccountId<T> => Option<(EthereumAddress, ChainSelector)>;
@@ -86,19 +94,16 @@ decl_storage! {
 
 	add_extra_genesis {
 		config(backings): Vec<(AccountId<T>, EthereumAddress, ChainSelector)>;
-		build(|config: &GenesisConfig<T>| {
+		build(|config| {
 			for (address, account, selector) in &config.backings {
-				<BackingAddressList<T>>::insert(address, (account, selector));
+                <BackingAddressList<T>>::insert(address, (account, selector));
 			}
 		});
 	}
 }
 
 decl_module! {
-	pub struct Module<T: Config> for enum Call
-	where
-		origin: T::Origin
-	{
+    pub struct Module<T: Config> for enum Call where origin: T::Origin {
 		fn deposit_event() = default;
 
 		fn on_initialize(_n: BlockNumber<T>) -> Weight {
@@ -107,30 +112,28 @@ decl_module! {
 	}
 }
 
-impl<T: Config> Relay for Module<T> {
+impl<T: Config> Relay for Pallet<T> {
 	type RelayProof = AccountId<T>;
 	type RelayMessage = (ChainSelector, Token, RelayAccount<AccountId<T>>);
 	type VerifiedResult = Result<(EthereumAddress, ChainSelector), DispatchError>;
 	type RelayMessageResult = Result<(), DispatchError>;
 	fn verify(proof: &Self::RelayProof) -> Self::VerifiedResult {
-		let address = <BackingAddressList<T>>::get(proof).ok_or(<Error<T>>::InvalidProof)?;
+        let address = <BackingAddressList<T>>::get(proof).ok_or(<Error<T>>::InvalidProof)?;
 		Ok(address)
 	}
 
-	// todo, use s2s relay message transaction
-	fn relay_message(_message: &Self::RelayMessage) -> Self::RelayMessageResult {
-		//let msg = message.clone();
-		//let index = BackingRuntimeIndex::get(&msg.0).ok_or(<Error<T>>::InvalidBackingAddr)?;
-		//let encoded = payload::encode_relay_message(index, msg.1, msg.2)
-		//.map_err(|_| <Error<T>>::EncodeInv)?;
-		//let issuing_id: AccountId<T> = T::PalletId::get().into_account();
-		//pallet_bridge_messages::Pallet::<T>::send_message(
-		//T::MessageSenderT::send_message(
-		//RawOrigin::Signed(1),
-		//[0; 4],
-		//encoded,
-		//0,
-		//)?;
+	fn relay_message(message: &Self::RelayMessage) -> Self::RelayMessageResult {
+        let msg = message.clone();
+        let encoded = darwinia_s2s_chain::encode_relay_message(msg.0, msg.1, msg.2)
+            .map_err(|_| <Error<T>>::EncodeInv)?;
+        let issuing_id: AccountId<T> = T::PalletId::get().into_account();
+        let payload = T::CallToPayload::to_payload(issuing_id.clone(), encoded);
+        T::MessageSenderT::raw_send_message(
+            RawOrigin::Signed(issuing_id).into(),
+            [0; 4],
+            payload,
+            0,
+            )?;
 		Ok(())
 	}
 }

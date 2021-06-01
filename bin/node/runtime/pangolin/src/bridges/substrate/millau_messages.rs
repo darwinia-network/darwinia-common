@@ -29,6 +29,7 @@ use sp_std::{convert::TryFrom, ops::RangeInclusive};
 // --- darwinia ---
 use crate::*;
 use pangolin_bridge_primitives::PANGOLIN_CHAIN_ID;
+use darwinia_support::traits::CallToPayload;
 
 /// Message payload for Pangolin -> Millau messages.
 pub type ToMillauMessagePayload = FromThisChainMessagePayload<WithMillauMessageBridge>;
@@ -247,3 +248,17 @@ impl SourceHeaderChain<bp_millau::Balance> for Millau {
 		)
 	}
 }
+
+pub struct MillauCallToPayload;
+
+impl CallToPayload<AccountId, ToMillauMessagePayload> for MillauCallToPayload {
+    fn to_payload(account: AccountId, call: Vec<u8>) -> ToMillauMessagePayload {
+        return FromThisChainMessagePayload::<WithMillauMessageBridge> {
+			spec_version: 1,
+			weight: 100,
+			origin: bp_message_dispatch::CallOrigin::SourceAccount(account),
+			call: call,
+		}
+    }
+}
+

@@ -174,3 +174,8 @@ pub trait EthereumReceipt<AccountId, Balance> {
 
 	fn gen_receipt_index(proof: &Self::EthereumReceiptProofThing) -> EthereumTransactionIndex;
 }
+
+pub trait CallToPayload<AccountId, P> {
+    fn to_payload(account: AccountId, call: Vec<u8>) -> P;
+}
+
