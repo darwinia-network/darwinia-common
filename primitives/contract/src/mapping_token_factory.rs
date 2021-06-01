@@ -30,6 +30,7 @@ use ethabi::{
 };
 
 use sp_std::prelude::*;
+use sp_std::vec;
 
 pub struct MappingTokenFactory;
 
