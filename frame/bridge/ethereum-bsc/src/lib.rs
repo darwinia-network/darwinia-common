@@ -91,6 +91,10 @@ pub mod pallet {
 		/// ExtraValidators is returned if non-checkpoint block contain validator data in
 		/// their extra-data fields
 		ExtraValidators,
+		/// UnknownAncestor is returned when validating a block requires an ancestor that is unknown.
+		UnknownAncestor,
+		/// Header timestamp too close while header timestamp is too close with parent's
+		HeaderTimestampTooClose,
 
 		/// EC_RECOVER error
 		///
@@ -183,8 +187,7 @@ pub mod pallet {
 			for i in 1..headers.len() {
 				Self::contextless_checks(&cfg, &headers[i])?;
 				// check parent
-				verification::contextual_checks(&cfg, &headers[i], &headers[i - 1])
-					.map_err(|e| e.msg())?;
+				Self::contextual_checks(&cfg, &headers[i], &headers[i - 1])?;
 				// who signed this header
 				let signer = Self::recover_creator(&headers[i])?;
 				// signed must in last authority set
@@ -264,8 +267,7 @@ pub mod pallet {
 			for i in 1..headers.len() {
 				Self::contextless_checks(&cfg, &headers[i])?;
 				// check parent
-				verification::contextual_checks(&cfg, &headers[i], &headers[i - 1])
-					.map_err(|e| e.msg())?;
+				Self::contextual_checks(&cfg, &headers[i], &headers[i - 1])?;
 				// who signed this header
 				let signer = Self::recover_creator(&headers[i])?;
 				// signed must in last authority set
@@ -309,7 +311,7 @@ pub mod pallet {
 			}
 
 			// Ensure that nonce is empty
-			ensure!(header.nonce.is_empty(), <Error<T>>::InvalidNonce);
+			ensure!(header.nonce.as_slice() == [0; 8], <Error<T>>::InvalidNonce);
 
 			ensure!(
 				header.gas_limit >= config.min_gas_limit
@@ -376,8 +378,28 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Perform checks that require access to parent header.
+		fn contextual_checks(
+			config: &BSCConfiguration,
+			header: &BSCHeader,
+			parent: &BSCHeader,
+		) -> DispatchResult {
+			// parent sanity check
+			if parent.compute_hash() != header.parent_hash || parent.number + 1 != header.number {
+				Err(<Error<T>>::UnknownAncestor)?;
+			}
+
+			// Ensure that the block's timestamp isn't too close to it's parent
+			// And header.timestamp is greater than parents'
+			if header.timestamp < parent.timestamp.saturating_add(config.period) {
+				Err(<Error<T>>::HeaderTimestampTooClose)?;
+			}
+
+			Ok(())
+		}
+
 		/// Recover block creator from signature
-		pub fn recover_creator(header: &BSCHeader) -> Result<Address, DispatchError> {
+		fn recover_creator(header: &BSCHeader) -> Result<Address, DispatchError> {
 			// Initialization
 			let mut cache = CREATOR_BY_HASH.write();
 
@@ -461,32 +483,19 @@ pub mod pallet {
 pub use pallet::*;
 
 mod utils;
-mod verification;
 
 use sp_runtime::RuntimeDebug;
 /// Header import error.
 #[derive(Clone, Copy, RuntimeDebug)]
 pub enum Error {
-	/// Block number isn't sensible.
-	RidiculousNumber,
-
-	/// UnknownAncestor is returned when validating a block requires an ancestor that is unknown.
-	UnknownAncestor,
-	/// Header timestamp too close
-	/// HeaderTimestampTooClose is returned when header timestamp is too close with parent's
-	HeaderTimestampTooClose,
 	/// Missing signers
 	CheckpointNoSigner,
-
 	/// List of signers is invalid
 	CheckpointInvalidSigners(usize),
 }
 impl Error {
 	pub fn msg(&self) -> &'static str {
 		match *self {
-			Error::RidiculousNumber => "Header has too large number",
-			Error::UnknownAncestor => "Unknow ancestor",
-			Error::HeaderTimestampTooClose => "Header timestamp too close",
 			Error::CheckpointNoSigner => "Missing signers",
 			// TODO how to format this and return a static str?
 			_ => "Unknown error.",
