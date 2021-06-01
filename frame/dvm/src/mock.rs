@@ -22,17 +22,20 @@ use crate::{
 	*,
 };
 use codec::{Decode, Encode};
-use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator, IssuingHandler};
+use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator};
+use dp_evm::Precompile;
 use ethereum::{TransactionAction, TransactionSignature};
-use frame_support::{traits::GenesisBuild, ConsensusEngineId, PalletId};
+use evm::{Context, ExitError, ExitSucceed};
+use frame_support::{traits::GenesisBuild, ConsensusEngineId};
 use frame_system::mocking::*;
 use rlp::*;
 use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	AccountId32, DispatchResult, Perbill, RuntimeDebug,
+	AccountId32, Perbill, RuntimeDebug,
 };
+use sp_std::{marker::PhantomData, vec::Vec};
 
 darwinia_support::impl_test_account_data! {}
 
@@ -136,7 +139,6 @@ impl FindAuthor<H160> for EthereumFindAuthor {
 frame_support::parameter_types! {
 	pub const TransactionByteFee: u64 = 1;
 	pub const ChainId: u64 = 42;
-	pub const EVMPalletId: PalletId = PalletId(*b"py/evmpa");
 	pub const BlockGasLimit: U256 = U256::MAX;
 }
 
@@ -147,6 +149,17 @@ impl AddressMapping<AccountId32> for HashedAddressMapping {
 		let mut data = [0u8; 32];
 		data[0..20].copy_from_slice(&address[..]);
 		AccountId32::from(Into::<[u8; 32]>::into(data))
+	}
+}
+
+pub struct RingBack<T>(PhantomData<T>);
+impl<T: darwinia_evm::Config> Precompile for RingBack<T> {
+	fn execute(
+		input: &[u8],
+		target_gas: Option<u64>,
+		context: &Context,
+	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
+		darwinia_evm_precompile_transfer::ring::RingBack::<T>::transfer(&input, target_gas, context)
 	}
 }
 
@@ -163,7 +176,7 @@ impl darwinia_evm::Config for Test {
 		darwinia_evm_precompile_simple::Sha256,
 		darwinia_evm_precompile_simple::Ripemd160,
 		darwinia_evm_precompile_simple::Identity,
-		darwinia_evm_precompile_withdraw::WithDraw<Self>,
+		RingBack<Test>,
 	);
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
@@ -173,7 +186,7 @@ impl darwinia_evm::Config for Test {
 	type IssuingHandler = ();
 }
 
-impl Config for Test {
+impl dvm_ethereum::Config for Test {
 	type Event = ();
 	type FindAuthor = EthereumFindAuthor;
 	type StateRoot = IntermediateStateRoot;

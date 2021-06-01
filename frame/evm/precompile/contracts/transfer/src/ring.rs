@@ -21,7 +21,7 @@ impl<T: Config> RingBack<T> {
 	/// 2. transfer from the contract address to withdrawal address
 	///
 	/// Input data: 32-bit substrate withdrawal public key
-	pub(crate) fn transfer(
+	pub fn transfer(
 		input: &[u8],
 		_: Option<u64>,
 		context: &Context,

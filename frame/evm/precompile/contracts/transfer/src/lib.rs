@@ -18,8 +18,8 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-mod kton;
-mod ring;
+pub mod kton;
+pub mod ring;
 pub mod util;
 
 // --- substrate ---
@@ -37,7 +37,6 @@ pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 /// Transfer Precompile Contract, used to support the exchange of KTON and RING tranfer.
 ///
 /// The contract address: 0000000000000000000000000000000000000015
-#[derive(PartialEq, Eq, Debug)]
 pub enum Transfer<T> {
 	/// Transfer RING bach from dvm to darwinia
 	RingBack,
