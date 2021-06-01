@@ -138,7 +138,7 @@ pub fn which_action<T: frame_system::Config>(input_data: &[u8]) -> Result<Kton<T
 	Err(ExitError::Other("Invalid Action！".into()))
 }
 
-pub fn is_kton_action(data: &[u8]) -> bool {
+pub fn is_kton_transfer(data: &[u8]) -> bool {
 	let transfer_and_call_action = &sha3::Keccak256::digest(&TRANSFER_AND_CALL_ACTION)[0..4];
 	let withdraw_action = &sha3::Keccak256::digest(&WITHDRAW_ACTION)[0..4];
 	&data[0..4] == transfer_and_call_action || &data[0..4] == withdraw_action
@@ -210,4 +210,40 @@ fn make_call_data(
 	};
 	func.encode_input(&[Token::Address(eth_address), Token::Uint(eth_value)])
 		.map_err(|_| ExitError::Other("Make call data error happened".into()))
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use std::str::FromStr;
+
+	#[test]
+	fn test_make_input() {
+		let mock_address =
+			sp_core::H160::from_str("Aa01a1bEF0557fa9625581a293F3AA7770192632").unwrap();
+		let mock_value_1 = sp_core::U256::from(30);
+		let expected_str = "0x47e7ef24000000000000000000000000aa01a1bef0557fa9625581a293f3aa7770192632000000000000000000000000000000000000000000000000000000000000001e";
+
+		let encoded_str =
+			array_bytes::bytes2hex("0x", make_call_data(mock_address, mock_value_1).unwrap());
+		assert_eq!(encoded_str, expected_str);
+
+		let mock_value_2 = sp_core::U256::from(25);
+		let encoded_str =
+			array_bytes::bytes2hex("0x", make_call_data(mock_address, mock_value_2).unwrap());
+		assert_ne!(encoded_str, expected_str);
+	}
+
+	#[test]
+	fn test_is_kton_transfer() {
+		let transfer_and_call_action = &sha3::Keccak256::digest(&TRANSFER_AND_CALL_ACTION)[0..4];
+		let withdraw_action = &sha3::Keccak256::digest(&WITHDRAW_ACTION)[0..4];
+
+		let data = vec![0; 32];
+		assert!(!is_kton_transfer(&data));
+		let data1 = transfer_and_call_action;
+		assert!(is_kton_transfer(&data1));
+		let data2 = withdraw_action;
+		assert!(is_kton_transfer(&data2));
+	}
 }

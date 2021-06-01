@@ -1794,6 +1794,7 @@ dependencies = [
 name = "darwinia-evm-precompile-transfer"
 version = "2.4.0"
 dependencies = [
+ "array-bytes",
  "darwinia-evm",
  "darwinia-support",
  "dp-evm",

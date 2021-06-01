@@ -22,28 +22,22 @@ mod kton;
 mod ring;
 pub mod util;
 
-use sha3::Digest;
-use sp_core::{H160, U256};
-use sp_runtime::traits::UniqueSaturatedInto;
-use sp_std::marker::PhantomData;
-use sp_std::prelude::*;
+// --- substrate ---
 use sp_std::vec::Vec;
-
-use codec::Decode;
-use darwinia_evm::{AddressMapping, Config};
-use darwinia_support::evm::POW_9;
+use sp_std::{marker::PhantomData, prelude::*};
+// --- darwinia ---
 use dp_evm::Precompile;
-use ethabi::{Function, Param, ParamType, Token};
-use evm::{Context, ExitError, ExitSucceed};
-
 use kton::Kton;
 use ring::RingBack;
+// --- crate ---
+use evm::{Context, ExitError, ExitSucceed};
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 
 /// Transfer Precompile Contract, used to support the exchange of KTON and RING tranfer.
 ///
 /// The contract address: 0000000000000000000000000000000000000015
+#[derive(PartialEq, Eq, Debug)]
 pub enum Transfer<T> {
 	/// Transfer RING bach from dvm to darwinia
 	RingBack,
@@ -58,18 +52,18 @@ impl<T: dvm_ethereum::Config> Precompile for Transfer<T> {
 		target_gas: Option<u64>,
 		context: &Context,
 	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
-		match which_action::<T>(&input) {
-			Ok(Transfer::RingBack) => RingBack::<T>::transfer(&input, target_gas, context),
-			Ok(Transfer::KtonTransfer) => Kton::<T>::transfer(&input, target_gas, context),
+		match which_transfer::<T>(&input) {
+			Transfer::RingBack => RingBack::<T>::transfer(&input, target_gas, context),
+			Transfer::KtonTransfer => Kton::<T>::transfer(&input, target_gas, context),
 			_ => Err(ExitError::Other("Invalid action".into())),
 		}
 	}
 }
 
-fn which_action<T: dvm_ethereum::Config>(data: &[u8]) -> Result<Transfer<T>, ExitError> {
-	if !kton::is_kton_action(data) {
-		Ok(Transfer::RingBack)
+fn which_transfer<T: dvm_ethereum::Config>(data: &[u8]) -> Transfer<T> {
+	if !kton::is_kton_transfer(data) {
+		Transfer::RingBack
 	} else {
-		Ok(Transfer::KtonTransfer)
+		Transfer::KtonTransfer
 	}
 }
