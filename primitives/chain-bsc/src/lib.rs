@@ -228,7 +228,7 @@ impl BSCHeader {
 	/// Returns header RLP
 	fn rlp(&self) -> Bytes {
 		let mut s = RlpStream::new();
-		s.begin_list(14);
+		s.begin_list(15);
 		s.append(&self.parent_hash);
 		s.append(&self.uncle_hash);
 		s.append(&self.coinbase);
@@ -242,6 +242,7 @@ impl BSCHeader {
 		s.append(&self.gas_used);
 		s.append(&self.timestamp);
 		s.append(&self.extra_data);
+		s.append(&self.mix_digest);
 		s.append(&self.nonce);
 
 		s.out().to_vec()
