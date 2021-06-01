@@ -43,7 +43,6 @@ use pallet_bridge_messages::MessageSender;
 mod types {
 	pub type BlockNumber<T> = <T as frame_system::Config>::BlockNumber;
 	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-    pub type Balance = u128;
 }
 
 pub trait Config: frame_system::Config {
@@ -57,9 +56,11 @@ pub trait Config: frame_system::Config {
 
     type OutboundPayload: Parameter + Size;
 
+    type OutboundMessageFee: From<u64>;
+
     type CallToPayload: CallToPayload<AccountId<Self>, Self::OutboundPayload>;
 
-    type MessageSenderT: MessageSender<Self::Origin, OutboundPayload=Self::OutboundPayload, OutboundMessageFee=Balance>;
+    type MessageSenderT: MessageSender<Self::Origin, OutboundPayload=Self::OutboundPayload, OutboundMessageFee=Self::OutboundMessageFee>;
 }
 
 use types::*;
@@ -132,7 +133,7 @@ impl<T: Config> Relay for Pallet<T> {
             RawOrigin::Signed(issuing_id).into(),
             [0; 4],
             payload,
-            0,
+            0.into(),
             )?;
 		Ok(())
 	}

@@ -18,8 +18,6 @@
 
 //! mapping token factory encode and decode.
 
-#![cfg_attr(not(feature = "std"), no_std)]
-
 pub use ethabi::{Event, Log};
 
 // --- crates ---

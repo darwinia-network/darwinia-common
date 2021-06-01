@@ -20,6 +20,7 @@
 
 #![allow(unused)]
 #![cfg_attr(not(feature = "std"), no_std)]
+#![recursion_limit = "128"]
 
 pub mod weights;
 pub use weights::WeightInfo;
@@ -60,9 +61,8 @@ pub mod pallet {
 	use sp_std::vec::Vec;
 	// --- darwinia ---
 	use darwinia_asset_primitives::token::{Token, TokenInfo, TokenOption};
-	use darwinia_evm::AddressMapping;
 	use darwinia_primitives_contract::mapping_token_factory::MappingTokenFactory as mtf;
-	use darwinia_relay_primitives::Relay;
+	use darwinia_relay_primitives::{Relay, RelayAccount};
 	use darwinia_support::balance::*;
 	use ethereum_primitives::EthereumAddress;
 	use sp_std::{convert::TryFrom, prelude::*};
@@ -88,8 +88,8 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 		type IssuingRelay: Relay<
 			RelayProof = AccountId<Self>,
-			VerifiedResult = Result<EthereumAddress, DispatchError>,
-			RelayMessage = (TargetChain, Token, EthereumAddress),
+			VerifiedResult = Result<(EthereumAddress, TargetChain), DispatchError>,
+			RelayMessage = (TargetChain, Token, RelayAccount<AccountId<Self>>),
 			RelayMessageResult = Result<(), DispatchError>,
 		>;
 		#[pallet::constant]
@@ -97,6 +97,18 @@ pub mod pallet {
 		#[pallet::constant]
 		type AdvancedFee: Get<RingBalance<Self>>;
 		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+	}
+
+	#[pallet::event]
+	#[pallet::generate_deposit(fn deposit_event)]
+	#[pallet::metadata(
+        AccountId<T> = "AccountId",
+    )]
+	pub enum Event<T: Config> {
+		/// token locked [tokenaddress, sender, recipient, amount]
+		TokenLocked(Token, AccountId<T>, EthereumAddress, U256),
+		/// token unlocked [token, recipient, value]
+		TokenUnlocked(Token, AccountId<T>, U256),
 	}
 
 	#[pallet::error]
@@ -113,17 +125,25 @@ pub mod pallet {
 		RingLockLim,
 	}
 
-	#[pallet::event]
-	#[pallet::generate_deposit(fn deposit_event)]
-	#[pallet::metadata(
-        AccountId<T> = "AccountId",
-    )]
-	pub enum Event<T: Config> {
-		/// token locked [tokenaddress, sender, recipient, amount]
-		TokenLocked(Token, AccountId<T>, EthereumAddress, U256),
-		/// token unlocked [token, recipient, value]
-		TokenUnlocked(Token, AccountId<T>, U256),
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		pub backed_ring: RingBalance<T>,
+    }
+
+    #[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self {
+				backed_ring: Default::default(),
+            }
+		}
 	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+        }
+    }
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -206,7 +226,7 @@ pub mod pallet {
 				}),
 			});
 
-			let message = (target, token.clone(), recipient);
+			let message = (target, token.clone(), RelayAccount::EthereumAccount(recipient));
 			T::IssuingRelay::relay_message(&message);
 			Self::deposit_event(Event::TokenLocked(token, user, recipient, amount));
 			Ok(().into())
@@ -242,3 +262,5 @@ pub mod pallet {
 		}
 	}
 }
+
+pub use pallet::*;

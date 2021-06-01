@@ -18,6 +18,7 @@ impl Config for Runtime {
 	type Event = Event;
 	type WeightInfo = ();
     type OutboundPayload = ToMillauMessagePayload;
+    type OutboundMessageFee = Balance;
     type CallToPayload = MillauCallToPayload;
     type MessageSenderT = BridgeMillauMessages;
 }
