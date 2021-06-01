@@ -91,10 +91,16 @@ pub mod pallet {
 		/// ExtraValidators is returned if non-checkpoint block contain validator data in
 		/// their extra-data fields
 		ExtraValidators,
+
 		/// UnknownAncestor is returned when validating a block requires an ancestor that is unknown.
 		UnknownAncestor,
 		/// Header timestamp too close while header timestamp is too close with parent's
 		HeaderTimestampTooClose,
+
+		/// Missing signers
+		CheckpointNoSigner,
+		/// List of signers is invalid
+		CheckpointInvalidSigners,
 
 		/// EC_RECOVER error
 		///
@@ -179,7 +185,7 @@ pub mod pallet {
 			);
 
 			// extract new authority set from submitted checkpoint header
-			let new_authority_set = &utils::extract_authorities(checkpoint).map_err(|e| e.msg())?;
+			let new_authority_set = Self::extract_authorities(checkpoint)?;
 
 			// log already signed signer
 			let mut recently = BTreeSet::<Address>::new();
@@ -259,7 +265,7 @@ pub mod pallet {
 			);
 
 			// extract new authority set from submitted checkpoint header
-			let new_authority_set = &utils::extract_authorities(checkpoint).map_err(|e| e.msg())?;
+			let new_authority_set = Self::extract_authorities(checkpoint)?;
 
 			// log already signed signer
 			let mut recently = BTreeSet::<Address>::new();
@@ -283,11 +289,11 @@ pub mod pallet {
 				if recently.len() == last_authority_set.len() / 2 {
 					// already have N/2 valid headers signed by different authority separately
 					// finalize new authroity set
-					<FinalizedAuthority<T>>::put(new_authority_set);
+					<FinalizedAuthority<T>>::put(&new_authority_set);
 					<FinalizedCheckpoint<T>>::put(checkpoint);
 					T::OnHeadersSubmitted::on_valid_authority_finalized(
 						submitter,
-						new_authority_set,
+						&new_authority_set,
 					);
 					// skip the rest submitted headers
 					return Ok(().into());
@@ -439,6 +445,41 @@ pub mod pallet {
 			cache.insert(header.compute_hash(), creator);
 			Ok(creator)
 		}
+
+		/// Extract authority set from extra_data.
+		///
+		/// Layout of extra_data:
+		/// ----
+		/// VANITY: 32 bytes
+		/// Signers: N * 32 bytes as hex encoded (20 characters)
+		/// Signature: 65 bytes
+		/// --
+		fn extract_authorities(header: &BSCHeader) -> Result<Vec<Address>, DispatchError> {
+			let data = &header.extra_data;
+
+			if data.len() <= VANITY_LENGTH + SIGNATURE_LENGTH {
+				Err(<Error<T>>::CheckpointNoSigner)?;
+			}
+
+			// extract only the portion of extra_data which includes the signer list
+			let signers_raw = &data[(VANITY_LENGTH)..data.len() - (SIGNATURE_LENGTH)];
+
+			if signers_raw.len() % ADDRESS_LENGTH != 0 {
+				Err(<Error<T>>::CheckpointInvalidSigners)?;
+			}
+
+			let num_signers = signers_raw.len() / 20;
+
+			let signers: Vec<Address> = (0..num_signers)
+				.map(|i| {
+					let start = i * ADDRESS_LENGTH;
+					let end = start + ADDRESS_LENGTH;
+					H160::from_slice(&signers_raw[start..end])
+				})
+				.collect();
+
+			Ok(signers)
+		}
 	}
 
 	/// Callbacks for header submission rewards/penalties.
@@ -483,22 +524,3 @@ pub mod pallet {
 pub use pallet::*;
 
 mod utils;
-
-use sp_runtime::RuntimeDebug;
-/// Header import error.
-#[derive(Clone, Copy, RuntimeDebug)]
-pub enum Error {
-	/// Missing signers
-	CheckpointNoSigner,
-	/// List of signers is invalid
-	CheckpointInvalidSigners(usize),
-}
-impl Error {
-	pub fn msg(&self) -> &'static str {
-		match *self {
-			Error::CheckpointNoSigner => "Missing signers",
-			// TODO how to format this and return a static str?
-			_ => "Unknown error.",
-		}
-	}
-}
