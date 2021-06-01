@@ -1,11 +1,46 @@
 // --- substrate ---
-use sp_core::U256;
+use sp_core::{H160, U256};
+use sp_std::{marker::PhantomData, vec::Vec};
 // --- darwinia ---
 use crate::*;
 use darwinia_evm::{runner::stack::Runner, ConcatAddressMapping, Config, EnsureAddressTruncated};
-use darwinia_evm_precompile::PangolinPrecompiles;
+pub use darwinia_evm_precompile_issuing::Issuing;
+pub use darwinia_evm_precompile_kton::Kton as KtonPrecompile;
+pub use darwinia_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
+pub use darwinia_evm_precompile_withdraw::WithDraw;
+use dp_evm::{Precompile, PrecompileSet};
 use dvm_ethereum::account_basic::DvmAccountBasic;
 use dvm_ethereum::account_basic::{KtonRemainBalance, RingRemainBalance};
+use evm_crate::{Context, ExitError, ExitSucceed};
+
+pub struct PangolinPrecompiles<R>(PhantomData<R>);
+
+impl<R: dvm_ethereum::Config> PrecompileSet for PangolinPrecompiles<R> {
+	fn execute(
+		address: H160,
+		input: &[u8],
+		target_gas: Option<u64>,
+		context: &Context,
+	) -> Option<core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError>> {
+		fn to_address(a: u64) -> H160 {
+			H160::from_low_u64_be(a)
+		}
+		match address {
+			// Ethereum precompiles
+			a if a == to_address(1) => Some(ECRecover::execute(input, target_gas, context)),
+			a if a == to_address(2) => Some(Sha256::execute(input, target_gas, context)),
+			a if a == to_address(3) => Some(Ripemd160::execute(input, target_gas, context)),
+			a if a == to_address(4) => Some(Identity::execute(input, target_gas, context)),
+			// Darwinia precompiles
+			a if a == to_address(21) => Some(WithDraw::<R>::execute(input, target_gas, context)),
+			a if a == to_address(22) => {
+				Some(KtonPrecompile::<R>::execute(input, target_gas, context))
+			}
+			a if a == to_address(23) => Some(Issuing::<R>::execute(input, target_gas, context)),
+			_ => None,
+		}
+	}
+}
 
 frame_support::parameter_types! {
 	pub const ChainId: u64 = 43;
