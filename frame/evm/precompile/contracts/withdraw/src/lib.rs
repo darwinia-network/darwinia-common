@@ -24,6 +24,7 @@ use sp_runtime::traits::UniqueSaturatedInto;
 use sp_std::marker::PhantomData;
 use sp_std::prelude::*;
 use sp_std::vec::Vec;
+use sp_std::vec;
 
 use codec::Decode;
 use darwinia_evm::{AddressMapping, Config};
