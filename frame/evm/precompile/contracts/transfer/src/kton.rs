@@ -1,25 +1,28 @@
+// --- substrate ---
+use sp_core::{H160, U256};
+use sp_runtime::{traits::UniqueSaturatedInto, SaturatedConversion};
+use sp_std::{borrow::ToOwned, prelude::*, vec::Vec};
+// --- darwinia ---
 use crate::util;
 use crate::AccountId;
-use codec::Decode;
-use core::str::FromStr;
-use darwinia_evm::AddressMapping;
-use darwinia_evm::{Account, AccountBasic, Config, Module, Runner};
+use darwinia_evm::{Account, AccountBasic, Module, Runner};
 use darwinia_support::evm::POW_9;
 use dvm_ethereum::{
 	account_basic::{KtonRemainBalance, RemainBalanceOp},
 	KtonBalance,
 };
+// --- crates ---
+use codec::Decode;
+use core::str::FromStr;
 use ethabi::{Function, Param, ParamType, Token};
 use evm::{Context, ExitError, ExitReason, ExitSucceed};
 use frame_support::{ensure, traits::Currency};
 use sha3::Digest;
-use sp_core::{H160, U256};
-use sp_runtime::{traits::UniqueSaturatedInto, SaturatedConversion};
-use sp_std::{borrow::ToOwned, marker::PhantomData, prelude::*, vec::Vec};
 
 const TRANSFER_AND_CALL_ACTION: &[u8] = b"transfer_and_call(address,uint256)";
 const WITHDRAW_ACTION: &[u8] = b"withdraw(bytes32,uint256)";
-const KTON_PRECOMPILE: &str = "0000000000000000000000000000000000000016";
+// const KTON_PRECOMPILE: &str = "0000000000000000000000000000000000000016";
+const KTON_PRECOMPILE: &str = "0000000000000000000000000000000000000015";
 
 pub enum Kton<T: frame_system::Config> {
 	/// Transfer from substrate account to wkton contract
@@ -137,11 +140,35 @@ pub fn which_action<T: frame_system::Config>(input_data: &[u8]) -> Result<Kton<T
 	}
 	Err(ExitError::Other("Invalid Action！".into()))
 }
-
 pub fn is_kton_transfer(data: &[u8]) -> bool {
 	let transfer_and_call_action = &sha3::Keccak256::digest(&TRANSFER_AND_CALL_ACTION)[0..4];
 	let withdraw_action = &sha3::Keccak256::digest(&WITHDRAW_ACTION)[0..4];
 	&data[0..4] == transfer_and_call_action || &data[0..4] == withdraw_action
+}
+
+fn make_call_data(
+	sp_address: sp_core::H160,
+	sp_value: sp_core::U256,
+) -> Result<Vec<u8>, ExitError> {
+	let eth_address = util::s2e_address(sp_address);
+	let eth_value = util::s2e_u256(sp_value);
+	let func = Function {
+		name: "deposit".to_owned(),
+		inputs: vec![
+			Param {
+				name: "address".to_owned(),
+				kind: ParamType::Address,
+			},
+			Param {
+				name: "value".to_owned(),
+				kind: ParamType::Uint(256),
+			},
+		],
+		outputs: vec![],
+		constant: false,
+	};
+	func.encode_input(&[Token::Address(eth_address), Token::Uint(eth_value)])
+		.map_err(|_| ExitError::Other("Make call data error happened".into()))
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -185,31 +212,6 @@ impl<T: frame_system::Config> WithdrawData<T> {
 			_ => Err(ExitError::Other("Invlid withdraw input data".into())),
 		}
 	}
-}
-
-fn make_call_data(
-	sp_address: sp_core::H160,
-	sp_value: sp_core::U256,
-) -> Result<Vec<u8>, ExitError> {
-	let eth_address = util::s2e_address(sp_address);
-	let eth_value = util::s2e_u256(sp_value);
-	let func = Function {
-		name: "deposit".to_owned(),
-		inputs: vec![
-			Param {
-				name: "address".to_owned(),
-				kind: ParamType::Address,
-			},
-			Param {
-				name: "value".to_owned(),
-				kind: ParamType::Uint(256),
-			},
-		],
-		outputs: vec![],
-		constant: false,
-	};
-	func.encode_input(&[Token::Address(eth_address), Token::Uint(eth_value)])
-		.map_err(|_| ExitError::Other("Make call data error happened".into()))
 }
 
 #[cfg(test)]
