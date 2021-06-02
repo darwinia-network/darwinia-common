@@ -52,17 +52,20 @@ impl<T: dvm_ethereum::Config> Precompile for Transfer<T> {
 		context: &Context,
 	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
 		match which_transfer::<T>(&input) {
-			Transfer::RingBack => RingBack::<T>::transfer(&input, target_gas, context),
-			Transfer::KtonTransfer => Kton::<T>::transfer(&input, target_gas, context),
+			Ok(Transfer::RingBack) => RingBack::<T>::transfer(&input, target_gas, context),
+			Ok(Transfer::KtonTransfer) => Kton::<T>::transfer(&input, target_gas, context),
 			_ => Err(ExitError::Other("Invalid action".into())),
 		}
 	}
 }
 
-fn which_transfer<T: dvm_ethereum::Config>(data: &[u8]) -> Transfer<T> {
+fn which_transfer<T: dvm_ethereum::Config>(data: &[u8]) -> Result<Transfer<T>, ExitError> {
+	if data.len() < 4 {
+		return Err(ExitError::Other("Invalid input data！".into()));
+	}
 	if !kton::is_kton_transfer(data) {
-		Transfer::RingBack
+		Ok(Transfer::RingBack)
 	} else {
-		Transfer::KtonTransfer
+		Ok(Transfer::KtonTransfer)
 	}
 }
