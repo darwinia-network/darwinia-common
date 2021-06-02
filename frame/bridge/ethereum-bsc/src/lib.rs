@@ -18,6 +18,11 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(test)]
+mod mock;
+// #[cfg(test)]
+// mod tests;
+
 #[frame_support::pallet]
 pub mod pallet {
 	// --- substrate ---
@@ -121,14 +126,16 @@ pub mod pallet {
 	#[cfg_attr(feature = "std", derive(Default))]
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {
-		pub finalized_authority: Vec<Address>,
-		pub finalized_checkpoint: BSCHeader,
+		pub genesis_header: BSCHeader,
 	}
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
-			<FinalizedAuthority<T>>::put(&self.finalized_authority);
-			<FinalizedCheckpoint<T>>::put(&self.finalized_checkpoint);
+			let initial_authority_set =
+				<Pallet<T>>::extract_authorities(&self.genesis_header).unwrap();
+
+			<FinalizedAuthority<T>>::put(initial_authority_set);
+			<FinalizedCheckpoint<T>>::put(self.genesis_header);
 		}
 	}
 

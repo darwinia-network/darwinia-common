@@ -35,8 +35,7 @@ use bp_bsc::{
 use secp256k1::SecretKey;
 use sp_std::prelude::*;
 
-/// Gas limit valid in test environment.
-pub const GAS_LIMIT: u64 = 0x2000;
+
 
 /// Test header builder.
 pub struct HeaderBuilder {

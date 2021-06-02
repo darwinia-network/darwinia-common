@@ -15,12 +15,15 @@ codec = { package = "parity-scale-codec", version = "2.1.1", default-features = 
 # bridge
 bp-bsc = { default-features = false, path = "../../../primitives/chain-bsc" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "master" }
-frame-system  = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-core       = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-io         = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-runtime    = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-std        = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "master" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.1" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.1" }
+sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.1" }
+sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.1" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.1" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.1" }
+
+[dev-dependencies]
+pallet-timestamp = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.1" }
 
 [features]
 default = ["std"]
