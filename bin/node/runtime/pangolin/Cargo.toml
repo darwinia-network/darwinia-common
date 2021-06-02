@@ -133,6 +133,8 @@ std = [
 	"darwinia-staking/std",
 	"darwinia-staking-rpc-runtime-api/std",
 	"darwinia-support/std",
+	"darwinia-s2s-relay/std",
+	"darwinia-s2s-issuing/std",
 	"darwinia-treasury/std",
 	"darwinia-tron-backing/std",
 	"darwinia-vesting/std",
