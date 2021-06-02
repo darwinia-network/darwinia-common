@@ -34,23 +34,27 @@ mod types {
 	use crate::*;
 
 	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-	pub type BlockNumber<T> = <T as frame_system::Config>::BlockNumber;
 	pub type MMRRoot<T> = <T as frame_system::Config>::Hash;
 	pub type RingBalance<T, I> = <RingCurrency<T, I> as Currency<AccountId<T>>>::Balance;
 	pub type RingCurrency<T, I> = <T as Config<I>>::RingCurrency;
 
-	pub type RelayAuthoritySigner<T, I> = <<T as Config<I>>::Sign as Sign<BlockNumber<T>>>::Signer;
+	pub type RelayAuthoritySigner<T, I> =
+		<<T as Config<I>>::Sign as Sign<BlockNumberFor<T>>>::Signer;
 	pub type RelayAuthorityMessage<T, I> =
-		<<T as Config<I>>::Sign as Sign<BlockNumber<T>>>::Message;
+		<<T as Config<I>>::Sign as Sign<BlockNumberFor<T>>>::Message;
 	pub type RelayAuthoritySignature<T, I> =
-		<<T as Config<I>>::Sign as Sign<BlockNumber<T>>>::Signature;
-	pub type RelayAuthorityT<T, I> =
-		RelayAuthority<AccountId<T>, RelayAuthoritySigner<T, I>, RingBalance<T, I>, BlockNumber<T>>;
+		<<T as Config<I>>::Sign as Sign<BlockNumberFor<T>>>::Signature;
+	pub type RelayAuthorityT<T, I> = RelayAuthority<
+		AccountId<T>,
+		RelayAuthoritySigner<T, I>,
+		RingBalance<T, I>,
+		BlockNumberFor<T>,
+	>;
 	pub type ScheduledAuthoritiesChangeT<T, I> = ScheduledAuthoritiesChange<
 		AccountId<T>,
 		RelayAuthoritySigner<T, I>,
 		RingBalance<T, I>,
-		BlockNumber<T>,
+		BlockNumberFor<T>,
 	>;
 }
 
@@ -63,7 +67,7 @@ use frame_support::{
 	weights::Weight,
 	StorageValue,
 };
-use frame_system::ensure_signed;
+use frame_system::{ensure_signed, pallet_prelude::*};
 use sp_runtime::{
 	traits::{Saturating, Zero},
 	DispatchError, DispatchResult, Perbill, SaturatedConversion,
@@ -97,7 +101,7 @@ decl_event! {
 	pub enum Event<T, I: Instance = DefaultInstance>
 	where
 		AccountId = AccountId<T>,
-		BlockNumber = BlockNumber<T>,
+		BlockNumber = BlockNumberFor<T>,
 		RingBalance = RingBalance<T, I>,
 		MMRRoot = MMRRoot<T>,
 		RelayAuthoritySigner = RelayAuthoritySigner<T, I>,
@@ -188,7 +192,7 @@ decl_storage! {
 		/// The `MMRRootsToSign` keys cache
 		///
 		/// Only use for update the `MMRRootsToSign` once the authorities changed
-		pub MMRRootsToSignKeys get(fn mmr_root_to_sign_keys): Vec<BlockNumber<T>>;
+		pub MMRRootsToSignKeys get(fn mmr_root_to_sign_keys): Vec<BlockNumberFor<T>>;
 
 		/// All the relay requirements from the backing module here
 		///
@@ -200,11 +204,11 @@ decl_storage! {
 		/// 	1. collected signatures
 		pub MMRRootsToSign
 			get(fn mmr_root_to_sign_of)
-			: map hasher(identity) BlockNumber<T>
+			: map hasher(identity) BlockNumberFor<T>
 			=> Option<Vec<(AccountId<T>, RelayAuthoritySignature<T, I>)>>;
 
 		/// The mmr root signature submit duration, will be delayed if on authorities change
-		pub SubmitDuration get(fn submit_duration): BlockNumber<T> = T::SubmitDuration::get();
+		pub SubmitDuration get(fn submit_duration): BlockNumberFor<T> = T::SubmitDuration::get();
 	}
 	add_extra_genesis {
 		config(authorities): Vec<(AccountId<T>, RelayAuthoritySigner<T, I>, RingBalance<T, I>)>;
@@ -241,18 +245,18 @@ decl_module! {
 
 		const LockId: LockIdentifier = T::LockId::get();
 
-		const TermDuration: BlockNumber<T> = T::TermDuration::get();
+		const TermDuration: BlockNumberFor<T> = T::TermDuration::get();
 
 		const MaxCandidates: u32 = T::MaxCandidates::get() as _;
 
 		const SignThreshold: Perbill = T::SignThreshold::get();
 
-		const SubmitDuration: BlockNumber<T> = T::SubmitDuration::get();
+		const SubmitDuration: BlockNumberFor<T> = T::SubmitDuration::get();
 
 		fn deposit_event() = default;
 
 		// Deal with the slash thing. If authority didn't do his job before the deadline
-		fn on_initialize(now: BlockNumber<T>) -> Weight {
+		fn on_initialize(now: BlockNumberFor<T>) -> Weight {
 			Self::check_misbehavior(now);
 
 			0
@@ -449,7 +453,7 @@ decl_module! {
 		#[weight = 10_000_000]
 		pub fn submit_signed_mmr_root(
 			origin,
-			block_number: BlockNumber<T>,
+			block_number: BlockNumberFor<T>,
 			signature: RelayAuthoritySignature<T, I>
 		) {
 			let authority = ensure_signed(origin)?;
@@ -750,7 +754,7 @@ where
 		Ok(())
 	}
 
-	pub fn mmr_root_signed(block_number: BlockNumber<T>) {
+	pub fn mmr_root_signed(block_number: BlockNumberFor<T>) {
 		<MMRRootsToSign<T, I>>::remove(block_number);
 		<MMRRootsToSignKeys<T, I>>::mutate(|mmr_roots_to_sign_keys| {
 			if let Some(position) = mmr_roots_to_sign_keys
@@ -762,7 +766,7 @@ where
 		});
 	}
 
-	pub fn check_misbehavior(now: BlockNumber<T>) {
+	pub fn check_misbehavior(now: BlockNumberFor<T>) {
 		let find_and_slash_misbehavior =
 			|signatures: Vec<(AccountId<T>, RelayAuthoritySignature<T, I>)>| {
 				let _ = <Authorities<T, I>>::try_mutate(|authorities| {
@@ -843,14 +847,14 @@ where
 	}
 }
 
-impl<T, I> RelayAuthorityProtocol<BlockNumber<T>> for Module<T, I>
+impl<T, I> RelayAuthorityProtocol<BlockNumberFor<T>> for Module<T, I>
 where
 	T: Config<I>,
 	I: Instance,
 {
 	type Signer = RelayAuthoritySigner<T, I>;
 
-	fn schedule_mmr_root(block_number: BlockNumber<T>) {
+	fn schedule_mmr_root(block_number: BlockNumberFor<T>) {
 		let _ = <MMRRootsToSign<T, I>>::try_mutate(block_number, |signed_mmr_root| {
 			// No-op if the sign was already scheduled
 			if signed_mmr_root.is_some() {

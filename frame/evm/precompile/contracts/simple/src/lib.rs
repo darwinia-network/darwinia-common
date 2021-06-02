@@ -55,12 +55,16 @@ impl LinearCostPrecompile for ECRecover {
 		sig[32..64].copy_from_slice(&input[96..128]);
 		sig[64] = input[63];
 
-		let pubkey = sp_io::crypto::secp256k1_ecdsa_recover(&sig, &msg)
-			.map_err(|_| ExitError::Other("Public key recover failed".into()))?;
-		let mut address = sp_io::hashing::keccak_256(&pubkey);
-		address[0..12].copy_from_slice(&[0u8; 12]);
+		let result = match sp_io::crypto::secp256k1_ecdsa_recover(&sig, &msg) {
+			Ok(pubkey) => {
+				let mut address = sp_io::hashing::keccak_256(&pubkey);
+				address[0..12].copy_from_slice(&[0u8; 12]);
+				address.to_vec()
+			}
+			Err(_) => [0u8; 0].to_vec(),
+		};
 
-		Ok((ExitSucceed::Returned, address.to_vec()))
+		Ok((ExitSucceed::Returned, result))
 	}
 }
 
@@ -99,7 +103,8 @@ impl LinearCostPrecompile for Sha256 {
 	}
 }
 
-/// The ecrecover precompile.
+/// The ECRecoverPublicKey precompile.
+/// Similar to ECRecover, but returns the pubkey (not the corresponding Ethereum address)
 pub struct ECRecoverPublicKey;
 
 impl LinearCostPrecompile for ECRecoverPublicKey {

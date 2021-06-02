@@ -30,8 +30,7 @@ members = [
 	"frame/claims",
 	"frame/democracy",
 	"frame/dvm",
-	# FIXME: https://github.com/darwinia-network/darwinia-common/issues/619
-	# "frame/dvm-dynamic-fee",
+	"frame/dvm-dynamic-fee",
 	"frame/dvm/rpc",
 	"frame/dvm/rpc/runtime-api",
 	"frame/elections-phragmen",
@@ -39,6 +38,7 @@ members = [
 	"frame/evm/precompile",
 	"frame/evm/precompile/contracts/blake2",
 	"frame/evm/precompile/contracts/bn128",
+	"frame/evm/precompile/contracts/curve25519",
 	"frame/evm/precompile/contracts/dispatch",
 	"frame/evm/precompile/contracts/ed25519",
 	"frame/evm/precompile/contracts/empty",

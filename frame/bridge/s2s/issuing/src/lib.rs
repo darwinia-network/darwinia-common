@@ -241,7 +241,7 @@ impl<T: Config> Module<T> {
 		let factory_address = MappingFactoryAddress::get();
 		let bytes = mtf::encode_mapping_token(backing, source)
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
-		let mapped_address = dvm_ethereum::Module::<T>::do_call(factory_address, bytes)
+		let mapped_address = dvm_ethereum::Pallet::<T>::do_call(factory_address, bytes)
 			.map_err(|e| -> &'static str { e.into() })?;
 		if mapped_address.len() != 32 {
 			return Err(Error::<T>::InvalidAddressLen.into());
@@ -251,7 +251,7 @@ impl<T: Config> Module<T> {
 
 	pub fn transact_mapping_factory(input: Vec<u8>) -> DispatchResult {
 		let contract = MappingFactoryAddress::get();
-		let result = dvm_ethereum::Module::<T>::internal_transact(contract, input).map_err(
+		let result = dvm_ethereum::Pallet::<T>::internal_transact(contract, input).map_err(
 			|e| -> &'static str {
 				log::info!("call mapping factory contract error {:?}", &e);
 				e.into()

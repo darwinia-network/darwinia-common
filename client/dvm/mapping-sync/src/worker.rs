@@ -30,7 +30,7 @@ use futures::{
 	task::{Context, Poll},
 };
 use futures_timer::Delay;
-use log::warn;
+use log::debug;
 
 const LIMIT: usize = 8;
 
@@ -118,7 +118,7 @@ where
 				}
 				Err(e) => {
 					self.have_next = false;
-					warn!(target: "mapping-sync", "Syncing failed with error {:?}, retrying.", e);
+					debug!(target: "mapping-sync", "Syncing failed with error {:?}, retrying.", e);
 					Poll::Ready(Some(()))
 				}
 			}

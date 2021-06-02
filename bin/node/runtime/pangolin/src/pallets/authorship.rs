@@ -7,6 +7,7 @@ use crate::*;
 frame_support::parameter_types! {
 	pub const UncleGenerations: BlockNumber = 5;
 }
+
 impl Config for Runtime {
 	type FindAuthor = FindAccountFromAuthorIndex<Self, Babe>;
 	type UncleGenerations = UncleGenerations;

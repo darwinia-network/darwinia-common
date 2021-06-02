@@ -302,7 +302,6 @@ mod types {
 	pub type TsInMs = u64;
 
 	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-	pub type BlockNumber<T> = <T as frame_system::Config>::BlockNumber;
 
 	/// The balance type of this module.
 	pub type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
@@ -319,7 +318,7 @@ mod types {
 		<KtonCurrency<T> as Currency<AccountId<T>>>::NegativeImbalance;
 
 	pub type StakingLedgerT<T> =
-		StakingLedger<AccountId<T>, RingBalance<T>, KtonBalance<T>, BlockNumber<T>>;
+		StakingLedger<AccountId<T>, RingBalance<T>, KtonBalance<T>, BlockNumberFor<T>>;
 	pub type StakingBalanceT<T> = StakingBalance<RingBalance<T>, KtonBalance<T>>;
 
 	pub type ExposureT<T> = Exposure<AccountId<T>, RingBalance<T>, KtonBalance<T>>;
@@ -352,7 +351,7 @@ use frame_support::{
 	},
 	PalletId,
 };
-use frame_system::{ensure_root, ensure_signed, offchain::SendTransactionTypes};
+use frame_system::{ensure_root, ensure_signed, offchain::SendTransactionTypes, pallet_prelude::*};
 use sp_runtime::{
 	helpers_128bit,
 	traits::{
@@ -520,7 +519,7 @@ decl_event!(
 	pub enum Event<T>
 	where
 		AccountId = AccountId<T>,
-		BlockNumber = BlockNumber<T>,
+		BlockNumber = BlockNumberFor<T>,
 		RingBalance = RingBalance<T>,
 		KtonBalance = KtonBalance<T>,
 	{

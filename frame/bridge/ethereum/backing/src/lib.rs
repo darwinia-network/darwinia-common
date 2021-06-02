@@ -46,7 +46,6 @@ pub mod pallet {
 		pub type EcdsaMessage = [u8; 32];
 		// Generic type
 		pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-		pub type BlockNumber<T> = <T as frame_system::Config>::BlockNumber;
 		pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 		pub type KtonBalance<T> = <<T as Config>::KtonCurrency as Currency<AccountId<T>>>::Balance;
 		pub type EthereumReceiptProofThing<T> = <<T as Config>::EthereumRelay as EthereumReceipt<
@@ -292,7 +291,7 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_initialize(_: BlockNumber<T>) -> Weight {
+		fn on_initialize(_: BlockNumberFor<T>) -> Weight {
 			<LockAssetEvents<T>>::kill();
 
 			T::DbWeight::get().writes(1)
@@ -1016,8 +1015,7 @@ pub mod pallet {
 			Ok((term, authorities, beneficiary))
 		}
 	}
-
-	impl<T: Config> Sign<BlockNumber<T>> for Pallet<T> {
+	impl<T: Config> Sign<BlockNumberFor<T>> for Pallet<T> {
 		type Signature = EcdsaSignature;
 		type Message = EcdsaMessage;
 		type Signer = EthereumAddress;

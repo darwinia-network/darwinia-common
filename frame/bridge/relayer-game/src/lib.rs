@@ -34,7 +34,6 @@ mod types {
 	use crate::*;
 
 	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-	pub type BlockNumber<T> = <T as frame_system::Config>::BlockNumber;
 
 	pub type RingBalance<T, I> = <RingCurrency<T, I> as Currency<AccountId<T>>>::Balance;
 	pub type RingNegativeImbalance<T, I> =
@@ -61,6 +60,7 @@ use frame_support::{
 	decl_error, decl_module, decl_storage, ensure,
 	traits::{Currency, Get, LockIdentifier, OnUnbalanced, WithdrawReasons},
 };
+use frame_system::pallet_prelude::*;
 use sp_runtime::{
 	traits::{Saturating, Zero},
 	DispatchError, DispatchResult,
@@ -163,7 +163,7 @@ decl_storage! {
 		pub AffirmTime
 			get(fn affirm_end_time_of)
 			: map hasher(identity) RelayHeaderId<T, I>
-			=> Option<(BlockNumber<T>, u32)>;
+			=> Option<(BlockNumberFor<T>, u32)>;
 
 		/// All the closed rounds here
 		///
@@ -171,7 +171,7 @@ decl_storage! {
 		/// Settle or update a game will be scheduled which will start at this moment
 		pub GamesToUpdate
 			get(fn games_to_update_at)
-			: map hasher(identity) BlockNumber<T>
+			: map hasher(identity) BlockNumberFor<T>
 			=> Vec<RelayHeaderId<T, I>>;
 
 		/// All the stakes here
@@ -198,7 +198,7 @@ decl_module! {
 
 		const MAX_ACTIVE_GAMES: u8 = T::RelayerGameAdjustor::max_active_games();
 
-		fn on_finalize(now: BlockNumber<T>) {
+		fn on_finalize(now: BlockNumberFor<T>) {
 			let game_ids = <GamesToUpdate<T, I>>::take(now);
 
 			if !game_ids.is_empty() {
@@ -216,7 +216,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 	/// Check if time for proposing
 	pub fn is_game_open_at(
 		game_id: &RelayHeaderId<T, I>,
-		moment: BlockNumber<T>,
+		moment: BlockNumberFor<T>,
 		round: u32,
 	) -> bool {
 		if let Some((affirm_time, affirm_round)) = Self::affirm_end_time_of(game_id) {
@@ -258,7 +258,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 	pub fn update_timer_of_game_at(
 		game_id: &RelayHeaderId<T, I>,
 		round: u32,
-		moment: BlockNumber<T>,
+		moment: BlockNumberFor<T>,
 	) {
 		let affirm_time = moment + T::RelayerGameAdjustor::affirm_time(round);
 		let complete_proofs_time = T::RelayerGameAdjustor::complete_proofs_time(round);
@@ -271,7 +271,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 
 	pub fn update_games_at(
 		game_ids: Vec<RelayHeaderId<T, I>>,
-		moment: BlockNumber<T>,
+		moment: BlockNumberFor<T>,
 	) -> DispatchResult {
 		log::trace!(target: "relayer-game", "Found Closed Rounds at `{:?}`", moment);
 		log::trace!(target: "relayer-game", "---");
@@ -643,7 +643,11 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 		}
 	}
 
-	pub fn update_game_at(game_id: &RelayHeaderId<T, I>, last_round: u32, moment: BlockNumber<T>) {
+	pub fn update_game_at(
+		game_id: &RelayHeaderId<T, I>,
+		last_round: u32,
+		moment: BlockNumberFor<T>,
+	) {
 		Self::update_timer_of_game_at(game_id, last_round + 1, moment);
 
 		<RoundCounts<T, I>>::mutate(&game_id, |round_count| {

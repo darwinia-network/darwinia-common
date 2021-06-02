@@ -15,6 +15,7 @@ impl ChangeMembers<AccountId> for MembershipChangedGroup {
 		EthereumRelay::change_members_sorted(incoming, outgoing, sorted_new);
 	}
 }
+
 impl Config<Instance1> for Runtime {
 	type Event = Event;
 	type AddOrigin = EnsureRootOrMoreThanHalfCouncil;

@@ -18,6 +18,7 @@ frame_support::parameter_types! {
 	// week.
 	pub const HeadersToKeep: u32 = 7 * DAYS as u32;
 }
+
 impl Config<WithMillauGrandpa> for Runtime {
 	type BridgedChain = Millau;
 	type MaxRequests = MaxRequests;

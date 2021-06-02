@@ -96,6 +96,7 @@ impl InstanceFilter<Call> for ProxyType {
 		}
 	}
 }
+
 frame_support::parameter_types! {
 	// One storage item; key size 32, value size 8; .
 	pub const ProxyDepositBase: Balance = pangolin_constants::deposit(1, 8);
@@ -106,6 +107,7 @@ frame_support::parameter_types! {
 	pub const AnnouncementDepositFactor: Balance = pangolin_constants::deposit(0, 66);
 	pub const MaxPending: u16 = 32;
 }
+
 impl Config for Runtime {
 	type Event = Event;
 	type Call = Call;

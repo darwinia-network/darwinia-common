@@ -536,7 +536,7 @@ pub mod pallet {
 			AtLeast32BitUnsigned, Bounded, CheckedAdd, CheckedSub, MaybeSerializeDeserialize,
 			Saturating, StaticLookup, StoredMapError, Zero,
 		},
-		DispatchError, DispatchResult, RuntimeDebug,
+		ArithmeticError, DispatchError, DispatchResult, RuntimeDebug,
 	};
 	use sp_std::{borrow::Borrow, cmp, fmt::Debug, mem, prelude::*};
 	// --- darwinia ---
@@ -619,8 +619,6 @@ pub mod pallet {
 		VestingBalance,
 		/// Account liquidity restrictions prevent withdrawal
 		LiquidityRestrictions,
-		/// Got an overflow after adding
-		Overflow,
 		/// Balance too low to send value
 		InsufficientBalance,
 		/// Value too low to create account due to existential deposit
@@ -1176,13 +1174,13 @@ pub mod pallet {
 										to_account
 											.free()
 											.checked_add(&actual)
-											.ok_or(<Error<T, I>>::Overflow)?,
+											.ok_or(ArithmeticError::Overflow)?,
 									),
 									BalanceStatus::Reserved => to_account.set_reserved(
 										to_account
 											.reserved()
 											.checked_add(&actual)
-											.ok_or(<Error<T, I>>::Overflow)?,
+											.ok_or(ArithmeticError::Overflow)?,
 									),
 								}
 								from_account.set_reserved(from_account.reserved() - actual);
@@ -1322,7 +1320,7 @@ pub mod pallet {
 								to_account
 									.free()
 									.checked_add(&value)
-									.ok_or(<Error<T, I>>::Overflow)?,
+									.ok_or(ArithmeticError::Overflow)?,
 							);
 
 							let ed = T::ExistentialDeposit::get();
@@ -1456,7 +1454,7 @@ pub mod pallet {
 						account
 							.free()
 							.checked_add(&value)
-							.ok_or(<Error<T, I>>::Overflow)?,
+							.ok_or(ArithmeticError::Overflow)?,
 					);
 					Ok(PositiveImbalance::new(value))
 				},
@@ -1671,7 +1669,7 @@ pub mod pallet {
 				let new_reserved = account
 					.reserved()
 					.checked_add(&value)
-					.ok_or(<Error<T, I>>::Overflow)?;
+					.ok_or(ArithmeticError::Overflow)?;
 				account.set_reserved(new_reserved);
 				Self::ensure_can_withdraw(
 					&who,

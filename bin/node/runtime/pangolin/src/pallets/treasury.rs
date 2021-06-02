@@ -24,6 +24,7 @@ frame_support::parameter_types! {
 	pub const BountyValueMinimum: Balance = 2 * COIN;
 	pub const MaxApprovals: u32 = 100;
 }
+
 impl Config for Runtime {
 	type PalletId = TreasuryPalletId;
 	type RingCurrency = Ring;

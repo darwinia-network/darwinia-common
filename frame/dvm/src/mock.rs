@@ -1,18 +1,20 @@
-// Copyright 2017-2020 Parity Technologies (UK) Ltd.
-// This file is part of Frontier.
-
-// Substrate is free software: you can redistribute it and/or modify
+// This file is part of Darwinia.
+//
+// Copyright (C) 2018-2021 Darwinia Network
+// SPDX-License-Identifier: GPL-3.0
+//
+// Darwinia is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-
-// Substrate is distributed in the hope that it will be useful,
+//
+// Darwinia is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-
+//
 // You should have received a copy of the GNU General Public License
-// along with Substrate. If not, see <http://www.gnu.org/licenses/>.
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 //! Test utilities
 
@@ -123,14 +125,6 @@ impl FeeCalculator for FixedGasPrice {
 	}
 }
 
-/// EmptyIssuingHandler
-pub struct EmptyIssuingHandler;
-impl IssuingHandler for EmptyIssuingHandler {
-	fn handle(_address: H160, _caller: H160, _input: &[u8]) -> DispatchResult {
-		Ok(())
-	}
-}
-
 pub struct EthereumFindAuthor;
 impl FindAuthor<H160> for EthereumFindAuthor {
 	fn find_author<'a, I>(_digests: I) -> Option<H160>
@@ -178,7 +172,7 @@ impl darwinia_evm::Config for Test {
 	type Runner = darwinia_evm::runner::stack::Runner<Self>;
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
-	type IssuingHandler = EmptyIssuingHandler;
+	type IssuingHandler = ();
 }
 
 impl Config for Test {

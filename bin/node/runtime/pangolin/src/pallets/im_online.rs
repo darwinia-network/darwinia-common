@@ -7,6 +7,7 @@ use crate::*;
 frame_support::parameter_types! {
 	pub const ImOnlineUnsignedPriority: TransactionPriority = TransactionPriority::max_value();
 }
+
 impl Config for Runtime {
 	type AuthorityId = AuthorityId;
 	type Event = Event;

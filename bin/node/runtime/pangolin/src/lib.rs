@@ -193,10 +193,12 @@ pub use darwinia_balances::Call as BalancesCall;
 pub use frame_system::Call as SystemCall;
 pub use pallet_bridge_grandpa::Call as BridgeGrandpaCall;
 pub use pallet_bridge_messages::Call as BridgeMessagesCall;
+pub use pallet_sudo::Call as SudoCall;
 
 // --- crates.io ---
 use codec::{Decode, Encode};
 // --- substrate ---
+use bp_runtime::MILLAU_CHAIN_ID;
 use bridge_runtime_common::messages::MessageBridge;
 use frame_support::{
 	traits::{KeyOwnerProofSystem, OnRuntimeUpgrade},
@@ -223,12 +225,13 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia ---
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
-use darwinia_evm::{Account as EVMAccount, FeeCalculator, Runner};
+use darwinia_evm::{Account as EVMAccount, Runner};
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
 use drml_primitives::*;
 use dvm_rpc_runtime_api::TransactionStatus;
 use impls::*;
+use pangolin_bridge_primitives::PANGOLIN_CHAIN_ID;
 
 /// The address format for describing accounts.
 pub type Address = MultiAddress<AccountId, ()>;
@@ -269,7 +272,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: sp_runtime::create_runtime_str!("Pangolin"),
 	authoring_version: 1,
 	// crate version ~2.4.0 := >=2.4.0, <2.5.0
-	spec_version: 2400,
+	spec_version: 2402,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -371,12 +374,13 @@ frame_support::construct_runtime! {
 
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 40,
 		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 41,
+		DynamicFee: dvm_dynamic_fee::{Pallet, Call, Storage, Inherent} = 47,
 
 		BridgeMillauMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 43,
 		BridgeMillauDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 44,
 		BridgeMillauGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 45,
-        Substrate2SubstrateRelay: darwinia_s2s_relay::{Pallet, Call, Storage, Config<T>, Event<T>} = 46,
-        Substrate2SubstrateIssuing: darwinia_s2s_issuing::{Pallet, Call, Storage, Config, Event<T>} = 47,
+        Substrate2SubstrateRelay: darwinia_s2s_relay::{Pallet, Call, Storage, Config<T>, Event<T>} = 48,
+        Substrate2SubstrateIssuing: darwinia_s2s_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
 	}
 }
 
@@ -658,7 +662,7 @@ impl_runtime_apis! {
 		}
 
 		fn author() -> H160 {
-			<dvm_ethereum::Module<Runtime>>::find_author()
+			<dvm_ethereum::Pallet<Runtime>>::find_author()
 		}
 
 		fn storage_at(address: H160, index: U256) -> H256 {
@@ -852,29 +856,25 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	}
 
 	fn on_runtime_upgrade() -> Weight {
-		// // --- substrate ---
-		// use frame_support::migration;
-
-		// migration::move_pallet(b"DarwiniaPhragmenElection", b"PhragmenElection");
-
-		// // https://github.com/paritytech/substrate/pull/8555
-		// migration::move_pallet(b"Instance1Collective", b"Instance2Collective");
-		// migration::move_pallet(b"Instance0Collective", b"Instance1Collective");
-
-		// migration::move_pallet(b"Instance0Membership", b"Instance1Membership");
-
-		// migration::move_pallet(
-		// 	b"Instance0DarwiniaRelayerGame",
-		// 	b"Instance1DarwiniaRelayerGame",
-		// );
-
-		// migration::move_pallet(
-		// 	b"Instance0DarwiniaRelayAuthorities",
-		// 	b"Instance1DarwiniaRelayAuthorities",
-		// );
-
-		// RuntimeBlockWeights::get().max_block
-
 		0
 	}
+}
+
+pub fn pangolin_to_millau_account_ownership_digest<Call, AccountId, SpecVersion>(
+	millau_call: &Call,
+	pangolin_account_id: AccountId,
+	millau_spec_version: SpecVersion,
+) -> Vec<u8>
+where
+	Call: Encode,
+	AccountId: Encode,
+	SpecVersion: Encode,
+{
+	pallet_bridge_dispatch::account_ownership_digest(
+		millau_call,
+		pangolin_account_id,
+		millau_spec_version,
+		PANGOLIN_CHAIN_ID,
+		MILLAU_CHAIN_ID,
+	)
 }

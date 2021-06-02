@@ -17,7 +17,7 @@ darwinia-asset-primitives          = { default-features = false, path = "../../.
 darwinia-relay-primitives          = { default-features = false, path = "../../../../primitives/relay" }
 ethereum-primitives                = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
 # substrate
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
 
 [features]
 default = ["std"]

@@ -595,7 +595,7 @@ macro_rules! decl_tests {
 
 				assert_err!(
 					Ring::transfer(Some(1).into(), 2, Balance::max_value()),
-					RingError::Overflow,
+					ArithmeticError::Overflow,
 				);
 
 				assert_eq!(Ring::free_balance(1), Balance::max_value());
