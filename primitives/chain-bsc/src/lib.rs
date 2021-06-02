@@ -48,14 +48,14 @@ use serde_big_array::big_array;
 /// Protocol constants
 /// The KECCAK of the RLP encoding of empty data.
 pub const KECCAK_NULL_RLP: H256 = H256([
-	0x56, 0xe8, 0x1f, 0x17, 0x1b, 0xcc, 0x55, 0xa6, 0xff, 0x83, 0x45, 0xe6, 0x92, 0xc0, 0xf8, 0x6e, 0x5b, 0x48, 0xe0,
-	0x1b, 0x99, 0x6c, 0xad, 0xc0, 0x01, 0x62, 0x2f, 0xb5, 0xe3, 0x63, 0xb4, 0x21,
+	0x56, 0xe8, 0x1f, 0x17, 0x1b, 0xcc, 0x55, 0xa6, 0xff, 0x83, 0x45, 0xe6, 0x92, 0xc0, 0xf8, 0x6e,
+	0x5b, 0x48, 0xe0, 0x1b, 0x99, 0x6c, 0xad, 0xc0, 0x01, 0x62, 0x2f, 0xb5, 0xe3, 0x63, 0xb4, 0x21,
 ]);
 
 /// The KECCAK of the RLP encoding of empty list.
 pub const KECCAK_EMPTY_LIST_RLP: H256 = H256([
-	0x1d, 0xcc, 0x4d, 0xe8, 0xde, 0xc7, 0x5d, 0x7a, 0xab, 0x85, 0xb5, 0x67, 0xb6, 0xcc, 0xd4, 0x1a, 0xd3, 0x12, 0x45,
-	0x1b, 0x94, 0x8a, 0x74, 0x13, 0xf0, 0xa1, 0x42, 0xfd, 0x40, 0xd4, 0x93, 0x47,
+	0x1d, 0xcc, 0x4d, 0xe8, 0xde, 0xc7, 0x5d, 0x7a, 0xab, 0x85, 0xb5, 0x67, 0xb6, 0xcc, 0xd4, 0x1a,
+	0xd3, 0x12, 0x45, 0x1b, 0x94, 0x8a, 0x74, 0x13, 0xf0, 0xa1, 0x42, 0xfd, 0x40, 0xd4, 0x93, 0x47,
 ]);
 
 /// Fixed number of extra-data prefix bytes reserved for signer vanity
@@ -207,6 +207,10 @@ impl BSCHeader {
 		keccak_256(&self.rlp()).into()
 	}
 
+	pub fn compute_hash_with_chain_id(&self, chain_id: u64) -> H256 {
+		keccak_256(&self.rlp_chain_id(chain_id)).into()
+	}
+
 	/// Get id of this header' parent. Returns None if this is genesis header.
 	pub fn parent_id(&self) -> Option<HeaderId> {
 		self.number.checked_sub(1).map(|parent_number| HeaderId {
@@ -229,6 +233,29 @@ impl BSCHeader {
 	fn rlp(&self) -> Bytes {
 		let mut s = RlpStream::new();
 		s.begin_list(15);
+		s.append(&self.parent_hash);
+		s.append(&self.uncle_hash);
+		s.append(&self.coinbase);
+		s.append(&self.state_root);
+		s.append(&self.transactions_root);
+		s.append(&self.receipts_root);
+		s.append(&EthBloom::from(self.log_bloom.0));
+		s.append(&self.difficulty);
+		s.append(&self.number);
+		s.append(&self.gas_limit);
+		s.append(&self.gas_used);
+		s.append(&self.timestamp);
+		s.append(&self.extra_data);
+		s.append(&self.mix_digest);
+		s.append(&self.nonce);
+
+		s.out().to_vec()
+	}
+
+	fn rlp_chain_id(&self, chain_id: u64) -> Bytes {
+		let mut s = RlpStream::new();
+		s.begin_list(16);
+		s.append(&chain_id);
 		s.append(&self.parent_hash);
 		s.append(&self.uncle_hash);
 		s.append(&self.coinbase);
@@ -301,13 +328,13 @@ impl UnsignedTransaction {
 impl LogEntry {
 	/// Calculates the bloom of this log entry.
 	pub fn bloom(&self) -> Bloom {
-		let eth_bloom =
-			self.topics
-				.iter()
-				.fold(EthBloom::from(BloomInput::Raw(self.address.as_bytes())), |mut b, t| {
-					b.accrue(BloomInput::Raw(t.as_bytes()));
-					b
-				});
+		let eth_bloom = self.topics.iter().fold(
+			EthBloom::from(BloomInput::Raw(self.address.as_bytes())),
+			|mut b, t| {
+				b.accrue(BloomInput::Raw(t.as_bytes()));
+				b
+			},
+		);
 		Bloom(*eth_bloom.data())
 	}
 }
@@ -315,7 +342,10 @@ impl LogEntry {
 impl Bloom {
 	/// Returns true if this bloom has all bits from the other set.
 	pub fn contains(&self, other: &Bloom) -> bool {
-		self.0.iter().zip(other.0.iter()).all(|(l, r)| (l & r) == *r)
+		self.0
+			.iter()
+			.zip(other.0.iter())
+			.all(|(l, r)| (l & r) == *r)
 	}
 }
 
@@ -369,8 +399,9 @@ pub fn transaction_decode_rlp(raw_tx: &[u8]) -> Result<Transaction, DecoderError
 	let message = unsigned.message(chain_id);
 
 	// recover tx sender
-	let sender_public = sp_io::crypto::secp256k1_ecdsa_recover(&signature, &message.as_fixed_bytes())
-		.map_err(|_| rlp::DecoderError::Custom("Failed to recover transaction sender"))?;
+	let sender_public =
+		sp_io::crypto::secp256k1_ecdsa_recover(&signature, &message.as_fixed_bytes())
+			.map_err(|_| rlp::DecoderError::Custom("Failed to recover transaction sender"))?;
 	let sender_address = public_to_address(&sender_public);
 
 	Ok(Transaction {
@@ -390,7 +421,10 @@ pub fn public_to_address(public: &[u8; 64]) -> Address {
 /// Check ethereum merkle proof.
 /// Returns Ok(computed-root) if check succeeds.
 /// Returns Err(computed-root) if check fails.
-fn check_merkle_proof<T: AsRef<[u8]>>(expected_root: H256, items: impl Iterator<Item = T>) -> Result<H256, H256> {
+fn check_merkle_proof<T: AsRef<[u8]>>(
+	expected_root: H256,
+	items: impl Iterator<Item = T>,
+) -> Result<H256, H256> {
 	let computed_root = compute_merkle_root(items);
 	if computed_root == expected_root {
 		Ok(computed_root)

@@ -181,7 +181,7 @@ pub mod pallet {
 			Self::contextless_checks(&cfg, checkpoint)?;
 
 			// check signer
-			let signer = Self::recover_creator(checkpoint)?;
+			let signer = Self::recover_creator(cfg.chain_id, checkpoint)?;
 
 			ensure!(
 				contains(&last_authority_set, signer),
@@ -199,7 +199,7 @@ pub mod pallet {
 				Self::contextual_checks(&cfg, &headers[i], &headers[i - 1])?;
 
 				// who signed this header
-				let signer = Self::recover_creator(&headers[i])?;
+				let signer = Self::recover_creator(cfg.chain_id, &headers[i])?;
 
 				// signed must in last authority set
 				ensure!(
@@ -265,7 +265,7 @@ pub mod pallet {
 
 			// check signer
 			{
-				let signer = Self::recover_creator(checkpoint)?;
+				let signer = Self::recover_creator(cfg.chain_id, checkpoint)?;
 				ensure!(
 					contains(&last_authority_set, signer),
 					<Error::<T>>::InvalidSigner
@@ -283,7 +283,7 @@ pub mod pallet {
 				Self::contextual_checks(&cfg, &headers[i], &headers[i - 1])?;
 
 				// who signed this header
-				let signer = Self::recover_creator(&headers[i])?;
+				let signer = Self::recover_creator(cfg.chain_id, &headers[i])?;
 
 				// signed must in last authority set
 				ensure!(
@@ -418,7 +418,7 @@ pub mod pallet {
 		}
 
 		/// Recover block creator from signature
-		fn recover_creator(header: &BSCHeader) -> Result<Address, DispatchError> {
+		fn recover_creator(chain_id: u64, header: &BSCHeader) -> Result<Address, DispatchError> {
 			if let Some(creator) = <CreatorCache<T>>::get(header.compute_hash()) {
 				return Ok(creator);
 			}
@@ -445,7 +445,7 @@ pub mod pallet {
 
 			unsigned_header.extra_data = signed_data_slice.to_vec();
 
-			let msg = unsigned_header.compute_hash();
+			let msg = unsigned_header.compute_hash_with_chain_id(chain_id);
 			let pubkey = crypto::secp256k1_ecdsa_recover(&signature, msg.as_fixed_bytes())
 				.map_err(|_| <Error<T>>::RecoverPubkeyFail)?;
 			let creator = bp_bsc::public_to_address(&pubkey);
@@ -518,6 +518,8 @@ pub mod pallet {
 	/// BSC pallet configuration parameters.
 	#[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug)]
 	pub struct BSCConfiguration {
+		/// Chain ID
+		pub chain_id: u64,
 		/// Minimum gas limit.
 		pub min_gas_limit: U256,
 		/// Maximum gas limit.
