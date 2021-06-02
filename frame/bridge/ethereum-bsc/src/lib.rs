@@ -28,9 +28,7 @@ pub mod pallet {
 	use sp_runtime::{DispatchError, DispatchResult, RuntimeDebug};
 	use sp_std::collections::btree_set::BTreeSet;
 	// --- darwinia ---
-	use crate::*;
 	use bp_bsc::*;
-	use utils::*;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -116,6 +114,10 @@ pub mod pallet {
 	#[pallet::getter(fn finalized_checkpoint)]
 	pub type FinalizedCheckpoint<T> = StorageValue<_, BSCHeader, ValueQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn creator_cache_of)]
+	pub type CreatorCache<T> = StorageMap<_, Identity, H256, Address, OptionQuery>;
+
 	#[cfg_attr(feature = "std", derive(Default))]
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {
@@ -177,8 +179,10 @@ pub mod pallet {
 			// verify checkpoint
 			// basic checks
 			Self::contextless_checks(&cfg, checkpoint)?;
+
 			// check signer
 			let signer = Self::recover_creator(checkpoint)?;
+
 			ensure!(
 				contains(&last_authority_set, signer),
 				<Error::<T>>::InvalidSigner
@@ -186,16 +190,17 @@ pub mod pallet {
 
 			// extract new authority set from submitted checkpoint header
 			let new_authority_set = Self::extract_authorities(checkpoint)?;
-
 			// log already signed signer
-			let mut recently = BTreeSet::<Address>::new();
+			let mut recently = <BTreeSet<Address>>::new();
 
 			for i in 1..headers.len() {
 				Self::contextless_checks(&cfg, &headers[i])?;
 				// check parent
 				Self::contextual_checks(&cfg, &headers[i], &headers[i - 1])?;
+
 				// who signed this header
 				let signer = Self::recover_creator(&headers[i])?;
+
 				// signed must in last authority set
 				ensure!(
 					contains(&last_authority_set, signer),
@@ -203,6 +208,7 @@ pub mod pallet {
 				);
 				// headers submitted must signed by different authority
 				ensure!(!recently.contains(&signer), <Error::<T>>::SignedRecently);
+
 				recently.insert(signer);
 
 				// enough proof to finalize new authority set
@@ -211,6 +217,7 @@ pub mod pallet {
 					// finalize new authroity set
 					<FinalizedAuthority<T>>::put(new_authority_set);
 					<FinalizedCheckpoint<T>>::put(checkpoint);
+
 					// skip the rest submitted headers
 					return Ok(().into());
 				}
@@ -226,9 +233,8 @@ pub mod pallet {
 			headers: Vec<BSCHeader>,
 		) -> DispatchResultWithPostInfo {
 			let submitter = frame_system::ensure_signed(origin)?;
-
 			// get finalized authority set from storage
-			let last_authority_set = &<FinalizedAuthority<T>>::get();
+			let last_authority_set = <FinalizedAuthority<T>>::get();
 
 			// ensure valid length
 			ensure!(
@@ -238,7 +244,6 @@ pub mod pallet {
 
 			let last_checkpoint = <FinalizedCheckpoint<T>>::get();
 			let checkpoint = &headers[0];
-
 			// get configuration
 			let cfg = T::BSCConfiguration::get();
 
@@ -257,16 +262,18 @@ pub mod pallet {
 			// verify checkpoint
 			// basic checks
 			Self::contextless_checks(&cfg, checkpoint)?;
+
 			// check signer
-			let signer = Self::recover_creator(checkpoint)?;
-			ensure!(
-				contains(&last_authority_set, signer),
-				<Error::<T>>::InvalidSigner
-			);
+			{
+				let signer = Self::recover_creator(checkpoint)?;
+				ensure!(
+					contains(&last_authority_set, signer),
+					<Error::<T>>::InvalidSigner
+				);
+			}
 
 			// extract new authority set from submitted checkpoint header
 			let new_authority_set = Self::extract_authorities(checkpoint)?;
-
 			// log already signed signer
 			let mut recently = BTreeSet::<Address>::new();
 
@@ -274,8 +281,10 @@ pub mod pallet {
 				Self::contextless_checks(&cfg, &headers[i])?;
 				// check parent
 				Self::contextual_checks(&cfg, &headers[i], &headers[i - 1])?;
+
 				// who signed this header
 				let signer = Self::recover_creator(&headers[i])?;
+
 				// signed must in last authority set
 				ensure!(
 					contains(&last_authority_set, signer),
@@ -283,6 +292,7 @@ pub mod pallet {
 				);
 				// headers submitted must signed by different authority
 				ensure!(!recently.contains(&signer), <Error::<T>>::SignedRecently);
+
 				recently.insert(signer);
 
 				// enough proof to finalize new authority set
@@ -291,14 +301,17 @@ pub mod pallet {
 					// finalize new authroity set
 					<FinalizedAuthority<T>>::put(&new_authority_set);
 					<FinalizedCheckpoint<T>>::put(checkpoint);
+
 					T::OnHeadersSubmitted::on_valid_authority_finalized(
 						submitter,
 						&new_authority_set,
 					);
+
 					// skip the rest submitted headers
 					return Ok(().into());
 				}
 			}
+
 			T::OnHeadersSubmitted::on_invalid_headers_submitted(submitter);
 
 			Err(<Error<T>>::HeadersNotEnough)?
@@ -406,43 +419,39 @@ pub mod pallet {
 
 		/// Recover block creator from signature
 		fn recover_creator(header: &BSCHeader) -> Result<Address, DispatchError> {
-			// Initialization
-			let mut cache = CREATOR_BY_HASH.write();
-
-			if let Some(creator) = cache.get_mut(&header.compute_hash()) {
-				return Ok(*creator);
+			if let Some(creator) = <CreatorCache<T>>::get(header.compute_hash()) {
+				return Ok(creator);
 			}
 
 			let data = &header.extra_data;
-			if data.len() < VANITY_LENGTH {
-				Err(<Error<T>>::MissingVanity)?;
-			}
 
-			if data.len() < VANITY_LENGTH + SIGNATURE_LENGTH {
-				Err(<Error<T>>::MissingSignature)?;
-			}
+			ensure!(data.len() > VANITY_LENGTH, <Error<T>>::MissingVanity);
+			ensure!(
+				data.len() >= VANITY_LENGTH + SIGNATURE_LENGTH,
+				<Error<T>>::MissingSignature
+			);
 
 			// Split `signed_extra data` and `signature`
 			let (signed_data_slice, signature_slice) = data.split_at(data.len() - SIGNATURE_LENGTH);
-
-			// TODO: handle panic
 			// convert `&[u8]` to `[u8; 65]`
 			let signature = {
 				let mut s = [0; SIGNATURE_LENGTH];
 				s.copy_from_slice(signature_slice);
+
 				s
 			};
-
 			// modify header and hash it
-			let unsigned_header = &mut header.clone();
-			unsigned_header.extra_data = signed_data_slice.to_vec();
-			let msg = unsigned_header.compute_hash();
+			let mut unsigned_header = header.to_owned();
 
+			unsigned_header.extra_data = signed_data_slice.to_vec();
+
+			let msg = unsigned_header.compute_hash();
 			let pubkey = crypto::secp256k1_ecdsa_recover(&signature, msg.as_fixed_bytes())
 				.map_err(|_| <Error<T>>::RecoverPubkeyFail)?;
 			let creator = bp_bsc::public_to_address(&pubkey);
 
-			cache.insert(header.compute_hash(), creator);
+			<CreatorCache<T>>::insert(header.compute_hash(), creator);
+
 			Ok(creator)
 		}
 
@@ -457,23 +466,25 @@ pub mod pallet {
 		fn extract_authorities(header: &BSCHeader) -> Result<Vec<Address>, DispatchError> {
 			let data = &header.extra_data;
 
-			if data.len() <= VANITY_LENGTH + SIGNATURE_LENGTH {
-				Err(<Error<T>>::CheckpointNoSigner)?;
-			}
+			ensure!(
+				data.len() > VANITY_LENGTH + SIGNATURE_LENGTH,
+				<Error<T>>::CheckpointNoSigner
+			);
 
 			// extract only the portion of extra_data which includes the signer list
-			let signers_raw = &data[(VANITY_LENGTH)..data.len() - (SIGNATURE_LENGTH)];
+			let signers_raw = &data[VANITY_LENGTH..data.len() - SIGNATURE_LENGTH];
 
-			if signers_raw.len() % ADDRESS_LENGTH != 0 {
-				Err(<Error<T>>::CheckpointInvalidSigners)?;
-			}
+			ensure!(
+				signers_raw.len() % ADDRESS_LENGTH == 0,
+				<Error<T>>::CheckpointInvalidSigners
+			);
 
-			let num_signers = signers_raw.len() / 20;
-
+			let num_signers = signers_raw.len() / ADDRESS_LENGTH;
 			let signers: Vec<Address> = (0..num_signers)
 				.map(|i| {
 					let start = i * ADDRESS_LENGTH;
 					let end = start + ADDRESS_LENGTH;
+
 					H160::from_slice(&signers_raw[start..end])
 				})
 				.collect();
@@ -522,5 +533,3 @@ pub mod pallet {
 	}
 }
 pub use pallet::*;
-
-mod utils;
