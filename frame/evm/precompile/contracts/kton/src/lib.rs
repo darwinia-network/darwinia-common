@@ -166,6 +166,9 @@ pub enum Action<T: frame_system::Config> {
 
 /// which action depends on the function selector
 pub fn which_action<T: frame_system::Config>(input_data: &[u8]) -> Result<Action<T>, ExitError> {
+	if input_data.len() < 4 {
+		return Err(ExitError::Other("Invalid input data！".into()));
+	}
 	let transfer_and_call_action = &sha3::Keccak256::digest(&TRANSFER_AND_CALL_ACTION)[0..4];
 	let withdraw_action = &sha3::Keccak256::digest(&WITHDRAW_ACTION)[0..4];
 	if &input_data[0..4] == transfer_and_call_action {
