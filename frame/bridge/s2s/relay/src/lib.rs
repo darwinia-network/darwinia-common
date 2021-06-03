@@ -18,69 +18,72 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::{
-	decl_error, decl_event, decl_module, decl_storage, traits::Get, weights::Weight, PalletId,
-};
-
-use sp_runtime::DispatchError;
-
 pub mod weights;
-use darwinia_relay_primitives::{Relay, RelayAccount};
-use darwinia_support::traits::CallToPayload;
 pub use weights::WeightInfo;
 
-use darwinia_asset_primitives::token::Token;
-use darwinia_s2s_chain::ChainSelector;
-use ethereum_primitives::EthereumAddress;
-use frame_system::RawOrigin;
-use sp_runtime::traits::AccountIdConversion;
-
-use bp_runtime::Size;
-use frame_support::Parameter;
-
-use pallet_bridge_messages::MessageSender;
-
-mod types {
-	pub type BlockNumber<T> = <T as frame_system::Config>::BlockNumber;
-	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-}
-
-pub trait Config: frame_system::Config {
-	/// The ethereum-relay's module id, used for deriving its sovereign account ID.
-	type PalletId: Get<PalletId>;
-
-	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
-
-	/// Weight information for extrinsics in this pallet.
-	type WeightInfo: WeightInfo;
-
-	type OutboundPayload: Parameter + Size;
-
-	type OutboundMessageFee: From<u64>;
-
-	type CallToPayload: CallToPayload<AccountId<Self>, Self::OutboundPayload>;
-
-	type MessageSenderT: MessageSender<
-		Self::Origin,
-		OutboundPayload = Self::OutboundPayload,
-		OutboundMessageFee = Self::OutboundMessageFee,
-	>;
-}
-
-use types::*;
-
-decl_event! {
-	pub enum Event<T>
-	where
-		AccountId = AccountId<T>,
-	{
-		/// new message relayed
-		NewMessageRelayed(AccountId, u8),
+#[frame_support::pallet]
+pub mod pallet {
+	pub mod types {
+		pub type BlockNumber<T> = <T as frame_system::Config>::BlockNumber;
+		pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 	}
-}
 
-decl_error! {
-	pub enum Error for Pallet<T: Config> {
+	use frame_support::{traits::Get, weights::Weight, PalletId};
+	pub use types::*;
+
+	use sp_runtime::DispatchError;
+
+	use darwinia_relay_primitives::{Relay, RelayAccount};
+	use darwinia_support::traits::CallToPayload;
+
+	use darwinia_asset_primitives::token::Token;
+	use darwinia_s2s_chain::ChainSelector;
+	use ethereum_primitives::EthereumAddress;
+	use frame_system::RawOrigin;
+	use sp_runtime::traits::AccountIdConversion;
+
+	use bp_runtime::Size;
+	use frame_support::{pallet_prelude::*, Parameter};
+
+	use pallet_bridge_messages::MessageSender;
+
+	use crate::weights::WeightInfo;
+	use frame_system::pallet_prelude::*;
+
+	#[pallet::config]
+	pub trait Config: frame_system::Config {
+		/// The ethereum-relay's module id, used for deriving its sovereign account ID.
+		type PalletId: Get<PalletId>;
+
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+
+		/// Weight information for extrinsics in this pallet.
+		type WeightInfo: WeightInfo;
+
+		type OutboundPayload: Parameter + Size;
+
+		type OutboundMessageFee: From<u64>;
+
+		type CallToPayload: CallToPayload<AccountId<Self>, Self::OutboundPayload>;
+
+		type MessageSenderT: MessageSender<
+			Self::Origin,
+			OutboundPayload = Self::OutboundPayload,
+			OutboundMessageFee = Self::OutboundMessageFee,
+		>;
+	}
+
+	#[pallet::event]
+	#[pallet::metadata(
+		AccountId<T> = "AccountId",
+	)]
+	pub enum Event<T: Config> {
+		/// new message relayed
+		NewMessageRelayed(AccountId<T>, u8),
+	}
+
+	#[pallet::error]
+	pub enum Error<T> {
 		/// The proof is not in backing list
 		InvalidProof,
 		/// Invalid Backing address
@@ -88,57 +91,78 @@ decl_error! {
 		/// Encode Invalid
 		EncodeInv,
 	}
-}
 
-decl_storage! {
-	trait Store for Pallet<T: Config> as Substrate2SubstrateRelay {
-		pub BackingAddressList
-			get(fn backing_address_list)
-			: map hasher(identity) AccountId<T> => Option<(EthereumAddress, ChainSelector)>;
+	#[pallet::storage]
+	#[pallet::getter(fn backing_address_list)]
+	pub type BackingAddressList<T> = StorageMap<
+		_,
+		Blake2_128Concat,
+		AccountId<T>,
+		Option<(EthereumAddress, ChainSelector)>,
+		ValueQuery,
+	>;
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		pub backings: Vec<(AccountId<T>, EthereumAddress, ChainSelector)>,
 	}
 
-	add_extra_genesis {
-		config(backings): Vec<(AccountId<T>, EthereumAddress, ChainSelector)>;
-		build(|config| {
-			for (address, account, selector) in &config.backings {
-				<BackingAddressList<T>>::insert(address, (account, selector));
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self {
+				backings: Default::default(),
 			}
-		});
+		}
 	}
-}
 
-decl_module! {
-	pub struct Module<T: Config> for enum Call where origin: T::Origin {
-		fn deposit_event() = default;
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			for (address, account, selector) in &self.backings {
+				<BackingAddressList<T>>::insert(address, Some((account, selector)));
+			}
+		}
+	}
 
-		fn on_initialize(_n: BlockNumber<T>) -> Weight {
+	#[pallet::pallet]
+	pub struct Pallet<T>(_);
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_initialize(_: BlockNumber<T>) -> Weight {
 			0
+		}
+	}
+
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {}
+
+	impl<T: Config> Relay for Pallet<T> {
+		type RelayProof = AccountId<T>;
+		type RelayMessage = (ChainSelector, Token, RelayAccount<AccountId<T>>);
+		type VerifiedResult = Result<(EthereumAddress, ChainSelector), DispatchError>;
+		type RelayMessageResult = Result<(), DispatchError>;
+		fn verify(proof: &Self::RelayProof) -> Self::VerifiedResult {
+			let address = <BackingAddressList<T>>::get(proof).ok_or(<Error<T>>::InvalidProof)?;
+			Ok(address)
+		}
+
+		fn relay_message(message: &Self::RelayMessage) -> Self::RelayMessageResult {
+			let msg = message.clone();
+			let encoded = darwinia_s2s_chain::encode_relay_message(msg.0, msg.1, msg.2)
+				.map_err(|_| <Error<T>>::EncodeInv)?;
+			let relay_id: AccountId<T> = T::PalletId::get().into_account();
+			let payload = T::CallToPayload::to_payload(relay_id.clone(), encoded);
+			T::MessageSenderT::raw_send_message(
+				RawOrigin::Signed(relay_id).into(),
+				[0; 4],
+				payload,
+				0.into(),
+			)?;
+			Ok(())
 		}
 	}
 }
 
-impl<T: Config> Relay for Pallet<T> {
-	type RelayProof = AccountId<T>;
-	type RelayMessage = (ChainSelector, Token, RelayAccount<AccountId<T>>);
-	type VerifiedResult = Result<(EthereumAddress, ChainSelector), DispatchError>;
-	type RelayMessageResult = Result<(), DispatchError>;
-	fn verify(proof: &Self::RelayProof) -> Self::VerifiedResult {
-		let address = <BackingAddressList<T>>::get(proof).ok_or(<Error<T>>::InvalidProof)?;
-		Ok(address)
-	}
-
-	fn relay_message(message: &Self::RelayMessage) -> Self::RelayMessageResult {
-		let msg = message.clone();
-		let encoded = darwinia_s2s_chain::encode_relay_message(msg.0, msg.1, msg.2)
-			.map_err(|_| <Error<T>>::EncodeInv)?;
-		let relay_id: AccountId<T> = T::PalletId::get().into_account();
-		let payload = T::CallToPayload::to_payload(relay_id.clone(), encoded);
-		T::MessageSenderT::raw_send_message(
-			RawOrigin::Signed(relay_id).into(),
-			[0; 4],
-			payload,
-			0.into(),
-		)?;
-		Ok(())
-	}
-}
+pub use pallet::*;
