@@ -1,4 +1,5 @@
 // --- substrate ---
+use frame_support::{ensure, traits::Currency};
 use sp_core::{H160, U256};
 use sp_runtime::{traits::UniqueSaturatedInto, SaturatedConversion};
 use sp_std::{borrow::ToOwned, prelude::*, vec::Vec};
@@ -16,7 +17,6 @@ use codec::Decode;
 use core::str::FromStr;
 use ethabi::{Function, Param, ParamType, Token};
 use evm::{Context, ExitError, ExitReason, ExitSucceed};
-use frame_support::{ensure, traits::Currency};
 use sha3::Digest;
 
 const TRANSFER_AND_CALL_ACTION: &[u8] = b"transfer_and_call(address,uint256)";
@@ -30,7 +30,7 @@ pub enum Kton<T: frame_system::Config> {
 	Withdraw(WithdrawData<T>),
 }
 
-impl<T: frame_system::Config + dvm_ethereum::Config> Kton<T> {
+impl<T: dvm_ethereum::Config> Kton<T> {
 	pub fn transfer(
 		input: &[u8],
 		target_gas: Option<u64>,
