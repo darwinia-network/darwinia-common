@@ -27,16 +27,20 @@ impl<R: dvm_ethereum::Config> PrecompileSet for PangolinPrecompiles<R> {
 		}
 		match address {
 			// Ethereum precompiles
-			a if a == to_address(1) => Some(ECRecover::execute(input, target_gas, context)),
-			a if a == to_address(2) => Some(Sha256::execute(input, target_gas, context)),
-			a if a == to_address(3) => Some(Ripemd160::execute(input, target_gas, context)),
-			a if a == to_address(4) => Some(Identity::execute(input, target_gas, context)),
+			_ if address == to_address(1) => Some(ECRecover::execute(input, target_gas, context)),
+			_ if address == to_address(2) => Some(Sha256::execute(input, target_gas, context)),
+			_ if address == to_address(3) => Some(Ripemd160::execute(input, target_gas, context)),
+			_ if address == to_address(4) => Some(Identity::execute(input, target_gas, context)),
 			// Darwinia precompiles
-			a if a == to_address(21) => Some(WithDraw::<R>::execute(input, target_gas, context)),
-			a if a == to_address(22) => {
+			_ if address == to_address(21) => {
+				Some(WithDraw::<R>::execute(input, target_gas, context))
+			}
+			_ if address == to_address(22) => {
 				Some(KtonPrecompile::<R>::execute(input, target_gas, context))
 			}
-			a if a == to_address(23) => Some(Issuing::<R>::execute(input, target_gas, context)),
+			_ if address == to_address(23) => {
+				Some(Issuing::<R>::execute(input, target_gas, context))
+			}
 			_ => None,
 		}
 	}
