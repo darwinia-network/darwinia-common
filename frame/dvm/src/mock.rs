@@ -188,7 +188,7 @@ impl darwinia_evm::Config for Test {
 	type IssuingHandler = ();
 }
 
-impl dvm_ethereum::Config for Test {
+impl Config for Test {
 	type Event = ();
 	type FindAuthor = EthereumFindAuthor;
 	type StateRoot = IntermediateStateRoot;
