@@ -302,9 +302,11 @@ impl LogEntry {
 			EthBloom::from(BloomInput::Raw(self.address.as_bytes())),
 			|mut b, t| {
 				b.accrue(BloomInput::Raw(t.as_bytes()));
+
 				b
 			},
 		);
+
 		Bloom(*eth_bloom.data())
 	}
 }
