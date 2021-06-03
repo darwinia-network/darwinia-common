@@ -96,8 +96,8 @@ decl_error! {
 		InvalidTokenType,
 		/// invalid token option
 		InvalidTokenOption,
-        /// decode event failed
-        InvalidDecoding,
+		/// decode event failed
+		InvalidDecoding,
 	}
 }
 
@@ -130,37 +130,41 @@ decl_module! {
 			0
 		}
 
-        /// handle from contract call
-        /// when user burn their tokens, this handler will receive the event from dispatch
-        /// precompile contract, and relay this event to the target chain to unlock asset
-        #[weight = 0]
-        pub fn dispatch_handle(origin, input: Vec<u8>) {
-            let user = ensure_signed(origin)?;
-            // we must check this user comes from mapping token factory contract address with
-            // precompile dispatch contract
-            let factory_address = MappingFactoryAddress::get();
-            let caller = <T as darwinia_evm::Config>::AddressMapping::into_account_id(factory_address);
-            ensure!(caller == user, <Error<T>>::AssetAR);
-            let register_action = &sha3::Keccak256::digest(&REGISTERD_ACTION)[0..4];
-            let burn_action = &sha3::Keccak256::digest(&BURN_ACTION)[0..4];
-            if &input[4..8] == register_action {
-                //register response
-                log::info!("new s2s token has been registered, ingore response");
-            } else if &input[4..8] == burn_action {
-                //burn action
-                let burn_info = TokenBurnInfo::decode(&input[8..])
-                    .map_err(|_| Error::<T>::InvalidDecoding)?;
-                let recipient = Self::account_id_try_from_bytes(burn_info.recipient.as_slice())?;
-                let mut target: [u8;4] = Default::default();
-                target.copy_from_slice(&input[..4]);
-                Self::cross_send(target, burn_info.source, recipient, burn_info.amount)?;
-            }
-        }
+		/// handle from contract call
+		/// when user burn their tokens, this handler will receive the event from dispatch
+		/// precompile contract, and relay this event to the target chain to unlock asset
+		#[weight = 0]
+		pub fn dispatch_handle(origin, input: Vec<u8>) {
+			let user = ensure_signed(origin)?;
+			// we must check this user comes from mapping token factory contract address with
+			// precompile dispatch contract
+			let factory_address = MappingFactoryAddress::get();
+			let caller = <T as darwinia_evm::Config>::AddressMapping::into_account_id(factory_address);
+			ensure!(caller == user, <Error<T>>::AssetAR);
+			let register_action = &sha3::Keccak256::digest(&REGISTERD_ACTION)[0..4];
+			let burn_action = &sha3::Keccak256::digest(&BURN_ACTION)[0..4];
+			if &input[4..8] == register_action {
+				//register response
+				log::info!("new s2s token has been registered, ingore response");
+			} else if &input[4..8] == burn_action {
+				//burn action
+				let burn_info = TokenBurnInfo::decode(&input[8..])
+					.map_err(|_| Error::<T>::InvalidDecoding)?;
+				let recipient = Self::account_id_try_from_bytes(burn_info.recipient.as_slice())?;
+				let mut target: [u8;4] = Default::default();
+				target.copy_from_slice(&input[..4]);
+				Self::cross_send(target, burn_info.source, recipient, burn_info.amount)?;
+			}
+		}
 
+		/// this is a remote call from the source backing pallet with relay message
+		/// only source backing pallet address is accepted
+		/// receive token transfer from the source chain, if the mapped token is not created, then
+		/// create first
 		#[weight = 0]
 		pub fn cross_receive(origin, message: (Token, EthereumAddress)) {
 			let user = ensure_signed(origin)?;
-			// the s2s message relay has been verified this comes from the backing chain with the
+			// the s2s message relay has been verified that the message comes from the backing chain with the
 			// chainID and backing sender address.
 			// here only we need is to check the sender is in whitelist
 			let (backing, target) = T::BackingRelay::verify(&user)?;
@@ -192,7 +196,6 @@ decl_module! {
 							.map_err(|_| Error::<T>::StringCF)?;
 						let input = Self::abi_encode_token_creation(target, backing, token_info.address, &name, &symbol, option.decimal)?;
 						Self::transact_mapping_factory(input)?;
-						// TODO check if we can get this address after create immediately
 						mapped_address = Self::mapped_token_address(backing, token_info.address)?;
 						Self::deposit_event(RawEvent::NewTokenCreated(user, backing, token_info.address, mapped_address));
 					}
@@ -206,7 +209,7 @@ decl_module! {
 				Self::deposit_event(RawEvent::TokenRedeemed(backing, mapped_address, recipient, value));
 			}
 		}
-    }
+	}
 }
 
 impl<T: Config> Module<T> {
@@ -260,7 +263,7 @@ impl<T: Config> Module<T> {
 		Ok(())
 	}
 
-    pub fn account_id_try_from_bytes(bytes: &[u8]) -> Result<T::AccountId, DispatchError> {
+	pub fn account_id_try_from_bytes(bytes: &[u8]) -> Result<T::AccountId, DispatchError> {
 		if bytes.len() != 32 {
 			return Err(Error::<T>::InvalidAddressLen.into());
 		}
@@ -270,16 +273,21 @@ impl<T: Config> Module<T> {
 		Ok(account_id.into())
 	}
 
-    pub fn cross_send(target: TargetChain, token: EthereumAddress, recipient: AccountId<T>, amount: U256) -> Result<(), DispatchError> {
-        let message = (
-            target,
-            Token::Native(TokenInfo {
-                address: token,
-                value: Some(amount),
-                option: None,
-            }),
-            RelayAccount::DarwiniaAccount(recipient)
-        );
-        T::BackingRelay::relay_message(&message)
-    }
+	pub fn cross_send(
+		target: TargetChain,
+		token: EthereumAddress,
+		recipient: AccountId<T>,
+		amount: U256,
+	) -> Result<(), DispatchError> {
+		let message = (
+			target,
+			Token::Native(TokenInfo {
+				address: token,
+				value: Some(amount),
+				option: None,
+			}),
+			RelayAccount::DarwiniaAccount(recipient),
+		);
+		T::BackingRelay::relay_message(&message)
+	}
 }

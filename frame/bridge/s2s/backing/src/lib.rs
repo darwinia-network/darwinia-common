@@ -86,6 +86,8 @@ pub mod pallet {
 		type FeePalletId: Get<PalletId>;
 
 		type WeightInfo: WeightInfo;
+		// now we have only one relay,
+		// in future, we modify it to multi-instance to interact with multi-target chains
 		type IssuingRelay: Relay<
 			RelayProof = AccountId<Self>,
 			VerifiedResult = Result<(EthereumAddress, TargetChain), DispatchError>,
@@ -128,22 +130,21 @@ pub mod pallet {
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub backed_ring: RingBalance<T>,
-    }
+	}
 
-    #[cfg(feature = "std")]
+	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
 			Self {
 				backed_ring: Default::default(),
-            }
+			}
 		}
 	}
 
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
-		fn build(&self) {
-        }
-    }
+		fn build(&self) {}
+	}
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -158,14 +159,15 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Receive balance from issuing burn
+		/// this can be only called by remote issuing pallet
 		#[pallet::weight(0)]
 		pub fn cross_receive(
 			origin: OriginFor<T>,
 			message: (Token, AccountId<T>),
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
-			// the s2s message relay has been verified this comes from the backing chain with the
-			// chainID and backing sender address.
+			// the s2s message relay has been verified the message comes from the issuing pallet with the
+			// chainID and issuing sender address.
 			// here only we need is to check the sender is in whitelist
 			let backing = T::IssuingRelay::verify(&user)?;
 			let (token, recipient) = message;
@@ -192,6 +194,7 @@ pub mod pallet {
 		}
 
 		/// lock token and cross transfer to the target chain
+		/// @target is the id of the target chain defined in s2s_chain pallet
 		#[pallet::weight(0)]
 		#[frame_support::transactional]
 		pub fn cross_send(
@@ -217,6 +220,7 @@ pub mod pallet {
 			let ring_name: [u8; 32] = array_bytes::hex2array_unchecked!(RING_NAME, 32).into();
 			let ring_symbol: [u8; 32] = array_bytes::hex2array_unchecked!(RING_SYMBOL, 32).into();
 			let token = Token::Native(TokenInfo {
+				// we give the native ring token as a special erc20 address 0x0
 				address: H160::zero(),
 				value: Some(amount),
 				option: Some(TokenOption {
@@ -226,7 +230,11 @@ pub mod pallet {
 				}),
 			});
 
-			let message = (target, token.clone(), RelayAccount::EthereumAccount(recipient));
+			let message = (
+				target,
+				token.clone(),
+				RelayAccount::EthereumAccount(recipient),
+			);
 			T::IssuingRelay::relay_message(&message);
 			Self::deposit_event(Event::TokenLocked(token, user, recipient, amount));
 			Ok(().into())

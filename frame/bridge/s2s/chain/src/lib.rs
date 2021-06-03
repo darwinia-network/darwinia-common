@@ -21,8 +21,8 @@
 
 use codec::{Decode, Encode};
 use darwinia_asset_primitives::token::Token;
-use ethereum_primitives::EthereumAddress;
 use darwinia_relay_primitives::RelayAccount;
+use ethereum_primitives::EthereumAddress;
 use sp_std::vec::Vec;
 
 // here we must contruct a Backing Runtime Call to call backing pallet from the remote issuing
@@ -61,22 +61,22 @@ pub fn encode_relay_message<AccountId>(
 	token: Token,
 	recipient: RelayAccount<AccountId>,
 ) -> Result<Vec<u8>, ()> {
-    match recipient {
-        RelayAccount::<AccountId>::EthereumAccount(r) => {
-            match selector {
-                // millau_backing_cross_receive(address,address)
-                [0x22, 0x4f, 0xdd, 0x11] => Ok(MillauRuntime::Sub2SubBacking(
-                        MillauSub2SubBackingCall::cross_receive((token, r)),
-                        )
-                    .encode()),
-                    // pangolin_issuing_cross_receive(address,address)
-                [0xa8, 0x0b, 0x03, 0x9a] => Ok(PangolinRuntime::Sub2SubIssuing(
-                        PangolinSub2SubIssuingCall::cross_receive((token, r)),
-                        )
-                    .encode()),
-                _ => Err(())
-            }
-        }
+	match recipient {
+		RelayAccount::<AccountId>::EthereumAccount(r) => {
+			match selector {
+				// millau_backing_cross_receive(address,address)
+				[0x22, 0x4f, 0xdd, 0x11] => Ok(MillauRuntime::Sub2SubBacking(
+					MillauSub2SubBackingCall::cross_receive((token, r)),
+				)
+				.encode()),
+				// pangolin_issuing_cross_receive(address,address)
+				[0xa8, 0x0b, 0x03, 0x9a] => Ok(PangolinRuntime::Sub2SubIssuing(
+					PangolinSub2SubIssuingCall::cross_receive((token, r)),
+				)
+				.encode()),
+				_ => Err(()),
+			}
+		}
 		_ => Err(()),
 	}
 }
