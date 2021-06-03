@@ -31,7 +31,6 @@ members = [
 	"frame/dvm/rpc/runtime-api",
 	"frame/elections-phragmen",
 	"frame/evm",
-	"frame/evm/precompile",
 	"frame/evm/precompile/contracts/blake2",
 	"frame/evm/precompile/contracts/bn128",
 	"frame/evm/precompile/contracts/curve25519",

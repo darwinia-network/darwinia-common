@@ -38,10 +38,7 @@ mod types {
 	use crate::*;
 
 	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-	pub type BlockNumber<T> = <T as frame_system::Config>::BlockNumber;
-
 	pub type RingBalance<T> = <CurrencyT<T> as Currency<AccountId<T>>>::Balance;
-
 	type CurrencyT<T> = <T as Config>::Currency;
 }
 
@@ -62,7 +59,7 @@ use frame_support::{
 	weights::Weight,
 	PalletId,
 };
-use frame_system::ensure_signed;
+use frame_system::{ensure_signed, pallet_prelude::*};
 use sp_runtime::{
 	traits::{AccountIdConversion, DispatchInfoOf, Dispatchable, SignedExtension, Zero},
 	transaction_validity::ValidTransaction,
@@ -231,7 +228,7 @@ decl_storage! {
 
 		pub PendingRelayHeaderParcels
 			get(fn pending_relay_header_parcels)
-			: Vec<(BlockNumber<T>, EthereumRelayHeaderParcel, RelayVotingState<AccountId<T>>)>;
+			: Vec<(BlockNumberFor<T>, EthereumRelayHeaderParcel, RelayVotingState<AccountId<T>>)>;
 	}
 	add_extra_genesis {
 		config(genesis_header_info): (Vec<u8>, H256);
@@ -279,14 +276,14 @@ decl_module! {
 
 		const PalletId: PalletId = T::PalletId::get();
 
-		const ConfirmPeriod: BlockNumber<T> = T::ConfirmPeriod::get();
+		const ConfirmPeriod: BlockNumberFor<T> = T::ConfirmPeriod::get();
 
 		const ApproveThreshold: Perbill = T::ApproveThreshold::get();
 		const RejectThreshold: Perbill = T::RejectThreshold::get();
 
 		fn deposit_event() = default;
 
-		fn on_initialize(now: BlockNumber<T>) -> Weight {
+		fn on_initialize(now: BlockNumberFor<T>) -> Weight {
 			// TODO: handle error
 			// TODO: weight
 			Self::system_approve_pending_relay_header_parcels(now).unwrap_or(0)
@@ -656,7 +653,7 @@ impl<T: Config> Module<T> {
 	}
 
 	pub fn system_approve_pending_relay_header_parcels(
-		now: BlockNumber<T>,
+		now: BlockNumberFor<T>,
 	) -> Result<Weight, DispatchError> {
 		<PendingRelayHeaderParcels<T>>::mutate(|parcels| {
 			parcels.retain(|(at, parcel, _)| {
