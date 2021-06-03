@@ -37,7 +37,7 @@ pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 /// Transfer Precompile Contract, used to support the exchange of KTON and RING transfer.
 pub enum Transfer<T> {
 	/// Transfer RING back from DVM to Darwinia
-	RingBack,
+	RingTransfer,
 	/// Transfer KTON between Darwinia and DVM contract
 	KtonTransfer,
 	_Impossible(PhantomData<T>),
@@ -50,7 +50,7 @@ impl<T: dvm_ethereum::Config> Precompile for Transfer<T> {
 		context: &Context,
 	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
 		match which_transfer::<T>(&input) {
-			Ok(Transfer::RingBack) => RingBack::<T>::transfer(&input, target_gas, context),
+			Ok(Transfer::RingTransfer) => RingBack::<T>::transfer(&input, target_gas, context),
 			Ok(Transfer::KtonTransfer) => Kton::<T>::transfer(&input, target_gas, context),
 			_ => Err(ExitError::Other("Invalid action".into())),
 		}
@@ -67,5 +67,5 @@ fn which_transfer<T: dvm_ethereum::Config>(data: &[u8]) -> Result<Transfer<T>, E
 	if kton::is_kton_transfer(data) {
 		return Ok(Transfer::KtonTransfer);
 	}
-	Ok(Transfer::RingBack)
+	Ok(Transfer::RingTransfer)
 }
