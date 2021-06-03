@@ -7,7 +7,7 @@ use sp_std::{borrow::ToOwned, prelude::*, vec::Vec};
 use crate::util;
 use crate::AccountId;
 use darwinia_evm::{Account, AccountBasic, Module, Runner};
-use darwinia_support::evm::POW_9;
+use darwinia_support::evm::{POW_9, SELECTOR};
 use dvm_ethereum::{
 	account_basic::{KtonRemainBalance, RemainBalanceOp},
 	KtonBalance,
@@ -128,21 +128,21 @@ impl<T: dvm_ethereum::Config> Kton<T> {
 
 /// which action depends on the function selector
 pub fn which_action<T: frame_system::Config>(input_data: &[u8]) -> Result<Kton<T>, ExitError> {
-	let transfer_and_call_action = &sha3::Keccak256::digest(&TRANSFER_AND_CALL_ACTION)[0..4];
-	let withdraw_action = &sha3::Keccak256::digest(&WITHDRAW_ACTION)[0..4];
-	if &input_data[0..4] == transfer_and_call_action {
-		let decoded_data = CallData::decode(&input_data[4..])?;
+	let transfer_and_call_action = &sha3::Keccak256::digest(&TRANSFER_AND_CALL_ACTION)[0..SELECTOR];
+	let withdraw_action = &sha3::Keccak256::digest(&WITHDRAW_ACTION)[0..SELECTOR];
+	if &input_data[0..SELECTOR] == transfer_and_call_action {
+		let decoded_data = CallData::decode(&input_data[SELECTOR..])?;
 		return Ok(Kton::TransferAndCall(decoded_data));
-	} else if &input_data[0..4] == withdraw_action {
-		let decoded_data = WithdrawData::decode(&input_data[4..])?;
+	} else if &input_data[0..SELECTOR] == withdraw_action {
+		let decoded_data = WithdrawData::decode(&input_data[SELECTOR..])?;
 		return Ok(Kton::Withdraw(decoded_data));
 	}
 	Err(ExitError::Other("Invalid Action！".into()))
 }
 pub fn is_kton_transfer(data: &[u8]) -> bool {
-	let transfer_and_call_action = &sha3::Keccak256::digest(&TRANSFER_AND_CALL_ACTION)[0..4];
-	let withdraw_action = &sha3::Keccak256::digest(&WITHDRAW_ACTION)[0..4];
-	&data[0..4] == transfer_and_call_action || &data[0..4] == withdraw_action
+	let transfer_and_call_action = &sha3::Keccak256::digest(&TRANSFER_AND_CALL_ACTION)[0..SELECTOR];
+	let withdraw_action = &sha3::Keccak256::digest(&WITHDRAW_ACTION)[0..SELECTOR];
+	&data[0..SELECTOR] == transfer_and_call_action || &data[0..SELECTOR] == withdraw_action
 }
 
 fn make_call_data(
@@ -237,8 +237,9 @@ mod tests {
 
 	#[test]
 	fn test_is_kton_transfer() {
-		let transfer_and_call_action = &sha3::Keccak256::digest(&TRANSFER_AND_CALL_ACTION)[0..4];
-		let withdraw_action = &sha3::Keccak256::digest(&WITHDRAW_ACTION)[0..4];
+		let transfer_and_call_action =
+			&sha3::Keccak256::digest(&TRANSFER_AND_CALL_ACTION)[0..SELECTOR];
+		let withdraw_action = &sha3::Keccak256::digest(&WITHDRAW_ACTION)[0..SELECTOR];
 
 		let data = vec![0; 32];
 		assert!(!is_kton_transfer(&data));

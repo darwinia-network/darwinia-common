@@ -61,7 +61,7 @@ impl<T: dvm_ethereum::Config> Precompile for Transfer<T> {
 ///
 /// The RingBack has only one action, while KtonTransfer has two: `transfer and call`, `withdraw`.
 fn which_transfer<T: dvm_ethereum::Config>(data: &[u8]) -> Result<Transfer<T>, ExitError> {
-	if (data.len() as u32) < SELECTOR {
+	if data.len() < SELECTOR {
 		return Err(ExitError::Other("Invalid input data！".into()));
 	}
 	if kton::is_kton_transfer(data) {
