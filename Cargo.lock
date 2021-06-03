@@ -1576,7 +1576,6 @@ version = "2.4.0"
 dependencies = [
  "darwinia-ethereum-issuing-contract",
  "darwinia-evm",
- "darwinia-evm-precompile",
  "darwinia-relay-primitives",
  "darwinia-support",
  "dp-evm",
@@ -1671,17 +1670,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
-]
-
-[[package]]
-name = "darwinia-evm-precompile"
-version = "2.4.0"
-dependencies = [
- "darwinia-evm-precompile-empty",
- "darwinia-evm-precompile-issuing",
- "darwinia-evm-precompile-kton",
- "darwinia-evm-precompile-simple",
- "darwinia-evm-precompile-withdraw",
 ]
 
 [[package]]
@@ -5763,7 +5751,10 @@ dependencies = [
  "darwinia-ethereum-issuing",
  "darwinia-ethereum-relay",
  "darwinia-evm",
- "darwinia-evm-precompile",
+ "darwinia-evm-precompile-issuing",
+ "darwinia-evm-precompile-kton",
+ "darwinia-evm-precompile-simple",
+ "darwinia-evm-precompile-withdraw",
  "darwinia-header-mmr",
  "darwinia-header-mmr-rpc-runtime-api",
  "darwinia-relay-authorities",
@@ -5775,11 +5766,13 @@ dependencies = [
  "darwinia-treasury",
  "darwinia-tron-backing",
  "darwinia-vesting",
+ "dp-evm",
  "drml-primitives",
  "dvm-dynamic-fee",
  "dvm-ethereum",
  "dvm-rpc-runtime-api",
  "ethereum-primitives",
+ "evm",
  "frame-executive",
  "frame-support",
  "frame-system",
