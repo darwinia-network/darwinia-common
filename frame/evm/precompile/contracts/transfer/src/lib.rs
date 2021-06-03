@@ -34,7 +34,7 @@ use evm::{Context, ExitError, ExitSucceed};
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 
-/// Transfer Precompile Contract, used to support the exchange of KTON and RING tranfer.
+/// Transfer Precompile Contract, used to support the exchange of KTON and RING transfer.
 pub enum Transfer<T> {
 	/// Transfer RING back from DVM to Darwinia
 	RingBack,
