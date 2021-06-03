@@ -28,7 +28,7 @@ pub mod pallet {
 	// --- substrate ---
 	use frame_support::{pallet_prelude::*, traits::UnixTime};
 	use frame_system::pallet_prelude::*;
-	use sp_core::{H256, U256};
+	use sp_core::U256;
 	use sp_io::crypto;
 	use sp_runtime::{DispatchError, DispatchResult, RuntimeDebug};
 	use sp_std::collections::btree_set::BTreeSet;
@@ -121,7 +121,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn creator_cache_of)]
-	pub type CreatorCache<T> = StorageMap<_, Identity, H256, Address, OptionQuery>;
+	pub type CreatorCache<T> = StorageMap<_, Identity, Hash, Address, OptionQuery>;
 
 	#[cfg_attr(feature = "std", derive(Default))]
 	#[pallet::genesis_config]
@@ -322,6 +322,15 @@ pub mod pallet {
 			T::OnHeadersSubmitted::on_invalid_headers_submitted(submitter);
 
 			Err(<Error<T>>::HeadersNotEnough)?
+		}
+
+		#[pallet::weight(0)]
+		fn clean_creator_cache(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+
+			<CreatorCache<T>>::remove_all();
+
+			Ok(().into())
 		}
 	}
 	impl<T: Config> Pallet<T> {
