@@ -13,7 +13,7 @@ version     = "2.4.0"
 # crates.io
 codec = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
 # bridge
-bp-bsc = { default-features = false, path = "../../../primitives/chain-bsc" }
+bsc-primitives = { default-features = false, path = "../../../primitives/chain-bsc" }
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.1" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.1" }
@@ -39,7 +39,7 @@ crates-std = [
 ]
 
 darwinia-std = [
-	"bp-bsc/std",
+	"bsc-primitives/std",
 ]
 
 substrate-std = [

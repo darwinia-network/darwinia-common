@@ -33,7 +33,7 @@ pub mod pallet {
 	use sp_runtime::{DispatchError, DispatchResult, RuntimeDebug};
 	use sp_std::collections::btree_set::BTreeSet;
 	// --- darwinia ---
-	use bp_bsc::*;
+	use bsc_primitives::*;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -455,7 +455,7 @@ pub mod pallet {
 			let msg = unsigned_header.compute_hash_with_chain_id(chain_id);
 			let pubkey = crypto::secp256k1_ecdsa_recover(&signature, msg.as_fixed_bytes())
 				.map_err(|_| <Error<T>>::RecoverPubkeyFail)?;
-			let creator = bp_bsc::public_to_address(&pubkey);
+			let creator = bsc_primitives::public_to_address(&pubkey);
 
 			<CreatorCache<T>>::insert(header.compute_hash(), creator);
 

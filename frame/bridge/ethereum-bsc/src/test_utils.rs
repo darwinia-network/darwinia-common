@@ -26,7 +26,7 @@
 
 use crate::{Config, Storage};
 
-use bp_bsc::{
+use bsc_primitives::{
 	rlp_encode,
 	signatures::{secret_to_address, sign, SignHeader},
 	Address, BSCHeader, Bloom, H256, U256,

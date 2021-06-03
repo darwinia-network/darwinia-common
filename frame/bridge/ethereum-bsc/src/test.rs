@@ -1,5 +1,5 @@
 use crate::{mock::*, *};
-use bp_bsc::BSCHeader;
+use bsc_primitives::BSCHeader;
 
 #[test]
 fn utils_should_works() {

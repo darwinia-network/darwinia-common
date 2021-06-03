@@ -21,7 +21,7 @@ use frame_system::mocking::*;
 use sp_core::U256;
 // --- darwinia ---
 use crate::{self as darwinia_bridge_ethereum_bsc, *};
-use bp_bsc::BSCHeader;
+use bsc_primitives::BSCHeader;
 
 pub type Block = MockBlock<Test>;
 pub type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
