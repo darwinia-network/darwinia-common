@@ -36,6 +36,7 @@ pub mod evm {
 
 	pub const POW_9: u32 = 1_000_000_000;
 	pub const INTERNAL_CALLER: H160 = H160::zero();
+	pub const SELECTOR: u32 = 4;
 }
 
 #[cfg(test)]

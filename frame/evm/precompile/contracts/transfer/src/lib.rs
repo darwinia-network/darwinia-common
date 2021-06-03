@@ -23,9 +23,9 @@ pub mod ring;
 pub mod util;
 
 // --- substrate ---
-use sp_std::vec::Vec;
-use sp_std::{marker::PhantomData, prelude::*};
+use sp_std::{marker::PhantomData, vec::Vec};
 // --- darwinia ---
+use darwinia_support::evm::SELECTOR;
 use dp_evm::Precompile;
 use kton::Kton;
 use ring::RingBack;
@@ -35,12 +35,10 @@ use evm::{Context, ExitError, ExitSucceed};
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 
 /// Transfer Precompile Contract, used to support the exchange of KTON and RING tranfer.
-///
-/// The contract address: 0000000000000000000000000000000000000015
 pub enum Transfer<T> {
-	/// Transfer RING bach from dvm to darwinia
+	/// Transfer RING back from DVM to Darwinia
 	RingBack,
-	/// Transfer KTON between darwinia and dvm contract
+	/// Transfer KTON between Darwinia and DVM contract
 	KtonTransfer,
 	_Impossible(PhantomData<T>),
 }
@@ -59,8 +57,11 @@ impl<T: dvm_ethereum::Config> Precompile for Transfer<T> {
 	}
 }
 
+/// There are two types of transfers: RING transfer and KTON transfer
+///
+/// The RingBack has only one action, while KtonTransfer has two: `transfer and call`, `withdraw`.
 fn which_transfer<T: dvm_ethereum::Config>(data: &[u8]) -> Result<Transfer<T>, ExitError> {
-	if data.len() < 4 {
+	if (data.len() as u32) < SELECTOR {
 		return Err(ExitError::Other("Invalid input data！".into()));
 	}
 	if !kton::is_kton_transfer(data) {

@@ -1,7 +1,6 @@
 pub use darwinia_evm_precompile_issuing::Issuing;
-pub use darwinia_evm_precompile_kton::Kton as KtonPrecompile;
 pub use darwinia_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
-pub use darwinia_evm_precompile_withdraw::WithDraw;
+pub use darwinia_evm_precompile_transfer::Transfer;
 
 // --- crates.io ---
 use evm::{Context, ExitError, ExitSucceed};
@@ -32,10 +31,7 @@ impl<R: dvm_ethereum::Config> PrecompileSet for PangolinPrecompiles<R> {
 			_ if address == to_address(4) => Some(Identity::execute(input, target_gas, context)),
 			// Darwinia precompiles
 			_ if address == to_address(21) => {
-				Some(<WithDraw<R>>::execute(input, target_gas, context))
-			}
-			_ if address == to_address(22) => {
-				Some(<KtonPrecompile<R>>::execute(input, target_gas, context))
+				Some(<Transfer<R>>::execute(input, target_gas, context))
 			}
 			_ if address == to_address(23) => {
 				Some(<Issuing<R>>::execute(input, target_gas, context))

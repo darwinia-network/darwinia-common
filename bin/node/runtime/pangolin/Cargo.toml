@@ -31,9 +31,8 @@ darwinia-ethereum-issuing           = { default-features = false, path = "../../
 darwinia-ethereum-relay             = { default-features = false, path = "../../../../frame/bridge/ethereum/relay" }
 darwinia-evm                        = { default-features = false, path = "../../../../frame/evm" }
 darwinia-evm-precompile-issuing     = { default-features = false, path = "../../../../frame/evm/precompile/contracts/issuing" }
-darwinia-evm-precompile-kton        = { default-features = false, path = "../../../../frame/evm/precompile/contracts/kton" }
 darwinia-evm-precompile-simple      = { default-features = false, path = "../../../../frame/evm/precompile/contracts/simple" }
-darwinia-evm-precompile-withdraw    = { default-features = false, path = "../../../../frame/evm/precompile/contracts/withdraw" }
+darwinia-evm-precompile-transfer    = { default-features = false, path = "../../../../frame/evm/precompile/contracts/transfer" }
 darwinia-header-mmr                 = { default-features = false, path = "../../../../frame/header-mmr" }
 darwinia-header-mmr-rpc-runtime-api = { default-features = false, path = "../../../../frame/header-mmr/rpc/runtime-api" }
 darwinia-relay-authorities          = { default-features = false, path = "../../../../frame/bridge/relay-authorities" }
@@ -129,9 +128,8 @@ std = [
 	"darwinia-ethereum-relay/std",
 	"darwinia-evm/std",
 	"darwinia-evm-precompile-issuing/std",
-	"darwinia-evm-precompile-kton/std",
 	"darwinia-evm-precompile-simple/std",
-	"darwinia-evm-precompile-withdraw/std",
+	"darwinia-evm-precompile-transfer/std",
 	"darwinia-header-mmr/std",
 	"darwinia-header-mmr-rpc-runtime-api/std",
 	"darwinia-relay-authorities/std",
