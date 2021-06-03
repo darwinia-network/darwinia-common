@@ -21,10 +21,8 @@ impl<R: dvm_ethereum::Config> PrecompileSet for PangolinPrecompiles<R> {
 		input: &[u8],
 		target_gas: Option<u64>,
 		context: &Context,
-	) -> Option<core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError>> {
-		fn to_address(a: u64) -> H160 {
-			H160::from_low_u64_be(a)
-		}
+	) -> Option<Result<(ExitSucceed, Vec<u8>, u64), ExitError>> {
+		let to_address = |n: u64| -> H160 { H160::from_low_u64_be(n) };
 
 		match address {
 			// Ethereum precompiles
@@ -34,13 +32,13 @@ impl<R: dvm_ethereum::Config> PrecompileSet for PangolinPrecompiles<R> {
 			_ if address == to_address(4) => Some(Identity::execute(input, target_gas, context)),
 			// Darwinia precompiles
 			_ if address == to_address(21) => {
-				Some(WithDraw::<R>::execute(input, target_gas, context))
+				Some(<WithDraw<R>>::execute(input, target_gas, context))
 			}
 			_ if address == to_address(22) => {
-				Some(KtonPrecompile::<R>::execute(input, target_gas, context))
+				Some(<KtonPrecompile<R>>::execute(input, target_gas, context))
 			}
 			_ if address == to_address(23) => {
-				Some(Issuing::<R>::execute(input, target_gas, context))
+				Some(<Issuing<R>>::execute(input, target_gas, context))
 			}
 			_ => None,
 		}
@@ -49,7 +47,7 @@ impl<R: dvm_ethereum::Config> PrecompileSet for PangolinPrecompiles<R> {
 
 frame_support::parameter_types! {
 	pub const ChainId: u64 = 43;
-	pub BlockGasLimit: U256 = U256::from(u32::max_value());
+	pub BlockGasLimit: U256 = u32::max_value().into();
 }
 
 impl Config for Runtime {
