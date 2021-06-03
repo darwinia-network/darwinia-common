@@ -13,10 +13,7 @@ version     = "2.4.0"
 # crates.io
 codec           = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
 ethbloom        = { version = "0.11.0", default-features = false, features = ["rlp"] }
-fixed-hash      = { version = "0.7.0", default-features = false }
 hash-db         = { version = "0.15.2", default-features = false }
-impl-rlp        = { version = "0.3.0", default-features = false }
-impl-serde      = { version = "0.3.1", optional = true }
 plain_hasher    = { version = "0.2.3", default-features = false }
 primitive-types = { version = "0.9.0", default-features = false, features = ["codec", "rlp"] }
 rlp             = { version = "0.5.0", default-features = false }
@@ -28,15 +25,15 @@ sp-io      = { git = "https://github.com/darwinia-network/substrate", tag = "dar
 sp-runtime = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.1", default-features = false }
 sp-std     = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.1", default-features = false }
 
+[dev-dependencies]
+array-bytes = { version = "1.1.0" }
+
 [features]
 default = ["std"]
 std     = [
 	"codec/std",
 	"ethbloom/std",
-	"fixed-hash/std",
 	"hash-db/std",
-	"impl-rlp/std",
-	"impl-serde",
 	"plain_hasher/std",
 	"primitive-types/std",
 	"primitive-types/serde",

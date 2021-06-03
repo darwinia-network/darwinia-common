@@ -758,11 +758,9 @@ checksum = "771fe0050b883fcc3ea2359b1a96bcfbc090b7116eae7c3c512c7a083fdf23d3"
 name = "bsc-primitives"
 version = "2.4.0"
 dependencies = [
+ "array-bytes",
  "ethbloom",
- "fixed-hash",
  "hash-db",
- "impl-rlp",
- "impl-serde",
  "parity-scale-codec",
  "plain_hasher",
  "primitive-types",

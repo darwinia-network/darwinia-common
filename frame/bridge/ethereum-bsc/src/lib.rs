@@ -28,7 +28,7 @@ pub mod pallet {
 	// --- substrate ---
 	use frame_support::{pallet_prelude::*, traits::UnixTime};
 	use frame_system::pallet_prelude::*;
-	use sp_core::U256;
+	use sp_core::{H256, U256};
 	use sp_io::crypto;
 	use sp_runtime::{DispatchError, DispatchResult, RuntimeDebug};
 	use sp_std::collections::btree_set::BTreeSet;
@@ -135,7 +135,7 @@ pub mod pallet {
 				<Pallet<T>>::extract_authorities(&self.genesis_header).unwrap();
 
 			<FinalizedAuthority<T>>::put(initial_authority_set);
-			<FinalizedCheckpoint<T>>::put(self.genesis_header);
+			<FinalizedCheckpoint<T>>::put(&self.genesis_header);
 		}
 	}
 
@@ -492,7 +492,7 @@ pub mod pallet {
 					let start = i * ADDRESS_LENGTH;
 					let end = start + ADDRESS_LENGTH;
 
-					H160::from_slice(&signers_raw[start..end])
+					Address::from_slice(&signers_raw[start..end])
 				})
 				.collect();
 
