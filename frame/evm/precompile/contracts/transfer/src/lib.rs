@@ -64,9 +64,8 @@ fn which_transfer<T: dvm_ethereum::Config>(data: &[u8]) -> Result<Transfer<T>, E
 	if (data.len() as u32) < SELECTOR {
 		return Err(ExitError::Other("Invalid input data！".into()));
 	}
-	if !kton::is_kton_transfer(data) {
-		Ok(Transfer::RingBack)
-	} else {
-		Ok(Transfer::KtonTransfer)
+	if kton::is_kton_transfer(data) {
+		return Ok(Transfer::KtonTransfer);
 	}
+	Ok(Transfer::RingBack)
 }
