@@ -154,16 +154,16 @@ impl AddressMapping<AccountId32> for HashedAddressMapping {
 	}
 }
 
-pub struct RingBack<T>(PhantomData<T>);
-impl<T: darwinia_evm::Config> Precompile for RingBack<T> {
-	fn execute(
-		input: &[u8],
-		target_gas: Option<u64>,
-		context: &Context,
-	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
-		darwinia_evm_precompile_transfer::ring::RingBack::<T>::transfer(&input, target_gas, context)
-	}
-}
+// pub struct RingBack<T>(PhantomData<T>);
+// impl<T: darwinia_evm::Config> Precompile for RingBack<T> {
+// 	fn execute(
+// 		input: &[u8],
+// 		target_gas: Option<u64>,
+// 		context: &Context,
+// 	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
+// 		darwinia_evm_precompile_transfer::ring::RingBack::<T>::transfer(&input, target_gas, context)
+// 	}
+// }
 
 impl darwinia_evm::Config for Test {
 	type FeeCalculator = FixedGasPrice;
@@ -178,7 +178,8 @@ impl darwinia_evm::Config for Test {
 		darwinia_evm_precompile_simple::Sha256,
 		darwinia_evm_precompile_simple::Ripemd160,
 		darwinia_evm_precompile_simple::Identity,
-		RingBack<Test>,
+		darwinia_evm_precompile_transfer::Transfer<Self>,
+		// RingBack<Test>,
 	);
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
