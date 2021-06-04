@@ -38,6 +38,7 @@ use frame_support::{
 	PalletId,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
+use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::{
 	traits::{AccountIdConversion, Dispatchable, Saturating, Zero},
 	DispatchError, SaturatedConversion,
@@ -146,6 +147,7 @@ pub mod pallet {
 		/// Lock token in this chain and cross transfer to the target chain
 		///
 		/// Target is the id of the target chain defined in s2s_chain pallet
+		// TODO: update the weight
 		#[pallet::weight(0)]
 		#[frame_support::transactional]
 		pub fn lock_and_cross_send(
@@ -180,8 +182,8 @@ pub mod pallet {
 				address: array_bytes::hex2array_unchecked!(BACK_ERC20_RING, 20).into(),
 				value: Some(amount),
 				option: Some(TokenOption {
-					name: array_bytes::hex2array_unchecked!(RING_NAME, 32).into(),
-					symbol: array_bytes::hex2array_unchecked!(RING_SYMBOL, 32).into(),
+					name: array_bytes::hex2array_unchecked!(RING_NAME, 32),
+					symbol: array_bytes::hex2array_unchecked!(RING_SYMBOL, 32),
 					decimal: 9,
 				}),
 			});
@@ -196,14 +198,15 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Receive balance from issuing burn
-		/// this can be only called by remote issuing pallet
+		/// Receive target chain locked message and unlock token in this chain.
+		// TODO: update the weight
 		#[pallet::weight(0)]
-		pub fn cross_receive(
+		pub fn cross_receive_and_unlock(
 			origin: OriginFor<T>,
 			message: (Token, AccountId<T>),
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
+
 			// the s2s message relay has been verified the message comes from the issuing pallet with the
 			// chainID and issuing sender address.
 			// here only we need is to check the sender is in whitelist
@@ -222,11 +225,23 @@ pub mod pallet {
 				_ => return Err(Error::<T>::InvalidTokenType.into()),
 			};
 			let amount = match token_info.value {
-				Some(value) => value.into(),
+				Some(value) => value,
 				_ => return Err(<Error<T>>::InvalidTokenType.into()),
 			};
-			let unlock_amount = Balance::try_from(amount)?;
-			Self::unlock_token_cast::<T::RingCurrency>(&recipient, unlock_amount)?;
+
+			// Make sure the user's balance is enough to lock
+			ensure!(
+				T::RingCurrency::free_balance(&Self::pallet_account_id())
+					> amount.low_u128().unique_saturated_into(),
+				<Error<T>>::InsufficientBalance
+			);
+			T::RingCurrency::transfer(
+				&Self::pallet_account_id(),
+				&recipient,
+				amount.low_u128().unique_saturated_into(),
+				KeepAlive,
+			)?;
+
 			Self::deposit_event(Event::TokenUnlocked(token, recipient, amount));
 			Ok(().into())
 		}
@@ -239,26 +254,6 @@ pub mod pallet {
 
 		pub fn fee_account_id() -> T::AccountId {
 			T::FeePalletId::get().into_account()
-		}
-
-		/// Return the amount of money in the pot.
-		// The existential deposit is not part of the pot so backing account never gets deleted.
-		pub fn pot<C: LockableCurrency<T::AccountId>>() -> C::Balance {
-			C::usable_balance(&Self::pallet_account_id())
-				// Must never be less than 0 but better be safe.
-				.saturating_sub(C::minimum_balance())
-		}
-
-		fn unlock_token_cast<C: LockableCurrency<T::AccountId>>(
-			recipient: &T::AccountId,
-			amount: Balance,
-		) -> DispatchResult {
-			let amount: C::Balance = amount.saturated_into();
-
-			ensure!(Self::pot::<C>() >= amount, <Error<T>>::InsufficientBalance);
-
-			C::transfer(&Self::pallet_account_id(), &recipient, amount, KeepAlive)?;
-			Ok(())
 		}
 	}
 }

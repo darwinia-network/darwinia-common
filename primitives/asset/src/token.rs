@@ -41,10 +41,9 @@ pub struct TokenInfo {
 	pub option: Option<TokenOption>,
 }
 
-/// the token defination, native or erc20
+/// The token Definition, Native token or ERC20
 #[derive(Encode, Decode, Clone, Debug, Eq, PartialEq)]
 pub enum Token {
-	// native ring, kton ...
 	Native(TokenInfo),
 	Erc20(TokenInfo),
 }
