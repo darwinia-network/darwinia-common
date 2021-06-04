@@ -23,8 +23,8 @@ use sp_core::U256;
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_std::marker::PhantomData;
 use sp_std::prelude::*;
-use sp_std::vec::Vec;
 use sp_std::vec;
+use sp_std::vec::Vec;
 
 use codec::Decode;
 use darwinia_evm::{AddressMapping, Config};

@@ -25,67 +25,63 @@
 pub mod weights;
 pub use weights::WeightInfo;
 
+// --- crates ---
+use ethereum_primitives::EthereumAddress;
+use ethereum_types::{Address, H160, H256, U256};
+// --- substrate ---
+use frame_support::{
+	decl_error, decl_event, decl_module, decl_storage, ensure,
+	pallet_prelude::*,
+	parameter_types,
+	traits::{Currency, ExistenceRequirement::*, Get},
+	weights::Weight,
+	PalletId,
+};
+use frame_system::{ensure_signed, pallet_prelude::*};
+use sp_runtime::{
+	traits::{AccountIdConversion, Dispatchable, Saturating, Zero},
+	DispatchError, SaturatedConversion,
+};
+use sp_std::{convert::TryFrom, prelude::*, vec::Vec};
+// --- darwinia ---
+use darwinia_asset_primitives::token::{Token, TokenInfo, TokenOption};
+use darwinia_primitives_contract::mapping_token_factory::MappingTokenFactory as mtf;
+use darwinia_relay_primitives::{Relay, RelayAccount};
+use darwinia_s2s_chain::ChainSelector as TargetChain;
+use darwinia_support::balance::*;
+
+// TODO: It's better to calculate this value rather than hard code here.
 const RING_NAME: &'static str =
 	"0x44617277696e6961204e6574776f726b204e617469766520546f6b656e000000";
 const RING_SYMBOL: &'static str =
 	"0x52494e4700000000000000000000000000000000000000000000000000000000";
 
+pub type AccountId<T> = <T as frame_system::Config>::AccountId;
+pub type Balance = u128;
+pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
+
+pub use pallet::*;
+
 #[frame_support::pallet]
 pub mod pallet {
-	pub mod types {
-		use crate::pallet::*;
-
-		pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-		pub type Balance = u128;
-		pub type BlockNumber<T> = <T as frame_system::Config>::BlockNumber;
-		pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
-	}
-
+	use super::*;
+	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
-	// --- crates ---
-	use ethereum_types::{Address, H160, H256, U256};
-	// --- substrate ---
-	use frame_support::{
-		decl_error, decl_event, decl_module, decl_storage, ensure,
-		pallet_prelude::*,
-		parameter_types,
-		traits::{Currency, ExistenceRequirement::*, Get},
-		weights::Weight,
-		PalletId,
-	};
-	use frame_system::ensure_signed;
-	use sp_runtime::{
-		traits::{AccountIdConversion, Saturating, Zero},
-		DispatchError, DispatchResult, SaturatedConversion,
-	};
-	use sp_std::vec::Vec;
-	// --- darwinia ---
-	use darwinia_asset_primitives::token::{Token, TokenInfo, TokenOption};
-	use darwinia_primitives_contract::mapping_token_factory::MappingTokenFactory as mtf;
-	use darwinia_relay_primitives::{Relay, RelayAccount};
-	use darwinia_support::balance::*;
-	use ethereum_primitives::EthereumAddress;
-	use sp_std::{convert::TryFrom, prelude::*};
-
-	use sp_runtime::traits::Dispatchable;
-
-	use darwinia_s2s_chain::ChainSelector as TargetChain;
-
-	use crate::weights::WeightInfo;
-
-	use crate::{RING_NAME, RING_SYMBOL};
-	use types::*;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type WeightInfo: WeightInfo;
 		#[pallet::constant]
 		type FeePalletId: Get<PalletId>;
-
-		type WeightInfo: WeightInfo;
+		#[pallet::constant]
+		type RingLockLimit: Get<RingBalance<Self>>;
+		// bear-trace: whhen this value used?
+		#[pallet::constant]
+		type AdvancedFee: Get<RingBalance<Self>>;
+		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 		// now we have only one relay,
 		// in future, we modify it to multi-instance to interact with multi-target chains
 		type IssuingRelay: Relay<
@@ -94,37 +90,30 @@ pub mod pallet {
 			RelayMessage = (TargetChain, Token, RelayAccount<AccountId<Self>>),
 			RelayMessageResult = Result<(), DispatchError>,
 		>;
-		#[pallet::constant]
-		type RingLockLimit: Get<RingBalance<Self>>;
-		#[pallet::constant]
-		type AdvancedFee: Get<RingBalance<Self>>;
-		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(fn deposit_event)]
-	#[pallet::metadata(
-        AccountId<T> = "AccountId",
-    )]
+	#[pallet::metadata(T::AccountId = "AccountId")]
 	pub enum Event<T: Config> {
-		/// token locked [tokenaddress, sender, recipient, amount]
+		/// Token locked [token address, sender, recipient, amount]
 		TokenLocked(Token, AccountId<T>, EthereumAddress, U256),
-		/// token unlocked [token, recipient, value]
+		/// Token unlocked [token, recipient, value]
 		TokenUnlocked(Token, AccountId<T>, U256),
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// currently we only support native token transfered by s2s bridge
+		/// Currently we only support native token transfer comes from s2s bridge
 		Erc20NotSupported,
-		/// invalid token type
+		/// Invalid token type
 		InvalidTokenType,
-		/// invalid token option
+		/// Invalid token option
 		InvalidTokenOption,
-		/// not enough ring balance
+		/// Not enough ring balance
 		NotEnoughRingBalance,
-		/// Ring Lock - LIMITED
-		RingLockLim,
+		/// Ring Lock LIMITED
+		RingLockLimited,
 	}
 
 	#[pallet::genesis_config]
@@ -150,11 +139,7 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_initialize(_: BlockNumber<T>) -> Weight {
-			0
-		}
-	}
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -209,7 +194,7 @@ pub mod pallet {
 
 			ensure!(
 				ring_to_lock < T::RingLockLimit::get() && !ring_to_lock.is_zero(),
-				<Error<T>>::RingLockLim
+				<Error<T>>::RingLockLimited
 			);
 
 			T::RingCurrency::transfer(&user, &Self::account_id(), ring_to_lock, AllowDeath)?;
@@ -245,6 +230,7 @@ pub mod pallet {
 		pub fn account_id() -> T::AccountId {
 			T::PalletId::get().into_account()
 		}
+
 		pub fn fee_account_id() -> T::AccountId {
 			T::FeePalletId::get().into_account()
 		}
@@ -270,5 +256,3 @@ pub mod pallet {
 		}
 	}
 }
-
-pub use pallet::*;

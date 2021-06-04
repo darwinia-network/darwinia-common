@@ -53,8 +53,8 @@ where
 		}
 		let inner_call = match input[0..SELECTOR_SIZE_BYTES] {
 			[0x33, 0x08, 0xe8, 0x7a] => {
-                darwinia_s2s_issuing::Call::<T>::dispatch_handle(input.to_vec())
-            }
+				darwinia_s2s_issuing::Call::<T>::dispatch_handle(input.to_vec())
+			}
 			_ => {
 				return Err(ExitError::Other(
 					"No wrapper method at selector given selector".into(),
@@ -85,10 +85,7 @@ where
 				);
 				Ok((ExitSucceed::Stopped, Default::default(), cost))
 			}
-			Err(_) => {
-                Err(ExitError::Other("dispatch execution failed".into()))
-            }
+			Err(_) => Err(ExitError::Other("dispatch execution failed".into())),
 		}
 	}
 }
-
