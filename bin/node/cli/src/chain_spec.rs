@@ -400,7 +400,7 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 		},
 		darwinia_evm: pangolin_runtime::EVMConfig { accounts: evm_accounts },
 		dvm_ethereum: Default::default(),
-        darwinia_s2s_relay: pangolin_runtime::Substrate2SubstrateRelayConfig {
+        darwinia_s2s_relay_Instance1: pangolin_runtime::Substrate2SubstrateRelayConfig {
             backings: vec![(
 				array_bytes::hex2array_unchecked!(MILLAU_BACKING_SUBADDRESS, 32).into(),
                 array_bytes::hex2array_unchecked!(MILLAU_BACKING_ETHADDRESS, 20).into(),
@@ -567,7 +567,7 @@ fn pangolin_development_genesis() -> pangolin_runtime::GenesisConfig {
 		},
 		darwinia_evm: pangolin_runtime::EVMConfig { accounts: evm_accounts },
 		dvm_ethereum: Default::default(),
-        darwinia_s2s_relay: pangolin_runtime::Substrate2SubstrateRelayConfig {
+        darwinia_s2s_relay_Instance1: pangolin_runtime::Substrate2SubstrateRelayConfig {
             backings: vec![(
 				array_bytes::hex2array_unchecked!(MILLAU_BACKING_SUBADDRESS, 32).into(),
                 array_bytes::hex2array_unchecked!(MILLAU_BACKING_ETHADDRESS, 20).into(),

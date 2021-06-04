@@ -28,7 +28,7 @@ pub mod pallet {
 		pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 	}
 
-	use frame_support::{traits::Get, weights::Weight, PalletId};
+	use frame_support::{traits::Get, PalletId};
 	pub use types::*;
 
 	use sp_runtime::DispatchError;
@@ -40,7 +40,7 @@ pub mod pallet {
 	use darwinia_s2s_chain::ChainSelector;
 	use ethereum_primitives::EthereumAddress;
 	use frame_system::RawOrigin;
-	use sp_runtime::traits::AccountIdConversion;
+	use sp_runtime::traits::{AccountIdConversion, MaybeSerializeDeserialize};
 
 	use bp_runtime::Size;
 	use frame_support::{pallet_prelude::*, Parameter};
@@ -48,14 +48,18 @@ pub mod pallet {
 	use pallet_bridge_messages::MessageSender;
 
 	use crate::weights::WeightInfo;
+	use codec::Codec;
 	use frame_system::pallet_prelude::*;
+	use sp_std::fmt::Debug;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config<I: 'static = ()>: frame_system::Config {
 		/// The ethereum-relay's module id, used for deriving its sovereign account ID.
 		type PalletId: Get<PalletId>;
 
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type Event: From<Event<Self, I>> + IsType<<Self as frame_system::Config>::Event>;
+
+		type TargetChain: Parameter + Codec + Copy + Debug + MaybeSerializeDeserialize;
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
@@ -74,16 +78,14 @@ pub mod pallet {
 	}
 
 	#[pallet::event]
-	#[pallet::metadata(
-		AccountId<T> = "AccountId",
-	)]
-	pub enum Event<T: Config> {
+	#[pallet::metadata(T::AccountId = "AccountId")]
+	pub enum Event<T: Config<I>, I: 'static = ()> {
 		/// new message relayed
-		NewMessageRelayed(AccountId<T>, u8),
+		NewMessageRelayed(T::AccountId, u8),
 	}
 
 	#[pallet::error]
-	pub enum Error<T> {
+	pub enum Error<T, I = ()> {
 		/// The proof is not in backing list
 		InvalidProof,
 		/// Invalid Backing address
@@ -94,21 +96,21 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn backing_address_list)]
-	pub type BackingAddressList<T> = StorageMap<
+	pub type BackingAddressList<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
 		Blake2_128Concat,
-		AccountId<T>,
-		Option<(EthereumAddress, ChainSelector)>,
+		T::AccountId,
+		Option<(EthereumAddress, T::TargetChain)>,
 		ValueQuery,
 	>;
 
 	#[pallet::genesis_config]
-	pub struct GenesisConfig<T: Config> {
-		pub backings: Vec<(AccountId<T>, EthereumAddress, ChainSelector)>,
+	pub struct GenesisConfig<T: Config<I>, I: 'static = ()> {
+		pub backings: Vec<(T::AccountId, EthereumAddress, T::TargetChain)>,
 	}
 
 	#[cfg(feature = "std")]
-	impl<T: Config> Default for GenesisConfig<T> {
+	impl<T: Config<I>, I: 'static> Default for GenesisConfig<T, I> {
 		fn default() -> Self {
 			Self {
 				backings: Default::default(),
@@ -117,41 +119,39 @@ pub mod pallet {
 	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+	impl<T: Config<I>, I: 'static> GenesisBuild<T, I> for GenesisConfig<T, I> {
 		fn build(&self) {
 			for (address, account, selector) in &self.backings {
-				<BackingAddressList<T>>::insert(address, Some((account, selector)));
+				<BackingAddressList<T, I>>::insert(address, Some((account, selector)));
 			}
 		}
 	}
 
 	#[pallet::pallet]
-	pub struct Pallet<T>(_);
+	#[pallet::generate_store(pub(super) trait Store)]
+	pub struct Pallet<T, I = ()>(PhantomData<(T, I)>);
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_initialize(_: BlockNumber<T>) -> Weight {
-			0
-		}
-	}
+	impl<T: Config<I>, I: 'static> Hooks<BlockNumberFor<T>> for Pallet<T, I> {}
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config<I>, I: 'static> Pallet<T, I> {}
 
-	impl<T: Config> Relay for Pallet<T> {
+	impl<T: Config<I>, I: 'static> Relay for Pallet<T, I> {
 		type RelayProof = AccountId<T>;
 		type RelayMessage = (ChainSelector, Token, RelayAccount<AccountId<T>>);
-		type VerifiedResult = Result<(EthereumAddress, ChainSelector), DispatchError>;
+		type VerifiedResult = Result<(EthereumAddress, T::TargetChain), DispatchError>;
 		type RelayMessageResult = Result<(), DispatchError>;
 		fn verify(proof: &Self::RelayProof) -> Self::VerifiedResult {
-			let address = <BackingAddressList<T>>::get(proof).ok_or(<Error<T>>::InvalidProof)?;
+			let address =
+				<BackingAddressList<T, I>>::get(proof).ok_or(<Error<T, I>>::InvalidProof)?;
 			Ok(address)
 		}
 
 		fn relay_message(message: &Self::RelayMessage) -> Self::RelayMessageResult {
 			let msg = message.clone();
 			let encoded = darwinia_s2s_chain::encode_relay_message(msg.0, msg.1, msg.2)
-				.map_err(|_| <Error<T>>::EncodeInv)?;
+				.map_err(|_| <Error<T, I>>::EncodeInv)?;
 			let relay_id: AccountId<T> = T::PalletId::get().into_account();
 			let payload = T::CallToPayload::to_payload(relay_id.clone(), encoded);
 			T::MessageSenderT::raw_send_message(
