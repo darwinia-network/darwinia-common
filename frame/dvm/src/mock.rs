@@ -25,7 +25,7 @@ use crate::{
 };
 use codec::{Decode, Encode};
 use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator};
-use dp_evm::Precompile;
+use dp_evm::{Precompile, PrecompileSet};
 use ethereum::{TransactionAction, TransactionSignature};
 use evm::{Context, ExitError, ExitSucceed};
 use frame_support::{traits::GenesisBuild, ConsensusEngineId};
@@ -154,16 +154,44 @@ impl AddressMapping<AccountId32> for HashedAddressMapping {
 	}
 }
 
-pub struct RingBack<T>(PhantomData<T>);
-impl<T: darwinia_evm::Config> Precompile for RingBack<T> {
+// pub struct RingBack<T>(PhantomData<T>);
+// // impl<T: darwinia_evm::Config> Precompile for RingBack<T> {
+// impl<T: dvm_ethereum::Config> Precompile for RingBack<T> {
+// 	fn execute(
+// 		input: &[u8],
+// 		target_gas: Option<u64>,
+// 		context: &Context,
+// 	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
+// 		// darwinia_evm_precompile_transfer::ring::RingBack::<T>::transfer(&input, target_gas, context)
+// 		darwinia_evm_precompile_transfer::kton::Kton::<T>::transfer(&input, target_gas, context)
+// 	}
+// }
+
+pub struct PangolinPrecompiles<R>(PhantomData<R>);
+impl<R> PrecompileSet for PangolinPrecompiles<R> {
 	fn execute(
+		address: H160,
 		input: &[u8],
 		target_gas: Option<u64>,
 		context: &Context,
-	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
-		darwinia_evm_precompile_transfer::ring::RingBack::<T>::transfer(&input, target_gas, context)
+	) -> Option<Result<(ExitSucceed, Vec<u8>, u64), ExitError>> {
+		let to_address = |n: u64| -> H160 { H160::from_low_u64_be(n) };
+
+		match address {
+			// Ethereum precompiles
+			// _ if address == to_address(1) => Some(darwinia_evm_precompile_simple::ECRecover::execute(input, target_gas, context)),
+			// _ if address == to_address(2) => Some(darwinia_evm_precompile_simple::Sha256::execute(input, target_gas, context)),
+			// _ if address == to_address(3) => Some(darwinia_evm_precompile_simple::Ripemd160::execute(input, target_gas, context)),
+			// _ if address == to_address(4) => Some(darwinia_evm_precompile_simple::Identity::execute(input, target_gas, context)),
+			// Darwinia precompiles
+			_ if address == to_address(21) => {
+				Some(<darwinia_evm_precompile_transfer::Transfer<Test>>::execute(input, target_gas, context))
+			}
+			_ => None,
+		}
 	}
 }
+
 
 impl darwinia_evm::Config for Test {
 	type FeeCalculator = FixedGasPrice;
@@ -173,13 +201,15 @@ impl darwinia_evm::Config for Test {
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 	type Event = ();
-	type Precompiles = (
-		darwinia_evm_precompile_simple::ECRecover,
-		darwinia_evm_precompile_simple::Sha256,
-		darwinia_evm_precompile_simple::Ripemd160,
-		darwinia_evm_precompile_simple::Identity,
-		RingBack<Test>,
-	);
+	// type Precompiles = (
+	// 	darwinia_evm_precompile_simple::ECRecover,
+	// 	darwinia_evm_precompile_simple::Sha256,
+	// 	darwinia_evm_precompile_simple::Ripemd160,
+	// 	darwinia_evm_precompile_simple::Identity,
+	// 	// darwinia_evm_precompile_transfer::Transfer<Self>,
+	// 	RingBack<Self>,
+	// );
+	type Precompiles = PangolinPrecompiles<Self>;
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
 	type Runner = darwinia_evm::runner::stack::Runner<Self>;
@@ -206,8 +236,8 @@ frame_support::construct_runtime! {
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>},
 		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage},
-		EVM: darwinia_evm::{Pallet, Call, Storage},
-		Ethereum: dvm_ethereum::{Pallet, Call, Storage},
+		EVM: darwinia_evm::{Pallet, Call, Storage, Config},
+		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config},
 	}
 }
 
