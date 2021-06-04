@@ -48,7 +48,7 @@ use darwinia_asset_primitives::token::{Token, TokenInfo, TokenOption};
 use darwinia_primitives_contract::mapping_token_factory::MappingTokenFactory as mtf;
 use darwinia_relay_primitives::{Relay, RelayAccount};
 use darwinia_s2s_chain::ChainSelector as TargetChain;
-use darwinia_support::balance::*;
+use darwinia_support::{balance::*, evm::BACK_ERC20_RING};
 
 // TODO: It's better to calculate this value rather than hard code here.
 const RING_NAME: &'static str =
@@ -78,7 +78,7 @@ pub mod pallet {
 		type FeePalletId: Get<PalletId>;
 		#[pallet::constant]
 		type RingLockMaxLimit: Get<RingBalance<Self>>;
-		// bear-trace: whhen this value used?
+		// TODO: Why this fee exist? how about substrate weight fee?
 		#[pallet::constant]
 		type AdvancedFee: Get<RingBalance<Self>>;
 		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
@@ -176,8 +176,8 @@ pub mod pallet {
 			// Send to the target chain
 			let amount: U256 = value.saturated_into::<u128>().into();
 			let token = Token::Native(TokenInfo {
-				// we give the native ring token as a special erc20 address 0x0
-				address: H160::zero(),
+				// The native mapped RING token as a special ERC20 address
+				address: array_bytes::hex2array_unchecked!(BACK_ERC20_RING, 20).into(),
 				value: Some(amount),
 				option: Some(TokenOption {
 					name: array_bytes::hex2array_unchecked!(RING_NAME, 32).into(),
@@ -255,7 +255,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let amount: C::Balance = amount.saturated_into();
 
-			ensure!(Self::pot::<C>() >= amount, <Error<T>>::NotEnoughRingBalance);
+			ensure!(Self::pot::<C>() >= amount, <Error<T>>::InsufficientBalance);
 
 			C::transfer(&Self::pallet_account_id(), &recipient, amount, KeepAlive)?;
 			Ok(())
