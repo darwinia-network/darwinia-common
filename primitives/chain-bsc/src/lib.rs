@@ -22,7 +22,7 @@ pub use primitive_types::{H160 as Address, H256 as Hash};
 
 // --- crates.io ---
 use codec::{Decode, Encode};
-use ethbloom::{Bloom as EthBloom, Input as BloomInput};
+use ethbloom::{Bloom, Input};
 use primitive_types::U256;
 use rlp::{DecoderError, Rlp, RlpStream};
 #[cfg(feature = "std")]
@@ -79,13 +79,19 @@ pub struct HeaderId {
 
 /// An BSC header.
 #[derive(Clone, Default, Encode, Decode, PartialEq, RuntimeDebug)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[cfg_attr(
+	feature = "std",
+	derive(Serialize, Deserialize),
+	serde(rename_all = "camelCase")
+)]
 pub struct BSCHeader {
 	/// Parent block hash.
 	pub parent_hash: Hash,
 	/// Block uncles hash.
+	#[cfg_attr(feature = "std", serde(rename = "sha3Uncles"))]
 	pub uncle_hash: Hash,
 	/// validator address
+	#[cfg_attr(feature = "std", serde(rename = "miner"))]
 	pub coinbase: Address,
 	/// State root.
 	pub state_root: Hash,
@@ -94,23 +100,29 @@ pub struct BSCHeader {
 	/// Block receipts root.
 	pub receipts_root: Hash,
 	/// Block bloom.
+	#[cfg_attr(feature = "std", serde(rename = "logsBloom"))]
 	pub log_bloom: Bloom,
 	/// Block difficulty.
 	pub difficulty: U256,
 	/// Block number.
+	#[cfg_attr(feature = "std", serde(deserialize_with = "array_bytes::hexd2num"))]
 	pub number: u64,
 	/// Block gas limit.
 	pub gas_limit: U256,
 	/// Gas used for contracts execution.
 	pub gas_used: U256,
 	/// Block timestamp.
+	#[cfg_attr(feature = "std", serde(deserialize_with = "array_bytes::hexd2num"))]
 	pub timestamp: u64,
 	/// Block extra data.
+	#[cfg_attr(feature = "std", serde(deserialize_with = "array_bytes::hexd2bytes"))]
 	pub extra_data: Bytes,
 	/// MixDigest
+	#[cfg_attr(feature = "std", serde(rename = "mixHash"))]
 	pub mix_digest: Hash,
 	/// Nonce(64 bit in ethereum)
-	pub nonce: Vec<u8>,
+	#[cfg_attr(feature = "std", serde(deserialize_with = "array_bytes::hexd2bytes"))]
+	pub nonce: Bytes,
 }
 impl BSCHeader {
 	/// Compute id of this header.
@@ -158,7 +170,7 @@ impl BSCHeader {
 		s.append(&self.state_root);
 		s.append(&self.transactions_root);
 		s.append(&self.receipts_root);
-		s.append(&EthBloom::from(self.log_bloom.0));
+		s.append(&Bloom::from(self.log_bloom.0));
 		s.append(&self.difficulty);
 		s.append(&self.number);
 		s.append(&self.gas_limit);
@@ -181,7 +193,7 @@ impl BSCHeader {
 		s.append(&self.state_root);
 		s.append(&self.transactions_root);
 		s.append(&self.receipts_root);
-		s.append(&EthBloom::from(self.log_bloom.0));
+		s.append(&Bloom::from(self.log_bloom.0));
 		s.append(&self.difficulty);
 		s.append(&self.number);
 		s.append(&self.gas_limit);
@@ -298,51 +310,13 @@ pub struct LogEntry {
 impl LogEntry {
 	/// Calculates the bloom of this log entry.
 	pub fn bloom(&self) -> Bloom {
-		let eth_bloom = self.topics.iter().fold(
-			EthBloom::from(BloomInput::Raw(self.address.as_bytes())),
+		self.topics.iter().fold(
+			Bloom::from(Input::Raw(self.address.as_bytes())),
 			|mut b, t| {
-				b.accrue(BloomInput::Raw(t.as_bytes()));
-
+				b.accrue(Input::Raw(t.as_bytes()));
 				b
 			},
-		);
-
-		Bloom(*eth_bloom.data())
-	}
-}
-
-/// Logs bloom.
-#[derive(Clone, Encode, Decode)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct Bloom(#[cfg_attr(feature = "std", serde(with = "BigArray"))] [u8; 256]);
-impl Bloom {
-	/// Returns true if this bloom has all bits from the other set.
-	pub fn contains(&self, other: &Bloom) -> bool {
-		self.0
-			.iter()
-			.zip(other.0.iter())
-			.all(|(l, r)| (l & r) == *r)
-	}
-}
-impl<'a> From<&'a [u8; 256]> for Bloom {
-	fn from(buffer: &'a [u8; 256]) -> Bloom {
-		Bloom(*buffer)
-	}
-}
-impl PartialEq<Bloom> for Bloom {
-	fn eq(&self, other: &Bloom) -> bool {
-		self.0.iter().zip(other.0.iter()).all(|(l, r)| l == r)
-	}
-}
-impl Default for Bloom {
-	fn default() -> Self {
-		Bloom([0; 256])
-	}
-}
-#[cfg(feature = "std")]
-impl std::fmt::Debug for Bloom {
-	fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
-		fmt.debug_struct("Bloom").finish()
+		)
 	}
 }
 
@@ -429,6 +403,35 @@ mod tests {
 	use crate::*;
 
 	#[test]
+	fn deserialize_bsc_header_should_work() {
+		let header_json = r#"{
+			"difficulty": "0x2",
+			"extraData": "0xd883010100846765746888676f312e31352e35856c696e7578000000fc3ca6b72465176c461afb316ebc773c61faee85a6515daa295e26495cef6f69dfa69911d9d8e4f3bbadb89b29a97c6effb8a411dabc6adeefaa84f5067c8bbe2d4c407bbe49438ed859fe965b140dcf1aab71a93f349bbafec1551819b8be1efea2fc46ca749aa14430b3230294d12c6ab2aac5c2cd68e80b16b581685b1ded8013785d6623cc18d214320b6bb6475970f657164e5b75689b64b7fd1fa275f334f28e1872b61c6014342d914470ec7ac2975be345796c2b7ae2f5b9e386cd1b50a4550696d957cb4900f03a8b6c8fd93d6f4cea42bbb345dbc6f0dfdb5bec739bb832254baf4e8b4cc26bd2b52b31389b56e98b9f8ccdafcc39f3c7d6ebf637c9151673cbc36b88a6f79b60359f141df90a0c745125b131caaffd12b8f7166496996a7da21cf1f1b04d9b3e26a3d077be807dddb074639cd9fa61b47676c064fc50d62cce2fd7544e0b2cc94692d4a704debef7bcb61328e2d3a739effcd3a99387d015e260eefac72ebea1e9ae3261a475a27bb1028f140bc2a7c843318afdea0a6e3c511bbd10f4519ece37dc24887e11b55dee226379db83cffc681495730c11fdde79ba4c0c0670403d7dfc4c816a313885fe04b850f96f27b2e9fd88b147c882ad7caf9b964abfe6543625fcca73b56fe29d3046831574b0681d52bf5383d6f2187b6276c100",
+			"gasLimit": "0x38ff37a",
+			"gasUsed": "0x1364017",
+			"logsBloom": "0x2c30123db854d838c878e978cd2117896aa092e4ce08f078424e9ec7f2312f1909b35e579fb2702d571a3be04a8f01328e51af205100a7c32e3dd8faf8222fcf03f3545655314abf91c4c0d80cea6aa46f122c2a9c596c6a99d5842786d40667eb195877bbbb128890a824506c81a9e5623d4355e08a16f384bf709bf4db598bbcb88150abcd4ceba89cc798000bdccf5cf4d58d50828d3b7dc2bc5d8a928a32d24b845857da0b5bcf2c5dec8230643d4bec452491ba1260806a9e68a4a530de612e5c2676955a17400ce1d4fd6ff458bc38a8b1826e1c1d24b9516ef84ea6d8721344502a6c732ed7f861bb0ea017d520bad5fa53cfc67c678a2e6f6693c8ee",
+			"miner": "0xe9ae3261a475a27bb1028f140bc2a7c843318afd",
+			"mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+			"nonce": "0x0000000000000000",
+			"number": "0x7594c8",
+			"parentHash": "0x5cb4b6631001facd57be810d5d1383ee23a31257d2430f097291d25fc1446d4f",
+			"receiptsRoot": "0x1bfba16a9e34a12ff7c4b88be484ccd8065b90abea026f6c1f97c257fdb4ad2b",
+			"sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+			"stateRoot": "0xa6cd7017374dfe102e82d2b3b8a43dbe1d41cc0e4569f3dc45db6c4e687949ae",
+			"timestamp": "0x60ac7137",
+			"transactionsRoot": "0x657f5876113ac9abe5cf0460aa8d6b3b53abfc336cea4ab3ee594586f8b584ca"
+		}"#;
+		let header = serde_json::from_str::<BSCHeader>(header_json).unwrap();
+
+		assert_eq!(
+			array_bytes::hex_into_unchecked::<_, Hash, 32>(
+				"0x7e1db1179427e17c11a42019f19a3dddf326b6177b0266749639c85c78c607bb"
+			),
+			header.compute_hash()
+		);
+	}
+
+	#[test]
 	fn transfer_transaction_decode_works() {
 		// value transfer transaction
 		// https://etherscan.io/tx/0xb9d4ad5408f53eac8627f9ccd840ba8fb3469d55cd9cc2a11c6e049f1eef4edd
@@ -437,22 +440,14 @@ mod tests {
 		assert_eq!(
 			transaction_decode_rlp(&raw_tx),
 			Ok(Transaction {
-				sender: array_bytes::hex2array_unchecked!(
-					"67835910d32600471f388a137bbff3eb07993c04",
-					20
-				)
-				.into(),
+				sender: array_bytes::hex_into_unchecked("67835910d32600471f388a137bbff3eb07993c04"),
 				unsigned: UnsignedTransaction {
 					nonce: 10.into(),
 					gas_price: 19000000000u64.into(),
 					gas: 93674.into(),
-					to: Some(
-						array_bytes::hex2array_unchecked!(
-							"d1310c1e038bc12865d3d3997275b3e4737c6302",
-							20
-						)
-						.into()
-					),
+					to: Some(array_bytes::hex_into_unchecked(
+						"d1310c1e038bc12865d3d3997275b3e4737c6302"
+					)),
 					value: 815217380000000000_u64.into(),
 					payload: Default::default(),
 				}
@@ -466,22 +461,14 @@ mod tests {
 		assert_eq!(
 			transaction_decode_rlp(&raw_tx),
 			Ok(Transaction {
-				sender: array_bytes::hex2array_unchecked!(
-					"faadface3fbd81ce37b0e19c0b65ff4234148132",
-					20
-				)
-				.into(),
+				sender: array_bytes::hex_into_unchecked("faadface3fbd81ce37b0e19c0b65ff4234148132"),
 				unsigned: UnsignedTransaction {
 					nonce: 10262.into(),
 					gas_price: 0.into(),
 					gas: 21000.into(),
-					to: Some(
-						array_bytes::hex2array_unchecked!(
-							"70c1ccde719d6f477084f07e4137ab0e55f8369f",
-							20
-						)
-						.into()
-					),
+					to: Some(array_bytes::hex_into_unchecked(
+						"70c1ccde719d6f477084f07e4137ab0e55f8369f",
+					)),
 					value: 900379597077600000000_u128.into(),
 					payload: Default::default(),
 				},
@@ -498,12 +485,12 @@ mod tests {
 		assert_eq!(
 			transaction_decode_rlp(&raw_tx),
 			Ok(Transaction {
-				sender: array_bytes::hex2array_unchecked!("2b9a4d37bdeecdf994c4c9ad7f3cf8dc632f7d70", 20).into(),
+				sender: array_bytes::hex_into_unchecked("2b9a4d37bdeecdf994c4c9ad7f3cf8dc632f7d70"),
 				unsigned: UnsignedTransaction {
 					nonce: 118.into(),
 					gas_price: 18000000000u64.into(),
 					gas: 86016.into(),
-					to: Some(array_bytes::hex2array_unchecked!("dac17f958d2ee523a2206206994597c13d831ec7", 20).into()),
+					to: Some(array_bytes::hex_into_unchecked("dac17f958d2ee523a2206206994597c13d831ec7")),
 					value: 0.into(),
 					payload: array_bytes::hex2bytes_unchecked("a9059cbb000000000000000000000000e08f35f66867a454835b25118f1e490e7f9e9a7400000000000000000000000000000000000000000000000000000000004c4b40"),
 				},
@@ -517,12 +504,12 @@ mod tests {
 		assert_eq!(
 			transaction_decode_rlp(&raw_tx),
 			Ok(Transaction {
-				sender: array_bytes::hex2array_unchecked!("617da121abf03d4c1af572f5a4e313e26bef7bdc", 20).into(),
+				sender: array_bytes::hex_into_unchecked("617da121abf03d4c1af572f5a4e313e26bef7bdc"),
 				unsigned: UnsignedTransaction {
 					nonce: 139275.into(),
 					gas_price: 1000000000.into(),
 					gas: 160000.into(),
-					to: Some(array_bytes::hex2array_unchecked!("84dd11eb2a29615303d18149c0dbfa24167f8966", 20).into()),
+					to: Some(array_bytes::hex_into_unchecked("84dd11eb2a29615303d18149c0dbfa24167f8966")),
 					value: 0.into(),
 					payload: array_bytes::hex2bytes_unchecked("a9059cbb00000000000000000000000001503dfc5ad81bf630d83697e98601871bb211b60000000000000000000000000000000000000000000000000000000000002710"),
 				},
