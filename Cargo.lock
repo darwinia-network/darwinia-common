@@ -5793,6 +5793,7 @@ dependencies = [
  "bridge-runtime-common",
  "darwinia-balances",
  "darwinia-balances-rpc-runtime-api",
+ "darwinia-bridge-ethereum-bsc",
  "darwinia-claims",
  "darwinia-crab-backing",
  "darwinia-crab-issuing",

@@ -31,7 +31,9 @@ pub mod pallet {
 	use sp_core::U256;
 	use sp_io::crypto;
 	use sp_runtime::{DispatchError, DispatchResult, RuntimeDebug};
-	use sp_std::collections::btree_set::BTreeSet;
+	#[cfg(not(feature = "std"))]
+	use sp_std::borrow::ToOwned;
+	use sp_std::{collections::btree_set::BTreeSet, prelude::*};
 	// --- darwinia ---
 	use bsc_primitives::*;
 

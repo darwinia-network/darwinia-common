@@ -393,6 +393,7 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 		},
 		darwinia_evm: pangolin_runtime::EVMConfig { accounts: evm_accounts },
 		dvm_ethereum: Default::default(),
+		darwinia_bridge_ethereum_bsc: Default::default(),
 	}
 }
 
@@ -550,5 +551,6 @@ fn pangolin_development_genesis() -> pangolin_runtime::GenesisConfig {
 		},
 		darwinia_evm: pangolin_runtime::EVMConfig { accounts: evm_accounts },
 		dvm_ethereum: Default::default(),
+		darwinia_bridge_ethereum_bsc: Default::default(),
 	}
 }
