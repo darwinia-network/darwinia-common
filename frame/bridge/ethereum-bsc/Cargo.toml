@@ -12,7 +12,7 @@ version     = "2.4.0"
 [dependencies]
 # crates.io
 codec = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
-# bridge
+# darwinia
 bsc-primitives = { default-features = false, path = "../../../primitives/chain-bsc" }
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.1" }
@@ -23,6 +23,11 @@ sp-runtime    = { default-features = false, git = "https://github.com/darwinia-n
 sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.1" }
 
 [dev-dependencies]
+# crates.io
+serde_json = { version = "1.0.64" }
+# darwinia
+bsc-primitives = { features = ["deserialize"], path = "../../../primitives/chain-bsc" }
+# substrate
 pallet-timestamp = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.1" }
 
 [features]
