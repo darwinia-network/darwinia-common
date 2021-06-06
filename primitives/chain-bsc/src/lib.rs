@@ -23,6 +23,7 @@ pub use primitive_types::{H160 as Address, H256 as Hash};
 // --- crates.io ---
 use codec::{Decode, Encode};
 use ethbloom::{Bloom, Input};
+use hash_db::Hasher;
 use primitive_types::U256;
 use rlp::RlpStream;
 #[cfg(feature = "std")]
@@ -158,6 +159,7 @@ impl BSCHeader {
 	/// Returns header RLP
 	fn rlp(&self) -> Bytes {
 		let mut s = RlpStream::new();
+
 		s.begin_list(15);
 		s.append(&self.parent_hash);
 		s.append(&self.uncle_hash);
@@ -165,7 +167,7 @@ impl BSCHeader {
 		s.append(&self.state_root);
 		s.append(&self.transactions_root);
 		s.append(&self.receipts_root);
-		s.append(&Bloom::from(self.log_bloom.0));
+		s.append(&self.log_bloom);
 		s.append(&self.difficulty);
 		s.append(&self.number);
 		s.append(&self.gas_limit);
@@ -180,6 +182,7 @@ impl BSCHeader {
 
 	fn rlp_chain_id(&self, chain_id: u64) -> Bytes {
 		let mut s = RlpStream::new();
+
 		s.begin_list(16);
 		s.append(&chain_id);
 		s.append(&self.parent_hash);
@@ -188,7 +191,7 @@ impl BSCHeader {
 		s.append(&self.state_root);
 		s.append(&self.transactions_root);
 		s.append(&self.receipts_root);
-		s.append(&Bloom::from(self.log_bloom.0));
+		s.append(&self.log_bloom);
 		s.append(&self.difficulty);
 		s.append(&self.number);
 		s.append(&self.gas_limit);
@@ -254,10 +257,10 @@ pub fn check_merkle_proof<T: AsRef<[u8]>>(
 /// Compute ethereum merkle root.
 pub fn compute_merkle_root<T: AsRef<[u8]>>(items: impl Iterator<Item = T>) -> Hash {
 	struct Keccak256Hasher;
-
-	impl hash_db::Hasher for Keccak256Hasher {
+	impl Hasher for Keccak256Hasher {
 		type Out = Hash;
 		type StdHasher = plain_hasher::PlainHasher;
+
 		const LENGTH: usize = 32;
 
 		fn hash(x: &[u8]) -> Self::Out {
