@@ -20,8 +20,8 @@
 
 #[cfg(test)]
 mod mock;
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -273,6 +273,7 @@ pub mod pallet {
 			// check signer
 			{
 				let signer = Self::recover_creator(cfg.chain_id, checkpoint)?;
+
 				ensure!(
 					contains(&last_authority_set, signer),
 					<Error::<T>>::InvalidSigner
@@ -334,12 +335,12 @@ pub mod pallet {
 		}
 	}
 	impl<T: Config> Pallet<T> {
-		fn is_timestamp_ahead(timestamp: u64) -> bool {
+		pub fn is_timestamp_ahead(timestamp: u64) -> bool {
 			T::UnixTime::now().as_millis() as u64 <= timestamp
 		}
 
 		/// Perform basic checks that only require header itself.
-		fn contextless_checks(config: &BSCConfiguration, header: &BSCHeader) -> DispatchResult {
+		pub fn contextless_checks(config: &BSCConfiguration, header: &BSCHeader) -> DispatchResult {
 			// he genesis block is the always valid dead-end
 			if header.number == 0 {
 				return Ok(());
@@ -414,7 +415,7 @@ pub mod pallet {
 		}
 
 		/// Perform checks that require access to parent header.
-		fn contextual_checks(
+		pub fn contextual_checks(
 			config: &BSCConfiguration,
 			header: &BSCHeader,
 			parent: &BSCHeader,
@@ -434,7 +435,10 @@ pub mod pallet {
 		}
 
 		/// Recover block creator from signature
-		fn recover_creator(chain_id: u64, header: &BSCHeader) -> Result<Address, DispatchError> {
+		pub fn recover_creator(
+			chain_id: u64,
+			header: &BSCHeader,
+		) -> Result<Address, DispatchError> {
 			if let Some(creator) = <CreatorCache<T>>::get(header.compute_hash()) {
 				return Ok(creator);
 			}
@@ -479,7 +483,7 @@ pub mod pallet {
 		/// Signers: N * 32 bytes as hex encoded (20 characters)
 		/// Signature: 65 bytes
 		/// --
-		fn extract_authorities(header: &BSCHeader) -> Result<Vec<Address>, DispatchError> {
+		pub fn extract_authorities(header: &BSCHeader) -> Result<Vec<Address>, DispatchError> {
 			let data = &header.extra_data;
 
 			ensure!(
