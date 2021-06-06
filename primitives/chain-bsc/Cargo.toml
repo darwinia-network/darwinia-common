@@ -19,7 +19,6 @@ plain_hasher    = { version = "0.2.3", default-features = false }
 primitive-types = { version = "0.9.0", default-features = false, features = ["codec", "rlp"] }
 rlp             = { version = "0.5.0", default-features = false }
 serde           = { version = "1.0.126", optional = true }
-serde-big-array = { version = "0.3.2", optional = true }
 triehash        = { version = "0.8.4", default-features = false }
 # substrate
 sp-io      = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.1", default-features = false }
@@ -45,7 +44,6 @@ std     = [
 	"primitive-types/serde",
 	"rlp/std",
 	"serde",
-	"serde-big-array",
 	"triehash/std",
 	"sp-io/std",
 	"sp-runtime/std",
