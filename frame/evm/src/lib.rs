@@ -105,6 +105,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// Issue an EVM call operation. This is similar to a message call transaction in Ethereum.
 		#[pallet::weight(T::GasWeightMapping::gas_to_weight(*gas_limit))]
 		pub(super) fn call(
 			origin: OriginFor<T>,
