@@ -30,7 +30,7 @@ use sp_core::{H160, U256};
 use sp_runtime::{traits::UniqueSaturatedInto, SaturatedConversion};
 use sp_std::{borrow::ToOwned, marker::PhantomData, prelude::*, vec::Vec};
 
-use darwinia_evm::{Account, AccountBasic, Config, Module, Runner};
+use darwinia_evm::{Account, AccountBasic, Config, Pallet, Runner};
 use darwinia_support::evm::POW_9;
 use dp_evm::Precompile;
 use dvm_ethereum::{
@@ -73,7 +73,7 @@ impl<T: Config + dvm_ethereum::Config> Precompile for Kton<T> {
 			Action::TransferAndCall(call_data) => {
 				// Ensure wkton is a contract
 				ensure!(
-					!crate::Module::<T>::is_contract_code_empty(&call_data.wkton_address),
+					!crate::Pallet::<T>::is_contract_code_empty(&call_data.wkton_address),
 					ExitError::Other("Wkton must be a contract!".into())
 				);
 				// Ensure context's apparent_value is zero, since the transfer value is encoded in input field
@@ -119,7 +119,7 @@ impl<T: Config + dvm_ethereum::Config> Precompile for Kton<T> {
 			Action::Withdraw(wd) => {
 				// Ensure wkton is a contract
 				ensure!(
-					!crate::Module::<T>::is_contract_code_empty(&context.caller),
+					!crate::Pallet::<T>::is_contract_code_empty(&context.caller),
 					ExitError::Other("The caller must be wkton contract!".into())
 				);
 				// Ensure context's apparent_value is zero
