@@ -18,4 +18,10 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use sp_std::vec::Vec;
+
 pub mod token;
+
+pub trait RemoteAssetReceiver<Receipt> {
+    fn encode_call(token: token::Token, receipt: Receipt) -> Result<Vec<u8>, ()>;
+}

@@ -36,8 +36,7 @@ pub mod pallet {
 	use darwinia_relay_primitives::{Relay, RelayAccount};
 	use darwinia_support::traits::CallToPayload;
 
-	use darwinia_asset_primitives::token::Token;
-	use darwinia_s2s_chain::ChainSelector;
+	use darwinia_asset_primitives::{token::Token, RemoteAssetReceiver};
 	use ethereum_primitives::EthereumAddress;
 	use frame_system::RawOrigin;
 	use sp_runtime::traits::{AccountIdConversion, MaybeSerializeDeserialize};
@@ -60,6 +59,8 @@ pub mod pallet {
 		type Event: From<Event<Self, I>> + IsType<<Self as frame_system::Config>::Event>;
 
 		type TargetChain: Parameter + Codec + Copy + Debug + MaybeSerializeDeserialize;
+
+		type RemoteAssetReceiverT: RemoteAssetReceiver<RelayAccount<AccountId<Self>>>;
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
@@ -139,7 +140,7 @@ pub mod pallet {
 
 	impl<T: Config<I>, I: 'static> Relay for Pallet<T, I> {
 		type RelayProof = AccountId<T>;
-		type RelayMessage = (ChainSelector, Token, RelayAccount<AccountId<T>>);
+		type RelayMessage = (Token, RelayAccount<AccountId<T>>);
 		type VerifiedResult = Result<(EthereumAddress, T::TargetChain), DispatchError>;
 		type RelayMessageResult = Result<(), DispatchError>;
 		fn verify(proof: &Self::RelayProof) -> Self::VerifiedResult {
@@ -150,7 +151,7 @@ pub mod pallet {
 
 		fn relay_message(message: &Self::RelayMessage) -> Self::RelayMessageResult {
 			let msg = message.clone();
-			let encoded = darwinia_s2s_chain::encode_relay_message(msg.0, msg.1, msg.2)
+			let encoded = T::RemoteAssetReceiverT::encode_call(msg.0, msg.1)
 				.map_err(|_| <Error<T, I>>::EncodeInv)?;
 			let relay_id: AccountId<T> = T::PalletId::get().into_account();
 			let payload = T::CallToPayload::to_payload(relay_id.clone(), encoded);

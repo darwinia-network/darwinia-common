@@ -1406,6 +1406,7 @@ version = "2.4.0"
 dependencies = [
  "ethereum-primitives",
  "parity-scale-codec",
+ "sp-std",
 ]
 
 [[package]]
@@ -2036,7 +2037,6 @@ dependencies = [
  "bp-runtime",
  "darwinia-asset-primitives",
  "darwinia-relay-primitives",
- "darwinia-s2s-chain",
  "darwinia-support",
  "ethereum-primitives",
  "ethereum-types",
@@ -5916,6 +5916,7 @@ dependencies = [
  "bp-millau",
  "bp-runtime",
  "bridge-runtime-common",
+ "darwinia-asset-primitives",
  "darwinia-balances",
  "darwinia-balances-rpc-runtime-api",
  "darwinia-claims",

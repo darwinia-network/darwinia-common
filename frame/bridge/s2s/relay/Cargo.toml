@@ -21,7 +21,6 @@ darwinia-asset-primitives          = { default-features = false, path = "../../.
 darwinia-relay-primitives          = { default-features = false, path = "../../../../primitives/relay" }
 darwinia-support                   = { default-features = false, path = "../../../support" }
 ethereum-primitives                = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
-darwinia-s2s-chain = { default-features = false, path = "../chain" }
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }

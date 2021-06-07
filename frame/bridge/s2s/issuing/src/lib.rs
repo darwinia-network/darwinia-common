@@ -72,7 +72,7 @@ pub trait Config: dvm_ethereum::Config {
 	type BackingRelay: Relay<
 		RelayProof = AccountId<Self>,
 		VerifiedResult = Result<(EthereumAddress, TargetChain), DispatchError>,
-		RelayMessage = (TargetChain, Token, RelayAccount<Self::AccountId>),
+		RelayMessage = (Token, RelayAccount<Self::AccountId>),
 		RelayMessageResult = Result<(), DispatchError>,
 	>;
 }
@@ -151,9 +151,10 @@ decl_module! {
 				let burn_info = TokenBurnInfo::decode(&input[8..])
 					.map_err(|_| Error::<T>::InvalidDecoding)?;
 				let recipient = Self::account_id_try_from_bytes(burn_info.recipient.as_slice())?;
-				let mut target: [u8;4] = Default::default();
-				target.copy_from_slice(&input[..4]);
-				Self::cross_send(target, burn_info.source, recipient, burn_info.amount)?;
+				// TODO, target is used to select remote chain
+				//let mut target: [u8;4] = Default::default();
+				//target.copy_from_slice(&input[..4]);
+				Self::cross_send(burn_info.source, recipient, burn_info.amount)?;
 			}
 		}
 
@@ -274,13 +275,11 @@ impl<T: Config> Module<T> {
 	}
 
 	pub fn cross_send(
-		target: TargetChain,
 		token: EthereumAddress,
 		recipient: AccountId<T>,
 		amount: U256,
 	) -> Result<(), DispatchError> {
 		let message = (
-			target,
 			Token::Native(TokenInfo {
 				address: token,
 				value: Some(amount),

@@ -13,6 +13,7 @@ version     = "2.4.0"
 # crates
 codec = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
 ethereum-primitives                = { default-features = false, path = "../ethereum-primitives" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
 
 [features]
 default = ["std"]
@@ -20,10 +21,15 @@ default = ["std"]
 std = [
 	"crates-std",
 	"darwinia-std",
+	"substrate-std",
 ]
 
 crates-std    = ["codec/std"]
 
 darwinia-std = [
 	"ethereum-primitives/std",
+]
+
+substrate-std = [
+	"sp-std/std",
 ]

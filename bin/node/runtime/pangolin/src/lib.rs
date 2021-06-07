@@ -224,9 +224,14 @@ use sp_std::prelude::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia ---
+use darwinia_asset_primitives::{
+    token::Token,
+    RemoteAssetReceiver,
+};
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
 use darwinia_evm::{Account as EVMAccount, Runner};
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
+use darwinia_relay_primitives::RelayAccount;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
 use drml_primitives::*;
 use dvm_rpc_runtime_api::TransactionStatus;
@@ -878,3 +883,36 @@ where
 		MILLAU_CHAIN_ID,
 	)
 }
+
+// ****************** s2s bridge *********************
+// remote chain millau's dispatch info
+#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
+pub enum MillauRuntime {
+	/// s2s bridge backing pallet.
+	/// this index must be the same as the backing pallet in millau runtime
+	#[codec(index = 49)]
+	Sub2SubBacking(MillauSub2SubBackingCall),
+}
+
+#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
+#[allow(non_camel_case_types)]
+pub enum MillauSub2SubBackingCall {
+	#[codec(index = 0)]
+	cross_receive_and_unlock((Token, AccountId)),
+}
+
+pub struct MillauBackingReceiver;
+impl RemoteAssetReceiver<RelayAccount<AccountId>> for MillauBackingReceiver {
+    fn encode_call(token: Token, receipt: RelayAccount<AccountId>) -> Result<Vec<u8>, ()> {
+        match receipt {
+            RelayAccount::<AccountId>::DarwiniaAccount(r) => {
+                return Ok(MillauRuntime::Sub2SubBacking(
+                        MillauSub2SubBackingCall::cross_receive_and_unlock((token, r))
+                    )
+                    .encode())
+            }
+            _ => Err(())
+        }
+    }
+}
+

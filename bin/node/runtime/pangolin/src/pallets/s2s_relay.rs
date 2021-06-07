@@ -19,5 +19,6 @@ impl Config<DarwiniaS2sRelay> for Runtime {
 	type OutboundPayload = ToMillauMessagePayload;
 	type OutboundMessageFee = Balance;
 	type CallToPayload = MillauCallToPayload;
+	type RemoteAssetReceiverT = MillauBackingReceiver;
 	type MessageSenderT = BridgeMillauMessages;
 }
