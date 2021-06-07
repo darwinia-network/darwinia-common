@@ -151,7 +151,7 @@ pub mod pallet {
 
 	impl<T: Config<I>, I: 'static> Relay for Pallet<T, I> {
 		type RelayProof = AccountId<T>;
-		type RelayMessage = (Token, RelayAccount<AccountId<T>>);
+		type RelayMessage = (u32, Token, RelayAccount<AccountId<T>>);
 		type VerifiedResult = Result<EthereumAddress, DispatchError>;
 		type RelayMessageResult = Result<(), DispatchError>;
 		fn verify(proof: &Self::RelayProof) -> Self::VerifiedResult {
@@ -162,10 +162,10 @@ pub mod pallet {
 
 		fn relay_message(message: &Self::RelayMessage) -> Self::RelayMessageResult {
 			let msg = message.clone();
-			let encoded = T::RemoteAssetReceiverT::encode_call(msg.0, msg.1)
+			let encoded = T::RemoteAssetReceiverT::encode_call(msg.1, msg.2)
 				.map_err(|_| <Error<T, I>>::EncodeInv)?;
 			let relay_id: AccountId<T> = T::PalletId::get().into_account();
-			let payload = T::CallToPayload::to_payload(encoded);
+			let payload = T::CallToPayload::to_payload(msg.0, encoded);
 			T::MessageSenderT::raw_send_message(
 				RawOrigin::Signed(relay_id).into(),
 				[0; 4],

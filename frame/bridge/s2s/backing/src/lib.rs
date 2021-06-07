@@ -87,7 +87,7 @@ pub mod pallet {
 		type IssuingRelay: Relay<
 			RelayProof = AccountId<Self>,
 			VerifiedResult = Result<EthereumAddress, DispatchError>,
-			RelayMessage = (Token, RelayAccount<AccountId<Self>>),
+			RelayMessage = (u32, Token, RelayAccount<AccountId<Self>>),
 			RelayMessageResult = Result<(), DispatchError>,
 		>;
 	}
@@ -151,6 +151,7 @@ pub mod pallet {
 		#[frame_support::transactional]
 		pub fn lock_and_cross_send(
 			origin: OriginFor<T>,
+			spec_version: u32,
 			#[pallet::compact] value: RingBalance<T>,
 			recipient: EthereumAddress,
 		) -> DispatchResultWithPostInfo {
@@ -187,6 +188,7 @@ pub mod pallet {
 			});
 
 			let message = (
+				spec_version,
 				token.clone(),
 				RelayAccount::EthereumAccount(recipient),
 			);

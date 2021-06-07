@@ -252,9 +252,9 @@ impl SourceHeaderChain<bp_millau::Balance> for Millau {
 pub struct MillauCallToPayload;
 
 impl CallToPayload<ToMillauMessagePayload> for MillauCallToPayload {
-	fn to_payload(call: Vec<u8>) -> ToMillauMessagePayload {
+	fn to_payload(spec_version: u32, call: Vec<u8>) -> ToMillauMessagePayload {
 		return FromThisChainMessagePayload::<WithMillauMessageBridge> {
-			spec_version: 1,
+			spec_version: spec_version,
 			weight: 100,
 			origin: bp_message_dispatch::CallOrigin::SourceRoot,
 			call,
