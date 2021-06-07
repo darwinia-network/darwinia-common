@@ -78,7 +78,7 @@ pub mod pallet {
 
 		type OutboundMessageFee: From<u64>;
 
-		type CallToPayload: CallToPayload<AccountId<Self>, Self::OutboundPayload>;
+		type CallToPayload: CallToPayload<Self::OutboundPayload>;
 
 		type RemoteAccountIdConverter: Convert<sp_core::hash::H256, Self::AccountId>;
 
@@ -165,7 +165,7 @@ pub mod pallet {
 			let encoded = T::RemoteAssetReceiverT::encode_call(msg.0, msg.1)
 				.map_err(|_| <Error<T, I>>::EncodeInv)?;
 			let relay_id: AccountId<T> = T::PalletId::get().into_account();
-			let payload = T::CallToPayload::to_payload(relay_id.clone(), encoded);
+			let payload = T::CallToPayload::to_payload(encoded);
 			T::MessageSenderT::raw_send_message(
 				RawOrigin::Signed(relay_id).into(),
 				[0; 4],
