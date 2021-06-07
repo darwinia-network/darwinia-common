@@ -210,15 +210,11 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		},
 	);
 
-	<darwinia_balances::GenesisConfig<Test, RingInstance>>::default()
-		.assimilate_storage(&mut t)
-		.unwrap();
-	<darwinia_balances::GenesisConfig<Test, KtonInstance>>::default()
-		.assimilate_storage(&mut t)
-		.unwrap();
-	darwinia_evm::GenesisConfig { accounts }
-		.assimilate_storage::<Test>(&mut t)
-		.unwrap();
+	<crate::GenesisConfig as GenesisBuild<Test>>::assimilate_storage(
+		&crate::GenesisConfig { accounts },
+		&mut t,
+	)
+	.unwrap();
 	t.into()
 }
 
