@@ -45,6 +45,8 @@ pub mod s2s {
 	pub const RING_SYMBOL: &[u8] = b"RING";
 	pub const RING_DECIMAL: u8 = 9;
 
+	pub type ChainSelector = [u8; 4];
+
 	// S2S backing pallet
 	pub const BACK_ERC20_RING: &'static str = "0x0000000000000000000000000000000000002048";
 
