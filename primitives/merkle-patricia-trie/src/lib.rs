@@ -50,7 +50,7 @@ use sp_std::rc::Rc;
 /// 		("dogglesworth", "cat"),
 /// 	];
 ///
-/// 	let root:Vec<u8> = array_bytes::hex2bytes("8aad789dff2f538bca5d8ea56e8abe10f4c7ba3a5dea95fea4cd6e7c3a1168d3").unwrap();
+/// 	let root:Vec<u8> = array_bytes::hex2bytes_unchecked("8aad789dff2f538bca5d8ea56e8abe10f4c7ba3a5dea95fea4cd6e7c3a1168d3");
 /// 	assert_eq!(build_trie(v).unwrap().root().unwrap(), root);
 /// }
 /// ```
@@ -80,7 +80,7 @@ where
 ///
 /// fn main() {
 /// 	let v = &["doe", "reindeer"];
-/// 	let root:Vec<u8> = array_bytes::hex2bytes("e766d5d51b89dc39d981b41bda63248d7abce4f0225eefd023792a540bcffee3").unwrap();
+/// 	let root:Vec<u8> = array_bytes::hex2bytes_unchecked("e766d5d51b89dc39d981b41bda63248d7abce4f0225eefd023792a540bcffee3");
 /// 	assert_eq!(build_order_trie(v).unwrap().root().unwrap(), root);
 /// }
 /// ```

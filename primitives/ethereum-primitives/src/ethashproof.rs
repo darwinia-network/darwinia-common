@@ -35,9 +35,9 @@ impl EthashProof {
 		for e in s.splitn(60, '"') {
 			let l = e.len();
 			if l == 34 {
-				proof.push(array_bytes::hex2array_unchecked!(e, 16).into());
+				proof.push(array_bytes::hex_into_unchecked(e));
 			} else if l == 130 {
-				dag_nodes.push(array_bytes::hex2array_unchecked!(e, 64).into());
+				dag_nodes.push(array_bytes::hex_into_unchecked(e));
 			} else if l > 34 {
 				// should not be here
 				panic!("the proofs are longer than 25");
@@ -56,7 +56,7 @@ impl EthashProof {
 			data[48..64].copy_from_slice(&(r.0));
 
 			// `H256` is 32 length, truncate is safe; qed
-			array_bytes::dyn2array!(sha2_256(&data)[16..], 16).into()
+			array_bytes::dyn_into!(sha2_256(&data)[16..], 16)
 		}
 
 		let mut data = [0u8; 128];
@@ -64,7 +64,7 @@ impl EthashProof {
 		data[64..].copy_from_slice(&(self.dag_nodes[1].0));
 
 		// `H256` is 32 length, truncate is safe; qed
-		let mut leaf = array_bytes::dyn2array!(sha2_256(&data)[16..], 16).into();
+		let mut leaf = array_bytes::dyn_into!(sha2_256(&data)[16..], 16);
 		for i in 0..self.proof.len() {
 			if (index >> i as u64) % 2 == 0 {
 				leaf = hash_h128(leaf, self.proof[i]);
