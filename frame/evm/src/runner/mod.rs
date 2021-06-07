@@ -18,10 +18,12 @@
 
 pub mod stack;
 
+// --- substrate ---
+use sp_core::{H160, H256, U256};
+use sp_std::prelude::*;
+// --- darwinia ---
 use crate::Config;
 use dp_evm::{CallInfo, CreateInfo};
-use sp_core::{H160, H256, U256};
-use sp_std::vec::Vec;
 
 pub trait Runner<T: Config> {
 	type Error: Into<sp_runtime::DispatchError>;

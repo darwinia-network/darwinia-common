@@ -18,30 +18,29 @@
 
 //! EVM stack-based runner.
 
-use crate::runner::Runner as RunnerT;
-use crate::{
-	AccountBasic, AccountCodes, AccountStorages, AddressMapping, Config, Error, Event,
-	FeeCalculator, Pallet, PrecompileSet,
+// --- crates.io ---
+use evm::{
+	backend::Backend as BackendT,
+	executor::{StackExecutor, StackState as StackStateT, StackSubstateMetadata},
+	ExitError, ExitReason, Transfer,
 };
-
-// --- darwinia ---
-use dp_evm::{CallInfo, CreateInfo, ExecutionInfo, Log, Vicinity};
+use sha3::{Digest, Keccak256};
 // --- substrate ---
 use frame_support::{ensure, traits::Get};
 use sp_core::{H160, H256, U256};
 use sp_runtime::traits::UniqueSaturatedInto;
-use sp_std::{boxed::Box, collections::btree_set::BTreeSet, marker::PhantomData, mem, vec::Vec};
-// --- std ---
-use evm::backend::Backend as BackendT;
-use evm::executor::{StackExecutor, StackState as StackStateT, StackSubstateMetadata};
-use evm::{ExitError, ExitReason, Transfer};
-use sha3::{Digest, Keccak256};
+use sp_std::{collections::btree_set::BTreeSet, marker::PhantomData, mem, prelude::*};
+// --- darwinia ---
+use crate::{
+	runner::Runner as RunnerT, AccountBasic, AccountCodes, AccountStorages, AddressMapping, Config,
+	Error, Event, FeeCalculator, Pallet, PrecompileSet,
+};
+use dp_evm::{CallInfo, CreateInfo, ExecutionInfo, Log, Vicinity};
 
 #[derive(Default)]
 pub struct Runner<T: Config> {
 	_marker: PhantomData<T>,
 }
-
 impl<T: Config> Runner<T> {
 	/// Execute an EVM operation.
 	pub fn execute<'config, F, R>(
@@ -120,7 +119,7 @@ impl<T: Config> Runner<T> {
 				"Deleting account at {:?}",
 				address
 			);
-			Pallet::<T>::remove_account(&address)
+			<Pallet<T>>::remove_account(&address)
 		}
 
 		for substrate_log in &state.substate.logs {
