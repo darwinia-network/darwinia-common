@@ -42,16 +42,18 @@ pub enum Transfer<T> {
 	KtonTransfer,
 	_Impossible(PhantomData<T>),
 }
-
-impl<T: dvm_ethereum::Config> Precompile for Transfer<T> {
+impl<T> Precompile for Transfer<T>
+where
+	T: dvm_ethereum::Config,
+{
 	fn execute(
 		input: &[u8],
 		target_gas: Option<u64>,
 		context: &Context,
 	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
 		match which_transfer::<T>(&input) {
-			Ok(Transfer::RingTransfer) => RingBack::<T>::transfer(&input, target_gas, context),
-			Ok(Transfer::KtonTransfer) => Kton::<T>::transfer(&input, target_gas, context),
+			Ok(Transfer::RingTransfer) => <RingBack<T>>::transfer(&input, target_gas, context),
+			Ok(Transfer::KtonTransfer) => <Kton<T>>::transfer(&input, target_gas, context),
 			_ => Err(ExitError::Other("Invalid action".into())),
 		}
 	}
