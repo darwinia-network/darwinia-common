@@ -48,13 +48,11 @@ use sp_std::{convert::TryFrom, prelude::*, vec::Vec};
 use darwinia_asset_primitives::token::{Token, TokenInfo, TokenOption};
 use darwinia_primitives_contract::mapping_token_factory::MappingTokenFactory as mtf;
 use darwinia_relay_primitives::{Relay, RelayAccount};
-use darwinia_support::{balance::*, evm::BACK_ERC20_RING};
-
-// TODO: It's better to calculate this value rather than hard code here.
-const RING_NAME: &'static str =
-	"0x44617277696e6961204e6574776f726b204e617469766520546f6b656e000000";
-const RING_SYMBOL: &'static str =
-	"0x52494e4700000000000000000000000000000000000000000000000000000000";
+use darwinia_s2s_chain::ChainSelector as TargetChain;
+use darwinia_support::{
+	balance::*,
+	s2s::{to_bytes32, BACK_ERC20_RING, RING_DECIMAL, RING_NAME, RING_SYMBOL},
+};
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type Balance = u128;
@@ -78,7 +76,6 @@ pub mod pallet {
 		type FeePalletId: Get<PalletId>;
 		#[pallet::constant]
 		type RingLockMaxLimit: Get<RingBalance<Self>>;
-		// TODO: Why this fee exist? how about substrate weight fee?
 		#[pallet::constant]
 		type AdvancedFee: Get<RingBalance<Self>>;
 		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
@@ -181,9 +178,9 @@ pub mod pallet {
 				address: array_bytes::hex2array_unchecked!(BACK_ERC20_RING, 20).into(),
 				value: Some(amount),
 				option: Some(TokenOption {
-					name: array_bytes::hex2array_unchecked!(RING_NAME, 32),
-					symbol: array_bytes::hex2array_unchecked!(RING_SYMBOL, 32),
-					decimal: 9,
+					name: to_bytes32(RING_NAME),
+					symbol: to_bytes32(RING_SYMBOL),
+					decimal: RING_DECIMAL,
 				}),
 			});
 

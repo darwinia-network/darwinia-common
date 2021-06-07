@@ -2099,8 +2099,11 @@ dependencies = [
 name = "darwinia-support"
 version = "2.4.0"
 dependencies = [
+ "array-bytes",
+ "ethabi",
  "ethereum-primitives",
  "frame-support",
+ "hex",
  "impl-trait-for-tuples",
  "num-traits",
  "parity-scale-codec",
