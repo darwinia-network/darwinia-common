@@ -32,7 +32,7 @@ use frame_support::{
 	traits::Get,
 };
 use sp_core::{H160, H256, U256};
-use sp_runtime::traits::UniqueSaturatedInto;
+use sp_runtime::{traits::UniqueSaturatedInto, ArithmeticError, DispatchError};
 use sp_std::{boxed::Box, collections::btree_set::BTreeSet, marker::PhantomData, mem, vec::Vec};
 // --- std ---
 use evm::backend::Backend as BackendT;
@@ -44,7 +44,6 @@ use sha3::{Digest, Keccak256};
 pub struct Runner<T: Config> {
 	_marker: PhantomData<T>,
 }
-
 impl<T: Config> Runner<T> {
 	/// Execute an EVM operation.
 	pub fn execute<'config, F, R>(
@@ -55,7 +54,7 @@ impl<T: Config> Runner<T> {
 		nonce: Option<U256>,
 		config: &'config evm::Config,
 		f: F,
-	) -> Result<ExecutionInfo<R>, Error<T>>
+	) -> Result<ExecutionInfo<R>, DispatchError>
 	where
 		F: FnOnce(
 			&mut StackExecutor<'config, SubstrateStackState<'_, 'config, T>>,
@@ -66,7 +65,7 @@ impl<T: Config> Runner<T> {
 			Some(gas_price) => {
 				ensure!(
 					gas_price >= T::FeeCalculator::min_gas_price(),
-					Error::<T>::GasPriceTooLow
+					<Error<T>>::GasPriceTooLow
 				);
 				gas_price
 			}
@@ -85,18 +84,18 @@ impl<T: Config> Runner<T> {
 
 		let total_fee = gas_price
 			.checked_mul(U256::from(gas_limit))
-			.ok_or(Error::<T>::FeeOverflow)?;
+			.ok_or(ArithmeticError::Overflow)?;
 		let total_payment = value
 			.checked_add(total_fee)
-			.ok_or(Error::<T>::PaymentOverflow)?;
+			.ok_or(ArithmeticError::Overflow)?;
 		let source_account = T::RingAccountBasic::account_basic(&source);
 		ensure!(
 			source_account.balance >= total_payment,
-			Error::<T>::BalanceLow
+			<Error<T>>::BalanceLow
 		);
 
 		if let Some(nonce) = nonce {
-			ensure!(source_account.nonce == nonce, Error::<T>::InvalidNonce);
+			ensure!(source_account.nonce == nonce, <Error<T>>::InvalidNonce);
 		}
 
 		Module::<T>::withdraw_fee(&source, total_fee);
@@ -153,7 +152,7 @@ impl<T: Config> Runner<T> {
 }
 
 impl<T: Config> RunnerT<T> for Runner<T> {
-	type Error = Error<T>;
+	type Error = DispatchError;
 
 	fn call(
 		source: H160,
