@@ -1998,6 +1998,7 @@ version = "2.4.0"
 dependencies = [
  "darwinia-asset-primitives",
  "darwinia-relay-primitives",
+ "darwinia-support",
  "ethereum-primitives",
  "parity-scale-codec",
  "sha3 0.9.1",
