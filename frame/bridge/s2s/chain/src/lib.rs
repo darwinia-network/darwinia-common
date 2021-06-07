@@ -25,6 +25,9 @@ use darwinia_relay_primitives::RelayAccount;
 use ethereum_primitives::EthereumAddress;
 use sp_std::vec::Vec;
 
+const MILLAU_BACKING_CROSS_RECEIVE: &[u8] = b"millau_backing_cross_receive(address,address)";
+const Pangolin_BACKING_CROSS_RECEIVE: &[u8] = b"pangolin_issuing_cross_receive(address,address)";
+
 // here we must contruct a Backing Runtime Call to call backing pallet from the remote issuing
 // pallet, because also we have the other direction call from backing pallet to this issuing
 // pallet. Otherwise if we import the backing pallet and use the Call definiation. The must be a circular reference
@@ -54,29 +57,53 @@ pub enum PangolinSub2SubIssuingCall {
 	cross_receive((Token, EthereumAddress)),
 }
 
-pub type ChainSelector = [u8; 4];
+pub enum RelayMessage {
+	MillauBacking,
+	PangolinIssuing,
+}
+
+fn which_relay(selector: [u8; 4]) -> RelayMessage {
+	let millau_relay = &sha3::Keccak256::digest(&MILLAU_BACKING_CROSS_RECEIVE)[0..4];
+	let pangolin_relay = &sha3::Keccak256::digest(&Pangolin_BACKING_CROSS_RECEIVE)[0..4];
+
+	if selector == millau_relay {
+		return RelayMessage::MillauBacking;
+	}
+	RelayMessage::PangolinIssuing
+}
 
 pub fn encode_relay_message<AccountId>(
-	selector: ChainSelector,
+	selector: [u8; 4],
 	token: Token,
 	recipient: RelayAccount<AccountId>,
 ) -> Result<Vec<u8>, ()> {
 	match recipient {
-		RelayAccount::<AccountId>::EthereumAccount(r) => {
-			match selector {
-				// millau_backing_cross_receive(address,address)
-				[0x22, 0x4f, 0xdd, 0x11] => Ok(MillauRuntime::Sub2SubBacking(
-					MillauSub2SubBackingCall::cross_receive((token, r)),
-				)
-				.encode()),
-				// pangolin_issuing_cross_receive(address,address)
-				[0xa8, 0x0b, 0x03, 0x9a] => Ok(PangolinRuntime::Sub2SubIssuing(
-					PangolinSub2SubIssuingCall::cross_receive((token, r)),
-				)
-				.encode()),
-				_ => Err(()),
-			}
-		}
+		RelayAccount::<AccountId>::EthereumAccount(r) => match which_relay(selector) {
+			RelayMessage::MillauBacking => Ok(MillauRuntime::Sub2SubBacking(
+				MillauSub2SubBackingCall::cross_receive((token, r)),
+			)
+			.encode()),
+			RelayMessage::PangolinIssuing => Ok(PangolinRuntime::Sub2SubIssuing(
+				PangolinSub2SubIssuingCall::cross_receive((token, r)),
+			)
+			.encode()),
+			_ => Err(()),
+		},
 		_ => Err(()),
+	}
+}
+
+#[cfg(test)]
+mod test {
+	use super::*;
+	use sha3::Digest;
+
+	#[test]
+	fn test_chain_selector() {
+		let m_action = &sha3::Keccak256::digest(&MILLAU_BACKING_CROSS_RECEIVE)[0..4];
+		let p_action = &sha3::Keccak256::digest(&Pangolin_BACKING_CROSS_RECEIVE)[0..4];
+
+		eprintln!("m {:?}", m_action);
+		eprintln!("p {:?}", p_action);
 	}
 }

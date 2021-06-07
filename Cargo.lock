@@ -1999,6 +1999,7 @@ dependencies = [
  "darwinia-relay-primitives",
  "ethereum-primitives",
  "parity-scale-codec",
+ "sha3 0.9.1",
  "sp-std",
 ]
 
