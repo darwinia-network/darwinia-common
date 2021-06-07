@@ -20,10 +20,7 @@
 
 // --- core ---
 use codec::{Decode, Encode};
-use ethereum_primitives::{
-    EthereumAddress,
-    U256
-};
+use ethereum_primitives::{EthereumAddress, U256};
 
 /// used by token name and symbol
 pub type Bytes32 = [u8; 32];
@@ -31,24 +28,22 @@ pub type Bytes32 = [u8; 32];
 /// the token extra options
 #[derive(Encode, Decode, Clone, Debug, Eq, PartialEq)]
 pub struct TokenOption {
-    pub name: Bytes32,
-    pub symbol: Bytes32,
-    pub decimal: u8,
+	pub name: Bytes32,
+	pub symbol: Bytes32,
+	pub decimal: u8,
 }
 
 /// the token metadata
 #[derive(Encode, Decode, Clone, Debug, Eq, PartialEq)]
 pub struct TokenInfo {
-    pub address: EthereumAddress,
-    pub value: Option<U256>,
-    pub option: Option<TokenOption>,
+	pub address: EthereumAddress,
+	pub value: Option<U256>,
+	pub option: Option<TokenOption>,
 }
 
-/// the token defination, native or erc20
+/// The token Definition, Native token or ERC20
 #[derive(Encode, Decode, Clone, Debug, Eq, PartialEq)]
 pub enum Token {
-    // native ring, kton ...
-    Native(TokenInfo),
-    Erc20(TokenInfo),
+	Native(TokenInfo),
+	Erc20(TokenInfo),
 }
-

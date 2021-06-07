@@ -176,6 +176,5 @@ pub trait EthereumReceipt<AccountId, Balance> {
 }
 
 pub trait CallToPayload<AccountId, P> {
-    fn to_payload(account: AccountId, call: Vec<u8>) -> P;
+	fn to_payload(account: AccountId, call: Vec<u8>) -> P;
 }
-

@@ -13,5 +13,5 @@ impl Config for Runtime {
 	type Event = Event;
 	type WeightInfo = ();
 	type ReceiverAccountId = AccountId;
-    type BackingRelay = Substrate2SubstrateRelay;
+	type BackingRelay = Substrate2SubstrateRelay;
 }

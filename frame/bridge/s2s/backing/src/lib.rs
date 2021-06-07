@@ -25,67 +25,64 @@
 pub mod weights;
 pub use weights::WeightInfo;
 
+// --- crates ---
+use ethereum_primitives::EthereumAddress;
+use ethereum_types::{Address, H160, H256, U256};
+// --- substrate ---
+use frame_support::{
+	decl_error, decl_event, decl_module, decl_storage, ensure,
+	pallet_prelude::*,
+	parameter_types,
+	traits::{Currency, ExistenceRequirement::*, Get},
+	weights::Weight,
+	PalletId,
+};
+use frame_system::{ensure_signed, pallet_prelude::*};
+use sp_runtime::traits::UniqueSaturatedInto;
+use sp_runtime::{
+	traits::{AccountIdConversion, Dispatchable, Saturating, Zero},
+	DispatchError, SaturatedConversion,
+};
+use sp_std::{convert::TryFrom, prelude::*, vec::Vec};
+// --- darwinia ---
+use darwinia_asset_primitives::token::{Token, TokenInfo, TokenOption};
+use darwinia_primitives_contract::mapping_token_factory::MappingTokenFactory as mtf;
+use darwinia_relay_primitives::{Relay, RelayAccount};
+use darwinia_s2s_chain::ChainSelector as TargetChain;
+use darwinia_support::{balance::*, evm::BACK_ERC20_RING};
+
+// TODO: It's better to calculate this value rather than hard code here.
 const RING_NAME: &'static str =
 	"0x44617277696e6961204e6574776f726b204e617469766520546f6b656e000000";
 const RING_SYMBOL: &'static str =
 	"0x52494e4700000000000000000000000000000000000000000000000000000000";
 
+pub type AccountId<T> = <T as frame_system::Config>::AccountId;
+pub type Balance = u128;
+pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
+
+pub use pallet::*;
+
 #[frame_support::pallet]
 pub mod pallet {
-	pub mod types {
-		use crate::pallet::*;
-
-		pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-		pub type Balance = u128;
-		pub type BlockNumber<T> = <T as frame_system::Config>::BlockNumber;
-		pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
-	}
-
+	use super::*;
+	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
-	// --- crates ---
-	use ethereum_types::{Address, H160, H256, U256};
-	// --- substrate ---
-	use frame_support::{
-		decl_error, decl_event, decl_module, decl_storage, ensure,
-		pallet_prelude::*,
-		parameter_types,
-		traits::{Currency, ExistenceRequirement::*, Get},
-		weights::Weight,
-		PalletId,
-	};
-	use frame_system::ensure_signed;
-	use sp_runtime::{
-		traits::{AccountIdConversion, Saturating, Zero},
-		DispatchError, DispatchResult, SaturatedConversion,
-	};
-	use sp_std::vec::Vec;
-	// --- darwinia ---
-	use darwinia_asset_primitives::token::{Token, TokenInfo, TokenOption};
-	use darwinia_primitives_contract::mapping_token_factory::MappingTokenFactory as mtf;
-	use darwinia_relay_primitives::{Relay, RelayAccount};
-	use darwinia_support::balance::*;
-	use ethereum_primitives::EthereumAddress;
-	use sp_std::{convert::TryFrom, prelude::*};
-
-	use sp_runtime::traits::Dispatchable;
-
-	use darwinia_s2s_chain::ChainSelector as TargetChain;
-
-	use crate::weights::WeightInfo;
-
-	use crate::{RING_NAME, RING_SYMBOL};
-	use types::*;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-
+		type WeightInfo: WeightInfo;
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 		#[pallet::constant]
 		type FeePalletId: Get<PalletId>;
-
-		type WeightInfo: WeightInfo;
+		#[pallet::constant]
+		type RingLockMaxLimit: Get<RingBalance<Self>>;
+		// TODO: Why this fee exist? how about substrate weight fee?
+		#[pallet::constant]
+		type AdvancedFee: Get<RingBalance<Self>>;
+		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 		// now we have only one relay,
 		// in future, we modify it to multi-instance to interact with multi-target chains
 		type IssuingRelay: Relay<
@@ -94,37 +91,30 @@ pub mod pallet {
 			RelayMessage = (TargetChain, Token, RelayAccount<AccountId<Self>>),
 			RelayMessageResult = Result<(), DispatchError>,
 		>;
-		#[pallet::constant]
-		type RingLockLimit: Get<RingBalance<Self>>;
-		#[pallet::constant]
-		type AdvancedFee: Get<RingBalance<Self>>;
-		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(fn deposit_event)]
-	#[pallet::metadata(
-        AccountId<T> = "AccountId",
-    )]
+	#[pallet::metadata(T::AccountId = "AccountId")]
 	pub enum Event<T: Config> {
-		/// token locked [tokenaddress, sender, recipient, amount]
+		/// Token locked [token address, sender, recipient, amount]
 		TokenLocked(Token, AccountId<T>, EthereumAddress, U256),
-		/// token unlocked [token, recipient, value]
+		/// Token unlocked [token, recipient, value]
 		TokenUnlocked(Token, AccountId<T>, U256),
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// currently we only support native token transfered by s2s bridge
+		/// Currently we only support native token transfer comes from s2s bridge
 		Erc20NotSupported,
-		/// invalid token type
+		/// Invalid token type
 		InvalidTokenType,
-		/// invalid token option
+		/// Invalid token option
 		InvalidTokenOption,
-		/// not enough ring balance
-		NotEnoughRingBalance,
-		/// Ring Lock - LIMITED
-		RingLockLim,
+		/// Insufficient balance
+		InsufficientBalance,
+		/// Ring Lock LIMITED
+		RingLockLimited,
 	}
 
 	#[pallet::genesis_config]
@@ -150,22 +140,73 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_initialize(_: BlockNumber<T>) -> Weight {
-			0
-		}
-	}
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Receive balance from issuing burn
-		/// this can be only called by remote issuing pallet
+		/// Lock token in this chain and cross transfer to the target chain
+		///
+		/// Target is the id of the target chain defined in s2s_chain pallet
+		// TODO: update the weight
 		#[pallet::weight(0)]
-		pub fn cross_receive(
+		#[frame_support::transactional]
+		pub fn lock_and_cross_send(
+			origin: OriginFor<T>,
+			target: TargetChain,
+			#[pallet::compact] value: RingBalance<T>,
+			recipient: EthereumAddress,
+		) -> DispatchResultWithPostInfo {
+			// TODO: Do we need to check the target chain? and make sure this id is a truly bridged chain
+			let user = ensure_signed(origin)?;
+
+			// Make sure the locked value is less than the max lock limited
+			ensure!(
+				value < T::RingLockMaxLimit::get() && !value.is_zero(),
+				<Error<T>>::RingLockLimited
+			);
+			// Make sure the user's balance is enough to lock
+			ensure!(
+				T::RingCurrency::free_balance(&user) > value + T::AdvancedFee::get(),
+				<Error<T>>::InsufficientBalance
+			);
+
+			// Pay some fee and lock token
+			let fee_account = Self::fee_account_id();
+			T::RingCurrency::transfer(&user, &fee_account, T::AdvancedFee::get(), KeepAlive)?;
+			T::RingCurrency::transfer(&user, &Self::pallet_account_id(), value, AllowDeath)?;
+
+			// Send to the target chain
+			let amount: U256 = value.saturated_into::<u128>().into();
+			let token = Token::Native(TokenInfo {
+				// The native mapped RING token as a special ERC20 address
+				address: array_bytes::hex2array_unchecked!(BACK_ERC20_RING, 20).into(),
+				value: Some(amount),
+				option: Some(TokenOption {
+					name: array_bytes::hex2array_unchecked!(RING_NAME, 32),
+					symbol: array_bytes::hex2array_unchecked!(RING_SYMBOL, 32),
+					decimal: 9,
+				}),
+			});
+
+			let message = (
+				target,
+				token.clone(),
+				RelayAccount::EthereumAccount(recipient),
+			);
+			T::IssuingRelay::relay_message(&message);
+			Self::deposit_event(Event::TokenLocked(token, user, recipient, amount));
+			Ok(().into())
+		}
+
+		/// Receive target chain locked message and unlock token in this chain.
+		// TODO: update the weight
+		#[pallet::weight(0)]
+		pub fn cross_receive_and_unlock(
 			origin: OriginFor<T>,
 			message: (Token, AccountId<T>),
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
+
 			// the s2s message relay has been verified the message comes from the issuing pallet with the
 			// chainID and issuing sender address.
 			// here only we need is to check the sender is in whitelist
@@ -184,91 +225,35 @@ pub mod pallet {
 				_ => return Err(Error::<T>::InvalidTokenType.into()),
 			};
 			let amount = match token_info.value {
-				Some(value) => value.into(),
+				Some(value) => value,
 				_ => return Err(<Error<T>>::InvalidTokenType.into()),
 			};
-			let unlock_amount = Balance::try_from(amount)?;
-			Self::unlock_token_cast::<T::RingCurrency>(&recipient, unlock_amount)?;
-			Self::deposit_event(Event::TokenUnlocked(token, recipient, amount));
-			Ok(().into())
-		}
 
-		/// lock token and cross transfer to the target chain
-		/// @target is the id of the target chain defined in s2s_chain pallet
-		#[pallet::weight(0)]
-		#[frame_support::transactional]
-		pub fn cross_send(
-			origin: OriginFor<T>,
-			target: TargetChain,
-			#[pallet::compact] ring_to_lock: RingBalance<T>,
-			recipient: EthereumAddress,
-		) -> DispatchResultWithPostInfo {
-			let user = ensure_signed(origin)?;
-			let fee_account = Self::fee_account_id();
-			T::RingCurrency::transfer(&user, &fee_account, T::AdvancedFee::get(), KeepAlive)?;
-
+			// Make sure the user's balance is enough to lock
 			ensure!(
-				ring_to_lock < T::RingLockLimit::get() && !ring_to_lock.is_zero(),
-				<Error<T>>::RingLockLim
+				T::RingCurrency::free_balance(&Self::pallet_account_id())
+					> amount.low_u128().unique_saturated_into(),
+				<Error<T>>::InsufficientBalance
 			);
+			T::RingCurrency::transfer(
+				&Self::pallet_account_id(),
+				&recipient,
+				amount.low_u128().unique_saturated_into(),
+				KeepAlive,
+			)?;
 
-			T::RingCurrency::transfer(&user, &Self::account_id(), ring_to_lock, AllowDeath)?;
-
-			let amount: Balance = ring_to_lock.saturated_into();
-			let amount = U256::from(amount);
-
-			let ring_name: [u8; 32] = array_bytes::hex2array_unchecked!(RING_NAME, 32).into();
-			let ring_symbol: [u8; 32] = array_bytes::hex2array_unchecked!(RING_SYMBOL, 32).into();
-			let token = Token::Native(TokenInfo {
-				// we give the native ring token as a special erc20 address 0x0
-				address: H160::zero(),
-				value: Some(amount),
-				option: Some(TokenOption {
-					name: ring_name,
-					symbol: ring_symbol,
-					decimal: 9,
-				}),
-			});
-
-			let message = (
-				target,
-				token.clone(),
-				RelayAccount::EthereumAccount(recipient),
-			);
-			T::IssuingRelay::relay_message(&message);
-			Self::deposit_event(Event::TokenLocked(token, user, recipient, amount));
+			Self::deposit_event(Event::TokenUnlocked(token, recipient, amount));
 			Ok(().into())
 		}
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub fn account_id() -> T::AccountId {
+		pub fn pallet_account_id() -> T::AccountId {
 			T::PalletId::get().into_account()
 		}
+
 		pub fn fee_account_id() -> T::AccountId {
 			T::FeePalletId::get().into_account()
 		}
-
-		/// Return the amount of money in the pot.
-		// The existential deposit is not part of the pot so backing account never gets deleted.
-		pub fn pot<C: LockableCurrency<T::AccountId>>() -> C::Balance {
-			C::usable_balance(&Self::account_id())
-				// Must never be less than 0 but better be safe.
-				.saturating_sub(C::minimum_balance())
-		}
-
-		fn unlock_token_cast<C: LockableCurrency<T::AccountId>>(
-			recipient: &T::AccountId,
-			amount: Balance,
-		) -> DispatchResult {
-			let amount: C::Balance = amount.saturated_into();
-
-			ensure!(Self::pot::<C>() >= amount, <Error<T>>::NotEnoughRingBalance);
-
-			C::transfer(&Self::account_id(), &recipient, amount, KeepAlive)?;
-			Ok(())
-		}
 	}
 }
-
-pub use pallet::*;
