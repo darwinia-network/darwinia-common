@@ -1977,7 +1977,6 @@ dependencies = [
  "darwinia-asset-primitives",
  "darwinia-primitives-contract",
  "darwinia-relay-primitives",
- "darwinia-s2s-chain",
  "darwinia-support",
  "ethereum-primitives",
  "ethereum-types",
@@ -1992,17 +1991,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-s2s-chain"
-version = "2.4.0"
-dependencies = [
- "darwinia-asset-primitives",
- "darwinia-relay-primitives",
- "ethereum-primitives",
- "parity-scale-codec",
- "sp-std",
-]
-
-[[package]]
 name = "darwinia-s2s-issuing"
 version = "2.4.0"
 dependencies = [
@@ -2012,7 +2000,6 @@ dependencies = [
  "darwinia-evm",
  "darwinia-primitives-contract",
  "darwinia-relay-primitives",
- "darwinia-s2s-chain",
  "darwinia-support",
  "dp-evm",
  "dvm-ethereum",

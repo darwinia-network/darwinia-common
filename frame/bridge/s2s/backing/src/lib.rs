@@ -48,7 +48,6 @@ use sp_std::{convert::TryFrom, prelude::*, vec::Vec};
 use darwinia_asset_primitives::token::{Token, TokenInfo, TokenOption};
 use darwinia_primitives_contract::mapping_token_factory::MappingTokenFactory as mtf;
 use darwinia_relay_primitives::{Relay, RelayAccount};
-use darwinia_s2s_chain::ChainSelector as TargetChain;
 use darwinia_support::{balance::*, evm::BACK_ERC20_RING};
 
 // TODO: It's better to calculate this value rather than hard code here.
@@ -87,8 +86,8 @@ pub mod pallet {
 		// in future, we modify it to multi-instance to interact with multi-target chains
 		type IssuingRelay: Relay<
 			RelayProof = AccountId<Self>,
-			VerifiedResult = Result<(EthereumAddress, TargetChain), DispatchError>,
-			RelayMessage = (TargetChain, Token, RelayAccount<AccountId<Self>>),
+			VerifiedResult = Result<EthereumAddress, DispatchError>,
+			RelayMessage = (Token, RelayAccount<AccountId<Self>>),
 			RelayMessageResult = Result<(), DispatchError>,
 		>;
 	}
@@ -152,7 +151,6 @@ pub mod pallet {
 		#[frame_support::transactional]
 		pub fn lock_and_cross_send(
 			origin: OriginFor<T>,
-			target: TargetChain,
 			#[pallet::compact] value: RingBalance<T>,
 			recipient: EthereumAddress,
 		) -> DispatchResultWithPostInfo {
@@ -189,7 +187,6 @@ pub mod pallet {
 			});
 
 			let message = (
-				target,
 				token.clone(),
 				RelayAccount::EthereumAccount(recipient),
 			);
