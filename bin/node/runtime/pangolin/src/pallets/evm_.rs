@@ -30,9 +30,9 @@ impl<R: dvm_ethereum::Config> PrecompileSet for PangolinPrecompiles<R> {
 			_ if address == to_address(3) => Some(Ripemd160::execute(input, target_gas, context)),
 			_ if address == to_address(4) => Some(Identity::execute(input, target_gas, context)),
 			// Darwinia precompiles
-			_ if address == to_address(21) => {
-				Some(<Transfer<R>>::execute(input, target_gas, context))
-			}
+			_ if address == to_address(21) => Some(<Transfer<R> as Precompile>::execute(
+				input, target_gas, context,
+			)),
 			_ if address == to_address(23) => {
 				Some(<Issuing<R>>::execute(input, target_gas, context))
 			}

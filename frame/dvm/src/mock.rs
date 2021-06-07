@@ -18,26 +18,26 @@
 
 //! Test utilities
 
-use crate::{
-	self as dvm_ethereum,
-	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
-	*,
-};
+// --- crates.io ---
 use codec::{Decode, Encode};
-use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator};
-use dp_evm::{Precompile, PrecompileSet};
 use ethereum::{TransactionAction, TransactionSignature};
 use evm::{Context, ExitError, ExitSucceed};
+use rlp::*;
+// --- substrate ---
 use frame_support::{traits::GenesisBuild, ConsensusEngineId};
 use frame_system::mocking::*;
-use rlp::*;
 use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 	AccountId32, Perbill, RuntimeDebug,
 };
-use sp_std::{marker::PhantomData, vec::Vec};
+use sp_std::prelude::*;
+// --- darwinia ---
+use crate::{self as dvm_ethereum, account_basic::*, *};
+use darwinia_evm::{runner::stack::Runner, AddressMapping, EnsureAddressTruncated, FeeCalculator};
+use darwinia_evm_precompile_simple::*;
+use dp_evm::{Precompile, PrecompileSet};
 
 darwinia_support::impl_test_account_data! {}
 
@@ -52,7 +52,6 @@ frame_support::parameter_types! {
 	pub const MaximumBlockLength: u32 = 2 * 1024;
 	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
 }
-
 impl frame_system::Config for Test {
 	type BaseCallFilter = ();
 	type BlockWeights = ();
@@ -85,7 +84,6 @@ frame_support::parameter_types! {
 	pub const MaxLocks: u32 = 10;
 	pub const ExistentialDeposit: u64 = 500;
 }
-
 impl darwinia_balances::Config<RingInstance> for Test {
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
@@ -97,7 +95,6 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type Event = ();
 	type BalanceInfo = AccountData<Balance>;
 }
-
 impl darwinia_balances::Config<KtonInstance> for Test {
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
@@ -113,7 +110,6 @@ impl darwinia_balances::Config<KtonInstance> for Test {
 frame_support::parameter_types! {
 	pub const MinimumPeriod: u64 = 6000 / 2;
 }
-
 impl pallet_timestamp::Config for Test {
 	type Moment = u64;
 	type OnTimestampSet = ();
@@ -127,7 +123,6 @@ impl FeeCalculator for FixedGasPrice {
 		1.into()
 	}
 }
-
 pub struct EthereumFindAuthor;
 impl FindAuthor<H160> for EthereumFindAuthor {
 	fn find_author<'a, I>(_digests: I) -> Option<H160>
@@ -137,15 +132,7 @@ impl FindAuthor<H160> for EthereumFindAuthor {
 		Some(address_build(0).address)
 	}
 }
-
-frame_support::parameter_types! {
-	pub const TransactionByteFee: u64 = 1;
-	pub const ChainId: u64 = 42;
-	pub const BlockGasLimit: U256 = U256::MAX;
-}
-
 pub struct HashedAddressMapping;
-
 impl AddressMapping<AccountId32> for HashedAddressMapping {
 	fn into_account_id(address: H160) -> AccountId32 {
 		let mut data = [0u8; 32];
@@ -153,22 +140,8 @@ impl AddressMapping<AccountId32> for HashedAddressMapping {
 		AccountId32::from(Into::<[u8; 32]>::into(data))
 	}
 }
-
-// pub struct RingBack<T>(PhantomData<T>);
-// // impl<T: darwinia_evm::Config> Precompile for RingBack<T> {
-// impl<T: dvm_ethereum::Config> Precompile for RingBack<T> {
-// 	fn execute(
-// 		input: &[u8],
-// 		target_gas: Option<u64>,
-// 		context: &Context,
-// 	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
-// 		// darwinia_evm_precompile_transfer::ring::RingBack::<T>::transfer(&input, target_gas, context)
-// 		darwinia_evm_precompile_transfer::kton::Kton::<T>::transfer(&input, target_gas, context)
-// 	}
-// }
-
-pub struct PangolinPrecompiles<R>(PhantomData<R>);
-impl<R> PrecompileSet for PangolinPrecompiles<R> {
+pub struct PangolinPrecompiles;
+impl PrecompileSet for PangolinPrecompiles {
 	fn execute(
 		address: H160,
 		input: &[u8],
@@ -179,20 +152,28 @@ impl<R> PrecompileSet for PangolinPrecompiles<R> {
 
 		match address {
 			// Ethereum precompiles
-			// _ if address == to_address(1) => Some(darwinia_evm_precompile_simple::ECRecover::execute(input, target_gas, context)),
-			// _ if address == to_address(2) => Some(darwinia_evm_precompile_simple::Sha256::execute(input, target_gas, context)),
-			// _ if address == to_address(3) => Some(darwinia_evm_precompile_simple::Ripemd160::execute(input, target_gas, context)),
-			// _ if address == to_address(4) => Some(darwinia_evm_precompile_simple::Identity::execute(input, target_gas, context)),
+			_ if address == to_address(1) => Some(ECRecover::execute(input, target_gas, context)),
+			_ if address == to_address(2) => Some(Sha256::execute(input, target_gas, context)),
+			_ if address == to_address(3) => Some(Ripemd160::execute(input, target_gas, context)),
+			_ if address == to_address(4) => Some(Identity::execute(input, target_gas, context)),
 			// Darwinia precompiles
-			_ if address == to_address(21) => {
-				Some(<darwinia_evm_precompile_transfer::Transfer<Test>>::execute(input, target_gas, context))
-			}
+			_ if address == to_address(21) => Some(<darwinia_evm_precompile_transfer::Transfer<
+				Test,
+			> as Precompile>::execute(
+				input, target_gas, context
+			)),
+			// _ if address == to_address(23) => {
+			// Some(<Issuing<R>>::execute(input, target_gas, context))
+			// }
 			_ => None,
 		}
 	}
 }
-
-
+frame_support::parameter_types! {
+	pub const TransactionByteFee: u64 = 1;
+	pub const ChainId: u64 = 42;
+	pub const BlockGasLimit: U256 = U256::MAX;
+}
 impl darwinia_evm::Config for Test {
 	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = ();
@@ -201,18 +182,10 @@ impl darwinia_evm::Config for Test {
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 	type Event = ();
-	// type Precompiles = (
-	// 	darwinia_evm_precompile_simple::ECRecover,
-	// 	darwinia_evm_precompile_simple::Sha256,
-	// 	darwinia_evm_precompile_simple::Ripemd160,
-	// 	darwinia_evm_precompile_simple::Identity,
-	// 	// darwinia_evm_precompile_transfer::Transfer<Self>,
-	// 	RingBack<Self>,
-	// );
-	type Precompiles = PangolinPrecompiles<Self>;
+	type Precompiles = PangolinPrecompiles;
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
-	type Runner = darwinia_evm::runner::stack::Runner<Self>;
+	type Runner = Runner<Self>;
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 	type IssuingHandler = ();
@@ -245,6 +218,59 @@ pub struct AccountInfo {
 	pub address: H160,
 	pub account_id: AccountId32,
 	pub private_key: H256,
+}
+
+pub struct UnsignedTransaction {
+	pub nonce: U256,
+	pub gas_price: U256,
+	pub gas_limit: U256,
+	pub action: TransactionAction,
+	pub value: U256,
+	pub input: Vec<u8>,
+}
+impl UnsignedTransaction {
+	fn signing_rlp_append(&self, s: &mut RlpStream) {
+		s.begin_list(9);
+		s.append(&self.nonce);
+		s.append(&self.gas_price);
+		s.append(&self.gas_limit);
+		s.append(&self.action);
+		s.append(&self.value);
+		s.append(&self.input);
+		s.append(&ChainId::get());
+		s.append(&0u8);
+		s.append(&0u8);
+	}
+
+	fn signing_hash(&self) -> H256 {
+		let mut stream = RlpStream::new();
+		self.signing_rlp_append(&mut stream);
+		H256::from_slice(&Keccak256::digest(&stream.out()).as_slice())
+	}
+
+	pub fn sign(&self, key: &H256) -> Transaction {
+		let hash = self.signing_hash();
+		let msg = secp256k1::Message::parse(hash.as_fixed_bytes());
+		let s = secp256k1::sign(&msg, &secp256k1::SecretKey::parse_slice(&key[..]).unwrap());
+		let sig = s.0.serialize();
+
+		let sig = TransactionSignature::new(
+			s.1.serialize() as u64 % 2 + ChainId::get() * 2 + 35,
+			H256::from_slice(&sig[0..32]),
+			H256::from_slice(&sig[32..64]),
+		)
+		.unwrap();
+
+		Transaction {
+			nonce: self.nonce,
+			gas_price: self.gas_price,
+			gas_limit: self.gas_limit,
+			action: self.action,
+			value: self.value,
+			input: self.input.clone(),
+			signature: sig,
+		}
+	}
 }
 
 fn address_build(seed: u8) -> AccountInfo {
@@ -298,58 +324,4 @@ pub fn storage_address(sender: H160, slot: H256) -> H256 {
 	H256::from_slice(&Keccak256::digest(
 		[&H256::from(sender)[..], &slot[..]].concat().as_slice(),
 	))
-}
-
-pub struct UnsignedTransaction {
-	pub nonce: U256,
-	pub gas_price: U256,
-	pub gas_limit: U256,
-	pub action: TransactionAction,
-	pub value: U256,
-	pub input: Vec<u8>,
-}
-
-impl UnsignedTransaction {
-	fn signing_rlp_append(&self, s: &mut RlpStream) {
-		s.begin_list(9);
-		s.append(&self.nonce);
-		s.append(&self.gas_price);
-		s.append(&self.gas_limit);
-		s.append(&self.action);
-		s.append(&self.value);
-		s.append(&self.input);
-		s.append(&ChainId::get());
-		s.append(&0u8);
-		s.append(&0u8);
-	}
-
-	fn signing_hash(&self) -> H256 {
-		let mut stream = RlpStream::new();
-		self.signing_rlp_append(&mut stream);
-		H256::from_slice(&Keccak256::digest(&stream.out()).as_slice())
-	}
-
-	pub fn sign(&self, key: &H256) -> Transaction {
-		let hash = self.signing_hash();
-		let msg = secp256k1::Message::parse(hash.as_fixed_bytes());
-		let s = secp256k1::sign(&msg, &secp256k1::SecretKey::parse_slice(&key[..]).unwrap());
-		let sig = s.0.serialize();
-
-		let sig = TransactionSignature::new(
-			s.1.serialize() as u64 % 2 + ChainId::get() * 2 + 35,
-			H256::from_slice(&sig[0..32]),
-			H256::from_slice(&sig[32..64]),
-		)
-		.unwrap();
-
-		Transaction {
-			nonce: self.nonce,
-			gas_price: self.gas_price,
-			gas_limit: self.gas_limit,
-			action: self.action,
-			value: self.value,
-			input: self.input.clone(),
-			signature: sig,
-		}
-	}
 }
