@@ -1,6 +1,24 @@
-#![cfg(test)]
+// This file is part of Darwinia.
+//
+// Copyright (C) 2018-2021 Darwinia Network
+// SPDX-License-Identifier: GPL-3.0
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{self as darwinia_evm, *};
+// --- std ---
+use std::{collections::BTreeMap, str::FromStr};
+// --- substrate ---
 use frame_support::{assert_ok, traits::GenesisBuild};
 use frame_system::mocking::*;
 use sp_core::H256;
@@ -9,7 +27,8 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	RuntimeDebug,
 };
-use std::{collections::BTreeMap, str::FromStr};
+// --- darwinia ---
+use crate::{self as darwinia_evm, runner::stack::Runner, *};
 
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
@@ -90,7 +109,6 @@ impl FeeCalculator for FixedGasPrice {
 }
 
 pub struct RawAccountBasic<T>(sp_std::marker::PhantomData<T>);
-
 impl<T: Config> AccountBasic for RawAccountBasic<T> {
 	/// Get the account basic in EVM format.
 	fn account_basic(address: &H160) -> Account {
@@ -133,7 +151,6 @@ impl<T: Config> AccountBasic for RawAccountBasic<T> {
 
 /// Ensure that the origin is root.
 pub struct EnsureAddressRoot<AccountId>(sp_std::marker::PhantomData<AccountId>);
-
 impl<OuterOrigin, AccountId> EnsureAddressOrigin<OuterOrigin> for EnsureAddressRoot<AccountId>
 where
 	OuterOrigin: Into<Result<RawOrigin<AccountId>, OuterOrigin>> + From<RawOrigin<AccountId>>,
@@ -161,7 +178,7 @@ impl Config for Test {
 	type Precompiles = ();
 	type ChainId = ();
 	type BlockGasLimit = ();
-	type Runner = crate::runner::stack::Runner<Self>;
+	type Runner = Runner<Self>;
 	type IssuingHandler = ();
 	type RingAccountBasic = RawAccountBasic<Test>;
 	type KtonAccountBasic = RawAccountBasic<Test>;
@@ -210,15 +227,11 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		},
 	);
 
-	<darwinia_balances::GenesisConfig<Test, RingInstance>>::default()
-		.assimilate_storage(&mut t)
-		.unwrap();
-	<darwinia_balances::GenesisConfig<Test, KtonInstance>>::default()
-		.assimilate_storage(&mut t)
-		.unwrap();
-	darwinia_evm::GenesisConfig { accounts }
-		.assimilate_storage::<Test>(&mut t)
-		.unwrap();
+	<darwinia_evm::GenesisConfig as GenesisBuild<Test>>::assimilate_storage(
+		&darwinia_evm::GenesisConfig { accounts },
+		&mut t,
+	)
+	.unwrap();
 	t.into()
 }
 
