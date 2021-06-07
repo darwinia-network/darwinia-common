@@ -1464,7 +1464,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-bridge-ethereum-bsc"
+name = "darwinia-bridge-bsc"
 version = "2.4.0"
 dependencies = [
  "array-bytes",
@@ -5793,7 +5793,7 @@ dependencies = [
  "bridge-runtime-common",
  "darwinia-balances",
  "darwinia-balances-rpc-runtime-api",
- "darwinia-bridge-ethereum-bsc",
+ "darwinia-bridge-bsc",
  "darwinia-claims",
  "darwinia-crab-backing",
  "darwinia-crab-issuing",
