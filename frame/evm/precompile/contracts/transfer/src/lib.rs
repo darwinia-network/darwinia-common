@@ -51,7 +51,7 @@ use ring::RingBack;
 use evm::{Context, ExitError, ExitSucceed};
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-pub use dvm_ethereum::{self, Call, Config, Event, Pallet};
+pub use dvm_ethereum;
 
 /// Transfer Precompile Contract, used to support the exchange of KTON and RING transfer.
 pub enum Transfer<T> {

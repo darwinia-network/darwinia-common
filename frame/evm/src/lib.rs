@@ -431,11 +431,14 @@ pub trait AddressMapping<A> {
 	fn into_account_id(address: H160) -> A;
 }
 
-/// Get account basic info
+/// Account basic info operations
 pub trait AccountBasic {
 	fn account_basic(address: &H160) -> Account;
 	fn mutate_account_basic(address: &H160, new: Account);
 	fn transfer(source: &H160, target: &H160, value: U256) -> Result<(), ExitError>;
+	fn account(account_id: &AccountId32) -> Account {
+		self.account_basic()
+	}
 }
 
 /// Config that outputs the current transaction gas price.
