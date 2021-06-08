@@ -224,10 +224,7 @@ use sp_std::prelude::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia ---
-use darwinia_asset_primitives::{
-    token::Token,
-    RemoteAssetReceiver,
-};
+use darwinia_asset_primitives::{token::Token, RemoteAssetReceiver};
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
 use darwinia_evm::{Account as EVMAccount, Runner};
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
@@ -903,16 +900,15 @@ pub enum MillauSub2SubBackingCall {
 
 pub struct MillauBackingReceiver;
 impl RemoteAssetReceiver<RelayAccount<AccountId>> for MillauBackingReceiver {
-    fn encode_call(token: Token, receipt: RelayAccount<AccountId>) -> Result<Vec<u8>, ()> {
-        match receipt {
-            RelayAccount::<AccountId>::DarwiniaAccount(r) => {
-                return Ok(MillauRuntime::Sub2SubBacking(
-                        MillauSub2SubBackingCall::cross_receive_and_unlock((token, r))
-                    )
-                    .encode())
-            }
-            _ => Err(())
-        }
-    }
+	fn encode_call(token: Token, receipt: RelayAccount<AccountId>) -> Result<Vec<u8>, ()> {
+		match receipt {
+			RelayAccount::<AccountId>::DarwiniaAccount(r) => {
+				return Ok(MillauRuntime::Sub2SubBacking(
+					MillauSub2SubBackingCall::cross_receive_and_unlock((token, r)),
+				)
+				.encode())
+			}
+			_ => Err(()),
+		}
+	}
 }
-
