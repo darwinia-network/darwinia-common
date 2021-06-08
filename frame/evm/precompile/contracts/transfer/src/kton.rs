@@ -1,28 +1,38 @@
+// This file is part of Darwinia.
+//
+// Copyright (C) 2018-2021 Darwinia Network
+// SPDX-License-Identifier: GPL-3.0
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+
 // --- substrate ---
 use frame_support::{ensure, traits::Currency};
 use sp_core::{H160, U256};
 use sp_runtime::{traits::UniqueSaturatedInto, SaturatedConversion};
-<<<<<<< HEAD:frame/evm/precompile/contracts/transfer/src/kton.rs
-use sp_std::{borrow::ToOwned, prelude::*, vec::Vec};
+// use sp_std::{borrow::ToOwned, prelude::*, vec::Vec};
 // --- darwinia ---
 use crate::util;
 use crate::AccountId;
-use darwinia_evm::{Account, AccountBasic, Module, Runner};
+use darwinia_evm::{Account, AccountBasic, Pallet, Runner};
 use darwinia_support::evm::{POW_9, SELECTOR, TRANSFER_ADDR};
-=======
-use sp_std::{borrow::ToOwned, marker::PhantomData, prelude::*, vec::Vec};
-
-use darwinia_evm::{Account, AccountBasic, Config, Pallet, Runner};
-use darwinia_support::evm::POW_9;
-use dp_evm::Precompile;
->>>>>>> master:frame/evm/precompile/contracts/kton/src/lib.rs
 use dvm_ethereum::{
 	account_basic::{KtonRemainBalance, RemainBalanceOp},
 	KtonBalance,
 };
+use sp_std::{borrow::ToOwned, prelude::*, vec::Vec};
 // --- crates ---
 use codec::Decode;
-use core::str::FromStr;
 use ethabi::{Function, Param, ParamType, Token};
 use evm::{Context, ExitError, ExitReason, ExitSucceed};
 use sha3::Digest;
@@ -50,7 +60,7 @@ impl<T: dvm_ethereum::Config> Kton<T> {
 			Kton::TransferAndCall(call_data) => {
 				// Ensure wkton is a contract
 				ensure!(
-					!crate::Pallet::<T>::is_contract_code_empty(&call_data.wkton_address),
+					!<Pallet<T>>::is_contract_code_empty(&call_data.wkton_address),
 					ExitError::Other("Wkton must be a contract!".into())
 				);
 				// Ensure context's apparent_value is zero, since the transfer value is encoded in input field
@@ -97,11 +107,7 @@ impl<T: dvm_ethereum::Config> Kton<T> {
 			Kton::Withdraw(wd) => {
 				// Ensure wkton is a contract
 				ensure!(
-<<<<<<< HEAD:frame/evm/precompile/contracts/transfer/src/kton.rs
-					!Module::<T>::is_contract_code_empty(&context.caller),
-=======
-					!crate::Pallet::<T>::is_contract_code_empty(&context.caller),
->>>>>>> master:frame/evm/precompile/contracts/kton/src/lib.rs
+					!<Pallet<T>>::is_contract_code_empty(&context.caller),
 					ExitError::Other("The caller must be wkton contract!".into())
 				);
 				// Ensure context's apparent_value is zero
