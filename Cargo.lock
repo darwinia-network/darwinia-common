@@ -160,9 +160,9 @@ dependencies = [
 
 [[package]]
 name = "array-bytes"
-version = "1.3.2"
+version = "1.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0365f8406e359fe53884aa7a1e0fdfae6ca4b60b1beb2bd8735006473c727089"
+checksum = "b76542acb2b0012e8bbdc5c6ec96a164b30e1f3aa06fdb17dc86515817ca2776"
 
 [[package]]
 name = "arrayref"
