@@ -1,12 +1,16 @@
 // --- substrate ---
-use frame_support::traits::{Currency, ExistenceRequirement};
+use frame_support::{ensure, traits::Currency};
 use sp_core::U256;
-use sp_runtime::traits::UniqueSaturatedInto;
+use sp_runtime::{traits::UniqueSaturatedInto, SaturatedConversion};
 use sp_std::{marker::PhantomData, prelude::*, vec::Vec};
 // --- darwinia ---
 use crate::AccountId;
-use darwinia_evm::{AddressMapping, Config};
-use darwinia_support::evm::POW_9;
+use darwinia_evm::{Account, AccountBasic, Config};
+use darwinia_support::evm::{POW_9, TRANSFER_ADDR};
+use dvm_ethereum::{
+	account_basic::{RemainBalanceOp, RingRemainBalance},
+	RingBalance,
+};
 // --- crates ---
 use codec::Decode;
 use evm::{Context, ExitError, ExitSucceed};
@@ -15,7 +19,7 @@ pub struct RingBack<T: Config> {
 	_maker: PhantomData<T>,
 }
 
-impl<T: Config> RingBack<T> {
+impl<T: dvm_ethereum::Config> RingBack<T> {
 	/// The Withdraw process is divided into two part:
 	/// 1. parse the withdrawal address from the input parameter and get the contract address and value from the context
 	/// 2. transfer from the contract address to withdrawal address
@@ -27,34 +31,39 @@ impl<T: Config> RingBack<T> {
 		context: &Context,
 	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
 		// Decode input data
-		let input = InputData::<T>::decode(&input)?;
-
 		let helper = U256::from(POW_9);
-		let contract_address = T::AddressMapping::into_account_id(context.address);
-		let context_value = context.apparent_value.div_mod(helper).0;
-		let context_value = context_value.low_u128().unique_saturated_into();
+		let input = InputData::<T>::decode(&input)?;
+		let (source, value) = (context.address, context.apparent_value);
+		let source_account = T::RingAccountBasic::account_basic(&source);
 
-		let result = T::RingCurrency::transfer(
-			&contract_address,
+		// Ensure the context address should be precompile address
+		ensure!(
+			source == array_bytes::hex2array_unchecked!(TRANSFER_ADDR, 20).into(),
+			ExitError::Other("Invalid context address".into())
+		);
+		// Ensure the context address balance is enough
+		ensure!(source_account.balance >= value, ExitError::OutOfFund);
+
+		// Transfer
+		let new_source_balance = source_account.balance.saturating_sub(value);
+		T::RingAccountBasic::mutate_account_basic(
+			&source,
+			Account {
+				nonce: source_account.nonce,
+				balance: new_source_balance,
+			},
+		);
+		let (currency_value, remain_balance) = context.apparent_value.div_mod(helper);
+		<T as darwinia_evm::Config>::RingCurrency::deposit_creating(
 			&input.dest,
-			context_value,
-			ExistenceRequirement::AllowDeath,
+			currency_value.low_u128().unique_saturated_into(),
+		);
+		<RingRemainBalance as RemainBalanceOp<T, RingBalance<T>>>::inc_remaining_balance(
+			&input.dest,
+			remain_balance.low_u128().saturated_into(),
 		);
 
-		match result {
-			Ok(()) => Ok((ExitSucceed::Returned, vec![], 10000)),
-			Err(error) => match error {
-				sp_runtime::DispatchError::BadOrigin => Err(ExitError::Other("BadOrigin".into())),
-				sp_runtime::DispatchError::CannotLookup => {
-					Err(ExitError::Other("CannotLookup".into()))
-				}
-				sp_runtime::DispatchError::Other(message) => Err(ExitError::Other(message.into())),
-				sp_runtime::DispatchError::Module { message, .. } => {
-					Err(ExitError::Other(message.unwrap_or("Module Error").into()))
-				}
-				_ => Err(ExitError::Other("Module Error".into())),
-			},
-		}
+		Ok((ExitSucceed::Returned, vec![], 10000))
 	}
 }
 

@@ -37,6 +37,7 @@ pub mod evm {
 	pub const POW_9: u32 = 1_000_000_000;
 	pub const INTERNAL_CALLER: H160 = H160::zero();
 	pub const SELECTOR: usize = 4;
+	pub const TRANSFER_ADDR: &'static str = "0x0000000000000000000000000000000000000015";
 }
 
 #[cfg(test)]

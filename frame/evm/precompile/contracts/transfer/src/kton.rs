@@ -7,7 +7,7 @@ use sp_std::{borrow::ToOwned, prelude::*, vec::Vec};
 use crate::util;
 use crate::AccountId;
 use darwinia_evm::{Account, AccountBasic, Module, Runner};
-use darwinia_support::evm::{POW_9, SELECTOR};
+use darwinia_support::evm::{POW_9, SELECTOR, TRANSFER_ADDR};
 use dvm_ethereum::{
 	account_basic::{KtonRemainBalance, RemainBalanceOp},
 	KtonBalance,
@@ -21,7 +21,6 @@ use sha3::Digest;
 
 const TRANSFER_AND_CALL_ACTION: &[u8] = b"transfer_and_call(address,uint256)";
 const WITHDRAW_ACTION: &[u8] = b"withdraw(bytes32,uint256)";
-const CALLER_PRECOMPILE: &str = "0000000000000000000000000000000000000015";
 
 pub enum Kton<T: frame_system::Config> {
 	/// Transfer from substrate account to wkton contract
@@ -64,7 +63,8 @@ impl<T: dvm_ethereum::Config> Kton<T> {
 					call_data.value,
 				)?;
 				// Call WKTON wrapped contract deposit
-				let precompile_address = H160::from_str(CALLER_PRECOMPILE).unwrap_or_default();
+				let precompile_address: H160 =
+					array_bytes::hex2array_unchecked!(TRANSFER_ADDR, 20).into();
 				let raw_input = make_call_data(context.caller, call_data.value)?;
 				if let Ok(call_res) = T::Runner::call(
 					precompile_address,
