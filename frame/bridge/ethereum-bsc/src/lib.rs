@@ -322,15 +322,6 @@ pub mod pallet {
 
 			Err(<Error<T>>::HeadersNotEnough)?
 		}
-
-		#[pallet::weight(0)]
-		fn clean_creator_cache(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
-			ensure_root(origin)?;
-
-			<CreatorCache<T>>::remove_all();
-
-			Ok(().into())
-		}
 	}
 	impl<T: Config> Pallet<T> {
 		pub fn is_timestamp_ahead(timestamp: u64) -> bool {
