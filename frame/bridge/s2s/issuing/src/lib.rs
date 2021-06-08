@@ -74,7 +74,7 @@ pub trait Config: dvm_ethereum::Config {
 		RelayProof = AccountId<Self>,
 		VerifiedResult = Result<EthereumAddress, DispatchError>,
 		RelayMessage = (u32, Token, RelayAccount<Self::AccountId>),
-		RelayMessageResult = Result<(), DispatchError>,
+		RelayMessageResult = DispatchResult,
 	>;
 }
 

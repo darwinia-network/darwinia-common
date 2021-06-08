@@ -21,6 +21,6 @@ impl Config<ToMillauRelay> for Runtime {
 	type RemoteAssetReceiverT = MillauBackingReceiver;
 	type ToEthereumAddressT = darwinia_s2s_relay::ConcatToEthereumAddress;
 	type RemoteAccountIdConverter = bp_millau::AccountIdConverter;
-	type MessageSenderT = BridgeMillauMessages;
 	type RemoteChainId = MillauChainId;
+	type MessageRelayCallT = ToMillauMessageRelayCall;
 }

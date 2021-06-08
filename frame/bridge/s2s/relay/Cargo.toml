@@ -28,9 +28,8 @@ frame-system  = { default-features = false, git = "https://github.com/darwinia-n
 sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
 sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
 sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
-pallet-bridge-messages                     = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.1-s2s" }
-bp-messages                                = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.1-s2s" }
-bp-runtime                                 = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.1-s2s" }
+bp-messages   = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.1" }
+bp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.1" }
 
 [features]
 default = ["std"]
@@ -61,7 +60,6 @@ substrate-std = [
 	"sp-core/std",
 	"sp-runtime/std",
 	"sp-std/std",
-	"pallet-bridge-messages/std",
 	"bp-messages/std",
 	"bp-runtime/std",
 ]

@@ -42,9 +42,11 @@ pub mod pallet {
 	use sp_runtime::traits::{AccountIdConversion, Convert};
 
 	use bp_runtime::{derive_account_id, ChainId, Size, SourceAccount};
-	use frame_support::{pallet_prelude::*, Parameter};
-
-	use pallet_bridge_messages::MessageSender;
+	use frame_support::{
+		dispatch::{Dispatchable, PostDispatchInfo},
+		pallet_prelude::*,
+		Parameter,
+	};
 
 	use crate::weights::WeightInfo;
 	use frame_system::pallet_prelude::*;
@@ -60,6 +62,10 @@ pub mod pallet {
 			let account20: &[u8] = &address.as_ref();
 			EthereumAddress::from_slice(&account20[..20])
 		}
+	}
+
+	pub trait MessageRelayCall<P, C> {
+		fn encode_call(payload: P) -> C;
 	}
 
 	#[pallet::config]
@@ -84,13 +90,9 @@ pub mod pallet {
 
 		type ToEthereumAddressT: ToEthereumAddress<Self::AccountId>;
 
-		type MessageSenderT: MessageSender<
-			Self::Origin,
-			OutboundPayload = Self::OutboundPayload,
-			OutboundMessageFee = Self::OutboundMessageFee,
-		>;
-
 		type RemoteChainId: Get<ChainId>;
+
+		type MessageRelayCallT: MessageRelayCall<Self::OutboundPayload, Self::Call>;
 	}
 
 	#[pallet::event]
@@ -108,6 +110,8 @@ pub mod pallet {
 		InvalidBackingAddr,
 		/// Encode Invalid
 		EncodeInv,
+		/// Dispatch Message Relay Failed
+		DispatchFD,
 	}
 
 	#[pallet::storage]
@@ -149,11 +153,15 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config<I>, I: 'static> Pallet<T, I> {}
 
-	impl<T: Config<I>, I: 'static> Relay for Pallet<T, I> {
+	impl<T: Config<I>, I: 'static> Relay for Pallet<T, I>
+	where
+		<T::Call as Dispatchable>::Origin: From<RawOrigin<T::AccountId>>,
+		T::Call: Dispatchable<PostInfo = PostDispatchInfo>,
+	{
 		type RelayProof = AccountId<T>;
 		type RelayMessage = (u32, Token, RelayAccount<AccountId<T>>);
 		type VerifiedResult = Result<EthereumAddress, DispatchError>;
-		type RelayMessageResult = Result<(), DispatchError>;
+		type RelayMessageResult = DispatchResult;
 		fn verify(proof: &Self::RelayProof) -> Self::VerifiedResult {
 			let source_root = <RemoteRootId<T, I>>::get();
 			ensure!(&source_root == proof, <Error<T, I>>::InvalidProof);
@@ -166,12 +174,9 @@ pub mod pallet {
 				.map_err(|_| <Error<T, I>>::EncodeInv)?;
 			let relay_id: AccountId<T> = T::PalletId::get().into_account();
 			let payload = T::CallToPayload::to_payload(msg.0, encoded);
-			T::MessageSenderT::raw_send_message(
-				RawOrigin::Signed(relay_id).into(),
-				[0; 4],
-				payload,
-				0.into(),
-			)?;
+			T::MessageRelayCallT::encode_call(payload)
+				.dispatch(RawOrigin::Signed(relay_id).into())
+				.map_err(|_| <Error<T, I>>::DispatchFD)?;
 			Ok(())
 		}
 

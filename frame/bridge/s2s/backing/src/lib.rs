@@ -50,10 +50,7 @@ use darwinia_primitives_contract::mapping_token_factory::MappingTokenFactory as 
 use darwinia_relay_primitives::{Relay, RelayAccount};
 use darwinia_support::{
 	balance::*,
-	s2s::{
-		to_bytes32, BACK_ERC20_RING, RING_DECIMAL, RING_NAME,
-		RING_SYMBOL,
-	},
+	s2s::{to_bytes32, BACK_ERC20_RING, RING_DECIMAL, RING_NAME, RING_SYMBOL},
 };
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;

@@ -230,6 +230,7 @@ use darwinia_evm::{Account as EVMAccount, Runner};
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
 use darwinia_relay_primitives::RelayAccount;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
+use darwinia_s2s_relay::MessageRelayCall;
 use drml_primitives::*;
 use dvm_rpc_runtime_api::TransactionStatus;
 use impls::*;
@@ -912,3 +913,15 @@ impl RemoteAssetReceiver<RelayAccount<AccountId>> for MillauBackingReceiver {
 		}
 	}
 }
+
+pub struct ToMillauMessageRelayCall;
+impl MessageRelayCall<millau_messages::ToMillauMessagePayload, crate::Call> for ToMillauMessageRelayCall {
+    fn encode_call(payload: millau_messages::ToMillauMessagePayload) -> crate::Call {
+        return BridgeMessagesCall::<Runtime, pallet_bridge_messages::Instance1>::send_message(
+                [0; 4],
+                payload,
+                0u128.into(),
+            ).into()
+    }
+}
+

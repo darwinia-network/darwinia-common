@@ -11,8 +11,8 @@ version     = "2.4.0"
 
 [dependencies]
 # bridge
-bp-messages = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common.git", branch = "darwinia-v0.11.1-s2s" }
-bp-runtime  = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common.git", branch = "darwinia-v0.11.1-s2s" }
+bp-messages = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common.git", tag = "darwinia-v0.11.1" }
+bp-runtime  = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common.git", tag = "darwinia-v0.11.1" }
 # darwinia
 drml-primitives = { default-features = false, path = "../../primitives" }
 # substrate
