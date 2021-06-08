@@ -26,7 +26,6 @@ pub use weights::WeightInfo;
 
 use darwinia_evm::AddressMapping;
 use darwinia_relay_primitives::{Relay, RelayAccount};
-use darwinia_support::s2s::ChainSelector as TargetChain;
 
 use sp_runtime::traits::Dispatchable;
 

@@ -51,7 +51,7 @@ use darwinia_relay_primitives::{Relay, RelayAccount};
 use darwinia_support::{
 	balance::*,
 	s2s::{
-		to_bytes32, ChainSelector as TargetChain, BACK_ERC20_RING, RING_DECIMAL, RING_NAME,
+		to_bytes32, BACK_ERC20_RING, RING_DECIMAL, RING_NAME,
 		RING_SYMBOL,
 	},
 };
