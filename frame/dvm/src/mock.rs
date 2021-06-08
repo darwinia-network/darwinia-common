@@ -152,7 +152,7 @@ frame_support::parameter_types! {
 pub struct MockPrecompiles<R>(PhantomData<R>);
 impl<R> PrecompileSet for MockPrecompiles<R>
 where
-	R: darwinia_evm_precompile_transfer::dvm_ethereum::Config,
+	R: darwinia_evm::Config,
 {
 	fn execute(
 		address: H160,
@@ -169,9 +169,9 @@ where
 			_ if address == to_address(3) => Some(Ripemd160::execute(input, target_gas, context)),
 			_ if address == to_address(4) => Some(Identity::execute(input, target_gas, context)),
 			// Darwinia precompiles
-			_ if address == to_address(21) => Some(<Transfer<R> as Precompile>::execute(
-				input, target_gas, context,
-			)),
+			_ if address == to_address(21) => {
+				Some(<Transfer<R>>::execute(input, target_gas, context))
+			}
 			_ => None,
 		}
 	}
@@ -192,14 +192,6 @@ impl darwinia_evm::Config for Test {
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 	type IssuingHandler = ();
-}
-
-impl darwinia_evm_precompile_transfer::dvm_ethereum::Config for Test {
-	type Event = ();
-	type FindAuthor = EthereumFindAuthor;
-	type StateRoot = IntermediateStateRoot;
-	type RingCurrency = Ring;
-	type KtonCurrency = Kton;
 }
 
 impl dvm_ethereum::Config for Test {

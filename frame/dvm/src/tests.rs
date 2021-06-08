@@ -21,7 +21,7 @@ use crate::{
 	Call, *,
 };
 use codec::Decode;
-use darwinia_evm::{Account, AddressMapping};
+use darwinia_evm::AddressMapping;
 use ethereum::TransactionSignature;
 use frame_support::{assert_err, assert_noop, assert_ok, unsigned::ValidateUnsigned};
 use mock::*;
@@ -415,6 +415,41 @@ fn withdraw_without_enough_balance_should_fail() {
 		assert_eq!(<Test as Config>::RingCurrency::free_balance(&dest), 0);
 	});
 }
+
+#[test]
+fn withdraw_with_enough_balance() {
+	let (pairs, mut ext) = new_test_ext(1);
+	let alice = &pairs[0];
+
+	ext.execute_with(|| {
+		let t = sign_transaction(alice, default_withdraw_unsigned_transaction());
+		assert_ok!(Ethereum::execute(
+			alice.address,
+			t.input.clone(),
+			t.value,
+			t.gas_limit,
+			None,
+			Some(t.nonce),
+			t.action,
+			None,
+		));
+
+		// Check caller balance
+		assert_eq!(
+			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&alice.address).balance,
+			U256::from(70_000_000_000_000_000_000u128)
+		);
+		// Check the target balance
+		let input_bytes: Vec<u8> = array_bytes::hex2bytes_unchecked(WITH_DRAW_INPUT);
+		let dest =
+			<Test as frame_system::Config>::AccountId::decode(&mut &input_bytes[..]).unwrap();
+		assert_eq!(
+			<Test as Config>::RingCurrency::free_balance(dest),
+			30000000000
+		);
+	});
+}
+
 #[test]
 fn withdraw_with_invalid_input_length_should_failed() {
 	let (pairs, mut ext) = new_test_ext(1);
