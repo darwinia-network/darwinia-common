@@ -17,19 +17,13 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- substrate ---
-use frame_support::{ensure, traits::Currency};
+use frame_support::ensure;
 use sp_core::{H160, U256};
-use sp_runtime::{traits::UniqueSaturatedInto, SaturatedConversion};
-// use sp_std::{borrow::ToOwned, prelude::*, vec::Vec};
 // --- darwinia ---
 use crate::util;
 use crate::AccountId;
-use darwinia_evm::{AccountBasic, Pallet, Runner};
-use darwinia_support::evm::{POW_9, SELECTOR, TRANSFER_ADDR};
-use dvm_ethereum::{
-	account_basic::{KtonRemainBalance, RemainBalanceOp},
-	KtonBalance,
-};
+use darwinia_evm::{AccountBasic, Config, Pallet, Runner};
+use darwinia_support::evm::{SELECTOR, TRANSFER_ADDR};
 use sp_std::{borrow::ToOwned, prelude::*, vec::Vec};
 // --- crates ---
 use codec::Decode;
@@ -47,13 +41,12 @@ pub enum Kton<T: frame_system::Config> {
 	Withdraw(WithdrawData<T>),
 }
 
-impl<T: dvm_ethereum::Config> Kton<T> {
+impl<T: Config> Kton<T> {
 	pub fn transfer(
 		input: &[u8],
 		target_gas: Option<u64>,
 		context: &Context,
 	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
-		let helper = U256::from(POW_9);
 		let action = which_action::<T>(&input)?;
 
 		match action {
@@ -125,16 +118,10 @@ impl<T: dvm_ethereum::Config> Kton<T> {
 					&context.caller,
 					new_wkton_balance,
 				);
-				let (currency_value, remain_balance) = wd.kton_value.div_mod(helper);
-				<T as darwinia_evm::Config>::KtonCurrency::deposit_creating(
-					&wd.to_account_id,
-					currency_value.low_u128().unique_saturated_into(),
-				);
-				<KtonRemainBalance as RemainBalanceOp<T, KtonBalance<T>>>::inc_remaining_balance(
-					&wd.to_account_id,
-					remain_balance.low_u128().saturated_into(),
-				);
 
+				let target_balance = T::KtonAccountBasic::account_balance(&wd.to_account_id);
+				let new_target_balance = target_balance.saturating_add(wd.kton_value);
+				T::KtonAccountBasic::mutate_account_balance(&wd.to_account_id, new_target_balance);
 				Ok((ExitSucceed::Returned, vec![], 20000))
 			}
 		}
@@ -142,7 +129,7 @@ impl<T: dvm_ethereum::Config> Kton<T> {
 }
 
 /// which action depends on the function selector
-pub fn which_action<T: frame_system::Config>(input_data: &[u8]) -> Result<Kton<T>, ExitError> {
+pub fn which_action<T: Config>(input_data: &[u8]) -> Result<Kton<T>, ExitError> {
 	let transfer_and_call_action = &sha3::Keccak256::digest(&TRANSFER_AND_CALL_ACTION)[0..SELECTOR];
 	let withdraw_action = &sha3::Keccak256::digest(&WITHDRAW_ACTION)[0..SELECTOR];
 	if &input_data[0..SELECTOR] == transfer_and_call_action {

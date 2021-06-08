@@ -43,6 +43,7 @@ pub mod util;
 // --- substrate ---
 use sp_std::{marker::PhantomData, vec::Vec};
 // --- darwinia ---
+use darwinia_evm::Config;
 use darwinia_support::evm::SELECTOR;
 use dp_evm::Precompile;
 use kton::Kton;
@@ -51,7 +52,6 @@ use ring::RingBack;
 use evm::{Context, ExitError, ExitSucceed};
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-pub use dvm_ethereum;
 
 /// Transfer Precompile Contract, used to support the exchange of KTON and RING transfer.
 pub enum Transfer<T> {
@@ -61,10 +61,7 @@ pub enum Transfer<T> {
 	KtonTransfer,
 	_Impossible(PhantomData<T>),
 }
-impl<T> Precompile for Transfer<T>
-where
-	T: dvm_ethereum::Config,
-{
+impl<T: Config> Precompile for Transfer<T> {
 	fn execute(
 		input: &[u8],
 		target_gas: Option<u64>,
@@ -81,7 +78,7 @@ where
 /// There are two types of transfers: RING transfer and KTON transfer
 ///
 /// The RingBack has only one action, while KtonTransfer has two: `transfer and call`, `withdraw`.
-fn which_transfer<T: dvm_ethereum::Config>(data: &[u8]) -> Result<Transfer<T>, ExitError> {
+fn which_transfer<T: Config>(data: &[u8]) -> Result<Transfer<T>, ExitError> {
 	if data.len() < SELECTOR {
 		return Err(ExitError::Other("Invalid input data！".into()));
 	}

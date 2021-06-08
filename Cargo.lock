@@ -1787,7 +1787,6 @@ dependencies = [
  "darwinia-evm",
  "darwinia-support",
  "dp-evm",
- "dvm-ethereum",
  "ethabi",
  "ethereum-types",
  "evm",
