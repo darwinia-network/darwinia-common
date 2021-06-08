@@ -109,7 +109,7 @@ impl FeeCalculator for FixedGasPrice {
 }
 
 pub struct RawAccountBasic<T>(sp_std::marker::PhantomData<T>);
-impl<T: Config> AccountBasic for RawAccountBasic<T> {
+impl<T: Config> AccountBasic<T> for RawAccountBasic<T> {
 	/// Get the account basic in EVM format.
 	fn account_basic(address: &H160) -> Account {
 		let account_id = T::AddressMapping::into_account_id(*address);
@@ -123,23 +123,23 @@ impl<T: Config> AccountBasic for RawAccountBasic<T> {
 		}
 	}
 
-	fn mutate_account_basic_balance(address: &H160, new: Account) {
+	fn mutate_account_basic_balance(address: &H160, new_balance: U256) {
 		let account_id = T::AddressMapping::into_account_id(*address);
 		let current = T::RingAccountBasic::account_basic(address);
 
-		if current.nonce < new.nonce {
-			// ASSUME: in one single EVM transaction, the nonce will not increase more than
-			// `u128::max_value()`.
-			for _ in 0..(new.nonce - current.nonce).low_u128() {
-				<frame_system::Pallet<T>>::inc_account_nonce(&account_id);
-			}
-		}
+		// if current.nonce < new.nonce {
+		// 	// ASSUME: in one single EVM transaction, the nonce will not increase more than
+		// 	// `u128::max_value()`.
+		// 	for _ in 0..(new.nonce - current.nonce).low_u128() {
+		// 		<frame_system::Pallet<T>>::inc_account_nonce(&account_id);
+		// 	}
+		// }
 
-		if current.balance > new.balance {
-			let diff = current.balance - new.balance;
+		if current.balance > new_balance {
+			let diff = current.balance - new_balance;
 			T::RingCurrency::slash(&account_id, diff.low_u128().unique_saturated_into());
-		} else if current.balance < new.balance {
-			let diff = new.balance - current.balance;
+		} else if current.balance < new_balance {
+			let diff = new_balance - current.balance;
 			T::RingCurrency::deposit_creating(&account_id, diff.low_u128().unique_saturated_into());
 		}
 	}
@@ -147,6 +147,11 @@ impl<T: Config> AccountBasic for RawAccountBasic<T> {
 	fn transfer(_source: &H160, _target: &H160, _value: U256) -> Result<(), ExitError> {
 		Ok(())
 	}
+
+	fn account_balance(_account_id: &T::AccountId) -> U256 {
+		U256::default()
+	}
+	fn mutate_account_balance(_account_id: &T::AccountId, _balance: U256) {}
 }
 
 /// Ensure that the origin is root.
