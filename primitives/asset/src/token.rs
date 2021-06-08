@@ -44,6 +44,27 @@ pub struct TokenInfo {
 /// The token Definition, Native token or ERC20
 #[derive(Encode, Decode, Clone, Debug, Eq, PartialEq)]
 pub enum Token {
+	InvalidToken,
 	Native(TokenInfo),
 	Erc20(TokenInfo),
+}
+
+impl From<(u32, TokenInfo)> for Token {
+	fn from(t: (u32, TokenInfo)) -> Self {
+		match t.0 {
+			0 => Self::Erc20(t.1),
+			1 => Self::Native(t.1),
+			_ => Self::InvalidToken,
+		}
+	}
+}
+
+impl Token {
+	pub fn token_info(self) -> Result<(u32, TokenInfo), ()> {
+		match self {
+			Self::Erc20(info) => Ok((0, info)),
+			Self::Native(info) => Ok((1, info)),
+			_ => Err(()),
+		}
+	}
 }

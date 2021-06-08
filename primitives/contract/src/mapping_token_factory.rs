@@ -64,6 +64,10 @@ impl MappingTokenFactory {
 				kind: ParamType::FixedBytes(4),
 			},
 			Param {
+				name: "tokenType".into(),
+				kind: ParamType::Uint(32),
+			},
+			Param {
 				name: "name".into(),
 				kind: ParamType::String,
 			},
@@ -118,6 +122,7 @@ impl MappingTokenFactory {
 	/// encode erc20 create function
 	pub fn encode_create_erc20(
 		event_receiver: [u8; 4],
+		token_type: u32,
 		name: &str,
 		symbol: &str,
 		decimals: u8,
@@ -128,6 +133,7 @@ impl MappingTokenFactory {
 		create.encode_input(
 			vec![
 				Token::FixedBytes(event_receiver.to_vec()),
+				Token::Uint(U256::from(token_type)),
 				Token::String(name.into()),
 				Token::String(symbol.into()),
 				Token::Uint(U256::from(decimals)),
@@ -211,6 +217,7 @@ impl TokenRegisterInfo {
 #[derive(Debug, PartialEq, Eq)]
 pub struct TokenBurnInfo {
 	pub spec_version: u32,
+	pub token_type: u32,
 	pub backing: H160,
 	pub sender: H160,
 	pub source: H160,
@@ -222,6 +229,7 @@ impl TokenBurnInfo {
 	pub fn decode(data: &[u8]) -> AbiResult<Self> {
 		let tokens = ethabi::decode(
 			&[
+				ParamType::Uint(256),
 				ParamType::Uint(256),
 				ParamType::Address,
 				ParamType::Address,
@@ -238,9 +246,11 @@ impl TokenBurnInfo {
 			tokens[3].clone(),
 			tokens[4].clone(),
 			tokens[5].clone(),
+			tokens[6].clone(),
 		) {
 			(
 				Token::Uint(spec_version),
+				Token::Uint(token_type),
 				Token::Address(backing),
 				Token::Address(sender),
 				Token::Address(source),
@@ -248,6 +258,7 @@ impl TokenBurnInfo {
 				Token::Uint(amount),
 			) => Ok(TokenBurnInfo {
 				spec_version: spec_version.low_u32(),
+				token_type: token_type.low_u32(),
 				backing,
 				sender,
 				source,

@@ -153,6 +153,7 @@ decl_module! {
 				let recipient = Self::account_id_try_from_bytes(burn_info.recipient.as_slice())?;
 				Self::cross_send(
 					burn_info.spec_version,
+					burn_info.token_type,
 					burn_info.source,
 					recipient,
 					burn_info.amount)?;
@@ -172,19 +173,8 @@ decl_module! {
 			let backing = T::BackingRelay::verify(&user)?;
 			let (token, recipient) = message;
 
-			let token_info = match token {
-				Token::Native(info) => {
-					log::debug!("cross receive native token {:?}", info);
-					info
-				}
-				Token::Erc20(info) => {
-					log::debug!("cross receive erc20 token {:?}", info);
-					info
-				}
-				_ => {
-					return Err(Error::<T>::InvalidTokenType.into())
-				}
-			};
+			let (token_type, token_info) = token.token_info()
+				.map_err(|_| Error::<T>::InvalidTokenType)?;
 
 			let mut mapped_address = Self::mapped_token_address(backing, token_info.address)?;
 			// if the mapped token address has not been created, create it first
@@ -196,7 +186,7 @@ decl_module! {
 							.map_err(|_| Error::<T>::StringCF)?;
 						let symbol = sp_std::str::from_utf8(&option.symbol[..])
 							.map_err(|_| Error::<T>::StringCF)?;
-						let input = Self::abi_encode_token_creation(backing, token_info.address, &name, &symbol, option.decimal)?;
+						let input = Self::abi_encode_token_creation(backing, token_info.address, token_type, &name, &symbol, option.decimal)?;
 						Self::transact_mapping_factory(input)?;
 						mapped_address = Self::mapped_token_address(backing, token_info.address)?;
 						Self::deposit_event(RawEvent::NewTokenCreated(user, backing, token_info.address, mapped_address));
@@ -222,14 +212,22 @@ impl<T: Config> Module<T> {
 	fn abi_encode_token_creation(
 		backing: EthereumAddress,
 		address: EthereumAddress,
+		token_type: u32,
 		name: &str,
 		symbol: &str,
 		decimal: u8,
 	) -> Result<Vec<u8>, DispatchError> {
 		let callback_processor = Self::relay_digest();
-		let input =
-			mtf::encode_create_erc20(callback_processor, name, symbol, decimal, backing, address)
-				.map_err(|_| Error::<T>::InvalidEncodeERC20)?;
+		let input = mtf::encode_create_erc20(
+			callback_processor,
+			token_type,
+			name,
+			symbol,
+			decimal,
+			backing,
+			address,
+		)
+		.map_err(|_| Error::<T>::InvalidEncodeERC20)?;
 		Ok(input)
 	}
 
@@ -282,17 +280,22 @@ impl<T: Config> Module<T> {
 
 	pub fn cross_send(
 		spec_version: u32,
+		token_type: u32,
 		token: EthereumAddress,
 		recipient: AccountId<T>,
 		amount: U256,
 	) -> Result<(), DispatchError> {
 		let message = (
 			spec_version,
-			Token::Native(TokenInfo {
-				address: token,
-				value: Some(amount),
-				option: None,
-			}),
+			(
+				token_type,
+				TokenInfo {
+					address: token,
+					value: Some(amount),
+					option: None,
+				},
+			)
+				.into(),
 			RelayAccount::DarwiniaAccount(recipient),
 		);
 		T::BackingRelay::relay_message(&message)
