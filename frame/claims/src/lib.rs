@@ -1002,11 +1002,7 @@ mod tests {
 			// "Pay RUSTs to the TEST account:0c0529c66a44e1861e5e1502b4a87009f23c792518a7a2091363f5a0e38abd57"
 			let sig = array_bytes::hex2array_unchecked("0x34c3d5afc7f8fa08f9d00a1ec4ac274c63ebce99460b556de85258c94f41ab2f52ad5188bd9fc51251cf5dcdd53751b1bd577828db3f2e8fe8ef77907d7f3f6a1b");
 			let sig = EcdsaSignature(sig);
-			let who = {
-				let array: [u8; 32] = array_bytes::hex2array_unchecked("0x0c0529c66a44e1861e5e1502b4a87009f23c792518a7a2091363f5a0e38abd57");
-
-				array.using_encoded(to_ascii_hex)
-			};
+			let who = array_bytes::hex2array_unchecked::<_, 32>("0x0c0529c66a44e1861e5e1502b4a87009f23c792518a7a2091363f5a0e38abd57").using_encoded(to_ascii_hex);
 			let signer = Claims::tron_recover(&sig, &who).unwrap();
 			assert_eq!(signer, array_bytes::hex2array_unchecked("0x11974bce18a43243ede78beec2fd8e0ba4fe17ae"));
 		});
