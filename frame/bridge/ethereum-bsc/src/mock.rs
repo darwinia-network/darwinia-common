@@ -72,8 +72,8 @@ impl pallet_timestamp::Config for Test {
 }
 
 frame_support::parameter_types! {
-	pub TestBSCConfiguration: BSCConfiguration = BSCConfiguration {
-		chain_id: 56, // 97 for bsc testnet and 56 for bsc mainnet
+	pub static Configuration: BSCConfiguration = BSCConfiguration {
+		chain_id: 56, // 56 for mainnet
 		min_gas_limit: 0x1388.into(),
 		max_gas_limit: U256::max_value(),
 		period: 0x03,
@@ -81,7 +81,7 @@ frame_support::parameter_types! {
 	};
 }
 impl Config for Test {
-	type BSCConfiguration = TestBSCConfiguration;
+	type BSCConfiguration = Configuration;
 	type UnixTime = Timestamp;
 	type OnHeadersSubmitted = ();
 }
@@ -100,6 +100,7 @@ frame_support::construct_runtime! {
 }
 
 pub struct ExtBuilder {
+	mainnet: bool,
 	genesis_header: BSCHeader,
 }
 impl ExtBuilder {
@@ -110,7 +111,51 @@ impl ExtBuilder {
 		self
 	}
 
+	pub fn testnet(mut self) -> Self {
+		let genesis_header = serde_json::from_str::<BSCHeader>(
+			r#"{
+				"difficulty": "0x2",
+				"extraData": "0xd883010100846765746888676f312e31352e35856c696e75780000001600553d1284214b9b9c85549ab3d2b972df0deef66ac2c935552c16704d214347f29fa77f77da6d75d7c7523679479c2402e921db00923e014cd439c606c5967a1a4ad9cc746a70ee58568466f7996dd0ace4e896c5d20b2a975c050e4220be276ace4892f4b41a980a75ecd1309ea12fa2ed87a8744fbfc9b863d5a2959d3f95eae5dc7d70144ce1b73b403b7eb6e0b71b214cb885500844365e95cd9942c7276e7fd8c89c669357d161d57b0b255c94ea96e179999919e625dd7ad2f7b88723857946a41af646c589c3362af12db7da187b9d47f600a1e0c15639d477674640fa9d5fbf9dfaf1d84525f128a3c90b7480be53ad77703837dfead0b31186c4103b85ea08e2c37006e7c41301",
+				"gasLimit": "0x1c7f9be",
+				"gasUsed": "0x1a478c",
+				"hash": "0xfec73802d11a6d4e6209242150c2cb17aa49350d25e41b82335074a98781f1f6",
+				"logsBloom": "0x0000200080200000000041000020000002000000080000000800010000400000000800010002000000800201000000841000044000002200000000001020000a000800001000000000000008000000212010000000100000000000022002000200a080201022102208000000200000004000080080000000000000100010000000802000000001000008000040008410000005400100000200000004000000000300200000000080001000000800000000000000000020800202400005001400140000020000002008002000080001000000000000004400208000800800000404100004008450004100000800000040402000000000800808000b0000400000",
+				"miner": "0x1284214b9b9c85549ab3d2b972df0deef66ac2c9",
+				"mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+				"nonce": "0x0000000000000000",
+				"number": "0x913570",
+				"parentHash": "0x58ff628185cd8d77c8592c7349180731fc8f85a8f46be7d7aba572eafbc2ffb7",
+				"receiptsRoot": "0x707b7daac57a5e13c01b3cbcc00f444860cb44b003b468788716464135faba15",
+				"sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+				"stateRoot": "0x65918191d85321efd8e2b0d9970c316342c62ebfd590198b8e4900f746a20a96",
+				"timestamp": "0x60bdb93d",
+				"totalDifficulty": "0x12119b9",
+				"transactionsRoot": "0xe2b722a634ec82422a09a24ba0bc2c3ae4d83df764b872fd24c464634df399cf"
+			}"#,
+		).unwrap();
+
+		self.mainnet = false;
+
+		self.genesis_header(genesis_header)
+	}
+
+	pub fn set_associated_constants(&self) {
+		if !self.mainnet {
+			CONFIGURATION.with(|v| {
+				*v.borrow_mut() = BSCConfiguration {
+					chain_id: 97, // 97 for testnet
+					min_gas_limit: 0x1388.into(),
+					max_gas_limit: U256::max_value(),
+					period: 0x03,
+					epoch_length: 0xc8, // 200
+				}
+			});
+		}
+	}
+
 	pub fn build(self) -> TestExternalities {
+		self.set_associated_constants();
+
 		let mut storage = frame_system::GenesisConfig::default()
 			.build_storage::<Test>()
 			.unwrap();
@@ -140,7 +185,7 @@ impl ExtBuilder {
 impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {
-			// BSC mainnet
+			mainnet: true,
 			genesis_header: serde_json::from_str(r#"{
 				"difficulty": "0x2",
 				"extraData": "0xd883010100846765746888676f312e31352e35856c696e7578000000fc3ca6b72465176c461afb316ebc773c61faee85a6515daa295e26495cef6f69dfa69911d9d8e4f3bbadb89b29a97c6effb8a411dabc6adeefaa84f5067c8bbe2d4c407bbe49438ed859fe965b140dcf1aab71a93f349bbafec1551819b8be1efea2fc46ca749aa14430b3230294d12c6ab2aac5c2cd68e80b16b581685b1ded8013785d6623cc18d214320b6bb6475970f657164e5b75689b64b7fd1fa275f334f28e1872b61c6014342d914470ec7ac2975be345796c2b7ae2f5b9e386cd1b50a4550696d957cb4900f03a8b6c8fd93d6f4cea42bbb345dbc6f0dfdb5bec739bb832254baf4e8b4cc26bd2b52b31389b56e98b9f8ccdafcc39f3c7d6ebf637c9151673cbc36b88a6f79b60359f141df90a0c745125b131caaffd12b8f7166496996a7da21cf1f1b04d9b3e26a3d077be807dddb074639cd9fa61b47676c064fc50d62cce2fd7544e0b2cc94692d4a704debef7bcb61328e2d3a739effcd3a99387d015e260eefac72ebea1e9ae3261a475a27bb1028f140bc2a7c843318afdea0a6e3c511bbd10f4519ece37dc24887e11b55dee226379db83cffc681495730c11fdde79ba4c0c0670403d7dfc4c816a313885fe04b850f96f27b2e9fd88b147c882ad7caf9b964abfe6543625fcca73b56fe29d3046831574b0681d52bf5383d6f2187b6276c100",
