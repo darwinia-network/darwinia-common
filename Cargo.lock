@@ -2303,6 +2303,7 @@ name = "drml"
 version = "2.4.0"
 dependencies = [
  "array-bytes",
+ "bsc-primitives",
  "darwinia-balances-rpc",
  "darwinia-balances-rpc-runtime-api",
  "darwinia-claims",
@@ -2356,6 +2357,7 @@ dependencies = [
  "sc-sync-state-rpc",
  "sc-telemetry",
  "sc-transaction-pool",
+ "serde_json",
  "sp-api",
  "sp-authority-discovery",
  "sp-authorship",
