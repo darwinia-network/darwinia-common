@@ -38,7 +38,8 @@ fn recover_creator_should_work() {
 		}"#,
 		).unwrap();
 
-	ExtBuilder::new(bsc_testnet_header_9516400)
+	ExtBuilder::default()
+		.genesis_header(bsc_testnet_header_9516400)
 		.build()
 		.execute_with(|| {
 			let header = BSC::finalized_checkpoint();
