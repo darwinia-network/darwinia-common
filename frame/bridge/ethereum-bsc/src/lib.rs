@@ -121,10 +121,6 @@ pub mod pallet {
 	#[pallet::getter(fn finalized_checkpoint)]
 	pub type FinalizedCheckpoint<T> = StorageValue<_, BSCHeader, ValueQuery>;
 
-	#[pallet::storage]
-	#[pallet::getter(fn creator_cache_of)]
-	pub type CreatorCache<T> = StorageMap<_, Identity, Hash, Address, OptionQuery>;
-
 	#[cfg_attr(feature = "std", derive(Default))]
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {
@@ -441,10 +437,6 @@ pub mod pallet {
 			chain_id: u64,
 			header: &BSCHeader,
 		) -> Result<Address, DispatchError> {
-			if let Some(creator) = <CreatorCache<T>>::get(header.compute_hash()) {
-				return Ok(creator);
-			}
-
 			let data = &header.extra_data;
 
 			ensure!(data.len() > VANITY_LENGTH, <Error<T>>::MissingVanity);
@@ -471,8 +463,6 @@ pub mod pallet {
 			let pubkey = crypto::secp256k1_ecdsa_recover(&signature, msg.as_fixed_bytes())
 				.map_err(|_| <Error<T>>::RecoverPubkeyFail)?;
 			let creator = bsc_primitives::public_to_address(&pubkey);
-
-			<CreatorCache<T>>::insert(header.compute_hash(), creator);
 
 			Ok(creator)
 		}
