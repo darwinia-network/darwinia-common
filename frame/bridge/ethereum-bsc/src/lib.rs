@@ -149,8 +149,6 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			headers: Vec<BSCHeader>,
 		) -> DispatchResultWithPostInfo {
-			// TODO: should we ignore all checks while number equals 0?
-
 			// ensure not signed
 			frame_system::ensure_none(origin)?;
 
