@@ -23,7 +23,7 @@ use sp_runtime::{traits::UniqueSaturatedInto, SaturatedConversion};
 use sp_std::{marker::PhantomData, prelude::*, vec::Vec};
 // --- darwinia ---
 use crate::AccountId;
-use darwinia_evm::{Account, AccountBasic, Config};
+use darwinia_evm::{AccountBasic, Config};
 use darwinia_support::evm::{POW_9, TRANSFER_ADDR};
 use dvm_ethereum::{
 	account_basic::{RemainBalanceOp, RingRemainBalance},
@@ -64,13 +64,7 @@ impl<T: dvm_ethereum::Config> RingBack<T> {
 
 		// Transfer
 		let new_source_balance = source_account.balance.saturating_sub(value);
-		T::RingAccountBasic::mutate_account_basic(
-			&source,
-			Account {
-				nonce: source_account.nonce,
-				balance: new_source_balance,
-			},
-		);
+		T::RingAccountBasic::mutate_account_basic(&source, new_source_balance);
 		let (currency_value, remain_balance) = context.apparent_value.div_mod(helper);
 		<T as darwinia_evm::Config>::RingCurrency::deposit_creating(
 			&input.dest,

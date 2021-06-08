@@ -24,7 +24,7 @@ use sp_runtime::{traits::UniqueSaturatedInto, SaturatedConversion};
 // --- darwinia ---
 use crate::util;
 use crate::AccountId;
-use darwinia_evm::{Account, AccountBasic, Pallet, Runner};
+use darwinia_evm::{AccountBasic, Pallet, Runner};
 use darwinia_support::evm::{POW_9, SELECTOR, TRANSFER_ADDR};
 use dvm_ethereum::{
 	account_basic::{KtonRemainBalance, RemainBalanceOp},
@@ -121,13 +121,7 @@ impl<T: dvm_ethereum::Config> Kton<T> {
 
 				// Transfer
 				let new_wkton_balance = caller_kton.balance.saturating_sub(wd.kton_value);
-				T::KtonAccountBasic::mutate_account_basic(
-					&context.caller,
-					Account {
-						nonce: caller_kton.nonce,
-						balance: new_wkton_balance,
-					},
-				);
+				T::KtonAccountBasic::mutate_account_basic(&context.caller, new_wkton_balance);
 				let (currency_value, remain_balance) = wd.kton_value.div_mod(helper);
 				<T as darwinia_evm::Config>::KtonCurrency::deposit_creating(
 					&wd.to_account_id,

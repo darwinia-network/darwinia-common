@@ -89,8 +89,8 @@ pub mod pallet {
 		/// EVM execution runner.
 		type Runner: Runner<Self>;
 		/// The account basic mapping way
-		type RingAccountBasic: AccountBasic;
-		type KtonAccountBasic: AccountBasic;
+		type RingAccountBasic: AccountBasic<Self>;
+		type KtonAccountBasic: AccountBasic<Self>;
 		/// Issuing contracts handler
 		type IssuingHandler: IssuingHandler;
 
@@ -162,20 +162,8 @@ pub mod pallet {
 		fn build(&self) {
 			let extra_genesis_builder: fn(&Self) = |config: &GenesisConfig| {
 				for (address, account) in &config.accounts {
-					T::RingAccountBasic::mutate_account_basic(
-						&address,
-						Account {
-							balance: account.balance,
-							nonce: account.nonce,
-						},
-					);
-					T::KtonAccountBasic::mutate_account_basic(
-						&address,
-						Account {
-							balance: account.balance,
-							nonce: account.nonce,
-						},
-					);
+					T::RingAccountBasic::mutate_account_basic(&address, account.balance);
+					T::KtonAccountBasic::mutate_account_basic(&address, account.balance);
 					AccountCodes::<T>::insert(address, &account.code);
 					for (index, value) in &account.storage {
 						AccountStorages::<T>::insert(address, index, value);
@@ -382,13 +370,7 @@ pub mod pallet {
 			let account = T::RingAccountBasic::account_basic(address);
 			let new_account_balance = account.balance.saturating_sub(value);
 
-			T::RingAccountBasic::mutate_account_basic(
-				&address,
-				Account {
-					nonce: account.nonce,
-					balance: new_account_balance,
-				},
-			);
+			T::RingAccountBasic::mutate_account_basic(&address, new_account_balance);
 		}
 
 		/// Deposit fee.
@@ -396,13 +378,7 @@ pub mod pallet {
 			let account = T::RingAccountBasic::account_basic(address);
 			let new_account_balance = account.balance.saturating_add(value);
 
-			T::RingAccountBasic::mutate_account_basic(
-				&address,
-				Account {
-					nonce: account.nonce,
-					balance: new_account_balance,
-				},
-			);
+			T::RingAccountBasic::mutate_account_basic(&address, new_account_balance);
 		}
 	}
 }
@@ -432,13 +408,17 @@ pub trait AddressMapping<A> {
 }
 
 /// Account basic info operations
-pub trait AccountBasic {
+pub trait AccountBasic<T: frame_system::Config> {
+	/// Get the account basic in EVM format.
 	fn account_basic(address: &H160) -> Account;
-	fn mutate_account_basic(address: &H160, new: Account);
+	/// Mutate the basic account
+	fn mutate_account_basic(address: &H160, new_balance: U256);
+	/// Transfer value
 	fn transfer(source: &H160, target: &H160, value: U256) -> Result<(), ExitError>;
-	fn account(account_id: &AccountId32) -> Account {
-		self.account_basic()
-	}
+	/// Get account balance
+	fn account_balance(account_id: &T::AccountId) -> U256;
+	/// Mutate account balance
+	fn mutate_account_balance(account_id: &T::AccountId, balance: U256);
 }
 
 /// Config that outputs the current transaction gas price.
