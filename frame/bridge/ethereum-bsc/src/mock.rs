@@ -73,11 +73,12 @@ impl pallet_timestamp::Config for Test {
 
 frame_support::parameter_types! {
 	pub static Configuration: BSCConfiguration = BSCConfiguration {
-		chain_id: 56, // 56 for mainnet
+		// Mainnet
+		chain_id: 56,
 		min_gas_limit: 0x1388.into(),
 		max_gas_limit: U256::max_value(),
 		period: 0x03,
-		epoch_length: 0xc8, // 200
+		epoch_length: 0xc8,
 	};
 }
 impl Config for Test {
@@ -143,11 +144,12 @@ impl ExtBuilder {
 		if !self.mainnet {
 			CONFIGURATION.with(|v| {
 				*v.borrow_mut() = BSCConfiguration {
-					chain_id: 97, // 97 for testnet
+					// Testnet
+					chain_id: 97,
 					min_gas_limit: 0x1388.into(),
 					max_gas_limit: U256::max_value(),
 					period: 0x03,
-					epoch_length: 0xc8, // 200
+					epoch_length: 0xc8,
 				}
 			});
 		}
