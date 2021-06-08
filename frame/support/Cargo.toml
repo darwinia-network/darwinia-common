@@ -13,10 +13,8 @@ version     = "2.4.0"
 # crates
 codec                 = { package = "parity-scale-codec", version = "2.1.1", default-features = false, features = ["derive"] }
 ethabi                = { default-features = false, git = "https://github.com/darwinia-network/ethabi.git", branch = "xavier-no-std" }
-hex                   = { version = "0.4.3", default-features = false }
 impl-trait-for-tuples = { version = "0.2.1" }
 num-traits            = { version = "0.2.14", default-features = false }
-array-bytes    = { version = "1.1.0" }
 # darwinia
 ethereum-primitives = { default-features = false, path = "../../primitives/ethereum-primitives" }
 # substrate
@@ -26,6 +24,7 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 
 [dev-dependencies]
 sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
+array-bytes    = { version = "1.1.0" }
 
 [features]
 default = ["std"]
@@ -39,7 +38,6 @@ std = [
 crates-std    = [
 	"codec/std",
 	"ethabi/std",
-	"hex/std",
 	"num-traits/std",
 ]
 darwinia-std  = ["ethereum-primitives/std"]

@@ -1406,6 +1406,7 @@ version = "2.4.0"
 dependencies = [
  "ethereum-primitives",
  "parity-scale-codec",
+ "sha3 0.9.1",
  "sp-std",
 ]
 
@@ -1991,22 +1992,6 @@ dependencies = [
 ]
 
 [[package]]
-<<<<<<< HEAD
-=======
-name = "darwinia-s2s-chain"
-version = "2.4.0"
-dependencies = [
- "darwinia-asset-primitives",
- "darwinia-relay-primitives",
- "darwinia-support",
- "ethereum-primitives",
- "parity-scale-codec",
- "sha3 0.9.1",
- "sp-std",
-]
-
-[[package]]
->>>>>>> Replace chain selector hardcode value
 name = "darwinia-s2s-issuing"
 version = "2.4.0"
 dependencies = [
@@ -2119,7 +2104,6 @@ dependencies = [
  "ethabi",
  "ethereum-primitives",
  "frame-support",
- "hex",
  "impl-trait-for-tuples",
  "num-traits",
  "parity-scale-codec",

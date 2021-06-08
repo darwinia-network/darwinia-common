@@ -14,10 +14,10 @@ version     = "2.4.0"
 codec          = { package = "parity-scale-codec", version = "2.1.1", default-features = false, features = ["derive"] }
 sha3           = { version = "0.9.1", default-features = false }
 # darwinia
-darwinia-asset-primitives          = { default-features = false, path = "../../../../primitives/asset" }
-darwinia-relay-primitives          = { default-features = false, path = "../../../../primitives/relay" }
-ethereum-primitives                = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
-darwinia-support                   = { default-features = false, path = "../../../support" }
+# darwinia-asset-primitives          = { default-features = false, path = "../../../../primitives/asset" }
+# darwinia-relay-primitives          = { default-features = false, path = "../../../../primitives/relay" }
+ethereum-primitives                = { default-features = false, path = "../ethereum-primitives" }
+# darwinia-support                   = { default-features = false, path = "../../../support" }
 # substrate
 sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
 
@@ -33,10 +33,10 @@ std = [
 crates-std    = ["codec/std"]
 
 darwinia-std = [
-	"darwinia-asset-primitives/std",
-	"darwinia-relay-primitives/std",
+	# "darwinia-asset-primitives/std",
+	# "darwinia-relay-primitives/std",
 	"ethereum-primitives/std",
-	"darwinia-support/std",
+	# "darwinia-support/std",
 	"sha3/std",
 ]
 

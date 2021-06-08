@@ -35,7 +35,7 @@ pub trait Relay {
 	type RelayMessageResult: Clone;
 	fn verify(proof: &Self::RelayProof) -> Self::VerifiedResult;
 	fn relay_message(message: &Self::RelayMessage) -> Self::RelayMessageResult;
-    fn digest() -> RelayDigest;
+	fn digest() -> RelayDigest;
 }
 
 #[derive(Encode, Decode, Clone, Debug, Eq, PartialEq)]
@@ -44,4 +44,4 @@ pub enum RelayAccount<AccountId> {
 	DarwiniaAccount(AccountId),
 }
 
-pub type RelayDigest = [u8;4];
+pub type RelayDigest = [u8; 4];

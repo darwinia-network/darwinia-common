@@ -55,6 +55,7 @@ use darwinia_asset_primitives::token::{Token, TokenInfo};
 use darwinia_evm::GasWeightMapping;
 use darwinia_primitives_contract::mapping_token_factory::MappingTokenFactory as mtf;
 use darwinia_primitives_contract::mapping_token_factory::TokenBurnInfo;
+use darwinia_relay_primitives::RelayDigest;
 use ethereum_primitives::EthereumAddress;
 use sha3::Digest;
 use types::*;
