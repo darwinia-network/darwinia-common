@@ -2,7 +2,7 @@
 use sp_core::U256;
 // --- darwinia ---
 use crate::*;
-use darwinia_bridge_ethereum_bsc::{BSCConfiguration, Config};
+use darwinia_bridge_bsc::{BSCConfiguration, Config};
 
 frame_support::parameter_types! {
 	pub Configuration: BSCConfiguration = BSCConfiguration {

@@ -24,7 +24,7 @@ use frame_system::mocking::*;
 use sp_core::U256;
 use sp_io::TestExternalities;
 // --- darwinia ---
-use crate::{self as darwinia_bridge_ethereum_bsc, *};
+use crate::{self as darwinia_bridge_bsc, *};
 use bsc_primitives::BSCHeader;
 
 pub type Block = MockBlock<Test>;
@@ -95,7 +95,7 @@ frame_support::construct_runtime! {
 	{
 		System: frame_system::{Pallet, Call, Storage, Config},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		BSC: darwinia_bridge_ethereum_bsc::{Pallet, Storage, Call},
+		BSC: darwinia_bridge_bsc::{Pallet, Storage, Call},
 	}
 }
 
@@ -115,8 +115,8 @@ impl ExtBuilder {
 			.build_storage::<Test>()
 			.unwrap();
 
-		<darwinia_bridge_ethereum_bsc::GenesisConfig as GenesisBuild<Test>>::assimilate_storage(
-			&darwinia_bridge_ethereum_bsc::GenesisConfig {
+		<darwinia_bridge_bsc::GenesisConfig as GenesisBuild<Test>>::assimilate_storage(
+			&darwinia_bridge_bsc::GenesisConfig {
 				genesis_header: self.genesis_header,
 			},
 			&mut storage,
