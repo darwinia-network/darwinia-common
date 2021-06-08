@@ -455,7 +455,7 @@ fn mutate_account_works_well() {
 	ext.execute_with(|| {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
 		let origin_balance = U256::from(123_456_789_000_000_090u128);
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic(
+		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
 			&test_addr,
 			origin_balance,
 		);
@@ -471,13 +471,13 @@ fn mutate_account_inc_balance_by_10() {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
 		// origin
 		let origin_balance = U256::from(600_000_000_090u128);
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic(
+		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
 			&test_addr,
 			origin_balance,
 		);
 
 		let new_balance = origin_balance.saturating_add(U256::from(10));
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic(
+		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
 			&test_addr,
 			new_balance,
 		);
@@ -492,13 +492,13 @@ fn mutate_account_inc_balance_by_999_999_910() {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
 		// origin
 		let origin_balance = U256::from(600_000_000_090u128);
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic(
+		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
 			&test_addr,
 			origin_balance,
 		);
 
 		let new_balance = origin_balance.saturating_add(U256::from(999999910u128));
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic(
+		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
 			&test_addr,
 			new_balance,
 		);
@@ -513,13 +513,13 @@ fn mutate_account_inc_by_1000_000_000() {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
 		// origin
 		let origin_balance = U256::from(600_000_000_090u128);
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic(
+		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
 			&test_addr,
 			origin_balance,
 		);
 
 		let new_balance = origin_balance.saturating_add(U256::from(1000_000_000u128));
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic(
+		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
 			&test_addr,
 			new_balance,
 		);
@@ -534,13 +534,13 @@ fn mutate_account_dec_balance_by_90() {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
 		// origin
 		let origin_balance = U256::from(600_000_000_090u128);
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic(
+		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
 			&test_addr,
 			origin_balance,
 		);
 
 		let new_balance = origin_balance.saturating_sub(U256::from(90));
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic(
+		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
 			&test_addr,
 			new_balance,
 		);
@@ -554,13 +554,13 @@ fn mutate_account_dec_balance_by_990() {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
 		// origin
 		let origin_balance = U256::from(600_000_000_090u128);
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic(
+		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
 			&test_addr,
 			origin_balance,
 		);
 
 		let new_balance = origin_balance.saturating_sub(U256::from(990));
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic(
+		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
 			&test_addr,
 			new_balance,
 		);
@@ -574,13 +574,13 @@ fn mutate_account_dec_balance_existential_by_90() {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
 		// origin
 		let origin_balance = U256::from(500_000_000_090u128);
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic(
+		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
 			&test_addr,
 			origin_balance,
 		);
 
 		let new_balance = origin_balance.saturating_sub(U256::from(90));
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic(
+		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
 			&test_addr,
 			new_balance,
 		);
@@ -594,13 +594,13 @@ fn mutate_account_dec_balance_existential_by_990() {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
 		// origin
 		let origin_balance = U256::from(500_000_000_090u128);
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic(
+		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
 			&test_addr,
 			origin_balance,
 		);
 
 		let new_balance = origin_balance.saturating_sub(U256::from(990));
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic(
+		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
 			&test_addr,
 			new_balance,
 		);

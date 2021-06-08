@@ -162,8 +162,8 @@ pub mod pallet {
 		fn build(&self) {
 			let extra_genesis_builder: fn(&Self) = |config: &GenesisConfig| {
 				for (address, account) in &config.accounts {
-					T::RingAccountBasic::mutate_account_basic(&address, account.balance);
-					T::KtonAccountBasic::mutate_account_basic(&address, account.balance);
+					T::RingAccountBasic::mutate_account_basic_balance(&address, account.balance);
+					T::KtonAccountBasic::mutate_account_basic_balance(&address, account.balance);
 					AccountCodes::<T>::insert(address, &account.code);
 					for (index, value) in &account.storage {
 						AccountStorages::<T>::insert(address, index, value);
@@ -370,7 +370,7 @@ pub mod pallet {
 			let account = T::RingAccountBasic::account_basic(address);
 			let new_account_balance = account.balance.saturating_sub(value);
 
-			T::RingAccountBasic::mutate_account_basic(&address, new_account_balance);
+			T::RingAccountBasic::mutate_account_basic_balance(&address, new_account_balance);
 		}
 
 		/// Deposit fee.
@@ -378,7 +378,7 @@ pub mod pallet {
 			let account = T::RingAccountBasic::account_basic(address);
 			let new_account_balance = account.balance.saturating_add(value);
 
-			T::RingAccountBasic::mutate_account_basic(&address, new_account_balance);
+			T::RingAccountBasic::mutate_account_basic_balance(&address, new_account_balance);
 		}
 	}
 }
@@ -412,7 +412,7 @@ pub trait AccountBasic<T: frame_system::Config> {
 	/// Get the account basic in EVM format.
 	fn account_basic(address: &H160) -> Account;
 	/// Mutate the basic account
-	fn mutate_account_basic(address: &H160, new_balance: U256);
+	fn mutate_account_basic_balance(address: &H160, new_balance: U256);
 	/// Transfer value
 	fn transfer(source: &H160, target: &H160, value: U256) -> Result<(), ExitError>;
 	/// Get account balance

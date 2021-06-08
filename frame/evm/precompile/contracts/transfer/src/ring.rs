@@ -64,7 +64,7 @@ impl<T: dvm_ethereum::Config> RingBack<T> {
 
 		// Transfer
 		let new_source_balance = source_account.balance.saturating_sub(value);
-		T::RingAccountBasic::mutate_account_basic(&source, new_source_balance);
+		T::RingAccountBasic::mutate_account_basic_balance(&source, new_source_balance);
 		let (currency_value, remain_balance) = context.apparent_value.div_mod(helper);
 		<T as darwinia_evm::Config>::RingCurrency::deposit_creating(
 			&input.dest,

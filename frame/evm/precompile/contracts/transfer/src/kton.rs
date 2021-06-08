@@ -121,7 +121,10 @@ impl<T: dvm_ethereum::Config> Kton<T> {
 
 				// Transfer
 				let new_wkton_balance = caller_kton.balance.saturating_sub(wd.kton_value);
-				T::KtonAccountBasic::mutate_account_basic(&context.caller, new_wkton_balance);
+				T::KtonAccountBasic::mutate_account_basic_balance(
+					&context.caller,
+					new_wkton_balance,
+				);
 				let (currency_value, remain_balance) = wd.kton_value.div_mod(helper);
 				<T as darwinia_evm::Config>::KtonCurrency::deposit_creating(
 					&wd.to_account_id,

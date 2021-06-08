@@ -123,7 +123,7 @@ impl<T: Config> AccountBasic for RawAccountBasic<T> {
 		}
 	}
 
-	fn mutate_account_basic(address: &H160, new: Account) {
+	fn mutate_account_basic_balance(address: &H160, new: Account) {
 		let account_id = T::AddressMapping::into_account_id(*address);
 		let current = T::RingAccountBasic::account_basic(address);
 

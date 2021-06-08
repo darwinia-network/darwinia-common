@@ -118,7 +118,7 @@ where
 	}
 
 	/// Mutate the basic account
-	fn mutate_account_basic(address: &H160, new_balance: U256) {
+	fn mutate_account_basic_balance(address: &H160, new_balance: U256) {
 		let account_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(*address);
 		Self::mutate_account_balance(&account_id, new_balance)
 	}
@@ -128,11 +128,11 @@ where
 		let source_account = Self::account_basic(source);
 		ensure!(source_account.balance >= value, ExitError::OutOfGas);
 		let new_source_balance = source_account.balance.saturating_sub(value);
-		Self::mutate_account_basic(source, new_source_balance);
+		Self::mutate_account_basic_balance(source, new_source_balance);
 
 		let target_account = Self::account_basic(target);
 		let new_target_balance = target_account.balance.saturating_add(value);
-		Self::mutate_account_basic(target, new_target_balance);
+		Self::mutate_account_basic_balance(target, new_target_balance);
 
 		Ok(())
 	}
