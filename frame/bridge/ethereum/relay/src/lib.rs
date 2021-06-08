@@ -732,7 +732,7 @@ impl<T: Config> Relayable for Module<T> {
 		);
 
 		let last_leaf = *relay_header_id - 1;
-		let mmr_root = array_bytes::dyn2array!(mmr_root, 32).into();
+		let mmr_root = array_bytes::dyn_into!(mmr_root, 32);
 
 		if let Some(best_confirmed_block_number) = optional_best_confirmed_relay_header_id {
 			let maybe_best_confirmed_block_header_hash =
@@ -756,7 +756,7 @@ impl<T: Config> Relayable for Module<T> {
 					mmr_root,
 					mmr_proof
 						.iter()
-						.map(|h| array_bytes::dyn2array!(h, 32).into())
+						.map(|h| array_bytes::dyn_into!(h, 32))
 						.collect(),
 					vec![(
 						*best_confirmed_block_number,
@@ -780,12 +780,11 @@ impl<T: Config> Relayable for Module<T> {
 					mmr_root,
 					mmr_proof
 						.iter()
-						.map(|h| array_bytes::dyn2array!(h, 32).into())
+						.map(|h| array_bytes::dyn_into!(h, 32))
 						.collect(),
 					vec![(
 						header.number,
-						array_bytes::dyn2array!(header.hash.ok_or(<Error<T>>::HeaderInv)?, 32)
-							.into(),
+						array_bytes::dyn_into!(header.hash.ok_or(<Error<T>>::HeaderInv)?, 32)
 					)],
 				),
 				<Error<T>>::MMRInv
@@ -926,11 +925,10 @@ impl<T: Config> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
 				mmr_proof.proof.to_vec(),
 				vec![(
 					ethereum_header.number,
-					array_bytes::dyn2array!(
+					array_bytes::dyn_into!(
 						ethereum_header.hash.ok_or(<Error<T>>::HeaderHashInv)?,
 						32
 					)
-					.into(),
 				)]
 			),
 			<Error<T>>::MMRInv
