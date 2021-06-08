@@ -1,50 +1,46 @@
-// This file is part of Substrate.
-
-// Copyright (C) 2017-2020 Parity Technologies (UK) Ltd.
-// SPDX-License-Identifier: Apache-2.0
-
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// This file is part of Darwinia.
 //
-// 	http://www.apache.org/licenses/LICENSE-2.0
+// Copyright (C) 2018-2021 Darwinia Network
+// SPDX-License-Identifier: GPL-3.0
 //
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 //! EVM stack-based runner.
 
-use crate::runner::Runner as RunnerT;
-use crate::{
-	AccountBasic, AccountCodes, AccountStorages, AddressMapping, Config, Error, Event,
-	FeeCalculator, Module, PrecompileSet,
+// --- crates.io ---
+use evm::{
+	backend::Backend as BackendT,
+	executor::{StackExecutor, StackState as StackStateT, StackSubstateMetadata},
+	ExitError, ExitReason, Transfer,
 };
-
-// --- darwinia ---
-use dp_evm::{CallInfo, CreateInfo, ExecutionInfo, Log, Vicinity};
+use sha3::{Digest, Keccak256};
 // --- substrate ---
-use frame_support::{
-	ensure,
-	storage::{StorageDoubleMap, StorageMap},
-	traits::Get,
-};
+use frame_support::{ensure, traits::Get};
 use sp_core::{H160, H256, U256};
 use sp_runtime::traits::UniqueSaturatedInto;
-use sp_std::{boxed::Box, collections::btree_set::BTreeSet, marker::PhantomData, mem, vec::Vec};
-// --- std ---
-use evm::backend::Backend as BackendT;
-use evm::executor::{StackExecutor, StackState as StackStateT, StackSubstateMetadata};
-use evm::{ExitError, ExitReason, Transfer};
-use sha3::{Digest, Keccak256};
+use sp_std::{collections::btree_set::BTreeSet, marker::PhantomData, mem, prelude::*};
+// --- darwinia ---
+use crate::{
+	runner::Runner as RunnerT, AccountBasic, AccountCodes, AccountStorages, AddressMapping, Config,
+	Error, Event, FeeCalculator, Pallet, PrecompileSet,
+};
+use dp_evm::{CallInfo, CreateInfo, ExecutionInfo, Log, Vicinity};
 
 #[derive(Default)]
 pub struct Runner<T: Config> {
 	_marker: PhantomData<T>,
 }
-
 impl<T: Config> Runner<T> {
 	/// Execute an EVM operation.
 	pub fn execute<'config, F, R>(
@@ -99,7 +95,7 @@ impl<T: Config> Runner<T> {
 			ensure!(source_account.nonce == nonce, Error::<T>::InvalidNonce);
 		}
 
-		Module::<T>::withdraw_fee(&source, total_fee);
+		Pallet::<T>::withdraw_fee(&source, total_fee);
 		let (reason, retv) = f(&mut executor);
 
 		let used_gas = U256::from(executor.used_gas());
@@ -113,7 +109,7 @@ impl<T: Config> Runner<T> {
 			gas_limit,
 			actual_fee
 		);
-		Module::<T>::deposit_fee(&source, total_fee.saturating_sub(actual_fee));
+		Pallet::<T>::deposit_fee(&source, total_fee.saturating_sub(actual_fee));
 
 		let state = executor.into_state();
 
@@ -123,7 +119,7 @@ impl<T: Config> Runner<T> {
 				"Deleting account at {:?}",
 				address
 			);
-			Module::<T>::remove_account(&address)
+			<Pallet<T>>::remove_account(&address)
 		}
 
 		for substrate_log in &state.substate.logs {
@@ -136,7 +132,7 @@ impl<T: Config> Runner<T> {
 				substrate_log.data.len(),
 				substrate_log.data
 			);
-			Module::<T>::deposit_event(Event::<T>::Log(Log {
+			Pallet::<T>::deposit_event(Event::<T>::Log(Log {
 				address: substrate_log.address,
 				topics: substrate_log.topics.clone(),
 				data: substrate_log.data.clone(),
@@ -400,11 +396,11 @@ impl<'vicinity, 'config, T: Config> BackendT for SubstrateStackState<'vicinity, 
 	}
 
 	fn code(&self, address: H160) -> Vec<u8> {
-		AccountCodes::get(&address)
+		AccountCodes::<T>::get(&address)
 	}
 
 	fn storage(&self, address: H160, index: H256) -> H256 {
-		AccountStorages::get(address, index)
+		AccountStorages::<T>::get(address, index)
 	}
 
 	fn original_storage(&self, _address: H160, _index: H256) -> Option<H256> {
@@ -440,7 +436,7 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 	}
 
 	fn is_empty(&self, address: H160) -> bool {
-		Module::<T>::is_account_empty(&address)
+		Pallet::<T>::is_account_empty(&address)
 	}
 
 	fn deleted(&self, address: H160) -> bool {
@@ -460,7 +456,7 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 				address,
 				index,
 			);
-			AccountStorages::remove(address, index);
+			AccountStorages::<T>::remove(address, index);
 		} else {
 			log::debug!(
 				target: "evm",
@@ -469,12 +465,12 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 				index,
 				value,
 			);
-			AccountStorages::insert(address, index, value);
+			AccountStorages::<T>::insert(address, index, value);
 		}
 	}
 
 	fn reset_storage(&mut self, address: H160) {
-		AccountStorages::remove_prefix(address);
+		AccountStorages::<T>::remove_prefix(address);
 	}
 
 	fn log(&mut self, address: H160, topics: Vec<H256>, data: Vec<u8>) {
@@ -492,7 +488,7 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 			code.len(),
 			address
 		);
-		Module::<T>::create_account(address, code);
+		Pallet::<T>::create_account(address, code);
 	}
 
 	fn transfer(&mut self, transfer: Transfer) -> Result<(), ExitError> {
