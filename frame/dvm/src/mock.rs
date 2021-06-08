@@ -36,8 +36,10 @@ use sp_std::prelude::*;
 // --- darwinia ---
 use crate::{self as dvm_ethereum, account_basic::*, *};
 use darwinia_evm::{runner::stack::Runner, AddressMapping, EnsureAddressTruncated, FeeCalculator};
-use darwinia_evm_precompile_simple::*;
+use darwinia_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
+use darwinia_evm_precompile_transfer::Transfer;
 use dp_evm::{Precompile, PrecompileSet};
+use sp_std::marker::PhantomData;
 
 darwinia_support::impl_test_account_data! {}
 
@@ -146,6 +148,35 @@ frame_support::parameter_types! {
 	pub const ChainId: u64 = 42;
 	pub const BlockGasLimit: U256 = U256::MAX;
 }
+
+pub struct MockPrecompiles<R>(PhantomData<R>);
+impl<R> PrecompileSet for MockPrecompiles<R>
+where
+	R: darwinia_evm_precompile_transfer::dvm_ethereum::Config,
+{
+	fn execute(
+		address: H160,
+		input: &[u8],
+		target_gas: Option<u64>,
+		context: &Context,
+	) -> Option<Result<(ExitSucceed, Vec<u8>, u64), ExitError>> {
+		let to_address = |n: u64| -> H160 { H160::from_low_u64_be(n) };
+
+		match address {
+			// Ethereum precompiles
+			_ if address == to_address(1) => Some(ECRecover::execute(input, target_gas, context)),
+			_ if address == to_address(2) => Some(Sha256::execute(input, target_gas, context)),
+			_ if address == to_address(3) => Some(Ripemd160::execute(input, target_gas, context)),
+			_ if address == to_address(4) => Some(Identity::execute(input, target_gas, context)),
+			// Darwinia precompiles
+			_ if address == to_address(21) => Some(<Transfer<R> as Precompile>::execute(
+				input, target_gas, context,
+			)),
+			_ => None,
+		}
+	}
+}
+
 impl darwinia_evm::Config for Test {
 	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = ();
@@ -154,14 +185,21 @@ impl darwinia_evm::Config for Test {
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 	type Event = ();
-	// TODO: Add more precompiles to run withdraw unit test.
-	type Precompiles = ();
+	type Precompiles = MockPrecompiles<Self>;
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
 	type Runner = Runner<Self>;
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 	type IssuingHandler = ();
+}
+
+impl darwinia_evm_precompile_transfer::dvm_ethereum::Config for Test {
+	type Event = ();
+	type FindAuthor = EthereumFindAuthor;
+	type StateRoot = IntermediateStateRoot;
+	type RingCurrency = Ring;
+	type KtonCurrency = Kton;
 }
 
 impl Config for Test {
