@@ -16,6 +16,7 @@ ethereum-types = { default-features = false, version = "0.11.0" }
 log            = { version = "0.4.14" }
 serde          = { version = "1.0.126", optional = true }
 serde_json     = { version = "1.0.64", optional = true }
+sha3           = { version = "0.9.1", default-features = false }
 # darwinia
 darwinia-asset-primitives          = { default-features = false, path = "../../../../primitives/asset" }
 darwinia-relay-primitives          = { default-features = false, path = "../../../../primitives/relay" }
@@ -24,6 +25,7 @@ ethereum-primitives                = { default-features = false, path = "../../.
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
+sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
 sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
 sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
 pallet-bridge-messages                     = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.1-s2s" }
@@ -56,6 +58,7 @@ darwinia-std = [
 substrate-std = [
 	"frame-support/std",
 	"frame-system/std",
+	"sp-core/std",
 	"sp-runtime/std",
 	"sp-std/std",
 	"pallet-bridge-messages/std",

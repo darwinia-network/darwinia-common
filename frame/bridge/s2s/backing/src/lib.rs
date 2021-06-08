@@ -85,8 +85,8 @@ pub mod pallet {
 		// in future, we modify it to multi-instance to interact with multi-target chains
 		type IssuingRelay: Relay<
 			RelayProof = AccountId<Self>,
-			VerifiedResult = Result<(EthereumAddress, TargetChain), DispatchError>,
-			RelayMessage = (TargetChain, Token, RelayAccount<AccountId<Self>>),
+			VerifiedResult = Result<EthereumAddress, DispatchError>,
+			RelayMessage = (u32, Token, RelayAccount<AccountId<Self>>),
 			RelayMessageResult = Result<(), DispatchError>,
 		>;
 	}
@@ -150,7 +150,7 @@ pub mod pallet {
 		#[frame_support::transactional]
 		pub fn lock_and_cross_send(
 			origin: OriginFor<T>,
-			target: TargetChain,
+			spec_version: u32,
 			#[pallet::compact] value: RingBalance<T>,
 			recipient: EthereumAddress,
 		) -> DispatchResultWithPostInfo {
@@ -187,7 +187,7 @@ pub mod pallet {
 			});
 
 			let message = (
-				target,
+				spec_version,
 				token.clone(),
 				RelayAccount::EthereumAccount(recipient),
 			);

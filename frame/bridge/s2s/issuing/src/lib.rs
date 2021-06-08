@@ -35,6 +35,7 @@ mod types {
 
 	pub type BlockNumber<T> = <T as frame_system::Config>::BlockNumber;
 	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
+	pub type PalletDigest = [u8; 4];
 }
 
 // --- crates ---
@@ -54,6 +55,7 @@ use darwinia_asset_primitives::token::{Token, TokenInfo};
 use darwinia_evm::GasWeightMapping;
 use darwinia_primitives_contract::mapping_token_factory::MappingTokenFactory as mtf;
 use darwinia_primitives_contract::mapping_token_factory::TokenBurnInfo;
+use darwinia_relay_primitives::RelayDigest;
 use ethereum_primitives::EthereumAddress;
 use sha3::Digest;
 use types::*;
@@ -71,8 +73,8 @@ pub trait Config: dvm_ethereum::Config {
 	type WeightInfo: WeightInfo;
 	type BackingRelay: Relay<
 		RelayProof = AccountId<Self>,
-		VerifiedResult = Result<(EthereumAddress, TargetChain), DispatchError>,
-		RelayMessage = (Token, RelayAccount<Self::AccountId>),
+		VerifiedResult = Result<EthereumAddress, DispatchError>,
+		RelayMessage = (u32, Token, RelayAccount<Self::AccountId>),
 		RelayMessageResult = Result<(), DispatchError>,
 	>;
 }
@@ -151,10 +153,11 @@ decl_module! {
 				let burn_info = TokenBurnInfo::decode(&input[8..])
 					.map_err(|_| Error::<T>::InvalidDecoding)?;
 				let recipient = Self::account_id_try_from_bytes(burn_info.recipient.as_slice())?;
-				// TODO, target is used to select remote chain
-				//let mut target: [u8;4] = Default::default();
-				//target.copy_from_slice(&input[..4]);
-				Self::cross_send(burn_info.source, recipient, burn_info.amount)?;
+				Self::cross_send(
+					burn_info.spec_version,
+					burn_info.source,
+					recipient,
+					burn_info.amount)?;
 			}
 		}
 
@@ -168,7 +171,7 @@ decl_module! {
 			// the s2s message relay has been verified that the message comes from the backing chain with the
 			// chainID and backing sender address.
 			// here only we need is to check the sender is in whitelist
-			let (backing, target) = T::BackingRelay::verify(&user)?;
+			let backing = T::BackingRelay::verify(&user)?;
 			let (token, recipient) = message;
 
 			let token_info = match token {
@@ -195,7 +198,7 @@ decl_module! {
 							.map_err(|_| Error::<T>::StringCF)?;
 						let symbol = sp_std::str::from_utf8(&option.symbol[..])
 							.map_err(|_| Error::<T>::StringCF)?;
-						let input = Self::abi_encode_token_creation(target, backing, token_info.address, &name, &symbol, option.decimal)?;
+						let input = Self::abi_encode_token_creation(backing, token_info.address, &name, &symbol, option.decimal)?;
 						Self::transact_mapping_factory(input)?;
 						mapped_address = Self::mapped_token_address(backing, token_info.address)?;
 						Self::deposit_event(RawEvent::NewTokenCreated(user, backing, token_info.address, mapped_address));
@@ -214,16 +217,21 @@ decl_module! {
 }
 
 impl<T: Config> Module<T> {
+	pub fn relay_digest() -> RelayDigest {
+		return T::BackingRelay::digest();
+	}
+
 	fn abi_encode_token_creation(
-		target: TargetChain,
 		backing: EthereumAddress,
 		address: EthereumAddress,
 		name: &str,
 		symbol: &str,
 		decimal: u8,
 	) -> Result<Vec<u8>, DispatchError> {
-		let input = mtf::encode_create_erc20(target, name, symbol, decimal, backing, address)
-			.map_err(|_| Error::<T>::InvalidEncodeERC20)?;
+		let callback_processor = Self::relay_digest();
+		let input =
+			mtf::encode_create_erc20(callback_processor, name, symbol, decimal, backing, address)
+				.map_err(|_| Error::<T>::InvalidEncodeERC20)?;
 		Ok(input)
 	}
 
@@ -275,11 +283,13 @@ impl<T: Config> Module<T> {
 	}
 
 	pub fn cross_send(
+		spec_version: u32,
 		token: EthereumAddress,
 		recipient: AccountId<T>,
 		amount: U256,
 	) -> Result<(), DispatchError> {
 		let message = (
+			spec_version,
 			Token::Native(TokenInfo {
 				address: token,
 				value: Some(amount),

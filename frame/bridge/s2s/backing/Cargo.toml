@@ -20,7 +20,6 @@ array-bytes    = { version = "1.1.0" }
 # darwinia
 darwinia-asset-primitives          = { default-features = false, path = "../../../../primitives/asset" }
 darwinia-primitives-contract = { default-features = false, path = "../../../../primitives/contract" }
-darwinia-s2s-chain = { default-features = false, path = "../chain" }
 darwinia-relay-primitives          = { default-features = false, path = "../../../../primitives/relay" }
 darwinia-support                   = { default-features = false, path = "../../../support" }
 ethereum-primitives                = { default-features = false, path = "../../../../primitives/ethereum-primitives" }

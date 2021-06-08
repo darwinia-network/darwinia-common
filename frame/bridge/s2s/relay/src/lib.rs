@@ -31,25 +31,36 @@ pub mod pallet {
 	use frame_support::{traits::Get, PalletId};
 	pub use types::*;
 
-	use sp_runtime::DispatchError;
+	use sp_runtime::{AccountId32, DispatchError};
 
-	use darwinia_relay_primitives::{Relay, RelayAccount};
+	use darwinia_relay_primitives::{Relay, RelayAccount, RelayDigest};
 	use darwinia_support::traits::CallToPayload;
 
 	use darwinia_asset_primitives::{token::Token, RemoteAssetReceiver};
 	use ethereum_primitives::EthereumAddress;
 	use frame_system::RawOrigin;
-	use sp_runtime::traits::{AccountIdConversion, MaybeSerializeDeserialize};
+	use sp_runtime::traits::{AccountIdConversion, Convert};
 
-	use bp_runtime::Size;
+	use bp_runtime::{derive_account_id, ChainId, Size, SourceAccount};
 	use frame_support::{pallet_prelude::*, Parameter};
 
 	use pallet_bridge_messages::MessageSender;
 
 	use crate::weights::WeightInfo;
-	use codec::Codec;
 	use frame_system::pallet_prelude::*;
-	use sp_std::fmt::Debug;
+	use sha3::Digest;
+
+	pub trait ToEthereumAddress<A> {
+		fn into_ethereum_id(address: &A) -> EthereumAddress;
+	}
+
+	pub struct ConcatToEthereumAddress;
+	impl ToEthereumAddress<AccountId32> for ConcatToEthereumAddress {
+		fn into_ethereum_id(address: &AccountId32) -> EthereumAddress {
+			let account20: &[u8] = &address.as_ref();
+			EthereumAddress::from_slice(&account20[..20])
+		}
+	}
 
 	#[pallet::config]
 	pub trait Config<I: 'static = ()>: frame_system::Config {
@@ -57,8 +68,6 @@ pub mod pallet {
 		type PalletId: Get<PalletId>;
 
 		type Event: From<Event<Self, I>> + IsType<<Self as frame_system::Config>::Event>;
-
-		type TargetChain: Parameter + Codec + Copy + Debug + MaybeSerializeDeserialize;
 
 		type RemoteAssetReceiverT: RemoteAssetReceiver<RelayAccount<AccountId<Self>>>;
 
@@ -69,13 +78,19 @@ pub mod pallet {
 
 		type OutboundMessageFee: From<u64>;
 
-		type CallToPayload: CallToPayload<AccountId<Self>, Self::OutboundPayload>;
+		type CallToPayload: CallToPayload<Self::OutboundPayload>;
+
+		type RemoteAccountIdConverter: Convert<sp_core::hash::H256, Self::AccountId>;
+
+		type ToEthereumAddressT: ToEthereumAddress<Self::AccountId>;
 
 		type MessageSenderT: MessageSender<
 			Self::Origin,
 			OutboundPayload = Self::OutboundPayload,
 			OutboundMessageFee = Self::OutboundMessageFee,
 		>;
+
+		type RemoteChainId: Get<ChainId>;
 	}
 
 	#[pallet::event]
@@ -96,25 +111,20 @@ pub mod pallet {
 	}
 
 	#[pallet::storage]
-	#[pallet::getter(fn backing_address_list)]
-	pub type BackingAddressList<T: Config<I>, I: 'static = ()> = StorageMap<
-		_,
-		Blake2_128Concat,
-		T::AccountId,
-		Option<(EthereumAddress, T::TargetChain)>,
-		ValueQuery,
-	>;
+	#[pallet::getter(fn remote_root_id)]
+	pub type RemoteRootId<T: Config<I>, I: 'static = ()> =
+		StorageValue<_, T::AccountId, ValueQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config<I>, I: 'static = ()> {
-		pub backings: Vec<(T::AccountId, EthereumAddress, T::TargetChain)>,
+		pub phantom: PhantomData<(T, I)>,
 	}
 
 	#[cfg(feature = "std")]
 	impl<T: Config<I>, I: 'static> Default for GenesisConfig<T, I> {
 		fn default() -> Self {
 			Self {
-				backings: Default::default(),
+				phantom: Default::default(),
 			}
 		}
 	}
@@ -122,9 +132,10 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config<I>, I: 'static> GenesisBuild<T, I> for GenesisConfig<T, I> {
 		fn build(&self) {
-			for (address, account, selector) in &self.backings {
-				<BackingAddressList<T, I>>::insert(address, Some((account, selector)));
-			}
+			let chain_id = T::RemoteChainId::get();
+			let hex_id = derive_account_id::<T::AccountId>(chain_id, SourceAccount::Root);
+			let target_id = T::RemoteAccountIdConverter::convert(hex_id);
+			<RemoteRootId<T, I>>::put(target_id);
 		}
 	}
 
@@ -140,21 +151,21 @@ pub mod pallet {
 
 	impl<T: Config<I>, I: 'static> Relay for Pallet<T, I> {
 		type RelayProof = AccountId<T>;
-		type RelayMessage = (Token, RelayAccount<AccountId<T>>);
-		type VerifiedResult = Result<(EthereumAddress, T::TargetChain), DispatchError>;
+		type RelayMessage = (u32, Token, RelayAccount<AccountId<T>>);
+		type VerifiedResult = Result<EthereumAddress, DispatchError>;
 		type RelayMessageResult = Result<(), DispatchError>;
 		fn verify(proof: &Self::RelayProof) -> Self::VerifiedResult {
-			let address =
-				<BackingAddressList<T, I>>::get(proof).ok_or(<Error<T, I>>::InvalidProof)?;
-			Ok(address)
+			let source_root = <RemoteRootId<T, I>>::get();
+			ensure!(&source_root == proof, <Error<T, I>>::InvalidProof);
+			Ok(T::ToEthereumAddressT::into_ethereum_id(proof))
 		}
 
 		fn relay_message(message: &Self::RelayMessage) -> Self::RelayMessageResult {
 			let msg = message.clone();
-			let encoded = T::RemoteAssetReceiverT::encode_call(msg.0, msg.1)
+			let encoded = T::RemoteAssetReceiverT::encode_call(msg.1, msg.2)
 				.map_err(|_| <Error<T, I>>::EncodeInv)?;
 			let relay_id: AccountId<T> = T::PalletId::get().into_account();
-			let payload = T::CallToPayload::to_payload(relay_id.clone(), encoded);
+			let payload = T::CallToPayload::to_payload(msg.0, encoded);
 			T::MessageSenderT::raw_send_message(
 				RawOrigin::Signed(relay_id).into(),
 				[0; 4],
@@ -162,6 +173,13 @@ pub mod pallet {
 				0.into(),
 			)?;
 			Ok(())
+		}
+
+		fn digest() -> RelayDigest {
+			let mut digest: RelayDigest = Default::default();
+			let pallet_digest = sha3::Keccak256::digest(T::PalletId::get().encode().as_slice());
+			digest.copy_from_slice(&pallet_digest[..4]);
+			digest
 		}
 	}
 }
