@@ -140,35 +140,7 @@ impl AddressMapping<AccountId32> for HashedAddressMapping {
 		AccountId32::from(Into::<[u8; 32]>::into(data))
 	}
 }
-pub struct PangolinPrecompiles;
-impl PrecompileSet for PangolinPrecompiles {
-	fn execute(
-		address: H160,
-		input: &[u8],
-		target_gas: Option<u64>,
-		context: &Context,
-	) -> Option<Result<(ExitSucceed, Vec<u8>, u64), ExitError>> {
-		let to_address = |n: u64| -> H160 { H160::from_low_u64_be(n) };
 
-		match address {
-			// Ethereum precompiles
-			_ if address == to_address(1) => Some(ECRecover::execute(input, target_gas, context)),
-			_ if address == to_address(2) => Some(Sha256::execute(input, target_gas, context)),
-			_ if address == to_address(3) => Some(Ripemd160::execute(input, target_gas, context)),
-			_ if address == to_address(4) => Some(Identity::execute(input, target_gas, context)),
-			// Darwinia precompiles
-			_ if address == to_address(21) => Some(<darwinia_evm_precompile_transfer::Transfer<
-				Test,
-			> as Precompile>::execute(
-				input, target_gas, context
-			)),
-			// _ if address == to_address(23) => {
-			// Some(<Issuing<R>>::execute(input, target_gas, context))
-			// }
-			_ => None,
-		}
-	}
-}
 frame_support::parameter_types! {
 	pub const TransactionByteFee: u64 = 1;
 	pub const ChainId: u64 = 42;
@@ -182,7 +154,8 @@ impl darwinia_evm::Config for Test {
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 	type Event = ();
-	type Precompiles = PangolinPrecompiles;
+	// TODO: Add more precompiles to run withdraw unit test.
+	type Precompiles = ();
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
 	type Runner = Runner<Self>;

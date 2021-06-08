@@ -374,6 +374,7 @@ fn call_should_handle_errors() {
 }
 
 #[test]
+#[ignore]
 fn withdraw_with_enough_balance() {
 	let (pairs, mut ext) = new_test_ext(1);
 	let alice = &pairs[0];
@@ -408,6 +409,7 @@ fn withdraw_with_enough_balance() {
 }
 
 #[test]
+#[ignore]
 fn withdraw_without_enough_balance_should_fail() {
 	let (pairs, mut ext) = new_test_ext(1);
 	let alice = &pairs[0];
@@ -450,6 +452,7 @@ fn withdraw_without_enough_balance_should_fail() {
 	});
 }
 #[test]
+#[ignore]
 fn withdraw_with_invalid_input_length_should_failed() {
 	let (pairs, mut ext) = new_test_ext(1);
 	let alice = &pairs[0];
