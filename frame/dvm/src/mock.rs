@@ -202,7 +202,7 @@ impl darwinia_evm_precompile_transfer::dvm_ethereum::Config for Test {
 	type KtonCurrency = Kton;
 }
 
-impl Config for Test {
+impl dvm_ethereum::Config for Test {
 	type Event = ();
 	type FindAuthor = EthereumFindAuthor;
 	type StateRoot = IntermediateStateRoot;
