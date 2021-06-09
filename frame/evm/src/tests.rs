@@ -127,14 +127,6 @@ impl<T: Config> AccountBasic<T> for RawAccountBasic<T> {
 		let account_id = T::AddressMapping::into_account_id(*address);
 		let current = T::RingAccountBasic::account_basic(address);
 
-		// if current.nonce < new.nonce {
-		// 	// ASSUME: in one single EVM transaction, the nonce will not increase more than
-		// 	// `u128::max_value()`.
-		// 	for _ in 0..(new.nonce - current.nonce).low_u128() {
-		// 		<frame_system::Pallet<T>>::inc_account_nonce(&account_id);
-		// 	}
-		// }
-
 		if current.balance > new_balance {
 			let diff = current.balance - new_balance;
 			T::RingCurrency::slash(&account_id, diff.low_u128().unique_saturated_into());

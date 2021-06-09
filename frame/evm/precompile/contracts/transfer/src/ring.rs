@@ -44,7 +44,7 @@ impl<T: Config> RingBack<T> {
 	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
 		// Decode input data
 		let input = InputData::<T>::decode(&input)?;
-		let (source, value) = (context.address, context.apparent_value);
+		let (source, to, value) = (context.address, input.dest, context.apparent_value);
 		let source_account = T::RingAccountBasic::account_basic(&source);
 
 		// Ensure the context address should be precompile address
@@ -59,9 +59,9 @@ impl<T: Config> RingBack<T> {
 		let new_source_balance = source_account.balance.saturating_sub(value);
 		T::RingAccountBasic::mutate_account_basic_balance(&source, new_source_balance);
 
-		let target_balance = T::RingAccountBasic::account_balance(&input.dest);
+		let target_balance = T::RingAccountBasic::account_balance(&to);
 		let new_target_balance = target_balance.saturating_add(value);
-		T::RingAccountBasic::mutate_account_balance(&input.dest, new_target_balance);
+		T::RingAccountBasic::mutate_account_balance(&to, new_target_balance);
 
 		Ok((ExitSucceed::Returned, vec![], 20000))
 	}
