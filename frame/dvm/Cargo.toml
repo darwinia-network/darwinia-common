@@ -10,8 +10,7 @@ repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "2.4.0"
 
 [dependencies]
-# crates
-array-bytes    = { version = "1.1.0" }
+# crates.io
 codec          = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
 ethereum       = { version = "0.7.1", default-features = false, features = ["with-codec"] }
 ethereum-types = { version = "0.11.0", default-features = false }
@@ -38,6 +37,8 @@ sp-runtime       = { default-features = false, git = "https://github.com/darwini
 sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
 
 [dev-dependencies]
+# crates.io
+array-bytes = { version = "1.3.3" }
 # darwinia
 darwinia-balances                = { path = "../balances" }
 darwinia-evm-precompile-simple   = { path = "../evm/precompile/contracts/simple" }

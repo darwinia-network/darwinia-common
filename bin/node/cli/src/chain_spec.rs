@@ -181,8 +181,8 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 	}
 	impl Keys {
 		fn new(sr25519: &str, ed25519: &str) -> Self {
-			let sr25519 = array_bytes::hex2array_unchecked!(sr25519, 32);
-			let ed25519 = array_bytes::hex2array_unchecked!(ed25519, 32);
+			let sr25519 = array_bytes::hex2array_unchecked(sr25519);
+			let ed25519 = array_bytes::hex2array_unchecked(ed25519);
 
 			Self {
 				stash: sr25519.into(),
@@ -196,9 +196,8 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 		}
 	}
 
-	let root = AccountId::from(array_bytes::hex2array_unchecked!(
+	let root = AccountId::from(array_bytes::hex2array_unchecked(
 		"0x72819fbc1b93196fa230243947c1726cbea7e33044c7eb6f736ff345561f9e4c",
-		32
 	));
 	let initial_authorities = vec![
 		Keys::new(
@@ -233,7 +232,7 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 
 		for account in EVM_ACCOUNTS.iter() {
 			map.insert(
-				array_bytes::hex2array_unchecked!(account, 20).into(),
+				array_bytes::hex_into_unchecked(account),
 				GenesisAccount {
 					nonce: 0.into(),
 					balance: (MANY_COINS * (10 as Balance).pow(9)).into(),
@@ -274,7 +273,7 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 			.chain(
 				TEAM_MEMBERS
 					.iter()
-					.map(|m| (array_bytes::hex2array_unchecked!(m, 32).into(), MANY_COINS)),
+					.map(|m| (array_bytes::hex_into_unchecked(m), MANY_COINS)),
 			)
 			.collect()
 		},
@@ -294,7 +293,7 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 				.chain(
 					TEAM_MEMBERS
 						.iter()
-						.map(|m| (array_bytes::hex2array_unchecked!(m, 32).into(), A_FEW_COINS)),
+						.map(|m| (array_bytes::hex_into_unchecked(m), A_FEW_COINS)),
 				)
 				.collect()
 		},
@@ -368,22 +367,22 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 			..Default::default()
 		},
 		darwinia_ethereum_backing: pangolin_runtime::EthereumBackingConfig {
-			token_redeem_address: array_bytes::hex2array_unchecked!(TOKEN_REDEEM_ADDRESS, 20).into(),
-			deposit_redeem_address: array_bytes::hex2array_unchecked!(DEPOSIT_REDEEM_ADDRESS, 20).into(),
-			set_authorities_address: array_bytes::hex2array_unchecked!(SET_AUTHORITIES_ADDRESS, 20).into(),
-			ring_token_address: array_bytes::hex2array_unchecked!(RING_TOKEN_ADDRESS, 20).into(),
-			kton_token_address: array_bytes::hex2array_unchecked!(KTON_TOKEN_ADDRESS, 20).into(),
+			token_redeem_address: array_bytes::hex_into_unchecked(TOKEN_REDEEM_ADDRESS),
+			deposit_redeem_address: array_bytes::hex_into_unchecked(DEPOSIT_REDEEM_ADDRESS),
+			set_authorities_address: array_bytes::hex_into_unchecked(SET_AUTHORITIES_ADDRESS),
+			ring_token_address: array_bytes::hex_into_unchecked(RING_TOKEN_ADDRESS),
+			kton_token_address: array_bytes::hex_into_unchecked(KTON_TOKEN_ADDRESS),
 			backed_ring: BUNCH_OF_COINS,
 			backed_kton: BUNCH_OF_COINS,
 		},
 		darwinia_ethereum_issuing: pangolin_runtime::EthereumIssuingConfig {
-			mapping_factory_address: array_bytes::hex2array_unchecked!(MAPPING_FACTORY_ADDRESS, 20).into(),
-			ethereum_backing_address: array_bytes::hex2array_unchecked!(ETHEREUM_BACKING_ADDRESS, 20).into(),
+			mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
+			ethereum_backing_address: array_bytes::hex_into_unchecked(ETHEREUM_BACKING_ADDRESS),
 		},
 		darwinia_relay_authorities_Instance1: pangolin_runtime::EthereumRelayAuthoritiesConfig {
 			authorities: vec![(
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				array_bytes::hex2array_unchecked!(ETHEREUM_RELAY_AUTHORITY_SIGNER, 20).into(),
+				array_bytes::hex_into_unchecked(ETHEREUM_RELAY_AUTHORITY_SIGNER),
 				1
 			)]
 		},
@@ -442,7 +441,7 @@ fn pangolin_development_genesis() -> pangolin_runtime::GenesisConfig {
 	.chain(
 		TEAM_MEMBERS
 			.iter()
-			.map(|m| array_bytes::hex2array_unchecked!(m, 32).into()),
+			.map(|m| array_bytes::hex_into_unchecked(m)),
 	)
 	.collect::<Vec<_>>();
 	let collective_members = vec![get_account_id_from_seed::<sr25519::Public>("Alice")];
@@ -451,7 +450,7 @@ fn pangolin_development_genesis() -> pangolin_runtime::GenesisConfig {
 
 		for account in EVM_ACCOUNTS.iter() {
 			map.insert(
-				array_bytes::hex2array_unchecked!(account, 20).into(),
+				array_bytes::hex_into_unchecked(account),
 				GenesisAccount {
 					nonce: 0.into(),
 					balance: (123_456_789_000_000_000_000_090 as Balance).into(),
@@ -544,22 +543,22 @@ fn pangolin_development_genesis() -> pangolin_runtime::GenesisConfig {
 			..Default::default()
 		},
 		darwinia_ethereum_backing: pangolin_runtime::EthereumBackingConfig {
-			token_redeem_address: array_bytes::hex2array_unchecked!(TOKEN_REDEEM_ADDRESS, 20).into(),
-			deposit_redeem_address: array_bytes::hex2array_unchecked!(DEPOSIT_REDEEM_ADDRESS, 20).into(),
-			set_authorities_address: array_bytes::hex2array_unchecked!(SET_AUTHORITIES_ADDRESS, 20).into(),
-			ring_token_address: array_bytes::hex2array_unchecked!(RING_TOKEN_ADDRESS, 20).into(),
-			kton_token_address: array_bytes::hex2array_unchecked!(KTON_TOKEN_ADDRESS, 20).into(),
+			token_redeem_address: array_bytes::hex_into_unchecked(TOKEN_REDEEM_ADDRESS),
+			deposit_redeem_address: array_bytes::hex_into_unchecked(DEPOSIT_REDEEM_ADDRESS),
+			set_authorities_address: array_bytes::hex_into_unchecked(SET_AUTHORITIES_ADDRESS),
+			ring_token_address: array_bytes::hex_into_unchecked(RING_TOKEN_ADDRESS),
+			kton_token_address: array_bytes::hex_into_unchecked(KTON_TOKEN_ADDRESS),
 			backed_ring: BUNCH_OF_COINS,
 			backed_kton: BUNCH_OF_COINS,
 		},
 		darwinia_ethereum_issuing: pangolin_runtime::EthereumIssuingConfig {
-			mapping_factory_address: array_bytes::hex2array_unchecked!(MAPPING_FACTORY_ADDRESS, 20).into(),
-			ethereum_backing_address: array_bytes::hex2array_unchecked!(ETHEREUM_BACKING_ADDRESS, 20).into(),
+			mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
+			ethereum_backing_address: array_bytes::hex_into_unchecked(ETHEREUM_BACKING_ADDRESS),
 		},
 		darwinia_relay_authorities_Instance1: pangolin_runtime::EthereumRelayAuthoritiesConfig {
 			authorities: vec![(
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				array_bytes::hex2array_unchecked!(ETHEREUM_RELAY_AUTHORITY_SIGNER, 20).into(),
+				array_bytes::hex_into_unchecked(ETHEREUM_RELAY_AUTHORITY_SIGNER),
 				1
 			)]
 		},

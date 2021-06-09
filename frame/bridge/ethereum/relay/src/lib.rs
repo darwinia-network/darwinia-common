@@ -38,10 +38,7 @@ mod types {
 	use crate::*;
 
 	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-	pub type BlockNumber<T> = <T as frame_system::Config>::BlockNumber;
-
 	pub type RingBalance<T> = <CurrencyT<T> as Currency<AccountId<T>>>::Balance;
-
 	type CurrencyT<T> = <T as Config>::Currency;
 }
 
@@ -62,7 +59,7 @@ use frame_support::{
 	weights::Weight,
 	PalletId,
 };
-use frame_system::ensure_signed;
+use frame_system::{ensure_signed, pallet_prelude::*};
 use sp_runtime::{
 	traits::{AccountIdConversion, DispatchInfoOf, Dispatchable, SignedExtension, Zero},
 	transaction_validity::ValidTransaction,
@@ -231,7 +228,7 @@ decl_storage! {
 
 		pub PendingRelayHeaderParcels
 			get(fn pending_relay_header_parcels)
-			: Vec<(BlockNumber<T>, EthereumRelayHeaderParcel, RelayVotingState<AccountId<T>>)>;
+			: Vec<(BlockNumberFor<T>, EthereumRelayHeaderParcel, RelayVotingState<AccountId<T>>)>;
 	}
 	add_extra_genesis {
 		config(genesis_header_info): (Vec<u8>, H256);
@@ -279,14 +276,14 @@ decl_module! {
 
 		const PalletId: PalletId = T::PalletId::get();
 
-		const ConfirmPeriod: BlockNumber<T> = T::ConfirmPeriod::get();
+		const ConfirmPeriod: BlockNumberFor<T> = T::ConfirmPeriod::get();
 
 		const ApproveThreshold: Perbill = T::ApproveThreshold::get();
 		const RejectThreshold: Perbill = T::RejectThreshold::get();
 
 		fn deposit_event() = default;
 
-		fn on_initialize(now: BlockNumber<T>) -> Weight {
+		fn on_initialize(now: BlockNumberFor<T>) -> Weight {
 			// TODO: handle error
 			// TODO: weight
 			Self::system_approve_pending_relay_header_parcels(now).unwrap_or(0)
@@ -656,7 +653,7 @@ impl<T: Config> Module<T> {
 	}
 
 	pub fn system_approve_pending_relay_header_parcels(
-		now: BlockNumber<T>,
+		now: BlockNumberFor<T>,
 	) -> Result<Weight, DispatchError> {
 		<PendingRelayHeaderParcels<T>>::mutate(|parcels| {
 			parcels.retain(|(at, parcel, _)| {
@@ -735,7 +732,7 @@ impl<T: Config> Relayable for Module<T> {
 		);
 
 		let last_leaf = *relay_header_id - 1;
-		let mmr_root = array_bytes::dyn2array!(mmr_root, 32).into();
+		let mmr_root = array_bytes::dyn_into!(mmr_root, 32);
 
 		if let Some(best_confirmed_block_number) = optional_best_confirmed_relay_header_id {
 			let maybe_best_confirmed_block_header_hash =
@@ -759,7 +756,7 @@ impl<T: Config> Relayable for Module<T> {
 					mmr_root,
 					mmr_proof
 						.iter()
-						.map(|h| array_bytes::dyn2array!(h, 32).into())
+						.map(|h| array_bytes::dyn_into!(h, 32))
 						.collect(),
 					vec![(
 						*best_confirmed_block_number,
@@ -783,12 +780,11 @@ impl<T: Config> Relayable for Module<T> {
 					mmr_root,
 					mmr_proof
 						.iter()
-						.map(|h| array_bytes::dyn2array!(h, 32).into())
+						.map(|h| array_bytes::dyn_into!(h, 32))
 						.collect(),
 					vec![(
 						header.number,
-						array_bytes::dyn2array!(header.hash.ok_or(<Error<T>>::HeaderInv)?, 32)
-							.into(),
+						array_bytes::dyn_into!(header.hash.ok_or(<Error<T>>::HeaderInv)?, 32)
 					)],
 				),
 				<Error<T>>::MMRInv
@@ -929,11 +925,10 @@ impl<T: Config> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
 				mmr_proof.proof.to_vec(),
 				vec![(
 					ethereum_header.number,
-					array_bytes::dyn2array!(
+					array_bytes::dyn_into!(
 						ethereum_header.hash.ok_or(<Error<T>>::HeaderHashInv)?,
 						32
 					)
-					.into(),
 				)]
 			),
 			<Error<T>>::MMRInv

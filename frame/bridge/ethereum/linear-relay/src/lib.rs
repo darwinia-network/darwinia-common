@@ -83,7 +83,7 @@ use sp_runtime::{
 	transaction_validity::{
 		InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
 	},
-	DispatchError, DispatchResult, SaturatedConversion,
+	ArithmeticError, DispatchError, DispatchResult, SaturatedConversion,
 };
 use sp_std::prelude::*;
 // --- darwinia ---
@@ -137,11 +137,6 @@ decl_error! {
 	pub enum Error for Module<T: Config> {
 		/// Account - NO PRIVILEGES
 		AccountNP,
-
-		/// Block Number - OVERFLOW
-		BlockNumberOF,
-		/// Block Number - UNDERFLOW
-		BlockNumberUF,
 
 		/// Block Number - MISMATCHED
 		BlockNumberMis,
@@ -528,7 +523,7 @@ impl<T: Config> Module<T> {
 		// Removing header with larger numbers, if there are.
 		for number in block_number
 			.checked_add(1)
-			.ok_or(<Error<T>>::BlockNumberOF)?..u64::max_value()
+			.ok_or(ArithmeticError::Overflow)?..u64::max_value()
 		{
 			// If the current block hash is 0 (unlikely), or the previous hash matches the
 			// current hash, then we chains converged and can stop now.
@@ -634,7 +629,7 @@ impl<T: Config> Module<T> {
 				<= header
 					.number
 					.checked_add(Self::number_of_blocks_finality())
-					.ok_or(<Error<T>>::BlockNumberOF)?,
+					.ok_or(ArithmeticError::Overflow)?,
 			<Error<T>>::HeaderTO,
 		);
 
@@ -648,7 +643,7 @@ impl<T: Config> Module<T> {
 			parent_hash: header.parent_hash,
 			total_difficulty: parent_total_difficulty
 				.checked_add(header.difficulty)
-				.ok_or(<Error<T>>::BlockNumberOF)?,
+				.ok_or(ArithmeticError::Overflow)?,
 			relayer: relayer.clone(),
 		};
 
@@ -666,7 +661,7 @@ impl<T: Config> Module<T> {
 				for number in header_brief
 					.number
 					.checked_add(1)
-					.ok_or(<Error<T>>::BlockNumberOF)?..=best_header_info.number
+					.ok_or(ArithmeticError::Overflow)?..=best_header_info.number
 				{
 					CanonicalHeaderHashes::remove(&number);
 				}
@@ -682,7 +677,7 @@ impl<T: Config> Module<T> {
 			for number in (0..=header
 				.number
 				.checked_sub(1)
-				.ok_or(<Error<T>>::BlockNumberUF)?)
+				.ok_or(ArithmeticError::Underflow)?)
 				.rev()
 			{
 				let prev_value = CanonicalHeaderHashes::get(number);
@@ -756,7 +751,7 @@ impl<T: Config> EthereumReceiptT<T::AccountId, Balance<T>> for Module<T> {
 				>= info
 					.number
 					.checked_add(Self::number_of_blocks_safe())
-					.ok_or(<Error<T>>::BlockNumberOF)?,
+					.ok_or(ArithmeticError::Overflow)?,
 			<Error<T>>::BlockNumberMis
 		);
 

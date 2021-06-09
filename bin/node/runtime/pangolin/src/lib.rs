@@ -198,6 +198,7 @@ pub use pallet_sudo::Call as SudoCall;
 // --- crates.io ---
 use codec::{Decode, Encode};
 // --- substrate ---
+use bp_runtime::MILLAU_CHAIN_ID;
 use bridge_runtime_common::messages::MessageBridge;
 use frame_support::{
 	traits::{KeyOwnerProofSystem, OnRuntimeUpgrade},
@@ -230,6 +231,7 @@ use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispa
 use drml_primitives::*;
 use dvm_rpc_runtime_api::TransactionStatus;
 use impls::*;
+use pangolin_bridge_primitives::PANGOLIN_CHAIN_ID;
 
 /// The address format for describing accounts.
 pub type Address = MultiAddress<AccountId, ()>;
@@ -656,17 +658,17 @@ impl_runtime_apis! {
 		}
 
 		fn account_code_at(address: H160) -> Vec<u8> {
-			darwinia_evm::Module::<Runtime>::account_codes(address)
+			darwinia_evm::Pallet::<Runtime>::account_codes(address)
 		}
 
 		fn author() -> H160 {
-			<dvm_ethereum::Module<Runtime>>::find_author()
+			<dvm_ethereum::Pallet<Runtime>>::find_author()
 		}
 
 		fn storage_at(address: H160, index: U256) -> H256 {
 			let mut tmp = [0u8; 32];
 			index.to_big_endian(&mut tmp);
-			darwinia_evm::Module::<Runtime>::account_storages(address, H256::from_slice(&tmp[..]))
+			darwinia_evm::Pallet::<Runtime>::account_storages(address, H256::from_slice(&tmp[..]))
 		}
 
 		fn call(
@@ -856,4 +858,23 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	fn on_runtime_upgrade() -> Weight {
 		0
 	}
+}
+
+pub fn pangolin_to_millau_account_ownership_digest<Call, AccountId, SpecVersion>(
+	millau_call: &Call,
+	pangolin_account_id: AccountId,
+	millau_spec_version: SpecVersion,
+) -> Vec<u8>
+where
+	Call: Encode,
+	AccountId: Encode,
+	SpecVersion: Encode,
+{
+	pallet_bridge_dispatch::account_ownership_digest(
+		millau_call,
+		pangolin_account_id,
+		millau_spec_version,
+		PANGOLIN_CHAIN_ID,
+		MILLAU_CHAIN_ID,
+	)
 }

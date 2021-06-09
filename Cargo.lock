@@ -160,9 +160,9 @@ dependencies = [
 
 [[package]]
 name = "array-bytes"
-version = "1.3.1"
+version = "1.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "680b54fd22e46b880d0b9eea905904739b524fac71c26d5f2baf7597d8e7eb7b"
+checksum = "b76542acb2b0012e8bbdc5c6ec96a164b30e1f3aa06fdb17dc86515817ca2776"
 dependencies = [
  "serde",
 ]
@@ -1615,7 +1615,6 @@ version = "2.4.0"
 dependencies = [
  "darwinia-ethereum-issuing-contract",
  "darwinia-evm",
- "darwinia-evm-precompile",
  "darwinia-relay-primitives",
  "darwinia-support",
  "dp-evm",
@@ -1710,17 +1709,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
-]
-
-[[package]]
-name = "darwinia-evm-precompile"
-version = "2.4.0"
-dependencies = [
- "darwinia-evm-precompile-empty",
- "darwinia-evm-precompile-issuing",
- "darwinia-evm-precompile-kton",
- "darwinia-evm-precompile-simple",
- "darwinia-evm-precompile-withdraw",
 ]
 
 [[package]]
@@ -5788,7 +5776,6 @@ dependencies = [
 name = "pangolin-runtime"
 version = "2.4.0"
 dependencies = [
- "array-bytes",
  "bp-messages",
  "bp-millau",
  "bp-runtime",
@@ -5805,7 +5792,10 @@ dependencies = [
  "darwinia-ethereum-issuing",
  "darwinia-ethereum-relay",
  "darwinia-evm",
- "darwinia-evm-precompile",
+ "darwinia-evm-precompile-issuing",
+ "darwinia-evm-precompile-kton",
+ "darwinia-evm-precompile-simple",
+ "darwinia-evm-precompile-withdraw",
  "darwinia-header-mmr",
  "darwinia-header-mmr-rpc-runtime-api",
  "darwinia-relay-authorities",
@@ -5817,11 +5807,13 @@ dependencies = [
  "darwinia-treasury",
  "darwinia-tron-backing",
  "darwinia-vesting",
+ "dp-evm",
  "drml-primitives",
  "dvm-dynamic-fee",
  "dvm-ethereum",
  "dvm-rpc-runtime-api",
  "ethereum-primitives",
+ "evm",
  "frame-executive",
  "frame-support",
  "frame-system",
