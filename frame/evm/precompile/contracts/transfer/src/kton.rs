@@ -51,7 +51,8 @@ impl<T: Config> Kton<T> {
 
 		match action {
 			Kton::TransferAndCall(call_data) => {
-				let (caller, wkton, value) = (context.caller, call_data.wkton_address, call_data.value);
+				let (caller, wkton, value) =
+					(context.caller, call_data.wkton_address, call_data.value);
 				// Ensure wkton is a contract
 				ensure!(
 					!<Pallet<T>>::is_contract_code_empty(&wkton),
@@ -69,13 +70,11 @@ impl<T: Config> Kton<T> {
 				);
 
 				// Transfer kton from sender to KTON wrapped contract
-				T::KtonAccountBasic::transfer(&caller,&wkton, value)?;
+				T::KtonAccountBasic::transfer(&caller, &wkton, value)?;
 				// Call WKTON wrapped contract deposit
-				let precompile_address: H160 =
-					array_bytes::hex2array_unchecked!(TRANSFER_ADDR, 20).into();
 				let raw_input = make_call_data(caller, value)?;
 				if let Ok(call_res) = T::Runner::call(
-					precompile_address,
+					array_bytes::hex_into_unchecked(TRANSFER_ADDR),
 					wkton,
 					raw_input.to_vec(),
 					U256::zero(),
@@ -112,10 +111,7 @@ impl<T: Config> Kton<T> {
 
 				// Transfer
 				let new_source_kton_balance = source_kton.balance.saturating_sub(value);
-				T::KtonAccountBasic::mutate_account_basic_balance(
-					&source,
-					new_source_kton_balance,
-				);
+				T::KtonAccountBasic::mutate_account_basic_balance(&source, new_source_kton_balance);
 
 				let target_kton = T::KtonAccountBasic::account_balance(&to);
 				let new_target_kton_balance = target_kton.saturating_add(value);

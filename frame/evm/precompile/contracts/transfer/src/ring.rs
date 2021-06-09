@@ -49,7 +49,7 @@ impl<T: Config> RingBack<T> {
 
 		// Ensure the context address should be precompile address
 		ensure!(
-			source == array_bytes::hex2array_unchecked!(TRANSFER_ADDR, 20).into(),
+			source == array_bytes::hex_into_unchecked(TRANSFER_ADDR),
 			ExitError::Other("Invalid context address".into())
 		);
 		// Ensure the context address balance is enough
