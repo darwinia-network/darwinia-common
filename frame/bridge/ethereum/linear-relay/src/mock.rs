@@ -149,25 +149,21 @@ impl BlockWithProof {
 
 		BlockWithProof {
 			proof_length: raw_block_with_proof.proof_length,
-			merkle_root: array_bytes::hex2array_unchecked!(&raw_block_with_proof.merkle_root, 16)
-				.into(),
+			merkle_root: array_bytes::hex_into_unchecked(&raw_block_with_proof.merkle_root),
 			header_rlp: array_bytes::hex2bytes_unchecked(&raw_block_with_proof.header_rlp),
 			merkle_proofs: raw_block_with_proof
 				.merkle_proofs
 				.iter()
 				.cloned()
 				.map(|raw_merkle_proof| {
-					array_bytes::hex2array_unchecked!(&zero_padding(raw_merkle_proof, 16), 16)
-						.into()
+					array_bytes::hex_into_unchecked(&zero_padding(raw_merkle_proof, 16))
 				})
 				.collect(),
 			elements: raw_block_with_proof
 				.elements
 				.iter()
 				.cloned()
-				.map(|raw_element| {
-					array_bytes::hex2array_unchecked!(&zero_padding(raw_element, 32), 32).into()
-				})
+				.map(|raw_element| array_bytes::hex_into_unchecked(&zero_padding(raw_element, 32)))
 				.collect(),
 		}
 	}
@@ -323,11 +319,7 @@ pub fn mock_canonical_receipt() -> EthereumReceiptProof {
 			.parse()
 			.unwrap(),
 		proof: array_bytes::hex2bytes_unchecked(receipt["proof"].as_str().unwrap()),
-		header_hash: array_bytes::hex2array_unchecked!(
-			receipt["header_hash"].as_str().unwrap(),
-			32
-		)
-		.into(),
+		header_hash: array_bytes::hex_into_unchecked(receipt["header_hash"].as_str().unwrap()),
 	}
 }
 
@@ -339,12 +331,12 @@ pub fn mock_receipt_logs() -> Vec<LogEntry> {
 		.unwrap()
 		.iter()
 		.map(|log| LogEntry {
-			address: array_bytes::hex2array_unchecked!(log["address"].as_str().unwrap(), 20).into(),
+			address: array_bytes::hex_into_unchecked(log["address"].as_str().unwrap()),
 			topics: log["topics"]
 				.as_array()
 				.unwrap()
 				.iter()
-				.map(|topic| array_bytes::hex2array_unchecked!(topic.as_str().unwrap(), 32).into())
+				.map(|topic| array_bytes::hex_into_unchecked(topic.as_str().unwrap()))
 				.collect(),
 			data: array_bytes::hex2bytes_unchecked(log["data"].as_str().unwrap()),
 		})
