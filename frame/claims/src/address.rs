@@ -62,7 +62,7 @@ macro_rules! impl_address {
 					)))?;
 				}
 
-				Ok($name(array_bytes::hex2array_unchecked!(s, 20)))
+				Ok($name(array_bytes::hex2array_unchecked(s)))
 			}
 		}
 	};
