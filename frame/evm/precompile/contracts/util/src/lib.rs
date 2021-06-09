@@ -35,6 +35,7 @@ const SELECTOR_SIZE_BYTES: usize = 4;
 impl<T> Precompile for Util<T>
 where
 	T: darwinia_evm::Config + darwinia_s2s_issuing::Config,
+	T::Call: Encode + From<darwinia_s2s_issuing::Call<T>>,
 {
 	fn execute(
 		input: &[u8],
@@ -55,6 +56,7 @@ where
 				));
 			}
 		};
-		Ok((ExitSucceed::Stopped, inner_call.encode(), 0))
+		let call: T::Call = inner_call.into();
+		Ok((ExitSucceed::Stopped, call.encode(), 0))
 	}
 }
