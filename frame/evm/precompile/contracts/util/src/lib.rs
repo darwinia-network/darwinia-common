@@ -20,39 +20,33 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use codec::Decode;
+use codec::Encode;
 use core::marker::PhantomData;
-use darwinia_evm::{AddressMapping, GasWeightMapping};
+use darwinia_relay_primitives::Relay;
 use dp_evm::Precompile;
 use evm::{Context, ExitError, ExitSucceed};
-use frame_support::{
-	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
-	weights::{DispatchClass, Pays},
-};
 
 /// The contract address: 0000000000000000000000000000000000000018
-pub struct DispatchWrapper<T> {
+pub struct Util<T> {
 	_marker: PhantomData<T>,
 }
 
 const SELECTOR_SIZE_BYTES: usize = 4;
-impl<T> Precompile for DispatchWrapper<T>
+impl<T> Precompile for Util<T>
 where
 	T: darwinia_evm::Config + darwinia_s2s_issuing::Config,
-	T::Call: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Decode,
-	<T::Call as Dispatchable>::Origin: From<Option<T::AccountId>>,
-	T::Call: From<darwinia_s2s_issuing::Call<T>>,
 {
 	fn execute(
 		input: &[u8],
-		target_gas: Option<u64>,
-		context: &Context,
+		_target_gas: Option<u64>,
+		_context: &Context,
 	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
-		if input.len() < 4 {
+		if input.len() < SELECTOR_SIZE_BYTES {
 			return Err(ExitError::Other("input length less than 4 bytes".into()));
 		}
-		let inner_call = match input[0..SELECTOR_SIZE_BYTES] {
-			[0x33, 0x08, 0xe8, 0x7a] => {
+		let selector = &input[0..SELECTOR_SIZE_BYTES];
+		let inner_call = match selector {
+			_ if selector == <T as darwinia_s2s_issuing::Config>::BackingRelay::digest() => {
 				darwinia_s2s_issuing::Call::<T>::dispatch_handle(input.to_vec())
 			}
 			_ => {
@@ -61,31 +55,6 @@ where
 				));
 			}
 		};
-		let call: T::Call = inner_call.into();
-		let info = call.get_dispatch_info();
-
-		let valid_call = info.pays_fee == Pays::Yes && info.class == DispatchClass::Normal;
-		if !valid_call {
-			return Err(ExitError::Other("invalid call".into()));
-		}
-
-		if let Some(gas) = target_gas {
-			let valid_weight = info.weight <= T::GasWeightMapping::gas_to_weight(gas);
-			if !valid_weight {
-				return Err(ExitError::OutOfGas);
-			}
-		}
-
-		let origin = T::AddressMapping::into_account_id(context.caller);
-
-		match call.dispatch(Some(origin).into()) {
-			Ok(post_info) => {
-				let cost = T::GasWeightMapping::weight_to_gas(
-					post_info.actual_weight.unwrap_or(info.weight),
-				);
-				Ok((ExitSucceed::Stopped, Default::default(), cost))
-			}
-			Err(_) => Err(ExitError::Other("dispatch execution failed".into())),
-		}
+		Ok((ExitSucceed::Stopped, inner_call.encode(), 0))
 	}
 }

@@ -1688,11 +1688,12 @@ dependencies = [
 name = "darwinia-evm-precompile"
 version = "2.4.0"
 dependencies = [
- "darwinia-evm-precompile-dispatch-wrapper",
+ "darwinia-evm-precompile-dispatch",
  "darwinia-evm-precompile-empty",
  "darwinia-evm-precompile-issuing",
  "darwinia-evm-precompile-kton",
  "darwinia-evm-precompile-simple",
+ "darwinia-evm-precompile-util",
  "darwinia-evm-precompile-withdraw",
 ]
 
@@ -1737,24 +1738,6 @@ dependencies = [
  "evm",
  "frame-support",
  "parity-scale-codec",
- "sp-core",
- "sp-io",
-]
-
-[[package]]
-name = "darwinia-evm-precompile-dispatch-wrapper"
-version = "2.4.0"
-dependencies = [
- "array-bytes",
- "darwinia-evm",
- "darwinia-primitives-contract",
- "darwinia-s2s-issuing",
- "dp-evm",
- "evm",
- "frame-support",
- "log",
- "parity-scale-codec",
- "sha3 0.9.1",
  "sp-core",
  "sp-io",
 ]
@@ -1843,6 +1826,25 @@ dependencies = [
  "dp-evm",
  "evm",
  "ripemd160",
+ "sp-core",
+ "sp-io",
+]
+
+[[package]]
+name = "darwinia-evm-precompile-util"
+version = "2.4.0"
+dependencies = [
+ "array-bytes",
+ "darwinia-evm",
+ "darwinia-primitives-contract",
+ "darwinia-relay-primitives",
+ "darwinia-s2s-issuing",
+ "dp-evm",
+ "evm",
+ "frame-support",
+ "log",
+ "parity-scale-codec",
+ "sha3 0.9.1",
  "sp-core",
  "sp-io",
 ]
