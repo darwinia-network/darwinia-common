@@ -152,7 +152,7 @@ decl_module! {
 				let burn_info = TokenBurnInfo::decode(&input[8..])
 					.map_err(|_| Error::<T>::InvalidDecoding)?;
 				let recipient = Self::account_id_try_from_bytes(burn_info.recipient.as_slice())?;
-				Self::cross_send(
+				Self::burn_and_remote_unlock(
 					burn_info.spec_version,
 					burn_info.token_type,
 					burn_info.source,
@@ -166,7 +166,7 @@ decl_module! {
 		/// receive token transfer from the source chain, if the mapped token is not created, then
 		/// create first
 		#[weight = 0]
-		pub fn cross_receive(origin, message: (Token, EthereumAddress)) {
+		pub fn cross_receive_and_redeem(origin, message: (Token, EthereumAddress)) {
 			let user = ensure_signed(origin)?;
 			// the s2s message relay has been verified that the message comes from the backing chain with the
 			// chainID and backing sender address.
@@ -279,7 +279,7 @@ impl<T: Config> Module<T> {
 		Ok(account_id.into())
 	}
 
-	pub fn cross_send(
+	pub fn burn_and_remote_unlock(
 		spec_version: u32,
 		token_type: u32,
 		token: EthereumAddress,
