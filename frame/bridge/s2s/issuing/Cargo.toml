@@ -30,8 +30,18 @@ ethereum-primitives                = { default-features = false, path = "../../.
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
+sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
 sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
 sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
+
+[dev-dependencies]
+libsecp256k1   = { version = "0.3.5", default-features = false }
+# darwinia
+darwinia-balances                = { path = "../../../balances" }
+darwinia-evm-precompile-simple   = { path = "../../../evm/precompile/contracts/simple" }
+darwinia-evm-precompile-withdraw = { path = "../../../evm/precompile/contracts/withdraw" }
+pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
+darwinia-support = { features = ["easy-testing"], path = "../../../support" }
 
 [features]
 default = ["std"]
@@ -64,4 +74,5 @@ substrate-std = [
 	"frame-system/std",
 	"sp-runtime/std",
 	"sp-std/std",
+	"sp-io/std",
 ]
