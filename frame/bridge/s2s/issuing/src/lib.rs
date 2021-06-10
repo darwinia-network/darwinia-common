@@ -50,11 +50,11 @@ use frame_system::ensure_signed;
 use sp_runtime::{DispatchError, DispatchResult};
 use sp_std::vec::Vec;
 // --- darwinia ---
-use darwinia_asset_primitives::token::{Token, TokenInfo};
 use darwinia_evm::GasWeightMapping;
-use darwinia_primitives_contract::mapping_token_factory::MappingTokenFactory as mtf;
-use darwinia_primitives_contract::mapping_token_factory::TokenBurnInfo;
 use darwinia_relay_primitives::RelayDigest;
+use dp_asset::token::{Token, TokenInfo};
+use dp_contract::mapping_token_factory::MappingTokenFactory as mtf;
+use dp_contract::mapping_token_factory::TokenBurnInfo;
 use ethereum_primitives::EthereumAddress;
 use sha3::Digest;
 use types::*;

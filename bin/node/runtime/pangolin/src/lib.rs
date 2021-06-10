@@ -224,13 +224,13 @@ use sp_std::prelude::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia ---
-use darwinia_asset_primitives::{token::Token, RemoteAssetReceiver};
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
 use darwinia_evm::{Account as EVMAccount, Runner};
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
 use darwinia_relay_primitives::RelayAccount;
 use darwinia_s2s_relay::MessageRelayCall;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
+use dp_asset::{token::Token, RemoteAssetReceiver};
 use drml_primitives::*;
 use dvm_rpc_runtime_api::TransactionStatus;
 use impls::*;
@@ -882,7 +882,6 @@ where
 	)
 }
 
-// ****************** s2s bridge *********************
 // remote chain millau's dispatch info
 #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
 pub enum MillauRuntime {

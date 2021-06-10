@@ -36,7 +36,7 @@ pub mod pallet {
 	use darwinia_relay_primitives::{Relay, RelayAccount, RelayDigest};
 	use darwinia_support::traits::CallToPayload;
 
-	use darwinia_asset_primitives::{token::Token, RemoteAssetReceiver};
+	use dp_asset::{token::Token, RemoteAssetReceiver};
 	use ethereum_primitives::EthereumAddress;
 	use frame_system::RawOrigin;
 	use sp_runtime::traits::{AccountIdConversion, Convert};

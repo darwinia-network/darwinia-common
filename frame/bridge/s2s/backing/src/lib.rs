@@ -45,13 +45,13 @@ use sp_runtime::{
 };
 use sp_std::{convert::TryFrom, prelude::*, vec::Vec};
 // --- darwinia ---
-use darwinia_asset_primitives::token::{Token, TokenInfo, TokenOption};
-use darwinia_primitives_contract::mapping_token_factory::MappingTokenFactory as mtf;
 use darwinia_relay_primitives::{Relay, RelayAccount};
 use darwinia_support::{
 	balance::*,
 	s2s::{to_bytes32, BACK_ERC20_RING, RING_DECIMAL, RING_NAME, RING_SYMBOL},
 };
+use dp_asset::token::{Token, TokenInfo, TokenOption};
+use dp_contract::mapping_token_factory::MappingTokenFactory as mtf;
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type Balance = u128;

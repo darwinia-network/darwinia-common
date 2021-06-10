@@ -395,11 +395,9 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 		},
 		darwinia_evm: pangolin_runtime::EVMConfig { accounts: evm_accounts },
 		dvm_ethereum: Default::default(),
-		darwinia_s2s_relay_Instance1: pangolin_runtime::Substrate2SubstrateRelayConfig {
-			phantom: Default::default(),
-		},
+		darwinia_s2s_relay_Instance1: Default::default(),
 		darwinia_s2s_issuing: pangolin_runtime::Substrate2SubstrateIssuingConfig {
-			mapping_factory_address: array_bytes::hex2array_unchecked!(S2S_MAPPING_FACTORY_ADDRESS, 20).into(),
+			mapping_factory_address: array_bytes::hex_into_unchecked(S2S_MAPPING_FACTORY_ADDRESS),
 		},
 	}
 }
@@ -558,11 +556,9 @@ fn pangolin_development_genesis() -> pangolin_runtime::GenesisConfig {
 		},
 		darwinia_evm: pangolin_runtime::EVMConfig { accounts: evm_accounts },
 		dvm_ethereum: Default::default(),
-		darwinia_s2s_relay_Instance1: pangolin_runtime::Substrate2SubstrateRelayConfig {
-			phantom: Default::default(),
-		},
+		darwinia_s2s_relay_Instance1: Default::default(),
 		darwinia_s2s_issuing: pangolin_runtime::Substrate2SubstrateIssuingConfig {
-			mapping_factory_address: array_bytes::hex2array_unchecked!(S2S_MAPPING_FACTORY_ADDRESS, 20).into(),
+			mapping_factory_address: array_bytes::hex_into_unchecked(S2S_MAPPING_FACTORY_ADDRESS),
 		},
 	}
 }

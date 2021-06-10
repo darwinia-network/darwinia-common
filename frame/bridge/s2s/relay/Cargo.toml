@@ -18,7 +18,7 @@ serde          = { version = "1.0.126", optional = true }
 serde_json     = { version = "1.0.64", optional = true }
 sha3           = { version = "0.9.1", default-features = false }
 # darwinia
-darwinia-asset-primitives          = { default-features = false, path = "../../../../primitives/asset" }
+dp-asset          = { default-features = false, path = "../../../../primitives/asset" }
 darwinia-relay-primitives          = { default-features = false, path = "../../../../primitives/relay" }
 darwinia-support                   = { default-features = false, path = "../../../support" }
 ethereum-primitives                = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
@@ -48,7 +48,7 @@ crates-std = [
 ]
 
 darwinia-std = [
-	"darwinia-asset-primitives/std",
+	"dp-asset/std",
 	"ethereum-primitives/std",
 	"darwinia-relay-primitives/std",
 	"darwinia-support/std",

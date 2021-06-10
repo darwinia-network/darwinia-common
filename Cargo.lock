@@ -1401,16 +1401,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-asset-primitives"
-version = "2.4.0"
-dependencies = [
- "ethereum-primitives",
- "parity-scale-codec",
- "sha3 0.9.1",
- "sp-std",
-]
-
-[[package]]
 name = "darwinia-balances"
 version = "2.4.0"
 dependencies = [
@@ -1822,9 +1812,9 @@ name = "darwinia-evm-precompile-util"
 version = "2.4.0"
 dependencies = [
  "darwinia-evm",
- "darwinia-primitives-contract",
  "darwinia-relay-primitives",
  "darwinia-s2s-issuing",
+ "dp-contract",
  "dp-evm",
  "evm",
  "frame-support",
@@ -1902,15 +1892,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-primitives-contract"
-version = "2.4.0"
-dependencies = [
- "ethabi",
- "ethereum-types",
- "sp-std",
-]
-
-[[package]]
 name = "darwinia-relay-authorities"
 version = "2.4.0"
 dependencies = [
@@ -1963,10 +1944,10 @@ name = "darwinia-s2s-backing"
 version = "2.4.0"
 dependencies = [
  "array-bytes",
- "darwinia-asset-primitives",
- "darwinia-primitives-contract",
  "darwinia-relay-primitives",
  "darwinia-support",
+ "dp-asset",
+ "dp-contract",
  "ethereum-primitives",
  "ethereum-types",
  "frame-support",
@@ -1984,15 +1965,15 @@ name = "darwinia-s2s-issuing"
 version = "2.4.0"
 dependencies = [
  "array-bytes",
- "darwinia-asset-primitives",
  "darwinia-balances",
  "darwinia-ethereum-issuing",
  "darwinia-evm",
  "darwinia-evm-precompile-simple",
  "darwinia-evm-precompile-withdraw",
- "darwinia-primitives-contract",
  "darwinia-relay-primitives",
  "darwinia-support",
+ "dp-asset",
+ "dp-contract",
  "dp-evm",
  "dvm-ethereum",
  "ethereum-primitives",
@@ -2017,9 +1998,9 @@ version = "2.4.0"
 dependencies = [
  "bp-messages",
  "bp-runtime",
- "darwinia-asset-primitives",
  "darwinia-relay-primitives",
  "darwinia-support",
+ "dp-asset",
  "ethereum-primitives",
  "ethereum-types",
  "frame-support",
@@ -2322,6 +2303,25 @@ checksum = "c4d33be9473d06f75f58220f71f7a9317aca647dc061dbd3c361b0bef505fbea"
 dependencies = [
  "byteorder",
  "quick-error",
+]
+
+[[package]]
+name = "dp-asset"
+version = "2.4.0"
+dependencies = [
+ "ethereum-primitives",
+ "parity-scale-codec",
+ "sha3 0.9.1",
+ "sp-std",
+]
+
+[[package]]
+name = "dp-contract"
+version = "2.4.0"
+dependencies = [
+ "ethabi",
+ "ethereum-types",
+ "sp-std",
 ]
 
 [[package]]
@@ -5904,7 +5904,6 @@ dependencies = [
  "bp-millau",
  "bp-runtime",
  "bridge-runtime-common",
- "darwinia-asset-primitives",
  "darwinia-balances",
  "darwinia-balances-rpc-runtime-api",
  "darwinia-claims",
@@ -5935,6 +5934,7 @@ dependencies = [
  "darwinia-treasury",
  "darwinia-tron-backing",
  "darwinia-vesting",
+ "dp-asset",
  "dp-evm",
  "drml-primitives",
  "dvm-dynamic-fee",

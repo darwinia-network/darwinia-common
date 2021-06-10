@@ -20,7 +20,7 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use codec::{Decode, Encode};
+use codec::Encode;
 use core::marker::PhantomData;
 use darwinia_relay_primitives::Relay;
 use dp_evm::Precompile;
