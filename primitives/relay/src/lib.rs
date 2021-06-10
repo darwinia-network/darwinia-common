@@ -27,15 +27,14 @@ pub use relay_authorities::*;
 pub use relayer_game::*;
 
 use codec::{Decode, Encode};
+use sp_runtime::DispatchError;
 
 pub trait Relay {
-	type RelayProof: Clone + PartialOrd;
+	type RelayOrigin: Clone + PartialOrd;
 	type RelayMessage: Encode + Decode + Clone;
-	type VerifiedResult: Clone;
-	type RelayMessageResult: Clone;
 
-	fn verify(proof: &Self::RelayProof) -> Self::VerifiedResult;
-	fn relay_message(message: &Self::RelayMessage) -> Self::RelayMessageResult;
+	fn verify_origin(proof: &Self::RelayOrigin) -> Result<EthereumAddress, DispatchError>;
+	fn relay_message(message: &Self::RelayMessage) -> Result<(), DispatchError>;
 	fn digest() -> RelayDigest;
 }
 

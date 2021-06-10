@@ -4,8 +4,8 @@ use frame_support::PalletId;
 // use crate::substrate::millau_messages::{MillauCallToPayload, ToMillauMessagePayload};
 use crate::*;
 use bp_millau::AccountIdConverter;
-use dp_asset::BridgedAssetReceiver;
 use darwinia_s2s_relay::{Config, Instance1 as ToMillauRelay, TruncateToEthAddress};
+use dp_asset::BridgedAssetReceiver;
 use pallet_bridge_messages::Instance1 as Millau;
 
 pub struct ToMillauMessageRelayCall;

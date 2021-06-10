@@ -63,18 +63,14 @@ const REGISTERD_ACTION: &[u8] = b"registered(address,address,address)";
 const BURN_ACTION: &[u8] = b"burned(address,address,address,address,uint256)";
 
 pub trait Config: dvm_ethereum::Config {
-	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
-
 	type PalletId: Get<PalletId>;
+	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
+	type WeightInfo: WeightInfo;
 
 	type ReceiverAccountId: From<[u8; 32]> + Into<Self::AccountId>;
-
-	type WeightInfo: WeightInfo;
 	type BackingRelay: Relay<
-		RelayProof = AccountId<Self>,
-		VerifiedResult = Result<EthereumAddress, DispatchError>,
+		RelayOrigin = AccountId<Self>,
 		RelayMessage = (u32, Token, RelayAccount<Self::AccountId>),
-		RelayMessageResult = DispatchResult,
 	>;
 }
 
@@ -171,7 +167,7 @@ decl_module! {
 			// the s2s message relay has been verified that the message comes from the backing chain with the
 			// chainID and backing sender address.
 			// here only we need is to check the sender is in whitelist
-			let backing = T::BackingRelay::verify(&user)?;
+			let backing = T::BackingRelay::verify_origin(&user)?;
 			let (token, recipient) = message;
 
 			let (token_type, token_info) = token.token_info()

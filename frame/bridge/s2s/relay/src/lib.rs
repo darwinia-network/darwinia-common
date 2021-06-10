@@ -132,18 +132,16 @@ where
 	<T::Call as Dispatchable>::Origin: From<RawOrigin<T::AccountId>>,
 	T::Call: Dispatchable<PostInfo = PostDispatchInfo>,
 {
-	type RelayProof = AccountId<T>;
+	type RelayOrigin = AccountId<T>;
 	type RelayMessage = (u32, Token, RelayAccount<AccountId<T>>);
-	type VerifiedResult = Result<EthereumAddress, DispatchError>;
-	type RelayMessageResult = DispatchResult;
 
-	fn verify(proof: &Self::RelayProof) -> Self::VerifiedResult {
+	fn verify_origin(proof: &Self::RelayOrigin) -> Result<EthereumAddress, DispatchError> {
 		let source_root = <RemoteRootId<T, I>>::get();
 		ensure!(&source_root == proof, <Error<T, I>>::InvalidProof);
 		Ok(T::ToEthAddressT::into_ethereum_id(proof))
 	}
 
-	fn relay_message(message: &Self::RelayMessage) -> Self::RelayMessageResult {
+	fn relay_message(message: &Self::RelayMessage) -> Result<(), DispatchError> {
 		let (spec_version, token, relay_account) = message.clone();
 		let encoded = T::BridgedAssetReceiverT::encode_call(token, relay_account)
 			.map_err(|_| <Error<T, I>>::EncodeInvalid)?;

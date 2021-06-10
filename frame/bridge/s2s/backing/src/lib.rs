@@ -81,10 +81,8 @@ pub mod pallet {
 		// now we have only one relay,
 		// in future, we modify it to multi-instance to interact with multi-target chains
 		type IssuingRelay: Relay<
-			RelayProof = AccountId<Self>,
-			VerifiedResult = Result<EthereumAddress, DispatchError>,
+			RelayOrigin = AccountId<Self>,
 			RelayMessage = (u32, Token, RelayAccount<AccountId<Self>>),
-			RelayMessageResult = Result<(), DispatchError>,
 		>;
 	}
 
@@ -188,7 +186,7 @@ pub mod pallet {
 				token.clone(),
 				RelayAccount::EthereumAccount(recipient),
 			);
-			T::IssuingRelay::relay_message(&message);
+			T::IssuingRelay::relay_message(&message)?;
 			Self::deposit_event(Event::TokenLocked(token, user, recipient, amount));
 			Ok(().into())
 		}
@@ -205,7 +203,7 @@ pub mod pallet {
 			// the s2s message relay has been verified the message comes from the issuing pallet with the
 			// chainID and issuing sender address.
 			// here only we need is to check the sender is in whitelist
-			let backing = T::IssuingRelay::verify(&user)?;
+			let backing = T::IssuingRelay::verify_origin(&user)?;
 			let (token, recipient) = message;
 
 			let token_info = match &token {
