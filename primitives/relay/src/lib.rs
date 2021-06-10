@@ -33,6 +33,7 @@ pub trait Relay {
 	type RelayMessage: Encode + Decode + Clone;
 	type VerifiedResult: Clone;
 	type RelayMessageResult: Clone;
+
 	fn verify(proof: &Self::RelayProof) -> Self::VerifiedResult;
 	fn relay_message(message: &Self::RelayMessage) -> Self::RelayMessageResult;
 	fn digest() -> RelayDigest;

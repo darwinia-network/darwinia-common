@@ -21,6 +21,6 @@
 use sp_std::vec::Vec;
 
 pub mod token;
-pub trait RemoteAssetReceiver<Receipt> {
-	fn encode_call(token: token::Token, receipt: Receipt) -> Result<Vec<u8>, ()>;
+pub trait BridgedAssetReceiver<R> {
+	fn encode_call(token: token::Token, receipt: R) -> Result<Vec<u8>, ()>;
 }

@@ -230,7 +230,7 @@ use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntime
 use darwinia_relay_primitives::RelayAccount;
 use darwinia_s2s_relay::MessageRelayCall;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
-use dp_asset::{token::Token, RemoteAssetReceiver};
+use dp_asset::token::Token;
 use drml_primitives::*;
 use dvm_rpc_runtime_api::TransactionStatus;
 use impls::*;
@@ -896,33 +896,4 @@ pub enum MillauRuntime {
 pub enum MillauSub2SubBackingCall {
 	#[codec(index = 0)]
 	cross_receive_and_unlock((Token, AccountId)),
-}
-
-pub struct MillauBackingReceiver;
-impl RemoteAssetReceiver<RelayAccount<AccountId>> for MillauBackingReceiver {
-	fn encode_call(token: Token, receipt: RelayAccount<AccountId>) -> Result<Vec<u8>, ()> {
-		match receipt {
-			RelayAccount::<AccountId>::DarwiniaAccount(r) => {
-				return Ok(MillauRuntime::Sub2SubBacking(
-					MillauSub2SubBackingCall::cross_receive_and_unlock((token, r)),
-				)
-				.encode())
-			}
-			_ => Err(()),
-		}
-	}
-}
-
-pub struct ToMillauMessageRelayCall;
-impl MessageRelayCall<millau_messages::ToMillauMessagePayload, crate::Call>
-	for ToMillauMessageRelayCall
-{
-	fn encode_call(payload: millau_messages::ToMillauMessagePayload) -> crate::Call {
-		return BridgeMessagesCall::<Runtime, pallet_bridge_messages::Instance1>::send_message(
-			[0; 4],
-			payload,
-			0u128.into(),
-		)
-		.into();
-	}
 }

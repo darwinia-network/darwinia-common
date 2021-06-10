@@ -237,7 +237,7 @@ pub mod pallet {
 				KeepAlive,
 			)?;
 
-			Self::deposit_event(Event::TokenUnlocked(token, recipient, amount));
+			Self::deposit_event(Event::TokenUnlocked(token.clone(), recipient, amount));
 			Ok(().into())
 		}
 	}
