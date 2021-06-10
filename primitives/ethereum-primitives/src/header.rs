@@ -140,38 +140,33 @@ impl EthereumHeader {
 			} else if s.starts_with("\"gasUsed") {
 				eth_header.gas_used = str_to_u64(parse_value_unchecked(s)).into();
 			} else if s.starts_with("\"hash") {
-				eth_header.hash =
-					Some(array_bytes::hex2array_unchecked!(parse_value_unchecked(s), 32).into());
+				eth_header.hash = Some(array_bytes::hex_into_unchecked(parse_value_unchecked(s)));
 			} else if s.starts_with("\"logsBloom") {
 				let s = parse_value_unchecked(s);
 				let s = if s.starts_with("0x") { &s[2..] } else { s };
 				eth_header.log_bloom = Bloom::from_str(s).unwrap_or_default();
 			} else if s.starts_with("\"miner") {
-				eth_header.author =
-					array_bytes::hex2array_unchecked!(parse_value_unchecked(s), 20).into();
+				eth_header.author = array_bytes::hex_into_unchecked(parse_value_unchecked(s));
 			} else if s.starts_with("\"mixHash") {
-				mix_hash = array_bytes::hex2array_unchecked!(parse_value_unchecked(s), 32).into();
+				mix_hash = array_bytes::hex_into_unchecked(parse_value_unchecked(s));
 			} else if s.starts_with("\"nonce") {
-				nonce = array_bytes::hex2array_unchecked!(parse_value_unchecked(s), 8).into();
+				nonce = array_bytes::hex_into_unchecked(parse_value_unchecked(s));
 			} else if s.starts_with("\"number") {
 				eth_header.number = str_to_u64(parse_value_unchecked(s));
 			} else if s.starts_with("\"parentHash") {
-				eth_header.parent_hash =
-					array_bytes::hex2array_unchecked!(parse_value_unchecked(s), 32).into();
+				eth_header.parent_hash = array_bytes::hex_into_unchecked(parse_value_unchecked(s));
 			} else if s.starts_with("\"receiptsRoot") {
 				eth_header.receipts_root =
-					array_bytes::hex2array_unchecked!(parse_value_unchecked(s), 32).into();
+					array_bytes::hex_into_unchecked(parse_value_unchecked(s));
 			} else if s.starts_with("\"sha3Uncles") {
-				eth_header.uncles_hash =
-					array_bytes::hex2array_unchecked!(parse_value_unchecked(s), 32).into();
+				eth_header.uncles_hash = array_bytes::hex_into_unchecked(parse_value_unchecked(s));
 			} else if s.starts_with("\"stateRoot") {
-				eth_header.state_root =
-					array_bytes::hex2array_unchecked!(parse_value_unchecked(s), 32).into();
+				eth_header.state_root = array_bytes::hex_into_unchecked(parse_value_unchecked(s));
 			} else if s.starts_with("\"timestamp") {
 				eth_header.timestamp = str_to_u64(parse_value_unchecked(s));
 			} else if s.starts_with("\"transactionsRoot") {
 				eth_header.transactions_root =
-					array_bytes::hex2array_unchecked!(parse_value_unchecked(s), 32).into();
+					array_bytes::hex_into_unchecked(parse_value_unchecked(s));
 			}
 		}
 		eth_header.seal = vec![
@@ -714,21 +709,17 @@ mod tests {
 
 		assert_eq!(
 			header.hash(),
-			array_bytes::hex2array_unchecked!(
+			array_bytes::hex_into_unchecked(
 				"0xb80bf91d6f459227a9c617c5d9823ff0b07f1098ea16788676f0b804ecd42f3b",
-				32
 			)
-			.into()
 		);
 
 		let partial_header_hash = header.bare_hash();
 		assert_eq!(
 			partial_header_hash,
-			array_bytes::hex2array_unchecked!(
+			array_bytes::hex_into_unchecked(
 				"0x3c2e6623b1de8862a927eeeef2b6b25dea6e1d9dad88dca3c239be3959dc384a",
-				32
 			)
-			.into()
 		);
 	}
 
@@ -769,11 +760,9 @@ mod tests {
 		let partial_header_hash = header.bare_hash();
 		assert_eq!(
 			partial_header_hash,
-			array_bytes::hex2array_unchecked!(
+			array_bytes::hex_into_unchecked(
 				"0xbb698ea6e304a7a88a6cd8238f0e766b4f7bf70dc0869bd2e4a76a8e93fffc80",
-				32
 			)
-			.into()
 		);
 	}
 

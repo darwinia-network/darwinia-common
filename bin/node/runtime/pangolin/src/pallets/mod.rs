@@ -119,8 +119,8 @@ pub mod tron_backing;
 pub use tron_backing::*;
 
 // DVM
-pub mod evm;
-pub use evm::*;
+pub mod evm_;
+pub use evm_::*;
 
 pub mod dvm;
 pub use dvm::*;
