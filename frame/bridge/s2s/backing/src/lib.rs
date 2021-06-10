@@ -174,7 +174,7 @@ pub mod pallet {
 			let amount: U256 = value.saturated_into::<u128>().into();
 			let token = Token::Native(TokenInfo {
 				// The native mapped RING token as a special ERC20 address
-				address: array_bytes::hex2array_unchecked!(BACK_ERC20_RING, 20).into(),
+				address: array_bytes::hex2array_unchecked(BACK_ERC20_RING).into(),
 				value: Some(amount),
 				option: Some(TokenOption {
 					name: to_bytes32(RING_NAME),
