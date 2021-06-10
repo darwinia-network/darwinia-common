@@ -14,28 +14,24 @@ use dp_evm::{Precompile, PrecompileSet};
 use dvm_ethereum::account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance};
 
 pub struct PangolinPrecompiles<R>(PhantomData<R>);
-impl<R: dvm_ethereum::Config> PrecompileSet for PangolinPrecompiles<R> {
+impl<R: darwinia_evm::Config> PrecompileSet for PangolinPrecompiles<R> {
 	fn execute(
 		address: H160,
 		input: &[u8],
 		target_gas: Option<u64>,
 		context: &Context,
 	) -> Option<Result<(ExitSucceed, Vec<u8>, u64), ExitError>> {
-		let to_address = |n: u64| -> H160 { H160::from_low_u64_be(n) };
+		let addr = |n: u64| -> H160 { H160::from_low_u64_be(n) };
 
 		match address {
 			// Ethereum precompiles
-			_ if address == to_address(1) => Some(ECRecover::execute(input, target_gas, context)),
-			_ if address == to_address(2) => Some(Sha256::execute(input, target_gas, context)),
-			_ if address == to_address(3) => Some(Ripemd160::execute(input, target_gas, context)),
-			_ if address == to_address(4) => Some(Identity::execute(input, target_gas, context)),
+			_ if address == addr(1) => Some(ECRecover::execute(input, target_gas, context)),
+			_ if address == addr(2) => Some(Sha256::execute(input, target_gas, context)),
+			_ if address == addr(3) => Some(Ripemd160::execute(input, target_gas, context)),
+			_ if address == addr(4) => Some(Identity::execute(input, target_gas, context)),
 			// Darwinia precompiles
-			_ if address == to_address(21) => Some(<Transfer<R> as Precompile>::execute(
-				input, target_gas, context,
-			)),
-			_ if address == to_address(23) => {
-				Some(<Issuing<R>>::execute(input, target_gas, context))
-			}
+			_ if address == addr(21) => Some(<Transfer<R>>::execute(input, target_gas, context)),
+			_ if address == addr(23) => Some(<Issuing<R>>::execute(input, target_gas, context)),
 			_ => None,
 		}
 	}
