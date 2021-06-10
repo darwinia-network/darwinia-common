@@ -62,6 +62,7 @@ use sp_runtime::{
 	DispatchError,
 };
 use sp_std::prelude::*;
+use sp_std::vec;
 // --- darwinia ---
 use darwinia_evm::{AccountBasic, FeeCalculator, GasWeightMapping, Runner};
 use darwinia_support::evm::INTERNAL_CALLER;

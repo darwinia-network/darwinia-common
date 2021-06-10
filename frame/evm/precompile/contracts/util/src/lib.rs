@@ -20,11 +20,12 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use codec::Encode;
+use codec::{Decode, Encode};
 use core::marker::PhantomData;
 use darwinia_relay_primitives::Relay;
 use dp_evm::Precompile;
 use evm::{Context, ExitError, ExitSucceed};
+use frame_support::dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo};
 
 /// The contract address: 0000000000000000000000000000000000000018
 pub struct Util<T> {
@@ -34,8 +35,10 @@ pub struct Util<T> {
 const SELECTOR_SIZE_BYTES: usize = 4;
 impl<T> Precompile for Util<T>
 where
-	T: darwinia_evm::Config + darwinia_s2s_issuing::Config,
-	T::Call: Encode + From<darwinia_s2s_issuing::Call<T>>,
+	T: darwinia_s2s_issuing::Config,
+	T::Call: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Encode,
+	<T::Call as Dispatchable>::Origin: From<Option<T::AccountId>>,
+	T::Call: From<darwinia_s2s_issuing::Call<T>>,
 {
 	fn execute(
 		input: &[u8],

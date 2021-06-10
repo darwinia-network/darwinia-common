@@ -1,13 +1,15 @@
+pub use darwinia_evm_precompile_dispatch::Dispatch;
 pub use darwinia_evm_precompile_issuing::Issuing;
 pub use darwinia_evm_precompile_kton::Kton as KtonPrecompile;
 pub use darwinia_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
-pub use darwinia_evm_precompile_withdraw::WithDraw;
 pub use darwinia_evm_precompile_util::Util;
-pub use darwinia_evm_precompile_dispatch::Dispatch;
+pub use darwinia_evm_precompile_withdraw::WithDraw;
 
 // --- crates.io ---
 use evm::{Context, ExitError, ExitSucceed};
 // --- substrate ---
+use codec::{Decode, Encode};
+use frame_support::dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo};
 use sp_core::{H160, U256};
 use sp_std::{marker::PhantomData, vec::Vec};
 // --- darwinia ---
@@ -17,7 +19,13 @@ use dp_evm::{Precompile, PrecompileSet};
 use dvm_ethereum::account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance};
 
 pub struct PangolinPrecompiles<R>(PhantomData<R>);
-impl<R: dvm_ethereum::Config> PrecompileSet for PangolinPrecompiles<R> {
+impl<R> PrecompileSet for PangolinPrecompiles<R>
+where
+	R: darwinia_s2s_issuing::Config + darwinia_evm::Config,
+	R::Call: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Encode + Decode,
+	<R::Call as Dispatchable>::Origin: From<Option<R::AccountId>>,
+	R::Call: From<darwinia_s2s_issuing::Call<R>>,
+{
 	fn execute(
 		address: H160,
 		input: &[u8],
@@ -42,9 +50,7 @@ impl<R: dvm_ethereum::Config> PrecompileSet for PangolinPrecompiles<R> {
 			_ if address == to_address(23) => {
 				Some(<Issuing<R>>::execute(input, target_gas, context))
 			}
-			_ if address == to_address(24) => {
-				Some(<Util<R>>::execute(input, target_gas, context))
-			}
+			_ if address == to_address(24) => Some(<Util<R>>::execute(input, target_gas, context)),
 			_ if address == to_address(25) => {
 				Some(<Dispatch<R>>::execute(input, target_gas, context))
 			}
