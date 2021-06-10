@@ -195,7 +195,10 @@ impl Relay for MockRelay {
 		Ok(())
 	}
 	fn digest() -> RelayDigest {
-		return [0; 4];
+        let mut digest: RelayDigest = Default::default();
+        let pallet_digest = sha3::Keccak256::digest(S2sRelayPalletId::get().encode().as_slice());
+        digest.copy_from_slice(&pallet_digest[..4]);
+        digest
 	}
 }
 
@@ -252,3 +255,43 @@ fn burn_and_remote_unlock_success() {
 		));
 	});
 }
+
+#[test]
+fn check_relay_digest() {
+	new_test_ext().execute_with(|| {
+        assert_eq!(
+            S2sIssuing::relay_digest(),
+            array_bytes::hex2bytes_unchecked("0xd184c5bd").as_slice()
+        );
+	});
+}
+
+#[test]
+fn test_encode_token_creation() {
+	new_test_ext().execute_with(|| {
+        let encoded = S2sIssuing::abi_encode_token_creation(
+            EthereumAddress::from_str("0000000000000000000000000000000000000001").unwrap(),
+            EthereumAddress::from_str("0000000000000000000000000000000000000002").unwrap(),
+            1,
+            "ring token",
+            "RING",
+            9
+        );
+        assert_ok!(&encoded);
+        let stream = encoded.unwrap();
+        assert_eq!(stream,
+                   array_bytes::hex2bytes_unchecked("0xe89a0b30d184c5bd00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000e00000000000000000000000000000000000000000000000000000000000000120000000000000000000000000000000000000000000000000000000000000000900000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000a72696e6720746f6b656e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000452494e4700000000000000000000000000000000000000000000000000000000").as_slice());
+    });
+}
+
+#[test]
+fn test_bytes_to_account_id() {
+    new_test_ext().execute_with(|| {
+        let accountid = AccountId32::from(Into::<[u8; 32]>::into([1; 32]));
+        assert_eq!(
+            S2sIssuing::account_id_try_from_bytes(&[1;32]).unwrap(),
+            accountid
+        );
+	});
+}
+
