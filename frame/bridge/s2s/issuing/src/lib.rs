@@ -18,65 +18,179 @@
 
 //! Prototype module for s2s cross chain assets issuing.
 
-#![allow(unused)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod weights;
 pub use weights::WeightInfo;
 
-use darwinia_evm::AddressMapping;
-use darwinia_relay_primitives::{Relay, RelayAccount};
-
-use sp_runtime::traits::Dispatchable;
-
-mod types {
-	use crate::*;
-
-	pub type BlockNumber<T> = <T as frame_system::Config>::BlockNumber;
-	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-	pub type PalletDigest = [u8; 4];
-}
+pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 
 // --- crates ---
-use ethereum_types::{Address, H160, H256, U256};
+use ethereum_primitives::EthereumAddress;
+use ethereum_types::{H160, U256};
+use sha3::Digest;
 // --- substrate ---
-use frame_support::{
-	decl_error, decl_event, decl_module, decl_storage, ensure, parameter_types,
-	traits::{Currency, ExistenceRequirement::*, Get},
-	weights::Weight,
-	PalletId,
-};
+use frame_support::{ensure, traits::Get, PalletId};
 use frame_system::ensure_signed;
 use sp_runtime::{DispatchError, DispatchResult};
 use sp_std::vec::Vec;
 // --- darwinia ---
-use darwinia_evm::GasWeightMapping;
-use darwinia_relay_primitives::RelayDigest;
+use darwinia_evm::AddressMapping;
+use darwinia_relay_primitives::{Relay, RelayAccount, RelayDigest};
 use dp_asset::token::{Token, TokenInfo};
-use dp_contract::mapping_token_factory::MappingTokenFactory as mtf;
-use dp_contract::mapping_token_factory::TokenBurnInfo;
-use ethereum_primitives::EthereumAddress;
-use sha3::Digest;
-use types::*;
+use dp_contract::mapping_token_factory::{MappingTokenFactory as mtf, TokenBurnInfo};
 
 const REGISTERD_ACTION: &[u8] = b"registered(address,address,address)";
 const BURN_ACTION: &[u8] = b"burned(address,address,address,address,uint256)";
 
-pub trait Config: dvm_ethereum::Config {
-	type PalletId: Get<PalletId>;
-	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
-	type WeightInfo: WeightInfo;
+pub use pallet::*;
 
-	type ReceiverAccountId: From<[u8; 32]> + Into<Self::AccountId>;
-	type BackingRelay: Relay<
-		RelayOrigin = AccountId<Self>,
-		RelayMessage = (u32, Token, RelayAccount<Self::AccountId>),
-	>;
-}
+#[frame_support::pallet]
+pub mod pallet {
+	use super::*;
+	use frame_support::pallet_prelude::*;
+	use frame_system::pallet_prelude::*;
 
-decl_error! {
+	#[pallet::config]
+	#[pallet::disable_frame_system_supertrait_check]
+	pub trait Config: dvm_ethereum::Config {
+		#[pallet::constant]
+		type PalletId: Get<PalletId>;
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type WeightInfo: WeightInfo;
+
+		type ReceiverAccountId: From<[u8; 32]> + Into<Self::AccountId>;
+		type BackingRelay: Relay<
+			RelayOrigin = AccountId<Self>,
+			RelayMessage = (u32, Token, RelayAccount<Self::AccountId>),
+		>;
+	}
+
+	#[pallet::pallet]
+	#[pallet::generate_store(pub(super) trait Store)]
+	pub struct Pallet<T>(PhantomData<T>);
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
+
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {
+		/// handle from contract call
+		/// when user burn their tokens, this handler will receive the event from dispatch
+		/// precompile contract, and relay this event to the target chain to unlock asset
+		#[pallet::weight(0)]
+		pub fn dispatch_handle(origin: OriginFor<T>, input: Vec<u8>) -> DispatchResultWithPostInfo {
+			let user = ensure_signed(origin)?;
+			// we must check this user comes from mapping token factory contract address with
+			// precompile dispatch contract
+			let factory_address = MappingFactoryAddress::<T>::get();
+			let caller =
+				<T as darwinia_evm::Config>::AddressMapping::into_account_id(factory_address);
+			ensure!(caller == user, <Error<T>>::AssetAR);
+			let register_action = &sha3::Keccak256::digest(&REGISTERD_ACTION)[0..4];
+			let burn_action = &sha3::Keccak256::digest(&BURN_ACTION)[0..4];
+			if &input[4..8] == register_action {
+				//register response
+				log::info!("new s2s token has been registered, ingore response");
+			} else if &input[4..8] == burn_action {
+				//burn action
+				let burn_info =
+					TokenBurnInfo::decode(&input[8..]).map_err(|_| Error::<T>::InvalidDecoding)?;
+				let recipient = Self::account_id_try_from_bytes(burn_info.recipient.as_slice())?;
+				Self::burn_and_remote_unlock(
+					burn_info.spec_version,
+					burn_info.token_type,
+					burn_info.source,
+					recipient,
+					burn_info.amount,
+				)?;
+			}
+			Ok(().into())
+		}
+
+		/// this is a remote call from the source backing pallet with relay message
+		/// only source backing pallet address is accepted
+		/// receive token transfer from the source chain, if the mapped token is not created, then
+		/// create first
+		#[pallet::weight(0)]
+		pub fn cross_receive_and_redeem(
+			origin: OriginFor<T>,
+			message: (Token, EthereumAddress),
+		) -> DispatchResultWithPostInfo {
+			let user = ensure_signed(origin)?;
+			// the s2s message relay has been verified that the message comes from the backing chain with the
+			// chainID and backing sender address.
+			// here only we need is to check the sender is in whitelist
+			let backing = T::BackingRelay::verify_origin(&user)?;
+			let (token, recipient) = message;
+
+			let (token_type, token_info) = token
+				.token_info()
+				.map_err(|_| Error::<T>::InvalidTokenType)?;
+
+			let mut mapped_address = Self::mapped_token_address(backing, token_info.address)?;
+			// if the mapped token address has not been created, create it first
+			if mapped_address == H160::zero() {
+				// create
+				match token_info.option {
+					Some(option) => {
+						let name = sp_std::str::from_utf8(&option.name[..])
+							.map_err(|_| Error::<T>::StringCF)?;
+						let symbol = sp_std::str::from_utf8(&option.symbol[..])
+							.map_err(|_| Error::<T>::StringCF)?;
+						let input = Self::abi_encode_token_creation(
+							backing,
+							token_info.address,
+							token_type,
+							&name,
+							&symbol,
+							option.decimal,
+						)?;
+						Self::transact_mapping_factory(input)?;
+						mapped_address = Self::mapped_token_address(backing, token_info.address)?;
+						Self::deposit_event(Event::NewTokenCreated(
+							user,
+							backing,
+							token_info.address,
+							mapped_address,
+						));
+					}
+					_ => return Err(Error::<T>::InvalidTokenOption.into()),
+				}
+			}
+			// redeem
+			if let Some(value) = token_info.value {
+				let input = Self::abi_encode_token_redeem(mapped_address, recipient, value)?;
+				Self::transact_mapping_factory(input)?;
+				Self::deposit_event(Event::TokenRedeemed(
+					backing,
+					mapped_address,
+					recipient,
+					value,
+				));
+			}
+			Ok(().into())
+		}
+	}
+
+	#[pallet::event]
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
+	#[pallet::metadata(T::AccountId = "AccountId")]
+	pub enum Event<T: Config> {
+		/// new erc20 token created [user, backing, tokenaddress, mappedaddress]
+		NewTokenCreated(
+			AccountId<T>,
+			EthereumAddress,
+			EthereumAddress,
+			EthereumAddress,
+		),
+		/// token redeemed [backing, mappedaddress, recipient, value]
+		TokenRedeemed(EthereumAddress, EthereumAddress, EthereumAddress, U256),
+	}
+
+	#[pallet::error]
 	/// Issuing pallet errors.
-	pub enum Error for Module<T: Config> {
+	pub enum Error<T> {
 		/// assert ar
 		AssetAR,
 		/// Invalid Issuing System Account
@@ -96,112 +210,40 @@ decl_error! {
 		/// decode event failed
 		InvalidDecoding,
 	}
-}
 
-decl_event! {
-	pub enum Event<T>
-	where
-		AccountId = AccountId<T>,
-	{
-		/// new erc20 token created [user, backing, tokenaddress, mappedaddress]
-		NewTokenCreated(AccountId, EthereumAddress, EthereumAddress, EthereumAddress),
-		/// token redeemed [backing, mappedaddress, recipient, value]
-		TokenRedeemed(EthereumAddress, EthereumAddress, EthereumAddress, U256),
+	#[pallet::storage]
+	#[pallet::getter(fn mapping_factory_address)]
+	pub type MappingFactoryAddress<T: Config> = StorageValue<_, EthereumAddress, ValueQuery>;
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig {
+		pub mapping_factory_address: EthereumAddress,
 	}
-}
 
-decl_storage! {
-	trait Store for Module<T: Config> as Substrate2SubstrateIssuing {
-		pub MappingFactoryAddress get(fn mapping_factory_address) config(): EthereumAddress;
-	}
-}
-
-decl_module! {
-	pub struct Module<T: Config> for enum Call
-	where
-		origin: T::Origin
-	{
-		fn deposit_event() = default;
-
-		fn on_initialize(_n: BlockNumber<T>) -> Weight {
-			0
-		}
-
-		/// handle from contract call
-		/// when user burn their tokens, this handler will receive the event from dispatch
-		/// precompile contract, and relay this event to the target chain to unlock asset
-		#[weight = 0]
-		pub fn dispatch_handle(origin, input: Vec<u8>) {
-			let user = ensure_signed(origin)?;
-			// we must check this user comes from mapping token factory contract address with
-			// precompile dispatch contract
-			let factory_address = MappingFactoryAddress::get();
-			let caller = <T as darwinia_evm::Config>::AddressMapping::into_account_id(factory_address);
-			ensure!(caller == user, <Error<T>>::AssetAR);
-			let register_action = &sha3::Keccak256::digest(&REGISTERD_ACTION)[0..4];
-			let burn_action = &sha3::Keccak256::digest(&BURN_ACTION)[0..4];
-			if &input[4..8] == register_action {
-				//register response
-				log::info!("new s2s token has been registered, ingore response");
-			} else if &input[4..8] == burn_action {
-				//burn action
-				let burn_info = TokenBurnInfo::decode(&input[8..])
-					.map_err(|_| Error::<T>::InvalidDecoding)?;
-				let recipient = Self::account_id_try_from_bytes(burn_info.recipient.as_slice())?;
-				Self::burn_and_remote_unlock(
-					burn_info.spec_version,
-					burn_info.token_type,
-					burn_info.source,
-					recipient,
-					burn_info.amount)?;
+	#[cfg(feature = "std")]
+	impl Default for GenesisConfig {
+		fn default() -> Self {
+			Self {
+				mapping_factory_address: Default::default(),
 			}
 		}
+	}
 
-		/// this is a remote call from the source backing pallet with relay message
-		/// only source backing pallet address is accepted
-		/// receive token transfer from the source chain, if the mapped token is not created, then
-		/// create first
-		#[weight = 0]
-		pub fn cross_receive_and_redeem(origin, message: (Token, EthereumAddress)) {
-			let user = ensure_signed(origin)?;
-			// the s2s message relay has been verified that the message comes from the backing chain with the
-			// chainID and backing sender address.
-			// here only we need is to check the sender is in whitelist
-			let backing = T::BackingRelay::verify_origin(&user)?;
-			let (token, recipient) = message;
-
-			let (token_type, token_info) = token.token_info()
-				.map_err(|_| Error::<T>::InvalidTokenType)?;
-
-			let mut mapped_address = Self::mapped_token_address(backing, token_info.address)?;
-			// if the mapped token address has not been created, create it first
-			if mapped_address == H160::zero() {
-				// create
-				match token_info.option {
-					Some(option) => {
-						let name = sp_std::str::from_utf8(&option.name[..])
-							.map_err(|_| Error::<T>::StringCF)?;
-						let symbol = sp_std::str::from_utf8(&option.symbol[..])
-							.map_err(|_| Error::<T>::StringCF)?;
-						let input = Self::abi_encode_token_creation(backing, token_info.address, token_type, &name, &symbol, option.decimal)?;
-						Self::transact_mapping_factory(input)?;
-						mapped_address = Self::mapped_token_address(backing, token_info.address)?;
-						Self::deposit_event(RawEvent::NewTokenCreated(user, backing, token_info.address, mapped_address));
-					}
-					_ => return Err(Error::<T>::InvalidTokenOption.into())
-				}
-			}
-			// redeem
-			if let Some(value) = token_info.value {
-				let input = Self::abi_encode_token_redeem(mapped_address, recipient, value)?;
-				Self::transact_mapping_factory(input)?;
-				Self::deposit_event(RawEvent::TokenRedeemed(backing, mapped_address, recipient, value));
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig {
+		fn build(&self) {
+			{
+				let data = &self.mapping_factory_address;
+				let v: &EthereumAddress = data;
+				<MappingFactoryAddress<T> as frame_support::storage::StorageValue<
+					EthereumAddress,
+				>>::put::<&EthereumAddress>(v);
 			}
 		}
 	}
 }
 
-impl<T: Config> Module<T> {
+impl<T: Config> Pallet<T> {
 	pub fn relay_digest() -> RelayDigest {
 		return T::BackingRelay::digest();
 	}
@@ -243,7 +285,7 @@ impl<T: Config> Module<T> {
 		backing: EthereumAddress,
 		source: EthereumAddress,
 	) -> Result<H160, DispatchError> {
-		let factory_address = MappingFactoryAddress::get();
+		let factory_address = MappingFactoryAddress::<T>::get();
 		let bytes = mtf::encode_mapping_token(backing, source)
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
 		let mapped_address = dvm_ethereum::Pallet::<T>::do_call(factory_address, bytes)
@@ -255,7 +297,7 @@ impl<T: Config> Module<T> {
 	}
 
 	pub fn transact_mapping_factory(input: Vec<u8>) -> DispatchResult {
-		let contract = MappingFactoryAddress::get();
+		let contract = MappingFactoryAddress::<T>::get();
 		let result = dvm_ethereum::Pallet::<T>::internal_transact(contract, input).map_err(
 			|e| -> &'static str {
 				log::info!("call mapping factory contract error {:?}", &e);
