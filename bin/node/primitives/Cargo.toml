@@ -11,8 +11,8 @@ version     = "2.4.0"
 
 [dependencies]
 # substrate
-sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
+sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
 
 [features]
 default = ["std"]

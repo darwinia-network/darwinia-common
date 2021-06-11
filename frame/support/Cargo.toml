@@ -17,12 +17,12 @@ num-traits            = { version = "0.2.14", default-features = false }
 # darwinia
 ethereum-primitives = { default-features = false, path = "../../primitives/ethereum-primitives" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
 
 [dev-dependencies]
-sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
+sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
 
 [features]
 default = ["std"]
