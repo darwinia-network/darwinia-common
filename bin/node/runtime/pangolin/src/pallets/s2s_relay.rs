@@ -18,8 +18,8 @@ impl MessageRelayCall<ToMillauMessagePayload, Call> for ToMillauMessageRelayCall
 
 pub struct MillauBackingReceiver;
 impl BridgedAssetReceiver<RelayAccount<AccountId>> for MillauBackingReceiver {
-	fn encode_call(token: Token, receipt: RelayAccount<AccountId>) -> Result<Vec<u8>, ()> {
-		match receipt {
+	fn encode_call(token: Token, recipient: RelayAccount<AccountId>) -> Result<Vec<u8>, ()> {
+		match recipient {
 			RelayAccount::<AccountId>::DarwiniaAccount(r) => {
 				return Ok(MillauRuntime::Sub2SubBacking(
 					MillauSub2SubBackingCall::cross_receive_and_unlock((token, r)),
