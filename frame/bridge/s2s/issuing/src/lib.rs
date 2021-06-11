@@ -26,7 +26,6 @@ pub use weights::WeightInfo;
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 
 // --- crates ---
-use ethereum_primitives::EthereumAddress;
 use ethereum_types::{H160, U256};
 use sha3::Digest;
 // --- substrate ---
@@ -36,11 +35,11 @@ use sp_runtime::{DispatchError, DispatchResult};
 use sp_std::vec::Vec;
 // --- darwinia ---
 use darwinia_evm::AddressMapping;
-use darwinia_relay_primitives::{Relay, RelayAccount, RelayDigest};
+use darwinia_relay_primitives::{Relay, RelayAccount};
 use dp_asset::token::{Token, TokenInfo};
 use dp_contract::mapping_token_factory::{MappingTokenFactory as mtf, TokenBurnInfo};
 
-const REGISTERD_ACTION: &[u8] = b"registered(address,address,address)";
+const _REGISTERD_ACTION: &[u8] = b"registered(address,address,address)";
 const BURN_ACTION: &[u8] = b"burned(address,address,address,address,uint256)";
 
 pub use pallet::*;
@@ -75,25 +74,23 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// handle from contract call
-		/// when user burn their tokens, this handler will receive the event from dispatch
-		/// precompile contract, and relay this event to the target chain to unlock asset
+		/// Handle dispatch call from dispatch precompile contract
+		///
+		/// When user burn their tokens, this handler will receive the event from dispatch
+		/// precompile contract, and relay this event to the target chain to unlock asset.
 		#[pallet::weight(0)]
 		pub fn dispatch_handle(origin: OriginFor<T>, input: Vec<u8>) -> DispatchResultWithPostInfo {
-			let user = ensure_signed(origin)?;
-			// we must check this user comes from mapping token factory contract address with
-			// precompile dispatch contract
-			let factory_address = MappingFactoryAddress::<T>::get();
-			let caller =
-				<T as darwinia_evm::Config>::AddressMapping::into_account_id(factory_address);
-			ensure!(caller == user, <Error<T>>::AssetAR);
-			let register_action = &sha3::Keccak256::digest(&REGISTERD_ACTION)[0..4];
+			let caller = ensure_signed(origin)?;
+
+			// Ensure the input data is long enough
+			ensure!(input.len() >= 8, <Error<T>>::InvalidInput);
+			// Ensure that the user is mapping token factory contract
+			let factory = MappingFactoryAddress::<T>::get();
+			let factory_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(factory);
+			ensure!(caller == factory_id, <Error<T>>::NotFactoryContract);
+
 			let burn_action = &sha3::Keccak256::digest(&BURN_ACTION)[0..4];
-			if &input[4..8] == register_action {
-				//register response
-				log::info!("new s2s token has been registered, ingore response");
-			} else if &input[4..8] == burn_action {
-				//burn action
+			if &input[4..8] == burn_action {
 				let burn_info =
 					TokenBurnInfo::decode(&input[8..]).map_err(|_| Error::<T>::InvalidDecoding)?;
 				let recipient = Self::account_id_try_from_bytes(burn_info.recipient.as_slice())?;
@@ -104,18 +101,20 @@ pub mod pallet {
 					recipient,
 					burn_info.amount,
 				)?;
+			} else {
+				log::trace!("No action match this input selector");
+				return Err(<Error<T>>::InvalidAction.into());
 			}
 			Ok(().into())
 		}
 
-		/// this is a remote call from the source backing pallet with relay message
-		/// only source backing pallet address is accepted
-		/// receive token transfer from the source chain, if the mapped token is not created, then
-		/// create first
+		/// Handle relay message sent from the source backing pallet with relay message
+		///
+		/// If the mapped token is not created, then create it.
 		#[pallet::weight(0)]
 		pub fn cross_receive_and_redeem(
 			origin: OriginFor<T>,
-			message: (Token, EthereumAddress),
+			message: (Token, H160),
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
 			// the s2s message relay has been verified that the message comes from the backing chain with the
@@ -138,7 +137,7 @@ pub mod pallet {
 							.map_err(|_| Error::<T>::StringCF)?;
 						let symbol = sp_std::str::from_utf8(&option.symbol[..])
 							.map_err(|_| Error::<T>::StringCF)?;
-						let input = Self::abi_encode_token_creation(
+						let input = Self::encode_token_creation(
 							backing,
 							token_info.address,
 							token_type,
@@ -148,7 +147,7 @@ pub mod pallet {
 						)?;
 						Self::transact_mapping_factory(input)?;
 						mapped_address = Self::mapped_token_address(backing, token_info.address)?;
-						Self::deposit_event(Event::NewTokenCreated(
+						Self::deposit_event(Event::TokenCreated(
 							user,
 							backing,
 							token_info.address,
@@ -158,9 +157,9 @@ pub mod pallet {
 					_ => return Err(Error::<T>::InvalidTokenOption.into()),
 				}
 			}
-			// redeem
+			// Redeem process
 			if let Some(value) = token_info.value {
-				let input = Self::abi_encode_token_redeem(mapped_address, recipient, value)?;
+				let input = Self::encode_token_redeem(mapped_address, recipient, value)?;
 				Self::transact_mapping_factory(input)?;
 				Self::deposit_event(Event::TokenRedeemed(
 					backing,
@@ -177,22 +176,21 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	#[pallet::metadata(T::AccountId = "AccountId")]
 	pub enum Event<T: Config> {
-		/// new erc20 token created [user, backing, tokenaddress, mappedaddress]
-		NewTokenCreated(
-			AccountId<T>,
-			EthereumAddress,
-			EthereumAddress,
-			EthereumAddress,
-		),
-		/// token redeemed [backing, mappedaddress, recipient, value]
-		TokenRedeemed(EthereumAddress, EthereumAddress, EthereumAddress, U256),
+		/// Create new token
+		TokenCreated(AccountId<T>, H160, H160, H160),
+		/// Redeem Token
+		TokenRedeemed(H160, H160, H160, U256),
 	}
 
 	#[pallet::error]
 	/// Issuing pallet errors.
 	pub enum Error<T> {
-		/// assert ar
-		AssetAR,
+		/// The input data is not long enough
+		InvalidInput,
+		/// The address is not from mapping factory contract address
+		NotFactoryContract,
+		/// There is no matched action
+		InvalidAction,
 		/// Invalid Issuing System Account
 		InvalidIssuingAccount,
 		/// StringCF
@@ -213,11 +211,11 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn mapping_factory_address)]
-	pub type MappingFactoryAddress<T: Config> = StorageValue<_, EthereumAddress, ValueQuery>;
+	pub type MappingFactoryAddress<T: Config> = StorageValue<_, H160, ValueQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {
-		pub mapping_factory_address: EthereumAddress,
+		pub mapping_factory_address: H160,
 	}
 
 	#[cfg(feature = "std")]
@@ -232,31 +230,33 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
-			{
-				let data = &self.mapping_factory_address;
-				let v: &EthereumAddress = data;
-				<MappingFactoryAddress<T> as frame_support::storage::StorageValue<
-					EthereumAddress,
-				>>::put::<&EthereumAddress>(v);
-			}
+			<MappingFactoryAddress<T>>::put(&self.mapping_factory_address);
 		}
 	}
 }
 
 impl<T: Config> Pallet<T> {
-	pub fn relay_digest() -> RelayDigest {
-		return T::BackingRelay::digest();
+	pub fn mapped_token_address(backing: H160, source: H160) -> Result<H160, DispatchError> {
+		let factory_address = <MappingFactoryAddress<T>>::get();
+		let bytes = mtf::encode_mapping_token(backing, source)
+			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
+		let mapped_address = dvm_ethereum::Pallet::<T>::do_call(factory_address, bytes)
+			.map_err(|e| -> &'static str { e.into() })?;
+		if mapped_address.len() != 32 {
+			return Err(Error::<T>::InvalidAddressLen.into());
+		}
+		Ok(H160::from_slice(&mapped_address.as_slice()[12..]))
 	}
 
-	fn abi_encode_token_creation(
-		backing: EthereumAddress,
-		address: EthereumAddress,
+	fn encode_token_creation(
+		backing: H160,
+		address: H160,
 		token_type: u32,
 		name: &str,
 		symbol: &str,
 		decimal: u8,
 	) -> Result<Vec<u8>, DispatchError> {
-		let callback_processor = Self::relay_digest();
+		let callback_processor = T::BackingRelay::digest();
 		let input = mtf::encode_create_erc20(
 			callback_processor,
 			token_type,
@@ -270,34 +270,19 @@ impl<T: Config> Pallet<T> {
 		Ok(input)
 	}
 
-	fn abi_encode_token_redeem(
-		dtoken_address: EthereumAddress,
-		recipient: EthereumAddress,
+	fn encode_token_redeem(
+		token_address: H160,
+		recipient: H160,
 		amount: U256,
 	) -> Result<Vec<u8>, DispatchError> {
-		let input = mtf::encode_cross_receive(dtoken_address, recipient, amount)
+		let input = mtf::encode_cross_receive(token_address, recipient, amount)
 			.map_err(|_| Error::<T>::InvalidMintEncoding)?;
-
 		Ok(input)
-	}
-
-	pub fn mapped_token_address(
-		backing: EthereumAddress,
-		source: EthereumAddress,
-	) -> Result<H160, DispatchError> {
-		let factory_address = MappingFactoryAddress::<T>::get();
-		let bytes = mtf::encode_mapping_token(backing, source)
-			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
-		let mapped_address = dvm_ethereum::Pallet::<T>::do_call(factory_address, bytes)
-			.map_err(|e| -> &'static str { e.into() })?;
-		if mapped_address.len() != 32 {
-			return Err(Error::<T>::InvalidAddressLen.into());
-		}
-		Ok(H160::from_slice(&mapped_address.as_slice()[12..]))
 	}
 
 	pub fn transact_mapping_factory(input: Vec<u8>) -> DispatchResult {
 		let contract = MappingFactoryAddress::<T>::get();
+		// TODO: update the result process
 		let result = dvm_ethereum::Pallet::<T>::internal_transact(contract, input).map_err(
 			|e| -> &'static str {
 				log::info!("call mapping factory contract error {:?}", &e);
@@ -307,20 +292,21 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	/// Get AccountId from bytes
 	pub fn account_id_try_from_bytes(bytes: &[u8]) -> Result<T::AccountId, DispatchError> {
 		if bytes.len() != 32 {
 			return Err(Error::<T>::InvalidAddressLen.into());
 		}
 
-		let account_id: T::ReceiverAccountId = array_bytes::dyn2array!(bytes, 32).into();
-
+		let account_id: T::ReceiverAccountId = array_bytes::dyn_into!(bytes, 32);
 		Ok(account_id.into())
 	}
 
+	/// burn and send message to bridged chain
 	pub fn burn_and_remote_unlock(
 		spec_version: u32,
 		token_type: u32,
-		token: EthereumAddress,
+		token_address: H160,
 		recipient: AccountId<T>,
 		amount: U256,
 	) -> Result<(), DispatchError> {
@@ -329,7 +315,7 @@ impl<T: Config> Pallet<T> {
 			(
 				token_type,
 				TokenInfo {
-					address: token,
+					address: token_address,
 					value: Some(amount),
 					option: None,
 				},
