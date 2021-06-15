@@ -152,81 +152,9 @@ pub mod pallet {
 			// ensure not signed
 			frame_system::ensure_none(origin)?;
 
-			// get finalized authority set from storage
-			let last_authority_set = <FinalizedAuthority<T>>::get();
+			Self::verify_and_update_authority_set(&headers)?;
 
-			// ensure valid length
-			ensure!(
-				last_authority_set.len() / 2 < headers.len(),
-				<Error::<T>>::InvalidHeadersSize
-			);
-
-			let last_checkpoint = <FinalizedCheckpoint<T>>::get();
-			let checkpoint = &headers[0];
-			let cfg = T::BSCConfiguration::get();
-
-			// ensure valid header number
-			// the first group headers that relayer submitted should exactly follow the initial checkpoint
-			// eg. the initial header number is x, the first call of this extrinsic should submit
-			// headers with numbers [x + epoch_length, x + epoch_length + 1, ...]
-			ensure!(
-				last_checkpoint.number + cfg.epoch_length == checkpoint.number,
-				<Error::<T>>::RidiculousNumber
-			);
-			// ensure first element is checkpoint block header
-			ensure!(
-				checkpoint.number % cfg.epoch_length == 0,
-				<Error::<T>>::NotCheckpoint
-			);
-
-			// verify checkpoint
-			// basic checks
-			Self::contextless_checks(&cfg, checkpoint)?;
-
-			// check signer
-			let signer = Self::recover_creator(cfg.chain_id, checkpoint)?;
-
-			ensure!(
-				contains(&last_authority_set, signer),
-				<Error::<T>>::InvalidSigner
-			);
-
-			// extract new authority set from submitted checkpoint header
-			let new_authority_set = Self::extract_authorities(checkpoint)?;
-			// log already signed signer
-			let mut recently = <BTreeSet<Address>>::new();
-
-			for i in 1..headers.len() {
-				Self::contextless_checks(&cfg, &headers[i])?;
-				// check parent
-				Self::contextual_checks(&cfg, &headers[i], &headers[i - 1])?;
-
-				// who signed this header
-				let signer = Self::recover_creator(cfg.chain_id, &headers[i])?;
-
-				// signed must in last authority set
-				ensure!(
-					contains(&last_authority_set, signer),
-					<Error::<T>>::InvalidSigner
-				);
-				// headers submitted must signed by different authority
-				ensure!(!recently.contains(&signer), <Error::<T>>::SignedRecently);
-
-				recently.insert(signer);
-
-				// enough proof to finalize new authority set
-				if recently.len() >= last_authority_set.len() / 2 {
-					// already have N/2 valid headers signed by different authority separately
-					// finalize new authroity set
-					<FinalizedAuthority<T>>::put(new_authority_set);
-					<FinalizedCheckpoint<T>>::put(checkpoint);
-
-					// skip the rest submitted headers
-					return Ok(().into());
-				}
-			}
-
-			Err(<Error<T>>::HeadersNotEnough)?
+			Ok(().into())
 		}
 
 		/// Verify signed relayed headers and finalize authority set
@@ -236,89 +164,22 @@ pub mod pallet {
 			headers: Vec<BSCHeader>,
 		) -> DispatchResultWithPostInfo {
 			let submitter = frame_system::ensure_signed(origin)?;
-			// get finalized authority set from storage
-			let last_authority_set = <FinalizedAuthority<T>>::get();
 
-			// ensure valid length
-			ensure!(
-				last_authority_set.len() / 2 < headers.len(),
-				<Error::<T>>::InvalidHeadersSize
-			);
-
-			let last_checkpoint = <FinalizedCheckpoint<T>>::get();
-			let checkpoint = &headers[0];
-			// get configuration
-			let cfg = T::BSCConfiguration::get();
-
-			// ensure valid header number
-			ensure!(
-				last_checkpoint.number + cfg.epoch_length == checkpoint.number,
-				<Error::<T>>::RidiculousNumber
-			);
-
-			// ensure first element is checkpoint block header
-			ensure!(
-				checkpoint.number % cfg.epoch_length == 0,
-				<Error::<T>>::NotCheckpoint
-			);
-
-			// verify checkpoint
-			// basic checks
-			Self::contextless_checks(&cfg, checkpoint)?;
-
-			// check signer
-			{
-				let signer = Self::recover_creator(cfg.chain_id, checkpoint)?;
-
-				ensure!(
-					contains(&last_authority_set, signer),
-					<Error::<T>>::InvalidSigner
-				);
-			}
-
-			// extract new authority set from submitted checkpoint header
-			let new_authority_set = Self::extract_authorities(checkpoint)?;
-			// log already signed signer
-			let mut recently = BTreeSet::<Address>::new();
-
-			for i in 1..headers.len() {
-				Self::contextless_checks(&cfg, &headers[i])?;
-				// check parent
-				Self::contextual_checks(&cfg, &headers[i], &headers[i - 1])?;
-
-				// who signed this header
-				let signer = Self::recover_creator(cfg.chain_id, &headers[i])?;
-
-				// signed must in last authority set
-				ensure!(
-					contains(&last_authority_set, signer),
-					<Error::<T>>::InvalidSigner
-				);
-				// headers submitted must signed by different authority
-				ensure!(!recently.contains(&signer), <Error::<T>>::SignedRecently);
-
-				recently.insert(signer);
-
-				// enough proof to finalize new authority set
-				if recently.len() == last_authority_set.len() / 2 {
-					// already have N/2 valid headers signed by different authority separately
-					// finalize new authroity set
-					<FinalizedAuthority<T>>::put(&new_authority_set);
-					<FinalizedCheckpoint<T>>::put(checkpoint);
-
+			match Self::verify_and_update_authority_set(&headers) {
+				Ok(new_authority_set) => {
 					T::OnHeadersSubmitted::on_valid_authority_finalized(
 						submitter,
 						&new_authority_set,
 					);
+				}
+				e => {
+					T::OnHeadersSubmitted::on_invalid_headers_submitted(submitter);
 
-					// skip the rest submitted headers
-					return Ok(().into());
+					e?;
 				}
 			}
 
-			T::OnHeadersSubmitted::on_invalid_headers_submitted(submitter);
-
-			Err(<Error<T>>::HeadersNotEnough)?
+			Ok(().into())
 		}
 	}
 	impl<T: Config> Pallet<T> {
@@ -491,6 +352,87 @@ pub mod pallet {
 				.collect();
 
 			Ok(signers)
+		}
+
+		/// Verify unsigned relayed headers and finalize authority set
+		pub fn verify_and_update_authority_set(
+			headers: &[BSCHeader],
+		) -> Result<Vec<Address>, DispatchError> {
+			// get finalized authority set from storage
+			let last_authority_set = <FinalizedAuthority<T>>::get();
+
+			// ensure valid length
+			ensure!(
+				last_authority_set.len() / 2 < headers.len(),
+				<Error::<T>>::InvalidHeadersSize
+			);
+
+			let last_checkpoint = <FinalizedCheckpoint<T>>::get();
+			let checkpoint = &headers[0];
+			let cfg = T::BSCConfiguration::get();
+
+			// ensure valid header number
+			// the first group headers that relayer submitted should exactly follow the initial checkpoint
+			// eg. the initial header number is x, the first call of this extrinsic should submit
+			// headers with numbers [x + epoch_length, x + epoch_length + 1, ...]
+			ensure!(
+				last_checkpoint.number + cfg.epoch_length == checkpoint.number,
+				<Error::<T>>::RidiculousNumber
+			);
+			// ensure first element is checkpoint block header
+			ensure!(
+				checkpoint.number % cfg.epoch_length == 0,
+				<Error::<T>>::NotCheckpoint
+			);
+
+			// verify checkpoint
+			// basic checks
+			Self::contextless_checks(&cfg, checkpoint)?;
+
+			// check signer
+			let signer = Self::recover_creator(cfg.chain_id, checkpoint)?;
+
+			ensure!(
+				contains(&last_authority_set, signer),
+				<Error::<T>>::InvalidSigner
+			);
+
+			// extract new authority set from submitted checkpoint header
+			let new_authority_set = Self::extract_authorities(checkpoint)?;
+			// log already signed signer
+			let mut recently = <BTreeSet<Address>>::new();
+
+			for i in 1..headers.len() {
+				Self::contextless_checks(&cfg, &headers[i])?;
+				// check parent
+				Self::contextual_checks(&cfg, &headers[i], &headers[i - 1])?;
+
+				// who signed this header
+				let signer = Self::recover_creator(cfg.chain_id, &headers[i])?;
+
+				// signed must in last authority set
+				ensure!(
+					contains(&last_authority_set, signer),
+					<Error::<T>>::InvalidSigner
+				);
+				// headers submitted must signed by different authority
+				ensure!(!recently.contains(&signer), <Error::<T>>::SignedRecently);
+
+				recently.insert(signer);
+
+				// enough proof to finalize new authority set
+				if recently.len() == last_authority_set.len() / 2 {
+					// already have N/2 valid headers signed by different authority separately
+					// finalize new authority set
+					<FinalizedAuthority<T>>::put(&new_authority_set);
+					<FinalizedCheckpoint<T>>::put(checkpoint);
+
+					// skip the rest submitted headers
+					return Ok(new_authority_set);
+				}
+			}
+
+			Err(<Error<T>>::HeadersNotEnough)?
 		}
 	}
 
