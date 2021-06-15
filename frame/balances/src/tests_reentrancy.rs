@@ -155,13 +155,6 @@ impl ExtBuilder {
 	}
 }
 
-fn last_event() -> Event {
-	frame_system::Pallet::<Test>::events()
-		.pop()
-		.expect("Event expected")
-		.event
-}
-
 #[test]
 fn transfer_dust_removal_tst1_should_work() {
 	ExtBuilder::default()
@@ -192,13 +185,12 @@ fn transfer_dust_removal_tst1_should_work() {
 			// Number of events expected is 8
 			assert_eq!(System::events().len(), 11);
 
-			assert!(System::events().iter().any(|er| er.event
-				== Event::darwinia_balances_Instance1(crate::Event::Transfer(2, 3, 450))));
-
-			assert!(System::events()
-				.iter()
-				.any(|er| er.event
-					== Event::darwinia_balances_Instance1(crate::Event::DustLost(2, 50))));
+			System::assert_has_event(Event::darwinia_balances_Instance1(crate::Event::Transfer(
+				2, 3, 450,
+			)));
+			System::assert_has_event(Event::darwinia_balances_Instance1(crate::Event::DustLost(
+				2, 50,
+			)));
 		});
 }
 
@@ -228,13 +220,12 @@ fn transfer_dust_removal_tst2_should_work() {
 			// Number of events expected is 8
 			assert_eq!(System::events().len(), 9);
 
-			assert!(System::events().iter().any(|er| er.event
-				== Event::darwinia_balances_Instance1(crate::Event::Transfer(2, 1, 450))));
-
-			assert!(System::events()
-				.iter()
-				.any(|er| er.event
-					== Event::darwinia_balances_Instance1(crate::Event::DustLost(2, 50))));
+			System::assert_has_event(Event::darwinia_balances_Instance1(crate::Event::Transfer(
+				2, 1, 450,
+			)));
+			System::assert_has_event(Event::darwinia_balances_Instance1(crate::Event::DustLost(
+				2, 50,
+			)));
 		});
 }
 
@@ -276,17 +267,11 @@ fn repatriating_reserved_balance_dust_removal_should_work() {
 			// Number of events expected is 10
 			assert_eq!(System::events().len(), 10);
 
-			assert!(System::events().iter().any(|er| er.event
-				== Event::darwinia_balances_Instance1(crate::Event::ReserveRepatriated(
-					2,
-					1,
-					450,
-					BalanceStatus::Free
-				),),),);
-
-			assert_eq!(
-				last_event(),
-				Event::darwinia_balances_Instance1(crate::Event::DustLost(2, 50)),
-			);
+			System::assert_has_event(Event::darwinia_balances_Instance1(
+				crate::Event::ReserveRepatriated(2, 1, 450, BalanceStatus::Free),
+			));
+			System::assert_last_event(Event::darwinia_balances_Instance1(crate::Event::DustLost(
+				2, 50,
+			)));
 		});
 }

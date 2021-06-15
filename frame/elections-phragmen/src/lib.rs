@@ -2295,10 +2295,7 @@ mod tests {
 			System::set_block_number(5);
 			Elections::on_initialize(System::block_number());
 
-			assert_eq!(
-				System::events().iter().last().unwrap().event,
-				Event::elections_phragmen(super::Event::EmptyTerm),
-			)
+			System::assert_last_event(Event::elections_phragmen(super::Event::EmptyTerm))
 		})
 	}
 
@@ -2314,10 +2311,10 @@ mod tests {
 			System::set_block_number(5);
 			Elections::on_initialize(System::block_number());
 
-			assert_eq!(
-				System::events().iter().last().unwrap().event,
-				Event::elections_phragmen(super::Event::NewTerm(vec![(4, 40), (5, 50)])),
-			);
+			System::assert_last_event(Event::elections_phragmen(super::Event::NewTerm(vec![
+				(4, 40),
+				(5, 50),
+			])));
 
 			assert_eq!(members_and_stake(), vec![(4, 40), (5, 50)]);
 			assert_eq!(runners_up_and_stake(), vec![]);
@@ -2328,10 +2325,7 @@ mod tests {
 			System::set_block_number(10);
 			Elections::on_initialize(System::block_number());
 
-			assert_eq!(
-				System::events().iter().last().unwrap().event,
-				Event::elections_phragmen(super::Event::NewTerm(vec![])),
-			);
+			System::assert_last_event(Event::elections_phragmen(super::Event::NewTerm(vec![])));
 
 			// outgoing have lost their bond.
 			assert_eq!(balances(&4), (37, 0));
@@ -2401,10 +2395,7 @@ mod tests {
 			assert_eq!(Elections::election_rounds(), 1);
 			assert!(members_ids().is_empty());
 
-			assert_eq!(
-				System::events().iter().last().unwrap().event,
-				Event::elections_phragmen(super::Event::NewTerm(vec![])),
-			)
+			System::assert_last_event(Event::elections_phragmen(super::Event::NewTerm(vec![])))
 		});
 	}
 
@@ -2773,10 +2764,10 @@ mod tests {
 			// 5 is an outgoing loser. will also get slashed.
 			assert_eq!(balances(&5), (45, 2));
 
-			assert!(System::events().iter().any(|event| {
-				event.event
-					== Event::elections_phragmen(super::Event::NewTerm(vec![(4, 40), (5, 50)]))
-			}));
+			System::assert_has_event(Event::elections_phragmen(super::Event::NewTerm(vec![
+				(4, 40),
+				(5, 50),
+			])));
 		})
 	}
 
