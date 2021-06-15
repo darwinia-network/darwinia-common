@@ -74,7 +74,9 @@ impl<T: Config> Kton<T> {
 				// Call WKTON wrapped contract deposit
 				let raw_input = make_call_data(caller, value)?;
 				if let Ok(call_res) = T::Runner::call(
-					array_bytes::hex_into_unchecked(TRANSFER_ADDR),
+					array_bytes::hex_try_into(TRANSFER_ADDR).map_err(|e| {
+						ExitError::Other(format!("Invalid transfer addr: {:?}", e).into())
+					})?,
 					wkton,
 					raw_input.to_vec(),
 					U256::zero(),
