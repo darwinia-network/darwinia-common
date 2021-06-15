@@ -26,9 +26,9 @@ pub mod pallet {
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 	use sp_core::U256;
+	use sp_inherents::IsFatalError;
 	#[cfg(feature = "std")]
-	use sp_inherents::InherentDataProvider as InherentDataProviderT;
-	use sp_inherents::{Error, IsFatalError};
+	use sp_inherents::{Error, InherentDataProvider as InherentDataProviderT};
 	// --- darwinia ---
 	use darwinia_evm::FeeCalculator;
 
