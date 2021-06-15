@@ -16,19 +16,23 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+// --- crates ---
+use array_bytes::{bytes2hex, hex2bytes_unchecked};
+use codec::Decode;
+use ethabi::{Function, Param, ParamType, Token};
+use ethereum::TransactionSignature;
+use std::str::FromStr;
+// --- darwinia ---
 use crate::{
 	account_basic::{RemainBalanceOp, RingRemainBalance},
 	Call, *,
 };
-use codec::Decode;
 use darwinia_evm::AddressMapping;
 use darwinia_support::evm::TRANSFER_ADDR;
-use ethabi::{Function, Param, ParamType, Token};
-use ethereum::TransactionSignature;
-use frame_support::{assert_err, assert_noop, assert_ok, unsigned::ValidateUnsigned};
 use mock::*;
+// --- substrate ---
+use frame_support::{assert_err, assert_noop, assert_ok, unsigned::ValidateUnsigned};
 use sp_runtime::transaction_validity::{InvalidTransaction, TransactionSource};
-use std::str::FromStr;
 
 // This ERC-20 contract mints the maximum amount of tokens to the contract creator.
 // pragma solidity ^0.5.0;
@@ -48,7 +52,7 @@ fn creation_contract(code: &str, nonce: u64) -> UnsignedTransaction {
 		gas_limit: U256::from(0x100000),
 		action: ethereum::TransactionAction::Create,
 		value: U256::zero(),
-		input: array_bytes::hex2bytes_unchecked(code),
+		input: hex2bytes_unchecked(code),
 	}
 }
 
@@ -59,7 +63,7 @@ fn default_withdraw_unsigned_transaction() -> UnsignedTransaction {
 		gas_limit: U256::from(0x100000),
 		action: ethereum::TransactionAction::Call(H160::from_str(TRANSFER_ADDR).unwrap()),
 		value: U256::from(30000000000000000000u128),
-		input: array_bytes::hex2bytes_unchecked(WITH_DRAW_INPUT),
+		input: hex2bytes_unchecked(WITH_DRAW_INPUT),
 	}
 }
 
@@ -130,7 +134,7 @@ fn get_wkton_balance(sender: &AccountInfo, nonce: u64) -> U256 {
 		gas_limit: U256::from(0x300000),
 		action: ethereum::TransactionAction::Call(H160::from_str(WKTON_ADDRESS).unwrap()),
 		value: U256::from(0),
-		input: array_bytes::hex2bytes_unchecked(hex::encode(wkton_balance_input(sender.address))),
+		input: hex2bytes_unchecked(bytes2hex("0x", wkton_balance_input(sender.address))),
 	};
 	let t = sign_transaction(sender, raw_tx);
 	if let Ok((_, _, res)) = Ethereum::execute(
@@ -460,7 +464,7 @@ fn call_should_handle_errors() {
 			gas_limit: U256::from(0x100000),
 			action: ethereum::TransactionAction::Create,
 			value: U256::zero(),
-			input: array_bytes::hex2bytes_unchecked(contract),
+			input: hex2bytes_unchecked(contract),
 		}
 		.sign(&alice.private_key);
 		assert_ok!(Ethereum::execute(
@@ -475,9 +479,9 @@ fn call_should_handle_errors() {
 		));
 
 		let contract_address: Vec<u8> =
-			array_bytes::hex2bytes_unchecked("32dcab0ef3fb2de2fce1d2e0799d36239671f04a");
-		let foo: Vec<u8> = array_bytes::hex2bytes_unchecked("c2985578");
-		let bar: Vec<u8> = array_bytes::hex2bytes_unchecked("febb0f7e");
+			hex2bytes_unchecked("32dcab0ef3fb2de2fce1d2e0799d36239671f04a");
+		let foo: Vec<u8> = hex2bytes_unchecked("c2985578");
+		let bar: Vec<u8> = hex2bytes_unchecked("febb0f7e");
 
 		// calling foo will succeed
 		let (_, _, info) = Ethereum::execute(
@@ -494,7 +498,7 @@ fn call_should_handle_errors() {
 		match info {
 			CallOrCreateInfo::Call(info) => {
 				assert_eq!(
-					array_bytes::bytes2hex("0x", info.value),
+					bytes2hex("0x", info.value),
 					"0x0000000000000000000000000000000000000000000000000000000000000001".to_owned()
 				);
 			}
@@ -541,7 +545,7 @@ fn withdraw_with_enough_balance() {
 			U256::from(70_000_000_000_000_000_000u128)
 		);
 		// Check the target balance
-		let input_bytes: Vec<u8> = array_bytes::hex2bytes_unchecked(WITH_DRAW_INPUT);
+		let input_bytes: Vec<u8> = hex2bytes_unchecked(WITH_DRAW_INPUT);
 		let dest =
 			<Test as frame_system::Config>::AccountId::decode(&mut &input_bytes[..]).unwrap();
 		assert_eq!(
@@ -587,7 +591,7 @@ fn withdraw_without_enough_balance_should_fail() {
 			U256::from(100000000000000000000u128)
 		);
 		// Check target balance
-		let input_bytes: Vec<u8> = array_bytes::hex2bytes_unchecked(WITH_DRAW_INPUT);
+		let input_bytes: Vec<u8> = hex2bytes_unchecked(WITH_DRAW_INPUT);
 		let dest =
 			<Test as frame_system::Config>::AccountId::decode(&mut &input_bytes[..]).unwrap();
 		assert_eq!(<Test as Config>::RingCurrency::free_balance(&dest), 0);
@@ -621,7 +625,7 @@ fn withdraw_with_invalid_input_length_should_failed() {
 			U256::from(100000000000000000000u128)
 		);
 		// Check target balance
-		let input_bytes: Vec<u8> = array_bytes::hex2bytes_unchecked(WITH_DRAW_INPUT);
+		let input_bytes: Vec<u8> = hex2bytes_unchecked(WITH_DRAW_INPUT);
 		let dest =
 			<Test as frame_system::Config>::AccountId::decode(&mut &input_bytes[..]).unwrap();
 		assert_eq!(<Test as Config>::RingCurrency::free_balance(&dest), 0);
@@ -750,7 +754,7 @@ fn test_kton_withdraw() {
 		);
 
 		// withdraw
-		let input_bytes: Vec<u8> = array_bytes::hex2bytes_unchecked(
+		let input_bytes: Vec<u8> = hex2bytes_unchecked(
 			"0x64766d3a00000000000000aa01a1bef0557fa9625581a293f3aa777019263256",
 		);
 		send_kton_withdraw_tx(
@@ -807,7 +811,7 @@ fn test_kton_withdraw_out_of_fund() {
 		);
 
 		// withdraw
-		let input_bytes: Vec<u8> = array_bytes::hex2bytes_unchecked(
+		let input_bytes: Vec<u8> = hex2bytes_unchecked(
 			"0x64766d3a00000000000000aa01a1bef0557fa9625581a293f3aa777019263256",
 		);
 		send_kton_withdraw_tx(
