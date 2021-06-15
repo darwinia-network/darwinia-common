@@ -75,7 +75,7 @@ impl<T: Config> Kton<T> {
 				let raw_input = make_call_data(caller, value)?;
 				if let Ok(call_res) = T::Runner::call(
 					array_bytes::hex_try_into(TRANSFER_ADDR).map_err(|e| {
-						ExitError::Other(format!("Invalid transfer addr: {:?}", e).into())
+						ExitError::Other("Invalid transfer address".into())
 					})?,
 					wkton,
 					raw_input.to_vec(),

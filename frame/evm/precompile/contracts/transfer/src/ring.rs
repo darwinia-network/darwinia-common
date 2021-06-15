@@ -49,7 +49,7 @@ impl<T: Config> RingBack<T> {
 
 		// Ensure the context address should be precompile address
 		let transfer_addr = array_bytes::hex_try_into(TRANSFER_ADDR)
-			.map_err(|e| ExitError::Other(format!("Invalid transfer addr: {:?}", e).into()))?;
+			.map_err(|e| ExitError::Other("Invalid transfer address".into()))?;
 		ensure!(
 			source == transfer_addr,
 			ExitError::Other("Invalid context address".into())
