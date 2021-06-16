@@ -143,7 +143,7 @@ pub mod pallet {
 		// TODO: update the weight
 		#[pallet::weight(0)]
 		#[frame_support::transactional]
-		pub fn lock_and_cross_send(
+		pub fn lock_and_remote_issue(
 			origin: OriginFor<T>,
 			spec_version: u32,
 			#[pallet::compact] value: RingBalance<T>,
@@ -194,7 +194,7 @@ pub mod pallet {
 		/// Receive target chain locked message and unlock token in this chain.
 		// TODO: update the weight
 		#[pallet::weight(0)]
-		pub fn cross_receive_and_unlock(
+		pub fn remote_burn_and_unlock(
 			origin: OriginFor<T>,
 			message: (Token, AccountId<T>),
 		) -> DispatchResultWithPostInfo {

@@ -112,7 +112,7 @@ pub mod pallet {
 		///
 		/// If the mapped token is not created, then create it.
 		#[pallet::weight(0)]
-		pub fn cross_receive_and_redeem(
+		pub fn remote_lock_and_issue(
 			origin: OriginFor<T>,
 			message: (Token, H160),
 		) -> DispatchResultWithPostInfo {

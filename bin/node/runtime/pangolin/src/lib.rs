@@ -895,5 +895,5 @@ pub enum MillauRuntime {
 #[allow(non_camel_case_types)]
 pub enum MillauSub2SubBackingCall {
 	#[codec(index = 0)]
-	cross_receive_and_unlock((Token, AccountId)),
+	remote_burn_and_unlock((Token, AccountId)),
 }
