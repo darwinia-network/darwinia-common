@@ -44,8 +44,8 @@ impl Config<WithMillauMessages> for Runtime {
 	type OutboundMessageFee = Balance;
 
 	type InboundPayload = FromMillauMessagePayload;
-	type InboundMessageFee = bp_millau::Balance;
-	type InboundRelayer = bp_millau::AccountId;
+	type InboundMessageFee = drml_primitives::Balance;
+	type InboundRelayer = drml_primitives::AccountId;
 
 	type AccountIdConverter = AccountIdConverter;
 

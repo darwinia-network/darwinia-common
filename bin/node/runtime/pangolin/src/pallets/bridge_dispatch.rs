@@ -2,7 +2,7 @@ pub use pallet_bridge_dispatch::Instance1 as WithMillauDispatch;
 
 // --- substrate ---
 use bp_messages::{LaneId, MessageNonce};
-use bp_millau::AccountId;
+use drml_primitives::AccountId;
 use pallet_bridge_dispatch::Config;
 use sp_runtime::{MultiSignature, MultiSigner};
 // --- darwinia ---

@@ -756,12 +756,12 @@ impl_runtime_apis! {
 	}
 
 	impl bp_millau::MillauFinalityApi<Block> for Runtime {
-		fn best_finalized() -> (bp_millau::BlockNumber, bp_millau::Hash) {
+		fn best_finalized() -> (drml_primitives::BlockNumber, drml_primitives::Hash) {
 			let header = BridgeMillauGrandpa::best_finalized();
 			(header.number, header.hash())
 		}
 
-		fn is_known_header(hash: bp_millau::Hash) -> bool {
+		fn is_known_header(hash: drml_primitives::Hash) -> bool {
 			BridgeMillauGrandpa::is_known_header(hash)
 		}
 	}
