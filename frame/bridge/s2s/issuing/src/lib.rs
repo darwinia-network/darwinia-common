@@ -39,7 +39,6 @@ use sp_std::vec::Vec;
 // --- darwinia ---
 use bp_runtime::{ChainId, Size};
 use darwinia_evm::AddressMapping;
-use darwinia_relay_primitives::RelayAccount;
 use darwinia_support::{
 	s2s::{source_root_converted_id, RelayMessageCaller, ToEthAddress},
 	traits::CallToPayload,
@@ -47,7 +46,7 @@ use darwinia_support::{
 };
 use dp_asset::{
 	token::{Token, TokenInfo},
-	BridgeAssetReceiver,
+	BridgeAssetReceiver, RecipientAccount,
 };
 use dp_contract::mapping_token_factory::{MappingTokenFactory as mtf, TokenBurnInfo};
 
@@ -73,7 +72,7 @@ pub mod pallet {
 		type BridgedAccountIdConverter: Convert<H256, Self::AccountId>;
 		type BridgedChainId: Get<ChainId>;
 		type ToEthAddressT: ToEthAddress<Self::AccountId>;
-		type RemoteUnlockCall: BridgeAssetReceiver<RelayAccount<Self::AccountId>>;
+		type RemoteUnlockCall: BridgeAssetReceiver<RecipientAccount<Self::AccountId>>;
 
 		type OutboundPayload: Parameter + Size;
 		type CallToPayload: CallToPayload<Self::OutboundPayload>;
@@ -188,7 +187,7 @@ pub mod pallet {
 			);
 			// Redeem process
 			if let Some(value) = token_info.value {
-				let input = Self::encode_token_redeem(mapped_address, recipient, value)?;
+				let input = Self::encode_token_issue_method(mapped_address, recipient, value)?;
 				Self::transact_mapping_factory(input)?;
 				Self::deposit_event(Event::TokenRedeemed(
 					backing,
@@ -312,7 +311,7 @@ impl<T: Config> Pallet<T> {
 		Ok(input)
 	}
 
-	fn encode_token_redeem(
+	fn encode_token_issue_method(
 		token_address: H160,
 		recipient: H160,
 		amount: U256,
@@ -361,7 +360,7 @@ impl<T: Config> Pallet<T> {
 			},
 		)
 			.into();
-		let account = RelayAccount::DarwiniaAccount(recipient);
+		let account = RecipientAccount::DarwiniaAccount(recipient);
 		let encoded = T::RemoteUnlockCall::encode_call(token, account)
 			.map_err(|_| Error::<T>::EncodeInvalid)?;
 		let payload = T::CallToPayload::to_payload(spec_version, encoded);

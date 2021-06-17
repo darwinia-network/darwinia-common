@@ -22,7 +22,6 @@ sha3           = { version = "0.9.1", default-features = false }
 ethereum-primitives       = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
 darwinia-ethereum-issuing = { default-features = false, path = "../../ethereum/issuing" }
 darwinia-evm              = { default-features = false, path = "../../../evm" }
-darwinia-relay-primitives = { default-features = false, path = "../../../../primitives/relay" }
 darwinia-support          = { default-features = false, path = "../../../support" }
 dp-asset          		  = { default-features = false, path = "../../../../primitives/asset" }
 dp-contract               = { default-features = false, path = "../../../../primitives/contract" }
@@ -66,7 +65,6 @@ darwinia-std = [
 	"darwinia-evm/std",
 	"dp-contract/std",
 	"ethereum-primitives/std",
-	"darwinia-relay-primitives/std",
 	"dp-evm/std",
 	"dvm-ethereum/std",
 	"darwinia-support/std",

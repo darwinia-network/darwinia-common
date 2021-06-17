@@ -22,26 +22,6 @@ pub mod relay_authorities;
 pub mod relayer_game;
 
 // --- darwinia ---
-use ethereum_primitives::EthereumAddress;
 pub use relay_authorities::*;
 pub use relayer_game::*;
 
-use codec::{Decode, Encode};
-use sp_runtime::DispatchError;
-
-pub trait Relay {
-	type RelayOrigin: Clone + PartialOrd;
-	type RelayMessage: Encode + Decode + Clone;
-
-	fn verify_origin(proof: &Self::RelayOrigin) -> Result<EthereumAddress, DispatchError>;
-	fn relay_message(message: &Self::RelayMessage) -> Result<(), DispatchError>;
-	fn digest() -> RelayDigest;
-}
-
-#[derive(Encode, Decode, Clone, Debug, Eq, PartialEq)]
-pub enum RelayAccount<AccountId> {
-	EthereumAccount(EthereumAddress),
-	DarwiniaAccount(AccountId),
-}
-
-pub type RelayDigest = [u8; 4];

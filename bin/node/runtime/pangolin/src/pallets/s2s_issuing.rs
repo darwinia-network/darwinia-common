@@ -8,7 +8,7 @@ use sp_runtime::DispatchErrorWithPostInfo;
 use crate::*;
 use darwinia_s2s_issuing::Config;
 use darwinia_support::s2s::{RelayMessageCaller, TruncateToEthAddress};
-use dp_asset::BridgeAssetReceiver;
+use dp_asset::{BridgeAssetReceiver, RecipientAccount};
 
 pub struct ToMillauMessageRelayCaller;
 impl RelayMessageCaller<ToMillauMessagePayload, AccountId> for ToMillauMessageRelayCaller {
@@ -24,10 +24,10 @@ impl RelayMessageCaller<ToMillauMessagePayload, AccountId> for ToMillauMessageRe
 }
 
 pub struct MillauBackingUnlockAsset;
-impl BridgeAssetReceiver<RelayAccount<AccountId>> for MillauBackingUnlockAsset {
-	fn encode_call(token: Token, recipient: RelayAccount<AccountId>) -> Result<Vec<u8>, ()> {
+impl BridgeAssetReceiver<RecipientAccount<AccountId>> for MillauBackingUnlockAsset {
+	fn encode_call(token: Token, recipient: RecipientAccount<AccountId>) -> Result<Vec<u8>, ()> {
 		match recipient {
-			RelayAccount::<AccountId>::DarwiniaAccount(r) => {
+			RecipientAccount::<AccountId>::DarwiniaAccount(r) => {
 				return Ok(
 					MillauRuntime::Sub2SubBacking(MillauSub2SubBackingCall::remote_unlock(
 						token, r,

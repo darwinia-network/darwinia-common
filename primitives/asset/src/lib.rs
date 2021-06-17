@@ -19,6 +19,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use sp_std::vec::Vec;
+use codec::{Decode, Encode};
+use ethereum_primitives::EthereumAddress;
 
 pub mod token;
 pub trait BridgeAssetReceiver<R> {
@@ -28,3 +30,10 @@ pub trait BridgeAssetReceiver<R> {
 pub trait BridgeAssetCreator {
     fn encode_call(token: token::Token) -> Vec<u8>;
 }
+
+#[derive(Encode, Decode, Clone, Debug, Eq, PartialEq)]
+pub enum RecipientAccount<AccountId> {
+	EthereumAccount(EthereumAddress),
+	DarwiniaAccount(AccountId),
+}
+

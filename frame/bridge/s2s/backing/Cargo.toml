@@ -18,7 +18,6 @@ log            = { version = "0.4.14" }
 serde          = { version = "1.0.126", optional = true }
 serde_json     = { version = "1.0.64", optional = true }
 # darwinia
-darwinia-relay-primitives          = { default-features = false, path = "../../../../primitives/relay" }
 darwinia-support                   = { default-features = false, path = "../../../support" }
 dp-asset                           = { default-features = false, path = "../../../../primitives/asset" }
 dp-contract                        = { default-features = false, path = "../../../../primitives/contract" }
@@ -50,7 +49,6 @@ darwinia-std = [
 	"dp-asset/std",
 	"dp-contract/std",
 	"ethereum-primitives/std",
-	"darwinia-relay-primitives/std",
 	"darwinia-support/std",
 ]
 

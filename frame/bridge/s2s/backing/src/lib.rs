@@ -46,7 +46,6 @@ use sp_runtime::{
 };
 use sp_std::{convert::TryFrom, prelude::*, vec::Vec};
 // --- darwinia ---
-use darwinia_relay_primitives::RelayAccount;
 use darwinia_support::{
 	balance::*,
 	s2s::{
@@ -57,7 +56,7 @@ use darwinia_support::{
 };
 use dp_asset::{
 	token::{Token, TokenInfo, TokenOption},
-	BridgeAssetCreator, BridgeAssetReceiver,
+	BridgeAssetCreator, BridgeAssetReceiver, RecipientAccount,
 };
 use dp_contract::mapping_token_factory::MappingTokenFactory as mtf;
 
@@ -88,7 +87,7 @@ pub mod pallet {
 		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 		type BridgedAccountIdConverter: Convert<H256, Self::AccountId>;
 		type BridgedChainId: Get<ChainId>;
-		type RemoteIssueCall: BridgeAssetReceiver<RelayAccount<Self::AccountId>>;
+		type RemoteIssueCall: BridgeAssetReceiver<RecipientAccount<Self::AccountId>>;
 		type RemoteRegisterCall: BridgeAssetCreator;
 		type OutboundPayload: Parameter + Size;
 		type CallToPayload: CallToPayload<Self::OutboundPayload>;
@@ -218,7 +217,7 @@ pub mod pallet {
 				option: None,
 			});
 
-			let account = RelayAccount::EthereumAccount(recipient);
+			let account = RecipientAccount::EthereumAccount(recipient);
 			let encoded = T::RemoteIssueCall::encode_call(token.clone(), account)
 				.map_err(|_| Error::<T>::EncodeInvalid)?;
 			let payload = T::CallToPayload::to_payload(spec_version, encoded);

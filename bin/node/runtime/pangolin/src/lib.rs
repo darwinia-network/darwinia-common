@@ -227,7 +227,6 @@ use sp_version::RuntimeVersion;
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
 use darwinia_evm::{Account as EVMAccount, Runner};
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
-use darwinia_relay_primitives::RelayAccount;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
 use dp_asset::token::Token;
 use drml_primitives::*;
