@@ -129,14 +129,14 @@ pub mod pallet {
 		#[pallet::weight(0)]
 		pub fn remote_lock_and_issue(
 			origin: OriginFor<T>,
-			message: (Token, H160),
+			token: Token,
+			recipient: H160,
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
 			// the s2s message relay has been verified that the message comes from the backing chain with the
 			// chainID and backing sender address.
 			// here only we need is to check the sender is in whitelist
 			let backing = Self::verify_origin(&user)?;
-			let (token, recipient) = message;
 
 			let (token_type, token_info) = token
 				.token_info()

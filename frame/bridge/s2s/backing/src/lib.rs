@@ -211,7 +211,8 @@ pub mod pallet {
 		#[pallet::weight(0)]
 		pub fn remote_burn_and_unlock(
 			origin: OriginFor<T>,
-			message: (Token, AccountId<T>),
+			token: Token,
+			recipient: AccountId<T>,
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
 
@@ -219,7 +220,6 @@ pub mod pallet {
 			// chainID and issuing sender address.
 			// here only we need is to check the sender is in whitelist
 			Self::verify_origin(&user)?;
-			let (token, recipient) = message;
 
 			let token_info = match &token {
 				Token::Native(info) => {

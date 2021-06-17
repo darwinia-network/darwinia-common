@@ -29,7 +29,7 @@ impl BridgedAssetReceiver<RelayAccount<AccountId>> for MillauBackingUnlockAsset 
 		match recipient {
 			RelayAccount::<AccountId>::DarwiniaAccount(r) => {
 				return Ok(MillauRuntime::Sub2SubBacking(
-					MillauSub2SubBackingCall::remote_burn_and_unlock((token, r)),
+					MillauSub2SubBackingCall::remote_burn_and_unlock(token, r),
 				)
 				.encode())
 			}
