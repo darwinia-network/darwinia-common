@@ -47,7 +47,7 @@ use darwinia_support::{
 };
 use dp_asset::{
 	token::{Token, TokenInfo},
-	BridgedAssetReceiver,
+	BridgeAssetReceiver,
 };
 use dp_contract::mapping_token_factory::{MappingTokenFactory as mtf, TokenBurnInfo};
 
@@ -73,7 +73,7 @@ pub mod pallet {
 		type BridgedAccountIdConverter: Convert<H256, Self::AccountId>;
 		type BridgedChainId: Get<ChainId>;
 		type ToEthAddressT: ToEthAddress<Self::AccountId>;
-		type RemoteUnlockCall: BridgedAssetReceiver<RelayAccount<Self::AccountId>>;
+		type RemoteUnlockCall: BridgeAssetReceiver<RelayAccount<Self::AccountId>>;
 
 		type OutboundPayload: Parameter + Size;
 		type CallToPayload: CallToPayload<Self::OutboundPayload>;
@@ -123,11 +123,49 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Handle relay message sent from the source backing pallet with relay message
-		///
-		/// If the mapped token is not created, then create it.
+		/// Handle remote register relay message
+		/// Before the token transfered, token should be created first
 		#[pallet::weight(0)]
-		pub fn remote_lock_and_issue(
+		pub fn remote_register(origin: OriginFor<T>, token: Token) -> DispatchResultWithPostInfo {
+			let user = ensure_signed(origin)?;
+			let backing = Self::verify_origin(&user)?;
+			let (token_type, token_info) = token
+				.token_info()
+				.map_err(|_| Error::<T>::InvalidTokenType)?;
+			let mut mapped_address = Self::mapped_token_address(backing, token_info.address)?;
+			ensure!(mapped_address == H160::zero(), "asset has been registered");
+			match token_info.option {
+				Some(option) => {
+					let name = sp_std::str::from_utf8(&option.name[..])
+						.map_err(|_| Error::<T>::StringCF)?;
+					let symbol = sp_std::str::from_utf8(&option.symbol[..])
+						.map_err(|_| Error::<T>::StringCF)?;
+					let input = Self::encode_token_creation(
+						Self::digest(),
+						backing,
+						token_info.address,
+						token_type,
+						&name,
+						&symbol,
+						option.decimal,
+					)?;
+					Self::transact_mapping_factory(input)?;
+					mapped_address = Self::mapped_token_address(backing, token_info.address)?;
+					Self::deposit_event(Event::TokenCreated(
+						user,
+						backing,
+						token_info.address,
+						mapped_address,
+					));
+				}
+				_ => return Err(Error::<T>::InvalidTokenOption.into()),
+			}
+			Ok(().into())
+		}
+
+		/// Handle relay message sent from the source backing pallet with relay message
+		#[pallet::weight(0)]
+		pub fn remote_issue(
 			origin: OriginFor<T>,
 			token: Token,
 			recipient: H160,
@@ -138,41 +176,16 @@ pub mod pallet {
 			// here only we need is to check the sender is in whitelist
 			let backing = Self::verify_origin(&user)?;
 
-			let (token_type, token_info) = token
+			let (_, token_info) = token
 				.token_info()
 				.map_err(|_| Error::<T>::InvalidTokenType)?;
 
-			let mut mapped_address = Self::mapped_token_address(backing, token_info.address)?;
-			// if the mapped token address has not been created, create it first
-			if mapped_address == H160::zero() {
-				// create
-				match token_info.option {
-					Some(option) => {
-						let name = sp_std::str::from_utf8(&option.name[..])
-							.map_err(|_| Error::<T>::StringCF)?;
-						let symbol = sp_std::str::from_utf8(&option.symbol[..])
-							.map_err(|_| Error::<T>::StringCF)?;
-						let input = Self::encode_token_creation(
-							Self::digest(),
-							backing,
-							token_info.address,
-							token_type,
-							&name,
-							&symbol,
-							option.decimal,
-						)?;
-						Self::transact_mapping_factory(input)?;
-						mapped_address = Self::mapped_token_address(backing, token_info.address)?;
-						Self::deposit_event(Event::TokenCreated(
-							user,
-							backing,
-							token_info.address,
-							mapped_address,
-						));
-					}
-					_ => return Err(Error::<T>::InvalidTokenOption.into()),
-				}
-			}
+			let mapped_address = Self::mapped_token_address(backing, token_info.address)?;
+
+			ensure!(
+				mapped_address != H160::zero(),
+				"asset has not been registered"
+			);
 			// Redeem process
 			if let Some(value) = token_info.value {
 				let input = Self::encode_token_redeem(mapped_address, recipient, value)?;

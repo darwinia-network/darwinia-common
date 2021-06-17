@@ -57,7 +57,7 @@ use darwinia_support::{
 };
 use dp_asset::{
 	token::{Token, TokenInfo, TokenOption},
-	BridgedAssetReceiver,
+	BridgeAssetCreator, BridgeAssetReceiver,
 };
 use dp_contract::mapping_token_factory::MappingTokenFactory as mtf;
 
@@ -88,7 +88,8 @@ pub mod pallet {
 		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 		type BridgedAccountIdConverter: Convert<H256, Self::AccountId>;
 		type BridgedChainId: Get<ChainId>;
-		type RemoteIssueCall: BridgedAssetReceiver<RelayAccount<Self::AccountId>>;
+		type RemoteIssueCall: BridgeAssetReceiver<RelayAccount<Self::AccountId>>;
+		type RemoteRegisterCall: BridgeAssetCreator;
 		type OutboundPayload: Parameter + Size;
 		type CallToPayload: CallToPayload<Self::OutboundPayload>;
 		type MessageSender: RelayMessageCaller<Self::OutboundPayload, Self::AccountId>;
@@ -98,6 +99,8 @@ pub mod pallet {
 	#[pallet::generate_deposit(fn deposit_event)]
 	#[pallet::metadata(T::AccountId = "AccountId")]
 	pub enum Event<T: Config> {
+		/// Token registered [token address, sender, recipient, amount]
+		TokenRegistered(Token, AccountId<T>, EthereumAddress),
 		/// Token locked [token address, sender, recipient, amount]
 		TokenLocked(Token, AccountId<T>, EthereumAddress, U256),
 		/// Token unlocked [token, recipient, value]
@@ -151,6 +154,31 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		#[pallet::weight(0)]
+		pub fn register_and_remote_create(
+			origin: OriginFor<T>,
+			spec_version: u32,
+			recipient: EthereumAddress,
+		) -> DispatchResultWithPostInfo {
+			let user = ensure_signed(origin)?;
+			let token = Token::Native(TokenInfo {
+				address: array_bytes::hex2array_unchecked(BACK_ERC20_RING).into(),
+				value: None,
+				option: Some(TokenOption {
+					name: to_bytes32(RING_NAME),
+					symbol: to_bytes32(RING_SYMBOL),
+					decimal: RING_DECIMAL,
+				}),
+			});
+			let encoded = T::RemoteRegisterCall::encode_call(token.clone());
+			let payload = T::CallToPayload::to_payload(spec_version, encoded);
+			let self_id: AccountId<T> = T::PalletId::get().into_account();
+			T::MessageSender::send_message(payload, self_id)
+				.map_err(|_| Error::<T>::SendMessageFailed)?;
+			Self::deposit_event(Event::TokenRegistered(token, user, recipient));
+			Ok(().into())
+		}
+
 		/// Lock token in this chain and cross transfer to the target chain
 		///
 		/// Target is the id of the target chain defined in s2s_chain pallet
@@ -163,7 +191,6 @@ pub mod pallet {
 			#[pallet::compact] value: RingBalance<T>,
 			recipient: EthereumAddress,
 		) -> DispatchResultWithPostInfo {
-			// TODO: Do we need to check the target chain? and make sure this id is a truly bridged chain
 			let user = ensure_signed(origin)?;
 
 			// Make sure the locked value is less than the max lock limited
@@ -188,11 +215,7 @@ pub mod pallet {
 				// The native mapped RING token as a special ERC20 address
 				address: array_bytes::hex2array_unchecked(BACK_ERC20_RING).into(),
 				value: Some(amount),
-				option: Some(TokenOption {
-					name: to_bytes32(RING_NAME),
-					symbol: to_bytes32(RING_SYMBOL),
-					decimal: RING_DECIMAL,
-				}),
+				option: None,
 			});
 
 			let account = RelayAccount::EthereumAccount(recipient);
@@ -209,7 +232,7 @@ pub mod pallet {
 		/// Receive target chain locked message and unlock token in this chain.
 		// TODO: update the weight
 		#[pallet::weight(0)]
-		pub fn remote_burn_and_unlock(
+		pub fn remote_unlock(
 			origin: OriginFor<T>,
 			token: Token,
 			recipient: AccountId<T>,
