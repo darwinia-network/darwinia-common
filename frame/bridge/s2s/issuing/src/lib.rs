@@ -26,17 +26,29 @@ pub use weights::WeightInfo;
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 
 // --- crates ---
-use ethereum_types::{H160, U256};
+use ethereum_types::{H160, H256, U256};
 use sha3::Digest;
 // --- substrate ---
-use frame_support::{ensure, traits::Get, PalletId};
+use frame_support::{ensure, pallet_prelude::*, traits::Get, PalletId};
 use frame_system::ensure_signed;
-use sp_runtime::{DispatchError, DispatchResult};
+use sp_runtime::{
+	traits::{AccountIdConversion, Convert},
+	DispatchError, DispatchResult,
+};
 use sp_std::vec::Vec;
 // --- darwinia ---
+use bp_runtime::{ChainId, Size};
 use darwinia_evm::AddressMapping;
-use darwinia_relay_primitives::{Relay, RelayAccount};
-use dp_asset::token::{Token, TokenInfo};
+use darwinia_relay_primitives::RelayAccount;
+use darwinia_support::{
+	s2s::{source_root_converted_id, RelayMessageCaller, ToEthAddress},
+	traits::CallToPayload,
+	PalletDigest,
+};
+use dp_asset::{
+	token::{Token, TokenInfo},
+	BridgedAssetReceiver,
+};
 use dp_contract::mapping_token_factory::{MappingTokenFactory as mtf, TokenBurnInfo};
 
 const _REGISTERD_ACTION: &[u8] = b"registered(address,address,address)";
@@ -47,7 +59,6 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
 	#[pallet::config]
@@ -59,10 +70,14 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 
 		type ReceiverAccountId: From<[u8; 32]> + Into<Self::AccountId>;
-		type BackingRelay: Relay<
-			RelayOrigin = AccountId<Self>,
-			RelayMessage = (u32, Token, RelayAccount<Self::AccountId>),
-		>;
+		type BridgedAccountIdConverter: Convert<H256, Self::AccountId>;
+		type BridgedChainId: Get<ChainId>;
+		type ToEthAddressT: ToEthAddress<Self::AccountId>;
+		type RemoteUnlockCall: BridgedAssetReceiver<RelayAccount<Self::AccountId>>;
+
+		type OutboundPayload: Parameter + Size;
+		type CallToPayload: CallToPayload<Self::OutboundPayload>;
+		type MessageSender: RelayMessageCaller<Self::OutboundPayload, Self::AccountId>;
 	}
 
 	#[pallet::pallet]
@@ -120,7 +135,7 @@ pub mod pallet {
 			// the s2s message relay has been verified that the message comes from the backing chain with the
 			// chainID and backing sender address.
 			// here only we need is to check the sender is in whitelist
-			let backing = T::BackingRelay::verify_origin(&user)?;
+			let backing = Self::verify_origin(&user)?;
 			let (token, recipient) = message;
 
 			let (token_type, token_info) = token
@@ -138,6 +153,7 @@ pub mod pallet {
 						let symbol = sp_std::str::from_utf8(&option.symbol[..])
 							.map_err(|_| Error::<T>::StringCF)?;
 						let input = Self::encode_token_creation(
+							Self::digest(),
 							backing,
 							token_info.address,
 							token_type,
@@ -207,6 +223,12 @@ pub mod pallet {
 		InvalidTokenOption,
 		/// decode event failed
 		InvalidDecoding,
+		/// invalid source origin
+		InvalidOrigin,
+		/// encode dispatch call failed
+		EncodeInvalid,
+		/// send relay message failed
+		SendMessageFailed,
 	}
 
 	#[pallet::storage]
@@ -236,6 +258,13 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
+	pub fn digest() -> PalletDigest {
+		let mut digest: PalletDigest = Default::default();
+		let pallet_digest = sha3::Keccak256::digest(T::PalletId::get().encode().as_slice());
+		digest.copy_from_slice(&pallet_digest[..4]);
+		digest
+	}
+
 	pub fn mapped_token_address(backing: H160, source: H160) -> Result<H160, DispatchError> {
 		let factory_address = <MappingFactoryAddress<T>>::get();
 		let bytes = mtf::encode_mapping_token(backing, source)
@@ -249,6 +278,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn encode_token_creation(
+		callback_processor: PalletDigest,
 		backing: H160,
 		address: H160,
 		token_type: u32,
@@ -256,7 +286,6 @@ impl<T: Config> Pallet<T> {
 		symbol: &str,
 		decimal: u8,
 	) -> Result<Vec<u8>, DispatchError> {
-		let callback_processor = T::BackingRelay::digest();
 		let input = mtf::encode_create_erc20(
 			callback_processor,
 			token_type,
@@ -310,19 +339,31 @@ impl<T: Config> Pallet<T> {
 		recipient: AccountId<T>,
 		amount: U256,
 	) -> Result<(), DispatchError> {
-		let message = (
-			spec_version,
-			(
-				token_type,
-				TokenInfo {
-					address: token_address,
-					value: Some(amount),
-					option: None,
-				},
-			)
-				.into(),
-			RelayAccount::DarwiniaAccount(recipient),
+		let token: Token = (
+			token_type,
+			TokenInfo {
+				address: token_address,
+				value: Some(amount),
+				option: None,
+			},
+		)
+			.into();
+		let account = RelayAccount::DarwiniaAccount(recipient);
+		let encoded = T::RemoteUnlockCall::encode_call(token, account)
+			.map_err(|_| Error::<T>::EncodeInvalid)?;
+		let payload = T::CallToPayload::to_payload(spec_version, encoded);
+
+		let self_id: AccountId<T> = T::PalletId::get().into_account();
+		T::MessageSender::send_message(payload, self_id)
+			.map_err(|_| Error::<T>::SendMessageFailed)?;
+		Ok(())
+	}
+
+	fn verify_origin(account: &T::AccountId) -> Result<H160, DispatchError> {
+		let source_root = source_root_converted_id::<T::AccountId, T::BridgedAccountIdConverter>(
+			T::BridgedChainId::get(),
 		);
-		T::BackingRelay::relay_message(&message)
+		ensure!(account == &source_root, Error::<T>::InvalidOrigin);
+		Ok(T::ToEthAddressT::into_ethereum_id(account))
 	}
 }

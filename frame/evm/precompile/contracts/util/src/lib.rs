@@ -22,7 +22,6 @@ extern crate alloc;
 use alloc::vec::Vec;
 use codec::Encode;
 use core::marker::PhantomData;
-use darwinia_relay_primitives::Relay;
 use dp_evm::Precompile;
 use evm::{Context, ExitError, ExitSucceed};
 use frame_support::dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo};
@@ -50,7 +49,7 @@ where
 		}
 		let selector = &input[0..SELECTOR_SIZE_BYTES];
 		let inner_call = match selector {
-			_ if selector == <T as darwinia_s2s_issuing::Config>::BackingRelay::digest() => {
+			_ if selector == <darwinia_s2s_issuing::Pallet<T>>::digest() => {
 				darwinia_s2s_issuing::Call::<T>::dispatch_handle(input.to_vec())
 			}
 			_ => {

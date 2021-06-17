@@ -29,6 +29,7 @@ pub use weights::WeightInfo;
 use ethereum_primitives::EthereumAddress;
 use ethereum_types::{Address, H160, H256, U256};
 // --- substrate ---
+use bp_runtime::{ChainId, Size};
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
 	pallet_prelude::*,
@@ -40,17 +41,24 @@ use frame_support::{
 use frame_system::{ensure_signed, pallet_prelude::*};
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::{
-	traits::{AccountIdConversion, Dispatchable, Saturating, Zero},
+	traits::{AccountIdConversion, Convert, Dispatchable, Saturating, Zero},
 	DispatchError, SaturatedConversion,
 };
 use sp_std::{convert::TryFrom, prelude::*, vec::Vec};
 // --- darwinia ---
-use darwinia_relay_primitives::{Relay, RelayAccount};
+use darwinia_relay_primitives::RelayAccount;
 use darwinia_support::{
 	balance::*,
-	s2s::{to_bytes32, BACK_ERC20_RING, RING_DECIMAL, RING_NAME, RING_SYMBOL},
+	s2s::{
+		source_root_converted_id, to_bytes32, RelayMessageCaller, BACK_ERC20_RING, RING_DECIMAL,
+		RING_NAME, RING_SYMBOL,
+	},
+	traits::CallToPayload,
 };
-use dp_asset::token::{Token, TokenInfo, TokenOption};
+use dp_asset::{
+	token::{Token, TokenInfo, TokenOption},
+	BridgedAssetReceiver,
+};
 use dp_contract::mapping_token_factory::MappingTokenFactory as mtf;
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
@@ -78,12 +86,12 @@ pub mod pallet {
 		#[pallet::constant]
 		type AdvancedFee: Get<RingBalance<Self>>;
 		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
-		// now we have only one relay,
-		// in future, we modify it to multi-instance to interact with multi-target chains
-		type IssuingRelay: Relay<
-			RelayOrigin = AccountId<Self>,
-			RelayMessage = (u32, Token, RelayAccount<AccountId<Self>>),
-		>;
+		type BridgedAccountIdConverter: Convert<H256, Self::AccountId>;
+		type BridgedChainId: Get<ChainId>;
+		type RemoteIssueCall: BridgedAssetReceiver<RelayAccount<Self::AccountId>>;
+		type OutboundPayload: Parameter + Size;
+		type CallToPayload: CallToPayload<Self::OutboundPayload>;
+		type MessageSender: RelayMessageCaller<Self::OutboundPayload, Self::AccountId>;
 	}
 
 	#[pallet::event]
@@ -108,6 +116,12 @@ pub mod pallet {
 		InsufficientBalance,
 		/// Ring Lock LIMITED
 		RingLockLimited,
+		/// invalid source origin
+		InvalidOrigin,
+		/// encode dispatch call failed
+		EncodeInvalid,
+		/// send relay message failed
+		SendMessageFailed,
 	}
 
 	#[pallet::genesis_config]
@@ -181,12 +195,13 @@ pub mod pallet {
 				}),
 			});
 
-			let message = (
-				spec_version,
-				token.clone(),
-				RelayAccount::EthereumAccount(recipient),
-			);
-			T::IssuingRelay::relay_message(&message)?;
+			let account = RelayAccount::EthereumAccount(recipient);
+			let encoded = T::RemoteIssueCall::encode_call(token.clone(), account)
+				.map_err(|_| Error::<T>::EncodeInvalid)?;
+			let payload = T::CallToPayload::to_payload(spec_version, encoded);
+			let self_id: AccountId<T> = T::PalletId::get().into_account();
+			T::MessageSender::send_message(payload, self_id)
+				.map_err(|_| Error::<T>::SendMessageFailed)?;
 			Self::deposit_event(Event::TokenLocked(token, user, recipient, amount));
 			Ok(().into())
 		}
@@ -203,7 +218,7 @@ pub mod pallet {
 			// the s2s message relay has been verified the message comes from the issuing pallet with the
 			// chainID and issuing sender address.
 			// here only we need is to check the sender is in whitelist
-			let backing = T::IssuingRelay::verify_origin(&user)?;
+			Self::verify_origin(&user)?;
 			let (token, recipient) = message;
 
 			let token_info = match &token {
@@ -247,6 +262,14 @@ pub mod pallet {
 
 		pub fn fee_account_id() -> T::AccountId {
 			T::FeePalletId::get().into_account()
+		}
+
+		fn verify_origin(account: &T::AccountId) -> Result<(), DispatchError> {
+			let source_root = source_root_converted_id::<T::AccountId, T::BridgedAccountIdConverter>(
+				T::BridgedChainId::get(),
+			);
+			ensure!(account == &source_root, Error::<T>::InvalidOrigin);
+			Ok(())
 		}
 	}
 }

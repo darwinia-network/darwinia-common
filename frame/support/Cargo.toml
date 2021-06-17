@@ -23,6 +23,8 @@ ethereum-primitives = { default-features = false, path = "../../primitives/ether
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
 sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
 sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
+sp-core        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
+bp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.1" }
 
 [dev-dependencies]
 sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
@@ -48,6 +50,8 @@ substrate-std = [
 	"frame-support/std",
 	"sp-runtime/std",
 	"sp-std/std",
+	"sp-core/std",
+	"bp-runtime/std",
 ]
 
 easy-testing = []

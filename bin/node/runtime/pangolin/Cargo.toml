@@ -45,7 +45,6 @@ darwinia-staking                    = { default-features = false, path = "../../
 darwinia-staking-rpc-runtime-api    = { default-features = false, path = "../../../../frame/staking/rpc/runtime-api" }
 darwinia-support                    = { default-features = false, path = "../../../../frame/support" }
 darwinia-s2s-issuing                = { default-features = false, path = "../../../../frame/bridge/s2s/issuing" }
-darwinia-s2s-relay                  = { default-features = false, path = "../../../../frame/bridge/s2s/relay" }
 darwinia-treasury                   = { default-features = false, path = "../../../../frame/treasury" }
 darwinia-tron-backing               = { default-features = false, path = "../../../../frame/bridge/tron/backing" }
 darwinia-vesting                    = { default-features = false, path = "../../../../frame/vesting" }
@@ -148,7 +147,6 @@ std = [
 	"darwinia-staking/std",
 	"darwinia-staking-rpc-runtime-api/std",
 	"darwinia-support/std",
-	"darwinia-s2s-relay/std",
 	"darwinia-s2s-issuing/std",
 	"darwinia-treasury/std",
 	"darwinia-tron-backing/std",

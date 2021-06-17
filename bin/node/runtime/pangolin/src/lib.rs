@@ -228,7 +228,6 @@ use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDis
 use darwinia_evm::{Account as EVMAccount, Runner};
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
 use darwinia_relay_primitives::RelayAccount;
-use darwinia_s2s_relay::MessageRelayCall;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
 use dp_asset::token::Token;
 use drml_primitives::*;
@@ -382,7 +381,6 @@ frame_support::construct_runtime! {
 		BridgeMillauMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 43,
 		BridgeMillauDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 44,
 		BridgeMillauGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 45,
-		Substrate2SubstrateRelay: darwinia_s2s_relay::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>} = 48,
 		Substrate2SubstrateIssuing: darwinia_s2s_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
 	}
 }
