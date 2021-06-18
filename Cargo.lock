@@ -1778,6 +1778,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-evm-precompile-encoder"
+version = "2.4.0"
+dependencies = [
+ "darwinia-evm",
+ "darwinia-relay-primitives",
+ "darwinia-s2s-issuing",
+ "dp-contract",
+ "dp-evm",
+ "evm",
+ "frame-support",
+ "log",
+ "parity-scale-codec",
+ "sha3 0.9.1",
+ "sp-core",
+ "sp-io",
+]
+
+[[package]]
 name = "darwinia-evm-precompile-issuing"
 version = "2.4.0"
 dependencies = [
@@ -1842,24 +1860,6 @@ dependencies = [
  "dp-evm",
  "evm",
  "ripemd160",
- "sp-core",
- "sp-io",
-]
-
-[[package]]
-name = "darwinia-evm-precompile-util"
-version = "2.4.0"
-dependencies = [
- "darwinia-evm",
- "darwinia-relay-primitives",
- "darwinia-s2s-issuing",
- "dp-contract",
- "dp-evm",
- "evm",
- "frame-support",
- "log",
- "parity-scale-codec",
- "sha3 0.9.1",
  "sp-core",
  "sp-io",
 ]
@@ -5936,10 +5936,10 @@ dependencies = [
  "darwinia-ethereum-relay",
  "darwinia-evm",
  "darwinia-evm-precompile-dispatch",
+ "darwinia-evm-precompile-encoder",
  "darwinia-evm-precompile-issuing",
  "darwinia-evm-precompile-kton",
  "darwinia-evm-precompile-simple",
- "darwinia-evm-precompile-util",
  "darwinia-evm-precompile-withdraw",
  "darwinia-header-mmr",
  "darwinia-header-mmr-rpc-runtime-api",

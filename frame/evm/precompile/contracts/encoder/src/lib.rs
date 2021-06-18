@@ -27,12 +27,12 @@ use evm::{Context, ExitError, ExitSucceed};
 use frame_support::dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo};
 
 /// The contract address: 0000000000000000000000000000000000000018
-pub struct Util<T> {
+pub struct DispatchCallEncoder<T> {
 	_marker: PhantomData<T>,
 }
 
 const SELECTOR_SIZE_BYTES: usize = 4;
-impl<T> Precompile for Util<T>
+impl<T> Precompile for DispatchCallEncoder<T>
 where
 	T: darwinia_s2s_issuing::Config,
 	T::Call: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Encode,

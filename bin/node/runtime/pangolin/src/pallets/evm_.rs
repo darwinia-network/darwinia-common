@@ -2,7 +2,7 @@ pub use darwinia_evm_precompile_dispatch::Dispatch;
 pub use darwinia_evm_precompile_issuing::Issuing;
 pub use darwinia_evm_precompile_kton::Kton as KtonPrecompile;
 pub use darwinia_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
-pub use darwinia_evm_precompile_util::Util;
+pub use darwinia_evm_precompile_encoder::DispatchCallEncoder;
 pub use darwinia_evm_precompile_withdraw::WithDraw;
 
 // --- crates.io ---
@@ -50,7 +50,7 @@ where
 			_ if address == to_address(23) => {
 				Some(<Issuing<R>>::execute(input, target_gas, context))
 			}
-			_ if address == to_address(24) => Some(<Util<R>>::execute(input, target_gas, context)),
+			_ if address == to_address(24) => Some(<DispatchCallEncoder<R>>::execute(input, target_gas, context)),
 			_ if address == to_address(25) => {
 				Some(<Dispatch<R>>::execute(input, target_gas, context))
 			}
