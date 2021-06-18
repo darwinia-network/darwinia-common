@@ -1,0 +1,65 @@
+[package]
+authors     = ["Darwinia Network <tianyi.song@itering.com>"]
+description = "Primitives of BSC Bridge module."
+edition     = "2018"
+homepage    = "https://darwinia.network/"
+license     = "GPL-3.0"
+name        = "bsc-primitives"
+readme      = "README.md"
+repository  = "https://github.com/darwinia-network/darwinia-common/"
+version     = "2.4.0"
+
+[dependencies]
+# crates.io
+array-bytes     = { version = "1.3.3", optional = true }
+codec           = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
+ethbloom        = { version = "0.11.0", default-features = false, features = ["codec", "rlp"] }
+hash-db         = { version = "0.15.2", default-features = false }
+plain_hasher    = { version = "0.2.3", default-features = false }
+primitive-types = { version = "0.9.0", default-features = false, features = ["codec", "rlp"] }
+rlp             = { version = "0.5.0", default-features = false }
+serde           = { version = "1.0.126", optional = true }
+triehash        = { version = "0.8.4", default-features = false }
+# substrate
+sp-io      = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.1", default-features = false }
+sp-runtime = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.1", default-features = false }
+sp-std     = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.1", default-features = false }
+
+[dev-dependencies]
+# crates.io
+array-bytes = { version = "1.3.3", features = ["serde"] }
+serde_json  = { version = "1.0.64" }
+# github
+ethbloom = { version = "0.11.0", default-features = false, features = ["codec", "rlp", "serialize"] }
+
+[features]
+default = ["std"]
+
+std = [
+	"crates-std",
+	"substrate-std",
+]
+
+crates-std = [
+	"codec/std",
+	"ethbloom/std",
+	"hash-db/std",
+	"plain_hasher/std",
+	"primitive-types/std",
+	"primitive-types/serde",
+	"rlp/std",
+	"serde",
+	"triehash/std",
+]
+
+substrate-std = [
+	"sp-io/std",
+	"sp-runtime/std",
+	"sp-std/std",
+]
+
+deserialize = [
+	"array-bytes",
+	"array-bytes/serde",
+	"ethbloom/serialize",
+]

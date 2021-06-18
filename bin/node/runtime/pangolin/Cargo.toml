@@ -21,6 +21,7 @@ static_assertions = { version = "1.1.0" }
 dp-asset          = { default-features = false, path = "../../../../primitives/asset" }
 darwinia-balances                   = { default-features = false, path = "../../../../frame/balances" }
 darwinia-balances-rpc-runtime-api   = { default-features = false, path = "../../../../frame/balances/rpc/runtime-api" }
+darwinia-bridge-bsc                 = { default-features = false, path = "../../../../frame/bridge/ethereum-bsc" }
 darwinia-claims                     = { default-features = false, path = "../../../../frame/claims" }
 darwinia-crab-backing               = { default-features = false, path = "../../../../frame/bridge/crab/backing" }
 darwinia-crab-issuing               = { default-features = false, path = "../../../../frame/bridge/crab/issuing" }
@@ -124,6 +125,7 @@ std = [
 	"dp-asset/std",
 	"darwinia-balances/std",
 	"darwinia-balances-rpc-runtime-api/std",
+	"darwinia-bridge-bsc/std",
 	"darwinia-claims/std",
 	"darwinia-crab-backing/std",
 	"darwinia-crab-issuing/std",
