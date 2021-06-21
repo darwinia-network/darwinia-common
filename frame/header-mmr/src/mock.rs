@@ -20,7 +20,7 @@
 
 // --- crates ---
 use codec::Encode;
-// --- substrate ---
+// --- paritytech ---
 use frame_system::mocking::*;
 use sp_core::H256;
 use sp_runtime::{

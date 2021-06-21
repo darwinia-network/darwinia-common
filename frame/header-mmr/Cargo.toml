@@ -20,7 +20,7 @@ darwinia-relay-primitives           = { default-features = false, path = "../../
 darwinia-support                    = { default-features = false, path = "../support" }
 # github
 mmr = { package = "ckb-merkle-mountain-range", default-features = false, git = "https://github.com/darwinia-network/merkle-mountain-range.git" }
-# substrate
+# paritytech
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
 sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
@@ -30,7 +30,7 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 # crates
 array-bytes = { version = "1.3.3" }
 serde_json  = { version = "1.0.64" }
-# substrate
+# paritytech
 sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
 sp-io   = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
 
@@ -41,7 +41,7 @@ std = [
 	"crates-std",
 	"darwinia-std",
 	"github-std",
-	"substrate-std",
+	"paritytech-std",
 ]
 
 crates-std    = [
@@ -54,7 +54,7 @@ darwinia-std  = [
 	"darwinia-support/std",
 ]
 github-std    = ["mmr/std"]
-substrate-std = [
+paritytech-std = [
 	"frame-support/std",
 	"frame-system/std",
 	"sp-runtime/std",

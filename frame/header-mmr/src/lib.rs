@@ -62,13 +62,19 @@ mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
+	pub mod types {
+		/// The type use for indexing a node
+		pub type NodeIndex = u64;
+	}
+	pub use types::*;
+
 	// --- crates.io ---
 	#[cfg(feature = "std")]
 	use serde::Serialize;
 	// --- github.com ---
 	use mmr::{Error, MMRStore, Merge, Result as MMRResult, MMR};
-	// --- substrate ---
-	use frame_support::pallet_prelude::*;
+	// --- paritytech ---
+	use frame_support::{pallet_prelude::*, weights::Weight};
 	use frame_system::pallet_prelude::*;
 	use sp_runtime::{
 		generic::{DigestItem, OpaqueDigestItemId},
@@ -76,23 +82,42 @@ pub mod pallet {
 	};
 	use sp_std::prelude::*;
 	// --- darwinia ---
+	use crate::weights::WeightInfo;
 	use darwinia_header_mmr_rpc_runtime_api::{Proof, RuntimeDispatchInfo};
 	use darwinia_relay_primitives::MMR as MMRT;
 
-	pub const PARENT_MMR_ROOT_LOG_ID: [u8; 4] = *b"MMRR";
+	// ? Useless const
+	// ? commented by Xavier
+	/// The prefix of [`MerkleMountainRangeRootLog`]
+	pub const LOG_PREFIX: [u8; 4] = *b"MMRR";
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config {}
+	pub trait Config: frame_system::Config {
+		/// The offchain-indexing prefix
+		const INDEXING_PREFIX: &'static [u8];
 
-	/// The MMR size and length of the mmr node list
+		type WeightInfo: WeightInfo;
+	}
+
+	/// Size of the MMR
 	#[pallet::storage]
-	#[pallet::getter(fn mmr_counter)]
-	pub type MMRCounter<T> = StorageValue<_, u64, ValueQuery>;
+	#[pallet::getter(fn mmr_size)]
+	pub type MmrSize<T> = StorageValue<_, NodeIndex, ValueQuery>;
 
 	/// MMR struct of the previous blocks, from first(genesis) to parent hash.
 	#[pallet::storage]
 	#[pallet::getter(fn mmr_node_list)]
-	pub type MMRNodeList<T: Config> = StorageMap<_, Identity, u64, T::Hash, OptionQuery>;
+	pub type MMRNodeList<T: Config> = StorageMap<_, Identity, NodeIndex, T::Hash, OptionQuery>;
+
+	/// Peaks of the MMR
+	#[pallet::storage]
+	#[pallet::getter(fn peak_of)]
+	pub type Peaks<T: Config> = StorageMap<_, Identity, NodeIndex, T::Hash, OptionQuery>;
+
+	/// The num of nodes that should be pruned each block
+	#[pallet::storage]
+	#[pallet::getter(fn pruning_step)]
+	pub type PruningStep<T> = StorageValue<_, NodeIndex, ValueQuery>;
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -101,7 +126,7 @@ pub mod pallet {
 		fn on_finalize(_: T::BlockNumber) {
 			let store = <ModuleMMRStore<T>>::default();
 			let parent_hash = <frame_system::Pallet<T>>::parent_hash();
-			let mut mmr = <MMR<_, MMRMerge<T>, _>>::new(<MMRCounter<T>>::get(), store);
+			let mut mmr = <MMR<_, MMRMerge<T>, _>>::new(<MmrSize<T>>::get(), store);
 
 			// Update MMR and add mmr root to digest of block header
 			let _ = mmr.push(parent_hash);
@@ -109,7 +134,7 @@ pub mod pallet {
 			if let Ok(parent_mmr_root) = mmr.get_root() {
 				if mmr.commit().is_ok() {
 					let mmr_root_log = MerkleMountainRangeRootLog::<T::Hash> {
-						prefix: PARENT_MMR_ROOT_LOG_ID,
+						prefix: LOG_PREFIX,
 						parent_mmr_root: parent_mmr_root.into(),
 					};
 					let mmr_item = DigestItem::Other(mmr_root_log.encode());
@@ -122,19 +147,51 @@ pub mod pallet {
 				log::error!("Calculate MMR - FAILED");
 			}
 		}
+
+		fn on_runtime_upgrade() -> Weight {
+			// --- paritytech ---
+			use frame_support::migration;
+
+			if let Some(mmr_size) =
+				migration::take_storage_value::<NodeIndex>(b"DarwiniaHeaderMMR", b"MMRCounter", &[])
+			{
+				migration::put_storage_value(b"DarwiniaHeaderMMR", b"MmrSize", &[], mmr_size);
+
+				T::DbWeight::get().writes(2)
+			} else {
+				0
+			}
+		}
 	}
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
 	impl<T: Config> Pallet<T> {
+		#[pallet::weight(T::DbWeight::get().writes(1))]
+		pub fn set_pruning_step(
+			origin: OriginFor<T>,
+			step: NodeIndex,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+
+			<PruningStep<T>>::put(step);
+
+			Ok(().into())
+		}
+	}
+	impl<T: Config> Pallet<T> {
+		pub fn offchain_key(pos: NodeIndex) -> Vec<u8> {
+			(T::INDEXING_PREFIX, pos).encode()
+		}
+
 		darwinia_support::impl_rpc! {
 			pub fn gen_proof_rpc(
-				block_number_of_member_leaf: u64,
-				block_number_of_last_leaf: u64,
+				block_number_of_member_leaf: NodeIndex,
+				block_number_of_last_leaf: NodeIndex,
 			) -> RuntimeDispatchInfo<T::Hash> {
 				if block_number_of_member_leaf <= block_number_of_last_leaf {
 					let store = <ModuleMMRStore<T>>::default();
 					let mmr_size = mmr::leaf_index_to_mmr_size(block_number_of_last_leaf);
-					if mmr_size <= <MMRCounter<T>>::get() {
+
+					if mmr_size <= <MmrSize<T>>::get() {
 						let mmr = <MMR<_, MMRMerge<T>, _>>::new(mmr_size, store);
 						let pos = mmr::leaf_index_to_pos(block_number_of_member_leaf);
 
@@ -163,7 +220,7 @@ pub mod pallet {
 			                      parent_mmr_root,
 			                  }: MerkleMountainRangeRootLog<T::Hash>| match prefix
 			{
-				PARENT_MMR_ROOT_LOG_ID => Some(parent_mmr_root),
+				LOG_PREFIX => Some(parent_mmr_root),
 				_ => None,
 			};
 
@@ -177,7 +234,8 @@ pub mod pallet {
 	impl<T: Config> MMRT<T::BlockNumber, T::Hash> for Pallet<T> {
 		fn get_root(block_number: T::BlockNumber) -> Option<T::Hash> {
 			let store = <ModuleMMRStore<T>>::default();
-			let mmr_size = mmr::leaf_index_to_mmr_size(block_number.saturated_into::<u64>() as _);
+			let mmr_size =
+				mmr::leaf_index_to_mmr_size(block_number.saturated_into::<NodeIndex>() as _);
 			let mmr = <MMR<_, MMRMerge<T>, _>>::new(mmr_size, store);
 
 			if let Ok(mmr_root) = mmr.get_root() {
@@ -195,24 +253,24 @@ pub mod pallet {
 		}
 	}
 	impl<T: Config> MMRStore<T::Hash> for ModuleMMRStore<T> {
-		fn get_elem(&self, pos: u64) -> MMRResult<Option<T::Hash>> {
+		fn get_elem(&self, pos: NodeIndex) -> MMRResult<Option<T::Hash>> {
 			Ok(<Pallet<T>>::mmr_node_list(pos))
 		}
 
-		fn append(&mut self, pos: u64, elems: Vec<T::Hash>) -> MMRResult<()> {
-			let mmr_count = <MMRCounter<T>>::get();
+		fn append(&mut self, pos: NodeIndex, elems: Vec<T::Hash>) -> MMRResult<()> {
+			let mmr_count = <MmrSize<T>>::get();
 			if pos != mmr_count {
 				// Must be append only.
 				Err(Error::InconsistentStore)?;
 			}
-			let elems_len = elems.len() as u64;
+			let elems_len = elems.len() as NodeIndex;
 
 			for (i, elem) in elems.into_iter().enumerate() {
-				<MMRNodeList<T>>::insert(mmr_count + i as u64, elem);
+				<MMRNodeList<T>>::insert(mmr_count + i as NodeIndex, elem);
 			}
 
 			// increment counter
-			<MMRCounter<T>>::put(mmr_count + elems_len);
+			<MmrSize<T>>::put(mmr_count + elems_len);
 
 			Ok(())
 		}
@@ -231,6 +289,8 @@ pub mod pallet {
 	#[cfg_attr(feature = "std", derive(Serialize))]
 	#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug)]
 	pub struct MerkleMountainRangeRootLog<Hash> {
+		// ? Useless filed
+		// ? commented by Xavier
 		/// Specific prefix to identify the mmr root log in the digest items with Other type.
 		pub prefix: [u8; 4],
 		/// The merkle mountain range root hash.
@@ -238,6 +298,8 @@ pub mod pallet {
 	}
 }
 pub use pallet::*;
+
+pub mod weights;
 
 pub mod migration {
 	const OLD_PALLET_NAME: &[u8] = b"DarwiniaHeaderMMR";
