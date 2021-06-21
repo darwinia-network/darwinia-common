@@ -32,7 +32,7 @@ use sha3::Digest;
 use frame_support::{ensure, pallet_prelude::*, traits::Get, PalletId};
 use frame_system::ensure_signed;
 use sp_runtime::{
-	traits::{AccountIdConversion, Convert},
+	traits::Convert,
 	DispatchError, DispatchResult,
 };
 use sp_std::vec::Vec;
@@ -76,7 +76,7 @@ pub mod pallet {
 
 		type OutboundPayload: Parameter + Size;
 		type CallToPayload: CallToPayload<Self::OutboundPayload>;
-		type MessageSender: RelayMessageCaller<Self::OutboundPayload, Self::AccountId>;
+		type MessageSender: RelayMessageCaller<Self::OutboundPayload>;
 	}
 
 	#[pallet::pallet]
@@ -365,8 +365,7 @@ impl<T: Config> Pallet<T> {
 			.map_err(|_| Error::<T>::EncodeInvalid)?;
 		let payload = T::CallToPayload::to_payload(spec_version, encoded);
 
-		let self_id: AccountId<T> = T::PalletId::get().into_account();
-		T::MessageSender::send_message(payload, self_id)
+		T::MessageSender::send_message(payload)
 			.map_err(|_| Error::<T>::SendMessageFailed)?;
 		Ok(())
 	}

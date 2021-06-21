@@ -11,15 +11,14 @@ use darwinia_support::s2s::{RelayMessageCaller, TruncateToEthAddress};
 use dp_asset::{BridgeAssetReceiver, RecipientAccount};
 
 pub struct ToMillauMessageRelayCaller;
-impl RelayMessageCaller<ToMillauMessagePayload, AccountId> for ToMillauMessageRelayCaller {
+impl RelayMessageCaller<ToMillauMessagePayload> for ToMillauMessageRelayCaller {
 	fn send_message(
 		payload: ToMillauMessagePayload,
-		account: AccountId,
 	) -> Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>> {
 		let call: Call =
 			BridgeMessagesCall::<Runtime, Millau>::send_message([0; 4], payload, 0u128.into())
 				.into();
-		call.dispatch(RawOrigin::Signed(account).into())
+		call.dispatch(RawOrigin::Root.into())
 	}
 }
 

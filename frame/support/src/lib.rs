@@ -63,10 +63,9 @@ pub mod s2s {
 
 	// S2S use bridges-common
 	// the relay's send_message call
-	pub trait RelayMessageCaller<P, A> {
+	pub trait RelayMessageCaller<P> {
 		fn send_message(
 			payload: P,
-			account: A,
 		) -> Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>;
 	}
 

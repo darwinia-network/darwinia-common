@@ -91,7 +91,7 @@ pub mod pallet {
 		type RemoteRegisterCall: BridgeAssetCreator;
 		type OutboundPayload: Parameter + Size;
 		type CallToPayload: CallToPayload<Self::OutboundPayload>;
-		type MessageSender: RelayMessageCaller<Self::OutboundPayload, Self::AccountId>;
+		type MessageSender: RelayMessageCaller<Self::OutboundPayload>;
 	}
 
 	#[pallet::event]
@@ -170,8 +170,7 @@ pub mod pallet {
 			});
 			let encoded = T::RemoteRegisterCall::encode_call(token.clone());
 			let payload = T::CallToPayload::to_payload(spec_version, encoded);
-			let self_id: AccountId<T> = T::PalletId::get().into_account();
-			T::MessageSender::send_message(payload, self_id).map_err(|e| {
+			T::MessageSender::send_message(payload).map_err(|e| {
 				log::info!("s2s-backing: register token failed {:?}", e);
 				Error::<T>::SendMessageFailed
 			})?;
@@ -222,8 +221,7 @@ pub mod pallet {
 			let encoded = T::RemoteIssueCall::encode_call(token.clone(), account)
 				.map_err(|_| Error::<T>::EncodeInvalid)?;
 			let payload = T::CallToPayload::to_payload(spec_version, encoded);
-			let self_id: AccountId<T> = T::PalletId::get().into_account();
-			T::MessageSender::send_message(payload, self_id)
+			T::MessageSender::send_message(payload)
 				.map_err(|_| Error::<T>::SendMessageFailed)?;
 			Self::deposit_event(Event::TokenLocked(token, user, recipient, amount));
 			Ok(().into())
