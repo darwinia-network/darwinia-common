@@ -98,8 +98,8 @@ pub mod pallet {
 	#[pallet::generate_deposit(fn deposit_event)]
 	#[pallet::metadata(T::AccountId = "AccountId")]
 	pub enum Event<T: Config> {
-		/// Token registered [token address, sender, recipient, amount]
-		TokenRegistered(Token, AccountId<T>, EthereumAddress),
+		/// Token registered [token address, sender]
+		TokenRegistered(Token, AccountId<T>),
 		/// Token locked [token address, sender, recipient, amount]
 		TokenLocked(Token, AccountId<T>, EthereumAddress, U256),
 		/// Token unlocked [token, recipient, value]
@@ -157,7 +157,6 @@ pub mod pallet {
 		pub fn register_and_remote_create(
 			origin: OriginFor<T>,
 			spec_version: u32,
-			recipient: EthereumAddress,
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
 			let token = Token::Native(TokenInfo {
@@ -172,9 +171,11 @@ pub mod pallet {
 			let encoded = T::RemoteRegisterCall::encode_call(token.clone());
 			let payload = T::CallToPayload::to_payload(spec_version, encoded);
 			let self_id: AccountId<T> = T::PalletId::get().into_account();
-			T::MessageSender::send_message(payload, self_id)
-				.map_err(|_| Error::<T>::SendMessageFailed)?;
-			Self::deposit_event(Event::TokenRegistered(token, user, recipient));
+			T::MessageSender::send_message(payload, self_id).map_err(|e| {
+				log::info!("s2s-backing: register token failed {:?}", e);
+				Error::<T>::SendMessageFailed
+			})?;
+			Self::deposit_event(Event::TokenRegistered(token, user));
 			Ok(().into())
 		}
 
