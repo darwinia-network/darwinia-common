@@ -91,10 +91,10 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
+		type WeightInfo: WeightInfo;
+
 		/// The offchain-indexing prefix
 		const INDEXING_PREFIX: &'static [u8];
-
-		type WeightInfo: WeightInfo;
 	}
 
 	/// Size of the MMR

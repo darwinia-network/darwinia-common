@@ -81,8 +81,8 @@ where
 
 pub struct Mmr<StorageType, T>
 where
-	T: Config,
 	Storage<StorageType, T>: MMRStore<T::Hash>,
+	T: Config,
 {
 	mmr: MMR<T::Hash, Hasher<T>, Storage<StorageType, T>>,
 }
@@ -103,7 +103,7 @@ where
 		}
 	}
 
-	pub fn get_root(self) -> MMRResult<T::Hash> {
+	pub fn get_root(&self) -> MMRResult<T::Hash> {
 		self.mmr.get_root()
 	}
 }
