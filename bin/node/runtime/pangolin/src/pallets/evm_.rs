@@ -45,8 +45,8 @@ frame_support::parameter_types! {
 impl Config for Runtime {
 	type FeeCalculator = dvm_dynamic_fee::Pallet<Self>;
 	type GasWeightMapping = ();
-	type CallOrigin = EnsureAddressTruncated;
-	type AddressMapping = ConcatAddressMapping;
+	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
+	type AddressMapping = ConcatAddressMapping<Self::AccountId>;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 	type Event = Event;

@@ -137,9 +137,11 @@ impl FindAuthor<H160> for EthereumFindAuthor {
 pub struct HashedAddressMapping;
 impl AddressMapping<AccountId32> for HashedAddressMapping {
 	fn into_account_id(address: H160) -> AccountId32 {
-		let mut data = [0u8; 32];
-		data[0..20].copy_from_slice(&address[..]);
-		AccountId32::from(Into::<[u8; 32]>::into(data))
+		let mut raw_account = [0u8; 32];
+
+		raw_account[0..20].copy_from_slice(&address[..]);
+
+		raw_account.into()
 	}
 }
 
@@ -180,7 +182,7 @@ where
 impl darwinia_evm::Config for Test {
 	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = ();
-	type CallOrigin = EnsureAddressTruncated;
+	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
 	type AddressMapping = HashedAddressMapping;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;

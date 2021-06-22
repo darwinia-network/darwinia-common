@@ -25,7 +25,7 @@ use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	RuntimeDebug,
+	AccountId32, RuntimeDebug,
 };
 // --- darwinia ---
 use crate::{self as darwinia_evm, runner::stack::Runner, *};
@@ -167,7 +167,7 @@ impl Config for Test {
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressRoot<Self::AccountId>;
 
-	type AddressMapping = ConcatAddressMapping;
+	type AddressMapping = ConcatAddressMapping<Self::AccountId>;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 
