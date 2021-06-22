@@ -662,29 +662,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bp-millau"
-version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common.git?tag=darwinia-v0.11.2#be41b9adb2ff188c8d7f0f0114e8dcc11843841f"
-dependencies = [
- "bp-messages",
- "bp-runtime",
- "fixed-hash",
- "frame-support",
- "frame-system",
- "hash256-std-hasher",
- "impl-codec",
- "impl-serde",
- "parity-util-mem",
- "serde",
- "sp-api",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "sp-trie",
-]
-
-[[package]]
 name = "bp-rialto"
 version = "0.1.0"
 source = "git+https://github.com/darwinia-network/parity-bridges-common.git?tag=darwinia-v0.11.2#be41b9adb2ff188c8d7f0f0114e8dcc11843841f"
@@ -4879,6 +4856,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "millau-primitives"
+version = "0.1.0"
+source = "git+https://github.com/darwinia-network/darwinia-launch.git?branch=s2s#fa0a3f51d3694b1227149d0ff99b6cb9a4fe95f0"
+dependencies = [
+ "bp-messages",
+ "bp-runtime",
+ "frame-support",
+ "frame-system",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "minicbor"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5764,7 +5756,6 @@ name = "pangolin-runtime"
 version = "2.5.0"
 dependencies = [
  "bp-messages",
- "bp-millau",
  "bp-runtime",
  "bridge-runtime-common",
  "darwinia-balances",
@@ -5806,6 +5797,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "log",
+ "millau-primitives",
  "pallet-authority-discovery",
  "pallet-authorship",
  "pallet-babe",

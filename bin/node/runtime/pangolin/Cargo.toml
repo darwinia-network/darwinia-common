@@ -55,7 +55,7 @@ pangolin-constants                  = { default-features = false, path = "src/co
 pangolin-runtime-system-params      = { default-features = false, path = "src/pallets/system/params" }
 # substrate
 bp-messages                                = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common.git", tag = "darwinia-v0.11.2" }
-bp-millau                                  = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common.git", tag = "darwinia-v0.11.2" }
+millau-primitives                          = { default-features = false, git = "https://github.com/darwinia-network/darwinia-launch.git", branch = "s2s" }
 bp-runtime                                 = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common.git", tag = "darwinia-v0.11.2" }
 bridge-runtime-common                      = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common.git", tag = "darwinia-v0.11.2" }
 frame-executive                            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
@@ -151,7 +151,7 @@ std = [
 	"pangolin-constants/std",
 	"pangolin-runtime-system-params/std",
 	"bp-messages/std",
-	"bp-millau/std",
+	"millau-primitives/std",
 	"bp-runtime/std",
 	"bridge-runtime-common/std",
 	"frame-executive/std",

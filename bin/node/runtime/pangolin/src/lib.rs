@@ -756,18 +756,18 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl bp_millau::MillauFinalityApi<Block> for Runtime {
-		fn best_finalized() -> (bp_millau::BlockNumber, bp_millau::Hash) {
+	impl millau_primitives::MillauFinalityApi<Block> for Runtime {
+		fn best_finalized() -> (millau_primitives::BlockNumber, millau_primitives::Hash) {
 			let header = BridgeMillauGrandpa::best_finalized();
 			(header.number, header.hash())
 		}
 
-		fn is_known_header(hash: bp_millau::Hash) -> bool {
+		fn is_known_header(hash: millau_primitives::Hash) -> bool {
 			BridgeMillauGrandpa::is_known_header(hash)
 		}
 	}
 
-	impl bp_millau::ToMillauOutboundLaneApi<Block, Balance, millau_messages::ToMillauMessagePayload> for Runtime {
+	impl millau_primitives::ToMillauOutboundLaneApi<Block, Balance, millau_messages::ToMillauMessagePayload> for Runtime {
 		fn estimate_message_delivery_and_dispatch_fee(
 			_lane_id: bp_messages::LaneId,
 			payload: millau_messages::ToMillauMessagePayload,
@@ -804,7 +804,7 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl bp_millau::FromMillauInboundLaneApi<Block> for Runtime {
+	impl millau_primitives::FromMillauInboundLaneApi<Block> for Runtime {
 		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
 			BridgeMillauMessages::inbound_latest_received_nonce(lane)
 		}
