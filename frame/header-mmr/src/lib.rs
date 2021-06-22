@@ -169,8 +169,8 @@ pub mod pallet {
 		}
 	}
 	impl<T: Config> Pallet<T> {
-		pub fn offchain_key(pos: NodeIndex) -> Vec<u8> {
-			(T::INDEXING_PREFIX, pos).encode()
+		pub fn offchain_key(position: NodeIndex) -> Vec<u8> {
+			(T::INDEXING_PREFIX, position).encode()
 		}
 
 		// darwinia_support::impl_rpc! {
@@ -184,9 +184,9 @@ pub mod pallet {
 
 		// 			if mmr_size <= <MmrSize<T>>::get() {
 		// 				let mmr = <MMR<_, Hasher<T>, _>>::new(mmr_size, store);
-		// 				let pos = mmr::leaf_index_to_pos(block_number_of_member_leaf);
+		// 				let position = mmr::leaf_index_to_pos(block_number_of_member_leaf);
 
-		// 				if let Ok(merkle_proof) = mmr.gen_proof(vec![pos]) {
+		// 				if let Ok(merkle_proof) = mmr.gen_proof(vec![position]) {
 		// 					return RuntimeDispatchInfo {
 		// 						mmr_size,
 		// 						proof: Proof(merkle_proof.proof_items().to_vec()),

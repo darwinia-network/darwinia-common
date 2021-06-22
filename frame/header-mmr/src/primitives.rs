@@ -3,7 +3,7 @@ pub use mmr::MMR;
 // --- crates.io ---
 use codec::{Decode, Encode};
 // --- github.com ---
-use mmr::{Error, MMRStore, Merge, Result as MMRResult};
+use mmr::{Error, MMRStore, Merge, MerkleProof, Result as MMRResult};
 // --- paritytech ---
 use sp_core::offchain::StorageKind;
 use sp_io::{offchain, offchain_index};
@@ -34,8 +34,8 @@ impl<T> MMRStore<T::Hash> for Storage<OffchainStorage, T>
 where
 	T: Config,
 {
-	fn get_elem(&self, pos: NodeIndex) -> MMRResult<Option<T::Hash>> {
-		let key = <Pallet<T>>::offchain_key(pos);
+	fn get_elem(&self, position: NodeIndex) -> MMRResult<Option<T::Hash>> {
+		let key = <Pallet<T>>::offchain_key(position);
 
 		// TODO: search runtime DB while pruning
 		Ok(offchain::local_storage_get(StorageKind::PERSISTENT, &key)
@@ -52,14 +52,15 @@ impl<T> MMRStore<T::Hash> for Storage<RuntimeStorage, T>
 where
 	T: Config,
 {
-	fn get_elem(&self, pos: NodeIndex) -> MMRResult<Option<T::Hash>> {
-		Ok(<Pallet<T>>::mmr_node_list(pos))
+	fn get_elem(&self, position: NodeIndex) -> MMRResult<Option<T::Hash>> {
+		// TODO only peaks on chain
+		Ok(<Pallet<T>>::mmr_node_list(position))
 	}
 
-	fn append(&mut self, pos: NodeIndex, elems: Vec<T::Hash>) -> MMRResult<()> {
+	fn append(&mut self, position: NodeIndex, elems: Vec<T::Hash>) -> MMRResult<()> {
 		let mut mmr_size = <MmrSize<T>>::get();
 
-		if pos != mmr_size {
+		if position != mmr_size {
 			Err(Error::InconsistentStore)?;
 		}
 
@@ -105,6 +106,16 @@ where
 
 	pub fn get_root(&self) -> MMRResult<T::Hash> {
 		self.mmr.get_root()
+	}
+
+	pub fn verify_proof(&self) {}
+}
+impl<T> Mmr<OffchainStorage, T>
+where
+	T: Config,
+{
+	pub fn gen_proof(&self, index: NodeIndex) -> MMRResult<MerkleProof<T::Hash, Hasher<T>>> {
+		self.mmr.gen_proof(vec![mmr::leaf_index_to_pos(index)])
 	}
 }
 impl<T> Mmr<RuntimeStorage, T>

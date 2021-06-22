@@ -24,14 +24,14 @@ use codec::{Decode, Encode};
 use mmr::Merge;
 // --- substrate ---
 use frame_support::traits::OnFinalize;
-use sp_runtime::{
-	generic::DigestItem,
-	testing::{Digest, H256},
-};
+use sp_runtime::{generic::DigestItem, testing::Digest};
 // --- darwinia ---
-use crate::{mock::*, pallet::*, primitives::*};
+use crate::{
+	mock::{Hash, *},
+	primitives::*,
+};
 
-fn headers_n_roots() -> Vec<(H256, H256)> {
+fn headers_n_roots() -> Vec<(Hash, Hash)> {
 	[
 		(
 			"0x34f61bfda344b3fad3c3e38832a91448b3c613b199eb23e5110a635d71c13c65",
@@ -87,17 +87,12 @@ fn headers_n_roots() -> Vec<(H256, H256)> {
 #[test]
 fn first_header_mmr() {
 	new_test_ext().execute_with(|| {
-		let parent_hash: H256 = Default::default();
-		initialize_block(1, parent_hash);
+		let header = new_block();
 
-		System::note_finished_extrinsics();
-		HeaderMMR::on_finalize(1);
-
-		let header = System::finalize();
 		assert_eq!(
 			header.digest,
 			Digest {
-				logs: vec![header_mmr_log(parent_hash)]
+				logs: vec![header_mmr_log(header.parent_hash)]
 			}
 		);
 	});
@@ -105,46 +100,58 @@ fn first_header_mmr() {
 
 #[test]
 fn test_insert_header() {
-	new_test_ext().execute_with(|| {
-		initialize_block(1, Default::default());
+	let h1 = 11;
+	let h2 = 19;
+	let pos = 19;
+	let mut prove_elem = Default::default();
+	let mut parent_mmr_root = Default::default();
 
-		HeaderMMR::on_finalize(1);
+	let mut ext = new_test_ext();
 
-		let mut headers = vec![];
+	ext.execute_with(|| {
+		let mut parent_hash;
+		let mut headers = vec![{
+			let header = new_block();
 
-		let mut header = System::finalize();
-		headers.push(header.clone());
+			parent_hash = header.hash();
 
-		for i in 2..30 {
-			initialize_block(i, header.hash());
+			header
+		}];
 
-			HeaderMMR::on_finalize(i);
-			header = System::finalize();
-			headers.push(header.clone());
+		for _ in 2..30 {
+			headers.push({
+				let header = new_block_with_parent_hash(parent_hash);
+
+				parent_hash = header.hash();
+
+				header
+			});
 		}
 
-		let h1 = 11 as u64;
-		let h2 = 19 as u64;
+		prove_elem = headers[h1 as usize - 1].hash();
 
-		let prove_elem = headers[h1 as usize - 1].hash();
-
-		let pos = 19;
 		assert_eq!(pos, mmr::leaf_index_to_pos(h1));
 		assert_eq!(prove_elem, HeaderMMR::mmr_node_list(pos).unwrap());
 
-		let parent_mmr_root = HeaderMMR::_find_parent_mmr_root(headers[h2 as usize - 1].clone())
-			.expect("Header mmr get failed");
+		parent_mmr_root =
+			HeaderMMR::_find_parent_mmr_root(headers[h2 as usize - 1].clone()).unwrap();
 
 		let mmr = <Mmr<RuntimeStorage, Test>>::with_size(mmr::leaf_index_to_mmr_size(h2 - 1));
 
-		assert_eq!(mmr.get_root().expect("Get Root Failed"), parent_mmr_root);
+		assert_eq!(mmr.get_root().unwrap(), parent_mmr_root);
+	});
 
-		// let proof = mmr.gen_proof(vec![pos]).expect("gen proof");
-		//
-		// let result = proof
-		// .verify(parent_mmr_root, vec![(pos, prove_elem)])
-		// .expect("verify");
-		// assert!(result);
+	ext.persist_offchain_overlay();
+	register_offchain_ext(&mut ext);
+
+	ext.execute_with(|| {
+		let mmr = <Mmr<OffchainStorage, Test>>::with_size(mmr::leaf_index_to_mmr_size(h2 - 1));
+
+		assert!(mmr
+			.gen_proof(h1)
+			.unwrap()
+			.verify(parent_mmr_root, vec![(pos, prove_elem)])
+			.unwrap());
 	});
 }
 
@@ -176,7 +183,7 @@ fn non_system_mmr_digest_item_encoding() {
 		]
 	);
 
-	let decoded: DigestItem<H256> = Decode::decode(&mut &encoded[..]).unwrap();
+	let decoded = <DigestItem<Hash>>::decode(&mut &encoded[..]).unwrap();
 	assert_eq!(item, decoded);
 }
 

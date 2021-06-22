@@ -21,8 +21,13 @@
 // --- crates ---
 use codec::Encode;
 // --- paritytech ---
+use frame_support::traits::OnFinalize;
 use frame_system::mocking::*;
-use sp_core::H256;
+use sp_core::{
+	offchain::{testing::TestOffchainExt, OffchainDbExt, OffchainWorkerExt},
+	H256,
+};
+use sp_io::TestExternalities;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
@@ -30,6 +35,9 @@ use sp_runtime::{
 };
 // --- darwinia ---
 use crate::{self as darwinia_header_mmr, *};
+
+pub type BlockNumber = u64;
+pub type Hash = H256;
 
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
@@ -42,8 +50,8 @@ impl frame_system::Config for Test {
 	type Origin = Origin;
 	type Call = Call;
 	type Index = u64;
-	type BlockNumber = u64;
-	type Hash = H256;
+	type BlockNumber = BlockNumber;
+	type Hash = Hash;
 	type Hashing = BlakeTwo256;
 	type AccountId = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
@@ -78,15 +86,22 @@ frame_support::construct_runtime! {
 	}
 }
 
-pub fn new_test_ext() -> sp_io::TestExternalities {
+pub fn new_test_ext() -> TestExternalities {
 	frame_system::GenesisConfig::default()
 		.build_storage::<Test>()
 		.unwrap()
 		.into()
 }
 
-pub fn header_mmr_log(hash: H256) -> DigestItem<H256> {
-	let mmr_root_log = MerkleMountainRangeRootLog::<H256> {
+pub fn register_offchain_ext(ext: &mut TestExternalities) {
+	let (offchain, _) = TestOffchainExt::with_offchain_db(ext.offchain_db());
+
+	ext.register_extension(OffchainDbExt::new(offchain.clone()));
+	ext.register_extension(OffchainWorkerExt::new(offchain));
+}
+
+pub fn header_mmr_log(hash: Hash) -> DigestItem<Hash> {
+	let mmr_root_log = MerkleMountainRangeRootLog::<Hash> {
 		prefix: LOG_PREFIX,
 		parent_mmr_root: hash,
 	};
@@ -94,11 +109,46 @@ pub fn header_mmr_log(hash: H256) -> DigestItem<H256> {
 	DigestItem::Other(mmr_root_log.encode())
 }
 
-pub fn initialize_block(number: u64, parent_hash: H256) {
+pub fn initialize_block(number: u64, parent_hash: Hash) {
 	System::initialize(
 		&number,
 		&parent_hash,
 		&Default::default(),
 		Default::default(),
 	);
+}
+
+pub fn new_block() -> Header {
+	let number = <frame_system::Pallet<Test>>::block_number() + 1;
+	let hash = Hash::repeat_byte(number as _);
+
+	<frame_system::Pallet<Test>>::initialize(
+		&number,
+		&hash,
+		&Default::default(),
+		frame_system::InitKind::Full,
+	);
+	HeaderMMR::on_finalize(number);
+	<frame_system::Pallet<Test>>::finalize()
+}
+
+pub fn new_block_with_parent_hash(parent_hash: Hash) -> Header {
+	let number = <frame_system::Pallet<Test>>::block_number() + 1;
+
+	<frame_system::Pallet<Test>>::initialize(
+		&number,
+		&parent_hash,
+		&Default::default(),
+		frame_system::InitKind::Full,
+	);
+	HeaderMMR::on_finalize(number);
+	<frame_system::Pallet<Test>>::finalize()
+}
+
+pub fn run_to_block(n: BlockNumber) -> Header {
+	for i in 0..n {
+		new_block();
+	}
+
+	new_block()
 }
