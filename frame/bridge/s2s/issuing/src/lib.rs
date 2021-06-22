@@ -31,10 +31,7 @@ use sha3::Digest;
 // --- substrate ---
 use frame_support::{ensure, pallet_prelude::*, traits::Get, PalletId};
 use frame_system::ensure_signed;
-use sp_runtime::{
-	traits::Convert,
-	DispatchError, DispatchResult,
-};
+use sp_runtime::{traits::Convert, DispatchError, DispatchResult};
 use sp_std::vec::Vec;
 // --- darwinia ---
 use bp_runtime::{ChainId, Size};
@@ -362,8 +359,7 @@ impl<T: Config> Pallet<T> {
 			.map_err(|_| Error::<T>::EncodeInvalid)?;
 		let payload = T::CallToPayload::to_payload(spec_version, encoded);
 
-		T::MessageSender::send_message(payload)
-			.map_err(|_| Error::<T>::SendMessageFailed)?;
+		T::MessageSender::send_message(payload).map_err(|_| Error::<T>::SendMessageFailed)?;
 		Ok(())
 	}
 

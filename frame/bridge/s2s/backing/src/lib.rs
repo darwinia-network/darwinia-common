@@ -221,8 +221,7 @@ pub mod pallet {
 			let encoded = T::RemoteIssueCall::encode_call(token.clone(), account)
 				.map_err(|_| Error::<T>::EncodeInvalid)?;
 			let payload = T::CallToPayload::to_payload(spec_version, encoded);
-			T::MessageSender::send_message(payload)
-				.map_err(|_| Error::<T>::SendMessageFailed)?;
+			T::MessageSender::send_message(payload).map_err(|_| Error::<T>::SendMessageFailed)?;
 			Self::deposit_event(Event::TokenLocked(token, user, recipient, amount));
 			Ok(().into())
 		}

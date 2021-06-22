@@ -15,9 +15,12 @@ impl RelayMessageCaller<ToMillauMessagePayload> for ToMillauMessageRelayCaller {
 	fn send_message(
 		payload: ToMillauMessagePayload,
 	) -> Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>> {
-		let call: Call =
-			BridgeMessagesCall::<Runtime, Millau>::send_message([0; 4], payload, 0u128.into())
-				.into();
+		let call: Call = BridgeMessagesCall::<Runtime, Millau>::send_message(
+			[0; 4],
+			payload,
+			300_000_000u128.into(),
+		)
+		.into();
 		call.dispatch(RawOrigin::Root.into())
 	}
 }

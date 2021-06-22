@@ -28,7 +28,9 @@ frame_support::parameter_types! {
 	// `IdentityFee` is used by Millau => we may use weight directly
 	pub const GetDeliveryConfirmationTransactionFee: Balance =
 		MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT as _;
-	pub const RootAccountForPayments: Option<AccountId> = None;
+	pub RootAccountForPayments: Option<AccountId> = Some(array_bytes::hex_into_unchecked(
+		"0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"
+	));
 }
 
 impl Config<WithMillauMessages> for Runtime {
