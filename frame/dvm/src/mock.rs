@@ -279,18 +279,28 @@ impl UnsignedTransaction {
 }
 
 fn address_build(seed: u8) -> AccountInfo {
-	let private_key = H256::from_slice(&[(seed + 1) as u8; 32]); //H256::from_low + 1) as u64);
-	let secret_key = secp256k1::SecretKey::parse_slice(&private_key[..]).unwrap();
-	let public_key = &secp256k1::PublicKey::from_secret_key(&secret_key).serialize()[1..65];
-	let address = H160::from(H256::from_slice(&Keccak256::digest(public_key)[..]));
+	let raw_private_key = [seed + 1; 32];
+	let secret_key = secp256k1::SecretKey::parse_slice(&raw_private_key).unwrap();
+	let raw_public_key = &secp256k1::PublicKey::from_secret_key(&secret_key).serialize()[1..65];
+	let raw_address = {
+		let mut s = [0; 20];
 
-	let mut data = [0u8; 32];
-	data[0..20].copy_from_slice(&address[..]);
+		s.copy_from_slice(&Keccak256::digest(raw_public_key)[12..]);
+
+		s
+	};
+	let raw_account = {
+		let mut s = [0; 32];
+
+		s[..20].copy_from_slice(&raw_address);
+
+		s
+	};
 
 	AccountInfo {
-		private_key,
-		account_id: AccountId32::from(Into::<[u8; 32]>::into(data)),
-		address,
+		private_key: raw_private_key.into(),
+		account_id: raw_account.into(),
+		address: raw_address.into(),
 	}
 }
 
