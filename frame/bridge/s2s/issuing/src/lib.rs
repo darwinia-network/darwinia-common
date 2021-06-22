@@ -117,7 +117,6 @@ pub mod pallet {
 				)?;
 			} else {
 				log::trace!("No action match this input selector");
-				return Err(<Error<T>>::InvalidAction.into());
 			}
 			Ok(().into())
 		}
