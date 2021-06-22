@@ -85,22 +85,41 @@ where
 	Storage<StorageType, T>: MMRStore<T::Hash>,
 {
 	mmr: MMR<T::Hash, Hasher<T>, Storage<StorageType, T>>,
-	size: NodeIndex,
 }
 impl<StorageType, T> Mmr<StorageType, T>
 where
 	T: Config,
 	Storage<StorageType, T>: MMRStore<T::Hash>,
 {
-	pub fn new(size: NodeIndex) -> Self {
+	pub fn new() -> Self {
 		Self {
-			mmr: MMR::new(size, Default::default()),
-			size,
+			mmr: MMR::new(<MmrSize<T>>::get(), Default::default()),
 		}
 	}
+
+	pub fn with_size(size: NodeIndex) -> Self {
+		Self {
+			mmr: MMR::new(size, Default::default()),
+		}
+	}
+
+	pub fn get_root(self) -> MMRResult<T::Hash> {
+		self.mmr.get_root()
+	}
 }
-impl<T> Mmr<RuntimeStorage, T> where T: Config {
+impl<T> Mmr<RuntimeStorage, T>
+where
+	T: Config,
+{
 	pub fn push(&mut self, leaf: T::Hash) -> Option<NodeIndex> {
-		
+		self.mmr.push(leaf).ok()
+	}
+
+	pub fn finalize(self) -> MMRResult<T::Hash> {
+		let root = self.mmr.get_root()?;
+
+		self.mmr.commit()?;
+
+		Ok(root)
 	}
 }

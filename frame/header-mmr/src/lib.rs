@@ -123,25 +123,19 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_finalize(_: T::BlockNumber) {
 			let parent_hash = <frame_system::Pallet<T>>::parent_hash();
-			let mut mmr = <Mmr<RuntimeStorage, T>>::new(<MmrSize<T>>::get());
-
-			// Update MMR and add mmr root to digest of block header
+			let mut mmr = <Mmr<RuntimeStorage, T>>::new();
 			let _ = mmr.push(parent_hash);
 
-			if let Ok(parent_mmr_root) = mmr.get_root() {
-				if mmr.commit().is_ok() {
-					let mmr_root_log = MerkleMountainRangeRootLog::<T::Hash> {
-						prefix: LOG_PREFIX,
-						parent_mmr_root: parent_mmr_root.into(),
-					};
-					let mmr_item = DigestItem::Other(mmr_root_log.encode());
+			if let Ok(parent_mmr_root) = mmr.finalize() {
+				let mmr_root_log = MerkleMountainRangeRootLog::<T::Hash> {
+					prefix: LOG_PREFIX,
+					parent_mmr_root,
+				};
+				let mmr_item = DigestItem::Other(mmr_root_log.encode());
 
-					<frame_system::Pallet<T>>::deposit_log(mmr_item.into());
-				} else {
-					log::error!("Commit MMR - FAILED");
-				}
+				<frame_system::Pallet<T>>::deposit_log(mmr_item.into());
 			} else {
-				log::error!("Calculate MMR - FAILED");
+				log::error!("Failed to finalize MMR");
 			}
 		}
 
@@ -230,15 +224,9 @@ pub mod pallet {
 	}
 	impl<T: Config> MMRT<T::BlockNumber, T::Hash> for Pallet<T> {
 		fn get_root(block_number: T::BlockNumber) -> Option<T::Hash> {
-			let mmr_size =
-				mmr::leaf_index_to_mmr_size(block_number.saturated_into::<NodeIndex>() as _);
-			let mmr = <Mmr<RuntimeStorage, T>>::new(mmr_size);
+			let size = mmr::leaf_index_to_mmr_size(block_number.saturated_into());
 
-			if let Ok(mmr_root) = mmr.get_root() {
-				Some(mmr_root)
-			} else {
-				None
-			}
+			<Mmr<RuntimeStorage, T>>::with_size(size).get_root().ok()
 		}
 	}
 
