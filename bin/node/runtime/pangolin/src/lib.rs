@@ -885,13 +885,13 @@ where
 pub enum MillauRuntime {
 	/// s2s bridge backing pallet.
 	/// this index must be the same as the backing pallet in millau runtime
-	#[codec(index = 49)]
+	#[codec(index = 14)]
 	Sub2SubBacking(MillauSub2SubBackingCall),
 }
 
 #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
 #[allow(non_camel_case_types)]
 pub enum MillauSub2SubBackingCall {
-	#[codec(index = 2)]
+	#[codec(index = 3)]
 	remote_unlock(Token, AccountId),
 }
