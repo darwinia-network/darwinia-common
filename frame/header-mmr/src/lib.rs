@@ -71,18 +71,16 @@ pub mod pallet {
 	// --- crates.io ---
 	#[cfg(feature = "std")]
 	use serde::Serialize;
-	// --- github.com ---
-	use mmr::{Error, MMRStore, Merge, Result as MMRResult, MMR};
 	// --- paritytech ---
 	use frame_support::{pallet_prelude::*, weights::Weight};
 	use frame_system::pallet_prelude::*;
 	use sp_runtime::{
 		generic::{DigestItem, OpaqueDigestItemId},
-		traits::{Hash, Header, SaturatedConversion},
+		traits::{Header, SaturatedConversion},
 	};
 	use sp_std::prelude::*;
 	// --- darwinia ---
-	use crate::weights::WeightInfo;
+	use crate::{primitives::*, weights::WeightInfo};
 	use darwinia_header_mmr_rpc_runtime_api::{Proof, RuntimeDispatchInfo};
 	use darwinia_relay_primitives::MMR as MMRT;
 
@@ -124,9 +122,8 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_finalize(_: T::BlockNumber) {
-			let store = <ModuleMMRStore<T>>::default();
 			let parent_hash = <frame_system::Pallet<T>>::parent_hash();
-			let mut mmr = <MMR<_, MMRMerge<T>, _>>::new(<MmrSize<T>>::get(), store);
+			let mut mmr = <Mmr<RuntimeStorage, T>>::new(<MmrSize<T>>::get());
 
 			// Update MMR and add mmr root to digest of block header
 			let _ = mmr.push(parent_hash);
@@ -182,34 +179,34 @@ pub mod pallet {
 			(T::INDEXING_PREFIX, pos).encode()
 		}
 
-		darwinia_support::impl_rpc! {
-			pub fn gen_proof_rpc(
-				block_number_of_member_leaf: NodeIndex,
-				block_number_of_last_leaf: NodeIndex,
-			) -> RuntimeDispatchInfo<T::Hash> {
-				if block_number_of_member_leaf <= block_number_of_last_leaf {
-					let store = <ModuleMMRStore<T>>::default();
-					let mmr_size = mmr::leaf_index_to_mmr_size(block_number_of_last_leaf);
+		// darwinia_support::impl_rpc! {
+		// 	pub fn gen_proof_rpc(
+		// 		block_number_of_member_leaf: NodeIndex,
+		// 		block_number_of_last_leaf: NodeIndex,
+		// 	) -> RuntimeDispatchInfo<T::Hash> {
+		// 		if block_number_of_member_leaf <= block_number_of_last_leaf {
+		// 			let store = <ModuleMMRStore<T>>::default();
+		// 			let mmr_size = mmr::leaf_index_to_mmr_size(block_number_of_last_leaf);
 
-					if mmr_size <= <MmrSize<T>>::get() {
-						let mmr = <MMR<_, MMRMerge<T>, _>>::new(mmr_size, store);
-						let pos = mmr::leaf_index_to_pos(block_number_of_member_leaf);
+		// 			if mmr_size <= <MmrSize<T>>::get() {
+		// 				let mmr = <MMR<_, Hasher<T>, _>>::new(mmr_size, store);
+		// 				let pos = mmr::leaf_index_to_pos(block_number_of_member_leaf);
 
-						if let Ok(merkle_proof) = mmr.gen_proof(vec![pos]) {
-							return RuntimeDispatchInfo {
-								mmr_size,
-								proof: Proof(merkle_proof.proof_items().to_vec()),
-							};
-						}
-					}
-				}
+		// 				if let Ok(merkle_proof) = mmr.gen_proof(vec![pos]) {
+		// 					return RuntimeDispatchInfo {
+		// 						mmr_size,
+		// 						proof: Proof(merkle_proof.proof_items().to_vec()),
+		// 					};
+		// 				}
+		// 			}
+		// 		}
 
-				RuntimeDispatchInfo {
-					mmr_size: 0,
-					proof: Proof(vec![]),
-				}
-			}
-		}
+		// 		RuntimeDispatchInfo {
+		// 			mmr_size: 0,
+		// 			proof: Proof(vec![]),
+		// 		}
+		// 	}
+		// }
 
 		// TODO: For future rpc calls
 		pub fn _find_parent_mmr_root(header: T::Header) -> Option<T::Hash> {
@@ -233,56 +230,15 @@ pub mod pallet {
 	}
 	impl<T: Config> MMRT<T::BlockNumber, T::Hash> for Pallet<T> {
 		fn get_root(block_number: T::BlockNumber) -> Option<T::Hash> {
-			let store = <ModuleMMRStore<T>>::default();
 			let mmr_size =
 				mmr::leaf_index_to_mmr_size(block_number.saturated_into::<NodeIndex>() as _);
-			let mmr = <MMR<_, MMRMerge<T>, _>>::new(mmr_size, store);
+			let mmr = <Mmr<RuntimeStorage, T>>::new(mmr_size);
 
 			if let Ok(mmr_root) = mmr.get_root() {
 				Some(mmr_root)
 			} else {
 				None
 			}
-		}
-	}
-
-	pub struct ModuleMMRStore<T>(PhantomData<T>);
-	impl<T> Default for ModuleMMRStore<T> {
-		fn default() -> Self {
-			ModuleMMRStore(sp_std::marker::PhantomData)
-		}
-	}
-	impl<T: Config> MMRStore<T::Hash> for ModuleMMRStore<T> {
-		fn get_elem(&self, pos: NodeIndex) -> MMRResult<Option<T::Hash>> {
-			Ok(<Pallet<T>>::mmr_node_list(pos))
-		}
-
-		fn append(&mut self, pos: NodeIndex, elems: Vec<T::Hash>) -> MMRResult<()> {
-			let mmr_count = <MmrSize<T>>::get();
-			if pos != mmr_count {
-				// Must be append only.
-				Err(Error::InconsistentStore)?;
-			}
-			let elems_len = elems.len() as NodeIndex;
-
-			for (i, elem) in elems.into_iter().enumerate() {
-				<MMRNodeList<T>>::insert(mmr_count + i as NodeIndex, elem);
-			}
-
-			// increment counter
-			<MmrSize<T>>::put(mmr_count + elems_len);
-
-			Ok(())
-		}
-	}
-
-	pub struct MMRMerge<T>(PhantomData<T>);
-	impl<T: Config> Merge for MMRMerge<T> {
-		type Item = <T as frame_system::Config>::Hash;
-
-		fn merge(lhs: &Self::Item, rhs: &Self::Item) -> Self::Item {
-			let encodable = (lhs, rhs);
-			<T as frame_system::Config>::Hashing::hash_of(&encodable)
 		}
 	}
 
@@ -298,6 +254,8 @@ pub mod pallet {
 	}
 }
 pub use pallet::*;
+
+pub mod primitives;
 
 pub mod weights;
 
