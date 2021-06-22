@@ -216,8 +216,6 @@ pub mod pallet {
 		InvalidInput,
 		/// The address is not from mapping factory contract address
 		NotFactoryContract,
-		/// There is no matched action
-		InvalidAction,
 		/// Invalid Issuing System Account
 		InvalidIssuingAccount,
 		/// StringCF
