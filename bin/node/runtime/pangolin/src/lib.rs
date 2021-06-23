@@ -632,8 +632,7 @@ impl_runtime_apis! {
 			block_number_of_member_leaf: u64,
 			block_number_of_last_leaf: u64
 		) -> HeaderMMRRuntimeDispatchInfo<Hash> {
-			unimplemented!()
-			// HeaderMMR::gen_proof_rpc(block_number_of_member_leaf, block_number_of_last_leaf)
+			HeaderMMR::gen_proof_rpc(block_number_of_member_leaf, block_number_of_last_leaf)
 		}
 	}
 

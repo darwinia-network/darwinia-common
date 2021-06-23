@@ -122,7 +122,7 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_finalize(_: T::BlockNumber) {
+		fn on_finalize(_: BlockNumberFor<T>) {
 			let parent_hash = <frame_system::Pallet<T>>::parent_hash();
 			let mut mmr = <Mmr<RuntimeStorage, T>>::new();
 			let _ = mmr.push(parent_hash);
@@ -177,34 +177,30 @@ pub mod pallet {
 			(T::INDEXING_PREFIX, position).encode()
 		}
 
-		// darwinia_support::impl_rpc! {
-		// 	pub fn gen_proof_rpc(
-		// 		block_number_of_member_leaf: NodeIndex,
-		// 		block_number_of_last_leaf: NodeIndex,
-		// 	) -> RuntimeDispatchInfo<T::Hash> {
-		// 		if block_number_of_member_leaf <= block_number_of_last_leaf {
-		// 			let store = <ModuleMMRStore<T>>::default();
-		// 			let mmr_size = mmr::leaf_index_to_mmr_size(block_number_of_last_leaf);
+		darwinia_support::impl_rpc! {
+			pub fn gen_proof_rpc(
+				block_number_of_member_leaf: NodeIndex,
+				block_number_of_last_leaf: NodeIndex,
+			) -> RuntimeDispatchInfo<T::Hash> {
+				if block_number_of_member_leaf <= block_number_of_last_leaf {
+					let mmr_size = mmr::leaf_index_to_mmr_size(block_number_of_last_leaf);
 
-		// 			if mmr_size <= <MmrSize<T>>::get() {
-		// 				let mmr = <MMR<_, Hasher<T>, _>>::new(mmr_size, store);
-		// 				let position = mmr::leaf_index_to_pos(block_number_of_member_leaf);
+					if mmr_size <= <MmrSize<T>>::get() {
+						let position = mmr::leaf_index_to_pos(block_number_of_member_leaf);
+						let mmr = <Mmr<OffchainStorage, T>>::with_size(<MmrSize<T>>::get());
 
-		// 				if let Ok(merkle_proof) = mmr.gen_proof(vec![position]) {
-		// 					return RuntimeDispatchInfo {
-		// 						mmr_size,
-		// 						proof: Proof(merkle_proof.proof_items().to_vec()),
-		// 					};
-		// 				}
-		// 			}
-		// 		}
+						if let Ok(merkle_proof) = mmr.gen_proof(position) {
+							return RuntimeDispatchInfo {
+								mmr_size,
+								proof: Proof(merkle_proof.proof_items().to_vec()),
+							};
+						}
+					}
+				}
 
-		// 		RuntimeDispatchInfo {
-		// 			mmr_size: 0,
-		// 			proof: Proof(vec![]),
-		// 		}
-		// 	}
-		// }
+				Default::default()
+			}
+		}
 
 		// TODO: For future rpc calls
 		pub fn _find_parent_mmr_root(header: &T::Header) -> Option<T::Hash> {
@@ -225,8 +221,8 @@ pub mod pallet {
 				.convert_first(|l| l.try_to(id).and_then(filter_log))
 		}
 	}
-	impl<T: Config> MMRT<T::BlockNumber, T::Hash> for Pallet<T> {
-		fn get_root(block_number: T::BlockNumber) -> Option<T::Hash> {
+	impl<T: Config> MMRT<BlockNumberFor<T>, T::Hash> for Pallet<T> {
+		fn get_root(block_number: BlockNumberFor<T>) -> Option<T::Hash> {
 			let size = mmr::leaf_index_to_mmr_size(block_number.saturated_into());
 
 			<Mmr<RuntimeStorage, T>>::with_size(size).get_root().ok()
