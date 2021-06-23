@@ -14,11 +14,10 @@ use crate::*;
 
 pub struct Hasher<T>(PhantomData<T>);
 impl<T: Config> Merge for Hasher<T> {
-	type Item = <T as frame_system::Config>::Hash;
+	type Item = T::Hash;
 
 	fn merge(lhs: &Self::Item, rhs: &Self::Item) -> Self::Item {
-		let encodable = (lhs, rhs);
-		<T as frame_system::Config>::Hashing::hash_of(&encodable)
+		T::Hashing::hash_of(&(lhs, rhs))
 	}
 }
 
@@ -108,7 +107,10 @@ where
 		self.mmr.get_root()
 	}
 
-	pub fn verify_proof(&self) {}
+	// TODO
+	pub fn verify(&self) -> MMRResult<bool> {
+		todo!()
+	}
 }
 impl<T> Mmr<OffchainStorage, T>
 where
