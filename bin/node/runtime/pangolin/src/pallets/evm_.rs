@@ -42,7 +42,9 @@ where
 			// Darwinia precompiles
 			_ if address == addr(21) => Some(<Transfer<R>>::execute(input, target_gas, context)),
 			_ if address == addr(23) => Some(<Issuing<R>>::execute(input, target_gas, context)),
-			_ if address == addr(24) => Some(<DispatchCallEncoder<R>>::execute(input, target_gas, context)),
+			_ if address == addr(24) => Some(<DispatchCallEncoder<R>>::execute(
+				input, target_gas, context,
+			)),
 			_ if address == addr(25) => Some(<Dispatch<R>>::execute(input, target_gas, context)),
 			_ => None,
 		}

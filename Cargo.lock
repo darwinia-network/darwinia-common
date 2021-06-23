@@ -1988,7 +1988,6 @@ dependencies = [
  "darwinia-ethereum-issuing",
  "darwinia-evm",
  "darwinia-evm-precompile-simple",
- "darwinia-evm-precompile-withdraw",
  "darwinia-support",
  "dp-asset",
  "dp-contract",

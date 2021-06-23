@@ -137,13 +137,9 @@ std = [
 	"darwinia-evm/std",
 	"darwinia-evm-precompile-issuing/std",
 	"darwinia-evm-precompile-simple/std",
-<<<<<<< HEAD
-	"darwinia-evm-precompile-withdraw/std",
 	"darwinia-evm-precompile-encoder/std",
 	"darwinia-evm-precompile-dispatch/std",
-=======
 	"darwinia-evm-precompile-transfer/std",
->>>>>>> master
 	"darwinia-header-mmr/std",
 	"darwinia-header-mmr-rpc-runtime-api/std",
 	"darwinia-relay-authorities/std",
