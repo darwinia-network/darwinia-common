@@ -74,10 +74,9 @@ pub mod pallet {
 	// --- paritytech ---
 	use frame_support::{pallet_prelude::*, weights::Weight};
 	use frame_system::pallet_prelude::*;
-	use sp_runtime::{
-		generic::{DigestItem, OpaqueDigestItemId},
-		traits::{Header, SaturatedConversion},
-	};
+	use sp_runtime::{generic::DigestItem, traits::SaturatedConversion};
+	#[cfg(test)]
+	use sp_runtime::{generic::OpaqueDigestItemId, traits::Header};
 	use sp_std::prelude::*;
 	// --- darwinia ---
 	use crate::{primitives::*, weights::WeightInfo};
