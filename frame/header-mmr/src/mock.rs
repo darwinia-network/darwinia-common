@@ -71,7 +71,7 @@ impl frame_system::Config for Test {
 impl Config for Test {
 	type WeightInfo = ();
 
-	const INDEXING_PREFIX: &'static [u8] = b"mmr";
+	const INDEXING_PREFIX: &'static [u8] = b"header-mmr-";
 }
 
 frame_support::construct_runtime! {
