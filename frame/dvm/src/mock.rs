@@ -18,23 +18,28 @@
 
 //! Test utilities
 
-use crate::{
-	self as dvm_ethereum,
-	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
-	*,
-};
+// --- crates.io ---
 use codec::{Decode, Encode};
-use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator, IssuingHandler};
 use ethereum::{TransactionAction, TransactionSignature};
-use frame_support::{traits::GenesisBuild, ConsensusEngineId, PalletId};
-use frame_system::mocking::*;
+use evm::{Context, ExitError, ExitSucceed};
 use rlp::*;
+// --- substrate ---
+use frame_support::{traits::GenesisBuild, ConsensusEngineId};
+use frame_system::mocking::*;
 use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	AccountId32, DispatchResult, Perbill, RuntimeDebug,
+	AccountId32, Perbill, RuntimeDebug,
 };
+use sp_std::prelude::*;
+// --- darwinia ---
+use crate::{self as dvm_ethereum, account_basic::*, *};
+use darwinia_evm::{runner::stack::Runner, AddressMapping, EnsureAddressTruncated, FeeCalculator};
+use darwinia_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
+use darwinia_evm_precompile_transfer::Transfer;
+use dp_evm::{Precompile, PrecompileSet};
+use sp_std::marker::PhantomData;
 
 darwinia_support::impl_test_account_data! {}
 
@@ -49,7 +54,6 @@ frame_support::parameter_types! {
 	pub const MaximumBlockLength: u32 = 2 * 1024;
 	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
 }
-
 impl frame_system::Config for Test {
 	type BaseCallFilter = ();
 	type BlockWeights = ();
@@ -82,7 +86,6 @@ frame_support::parameter_types! {
 	pub const MaxLocks: u32 = 10;
 	pub const ExistentialDeposit: u64 = 500;
 }
-
 impl darwinia_balances::Config<RingInstance> for Test {
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
@@ -94,7 +97,6 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type Event = ();
 	type BalanceInfo = AccountData<Balance>;
 }
-
 impl darwinia_balances::Config<KtonInstance> for Test {
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
@@ -110,7 +112,6 @@ impl darwinia_balances::Config<KtonInstance> for Test {
 frame_support::parameter_types! {
 	pub const MinimumPeriod: u64 = 6000 / 2;
 }
-
 impl pallet_timestamp::Config for Test {
 	type Moment = u64;
 	type OnTimestampSet = ();
@@ -124,7 +125,6 @@ impl FeeCalculator for FixedGasPrice {
 		1.into()
 	}
 }
-
 pub struct EthereumFindAuthor;
 impl FindAuthor<H160> for EthereumFindAuthor {
 	fn find_author<'a, I>(_digests: I) -> Option<H160>
@@ -134,48 +134,69 @@ impl FindAuthor<H160> for EthereumFindAuthor {
 		Some(address_build(0).address)
 	}
 }
+pub struct HashedAddressMapping;
+impl AddressMapping<AccountId32> for HashedAddressMapping {
+	fn into_account_id(address: H160) -> AccountId32 {
+		let mut raw_account = [0u8; 32];
+
+		raw_account[0..20].copy_from_slice(&address[..]);
+
+		raw_account.into()
+	}
+}
 
 frame_support::parameter_types! {
 	pub const TransactionByteFee: u64 = 1;
 	pub const ChainId: u64 = 42;
-	pub const EVMPalletId: PalletId = PalletId(*b"py/evmpa");
 	pub const BlockGasLimit: U256 = U256::MAX;
 }
 
-pub struct HashedAddressMapping;
+pub struct MockPrecompiles<R>(PhantomData<R>);
+impl<R> PrecompileSet for MockPrecompiles<R>
+where
+	R: darwinia_evm::Config,
+{
+	fn execute(
+		address: H160,
+		input: &[u8],
+		target_gas: Option<u64>,
+		context: &Context,
+	) -> Option<Result<(ExitSucceed, Vec<u8>, u64), ExitError>> {
+		let to_address = |n: u64| -> H160 { H160::from_low_u64_be(n) };
 
-impl AddressMapping<AccountId32> for HashedAddressMapping {
-	fn into_account_id(address: H160) -> AccountId32 {
-		let mut data = [0u8; 32];
-		data[0..20].copy_from_slice(&address[..]);
-		AccountId32::from(Into::<[u8; 32]>::into(data))
+		match address {
+			// Ethereum precompiles
+			_ if address == to_address(1) => Some(ECRecover::execute(input, target_gas, context)),
+			_ if address == to_address(2) => Some(Sha256::execute(input, target_gas, context)),
+			_ if address == to_address(3) => Some(Ripemd160::execute(input, target_gas, context)),
+			_ if address == to_address(4) => Some(Identity::execute(input, target_gas, context)),
+			// Darwinia precompiles
+			_ if address == to_address(21) => {
+				Some(<Transfer<R>>::execute(input, target_gas, context))
+			}
+			_ => None,
+		}
 	}
 }
 
 impl darwinia_evm::Config for Test {
 	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = ();
-	type CallOrigin = EnsureAddressTruncated;
+	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
 	type AddressMapping = HashedAddressMapping;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 	type Event = ();
-	type Precompiles = (
-		darwinia_evm_precompile_simple::ECRecover,
-		darwinia_evm_precompile_simple::Sha256,
-		darwinia_evm_precompile_simple::Ripemd160,
-		darwinia_evm_precompile_simple::Identity,
-		darwinia_evm_precompile_withdraw::WithDraw<Self>,
-	);
+	type Precompiles = MockPrecompiles<Self>;
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
-	type Runner = darwinia_evm::runner::stack::Runner<Self>;
+	type Runner = Runner<Self>;
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 	type IssuingHandler = ();
 }
 
-impl Config for Test {
+impl dvm_ethereum::Config for Test {
 	type Event = ();
 	type FindAuthor = EthereumFindAuthor;
 	type StateRoot = IntermediateStateRoot;
@@ -193,8 +214,8 @@ frame_support::construct_runtime! {
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>},
 		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage},
-		EVM: darwinia_evm::{Pallet, Call, Storage},
-		Ethereum: dvm_ethereum::{Pallet, Call, Storage},
+		EVM: darwinia_evm::{Pallet, Call, Storage, Config},
+		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config},
 	}
 }
 
@@ -202,59 +223,6 @@ pub struct AccountInfo {
 	pub address: H160,
 	pub account_id: AccountId32,
 	pub private_key: H256,
-}
-
-fn address_build(seed: u8) -> AccountInfo {
-	let private_key = H256::from_slice(&[(seed + 1) as u8; 32]); //H256::from_low + 1) as u64);
-	let secret_key = secp256k1::SecretKey::parse_slice(&private_key[..]).unwrap();
-	let public_key = &secp256k1::PublicKey::from_secret_key(&secret_key).serialize()[1..65];
-	let address = H160::from(H256::from_slice(&Keccak256::digest(public_key)[..]));
-
-	let mut data = [0u8; 32];
-	data[0..20].copy_from_slice(&address[..]);
-
-	AccountInfo {
-		private_key,
-		account_id: AccountId32::from(Into::<[u8; 32]>::into(data)),
-		address,
-	}
-}
-
-// This function basically just builds a genesis storage key/value store according to
-// our desired mockup.
-pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExternalities) {
-	// sc_cli::init_logger("");
-	let mut ext = frame_system::GenesisConfig::default()
-		.build_storage::<Test>()
-		.unwrap();
-
-	let pairs = (0..accounts_len)
-		.map(|i| address_build(i as u8))
-		.collect::<Vec<_>>();
-
-	let balances: Vec<_> = (0..accounts_len)
-		.map(|i| (pairs[i].account_id.clone(), 100_000_000_000))
-		.collect();
-
-	darwinia_balances::GenesisConfig::<Test, RingInstance> { balances }
-		.assimilate_storage(&mut ext)
-		.unwrap();
-
-	(pairs, ext.into())
-}
-
-pub fn contract_address(sender: H160, nonce: u64) -> H160 {
-	let mut rlp = RlpStream::new_list(2);
-	rlp.append(&sender);
-	rlp.append(&nonce);
-
-	H160::from_slice(&Keccak256::digest(&rlp.out())[12..])
-}
-
-pub fn storage_address(sender: H160, slot: H256) -> H256 {
-	H256::from_slice(&Keccak256::digest(
-		[&H256::from(sender)[..], &slot[..]].concat().as_slice(),
-	))
 }
 
 pub struct UnsignedTransaction {
@@ -265,7 +233,6 @@ pub struct UnsignedTransaction {
 	pub value: U256,
 	pub input: Vec<u8>,
 }
-
 impl UnsignedTransaction {
 	fn signing_rlp_append(&self, s: &mut RlpStream) {
 		s.begin_list(9);
@@ -309,4 +276,67 @@ impl UnsignedTransaction {
 			signature: sig,
 		}
 	}
+}
+
+fn address_build(seed: u8) -> AccountInfo {
+	let raw_private_key = [seed + 1; 32];
+	let secret_key = secp256k1::SecretKey::parse_slice(&raw_private_key).unwrap();
+	let raw_public_key = &secp256k1::PublicKey::from_secret_key(&secret_key).serialize()[1..65];
+	let raw_address = {
+		let mut s = [0; 20];
+
+		s.copy_from_slice(&Keccak256::digest(raw_public_key)[12..]);
+
+		s
+	};
+	let raw_account = {
+		let mut s = [0; 32];
+
+		s[..20].copy_from_slice(&raw_address);
+
+		s
+	};
+
+	AccountInfo {
+		private_key: raw_private_key.into(),
+		account_id: raw_account.into(),
+		address: raw_address.into(),
+	}
+}
+
+// This function basically just builds a genesis storage key/value store according to
+// our desired mockup.
+pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExternalities) {
+	// sc_cli::init_logger("");
+	let mut ext = frame_system::GenesisConfig::default()
+		.build_storage::<Test>()
+		.unwrap();
+
+	let pairs = (0..accounts_len)
+		.map(|i| address_build(i as u8))
+		.collect::<Vec<_>>();
+
+	let balances: Vec<_> = (0..accounts_len)
+		.map(|i| (pairs[i].account_id.clone(), 100_000_000_000))
+		.collect();
+
+	darwinia_balances::GenesisConfig::<Test, RingInstance> { balances }
+		.assimilate_storage(&mut ext)
+		.unwrap();
+
+	(pairs, ext.into())
+}
+
+pub fn contract_address(sender: H160, nonce: u64) -> H160 {
+	let mut rlp = RlpStream::new_list(2);
+	rlp.append(&sender);
+	rlp.append(&nonce);
+
+	H160::from_slice(&Keccak256::digest(&rlp.out())[12..])
+}
+
+pub fn storage_address(sender: H160, slot: H256) -> H256 {
+	H256::from_slice(&Keccak256::digest(
+		[&H256::from(sender)[..], &slot[..]].concat().as_slice(),
+	))
 }

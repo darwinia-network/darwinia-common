@@ -1805,32 +1805,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-evm-precompile-kton"
-version = "2.4.0"
-dependencies = [
- "array-bytes",
- "darwinia-evm",
- "darwinia-support",
- "dp-evm",
- "dvm-ethereum",
- "ethabi",
- "ethereum-types",
- "evm",
- "frame-support",
- "frame-system",
- "hex",
- "log",
- "pallet-timestamp",
- "parity-scale-codec",
- "ripemd160",
- "sha3 0.9.1",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "darwinia-evm-precompile-modexp"
 version = "2.4.0"
 dependencies = [
@@ -1865,18 +1839,23 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-evm-precompile-withdraw"
+name = "darwinia-evm-precompile-transfer"
 version = "2.4.0"
 dependencies = [
+ "array-bytes",
  "darwinia-evm",
  "darwinia-support",
  "dp-evm",
+ "ethabi",
+ "ethereum-types",
  "evm",
  "frame-support",
  "frame-system",
+ "log",
  "pallet-timestamp",
  "parity-scale-codec",
  "ripemd160",
+ "sha3 0.9.1",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -2498,12 +2477,13 @@ dependencies = [
  "darwinia-balances",
  "darwinia-evm",
  "darwinia-evm-precompile-simple",
- "darwinia-evm-precompile-withdraw",
+ "darwinia-evm-precompile-transfer",
  "darwinia-support",
  "dp-evm",
  "dp-storage",
  "dp_consensus",
  "dvm-rpc-runtime-api",
+ "ethabi",
  "ethereum",
  "ethereum-types",
  "evm",
@@ -5939,9 +5919,8 @@ dependencies = [
  "darwinia-evm-precompile-dispatch",
  "darwinia-evm-precompile-encoder",
  "darwinia-evm-precompile-issuing",
- "darwinia-evm-precompile-kton",
  "darwinia-evm-precompile-simple",
- "darwinia-evm-precompile-withdraw",
+ "darwinia-evm-precompile-transfer",
  "darwinia-header-mmr",
  "darwinia-header-mmr-rpc-runtime-api",
  "darwinia-relay-authorities",

@@ -141,7 +141,7 @@ describe("Test Transfer Balance", function () {
 
 	it("Get sender balance after withdraw", async function () {
 		const balanceFrom = web3.utils.fromWei(await web3.eth.getBalance(addressFrom), "ether");
-		expect(balanceFrom).to.be.equal("123366.78888448799999999");
+		expect(balanceFrom).to.be.equal("123366.78887448799999999");
 		expect(await web3.eth.getTransactionCount(addressFrom, "latest")).to.eq(5);
 	});
 });

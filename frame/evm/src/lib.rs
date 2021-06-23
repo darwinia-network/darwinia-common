@@ -48,9 +48,9 @@ use frame_system::RawOrigin;
 use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	traits::{BadOrigin, UniqueSaturatedInto},
-	AccountId32, DispatchResult,
+	DispatchResult,
 };
-use sp_std::prelude::*;
+use sp_std::{marker::PhantomData, prelude::*};
 
 static ISTANBUL_CONFIG: EvmConfig = EvmConfig::istanbul();
 
@@ -89,8 +89,8 @@ pub mod pallet {
 		/// EVM execution runner.
 		type Runner: Runner<Self>;
 		/// The account basic mapping way
-		type RingAccountBasic: AccountBasic;
-		type KtonAccountBasic: AccountBasic;
+		type RingAccountBasic: AccountBasic<Self>;
+		type KtonAccountBasic: AccountBasic<Self>;
 		/// Issuing contracts handler
 		type IssuingHandler: IssuingHandler;
 
@@ -158,20 +158,8 @@ pub mod pallet {
 		fn build(&self) {
 			let extra_genesis_builder: fn(&Self) = |config: &GenesisConfig| {
 				for (address, account) in &config.accounts {
-					T::RingAccountBasic::mutate_account_basic(
-						&address,
-						Account {
-							balance: account.balance,
-							nonce: account.nonce,
-						},
-					);
-					T::KtonAccountBasic::mutate_account_basic(
-						&address,
-						Account {
-							balance: account.balance,
-							nonce: account.nonce,
-						},
-					);
+					T::RingAccountBasic::mutate_account_basic_balance(&address, account.balance);
+					T::KtonAccountBasic::mutate_account_basic_balance(&address, account.balance);
 					AccountCodes::<T>::insert(address, &account.code);
 					for (index, value) in &account.storage {
 						AccountStorages::<T>::insert(address, index, value);
@@ -378,13 +366,7 @@ pub mod pallet {
 			let account = T::RingAccountBasic::account_basic(address);
 			let new_account_balance = account.balance.saturating_sub(value);
 
-			T::RingAccountBasic::mutate_account_basic(
-				&address,
-				Account {
-					nonce: account.nonce,
-					balance: new_account_balance,
-				},
-			);
+			T::RingAccountBasic::mutate_account_basic_balance(&address, new_account_balance);
 		}
 
 		/// Deposit fee.
@@ -392,13 +374,7 @@ pub mod pallet {
 			let account = T::RingAccountBasic::account_basic(address);
 			let new_account_balance = account.balance.saturating_add(value);
 
-			T::RingAccountBasic::mutate_account_basic(
-				&address,
-				Account {
-					nonce: account.nonce,
-					balance: new_account_balance,
-				},
-			);
+			T::RingAccountBasic::mutate_account_basic_balance(&address, new_account_balance);
 		}
 	}
 }
@@ -423,15 +399,22 @@ pub trait EnsureAddressOrigin<OuterOrigin> {
 	) -> Result<Self::Success, OuterOrigin>;
 }
 
-pub trait AddressMapping<A> {
-	fn into_account_id(address: H160) -> A;
+pub trait AddressMapping<AccountId> {
+	fn into_account_id(address: H160) -> AccountId;
 }
 
-/// Get account basic info
-pub trait AccountBasic {
+/// Account basic info operations
+pub trait AccountBasic<T: frame_system::Config> {
+	/// Get the account basic in EVM format.
 	fn account_basic(address: &H160) -> Account;
-	fn mutate_account_basic(address: &H160, new: Account);
+	/// Mutate the basic account
+	fn mutate_account_basic_balance(address: &H160, new_balance: U256);
+	/// Transfer value
 	fn transfer(source: &H160, target: &H160, value: U256) -> Result<(), ExitError>;
+	/// Get account balance
+	fn account_balance(account_id: &T::AccountId) -> U256;
+	/// Mutate account balance
+	fn mutate_account_balance(account_id: &T::AccountId, balance: U256);
 }
 
 /// Config that outputs the current transaction gas price.
@@ -470,39 +453,46 @@ impl IssuingHandler for () {
 	}
 }
 
-/// Ensure that the address is truncated hash of the origin. Only works if the account id is
-/// `AccountId32`.
-pub struct EnsureAddressTruncated;
-impl<OuterOrigin> EnsureAddressOrigin<OuterOrigin> for EnsureAddressTruncated
+/// Ensure that the address is truncated hash of the origin.
+pub struct EnsureAddressTruncated<AccountId>(PhantomData<AccountId>);
+impl<AccountId, OuterOrigin> EnsureAddressOrigin<OuterOrigin> for EnsureAddressTruncated<AccountId>
 where
-	OuterOrigin: Into<Result<RawOrigin<AccountId32>, OuterOrigin>> + From<RawOrigin<AccountId32>>,
+	AccountId: AsRef<[u8; 32]>,
+	OuterOrigin: Into<Result<RawOrigin<AccountId>, OuterOrigin>> + From<RawOrigin<AccountId>>,
 {
-	type Success = AccountId32;
+	type Success = AccountId;
 
-	fn try_address_origin(address: &H160, origin: OuterOrigin) -> Result<AccountId32, OuterOrigin> {
+	fn try_address_origin(address: &H160, origin: OuterOrigin) -> Result<AccountId, OuterOrigin> {
 		origin.into().and_then(|o| match o {
-			RawOrigin::Signed(who) if AsRef::<[u8; 32]>::as_ref(&who)[0..20] == address[0..20] => {
-				Ok(who)
-			}
+			RawOrigin::Signed(who) if who.as_ref()[0..20] == address[0..20] => Ok(who),
 			r => Err(OuterOrigin::from(r)),
 		})
 	}
 }
 
-pub struct ConcatAddressMapping;
+pub struct ConcatAddressMapping<AccountId>(PhantomData<AccountId>);
 /// The ConcatAddressMapping used for transfer from evm 20-length to substrate 32-length address
 /// The concat rule inclued three parts:
 /// 1. AccountId Prefix: concat("dvm", "0x00000000000000"), length: 11 byetes
 /// 2. EVM address: the original evm address, length: 20 bytes
 /// 3. CheckSum:  byte_xor(AccountId Prefix + EVM address), length: 1 bytes
-impl AddressMapping<AccountId32> for ConcatAddressMapping {
-	fn into_account_id(address: H160) -> AccountId32 {
-		let mut data = [0u8; 32];
-		data[0..4].copy_from_slice(b"dvm:");
-		data[11..31].copy_from_slice(&address[..]);
-		let checksum: u8 = data[1..31].iter().fold(data[0], |sum, &byte| sum ^ byte);
-		data[31] = checksum;
-		AccountId32::from(data)
+impl<AccountId> AddressMapping<AccountId> for ConcatAddressMapping<AccountId>
+where
+	AccountId: From<[u8; 32]>,
+{
+	fn into_account_id(address: H160) -> AccountId {
+		let mut raw_account = [0u8; 32];
+
+		raw_account[0..4].copy_from_slice(b"dvm:");
+		raw_account[11..31].copy_from_slice(&address[..]);
+
+		let checksum: u8 = raw_account[1..31]
+			.iter()
+			.fold(raw_account[0], |sum, &byte| sum ^ byte);
+
+		raw_account[31] = checksum;
+
+		raw_account.into()
 	}
 }
 
