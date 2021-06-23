@@ -61,6 +61,10 @@ where
 		Ok(<Pallet<T>>::peak_of(position))
 	}
 
+	// ? Actually we can move this pruning logic outside
+	// ? and perform the pruning every X blocks
+	// ?
+	// ? commented by Xavier
 	fn append(&mut self, position: NodeIndex, elems: Vec<T::Hash>) -> MMRResult<()> {
 		let mmr_size = <MmrSize<T>>::get();
 

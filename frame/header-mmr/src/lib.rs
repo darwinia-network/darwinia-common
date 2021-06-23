@@ -85,6 +85,7 @@ pub mod pallet {
 	use darwinia_relay_primitives::MMR as MMRT;
 
 	// ? Useless const
+	// ?
 	// ? commented by Xavier
 	/// The prefix of [`MerkleMountainRangeRootLog`]
 	pub const LOG_PREFIX: [u8; 4] = *b"MMRR";
@@ -236,6 +237,7 @@ pub mod pallet {
 	#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug)]
 	pub struct MerkleMountainRangeRootLog<Hash> {
 		// ? Useless filed
+		// ?
 		// ? commented by Xavier
 		/// Specific prefix to identify the mmr root log in the digest items with Other type.
 		pub prefix: [u8; 4],
