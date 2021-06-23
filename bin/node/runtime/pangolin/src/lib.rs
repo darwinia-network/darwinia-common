@@ -892,6 +892,6 @@ pub enum MillauRuntime {
 #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
 #[allow(non_camel_case_types)]
 pub enum MillauSub2SubBackingCall {
-	#[codec(index = 3)]
+	#[codec(index = 2)]
 	remote_unlock(Token, AccountId),
 }
