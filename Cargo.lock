@@ -979,8 +979,8 @@ dependencies = [
 
 [[package]]
 name = "ckb-merkle-mountain-range"
-version = "0.3.0"
-source = "git+https://github.com/darwinia-network/merkle-mountain-range.git#6ab7d95f407aa345e8f7fd6681a127609ad50e5a"
+version = "0.3.1"
+source = "git+https://github.com/darwinia-network/merkle-mountain-range.git#b16216f90e3ff143114a9966330b8b42c33a28c5"
 dependencies = [
  "cfg-if 0.1.10",
 ]
