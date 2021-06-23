@@ -34,19 +34,6 @@ pub trait PrecompileSet {
 		context: &Context,
 	) -> Option<core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError>>;
 }
-
-/// One single precompile used by EVM engine.
-pub trait Precompile {
-	/// Try to execute the precompile. Calculate the amount of gas needed with given `input` and
-	/// `target_gas`. Return `Ok(status, output, gas_used)` if the execution is
-	/// successful. Otherwise return `Err(_)`.
-	fn execute(
-		input: &[u8],
-		target_gas: Option<u64>,
-		context: &Context,
-	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError>;
-}
-
 #[impl_for_tuples(30)]
 #[tuple_types_no_default_trait_bound]
 impl PrecompileSet for Tuple {
@@ -71,24 +58,38 @@ impl PrecompileSet for Tuple {
 	}
 }
 
-pub trait LinearCostPrecompile {
-	const BASE: u64;
-	const WORD: u64;
-
-	fn execute(input: &[u8], cost: u64) -> core::result::Result<(ExitSucceed, Vec<u8>), ExitError>;
+/// One single precompile used by EVM engine.
+pub trait Precompile {
+	/// Try to execute the precompile. Calculate the amount of gas needed with given `input` and
+	/// `target_gas`. Return `Ok(status, output, gas_used)` if the execution is
+	/// successful. Otherwise return `Err(_)`.
+	fn execute(
+		input: &[u8],
+		target_gas: Option<u64>,
+		context: &Context,
+	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError>;
 }
-
-impl<T: LinearCostPrecompile> Precompile for T {
+impl<T> Precompile for T
+where
+	T: LinearCostPrecompile,
+{
 	fn execute(
 		input: &[u8],
 		target_gas: Option<u64>,
 		_: &Context,
 	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
 		let cost = ensure_linear_cost(target_gas, input.len() as u64, T::BASE, T::WORD)?;
-
 		let (succeed, out) = T::execute(input, cost)?;
+
 		Ok((succeed, out, cost))
 	}
+}
+
+pub trait LinearCostPrecompile {
+	const BASE: u64;
+	const WORD: u64;
+
+	fn execute(input: &[u8], cost: u64) -> core::result::Result<(ExitSucceed, Vec<u8>), ExitError>;
 }
 
 /// Linear gas cost

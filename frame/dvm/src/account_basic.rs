@@ -101,7 +101,7 @@ impl<T: Config> RemainBalanceOp<T, KtonBalance<T>> for KtonRemainBalance {
 }
 
 pub struct DvmAccountBasic<T, C, RB>(sp_std::marker::PhantomData<(T, C, RB)>);
-impl<T: Config, C, RB> AccountBasic for DvmAccountBasic<T, C, RB>
+impl<T: Config, C, RB> AccountBasic<T> for DvmAccountBasic<T, C, RB>
 where
 	RB: RemainBalanceOp<T, C::Balance>,
 	C: Currency<T::AccountId>,
@@ -110,6 +110,35 @@ where
 	fn account_basic(address: &H160) -> EVMAccount {
 		let account_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(*address);
 		let nonce = <frame_system::Pallet<T>>::account_nonce(&account_id);
+
+		EVMAccount {
+			nonce: nonce.saturated_into::<u128>().into(),
+			balance: Self::account_balance(&account_id),
+		}
+	}
+
+	/// Mutate the basic account
+	fn mutate_account_basic_balance(address: &H160, new_balance: U256) {
+		let account_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(*address);
+		Self::mutate_account_balance(&account_id, new_balance)
+	}
+
+	/// Transfer value
+	fn transfer(source: &H160, target: &H160, value: U256) -> Result<(), ExitError> {
+		let source_account = Self::account_basic(source);
+		ensure!(source_account.balance >= value, ExitError::OutOfGas);
+		let new_source_balance = source_account.balance.saturating_sub(value);
+		Self::mutate_account_basic_balance(source, new_source_balance);
+
+		let target_account = Self::account_basic(target);
+		let new_target_balance = target_account.balance.saturating_add(value);
+		Self::mutate_account_basic_balance(target, new_target_balance);
+
+		Ok(())
+	}
+
+	/// Get account balance
+	fn account_balance(account_id: &T::AccountId) -> U256 {
 		let helper = U256::from(POW_9);
 
 		// Get balance from Currency
@@ -125,24 +154,20 @@ where
 			.checked_add(remaining_balance)
 			.unwrap_or_default();
 
-		EVMAccount {
-			nonce: nonce.saturated_into::<u128>().into(),
-			balance: final_balance,
-		}
+		final_balance
 	}
 
-	/// Mutate the basic account
-	fn mutate_account_basic(address: &H160, new: EVMAccount) {
+	/// Mutate account balance
+	fn mutate_account_balance(account_id: &T::AccountId, new_balance: U256) {
 		let helper = U256::from(POW_9);
 
-		let account_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(*address);
-		let current = Self::account_basic(address);
+		let current = Self::account_balance(account_id);
 		let dvm_balance: U256 = RB::remaining_balance(&account_id)
 			.saturated_into::<u128>()
 			.into();
 
-		let nb = new.balance;
-		match current.balance {
+		let nb = new_balance;
+		match current {
 			cb if cb > nb => {
 				let diff = cb - nb;
 				let (diff_balance, diff_remaining_balance) = diff.div_mod(helper);
@@ -207,11 +232,9 @@ where
 		let ring_existential_deposit = U256::from(ring_existential_deposit) * helper;
 		let kton_existential_deposit = U256::from(kton_existential_deposit) * helper;
 
-		let ring_account = T::RingAccountBasic::account_basic(address);
-		let kton_account = T::KtonAccountBasic::account_basic(address);
-		if ring_account.balance < ring_existential_deposit
-			&& kton_account.balance < kton_existential_deposit
-		{
+		let ring_account = T::RingAccountBasic::account_balance(&account_id);
+		let kton_account = T::KtonAccountBasic::account_balance(&account_id);
+		if ring_account < ring_existential_deposit && kton_account < kton_existential_deposit {
 			<RingRemainBalance as RemainBalanceOp<T, RingBalance<T>>>::remove_remaining_balance(
 				&account_id,
 			);
@@ -219,30 +242,5 @@ where
 				&account_id,
 			);
 		}
-	}
-
-	fn transfer(source: &H160, target: &H160, value: U256) -> Result<(), ExitError> {
-		let source_account = Self::account_basic(source);
-		ensure!(source_account.balance >= value, ExitError::OutOfGas);
-		let new_source_balance = source_account.balance.saturating_sub(value);
-		Self::mutate_account_basic(
-			source,
-			EVMAccount {
-				nonce: source_account.nonce,
-				balance: new_source_balance,
-			},
-		);
-
-		let target_account = Self::account_basic(target);
-		let new_target_balance = target_account.balance.saturating_add(value);
-		Self::mutate_account_basic(
-			target,
-			EVMAccount {
-				nonce: target_account.nonce,
-				balance: new_target_balance,
-			},
-		);
-
-		Ok(())
 	}
 }

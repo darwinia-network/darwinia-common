@@ -10,76 +10,62 @@
 //
 // Darwinia is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg_attr(not(feature = "std"), no_std)]
-
-use frame_support::traits::{Currency, ExistenceRequirement};
-use sp_core::U256;
-use sp_runtime::traits::UniqueSaturatedInto;
-use sp_std::marker::PhantomData;
-use sp_std::prelude::*;
-use sp_std::vec::Vec;
-
+// --- substrate ---
+use frame_support::ensure;
+use sp_std::{marker::PhantomData, prelude::*, vec::Vec};
+// --- darwinia ---
+use crate::AccountId;
+use darwinia_evm::{AccountBasic, Config};
+use darwinia_support::evm::TRANSFER_ADDR;
+// --- crates ---
 use codec::Decode;
-use darwinia_evm::{AddressMapping, Config};
-use darwinia_support::evm::POW_9;
-use dp_evm::Precompile;
 use evm::{Context, ExitError, ExitSucceed};
 
-type AccountId<T> = <T as frame_system::Config>::AccountId;
-
-/// WithDraw Precompile Contract, used to withdraw balance from evm account to darwinia account
-///
-/// The contract address: 0000000000000000000000000000000000000015
-pub struct WithDraw<T: Config> {
+pub struct RingBack<T> {
 	_maker: PhantomData<T>,
 }
 
-impl<T: Config> Precompile for WithDraw<T> {
+impl<T: Config> RingBack<T> {
 	/// The Withdraw process is divided into two part:
 	/// 1. parse the withdrawal address from the input parameter and get the contract address and value from the context
 	/// 2. transfer from the contract address to withdrawal address
 	///
 	/// Input data: 32-bit substrate withdrawal public key
-	fn execute(
+	pub fn transfer(
 		input: &[u8],
 		_: Option<u64>,
 		context: &Context,
 	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
 		// Decode input data
 		let input = InputData::<T>::decode(&input)?;
+		let (source, to, value) = (context.address, input.dest, context.apparent_value);
+		let source_account = T::RingAccountBasic::account_basic(&source);
 
-		let helper = U256::from(POW_9);
-		let contract_address = T::AddressMapping::into_account_id(context.address);
-		let context_value = context.apparent_value.div_mod(helper).0;
-		let context_value = context_value.low_u128().unique_saturated_into();
-
-		let result = T::RingCurrency::transfer(
-			&contract_address,
-			&input.dest,
-			context_value,
-			ExistenceRequirement::AllowDeath,
+		// Ensure the context address should be precompile address
+		let transfer_addr = array_bytes::hex_try_into(TRANSFER_ADDR)
+			.map_err(|_| ExitError::Other("Invalid transfer address".into()))?;
+		ensure!(
+			source == transfer_addr,
+			ExitError::Other("Invalid context address".into())
 		);
+		// Ensure the context address balance is enough
+		ensure!(source_account.balance >= value, ExitError::OutOfFund);
 
-		match result {
-			Ok(()) => Ok((ExitSucceed::Returned, vec![], 10000)),
-			Err(error) => match error {
-				sp_runtime::DispatchError::BadOrigin => Err(ExitError::Other("BadOrigin".into())),
-				sp_runtime::DispatchError::CannotLookup => {
-					Err(ExitError::Other("CannotLookup".into()))
-				}
-				sp_runtime::DispatchError::Other(message) => Err(ExitError::Other(message.into())),
-				sp_runtime::DispatchError::Module { message, .. } => {
-					Err(ExitError::Other(message.unwrap_or("Module Error").into()))
-				}
-				_ => Err(ExitError::Other("Module Error".into())),
-			},
-		}
+		// Transfer
+		let new_source_balance = source_account.balance.saturating_sub(value);
+		T::RingAccountBasic::mutate_account_basic_balance(&source, new_source_balance);
+
+		let target_balance = T::RingAccountBasic::account_balance(&to);
+		let new_target_balance = target_balance.saturating_add(value);
+		T::RingAccountBasic::mutate_account_balance(&to, new_target_balance);
+
+		Ok((ExitSucceed::Returned, vec![], 20000))
 	}
 }
 
