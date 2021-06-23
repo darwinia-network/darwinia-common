@@ -135,7 +135,7 @@ fn test_insert_header() {
 		assert_eq!(position, mmr::leaf_index_to_pos(h1));
 
 		let prove_elem = headers[h1 as usize - 1].hash();
-		let parent_mmr_root = HeaderMMR::_find_parent_mmr_root(&headers[h2 as usize - 1]).unwrap();
+		let parent_mmr_root = HeaderMMR::find_parent_mmr_root(&headers[h2 as usize - 1]).unwrap();
 		let on_chain = <Mmr<RuntimeStorage, Test>>::with_size(mmr::leaf_index_to_mmr_size(h2 - 1));
 		let off_chain =
 			<Mmr<OffchainStorage, Test>>::with_size(mmr::leaf_index_to_mmr_size(h2 - 1));

@@ -84,9 +84,6 @@ pub mod pallet {
 	use darwinia_header_mmr_rpc_runtime_api::{Proof, RuntimeDispatchInfo};
 	use darwinia_relay_primitives::MMR as MMRT;
 
-	// ? Useless const
-	// ?
-	// ? commented by Xavier
 	/// The prefix of [`MerkleMountainRangeRootLog`]
 	pub const LOG_PREFIX: [u8; 4] = *b"MMRR";
 
@@ -202,23 +199,20 @@ pub mod pallet {
 			}
 		}
 
-		// TODO: For future rpc calls
-		pub fn _find_parent_mmr_root(header: &T::Header) -> Option<T::Hash> {
-			let id = OpaqueDigestItemId::Other;
-			let filter_log = |MerkleMountainRangeRootLog {
-			                      prefix,
-			                      parent_mmr_root,
-			                  }: MerkleMountainRangeRootLog<T::Hash>| match prefix
-			{
-				LOG_PREFIX => Some(parent_mmr_root),
+		// Remove the cfg, once there's a requirement from runtime usage
+		#[cfg(test)]
+		pub fn find_parent_mmr_root(header: &T::Header) -> Option<T::Hash> {
+			let find_parent_mmr_root = |m: MerkleMountainRangeRootLog<_>| match m.prefix {
+				LOG_PREFIX => Some(m.parent_mmr_root),
 				_ => None,
 			};
 
 			// find the first other digest with the right prefix which converts to
 			// the right kind of mmr root log.
-			header
-				.digest()
-				.convert_first(|l| l.try_to(id).and_then(filter_log))
+			header.digest().convert_first(|d| {
+				d.try_to(OpaqueDigestItemId::Other)
+					.and_then(find_parent_mmr_root)
+			})
 		}
 	}
 	impl<T: Config> MMRT<BlockNumberFor<T>, T::Hash> for Pallet<T> {
@@ -232,9 +226,6 @@ pub mod pallet {
 	#[cfg_attr(feature = "std", derive(Serialize))]
 	#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug)]
 	pub struct MerkleMountainRangeRootLog<Hash> {
-		// ? Useless filed
-		// ?
-		// ? commented by Xavier
 		/// Specific prefix to identify the mmr root log in the digest items with Other type.
 		pub prefix: [u8; 4],
 		/// The merkle mountain range root hash.
