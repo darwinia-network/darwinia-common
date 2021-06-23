@@ -100,23 +100,19 @@ fn first_header_mmr() {
 
 #[test]
 fn test_insert_header() {
-	let h1 = 11;
-	let h2 = 19;
-	let pos = 19;
-	let mut prove_elem = Default::default();
-	let mut parent_mmr_root = Default::default();
-
+	let mut headers = vec![];
 	let mut ext = new_test_ext();
 
 	ext.execute_with(|| {
 		let mut parent_hash;
-		let mut headers = vec![{
+
+		headers.push({
 			let header = new_block();
 
 			parent_hash = header.hash();
 
 			header
-		}];
+		});
 
 		for _ in 2..30 {
 			headers.push({
@@ -127,31 +123,36 @@ fn test_insert_header() {
 				header
 			});
 		}
-
-		prove_elem = headers[h1 as usize - 1].hash();
-
-		assert_eq!(pos, mmr::leaf_index_to_pos(h1));
-		assert_eq!(prove_elem, HeaderMMR::mmr_node_list(pos).unwrap());
-
-		parent_mmr_root =
-			HeaderMMR::_find_parent_mmr_root(headers[h2 as usize - 1].clone()).unwrap();
-
-		let mmr = <Mmr<RuntimeStorage, Test>>::with_size(mmr::leaf_index_to_mmr_size(h2 - 1));
-
-		assert_eq!(mmr.get_root().unwrap(), parent_mmr_root);
 	});
 
 	ext.persist_offchain_overlay();
 	register_offchain_ext(&mut ext);
 
 	ext.execute_with(|| {
-		let mmr = <Mmr<OffchainStorage, Test>>::with_size(mmr::leaf_index_to_mmr_size(h2 - 1));
+		let h1 = 11;
+		let h2 = 19;
+		let pos = 19;
 
-		assert!(mmr
-			.gen_proof(h1)
-			.unwrap()
-			.verify(parent_mmr_root, vec![(pos, prove_elem)])
-			.unwrap());
+		assert_eq!(pos, mmr::leaf_index_to_pos(h1));
+
+		let prove_elem = headers[h1 as usize - 1].hash();
+		let parent_mmr_root =
+			HeaderMMR::_find_parent_mmr_root(headers[h2 as usize - 1].clone()).unwrap();
+
+		assert_eq!(prove_elem, HeaderMMR::mmr_node_list(pos).unwrap());
+		assert_eq!(
+			<Mmr<RuntimeStorage, Test>>::with_size(mmr::leaf_index_to_mmr_size(h2 - 1))
+				.get_root()
+				.unwrap(),
+			parent_mmr_root
+		);
+		assert!(
+			<Mmr<OffchainStorage, Test>>::with_size(mmr::leaf_index_to_mmr_size(h2 - 1))
+				.gen_proof(h1)
+				.unwrap()
+				.verify(parent_mmr_root, vec![(pos, prove_elem)])
+				.unwrap()
+		);
 	});
 }
 
