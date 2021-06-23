@@ -20,6 +20,8 @@
 
 // --- crates ---
 use codec::Encode;
+// --- github.com ---
+use mmr::MMRStore;
 // --- paritytech ---
 use frame_support::traits::OnFinalize;
 use frame_system::mocking::*;
@@ -34,7 +36,7 @@ use sp_runtime::{
 	DigestItem,
 };
 // --- darwinia ---
-use crate::{self as darwinia_header_mmr, *};
+use crate::{self as darwinia_header_mmr, primitives::*, *};
 
 pub type BlockNumber = u64;
 pub type Hash = H256;
@@ -102,13 +104,27 @@ pub fn register_offchain_ext(ext: &mut TestExternalities) {
 	ext.register_extension(OffchainWorkerExt::new(offchain));
 }
 
-pub fn header_mmr_log(hash: Hash) -> DigestItem<Hash> {
+pub fn header_parent_mmr_log(hash: Hash) -> DigestItem<Hash> {
 	let mmr_root_log = MerkleMountainRangeRootLog::<Hash> {
 		prefix: LOG_PREFIX,
 		parent_mmr_root: hash,
 	};
 
 	DigestItem::Other(mmr_root_log.encode())
+}
+
+pub fn mmr_with_size<StorageType>(size: NodeIndex) -> Mmr<StorageType, Test>
+where
+	Storage<StorageType, Test>: MMRStore<Hash>,
+{
+	<Mmr<StorageType, Test>>::with_size(size)
+}
+
+pub fn mmr<StorageType>() -> Mmr<StorageType, Test>
+where
+	Storage<StorageType, Test>: MMRStore<Hash>,
+{
+	mmr_with_size(HeaderMMR::mmr_size())
 }
 
 pub fn new_block() -> Header {
