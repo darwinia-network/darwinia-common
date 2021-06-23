@@ -5918,6 +5918,7 @@ dependencies = [
 name = "pangolin-runtime"
 version = "2.4.0"
 dependencies = [
+ "array-bytes",
  "bp-message-dispatch",
  "bp-messages",
  "bp-millau",

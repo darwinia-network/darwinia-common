@@ -56,7 +56,7 @@ use darwinia_support::{
 };
 use dp_asset::{
 	token::{Token, TokenInfo, TokenOption},
-	BridgeAssetCreator, BridgeAssetReceiver, RecipientAccount,
+	RecipientAccount,
 };
 use dp_contract::mapping_token_factory::MappingTokenFactory as mtf;
 
@@ -85,12 +85,14 @@ pub mod pallet {
 		#[pallet::constant]
 		type AdvancedFee: Get<RingBalance<Self>>;
 		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+
 		type BridgedAccountIdConverter: Convert<H256, Self::AccountId>;
 		type BridgedChainId: Get<ChainId>;
-		type RemoteIssueCall: BridgeAssetReceiver<RecipientAccount<Self::AccountId>>;
-		type RemoteRegisterCall: BridgeAssetCreator;
+
 		type OutboundPayload: Parameter + Size;
 		type CallToPayload: CallToPayload<Self::OutboundPayload>;
+
+		type CallEncoder: EncodeCall<Self::AccountId>;
 		type MessageSender: RelayMessageCaller<Self::OutboundPayload>;
 	}
 
@@ -168,7 +170,7 @@ pub mod pallet {
 					decimal: RING_DECIMAL,
 				}),
 			});
-			let encoded = T::RemoteRegisterCall::encode_call(token.clone());
+			let encoded = T::CallEncoder::encode_remote_register(token.clone());
 			let payload = T::CallToPayload::to_payload(spec_version, encoded);
 			T::MessageSender::send_message(payload).map_err(|e| {
 				log::info!("s2s-backing: register token failed {:?}", e);
@@ -218,7 +220,7 @@ pub mod pallet {
 			});
 
 			let account = RecipientAccount::EthereumAccount(recipient);
-			let encoded = T::RemoteIssueCall::encode_call(token.clone(), account)
+			let encoded = T::CallEncoder::encode_remote_issue(token.clone(), account)
 				.map_err(|_| Error::<T>::EncodeInvalid)?;
 			let payload = T::CallToPayload::to_payload(spec_version, encoded);
 			T::MessageSender::send_message(payload).map_err(|_| Error::<T>::SendMessageFailed)?;
@@ -292,4 +294,15 @@ pub mod pallet {
 			Ok(())
 		}
 	}
+}
+
+/// Encode call
+pub trait EncodeCall<AccountId> {
+	/// Encode issuing pallet remote_register call
+	fn encode_remote_register(token: Token) -> Vec<u8>;
+	/// Encode issuing pallet remote_issue call
+	fn encode_remote_issue(
+		token: Token,
+		recipient: RecipientAccount<AccountId>,
+	) -> Result<Vec<u8>, ()>;
 }
