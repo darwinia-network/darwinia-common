@@ -119,6 +119,10 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_initialize(_: BlockNumberFor<T>) -> Weight {
+			T::WeightInfo::on_initialize()
+		}
+
 		fn on_finalize(_: BlockNumberFor<T>) {
 			let parent_hash = <frame_system::Pallet<T>>::parent_hash();
 			let mut mmr = <Mmr<RuntimeStorage, T>>::new();
