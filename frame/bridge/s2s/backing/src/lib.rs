@@ -128,25 +128,6 @@ pub mod pallet {
 		SendMessageFailed,
 	}
 
-	#[pallet::genesis_config]
-	pub struct GenesisConfig<T: Config> {
-		pub backed_ring: RingBalance<T>,
-	}
-
-	#[cfg(feature = "std")]
-	impl<T: Config> Default for GenesisConfig<T> {
-		fn default() -> Self {
-			Self {
-				backed_ring: Default::default(),
-			}
-		}
-	}
-
-	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
-		fn build(&self) {}
-	}
-
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
 
