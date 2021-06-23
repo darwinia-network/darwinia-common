@@ -90,9 +90,8 @@ pub mod pallet {
 		type BridgedChainId: Get<ChainId>;
 
 		type OutboundPayload: Parameter + Size;
-		type CallToPayload: CallToPayload<Self::OutboundPayload>;
+		type CallEncoder: EncodeCall<Self::AccountId, Self::OutboundPayload>;
 
-		type CallEncoder: EncodeCall<Self::AccountId>;
 		type MessageSender: RelayMessageCaller<Self::OutboundPayload>;
 	}
 
@@ -142,8 +141,10 @@ pub mod pallet {
 			spec_version: u32,
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
+
 			let token = Token::Native(TokenInfo {
-				address: array_bytes::hex2array_unchecked(BACK_ERC20_RING).into(),
+				address: array_bytes::hex_try_into(BACK_ERC20_RING)
+					.map_err(|_| Error::<T>::SendMessageFailed)?,
 				value: None,
 				option: Some(TokenOption {
 					name: to_bytes32(RING_NAME),
@@ -151,8 +152,7 @@ pub mod pallet {
 					decimal: RING_DECIMAL,
 				}),
 			});
-			let encoded = T::CallEncoder::encode_remote_register(token.clone());
-			let payload = T::CallToPayload::to_payload(spec_version, encoded);
+			let payload = T::CallEncoder::encode_remote_register(spec_version, token.clone());
 			T::MessageSender::send_message(payload).map_err(|e| {
 				log::info!("s2s-backing: register token failed {:?}", e);
 				Error::<T>::SendMessageFailed
@@ -201,9 +201,8 @@ pub mod pallet {
 			});
 
 			let account = RecipientAccount::EthereumAccount(recipient);
-			let encoded = T::CallEncoder::encode_remote_issue(token.clone(), account)
+			let payload = T::CallEncoder::encode_remote_issue(spec_version, token.clone(), account)
 				.map_err(|_| Error::<T>::EncodeInvalid)?;
-			let payload = T::CallToPayload::to_payload(spec_version, encoded);
 			T::MessageSender::send_message(payload).map_err(|_| Error::<T>::SendMessageFailed)?;
 			Self::deposit_event(Event::TokenLocked(token, user, recipient, amount));
 			Ok(().into())
@@ -278,12 +277,15 @@ pub mod pallet {
 }
 
 /// Encode call
-pub trait EncodeCall<AccountId> {
+pub trait EncodeCall<AccountId, MessagePayload> {
 	/// Encode issuing pallet remote_register call
-	fn encode_remote_register(token: Token) -> Vec<u8>;
+	fn encode_remote_register(spec_version: u32, token: Token) -> MessagePayload;
 	/// Encode issuing pallet remote_issue call
 	fn encode_remote_issue(
+		spec_version: u32,
 		token: Token,
 		recipient: RecipientAccount<AccountId>,
-	) -> Result<Vec<u8>, ()>;
+	) -> Result<MessagePayload, ()>;
+	/// Transfer call to message payload
+	fn to_payload(spec_version: u32, call: Vec<u8>) -> MessagePayload;
 }
