@@ -24,7 +24,7 @@ use crate::{
 	*,
 };
 use codec::{Decode, Encode};
-use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator, IssuingHandler};
+use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator};
 use ethereum::{TransactionAction, TransactionSignature};
 use frame_support::{traits::GenesisBuild, ConsensusEngineId, PalletId};
 use frame_system::mocking::*;
@@ -33,7 +33,7 @@ use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	AccountId32, DispatchResult, Perbill, RuntimeDebug,
+	AccountId32, Perbill, RuntimeDebug,
 };
 
 darwinia_support::impl_test_account_data! {}
