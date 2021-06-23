@@ -8,7 +8,7 @@ use mmr::{Error, MMRStore, Merge, MerkleProof, Result as MMRResult};
 use sp_core::offchain::StorageKind;
 use sp_io::{offchain, offchain_index};
 use sp_runtime::traits::Hash;
-use sp_std::marker::PhantomData;
+use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia ---
 use crate::*;
 
@@ -36,9 +36,15 @@ where
 	fn get_elem(&self, position: NodeIndex) -> MMRResult<Option<T::Hash>> {
 		let key = <Pallet<T>>::offchain_key(position);
 
-		// TODO: search runtime DB while pruning
-		Ok(offchain::local_storage_get(StorageKind::PERSISTENT, &key)
-			.and_then(|v| Decode::decode(&mut &*v).ok()))
+		if let Some(v) = offchain::local_storage_get(StorageKind::PERSISTENT, &key) {
+			Ok(Decode::decode(&mut &*v).ok())
+		} else {
+			Ok(<MMRNodeList<T>>::get(position))
+		}
+
+		// TODO: once the pruning finish, restore this
+		// Ok(offchain::local_storage_get(StorageKind::PERSISTENT, &key)
+		// .and_then(|v| Decode::decode(&mut &*v).ok()))
 	}
 
 	fn append(&mut self, _: NodeIndex, _: Vec<T::Hash>) -> MMRResult<()> {
@@ -52,28 +58,72 @@ where
 	T: Config,
 {
 	fn get_elem(&self, position: NodeIndex) -> MMRResult<Option<T::Hash>> {
-		// TODO only peaks on chain
-		Ok(<Pallet<T>>::mmr_node_list(position))
+		Ok(<Pallet<T>>::peak_of(position))
 	}
 
 	fn append(&mut self, position: NodeIndex, elems: Vec<T::Hash>) -> MMRResult<()> {
-		let mut mmr_size = <MmrSize<T>>::get();
+		let mmr_size = <MmrSize<T>>::get();
 
 		if position != mmr_size {
 			Err(Error::InconsistentStore)?;
 		}
 
-		for elem in elems.into_iter() {
-			let key = <Pallet<T>>::offchain_key(mmr_size);
-
-			// TODO prune to peaks on chain
-			<MMRNodeList<T>>::insert(mmr_size, elem);
-			elem.using_encoded(|elem| offchain_index::set(&key, elem));
-
-			mmr_size += 1;
-		}
+		let diff = |a: &[NodeIndex], b: &[NodeIndex]| -> Vec<NodeIndex> {
+			b.iter().filter(|x| !a.contains(x)).cloned().collect()
+		};
+		let peaks_before = if mmr_size == 0 {
+			vec![]
+		} else {
+			mmr::helper::get_peaks(mmr_size)
+		};
+		let elems = elems
+			.into_iter()
+			.enumerate()
+			.map(|(i, elem)| (mmr_size + i as NodeIndex, elem))
+			.collect::<Vec<_>>();
+		let mmr_size = mmr_size + elems.len() as NodeIndex;
 
 		<MmrSize<T>>::put(mmr_size);
+
+		for (position, elem) in elems.iter() {
+			elem.using_encoded(|elem| {
+				offchain_index::set(&<Pallet<T>>::offchain_key(*position), elem)
+			});
+		}
+
+		let peaks_after = mmr::helper::get_peaks(mmr_size);
+		let nodes_to_prune = diff(&peaks_after, &peaks_before);
+		let peaks_to_store = diff(&peaks_before, &peaks_after);
+
+		#[cfg(test)]
+		{
+			log::info!("elems: {:?}\n", elems);
+			log::info!("peaks_before: {:?}", peaks_before);
+			log::info!("peaks_after: {:?}", peaks_after);
+			log::info!("nodes_to_prune: {:?}", nodes_to_prune);
+			log::info!("peaks_to_store: {:?}\n", peaks_to_store);
+		}
+
+		for position in nodes_to_prune {
+			<Peaks<T>>::remove(position);
+		}
+		for position in peaks_to_store {
+			if let Some(i) = elems
+				.iter()
+				.position(|(position_, _)| *position_ == position)
+			{
+				if let Some((_, elem)) = elems.get(i) {
+					<Peaks<T>>::insert(position, elem);
+
+					#[cfg(test)]
+					log::info!("position: {}, elem: {}", position, elem);
+				} else {
+					log::error!("The different must existed in `elems`; qed");
+				}
+			} else {
+				log::error!("The different must existed in `elems`; qed");
+			}
+		}
 
 		Ok(())
 	}
@@ -84,7 +134,7 @@ where
 	Storage<StorageType, T>: MMRStore<T::Hash>,
 	T: Config,
 {
-	mmr: MMR<T::Hash, Hasher<T>, Storage<StorageType, T>>,
+	pub mmr: MMR<T::Hash, Hasher<T>, Storage<StorageType, T>>,
 }
 impl<StorageType, T> Mmr<StorageType, T>
 where

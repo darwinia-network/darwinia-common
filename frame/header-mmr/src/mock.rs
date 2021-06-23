@@ -87,6 +87,8 @@ frame_support::construct_runtime! {
 }
 
 pub fn new_test_ext() -> TestExternalities {
+	sp_tracing::try_init_simple();
+
 	frame_system::GenesisConfig::default()
 		.build_storage::<Test>()
 		.unwrap()
@@ -107,15 +109,6 @@ pub fn header_mmr_log(hash: Hash) -> DigestItem<Hash> {
 	};
 
 	DigestItem::Other(mmr_root_log.encode())
-}
-
-pub fn initialize_block(number: u64, parent_hash: Hash) {
-	System::initialize(
-		&number,
-		&parent_hash,
-		&Default::default(),
-		Default::default(),
-	);
 }
 
 pub fn new_block() -> Header {
@@ -146,7 +139,7 @@ pub fn new_block_with_parent_hash(parent_hash: Hash) -> Header {
 }
 
 pub fn run_to_block(n: BlockNumber) -> Header {
-	for i in 0..n {
+	for _ in 0..n {
 		new_block();
 	}
 

@@ -126,16 +126,19 @@ pub mod pallet {
 			let mut mmr = <Mmr<RuntimeStorage, T>>::new();
 			let _ = mmr.push(parent_hash);
 
-			if let Ok(parent_mmr_root) = mmr.finalize() {
-				let mmr_root_log = MerkleMountainRangeRootLog::<T::Hash> {
-					prefix: LOG_PREFIX,
-					parent_mmr_root,
-				};
-				let mmr_item = DigestItem::Other(mmr_root_log.encode());
+			match mmr.finalize() {
+				Ok(parent_mmr_root) => {
+					let mmr_root_log = MerkleMountainRangeRootLog::<T::Hash> {
+						prefix: LOG_PREFIX,
+						parent_mmr_root,
+					};
+					let mmr_item = DigestItem::Other(mmr_root_log.encode());
 
-				<frame_system::Pallet<T>>::deposit_log(mmr_item.into());
-			} else {
-				log::error!("Failed to finalize MMR");
+					<frame_system::Pallet<T>>::deposit_log(mmr_item.into());
+				}
+				Err(e) => {
+					log::error!("Failed to finalize MMR due to {}", e);
+				}
 			}
 		}
 
@@ -203,9 +206,8 @@ pub mod pallet {
 		// }
 
 		// TODO: For future rpc calls
-		pub fn _find_parent_mmr_root(header: T::Header) -> Option<T::Hash> {
+		pub fn _find_parent_mmr_root(header: &T::Header) -> Option<T::Hash> {
 			let id = OpaqueDigestItemId::Other;
-
 			let filter_log = |MerkleMountainRangeRootLog {
 			                      prefix,
 			                      parent_mmr_root,

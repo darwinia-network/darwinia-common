@@ -21,9 +21,8 @@
 // --- crates.io ---
 use codec::{Decode, Encode};
 // --- github.com ---
-use mmr::Merge;
+use mmr::{MMRStore, Merge};
 // --- substrate ---
-use frame_support::traits::OnFinalize;
 use sp_runtime::{generic::DigestItem, testing::Digest};
 // --- darwinia ---
 use crate::{
@@ -114,7 +113,7 @@ fn test_insert_header() {
 			header
 		});
 
-		for _ in 2..30 {
+		for _ in 2..=19 {
 			headers.push({
 				let header = new_block_with_parent_hash(parent_hash);
 
@@ -131,28 +130,29 @@ fn test_insert_header() {
 	ext.execute_with(|| {
 		let h1 = 11;
 		let h2 = 19;
-		let pos = 19;
+		let position = 19;
 
-		assert_eq!(pos, mmr::leaf_index_to_pos(h1));
+		assert_eq!(position, mmr::leaf_index_to_pos(h1));
 
 		let prove_elem = headers[h1 as usize - 1].hash();
-		let parent_mmr_root =
-			HeaderMMR::_find_parent_mmr_root(headers[h2 as usize - 1].clone()).unwrap();
+		let parent_mmr_root = HeaderMMR::_find_parent_mmr_root(&headers[h2 as usize - 1]).unwrap();
+		let on_chain = <Mmr<RuntimeStorage, Test>>::with_size(mmr::leaf_index_to_mmr_size(h2 - 1));
+		let off_chain =
+			<Mmr<OffchainStorage, Test>>::with_size(mmr::leaf_index_to_mmr_size(h2 - 1));
 
-		assert_eq!(prove_elem, HeaderMMR::mmr_node_list(pos).unwrap());
 		assert_eq!(
-			<Mmr<RuntimeStorage, Test>>::with_size(mmr::leaf_index_to_mmr_size(h2 - 1))
-				.get_root()
-				.unwrap(),
-			parent_mmr_root
-		);
-		assert!(
-			<Mmr<OffchainStorage, Test>>::with_size(mmr::leaf_index_to_mmr_size(h2 - 1))
-				.gen_proof(h1)
+			prove_elem,
+			<Storage<OffchainStorage, Test>>::default()
+				.get_elem(position)
 				.unwrap()
-				.verify(parent_mmr_root, vec![(pos, prove_elem)])
 				.unwrap()
 		);
+		assert_eq!(on_chain.get_root().unwrap(), parent_mmr_root);
+		assert!(off_chain
+			.gen_proof(h1)
+			.unwrap()
+			.verify(parent_mmr_root, vec![(position, prove_elem)])
+			.unwrap());
 	});
 }
 
