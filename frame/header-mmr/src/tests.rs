@@ -84,16 +84,22 @@ fn headers_n_roots() -> Vec<(Hash, Hash)> {
 }
 
 #[test]
-fn first_header_mmr() {
+fn header_digest_should_work() {
 	new_test_ext().execute_with(|| {
-		let header = new_block();
+		let mut header = new_block();
+		let mut parent_mmr_root = header.parent_hash;
 
-		assert_eq!(
-			header.digest,
-			Digest {
-				logs: vec![header_mmr_log(header.parent_hash)]
-			}
-		);
+		for _ in 0..100 {
+			assert_eq!(
+				header.digest,
+				Digest {
+					logs: vec![header_parent_mmr_log(parent_mmr_root)]
+				}
+			);
+
+			header = new_block();
+			parent_mmr_root = mmr::<RuntimeStorage>().get_root().unwrap();
+		}
 	});
 }
 
@@ -159,7 +165,7 @@ fn test_insert_header() {
 #[test]
 fn should_serialize_mmr_digest() {
 	let digest = Digest {
-		logs: vec![header_mmr_log(Default::default())],
+		logs: vec![header_parent_mmr_log(Default::default())],
 	};
 
 	assert_eq!(
@@ -171,7 +177,7 @@ fn should_serialize_mmr_digest() {
 
 #[test]
 fn non_system_mmr_digest_item_encoding() {
-	let item = header_mmr_log(Default::default());
+	let item = header_parent_mmr_log(Default::default());
 	let encoded = item.encode();
 	assert_eq!(
 		encoded,
