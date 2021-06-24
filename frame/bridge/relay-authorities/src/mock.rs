@@ -181,9 +181,6 @@ pub fn run_to_block(n: BlockNumber) {
 
 pub fn run_to_block_from_genesis(n: BlockNumber) -> Vec<Header> {
 	let mut headers = vec![];
-
-	HeaderMmr::on_finalize(0);
-
 	let mut header = <frame_system::Pallet<Test>>::finalize();
 
 	headers.push(header.clone());

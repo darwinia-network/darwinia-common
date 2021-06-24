@@ -389,7 +389,7 @@ fn schedule_too_many_should_fail() {
 }
 
 #[test]
-fn mmr_root_signed_event_should_work() {
+fn schedule_mmr_root_and_mmr_root_signed_event_should_work() {
 	for block_number in 4..25 {
 		new_test_ext().execute_with(|| {
 			assert_ok!(request_authority(1));
