@@ -99,13 +99,12 @@ where
 		let nodes_to_prune = diff(&peaks_after, &peaks_before);
 		let peaks_to_store = diff(&peaks_before, &peaks_after);
 
-		#[cfg(test)]
 		{
-			log::info!("elems: {:?}\n", elems);
-			log::info!("peaks_before: {:?}", peaks_before);
-			log::info!("peaks_after: {:?}", peaks_after);
-			log::info!("nodes_to_prune: {:?}", nodes_to_prune);
-			log::info!("peaks_to_store: {:?}\n", peaks_to_store);
+			log::trace!("elems: {:?}\n", elems);
+			log::trace!("peaks_before: {:?}", peaks_before);
+			log::trace!("peaks_after: {:?}", peaks_after);
+			log::trace!("nodes_to_prune: {:?}", nodes_to_prune);
+			log::trace!("peaks_to_store: {:?}\n", peaks_to_store);
 		}
 
 		for position in nodes_to_prune {
@@ -119,8 +118,7 @@ where
 				if let Some((_, elem)) = elems.get(i) {
 					<Peaks<T>>::insert(position, elem);
 
-					#[cfg(test)]
-					log::info!("position: {}, elem: {}", position, elem);
+					log::trace!("position: {}, elem: {}", position, elem);
 				} else {
 					log::error!("The different must existed in `elems`; qed");
 				}
