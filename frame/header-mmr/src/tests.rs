@@ -129,6 +129,7 @@ use data::*;
 
 // --- crates.io ---
 use codec::{Decode, Encode};
+use rand::prelude::*;
 // --- github.com ---
 use mmr::MMRStore;
 // --- substrate ---
@@ -162,7 +163,7 @@ fn header_digest_should_work() {
 		let mut header = new_block();
 		let mut parent_mmr_root = header.parent_hash;
 
-		for _ in 0..100 {
+		for _ in 0..10 {
 			assert_eq!(
 				header.digest,
 				Digest {
@@ -177,62 +178,60 @@ fn header_digest_should_work() {
 }
 
 #[test]
-fn test_insert_header() {
-	let mut headers = vec![];
-	let mut ext = new_test_ext();
+fn integration_testing_should_work() {
+	let mut rng = rand::thread_rng();
+	let mut leaves = (1..30).collect::<Vec<_>>();
+	let mut last_leaves = (1..30).collect::<Vec<_>>();
 
-	ext.execute_with(|| {
-		let mut parent_hash;
+	leaves.shuffle(&mut rng);
+	last_leaves.shuffle(&mut rng);
 
-		headers.push({
-			let header = new_block();
+	let data = leaves
+		.into_iter()
+		.zip(last_leaves.into_iter())
+		.filter(|(a, b)| a < b)
+		.collect::<Vec<_>>();
 
-			parent_hash = header.hash();
+	for (leaf, last_leaf) in data {
+		let mut headers = vec![];
+		let mut ext = new_test_ext();
 
-			header
+		ext.execute_with(|| {
+			headers = run_to_block(last_leaf);
 		});
 
-		for _ in 2..=19 {
-			headers.push({
-				let header = new_block_with_parent_hash(parent_hash);
+		register_offchain_ext(&mut ext);
 
-				parent_hash = header.hash();
+		ext.execute_with(|| {
+			let on_chain =
+				<Mmr<RuntimeStorage, Test>>::with_size(mmr::leaf_index_to_mmr_size(last_leaf - 1));
+			let off_chain =
+				<Mmr<OffchainStorage, Test>>::with_size(mmr::leaf_index_to_mmr_size(last_leaf - 1));
 
-				header
-			});
-		}
-	});
-
-	ext.persist_offchain_overlay();
-	register_offchain_ext(&mut ext);
-
-	ext.execute_with(|| {
-		let h1 = 11;
-		let h2 = 19;
-		let position = 19;
-
-		assert_eq!(position, mmr::leaf_index_to_pos(h1));
-
-		let prove_elem = headers[h1 as usize - 1].hash();
-		let parent_mmr_root = HeaderMMR::find_parent_mmr_root(&headers[h2 as usize - 1]).unwrap();
-		let on_chain = <Mmr<RuntimeStorage, Test>>::with_size(mmr::leaf_index_to_mmr_size(h2 - 1));
-		let off_chain =
-			<Mmr<OffchainStorage, Test>>::with_size(mmr::leaf_index_to_mmr_size(h2 - 1));
-
-		assert_eq!(
-			prove_elem,
-			<Storage<OffchainStorage, Test>>::default()
-				.get_elem(position)
+			assert_eq!(
+				headers[leaf as usize - 1].hash(),
+				<Storage<OffchainStorage, Test>>::default()
+					.get_elem(mmr::leaf_index_to_pos(leaf))
+					.unwrap()
+					.unwrap()
+			);
+			assert_eq!(
+				on_chain.get_root().unwrap(),
+				HeaderMMR::find_parent_mmr_root(&headers[last_leaf as usize - 1]).unwrap()
+			);
+			assert!(off_chain
+				.gen_proof(leaf)
 				.unwrap()
-				.unwrap()
-		);
-		assert_eq!(on_chain.get_root().unwrap(), parent_mmr_root);
-		assert!(off_chain
-			.gen_proof(h1)
-			.unwrap()
-			.verify(parent_mmr_root, vec![(position, prove_elem)])
-			.unwrap());
-	});
+				.verify(
+					HeaderMMR::find_parent_mmr_root(&headers[last_leaf as usize - 1]).unwrap(),
+					vec![(
+						mmr::leaf_index_to_pos(leaf),
+						headers[leaf as usize - 1].hash()
+					)]
+				)
+				.unwrap());
+		});
+	}
 }
 
 #[test]

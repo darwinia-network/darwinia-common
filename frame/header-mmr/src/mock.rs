@@ -98,6 +98,8 @@ pub fn new_test_ext() -> TestExternalities {
 }
 
 pub fn register_offchain_ext(ext: &mut TestExternalities) {
+	ext.persist_offchain_overlay();
+
 	let (offchain, _) = TestOffchainExt::with_offchain_db(ext.offchain_db());
 
 	ext.register_extension(OffchainDbExt::new(offchain.clone()));
@@ -127,20 +129,6 @@ where
 	mmr_with_size(HeaderMMR::mmr_size())
 }
 
-pub fn new_block() -> Header {
-	let number = <frame_system::Pallet<Test>>::block_number() + 1;
-	let hash = Hash::repeat_byte(number as _);
-
-	<frame_system::Pallet<Test>>::initialize(
-		&number,
-		&hash,
-		&Default::default(),
-		frame_system::InitKind::Full,
-	);
-	HeaderMMR::on_finalize(number);
-	<frame_system::Pallet<Test>>::finalize()
-}
-
 pub fn new_block_with_parent_hash(parent_hash: Hash) -> Header {
 	let number = <frame_system::Pallet<Test>>::block_number() + 1;
 
@@ -154,10 +142,34 @@ pub fn new_block_with_parent_hash(parent_hash: Hash) -> Header {
 	<frame_system::Pallet<Test>>::finalize()
 }
 
-pub fn run_to_block(n: BlockNumber) -> Header {
-	for _ in 0..n {
-		new_block();
+pub fn new_block() -> Header {
+	let number = <frame_system::Pallet<Test>>::block_number() + 1;
+	let parent_hash = Hash::repeat_byte(number as _);
+
+	new_block_with_parent_hash(parent_hash)
+}
+
+pub fn run_to_block(n: BlockNumber) -> Vec<Header> {
+	let mut headers = vec![];
+	let mut parent_hash;
+
+	headers.push({
+		let header = new_block();
+
+		parent_hash = header.hash();
+
+		header
+	});
+
+	for _ in 2..=n {
+		headers.push({
+			let header = new_block_with_parent_hash(parent_hash);
+
+			parent_hash = header.hash();
+
+			header
+		});
 	}
 
-	new_block()
+	headers
 }
