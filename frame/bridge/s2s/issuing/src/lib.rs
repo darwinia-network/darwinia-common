@@ -29,14 +29,20 @@ pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 use ethereum_types::{H160, H256, U256};
 use sha3::Digest;
 // --- substrate ---
-use frame_support::{ensure, pallet_prelude::*, traits::Get, PalletId};
+use frame_support::{
+	ensure,
+	pallet_prelude::*,
+	traits::{Currency, ExistenceRequirement::*, Get},
+	PalletId,
+};
 use frame_system::ensure_signed;
-use sp_runtime::{traits::Convert, DispatchError, DispatchResult};
+use sp_runtime::{traits::Convert, DispatchError, DispatchResult, SaturatedConversion};
 use sp_std::vec::Vec;
 // --- darwinia ---
 use bp_runtime::{ChainId, Size};
 use darwinia_evm::AddressMapping;
 use darwinia_support::{
+	balance::*,
 	s2s::{source_root_converted_id, RelayMessageCaller, ToEthAddress},
 	traits::CallToPayload,
 	PalletDigest,
@@ -51,6 +57,7 @@ const _REGISTERD_ACTION: &[u8] = b"registered(address,address,address)";
 const BURN_ACTION: &[u8] = b"burned(address,address,address,address,uint256)";
 
 pub use pallet::*;
+pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -64,6 +71,7 @@ pub mod pallet {
 		type PalletId: Get<PalletId>;
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type WeightInfo: WeightInfo;
+		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
 		type ReceiverAccountId: From<[u8; 32]> + Into<Self::AccountId>;
 		type BridgedAccountIdConverter: Convert<H256, Self::AccountId>;
@@ -73,7 +81,8 @@ pub mod pallet {
 
 		type OutboundPayload: Parameter + Size;
 		type CallToPayload: CallToPayload<Self::OutboundPayload>;
-		type MessageSender: RelayMessageCaller<Self::OutboundPayload>;
+		type FeeAccount: Get<Option<Self::AccountId>>;
+		type MessageSender: RelayMessageCaller<Self::OutboundPayload, RingBalance<Self>>;
 	}
 
 	#[pallet::pallet]
@@ -90,6 +99,7 @@ pub mod pallet {
 		/// When user burn their tokens, this handler will receive the event from dispatch
 		/// precompile contract, and relay this event to the target chain to unlock asset.
 		#[pallet::weight(0)]
+		#[frame_support::transactional]
 		pub fn dispatch_handle(origin: OriginFor<T>, input: Vec<u8>) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
 
@@ -104,6 +114,11 @@ pub mod pallet {
 			if &input[4..8] == burn_action {
 				let burn_info =
 					TokenBurnInfo::decode(&input[8..]).map_err(|_| Error::<T>::InvalidDecoding)?;
+
+				let fee: RingBalance<T> = burn_info.fee.saturated_into();
+				if let Some(fee_account) = T::FeeAccount::get() {
+					<T as Config>::RingCurrency::transfer(&caller, &fee_account, fee, KeepAlive)?;
+				}
 				let recipient = Self::account_id_try_from_bytes(burn_info.recipient.as_slice())?;
 				Self::burn_and_remote_unlock(
 					burn_info.spec_version,
@@ -111,6 +126,7 @@ pub mod pallet {
 					burn_info.source,
 					recipient,
 					burn_info.amount,
+					fee,
 				)?;
 			} else {
 				log::trace!("No action match this input selector");
@@ -344,6 +360,7 @@ impl<T: Config> Pallet<T> {
 		token_address: H160,
 		recipient: AccountId<T>,
 		amount: U256,
+		fee: RingBalance<T>,
 	) -> Result<(), DispatchError> {
 		let token: Token = (
 			token_type,
@@ -359,7 +376,7 @@ impl<T: Config> Pallet<T> {
 			.map_err(|_| Error::<T>::EncodeInvalid)?;
 		let payload = T::CallToPayload::to_payload(spec_version, encoded);
 
-		T::MessageSender::send_message(payload).map_err(|_| Error::<T>::SendMessageFailed)?;
+		T::MessageSender::send_message(payload, fee).map_err(|_| Error::<T>::SendMessageFailed)?;
 		Ok(())
 	}
 

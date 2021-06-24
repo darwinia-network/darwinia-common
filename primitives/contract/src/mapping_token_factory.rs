@@ -223,6 +223,7 @@ pub struct TokenBurnInfo {
 	pub source: H160,
 	pub recipient: Vec<u8>,
 	pub amount: U256,
+	pub fee: u128,
 }
 
 impl TokenBurnInfo {
@@ -236,6 +237,7 @@ impl TokenBurnInfo {
 				ParamType::Address,
 				ParamType::Bytes,
 				ParamType::Uint(256),
+				ParamType::Uint(256),
 			],
 			&data,
 		)?;
@@ -247,6 +249,7 @@ impl TokenBurnInfo {
 			tokens[4].clone(),
 			tokens[5].clone(),
 			tokens[6].clone(),
+			tokens[7].clone(),
 		) {
 			(
 				Token::Uint(spec_version),
@@ -256,6 +259,7 @@ impl TokenBurnInfo {
 				Token::Address(source),
 				Token::Bytes(recipient),
 				Token::Uint(amount),
+				Token::Uint(fee),
 			) => Ok(TokenBurnInfo {
 				spec_version: spec_version.low_u32(),
 				token_type: token_type.low_u32(),
@@ -264,6 +268,7 @@ impl TokenBurnInfo {
 				source,
 				recipient,
 				amount,
+				fee: fee.low_u128(),
 			}),
 			_ => Err(Error::InvalidData),
 		}

@@ -11,16 +11,13 @@ use darwinia_support::s2s::{RelayMessageCaller, TruncateToEthAddress};
 use dp_asset::{BridgeAssetReceiver, RecipientAccount};
 
 pub struct ToMillauMessageRelayCaller;
-impl RelayMessageCaller<ToMillauMessagePayload> for ToMillauMessageRelayCaller {
+impl RelayMessageCaller<ToMillauMessagePayload, Balance> for ToMillauMessageRelayCaller {
 	fn send_message(
 		payload: ToMillauMessagePayload,
+		fee: Balance,
 	) -> Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>> {
-		let call: Call = BridgeMessagesCall::<Runtime, Millau>::send_message(
-			[0; 4],
-			payload,
-			300_000_000u128.into(),
-		)
-		.into();
+		let call: Call =
+			BridgeMessagesCall::<Runtime, Millau>::send_message([0; 4], payload, fee).into();
 		call.dispatch(RawOrigin::Root.into())
 	}
 }
@@ -51,6 +48,8 @@ impl Config for Runtime {
 	type PalletId = S2sIssuingPalletId;
 	type Event = Event;
 	type WeightInfo = ();
+	type RingCurrency = Ring;
+	type FeeAccount = RootAccountForPayments;
 	type ReceiverAccountId = AccountId;
 	type BridgedAccountIdConverter = AccountIdConverter;
 	type BridgedChainId = MillauChainId;

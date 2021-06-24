@@ -92,7 +92,8 @@ pub mod pallet {
 		type OutboundPayload: Parameter + Size;
 		type CallEncoder: EncodeCall<Self::AccountId, Self::OutboundPayload>;
 
-		type MessageSender: RelayMessageCaller<Self::OutboundPayload>;
+		type FeeAccount: Get<Option<Self::AccountId>>;
+		type MessageSender: RelayMessageCaller<Self::OutboundPayload, RingBalance<Self>>;
 	}
 
 	#[pallet::event]
@@ -136,12 +137,17 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(0)]
+		#[frame_support::transactional]
 		pub fn register_and_remote_create(
 			origin: OriginFor<T>,
 			spec_version: u32,
+			fee: RingBalance<T>,
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
 
+			if let Some(fee_account) = T::FeeAccount::get() {
+				T::RingCurrency::transfer(&user, &fee_account, fee, KeepAlive)?;
+			}
 			let token = Token::Native(TokenInfo {
 				address: array_bytes::hex_try_into(BACK_ERC20_RING)
 					.map_err(|_| Error::<T>::SendMessageFailed)?,
@@ -153,7 +159,7 @@ pub mod pallet {
 				}),
 			});
 			let payload = T::CallEncoder::encode_remote_register(spec_version, token.clone());
-			T::MessageSender::send_message(payload).map_err(|e| {
+			T::MessageSender::send_message(payload, fee).map_err(|e| {
 				log::info!("s2s-backing: register token failed {:?}", e);
 				Error::<T>::SendMessageFailed
 			})?;
@@ -171,6 +177,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			spec_version: u32,
 			#[pallet::compact] value: RingBalance<T>,
+			#[pallet::compact] fee: RingBalance<T>,
 			recipient: EthereumAddress,
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
@@ -182,13 +189,13 @@ pub mod pallet {
 			);
 			// Make sure the user's balance is enough to lock
 			ensure!(
-				T::RingCurrency::free_balance(&user) > value + T::AdvancedFee::get(),
+				T::RingCurrency::free_balance(&user) > value + fee,
 				<Error<T>>::InsufficientBalance
 			);
 
-			// Pay some fee and lock token
-			let fee_account = Self::fee_account_id();
-			T::RingCurrency::transfer(&user, &fee_account, T::AdvancedFee::get(), KeepAlive)?;
+			if let Some(fee_account) = T::FeeAccount::get() {
+				T::RingCurrency::transfer(&user, &fee_account, fee, KeepAlive)?;
+			}
 			T::RingCurrency::transfer(&user, &Self::pallet_account_id(), value, AllowDeath)?;
 
 			// Send to the target chain
@@ -203,7 +210,8 @@ pub mod pallet {
 			let account = RecipientAccount::EthereumAccount(recipient);
 			let payload = T::CallEncoder::encode_remote_issue(spec_version, token.clone(), account)
 				.map_err(|_| Error::<T>::EncodeInvalid)?;
-			T::MessageSender::send_message(payload).map_err(|_| Error::<T>::SendMessageFailed)?;
+			T::MessageSender::send_message(payload, fee)
+				.map_err(|_| Error::<T>::SendMessageFailed)?;
 			Self::deposit_event(Event::TokenLocked(token, user, recipient, amount));
 			Ok(().into())
 		}
