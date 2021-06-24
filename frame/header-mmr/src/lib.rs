@@ -135,6 +135,8 @@ pub mod pallet {
 							hash.using_encoded(|hash| {
 								offchain_index::set(&<Pallet<T>>::offchain_key(position), hash)
 							});
+
+							log::trace!("Pruned node `{:?}` at position `{}`", hash, position);
 						}
 					}
 
