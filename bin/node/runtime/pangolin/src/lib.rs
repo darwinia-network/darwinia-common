@@ -856,7 +856,20 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	}
 
 	fn on_runtime_upgrade() -> Weight {
-		0
+		// --- paritytech ---
+		use frame_support::migration;
+		// --- darwinia ---
+		use darwinia_header_mmr::NodeIndex;
+
+		if let Some(mmr_size) =
+			migration::take_storage_value::<NodeIndex>(b"HeaderMMR", b"MMRCounter", &[])
+		{
+			migration::put_storage_value(b"HeaderMMR", b"MmrSize", &[], mmr_size);
+
+			<Runtime as frame_system::Config>::DbWeight::get().writes(2)
+		} else {
+			0
+		}
 	}
 }
 
