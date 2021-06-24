@@ -118,7 +118,7 @@ where
 				if let Some((_, elem)) = elems.get(i) {
 					<Peaks<T>>::insert(position, elem);
 
-					log::trace!("position: {}, elem: {}", position, elem);
+					log::trace!("position: {}, elem: {:?}", position, elem);
 				} else {
 					log::error!("The different must existed in `elems`; qed");
 				}
