@@ -74,6 +74,7 @@ pub mod pallet {
 	// --- paritytech ---
 	use frame_support::{pallet_prelude::*, weights::Weight};
 	use frame_system::pallet_prelude::*;
+	use sp_io::offchain_index;
 	use sp_runtime::{generic::DigestItem, traits::SaturatedConversion};
 	#[cfg(any(test, feature = "easy-testing"))]
 	use sp_runtime::{generic::OpaqueDigestItemId, traits::Header};
@@ -111,15 +112,38 @@ pub mod pallet {
 
 	/// The num of nodes that should be pruned each block
 	#[pallet::storage]
-	#[pallet::getter(fn pruning_step)]
-	pub type PruningStep<T> = StorageValue<_, NodeIndex, ValueQuery>;
+	#[pallet::getter(fn pruning_configuration)]
+	pub type PruningConfiguration<T> = StorageValue<_, MmrNodesPruningConfiguration, ValueQuery>;
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(_: BlockNumberFor<T>) -> Weight {
-			T::WeightInfo::on_initialize()
+			<PruningConfiguration<T>>::try_mutate(
+				|MmrNodesPruningConfiguration {
+				     step,
+				     progress,
+				     last_position,
+				 }| {
+					for position in *progress..progress.saturating_add(*step) {
+						if position > *last_position {
+							return Err(T::DbWeight::get().reads(1));
+						}
+
+						if let Some(hash) = <MMRNodeList<T>>::take(position) {
+							hash.using_encoded(|hash| {
+								offchain_index::set(&<Pallet<T>>::offchain_key(position), hash)
+							});
+						}
+					}
+
+					*progress = progress.saturating_add(*step);
+
+					Ok(T::DbWeight::get().reads_writes(1, *step * 2))
+				},
+			)
+			.map_or_else(|weight| weight, |weight| weight)
 		}
 
 		fn on_finalize(_: BlockNumberFor<T>) {
@@ -167,7 +191,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 
-			<PruningStep<T>>::put(step);
+			<PruningConfiguration<T>>::mutate(|c| c.step = step);
 
 			Ok(().into())
 		}
@@ -234,6 +258,16 @@ pub mod pallet {
 		/// The merkle mountain range root hash.
 		pub parent_mmr_root: Hash,
 	}
+
+	#[derive(Clone, Default, Eq, PartialEq, Encode, Decode, RuntimeDebug)]
+	pub struct MmrNodesPruningConfiguration {
+		/// The nodes num that should be pruned each block
+		pub step: NodeIndex,
+		/// The progress of last time pruning
+		pub progress: NodeIndex,
+		/// Should stop pruning after reach the last node's position
+		pub last_position: NodeIndex,
+	}
 }
 pub use pallet::*;
 
@@ -242,6 +276,11 @@ pub mod primitives;
 pub mod weights;
 
 pub mod migration {
+	// --- paritytech ---
+	use frame_support::migration;
+	// --- darwinia ---
+	use crate::*;
+
 	const OLD_PALLET_NAME: &[u8] = b"DarwiniaHeaderMMR";
 
 	#[cfg(feature = "try-runtime")]
@@ -255,6 +294,22 @@ pub mod migration {
 	}
 
 	pub fn migrate(new_pallet_name: &[u8]) {
-		frame_support::migration::move_pallet(OLD_PALLET_NAME, new_pallet_name);
+		migration::move_pallet(OLD_PALLET_NAME, new_pallet_name);
+	}
+
+	pub fn initialize_pruning_configuration<T>(module: &[u8], block_number: NodeIndex)
+	where
+		T: Config,
+	{
+		migration::put_storage_value(
+			module,
+			b"PruningConfiguration",
+			&[],
+			MmrNodesPruningConfiguration {
+				step: 200,
+				progress: 0,
+				last_position: mmr::leaf_index_to_mmr_size(block_number),
+			},
+		)
 	}
 }

@@ -867,7 +867,13 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 			migration::put_storage_value(b"HeaderMMR", b"MmrSize", &[], mmr_size);
 		}
 
-		darwinia_header_mmr::migration::migrate(b"Instance1DarwiniaRelayAuthorities");
+		darwinia_header_mmr::migration::initialize_pruning_configuration::<Runtime>(
+			b"HeaderMMR",
+			System::block_number() as _,
+		);
+		darwinia_relay_authorities::migration::migrate::<Runtime, EthereumRelayAuthoritiesInstance>(
+			b"Instance1DarwiniaRelayAuthorities",
+		);
 
 		RuntimeBlockWeights::get().max_block
 	}
