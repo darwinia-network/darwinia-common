@@ -223,7 +223,7 @@ pub struct TokenBurnInfo {
 	pub source: H160,
 	pub recipient: Vec<u8>,
 	pub amount: U256,
-	pub fee: u128,
+	pub fee: U256,
 }
 
 impl TokenBurnInfo {
@@ -268,7 +268,7 @@ impl TokenBurnInfo {
 				source,
 				recipient,
 				amount,
-				fee: fee.low_u128(),
+				fee,
 			}),
 			_ => Err(Error::InvalidData),
 		}

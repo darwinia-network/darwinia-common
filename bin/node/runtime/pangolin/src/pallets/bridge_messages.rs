@@ -17,6 +17,7 @@ use crate::{
 	},
 	*,
 };
+use darwinia_support::s2s::to_bytes32;
 use pangolin_bridge_primitives::AccountIdConverter;
 
 frame_support::parameter_types! {
@@ -28,7 +29,7 @@ frame_support::parameter_types! {
 	// `IdentityFee` is used by Millau => we may use weight directly
 	pub const GetDeliveryConfirmationTransactionFee: Balance =
 		MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT as _;
-	pub RootAccountForPayments: Option<AccountId> = Some(array_bytes::hex_into_unchecked(array_bytes::bytes2hex("0x", b"root")));
+	pub RootAccountForPayments: Option<AccountId> = Some(to_bytes32(b"root").into());
 }
 
 impl Config<WithMillauMessages> for Runtime {

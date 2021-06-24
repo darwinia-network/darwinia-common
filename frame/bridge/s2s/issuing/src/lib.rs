@@ -43,6 +43,7 @@ use bp_runtime::{ChainId, Size};
 use darwinia_evm::AddressMapping;
 use darwinia_support::{
 	balance::*,
+	evm::POW_9,
 	s2s::{source_root_converted_id, RelayMessageCaller, ToEthAddress},
 	traits::CallToPayload,
 	PalletDigest,
@@ -115,7 +116,7 @@ pub mod pallet {
 				let burn_info =
 					TokenBurnInfo::decode(&input[8..]).map_err(|_| Error::<T>::InvalidDecoding)?;
 
-				let fee: RingBalance<T> = burn_info.fee.saturated_into();
+				let fee = Self::transform_dvm_balance(burn_info.fee);
 				if let Some(fee_account) = T::FeeAccount::get() {
 					<T as Config>::RingCurrency::transfer(&caller, &fee_account, fee, KeepAlive)?;
 				}
@@ -341,6 +342,10 @@ impl<T: Config> Pallet<T> {
 			},
 		)?;
 		Ok(())
+	}
+
+	pub fn transform_dvm_balance(value: U256) -> RingBalance<T> {
+		(value / POW_9).low_u128().saturated_into()
 	}
 
 	/// Get AccountId from bytes
