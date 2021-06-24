@@ -865,11 +865,11 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 			migration::take_storage_value::<NodeIndex>(b"HeaderMMR", b"MMRCounter", &[])
 		{
 			migration::put_storage_value(b"HeaderMMR", b"MmrSize", &[], mmr_size);
-
-			<Runtime as frame_system::Config>::DbWeight::get().writes(2)
-		} else {
-			0
 		}
+
+		darwinia_header_mmr::migration::migrate(b"Instance1DarwiniaRelayAuthorities");
+
+		RuntimeBlockWeights::get().max_block
 	}
 }
 
