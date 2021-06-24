@@ -128,17 +128,47 @@ mod data {
 use data::*;
 
 // --- crates.io ---
-use codec::{Decode, Encode};
+use codec::Encode;
 use rand::prelude::*;
 // --- github.com ---
 use mmr::MMRStore;
 // --- substrate ---
-use sp_runtime::{generic::DigestItem, testing::Digest};
+use sp_runtime::testing::Digest;
 // --- darwinia ---
-use crate::{
-	mock::{Hash, *},
-	primitives::*,
-};
+use crate::{mock::*, primitives::*};
+
+#[test]
+fn codec_digest_should_work() {
+	assert_eq!(
+		header_parent_mmr_log(Default::default()).encode(),
+		vec![
+			// DigestItemType::Other
+			vec![0],
+			// Vector length
+			vec![0x90],
+			// Prefix *b"MMRR"
+			vec![77, 77, 82, 82],
+			// MMR root
+			vec![
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0
+			],
+		]
+		.concat()
+	);
+}
+
+#[test]
+fn serialize_digest_should_work() {
+	assert_eq!(
+		serde_json::to_string(&Digest {
+			logs: vec![header_parent_mmr_log(Default::default())],
+		})
+		.unwrap(),
+		// 0x90 is compact codec of the length 36, 0x4d4d5252 is prefix "MMRR"
+		r#"{"logs":["0x00904d4d52520000000000000000000000000000000000000000000000000000000000000000"]}"#
+	);
+}
 
 #[test]
 fn hasher_should_work() {
@@ -232,36 +262,4 @@ fn integration_testing_should_work() {
 				.unwrap());
 		});
 	}
-}
-
-#[test]
-fn should_serialize_mmr_digest() {
-	let digest = Digest {
-		logs: vec![header_parent_mmr_log(Default::default())],
-	};
-
-	assert_eq!(
-		serde_json::to_string(&digest).unwrap(),
-		// 0x90 is compact codec of the length 36, 0x4d4d5252 is prefix "MMRR"
-		r#"{"logs":["0x00904d4d52520000000000000000000000000000000000000000000000000000000000000000"]}"#
-	);
-}
-
-#[test]
-fn non_system_mmr_digest_item_encoding() {
-	let item = header_parent_mmr_log(Default::default());
-	let encoded = item.encode();
-	assert_eq!(
-		encoded,
-		vec![
-			0,    // type = DigestItemType::Other
-			0x90, // vec length
-			77, 77, 82, 82, // Prefix, *b"MMRR"
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, // mmr root
-		]
-	);
-
-	let decoded = <DigestItem<Hash>>::decode(&mut &encoded[..]).unwrap();
-	assert_eq!(item, decoded);
 }
