@@ -21,7 +21,7 @@
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
-use frame_support::traits::{GenesisBuild, OnInitialize};
+use frame_support::traits::{GenesisBuild, OnFinalize, OnInitialize};
 use frame_system::{mocking::*, EnsureRoot};
 use sp_core::H256;
 use sp_io::{hashing, TestExternalities};
@@ -37,6 +37,7 @@ use darwinia_relay_primitives::relay_authorities::Sign as SignT;
 pub type Block = MockBlock<Test>;
 pub type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 
+pub type Hash = H256;
 pub type BlockNumber = u64;
 pub type AccountId = u64;
 pub type Index = u64;
@@ -44,7 +45,6 @@ pub type Balance = u128;
 
 pub type RelayAuthoritiesError = Error<Test, DefaultInstance>;
 
-pub const DEFAULT_MMR_ROOT: H256 = H256([0; 32]);
 pub const DEFAULT_SIGNATURE: [u8; 65] = [0; 65];
 
 darwinia_support::impl_test_account_data! {}
@@ -58,7 +58,7 @@ impl frame_system::Config for Test {
 	type Call = Call;
 	type Index = Index;
 	type BlockNumber = BlockNumber;
-	type Hash = H256;
+	type Hash = Hash;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
@@ -90,12 +90,12 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type WeightInfo = ();
 }
 
-pub struct DarwiniaMMR;
-impl MMR<BlockNumber, H256> for DarwiniaMMR {
-	fn get_root(_: BlockNumber) -> Option<H256> {
-		Some(Default::default())
-	}
+impl darwinia_header_mmr::Config for Test {
+	type WeightInfo = ();
+
+	const INDEXING_PREFIX: &'static [u8] = b"";
 }
+
 pub struct Sign;
 impl SignT<BlockNumber> for Sign {
 	type Signature = [u8; 65];
@@ -126,7 +126,7 @@ impl Config for Test {
 	type AddOrigin = EnsureRoot<Self::AccountId>;
 	type RemoveOrigin = EnsureRoot<Self::AccountId>;
 	type ResetOrigin = EnsureRoot<Self::AccountId>;
-	type DarwiniaMMR = DarwiniaMMR;
+	type DarwiniaMMR = HeaderMmr;
 	type Sign = Sign;
 	type OpCodes = ();
 	type SignThreshold = SignThreshold;
@@ -143,11 +143,14 @@ frame_support::construct_runtime! {
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		HeaderMmr: darwinia_header_mmr::{Pallet, Call, Storage},
 		RelayAuthorities: darwinia_relay_authorities::{Pallet, Call, Storage, Config<T>, Event<T>}
 	}
 }
 
 pub fn new_test_ext() -> TestExternalities {
+	sp_tracing::try_init_simple();
+
 	let mut storage = frame_system::GenesisConfig::default()
 		.build_storage::<Test>()
 		.unwrap();
@@ -174,6 +177,34 @@ pub fn run_to_block(n: BlockNumber) {
 		System::set_block_number(b);
 		RelayAuthorities::on_initialize(b);
 	}
+}
+
+pub fn run_to_block_from_genesis(n: BlockNumber) -> Vec<Header> {
+	let mut headers = vec![];
+
+	HeaderMmr::on_finalize(0);
+
+	let mut header = <frame_system::Pallet<Test>>::finalize();
+
+	headers.push(header.clone());
+
+	for block_number in 1..=n {
+		System::set_block_number(block_number);
+
+		<frame_system::Pallet<Test>>::initialize(
+			&block_number,
+			&header.hash(),
+			&Default::default(),
+			frame_system::InitKind::Full,
+		);
+		RelayAuthorities::on_initialize(block_number);
+		HeaderMmr::on_finalize(block_number);
+
+		header = <frame_system::Pallet<Test>>::finalize();
+		headers.push(header.clone());
+	}
+
+	headers
 }
 
 pub fn events() -> Vec<Event> {

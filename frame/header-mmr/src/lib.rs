@@ -75,7 +75,7 @@ pub mod pallet {
 	use frame_support::{pallet_prelude::*, weights::Weight};
 	use frame_system::pallet_prelude::*;
 	use sp_runtime::{generic::DigestItem, traits::SaturatedConversion};
-	#[cfg(test)]
+	#[cfg(any(test, feature = "easy-testing"))]
 	use sp_runtime::{generic::OpaqueDigestItemId, traits::Header};
 	use sp_std::prelude::*;
 	// --- darwinia ---
@@ -203,7 +203,7 @@ pub mod pallet {
 		}
 
 		// Remove the cfg, once there's a requirement from runtime usage
-		#[cfg(test)]
+		#[cfg(any(test, feature = "easy-testing"))]
 		pub fn find_parent_mmr_root(header: &T::Header) -> Option<T::Hash> {
 			let find_parent_mmr_root = |m: MerkleMountainRangeRootLog<_>| match m.prefix {
 				LOG_PREFIX => Some(m.parent_mmr_root),

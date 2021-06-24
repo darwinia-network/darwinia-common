@@ -1897,15 +1897,18 @@ version = "2.4.0"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
+ "darwinia-header-mmr",
  "darwinia-relay-primitives",
  "darwinia-support",
  "frame-support",
  "frame-system",
+ "log",
  "parity-scale-codec",
  "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "sp-tracing",
 ]
 
 [[package]]

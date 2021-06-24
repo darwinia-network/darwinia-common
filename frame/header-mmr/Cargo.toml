@@ -65,6 +65,8 @@ paritytech-std = [
 	"sp-std/std",
 ]
 
+easy-testing = []
+
 try-runtime = [
 	"frame-support/try-runtime",
 ]
