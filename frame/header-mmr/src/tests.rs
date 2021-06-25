@@ -273,14 +273,14 @@ fn integration_testing_should_work() {
 
 #[test]
 fn prune_darwinia_should_work() {
-	// Perform `set_code` at block `5000`
+	// Perform `set_code` at block `500`
 	//
-	// The new runtime logic will be applied at block `5001`
-	const BLOCK_NUMBER: NodeIndex = 5000;
-	const PRUNING_STEP: NodeIndex = 500;
+	// The new runtime logic will be applied at block `501`
+	const BLOCK_NUMBER: NodeIndex = 500;
+	const PRUNING_STEP: NodeIndex = 10;
 
-	// The `5000` leaves' MMR size is `9996` the last position is `9995`
-	// So, the pruning will stop at `9995`
+	// The `500` leaves' MMR size is `995` the last position is `994`
+	// So, the pruning will stop at `994`
 	let size = mmr::leaf_index_to_mmr_size(BLOCK_NUMBER);
 	let mmr = darwinia_mmr()[..size as usize].to_vec();
 	let peaks = mmr::helper::get_peaks(size);
@@ -292,7 +292,7 @@ fn prune_darwinia_should_work() {
 		System::set_block_number(BLOCK_NUMBER);
 
 		migration::initialize_pruning_configuration::<Test>(PRUNING_STEP, BLOCK_NUMBER);
-		migration::initialize_new_mmr_state::<Test>(b"HeaderMmr", size, mmr, peaks);
+		migration::initialize_new_mmr_state::<Test>(size, mmr, peaks);
 
 		// Able to `gen_proof` from for runtime DB `MMRNodeList`, during pruning
 		{

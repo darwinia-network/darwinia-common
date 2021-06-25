@@ -316,24 +316,37 @@ pub mod migration {
 		});
 	}
 
+	#[cfg(test)]
 	pub fn initialize_new_mmr_state<T>(
-		module: &[u8],
 		size: NodeIndex,
 		mmr: Vec<T::Hash>,
 		peak_positions: Vec<NodeIndex>,
 	) where
 		T: Config,
 	{
-		migration::remove_storage_prefix(module, b"MMRCounter", &[]);
-
 		<MmrSize<T>>::put(size);
 
 		for position in peak_positions {
 			<Peaks<T>>::insert(position, mmr[position as usize]);
 		}
-		#[cfg(test)]
 		for (position, hash) in mmr.into_iter().enumerate() {
 			<MMRNodeList<T>>::insert(position as NodeIndex, hash);
+		}
+	}
+
+	#[cfg(not(test))]
+	pub fn initialize_new_mmr_state<T>(module: &[u8], peaks: Vec<(NodeIndex, T::Hash)>)
+	where
+		T: Config,
+	{
+		if let Some(size) = migration::take_storage_value::<NodeIndex>(module, b"MMRCounter", &[]) {
+			<MmrSize<T>>::put(size);
+		}
+
+		migration::remove_storage_prefix(module, b"MMRCounter", &[]);
+
+		for (position, peak) in peaks {
+			<Peaks<T>>::insert(position, peak);
 		}
 	}
 }

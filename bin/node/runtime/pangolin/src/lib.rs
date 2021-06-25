@@ -872,7 +872,7 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 			System::block_number() as _,
 		);
 		// TODO
-		darwinia_header_mmr::migration::initialize_new_mmr_state(b"HeaderMMR", 0, vec![], vec![]);
+		darwinia_header_mmr::migration::initialize_new_mmr_state(b"HeaderMMR", 0, vec![]);
 		darwinia_relay_authorities::migration::migrate::<Runtime, EthereumRelayAuthoritiesInstance>(
 			b"Instance1DarwiniaRelayAuthorities",
 		);
