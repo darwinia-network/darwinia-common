@@ -23,8 +23,6 @@
 pub mod weights;
 pub use weights::WeightInfo;
 
-pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-
 // --- crates ---
 use ethereum_types::{H160, H256, U256};
 use sha3::Digest;
@@ -36,7 +34,7 @@ use frame_support::{
 	PalletId,
 };
 use frame_system::ensure_signed;
-use sp_runtime::{traits::Convert, DispatchError, DispatchResult, SaturatedConversion};
+use sp_runtime::{traits::Convert, DispatchError, SaturatedConversion};
 use sp_std::vec::Vec;
 // --- darwinia ---
 use bp_runtime::{ChainId, Size};
@@ -54,10 +52,10 @@ use dp_asset::{
 };
 use dp_contract::mapping_token_factory::{MappingTokenFactory as mtf, TokenBurnInfo};
 
-const _REGISTERD_ACTION: &[u8] = b"registered(address,address,address)";
 const BURN_ACTION: &[u8] = b"burned(address,address,address,address,uint256)";
 
 pub use pallet::*;
+pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 
 #[frame_support::pallet]
@@ -99,6 +97,7 @@ pub mod pallet {
 		///
 		/// When user burn their tokens, this handler will receive the event from dispatch
 		/// precompile contract, and relay this event to the target chain to unlock asset.
+		// TODO: update the weight
 		#[pallet::weight(0)]
 		#[frame_support::transactional]
 		pub fn dispatch_handle(origin: OriginFor<T>, input: Vec<u8>) -> DispatchResultWithPostInfo {
@@ -115,20 +114,19 @@ pub mod pallet {
 			if &input[4..8] == burn_action {
 				let burn_info =
 					TokenBurnInfo::decode(&input[8..]).map_err(|_| Error::<T>::InvalidDecoding)?;
+				// Ensure the recipient is valid
+				ensure!(
+					burn_info.recipient.len() == 32,
+					<Error<T>>::InvalidAddressLen
+				);
 
 				let fee = Self::transform_dvm_balance(burn_info.fee);
 				if let Some(fee_account) = T::FeeAccount::get() {
+					// Since fee account will represent use to make a cross chain call, give fee to fee account here.
 					<T as Config>::RingCurrency::transfer(&caller, &fee_account, fee, KeepAlive)?;
 				}
-				let recipient = Self::account_id_try_from_bytes(burn_info.recipient.as_slice())?;
-				Self::burn_and_remote_unlock(
-					burn_info.spec_version,
-					burn_info.token_type,
-					burn_info.source,
-					recipient,
-					burn_info.amount,
-					fee,
-				)?;
+
+				Self::burn_and_remote_unlock(fee, burn_info)?;
 			} else {
 				log::trace!("No action match this input selector");
 			}
@@ -334,6 +332,7 @@ impl<T: Config> Pallet<T> {
 		Ok(input)
 	}
 
+	/// Make a call to mapping factory contract
 	pub fn transact_mapping_factory(input: Vec<u8>) -> DispatchResultWithPostInfo {
 		let contract = MappingFactoryAddress::<T>::get();
 		dvm_ethereum::Pallet::<T>::do_call(contract, input)
@@ -345,39 +344,25 @@ impl<T: Config> Pallet<T> {
 		(value / POW_9).low_u128().saturated_into()
 	}
 
-	/// Get AccountId from bytes
-	pub fn account_id_try_from_bytes(bytes: &[u8]) -> Result<T::AccountId, DispatchError> {
-		if bytes.len() != 32 {
-			return Err(Error::<T>::InvalidAddressLen.into());
-		}
-
-		let account_id: T::ReceiverAccountId = array_bytes::dyn_into!(bytes, 32);
-		Ok(account_id.into())
-	}
-
-	/// burn and send message to bridged chain
+	/// Burn and send message to bridged chain
 	pub fn burn_and_remote_unlock(
-		spec_version: u32,
-		token_type: u32,
-		token_address: H160,
-		recipient: AccountId<T>,
-		amount: U256,
 		fee: RingBalance<T>,
+		burn_info: TokenBurnInfo,
 	) -> Result<(), DispatchError> {
-		let token: Token = (
-			token_type,
-			TokenInfo {
-				address: token_address,
-				value: Some(amount),
-				option: None,
-			},
-		)
-			.into();
-		let account = RecipientAccount::DarwiniaAccount(recipient);
+		let (spec_version, token_type, address, amount) = (
+			burn_info.spec_version,
+			burn_info.token_type,
+			burn_info.source,
+			burn_info.amount,
+		);
+		let account_id: T::ReceiverAccountId =
+			array_bytes::dyn_into!(burn_info.recipient.as_slice(), 32);
+		let token: Token = (token_type, TokenInfo::new(address, Some(amount), None)).into();
+		let account = RecipientAccount::DarwiniaAccount(account_id.into());
+
 		let encoded = T::RemoteUnlockCall::encode_call(token, account)
 			.map_err(|_| Error::<T>::EncodeInvalid)?;
 		let payload = T::CallToPayload::to_payload(spec_version, encoded);
-
 		T::MessageSender::send_message(payload, fee).map_err(|_| Error::<T>::SendMessageFailed)?;
 		Ok(())
 	}
