@@ -23,7 +23,7 @@ use codec::Encode;
 // --- github.com ---
 use mmr::MMRStore;
 // --- paritytech ---
-use frame_support::traits::OnFinalize;
+use frame_support::traits::{OnFinalize, OnInitialize};
 use frame_system::mocking::*;
 use sp_core::{
 	offchain::{testing::TestOffchainExt, OffchainDbExt, OffchainWorkerExt},
@@ -84,7 +84,7 @@ frame_support::construct_runtime! {
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Storage, Config},
-		HeaderMMR: darwinia_header_mmr::{Pallet, Call, Storage},
+		HeaderMmr: darwinia_header_mmr::{Pallet, Call, Storage},
 	}
 }
 
@@ -126,7 +126,7 @@ pub fn mmr<StorageType>() -> Mmr<StorageType, Test>
 where
 	Storage<StorageType, Test>: MMRStore<Hash>,
 {
-	mmr_with_size(HeaderMMR::mmr_size())
+	mmr_with_size(HeaderMmr::mmr_size())
 }
 
 pub fn new_block_with_parent_hash(parent_hash: Hash) -> Header {
@@ -138,7 +138,8 @@ pub fn new_block_with_parent_hash(parent_hash: Hash) -> Header {
 		&Default::default(),
 		Default::default(),
 	);
-	HeaderMMR::on_finalize(number);
+	HeaderMmr::on_initialize(number);
+	HeaderMmr::on_finalize(number);
 	<frame_system::Pallet<Test>>::finalize()
 }
 
@@ -149,7 +150,7 @@ pub fn new_block() -> Header {
 	new_block_with_parent_hash(parent_hash)
 }
 
-pub fn run_to_block(n: BlockNumber) -> Vec<Header> {
+pub fn run_to_block_from_genesis(n: BlockNumber) -> Vec<Header> {
 	let mut headers = vec![new_block()];
 
 	for _ in 2..=n {

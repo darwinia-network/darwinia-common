@@ -44,7 +44,7 @@ where
 
 		// TODO: once the pruning finish, restore this
 		// Ok(offchain::local_storage_get(StorageKind::PERSISTENT, &key)
-		// .and_then(|v| Decode::decode(&mut &*v).ok()))
+		// 	.and_then(|v| Decode::decode(&mut &*v).ok()))
 	}
 
 	fn append(&mut self, _: NodeIndex, _: Vec<T::Hash>) -> MMRResult<()> {

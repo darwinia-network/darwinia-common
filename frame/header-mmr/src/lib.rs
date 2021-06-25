@@ -126,11 +126,11 @@ pub mod pallet {
 				     progress,
 				     last_position,
 				 }| {
-					for position in *progress..progress.saturating_add(*step) {
-						if position > *last_position {
-							return Err(T::DbWeight::get().reads(1));
-						}
+					if *progress > *last_position {
+						return Err(T::DbWeight::get().reads(1));
+					}
 
+					for position in *progress..progress.saturating_add(*step) {
 						if let Some(hash) = <MMRNodeList<T>>::take(position) {
 							hash.using_encoded(|hash| {
 								offchain_index::set(&<Pallet<T>>::offchain_key(position), hash)
@@ -166,21 +166,6 @@ pub mod pallet {
 				Err(e) => {
 					log::error!("Failed to finalize MMR due to {}", e);
 				}
-			}
-		}
-
-		fn on_runtime_upgrade() -> Weight {
-			// --- paritytech ---
-			use frame_support::migration;
-
-			if let Some(mmr_size) =
-				migration::take_storage_value::<NodeIndex>(b"DarwiniaHeaderMMR", b"MMRCounter", &[])
-			{
-				migration::put_storage_value(b"DarwiniaHeaderMMR", b"MmrSize", &[], mmr_size);
-
-				T::DbWeight::get().writes(2)
-			} else {
-				0
 			}
 		}
 	}
@@ -320,19 +305,34 @@ pub mod migration {
 		migration::move_pallet(OLD_PALLET_NAME, new_pallet_name);
 	}
 
-	pub fn initialize_pruning_configuration<T>(module: &[u8], block_number: NodeIndex)
+	pub fn initialize_pruning_configuration<T>(step: NodeIndex, block_number: NodeIndex)
 	where
 		T: Config,
 	{
-		migration::put_storage_value(
-			module,
-			b"PruningConfiguration",
-			&[],
-			MmrNodesPruningConfiguration {
-				step: 200,
-				progress: 0,
-				last_position: mmr::leaf_index_to_mmr_size(block_number),
-			},
-		)
+		<PruningConfiguration<T>>::put(MmrNodesPruningConfiguration {
+			step,
+			progress: 0,
+			last_position: mmr::leaf_index_to_mmr_size(block_number),
+		});
+	}
+
+	pub fn initialize_new_mmr_state<T>(
+		module: &[u8],
+		size: NodeIndex,
+		mmr: Vec<T::Hash>,
+		peak_positions: Vec<NodeIndex>,
+	) where
+		T: Config,
+	{
+		migration::remove_storage_prefix(module, b"MMRCounter", &[]);
+
+		<MmrSize<T>>::put(size);
+
+		for position in peak_positions {
+			<Peaks<T>>::insert(position, mmr[position as usize]);
+		}
+		for (position, hash) in mmr.into_iter().enumerate() {
+			<MMRNodeList<T>>::insert(position as NodeIndex, hash);
+		}
 	}
 }

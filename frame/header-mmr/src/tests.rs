@@ -19,6 +19,8 @@
 //! Tests for the module.
 
 mod data {
+	// --- std ---
+	use std::fs::File;
 	// --- darwinia ---
 	use crate::mock::*;
 
@@ -124,6 +126,11 @@ mod data {
 				.collect()
 		}
 	}
+
+	// 0~10000 MMR nodes from Darwinia
+	pub fn darwinia_mmr() -> Vec<Hash> {
+		serde_json::from_reader::<_, Vec<Hash>>(File::open("mmr.json").unwrap()).unwrap()
+	}
 }
 use data::*;
 
@@ -135,7 +142,7 @@ use mmr::MMRStore;
 // --- substrate ---
 use sp_runtime::testing::Digest;
 // --- darwinia ---
-use crate::{mock::*, primitives::*};
+use crate::{mock::*, primitives::*, *};
 
 #[test]
 fn codec_digest_should_work() {
@@ -227,7 +234,7 @@ fn integration_testing_should_work() {
 		let mut ext = new_test_ext();
 
 		ext.execute_with(|| {
-			headers = run_to_block(last_leaf);
+			headers = run_to_block_from_genesis(last_leaf);
 		});
 
 		register_offchain_ext(&mut ext);
@@ -247,13 +254,13 @@ fn integration_testing_should_work() {
 			);
 			assert_eq!(
 				on_chain.get_root().unwrap(),
-				HeaderMMR::find_parent_mmr_root(&headers[last_leaf as usize - 1]).unwrap()
+				HeaderMmr::find_parent_mmr_root(&headers[last_leaf as usize - 1]).unwrap()
 			);
 			assert!(off_chain
 				.gen_proof(leaf)
 				.unwrap()
 				.verify(
-					HeaderMMR::find_parent_mmr_root(&headers[last_leaf as usize - 1]).unwrap(),
+					HeaderMmr::find_parent_mmr_root(&headers[last_leaf as usize - 1]).unwrap(),
 					vec![(
 						mmr::leaf_index_to_pos(leaf),
 						headers[leaf as usize - 1].hash()
@@ -262,4 +269,78 @@ fn integration_testing_should_work() {
 				.unwrap());
 		});
 	}
+}
+
+#[test]
+fn prune_darwinia_should_work() {
+	// Perform `set_code` at block `5000`
+	//
+	// The new runtime logic will be applied at block `5001`
+	const BLOCK_NUMBER: NodeIndex = 5000;
+	const PRUNING_STEP: NodeIndex = 500;
+
+	// The `5000` leaves' MMR size is `9996` the last position is `9995`
+	// So, the pruning will stop at `9995`
+	let size = mmr::leaf_index_to_mmr_size(BLOCK_NUMBER);
+	let mmr = darwinia_mmr()[..size as usize].to_vec();
+	let peaks = mmr::helper::get_peaks(size);
+	let mut ext = new_test_ext();
+
+	register_offchain_ext(&mut ext);
+
+	ext.execute_with(|| {
+		System::set_block_number(BLOCK_NUMBER);
+
+		migration::initialize_pruning_configuration::<Test>(PRUNING_STEP, BLOCK_NUMBER);
+		migration::initialize_new_mmr_state::<Test>(b"HeaderMmr", size, mmr, peaks);
+
+		// Able to `gen_proof` from for runtime DB `MMRNodeList`, during pruning
+		{
+			let block_number = System::block_number();
+			let off_chain =
+				<Mmr<OffchainStorage, Test>>::with_size(mmr::leaf_index_to_mmr_size(block_number));
+
+			for index in 0..block_number {
+				assert!(off_chain.gen_proof(index).is_ok());
+			}
+		}
+
+		// A single pruning step
+		{
+			for position in (0 as NodeIndex)..PRUNING_STEP {
+				assert!(<MMRNodeList<Test>>::contains_key(position));
+			}
+			// Ignore parent hash here, just pruning testing
+			new_block();
+			for position in (0 as NodeIndex)..PRUNING_STEP {
+				assert!(!<MMRNodeList<Test>>::contains_key(position));
+			}
+			for position in PRUNING_STEP..size {
+				assert!(<MMRNodeList<Test>>::contains_key(position));
+			}
+		}
+
+		// Pruning `MMRNodeList` to empty
+		{
+			for _ in 0..size / PRUNING_STEP {
+				new_block();
+			}
+			for position in 0..size {
+				assert!(!<MMRNodeList<Test>>::contains_key(position));
+			}
+		}
+	});
+
+	register_offchain_ext(&mut ext);
+
+	// `gen_proof` only works in off-chain context now
+	ext.execute_with(|| {
+		let block_number = System::block_number();
+		let off_chain =
+			<Mmr<OffchainStorage, Test>>::with_size(mmr::leaf_index_to_mmr_size(block_number));
+
+		for index in 0..block_number {
+			assert!(off_chain.gen_proof(index).is_ok());
+		}
+	});
 }
