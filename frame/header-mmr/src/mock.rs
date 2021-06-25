@@ -136,7 +136,7 @@ pub fn new_block_with_parent_hash(parent_hash: Hash) -> Header {
 		&number,
 		&parent_hash,
 		&Default::default(),
-		frame_system::InitKind::Full,
+		Default::default(),
 	);
 	HeaderMMR::on_finalize(number);
 	<frame_system::Pallet<Test>>::finalize()
@@ -150,25 +150,12 @@ pub fn new_block() -> Header {
 }
 
 pub fn run_to_block(n: BlockNumber) -> Vec<Header> {
-	let mut headers = vec![];
-	let mut parent_hash;
-
-	headers.push({
-		let header = new_block();
-
-		parent_hash = header.hash();
-
-		header
-	});
+	let mut headers = vec![new_block()];
 
 	for _ in 2..=n {
-		headers.push({
-			let header = new_block_with_parent_hash(parent_hash);
-
-			parent_hash = header.hash();
-
-			header
-		});
+		headers.push(new_block_with_parent_hash(
+			headers[headers.len() - 1].hash(),
+		));
 	}
 
 	headers

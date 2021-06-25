@@ -180,25 +180,21 @@ pub fn run_to_block(n: BlockNumber) {
 }
 
 pub fn run_to_block_from_genesis(n: BlockNumber) -> Vec<Header> {
-	let mut headers = vec![];
-	let mut header = <frame_system::Pallet<Test>>::finalize();
-
-	headers.push(header.clone());
+	let mut headers = vec![<frame_system::Pallet<Test>>::finalize()];
 
 	for block_number in 1..=n {
 		System::set_block_number(block_number);
 
 		<frame_system::Pallet<Test>>::initialize(
 			&block_number,
-			&header.hash(),
+			&headers[headers.len() - 1].hash(),
 			&Default::default(),
-			frame_system::InitKind::Full,
+			Default::default(),
 		);
 		RelayAuthorities::on_initialize(block_number);
 		HeaderMmr::on_finalize(block_number);
 
-		header = <frame_system::Pallet<Test>>::finalize();
-		headers.push(header.clone());
+		headers.push(<frame_system::Pallet<Test>>::finalize());
 	}
 
 	headers
