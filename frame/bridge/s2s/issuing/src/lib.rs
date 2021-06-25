@@ -252,6 +252,8 @@ pub mod pallet {
 		EncodeInvalid,
 		/// send relay message failed
 		SendMessageFailed,
+		/// call mapping factory failed
+		MappingFactoryCallFailed,
 	}
 
 	#[pallet::storage]
@@ -332,16 +334,11 @@ impl<T: Config> Pallet<T> {
 		Ok(input)
 	}
 
-	pub fn transact_mapping_factory(input: Vec<u8>) -> DispatchResult {
+	pub fn transact_mapping_factory(input: Vec<u8>) -> DispatchResultWithPostInfo {
 		let contract = MappingFactoryAddress::<T>::get();
-		// TODO: update the result process
-		let result = dvm_ethereum::Pallet::<T>::internal_transact(contract, input).map_err(
-			|e| -> &'static str {
-				log::info!("call mapping factory contract error {:?}", &e);
-				e.into()
-			},
-		)?;
-		Ok(())
+		dvm_ethereum::Pallet::<T>::do_call(contract, input)
+			.map_err(|_| Error::<T>::MappingFactoryCallFailed)?;
+		Ok(().into())
 	}
 
 	pub fn transform_dvm_balance(value: U256) -> RingBalance<T> {
