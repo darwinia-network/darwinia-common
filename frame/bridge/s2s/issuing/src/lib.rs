@@ -35,7 +35,7 @@ use frame_support::{
 };
 use frame_system::ensure_signed;
 use sp_runtime::{traits::Convert, DispatchError, SaturatedConversion};
-use sp_std::vec::Vec;
+use sp_std::{str, vec::Vec};
 // --- darwinia ---
 use bp_runtime::{ChainId, Size};
 use darwinia_evm::AddressMapping;
@@ -134,7 +134,7 @@ pub mod pallet {
 		}
 
 		/// Handle remote register relay message
-		/// Before the token transfered, token should be created first
+		/// Before the token transfer, token should be created first
 		#[pallet::weight(0)]
 		pub fn remote_register(origin: OriginFor<T>, token: Token) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
@@ -144,21 +144,24 @@ pub mod pallet {
 				.map_err(|_| Error::<T>::InvalidTokenType)?;
 			let mut mapped_address = Self::mapped_token_address(backing, token_info.address)?;
 			ensure!(mapped_address == H160::zero(), "asset has been registered");
+
 			match token_info.option {
 				Some(option) => {
-					let name = sp_std::str::from_utf8(&option.name[..])
-						.map_err(|_| Error::<T>::StringCF)?;
-					let symbol = sp_std::str::from_utf8(&option.symbol[..])
-						.map_err(|_| Error::<T>::StringCF)?;
-					let input = Self::encode_token_creation(
+					let name =
+						str::from_utf8(&option.name[..]).map_err(|_| Error::<T>::StringCF)?;
+					let symbol =
+						str::from_utf8(&option.symbol[..]).map_err(|_| Error::<T>::StringCF)?;
+					let input = mtf::encode_create_erc20(
 						Self::digest(),
-						backing,
-						token_info.address,
 						token_type,
 						&name,
 						&symbol,
 						option.decimal,
-					)?;
+						backing,
+						token_info.address,
+					)
+					.map_err(|_| Error::<T>::InvalidEncodeERC20)?;
+
 					Self::transact_mapping_factory(input)?;
 					mapped_address = Self::mapped_token_address(backing, token_info.address)?;
 					Self::deposit_event(Event::TokenCreated(
@@ -198,7 +201,8 @@ pub mod pallet {
 			);
 			// Redeem process
 			if let Some(value) = token_info.value {
-				let input = Self::encode_token_issue_method(mapped_address, recipient, value)?;
+				let input = mtf::encode_cross_receive(mapped_address, recipient, value)
+					.map_err(|_| Error::<T>::InvalidMintEncoding)?;
 				Self::transact_mapping_factory(input)?;
 				Self::deposit_event(Event::TokenRedeemed(
 					backing,
@@ -298,38 +302,6 @@ impl<T: Config> Pallet<T> {
 			return Err(Error::<T>::InvalidAddressLen.into());
 		}
 		Ok(H160::from_slice(&mapped_address.as_slice()[12..]))
-	}
-
-	fn encode_token_creation(
-		callback_processor: PalletDigest,
-		backing: H160,
-		address: H160,
-		token_type: u32,
-		name: &str,
-		symbol: &str,
-		decimal: u8,
-	) -> Result<Vec<u8>, DispatchError> {
-		let input = mtf::encode_create_erc20(
-			callback_processor,
-			token_type,
-			name,
-			symbol,
-			decimal,
-			backing,
-			address,
-		)
-		.map_err(|_| Error::<T>::InvalidEncodeERC20)?;
-		Ok(input)
-	}
-
-	fn encode_token_issue_method(
-		token_address: H160,
-		recipient: H160,
-		amount: U256,
-	) -> Result<Vec<u8>, DispatchError> {
-		let input = mtf::encode_cross_receive(token_address, recipient, amount)
-			.map_err(|_| Error::<T>::InvalidMintEncoding)?;
-		Ok(input)
 	}
 
 	/// Make a call to mapping factory contract
