@@ -305,28 +305,19 @@ pub mod migration {
 		migration::move_pallet(OLD_PALLET_NAME, new_pallet_name);
 	}
 
-	pub fn initialize_pruning_configuration<T>(step: NodeIndex, block_number: NodeIndex)
+	#[cfg(test)]
+	pub fn initialize_new_mmr_state<T>(size: NodeIndex, mmr: Vec<T::Hash>, pruning_step: NodeIndex)
 	where
 		T: Config,
 	{
-		<PruningConfiguration<T>>::put(MmrNodesPruningConfiguration {
-			step,
-			progress: 0,
-			last_position: mmr::leaf_index_to_mmr_size(block_number),
-		});
-	}
-
-	#[cfg(test)]
-	pub fn initialize_new_mmr_state<T>(
-		size: NodeIndex,
-		mmr: Vec<T::Hash>,
-		peak_positions: Vec<NodeIndex>,
-	) where
-		T: Config,
-	{
 		<MmrSize<T>>::put(size);
+		<PruningConfiguration<T>>::put(MmrNodesPruningConfiguration {
+			step: pruning_step,
+			progress: 0,
+			last_position: size,
+		});
 
-		for position in peak_positions {
+		for position in mmr::helper::get_peaks(size) {
 			<Peaks<T>>::insert(position, mmr[position as usize]);
 		}
 		for (position, hash) in mmr.into_iter().enumerate() {
@@ -335,18 +326,27 @@ pub mod migration {
 	}
 
 	#[cfg(not(test))]
-	pub fn initialize_new_mmr_state<T>(module: &[u8], peaks: Vec<(NodeIndex, T::Hash)>)
+	pub fn initialize_new_mmr_state<T>(module: &[u8], pruning_step: NodeIndex)
 	where
 		T: Config,
 	{
-		if let Some(size) = migration::take_storage_value::<NodeIndex>(module, b"MMRCounter", &[]) {
-			<MmrSize<T>>::put(size);
-		}
+		let size = migration::take_storage_value::<NodeIndex>(module, b"MMRCounter", &[])
+			.expect("`MMRCounter` MUST be existed; qed");
 
 		migration::remove_storage_prefix(module, b"MMRCounter", &[]);
 
-		for (position, peak) in peaks {
-			<Peaks<T>>::insert(position, peak);
+		<MmrSize<T>>::put(size);
+		<PruningConfiguration<T>>::put(MmrNodesPruningConfiguration {
+			step: pruning_step,
+			progress: 0,
+			last_position: size,
+		});
+
+		for position in mmr::helper::get_peaks(size) {
+			<Peaks<T>>::insert(
+				position,
+				<MMRNodeList<T>>::get(position).expect("Node MUST be existed; qed"),
+			);
 		}
 	}
 }

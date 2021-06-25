@@ -283,7 +283,6 @@ fn prune_darwinia_should_work() {
 	// So, the pruning will stop at `994`
 	let size = mmr::leaf_index_to_mmr_size(BLOCK_NUMBER);
 	let mmr = darwinia_mmr()[..size as usize].to_vec();
-	let peaks = mmr::helper::get_peaks(size);
 	let mut ext = new_test_ext();
 
 	register_offchain_ext(&mut ext);
@@ -291,8 +290,7 @@ fn prune_darwinia_should_work() {
 	ext.execute_with(|| {
 		System::set_block_number(BLOCK_NUMBER);
 
-		migration::initialize_pruning_configuration::<Test>(PRUNING_STEP, BLOCK_NUMBER);
-		migration::initialize_new_mmr_state::<Test>(size, mmr, peaks);
+		migration::initialize_new_mmr_state::<Test>(size, mmr, PRUNING_STEP);
 
 		// Able to `gen_proof` from for runtime DB `MMRNodeList`, during pruning
 		{

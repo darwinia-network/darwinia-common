@@ -852,27 +852,16 @@ pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
+		darwinia_header_mmr::migration::initialize_new_mmr_state::<Runtime>(b"HeaderMMR", 50);
+		darwinia_relay_authorities::migration::migrate::<Runtime, EthereumRelayAuthoritiesInstance>(
+			b"Instance1DarwiniaRelayAuthorities",
+		);
+
 		Ok(())
 	}
 
 	fn on_runtime_upgrade() -> Weight {
-		// --- paritytech ---
-		use frame_support::migration;
-		// --- darwinia ---
-		use darwinia_header_mmr::NodeIndex;
-
-		if let Some(mmr_size) =
-			migration::take_storage_value::<NodeIndex>(b"HeaderMMR", b"MMRCounter", &[])
-		{
-			migration::put_storage_value(b"HeaderMMR", b"MmrSize", &[], mmr_size);
-		}
-
-		darwinia_header_mmr::migration::initialize_pruning_configuration::<Runtime>(
-			200,
-			System::block_number() as _,
-		);
-		// TODO
-		darwinia_header_mmr::migration::initialize_new_mmr_state(b"HeaderMMR", 0, vec![]);
+		darwinia_header_mmr::migration::initialize_new_mmr_state::<Runtime>(b"HeaderMMR", 50);
 		darwinia_relay_authorities::migration::migrate::<Runtime, EthereumRelayAuthoritiesInstance>(
 			b"Instance1DarwiniaRelayAuthorities",
 		);
