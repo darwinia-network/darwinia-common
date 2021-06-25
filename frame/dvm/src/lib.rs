@@ -414,7 +414,7 @@ impl<T: Config> Pallet<T> {
 		match info {
 			CallOrCreateInfo::Call(info) => match info.exit_reason {
 				ExitReason::Succeed(_) => Ok(info.value),
-				_ => Ok(vec![]),
+				_ => Err(Error::<T>::InvalidCall.into()),
 			},
 			_ => Err(Error::<T>::InvalidCall.into()),
 		}
