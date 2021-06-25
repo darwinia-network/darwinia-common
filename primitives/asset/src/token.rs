@@ -41,6 +41,16 @@ pub struct TokenInfo {
 	pub option: Option<TokenOption>,
 }
 
+impl TokenInfo {
+	pub fn new(address: EthereumAddress, value: Option<U256>, option: Option<TokenOption>) -> Self {
+		TokenInfo {
+			address,
+			value,
+			option,
+		}
+	}
+}
+
 /// The token Definition, Native token or ERC20
 #[derive(Encode, Decode, Clone, Debug, Eq, PartialEq)]
 pub enum Token {
