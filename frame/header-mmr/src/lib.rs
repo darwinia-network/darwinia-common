@@ -187,15 +187,36 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(T::DbWeight::get().writes(1))]
-		pub fn set_pruning_step(
+		pub fn config_pruning(
 			origin: OriginFor<T>,
-			step: NodeIndex,
+			step: Option<NodeIndex>,
+			progress: Option<NodeIndex>,
+			last_position: Option<NodeIndex>,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 
-			<PruningConfiguration<T>>::mutate(|c| c.step = step);
+			<PruningConfiguration<T>>::try_mutate(|c| {
+				let mut modified = false;
 
-			Ok(().into())
+				if let Some(step) = step {
+					c.step = step;
+					modified = true;
+				}
+				if let Some(progress) = progress {
+					c.progress = progress;
+					modified = true;
+				}
+				if let Some(last_position) = last_position {
+					c.last_position = last_position;
+					modified = true;
+				}
+
+				if modified {
+					Ok(().into())
+				} else {
+					Err("No changes".into())
+				}
+			})
 		}
 	}
 	impl<T: Config> Pallet<T> {
