@@ -331,6 +331,7 @@ pub mod migration {
 		for position in peak_positions {
 			<Peaks<T>>::insert(position, mmr[position as usize]);
 		}
+		#[cfg(test)]
 		for (position, hash) in mmr.into_iter().enumerate() {
 			<MMRNodeList<T>>::insert(position as NodeIndex, hash);
 		}
