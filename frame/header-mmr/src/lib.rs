@@ -330,7 +330,8 @@ pub mod migration {
 	where
 		T: Config,
 	{
-		let size = 5;
+		let size = migration::take_storage_value::<NodeIndex>(module, b"MMRCounter", &[])
+			.expect("`MMRCounter` MUST be existed; qed");
 
 		migration::remove_storage_prefix(module, b"MMRCounter", &[]);
 
