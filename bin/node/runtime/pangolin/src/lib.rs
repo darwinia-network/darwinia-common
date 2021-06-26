@@ -852,6 +852,11 @@ pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
+		// <--- Hack for local test
+		use frame_support::traits::Currency;
+		let _ = Ring::deposit_creating(&BridgeMillauMessages::relayer_fund_account_id(), 1 << 50);
+		// --->
+
 		darwinia_header_mmr::migration::initialize_new_mmr_state::<Runtime>(b"HeaderMMR", 50);
 		darwinia_relay_authorities::migration::migrate::<Runtime, EthereumRelayAuthoritiesInstance>(
 			b"Instance1DarwiniaRelayAuthorities",
