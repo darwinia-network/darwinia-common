@@ -857,7 +857,7 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 		let _ = Ring::deposit_creating(&BridgeMillauMessages::relayer_fund_account_id(), 1 << 50);
 		// --->
 
-		darwinia_header_mmr::migration::initialize_new_mmr_state::<Runtime>(b"HeaderMMR", 50);
+		darwinia_header_mmr::migration::initialize_new_mmr_state::<Runtime>(b"HeaderMMR", 2);
 		darwinia_relay_authorities::migration::migrate::<Runtime, EthereumRelayAuthoritiesInstance>(
 			b"Instance1DarwiniaRelayAuthorities",
 		);
@@ -866,6 +866,11 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	}
 
 	fn on_runtime_upgrade() -> Weight {
+		// <--- Hack for local test
+		// use frame_support::traits::Currency;
+		// let _ = Ring::deposit_creating(&BridgeMillauMessages::relayer_fund_account_id(), 1 << 50);
+		// --->
+
 		darwinia_header_mmr::migration::initialize_new_mmr_state::<Runtime>(b"HeaderMMR", 50);
 		darwinia_relay_authorities::migration::migrate::<Runtime, EthereumRelayAuthoritiesInstance>(
 			b"Instance1DarwiniaRelayAuthorities",
