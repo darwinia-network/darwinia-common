@@ -137,12 +137,14 @@ use data::*;
 // --- crates.io ---
 use codec::Encode;
 use rand::prelude::*;
+use serde_json::Value;
 // --- github.com ---
 use mmr::MMRStore;
 // --- substrate ---
 use sp_runtime::testing::Digest;
 // --- darwinia ---
 use crate::{mock::*, primitives::*, *};
+use darwinia_header_mmr_rpc_runtime_api::*;
 
 #[test]
 fn codec_digest_should_work() {
@@ -340,5 +342,50 @@ fn prune_darwinia_should_work() {
 		for index in 0..block_number {
 			assert!(off_chain.gen_proof(index).is_ok());
 		}
+
+		fn assert_rpc_result(rpc: &str, params: [NodeIndex; 2]) {
+			let json = serde_json::from_str::<Value>(rpc).unwrap();
+
+			assert_eq!(
+				RuntimeDispatchInfo {
+					mmr_size: json["mmrSize"].as_str().unwrap().parse().unwrap(),
+					proof: Proof(
+						json["proof"]
+							.as_str()
+							.unwrap()
+							.trim_matches(&['[', ']'] as &[_])
+							.split(',')
+							.map(|hex| array_bytes::hex_into_unchecked(hex.trim()))
+							.collect()
+					),
+				},
+				HeaderMmr::gen_proof_rpc(params[0], params[1])
+			);
+		}
+
+		// λ subalfred send-rpc --method headerMMR_genProof --params '[15, 27]' --uri https://rpc.darwinia.network
+		assert_rpc_result(
+			r#"{
+				"mmrSize": "53",
+				"proof": "[0x53239551406c7443ba08a8bf3295b5808f1117809fdc941251859764454b6127,0x9e9af6c7c85c72eca5f6eab91e51f46200d78ac781fce88fd320884af75c1fb0,0xdc74423b38518438f55c30c3039ea411c1884994164133d20b63f0ac158f693c,0xce90f8a4d033368ffa22b61062f1963495922090f25b738248f29d7bd3179747,0x9ef94a314854595c579175bf8a50c377ac674c7daab1b7ce73cd479585bf2243]"
+			}"#,
+			[15, 27],
+		);
+		// λ subalfred send-rpc --method headerMMR_genProof --params '[12, 345]' --uri https://rpc.darwinia.network
+		assert_rpc_result(
+			r#"{
+				"mmrSize": "687",
+				"proof": "[0xf470e3bc1d1675ae7178241dd2e3a86c9a5eb8069138aec2592f5e5e22e8f7c4,0x2176cea5ee7d347933c5b6e59e71868260da55e221c249981daba74140ba9c18,0xdc74423b38518438f55c30c3039ea411c1884994164133d20b63f0ac158f693c,0xce90f8a4d033368ffa22b61062f1963495922090f25b738248f29d7bd3179747,0xd75b80f04d876c18d00ca3c218a11975b3033efb21eca27053ba0ee0444c4734,0x889370a0a23fcb1f5b47c9ed85dd79396fce408e14640a19b897b6defb4685a7,0xdfd961454b76255ea5391ba747e64c1993b36df0eef9f70cbdb80f4839bc607f,0x42847d00d10e4ab1097281098bb01f6339ea0faf2f9df08734f471f241bd2067,0x969c918e8525124ffd0d93a29135b9420e898f277dfc67385900d8e872a9ea19]"
+			}"#,
+			[12, 345],
+		);
+		// λ subalfred send-rpc --method headerMMR_genProof --params '[50, 500]' --uri https://rpc.darwinia.network
+		assert_rpc_result(
+			r#"{
+				"mmrSize": "995",
+				"proof": "[0x6a85080d832bb8c61733c6a1d5205fa2f87514438fa46e9b446917aa8b0f28c7,0x691fa5a6305fdc0c1117cd6eacb9d45d5aed170a98d2143b9e616fc884bd9391,0x13e0e7836729160b07fa9ce24ab44e5bb2d2f25c24f29a604ea70df81c89622d,0x6beb56e3af536d5e4837f7469c22db15fa4a7bae0ce3bbfbf35a469e4ea81ba2,0x44cadf7ac096628db0cd3ccb827a31972cbfcef13de9563ca7c643242ff5f982,0x05d87c7306675244aee90748fb31776b4fbb65fd9082c198944bf03dbace2836,0xdfd961454b76255ea5391ba747e64c1993b36df0eef9f70cbdb80f4839bc607f,0x42847d00d10e4ab1097281098bb01f6339ea0faf2f9df08734f471f241bd2067,0xdf3d2d2278ae5a93db21bcbfcbc3dad584729044afab8b5450ed8d571c151ce7]"
+			}"#,
+			[50, 500],
+		);
 	});
 }
