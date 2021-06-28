@@ -75,7 +75,7 @@ pub mod pallet {
 	use frame_support::{pallet_prelude::*, weights::Weight};
 	use frame_system::pallet_prelude::*;
 	use sp_io::offchain_index;
-	use sp_runtime::{generic::DigestItem, traits::SaturatedConversion};
+	use sp_runtime::generic::DigestItem;
 	#[cfg(any(test, feature = "easy-testing"))]
 	use sp_runtime::{generic::OpaqueDigestItemId, traits::Header};
 	use sp_std::prelude::*;
@@ -250,10 +250,10 @@ pub mod pallet {
 		}
 	}
 	impl<T: Config> MMRT<BlockNumberFor<T>, T::Hash> for Pallet<T> {
-		fn get_root(block_number: BlockNumberFor<T>) -> Option<T::Hash> {
-			let size = mmr::leaf_index_to_mmr_size(block_number.saturated_into());
-
-			<Mmr<RuntimeStorage, T>>::with_size(size).get_root().ok()
+		fn get_root() -> Option<T::Hash> {
+			<Mmr<RuntimeStorage, T>>::with_size(<MmrSize<T>>::get())
+				.get_root()
+				.ok()
 		}
 	}
 
