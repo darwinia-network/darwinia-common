@@ -410,7 +410,7 @@ pub mod pallet {
 					(<frame_system::Pallet<T>>::block_number().saturated_into::<u32>() / 10 * 10
 						+ 10)
 						.saturated_into(),
-				);
+				)?;
 			}
 
 			Ok(().into())
