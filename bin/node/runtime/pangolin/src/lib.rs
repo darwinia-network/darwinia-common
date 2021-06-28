@@ -639,7 +639,7 @@ impl_runtime_apis! {
 			block_number_of_member_leaf: u64,
 			block_number_of_last_leaf: u64
 		) -> HeaderMMRRuntimeDispatchInfo<Hash> {
-			HeaderMMR::gen_proof_rpc(block_number_of_member_leaf, block_number_of_last_leaf )
+			HeaderMMR::gen_proof_rpc(block_number_of_member_leaf, block_number_of_last_leaf)
 		}
 	}
 
@@ -797,11 +797,26 @@ pub struct CustomOnRuntimeUpgrade;
 impl frame_support::traits::OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
-		darwinia_crab_issuing::migration::try_runtime::pre_migrate::<Runtime>()?;
-		darwinia_staking::migrations::v6::pre_migrate::<Runtime>()
+		darwinia_header_mmr::migration::initialize_new_mmr_state::<Runtime>(
+			b"DarwiniaHeaderMMR",
+			2,
+		);
+		darwinia_relay_authorities::migration::migrate::<Runtime, EthereumRelayAuthoritiesInstance>(
+			b"Instance0DarwiniaRelayAuthorities",
+		);
+
+		Ok(())
 	}
 
 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-		0
+		darwinia_header_mmr::migration::initialize_new_mmr_state::<Runtime>(
+			b"DarwiniaHeaderMMR",
+			50,
+		);
+		darwinia_relay_authorities::migration::migrate::<Runtime, EthereumRelayAuthoritiesInstance>(
+			b"Instance0DarwiniaRelayAuthorities",
+		);
+
+		RuntimeBlockWeights::get().max_block
 	}
 }

@@ -12,6 +12,7 @@ version     = "2.2.0"
 [dependencies]
 # crates
 codec = { package = "parity-scale-codec", version = "2.0.1", default-features = false, features = ["derive"] }
+log   = { version = "0.4.14" }
 serde = { version = "1.0.125", optional = true }
 # darwinia
 darwinia-relay-primitives = { default-features = false, path = "../../../primitives/relay" }
@@ -26,11 +27,13 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 # crates
 array-bytes = { version = "1.1.0" }
 # darwinia
-darwinia-balances = { path = "../../balances" }
-darwinia-support  = { path = "../../support" }
+darwinia-balances   = { path = "../../balances" }
+darwinia-header-mmr = { features = ["easy-testing"], path = "../../header-mmr" }
+darwinia-support    = { path = "../../support" }
 # substrate
-sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
-sp-io   = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-core    = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-io      = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-tracing = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
 
 [features]
 default = ["std"]

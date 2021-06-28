@@ -56,31 +56,261 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(test)]
 mod mock;
+#[cfg(test)]
 mod tests;
+
+pub mod types {
+	/// The type use for indexing a node
+	pub type NodeIndex = u64;
+}
+pub use types::*;
+
+pub mod primitives;
+
+pub mod weights;
+
+pub mod migration {
+	// --- paritytech ---
+	use frame_support::migration;
+	// --- darwinia ---
+	use crate::*;
+
+	#[cfg(test)]
+	pub fn initialize_new_mmr_state<T>(size: NodeIndex, mmr: Vec<T::Hash>, pruning_step: NodeIndex)
+	where
+		T: Config,
+	{
+		MmrSize::put(size);
+		PruningConfiguration::put(MmrNodesPruningConfiguration {
+			step: pruning_step,
+			progress: 0,
+			last_position: size,
+		});
+
+		for position in mmr::helper::get_peaks(size) {
+			<Peaks<T>>::insert(position, mmr[position as usize]);
+		}
+		for (position, hash) in mmr.into_iter().enumerate() {
+			<MMRNodeList<T>>::insert(position as NodeIndex, hash);
+		}
+	}
+
+	#[cfg(not(test))]
+	pub fn initialize_new_mmr_state<T>(module: &[u8], pruning_step: NodeIndex)
+	where
+		T: Config,
+	{
+		let size = migration::take_storage_value::<NodeIndex>(module, b"MMRCounter", &[])
+			.expect("`MMRCounter` MUST be existed; qed");
+
+		migration::remove_storage_prefix(module, b"MMRCounter", &[]);
+
+		MmrSize::put(size);
+		PruningConfiguration::put(MmrNodesPruningConfiguration {
+			step: pruning_step,
+			progress: 0,
+			last_position: size,
+		});
+
+		for position in mmr::helper::get_peaks(size) {
+			<Peaks<T>>::insert(
+				position,
+				<MMRNodeList<T>>::get(position).expect("Node MUST be existed; qed"),
+			);
+		}
+	}
+}
 
 #[cfg(feature = "std")]
 use serde::Serialize;
 
-// --- github ---
-use merkle_mountain_range::{
-	leaf_index_to_mmr_size, leaf_index_to_pos, MMRStore, Result as MMRResult, MMR,
-};
-// --- substrate ---
+// --- paritytech ---
 use codec::{Decode, Encode};
-use frame_support::{decl_module, decl_storage};
-use sp_runtime::{
-	generic::{DigestItem, OpaqueDigestItemId},
-	traits::{Hash, Header},
-	RuntimeDebug, SaturatedConversion,
-};
-use sp_std::{marker::PhantomData, prelude::*};
+use frame_support::{decl_module, decl_storage, traits::Get, weights::Weight};
+use frame_system::ensure_root;
+use sp_io::offchain_index;
+use sp_runtime::{generic::DigestItem, traits::SaturatedConversion, DispatchResult, RuntimeDebug};
+#[cfg(any(test, feature = "easy-testing"))]
+use sp_runtime::{generic::OpaqueDigestItemId, traits::Header};
+use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_header_mmr_rpc_runtime_api::{Proof, RuntimeDispatchInfo};
 use darwinia_relay_primitives::MMR as MMRT;
 use darwinia_support::impl_rpc;
+use primitives::*;
+use weights::WeightInfo;
 
-pub const PARENT_MMR_ROOT_LOG_ID: [u8; 4] = *b"MMRR";
+/// The prefix of [`MerkleMountainRangeRootLog`]
+pub const LOG_PREFIX: [u8; 4] = *b"MMRR";
+
+pub trait Config: frame_system::Config {
+	type WeightInfo: WeightInfo;
+
+	/// The offchain-indexing prefix
+	const INDEXING_PREFIX: &'static [u8];
+}
+
+decl_storage! {
+	trait Store for Module<T: Config> as DarwiniaHeaderMMR {
+		/// Size of the MMR
+		pub MmrSize get(fn mmr_size): NodeIndex;
+
+		/// MMR struct of the previous blocks, from first(genesis) to parent hash.
+		pub MMRNodeList get(fn mmr_node_list): map hasher(identity) NodeIndex => Option<T::Hash>;
+
+		/// Peaks of the MMR
+		pub Peaks get(fn peak_of): map hasher(identity) NodeIndex => Option<T::Hash>;
+
+		pub PruningConfiguration get(fn pruning_configuration): MmrNodesPruningConfiguration;
+	}
+}
+
+decl_module! {
+	pub struct Module<T: Config> for enum Call
+	where
+		origin: T::Origin
+	{
+		fn on_initialize(_block_number: T::BlockNumber) -> Weight {
+			PruningConfiguration::try_mutate(
+				|MmrNodesPruningConfiguration {
+					 step,
+					 progress,
+					 last_position,
+				 }| {
+					if *progress > *last_position {
+						return Err(T::DbWeight::get().reads(1));
+					}
+
+					for position in *progress..progress.saturating_add(*step) {
+						if let Some(hash) = <MMRNodeList<T>>::take(position) {
+							hash.using_encoded(|hash| {
+								offchain_index::set(&<Pallet<T>>::offchain_key(position), hash)
+							});
+
+							log::trace!("Pruned node `{:?}` at position `{}`", hash, position);
+						}
+					}
+
+					*progress = progress.saturating_add(*step);
+
+					Ok(T::DbWeight::get().reads_writes(1, *step * 2))
+				},
+			)
+			.map_or_else(|weight| weight, |weight| weight)
+		}
+
+		fn on_finalize(_block_number: T::BlockNumber) {
+			let parent_hash = <frame_system::Pallet<T>>::parent_hash();
+			let mut mmr = <Mmr<RuntimeStorage, T>>::new();
+			let _ = mmr.push(parent_hash);
+
+			match mmr.finalize() {
+				Ok(parent_mmr_root) => {
+					let mmr_root_log = MerkleMountainRangeRootLog::<T::Hash> {
+						prefix: LOG_PREFIX,
+						parent_mmr_root,
+					};
+					let mmr_item = DigestItem::Other(mmr_root_log.encode());
+
+					<frame_system::Pallet<T>>::deposit_log(mmr_item.into());
+				}
+				Err(e) => {
+					log::error!("Failed to finalize MMR due to {}", e);
+				}
+			}
+		}
+
+		#[weight = T::DbWeight::get().writes(1)]
+		pub fn config_pruning(
+			origin,
+			step: Option<NodeIndex>,
+			progress: Option<NodeIndex>,
+			last_position: Option<NodeIndex>
+		) {
+			ensure_root(origin)?;
+
+			PruningConfiguration::try_mutate(|c| {
+				let mut modified = false;
+
+				if let Some(step) = step {
+					c.step = step;
+					modified = true;
+				}
+				if let Some(progress) = progress {
+					c.progress = progress;
+					modified = true;
+				}
+				if let Some(last_position) = last_position {
+					c.last_position = last_position;
+					modified = true;
+				}
+
+				if modified {
+					Ok(().into())
+				} else {
+					DispatchResult::Err("No changes".into())
+				}
+			})?;
+		}
+	}
+}
+
+impl<T: Config> Module<T> {
+	pub fn offchain_key(position: NodeIndex) -> Vec<u8> {
+		(T::INDEXING_PREFIX, position).encode()
+	}
+
+	impl_rpc! {
+		pub fn gen_proof_rpc(
+			block_number_of_member_leaf: NodeIndex,
+			block_number_of_last_leaf: NodeIndex,
+		) -> RuntimeDispatchInfo<T::Hash> {
+			if block_number_of_member_leaf <= block_number_of_last_leaf {
+				let mmr_size = mmr::leaf_index_to_mmr_size(block_number_of_last_leaf);
+
+				if mmr_size <= MmrSize::get() {
+						let position = mmr::leaf_index_to_pos(block_number_of_member_leaf);
+						let mmr = <Mmr<OffchainStorage, T>>::with_size(MmrSize::get());
+
+						if let Ok(merkle_proof) = mmr.gen_proof(position) {
+						return RuntimeDispatchInfo {
+							mmr_size,
+							proof: Proof(merkle_proof.proof_items().to_vec()),
+						};
+					}
+				}
+			}
+
+			Default::default()
+		}
+	}
+
+	// Remove the cfg, once there's a requirement from runtime usage
+	#[cfg(any(test, feature = "easy-testing"))]
+	pub fn find_parent_mmr_root(header: &T::Header) -> Option<T::Hash> {
+		let find_parent_mmr_root = |m: MerkleMountainRangeRootLog<_>| match m.prefix {
+			LOG_PREFIX => Some(m.parent_mmr_root),
+			_ => None,
+		};
+
+		// find the first other digest with the right prefix which converts to
+		// the right kind of mmr root log.
+		header.digest().convert_first(|d| {
+			d.try_to(OpaqueDigestItemId::Other)
+				.and_then(find_parent_mmr_root)
+		})
+	}
+}
+
+impl<T: Config> MMRT<T::BlockNumber, T::Hash> for Pallet<T> {
+	fn get_root(block_number: T::BlockNumber) -> Option<T::Hash> {
+		let size = mmr::leaf_index_to_mmr_size(block_number.saturated_into());
+
+		<Mmr<RuntimeStorage, T>>::with_size(size).get_root().ok()
+	}
+}
 
 #[cfg_attr(feature = "std", derive(Serialize))]
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug)]
@@ -91,149 +321,12 @@ pub struct MerkleMountainRangeRootLog<Hash> {
 	pub parent_mmr_root: Hash,
 }
 
-pub trait Config: frame_system::Config {}
-
-decl_storage! {
-	trait Store for Module<T: Config> as DarwiniaHeaderMMR {
-		/// MMR struct of the previous blocks, from first(genesis) to parent hash.
-		pub MMRNodeList get(fn mmr_node_list): map hasher(identity) u64 => Option<T::Hash>;
-
-		/// The MMR size and length of the mmr node list
-		pub MMRCounter get(fn mmr_counter): u64;
-	}
-}
-
-decl_module! {
-	pub struct Module<T: Config> for enum Call
-	where
-		origin: T::Origin
-	{
-		fn on_finalize(_block_number: T::BlockNumber) {
-			let store = <ModuleMMRStore<T>>::default();
-			let parent_hash = <frame_system::Pallet<T>>::parent_hash();
-			let mut mmr = <MMR<_, MMRMerge<T>, _>>::new(MMRCounter::get(), store);
-
-			// Update MMR and add mmr root to digest of block header
-			let _ = mmr.push(parent_hash);
-
-			if let Ok(parent_mmr_root) = mmr.get_root() {
-				if mmr.commit().is_ok() {
-					let mmr_root_log = MerkleMountainRangeRootLog::<T::Hash> {
-						prefix: PARENT_MMR_ROOT_LOG_ID,
-						parent_mmr_root: parent_mmr_root.into()
-					};
-					let mmr_item = DigestItem::Other(mmr_root_log.encode());
-
-					<frame_system::Pallet<T>>::deposit_log(mmr_item.into());
-				} else {
-					log::error!("[darwinia-header-mmr] FAILED to Commit MMR");
-				}
-			} else {
-				log::error!("[darwinia-header-mmr] FAILED to Calculate MMR");
-			}
-		}
-	}
-}
-
-impl<T: Config> Module<T> {
-	impl_rpc! {
-		pub fn gen_proof_rpc(
-			block_number_of_member_leaf: u64,
-			block_number_of_last_leaf: u64,
-		) -> RuntimeDispatchInfo<T::Hash> {
-			if block_number_of_member_leaf <= block_number_of_last_leaf {
-				let store = <ModuleMMRStore<T>>::default();
-				let mmr_size = leaf_index_to_mmr_size(block_number_of_last_leaf);
-				if mmr_size <= MMRCounter::get() {
-					let mmr = <MMR<_, MMRMerge<T>, _>>::new(mmr_size, store);
-					let pos = leaf_index_to_pos(block_number_of_member_leaf);
-
-					if let Ok(merkle_proof) = mmr.gen_proof(vec![pos]) {
-						return RuntimeDispatchInfo {
-							mmr_size,
-							proof: Proof(merkle_proof.proof_items().to_vec()),
-						};
-					}
-				}
-			}
-
-			RuntimeDispatchInfo {
-				mmr_size: 0,
-				proof: Proof(vec![]),
-			}
-		}
-	}
-
-	// TODO: For future rpc calls
-	fn _find_parent_mmr_root(header: T::Header) -> Option<T::Hash> {
-		let id = OpaqueDigestItemId::Other;
-
-		let filter_log = |MerkleMountainRangeRootLog {
-		                      prefix,
-		                      parent_mmr_root,
-		                  }: MerkleMountainRangeRootLog<T::Hash>| match prefix {
-			PARENT_MMR_ROOT_LOG_ID => Some(parent_mmr_root),
-			_ => None,
-		};
-
-		// find the first other digest with the right prefix which converts to
-		// the right kind of mmr root log.
-		header
-			.digest()
-			.convert_first(|l| l.try_to(id).and_then(filter_log))
-	}
-}
-
-pub struct MMRMerge<T>(PhantomData<T>);
-impl<T: Config> merkle_mountain_range::Merge for MMRMerge<T> {
-	type Item = <T as frame_system::Config>::Hash;
-
-	fn merge(lhs: &Self::Item, rhs: &Self::Item) -> Self::Item {
-		let encodable = (lhs, rhs);
-		<T as frame_system::Config>::Hashing::hash_of(&encodable)
-	}
-}
-
-pub struct ModuleMMRStore<T>(PhantomData<T>);
-impl<T> Default for ModuleMMRStore<T> {
-	fn default() -> Self {
-		ModuleMMRStore(sp_std::marker::PhantomData)
-	}
-}
-impl<T: Config> MMRStore<T::Hash> for ModuleMMRStore<T> {
-	fn get_elem(&self, pos: u64) -> MMRResult<Option<T::Hash>> {
-		Ok(<Module<T>>::mmr_node_list(pos))
-	}
-
-	fn append(&mut self, pos: u64, elems: Vec<T::Hash>) -> MMRResult<()> {
-		let mmr_count = MMRCounter::get();
-		if pos != mmr_count {
-			// Must be append only.
-			Err(merkle_mountain_range::Error::InconsistentStore)?;
-		}
-		let elems_len = elems.len() as u64;
-
-		for (i, elem) in elems.into_iter().enumerate() {
-			<MMRNodeList<T>>::insert(mmr_count + i as u64, elem);
-		}
-
-		// increment counter
-		MMRCounter::put(mmr_count + elems_len);
-
-		Ok(())
-	}
-}
-
-impl<T: Config> MMRT<T::BlockNumber, T::Hash> for Module<T> {
-	fn get_root(block_number: T::BlockNumber) -> Option<T::Hash> {
-		let store = <ModuleMMRStore<T>>::default();
-		let mmr_size = leaf_index_to_mmr_size(block_number.saturated_into::<u64>() as _);
-		let mmr = <MMR<_, MMRMerge<T>, _>>::new(mmr_size, store);
-
-		if let Ok(mmr_root) = mmr.get_root() {
-			Some(mmr_root)
-		} else {
-			None
-		}
-	}
+#[derive(Clone, Default, Eq, PartialEq, Encode, Decode, RuntimeDebug)]
+pub struct MmrNodesPruningConfiguration {
+	/// The nodes num that should be pruned each block
+	pub step: NodeIndex,
+	/// The progress of last time pruning
+	pub progress: NodeIndex,
+	/// Should stop pruning after reach the last node's position
+	pub last_position: NodeIndex,
 }

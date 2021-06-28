@@ -325,7 +325,7 @@ decl_module! {
 				T::EcdsaAuthorities::schedule_mmr_root((
 					<frame_system::Pallet<T>>::block_number().saturated_into::<u32>()
 						/ 10 * 10 + 10
-				).saturated_into());
+				).saturated_into())?;
 			}
 		}
 

@@ -182,7 +182,9 @@ macro_rules! decl_tests {
 		impl RelayAuthorityProtocol<BlockNumber> for EcdsaAuthorities {
 			type Signer = EthereumAddress;
 
-			fn schedule_mmr_root(_: BlockNumber) {}
+			fn schedule_mmr_root(_: BlockNumber) -> DispatchResult {
+				Ok(())
+			}
 
 			fn check_authorities_change_to_sync(_: Term, _: Vec<Self::Signer>) -> DispatchResult {
 				Ok(())
