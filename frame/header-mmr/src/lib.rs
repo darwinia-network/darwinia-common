@@ -73,6 +73,7 @@ pub mod weights;
 
 pub mod migration {
 	// --- paritytech ---
+	#[cfg(not(test))]
 	use frame_support::migration;
 	// --- darwinia ---
 	use crate::*;
@@ -271,10 +272,9 @@ impl<T: Config> Module<T> {
 				let mmr_size = mmr::leaf_index_to_mmr_size(block_number_of_last_leaf);
 
 				if mmr_size <= MmrSize::get() {
-						let position = mmr::leaf_index_to_pos(block_number_of_member_leaf);
-						let mmr = <Mmr<OffchainStorage, T>>::with_size(MmrSize::get());
+					let mmr = <Mmr<OffchainStorage, T>>::with_size(mmr_size);
 
-						if let Ok(merkle_proof) = mmr.gen_proof(position) {
+					if let Ok(merkle_proof) = mmr.gen_proof(block_number_of_member_leaf) {
 						return RuntimeDispatchInfo {
 							mmr_size,
 							proof: Proof(merkle_proof.proof_items().to_vec()),
