@@ -762,7 +762,7 @@ where
 	}
 
 	pub fn prepare_mmr_root_to_sign(block_number: BlockNumber<T>) {
-		if let Some(index) = <MmrRootsToSignKeys<T, I>>::get()
+		if let Some(schedule) = <MmrRootsToSignKeys<T, I>>::get()
 			.into_iter()
 			// In order to get the schedule block number's MMR root
 			// 	1. MMR root doesn't contain itself(header hash)
@@ -770,15 +770,15 @@ where
 			// That's why we need to plus `2` to the scheduled block number
 			.find(|schedule| *schedule + 2_u32.into() == block_number)
 		{
-			if let Some(mmr_root) = T::DarwiniaMMR::get_root(index) {
-				let _ = <MmrRootsToSign<T, I>>::try_mutate(index, |maybe_mmr_root_to_sign| {
+			if let Some(mmr_root) = T::DarwiniaMMR::get_root() {
+				let _ = <MmrRootsToSign<T, I>>::try_mutate(schedule, |maybe_mmr_root_to_sign| {
 					if maybe_mmr_root_to_sign.is_none() {
 						*maybe_mmr_root_to_sign = Some(MmrRootToSign::new(mmr_root));
 
 						log::trace!(
 							"Success to `prepare_mmr_root_to_sign` `{:?}` for block `{:?}` at block `{:?}`",
 							mmr_root,
-							index,
+							schedule,
 							block_number
 						);
 
@@ -790,7 +790,7 @@ where
 			} else {
 				log::error!(
 					"Failed to `get_root` while `prepare_mmr_root_to_sign` for block `{:?}` at block `{:?}`",
-					index,
+					schedule,
 					block_number
 				);
 			}

@@ -57,11 +57,11 @@ pub trait RelayAuthorityProtocol<BlockNumber> {
 }
 
 pub trait MMR<BlockNumber, Root> {
-	fn get_root(block_number: BlockNumber) -> Option<Root>;
+	fn get_root() -> Option<Root>;
 }
 // Only for test
 impl<BlockNumber, Root> MMR<BlockNumber, Root> for () {
-	fn get_root(_: BlockNumber) -> Option<Root> {
+	fn get_root() -> Option<Root> {
 		None
 	}
 }

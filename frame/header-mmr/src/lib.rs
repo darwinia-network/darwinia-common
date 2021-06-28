@@ -132,7 +132,7 @@ use codec::{Decode, Encode};
 use frame_support::{decl_module, decl_storage, traits::Get, weights::Weight};
 use frame_system::ensure_root;
 use sp_io::offchain_index;
-use sp_runtime::{generic::DigestItem, traits::SaturatedConversion, DispatchResult, RuntimeDebug};
+use sp_runtime::{generic::DigestItem, DispatchResult, RuntimeDebug};
 #[cfg(any(test, feature = "easy-testing"))]
 use sp_runtime::{generic::OpaqueDigestItemId, traits::Header};
 use sp_std::prelude::*;
@@ -305,10 +305,10 @@ impl<T: Config> Module<T> {
 }
 
 impl<T: Config> MMRT<T::BlockNumber, T::Hash> for Pallet<T> {
-	fn get_root(block_number: T::BlockNumber) -> Option<T::Hash> {
-		let size = mmr::leaf_index_to_mmr_size(block_number.saturated_into());
-
-		<Mmr<RuntimeStorage, T>>::with_size(size).get_root().ok()
+	fn get_root() -> Option<T::Hash> {
+		<Mmr<RuntimeStorage, T>>::with_size(MmrSize::get())
+			.get_root()
+			.ok()
 	}
 }
 
