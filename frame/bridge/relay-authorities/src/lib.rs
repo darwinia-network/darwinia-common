@@ -28,8 +28,8 @@ pub mod migration {
 		// --- paritytech ---
 		use frame_support::migration;
 
-		migration::remove_storage_prefix(module, b"MmrRootsToSign", &[]);
-		migration::remove_storage_prefix(module, b"MmrRootsToSignKeys", &[]);
+		migration::remove_storage_prefix(module, b"MMRRootsToSign", &[]);
+		migration::remove_storage_prefix(module, b"MMRRootsToSignKeys", &[]);
 	}
 }
 
