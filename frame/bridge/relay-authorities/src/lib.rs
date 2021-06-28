@@ -21,7 +21,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod weights;
-// --- darwinia ---
 pub use weights::WeightInfo;
 
 pub mod migration {
@@ -90,6 +89,8 @@ use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::balance::*;
 use types::*;
 
+pub const MAX_SCHEDULED_NUM: usize = 10;
+
 pub trait Config<I: Instance = DefaultInstance>: frame_system::Config {
 	type Event: From<Event<Self, I>> + Into<<Self as frame_system::Config>::Event>;
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
@@ -106,8 +107,6 @@ pub trait Config<I: Instance = DefaultInstance>: frame_system::Config {
 	type SubmitDuration: Get<Self::BlockNumber>;
 	type WeightInfo: WeightInfo;
 }
-
-pub const MAX_SCHEDULED_NUM: usize = 10;
 
 decl_event! {
 	pub enum Event<T, I: Instance = DefaultInstance>
