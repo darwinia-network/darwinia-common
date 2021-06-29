@@ -46,7 +46,7 @@ pub trait Sign<BlockNumber> {
 pub trait RelayAuthorityProtocol<BlockNumber> {
 	type Signer;
 
-	fn schedule_mmr_root(block_number: BlockNumber);
+	fn schedule_mmr_root(block_number: BlockNumber) -> DispatchResult;
 
 	fn check_authorities_change_to_sync(
 		term: Term,
@@ -57,11 +57,11 @@ pub trait RelayAuthorityProtocol<BlockNumber> {
 }
 
 pub trait MMR<BlockNumber, Root> {
-	fn get_root(block_number: BlockNumber) -> Option<Root>;
+	fn get_root() -> Option<Root>;
 }
 // Only for test
 impl<BlockNumber, Root> MMR<BlockNumber, Root> for () {
-	fn get_root(_: BlockNumber) -> Option<Root> {
+	fn get_root() -> Option<Root> {
 		None
 	}
 }
@@ -116,4 +116,18 @@ pub struct ScheduledAuthoritiesChange<AccountId, Signer, RingBalance, BlockNumbe
 	pub next_authorities: Vec<RelayAuthority<AccountId, Signer, RingBalance, BlockNumber>>,
 	/// The deadline of the previous authorities to sign for the next authorities
 	pub deadline: BlockNumber,
+}
+
+#[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug)]
+pub struct MmrRootToSign<MmrRoot, Signer, Signature> {
+	pub mmr_root: MmrRoot,
+	pub signatures: Vec<(Signer, Signature)>,
+}
+impl<MmrRoot, Signer, Signature> MmrRootToSign<MmrRoot, Signer, Signature> {
+	pub fn new(mmr_root: MmrRoot) -> Self {
+		Self {
+			mmr_root,
+			signatures: vec![],
+		}
+	}
 }
