@@ -43,12 +43,11 @@ use darwinia_support::{
 	balance::*,
 	evm::POW_9,
 	s2s::{source_root_converted_id, RelayMessageCaller, ToEthAddress},
-	traits::CallToPayload,
 	PalletDigest,
 };
 use dp_asset::{
 	token::{Token, TokenInfo},
-	BridgeAssetReceiver, RecipientAccount,
+	RecipientAccount,
 };
 use dp_contract::mapping_token_factory::{MappingTokenFactory as mtf, TokenBurnInfo};
 
@@ -76,10 +75,8 @@ pub mod pallet {
 		type BridgedAccountIdConverter: Convert<H256, Self::AccountId>;
 		type BridgedChainId: Get<ChainId>;
 		type ToEthAddressT: ToEthAddress<Self::AccountId>;
-		type RemoteUnlockCall: BridgeAssetReceiver<RecipientAccount<Self::AccountId>>;
-
 		type OutboundPayload: Parameter + Size;
-		type CallToPayload: CallToPayload<Self::OutboundPayload>;
+		type CallEncoder: EncodeCall<Self::AccountId, Self::OutboundPayload>;
 		type FeeAccount: Get<Option<Self::AccountId>>;
 		type MessageSender: RelayMessageCaller<Self::OutboundPayload, RingBalance<Self>>;
 	}
@@ -321,8 +318,9 @@ impl<T: Config> Pallet<T> {
 		fee: RingBalance<T>,
 		burn_info: TokenBurnInfo,
 	) -> Result<(), DispatchError> {
-		let (spec_version, token_type, address, amount) = (
+		let (spec_version, weight, token_type, address, amount) = (
 			burn_info.spec_version,
+			burn_info.weight,
 			burn_info.token_type,
 			burn_info.source,
 			burn_info.amount,
@@ -332,9 +330,8 @@ impl<T: Config> Pallet<T> {
 		let token: Token = (token_type, TokenInfo::new(address, Some(amount), None)).into();
 		let account = RecipientAccount::DarwiniaAccount(account_id.into());
 
-		let encoded = T::RemoteUnlockCall::encode_call(token, account)
+		let payload = T::CallEncoder::encode_remote_unlock(spec_version, weight, token, account)
 			.map_err(|_| Error::<T>::EncodeInvalid)?;
-		let payload = T::CallToPayload::to_payload(spec_version, encoded);
 		T::MessageSender::send_message(payload, fee).map_err(|_| Error::<T>::SendMessageFailed)?;
 		Ok(())
 	}
@@ -346,4 +343,13 @@ impl<T: Config> Pallet<T> {
 		ensure!(account == &source_root, Error::<T>::InvalidOrigin);
 		Ok(T::ToEthAddressT::into_ethereum_id(account))
 	}
+}
+
+pub trait EncodeCall<AccountId, Payload> {
+	fn encode_remote_unlock(
+		spec_version: u32,
+		weight: u64,
+		token: Token,
+		recipient: RecipientAccount<AccountId>,
+	) -> Result<Payload, ()>;
 }

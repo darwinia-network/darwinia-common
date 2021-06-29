@@ -217,6 +217,7 @@ impl TokenRegisterInfo {
 #[derive(Debug, PartialEq, Eq)]
 pub struct TokenBurnInfo {
 	pub spec_version: u32,
+	pub weight: u64,
 	pub token_type: u32,
 	pub backing: H160,
 	pub sender: H160,
@@ -230,6 +231,7 @@ impl TokenBurnInfo {
 	pub fn decode(data: &[u8]) -> AbiResult<Self> {
 		let tokens = ethabi::decode(
 			&[
+				ParamType::Uint(256),
 				ParamType::Uint(256),
 				ParamType::Uint(256),
 				ParamType::Address,
@@ -250,9 +252,11 @@ impl TokenBurnInfo {
 			tokens[5].clone(),
 			tokens[6].clone(),
 			tokens[7].clone(),
+			tokens[8].clone(),
 		) {
 			(
 				Token::Uint(spec_version),
+				Token::Uint(weight),
 				Token::Uint(token_type),
 				Token::Address(backing),
 				Token::Address(sender),
@@ -262,6 +266,7 @@ impl TokenBurnInfo {
 				Token::Uint(fee),
 			) => Ok(TokenBurnInfo {
 				spec_version: spec_version.low_u32(),
+				weight: weight.low_u64(),
 				token_type: token_type.low_u32(),
 				backing,
 				sender,

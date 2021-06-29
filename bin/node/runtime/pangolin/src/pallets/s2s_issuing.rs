@@ -6,9 +6,9 @@ use pallet_bridge_messages::Instance1 as Millau;
 use sp_runtime::DispatchErrorWithPostInfo;
 // --- darwinia ---
 use crate::*;
-use darwinia_s2s_issuing::Config;
+use darwinia_s2s_issuing::{Config, EncodeCall};
 use darwinia_support::s2s::{RelayMessageCaller, TruncateToEthAddress};
-use dp_asset::{BridgeAssetReceiver, RecipientAccount};
+use dp_asset::RecipientAccount;
 
 pub struct ToMillauMessageRelayCaller;
 impl RelayMessageCaller<ToMillauMessagePayload, Balance> for ToMillauMessageRelayCaller {
@@ -22,17 +22,27 @@ impl RelayMessageCaller<ToMillauMessagePayload, Balance> for ToMillauMessageRela
 	}
 }
 
-pub struct MillauBackingUnlockAsset;
-impl BridgeAssetReceiver<RecipientAccount<AccountId>> for MillauBackingUnlockAsset {
-	fn encode_call(token: Token, recipient: RecipientAccount<AccountId>) -> Result<Vec<u8>, ()> {
+pub struct MillauCallEncoder;
+
+impl EncodeCall<AccountId, ToMillauMessagePayload> for MillauCallEncoder {
+	fn encode_remote_unlock(
+		spec_version: u32,
+		weight: u64,
+		token: Token,
+		recipient: RecipientAccount<AccountId>,
+	) -> Result<ToMillauMessagePayload, ()> {
 		match recipient {
 			RecipientAccount::<AccountId>::DarwiniaAccount(r) => {
-				return Ok(
-					MillauRuntime::Sub2SubBacking(MillauSub2SubBackingCall::remote_unlock(
-						token, r,
-					))
-					.encode(),
-				)
+				let call = MillauRuntime::Sub2SubBacking(MillauSub2SubBackingCall::remote_unlock(
+					token, r,
+				))
+				.encode();
+				return Ok(ToMillauMessagePayload {
+					spec_version,
+					weight,
+					origin: bp_message_dispatch::CallOrigin::SourceRoot,
+					call,
+				});
 			}
 			_ => Err(()),
 		}
@@ -54,8 +64,7 @@ impl Config for Runtime {
 	type BridgedAccountIdConverter = AccountIdConverter;
 	type BridgedChainId = MillauChainId;
 	type ToEthAddressT = TruncateToEthAddress;
-	type RemoteUnlockCall = MillauBackingUnlockAsset;
 	type OutboundPayload = ToMillauMessagePayload;
-	type CallToPayload = MillauCallToPayload;
+	type CallEncoder = MillauCallEncoder;
 	type MessageSender = ToMillauMessageRelayCaller;
 }

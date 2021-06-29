@@ -52,7 +52,6 @@ use darwinia_support::{
 		source_root_converted_id, to_bytes32, RelayMessageCaller, BACK_ERC20_RING, RING_DECIMAL,
 		RING_NAME, RING_SYMBOL,
 	},
-	traits::CallToPayload,
 };
 use dp_asset::{
 	token::{Token, TokenInfo, TokenOption},
@@ -141,6 +140,7 @@ pub mod pallet {
 		pub fn register_and_remote_create(
 			origin: OriginFor<T>,
 			spec_version: u32,
+			weight: u64,
 			fee: RingBalance<T>,
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
@@ -158,7 +158,8 @@ pub mod pallet {
 					decimal: RING_DECIMAL,
 				}),
 			});
-			let payload = T::CallEncoder::encode_remote_register(spec_version, token.clone());
+			let payload =
+				T::CallEncoder::encode_remote_register(spec_version, weight, token.clone());
 			T::MessageSender::send_message(payload, fee).map_err(|e| {
 				log::info!("s2s-backing: register token failed {:?}", e);
 				Error::<T>::SendMessageFailed
@@ -176,6 +177,7 @@ pub mod pallet {
 		pub fn lock_and_remote_issue(
 			origin: OriginFor<T>,
 			spec_version: u32,
+			weight: u64,
 			#[pallet::compact] value: RingBalance<T>,
 			#[pallet::compact] fee: RingBalance<T>,
 			recipient: EthereumAddress,
@@ -208,8 +210,9 @@ pub mod pallet {
 			});
 
 			let account = RecipientAccount::EthereumAccount(recipient);
-			let payload = T::CallEncoder::encode_remote_issue(spec_version, token.clone(), account)
-				.map_err(|_| Error::<T>::EncodeInvalid)?;
+			let payload =
+				T::CallEncoder::encode_remote_issue(spec_version, weight, token.clone(), account)
+					.map_err(|_| Error::<T>::EncodeInvalid)?;
 			T::MessageSender::send_message(payload, fee)
 				.map_err(|_| Error::<T>::SendMessageFailed)?;
 			Self::deposit_event(Event::TokenLocked(token, user, recipient, amount));
@@ -287,13 +290,12 @@ pub mod pallet {
 /// Encode call
 pub trait EncodeCall<AccountId, MessagePayload> {
 	/// Encode issuing pallet remote_register call
-	fn encode_remote_register(spec_version: u32, token: Token) -> MessagePayload;
+	fn encode_remote_register(spec_version: u32, weight: u64, token: Token) -> MessagePayload;
 	/// Encode issuing pallet remote_issue call
 	fn encode_remote_issue(
 		spec_version: u32,
+		weight: u64,
 		token: Token,
 		recipient: RecipientAccount<AccountId>,
 	) -> Result<MessagePayload, ()>;
-	/// Transfer call to message payload
-	fn to_payload(spec_version: u32, call: Vec<u8>) -> MessagePayload;
 }

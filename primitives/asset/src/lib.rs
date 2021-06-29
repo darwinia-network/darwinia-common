@@ -20,12 +20,8 @@
 
 use codec::{Decode, Encode};
 use ethereum_primitives::EthereumAddress;
-use sp_std::vec::Vec;
 
 pub mod token;
-pub trait BridgeAssetReceiver<R> {
-	fn encode_call(token: token::Token, recipient: R) -> Result<Vec<u8>, ()>;
-}
 
 #[derive(Encode, Decode, Clone, Debug, Eq, PartialEq)]
 pub enum RecipientAccount<AccountId> {
