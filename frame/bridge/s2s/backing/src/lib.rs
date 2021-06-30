@@ -27,13 +27,12 @@ pub use weights::WeightInfo;
 
 // --- crates ---
 use ethereum_primitives::EthereumAddress;
-use ethereum_types::{Address, H160, H256, U256};
+use ethereum_types::{H256, U256};
 // --- substrate ---
 use bp_runtime::{ChainId, Size};
 use frame_support::{
-	decl_error, decl_event, decl_module, decl_storage, ensure,
+	ensure,
 	pallet_prelude::*,
-	parameter_types,
 	traits::{Currency, ExistenceRequirement::*, Get},
 	weights::Weight,
 	PalletId,
@@ -41,10 +40,10 @@ use frame_support::{
 use frame_system::{ensure_signed, pallet_prelude::*};
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::{
-	traits::{AccountIdConversion, Convert, Dispatchable, Saturating, Zero},
+	traits::{AccountIdConversion, Convert, Saturating, Zero},
 	DispatchError, SaturatedConversion,
 };
-use sp_std::{convert::TryFrom, prelude::*, vec::Vec};
+use sp_std::{convert::TryFrom, prelude::*};
 // --- darwinia ---
 use darwinia_support::{
 	balance::*,
@@ -109,8 +108,8 @@ pub mod pallet {
 		Erc20NotSupported,
 		/// Invalid token type
 		InvalidTokenType,
-		/// Invalid token option
-		InvalidTokenOption,
+		/// Invalid token value
+		InvalidTokenAmount,
 		/// Insufficient balance
 		InsufficientBalance,
 		/// Ring Lock LIMITED
@@ -145,8 +144,7 @@ pub mod pallet {
 				T::RingCurrency::transfer(&user, &fee_account, fee, KeepAlive)?;
 			}
 			let token = Token::Native(TokenInfo {
-				address: array_bytes::hex_try_into(BACK_ERC20_RING)
-					.map_err(|_| Error::<T>::SendMessageFailed)?,
+				address: array_bytes::hex2array_unchecked(BACK_ERC20_RING).into(),
 				value: None,
 				option: Some(TokenOption {
 					name: to_bytes32(RING_NAME),
@@ -227,7 +225,7 @@ pub mod pallet {
 
 			// the s2s message relay has been verified the message comes from the issuing pallet with the
 			// chainID and issuing sender address.
-			// here only we need is to check the sender is in whitelist
+			// here only we need is to check the sender is root account
 			Self::verify_origin(&user)?;
 
 			let token_info = match &token {
@@ -243,7 +241,7 @@ pub mod pallet {
 			};
 			let amount = match token_info.value {
 				Some(value) => value,
-				_ => return Err(<Error<T>>::InvalidTokenType.into()),
+				_ => return Err(<Error<T>>::InvalidTokenAmount.into()),
 			};
 
 			// Make sure the user's balance is enough to lock
