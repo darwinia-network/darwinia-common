@@ -25,7 +25,6 @@ use codec::{Decode, Encode, FullCodec};
 // --- substrate ---
 use sp_runtime::{traits::Zero, DispatchError, DispatchResult, RuntimeDebug};
 use sp_std::prelude::*;
-use sp_std::vec;
 
 pub trait RelayHeaderParcelInfo {
 	type HeaderId: Clone;
