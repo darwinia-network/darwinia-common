@@ -78,11 +78,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 		#[pallet::constant]
-		type FeePalletId: Get<PalletId>;
-		#[pallet::constant]
 		type RingLockMaxLimit: Get<RingBalance<Self>>;
-		#[pallet::constant]
-		type AdvancedFee: Get<RingBalance<Self>>;
 		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
 		type BridgedAccountIdConverter: Convert<H256, Self::AccountId>;
@@ -271,10 +267,6 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		pub fn pallet_account_id() -> T::AccountId {
 			T::PalletId::get().into_account()
-		}
-
-		pub fn fee_account_id() -> T::AccountId {
-			T::FeePalletId::get().into_account()
 		}
 
 		fn verify_origin(account: &T::AccountId) -> Result<(), DispatchError> {
