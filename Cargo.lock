@@ -8537,7 +8537,7 @@ dependencies = [
  "futures 0.3.15",
  "httparse",
  "log",
- "rand 0.8.3",
+ "rand 0.8.4",
  "sha-1 0.9.6",
 ]
 
