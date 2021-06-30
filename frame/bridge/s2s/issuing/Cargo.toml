@@ -20,7 +20,6 @@ serde_json     = { version = "1.0.64", optional = true }
 sha3           = { version = "0.9.1", default-features = false }
 # darwinia
 ethereum-primitives       = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
-darwinia-ethereum-issuing = { default-features = false, path = "../../ethereum/issuing" }
 darwinia-evm              = { default-features = false, path = "../../../evm" }
 darwinia-support          = { default-features = false, path = "../../../support" }
 dp-asset          		  = { default-features = false, path = "../../../../primitives/asset" }
