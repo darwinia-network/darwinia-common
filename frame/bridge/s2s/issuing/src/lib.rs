@@ -71,7 +71,7 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
-		type ReceiverAccountId: From<[u8; 32]> + Into<Self::AccountId>;
+		type ReceiverAccountId: From<[u8; 32]> + Into<Self::AccountId> + Clone;
 		type BridgedAccountIdConverter: Convert<H256, Self::AccountId>;
 		type BridgedChainId: Get<ChainId>;
 		type ToEthAddressT: ToEthAddress<Self::AccountId>;
@@ -120,6 +120,8 @@ pub mod pallet {
 				let fee = Self::transform_dvm_balance(burn_info.fee);
 				if let Some(fee_account) = T::FeeAccount::get() {
 					// Since fee account will represent use to make a cross chain call, give fee to fee account here.
+					// the fee transfer path
+					// user -> mapping_token_factory(caller) -> fee_account -> fee_fund -> relayers
 					<T as Config>::RingCurrency::transfer(&caller, &fee_account, fee, KeepAlive)?;
 				}
 
@@ -161,7 +163,7 @@ pub mod pallet {
 
 					Self::transact_mapping_factory(input)?;
 					mapped_address = Self::mapped_token_address(backing, token_info.address)?;
-					Self::deposit_event(Event::TokenCreated(
+					Self::deposit_event(Event::TokenRegistered(
 						user,
 						backing,
 						token_info.address,
@@ -183,7 +185,7 @@ pub mod pallet {
 			let user = ensure_signed(origin)?;
 			// the s2s message relay has been verified that the message comes from the backing chain with the
 			// chainID and backing sender address.
-			// here only we need is to check the sender is in whitelist
+			// here only we need is to check the sender is root
 			let backing = Self::verify_origin(&user)?;
 
 			let (_, token_info) = token
@@ -201,7 +203,7 @@ pub mod pallet {
 				let input = mtf::encode_cross_receive(mapped_address, recipient, value)
 					.map_err(|_| Error::<T>::InvalidMintEncoding)?;
 				Self::transact_mapping_factory(input)?;
-				Self::deposit_event(Event::TokenRedeemed(
+				Self::deposit_event(Event::TokenIssued(
 					backing,
 					mapped_address,
 					recipient,
@@ -217,9 +219,14 @@ pub mod pallet {
 	#[pallet::metadata(T::AccountId = "AccountId")]
 	pub enum Event<T: Config> {
 		/// Create new token
-		TokenCreated(AccountId<T>, H160, H160, H160),
+		/// [user, backing, source_address, mapping_address]
+		TokenRegistered(AccountId<T>, H160, H160, H160),
 		/// Redeem Token
-		TokenRedeemed(H160, H160, H160, U256),
+		/// [backing, mapping_address, recipient, amount]
+		TokenIssued(H160, H160, H160, U256),
+		/// Token Burned and request Remote unlock
+		/// [spec_version, weight, tokentype, source, amount, recipient, fee]
+		TokenBurned(u32, u64, u32, H160, U256, AccountId<T>, U256),
 	}
 
 	#[pallet::error]
@@ -328,11 +335,20 @@ impl<T: Config> Pallet<T> {
 		let account_id: T::ReceiverAccountId =
 			array_bytes::dyn_into!(burn_info.recipient.as_slice(), 32);
 		let token: Token = (token_type, TokenInfo::new(address, Some(amount), None)).into();
-		let account = RecipientAccount::DarwiniaAccount(account_id.into());
+		let account = RecipientAccount::DarwiniaAccount(account_id.clone().into());
 
 		let payload = T::CallEncoder::encode_remote_unlock(spec_version, weight, token, account)
 			.map_err(|_| Error::<T>::EncodeInvalid)?;
 		T::MessageSender::send_message(payload, fee).map_err(|_| Error::<T>::SendMessageFailed)?;
+		Self::deposit_event(Event::TokenBurned(
+			spec_version,
+			weight,
+			token_type,
+			address,
+			amount,
+			account_id.into(),
+			burn_info.fee,
+		));
 		Ok(())
 	}
 
