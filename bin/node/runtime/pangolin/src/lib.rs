@@ -272,8 +272,8 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangolin"),
 	impl_name: sp_runtime::create_runtime_str!("Pangolin"),
 	authoring_version: 1,
-	// crate version ~2.4.0 := >=2.4.0, <2.5.0
-	spec_version: 2402,
+	// crate version ~2.5.0 := >=2.5.0, <2.6.0
+	spec_version: 2501,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -380,6 +380,8 @@ frame_support::construct_runtime! {
 		BridgeMillauMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 43,
 		BridgeMillauDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 44,
 		BridgeMillauGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 45,
+
+		BSC: darwinia_bridge_bsc::{Pallet, Call, Storage, Config} = 46,
 	}
 }
 
@@ -631,7 +633,7 @@ impl_runtime_apis! {
 			block_number_of_member_leaf: u64,
 			block_number_of_last_leaf: u64
 		) -> HeaderMMRRuntimeDispatchInfo<Hash> {
-			HeaderMMR::gen_proof_rpc(block_number_of_member_leaf, block_number_of_last_leaf )
+			HeaderMMR::gen_proof_rpc(block_number_of_member_leaf, block_number_of_last_leaf)
 		}
 	}
 
@@ -851,11 +853,31 @@ pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
+		// <--- Hack for local test
+		use frame_support::traits::Currency;
+		let _ = Ring::deposit_creating(&BridgeMillauMessages::relayer_fund_account_id(), 1 << 50);
+		// --->
+
+		darwinia_header_mmr::migration::initialize_new_mmr_state::<Runtime>(b"HeaderMMR", 2);
+		darwinia_relay_authorities::migration::migrate::<Runtime, EthereumRelayAuthoritiesInstance>(
+			b"Instance1DarwiniaRelayAuthorities",
+		);
+
 		Ok(())
 	}
 
 	fn on_runtime_upgrade() -> Weight {
-		0
+		// <--- Hack for local test
+		// use frame_support::traits::Currency;
+		// let _ = Ring::deposit_creating(&BridgeMillauMessages::relayer_fund_account_id(), 1 << 50);
+		// --->
+
+		darwinia_header_mmr::migration::initialize_new_mmr_state::<Runtime>(b"HeaderMMR", 50);
+		darwinia_relay_authorities::migration::migrate::<Runtime, EthereumRelayAuthoritiesInstance>(
+			b"Instance1DarwiniaRelayAuthorities",
+		);
+
+		RuntimeBlockWeights::get().max_block
 	}
 }
 

@@ -191,6 +191,7 @@
 		"prefix": "[u8; 4; Prefix]",
 		"parent_mmr_root": "Hash"
 	},
+	"NodeIndex": "u64",
 	"__[primitives.relay]__": {},
 	"OpCode": "[u8; 4; OpCode]",
 	"Term": "u32",
