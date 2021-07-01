@@ -605,9 +605,8 @@ fn punished_claim_should_work() {
 		// should claim success
 		let slashed: KtonBalance<Test> = inflation::compute_kton_reward::<Test>(bond_value, 36)
 			- inflation::compute_kton_reward::<Test>(bond_value, 14);
-		assert_eq!(
-			staking_events()[1],
-			RawEvent::DepositsClaimedWithPunish(ledger.stash.clone(), slashed * 3)
+		System::assert_has_event(
+			RawEvent::DepositsClaimedWithPunish(ledger.stash.clone(), slashed * 3).into(),
 		);
 		// assert leger
 		ledger.active_deposit_ring -= bond_value;
@@ -2118,9 +2117,6 @@ fn rebond_event_should_work() {
 					..Default::default()
 				})
 			);
-			assert_eq!(
-				staking_events(),
-				vec![RawEvent::BondRing(200, 36000, 36000)]
-			);
+			System::assert_has_event(RawEvent::BondRing(200, 36000, 36000).into());
 		});
 }

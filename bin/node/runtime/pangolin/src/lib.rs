@@ -267,6 +267,7 @@ pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 type Ring = Balances;
 
 /// This runtime version.
+#[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangolin"),
 	impl_name: sp_runtime::create_runtime_str!("Pangolin"),

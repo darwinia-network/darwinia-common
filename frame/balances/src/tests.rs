@@ -43,10 +43,6 @@ macro_rules! decl_tests {
 			evt
 		}
 
-		fn last_event() -> Event {
-			<frame_system::Pallet<Test>>::events().pop().expect("Event expected").event
-		}
-
 		#[test]
 		fn basic_locking_should_work() {
 			<$ext_builder>::default()
@@ -775,16 +771,14 @@ macro_rules! decl_tests {
 					System::set_block_number(2);
 					assert_ok!(Ring::reserve(&1, 10));
 
-					assert_eq!(
-						last_event(),
+					System::assert_last_event(
 						Event::darwinia_balances_Instance1(darwinia_balances::Event::Reserved(1, 10)),
 					);
 
 					System::set_block_number(3);
 					assert!(Ring::unreserve(&1, 5).is_zero());
 
-					assert_eq!(
-						last_event(),
+					System::assert_last_event(
 						Event::darwinia_balances_Instance1(darwinia_balances::Event::Unreserved(1, 5)),
 					);
 
@@ -792,8 +786,7 @@ macro_rules! decl_tests {
 					assert_eq!(Ring::unreserve(&1, 6), 1);
 
 					// should only unreserve 5
-					assert_eq!(
-						last_event(),
+					System::assert_last_event(
 						Event::darwinia_balances_Instance1(darwinia_balances::Event::Unreserved(1, 5)),
 					);
 				});

@@ -206,21 +206,6 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	t.into()
 }
 
-pub fn last_event() -> RawEvent<u128, H256, u64, u64, DefaultInstance> {
-	System::events()
-		.into_iter()
-		.map(|r| r.event)
-		.filter_map(|e| {
-			if let Event::darwinia_treasury(inner) = e {
-				Some(inner)
-			} else {
-				None
-			}
-		})
-		.last()
-		.unwrap()
-}
-
 pub fn tip_hash() -> H256 {
 	BlakeTwo256::hash_of(&(BlakeTwo256::hash(b"awesome.darwinia"), 3u128))
 }
