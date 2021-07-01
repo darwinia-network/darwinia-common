@@ -1782,7 +1782,6 @@ name = "darwinia-evm-precompile-encoder"
 version = "2.4.0"
 dependencies = [
  "darwinia-evm",
- "darwinia-relay-primitives",
  "darwinia-s2s-issuing",
  "dp-contract",
  "dp-evm",
@@ -1988,9 +1987,9 @@ dependencies = [
  "array-bytes",
  "bp-runtime",
  "darwinia-balances",
- "darwinia-ethereum-issuing",
  "darwinia-evm",
  "darwinia-evm-precompile-simple",
+ "darwinia-evm-precompile-transfer",
  "darwinia-support",
  "dp-asset",
  "dp-contract",
@@ -1998,6 +1997,7 @@ dependencies = [
  "dvm-ethereum",
  "ethereum-primitives",
  "ethereum-types",
+ "evm",
  "frame-support",
  "frame-system",
  "libsecp256k1",

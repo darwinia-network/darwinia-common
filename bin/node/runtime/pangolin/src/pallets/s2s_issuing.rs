@@ -10,6 +10,9 @@ use darwinia_s2s_issuing::{Config, EncodeCall};
 use darwinia_support::s2s::{RelayMessageCaller, TruncateToEthAddress};
 use dp_asset::RecipientAccount;
 
+// 0x70746d6c
+const MILLAU_PANGO_LANE: [u8;4] = *b"mtpl";
+
 pub struct ToMillauMessageRelayCaller;
 impl RelayMessageCaller<ToMillauMessagePayload, Balance> for ToMillauMessageRelayCaller {
 	fn send_message(
@@ -17,7 +20,7 @@ impl RelayMessageCaller<ToMillauMessagePayload, Balance> for ToMillauMessageRela
 		fee: Balance,
 	) -> Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>> {
 		let call: Call =
-			BridgeMessagesCall::<Runtime, Millau>::send_message([0; 4], payload, fee).into();
+			BridgeMessagesCall::<Runtime, Millau>::send_message(MILLAU_PANGO_LANE, payload, fee).into();
 		call.dispatch(RawOrigin::Root.into())
 	}
 }
