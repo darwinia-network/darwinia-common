@@ -36,9 +36,11 @@ bp-runtime    = { default-features = false, git = "https://github.com/darwinia-n
 
 [dev-dependencies]
 libsecp256k1   = { version = "0.3.5", default-features = false }
+evm            = { version = "0.25.0", default-features = false, features = ["with-codec"] }
 # darwinia
 darwinia-balances                = { path = "../../../balances" }
 darwinia-evm-precompile-simple   = { path = "../../../evm/precompile/contracts/simple" }
+darwinia-evm-precompile-transfer = { path = "../../../evm/precompile/contracts/transfer" }
 pallet-timestamp				 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
 darwinia-support                 = { features = ["easy-testing"], path = "../../../support" }
 

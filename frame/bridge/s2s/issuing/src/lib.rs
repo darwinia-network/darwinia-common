@@ -23,6 +23,9 @@
 pub mod weights;
 pub use weights::WeightInfo;
 
+#[cfg(test)]
+mod tests;
+
 // --- crates ---
 use ethereum_types::{H160, H256, U256};
 use sha3::Digest;
