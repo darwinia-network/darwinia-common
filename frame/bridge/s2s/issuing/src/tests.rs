@@ -2,25 +2,27 @@
 
 use crate::*;
 use crate::{self as s2s_issuing};
-use darwinia_evm::{PrecompileSet, Precompile, AddressMapping, EnsureAddressTruncated, FeeCalculator};
+use darwinia_evm::{
+	AddressMapping, EnsureAddressTruncated, FeeCalculator, Precompile, PrecompileSet,
+};
+use darwinia_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
+use darwinia_evm_precompile_transfer::Transfer;
+use darwinia_support::s2s::TruncateToEthAddress;
 use dvm_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
 	IntermediateStateRoot,
 };
+use evm::{Context, ExitError, ExitSucceed};
 use frame_support::assert_ok;
+use frame_support::weights::PostDispatchInfo;
 use frame_system::mocking::*;
 use sha3::{Digest, Keccak256};
+use sp_runtime::DispatchErrorWithPostInfo;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 	AccountId32, RuntimeDebug,
 };
-use evm::{Context, ExitError, ExitSucceed};
-use darwinia_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
-use darwinia_evm_precompile_transfer::Transfer;
-use frame_support::weights::PostDispatchInfo;
-use sp_runtime::DispatchErrorWithPostInfo;
-use darwinia_support::s2s::TruncateToEthAddress;
 
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
@@ -211,7 +213,7 @@ frame_support::parameter_types! {
 frame_support::parameter_types! {
 	pub const S2sRelayPalletId: PalletId = PalletId(*b"da/s2sre");
 	pub const MillauChainId: bp_runtime::ChainId = *b"mcid";
-    pub RootAccountForPayments: Option<AccountId32> = Some([1;32].into());
+	pub RootAccountForPayments: Option<AccountId32> = Some([1;32].into());
 }
 
 pub struct AccountIdConverter;
@@ -223,9 +225,9 @@ impl Convert<H256, AccountId32> for AccountIdConverter {
 
 #[derive(Debug, Encode, Decode, Clone, PartialEq, Eq)]
 pub struct MockMessagePayload {
-    spec_version: u32,
-    weight: u64,
-    call: Vec<u8>,
+	spec_version: u32,
+	weight: u64,
+	call: Vec<u8>,
 }
 
 impl Size for MockMessagePayload {
@@ -242,11 +244,11 @@ impl EncodeCall<AccountId32, MockMessagePayload> for MillauCallEncoder {
 		_token: Token,
 		_recipient: RecipientAccount<AccountId32>,
 	) -> Result<MockMessagePayload, ()> {
-        return Ok(MockMessagePayload {
-            spec_version,
-            weight,
-            call: vec![],
-        });
+		return Ok(MockMessagePayload {
+			spec_version,
+			weight,
+			call: vec![],
+		});
 	}
 }
 
@@ -256,10 +258,10 @@ impl RelayMessageCaller<MockMessagePayload, Balance> for ToMillauMessageRelayCal
 		_payload: MockMessagePayload,
 		_fee: Balance,
 	) -> Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>> {
-        Ok(PostDispatchInfo{
-            actual_weight: None,
-            pays_fee: Pays::No,
-        })
+		Ok(PostDispatchInfo {
+			actual_weight: None,
+			pays_fee: Pays::No,
+		})
 	}
 }
 
@@ -270,14 +272,14 @@ impl Config for Test {
 	type WeightInfo = ();
 	type ReceiverAccountId = AccountId32;
 
-    type RingCurrency = Ring;
-    type BridgedAccountIdConverter = AccountIdConverter;
-    type BridgedChainId = MillauChainId;
-    type ToEthAddressT = TruncateToEthAddress;
-    type OutboundPayload = MockMessagePayload;
-    type CallEncoder = MillauCallEncoder;
-    type FeeAccount = RootAccountForPayments;
-    type MessageSender = ToMillauMessageRelayCaller;
+	type RingCurrency = Ring;
+	type BridgedAccountIdConverter = AccountIdConverter;
+	type BridgedChainId = MillauChainId;
+	type ToEthAddressT = TruncateToEthAddress;
+	type OutboundPayload = MockMessagePayload;
+	type CallEncoder = MillauCallEncoder;
+	type FeeAccount = RootAccountForPayments;
+	type MessageSender = ToMillauMessageRelayCaller;
 }
 
 frame_support::construct_runtime! {
@@ -301,7 +303,9 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		H160::from_str("0000000000000000000000000000000000000002").unwrap();
 
 	<s2s_issuing::GenesisConfig as GenesisBuild<Test>>::assimilate_storage(
-		&s2s_issuing::GenesisConfig { mapping_factory_address },
+		&s2s_issuing::GenesisConfig {
+			mapping_factory_address,
+		},
 		&mut t,
 	)
 	.unwrap();
@@ -310,32 +314,28 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
 #[test]
 fn burn_and_remote_unlock_success() {
-    new_test_ext().execute_with(|| {
-        let burn_info = TokenBurnInfo {
-            spec_version: 0,
-            weight: 100,
-            token_type: 1,
-            backing: H160::from_str("1000000000000000000000000000000000000001").unwrap(),
-            sender: H160::from_str("1000000000000000000000000000000000000001").unwrap(),
-            source: H160::from_str("1000000000000000000000000000000000000001").unwrap(),
-            recipient: [1;32].to_vec(),
-            amount: U256::from(1),
-            fee: U256::from(1),
-        };
-        assert_ok!(S2sIssuing::burn_and_remote_unlock(
-            0,
-            burn_info,
-        ));
-    });
+	new_test_ext().execute_with(|| {
+		let burn_info = TokenBurnInfo {
+			spec_version: 0,
+			weight: 100,
+			token_type: 1,
+			backing: H160::from_str("1000000000000000000000000000000000000001").unwrap(),
+			sender: H160::from_str("1000000000000000000000000000000000000001").unwrap(),
+			source: H160::from_str("1000000000000000000000000000000000000001").unwrap(),
+			recipient: [1; 32].to_vec(),
+			amount: U256::from(1),
+			fee: U256::from(1),
+		};
+		assert_ok!(S2sIssuing::burn_and_remote_unlock(0, burn_info,));
+	});
 }
 
 #[test]
 fn check_digest() {
 	new_test_ext().execute_with(|| {
-        assert_eq!(
-            S2sIssuing::digest(),
-            array_bytes::hex2bytes_unchecked("0xd184c5bd").as_slice()
-        );
+		assert_eq!(
+			S2sIssuing::digest(),
+			array_bytes::hex2bytes_unchecked("0xd184c5bd").as_slice()
+		);
 	});
 }
-

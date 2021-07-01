@@ -95,8 +95,10 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Handle dispatch call from dispatch precompile contract
 		///
-		/// When user burn their tokens, this handler will receive the event from dispatch
-		/// precompile contract, and relay this event to the target chain to unlock asset.
+		/// When user burn their mapped tokens, the mapping-token-factory contract will call this
+		/// function through dispatch precompile contract. And the parameters will be encoded into
+		/// input, here we need decode it to get the burn event.
+		/// Then the event will be sent to the remote backing module as burn proof to unlock origin asset.
 		// TODO: update the weight
 		#[pallet::weight(0)]
 		#[frame_support::transactional]
