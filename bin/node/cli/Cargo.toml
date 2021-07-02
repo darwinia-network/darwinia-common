@@ -98,7 +98,6 @@ substrate-frame-rpc-system                 = { git = "https://github.com/darwini
 substrate-prometheus-endpoint              = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
 try-runtime-cli                            = { optional = true, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
 
-
 [build-dependencies]
 # substrate
 substrate-build-script-utils = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
