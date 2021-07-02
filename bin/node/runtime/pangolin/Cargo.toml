@@ -17,7 +17,6 @@ log               = { version = "0.4.14" }
 serde             = { version = "1.0.126", optional = true }
 smallvec          = { version = "1.6.1" }
 static_assertions = { version = "1.1.0" }
-hex-literal = { version = "0.3.1", optional = true }
 # darwinia
 darwinia-balances                   = { default-features = false, path = "../../../../frame/balances" }
 darwinia-balances-rpc-runtime-api   = { default-features = false, path = "../../../../frame/balances/rpc/runtime-api" }
@@ -105,6 +104,8 @@ sp-staking                                 = { default-features = false, git = "
 sp-std                                     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
 sp-transaction-pool                        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
 sp-version                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
+frame-benchmarking                         = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
+frame-system-benchmarking                         = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
 
 [build-dependencies]
 # substrate
@@ -223,8 +224,6 @@ runtime-benchmarks = [
 	"frame-support/runtime-benchmarks",
 	"frame-system-benchmarking",
 	"frame-system/runtime-benchmarks",
-	# "hex-literal",
 	"pallet-collective/runtime-benchmarks",
 	"pallet-society/runtime-benchmarks",
-	"darwinia-s2s-issuing/runtime-benchmarks",
 ]

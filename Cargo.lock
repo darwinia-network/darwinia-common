@@ -1942,62 +1942,6 @@ dependencies = [
 ]
 
 [[package]]
-<<<<<<< HEAD
-=======
-name = "darwinia-s2s-backing"
-version = "2.4.0"
-dependencies = [
- "array-bytes",
- "bp-runtime",
- "darwinia-support",
- "dp-asset",
- "dp-contract",
- "ethereum-primitives",
- "ethereum-types",
- "frame-support",
- "frame-system",
- "log",
- "parity-scale-codec",
- "serde",
- "serde_json",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "darwinia-s2s-issuing"
-version = "2.4.0"
-dependencies = [
- "array-bytes",
- "bp-runtime",
- "darwinia-balances",
- "darwinia-ethereum-issuing",
- "darwinia-evm",
- "darwinia-evm-precompile-simple",
- "darwinia-support",
- "dp-asset",
- "dp-contract",
- "dp-evm",
- "dvm-ethereum",
- "ethereum-primitives",
- "ethereum-types",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "libsecp256k1",
- "log",
- "pallet-timestamp",
- "parity-scale-codec",
- "serde",
- "serde_json",
- "sha3 0.9.1",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
->>>>>>> 8cd6c7fa0... Add the frameworks
 name = "darwinia-staking"
 version = "2.5.0"
 dependencies = [
@@ -2976,7 +2920,7 @@ dependencies = [
 [[package]]
 name = "frame-benchmarking-cli"
 version = "3.0.0"
-source = "git+https://github.com/darwinia-network/substrate.git?tag=darwinia-v0.11.1#3f110196163b5ec03bac5ee188d60bedf3ebd91d"
+source = "git+https://github.com/darwinia-network/substrate.git?tag=darwinia-v0.11.2#1d7f6e12c651d776fc0dc1adefd007bb60f60b63"
 dependencies = [
  "Inflector",
  "chrono",
@@ -3115,7 +3059,7 @@ dependencies = [
 [[package]]
 name = "frame-system-benchmarking"
 version = "3.0.0"
-source = "git+https://github.com/darwinia-network/substrate.git?tag=darwinia-v0.11.1#3f110196163b5ec03bac5ee188d60bedf3ebd91d"
+source = "git+https://github.com/darwinia-network/substrate.git?tag=darwinia-v0.11.2#1d7f6e12c651d776fc0dc1adefd007bb60f60b63"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5923,7 +5867,6 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
- "hex-literal",
  "log",
  "pallet-authority-discovery",
  "pallet-authorship",
