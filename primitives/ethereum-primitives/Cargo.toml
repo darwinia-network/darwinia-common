@@ -27,9 +27,9 @@ serde           = { version = "1.0.126", optional = true, features = ["derive"] 
 ethash               = { default-features = false, git = "https://github.com/darwinia-network/rust-ethash" }
 merkle-patricia-trie = { default-features = false, path = "../merkle-patricia-trie" }
 # substrate
-sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
-sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
+sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [dev-dependencies]
 # crates
@@ -38,7 +38,7 @@ serde_json    = { version = "1.0.64" }
 # github
 triehash = { version = "0.8.4" }
 # substrate
-frame-support = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
+frame-support = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [features]
 default = ["std"]

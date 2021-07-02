@@ -22,10 +22,10 @@ serde_json     = { version = "1.0.64", optional = true }
 darwinia-support    = { default-features = false, path = "../../../support" }
 ethereum-primitives = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [dev-dependencies]
 # crates
@@ -34,8 +34,8 @@ array-bytes = { version = "1.3.3" }
 darwinia-balances   = { path = "../../../../frame/balances" }
 ethereum-primitives = { features = ["deserialize"], path = "../../../../primitives/ethereum-primitives" }
 # substrate
-sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
-sp-io   = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
+sp-core = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-io   = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [features]
 default = ["std"]
