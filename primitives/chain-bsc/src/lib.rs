@@ -26,7 +26,7 @@ use ethbloom::{Bloom, Input};
 use hash_db::Hasher;
 use primitive_types::U256;
 use rlp::RlpStream;
-#[cfg(any(test, feature = "deserialize"))]
+#[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 // --- substrate ---
 use sp_io::hashing;
@@ -76,7 +76,7 @@ pub struct HeaderId {
 /// An BSC header.
 #[derive(Clone, Default, Encode, Decode, PartialEq, RuntimeDebug)]
 #[cfg_attr(
-	any(test, feature = "deserialize"),
+	feature = "std",
 	derive(Serialize, Deserialize),
 	serde(rename_all = "camelCase")
 )]
@@ -84,10 +84,10 @@ pub struct BSCHeader {
 	/// Parent block hash.
 	pub parent_hash: Hash,
 	/// Block uncles hash.
-	#[cfg_attr(any(test, feature = "deserialize"), serde(rename = "sha3Uncles"))]
+	#[cfg_attr(feature = "std", serde(rename = "sha3Uncles"))]
 	pub uncle_hash: Hash,
 	/// validator address
-	#[cfg_attr(any(test, feature = "deserialize"), serde(rename = "miner"))]
+	#[cfg_attr(feature = "std", serde(rename = "miner"))]
 	pub coinbase: Address,
 	/// State root.
 	pub state_root: Hash,
@@ -96,40 +96,28 @@ pub struct BSCHeader {
 	/// Block receipts root.
 	pub receipts_root: Hash,
 	/// Block bloom.
-	#[cfg_attr(any(test, feature = "deserialize"), serde(rename = "logsBloom"))]
+	#[cfg_attr(feature = "std", serde(rename = "logsBloom"))]
 	pub log_bloom: Bloom,
 	/// Block difficulty.
 	pub difficulty: U256,
 	/// Block number.
-	#[cfg_attr(
-		any(test, feature = "deserialize"),
-		serde(deserialize_with = "array_bytes::hexd2num")
-	)]
+	#[cfg_attr(feature = "std", serde(deserialize_with = "array_bytes::hexd2num"))]
 	pub number: u64,
 	/// Block gas limit.
 	pub gas_limit: U256,
 	/// Gas used for contracts execution.
 	pub gas_used: U256,
 	/// Block timestamp.
-	#[cfg_attr(
-		any(test, feature = "deserialize"),
-		serde(deserialize_with = "array_bytes::hexd2num")
-	)]
+	#[cfg_attr(feature = "std", serde(deserialize_with = "array_bytes::hexd2num"))]
 	pub timestamp: u64,
 	/// Block extra data.
-	#[cfg_attr(
-		any(test, feature = "deserialize"),
-		serde(deserialize_with = "array_bytes::hexd2bytes")
-	)]
+	#[cfg_attr(feature = "std", serde(deserialize_with = "array_bytes::hexd2bytes"))]
 	pub extra_data: Bytes,
 	/// MixDigest
-	#[cfg_attr(any(test, feature = "deserialize"), serde(rename = "mixHash"))]
+	#[cfg_attr(feature = "std", serde(rename = "mixHash"))]
 	pub mix_digest: Hash,
 	/// Nonce(64 bit in ethereum)
-	#[cfg_attr(
-		any(test, feature = "deserialize"),
-		serde(deserialize_with = "array_bytes::hexd2bytes")
-	)]
+	#[cfg_attr(feature = "std", serde(deserialize_with = "array_bytes::hexd2bytes"))]
 	pub nonce: Bytes,
 }
 impl BSCHeader {
