@@ -2,7 +2,7 @@ pub use pallet_bridge_messages::Instance1 as WithMillauMessages;
 
 // --- substrate ---
 use bp_messages::MessageNonce;
-use bp_millau::{
+use millau_primitives::{
 	MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT, MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE,
 	MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE,
 };
@@ -45,8 +45,8 @@ impl Config<WithMillauMessages> for Runtime {
 	type OutboundMessageFee = Balance;
 
 	type InboundPayload = FromMillauMessagePayload;
-	type InboundMessageFee = bp_millau::Balance;
-	type InboundRelayer = bp_millau::AccountId;
+	type InboundMessageFee = millau_primitives::Balance;
+	type InboundRelayer = millau_primitives::AccountId;
 
 	type AccountIdConverter = AccountIdConverter;
 

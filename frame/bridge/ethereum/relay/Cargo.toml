@@ -23,23 +23,23 @@ darwinia-relayer-game     = { default-features = false, path = "../../../bridge/
 darwinia-support          = { default-features = false, path = "../../../support" }
 ethereum-primitives       = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
 # github
-ckb-merkle-mountain-range = { default-features = false, git = "https://github.com/darwinia-network/merkle-mountain-range.git" }
+ckb-merkle-mountain-range = { default-features = false, git = "https://github.com/darwinia-network/merkle-mountain-range" }
 ethereum-types            = { version = "0.11.0", default-features = false }
 rlp                       = { version = "0.5.0", default-features = false }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
-sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
 
 [dev-dependencies]
 # darwinia
 darwinia-balances   = { path = "../../../../frame/balances" }
 ethereum-primitives = { features = ["deserialize"], path = "../../../../primitives/ethereum-primitives" }
 # substrate
-sp-core = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
-sp-io   = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
+sp-core = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sp-io   = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
 
 [features]
 default = ["std"]

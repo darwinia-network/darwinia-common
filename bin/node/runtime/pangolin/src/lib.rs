@@ -268,12 +268,13 @@ pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 type Ring = Balances;
 
 /// This runtime version.
+#[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangolin"),
 	impl_name: sp_runtime::create_runtime_str!("Pangolin"),
 	authoring_version: 1,
-	// crate version ~2.5.0 := >=2.4.0, <2.6.0
-	spec_version: 2500,
+	// crate version ~2.5.0 := >=2.5.0, <2.6.0
+	spec_version: 2501,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -756,18 +757,18 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl bp_millau::MillauFinalityApi<Block> for Runtime {
-		fn best_finalized() -> (bp_millau::BlockNumber, bp_millau::Hash) {
+	impl millau_primitives::MillauFinalityApi<Block> for Runtime {
+		fn best_finalized() -> (millau_primitives::BlockNumber, millau_primitives::Hash) {
 			let header = BridgeMillauGrandpa::best_finalized();
 			(header.number, header.hash())
 		}
 
-		fn is_known_header(hash: bp_millau::Hash) -> bool {
+		fn is_known_header(hash: millau_primitives::Hash) -> bool {
 			BridgeMillauGrandpa::is_known_header(hash)
 		}
 	}
 
-	impl bp_millau::ToMillauOutboundLaneApi<Block, Balance, millau_messages::ToMillauMessagePayload> for Runtime {
+	impl millau_primitives::ToMillauOutboundLaneApi<Block, Balance, millau_messages::ToMillauMessagePayload> for Runtime {
 		fn estimate_message_delivery_and_dispatch_fee(
 			_lane_id: bp_messages::LaneId,
 			payload: millau_messages::ToMillauMessagePayload,
@@ -804,7 +805,7 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl bp_millau::FromMillauInboundLaneApi<Block> for Runtime {
+	impl millau_primitives::FromMillauInboundLaneApi<Block> for Runtime {
 		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
 			BridgeMillauMessages::inbound_latest_received_nonce(lane)
 		}

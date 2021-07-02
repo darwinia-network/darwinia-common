@@ -122,7 +122,7 @@ fn close_tip_works() {
 
 		let h = tip_hash();
 
-		assert_eq!(last_event(), RawEvent::NewTip(h));
+		System::assert_last_event(RawEvent::NewTip(h).into());
 
 		assert_ok!(Treasury::tip(Origin::signed(11), h.clone(), 10));
 
@@ -133,7 +133,7 @@ fn close_tip_works() {
 
 		assert_ok!(Treasury::tip(Origin::signed(12), h.clone(), 10));
 
-		assert_eq!(last_event(), RawEvent::TipClosing(h));
+		System::assert_last_event(RawEvent::TipClosing(h).into());
 
 		assert_noop!(
 			Treasury::close_tip(Origin::signed(0), h.into()),
@@ -145,7 +145,7 @@ fn close_tip_works() {
 		assert_ok!(Treasury::close_tip(Origin::signed(0), h.into()));
 		assert_eq!(Ring::free_balance(3), 10);
 
-		assert_eq!(last_event(), RawEvent::TipClosed(h, 3, 10));
+		System::assert_last_event(RawEvent::TipClosed(h, 3, 10).into());
 
 		assert_noop!(
 			Treasury::close_tip(Origin::signed(100), h.into()),
@@ -489,7 +489,7 @@ fn propose_bounty_works() {
 			b"1234567890".to_vec()
 		));
 
-		assert_eq!(last_event(), RawEvent::BountyProposed(0));
+		System::assert_last_event(RawEvent::BountyProposed(0).into());
 
 		let deposit: u64 = 85 + 5;
 		assert_eq!(Ring::reserved_balance(0), deposit);
@@ -561,7 +561,7 @@ fn close_bounty_works() {
 
 		let deposit: u64 = 80 + 5;
 
-		assert_eq!(last_event(), RawEvent::BountyRejected(0, deposit));
+		System::assert_last_event(RawEvent::BountyRejected(0, deposit).into());
 
 		assert_eq!(Ring::reserved_balance(0), 0);
 		assert_eq!(Ring::free_balance(0), 100 - deposit);
@@ -830,7 +830,7 @@ fn award_and_claim_bounty_works() {
 
 		assert_ok!(Treasury::claim_bounty(Origin::signed(1), 0));
 
-		assert_eq!(last_event(), RawEvent::BountyClaimed(0, 56, 3));
+		System::assert_last_event(RawEvent::BountyClaimed(0, 56, 3).into());
 
 		assert_eq!(Ring::free_balance(4), 14); // initial 10 + fee 4
 		assert_eq!(Ring::free_balance(3), 56);
@@ -871,7 +871,7 @@ fn claim_handles_high_fee() {
 
 		assert_ok!(Treasury::claim_bounty(Origin::signed(1), 0));
 
-		assert_eq!(last_event(), RawEvent::BountyClaimed(0, 0, 3));
+		System::assert_last_event(RawEvent::BountyClaimed(0, 0, 3).into());
 
 		assert_eq!(Ring::free_balance(4), 70); // 30 + 50 - 10
 		assert_eq!(Ring::free_balance(3), 0);
@@ -960,7 +960,7 @@ fn award_and_cancel() {
 		assert_ok!(Treasury::unassign_curator(Origin::root(), 0));
 		assert_ok!(Treasury::close_bounty(Origin::root(), 0));
 
-		assert_eq!(last_event(), RawEvent::BountyCanceled(0));
+		System::assert_last_event(RawEvent::BountyCanceled(0).into());
 
 		assert_eq!(Ring::free_balance(Treasury::bounty_account_id(0)), 0);
 		// Slashed.

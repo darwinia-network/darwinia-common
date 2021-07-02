@@ -11,16 +11,16 @@ version     = "2.5.0"
 
 [dependencies]
 # bridge
-bp-messages = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common.git", tag = "darwinia-v0.11.1" }
-bp-runtime  = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common.git", tag = "darwinia-v0.11.1" }
+bp-messages = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
+bp-runtime  = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
 # darwinia
 drml-primitives = { default-features = false, path = "../../primitives" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
-sp-api        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
-sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.1" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sp-api        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
 
 [features]
 default = ["std"]

@@ -195,11 +195,16 @@
 	},
 	"AddressT": "[u8; 20; AddressT]",
 	"__[pallet.header-mmr]__": {},
+	"NodeIndex": "u64",
 	"MerkleMountainRangeRootLog": {
 		"prefix": "[u8; 4; Prefix]",
 		"parent_mmr_root": "Hash"
 	},
-	"NodeIndex": "u64",
+	"MmrNodesPruningConfiguration": {
+		"step": "NodeIndex",
+		"progress": "NodeIndex",
+		"last_position": "NodeIndex"
+	},
 	"__[primitives.relay]__": {},
 	"OpCode": "[u8; 4; OpCode]",
 	"Term": "u32",
@@ -224,7 +229,7 @@
 	},
 	"RelayAuthorityT": {
 		"account_id": "AccountId",
-		"signer": "Signer",
+		"signer": "EthereumAddress",
 		"stake": "Balance",
 		"term": "BlockNumber"
 	},
@@ -232,7 +237,29 @@
 		"next_authorities": "Vec<RelayAuthorityT>",
 		"deadline": "BlockNumber"
 	},
+	"MmrRootToSign": {
+		"mmr_root": "Hash",
+		"signatures": "Vec<(EthereumAddress, EcdsaSignature)>"
+	},
 	"MMRRoot": "Hash",
+	"__[primitives.bsc]___": {},
+	"BSCHeader": {
+		"parent_hash": "H256",
+		"uncle_hash": "H256",
+		"coinbase": "EthereumAddress",
+		"state_root": "H256",
+		"transactions_root": "H256",
+		"receipts_root": "H256",
+		"log_bloom": "Bloom",
+		"difficulty": "U256",
+		"number": "u64",
+		"gas_limit": "U256",
+		"gas_used": "U256",
+		"timestamp": "u64",
+		"extra_data": "Bytes",
+		"mix_digest": "H256",
+		"nonce": "Bytes"
+	},
 	"__[pangolin.runtime]__": {
 		"ProxyType": {
 			"_enum": {

@@ -1,7 +1,7 @@
 pub use pallet_bridge_grandpa::Instance1 as WithMillauGrandpa;
 
 // --- substrate ---
-use bp_millau::{Millau, DAYS};
+use millau_primitives::{Millau, DAYS};
 use pallet_bridge_grandpa::{weights::RialtoWeight, Config};
 // --- darwinia ---
 use crate::*;

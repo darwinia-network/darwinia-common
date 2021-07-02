@@ -1,5 +1,5 @@
 // --- substrate ---
-use bp_millau::AccountIdConverter;
+use millau_primitives::AccountIdConverter;
 use frame_support::{dispatch::Dispatchable, weights::PostDispatchInfo, PalletId};
 use frame_system::RawOrigin;
 use pallet_bridge_messages::Instance1 as Millau;
