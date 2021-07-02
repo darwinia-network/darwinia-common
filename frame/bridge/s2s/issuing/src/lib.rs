@@ -102,7 +102,7 @@ pub mod pallet {
 		// TODO: update the weight
 		#[pallet::weight(0)]
 		#[frame_support::transactional]
-		pub fn dispatch_handle(origin: OriginFor<T>, input: Vec<u8>) -> DispatchResultWithPostInfo {
+		pub fn asset_burn_event_handle(origin: OriginFor<T>, input: Vec<u8>) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
 
 			// Ensure the input data is long enough
@@ -140,9 +140,9 @@ pub mod pallet {
 		/// Handle remote register relay message
 		/// Before the token transfer, token should be created first
 		#[pallet::weight(0)]
-		pub fn remote_register(origin: OriginFor<T>, token: Token) -> DispatchResultWithPostInfo {
+		pub fn register_from_remote(origin: OriginFor<T>, token: Token) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
-			let backing = Self::verify_origin(&user)?;
+			let backing = Self::ensure_source_root(&user)?;
 			let (token_type, token_info) = token
 				.token_info()
 				.map_err(|_| Error::<T>::InvalidTokenType)?;
@@ -182,7 +182,7 @@ pub mod pallet {
 
 		/// Handle relay message sent from the source backing pallet with relay message
 		#[pallet::weight(0)]
-		pub fn remote_issue(
+		pub fn issue_from_remote(
 			origin: OriginFor<T>,
 			token: Token,
 			recipient: H160,
@@ -191,7 +191,7 @@ pub mod pallet {
 			// the s2s message relay has been verified that the message comes from the backing chain with the
 			// chainID and backing sender address.
 			// here only we need is to check the sender is root
-			let backing = Self::verify_origin(&user)?;
+			let backing = Self::ensure_source_root(&user)?;
 
 			let (_, token_info) = token
 				.token_info()
@@ -357,7 +357,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	fn verify_origin(account: &T::AccountId) -> Result<H160, DispatchError> {
+	fn ensure_source_root(account: &T::AccountId) -> Result<H160, DispatchError> {
 		let source_root = source_root_converted_id::<T::AccountId, T::BridgedAccountIdConverter>(
 			T::BridgedChainId::get(),
 		);

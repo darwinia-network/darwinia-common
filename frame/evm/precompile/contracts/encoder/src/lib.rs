@@ -50,7 +50,7 @@ where
 		let selector = &input[0..SELECTOR_SIZE_BYTES];
 		let inner_call = match selector {
 			_ if selector == <darwinia_s2s_issuing::Pallet<T>>::digest() => {
-				darwinia_s2s_issuing::Call::<T>::dispatch_handle(input.to_vec())
+				darwinia_s2s_issuing::Call::<T>::asset_burn_event_handle(input.to_vec())
 			}
 			_ => {
 				return Err(ExitError::Other(
