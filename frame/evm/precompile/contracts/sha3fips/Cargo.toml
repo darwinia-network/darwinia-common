@@ -17,8 +17,8 @@ evm         = { version = "0.25.0", default-features = false, features = ["with-
 tiny-keccak = { version = "2.0", features = ["fips202"] }
 
 # substrate
-sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
-sp-io   = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
+sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-io   = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [features]
 default = ["std"]

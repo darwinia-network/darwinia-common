@@ -15,12 +15,12 @@ codec = { package = "parity-scale-codec", version = "2.1.1", default-features = 
 # darwinia
 bsc-primitives = { default-features = false, path = "../../../primitives/chain-bsc" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.2" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.2" }
-sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.2" }
-sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.2" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.2" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.2" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [dev-dependencies]
 # crates.io
@@ -29,7 +29,7 @@ serde_json  = { version = "1.0.64" }
 # darwinia
 bsc-primitives = { features = ["deserialize"], path = "../../../primitives/chain-bsc" }
 # substrate
-pallet-timestamp = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.2" }
+pallet-timestamp = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [features]
 default = ["std"]

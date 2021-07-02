@@ -39,9 +39,9 @@ pub type FromMillauMessagePayload = FromBridgedChainMessagePayload<WithMillauMes
 /// Encoded Pangolin Call as it comes from Millau.
 pub type FromMillauEncodedCall = FromBridgedChainEncodedMessageCall<WithMillauMessageBridge>;
 /// Messages proof for Millau -> Pangolin messages.
-type FromMillauMessagesProof = FromBridgedChainMessagesProof<bp_millau::Hash>;
+type FromMillauMessagesProof = FromBridgedChainMessagesProof<millau_primitives::Hash>;
 /// Messages delivery proof for Pangolin -> Millau messages.
-type ToMillauMessagesDeliveryProof = FromBridgedChainMessagesDeliveryProof<bp_millau::Hash>;
+type ToMillauMessagesDeliveryProof = FromBridgedChainMessagesDeliveryProof<millau_primitives::Hash>;
 /// Call-dispatch based message dispatch for Millau -> Pangolin messages.
 pub type FromMillauMessageDispatch =
 	FromBridgedChainMessageDispatch<WithMillauMessageBridge, Runtime, WithMillauDispatch>;
@@ -80,7 +80,7 @@ impl MessageBridge for WithMillauMessageBridge {
 	type ThisChain = Pangolin;
 	type BridgedChain = Millau;
 
-	fn bridged_balance_to_this_balance(bridged_balance: bp_millau::Balance) -> Balance {
+	fn bridged_balance_to_this_balance(bridged_balance: millau_primitives::Balance) -> Balance {
 		Balance::try_from(MillauToPangolinConversionRate::get().saturating_mul_int(bridged_balance))
 			.unwrap_or(Balance::MAX)
 	}
@@ -123,7 +123,7 @@ impl messages::ThisChainWithMessages for Pangolin {
 			dispatch_weight:
 				pangolin_bridge_primitives::MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
 			size: inbound_data_size
-				.saturating_add(bp_millau::EXTRA_STORAGE_PROOF_SIZE)
+				.saturating_add(millau_primitives::EXTRA_STORAGE_PROOF_SIZE)
 				.saturating_add(pangolin_bridge_primitives::TX_EXTRA_BYTES),
 		}
 	}
@@ -148,24 +148,24 @@ pub struct Millau;
 impl messages::ChainWithMessages for Millau {
 	const ID: ChainId = MILLAU_CHAIN_ID;
 
-	type Hash = bp_millau::Hash;
-	type AccountId = bp_millau::AccountId;
-	type Signer = bp_millau::AccountSigner;
-	type Signature = bp_millau::Signature;
+	type Hash = millau_primitives::Hash;
+	type AccountId = millau_primitives::AccountId;
+	type Signer = millau_primitives::AccountPublic;
+	type Signature = millau_primitives::Signature;
 	type Weight = Weight;
-	type Balance = bp_millau::Balance;
+	type Balance = millau_primitives::Balance;
 
 	type MessagesInstance = WithMillauMessages;
 }
 impl messages::BridgedChainWithMessages for Millau {
 	fn maximal_extrinsic_size() -> u32 {
-		bp_millau::max_extrinsic_size()
+		millau_primitives::max_extrinsic_size()
 	}
 
 	fn message_weight_limits(_message_payload: &[u8]) -> RangeInclusive<Weight> {
 		// we don't want to relay too large messages + keep reserve for future upgrades
 		let upper_limit = messages::target::maximal_incoming_message_dispatch_weight(
-			bp_millau::max_extrinsic_weight(),
+			millau_primitives::max_extrinsic_weight(),
 		);
 
 		// we're charging for payload bytes in `WithMillauMessageBridge::transaction_payment` function
@@ -186,19 +186,19 @@ impl messages::BridgedChainWithMessages for Millau {
 
 		MessageTransaction {
 			dispatch_weight: extra_bytes_in_payload
-				.saturating_mul(bp_millau::ADDITIONAL_MESSAGE_BYTE_DELIVERY_WEIGHT)
-				.saturating_add(bp_millau::DEFAULT_MESSAGE_DELIVERY_TX_WEIGHT)
+				.saturating_mul(millau_primitives::ADDITIONAL_MESSAGE_BYTE_DELIVERY_WEIGHT)
+				.saturating_add(millau_primitives::DEFAULT_MESSAGE_DELIVERY_TX_WEIGHT)
 				.saturating_add(message_dispatch_weight),
 			size: message_payload_len
 				.saturating_add(pangolin_bridge_primitives::EXTRA_STORAGE_PROOF_SIZE)
-				.saturating_add(bp_millau::TX_EXTRA_BYTES),
+				.saturating_add(millau_primitives::TX_EXTRA_BYTES),
 		}
 	}
 
-	fn transaction_payment(transaction: MessageTransaction<Weight>) -> bp_millau::Balance {
+	fn transaction_payment(transaction: MessageTransaction<Weight>) -> millau_primitives::Balance {
 		// in our testnets, both per-byte fee and weight-to-fee are 1:1
 		messages::transaction_payment(
-			bp_millau::BlockWeights::get()
+			millau_primitives::RuntimeBlockWeights::get()
 				.get(DispatchClass::Normal)
 				.base_extrinsic,
 			1,
@@ -208,7 +208,7 @@ impl messages::BridgedChainWithMessages for Millau {
 		)
 	}
 }
-impl TargetHeaderChain<ToMillauMessagePayload, bp_millau::AccountId> for Millau {
+impl TargetHeaderChain<ToMillauMessagePayload, millau_primitives::AccountId> for Millau {
 	type Error = &'static str;
 	// The proof is:
 	// - hash of the header this proof has been created with;
@@ -228,7 +228,7 @@ impl TargetHeaderChain<ToMillauMessagePayload, bp_millau::AccountId> for Millau 
 		)
 	}
 }
-impl SourceHeaderChain<bp_millau::Balance> for Millau {
+impl SourceHeaderChain<millau_primitives::Balance> for Millau {
 	type Error = &'static str;
 	// The proof is:
 	// - hash of the header this proof has been created with;
@@ -240,7 +240,7 @@ impl SourceHeaderChain<bp_millau::Balance> for Millau {
 	fn verify_messages_proof(
 		proof: Self::MessagesProof,
 		messages_count: u32,
-	) -> Result<ProvedMessages<Message<bp_millau::Balance>>, Self::Error> {
+	) -> Result<ProvedMessages<Message<millau_primitives::Balance>>, Self::Error> {
 		target::verify_messages_proof::<WithMillauMessageBridge, Runtime, WithMillauGrandpa>(
 			proof,
 			messages_count,

@@ -10,7 +10,7 @@ version    = "2.5.0"
 
 [dependencies]
 # substrate
-sp-staking = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
+sp-staking = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 # darwinia
 drml-primitives = { default-features = false, path = "../../../../primitives" }
 
