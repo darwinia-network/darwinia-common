@@ -50,6 +50,8 @@ dvm-ethereum                        = { path = "../../../frame/dvm" }
 dvm-rpc-runtime-api                 = { path = "../../../frame/dvm/rpc/runtime-api" }
 pangolin-runtime                    = { path = "../runtime/pangolin" }
 # substrate
+frame-benchmarking                         = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
+frame-benchmarking-cli                     = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
 frame-system-rpc-runtime-api               = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
 pallet-im-online                           = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
 pallet-transaction-payment-rpc             = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
@@ -96,8 +98,6 @@ substrate-frame-rpc-system                 = { git = "https://github.com/darwini
 substrate-prometheus-endpoint              = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
 try-runtime-cli                            = { optional = true, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
 
-frame-benchmarking-cli                     = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
-frame-benchmarking                     = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.11.2" }
 
 [build-dependencies]
 # substrate
