@@ -21,9 +21,9 @@ rlp             = { version = "0.5.0", default-features = false }
 serde           = { version = "1.0.126", optional = true }
 triehash        = { version = "0.8.4", default-features = false }
 # substrate
-sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
 
 [dev-dependencies]
 # crates.io

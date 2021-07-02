@@ -15,12 +15,12 @@ codec = { package = "parity-scale-codec", version = "2.1.1", default-features = 
 # darwinia
 bsc-primitives = { default-features = false, path = "../../../primitives/chain-bsc" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
 
 [dev-dependencies]
 # crates.io
@@ -29,7 +29,7 @@ serde_json  = { version = "1.0.64" }
 # darwinia
 bsc-primitives = { features = ["deserialize"], path = "../../../primitives/chain-bsc" }
 # substrate
-pallet-timestamp = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
+pallet-timestamp = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
 
 [features]
 default = ["std"]

@@ -19,11 +19,11 @@ serde_json  = { version = "1.0.64", optional = true }
 # darwinia
 darwinia-support = { default-features = false, path = "../support" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
 
 [dev-dependencies]
 # crates
@@ -31,7 +31,7 @@ libsecp256k1 = { version = "0.3.5" }
 # darwinia
 darwinia-balances = { path = "../balances" }
 # substrate
-sp-core = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-core = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
 
 [features]
 default = ["std"]
