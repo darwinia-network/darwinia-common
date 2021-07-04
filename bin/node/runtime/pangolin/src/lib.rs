@@ -650,7 +650,7 @@ impl_runtime_apis! {
 			block_number_of_member_leaf: u64,
 			block_number_of_last_leaf: u64
 		) -> HeaderMMRRuntimeDispatchInfo<Hash> {
-			HeaderMMR::gen_proof_rpc(block_number_of_member_leaf, block_number_of_last_leaf )
+			HeaderMMR::gen_proof_rpc(block_number_of_member_leaf, block_number_of_last_leaf)
 		}
 	}
 
@@ -808,30 +808,19 @@ pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
+		// <--- Hack for local test
+		use frame_support::traits::Currency;
+		let _ = Ring::deposit_creating(&BridgeMillauMessages::relayer_fund_account_id(), 1 << 50);
+		// --->
+
 		Ok(())
 	}
 
 	fn on_runtime_upgrade() -> Weight {
-		// // --- substrate ---
-		// use frame_support::migration;
-
-		// migration::move_pallet(b"DarwiniaPhragmenElection", b"PhragmenElection");
-
-		// // https://github.com/paritytech/substrate/pull/8555
-		// migration::move_pallet(b"Instance1Collective", b"Instance2Collective");
-		// migration::move_pallet(b"Instance0Collective", b"Instance1Collective");
-
-		// migration::move_pallet(b"Instance0Membership", b"Instance1Membership");
-
-		// migration::move_pallet(
-		// 	b"Instance0DarwiniaRelayerGame",
-		// 	b"Instance1DarwiniaRelayerGame",
-		// );
-
-		// migration::move_pallet(
-		// 	b"Instance0DarwiniaRelayAuthorities",
-		// 	b"Instance1DarwiniaRelayAuthorities",
-		// );
+		// <--- Hack for local test
+		// use frame_support::traits::Currency;
+		// let _ = Ring::deposit_creating(&BridgeMillauMessages::relayer_fund_account_id(), 1 << 50);
+		// --->
 
 		// RuntimeBlockWeights::get().max_block
 

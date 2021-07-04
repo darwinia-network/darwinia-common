@@ -28,7 +28,7 @@
 use core::fmt::{self, Debug, Display};
 // --- crates ---
 use codec::{Codec, Decode, Encode};
-// --- substrate ---
+// --- paritytech ---
 use sp_api::decl_runtime_apis;
 use sp_runtime::traits::{MaybeDisplay, MaybeFromStr};
 use sp_std::prelude::*;
