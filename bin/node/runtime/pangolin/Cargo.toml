@@ -68,7 +68,7 @@ frame-support                              = { default-features = false, git = "
 frame-system                               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
 frame-system-rpc-runtime-api               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
 frame-try-runtime                          = { default-features = false, optional = true, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-millau-primitives                          = { default-features = false, git = "https://github.com/darwinia-network/darwinia-launch", branch = "s2s" }
+millau-primitives                          = { default-features = false, git = "https://github.com/darwinia-network/darwinia-launch", branch = "add-backing-pallet" }
 pallet-authority-discovery                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
 pallet-authorship                          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
 pallet-babe                                = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
