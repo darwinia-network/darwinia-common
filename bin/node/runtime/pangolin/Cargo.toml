@@ -58,11 +58,11 @@ bp-messages                                = { default-features = false, git = "
 millau-primitives                          = { default-features = false, git = "https://github.com/darwinia-network/darwinia-launch", branch = "s2s" }
 bp-runtime                                 = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
 bridge-runtime-common                      = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
-frame-benchmarking                         = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "main" }
+frame-benchmarking                         = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-executive                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-support                              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-system                               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-frame-system-benchmarking                  = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "main" }
+frame-system-benchmarking                  = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-system-rpc-runtime-api               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-try-runtime                          = { default-features = false, optional = true, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-authority-discovery                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
