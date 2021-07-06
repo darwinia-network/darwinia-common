@@ -92,6 +92,7 @@ native_executor_instance!(
 	pub PangolinExecutor,
 	pangolin_runtime::api::dispatch,
 	pangolin_runtime::native_version,
+	frame_benchmarking::benchmarking::HostFunctions,
 );
 
 /// A set of APIs that darwinia-like runtimes must implement.
