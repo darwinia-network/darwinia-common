@@ -23,11 +23,11 @@ dp-asset                           = { default-features = false, path = "../../.
 dp-contract                        = { default-features = false, path = "../../../../primitives/contract" }
 ethereum-primitives                = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
 # substrate
-bp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+bp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [features]
 default = ["std"]

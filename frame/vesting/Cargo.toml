@@ -13,10 +13,10 @@ version     = "2.5.0"
 # crates
 codec = { package = "parity-scale-codec", version = "2.1.1", default-features = false, features = ["derive"] }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 # darwinia
 darwinia-support = { default-features = false, path = "../support" }
 
@@ -24,9 +24,9 @@ darwinia-support = { default-features = false, path = "../support" }
 # crates
 hex-literal = { version = "0.3.1" }
 # substrate
-sp-core    = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-sp-io      = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-sp-storage = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sp-core    = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-io      = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-storage = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 # darwinia
 darwinia-balances = { path = "../balances" }
 

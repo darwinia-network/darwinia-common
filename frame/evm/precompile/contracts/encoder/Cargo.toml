@@ -21,9 +21,9 @@ darwinia-s2s-issuing = { default-features = false, path = "../../../../bridge/s2
 evm          = { version = "0.25.0", default-features = false, features = ["with-codec"] }
 sha3           = { version = "0.9.1", default-features = false }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
-sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
-sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "s2s" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "main" }
+sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "main" }
+sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "main" }
 
 [features]
 default = ["std"]

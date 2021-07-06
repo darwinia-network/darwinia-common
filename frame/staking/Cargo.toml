@@ -21,17 +21,17 @@ darwinia-support                 = { default-features = false, path = "../suppor
 # github
 substrate-fixed = { default-features = false, git = "https://github.com/encointer/substrate-fixed", branch = "master" }
 # substrate
-frame-election-provider-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-frame-support                   = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-frame-system                    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-pallet-authorship               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-pallet-session                  = { default-features = false, features = ["historical"], git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-sp-arithmetic                   = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-sp-core                         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-sp-io                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-sp-runtime                      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-sp-staking                      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-sp-std                          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+frame-election-provider-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-support                   = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-system                    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+pallet-authorship               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+pallet-session                  = { default-features = false, features = ["historical"], git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-arithmetic                   = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-core                         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-io                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-runtime                      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-staking                      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-std                          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [dev-dependencies]
 # crates
@@ -40,10 +40,10 @@ rand_chacha = { version = "0.3.0" }
 darwinia-balances = { path = "../../frame/balances" }
 darwinia-support  = { features = ["easy-testing"], path = "../support" }
 # substrate
-pallet-timestamp     = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-sp-storage           = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-sp-tracing           = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-substrate-test-utils = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+pallet-timestamp     = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-storage           = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-tracing           = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
+substrate-test-utils = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [features]
 default = ["std"]

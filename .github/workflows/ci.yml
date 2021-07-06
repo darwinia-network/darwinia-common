@@ -46,7 +46,7 @@ jobs:
         run: |
           cargo b
           ./target/debug/drml --dev --tmp &
-          sleep 60
+          sleep 180
 
       - name: Set up node env
         uses: actions/setup-node@v1
