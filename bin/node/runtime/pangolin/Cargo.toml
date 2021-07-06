@@ -58,9 +58,11 @@ bp-messages                                = { default-features = false, git = "
 millau-primitives                          = { default-features = false, git = "https://github.com/darwinia-network/darwinia-launch", branch = "s2s" }
 bp-runtime                                 = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
 bridge-runtime-common                      = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
+frame-benchmarking                         = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-executive                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-support                              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-system                               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-system-benchmarking                  = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-system-rpc-runtime-api               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-try-runtime                          = { default-features = false, optional = true, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-authority-discovery                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
@@ -154,6 +156,7 @@ std = [
 	"millau-primitives/std",
 	"bp-runtime/std",
 	"bridge-runtime-common/std",
+	"frame-benchmarking/std",
 	"frame-executive/std",
 	"frame-support/std",
 	"frame-system/std",
@@ -214,4 +217,13 @@ try-runtime = [
 	"darwinia-header-mmr/try-runtime",
 	"darwinia-staking/try-runtime",
 	"dvm-ethereum/try-runtime",
+]
+
+runtime-benchmarks = [
+	"frame-benchmarking",
+	"frame-system-benchmarking",
+	"frame-system/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"pallet-collective/runtime-benchmarks",
+	"pallet-society/runtime-benchmarks",
 ]

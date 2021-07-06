@@ -50,6 +50,8 @@ dvm-ethereum                        = { path = "../../../frame/dvm" }
 dvm-rpc-runtime-api                 = { path = "../../../frame/dvm/rpc/runtime-api" }
 pangolin-runtime                    = { path = "../runtime/pangolin" }
 # substrate
+frame-benchmarking                         = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-benchmarking-cli                     = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-system-rpc-runtime-api               = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-im-online                           = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-transaction-payment-rpc             = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
@@ -124,4 +126,8 @@ wasmtime  = ["sc-cli/wasmtime"]
 try-runtime = [
 	"pangolin-runtime/try-runtime",
 	"try-runtime-cli",
+]
+
+runtime-benchmarks = [
+	"pangolin-runtime/runtime-benchmarks",
 ]
