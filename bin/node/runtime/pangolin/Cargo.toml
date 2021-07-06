@@ -61,7 +61,7 @@ pangolin-runtime-system-params      = { default-features = false, path = "src/pa
 # substrate
 bp-messages                                = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
 bp-message-dispatch                        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
-millau-primitives                          = { default-features = false, git = "https://github.com/darwinia-network/darwinia-launch", branch = "s2s" }
+millau-primitives                          = { default-features = false, git = "https://github.com/darwinia-network/darwinia-launch", branch = "bear-merge-s2s-main" }
 bp-runtime                                 = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
 bridge-runtime-common                      = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
 frame-benchmarking                         = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
