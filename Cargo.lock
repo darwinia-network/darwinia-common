@@ -5020,7 +5020,7 @@ dependencies = [
 [[package]]
 name = "millau-primitives"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-launch?branch=s2s#32bf39049f343eea674f8ccce4f20eef0afea491"
+source = "git+https://github.com/darwinia-network/darwinia-launch?branch=pangolin-bridge#32bf39049f343eea674f8ccce4f20eef0afea491"
 dependencies = [
  "bp-messages",
  "bp-runtime",
