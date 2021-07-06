@@ -11,7 +11,7 @@ use darwinia_support::s2s::{RelayMessageCaller, TruncateToEthAddress};
 use dp_asset::RecipientAccount;
 
 // 0x70746d6c
-const MILLAU_PANGO_LANE: [u8; 4] = *b"mtpl";
+pub const MILLAU_PANGO_LANE: [u8; 4] = *b"mtpl";
 
 pub struct ToMillauMessageRelayCaller;
 impl RelayMessageCaller<ToMillauMessagePayload, Balance> for ToMillauMessageRelayCaller {
