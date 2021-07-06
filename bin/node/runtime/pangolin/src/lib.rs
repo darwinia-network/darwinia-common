@@ -228,6 +228,7 @@ use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDis
 use darwinia_evm::{Account as EVMAccount, Runner};
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
+use dp_asset::token::Token;
 use drml_primitives::*;
 use dvm_rpc_runtime_api::TransactionStatus;
 use impls::*;
@@ -380,7 +381,7 @@ frame_support::construct_runtime! {
 		BridgeMillauMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 43,
 		BridgeMillauDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 44,
 		BridgeMillauGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 45,
-
+		Substrate2SubstrateIssuing: darwinia_s2s_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
 		BSC: darwinia_bridge_bsc::{Pallet, Call, Storage, Config} = 46,
 	}
 }
@@ -898,4 +899,20 @@ where
 		PANGOLIN_CHAIN_ID,
 		MILLAU_CHAIN_ID,
 	)
+}
+
+// remote chain millau's dispatch info
+#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
+pub enum MillauRuntime {
+	/// s2s bridge backing pallet.
+	/// this index must be the same as the backing pallet in millau runtime
+	#[codec(index = 14)]
+	Sub2SubBacking(MillauSub2SubBackingCall),
+}
+
+#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
+#[allow(non_camel_case_types)]
+pub enum MillauSub2SubBackingCall {
+	#[codec(index = 2)]
+	remote_unlock(Token, AccountId),
 }

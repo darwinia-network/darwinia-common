@@ -1,0 +1,38 @@
+[package]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+description = "Darwinia Asset Primitives"
+edition     = "2018"
+homepage    = "https://darwinia.network/"
+license     = "GPL-3.0"
+name        = "dp-asset"
+readme      = "README.md"
+repository  = "https://github.com/darwinia-network/darwinia-common/"
+version     = "2.5.0"
+
+[dependencies]
+# crates
+codec          = { package = "parity-scale-codec", version = "2.1.1", default-features = false, features = ["derive"] }
+sha3           = { version = "0.9.1", default-features = false }
+# darwinia
+ethereum-primitives                = { default-features = false, path = "../ethereum-primitives" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+
+[features]
+default = ["std"]
+
+std = [
+	"crates-std",
+	"darwinia-std",
+	"substrate-std",
+]
+
+crates-std    = ["codec/std"]
+
+darwinia-std = [
+	"ethereum-primitives/std",
+	"sha3/std",
+]
+
+substrate-std = [
+	"sp-std/std",
+]

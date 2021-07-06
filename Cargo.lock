@@ -1735,6 +1735,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-evm-precompile-encoder"
+version = "2.4.0"
+dependencies = [
+ "darwinia-evm",
+ "darwinia-s2s-issuing",
+ "dp-contract",
+ "dp-evm",
+ "evm",
+ "frame-support",
+ "log",
+ "parity-scale-codec",
+ "sha3 0.9.1",
+ "sp-core",
+ "sp-io",
+]
+
+[[package]]
 name = "darwinia-evm-precompile-issuing"
 version = "2.5.0"
 dependencies = [
@@ -1900,6 +1917,59 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-s2s-backing"
+version = "2.4.0"
+dependencies = [
+ "array-bytes",
+ "bp-runtime",
+ "darwinia-support",
+ "dp-asset",
+ "dp-contract",
+ "ethereum-primitives",
+ "ethereum-types",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "serde",
+ "serde_json",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "darwinia-s2s-issuing"
+version = "2.4.0"
+dependencies = [
+ "array-bytes",
+ "bp-runtime",
+ "darwinia-balances",
+ "darwinia-evm",
+ "darwinia-evm-precompile-simple",
+ "darwinia-evm-precompile-transfer",
+ "darwinia-support",
+ "dp-asset",
+ "dp-contract",
+ "dp-evm",
+ "dvm-ethereum",
+ "ethereum-primitives",
+ "ethereum-types",
+ "evm",
+ "frame-support",
+ "frame-system",
+ "libsecp256k1",
+ "log",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "serde",
+ "serde_json",
+ "sha3 0.9.1",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "darwinia-staking"
 version = "2.5.0"
 dependencies = [
@@ -1958,8 +2028,12 @@ dependencies = [
 name = "darwinia-support"
 version = "2.5.0"
 dependencies = [
+ "array-bytes",
+ "bp-runtime",
+ "ethabi",
  "ethereum-primitives",
  "frame-support",
+ "hex",
  "impl-trait-for-tuples",
  "num-traits",
  "parity-scale-codec",
@@ -2184,6 +2258,25 @@ checksum = "c4d33be9473d06f75f58220f71f7a9317aca647dc061dbd3c361b0bef505fbea"
 dependencies = [
  "byteorder",
  "quick-error",
+]
+
+[[package]]
+name = "dp-asset"
+version = "2.4.0"
+dependencies = [
+ "ethereum-primitives",
+ "parity-scale-codec",
+ "sha3 0.9.1",
+ "sp-std",
+]
+
+[[package]]
+name = "dp-contract"
+version = "2.4.0"
+dependencies = [
+ "ethabi",
+ "ethereum-types",
+ "sp-std",
 ]
 
 [[package]]
@@ -2557,7 +2650,7 @@ dependencies = [
 [[package]]
 name = "ethabi"
 version = "13.0.0"
-source = "git+https://github.com/darwinia-network/ethabi?branch=xavier-no-std#baacf174d5c2f12122c4ee3fe31506fb52069983"
+source = "git+https://github.com/darwinia-network/ethabi.git?branch=xavier-no-std#baacf174d5c2f12122c4ee3fe31506fb52069983"
 dependencies = [
  "anyhow",
  "ethereum-types",
@@ -5772,6 +5865,8 @@ dependencies = [
 name = "pangolin-runtime"
 version = "2.5.0"
 dependencies = [
+ "array-bytes",
+ "bp-message-dispatch",
  "bp-messages",
  "bp-runtime",
  "bridge-runtime-common",
@@ -5787,6 +5882,8 @@ dependencies = [
  "darwinia-ethereum-issuing",
  "darwinia-ethereum-relay",
  "darwinia-evm",
+ "darwinia-evm-precompile-dispatch",
+ "darwinia-evm-precompile-encoder",
  "darwinia-evm-precompile-issuing",
  "darwinia-evm-precompile-simple",
  "darwinia-evm-precompile-transfer",
@@ -5795,12 +5892,14 @@ dependencies = [
  "darwinia-relay-authorities",
  "darwinia-relay-primitives",
  "darwinia-relayer-game",
+ "darwinia-s2s-issuing",
  "darwinia-staking",
  "darwinia-staking-rpc-runtime-api",
  "darwinia-support",
  "darwinia-treasury",
  "darwinia-tron-backing",
  "darwinia-vesting",
+ "dp-asset",
  "dp-evm",
  "drml-primitives",
  "dvm-dynamic-fee",

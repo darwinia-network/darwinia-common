@@ -40,5 +40,87 @@ pub mod evm {
 	pub const TRANSFER_ADDR: &'static str = "0x0000000000000000000000000000000000000015";
 }
 
+pub mod s2s {
+	use bp_runtime::{derive_account_id, ChainId, SourceAccount};
+	use codec::Encode;
+	use ethabi::{encode, Token};
+	use ethereum_primitives::{H160, H256};
+	use frame_support::weights::PostDispatchInfo;
+	use sp_runtime::DispatchErrorWithPostInfo;
+	use sp_runtime::{traits::Convert, AccountId32};
+
+	pub const RING_NAME: &[u8] = b"Darwinia Network Native Token";
+	pub const RING_SYMBOL: &[u8] = b"RING";
+	pub const RING_DECIMAL: u8 = 9;
+
+	// S2S backing pallet
+	pub const BACK_ERC20_RING: &'static str = "0x0000000000000000000000000000000000002048";
+
+	pub fn to_bytes32(raw: &[u8]) -> [u8; 32] {
+		let mut result = [0u8; 32];
+		let encoded = encode(&[Token::FixedBytes(raw.to_vec())]);
+		result.copy_from_slice(&encoded);
+		result
+	}
+
+	// S2S use bridges-common
+	// the relay's send_message call
+	pub trait RelayMessageCaller<P, F> {
+		fn send_message(
+			payload: P,
+			fee: F,
+		) -> Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>;
+	}
+
+	pub fn source_root_converted_id<AccountId: Encode, Converter: Convert<H256, AccountId>>(
+		chain_id: ChainId,
+	) -> AccountId {
+		let hex_id = derive_account_id::<AccountId>(chain_id, SourceAccount::Root);
+		let target_id = Converter::convert(hex_id);
+		return target_id;
+	}
+
+	pub trait ToEthAddress<A> {
+		fn into_ethereum_id(address: &A) -> H160;
+	}
+
+	pub struct TruncateToEthAddress;
+	impl ToEthAddress<AccountId32> for TruncateToEthAddress {
+		fn into_ethereum_id(address: &AccountId32) -> H160 {
+			let account20: &[u8] = &address.as_ref();
+			H160::from_slice(&account20[..20])
+		}
+	}
+}
+
+pub type PalletDigest = [u8; 4];
+
 #[cfg(test)]
-mod tests;
+mod test {
+	use crate::s2s::{to_bytes32, RING_NAME, RING_SYMBOL};
+	use array_bytes::hex2array_unchecked;
+
+	#[test]
+	fn test_ring_symbol_encode() {
+		// Get this info: https://etherscan.io/address/0x9469d013805bffb7d3debe5e7839237e535ec483#readContract
+		let target_symbol = "0x52494e4700000000000000000000000000000000000000000000000000000000";
+		assert_eq!(
+			to_bytes32(RING_SYMBOL),
+			hex2array_unchecked!(target_symbol, 32)
+		);
+	}
+
+	#[test]
+	fn test_ring_name_encode() {
+		// Get this info: https://etherscan.io/address/0x9469d013805bffb7d3debe5e7839237e535ec483#readContract
+		let target_name = "0x44617277696e6961204e6574776f726b204e617469766520546f6b656e000000";
+		assert_eq!(to_bytes32(RING_NAME), hex2array_unchecked!(target_name, 32));
+	}
+
+	#[test]
+	fn test_ring_name_decode() {
+		let name = "44617277696e6961204e6574776f726b204e617469766520546f6b656e000000";
+		let raw = hex::decode(name).unwrap();
+		assert_eq!(RING_NAME, &raw[..29]);
+	}
+}
