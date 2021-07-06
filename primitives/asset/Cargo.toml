@@ -15,7 +15,7 @@ codec          = { package = "parity-scale-codec", version = "2.1.1", default-fe
 sha3           = { version = "0.9.1", default-features = false }
 # darwinia
 ethereum-primitives                = { default-features = false, path = "../ethereum-primitives" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [features]
 default = ["std"]

@@ -100,8 +100,8 @@ try-runtime-cli                            = { optional = true, git = "https://g
 
 [build-dependencies]
 # substrate
-substrate-build-script-utils = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-try-runtime-cli              = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+substrate-build-script-utils = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
+try-runtime-cli              = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [features]
 default = [

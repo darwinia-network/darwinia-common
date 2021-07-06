@@ -28,13 +28,13 @@ dp-storage          = { default-features = false, path = "../../primitives/stora
 dp_consensus        = { default-features = false, path = "../../primitives/consensus" }
 dvm-rpc-runtime-api = { default-features = false, path = "./rpc/runtime-api" }
 # substrate
-frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-sp-core          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-sp-io            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-sp-runtime       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-core          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-io            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-runtime       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [dev-dependencies]
 # crates.io

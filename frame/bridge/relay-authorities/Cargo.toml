@@ -17,10 +17,10 @@ log   = { version = "0.4.14" }
 darwinia-relay-primitives = { default-features = false, path = "../../../primitives/relay" }
 darwinia-support          = { default-features = false, path = "../../support" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [dev-dependencies]
 # crates
@@ -30,9 +30,9 @@ darwinia-balances   = { path = "../../balances" }
 darwinia-header-mmr = { features = ["easy-testing"], path = "../../header-mmr" }
 darwinia-support    = { path = "../../support" }
 # substrate
-sp-core    = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-sp-io      = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
-sp-tracing = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+sp-core    = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-io      = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-tracing = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [features]
 default = ["std"]

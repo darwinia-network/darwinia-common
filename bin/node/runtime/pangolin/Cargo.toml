@@ -59,8 +59,8 @@ pangolin-bridge-primitives          = { default-features = false, path = "../../
 pangolin-constants                  = { default-features = false, path = "src/constants" }
 pangolin-runtime-system-params      = { default-features = false, path = "src/pallets/system/params" }
 # substrate
-bp-messages                                = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
-bp-message-dispatch                        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "s2s" }
+bp-messages                                = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
+bp-message-dispatch                        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
 millau-primitives                          = { default-features = false, git = "https://github.com/darwinia-network/darwinia-launch", branch = "s2s" }
 bp-runtime                                 = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
 bridge-runtime-common                      = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
@@ -115,7 +115,7 @@ sp-version                                 = { default-features = false, git = "
 
 [build-dependencies]
 # substrate
-substrate-wasm-builder = { git = "https://github.com/darwinia-network/substrate", branch = "s2s" }
+substrate-wasm-builder = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [features]
 default = ["std"]
