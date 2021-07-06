@@ -5020,7 +5020,7 @@ dependencies = [
 [[package]]
 name = "millau-primitives"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-launch?branch=bear-merge-s2s-main#17e47680ee787af1ceb63972f6adaddb8c0f5142"
+source = "git+https://github.com/darwinia-network/darwinia-launch?branch=s2s#32bf39049f343eea674f8ccce4f20eef0afea491"
 dependencies = [
  "bp-messages",
  "bp-runtime",
