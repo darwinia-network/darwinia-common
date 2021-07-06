@@ -216,7 +216,7 @@ pub mod pallet {
 		/// Receive target chain locked message and unlock token in this chain.
 		// TODO: update the weight
 		#[pallet::weight(0)]
-		pub fn remote_unlock(
+		pub fn unlock_from_remote(
 			origin: OriginFor<T>,
 			token: Token,
 			recipient: AccountId<T>,
@@ -226,7 +226,7 @@ pub mod pallet {
 			// the s2s message relay has been verified the message comes from the issuing pallet with the
 			// chainID and issuing sender address.
 			// here only we need is to check the sender is root account
-			Self::verify_origin(&user)?;
+			Self::ensure_source_root(&user)?;
 
 			let token_info = match &token {
 				Token::Native(info) => {
@@ -267,7 +267,7 @@ pub mod pallet {
 			T::PalletId::get().into_account()
 		}
 
-		fn verify_origin(account: &T::AccountId) -> Result<(), DispatchError> {
+		fn ensure_source_root(account: &T::AccountId) -> Result<(), DispatchError> {
 			let source_root = source_root_converted_id::<T::AccountId, T::BridgedAccountIdConverter>(
 				T::BridgedChainId::get(),
 			);
