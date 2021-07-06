@@ -17,7 +17,7 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- std ---
-use std::path::PathBuf;
+use std::{env, path::PathBuf};
 // --- substrate ---
 use sc_cli::{Role, RunCmd, RuntimeVersion, SubstrateCli};
 // --- darwinia ---
@@ -98,7 +98,7 @@ impl DarwiniaCli for Cli {
 }
 
 fn get_exec_name() -> Option<String> {
-	std::env::current_exe()
+	env::current_exe()
 		.ok()
 		.and_then(|pb| pb.file_name().map(|s| s.to_os_string()))
 		.and_then(|s| s.into_string().ok())
@@ -111,6 +111,7 @@ pub fn run() -> sc_cli::Result<()> {
 	match &cli.subcommand {
 		None => {
 			let runner = Configuration::create_runner(Cli::from_args())?;
+
 			runner.run_node_until_exit(|config| async move {
 				match config.role {
 					Role::Light => {
@@ -124,6 +125,7 @@ pub fn run() -> sc_cli::Result<()> {
 		}
 		Some(Subcommand::BuildSpec(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
+
 			runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
 		}
 		Some(Subcommand::CheckBlock(cmd)) => {
@@ -134,6 +136,7 @@ pub fn run() -> sc_cli::Result<()> {
 					service::pangolin_runtime::RuntimeApi,
 					service::PangolinExecutor,
 				>(&mut config, &cli)?;
+
 				Ok((cmd.run(client, import_queue), task_manager))
 			})
 		}
@@ -145,6 +148,7 @@ pub fn run() -> sc_cli::Result<()> {
 					service::pangolin_runtime::RuntimeApi,
 					service::PangolinExecutor,
 				>(&mut config, &cli)?;
+
 				Ok((cmd.run(client, config.database), task_manager))
 			})
 		}
@@ -156,6 +160,7 @@ pub fn run() -> sc_cli::Result<()> {
 					service::pangolin_runtime::RuntimeApi,
 					service::PangolinExecutor,
 				>(&mut config, &cli)?;
+
 				Ok((cmd.run(client, config.chain_spec), task_manager))
 			})
 		}
@@ -167,11 +172,13 @@ pub fn run() -> sc_cli::Result<()> {
 					service::pangolin_runtime::RuntimeApi,
 					service::PangolinExecutor,
 				>(&mut config, &cli)?;
+
 				Ok((cmd.run(client, import_queue), task_manager))
 			})
 		}
 		Some(Subcommand::PurgeChain(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
+
 			runner.sync_run(|config| cmd.run(config.database))
 		}
 		Some(Subcommand::Revert(cmd)) => {
@@ -182,21 +189,9 @@ pub fn run() -> sc_cli::Result<()> {
 					service::pangolin_runtime::RuntimeApi,
 					service::PangolinExecutor,
 				>(&mut config, &cli)?;
+
 				Ok((cmd.run(client, backend), task_manager))
 			})
-		}
-		Some(Subcommand::Benchmark(cmd)) => {
-			if cfg!(feature = "runtime-benchmarks") {
-				let runner = cli.create_runner(cmd)?;
-
-				runner.sync_run(|config| {
-					cmd.run::<service::pangolin_runtime::Block, service::PangolinExecutor>(config)
-				})
-			} else {
-				Err("Benchmarking wasn't enabled when building the node. \
-				You can enable it with `--features runtime-benchmarks`."
-					.into())
-			}
 		}
 		Some(Subcommand::Key(cmd)) => cmd.run(&cli),
 		Some(Subcommand::Sign(cmd)) => cmd.run(),
@@ -205,6 +200,7 @@ pub fn run() -> sc_cli::Result<()> {
 		#[cfg(feature = "try-runtime")]
 		Some(Subcommand::TryRuntime(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
+
 			runner.async_run(|config| {
 				// we don't need any of the components of new_partial, just a runtime, or a task
 				// manager to do `async_run`.
@@ -217,6 +213,14 @@ pub fn run() -> sc_cli::Result<()> {
 					cmd.run::<service::pangolin_runtime::Block, service::PangolinExecutor>(config),
 					task_manager,
 				))
+			})
+		}
+		#[cfg(feature = "runtime-benchmarks")]
+		Some(Subcommand::Benchmark(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+
+			runner.sync_run(|config| {
+				cmd.run::<service::pangolin_runtime::Block, service::PangolinExecutor>(config)
 			})
 		}
 	}

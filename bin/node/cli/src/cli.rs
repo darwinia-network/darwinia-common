@@ -107,12 +107,13 @@ pub enum Subcommand {
 	/// Sign a message, with a given (secret) key.
 	Sign(SignCmd),
 
+	/// The custom benchmark subcommmand benchmarking runtime pallets.
+	#[cfg(feature = "runtime-benchmarks")]
+	#[structopt(name = "benchmark", about = "Benchmark runtime pallets.")]
+	Benchmark(frame_benchmarking_cli::BenchmarkCmd),
+
 	/// Try some experimental command on the runtime. This includes migration and runtime-upgrade
 	/// testing.
 	#[cfg(feature = "try-runtime")]
 	TryRuntime(try_runtime_cli::TryRuntimeCmd),
-
-	/// The custom benchmark subcommmand benchmarking runtime pallets.
-	#[structopt(name = "benchmark", about = "Benchmark runtime pallets.")]
-	Benchmark(frame_benchmarking_cli::BenchmarkCmd),
 }
