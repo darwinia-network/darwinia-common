@@ -24,6 +24,7 @@ dp-contract                        = { default-features = false, path = "../../.
 ethereum-primitives                = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
 # substrate
 bp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
+frame-benchmarking = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
@@ -31,6 +32,7 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 
 [features]
 default = ["std"]
+runtime-benchmarks = ["frame-benchmarking"]
 
 std = [
 	"substrate-std",

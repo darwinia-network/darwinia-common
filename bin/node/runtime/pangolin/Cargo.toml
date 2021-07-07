@@ -46,6 +46,7 @@ darwinia-staking                    = { default-features = false, path = "../../
 darwinia-staking-rpc-runtime-api    = { default-features = false, path = "../../../../frame/staking/rpc/runtime-api" }
 darwinia-support                    = { default-features = false, path = "../../../../frame/support" }
 darwinia-s2s-issuing                = { default-features = false, path = "../../../../frame/bridge/s2s/issuing" }
+darwinia-s2s-backing                = { default-features = false, path = "../../../../frame/bridge/s2s/backing" }
 darwinia-treasury                   = { default-features = false, path = "../../../../frame/treasury" }
 darwinia-tron-backing               = { default-features = false, path = "../../../../frame/bridge/tron/backing" }
 darwinia-vesting                    = { default-features = false, path = "../../../../frame/vesting" }
@@ -57,6 +58,7 @@ dvm-rpc-runtime-api                 = { default-features = false, path = "../../
 ethereum-primitives                 = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
 millau-primitives                   = { default-features = false, git = "https://github.com/darwinia-network/darwinia-launch", branch = "pangolin-bridge" }
 pangolin-bridge-primitives          = { default-features = false, path = "../../bridge-primitives/pangolin" }
+millau-bridge-primitives          = { default-features = false, path = "../../bridge-primitives/millau" }
 pangolin-constants                  = { default-features = false, path = "src/constants" }
 pangolin-runtime-system-params      = { default-features = false, path = "src/pallets/system/params" }
 # substrate
@@ -151,6 +153,7 @@ std = [
 	"darwinia-staking-rpc-runtime-api/std",
 	"darwinia-support/std",
 	"darwinia-s2s-issuing/std",
+	"darwinia-s2s-backing/std",
 	"darwinia-treasury/std",
 	"darwinia-tron-backing/std",
 	"darwinia-vesting/std",
@@ -161,6 +164,7 @@ std = [
 	"ethereum-primitives/std",
 	"millau-primitives/std",
 	"pangolin-bridge-primitives/std",
+	"millau-bridge-primitives/std",
 	"pangolin-constants/std",
 	"pangolin-runtime-system-params/std",
 	"bp-messages/std",
@@ -237,4 +241,5 @@ runtime-benchmarks = [
 	"pallet-collective/runtime-benchmarks",
 	"pallet-society/runtime-benchmarks",
 	"darwinia-s2s-issuing/runtime-benchmarks",
+	"darwinia-s2s-backing/runtime-benchmarks",
 ]

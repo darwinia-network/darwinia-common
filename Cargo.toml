@@ -2,6 +2,7 @@
 members = [
 	"bin/node/cli",
 	"bin/node/bridge-primitives/pangolin",
+	"bin/node/bridge-primitives/millau",
 	"bin/node/primitives",
 	"bin/node/runtime/pangolin",
 	"bin/node/runtime/pangolin/src/constants",
