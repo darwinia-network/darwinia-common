@@ -138,8 +138,7 @@ pub mod pallet {
 					<T as Config>::RingCurrency::transfer(&caller, &fee_account, fee, KeepAlive)?;
 				}
 
-			// TODO: release this line after benchmark
-			// Self::burn_and_remote_unlock(fee, burn_info)?;
+				Self::burn_and_remote_unlock(fee, burn_info)?;
 			} else {
 				log::trace!("No action match this input selector");
 			}

@@ -42,11 +42,13 @@
 // --output=./frame/bridge/s2s/backing/src/weight.rs
 // --template=./.maintain/frame-weight-template.hbs
 
-
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
-use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
+use frame_support::{
+	traits::Get,
+	weights::{constants::RocksDbWeight, Weight},
+};
 use sp_std::marker::PhantomData;
 
 /// Weight functions needed for darwinia_s2s_backing.
@@ -54,7 +56,6 @@ pub trait WeightInfo {
 	fn register_and_remote_create() -> Weight;
 	fn lock_and_remote_issue() -> Weight;
 	fn unlock_from_remote() -> Weight;
-	
 }
 
 /// Weights for darwinia_s2s_backing using the Substrate node and recommended hardware.
@@ -64,21 +65,17 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		(56_164_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(11 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
-			
 	}
 	fn lock_and_remote_issue() -> Weight {
 		(68_808_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(12 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
-			
 	}
 	fn unlock_from_remote() -> Weight {
 		(41_417_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(7 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
-			
 	}
-	
 }
 
 // For backwards compatibility and tests
@@ -87,19 +84,15 @@ impl WeightInfo for () {
 		(56_164_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(11 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
-			
 	}
 	fn lock_and_remote_issue() -> Weight {
 		(68_808_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(12 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
-			
 	}
 	fn unlock_from_remote() -> Weight {
 		(41_417_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(7 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
-			
 	}
-	
 }

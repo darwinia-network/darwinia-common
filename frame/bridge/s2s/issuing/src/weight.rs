@@ -62,29 +62,29 @@ pub trait WeightInfo {
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	fn asset_burn_event_handle() -> Weight {
-		(30_837_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(8 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+		(58_379_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(13 as Weight))
+			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}
 	fn register_from_remote() -> Weight {
-		(4_709_000 as Weight)
+		(4_638_000 as Weight)
 	}
 	fn issue_from_remote() -> Weight {
-		(401_000 as Weight)
+		(381_000 as Weight)
 	}
 }
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
 	fn asset_burn_event_handle() -> Weight {
-		(30_837_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(8 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+		(58_379_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(13 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
 	}
 	fn register_from_remote() -> Weight {
-		(4_709_000 as Weight)
+		(4_638_000 as Weight)
 	}
 	fn issue_from_remote() -> Weight {
-		(401_000 as Weight)
+		(381_000 as Weight)
 	}
 }

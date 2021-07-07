@@ -29,13 +29,14 @@ use sp_std::vec;
 
 const SPEC_VERSION: u32 = 123;
 const FACTORY_ADDR: &str = "0xE1586e744b99bF8e4C981DfE4dD4369d6f8Ed88A";
+const INIT_COIN: u128 = 5000_000_000_000_000_000;
 
 benchmarks! {
 	asset_burn_event_handle {
 		let caller = <T as darwinia_evm::Config>::AddressMapping::into_account_id(
 			hex_into_unchecked(FACTORY_ADDR)
 		);
-		<T as Config>::RingCurrency::deposit_creating(&caller, U256::from(500).low_u128().unique_saturated_into());
+		<T as Config>::RingCurrency::deposit_creating(&caller, INIT_COIN.unique_saturated_into());
 
 		let mut input = vec![0; 4];
 		let mut burn_action = &sha3::Keccak256::digest(&BURN_ACTION)[0..4];
@@ -49,7 +50,7 @@ benchmarks! {
 			hex_into_unchecked("0000000000000000000000000000000000000003"),
 			vec![1; 32],
 			U256::from(250),
-			U256::from(10_000_000_000u128),
+			U256::from(949_643_000_000_000_000u128),
 		);
 		input.extend_from_slice(&token_info);
 	}:_(RawOrigin::Signed(caller), input)
