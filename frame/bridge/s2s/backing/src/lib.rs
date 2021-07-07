@@ -180,40 +180,41 @@ pub mod pallet {
 			#[pallet::compact] fee: RingBalance<T>,
 			recipient: EthereumAddress,
 		) -> DispatchResultWithPostInfo {
-			// let user = ensure_signed(origin)?;
+			let user = ensure_signed(origin)?;
 
-			// // Make sure the locked value is less than the max lock limited
-			// ensure!(
-			// 	value < T::RingLockMaxLimit::get() && !value.is_zero(),
-			// 	<Error<T>>::RingLockLimited
-			// );
-			// // Make sure the user's balance is enough to lock
-			// ensure!(
-			// 	T::RingCurrency::free_balance(&user) > value + fee,
-			// 	<Error<T>>::InsufficientBalance
-			// );
+			// Make sure the locked value is less than the max lock limited
+			ensure!(
+				value < T::RingLockMaxLimit::get() && !value.is_zero(),
+				<Error<T>>::RingLockLimited
+			);
+			// Make sure the user's balance is enough to lock
+			ensure!(
+				T::RingCurrency::free_balance(&user) > value + fee,
+				<Error<T>>::InsufficientBalance
+			);
 
-			// if let Some(fee_account) = T::FeeAccount::get() {
-			// 	T::RingCurrency::transfer(&user, &fee_account, fee, KeepAlive)?;
-			// }
-			// T::RingCurrency::transfer(&user, &Self::pallet_account_id(), value, AllowDeath)?;
+			if let Some(fee_account) = T::FeeAccount::get() {
+				T::RingCurrency::transfer(&user, &fee_account, fee, KeepAlive)?;
+			}
+			T::RingCurrency::transfer(&user, &Self::pallet_account_id(), value, AllowDeath)?;
 
-			// // Send to the target chain
-			// let amount: U256 = value.saturated_into::<u128>().into();
-			// let token = Token::Native(TokenInfo {
-			// 	// The native mapped RING token as a special ERC20 address
-			// 	address: array_bytes::hex2array_unchecked(BACK_ERC20_RING).into(),
-			// 	value: Some(amount),
-			// 	option: None,
-			// });
+			// Send to the target chain
+			let amount: U256 = value.saturated_into::<u128>().into();
+			let token = Token::Native(TokenInfo {
+				// The native mapped RING token as a special ERC20 address
+				address: array_bytes::hex2array_unchecked(BACK_ERC20_RING).into(),
+				value: Some(amount),
+				option: None,
+			});
 
-			// let account = RecipientAccount::EthereumAccount(recipient);
-			// let payload =
-			// 	T::CallEncoder::encode_remote_issue(spec_version, weight, token.clone(), account)
-			// 		.map_err(|_| Error::<T>::EncodeInvalid)?;
+			let account = RecipientAccount::EthereumAccount(recipient);
+			let payload =
+				T::CallEncoder::encode_remote_issue(spec_version, weight, token.clone(), account)
+					.map_err(|_| Error::<T>::EncodeInvalid)?;
+			// TODO: release those tokens after benchmark
 			// T::MessageSender::send_message(payload, fee)
 			// 	.map_err(|_| Error::<T>::SendMessageFailed)?;
-			// Self::deposit_event(Event::TokenLocked(token, user, recipient, amount));
+			Self::deposit_event(Event::TokenLocked(token, user, recipient, amount));
 			Ok(().into())
 		}
 
