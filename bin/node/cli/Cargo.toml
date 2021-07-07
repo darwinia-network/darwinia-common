@@ -51,7 +51,7 @@ dvm-rpc-runtime-api                 = { path = "../../../frame/dvm/rpc/runtime-a
 pangolin-runtime                    = { path = "../runtime/pangolin" }
 # substrate
 frame-benchmarking                         = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
-frame-benchmarking-cli                     = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-benchmarking-cli                     = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-system-rpc-runtime-api               = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-im-online                           = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-transaction-payment-rpc             = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
@@ -121,13 +121,15 @@ cli       = [
 db        = ["sc-service/db"]
 full-node = []
 wasmtime  = ["sc-cli/wasmtime"]
+
+runtime-benchmarks = [
+	"frame-benchmarking-cli",
+	"pangolin-runtime/runtime-benchmarks",
+]
+
 # Enable features that allow the runtime to be tried and debugged. Name might be subject to change
 # in the near future.
 try-runtime = [
 	"pangolin-runtime/try-runtime",
 	"try-runtime-cli",
-]
-
-runtime-benchmarks = [
-	"pangolin-runtime/runtime-benchmarks",
 ]

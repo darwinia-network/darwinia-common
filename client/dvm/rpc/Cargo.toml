@@ -25,7 +25,7 @@ libsecp256k1        = { version = "0.3" }
 log                 = { version = "0.4.14" }
 rand                = { version = "0.7" }
 rlp                 = { version = "0.5.0" }
-sha3                = { version = "0.8" }
+sha3                = { version = "0.9.1" }
 # darwinia
 dc-db               = { path = "../db" }
 dp-rpc              = { path = "../../../primitives/rpc" }
