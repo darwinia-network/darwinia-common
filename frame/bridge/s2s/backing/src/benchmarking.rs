@@ -31,18 +31,16 @@ const FACTORY_ADDR: &str = "0xE1586e744b99bF8e4C981DfE4dD4369d6f8Ed88A";
 
 benchmarks! {
 	register_and_remote_create {
-		let w in 0..1000000;
 		let caller = whitelisted_caller();
 		<T as Config>::RingCurrency::deposit_creating(&caller, U256::from(5000).low_u128().unique_saturated_into());
-	}:_(RawOrigin::Signed(caller), SPEC_VERSION, w.into(), U256::from(500).low_u128().unique_saturated_into())
+	}:_(RawOrigin::Signed(caller), SPEC_VERSION, 1000000, U256::from(500).low_u128().unique_saturated_into())
 
 	lock_and_remote_issue {
-		let w in 0..1000000;
 		let caller = whitelisted_caller();
 		<T as Config>::RingCurrency::deposit_creating(&caller, U256::from(5000).low_u128().unique_saturated_into());
 		let recipient = hex_into_unchecked("0000000000000000000000000000000000000001");
 
-	}: _(RawOrigin::Signed(caller), SPEC_VERSION, w.into(),
+	}: _(RawOrigin::Signed(caller), SPEC_VERSION, 1000000,
 			U256::from(500).low_u128().unique_saturated_into(),
 			U256::from(100).low_u128().unique_saturated_into(),
 			recipient

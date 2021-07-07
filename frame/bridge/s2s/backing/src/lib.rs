@@ -133,7 +133,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as Config>::WeightInfo::register_and_remote_create())]
 		#[frame_support::transactional]
 		pub fn register_and_remote_create(
 			origin: OriginFor<T>,
@@ -170,7 +170,7 @@ pub mod pallet {
 		///
 		/// Target is the id of the target chain defined in s2s_chain pallet
 		// TODO: update the weight
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as Config>::WeightInfo::lock_and_remote_issue())]
 		#[frame_support::transactional]
 		pub fn lock_and_remote_issue(
 			origin: OriginFor<T>,
@@ -220,7 +220,7 @@ pub mod pallet {
 
 		/// Receive target chain locked message and unlock token in this chain.
 		// TODO: update the weight
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as Config>::WeightInfo::unlock_from_remote())]
 		pub fn unlock_from_remote(
 			origin: OriginFor<T>,
 			token: Token,
