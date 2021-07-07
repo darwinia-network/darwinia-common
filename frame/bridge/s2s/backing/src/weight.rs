@@ -51,7 +51,7 @@ use sp_std::marker::PhantomData;
 
 /// Weight functions needed for darwinia_s2s_backing.
 pub trait WeightInfo {
-	fn register_and_remote_create() -> Weight;
+	fn register_and_remote_create(w: u32, ) -> Weight;
 	fn lock_and_remote_issue(w: u32, ) -> Weight;
 	fn unlock_from_remote() -> Weight;
 	
@@ -60,20 +60,22 @@ pub trait WeightInfo {
 /// Weights for darwinia_s2s_backing using the Substrate node and recommended hardware.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
-	fn register_and_remote_create() -> Weight {
-		(73_838_000 as Weight)
+	fn register_and_remote_create(_w: u32, ) -> Weight {
+		(28_519_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 			
 	}
 	fn lock_and_remote_issue(_w: u32, ) -> Weight {
-		(44_089_000 as Weight)
+		(41_513_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(7 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 			
 	}
 	fn unlock_from_remote() -> Weight {
-		(110_000 as Weight)
+		(65_703_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(7 as Weight))
+			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 			
 	}
 	
@@ -81,20 +83,22 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
-	fn register_and_remote_create() -> Weight {
-		(73_838_000 as Weight)
+	fn register_and_remote_create(_w: u32, ) -> Weight {
+		(28_519_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
 			
 	}
 	fn lock_and_remote_issue(_w: u32, ) -> Weight {
-		(44_089_000 as Weight)
+		(41_513_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(7 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 			
 	}
 	fn unlock_from_remote() -> Weight {
-		(110_000 as Weight)
+		(65_703_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(7 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 			
 	}
 	
