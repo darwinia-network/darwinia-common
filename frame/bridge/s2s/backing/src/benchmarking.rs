@@ -20,21 +20,46 @@
 
 use super::*;
 
-use frame_benchmarking::benchmarks;
+const SPEC_VERSION: u32 = 123;
+
+use array_bytes::{hex2bytes_unchecked, hex_into_unchecked};
+use dp_asset::token::{Token, TokenOption};
+use frame_benchmarking::{benchmarks, whitelisted_caller};
+use frame_system::RawOrigin;
+use sp_runtime::traits::UniqueSaturatedInto;
+const FACTORY_ADDR: &str = "0xE1586e744b99bF8e4C981DfE4dD4369d6f8Ed88A";
 
 benchmarks! {
 	register_and_remote_create {
-	}: {
+		// let addr_bytes = hex2bytes_unchecked("0x8e13b96a9c9e3b1832f07935be76c2b331251e26445f520ad1c56b24477ed8dd");
+		// let caller: T::AccountId = T::AccountId::decode(&mut &addr_bytes[..]).unwrap_or_default();
+		let caller = whitelisted_caller();
+		<T as Config>::RingCurrency::deposit_creating(&caller, U256::from(5000).low_u128().unique_saturated_into());
 
-	}
+	}:_(RawOrigin::Signed(caller), SPEC_VERSION, 1000, U256::from(500).low_u128().unique_saturated_into())
 
 	lock_and_remote_issue {
-	}: {
+		let addr_bytes = hex2bytes_unchecked("0x8e13b96a9c9e3b1832f07935be76c2b331251e26445f520ad1c56b24477ed8dd");
+		let caller: T::AccountId = T::AccountId::decode(&mut &addr_bytes[..]).unwrap_or_default();
+		let recipient = hex_into_unchecked("0000000000000000000000000000000000000001");
 
-	}
+	}: _(RawOrigin::Signed(caller), SPEC_VERSION, 1000,
+			U256::from(500).low_u128().unique_saturated_into(),
+			U256::from(100).low_u128().unique_saturated_into(),
+			recipient
+	)
 
 	unlock_from_remote {
-	}: {
-
-	}
+		let addr_bytes = hex2bytes_unchecked("0x8e13b96a9c9e3b1832f07935be76c2b331251e26445f520ad1c56b24477ed8dd");
+		let caller: T::AccountId = T::AccountId::decode(&mut &addr_bytes[..]).unwrap_or_default();
+		let register_token_address = hex_into_unchecked("0000000000000000000000000000000000000002");
+		let token_option = TokenOption {
+			name: [10; 32],
+			symbol: [20; 32],
+			decimal: 18,
+		};
+		let token = Token::Native(TokenInfo::new(register_token_address, None, Some(token_option)));
+		let addr_bytes = hex2bytes_unchecked("0x8e13b96a9c9e3b1832f07935be76c2b331251e26445f520ad1c56b24477ed8d6");
+		let recipient: T::AccountId = T::AccountId::decode(&mut &addr_bytes[..]).unwrap_or_default();
+	}:_(RawOrigin::Signed(caller), token, recipient)
 }

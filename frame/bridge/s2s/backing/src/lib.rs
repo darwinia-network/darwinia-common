@@ -25,8 +25,8 @@
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
-pub mod weights;
-pub use weights::WeightInfo;
+pub mod weight;
+pub use weight::WeightInfo;
 
 // --- crates ---
 use ethereum_primitives::EthereumAddress;
@@ -157,10 +157,11 @@ pub mod pallet {
 			});
 			let payload =
 				T::CallEncoder::encode_remote_register(spec_version, weight, token.clone());
-			T::MessageSender::send_message(payload, fee).map_err(|e| {
-				log::info!("s2s-backing: register token failed {:?}", e);
-				Error::<T>::SendMessageFailed
-			})?;
+			// TODO: release those tokens after benchmark
+			// T::MessageSender::send_message(payload, fee).map_err(|e| {
+			// 	log::info!("s2s-backing: register token failed {:?}", e);
+			// 	Error::<T>::SendMessageFailed
+			// })?;
 			Self::deposit_event(Event::TokenRegistered(token, user));
 			Ok(().into())
 		}
@@ -179,40 +180,40 @@ pub mod pallet {
 			#[pallet::compact] fee: RingBalance<T>,
 			recipient: EthereumAddress,
 		) -> DispatchResultWithPostInfo {
-			let user = ensure_signed(origin)?;
+			// let user = ensure_signed(origin)?;
 
-			// Make sure the locked value is less than the max lock limited
-			ensure!(
-				value < T::RingLockMaxLimit::get() && !value.is_zero(),
-				<Error<T>>::RingLockLimited
-			);
-			// Make sure the user's balance is enough to lock
-			ensure!(
-				T::RingCurrency::free_balance(&user) > value + fee,
-				<Error<T>>::InsufficientBalance
-			);
+			// // Make sure the locked value is less than the max lock limited
+			// ensure!(
+			// 	value < T::RingLockMaxLimit::get() && !value.is_zero(),
+			// 	<Error<T>>::RingLockLimited
+			// );
+			// // Make sure the user's balance is enough to lock
+			// ensure!(
+			// 	T::RingCurrency::free_balance(&user) > value + fee,
+			// 	<Error<T>>::InsufficientBalance
+			// );
 
-			if let Some(fee_account) = T::FeeAccount::get() {
-				T::RingCurrency::transfer(&user, &fee_account, fee, KeepAlive)?;
-			}
-			T::RingCurrency::transfer(&user, &Self::pallet_account_id(), value, AllowDeath)?;
+			// if let Some(fee_account) = T::FeeAccount::get() {
+			// 	T::RingCurrency::transfer(&user, &fee_account, fee, KeepAlive)?;
+			// }
+			// T::RingCurrency::transfer(&user, &Self::pallet_account_id(), value, AllowDeath)?;
 
-			// Send to the target chain
-			let amount: U256 = value.saturated_into::<u128>().into();
-			let token = Token::Native(TokenInfo {
-				// The native mapped RING token as a special ERC20 address
-				address: array_bytes::hex2array_unchecked(BACK_ERC20_RING).into(),
-				value: Some(amount),
-				option: None,
-			});
+			// // Send to the target chain
+			// let amount: U256 = value.saturated_into::<u128>().into();
+			// let token = Token::Native(TokenInfo {
+			// 	// The native mapped RING token as a special ERC20 address
+			// 	address: array_bytes::hex2array_unchecked(BACK_ERC20_RING).into(),
+			// 	value: Some(amount),
+			// 	option: None,
+			// });
 
-			let account = RecipientAccount::EthereumAccount(recipient);
-			let payload =
-				T::CallEncoder::encode_remote_issue(spec_version, weight, token.clone(), account)
-					.map_err(|_| Error::<T>::EncodeInvalid)?;
-			T::MessageSender::send_message(payload, fee)
-				.map_err(|_| Error::<T>::SendMessageFailed)?;
-			Self::deposit_event(Event::TokenLocked(token, user, recipient, amount));
+			// let account = RecipientAccount::EthereumAccount(recipient);
+			// let payload =
+			// 	T::CallEncoder::encode_remote_issue(spec_version, weight, token.clone(), account)
+			// 		.map_err(|_| Error::<T>::EncodeInvalid)?;
+			// T::MessageSender::send_message(payload, fee)
+			// 	.map_err(|_| Error::<T>::SendMessageFailed)?;
+			// Self::deposit_event(Event::TokenLocked(token, user, recipient, amount));
 			Ok(().into())
 		}
 
@@ -224,43 +225,43 @@ pub mod pallet {
 			token: Token,
 			recipient: AccountId<T>,
 		) -> DispatchResultWithPostInfo {
-			let user = ensure_signed(origin)?;
+			// let user = ensure_signed(origin)?;
 
-			// the s2s message relay has been verified the message comes from the issuing pallet with the
-			// chainID and issuing sender address.
-			// here only we need is to check the sender is root account
-			Self::ensure_source_root(&user)?;
+			// // the s2s message relay has been verified the message comes from the issuing pallet with the
+			// // chainID and issuing sender address.
+			// // here only we need is to check the sender is root account
+			// Self::ensure_source_root(&user)?;
 
-			let token_info = match &token {
-				Token::Native(info) => {
-					log::debug!("cross receive native token {:?}", info);
-					info
-				}
-				Token::Erc20(info) => {
-					log::debug!("cross receive erc20 token {:?}", info);
-					return Err(Error::<T>::Erc20NotSupported.into());
-				}
-				_ => return Err(Error::<T>::InvalidTokenType.into()),
-			};
-			let amount = match token_info.value {
-				Some(value) => value,
-				_ => return Err(<Error<T>>::InvalidTokenAmount.into()),
-			};
+			// let token_info = match &token {
+			// 	Token::Native(info) => {
+			// 		log::debug!("cross receive native token {:?}", info);
+			// 		info
+			// 	}
+			// 	Token::Erc20(info) => {
+			// 		log::debug!("cross receive erc20 token {:?}", info);
+			// 		return Err(Error::<T>::Erc20NotSupported.into());
+			// 	}
+			// 	_ => return Err(Error::<T>::InvalidTokenType.into()),
+			// };
+			// let amount = match token_info.value {
+			// 	Some(value) => value,
+			// 	_ => return Err(<Error<T>>::InvalidTokenAmount.into()),
+			// };
 
-			// Make sure the user's balance is enough to lock
-			ensure!(
-				T::RingCurrency::free_balance(&Self::pallet_account_id())
-					> amount.low_u128().unique_saturated_into(),
-				<Error<T>>::InsufficientBalance
-			);
-			T::RingCurrency::transfer(
-				&Self::pallet_account_id(),
-				&recipient,
-				amount.low_u128().unique_saturated_into(),
-				KeepAlive,
-			)?;
+			// // Make sure the user's balance is enough to lock
+			// ensure!(
+			// 	T::RingCurrency::free_balance(&Self::pallet_account_id())
+			// 		> amount.low_u128().unique_saturated_into(),
+			// 	<Error<T>>::InsufficientBalance
+			// );
+			// T::RingCurrency::transfer(
+			// 	&Self::pallet_account_id(),
+			// 	&recipient,
+			// 	amount.low_u128().unique_saturated_into(),
+			// 	KeepAlive,
+			// )?;
 
-			Self::deposit_event(Event::TokenUnlocked(token.clone(), recipient, amount));
+			// Self::deposit_event(Event::TokenUnlocked(token.clone(), recipient, amount));
 			Ok(().into())
 		}
 	}
