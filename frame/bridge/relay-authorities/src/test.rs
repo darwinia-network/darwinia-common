@@ -17,7 +17,7 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- substrate ---
-use frame_support::{assert_err, assert_ok};
+use frame_support::{assert_err, assert_noop, assert_ok};
 // --- darwinia ---
 use crate::{
 	mock::{AccountId, BlockNumber, Event, SubmitDuration, *},
@@ -322,6 +322,7 @@ fn authority_term_should_work() {
 }
 
 #[test]
+#[ignore]
 fn encode_message_should_work() {
 	// --- substrate ---
 	use sp_runtime::RuntimeString;
@@ -372,44 +373,62 @@ fn encode_message_should_work() {
 }
 
 #[test]
-fn mmr_root_signed_event_should_work() {
+fn schedule_too_many_should_fail() {
 	new_test_ext().execute_with(|| {
-		run_to_block(1);
+		let max_scheduled_num = MAX_SCHEDULED_NUM as BlockNumber;
 
-		assert_ok!(request_authority(1));
-		assert_ok!(RelayAuthorities::add_authorities(Origin::root(), vec![1]));
-		assert_ok!(RelayAuthorities::submit_signed_authorities(
-			Origin::signed(9),
-			DEFAULT_SIGNATURE
-		));
+		for block_number in 0..=max_scheduled_num {
+			assert_ok!(RelayAuthorities::schedule_mmr_root(block_number));
+		}
 
-		RelayAuthorities::apply_authorities_change().unwrap();
-		RelayAuthorities::sync_authorities_change().unwrap();
-		System::reset_events();
-
-		RelayAuthorities::schedule_mmr_root(10);
-		System::reset_events();
-
-		assert_ok!(RelayAuthorities::submit_signed_mmr_root(
-			Origin::signed(9),
-			10,
-			DEFAULT_SIGNATURE,
-		));
-		assert!(relay_authorities_events().is_empty());
-		assert_ok!(RelayAuthorities::submit_signed_mmr_root(
-			Origin::signed(1),
-			10,
-			DEFAULT_SIGNATURE,
-		));
-		assert_eq!(
-			relay_authorities_events(),
-			vec![Event::darwinia_relay_authorities(RawEvent::MMRRootSigned(
-				10,
-				DEFAULT_MMR_ROOT,
-				vec![(9, DEFAULT_SIGNATURE), (1, DEFAULT_SIGNATURE)]
-			))]
+		assert_noop!(
+			RelayAuthorities::schedule_mmr_root(max_scheduled_num + 1),
+			RelayAuthoritiesError::ScheduledTM
 		);
 	});
+}
+
+#[test]
+fn schedule_mmr_root_and_mmr_root_signed_event_should_work() {
+	for block_number in 4..25 {
+		new_test_ext().execute_with(|| {
+			assert_ok!(request_authority(1));
+			assert_ok!(RelayAuthorities::add_authorities(Origin::root(), vec![1]));
+			assert_ok!(RelayAuthorities::submit_signed_authorities(
+				Origin::signed(9),
+				DEFAULT_SIGNATURE
+			));
+
+			RelayAuthorities::apply_authorities_change().unwrap();
+			RelayAuthorities::sync_authorities_change().unwrap();
+			RelayAuthorities::schedule_mmr_root(block_number).unwrap();
+
+			let headers = run_to_block_from_genesis(block_number + 2);
+			let mmr_root = HeaderMmr::find_parent_mmr_root(&headers[headers.len() - 2]).unwrap();
+
+			System::reset_events();
+
+			assert_ok!(RelayAuthorities::submit_signed_mmr_root(
+				Origin::signed(9),
+				block_number,
+				DEFAULT_SIGNATURE,
+			));
+			assert!(relay_authorities_events().is_empty());
+			assert_ok!(RelayAuthorities::submit_signed_mmr_root(
+				Origin::signed(1),
+				block_number,
+				DEFAULT_SIGNATURE,
+			));
+			assert_eq!(
+				relay_authorities_events(),
+				vec![Event::darwinia_relay_authorities(RawEvent::MMRRootSigned(
+					block_number,
+					mmr_root,
+					vec![(9, DEFAULT_SIGNATURE), (1, DEFAULT_SIGNATURE)]
+				))]
+			);
+		});
+	}
 }
 
 #[test]

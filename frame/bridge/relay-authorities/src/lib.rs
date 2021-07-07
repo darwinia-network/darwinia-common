@@ -21,8 +21,17 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod weights;
-// --- darwinia ---
 pub use weights::WeightInfo;
+
+pub mod migration {
+	pub fn migrate<T, I>(module: &[u8]) {
+		// --- paritytech ---
+		use frame_support::migration;
+
+		migration::remove_storage_prefix(module, b"MMRRootsToSign", &[]);
+		migration::remove_storage_prefix(module, b"MMRRootsToSignKeys", &[]);
+	}
+}
 
 #[cfg(test)]
 mod mock;
@@ -63,7 +72,7 @@ use frame_support::{
 	weights::Weight,
 	StorageValue,
 };
-use frame_system::ensure_signed;
+use frame_system::{ensure_signed, pallet_prelude::*};
 use sp_runtime::{
 	traits::{Saturating, Zero},
 	DispatchError, DispatchResult, Perbill, SaturatedConversion,
@@ -75,6 +84,8 @@ use sp_std::prelude::*;
 use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::balance::*;
 use types::*;
+
+pub const MAX_SCHEDULED_NUM: usize = 10;
 
 pub trait Config<I: Instance = DefaultInstance>: frame_system::Config {
 	type Event: From<Event<Self, I>> + Into<<Self as frame_system::Config>::Event>;
@@ -135,10 +146,10 @@ decl_error! {
 		StakeIns,
 		/// On Authorities Change - DISABLED
 		OnAuthoritiesChangeDis,
+		/// Scheduled Items - TOO MANY
+		ScheduledTM,
 		/// Scheduled Sign -NOT EXISTED
 		ScheduledSignNE,
-		/// Darwinia MMR Root - NOT READY YET
-		DarwiniaMMRRootNRY,
 		/// Signature - INVALID
 		SignatureInv,
 		/// Term - MISMATCHED
@@ -185,10 +196,10 @@ decl_storage! {
 			get(fn authorities_to_sign)
 			: Option<(RelayAuthorityMessage<T, I>, Vec<(AccountId<T>, RelayAuthoritySignature<T, I>)>)>;
 
-		/// The `MMRRootsToSign` keys cache
+		/// The `MmrRootsToSign` keys cache
 		///
-		/// Only use for update the `MMRRootsToSign` once the authorities changed
-		pub MMRRootsToSignKeys get(fn mmr_root_to_sign_keys): Vec<BlockNumber<T>>;
+		/// Only use for update the `MmrRootsToSign` once the authorities changed
+		pub MmrRootsToSignKeys get(fn mmr_root_to_sign_keys): Vec<BlockNumberFor<T>>;
 
 		/// All the relay requirements from the backing module here
 		///
@@ -198,10 +209,10 @@ decl_storage! {
 		///
 		/// Params
 		/// 	1. collected signatures
-		pub MMRRootsToSign
+		pub MmrRootsToSign
 			get(fn mmr_root_to_sign_of)
-			: map hasher(identity) BlockNumber<T>
-			=> Option<Vec<(AccountId<T>, RelayAuthoritySignature<T, I>)>>;
+			: map hasher(identity) BlockNumberFor<T>
+			=> Option<MmrRootToSign<MMRRoot<T>, AccountId<T>, RelayAuthoritySignature<T, I>>>;
 
 		/// The mmr root signature submit duration, will be delayed if on authorities change
 		pub SubmitDuration get(fn submit_duration): BlockNumber<T> = T::SubmitDuration::get();
@@ -252,7 +263,8 @@ decl_module! {
 		fn deposit_event() = default;
 
 		// Deal with the slash thing. If authority didn't do his job before the deadline
-		fn on_initialize(now: BlockNumber<T>) -> Weight {
+		fn on_initialize(now: BlockNumberFor<T>) -> Weight {
+			Self::prepare_mmr_root_to_sign(now);
 			Self::check_misbehavior(now);
 
 			0
@@ -457,11 +469,11 @@ decl_module! {
 			// Not allow to submit during the authority set change
 			ensure!(!Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
 
-			let mut signatures =
-				<MMRRootsToSign<T, I>>::get(block_number).ok_or(<Error<T, I>>::ScheduledSignNE)?;
+			let mut to_sign =
+				<MmrRootsToSign<T, I>>::get(block_number).ok_or(<Error<T, I>>::ScheduledSignNE)?;
 
 			// No-op if was already submitted
-			if signatures.iter().position(|(authority_, _)| authority_ == &authority).is_some() {
+			if to_sign.signatures.iter().position(|(signer, _)| signer == &authority).is_some() {
 				return Ok(());
 			}
 
@@ -470,8 +482,6 @@ decl_module! {
 				&authorities,
 				&authority
 			).ok_or(<Error<T, I>>::AuthorityNE)?;
-			let mmr_root =
-				T::DarwiniaMMR::get_root(block_number).ok_or(<Error<T, I>>::DarwiniaMMRRootNRY)?;
 
 			// The message is composed of:
 			//
@@ -488,7 +498,7 @@ decl_module! {
 					_1: T::Version::get().spec_name,
 					_2: T::OpCodes::get().0,
 					_3: block_number,
-					_4: mmr_root
+					_4: to_sign.mmr_root
 				}
 				.encode()
 			);
@@ -498,17 +508,17 @@ decl_module! {
 				 <Error<T, I>>::SignatureInv
 			);
 
-			signatures.push((authority, signature));
+			to_sign.signatures.push((authority, signature));
 
-			if Perbill::from_rational(signatures.len() as u32, authorities.len() as _)
+			if Perbill::from_rational(to_sign.signatures.len() as u32, authorities.len() as _)
 				>= T::SignThreshold::get()
 			{
 				// TODO: clean the mmr root which was contains in this mmr root?
 
 				Self::mmr_root_signed(block_number);
-				Self::deposit_event(RawEvent::MMRRootSigned(block_number, mmr_root, signatures));
+				Self::deposit_event(RawEvent::MMRRootSigned(block_number, to_sign.mmr_root, to_sign.signatures));
 			} else {
-				<MMRRootsToSign<T, I>>::insert(block_number, signatures);
+				<MmrRootsToSign<T, I>>::insert(block_number, to_sign);
 			}
 		}
 
@@ -586,12 +596,12 @@ decl_module! {
 			<NextAuthorities<T, I>>::kill();
 			<AuthoritiesToSign<T, I>>::kill();
 			{
-				<MMRRootsToSign<T, I>>::remove_all();
+				<MmrRootsToSign<T, I>>::remove_all();
 				let schedule = (
 					<frame_system::Pallet<T>>::block_number().saturated_into::<u64>() / 10 * 10 + 10
 				).saturated_into();
-				<MMRRootsToSignKeys<T, I>>::mutate(|schedules| *schedules = vec![schedule]);
-				Self::schedule_mmr_root(schedule);
+				<MmrRootsToSignKeys<T, I>>::mutate(|schedules| *schedules = vec![schedule]);
+				Self::schedule_mmr_root(schedule)?;
 			}
 			<SubmitDuration<T, I>>::kill();
 		}
@@ -658,17 +668,18 @@ where
 		}
 
 		// TODO: optimize DB R/W, but it's ok in real case, since the set won't grow so large
-		for key in <MMRRootsToSignKeys<T, I>>::get() {
-			if let Some(mut signatures) = <MMRRootsToSign<T, I>>::get(key) {
+		for key in <MmrRootsToSignKeys<T, I>>::get() {
+			if let Some(mut mmr_root_to_sign) = <MmrRootsToSign<T, I>>::get(key) {
 				for account_id in &remove_authorities {
-					if let Some(position) = signatures
+					if let Some(position) = mmr_root_to_sign
+						.signatures
 						.iter()
 						.position(|(authority, _)| &authority == account_id)
 					{
-						signatures.remove(position);
+						mmr_root_to_sign.signatures.remove(position);
 					}
 
-					<MMRRootsToSign<T, I>>::insert(key, &signatures);
+					<MmrRootsToSign<T, I>>::insert(key, &mmr_root_to_sign);
 				}
 			} else {
 				// Should never enter this condition
@@ -750,9 +761,45 @@ where
 		Ok(())
 	}
 
-	pub fn mmr_root_signed(block_number: BlockNumber<T>) {
-		<MMRRootsToSign<T, I>>::remove(block_number);
-		<MMRRootsToSignKeys<T, I>>::mutate(|mmr_roots_to_sign_keys| {
+	pub fn prepare_mmr_root_to_sign(block_number: BlockNumberFor<T>) {
+		if let Some(schedule) = <MmrRootsToSignKeys<T, I>>::get()
+			.into_iter()
+			// In order to get the schedule block number's MMR root
+			// 	1. MMR root doesn't contain itself(header hash)
+			// 	1. MMR's state change on finalize
+			// That's why we need to plus `2` to the scheduled block number
+			.find(|schedule| *schedule + 2_u32.into() == block_number)
+		{
+			if let Some(mmr_root) = T::DarwiniaMMR::get_root() {
+				let _ = <MmrRootsToSign<T, I>>::try_mutate(schedule, |maybe_mmr_root_to_sign| {
+					if maybe_mmr_root_to_sign.is_none() {
+						*maybe_mmr_root_to_sign = Some(MmrRootToSign::new(mmr_root));
+
+						log::trace!(
+							"Success to `prepare_mmr_root_to_sign` `{:?}` for block `{:?}` at block `{:?}`",
+							mmr_root,
+							schedule,
+							block_number
+						);
+
+						Ok(())
+					} else {
+						Err(())
+					}
+				});
+			} else {
+				log::error!(
+					"Failed to `get_root` while `prepare_mmr_root_to_sign` for block `{:?}` at block `{:?}`",
+					schedule,
+					block_number
+				);
+			}
+		}
+	}
+
+	pub fn mmr_root_signed(block_number: BlockNumberFor<T>) {
+		<MmrRootsToSign<T, I>>::remove(block_number);
+		<MmrRootsToSignKeys<T, I>>::mutate(|mmr_roots_to_sign_keys| {
 			if let Some(position) = mmr_roots_to_sign_keys
 				.iter()
 				.position(|key| key == &block_number)
@@ -824,8 +871,8 @@ where
 		} else {
 			let at = now.saturating_sub(<SubmitDuration<T, I>>::get());
 
-			if let Some(signatures) = <MMRRootsToSign<T, I>>::take(at) {
-				let _ = <MMRRootsToSignKeys<T, I>>::try_mutate(|keys| {
+			if let Some(mmr_root_to_sign) = <MmrRootsToSign<T, I>>::take(at) {
+				let _ = <MmrRootsToSignKeys<T, I>>::try_mutate(|keys| {
 					if let Some(position) = keys.iter().position(|key| key == &at) {
 						keys.remove(position);
 
@@ -835,7 +882,7 @@ where
 					}
 				});
 
-				find_and_slash_misbehavior(signatures);
+				find_and_slash_misbehavior(mmr_root_to_sign.signatures);
 
 				// TODO: schedule a new mmr root (greatest one in the keys)
 			}
@@ -850,21 +897,31 @@ where
 {
 	type Signer = RelayAuthoritySigner<T, I>;
 
-	fn schedule_mmr_root(block_number: BlockNumber<T>) {
-		let _ = <MMRRootsToSign<T, I>>::try_mutate(block_number, |signed_mmr_root| {
+	fn schedule_mmr_root(block_number: BlockNumberFor<T>) -> DispatchResult {
+		if <MmrRootsToSignKeys<T, I>>::exists() {
+			if let Some(scheduled_num) = <MmrRootsToSignKeys<T, I>>::decode_len() {
+				if scheduled_num > MAX_SCHEDULED_NUM {
+					Err(<Error<T, I>>::ScheduledTM)?;
+				}
+			} else {
+				Err("Failed to get `decode_len`")?;
+			}
+		}
+
+		let _ = <MmrRootsToSignKeys<T, I>>::try_mutate(|mmr_roots_to_sign_keys| {
 			// No-op if the sign was already scheduled
-			if signed_mmr_root.is_some() {
+			if mmr_roots_to_sign_keys.contains(&block_number) {
 				return Err(());
 			}
 
-			<MMRRootsToSignKeys<T, I>>::append(block_number);
-
-			*signed_mmr_root = Some(<Vec<(AccountId<T>, RelayAuthoritySignature<T, I>)>>::new());
+			mmr_roots_to_sign_keys.push(block_number);
 
 			Self::deposit_event(RawEvent::ScheduleMMRRoot(block_number));
 
 			Ok(())
 		});
+
+		Ok(())
 	}
 
 	fn check_authorities_change_to_sync(

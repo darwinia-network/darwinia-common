@@ -628,7 +628,7 @@ impl_runtime_apis! {
 			block_number_of_member_leaf: u64,
 			block_number_of_last_leaf: u64
 		) -> HeaderMMRRuntimeDispatchInfo<Hash> {
-			HeaderMMR::gen_proof_rpc(block_number_of_member_leaf, block_number_of_last_leaf )
+			HeaderMMR::gen_proof_rpc(block_number_of_member_leaf, block_number_of_last_leaf)
 		}
 	}
 
@@ -848,6 +848,11 @@ pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
+		// <--- Hack for local test
+		use frame_support::traits::Currency;
+		let _ = Ring::deposit_creating(&BridgeMillauMessages::relayer_fund_account_id(), 1 << 50);
+		// --->
+
 		Ok(())
 	}
 
