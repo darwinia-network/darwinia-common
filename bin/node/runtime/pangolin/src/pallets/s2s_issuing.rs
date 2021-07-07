@@ -1,7 +1,7 @@
 // --- substrate ---
-use millau_primitives::AccountIdConverter;
 use frame_support::{dispatch::Dispatchable, weights::PostDispatchInfo, PalletId};
 use frame_system::RawOrigin;
+use millau_primitives::AccountIdConverter;
 use pallet_bridge_messages::Instance1 as Millau;
 use sp_runtime::DispatchErrorWithPostInfo;
 // --- darwinia ---
@@ -37,9 +37,9 @@ impl EncodeCall<AccountId, ToMillauMessagePayload> for MillauCallEncoder {
 	) -> Result<ToMillauMessagePayload, ()> {
 		match recipient {
 			RecipientAccount::<AccountId>::DarwiniaAccount(r) => {
-				let call = MillauRuntime::Sub2SubBacking(MillauSub2SubBackingCall::unlock_from_remote(
-					token, r,
-				))
+				let call = MillauRuntime::Sub2SubBacking(
+					MillauSub2SubBackingCall::unlock_from_remote(token, r),
+				)
 				.encode();
 				return Ok(ToMillauMessagePayload {
 					spec_version,

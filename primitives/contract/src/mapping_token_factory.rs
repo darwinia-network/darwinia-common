@@ -228,6 +228,31 @@ pub struct TokenBurnInfo {
 }
 
 impl TokenBurnInfo {
+	pub fn encode(
+		spec_version: u32,
+		weight: u64,
+		token_type: u32,
+		backing: H160,
+		sender: H160,
+		source: H160,
+		recipient: Vec<u8>,
+		amount: U256,
+		fee: U256,
+	) -> Vec<u8> {
+		let res = ethabi::encode(&[
+			Token::Uint(spec_version.into()),
+			Token::Uint(weight.into()),
+			Token::Uint(token_type.into()),
+			Token::Address(backing),
+			Token::Address(sender),
+			Token::Address(source),
+			Token::Bytes(recipient),
+			Token::Uint(amount),
+			Token::Uint(fee),
+		]);
+		res
+	}
+
 	pub fn decode(data: &[u8]) -> AbiResult<Self> {
 		let tokens = ethabi::decode(
 			&[

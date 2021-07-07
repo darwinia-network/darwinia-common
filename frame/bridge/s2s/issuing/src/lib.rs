@@ -20,8 +20,11 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub mod weights;
-pub use weights::WeightInfo;
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
+pub mod weight;
+pub use weight::WeightInfo;
 
 #[cfg(test)]
 mod tests;
@@ -99,10 +102,15 @@ pub mod pallet {
 		/// function through dispatch precompile contract. And the parameters will be encoded into
 		/// input, here we need decode it to get the burn event.
 		/// Then the event will be sent to the remote backing module as burn proof to unlock origin asset.
-		// TODO: update the weight
-		#[pallet::weight(0)]
+		#[pallet::weight(
+			<T as pallet::Config>::WeightInfo::asset_burn_event_handle()
+			.saturating_add(149_643_000)   // send_minimal_message_worst_case fee
+		)]
 		#[frame_support::transactional]
-		pub fn asset_burn_event_handle(origin: OriginFor<T>, input: Vec<u8>) -> DispatchResultWithPostInfo {
+		pub fn asset_burn_event_handle(
+			origin: OriginFor<T>,
+			input: Vec<u8>,
+		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
 
 			// Ensure the input data is long enough
@@ -130,7 +138,8 @@ pub mod pallet {
 					<T as Config>::RingCurrency::transfer(&caller, &fee_account, fee, KeepAlive)?;
 				}
 
-				Self::burn_and_remote_unlock(fee, burn_info)?;
+			// TODO: release this line after benchmark
+			// Self::burn_and_remote_unlock(fee, burn_info)?;
 			} else {
 				log::trace!("No action match this input selector");
 			}
@@ -140,7 +149,10 @@ pub mod pallet {
 		/// Handle remote register relay message
 		/// Before the token transfer, token should be created first
 		#[pallet::weight(0)]
-		pub fn register_from_remote(origin: OriginFor<T>, token: Token) -> DispatchResultWithPostInfo {
+		pub fn register_from_remote(
+			origin: OriginFor<T>,
+			token: Token,
+		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
 			let backing = Self::ensure_source_root(&user)?;
 			let (token_type, token_info) = token
