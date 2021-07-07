@@ -169,7 +169,6 @@ pub mod pallet {
 		/// Lock token in this chain and cross transfer to the target chain
 		///
 		/// Target is the id of the target chain defined in s2s_chain pallet
-		// TODO: update the weight
 		#[pallet::weight(<T as Config>::WeightInfo::lock_and_remote_issue())]
 		#[frame_support::transactional]
 		pub fn lock_and_remote_issue(
