@@ -195,7 +195,7 @@ pub mod pallet {
 		}
 
 		/// Handle relay message sent from the source backing pallet with relay message
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as Config>::WeightInfo::issue_from_remote())]
 		pub fn issue_from_remote(
 			origin: OriginFor<T>,
 			token: Token,
@@ -211,24 +211,25 @@ pub mod pallet {
 				.token_info()
 				.map_err(|_| Error::<T>::InvalidTokenType)?;
 
-			let mapped_address = Self::mapped_token_address(backing, token_info.address)?;
+			// TODO: release those lines after benchmark
+			// let mapped_address = Self::mapped_token_address(backing, token_info.address)?;
+			// ensure!(
+			// 	mapped_address != H160::zero(),
+			// 	"asset has not been registered"
+			// );
 
-			ensure!(
-				mapped_address != H160::zero(),
-				"asset has not been registered"
-			);
 			// Redeem process
-			if let Some(value) = token_info.value {
-				let input = mtf::encode_cross_receive(mapped_address, recipient, value)
-					.map_err(|_| Error::<T>::InvalidMintEncoding)?;
-				Self::transact_mapping_factory(input)?;
-				Self::deposit_event(Event::TokenIssued(
-					backing,
-					mapped_address,
-					recipient,
-					value,
-				));
-			}
+			// if let Some(value) = token_info.value {
+			// 	let input = mtf::encode_cross_receive(mapped_address, recipient, value)
+			// 		.map_err(|_| Error::<T>::InvalidMintEncoding)?;
+			// Self::transact_mapping_factory(input)?;
+			// Self::deposit_event(Event::TokenIssued(
+			// 	backing,
+			// 	mapped_address,
+			// 	recipient,
+			// 	value,
+			// ));
+			// }
 			Ok(().into())
 		}
 	}
