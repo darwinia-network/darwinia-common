@@ -157,11 +157,10 @@ pub mod pallet {
 			});
 			let payload =
 				T::CallEncoder::encode_remote_register(spec_version, weight, token.clone());
-			// TODO: release those tokens after benchmark
-			// T::MessageSender::send_message(payload, fee).map_err(|e| {
-			// 	log::info!("s2s-backing: register token failed {:?}", e);
-			// 	Error::<T>::SendMessageFailed
-			// })?;
+			T::MessageSender::send_message(payload, fee).map_err(|e| {
+				log::info!("s2s-backing: register token failed {:?}", e);
+				Error::<T>::SendMessageFailed
+			})?;
 			Self::deposit_event(Event::TokenRegistered(token, user));
 			Ok(().into())
 		}
@@ -210,15 +209,13 @@ pub mod pallet {
 			let payload =
 				T::CallEncoder::encode_remote_issue(spec_version, weight, token.clone(), account)
 					.map_err(|_| Error::<T>::EncodeInvalid)?;
-			// TODO: release those tokens after benchmark
-			// T::MessageSender::send_message(payload, fee)
-			// 	.map_err(|_| Error::<T>::SendMessageFailed)?;
+			T::MessageSender::send_message(payload, fee)
+				.map_err(|_| Error::<T>::SendMessageFailed)?;
 			Self::deposit_event(Event::TokenLocked(token, user, recipient, amount));
 			Ok(().into())
 		}
 
 		/// Receive target chain locked message and unlock token in this chain.
-		// TODO: update the weight
 		#[pallet::weight(<T as Config>::WeightInfo::unlock_from_remote())]
 		pub fn unlock_from_remote(
 			origin: OriginFor<T>,

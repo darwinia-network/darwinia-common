@@ -27,22 +27,22 @@ use frame_system::RawOrigin;
 use sp_runtime::traits::UniqueSaturatedInto;
 
 const SPEC_VERSION: u32 = 123;
-const FACTORY_ADDR: &str = "0xE1586e744b99bF8e4C981DfE4dD4369d6f8Ed88A";
+const INIT_COIN: u128 = 5000_000_000_000_000_000;
 
 benchmarks! {
 	register_and_remote_create {
 		let caller = whitelisted_caller();
-		<T as Config>::RingCurrency::deposit_creating(&caller, 5000u128.unique_saturated_into());
-	}:_(RawOrigin::Signed(caller), SPEC_VERSION, 1000000, 500u128.unique_saturated_into())
+		<T as Config>::RingCurrency::deposit_creating(&caller, INIT_COIN.unique_saturated_into());
+	}:_(RawOrigin::Signed(caller), SPEC_VERSION, 1000000, 949_643_000u128.unique_saturated_into())
 
 	lock_and_remote_issue {
 		let caller = whitelisted_caller();
-		<T as Config>::RingCurrency::deposit_creating(&caller, 5000u128.unique_saturated_into());
+		<T as Config>::RingCurrency::deposit_creating(&caller, INIT_COIN.unique_saturated_into());
 		let recipient = hex_into_unchecked("0000000000000000000000000000000000000001");
 
 	}: _(RawOrigin::Signed(caller), SPEC_VERSION, 1000000,
 			500u128.unique_saturated_into(),
-			100u128.unique_saturated_into(),
+			949_643_000u128.unique_saturated_into(),
 			recipient
 	)
 
@@ -52,6 +52,9 @@ benchmarks! {
 		let addr_bytes = hex2bytes_unchecked("0x6d6f646c64612f73327362610000000000000000000000000000000000000000");
 		let pallet_account_id: T::AccountId = T::AccountId::decode(&mut &addr_bytes[..]).unwrap_or_default();
 		<T as Config>::RingCurrency::deposit_creating(&pallet_account_id, U256::from(5000).low_u128().unique_saturated_into());
+		let addr_bytes = hex2bytes_unchecked("0x8e13b96a9c9e3b1832f07935be76c2b331251e26445f520ad1c56b24477ed8d6");
+		let recipient: T::AccountId = T::AccountId::decode(&mut &addr_bytes[..]).unwrap_or_default();
+
 		let register_token_address = hex_into_unchecked("0000000000000000000000000000000000000002");
 		let token_option = TokenOption {
 			name: [10; 32],
@@ -59,7 +62,5 @@ benchmarks! {
 			decimal: 18,
 		};
 		let token = Token::Native(TokenInfo::new(register_token_address, Some(100.into()), Some(token_option)));
-		let addr_bytes = hex2bytes_unchecked("0x8e13b96a9c9e3b1832f07935be76c2b331251e26445f520ad1c56b24477ed8d6");
-		let recipient: T::AccountId = T::AccountId::decode(&mut &addr_bytes[..]).unwrap_or_default();
 	}:_(RawOrigin::Signed(caller), token, recipient)
 }
