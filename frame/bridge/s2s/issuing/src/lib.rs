@@ -103,7 +103,7 @@ pub mod pallet {
 		/// input, here we need decode it to get the burn event.
 		/// Then the event will be sent to the remote backing module as burn proof to unlock origin asset.
 		#[pallet::weight(
-			<T as pallet::Config>::WeightInfo::asset_burn_event_handle()
+			<T as Config>::WeightInfo::asset_burn_event_handle()
 			.saturating_add(149_643_000)   // send_minimal_message_worst_case fee
 		)]
 		#[frame_support::transactional]
@@ -148,7 +148,7 @@ pub mod pallet {
 
 		/// Handle remote register relay message
 		/// Before the token transfer, token should be created first
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as Config>::WeightInfo::register_from_remote())]
 		pub fn register_from_remote(
 			origin: OriginFor<T>,
 			token: Token,
@@ -158,8 +158,9 @@ pub mod pallet {
 			let (token_type, token_info) = token
 				.token_info()
 				.map_err(|_| Error::<T>::InvalidTokenType)?;
-			let mut mapped_address = Self::mapped_token_address(backing, token_info.address)?;
-			ensure!(mapped_address == H160::zero(), "asset has been registered");
+			// TODO: release those lines after benchmark
+			// let mut mapped_address = Self::mapped_token_address(backing, token_info.address)?;
+			// ensure!(mapped_address == H160::zero(), "asset has been registered");
 
 			match token_info.option {
 				Some(option) => {
@@ -178,14 +179,15 @@ pub mod pallet {
 					)
 					.map_err(|_| Error::<T>::InvalidEncodeERC20)?;
 
-					Self::transact_mapping_factory(input)?;
-					mapped_address = Self::mapped_token_address(backing, token_info.address)?;
-					Self::deposit_event(Event::TokenRegistered(
-						user,
-						backing,
-						token_info.address,
-						mapped_address,
-					));
+					// TODO: release those lines after benchmark
+					// Self::transact_mapping_factory(input)?;
+					// mapped_address = Self::mapped_token_address(backing, token_info.address)?;
+					// Self::deposit_event(Event::TokenRegistered(
+					// 	user,
+					// 	backing,
+					// 	token_info.address,
+					// 	mapped_address,
+					// ));
 				}
 				_ => return Err(Error::<T>::InvalidTokenOption.into()),
 			}

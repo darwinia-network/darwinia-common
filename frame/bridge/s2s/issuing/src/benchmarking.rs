@@ -20,8 +20,8 @@
 
 use super::*;
 
-use array_bytes::hex_into_unchecked;
-use dp_asset::token::Token;
+use array_bytes::{hex2bytes_unchecked, hex_into_unchecked};
+use dp_asset::token::{Token, TokenOption};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_system::RawOrigin;
 use sp_runtime::traits::Bounded;
@@ -35,7 +35,6 @@ const SPEC_VERSION: u32 = 123;
 const FACTORY_ADDR: &str = "0xE1586e744b99bF8e4C981DfE4dD4369d6f8Ed88A";
 
 benchmarks! {
-	// dispatch handle benchmark
 	asset_burn_event_handle {
 		let caller = <T as darwinia_evm::Config>::AddressMapping::into_account_id(
 			hex_into_unchecked(FACTORY_ADDR)
@@ -60,15 +59,18 @@ benchmarks! {
 		input.extend_from_slice(&token_info);
 	}:asset_burn_event_handle(RawOrigin::Signed(caller), input)
 
-	// remote register benchmark
-	// remote_register {
-	// 	let addr_bytes = array_bytes::hex2bytes_unchecked("0x8e13b96a9c9e3b1832f07935be76c2b331251e26445f520ad1c56b24477ed8dd");
-	// 	let caller: T::AccountId = T::AccountId::decode(&mut &addr_bytes[..]).unwrap_or_default();
+	register_from_remote {
+		let addr_bytes = hex2bytes_unchecked("0x8e13b96a9c9e3b1832f07935be76c2b331251e26445f520ad1c56b24477ed8dd");
+		let caller: T::AccountId = T::AccountId::decode(&mut &addr_bytes[..]).unwrap_or_default();
 
-	// 	let register_token_address = H160::from_str("0000000000000000000000000000000000000002").unwrap();
-	// 	let token = Token::Native(TokenInfo::new(register_token_address, None, None));
-
-	// }: remote_register(RawOrigin::Signed(caller), token)
+		let register_token_address = H160::from_str("0000000000000000000000000000000000000002").unwrap();
+		let token_option = TokenOption {
+			name: [10; 32],
+			symbol: [20; 32],
+			decimal: 18,
+		};
+		let token = Token::Native(TokenInfo::new(register_token_address, None, Some(token_option)));
+	}: register_from_remote(RawOrigin::Signed(caller), token)
 
 	// // remote_issue
 	// remote_issue {

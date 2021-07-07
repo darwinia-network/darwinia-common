@@ -54,23 +54,30 @@ use sp_std::marker::PhantomData;
 /// Weight functions needed for darwinia_s2s_issuing.
 pub trait WeightInfo {
 	fn asset_burn_event_handle() -> Weight;
+	fn register_from_remote() -> Weight;
 }
 
 /// Weights for darwinia_s2s_issuing using the Substrate node and recommended hardware.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	fn asset_burn_event_handle() -> Weight {
-		(53_890_000 as Weight)
+		(42_900_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(8 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+	}
+	fn register_from_remote() -> Weight {
+		(4_748_000 as Weight)
 	}
 }
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
 	fn asset_burn_event_handle() -> Weight {
-		(53_890_000 as Weight)
+		(42_900_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(8 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+	}
+	fn register_from_remote() -> Weight {
+		(4_748_000 as Weight)
 	}
 }
