@@ -28,7 +28,7 @@ use darwinia_support::evm::{SELECTOR, TRANSFER_ADDR};
 // --- crates ---
 use codec::Decode;
 use ethabi::{Function, Param, ParamType, Token};
-use evm::{Context, ExitError, ExitReason, ExitSucceed};
+use evm::{executor::PrecompileOutput, Context, ExitError, ExitReason, ExitSucceed};
 use sha3::Digest;
 
 const TRANSFER_AND_CALL_ACTION: &[u8] = b"transfer_and_call(address,uint256)";
@@ -46,7 +46,7 @@ impl<T: Config> Kton<T> {
 		input: &[u8],
 		target_gas: Option<u64>,
 		context: &Context,
-	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
+	) -> core::result::Result<PrecompileOutput, ExitError> {
 		let action = which_action::<T>(&input)?;
 
 		match action {
@@ -92,7 +92,12 @@ impl<T: Config> Kton<T> {
 					}
 				}
 
-				Ok((ExitSucceed::Returned, vec![], 20000))
+				Ok(PrecompileOutput {
+					exit_status: ExitSucceed::Returned,
+					cost: 20000,
+					output: Default::default(),
+					logs: Default::default(),
+				})
 			}
 			Kton::Withdraw(wd) => {
 				let (source, to, value) = (context.caller, wd.to_account_id, wd.kton_value);
@@ -117,7 +122,12 @@ impl<T: Config> Kton<T> {
 				let target_kton = T::KtonAccountBasic::account_balance(&to);
 				let new_target_kton_balance = target_kton.saturating_add(value);
 				T::KtonAccountBasic::mutate_account_balance(&to, new_target_kton_balance);
-				Ok((ExitSucceed::Returned, vec![], 20000))
+				Ok(PrecompileOutput {
+					exit_status: ExitSucceed::Returned,
+					cost: 20000,
+					output: Default::default(),
+					logs: Default::default(),
+				})
 			}
 		}
 	}

@@ -21,7 +21,7 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 use dp_evm::Precompile;
-use evm::{Context, ExitError, ExitSucceed};
+use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
 use sp_core::U256;
 
 fn read_fr(input: &[u8], start_inx: usize) -> Result<bn::Fr, ExitError> {
@@ -65,7 +65,7 @@ impl Precompile for Bn128Add {
 		input: &[u8],
 		_target_gas: Option<u64>,
 		_context: &Context,
-	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
+	) -> core::result::Result<PrecompileOutput, ExitError> {
 		use bn::AffineG1;
 
 		let p1 = read_point(input, 0)?;
@@ -82,7 +82,12 @@ impl Precompile for Bn128Add {
 			})?;
 		}
 
-		Ok((ExitSucceed::Returned, buf.to_vec(), Bn128Add::GAS_COST))
+		Ok(PrecompileOutput {
+			exit_status: ExitSucceed::Returned,
+			cost: Bn128Add::GAS_COST,
+			output: buf.to_vec(),
+			logs: Default::default(),
+		})
 	}
 }
 
@@ -98,7 +103,7 @@ impl Precompile for Bn128Mul {
 		input: &[u8],
 		_target_gas: Option<u64>,
 		_context: &Context,
-	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
+	) -> core::result::Result<PrecompileOutput, ExitError> {
 		use bn::AffineG1;
 
 		let p = read_point(input, 0)?;
@@ -115,7 +120,12 @@ impl Precompile for Bn128Mul {
 			})?;
 		}
 
-		Ok((ExitSucceed::Returned, buf.to_vec(), Bn128Mul::GAS_COST))
+		Ok(PrecompileOutput {
+			exit_status: ExitSucceed::Returned,
+			cost: Bn128Mul::GAS_COST,
+			output: buf.to_vec(),
+			logs: Default::default(),
+		})
 	}
 }
 
@@ -133,7 +143,7 @@ impl Precompile for Bn128Pairing {
 		input: &[u8],
 		target_gas: Option<u64>,
 		_context: &Context,
-	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
+	) -> core::result::Result<PrecompileOutput, ExitError> {
 		use bn::{pairing_batch, AffineG1, AffineG2, Fq, Fq2, Group, Gt, G1, G2};
 
 		let (ret_val, gas_cost) = if input.is_empty() {
@@ -209,6 +219,11 @@ impl Precompile for Bn128Pairing {
 		let mut buf = [0u8; 32];
 		ret_val.to_big_endian(&mut buf);
 
-		Ok((ExitSucceed::Returned, buf.to_vec(), gas_cost))
+		Ok(PrecompileOutput {
+			exit_status: ExitSucceed::Returned,
+			cost: gas_cost,
+			output: buf.to_vec(),
+			logs: Default::default(),
+		})
 	}
 }

@@ -3,10 +3,10 @@ pub use darwinia_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256}
 pub use darwinia_evm_precompile_transfer::Transfer;
 
 // --- crates.io ---
-use evm::{Context, ExitError, ExitSucceed};
+use evm::{executor::PrecompileOutput, Context, ExitError};
 // --- substrate ---
 use sp_core::{H160, U256};
-use sp_std::{marker::PhantomData, vec::Vec};
+use sp_std::marker::PhantomData;
 // --- darwinia ---
 use crate::*;
 use darwinia_evm::{runner::stack::Runner, ConcatAddressMapping, Config, EnsureAddressTruncated};
@@ -20,7 +20,7 @@ impl<R: darwinia_evm::Config> PrecompileSet for PangolinPrecompiles<R> {
 		input: &[u8],
 		target_gas: Option<u64>,
 		context: &Context,
-	) -> Option<Result<(ExitSucceed, Vec<u8>, u64), ExitError>> {
+	) -> Option<Result<PrecompileOutput, ExitError>> {
 		let addr = |n: u64| -> H160 { H160::from_low_u64_be(n) };
 
 		match address {

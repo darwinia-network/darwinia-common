@@ -12,7 +12,7 @@ version     = "2.5.0"
 [dependencies]
 # crates
 codec                 = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
-evm                   = { version = "0.25.0", default-features = false, features = ["with-codec"] }
+evm                   = { version = "0.27.0", default-features = false, features = ["with-codec"] }
 impl-trait-for-tuples = { version = "0.2.1" }
 serde                 = { version = "1.0.126", optional = true, features = ["derive"] }
 # substrate
