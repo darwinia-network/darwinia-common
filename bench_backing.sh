@@ -4,7 +4,7 @@ RUST_LOG=darwinia_s2s_backing=debug ./target/release/drml benchmark \
   --chain dev \
   --wasm-execution compiled \
   --pallet darwinia_s2s_backing \
-  --execution native \
+  --execution wasm \
   --extrinsic=* \
   --steps 100 \
   --repeat 10 \
