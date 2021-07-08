@@ -1,7 +1,6 @@
 // --- substrate ---
 use frame_support::{dispatch::Dispatchable, weights::PostDispatchInfo, PalletId};
 use frame_system::RawOrigin;
-use millau_primitives::AccountIdConverter;
 use pallet_bridge_messages::Instance1 as Millau;
 use sp_runtime::DispatchErrorWithPostInfo;
 // --- darwinia ---
@@ -9,6 +8,7 @@ use crate::*;
 use darwinia_s2s_issuing::{Config, EncodeCall};
 use darwinia_support::s2s::{RelayMessageCaller, TruncateToEthAddress};
 use dp_asset::RecipientAccount;
+use millau_primitives::AccountIdConverter;
 
 // 0x70746d6c
 pub const MILLAU_PANGO_LANE: [u8; 4] = *b"mtpl";

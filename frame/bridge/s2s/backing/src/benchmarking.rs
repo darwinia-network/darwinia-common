@@ -39,7 +39,6 @@ benchmarks! {
 		let caller = whitelisted_caller();
 		<T as Config>::RingCurrency::deposit_creating(&caller, INIT_COIN.unique_saturated_into());
 		let recipient = hex_into_unchecked("0000000000000000000000000000000000000001");
-
 	}: _(RawOrigin::Signed(caller), SPEC_VERSION, 1000000,
 			500u128.unique_saturated_into(),
 			949_643_000u128.unique_saturated_into(),
