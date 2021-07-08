@@ -50,7 +50,7 @@ use frame_support::{
 	ensure,
 	traits::FindAuthor,
 	traits::{Currency, Get},
-	weights::Weight,
+	weights::{Pays, PostDispatchInfo, Weight},
 };
 use frame_system::ensure_none;
 use sp_runtime::{
@@ -492,10 +492,13 @@ impl<T: Config> Pallet<T> {
 			transaction_hash,
 			reason,
 		));
-		Ok(Some(T::GasWeightMapping::gas_to_weight(
-			used_gas.unique_saturated_into(),
-		))
-		.into())
+		Ok(PostDispatchInfo {
+			actual_weight: Some(T::GasWeightMapping::gas_to_weight(
+				used_gas.unique_saturated_into(),
+			)),
+			pays_fee: Pays::No,
+		})
+		.into()
 	}
 
 	/// Get the author using the FindAuthor trait.
