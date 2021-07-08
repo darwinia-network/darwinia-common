@@ -36,6 +36,8 @@ use ethereum_primitives::{
 
 decl_tests!(EthereumRelay: darwinia_ethereum_relay::{Pallet, Call, Storage});
 
+pub type EthereumRelayError = darwinia_ethereum_relay::Error<Test>;
+
 pub struct UnusedTechnicalMembership;
 impl SortedMembers<AccountId> for UnusedTechnicalMembership {
 	fn sorted_members() -> Vec<AccountId> {
@@ -354,7 +356,7 @@ fn set_redeem_status_should_work() {
 					Default::default()
 				),
 			),
-			<Error<Test>>::ReceiptProofInv
+			EthereumRelayError::ConfirmedHeaderNE
 		);
 
 		assert_ok!(EthereumBacking::set_redeem_status(Origin::root(), false));
@@ -392,7 +394,7 @@ fn set_redeem_status_should_work() {
 					Default::default()
 				),
 			),
-			<Error<Test>>::ReceiptProofInv
+			EthereumRelayError::ConfirmedHeaderNE
 		);
 	});
 }
