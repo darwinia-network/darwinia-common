@@ -104,7 +104,6 @@ pub mod pallet {
 		/// Then the event will be sent to the remote backing module as burn proof to unlock origin asset.
 		#[pallet::weight(
 			<T as Config>::WeightInfo::asset_burn_event_handle()
-			.saturating_add(149_643_000)   // send_minimal_message_worst_case fee
 		)]
 		#[frame_support::transactional]
 		pub fn asset_burn_event_handle(
@@ -147,7 +146,10 @@ pub mod pallet {
 
 		/// Handle remote register relay message
 		/// Before the token transfer, token should be created first
-		#[pallet::weight(<T as Config>::WeightInfo::register_from_remote())]
+		#[pallet::weight(
+			<T as Config>::WeightInfo::register_from_remote()
+			.saturating_add(2_000_000 * 3)
+		)]
 		pub fn register_from_remote(
 			origin: OriginFor<T>,
 			token: Token,
@@ -194,7 +196,10 @@ pub mod pallet {
 		}
 
 		/// Handle relay message sent from the source backing pallet with relay message
-		#[pallet::weight(<T as Config>::WeightInfo::issue_from_remote())]
+		#[pallet::weight(
+			<T as Config>::WeightInfo::issue_from_remote()
+			.saturating_add(2_000_000 * 2)
+		)]
 		pub fn issue_from_remote(
 			origin: OriginFor<T>,
 			token: Token,
