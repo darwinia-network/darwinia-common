@@ -6,7 +6,7 @@ use bp_messages::{
 	target_chain::{ProvedMessages, SourceHeaderChain},
 	InboundLaneData, LaneId, Message, MessageNonce, Parameter as MessagesParameter,
 };
-pub use bp_runtime::{ChainId, MILLAU_CHAIN_ID};
+use bp_runtime::{ChainId, MILLAU_CHAIN_ID};
 use bridge_runtime_common::messages::{
 	self,
 	source::{

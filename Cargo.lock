@@ -1927,7 +1927,6 @@ dependencies = [
  "dp-contract",
  "ethereum-primitives",
  "ethereum-types",
- "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
@@ -5020,21 +5019,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "millau-bridge-primitives"
-version = "2.5.0"
-dependencies = [
- "bp-messages",
- "bp-runtime",
- "drml-primitives",
- "frame-support",
- "frame-system",
- "sp-api",
- "sp-core",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "millau-primitives"
 version = "0.1.0"
 source = "git+https://github.com/darwinia-network/darwinia-launch?branch=pangolin-bridge#32bf39049f343eea674f8ccce4f20eef0afea491"
@@ -5969,7 +5953,6 @@ dependencies = [
  "darwinia-relay-authorities",
  "darwinia-relay-primitives",
  "darwinia-relayer-game",
- "darwinia-s2s-backing",
  "darwinia-s2s-issuing",
  "darwinia-staking",
  "darwinia-staking-rpc-runtime-api",
@@ -5993,7 +5976,6 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "log",
- "millau-bridge-primitives",
  "millau-primitives",
  "pallet-authority-discovery",
  "pallet-authorship",
