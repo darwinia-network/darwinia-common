@@ -1,5 +1,4 @@
 // --- substrate ---
-use millau_primitives::AccountIdConverter;
 use frame_support::{dispatch::Dispatchable, weights::PostDispatchInfo, PalletId};
 use frame_system::RawOrigin;
 use pallet_bridge_messages::Instance1 as Millau;
@@ -9,6 +8,7 @@ use crate::*;
 use darwinia_s2s_issuing::{Config, EncodeCall};
 use darwinia_support::s2s::{RelayMessageCaller, TruncateToEthAddress};
 use dp_asset::RecipientAccount;
+use millau_primitives::AccountIdConverter;
 
 // 0x70746d6c
 pub const MILLAU_PANGO_LANE: [u8; 4] = *b"mtpl";
@@ -37,9 +37,9 @@ impl EncodeCall<AccountId, ToMillauMessagePayload> for MillauCallEncoder {
 	) -> Result<ToMillauMessagePayload, ()> {
 		match recipient {
 			RecipientAccount::<AccountId>::DarwiniaAccount(r) => {
-				let call = MillauRuntime::Sub2SubBacking(MillauSub2SubBackingCall::unlock_from_remote(
-					token, r,
-				))
+				let call = MillauRuntime::Sub2SubBacking(
+					MillauSub2SubBackingCall::unlock_from_remote(token, r),
+				)
 				.encode();
 				return Ok(ToMillauMessagePayload {
 					spec_version,

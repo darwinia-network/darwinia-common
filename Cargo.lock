@@ -1955,6 +1955,7 @@ dependencies = [
  "ethereum-primitives",
  "ethereum-types",
  "evm",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "libsecp256k1",

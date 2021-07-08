@@ -236,4 +236,5 @@ runtime-benchmarks = [
 	"frame-support/runtime-benchmarks",
 	"pallet-collective/runtime-benchmarks",
 	"pallet-society/runtime-benchmarks",
+	"darwinia-s2s-issuing/runtime-benchmarks",
 ]
