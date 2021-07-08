@@ -159,9 +159,8 @@ pub mod pallet {
 			let (token_type, token_info) = token
 				.token_info()
 				.map_err(|_| Error::<T>::InvalidTokenType)?;
-			// TODO: release those lines after benchmark
-			// let mut mapped_address = Self::mapped_token_address(backing, token_info.address)?;
-			// ensure!(mapped_address == H160::zero(), "asset has been registered");
+			let mut mapped_address = Self::mapped_token_address(backing, token_info.address)?;
+			ensure!(mapped_address == H160::zero(), "asset has been registered");
 
 			match token_info.option {
 				Some(option) => {
@@ -180,15 +179,14 @@ pub mod pallet {
 					)
 					.map_err(|_| Error::<T>::InvalidEncodeERC20)?;
 
-					// TODO: release those lines after benchmark
-					// Self::transact_mapping_factory(input)?;
-					// mapped_address = Self::mapped_token_address(backing, token_info.address)?;
-					// Self::deposit_event(Event::TokenRegistered(
-					// 	user,
-					// 	backing,
-					// 	token_info.address,
-					// 	mapped_address,
-					// ));
+					Self::transact_mapping_factory(input)?;
+					mapped_address = Self::mapped_token_address(backing, token_info.address)?;
+					Self::deposit_event(Event::TokenRegistered(
+						user,
+						backing,
+						token_info.address,
+						mapped_address,
+					));
 				}
 				_ => return Err(Error::<T>::InvalidTokenOption.into()),
 			}
@@ -215,25 +213,24 @@ pub mod pallet {
 				.token_info()
 				.map_err(|_| Error::<T>::InvalidTokenType)?;
 
-			// TODO: release those lines after benchmark
-			// let mapped_address = Self::mapped_token_address(backing, token_info.address)?;
-			// ensure!(
-			// 	mapped_address != H160::zero(),
-			// 	"asset has not been registered"
-			// );
+			let mapped_address = Self::mapped_token_address(backing, token_info.address)?;
+			ensure!(
+				mapped_address != H160::zero(),
+				"asset has not been registered"
+			);
 
 			// Redeem process
-			// if let Some(value) = token_info.value {
-			// 	let input = mtf::encode_cross_receive(mapped_address, recipient, value)
-			// 		.map_err(|_| Error::<T>::InvalidMintEncoding)?;
-			// Self::transact_mapping_factory(input)?;
-			// Self::deposit_event(Event::TokenIssued(
-			// 	backing,
-			// 	mapped_address,
-			// 	recipient,
-			// 	value,
-			// ));
-			// }
+			if let Some(value) = token_info.value {
+				let input = mtf::encode_cross_receive(mapped_address, recipient, value)
+					.map_err(|_| Error::<T>::InvalidMintEncoding)?;
+				Self::transact_mapping_factory(input)?;
+				Self::deposit_event(Event::TokenIssued(
+					backing,
+					mapped_address,
+					recipient,
+					value,
+				));
+			}
 			Ok(().into())
 		}
 	}
