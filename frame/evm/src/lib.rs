@@ -438,7 +438,7 @@ impl GasWeightMapping for () {
 		gas * 1_000 as Weight
 	}
 	fn weight_to_gas(weight: Weight) -> u64 {
-		weight / 1_1000
+		weight / 1_000
 	}
 }
 
