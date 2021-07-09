@@ -55,7 +55,7 @@ use frame_support::{
 use frame_system::ensure_none;
 use sp_runtime::{
 	generic::DigestItem,
-	traits::UniqueSaturatedInto,
+	traits::{One, Saturating, UniqueSaturatedInto, Zero},
 	transaction_validity::{
 		InvalidTransaction, TransactionSource, TransactionValidity, ValidTransactionBuilder,
 	},
@@ -63,7 +63,7 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 // --- darwinia ---
-use darwinia_evm::{AccountBasic, FeeCalculator, GasWeightMapping, Runner};
+use darwinia_evm::{AccountBasic, BlockHashMapping, FeeCalculator, GasWeightMapping, Runner};
 use darwinia_support::evm::INTERNAL_CALLER;
 use dp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
 use dp_evm::CallOrCreateInfo;
@@ -107,13 +107,24 @@ pub mod pallet {
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_finalize(_block_number: T::BlockNumber) {
+		fn on_finalize(n: T::BlockNumber) {
 			<Pallet<T>>::store_block(
 				dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
 				U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(
 					frame_system::Pallet::<T>::block_number(),
 				)),
 			);
+			// move block hash pruning window by one block
+			let block_hash_count = T::BlockHashCount::get();
+			let to_remove = n
+				.saturating_sub(block_hash_count)
+				.saturating_sub(One::one());
+			// keep genesis hash
+			if !to_remove.is_zero() {
+				<BlockHash<T>>::remove(U256::from(
+					UniqueSaturatedInto::<u32>::unique_saturated_into(to_remove),
+				));
+			}
 		}
 
 		fn on_initialize(_block_number: T::BlockNumber) -> Weight {
@@ -264,6 +275,10 @@ pub mod pallet {
 	pub(super) type RemainingKtonBalance<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, KtonBalance<T>, ValueQuery>;
 
+	// Mapping for block number and hashes.
+	#[pallet::storage]
+	pub(super) type BlockHash<T: Config> = StorageMap<_, Twox64Concat, U256, H256, ValueQuery>;
+
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {}
 
@@ -285,6 +300,12 @@ pub mod pallet {
 				);
 			};
 			extra_genesis_builder(self);
+		}
+	}
+
+	impl<T: Config> BlockHashMapping for Pallet<T> {
+		fn block_hash(number: u32) -> H256 {
+			BlockHash::<T>::get(U256::from(number))
 		}
 	}
 }
@@ -358,6 +379,7 @@ impl<T: Config> Pallet<T> {
 		CurrentBlock::<T>::put(block.clone());
 		CurrentReceipts::<T>::put(receipts.clone());
 		CurrentTransactionStatuses::<T>::put(statuses.clone());
+		BlockHash::<T>::insert(block_number, block.header.hash());
 
 		if post_log {
 			let digest = DigestItem::<T::Hash>::Consensus(
@@ -590,6 +612,14 @@ pub enum ReturnValue {
 	Bytes(Vec<u8>),
 	Hash(H160),
 }
+
+// /// Returns the Ethereum block hash by number.
+// pub struct EthereumBlockHashMapping;
+// impl BlockHashMapping for EthereumBlockHashMapping {
+// 	fn block_hash(number: u32) -> H256 {
+// 		BlockHash::<T>::get(U256::from(number))
+// 	}
+// }
 
 #[repr(u8)]
 enum TransactionValidationError {

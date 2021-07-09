@@ -73,11 +73,13 @@ pub mod pallet {
 
 		/// Mapping from address to account id.
 		type AddressMapping: AddressMapping<Self::AccountId>;
+		/// Block number to block hash.
+		type BlockHashMapping: BlockHashMapping;
+
 		/// Ring Currency type
 		type RingCurrency: Currency<Self::AccountId>;
 		/// Kton Currency type
 		type KtonCurrency: Currency<Self::AccountId>;
-
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// Precompiles associated with this EVM engine.
@@ -439,6 +441,20 @@ impl GasWeightMapping for () {
 	}
 	fn weight_to_gas(weight: Weight) -> u64 {
 		weight
+	}
+}
+
+/// A trait for getting a block hash by number.
+pub trait BlockHashMapping {
+	fn block_hash(number: u32) -> H256;
+}
+
+/// Returns the Substrate block hash by number.
+pub struct SubstrateBlockHashMapping<T>(sp_std::marker::PhantomData<T>);
+impl<T: Config> BlockHashMapping for SubstrateBlockHashMapping<T> {
+	fn block_hash(number: u32) -> H256 {
+		let number = T::BlockNumber::from(number);
+		H256::from_slice(frame_system::Pallet::<T>::block_hash(number).as_ref())
 	}
 }
 

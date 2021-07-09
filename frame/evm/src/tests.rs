@@ -168,6 +168,8 @@ impl Config for Test {
 	type CallOrigin = EnsureAddressRoot<Self::AccountId>;
 
 	type AddressMapping = ConcatAddressMapping<Self::AccountId>;
+	type BlockHashMapping = crate::SubstrateBlockHashMapping<Self>;
+
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 

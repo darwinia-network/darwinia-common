@@ -47,6 +47,7 @@ impl Config for Runtime {
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
 	type AddressMapping = ConcatAddressMapping<Self::AccountId>;
+	type BlockHashMapping = dvm_ethereum::Pallet<Self>;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 	type Event = Event;
