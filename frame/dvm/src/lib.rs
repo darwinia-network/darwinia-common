@@ -403,7 +403,7 @@ impl<T: Config> Pallet<T> {
 			INTERNAL_CALLER,
 			input.clone(),
 			U256::zero(),
-			U256::from(0x100000),
+			U256::from(0x300000),
 			None,
 			None,
 			TransactionAction::Call(contract),

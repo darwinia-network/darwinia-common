@@ -435,10 +435,10 @@ pub trait GasWeightMapping {
 }
 impl GasWeightMapping for () {
 	fn gas_to_weight(gas: u64) -> Weight {
-		gas as Weight
+		gas * 1_000 as Weight
 	}
 	fn weight_to_gas(weight: Weight) -> u64 {
-		weight
+		weight / 1_1000
 	}
 }
 
