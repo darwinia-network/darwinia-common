@@ -5,13 +5,28 @@ pub use darwinia_evm_precompile_transfer::Transfer;
 // --- crates.io ---
 use evm::{executor::PrecompileOutput, Context, ExitError};
 // --- substrate ---
-use sp_core::{H160, U256};
+use frame_support::{traits::FindAuthor, ConsensusEngineId};
+use sp_core::{crypto::Public, H160, U256};
 use sp_std::marker::PhantomData;
 // --- darwinia ---
 use crate::*;
 use darwinia_evm::{runner::stack::Runner, ConcatAddressMapping, Config, EnsureAddressTruncated};
 use dp_evm::{Precompile, PrecompileSet};
 use dvm_ethereum::account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance};
+
+pub struct EthereumFindAuthor<F>(sp_std::marker::PhantomData<F>);
+impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
+	fn find_author<'a, I>(digests: I) -> Option<H160>
+	where
+		I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
+	{
+		if let Some(author_index) = F::find_author(digests) {
+			let authority_id = Babe::authorities()[author_index as usize].clone();
+			return Some(H160::from_slice(&authority_id.0.to_raw_vec()[4..24]));
+		}
+		None
+	}
+}
 
 pub struct PangolinPrecompiles<R>(PhantomData<R>);
 impl<R: darwinia_evm::Config> PrecompileSet for PangolinPrecompiles<R> {
@@ -47,6 +62,7 @@ impl Config for Runtime {
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
 	type AddressMapping = ConcatAddressMapping<Self::AccountId>;
+	type FindAuthor = EthereumFindAuthor<Babe>;
 	type BlockHashMapping = dvm_ethereum::Pallet<Self>;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;

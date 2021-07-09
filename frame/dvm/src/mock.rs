@@ -24,7 +24,7 @@ use ethereum::{TransactionAction, TransactionSignature};
 use evm::{executor::PrecompileOutput, Context, ExitError};
 use rlp::*;
 // --- substrate ---
-use frame_support::{traits::GenesisBuild, ConsensusEngineId};
+use frame_support::{traits::FindAuthor, traits::GenesisBuild, ConsensusEngineId};
 use frame_system::mocking::*;
 use sp_core::{H160, H256, U256};
 use sp_runtime::{
@@ -125,8 +125,8 @@ impl FeeCalculator for FixedGasPrice {
 		1.into()
 	}
 }
-pub struct EthereumFindAuthor;
-impl FindAuthor<H160> for EthereumFindAuthor {
+pub struct FindAuthorTruncated;
+impl FindAuthor<H160> for FindAuthorTruncated {
 	fn find_author<'a, I>(_digests: I) -> Option<H160>
 	where
 		I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
@@ -190,7 +190,8 @@ impl darwinia_evm::Config for Test {
 	type Precompiles = MockPrecompiles<Self>;
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
-	type BlockHashMapping = crate::EthereumBlockHashMapping;
+	type FindAuthor = FindAuthorTruncated;
+	type BlockHashMapping = dvm_ethereum::Pallet<Self>;
 	type Runner = Runner<Self>;
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
@@ -199,7 +200,6 @@ impl darwinia_evm::Config for Test {
 
 impl dvm_ethereum::Config for Test {
 	type Event = ();
-	type FindAuthor = EthereumFindAuthor;
 	type StateRoot = IntermediateStateRoot;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;

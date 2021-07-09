@@ -41,7 +41,7 @@ use serde::{Deserialize, Serialize};
 
 // --- substrate ---
 use frame_support::{
-	traits::Currency,
+	traits::{Currency, FindAuthor},
 	weights::{PostDispatchInfo, Weight},
 };
 use frame_system::RawOrigin;
@@ -75,6 +75,8 @@ pub mod pallet {
 		type AddressMapping: AddressMapping<Self::AccountId>;
 		/// Block number to block hash.
 		type BlockHashMapping: BlockHashMapping;
+		/// Find author for the current block.
+		type FindAuthor: FindAuthor<H160>;
 
 		/// Ring Currency type
 		type RingCurrency: Currency<Self::AccountId>;
@@ -377,6 +379,14 @@ pub mod pallet {
 			let new_account_balance = account.balance.saturating_add(value);
 
 			T::RingAccountBasic::mutate_account_basic_balance(&address, new_account_balance);
+		}
+
+		/// Get the author using the FindAuthor trait.
+		pub fn find_author() -> H160 {
+			let digest = <frame_system::Pallet<T>>::digest();
+			let pre_runtime_digests = digest.logs.iter().filter_map(|d| d.as_pre_runtime());
+
+			T::FindAuthor::find_author(pre_runtime_digests).unwrap_or_default()
 		}
 	}
 }

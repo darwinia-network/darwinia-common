@@ -48,7 +48,6 @@ use frame_support::storage::unhashed;
 use frame_support::{
 	dispatch::DispatchResultWithPostInfo,
 	ensure,
-	traits::FindAuthor,
 	traits::{Currency, Get},
 	weights::{Pays, PostDispatchInfo, Weight},
 };
@@ -91,8 +90,6 @@ pub mod pallet {
 	{
 		/// The overarching event type.
 		type Event: From<Event> + IsType<<Self as frame_system::Config>::Event>;
-		/// Find author for Ethereum.
-		type FindAuthor: FindAuthor<H160>;
 		/// How Ethereum state root is calculated.
 		type StateRoot: Get<H256>;
 		// RING Balance module
@@ -352,7 +349,7 @@ impl<T: Config> Pallet<T> {
 		let ommers = Vec::<ethereum::Header>::new();
 		let partial_header = ethereum::PartialHeader {
 			parent_hash: Self::current_block_hash().unwrap_or_default(),
-			beneficiary: <Pallet<T>>::find_author(),
+			beneficiary: darwinia_evm::Pallet::<T>::find_author(),
 			// TODO: figure out if there's better way to get a sort-of-valid state root.
 			state_root: H256::default(),
 			receipts_root: H256::from_slice(
@@ -521,14 +518,6 @@ impl<T: Config> Pallet<T> {
 			pays_fee: Pays::No,
 		})
 		.into()
-	}
-
-	/// Get the author using the FindAuthor trait.
-	pub fn find_author() -> H160 {
-		let digest = <frame_system::Pallet<T>>::digest();
-		let pre_runtime_digests = digest.logs.iter().filter_map(|d| d.as_pre_runtime());
-
-		T::FindAuthor::find_author(pre_runtime_digests).unwrap_or_default()
 	}
 
 	/// Get the transaction status with given index.
