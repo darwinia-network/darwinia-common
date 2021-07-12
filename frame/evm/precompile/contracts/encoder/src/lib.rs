@@ -20,12 +20,15 @@
 
 extern crate alloc;
 
+// --- crates ---
 use alloc::vec::Vec;
 use codec::Encode;
 use core::marker::PhantomData;
+use evm::{Context, ExitError, ExitSucceed};
+// --- darwinia ---
 use darwinia_support::evm::SELECTOR;
 use dp_evm::Precompile;
-use evm::{Context, ExitError, ExitSucceed};
+// --- substrate ---
 use frame_support::dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo};
 
 /// The contract address: 0000000000000000000000000000000000000018
@@ -33,7 +36,6 @@ pub struct DispatchCallEncoder<T> {
 	_marker: PhantomData<T>,
 }
 
-// const SELECTOR_SIZE_BYTES: usize = 4;
 impl<T> Precompile for DispatchCallEncoder<T>
 where
 	T: darwinia_s2s_issuing::Config,
