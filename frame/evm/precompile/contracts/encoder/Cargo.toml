@@ -19,6 +19,7 @@ sha3         = { version = "0.9.1", default-features = false }
 # darwinia
 darwinia-evm         = { default-features = false, path = "../../../../evm" }
 darwinia-s2s-issuing = { default-features = false, path = "../../../../bridge/s2s/issuing" }
+darwinia-support     = { default-features = false, path = "../../../../support" }
 dp-contract          = { default-features = false, path = "../../../../../primitives/contract" }
 dp-evm               = { default-features = false, path = "../../../../../primitives/evm" }
 # substrate
@@ -43,6 +44,7 @@ crates-std = [
 darwinia-std = [
 	"darwinia-evm/std",
 	"darwinia-s2s-issuing/std",
+	"darwinia-support/std",
 	"dp-contract/std",
 	"dp-evm/std",
 ]

@@ -18,7 +18,6 @@
 
 //! Prototype module for s2s cross chain assets backing.
 
-#![allow(unused)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "128"]
 
@@ -37,16 +36,15 @@ use frame_support::{
 	ensure,
 	pallet_prelude::*,
 	traits::{Currency, ExistenceRequirement::*, Get},
-	weights::Weight,
 	PalletId,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
-use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::{
-	traits::{AccountIdConversion, Convert, Saturating, Zero},
+	traits::UniqueSaturatedInto,
+	traits::{AccountIdConversion, Convert, Zero},
 	DispatchError, SaturatedConversion,
 };
-use sp_std::{convert::TryFrom, prelude::*};
+use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_support::{
 	balance::*,
@@ -59,7 +57,6 @@ use dp_asset::{
 	token::{Token, TokenInfo, TokenOption},
 	RecipientAccount,
 };
-use dp_contract::mapping_token_factory::MappingTokenFactory as mtf;
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type Balance = u128;
@@ -70,8 +67,6 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::pallet_prelude::*;
-	use frame_system::pallet_prelude::*;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {

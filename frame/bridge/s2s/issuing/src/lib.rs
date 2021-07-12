@@ -22,12 +22,11 @@
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
+#[cfg(test)]
+mod tests;
 
 pub mod weight;
 pub use weight::WeightInfo;
-
-#[cfg(test)]
-mod tests;
 
 // --- crates ---
 use ethereum_types::{H160, H256, U256};

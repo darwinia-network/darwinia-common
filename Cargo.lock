@@ -1740,6 +1740,7 @@ version = "2.5.0"
 dependencies = [
  "darwinia-evm",
  "darwinia-s2s-issuing",
+ "darwinia-support",
  "dp-contract",
  "dp-evm",
  "evm",
