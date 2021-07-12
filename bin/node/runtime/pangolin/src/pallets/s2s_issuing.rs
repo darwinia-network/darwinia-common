@@ -2,11 +2,11 @@
 use frame_support::{dispatch::Dispatchable, weights::PostDispatchInfo, PalletId};
 use frame_system::RawOrigin;
 use pallet_bridge_messages::Instance1 as Millau;
-use sp_runtime::DispatchErrorWithPostInfo;
+use sp_runtime::{AccountId32, DispatchErrorWithPostInfo};
 // --- darwinia ---
 use crate::*;
 use darwinia_s2s_issuing::{Config, EncodeCall};
-use darwinia_support::s2s::{RelayMessageCaller, TruncateToEthAddress};
+use darwinia_support::s2s::{RelayMessageCaller, ToEthAddress};
 use dp_asset::{token::Token, RecipientAccount};
 use millau_primitives::AccountIdConverter;
 
@@ -65,6 +65,14 @@ impl EncodeCall<AccountId, ToMillauMessagePayload> for MillauCallEncoder {
 			}
 			_ => Err(()),
 		}
+	}
+}
+
+pub struct TruncateToEthAddress;
+impl ToEthAddress<AccountId32> for TruncateToEthAddress {
+	fn into_ethereum_id(address: &AccountId32) -> H160 {
+		let account20: &[u8] = &address.as_ref();
+		H160::from_slice(&account20[..20])
 	}
 }
 

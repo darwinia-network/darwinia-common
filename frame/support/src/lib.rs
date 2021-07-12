@@ -46,25 +46,18 @@ pub mod s2s {
 	use ethabi::{encode, Token};
 	use ethereum_primitives::{H160, H256};
 	use frame_support::weights::PostDispatchInfo;
-	use sp_runtime::DispatchErrorWithPostInfo;
-	use sp_runtime::{traits::Convert, AccountId32};
+	use sp_runtime::{traits::Convert, DispatchErrorWithPostInfo};
 
 	pub const RING_NAME: &[u8] = b"Darwinia Network Native Token";
 	pub const RING_SYMBOL: &[u8] = b"RING";
 	pub const RING_DECIMAL: u8 = 9;
-
-	// S2S backing pallet
 	pub const BACK_ERC20_RING: &'static str = "0x0000000000000000000000000000000000002048";
 
-	pub fn to_bytes32(raw: &[u8]) -> [u8; 32] {
-		let mut result = [0u8; 32];
-		let encoded = encode(&[Token::FixedBytes(raw.to_vec())]);
-		result.copy_from_slice(&encoded);
-		result
+	pub trait ToEthAddress<A> {
+		fn into_ethereum_id(address: &A) -> H160;
 	}
 
-	// S2S use bridges-common
-	// the relay's send_message call
+	// RelayMessageCaller send message to pallet-messages
 	pub trait RelayMessageCaller<P, F> {
 		fn send_message(
 			payload: P,
@@ -80,16 +73,11 @@ pub mod s2s {
 		return target_id;
 	}
 
-	pub trait ToEthAddress<A> {
-		fn into_ethereum_id(address: &A) -> H160;
-	}
-
-	pub struct TruncateToEthAddress;
-	impl ToEthAddress<AccountId32> for TruncateToEthAddress {
-		fn into_ethereum_id(address: &AccountId32) -> H160 {
-			let account20: &[u8] = &address.as_ref();
-			H160::from_slice(&account20[..20])
-		}
+	pub fn to_bytes32(raw: &[u8]) -> [u8; 32] {
+		let mut result = [0u8; 32];
+		let encoded = encode(&[Token::FixedBytes(raw.to_vec())]);
+		result.copy_from_slice(&encoded);
+		result
 	}
 }
 
