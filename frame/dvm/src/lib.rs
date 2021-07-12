@@ -398,7 +398,7 @@ impl<T: Config> Pallet<T> {
 		Self::raw_transact(transaction)
 	}
 
-	// the hard code for gas limit may cause some problem
+	// TODO: the hard code for gas limit may cause some problem
 	// Please refer issue https://github.com/darwinia-network/darwinia-common/issues/706
 	pub fn do_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
 		let (_, _, info) = Self::execute(
