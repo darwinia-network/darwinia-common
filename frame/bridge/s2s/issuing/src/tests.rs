@@ -1,42 +1,51 @@
-#![cfg(test)]
+// This file is part of Darwinia.
+//
+// Copyright (C) 2018-2021 Darwinia Network
+// SPDX-License-Identifier: GPL-3.0
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+// crates
+use codec::{Decode, Encode};
+use std::str::FromStr;
+// darwinia
 use crate::*;
 use crate::{self as s2s_issuing};
-use darwinia_evm::{
-	AddressMapping, EnsureAddressTruncated, FeeCalculator, Precompile, PrecompileSet,
-};
-use darwinia_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
-use darwinia_evm_precompile_transfer::Transfer;
+use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator};
 use darwinia_support::s2s::TruncateToEthAddress;
 use dvm_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
 	IntermediateStateRoot,
 };
-use evm::{Context, ExitError, ExitSucceed};
-use frame_support::assert_ok;
-use frame_support::weights::PostDispatchInfo;
+// substrate
+use frame_support::{assert_ok, traits::GenesisBuild, weights::PostDispatchInfo, PalletId};
 use frame_system::mocking::*;
-use sha3::{Digest, Keccak256};
-use sp_runtime::DispatchErrorWithPostInfo;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	AccountId32, RuntimeDebug,
+	AccountId32, DispatchErrorWithPostInfo, RuntimeDebug,
 };
 
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
-
-use std::str::FromStr;
-
 type Balance = u64;
 
-use frame_support::traits::FindAuthor;
-use frame_support::{traits::GenesisBuild, ConsensusEngineId, PalletId};
-
-use codec::{Decode, Encode};
 darwinia_support::impl_test_account_data! {}
 
+frame_support::parameter_types! {
+	pub const ExistentialDeposit: u64 = 1;
+}
 impl darwinia_balances::Config<RingInstance> for Test {
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
@@ -48,7 +57,6 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type Event = ();
 	type BalanceInfo = AccountData<Balance>;
 }
-
 impl darwinia_balances::Config<KtonInstance> for Test {
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
@@ -64,7 +72,6 @@ impl darwinia_balances::Config<KtonInstance> for Test {
 frame_support::parameter_types! {
 	pub const MinimumPeriod: u64 = 6000 / 2;
 }
-
 impl pallet_timestamp::Config for Test {
 	type Moment = u64;
 	type OnTimestampSet = ();
@@ -98,41 +105,9 @@ impl frame_system::Config for Test {
 	type OnSetCode = ();
 }
 
-pub struct AccountInfo {
-	pub address: H160,
-	pub account_id: AccountId32,
-	pub private_key: H256,
-}
-
-fn address_build(seed: u8) -> AccountInfo {
-	let private_key = H256::from_slice(&[(seed + 1) as u8; 32]); //H256::from_low + 1) as u64);
-	let secret_key = secp256k1::SecretKey::parse_slice(&private_key[..]).unwrap();
-	let public_key = &secp256k1::PublicKey::from_secret_key(&secret_key).serialize()[1..65];
-	let address = H160::from(H256::from_slice(&Keccak256::digest(public_key)[..]));
-
-	let mut data = [0u8; 32];
-	data[0..20].copy_from_slice(&address[..]);
-
-	AccountInfo {
-		private_key,
-		account_id: AccountId32::from(Into::<[u8; 32]>::into(data)),
-		address,
-	}
-}
-
-pub struct EthereumFindAuthor;
-impl FindAuthor<H160> for EthereumFindAuthor {
-	fn find_author<'a, I>(_digests: I) -> Option<H160>
-	where
-		I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
-	{
-		Some(address_build(0).address)
-	}
-}
-
 impl dvm_ethereum::Config for Test {
 	type Event = ();
-	type FindAuthor = EthereumFindAuthor;
+	type FindAuthor = ();
 	type StateRoot = IntermediateStateRoot;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
@@ -146,13 +121,6 @@ impl FeeCalculator for FixedGasPrice {
 }
 
 pub struct HashedAddressMapping;
-frame_support::parameter_types! {
-	pub const TransactionByteFee: u64 = 1;
-	pub const ChainId: u64 = 42;
-	pub const EVMPalletId: PalletId = PalletId(*b"py/evmpa");
-	pub const BlockGasLimit: U256 = U256::MAX;
-}
-
 impl AddressMapping<AccountId32> for HashedAddressMapping {
 	fn into_account_id(address: H160) -> AccountId32 {
 		let mut data = [0u8; 32];
@@ -161,34 +129,10 @@ impl AddressMapping<AccountId32> for HashedAddressMapping {
 	}
 }
 
-pub struct MockPrecompiles<R>(PhantomData<R>);
-impl<R> PrecompileSet for MockPrecompiles<R>
-where
-	R: darwinia_evm::Config,
-{
-	fn execute(
-		address: H160,
-		input: &[u8],
-		target_gas: Option<u64>,
-		context: &Context,
-	) -> Option<Result<(ExitSucceed, Vec<u8>, u64), ExitError>> {
-		let to_address = |n: u64| -> H160 { H160::from_low_u64_be(n) };
-
-		match address {
-			// Ethereum precompiles
-			_ if address == to_address(1) => Some(ECRecover::execute(input, target_gas, context)),
-			_ if address == to_address(2) => Some(Sha256::execute(input, target_gas, context)),
-			_ if address == to_address(3) => Some(Ripemd160::execute(input, target_gas, context)),
-			_ if address == to_address(4) => Some(Identity::execute(input, target_gas, context)),
-			// Darwinia precompiles
-			_ if address == to_address(21) => {
-				Some(<Transfer<R>>::execute(input, target_gas, context))
-			}
-			_ => None,
-		}
-	}
+frame_support::parameter_types! {
+	pub const ChainId: u64 = 42;
+	pub const BlockGasLimit: U256 = U256::MAX;
 }
-
 impl darwinia_evm::Config for Test {
 	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = ();
@@ -197,17 +141,13 @@ impl darwinia_evm::Config for Test {
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 	type Event = ();
-	type Precompiles = MockPrecompiles<Self>;
+	type Precompiles = ();
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
 	type Runner = darwinia_evm::runner::stack::Runner<Self>;
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 	type IssuingHandler = ();
-}
-
-frame_support::parameter_types! {
-	pub const ExistentialDeposit: u64 = 1;
 }
 
 frame_support::parameter_types! {
@@ -268,7 +208,6 @@ impl RelayMessageCaller<MockMessagePayload, Balance> for ToMillauMessageRelayCal
 impl Config for Test {
 	type Event = ();
 	type PalletId = S2sRelayPalletId;
-	//type Call = Call;
 	type WeightInfo = ();
 	type ReceiverAccountId = AccountId32;
 

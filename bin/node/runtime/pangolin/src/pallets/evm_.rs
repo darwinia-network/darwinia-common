@@ -54,7 +54,6 @@ where
 }
 
 pub struct DarwiniaGasWeightMapping;
-
 impl GasWeightMapping for DarwiniaGasWeightMapping {
 	fn gas_to_weight(gas: u64) -> Weight {
 		gas * 1_000 as Weight

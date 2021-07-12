@@ -1945,8 +1945,6 @@ dependencies = [
  "bp-runtime",
  "darwinia-balances",
  "darwinia-evm",
- "darwinia-evm-precompile-simple",
- "darwinia-evm-precompile-transfer",
  "darwinia-support",
  "dp-asset",
  "dp-contract",

@@ -7,11 +7,27 @@ use sp_runtime::DispatchErrorWithPostInfo;
 use crate::*;
 use darwinia_s2s_issuing::{Config, EncodeCall};
 use darwinia_support::s2s::{RelayMessageCaller, TruncateToEthAddress};
-use dp_asset::RecipientAccount;
+use dp_asset::{token::Token, RecipientAccount};
 use millau_primitives::AccountIdConverter;
 
 // 0x70746d6c
 pub const MILLAU_PANGO_LANE: [u8; 4] = *b"mtpl";
+
+// remote chain millau's dispatch info
+#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
+pub enum MillauRuntime {
+	/// s2s bridge backing pallet.
+	/// this index must be the same as the backing pallet in millau runtime
+	#[codec(index = 14)]
+	Sub2SubBacking(MillauSub2SubBackingCall),
+}
+
+#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
+#[allow(non_camel_case_types)]
+pub enum MillauSub2SubBackingCall {
+	#[codec(index = 2)]
+	unlock_from_remote(Token, AccountId),
+}
 
 pub struct ToMillauMessageRelayCaller;
 impl RelayMessageCaller<ToMillauMessagePayload, Balance> for ToMillauMessageRelayCaller {
@@ -27,7 +43,6 @@ impl RelayMessageCaller<ToMillauMessagePayload, Balance> for ToMillauMessageRela
 }
 
 pub struct MillauCallEncoder;
-
 impl EncodeCall<AccountId, ToMillauMessagePayload> for MillauCallEncoder {
 	fn encode_remote_unlock(
 		spec_version: u32,
