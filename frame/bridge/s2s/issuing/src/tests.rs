@@ -23,7 +23,6 @@ use std::str::FromStr;
 use crate::*;
 use crate::{self as s2s_issuing};
 use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator};
-use darwinia_support::s2s::TruncateToEthAddress;
 use dvm_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
 	IntermediateStateRoot,
@@ -202,6 +201,14 @@ impl RelayMessageCaller<MockMessagePayload, Balance> for ToMillauMessageRelayCal
 			actual_weight: None,
 			pays_fee: Pays::No,
 		})
+	}
+}
+
+pub struct TruncateToEthAddress;
+impl ToEthAddress<AccountId32> for TruncateToEthAddress {
+	fn into_ethereum_id(address: &AccountId32) -> H160 {
+		let account20: &[u8] = &address.as_ref();
+		H160::from_slice(&account20[..20])
 	}
 }
 
