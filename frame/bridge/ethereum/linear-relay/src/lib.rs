@@ -303,8 +303,7 @@ decl_module! {
 		pub fn check_receipt(origin, proof_record: EthereumReceiptProof) {
 			let worker = ensure_signed(origin)?;
 
-			let verified_receipt =
-				Self::verify_receipt(&proof_record).map_err(|_| <Error<T>>::ReceiptProofInv)?;
+			let verified_receipt = Self::verify_receipt(&proof_record)?;
 			let fee = Self::receipt_verify_fee();
 
 			let module_account = Self::account_id();

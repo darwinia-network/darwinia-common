@@ -176,8 +176,6 @@ pub mod pallet {
 		AssetAR,
 		/// Authorities Change - ALREADY SYNCED
 		AuthoritiesChangeAR,
-		/// EthereumReceipt Proof - INVALID
-		ReceiptProofInv,
 		/// Eth Log - PARSING FAILED
 		EthLogPF,
 		/// *KTON* Locked - NO SUFFICIENT BACKING ASSETS
@@ -656,8 +654,7 @@ pub mod pallet {
 		pub(super) fn parse_token_redeem_proof(
 			proof_record: &EthereumReceiptProofThing<T>,
 		) -> Result<(T::AccountId, (bool, Balance), RingBalance<T>), DispatchError> {
-			let verified_receipt = T::EthereumRelay::verify_receipt(proof_record)
-				.map_err(|_| <Error<T>>::ReceiptProofInv)?;
+			let verified_receipt = T::EthereumRelay::verify_receipt(proof_record)?;
 			let fee = T::EthereumRelay::receipt_verify_fee();
 			let result = {
 				let eth_event = EthEvent {
@@ -813,8 +810,7 @@ pub mod pallet {
 			),
 			DispatchError,
 		> {
-			let verified_receipt = T::EthereumRelay::verify_receipt(proof_record)
-				.map_err(|_| <Error<T>>::ReceiptProofInv)?;
+			let verified_receipt = T::EthereumRelay::verify_receipt(proof_record)?;
 			let fee = T::EthereumRelay::receipt_verify_fee();
 			let result = {
 				let eth_event = EthEvent {
@@ -934,15 +930,14 @@ pub mod pallet {
 			))
 		}
 
-		// event SetAuthritiesEvent(uint32 nonce, address[] authorities, bytes32 benifit);
+		// event SetAuthoritiesEvent(uint32 nonce, address[] authorities, bytes32 benefit);
 		// https://github.com/darwinia-network/darwinia-bridge-on-ethereum/blob/51839e614c0575e431eabfd5c70b84f6aa37826a/contracts/Relay.sol#L22
 		// https://ropsten.etherscan.io/tx/0x652528b9421ecb495610a734a4ab70d054b5510dbbf3a9d5c7879c43c7dde4e9#eventlog
 		fn parse_authorities_set_proof(
 			proof_record: &EthereumReceiptProofThing<T>,
 		) -> Result<(Term, Vec<EthereumAddress>, AccountId<T>), DispatchError> {
 			let log = {
-				let verified_receipt = T::EthereumRelay::verify_receipt(proof_record)
-					.map_err(|_| <Error<T>>::ReceiptProofInv)?;
+				let verified_receipt = T::EthereumRelay::verify_receipt(proof_record)?;
 				let eth_event = EthEvent {
 					name: "SetAuthoritiesEvent".into(),
 					inputs: vec![

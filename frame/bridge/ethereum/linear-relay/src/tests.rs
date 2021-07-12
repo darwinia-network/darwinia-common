@@ -151,7 +151,7 @@ fn check_receipt_safety() {
 		));
 		assert_err!(
 			EthereumRelay::check_receipt(Origin::signed(0), receipt.clone()),
-			<Error<Test>>::ReceiptProofInv
+			<Error<Test>>::HeaderHashMis
 		);
 	});
 }
@@ -222,7 +222,7 @@ fn test_safety_block() {
 		));
 		assert_err!(
 			EthereumRelay::check_receipt(Origin::signed(0), receipt.clone()),
-			<Error<Test>>::ReceiptProofInv
+			<Error<Test>>::BlockNumberMis
 		);
 
 		// not safety after 2 blocks
@@ -238,7 +238,7 @@ fn test_safety_block() {
 		));
 		assert_err!(
 			EthereumRelay::check_receipt(Origin::signed(0), receipt.clone()),
-			<Error<Test>>::ReceiptProofInv
+			<Error<Test>>::BlockNumberMis
 		);
 
 		// safety after 3 blocks

@@ -1,6 +1,8 @@
+pub use pallet_membership::Instance1 as TechnicalMembershipInstance;
+
 // --- substrate ---
 use frame_support::traits::ChangeMembers;
-use pallet_membership::{weights::SubstrateWeight, Config, Instance1};
+use pallet_membership::{weights::SubstrateWeight, Config};
 // --- darwinia ---
 use crate::*;
 
@@ -16,7 +18,7 @@ impl ChangeMembers<AccountId> for MembershipChangedGroup {
 	}
 }
 
-impl Config<Instance1> for Runtime {
+impl Config<TechnicalMembershipInstance> for Runtime {
 	type Event = Event;
 	type AddOrigin = EnsureRootOrMoreThanHalfCouncil;
 	type RemoveOrigin = EnsureRootOrMoreThanHalfCouncil;
