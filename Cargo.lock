@@ -2034,7 +2034,6 @@ dependencies = [
  "ethabi",
  "ethereum-primitives",
  "frame-support",
- "hex",
  "impl-trait-for-tuples",
  "num-traits",
  "parity-scale-codec",

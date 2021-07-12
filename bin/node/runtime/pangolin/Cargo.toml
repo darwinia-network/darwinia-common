@@ -19,7 +19,7 @@ serde             = { version = "1.0.126", optional = true }
 smallvec          = { version = "1.6.1" }
 static_assertions = { version = "1.1.0" }
 # darwinia
-dp-asset          = { default-features = false, path = "../../../../primitives/asset" }
+dp-asset                            = { default-features = false, path = "../../../../primitives/asset" }
 darwinia-balances                   = { default-features = false, path = "../../../../frame/balances" }
 darwinia-balances-rpc-runtime-api   = { default-features = false, path = "../../../../frame/balances/rpc/runtime-api" }
 darwinia-bridge-bsc                 = { default-features = false, path = "../../../../frame/bridge/ethereum-bsc" }
@@ -32,10 +32,10 @@ darwinia-ethereum-backing           = { default-features = false, path = "../../
 darwinia-ethereum-issuing           = { default-features = false, path = "../../../../frame/bridge/ethereum/issuing" }
 darwinia-ethereum-relay             = { default-features = false, path = "../../../../frame/bridge/ethereum/relay" }
 darwinia-evm                        = { default-features = false, path = "../../../../frame/evm" }
-darwinia-evm-precompile-issuing     = { default-features = false, path = "../../../../frame/evm/precompile/contracts/issuing" }
-darwinia-evm-precompile-simple      = { default-features = false, path = "../../../../frame/evm/precompile/contracts/simple" }
 darwinia-evm-precompile-encoder     = { default-features = false, path = "../../../../frame/evm/precompile/contracts/encoder" }
 darwinia-evm-precompile-dispatch    = { default-features = false, path = "../../../../frame/evm/precompile/contracts/dispatch" }
+darwinia-evm-precompile-issuing     = { default-features = false, path = "../../../../frame/evm/precompile/contracts/issuing" }
+darwinia-evm-precompile-simple      = { default-features = false, path = "../../../../frame/evm/precompile/contracts/simple" }
 darwinia-evm-precompile-transfer    = { default-features = false, path = "../../../../frame/evm/precompile/contracts/transfer" }
 darwinia-header-mmr                 = { default-features = false, path = "../../../../frame/header-mmr" }
 darwinia-header-mmr-rpc-runtime-api = { default-features = false, path = "../../../../frame/header-mmr/rpc/runtime-api" }
@@ -137,10 +137,10 @@ std = [
 	"darwinia-ethereum-issuing/std",
 	"darwinia-ethereum-relay/std",
 	"darwinia-evm/std",
-	"darwinia-evm-precompile-issuing/std",
-	"darwinia-evm-precompile-simple/std",
 	"darwinia-evm-precompile-encoder/std",
 	"darwinia-evm-precompile-dispatch/std",
+	"darwinia-evm-precompile-issuing/std",
+	"darwinia-evm-precompile-simple/std",
 	"darwinia-evm-precompile-transfer/std",
 	"darwinia-header-mmr/std",
 	"darwinia-header-mmr-rpc-runtime-api/std",

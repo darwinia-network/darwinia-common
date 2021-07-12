@@ -434,7 +434,7 @@ pub trait GasWeightMapping {
 	fn weight_to_gas(weight: Weight) -> u64;
 }
 
-// need to test if suitable for all caller
+// TODO: need to test if suitable for all caller
 // refer issue: https://github.com/darwinia-network/darwinia-common/issues/705
 impl GasWeightMapping for () {
 	fn gas_to_weight(gas: u64) -> Weight {
