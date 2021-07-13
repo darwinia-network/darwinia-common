@@ -11,7 +11,7 @@ use dp_asset::{token::Token, RecipientAccount};
 use millau_primitives::AccountIdConverter;
 
 // 0x70746d6c
-pub const MILLAU_PANGO_LANE: [u8; 4] = *b"mtpl";
+pub const MILLAU_PANGOLIN_LANE: [u8; 4] = *b"mtpl";
 
 // remote chain millau's dispatch info
 #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
@@ -36,7 +36,7 @@ impl RelayMessageCaller<ToMillauMessagePayload, Balance> for ToMillauMessageRela
 		fee: Balance,
 	) -> Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>> {
 		let call: Call =
-			BridgeMessagesCall::<Runtime, Millau>::send_message(MILLAU_PANGO_LANE, payload, fee)
+			BridgeMessagesCall::<Runtime, Millau>::send_message(MILLAU_PANGOLIN_LANE, payload, fee)
 				.into();
 		call.dispatch(RawOrigin::Root.into())
 	}
