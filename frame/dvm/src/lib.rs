@@ -60,6 +60,7 @@ use sp_runtime::{
 	},
 	DispatchError,
 };
+use sp_std::marker::PhantomData;
 use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_evm::{AccountBasic, BlockHashMapping, FeeCalculator, GasWeightMapping, Runner};
@@ -572,8 +573,9 @@ impl<T: Config> Pallet<T> {
 	}
 }
 
-impl<T: Config> BlockHashMapping for Pallet<T> {
-	/// Returns the Ethereum block hash by number.
+/// Returns the Ethereum block hash by number.
+pub struct EthereumBlockHashMapping<T>(PhantomData<T>);
+impl<T: Config> BlockHashMapping for EthereumBlockHashMapping<T> {
 	fn block_hash(number: u32) -> H256 {
 		BlockHash::<T>::get(U256::from(number))
 	}

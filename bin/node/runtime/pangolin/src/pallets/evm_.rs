@@ -12,7 +12,10 @@ use sp_std::marker::PhantomData;
 use crate::*;
 use darwinia_evm::{runner::stack::Runner, ConcatAddressMapping, Config, EnsureAddressTruncated};
 use dp_evm::{Precompile, PrecompileSet};
-use dvm_ethereum::account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance};
+use dvm_ethereum::{
+	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
+	EthereumBlockHashMapping,
+};
 
 pub struct EthereumFindAuthor<F>(sp_std::marker::PhantomData<F>);
 impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
@@ -63,7 +66,7 @@ impl Config for Runtime {
 	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
 	type AddressMapping = ConcatAddressMapping<Self::AccountId>;
 	type FindAuthor = EthereumFindAuthor<Babe>;
-	type BlockHashMapping = dvm_ethereum::Pallet<Self>;
+	type BlockHashMapping = EthereumBlockHashMapping<Self>;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 	type Event = Event;

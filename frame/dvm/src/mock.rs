@@ -191,7 +191,7 @@ impl darwinia_evm::Config for Test {
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
 	type FindAuthor = FindAuthorTruncated;
-	type BlockHashMapping = dvm_ethereum::Pallet<Self>;
+	type BlockHashMapping = EthereumBlockHashMapping<Self>;
 	type Runner = Runner<Self>;
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
