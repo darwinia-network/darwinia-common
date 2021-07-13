@@ -21,9 +21,8 @@ use frame_support::ensure;
 use sp_core::{H160, U256};
 use sp_std::{borrow::ToOwned, prelude::*, vec::Vec};
 // --- darwinia ---
-use crate::util;
-use crate::AccountId;
-use darwinia_evm::{AccountBasic, Config, Pallet, Runner};
+use crate::{util, AccountId};
+use darwinia_evm::{runner::Runner, AccountBasic, Config, Pallet};
 use darwinia_support::evm::{SELECTOR, TRANSFER_ADDR};
 // --- crates ---
 use codec::Decode;

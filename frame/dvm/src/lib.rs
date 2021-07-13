@@ -26,11 +26,10 @@
 
 pub mod account_basic;
 
+use dvm_rpc_runtime_api::{DVMTransaction, TransactionStatus};
 pub use ethereum::{
 	Block, Log, Receipt, Transaction, TransactionAction, TransactionMessage, TransactionSignature,
 };
-
-pub use dvm_rpc_runtime_api::{DVMTransaction, TransactionStatus};
 
 #[cfg(all(feature = "std", test))]
 mod mock;
@@ -63,7 +62,9 @@ use sp_runtime::{
 use sp_std::marker::PhantomData;
 use sp_std::prelude::*;
 // --- darwinia ---
-use darwinia_evm::{AccountBasic, BlockHashMapping, FeeCalculator, GasWeightMapping, Runner};
+use darwinia_evm::{
+	runner::Runner, AccountBasic, BlockHashMapping, FeeCalculator, GasWeightMapping,
+};
 use darwinia_support::evm::INTERNAL_CALLER;
 use dp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
 use dp_evm::CallOrCreateInfo;

@@ -18,7 +18,7 @@
 
 //! EVM stack-based runner.
 
-// --- crates.io ---
+// --- crates ---
 use evm::{
 	backend::Backend as BackendT,
 	executor::{StackExecutor, StackState as StackStateT, StackSubstateMetadata},
