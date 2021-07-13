@@ -124,6 +124,15 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 	}
 }
 
+/// Returns the Substrate block hash by number.
+pub struct SubstrateBlockHashMapping<T>(sp_std::marker::PhantomData<T>);
+impl<T: Config> BlockHashMapping for SubstrateBlockHashMapping<T> {
+	fn block_hash(number: u32) -> H256 {
+		let number = T::BlockNumber::from(number);
+		H256::from_slice(frame_system::Pallet::<T>::block_hash(number).as_ref())
+	}
+}
+
 pub struct RawAccountBasic<T>(sp_std::marker::PhantomData<T>);
 impl<T: Config> AccountBasic<T> for RawAccountBasic<T> {
 	/// Get the account basic in EVM format.
@@ -184,7 +193,7 @@ impl Config for Test {
 	type CallOrigin = EnsureAddressRoot<Self::AccountId>;
 
 	type AddressMapping = ConcatAddressMapping<Self::AccountId>;
-	type BlockHashMapping = crate::SubstrateBlockHashMapping<Self>;
+	type BlockHashMapping = SubstrateBlockHashMapping<Self>;
 	type FindAuthor = FindAuthorTruncated<Aura>;
 
 	type RingCurrency = Ring;

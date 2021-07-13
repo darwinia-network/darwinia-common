@@ -293,12 +293,6 @@ pub mod pallet {
 			extra_genesis_builder(self);
 		}
 	}
-
-	impl<T: Config> BlockHashMapping for Pallet<T> {
-		fn block_hash(number: u32) -> H256 {
-			BlockHash::<T>::get(U256::from(number))
-		}
-	}
 }
 
 impl<T: Config> Pallet<T> {
@@ -578,6 +572,13 @@ impl<T: Config> Pallet<T> {
 	}
 }
 
+impl<T: Config> BlockHashMapping for Pallet<T> {
+	/// Returns the Ethereum block hash by number.
+	fn block_hash(number: u32) -> H256 {
+		BlockHash::<T>::get(U256::from(number))
+	}
+}
+
 /// The schema version for Pallet Ethereum's storage
 #[derive(Clone, Debug, Encode, Decode, PartialEq, Eq, PartialOrd, Ord)]
 pub enum EthereumStorageSchema {
@@ -595,14 +596,6 @@ pub enum ReturnValue {
 	Bytes(Vec<u8>),
 	Hash(H160),
 }
-
-// /// Returns the Ethereum block hash by number.
-// pub struct EthereumBlockHashMapping;
-// impl BlockHashMapping for EthereumBlockHashMapping {
-// 	fn block_hash(number: u32) -> H256 {
-// 		BlockHash::<T>::get(U256::from(number))
-// 	}
-// }
 
 #[repr(u8)]
 enum TransactionValidationError {
