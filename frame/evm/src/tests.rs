@@ -17,7 +17,7 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- std ---
-use std::{collections::BTreeMap, marker::PhantomData, str::FromStr};
+use std::{collections::BTreeMap, str::FromStr};
 // --- substrate ---
 use frame_support::{assert_ok, traits::GenesisBuild, ConsensusEngineId};
 use frame_system::mocking::*;
@@ -29,13 +29,11 @@ use sp_runtime::{
 };
 // --- darwinia ---
 use crate::{self as darwinia_evm, runner::stack::Runner, *};
-use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 
 type Balance = u64;
-type Aura = pallet_aura::Module<Test>;
 
 darwinia_support::impl_test_account_data! {}
 
@@ -101,10 +99,6 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
-impl pallet_aura::Config for Test {
-	type AuthorityId = AuraId;
-}
-
 /// Fixed gas price of `0`.
 pub struct FixedGasPrice;
 impl FeeCalculator for FixedGasPrice {
@@ -113,23 +107,21 @@ impl FeeCalculator for FixedGasPrice {
 		0.into()
 	}
 }
-
-pub struct FindAuthorTruncated<F>(PhantomData<F>);
-impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
-	fn find_author<'a, I>(_digests: I) -> Option<H160>
-	where
-		I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
-	{
-		Some(H160::from_str("1234500000000000000000000000000000000000").unwrap())
-	}
-}
-
 /// Returns the Substrate block hash by number.
 pub struct SubstrateBlockHashMapping<T>(sp_std::marker::PhantomData<T>);
 impl<T: Config> BlockHashMapping for SubstrateBlockHashMapping<T> {
 	fn block_hash(number: u32) -> H256 {
 		let number = T::BlockNumber::from(number);
 		H256::from_slice(frame_system::Pallet::<T>::block_hash(number).as_ref())
+	}
+}
+pub struct FindAuthorTruncated;
+impl FindAuthor<H160> for FindAuthorTruncated {
+	fn find_author<'a, I>(_digests: I) -> Option<H160>
+	where
+		I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
+	{
+		Some(H160::default())
 	}
 }
 
@@ -194,7 +186,7 @@ impl Config for Test {
 
 	type AddressMapping = ConcatAddressMapping<Self::AccountId>;
 	type BlockHashMapping = SubstrateBlockHashMapping<Self>;
-	type FindAuthor = FindAuthorTruncated<Aura>;
+	type FindAuthor = FindAuthorTruncated;
 
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
@@ -284,16 +276,5 @@ fn fail_call_return_ok() {
 			U256::default(),
 			None,
 		));
-	});
-}
-
-#[test]
-fn find_author() {
-	new_test_ext().execute_with(|| {
-		let author = EVM::find_author();
-		assert_eq!(
-			author,
-			H160::from_str("1234500000000000000000000000000000000000").unwrap()
-		);
 	});
 }

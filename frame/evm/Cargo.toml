@@ -34,8 +34,6 @@ sp-std           = { default-features = false, git = "https://github.com/darwini
 
 [dev-dependencies]
 darwinia-support   = { features = ["easy-testing"], path = "../support" }
-sp-consensus-aura = { version = "0.9.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-pallet-aura = { version = "3.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 
 [features]
 default = ["std"]
