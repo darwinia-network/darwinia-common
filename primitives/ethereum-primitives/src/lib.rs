@@ -22,7 +22,6 @@
 #[macro_use]
 pub extern crate rlp_derive;
 
-pub mod encoded;
 pub mod error;
 pub mod ethashproof;
 pub mod header;

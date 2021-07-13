@@ -377,11 +377,6 @@ impl EthereumHeader {
 		keccak_hash::keccak(self.rlp(Seal::Without))
 	}
 
-	/// Encode the header, getting a type-safe wrapper around the RLP.
-	pub fn encoded(&self) -> encoded::Header {
-		encoded::Header::new(self.rlp(Seal::With))
-	}
-
 	/// Get the RLP representation of this Header.
 	fn rlp(&self, with_seal: Seal) -> Bytes {
 		let mut s = RlpStream::new();
