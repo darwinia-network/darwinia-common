@@ -24,7 +24,7 @@ rlp             = { version = "0.5.0", default-features = false }
 rlp-derive      = { version = "0.1.0" }
 serde           = { version = "1.0.126", optional = true, features = ["derive"] }
 # darwinia
-ethash               = { default-features = false, git = "https://github.com/darwinia-network/rust-ethash" }
+ethash               = { default-features = false, git = "https://github.com/darwinia-network/rust-ethash", tag = "v0.4.0" }
 merkle-patricia-trie = { default-features = false, path = "../merkle-patricia-trie" }
 # substrate
 sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
@@ -49,7 +49,7 @@ std = [
 	"substrate-std",
 ]
 
-crates-std    = [
+crates-std = [
 	"codec/std",
 	"ethbloom/std",
 	"ethereum-types/std",
@@ -62,7 +62,7 @@ crates-std    = [
 	"rlp/std",
 	"serde",
 ]
-darwinia-std  = [
+darwinia-std = [
 	"ethash/std",
 	"merkle-patricia-trie/std",
 ]

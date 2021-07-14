@@ -19,7 +19,7 @@ serde_json  = { version = "1.0.64", optional = true }
 # darwinia
 darwinia-relay-primitives = { default-features = false, path = "../../../../primitives/relay" }
 darwinia-support          = { default-features = false, path = "../../../support" }
-ethabi                    = { default-features = false, git = "https://github.com/darwinia-network/ethabi", branch = "xavier-no-std" }
+ethabi                    = { default-features = false, git = "https://github.com/darwinia-network/ethabi", tag = "v13.0.0-no-std" }
 ethereum-primitives       = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
@@ -55,12 +55,12 @@ std = [
 	"substrate-std",
 ]
 
-crates-std    = [
+crates-std = [
 	"codec/std",
 	"serde",
 	"serde_json",
 ]
-darwinia-std  = [
+darwinia-std = [
 	"darwinia-relay-primitives/std",
 	"darwinia-support/std",
 	"ethabi/std",
