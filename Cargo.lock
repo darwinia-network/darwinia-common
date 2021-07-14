@@ -125,9 +125,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.41"
+version = "1.0.42"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "15af2628f6890fe2609a3b91bef4c83450512802e59489f9c1cb1fa5df064a61"
+checksum = "595d3cfa7a60d4555cb5067b99f07142a08ea778de5cf993f7b75c7d8fabc486"
 
 [[package]]
 name = "approx"
@@ -1595,7 +1595,7 @@ name = "darwinia-ethereum-issuing-contract"
 version = "2.5.0"
 dependencies = [
  "ethabi",
- "ethereum-types 0.11.0",
+ "ethereum-types 0.12.0",
 ]
 
 [[package]]
@@ -1606,7 +1606,7 @@ dependencies = [
  "darwinia-balances",
  "darwinia-support",
  "ethereum-primitives",
- "ethereum-types 0.11.0",
+ "ethereum-types 0.12.0",
  "frame-support",
  "frame-system",
  "log",
@@ -2558,11 +2558,11 @@ dependencies = [
 
 [[package]]
 name = "ethabi"
-version = "13.0.0"
-source = "git+https://github.com/darwinia-network/ethabi?branch=xavier-no-std#baacf174d5c2f12122c4ee3fe31506fb52069983"
+version = "14.1.0"
+source = "git+https://github.com/darwinia-network/ethabi?branch=xavier-no-std#09da0834d95f8b43377ca22d7b1c97a2401f4b0c"
 dependencies = [
  "anyhow",
- "ethereum-types 0.11.0",
+ "ethereum-types 0.12.0",
  "hex",
  "serde",
  "serde_json",
@@ -9520,18 +9520,18 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
-version = "1.0.25"
+version = "1.0.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fa6f76457f59514c7eeb4e59d891395fab0b2fd1d40723ae737d64153392e9c6"
+checksum = "93119e4feac1cbe6c798c34d3a53ea0026b0b1de6a120deef895137c0529bfe2"
 dependencies = [
  "thiserror-impl",
 ]
 
 [[package]]
 name = "thiserror-impl"
-version = "1.0.25"
+version = "1.0.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a36768c0fbf1bb15eca10defa29526bda730a2376c2ab4393ccfa16fb1a318d"
+checksum = "060d69a0afe7796bf42e9e2ff91f5ee691fb15c53d38b4b62a9a53eb23164745"
 dependencies = [
  "proc-macro2",
  "quote",

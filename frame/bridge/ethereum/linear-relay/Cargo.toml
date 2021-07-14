@@ -13,7 +13,7 @@ version     = "2.5.0"
 [dependencies]
 # crates
 codec          = { package = "parity-scale-codec", version = "2.1.1", default-features = false, features = ["derive"] }
-ethereum-types = { version = "0.11.0", default-features = false }
+ethereum-types = { version = "0.12.0", default-features = false }
 log            = { version = "0.4.14" }
 rlp            = { version = "0.5.0", default-features = false }
 serde          = { version = "1.0.126", optional = true }
@@ -46,7 +46,7 @@ std = [
 	"substrate-std",
 ]
 
-crates-std    = [
+crates-std = [
 	"codec/std",
 	"ethereum-types/std",
 	"ethereum-types/serialize",
@@ -54,7 +54,7 @@ crates-std    = [
 	"serde",
 	"serde_json",
 ]
-darwinia-std  = [
+darwinia-std = [
 	"darwinia-support/std",
 	"ethereum-primitives/std",
 ]
