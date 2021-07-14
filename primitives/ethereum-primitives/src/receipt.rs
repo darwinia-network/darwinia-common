@@ -20,7 +20,7 @@
 use codec::{Decode, Encode};
 // --- github ---
 use ethbloom::{Bloom, Input as BloomInput};
-use primitive_types::{H256, U256};
+use ethereum_types::{H256, U256};
 use rlp::*;
 use sp_runtime::RuntimeDebug;
 use sp_std::prelude::*;

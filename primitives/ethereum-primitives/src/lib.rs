@@ -22,7 +22,6 @@
 #[macro_use]
 pub extern crate rlp_derive;
 
-pub mod encoded;
 pub mod error;
 pub mod ethashproof;
 pub mod header;
@@ -30,8 +29,7 @@ pub mod pow;
 pub mod receipt;
 
 pub use ethbloom::{Bloom, Input as BloomInput};
-pub use ethereum_types::H64;
-pub use primitive_types::{H160, H256, U128, U256, U512};
+pub use ethereum_types::{H160, H256, H64, U128, U256, U512};
 
 use codec::{Decode, Encode};
 use sp_std::prelude::*;
