@@ -40,6 +40,7 @@ pub mod evm {
 	pub const TRANSFER_ADDR: &'static str = "0x0000000000000000000000000000000000000015";
 }
 
+// TODO: Should we move this to `s2s-primitives`?
 pub mod s2s {
 	use bp_runtime::{derive_account_id, ChainId, SourceAccount};
 	use codec::Encode;
