@@ -16,12 +16,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+// --- paritytech ---
 use codec::{Decode, Encode};
-
+// --- darwinia ---
 use crate::*;
 
-#[derive(PartialEq, Eq, Clone, Copy, Debug, Encode, Decode)]
 /// Error indicating value found is outside of a valid range.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Encode, Decode)]
 pub struct OutOfBounds<T> {
 	/// Minimum allowed value.
 	pub min: Option<T>,
@@ -31,8 +32,8 @@ pub struct OutOfBounds<T> {
 	pub found: T,
 }
 
-#[derive(PartialEq, Eq, Clone, Copy, Debug, Encode, Decode)]
 /// Error indicating an expected value was not found.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Encode, Decode)]
 pub struct Mismatch<T> {
 	/// Value expected.
 	pub expected: T,
@@ -40,7 +41,7 @@ pub struct Mismatch<T> {
 	pub found: T,
 }
 
-#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum EthereumError {
 	InvalidProofOfWork(OutOfBounds<U256>),
 	DifficultyOutOfBounds(OutOfBounds<U256>),
@@ -50,7 +51,6 @@ pub enum EthereumError {
 	Rlp(&'static str),
 	InvalidReceiptProof,
 }
-
 impl From<EthereumError> for &str {
 	fn from(e: EthereumError) -> Self {
 		use EthereumError::*;

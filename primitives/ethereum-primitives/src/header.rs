@@ -16,15 +16,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-// --- crates ---
+// --- crates.io ---
 use codec::{Decode, Encode};
 #[cfg(any(feature = "deserialize", test))]
 use serde::Deserialize;
-// --- github ---
+// --- github.com ---
 use ethbloom::Bloom;
 use keccak_hash::{keccak, KECCAK_EMPTY_LIST_RLP, KECCAK_NULL_RLP};
 use rlp::{Decodable, DecoderError, Encodable, Rlp, RlpStream};
-// --- substrate ---
+// --- paritytech ---
 use sp_runtime::RuntimeDebug;
 use sp_std::prelude::*;
 // --- darwinia ---

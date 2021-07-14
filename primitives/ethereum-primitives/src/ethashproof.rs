@@ -16,8 +16,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+// --- crates.io ---
 use codec::{Decode, Encode};
-pub use ethereum_types::{H128, H512};
+use ethereum_types::{H128, H512};
+// --- paritytech ---
 use sp_io::hashing::sha2_256;
 use sp_runtime::RuntimeDebug;
 use sp_std::vec::Vec;

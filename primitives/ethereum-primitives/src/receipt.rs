@@ -16,18 +16,18 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-// --- crates ---
+// --- crates.io ---
 use codec::{Decode, Encode};
-// --- github ---
+// --- github.com ---
 use ethbloom::{Bloom, Input as BloomInput};
 use ethereum_types::{H256, U256};
 use rlp::*;
+use rlp_derive::{RlpDecodable, RlpEncodable};
 use sp_runtime::RuntimeDebug;
 use sp_std::prelude::*;
 // --- darwinia ---
 #[cfg(any(feature = "deserialize", test))]
-use crate::header::bytes_from_string;
-use crate::{error::EthereumError, *};
+use crate::{error::EthereumError, header::bytes_from_string, *};
 use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
 
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
