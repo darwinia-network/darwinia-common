@@ -54,6 +54,7 @@ impl Abi {
 			},
 		];
 
+		#[allow(deprecated)]
 		Function {
 			name: "crossReceive".into(),
 			inputs,
@@ -92,6 +93,7 @@ impl Abi {
 			kind: ParamType::Address,
 		}];
 
+		#[allow(deprecated)]
 		Function {
 			name: "createERC20Contract".into(),
 			inputs,
@@ -252,6 +254,7 @@ impl Abi {
 			kind: ParamType::Address,
 		}];
 
+		#[allow(deprecated)]
 		Function {
 			name: "mappingToken".into(),
 			inputs,
