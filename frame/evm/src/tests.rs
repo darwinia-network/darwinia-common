@@ -107,14 +107,7 @@ impl FeeCalculator for FixedGasPrice {
 		0.into()
 	}
 }
-/// Returns the Substrate block hash by number.
-pub struct SubstrateBlockHashMapping<T>(sp_std::marker::PhantomData<T>);
-impl<T: Config> BlockHashMapping for SubstrateBlockHashMapping<T> {
-	fn block_hash(number: u32) -> H256 {
-		let number = T::BlockNumber::from(number);
-		H256::from_slice(frame_system::Pallet::<T>::block_hash(number).as_ref())
-	}
-}
+
 pub struct FindAuthorTruncated;
 impl FindAuthor<H160> for FindAuthorTruncated {
 	fn find_author<'a, I>(_digests: I) -> Option<H160>
