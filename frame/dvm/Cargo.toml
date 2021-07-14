@@ -16,7 +16,7 @@ ethereum       = { version = "0.7.1", default-features = false, features = ["wit
 ethereum-types = { version = "0.11.0", default-features = false }
 evm            = { version = "0.25.0", default-features = false, features = ["with-codec"] }
 libsecp256k1   = { version = "0.3.5", default-features = false }
-log            = { version = "0.4.14", optional = true }
+log            = { version = "0.4.14", default-features = false }
 rlp            = { version = "0.5.0", default-features = false }
 serde          = { version = "1.0.126", optional = true, default-features = false }
 sha3           = { version = "0.9.1", default-features = false }
@@ -61,6 +61,7 @@ crates-std    = [
 	"evm/std",
 	"libsecp256k1/std",
 	"rlp/std",
+	"log/std",
 	"serde",
 	"sha3/std",
 ]
@@ -82,6 +83,5 @@ substrate-std = [
 ]
 
 try-runtime = [
-	"log",
 	"frame-support/try-runtime",
 ]
