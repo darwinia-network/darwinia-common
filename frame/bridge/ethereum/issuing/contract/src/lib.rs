@@ -32,7 +32,7 @@ use ethereum_types::{Address as EthereumAddress, H160, H256, U256};
 // --- github ---
 use ethabi::{
 	param_type::ParamType, token::Token, Bytes, Error, EventParam, Function, Param, RawLog,
-	Result as AbiResult,
+	Result as AbiResult, StateMutability,
 };
 
 pub struct Abi;
@@ -59,6 +59,7 @@ impl Abi {
 			inputs,
 			outputs: vec![],
 			constant: false,
+			state_mutability: StateMutability::NonPayable,
 		}
 	}
 
@@ -96,6 +97,7 @@ impl Abi {
 			inputs,
 			outputs,
 			constant: false,
+			state_mutability: StateMutability::NonPayable,
 		}
 	}
 
@@ -255,6 +257,7 @@ impl Abi {
 			inputs,
 			outputs,
 			constant: true,
+			state_mutability: StateMutability::View,
 		}
 	}
 
