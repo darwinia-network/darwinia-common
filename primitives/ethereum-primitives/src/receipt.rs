@@ -26,8 +26,9 @@ use rlp_derive::{RlpDecodable, RlpEncodable};
 use sp_runtime::RuntimeDebug;
 use sp_std::prelude::*;
 // --- darwinia ---
+use crate::error::EthereumError;
 #[cfg(any(feature = "deserialize", test))]
-use crate::{error::EthereumError, header::bytes_from_string, *};
+use crate::{header::bytes_from_string, *};
 use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
 
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
