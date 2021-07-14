@@ -8,9 +8,13 @@ pub use darwinia_evm_precompile_transfer::Transfer;
 use evm::{executor::PrecompileOutput, Context, ExitError};
 // --- substrate ---
 use codec::{Decode, Encode};
-use frame_support::dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo};
-use sp_core::{H160, U256};
-use sp_std::{marker::PhantomData, vec::Vec};
+use frame_support::{
+	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
+	traits::FindAuthor,
+	ConsensusEngineId,
+};
+use sp_core::{crypto::Public, H160, U256};
+use sp_std::marker::PhantomData;
 // --- darwinia ---
 use crate::*;
 use darwinia_evm::{

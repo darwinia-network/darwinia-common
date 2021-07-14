@@ -1652,9 +1652,9 @@ dependencies = [
  "darwinia-balances",
  "darwinia-support",
  "dp-evm",
- "evm",
- "evm-gasometer",
- "evm-runtime",
+ "evm 0.27.0",
+ "evm-gasometer 0.27.0",
+ "evm-runtime 0.27.0",
  "frame-support",
  "frame-system",
  "log",
@@ -1675,7 +1675,7 @@ name = "darwinia-evm-precompile-blake2"
 version = "2.5.0"
 dependencies = [
  "dp-evm",
- "evm",
+ "evm 0.27.0",
  "sp-core",
  "sp-io",
 ]
@@ -1685,7 +1685,7 @@ name = "darwinia-evm-precompile-bn128"
 version = "2.5.0"
 dependencies = [
  "dp-evm",
- "evm",
+ "evm 0.27.0",
  "sp-core",
  "sp-io",
  "substrate-bn",
@@ -1697,7 +1697,7 @@ version = "2.5.0"
 dependencies = [
  "curve25519-dalek 3.1.0",
  "dp-evm",
- "evm",
+ "evm 0.27.0",
  "sp-core",
  "sp-io",
 ]
@@ -1708,7 +1708,7 @@ version = "2.5.0"
 dependencies = [
  "darwinia-evm",
  "dp-evm",
- "evm",
+ "evm 0.27.0",
  "frame-support",
  "parity-scale-codec",
  "sp-core",
@@ -1721,7 +1721,7 @@ version = "2.5.0"
 dependencies = [
  "dp-evm",
  "ed25519-dalek",
- "evm",
+ "evm 0.27.0",
  "sp-core",
  "sp-io",
 ]
@@ -1731,7 +1731,7 @@ name = "darwinia-evm-precompile-empty"
 version = "2.5.0"
 dependencies = [
  "dp-evm",
- "evm",
+ "evm 0.27.0",
 ]
 
 [[package]]
@@ -1743,7 +1743,7 @@ dependencies = [
  "darwinia-support",
  "dp-contract",
  "dp-evm",
- "evm",
+ "evm 0.27.0",
  "frame-support",
  "log",
  "parity-scale-codec",
@@ -1758,7 +1758,7 @@ version = "2.5.0"
 dependencies = [
  "darwinia-evm",
  "dp-evm",
- "evm",
+ "evm 0.27.0",
 ]
 
 [[package]]
@@ -1766,7 +1766,7 @@ name = "darwinia-evm-precompile-modexp"
 version = "2.5.0"
 dependencies = [
  "dp-evm",
- "evm",
+ "evm 0.27.0",
  "hex",
  "num",
  "sp-core",
@@ -1778,7 +1778,7 @@ name = "darwinia-evm-precompile-sha3fips"
 version = "2.0.0"
 dependencies = [
  "dp-evm",
- "evm",
+ "evm 0.27.0",
  "sp-core",
  "sp-io",
  "tiny-keccak",
@@ -1789,7 +1789,7 @@ name = "darwinia-evm-precompile-simple"
 version = "2.5.0"
 dependencies = [
  "dp-evm",
- "evm",
+ "evm 0.27.0",
  "ripemd160",
  "sp-core",
  "sp-io",
@@ -1805,7 +1805,7 @@ dependencies = [
  "dp-evm",
  "ethabi",
  "ethereum-types",
- "evm",
+ "evm 0.27.0",
  "frame-support",
  "frame-system",
  "log",
@@ -1953,11 +1953,11 @@ dependencies = [
  "dvm-ethereum",
  "ethereum-primitives",
  "ethereum-types",
- "evm",
+ "evm 0.25.0",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "libsecp256k1",
+ "libsecp256k1 0.3.5",
  "log",
  "pallet-timestamp",
  "parity-scale-codec",
@@ -2154,7 +2154,7 @@ dependencies = [
  "dvm-rpc-runtime-api",
  "ethereum",
  "ethereum-types",
- "evm",
+ "evm 0.27.0",
  "futures 0.3.15",
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -2282,7 +2282,7 @@ dependencies = [
 name = "dp-evm"
 version = "2.5.0"
 dependencies = [
- "evm",
+ "evm 0.27.0",
  "impl-trait-for-tuples",
  "parity-scale-codec",
  "serde",
@@ -2446,7 +2446,7 @@ dependencies = [
  "ethabi",
  "ethereum",
  "ethereum-types",
- "evm",
+ "evm 0.27.0",
  "frame-support",
  "frame-system",
  "libsecp256k1 0.5.0",
@@ -2757,21 +2757,49 @@ checksum = "f7531096570974c3a9dcf9e4b8e1cede1ec26cf5046219fb3b9d897503b9be59"
 
 [[package]]
 name = "evm"
+version = "0.25.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1b4bd1fb06a4962a243c8be285d8a9b2493ffa79acb32633ad07a0bc523b1acd"
+dependencies = [
+ "ethereum",
+ "evm-core 0.25.1",
+ "evm-gasometer 0.25.0",
+ "evm-runtime 0.25.0",
+ "log",
+ "parity-scale-codec",
+ "primitive-types",
+ "rlp",
+ "sha3 0.8.2",
+]
+
+[[package]]
+name = "evm"
 version = "0.27.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f833b0e642bec8286b80f00ad6cc6a95e50210c77949b9cb484637e6a05ed596"
 dependencies = [
  "environmental",
  "ethereum",
- "evm-core",
- "evm-gasometer",
- "evm-runtime",
+ "evm-core 0.27.1",
+ "evm-gasometer 0.27.0",
+ "evm-runtime 0.27.0",
  "log",
  "parity-scale-codec",
  "primitive-types",
  "rlp",
  "serde",
  "sha3 0.8.2",
+]
+
+[[package]]
+name = "evm-core"
+version = "0.25.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e1e6640dd44ba663316c7121e0c6fee38000d8249127fd9221bfdc331f75cbfe"
+dependencies = [
+ "funty",
+ "parity-scale-codec",
+ "primitive-types",
 ]
 
 [[package]]
@@ -2788,14 +2816,36 @@ dependencies = [
 
 [[package]]
 name = "evm-gasometer"
+version = "0.25.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0a8f04dcc8b0296652eabfa443a08ebed6071a1178e0f42a7f7b63a612bddf0b"
+dependencies = [
+ "evm-core 0.25.1",
+ "evm-runtime 0.25.0",
+ "primitive-types",
+]
+
+[[package]]
+name = "evm-gasometer"
 version = "0.27.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4118f952ce320c11e1b7b8a575e477d70bc86a3b92ea23e427174d979cf1da26"
 dependencies = [
  "environmental",
- "evm-core",
- "evm-runtime",
+ "evm-core 0.27.1",
+ "evm-runtime 0.27.0",
  "primitive-types",
+]
+
+[[package]]
+name = "evm-runtime"
+version = "0.25.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "54c302f29ca8bba82a382aa52d427869964179e4f24eae57bde70958ce9b7607"
+dependencies = [
+ "evm-core 0.25.1",
+ "primitive-types",
+ "sha3 0.8.2",
 ]
 
 [[package]]
@@ -2805,7 +2855,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "952296b416c3b334b26933ad1f9cfa9203e251691586fb317e411872886ca31b"
 dependencies = [
  "environmental",
- "evm-core",
+ "evm-core 0.27.1",
  "primitive-types",
  "sha3 0.8.2",
 ]
@@ -6027,7 +6077,7 @@ dependencies = [
  "dvm-ethereum",
  "dvm-rpc-runtime-api",
  "ethereum-primitives",
- "evm",
+ "evm 0.27.0",
  "frame-benchmarking",
  "frame-executive",
  "frame-support",
