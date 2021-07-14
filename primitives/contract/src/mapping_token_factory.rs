@@ -20,15 +20,14 @@
 
 pub use ethabi::{Event, Log};
 
-// --- crates ---
+// --- crates.io ---
 use ethereum_types::{Address as EthereumAddress, H160, U256};
-// --- github ---
+// --- darwinia ---
 use ethabi::{
 	param_type::ParamType, token::Token, Bytes, Error, Function, Param, Result as AbiResult,
 };
-
+// --- paritytech ---
 use sp_std::prelude::*;
-use sp_std::vec;
 
 pub struct MappingTokenFactory;
 
