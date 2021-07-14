@@ -479,7 +479,7 @@ decl_module! {
 			mmr_proof: MMRProof
 		) {
 			let worker = ensure_signed(origin)?;
-			let verified_receipt = Self::verify_receipt(&(ethereum_header.clone(), ethereum_proof_record, mmr_proof)).map_err(|_| <Error<T>>::ReceiptProofInv)?;
+			let verified_receipt = Self::verify_receipt(&(ethereum_header.clone(), ethereum_proof_record, mmr_proof))?;
 			let fee = Self::receipt_verify_fee();
 			let module_account = Self::account_id();
 

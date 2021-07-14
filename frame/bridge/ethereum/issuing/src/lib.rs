@@ -86,8 +86,6 @@ decl_error! {
 		InvalidIssuingAccount,
 		/// assert ar
 		AssetAR,
-		/// ReceiptProofInv
-		ReceiptProofInv,
 		/// LogEntryNE
 		LogEntryNE,
 		/// EthLogPF
@@ -345,10 +343,7 @@ impl<T: Config> Module<T> {
 			!VerifiedIssuingProof::contains_key(tx_index),
 			<Error<T>>::AssetAR
 		);
-		let verified_receipt = T::EthereumRelay::verify_receipt(&proof).map_err(|err| {
-			log::debug!("verify error {:?}", err);
-			<Error<T>>::ReceiptProofInv
-		})?;
+		let verified_receipt = T::EthereumRelay::verify_receipt(&proof)?;
 
 		let backing_address = EthereumBackingAddress::get();
 		let log_entry = verified_receipt
