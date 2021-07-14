@@ -10,7 +10,7 @@ use darwinia_support::s2s::{RelayMessageCaller, ToEthAddress};
 use dp_asset::{token::Token, RecipientAccount};
 use millau_primitives::AccountIdConverter;
 
-// 0x70746d6c
+// 0x6d74706c
 pub const MILLAU_PANGOLIN_LANE: [u8; 4] = *b"mtpl";
 
 // remote chain millau's dispatch info
