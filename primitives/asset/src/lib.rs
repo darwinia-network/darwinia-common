@@ -18,10 +18,11 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod token;
+
+// --- crates.io ---
 use codec::{Decode, Encode};
 use ethereum_primitives::EthereumAddress;
-
-pub mod token;
 
 #[derive(Encode, Decode, Clone, Debug, Eq, PartialEq)]
 pub enum RecipientAccount<AccountId> {

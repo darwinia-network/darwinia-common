@@ -18,10 +18,13 @@
 
 //! Token Primitives
 
-// --- core ---
+// --- crates.io ---
 use codec::{Decode, Encode};
+// --- darwinia ---
+// TODO: Use ethereum-types? In https://github.com/darwinia-network/darwinia-common/pull/708
 use ethereum_primitives::{EthereumAddress, U256};
 
+// TODO: Are this type necessary?
 /// used by token name and symbol
 pub type Bytes32 = [u8; 32];
 
@@ -40,7 +43,6 @@ pub struct TokenInfo {
 	pub value: Option<U256>,
 	pub option: Option<TokenOption>,
 }
-
 impl TokenInfo {
 	pub fn new(address: EthereumAddress, value: Option<U256>, option: Option<TokenOption>) -> Self {
 		TokenInfo {
@@ -58,23 +60,22 @@ pub enum Token {
 	Native(TokenInfo),
 	Erc20(TokenInfo),
 }
-
+impl Token {
+	// TODO: Return more details `Err` or `Option`
+	pub fn token_info(self) -> Result<(u32, TokenInfo), ()> {
+		match self {
+			Self::Erc20(info) => Ok((0, info)),
+			Self::Native(info) => Ok((1, info)),
+			_ => Err(()),
+		}
+	}
+}
 impl From<(u32, TokenInfo)> for Token {
 	fn from(t: (u32, TokenInfo)) -> Self {
 		match t.0 {
 			0 => Self::Erc20(t.1),
 			1 => Self::Native(t.1),
 			_ => Self::InvalidToken,
-		}
-	}
-}
-
-impl Token {
-	pub fn token_info(self) -> Result<(u32, TokenInfo), ()> {
-		match self {
-			Self::Erc20(info) => Ok((0, info)),
-			Self::Native(info) => Ok((1, info)),
-			_ => Err(()),
 		}
 	}
 }

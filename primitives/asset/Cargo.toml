@@ -10,13 +10,13 @@ repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "2.5.0"
 
 [dependencies]
-# crates
-codec   = { package = "parity-scale-codec", version = "2.1.1", default-features = false, features = ["derive"] }
-sha3    = { version = "0.9.1", default-features = false }
+# crates.io
+codec = { package = "parity-scale-codec", version = "2.1.1", default-features = false, features = ["derive"] }
+sha3  = { version = "0.9.1", default-features = false }
 # darwinia
-ethereum-primitives  = { default-features = false, path = "../ethereum-primitives" }
+ethereum-primitives = { default-features = false, path = "../ethereum-primitives" }
 # substrate
-sp-std    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [features]
 default = ["std"]
@@ -27,7 +27,7 @@ std = [
 	"substrate-std",
 ]
 
-crates-std   = [
+crates-std = [
 	"codec/std",
 	"sha3/std",
 ]
