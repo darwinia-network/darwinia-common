@@ -399,6 +399,7 @@ frame_support::construct_runtime! {
 		BridgeMillauDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 44,
 		BridgeMillauGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 45,
 		Substrate2SubstrateIssuing: darwinia_s2s_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
+
 		BSC: darwinia_bridge_bsc::{Pallet, Call, Storage, Config} = 46,
 	}
 }

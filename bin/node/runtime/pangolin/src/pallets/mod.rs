@@ -82,9 +82,6 @@ pub use recovery::*;
 pub mod scheduler;
 pub use scheduler::*;
 
-pub mod s2s_issuing;
-pub use s2s_issuing::*;
-
 pub mod proxy;
 pub use proxy::*;
 
@@ -134,6 +131,9 @@ pub use bridge_dispatch::*;
 
 pub mod bridge_grandpa;
 pub use bridge_grandpa::*;
+
+pub mod s2s_issuing;
+pub use s2s_issuing::*;
 
 pub mod bridge_bsc;
 pub use bridge_bsc::*;
