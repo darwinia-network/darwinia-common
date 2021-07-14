@@ -27,7 +27,7 @@ use darwinia_evm::{AccountBasic, Config, Pallet, Runner};
 use darwinia_support::evm::{SELECTOR, TRANSFER_ADDR};
 // --- crates ---
 use codec::Decode;
-use ethabi::{Function, Param, ParamType, Token};
+use ethabi::{Function, Param, ParamType, Token, StateMutability};
 use evm::{Context, ExitError, ExitReason, ExitSucceed};
 use sha3::Digest;
 
@@ -148,6 +148,7 @@ fn make_call_data(
 ) -> Result<Vec<u8>, ExitError> {
 	let eth_address = util::s2e_address(sp_address);
 	let eth_value = util::s2e_u256(sp_value);
+	#[allow(deprecated)]
 	let func = Function {
 		name: "deposit".to_owned(),
 		inputs: vec![
@@ -162,6 +163,7 @@ fn make_call_data(
 		],
 		outputs: vec![],
 		constant: false,
+		state_mutability: StateMutability::NonPayable,
 	};
 	func.encode_input(&[Token::Address(eth_address), Token::Uint(eth_value)])
 		.map_err(|_| ExitError::Other("Make call data error happened".into()))
