@@ -11,6 +11,7 @@ version    = "2.5.0"
 
 [dependencies]
 # crates
+array-bytes       = { version = "1.3.3" }
 codec             = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
 evm               = { version = "0.25.0", default-features = false, features = ["with-codec"] }
 log               = { version = "0.4.14" }
@@ -30,6 +31,8 @@ darwinia-ethereum-backing           = { default-features = false, path = "../../
 darwinia-ethereum-issuing           = { default-features = false, path = "../../../../frame/bridge/ethereum/issuing" }
 darwinia-ethereum-relay             = { default-features = false, path = "../../../../frame/bridge/ethereum/relay" }
 darwinia-evm                        = { default-features = false, path = "../../../../frame/evm" }
+darwinia-evm-precompile-dispatch    = { default-features = false, path = "../../../../frame/evm/precompile/contracts/dispatch" }
+darwinia-evm-precompile-encoder     = { default-features = false, path = "../../../../frame/evm/precompile/contracts/encoder" }
 darwinia-evm-precompile-issuing     = { default-features = false, path = "../../../../frame/evm/precompile/contracts/issuing" }
 darwinia-evm-precompile-simple      = { default-features = false, path = "../../../../frame/evm/precompile/contracts/simple" }
 darwinia-evm-precompile-transfer    = { default-features = false, path = "../../../../frame/evm/precompile/contracts/transfer" }
@@ -38,23 +41,26 @@ darwinia-header-mmr-rpc-runtime-api = { default-features = false, path = "../../
 darwinia-relay-authorities          = { default-features = false, path = "../../../../frame/bridge/relay-authorities" }
 darwinia-relay-primitives           = { default-features = false, path = "../../../../primitives/relay" }
 darwinia-relayer-game               = { default-features = false, path = "../../../../frame/bridge/relayer-game" }
+darwinia-s2s-issuing                = { default-features = false, path = "../../../../frame/bridge/s2s/issuing" }
 darwinia-staking                    = { default-features = false, path = "../../../../frame/staking" }
 darwinia-staking-rpc-runtime-api    = { default-features = false, path = "../../../../frame/staking/rpc/runtime-api" }
 darwinia-support                    = { default-features = false, path = "../../../../frame/support" }
 darwinia-treasury                   = { default-features = false, path = "../../../../frame/treasury" }
 darwinia-tron-backing               = { default-features = false, path = "../../../../frame/bridge/tron/backing" }
 darwinia-vesting                    = { default-features = false, path = "../../../../frame/vesting" }
+dp-asset                            = { default-features = false, path = "../../../../primitives/asset" }
 dp-evm                              = { default-features = false, path = "../../../../primitives/evm" }
 drml-primitives                     = { default-features = false, path = "../../primitives" }
 dvm-dynamic-fee                     = { default-features = false, path = "../../../../frame/dvm-dynamic-fee" }
 dvm-ethereum                        = { default-features = false, path = "../../../../frame/dvm" }
 dvm-rpc-runtime-api                 = { default-features = false, path = "../../../../frame/dvm/rpc/runtime-api" }
 ethereum-primitives                 = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
-millau-primitives                   = { default-features = false, git = "https://github.com/darwinia-network/darwinia-launch", branch = "s2s" }
+millau-primitives                   = { default-features = false, git = "https://github.com/darwinia-network/darwinia-launch", branch = "pangolin-bridge" }
 pangolin-bridge-primitives          = { default-features = false, path = "../../bridge-primitives/pangolin" }
 pangolin-constants                  = { default-features = false, path = "src/constants" }
 pangolin-runtime-system-params      = { default-features = false, path = "src/pallets/system/params" }
 # substrate
+bp-message-dispatch                        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
 bp-messages                                = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
 bp-runtime                                 = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
 bridge-runtime-common                      = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
@@ -130,6 +136,8 @@ std = [
 	"darwinia-ethereum-issuing/std",
 	"darwinia-ethereum-relay/std",
 	"darwinia-evm/std",
+	"darwinia-evm-precompile-dispatch/std",
+	"darwinia-evm-precompile-encoder/std",
 	"darwinia-evm-precompile-issuing/std",
 	"darwinia-evm-precompile-simple/std",
 	"darwinia-evm-precompile-transfer/std",
@@ -138,12 +146,15 @@ std = [
 	"darwinia-relay-authorities/std",
 	"darwinia-relay-primitives/std",
 	"darwinia-relayer-game/std",
+	"darwinia-s2s-issuing/std",
 	"darwinia-staking/std",
 	"darwinia-staking-rpc-runtime-api/std",
 	"darwinia-support/std",
 	"darwinia-treasury/std",
 	"darwinia-tron-backing/std",
 	"darwinia-vesting/std",
+	"dp-asset/std",
+	"dp-evm/std",
 	"drml-primitives/std",
 	"dvm-ethereum/std",
 	"dvm-dynamic-fee/std",
@@ -153,6 +164,7 @@ std = [
 	"pangolin-bridge-primitives/std",
 	"pangolin-constants/std",
 	"pangolin-runtime-system-params/std",
+	"bp-message-dispatch/std",
 	"bp-messages/std",
 	"bp-runtime/std",
 	"bridge-runtime-common/std",
@@ -226,4 +238,5 @@ runtime-benchmarks = [
 	"frame-support/runtime-benchmarks",
 	"pallet-collective/runtime-benchmarks",
 	"pallet-society/runtime-benchmarks",
+	"darwinia-s2s-issuing/runtime-benchmarks",
 ]

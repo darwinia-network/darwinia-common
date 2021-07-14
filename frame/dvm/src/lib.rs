@@ -398,12 +398,14 @@ impl<T: Config> Pallet<T> {
 		Self::raw_transact(transaction)
 	}
 
+	// TODO: the hard code for gas limit may cause some problem
+	// Please refer issue https://github.com/darwinia-network/darwinia-common/issues/706
 	pub fn do_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
 		let (_, _, info) = Self::execute(
 			INTERNAL_CALLER,
 			input.clone(),
 			U256::zero(),
-			U256::from(0x100000),
+			U256::from(0x300000),
 			None,
 			None,
 			TransactionAction::Call(contract),
@@ -413,7 +415,7 @@ impl<T: Config> Pallet<T> {
 		match info {
 			CallOrCreateInfo::Call(info) => match info.exit_reason {
 				ExitReason::Succeed(_) => Ok(info.value),
-				_ => Ok(vec![]),
+				_ => Err(Error::<T>::InvalidCall.into()),
 			},
 			_ => Err(Error::<T>::InvalidCall.into()),
 		}

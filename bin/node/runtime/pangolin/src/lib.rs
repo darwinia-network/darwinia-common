@@ -214,7 +214,9 @@ pub use pallet_sudo::Call as SudoCall;
 use codec::{Decode, Encode};
 // --- substrate ---
 use bp_runtime::MILLAU_CHAIN_ID;
-use bridge_runtime_common::messages::MessageBridge;
+use bridge_runtime_common::messages::{
+	source::estimate_message_dispatch_and_delivery_fee, MessageBridge,
+};
 use frame_support::{
 	traits::{KeyOwnerProofSystem, OnRuntimeUpgrade},
 	weights::{constants::ExtrinsicBaseWeight, Weight},
@@ -239,6 +241,7 @@ use sp_std::prelude::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia ---
+use bridges::substrate::millau_messages::{ToMillauMessagePayload, WithMillauMessageBridge};
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
 use darwinia_evm::{Account as EVMAccount, Runner};
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
@@ -395,6 +398,7 @@ frame_support::construct_runtime! {
 		BridgeMillauMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 43,
 		BridgeMillauDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 44,
 		BridgeMillauGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 45,
+		Substrate2SubstrateIssuing: darwinia_s2s_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
 
 		BSC: darwinia_bridge_bsc::{Pallet, Call, Storage, Config} = 46,
 	}
@@ -782,16 +786,14 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl millau_primitives::ToMillauOutboundLaneApi<Block, Balance, millau_messages::ToMillauMessagePayload> for Runtime {
+	impl millau_primitives::ToMillauOutboundLaneApi<Block, Balance, ToMillauMessagePayload> for Runtime {
 		fn estimate_message_delivery_and_dispatch_fee(
 			_lane_id: bp_messages::LaneId,
-			payload: millau_messages::ToMillauMessagePayload,
+			payload: ToMillauMessagePayload,
 		) -> Option<Balance> {
-			bridge_runtime_common::messages::source::estimate_message_dispatch_and_delivery_fee
-				::<millau_messages::WithMillauMessageBridge>
-			(
+			estimate_message_dispatch_and_delivery_fee::<WithMillauMessageBridge>(
 				&payload,
-				millau_messages::WithMillauMessageBridge::RELAYER_FEE_PERCENT,
+				WithMillauMessageBridge::RELAYER_FEE_PERCENT,
 			).ok()
 		}
 
@@ -802,7 +804,7 @@ impl_runtime_apis! {
 		) -> Vec<(bp_messages::MessageNonce, Weight, u32)> {
 			(begin..=end).filter_map(|nonce| {
 				let encoded_payload = BridgeMillauMessages::outbound_message_payload(lane, nonce)?;
-				let decoded_payload = millau_messages::ToMillauMessagePayload::decode(
+				let decoded_payload = ToMillauMessagePayload::decode(
 					&mut &encoded_payload[..]
 				).ok()?;
 				Some((nonce, decoded_payload.weight, encoded_payload.len() as _))
@@ -859,6 +861,7 @@ impl_runtime_apis! {
 			let params = (&config, &whitelist);
 
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
+			add_benchmark!(params, batches, darwinia_s2s_issuing, Substrate2SubstrateIssuing);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
