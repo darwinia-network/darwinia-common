@@ -367,7 +367,6 @@ impl<T: Config> Module<T> {
 	pub fn transact_mapping_factory(input: Vec<u8>) -> DispatchResultWithPostInfo {
 		let contract = MappingFactoryAddress::get();
 		dvm_ethereum::Pallet::<T>::internal_transact(contract, input)
-		// Ok(())
 	}
 }
 
