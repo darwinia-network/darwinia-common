@@ -9,7 +9,7 @@ use sp_version::RuntimeVersion;
 use crate::*;
 
 frame_support::parameter_types! {
-	pub const BlockHashCount: BlockNumber = 2400;
+	pub const BlockHashCount: BlockNumber = 256;
 	pub const Version: RuntimeVersion = VERSION;
 	pub const SS58Prefix: u8 = 18;
 }

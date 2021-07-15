@@ -18,7 +18,7 @@
 
 //! EVM stack-based runner.
 
-// --- crates.io ---
+// --- crates ---
 use evm::{
 	backend::Backend as BackendT,
 	executor::{StackExecutor, StackState as StackStateT, StackSubstateMetadata},
@@ -32,8 +32,8 @@ use sp_runtime::{traits::UniqueSaturatedInto, ArithmeticError, DispatchError};
 use sp_std::{collections::btree_set::BTreeSet, marker::PhantomData, mem, prelude::*};
 // --- darwinia ---
 use crate::{
-	runner::Runner as RunnerT, AccountBasic, AccountCodes, AccountStorages, AddressMapping, Config,
-	Error, Event, FeeCalculator, Pallet, PrecompileSet,
+	runner::Runner as RunnerT, AccountBasic, AccountCodes, AccountStorages, AddressMapping,
+	BlockHashMapping, Config, Error, Event, FeeCalculator, Pallet, PrecompileSet,
 };
 use dp_evm::{CallInfo, CreateInfo, ExecutionInfo, Log, Vicinity};
 
@@ -351,8 +351,7 @@ impl<'vicinity, 'config, T: Config> BackendT for SubstrateStackState<'vicinity, 
 		if number > U256::from(u32::max_value()) {
 			H256::default()
 		} else {
-			let number = T::BlockNumber::from(number.as_u32());
-			H256::from_slice(<frame_system::Pallet<T>>::block_hash(number).as_ref())
+			T::BlockHashMapping::block_hash(number.as_u32())
 		}
 	}
 
@@ -362,7 +361,7 @@ impl<'vicinity, 'config, T: Config> BackendT for SubstrateStackState<'vicinity, 
 	}
 
 	fn block_coinbase(&self) -> H160 {
-		H160::default()
+		Pallet::<T>::find_author()
 	}
 
 	fn block_timestamp(&self) -> U256 {
@@ -375,7 +374,7 @@ impl<'vicinity, 'config, T: Config> BackendT for SubstrateStackState<'vicinity, 
 	}
 
 	fn block_gas_limit(&self) -> U256 {
-		U256::zero()
+		T::BlockGasLimit::get()
 	}
 
 	fn chain_id(&self) -> U256 {

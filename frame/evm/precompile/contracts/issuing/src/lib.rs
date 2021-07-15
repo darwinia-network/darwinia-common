@@ -22,10 +22,8 @@ extern crate alloc;
 
 // --- core ---
 use core::marker::PhantomData;
-// --- alloc ---
-use alloc::vec::Vec;
 // --- crates ---
-use evm::{Context, ExitError, ExitSucceed};
+use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
 // --- darwinia ---
 use darwinia_evm::{Config, IssuingHandler};
 use dp_evm::Precompile;
@@ -41,9 +39,14 @@ impl<T: Config> Precompile for Issuing<T> {
 		input: &[u8],
 		_: Option<u64>,
 		context: &Context,
-	) -> Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
+	) -> Result<PrecompileOutput, ExitError> {
 		T::IssuingHandler::handle(context.address, context.caller, input)
 			.map_err(|_| ExitError::Other("contract handle failed".into()))?;
-		Ok((ExitSucceed::Returned, Default::default(), 20000))
+		Ok(PrecompileOutput {
+			exit_status: ExitSucceed::Returned,
+			cost: 20000,
+			output: Default::default(),
+			logs: Default::default(),
+		})
 	}
 }

@@ -41,7 +41,7 @@ pub mod ring;
 pub mod util;
 
 // --- substrate ---
-use sp_std::{marker::PhantomData, vec::Vec};
+use sp_std::marker::PhantomData;
 // --- darwinia ---
 use darwinia_evm::Config;
 use darwinia_support::evm::SELECTOR;
@@ -49,7 +49,7 @@ use dp_evm::Precompile;
 use kton::Kton;
 use ring::RingBack;
 // --- crate ---
-use evm::{Context, ExitError, ExitSucceed};
+use evm::{executor::PrecompileOutput, Context, ExitError};
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 
@@ -66,7 +66,7 @@ impl<T: Config> Precompile for Transfer<T> {
 		input: &[u8],
 		target_gas: Option<u64>,
 		context: &Context,
-	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
+	) -> core::result::Result<PrecompileOutput, ExitError> {
 		match which_transfer::<T>(&input) {
 			Ok(Transfer::RingTransfer) => <RingBack<T>>::transfer(&input, target_gas, context),
 			Ok(Transfer::KtonTransfer) => <Kton<T>>::transfer(&input, target_gas, context),

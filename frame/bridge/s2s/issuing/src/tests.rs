@@ -22,7 +22,9 @@ use std::str::FromStr;
 // darwinia
 use crate::*;
 use crate::{self as s2s_issuing};
-use darwinia_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator};
+use darwinia_evm::{
+	AddressMapping, EnsureAddressTruncated, FeeCalculator, SubstrateBlockHashMapping,
+};
 use dvm_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
 	IntermediateStateRoot,
@@ -106,7 +108,6 @@ impl frame_system::Config for Test {
 
 impl dvm_ethereum::Config for Test {
 	type Event = ();
-	type FindAuthor = ();
 	type StateRoot = IntermediateStateRoot;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
@@ -141,6 +142,8 @@ impl darwinia_evm::Config for Test {
 	type KtonCurrency = Kton;
 	type Event = ();
 	type Precompiles = ();
+	type FindAuthor = ();
+	type BlockHashMapping = SubstrateBlockHashMapping<Self>;
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
 	type Runner = darwinia_evm::runner::stack::Runner<Self>;

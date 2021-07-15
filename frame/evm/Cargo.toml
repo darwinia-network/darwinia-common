@@ -12,9 +12,9 @@ version     = "2.5.0"
 [dependencies]
 # crates
 codec           = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
-evm             = { version = "0.25.0", default-features = false, features = ["with-codec"] }
-evm-gasometer   = { version = "0.25.0", default-features = false }
-evm-runtime     = { version = "0.25.0", default-features = false }
+evm             = { version = "0.27.0", default-features = false, features = ["with-codec"] }
+evm-gasometer   = { version = "0.27.0", default-features = false }
+evm-runtime     = { version = "0.27.0", default-features = false }
 log             = { version = "0.4.14" }
 primitive-types = { version = "0.9.0", default-features = false, features = ["rlp", "byteorder"] }
 rlp             = { version = "0.5.0", default-features = false }
@@ -33,7 +33,7 @@ sp-runtime       = { default-features = false, git = "https://github.com/darwini
 sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [dev-dependencies]
-darwinia-support = { features = ["easy-testing"], path = "../support" }
+darwinia-support   = { features = ["easy-testing"], path = "../support" }
 
 [features]
 default = ["std"]

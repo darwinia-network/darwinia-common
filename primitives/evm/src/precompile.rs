@@ -15,7 +15,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use evm::{Context, ExitError, ExitSucceed};
+use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
 use impl_trait_for_tuples::impl_for_tuples;
 use sp_core::H160;
 use sp_std::vec::Vec;
@@ -32,7 +32,7 @@ pub trait PrecompileSet {
 		input: &[u8],
 		target_gas: Option<u64>,
 		context: &Context,
-	) -> Option<core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError>>;
+	) -> Option<core::result::Result<PrecompileOutput, ExitError>>;
 }
 #[impl_for_tuples(30)]
 #[tuple_types_no_default_trait_bound]
@@ -44,7 +44,7 @@ impl PrecompileSet for Tuple {
 		input: &[u8],
 		target_gas: Option<u64>,
 		context: &Context,
-	) -> Option<core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError>> {
+	) -> Option<core::result::Result<PrecompileOutput, ExitError>> {
 		let mut index = 0;
 
 		for_tuples!( #(
@@ -67,7 +67,7 @@ pub trait Precompile {
 		input: &[u8],
 		target_gas: Option<u64>,
 		context: &Context,
-	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError>;
+	) -> core::result::Result<PrecompileOutput, ExitError>;
 }
 impl<T> Precompile for T
 where
@@ -77,11 +77,15 @@ where
 		input: &[u8],
 		target_gas: Option<u64>,
 		_: &Context,
-	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
+	) -> core::result::Result<PrecompileOutput, ExitError> {
 		let cost = ensure_linear_cost(target_gas, input.len() as u64, T::BASE, T::WORD)?;
-		let (succeed, out) = T::execute(input, cost)?;
-
-		Ok((succeed, out, cost))
+		let (exit_status, output) = T::execute(input, cost)?;
+		Ok(PrecompileOutput {
+			exit_status,
+			cost,
+			output,
+			logs: Default::default(),
+		})
 	}
 }
 

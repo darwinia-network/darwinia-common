@@ -18,14 +18,11 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-extern crate alloc;
-use alloc::vec::Vec;
-
 // --- core ---
 use core::marker::PhantomData;
 // --- crates ---
 use codec::Encode;
-use evm::{Context, ExitError, ExitSucceed};
+use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
 // --- darwinia ---
 use darwinia_support::evm::SELECTOR;
 use dp_evm::Precompile;
@@ -47,7 +44,7 @@ where
 		input: &[u8],
 		_target_gas: Option<u64>,
 		_context: &Context,
-	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
+	) -> core::result::Result<PrecompileOutput, ExitError> {
 		if input.len() < SELECTOR {
 			return Err(ExitError::Other("input length less than 4 bytes".into()));
 		}
@@ -63,6 +60,12 @@ where
 			}
 		};
 		let call: T::Call = inner_call.into();
-		Ok((ExitSucceed::Stopped, call.encode(), 0))
+		// TODO: The cost should not be zero
+		Ok(PrecompileOutput {
+			exit_status: ExitSucceed::Stopped,
+			cost: 0,
+			output: call.encode(),
+			logs: Default::default(),
+		})
 	}
 }
