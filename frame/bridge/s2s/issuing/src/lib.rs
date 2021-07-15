@@ -328,12 +328,15 @@ impl<T: Config> Pallet<T> {
 		Ok(H160::from_slice(&mapped_address.as_slice()[12..]))
 	}
 
-	/// Make a call to mapping factory contract
+	/// Make a transaction call to mapping token factory sol contract
+	///
+	/// Note: this a internal transaction
 	pub fn transact_mapping_factory(input: Vec<u8>) -> DispatchResultWithPostInfo {
 		let contract = MappingFactoryAddress::<T>::get();
 		dvm_ethereum::Pallet::<T>::internal_transact(contract, input)
 	}
 
+	/// Do decimals between DVM balance and RING balance
 	pub fn transform_dvm_balance(value: U256) -> RingBalance<T> {
 		(value / POW_9).low_u128().saturated_into()
 	}

@@ -364,6 +364,9 @@ impl<T: Config> Module<T> {
 		Ok((tx_index, ethlog))
 	}
 
+	/// Make a transaction call to mapping token factory sol contract
+	///
+	/// Note: this a internal transaction
 	pub fn transact_mapping_factory(input: Vec<u8>) -> DispatchResultWithPostInfo {
 		let contract = MappingFactoryAddress::get();
 		dvm_ethereum::Pallet::<T>::internal_transact(contract, input)
