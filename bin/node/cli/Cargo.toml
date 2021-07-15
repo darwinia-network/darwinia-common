@@ -42,8 +42,8 @@ darwinia-staking-rpc-runtime-api    = { path = "../../../frame/staking/rpc/runti
 dc-db                               = { path = "../../../client/dvm/db" }
 dc-mapping-sync                     = { path = "../../../client/dvm/mapping-sync" }
 dc-rpc                              = { path = "../../../client/dvm/rpc", features = ["rpc_binary_search_estimate"] }
+dp-consensus                        = { path = "../../../primitives/consensus" }
 dp-rpc                              = { path = "../../../primitives/rpc" }
-dp_consensus                        = { path = "../../../primitives/consensus" }
 drml-primitives                     = { path = "../primitives" }
 dvm-dynamic-fee                     = { path = "../../../frame/dvm-dynamic-fee" }
 dvm-ethereum                        = { path = "../../../frame/dvm" }

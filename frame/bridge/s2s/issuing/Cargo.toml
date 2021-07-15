@@ -62,12 +62,13 @@ std = [
 	"dvm-ethereum/std",
 	"darwinia-support/std",
 	# paritytech
+	"bp-runtime/std",
+	"frame-benchmarking/std",
 	"frame-support/std",
 	"frame-system/std",
 	"sp-runtime/std",
 	"sp-std/std",
 	"sp-io/std",
-	"bp-runtime/std",
 ]
 
 runtime-benchmarks = ["frame-benchmarking"]

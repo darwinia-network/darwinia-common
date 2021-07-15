@@ -28,9 +28,9 @@ rlp                 = { version = "0.5.0" }
 sha3                = { version = "0.9.1" }
 # darwinia-network
 dc-db               = { path = "../db" }
+dp-consensus        = { path = "../../../primitives/consensus/" }
 dp-rpc              = { path = "../../../primitives/rpc" }
 dp-storage          = { path = "../../../primitives/storage/" }
-dp_consensus        = { path = "../../../primitives/consensus/" }
 dvm-ethereum        = { path = "../../../frame/dvm" }
 dvm-rpc-core        = { path = "../../../frame/dvm/rpc" }
 dvm-rpc-runtime-api = { path = "../../../frame/dvm/rpc/runtime-api" }

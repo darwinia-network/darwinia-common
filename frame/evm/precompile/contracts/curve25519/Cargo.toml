@@ -24,6 +24,7 @@ default = ["std"]
 
 std = [
 	# crates.io
+	"curve25519-dalek/std",
 	"evm/std",
 	# darwinia-network
 	"dp-evm/std",
