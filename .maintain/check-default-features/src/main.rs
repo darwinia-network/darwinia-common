@@ -46,7 +46,7 @@ fn main() {
 
 	if !incomplete_dependencies.is_empty() {
 		for (alias, path) in incomplete_dependencies {
-			println!("Incomplete std feature found for `{}` at {}", alias, path);
+			println!("Incomplete std feature found for `{}` at `{}`", alias, path);
 		}
 
 		process::exit(1);
