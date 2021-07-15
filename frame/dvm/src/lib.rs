@@ -398,12 +398,17 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Pure read-only call to contract
-	pub fn raw_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
+	pub fn raw_call(
+		source: H160,
+		contract: H160,
+		input: Vec<u8>,
+		gas_limit: U256,
+	) -> Result<Vec<u8>, DispatchError> {
 		let (_, _, info) = Self::execute(
-			INTERNAL_CALLER,
+			source,
 			input.clone(),
 			U256::zero(),
-			U256::from(0x300000),
+			gas_limit,
 			None,
 			None,
 			TransactionAction::Call(contract),

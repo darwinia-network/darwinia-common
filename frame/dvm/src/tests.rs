@@ -549,13 +549,42 @@ fn raw_call_should_works() {
 			array_bytes::hex_into_unchecked("32dcab0ef3fb2de2fce1d2e0799d36239671f04a");
 		let foo: Vec<u8> = hex2bytes_unchecked("c2985578");
 
-		let result = Ethereum::raw_call(contract_address, foo).unwrap();
+		// Call foo use INTERNAL_CALLER
+		let result = Ethereum::raw_call(
+			INTERNAL_CALLER,
+			contract_address,
+			foo.clone(),
+			U256::from(0x300000),
+		)
+		.unwrap();
 		assert_eq!(
 			result,
 			vec![
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 1
 			]
+		);
+		// Check nonce
+		assert_eq!(
+			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&INTERNAL_CALLER).nonce,
+			U256::from(1)
+		);
+
+		// Call foo use INTERNAL_CALLER
+		let result =
+			Ethereum::raw_call(INTERNAL_CALLER, contract_address, foo, U256::from(0x300000))
+				.unwrap();
+		assert_eq!(
+			result,
+			vec![
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 1
+			]
+		);
+		// Check nonce
+		assert_eq!(
+			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&INTERNAL_CALLER).nonce,
+			U256::from(2)
 		);
 	});
 }

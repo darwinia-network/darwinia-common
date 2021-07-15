@@ -46,7 +46,7 @@ use bp_runtime::{ChainId, Size};
 use darwinia_evm::AddressMapping;
 use darwinia_support::{
 	balance::*,
-	evm::POW_9,
+	evm::{INTERNAL_CALLER, POW_9},
 	s2s::{source_root_converted_id, RelayMessageCaller, ToEthAddress},
 	PalletDigest,
 };
@@ -320,8 +320,13 @@ impl<T: Config> Pallet<T> {
 		let factory_address = <MappingFactoryAddress<T>>::get();
 		let bytes = mtf::encode_mapping_token(backing, source)
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
-		let mapped_address = dvm_ethereum::Pallet::<T>::raw_call(factory_address, bytes)
-			.map_err(|e| -> &'static str { e.into() })?;
+		let mapped_address = dvm_ethereum::Pallet::<T>::raw_call(
+			INTERNAL_CALLER,
+			factory_address,
+			bytes,
+			U256::from(0x300000),
+		)
+		.map_err(|e| -> &'static str { e.into() })?;
 		if mapped_address.len() != 32 {
 			return Err(Error::<T>::InvalidAddressLen.into());
 		}

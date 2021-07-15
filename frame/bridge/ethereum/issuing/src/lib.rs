@@ -58,7 +58,7 @@ use darwinia_ethereum_issuing_contract::{
 };
 use darwinia_evm::{GasWeightMapping, IssuingHandler};
 use darwinia_relay_primitives::relay_authorities::*;
-use darwinia_support::{balance::*, traits::EthereumReceipt};
+use darwinia_support::{balance::*, evm::INTERNAL_CALLER, traits::EthereumReceipt};
 use dp_evm::CallOrCreateInfo;
 use ethereum_primitives::{
 	receipt::{EthereumTransactionIndex, LogEntry},
@@ -278,8 +278,14 @@ impl<T: Config> Module<T> {
 		let factory_address = MappingFactoryAddress::get();
 		let bytes = Abi::encode_mapping_token(backing, source)
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
-		let mapped_address = dvm_ethereum::Pallet::<T>::raw_call(factory_address, bytes)
-			.map_err(|e| -> &'static str { e.into() })?;
+		let mapped_address = dvm_ethereum::Pallet::<T>::raw_call(
+			INTERNAL_CALLER,
+			factory_address,
+			bytes,
+			// TODO: this field should passed in runtime
+			U256::from(0x300000),
+		)
+		.map_err(|e| -> &'static str { e.into() })?;
 		if mapped_address.len() != 32 {
 			return Err(Error::<T>::InvalidAddressLen.into());
 		}
