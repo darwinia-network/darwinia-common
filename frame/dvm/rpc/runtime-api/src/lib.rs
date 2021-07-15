@@ -69,7 +69,7 @@ impl DVMTransaction {
 			nonce,
 			// Not used, and will be overwritten by None later.
 			gas_price: U256::zero(),
-			gas_limit: U256::from(0x100000),
+			gas_limit: U256::from(0x300000),
 			action: ethereum::TransactionAction::Call(target),
 			value: U256::zero(),
 			input,

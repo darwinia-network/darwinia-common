@@ -377,6 +377,7 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
+	// TODO: Add more docs here
 	pub fn internal_transact(target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo {
 		ensure!(
 			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
@@ -389,6 +390,7 @@ impl<T: Config> Pallet<T> {
 		Self::raw_transact(transaction)
 	}
 
+	// TODO: Add more docs here
 	pub fn do_transact(transaction: ethereum::Transaction) -> DispatchResultWithPostInfo {
 		ensure!(
 			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
@@ -398,7 +400,7 @@ impl<T: Config> Pallet<T> {
 		Self::raw_transact(transaction)
 	}
 
-	// TODO: the hard code for gas limit may cause some problem
+	// // TODO: the hard code for gas limit may cause some problem
 	// Please refer issue https://github.com/darwinia-network/darwinia-common/issues/706
 	pub fn do_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
 		let (_, _, info) = Self::execute(

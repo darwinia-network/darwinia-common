@@ -331,9 +331,9 @@ impl<T: Config> Pallet<T> {
 	/// Make a call to mapping factory contract
 	pub fn transact_mapping_factory(input: Vec<u8>) -> DispatchResultWithPostInfo {
 		let contract = MappingFactoryAddress::<T>::get();
-		dvm_ethereum::Pallet::<T>::do_call(contract, input)
-			.map_err(|_| Error::<T>::MappingFactoryCallFailed)?;
-		Ok(().into())
+		dvm_ethereum::Pallet::<T>::internal_transact(contract, input)
+		// .map_err(|_| Error::<T>::MappingFactoryCallFailed)?;
+		// Ok(().into())
 	}
 
 	pub fn transform_dvm_balance(value: U256) -> RingBalance<T> {
