@@ -10,7 +10,7 @@ repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "2.5.0"
 
 [dependencies]
-# crates
+# crates.io
 codec           = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
 evm             = { version = "0.25.0", default-features = false, features = ["with-codec"] }
 evm-gasometer   = { version = "0.25.0", default-features = false }
@@ -20,10 +20,10 @@ primitive-types = { version = "0.9.0", default-features = false, features = ["rl
 rlp             = { version = "0.5.0", default-features = false }
 serde           = { version = "1.0.126", optional = true, default-features = false, features = ["derive"] }
 sha3            = { version = "0.9.1", default-features = false }
-# darwinia
+# darwinia-network
 darwinia-balances = { default-features = false, path = "../balances" }
 dp-evm            = { default-features = false, path = "../../primitives/evm" }
-# substrate
+# paritytech
 frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
@@ -39,30 +39,23 @@ darwinia-support = { features = ["easy-testing"], path = "../support" }
 default = ["std"]
 
 std = [
-	"crates-std",
-	"darwinia-std",
-	"substrate-std",
-]
-
-crates-std    = [
+	# crates.io
 	"codec/std",
-	"serde",
-]
-darwinia-std  = [
-	"darwinia-balances/std",
-	"dp-evm/std",
-]
-substrate-std = [
 	"evm/std",
 	"evm/with-serde",
 	"evm-gasometer/std",
 	"evm-runtime/std",
+	"primitive-types/std",
+	"rlp/std",
+	"serde",
+	"sha3/std",
+	# darwinia-network
+	"darwinia-balances/std",
+	"dp-evm/std",
+	# paritytech
 	"frame-support/std",
 	"frame-system/std",
 	"pallet-timestamp/std",
-	"primitive-types/std",
-	"rlp/std",
-	"sha3/std",
 	"sp-core/std",
 	"sp-io/std",
 	"sp-runtime/std",

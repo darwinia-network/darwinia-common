@@ -10,32 +10,24 @@ repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "2.5.0"
 
 [dependencies]
-# crates
+# crates.io
+curve25519-dalek = { version = "3.0.0", default-features = false, features = ["alloc", "u64_backend"] }
+evm              = { version = "0.25.0", default-features = false, features = ["with-codec"] }
+# darwinia-network
 dp-evm = { default-features = false, path = "../../../../../primitives/evm" }
-evm	   = { version = "0.25.0", default-features = false, features = ["with-codec"] }
-# substrate
+# paritytech
 sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-io   = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-
-[dependencies.curve25519-dalek]
-version = "3.0.0"
-default-features = false
-features = ["u64_backend", "alloc"]
 
 [features]
 default = ["std"]
 
 std = [
-	"crates-std",
-	"substrate-std",
-]
-
-crates-std = [
+	# crates.io
 	"evm/std",
+	# darwinia-network
 	"dp-evm/std",
-]
-
-substrate-std = [
+	# paritytech
 	"sp-core/std",
 	"sp-io/std",
 ]

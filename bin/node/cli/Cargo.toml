@@ -15,7 +15,7 @@ version     = "2.5.0"
 name = "drml"
 
 [dependencies]
-# crates
+# crates.io
 array-bytes    = { version = "1.3.3" }
 codec          = { package = "parity-scale-codec", version = "2.1.1" }
 futures        = { version = "0.3.13" }
@@ -26,7 +26,7 @@ rand           = { version = "0.8.3" }
 serde_json     = { version = "1.0.64" }
 structopt      = { version = "0.3.21" }
 tokio          = { version = "0.3.6", optional = true, features = ["rt-multi-thread"] }
-# darwinia
+# darwinia-network
 bsc-primitives                      = { path = "../../../primitives/chain-bsc" }
 darwinia-balances-rpc               = { path = "../../../frame/balances/rpc" }
 darwinia-balances-rpc-runtime-api   = { path = "../../../frame/balances/rpc/runtime-api" }
@@ -49,7 +49,7 @@ dvm-dynamic-fee                     = { path = "../../../frame/dvm-dynamic-fee" 
 dvm-ethereum                        = { path = "../../../frame/dvm" }
 dvm-rpc-runtime-api                 = { path = "../../../frame/dvm/rpc/runtime-api" }
 pangolin-runtime                    = { path = "../runtime/pangolin" }
-# substrate
+# paritytech
 frame-benchmarking                         = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-benchmarking-cli                     = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-system-rpc-runtime-api               = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
@@ -99,7 +99,7 @@ substrate-prometheus-endpoint              = { git = "https://github.com/darwini
 try-runtime-cli                            = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [build-dependencies]
-# substrate
+# paritytech
 substrate-build-script-utils = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 try-runtime-cli              = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
@@ -111,16 +111,19 @@ default = [
 	"wasmtime",
 ]
 
-cli       = [
+cli = [
 	"tokio",
 	"darwinia-cli",
 	"sc-cli",
 	"sc-finality-grandpa-warp-sync",
 	"sc-service",
 ]
-db        = ["sc-service/db"]
+
+db = ["sc-service/db"]
+
 full-node = []
-wasmtime  = ["sc-cli/wasmtime"]
+
+wasmtime = ["sc-cli/wasmtime"]
 
 runtime-benchmarks = [
 	"frame-benchmarking-cli",

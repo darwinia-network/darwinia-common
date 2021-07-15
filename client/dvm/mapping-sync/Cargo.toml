@@ -10,16 +10,16 @@ repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "2.5.0"
 
 [dependencies]
-# substrate
+# paritytech
 sc-client-api = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-api        = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-blockchain = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-runtime    = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
-# darwinia
+# darwinia-network
 dc-db               = { path = "../db" }
 dp_consensus        = { path = "../../../primitives/consensus/" }
 dvm-rpc-runtime-api = { path = "../../../frame/dvm/rpc/runtime-api" }
-# crates
+# crates.io
 futures       = { version = "0.3.1", features = ["compat"] }
 futures-timer = "3.0.1"
 log           = "0.4.8"

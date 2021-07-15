@@ -10,16 +10,15 @@ repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "2.5.0"
 
 [dependencies]
-# substrate
+# paritytech
 sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [features]
 default = ["std"]
 
-std = ["substrate-std"]
-
-substrate-std = [
+std = [
+	# paritytech
 	"sp-core/std",
 	"sp-runtime/std",
 ]
