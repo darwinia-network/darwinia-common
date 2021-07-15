@@ -122,7 +122,7 @@ pub mod pallet {
 				let PreLog::Block(block) = log;
 
 				for transaction in block.transactions {
-					Self::do_transact(transaction).expect(
+					Self::rpc_transact(transaction).expect(
 						"pre-block transaction verification failed; the block cannot be built",
 					);
 				}
@@ -141,7 +141,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			ensure_none(origin)?;
 
-			Self::do_transact(transaction)
+			Self::rpc_transact(transaction)
 		}
 	}
 
@@ -290,6 +290,211 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
+	/// Execute transaction from pallet(internal transaction)
+	pub fn internal_transact(target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo {
+		ensure!(
+			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
+			Error::<T>::PreLogExists,
+		);
+		let nonce =
+			<T as darwinia_evm::Config>::RingAccountBasic::account_basic(&INTERNAL_CALLER).nonce;
+		let transaction = DVMTransaction::new(nonce, target, input);
+
+		Self::raw_transact(transaction)
+	}
+
+	/// Execute transaction from EthApi(network transaction)
+	pub fn rpc_transact(transaction: ethereum::Transaction) -> DispatchResultWithPostInfo {
+		ensure!(
+			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
+			Error::<T>::PreLogExists,
+		);
+		let transaction = Self::to_dvm_transaction(transaction)?;
+		Self::raw_transact(transaction)
+	}
+
+	/// Execute DVMTransaction in evm runner and save the execution info in Pending
+	fn raw_transact(transaction: DVMTransaction) -> DispatchResultWithPostInfo {
+		let transaction_hash =
+			H256::from_slice(Keccak256::digest(&rlp::encode(&transaction.tx)).as_slice());
+		let transaction_index = Pending::<T>::get().len() as u32;
+
+		let (to, contract_address, info) = Self::execute(
+			transaction.source,
+			transaction.tx.input.clone(),
+			transaction.tx.value,
+			transaction.tx.gas_limit,
+			transaction.gas_price,
+			Some(transaction.tx.nonce),
+			transaction.tx.action,
+			None,
+		)?;
+
+		let (reason, status, used_gas) = match info {
+			CallOrCreateInfo::Call(info) => (
+				info.exit_reason,
+				TransactionStatus {
+					transaction_hash,
+					transaction_index,
+					from: transaction.source,
+					to,
+					contract_address: None,
+					logs: info.logs.clone(),
+					logs_bloom: {
+						let mut bloom: Bloom = Bloom::default();
+						Self::logs_bloom(info.logs, &mut bloom);
+						bloom
+					},
+				},
+				info.used_gas,
+			),
+			CallOrCreateInfo::Create(info) => (
+				info.exit_reason,
+				TransactionStatus {
+					transaction_hash,
+					transaction_index,
+					from: transaction.source,
+					to,
+					contract_address: Some(info.value),
+					logs: info.logs.clone(),
+					logs_bloom: {
+						let mut bloom: Bloom = Bloom::default();
+						Self::logs_bloom(info.logs, &mut bloom);
+						bloom
+					},
+				},
+				info.used_gas,
+			),
+		};
+
+		let receipt = ethereum::Receipt {
+			state_root: match reason.clone() {
+				ExitReason::Succeed(_) => H256::from_low_u64_be(1),
+				ExitReason::Error(_) => H256::from_low_u64_le(0),
+				ExitReason::Revert(_) => H256::from_low_u64_le(0),
+				ExitReason::Fatal(_) => H256::from_low_u64_le(0),
+			},
+			used_gas,
+			logs_bloom: status.clone().logs_bloom,
+			logs: status.clone().logs,
+		};
+
+		Pending::<T>::append((transaction.tx, status, receipt));
+
+		Self::deposit_event(Event::Executed(
+			transaction.source,
+			contract_address.unwrap_or_default(),
+			transaction_hash,
+			reason.clone(),
+		));
+
+		match reason {
+			ExitReason::Succeed(_) => Ok(Some(T::GasWeightMapping::gas_to_weight(
+				used_gas.unique_saturated_into(),
+			))
+			.into()),
+			_ => Err(Error::<T>::InvalidCall.into()),
+		}
+	}
+
+	/// Pure read-only call to contract
+	pub fn raw_call(
+		source: H160,
+		contract: H160,
+		input: Vec<u8>,
+		gas_limit: U256,
+	) -> Result<Vec<u8>, DispatchError> {
+		let (_, _, info) = Self::execute(
+			source,
+			input.clone(),
+			U256::zero(),
+			gas_limit,
+			None,
+			None,
+			TransactionAction::Call(contract),
+			None,
+		)?;
+
+		match info {
+			CallOrCreateInfo::Call(info) => match info.exit_reason {
+				ExitReason::Succeed(_) => Ok(info.value),
+				_ => Err(Error::<T>::InvalidCall.into()),
+			},
+			_ => Err(Error::<T>::InvalidCall.into()),
+		}
+	}
+
+	/// Get the author using the FindAuthor trait.
+	pub fn find_author() -> H160 {
+		let digest = <frame_system::Pallet<T>>::digest();
+		let pre_runtime_digests = digest.logs.iter().filter_map(|d| d.as_pre_runtime());
+
+		T::FindAuthor::find_author(pre_runtime_digests).unwrap_or_default()
+	}
+
+	/// Get the transaction status with given index.
+	pub fn current_transaction_statuses() -> Option<Vec<TransactionStatus>> {
+		CurrentTransactionStatuses::<T>::get()
+	}
+	/// Get current block.
+	pub fn current_block() -> Option<ethereum::Block> {
+		CurrentBlock::<T>::get()
+	}
+
+	/// Get current block hash
+	pub fn current_block_hash() -> Option<H256> {
+		Self::current_block().map(|block| block.header.hash())
+	}
+
+	/// Get receipts by number.
+	pub fn current_receipts() -> Option<Vec<ethereum::Receipt>> {
+		CurrentReceipts::<T>::get()
+	}
+
+	/// Execute an Ethereum transaction
+	pub fn execute(
+		from: H160,
+		input: Vec<u8>,
+		value: U256,
+		gas_limit: U256,
+		gas_price: Option<U256>,
+		nonce: Option<U256>,
+		action: TransactionAction,
+		config: Option<evm::Config>,
+	) -> Result<(Option<H160>, Option<H160>, CallOrCreateInfo), DispatchError> {
+		match action {
+			ethereum::TransactionAction::Call(target) => {
+				let res = T::Runner::call(
+					from,
+					target,
+					input.clone(),
+					value,
+					gas_limit.low_u64(),
+					gas_price,
+					nonce,
+					config.as_ref().unwrap_or(T::config()),
+				)
+				.map_err(Into::into)?;
+
+				Ok((Some(target), None, CallOrCreateInfo::Call(res)))
+			}
+			ethereum::TransactionAction::Create => {
+				let res = T::Runner::create(
+					from,
+					input.clone(),
+					value,
+					gas_limit.low_u64(),
+					gas_price,
+					nonce,
+					config.as_ref().unwrap_or(T::config()),
+				)
+				.map_err(Into::into)?;
+
+				Ok((None, Some(res.value), CallOrCreateInfo::Create(res)))
+			}
+		}
+	}
+
 	fn recover_signer(transaction: &ethereum::Transaction) -> Option<H160> {
 		let mut sig = [0u8; 65];
 		let mut msg = [0u8; 32];
@@ -373,200 +578,6 @@ impl<T: Config> Pallet<T> {
 			bloom.accrue(BloomInput::Raw(&log.address[..]));
 			for topic in log.topics {
 				bloom.accrue(BloomInput::Raw(&topic[..]));
-			}
-		}
-	}
-
-	pub fn internal_transact(target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo {
-		ensure!(
-			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
-			Error::<T>::PreLogExists,
-		);
-		let nonce =
-			<T as darwinia_evm::Config>::RingAccountBasic::account_basic(&INTERNAL_CALLER).nonce;
-		let transaction = DVMTransaction::new(nonce, target, input);
-
-		Self::raw_transact(transaction)
-	}
-
-	pub fn do_transact(transaction: ethereum::Transaction) -> DispatchResultWithPostInfo {
-		ensure!(
-			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
-			Error::<T>::PreLogExists,
-		);
-		let transaction = Self::to_dvm_transaction(transaction)?;
-		Self::raw_transact(transaction)
-	}
-
-	// TODO: the hard code for gas limit may cause some problem
-	// Please refer issue https://github.com/darwinia-network/darwinia-common/issues/706
-	pub fn do_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
-		let (_, _, info) = Self::execute(
-			INTERNAL_CALLER,
-			input.clone(),
-			U256::zero(),
-			U256::from(0x300000),
-			None,
-			None,
-			TransactionAction::Call(contract),
-			None,
-		)?;
-
-		match info {
-			CallOrCreateInfo::Call(info) => match info.exit_reason {
-				ExitReason::Succeed(_) => Ok(info.value),
-				_ => Err(Error::<T>::InvalidCall.into()),
-			},
-			_ => Err(Error::<T>::InvalidCall.into()),
-		}
-	}
-
-	fn raw_transact(transaction: DVMTransaction) -> DispatchResultWithPostInfo {
-		let transaction_hash =
-			H256::from_slice(Keccak256::digest(&rlp::encode(&transaction.tx)).as_slice());
-		let transaction_index = Pending::<T>::get().len() as u32;
-
-		let (to, contract_address, info) = Self::execute(
-			transaction.source,
-			transaction.tx.input.clone(),
-			transaction.tx.value,
-			transaction.tx.gas_limit,
-			transaction.gas_price,
-			Some(transaction.tx.nonce),
-			transaction.tx.action,
-			None,
-		)?;
-
-		let (reason, status, used_gas) = match info {
-			CallOrCreateInfo::Call(info) => (
-				info.exit_reason,
-				TransactionStatus {
-					transaction_hash,
-					transaction_index,
-					from: transaction.source,
-					to,
-					contract_address: None,
-					logs: info.logs.clone(),
-					logs_bloom: {
-						let mut bloom: Bloom = Bloom::default();
-						Self::logs_bloom(info.logs, &mut bloom);
-						bloom
-					},
-				},
-				info.used_gas,
-			),
-			CallOrCreateInfo::Create(info) => (
-				info.exit_reason,
-				TransactionStatus {
-					transaction_hash,
-					transaction_index,
-					from: transaction.source,
-					to,
-					contract_address: Some(info.value),
-					logs: info.logs.clone(),
-					logs_bloom: {
-						let mut bloom: Bloom = Bloom::default();
-						Self::logs_bloom(info.logs, &mut bloom);
-						bloom
-					},
-				},
-				info.used_gas,
-			),
-		};
-
-		let receipt = ethereum::Receipt {
-			state_root: match reason {
-				ExitReason::Succeed(_) => H256::from_low_u64_be(1),
-				ExitReason::Error(_) => H256::from_low_u64_le(0),
-				ExitReason::Revert(_) => H256::from_low_u64_le(0),
-				ExitReason::Fatal(_) => H256::from_low_u64_le(0),
-			},
-			used_gas,
-			logs_bloom: status.clone().logs_bloom,
-			logs: status.clone().logs,
-		};
-
-		Pending::<T>::append((transaction.tx, status, receipt));
-
-		Self::deposit_event(Event::Executed(
-			transaction.source,
-			contract_address.unwrap_or_default(),
-			transaction_hash,
-			reason,
-		));
-		Ok(Some(T::GasWeightMapping::gas_to_weight(
-			used_gas.unique_saturated_into(),
-		))
-		.into())
-	}
-
-	/// Get the author using the FindAuthor trait.
-	pub fn find_author() -> H160 {
-		let digest = <frame_system::Pallet<T>>::digest();
-		let pre_runtime_digests = digest.logs.iter().filter_map(|d| d.as_pre_runtime());
-
-		T::FindAuthor::find_author(pre_runtime_digests).unwrap_or_default()
-	}
-
-	/// Get the transaction status with given index.
-	pub fn current_transaction_statuses() -> Option<Vec<TransactionStatus>> {
-		CurrentTransactionStatuses::<T>::get()
-	}
-	/// Get current block.
-	pub fn current_block() -> Option<ethereum::Block> {
-		CurrentBlock::<T>::get()
-	}
-
-	/// Get current block hash
-	pub fn current_block_hash() -> Option<H256> {
-		Self::current_block().map(|block| block.header.hash())
-	}
-
-	/// Get receipts by number.
-	pub fn current_receipts() -> Option<Vec<ethereum::Receipt>> {
-		CurrentReceipts::<T>::get()
-	}
-
-	/// Execute an Ethereum transaction
-	pub fn execute(
-		from: H160,
-		input: Vec<u8>,
-		value: U256,
-		gas_limit: U256,
-		gas_price: Option<U256>,
-		nonce: Option<U256>,
-		action: TransactionAction,
-		config: Option<evm::Config>,
-	) -> Result<(Option<H160>, Option<H160>, CallOrCreateInfo), DispatchError> {
-		match action {
-			ethereum::TransactionAction::Call(target) => {
-				let res = T::Runner::call(
-					from,
-					target,
-					input.clone(),
-					value,
-					gas_limit.low_u64(),
-					gas_price,
-					nonce,
-					config.as_ref().unwrap_or(T::config()),
-				)
-				.map_err(Into::into)?;
-
-				Ok((Some(target), None, CallOrCreateInfo::Call(res)))
-			}
-			ethereum::TransactionAction::Create => {
-				let res = T::Runner::create(
-					from,
-					input.clone(),
-					value,
-					gas_limit.low_u64(),
-					gas_price,
-					nonce,
-					config.as_ref().unwrap_or(T::config()),
-				)
-				.map_err(Into::into)?;
-
-				Ok((None, Some(res.value), CallOrCreateInfo::Create(res)))
 			}
 		}
 	}

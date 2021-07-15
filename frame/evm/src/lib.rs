@@ -46,10 +46,7 @@ use frame_support::{
 };
 use frame_system::RawOrigin;
 use sp_core::{H160, H256, U256};
-use sp_runtime::{
-	traits::{BadOrigin, UniqueSaturatedInto},
-	DispatchResult,
-};
+use sp_runtime::traits::{BadOrigin, UniqueSaturatedInto};
 use sp_std::{marker::PhantomData, prelude::*};
 
 static ISTANBUL_CONFIG: EvmConfig = EvmConfig::istanbul();
@@ -442,14 +439,15 @@ impl GasWeightMapping for () {
 	}
 }
 
+use frame_support::dispatch::DispatchResultWithPostInfo;
 /// A contract handle for ethereum issuing
 pub trait IssuingHandler {
-	fn handle(address: H160, caller: H160, input: &[u8]) -> DispatchResult;
+	fn handle(address: H160, caller: H160, input: &[u8]) -> DispatchResultWithPostInfo;
 }
 /// A default empty issuingHandler, usually used in the test scenario.
 impl IssuingHandler for () {
-	fn handle(_: H160, _: H160, _: &[u8]) -> DispatchResult {
-		Ok(())
+	fn handle(_: H160, _: H160, _: &[u8]) -> DispatchResultWithPostInfo {
+		Ok(().into())
 	}
 }
 

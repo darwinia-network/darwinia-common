@@ -46,7 +46,7 @@ use bp_runtime::{ChainId, Size};
 use darwinia_evm::AddressMapping;
 use darwinia_support::{
 	balance::*,
-	evm::POW_9,
+	evm::{INTERNAL_CALLER, POW_9},
 	s2s::{source_root_converted_id, RelayMessageCaller, ToEthAddress},
 	PalletDigest,
 };
@@ -75,6 +75,7 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type WeightInfo: WeightInfo;
 		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+		type RawCallGasLimit: Get<U256>;
 
 		type ReceiverAccountId: From<[u8; 32]> + Into<Self::AccountId> + Clone;
 		type BridgedAccountIdConverter: Convert<H256, Self::AccountId>;
@@ -320,22 +321,28 @@ impl<T: Config> Pallet<T> {
 		let factory_address = <MappingFactoryAddress<T>>::get();
 		let bytes = mtf::encode_mapping_token(backing, source)
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
-		let mapped_address = dvm_ethereum::Pallet::<T>::do_call(factory_address, bytes)
-			.map_err(|e| -> &'static str { e.into() })?;
+		let mapped_address = dvm_ethereum::Pallet::<T>::raw_call(
+			INTERNAL_CALLER,
+			factory_address,
+			bytes,
+			T::RawCallGasLimit::get(),
+		)
+		.map_err(|e| -> &'static str { e.into() })?;
 		if mapped_address.len() != 32 {
 			return Err(Error::<T>::InvalidAddressLen.into());
 		}
 		Ok(H160::from_slice(&mapped_address.as_slice()[12..]))
 	}
 
-	/// Make a call to mapping factory contract
+	/// Make a transaction call to mapping token factory sol contract
+	///
+	/// Note: this a internal transaction
 	pub fn transact_mapping_factory(input: Vec<u8>) -> DispatchResultWithPostInfo {
 		let contract = MappingFactoryAddress::<T>::get();
-		dvm_ethereum::Pallet::<T>::do_call(contract, input)
-			.map_err(|_| Error::<T>::MappingFactoryCallFailed)?;
-		Ok(().into())
+		dvm_ethereum::Pallet::<T>::internal_transact(contract, input)
 	}
 
+	/// Do decimals between DVM balance and RING balance
 	pub fn transform_dvm_balance(value: U256) -> RingBalance<T> {
 		(value / POW_9).low_u128().saturated_into()
 	}

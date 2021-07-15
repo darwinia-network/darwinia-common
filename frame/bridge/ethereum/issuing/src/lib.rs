@@ -58,7 +58,7 @@ use darwinia_ethereum_issuing_contract::{
 };
 use darwinia_evm::{GasWeightMapping, IssuingHandler};
 use darwinia_relay_primitives::relay_authorities::*;
-use darwinia_support::{balance::*, traits::EthereumReceipt};
+use darwinia_support::{balance::*, evm::INTERNAL_CALLER, traits::EthereumReceipt};
 use dp_evm::CallOrCreateInfo;
 use ethereum_primitives::{
 	receipt::{EthereumTransactionIndex, LogEntry},
@@ -76,6 +76,7 @@ pub trait Config: dvm_ethereum::Config {
 	type EthereumRelay: EthereumReceipt<Self::AccountId, RingBalance<Self>>;
 	type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber, Signer = EthereumAddress>;
 
+	type RawCallGasLimit: Get<U256>;
 	type WeightInfo: WeightInfo;
 }
 
@@ -151,7 +152,7 @@ decl_module! {
 		}
 
 		#[weight = <T as darwinia_evm::Config>::GasWeightMapping::gas_to_weight(0x100000)]
-		pub fn register_erc20(origin, proof: EthereumReceiptProofThing<T>) {
+		pub fn register_erc20(origin, proof: EthereumReceiptProofThing<T>) -> DispatchResultWithPostInfo {
 			log::debug!("start to register erc20 token");
 			let user = ensure_signed(origin)?;
 			let (tx_index, ethlog) = Self::verify_and_parse_proof(
@@ -162,10 +163,11 @@ decl_module! {
 			Self::transact_mapping_factory(input)?;
 			VerifiedIssuingProof::insert(tx_index, true);
 			Self::deposit_event(RawEvent::RegisterErc20(user, backing_address, tx_index));
+			Ok(().into())
 		}
 
 		#[weight = <T as darwinia_evm::Config>::GasWeightMapping::gas_to_weight(0x100000)]
-		pub fn redeem_erc20(origin, proof: EthereumReceiptProofThing<T>) {
+		pub fn redeem_erc20(origin, proof: EthereumReceiptProofThing<T>) -> DispatchResultWithPostInfo {
 			log::debug!("start to redeem erc20 token");
 			let user = ensure_signed(origin)?;
 			let (tx_index, ethlog) = Self::verify_and_parse_proof(
@@ -176,6 +178,7 @@ decl_module! {
 			Self::transact_mapping_factory(input)?;
 			VerifiedIssuingProof::insert(tx_index, true);
 			Self::deposit_event(RawEvent::RedeemErc20(user, backing_address, tx_index));
+			Ok(().into())
 		}
 	}
 }
@@ -276,8 +279,13 @@ impl<T: Config> Module<T> {
 		let factory_address = MappingFactoryAddress::get();
 		let bytes = Abi::encode_mapping_token(backing, source)
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
-		let mapped_address = dvm_ethereum::Pallet::<T>::do_call(factory_address, bytes)
-			.map_err(|e| -> &'static str { e.into() })?;
+		let mapped_address = dvm_ethereum::Pallet::<T>::raw_call(
+			INTERNAL_CALLER,
+			factory_address,
+			bytes,
+			T::RawCallGasLimit::get(),
+		)
+		.map_err(|e| -> &'static str { e.into() })?;
 		if mapped_address.len() != 32 {
 			return Err(Error::<T>::InvalidAddressLen.into());
 		}
@@ -288,7 +296,7 @@ impl<T: Config> Module<T> {
 		backing: EthereumAddress,
 		source: EthereumAddress,
 		target: EthereumAddress,
-	) -> DispatchResult {
+	) -> DispatchResultWithPostInfo {
 		let raw_event = RawEvent::TokenRegistered(0, backing, source, target);
 		let module_event: <T as Config>::Event = raw_event.clone().into();
 		let system_event: <T as frame_system::Config>::Event = module_event.into();
@@ -298,7 +306,7 @@ impl<T: Config> Module<T> {
 			(<frame_system::Pallet<T>>::block_number().saturated_into::<u32>() / 10 * 10 + 10)
 				.saturated_into(),
 		);
-		Ok(())
+		Ok(().into())
 	}
 
 	pub fn deposit_burn_token_event(
@@ -307,7 +315,7 @@ impl<T: Config> Module<T> {
 		source: EthereumAddress,
 		recipient: EthereumAddress,
 		amount: U256,
-	) -> DispatchResult {
+	) -> DispatchResultWithPostInfo {
 		let mapped_address = Self::mapped_token_address(backing, source).map_err(|e| {
 			log::debug!("mapped token address error {:?} ", e);
 			e
@@ -331,7 +339,7 @@ impl<T: Config> Module<T> {
 			(<frame_system::Pallet<T>>::block_number().saturated_into::<u32>() / 10 * 10 + 10)
 				.saturated_into(),
 		);
-		Ok(())
+		Ok(().into())
 	}
 
 	pub fn verify_and_parse_proof(
@@ -362,20 +370,17 @@ impl<T: Config> Module<T> {
 		Ok((tx_index, ethlog))
 	}
 
-	pub fn transact_mapping_factory(input: Vec<u8>) -> DispatchResult {
+	/// Make a transaction call to mapping token factory sol contract
+	///
+	/// Note: this a internal transaction
+	pub fn transact_mapping_factory(input: Vec<u8>) -> DispatchResultWithPostInfo {
 		let contract = MappingFactoryAddress::get();
-		let result = dvm_ethereum::Pallet::<T>::internal_transact(contract, input).map_err(
-			|e| -> &'static str {
-				log::debug!("call mapping factory contract error {:?}", &e);
-				e.into()
-			},
-		)?;
-		Ok(())
+		dvm_ethereum::Pallet::<T>::internal_transact(contract, input)
 	}
 }
 
 impl<T: Config> IssuingHandler for Module<T> {
-	fn handle(address: H160, caller: H160, input: &[u8]) -> DispatchResult {
+	fn handle(address: H160, caller: H160, input: &[u8]) -> DispatchResultWithPostInfo {
 		ensure!(MappingFactoryAddress::get() == caller, <Error<T>>::AssetAR);
 		// in order to use a common precompile contract to deliver these issuing events
 		// we just use the len of input to distinguish which event.
