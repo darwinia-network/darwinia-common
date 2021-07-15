@@ -122,7 +122,7 @@ pub mod pallet {
 				let PreLog::Block(block) = log;
 
 				for transaction in block.transactions {
-					Self::do_transact(transaction).expect(
+					Self::rpc_transact(transaction).expect(
 						"pre-block transaction verification failed; the block cannot be built",
 					);
 				}
@@ -141,7 +141,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			ensure_none(origin)?;
 
-			Self::do_transact(transaction)
+			Self::rpc_transact(transaction)
 		}
 	}
 
@@ -290,94 +290,7 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-	fn recover_signer(transaction: &ethereum::Transaction) -> Option<H160> {
-		let mut sig = [0u8; 65];
-		let mut msg = [0u8; 32];
-		sig[0..32].copy_from_slice(&transaction.signature.r()[..]);
-		sig[32..64].copy_from_slice(&transaction.signature.s()[..]);
-		sig[64] = transaction.signature.standard_v();
-		msg.copy_from_slice(&TransactionMessage::from(transaction.clone()).hash()[..]);
-
-		let pubkey = sp_io::crypto::secp256k1_ecdsa_recover(&sig, &msg).ok()?;
-		Some(H160::from(H256::from_slice(
-			Keccak256::digest(&pubkey).as_slice(),
-		)))
-	}
-
-	fn to_dvm_transaction(
-		transaction: ethereum::Transaction,
-	) -> Result<DVMTransaction, DispatchError> {
-		let source =
-			Self::recover_signer(&transaction).ok_or_else(|| Error::<T>::InvalidSignature)?;
-		Ok(DVMTransaction {
-			source,
-			gas_price: Some(transaction.gas_price),
-			tx: transaction,
-		})
-	}
-
-	fn store_block(post_log: bool, block_number: U256) {
-		let mut transactions = Vec::new();
-		let mut statuses = Vec::new();
-		let mut receipts = Vec::new();
-		let mut logs_bloom = Bloom::default();
-		for (transaction, status, receipt) in Pending::<T>::get() {
-			transactions.push(transaction);
-			statuses.push(status);
-			receipts.push(receipt.clone());
-			Self::logs_bloom(receipt.logs.clone(), &mut logs_bloom);
-		}
-
-		let ommers = Vec::<ethereum::Header>::new();
-		let partial_header = ethereum::PartialHeader {
-			parent_hash: Self::current_block_hash().unwrap_or_default(),
-			beneficiary: <Pallet<T>>::find_author(),
-			// TODO: figure out if there's better way to get a sort-of-valid state root.
-			state_root: H256::default(),
-			receipts_root: H256::from_slice(
-				Keccak256::digest(&rlp::encode_list(&receipts)[..]).as_slice(),
-			), // TODO: check receipts hash.
-			logs_bloom,
-			difficulty: U256::zero(),
-			number: block_number,
-			gas_limit: T::BlockGasLimit::get(),
-			gas_used: receipts
-				.clone()
-				.into_iter()
-				.fold(U256::zero(), |acc, r| acc + r.used_gas),
-			timestamp: UniqueSaturatedInto::<u64>::unique_saturated_into(
-				<pallet_timestamp::Pallet<T>>::get(),
-			),
-			extra_data: Vec::new(),
-			mix_hash: H256::default(),
-			nonce: H64::default(),
-		};
-		let mut block = ethereum::Block::new(partial_header, transactions.clone(), ommers);
-		block.header.state_root = T::StateRoot::get();
-
-		CurrentBlock::<T>::put(block.clone());
-		CurrentReceipts::<T>::put(receipts.clone());
-		CurrentTransactionStatuses::<T>::put(statuses.clone());
-
-		if post_log {
-			let digest = DigestItem::<T::Hash>::Consensus(
-				FRONTIER_ENGINE_ID,
-				PostLog::Hashes(dp_consensus::Hashes::from_block(block)).encode(),
-			);
-			<frame_system::Pallet<T>>::deposit_log(digest.into());
-		}
-	}
-
-	fn logs_bloom(logs: Vec<Log>, bloom: &mut Bloom) {
-		for log in logs {
-			bloom.accrue(BloomInput::Raw(&log.address[..]));
-			for topic in log.topics {
-				bloom.accrue(BloomInput::Raw(&topic[..]));
-			}
-		}
-	}
-
-	// TODO: Add more docs here
+	/// Execute transaction from pallet(internal transaction)
 	pub fn internal_transact(target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo {
 		ensure!(
 			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
@@ -390,8 +303,8 @@ impl<T: Config> Pallet<T> {
 		Self::raw_transact(transaction)
 	}
 
-	// TODO: Add more docs here
-	pub fn do_transact(transaction: ethereum::Transaction) -> DispatchResultWithPostInfo {
+	/// Execute transaction from EthApi(network transaction)
+	pub fn rpc_transact(transaction: ethereum::Transaction) -> DispatchResultWithPostInfo {
 		ensure!(
 			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
 			Error::<T>::PreLogExists,
@@ -573,6 +486,93 @@ impl<T: Config> Pallet<T> {
 				.map_err(Into::into)?;
 
 				Ok((None, Some(res.value), CallOrCreateInfo::Create(res)))
+			}
+		}
+	}
+
+	fn recover_signer(transaction: &ethereum::Transaction) -> Option<H160> {
+		let mut sig = [0u8; 65];
+		let mut msg = [0u8; 32];
+		sig[0..32].copy_from_slice(&transaction.signature.r()[..]);
+		sig[32..64].copy_from_slice(&transaction.signature.s()[..]);
+		sig[64] = transaction.signature.standard_v();
+		msg.copy_from_slice(&TransactionMessage::from(transaction.clone()).hash()[..]);
+
+		let pubkey = sp_io::crypto::secp256k1_ecdsa_recover(&sig, &msg).ok()?;
+		Some(H160::from(H256::from_slice(
+			Keccak256::digest(&pubkey).as_slice(),
+		)))
+	}
+
+	fn to_dvm_transaction(
+		transaction: ethereum::Transaction,
+	) -> Result<DVMTransaction, DispatchError> {
+		let source =
+			Self::recover_signer(&transaction).ok_or_else(|| Error::<T>::InvalidSignature)?;
+		Ok(DVMTransaction {
+			source,
+			gas_price: Some(transaction.gas_price),
+			tx: transaction,
+		})
+	}
+
+	fn store_block(post_log: bool, block_number: U256) {
+		let mut transactions = Vec::new();
+		let mut statuses = Vec::new();
+		let mut receipts = Vec::new();
+		let mut logs_bloom = Bloom::default();
+		for (transaction, status, receipt) in Pending::<T>::get() {
+			transactions.push(transaction);
+			statuses.push(status);
+			receipts.push(receipt.clone());
+			Self::logs_bloom(receipt.logs.clone(), &mut logs_bloom);
+		}
+
+		let ommers = Vec::<ethereum::Header>::new();
+		let partial_header = ethereum::PartialHeader {
+			parent_hash: Self::current_block_hash().unwrap_or_default(),
+			beneficiary: <Pallet<T>>::find_author(),
+			// TODO: figure out if there's better way to get a sort-of-valid state root.
+			state_root: H256::default(),
+			receipts_root: H256::from_slice(
+				Keccak256::digest(&rlp::encode_list(&receipts)[..]).as_slice(),
+			), // TODO: check receipts hash.
+			logs_bloom,
+			difficulty: U256::zero(),
+			number: block_number,
+			gas_limit: T::BlockGasLimit::get(),
+			gas_used: receipts
+				.clone()
+				.into_iter()
+				.fold(U256::zero(), |acc, r| acc + r.used_gas),
+			timestamp: UniqueSaturatedInto::<u64>::unique_saturated_into(
+				<pallet_timestamp::Pallet<T>>::get(),
+			),
+			extra_data: Vec::new(),
+			mix_hash: H256::default(),
+			nonce: H64::default(),
+		};
+		let mut block = ethereum::Block::new(partial_header, transactions.clone(), ommers);
+		block.header.state_root = T::StateRoot::get();
+
+		CurrentBlock::<T>::put(block.clone());
+		CurrentReceipts::<T>::put(receipts.clone());
+		CurrentTransactionStatuses::<T>::put(statuses.clone());
+
+		if post_log {
+			let digest = DigestItem::<T::Hash>::Consensus(
+				FRONTIER_ENGINE_ID,
+				PostLog::Hashes(dp_consensus::Hashes::from_block(block)).encode(),
+			);
+			<frame_system::Pallet<T>>::deposit_log(digest.into());
+		}
+	}
+
+	fn logs_bloom(logs: Vec<Log>, bloom: &mut Bloom) {
+		for log in logs {
+			bloom.accrue(BloomInput::Raw(&log.address[..]));
+			for topic in log.topics {
+				bloom.accrue(BloomInput::Raw(&topic[..]));
 			}
 		}
 	}
