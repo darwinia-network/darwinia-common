@@ -400,29 +400,7 @@ impl<T: Config> Pallet<T> {
 		Self::raw_transact(transaction)
 	}
 
-	// // TODO: the hard code for gas limit may cause some problem
-	// Please refer issue https://github.com/darwinia-network/darwinia-common/issues/706
-	pub fn do_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
-		let (_, _, info) = Self::execute(
-			INTERNAL_CALLER,
-			input.clone(),
-			U256::zero(),
-			U256::from(0x300000),
-			None,
-			None,
-			TransactionAction::Call(contract),
-			None,
-		)?;
-
-		match info {
-			CallOrCreateInfo::Call(info) => match info.exit_reason {
-				ExitReason::Succeed(_) => Ok(info.value),
-				_ => Err(Error::<T>::InvalidCall.into()),
-			},
-			_ => Err(Error::<T>::InvalidCall.into()),
-		}
-	}
-
+	/// Execute DVMTransaction in evm runner and save the execution info in Pending
 	fn raw_transact(transaction: DVMTransaction) -> DispatchResultWithPostInfo {
 		let transaction_hash =
 			H256::from_slice(Keccak256::digest(&rlp::encode(&transaction.tx)).as_slice());
@@ -502,6 +480,28 @@ impl<T: Config> Pallet<T> {
 				used_gas.unique_saturated_into(),
 			))
 			.into()),
+			_ => Err(Error::<T>::InvalidCall.into()),
+		}
+	}
+
+	/// Pure read-only call to contract
+	pub fn raw_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
+		let (_, _, info) = Self::execute(
+			INTERNAL_CALLER,
+			input.clone(),
+			U256::zero(),
+			U256::from(0x300000),
+			None,
+			None,
+			TransactionAction::Call(contract),
+			None,
+		)?;
+
+		match info {
+			CallOrCreateInfo::Call(info) => match info.exit_reason {
+				ExitReason::Succeed(_) => Ok(info.value),
+				_ => Err(Error::<T>::InvalidCall.into()),
+			},
 			_ => Err(Error::<T>::InvalidCall.into()),
 		}
 	}
