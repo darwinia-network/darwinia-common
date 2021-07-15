@@ -10,14 +10,14 @@ repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "2.5.0"
 
 [dependencies]
-# crates
+# crates.io
 codec               = { package = "parity-scale-codec", version = "2.1.1" }
 jsonrpc-core        = { version = "15.1.0" }
 jsonrpc-core-client = { version = "15.1.0" }
 jsonrpc-derive      = { version = "15.1.0" }
-# darwinia
+# darwinia-network
 darwinia-header-mmr-rpc-runtime-api = { path = "./runtime-api" }
-# substrate
+# paritytech
 sp-api        = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-blockchain = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-runtime    = { git = "https://github.com/darwinia-network/substrate", branch = "main" }

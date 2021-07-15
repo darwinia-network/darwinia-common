@@ -7,6 +7,6 @@
 
 # Package Manager
 ## cargo
-/target
+target
 ## npm
 node_modules

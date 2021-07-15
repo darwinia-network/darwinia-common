@@ -2129,7 +2129,7 @@ name = "dc-mapping-sync"
 version = "2.5.0"
 dependencies = [
  "dc-db",
- "dp_consensus",
+ "dp-consensus",
  "dvm-rpc-runtime-api",
  "futures 0.3.15",
  "futures-timer 3.0.2",
@@ -2146,9 +2146,9 @@ version = "2.5.0"
 dependencies = [
  "array-bytes",
  "dc-db",
+ "dp-consensus",
  "dp-rpc",
  "dp-storage",
- "dp_consensus",
  "dvm-ethereum",
  "dvm-rpc-core",
  "dvm-rpc-runtime-api",
@@ -2270,6 +2270,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "dp-consensus"
+version = "2.5.0"
+dependencies = [
+ "ethereum",
+ "parity-scale-codec",
+ "rlp",
+ "sha3 0.9.1",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "dp-contract"
 version = "2.5.0"
 dependencies = [
@@ -2309,19 +2322,6 @@ name = "dp-storage"
 version = "2.5.0"
 
 [[package]]
-name = "dp_consensus"
-version = "2.5.0"
-dependencies = [
- "ethereum",
- "parity-scale-codec",
- "rlp",
- "sha3 0.9.1",
- "sp-core",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "drml"
 version = "2.5.0"
 dependencies = [
@@ -2341,8 +2341,8 @@ dependencies = [
  "dc-db",
  "dc-mapping-sync",
  "dc-rpc",
+ "dp-consensus",
  "dp-rpc",
- "dp_consensus",
  "drml-primitives",
  "dvm-dynamic-fee",
  "dvm-ethereum",
@@ -2439,9 +2439,9 @@ dependencies = [
  "darwinia-evm-precompile-simple",
  "darwinia-evm-precompile-transfer",
  "darwinia-support",
+ "dp-consensus",
  "dp-evm",
  "dp-storage",
- "dp_consensus",
  "dvm-rpc-runtime-api",
  "ethabi",
  "ethereum",

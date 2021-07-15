@@ -20,7 +20,7 @@ primitive-types = { version = "0.9.0", default-features = false, features = ["co
 rlp             = { version = "0.5.0", default-features = false }
 serde           = { version = "1.0.126", optional = true }
 triehash        = { version = "0.8.4", default-features = false }
-# substrate
+# paritytech
 sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
@@ -28,23 +28,18 @@ sp-std     = { default-features = false, git = "https://github.com/darwinia-netw
 [dev-dependencies]
 # crates.io
 array-bytes = { version = "1.3.3", features = ["serde"] }
+ethbloom    = { version = "0.11.0", default-features = false, features = ["codec", "rlp", "serialize"] }
 serde_json  = { version = "1.0.64" }
-# github
-ethbloom = { version = "0.11.0", default-features = false, features = ["codec", "rlp", "serialize"] }
 
 [features]
 default = ["std"]
 
 std = [
-	"crates-std",
-	"substrate-std",
+	# crates.io
 	"array-bytes/serde",
-	"ethbloom/serialize",
-]
-
-crates-std = [
 	"codec/std",
 	"ethbloom/std",
+	"ethbloom/serialize",
 	"hash-db/std",
 	"plain_hasher/std",
 	"primitive-types/std",
@@ -52,9 +47,7 @@ crates-std = [
 	"rlp/std",
 	"serde",
 	"triehash/std",
-]
-
-substrate-std = [
+	# paritytech
 	"sp-io/std",
 	"sp-runtime/std",
 	"sp-std/std",

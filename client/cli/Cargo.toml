@@ -10,10 +10,10 @@ repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "2.5.0"
 
 [dependencies]
-# crates
+# crates.io
 serde = { version = "1.0.126", features = ["derive"] }
 toml  = { version = "0.5.7" }
-# substrate
+# paritytech
 sc-cli        = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sc-client-api = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sc-service    = { git = "https://github.com/darwinia-network/substrate", branch = "main" }

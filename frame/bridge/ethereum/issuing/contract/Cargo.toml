@@ -10,22 +10,17 @@ repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "2.5.0"
 
 [dependencies]
-# crates
+# crates.io
 ethereum-types = { default-features = false, version = "0.11.0" }
-# github
+# darwinia-network
 ethabi = { default-features = false, git = "https://github.com/darwinia-network/ethabi", tag = "v13.0.0-no-std" }
 
 [features]
 default = ["std"]
 
 std = [
-	"crates-std",
-	"github-std",
-]
-
-crates-std = [
+	# crates.io
 	"ethereum-types/std",
-]
-github-std = [
+	# darwinia-network
 	"ethabi/std",
 ]

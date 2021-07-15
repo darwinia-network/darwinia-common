@@ -9,15 +9,17 @@ repository = "https://github.com/darwinia-network/darwinia-common/"
 version    = "2.5.0"
 
 [dependencies]
-# substrate
-sp-staking = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-# darwinia
+# darwinia-network
 drml-primitives = { default-features = false, path = "../../../../primitives" }
+# paritytech
+sp-staking = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [features]
 default = ["std"]
 
 std = [
-	"sp-staking/std",
+	# darwinia-network
 	"drml-primitives/std",
+	# paritytech
+	"sp-staking/std",
 ]
