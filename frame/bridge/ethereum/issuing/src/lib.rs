@@ -76,6 +76,7 @@ pub trait Config: dvm_ethereum::Config {
 	type EthereumRelay: EthereumReceipt<Self::AccountId, RingBalance<Self>>;
 	type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber, Signer = EthereumAddress>;
 
+	type RawCallGasLimit: Get<U256>;
 	type WeightInfo: WeightInfo;
 }
 
@@ -282,8 +283,7 @@ impl<T: Config> Module<T> {
 			INTERNAL_CALLER,
 			factory_address,
 			bytes,
-			// TODO: this field should passed in runtime
-			U256::from(0x300000),
+			T::RawCallGasLimit::get(),
 		)
 		.map_err(|e| -> &'static str { e.into() })?;
 		if mapped_address.len() != 32 {
