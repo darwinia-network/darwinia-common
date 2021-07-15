@@ -2651,7 +2651,7 @@ dependencies = [
 [[package]]
 name = "ethabi"
 version = "13.0.0"
-source = "git+https://github.com/darwinia-network/ethabi.git?branch=xavier-no-std#baacf174d5c2f12122c4ee3fe31506fb52069983"
+source = "git+https://github.com/darwinia-network/ethabi.git?tag=v13.0.0-no-std#baacf174d5c2f12122c4ee3fe31506fb52069983"
 dependencies = [
  "anyhow",
  "ethereum-types",
@@ -2666,11 +2666,10 @@ dependencies = [
 [[package]]
 name = "ethash"
 version = "0.4.0"
-source = "git+https://github.com/darwinia-network/rust-ethash#9014d7649c19800f3b37944a23dd499d207cf881"
+source = "git+https://github.com/darwinia-network/rust-ethash?tag=v0.4.0#e5d6d4c490ac710d793db4f8c1c1bdbb2bfbb164"
 dependencies = [
  "byteorder",
  "ethereum-types",
- "primitive-types",
  "rlp",
  "sha3 0.9.1",
 ]
