@@ -22,9 +22,8 @@ use core::{
 };
 
 use codec::{Decode, Encode};
-use ethereum_types::{BigEndianHash, H128};
+use ethereum_types::{BigEndianHash, H128, H256, U256, U512};
 use keccak_hash::KECCAK_EMPTY_LIST_RLP;
-use primitive_types::{H256, U256, U512};
 use rlp::*;
 use sp_runtime::RuntimeDebug;
 use sp_std::{cell::RefCell, collections::btree_map::BTreeMap, mem};

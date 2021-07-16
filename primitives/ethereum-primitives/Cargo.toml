@@ -11,18 +11,17 @@ version     = "2.5.0"
 
 [dependencies]
 # crates.io
-array-bytes     = { version = "1.3.3" }
-codec           = { package = "parity-scale-codec", version = "2.1.1", default-features = false, features = ["derive"] }
-ethbloom        = { version = "0.11.0", default-features = false, features = ["codec", "rlp"] }
-ethereum-types  = { version = "0.11.0", default-features = false, features = ["codec", "rlp"] }
-fixed-hash      = { version = "0.7.0", default-features = false }
-impl-codec      = { version = "0.5.0", default-features = false }
-impl-rlp        = { version = "0.3.0", default-features = false }
-keccak-hash     = { version = "0.7.0", default-features = false }
-primitive-types = { version = "0.9.0", default-features = false, features = ["codec", "rlp"] }
-rlp             = { version = "0.5.0", default-features = false }
-rlp-derive      = { version = "0.1.0" }
-serde           = { version = "1.0.126", optional = true, features = ["derive"] }
+array-bytes    = { version = "1.3.3" }
+codec          = { package = "parity-scale-codec", version = "2.1.1", default-features = false, features = ["derive"] }
+ethbloom       = { version = "0.11.0", default-features = false, features = ["codec", "rlp"] }
+ethereum-types = { version = "0.11.0", default-features = false, features = ["codec", "rlp"] }
+fixed-hash     = { version = "0.7.0", default-features = false }
+impl-codec     = { version = "0.5.0", default-features = false }
+impl-rlp       = { version = "0.3.0", default-features = false }
+keccak-hash    = { version = "0.7.0", default-features = false }
+rlp            = { version = "0.5.0", default-features = false }
+rlp-derive     = { version = "0.1.0" }
+serde          = { version = "1.0.126", optional = true, features = ["derive"] }
 # darwinia-network
 ethash               = { default-features = false, git = "https://github.com/darwinia-network/rust-ethash", tag = "v0.4.0" }
 merkle-patricia-trie = { default-features = false, path = "../merkle-patricia-trie" }
@@ -53,7 +52,6 @@ std = [
 	"impl-codec/std",
 	"impl-rlp/std",
 	"keccak-hash/std",
-	"primitive-types/std",
 	"rlp/std",
 	"serde",
 	# darwinia-network
