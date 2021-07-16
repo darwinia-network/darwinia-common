@@ -10,12 +10,12 @@ repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "2.5.0"
 
 [dependencies]
-# crates
+# crates.io
 codec = { package = "parity-scale-codec", version = "2.1.1", default-features = false, features = ["derive"] }
 serde = { version = "1.0.126", optional = true, features = ["derive"] }
-# darwinia
+# darwinia-network
 darwinia-support = { default-features = false, path = "../support" }
-# substrate
+# paritytech
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
@@ -23,12 +23,12 @@ sp-runtime    = { default-features = false, git = "https://github.com/darwinia-n
 sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [dev-dependencies]
-# crates
+# crates.io
 hex-literal = "0.3.1"
-# darwinia
+# darwinia-network
 darwinia-balances = { path = "../balances" }
 darwinia-support  = { features = ["easy-testing"], path = "../support" }
-# substrate
+# paritytech
 pallet-scheduler     = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-core              = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-storage           = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
@@ -38,9 +38,12 @@ substrate-test-utils = { git = "https://github.com/darwinia-network/substrate", 
 default = ["std"]
 
 std = [
+	# crates.io
 	"codec/std",
 	"serde",
+	# darwinia-network
 	"darwinia-support/std",
+	# paritytech
 	"frame-support/std",
 	"frame-system/std",
 	"sp-io/std",
