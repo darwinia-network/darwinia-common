@@ -170,6 +170,7 @@ pub mod pallet {
 
 		fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
 			if let Call::transact(transaction) = call {
+				// Check chain id correctly
 				if let Some(chain_id) = transaction.signature.chain_id() {
 					if chain_id != T::ChainId::get() {
 						return InvalidTransaction::Custom(
@@ -178,33 +179,31 @@ pub mod pallet {
 						.into();
 					}
 				}
-
+				// Check signature correctly
 				let origin = Self::recover_signer(&transaction).ok_or_else(|| {
 					InvalidTransaction::Custom(TransactionValidationError::InvalidSignature as u8)
 				})?;
-
+				// Check transaction gas limit correctly
 				if transaction.gas_limit >= T::BlockGasLimit::get() {
 					return InvalidTransaction::Custom(
 						TransactionValidationError::InvalidGasLimit as u8,
 					)
 					.into();
 				}
-
 				let account_data =
-					<T as darwinia_evm::Config>::RingAccountBasic::account_basic(&origin);
-
+				<T as darwinia_evm::Config>::RingAccountBasic::account_basic(&origin);
+				// Check sender's nonce correctly
 				if transaction.nonce < account_data.nonce {
 					return InvalidTransaction::Stale.into();
 				}
-
+				// Check sender's balance correctly
 				let fee = transaction.gas_price.saturating_mul(transaction.gas_limit);
 				let total_payment = transaction.value.saturating_add(fee);
 				if account_data.balance < total_payment {
 					return InvalidTransaction::Payment.into();
 				}
-
+				// Check transaction gas price correctly
 				let min_gas_price = T::FeeCalculator::min_gas_price();
-
 				if transaction.gas_price < min_gas_price {
 					return InvalidTransaction::Payment.into();
 				}
