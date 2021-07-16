@@ -29,26 +29,6 @@ pub struct EthashProof {
 	pub proof: Vec<H128>,
 }
 impl EthashProof {
-	pub fn from_str_unchecked(s: &str) -> Self {
-		let mut dag_nodes: Vec<H512> = Vec::new();
-		let mut proof: Vec<H128> = Vec::new();
-		for e in s.splitn(60, '"') {
-			let l = e.len();
-			if l == 34 {
-				proof.push(array_bytes::hex_into_unchecked(e));
-			} else if l == 130 {
-				dag_nodes.push(array_bytes::hex_into_unchecked(e));
-			} else if l > 34 {
-				// should not be here
-				panic!("the proofs are longer than 25");
-			}
-		}
-		EthashProof {
-			dag_nodes: [dag_nodes[0], dag_nodes[1]],
-			proof,
-		}
-	}
-
 	pub fn apply_merkle_proof(&self, index: u64) -> H128 {
 		fn hash_h128(l: H128, r: H128) -> H128 {
 			let mut data = [0u8; 64];
@@ -75,4 +55,60 @@ impl EthashProof {
 
 		leaf
 	}
+}
+
+#[test]
+fn scale_should_work() {
+	let ethash_proof = EthashProof::default();
+	let encoded_ethash_proof = ethash_proof.encode();
+
+	assert_eq!(
+		ethash_proof,
+		EthashProof::decode(&mut &*encoded_ethash_proof).unwrap()
+	);
+}
+
+#[test]
+fn serde_should_work() {
+	let ethash_proof = serde_json::from_str::<EthashProof>(r#"{
+		"dag_nodes": [
+			"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+			"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+		],
+		"proof": [
+			"0x00000000000000000000000000000000",
+			"0x00000000000000000000000000000000",
+			"0x00000000000000000000000000000000",
+			"0x00000000000000000000000000000000",
+			"0x00000000000000000000000000000000",
+			"0x00000000000000000000000000000000",
+			"0x00000000000000000000000000000000",
+			"0x00000000000000000000000000000000",
+			"0x00000000000000000000000000000000",
+			"0x00000000000000000000000000000000",
+			"0x00000000000000000000000000000000",
+			"0x00000000000000000000000000000000",
+			"0x00000000000000000000000000000000",
+			"0x00000000000000000000000000000000",
+			"0x00000000000000000000000000000000",
+			"0x00000000000000000000000000000000",
+			"0x00000000000000000000000000000000",
+			"0x00000000000000000000000000000000",
+			"0x00000000000000000000000000000000",
+			"0x00000000000000000000000000000000",
+			"0x00000000000000000000000000000000",
+			"0x00000000000000000000000000000000",
+			"0x00000000000000000000000000000000",
+			"0x00000000000000000000000000000000",
+			"0x00000000000000000000000000000000"
+			]
+	}"#).unwrap();
+
+	assert_eq!(
+		ethash_proof,
+		EthashProof {
+			proof: vec![Default::default(); 25],
+			..Default::default()
+		}
+	);
 }
