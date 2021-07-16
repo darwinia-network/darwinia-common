@@ -2714,10 +2714,6 @@ dependencies = [
  "ethash",
  "ethbloom",
  "ethereum-types",
- "fixed-hash",
- "frame-support",
- "impl-codec",
- "impl-rlp",
  "keccak-hash",
  "keccak-hasher",
  "merkle-patricia-trie",
@@ -2726,9 +2722,8 @@ dependencies = [
  "rlp-derive",
  "serde",
  "serde_json",
- "sp-io",
- "sp-runtime",
- "sp-std",
+ "sp-debug-derive 3.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "subhasher",
  "triehash",
 ]
 
@@ -8666,7 +8661,7 @@ dependencies = [
  "num-traits",
  "parity-scale-codec",
  "serde",
- "sp-debug-derive",
+ "sp-debug-derive 3.0.0 (git+https://github.com/darwinia-network/substrate?branch=main)",
  "sp-std",
  "static_assertions",
 ]
@@ -8835,7 +8830,7 @@ dependencies = [
  "secrecy",
  "serde",
  "sha2 0.9.5",
- "sp-debug-derive",
+ "sp-debug-derive 3.0.0 (git+https://github.com/darwinia-network/substrate?branch=main)",
  "sp-externalities",
  "sp-runtime-interface",
  "sp-std",
@@ -8856,6 +8851,17 @@ source = "git+https://github.com/darwinia-network/substrate?branch=main#1d7f6e12
 dependencies = [
  "kvdb",
  "parking_lot 0.11.1",
+]
+
+[[package]]
+name = "sp-debug-derive"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e80275f23b4e7ba8f54dec5f90f016530e7307d2ee9445f617ab986cbe97f31e"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -9144,7 +9150,7 @@ dependencies = [
  "parity-scale-codec",
  "ref-cast",
  "serde",
- "sp-debug-derive",
+ "sp-debug-derive 3.0.0 (git+https://github.com/darwinia-network/substrate?branch=main)",
  "sp-std",
 ]
 
@@ -9373,6 +9379,19 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "subhasher"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8146e2d664d312544c094a1b649e2d6239df5a0ce8a8c95427088815a0a516a6"
+dependencies = [
+ "blake2-rfc",
+ "byteorder",
+ "sha2 0.9.5",
+ "tiny-keccak",
+ "twox-hash",
 ]
 
 [[package]]

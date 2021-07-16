@@ -16,21 +16,31 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-// --- crates ---
+// --- alloc ---
+#[cfg(not(feature = "std"))]
+use alloc::vec::Vec;
+// --- crates.io ---
+#[cfg(any(feature = "full-codec", test))]
 use codec::{Decode, Encode};
-// --- github ---
-use ethbloom::{Bloom, Input as BloomInput};
-use ethereum_types::{H256, U256};
-use rlp::*;
-use sp_runtime::RuntimeDebug;
-use sp_std::prelude::*;
-// --- darwinia ---
-#[cfg(any(feature = "deserialize", test))]
+use ethbloom::{Bloom, Input};
+#[cfg(any(feature = "full-rlp", test))]
+use rlp::{Decodable, DecoderError, Encodable, Rlp, RlpStream};
+#[cfg(any(feature = "full-rlp", test))]
+use rlp_derive::{RlpDecodable, RlpEncodable};
+use sp_debug_derive::RuntimeDebug;
+// --- darwinia-network ---
+#[cfg(any(feature = "full-rlp", test))]
+use crate::error::EthereumError;
+#[cfg(any(feature = "full-serde", test))]
 use crate::header::bytes_from_string;
-use crate::{error::EthereumError, *};
+use crate::{H256, U256, *};
+#[cfg(any(feature = "full-rlp", test))]
 use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
 
-#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
+pub type EthereumTransactionIndex = (H256, u64);
+
+#[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
+#[derive(Clone, PartialEq, Eq, RuntimeDebug)]
 pub enum TransactionOutcome {
 	/// Status and state root are unknown under EIP-98 rules.
 	Unknown,
@@ -40,7 +50,9 @@ pub enum TransactionOutcome {
 	StatusCode(u8),
 }
 
-#[derive(Clone, PartialEq, Eq, Encode, Decode, RlpEncodable, RlpDecodable, RuntimeDebug)]
+#[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
+#[cfg_attr(any(feature = "full-rlp", test), derive(RlpEncodable, RlpDecodable))]
+#[derive(Clone, PartialEq, Eq, RuntimeDebug)]
 pub struct LogEntry {
 	/// The address of the contract executing at the point of the `LOG` operation.
 	pub address: EthereumAddress,
@@ -49,21 +61,21 @@ pub struct LogEntry {
 	/// The data associated with the `LOG` operation.
 	pub data: Bytes,
 }
-
 impl LogEntry {
 	/// Calculates the bloom of this log entry.
 	pub fn bloom(&self) -> Bloom {
 		self.topics.iter().fold(
-			Bloom::from(BloomInput::Raw(self.address.as_bytes())),
+			Bloom::from(Input::Raw(self.address.as_bytes())),
 			|mut b, t| {
-				b.accrue(BloomInput::Raw(t.as_bytes()));
+				b.accrue(Input::Raw(t.as_bytes()));
 				b
 			},
 		)
 	}
 }
 
-#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
+#[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
+#[derive(Clone, PartialEq, Eq, RuntimeDebug)]
 pub struct EthereumReceipt {
 	/// The total gas used in the block following execution of the transaction.
 	pub gas_used: U256,
@@ -74,19 +86,6 @@ pub struct EthereumReceipt {
 	/// Transaction outcome.
 	pub outcome: TransactionOutcome,
 }
-
-#[cfg_attr(any(feature = "deserialize", test), derive(serde::Deserialize))]
-#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
-pub struct EthereumReceiptProof {
-	pub index: u64,
-	#[cfg_attr(
-		any(feature = "deserialize", test),
-		serde(deserialize_with = "bytes_from_string")
-	)]
-	pub proof: Vec<u8>,
-	pub header_hash: H256,
-}
-
 impl EthereumReceipt {
 	/// Create a new receipt.
 	pub fn new(outcome: TransactionOutcome, gas_used: U256, logs: Vec<LogEntry>) -> Self {
@@ -101,6 +100,7 @@ impl EthereumReceipt {
 		}
 	}
 
+	#[cfg(any(feature = "full-rlp", test))]
 	pub fn verify_proof_and_generate(
 		receipt_root: &H256,
 		proof_record: &EthereumReceiptProof,
@@ -117,7 +117,7 @@ impl EthereumReceipt {
 		Ok(receipt)
 	}
 }
-
+#[cfg(any(feature = "full-rlp", test))]
 impl Encodable for EthereumReceipt {
 	fn rlp_append(&self, s: &mut RlpStream) {
 		match self.outcome {
@@ -138,7 +138,7 @@ impl Encodable for EthereumReceipt {
 		s.append_list(&self.logs);
 	}
 }
-
+#[cfg(any(feature = "full-rlp", test))]
 impl Decodable for EthereumReceipt {
 	fn decode(rlp: &Rlp) -> Result<Self, DecoderError> {
 		if rlp.item_count()? == 3 {
@@ -166,7 +166,18 @@ impl Decodable for EthereumReceipt {
 	}
 }
 
-pub type EthereumTransactionIndex = (H256, u64);
+#[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
+#[cfg_attr(any(feature = "full-serde", test), derive(serde::Deserialize))]
+#[derive(Clone, PartialEq, Eq, RuntimeDebug)]
+pub struct EthereumReceiptProof {
+	pub index: u64,
+	#[cfg_attr(
+		any(feature = "full-serde", test),
+		serde(deserialize_with = "bytes_from_string")
+	)]
+	pub proof: Vec<u8>,
+	pub header_hash: H256,
+}
 
 #[cfg(test)]
 mod tests {

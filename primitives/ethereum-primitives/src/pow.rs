@@ -16,26 +16,36 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+// --- core ---
+#[cfg(any(feature = "full-rlp", test))]
+use core::{cell::RefCell, mem};
 use core::{
 	cmp,
 	convert::{From, Into, TryFrom},
 };
-
+// --- std ---
+#[cfg(feature = "std")]
+use std::collections::BTreeMap;
+// --- alloc ---
+#[cfg(not(feature = "std"))]
+use alloc::collections::BTreeMap;
+// --- crates.io ---
+#[cfg(any(feature = "full-codec", test))]
 use codec::{Decode, Encode};
-use ethereum_types::{BigEndianHash, H128, H256, U256, U512};
 use keccak_hash::KECCAK_EMPTY_LIST_RLP;
-use rlp::*;
-use sp_runtime::RuntimeDebug;
-use sp_std::{cell::RefCell, collections::btree_map::BTreeMap, mem};
-
+#[cfg(any(feature = "full-rlp", test))]
+use rlp::Rlp;
+use sp_debug_derive::RuntimeDebug;
+// --- darwinia-network ---
+#[cfg(any(feature = "full-rlp", test))]
 use crate::{
 	error::{EthereumError, Mismatch, OutOfBounds},
 	ethashproof::EthashProof,
-	header::EthereumHeader,
-	*,
 };
+use crate::{header::EthereumHeader, *};
 
-#[derive(Default, PartialEq, Eq, Clone, Encode, Decode)]
+#[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
+#[derive(Default, PartialEq, Eq, Clone)]
 pub struct EthashPartial {
 	pub minimum_difficulty: U256,
 	pub difficulty_bound_divisor: U256,
@@ -54,7 +64,6 @@ pub struct EthashPartial {
 	pub expip2_duration_limit: u64,
 	pub progpow_transition: u64,
 }
-
 impl EthashPartial {
 	pub fn set_difficulty_bomb_delays(
 		&mut self,
@@ -141,6 +150,7 @@ impl EthashPartial {
 }
 
 impl EthashPartial {
+	#[cfg(any(feature = "full-rlp", test))]
 	pub fn verify_seal_with_proof(
 		self,
 		header: &EthereumHeader,
@@ -162,6 +172,7 @@ impl EthashPartial {
 		Ok(())
 	}
 
+	#[cfg(any(feature = "full-rlp", test))]
 	fn hashimoto_merkle(
 		self,
 		header_hash: &H256,
@@ -226,6 +237,7 @@ impl EthashPartial {
 		}
 	}
 
+	#[cfg(any(feature = "full-rlp", test))]
 	pub fn verify_block_basic(&self, header: &EthereumHeader) -> Result<(), EthereumError> {
 		// check the seal fields.
 		let seal = EthashSeal::parse_seal(header.seal())?;
@@ -346,16 +358,17 @@ impl EthashPartial {
 	}
 }
 
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
+#[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
+#[derive(PartialEq, Eq, Clone, RuntimeDebug)]
 pub struct EthashSeal {
 	/// Ethash seal mix_hash
 	pub mix_hash: H256,
 	/// Ethash seal nonce
 	pub nonce: H64,
 }
-
 impl EthashSeal {
 	/// Tries to parse rlp encoded bytes as an Ethash/Clique seal.
+	#[cfg(any(feature = "full-rlp", test))]
 	pub fn parse_seal<T: AsRef<[u8]>>(seal: &[T]) -> Result<Self, EthereumError> {
 		if seal.len() != 2 {
 			return Err(EthereumError::InvalidSealArity(Mismatch {
@@ -393,6 +406,7 @@ fn difficulty_to_boundary_aux<T: Into<U512>>(difficulty: T) -> ethereum_types::U
 	}
 }
 
+#[cfg(any(feature = "full-rlp", test))]
 fn quick_get_difficulty(
 	header_hash: &[u8; 32],
 	nonce: u64,

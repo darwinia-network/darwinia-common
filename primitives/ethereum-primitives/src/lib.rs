@@ -16,11 +16,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-#![recursion_limit = "128"]
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[macro_use]
-pub extern crate rlp_derive;
+extern crate alloc;
 
 pub mod error;
 pub mod ethashproof;
@@ -28,17 +26,19 @@ pub mod header;
 pub mod pow;
 pub mod receipt;
 
-pub use ethbloom::{Bloom, Input as BloomInput};
-pub use ethereum_types::{H160, H256, H64, U128, U256, U512};
+pub use ethereum_types::{Address as EthereumAddress, *};
 
+// --- alloc ---
+use alloc::vec::Vec;
+// --- crates.io ---
+#[cfg(any(feature = "full-codec", test))]
 use codec::{Decode, Encode};
-use sp_std::prelude::*;
 
 pub type Bytes = Vec<u8>;
-pub type EthereumAddress = H160;
 pub type EthereumBlockNumber = u64;
 
-#[derive(Clone, PartialEq, Encode, Decode)]
+#[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
+#[derive(Clone, PartialEq)]
 pub enum EthereumNetworkType {
 	Mainnet,
 	Ropsten,

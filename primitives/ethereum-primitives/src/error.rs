@@ -16,11 +16,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+// --- crates.io ---
+#[cfg(feature = "codec")]
 use codec::{Decode, Encode};
-
+// --- darwinia-network ---
 use crate::*;
 
-#[derive(PartialEq, Eq, Clone, Copy, Debug, Encode, Decode)]
+#[cfg_attr(feature = "codec", derive(Encode, Decode))]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 /// Error indicating value found is outside of a valid range.
 pub struct OutOfBounds<T> {
 	/// Minimum allowed value.
@@ -31,7 +34,8 @@ pub struct OutOfBounds<T> {
 	pub found: T,
 }
 
-#[derive(PartialEq, Eq, Clone, Copy, Debug, Encode, Decode)]
+#[cfg_attr(feature = "codec", derive(Encode, Decode))]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 /// Error indicating an expected value was not found.
 pub struct Mismatch<T> {
 	/// Value expected.
@@ -40,7 +44,7 @@ pub struct Mismatch<T> {
 	pub found: T,
 }
 
-#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum EthereumError {
 	InvalidProofOfWork(OutOfBounds<U256>),
 	DifficultyOutOfBounds(OutOfBounds<U256>),

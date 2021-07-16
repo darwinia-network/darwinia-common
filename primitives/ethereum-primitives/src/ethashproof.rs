@@ -16,14 +16,22 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+// --- alloc ---
+#[cfg(not(feature = "std"))]
+use alloc::vec::Vec;
+// --- crates.io ---
+use sp_debug_derive::RuntimeDebug;
+// --- github.com ---
+#[cfg(any(feature = "full-codec", test))]
 use codec::{Decode, Encode};
-pub use ethereum_types::{H128, H512};
-use sp_io::hashing::sha2_256;
-use sp_runtime::RuntimeDebug;
-use sp_std::vec::Vec;
+#[cfg(any(feature = "full-serde", test))]
+use serde::Deserialize;
+// --- darwinia-network ---
+use crate::{H128, H512};
 
-#[cfg_attr(any(feature = "deserialize", test), derive(serde::Deserialize))]
-#[derive(Clone, Default, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
+#[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
+#[cfg_attr(any(feature = "full-serde", test), derive(Deserialize))]
+#[derive(Clone, Default, PartialEq, Eq, RuntimeDebug)]
 pub struct EthashProof {
 	pub dag_nodes: [H512; 2],
 	pub proof: Vec<H128>,
@@ -36,7 +44,7 @@ impl EthashProof {
 			data[48..64].copy_from_slice(&(r.0));
 
 			// `H256` is 32 length, truncate is safe; qed
-			array_bytes::dyn_into!(sha2_256(&data)[16..], 16)
+			array_bytes::dyn_into!(subhasher::sha2_256(&data)[16..], 16)
 		}
 
 		let mut data = [0u8; 128];
@@ -44,7 +52,7 @@ impl EthashProof {
 		data[64..].copy_from_slice(&(self.dag_nodes[1].0));
 
 		// `H256` is 32 length, truncate is safe; qed
-		let mut leaf = array_bytes::dyn_into!(sha2_256(&data)[16..], 16);
+		let mut leaf = array_bytes::dyn_into!(subhasher::sha2_256(&data)[16..], 16);
 		for i in 0..self.proof.len() {
 			if (index >> i as u64) % 2 == 0 {
 				leaf = hash_h128(leaf, self.proof[i]);

@@ -16,21 +16,27 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-// --- crates ---
+// --- alloc ---
+#[cfg(not(feature = "std"))]
+use alloc::vec::Vec;
+// --- crates.io ---
+#[cfg(any(feature = "full-codec", test))]
 use codec::{Decode, Encode};
-#[cfg(any(feature = "deserialize", test))]
-use serde::Deserialize;
-// --- github ---
 use ethbloom::Bloom;
-use keccak_hash::{keccak, KECCAK_EMPTY_LIST_RLP, KECCAK_NULL_RLP};
+#[cfg(any(feature = "full-rlp", test))]
+use keccak_hash::keccak;
+use keccak_hash::{KECCAK_EMPTY_LIST_RLP, KECCAK_NULL_RLP};
+#[cfg(any(feature = "full-rlp", test))]
 use rlp::{Decodable, DecoderError, Encodable, Rlp, RlpStream};
-// --- substrate ---
-use sp_runtime::RuntimeDebug;
-use sp_std::prelude::*;
+#[cfg(any(feature = "full-serde", test))]
+use serde::{Deserialize, Deserializer};
+use sp_debug_derive::RuntimeDebug;
 // --- darwinia ---
 use crate::*;
 
-#[derive(Clone, Copy, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
+#[cfg(any(feature = "full-rlp", test))]
+#[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
+#[derive(Clone, Copy, PartialEq, Eq, RuntimeDebug)]
 enum Seal {
 	/// The seal/signature is included.
 	With,
@@ -38,8 +44,9 @@ enum Seal {
 	Without,
 }
 
-#[cfg_attr(any(feature = "deserialize", test), derive(serde::Deserialize))]
-#[derive(Clone, Eq, Encode, Decode, RuntimeDebug)]
+#[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
+#[cfg_attr(any(feature = "full-serde", test), derive(Deserialize))]
+#[derive(Clone, Eq, RuntimeDebug)]
 pub struct EthereumHeader {
 	pub parent_hash: H256,
 	pub timestamp: u64,
@@ -48,7 +55,7 @@ pub struct EthereumHeader {
 	pub transactions_root: H256,
 	pub uncles_hash: H256,
 	#[cfg_attr(
-		any(feature = "deserialize", test),
+		any(feature = "full-serde", test),
 		serde(deserialize_with = "bytes_from_string")
 	)]
 	pub extra_data: Bytes,
@@ -56,29 +63,29 @@ pub struct EthereumHeader {
 	pub receipts_root: H256,
 	pub log_bloom: Bloom,
 	#[cfg_attr(
-		any(feature = "deserialize", test),
+		any(feature = "full-serde", test),
 		serde(deserialize_with = "u256_from_u64")
 	)]
 	pub gas_used: U256,
 	#[cfg_attr(
-		any(feature = "deserialize", test),
+		any(feature = "full-serde", test),
 		serde(deserialize_with = "u256_from_u64")
 	)]
 	pub gas_limit: U256,
 	#[cfg_attr(
-		any(feature = "deserialize", test),
+		any(feature = "full-serde", test),
 		serde(deserialize_with = "u256_from_u64")
 	)]
 	pub difficulty: U256,
 	#[cfg_attr(
-		any(feature = "deserialize", test),
+		any(feature = "full-serde", test),
 		serde(deserialize_with = "bytes_array_from_string")
 	)]
 	pub seal: Vec<Bytes>,
 	pub hash: Option<H256>,
 }
 impl EthereumHeader {
-	#[cfg(any(feature = "deserialize", test))]
+	#[cfg(any(feature = "full-codec", test))]
 	pub fn from_scale_codec_str<S: AsRef<str>>(s: S) -> Option<Self> {
 		if let Ok(eth_header) =
 			<Self as Decode>::decode(&mut &array_bytes::hex2bytes_unchecked(s.as_ref())[..])
@@ -89,7 +96,7 @@ impl EthereumHeader {
 		}
 	}
 
-	#[cfg(any(feature = "deserialize", test))]
+	#[cfg(any(all(feature = "full-serde", feature = "full-rlp"), test))]
 	pub fn from_str_unchecked(s: &str) -> Self {
 		// --- std ---
 		use std::str::FromStr;
@@ -186,14 +193,14 @@ impl Default for EthereumHeader {
 			author: EthereumAddress::zero(),
 			transactions_root: KECCAK_NULL_RLP,
 			uncles_hash: KECCAK_EMPTY_LIST_RLP,
-			extra_data: vec![],
+			extra_data: Vec::new(),
 			state_root: KECCAK_NULL_RLP,
 			receipts_root: KECCAK_NULL_RLP,
 			log_bloom: Bloom::default(),
 			gas_used: U256::default(),
 			gas_limit: U256::default(),
 			difficulty: U256::default(),
-			seal: vec![],
+			seal: Vec::new(),
 			hash: None,
 		}
 	}
@@ -225,6 +232,7 @@ impl PartialEq for EthereumHeader {
 			&& self.seal == c.seal
 	}
 }
+#[cfg(any(feature = "full-rlp", test))]
 impl Decodable for EthereumHeader {
 	fn decode(r: &Rlp) -> Result<Self, DecoderError> {
 		let mut blockheader = EthereumHeader {
@@ -241,7 +249,7 @@ impl Decodable for EthereumHeader {
 			gas_used: r.val_at(10)?,
 			timestamp: r.val_at(11)?,
 			extra_data: r.val_at(12)?,
-			seal: vec![],
+			seal: Vec::new(),
 			hash: keccak(r.as_raw()).into(),
 		};
 
@@ -252,6 +260,7 @@ impl Decodable for EthereumHeader {
 		Ok(blockheader)
 	}
 }
+#[cfg(any(feature = "full-rlp", test))]
 impl Encodable for EthereumHeader {
 	fn rlp_append(&self, s: &mut RlpStream) {
 		self.stream_rlp(s, Seal::With);
@@ -356,28 +365,33 @@ impl EthereumHeader {
 	}
 
 	/// Get & memoize the hash of this header (keccak of the RLP with seal).
+	#[cfg(any(feature = "full-rlp", test))]
 	pub fn compute_hash(&mut self) -> H256 {
 		let hash = self.hash();
 		self.hash = Some(hash);
 		hash
 	}
 
+	#[cfg(any(feature = "full-rlp", test))]
 	pub fn re_compute_hash(&self) -> H256 {
 		keccak_hash::keccak(self.rlp(Seal::With))
 	}
 
 	/// Get the hash of this header (keccak of the RLP with seal).
+	#[cfg(any(feature = "full-rlp", test))]
 	pub fn hash(&self) -> H256 {
 		self.hash
 			.unwrap_or_else(|| keccak_hash::keccak(self.rlp(Seal::With)))
 	}
 
 	/// Get the hash of the header excluding the seal
+	#[cfg(any(feature = "full-rlp", test))]
 	pub fn bare_hash(&self) -> H256 {
 		keccak_hash::keccak(self.rlp(Seal::Without))
 	}
 
 	/// Get the RLP representation of this Header.
+	#[cfg(any(feature = "full-rlp", test))]
 	fn rlp(&self, with_seal: Seal) -> Bytes {
 		let mut s = RlpStream::new();
 		self.stream_rlp(&mut s, with_seal);
@@ -385,6 +399,7 @@ impl EthereumHeader {
 	}
 
 	/// Place this header into an RLP stream `s`, optionally `with_seal`.
+	#[cfg(any(feature = "full-rlp", test))]
 	fn stream_rlp(&self, s: &mut RlpStream, with_seal: Seal) {
 		if let Seal::With = with_seal {
 			s.begin_list(13 + self.seal.len());
@@ -414,7 +429,7 @@ impl EthereumHeader {
 	}
 }
 
-#[cfg(any(feature = "deserialize", test))]
+#[cfg(any(feature = "full-serde", test))]
 pub fn str_to_u64(s: &str) -> u64 {
 	if s.starts_with("0x") {
 		u64::from_str_radix(&s[2..], 16).unwrap_or_default()
@@ -423,28 +438,28 @@ pub fn str_to_u64(s: &str) -> u64 {
 	}
 }
 
-#[cfg(any(feature = "deserialize", test))]
+#[cfg(any(feature = "full-serde", test))]
 pub fn bytes_from_string<'de, D>(deserializer: D) -> Result<Bytes, D::Error>
 where
-	D: serde::Deserializer<'de>,
+	D: Deserializer<'de>,
 {
 	Ok(array_bytes::hex2bytes_unchecked(&String::deserialize(
 		deserializer,
 	)?))
 }
 
-#[cfg(any(feature = "deserialize", test))]
+#[cfg(any(feature = "full-serde", test))]
 fn u256_from_u64<'de, D>(deserializer: D) -> Result<U256, D::Error>
 where
-	D: serde::Deserializer<'de>,
+	D: Deserializer<'de>,
 {
 	Ok(u64::deserialize(deserializer)?.into())
 }
 
-#[cfg(any(feature = "deserialize", test))]
+#[cfg(any(feature = "full-serde", test))]
 fn bytes_array_from_string<'de, D>(deserializer: D) -> Result<Vec<Bytes>, D::Error>
 where
-	D: serde::Deserializer<'de>,
+	D: Deserializer<'de>,
 {
 	Ok(<Vec<String>>::deserialize(deserializer)?
 		.into_iter()
