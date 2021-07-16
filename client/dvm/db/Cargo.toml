@@ -10,12 +10,12 @@ repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "2.5.0"
 
 [dependencies]
-# crates
+# crates.io
 codec        = { package = "parity-scale-codec", version = "2.1.1", features = ["derive"] }
 kvdb         = { version = "0.9.0" }
 kvdb-rocksdb = { version = "0.11.0" }
 parking_lot  = { version = "0.11.1" }
-# substrate
+# paritytech
 sp-core     = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-database = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-runtime  = { git = "https://github.com/darwinia-network/substrate", branch = "main" }

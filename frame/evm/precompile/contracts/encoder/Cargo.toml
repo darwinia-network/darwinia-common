@@ -16,7 +16,7 @@ codec = { package = "parity-scale-codec", version = "2.1.1", default-features = 
 evm   = { version = "0.25.0", default-features = false, features = ["with-codec"] }
 log   = { version = "0.4.14" }
 sha3  = { version = "0.9.1", default-features = false }
-# darwinia
+# darwinia-network
 darwinia-evm         = { default-features = false, path = "../../../../evm" }
 darwinia-s2s-issuing = { default-features = false, path = "../../../../bridge/s2s/issuing" }
 darwinia-support     = { default-features = false, path = "../../../../support" }
@@ -31,25 +31,17 @@ sp-io         = { default-features = false, git = "https://github.com/darwinia-n
 default = ["std"]
 
 std = [
-	"crates-std",
-	"darwinia-std",
-	"paritytech-std",
-]
-
-crates-std = [
+	# crates.io
 	"codec/std",
 	"evm/std",
-]
-
-darwinia-std = [
+	"sha3/std",
+	# darwinia-network
 	"darwinia-evm/std",
 	"darwinia-s2s-issuing/std",
 	"darwinia-support/std",
 	"dp-contract/std",
 	"dp-evm/std",
-]
-
-paritytech-std = [
+	# paritytech
 	"frame-support/std",
 	"sp-core/std",
 	"sp-io/std",

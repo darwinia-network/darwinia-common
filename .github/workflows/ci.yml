@@ -13,6 +13,19 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  check-default-features:
+    name: Check `default-features`
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+      - name: Build checker
+        run: cargo b --manifest-path .maintain/check-default-features/Cargo.toml
+      - name: Run checker
+        run: .maintain/check-default-features/target/debug/check-default-features
+
   test:
     name: Run Tests
     runs-on: ubuntu-latest
