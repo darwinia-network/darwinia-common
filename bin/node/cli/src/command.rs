@@ -186,6 +186,7 @@ pub fn run() -> sc_cli::Result<()> {
 					cache_size: 0,
 				};
 				cmd.run(dvm_database_config)?;
+
 				cmd.run(config.database)
 			})
 		}

@@ -18,19 +18,19 @@
 
 //! EVM stack-based runner.
 
-// --- crates ---
+// --- crates.io ---
 use evm::{
 	backend::Backend as BackendT,
 	executor::{StackExecutor, StackState as StackStateT, StackSubstateMetadata},
 	ExitError, ExitReason, Transfer,
 };
 use sha3::{Digest, Keccak256};
-// --- substrate ---
+// --- paritytech ---
 use frame_support::{ensure, traits::Get};
 use sp_core::{H160, H256, U256};
 use sp_runtime::{traits::UniqueSaturatedInto, ArithmeticError, DispatchError};
 use sp_std::{collections::btree_set::BTreeSet, marker::PhantomData, mem, prelude::*};
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::{
 	runner::Runner as RunnerT, AccountBasic, AccountCodes, AccountStorages, AddressMapping,
 	BlockHashMapping, Config, Error, Event, FeeCalculator, Pallet, PrecompileSet,

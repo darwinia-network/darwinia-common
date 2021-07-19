@@ -26,6 +26,7 @@ pub use pangolin_runtime;
 // --- std ---
 use std::{
 	collections::{BTreeMap, HashMap},
+	path::PathBuf,
 	sync::{Arc, Mutex},
 	time::Duration,
 };
@@ -176,7 +177,7 @@ fn set_prometheus_registry(config: &mut Configuration) -> Result<(), ServiceErro
 	Ok(())
 }
 
-pub fn dvm_database_dir(config: &Configuration) -> std::path::PathBuf {
+pub fn dvm_database_dir(config: &Configuration) -> PathBuf {
 	let config_dir = config
 		.base_path
 		.as_ref()
@@ -185,6 +186,7 @@ pub fn dvm_database_dir(config: &Configuration) -> std::path::PathBuf {
 			BasePath::from_project("", "", &crate::cli::Cli::executable_name())
 				.config_dir(config.chain_spec.id())
 		});
+
 	config_dir.join("dvm").join("db")
 }
 
