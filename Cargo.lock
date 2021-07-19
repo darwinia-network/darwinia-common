@@ -1423,6 +1423,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-basic-channel"
+version = "2.5.0"
+dependencies = [
+ "darwinia-header-mmr",
+ "darwinia-support",
+ "dp-contract",
+ "ethereum-types",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "serde",
+ "serde_json",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "darwinia-bridge-bsc"
 version = "2.5.0"
 dependencies = [
@@ -2275,6 +2294,7 @@ version = "2.5.0"
 dependencies = [
  "ethabi",
  "ethereum-types",
+ "parity-scale-codec",
  "sp-std",
 ]
 
