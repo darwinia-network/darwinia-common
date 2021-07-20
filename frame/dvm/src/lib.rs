@@ -367,7 +367,7 @@ impl<T: Config> Pallet<T> {
 		};
 
 		let receipt = ethereum::Receipt {
-			state_root: match reason.clone() {
+			state_root: match reason {
 				ExitReason::Succeed(_) => H256::from_low_u64_be(1),
 				ExitReason::Error(_) => H256::from_low_u64_le(0),
 				ExitReason::Revert(_) => H256::from_low_u64_le(0),
@@ -384,16 +384,13 @@ impl<T: Config> Pallet<T> {
 			transaction.source,
 			contract_address.unwrap_or_default(),
 			transaction_hash,
-			reason.clone(),
+			reason,
 		));
 
-		match reason {
-			ExitReason::Succeed(_) => Ok(Some(T::GasWeightMapping::gas_to_weight(
-				used_gas.unique_saturated_into(),
-			))
-			.into()),
-			_ => Err(Error::<T>::InvalidCall.into()),
-		}
+		Ok(Some(T::GasWeightMapping::gas_to_weight(
+			used_gas.unique_saturated_into(),
+		))
+		.into())
 	}
 
 	/// Pure read-only call to contract
