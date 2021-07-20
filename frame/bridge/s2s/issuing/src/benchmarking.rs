@@ -80,4 +80,8 @@ benchmarks! {
 		let token = Token::Native(TokenInfo::new(register_token_address, None, Some(token_option)));
 		let recipient = hex_into_unchecked("0000000000000000000000000000000000000001");
 	}: _(RawOrigin::Signed(caller), token, recipient)
+
+	set_mapping_factory_address {
+		let address = hex_into_unchecked("0000000000000000000000000000000000000001");
+	}: _(RawOrigin::Root, address)
 }

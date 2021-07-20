@@ -232,6 +232,21 @@ pub mod pallet {
 			}
 			Ok(().into())
 		}
+
+		/// set mapping token factory address, root account aquired
+		#[pallet::weight(
+			<T as Config>::WeightInfo::set_mapping_factory_address()
+		)]
+		pub fn set_mapping_factory_address(
+			origin: OriginFor<T>,
+			address: H160,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+			let old_address = <MappingFactoryAddress<T>>::get();
+			<MappingFactoryAddress<T>>::put(address);
+			Self::deposit_event(Event::MappingFactoryAddressUpdated(old_address, address));
+			Ok(().into())
+		}
 	}
 
 	#[pallet::event]
@@ -247,6 +262,9 @@ pub mod pallet {
 		/// Token Burned and request Remote unlock
 		/// [spec_version, weight, tokentype, source, amount, recipient, fee]
 		TokenBurned(u32, u64, u32, H160, U256, AccountId<T>, U256),
+		/// Set mapping token factory address
+		/// [old, new]
+		MappingFactoryAddressUpdated(H160, H160),
 	}
 
 	#[pallet::error]
