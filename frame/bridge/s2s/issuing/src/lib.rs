@@ -233,7 +233,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// set mapping token factory address, root account aquired
+		/// Set mapping token factory address, root account required
 		#[pallet::weight(
 			<T as Config>::WeightInfo::set_mapping_factory_address()
 		)]
@@ -260,7 +260,7 @@ pub mod pallet {
 		/// [backing, mapping_address, recipient, amount]
 		TokenIssued(H160, H160, H160, U256),
 		/// Token Burned and request Remote unlock
-		/// [spec_version, weight, tokentype, source, amount, recipient, fee]
+		/// [spec_version, weight, tokenType, source, amount, recipient, fee]
 		TokenBurned(u32, u64, u32, H160, U256, AccountId<T>, U256),
 		/// Set mapping token factory address
 		/// [old, new]
