@@ -66,12 +66,12 @@ impl DVMTransaction {
 	/// the source account is specified by INTERNAL_CALLER
 	/// gas_price is None means no need for gas fee
 	/// a default signature which will not be verified
-	pub fn new(nonce: U256, target: H160, input: Vec<u8>) -> Self {
+	pub fn new(nonce: U256, target: H160, input: Vec<u8>, gas_limit: U256) -> Self {
 		let transaction = ethereum::Transaction {
 			nonce,
 			// Not used, and will be overwritten by None later.
 			gas_price: U256::zero(),
-			gas_limit: U256::from(0x300000),
+			gas_limit,
 			action: ethereum::TransactionAction::Call(target),
 			value: U256::zero(),
 			input,

@@ -19,10 +19,15 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 	}
 }
 
+frame_support::parameter_types! {
+	pub InternalTransactionGasLimit: U256 = U256::from(0x300000);
+}
+
 impl Config for Runtime {
 	type Event = Event;
 	type FindAuthor = EthereumFindAuthor<Babe>;
 	type StateRoot = IntermediateStateRoot;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
+	type InternalTransactionGasLimit = InternalTransactionGasLimit;
 }
