@@ -594,16 +594,39 @@ fn raw_call_should_works() {
 #[test]
 fn internal_transaction_should_works() {
 	let (pairs, mut ext) = new_test_ext(1);
-	// let alice = &pairs[0];
+	let alice = &pairs[0];
 
 	ext.execute_with(|| {
-		// Ethereum::transact(Origin::none(), t);
-		Ethereum::test(Origin::none());
+		let t = UnsignedTransaction {
+			nonce: U256::zero(),
+			gas_price: U256::from(1),
+			gas_limit: U256::from(0x100000),
+			action: ethereum::TransactionAction::Create,
+			value: U256::zero(),
+			input: hex2bytes_unchecked(TEST_CONTRACT_BYTECODE),
+		}
+		.sign(&alice.private_key);
+		assert_ok!(Ethereum::execute(
+			alice.address,
+			t.input,
+			t.value,
+			t.gas_limit,
+			Some(t.gas_price),
+			Some(t.nonce),
+			t.action,
+			None,
+		));
+		let contract_address: H160 =
+			array_bytes::hex_into_unchecked("32dcab0ef3fb2de2fce1d2e0799d36239671f04a");
+		let foo: Vec<u8> = hex2bytes_unchecked("c2985578");
 
-		let event_count = System::event_count();
-		let events = System::events();
-		println!("events {:?}", events);
-		assert_eq!(event_count, 2);
+		Ethereum::internal_transact(contract_address, foo.clone());
+		Ethereum::internal_transact(contract_address, foo);
+
+		// let event_count = System::event_count();
+		// let events = System::events();
+		// println!("bear: --- events in test file {:?}", events);
+		// assert_eq!(event_count, 2);
 	});
 }
 

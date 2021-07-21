@@ -57,6 +57,8 @@ pub struct DVMTransaction {
 	pub gas_price: Option<U256>,
 	/// the transaction defined in ethereum lib
 	pub tx: ethereum::Transaction,
+	/// the transaction is internal or not
+	pub is_internal: bool,
 }
 
 impl DVMTransaction {
@@ -88,6 +90,7 @@ impl DVMTransaction {
 			source: INTERNAL_CALLER,
 			gas_price: None,
 			tx: transaction,
+			is_internal: true,
 		}
 	}
 }

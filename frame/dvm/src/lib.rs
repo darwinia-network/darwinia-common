@@ -45,6 +45,7 @@ use sha3::{Digest, Keccak256};
 // --- substrate ---
 #[cfg(feature = "std")]
 use frame_support::storage::unhashed;
+use frame_support::weights::{Pays, PostDispatchInfo};
 use frame_support::{
 	dispatch::DispatchResultWithPostInfo,
 	ensure, print,
@@ -143,18 +144,6 @@ pub mod pallet {
 
 			Self::rpc_transact(transaction)
 		}
-
-		#[pallet::weight(1000)]
-		pub fn test(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
-			Self::deposit_event(Event::Executed(
-				H160::default(),
-				H160::default(),
-				H256::default(),
-				ExitReason::Succeed(ExitSucceed::Stopped),
-			));
-
-			Ok(().into())
-		}
 	}
 
 	#[pallet::event]
@@ -174,6 +163,10 @@ pub mod pallet {
 		PreLogExists,
 		/// Call failed
 		InvalidCall,
+		/// The internal transaction errors
+		InternalTransactionExitError,
+		InternalTransactionRevertError,
+		InternalTransactionFatalError,
 	}
 
 	#[pallet::validate_unsigned]
@@ -310,28 +303,7 @@ impl<T: Config> Pallet<T> {
 		let nonce =
 			<T as darwinia_evm::Config>::RingAccountBasic::account_basic(&INTERNAL_CALLER).nonce;
 		let transaction = DVMTransaction::new(nonce, target, input);
-
 		Self::raw_transact(transaction)
-		// catch the last event
-		// let events = frame_support::events_count();
-		// let count = <frame_system::Pallet<T>>::event_count();
-		// println!("bear: === get event count {:?}", count);
-		// let mock_event = Event::
-		// if let Some(last_event) = <frame_system::Pallet<T>>::events().last() {
-		// 	// match the last event
-		// 	// match last_event.event {
-
-		// 	// Event::Executed(_, _, _, _) => {
-		// 	// 	todo!()
-		// 	// }
-		// 	// _ => todo!(),
-		// 	// }
-		// } else {
-		// 	// todo: change it later
-		// 	// return Err(Error::<T>::InvalidCall.into());
-		// 	todo!()
-		// }
-		// Ok(().into())
 	}
 
 	/// Execute transaction from EthApi(network transaction)
@@ -418,15 +390,7 @@ impl<T: Config> Pallet<T> {
 			transaction_hash,
 			reason.clone(),
 		));
-		println!(
-			"bear: === output the event here, source {:?}, reason {:?}",
-			transaction.source, reason
-		);
-
-		Ok(Some(T::GasWeightMapping::gas_to_weight(
-			used_gas.unique_saturated_into(),
-		))
-		.into())
+		Self::return_dispatch_result(transaction.is_internal, &reason, used_gas)
 	}
 
 	/// Pure read-only call to contract
@@ -550,6 +514,7 @@ impl<T: Config> Pallet<T> {
 			source,
 			gas_price: Some(transaction.gas_price),
 			tx: transaction,
+			is_internal: false,
 		})
 	}
 
@@ -610,6 +575,44 @@ impl<T: Config> Pallet<T> {
 				bloom.accrue(BloomInput::Raw(&topic[..]));
 			}
 		}
+	}
+
+	/// The dispatch result depends on the transaction type.
+	/// The internal transaction will return DispatchError when exitReason does not Succeed,
+	/// The Rpc transaction will alway return Ok(...) no matter what exitReason is.
+	pub fn return_dispatch_result(
+		is_internal: bool,
+		reason: &ExitReason,
+		used_gas: U256,
+	) -> DispatchResultWithPostInfo {
+		if is_internal {
+			match reason {
+				ExitReason::Succeed(_) => {
+					return Ok(PostDispatchInfo {
+						actual_weight: Some(T::GasWeightMapping::gas_to_weight(
+							used_gas.unique_saturated_into(),
+						)),
+						pays_fee: Pays::No,
+					})
+				}
+				ExitReason::Error(e) => {
+					log::error!("Executing internal transaction error happened, {:?}", e);
+					return Err(Error::<T>::InternalTransactionExitError.into());
+				}
+				ExitReason::Revert(e) => {
+					log::error!("Executing internal transaction error happened, {:?}", e);
+					return Err(Error::<T>::InternalTransactionRevertError.into());
+				}
+				ExitReason::Fatal(e) => {
+					log::error!("Executing internal transaction error happened, {:?}", e);
+					return Err(Error::<T>::InternalTransactionFatalError.into());
+				}
+			}
+		}
+		Ok(Some(T::GasWeightMapping::gas_to_weight(
+			used_gas.unique_saturated_into(),
+		))
+		.into())
 	}
 }
 
