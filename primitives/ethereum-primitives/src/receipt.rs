@@ -36,7 +36,7 @@ use sp_debug_derive::RuntimeDebug;
 #[cfg(any(feature = "full-rlp", test))]
 use crate::error::*;
 #[cfg(any(feature = "full-serde", test))]
-use crate::header::bytes_from_string;
+use crate::header::bytes_from_hex;
 use crate::{H256, U256, *};
 #[cfg(any(feature = "full-rlp", test))]
 use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
@@ -168,15 +168,15 @@ impl Decodable for Receipt {
 }
 
 #[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
-#[cfg_attr(any(feature = "full-serde", test), derive(serde::Deserialize))]
+// #[cfg_attr(any(feature = "full-serde", test), derive(serde::Deserialize))]
 #[derive(Clone, PartialEq, Eq, RuntimeDebug)]
 pub struct ReceiptProof {
 	pub index: u64,
-	#[cfg_attr(
-		any(feature = "full-serde", test),
-		serde(deserialize_with = "bytes_from_string")
-	)]
-	pub proof: Vec<u8>,
+	// #[cfg_attr(
+	// any(feature = "full-serde", test),
+	// serde(deserialize_with = "bytes_from_hex")
+	// )]
+	pub proof: Bytes,
 	pub header_hash: H256,
 }
 
