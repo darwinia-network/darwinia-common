@@ -308,8 +308,12 @@ impl<T: Config> Pallet<T> {
 		);
 		let nonce =
 			<T as darwinia_evm::Config>::RingAccountBasic::account_basic(&INTERNAL_CALLER).nonce;
-		let transaction =
-			DVMTransaction::new(nonce, target, input, T::InternalTransactionGasLimit::get());
+		let transaction = DVMTransaction::new_internal_transaction(
+			nonce,
+			target,
+			input,
+			T::InternalTransactionGasLimit::get(),
+		);
 		Self::raw_transact(transaction)
 	}
 

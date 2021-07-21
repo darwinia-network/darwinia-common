@@ -46,7 +46,7 @@ use bp_runtime::{ChainId, Size};
 use darwinia_evm::AddressMapping;
 use darwinia_support::{
 	balance::*,
-	evm::{POW_9},
+	evm::POW_9,
 	s2s::{source_root_converted_id, RelayMessageCaller, ToEthAddress},
 	PalletDigest,
 };
