@@ -65,7 +65,7 @@ use sp_runtime::{
 use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_evm::{AccountBasic, FeeCalculator, GasWeightMapping, Runner};
-use darwinia_support::evm::INTERNAL_CALLER;
+use darwinia_support::evm::{recover_signer, INTERNAL_CALLER};
 use dp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
 use dp_evm::CallOrCreateInfo;
 #[cfg(feature = "std")]
@@ -185,7 +185,7 @@ pub mod pallet {
 					}
 				}
 				// Check signature correctly
-				let origin = Self::recover_signer(&transaction).ok_or_else(|| {
+				let origin = recover_signer(&transaction).ok_or_else(|| {
 					InvalidTransaction::Custom(TransactionValidationError::InvalidSignature as u8)
 				})?;
 				// Check transaction gas limit correctly
@@ -491,25 +491,11 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	fn recover_signer(transaction: &ethereum::Transaction) -> Option<H160> {
-		let mut sig = [0u8; 65];
-		let mut msg = [0u8; 32];
-		sig[0..32].copy_from_slice(&transaction.signature.r()[..]);
-		sig[32..64].copy_from_slice(&transaction.signature.s()[..]);
-		sig[64] = transaction.signature.standard_v();
-		msg.copy_from_slice(&TransactionMessage::from(transaction.clone()).hash()[..]);
-
-		let pubkey = sp_io::crypto::secp256k1_ecdsa_recover(&sig, &msg).ok()?;
-		Some(H160::from(H256::from_slice(
-			Keccak256::digest(&pubkey).as_slice(),
-		)))
-	}
-
+	/// Transfer rpc transaction to dvm transaction
 	fn to_dvm_transaction(
 		transaction: ethereum::Transaction,
 	) -> Result<DVMTransaction, DispatchError> {
-		let source =
-			Self::recover_signer(&transaction).ok_or_else(|| Error::<T>::InvalidSignature)?;
+		let source = recover_signer(&transaction).ok_or_else(|| Error::<T>::InvalidSignature)?;
 		Ok(DVMTransaction {
 			source,
 			gas_price: Some(transaction.gas_price),
@@ -518,6 +504,7 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
+	/// Save ethereum block
 	fn store_block(post_log: bool, block_number: U256) {
 		let mut transactions = Vec::new();
 		let mut statuses = Vec::new();
