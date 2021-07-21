@@ -31,7 +31,7 @@ use darwinia_relay_primitives::relayer_game::*;
 use darwinia_staking::{RewardDestination, StakingBalance, StakingLedger, TimeDepositItem};
 use darwinia_support::balance::*;
 use ethereum_primitives::{
-	header::EthereumHeader, receipt::EthereumReceiptProof, EthereumBlockNumber, EthereumNetworkType,
+	header::EthereumHeader, receipt::EthereumReceiptProof, EthereumBlockNumber, EthereumNetwork,
 };
 
 decl_tests!(EthereumRelay: darwinia_ethereum_relay::{Pallet, Call, Storage});
@@ -46,12 +46,12 @@ impl SortedMembers<AccountId> for UnusedTechnicalMembership {
 }
 frame_support::parameter_types! {
 	pub const EthereumRelayPalletId: PalletId = PalletId(*b"da/ethrl");
-	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Ropsten;
+	pub const EthereumRelayTargetNetwork: EthereumNetwork = EthereumNetwork::Ropsten;
 }
 impl darwinia_ethereum_relay::Config for Test {
 	type PalletId = EthereumRelayPalletId;
 	type Event = ();
-	type EthereumNetwork = EthereumNetwork;
+	type TargetNetwork = EthereumRelayTargetNetwork;
 	type RelayerGame = UnusedRelayerGame;
 	type ApproveOrigin = EnsureRoot<AccountId>;
 	type RejectOrigin = EnsureRoot<AccountId>;

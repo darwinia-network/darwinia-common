@@ -93,7 +93,7 @@ use ethereum_primitives::{
 	header::EthereumHeader,
 	pow::EthashPartial,
 	receipt::{EthereumReceipt, EthereumReceiptProof, EthereumTransactionIndex},
-	EthereumBlockNumber, EthereumNetworkType, H256, U256,
+	EthereumBlockNumber, EthereumNetwork, H256, U256,
 };
 use types::*;
 
@@ -106,7 +106,7 @@ pub trait Config: frame_system::Config {
 
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
-	type EthereumNetwork: Get<EthereumNetworkType>;
+	type TargetNetwork: Get<EthereumNetwork>;
 
 	type Call: Dispatchable + From<Call<Self>> + IsSubType<Call<Self>> + Clone;
 
@@ -142,7 +142,7 @@ decl_error! {
 		BlockNumberMis,
 		/// Header Hash - MISMATCHED
 		HeaderHashMis,
-		/// Mixhash - MISMATCHED
+		/// MixHash - MISMATCHED
 		MixHashMis,
 
 		/// Begin Header - NOT EXISTED
@@ -252,7 +252,7 @@ decl_module! {
 
 		const PalletId: PalletId = T::PalletId::get();
 
-		const EthereumNetwork: EthereumNetworkType = T::EthereumNetwork::get();
+		const EthereumNetwork: EthereumNetwork = T::TargetNetwork::get();
 
 		fn deposit_event() = default;
 
@@ -561,9 +561,9 @@ impl<T: Config> Module<T> {
 		log::trace!(target: "ethereum-linear-relay", "Number2 OK");
 
 		// check difficulty
-		let ethash_params = match T::EthereumNetwork::get() {
-			EthereumNetworkType::Mainnet => EthashPartial::production(),
-			EthereumNetworkType::Ropsten => EthashPartial::ropsten_testnet(),
+		let ethash_params = match T::TargetNetwork::get() {
+			EthereumNetwork::Mainnet => EthashPartial::production(),
+			EthereumNetwork::Ropsten => EthashPartial::ropsten_testnet(),
 		};
 		ethash_params
 			.verify_block_basic(header)
@@ -581,9 +581,9 @@ impl<T: Config> Module<T> {
 	fn verify_header_pow(header: &EthereumHeader, ethash_proof: &[EthashProof]) -> DispatchResult {
 		Self::verify_header_basic(&header)?;
 
-		let ethash_params = match T::EthereumNetwork::get() {
-			EthereumNetworkType::Mainnet => EthashPartial::production(),
-			EthereumNetworkType::Ropsten => EthashPartial::ropsten_testnet(),
+		let ethash_params = match T::TargetNetwork::get() {
+			EthereumNetwork::Mainnet => EthashPartial::production(),
+			EthereumNetwork::Ropsten => EthashPartial::ropsten_testnet(),
 		};
 
 		let merkle_root = Self::dag_merkle_root((header.number as usize / 30000) as u64);

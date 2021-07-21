@@ -16,6 +16,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+pub use Receipt as EthereumReceipt;
+pub use ReceiptProof as EthereumReceiptProof;
+pub use TransactionIndex as EthereumTransactionIndex;
+
 // --- alloc ---
 #[cfg(not(feature = "std"))]
 use alloc::vec::Vec;
@@ -30,14 +34,14 @@ use rlp_derive::{RlpDecodable, RlpEncodable};
 use sp_debug_derive::RuntimeDebug;
 // --- darwinia-network ---
 #[cfg(any(feature = "full-rlp", test))]
-use crate::error::EthereumError;
+use crate::error::*;
 #[cfg(any(feature = "full-serde", test))]
 use crate::header::bytes_from_string;
 use crate::{H256, U256, *};
 #[cfg(any(feature = "full-rlp", test))]
 use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
 
-pub type EthereumTransactionIndex = (H256, u64);
+pub type TransactionIndex = (H256, u64);
 
 #[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
 #[derive(Clone, PartialEq, Eq, RuntimeDebug)]
@@ -55,7 +59,7 @@ pub enum TransactionOutcome {
 #[derive(Clone, PartialEq, Eq, RuntimeDebug)]
 pub struct LogEntry {
 	/// The address of the contract executing at the point of the `LOG` operation.
-	pub address: EthereumAddress,
+	pub address: Address,
 	/// The topics associated with the `LOG` operation.
 	pub topics: Vec<H256>,
 	/// The data associated with the `LOG` operation.
@@ -76,7 +80,7 @@ impl LogEntry {
 
 #[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
 #[derive(Clone, PartialEq, Eq, RuntimeDebug)]
-pub struct EthereumReceipt {
+pub struct Receipt {
 	/// The total gas used in the block following execution of the transaction.
 	pub gas_used: U256,
 	/// The OR-wide combination of all logs' blooms for this transaction.
@@ -86,7 +90,7 @@ pub struct EthereumReceipt {
 	/// Transaction outcome.
 	pub outcome: TransactionOutcome,
 }
-impl EthereumReceipt {
+impl Receipt {
 	/// Create a new receipt.
 	pub fn new(outcome: TransactionOutcome, gas_used: U256, logs: Vec<LogEntry>) -> Self {
 		Self {
@@ -103,22 +107,19 @@ impl EthereumReceipt {
 	#[cfg(any(feature = "full-rlp", test))]
 	pub fn verify_proof_and_generate(
 		receipt_root: &H256,
-		proof_record: &EthereumReceiptProof,
-	) -> Result<Self, EthereumError> {
-		let proof: Proof =
-			rlp::decode(&proof_record.proof).map_err(|_| EthereumError::InvalidReceiptProof)?;
+		proof_record: &ReceiptProof,
+	) -> Result<Self, Error> {
+		let proof = rlp::decode::<Proof>(&proof_record.proof).map_err(RlpError::from)?;
 		let key = rlp::encode(&proof_record.index);
-
-		let value = MerklePatriciaTrie::verify_proof(receipt_root.0.to_vec(), &key, proof)
-			.map_err(|_| EthereumError::InvalidReceiptProof)?
-			.ok_or(EthereumError::InvalidReceiptProof)?;
-		let receipt = rlp::decode(&value).map_err(|_| EthereumError::InvalidReceiptProof)?;
+		let value = MerklePatriciaTrie::verify_proof(receipt_root.0.to_vec(), &key, proof)?
+			.ok_or(ProofError::TrieKeyNotExist)?;
+		let receipt = rlp::decode(&value).map_err(RlpError::from)?;
 
 		Ok(receipt)
 	}
 }
 #[cfg(any(feature = "full-rlp", test))]
-impl Encodable for EthereumReceipt {
+impl Encodable for Receipt {
 	fn rlp_append(&self, s: &mut RlpStream) {
 		match self.outcome {
 			TransactionOutcome::Unknown => {
@@ -139,17 +140,17 @@ impl Encodable for EthereumReceipt {
 	}
 }
 #[cfg(any(feature = "full-rlp", test))]
-impl Decodable for EthereumReceipt {
+impl Decodable for Receipt {
 	fn decode(rlp: &Rlp) -> Result<Self, DecoderError> {
 		if rlp.item_count()? == 3 {
-			Ok(EthereumReceipt {
+			Ok(Receipt {
 				outcome: TransactionOutcome::Unknown,
 				gas_used: rlp.val_at(0)?,
 				log_bloom: rlp.val_at(1)?,
 				logs: rlp.list_at(2)?,
 			})
 		} else {
-			Ok(EthereumReceipt {
+			Ok(Receipt {
 				gas_used: rlp.val_at(1)?,
 				log_bloom: rlp.val_at(2)?,
 				logs: rlp.list_at(3)?,
@@ -169,7 +170,7 @@ impl Decodable for EthereumReceipt {
 #[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
 #[cfg_attr(any(feature = "full-serde", test), derive(serde::Deserialize))]
 #[derive(Clone, PartialEq, Eq, RuntimeDebug)]
-pub struct EthereumReceiptProof {
+pub struct ReceiptProof {
 	pub index: u64,
 	#[cfg_attr(
 		any(feature = "full-serde", test),
@@ -194,8 +195,8 @@ mod tests {
 		gas_used: U256,
 		status: Option<u8>,
 		log_entries: Vec<LogEntry>,
-	) -> EthereumReceipt {
-		EthereumReceipt::new(
+	) -> Receipt {
+		Receipt::new(
 			if root.is_some() {
 				TransactionOutcome::StateRoot(root.unwrap())
 			} else {
@@ -211,7 +212,7 @@ mod tests {
 	fn test_basic() {
 		// https://ropsten.etherscan.io/tx/0xce62c3d1d2a43cfcc39707b98de53e61a7ef7b7f8853e943d85e511b3451aa7e#eventlog
 		let log_entries = vec![LogEntry {
-			address: EthereumAddress::from_str("ad52e0f67b6f44cd5b9a6f4fbc7c0f78f37e094b").unwrap(),
+			address: Address::from_str("ad52e0f67b6f44cd5b9a6f4fbc7c0f78f37e094b").unwrap(),
 			topics: vec![
 				array_bytes::hex_into_unchecked(
 					"0x6775ce244ff81f0a82f87d6fd2cf885affb38416e3a04355f713c6f008dd126a",
@@ -246,13 +247,13 @@ mod tests {
 		);
 
 		let log_entries = vec![LogEntry {
-			address: EthereumAddress::from_str("a24df0420de1f3b8d740a52aaeb9d55d6d64478e").unwrap(),
+			address: Address::from_str("a24df0420de1f3b8d740a52aaeb9d55d6d64478e").unwrap(),
 			topics: vec![array_bytes::hex_into_unchecked(
 				"0xf36406321d51f9ba55d04e900c1d56caac28601524e09d53e9010e03f83d7d00",
 			)],
 			data: array_bytes::hex2bytes_unchecked("0x0000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000363384a3868b9000000000000000000000000000000000000000000000000000000005d75f54f0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000e53504f5450582f4241542d455448000000000000000000000000000000000000"),
 		}];
-		let receipts = vec![EthereumReceipt::new(
+		let receipts = vec![Receipt::new(
 			TransactionOutcome::StatusCode(1),
 			73705.into(),
 			log_entries,

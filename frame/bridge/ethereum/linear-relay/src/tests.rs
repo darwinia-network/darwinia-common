@@ -263,7 +263,7 @@ fn build_genesis_header() {
 #[test]
 fn relay_mainet_header() {
 	ExtBuilder::default()
-		.eth_network(EthereumNetworkType::Mainnet)
+		.ethereum_network(EthereumNetwork::Mainnet)
 		.build()
 		.execute_with(|| {
 			assert_ok!(EthereumRelay::add_authority(RawOrigin::Root.into(), 0));
@@ -394,7 +394,7 @@ fn receipt_verify_fees_and_relayer_claim_reward() {
 #[test]
 fn check_eth_relay_header_hash_works() {
 	ExtBuilder::default()
-		.eth_network(EthereumNetworkType::Mainnet)
+		.ethereum_network(EthereumNetwork::Mainnet)
 		.build()
 		.execute_with(|| {
 			// block 8996776

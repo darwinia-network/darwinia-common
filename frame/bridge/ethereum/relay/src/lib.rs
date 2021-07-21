@@ -77,7 +77,7 @@ use ethereum_primitives::{
 	header::EthereumHeader,
 	pow::EthashPartial,
 	receipt::{EthereumReceipt, EthereumReceiptProof, EthereumTransactionIndex},
-	EthereumBlockNumber, EthereumNetworkType, H256,
+	EthereumBlockNumber, EthereumNetwork, H256,
 };
 use types::*;
 
@@ -90,7 +90,7 @@ pub trait Config: frame_system::Config {
 
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
-	type EthereumNetwork: Get<EthereumNetworkType>;
+	type TargetNetwork: Get<EthereumNetwork>;
 
 	type Call: Dispatchable + From<Call<Self>> + IsSubType<Call<Self>> + Clone;
 
@@ -566,9 +566,9 @@ impl<T: Config> Module<T> {
 	}
 
 	pub fn ethash_params() -> EthashPartial {
-		match T::EthereumNetwork::get() {
-			EthereumNetworkType::Mainnet => EthashPartial::production(),
-			EthereumNetworkType::Ropsten => EthashPartial::ropsten_testnet(),
+		match T::TargetNetwork::get() {
+			EthereumNetwork::Mainnet => EthashPartial::production(),
+			EthereumNetwork::Ropsten => EthashPartial::ropsten_testnet(),
 		}
 	}
 

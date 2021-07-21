@@ -16,57 +16,106 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+pub mod unexpected {
+	/// Error indicating value found is outside of a valid range.
+	#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+	pub struct OutOfBounds<T> {
+		/// Minimum allowed value.
+		pub min: Option<T>,
+		/// Maximum allowed value.
+		pub max: Option<T>,
+		/// Value found.
+		pub found: T,
+	}
+
+	/// Error indicating an expected value was not found.
+	#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+	pub struct Mismatch<T> {
+		/// Value expected.
+		pub expected: T,
+		/// Value found.
+		pub found: T,
+	}
+}
+pub use unexpected::*;
+
+// --- core ---
+use core::fmt;
 // --- crates.io ---
-#[cfg(feature = "codec")]
-use codec::{Decode, Encode};
+#[cfg(any(feature = "full-rlp", test))]
+use merkle_patricia_trie::TrieError;
+#[cfg(any(feature = "full-rlp", test))]
+use rlp::DecoderError;
 // --- darwinia-network ---
-use crate::*;
+use crate::{H128, U256};
 
-#[cfg_attr(feature = "codec", derive(Encode, Decode))]
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-/// Error indicating value found is outside of a valid range.
-pub struct OutOfBounds<T> {
-	/// Minimum allowed value.
-	pub min: Option<T>,
-	/// Maximum allowed value.
-	pub max: Option<T>,
-	/// Value found.
-	pub found: T,
+/// Errors concerning block processing.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Error {
+	Custom(&'static str),
+	Block(BlockError),
+	Proof(ProofError),
+	#[cfg(any(feature = "full-rlp", test))]
+	Rlp(RlpError),
+	#[cfg(any(feature = "full-rlp", test))]
+	Trie(TrieError),
+}
+impl fmt::Display for Error {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		fmt::Debug::fmt(&self, f)
+	}
+}
+impl From<&'static str> for Error {
+	fn from(s: &'static str) -> Self {
+		Self::Custom(s)
+	}
+}
+impl From<BlockError> for Error {
+	fn from(e: BlockError) -> Self {
+		Self::Block(e)
+	}
+}
+impl From<ProofError> for Error {
+	fn from(e: ProofError) -> Self {
+		Self::Proof(e)
+	}
+}
+#[cfg(any(feature = "full-rlp", test))]
+impl From<RlpError> for Error {
+	fn from(e: RlpError) -> Self {
+		Self::Rlp(e)
+	}
+}
+#[cfg(any(feature = "full-rlp", test))]
+impl From<TrieError> for Error {
+	fn from(e: TrieError) -> Self {
+		Self::Trie(e)
+	}
 }
 
-#[cfg_attr(feature = "codec", derive(Encode, Decode))]
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-/// Error indicating an expected value was not found.
-pub struct Mismatch<T> {
-	/// Value expected.
-	pub expected: T,
-	/// Value found.
-	pub found: T,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum EthereumError {
-	InvalidProofOfWork(OutOfBounds<U256>),
-	DifficultyOutOfBounds(OutOfBounds<U256>),
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum BlockError {
 	InvalidSealArity(Mismatch<usize>),
-	SealInvalid,
-	MerkleProofMismatch(&'static str),
-	Rlp(&'static str),
-	InvalidReceiptProof,
+	DifficultyOutOfBounds(OutOfBounds<U256>),
+	InvalidProofOfWork(OutOfBounds<U256>),
+	InvalidSeal,
 }
 
-impl From<EthereumError> for &str {
-	fn from(e: EthereumError) -> Self {
-		use EthereumError::*;
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum ProofError {
+	TrieKeyNotExist,
+	MerkleRootMismatch(Mismatch<H128>),
+	MerkleProofOutOfRange(OutOfBounds<usize>),
+}
 
-		match e {
-			InvalidProofOfWork(_) => "Proof Of Work - INVALID",
-			DifficultyOutOfBounds(_) => "Difficulty - OUT OF BOUNDS",
-			InvalidSealArity(_) => "Seal Arity - INVALID",
-			SealInvalid => "Seal - INVALID",
-			MerkleProofMismatch(msg) => msg,
-			Rlp(msg) => msg,
-			InvalidReceiptProof => "EthereumReceipt Proof - INVALID",
-		}
+#[cfg(any(feature = "full-rlp", test))]
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum RlpError {
+	Decoder(DecoderError),
+}
+#[cfg(any(feature = "full-rlp", test))]
+impl From<DecoderError> for RlpError {
+	fn from(e: DecoderError) -> Self {
+		Self::Decoder(e)
 	}
 }

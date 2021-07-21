@@ -18,6 +18,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(not(feature = "std"))]
 extern crate alloc;
 
 pub mod error;
@@ -26,25 +27,27 @@ pub mod header;
 pub mod pow;
 pub mod receipt;
 
+pub use crate::{BlockNumber as EthereumBlockNumber, Network as EthereumNetwork};
 pub use ethereum_types::{Address as EthereumAddress, *};
 
 // --- alloc ---
+#[cfg(not(feature = "std"))]
 use alloc::vec::Vec;
 // --- crates.io ---
 #[cfg(any(feature = "full-codec", test))]
 use codec::{Decode, Encode};
 
 pub type Bytes = Vec<u8>;
-pub type EthereumBlockNumber = u64;
+pub type BlockNumber = u64;
 
 #[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
 #[derive(Clone, PartialEq)]
-pub enum EthereumNetworkType {
+pub enum Network {
 	Mainnet,
 	Ropsten,
 }
-impl Default for EthereumNetworkType {
-	fn default() -> EthereumNetworkType {
-		EthereumNetworkType::Mainnet
+impl Default for Network {
+	fn default() -> Network {
+		Network::Mainnet
 	}
 }
