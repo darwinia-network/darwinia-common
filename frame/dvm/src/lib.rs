@@ -641,12 +641,6 @@ impl Default for EthereumStorageSchema {
 	}
 }
 
-#[derive(Eq, PartialEq, Clone, sp_runtime::RuntimeDebug)]
-pub enum ReturnValue {
-	Bytes(Vec<u8>),
-	Hash(H160),
-}
-
 #[repr(u8)]
 enum TransactionValidationError {
 	#[allow(dead_code)]

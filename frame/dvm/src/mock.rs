@@ -138,9 +138,7 @@ pub struct HashedAddressMapping;
 impl AddressMapping<AccountId32> for HashedAddressMapping {
 	fn into_account_id(address: H160) -> AccountId32 {
 		let mut raw_account = [0u8; 32];
-
 		raw_account[0..20].copy_from_slice(&address[..]);
-
 		raw_account.into()
 	}
 }
@@ -198,12 +196,16 @@ impl darwinia_evm::Config for Test {
 	type IssuingHandler = ();
 }
 
+frame_support::parameter_types! {
+	pub InternalTransactionGasLimit: U256 = U256::from(0x300000);
+}
+
 impl dvm_ethereum::Config for Test {
 	type Event = Event;
-	type FindAuthor = EthereumFindAuthor;
 	type StateRoot = IntermediateStateRoot;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
+	type InternalTransactionGasLimit = InternalTransactionGasLimit;
 }
 
 frame_support::construct_runtime! {

@@ -21,6 +21,7 @@ use array_bytes::{bytes2hex, hex2bytes_unchecked};
 use codec::Decode;
 use ethabi::{Function, Param, ParamType, Token};
 use ethereum::TransactionSignature;
+use evm::ExitSucceed;
 use std::str::FromStr;
 // --- darwinia ---
 use crate::{
@@ -534,6 +535,7 @@ fn raw_call_should_works() {
 			input: hex2bytes_unchecked(TEST_CONTRACT_BYTECODE),
 		}
 		.sign(&alice.private_key);
+		// Deploy contract
 		assert_ok!(Ethereum::execute(
 			alice.address,
 			t.input,
@@ -589,7 +591,7 @@ fn raw_call_should_works() {
 }
 
 #[test]
-fn internal_transaction_should_works() {
+fn raw_call_with_insufficient_gas_limit_failed() {
 	let (pairs, mut ext) = new_test_ext(1);
 	let alice = &pairs[0];
 
@@ -603,6 +605,7 @@ fn internal_transaction_should_works() {
 			input: hex2bytes_unchecked(TEST_CONTRACT_BYTECODE),
 		}
 		.sign(&alice.private_key);
+		// Deploy contract
 		assert_ok!(Ethereum::execute(
 			alice.address,
 			t.input,
@@ -617,13 +620,184 @@ fn internal_transaction_should_works() {
 			array_bytes::hex_into_unchecked("32dcab0ef3fb2de2fce1d2e0799d36239671f04a");
 		let foo: Vec<u8> = hex2bytes_unchecked("c2985578");
 
-		Ethereum::internal_transact(contract_address, foo.clone());
-		Ethereum::internal_transact(contract_address, foo);
+		// Call foo use INTERNAL_CALLER
+		let result = Ethereum::raw_call(
+			INTERNAL_CALLER,
+			contract_address,
+			foo.clone(),
+			U256::from(0x300000),
+		)
+		.unwrap();
+		assert_eq!(
+			result,
+			vec![
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 1
+			]
+		);
+		// Check nonce
+		assert_eq!(
+			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&INTERNAL_CALLER).nonce,
+			U256::from(1)
+		);
 
-		// let event_count = System::event_count();
-		// let events = System::events();
-		// println!("bear: --- events in test file {:?}", events);
-		// assert_eq!(event_count, 2);
+		// Change gas limit to 0x300, return error
+		assert_err!(
+			Ethereum::raw_call(
+				INTERNAL_CALLER,
+				contract_address,
+				foo.clone(),
+				U256::from(0x300)
+			),
+			<Error<Test>>::InternalTransactionExitError
+		);
+		// Change gas limit to 0x30000, return ok
+		assert_ok!(Ethereum::raw_call(
+			INTERNAL_CALLER,
+			contract_address,
+			foo,
+			U256::from(0x30000)
+		),);
+	});
+}
+
+#[test]
+fn internal_transaction_should_works() {
+	let (pairs, mut ext) = new_test_ext(1);
+	let alice = &pairs[0];
+
+	ext.execute_with(|| {
+		let t = UnsignedTransaction {
+			nonce: U256::zero(),
+			gas_price: U256::from(1),
+			gas_limit: U256::from(0x100000),
+			action: ethereum::TransactionAction::Create,
+			value: U256::zero(),
+			input: hex2bytes_unchecked(TEST_CONTRACT_BYTECODE),
+		}
+		.sign(&alice.private_key);
+		// deploy contract
+		assert_ok!(Ethereum::execute(
+			alice.address,
+			t.input,
+			t.value,
+			t.gas_limit,
+			Some(t.gas_price),
+			Some(t.nonce),
+			t.action,
+			None,
+		));
+		let contract_address: H160 =
+			array_bytes::hex_into_unchecked("32dcab0ef3fb2de2fce1d2e0799d36239671f04a");
+		let foo: Vec<u8> = hex2bytes_unchecked("c2985578");
+
+		// Call foo use internal transaction
+		assert_ok!(Ethereum::internal_transact(contract_address, foo.clone()));
+		assert_eq!(System::event_count(), 1);
+		System::assert_last_event(mock::Event::dvm_ethereum(crate::Event::Executed(
+			INTERNAL_CALLER,
+			H160::default(),
+			H256::from_str("0xacbca5c359f950a7a2fc5f802816396597e5eb3bd4d3221501953359bac12b88")
+				.unwrap(),
+			ExitReason::Succeed(ExitSucceed::Returned),
+		)));
+
+		assert_ok!(Ethereum::internal_transact(contract_address, foo));
+		System::assert_last_event(mock::Event::dvm_ethereum(crate::Event::Executed(
+			INTERNAL_CALLER,
+			H160::default(),
+			H256::from_str("0x9865413867a71dc81995d8a8d05ecdf15269d874b3a7203484b110c81ea04043")
+				.unwrap(),
+			ExitReason::Succeed(ExitSucceed::Returned),
+		)));
+		assert_eq!(System::event_count(), 2);
+	});
+}
+
+#[test]
+fn internal_transaction_nonce_increase() {
+	let (pairs, mut ext) = new_test_ext(1);
+	let alice = &pairs[0];
+
+	ext.execute_with(|| {
+		let t = UnsignedTransaction {
+			nonce: U256::zero(),
+			gas_price: U256::from(1),
+			gas_limit: U256::from(0x100000),
+			action: ethereum::TransactionAction::Create,
+			value: U256::zero(),
+			input: hex2bytes_unchecked(TEST_CONTRACT_BYTECODE),
+		}
+		.sign(&alice.private_key);
+		// deploy contract
+		assert_ok!(Ethereum::execute(
+			alice.address,
+			t.input,
+			t.value,
+			t.gas_limit,
+			Some(t.gas_price),
+			Some(t.nonce),
+			t.action,
+			None,
+		));
+		let contract_address: H160 =
+			array_bytes::hex_into_unchecked("32dcab0ef3fb2de2fce1d2e0799d36239671f04a");
+		let foo: Vec<u8> = hex2bytes_unchecked("c2985578");
+
+		// Call foo use internal transaction
+		assert_ok!(Ethereum::internal_transact(contract_address, foo.clone()));
+		assert_eq!(
+			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&INTERNAL_CALLER).nonce,
+			U256::from(1)
+		);
+
+		assert_ok!(Ethereum::internal_transact(contract_address, foo));
+		assert_eq!(
+			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&INTERNAL_CALLER).nonce,
+			U256::from(2)
+		);
+	});
+}
+
+#[test]
+fn internal_transact_dispatch_error() {
+	let (pairs, mut ext) = new_test_ext(1);
+	let alice = &pairs[0];
+
+	ext.execute_with(|| {
+		let t = UnsignedTransaction {
+			nonce: U256::zero(),
+			gas_price: U256::from(1),
+			gas_limit: U256::from(0x100000),
+			action: ethereum::TransactionAction::Create,
+			value: U256::zero(),
+			input: hex2bytes_unchecked(TEST_CONTRACT_BYTECODE),
+		}
+		.sign(&alice.private_key);
+		// deploy contract
+		assert_ok!(Ethereum::execute(
+			alice.address,
+			t.input,
+			t.value,
+			t.gas_limit,
+			Some(t.gas_price),
+			Some(t.nonce),
+			t.action,
+			None,
+		));
+		let contract_address: H160 =
+			array_bytes::hex_into_unchecked("32dcab0ef3fb2de2fce1d2e0799d36239671f04a");
+		let mock_foo: Vec<u8> = hex2bytes_unchecked("00000000");
+
+		// Call foo use internal transaction
+		assert_err!(
+			Ethereum::internal_transact(contract_address, mock_foo),
+			<Error<Test>>::InternalTransactionRevertError
+		);
+		assert_eq!(
+			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&INTERNAL_CALLER).nonce,
+			U256::from(1)
+		);
 	});
 }
 
