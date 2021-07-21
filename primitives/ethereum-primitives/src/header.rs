@@ -29,7 +29,7 @@ use ethbloom::Bloom;
 use keccak_hash::keccak;
 use keccak_hash::{KECCAK_EMPTY_LIST_RLP, KECCAK_NULL_RLP};
 #[cfg(any(feature = "full-rlp", test))]
-use rlp::{Decodable, DecoderError, Encodable, Rlp, RlpStream};
+use rlp::{DecoderError, Encodable, Rlp, RlpStream};
 #[cfg(any(feature = "full-serde", test))]
 use serde::{Deserialize, Deserializer};
 use sp_debug_derive::RuntimeDebug;
@@ -54,6 +54,7 @@ pub struct Header {
 	pub timestamp: u64,
 	pub number: BlockNumber,
 	pub author: Address,
+
 	pub transactions_root: H256,
 	pub uncles_hash: H256,
 	#[cfg_attr(
@@ -61,6 +62,7 @@ pub struct Header {
 		serde(deserialize_with = "bytes_from_string")
 	)]
 	pub extra_data: Bytes,
+
 	pub state_root: H256,
 	pub receipts_root: H256,
 	pub log_bloom: Bloom,
@@ -68,6 +70,7 @@ pub struct Header {
 		any(feature = "full-serde", test),
 		serde(deserialize_with = "u256_from_u64")
 	)]
+	/// Gas used for contracts execution.
 	pub gas_used: U256,
 	#[cfg_attr(
 		any(feature = "full-serde", test),
@@ -79,11 +82,17 @@ pub struct Header {
 		serde(deserialize_with = "u256_from_u64")
 	)]
 	pub difficulty: U256,
+	/// Vector of post-RLP-encoded fields.
 	#[cfg_attr(
 		any(feature = "full-serde", test),
 		serde(deserialize_with = "bytes_array_from_string")
 	)]
 	pub seal: Vec<Bytes>,
+
+	/// Base fee per gas. Introduced by EIP1559.
+	pub base_fee_per_gas: Option<U256>,
+
+	/// Memoized hash of that header and the seal.
 	pub hash: Option<H256>,
 }
 impl Header {
@@ -96,6 +105,60 @@ impl Header {
 		} else {
 			None
 		}
+	}
+
+	#[cfg(any(feature = "full-rlp", test))]
+	pub fn decode_rlp(r: &Rlp, eip1559_transition: BlockNumber) -> Result<Self, DecoderError> {
+		let mut header = Header {
+			parent_hash: r.val_at(0)?,
+			uncles_hash: r.val_at(1)?,
+			author: r.val_at(2)?,
+			state_root: r.val_at(3)?,
+			transactions_root: r.val_at(4)?,
+			receipts_root: r.val_at(5)?,
+			log_bloom: r.val_at(6)?,
+			difficulty: r.val_at(7)?,
+			number: r.val_at(8)?,
+			gas_limit: r.val_at(9)?,
+			gas_used: r.val_at(10)?,
+			timestamp: r.val_at(11)?,
+			extra_data: r.val_at(12)?,
+			seal: Vec::new(),
+			base_fee_per_gas: None,
+			hash: keccak(r.as_raw()).into(),
+		};
+
+		if header.number >= eip1559_transition {
+			for i in 13..r.item_count()? - 1 {
+				header.seal.push(r.at(i)?.as_raw().to_vec())
+			}
+			header.base_fee_per_gas = Some(r.val_at(r.item_count()? - 1)?);
+		} else {
+			for i in 13..r.item_count()? {
+				header.seal.push(r.at(i)?.as_raw().to_vec())
+			}
+		}
+
+		Ok(header)
+	}
+
+	#[cfg(any(feature = "full-rlp", test))]
+	pub fn decode_rlp_list(
+		rlp: &Rlp,
+		eip1559_transition: BlockNumber,
+	) -> Result<Vec<Self>, DecoderError> {
+		if !rlp.is_list() {
+			// at least one byte needs to be present
+			return Err(DecoderError::RlpIncorrectListLen);
+		}
+
+		let mut output = Vec::with_capacity(rlp.item_count()?);
+
+		for h in rlp.iter() {
+			output.push(Self::decode_rlp(&h, eip1559_transition)?);
+		}
+
+		Ok(output)
 	}
 }
 impl Default for Header {
@@ -115,6 +178,7 @@ impl Default for Header {
 			gas_limit: U256::default(),
 			difficulty: U256::default(),
 			seal: Vec::new(),
+			base_fee_per_gas: None,
 			hash: None,
 		}
 	}
@@ -143,35 +207,8 @@ impl PartialEq for Header {
 			&& self.gas_used == c.gas_used
 			&& self.gas_limit == c.gas_limit
 			&& self.difficulty == c.difficulty
+			&& self.base_fee_per_gas == c.base_fee_per_gas
 			&& self.seal == c.seal
-	}
-}
-#[cfg(any(feature = "full-rlp", test))]
-impl Decodable for Header {
-	fn decode(r: &Rlp) -> Result<Self, DecoderError> {
-		let mut header = Header {
-			parent_hash: r.val_at(0)?,
-			uncles_hash: r.val_at(1)?,
-			author: r.val_at(2)?,
-			state_root: r.val_at(3)?,
-			transactions_root: r.val_at(4)?,
-			receipts_root: r.val_at(5)?,
-			log_bloom: r.val_at(6)?,
-			difficulty: r.val_at(7)?,
-			number: r.val_at(8)?,
-			gas_limit: r.val_at(9)?,
-			gas_used: r.val_at(10)?,
-			timestamp: r.val_at(11)?,
-			extra_data: r.val_at(12)?,
-			seal: Vec::new(),
-			hash: keccak(r.as_raw()).into(),
-		};
-
-		for i in 13..r.item_count()? {
-			header.seal.push(r.at(i)?.as_raw().to_vec())
-		}
-
-		Ok(header)
 	}
 }
 #[cfg(any(feature = "full-rlp", test))]
@@ -268,6 +305,11 @@ impl Header {
 		&self.seal
 	}
 
+	/// Get the base fee field of the header.
+	pub fn base_fee(&self) -> Option<U256> {
+		self.base_fee_per_gas
+	}
+
 	/// Set the seal field of the header.
 	pub fn set_seal(&mut self, a: Vec<Bytes>) {
 		change_field(&mut self.hash, &mut self.seal, a)
@@ -315,10 +357,16 @@ impl Header {
 	/// Place this header into an RLP stream `s`, optionally `with_seal`.
 	#[cfg(any(feature = "full-rlp", test))]
 	fn stream_rlp(&self, s: &mut RlpStream, with_seal: Seal) {
-		if let Seal::With = with_seal {
-			s.begin_list(13 + self.seal.len());
+		let stream_length_without_seal = if self.base_fee_per_gas.is_some() {
+			14
 		} else {
-			s.begin_list(13);
+			13
+		};
+
+		if let Seal::With = with_seal {
+			s.begin_list(stream_length_without_seal + self.seal.len());
+		} else {
+			s.begin_list(stream_length_without_seal);
 		}
 
 		s.append(&self.parent_hash);
@@ -339,6 +387,10 @@ impl Header {
 			for b in &self.seal {
 				s.append_raw(b, 1);
 			}
+		}
+
+		if self.base_fee_per_gas.is_some() {
+			s.append(&self.base_fee_per_gas.unwrap());
 		}
 	}
 }

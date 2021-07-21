@@ -41,6 +41,7 @@ use sp_debug_derive::RuntimeDebug;
 use crate::{
 	error::{BlockError, Error, Mismatch, OutOfBounds, ProofError, RlpError},
 	ethashproof::EthashProof,
+	H128,
 };
 use crate::{header::Header, BigEndianHash, BlockNumber, H256, H64, U256, U512};
 
