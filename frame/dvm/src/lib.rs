@@ -44,11 +44,10 @@ use sha3::{Digest, Keccak256};
 // --- substrate ---
 #[cfg(feature = "std")]
 use frame_support::storage::unhashed;
-use frame_support::weights::{Pays, PostDispatchInfo};
 use frame_support::{
 	dispatch::DispatchResultWithPostInfo,
 	ensure,
-	traits::{Currency, Get},
+	traits::{Currency, FindAuthor, Get},
 	weights::{Pays, PostDispatchInfo, Weight},
 };
 use frame_system::ensure_none;
@@ -63,15 +62,8 @@ use sp_runtime::{
 use sp_std::marker::PhantomData;
 use sp_std::prelude::*;
 // --- darwinia ---
-<<<<<<< HEAD
-use darwinia_evm::{AccountBasic, FeeCalculator, GasWeightMapping, Runner};
+use darwinia_evm::{AccountBasic, BlockHashMapping, FeeCalculator, GasWeightMapping, Runner};
 use darwinia_support::evm::{recover_signer, INTERNAL_CALLER};
-=======
-use darwinia_evm::{
-	runner::Runner, AccountBasic, BlockHashMapping, FeeCalculator, GasWeightMapping,
-};
-use darwinia_support::evm::INTERNAL_CALLER;
->>>>>>> master
 use dp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
 use dp_evm::CallOrCreateInfo;
 #[cfg(feature = "std")]

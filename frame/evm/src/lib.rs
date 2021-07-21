@@ -41,7 +41,7 @@ use serde::{Deserialize, Serialize};
 // --- paritytech ---
 use frame_support::{
 	dispatch::DispatchResultWithPostInfo,
-	traits::Currency,
+	traits::{Currency, FindAuthor},
 	weights::{PostDispatchInfo, Weight},
 };
 use frame_system::RawOrigin;
