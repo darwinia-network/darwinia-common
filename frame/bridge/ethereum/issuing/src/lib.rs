@@ -67,16 +67,13 @@ use ethereum_primitives::{
 use types::*;
 
 pub trait Config: dvm_ethereum::Config {
+	type PalletId: Get<PalletId>;
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
-	type PalletId: Get<PalletId>;
-
 	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
-
+	type RawCallGasLimit: Get<U256>;
 	type EthereumRelay: EthereumReceipt<Self::AccountId, RingBalance<Self>>;
 	type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber, Signer = EthereumAddress>;
-
-	type RawCallGasLimit: Get<U256>;
 	type WeightInfo: WeightInfo;
 }
 
@@ -279,13 +276,9 @@ impl<T: Config> Module<T> {
 		let factory_address = MappingFactoryAddress::get();
 		let bytes = Abi::encode_mapping_token(backing, source)
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
-		let mapped_address = dvm_ethereum::Pallet::<T>::raw_call(
-			INTERNAL_CALLER,
-			factory_address,
-			bytes,
-			T::RawCallGasLimit::get(),
-		)
-		.map_err(|e| -> &'static str { e.into() })?;
+		let mapped_address =
+			dvm_ethereum::Pallet::<T>::raw_call(factory_address, bytes, T::RawCallGasLimit::get())
+				.map_err(|e| -> &'static str { e.into() })?;
 		if mapped_address.len() != 32 {
 			return Err(Error::<T>::InvalidAddressLen.into());
 		}

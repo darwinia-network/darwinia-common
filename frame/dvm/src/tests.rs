@@ -551,13 +551,8 @@ fn raw_call_should_works() {
 		let foo: Vec<u8> = hex2bytes_unchecked("c2985578");
 
 		// Call foo use INTERNAL_CALLER
-		let result = Ethereum::raw_call(
-			INTERNAL_CALLER,
-			contract_address,
-			foo.clone(),
-			U256::from(0x300000),
-		)
-		.unwrap();
+		let result =
+			Ethereum::raw_call(contract_address, foo.clone(), U256::from(0x300000)).unwrap();
 		assert_eq!(
 			result,
 			vec![
@@ -572,9 +567,7 @@ fn raw_call_should_works() {
 		);
 
 		// Call foo use INTERNAL_CALLER
-		let result =
-			Ethereum::raw_call(INTERNAL_CALLER, contract_address, foo, U256::from(0x300000))
-				.unwrap();
+		let result = Ethereum::raw_call(contract_address, foo, U256::from(0x300000)).unwrap();
 		assert_eq!(
 			result,
 			vec![
@@ -621,13 +614,8 @@ fn raw_call_with_insufficient_gas_limit_failed() {
 		let foo: Vec<u8> = hex2bytes_unchecked("c2985578");
 
 		// Call foo use INTERNAL_CALLER
-		let result = Ethereum::raw_call(
-			INTERNAL_CALLER,
-			contract_address,
-			foo.clone(),
-			U256::from(0x300000),
-		)
-		.unwrap();
+		let result =
+			Ethereum::raw_call(contract_address, foo.clone(), U256::from(0x300000)).unwrap();
 		assert_eq!(
 			result,
 			vec![
@@ -643,17 +631,11 @@ fn raw_call_with_insufficient_gas_limit_failed() {
 
 		// Change gas limit to 0x300, return error
 		assert_err!(
-			Ethereum::raw_call(
-				INTERNAL_CALLER,
-				contract_address,
-				foo.clone(),
-				U256::from(0x300)
-			),
+			Ethereum::raw_call(contract_address, foo.clone(), U256::from(0x300)),
 			<Error<Test>>::InternalTransactionExitError
 		);
 		// Change gas limit to 0x30000, return ok
 		assert_ok!(Ethereum::raw_call(
-			INTERNAL_CALLER,
 			contract_address,
 			foo,
 			U256::from(0x30000)
