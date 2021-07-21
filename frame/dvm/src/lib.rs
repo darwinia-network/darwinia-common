@@ -404,7 +404,7 @@ impl<T: Config> Pallet<T> {
 		Self::return_dispatch_result(transaction.is_internal, &reason, used_gas)
 	}
 
-	/// Pure read-only call to contract
+	/// Pure read-only call to contract, the sender is INTERNAL_CALLER
 	pub fn raw_call(
 		contract: H160,
 		input: Vec<u8>,

@@ -32,21 +32,18 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	AccountId32, Perbill, RuntimeDebug,
 };
-use sp_std::prelude::*;
+use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia ---
 use crate::{self as dvm_ethereum, account_basic::*, *};
 use darwinia_evm::{runner::stack::Runner, AddressMapping, EnsureAddressTruncated, FeeCalculator};
 use darwinia_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use darwinia_evm_precompile_transfer::Transfer;
 use dp_evm::{Precompile, PrecompileSet};
-use sp_std::marker::PhantomData;
-
-darwinia_support::impl_test_account_data! {}
 
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
-
 type Balance = u64;
+darwinia_support::impl_test_account_data! {}
 
 frame_support::parameter_types! {
 	pub const BlockHashCount: u64 = 250;
@@ -291,16 +288,12 @@ fn address_build(seed: u8) -> AccountInfo {
 	let raw_public_key = &libsecp256k1::PublicKey::from_secret_key(&secret_key).serialize()[1..65];
 	let raw_address = {
 		let mut s = [0; 20];
-
 		s.copy_from_slice(&Keccak256::digest(raw_public_key)[12..]);
-
 		s
 	};
 	let raw_account = {
 		let mut s = [0; 32];
-
 		s[..20].copy_from_slice(&raw_address);
-
 		s
 	};
 
