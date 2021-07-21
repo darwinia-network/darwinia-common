@@ -109,6 +109,7 @@ impl EthashPartial {
 				m.insert(4370000, 3000000);
 				m.insert(7280000, 2000000);
 				m.insert(0x8c6180, 0x3d0900);
+				m.insert(0xc3d0e8, 0xaae60);
 				m
 			},
 			expip2_transition: u64::max_value(),
@@ -136,6 +137,7 @@ impl EthashPartial {
 				m.insert(0x19f0a0, 0x2dc6c0);
 				m.insert(0x408b70, 0x1e8480);
 				m.insert(0x6c993d, 0x3d0900);
+				m.insert(0xa03549, 0xaae60);
 				m
 			},
 			expip2_transition: u64::max_value(),
