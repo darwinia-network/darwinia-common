@@ -34,7 +34,7 @@ use rlp::{Decodable, DecoderError, Encodable, Rlp, RlpStream};
 use serde::{Deserialize, Deserializer};
 use sp_debug_derive::RuntimeDebug;
 // --- darwinia ---
-use crate::{Address, BlockNumber, Bytes, H256, H64, U256};
+use crate::{Address, BlockNumber, Bytes, H256, U256};
 
 #[cfg(any(feature = "full-rlp", test))]
 #[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
@@ -96,94 +96,6 @@ impl Header {
 		} else {
 			None
 		}
-	}
-
-	#[cfg(any(all(feature = "full-serde", feature = "full-rlp"), test))]
-	pub fn from_str_unchecked(s: &str) -> Self {
-		// --- std ---
-		use std::str::FromStr;
-
-		fn parse_value_unchecked(s: &str) -> &str {
-			s.splitn(2, ':')
-				.nth(1)
-				.unwrap_or_default()
-				.trim()
-				.trim_matches('"')
-		}
-
-		let s = s
-			.trim()
-			.trim_start_matches('{')
-			.trim_end_matches('}')
-			.split(',');
-		let mut nested_array = 0u32;
-		let mut eth_header = Self::default();
-		let mut mix_hash = H256::default();
-		let mut nonce = H64::default();
-		for s in s {
-			if s.is_empty() {
-				continue;
-			}
-
-			if s[s.find(':').unwrap_or_default() + 1..]
-				.trim_start()
-				.starts_with('[')
-				&& !s.ends_with(']')
-			{
-				nested_array = nested_array.saturating_add(1);
-			} else if s.ends_with(']') {
-				nested_array = nested_array.saturating_sub(1);
-			}
-
-			if nested_array != 0 {
-				continue;
-			}
-
-			let s = s.trim();
-			if s.starts_with("\"difficulty") {
-				eth_header.difficulty = str_to_u64(parse_value_unchecked(s)).into();
-			} else if s.starts_with("\"extraData") {
-				eth_header.extra_data = array_bytes::hex2bytes_unchecked(parse_value_unchecked(s));
-			} else if s.starts_with("\"gasLimit") {
-				eth_header.gas_limit = str_to_u64(parse_value_unchecked(s)).into();
-			} else if s.starts_with("\"gasUsed") {
-				eth_header.gas_used = str_to_u64(parse_value_unchecked(s)).into();
-			} else if s.starts_with("\"hash") {
-				eth_header.hash = Some(array_bytes::hex_into_unchecked(parse_value_unchecked(s)));
-			} else if s.starts_with("\"logsBloom") {
-				let s = parse_value_unchecked(s);
-				let s = if s.starts_with("0x") { &s[2..] } else { s };
-				eth_header.log_bloom = Bloom::from_str(s).unwrap_or_default();
-			} else if s.starts_with("\"miner") {
-				eth_header.author = array_bytes::hex_into_unchecked(parse_value_unchecked(s));
-			} else if s.starts_with("\"mixHash") {
-				mix_hash = array_bytes::hex_into_unchecked(parse_value_unchecked(s));
-			} else if s.starts_with("\"nonce") {
-				nonce = array_bytes::hex_into_unchecked(parse_value_unchecked(s));
-			} else if s.starts_with("\"number") {
-				eth_header.number = str_to_u64(parse_value_unchecked(s));
-			} else if s.starts_with("\"parentHash") {
-				eth_header.parent_hash = array_bytes::hex_into_unchecked(parse_value_unchecked(s));
-			} else if s.starts_with("\"receiptsRoot") {
-				eth_header.receipts_root =
-					array_bytes::hex_into_unchecked(parse_value_unchecked(s));
-			} else if s.starts_with("\"sha3Uncles") {
-				eth_header.uncles_hash = array_bytes::hex_into_unchecked(parse_value_unchecked(s));
-			} else if s.starts_with("\"stateRoot") {
-				eth_header.state_root = array_bytes::hex_into_unchecked(parse_value_unchecked(s));
-			} else if s.starts_with("\"timestamp") {
-				eth_header.timestamp = str_to_u64(parse_value_unchecked(s));
-			} else if s.starts_with("\"transactionsRoot") {
-				eth_header.transactions_root =
-					array_bytes::hex_into_unchecked(parse_value_unchecked(s));
-			}
-		}
-		eth_header.seal = vec![
-			rlp::encode(&mix_hash).to_vec(),
-			rlp::encode(&nonce).to_vec(),
-		];
-
-		eth_header
 	}
 }
 impl Default for Header {

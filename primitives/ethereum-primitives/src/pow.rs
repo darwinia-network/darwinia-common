@@ -42,7 +42,7 @@ use crate::{
 	error::{BlockError, Error, Mismatch, OutOfBounds, ProofError, RlpError},
 	ethashproof::EthashProof,
 };
-use crate::{header::Header, BigEndianHash, BlockNumber, H128, H256, H64, U256, U512};
+use crate::{header::Header, BigEndianHash, BlockNumber, H256, H64, U256, U512};
 
 #[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
 #[derive(Default, PartialEq, Eq, Clone)]
