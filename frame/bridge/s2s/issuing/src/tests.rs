@@ -156,7 +156,7 @@ frame_support::parameter_types! {
 	pub const S2sRelayPalletId: PalletId = PalletId(*b"da/s2sre");
 	pub const MillauChainId: bp_runtime::ChainId = *b"mcid";
 	pub RootAccountForPayments: Option<AccountId32> = Some([1;32].into());
-	pub RawCallGasLimit: U256 = U256::from(0x300000);
+	pub RawCallGasLimit: U256 = U256::from(300_000_000);
 }
 
 pub struct AccountIdConverter;

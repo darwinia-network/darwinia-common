@@ -79,7 +79,7 @@ impl ToEthAddress<AccountId32> for TruncateToEthAddress {
 frame_support::parameter_types! {
 	pub const S2sIssuingPalletId: PalletId = PalletId(*b"da/s2sis");
 	pub const MillauChainId: bp_runtime::ChainId = bp_runtime::MILLAU_CHAIN_ID;
-	pub RawCallGasLimit: U256 = U256::from(0x300000);
+	pub RawCallGasLimit: U256 = U256::from(300_000_000);
 }
 
 impl Config for Runtime {

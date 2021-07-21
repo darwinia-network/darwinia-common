@@ -9,7 +9,7 @@ frame_support::parameter_types! {
 }
 
 frame_support::parameter_types! {
-	pub RawCallGasLimit: U256 = U256::from(0x300000);
+	pub RawCallGasLimit: U256 = U256::from(300_000_000);
 }
 
 impl Config for Runtime {
