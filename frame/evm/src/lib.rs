@@ -38,10 +38,9 @@ use codec::{Decode, Encode};
 use evm::{Config as EvmConfig, ExitError, ExitReason};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-
-// --- substrate ---
+// --- paritytech ---
 use frame_support::{
-	traits::Currency,
+	traits::{Currency, FindAuthor},
 	weights::{PostDispatchInfo, Weight},
 };
 use frame_system::RawOrigin;
@@ -68,29 +67,35 @@ pub mod pallet {
 		type FeeCalculator: FeeCalculator;
 		/// Maps Ethereum gas to Substrate weight.
 		type GasWeightMapping: GasWeightMapping;
+		/// The block gas limit. Can be a simple constant, or an adjustment algorithm in another pallet.
+		type BlockGasLimit: Get<U256>;
+
 		/// Allow the origin to call on behalf of given address.
 		type CallOrigin: EnsureAddressOrigin<Self::Origin>;
+		/// The overarching event type.
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		/// Chain ID of EVM.
+		type ChainId: Get<u64>;
 
 		/// Mapping from address to account id.
 		type AddressMapping: AddressMapping<Self::AccountId>;
+		/// Block number to block hash.
+		type BlockHashMapping: BlockHashMapping;
+		/// Find author for the current block.
+		type FindAuthor: FindAuthor<H160>;
+
 		/// Ring Currency type
 		type RingCurrency: Currency<Self::AccountId>;
 		/// Kton Currency type
 		type KtonCurrency: Currency<Self::AccountId>;
-
-		/// The overarching event type.
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		/// Precompiles associated with this EVM engine.
-		type Precompiles: PrecompileSet;
-		/// Chain ID of EVM.
-		type ChainId: Get<u64>;
-		/// The block gas limit. Can be a simple constant, or an adjustment algorithm in another pallet.
-		type BlockGasLimit: Get<U256>;
-		/// EVM execution runner.
-		type Runner: Runner<Self>;
 		/// The account basic mapping way
 		type RingAccountBasic: AccountBasic<Self>;
 		type KtonAccountBasic: AccountBasic<Self>;
+
+		/// Precompiles associated with this EVM engine.
+		type Precompiles: PrecompileSet;
+		/// EVM execution runner.
+		type Runner: Runner<Self>;
 		/// Issuing contracts handler
 		type IssuingHandler: IssuingHandler;
 
@@ -376,6 +381,14 @@ pub mod pallet {
 
 			T::RingAccountBasic::mutate_account_basic_balance(&address, new_account_balance);
 		}
+
+		/// Get the author using the FindAuthor trait.
+		pub fn find_author() -> H160 {
+			let digest = <frame_system::Pallet<T>>::digest();
+			let pre_runtime_digests = digest.logs.iter().filter_map(|d| d.as_pre_runtime());
+
+			T::FindAuthor::find_author(pre_runtime_digests).unwrap_or_default()
+		}
 	}
 }
 pub use pallet::*;
@@ -439,6 +452,20 @@ impl GasWeightMapping for () {
 	}
 	fn weight_to_gas(weight: Weight) -> u64 {
 		weight
+	}
+}
+
+/// A trait for getting a block hash by number.
+pub trait BlockHashMapping {
+	fn block_hash(number: u32) -> H256;
+}
+
+/// Returns the Substrate block hash by number.
+pub struct SubstrateBlockHashMapping<T>(sp_std::marker::PhantomData<T>);
+impl<T: Config> BlockHashMapping for SubstrateBlockHashMapping<T> {
+	fn block_hash(number: u32) -> H256 {
+		let number = T::BlockNumber::from(number);
+		H256::from_slice(frame_system::Pallet::<T>::block_hash(number).as_ref())
 	}
 }
 

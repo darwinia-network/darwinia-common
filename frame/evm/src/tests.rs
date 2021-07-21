@@ -19,7 +19,7 @@
 // --- std ---
 use std::{collections::BTreeMap, str::FromStr};
 // --- substrate ---
-use frame_support::{assert_ok, traits::GenesisBuild};
+use frame_support::{assert_ok, traits::GenesisBuild, ConsensusEngineId};
 use frame_system::mocking::*;
 use sp_core::H256;
 use sp_runtime::{
@@ -108,6 +108,16 @@ impl FeeCalculator for FixedGasPrice {
 	}
 }
 
+pub struct FindAuthorTruncated;
+impl FindAuthor<H160> for FindAuthorTruncated {
+	fn find_author<'a, I>(_digests: I) -> Option<H160>
+	where
+		I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
+	{
+		Some(H160::default())
+	}
+}
+
 pub struct RawAccountBasic<T>(sp_std::marker::PhantomData<T>);
 impl<T: Config> AccountBasic<T> for RawAccountBasic<T> {
 	/// Get the account basic in EVM format.
@@ -168,6 +178,9 @@ impl Config for Test {
 	type CallOrigin = EnsureAddressRoot<Self::AccountId>;
 
 	type AddressMapping = ConcatAddressMapping<Self::AccountId>;
+	type BlockHashMapping = SubstrateBlockHashMapping<Self>;
+	type FindAuthor = FindAuthorTruncated;
+
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
 

@@ -17,14 +17,11 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-extern crate alloc;
-
-use alloc::vec::Vec;
 use codec::Decode;
 use core::marker::PhantomData;
 use darwinia_evm::{AddressMapping, GasWeightMapping};
 use dp_evm::Precompile;
-use evm::{Context, ExitError, ExitSucceed};
+use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	weights::{DispatchClass, Pays},
@@ -44,7 +41,7 @@ where
 		input: &[u8],
 		target_gas: Option<u64>,
 		context: &Context,
-	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
+	) -> core::result::Result<PrecompileOutput, ExitError> {
 		let call = T::Call::decode(&mut &input[..])
 			.map_err(|_| ExitError::Other("decode failed".into()))?;
 		let info = call.get_dispatch_info();
@@ -68,7 +65,12 @@ where
 				let cost = T::GasWeightMapping::weight_to_gas(
 					post_info.actual_weight.unwrap_or(info.weight),
 				);
-				Ok((ExitSucceed::Stopped, Default::default(), cost))
+				Ok(PrecompileOutput {
+					exit_status: ExitSucceed::Stopped,
+					cost,
+					output: Default::default(),
+					logs: Default::default(),
+				})
 			}
 			Err(_) => Err(ExitError::Other("dispatch execution failed".into())),
 		}

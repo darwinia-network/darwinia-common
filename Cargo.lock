@@ -1448,7 +1448,7 @@ dependencies = [
  "darwinia-support",
  "frame-support",
  "frame-system",
- "libsecp256k1",
+ "libsecp256k1 0.3.5",
  "log",
  "parity-scale-codec",
  "serde",
@@ -1652,9 +1652,9 @@ dependencies = [
  "darwinia-balances",
  "darwinia-support",
  "dp-evm",
- "evm",
- "evm-gasometer",
- "evm-runtime",
+ "evm 0.27.0",
+ "evm-gasometer 0.27.0",
+ "evm-runtime 0.27.0",
  "frame-support",
  "frame-system",
  "log",
@@ -1675,7 +1675,7 @@ name = "darwinia-evm-precompile-blake2"
 version = "2.5.0"
 dependencies = [
  "dp-evm",
- "evm",
+ "evm 0.27.0",
  "sp-core",
  "sp-io",
 ]
@@ -1685,7 +1685,7 @@ name = "darwinia-evm-precompile-bn128"
 version = "2.5.0"
 dependencies = [
  "dp-evm",
- "evm",
+ "evm 0.27.0",
  "sp-core",
  "sp-io",
  "substrate-bn",
@@ -1697,7 +1697,7 @@ version = "2.5.0"
 dependencies = [
  "curve25519-dalek 3.1.0",
  "dp-evm",
- "evm",
+ "evm 0.27.0",
  "sp-core",
  "sp-io",
 ]
@@ -1708,7 +1708,7 @@ version = "2.5.0"
 dependencies = [
  "darwinia-evm",
  "dp-evm",
- "evm",
+ "evm 0.27.0",
  "frame-support",
  "parity-scale-codec",
  "sp-core",
@@ -1721,7 +1721,7 @@ version = "2.5.0"
 dependencies = [
  "dp-evm",
  "ed25519-dalek",
- "evm",
+ "evm 0.27.0",
  "sp-core",
  "sp-io",
 ]
@@ -1731,7 +1731,7 @@ name = "darwinia-evm-precompile-empty"
 version = "2.5.0"
 dependencies = [
  "dp-evm",
- "evm",
+ "evm 0.27.0",
 ]
 
 [[package]]
@@ -1743,7 +1743,7 @@ dependencies = [
  "darwinia-support",
  "dp-contract",
  "dp-evm",
- "evm",
+ "evm 0.27.0",
  "frame-support",
  "log",
  "parity-scale-codec",
@@ -1758,7 +1758,7 @@ version = "2.5.0"
 dependencies = [
  "darwinia-evm",
  "dp-evm",
- "evm",
+ "evm 0.27.0",
 ]
 
 [[package]]
@@ -1766,7 +1766,7 @@ name = "darwinia-evm-precompile-modexp"
 version = "2.5.0"
 dependencies = [
  "dp-evm",
- "evm",
+ "evm 0.27.0",
  "hex",
  "num",
  "sp-core",
@@ -1778,7 +1778,7 @@ name = "darwinia-evm-precompile-sha3fips"
 version = "2.0.0"
 dependencies = [
  "dp-evm",
- "evm",
+ "evm 0.27.0",
  "sp-core",
  "sp-io",
  "tiny-keccak",
@@ -1789,7 +1789,7 @@ name = "darwinia-evm-precompile-simple"
 version = "2.5.0"
 dependencies = [
  "dp-evm",
- "evm",
+ "evm 0.27.0",
  "ripemd160",
  "sp-core",
  "sp-io",
@@ -1805,7 +1805,7 @@ dependencies = [
  "dp-evm",
  "ethabi",
  "ethereum-types",
- "evm",
+ "evm 0.27.0",
  "frame-support",
  "frame-system",
  "log",
@@ -1953,11 +1953,11 @@ dependencies = [
  "dvm-ethereum",
  "ethereum-primitives",
  "ethereum-types",
- "evm",
+ "evm 0.25.0",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "libsecp256k1",
+ "libsecp256k1 0.3.5",
  "log",
  "pallet-timestamp",
  "parity-scale-codec",
@@ -2154,13 +2154,13 @@ dependencies = [
  "dvm-rpc-runtime-api",
  "ethereum",
  "ethereum-types",
- "evm",
+ "evm 0.27.0",
  "futures 0.3.15",
  "jsonrpc-core",
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "jsonrpc-pubsub",
- "libsecp256k1",
+ "libsecp256k1 0.3.5",
  "log",
  "parity-scale-codec",
  "rand 0.7.3",
@@ -2295,7 +2295,7 @@ dependencies = [
 name = "dp-evm"
 version = "2.5.0"
 dependencies = [
- "evm",
+ "evm 0.27.0",
  "impl-trait-for-tuples",
  "parity-scale-codec",
  "serde",
@@ -2446,10 +2446,10 @@ dependencies = [
  "ethabi",
  "ethereum",
  "ethereum-types",
- "evm",
+ "evm 0.27.0",
  "frame-support",
  "frame-system",
- "libsecp256k1",
+ "libsecp256k1 0.5.0",
  "log",
  "pallet-timestamp",
  "parity-scale-codec",
@@ -2755,9 +2755,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1b4bd1fb06a4962a243c8be285d8a9b2493ffa79acb32633ad07a0bc523b1acd"
 dependencies = [
  "ethereum",
- "evm-core",
- "evm-gasometer",
- "evm-runtime",
+ "evm-core 0.25.1",
+ "evm-gasometer 0.25.0",
+ "evm-runtime 0.25.0",
+ "log",
+ "parity-scale-codec",
+ "primitive-types",
+ "rlp",
+ "sha3 0.8.2",
+]
+
+[[package]]
+name = "evm"
+version = "0.27.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f833b0e642bec8286b80f00ad6cc6a95e50210c77949b9cb484637e6a05ed596"
+dependencies = [
+ "environmental",
+ "ethereum",
+ "evm-core 0.27.1",
+ "evm-gasometer 0.27.0",
+ "evm-runtime 0.27.0",
  "log",
  "parity-scale-codec",
  "primitive-types",
@@ -2775,6 +2793,17 @@ dependencies = [
  "funty",
  "parity-scale-codec",
  "primitive-types",
+]
+
+[[package]]
+name = "evm-core"
+version = "0.27.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "908739da31125d17a69533c290a6c818b494176e59a2ce8accbf122f7d76835c"
+dependencies = [
+ "funty",
+ "parity-scale-codec",
+ "primitive-types",
  "serde",
 ]
 
@@ -2784,8 +2813,20 @@ version = "0.25.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0a8f04dcc8b0296652eabfa443a08ebed6071a1178e0f42a7f7b63a612bddf0b"
 dependencies = [
- "evm-core",
- "evm-runtime",
+ "evm-core 0.25.1",
+ "evm-runtime 0.25.0",
+ "primitive-types",
+]
+
+[[package]]
+name = "evm-gasometer"
+version = "0.27.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4118f952ce320c11e1b7b8a575e477d70bc86a3b92ea23e427174d979cf1da26"
+dependencies = [
+ "environmental",
+ "evm-core 0.27.1",
+ "evm-runtime 0.27.0",
  "primitive-types",
 ]
 
@@ -2795,7 +2836,19 @@ version = "0.25.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "54c302f29ca8bba82a382aa52d427869964179e4f24eae57bde70958ce9b7607"
 dependencies = [
- "evm-core",
+ "evm-core 0.25.1",
+ "primitive-types",
+ "sha3 0.8.2",
+]
+
+[[package]]
+name = "evm-runtime"
+version = "0.27.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "952296b416c3b334b26933ad1f9cfa9203e251691586fb317e411872886ca31b"
+dependencies = [
+ "environmental",
+ "evm-core 0.27.1",
  "primitive-types",
  "sha3 0.8.2",
 ]
@@ -2963,7 +3016,7 @@ dependencies = [
 [[package]]
 name = "frame-benchmarking-cli"
 version = "3.0.0"
-source = "git+https://github.com/darwinia-network/substrate.git?branch=main#1d7f6e12c651d776fc0dc1adefd007bb60f60b63"
+source = "git+https://github.com/darwinia-network/substrate?branch=main#1d7f6e12c651d776fc0dc1adefd007bb60f60b63"
 dependencies = [
  "Inflector",
  "chrono",
@@ -3102,7 +3155,7 @@ dependencies = [
 [[package]]
 name = "frame-system-benchmarking"
 version = "3.0.0"
-source = "git+https://github.com/darwinia-network/substrate.git?branch=main#1d7f6e12c651d776fc0dc1adefd007bb60f60b63"
+source = "git+https://github.com/darwinia-network/substrate?branch=main#1d7f6e12c651d776fc0dc1adefd007bb60f60b63"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -3609,6 +3662,17 @@ dependencies = [
  "digest 0.8.1",
  "generic-array 0.12.4",
  "hmac 0.7.1",
+]
+
+[[package]]
+name = "hmac-drbg"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "17ea0a1394df5b6574da6e0c1ade9e78868c9fb0a4e5ef4428e32da4676b85b1"
+dependencies = [
+ "digest 0.9.0",
+ "generic-array 0.14.4",
+ "hmac 0.8.1",
 ]
 
 [[package]]
@@ -4389,7 +4453,7 @@ dependencies = [
  "futures 0.3.15",
  "futures-timer 3.0.2",
  "lazy_static",
- "libsecp256k1",
+ "libsecp256k1 0.3.5",
  "log",
  "multihash",
  "multistream-select",
@@ -4791,11 +4855,59 @@ dependencies = [
  "arrayref",
  "crunchy",
  "digest 0.8.1",
- "hmac-drbg",
+ "hmac-drbg 0.2.0",
  "rand 0.7.3",
  "sha2 0.8.2",
  "subtle 2.4.0",
  "typenum",
+]
+
+[[package]]
+name = "libsecp256k1"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bd1137239ab33b41aa9637a88a28249e5e70c40a42ccc92db7f12cc356c1fcd7"
+dependencies = [
+ "arrayref",
+ "base64 0.12.3",
+ "digest 0.9.0",
+ "hmac-drbg 0.3.0",
+ "libsecp256k1-core",
+ "libsecp256k1-gen-ecmult",
+ "libsecp256k1-gen-genmult",
+ "rand 0.7.3",
+ "serde",
+ "sha2 0.9.5",
+ "typenum",
+]
+
+[[package]]
+name = "libsecp256k1-core"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ee11012b293ea30093c129173cac4335513064094619f4639a25b310fd33c11"
+dependencies = [
+ "crunchy",
+ "digest 0.9.0",
+ "subtle 2.4.0",
+]
+
+[[package]]
+name = "libsecp256k1-gen-ecmult"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "32239626ffbb6a095b83b37a02ceb3672b2443a87a000a884fc3c4d16925c9c0"
+dependencies = [
+ "libsecp256k1-core",
+]
+
+[[package]]
+name = "libsecp256k1-gen-genmult"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "76acb433e21d10f5f9892b1962c2856c58c7f39a9e4bd68ac82b9436a0ffd5b9"
+dependencies = [
+ "libsecp256k1-core",
 ]
 
 [[package]]
@@ -5958,7 +6070,7 @@ dependencies = [
  "dvm-ethereum",
  "dvm-rpc-runtime-api",
  "ethereum-primitives",
- "evm",
+ "evm 0.27.0",
  "frame-benchmarking",
  "frame-executive",
  "frame-support",
@@ -7557,7 +7669,7 @@ source = "git+https://github.com/darwinia-network/substrate?branch=main#1d7f6e12
 dependencies = [
  "derive_more",
  "lazy_static",
- "libsecp256k1",
+ "libsecp256k1 0.3.5",
  "log",
  "parity-scale-codec",
  "parity-wasm 0.41.0",
@@ -8816,7 +8928,7 @@ dependencies = [
  "hex",
  "impl-serde",
  "lazy_static",
- "libsecp256k1",
+ "libsecp256k1 0.3.5",
  "log",
  "merlin",
  "num-traits",
@@ -8923,7 +9035,7 @@ source = "git+https://github.com/darwinia-network/substrate?branch=main#1d7f6e12
 dependencies = [
  "futures 0.3.15",
  "hash-db",
- "libsecp256k1",
+ "libsecp256k1 0.3.5",
  "log",
  "parity-scale-codec",
  "parking_lot 0.11.1",

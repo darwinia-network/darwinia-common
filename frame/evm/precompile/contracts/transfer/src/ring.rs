@@ -18,14 +18,14 @@
 
 // --- substrate ---
 use frame_support::ensure;
-use sp_std::{marker::PhantomData, prelude::*, vec::Vec};
+use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia ---
 use crate::AccountId;
 use darwinia_evm::{AccountBasic, Config};
 use darwinia_support::evm::TRANSFER_ADDR;
 // --- crates ---
 use codec::Decode;
-use evm::{Context, ExitError, ExitSucceed};
+use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
 
 pub struct RingBack<T> {
 	_maker: PhantomData<T>,
@@ -41,7 +41,7 @@ impl<T: Config> RingBack<T> {
 		input: &[u8],
 		_: Option<u64>,
 		context: &Context,
-	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
+	) -> core::result::Result<PrecompileOutput, ExitError> {
 		// Decode input data
 		let input = InputData::<T>::decode(&input)?;
 		let (source, to, value) = (context.address, input.dest, context.apparent_value);
@@ -65,7 +65,12 @@ impl<T: Config> RingBack<T> {
 		let new_target_balance = target_balance.saturating_add(value);
 		T::RingAccountBasic::mutate_account_balance(&to, new_target_balance);
 
-		Ok((ExitSucceed::Returned, vec![], 20000))
+		Ok(PrecompileOutput {
+			exit_status: ExitSucceed::Returned,
+			cost: 20000,
+			output: Default::default(),
+			logs: Default::default(),
+		})
 	}
 }
 
