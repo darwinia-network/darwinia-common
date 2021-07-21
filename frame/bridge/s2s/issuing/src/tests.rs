@@ -106,11 +106,16 @@ impl frame_system::Config for Test {
 	type OnSetCode = ();
 }
 
+frame_support::parameter_types! {
+	pub InternalTransactionGasLimit: U256 = U256::from(300_000_000);
+}
+
 impl dvm_ethereum::Config for Test {
 	type Event = ();
 	type StateRoot = IntermediateStateRoot;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
+	type InternalTransactionGasLimit = InternalTransactionGasLimit;
 }
 
 pub struct FixedGasPrice;
