@@ -32,9 +32,9 @@ pub use ethereum::{
 
 pub use dvm_rpc_runtime_api::{DVMTransaction, TransactionStatus};
 
-// #[cfg(all(feature = "std", test))]
+#[cfg(all(feature = "std", test))]
 mod mock;
-// #[cfg(all(feature = "std", test))]
+#[cfg(all(feature = "std", test))]
 mod tests;
 
 // --- crates ---

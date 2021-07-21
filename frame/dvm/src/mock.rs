@@ -18,8 +18,6 @@
 
 //! Test utilities
 
-#![cfg(test)]
-
 // --- crates.io ---
 use codec::{Decode, Encode};
 use ethereum::{TransactionAction, TransactionSignature};

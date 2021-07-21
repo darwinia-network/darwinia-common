@@ -41,6 +41,7 @@ use serde::{Deserialize, Serialize};
 
 // --- substrate ---
 use frame_support::{
+	dispatch::DispatchResultWithPostInfo,
 	traits::Currency,
 	weights::{PostDispatchInfo, Weight},
 };
@@ -439,7 +440,6 @@ impl GasWeightMapping for () {
 	}
 }
 
-use frame_support::dispatch::DispatchResultWithPostInfo;
 /// A contract handle for ethereum issuing
 pub trait IssuingHandler {
 	fn handle(address: H160, caller: H160, input: &[u8]) -> DispatchResultWithPostInfo;

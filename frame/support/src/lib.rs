@@ -32,9 +32,9 @@ pub mod balance {
 
 pub mod evm {
 	// --- darwinia ---
-	use ethereum_primitives::{H160, H256};
 	use ethereum::TransactionMessage;
-	use sha3::{Keccak256, Digest};
+	use ethereum_primitives::{H160, H256};
+	use sha3::{Digest, Keccak256};
 
 	pub const POW_9: u32 = 1_000_000_000;
 	pub const INTERNAL_CALLER: H160 = H160::zero();

@@ -16,8 +16,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg(test)]
-
 // --- crates ---
 use array_bytes::{bytes2hex, hex2bytes_unchecked};
 use codec::Decode;
