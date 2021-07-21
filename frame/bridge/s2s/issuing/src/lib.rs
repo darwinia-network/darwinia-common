@@ -322,8 +322,7 @@ impl<T: Config> Pallet<T> {
 		let bytes = mtf::encode_mapping_token(backing, source)
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
 		let mapped_address =
-			dvm_ethereum::Pallet::<T>::raw_call(factory_address, bytes, T::RawCallGasLimit::get())
-				.map_err(|e| -> &'static str { e.into() })?;
+			dvm_ethereum::Pallet::<T>::raw_call(factory_address, bytes, T::RawCallGasLimit::get())?;
 		if mapped_address.len() != 32 {
 			return Err(Error::<T>::InvalidAddressLen.into());
 		}
