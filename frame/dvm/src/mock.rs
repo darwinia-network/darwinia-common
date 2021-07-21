@@ -18,6 +18,8 @@
 
 //! Test utilities
 
+#![cfg(test)]
+
 // --- crates.io ---
 use codec::{Decode, Encode};
 use ethereum::{TransactionAction, TransactionSignature};
@@ -68,7 +70,7 @@ impl frame_system::Config for Test {
 	type AccountId = AccountId32;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = ();
+	type Event = Event;
 	type BlockHashCount = ();
 	type Version = ();
 	type PalletInfo = PalletInfo;
@@ -94,7 +96,7 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type OtherCurrencies = ();
 	type WeightInfo = ();
 	type Balance = Balance;
-	type Event = ();
+	type Event = Event;
 	type BalanceInfo = AccountData<Balance>;
 }
 impl darwinia_balances::Config<KtonInstance> for Test {
@@ -105,7 +107,7 @@ impl darwinia_balances::Config<KtonInstance> for Test {
 	type OtherCurrencies = ();
 	type WeightInfo = ();
 	type Balance = Balance;
-	type Event = ();
+	type Event = Event;
 	type BalanceInfo = AccountData<Balance>;
 }
 
@@ -186,7 +188,7 @@ impl darwinia_evm::Config for Test {
 	type AddressMapping = HashedAddressMapping;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
-	type Event = ();
+	type Event = Event;
 	type Precompiles = MockPrecompiles<Self>;
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
@@ -197,7 +199,7 @@ impl darwinia_evm::Config for Test {
 }
 
 impl dvm_ethereum::Config for Test {
-	type Event = ();
+	type Event = Event;
 	type FindAuthor = EthereumFindAuthor;
 	type StateRoot = IntermediateStateRoot;
 	type RingCurrency = Ring;
@@ -210,12 +212,12 @@ frame_support::construct_runtime! {
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Pallet, Call, Config, Storage},
+		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
-		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>},
-		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage},
-		EVM: darwinia_evm::{Pallet, Call, Storage, Config},
-		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config},
+		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>},
+		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event},
 	}
 }
 
@@ -308,7 +310,7 @@ fn address_build(seed: u8) -> AccountInfo {
 // our desired mockup.
 pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExternalities) {
 	// sc_cli::init_logger("");
-	let mut ext = frame_system::GenesisConfig::default()
+	let mut t = frame_system::GenesisConfig::default()
 		.build_storage::<Test>()
 		.unwrap();
 
@@ -321,8 +323,10 @@ pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExtern
 		.collect();
 
 	darwinia_balances::GenesisConfig::<Test, RingInstance> { balances }
-		.assimilate_storage(&mut ext)
+		.assimilate_storage(&mut t)
 		.unwrap();
+	let mut ext = sp_io::TestExternalities::new(t);
+	ext.execute_with(|| System::set_block_number(1));
 
 	(pairs, ext.into())
 }

@@ -16,6 +16,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+#![cfg(test)]
+
 // --- crates ---
 use array_bytes::{bytes2hex, hex2bytes_unchecked};
 use codec::Decode;
@@ -586,6 +588,22 @@ fn raw_call_should_works() {
 			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&INTERNAL_CALLER).nonce,
 			U256::from(2)
 		);
+	});
+}
+
+#[test]
+fn internal_transaction_should_works() {
+	let (pairs, mut ext) = new_test_ext(1);
+	// let alice = &pairs[0];
+
+	ext.execute_with(|| {
+		// Ethereum::transact(Origin::none(), t);
+		Ethereum::test(Origin::none());
+
+		let event_count = System::event_count();
+		let events = System::events();
+		println!("events {:?}", events);
+		assert_eq!(event_count, 2);
 	});
 }
 

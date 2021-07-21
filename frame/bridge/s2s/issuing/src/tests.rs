@@ -53,7 +53,7 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type OtherCurrencies = ();
 	type WeightInfo = ();
 	type Balance = Balance;
-	type Event = ();
+	type Event = Event;
 	type BalanceInfo = AccountData<Balance>;
 }
 impl darwinia_balances::Config<KtonInstance> for Test {
@@ -64,7 +64,7 @@ impl darwinia_balances::Config<KtonInstance> for Test {
 	type OtherCurrencies = ();
 	type WeightInfo = ();
 	type Balance = Balance;
-	type Event = ();
+	type Event = Event;
 	type BalanceInfo = AccountData<Balance>;
 }
 
@@ -92,7 +92,7 @@ impl frame_system::Config for Test {
 	type AccountId = AccountId32;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = ();
+	type Event = Event;
 	type BlockHashCount = ();
 	type Version = ();
 	type PalletInfo = PalletInfo;
@@ -105,7 +105,7 @@ impl frame_system::Config for Test {
 }
 
 impl dvm_ethereum::Config for Test {
-	type Event = ();
+	type Event = Event;
 	type FindAuthor = ();
 	type StateRoot = IntermediateStateRoot;
 	type RingCurrency = Ring;
@@ -139,7 +139,7 @@ impl darwinia_evm::Config for Test {
 	type AddressMapping = HashedAddressMapping;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
-	type Event = ();
+	type Event = Event;
 	type Precompiles = ();
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
@@ -214,7 +214,7 @@ impl ToEthAddress<AccountId32> for TruncateToEthAddress {
 }
 
 impl Config for Test {
-	type Event = ();
+	type Event = Event;
 	type PalletId = S2sRelayPalletId;
 	type WeightInfo = ();
 	type ReceiverAccountId = AccountId32;
@@ -240,6 +240,8 @@ frame_support::construct_runtime! {
 		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		S2sIssuing: s2s_issuing::{Pallet, Call, Storage, Config, Event<T>},
+		Eth: dvm_ethereum::{Pallet, Call, Storage, Config, Event},
+		DVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>},
 	}
 }
 
@@ -275,6 +277,7 @@ fn burn_and_remote_unlock_success() {
 			fee: U256::from(1),
 		};
 		assert_ok!(S2sIssuing::burn_and_remote_unlock(0, burn_info,));
+		assert_eq!(System::event_count(), 1);
 	});
 }
 

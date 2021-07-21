@@ -32,22 +32,22 @@ pub use ethereum::{
 
 pub use dvm_rpc_runtime_api::{DVMTransaction, TransactionStatus};
 
-#[cfg(all(feature = "std", test))]
+// #[cfg(all(feature = "std", test))]
 mod mock;
-#[cfg(all(feature = "std", test))]
+// #[cfg(all(feature = "std", test))]
 mod tests;
 
 // --- crates ---
 use codec::{Decode, Encode};
 use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
-use evm::ExitReason;
+use evm::{ExitReason, ExitSucceed};
 use sha3::{Digest, Keccak256};
 // --- substrate ---
 #[cfg(feature = "std")]
 use frame_support::storage::unhashed;
 use frame_support::{
 	dispatch::DispatchResultWithPostInfo,
-	ensure,
+	ensure, print,
 	traits::FindAuthor,
 	traits::{Currency, Get},
 	weights::Weight,
@@ -142,6 +142,18 @@ pub mod pallet {
 			ensure_none(origin)?;
 
 			Self::rpc_transact(transaction)
+		}
+
+		#[pallet::weight(1000)]
+		pub fn test(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+			Self::deposit_event(Event::Executed(
+				H160::default(),
+				H160::default(),
+				H256::default(),
+				ExitReason::Succeed(ExitSucceed::Stopped),
+			));
+
+			Ok(().into())
 		}
 	}
 
@@ -300,6 +312,26 @@ impl<T: Config> Pallet<T> {
 		let transaction = DVMTransaction::new(nonce, target, input);
 
 		Self::raw_transact(transaction)
+		// catch the last event
+		// let events = frame_support::events_count();
+		// let count = <frame_system::Pallet<T>>::event_count();
+		// println!("bear: === get event count {:?}", count);
+		// let mock_event = Event::
+		// if let Some(last_event) = <frame_system::Pallet<T>>::events().last() {
+		// 	// match the last event
+		// 	// match last_event.event {
+
+		// 	// Event::Executed(_, _, _, _) => {
+		// 	// 	todo!()
+		// 	// }
+		// 	// _ => todo!(),
+		// 	// }
+		// } else {
+		// 	// todo: change it later
+		// 	// return Err(Error::<T>::InvalidCall.into());
+		// 	todo!()
+		// }
+		// Ok(().into())
 	}
 
 	/// Execute transaction from EthApi(network transaction)
@@ -384,8 +416,12 @@ impl<T: Config> Pallet<T> {
 			transaction.source,
 			contract_address.unwrap_or_default(),
 			transaction_hash,
-			reason,
+			reason.clone(),
 		));
+		println!(
+			"bear: === output the event here, source {:?}, reason {:?}",
+			transaction.source, reason
+		);
 
 		Ok(Some(T::GasWeightMapping::gas_to_weight(
 			used_gas.unique_saturated_into(),
