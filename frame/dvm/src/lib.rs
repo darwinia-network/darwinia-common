@@ -40,7 +40,7 @@ mod tests;
 // --- crates ---
 use codec::{Decode, Encode};
 use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
-use evm::{ExitReason, ExitSucceed};
+use evm::ExitReason;
 use sha3::{Digest, Keccak256};
 // --- substrate ---
 #[cfg(feature = "std")]
@@ -48,7 +48,7 @@ use frame_support::storage::unhashed;
 use frame_support::weights::{Pays, PostDispatchInfo};
 use frame_support::{
 	dispatch::DispatchResultWithPostInfo,
-	ensure, print,
+	ensure,
 	traits::FindAuthor,
 	traits::{Currency, Get},
 	weights::Weight,
@@ -161,12 +161,11 @@ pub mod pallet {
 		InvalidSignature,
 		/// Pre-log is present, therefore transact is not allowed.
 		PreLogExists,
-		/// Call failed
-		InvalidCall,
 		/// The internal transaction errors
 		InternalTransactionExitError,
 		InternalTransactionRevertError,
 		InternalTransactionFatalError,
+		InvalidCallError,
 	}
 
 	#[pallet::validate_unsigned]
@@ -414,9 +413,20 @@ impl<T: Config> Pallet<T> {
 		match info {
 			CallOrCreateInfo::Call(info) => match info.exit_reason {
 				ExitReason::Succeed(_) => Ok(info.value),
-				_ => Err(Error::<T>::InvalidCall.into()),
+				ExitReason::Error(e) => {
+					log::error!("Executing internal transaction error happened, {:?}", e);
+					return Err(Error::<T>::InternalTransactionExitError.into());
+				}
+				ExitReason::Revert(e) => {
+					log::error!("Executing internal transaction error happened, {:?}", e);
+					return Err(Error::<T>::InternalTransactionRevertError.into());
+				}
+				ExitReason::Fatal(e) => {
+					log::error!("Executing internal transaction error happened, {:?}", e);
+					return Err(Error::<T>::InternalTransactionFatalError.into());
+				}
 			},
-			_ => Err(Error::<T>::InvalidCall.into()),
+			_ => Err(Error::<T>::InvalidCallError.into()),
 		}
 	}
 

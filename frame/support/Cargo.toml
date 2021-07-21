@@ -25,8 +25,8 @@ bp-runtime    = { default-features = false, git = "https://github.com/darwinia-n
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "main" }
 sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "main" }
 sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "main" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "main" }
 sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "main" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "main" }
 
 [features]
 default = ["std"]
@@ -53,8 +53,8 @@ paritytech-std = [
 	"bp-runtime/std",
 	"sp-core/std",
 	"sp-runtime/std",
-	"sp-std/std",
 	"sp-io/std",
+	"sp-std/std",
 ]
 
 easy-testing = []
