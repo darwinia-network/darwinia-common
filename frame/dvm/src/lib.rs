@@ -26,11 +26,10 @@
 
 pub mod account_basic;
 
+use dvm_rpc_runtime_api::{DVMTransaction, TransactionStatus};
 pub use ethereum::{
 	Block, Log, Receipt, Transaction, TransactionAction, TransactionMessage, TransactionSignature,
 };
-
-pub use dvm_rpc_runtime_api::{DVMTransaction, TransactionStatus};
 
 #[cfg(all(feature = "std", test))]
 mod mock;
@@ -49,23 +48,30 @@ use frame_support::weights::{Pays, PostDispatchInfo};
 use frame_support::{
 	dispatch::DispatchResultWithPostInfo,
 	ensure,
-	traits::FindAuthor,
 	traits::{Currency, Get},
-	weights::Weight,
+	weights::{Pays, PostDispatchInfo, Weight},
 };
 use frame_system::ensure_none;
 use sp_runtime::{
 	generic::DigestItem,
-	traits::UniqueSaturatedInto,
+	traits::{One, Saturating, UniqueSaturatedInto, Zero},
 	transaction_validity::{
 		InvalidTransaction, TransactionSource, TransactionValidity, ValidTransactionBuilder,
 	},
 	DispatchError,
 };
+use sp_std::marker::PhantomData;
 use sp_std::prelude::*;
 // --- darwinia ---
+<<<<<<< HEAD
 use darwinia_evm::{AccountBasic, FeeCalculator, GasWeightMapping, Runner};
 use darwinia_support::evm::{recover_signer, INTERNAL_CALLER};
+=======
+use darwinia_evm::{
+	runner::Runner, AccountBasic, BlockHashMapping, FeeCalculator, GasWeightMapping,
+};
+use darwinia_support::evm::INTERNAL_CALLER;
+>>>>>>> master
 use dp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
 use dp_evm::CallOrCreateInfo;
 #[cfg(feature = "std")]
@@ -92,8 +98,6 @@ pub mod pallet {
 	{
 		/// The overarching event type.
 		type Event: From<Event> + IsType<<Self as frame_system::Config>::Event>;
-		/// Find author for Ethereum.
-		type FindAuthor: FindAuthor<H160>;
 		/// How Ethereum state root is calculated.
 		type StateRoot: Get<H256>;
 		// RING Balance module
@@ -110,13 +114,24 @@ pub mod pallet {
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_finalize(_block_number: T::BlockNumber) {
+		fn on_finalize(n: T::BlockNumber) {
 			<Pallet<T>>::store_block(
 				dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
 				U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(
 					frame_system::Pallet::<T>::block_number(),
 				)),
 			);
+			// move block hash pruning window by one block
+			let block_hash_count = T::BlockHashCount::get();
+			let to_remove = n
+				.saturating_sub(block_hash_count)
+				.saturating_sub(One::one());
+			// keep genesis hash
+			if !to_remove.is_zero() {
+				<BlockHash<T>>::remove(U256::from(
+					UniqueSaturatedInto::<u32>::unique_saturated_into(to_remove),
+				));
+			}
 		}
 
 		fn on_initialize(_block_number: T::BlockNumber) -> Weight {
@@ -216,13 +231,7 @@ pub mod pallet {
 
 				let mut builder = ValidTransactionBuilder::default()
 					.and_provides((origin, transaction.nonce))
-					.priority(if min_gas_price == U256::zero() {
-						0
-					} else {
-						let target_gas =
-							(transaction.gas_limit * transaction.gas_price) / min_gas_price;
-						T::GasWeightMapping::gas_to_weight(target_gas.unique_saturated_into())
-					});
+					.priority(transaction.gas_price.unique_saturated_into());
 
 				if transaction.nonce > account_data.nonce {
 					if let Some(prev_nonce) = transaction.nonce.checked_sub(1.into()) {
@@ -268,6 +277,10 @@ pub mod pallet {
 	#[pallet::getter(fn get_kton_remaining_balances)]
 	pub(super) type RemainingKtonBalance<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, KtonBalance<T>, ValueQuery>;
+
+	// Mapping for block number and hashes.
+	#[pallet::storage]
+	pub(super) type BlockHash<T: Config> = StorageMap<_, Twox64Concat, U256, H256, ValueQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {}
@@ -613,6 +626,14 @@ impl<T: Config> Pallet<T> {
 			used_gas.unique_saturated_into(),
 		))
 		.into())
+	}
+}
+
+/// Returns the Ethereum block hash by number.
+pub struct EthereumBlockHashMapping<T>(PhantomData<T>);
+impl<T: Config> BlockHashMapping for EthereumBlockHashMapping<T> {
+	fn block_hash(number: u32) -> H256 {
+		BlockHash::<T>::get(U256::from(number))
 	}
 }
 

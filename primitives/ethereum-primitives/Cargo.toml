@@ -10,7 +10,7 @@ repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "2.5.0"
 
 [dependencies]
-# crates
+# crates.io
 array-bytes     = { version = "1.3.3" }
 codec           = { package = "parity-scale-codec", version = "2.1.1", default-features = false, features = ["derive"] }
 ethbloom        = { version = "0.11.0", default-features = false, features = ["codec", "rlp"] }
@@ -23,33 +23,28 @@ primitive-types = { version = "0.9.0", default-features = false, features = ["co
 rlp             = { version = "0.5.0", default-features = false }
 rlp-derive      = { version = "0.1.0" }
 serde           = { version = "1.0.126", optional = true, features = ["derive"] }
-# darwinia
-ethash               = { default-features = false, git = "https://github.com/darwinia-network/rust-ethash" }
+# darwinia-network
+ethash               = { default-features = false, git = "https://github.com/darwinia-network/rust-ethash", tag = "v0.4.0" }
 merkle-patricia-trie = { default-features = false, path = "../merkle-patricia-trie" }
-# substrate
+# paritytech
 sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [dev-dependencies]
-# crates
+# crates.io
 keccak-hasher = { version = "0.15.3" }
 serde_json    = { version = "1.0.64" }
 # github
 triehash = { version = "0.8.4" }
-# substrate
+# paritytech
 frame-support = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [features]
 default = ["std"]
 
 std = [
-	"crates-std",
-	"darwinia-std",
-	"substrate-std",
-]
-
-crates-std    = [
+	# crates.io
 	"codec/std",
 	"ethbloom/std",
 	"ethereum-types/std",
@@ -61,16 +56,15 @@ crates-std    = [
 	"primitive-types/std",
 	"rlp/std",
 	"serde",
-]
-darwinia-std  = [
+	# darwinia-network
 	"ethash/std",
 	"merkle-patricia-trie/std",
-]
-substrate-std = [
+	# paritytech
 	"sp-io/std",
 	"sp-runtime/std",
 	"sp-std/std",
 ]
 
-deserialize  = []
+deserialize = []
+
 with-new-dag = []

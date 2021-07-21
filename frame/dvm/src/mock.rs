@@ -21,10 +21,10 @@
 // --- crates.io ---
 use codec::{Decode, Encode};
 use ethereum::{TransactionAction, TransactionSignature};
-use evm::{Context, ExitError, ExitSucceed};
+use evm::{executor::PrecompileOutput, Context, ExitError};
 use rlp::*;
 // --- substrate ---
-use frame_support::{traits::GenesisBuild, ConsensusEngineId};
+use frame_support::{traits::FindAuthor, traits::GenesisBuild, ConsensusEngineId};
 use frame_system::mocking::*;
 use sp_core::{H160, H256, U256};
 use sp_runtime::{
@@ -125,8 +125,8 @@ impl FeeCalculator for FixedGasPrice {
 		1.into()
 	}
 }
-pub struct EthereumFindAuthor;
-impl FindAuthor<H160> for EthereumFindAuthor {
+pub struct FindAuthorTruncated;
+impl FindAuthor<H160> for FindAuthorTruncated {
 	fn find_author<'a, I>(_digests: I) -> Option<H160>
 	where
 		I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
@@ -161,7 +161,7 @@ where
 		input: &[u8],
 		target_gas: Option<u64>,
 		context: &Context,
-	) -> Option<Result<(ExitSucceed, Vec<u8>, u64), ExitError>> {
+	) -> Option<Result<PrecompileOutput, ExitError>> {
 		let to_address = |n: u64| -> H160 { H160::from_low_u64_be(n) };
 
 		match address {
@@ -190,6 +190,8 @@ impl darwinia_evm::Config for Test {
 	type Precompiles = MockPrecompiles<Self>;
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
+	type FindAuthor = FindAuthorTruncated;
+	type BlockHashMapping = EthereumBlockHashMapping<Self>;
 	type Runner = Runner<Self>;
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
@@ -255,8 +257,11 @@ impl UnsignedTransaction {
 
 	pub fn sign(&self, key: &H256) -> Transaction {
 		let hash = self.signing_hash();
-		let msg = secp256k1::Message::parse(hash.as_fixed_bytes());
-		let s = secp256k1::sign(&msg, &secp256k1::SecretKey::parse_slice(&key[..]).unwrap());
+		let msg = libsecp256k1::Message::parse(hash.as_fixed_bytes());
+		let s = libsecp256k1::sign(
+			&msg,
+			&libsecp256k1::SecretKey::parse_slice(&key[..]).unwrap(),
+		);
 		let sig = s.0.serialize();
 
 		let sig = TransactionSignature::new(
@@ -280,8 +285,8 @@ impl UnsignedTransaction {
 
 fn address_build(seed: u8) -> AccountInfo {
 	let raw_private_key = [seed + 1; 32];
-	let secret_key = secp256k1::SecretKey::parse_slice(&raw_private_key).unwrap();
-	let raw_public_key = &secp256k1::PublicKey::from_secret_key(&secret_key).serialize()[1..65];
+	let secret_key = libsecp256k1::SecretKey::parse_slice(&raw_private_key).unwrap();
+	let raw_public_key = &libsecp256k1::PublicKey::from_secret_key(&secret_key).serialize()[1..65];
 	let raw_address = {
 		let mut s = [0; 20];
 

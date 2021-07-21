@@ -17,8 +17,8 @@ ethereum              = { version = "0.7.1", default-features = false, features 
 impl-trait-for-tuples = { version = "0.2.1" }
 num-traits            = { version = "0.2.14", default-features = false }
 sha3                  = { version = "0.9.1", default-features = false }
-# darwinia
-ethabi              = { default-features = false, git = "https://github.com/darwinia-network/ethabi.git", branch = "xavier-no-std" }
+# darwinia-network
+ethabi              = { default-features = false, git = "https://github.com/darwinia-network/ethabi.git", tag = "v13.0.0-no-std" }
 ethereum-primitives = { default-features = false, path = "../../primitives/ethereum-primitives" }
 # paritytech
 bp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
@@ -32,23 +32,15 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 default = ["std"]
 
 std = [
-	"crates-std",
-	"darwinia-std",
-	"paritytech-std",
-]
-
-crates-std = [
+	# crates.io
 	"codec/std",
 	"num-traits/std",
 	"ethereum/std",
 	"sha3/std",
-]
-darwinia-std = [
+	# darwinia-network
 	"ethabi/std",
 	"ethereum-primitives/std",
-]
-
-paritytech-std = [
+	# paritytech
 	"frame-support/std",
 	"bp-runtime/std",
 	"sp-core/std",

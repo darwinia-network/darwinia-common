@@ -26,6 +26,7 @@ pub use pangolin_runtime;
 // --- std ---
 use std::{
 	collections::{BTreeMap, HashMap},
+	path::PathBuf,
 	sync::{Arc, Mutex},
 	time::Duration,
 };
@@ -176,7 +177,7 @@ fn set_prometheus_registry(config: &mut Configuration) -> Result<(), ServiceErro
 	Ok(())
 }
 
-fn open_frontier_backend(config: &Configuration) -> Result<Arc<Backend<Block>>, String> {
+pub fn dvm_database_dir(config: &Configuration) -> PathBuf {
 	let config_dir = config
 		.base_path
 		.as_ref()
@@ -185,11 +186,14 @@ fn open_frontier_backend(config: &Configuration) -> Result<Arc<Backend<Block>>, 
 			BasePath::from_project("", "", &crate::cli::Cli::executable_name())
 				.config_dir(config.chain_spec.id())
 		});
-	let database_dir = config_dir.join("dvm").join("db");
 
+	config_dir.join("dvm").join("db")
+}
+
+pub fn open_dvm_backend(config: &Configuration) -> Result<Arc<Backend<Block>>, String> {
 	Ok(Arc::new(Backend::<Block>::new(&DatabaseSettings {
 		source: DatabaseSettingsSrc::RocksDb {
-			path: database_dir,
+			path: dvm_database_dir(&config),
 			cache_size: 0,
 		},
 	})?))
@@ -274,7 +278,7 @@ where
 		task_manager.spawn_handle(),
 		client.clone(),
 	);
-	let frontier_backend = open_frontier_backend(config)?;
+	let dvm_backend = open_dvm_backend(config)?;
 	let grandpa_hard_forks = vec![];
 	let (grandpa_block_import, grandpa_link) =
 		sc_finality_grandpa::block_import_with_authority_set_hard_forks(
@@ -340,7 +344,7 @@ where
 		let select_chain = select_chain.clone();
 		let chain_spec = config.chain_spec.cloned_box();
 		let pending_transactions = pending_transactions.clone();
-		let frontier_backend = frontier_backend.clone();
+		let dvm_backend = dvm_backend.clone();
 		let filter_pool = filter_pool.clone();
 		let max_past_logs = cli.run.max_past_logs;
 
@@ -366,7 +370,7 @@ where
 					finality_provider: finality_proof_provider.clone(),
 				},
 				pending_transactions: pending_transactions.clone(),
-				backend: frontier_backend.clone(),
+				backend: dvm_backend.clone(),
 				filter_pool: filter_pool.clone(),
 				max_past_logs,
 			};
@@ -389,7 +393,7 @@ where
 			rpc_setup,
 			telemetry,
 			pending_transactions,
-			frontier_backend,
+			dvm_backend,
 			filter_pool,
 		),
 	})
@@ -444,7 +448,7 @@ where
 				rpc_setup,
 				mut telemetry,
 				pending_transactions,
-				frontier_backend,
+				dvm_backend,
 				filter_pool,
 			),
 	} = new_partial::<RuntimeApi, Executor>(&mut config, cli)?;
@@ -673,7 +677,7 @@ where
 			Duration::new(6, 0),
 			client.clone(),
 			backend.clone(),
-			frontier_backend.clone(),
+			dvm_backend.clone(),
 		)
 		.for_each(|()| futures::future::ready(())),
 	);

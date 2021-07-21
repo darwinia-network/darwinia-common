@@ -10,10 +10,10 @@ repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "2.5.0"
 
 [dependencies]
-# crates
+# crates.io
 ethereum-types = { default-features = false, version = "0.11.0" }
-# darwinia
-ethabi = { default-features = false, git = "https://github.com/darwinia-network/ethabi.git", branch = "xavier-no-std" }
+# darwinia-network
+ethabi = { default-features = false, git = "https://github.com/darwinia-network/ethabi.git", tag = "v13.0.0-no-std" }
 # paritytech
 sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
@@ -21,19 +21,10 @@ sp-std = { default-features = false, git = "https://github.com/darwinia-network/
 default = ["std"]
 
 std = [
-	"crates-std",
-	"darwinia-std",
-	"paritytech-std",
-]
-
-crates-std = [
+	# crates.io
 	"ethereum-types/std",
-]
-
-darwinia-std = [
+	# darwinia-network
 	"ethabi/std",
-]
-
-paritytech-std = [
+	# paritytech
 	"sp-std/std",
 ]
