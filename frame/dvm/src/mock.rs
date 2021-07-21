@@ -21,10 +21,13 @@
 // --- crates.io ---
 use codec::{Decode, Encode};
 use ethereum::{TransactionAction, TransactionSignature};
-use evm::{Context, ExitError, ExitSucceed};
+use evm::{executor::PrecompileOutput, Context, ExitError};
 use rlp::RlpStream;
 // --- paritytech ---
-use frame_support::{traits::GenesisBuild, ConsensusEngineId};
+use frame_support::{
+	traits::{FindAuthor, GenesisBuild},
+	ConsensusEngineId,
+};
 use frame_system::mocking::*;
 use sp_core::{H160, H256, U256};
 use sp_runtime::{
