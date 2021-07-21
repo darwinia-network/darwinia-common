@@ -389,7 +389,7 @@ impl<T: Config> Pallet<T> {
 				ExitReason::Fatal(_) => H256::from_low_u64_le(0),
 			},
 			used_gas,
-			logs_bloom: status.clone().logs_bloom,
+			logs_bloom: status.logs_bloom,
 			logs: status.clone().logs,
 		};
 
@@ -412,7 +412,7 @@ impl<T: Config> Pallet<T> {
 	) -> Result<Vec<u8>, DispatchError> {
 		let (_, _, info) = Self::execute(
 			INTERNAL_CALLER,
-			input.clone(),
+			input,
 			U256::zero(),
 			gas_limit,
 			None,
@@ -426,15 +426,15 @@ impl<T: Config> Pallet<T> {
 				ExitReason::Succeed(_) => Ok(info.value),
 				ExitReason::Error(e) => {
 					log::error!("Executing internal transaction error happened, {:?}", e);
-					return Err(Error::<T>::InternalTransactionExitError.into());
+					Err(Error::<T>::InternalTransactionExitError.into())
 				}
 				ExitReason::Revert(e) => {
 					log::error!("Executing internal transaction error happened, {:?}", e);
-					return Err(Error::<T>::InternalTransactionRevertError.into());
+					Err(Error::<T>::InternalTransactionRevertError.into())
 				}
 				ExitReason::Fatal(e) => {
 					log::error!("Executing internal transaction error happened, {:?}", e);
-					return Err(Error::<T>::InternalTransactionFatalError.into());
+					Err(Error::<T>::InternalTransactionFatalError.into())
 				}
 			},
 			_ => Err(Error::<T>::InvalidCallError.into()),
@@ -484,7 +484,7 @@ impl<T: Config> Pallet<T> {
 				let res = T::Runner::call(
 					from,
 					target,
-					input.clone(),
+					input,
 					value,
 					gas_limit.low_u64(),
 					gas_price,
@@ -498,7 +498,7 @@ impl<T: Config> Pallet<T> {
 			ethereum::TransactionAction::Create => {
 				let res = T::Runner::create(
 					from,
-					input.clone(),
+					input,
 					value,
 					gas_limit.low_u64(),
 					gas_price,
@@ -516,7 +516,7 @@ impl<T: Config> Pallet<T> {
 	fn to_dvm_transaction(
 		transaction: ethereum::Transaction,
 	) -> Result<DVMTransaction, DispatchError> {
-		let source = recover_signer(&transaction).ok_or_else(|| Error::<T>::InvalidSignature)?;
+		let source = recover_signer(&transaction).ok_or(Error::<T>::InvalidSignature)?;
 		Ok(DVMTransaction {
 			source,
 			gas_price: Some(transaction.gas_price),
@@ -561,18 +561,18 @@ impl<T: Config> Pallet<T> {
 			mix_hash: H256::default(),
 			nonce: H64::default(),
 		};
-		let block = ethereum::Block::new(partial_header, transactions.clone(), ommers);
+		let block = ethereum::Block::new(partial_header, transactions, ommers);
 
 		CurrentBlock::<T>::put(block.clone());
-		CurrentReceipts::<T>::put(receipts.clone());
-		CurrentTransactionStatuses::<T>::put(statuses.clone());
+		CurrentReceipts::<T>::put(receipts);
+		CurrentTransactionStatuses::<T>::put(statuses);
 
 		if post_log {
 			let digest = DigestItem::<T::Hash>::Consensus(
 				FRONTIER_ENGINE_ID,
 				PostLog::Hashes(dp_consensus::Hashes::from_block(block)).encode(),
 			);
-			<frame_system::Pallet<T>>::deposit_log(digest.into());
+			<frame_system::Pallet<T>>::deposit_log(digest);
 		}
 	}
 
