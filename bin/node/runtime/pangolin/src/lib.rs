@@ -863,6 +863,7 @@ impl_runtime_apis! {
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
 			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
 			use frame_system_benchmarking::Pallet as SystemBench;
+			use darwinia_evm::Module as PalletEvmBench;
 			impl frame_system_benchmarking::Config for Runtime {}
 
 			let whitelist: Vec<TrackedStorageKey> = vec![];
@@ -871,6 +872,7 @@ impl_runtime_apis! {
 			let params = (&config, &whitelist);
 
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
+			add_benchmark!(params, batches, darwinia_evm, PalletEvmBench::<Runtime>);
 			add_benchmark!(params, batches, darwinia_s2s_issuing, Substrate2SubstrateIssuing);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
