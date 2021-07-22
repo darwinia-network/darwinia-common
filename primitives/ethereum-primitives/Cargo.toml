@@ -27,6 +27,7 @@ merkle-patricia-trie = { default-features = false, path = "../merkle-patricia-tr
 
 [dev-dependencies]
 # crates.io
+array-bytes    = { version = "1.3.3", features = ["serde"] }
 codec          = { package = "parity-scale-codec", version = "2.1.1", features = ["derive"] }
 ethbloom       = { version = "0.11.0", features = ["codec"] }
 ethereum-types = { version = "0.11.0", features = ["codec"] }
@@ -67,9 +68,10 @@ full-rlp = [
 ]
 
 full-serde = [
+	"array-bytes/serde",
 	"serde",
 	"ethbloom/serialize",
 	"ethereum-types/serialize",
 ]
 
-with-new-dag = []
+dag = []

@@ -35,8 +35,6 @@ use sp_debug_derive::RuntimeDebug;
 // --- darwinia-network ---
 #[cfg(any(feature = "full-rlp", test))]
 use crate::error::*;
-#[cfg(any(feature = "full-serde", test))]
-use crate::header::bytes_from_hex;
 use crate::{H256, U256, *};
 #[cfg(any(feature = "full-rlp", test))]
 use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
@@ -168,14 +166,14 @@ impl Decodable for Receipt {
 }
 
 #[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
-// #[cfg_attr(any(feature = "full-serde", test), derive(serde::Deserialize))]
+#[cfg_attr(any(feature = "full-serde", test), derive(serde::Deserialize))]
 #[derive(Clone, PartialEq, Eq, RuntimeDebug)]
 pub struct ReceiptProof {
 	pub index: u64,
-	// #[cfg_attr(
-	// any(feature = "full-serde", test),
-	// serde(deserialize_with = "bytes_from_hex")
-	// )]
+	#[cfg_attr(
+		any(feature = "full-serde", test),
+		serde(deserialize_with = "array_bytes::hexd2bytes")
+	)]
 	pub proof: Bytes,
 	pub header_hash: H256,
 }
@@ -226,8 +224,8 @@ mod tests {
 			],
 			data: array_bytes::hex2bytes_unchecked("0x00000000000000000000000074241db5f3ebaeecf9506e4ae9881860933416048eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48000000000000000000000000000000000000000000000000002386f26fc10000"),
 		}];
-
 		let r = construct_receipts(None, 1123401.into(), Some(1), log_entries);
+
 		// TODO: Check the log bloom generation logic
 		assert_eq!(r.log_bloom, Bloom::from_str(
 			"00000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000820000000000000020000000000000000000800000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000200000000020000000000000000000000000000080000000000000800000000000000000000000"
@@ -245,7 +243,6 @@ mod tests {
 		let expected_root = array_bytes::hex_into_unchecked(
 			"0xc789eb8b7f5876f4df4f8ae16f95c9881eabfb700ee7d8a00a51fb4a71afbac9",
 		);
-
 		let log_entries = vec![LogEntry {
 			address: Address::from_str("a24df0420de1f3b8d740a52aaeb9d55d6d64478e").unwrap(),
 			topics: vec![array_bytes::hex_into_unchecked(
@@ -258,7 +255,6 @@ mod tests {
 			73705.into(),
 			log_entries,
 		)];
-
 		let receipts_root = H256(triehash::ordered_trie_root::<KeccakHasher, _>(
 			receipts.iter().map(|x| ::rlp::encode(x)),
 		));
