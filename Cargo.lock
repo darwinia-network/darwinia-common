@@ -1543,7 +1543,6 @@ version = "2.5.0"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
- "darwinia-ethereum-linear-relay",
  "darwinia-ethereum-relay",
  "darwinia-relay-primitives",
  "darwinia-relayer-game",
@@ -1596,28 +1595,6 @@ version = "2.5.0"
 dependencies = [
  "ethabi",
  "ethereum-types",
-]
-
-[[package]]
-name = "darwinia-ethereum-linear-relay"
-version = "2.5.0"
-dependencies = [
- "array-bytes",
- "darwinia-balances",
- "darwinia-support",
- "ethereum-primitives",
- "ethereum-types",
- "frame-support",
- "frame-system",
- "log",
- "parity-scale-codec",
- "rlp",
- "serde",
- "serde_json",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]

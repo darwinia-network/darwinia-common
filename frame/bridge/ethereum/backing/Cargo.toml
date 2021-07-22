@@ -32,13 +32,13 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 # crates.io
 rlp = { version = "0.5.0" }
 # darwinia-network
-darwinia-balances              = { path = "../../../../frame/balances" }
-darwinia-ethereum-linear-relay = { path = "../linear-relay" }
-darwinia-ethereum-relay        = { features = ["full-serde"], path = "../relay" }
+darwinia-balances         = { path = "../../../../frame/balances" }
+darwinia-ethereum-relay   = { features = ["full-serde"], path = "../relay" }
 darwinia-relay-primitives = { path = "../../../../primitives/relay" }
 darwinia-relayer-game     = { path = "../../relayer-game" }
 darwinia-staking          = { path = "../../../../frame/staking" }
-ethereum-primitives            = { features = ["full-serde"], path = "../../../../primitives/ethereum-primitives" }
+ethereum-primitives       = { features = ["full-serde"], path = "../../../../primitives/ethereum-primitives" }
+# darwinia-ethereum-linear-relay = { path = "../linear-relay" }
 # paritytech
 frame-election-provider-support = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-session                  = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
