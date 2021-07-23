@@ -25,6 +25,8 @@ use core::fmt;
 #[cfg(not(feature = "std"))]
 use alloc::vec::Vec;
 // --- crates.io ---
+#[cfg(any(feature = "full-serde", test))]
+use array_bytes::TryFromHex;
 #[cfg(any(feature = "full-codec", test))]
 use codec::{Decode, Encode};
 use ethbloom::Bloom;
@@ -136,11 +138,11 @@ impl<'de> Deserialize<'de> for Header {
 
 						$field = Some(map.next_value()?);
 					}};
-					($field:ident, $from_hex:expr) => {{
+					($field:ident, $hex2:expr) => {{
 						check_and_set_option!(check: $field);
 
 						$field = Some(
-							$from_hex(map.next_value::<&str>()?)
+							$hex2(map.next_value::<&str>()?)
 								.map_err(|e| Error::custom(format_args!("{:?}", e)))?,
 						);
 					}};
@@ -189,7 +191,9 @@ impl<'de> Deserialize<'de> for Header {
 						Ok(Some(key)) => match key {
 							Field::baseFeePerGas => check_and_set_option!(baseFeePerGas),
 							Field::difficulty => check_and_set_option!(difficulty),
-							Field::extraData => check_and_set_option!(extraData, bytes_from_hex),
+							Field::extraData => {
+								check_and_set_option!(extraData, array_bytes::hex2bytes)
+							}
 							Field::gasLimit => check_and_set_option!(gasLimit),
 							Field::gasUsed => check_and_set_option!(gasUsed),
 							Field::hash => check_and_set_option!(hash),
@@ -197,13 +201,17 @@ impl<'de> Deserialize<'de> for Header {
 							Field::miner => check_and_set_option!(miner),
 							Field::mixHash => check_and_set_option!(mixHash),
 							Field::nonce => check_and_set_option!(nonce),
-							Field::number => check_and_set_option!(number, u64_from_hex),
+							Field::number => {
+								check_and_set_option!(number, TryFromHex::try_from_hex)
+							}
 							Field::parentHash => check_and_set_option!(parentHash),
 							Field::receiptsRoot => check_and_set_option!(receiptsRoot),
 							Field::sha3Uncles => check_and_set_option!(sha3Uncles),
 							// Field::size => {}
 							Field::stateRoot => check_and_set_option!(stateRoot),
-							Field::timestamp => check_and_set_option!(timestamp, u64_from_hex),
+							Field::timestamp => {
+								check_and_set_option!(timestamp, TryFromHex::try_from_hex)
+							}
 							// Field::totalDifficulty => {}
 							Field::transactionsRoot => check_and_set_option!(transactionsRoot),
 						},
@@ -262,17 +270,6 @@ impl<'de> Deserialize<'de> for Header {
 	}
 }
 impl Header {
-	#[cfg(any(feature = "full-codec", test))]
-	pub fn from_scale_codec_str<S: AsRef<str>>(s: S) -> Option<Self> {
-		if let Ok(eth_header) =
-			<Self as Decode>::decode(&mut &array_bytes::hex2bytes_unchecked(s.as_ref())[..])
-		{
-			Some(eth_header)
-		} else {
-			None
-		}
-	}
-
 	#[cfg(any(feature = "full-rlp", test))]
 	pub fn decode_rlp(r: &Rlp, eip1559_transition: BlockNumber) -> Result<Self, DecoderError> {
 		let mut header = Header {
@@ -560,31 +557,6 @@ impl Header {
 		}
 	}
 }
-
-#[cfg(any(feature = "full-serde", test))]
-pub fn u64_from_hex(hex: impl AsRef<str>) -> Result<u64, impl fmt::Debug> {
-	let hex = hex.as_ref();
-
-	if hex.starts_with("0x") {
-		u64::from_str_radix(&hex[2..], 16)
-	} else {
-		Ok(hex.parse().unwrap_or_default())
-	}
-}
-
-#[cfg(any(feature = "full-serde", test))]
-pub fn bytes_from_hex(hex: impl AsRef<str>) -> Result<Bytes, impl fmt::Debug> {
-	array_bytes::hex2bytes(hex)
-}
-
-// #[cfg(any(feature = "full-serde", test))]
-// fn bytes_array_from_hex(hex: impl AsRef<str>) -> Result<Vec<Bytes>, impl fmt::Debug> {
-// 	serde_json::from_str::<Vec<&str>>(hex.as_ref())?
-// 		.into_iter()
-// 		.map(|s| array_bytes::hex2bytes(s))
-// 		.collect::<Result<_, _>>()
-// 		.map_err(|e| serde_json::Error::custom(format_args!("{:?}", e)))
-// }
 
 #[cfg(test)]
 mod tests {
