@@ -20,7 +20,7 @@ serde_json  = { version = "1.0.64", optional = true }
 darwinia-relay-primitives = { default-features = false, path = "../../../../primitives/relay" }
 darwinia-support          = { default-features = false, path = "../../../support" }
 ethabi                    = { default-features = false, git = "https://github.com/darwinia-network/ethabi", tag = "v13.0.0-no-std" }
-ethereum-primitives       = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
+ethereum-primitives       = { default-features = false, path = "../../../../primitives/ethereum" }
 # paritytech
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
@@ -37,7 +37,7 @@ darwinia-ethereum-relay   = { features = ["full-serde"], path = "../relay" }
 darwinia-relay-primitives = { path = "../../../../primitives/relay" }
 darwinia-relayer-game     = { path = "../../relayer-game" }
 darwinia-staking          = { path = "../../../../frame/staking" }
-ethereum-primitives       = { features = ["full-serde"], path = "../../../../primitives/ethereum-primitives" }
+ethereum-primitives       = { features = ["full-serde"], path = "../../../../primitives/ethereum" }
 # darwinia-ethereum-linear-relay = { path = "../linear-relay" }
 # paritytech
 frame-election-provider-support = { git = "https://github.com/darwinia-network/substrate", branch = "main" }

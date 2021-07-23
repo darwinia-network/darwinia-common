@@ -57,7 +57,7 @@
 /frame/vesting/ @AurevoirXavier
 
 /primitives/consensus/ @AsceticBear
-/primitives/ethereum-primitives/ @AurevoirXavier @HackFisher
+/primitives/ethereum/ @AurevoirXavier @HackFisher
 /primitives/evm/ @AsceticBear
 /primitives/merkle-patricia-trie/ @AurevoirXavier @HackFisher
 /primitives/relay/ @AurevoirXavier

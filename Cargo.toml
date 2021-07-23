@@ -57,7 +57,7 @@ members = [
 	"primitives/chain-bsc",
 	"primitives/consensus",
 	"primitives/contract",
-	"primitives/ethereum-primitives",
+	"primitives/ethereum",
 	"primitives/evm",
 	"primitives/merkle-patricia-trie",
 	"primitives/relay",
