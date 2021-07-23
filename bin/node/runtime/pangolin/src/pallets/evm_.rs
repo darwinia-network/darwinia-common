@@ -18,7 +18,7 @@ use sp_std::marker::PhantomData;
 // --- darwinia ---
 use crate::*;
 use darwinia_evm::{
-	runner::stack::Runner, ConcatAddressMapping, Config, EnsureAddressTruncated, GasWeightMapping,
+	runner::stack::Runner, ConcatAddressMapping, Config, EnsureAddressTruncated,
 };
 use dp_evm::{Precompile, PrecompileSet};
 use dvm_ethereum::{
@@ -72,16 +72,6 @@ where
 	}
 }
 
-pub struct DarwiniaGasWeightMapping;
-impl GasWeightMapping for DarwiniaGasWeightMapping {
-	fn gas_to_weight(gas: u64) -> Weight {
-		gas * 1_000 as Weight
-	}
-	fn weight_to_gas(weight: Weight) -> u64 {
-		weight / 1_000
-	}
-}
-
 frame_support::parameter_types! {
 	pub const ChainId: u64 = 43;
 	pub BlockGasLimit: U256 = u32::max_value().into();
@@ -89,7 +79,7 @@ frame_support::parameter_types! {
 
 impl Config for Runtime {
 	type FeeCalculator = dvm_dynamic_fee::Pallet<Self>;
-	type GasWeightMapping = DarwiniaGasWeightMapping;
+	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
 	type AddressMapping = ConcatAddressMapping<Self::AccountId>;
 	type FindAuthor = EthereumFindAuthor<Babe>;
