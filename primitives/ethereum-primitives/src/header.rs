@@ -92,6 +92,7 @@ impl<'de> Deserialize<'de> for Header {
 		#[derive(Debug, Deserialize)]
 		#[serde(field_identifier)]
 		enum Field {
+			baseFeePerGas,
 			difficulty,
 			extraData,
 			gasLimit,
@@ -151,6 +152,8 @@ impl<'de> Deserialize<'de> for Header {
 					}};
 				}
 
+				#[allow(non_snake_case)]
+				let mut baseFeePerGas = None;
 				let mut difficulty = None;
 				#[allow(non_snake_case)]
 				let mut extraData = None;
@@ -184,6 +187,7 @@ impl<'de> Deserialize<'de> for Header {
 				loop {
 					match map.next_key() {
 						Ok(Some(key)) => match key {
+							Field::baseFeePerGas => check_and_set_option!(baseFeePerGas),
 							Field::difficulty => check_and_set_option!(difficulty),
 							Field::extraData => check_and_set_option!(extraData, bytes_from_hex),
 							Field::gasLimit => check_and_set_option!(gasLimit),
@@ -228,7 +232,7 @@ impl<'de> Deserialize<'de> for Header {
 						rlp::encode(&check_missing_field!(mixHash)).to_vec(),
 						rlp::encode(&check_missing_field!(nonce)).to_vec(),
 					],
-					// base_fee_per_gas:,
+					base_fee_per_gas: baseFeePerGas,
 					hash,
 					..Default::default()
 				})

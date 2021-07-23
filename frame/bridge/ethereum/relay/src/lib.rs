@@ -231,7 +231,7 @@ decl_storage! {
 			: Vec<(BlockNumberFor<T>, EthereumRelayHeaderParcel, RelayVotingState<AccountId<T>>)>;
 	}
 	add_extra_genesis {
-		config(genesis_header_info): (Vec<u8>, H256);
+		config(genesis_header_info): (String, H256);
 		config(dags_merkle_roots_loader): DagsMerkleRootsLoader;
 		build(|config| {
 			let GenesisConfig {
@@ -239,7 +239,7 @@ decl_storage! {
 				dags_merkle_roots_loader,
 				..
 			} = config;
-			let genesis_header = EthereumHeader::decode(&mut &*genesis_header.to_vec()).unwrap();
+			let genesis_header = serde_json::from_str::<EthereumHeader>(genesis_header).unwrap();
 
 			BestConfirmedBlockNumber::put(genesis_header.number);
 			ConfirmedBlockNumbers::mutate(|numbers| {
