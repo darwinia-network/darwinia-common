@@ -915,16 +915,43 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 		Ok(())
 	}
 
+	#[cfg(feature = "std")]
 	fn on_runtime_upgrade() -> Weight {
 		// <--- Hack for local test
 		// use frame_support::traits::Currency;
 		// let _ = Ring::deposit_creating(&BridgeMillauMessages::relayer_fund_account_id(), 1 << 50);
 		// --->
 
-		darwinia_header_mmr::migration::initialize_new_mmr_state::<Runtime>(b"HeaderMMR", 50);
-		darwinia_relay_authorities::migration::migrate::<Runtime, EthereumRelayAuthoritiesInstance>(
-			b"Instance1DarwiniaRelayAuthorities",
-		);
+		// if let Ok(parcel) = serde_json::from_str(
+		// 	r#"{
+		// 	"header": {
+		// 		"baseFeePerGas": "0x536106b",
+		// 		"difficulty": "0x1e074a90",
+		// 		"extraData": "0xd883010a05846765746888676f312e31362e35856c696e7578",
+		// 		"gasLimit": "0x7a1200",
+		// 		"gasUsed": "0x0",
+		// 		"hash": "0x326c0a30d77b78d91595a4b68ace0f1c0d08d9cf80f98ab9abec5eb12adbd372",
+		// 		"logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+		// 		"miner": "0x9ffed2297c7b81293413550db675073ab46980b2",
+		// 		"mixHash": "0x6fef2c5eded7b7d98dbf81bc40be1b5595eca162e2e98b2f8ae28a96c8bde1b1",
+		// 		"nonce": "0x21d771488758293c",
+		// 		"number": "0xa30533",
+		// 		"parentHash": "0x0f1524bd3bb6e84ec397fa65cc7edb1effb7ef66945523f6f9f22e9ec5867586",
+		// 		"receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+		// 		"sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+		// 		"size": "0x221",
+		// 		"stateRoot": "0x12673e3f6dd58a1adf6d6ffab70374b53862064ba23de736e2f0ca8fa4aa35d5",
+		// 		"timestamp": "0x60f91637",
+		// 		"totalDifficulty": "0x799b46acb904b7",
+		// 		"transactions": [],
+		// 		"transactionsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+		// 		"uncles": []
+		// 	},
+		// 	"mmr_root": "TODO"
+		// }"#,
+		// ) {
+		// 	darwinia_ethereum_relay::migration::migrate(parcel);
+		// }
 
 		RuntimeBlockWeights::get().max_block
 	}

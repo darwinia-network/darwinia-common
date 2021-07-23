@@ -20,6 +20,20 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod migration {
+	// --- darwinia-network ---
+	use crate::*;
+
+	pub fn migrate(parcel: EthereumRelayHeaderParcel) {
+		let number = parcel.header.number;
+
+		BestConfirmedBlockNumber::put(number);
+		ConfirmedBlockNumbers::put(vec![number]);
+		ConfirmedHeaderParcels::remove_all();
+		ConfirmedHeaderParcels::insert(number, parcel);
+	}
+}
+
 pub mod weights;
 // --- darwinia ---
 pub use weights::WeightInfo;
@@ -108,7 +122,7 @@ pub trait Config: frame_system::Config {
 
 	type RejectOrigin: EnsureOrigin<Self::Origin>;
 
-	/// The comfirm period for guard
+	/// The confirm period for guard
 	///
 	/// Tech.Comm. can vote for the pending header within this period
 	/// If not enough Tech.Comm. votes for the pending header it will be confirmed
@@ -533,9 +547,9 @@ decl_module! {
 		pub fn clean_confirmed_parcels(origin) {
 			T::ApproveOrigin::ensure_origin(origin)?;
 
-			ConfirmedHeaderParcels::remove_all();
-			ConfirmedBlockNumbers::kill();
 			BestConfirmedBlockNumber::kill();
+			ConfirmedBlockNumbers::kill();
+			ConfirmedHeaderParcels::remove_all();
 		}
 
 		#[weight = 10_000_000]
