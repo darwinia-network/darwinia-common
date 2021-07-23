@@ -23,7 +23,7 @@
 
 pub mod runner;
 
-#[cfg(any(test, feature = "runtime-benchmarks"))]
+#[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 #[cfg(test)]
 mod tests;

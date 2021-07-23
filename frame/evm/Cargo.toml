@@ -15,6 +15,7 @@ codec           = { package = "parity-scale-codec", version = "2.1.1", default-f
 evm             = { version = "0.27.0", default-features = false, features = ["with-codec"] }
 evm-gasometer   = { version = "0.27.0", default-features = false }
 evm-runtime     = { version = "0.27.0", default-features = false }
+hex             = { optional = true, version = "0.4", default-features = false }
 log             = { version = "0.4.14" }
 primitive-types = { version = "0.9.0", default-features = false, features = ["rlp", "byteorder"] }
 rlp             = { version = "0.5.0", default-features = false }
@@ -32,7 +33,6 @@ sp-core            = { default-features = false, git = "https://github.com/darwi
 sp-io              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-runtime         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-std             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-hex              = { version = "0.4", default-features = false }
 
 [dev-dependencies]
 darwinia-support = { features = ["easy-testing"], path = "../support" }
@@ -48,10 +48,10 @@ std = [
 	"evm-gasometer/std",
 	"evm-runtime/std",
 	"primitive-types/std",
+	"hex/std",
 	"rlp/std",
 	"serde",
 	"sha3/std",
-	"hex/std",
 	# darwinia-network
 	"darwinia-balances/std",
 	"dp-evm/std",
@@ -67,5 +67,6 @@ std = [
 ]
 
 runtime-benchmarks = [
+	"hex",
 	"frame-benchmarking",
 ]

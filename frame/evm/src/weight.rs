@@ -61,7 +61,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	fn runner_execute(x: u32, ) -> Weight {
 		(0 as Weight)
 			// Standard Error: 0
-			.saturating_add((15_000 as Weight).saturating_mul(x as Weight))
+			.saturating_add((16_000 as Weight).saturating_mul(x as Weight))
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			
 	}
@@ -72,7 +72,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 impl WeightInfo for () {
 	fn runner_execute(x: u32, ) -> Weight {
 		(0 as Weight)
-			.saturating_add((15_000 as Weight).saturating_mul(x as Weight))
+			.saturating_add((16_000 as Weight).saturating_mul(x as Weight))
 			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
 			
 	}
