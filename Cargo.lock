@@ -1649,6 +1649,7 @@ dependencies = [
 name = "darwinia-evm"
 version = "2.5.0"
 dependencies = [
+ "array-bytes",
  "darwinia-balances",
  "darwinia-support",
  "dp-evm",
@@ -1658,7 +1659,6 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hex",
  "log",
  "pallet-timestamp",
  "parity-scale-codec",
