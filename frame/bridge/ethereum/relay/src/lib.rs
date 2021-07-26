@@ -28,29 +28,29 @@ pub mod migration {
 	fn encode() {
 		let parcel = serde_json::from_str::<EthereumRelayHeaderParcel>(r#"{
 			"header": {
-				"baseFeePerGas": "0x536106b",
-				"difficulty": "0x1e074a90",
-				"extraData": "0xd883010a05846765746888676f312e31362e35856c696e7578",
+				"baseFeePerGas": "0xeb",
+				"difficulty": "0x4186f54e",
+				"extraData": "0xd883010a06846765746888676f312e31352e36856c696e7578",
 				"gasLimit": "0x7a1200",
-				"gasUsed": "0x0",
-				"hash": "0x326c0a30d77b78d91595a4b68ace0f1c0d08d9cf80f98ab9abec5eb12adbd372",
-				"logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-				"miner": "0x9ffed2297c7b81293413550db675073ab46980b2",
-				"mixHash": "0x6fef2c5eded7b7d98dbf81bc40be1b5595eca162e2e98b2f8ae28a96c8bde1b1",
-				"nonce": "0x21d771488758293c",
-				"number": "0xa30533",
-				"parentHash": "0x0f1524bd3bb6e84ec397fa65cc7edb1effb7ef66945523f6f9f22e9ec5867586",
-				"receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+				"gasUsed": "0x5e949",
+				"hash": "0x9db735cdbe337477d38b70d96998decb9d8ea1d796cdc6c97546132978db668c",
+				"logsBloom": "0x00200000000000000000000080000000000000004000001000010000000000000000000000000000000000000000000000000000000000000000000008000000040000000020400000004008000020200000010000000000004000008000000000000400020000800100000000000800080000000000400000000010000000000000000000000000004000000080000000000081010000080000004000200000000080000020000000000000000000000000200000080000000000000000000000000006000000000000000000000000000000200000001000002000000020000000000000000000000a00000000200000002000000000400000000000000000",
+				"miner": "0xfbb61b8b98a59fbc4bd79c23212addbefaeb289f",
+				"mixHash": "0xbb166a439393a562d5c71973a7e3f1b87bc6bb65b1b2524e846b021c6c170a16",
+				"nonce": "0xee2e3a941040cee1",
+				"number": "0xa367a4",
+				"parentHash": "0xcaf94fe7cc38a012316dba0cc1296fa2ab3fb401aacef819c39aac934c29ef34",
+				"receiptsRoot": "0x27f5405108f65bd36455ddddf2ce32fe2b87851be97fce3e5eff48636ee52f1e",
 				"sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-				"size": "0x221",
-				"stateRoot": "0x12673e3f6dd58a1adf6d6ffab70374b53862064ba23de736e2f0ca8fa4aa35d5",
-				"timestamp": "0x60f91637",
-				"totalDifficulty": "0x799b46acb904b7",
+				"size": "0x794",
+				"stateRoot": "0xfcd5f2e0b1a728dbb2112c21c375cdfe425568493dde3bb71d036509c404a236",
+				"timestamp": "0x60fe2f75",
+				"totalDifficulty": "0x79b2e0d1c5829f",
 				"transactions": [],
-				"transactionsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+				"transactionsRoot": "0x2169e889c51cc5605d055a54a3fb095a90a33db18fbcf28e86073fd33288fbb4",
 				"uncles": []
 			},
-			"mmr_root": "0x326c0a30d77b78d91595a4b68ace0f1c0d08d9cf80f98ab9abec5eb12adbd372"
+			"parent_mmr_root": "0x1183acf36ada5ca93e31e618e7632c3ed23eddf3cebf077eb868873d6212179a"
 		}"#).unwrap();
 
 		dbg!(parcel.encode());
@@ -308,7 +308,7 @@ decl_storage! {
 					genesis_header.number,
 					EthereumRelayHeaderParcel {
 						header: genesis_header,
-						mmr_root: *genesis_header_mmr_root
+						parent_mmr_root: *genesis_header_mmr_root
 					}
 				);
 			});
@@ -779,7 +779,10 @@ impl<T: Config> Relayable for Module<T> {
 		relay_proofs: &Self::RelayProofs,
 		optional_best_confirmed_relay_header_id: Option<&Self::RelayHeaderId>,
 	) -> DispatchResult {
-		let Self::RelayHeaderParcel { header, mmr_root } = relay_header_parcel;
+		let Self::RelayHeaderParcel {
+			header,
+			parent_mmr_root,
+		} = relay_header_parcel;
 		let Self::RelayProofs {
 			ethash_proof,
 			mmr_proof,
@@ -791,7 +794,7 @@ impl<T: Config> Relayable for Module<T> {
 		);
 
 		let last_leaf = *relay_header_id - 1;
-		let mmr_root = array_bytes::dyn_into!(mmr_root, 32);
+		let mmr_root = array_bytes::dyn_into!(parent_mmr_root, 32);
 
 		if let Some(best_confirmed_block_number) = optional_best_confirmed_relay_header_id {
 			let maybe_best_confirmed_block_header_hash =
@@ -975,7 +978,7 @@ impl<T: Config> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
 		// Verify header member to last confirmed block using mmr proof
 		let mmr_root = Self::confirmed_header_parcel_of(mmr_proof.last_leaf_index + 1)
 			.ok_or(<Error<T>>::ConfirmedHeaderNE)?
-			.mmr_root;
+			.parent_mmr_root;
 
 		ensure!(
 			Self::verify_mmr(
@@ -1017,7 +1020,7 @@ impl<T: Config> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
 #[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
 pub struct EthereumRelayHeaderParcel {
 	pub header: EthereumHeader,
-	pub mmr_root: H256,
+	pub parent_mmr_root: H256,
 }
 impl RelayHeaderParcelInfo for EthereumRelayHeaderParcel {
 	type HeaderId = EthereumBlockNumber;

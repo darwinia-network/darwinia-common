@@ -239,7 +239,7 @@ fn verify_parse_token_redeem_proof() {
 					"transactionsRoot": "0xc6957c52dcac0eb2bda32765cc7c2b13406cf040021ea5caa5ba974d7a81fc95",
 					"uncles": []
 				  },
-				"mmr_root": "0x95866493e3fd63b6a19c7815cc5cecaae57d5d7a3f1cc12f45e0028b090c0451"
+				"parent_mmr_root": "0x95866493e3fd63b6a19c7815cc5cecaae57d5d7a3f1cc12f45e0028b090c0451"
 			}"#).unwrap();
 
 			EthereumRelay::confirm_relay_header_parcel_with_reason(relay_header_parcel, vec![]);
@@ -332,7 +332,7 @@ fn verify_redeem_ring() {
 					"transactionsRoot": "0xc6957c52dcac0eb2bda32765cc7c2b13406cf040021ea5caa5ba974d7a81fc95",
 					"uncles": []
 				},
-				"mmr_root": "0x95866493e3fd63b6a19c7815cc5cecaae57d5d7a3f1cc12f45e0028b090c0451"
+				"parent_mmr_root": "0x95866493e3fd63b6a19c7815cc5cecaae57d5d7a3f1cc12f45e0028b090c0451"
 			}"#).unwrap();
 
 			EthereumRelay::confirm_relay_header_parcel_with_reason(relay_header_parcel, vec![]);
@@ -441,7 +441,7 @@ fn verify_redeem_kton() {
 					"transactionsRoot": "0xaa9758d9753fe39172d8c6dee5d843d8877e4136ef1a9931e909dc71800a7ee3",
 					"uncles": []
 				},
-				"mmr_root": "0x26226df72727f8317e86e28503558fb02221baef2cec85816f75ae79fc250925"
+				"parent_mmr_root": "0x26226df72727f8317e86e28503558fb02221baef2cec85816f75ae79fc250925"
 			}"#).unwrap();
 
 			EthereumRelay::confirm_relay_header_parcel_with_reason(relay_header_parcel, vec![]);
@@ -563,7 +563,7 @@ fn verify_redeem_deposit() {
 					"transactionsRoot": "0x1f6ca6fecd61433b30a7ead60a20e685a5af66ccb14159d307b862086f96570d",
 					"uncles": []
 				},
-				"mmr_root": "0x0d378bc5ada4c0103f9e5a0ff623dc72d6e797963d4902c6fcbbba4f265fab74"
+				"parent_mmr_root": "0x0d378bc5ada4c0103f9e5a0ff623dc72d6e797963d4902c6fcbbba4f265fab74"
 			}"#).unwrap();
 
 			EthereumRelay::confirm_relay_header_parcel_with_reason(relay_header_parcel, vec![]);
@@ -866,7 +866,7 @@ fn verify_new_authorities() {
 					"transactionsRoot": "0xc3d56a07fd42e2895a5c2e9c72d20961ff7533ed0498ff39bf127ed24a338c03",
 					"uncles": []
 				},
-				"mmr_root": "0x7dca3788ae8401072026d5406c6e5d011e71baed3fefae1b5fd4cea01a3c3210"
+				"parent_mmr_root": "0x7dca3788ae8401072026d5406c6e5d011e71baed3fefae1b5fd4cea01a3c3210"
 			}"#).unwrap();
 
 			EthereumRelay::confirm_relay_header_parcel_with_reason(relay_header_parcel, vec![]);

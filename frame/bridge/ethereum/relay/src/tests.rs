@@ -47,7 +47,7 @@ fn store_relay_header_parcel_should_work() {
 				"transactionsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
 				"uncles": []
 			},
-			"mmr_root": "0x33d834e1e65b96f470374134cf173f359a5b37c910a7e07c7d6148866c1805d7"
+			"parent_mmr_root": "0x33d834e1e65b96f470374134cf173f359a5b37c910a7e07c7d6148866c1805d7"
 		}"#).unwrap();
 
 		assert!(EthereumRelay::confirmed_header_parcel_of(100).is_none());

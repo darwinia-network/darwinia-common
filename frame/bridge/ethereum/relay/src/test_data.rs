@@ -39,7 +39,7 @@ pub const LAST_CONFIRM: &'static str = r#"{
 		"transactionsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
 		"uncles": []
 	},
-	"mmr_root": "0x8050b4ab63982d7ab4b0486b50d69938c5a5f70b4cd6bb212bc5da5e212d3179"
+	"parent_mmr_root": "0x8050b4ab63982d7ab4b0486b50d69938c5a5f70b4cd6bb212bc5da5e212d3179"
 }"#;
 
 pub const HEADER_103: &'static str = r#"{
@@ -65,7 +65,7 @@ pub const HEADER_103: &'static str = r#"{
 		"transactionsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
 		"uncles": []
 	},
-	"mmr_root": "0x34a80a8e0b6bfe253d1c960647cb4de34607a9caf86e99f7611304dbdf7fbde0"
+	"parent_mmr_root": "0x34a80a8e0b6bfe253d1c960647cb4de34607a9caf86e99f7611304dbdf7fbde0"
 }"#;
 pub const PROOFS_103: &'static str = r#"{
 	"ethash_proof": [
@@ -2086,7 +2086,7 @@ pub const HEADER_102: &'static str = r#"{
 		"transactionsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
 		"uncles": []
 	},
-	"mmr_root": "0x34a80a8e0b6bfe253d1c960647cb4de34607a9caf86e99f7611304dbdf7fbde0"
+	"parent_mmr_root": "0x34a80a8e0b6bfe253d1c960647cb4de34607a9caf86e99f7611304dbdf7fbde0"
 }"#;
 pub const PROOFS_102: &'static str = r#"{
 	"ethash_proof": [
@@ -4106,7 +4106,7 @@ pub const HEADER_101: &'static str = r#"{
 		"transactionsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
 		"uncles": []
 	},
-	"mmr_root": "0x34a80a8e0b6bfe253d1c960647cb4de34607a9caf86e99f7611304dbdf7fbde0"
+	"parent_mmr_root": "0x34a80a8e0b6bfe253d1c960647cb4de34607a9caf86e99f7611304dbdf7fbde0"
 }"#;
 pub const PROOFS_101: &'static str = r#"{
 	"ethash_proof": [
