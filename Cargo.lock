@@ -1426,13 +1426,13 @@ dependencies = [
 name = "darwinia-basic-channel"
 version = "2.5.0"
 dependencies = [
- "darwinia-header-mmr",
  "darwinia-support",
  "dp-contract",
  "ethereum-types",
  "frame-support",
  "frame-system",
  "log",
+ "pallet-mmr-primitives",
  "parity-scale-codec",
  "serde",
  "serde_json",
@@ -2990,7 +2990,7 @@ dependencies = [
 [[package]]
 name = "frame-benchmarking-cli"
 version = "3.0.0"
-source = "git+https://github.com/darwinia-network/substrate.git?branch=main#1d7f6e12c651d776fc0dc1adefd007bb60f60b63"
+source = "git+https://github.com/darwinia-network/substrate?branch=main#1d7f6e12c651d776fc0dc1adefd007bb60f60b63"
 dependencies = [
  "Inflector",
  "chrono",
@@ -3129,7 +3129,7 @@ dependencies = [
 [[package]]
 name = "frame-system-benchmarking"
 version = "3.0.0"
-source = "git+https://github.com/darwinia-network/substrate.git?branch=main#1d7f6e12c651d776fc0dc1adefd007bb60f60b63"
+source = "git+https://github.com/darwinia-network/substrate?branch=main#1d7f6e12c651d776fc0dc1adefd007bb60f60b63"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5708,6 +5708,21 @@ dependencies = [
  "log",
  "parity-scale-codec",
  "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-mmr-primitives"
+version = "3.0.0"
+source = "git+https://github.com/darwinia-network/substrate?branch=main#1d7f6e12c651d776fc0dc1adefd007bb60f60b63"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "sp-api",
+ "sp-core",
  "sp-runtime",
  "sp-std",
 ]

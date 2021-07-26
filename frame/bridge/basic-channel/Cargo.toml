@@ -18,11 +18,11 @@ serde          = { version = "1.0.126", optional = true }
 serde_json     = { version = "1.0.64", optional = true }
 # darwinia
 darwinia-support     = { default-features = false, path = "../../support" }
-darwinia-header-mmr = { features = ["easy-testing"], path = "../../header-mmr" }
 dp-contract          = { default-features = false, path = "../../../primitives/contract" }
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+pallet-mmr-primitives = { default-features = false, git = "https://github.com/darwinia-network/substrate",  branch = "main" }
 sp-io            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }

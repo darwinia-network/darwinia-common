@@ -23,78 +23,65 @@ pub use ethabi::{Event, Log};
 // --- crates.io ---
 use ethereum_types::{Address as EthereumAddress, H256};
 // --- darwinia ---
-use ethabi::{
-	token::Token,
-};
+use ethabi::token::Token;
 // --- paritytech ---
+use codec::{Decode, Encode};
 use sp_std::prelude::*;
-use codec::{Encode, Decode};
 
 #[derive(Encode, Decode, Clone, PartialEq, Eq)]
 pub struct BasicMessage {
-    pub target: EthereumAddress,
-    pub nonce: u64,
-    pub payload: Vec<u8>,
+	pub target: EthereumAddress,
+	pub nonce: u64,
+	pub payload: Vec<u8>,
 }
 
 impl BasicMessage {
-    pub fn encode(
-        target: EthereumAddress,
-        nonce: u64,
-        payload: Vec<u8>,
-    ) -> Vec<u8> {
-        let res = ethabi::encode(&[
-            Token::Address(target),
-            Token::Uint(nonce.into()),
-            Token::Bytes(payload.clone()),
-        ]);
-        res
-    }
+	pub fn encode(target: EthereumAddress, nonce: u64, payload: Vec<u8>) -> Vec<u8> {
+		let res = ethabi::encode(&[
+			Token::Address(target),
+			Token::Uint(nonce.into()),
+			Token::Bytes(payload.clone()),
+		]);
+		res
+	}
 
-    pub fn encode_messages(
-        messages: &[Self]
-    ) -> Vec<u8> {
-        let messages: Vec<Token> = messages
-            .iter()
-            .map(|message| {
-                Token::Tuple(vec![
-                    Token::Address(message.target),
-                    Token::Uint(message.nonce.into()),
-                    Token::Bytes(message.payload.clone())
-                ])
-            })
-        .collect();
-        ethabi::encode(&vec![Token::Array(messages)])
-    }
+	pub fn encode_messages(messages: &[Self]) -> Vec<u8> {
+		let messages: Vec<Token> = messages
+			.iter()
+			.map(|message| {
+				Token::Tuple(vec![
+					Token::Address(message.target),
+					Token::Uint(message.nonce.into()),
+					Token::Bytes(message.payload.clone()),
+				])
+			})
+			.collect();
+		ethabi::encode(&vec![Token::Array(messages)])
+	}
 }
 
 #[derive(Encode, Decode, Clone, PartialEq, Eq)]
 pub struct MmrLeaf {
-    pub parent_hash: H256,
-    pub message_root: H256,
-    pub block_number: u32,
+	pub parent_hash: H256,
+	pub message_root: H256,
+	pub block_number: u32,
 }
 
 impl MmrLeaf {
-    pub fn new(
-        parent_hash: &[u8],
-        message_root: H256,
-        block_number: u32
-    ) -> Self {
-        Self {
-            parent_hash: H256::from_slice(parent_hash),
-            message_root,
-            block_number,
-        }
-    }
+	pub fn new(parent_hash: &[u8], message_root: H256, block_number: u32) -> Self {
+		Self {
+			parent_hash: H256::from_slice(parent_hash),
+			message_root,
+			block_number,
+		}
+	}
 
-    pub fn encode(&self) -> Vec<u8> {
-        let res = ethabi::encode(&[
-            Token::FixedBytes(self.parent_hash.0.to_vec()),
-            Token::FixedBytes(self.message_root.0.to_vec()),
-            Token::Uint(self.block_number.into()),
-        ]);
-        res
-    }
+	pub fn encode(&self) -> Vec<u8> {
+		let res = ethabi::encode(&[
+			Token::FixedBytes(self.parent_hash.0.to_vec()),
+			Token::FixedBytes(self.message_root.0.to_vec()),
+			Token::Uint(self.block_number.into()),
+		]);
+		res
+	}
 }
-

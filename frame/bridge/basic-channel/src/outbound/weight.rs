@@ -1,2 +1,1 @@
-pub trait WeightInfo {
-}
+pub trait WeightInfo {}
