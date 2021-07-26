@@ -1649,12 +1649,14 @@ dependencies = [
 name = "darwinia-evm"
 version = "2.5.0"
 dependencies = [
+ "array-bytes",
  "darwinia-balances",
  "darwinia-support",
  "dp-evm",
  "evm 0.27.0",
  "evm-gasometer 0.27.0",
  "evm-runtime 0.27.0",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",

@@ -11,6 +11,7 @@ version     = "2.5.0"
 
 [dependencies]
 # crates.io
+array-bytes     = { version = "1.3.3" }
 codec           = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
 evm             = { version = "0.27.0", default-features = false, features = ["with-codec"] }
 evm-gasometer   = { version = "0.27.0", default-features = false }
@@ -24,13 +25,14 @@ sha3            = { version = "0.9.1", default-features = false }
 darwinia-balances = { default-features = false, path = "../balances" }
 dp-evm            = { default-features = false, path = "../../primitives/evm" }
 # paritytech
-frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-core          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-io            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-runtime       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-benchmarking = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-support      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-system       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+pallet-timestamp   = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-core            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-io              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-runtime         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-std             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [dev-dependencies]
 darwinia-support = { features = ["easy-testing"], path = "../support" }
@@ -53,6 +55,7 @@ std = [
 	"darwinia-balances/std",
 	"dp-evm/std",
 	# paritytech
+	"frame-benchmarking/std",
 	"frame-support/std",
 	"frame-system/std",
 	"pallet-timestamp/std",
@@ -60,4 +63,8 @@ std = [
 	"sp-io/std",
 	"sp-runtime/std",
 	"sp-std/std",
+]
+
+runtime-benchmarks = [
+	"frame-benchmarking",
 ]
