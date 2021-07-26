@@ -80,12 +80,12 @@ impl darwinia_balances::Config<RingInstance> for Test {
 
 frame_support::parameter_types! {
 	pub const EthereumRelayPalletId: PalletId = PalletId(*b"da/ethli");
-	pub static EthereumRelayTargetNetwork: EthereumNetwork = EthereumNetwork::Ropsten;
+	pub static EthereumRelayBridgeNetwork: EthereumNetwork = EthereumNetwork::Ropsten;
 }
 impl Config for Test {
 	type PalletId = EthereumRelayPalletId;
 	type Event = ();
-	type TargetNetwork = EthereumRelayTargetNetwork;
+	type BridgedNetwork = EthereumRelayBridgeNetwork;
 	type Call = Call;
 	type Currency = Ring;
 	type WeightInfo = ();

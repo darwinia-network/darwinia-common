@@ -46,12 +46,12 @@ impl SortedMembers<AccountId> for UnusedTechnicalMembership {
 }
 frame_support::parameter_types! {
 	pub const EthereumRelayPalletId: PalletId = PalletId(*b"da/ethrl");
-	pub const EthereumRelayTargetNetwork: EthereumNetwork = EthereumNetwork::Ropsten;
+	pub const EthereumRelayBridgeNetwork: EthereumNetwork = EthereumNetwork::Ropsten;
 }
 impl darwinia_ethereum_relay::Config for Test {
 	type PalletId = EthereumRelayPalletId;
 	type Event = ();
-	type TargetNetwork = EthereumRelayTargetNetwork;
+	type BridgedNetwork = EthereumRelayBridgeNetwork;
 	type RelayerGame = UnusedRelayerGame;
 	type ApproveOrigin = EnsureRoot<AccountId>;
 	type RejectOrigin = EnsureRoot<AccountId>;

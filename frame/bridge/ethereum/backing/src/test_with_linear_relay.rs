@@ -34,12 +34,12 @@ decl_tests!(EthereumRelay: darwinia_ethereum_linear_relay::{Pallet, Call, Storag
 
 frame_support::parameter_types! {
 	pub const EthereumLinearRelayPalletId: PalletId = PalletId(*b"da/ethli");
-	pub const EthereumLinearRelayTargetNetwork: EthereumNetwork = EthereumNetwork::Ropsten;
+	pub const EthereumLinearRelayBridgeNetwork: EthereumNetwork = EthereumNetwork::Ropsten;
 }
 impl darwinia_ethereum_linear_relay::Config for Test {
 	type PalletId = EthereumLinearRelayPalletId;
 	type Event = ();
-	type TargetNetwork = EthereumLinearRelayTargetNetwork;
+	type BridgedNetwork = EthereumLinearRelayBridgeNetwork;
 	type Call = Call;
 	type Currency = Ring;
 	type WeightInfo = ();

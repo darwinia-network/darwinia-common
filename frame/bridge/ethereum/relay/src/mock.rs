@@ -81,14 +81,14 @@ impl SortedMembers<AccountId> for UnusedTechnicalMembership {
 }
 frame_support::parameter_types! {
 	pub const EthereumRelayPalletId: PalletId = PalletId(*b"da/ethrl");
-	pub const EthereumRelayTargetNetwork: EthereumNetwork = EthereumNetwork::Mainnet;
+	pub const EthereumRelayBridgeNetwork: EthereumNetwork = EthereumNetwork::Mainnet;
 	pub static BestConfirmedBlockNumber: EthereumBlockNumber = 0;
 	pub static ConfirmPeriod: BlockNumber = 0;
 }
 impl Config for Test {
 	type PalletId = EthereumRelayPalletId;
 	type Event = ();
-	type TargetNetwork = EthereumRelayTargetNetwork;
+	type BridgedNetwork = EthereumRelayBridgeNetwork;
 	type Call = Call;
 	type Currency = Ring;
 	type RelayerGame = UnusedRelayerGame;

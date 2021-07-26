@@ -106,7 +106,7 @@ pub trait Config: frame_system::Config {
 
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
-	type TargetNetwork: Get<EthereumNetwork>;
+	type BridgedNetwork: Get<EthereumNetwork>;
 
 	type Call: Dispatchable + From<Call<Self>> + IsSubType<Call<Self>> + Clone;
 
@@ -252,7 +252,7 @@ decl_module! {
 
 		const PalletId: PalletId = T::PalletId::get();
 
-		const EthereumNetwork: EthereumNetwork = T::TargetNetwork::get();
+		const EthereumNetwork: EthereumNetwork = T::BridgedNetwork::get();
 
 		fn deposit_event() = default;
 
@@ -561,7 +561,7 @@ impl<T: Config> Module<T> {
 		log::trace!(target: "ethereum-linear-relay", "Number2 OK");
 
 		// check difficulty
-		let ethash_params = match T::TargetNetwork::get() {
+		let ethash_params = match T::BridgedNetwork::get() {
 			EthereumNetwork::Mainnet => EthashPartial::production(),
 			EthereumNetwork::Ropsten => EthashPartial::ropsten_testnet(),
 		};
@@ -581,7 +581,7 @@ impl<T: Config> Module<T> {
 	fn verify_header_pow(header: &EthereumHeader, ethash_proof: &[EthashProof]) -> DispatchResult {
 		Self::verify_header_basic(&header)?;
 
-		let ethash_params = match T::TargetNetwork::get() {
+		let ethash_params = match T::BridgedNetwork::get() {
 			EthereumNetwork::Mainnet => EthashPartial::production(),
 			EthereumNetwork::Ropsten => EthashPartial::ropsten_testnet(),
 		};

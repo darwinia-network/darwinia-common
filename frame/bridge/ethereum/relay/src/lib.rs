@@ -149,7 +149,7 @@ pub trait Config: frame_system::Config {
 
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
-	type TargetNetwork: Get<EthereumNetwork>;
+	type BridgedNetwork: Get<EthereumNetwork>;
 
 	type Call: Dispatchable + From<Call<Self>> + IsSubType<Call<Self>> + Clone;
 
@@ -625,7 +625,7 @@ impl<T: Config> Module<T> {
 	}
 
 	pub fn ethash_params() -> EthashPartial {
-		match T::TargetNetwork::get() {
+		match T::BridgedNetwork::get() {
 			EthereumNetwork::Mainnet => EthashPartial::production(),
 			EthereumNetwork::Ropsten => EthashPartial::ropsten_testnet(),
 		}
