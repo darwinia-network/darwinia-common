@@ -21,13 +21,15 @@
 // --- darwinia ---
 pub use darwinia_header_mmr_rpc_runtime_api::HeaderMMRApi as HeaderMMRRuntimeApi;
 
+// --- core ---
+use core::fmt::Debug;
 // --- std ---
 use std::sync::Arc;
 // --- crates ---
 use codec::Codec;
 use jsonrpc_core::{Error, ErrorCode, Result};
 use jsonrpc_derive::rpc;
-// --- substrate ---
+// --- paritytech ---
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{
@@ -53,7 +55,6 @@ pub struct HeaderMMR<Client, Block> {
 	client: Arc<Client>,
 	_marker: std::marker::PhantomData<Block>,
 }
-
 impl<Client, Block> HeaderMMR<Client, Block> {
 	pub fn new(client: Arc<Client>) -> Self {
 		Self {
@@ -62,13 +63,12 @@ impl<Client, Block> HeaderMMR<Client, Block> {
 		}
 	}
 }
-
 impl<Client, Block, Hash> HeaderMMRApi<Hash, RuntimeDispatchInfo<Hash>> for HeaderMMR<Client, Block>
 where
 	Client: 'static + Send + Sync + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
 	Client::Api: HeaderMMRRuntimeApi<Block, Hash>,
 	Block: BlockT,
-	Hash: core::fmt::Debug + Codec + MaybeDisplay + MaybeFromStr,
+	Hash: Debug + Codec + MaybeDisplay + MaybeFromStr,
 {
 	fn gen_proof(
 		&self,
@@ -82,7 +82,7 @@ where
 		api.gen_proof(&at, block_number_of_member_leaf, block_number_of_last_leaf)
 			.map_err(|e| Error {
 				code: ErrorCode::ServerError(RUNTIME_ERROR),
-				message: "Unable to query power.".into(),
+				message: "Unable to generate mmr proof.".into(),
 				data: Some(format!("{:?}", e).into()),
 			})
 	}
