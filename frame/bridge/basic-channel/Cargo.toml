@@ -19,6 +19,7 @@ serde_json     = { version = "1.0.64", optional = true }
 # darwinia
 darwinia-support     = { default-features = false, path = "../../support" }
 dp-contract          = { default-features = false, path = "../../../primitives/contract" }
+ethereum-primitives = { default-features = false, path = "../../../primitives/ethereum-primitives" }
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
@@ -46,6 +47,7 @@ crates-std = [
 darwinia-std = [
 	"dp-contract/std",
 	"darwinia-support/std",
+	"ethereum-primitives/std",
 ]
 
 substrate-std = [

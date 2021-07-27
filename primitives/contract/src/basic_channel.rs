@@ -24,18 +24,20 @@ pub use ethabi::{Event, Log};
 use ethereum_types::{Address as EthereumAddress, H256};
 // --- darwinia ---
 use ethabi::token::Token;
+use ethabi::{Error, EventParam, ParamType, RawLog, Result as AbiResult};
+use ethereum_primitives::receipt::EthereumReceipt;
 // --- paritytech ---
 use codec::{Decode, Encode};
 use sp_std::prelude::*;
 
 #[derive(Encode, Decode, Clone, PartialEq, Eq)]
-pub struct BasicMessage {
+pub struct BasicOutboundMessage {
 	pub target: EthereumAddress,
 	pub nonce: u64,
 	pub payload: Vec<u8>,
 }
 
-impl BasicMessage {
+impl BasicOutboundMessage {
 	pub fn encode(target: EthereumAddress, nonce: u64, payload: Vec<u8>) -> Vec<u8> {
 		let res = ethabi::encode(&[
 			Token::Address(target),
@@ -83,5 +85,78 @@ impl MmrLeaf {
 			Token::Uint(self.block_number.into()),
 		]);
 		res
+	}
+}
+
+pub struct BasicInboundMessage {
+	pub source: EthereumAddress,
+	pub nonce: u64,
+	pub payload: Vec<u8>,
+}
+
+impl BasicInboundMessage {
+	pub fn channel_event() -> Event {
+		Event {
+			name: "Message".into(),
+			inputs: vec![
+				EventParam {
+					name: "source".into(),
+					kind: ParamType::Address,
+					indexed: false,
+				},
+				EventParam {
+					name: "nonce".into(),
+					kind: ParamType::Uint(64),
+					indexed: false,
+				},
+				EventParam {
+					name: "payload".into(),
+					kind: ParamType::Bytes,
+					indexed: false,
+				},
+			],
+			anonymous: false,
+		}
+	}
+
+	pub fn parse_channel_event(
+		source_channel: &EthereumAddress,
+		receipt: &EthereumReceipt,
+	) -> AbiResult<Self> {
+		let event = Self::channel_event();
+		let log_entry = receipt
+			.logs
+			.clone()
+			.into_iter()
+			.find(|x| &x.address == source_channel && x.topics[0] == event.signature())
+			.ok_or(Error::InvalidData)?;
+
+		let log = RawLog {
+			topics: log_entry
+				.topics
+				.into_iter()
+				.map(|t| -> H256 { t.into() })
+				.collect(),
+			data: log_entry.data.clone(),
+		};
+		let ethlog = event.parse_log(log)?;
+		Ok(Self {
+			source: ethlog.params[0]
+				.value
+				.clone()
+				.into_address()
+				.ok_or(Error::InvalidData)?,
+			nonce: ethlog.params[1]
+				.value
+				.clone()
+				.into_uint()
+				.ok_or(Error::InvalidData)?
+				.low_u64(),
+			payload: ethlog.params[2]
+				.value
+				.clone()
+				.into_bytes()
+				.ok_or(Error::InvalidData)?,
+		})
 	}
 }

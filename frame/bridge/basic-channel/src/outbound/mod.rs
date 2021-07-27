@@ -37,7 +37,7 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 
-use dp_contract::basic_channel::{BasicMessage, MmrLeaf};
+use dp_contract::basic_channel::{BasicOutboundMessage, MmrLeaf};
 
 pub use pallet::*;
 use sp_runtime::DigestItem;
@@ -45,11 +45,6 @@ use sp_runtime::DigestItem;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	pub mod types {
-		/// The type use for indexing a node
-		pub type NodeIndex = u64;
-	}
-	pub use types::*;
 
 	pub const BASIC_MESSAGE_PREFIX: [u8; 12] = *b"BasicMessage";
 	pub const BASIC_MMR_PREFIX: [u8; 4] = *b"bmmr";
@@ -67,16 +62,6 @@ pub mod pallet {
 
 		type Hashing: Hash<Output = H256>;
 	}
-
-	/// Size of the MMR
-	#[pallet::storage]
-	#[pallet::getter(fn mmr_size)]
-	pub type MmrSize<T> = StorageValue<_, NodeIndex, ValueQuery>;
-
-	/// Peaks of the MMR
-	#[pallet::storage]
-	#[pallet::getter(fn peak_of)]
-	pub type Peaks<T: Config> = StorageMap<_, Identity, NodeIndex, T::Hash, OptionQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(fn deposit_event)]
@@ -102,7 +87,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn pending_message)]
-	pub type PendingMessage<T: Config> = StorageValue<_, Vec<BasicMessage>, ValueQuery>;
+	pub type PendingMessage<T: Config> = StorageValue<_, Vec<BasicOutboundMessage>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn nonce)]
@@ -142,7 +127,7 @@ pub mod pallet {
 					return Err(Error::<T>::NonceOverFlow.into());
 				}
 
-				<PendingMessage<T>>::append(BasicMessage {
+				<PendingMessage<T>>::append(BasicOutboundMessage {
 					target,
 					nonce: *nonce,
 					payload: payload.to_vec(),
@@ -158,12 +143,13 @@ pub mod pallet {
 		fn leaf_data() -> Self::LeafData {
 			let parent_hash = <frame_system::Pallet<T>>::parent_hash();
 			let block_number = <frame_system::Pallet<T>>::block_number();
-			let messages: Vec<BasicMessage> = if (block_number % <Interval<T>>::get()).is_zero() {
-				<PendingMessage<T>>::take()
-			} else {
-				vec![]
-			};
-			let commitment = BasicMessage::encode_messages(&messages);
+			let messages: Vec<BasicOutboundMessage> =
+				if (block_number % <Interval<T>>::get()).is_zero() {
+					<PendingMessage<T>>::take()
+				} else {
+					vec![]
+				};
+			let commitment = BasicOutboundMessage::encode_messages(&messages);
 			let commitment_hash = <T as Config>::Hashing::hash(&commitment);
 
 			let leaf = MmrLeaf::new(

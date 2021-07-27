@@ -15,6 +15,7 @@ codec          = { package = "parity-scale-codec", version = "2.1.1", default-fe
 ethereum-types = { default-features = false, version = "0.11.0" }
 # darwinia
 ethabi = { default-features = false, git = "https://github.com/darwinia-network/ethabi.git", branch = "xavier-no-std" }
+ethereum-primitives = { default-features = false, path = "../ethereum-primitives" }
 # paritytech
 sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
@@ -29,6 +30,7 @@ std = [
 
 crates-std = [
 	"ethereum-types/std",
+	"ethereum-primitives/std",
 ]
 
 darwinia-std = [

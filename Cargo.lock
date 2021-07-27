@@ -1428,6 +1428,7 @@ version = "2.5.0"
 dependencies = [
  "darwinia-support",
  "dp-contract",
+ "ethereum-primitives",
  "ethereum-types",
  "frame-support",
  "frame-system",
@@ -2293,6 +2294,7 @@ name = "dp-contract"
 version = "2.5.0"
 dependencies = [
  "ethabi",
+ "ethereum-primitives",
  "ethereum-types",
  "parity-scale-codec",
  "sp-std",
