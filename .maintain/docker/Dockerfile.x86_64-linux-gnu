@@ -21,10 +21,8 @@ FROM ubuntu:16.04
 # for gernal linux
 
 # change mirrorlist
-RUN apt update && \
-    apt upgrade -y && \
-    apt install -y \
-    # tool
-    git make \
-    # compiler
-    gcc g++ clang-4.0
+RUN apt update && apt install -y \
+	# tool
+	git make \
+	# compiler
+	gcc g++ clang-4.0
