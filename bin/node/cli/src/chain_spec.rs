@@ -17,7 +17,7 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- std ---
-use std::{collections::BTreeMap, marker::PhantomData};
+use std::{collections::BTreeMap, marker::PhantomData, str::FromStr};
 // --- crates ---
 use rand::{seq::SliceRandom, Rng};
 // --- substrate ---
@@ -162,7 +162,17 @@ pub fn pangolin_build_spec_config() -> PangolinChainSpec {
 		"pangolin",
 		ChainType::Live,
 		pangolin_build_spec_genesis,
-		vec![],
+		[
+			"/dns4/t1.pangolin-p2p.darwinia.network/tcp/30333/p2p/12D3KooWLc6ZD4PGjnRz8CuVioW1dEr8rVBVEAFb1vpxFHXU4g2Y",
+			"/dns4/t2.pangolin-p2p.darwinia.network/tcp/30333/p2p/12D3KooWHf1v45q3u1qPrkwSUq7ybzNfXf5ELPcpoBTJ4k49axfk",
+			"/dns4/t3.pangolin-p2p.darwinia.network/tcp/30333/p2p/12D3KooWCXW7Ds6invyE1rF4BSfwpMgNKzzBxbnEGGjcqZ6cSgap",
+			"/dns4/t4.pangolin-p2p.darwinia.network/tcp/30333/p2p/12D3KooWHokmaoAJp2vVPkw2YG3HFa799RUAJvdfy4dcaEzBdkGw",
+			"/dns4/t5.pangolin-p2p.darwinia.network/tcp/30333/p2p/12D3KooWGJM9oAV95rM67Vad7j7jZGcH7mRoXM4R3gFNYGWE8Nsj",
+			"/dns4/t6.pangolin-p2p.darwinia.network/tcp/30333/p2p/12D3KooWKhUXATik7HPz7EC3865dd7XihbnbCA3ciVjuvPv3YXwr"
+		]
+		.iter()
+		.filter_map(|s| FromStr::from_str(s).ok())
+		.collect(),
 		Some(
 			TelemetryEndpoints::new(vec![(PANGOLIN_TELEMETRY_URL.to_string(), 0)])
 				.expect("Pangolin telemetry url is valid; qed"),
