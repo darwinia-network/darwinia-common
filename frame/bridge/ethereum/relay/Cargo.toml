@@ -65,7 +65,3 @@ std = [
 	"sp-runtime/std",
 	"sp-std/std",
 ]
-
-full-serde = [
-	"ethereum-primitives/full-serde",
-]

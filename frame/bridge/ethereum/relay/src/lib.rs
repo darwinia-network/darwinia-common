@@ -56,7 +56,7 @@ pub mod migration {
 		dbg!(parcel.encode());
 	}
 
-	#[cfg(feature = "full-serde")]
+	#[cfg(feature = "std")]
 	pub fn assert_encoded_eq(raw: impl AsRef<str>, encoded: impl AsRef<[u8]>) {
 		let from_json = serde_json::from_str::<EthereumRelayHeaderParcel>(raw.as_ref()).unwrap();
 		let from_codec = decode(encoded);
@@ -1016,7 +1016,7 @@ impl<T: Config> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
 	}
 }
 
-#[cfg_attr(any(feature = "full-serde", test), derive(serde::Deserialize))]
+#[cfg_attr(any(feature = "std", test), derive(serde::Deserialize))]
 #[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
 pub struct EthereumRelayHeaderParcel {
 	pub header: EthereumHeader,
@@ -1030,14 +1030,14 @@ impl RelayHeaderParcelInfo for EthereumRelayHeaderParcel {
 	}
 }
 
-#[cfg_attr(any(feature = "full-serde", test), derive(serde::Deserialize))]
+#[cfg_attr(any(feature = "std", test), derive(serde::Deserialize))]
 #[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
 pub struct EthereumRelayProofs {
 	pub ethash_proof: Vec<EthashProof>,
 	pub mmr_proof: Vec<H256>,
 }
 
-#[cfg_attr(any(feature = "full-serde", test), derive(serde::Deserialize))]
+#[cfg_attr(any(feature = "std", test), derive(serde::Deserialize))]
 #[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug)]
 pub struct MMRProof {
 	pub member_leaf_index: u64,
