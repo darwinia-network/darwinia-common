@@ -57,6 +57,7 @@ std = [
 	"darwinia-relay-primitives/std",
 	"darwinia-support/std",
 	"ethereum-primitives/std",
+	"ethereum-primitives/full-serde",
 	# paritytech
 	"frame-support/std",
 	"frame-system/std",
