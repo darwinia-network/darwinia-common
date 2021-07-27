@@ -80,12 +80,12 @@ impl darwinia_balances::Config<RingInstance> for Test {
 
 frame_support::parameter_types! {
 	pub const EthereumRelayPalletId: PalletId = PalletId(*b"da/ethli");
-	pub static EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Ropsten;
+	pub static EthereumRelayBridgeNetwork: EthereumNetwork = EthereumNetwork::Ropsten;
 }
 impl Config for Test {
 	type PalletId = EthereumRelayPalletId;
 	type Event = ();
-	type EthereumNetwork = EthereumNetwork;
+	type BridgedNetwork = EthereumRelayBridgeNetwork;
 	type Call = Call;
 	type Currency = Ring;
 	type WeightInfo = ();
@@ -234,22 +234,22 @@ impl HeaderWithProof {
 }
 
 pub struct ExtBuilder {
-	eth_network: EthereumNetworkType,
+	ethereum_network: EthereumNetwork,
 }
 impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {
-			eth_network: EthereumNetworkType::Ropsten,
+			ethereum_network: EthereumNetwork::Ropsten,
 		}
 	}
 }
 impl ExtBuilder {
-	pub fn eth_network(mut self, eth_network: EthereumNetworkType) -> Self {
-		self.eth_network = eth_network;
+	pub fn ethereum_network(mut self, ethereum_network: EthereumNetwork) -> Self {
+		self.ethereum_network = ethereum_network;
 		self
 	}
 	pub fn set_associated_constants(&self) {
-		ETHEREUM_NETWORK.with(|v| v.replace(self.eth_network.clone()));
+		ETHEREUM_RELAY_TARGET_NETWORK.with(|v| v.replace(self.ethereum_network.clone()));
 	}
 
 	pub fn build(self) -> sp_io::TestExternalities {

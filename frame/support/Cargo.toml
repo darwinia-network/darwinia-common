@@ -17,7 +17,7 @@ impl-trait-for-tuples = { version = "0.2.1" }
 num-traits            = { version = "0.2.14", default-features = false }
 # darwinia-network
 ethabi              = { default-features = false, git = "https://github.com/darwinia-network/ethabi.git", tag = "v13.0.0-no-std" }
-ethereum-primitives = { default-features = false, path = "../../primitives/ethereum-primitives" }
+ethereum-primitives = { default-features = false, path = "../../primitives/ethereum" }
 # paritytech
 bp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "main" }

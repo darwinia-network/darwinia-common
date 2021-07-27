@@ -22,9 +22,12 @@
 use codec::{Decode, Encode};
 use ethereum::{TransactionAction, TransactionSignature};
 use evm::{executor::PrecompileOutput, Context, ExitError};
-use rlp::*;
-// --- substrate ---
-use frame_support::{traits::FindAuthor, traits::GenesisBuild, ConsensusEngineId};
+use rlp::RlpStream;
+// --- paritytech ---
+use frame_support::{
+	traits::{FindAuthor, GenesisBuild},
+	ConsensusEngineId,
+};
 use frame_system::mocking::*;
 use sp_core::{H160, H256, U256};
 use sp_runtime::{
@@ -33,7 +36,7 @@ use sp_runtime::{
 	AccountId32, Perbill, RuntimeDebug,
 };
 use sp_std::prelude::*;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::{self as dvm_ethereum, account_basic::*, *};
 use darwinia_evm::{runner::stack::Runner, AddressMapping, EnsureAddressTruncated, FeeCalculator};
 use darwinia_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};

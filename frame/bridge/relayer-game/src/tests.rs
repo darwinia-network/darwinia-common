@@ -374,7 +374,7 @@ fn lock_should_work() {
 						vec![relay_parcel],
 						Some(vec![()])
 					));
-					assert_eq!(RelayerGame::stakes_of(relayer), stakes);
+					assert_eq!(RelayerGame::stake_of(relayer), stakes);
 					assert_eq!(
 						Ring::locks(relayer),
 						vec![BalanceLock {
@@ -421,10 +421,10 @@ fn lock_should_work() {
 					run_to_block(challenge_time() * (i as BlockNumber + 1) + 1);
 				}
 
-				assert_eq!(RelayerGame::stakes_of(relayer_a), 0);
+				assert_eq!(RelayerGame::stake_of(relayer_a), 0);
 				assert!(Ring::locks(1).is_empty());
 
-				assert_eq!(RelayerGame::stakes_of(relayer_b), 0);
+				assert_eq!(RelayerGame::stake_of(relayer_b), 0);
 				assert!(Ring::locks(2).is_empty());
 			});
 	}

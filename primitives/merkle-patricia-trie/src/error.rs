@@ -22,12 +22,12 @@ extern crate alloc;
 #[cfg(not(feature = "std"))]
 use alloc::{format, string::String};
 
+use core::fmt;
 use rlp::DecoderError;
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
-use sp_std::fmt;
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TrieError {
 	DB(String),
 	Decoder(DecoderError),
@@ -35,22 +35,13 @@ pub enum TrieError {
 	InvalidStateRoot,
 	InvalidProof,
 }
-
 impl fmt::Display for TrieError {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		let printable = match *self {
-			TrieError::DB(ref err) => format!("trie error: {:?}", err),
-			TrieError::Decoder(ref err) => format!("trie error: {:?}", err),
-			TrieError::InvalidData => "trie error: invalid data".to_owned(),
-			TrieError::InvalidStateRoot => "trie error: invalid state root".to_owned(),
-			TrieError::InvalidProof => "trie error: invalid proof".to_owned(),
-		};
-		write!(f, "{}", printable)
+		fmt::Debug::fmt(&self, f)
 	}
 }
-
 impl From<DecoderError> for TrieError {
-	fn from(error: DecoderError) -> Self {
-		TrieError::Decoder(error)
+	fn from(e: DecoderError) -> Self {
+		TrieError::Decoder(e)
 	}
 }
