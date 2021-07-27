@@ -380,7 +380,7 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 					"uncles": []
 				},
 				"parent_mmr_root": "0x1183acf36ada5ca93e31e618e7632c3ed23eddf3cebf077eb868873d6212179a"
-			}"#,
+			}"#.into(),
 			dags_merkle_roots_loader: DagsMerkleRootsLoaderR::from_file(
 				"bin/res/ethereum/dags-merkle-roots.json",
 				"DAG_MERKLE_ROOTS_PATH",
@@ -584,7 +584,7 @@ fn pangolin_development_genesis() -> pangolin_runtime::GenesisConfig {
 					"uncles": []
 				},
 				"parent_mmr_root": "0x1183acf36ada5ca93e31e618e7632c3ed23eddf3cebf077eb868873d6212179a"
-			}"#,
+			}"#.into(),
 			dags_merkle_roots_loader: DagsMerkleRootsLoaderR::from_file(
 				"bin/res/ethereum/dags-merkle-roots.json",
 				"DAG_MERKLE_ROOTS_PATH",
