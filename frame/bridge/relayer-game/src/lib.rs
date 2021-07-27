@@ -29,7 +29,7 @@ pub mod migration {
 		T: Config<I>,
 		I: Instance,
 	{
-		<RelayHeaderParcelToResolve<T, I>>::put(<Vec<RelayHeaderId<T, I>>>::new());
+		<RelayHeaderParcelToResolve<T, I>>::kill();
 		<Affirmations<T, I>>::remove_all();
 		<BestConfirmedHeaderId<T, I>>::remove_all();
 		<RoundCounts<T, I>>::remove_all();
