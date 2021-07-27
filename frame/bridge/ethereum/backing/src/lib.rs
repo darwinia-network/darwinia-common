@@ -1060,19 +1060,12 @@ pub mod pallet {
 pub use pallet::*;
 
 pub mod migration {
-	const OLD_PALLET_NAME: &[u8] = b"DarwiniaEthereumBacking";
-
 	#[cfg(feature = "try-runtime")]
 	pub mod try_runtime {
-		// --- darwinia ---
-		use crate::*;
-
-		pub fn pre_migrate<T: Config>() -> Result<(), &'static str> {
+		pub fn pre_migrate() -> Result<(), &'static str> {
 			Ok(())
 		}
 	}
 
-	pub fn migrate(new_pallet_name: &[u8]) {
-		frame_support::migration::move_pallet(OLD_PALLET_NAME, new_pallet_name);
-	}
+	pub fn migrate() {}
 }

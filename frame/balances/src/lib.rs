@@ -1919,55 +1919,10 @@ pub use pallet::{imbalances::*, *};
 pub mod migration {
 	#[cfg(feature = "try-runtime")]
 	pub mod try_runtime {
-		// --- substrate ---
-		use frame_support::{pallet_prelude::*, traits::StorageInstance};
-		// --- darwinia ---
-		use crate::*;
-
-		macro_rules! generate_storage_types {
-			($prefix:expr, $storage:expr, $name:ident => Value<$value:ty>) => {
-				paste::paste! {
-					type $name = StorageValue<[<$name Instance>], $value, ValueQuery>;
-
-					struct [<$name Instance>];
-					impl StorageInstance for [<$name Instance>] {
-						const STORAGE_PREFIX: &'static str = $storage;
-
-						fn pallet_prefix() -> &'static str { $prefix }
-					}
-				}
-			};
-		}
-
-		generate_storage_types!("Instance0DarwiniaBalances", "TotalIssuance", OldRingTotalIssuance => Value<()>);
-		generate_storage_types!("Balances", "TotalIssuance", NewRingTotalIssuance => Value<()>);
-		generate_storage_types!("Instance1DarwiniaBalances", "TotalIssuance", OldKtonTotalIssuance => Value<()>);
-		generate_storage_types!("Kton", "TotalIssuance", NewKtonTotalIssuance => Value<()>);
-
 		pub fn pre_migrate() -> Result<(), &'static str> {
-			assert!(OldRingTotalIssuance::exists());
-			assert!(!NewRingTotalIssuance::exists());
-			assert!(OldKtonTotalIssuance::exists());
-			assert!(!NewKtonTotalIssuance::exists());
-
-			log::info!("Migrating `Instance0Darwinia` to `Balances`...");
-			migration::migrate(b"Instance0DarwiniaBalances", b"Balances");
-
-			log::info!("Migrating `Instance1Darwinia` to `Kton`...");
-			migration::migrate(b"Instance1DarwiniaBalances", b"Kton");
-
-			assert!(!OldRingTotalIssuance::exists());
-			assert!(NewRingTotalIssuance::exists());
-			assert!(!OldKtonTotalIssuance::exists());
-			assert!(NewKtonTotalIssuance::exists());
-
 			Ok(())
 		}
 	}
 
-	pub fn migrate(old_pallet_name: &[u8], new_pallet_name: &[u8]) {
-		// Balances: Instance0DarwiniaBalances
-		// Kton: Instance1DarwiniaBalances
-		frame_support::migration::move_pallet(old_pallet_name, new_pallet_name);
-	}
+	pub fn migrate() {}
 }
