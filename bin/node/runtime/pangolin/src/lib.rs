@@ -292,7 +292,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: sp_runtime::create_runtime_str!("Pangolin"),
 	authoring_version: 1,
 	// crate version ~2.5.0 := >=2.5.0, <2.6.0
-	spec_version: 2501,
+	spec_version: 2502,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -968,10 +968,34 @@ pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
+		// --- paritytech ---
+		use frame_support::{migration, Identity};
+		// --- darwinia-network ---
+		use darwinia_header_mmr::NodeIndex;
+
 		// <--- Hack for local test
 		use frame_support::traits::Currency;
 		let _ = Ring::deposit_creating(&BridgeMillauMessages::relayer_fund_account_id(), 1 << 50);
 		// --->
+
+		darwinia_header_mmr::migration::migrate(b"HeaderMMR");
+
+		assert!(migration::storage_key_iter::<NodeIndex, Hash, Identity>(
+			b"HeaderMMR",
+			b"MMRNodeList"
+		)
+		.next()
+		.is_none());
+		assert!(!migration::have_storage_value(
+			b"HeaderMMR",
+			b"MMRNodeList",
+			&[]
+		));
+		assert!(!migration::have_storage_value(
+			b"HeaderMMR",
+			b"PruningConfiguration",
+			&[]
+		));
 
 		Ok(())
 	}

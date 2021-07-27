@@ -147,8 +147,8 @@ impl ExtBuilder {
 			.unwrap();
 
 		darwinia_ethereum_relay::GenesisConfig::<Test> {
-			genesis_header_info: (
-				r#"{
+			genesis_header_parcel: r#"{
+				"header": {
 					"difficulty": "0x400000000",
 					"extraData": "0x11bbe8db4e347b4e8c937c1c8370e4b5ed33adb3db69cbdb7a38e1e50b1b82fa",
 					"gasLimit": "0x1388",
@@ -169,11 +169,9 @@ impl ExtBuilder {
 					"transactions": [],
 					"transactionsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
 					"uncles": []
-				}"#.into(),
-				array_bytes::hex_into_unchecked(
-					"0x0000000000000000000000000000000000000000000000000000000000000000",
-				),
-			),
+				},
+				"parent_mmr_root": "0x0000000000000000000000000000000000000000000000000000000000000000"
+			}"#.into(),
 			dags_merkle_roots_loader: DagsMerkleRootsLoader::from_file(
 				"../../../../bin/res/ethereum/dags-merkle-roots.json",
 				"DAG_MERKLE_ROOTS_PATH",

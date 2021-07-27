@@ -36,15 +36,8 @@ where
 	fn get_elem(&self, position: NodeIndex) -> MMRResult<Option<T::Hash>> {
 		let key = <Pallet<T>>::offchain_key(position);
 
-		if let Some(v) = offchain::local_storage_get(StorageKind::PERSISTENT, &key) {
-			Ok(Decode::decode(&mut &*v).ok())
-		} else {
-			Ok(<MMRNodeList<T>>::get(position))
-		}
-
-		// TODO: once the pruning finish, restore this
-		// Ok(offchain::local_storage_get(StorageKind::PERSISTENT, &key)
-		// 	.and_then(|v| Decode::decode(&mut &*v).ok()))
+		Ok(offchain::local_storage_get(StorageKind::PERSISTENT, &key)
+			.and_then(|v| Decode::decode(&mut &*v).ok()))
 	}
 
 	fn append(&mut self, _: NodeIndex, _: Vec<T::Hash>) -> MMRResult<()> {

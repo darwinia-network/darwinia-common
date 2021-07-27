@@ -192,11 +192,6 @@
 		"prefix": "[u8; 4; Prefix]",
 		"parent_mmr_root": "Hash"
 	},
-	"MmrNodesPruningConfiguration": {
-		"step": "NodeIndex",
-		"progress": "NodeIndex",
-		"last_position": "NodeIndex"
-	},
 	"__[primitives.relay]__": {},
 	"OpCode": "[u8; 4; OpCode]",
 	"Term": "u32",

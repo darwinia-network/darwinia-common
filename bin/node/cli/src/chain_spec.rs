@@ -17,7 +17,7 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- std ---
-use std::{collections::BTreeMap, marker::PhantomData};
+use std::{collections::BTreeMap, marker::PhantomData, str::FromStr};
 // --- crates ---
 use rand::{seq::SliceRandom, Rng};
 // --- substrate ---
@@ -45,10 +45,6 @@ type AccountPublic = <Signature as Verify>::Signer;
 const PANGOLIN_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
 const TEAM_MEMBERS: &[&'static str] = &[
-	// Huiyi
-	"0x281b7ec1e05feb46457caa9c54cef0ebdaf7f65d31fd6ed740a34dbc9875304c",
-	// Ron
-	"0x9cf0c0ea7488a17e348f0abba9c229032f3240a793ffcfbedc4b46db0aeb306c",
 	// Cheng
 	"0x922b6854052ba1084c74dd323ee70047d58ae4eb068f20bc251831f1ec109030",
 	// Jane
@@ -166,7 +162,17 @@ pub fn pangolin_build_spec_config() -> PangolinChainSpec {
 		"pangolin",
 		ChainType::Live,
 		pangolin_build_spec_genesis,
-		vec![],
+		[
+			"/dns4/t1.pangolin-p2p.darwinia.network/tcp/30333/p2p/12D3KooWLc6ZD4PGjnRz8CuVioW1dEr8rVBVEAFb1vpxFHXU4g2Y",
+			"/dns4/t2.pangolin-p2p.darwinia.network/tcp/30333/p2p/12D3KooWHf1v45q3u1qPrkwSUq7ybzNfXf5ELPcpoBTJ4k49axfk",
+			"/dns4/t3.pangolin-p2p.darwinia.network/tcp/30333/p2p/12D3KooWCXW7Ds6invyE1rF4BSfwpMgNKzzBxbnEGGjcqZ6cSgap",
+			"/dns4/t4.pangolin-p2p.darwinia.network/tcp/30333/p2p/12D3KooWHokmaoAJp2vVPkw2YG3HFa799RUAJvdfy4dcaEzBdkGw",
+			"/dns4/t5.pangolin-p2p.darwinia.network/tcp/30333/p2p/12D3KooWGJM9oAV95rM67Vad7j7jZGcH7mRoXM4R3gFNYGWE8Nsj",
+			"/dns4/t6.pangolin-p2p.darwinia.network/tcp/30333/p2p/12D3KooWKhUXATik7HPz7EC3865dd7XihbnbCA3ciVjuvPv3YXwr"
+		]
+		.iter()
+		.filter_map(|s| FromStr::from_str(s).ok())
+		.collect(),
 		Some(
 			TelemetryEndpoints::new(vec![(PANGOLIN_TELEMETRY_URL.to_string(), 0)])
 				.expect("Pangolin telemetry url is valid; qed"),
@@ -359,33 +365,32 @@ fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
 		darwinia_crab_issuing: pangolin_runtime::CrabIssuingConfig { total_mapped_ring: BUNCH_OF_COINS },
 		darwinia_crab_backing: pangolin_runtime::CrabBackingConfig { backed_ring: BUNCH_OF_COINS },
 		darwinia_ethereum_relay: pangolin_runtime::EthereumRelayConfig {
-			genesis_header_info: (
-				r#"{
-					"difficulty": "0x400000000",
-					"extraData": "0x11bbe8db4e347b4e8c937c1c8370e4b5ed33adb3db69cbdb7a38e1e50b1b82fa",
-					"gasLimit": "0x1388",
-					"gasUsed": "0x0",
-					"hash": "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3",
-					"logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-					"miner": "0x0000000000000000000000000000000000000000",
-					"mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-					"nonce": "0x0000000000000042",
-					"number": "0x0",
-					"parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-					"receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+			genesis_header_parcel: r#"{
+				"header": {
+					"baseFeePerGas": "0xeb",
+					"difficulty": "0x4186f54e",
+					"extraData": "0xd883010a06846765746888676f312e31352e36856c696e7578",
+					"gasLimit": "0x7a1200",
+					"gasUsed": "0x5e949",
+					"hash": "0x9db735cdbe337477d38b70d96998decb9d8ea1d796cdc6c97546132978db668c",
+					"logsBloom": "0x00200000000000000000000080000000000000004000001000010000000000000000000000000000000000000000000000000000000000000000000008000000040000000020400000004008000020200000010000000000004000008000000000000400020000800100000000000800080000000000400000000010000000000000000000000000004000000080000000000081010000080000004000200000000080000020000000000000000000000000200000080000000000000000000000000006000000000000000000000000000000200000001000002000000020000000000000000000000a00000000200000002000000000400000000000000000",
+					"miner": "0xfbb61b8b98a59fbc4bd79c23212addbefaeb289f",
+					"mixHash": "0xbb166a439393a562d5c71973a7e3f1b87bc6bb65b1b2524e846b021c6c170a16",
+					"nonce": "0xee2e3a941040cee1",
+					"number": "0xa367a4",
+					"parentHash": "0xcaf94fe7cc38a012316dba0cc1296fa2ab3fb401aacef819c39aac934c29ef34",
+					"receiptsRoot": "0x27f5405108f65bd36455ddddf2ce32fe2b87851be97fce3e5eff48636ee52f1e",
 					"sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-					"size": "0x21c",
-					"stateRoot": "0xd7f8974fb5ac78d9ac099b9ad5018bedc2ce0a72dad1827a1709da30580f0544",
-					"timestamp": "0x0",
-					"totalDifficulty": "0x400000000",
+					"size": "0x794",
+					"stateRoot": "0xfcd5f2e0b1a728dbb2112c21c375cdfe425568493dde3bb71d036509c404a236",
+					"timestamp": "0x60fe2f75",
+					"totalDifficulty": "0x79b2e0d1c5829f",
 					"transactions": [],
-					"transactionsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+					"transactionsRoot": "0x2169e889c51cc5605d055a54a3fb095a90a33db18fbcf28e86073fd33288fbb4",
 					"uncles": []
-				}"#.into(),
-				array_bytes::hex_into_unchecked(
-					"0x0000000000000000000000000000000000000000000000000000000000000000",
-				),
-			),
+				},
+				"parent_mmr_root": "0x1183acf36ada5ca93e31e618e7632c3ed23eddf3cebf077eb868873d6212179a"
+			}"#.into(),
 			dags_merkle_roots_loader: DagsMerkleRootsLoaderR::from_file(
 				"bin/res/ethereum/dags-merkle-roots.json",
 				"DAG_MERKLE_ROOTS_PATH",
@@ -564,33 +569,32 @@ fn pangolin_development_genesis() -> pangolin_runtime::GenesisConfig {
 		darwinia_crab_issuing: pangolin_runtime::CrabIssuingConfig { total_mapped_ring: BUNCH_OF_COINS },
 		darwinia_crab_backing: pangolin_runtime::CrabBackingConfig { backed_ring: BUNCH_OF_COINS },
 		darwinia_ethereum_relay: pangolin_runtime::EthereumRelayConfig {
-			genesis_header_info: (
-				r#"{
-					"difficulty": "0x400000000",
-					"extraData": "0x11bbe8db4e347b4e8c937c1c8370e4b5ed33adb3db69cbdb7a38e1e50b1b82fa",
-					"gasLimit": "0x1388",
-					"gasUsed": "0x0",
-					"hash": "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3",
-					"logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-					"miner": "0x0000000000000000000000000000000000000000",
-					"mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-					"nonce": "0x0000000000000042",
-					"number": "0x0",
-					"parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-					"receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+			genesis_header_parcel: r#"{
+				"header": {
+					"baseFeePerGas": "0xeb",
+					"difficulty": "0x4186f54e",
+					"extraData": "0xd883010a06846765746888676f312e31352e36856c696e7578",
+					"gasLimit": "0x7a1200",
+					"gasUsed": "0x5e949",
+					"hash": "0x9db735cdbe337477d38b70d96998decb9d8ea1d796cdc6c97546132978db668c",
+					"logsBloom": "0x00200000000000000000000080000000000000004000001000010000000000000000000000000000000000000000000000000000000000000000000008000000040000000020400000004008000020200000010000000000004000008000000000000400020000800100000000000800080000000000400000000010000000000000000000000000004000000080000000000081010000080000004000200000000080000020000000000000000000000000200000080000000000000000000000000006000000000000000000000000000000200000001000002000000020000000000000000000000a00000000200000002000000000400000000000000000",
+					"miner": "0xfbb61b8b98a59fbc4bd79c23212addbefaeb289f",
+					"mixHash": "0xbb166a439393a562d5c71973a7e3f1b87bc6bb65b1b2524e846b021c6c170a16",
+					"nonce": "0xee2e3a941040cee1",
+					"number": "0xa367a4",
+					"parentHash": "0xcaf94fe7cc38a012316dba0cc1296fa2ab3fb401aacef819c39aac934c29ef34",
+					"receiptsRoot": "0x27f5405108f65bd36455ddddf2ce32fe2b87851be97fce3e5eff48636ee52f1e",
 					"sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-					"size": "0x21c",
-					"stateRoot": "0xd7f8974fb5ac78d9ac099b9ad5018bedc2ce0a72dad1827a1709da30580f0544",
-					"timestamp": "0x0",
-					"totalDifficulty": "0x400000000",
+					"size": "0x794",
+					"stateRoot": "0xfcd5f2e0b1a728dbb2112c21c375cdfe425568493dde3bb71d036509c404a236",
+					"timestamp": "0x60fe2f75",
+					"totalDifficulty": "0x79b2e0d1c5829f",
 					"transactions": [],
-					"transactionsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+					"transactionsRoot": "0x2169e889c51cc5605d055a54a3fb095a90a33db18fbcf28e86073fd33288fbb4",
 					"uncles": []
-				}"#.into(),
-				array_bytes::hex_into_unchecked(
-					"0x0000000000000000000000000000000000000000000000000000000000000000",
-				),
-			),
+				},
+				"parent_mmr_root": "0x1183acf36ada5ca93e31e618e7632c3ed23eddf3cebf077eb868873d6212179a"
+			}"#.into(),
 			dags_merkle_roots_loader: DagsMerkleRootsLoaderR::from_file(
 				"bin/res/ethereum/dags-merkle-roots.json",
 				"DAG_MERKLE_ROOTS_PATH",

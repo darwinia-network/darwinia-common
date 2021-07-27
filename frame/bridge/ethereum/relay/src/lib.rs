@@ -290,26 +290,26 @@ decl_storage! {
 			: Vec<(BlockNumberFor<T>, EthereumRelayHeaderParcel, RelayVotingState<AccountId<T>>)>;
 	}
 	add_extra_genesis {
-		config(genesis_header_info): (String, H256);
+		config(genesis_header_parcel): String;
 		config(dags_merkle_roots_loader): DagsMerkleRootsLoader;
 		build(|config| {
 			let GenesisConfig {
-				genesis_header_info: (genesis_header, genesis_header_mmr_root),
+				genesis_header_parcel,
 				dags_merkle_roots_loader,
 				..
 			} = config;
-			let genesis_header = serde_json::from_str::<EthereumHeader>(genesis_header).unwrap();
+			let genesis_header_parcel = serde_json::from_str::<EthereumRelayHeaderParcel>(
+				genesis_header_parcel
+			).unwrap();
+			let genesis_block_number = genesis_header_parcel.header.number;
 
-			BestConfirmedBlockNumber::put(genesis_header.number);
+			BestConfirmedBlockNumber::put(genesis_block_number);
 			ConfirmedBlockNumbers::mutate(|numbers| {
-				numbers.push(genesis_header.number);
+				numbers.push(genesis_block_number);
 
 				ConfirmedHeaderParcels::insert(
-					genesis_header.number,
-					EthereumRelayHeaderParcel {
-						header: genesis_header,
-						parent_mmr_root: *genesis_header_mmr_root
-					}
+					genesis_block_number,
+					genesis_header_parcel
 				);
 			});
 
