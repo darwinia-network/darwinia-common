@@ -20,15 +20,10 @@
 
 // --- crates.io ---
 use codec::Encode;
-use rand::prelude::*;
-use serde_json::Value;
-// --- github.com ---
-use mmr::MMRStore;
 // --- substrate ---
 use sp_runtime::testing::Digest;
 // --- darwinia ---
-use crate::{mock::*, primitives::*, *};
-use darwinia_header_mmr_rpc_runtime_api::*;
+use crate::{mock::*, primitives::*};
 
 #[test]
 fn codec_digest_should_work() {
@@ -61,23 +56,6 @@ fn serialize_digest_should_work() {
 		// 0x90 is compact codec of the length 36, 0x4d4d5252 is prefix "MMRR"
 		r#"{"logs":["0x00904d4d52520000000000000000000000000000000000000000000000000000000000000000"]}"#
 	);
-}
-
-#[test]
-fn hasher_should_work() {
-	fn assert_hashes(raw_hashes: &[(&str, &str)]) {
-		let hashes = Hashes::from_raw(raw_hashes);
-		let mut mmr = <Mmr<RuntimeStorage, Test>>::with_size(0);
-
-		for i in 0..hashes.len() {
-			mmr.push(hashes[i].hash).unwrap();
-
-			assert_eq!(mmr.get_root().unwrap(), hashes[i].parent_mmr_root);
-		}
-	}
-
-	assert_hashes(Hashes::CRAB);
-	assert_hashes(Hashes::DARWINIA);
 }
 
 #[test]

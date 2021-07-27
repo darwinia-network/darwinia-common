@@ -72,9 +72,8 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	use serde::Serialize;
 	// --- paritytech ---
-	use frame_support::{pallet_prelude::*, weights::Weight};
+	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
-	use sp_io::offchain_index;
 	use sp_runtime::generic::DigestItem;
 	#[cfg(any(test, feature = "easy-testing"))]
 	use sp_runtime::{generic::OpaqueDigestItemId, traits::Header};
