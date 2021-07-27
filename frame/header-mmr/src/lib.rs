@@ -99,11 +99,6 @@ pub mod pallet {
 	#[pallet::getter(fn mmr_size)]
 	pub type MmrSize<T> = StorageValue<_, NodeIndex, ValueQuery>;
 
-	/// MMR struct of the previous blocks, from first(genesis) to parent hash.
-	#[pallet::storage]
-	#[pallet::getter(fn mmr_node_list)]
-	pub type MMRNodeList<T: Config> = StorageMap<_, Identity, NodeIndex, T::Hash, OptionQuery>;
-
 	/// Peaks of the MMR
 	#[pallet::storage]
 	#[pallet::getter(fn peak_of)]
@@ -212,5 +207,11 @@ pub mod migration {
 		}
 	}
 
-	pub fn migrate() {}
+	pub fn migrate(module: impl AsRef<[u8]>) {
+		// --- paritytech ---
+		use frame_support::migration;
+
+		migration::remove_storage_prefix(module.as_ref(), b"MMRNodeList", &[]);
+		migration::remove_storage_prefix(module.as_ref(), b"PruningConfiguration", &[]);
+	}
 }
