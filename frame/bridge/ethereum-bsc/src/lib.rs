@@ -16,6 +16,47 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+//! # Ethereum BSC(Binance Smart Chain) Pallet
+//!
+//! The ethereum-bsc pallet provides functionality for verify headers which submitted by relayer and finalize
+//! authority set
+//!
+//! - [`Config`]
+//! - [`Call`]
+//! - [`Pallet`]
+//!
+//! ## Overview
+//!
+//! The Balances pallet provides functions for:
+//!
+//! - Verify and finalize bsc headers and authority set
+//! - Verify a single bsc header
+//!
+//! ### Terminology
+//!
+//! - **BSCHeader:** The header structure of Binance Smart Chain.
+//!
+//! - **genesis_header** The initial header set to this pallet before accept the headers submmit by relayers.
+//!   We extract the initial authority set from this header and verify the headers submit later with the extracted initial
+//!   authority set. So the genesis_header must be verified manually.
+//!
+//!
+//! - **checkpoint** checkpoint is the block that fullfill block number % epoch_length == 0. This concept comes from the implements of
+//!   authroity round consensus algorithm
+//!
+//! ### Implementations
+//! If you want to review the code, you should read about Authority Round and Proof of Authority consensus algorithms first. Then you may
+//! look into the go implementation of bsc source code and probably focus on the consensus alogrithm that bsc using. Read the official docs if you want.
+//! For this pallet:
+//! The first thing you should care is the configuration of this pallet. Check the bsc official docs to make sure you set these
+//! parameters correctly
+//! In bsc explorer, choose a checkpoint block's header to set as genesis header of this pallet. It's not important which block you take, but it's important
+//! that the relayers should submmit headers from genesis_header.number + epoch_length
+//! If you only want to verify a single header, use verify_header fn is enough. The important tip is the header's number you want verify should greater
+//! than genesis header, or the answer will be NO.
+//! According to the official doc of Binance Smart Chain, when authority set changed at checkpoint header, the new authority set are not taken as finanlized immediately.
+//! We will wait N / 2 blocks to make sure it's safe to finalize the new authority set. N is the authority set size.
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(test)]
@@ -121,6 +162,11 @@ pub mod pallet {
 	#[pallet::getter(fn finalized_checkpoint)]
 	pub type FinalizedCheckpoint<T> = StorageValue<_, BSCHeader, ValueQuery>;
 
+	/// authroities is the set of qulified authorities that currently active or actived in previous rounds
+	#[pallet::storage]
+	#[pallet::getter(fn authorities)]
+	pub type Authorities<T> = StorageValue<_, Vec<Address>, ValueQuery>;
+
 	#[cfg_attr(feature = "std", derive(Default))]
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {
@@ -131,7 +177,7 @@ pub mod pallet {
 		fn build(&self) {
 			let initial_authority_set =
 				<Pallet<T>>::extract_authorities(&self.genesis_header).unwrap();
-
+			<Authorities<T>>::put(initial_authority_set.clone());
 			<FinalizedAuthority<T>>::put(initial_authority_set);
 			<FinalizedCheckpoint<T>>::put(&self.genesis_header);
 		}
@@ -183,6 +229,7 @@ pub mod pallet {
 		}
 	}
 	impl<T: Config> Pallet<T> {
+		/// Return true if the header's timestamp greater or equal than current on-chain time
 		pub fn is_timestamp_ahead(timestamp: u64) -> bool {
 			T::UnixTime::now().as_millis() as u64 <= timestamp
 		}
@@ -197,6 +244,7 @@ pub mod pallet {
 			// Ensure that nonce is empty
 			ensure!(header.nonce.as_slice() == [0; 8], <Error<T>>::InvalidNonce);
 
+			// This comes from the go version of BSC header verification code
 			ensure!(
 				header.gas_limit >= config.min_gas_limit
 					&& header.gas_limit <= config.max_gas_limit,
@@ -354,6 +402,19 @@ pub mod pallet {
 			Ok(signers)
 		}
 
+		/// Verify single header
+		/// The header number should in the range [genesis_header.number, finalized_checkpoint.number + N]
+		/// Before the first call of verify_and_update_authority_set extrinsic, genesis_header == finalized_checkpoint
+		pub fn verify_header(header: &BSCHeader) -> DispatchResult {
+			let cfg = T::BSCConfiguration::get();
+			Self::contextless_checks(&cfg, header)?;
+			let authorities = <FinalizedAuthority<T>>::get();
+			// check signer
+			let signer = Self::recover_creator(cfg.chain_id, header)?;
+			ensure!(contains(&authorities, signer), <Error::<T>>::InvalidSigner);
+			Ok(())
+		}
+
 		/// Verify unsigned relayed headers and finalize authority set
 		pub fn verify_and_update_authority_set(
 			headers: &[BSCHeader],
@@ -362,6 +423,7 @@ pub mod pallet {
 			let last_authority_set = <FinalizedAuthority<T>>::get();
 
 			// ensure valid length
+			// we should submit at least N / 2 + 1 headers
 			ensure!(
 				last_authority_set.len() / 2 < headers.len(),
 				<Error::<T>>::InvalidHeadersSize
@@ -423,10 +485,16 @@ pub mod pallet {
 				// enough proof to finalize new authority set
 				if recently.len() == last_authority_set.len() / 2 {
 					// already have N/2 valid headers signed by different authority separately
-					// finalize new authority set
+					// do finalize new authority set
 					<FinalizedAuthority<T>>::put(&new_authority_set);
 					<FinalizedCheckpoint<T>>::put(checkpoint);
-
+					let mut authorities = <Authorities<T>>::get();
+					for authority in &new_authority_set {
+						if !contains(&authorities, *authority) {
+							authorities.push(*authority)
+						}
+					}
+					<Authorities<T>>::put(authorities);
 					// skip the rest submitted headers
 					return Ok(new_authority_set);
 				}
@@ -473,6 +541,7 @@ pub mod pallet {
 		pub period: u64,
 	}
 
+	/// check if the signer address in a set of qulified signers
 	fn contains(signers: &[Address], signer: Address) -> bool {
 		signers.iter().any(|i| *i == signer)
 	}
