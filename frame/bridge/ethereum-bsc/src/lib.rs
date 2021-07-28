@@ -163,6 +163,7 @@ pub mod pallet {
 	pub type FinalizedCheckpoint<T> = StorageValue<_, BSCHeader, ValueQuery>;
 
 	/// authroities is the set of qulified authorities that currently active or actived in previous rounds
+	/// this was added to track the older qualified authorities, to make sure we can verify a older header
 	#[pallet::storage]
 	#[pallet::getter(fn authorities)]
 	pub type Authorities<T> = StorageValue<_, Vec<Address>, ValueQuery>;
