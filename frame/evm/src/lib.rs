@@ -42,7 +42,7 @@ use evm::{Config as EvmConfig, ExitError, ExitReason};
 use serde::{Deserialize, Serialize};
 // --- paritytech ---
 use frame_support::{
-	traits::{Currency, FindAuthor},
+	traits::FindAuthor,
 	weights::{PostDispatchInfo, Weight},
 };
 use frame_system::RawOrigin;
@@ -86,11 +86,7 @@ pub mod pallet {
 		/// Find author for the current block.
 		type FindAuthor: FindAuthor<H160>;
 
-		/// Ring Currency type
-		type RingCurrency: Currency<Self::AccountId>;
-		/// Kton Currency type
-		type KtonCurrency: Currency<Self::AccountId>;
-		/// The account basic mapping way
+		/// Account basic
 		type RingAccountBasic: AccountBasic<Self>;
 		type KtonAccountBasic: AccountBasic<Self>;
 
