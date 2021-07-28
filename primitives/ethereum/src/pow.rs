@@ -16,27 +16,37 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+// --- core ---
+#[cfg(any(feature = "full-rlp", test))]
+use core::{cell::RefCell, mem};
 use core::{
 	cmp,
 	convert::{From, Into, TryFrom},
 };
-
+// --- std ---
+#[cfg(feature = "std")]
+use std::collections::BTreeMap;
+// --- alloc ---
+#[cfg(not(feature = "std"))]
+use alloc::{borrow::ToOwned, collections::BTreeMap};
+// --- crates.io ---
+#[cfg(any(feature = "full-codec", test))]
 use codec::{Decode, Encode};
-use ethereum_types::{BigEndianHash, H128};
 use keccak_hash::KECCAK_EMPTY_LIST_RLP;
-use primitive_types::{H256, U256, U512};
-use rlp::*;
-use sp_runtime::RuntimeDebug;
-use sp_std::{cell::RefCell, collections::btree_map::BTreeMap, mem};
-
+#[cfg(any(feature = "full-rlp", test))]
+use rlp::Rlp;
+use sp_debug_derive::RuntimeDebug;
+// --- darwinia-network ---
+#[cfg(any(feature = "full-rlp", test))]
 use crate::{
-	error::{EthereumError, Mismatch, OutOfBounds},
+	error::{BlockError, Error, Mismatch, OutOfBounds, ProofError, RlpError},
 	ethashproof::EthashProof,
-	header::EthereumHeader,
-	*,
+	H128,
 };
+use crate::{header::Header, BigEndianHash, BlockNumber, H256, H64, U256, U512};
 
-#[derive(Default, PartialEq, Eq, Clone, Encode, Decode)]
+#[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
+#[derive(Default, PartialEq, Eq, Clone)]
 pub struct EthashPartial {
 	pub minimum_difficulty: U256,
 	pub difficulty_bound_divisor: U256,
@@ -50,18 +60,13 @@ pub struct EthashPartial {
 	pub eip100b_transition: u64,
 	pub ecip1010_pause_transition: u64,
 	pub ecip1010_continue_transition: u64,
-	pub difficulty_bomb_delays: BTreeMap<EthereumBlockNumber, EthereumBlockNumber>,
+	pub difficulty_bomb_delays: BTreeMap<BlockNumber, BlockNumber>,
 	pub expip2_transition: u64,
 	pub expip2_duration_limit: u64,
 	pub progpow_transition: u64,
 }
-
 impl EthashPartial {
-	pub fn set_difficulty_bomb_delays(
-		&mut self,
-		key: EthereumBlockNumber,
-		value: EthereumBlockNumber,
-	) {
+	pub fn set_difficulty_bomb_delays(&mut self, key: BlockNumber, value: BlockNumber) {
 		self.difficulty_bomb_delays.insert(key, value);
 	}
 
@@ -79,7 +84,7 @@ impl EthashPartial {
 			eip100b_transition: 0xC3500,
 			ecip1010_pause_transition: 0x2dc6c0,
 			ecip1010_continue_transition: 0x4c4b40,
-			difficulty_bomb_delays: BTreeMap::<EthereumBlockNumber, EthereumBlockNumber>::default(),
+			difficulty_bomb_delays: BTreeMap::<BlockNumber, BlockNumber>::default(),
 			expip2_transition: 0xc3500,
 			expip2_duration_limit: 0x1e,
 			progpow_transition: u64::max_value(),
@@ -105,6 +110,7 @@ impl EthashPartial {
 				m.insert(4370000, 3000000);
 				m.insert(7280000, 2000000);
 				m.insert(0x8c6180, 0x3d0900);
+				m.insert(0xc3d0e8, 0xaae60);
 				m
 			},
 			expip2_transition: u64::max_value(),
@@ -132,6 +138,7 @@ impl EthashPartial {
 				m.insert(0x19f0a0, 0x2dc6c0);
 				m.insert(0x408b70, 0x1e8480);
 				m.insert(0x6c993d, 0x3d0900);
+				m.insert(0xa03549, 0xaae60);
 				m
 			},
 			expip2_transition: u64::max_value(),
@@ -142,14 +149,14 @@ impl EthashPartial {
 }
 
 impl EthashPartial {
+	#[cfg(any(feature = "full-rlp", test))]
 	pub fn verify_seal_with_proof(
 		self,
-		header: &EthereumHeader,
+		header: &Header,
 		ethash_proof: &[EthashProof],
 		merkle_root: &H128,
-	) -> Result<(), EthereumError> {
-		let seal = EthashSeal::parse_seal(header.seal())?;
-
+	) -> Result<(), Error> {
+		let seal = Seal::parse_seal(header.seal())?;
 		let (mix_hash, _result) = self.hashimoto_merkle(
 			&header.bare_hash(),
 			&seal.nonce,
@@ -157,12 +164,15 @@ impl EthashPartial {
 			ethash_proof,
 			merkle_root,
 		)?;
+
 		if mix_hash != seal.mix_hash {
-			return Err(EthereumError::SealInvalid);
+			Err(BlockError::InvalidSeal)?;
 		}
+
 		Ok(())
 	}
 
+	#[cfg(any(feature = "full-rlp", test))]
 	fn hashimoto_merkle(
 		self,
 		header_hash: &H256,
@@ -170,75 +180,81 @@ impl EthashPartial {
 		block_number: u64,
 		nodes: &[EthashProof],
 		merkle_root: &H128,
-	) -> Result<(H256, H256), EthereumError> {
+	) -> Result<(H256, H256), ProofError> {
 		// Boxed index since ethash::hashimoto gets Fn, but not FnMut
 		let index = RefCell::new(0);
-		let err = RefCell::new(0u8);
+		let maybe_error = RefCell::new(None);
 
 		let pair = ethash::hashimoto(
 			*header_hash,
 			*nonce,
 			ethash::get_full_size(block_number as usize / 30000),
 			|offset| {
-				if *err.borrow() != 0 {
+				if maybe_error.borrow().is_some() {
 					return Default::default();
 				}
 
 				let index = index.replace_with(|&mut old| old + 1);
-
 				// Each two nodes are packed into single 128 bytes with Merkle proof
 				let node = if let Some(node) = nodes.get(index / 2) {
 					node
 				} else {
-					err.replace(1);
+					maybe_error.replace(Some(ProofError::MerkleProofOutOfRange(OutOfBounds {
+						min: Some(0),
+						max: Some(nodes.len()),
+						found: index / 2,
+					})));
+
 					return Default::default();
 				};
 
-				if index % 2 == 0 {
+				let index_mod_2 = index % 2;
+
+				if index_mod_2 == 0 {
+					let expected_merkle_root = merkle_root.to_owned();
 					// Divide by 2 to adjust offset for 64-byte words instead of 128-byte
-					if *merkle_root != node.apply_merkle_proof((offset / 2) as u64) {
-						err.replace(2);
+					let calculated_merkle_root = node.apply_merkle_proof((offset / 2) as u64);
+
+					if expected_merkle_root != calculated_merkle_root {
+						maybe_error.replace(Some(ProofError::MerkleRootMismatch(Mismatch {
+							expected: expected_merkle_root,
+							found: calculated_merkle_root,
+						})));
+
 						return Default::default();
 					}
 				};
 
 				// Reverse each 32 bytes for ETHASH compatibility
-				let mut data = if let Some(dag_node) = node.dag_nodes.get(index % 2) {
-					dag_node.0
-				} else {
-					err.replace(1);
-					return Default::default();
-				};
+				// `index_mod_2` will never get out of range on `[H512; 2]`
+				let mut data = node.dag_nodes[index_mod_2];
 				data[..32].reverse();
 				data[32..].reverse();
+
 				data.into()
 			},
 		);
 
-		match err.into_inner() {
-			0 => Ok(pair),
-			1 => Err(EthereumError::MerkleProofMismatch(
-				"Merkle proof index out off range error",
-			)),
-			2 => Err(EthereumError::MerkleProofMismatch("Merkle root mismatch")),
-			_ => Err(EthereumError::MerkleProofMismatch(
-				"Merkle root error - should not be here",
-			)),
+		if let Some(e) = maybe_error.into_inner() {
+			Err(e)
+		} else {
+			Ok(pair)
 		}
 	}
 
-	pub fn verify_block_basic(&self, header: &EthereumHeader) -> Result<(), EthereumError> {
+	#[cfg(any(feature = "full-rlp", test))]
+	pub fn verify_block_basic(&self, header: &Header) -> Result<(), Error> {
 		// check the seal fields.
-		let seal = EthashSeal::parse_seal(header.seal())?;
-
+		let seal = Seal::parse_seal(header.seal())?;
 		// TODO: consider removing these lines.
 		let min_difficulty = self.minimum_difficulty;
+
 		if header.difficulty() < &min_difficulty {
-			return Err(EthereumError::DifficultyOutOfBounds(OutOfBounds {
+			Err(BlockError::DifficultyOutOfBounds(OutOfBounds {
 				min: Some(min_difficulty),
 				max: None,
 				found: *header.difficulty(),
-			}));
+			}))?;
 		}
 
 		let difficulty = boundary_to_difficulty(&H256(quick_get_difficulty(
@@ -249,17 +265,17 @@ impl EthashPartial {
 		)));
 
 		if &difficulty < header.difficulty() {
-			return Err(EthereumError::InvalidProofOfWork(OutOfBounds {
+			Err(BlockError::InvalidProofOfWork(OutOfBounds {
 				min: Some(*header.difficulty()),
 				max: None,
 				found: difficulty,
-			}));
+			}))?;
 		}
 
 		Ok(())
 	}
 
-	pub fn calculate_difficulty(&self, header: &EthereumHeader, parent: &EthereumHeader) -> U256 {
+	pub fn calculate_difficulty(&self, header: &Header, parent: &Header) -> U256 {
 		const EXP_DIFF_PERIOD: u64 = 100_000;
 
 		if header.number() == 0 {
@@ -347,41 +363,42 @@ impl EthashPartial {
 	}
 }
 
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
-pub struct EthashSeal {
+#[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
+#[derive(PartialEq, Eq, Clone, RuntimeDebug)]
+pub struct Seal {
 	/// Ethash seal mix_hash
 	pub mix_hash: H256,
 	/// Ethash seal nonce
 	pub nonce: H64,
 }
-
-impl EthashSeal {
+impl Seal {
 	/// Tries to parse rlp encoded bytes as an Ethash/Clique seal.
-	pub fn parse_seal<T: AsRef<[u8]>>(seal: &[T]) -> Result<Self, EthereumError> {
+	#[cfg(any(feature = "full-rlp", test))]
+	pub fn parse_seal<T: AsRef<[u8]>>(seal: &[T]) -> Result<Self, Error> {
 		if seal.len() != 2 {
-			return Err(EthereumError::InvalidSealArity(Mismatch {
+			Err(BlockError::InvalidSealArity(Mismatch {
 				expected: 2,
 				found: seal.len(),
-			}));
+			}))?;
 		}
 
 		let mix_hash = Rlp::new(seal[0].as_ref())
 			.as_val::<H256>()
-			.map_err(|_e| EthereumError::Rlp("Rlp - INVALID"))
-			.unwrap();
+			.map_err(RlpError::from)?;
 		let nonce = Rlp::new(seal[1].as_ref())
 			.as_val::<H64>()
-			.map_err(|_e| EthereumError::Rlp("Rlp - INVALID"))
-			.unwrap();
-		Ok(EthashSeal { mix_hash, nonce })
+			.map_err(RlpError::from)?;
+		let seal = Seal { mix_hash, nonce };
+
+		Ok(seal)
 	}
 }
 
-pub fn boundary_to_difficulty(boundary: &ethereum_types::H256) -> U256 {
+pub fn boundary_to_difficulty(boundary: &H256) -> U256 {
 	difficulty_to_boundary_aux(&boundary.into_uint())
 }
 
-fn difficulty_to_boundary_aux<T: Into<U512>>(difficulty: T) -> ethereum_types::U256 {
+fn difficulty_to_boundary_aux<T: Into<U512>>(difficulty: T) -> U256 {
 	let difficulty = difficulty.into();
 
 	assert!(!difficulty.is_zero());
@@ -394,6 +411,7 @@ fn difficulty_to_boundary_aux<T: Into<U512>>(difficulty: T) -> ethereum_types::U
 	}
 }
 
+#[cfg(any(feature = "full-rlp", test))]
 fn quick_get_difficulty(
 	header_hash: &[u8; 32],
 	nonce: u64,

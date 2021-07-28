@@ -427,6 +427,7 @@ where
 {
 	let role = config.role.clone();
 	let is_authority = role.is_authority();
+	let is_archive = config.state_pruning.is_archive();
 	let force_authoring = config.force_authoring;
 	let backoff_authoring_blocks =
 		Some(sc_consensus_slots::BackoffAuthoringOnFinalizedHeadLagging::default());
@@ -670,17 +671,19 @@ where
 		);
 	}
 
-	task_manager.spawn_essential_handle().spawn(
-		"frontier-mapping-sync-worker",
-		MappingSyncWorker::new(
-			client.import_notification_stream(),
-			Duration::new(6, 0),
-			client.clone(),
-			backend.clone(),
-			dvm_backend.clone(),
-		)
-		.for_each(|()| futures::future::ready(())),
-	);
+	if is_archive {
+		task_manager.spawn_essential_handle().spawn(
+			"frontier-mapping-sync-worker",
+			MappingSyncWorker::new(
+				client.import_notification_stream(),
+				Duration::new(6, 0),
+				client.clone(),
+				backend.clone(),
+				dvm_backend.clone(),
+			)
+			.for_each(|()| futures::future::ready(())),
+		);
+	}
 
 	// Spawn Frontier EthFilterApi maintenance task.
 	if let Some(filter_pool) = filter_pool {

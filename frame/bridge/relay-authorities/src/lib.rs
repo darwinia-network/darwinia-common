@@ -24,13 +24,14 @@ pub mod weights;
 pub use weights::WeightInfo;
 
 pub mod migration {
-	pub fn migrate<T, I>(module: &[u8]) {
-		// --- paritytech ---
-		use frame_support::migration;
-
-		migration::remove_storage_prefix(module, b"MMRRootsToSign", &[]);
-		migration::remove_storage_prefix(module, b"MMRRootsToSignKeys", &[]);
+	#[cfg(feature = "try-runtime")]
+	pub mod try_runtime {
+		pub fn pre_migrate() -> Result<(), &'static str> {
+			Ok(())
+		}
 	}
+
+	pub fn migrate() {}
 }
 
 #[cfg(test)]

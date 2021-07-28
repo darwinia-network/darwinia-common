@@ -23,6 +23,8 @@
 
 pub mod runner;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
 #[cfg(test)]
 mod tests;
 
@@ -444,12 +446,13 @@ pub trait GasWeightMapping {
 	fn gas_to_weight(gas: u64) -> Weight;
 	fn weight_to_gas(weight: Weight) -> u64;
 }
+// The radio of gas to weight comes from benchmark test
 impl GasWeightMapping for () {
 	fn gas_to_weight(gas: u64) -> Weight {
-		gas as Weight
+		gas * 16_000 as Weight
 	}
 	fn weight_to_gas(weight: Weight) -> u64 {
-		weight
+		weight / 16_000
 	}
 }
 

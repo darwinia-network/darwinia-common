@@ -436,9 +436,6 @@ name = "beef"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6736e2428df2ca2848d846c43e88745121a6654696e349ce0054a420815a7409"
-dependencies = [
- "serde",
-]
 
 [[package]]
 name = "bincode"
@@ -1543,7 +1540,6 @@ version = "2.5.0"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
- "darwinia-ethereum-linear-relay",
  "darwinia-ethereum-relay",
  "darwinia-relay-primitives",
  "darwinia-relayer-game",
@@ -1599,28 +1595,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-ethereum-linear-relay"
-version = "2.5.0"
-dependencies = [
- "array-bytes",
- "darwinia-balances",
- "darwinia-support",
- "ethereum-primitives",
- "ethereum-types",
- "frame-support",
- "frame-system",
- "log",
- "parity-scale-codec",
- "rlp",
- "serde",
- "serde_json",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "darwinia-ethereum-relay"
 version = "2.5.0"
 dependencies = [
@@ -1649,12 +1623,14 @@ dependencies = [
 name = "darwinia-evm"
 version = "2.5.0"
 dependencies = [
+ "array-bytes",
  "darwinia-balances",
  "darwinia-support",
  "dp-evm",
  "evm 0.27.0",
  "evm-gasometer 0.27.0",
  "evm-runtime 0.27.0",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
@@ -1832,7 +1808,6 @@ dependencies = [
  "frame-system",
  "log",
  "parity-scale-codec",
- "rand 0.8.4",
  "serde",
  "serde_json",
  "sp-core",
@@ -2717,22 +2692,16 @@ dependencies = [
  "ethash",
  "ethbloom",
  "ethereum-types",
- "fixed-hash",
- "frame-support",
- "impl-codec",
- "impl-rlp",
  "keccak-hash",
  "keccak-hasher",
  "merkle-patricia-trie",
  "parity-scale-codec",
- "primitive-types",
  "rlp",
  "rlp-derive",
  "serde",
  "serde_json",
- "sp-io",
- "sp-runtime",
- "sp-std",
+ "sp-debug-derive 3.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "subhasher",
  "triehash",
 ]
 
@@ -3740,17 +3709,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "http-body"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "60daa14be0e0786db0f03a9e57cb404c9d756eed2b6c62b9ea98ec5743ec75a9"
-dependencies = [
- "bytes 1.0.1",
- "http 0.2.4",
- "pin-project-lite 0.2.7",
-]
-
-[[package]]
 name = "httparse"
 version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3761,12 +3719,6 @@ name = "httpdate"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "494b4d60369511e7dea41cf646832512a94e542f68bb9c49e54518e0f468eb47"
-
-[[package]]
-name = "httpdate"
-version = "1.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6456b8a6c8f33fee7d958fcd1b60d55b11940a79e63ae87013e6d22e26034440"
 
 [[package]]
 name = "humantime"
@@ -3827,33 +3779,11 @@ dependencies = [
  "http 0.2.4",
  "http-body 0.3.1",
  "httparse",
- "httpdate 0.3.2",
+ "httpdate",
  "itoa",
  "pin-project 1.0.7",
  "socket2 0.3.19",
  "tokio 0.2.25",
- "tower-service",
- "tracing",
- "want 0.3.0",
-]
-
-[[package]]
-name = "hyper"
-version = "0.14.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07d6baa1b441335f3ce5098ac421fb6547c46dda735ca1bc6d0153c838f9dd83"
-dependencies = [
- "bytes 1.0.1",
- "futures-channel",
- "futures-core",
- "futures-util",
- "http 0.2.4",
- "http-body 0.4.2",
- "httparse",
- "httpdate 1.0.1",
- "itoa",
- "pin-project-lite 0.2.7",
- "tokio 1.7.1",
  "tower-service",
  "tracing",
  "want 0.3.0",
@@ -4244,27 +4174,25 @@ dependencies = [
 
 [[package]]
 name = "jsonrpsee-types"
-version = "0.2.0"
+version = "0.2.0-alpha.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c0cf7bd4e93b3b56e59131de7f24afbea871faf914e97bcdd942c86927ab0172"
+checksum = "bab3dabceeeeb865897661d532d47202eaae71cd2c606f53cb69f1fbc0555a51"
 dependencies = [
  "async-trait",
  "beef",
  "futures-channel",
  "futures-util",
- "hyper 0.14.9",
  "log",
  "serde",
  "serde_json",
- "soketto 0.5.0",
  "thiserror",
 ]
 
 [[package]]
 name = "jsonrpsee-utils"
-version = "0.2.0"
+version = "0.2.0-alpha.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "47554ecaacb479285da68799d9b6afc258c32b332cc8b85829c6a9304ee98776"
+checksum = "d63cf4d423614e71fd144a8691208539d2b23d8373e069e2fbe023c5eba5e922"
 dependencies = [
  "futures-util",
  "hyper 0.13.10",
@@ -4825,7 +4753,7 @@ dependencies = [
  "log",
  "quicksink",
  "rw-stream-sink",
- "soketto 0.4.2",
+ "soketto",
  "url 2.2.2",
  "webpki-roots",
 ]
@@ -8706,21 +8634,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "soketto"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4919971d141dbadaa0e82b5d369e2d7666c98e4625046140615ca363e50d4daa"
-dependencies = [
- "base64 0.13.0",
- "bytes 1.0.1",
- "futures 0.3.15",
- "httparse",
- "log",
- "rand 0.8.4",
- "sha-1 0.9.6",
-]
-
-[[package]]
 name = "sp-allocator"
 version = "3.0.0"
 source = "git+https://github.com/darwinia-network/substrate?branch=main#1d7f6e12c651d776fc0dc1adefd007bb60f60b63"
@@ -8782,7 +8695,7 @@ dependencies = [
  "num-traits",
  "parity-scale-codec",
  "serde",
- "sp-debug-derive",
+ "sp-debug-derive 3.0.0 (git+https://github.com/darwinia-network/substrate?branch=main)",
  "sp-std",
  "static_assertions",
 ]
@@ -8951,7 +8864,7 @@ dependencies = [
  "secrecy",
  "serde",
  "sha2 0.9.5",
- "sp-debug-derive",
+ "sp-debug-derive 3.0.0 (git+https://github.com/darwinia-network/substrate?branch=main)",
  "sp-externalities",
  "sp-runtime-interface",
  "sp-std",
@@ -8978,6 +8891,17 @@ dependencies = [
 name = "sp-debug-derive"
 version = "3.0.0"
 source = "git+https://github.com/darwinia-network/substrate?branch=main#1d7f6e12c651d776fc0dc1adefd007bb60f60b63"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "sp-debug-derive"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e80275f23b4e7ba8f54dec5f90f016530e7307d2ee9445f617ab986cbe97f31e"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -9260,7 +9184,7 @@ dependencies = [
  "parity-scale-codec",
  "ref-cast",
  "serde",
- "sp-debug-derive",
+ "sp-debug-derive 3.0.0 (git+https://github.com/darwinia-network/substrate?branch=main)",
  "sp-std",
 ]
 
@@ -9489,6 +9413,19 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "subhasher"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8146e2d664d312544c094a1b649e2d6239df5a0ce8a8c95427088815a0a516a6"
+dependencies = [
+ "blake2-rfc",
+ "byteorder",
+ "sha2 0.9.5",
+ "tiny-keccak",
+ "twox-hash",
 ]
 
 [[package]]
@@ -9850,16 +9787,6 @@ dependencies = [
  "num_cpus",
  "pin-project-lite 0.2.7",
  "slab",
-]
-
-[[package]]
-name = "tokio"
-version = "1.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5fb2ed024293bb19f7a5dc54fe83bf86532a44c12a2bb8ba40d64a4509395ca2"
-dependencies = [
- "autocfg",
- "pin-project-lite 0.2.7",
 ]
 
 [[package]]

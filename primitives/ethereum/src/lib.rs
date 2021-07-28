@@ -16,15 +16,38 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-use sp_std::prelude::*;
+#![cfg_attr(not(feature = "std"), no_std)]
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Header(Vec<u8>);
-impl Header {
-	/// Create a new owning header view.
-	/// Expects the data to be an RLP-encoded header -- any other case will likely lead to
-	/// panics further down the line.
-	pub fn new(encoded: Vec<u8>) -> Self {
-		Header(encoded)
+#[cfg(not(feature = "std"))]
+extern crate alloc;
+
+pub mod error;
+pub mod ethashproof;
+pub mod header;
+pub mod pow;
+pub mod receipt;
+
+pub use crate::{BlockNumber as EthereumBlockNumber, Network as EthereumNetwork};
+pub use ethereum_types::{Address as EthereumAddress, *};
+
+// --- alloc ---
+#[cfg(not(feature = "std"))]
+use alloc::vec::Vec;
+// --- crates.io ---
+#[cfg(any(feature = "full-codec", test))]
+use codec::{Decode, Encode};
+
+pub type Bytes = Vec<u8>;
+pub type BlockNumber = u64;
+
+#[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
+#[derive(Clone, PartialEq)]
+pub enum Network {
+	Mainnet,
+	Ropsten,
+}
+impl Default for Network {
+	fn default() -> Network {
+		Network::Mainnet
 	}
 }

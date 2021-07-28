@@ -54,7 +54,7 @@ drml-primitives                     = { default-features = false, path = "../../
 dvm-dynamic-fee                     = { default-features = false, path = "../../../../frame/dvm-dynamic-fee" }
 dvm-ethereum                        = { default-features = false, path = "../../../../frame/dvm" }
 dvm-rpc-runtime-api                 = { default-features = false, path = "../../../../frame/dvm/rpc/runtime-api" }
-ethereum-primitives                 = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
+ethereum-primitives                 = { default-features = false, path = "../../../../primitives/ethereum" }
 millau-primitives                   = { default-features = false, git = "https://github.com/darwinia-network/darwinia-launch", branch = "pangolin-bridge" }
 pangolin-bridge-primitives          = { default-features = false, path = "../../bridge-primitives/pangolin" }
 pangolin-constants                  = { default-features = false, path = "src/constants" }
@@ -230,6 +230,7 @@ runtime-benchmarks = [
 	"frame-support/runtime-benchmarks",
 	"pallet-collective/runtime-benchmarks",
 	"pallet-society/runtime-benchmarks",
+	"darwinia-evm/runtime-benchmarks",
 	"darwinia-s2s-issuing/runtime-benchmarks",
 ]
 

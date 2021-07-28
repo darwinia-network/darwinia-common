@@ -28,20 +28,18 @@ use sp_runtime::{traits::Dispatchable, AccountId32, RuntimeDebug};
 use crate::{pallet::*, *};
 use darwinia_staking::{RewardDestination, StakingBalance, StakingLedger, TimeDepositItem};
 use darwinia_support::balance::*;
-use ethereum_primitives::{
-	header::EthereumHeader, receipt::EthereumReceiptProof, EthereumNetworkType,
-};
+use ethereum_primitives::{header::EthereumHeader, receipt::EthereumReceiptProof, EthereumNetwork};
 
 decl_tests!(EthereumRelay: darwinia_ethereum_linear_relay::{Pallet, Call, Storage});
 
 frame_support::parameter_types! {
 	pub const EthereumLinearRelayPalletId: PalletId = PalletId(*b"da/ethli");
-	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Ropsten;
+	pub const EthereumLinearRelayBridgeNetwork: EthereumNetwork = EthereumNetwork::Ropsten;
 }
 impl darwinia_ethereum_linear_relay::Config for Test {
 	type PalletId = EthereumLinearRelayPalletId;
 	type Event = ();
-	type EthereumNetwork = EthereumNetwork;
+	type BridgedNetwork = EthereumLinearRelayBridgeNetwork;
 	type Call = Call;
 	type Currency = Ring;
 	type WeightInfo = ();

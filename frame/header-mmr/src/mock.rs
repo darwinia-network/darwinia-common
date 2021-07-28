@@ -97,6 +97,7 @@ pub fn new_test_ext() -> TestExternalities {
 		.into()
 }
 
+#[allow(unused)]
 pub fn register_offchain_ext(ext: &mut TestExternalities) {
 	ext.persist_offchain_overlay();
 
@@ -150,6 +151,7 @@ pub fn new_block() -> Header {
 	new_block_with_parent_hash(parent_hash)
 }
 
+#[allow(unused)]
 pub fn run_to_block_from_genesis(n: BlockNumber) -> Vec<Header> {
 	let mut headers = vec![new_block()];
 

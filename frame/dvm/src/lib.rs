@@ -662,15 +662,9 @@ impl Get<H256> for IntermediateStateRoot {
 }
 
 pub mod migration {
-	// --- darwinia ---
-	// use crate::*;
-
 	#[cfg(feature = "try-runtime")]
 	pub mod try_runtime {
-		// --- darwinia ---
-		use crate::*;
-
-		pub fn pre_migrate<T: Config>() -> Result<(), &'static str> {
+		pub fn pre_migrate() -> Result<(), &'static str> {
 			Ok(())
 		}
 	}
