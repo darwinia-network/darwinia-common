@@ -510,6 +510,6 @@ fn verify_and_update_authority_set_signed_should_work() {
 			    }"#,
 		).unwrap();
 
-		assert_ok!(BSC::verify_header(h9516608));
+		assert_ok!(BSC::verify_header(&h9516608));
 	})
 }

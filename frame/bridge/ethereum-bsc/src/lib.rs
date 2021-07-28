@@ -29,33 +29,33 @@
 //!
 //! The Balances pallet provides functions for:
 //!
-//! - Verify and finalize bsc headers and authority set
+//! - Verify bsc headers and finalize authority set
 //! - Verify a single bsc header
 //!
 //! ### Terminology
 //!
 //! - **BSCHeader:** The header structure of Binance Smart Chain.
 //!
-//! - **genesis_header** The initial header set to this pallet before accept the headers submmit by relayers.
-//!   We extract the initial authority set from this header and verify the headers submit later with the extracted initial
+//! - **genesis_header** The initial header which set to this pallet before it accept the headers submmitted by relayers.
+//!   We extract the initial authority set from this header and verify the headers submitted later with the extracted initial
 //!   authority set. So the genesis_header must be verified manually.
 //!
 //!
-//! - **checkpoint** checkpoint is the block that fullfill block number % epoch_length == 0. This concept comes from the implements of
-//!   authroity round consensus algorithm
+//! - **checkpoint** checkpoint is the block that fullfill block number % epoch_length == 0. This concept comes from the implementations of
+//!   Proof of Authority consensus algorithm
 //!
 //! ### Implementations
-//! If you want to review the code, you should read about Authority Round and Proof of Authority consensus algorithms first. Then you may
-//! look into the go implementation of bsc source code and probably focus on the consensus alogrithm that bsc using. Read the official docs if you want.
+//! If you want to review the code, you may need to read about Authority Round and Proof of Authority consensus algorithms first. Then you may
+//! look into the go implementation of bsc source code and probably focus on the consensus alogrithm that bsc using. Read the official docs if you need.
 //! For this pallet:
-//! The first thing you should care is the configuration of this pallet. Check the bsc official docs to make sure you set these
-//! parameters correctly
+//! The first thing you should care about is the configuration parameters of this pallet. Check the bsc official docs to make sure you set them
+//! correctly
 //! In bsc explorer, choose a checkpoint block's header to set as genesis header of this pallet. It's not important which block you take, but it's important
 //! that the relayers should submmit headers from genesis_header.number + epoch_length
 //! If you only want to verify a single header, use verify_header fn is enough. The important tip is the header's number you want verify should greater
 //! than genesis header, or the answer will be NO.
 //! According to the official doc of Binance Smart Chain, when authority set changed at checkpoint header, the new authority set are not taken as finanlized immediately.
-//! We will wait N / 2 blocks to make sure it's safe to finalize the new authority set. N is the authority set size.
+//! We will wait(accept and verify) N / 2 blocks to make sure it's safe to finalize the new authority set. N is the authority set size.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
