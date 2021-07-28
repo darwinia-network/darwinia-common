@@ -120,6 +120,7 @@
 		"gas_limit": "U256",
 		"difficulty": "U256",
 		"seal": "Vec<Bytes>",
+		"base_fee_per_gas": "Option<U256>",
 		"hash": "Option<H256>"
 	},
 	"EthereumAddress": "H160",
