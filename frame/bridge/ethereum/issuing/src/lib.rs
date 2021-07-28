@@ -37,28 +37,32 @@ mod types {
 
 // --- crates ---
 use ethereum_types::{Address, H160, H256, U256};
+use sha3::Digest;
 // --- substrate ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage,
 	dispatch::DispatchResultWithPostInfo,
-	ensure, parameter_types,
+	ensure,
+	pallet_prelude::*,
+	parameter_types,
 	traits::{Currency, ExistenceRequirement::*, Get},
 	weights::Weight,
 	PalletId,
 };
 use frame_system::{ensure_root, ensure_signed, pallet_prelude::*};
 use sp_runtime::{
-	traits::{AccountIdConversion, Saturating},
+	traits::{AccountIdConversion, Keccak256, Saturating},
 	AccountId32, DispatchError, DispatchResult, SaturatedConversion,
 };
-use sp_std::vec::Vec;
+use sp_std::{str, vec::Vec};
 // --- darwinia ---
-use darwinia_ethereum_issuing_contract::{
-	Abi, Event as EthEvent, Log as EthLog, TokenBurnInfo, TokenRegisterInfo,
-};
 use darwinia_evm::{GasWeightMapping, IssuingHandler};
 use darwinia_relay_primitives::relay_authorities::*;
-use darwinia_support::{balance::*, traits::EthereumReceipt};
+use darwinia_support::{balance::*, traits::EthereumReceipt, PalletDigest};
+use dp_contract::{
+	ethereum_backing::{EthereumBacking, EthereumLockEvent, EthereumRegisterEvent},
+	mapping_token_factory::{MappingTokenFactory as mtf, TokenBurnInfo, TokenRegisterInfo},
+};
 use dp_evm::CallOrCreateInfo;
 use ethereum_primitives::{
 	receipt::{EthereumTransactionIndex, LogEntry},
@@ -104,6 +108,8 @@ decl_error! {
 		InvalidAddressLen,
 		/// decode input value error
 		InvalidInputData,
+		/// decode ethereum event failed
+		DecodeEventFailed,
 	}
 }
 
@@ -154,11 +160,26 @@ decl_module! {
 		pub fn register_erc20(origin, proof: EthereumReceiptProofThing<T>) {
 			log::debug!("start to register erc20 token");
 			let user = ensure_signed(origin)?;
-			let (tx_index, ethlog) = Self::verify_and_parse_proof(
-				Abi::register_event(),
-				proof)?;
+			let tx_index = T::EthereumRelay::gen_receipt_index(&proof);
+			ensure!(
+				!VerifiedIssuingProof::contains_key(tx_index),
+				<Error<T>>::AssetAR
+				);
+			let verified_receipt = T::EthereumRelay::verify_receipt(&proof)?;
 			let backing_address = EthereumBackingAddress::get();
-			let input = Self::abi_encode_token_creation(backing_address, ethlog)?;
+			let register_info = EthereumBacking::parse_register_event(
+				&verified_receipt,
+				&backing_address
+			).map_err(|_| Error::<T>::DecodeEventFailed)?;
+			let input = mtf::encode_create_erc20(
+				Self::digest(),
+				0,
+				str::from_utf8(&register_info.name[..]).map_err(|_| Error::<T>::StringCF)?,
+				str::from_utf8(&register_info.symbol[..]).map_err(|_| Error::<T>::StringCF)?,
+				register_info.decimals.as_u32() as u8,
+				backing_address,
+				register_info.token_address,
+			).map_err(|_| Error::<T>::InvalidEncodeERC20)?;
 			Self::transact_mapping_factory(input)?;
 			VerifiedIssuingProof::insert(tx_index, true);
 			Self::deposit_event(RawEvent::RegisterErc20(user, backing_address, tx_index));
@@ -168,11 +189,22 @@ decl_module! {
 		pub fn redeem_erc20(origin, proof: EthereumReceiptProofThing<T>) {
 			log::debug!("start to redeem erc20 token");
 			let user = ensure_signed(origin)?;
-			let (tx_index, ethlog) = Self::verify_and_parse_proof(
-				Abi::backing_event(),
-				proof)?;
+			let tx_index = T::EthereumRelay::gen_receipt_index(&proof);
+			ensure!(
+				!VerifiedIssuingProof::contains_key(tx_index),
+				<Error<T>>::AssetAR
+				);
+			let verified_receipt = T::EthereumRelay::verify_receipt(&proof)?;
 			let backing_address = EthereumBackingAddress::get();
-			let input = Self::abi_encode_token_redeem(ethlog)?;
+			let lock_info = EthereumBacking::parse_locking_event(
+				&verified_receipt,
+				&backing_address
+			).map_err(|_| Error::<T>::DecodeEventFailed)?;
+			let input = mtf::encode_cross_receive(
+				lock_info.mapped_address,
+				lock_info.recipient,
+				lock_info.amount,
+			).map_err(|_| Error::<T>::InvalidEncodeERC20)?;
 			Self::transact_mapping_factory(input)?;
 			VerifiedIssuingProof::insert(tx_index, true);
 			Self::deposit_event(RawEvent::RedeemErc20(user, backing_address, tx_index));
@@ -188,85 +220,11 @@ impl<T: Config> Module<T> {
 		H160::from_slice(&account20[..20])
 	}
 
-	fn abi_encode_token_creation(
-		backing: EthereumAddress,
-		result: EthLog,
-	) -> Result<Vec<u8>, DispatchError> {
-		log::debug!("start to abi_encode_token_creation");
-		let name = result.params[1]
-			.value
-			.clone()
-			.into_string()
-			.ok_or(<Error<T>>::StringCF)?;
-		let symbol = result.params[2]
-			.value
-			.clone()
-			.into_string()
-			.ok_or(<Error<T>>::StringCF)?;
-		let decimals = result.params[3]
-			.value
-			.clone()
-			.into_uint()
-			.ok_or(<Error<T>>::UintCF)?;
-		let fee = result.params[4]
-			.value
-			.clone()
-			.into_uint()
-			.ok_or(<Error<T>>::UintCF)?;
-		let token_address = result.params[0]
-			.value
-			.clone()
-			.into_address()
-			.ok_or(<Error<T>>::AddressCF)?;
-
-		let input = Abi::encode_create_erc20(
-			&name,
-			&symbol,
-			decimals.as_u32() as u8,
-			backing,
-			token_address,
-		)
-		.map_err(|_| Error::<T>::InvalidEncodeERC20)?;
-
-		log::debug!("register fee will be delived to fee pallet {}", fee);
-		Ok(input)
-	}
-
-	fn abi_encode_token_redeem(result: EthLog) -> Result<Vec<u8>, DispatchError> {
-		log::debug!("abi_encode_token_redeem");
-		// parse the following ethereum backing lock event
-		// BackingLock(address indexed sender, address source, address target, uint256 amount, address receiver, uint256 fee)
-		// @sender & @source are not used here
-		// @target(params[2]): the mapped token address
-		// @amount(params[3]): the token amount [wei]
-		// @receiver(params[4]): the dvm receiver address
-		// @fee(params[5]): the fee for this cross transfer
-		let dtoken_address = result.params[2]
-			.value
-			.clone()
-			.into_address()
-			.ok_or(<Error<T>>::AddressCF)?;
-		let amount = result.params[3]
-			.value
-			.clone()
-			.into_uint()
-			.ok_or(<Error<T>>::UintCF)?;
-		let recipient = result.params[4]
-			.value
-			.clone()
-			.into_address()
-			.ok_or(<Error<T>>::AddressCF)?;
-		let fee = result.params[5]
-			.value
-			.clone()
-			.into_uint()
-			.ok_or(<Error<T>>::UintCF)?;
-
-		let input = Abi::encode_cross_receive(dtoken_address, recipient, amount)
-			.map_err(|_| Error::<T>::InvalidMintEncoding)?;
-
-		log::debug!("transfer fee will be delived to fee pallet {}", fee);
-		Ok(input)
+	pub fn digest() -> PalletDigest {
+		let mut digest: PalletDigest = Default::default();
+		let pallet_digest = sha3::Keccak256::digest(T::PalletId::get().encode().as_slice());
+		digest.copy_from_slice(&pallet_digest[..4]);
+		digest
 	}
 
 	pub fn mapped_token_address(
@@ -274,7 +232,7 @@ impl<T: Config> Module<T> {
 		source: EthereumAddress,
 	) -> Result<H160, DispatchError> {
 		let factory_address = MappingFactoryAddress::get();
-		let bytes = Abi::encode_mapping_token(backing, source)
+		let bytes = mtf::encode_mapping_token(backing, source)
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
 		let mapped_address = dvm_ethereum::Pallet::<T>::do_call(factory_address, bytes)
 			.map_err(|e| -> &'static str { e.into() })?;
@@ -334,34 +292,6 @@ impl<T: Config> Module<T> {
 		Ok(())
 	}
 
-	pub fn verify_and_parse_proof(
-		log_event: EthEvent,
-		proof: EthereumReceiptProofThing<T>,
-	) -> Result<(EthereumTransactionIndex, EthLog), DispatchError> {
-		let tx_index = T::EthereumRelay::gen_receipt_index(&proof);
-		ensure!(
-			!VerifiedIssuingProof::contains_key(tx_index),
-			<Error<T>>::AssetAR
-		);
-		let verified_receipt = T::EthereumRelay::verify_receipt(&proof)?;
-
-		let backing_address = EthereumBackingAddress::get();
-		let log_entry = verified_receipt
-			.logs
-			.into_iter()
-			.find(|x| x.address == backing_address && x.topics[0] == log_event.signature())
-			.ok_or(<Error<T>>::LogEntryNE)?;
-
-		let ethlog = Abi::parse_event(
-			log_entry.topics.into_iter().collect(),
-			log_entry.data.clone(),
-			log_event,
-		)
-		.map_err(|_| <Error<T>>::EthLogPF)?;
-
-		Ok((tx_index, ethlog))
-	}
-
 	pub fn transact_mapping_factory(input: Vec<u8>) -> DispatchResult {
 		let contract = MappingFactoryAddress::get();
 		let result = dvm_ethereum::Pallet::<T>::internal_transact(contract, input).map_err(
@@ -388,12 +318,13 @@ impl<T: Config> IssuingHandler for Module<T> {
 		} else {
 			let burn_info =
 				TokenBurnInfo::decode(input).map_err(|_| Error::<T>::InvalidInputData)?;
+			ensure!(burn_info.recipient.len() == 20, <Error<T>>::AssetAR);
 			Self::deposit_burn_token_event(
 				burn_info.backing,
 				burn_info.sender,
 				burn_info.source,
-				burn_info.recipient,
-				U256(burn_info.amount.0),
+				EthereumAddress::from_slice(burn_info.recipient.as_slice()),
+				burn_info.amount,
 			)
 		}
 	}
