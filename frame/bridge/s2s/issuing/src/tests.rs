@@ -138,8 +138,6 @@ impl darwinia_evm::Config for Test {
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
 	type AddressMapping = HashedAddressMapping;
-	type RingCurrency = Ring;
-	type KtonCurrency = Kton;
 	type Event = ();
 	type Precompiles = ();
 	type FindAuthor = ();

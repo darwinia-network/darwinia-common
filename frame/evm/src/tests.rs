@@ -121,30 +121,11 @@ impl FindAuthor<H160> for FindAuthorTruncated {
 pub struct RawAccountBasic<T>(sp_std::marker::PhantomData<T>);
 impl<T: Config> AccountBasic<T> for RawAccountBasic<T> {
 	/// Get the account basic in EVM format.
-	fn account_basic(address: &H160) -> Account {
-		let account_id = T::AddressMapping::into_account_id(*address);
-
-		let nonce = <frame_system::Pallet<T>>::account_nonce(&account_id);
-		let balance = T::RingCurrency::free_balance(&account_id);
-
-		Account {
-			nonce: U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(nonce)),
-			balance: U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(balance)),
-		}
+	fn account_basic(_address: &H160) -> Account {
+		Account::default()
 	}
 
-	fn mutate_account_basic_balance(address: &H160, new_balance: U256) {
-		let account_id = T::AddressMapping::into_account_id(*address);
-		let current = T::RingAccountBasic::account_basic(address);
-
-		if current.balance > new_balance {
-			let diff = current.balance - new_balance;
-			T::RingCurrency::slash(&account_id, diff.low_u128().unique_saturated_into());
-		} else if current.balance < new_balance {
-			let diff = new_balance - current.balance;
-			T::RingCurrency::deposit_creating(&account_id, diff.low_u128().unique_saturated_into());
-		}
-	}
+	fn mutate_account_basic_balance(_address: &H160, _new_balance: U256) {}
 
 	fn transfer(_source: &H160, _target: &H160, _value: U256) -> Result<(), ExitError> {
 		Ok(())
@@ -176,14 +157,9 @@ impl Config for Test {
 	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressRoot<Self::AccountId>;
-
 	type AddressMapping = ConcatAddressMapping<Self::AccountId>;
 	type BlockHashMapping = SubstrateBlockHashMapping<Self>;
 	type FindAuthor = FindAuthorTruncated;
-
-	type RingCurrency = Ring;
-	type KtonCurrency = Kton;
-
 	type Event = Event;
 	type Precompiles = ();
 	type ChainId = ();
