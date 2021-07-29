@@ -220,10 +220,7 @@ macro_rules! assert_balance {
 			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&$evm_address).balance,
 			$balance
 		);
-		assert_eq!(
-			<Test as darwinia_evm::Config>::RingCurrency::free_balance(&account_id),
-			$left
-		);
+		assert_eq!(Ring::free_balance(&account_id), $left);
 		assert_eq!(
 			<RingRemainBalance as RemainBalanceOp<Test, u64>>::remaining_balance(&account_id),
 			$right

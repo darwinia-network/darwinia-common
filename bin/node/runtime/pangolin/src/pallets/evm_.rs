@@ -82,8 +82,6 @@ impl Config for Runtime {
 	type AddressMapping = ConcatAddressMapping<Self::AccountId>;
 	type FindAuthor = EthereumFindAuthor<Babe>;
 	type BlockHashMapping = EthereumBlockHashMapping<Self>;
-	type RingCurrency = Ring;
-	type KtonCurrency = Kton;
 	type Event = Event;
 	type Precompiles = PangolinPrecompiles<Self>;
 	type ChainId = ChainId;
