@@ -176,11 +176,19 @@ pub mod pallet {
 	#[pallet::getter(fn finalized_checkpoint)]
 	pub type FinalizedCheckpoint<T> = StorageValue<_, BSCHeader, ValueQuery>;
 
-	/// authroities is the set of qulified authorities that currently active or actived in previous rounds
+	/// Authorities is the set of qulified authorities that currently active or actived in previous rounds
 	/// this was added to track the older qualified authorities, to make sure we can verify a older header
 	#[pallet::storage]
 	#[pallet::getter(fn authorities)]
 	pub type Authorities<T> = StorageValue<_, Vec<Address>, ValueQuery>;
+
+	/// AuthoritiesOfRound use a map[u64]Vec<u32> structure to track the active authorities in every epoch
+	/// the key is checkpoint.number / epoch_length
+	/// the value is the vec index of authorities which extracted from checkpoint block header
+	/// So the the order of authorities vec MUST be stable.
+	#[pallet::storage]
+	#[pallet::getter(fn authorities_of_round)]
+	pub type AuthoritiesOfRound<T> = StorageMap<_, Blake2_128Concat, u64, Vec<u32>, ValueQuery>;
 
 	#[cfg_attr(feature = "std", derive(Default))]
 	#[pallet::genesis_config]
@@ -192,9 +200,15 @@ pub mod pallet {
 		fn build(&self) {
 			let initial_authority_set =
 				<Pallet<T>>::extract_authorities(&self.genesis_header).unwrap();
+			let initial_size = initial_authority_set.len();
 			<Authorities<T>>::put(initial_authority_set.clone());
 			<FinalizedAuthority<T>>::put(initial_authority_set);
 			<FinalizedCheckpoint<T>>::put(&self.genesis_header);
+
+			<AuthoritiesOfRound<T>>::insert(
+				&self.genesis_header.number / T::BSCConfiguration::get().epoch_length,
+				(0u32..initial_size as u32).collect::<Vec<u32>>(),
+			);
 		}
 	}
 
@@ -420,17 +434,30 @@ pub mod pallet {
 		/// Verify single header
 		/// The header number should in the range [genesis_header.number, finalized_checkpoint.number + N]
 		/// Before the first call of verify_and_update_authority_set extrinsic, genesis_header == finalized_checkpoint
-		/// Corner cases:
-		/// Assuming that, Authority B was qualified in round 10, but not qualified at round 11,
-		/// if you call this fn with a header signed by B and the header's number  is in round 11, this fn will return OK,
-		/// but actually, the header is illegal
 		pub fn verify_header(header: &BSCHeader) -> DispatchResult {
 			let cfg = T::BSCConfiguration::get();
+			// ensure the number is in the range
+			let round_key = header.number / cfg.epoch_length;
+			ensure!(
+				<AuthoritiesOfRound<T>>::contains_key(round_key),
+				// it could be the signer which signed your header has not been finialized yet
+				// or your header.number is less than the genesis header number
+				<Error::<T>>::RidiculousNumber
+			);
 			Self::contextless_checks(&cfg, header)?;
-			let authorities = <FinalizedAuthority<T>>::get();
+
+			// get index vec
+			let authorities_of_round = <AuthoritiesOfRound<T>>::get(round_key);
+			// get all authorities
+			let authorities = <Authorities<T>>::get();
+			// filter authorities of this round out
+			let signers = authorities_of_round
+				.iter()
+				.map(|i| authorities[*i as usize])
+				.collect::<Vec<Address>>();
 			// check signer
 			let signer = Self::recover_creator(cfg.chain_id, header)?;
-			ensure!(contains(&authorities, signer), <Error::<T>>::InvalidSigner);
+			ensure!(contains(&signers, signer), <Error::<T>>::InvalidSigner);
 			Ok(())
 		}
 
@@ -509,12 +536,18 @@ pub mod pallet {
 					<FinalizedCheckpoint<T>>::put(checkpoint);
 					let mut authorities = <Authorities<T>>::get();
 					// track authorities
+					let mut indexes = vec![];
 					for authority in &new_authority_set {
 						if !contains(&authorities, *authority) {
-							authorities.push(*authority)
+							authorities.push(*authority);
+						}
+						if let Some(i) = pos(&authorities, *authority) {
+							indexes.push(i);
 						}
 					}
 					<Authorities<T>>::put(authorities);
+					// insert this epoch's authority indexes
+					<AuthoritiesOfRound<T>>::insert(checkpoint.number / cfg.epoch_length, indexes);
 					// skip the rest submitted headers
 					return Ok(new_authority_set);
 				}
@@ -559,6 +592,14 @@ pub mod pallet {
 		pub epoch_length: u64,
 		/// block period
 		pub period: u64,
+	}
+
+	/// find index of signer in a set of signers
+	fn pos(signers: &[Address], signer: Address) -> Option<u32> {
+		match signers.iter().position(|val| *val == signer) {
+			Some(x) => Some(x as u32),
+			None => None,
+		}
 	}
 
 	/// check if the signer address in a set of qulified signers
