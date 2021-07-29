@@ -24,29 +24,14 @@
 pub mod weights;
 pub use weights::WeightInfo;
 
-mod types {
-	use crate::*;
-
-	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-	pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
-	pub type EthereumReceiptProofThing<T> = <<T as Config>::EthereumRelay as EthereumReceipt<
-		AccountId<T>,
-		RingBalance<T>,
-	>>::EthereumReceiptProofThing;
-}
-
 // --- crates ---
-use ethereum_types::{Address, H160, H256, U256};
 use sha3::Digest;
 // --- substrate ---
 use frame_support::{
-	decl_error, decl_event, decl_module, decl_storage,
-	dispatch::DispatchResultWithPostInfo,
 	ensure,
 	pallet_prelude::*,
 	parameter_types,
 	traits::{Currency, ExistenceRequirement::*, Get},
-	weights::Weight,
 	PalletId,
 };
 use frame_system::{ensure_root, ensure_signed, pallet_prelude::*};
@@ -66,47 +51,50 @@ use dp_contract::{
 		MappingTokenFactory as mtf, TokenBurnInfo, TokenRegisterInfo, BURN_ACTION, REGISTER_ACTION,
 	},
 };
-use dp_evm::CallOrCreateInfo;
 use ethereum_primitives::{
 	receipt::{EthereumTransactionIndex, LogEntry},
-	EthereumAddress,
+	EthereumAddress, U256,
 };
-use types::*;
+pub use pallet::*;
 
-pub trait Config: dvm_ethereum::Config {
-	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
+#[frame_support::pallet]
+pub mod pallet {
+	use super::*;
+	mod types {
+		use crate::*;
 
-	type PalletId: Get<PalletId>;
+		pub type AccountId<T> = <T as frame_system::Config>::AccountId;
+		pub type EthereumReceiptProofThing<T> = <<T as Config>::EthereumRelay as EthereumReceipt<
+			AccountId<T>,
+			RingBalance<T>,
+		>>::EthereumReceiptProofThing;
+		pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
+	}
+	pub use types::*;
 
-	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+	#[pallet::config]
+	#[pallet::disable_frame_system_supertrait_check]
+	pub trait Config: dvm_ethereum::Config {
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		#[pallet::constant]
+		type PalletId: Get<PalletId>;
+		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+		type EthereumRelay: EthereumReceipt<Self::AccountId, RingBalance<Self>>;
+		type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber, Signer = EthereumAddress>;
+		type WeightInfo: WeightInfo;
+	}
 
-	type EthereumRelay: EthereumReceipt<Self::AccountId, RingBalance<Self>>;
-	type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber, Signer = EthereumAddress>;
-
-	type WeightInfo: WeightInfo;
-}
-
-decl_error! {
+	#[pallet::error]
 	/// Issuing pallet errors.
-	pub enum Error for Module<T: Config> {
+	pub enum Error<T> {
 		/// Invalid Issuing System Account
 		InvalidIssuingAccount,
 		/// assert ar
 		AssetAR,
-		/// LogEntryNE
-		LogEntryNE,
-		/// EthLogPF
-		EthLogPF,
 		/// StringCF
 		StringCF,
-		/// Unit
-		UintCF,
-		/// Address - CONVERSION FAILED
-		AddressCF,
 		/// encode erc20 tx failed
 		InvalidEncodeERC20,
-		/// encode mint tx failed
-		InvalidMintEncoding,
 		/// invalid ethereum address length
 		InvalidAddressLen,
 		/// decode input value error
@@ -116,72 +104,120 @@ decl_error! {
 		/// invalid input length
 		InvalidInput,
 	}
-}
 
-decl_event! {
-	pub enum Event<T>
-	where
-		AccountId = AccountId<T>,
-	{
+	#[pallet::event]
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
+	#[pallet::metadata(T::AccountId = "AccountId")]
+	pub enum Event<T: Config> {
 		/// register new erc20 token
-		RegisterErc20(AccountId, EthereumAddress, EthereumTransactionIndex),
+		RegisterErc20(AccountId<T>, EthereumAddress, EthereumTransactionIndex),
 		/// redeem erc20 token
-		RedeemErc20(AccountId, EthereumAddress, EthereumTransactionIndex),
-		/// erc20 created
-		CreateErc20(EthereumAddress),
+		RedeemErc20(AccountId<T>, EthereumAddress, EthereumTransactionIndex),
 		/// burn event
 		/// type: 1, backing, sender, recipient, source, target, value
-		BurnToken(u8, EthereumAddress, EthereumAddress, EthereumAddress, EthereumAddress, EthereumAddress, U256),
+		BurnToken(
+			u8,
+			EthereumAddress,
+			EthereumAddress,
+			EthereumAddress,
+			EthereumAddress,
+			EthereumAddress,
+			U256,
+		),
 		/// token registered event
 		/// type: u8 = 0, backing, source(origin erc20), target(mapped erc20)
 		TokenRegistered(u8, EthereumAddress, EthereumAddress, EthereumAddress),
 		/// set mapping token factory address
 		/// [old, new]
-		MappingFactoryAddressUpdated(H160, H160),
+		MappingFactoryAddressUpdated(EthereumAddress, EthereumAddress),
 		/// set ethereum backing address
 		/// [old, new]
-		EthereumBackingAddressUpdated(H160, H160),
+		EthereumBackingAddressUpdated(EthereumAddress, EthereumAddress),
 	}
-}
 
-decl_storage! {
-	trait Store for Module<T: Config> as DarwiniaEthereumIssuing {
-		pub MappingFactoryAddress get(fn mapping_factory_address) config(): EthereumAddress;
-		pub EthereumBackingAddress get(fn ethereum_backing_address) config(): EthereumAddress;
-		pub VerifiedIssuingProof
-			get(fn verified_issuing_proof)
-			: map hasher(blake2_128_concat) EthereumTransactionIndex => bool = false;
-		pub BurnTokenEvents get(fn burn_token_events): Vec<<T as frame_system::Config>::Event>;
+	#[pallet::storage]
+	#[pallet::getter(fn mapping_factory_address)]
+	pub type MappingFactoryAddress<T: Config> = StorageValue<_, EthereumAddress, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn ethereum_backing_address)]
+	pub type EthereumBackingAddress<T: Config> = StorageValue<_, EthereumAddress, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn verified_issuing_proof)]
+	pub type VerifiedIssuingProof<T> = StorageMap<
+		_,
+		Blake2_128Concat,
+		EthereumTransactionIndex,
+		bool,
+		ValueQuery,
+		DefaultVerifiedIssuingProof,
+	>;
+
+	#[pallet::type_value]
+	pub fn DefaultVerifiedIssuingProof() -> bool {
+		false
 	}
-}
 
-decl_module! {
-	pub struct Module<T: Config> for enum Call
-	where
-		origin: T::Origin
-	{
-		fn deposit_event() = default;
+	#[pallet::storage]
+	#[pallet::getter(fn burn_token_events)]
+	pub type BurnTokenEvents<T: Config> =
+		StorageValue<_, Vec<<T as frame_system::Config>::Event>, ValueQuery>;
 
-		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
+	#[pallet::pallet]
+	pub struct Pallet<T>(_);
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_initialize(_: BlockNumberFor<T>) -> Weight {
 			<BurnTokenEvents<T>>::kill();
-			0
+			T::DbWeight::get().writes(1)
 		}
+	}
 
-		#[weight = <T as darwinia_evm::Config>::GasWeightMapping::gas_to_weight(0x100000)]
-		pub fn register_erc20(origin, proof: EthereumReceiptProofThing<T>) {
+	#[pallet::genesis_config]
+	pub struct GenesisConfig {
+		pub mapping_factory_address: EthereumAddress,
+		pub ethereum_backing_address: EthereumAddress,
+	}
+
+	#[cfg(feature = "std")]
+	impl Default for GenesisConfig {
+		fn default() -> Self {
+			Self {
+				mapping_factory_address: Default::default(),
+				ethereum_backing_address: Default::default(),
+			}
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig {
+		fn build(&self) {
+			<MappingFactoryAddress<T>>::put(&self.mapping_factory_address);
+			<MappingFactoryAddress<T>>::put(&self.ethereum_backing_address);
+		}
+	}
+
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {
+		#[pallet::weight(10_000_000)]
+		pub fn register_erc20(
+			origin: OriginFor<T>,
+			proof: EthereumReceiptProofThing<T>,
+		) -> DispatchResultWithPostInfo {
 			log::debug!("start to register erc20 token");
 			let user = ensure_signed(origin)?;
 			let tx_index = T::EthereumRelay::gen_receipt_index(&proof);
 			ensure!(
-				!VerifiedIssuingProof::contains_key(tx_index),
+				!VerifiedIssuingProof::<T>::contains_key(tx_index),
 				<Error<T>>::AssetAR
-				);
+			);
 			let verified_receipt = T::EthereumRelay::verify_receipt(&proof)?;
-			let backing_address = EthereumBackingAddress::get();
-			let register_info = EthereumBacking::parse_register_event(
-				&verified_receipt,
-				&backing_address
-			).map_err(|_| Error::<T>::DecodeEventFailed)?;
+			let backing_address = EthereumBackingAddress::<T>::get();
+			let register_info =
+				EthereumBacking::parse_register_event(&verified_receipt, &backing_address)
+					.map_err(|_| Error::<T>::DecodeEventFailed)?;
 			let input = mtf::encode_create_erc20(
 				Self::digest(),
 				0,
@@ -190,45 +226,51 @@ decl_module! {
 				register_info.decimals.as_u32() as u8,
 				backing_address,
 				register_info.token_address,
-			).map_err(|_| Error::<T>::InvalidEncodeERC20)?;
+			)
+			.map_err(|_| Error::<T>::InvalidEncodeERC20)?;
 			Self::transact_mapping_factory(input)?;
-			VerifiedIssuingProof::insert(tx_index, true);
-			Self::deposit_event(RawEvent::RegisterErc20(user, backing_address, tx_index));
+			VerifiedIssuingProof::<T>::insert(tx_index, true);
+			Self::deposit_event(Event::RegisterErc20(user, backing_address, tx_index));
+			Ok(().into())
 		}
 
-		#[weight = <T as darwinia_evm::Config>::GasWeightMapping::gas_to_weight(0x100000)]
-		pub fn redeem_erc20(origin, proof: EthereumReceiptProofThing<T>) {
+		#[pallet::weight(10_000_000)]
+		pub fn redeem_erc20(
+			origin: OriginFor<T>,
+			proof: EthereumReceiptProofThing<T>,
+		) -> DispatchResultWithPostInfo {
 			log::debug!("start to redeem erc20 token");
 			let user = ensure_signed(origin)?;
 			let tx_index = T::EthereumRelay::gen_receipt_index(&proof);
 			ensure!(
-				!VerifiedIssuingProof::contains_key(tx_index),
+				!VerifiedIssuingProof::<T>::contains_key(tx_index),
 				<Error<T>>::AssetAR
-				);
+			);
 			let verified_receipt = T::EthereumRelay::verify_receipt(&proof)?;
-			let backing_address = EthereumBackingAddress::get();
-			let lock_info = EthereumBacking::parse_locking_event(
-				&verified_receipt,
-				&backing_address
-			).map_err(|_| Error::<T>::DecodeEventFailed)?;
+			let backing_address = EthereumBackingAddress::<T>::get();
+			let lock_info =
+				EthereumBacking::parse_locking_event(&verified_receipt, &backing_address)
+					.map_err(|_| Error::<T>::DecodeEventFailed)?;
 			let input = mtf::encode_cross_receive(
 				lock_info.mapped_address,
 				lock_info.recipient,
 				lock_info.amount,
-			).map_err(|_| Error::<T>::InvalidEncodeERC20)?;
+			)
+			.map_err(|_| Error::<T>::InvalidEncodeERC20)?;
 			Self::transact_mapping_factory(input)?;
-			VerifiedIssuingProof::insert(tx_index, true);
-			Self::deposit_event(RawEvent::RedeemErc20(user, backing_address, tx_index));
+			VerifiedIssuingProof::<T>::insert(tx_index, true);
+			Self::deposit_event(Event::RedeemErc20(user, backing_address, tx_index));
+			Ok(().into())
 		}
 
-		#[weight = 0]
+		#[pallet::weight(10_000_000)]
 		pub fn mapping_factory_event_handle(
-			origin,
+			origin: OriginFor<T>,
 			input: Vec<u8>,
-		) {
+		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
 			ensure!(input.len() >= 8, <Error<T>>::InvalidInput);
-			let factory = MappingFactoryAddress::get();
+			let factory = MappingFactoryAddress::<T>::get();
 			let factory_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(factory);
 			ensure!(factory_id == caller, <Error<T>>::AssetAR);
 			let burn_action = &sha3::Keccak256::digest(&BURN_ACTION)[0..4];
@@ -243,48 +285,49 @@ decl_module! {
 					burn_info.source,
 					EthereumAddress::from_slice(burn_info.recipient.as_slice()),
 					burn_info.amount,
-					)?;
+				)?;
 			} else if &input[4..8] == register_action {
-				let register_info =
-					TokenRegisterInfo::decode(&input[8..]).map_err(|_| Error::<T>::InvalidInputData)?;
+				let register_info = TokenRegisterInfo::decode(&input[8..])
+					.map_err(|_| Error::<T>::InvalidInputData)?;
 				Self::finish_token_registered(register_info.0, register_info.1, register_info.2);
 			} else {
 				log::trace!("Unsupport action!");
 			}
-		}
-
-		#[weight = 0]
-		pub fn set_mapping_factory_address(
-			origin,
-			address: H160,
-		) -> DispatchResultWithPostInfo {
-			ensure_root(origin)?;
-			let old_address = MappingFactoryAddress::get();
-			MappingFactoryAddress::put(address);
-			Self::deposit_event(RawEvent::MappingFactoryAddressUpdated(old_address, address));
 			Ok(().into())
 		}
 
-		#[weight = 0]
-		pub fn set_ethereum_backing_address(
-			origin,
-			address: H160,
+		#[pallet::weight(10_000_000)]
+		pub fn set_mapping_factory_address(
+			origin: OriginFor<T>,
+			address: EthereumAddress,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
-			let old_address = EthereumBackingAddress::get();
-			EthereumBackingAddress::put(address);
-			Self::deposit_event(RawEvent::EthereumBackingAddressUpdated(old_address, address));
+			let old_address = MappingFactoryAddress::<T>::get();
+			MappingFactoryAddress::<T>::put(address);
+			Self::deposit_event(Event::MappingFactoryAddressUpdated(old_address, address));
+			Ok(().into())
+		}
+
+		#[pallet::weight(10_000_000)]
+		pub fn set_ethereum_backing_address(
+			origin: OriginFor<T>,
+			address: EthereumAddress,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+			let old_address = EthereumBackingAddress::<T>::get();
+			EthereumBackingAddress::<T>::put(address);
+			Self::deposit_event(Event::EthereumBackingAddressUpdated(old_address, address));
 			Ok(().into())
 		}
 	}
 }
 
-impl<T: Config> Module<T> {
+impl<T: Config> Pallet<T> {
 	/// The account ID of the issuing pot.
-	pub fn dvm_account_id() -> H160 {
+	pub fn dvm_account_id() -> EthereumAddress {
 		let account32: AccountId32 = T::PalletId::get().into_account();
 		let account20: &[u8] = &account32.as_ref();
-		H160::from_slice(&account20[..20])
+		EthereumAddress::from_slice(&account20[..20])
 	}
 
 	pub fn digest() -> PalletDigest {
@@ -297,8 +340,8 @@ impl<T: Config> Module<T> {
 	pub fn mapped_token_address(
 		backing: EthereumAddress,
 		source: EthereumAddress,
-	) -> Result<H160, DispatchError> {
-		let factory_address = MappingFactoryAddress::get();
+	) -> Result<EthereumAddress, DispatchError> {
+		let factory_address = MappingFactoryAddress::<T>::get();
 		let bytes = mtf::encode_mapping_token(backing, source)
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
 		let mapped_address = dvm_ethereum::Pallet::<T>::do_call(factory_address, bytes)
@@ -306,7 +349,9 @@ impl<T: Config> Module<T> {
 		if mapped_address.len() != 32 {
 			return Err(Error::<T>::InvalidAddressLen.into());
 		}
-		Ok(H160::from_slice(&mapped_address.as_slice()[12..]))
+		Ok(EthereumAddress::from_slice(
+			&mapped_address.as_slice()[12..],
+		))
 	}
 
 	pub fn finish_token_registered(
@@ -314,7 +359,7 @@ impl<T: Config> Module<T> {
 		source: EthereumAddress,
 		target: EthereumAddress,
 	) -> DispatchResult {
-		let raw_event = RawEvent::TokenRegistered(0, backing, source, target);
+		let raw_event = Event::TokenRegistered(0, backing, source, target);
 		let module_event: <T as Config>::Event = raw_event.clone().into();
 		let system_event: <T as frame_system::Config>::Event = module_event.into();
 		<BurnTokenEvents<T>>::append(system_event);
@@ -338,7 +383,7 @@ impl<T: Config> Module<T> {
 			e
 		})?;
 
-		let raw_event = RawEvent::BurnToken(
+		let raw_event = Event::BurnToken(
 			1,
 			backing,
 			sender,
@@ -360,7 +405,7 @@ impl<T: Config> Module<T> {
 	}
 
 	pub fn transact_mapping_factory(input: Vec<u8>) -> DispatchResult {
-		let contract = MappingFactoryAddress::get();
+		let contract = MappingFactoryAddress::<T>::get();
 		let result = dvm_ethereum::Pallet::<T>::internal_transact(contract, input).map_err(
 			|e| -> &'static str {
 				log::debug!("call mapping factory contract error {:?}", &e);
