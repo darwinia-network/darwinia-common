@@ -62,7 +62,9 @@ use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::{balance::*, traits::EthereumReceipt, PalletDigest};
 use dp_contract::{
 	ethereum_backing::{EthereumBacking, EthereumLockEvent, EthereumRegisterEvent},
-	mapping_token_factory::{MappingTokenFactory as mtf, TokenBurnInfo, TokenRegisterInfo},
+	mapping_token_factory::{
+		MappingTokenFactory as mtf, TokenBurnInfo, TokenRegisterInfo, BURN_ACTION, REGISTER_ACTION,
+	},
 };
 use dp_evm::CallOrCreateInfo;
 use ethereum_primitives::{
@@ -70,7 +72,6 @@ use ethereum_primitives::{
 	EthereumAddress,
 };
 use types::*;
-const BURN_ACTION: &[u8] = b"burned(address,address,address,address,uint256)";
 
 pub trait Config: dvm_ethereum::Config {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
@@ -225,6 +226,7 @@ decl_module! {
 			let factory_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(factory);
 			ensure!(factory_id == caller, <Error<T>>::AssetAR);
 			let burn_action = &sha3::Keccak256::digest(&BURN_ACTION)[0..4];
+			let register_action = &sha3::Keccak256::digest(&REGISTER_ACTION)[0..4];
 			if &input[4..8] == burn_action {
 				let burn_info =
 					TokenBurnInfo::decode(&input[8..]).map_err(|_| Error::<T>::InvalidInputData)?;
@@ -236,10 +238,12 @@ decl_module! {
 					EthereumAddress::from_slice(burn_info.recipient.as_slice()),
 					burn_info.amount,
 					)?;
-			} else {
+			} else if &input[4..8] == register_action {
 				let register_info =
 					TokenRegisterInfo::decode(&input[8..]).map_err(|_| Error::<T>::InvalidInputData)?;
 				Self::finish_token_registered(register_info.0, register_info.1, register_info.2);
+			} else {
+				log::trace!("Unsupport action!");
 			}
 		}
 	}

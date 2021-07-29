@@ -20,6 +20,9 @@
 
 pub use ethabi::{Event, Log};
 
+pub const BURN_ACTION: &[u8] = b"burned(uint32,uint64,address,address,uint256)";
+pub const REGISTER_ACTION: &[u8] = b"registered(bytes4,uint32,string,string,uint8,address,address)";
+
 // --- crates.io ---
 use ethereum_types::{Address as EthereumAddress, H160, U256};
 // --- darwinia ---
