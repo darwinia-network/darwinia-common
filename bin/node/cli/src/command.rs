@@ -107,18 +107,26 @@ fn get_exec_name() -> Option<String> {
 /// Parse command line arguments into service configuration.
 pub fn run() -> sc_cli::Result<()> {
 	let cli = Cli::from_args();
+	let max_past_logs = cli.run.dynamic_fee_parameters.max_past_logs;
+	let target_gas_price = cli.run.dynamic_fee_parameters.target_gas_price;
 
 	match &cli.subcommand {
 		None => {
-			let runner = Configuration::create_runner(Cli::from_args())?;
+			let authority_discovery_disabled = cli.run.authority_discovery_disabled;
+			let runner = Configuration::create_runner(cli)?;
 
 			runner.run_node_until_exit(|config| async move {
 				match config.role {
 					Role::Light => {
 						service::drml_new_light(config).map(|(task_manager, _)| task_manager)
 					}
-					_ => service::drml_new_full(config, &cli)
-						.map(|(task_manager, _, _)| task_manager),
+					_ => service::drml_new_full(
+						config,
+						authority_discovery_disabled,
+						max_past_logs,
+						target_gas_price,
+					)
+					.map(|(task_manager, _, _)| task_manager),
 				}
 				.map_err(sc_cli::Error::Service)
 			})
@@ -132,10 +140,11 @@ pub fn run() -> sc_cli::Result<()> {
 			let runner = cli.create_runner(cmd)?;
 
 			runner.async_run(|mut config| {
-				let (client, _, import_queue, task_manager) = service::new_chain_ops::<
-					service::pangolin_runtime::RuntimeApi,
-					service::PangolinExecutor,
-				>(&mut config, &cli)?;
+				let (client, _, import_queue, task_manager) =
+					service::new_chain_ops::<
+						service::pangolin_runtime::RuntimeApi,
+						service::PangolinExecutor,
+					>(&mut config, max_past_logs, target_gas_price)?;
 
 				Ok((cmd.run(client, import_queue), task_manager))
 			})
@@ -147,7 +156,7 @@ pub fn run() -> sc_cli::Result<()> {
 				let (client, _, _, task_manager) = service::new_chain_ops::<
 					service::pangolin_runtime::RuntimeApi,
 					service::PangolinExecutor,
-				>(&mut config, &cli)?;
+				>(&mut config, max_past_logs, target_gas_price)?;
 
 				Ok((cmd.run(client, config.database), task_manager))
 			})
@@ -159,7 +168,7 @@ pub fn run() -> sc_cli::Result<()> {
 				let (client, _, _, task_manager) = service::new_chain_ops::<
 					service::pangolin_runtime::RuntimeApi,
 					service::PangolinExecutor,
-				>(&mut config, &cli)?;
+				>(&mut config, max_past_logs, target_gas_price)?;
 
 				Ok((cmd.run(client, config.chain_spec), task_manager))
 			})
@@ -168,10 +177,11 @@ pub fn run() -> sc_cli::Result<()> {
 			let runner = cli.create_runner(cmd)?;
 
 			runner.async_run(|mut config| {
-				let (client, _, import_queue, task_manager) = service::new_chain_ops::<
-					service::pangolin_runtime::RuntimeApi,
-					service::PangolinExecutor,
-				>(&mut config, &cli)?;
+				let (client, _, import_queue, task_manager) =
+					service::new_chain_ops::<
+						service::pangolin_runtime::RuntimeApi,
+						service::PangolinExecutor,
+					>(&mut config, max_past_logs, target_gas_price)?;
 
 				Ok((cmd.run(client, import_queue), task_manager))
 			})
@@ -194,10 +204,11 @@ pub fn run() -> sc_cli::Result<()> {
 			let runner = cli.create_runner(cmd)?;
 
 			runner.async_run(|mut config| {
-				let (client, backend, _, task_manager) = service::new_chain_ops::<
-					service::pangolin_runtime::RuntimeApi,
-					service::PangolinExecutor,
-				>(&mut config, &cli)?;
+				let (client, backend, _, task_manager) =
+					service::new_chain_ops::<
+						service::pangolin_runtime::RuntimeApi,
+						service::PangolinExecutor,
+					>(&mut config, max_past_logs, target_gas_price)?;
 
 				Ok((cmd.run(client, backend), task_manager))
 			})
