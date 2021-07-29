@@ -27,7 +27,7 @@
 //!
 //! ## Overview
 //!
-//! The Balances pallet provides functions for:
+//! The ethereum-bsc pallet provides functions for:
 //!
 //! - Verify bsc headers and finalize authority set
 //! - Verify a single bsc header
@@ -46,16 +46,30 @@
 //!
 //! ### Implementations
 //! If you want to review the code, you may need to read about Authority Round and Proof of Authority consensus algorithms first. Then you may
-//! look into the go implementation of bsc source code and probably focus on the consensus alogrithm that bsc using. Read the official docs if you need.
+//! look into the go implementation of bsc source code and probably focus on the consensus alogrithm that bsc using. Read the bsc official docs if you need.
 //! For this pallet:
-//! The first thing you should care about is the configuration parameters of this pallet. Check the bsc official docs to make sure you set them
+//! The first thing you should care about is the configuration parameters of this pallet. Check the bsc official docs even the go source code to make sure you set them
 //! correctly
 //! In bsc explorer, choose a checkpoint block's header to set as genesis header of this pallet. It's not important which block you take, but it's important
 //! that the relayers should submmit headers from genesis_header.number + epoch_length
+//! Probably you need a tool to finish this, like POSTMAN
+//! For bsc testnet, you can access api `https://data-seed-prebsc-1-s1.binance.org:8545` with
+//! following body input to get the header content.
+//! ```json
+//! {
+//!    "jsonrpc": "2.0",
+//!    "method": "eth_getBlockByNumber",
+//!    "params": [
+//!        "0x913640",
+//!        false
+//!    ],
+//!    "id": 83
+//! }
+//!```
 //! If you only want to verify a single header, use verify_header fn is enough. The important tip is the header's number you want verify should greater
 //! than genesis header, or the answer will be NO.
 //! According to the official doc of Binance Smart Chain, when authority set changed at checkpoint header, the new authority set are not taken as finanlized immediately.
-//! We will wait(accept and verify) N / 2 blocks to make sure it's safe to finalize the new authority set. N is the authority set size.
+//! We will wait(accept and verify) N / 2 blocks(only headers) to make sure it's safe to finalize the new authority set. N is the authority set size.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
