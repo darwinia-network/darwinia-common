@@ -406,6 +406,10 @@ pub mod pallet {
 		/// Verify single header
 		/// The header number should in the range [genesis_header.number, finalized_checkpoint.number + N]
 		/// Before the first call of verify_and_update_authority_set extrinsic, genesis_header == finalized_checkpoint
+                /// Corner cases:
+                /// Assuming that, Authority B was qualified in round 10, but not qualified at round 11, 
+                /// if you call this fn with a header signed by B and the header's number  is in round 11, this fn will return OK,
+                /// but actually, the header is illegal
 		pub fn verify_header(header: &BSCHeader) -> DispatchResult {
 			let cfg = T::BSCConfiguration::get();
 			Self::contextless_checks(&cfg, header)?;
@@ -490,6 +494,7 @@ pub mod pallet {
 					<FinalizedAuthority<T>>::put(&new_authority_set);
 					<FinalizedCheckpoint<T>>::put(checkpoint);
 					let mut authorities = <Authorities<T>>::get();
+                                        // track authorities
 					for authority in &new_authority_set {
 						if !contains(&authorities, *authority) {
 							authorities.push(*authority)
