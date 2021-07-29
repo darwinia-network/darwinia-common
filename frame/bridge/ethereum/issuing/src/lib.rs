@@ -135,6 +135,12 @@ decl_event! {
 		/// token registered event
 		/// type: u8 = 0, backing, source(origin erc20), target(mapped erc20)
 		TokenRegistered(u8, EthereumAddress, EthereumAddress, EthereumAddress),
+		/// set mapping token factory address
+		/// [old, new]
+		MappingFactoryAddressUpdated(H160, H160),
+		/// set ethereum backing address
+		/// [old, new]
+		EthereumBackingAddressUpdated(H160, H160),
 	}
 }
 
@@ -216,7 +222,7 @@ decl_module! {
 		}
 
 		#[weight = 0]
-		pub fn asset_burn_event_handle(
+		pub fn mapping_factory_event_handle(
 			origin,
 			input: Vec<u8>,
 		) {
@@ -245,6 +251,30 @@ decl_module! {
 			} else {
 				log::trace!("Unsupport action!");
 			}
+		}
+
+		#[weight = 0]
+		pub fn set_mapping_factory_address(
+			origin,
+			address: H160,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+			let old_address = MappingFactoryAddress::get();
+			MappingFactoryAddress::put(address);
+			Self::deposit_event(RawEvent::MappingFactoryAddressUpdated(old_address, address));
+			Ok(().into())
+		}
+
+		#[weight = 0]
+		pub fn set_ethereum_backing_address(
+			origin,
+			address: H160,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+			let old_address = EthereumBackingAddress::get();
+			EthereumBackingAddress::put(address);
+			Self::deposit_event(RawEvent::EthereumBackingAddressUpdated(old_address, address));
+			Ok(().into())
 		}
 	}
 }

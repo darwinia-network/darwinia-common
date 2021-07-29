@@ -56,7 +56,8 @@ where
 				darwinia_s2s_issuing::Call::<T>::asset_burn_event_handle(input.to_vec()).into()
 			}
 			_ if selector == <darwinia_ethereum_issuing::Pallet<T>>::digest() => {
-				darwinia_ethereum_issuing::Call::<T>::asset_burn_event_handle(input.to_vec()).into()
+				darwinia_ethereum_issuing::Call::<T>::mapping_factory_event_handle(input.to_vec())
+					.into()
 			}
 			_ => {
 				return Err(ExitError::Other(
