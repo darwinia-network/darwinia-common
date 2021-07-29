@@ -35,10 +35,12 @@ pub struct DispatchCallEncoder<T> {
 }
 impl<T> Precompile for DispatchCallEncoder<T>
 where
+	T: darwinia_ethereum_issuing::Config,
 	T: darwinia_s2s_issuing::Config,
 	T::Call: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Encode,
 	<T::Call as Dispatchable>::Origin: From<Option<T::AccountId>>,
 	T::Call: From<darwinia_s2s_issuing::Call<T>>,
+	T::Call: From<darwinia_ethereum_issuing::Call<T>>,
 {
 	fn execute(
 		input: &[u8],
@@ -49,9 +51,12 @@ where
 			return Err(ExitError::Other("input length less than 4 bytes".into()));
 		}
 		let selector = &input[0..SELECTOR];
-		let inner_call = match selector {
+		let call: T::Call = match selector {
 			_ if selector == <darwinia_s2s_issuing::Pallet<T>>::digest() => {
-				darwinia_s2s_issuing::Call::<T>::asset_burn_event_handle(input.to_vec())
+				darwinia_s2s_issuing::Call::<T>::asset_burn_event_handle(input.to_vec()).into()
+			}
+			_ if selector == <darwinia_ethereum_issuing::Pallet<T>>::digest() => {
+				darwinia_ethereum_issuing::Call::<T>::asset_burn_event_handle(input.to_vec()).into()
 			}
 			_ => {
 				return Err(ExitError::Other(
@@ -59,7 +64,6 @@ where
 				));
 			}
 		};
-		let call: T::Call = inner_call.into();
 		// TODO: The cost should not be zero
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Stopped,

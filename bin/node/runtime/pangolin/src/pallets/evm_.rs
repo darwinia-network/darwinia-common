@@ -1,6 +1,5 @@
 pub use darwinia_evm_precompile_dispatch::Dispatch;
 pub use darwinia_evm_precompile_encoder::DispatchCallEncoder as CallEncoder;
-pub use darwinia_evm_precompile_issuing::Issuing;
 pub use darwinia_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 pub use darwinia_evm_precompile_transfer::Transfer;
 
@@ -41,9 +40,12 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 pub struct PangolinPrecompiles<R>(PhantomData<R>);
 impl<R> PrecompileSet for PangolinPrecompiles<R>
 where
-	R: darwinia_s2s_issuing::Config + darwinia_evm::Config,
+	R: darwinia_ethereum_issuing::Config,
+	R: darwinia_s2s_issuing::Config,
+	R: darwinia_evm::Config,
 	R::Call: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Encode + Decode,
 	<R::Call as Dispatchable>::Origin: From<Option<R::AccountId>>,
+	R::Call: From<darwinia_ethereum_issuing::Call<R>>,
 	R::Call: From<darwinia_s2s_issuing::Call<R>>,
 {
 	fn execute(
@@ -62,7 +64,6 @@ where
 			_ if address == addr(4) => Some(Identity::execute(input, target_gas, context)),
 			// Darwinia precompiles
 			_ if address == addr(21) => Some(<Transfer<R>>::execute(input, target_gas, context)),
-			_ if address == addr(23) => Some(<Issuing<R>>::execute(input, target_gas, context)),
 			_ if address == addr(24) => Some(<CallEncoder<R>>::execute(input, target_gas, context)),
 			_ if address == addr(25) => Some(<Dispatch<R>>::execute(input, target_gas, context)),
 			_ => None,
@@ -91,5 +92,4 @@ impl Config for Runtime {
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 	type Runner = Runner<Self>;
-	type IssuingHandler = EthereumIssuing;
 }

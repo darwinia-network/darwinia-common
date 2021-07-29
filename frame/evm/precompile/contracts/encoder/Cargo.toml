@@ -17,6 +17,7 @@ evm   = { version = "0.27.0", default-features = false, features = ["with-codec"
 log   = { version = "0.4.14" }
 sha3  = { version = "0.9.1", default-features = false }
 # darwinia-network
+darwinia-ethereum-issuing = { default-features = false, path = "../../../../bridge/ethereum/issuing" }
 darwinia-evm         = { default-features = false, path = "../../../../evm" }
 darwinia-s2s-issuing = { default-features = false, path = "../../../../bridge/s2s/issuing" }
 darwinia-support     = { default-features = false, path = "../../../../support" }

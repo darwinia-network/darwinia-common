@@ -56,7 +56,8 @@ use sp_runtime::{
 };
 use sp_std::{str, vec::Vec};
 // --- darwinia ---
-use darwinia_evm::{GasWeightMapping, IssuingHandler};
+use darwinia_evm::AddressMapping;
+use darwinia_evm::GasWeightMapping;
 use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::{balance::*, traits::EthereumReceipt, PalletDigest};
 use dp_contract::{
@@ -69,6 +70,7 @@ use ethereum_primitives::{
 	EthereumAddress,
 };
 use types::*;
+const BURN_ACTION: &[u8] = b"burned(address,address,address,address,uint256)";
 
 pub trait Config: dvm_ethereum::Config {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
@@ -110,6 +112,8 @@ decl_error! {
 		InvalidInputData,
 		/// decode ethereum event failed
 		DecodeEventFailed,
+		/// invalid input length
+		InvalidInput,
 	}
 }
 
@@ -209,6 +213,35 @@ decl_module! {
 			VerifiedIssuingProof::insert(tx_index, true);
 			Self::deposit_event(RawEvent::RedeemErc20(user, backing_address, tx_index));
 		}
+
+		#[weight = 0]
+		pub fn asset_burn_event_handle(
+			origin,
+			input: Vec<u8>,
+		) {
+			let caller = ensure_signed(origin)?;
+			ensure!(input.len() >= 8, <Error<T>>::InvalidInput);
+			let factory = MappingFactoryAddress::get();
+			let factory_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(factory);
+			ensure!(factory_id == caller, <Error<T>>::AssetAR);
+			let burn_action = &sha3::Keccak256::digest(&BURN_ACTION)[0..4];
+			if &input[4..8] == burn_action {
+				let burn_info =
+					TokenBurnInfo::decode(&input[8..]).map_err(|_| Error::<T>::InvalidInputData)?;
+				ensure!(burn_info.recipient.len() == 20, <Error<T>>::AssetAR);
+				Self::deposit_burn_token_event(
+					burn_info.backing,
+					burn_info.sender,
+					burn_info.source,
+					EthereumAddress::from_slice(burn_info.recipient.as_slice()),
+					burn_info.amount,
+					)?;
+			} else {
+				let register_info =
+					TokenRegisterInfo::decode(&input[8..]).map_err(|_| Error::<T>::InvalidInputData)?;
+				Self::finish_token_registered(register_info.0, register_info.1, register_info.2);
+			}
+		}
 	}
 }
 
@@ -301,31 +334,5 @@ impl<T: Config> Module<T> {
 			},
 		)?;
 		Ok(())
-	}
-}
-
-impl<T: Config> IssuingHandler for Module<T> {
-	fn handle(address: H160, caller: H160, input: &[u8]) -> DispatchResult {
-		ensure!(MappingFactoryAddress::get() == caller, <Error<T>>::AssetAR);
-		// in order to use a common precompile contract to deliver these issuing events
-		// we just use the len of input to distinguish which event.
-		// register-event: input-len = len(abi.encode(backing, source, token)) = 3 * 32
-		// burn-event: input-len = len(abi.encode(info.backing, info.source, recipient, amount)) = 4 * 32
-		if input.len() == 3 * 32 {
-			let register_info =
-				TokenRegisterInfo::decode(input).map_err(|_| Error::<T>::InvalidInputData)?;
-			Self::finish_token_registered(register_info.0, register_info.1, register_info.2)
-		} else {
-			let burn_info =
-				TokenBurnInfo::decode(input).map_err(|_| Error::<T>::InvalidInputData)?;
-			ensure!(burn_info.recipient.len() == 20, <Error<T>>::AssetAR);
-			Self::deposit_burn_token_event(
-				burn_info.backing,
-				burn_info.sender,
-				burn_info.source,
-				EthereumAddress::from_slice(burn_info.recipient.as_slice()),
-				burn_info.amount,
-			)
-		}
 	}
 }
