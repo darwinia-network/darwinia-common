@@ -64,7 +64,7 @@ pub struct RunCmd {
 
 	#[allow(missing_docs)]
 	#[structopt(flatten)]
-	pub dynamic_fee_parameters: DynamicFeeParameters,
+	pub dvm_args: DvmArgs,
 }
 
 /// Possible subcommands of the main binary.
@@ -115,7 +115,7 @@ pub enum Subcommand {
 }
 
 #[derive(Debug, StructOpt)]
-pub struct DynamicFeeParameters {
+pub struct DvmArgs {
 	/// Maximum number of logs in a query.
 	#[structopt(long, default_value = "10000")]
 	pub max_past_logs: u32,

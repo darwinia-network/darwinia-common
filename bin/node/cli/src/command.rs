@@ -107,8 +107,8 @@ fn get_exec_name() -> Option<String> {
 /// Parse command line arguments into service configuration.
 pub fn run() -> sc_cli::Result<()> {
 	let cli = Cli::from_args();
-	let max_past_logs = cli.run.dynamic_fee_parameters.max_past_logs;
-	let target_gas_price = cli.run.dynamic_fee_parameters.target_gas_price;
+	let max_past_logs = cli.run.dvm_args.max_past_logs;
+	let target_gas_price = cli.run.dvm_args.target_gas_price;
 
 	match &cli.subcommand {
 		None => {
