@@ -78,8 +78,8 @@ benchmarks! {
 				H256::from_str("5398f3342a0239e3c85f2921cba88e137947cdd0211fd5be5e88b581f635ab72").unwrap(),
 			],
 		};
-		let mut xxx: vec::Vec<u8> = (header, receipt_proof, mmr_proof).encode();
-		let proof_thing: EthereumReceiptProofThing<T>  = Decode::decode(&mut xxx.as_slice()).unwrap();
+		let mut proof: vec::Vec<u8> = (header, receipt_proof, mmr_proof).encode();
+		let proof_thing: EthereumReceiptProofThing<T>  = Decode::decode(&mut proof.as_slice()).unwrap();
 	}: _(RawOrigin::Root, proof_thing)
 
 	set_mapping_factory_address {
