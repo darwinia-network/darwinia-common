@@ -1568,6 +1568,8 @@ dependencies = [
 name = "darwinia-ethereum-issuing"
 version = "2.5.0"
 dependencies = [
+ "array-bytes",
+ "darwinia-ethereum-relay",
  "darwinia-evm",
  "darwinia-relay-primitives",
  "darwinia-support",
@@ -1575,6 +1577,7 @@ dependencies = [
  "dp-evm",
  "dvm-ethereum",
  "ethereum-primitives",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",

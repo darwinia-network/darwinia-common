@@ -228,6 +228,7 @@ runtime-benchmarks = [
 	"frame-support/runtime-benchmarks",
 	"pallet-collective/runtime-benchmarks",
 	"pallet-society/runtime-benchmarks",
+	"darwinia-ethereum-issuing/runtime-benchmarks",
 	"darwinia-evm/runtime-benchmarks",
 	"darwinia-s2s-issuing/runtime-benchmarks",
 ]
