@@ -116,9 +116,9 @@ pub mod pallet {
 	#[pallet::metadata(T::AccountId = "AccountId")]
 	pub enum Event<T: Config> {
 		/// register new erc20 token
-		RegisterErc20(AccountId<T>, EthereumAddress, EthereumTransactionIndex),
+		RegisterErc20(EthereumAddress, EthereumTransactionIndex),
 		/// redeem erc20 token
-		RedeemErc20(AccountId<T>, EthereumAddress, EthereumTransactionIndex),
+		RedeemErc20(EthereumAddress, EthereumTransactionIndex),
 		/// burn event
 		/// type: 1, backing, sender, recipient, source, target, value
 		BurnToken(
@@ -213,7 +213,7 @@ pub mod pallet {
 			proof: EthereumReceiptProofThing<T>,
 		) -> DispatchResultWithPostInfo {
 			log::debug!("start to register erc20 token");
-			let user = ensure_signed(origin)?;
+			ensure_signed(origin)?;
 			let tx_index = T::EthereumRelay::gen_receipt_index(&proof);
 			ensure!(
 				!VerifiedIssuingProof::<T>::contains_key(tx_index),
@@ -236,7 +236,7 @@ pub mod pallet {
 			.map_err(|_| Error::<T>::InvalidEncodeERC20)?;
 			Self::transact_mapping_factory(input)?;
 			VerifiedIssuingProof::<T>::insert(tx_index, true);
-			Self::deposit_event(Event::RegisterErc20(user, backing_address, tx_index));
+			Self::deposit_event(Event::RegisterErc20(backing_address, tx_index));
 			Ok(().into())
 		}
 
@@ -246,7 +246,7 @@ pub mod pallet {
 			proof: EthereumReceiptProofThing<T>,
 		) -> DispatchResultWithPostInfo {
 			log::debug!("start to redeem erc20 token");
-			let user = ensure_signed(origin)?;
+			ensure_signed(origin)?;
 			let tx_index = T::EthereumRelay::gen_receipt_index(&proof);
 			ensure!(
 				!VerifiedIssuingProof::<T>::contains_key(tx_index),
@@ -265,7 +265,7 @@ pub mod pallet {
 			.map_err(|_| Error::<T>::InvalidEncodeERC20)?;
 			Self::transact_mapping_factory(input)?;
 			VerifiedIssuingProof::<T>::insert(tx_index, true);
-			Self::deposit_event(Event::RedeemErc20(user, backing_address, tx_index));
+			Self::deposit_event(Event::RedeemErc20(backing_address, tx_index));
 			Ok(().into())
 		}
 
