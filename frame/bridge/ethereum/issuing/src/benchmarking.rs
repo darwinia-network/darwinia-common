@@ -21,7 +21,7 @@
 use super::*;
 
 use array_bytes::{hex2bytes_unchecked, hex_into_unchecked};
-use frame_benchmarking::benchmarks;
+use frame_benchmarking::{benchmarks, whitelisted_caller};
 use frame_system::RawOrigin;
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_std::vec;
@@ -34,53 +34,87 @@ use darwinia_support::traits::EthereumReceipt as EthereumReceiptT;
 
 use codec::{Decode, Encode};
 
+// should mock ethereum relay first
+// https://github.com/darwinia-network/darwinia-common/blob/master/frame/bridge/ethereum/relay/src/lib.rs
+// replace line `let mmr_root = Self::confirmed_header_parcel_of(mmr_proof.last_leaf_index + 1)` as
+/*
+ *
+ * let mmr_root = if ethereum_header.number == 10254000 {
+ *     H256::from_str("4daf1aacca87c0829a1e55f3ebcc44f49b158e92e9cbb474a60719070b225e6e").unwrap()
+ * } else {
+ *     H256::from_str("e860637b3d94a6606fd1d7cd7d86ca3bb37625c3b6a88de3afe118f936acbc35").unwrap()
+ * };
+ *
+ */
 benchmarks! {
 	register_erc20 {
-		let header : EthereumHeader = serde_json::from_str(r#"{
-        "parent_hash":"0x076323243bb412fd1526da231ebcabffeee8ad7dcb8a3c009c87b6a4f49c429e",
-        "timestamp":1624500254,
-        "number":10499402,
-        "author":"0x1cffe205e97976bb9d1ec006f5222360a89353e0",
-        "transactions_root":"0xede00358653ae8f8aa6bd70843e50c0593a6d9c196d4f5dd97b40bbb7096e68a",
-        "uncles_hash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-        "extra_data":"0x436f6e73656e5379732048797065726c65646765722042657375",
-        "state_root":"0x1c151425f8e28b2408f7f92ff14e7bd2c8575fdd86caec31b1856f837b96420a",
-        "receipts_root":"0x390a4be2c778271a29dd2d2d57cec7c6a6791336092e9557c07c967b4e54f862",
-        "log_bloom":"0x000000000000000000000000800000000000000000200000000000004000000a000000800000010000000040000000000000000000000000000000000000000000000000020300000000000800000000000004000200000000000000000000000400000802000000000000080000280000000000800000000000003000000000220000020000400000000a000100000000000000000080000000000000000000000000000000000000804000220000000000000000000000000000004000000000000002000000000000a00000000000000000000100000000000c00000020000000000000100000000000000000000000000080000000000000001000010010",
-        "gas_used":478428,
-        "gas_limit":16000000,
-        "difficulty":1108509492,
-        "seal":["0xa04dc6d3cf65a6d5625f6a5798643b11c865d15a11f6dfe1c239e28d3341a1aec8","0x88515a2ef500b2be77"],
-        "hash":"0xabf627ce77d9f92a40f34e3cace721c3f089000dae820d00d3e99314c263a0c3",
-        "base_fee_per_gas":1116547859}"#).unwrap();
+		let caller = whitelisted_caller();
+		let header : EthereumHeader = Decode::decode(&mut array_bytes::hex2bytes_unchecked(mock_header::REGISTER_HEADER).as_slice()).unwrap();
+
 		let receipt_proof = ReceiptProof {
-			index: 13,
-			proof: array_bytes::hex2bytes_unchecked("0xf903c3f903c0b853f851a0b3f6df122df06ffe6513d7896903ad010e9c86e251433fb1880f1c6289b930f980808080808080a02db1fb7c3f10bcc54dcbf5e14348d0d05488245238883eba62a989152e3a53718080808080808080b901b4f901b180a06d2a5febcaaf0e918718cc54494cc067bea5ee6686ee81204ab80cb2e4374975a088144864f0a583dad46043084e601b2f0f7b75054e9faee7c34e9839a175e9dca0f6913065cb63d6dae545865364417d80d5743064bec93912caf0c1e2aed42aa7a0d05b2d7a83d74f7c902882507119be8eafa167811b89b00e50c9b4df5fcac7daa0583ea85c95e110282ee6f68cc55c90276b3f1e855cbd156379cb29376845357aa0ed68fc478694bc5a842e2bde468f92cf742124c73e153a1dffa7b18343869e79a02d7cf76429ff8fc602a3d4e2d99d6a50f09ab439a0cfc0135bad95aa252fa2b7a0a7109e55d97a5c697425dc8a9775f73e9dadd34b40b5522024ad8302657a21d7a0d4e33bc87511037fc572bdab0149412f44775a4634c390f945c929d8fc54a9e6a046db6dcca9115967155ddfbdc07055873004cf1b6b874f4be0307233b6d63256a0b63a120f8d2d9d840180fb59a296f4f7b7096e19b6d7741072ac8164f6554788a061e904fcc749284022c01bad2405f6e4d62741ffde990f8b1597c98ea78d62f8a0dbc1f791c00ddfc40afe22d45d180dae2d99cf9b7ad8cf9939b7601528c1ea20808080b901b1f901ae20b901aaf901a70183074cdcb9010000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000008000000000000000000000000000000000000000000000000020000000000000000002800000000000000000000000030000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000100000000000000000020000000000000100000000000000000000000000000000000000000000000000000f89df89b94fab46e002bbf0b4509813474841e0716e6730136f863a0ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3efa00000000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000d6faa9dfa475d7615f8b776dbc2bc182e2526547a0000000000000000000000000000000000000000000084595161401484a000000"),
-			header_hash: H256::from_str("b49af42826f514553a91bd976c598e03f24516c9478af1162560f47a583b55f7").unwrap(),
+			index: 11,
+			proof: array_bytes::hex2bytes_unchecked(mock_header::REGISTER_RECEIPT_PROOF),
+			header_hash: H256::from_str("0x1772823cfe05d72d414c50ace0a9c7481c367480a3eecea22aedf08fd392d452").unwrap(),
 		};
 		let mmr_proof = MMRProof {
-			member_leaf_index: 10499402,
-			last_leaf_index: 10499501,
+			member_leaf_index: 10254000,
+			last_leaf_index: 10254000,
 			proof: vec![
 				H256::from_str("36f3d834cbe12a5a20b063c432b88f5506bdce03b93fa3aa035a5d82fd50177c").unwrap(),
-				H256::from_str("b10a06336827182396eabf37e835e57252cee94fd4b493787a76a9869026a65e").unwrap(),
-				H256::from_str("e9296a032921f8f72f5f0926c697e8b4e6781553edd567ec3d94e2ad4e7ebc02").unwrap(),
-				H256::from_str("52cb40263a1482dc80e46b8f930501d2bafc84fa24cce0ecd47b21dc60e30dfd").unwrap(),
-				H256::from_str("960db9f55d08477ba91d005b3ff74008c24f62edec31af401c5ca205d12312b8").unwrap(),
-				H256::from_str("4b9e2b61bbcd8215ef5435c0a901d10c902161cb2cc58b4b6d1960b721c0f463").unwrap(),
-				H256::from_str("451f5cc007407deeb20bc341cdec27d469b2d85a54adbb12881a431325970ebe").unwrap(),
-				H256::from_str("a3485a8c66ec17fd717ea4a43e1a6c8dcdaa084fe66868d1c35a9247258aff38").unwrap(),
-				H256::from_str("b7df21b67493270979deae26b834ecf61de8e062db3dd11ec580df3748987f48").unwrap(),
-				H256::from_str("4ee36b22ce0b59b90beac005639c8e6386875a4a4d1292489cd8e38061c65cbc").unwrap(),
-				H256::from_str("ada6eaea4760ed599acd1e36de0638b2d47142a5f237a2f8bc7e947bda4d468f").unwrap(),
-				H256::from_str("f05676af0ba496e869a408b45f197c15a33239663ba31129c9f1c782000df825").unwrap(),
-				H256::from_str("ec8977867c578d950361969cadc43ab559063e8fd9614259a949b8c36714478b").unwrap(),
-				H256::from_str("5398f3342a0239e3c85f2921cba88e137947cdd0211fd5be5e88b581f635ab72").unwrap(),
+				H256::from_str("31be4a0f0d61cc2e97e19996d949259faa0b9c449acce29bc675a0cf0d429b2a").unwrap(),
+				H256::from_str("21877504b36bbe17e7aaaec85960760e23145db31ccaf34869081aa0adb19824").unwrap(),
+				H256::from_str("f6de10c1c6ba47d4b752c57d5833f5631d377f996cc92c8444e8d6c46976ad06").unwrap(),
+				H256::from_str("6fba92edaed7f3174a5bb8b07973587d9b1d91446cd09d72ce71e4331ebf5124").unwrap(),
+				H256::from_str("a7121b92d3428733616b27d0d2ba890b0dd1f3214a0843b2e87bf53f3c6687b8").unwrap(),
+				H256::from_str("0d3bc625dd98dc9611fb33c0dcc1da283f662f8a9c2dc4a483430a404ad81b99").unwrap(),
+				H256::from_str("c943667292d18518170e94823577ef31c9e0c895fc2610fa52d0f23200f7b455").unwrap(),
+				H256::from_str("8bfdcd4ebd32d703593a682ec0dc38edd761dc55777c8c92235e4d29a87c589c").unwrap(),
+				H256::from_str("1ebc80a9e579049f0e349aedcfbea7a850a0ad62d57e5970aa6cb3d02f4e99e8").unwrap(),
+				H256::from_str("1cb8ff1fcb087edc5d516da846f8f4c1eb5a1799837b8fab7693ec083d65f3d2").unwrap(),
+				H256::from_str("52713d8398aafc081da132f172682f9c72b36b9f7fd6def567358a989877bc2f").unwrap(),
 			],
 		};
 		let mut proof: vec::Vec<u8> = (header, receipt_proof, mmr_proof).encode();
 		let proof_thing: EthereumReceiptProofThing<T>  = Decode::decode(&mut proof.as_slice()).unwrap();
-	}: _(RawOrigin::Root, proof_thing)
+	}: _(RawOrigin::Signed(caller), proof_thing)
+
+	redeem_erc20 {
+		let caller = whitelisted_caller();
+		let header : EthereumHeader = Decode::decode(&mut array_bytes::hex2bytes_unchecked(mock_header::SEND_HEADER).as_slice()).unwrap();
+
+		let receipt_proof = ReceiptProof {
+			index: 38,
+			proof: array_bytes::hex2bytes_unchecked(mock_header::SEND_RECEIPT_PROOF),
+			header_hash: H256::from_str("0x5922cd234fcb6cfc0ea81365858941a8b426169ce9998158313239af0ca0a763").unwrap(),
+		};
+		let mmr_proof = MMRProof {
+			member_leaf_index: 10254219,
+			last_leaf_index: 10254219,
+			proof: vec![
+				H256::from_str("36f3d834cbe12a5a20b063c432b88f5506bdce03b93fa3aa035a5d82fd50177c").unwrap(),
+				H256::from_str("31be4a0f0d61cc2e97e19996d949259faa0b9c449acce29bc675a0cf0d429b2a").unwrap(),
+				H256::from_str("21877504b36bbe17e7aaaec85960760e23145db31ccaf34869081aa0adb19824").unwrap(),
+				H256::from_str("f6de10c1c6ba47d4b752c57d5833f5631d377f996cc92c8444e8d6c46976ad06").unwrap(),
+				H256::from_str("6fba92edaed7f3174a5bb8b07973587d9b1d91446cd09d72ce71e4331ebf5124").unwrap(),
+				H256::from_str("a7121b92d3428733616b27d0d2ba890b0dd1f3214a0843b2e87bf53f3c6687b8").unwrap(),
+				H256::from_str("0d3bc625dd98dc9611fb33c0dcc1da283f662f8a9c2dc4a483430a404ad81b99").unwrap(),
+				H256::from_str("c943667292d18518170e94823577ef31c9e0c895fc2610fa52d0f23200f7b455").unwrap(),
+				H256::from_str("8bfdcd4ebd32d703593a682ec0dc38edd761dc55777c8c92235e4d29a87c589c").unwrap(),
+				H256::from_str("b2de0beaebe230e8c32d147af3fda4b695fdf7c4c3457e061d24a516fa9d24e8").unwrap(),
+				H256::from_str("3ea43917f7c688caf790bd826943260a03044a0c115269313735ccfd51e8e1d7").unwrap(),
+				H256::from_str("c0b5c9b33a898548d924ffce2ad7f141ae2d65e6e88b48116e8114c7a1d9c598").unwrap(),
+				H256::from_str("810712e4402c52e614fdece5fa985c8ceb0a829018d9f22d52aae5f5feafd9aa").unwrap(),
+				H256::from_str("ee2b452c196922e9e226e79d8a7728ead52e98c82caa2510dc8b9652138d0c0f").unwrap(),
+			],
+		};
+		let mut proof: vec::Vec<u8> = (header, receipt_proof, mmr_proof).encode();
+		let proof_thing: EthereumReceiptProofThing<T>  = Decode::decode(&mut proof.as_slice()).unwrap();
+	}: _(RawOrigin::Signed(caller), proof_thing)
+
+	// todo
+	//mapping_factory_event_handle {
+		//let caller = whitelisted_caller();
+	//}: _(RawOrigin::Signed(caller), proof_thing)
 
 	set_mapping_factory_address {
 		let address = hex_into_unchecked("0000000000000000000000000000000000000001");

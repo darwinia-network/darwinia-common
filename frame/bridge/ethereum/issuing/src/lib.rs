@@ -24,8 +24,11 @@
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
-pub mod weights;
-pub use weights::WeightInfo;
+#[cfg(feature = "runtime-benchmarks")]
+mod mock_header;
+
+pub mod weight;
+pub use weight::WeightInfo;
 
 // --- crates ---
 use sha3::Digest;
@@ -198,13 +201,13 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
 			<MappingFactoryAddress<T>>::put(&self.mapping_factory_address);
-			<MappingFactoryAddress<T>>::put(&self.ethereum_backing_address);
+			<EthereumBackingAddress<T>>::put(&self.ethereum_backing_address);
 		}
 	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(10_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::register_erc20())]
 		pub fn register_erc20(
 			origin: OriginFor<T>,
 			proof: EthereumReceiptProofThing<T>,
@@ -237,7 +240,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::redeem_erc20())]
 		pub fn redeem_erc20(
 			origin: OriginFor<T>,
 			proof: EthereumReceiptProofThing<T>,
@@ -299,7 +302,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_mapping_factory_address())]
 		pub fn set_mapping_factory_address(
 			origin: OriginFor<T>,
 			address: EthereumAddress,
@@ -311,7 +314,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_ethereum_backing_address())]
 		pub fn set_ethereum_backing_address(
 			origin: OriginFor<T>,
 			address: EthereumAddress,
