@@ -1,24 +1,33 @@
 #!/bin/bash
-. ./prelude.sh
-. ./build_node.sh
 
 set -xe
+
+DIR="$( cd "$( dirname "$0" )" && pwd )"
+REPO_PATH="$( cd "$( dirname "$0" )" && cd ../../ && pwd )"
+echo $DIR
+
+LOG_PATH=${DIR}/log
+DATA_PATH=${DIR}/data
+BIN_PATH=${DIR}/bin
+
+## Build node
+cargo build --release
+cp ${REPO_PATH}/target/release/drml ${BIN_PATH}/
 
 ### Clean code chain data
 
 for i in 1 2 3 4 5 6
 do
-  echo "this is ${i}"
-  rm -rf ../data/n${i}/chains/pangolin/db
-  rm -rf ../data/n${i}/chains/pangolin/dvm
-  rm -rf ../data/n${i}/chains/pangolin/network
+  rm -rf ${DATA_PATH}/n${i}/chains/pangolin/db
+  rm -rf ${DATA_PATH}/n${i}/chains/pangolin/dvm
+  rm -rf ${DATA_PATH}/n${i}/chains/pangolin/network
 done
 
 ### Start all the validators
 
 # start n1
-./../bin/drml \
-  --base-path ../data/n1 \
+${BIN_PATH}/drml \
+  --base-path ${DATA_PATH}/n1 \
   --alice \
   --chain pangolin \
   --port 30333 \
@@ -34,11 +43,11 @@ done
           "/ip4/127.0.0.1/tcp/30336/p2p/12D3KooWSsChzF81YDUKpe9Uk5AHV5oqAaXAcWNSPYgoLauUk4st" \
           "/ip4/127.0.0.1/tcp/30337/p2p/12D3KooWSuTq6MG9gPt7qZqLFKkYrfxMewTZhj9nmRHJkPwzWDG2" \
           "/ip4/127.0.0.1/tcp/30338/p2p/12D3KooWMz5U7fR8mF5DNhZSSyFN8c19kU63xYopzDSNCzoFigYk" \
-  --validator&
+  --validator &> ${LOG_PATH}/node1.log &
 
 # start n2
-./../bin/drml \
-  --base-path ../data/n2 \
+${BIN_PATH}/drml \
+  --base-path ${DATA_PATH}/n2 \
   --chain pangolin \
   --port 30334 \
   --ws-port 9945 \
@@ -54,11 +63,11 @@ done
           "/ip4/127.0.0.1/tcp/30336/p2p/12D3KooWSsChzF81YDUKpe9Uk5AHV5oqAaXAcWNSPYgoLauUk4st" \
           "/ip4/127.0.0.1/tcp/30337/p2p/12D3KooWSuTq6MG9gPt7qZqLFKkYrfxMewTZhj9nmRHJkPwzWDG2" \
           "/ip4/127.0.0.1/tcp/30338/p2p/12D3KooWMz5U7fR8mF5DNhZSSyFN8c19kU63xYopzDSNCzoFigYk" \
-  --validator&
+  --validator &> ${LOG_PATH}/node2.log &
 
 # start n3
-./../bin/drml \
-  --base-path ../data/n3 \
+${BIN_PATH}/drml \
+  --base-path ${DATA_PATH}/n3 \
   --chain pangolin \
   --port 30335 \
   --ws-port 9946 \
@@ -74,11 +83,11 @@ done
           "/ip4/127.0.0.1/tcp/30336/p2p/12D3KooWSsChzF81YDUKpe9Uk5AHV5oqAaXAcWNSPYgoLauUk4st" \
           "/ip4/127.0.0.1/tcp/30337/p2p/12D3KooWSuTq6MG9gPt7qZqLFKkYrfxMewTZhj9nmRHJkPwzWDG2" \
           "/ip4/127.0.0.1/tcp/30338/p2p/12D3KooWMz5U7fR8mF5DNhZSSyFN8c19kU63xYopzDSNCzoFigYk" \
-  --validator&
+  --validator &> ${LOG_PATH}/node3.log &
 
 # start n4
-./../bin/drml \
-  --base-path ../data/n4 \
+${BIN_PATH}/drml \
+  --base-path ${DATA_PATH}/n4 \
   --chain pangolin \
   --port 30336 \
   --ws-port 9947 \
@@ -94,11 +103,11 @@ done
           "/ip4/127.0.0.1/tcp/30336/p2p/12D3KooWSsChzF81YDUKpe9Uk5AHV5oqAaXAcWNSPYgoLauUk4st" \
           "/ip4/127.0.0.1/tcp/30337/p2p/12D3KooWSuTq6MG9gPt7qZqLFKkYrfxMewTZhj9nmRHJkPwzWDG2" \
           "/ip4/127.0.0.1/tcp/30338/p2p/12D3KooWMz5U7fR8mF5DNhZSSyFN8c19kU63xYopzDSNCzoFigYk" \
-  --validator&
+  --validator &> ${LOG_PATH}/node4.log &
 
 # start n5
-./../bin/drml \
-  --base-path ../data/n5 \
+${BIN_PATH}/drml \
+  --base-path ${DATA_PATH}/n5 \
   --chain pangolin \
   --port 30337 \
   --ws-port 9948 \
@@ -114,11 +123,11 @@ done
           "/ip4/127.0.0.1/tcp/30336/p2p/12D3KooWSsChzF81YDUKpe9Uk5AHV5oqAaXAcWNSPYgoLauUk4st" \
           "/ip4/127.0.0.1/tcp/30337/p2p/12D3KooWSuTq6MG9gPt7qZqLFKkYrfxMewTZhj9nmRHJkPwzWDG2" \
           "/ip4/127.0.0.1/tcp/30338/p2p/12D3KooWMz5U7fR8mF5DNhZSSyFN8c19kU63xYopzDSNCzoFigYk" \
-  --validator&
+  --validator &> ${LOG_PATH}/node5.log &
 
 # start n6
-./../bin/drml \
-  --base-path ../data/n6 \
+${BIN_PATH}/drml \
+  --base-path ${DATA_PATH}/n6 \
   --chain pangolin \
   --port 30338 \
   --ws-port 9949 \
@@ -134,4 +143,4 @@ done
           "/ip4/127.0.0.1/tcp/30336/p2p/12D3KooWSsChzF81YDUKpe9Uk5AHV5oqAaXAcWNSPYgoLauUk4st" \
           "/ip4/127.0.0.1/tcp/30337/p2p/12D3KooWSuTq6MG9gPt7qZqLFKkYrfxMewTZhj9nmRHJkPwzWDG2" \
           "/ip4/127.0.0.1/tcp/30338/p2p/12D3KooWMz5U7fR8mF5DNhZSSyFN8c19kU63xYopzDSNCzoFigYk" \
-  --validator&
+  --validator &> ${LOG_PATH}/node6.log &
