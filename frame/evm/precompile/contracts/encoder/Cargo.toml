@@ -38,6 +38,7 @@ std = [
 	"sha3/std",
 	# darwinia-network
 	"darwinia-evm/std",
+	"darwinia-ethereum-issuing/std",
 	"darwinia-s2s-issuing/std",
 	"darwinia-support/std",
 	"dp-contract/std",

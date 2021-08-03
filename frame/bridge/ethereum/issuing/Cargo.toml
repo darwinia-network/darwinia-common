@@ -37,7 +37,9 @@ default = ["std"]
 std = [
 	# crates.io
 	"codec/std",
+	"sha3/std",
 	# darwinia-network
+	"darwinia-ethereum-relay/std",
 	"darwinia-evm/std",
 	"ethereum-primitives/std",
 	"darwinia-relay-primitives/std",
