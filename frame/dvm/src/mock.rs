@@ -198,7 +198,6 @@ impl darwinia_evm::Config for Test {
 	type Runner = Runner<Self>;
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
-	type IssuingHandler = ();
 }
 
 impl dvm_ethereum::Config for Test {
