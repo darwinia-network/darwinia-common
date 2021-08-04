@@ -9,62 +9,33 @@ on:
       - main
       - master
 
-env:
-  CARGO_TERM_COLOR: always
-
 jobs:
-  check-default-features:
-    name: Check `default-features`
+  build_and_test:
+    name: Build and test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
-      - name: Build checker
-        run: cargo b --manifest-path .maintain/check-default-features/Cargo.toml
-      - name: Run checker
-        run: .maintain/check-default-features/target/debug/check-default-features
-
-  test:
-    name: Run Tests
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-    steps:
-      - uses: actions/checkout@v2
-
-      - uses: actions-rs/toolchain@v1
+          toolchain: nightly-2021-08-03
+      - uses: actions-rs/cargo@v1
         with:
-          toolchain: nightly-2021-03-01
-          override: true
-          target: wasm32-unknown-unknown
-
-      - name: Overall test
-        run: cargo t
-
-  dvm-rpc-test:
-    name: Run DVM RPC Tests
+          command: build
+          args: --manifest-path .maintain/check-default-features/Cargo.toml
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --manifest-path .maintain/check-default-features/Cargo.toml
+      - uses: actions/upload-artifact@v2
+        with:
+          name: check-default-features
+          path: .maintain/check-default-features/target/debug/check-default-features
+  check_default_features:
+    name: Check default features
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/download-artifact@v2
         with:
-          toolchain: nightly-2021-03-01
-          override: true
-          target: wasm32-unknown-unknown
-
-      - name: Build and Run node
-        run: |
-          cargo b
-          ./target/debug/drml --dev --tmp &
-          sleep 180
-
-      - name: Set up node env
-        uses: actions/setup-node@v1
-        with:
-          node-version: 10
-
-      - name: Run dvm tests
-        run: cd tests/dvm && npm install && npm test
+          name: check-default-features
+      - run: ls -R
