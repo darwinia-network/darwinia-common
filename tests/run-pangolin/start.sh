@@ -22,7 +22,6 @@ do
 done
 
 echo "===> Setup all the validators"
-
 echo "start n1 ..."
 ${BIN_PATH}/drml \
   --base-path ${DATA_PATH}/n1 \
@@ -142,3 +141,5 @@ ${BIN_PATH}/drml \
           "/ip4/127.0.0.1/tcp/30337/p2p/12D3KooWSuTq6MG9gPt7qZqLFKkYrfxMewTZhj9nmRHJkPwzWDG2" \
           "/ip4/127.0.0.1/tcp/30338/p2p/12D3KooWMz5U7fR8mF5DNhZSSyFN8c19kU63xYopzDSNCzoFigYk" \
   --validator &> ${LOG_PATH}/node6.log &
+
+echo "===> The pangolin network is running successfully"
