@@ -17,8 +17,8 @@ jobs:
             - name: Fetch latest code
               uses: actions/checkout@v2
               with:
-                  name: darwinia-network/darwinia-kit
-                  ref: 6a08d2288635eff01754c27d3f43e985e13b5bb2
+                  repository: darwinia-network/darwinia-kit
+                  ref: cd17822e81f9f5346becd3ebd05f85e03a1e6832
             - name: Install Rust nightly-2021-08-03 toolchain
               uses: actions-rs/toolchain@v1
               with:
@@ -28,6 +28,13 @@ jobs:
               with:
                   command: build
                   args: --manifest-path ci-bot/Cargo.toml
+            - name: Compress artifact
+              run: mv target/debug/ci-bot . && tar cf kit.tar.zst ci-bot -I pzstd
+            - name: Upload kit
+              uses: actions/upload-artifact@v2
+              with:
+                  name: kit
+                  path: kit.tar.zst
     build_and_test_pangolin:
         name: Build and test Pangolin
         runs-on: ubuntu-latest
@@ -57,18 +64,18 @@ jobs:
               with:
                   name: artifact
                   path: artifact.tar.zst
-    check_default_features:
-        name: Check default features
-        runs-on: ubuntu-latest
-        needs: [build_and_test]
-        steps:
-            - name: Fetch latest code
-              uses: actions/checkout@v2
-            - name: Download artifact
-              uses: actions/download-artifact@v2
-              with:
-                  name: artifact
-            - name: Uncompress artifact
-              run: tar xf artifact.tar.zst -I pzstd
-            - name: List dir
-              run: ls -R
+    # check_default_features:
+    #     name: Check default features
+    #     runs-on: ubuntu-latest
+    #     needs: [build_and_test]
+    #     steps:
+    #         - name: Fetch latest code
+    #           uses: actions/checkout@v2
+    #         - name: Download artifact
+    #           uses: actions/download-artifact@v2
+    #           with:
+    #               name: artifact
+    #         - name: Uncompress artifact
+    #           run: tar xf artifact.tar.zst -I pzstd
+    #         - name: List dir
+    #           run: ls -R
