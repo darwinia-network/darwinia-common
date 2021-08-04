@@ -269,7 +269,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::mapping_factory_event_handle())]
 		pub fn mapping_factory_event_handle(
 			origin: OriginFor<T>,
 			input: Vec<u8>,

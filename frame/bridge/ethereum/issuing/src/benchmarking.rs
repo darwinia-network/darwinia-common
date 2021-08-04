@@ -26,7 +26,7 @@ use frame_system::RawOrigin;
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_std::vec;
 
-use ethereum_primitives::{header::EthereumHeader, receipt::ReceiptProof, H256};
+use ethereum_primitives::{header::EthereumHeader, receipt::ReceiptProof, H160, H256};
 use sp_std::str::FromStr;
 
 use darwinia_ethereum_relay::MMRProof;
@@ -37,6 +37,9 @@ use codec::{Decode, Encode};
 // should mock ethereum relay first
 // https://github.com/darwinia-network/darwinia-common/blob/master/frame/bridge/ethereum/relay/src/lib.rs
 // replace line `let mmr_root = Self::confirmed_header_parcel_of(mmr_proof.last_leaf_index + 1)` as
+// for generic simulation, we choose different mmr root for register and redeem.
+// the mmr root at 10254000 is used for register transaction proof, and the other is for redeem
+// transaction proof.
 /*
  *
  * let mmr_root = if ethereum_header.number == 10254000 {
@@ -111,10 +114,13 @@ benchmarks! {
 		let proof_thing: EthereumReceiptProofThing<T>  = Decode::decode(&mut proof.as_slice()).unwrap();
 	}: _(RawOrigin::Signed(caller), proof_thing)
 
-	// todo
-	//mapping_factory_event_handle {
-		//let caller = whitelisted_caller();
-	//}: _(RawOrigin::Signed(caller), proof_thing)
+	// the test data is from tx:
+	// https://ropsten.etherscan.io/tx/0x5999253ecbe82b26800534b78567058352cc741c3475c94dba014f5971b5933c
+	mapping_factory_event_handle {
+		let factory = H160::from_str("E1586e744b99bF8e4C981DfE4dD4369d6f8Ed88A").unwrap();
+		let caller = <T as darwinia_evm::Config>::AddressMapping::into_account_id(factory);
+		let input = array_bytes::hex2bytes_unchecked("0x9fd728bf917e2e38000000000000000000000000b2bea2358d817dae01b0fd0dc3aecb25910e65aa000000000000000000000000a26e0ff781f2d39cc9a9e255a2e74573945c2d790000000000000000000000003bdeafc230636b5d4ecc4e5688dbbf78d68d19e6");
+	}: _(RawOrigin::Signed(caller), input)
 
 	set_mapping_factory_address {
 		let address = hex_into_unchecked("0000000000000000000000000000000000000001");
