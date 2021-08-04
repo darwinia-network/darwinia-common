@@ -1,57 +1,74 @@
 name: CI
 on:
-  push:
-    branches:
-      - main
-      - master
-  pull_request:
-    branches:
-      - main
-      - master
+    push:
+        branches:
+            - main
+            - master
+    pull_request:
+        branches:
+            - main
+            - master
 
 jobs:
-  build_and_test:
-    name: Build and test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Fetch latest code
-        uses: actions/checkout@v2
-      - name: Install Rust nightly-2021-08-03 toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly-2021-08-03
-      - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --manifest-path .maintain/check-default-features/Cargo.toml
-      - name: Test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --manifest-path .maintain/check-default-features/Cargo.toml
-      - name: Compress artifact
-        run: |
-          mv .maintain/check-default-features/target/debug/check-default-features .\
-          &&\
-          tar cf artifact.tar.zst check-default-features -I pzstd
-      - name: Upload artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: artifact
-          path: artifact.tar.zst
-  check_default_features:
-    name: Check default features
-    runs-on: ubuntu-latest
-    needs: [build_and_test]
-    steps:
-      - name: Fetch latest code
-        uses: actions/checkout@v2
-      - name: Download artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: artifact
-      - name: Uncompress artifact
-        run: tar xf artifact.tar.zst -I pzstd
-      - name: List dir
-        run: ls -R
+    build_kit:
+        name: Build kit
+        runs-on: ubuntu-latest
+        steps:
+            - name: Fetch latest code
+              uses: actions/checkout@v2
+              with:
+                  name: darwinia-network/darwinia-kit
+                  ref: 6a08d2288635eff01754c27d3f43e985e13b5bb2
+            - name: Install Rust nightly-2021-08-03 toolchain
+              uses: actions-rs/toolchain@v1
+              with:
+                  toolchain: nightly-2021-08-03
+            - name: Build
+              uses: actions-rs/cargo@v1
+              with:
+                  command: build
+                  args: --manifest-path ci-bot/Cargo.toml
+    build_and_test_pangolin:
+        name: Build and test Pangolin
+        runs-on: ubuntu-latest
+        steps:
+            - name: Fetch latest code
+              uses: actions/checkout@v2
+            - name: Install Rust nightly-2021-08-03 toolchain
+              uses: actions-rs/toolchain@v1
+              with:
+                  toolchain: nightly-2021-08-03
+            - name: Build
+              uses: actions-rs/cargo@v1
+              with:
+                  command: build
+                  args: --manifest-path .maintain/check-default-features/Cargo.toml
+            - name: Test
+              uses: actions-rs/cargo@v1
+              with:
+                  command: test
+                  args: --manifest-path .maintain/check-default-features/Cargo.toml
+            - name: Compress artifact
+              run: |
+                  mv .maintain/check-default-features/target/debug/check-default-features .\
+                  && tar cf artifact.tar.zst check-default-features -I pzstd
+            - name: Upload artifact
+              uses: actions/upload-artifact@v2
+              with:
+                  name: artifact
+                  path: artifact.tar.zst
+    check_default_features:
+        name: Check default features
+        runs-on: ubuntu-latest
+        needs: [build_and_test]
+        steps:
+            - name: Fetch latest code
+              uses: actions/checkout@v2
+            - name: Download artifact
+              uses: actions/download-artifact@v2
+              with:
+                  name: artifact
+            - name: Uncompress artifact
+              run: tar xf artifact.tar.zst -I pzstd
+            - name: List dir
+              run: ls -R
