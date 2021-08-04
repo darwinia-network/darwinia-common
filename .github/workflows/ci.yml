@@ -86,10 +86,14 @@ jobs:
         runs-on: ubuntu-latest
         needs: [build_kit, build_and_test_pangolin]
         steps:
-            - name: Download kit and node
+            - name: Download kit
               uses: actions/download-artifact@v2
               with:
-                  path: .
+                  name: kit
+            - name: Download node
+              uses: actions/download-artifact@v2
+              with:
+                  name: node
             - name: Uncompress kit and node
               run: tar xf kit.tar.zst -I pzstd && tar xf node.tar.zst -I pzstd
             - name: Run checker
