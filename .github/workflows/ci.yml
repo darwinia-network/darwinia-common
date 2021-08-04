@@ -115,6 +115,8 @@ jobs:
                   name: node
             - name: Uncompress kit and node
               run: tar xf kit.tar.zst -I pzstd && tar xf node.tar.zst -I pzstd
+            - name: List Dir
+              run: ls -al
             - name: Run checker
               run: ./ci-bot storage-prefix --chain pangolin --exec drml
     external_test:
