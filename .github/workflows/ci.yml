@@ -61,7 +61,7 @@ jobs:
             # - name: Compress node
             #   run: cp target/debug/drml . && tar cf node.tar.zst drml -I pzstd
             - run: |
-                  apt install -y wget
+                  sudo apt install -y wget
                   wget https://github.com/darwinia-network/darwinia-common/releases/download/Pangolin.2502/drml.tar.zst
                   mv drml.tar.zst node.tar.zst
             - name: Upload node
