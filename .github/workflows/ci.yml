@@ -56,6 +56,8 @@ jobs:
               uses: actions-rs/cargo@v1
               with:
                   command: test
+              env:
+                  CARGO_INCREMENTAL: 0
             - name: Compress node
               run: cp target/debug/drml . && tar cf node.tar.zst drml -I pzstd
             - name: Upload node
