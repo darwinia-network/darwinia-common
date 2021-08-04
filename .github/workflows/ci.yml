@@ -34,8 +34,8 @@ jobs:
       #   run: apt-get install -y zstd
       - name: Compress artifact
         run: |
-          mv .maintain/check-default-features/target/debug/check-default-features .
-          &&
+          mv .maintain/check-default-features/target/debug/check-default-features .\
+          &&\
           tar cf artifact.tar.zst check-default-features -I pzstd
       - name: Upload artifact
         uses: actions/upload-artifact@v2
