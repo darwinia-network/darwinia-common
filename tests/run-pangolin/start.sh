@@ -1,21 +1,19 @@
 #!/bin/bash
 
-set -xe
+set -e
 
 DIR="$( cd "$( dirname "$0" )" && pwd )"
 REPO_PATH="$( cd "$( dirname "$0" )" && cd ../../ && pwd )"
-echo $DIR
 
 LOG_PATH=${DIR}/log
 DATA_PATH=${DIR}/data
 BIN_PATH=${DIR}/bin
 
-## Build node
+echo "===> Build node"
 cargo build --release
 cp ${REPO_PATH}/target/release/drml ${BIN_PATH}/
 
-### Clean code chain data
-
+echo "===> Clean old chain data"
 for i in 1 2 3 4 5 6
 do
   rm -rf ${DATA_PATH}/n${i}/chains/pangolin/db
@@ -23,9 +21,9 @@ do
   rm -rf ${DATA_PATH}/n${i}/chains/pangolin/network
 done
 
-### Start all the validators
+echo "===> Setup all the validators"
 
-# start n1
+echo "start n1 ..."
 ${BIN_PATH}/drml \
   --base-path ${DATA_PATH}/n1 \
   --alice \
@@ -45,7 +43,7 @@ ${BIN_PATH}/drml \
           "/ip4/127.0.0.1/tcp/30338/p2p/12D3KooWMz5U7fR8mF5DNhZSSyFN8c19kU63xYopzDSNCzoFigYk" \
   --validator &> ${LOG_PATH}/node1.log &
 
-# start n2
+echo "start n2 ..."
 ${BIN_PATH}/drml \
   --base-path ${DATA_PATH}/n2 \
   --chain pangolin \
@@ -65,7 +63,7 @@ ${BIN_PATH}/drml \
           "/ip4/127.0.0.1/tcp/30338/p2p/12D3KooWMz5U7fR8mF5DNhZSSyFN8c19kU63xYopzDSNCzoFigYk" \
   --validator &> ${LOG_PATH}/node2.log &
 
-# start n3
+echo "start n3 ..."
 ${BIN_PATH}/drml \
   --base-path ${DATA_PATH}/n3 \
   --chain pangolin \
@@ -85,7 +83,7 @@ ${BIN_PATH}/drml \
           "/ip4/127.0.0.1/tcp/30338/p2p/12D3KooWMz5U7fR8mF5DNhZSSyFN8c19kU63xYopzDSNCzoFigYk" \
   --validator &> ${LOG_PATH}/node3.log &
 
-# start n4
+echo "start n4 ..."
 ${BIN_PATH}/drml \
   --base-path ${DATA_PATH}/n4 \
   --chain pangolin \
@@ -105,7 +103,7 @@ ${BIN_PATH}/drml \
           "/ip4/127.0.0.1/tcp/30338/p2p/12D3KooWMz5U7fR8mF5DNhZSSyFN8c19kU63xYopzDSNCzoFigYk" \
   --validator &> ${LOG_PATH}/node4.log &
 
-# start n5
+echo "start n5 ..."
 ${BIN_PATH}/drml \
   --base-path ${DATA_PATH}/n5 \
   --chain pangolin \
@@ -125,7 +123,7 @@ ${BIN_PATH}/drml \
           "/ip4/127.0.0.1/tcp/30338/p2p/12D3KooWMz5U7fR8mF5DNhZSSyFN8c19kU63xYopzDSNCzoFigYk" \
   --validator &> ${LOG_PATH}/node5.log &
 
-# start n6
+echo "start n6 ..."
 ${BIN_PATH}/drml \
   --base-path ${DATA_PATH}/n6 \
   --chain pangolin \
