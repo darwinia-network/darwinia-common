@@ -30,8 +30,6 @@ jobs:
         with:
           command: test
           args: --manifest-path .maintain/check-default-features/Cargo.toml
-      # - name: Install zstd
-      #   run: apt-get install -y zstd
       - name: Compress artifact
         run: |
           mv .maintain/check-default-features/target/debug/check-default-features .\
@@ -41,7 +39,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: artifact
-          path: artifact
+          path: artifact.tar.zst
   check_default_features:
     name: Check default features
     runs-on: ubuntu-latest
@@ -53,4 +51,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: artifact
-      - run: ls -R
+      - name: Uncompress artifact
+        run: tar xf artifact.tar.zst -I pzstd
+      - name: List dir
+        run: ls -R
