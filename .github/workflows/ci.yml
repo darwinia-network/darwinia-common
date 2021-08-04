@@ -23,20 +23,21 @@ jobs:
               uses: actions-rs/toolchain@v1
               with:
                   toolchain: nightly-2021-08-03
+                  default: true
             - name: Build
               uses: actions-rs/cargo@v1
               with:
                   command: build
                   args: --manifest-path ci-bot/Cargo.toml
-            - name: Compress artifact
-              run: mv target/debug/ci-bot . && tar cf kit.tar.zst ci-bot -I pzstd
+            - name: Compress kit
+              run: cp target/debug/ci-bot . && tar cf kit.tar.zst ci-bot -I pzstd
             - name: Upload kit
               uses: actions/upload-artifact@v2
               with:
                   name: kit
                   path: kit.tar.zst
     build_and_test_pangolin:
-        name: Build and test Pangolin
+        name: Build and test node
         runs-on: ubuntu-latest
         steps:
             - name: Fetch latest code
@@ -45,6 +46,7 @@ jobs:
               uses: actions-rs/toolchain@v1
               with:
                   toolchain: nightly-2021-08-03
+                  default: true
             - name: Build
               uses: actions-rs/cargo@v1
               with:
@@ -55,27 +57,38 @@ jobs:
               with:
                   command: test
                   args: --manifest-path .maintain/check-default-features/Cargo.toml
-            - name: Compress artifact
+            - name: Compress node
               run: |
-                  mv .maintain/check-default-features/target/debug/check-default-features .\
-                  && tar cf artifact.tar.zst check-default-features -I pzstd
-            - name: Upload artifact
+                  cp .maintain/check-default-features/target/debug/check-default-features . \
+                  && tar cf node.tar.zst check-default-features -I pzstd
+            - name: Upload node
               uses: actions/upload-artifact@v2
               with:
-                  name: artifact
-                  path: artifact.tar.zst
-    # check_default_features:
-    #     name: Check default features
-    #     runs-on: ubuntu-latest
-    #     needs: [build_and_test]
-    #     steps:
-    #         - name: Fetch latest code
-    #           uses: actions/checkout@v2
-    #         - name: Download artifact
-    #           uses: actions/download-artifact@v2
-    #           with:
-    #               name: artifact
-    #         - name: Uncompress artifact
-    #           run: tar xf artifact.tar.zst -I pzstd
-    #         - name: List dir
-    #           run: ls -R
+                  name: node
+                  path: node.tar.zst
+    check_default_features:
+        name: Check default features
+        runs-on: ubuntu-latest
+        needs: [build_kit]
+        steps:
+            - name: Fetch latest code
+              uses: actions/checkout@v2
+            - name: Download kit
+              uses: actions/download-artifact@v2
+              with:
+                  name: kit
+            - name: Uncompress kit
+              run: tar xf kit.tar.zst -I pzstd
+            - name: Run checker
+              run: ./ci-bot default-features --project-dir .
+    check_storage_prefixes:
+        name: Check storage prefixes
+        runs-on: ubuntu-latest
+        needs: [build_and_test_pangolin]
+        steps:
+            - name: Download kit and node
+              uses: actions/download-artifact@v2
+            - name: Uncompress kit and node
+              run: tar xf kit.tar.zst -I pzstd && tar xf node.tar.zst -I pzstd
+            - name: Run checker
+              run: ./ci-bot --chain pangolin --exec drml
