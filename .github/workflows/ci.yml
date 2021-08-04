@@ -2,11 +2,11 @@ name: CI
 on:
   push:
     branches:
-      - pangolin
+      - main
       - master
   pull_request:
     branches:
-      - pangolin
+      - main
       - master
 
 env:
