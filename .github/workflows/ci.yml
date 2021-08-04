@@ -40,30 +40,26 @@ jobs:
         name: Build node and internal test
         runs-on: ubuntu-latest
         steps:
-            # - name: Fetch latest code
-            #   uses: actions/checkout@v2
-            # - name: Install Rust nightly-2021-08-03 toolchain
-            #   uses: actions-rs/toolchain@v1
-            #   with:
-            #       toolchain: nightly-2021-08-03
-            #       target: wasm32-unknown-unknown
-            #       default: true
-            # - name: Build
-            #   uses: actions-rs/cargo@v1
-            #   with:
-            #       command: build
-            # - name: Test
-            #   uses: actions-rs/cargo@v1
-            #   with:
-            #       command: test
-            #   env:
-            #       CARGO_INCREMENTAL: 0
-            # - name: Compress node
-            #   run: cp target/debug/drml . && tar cf node.tar.zst drml -I pzstd
-            - run: |
-                  sudo apt install -y wget
-                  wget https://github.com/darwinia-network/darwinia-common/releases/download/Pangolin.2502/drml.tar.zst
-                  mv drml.tar.zst node.tar.zst
+            - name: Fetch latest code
+              uses: actions/checkout@v2
+            - name: Install Rust nightly-2021-08-03 toolchain
+              uses: actions-rs/toolchain@v1
+              with:
+                  toolchain: nightly-2021-08-03
+                  target: wasm32-unknown-unknown
+                  default: true
+            - name: Build
+              uses: actions-rs/cargo@v1
+              with:
+                  command: build
+            - name: Test
+              uses: actions-rs/cargo@v1
+              with:
+                  command: test
+              env:
+                  CARGO_INCREMENTAL: 0
+            - name: Compress node
+              run: cp target/debug/drml . && tar cf node.tar.zst drml -I pzstd
             - name: Upload node
               uses: actions/upload-artifact@v2
               with:
