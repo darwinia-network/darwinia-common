@@ -141,6 +141,7 @@ jobs:
     clean_artifacts:
         name: Clean artifacts
         runs-on: ubuntu-latest
+        if: always()
         needs: [check_storage_prefix, external_test]
         steps:
             - uses: geekyeggo/delete-artifact@v1
