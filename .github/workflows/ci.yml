@@ -51,16 +51,12 @@ jobs:
               uses: actions-rs/cargo@v1
               with:
                   command: build
-                  args: --manifest-path .maintain/check-default-features/Cargo.toml
             - name: Test
               uses: actions-rs/cargo@v1
               with:
                   command: test
-                  args: --manifest-path .maintain/check-default-features/Cargo.toml
             - name: Compress node
-              run: |
-                  cp .maintain/check-default-features/target/debug/check-default-features . \
-                  && tar cf node.tar.zst check-default-features -I pzstd
+              run: cp target/debug/drml . && tar cf node.tar.zst drml -I pzstd
             - name: Upload node
               uses: actions/upload-artifact@v2
               with:
