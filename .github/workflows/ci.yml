@@ -117,7 +117,7 @@ jobs:
               name: Run checker
               run: |
                   OUTPUT=$(./ci-bot storage-prefix --chain pangolin --exec ./drml)
-                  && echo "::set-output name=result::$OUTPUT"
+                  echo "::set-output name=result::$OUTPUT"
             - uses: marocchino/sticky-pull-request-comment@v2
               with:
                   message: |
