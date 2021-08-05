@@ -18,7 +18,7 @@ jobs:
               uses: actions/checkout@v2
               with:
                   repository: darwinia-network/darwinia-kit
-                  ref: cd17822e81f9f5346becd3ebd05f85e03a1e6832
+                  ref: 003b4a476485256e4035ae51eb96e11ce5f94283
             - name: Install Rust nightly-2021-08-03 toolchain
               uses: actions-rs/toolchain@v1
               with:
@@ -115,7 +115,16 @@ jobs:
               run: tar xf kit.tar.zst -I pzstd && tar xf node.tar.zst -I pzstd
             - id: run_checker
               name: Run checker
-              run: echo "::set-output name=result::$(./ci-bot storage-prefix --chain pangolin --exec ./drml)"
+              run: |
+                  OUTPUT=$(./ci-bot storage-prefix --chain pangolin --exec ./drml)
+                  && echo "::set-output name=result::$OUTPUT"
+            - uses: marocchino/sticky-pull-request-comment@v2
+              with:
+                  message: |
+                      Check storage prefix with ${{ github.sha }}.
+                      ```diff
+                      ${{ steps.run_checker.outputs.result }}
+                      ```
     external_test:
         name: External test
         runs-on: ubuntu-latest
