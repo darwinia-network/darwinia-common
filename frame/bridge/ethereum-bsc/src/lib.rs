@@ -603,7 +603,7 @@ pub mod pallet {
 		pub period: u64,
 	}
 
-	/// check if the signer address in a set of qulified signers
+	/// check if the signer address in a set of qualified signers
 	fn contains(signers: &[Address], signer: Address) -> bool {
 		signers.iter().any(|i| *i == signer)
 	}
