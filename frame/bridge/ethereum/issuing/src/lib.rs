@@ -332,13 +332,6 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-	/// The account ID of the issuing pot.
-	pub fn dvm_account_id() -> EthereumAddress {
-		let account32: AccountId32 = T::PalletId::get().into_account();
-		let account20: &[u8] = &account32.as_ref();
-		EthereumAddress::from_slice(&account20[..20])
-	}
-
 	pub fn digest() -> PalletDigest {
 		let mut digest: PalletDigest = Default::default();
 		let pallet_digest = sha3::Keccak256::digest(T::PalletId::get().encode().as_slice());
