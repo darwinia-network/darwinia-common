@@ -62,17 +62,16 @@ use ethereum_primitives::{
 };
 pub use pallet::*;
 
-<<<<<<< HEAD
 const REGISTER_TYPE: u8 = 0;
-const BURN_TYPE: u8     = 1;
-=======
+const BURN_TYPE: u8 = 1;
+
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type EthereumReceiptProofThing<T> = <<T as Config>::EthereumRelay as EthereumReceipt<
 	AccountId<T>,
 	RingBalance<T>,
 >>::EthereumReceiptProofThing;
-pub type RingBalance<T> = <<T as dvm_ethereum::Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
->>>>>>> Code clean
+pub type RingBalance<T> =
+	<<T as dvm_ethereum::Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -85,7 +84,6 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
-		// type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 		type EthereumRelay: EthereumReceipt<Self::AccountId, RingBalance<Self>>;
 		type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber, Signer = EthereumAddress>;
 		type WeightInfo: WeightInfo;
