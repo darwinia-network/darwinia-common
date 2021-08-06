@@ -12,7 +12,7 @@ impl Config for Runtime {
 	type PalletId = EthereumIssuingPalletId;
 	type Event = Event;
 	type EthereumRelay = EthereumRelay;
-	type RingCurrency = Ring;
+	// type RingCurrency = Ring;
 	type EcdsaAuthorities = EthereumRelayAuthorities;
 	type WeightInfo = ();
 }

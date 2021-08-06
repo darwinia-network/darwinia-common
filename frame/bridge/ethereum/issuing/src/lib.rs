@@ -47,8 +47,7 @@ use sp_runtime::{
 };
 use sp_std::{str, vec::Vec};
 // --- darwinia ---
-use darwinia_evm::AddressMapping;
-use darwinia_evm::GasWeightMapping;
+use darwinia_evm::{AddressMapping, GasWeightMapping};
 use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::{balance::*, traits::EthereumReceipt, PalletDigest};
 use dp_contract::{
@@ -63,23 +62,22 @@ use ethereum_primitives::{
 };
 pub use pallet::*;
 
+<<<<<<< HEAD
 const REGISTER_TYPE: u8 = 0;
 const BURN_TYPE: u8     = 1;
+=======
+pub type AccountId<T> = <T as frame_system::Config>::AccountId;
+pub type EthereumReceiptProofThing<T> = <<T as Config>::EthereumRelay as EthereumReceipt<
+	AccountId<T>,
+	RingBalance<T>,
+>>::EthereumReceiptProofThing;
+pub type RingBalance<T> = <<T as dvm_ethereum::Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
+>>>>>>> Code clean
 
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	mod types {
-		use crate::*;
-
-		pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-		pub type EthereumReceiptProofThing<T> = <<T as Config>::EthereumRelay as EthereumReceipt<
-			AccountId<T>,
-			RingBalance<T>,
-		>>::EthereumReceiptProofThing;
-		pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
-	}
-	pub use types::*;
+	use crate::*;
 
 	#[pallet::config]
 	#[pallet::disable_frame_system_supertrait_check]
@@ -87,7 +85,7 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
-		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+		// type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 		type EthereumRelay: EthereumReceipt<Self::AccountId, RingBalance<Self>>;
 		type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber, Signer = EthereumAddress>;
 		type WeightInfo: WeightInfo;
@@ -229,6 +227,7 @@ pub mod pallet {
 				!VerifiedIssuingProof::<T>::contains_key(tx_index),
 				<Error<T>>::AssetAlreadyRegistered
 			);
+
 			let verified_receipt = T::EthereumRelay::verify_receipt(&proof)?;
 			let backing_address = EthereumBackingAddress::<T>::get();
 			let register_info =
