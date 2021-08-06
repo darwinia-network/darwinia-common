@@ -28,11 +28,11 @@ jobs:
               uses: actions-rs/cargo@v1
               with:
                   command: build
-                  args: --manifest-path ci-bot/Cargo.toml
+                  args: --release --manifest-path ci-bot/Cargo.toml
             - name: Compress kit
               run: |
                   mv ci-bot avoid-same-name
-                  cp target/debug/ci-bot .
+                  cp target/release/ci-bot .
                   tar cf kit.tar.zst ci-bot -I pzstd
             - name: Upload kit
               uses: actions/upload-artifact@v2
@@ -55,14 +55,16 @@ jobs:
               uses: actions-rs/cargo@v1
               with:
                   command: build
+                  args: --release
             - name: Test
               uses: actions-rs/cargo@v1
               with:
                   command: test
+                  args: --release
               env:
                   CARGO_INCREMENTAL: 0
             - name: Compress node
-              run: cp target/debug/drml . && tar cf node.tar.zst drml -I pzstd
+              run: cp target/release/drml . && tar cf node.tar.zst drml -I pzstd
             - name: Upload node
               uses: actions/upload-artifact@v2
               with:
@@ -152,7 +154,7 @@ jobs:
               with:
                   node-version: 10
             - name: DVM test
-              run: cd tests/dvm && npm install && sleep 30 && npm test
+              run: cd tests/dvm && npm install && npm test
     clean_artifacts:
         name: Clean artifacts
         runs-on: ubuntu-latest
