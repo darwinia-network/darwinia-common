@@ -146,12 +146,8 @@ impl EthereumBacking {
 			.find(|x| &x.address == backing_address && x.topics[0] == log_event.signature())
 			.ok_or(Error::InvalidData)?;
 		let log = RawLog {
-			topics: log_entry
-				.topics
-				.into_iter()
-				.map(|t| -> H256 { t.into() })
-				.collect(),
-			data: log_entry.data.clone(),
+			topics: log_entry.topics.into_iter().collect(),
+			data: log_entry.data,
 		};
 		log_event.parse_log(log)
 	}
