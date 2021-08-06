@@ -112,6 +112,8 @@ pub mod pallet {
 		InvalidInput,
 		/// caller has no authority
 		NoAuthority,
+		/// the action is not supported
+		UnsupportedAction,
 	}
 
 	#[pallet::event]
@@ -307,7 +309,7 @@ pub mod pallet {
 					.map_err(|_| Error::<T>::InvalidInputData)?;
 				Self::finish_token_registered(register_info.0, register_info.1, register_info.2);
 			} else {
-				log::trace!("Unsupport action!");
+				return Err(Error::<T>::UnsupportedAction.into());
 			}
 			Ok(().into())
 		}
