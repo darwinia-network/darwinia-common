@@ -63,6 +63,9 @@ use ethereum_primitives::{
 };
 pub use pallet::*;
 
+const REGISTER_TYPE: u8 = 0;
+const BURN_TYPE: u8     = 1;
+
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
@@ -368,7 +371,7 @@ impl<T: Config> Pallet<T> {
 		source: EthereumAddress,
 		target: EthereumAddress,
 	) -> DispatchResult {
-		let raw_event = Event::TokenRegistered(0, backing, source, target);
+		let raw_event = Event::TokenRegistered(REGISTER_TYPE, backing, source, target);
 		let module_event: <T as Config>::Event = raw_event.clone().into();
 		let system_event: <T as frame_system::Config>::Event = module_event.into();
 		<BurnTokenEvents<T>>::append(system_event);
@@ -393,7 +396,7 @@ impl<T: Config> Pallet<T> {
 		})?;
 
 		let raw_event = Event::BurnToken(
-			1,
+			BURN_TYPE,
 			backing,
 			sender,
 			recipient,
