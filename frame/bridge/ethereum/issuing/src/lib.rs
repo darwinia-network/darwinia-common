@@ -95,8 +95,10 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// Invalid Issuing System Account
 		InvalidIssuingAccount,
-		/// assert ar
-		AssetAR,
+		/// assert already registered
+		AssetAlreadyRegistered,
+		/// assert already redeemed
+		AssetAlreadyRedeemed,
 		/// StringCF
 		StringCF,
 		/// encode erc20 tx failed
@@ -109,6 +111,8 @@ pub mod pallet {
 		DecodeEventFailed,
 		/// invalid input length
 		InvalidInput,
+		/// caller has no authority
+		NoAuthority,
 	}
 
 	#[pallet::event]
@@ -220,7 +224,7 @@ pub mod pallet {
 			let tx_index = T::EthereumRelay::gen_receipt_index(&proof);
 			ensure!(
 				!VerifiedIssuingProof::<T>::contains_key(tx_index),
-				<Error<T>>::AssetAR
+				<Error<T>>::AssetAlreadyRegistered
 			);
 			let verified_receipt = T::EthereumRelay::verify_receipt(&proof)?;
 			let backing_address = EthereumBackingAddress::<T>::get();
@@ -253,7 +257,7 @@ pub mod pallet {
 			let tx_index = T::EthereumRelay::gen_receipt_index(&proof);
 			ensure!(
 				!VerifiedIssuingProof::<T>::contains_key(tx_index),
-				<Error<T>>::AssetAR
+				<Error<T>>::AssetAlreadyRedeemed
 			);
 			let verified_receipt = T::EthereumRelay::verify_receipt(&proof)?;
 			let backing_address = EthereumBackingAddress::<T>::get();
@@ -281,13 +285,16 @@ pub mod pallet {
 			ensure!(input.len() >= 8, <Error<T>>::InvalidInput);
 			let factory = MappingFactoryAddress::<T>::get();
 			let factory_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(factory);
-			ensure!(factory_id == caller, <Error<T>>::AssetAR);
+			ensure!(factory_id == caller, <Error<T>>::NoAuthority);
 			let burn_action = &sha3::Keccak256::digest(&BURN_ACTION)[0..4];
 			let register_action = &sha3::Keccak256::digest(&REGISTER_ACTION)[0..4];
 			if &input[4..8] == burn_action {
 				let burn_info =
 					TokenBurnInfo::decode(&input[8..]).map_err(|_| Error::<T>::InvalidInputData)?;
-				ensure!(burn_info.recipient.len() == 20, <Error<T>>::AssetAR);
+				ensure!(
+					burn_info.recipient.len() == 20,
+					<Error<T>>::InvalidAddressLen
+				);
 				Self::deposit_burn_token_event(
 					burn_info.backing,
 					burn_info.sender,
