@@ -121,10 +121,10 @@ pub mod pallet {
 	#[pallet::metadata(T::AccountId = "AccountId")]
 	pub enum Event<T: Config> {
 		/// register new erc20 token
-		RegisterErc20(EthereumAddress, EthereumTransactionIndex),
+		TokenRegisterSubmitted(EthereumAddress, EthereumTransactionIndex),
 		/// redeem erc20 token
 		RedeemErc20(EthereumAddress, EthereumTransactionIndex),
-		//  These two events `BurnToken` and `TokenRegistered` will be saved in a special storage, and
+		//  These two events `BurnToken` and `TokenRegisterFinished` will be saved in a special storage, and
 		//  will be delivered to the remote chain. Remote ethereum chain will decode them using
 		//  scale encoding. And the first parameter `type` is used to distinguish the two events.
 		/// burn event
@@ -140,7 +140,7 @@ pub mod pallet {
 		),
 		/// token registered event
 		/// type: u8 = 0, backing, source(origin erc20), target(mapped erc20)
-		TokenRegistered(u8, EthereumAddress, EthereumAddress, EthereumAddress),
+		TokenRegisterFinished(u8, EthereumAddress, EthereumAddress, EthereumAddress),
 		/// set mapping token factory address
 		/// [old, new]
 		MappingFactoryAddressUpdated(EthereumAddress, EthereumAddress),
@@ -245,7 +245,7 @@ pub mod pallet {
 			.map_err(|_| Error::<T>::InvalidEncodeERC20)?;
 			Self::transact_mapping_factory(input)?;
 			VerifiedIssuingProof::<T>::insert(tx_index, true);
-			Self::deposit_event(Event::RegisterErc20(backing_address, tx_index));
+			Self::deposit_event(Event::TokenRegisterSubmitted(backing_address, tx_index));
 			Ok(().into())
 		}
 
@@ -370,7 +370,7 @@ impl<T: Config> Pallet<T> {
 		source: EthereumAddress,
 		target: EthereumAddress,
 	) -> DispatchResult {
-		let raw_event = Event::TokenRegistered(REGISTER_TYPE, backing, source, target);
+		let raw_event = Event::TokenRegisterFinished(REGISTER_TYPE, backing, source, target);
 		let module_event: <T as Config>::Event = raw_event.clone().into();
 		let system_event: <T as frame_system::Config>::Event = module_event.into();
 		<BurnTokenEvents<T>>::append(system_event);
