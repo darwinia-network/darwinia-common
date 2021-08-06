@@ -119,6 +119,9 @@ pub mod pallet {
 		RegisterErc20(EthereumAddress, EthereumTransactionIndex),
 		/// redeem erc20 token
 		RedeemErc20(EthereumAddress, EthereumTransactionIndex),
+		//  These two events `BurnToken` and `TokenRegistered` will be saved in a special storage, and
+		//  will be delivered to the remote chain. Remote ethereum chain will decode them using
+		//  scale encoding. And the first parameter `type` is used to distinguish the two events.
 		/// burn event
 		/// type: 1, backing, sender, recipient, source, target, value
 		BurnToken(
