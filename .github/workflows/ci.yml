@@ -41,6 +41,7 @@ jobs:
               with:
                   name: kit
                   path: kit.tar.zst
+
     build_node_and_internal_test:
         name: Build node and internal test
         runs-on: ubuntu-latest
@@ -74,6 +75,7 @@ jobs:
               with:
                   name: node
                   path: node.tar.zst
+
     check_default_features:
         name: Check default features
         runs-on: ubuntu-latest
@@ -89,6 +91,7 @@ jobs:
               run: tar xf kit.tar.zst -I pzstd
             - name: Run checker
               run: ./ci-bot default-features --project-dir ../darwinia-common
+
     check_rust_code:
         name: Check Rust code
         runs-on: ubuntu-latest
@@ -107,6 +110,7 @@ jobs:
                   command: check
               env:
                   CARGO_INCREMENTAL: 1
+
     check_storage_prefix:
         name: Check storage prefix
         runs-on: ubuntu-latest
@@ -140,6 +144,7 @@ jobs:
                       ```diff
                       ${{ steps.run_checker.outputs.result }}
                       ```
+
     external_test:
         name: External test
         runs-on: ubuntu-latest
@@ -161,6 +166,7 @@ jobs:
                   node-version: 10
             - name: DVM test
               run: cd tests/dvm && npm install && npm test
+
     clean_artifacts:
         name: Clean artifacts
         runs-on: ubuntu-latest
