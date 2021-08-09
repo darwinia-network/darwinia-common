@@ -47,10 +47,7 @@ use frame_support::{
 };
 use frame_system::RawOrigin;
 use sp_core::{H160, H256, U256};
-use sp_runtime::{
-	traits::{BadOrigin, UniqueSaturatedInto},
-	DispatchResult,
-};
+use sp_runtime::traits::{BadOrigin, UniqueSaturatedInto};
 use sp_std::{marker::PhantomData, prelude::*};
 
 static ISTANBUL_CONFIG: EvmConfig = EvmConfig::istanbul();
@@ -94,8 +91,6 @@ pub mod pallet {
 		type Precompiles: PrecompileSet;
 		/// EVM execution runner.
 		type Runner: Runner<Self>;
-		/// Issuing contracts handler
-		type IssuingHandler: IssuingHandler;
 
 		/// EVM config used in the Pallet.
 		fn config() -> &'static EvmConfig {
@@ -465,17 +460,6 @@ impl<T: Config> BlockHashMapping for SubstrateBlockHashMapping<T> {
 	fn block_hash(number: u32) -> H256 {
 		let number = T::BlockNumber::from(number);
 		H256::from_slice(frame_system::Pallet::<T>::block_hash(number).as_ref())
-	}
-}
-
-/// A contract handle for ethereum issuing
-pub trait IssuingHandler {
-	fn handle(address: H160, caller: H160, input: &[u8]) -> DispatchResult;
-}
-/// A default empty issuingHandler, usually used in the test scenario.
-impl IssuingHandler for () {
-	fn handle(_: H160, _: H160, _: &[u8]) -> DispatchResult {
-		Ok(())
 	}
 }
 
