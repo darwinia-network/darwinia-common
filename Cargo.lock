@@ -1568,30 +1568,23 @@ dependencies = [
 name = "darwinia-ethereum-issuing"
 version = "2.5.0"
 dependencies = [
- "darwinia-ethereum-issuing-contract",
+ "array-bytes",
+ "darwinia-ethereum-relay",
  "darwinia-evm",
  "darwinia-relay-primitives",
  "darwinia-support",
+ "dp-contract",
  "dp-evm",
  "dvm-ethereum",
  "ethereum-primitives",
- "ethereum-types",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
  "parity-scale-codec",
- "serde",
- "serde_json",
+ "sha3 0.9.1",
  "sp-runtime",
  "sp-std",
-]
-
-[[package]]
-name = "darwinia-ethereum-issuing-contract"
-version = "2.5.0"
-dependencies = [
- "ethabi",
- "ethereum-types",
 ]
 
 [[package]]
@@ -1714,6 +1707,7 @@ dependencies = [
 name = "darwinia-evm-precompile-encoder"
 version = "2.5.0"
 dependencies = [
+ "darwinia-ethereum-issuing",
  "darwinia-evm",
  "darwinia-s2s-issuing",
  "darwinia-support",
@@ -1726,15 +1720,6 @@ dependencies = [
  "sha3 0.9.1",
  "sp-core",
  "sp-io",
-]
-
-[[package]]
-name = "darwinia-evm-precompile-issuing"
-version = "2.5.0"
-dependencies = [
- "darwinia-evm",
- "dp-evm",
- "evm 0.27.0",
 ]
 
 [[package]]
@@ -2265,6 +2250,7 @@ name = "dp-contract"
 version = "2.5.0"
 dependencies = [
  "ethabi",
+ "ethereum-primitives",
  "ethereum-types",
  "sp-std",
 ]
@@ -5985,7 +5971,6 @@ dependencies = [
  "darwinia-evm",
  "darwinia-evm-precompile-dispatch",
  "darwinia-evm-precompile-encoder",
- "darwinia-evm-precompile-issuing",
  "darwinia-evm-precompile-simple",
  "darwinia-evm-precompile-transfer",
  "darwinia-header-mmr",
@@ -8890,7 +8875,8 @@ dependencies = [
 [[package]]
 name = "sp-debug-derive"
 version = "3.0.0"
-source = "git+https://github.com/darwinia-network/substrate?branch=main#1d7f6e12c651d776fc0dc1adefd007bb60f60b63"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e80275f23b4e7ba8f54dec5f90f016530e7307d2ee9445f617ab986cbe97f31e"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -8900,8 +8886,7 @@ dependencies = [
 [[package]]
 name = "sp-debug-derive"
 version = "3.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e80275f23b4e7ba8f54dec5f90f016530e7307d2ee9445f617ab986cbe97f31e"
+source = "git+https://github.com/darwinia-network/substrate?branch=main#1d7f6e12c651d776fc0dc1adefd007bb60f60b63"
 dependencies = [
  "proc-macro2",
  "quote",

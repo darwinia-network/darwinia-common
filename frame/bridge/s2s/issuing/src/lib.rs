@@ -54,9 +54,7 @@ use dp_asset::{
 	token::{Token, TokenInfo},
 	RecipientAccount,
 };
-use dp_contract::mapping_token_factory::{MappingTokenFactory as mtf, TokenBurnInfo};
-
-const BURN_ACTION: &[u8] = b"burned(address,address,address,address,uint256)";
+use dp_contract::mapping_token_factory::{MappingTokenFactory as mtf, TokenBurnInfo, BURN_ACTION};
 
 pub use pallet::*;
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;

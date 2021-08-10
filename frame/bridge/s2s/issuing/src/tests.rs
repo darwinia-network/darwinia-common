@@ -143,8 +143,6 @@ impl darwinia_evm::Config for Test {
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
 	type AddressMapping = HashedAddressMapping;
-	type RingCurrency = Ring;
-	type KtonCurrency = Kton;
 	type Event = ();
 	type Precompiles = ();
 	type FindAuthor = ();
@@ -154,7 +152,6 @@ impl darwinia_evm::Config for Test {
 	type Runner = darwinia_evm::runner::stack::Runner<Self>;
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
-	type IssuingHandler = ();
 }
 
 frame_support::parameter_types! {

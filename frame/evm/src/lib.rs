@@ -42,8 +42,7 @@ use evm::{Config as EvmConfig, ExitError, ExitReason};
 use serde::{Deserialize, Serialize};
 // --- paritytech ---
 use frame_support::{
-	dispatch::DispatchResultWithPostInfo,
-	traits::{Currency, FindAuthor},
+	traits::FindAuthor,
 	weights::{PostDispatchInfo, Weight},
 };
 use frame_system::RawOrigin;
@@ -84,11 +83,7 @@ pub mod pallet {
 		/// Find author for the current block.
 		type FindAuthor: FindAuthor<H160>;
 
-		/// Ring Currency type
-		type RingCurrency: Currency<Self::AccountId>;
-		/// Kton Currency type
-		type KtonCurrency: Currency<Self::AccountId>;
-		/// The account basic mapping way
+		/// Account basic
 		type RingAccountBasic: AccountBasic<Self>;
 		type KtonAccountBasic: AccountBasic<Self>;
 
@@ -96,8 +91,6 @@ pub mod pallet {
 		type Precompiles: PrecompileSet;
 		/// EVM execution runner.
 		type Runner: Runner<Self>;
-		/// Issuing contracts handler
-		type IssuingHandler: IssuingHandler;
 
 		/// EVM config used in the Pallet.
 		fn config() -> &'static EvmConfig {
@@ -470,6 +463,7 @@ impl<T: Config> BlockHashMapping for SubstrateBlockHashMapping<T> {
 	}
 }
 
+<<<<<<< HEAD
 /// A contract handle for ethereum issuing
 pub trait IssuingHandler {
 	fn handle(address: H160, caller: H160, input: &[u8]) -> DispatchResultWithPostInfo;
@@ -481,6 +475,8 @@ impl IssuingHandler for () {
 	}
 }
 
+=======
+>>>>>>> master
 /// Ensure that the address is truncated hash of the origin.
 pub struct EnsureAddressTruncated<AccountId>(PhantomData<AccountId>);
 impl<AccountId, OuterOrigin> EnsureAddressOrigin<OuterOrigin> for EnsureAddressTruncated<AccountId>
