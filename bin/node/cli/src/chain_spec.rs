@@ -665,11 +665,17 @@ pub fn pangolin_local_testnet_config() -> PangolinChainSpec {
 		];
 		let endowed_accounts = vec![
 			get_account_id_from_seed::<sr25519::Public>("Alice"),
+			get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
 			get_account_id_from_seed::<sr25519::Public>("Bob"),
+			get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
 			get_account_id_from_seed::<sr25519::Public>("Charlie"),
+			get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
 			get_account_id_from_seed::<sr25519::Public>("Dave"),
+			get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
 			get_account_id_from_seed::<sr25519::Public>("Eve"),
+			get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
 			get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+			get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 		]
 		.into_iter()
 		.chain(
@@ -857,7 +863,26 @@ pub fn pangolin_local_testnet_config() -> PangolinChainSpec {
 		"pangolin",
 		ChainType::Development,
 		pangolin_local_testnet_genesis,
-		vec![],
+		vec![
+			"/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp"
+				.parse()
+				.unwrap(),
+			"/ip4/127.0.0.1/tcp/30334/p2p/12D3KooWHdiAxVd8uMQR1hGWXccidmfCwLqcMpGwR6QcTP6QRMuD"
+				.parse()
+				.unwrap(),
+			"/ip4/127.0.0.1/tcp/30335/p2p/12D3KooWSCufgHzV4fCwRijfH2k3abrpAJxTKxEvN1FDuRXA2U9x"
+				.parse()
+				.unwrap(),
+			"/ip4/127.0.0.1/tcp/30336/p2p/12D3KooWSsChzF81YDUKpe9Uk5AHV5oqAaXAcWNSPYgoLauUk4st"
+				.parse()
+				.unwrap(),
+			"/ip4/127.0.0.1/tcp/30337/p2p/12D3KooWSuTq6MG9gPt7qZqLFKkYrfxMewTZhj9nmRHJkPwzWDG2"
+				.parse()
+				.unwrap(),
+			"/ip4/127.0.0.1/tcp/30338/p2p/12D3KooWMz5U7fR8mF5DNhZSSyFN8c19kU63xYopzDSNCzoFigYk"
+				.parse()
+				.unwrap(),
+		],
 		None,
 		None,
 		Some(properties()),
