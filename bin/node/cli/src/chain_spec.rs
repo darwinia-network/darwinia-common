@@ -724,8 +724,8 @@ pub fn pangolin_local_testnet_config() -> PangolinChainSpec {
 					.collect()
 			},
 			darwinia_staking: pangolin_runtime::StakingConfig {
-				minimum_validator_count: 1,
-				validator_count: 2,
+				minimum_validator_count: 6,
+				validator_count: 6,
 				stakers: initial_authorities
 					.iter()
 					.cloned()
