@@ -1,6 +1,6 @@
 [package]
 authors     = ["Darwinia Network <tianyi.song@itering.com>"]
-description = "Primitives of BSC Bridge module."
+description = "Primitives of BSC(Binance Smart Chain) Bridge module."
 edition     = "2018"
 homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"

@@ -1,6 +1,6 @@
 [package]
 authors     = ["Darwinia Network <hello@darwinia.network>"]
-description = "A Substrate Runtime module that is able to verify bsc headers and authority set finality."
+description = "A Substrate Runtime module that is able to verify bsc(Binance Smart Chain) headers and authority set finality."
 edition     = "2018"
 homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"
