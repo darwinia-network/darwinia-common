@@ -21,27 +21,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod migration {
-	// --- darwinia-network ---
-	use crate::*;
-
-	pub fn migrate<T, I>()
-	where
-		T: Config<I>,
-		I: Instance,
-	{
-		<RelayHeaderParcelToResolve<T, I>>::kill();
-		<Affirmations<T, I>>::remove_all();
-		<BestConfirmedHeaderId<T, I>>::remove_all();
-		<RoundCounts<T, I>>::remove_all();
-		<AffirmTime<T, I>>::remove_all();
-		<GamesToUpdate<T, I>>::remove_all();
-
-		for (staker, _) in <Stakes<T, I>>::drain() {
-			T::RingCurrency::remove_lock(T::LockId::get(), &staker);
-		}
-
-		<GameSamplePoints<T, I>>::remove_all();
-	}
+	pub fn migrate() {}
 }
 
 pub mod weights;

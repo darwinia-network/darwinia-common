@@ -207,11 +207,5 @@ pub mod migration {
 		}
 	}
 
-	pub fn migrate(module: impl AsRef<[u8]>) {
-		// --- paritytech ---
-		use frame_support::migration;
-
-		migration::remove_storage_prefix(module.as_ref(), b"MMRNodeList", &[]);
-		migration::remove_storage_prefix(module.as_ref(), b"PruningConfiguration", &[]);
-	}
+	pub fn migrate() {}
 }
