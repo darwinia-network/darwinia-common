@@ -16,6 +16,61 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+//! # Ethereum BSC(Binance Smart Chain) Pallet
+//!
+//! The ethereum-bsc pallet provides functionality for verifying headers which submitted by relayer and finalized
+//! authority set
+//!
+//! - [`Config`]
+//! - [`Call`]
+//! - [`Pallet`]
+//!
+//! ## Overview
+//!
+//! The ethereum-bsc pallet provides functions for:
+//!
+//! - Verify bsc headers and finalize authority set
+//! - Verify a single bsc header
+//!
+//! ### Terminology
+//!
+//! - [`BSCHeader`]: The header structure of Binance Smart Chain.
+//!
+//! - `genesis_header` The initial header which set to this pallet before it accepts the headers submitted by relayers.
+//!   We extract the initial authority set from this header and verify the headers submitted later with the extracted initial
+//!   authority set. So the genesis_header must be verified manually.
+//!
+//!
+//! - `checkpoint` checkpoint is the block that fulfill block number % epoch_length == 0. This concept comes from the implementation of
+//!   Proof of Authority consensus algorithm
+//!
+//! ### Implementations
+//! If you want to review the code, you may need to read about Authority Round and Proof of Authority consensus algorithms first. Then you may
+//! look into the go implementation of bsc source code and probably focus on the consensus algorithm that bsc is using. Read the bsc official docs if you need them.
+//! For this pallet:
+//! The first thing you should care about is the configuration parameters of this pallet. Check the bsc official docs even the go source code to make sure you set them
+//! correctly
+//! In bsc explorer, choose a checkpoint block's header to set as the genesis header of this pallet. It's not important which block you take, but it's important
+//! that the relayers should submit headers from `genesis_header.number + epoch_length`
+//! Probably you need a tool to finish this, like POSTMAN
+//! For bsc testnet, you can access API https://data-seed-prebsc-1-s1.binance.org:8545 with
+//! following body input to get the header content.
+//! ```json
+//! {
+//!    "jsonrpc": "2.0",
+//!    "method": "eth_getBlockByNumber",
+//!    "params": [
+//!        "0x913640",
+//!        false
+//!    ],
+//!    "id": 83
+//! }
+//!```
+//! If you only want to verify a single header, use verify_header fn is enough. The important tip is the header's number you want verify should greater
+//! than genesis header, or the answer will be NO.
+//! According to the official doc of Binance Smart Chain, when the authority set changed at checkpoint header, the new authority set is not taken as finalized immediately.
+//! We will wait(accept and verify) N / 2 blocks(only headers) to make sure it's safe to finalize the new authority set. N is the authority set size.
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(test)]
@@ -121,6 +176,20 @@ pub mod pallet {
 	#[pallet::getter(fn finalized_checkpoint)]
 	pub type FinalizedCheckpoint<T> = StorageValue<_, BSCHeader, ValueQuery>;
 
+	/// [`Authorities`] is the set of qualified authorities that currently active or activated in previous rounds
+	/// this was added to track the older qualified authorities, to make sure we can verify a older header
+	#[pallet::storage]
+	#[pallet::getter(fn authorities)]
+	pub type Authorities<T> = StorageValue<_, Vec<Address>, ValueQuery>;
+
+	/// [`AuthoritiesOfRound`] use a `Map<u64, Vec<u32>>` structure to track the active authorities in every epoch
+	/// the key is `checkpoint.number / epoch_length`
+	/// the value is the index of authorities which extracted from checkpoint block header
+	/// So the the order of authorities vector **MUST** be stable.
+	#[pallet::storage]
+	#[pallet::getter(fn authorities_of_round)]
+	pub type AuthoritiesOfRound<T> = StorageMap<_, Blake2_128Concat, u64, Vec<u32>, ValueQuery>;
+
 	#[cfg_attr(feature = "std", derive(Default))]
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {
@@ -132,8 +201,13 @@ pub mod pallet {
 			let initial_authority_set =
 				<Pallet<T>>::extract_authorities(&self.genesis_header).unwrap();
 
-			<FinalizedAuthority<T>>::put(initial_authority_set);
+			<Authorities<T>>::put(&initial_authority_set);
+			<FinalizedAuthority<T>>::put(&initial_authority_set);
 			<FinalizedCheckpoint<T>>::put(&self.genesis_header);
+			<AuthoritiesOfRound<T>>::insert(
+				&self.genesis_header.number / T::BSCConfiguration::get().epoch_length,
+				(0u32..initial_authority_set.len() as u32).collect::<Vec<u32>>(),
+			);
 		}
 	}
 
@@ -183,6 +257,7 @@ pub mod pallet {
 		}
 	}
 	impl<T: Config> Pallet<T> {
+		/// Return true if the header's timestamp greater or equal than current on-chain time
 		pub fn is_timestamp_ahead(timestamp: u64) -> bool {
 			T::UnixTime::now().as_millis() as u64 <= timestamp
 		}
@@ -197,6 +272,7 @@ pub mod pallet {
 			// Ensure that nonce is empty
 			ensure!(header.nonce.as_slice() == [0; 8], <Error<T>>::InvalidNonce);
 
+			// This comes from the go version of BSC header verification code
 			ensure!(
 				header.gas_limit >= config.min_gas_limit
 					&& header.gas_limit <= config.max_gas_limit,
@@ -354,6 +430,40 @@ pub mod pallet {
 			Ok(signers)
 		}
 
+		/// Verify single header
+		/// The header number should in the range `[genesis_header.number, finalized_checkpoint.number + N]`
+		/// Before the first call of verify_and_update_authority_set extrinsic, genesis_header == finalized_checkpoint
+		pub fn verify_header(header: &BSCHeader) -> DispatchResult {
+			let cfg = T::BSCConfiguration::get();
+			// ensure the number is in the range
+			let round = header.number / cfg.epoch_length;
+
+			ensure!(
+				<AuthoritiesOfRound<T>>::contains_key(round),
+				// it could be the signer which signed your header has not been finalized yet
+				// or your header.number is less than the genesis header number
+				<Error::<T>>::RidiculousNumber
+			);
+
+			Self::contextless_checks(&cfg, header)?;
+
+			// get index vec
+			let authorities_of_round = <AuthoritiesOfRound<T>>::get(round);
+			// get all authorities
+			let authorities = <Authorities<T>>::get();
+			// filter authorities of this round out
+			let signers = authorities_of_round
+				.into_iter()
+				.map(|i| authorities[i as usize])
+				.collect::<Vec<_>>();
+			// check signer
+			let signer = Self::recover_creator(cfg.chain_id, header)?;
+
+			ensure!(contains(&signers, signer), <Error::<T>>::InvalidSigner);
+
+			Ok(())
+		}
+
 		/// Verify unsigned relayed headers and finalize authority set
 		pub fn verify_and_update_authority_set(
 			headers: &[BSCHeader],
@@ -362,6 +472,7 @@ pub mod pallet {
 			let last_authority_set = <FinalizedAuthority<T>>::get();
 
 			// ensure valid length
+			// we should submit at least `N / 2 + 1` headers
 			ensure!(
 				last_authority_set.len() / 2 < headers.len(),
 				<Error::<T>>::InvalidHeadersSize
@@ -422,10 +533,29 @@ pub mod pallet {
 
 				// enough proof to finalize new authority set
 				if recently.len() == last_authority_set.len() / 2 {
-					// already have N/2 valid headers signed by different authority separately
-					// finalize new authority set
+					// already have `N / 2` valid headers signed by different authority separately
+					// do finalize new authority set
 					<FinalizedAuthority<T>>::put(&new_authority_set);
 					<FinalizedCheckpoint<T>>::put(checkpoint);
+
+					let mut authorities = <Authorities<T>>::get();
+					// track authorities
+					let mut indexes = vec![];
+					for authority in &new_authority_set {
+						if !contains(&authorities, *authority) {
+							authorities.push(*authority);
+						}
+						if let Some(i) = authorities
+							.iter()
+							.position(|authority_| authority_ == authority)
+						{
+							indexes.push(i as u32);
+						}
+					}
+
+					<Authorities<T>>::put(authorities);
+					// insert this epoch's authority indexes
+					<AuthoritiesOfRound<T>>::insert(checkpoint.number / cfg.epoch_length, indexes);
 
 					// skip the rest submitted headers
 					return Ok(new_authority_set);
@@ -473,6 +603,7 @@ pub mod pallet {
 		pub period: u64,
 	}
 
+	/// check if the signer address in a set of qualified signers
 	fn contains(signers: &[Address], signer: Address) -> bool {
 		signers.iter().any(|i| *i == signer)
 	}

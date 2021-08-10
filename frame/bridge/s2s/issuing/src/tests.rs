@@ -147,7 +147,6 @@ impl darwinia_evm::Config for Test {
 	type Runner = darwinia_evm::runner::stack::Runner<Self>;
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
-	type IssuingHandler = ();
 }
 
 frame_support::parameter_types! {

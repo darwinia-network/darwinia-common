@@ -165,7 +165,6 @@ impl Config for Test {
 	type ChainId = ();
 	type BlockGasLimit = ();
 	type Runner = Runner<Self>;
-	type IssuingHandler = ();
 	type RingAccountBasic = RawAccountBasic<Test>;
 	type KtonAccountBasic = RawAccountBasic<Test>;
 }

@@ -89,11 +89,8 @@ const SET_AUTHORITIES_ADDRESS: &'static str = "0xD35Bb6F1bc1C84b53E0995c1830454A
 const RING_TOKEN_ADDRESS: &'static str = "0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0";
 const KTON_TOKEN_ADDRESS: &'static str = "0x1994100c58753793D52c6f457f189aa3ce9cEe94";
 const ETHEREUM_RELAY_AUTHORITY_SIGNER: &'static str = "0x68898db1012808808c903f390909c52d9f706749";
-const MAPPING_FACTORY_ADDRESS: &'static str = "0xcB8531Bc0B7C8F41B55CF4E94698C37b130597B9";
+const MAPPING_FACTORY_ADDRESS: &'static str = "0xE1586e744b99bF8e4C981DfE4dD4369d6f8Ed88A";
 const ETHEREUM_BACKING_ADDRESS: &'static str = "0xb2Bea2358d817dAE01B0FD0DC3aECB25910E65AA";
-
-// TODO use the same address as ethereum bridge
-const S2S_MAPPING_FACTORY_ADDRESS: &'static str = "0xE1586e744b99bF8e4C981DfE4dD4369d6f8Ed88A";
 
 fn session_keys(
 	babe: BabeId,
@@ -398,7 +395,7 @@ pub fn pangolin_build_spec_config() -> PangolinChainSpec {
 			darwinia_evm: pangolin_runtime::EVMConfig { accounts: evm_accounts },
 			dvm_ethereum: Default::default(),
 			darwinia_s2s_issuing: pangolin_runtime::Substrate2SubstrateIssuingConfig {
-				mapping_factory_address: array_bytes::hex_into_unchecked(S2S_MAPPING_FACTORY_ADDRESS),
+				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 			},
 			darwinia_bridge_bsc: pangolin_runtime::BSCConfig {
 				genesis_header: serde_json::from_str(r#"{
@@ -615,7 +612,7 @@ pub fn pangolin_development_config() -> PangolinChainSpec {
 			darwinia_evm: pangolin_runtime::EVMConfig { accounts: evm_accounts },
 			dvm_ethereum: Default::default(),
 			darwinia_s2s_issuing: pangolin_runtime::Substrate2SubstrateIssuingConfig {
-				mapping_factory_address: array_bytes::hex_into_unchecked(S2S_MAPPING_FACTORY_ADDRESS),
+				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 			},
 			darwinia_bridge_bsc: pangolin_runtime::BSCConfig {
 				genesis_header: serde_json::from_str(r#"{
@@ -834,7 +831,7 @@ pub fn pangolin_local_testnet_config() -> PangolinChainSpec {
 			darwinia_evm: pangolin_runtime::EVMConfig { accounts: evm_accounts },
 			dvm_ethereum: Default::default(),
 			darwinia_s2s_issuing: pangolin_runtime::Substrate2SubstrateIssuingConfig {
-				mapping_factory_address: array_bytes::hex_into_unchecked(S2S_MAPPING_FACTORY_ADDRESS),
+				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 			},
 			darwinia_bridge_bsc: pangolin_runtime::BSCConfig {
 				genesis_header: serde_json::from_str(r#"{
