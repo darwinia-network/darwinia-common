@@ -7,14 +7,14 @@ license     = "Apache-2.0"
 name        = "dp-evm"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.5.0"
+version     = "2.5.1"
 
 [dependencies]
 # crates.io
 codec                 = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
 evm                   = { version = "0.27.0", default-features = false, features = ["with-codec"] }
 impl-trait-for-tuples = { version = "0.2.1" }
-serde                 = { version = "1.0.126", optional = true, features = ["derive"] }
+serde                 = { version = "1.0.127", optional = true, features = ["derive"] }
 # paritytech
 sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-std  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }

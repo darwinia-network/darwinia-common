@@ -8,7 +8,7 @@ license     = "GPL-3.0"
 name        = "drml"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.5.0"
+version     = "2.5.1"
 
 # TODO: Consider rename this repo to darwinia-runtime-module-library
 [[bin]]
@@ -23,7 +23,7 @@ jsonrpc-core   = { version = "15.1.0" }
 jsonrpc-pubsub = { version = "15.1.0" }
 log            = { version = "0.4.14" }
 rand           = { version = "0.8.3" }
-serde_json     = { version = "1.0.64" }
+serde_json     = { version = "1.0.66" }
 structopt      = { version = "0.3.21" }
 tokio          = { version = "0.3.6", optional = true, features = ["rt-multi-thread"] }
 # darwinia-network

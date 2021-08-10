@@ -7,13 +7,13 @@ license     = "GPL-3.0"
 name        = "dp-contract"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.5.0"
+version     = "2.5.1"
 
 [dependencies]
 # crates.io
 ethereum-types = { default-features = false, version = "0.11.0" }
 # darwinia-network
-ethabi = { default-features = false, git = "https://github.com/darwinia-network/ethabi.git", tag = "v13.0.0-no-std" }
+ethabi              = { default-features = false, git = "https://github.com/darwinia-network/ethabi.git", tag = "v13.0.0-no-std" }
 ethereum-primitives = { default-features = false, path = "../ethereum" }
 # paritytech
 sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
