@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: darwinia-network/darwinia-kit
-          ref: 17064bd5eee5b384581511ec65f9a161aea04176
+          ref: main
       - name: Install Rust nightly-2021-02-25 toolchain
         uses: actions-rs/toolchain@v1
         with:
