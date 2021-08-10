@@ -86,6 +86,7 @@ pub mod pallet {
 		type PalletId: Get<PalletId>;
 		type EthereumRelay: EthereumReceipt<Self::AccountId, RingBalance<Self>>;
 		type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber, Signer = EthereumAddress>;
+		type RawCallGasLimit: Get<U256>;
 		type WeightInfo: WeightInfo;
 	}
 

@@ -463,20 +463,6 @@ impl<T: Config> BlockHashMapping for SubstrateBlockHashMapping<T> {
 	}
 }
 
-<<<<<<< HEAD
-/// A contract handle for ethereum issuing
-pub trait IssuingHandler {
-	fn handle(address: H160, caller: H160, input: &[u8]) -> DispatchResultWithPostInfo;
-}
-/// A default empty issuingHandler, usually used in the test scenario.
-impl IssuingHandler for () {
-	fn handle(_: H160, _: H160, _: &[u8]) -> DispatchResultWithPostInfo {
-		Ok(().into())
-	}
-}
-
-=======
->>>>>>> master
 /// Ensure that the address is truncated hash of the origin.
 pub struct EnsureAddressTruncated<AccountId>(PhantomData<AccountId>);
 impl<AccountId, OuterOrigin> EnsureAddressOrigin<OuterOrigin> for EnsureAddressTruncated<AccountId>
