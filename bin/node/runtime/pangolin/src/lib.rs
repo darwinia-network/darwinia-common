@@ -917,7 +917,12 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 		// let _ = Ring::deposit_creating(&BridgeMillauMessages::relayer_fund_account_id(), 1 << 50);
 		// --->
 
-		0
+		// --- paritytech ---
+		use frame_support::migration;
+
+		migration::move_pallet(b"DarwiniaEthereumBacking", b"EthereumBacking");
+
+		RuntimeBlockWeights::get().max_block
 	}
 }
 
