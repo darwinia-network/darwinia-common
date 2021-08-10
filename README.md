@@ -1,5 +1,5 @@
-# Darwinia Runtime Modules Library
-The Darwinia Runtime Modules Library (DRML) is a darwinia.network maintained collection of Substrate runtime modules.
+# Darwinia Runtime Module Library
+The Darwinia Runtime Module Library (DRML) is a darwinia.network maintained collection of Substrate runtime modules.
 
 ## Runtime Modules Overview
 - [darwinia-balances](./frame/balances)
