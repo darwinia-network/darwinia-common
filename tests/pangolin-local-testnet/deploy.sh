@@ -26,7 +26,7 @@ do
 
   echo "Firing Pangolin Node ${validator}"
   ${EXECUTABLE} \
-    --base-path $DATA_DIR/pangolin-$validator \
+    --base-path $DATA_DIR/$validator \
     --$validator \
     --chain pangolin-local \
     --port $((30333 + index)) \
