@@ -13,7 +13,7 @@ version     = "2.5.0"
 # crates.io
 ethereum-types = { default-features = false, version = "0.11.0" }
 # darwinia-network
-ethabi = { default-features = false, git = "https://github.com/darwinia-network/ethabi.git", tag = "v13.0.0-no-std" }
+ethabi = { default-features = false, git = "https://github.com/darwinia-network/ethabi", tag = "v13.0.0-no-std" }
 # paritytech
 sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
