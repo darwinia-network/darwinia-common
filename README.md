@@ -53,5 +53,5 @@ The Darwinia Runtime Module Library (DRML) is a darwinia.network maintained coll
 
 ### Deploy A Pangolin Local Testnet
 ```sh
-tests/run-pangolin/start.sh
+tests/pangolin-local-testnet/deploy.sh
 ```
