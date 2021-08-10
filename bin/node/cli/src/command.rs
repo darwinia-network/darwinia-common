@@ -73,7 +73,7 @@ impl SubstrateCli for Cli {
 			id
 		};
 
-		Ok(match id {
+		Ok(match id.to_lowercase().as_ref() {
 			"pangolin" => Box::new(chain_spec::pangolin_config()?),
 			"pangolin-dev" | "dev" => Box::new(chain_spec::pangolin_development_config()),
 			"pangolin-genesis" => Box::new(chain_spec::pangolin_build_spec_config()),
