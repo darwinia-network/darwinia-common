@@ -1,9 +1,57 @@
-# darwinia-common
-[Substrate](https://github.com/paritytech/substrate)-like common libraries, but only for Darwinia blockchains!
+# Darwinia Runtime Modules Library
+The Darwinia Runtime Modules Library (DRML) is a darwinia.network maintained collection of Substrate runtime modules.
 
-## Run the Pangolin Network locally
+## Runtime Modules Overview
+- [darwinia-balances](./frame/balances)
+	- Desc.
+- [darwinia-crab-backing](./frame/bridge/crab/backing)
+	- Desc.
+- [darwinia-crab-issuing](./frame/bridge/crab/issuing)
+	- Desc.
+- [darwinia-ethereum-backing](./frame/bridge/ethereum/backing)
+	- Desc.
+- [darwinia-ethereum-issuing](./frame/bridge/ethereum/issuing)
+	- Desc.
+- [darwinia-ethereum-relay](./frame/bridge/ethereum/relay)
+	- Desc.
+- [darwinia-bridge-bsc](./frame/bridge/ethereum-bsc)
+	- Desc.
+- [darwinia-relay-authorities](./frame/bridge/relay-authorities)
+	- Desc.
+- [darwinia-relayer-game](./frame/bridge/relayer-game)
+	- Desc.
+- [darwinia-s2s-backing](./frame/bridge/s2s/backing)
+	- Desc.
+- [darwinia-s2s-issuing](./frame/bridge/s2s/issuing)
+	- Desc.
+- [darwinia-tron-backing](./frame/bridge/tron/backing)
+	- Desc.
+- [darwinia-claims](./frame/claims)
+	- Desc.
+- [darwinia-democracy](./frame/democracy)
+	- Desc.
+- [darwinia-dvm](./frame/dvm)
+	- Desc.
+- [darwinia-dvm-dynamic-fee](./frame/dvm-dynamic-fee)
+	- Desc.
+- [darwinia-elections-phragmen](./frame/elections-phragmen)
+	- Desc.
+- [darwinia-evm](./frame/evm)
+	- Desc.
+- [darwinia-header-mmr](./frame/header-mmr)
+	- Desc.
+- [darwinia-staking](./frame/staking)
+	- Desc.
+- [darwinia-support](./frame/support)
+	- Desc.
+- [darwinia-treasury](./frame/treasury)
+	- Desc.
+- [darwinia-vesting](./frame/vesting)
+	- Desc.
 
+## Development
+
+### Deploy A Pangolin Local Testnet
 ```sh
-$ cd darwinia-common
-$ ./tests/run-pangolin/start.sh
+tests/run-pangolin/start.sh
 ```
