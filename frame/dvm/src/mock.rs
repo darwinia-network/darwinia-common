@@ -182,7 +182,7 @@ impl darwinia_evm::Config for Test {
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
 	type AddressMapping = HashedAddressMapping;
-	type Event = ();
+	type Event = Event;
 	type Precompiles = MockPrecompiles<Self>;
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
