@@ -193,16 +193,11 @@ impl darwinia_evm::Config for Test {
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 }
 
-frame_support::parameter_types! {
-	pub InternalTransactionGasLimit: U256 = U256::from(0x300000);
-}
-
 impl dvm_ethereum::Config for Test {
 	type Event = Event;
 	type StateRoot = IntermediateStateRoot;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
-	type InternalTransactionGasLimit = InternalTransactionGasLimit;
 }
 
 frame_support::construct_runtime! {

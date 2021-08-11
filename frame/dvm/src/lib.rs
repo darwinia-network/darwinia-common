@@ -96,8 +96,6 @@ pub mod pallet {
 		type RingCurrency: Currency<Self::AccountId>;
 		// KTON Balance module
 		type KtonCurrency: Currency<Self::AccountId>;
-		// Gas Limit for internal transaction
-		type InternalTransactionGasLimit: Get<U256>;
 	}
 
 	#[pallet::pallet]
@@ -308,12 +306,7 @@ impl<T: Config> Pallet<T> {
 		);
 		let nonce =
 			<T as darwinia_evm::Config>::RingAccountBasic::account_basic(&INTERNAL_CALLER).nonce;
-		let transaction = DVMTransaction::new_internal_transaction(
-			nonce,
-			target,
-			input,
-			T::InternalTransactionGasLimit::get(),
-		);
+		let transaction = DVMTransaction::new_internal_transaction(nonce, target, input);
 		Self::raw_transact(transaction)
 	}
 
