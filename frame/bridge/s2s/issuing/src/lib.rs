@@ -73,7 +73,6 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type WeightInfo: WeightInfo;
 		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
-		type RawCallGasLimit: Get<U256>;
 
 		type ReceiverAccountId: From<[u8; 32]> + Into<Self::AccountId> + Clone;
 		type BridgedAccountIdConverter: Convert<H256, Self::AccountId>;
@@ -337,8 +336,7 @@ impl<T: Config> Pallet<T> {
 		let factory_address = <MappingFactoryAddress<T>>::get();
 		let bytes = mtf::encode_mapping_token(backing, source)
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
-		let mapped_address =
-			dvm_ethereum::Pallet::<T>::raw_call(factory_address, bytes, T::RawCallGasLimit::get())?;
+		let mapped_address = dvm_ethereum::Pallet::<T>::raw_call(factory_address, bytes)?;
 		if mapped_address.len() != 32 {
 			return Err(Error::<T>::InvalidAddressLen.into());
 		}

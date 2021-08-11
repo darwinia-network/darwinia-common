@@ -63,7 +63,7 @@ use sp_std::marker::PhantomData;
 use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_evm::{AccountBasic, BlockHashMapping, FeeCalculator, GasWeightMapping, Runner};
-use darwinia_support::evm::{recover_signer, INTERNAL_CALLER};
+use darwinia_support::evm::{recover_signer, INTERNAL_CALLER, INTERNAL_TX_GAS_LIMIT};
 use dp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
 use dp_evm::CallOrCreateInfo;
 #[cfg(feature = "std")]
@@ -398,16 +398,12 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Pure read-only call to contract, the sender is INTERNAL_CALLER
-	pub fn raw_call(
-		contract: H160,
-		input: Vec<u8>,
-		gas_limit: U256,
-	) -> Result<Vec<u8>, DispatchError> {
+	pub fn raw_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
 		let (_, _, info) = Self::execute(
 			INTERNAL_CALLER,
 			input,
 			U256::zero(),
-			gas_limit,
+			U256::from(INTERNAL_TX_GAS_LIMIT),
 			None,
 			None,
 			TransactionAction::Call(contract),

@@ -153,7 +153,6 @@ frame_support::parameter_types! {
 	pub const S2sRelayPalletId: PalletId = PalletId(*b"da/s2sre");
 	pub const MillauChainId: bp_runtime::ChainId = *b"mcid";
 	pub RootAccountForPayments: Option<AccountId32> = Some([1;32].into());
-	pub RawCallGasLimit: U256 = U256::from(300_000_000);
 }
 
 pub struct AccountIdConverter;
@@ -218,7 +217,6 @@ impl Config for Test {
 	type PalletId = S2sRelayPalletId;
 	type WeightInfo = ();
 	type ReceiverAccountId = AccountId32;
-	type RawCallGasLimit = RawCallGasLimit;
 
 	type RingCurrency = Ring;
 	type BridgedAccountIdConverter = AccountIdConverter;

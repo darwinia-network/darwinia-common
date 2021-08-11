@@ -86,7 +86,6 @@ pub mod pallet {
 		type PalletId: Get<PalletId>;
 		type EthereumRelay: EthereumReceipt<Self::AccountId, RingBalance<Self>>;
 		type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber, Signer = EthereumAddress>;
-		type RawCallGasLimit: Get<U256>;
 		type WeightInfo: WeightInfo;
 	}
 
@@ -356,8 +355,7 @@ impl<T: Config> Pallet<T> {
 		let factory_address = MappingFactoryAddress::<T>::get();
 		let bytes = mtf::encode_mapping_token(backing, source)
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
-		let mapped_address =
-			dvm_ethereum::Pallet::<T>::raw_call(factory_address, bytes, T::RawCallGasLimit::get())?;
+		let mapped_address = dvm_ethereum::Pallet::<T>::raw_call(factory_address, bytes)?;
 		if mapped_address.len() != 32 {
 			return Err(Error::<T>::InvalidAddressLen.into());
 		}
