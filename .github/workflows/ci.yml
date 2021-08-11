@@ -19,18 +19,16 @@ jobs:
         with:
           repository: darwinia-network/darwinia-kit
           ref: main
-      - name: Install Rust nightly-2021-02-25 toolchain
+      - name: Install Rust nightly toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly-2021-02-25
+          toolchain: nightly
           default: true
       - name: Build
         uses: actions-rs/cargo@v1
         with:
           command: build
           args: --release --manifest-path ci-bot/Cargo.toml
-        env:
-          CARGO_INCREMENTAL: 1
       - name: Compress kit
         run: |
           mv ci-bot avoid-same-name
@@ -48,10 +46,10 @@ jobs:
     steps:
       - name: Fetch latest code
         uses: actions/checkout@v2
-      - name: Install Rust nightly-2021-02-25 toolchain
+      - name: Install Rust nightly toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly-2021-02-25
+          toolchain: nightly
           target: wasm32-unknown-unknown
           default: true
       - name: Build
@@ -59,15 +57,13 @@ jobs:
         with:
           command: build
           args: --release
-        env:
-          CARGO_INCREMENTAL: 1
       - name: Test
         uses: actions-rs/cargo@v1
         with:
           command: test
           args: --release
         env:
-          CARGO_INCREMENTAL: 1
+          CARGO_INCREMENTAL: 0
       - name: Compress node
         run: cp target/release/drml . && tar cf node.tar.zst drml -I pzstd
       - name: Upload node
@@ -98,18 +94,16 @@ jobs:
     steps:
       - name: Fetch latest code
         uses: actions/checkout@v2
-      - name: Install Rust nightly-2021-02-25 toolchain
+      - name: Install Rust nightly toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly-2021-02-25
+          toolchain: nightly
           target: wasm32-unknown-unknown
           default: true
       - name: Run checker
         uses: actions-rs/cargo@v1
         with:
           command: check
-        env:
-          CARGO_INCREMENTAL: 1
 
   check_storage_prefix:
     name: Check storage prefix
