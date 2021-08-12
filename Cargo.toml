@@ -53,6 +53,7 @@ members = [
 	"frame/treasury",
 	"frame/vesting",
 	"primitives/asset",
+	"primitives/beefy",
 	"primitives/chain-bsc",
 	"primitives/consensus",
 	"primitives/contract",
