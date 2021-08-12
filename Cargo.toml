@@ -13,6 +13,7 @@ members = [
 	"frame/balances",
 	"frame/balances/rpc",
 	"frame/balances/rpc/runtime-api",
+	"frame/beefy",
 	"frame/bridge/crab/backing",
 	"frame/bridge/crab/issuing",
 	"frame/bridge/ethereum/backing",
