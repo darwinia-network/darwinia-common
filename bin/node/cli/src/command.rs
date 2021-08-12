@@ -73,10 +73,11 @@ impl SubstrateCli for Cli {
 			id
 		};
 
-		Ok(match id {
+		Ok(match id.to_lowercase().as_ref() {
 			"pangolin" => Box::new(chain_spec::pangolin_config()?),
-			"pangolin-dev" | "dev" => Box::new(chain_spec::pangolin_development_config()),
 			"pangolin-genesis" => Box::new(chain_spec::pangolin_build_spec_config()),
+			"pangolin-dev" | "dev" => Box::new(chain_spec::pangolin_development_config()),
+			"pangolin-local" | "local" => Box::new(chain_spec::pangolin_local_testnet_config()),
 			path => Box::new(chain_spec::PangolinChainSpec::from_json_file(
 				PathBuf::from(path),
 			)?),

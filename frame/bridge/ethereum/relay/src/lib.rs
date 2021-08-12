@@ -21,62 +21,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod migration {
-	// --- darwinia-network ---
-	use crate::*;
-
-	#[test]
-	fn encode() {
-		let parcel = serde_json::from_str::<EthereumRelayHeaderParcel>(r#"{
-			"header": {
-				"baseFeePerGas": "0xeb",
-				"difficulty": "0x4186f54e",
-				"extraData": "0xd883010a06846765746888676f312e31352e36856c696e7578",
-				"gasLimit": "0x7a1200",
-				"gasUsed": "0x5e949",
-				"hash": "0x9db735cdbe337477d38b70d96998decb9d8ea1d796cdc6c97546132978db668c",
-				"logsBloom": "0x00200000000000000000000080000000000000004000001000010000000000000000000000000000000000000000000000000000000000000000000008000000040000000020400000004008000020200000010000000000004000008000000000000400020000800100000000000800080000000000400000000010000000000000000000000000004000000080000000000081010000080000004000200000000080000020000000000000000000000000200000080000000000000000000000000006000000000000000000000000000000200000001000002000000020000000000000000000000a00000000200000002000000000400000000000000000",
-				"miner": "0xfbb61b8b98a59fbc4bd79c23212addbefaeb289f",
-				"mixHash": "0xbb166a439393a562d5c71973a7e3f1b87bc6bb65b1b2524e846b021c6c170a16",
-				"nonce": "0xee2e3a941040cee1",
-				"number": "0xa367a4",
-				"parentHash": "0xcaf94fe7cc38a012316dba0cc1296fa2ab3fb401aacef819c39aac934c29ef34",
-				"receiptsRoot": "0x27f5405108f65bd36455ddddf2ce32fe2b87851be97fce3e5eff48636ee52f1e",
-				"sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-				"size": "0x794",
-				"stateRoot": "0xfcd5f2e0b1a728dbb2112c21c375cdfe425568493dde3bb71d036509c404a236",
-				"timestamp": "0x60fe2f75",
-				"totalDifficulty": "0x79b2e0d1c5829f",
-				"transactions": [],
-				"transactionsRoot": "0x2169e889c51cc5605d055a54a3fb095a90a33db18fbcf28e86073fd33288fbb4",
-				"uncles": []
-			},
-			"parent_mmr_root": "0x1183acf36ada5ca93e31e618e7632c3ed23eddf3cebf077eb868873d6212179a"
-		}"#).unwrap();
-
-		dbg!(parcel.encode());
-	}
-
-	#[cfg(feature = "std")]
-	pub fn assert_encoded_eq(raw: impl AsRef<str>, encoded: impl AsRef<[u8]>) {
-		let from_json = serde_json::from_str::<EthereumRelayHeaderParcel>(raw.as_ref()).unwrap();
-		let from_codec = decode(encoded);
-
-		assert_eq!(from_json, from_codec);
-	}
-
-	fn decode(encoded: impl AsRef<[u8]>) -> EthereumRelayHeaderParcel {
-		Decode::decode(&mut &*encoded.as_ref()).unwrap()
-	}
-
-	pub fn migrate(encoded: impl AsRef<[u8]>) {
-		let parcel = decode(encoded);
-		let number = parcel.header.number;
-
-		BestConfirmedBlockNumber::put(number);
-		ConfirmedBlockNumbers::put(vec![number]);
-		ConfirmedHeaderParcels::remove_all();
-		ConfirmedHeaderParcels::insert(number, parcel);
-	}
+	pub fn migrate() {}
 }
 
 pub mod weights;

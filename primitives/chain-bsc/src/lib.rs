@@ -73,7 +73,7 @@ pub struct HeaderId {
 	pub hash: Hash,
 }
 
-/// An BSC header.
+/// An BSC(Binance Smart Chain) header.
 #[derive(Clone, Default, Encode, Decode, PartialEq, RuntimeDebug)]
 #[cfg_attr(
 	feature = "std",

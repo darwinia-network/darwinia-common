@@ -20,6 +20,9 @@
 
 pub use ethabi::{Event, Log};
 
+pub const BURN_ACTION: &[u8] = b"burned(uint32,uint64,address,address,uint256)";
+pub const REGISTER_ACTION: &[u8] = b"registered(bytes4,uint32,string,string,uint8,address,address)";
+
 // --- crates.io ---
 use ethereum_types::{Address as EthereumAddress, H160, U256};
 // --- darwinia ---
@@ -110,9 +113,9 @@ impl MappingTokenFactory {
 		let receive = Self::cross_receive();
 		receive.encode_input(
 			vec![
-				Token::Address(token.into()),
-				Token::Address(recipient.into()),
-				Token::Uint(amount.into()),
+				Token::Address(token),
+				Token::Address(recipient),
+				Token::Uint(amount),
 			]
 			.as_slice(),
 		)
@@ -136,8 +139,8 @@ impl MappingTokenFactory {
 				Token::String(name.into()),
 				Token::String(symbol.into()),
 				Token::Uint(U256::from(decimals)),
-				Token::Address(backing.into()),
-				Token::Address(source.into()),
+				Token::Address(backing),
+				Token::Address(source),
 			]
 			.as_slice(),
 		)
@@ -175,13 +178,7 @@ impl MappingTokenFactory {
 		source: EthereumAddress,
 	) -> AbiResult<Bytes> {
 		let mapping = Self::mapping_token();
-		mapping.encode_input(
-			vec![
-				Token::Address(backing.into()),
-				Token::Address(source.into()),
-			]
-			.as_slice(),
-		)
+		mapping.encode_input(vec![Token::Address(backing), Token::Address(source)].as_slice())
 	}
 }
 
@@ -238,7 +235,7 @@ impl TokenBurnInfo {
 		amount: U256,
 		fee: U256,
 	) -> Vec<u8> {
-		let res = ethabi::encode(&[
+		ethabi::encode(&[
 			Token::Uint(spec_version.into()),
 			Token::Uint(weight.into()),
 			Token::Uint(token_type.into()),
@@ -248,8 +245,7 @@ impl TokenBurnInfo {
 			Token::Bytes(recipient),
 			Token::Uint(amount),
 			Token::Uint(fee),
-		]);
-		res
+		])
 	}
 
 	pub fn decode(data: &[u8]) -> AbiResult<Self> {
