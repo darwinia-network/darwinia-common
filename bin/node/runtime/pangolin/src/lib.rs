@@ -918,9 +918,47 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 		// --->
 
 		// --- paritytech ---
+		use darwinia_evm::AddressMapping;
 		use frame_support::migration;
+		use frame_support::traits::{Currency, ExistenceRequirement};
 
-		migration::move_pallet(b"DarwiniaEthereumBacking", b"EthereumBacking");
+		// Step 1:
+		// 1. move from crab issuing module account balance to treasury module Account
+		// 2. move from treasury module account to CRING token contract
+		log::info!("Step 1: ");
+		let mock_cring_token_contract: H160 =
+			array_bytes::hex_into_unchecked("0xd89445b6461d87c6d5ec493b82bc73401236da1a");
+		let crab_issuing_account = CrabIssuing::account_id();
+		let treasury_account = Treasury::account_id();
+		let value = Ring::free_balance(&crab_issuing_account);
+		let _ = <Ring as Currency<_>>::transfer(
+			&crab_issuing_account,
+			&treasury_account,
+			value,
+			ExistenceRequirement::AllowDeath,
+		);
+		log::info!(
+			"transfer from crab-issuing {:?} to treasure {:?}, value {:?}",
+			crab_issuing_account,
+			treasury_account,
+			value
+		);
+
+		// Step 2:
+		// move crab issuing TotalMappedRing value to RING token contract
+		log::info!("Step 2: ");
+		let ring_token_contract: H160 =
+			array_bytes::hex_into_unchecked("0xc517dfacbee5dfa82feefb5ca29a2bb40b2d4faa");
+		let ring_token_account_id =
+			<Runtime as darwinia_evm::Config>::AddressMapping::into_account_id(ring_token_contract);
+		let total_mapped_ring = CrabIssuing::total_mapped_ring().unwrap_or_default();
+		Ring::deposit_creating(&ring_token_account_id, total_mapped_ring);
+		migration::take_storage_value::<u128>(b"CrabIssuing", b"TotalMappedRing", &[]);
+		log::info!(
+			"deposit create, ring token account id: {:?}, mapped ring {:?}",
+			ring_token_account_id,
+			total_mapped_ring
+		);
 
 		RuntimeBlockWeights::get().max_block
 	}
