@@ -1,0 +1,40 @@
+[package]
+name = "pallet-beefy"
+version = "0.1.0"
+authors = ["Parity Technologies <admin@parity.io>"]
+edition = "2018"
+license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
+
+[dependencies]
+codec            = { version = "2.0.0", package = "parity-scale-codec", default-features = false, features = ["derive"] }
+scale-info       = { version = "0.10.0", default-features = false, features = ["derive"] }
+serde            = { version = "1.0.127", optional = true }
+
+frame-support    = { git = "https://github.com/darwinia-network/substrate", default-features = false, branch = "main" }
+frame-system     = { git = "https://github.com/darwinia-network/substrate", default-features = false, branch = "main" }
+
+sp-runtime       = { git = "https://github.com/darwinia-network/substrate", default-features = false, branch = "main" }
+sp-std           = { git = "https://github.com/darwinia-network/substrate", default-features = false, branch = "main" }
+
+pallet-session   = { git = "https://github.com/darwinia-network/substrate", default-features = false, branch = "main" }
+
+beefy-primitives = { path = "../../primitives/beefy", default-features = false }
+
+[dev-dependencies]
+sp-core    = { git = "https://github.com/darwinia-network/substrate.git", branch = "main" }
+sp-io      = { git = "https://github.com/darwinia-network/substrate.git", branch = "main" }
+sp-staking = { git = "https://github.com/darwinia-network/substrate.git", branch = "main" }
+
+[features]
+default = ["std"]
+std = [
+	"codec/std",
+	"scale-info/std",
+	"serde",
+	"beefy-primitives/std",
+	"frame-support/std",
+	"frame-system/std",
+	"sp-runtime/std",
+	"sp-std/std",
+	"pallet-session/std",
+]
