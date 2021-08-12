@@ -9,7 +9,7 @@ LOG_DIR=$DIR/log
 mkdir -p $LOG_DIR
 
 DATA_DIR=$DIR/data
-mkdir -p DATA_DIR
+mkdir -p $DATA_DIR
 
 EXECUTABLE=$REPO_PATH/target/release/drml
 
