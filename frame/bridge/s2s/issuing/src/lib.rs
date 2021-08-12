@@ -36,7 +36,7 @@ use frame_support::{
 	ensure,
 	pallet_prelude::*,
 	traits::{Currency, ExistenceRequirement::*, Get},
-	PalletId,
+	transactional, PalletId,
 };
 use frame_system::ensure_signed;
 use sp_runtime::{traits::Convert, DispatchError, SaturatedConversion};
@@ -102,7 +102,7 @@ pub mod pallet {
 		#[pallet::weight(
 			<T as Config>::WeightInfo::asset_burn_event_handle()
 		)]
-		#[frame_support::transactional]
+		#[transactional]
 		pub fn asset_burn_event_handle(
 			origin: OriginFor<T>,
 			input: Vec<u8>,
@@ -147,6 +147,7 @@ pub mod pallet {
 			<T as Config>::WeightInfo::register_from_remote()
 			.saturating_add(2_000_000 * 3)
 		)]
+		#[transactional]
 		pub fn register_from_remote(
 			origin: OriginFor<T>,
 			token: Token,
@@ -195,6 +196,7 @@ pub mod pallet {
 			<T as Config>::WeightInfo::issue_from_remote()
 			.saturating_add(2_000_000 * 2)
 		)]
+		#[transactional]
 		pub fn issue_from_remote(
 			origin: OriginFor<T>,
 			token: Token,
