@@ -963,6 +963,15 @@ dependencies = [
 [[package]]
 name = "ckb-merkle-mountain-range"
 version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e486fe53bb9f2ca0f58cb60e8679a5354fd6687a839942ef0a75967250289ca6"
+dependencies = [
+ "cfg-if 0.1.10",
+]
+
+[[package]]
+name = "ckb-merkle-mountain-range"
+version = "0.3.1"
 source = "git+https://github.com/darwinia-network/merkle-mountain-range#b16216f90e3ff143114a9966330b8b42c33a28c5"
 dependencies = [
  "cfg-if 0.1.10",
@@ -1618,7 +1627,7 @@ version = "2.5.1"
 dependencies = [
  "array-bytes",
  "blake2-rfc",
- "ckb-merkle-mountain-range",
+ "ckb-merkle-mountain-range 0.3.1 (git+https://github.com/darwinia-network/merkle-mountain-range)",
  "darwinia-balances",
  "darwinia-relay-primitives",
  "darwinia-relayer-game",
@@ -1810,7 +1819,7 @@ name = "darwinia-header-mmr"
 version = "2.5.1"
 dependencies = [
  "array-bytes",
- "ckb-merkle-mountain-range",
+ "ckb-merkle-mountain-range 0.3.1 (git+https://github.com/darwinia-network/merkle-mountain-range)",
  "darwinia-header-mmr-rpc-runtime-api",
  "darwinia-relay-primitives",
  "darwinia-support",
@@ -5788,6 +5797,74 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-mmr"
+version = "3.0.0"
+dependencies = [
+ "ckb-merkle-mountain-range 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "env_logger 0.8.4",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "pallet-mmr-primitives 3.0.0 (git+https://github.com/darwinia-network/substrate?branch=main)",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-mmr-primitives"
+version = "3.0.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "log",
+ "parity-scale-codec",
+ "serde",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-mmr-primitives"
+version = "3.0.0"
+source = "git+https://github.com/darwinia-network/substrate?branch=main#1d7f6e12c651d776fc0dc1adefd007bb60f60b63"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "serde",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-mmr-rpc"
+version = "3.0.0"
+dependencies = [
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "pallet-mmr-primitives 3.0.0",
+ "parity-scale-codec",
+ "serde",
+ "serde_json",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-rpc",
+ "sp-runtime",
 ]
 
 [[package]]

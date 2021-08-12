@@ -1,0 +1,46 @@
+[package]
+authors     = ["Parity Technologies <admin@parity.io>"]
+description = "FRAME Merkle Mountain Range pallet."
+edition     = "2018"
+homepage    = "https://substrate.dev"
+license     = "Apache-2.0"
+name        = "pallet-mmr"
+repository  = "https://github.com/paritytech/substrate/"
+version     = "3.0.0"
+
+[dependencies]
+# crates.io
+codec   = { package = "parity-scale-codec", version = "2.0.0", default-features = false }
+mmr-lib = { package = "ckb-merkle-mountain-range", version = "0.3.1", default-features = false }
+# paritytech
+frame-benchmarking    = { version = "3.1.0", default-features = false, optional = true, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-support         = { version = "3.0.0", default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-system          = { version = "3.0.0", default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+pallet-mmr-primitives = { version = "3.0.0", default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-core               = { version = "3.0.0", default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-io                 = { version = "3.0.0", default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-runtime            = { version = "3.0.0", default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-std                = { version = "3.0.0", default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+
+[dev-dependencies]
+env_logger  = { version = "0.8" }
+hex-literal = { version = "0.3" }
+
+[features]
+default = ["std"]
+runtime-benchmarks = ["frame-benchmarking"]
+std = [
+	# crates.io
+	"codec/std",
+	"mmr-lib/std",
+	# paritytech
+	"frame-benchmarking/std",
+	"frame-support/std",
+	"frame-system/std",
+	"pallet-mmr-primitives/std",
+	"sp-core/std",
+	"sp-io/std",
+	"sp-runtime/std",
+	"sp-std/std",
+]
+try-runtime = ["frame-support/try-runtime"]
