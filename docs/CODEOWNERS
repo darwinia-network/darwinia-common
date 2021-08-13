@@ -24,7 +24,6 @@
 /bin/node/primitive/ @AurevoirXavier
 /bin/node/runtime/pangolin/ @AsceticBear @AurevoirXavier
 
-/client/cli/ @AurevoirXavier
 /client/dvm/ @AsceticBear
 
 /frame/balances/ @AurevoirXavier @HackFisher
