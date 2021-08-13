@@ -169,9 +169,7 @@ pub mod pallet {
 		/// Pre-log is present, therefore transact is not allowed.
 		PreLogExists,
 		/// The internal transaction errors
-		InternalTransactionExitError,
-		InternalTransactionRevertError,
-		InternalTransactionFatalError,
+		InternalEvmExecuteError,
 		InvalidCallError,
 	}
 
@@ -299,6 +297,8 @@ pub mod pallet {
 
 impl<T: Config> Pallet<T> {
 	/// Execute transaction from pallet(internal transaction)
+	/// NOTE: The difference between the rpc transaction and the internal transaction is that
+	/// The internal transactions will catch and throw evm error comes from runner to caller.
 	pub fn internal_transact(target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo {
 		ensure!(
 			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
@@ -308,30 +308,23 @@ impl<T: Config> Pallet<T> {
 			<T as darwinia_evm::Config>::RingAccountBasic::account_basic(&INTERNAL_CALLER).nonce;
 		let transaction = DVMTransaction::new_internal_transaction(nonce, target, input);
 		Self::raw_transact(transaction).map(|(reason, used_gas)| match reason {
-			ExitReason::Succeed(_) => {
-				return Ok(PostDispatchInfo {
-					actual_weight: Some(T::GasWeightMapping::gas_to_weight(
-						used_gas.unique_saturated_into(),
-					)),
-					pays_fee: Pays::No,
-				})
-			}
-			ExitReason::Error(e) => {
-				log::error!("Executing internal transaction error happened, {:?}", e);
-				return Err(Error::<T>::InternalTransactionExitError.into());
-			}
-			ExitReason::Revert(e) => {
-				log::error!("Executing internal transaction error happened, {:?}", e);
-				return Err(Error::<T>::InternalTransactionRevertError.into());
-			}
-			ExitReason::Fatal(e) => {
-				log::error!("Executing internal transaction error happened, {:?}", e);
-				return Err(Error::<T>::InternalTransactionFatalError.into());
+			// Only when exit_reason is successful, return Ok(...)
+			ExitReason::Succeed(_) => Ok(PostDispatchInfo {
+				actual_weight: Some(T::GasWeightMapping::gas_to_weight(
+					used_gas.unique_saturated_into(),
+				)),
+				pays_fee: Pays::No,
+			}),
+			_ => {
+				log::error!("Executing internal transaction error happened");
+				Err(Error::<T>::InternalEvmExecuteError.into())
 			}
 		})?
 	}
 
 	/// Execute transaction from EthApi(network transaction)
+	/// NOTE: For the rpc transaction, the execution will return ok(..) even when encounters error
+	/// from evm runner
 	pub fn rpc_transact(transaction: ethereum::Transaction) -> DispatchResultWithPostInfo {
 		ensure!(
 			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
@@ -424,6 +417,8 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Pure read-only call to contract, the sender is INTERNAL_CALLER
+	/// NOTE: You should never use raw call for any non-read-only operation. Because raw_call
+	/// has ability to chang storage. Be carefully.
 	pub fn raw_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
 		let (_, _, info) = Self::execute(
 			INTERNAL_CALLER,
@@ -439,17 +434,9 @@ impl<T: Config> Pallet<T> {
 		match info {
 			CallOrCreateInfo::Call(info) => match info.exit_reason {
 				ExitReason::Succeed(_) => Ok(info.value),
-				ExitReason::Error(e) => {
-					log::error!("Executing internal transaction error happened, {:?}", e);
-					Err(Error::<T>::InternalTransactionExitError.into())
-				}
-				ExitReason::Revert(e) => {
-					log::error!("Executing internal transaction error happened, {:?}", e);
-					Err(Error::<T>::InternalTransactionRevertError.into())
-				}
-				ExitReason::Fatal(e) => {
-					log::error!("Executing internal transaction error happened, {:?}", e);
-					Err(Error::<T>::InternalTransactionFatalError.into())
+				_ => {
+					log::error!("Executing internal transaction error happened");
+					Err(Error::<T>::InternalEvmExecuteError.into())
 				}
 			},
 			_ => Err(Error::<T>::InvalidCallError.into()),
