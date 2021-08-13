@@ -13,7 +13,7 @@ members = [
 	"frame/balances",
 	"frame/balances/rpc",
 	"frame/balances/rpc/runtime-api",
-	"frame/beefy",
+	"frame/beefy/pallet",
 	"frame/beefy/mmr",
 	"frame/beefy/merkle-tree",
 	"frame/bridge/crab/backing",
