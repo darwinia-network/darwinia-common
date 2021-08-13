@@ -42,7 +42,6 @@ use codec::Encode;
 use frame_support::traits::Get;
 
 pub use pallet::*;
-pub use pallet_beefy::pallet;
 
 #[cfg(test)]
 mod mock;
@@ -103,6 +102,9 @@ pub mod pallet {
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
 
 	/// The module's configuration trait.
 	#[pallet::config]
@@ -165,22 +167,6 @@ impl<T: Config> Pallet<T>
 where
 	MerkleRootOf<T>: From<beefy_merkle_tree::Hash> + Into<beefy_merkle_tree::Hash>,
 {
-	/// Returns latest root hash of a merkle tree constructed from all active parachain headers.
-	///
-	/// The leafs are sorted by `ParaId` to allow more efficient lookups and non-existence proofs.
-	///
-	/// NOTE this does not include parathreads - only parachains are part of the merkle tree.
-	///
-	/// NOTE This is an initial and inefficient implementation, which re-constructs
-	/// the merkle tree every block. Instead we should update the merkle root in [Self::on_initialize]
-	/// call of this pallet and update the merkle tree efficiently (use on-chain storage to persist inner nodes).
-	fn parachain_heads_merkle_root() -> MerkleRootOf<T> {
-		let mut para_heads = T::ParachainHeads::parachain_heads();
-		para_heads.sort();
-		let para_heads = para_heads.into_iter().map(|pair| pair.encode());
-		beefy_merkle_tree::merkle_root::<Self, _, _>(para_heads).into()
-	}
-
 	/// Returns details of the next BEEFY authority set.
 	///
 	/// Details contain authority set id, authority set length and a merkle root,

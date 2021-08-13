@@ -18,7 +18,7 @@ sp-std           = { git = "https://github.com/darwinia-network/substrate", defa
 
 pallet-session   = { git = "https://github.com/darwinia-network/substrate", default-features = false, branch = "main" }
 
-beefy-primitives = { path = "../../primitives/beefy", default-features = false }
+beefy-primitives = { path = "../../../primitives/beefy", default-features = false }
 
 [dev-dependencies]
 sp-core    = { git = "https://github.com/darwinia-network/substrate.git", branch = "main" }

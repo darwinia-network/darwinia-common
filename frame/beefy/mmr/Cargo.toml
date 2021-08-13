@@ -26,7 +26,7 @@ sp-std                = { git = "https://github.com/darwinia-network/substrate",
 
 beefy-merkle-tree     = { path = "../merkle-tree", default-features = false }
 beefy-primitives      = { path = "../../../primitives/beefy", default-features = false }
-pallet-beefy          = { path = "../", default-features = false }
+pallet-beefy          = { path = "../pallet", default-features = false }
 
 [dev-dependencies]
 sp-staking  = { git = "https://github.com/darwinia-network/substrate.git", branch = "main" }
