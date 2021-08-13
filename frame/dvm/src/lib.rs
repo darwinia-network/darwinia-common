@@ -307,7 +307,28 @@ impl<T: Config> Pallet<T> {
 		let nonce =
 			<T as darwinia_evm::Config>::RingAccountBasic::account_basic(&INTERNAL_CALLER).nonce;
 		let transaction = DVMTransaction::new_internal_transaction(nonce, target, input);
-		Self::raw_transact(transaction)
+		Self::raw_transact(transaction).map(|(reason, used_gas)| match reason {
+			ExitReason::Succeed(_) => {
+				return Ok(PostDispatchInfo {
+					actual_weight: Some(T::GasWeightMapping::gas_to_weight(
+						used_gas.unique_saturated_into(),
+					)),
+					pays_fee: Pays::No,
+				})
+			}
+			ExitReason::Error(e) => {
+				log::error!("Executing internal transaction error happened, {:?}", e);
+				return Err(Error::<T>::InternalTransactionExitError.into());
+			}
+			ExitReason::Revert(e) => {
+				log::error!("Executing internal transaction error happened, {:?}", e);
+				return Err(Error::<T>::InternalTransactionRevertError.into());
+			}
+			ExitReason::Fatal(e) => {
+				log::error!("Executing internal transaction error happened, {:?}", e);
+				return Err(Error::<T>::InternalTransactionFatalError.into());
+			}
+		})?
 	}
 
 	/// Execute transaction from EthApi(network transaction)
@@ -317,11 +338,16 @@ impl<T: Config> Pallet<T> {
 			Error::<T>::PreLogExists,
 		);
 		let transaction = Self::to_dvm_transaction(transaction)?;
-		Self::raw_transact(transaction)
+		Self::raw_transact(transaction).map(|(_, used_gas)| {
+			Ok(Some(T::GasWeightMapping::gas_to_weight(
+				used_gas.unique_saturated_into(),
+			))
+			.into())
+		})?
 	}
 
 	/// Execute DVMTransaction in evm runner and save the execution info in Pending
-	fn raw_transact(transaction: DVMTransaction) -> DispatchResultWithPostInfo {
+	fn raw_transact(transaction: DVMTransaction) -> Result<(ExitReason, U256), DispatchError> {
 		let transaction_hash =
 			H256::from_slice(Keccak256::digest(&rlp::encode(&transaction.tx)).as_slice());
 		let transaction_index = Pending::<T>::get().len() as u32;
@@ -394,7 +420,7 @@ impl<T: Config> Pallet<T> {
 			transaction_hash,
 			reason.clone(),
 		));
-		Self::return_dispatch_result(transaction.is_internal, &reason, used_gas)
+		Ok((reason, used_gas))
 	}
 
 	/// Pure read-only call to contract, the sender is INTERNAL_CALLER
@@ -572,44 +598,6 @@ impl<T: Config> Pallet<T> {
 				bloom.accrue(BloomInput::Raw(&topic[..]));
 			}
 		}
-	}
-
-	/// The dispatch result depends on the transaction type.
-	/// The internal transaction will return DispatchError when exitReason does not Succeed,
-	/// The Rpc transaction will alway return Ok(...) no matter what exitReason is.
-	pub fn return_dispatch_result(
-		is_internal: bool,
-		reason: &ExitReason,
-		used_gas: U256,
-	) -> DispatchResultWithPostInfo {
-		if is_internal {
-			match reason {
-				ExitReason::Succeed(_) => {
-					return Ok(PostDispatchInfo {
-						actual_weight: Some(T::GasWeightMapping::gas_to_weight(
-							used_gas.unique_saturated_into(),
-						)),
-						pays_fee: Pays::No,
-					})
-				}
-				ExitReason::Error(e) => {
-					log::error!("Executing internal transaction error happened, {:?}", e);
-					return Err(Error::<T>::InternalTransactionExitError.into());
-				}
-				ExitReason::Revert(e) => {
-					log::error!("Executing internal transaction error happened, {:?}", e);
-					return Err(Error::<T>::InternalTransactionRevertError.into());
-				}
-				ExitReason::Fatal(e) => {
-					log::error!("Executing internal transaction error happened, {:?}", e);
-					return Err(Error::<T>::InternalTransactionFatalError.into());
-				}
-			}
-		}
-		Ok(Some(T::GasWeightMapping::gas_to_weight(
-			used_gas.unique_saturated_into(),
-		))
-		.into())
 	}
 }
 
