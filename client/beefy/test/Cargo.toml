@@ -1,0 +1,35 @@
+[package]
+name = "beefy-test"
+version = "0.1.0"
+authors = ["Parity Technologies <admin@parity.io>"]
+edition = "2018"
+license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
+
+[dependencies]
+sp-blockchain                 = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-consensus                  = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-core                       = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-runtime                    = { git = "https://github.com/darwinia-network/substrate.git", branch = "main" }
+
+sc-block-builder              = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sc-client-api                 = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sc-consensus                  = { git = "https://github.com/darwinia-network/substrate.git", branch = "main" }
+sc-network                    = { git = "https://github.com/darwinia-network/substrate.git", branch = "main" }
+
+substrate-test-runtime-client = { git = "https://github.com/darwinia-network/substrate.git", branch = "main" }
+substrate-test-runtime        = { git = "https://github.com/darwinia-network/substrate.git", branch = "main" }
+
+beefy-gadget     = { path = "../." }
+beefy-primitives = { path = "../../../primitives/beefy" }
+
+async-trait  = { version = "0.1" }
+futures      = { version = "0.3" }
+futures-core = { version = "0.3" }
+log          = { version = "0.4" }
+parking_lot  = { version = "0.11" }
+rand         = { version = "0.8" }
+strum        = { version = "0.21", features = ["derive"] }
+tokio        = { version = "1.9", features = ["full"] }
+
+[dev-dependencies]
+sp-tracing = { git = "https://github.com/darwinia-network/substrate.git", branch = "main" }

@@ -39,7 +39,6 @@ use beefy_primitives::mmr::{BeefyNextAuthoritySet, MmrLeaf, MmrLeafVersion};
 use frame_system::pallet_prelude::*;
 use pallet_mmr::primitives::LeafDataProvider;
 
-use codec::Encode;
 use frame_support::traits::Get;
 
 pub use pallet::*;
