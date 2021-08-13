@@ -38,7 +38,6 @@ darwinia-relay-primitives = { path = "../../../../primitives/relay" }
 darwinia-relayer-game     = { path = "../../relayer-game" }
 darwinia-staking          = { path = "../../../../frame/staking" }
 ethereum-primitives       = { features = ["full-serde"], path = "../../../../primitives/ethereum" }
-# darwinia-ethereum-linear-relay = { path = "../linear-relay" }
 # paritytech
 frame-election-provider-support = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-session                  = { git = "https://github.com/darwinia-network/substrate", branch = "main" }

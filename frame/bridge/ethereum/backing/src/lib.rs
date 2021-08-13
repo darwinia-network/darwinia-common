@@ -18,8 +18,6 @@
 
 //! Prototype module for cross chain assets backing.
 
-// TODO: https://github.com/darwinia-network/darwinia-common/issues/372
-#![allow(unused)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "128"]
 
@@ -28,10 +26,8 @@ pub use weights::WeightInfo;
 
 #[cfg(test)]
 mod mock;
-// #[cfg(test)]
-// mod test_with_linear_relay;
 #[cfg(test)]
-mod test_with_relay;
+mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -423,7 +419,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			proof: EthereumReceiptProofThing<T>,
 		) -> DispatchResultWithPostInfo {
-			let bridger = ensure_signed(origin)?;
+			let _bridger = ensure_signed(origin)?;
 			let tx_index = T::EthereumRelay::gen_receipt_index(&proof);
 
 			ensure!(
@@ -605,12 +601,12 @@ pub mod pallet {
 			Ok(())
 		}
 		fn redeem_token_cast<C: LockableCurrency<T::AccountId>>(
-			redeemer: &T::AccountId,
+			_redeemer: &T::AccountId,
 			darwinia_account: T::AccountId,
 			tx_index: EthereumTransactionIndex,
 			is_ring: bool,
 			redeem_amount: Balance,
-			fee: RingBalance<T>,
+			_fee: RingBalance<T>,
 		) -> DispatchResult {
 			let raw_amount = redeem_amount;
 			let redeem_amount: C::Balance = redeem_amount.saturated_into();
@@ -748,7 +744,7 @@ pub mod pallet {
 		}
 
 		fn redeem_deposit(
-			redeemer: &T::AccountId,
+			_redeemer: &T::AccountId,
 			proof: &EthereumReceiptProofThing<T>,
 		) -> DispatchResult {
 			let tx_index = T::EthereumRelay::gen_receipt_index(proof);
@@ -759,7 +755,7 @@ pub mod pallet {
 			);
 
 			// TODO: remove fee?
-			let (deposit_id, darwinia_account, redeemed_ring, start_at, months, fee) =
+			let (deposit_id, darwinia_account, redeemed_ring, start_at, months, _fee) =
 				Self::parse_deposit_redeem_proof(&proof)?;
 
 			ensure!(
