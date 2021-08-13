@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "bsc-primitives"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.5.0"
+version     = "2.6.0"
 
 [dependencies]
 # crates.io
@@ -18,7 +18,7 @@ hash-db         = { version = "0.15.2", default-features = false }
 plain_hasher    = { version = "0.2.3", default-features = false }
 primitive-types = { version = "0.9.0", default-features = false, features = ["codec", "rlp"] }
 rlp             = { version = "0.5.0", default-features = false }
-serde           = { version = "1.0.126", optional = true }
+serde           = { version = "1.0.127", optional = true }
 triehash        = { version = "0.8.4", default-features = false }
 # paritytech
 sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
@@ -29,7 +29,7 @@ sp-std     = { default-features = false, git = "https://github.com/darwinia-netw
 # crates.io
 array-bytes = { version = "1.3.3", features = ["serde"] }
 ethbloom    = { version = "0.11.0", default-features = false, features = ["codec", "rlp", "serialize"] }
-serde_json  = { version = "1.0.64" }
+serde_json  = { version = "1.0.66" }
 
 [features]
 default = ["std"]

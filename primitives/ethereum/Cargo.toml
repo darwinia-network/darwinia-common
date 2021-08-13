@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "ethereum-primitives"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.5.0"
+version     = "2.6.0"
 
 [dependencies]
 # crates.io
@@ -18,7 +18,7 @@ ethereum-types  = { version = "0.11.0", default-features = false }
 keccak-hash     = { version = "0.7.0", default-features = false }
 rlp             = { version = "0.5.0", optional = true, default-features = false }
 rlp-derive      = { version = "0.1.0", optional = true }
-serde           = { version = "1.0.126", optional = true, features = ["derive"] }
+serde           = { version = "1.0.127", optional = true, features = ["derive"] }
 sp-debug-derive = { version = "3.0.0" }
 subhasher       = { version = "0.1.7", default-features = false }
 # darwinia-network
@@ -34,8 +34,8 @@ ethereum-types = { version = "0.11.0", features = ["codec"] }
 keccak-hasher  = { version = "0.15.3" }
 rlp            = { version = "0.5.0" }
 rlp-derive     = { version = "0.1.0" }
-serde          = { version = "1.0.126", features = ["derive"] }
-serde_json     = { version = "1.0.64" }
+serde          = { version = "1.0.127", features = ["derive"] }
+serde_json     = { version = "1.0.66" }
 # github
 triehash = { version = "0.8.4" }
 

@@ -44,7 +44,7 @@ type AccountPublic = <Signature as Verify>::Signer;
 
 const PANGOLIN_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
-const TEAM_MEMBERS: &[&'static str] = &[
+const TEAM_MEMBERS: &[&str] = &[
 	// Cheng
 	"0x922b6854052ba1084c74dd323ee70047d58ae4eb068f20bc251831f1ec109030",
 	// Jane
@@ -68,7 +68,7 @@ const TEAM_MEMBERS: &[&'static str] = &[
 	// Xuelei
 	"0x88d388115bd0df43e805b029207cfa4925cecfb29026e345979d9b0004466c49",
 ];
-const EVM_ACCOUNTS: &[&'static str] = &[
+const EVM_ACCOUNTS: &[&str] = &[
 	"0x68898db1012808808c903f390909c52d9f706749",
 	"0x6be02d1d3665660d22ff9624b7be0551ee1ac91b",
 	"0xB90168C8CBcd351D069ffFdA7B71cd846924d551",
@@ -83,14 +83,15 @@ const A_FEW_COINS: Balance = 1 << 44;
 const MANY_COINS: Balance = A_FEW_COINS << 6;
 const BUNCH_OF_COINS: Balance = MANY_COINS << 6;
 
-const TOKEN_REDEEM_ADDRESS: &'static str = "0x49262B932E439271d05634c32978294C7Ea15d0C";
-const DEPOSIT_REDEEM_ADDRESS: &'static str = "0x6EF538314829EfA8386Fc43386cB13B4e0A67D1e";
-const SET_AUTHORITIES_ADDRESS: &'static str = "0xD35Bb6F1bc1C84b53E0995c1830454AB7C4147f1";
-const RING_TOKEN_ADDRESS: &'static str = "0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0";
-const KTON_TOKEN_ADDRESS: &'static str = "0x1994100c58753793D52c6f457f189aa3ce9cEe94";
-const ETHEREUM_RELAY_AUTHORITY_SIGNER: &'static str = "0x68898db1012808808c903f390909c52d9f706749";
-const MAPPING_FACTORY_ADDRESS: &'static str = "0xE1586e744b99bF8e4C981DfE4dD4369d6f8Ed88A";
-const ETHEREUM_BACKING_ADDRESS: &'static str = "0xb2Bea2358d817dAE01B0FD0DC3aECB25910E65AA";
+const S2S_RELAYER: &str = "ec7c1c10c73a2d90c6a4fc92a5212caaff849a65193db3a2b2aa1ffdadb99f06";
+const TOKEN_REDEEM_ADDRESS: &str = "0x49262B932E439271d05634c32978294C7Ea15d0C";
+const DEPOSIT_REDEEM_ADDRESS: &str = "0x6EF538314829EfA8386Fc43386cB13B4e0A67D1e";
+const SET_AUTHORITIES_ADDRESS: &str = "0xD35Bb6F1bc1C84b53E0995c1830454AB7C4147f1";
+const RING_TOKEN_ADDRESS: &str = "0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0";
+const KTON_TOKEN_ADDRESS: &str = "0x1994100c58753793D52c6f457f189aa3ce9cEe94";
+const ETHEREUM_RELAY_AUTHORITY_SIGNER: &str = "0x68898db1012808808c903f390909c52d9f706749";
+const MAPPING_FACTORY_ADDRESS: &str = "0xE1586e744b99bF8e4C981DfE4dD4369d6f8Ed88A";
+const ETHEREUM_BACKING_ADDRESS: &str = "0xb2Bea2358d817dAE01B0FD0DC3aECB25910E65AA";
 
 fn session_keys(
 	babe: BabeId,
@@ -179,6 +180,7 @@ pub fn pangolin_build_spec_config() -> PangolinChainSpec {
 		let root = AccountId::from(array_bytes::hex2array_unchecked(
 			"0x72819fbc1b93196fa230243947c1726cbea7e33044c7eb6f736ff345561f9e4c",
 		));
+		let s2s_relayer = array_bytes::hex_into_unchecked(S2S_RELAYER);
 		let initial_authorities = vec![
 			Keys::new(
 				"0x9c43c00407c0a51e0d88ede9d531f165e370013b648e6b62f4b3bcff4689df02",
@@ -258,7 +260,7 @@ pub fn pangolin_build_spec_config() -> PangolinChainSpec {
 				.collect()
 			},
 			darwinia_balances_Instance2: pangolin_runtime::KtonConfig {
-				balances: vec![(root.clone(), BUNCH_OF_COINS)]
+				balances: vec![(root.clone(), BUNCH_OF_COINS), (s2s_relayer, BUNCH_OF_COINS)]
 					.into_iter()
 					.chain(
 						initial_authorities
@@ -448,12 +450,14 @@ pub fn pangolin_build_spec_config() -> PangolinChainSpec {
 pub fn pangolin_development_config() -> PangolinChainSpec {
 	fn pangolin_development_genesis() -> pangolin_runtime::GenesisConfig {
 		let root = get_account_id_from_seed::<sr25519::Public>("Alice");
+		let s2s_relayer = array_bytes::hex_into_unchecked(S2S_RELAYER);
 		let initial_authorities = vec![get_authority_keys_from_seed("Alice")];
 		let endowed_accounts = vec![
-			get_account_id_from_seed::<sr25519::Public>("Alice"),
-			get_account_id_from_seed::<sr25519::Public>("Bob"),
+			root.clone(),
 			get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+			get_account_id_from_seed::<sr25519::Public>("Bob"),
 			get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+			s2s_relayer,
 		]
 		.into_iter()
 		.chain(
@@ -652,6 +656,7 @@ pub fn pangolin_development_config() -> PangolinChainSpec {
 pub fn pangolin_local_testnet_config() -> PangolinChainSpec {
 	fn pangolin_local_testnet_genesis() -> pangolin_runtime::GenesisConfig {
 		let root = get_account_id_from_seed::<sr25519::Public>("Alice");
+		let s2s_relayer = array_bytes::hex_into_unchecked(S2S_RELAYER);
 		let initial_authorities = vec![
 			get_authority_keys_from_seed("Alice"),
 			get_authority_keys_from_seed("Bob"),
@@ -673,6 +678,7 @@ pub fn pangolin_local_testnet_config() -> PangolinChainSpec {
 			get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
 			get_account_id_from_seed::<sr25519::Public>("Ferdie"),
 			get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+			s2s_relayer,
 		]
 		.into_iter()
 		.chain(
