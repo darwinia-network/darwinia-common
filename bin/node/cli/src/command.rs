@@ -97,9 +97,7 @@ pub fn run() -> sc_cli::Result<()> {
 
 	match &cli.subcommand {
 		None => {
-			let runner = cli
-				.create_runner(&cli.run.base)
-				.map_err(sc_cli::Error::from)?;
+			let runner = cli.create_runner(&cli.run.base)?;
 
 			runner.run_node_until_exit(|config| async move {
 				match config.role {
