@@ -47,7 +47,7 @@ use frame_support::storage::unhashed;
 use frame_support::{
 	dispatch::DispatchResultWithPostInfo,
 	ensure,
-	traits::{Currency, FindAuthor, Get},
+	traits::{Currency, Get},
 	weights::{Pays, PostDispatchInfo, Weight},
 };
 use frame_system::ensure_none;
@@ -168,9 +168,10 @@ pub mod pallet {
 		InvalidSignature,
 		/// Pre-log is present, therefore transact is not allowed.
 		PreLogExists,
-		/// The internal transaction errors
-		InternalEvmExecuteError,
-		InvalidCallError,
+		/// The internal transaction failed
+		InternalEvmExecute,
+		// The internal call failed
+		InvalidCall,
 	}
 
 	#[pallet::validate_unsigned]
@@ -304,6 +305,7 @@ impl<T: Config> Pallet<T> {
 			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
 			Error::<T>::PreLogExists,
 		);
+
 		let nonce =
 			<T as darwinia_evm::Config>::RingAccountBasic::account_basic(&INTERNAL_CALLER).nonce;
 		let transaction = DVMTransaction::new_internal_transaction(nonce, target, input);
@@ -317,7 +319,7 @@ impl<T: Config> Pallet<T> {
 			}),
 			_ => {
 				log::error!("Executing internal transaction error happened");
-				Err(Error::<T>::InternalEvmExecuteError.into())
+				Err(Error::<T>::InternalEvmExecute.into())
 			}
 		})?
 	}
@@ -436,19 +438,11 @@ impl<T: Config> Pallet<T> {
 				ExitReason::Succeed(_) => Ok(info.value),
 				_ => {
 					log::error!("Executing internal transaction error happened");
-					Err(Error::<T>::InternalEvmExecuteError.into())
+					Err(Error::<T>::InternalEvmExecute.into())
 				}
 			},
-			_ => Err(Error::<T>::InvalidCallError.into()),
+			_ => Err(Error::<T>::InvalidCall.into()),
 		}
-	}
-
-	/// Get the author using the FindAuthor trait.
-	pub fn find_author() -> H160 {
-		let digest = <frame_system::Pallet<T>>::digest();
-		let pre_runtime_digests = digest.logs.iter().filter_map(|d| d.as_pre_runtime());
-
-		T::FindAuthor::find_author(pre_runtime_digests).unwrap_or_default()
 	}
 
 	/// Get the transaction status with given index.
@@ -542,7 +536,7 @@ impl<T: Config> Pallet<T> {
 		let ommers = Vec::<ethereum::Header>::new();
 		let partial_header = ethereum::PartialHeader {
 			parent_hash: Self::current_block_hash().unwrap_or_default(),
-			beneficiary: <Pallet<T>>::find_author(),
+			beneficiary: darwinia_evm::Pallet::<T>::find_author(),
 			state_root: T::StateRoot::get(),
 			receipts_root: H256::from_slice(
 				Keccak256::digest(&rlp::encode_list(&receipts)[..]).as_slice(),
@@ -567,6 +561,7 @@ impl<T: Config> Pallet<T> {
 		CurrentBlock::<T>::put(block.clone());
 		CurrentReceipts::<T>::put(receipts);
 		CurrentTransactionStatuses::<T>::put(statuses);
+		BlockHash::<T>::insert(block_number, block.header.hash());
 
 		if post_log {
 			let digest = DigestItem::<T::Hash>::Consensus(
