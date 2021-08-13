@@ -44,7 +44,6 @@ pub struct RunCmd {
 	#[structopt(flatten)]
 	pub base: sc_cli::RunCmd,
 
-	// TODO: darwinia-cli
 	/// Disable the authority discovery module on validator or sentry nodes.
 	///
 	/// Enabled by default on validator and sentry nodes. Always disabled on non

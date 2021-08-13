@@ -19,14 +19,13 @@
 // --- std ---
 use std::{env, path::PathBuf};
 // --- substrate ---
-use sc_cli::{Role, RunCmd, RuntimeVersion, SubstrateCli};
+use sc_cli::{Role, RuntimeVersion, SubstrateCli};
 // --- darwinia ---
 use crate::{
 	chain_spec,
 	cli::{Cli, Subcommand},
 	service,
 };
-use darwinia_cli::{Configuration, DarwiniaCli};
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
@@ -84,19 +83,6 @@ impl SubstrateCli for Cli {
 		})
 	}
 }
-impl DarwiniaCli for Cli {
-	fn conf(&self) -> &Option<PathBuf> {
-		&self.conf
-	}
-
-	fn base(&self) -> &RunCmd {
-		&self.run.base
-	}
-
-	fn mut_base(&mut self) -> &mut RunCmd {
-		&mut self.run.base
-	}
-}
 
 fn get_exec_name() -> Option<String> {
 	env::current_exe()
@@ -111,7 +97,7 @@ pub fn run() -> sc_cli::Result<()> {
 
 	match &cli.subcommand {
 		None => {
-			let runner = Configuration::create_runner(Cli::from_args())?;
+			let runner = cli.create_runner(&cli.run.base)?;
 
 			runner.run_node_until_exit(|config| async move {
 				match config.role {
