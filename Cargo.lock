@@ -2625,7 +2625,7 @@ dependencies = [
 [[package]]
 name = "ethabi"
 version = "13.0.0"
-source = "git+https://github.com/darwinia-network/ethabi.git?tag=v13.0.0-no-std#baacf174d5c2f12122c4ee3fe31506fb52069983"
+source = "git+https://github.com/darwinia-network/ethabi?tag=v13.0.0-no-std#baacf174d5c2f12122c4ee3fe31506fb52069983"
 dependencies = [
  "anyhow",
  "ethereum-types",
