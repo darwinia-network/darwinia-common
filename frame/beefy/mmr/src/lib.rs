@@ -36,6 +36,7 @@ use sp_runtime::traits::{Convert, Hash};
 use sp_std::prelude::*;
 
 use beefy_primitives::mmr::{BeefyNextAuthoritySet, MmrLeaf, MmrLeafVersion};
+use frame_system::pallet_prelude::*;
 use pallet_mmr::primitives::LeafDataProvider;
 
 use codec::Encode;
@@ -105,6 +106,8 @@ pub mod pallet {
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {}
 
 	/// The module's configuration trait.
 	#[pallet::config]
@@ -148,7 +151,6 @@ where
 		MmrLeaf {
 			version: T::LeafVersion::get(),
 			parent_number_and_hash: frame_system::Pallet::<T>::leaf_data(),
-			parachain_heads: Pallet::<T>::parachain_heads_merkle_root(),
 			beefy_next_authority_set: Pallet::<T>::update_beefy_next_authority_set(),
 		}
 	}

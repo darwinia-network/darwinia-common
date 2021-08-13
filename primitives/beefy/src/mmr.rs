@@ -39,8 +39,6 @@ pub struct MmrLeaf<BlockNumber, Hash, MerkleRoot> {
 	pub parent_number_and_hash: (BlockNumber, Hash),
 	/// A merkle root of the next BEEFY authority set.
 	pub beefy_next_authority_set: BeefyNextAuthoritySet<MerkleRoot>,
-	/// A merkle root of all registered parachain heads.
-	pub parachain_heads: MerkleRoot,
 }
 
 /// A MMR leaf versioning scheme.
