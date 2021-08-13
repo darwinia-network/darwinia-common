@@ -91,23 +91,6 @@ impl Convert<beefy_primitives::crypto::AuthorityId, Vec<u8>> for BeefyEcdsaToEth
 }
 
 type MerkleRootOf<T> = <T as pallet_mmr::Config>::Hash;
-type ParaId = u32;
-type ParaHead = Vec<u8>;
-
-/// A type that is able to return current list of parachain heads that end up in the MMR leaf.
-pub trait ParachainHeadsProvider {
-	/// Return a list of tuples containing a `ParaId` and Parachain Header data (ParaHead).
-	///
-	/// The returned data does not have to be sorted.
-	fn parachain_heads() -> Vec<(ParaId, ParaHead)>;
-}
-
-/// A default implementation for runtimes without parachains.
-impl ParachainHeadsProvider for () {
-	fn parachain_heads() -> Vec<(ParaId, ParaHead)> {
-		Default::default()
-	}
-}
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -138,13 +121,6 @@ pub mod pallet {
 		/// but the rest of the Substrate codebase is storing them compressed (33 bytes) for
 		/// efficiency reasons.
 		type BeefyAuthorityToMerkleLeaf: Convert<<Self as pallet_beefy::Config>::BeefyId, Vec<u8>>;
-
-		/// Retrieve a list of current parachain heads.
-		///
-		/// The trait is implemented for `paras` module, but since not all chains might have parachains,
-		/// and we want to keep the MMR leaf structure uniform, it's possible to use `()` as well to
-		/// simply put dummy data to the leaf.
-		type ParachainHeads: ParachainHeadsProvider;
 	}
 
 	/// Details of next BEEFY authority set.
