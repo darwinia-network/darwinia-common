@@ -536,7 +536,6 @@ impl<T: Config> Pallet<T> {
 			source,
 			gas_price: Some(transaction.gas_price),
 			tx: transaction,
-			is_internal: false,
 		})
 	}
 
