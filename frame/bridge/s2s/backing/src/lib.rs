@@ -36,7 +36,7 @@ use frame_support::{
 	ensure,
 	pallet_prelude::*,
 	traits::{Currency, ExistenceRequirement::*, Get},
-	PalletId,
+	transactional, PalletId,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use sp_runtime::{
@@ -129,7 +129,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(<T as Config>::WeightInfo::register_and_remote_create())]
-		#[frame_support::transactional]
+		#[transactional]
 		pub fn register_and_remote_create(
 			origin: OriginFor<T>,
 			spec_version: u32,
@@ -164,7 +164,7 @@ pub mod pallet {
 		///
 		/// Target is the id of the target chain defined in s2s_chain pallet
 		#[pallet::weight(<T as Config>::WeightInfo::lock_and_remote_issue())]
-		#[frame_support::transactional]
+		#[transactional]
 		pub fn lock_and_remote_issue(
 			origin: OriginFor<T>,
 			spec_version: u32,

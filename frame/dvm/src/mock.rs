@@ -42,14 +42,11 @@ use darwinia_evm::{runner::stack::Runner, AddressMapping, EnsureAddressTruncated
 use darwinia_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use darwinia_evm_precompile_transfer::Transfer;
 use dp_evm::{Precompile, PrecompileSet};
-use sp_std::marker::PhantomData;
-
-darwinia_support::impl_test_account_data! {}
 
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
-
 type Balance = u64;
+darwinia_support::impl_test_account_data! {}
 
 frame_support::parameter_types! {
 	pub const BlockHashCount: u64 = 250;
@@ -71,7 +68,7 @@ impl frame_system::Config for Test {
 	type AccountId = AccountId32;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = ();
+	type Event = Event;
 	type BlockHashCount = ();
 	type Version = ();
 	type PalletInfo = PalletInfo;
@@ -97,7 +94,7 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type OtherCurrencies = ();
 	type WeightInfo = ();
 	type Balance = Balance;
-	type Event = ();
+	type Event = Event;
 	type BalanceInfo = AccountData<Balance>;
 }
 impl darwinia_balances::Config<KtonInstance> for Test {
@@ -108,7 +105,7 @@ impl darwinia_balances::Config<KtonInstance> for Test {
 	type OtherCurrencies = ();
 	type WeightInfo = ();
 	type Balance = Balance;
-	type Event = ();
+	type Event = Event;
 	type BalanceInfo = AccountData<Balance>;
 }
 
@@ -141,9 +138,7 @@ pub struct HashedAddressMapping;
 impl AddressMapping<AccountId32> for HashedAddressMapping {
 	fn into_account_id(address: H160) -> AccountId32 {
 		let mut raw_account = [0u8; 32];
-
 		raw_account[0..20].copy_from_slice(&address[..]);
-
 		raw_account.into()
 	}
 }
@@ -187,7 +182,7 @@ impl darwinia_evm::Config for Test {
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
 	type AddressMapping = HashedAddressMapping;
-	type Event = ();
+	type Event = Event;
 	type Precompiles = MockPrecompiles<Self>;
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
@@ -199,7 +194,7 @@ impl darwinia_evm::Config for Test {
 }
 
 impl dvm_ethereum::Config for Test {
-	type Event = ();
+	type Event = Event;
 	type StateRoot = IntermediateStateRoot;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
@@ -211,12 +206,12 @@ frame_support::construct_runtime! {
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Pallet, Call, Config, Storage},
+		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
-		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>},
-		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage},
-		EVM: darwinia_evm::{Pallet, Call, Storage, Config},
-		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config},
+		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>},
+		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event},
 	}
 }
 
@@ -288,16 +283,12 @@ fn address_build(seed: u8) -> AccountInfo {
 	let raw_public_key = &libsecp256k1::PublicKey::from_secret_key(&secret_key).serialize()[1..65];
 	let raw_address = {
 		let mut s = [0; 20];
-
 		s.copy_from_slice(&Keccak256::digest(raw_public_key)[12..]);
-
 		s
 	};
 	let raw_account = {
 		let mut s = [0; 32];
-
 		s[..20].copy_from_slice(&raw_address);
-
 		s
 	};
 
@@ -312,7 +303,7 @@ fn address_build(seed: u8) -> AccountInfo {
 // our desired mockup.
 pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExternalities) {
 	// sc_cli::init_logger("");
-	let mut ext = frame_system::GenesisConfig::default()
+	let mut t = frame_system::GenesisConfig::default()
 		.build_storage::<Test>()
 		.unwrap();
 
@@ -325,8 +316,10 @@ pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExtern
 		.collect();
 
 	darwinia_balances::GenesisConfig::<Test, RingInstance> { balances }
-		.assimilate_storage(&mut ext)
+		.assimilate_storage(&mut t)
 		.unwrap();
+	let mut ext = sp_io::TestExternalities::new(t);
+	ext.execute_with(|| System::set_block_number(1));
 
 	(pairs, ext.into())
 }
