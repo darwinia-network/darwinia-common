@@ -614,6 +614,7 @@ fn read_only_call_should_not_change_storages() {
 				0, 0, 0, 2
 			]
 		);
+		let old_root = sp_io::storage::root();
 
 		// read only call does not change storage
 		assert_ok!(Ethereum::read_only_call(contract_address, add.clone()));
@@ -625,6 +626,8 @@ fn read_only_call_should_not_change_storages() {
 				0, 0, 0, 2
 			]
 		);
+		let new_root = sp_io::storage::root();
+		assert_eq!(old_root, new_root);
 	});
 }
 
