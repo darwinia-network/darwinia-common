@@ -55,6 +55,7 @@ use ethereum_types::H128;
 // --- substrate ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
+	pallet_prelude::*,
 	traits::{
 		ChangeMembers, Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, Get, IsSubType,
 		ReservableCurrency, SortedMembers,
@@ -168,8 +169,8 @@ decl_error! {
 		ConfirmedBlocksC,
 		/// Continuous - INVALID
 		ContinuousInv,
-		// /// Affirmation - INVALID
-		// AffirmationInv,
+		/// Affirmation - EXISTED
+		AffirmationExisted,
 		/// Header Hash - INVALID
 		HeaderHashInv,
 		/// MMR - INVALID
@@ -688,12 +689,12 @@ impl<T: Config> Relayable for Module<T> {
 		Self::best_confirmed_block_number()
 	}
 
-	fn preverify_game_sample_points(
+	fn pre_verify_game_sample_points(
 		extended_relay_affirmation_id: &RelayAffirmationId<Self::RelayHeaderId>,
 		game_sample_points: &[Self::RelayHeaderParcel],
 	) -> DispatchResult {
 		let previous_sample_points =
-			T::RelayerGame::get_proposed_relay_header_parcels(extended_relay_affirmation_id)
+			T::RelayerGame::get_affirmed_relay_header_parcels(extended_relay_affirmation_id)
 				.ok_or("Previous Sample Points - UNKNOWN")?;
 
 		ensure!(previous_sample_points.len() == 1, "Length - UNKNOWN");
@@ -1022,43 +1023,30 @@ impl<T: Send + Sync + Config> SignedExtension for CheckEthereumRelayHeaderParcel
 	fn validate(
 		&self,
 		_: &Self::AccountId,
-		_call: &Self::Call,
+		call: &Self::Call,
 		_: &DispatchInfoOf<Self::Call>,
 		_: usize,
 	) -> TransactionValidity {
-		// TODO: pre-verify
-		// if let Some(Call::submit_proposal(ref proposal)) = call.is_sub_type() {
-		// 	if let Some(proposed_header_thing) = proposal.get(0) {
-		// 		for existed_proposal in
-		// 			T::RelayerGame::proposals_of_game(proposed_header_thing.header.number)
-		// 		{
-		// 			if existed_proposal
-		// 				.bonded_proposal
-		// 				.iter()
-		// 				.zip(proposal.iter())
-		// 				.all(
-		// 					|(
-		// 						(
-		// 							_,
-		// 							EthereumHeaderThing {
-		// 								header: header_a,
-		// 								mmr_root: mmr_root_a,
-		// 							},
-		// 						),
-		// 						EthereumHeaderThingWithProof {
-		// 							header: header_b,
-		// 							mmr_root: mmr_root_b,
-		// 							..
-		// 						},
-		// 					)| header_a == header_b && mmr_root_a == mmr_root_b,
-		// 				) {
-		// 				return InvalidTransaction::Custom(<Error<T>>::AffirmationInv.as_u8()).into();
-		// 			}
-		// 		}
-		// 	}
-		// }
+		match call.is_sub_type() {
+			Some(Call::affirm(ref relay_header_parcel, _)) => {
+				if T::RelayerGame::get_affirmed_relay_header_parcels(&RelayAffirmationId {
+					game_id: relay_header_parcel.header.number,
+					round: 0,
+					index: 0,
+				})
+				.is_some()
+				{
+					return InvalidTransaction::Custom(<Error<T>>::AffirmationExisted.as_u8())
+						.into();
+				}
 
-		Ok(ValidTransaction::default())
+				Ok(ValidTransaction::default())
+			}
+			// TODO
+			// Some(Call::dispute_and_affirm())
+			// Some(Call::extend_affirmation())
+			_ => Ok(ValidTransaction::default()),
+		}
 	}
 }
 

@@ -47,8 +47,8 @@ pub trait Relayable {
 	/// The latest finalize block's id which recorded in darwinia
 	fn best_confirmed_relay_header_id() -> Self::RelayHeaderId;
 
-	/// Some custom preverify logic for different chain
-	fn preverify_game_sample_points(
+	/// Some custom pre-verify logic of sample points for different chain
+	fn pre_verify_game_sample_points(
 		extended_relay_affirmation_id: &RelayAffirmationId<Self::RelayHeaderId>,
 		game_sample_points: &[Self::RelayHeaderParcel],
 	) -> DispatchResult;
@@ -131,7 +131,7 @@ pub trait RelayerGameProtocol {
 		+ RelayHeaderParcelInfo<HeaderId = Self::RelayHeaderId>;
 	type RelayProofs;
 
-	fn get_proposed_relay_header_parcels(
+	fn get_affirmed_relay_header_parcels(
 		affirmation_id: &RelayAffirmationId<Self::RelayHeaderId>,
 	) -> Option<Vec<Self::RelayHeaderParcel>>;
 

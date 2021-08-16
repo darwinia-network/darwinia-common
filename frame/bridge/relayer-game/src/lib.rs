@@ -790,7 +790,7 @@ impl<T: Config<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 	type RelayHeaderParcel = RelayHeaderParcel<T, I>;
 	type RelayProofs = RelayProofs<T, I>;
 
-	fn get_proposed_relay_header_parcels(
+	fn get_affirmed_relay_header_parcels(
 		relay_affirmation_id: &RelayAffirmationId<Self::RelayHeaderId>,
 	) -> Option<Vec<Self::RelayHeaderParcel>> {
 		let RelayAffirmationId {
@@ -1062,7 +1062,7 @@ impl<T: Config<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			<Error<T, I>>::PreviousRelayProofsInc
 		);
 
-		T::RelayableChain::preverify_game_sample_points(
+		T::RelayableChain::pre_verify_game_sample_points(
 			&extended_relay_affirmation_id,
 			&game_sample_points,
 		)?;
