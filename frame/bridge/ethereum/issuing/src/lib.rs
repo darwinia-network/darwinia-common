@@ -38,7 +38,7 @@ use frame_support::{
 	pallet_prelude::*,
 	parameter_types,
 	traits::{Currency, ExistenceRequirement::*, Get},
-	PalletId,
+	transactional, PalletId,
 };
 use frame_system::{ensure_root, ensure_signed, pallet_prelude::*};
 use sp_runtime::{
@@ -216,6 +216,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(<T as Config>::WeightInfo::register_erc20())]
+		#[transactional]
 		pub fn register_erc20(
 			origin: OriginFor<T>,
 			proof: EthereumReceiptProofThing<T>,
@@ -250,6 +251,7 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(<T as Config>::WeightInfo::redeem_erc20())]
+		#[transactional]
 		pub fn redeem_erc20(
 			origin: OriginFor<T>,
 			proof: EthereumReceiptProofThing<T>,
@@ -279,6 +281,7 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(<T as Config>::WeightInfo::mapping_factory_event_handle())]
+		#[transactional]
 		pub fn mapping_factory_event_handle(
 			origin: OriginFor<T>,
 			input: Vec<u8>,
