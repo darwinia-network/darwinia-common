@@ -518,7 +518,7 @@ fn call_should_handle_errors() {
 }
 
 #[test]
-fn raw_call_should_works() {
+fn read_only_call_should_works() {
 	let (pairs, mut ext) = new_test_ext(1);
 	let alice = &pairs[0];
 
@@ -548,7 +548,7 @@ fn raw_call_should_works() {
 		let foo: Vec<u8> = hex2bytes_unchecked("c2985578");
 
 		// Call foo use INTERNAL_CALLER
-		let result = Ethereum::raw_call(contract_address, foo.clone()).unwrap();
+		let result = Ethereum::read_only_call(contract_address, foo.clone()).unwrap();
 		assert_eq!(
 			result,
 			vec![
@@ -559,25 +559,44 @@ fn raw_call_should_works() {
 		// Check nonce
 		assert_eq!(
 			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&INTERNAL_CALLER).nonce,
-			U256::from(1)
-		);
-
-		// Call foo use INTERNAL_CALLER
-		let result = Ethereum::raw_call(contract_address, foo).unwrap();
-		assert_eq!(
-			result,
-			vec![
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 1
-			]
-		);
-		// Check nonce
-		assert_eq!(
-			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&INTERNAL_CALLER).nonce,
-			U256::from(2)
+			U256::from(0)
 		);
 	});
 }
+
+#[test]
+fn read_only_call_should_not_change_storages() {
+	let (pairs, mut ext) = new_test_ext(1);
+	let alice = &pairs[0];
+
+	ext.execute_with(|| {
+		let t = UnsignedTransaction {
+			nonce: U256::zero(),
+			gas_price: U256::from(1),
+			gas_limit: U256::from(0x100000),
+			action: ethereum::TransactionAction::Create,
+			value: U256::zero(),
+			input: hex2bytes_unchecked(TEST_CONTRACT_BYTECODE),
+		}
+		.sign(&alice.private_key);
+		// Deploy contract
+		assert_ok!(Ethereum::execute(
+			alice.address,
+			t.input,
+			t.value,
+			t.gas_limit,
+			Some(t.gas_price),
+			Some(t.nonce),
+			t.action,
+			None,
+		));
+		let contract_address: H160 =
+			array_bytes::hex_into_unchecked("32dcab0ef3fb2de2fce1d2e0799d36239671f04a");
+		let foo: Vec<u8> = hex2bytes_unchecked("c2985578");
+		todo!();
+	});
+}
+
 
 #[test]
 fn internal_transaction_should_works() {

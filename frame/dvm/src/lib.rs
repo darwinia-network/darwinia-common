@@ -419,9 +419,9 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Pure read-only call to contract, the sender is INTERNAL_CALLER
-	/// NOTE: You should never use raw call for any non-read-only operation. Because raw_call
-	/// has ability to chang storage. Be carefully.
-	pub fn raw_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
+	/// NOTE: You should never use raw call for any non-read-only operation, be carefully.
+	pub fn read_only_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
+		sp_io::storage::start_transaction();
 		let (_, _, info) = Self::execute(
 			INTERNAL_CALLER,
 			input,
@@ -432,7 +432,7 @@ impl<T: Config> Pallet<T> {
 			TransactionAction::Call(contract),
 			None,
 		)?;
-
+		sp_io::storage::rollback_transaction();
 		match info {
 			CallOrCreateInfo::Call(info) => match info.exit_reason {
 				ExitReason::Succeed(_) => Ok(info.value),
