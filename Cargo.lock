@@ -1482,18 +1482,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-cli"
-version = "2.6.0"
-dependencies = [
- "sc-cli",
- "sc-client-api",
- "sc-service",
- "sc-tracing",
- "serde",
- "toml",
-]
-
-[[package]]
 name = "darwinia-crab-backing"
 version = "2.5.0"
 dependencies = [
@@ -2320,7 +2308,6 @@ dependencies = [
  "darwinia-balances-rpc",
  "darwinia-balances-rpc-runtime-api",
  "darwinia-claims",
- "darwinia-cli",
  "darwinia-ethereum-relay",
  "darwinia-evm",
  "darwinia-header-mmr-rpc",
@@ -2641,7 +2628,7 @@ dependencies = [
 [[package]]
 name = "ethabi"
 version = "13.0.0"
-source = "git+https://github.com/darwinia-network/ethabi.git?tag=v13.0.0-no-std#baacf174d5c2f12122c4ee3fe31506fb52069983"
+source = "git+https://github.com/darwinia-network/ethabi?tag=v13.0.0-no-std#baacf174d5c2f12122c4ee3fe31506fb52069983"
 dependencies = [
  "anyhow",
  "ethereum-types",

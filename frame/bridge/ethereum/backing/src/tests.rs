@@ -18,142 +18,19 @@
 
 //! Tests for ethereum-backing.
 
-// --- crates.io ---
-use codec::{Decode, Encode};
 // --- substrate ---
-use frame_support::{assert_err, assert_noop, assert_ok, traits::SortedMembers};
-use frame_system::EnsureRoot;
-use sp_runtime::{traits::Dispatchable, AccountId32, DispatchError, RuntimeDebug};
+use frame_support::{assert_err, assert_noop, assert_ok, traits::Currency};
+use sp_runtime::{traits::Dispatchable, AccountId32};
 // --- darwinia ---
-use crate::{pallet::*, *};
-use darwinia_ethereum_relay::{EthereumRelayHeaderParcel, EthereumRelayProofs, MMRProof};
-use darwinia_relay_primitives::relayer_game::*;
+use crate::{
+	mock::{Call, *},
+	pallet::*,
+};
+use darwinia_ethereum_relay::EthereumRelayHeaderParcel;
+use darwinia_relay_primitives::Sign;
 use darwinia_staking::{RewardDestination, StakingBalance, StakingLedger, TimeDepositItem};
 use darwinia_support::balance::*;
-use ethereum_primitives::{
-	header::EthereumHeader, receipt::EthereumReceiptProof, EthereumBlockNumber, EthereumNetwork,
-};
-
-decl_tests!(EthereumRelay: darwinia_ethereum_relay::{Pallet, Call, Storage});
-
-pub type EthereumRelayError = darwinia_ethereum_relay::Error<Test>;
-
-pub struct UnusedTechnicalMembership;
-impl SortedMembers<AccountId> for UnusedTechnicalMembership {
-	fn sorted_members() -> Vec<AccountId> {
-		unimplemented!()
-	}
-}
-frame_support::parameter_types! {
-	pub const EthereumRelayPalletId: PalletId = PalletId(*b"da/ethrl");
-	pub const EthereumRelayBridgeNetwork: EthereumNetwork = EthereumNetwork::Ropsten;
-}
-impl darwinia_ethereum_relay::Config for Test {
-	type PalletId = EthereumRelayPalletId;
-	type Event = ();
-	type BridgedNetwork = EthereumRelayBridgeNetwork;
-	type RelayerGame = UnusedRelayerGame;
-	type ApproveOrigin = EnsureRoot<AccountId>;
-	type RejectOrigin = EnsureRoot<AccountId>;
-	type ConfirmPeriod = ();
-	type TechnicalMembership = UnusedTechnicalMembership;
-	type ApproveThreshold = ();
-	type RejectThreshold = ();
-	type Call = Call;
-	type Currency = Ring;
-	type WeightInfo = ();
-}
-
-pub struct UnusedRelayerGame;
-impl RelayerGameProtocol for UnusedRelayerGame {
-	type Relayer = AccountId;
-	type RelayHeaderId = EthereumBlockNumber;
-	type RelayHeaderParcel = EthereumRelayHeaderParcel;
-	type RelayProofs = EthereumRelayProofs;
-
-	fn get_proposed_relay_header_parcels(
-		_: &RelayAffirmationId<Self::RelayHeaderId>,
-	) -> Option<Vec<Self::RelayHeaderParcel>> {
-		unimplemented!()
-	}
-	fn best_confirmed_header_id_of(_: &Self::RelayHeaderId) -> Self::RelayHeaderId {
-		unimplemented!()
-	}
-	fn affirm(
-		_: &Self::Relayer,
-		_: Self::RelayHeaderParcel,
-		_: Option<Self::RelayProofs>,
-	) -> Result<Self::RelayHeaderId, DispatchError> {
-		unimplemented!()
-	}
-	fn dispute_and_affirm(
-		_: &Self::Relayer,
-		_: Self::RelayHeaderParcel,
-		_: Option<Self::RelayProofs>,
-	) -> Result<(Self::RelayHeaderId, u32), DispatchError> {
-		unimplemented!()
-	}
-	fn complete_relay_proofs(
-		_: RelayAffirmationId<Self::RelayHeaderId>,
-		_: Vec<Self::RelayProofs>,
-	) -> DispatchResult {
-		unimplemented!()
-	}
-	fn extend_affirmation(
-		_: &Self::Relayer,
-		_: RelayAffirmationId<Self::RelayHeaderId>,
-		_: Vec<Self::RelayHeaderParcel>,
-		_: Option<Vec<Self::RelayProofs>>,
-	) -> Result<(Self::RelayHeaderId, u32, u32), DispatchError> {
-		unimplemented!()
-	}
-}
-
-pub struct ExtBuilder;
-impl Default for ExtBuilder {
-	fn default() -> Self {
-		Self
-	}
-}
-impl ExtBuilder {
-	pub fn build(self) -> sp_io::TestExternalities {
-		let mut t = frame_system::GenesisConfig::default()
-			.build_storage::<Test>()
-			.unwrap();
-
-		darwinia_ethereum_backing::GenesisConfig::<Test> {
-			token_redeem_address: array_bytes::hex_into_unchecked(
-				"0x49262B932E439271d05634c32978294C7Ea15d0C",
-			),
-			deposit_redeem_address: array_bytes::hex_into_unchecked(
-				"0x6EF538314829EfA8386Fc43386cB13B4e0A67D1e",
-			),
-			set_authorities_address: array_bytes::hex_into_unchecked(
-				"0xE4A2892599Ad9527D76Ce6E26F93620FA7396D85",
-			),
-			ring_token_address: array_bytes::hex_into_unchecked(
-				"0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0",
-			),
-			kton_token_address: array_bytes::hex_into_unchecked(
-				"0x1994100c58753793D52c6f457f189aa3ce9cEe94",
-			),
-			backed_ring: 20000000000000,
-			backed_kton: 5000000000000,
-		}
-		.assimilate_storage(&mut t)
-		.unwrap();
-
-		t.into()
-	}
-}
-
-#[cfg_attr(test, derive(serde::Deserialize))]
-#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
-pub struct TestReceiptProofThing {
-	pub header: EthereumHeader,
-	pub receipt_proof: EthereumReceiptProof,
-	pub mmr_proof: MMRProof,
-}
+use ethereum_primitives::receipt::EthereumReceiptProof;
 
 #[test]
 fn genesis_config_works() {
@@ -731,7 +608,7 @@ fn lock_failed_rollback_transaction_should_work() {
 		let module_account_id = EthereumBacking::account_id();
 		let module_account_ring = Ring::free_balance(&module_account_id);
 		let module_account_kton = Kton::free_balance(&module_account_id);
-		let advanced_fee = <Test as Config>::AdvancedFee::get();
+		let _advanced_fee = <Test as Config>::AdvancedFee::get();
 
 		assert_noop!(
 			EthereumBacking::lock(
