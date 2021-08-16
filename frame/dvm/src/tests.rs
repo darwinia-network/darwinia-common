@@ -710,7 +710,7 @@ fn internal_transact_dispatch_error() {
 		// Call foo use internal transaction
 		assert_err!(
 			Ethereum::internal_transact(contract_address, mock_foo),
-			<Error<Test>>::InternalEvmExecute
+			<Error<Test>>::FailedInternalTx
 		);
 		assert_eq!(
 			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&INTERNAL_CALLER).nonce,

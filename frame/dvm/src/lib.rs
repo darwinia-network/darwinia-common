@@ -169,7 +169,7 @@ pub mod pallet {
 		/// Pre-log is present, therefore transact is not allowed.
 		PreLogExists,
 		/// The internal transaction failed
-		InternalEvmExecute,
+		FailedInternalTx,
 		// The internal call failed
 		InvalidCall,
 	}
@@ -319,7 +319,7 @@ impl<T: Config> Pallet<T> {
 			}),
 			_ => {
 				log::error!("Executing internal transaction error happened");
-				Err(Error::<T>::InternalEvmExecute.into())
+				Err(Error::<T>::FailedInternalTx.into())
 			}
 		})?
 	}
@@ -438,7 +438,7 @@ impl<T: Config> Pallet<T> {
 				ExitReason::Succeed(_) => Ok(info.value),
 				_ => {
 					log::error!("Executing internal transaction error happened");
-					Err(Error::<T>::InternalEvmExecute.into())
+					Err(Error::<T>::FailedInternalTx.into())
 				}
 			},
 			_ => Err(Error::<T>::InvalidCall.into()),
