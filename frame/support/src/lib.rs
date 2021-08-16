@@ -32,12 +32,29 @@ pub mod balance {
 
 pub mod evm {
 	// --- darwinia ---
-	use ethereum_primitives::H160;
+	use ethereum::TransactionMessage;
+	use ethereum_primitives::{H160, H256};
+	use sha3::{Digest, Keccak256};
 
 	pub const POW_9: u32 = 1_000_000_000;
 	pub const INTERNAL_CALLER: H160 = H160::zero();
+	pub const INTERNAL_TX_GAS_LIMIT: u32 = 300_000_000;
 	pub const SELECTOR: usize = 4;
 	pub const TRANSFER_ADDR: &'static str = "0x0000000000000000000000000000000000000015";
+
+	pub fn recover_signer(transaction: &ethereum::Transaction) -> Option<H160> {
+		let mut sig = [0u8; 65];
+		let mut msg = [0u8; 32];
+		sig[0..32].copy_from_slice(&transaction.signature.r()[..]);
+		sig[32..64].copy_from_slice(&transaction.signature.s()[..]);
+		sig[64] = transaction.signature.standard_v();
+		msg.copy_from_slice(&TransactionMessage::from(transaction.clone()).hash()[..]);
+
+		let pubkey = sp_io::crypto::secp256k1_ecdsa_recover(&sig, &msg).ok()?;
+		Some(H160::from(H256::from_slice(
+			Keccak256::digest(&pubkey).as_slice(),
+		)))
+	}
 }
 
 // TODO: Should we move this to `s2s-primitives`?

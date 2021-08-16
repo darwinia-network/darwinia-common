@@ -355,8 +355,7 @@ impl<T: Config> Pallet<T> {
 		let factory_address = MappingFactoryAddress::<T>::get();
 		let bytes = mtf::encode_mapping_token(backing, source)
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
-		let mapped_address = dvm_ethereum::Pallet::<T>::do_call(factory_address, bytes)
-			.map_err(|e| -> &'static str { e.into() })?;
+		let mapped_address = dvm_ethereum::Pallet::<T>::read_only_call(factory_address, bytes)?;
 		if mapped_address.len() != 32 {
 			return Err(Error::<T>::InvalidAddressLen.into());
 		}
@@ -379,7 +378,7 @@ impl<T: Config> Pallet<T> {
 			(<frame_system::Pallet<T>>::block_number().saturated_into::<u32>() / 10 * 10 + 10)
 				.saturated_into(),
 		);
-		Ok(())
+		Ok(().into())
 	}
 
 	pub fn deposit_burn_token_event(
@@ -388,7 +387,7 @@ impl<T: Config> Pallet<T> {
 		source: EthereumAddress,
 		recipient: EthereumAddress,
 		amount: U256,
-	) -> DispatchResult {
+	) -> DispatchResultWithPostInfo {
 		let mapped_address = Self::mapped_token_address(backing, source).map_err(|e| {
 			log::debug!("mapped token address error {:?} ", e);
 			e
@@ -412,7 +411,7 @@ impl<T: Config> Pallet<T> {
 			(<frame_system::Pallet<T>>::block_number().saturated_into::<u32>() / 10 * 10 + 10)
 				.saturated_into(),
 		);
-		Ok(())
+		Ok(().into())
 	}
 
 	pub fn transact_mapping_factory(input: Vec<u8>) -> DispatchResult {

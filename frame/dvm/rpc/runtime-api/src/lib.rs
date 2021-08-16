@@ -18,7 +18,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
-use darwinia_support::evm::INTERNAL_CALLER;
+use darwinia_support::evm::{INTERNAL_CALLER, INTERNAL_TX_GAS_LIMIT};
 use ethereum::{Block as EthereumBlock, Log};
 use ethereum_types::Bloom;
 use sp_core::{H160, H256, U256};
@@ -65,12 +65,12 @@ impl DVMTransaction {
 	/// the source account is specified by INTERNAL_CALLER
 	/// gas_price is None means no need for gas fee
 	/// a default signature which will not be verified
-	pub fn new(nonce: U256, target: H160, input: Vec<u8>) -> Self {
+	pub fn new_internal_transaction(nonce: U256, target: H160, input: Vec<u8>) -> Self {
 		let transaction = ethereum::Transaction {
 			nonce,
 			// Not used, and will be overwritten by None later.
 			gas_price: U256::zero(),
-			gas_limit: U256::from(0x100000),
+			gas_limit: U256::from(INTERNAL_TX_GAS_LIMIT),
 			action: ethereum::TransactionAction::Call(target),
 			value: U256::zero(),
 			input,

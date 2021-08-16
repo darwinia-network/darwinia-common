@@ -62,10 +62,8 @@ use sp_runtime::{
 use sp_std::marker::PhantomData;
 use sp_std::prelude::*;
 // --- darwinia ---
-use darwinia_evm::{
-	runner::Runner, AccountBasic, BlockHashMapping, FeeCalculator, GasWeightMapping,
-};
-use darwinia_support::evm::INTERNAL_CALLER;
+use darwinia_evm::{AccountBasic, BlockHashMapping, FeeCalculator, GasWeightMapping, Runner};
+use darwinia_support::evm::{recover_signer, INTERNAL_CALLER, INTERNAL_TX_GAS_LIMIT};
 use dp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
 use dp_evm::CallOrCreateInfo;
 #[cfg(feature = "std")]
@@ -132,7 +130,7 @@ pub mod pallet {
 				let PreLog::Block(block) = log;
 
 				for transaction in block.transactions {
-					Self::do_transact(transaction).expect(
+					Self::rpc_transact(transaction).expect(
 						"pre-block transaction verification failed; the block cannot be built",
 					);
 				}
@@ -151,7 +149,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			ensure_none(origin)?;
 
-			Self::do_transact(transaction)
+			Self::rpc_transact(transaction)
 		}
 	}
 
@@ -170,7 +168,9 @@ pub mod pallet {
 		InvalidSignature,
 		/// Pre-log is present, therefore transact is not allowed.
 		PreLogExists,
-		/// Call failed
+		/// The internal transaction failed
+		FailedInternalTx,
+		// The internal call failed
 		InvalidCall,
 	}
 
@@ -180,6 +180,7 @@ pub mod pallet {
 
 		fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
 			if let Call::transact(transaction) = call {
+				// Check chain id correctly
 				if let Some(chain_id) = transaction.signature.chain_id() {
 					if chain_id != T::ChainId::get() {
 						return InvalidTransaction::Custom(
@@ -188,33 +189,31 @@ pub mod pallet {
 						.into();
 					}
 				}
-
-				let origin = Self::recover_signer(&transaction).ok_or_else(|| {
+				// Check signature correctly
+				let origin = recover_signer(&transaction).ok_or_else(|| {
 					InvalidTransaction::Custom(TransactionValidationError::InvalidSignature as u8)
 				})?;
-
+				// Check transaction gas limit correctly
 				if transaction.gas_limit >= T::BlockGasLimit::get() {
 					return InvalidTransaction::Custom(
 						TransactionValidationError::InvalidGasLimit as u8,
 					)
 					.into();
 				}
-
 				let account_data =
 					<T as darwinia_evm::Config>::RingAccountBasic::account_basic(&origin);
-
+				// Check sender's nonce correctly
 				if transaction.nonce < account_data.nonce {
 					return InvalidTransaction::Stale.into();
 				}
-
+				// Check sender's balance correctly
 				let fee = transaction.gas_price.saturating_mul(transaction.gas_limit);
 				let total_payment = transaction.value.saturating_add(fee);
 				if account_data.balance < total_payment {
 					return InvalidTransaction::Payment.into();
 				}
-
+				// Check transaction gas price correctly
 				let min_gas_price = T::FeeCalculator::min_gas_price();
-
 				if transaction.gas_price < min_gas_price {
 					return InvalidTransaction::Payment.into();
 				}
@@ -298,139 +297,52 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-	fn recover_signer(transaction: &ethereum::Transaction) -> Option<H160> {
-		let mut sig = [0u8; 65];
-		let mut msg = [0u8; 32];
-		sig[0..32].copy_from_slice(&transaction.signature.r()[..]);
-		sig[32..64].copy_from_slice(&transaction.signature.s()[..]);
-		sig[64] = transaction.signature.standard_v();
-		msg.copy_from_slice(&TransactionMessage::from(transaction.clone()).hash()[..]);
-
-		let pubkey = sp_io::crypto::secp256k1_ecdsa_recover(&sig, &msg).ok()?;
-		Some(H160::from(H256::from_slice(
-			Keccak256::digest(&pubkey).as_slice(),
-		)))
-	}
-
-	fn to_dvm_transaction(
-		transaction: ethereum::Transaction,
-	) -> Result<DVMTransaction, DispatchError> {
-		let source =
-			Self::recover_signer(&transaction).ok_or_else(|| Error::<T>::InvalidSignature)?;
-		Ok(DVMTransaction {
-			source,
-			gas_price: Some(transaction.gas_price),
-			tx: transaction,
-		})
-	}
-
-	fn store_block(post_log: bool, block_number: U256) {
-		let mut transactions = Vec::new();
-		let mut statuses = Vec::new();
-		let mut receipts = Vec::new();
-		let mut logs_bloom = Bloom::default();
-		for (transaction, status, receipt) in Pending::<T>::get() {
-			transactions.push(transaction);
-			statuses.push(status);
-			receipts.push(receipt.clone());
-			Self::logs_bloom(receipt.logs.clone(), &mut logs_bloom);
-		}
-
-		let ommers = Vec::<ethereum::Header>::new();
-		let partial_header = ethereum::PartialHeader {
-			parent_hash: Self::current_block_hash().unwrap_or_default(),
-			beneficiary: darwinia_evm::Pallet::<T>::find_author(),
-			// TODO: figure out if there's better way to get a sort-of-valid state root.
-			state_root: H256::default(),
-			receipts_root: H256::from_slice(
-				Keccak256::digest(&rlp::encode_list(&receipts)[..]).as_slice(),
-			), // TODO: check receipts hash.
-			logs_bloom,
-			difficulty: U256::zero(),
-			number: block_number,
-			gas_limit: T::BlockGasLimit::get(),
-			gas_used: receipts
-				.clone()
-				.into_iter()
-				.fold(U256::zero(), |acc, r| acc + r.used_gas),
-			timestamp: UniqueSaturatedInto::<u64>::unique_saturated_into(
-				<pallet_timestamp::Pallet<T>>::get(),
-			),
-			extra_data: Vec::new(),
-			mix_hash: H256::default(),
-			nonce: H64::default(),
-		};
-		let mut block = ethereum::Block::new(partial_header, transactions.clone(), ommers);
-		block.header.state_root = T::StateRoot::get();
-
-		CurrentBlock::<T>::put(block.clone());
-		CurrentReceipts::<T>::put(receipts.clone());
-		CurrentTransactionStatuses::<T>::put(statuses.clone());
-		BlockHash::<T>::insert(block_number, block.header.hash());
-
-		if post_log {
-			let digest = DigestItem::<T::Hash>::Consensus(
-				FRONTIER_ENGINE_ID,
-				PostLog::Hashes(dp_consensus::Hashes::from_block(block)).encode(),
-			);
-			<frame_system::Pallet<T>>::deposit_log(digest.into());
-		}
-	}
-
-	fn logs_bloom(logs: Vec<Log>, bloom: &mut Bloom) {
-		for log in logs {
-			bloom.accrue(BloomInput::Raw(&log.address[..]));
-			for topic in log.topics {
-				bloom.accrue(BloomInput::Raw(&topic[..]));
-			}
-		}
-	}
-
+	/// Execute transaction from pallet(internal transaction)
+	/// NOTE: The difference between the rpc transaction and the internal transaction is that
+	/// The internal transactions will catch and throw evm error comes from runner to caller.
 	pub fn internal_transact(target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo {
 		ensure!(
 			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
 			Error::<T>::PreLogExists,
 		);
+
 		let nonce =
 			<T as darwinia_evm::Config>::RingAccountBasic::account_basic(&INTERNAL_CALLER).nonce;
-		let transaction = DVMTransaction::new(nonce, target, input);
-
-		Self::raw_transact(transaction)
+		let transaction = DVMTransaction::new_internal_transaction(nonce, target, input);
+		Self::raw_transact(transaction).map(|(reason, used_gas)| match reason {
+			// Only when exit_reason is successful, return Ok(...)
+			ExitReason::Succeed(_) => Ok(PostDispatchInfo {
+				actual_weight: Some(T::GasWeightMapping::gas_to_weight(
+					used_gas.unique_saturated_into(),
+				)),
+				pays_fee: Pays::No,
+			}),
+			_ => {
+				log::error!("Executing internal transaction error happened");
+				Err(Error::<T>::FailedInternalTx.into())
+			}
+		})?
 	}
 
-	pub fn do_transact(transaction: ethereum::Transaction) -> DispatchResultWithPostInfo {
+	/// Execute transaction from EthApi(network transaction)
+	/// NOTE: For the rpc transaction, the execution will return ok(..) even when encounters error
+	/// from evm runner
+	pub fn rpc_transact(transaction: ethereum::Transaction) -> DispatchResultWithPostInfo {
 		ensure!(
 			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
 			Error::<T>::PreLogExists,
 		);
 		let transaction = Self::to_dvm_transaction(transaction)?;
-		Self::raw_transact(transaction)
+		Self::raw_transact(transaction).map(|(_, used_gas)| {
+			Ok(Some(T::GasWeightMapping::gas_to_weight(
+				used_gas.unique_saturated_into(),
+			))
+			.into())
+		})?
 	}
 
-	// TODO: the hard code for gas limit may cause some problem
-	// Please refer issue https://github.com/darwinia-network/darwinia-common/issues/706
-	pub fn do_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
-		let (_, _, info) = Self::execute(
-			INTERNAL_CALLER,
-			input.clone(),
-			U256::zero(),
-			U256::from(0x300000),
-			None,
-			None,
-			TransactionAction::Call(contract),
-			None,
-		)?;
-
-		match info {
-			CallOrCreateInfo::Call(info) => match info.exit_reason {
-				ExitReason::Succeed(_) => Ok(info.value),
-				_ => Err(Error::<T>::InvalidCall.into()),
-			},
-			_ => Err(Error::<T>::InvalidCall.into()),
-		}
-	}
-
-	fn raw_transact(transaction: DVMTransaction) -> DispatchResultWithPostInfo {
+	/// Execute DVMTransaction in evm runner and save the execution info in Pending
+	fn raw_transact(transaction: DVMTransaction) -> Result<(ExitReason, U256), DispatchError> {
 		let transaction_hash =
 			H256::from_slice(Keccak256::digest(&rlp::encode(&transaction.tx)).as_slice());
 		let transaction_index = Pending::<T>::get().len() as u32;
@@ -491,7 +403,7 @@ impl<T: Config> Pallet<T> {
 				ExitReason::Fatal(_) => H256::from_low_u64_le(0),
 			},
 			used_gas,
-			logs_bloom: status.clone().logs_bloom,
+			logs_bloom: status.logs_bloom,
 			logs: status.clone().logs,
 		};
 
@@ -501,15 +413,36 @@ impl<T: Config> Pallet<T> {
 			transaction.source,
 			contract_address.unwrap_or_default(),
 			transaction_hash,
-			reason,
+			reason.clone(),
 		));
-		Ok(PostDispatchInfo {
-			actual_weight: Some(T::GasWeightMapping::gas_to_weight(
-				used_gas.unique_saturated_into(),
-			)),
-			pays_fee: Pays::No,
-		})
-		.into()
+		Ok((reason, used_gas))
+	}
+
+	/// Pure read-only call to contract, the sender is INTERNAL_CALLER
+	/// NOTE: You should never use raw call for any non-read-only operation, be carefully.
+	pub fn read_only_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
+		sp_io::storage::start_transaction();
+		let (_, _, info) = Self::execute(
+			INTERNAL_CALLER,
+			input,
+			U256::zero(),
+			U256::from(INTERNAL_TX_GAS_LIMIT),
+			None,
+			None,
+			TransactionAction::Call(contract),
+			None,
+		)?;
+		sp_io::storage::rollback_transaction();
+		match info {
+			CallOrCreateInfo::Call(info) => match info.exit_reason {
+				ExitReason::Succeed(_) => Ok(info.value),
+				_ => {
+					log::error!("Executing internal transaction error happened");
+					Err(Error::<T>::FailedInternalTx.into())
+				}
+			},
+			_ => Err(Error::<T>::InvalidCall.into()),
+		}
 	}
 
 	/// Get the transaction status with given index.
@@ -547,7 +480,7 @@ impl<T: Config> Pallet<T> {
 				let res = T::Runner::call(
 					from,
 					target,
-					input.clone(),
+					input,
 					value,
 					gas_limit.low_u64(),
 					gas_price,
@@ -561,7 +494,7 @@ impl<T: Config> Pallet<T> {
 			ethereum::TransactionAction::Create => {
 				let res = T::Runner::create(
 					from,
-					input.clone(),
+					input,
 					value,
 					gas_limit.low_u64(),
 					gas_price,
@@ -571,6 +504,79 @@ impl<T: Config> Pallet<T> {
 				.map_err(Into::into)?;
 
 				Ok((None, Some(res.value), CallOrCreateInfo::Create(res)))
+			}
+		}
+	}
+
+	/// Transfer rpc transaction to dvm transaction
+	fn to_dvm_transaction(
+		transaction: ethereum::Transaction,
+	) -> Result<DVMTransaction, DispatchError> {
+		let source = recover_signer(&transaction).ok_or(Error::<T>::InvalidSignature)?;
+		Ok(DVMTransaction {
+			source,
+			gas_price: Some(transaction.gas_price),
+			tx: transaction,
+		})
+	}
+
+	/// Save ethereum block
+	fn store_block(post_log: bool, block_number: U256) {
+		let mut transactions = Vec::new();
+		let mut statuses = Vec::new();
+		let mut receipts = Vec::new();
+		let mut logs_bloom = Bloom::default();
+		for (transaction, status, receipt) in Pending::<T>::get() {
+			transactions.push(transaction);
+			statuses.push(status);
+			receipts.push(receipt.clone());
+			Self::logs_bloom(receipt.logs.clone(), &mut logs_bloom);
+		}
+
+		let ommers = Vec::<ethereum::Header>::new();
+		let partial_header = ethereum::PartialHeader {
+			parent_hash: Self::current_block_hash().unwrap_or_default(),
+			beneficiary: darwinia_evm::Pallet::<T>::find_author(),
+			state_root: T::StateRoot::get(),
+			receipts_root: H256::from_slice(
+				Keccak256::digest(&rlp::encode_list(&receipts)[..]).as_slice(),
+			), // TODO: check receipts hash.
+			logs_bloom,
+			difficulty: U256::zero(),
+			number: block_number,
+			gas_limit: T::BlockGasLimit::get(),
+			gas_used: receipts
+				.clone()
+				.into_iter()
+				.fold(U256::zero(), |acc, r| acc + r.used_gas),
+			timestamp: UniqueSaturatedInto::<u64>::unique_saturated_into(
+				<pallet_timestamp::Pallet<T>>::get(),
+			),
+			extra_data: Vec::new(),
+			mix_hash: H256::default(),
+			nonce: H64::default(),
+		};
+		let block = ethereum::Block::new(partial_header, transactions, ommers);
+
+		CurrentBlock::<T>::put(block.clone());
+		CurrentReceipts::<T>::put(receipts);
+		CurrentTransactionStatuses::<T>::put(statuses);
+		BlockHash::<T>::insert(block_number, block.header.hash());
+
+		if post_log {
+			let digest = DigestItem::<T::Hash>::Consensus(
+				FRONTIER_ENGINE_ID,
+				PostLog::Hashes(dp_consensus::Hashes::from_block(block)).encode(),
+			);
+			<frame_system::Pallet<T>>::deposit_log(digest);
+		}
+	}
+
+	fn logs_bloom(logs: Vec<Log>, bloom: &mut Bloom) {
+		for log in logs {
+			bloom.accrue(BloomInput::Raw(&log.address[..]));
+			for topic in log.topics {
+				bloom.accrue(BloomInput::Raw(&topic[..]));
 			}
 		}
 	}
@@ -594,12 +600,6 @@ impl Default for EthereumStorageSchema {
 	fn default() -> Self {
 		Self::Undefined
 	}
-}
-
-#[derive(Eq, PartialEq, Clone, sp_runtime::RuntimeDebug)]
-pub enum ReturnValue {
-	Bytes(Vec<u8>),
-	Hash(H160),
 }
 
 #[repr(u8)]
