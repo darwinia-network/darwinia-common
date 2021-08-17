@@ -32,11 +32,13 @@ pub mod pallet {
 	}
 	pub use types::*;
 
+	// --- crates.io ---
+	use ethereum_types::{Address, U256};
 	// --- substrate ---
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{Currency, Get},
-		PalletId,
+		transactional, PalletId,
 	};
 	use frame_system::pallet_prelude::*;
 	// --- darwinia ---
@@ -50,7 +52,38 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		#[pallet::weight(10000)]
+		#[transactional]
+		pub fn add_liquidity(
+			origin: OriginFor<T>,
+			token_a: Address,
+			token_b: Address,
+			amount_a_desired: U256,
+			amount_b_desired: U256,
+			amount_a_admin: U256,
+			amount_b_admin: U256,
+			address_to: Address,
+			deadline: U256,
+		) -> DispatchResultWithPostInfo {
+			Ok(().into())
+		}
+
+		#[pallet::weight(10000)]
+		#[transactional]
+		pub fn remove_liquidity(
+			origin: OriginFor<T>,
+			token_a: Address,
+			token_b: Address,
+			liquidity: U256,
+			amount_a_admin: U256,
+			amount_b_admin: U256,
+			to: Address,
+			deadline: U256,
+		) -> DispatchResultWithPostInfo {
+			Ok(().into())
+		}
+	}
 }
 pub use pallet::*;
 
@@ -61,6 +94,5 @@ pub mod migration {
 			Ok(())
 		}
 	}
-
-	pub fn migrate() {}
 }
+pub fn migrate() {}
