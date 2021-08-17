@@ -137,3 +137,6 @@ pub use s2s_issuing::*;
 
 pub mod bridge_bsc;
 pub use bridge_bsc::*;
+
+pub mod subswap;
+pub use subswap::*;

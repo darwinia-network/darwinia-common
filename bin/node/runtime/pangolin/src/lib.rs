@@ -401,6 +401,8 @@ frame_support::construct_runtime! {
 		Substrate2SubstrateIssuing: darwinia_s2s_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
 
 		BSC: darwinia_bridge_bsc::{Pallet, Call, Storage, Config} = 46,
+
+		SubSwap: darwinia_subswap::{Pallet, Call} = 50,
 	}
 }
 

@@ -1998,6 +1998,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-subswap"
+version = "2.6.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+]
+
+[[package]]
 name = "darwinia-support"
 version = "2.6.0"
 dependencies = [
@@ -2628,7 +2637,7 @@ dependencies = [
 [[package]]
 name = "ethabi"
 version = "13.0.0"
-source = "git+https://github.com/darwinia-network/ethabi.git?tag=v13.0.0-no-std#baacf174d5c2f12122c4ee3fe31506fb52069983"
+source = "git+https://github.com/darwinia-network/ethabi?tag=v13.0.0-no-std#baacf174d5c2f12122c4ee3fe31506fb52069983"
 dependencies = [
  "anyhow",
  "ethereum-types",
@@ -6041,6 +6050,7 @@ dependencies = [
  "darwinia-s2s-issuing",
  "darwinia-staking",
  "darwinia-staking-rpc-runtime-api",
+ "darwinia-subswap",
  "darwinia-support",
  "darwinia-treasury",
  "darwinia-tron-backing",

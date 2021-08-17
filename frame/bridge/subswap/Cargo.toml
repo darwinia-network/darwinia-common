@@ -1,0 +1,32 @@
+[package]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+description = "Interact with Sub Swap"
+edition     = "2018"
+homepage    = "https://darwinia.network/"
+license     = "GPL-3.0"
+name        = "darwinia-subswap"
+readme      = "README.md"
+repository  = "https://github.com/darwinia-network/darwinia-common/"
+version     = "2.6.0"
+
+[dependencies]
+# crates.io
+codec      = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
+# paritytech
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+
+[features]
+default = ["std"]
+
+std = [
+	# crates.io
+	"codec/std",
+	# paritytech
+	"frame-support/std",
+	"frame-system/std",
+]
+
+try-runtime = [
+	"frame-support/try-runtime",
+]
