@@ -193,6 +193,7 @@ impl Default for ExtBuilder {
 	}
 }
 
+// TODO https://github.com/darwinia-network/darwinia-common/issues/754
 pub struct UnusedRelayerGame;
 impl RelayerGameProtocol for UnusedRelayerGame {
 	type Relayer = AccountId;
@@ -200,10 +201,11 @@ impl RelayerGameProtocol for UnusedRelayerGame {
 	type RelayHeaderParcel = EthereumRelayHeaderParcel;
 	type RelayProofs = EthereumRelayProofs;
 
-	fn get_proposed_relay_header_parcels(
+	fn get_affirmed_relay_header_parcels(
 		_: &RelayAffirmationId<Self::RelayHeaderId>,
 	) -> Option<Vec<Self::RelayHeaderParcel>> {
-		unimplemented!()
+		// This is mocked for test `pre_verify_should_work`
+		Some(Default::default())
 	}
 	fn best_confirmed_header_id_of(_: &Self::RelayHeaderId) -> Self::RelayHeaderId {
 		BEST_CONFIRMED_BLOCK_NUMBER.with(|v| *v.borrow())
