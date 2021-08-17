@@ -204,6 +204,7 @@ impl RelayerGameProtocol for UnusedRelayerGame {
 	fn get_affirmed_relay_header_parcels(
 		_: &RelayAffirmationId<Self::RelayHeaderId>,
 	) -> Option<Vec<Self::RelayHeaderParcel>> {
+		// This is mocked for test `pre_verify_should_work`
 		Some(Default::default())
 	}
 	fn best_confirmed_header_id_of(_: &Self::RelayHeaderId) -> Self::RelayHeaderId {
