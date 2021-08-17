@@ -18,15 +18,15 @@ impl-trait-for-tuples = { version = "0.2.1" }
 num-traits            = { version = "0.2.14", default-features = false }
 sha3                  = { version = "0.9.1", default-features = false }
 # darwinia-network
-ethabi              = { default-features = false, git = "https://github.com/darwinia-network/ethabi.git", tag = "v13.0.0-no-std" }
+ethabi              = { default-features = false, git = "https://github.com/darwinia-network/ethabi", tag = "v13.0.0-no-std" }
 ethereum-primitives = { default-features = false, path = "../../primitives/ethereum" }
 # paritytech
 bp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "main" }
-sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "main" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "main" }
-sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "main" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "main" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [features]
 default = ["std"]
