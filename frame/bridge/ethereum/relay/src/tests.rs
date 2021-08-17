@@ -17,9 +17,14 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- substrate ---
-use frame_support::assert_ok;
+use frame_support::{assert_err, assert_ok};
 // --- darwinia ---
-use crate::{mock::*, test_data::*, *};
+use crate::{
+	self as darwinia_ethereum_relay,
+	mock::{Call, *},
+	test_data::*,
+	*,
+};
 
 #[test]
 fn store_relay_header_parcel_should_work() {
@@ -222,4 +227,43 @@ fn mmr() {
 		mmr_proof,
 		vec![(102, header_hash)]
 	));
+}
+
+#[test]
+fn pre_verify_should_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		assert_err!(
+			<CheckEthereumRelayHeaderParcel<Test> as SignedExtension>::pre_dispatch(
+				CheckEthereumRelayHeaderParcel(Default::default()),
+				&Default::default(),
+				&Call::EthereumRelay(darwinia_ethereum_relay::Call::affirm(
+					EthereumRelayHeaderParcel {
+						header: EthereumHeader {
+							parent_hash: Default::default(),
+							timestamp: Default::default(),
+							number: Default::default(),
+							author: Default::default(),
+							transactions_root: Default::default(),
+							uncles_hash: Default::default(),
+							extra_data: Default::default(),
+							state_root: Default::default(),
+							receipts_root: Default::default(),
+							log_bloom: Default::default(),
+							gas_used: Default::default(),
+							gas_limit: Default::default(),
+							difficulty: Default::default(),
+							seal: Default::default(),
+							base_fee_per_gas: Default::default(),
+							hash: Default::default(),
+						},
+						parent_mmr_root: Default::default(),
+					},
+					None,
+				)),
+				&Default::default(),
+				Default::default(),
+			),
+			InvalidTransaction::Custom(<Error<Test>>::AffirmationExisted.as_u8())
+		);
+	});
 }
