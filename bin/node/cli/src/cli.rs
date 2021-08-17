@@ -44,7 +44,6 @@ pub struct RunCmd {
 	#[structopt(flatten)]
 	pub base: sc_cli::RunCmd,
 
-	// TODO: darwinia-cli
 	/// Disable the authority discovery module on validator or sentry nodes.
 	///
 	/// Enabled by default on validator and sentry nodes. Always disabled on non
@@ -62,13 +61,9 @@ pub struct RunCmd {
 	#[structopt(long = "disable-authority-discovery")]
 	pub authority_discovery_disabled: bool,
 
-	/// Maximum number of logs in a query.
-	#[structopt(long, default_value = "10000")]
-	pub max_past_logs: u32,
-
-	/// The dynamic-fee pallet target gas price set by block author
-	#[structopt(long, default_value = "1000000000")]
-	pub target_gas_price: u64,
+	#[allow(missing_docs)]
+	#[structopt(flatten)]
+	pub dvm_args: DvmArgs,
 }
 
 /// Possible subcommands of the main binary.
@@ -116,4 +111,15 @@ pub enum Subcommand {
 	/// testing.
 	#[cfg(feature = "try-runtime")]
 	TryRuntime(try_runtime_cli::TryRuntimeCmd),
+}
+
+#[derive(Debug, StructOpt)]
+pub struct DvmArgs {
+	/// Maximum number of logs in a query.
+	#[structopt(long, default_value = "10000")]
+	pub max_past_logs: u32,
+
+	/// The dynamic-fee pallet target gas price set by block author
+	#[structopt(long, default_value = "1000000000")]
+	pub target_gas_price: u64,
 }

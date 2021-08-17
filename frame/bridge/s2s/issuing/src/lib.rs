@@ -36,7 +36,7 @@ use frame_support::{
 	ensure,
 	pallet_prelude::*,
 	traits::{Currency, ExistenceRequirement::*, Get},
-	PalletId,
+	transactional, PalletId,
 };
 use frame_system::ensure_signed;
 use sp_runtime::{traits::Convert, DispatchError, SaturatedConversion};
@@ -102,7 +102,7 @@ pub mod pallet {
 		#[pallet::weight(
 			<T as Config>::WeightInfo::asset_burn_event_handle()
 		)]
-		#[frame_support::transactional]
+		#[transactional]
 		pub fn asset_burn_event_handle(
 			origin: OriginFor<T>,
 			input: Vec<u8>,
@@ -147,6 +147,7 @@ pub mod pallet {
 			<T as Config>::WeightInfo::register_from_remote()
 			.saturating_add(2_000_000 * 3)
 		)]
+		#[transactional]
 		pub fn register_from_remote(
 			origin: OriginFor<T>,
 			token: Token,
@@ -195,6 +196,7 @@ pub mod pallet {
 			<T as Config>::WeightInfo::issue_from_remote()
 			.saturating_add(2_000_000 * 2)
 		)]
+		#[transactional]
 		pub fn issue_from_remote(
 			origin: OriginFor<T>,
 			token: Token,
@@ -336,22 +338,22 @@ impl<T: Config> Pallet<T> {
 		let factory_address = <MappingFactoryAddress<T>>::get();
 		let bytes = mtf::encode_mapping_token(backing, source)
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
-		let mapped_address = dvm_ethereum::Pallet::<T>::do_call(factory_address, bytes)
-			.map_err(|e| -> &'static str { e.into() })?;
+		let mapped_address = dvm_ethereum::Pallet::<T>::read_only_call(factory_address, bytes)?;
 		if mapped_address.len() != 32 {
 			return Err(Error::<T>::InvalidAddressLen.into());
 		}
 		Ok(H160::from_slice(&mapped_address.as_slice()[12..]))
 	}
 
-	/// Make a call to mapping factory contract
+	/// Make a transaction call to mapping token factory sol contract
+	///
+	/// Note: this a internal transaction
 	pub fn transact_mapping_factory(input: Vec<u8>) -> DispatchResultWithPostInfo {
 		let contract = MappingFactoryAddress::<T>::get();
-		dvm_ethereum::Pallet::<T>::do_call(contract, input)
-			.map_err(|_| Error::<T>::MappingFactoryCallFailed)?;
-		Ok(().into())
+		dvm_ethereum::Pallet::<T>::internal_transact(contract, input)
 	}
 
+	/// Do decimals between DVM balance and RING balance
 	pub fn transform_dvm_balance(value: U256) -> RingBalance<T> {
 		(value / POW_9).low_u128().saturated_into()
 	}

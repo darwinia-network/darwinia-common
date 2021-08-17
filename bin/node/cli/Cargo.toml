@@ -8,7 +8,7 @@ license     = "GPL-3.0"
 name        = "drml"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.5.1"
+version     = "2.6.0"
 
 # TODO: Consider rename this repo to darwinia-runtime-module-library
 [[bin]]
@@ -31,7 +31,6 @@ bsc-primitives                      = { path = "../../../primitives/chain-bsc" }
 darwinia-balances-rpc               = { path = "../../../frame/balances/rpc" }
 darwinia-balances-rpc-runtime-api   = { path = "../../../frame/balances/rpc/runtime-api" }
 darwinia-claims                     = { path = "../../../frame/claims" }
-darwinia-cli                        = { optional = true, path = "../../../client/cli" }
 darwinia-ethereum-relay             = { path = "../../../frame/bridge/ethereum/relay" }
 darwinia-evm                        = { path = "../../../frame/evm" }
 darwinia-header-mmr-rpc             = { path = "../../../frame/header-mmr/rpc" }
@@ -113,7 +112,6 @@ default = [
 
 cli = [
 	"tokio",
-	"darwinia-cli",
 	"sc-cli",
 	"sc-finality-grandpa-warp-sync",
 	"sc-service",

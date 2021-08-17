@@ -24,7 +24,6 @@
 /bin/node/primitive/ @AurevoirXavier
 /bin/node/runtime/pangolin/ @AsceticBear @AurevoirXavier
 
-/client/cli/ @AurevoirXavier
 /client/dvm/ @AsceticBear
 
 /frame/balances/ @AurevoirXavier @HackFisher
@@ -34,7 +33,6 @@
 /frame/bridge/crab/issuing/ @AurevoirXavier @HackFisher
 /frame/bridge/ethereum/backing/ @AurevoirXavier @HackFisher
 /frame/bridge/ethereum/issuing/ @xiaoch05
-/frame/bridge/ethereum/linear-relay/ @AurevoirXavier @HackFisher
 /frame/bridge/ethereum/relay/ @AurevoirXavier @HackFisher
 /frame/bridge/relay-authorities/ @AurevoirXavier
 /frame/bridge/relayer-game/ @AurevoirXavier
