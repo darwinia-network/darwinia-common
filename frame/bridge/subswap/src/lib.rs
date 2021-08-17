@@ -33,7 +33,7 @@ pub mod pallet {
 	pub use types::*;
 
 	// --- crates.io ---
-	use ethereum_types::{Address, U256};
+	use ethereum_primitives::{EthereumAddress, U256};
 	// --- substrate ---
 	use frame_support::{
 		pallet_prelude::*,
@@ -57,13 +57,13 @@ pub mod pallet {
 		#[transactional]
 		pub fn add_liquidity(
 			origin: OriginFor<T>,
-			token_a: Address,
-			token_b: Address,
+			token_a: EthereumAddress,
+			token_b: EthereumAddress,
 			amount_a_desired: U256,
 			amount_b_desired: U256,
 			amount_a_admin: U256,
 			amount_b_admin: U256,
-			address_to: Address,
+			address_to: EthereumAddress,
 			deadline: U256,
 		) -> DispatchResultWithPostInfo {
 			Ok(().into())
@@ -73,12 +73,12 @@ pub mod pallet {
 		#[transactional]
 		pub fn remove_liquidity(
 			origin: OriginFor<T>,
-			token_a: Address,
-			token_b: Address,
+			token_a: EthereumAddress,
+			token_b: EthereumAddress,
 			liquidity: U256,
 			amount_a_admin: U256,
 			amount_b_admin: U256,
-			to: Address,
+			to: EthereumAddress,
 			deadline: U256,
 		) -> DispatchResultWithPostInfo {
 			Ok(().into())

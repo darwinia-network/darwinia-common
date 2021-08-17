@@ -2001,7 +2001,7 @@ dependencies = [
 name = "darwinia-subswap"
 version = "2.6.0"
 dependencies = [
- "ethereum-types",
+ "ethereum-primitives",
  "frame-support",
  "frame-system",
  "parity-scale-codec",

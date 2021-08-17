@@ -12,7 +12,8 @@ version     = "2.6.0"
 [dependencies]
 # crates.io
 codec          = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
-ethereum-types = { version = "0.11.0", default-features = false }
+# # darwinia-network
+ethereum-primitives       = { default-features = false, path = "../../../primitives/ethereum" }
 # paritytech
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
@@ -23,7 +24,7 @@ default = ["std"]
 std = [
 	# crates.io
 	"codec/std",
-	"ethereum-types/std",
+	"ethereum-primitives/std",
 	# paritytech
 	"frame-support/std",
 	"frame-system/std",
