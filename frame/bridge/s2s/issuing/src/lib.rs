@@ -47,7 +47,7 @@ use darwinia_evm::AddressMapping;
 use darwinia_support::{
 	balance::*,
 	evm::POW_9,
-	s2s::{source_root_converted_id, RelayMessageCaller, ToEthAddress},
+	s2s::{ensure_source_root, RelayMessageCaller, ToEthAddress},
 	PalletDigest,
 };
 use dp_asset::{
@@ -153,7 +153,12 @@ pub mod pallet {
 			token: Token,
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
-			let backing = Self::ensure_source_root(&user)?;
+			ensure_source_root::<T::AccountId, T::BridgedAccountIdConverter>(
+				T::BridgedChainId::get(),
+				&user,
+			)?;
+
+			let backing = T::ToEthAddressT::into_ethereum_id(&user);
 			let (token_type, token_info) = token
 				.token_info()
 				.map_err(|_| Error::<T>::InvalidTokenType)?;
@@ -206,8 +211,12 @@ pub mod pallet {
 			// the s2s message relay has been verified that the message comes from the backing chain with the
 			// chainID and backing sender address.
 			// here only we need is to check the sender is root
-			let backing = Self::ensure_source_root(&user)?;
+			ensure_source_root::<T::AccountId, T::BridgedAccountIdConverter>(
+				T::BridgedChainId::get(),
+				&user,
+			)?;
 
+			let backing = T::ToEthAddressT::into_ethereum_id(&user);
 			let (_, token_info) = token
 				.token_info()
 				.map_err(|_| Error::<T>::InvalidTokenType)?;
@@ -388,14 +397,6 @@ impl<T: Config> Pallet<T> {
 			burn_info.fee,
 		));
 		Ok(())
-	}
-
-	fn ensure_source_root(account: &T::AccountId) -> Result<H160, DispatchError> {
-		let source_root = source_root_converted_id::<T::AccountId, T::BridgedAccountIdConverter>(
-			T::BridgedChainId::get(),
-		);
-		ensure!(account == &source_root, Error::<T>::InvalidOrigin);
-		Ok(T::ToEthAddressT::into_ethereum_id(account))
 	}
 }
 
