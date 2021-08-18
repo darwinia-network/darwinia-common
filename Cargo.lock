@@ -2018,23 +2018,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-treasury"
-version = "2.6.0"
-dependencies = [
- "darwinia-balances",
- "darwinia-support",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "sp-storage",
-]
-
-[[package]]
 name = "darwinia-tron-backing"
 version = "2.6.0"
 dependencies = [
@@ -6071,7 +6054,6 @@ dependencies = [
  "darwinia-staking",
  "darwinia-staking-rpc-runtime-api",
  "darwinia-support",
- "darwinia-treasury",
  "darwinia-tron-backing",
  "darwinia-vesting",
  "dp-asset",

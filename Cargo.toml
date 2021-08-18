@@ -48,7 +48,6 @@ members = [
 	"frame/staking/rpc",
 	"frame/staking/rpc/runtime-api",
 	"frame/support",
-	"frame/treasury",
 	"frame/vesting",
 	"primitives/asset",
 	"primitives/chain-bsc",

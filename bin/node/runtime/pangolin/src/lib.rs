@@ -349,7 +349,7 @@ frame_support::construct_runtime! {
 		TechnicalCommittee: pallet_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Config<T>, Event<T>} = 19,
 		PhragmenElection: darwinia_elections_phragmen::{Pallet, Call, Storage, Config<T>, Event<T>} = 20,
 		TechnicalMembership: pallet_membership::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>} = 21,
-		Treasury: darwinia_treasury::{Pallet, Call, Storage, Event<T>} = 22,
+		// Old Treasury = 22,
 
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 23,
 
