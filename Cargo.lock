@@ -1706,14 +1706,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-evm-precompile-empty"
-version = "2.6.0"
-dependencies = [
- "dp-evm",
- "evm 0.27.0",
-]
-
-[[package]]
 name = "darwinia-evm-precompile-encoder"
 version = "2.6.0"
 dependencies = [

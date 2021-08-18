@@ -322,16 +322,19 @@ pub fn pangolin_build_spec_config() -> PangolinChainSpec {
 			pallet_im_online: Default::default(),
 			pallet_authority_discovery: Default::default(),
 			darwinia_democracy: Default::default(),
-			pallet_collective_Instance1: pangolin_runtime::CouncilConfig {
-				phantom: PhantomData::<pangolin_runtime::CouncilCollective>,
+			pallet_collective_Instance1: Default::default(),
+			pallet_collective_Instance2: Default::default(),
+			darwinia_elections_phragmen: pangolin_runtime::PhragmenElectionConfig {
+				members: collective_members
+					.iter()
+					.cloned()
+					.map(|a| (a, A_FEW_COINS))
+					.collect(),
+			},
+			pallet_membership_Instance1: pangolin_runtime::TechnicalMembershipConfig {
+				phantom: PhantomData::<pangolin_runtime::TechnicalMembershipInstance>,
 				members: collective_members.clone(),
 			},
-			pallet_collective_Instance2: pangolin_runtime::TechnicalCommitteeConfig {
-				phantom: PhantomData::<pangolin_runtime::TechnicalCollective>,
-				members: collective_members
-			},
-			darwinia_elections_phragmen: Default::default(),
-			pallet_membership_Instance1: Default::default(),
 			pallet_treasury: Default::default(),
 			pallet_treasury_Instance2: Default::default(),
 			darwinia_claims: Default::default(),
