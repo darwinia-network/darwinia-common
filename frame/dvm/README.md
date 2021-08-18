@@ -1,14 +1,14 @@
 # DVM
 
-Darwinia Network provides smart contract solutions based on DVM(Darwinia Virtual Machine), which is compatible with the Ethereum virtual machine paradigm at the low level. Therefore, It allows you to run unmodified Ethereum dapps.
+Darwinia Network provides smart contract solutions based on DVM(Darwinia Virtual Machine), which is compatible with the Ethereum virtual machine paradigm at a low level. Therefore, It allows you to run unmodified Ethereum DApps.
 
 ## Pallets
 
 Those pallets are part of the DVM system:
 
 - `darwinia-dvm`: Ethereum block handling.
-- `darwinia-evm`: Evm execution handling.
-- `dvm-dynamic-fee`: Extends the fee handling logic so that it can be changed within the runtime.
+- `darwinia-evm`: EVM execution handling.
+- `dvm-dynamic-fee`: Extending the fee handling, adjust the fee dynamically on-chain.
 
 ## EVM Pallet Precompiles
 
@@ -21,4 +21,4 @@ Those pallets are part of the DVM system:
 - `darwinia-evm-precompile-sha3fips`: Standard SHA3 precompile.
 - `darwinia-evm-precompile-simple`: Four basic precompiles in Ethereum EVMs.
 - `darwinia-evm-precompile-encoder`: Encode substrate dispatch call.
-- `darwinia-evm-precompile-transfer`: Transfer asset from dvm account to substrate account.
+- `darwinia-evm-precompile-transfer`: Transfer asset from DVM account to substrate account.
