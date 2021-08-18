@@ -899,28 +899,33 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 	}
 }
 
+fn migrate_treasury() {
+	// --- paritytech ---
+	use frame_support::migration;
+
+	const MODULE: &[u8] = b"DarwiniaTreasury";
+
+	migration::remove_storage_prefix(MODULE, b"BountyCount", &[]);
+	log::info!("`BountyCount` Removed");
+	migration::remove_storage_prefix(MODULE, b"Bounties", &[]);
+	log::info!("`Bounties` Removed");
+	migration::remove_storage_prefix(MODULE, b"BountyDescriptions", &[]);
+	log::info!("`BountyDescriptions` Removed");
+	migration::remove_storage_prefix(MODULE, b"BountyApprovals", &[]);
+	log::info!("`BountyApprovals` Removed");
+}
+
 pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
-		// <--- Hack for local test
-		use frame_support::traits::Currency;
-		let _ = Ring::deposit_creating(&BridgeMillauMessages::relayer_fund_account_id(), 1 << 50);
-		// --->
+		migrate_treasury();
 
 		Ok(())
 	}
 
 	fn on_runtime_upgrade() -> Weight {
-		// <--- Hack for local test
-		// use frame_support::traits::Currency;
-		// let _ = Ring::deposit_creating(&BridgeMillauMessages::relayer_fund_account_id(), 1 << 50);
-		// --->
-
-		// --- paritytech ---
-		use frame_support::migration;
-
-		migration::move_pallet(b"DarwiniaEthereumBacking", b"EthereumBacking");
+		migrate_treasury();
 
 		RuntimeBlockWeights::get().max_block
 	}
