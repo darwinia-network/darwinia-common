@@ -911,15 +911,6 @@ fn migrate_treasury() {
 	const OLD_PREFIX: &[u8] = b"DarwiniaTreasury";
 	const NEW_PREFIX: &[u8] = b"Treasury";
 
-	migration::remove_storage_prefix(OLD_PREFIX, b"BountyCount", &[]);
-	log::info!("`BountyCount` Removed");
-	migration::remove_storage_prefix(OLD_PREFIX, b"Bounties", &[]);
-	log::info!("`Bounties` Removed");
-	migration::remove_storage_prefix(OLD_PREFIX, b"BountyDescriptions", &[]);
-	log::info!("`BountyDescriptions` Removed");
-	migration::remove_storage_prefix(OLD_PREFIX, b"BountyApprovals", &[]);
-	log::info!("`BountyApprovals` Removed");
-
 	migration::move_storage_from_pallet(b"ProposalCount", OLD_PREFIX, NEW_PREFIX);
 	log::info!("`ProposalCount` Migrated");
 	migration::move_storage_from_pallet(b"Approvals", OLD_PREFIX, NEW_PREFIX);
@@ -970,7 +961,7 @@ fn migrate_treasury() {
 				bond: old_proposal.kton_bond,
 			};
 
-			migration::put_storage_value(NEW_PREFIX, b"Proposals", &hash, new_proposal);
+			migration::put_storage_value(b"Instance2Treasury", b"Proposals", &hash, new_proposal);
 		}
 	}
 	migration::remove_storage_prefix(OLD_PREFIX, b"Proposals", &[]);
@@ -1013,10 +1004,19 @@ fn migrate_treasury() {
 		};
 		let hash = Twox64Concat::hash(&hash.encode());
 
-		migration::put_storage_value(b"Tips", b"Tips", &hash, new_tip);
+		migration::put_storage_value(NEW_PREFIX, b"Tips", &hash, new_tip);
 	}
 	migration::remove_storage_prefix(OLD_PREFIX, b"Tips", &[]);
 	log::info!("`Tips` Migrated");
+
+	migration::move_storage_from_pallet(b"BountyCount", OLD_PREFIX, NEW_PREFIX);
+	log::info!("`BountyCount` Migrated");
+	migration::move_storage_from_pallet(b"Bounties", OLD_PREFIX, NEW_PREFIX);
+	log::info!("`Bounties` Migrated");
+	migration::move_storage_from_pallet(b"BountyDescriptions", OLD_PREFIX, NEW_PREFIX);
+	log::info!("`BountyDescriptions` Migrated");
+	migration::move_storage_from_pallet(b"BountyApprovals", OLD_PREFIX, NEW_PREFIX);
+	log::info!("`BountyApprovals` Migrated");
 }
 
 pub struct CustomOnRuntimeUpgrade;
