@@ -901,18 +901,111 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 
 fn migrate_treasury() {
 	// --- paritytech ---
-	use frame_support::migration;
+	use frame_support::{
+		migration::{self, StorageKeyIterator},
+		Twox64Concat,
+	};
 
-	const MODULE: &[u8] = b"DarwiniaTreasury";
+	type ProposalIndex = u32;
 
-	migration::remove_storage_prefix(MODULE, b"BountyCount", &[]);
+	const OLD_PREFIX: &[u8] = b"DarwiniaTreasury";
+	const NEW_PREFIX: &[u8] = b"Instance1Treasury";
+
+	migration::remove_storage_prefix(OLD_PREFIX, b"BountyCount", &[]);
 	log::info!("`BountyCount` Removed");
-	migration::remove_storage_prefix(MODULE, b"Bounties", &[]);
+	migration::remove_storage_prefix(OLD_PREFIX, b"Bounties", &[]);
 	log::info!("`Bounties` Removed");
-	migration::remove_storage_prefix(MODULE, b"BountyDescriptions", &[]);
+	migration::remove_storage_prefix(OLD_PREFIX, b"BountyDescriptions", &[]);
 	log::info!("`BountyDescriptions` Removed");
-	migration::remove_storage_prefix(MODULE, b"BountyApprovals", &[]);
+	migration::remove_storage_prefix(OLD_PREFIX, b"BountyApprovals", &[]);
 	log::info!("`BountyApprovals` Removed");
+
+	migration::move_storage_from_pallet(b"ProposalCount", OLD_PREFIX, NEW_PREFIX);
+	log::info!("`ProposalCount` Migrated");
+	migration::move_storage_from_pallet(b"Approvals", OLD_PREFIX, NEW_PREFIX);
+	log::info!("`Approvals` Migrated");
+
+	#[derive(Encode, Decode)]
+	struct OldProposal {
+		proposer: AccountId,
+		beneficiary: AccountId,
+		ring_value: Balance,
+		kton_value: Balance,
+		ring_bond: Balance,
+		kton_bond: Balance,
+	}
+	#[derive(Encode, Decode)]
+	struct Proposal {
+		proposer: AccountId,
+		value: Balance,
+		beneficiary: AccountId,
+		bond: Balance,
+	}
+	for (index, old_proposal) in
+		StorageKeyIterator::<ProposalIndex, OldProposal, Twox64Concat>::new(
+			OLD_PREFIX,
+			b"Proposals",
+		)
+		.drain()
+	{
+		if old_proposal.ring_value != 0 {
+			let new_proposal = Proposal {
+				proposer: old_proposal.proposer.clone(),
+				value: old_proposal.ring_value,
+				beneficiary: old_proposal.beneficiary.clone(),
+				bond: old_proposal.ring_bond,
+			};
+		}
+		if old_proposal.kton_value != 0 {
+			let new_proposal = Proposal {
+				proposer: old_proposal.proposer,
+				value: old_proposal.kton_value,
+				beneficiary: old_proposal.beneficiary,
+				bond: old_proposal.kton_bond,
+			};
+		}
+	}
+	migration::remove_storage_prefix(OLD_PREFIX, b"Proposals", &[]);
+	log::info!("`Proposals` Migrated");
+
+	#[derive(Encode, Decode)]
+	struct OldTip {
+		reason: Hash,
+		who: AccountId,
+		finder: Option<(AccountId, Balance)>,
+		closes: Option<BlockNumber>,
+		tips: Vec<(AccountId, Balance)>,
+	}
+	#[derive(Encode, Decode)]
+	struct OpenTip {
+		reason: Hash,
+		who: AccountId,
+		finder: AccountId,
+		deposit: Balance,
+		closes: Option<BlockNumber>,
+		tips: Vec<(AccountId, Balance)>,
+		finders_fee: bool,
+	}
+	for (hash, old_tip) in
+		StorageKeyIterator::<Hash, OldTip, Twox64Concat>::new(OLD_PREFIX, b"Tips").drain()
+	{
+		let (finder, deposit, finders_fee) = if let Some((finder, deposit)) = old_tip.finder {
+			(finder, deposit, true)
+		} else {
+			(AccountId::default(), 0, false)
+		};
+		let new_tip = OpenTip {
+			reason: old_tip.reason,
+			who: old_tip.who,
+			finder,
+			deposit,
+			closes: old_tip.closes,
+			tips: old_tip.tips,
+			finders_fee,
+		};
+	}
+	migration::remove_storage_prefix(OLD_PREFIX, b"Tips", &[]);
+	log::info!("`Tips` Migrated");
 }
 
 pub struct CustomOnRuntimeUpgrade;

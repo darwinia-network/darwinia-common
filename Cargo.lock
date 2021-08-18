@@ -5929,6 +5929,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-tips"
+version = "3.0.0"
+source = "git+https://github.com/darwinia-network/substrate?branch=main#1d7f6e12c651d776fc0dc1adefd007bb60f60b63"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-treasury",
+ "parity-scale-codec",
+ "serde",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-transaction-payment"
 version = "3.0.0"
 source = "git+https://github.com/darwinia-network/substrate?branch=main#1d7f6e12c651d776fc0dc1adefd007bb60f60b63"
@@ -5970,6 +5984,21 @@ dependencies = [
  "parity-scale-codec",
  "sp-api",
  "sp-runtime",
+]
+
+[[package]]
+name = "pallet-treasury"
+version = "3.0.0"
+source = "git+https://github.com/darwinia-network/substrate?branch=main#1d7f6e12c651d776fc0dc1adefd007bb60f60b63"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "impl-trait-for-tuples",
+ "pallet-balances",
+ "parity-scale-codec",
+ "serde",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -6084,8 +6113,10 @@ dependencies = [
  "pallet-society",
  "pallet-sudo",
  "pallet-timestamp",
+ "pallet-tips",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
+ "pallet-treasury",
  "pallet-utility",
  "pangolin-bridge-primitives",
  "pangolin-constants",

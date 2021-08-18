@@ -92,8 +92,10 @@ pallet-session                             = { default-features = false, git = "
 pallet-society                             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-sudo                                = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-timestamp                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+pallet-tips                                = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-transaction-payment                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-transaction-payment-rpc-runtime-api = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+pallet-treasury                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-utility                             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-api                                     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-application-crypto                      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
@@ -198,8 +200,10 @@ std = [
 	"pallet-society/std",
 	"pallet-sudo/std",
 	"pallet-timestamp/std",
+	"pallet-tips/std",
 	"pallet-transaction-payment/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
+	"pallet-treasury/std",
 	"pallet-utility/std",
 	"sp-api/std",
 	"sp-application-crypto/std",
