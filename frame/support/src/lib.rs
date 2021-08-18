@@ -33,8 +33,9 @@ pub mod balance {
 pub mod evm {
 	// --- crates.io ---
 	use ethereum::TransactionMessage;
-	use ethereum_primitives::{H160, H256};
 	use sha3::{Digest, Keccak256};
+	// --- darwinia-network ---
+	use ethereum_primitives::{H160, H256};
 
 	pub const POW_9: u32 = 1_000_000_000;
 	pub const INTERNAL_CALLER: H160 = H160::zero();
@@ -62,6 +63,7 @@ pub mod s2s {
 	// --- crates.io ---
 	use codec::Encode;
 	use ethabi::{encode, Token};
+	// --- darwinia-network ---
 	use ethereum_primitives::{H160, H256};
 	// --- paritytech ---
 	use bp_runtime::{derive_account_id, ChainId, SourceAccount};
