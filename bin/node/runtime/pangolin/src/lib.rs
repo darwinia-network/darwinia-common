@@ -349,7 +349,10 @@ frame_support::construct_runtime! {
 		TechnicalCommittee: pallet_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Config<T>, Event<T>} = 19,
 		PhragmenElection: darwinia_elections_phragmen::{Pallet, Call, Storage, Config<T>, Event<T>} = 20,
 		TechnicalMembership: pallet_membership::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>} = 21,
-		// Old Treasury = 22,
+		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 22,
+		KtonTreasury: pallet_treasury::<Instance2>::{Pallet, Call, Storage, Config, Event<T>} = 50,
+		Tips: pallet_tips::{Pallet, Call, Storage, Event<T>} = 51,
+		Bounties: pallet_bounties::{Pallet, Call, Storage, Event<T>} = 52,
 
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 23,
 
@@ -909,7 +912,7 @@ fn migrate_treasury() {
 	type ProposalIndex = u32;
 
 	const OLD_PREFIX: &[u8] = b"DarwiniaTreasury";
-	const NEW_PREFIX: &[u8] = b"Instance1Treasury";
+	const NEW_PREFIX: &[u8] = b"Treasury";
 
 	migration::remove_storage_prefix(OLD_PREFIX, b"BountyCount", &[]);
 	log::info!("`BountyCount` Removed");

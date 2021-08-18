@@ -42,7 +42,7 @@ impl Config for Runtime {
 	type RingReward = ();
 	type KtonCurrency = Kton;
 	// send the slashed funds to the treasury.
-	type KtonSlash = Treasury;
+	type KtonSlash = KtonTreasury;
 	// rewards are minted from the void
 	type KtonReward = ();
 	type Cap = Cap;

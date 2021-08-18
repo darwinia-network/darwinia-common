@@ -371,11 +371,7 @@ use sp_std::borrow::ToOwned;
 use sp_std::{collections::btree_map::BTreeMap, convert::TryInto, marker::PhantomData, prelude::*};
 // --- darwinia ---
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo;
-use darwinia_support::{
-	balance::*,
-	impl_rpc,
-	traits::{OnDepositRedeem, OnUnbalancedKton},
-};
+use darwinia_support::{balance::*, impl_rpc, traits::OnDepositRedeem};
 use types::*;
 
 pub(crate) const LOG_TARGET: &'static str = "runtime::staking";
@@ -463,7 +459,7 @@ pub trait Config: frame_system::Config + SendTransactionTypes<Call<Self>> {
 	type KtonCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 	// FIXME: Ugly hack due to https://github.com/rust-lang/rust/issues/31844#issuecomment-557918823
 	/// Handler for the unbalanced *KTON* reduction when slashing a staker.
-	type KtonSlash: OnUnbalancedKton<KtonNegativeImbalance<Self>>;
+	type KtonSlash: OnUnbalanced<KtonNegativeImbalance<Self>>;
 	/// Handler for the unbalanced *KTON* increment when rewarding a staker.
 	type KtonReward: OnUnbalanced<KtonPositiveImbalance<Self>>;
 
