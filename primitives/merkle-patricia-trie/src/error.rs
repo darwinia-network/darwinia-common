@@ -20,12 +20,10 @@
 extern crate alloc;
 
 #[cfg(not(feature = "std"))]
-use alloc::{format, string::String};
+use alloc::string::String;
 
 use core::fmt;
 use rlp::DecoderError;
-#[cfg(not(feature = "std"))]
-use sp_std::borrow::ToOwned;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TrieError {
