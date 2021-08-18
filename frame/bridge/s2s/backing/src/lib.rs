@@ -42,14 +42,14 @@ use frame_system::{ensure_signed, pallet_prelude::*};
 use sp_runtime::{
 	traits::UniqueSaturatedInto,
 	traits::{AccountIdConversion, Convert, Zero},
-	DispatchError, SaturatedConversion,
+	SaturatedConversion,
 };
 use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_support::{
 	balance::*,
 	s2s::{
-		source_root_converted_id, to_bytes32, RelayMessageCaller, BACK_ERC20_RING, RING_DECIMAL,
+		ensure_source_root, to_bytes32, RelayMessageCaller, BACK_ERC20_RING, RING_DECIMAL,
 		RING_NAME, RING_SYMBOL,
 	},
 };
@@ -222,7 +222,10 @@ pub mod pallet {
 			// the s2s message relay has been verified the message comes from the issuing pallet with the
 			// chainID and issuing sender address.
 			// here only we need is to check the sender is root account
-			Self::ensure_source_root(&user)?;
+			ensure_source_root::<T::AccountId, T::BridgedAccountIdConverter>(
+				T::BridgedChainId::get(),
+				&user,
+			)?;
 
 			let token_info = match &token {
 				Token::Native(info) => {
@@ -261,14 +264,6 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		pub fn pallet_account_id() -> T::AccountId {
 			T::PalletId::get().into_account()
-		}
-
-		fn ensure_source_root(account: &T::AccountId) -> Result<(), DispatchError> {
-			let source_root = source_root_converted_id::<T::AccountId, T::BridgedAccountIdConverter>(
-				T::BridgedChainId::get(),
-			);
-			ensure!(account == &source_root, Error::<T>::InvalidOrigin);
-			Ok(())
 		}
 	}
 }

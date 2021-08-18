@@ -63,8 +63,11 @@ pub mod s2s {
 	use codec::Encode;
 	use ethabi::{encode, Token};
 	use ethereum_primitives::{H160, H256};
-	use frame_support::weights::PostDispatchInfo;
-	use sp_runtime::{traits::Convert, DispatchErrorWithPostInfo};
+	use frame_support::{ensure, weights::PostDispatchInfo};
+	use sp_runtime::{
+		traits::{BadOrigin, Convert},
+		DispatchError, DispatchErrorWithPostInfo,
+	};
 
 	pub const RING_NAME: &[u8] = b"Darwinia Network Native Token";
 	pub const RING_SYMBOL: &[u8] = b"RING";
@@ -83,12 +86,18 @@ pub mod s2s {
 		) -> Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>;
 	}
 
-	pub fn source_root_converted_id<AccountId: Encode, Converter: Convert<H256, AccountId>>(
+	pub fn ensure_source_root<AccountId, Converter>(
 		chain_id: ChainId,
-	) -> AccountId {
+		account: &AccountId,
+	) -> Result<(), DispatchError>
+	where
+		AccountId: Encode + sp_std::cmp::PartialEq,
+		Converter: Convert<H256, AccountId>,
+	{
 		let hex_id = derive_account_id::<AccountId>(chain_id, SourceAccount::Root);
 		let target_id = Converter::convert(hex_id);
-		return target_id;
+		ensure!(&target_id == account, BadOrigin);
+		Ok(())
 	}
 
 	pub fn to_bytes32(raw: &[u8]) -> [u8; 32] {
