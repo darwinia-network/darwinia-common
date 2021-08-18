@@ -949,8 +949,6 @@ fn migrate_treasury() {
 				bond: old_proposal.ring_bond,
 			};
 
-			log::info!("Hash: {}", array_bytes::bytes2hex("", &hash));
-
 			migration::put_storage_value(NEW_PREFIX, b"Proposals", &hash, new_proposal);
 		}
 		if old_proposal.kton_value != 0 {
@@ -967,48 +965,8 @@ fn migrate_treasury() {
 	migration::remove_storage_prefix(OLD_PREFIX, b"Proposals", &[]);
 	log::info!("`Proposals` Migrated");
 
-	#[derive(Encode, Decode)]
-	struct OldTip {
-		reason: Hash,
-		who: AccountId,
-		finder: Option<(AccountId, Balance)>,
-		closes: Option<BlockNumber>,
-		tips: Vec<(AccountId, Balance)>,
-	}
-	#[derive(Encode, Decode)]
-	struct OpenTip {
-		reason: Hash,
-		who: AccountId,
-		finder: AccountId,
-		deposit: Balance,
-		closes: Option<BlockNumber>,
-		tips: Vec<(AccountId, Balance)>,
-		finders_fee: bool,
-	}
-	for (hash, old_tip) in
-		migration::storage_key_iter::<Hash, OldTip, Twox64Concat>(OLD_PREFIX, b"Tips").drain()
-	{
-		let (finder, deposit, finders_fee) = if let Some((finder, deposit)) = old_tip.finder {
-			(finder, deposit, true)
-		} else {
-			(AccountId::default(), 0, false)
-		};
-		let new_tip = OpenTip {
-			reason: old_tip.reason,
-			who: old_tip.who,
-			finder,
-			deposit,
-			closes: old_tip.closes,
-			tips: old_tip.tips,
-			finders_fee,
-		};
-		let hash = Twox64Concat::hash(&hash.encode());
-
-		migration::put_storage_value(NEW_PREFIX, b"Tips", &hash, new_tip);
-	}
-	migration::remove_storage_prefix(OLD_PREFIX, b"Tips", &[]);
+	migration::move_storage_from_pallet(b"Tips", OLD_PREFIX, NEW_PREFIX);
 	log::info!("`Tips` Migrated");
-
 	migration::move_storage_from_pallet(b"BountyCount", OLD_PREFIX, NEW_PREFIX);
 	log::info!("`BountyCount` Migrated");
 	migration::move_storage_from_pallet(b"Bounties", OLD_PREFIX, NEW_PREFIX);
