@@ -31,7 +31,7 @@ pub mod balance {
 }
 
 pub mod evm {
-	// --- darwinia ---
+	// --- crates.io ---
 	use ethereum::TransactionMessage;
 	use ethereum_primitives::{H160, H256};
 	use sha3::{Digest, Keccak256};
@@ -59,15 +59,18 @@ pub mod evm {
 
 // TODO: Should we move this to `s2s-primitives`?
 pub mod s2s {
-	use bp_runtime::{derive_account_id, ChainId, SourceAccount};
+	// --- crates.io ---
 	use codec::Encode;
 	use ethabi::{encode, Token};
 	use ethereum_primitives::{H160, H256};
+	// --- paritytech ---
+	use bp_runtime::{derive_account_id, ChainId, SourceAccount};
 	use frame_support::{ensure, weights::PostDispatchInfo};
 	use sp_runtime::{
 		traits::{BadOrigin, Convert},
 		DispatchError, DispatchErrorWithPostInfo,
 	};
+	use sp_std::cmp::PartialEq;
 
 	pub const RING_NAME: &[u8] = b"Darwinia Network Native Token";
 	pub const RING_SYMBOL: &[u8] = b"RING";
@@ -91,7 +94,7 @@ pub mod s2s {
 		account: &AccountId,
 	) -> Result<(), DispatchError>
 	where
-		AccountId: Encode + sp_std::cmp::PartialEq,
+		AccountId: PartialEq + Encode,
 		Converter: Convert<H256, AccountId>,
 	{
 		let hex_id = derive_account_id::<AccountId>(chain_id, SourceAccount::Root);
