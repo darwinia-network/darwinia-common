@@ -904,10 +904,7 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 
 fn migrate_treasury() {
 	// --- paritytech ---
-	use frame_support::{
-		migration::{self, StorageKeyIterator},
-		Twox64Concat,
-	};
+	use frame_support::{migration, StorageHasher, Twox64Concat};
 
 	type ProposalIndex = u32;
 
@@ -944,13 +941,15 @@ fn migrate_treasury() {
 		beneficiary: AccountId,
 		bond: Balance,
 	}
-	for (index, old_proposal) in
-		StorageKeyIterator::<ProposalIndex, OldProposal, Twox64Concat>::new(
-			OLD_PREFIX,
-			b"Proposals",
-		)
-		.drain()
+	for (index, old_proposal) in migration::storage_key_iter::<
+		ProposalIndex,
+		OldProposal,
+		Twox64Concat,
+	>(OLD_PREFIX, b"Proposals")
+	.drain()
 	{
+		let hash = Twox64Concat::hash(&index.encode());
+
 		if old_proposal.ring_value != 0 {
 			let new_proposal = Proposal {
 				proposer: old_proposal.proposer.clone(),
@@ -958,6 +957,10 @@ fn migrate_treasury() {
 				beneficiary: old_proposal.beneficiary.clone(),
 				bond: old_proposal.ring_bond,
 			};
+
+			log::info!("Hash: {}", array_bytes::bytes2hex("", &hash));
+
+			migration::put_storage_value(NEW_PREFIX, b"Proposals", &hash, new_proposal);
 		}
 		if old_proposal.kton_value != 0 {
 			let new_proposal = Proposal {
@@ -966,6 +969,8 @@ fn migrate_treasury() {
 				beneficiary: old_proposal.beneficiary,
 				bond: old_proposal.kton_bond,
 			};
+
+			migration::put_storage_value(NEW_PREFIX, b"Proposals", &hash, new_proposal);
 		}
 	}
 	migration::remove_storage_prefix(OLD_PREFIX, b"Proposals", &[]);
@@ -990,7 +995,7 @@ fn migrate_treasury() {
 		finders_fee: bool,
 	}
 	for (hash, old_tip) in
-		StorageKeyIterator::<Hash, OldTip, Twox64Concat>::new(OLD_PREFIX, b"Tips").drain()
+		migration::storage_key_iter::<Hash, OldTip, Twox64Concat>(OLD_PREFIX, b"Tips").drain()
 	{
 		let (finder, deposit, finders_fee) = if let Some((finder, deposit)) = old_tip.finder {
 			(finder, deposit, true)
@@ -1006,6 +1011,9 @@ fn migrate_treasury() {
 			tips: old_tip.tips,
 			finders_fee,
 		};
+		let hash = Twox64Concat::hash(&hash.encode());
+
+		migration::put_storage_value(b"Tips", b"Tips", &hash, new_tip);
 	}
 	migration::remove_storage_prefix(OLD_PREFIX, b"Tips", &[]);
 	log::info!("`Tips` Migrated");
