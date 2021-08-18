@@ -235,10 +235,7 @@ pub mod pallet {
 				}
 				_ => return Err(Error::<T>::InvalidTokenType.into()),
 			};
-			let amount = match token_info.value {
-				Some(value) => value,
-				_ => return Err(<Error<T>>::InvalidTokenAmount.into()),
-			};
+			let amount = token_info.value.ok_or(<Error<T>>::InvalidTokenAmount)?;
 
 			// Make sure the user's balance is enough to lock
 			ensure!(
