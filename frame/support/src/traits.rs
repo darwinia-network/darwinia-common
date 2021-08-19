@@ -22,7 +22,7 @@ use core::fmt::Debug;
 use codec::FullCodec;
 use impl_trait_for_tuples::impl_for_tuples;
 // --- substrate ---
-use frame_support::traits::{Currency, Get, LockIdentifier, TryDrop, WithdrawReasons};
+use frame_support::traits::{Currency, Get, LockIdentifier, WithdrawReasons};
 use sp_runtime::{DispatchError, DispatchResult};
 use sp_std::prelude::*;
 // --- darwinia ---
@@ -123,43 +123,6 @@ pub trait OnDepositRedeem<AccountId, Balance> {
 		months: u8,
 	) -> DispatchResult;
 }
-
-// FIXME: Ugly hack due to https://github.com/rust-lang/rust/issues/31844#issuecomment-557918823
-/// Handler for when some currency "account" decreased in balance for
-/// some reason.
-///
-/// The only reason at present for an increase would be for validator rewards, but
-/// there may be other reasons in the future or for other chains.
-///
-/// Reasons for decreases include:
-///
-/// - Someone got slashed.
-/// - Someone paid for a transaction to be included.
-pub trait OnUnbalancedKton<Imbalance: TryDrop> {
-	/// Handler for some imbalances. The different imbalances might have different origins or
-	/// meanings, dependent on the context. Will default to simply calling on_unbalanced for all
-	/// of them. Infallible.
-	fn on_unbalanceds<B>(amounts: impl Iterator<Item = Imbalance>)
-	where
-		Imbalance: frame_support::traits::Imbalance<B>,
-	{
-		Self::on_unbalanced(amounts.fold(Imbalance::zero(), |i, x| x.merge(i)))
-	}
-
-	/// Handler for some imbalance. Infallible.
-	fn on_unbalanced(amount: Imbalance) {
-		amount
-			.try_drop()
-			.unwrap_or_else(Self::on_nonzero_unbalanced)
-	}
-
-	/// Actually handle a non-zero imbalance. You probably want to implement this rather than
-	/// `on_unbalanced`.
-	fn on_nonzero_unbalanced(amount: Imbalance) {
-		drop(amount);
-	}
-}
-impl<Imbalance: TryDrop> OnUnbalancedKton<Imbalance> for () {}
 
 pub trait EthereumReceipt<AccountId, Balance> {
 	type EthereumReceiptProofThing: Clone + Debug + PartialEq + FullCodec;
