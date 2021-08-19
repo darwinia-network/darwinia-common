@@ -53,17 +53,6 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type Event = ();
 	type BalanceInfo = AccountData<Balance>;
 }
-impl darwinia_balances::Config<KtonInstance> for Test {
-	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
-	type MaxLocks = ();
-	type OtherCurrencies = ();
-	type WeightInfo = ();
-	type Balance = Balance;
-	type Event = ();
-	type BalanceInfo = AccountData<Balance>;
-}
 
 frame_support::parameter_types! {
 	pub const MinimumPeriod: u64 = 6000 / 2;
@@ -105,7 +94,7 @@ frame_support::parameter_types! {
 	pub const MockChainId: [u8; 4] = [0; 4];
 	pub const MockId: PalletId = PalletId(*b"da/s2sba");
 	pub const BackErc20RingId: ContractId = ContractId(*b"da/backr");
-	pub const RingLockLimit: Balance = 1_000_000_000;
+	pub const RingLockMaxLimit: Balance = 1_000_000_000;
 }
 
 pub struct MockRelayCaller;
@@ -140,7 +129,7 @@ impl Config for Test {
 	type WeightInfo = ();
 	type PalletId = MockId;
 	type BackErc20RingId = BackErc20RingId;
-	type RingLockMaxLimit = RingLockLimit;
+	type RingLockMaxLimit = RingLockMaxLimit;
 	type RingCurrency = Ring;
 	type BridgedAccountIdConverter = ();
 	type BridgedChainId = MockChainId;
@@ -158,7 +147,6 @@ frame_support::construct_runtime! {
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Backing: s2s_backing::{Pallet, Call, Storage, Event<T>},
 	}
 }
