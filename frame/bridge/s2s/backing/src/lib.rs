@@ -50,7 +50,7 @@ use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_support::{
 	balance::*,
-	evm::ContractId,
+	evm::{ContractId, IntoDvmAddress},
 	s2s::{
 		ensure_source_root, to_bytes32, RelayMessageCaller, RING_DECIMAL, RING_NAME, RING_SYMBOL,
 	},
@@ -267,13 +267,6 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		pub fn pallet_account_id() -> T::AccountId {
 			T::PalletId::get().into_account()
-		}
-
-		pub fn dvm_account_id() -> EthereumAddress {
-			let pallet_id = T::PalletId::get();
-			let mut bytes = vec![0u8; 12];
-			bytes.append(&mut pallet_id.0.to_vec());
-			EthereumAddress::from_slice(&bytes)
 		}
 	}
 }

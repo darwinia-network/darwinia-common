@@ -179,3 +179,13 @@ fn test_back_erc20_dvm_address() {
 		);
 	});
 }
+
+#[test]
+fn test_pallet_id_to_dvm_address() {
+	new_test_ext().execute_with(|| {
+		assert_eq!(
+			<Test as s2s_backing::Config>::PalletId::get().into_dvm_address(),
+			EthereumAddress::from_str("0x00000000000000000000000064612f7332736261").unwrap()
+		);
+	});
+}

@@ -18,6 +18,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod evm;
 pub mod macros;
 pub mod structs;
 pub mod testing;
@@ -28,46 +29,6 @@ pub mod balance {
 		BalanceLock, FrozenBalance, LockFor, LockReasons, StakingLock, Unbonding,
 	};
 	pub use crate::traits::{BalanceInfo, DustCollector, LockableCurrency, OnUnbalancedKton};
-}
-
-pub mod evm {
-	// --- crates.io ---
-	use ethereum::TransactionMessage;
-	use sha3::{Digest, Keccak256};
-	// --- darwinia-network ---
-	use codec::{Decode, Encode};
-	use ethereum_primitives::{H160, H256};
-
-	pub const POW_9: u32 = 1_000_000_000;
-	pub const INTERNAL_CALLER: H160 = H160::zero();
-	pub const INTERNAL_TX_GAS_LIMIT: u32 = 300_000_000;
-	pub const SELECTOR: usize = 4;
-	pub const TRANSFER_ADDR: &'static str = "0x0000000000000000000000000000000000000015";
-
-	#[derive(Clone, Copy, Eq, PartialEq, Encode, Decode)]
-	pub struct ContractId(pub [u8; 8]);
-
-	/// Convert from ContractId to dvm address
-	impl ContractId {
-		pub fn into_dvm_address(&self) -> H160 {
-			let mut bytes = vec![0u8; 12];
-			bytes.append(&mut self.0.to_vec());
-			H160::from_slice(&bytes)
-		}
-	}
-	pub fn recover_signer(transaction: &ethereum::Transaction) -> Option<H160> {
-		let mut sig = [0u8; 65];
-		let mut msg = [0u8; 32];
-		sig[0..32].copy_from_slice(&transaction.signature.r()[..]);
-		sig[32..64].copy_from_slice(&transaction.signature.s()[..]);
-		sig[64] = transaction.signature.standard_v();
-		msg.copy_from_slice(&TransactionMessage::from(transaction.clone()).hash()[..]);
-
-		let pubkey = sp_io::crypto::secp256k1_ecdsa_recover(&sig, &msg).ok()?;
-		Some(H160::from(H256::from_slice(
-			Keccak256::digest(&pubkey).as_slice(),
-		)))
-	}
 }
 
 // TODO: Should we move this to `s2s-primitives`?
