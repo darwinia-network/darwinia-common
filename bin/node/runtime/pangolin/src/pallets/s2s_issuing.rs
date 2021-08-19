@@ -82,6 +82,7 @@ frame_support::parameter_types! {
 }
 
 impl Config for Runtime {
+	// FIXME: Remove tight couple with dvm_ethereum and change it to PalletId
 	type IssuingPalletId = S2sIssuingPalletId;
 	type Event = Event;
 	type WeightInfo = ();
