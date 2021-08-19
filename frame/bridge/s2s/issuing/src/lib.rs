@@ -69,7 +69,7 @@ pub mod pallet {
 	#[pallet::disable_frame_system_supertrait_check]
 	pub trait Config: dvm_ethereum::Config {
 		#[pallet::constant]
-		type PalletId: Get<PalletId>;
+		type IssuingPalletId: Get<PalletId>;
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type WeightInfo: WeightInfo;
 		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
@@ -338,8 +338,7 @@ pub mod pallet {
 impl<T: Config> Pallet<T> {
 	pub fn digest() -> PalletDigest {
 		let mut digest: PalletDigest = Default::default();
-		let pallet_digest =
-			sha3::Keccak256::digest(<T as self::Config>::PalletId::get().encode().as_slice());
+		let pallet_digest = sha3::Keccak256::digest(T::IssuingPalletId::get().encode().as_slice());
 		digest.copy_from_slice(&pallet_digest[..4]);
 		digest
 	}
