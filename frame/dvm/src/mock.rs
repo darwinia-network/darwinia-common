@@ -26,7 +26,7 @@ use rlp::RlpStream;
 // --- paritytech ---
 use frame_support::{
 	traits::{FindAuthor, GenesisBuild},
-	ConsensusEngineId,
+	ConsensusEngineId, PalletId,
 };
 use frame_system::mocking::*;
 use sp_core::{H160, H256, U256};
@@ -193,7 +193,12 @@ impl darwinia_evm::Config for Test {
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 }
 
+frame_support::parameter_types! {
+	pub const MockPalletId: PalletId = PalletId(*b"dar/dvmp");
+}
+
 impl dvm_ethereum::Config for Test {
+	type PalletId = MockPalletId;
 	type Event = Event;
 	type StateRoot = IntermediateStateRoot;
 	type RingCurrency = Ring;

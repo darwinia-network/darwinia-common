@@ -338,7 +338,8 @@ pub mod pallet {
 impl<T: Config> Pallet<T> {
 	pub fn digest() -> PalletDigest {
 		let mut digest: PalletDigest = Default::default();
-		let pallet_digest = sha3::Keccak256::digest(T::PalletId::get().encode().as_slice());
+		let pallet_digest =
+			sha3::Keccak256::digest(<T as self::Config>::PalletId::get().encode().as_slice());
 		digest.copy_from_slice(&pallet_digest[..4]);
 		digest
 	}

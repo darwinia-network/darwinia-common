@@ -29,7 +29,7 @@ use crate::{
 	Call, *,
 };
 use darwinia_evm::AddressMapping;
-use darwinia_support::evm::TRANSFER_ADDR;
+use darwinia_support::evm::{IntoDvmAddress, TRANSFER_ADDR};
 use mock::*;
 // --- substrate ---
 use frame_support::{assert_err, assert_noop, assert_ok, unsigned::ValidateUnsigned};
@@ -554,7 +554,7 @@ fn read_only_call_should_works() {
 			array_bytes::hex_into_unchecked("32dcab0ef3fb2de2fce1d2e0799d36239671f04a");
 		let foo: Vec<u8> = hex2bytes_unchecked("c2985578");
 
-		// Call foo use INTERNAL_CALLER
+		// Call foo use pallet dvm address
 		let result = Ethereum::read_only_call(contract_address, foo.clone()).unwrap();
 		assert_eq!(
 			result,
@@ -564,8 +564,9 @@ fn read_only_call_should_works() {
 			]
 		);
 		// Check nonce
+		let source = <Test as self::Config>::PalletId::get().into_dvm_address();
 		assert_eq!(
-			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&INTERNAL_CALLER).nonce,
+			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce,
 			U256::from(0)
 		);
 	});
@@ -665,7 +666,7 @@ fn internal_transaction_should_works() {
 		assert_ok!(Ethereum::internal_transact(contract_address, foo.clone()));
 		assert_eq!(System::event_count(), 1);
 		System::assert_last_event(mock::Event::dvm_ethereum(crate::Event::Executed(
-			INTERNAL_CALLER,
+			<Test as self::Config>::PalletId::get().into_dvm_address(),
 			H160::default(),
 			H256::from_str("0xabdebc2d8a79e4c40d6d66c614bafc2be138d4fc0fd21e28d318f3a032cbee39")
 				.unwrap(),
@@ -674,7 +675,7 @@ fn internal_transaction_should_works() {
 
 		assert_ok!(Ethereum::internal_transact(contract_address, foo));
 		System::assert_last_event(mock::Event::dvm_ethereum(crate::Event::Executed(
-			INTERNAL_CALLER,
+			<Test as self::Config>::PalletId::get().into_dvm_address(),
 			H160::default(),
 			H256::from_str("0x2028ce5eef8d4531d4f955c9860b28f9e8cd596b17fea2326d2be49a8d3dc7ac")
 				.unwrap(),
@@ -713,17 +714,19 @@ fn internal_transaction_nonce_increase() {
 		let contract_address: H160 =
 			array_bytes::hex_into_unchecked("32dcab0ef3fb2de2fce1d2e0799d36239671f04a");
 		let foo: Vec<u8> = hex2bytes_unchecked("c2985578");
+		let source = <Test as self::Config>::PalletId::get().into_dvm_address();
 
 		// Call foo use internal transaction
 		assert_ok!(Ethereum::internal_transact(contract_address, foo.clone()));
+
 		assert_eq!(
-			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&INTERNAL_CALLER).nonce,
+			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce,
 			U256::from(1)
 		);
 
 		assert_ok!(Ethereum::internal_transact(contract_address, foo));
 		assert_eq!(
-			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&INTERNAL_CALLER).nonce,
+			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce,
 			U256::from(2)
 		);
 	});
@@ -758,6 +761,7 @@ fn internal_transact_dispatch_error() {
 		let contract_address: H160 =
 			array_bytes::hex_into_unchecked("32dcab0ef3fb2de2fce1d2e0799d36239671f04a");
 		let mock_foo: Vec<u8> = hex2bytes_unchecked("00000000");
+		let source = <Test as self::Config>::PalletId::get().into_dvm_address();
 
 		// Call foo use internal transaction
 		assert_err!(
@@ -765,7 +769,7 @@ fn internal_transact_dispatch_error() {
 			<Error<Test>>::FailedInternalTx
 		);
 		assert_eq!(
-			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&INTERNAL_CALLER).nonce,
+			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce,
 			U256::from(1)
 		);
 	});
@@ -1241,4 +1245,15 @@ fn mutate_account_dec_balance_existential_by_990() {
 
 		assert_balance!(test_addr, U256::zero(), 0, 0);
 	});
+}
+
+#[test]
+fn test_pallet_id_to_dvm_address() {
+	let (_, mut ext) = new_test_ext(1);
+	ext.execute_with(|| {
+		assert_eq!(
+			<Test as self::Config>::PalletId::get().into_dvm_address(),
+			H160::from_str("0x0000000000000000000000006461722f64766d70").unwrap()
+		)
+	})
 }

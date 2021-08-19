@@ -26,7 +26,7 @@
 
 pub mod account_basic;
 
-use dvm_rpc_runtime_api::{DVMTransaction, TransactionStatus};
+use dvm_rpc_runtime_api::TransactionStatus;
 pub use ethereum::{
 	Block, Log, Receipt, Transaction, TransactionAction, TransactionMessage, TransactionSignature,
 };
@@ -49,6 +49,7 @@ use frame_support::{
 	ensure,
 	traits::{Currency, Get},
 	weights::{Pays, PostDispatchInfo, Weight},
+	PalletId,
 };
 use frame_system::ensure_none;
 use sp_runtime::{
@@ -63,7 +64,9 @@ use sp_std::marker::PhantomData;
 use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_evm::{AccountBasic, BlockHashMapping, FeeCalculator, GasWeightMapping, Runner};
-use darwinia_support::evm::{recover_signer, INTERNAL_CALLER, INTERNAL_TX_GAS_LIMIT};
+use darwinia_support::evm::{
+	recover_signer, DVMTransaction, IntoDvmAddress, INTERNAL_TX_GAS_LIMIT,
+};
 use dp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
 use dp_evm::CallOrCreateInfo;
 #[cfg(feature = "std")]
@@ -88,6 +91,8 @@ pub mod pallet {
 	pub trait Config:
 		frame_system::Config + pallet_timestamp::Config + darwinia_evm::Config
 	{
+		#[pallet::constant]
+		type PalletId: Get<PalletId>;
 		/// The overarching event type.
 		type Event: From<Event> + IsType<<Self as frame_system::Config>::Event>;
 		/// How Ethereum state root is calculated.
@@ -306,9 +311,9 @@ impl<T: Config> Pallet<T> {
 			Error::<T>::PreLogExists,
 		);
 
-		let nonce =
-			<T as darwinia_evm::Config>::RingAccountBasic::account_basic(&INTERNAL_CALLER).nonce;
-		let transaction = DVMTransaction::new_internal_transaction(nonce, target, input);
+		let source = T::PalletId::get().into_dvm_address();
+		let nonce = <T as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce;
+		let transaction = DVMTransaction::new_internal_transaction(source, nonce, target, input);
 		Self::raw_transact(transaction).map(|(reason, used_gas)| match reason {
 			// Only when exit_reason is successful, return Ok(...)
 			ExitReason::Succeed(_) => Ok(PostDispatchInfo {
@@ -418,12 +423,12 @@ impl<T: Config> Pallet<T> {
 		Ok((reason, used_gas))
 	}
 
-	/// Pure read-only call to contract, the sender is INTERNAL_CALLER
+	/// Pure read-only call to contract, the sender is pallet dvm account.
 	/// NOTE: You should never use raw call for any non-read-only operation, be carefully.
 	pub fn read_only_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
 		sp_io::storage::start_transaction();
 		let (_, _, info) = Self::execute(
-			INTERNAL_CALLER,
+			T::PalletId::get().into_dvm_address(),
 			input,
 			U256::zero(),
 			U256::from(INTERNAL_TX_GAS_LIMIT),
