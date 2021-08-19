@@ -82,7 +82,7 @@ frame_support::parameter_types! {
 }
 
 impl Config for Runtime {
-	type PalletId = S2sIssuingPalletId;
+	type IssuingPalletId = S2sIssuingPalletId;
 	type Event = Event;
 	type WeightInfo = ();
 	type RingCurrency = Ring;

@@ -106,8 +106,13 @@ impl frame_system::Config for Test {
 	type OnSetCode = ();
 }
 
+frame_support::parameter_types! {
+	pub const DvmPalletId: PalletId = PalletId(*b"dar/dvmp");
+}
+
 impl dvm_ethereum::Config for Test {
 	type Event = ();
+	type PalletId = DvmPalletId;
 	type StateRoot = IntermediateStateRoot;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
@@ -214,7 +219,7 @@ impl ToEthAddress<AccountId32> for TruncateToEthAddress {
 
 impl Config for Test {
 	type Event = ();
-	type PalletId = S2sRelayPalletId;
+	type IssuingPalletId = S2sRelayPalletId;
 	type WeightInfo = ();
 	type ReceiverAccountId = AccountId32;
 

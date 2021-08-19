@@ -83,7 +83,7 @@ pub mod pallet {
 	pub trait Config: dvm_ethereum::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		#[pallet::constant]
-		type PalletId: Get<PalletId>;
+		type IssuingPalletId: Get<PalletId>;
 		type EthereumRelay: EthereumReceipt<Self::AccountId, RingBalance<Self>>;
 		type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber, Signer = EthereumAddress>;
 		type WeightInfo: WeightInfo;
@@ -346,7 +346,7 @@ pub mod pallet {
 impl<T: Config> Pallet<T> {
 	pub fn digest() -> PalletDigest {
 		let mut digest: PalletDigest = Default::default();
-		let pallet_digest = sha3::Keccak256::digest(T::PalletId::get().encode().as_slice());
+		let pallet_digest = sha3::Keccak256::digest(T::IssuingPalletId::get().encode().as_slice());
 		digest.copy_from_slice(&pallet_digest[..4]);
 		digest
 	}

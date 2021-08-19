@@ -9,7 +9,7 @@ frame_support::parameter_types! {
 }
 
 impl Config for Runtime {
-	type PalletId = EthereumIssuingPalletId;
+	type IssuingPalletId = EthereumIssuingPalletId;
 	type Event = Event;
 	type EthereumRelay = EthereumRelay;
 	type EcdsaAuthorities = EthereumRelayAuthorities;
