@@ -35,6 +35,7 @@ pub mod evm {
 	use ethereum::TransactionMessage;
 	use sha3::{Digest, Keccak256};
 	// --- darwinia-network ---
+	use codec::{Decode, Encode};
 	use ethereum_primitives::{H160, H256};
 
 	pub const POW_9: u32 = 1_000_000_000;
@@ -43,6 +44,17 @@ pub mod evm {
 	pub const SELECTOR: usize = 4;
 	pub const TRANSFER_ADDR: &'static str = "0x0000000000000000000000000000000000000015";
 
+	#[derive(Clone, Copy, Eq, PartialEq, Encode, Decode)]
+	pub struct ContractId(pub [u8; 8]);
+
+	/// Convert from ContractId to dvm address
+	impl ContractId {
+		pub fn into_dvm_address(&self) -> H160 {
+			let mut bytes = vec![0u8; 12];
+			bytes.append(&mut self.0.to_vec());
+			H160::from_slice(&bytes)
+		}
+	}
 	pub fn recover_signer(transaction: &ethereum::Transaction) -> Option<H160> {
 		let mut sig = [0u8; 65];
 		let mut msg = [0u8; 32];
@@ -77,7 +89,6 @@ pub mod s2s {
 	pub const RING_NAME: &[u8] = b"Darwinia Network Native Token";
 	pub const RING_SYMBOL: &[u8] = b"RING";
 	pub const RING_DECIMAL: u8 = 9;
-	pub const BACK_ERC20_RING: &'static str = "0x0000000000000000000000000000000000002048";
 
 	pub trait ToEthAddress<A> {
 		fn into_ethereum_id(address: &A) -> H160;
