@@ -24,7 +24,7 @@ use crate::*;
 use crate::{self as s2s_backing};
 use darwinia_support::s2s::RelayMessageCaller;
 // substrate
-use frame_support::{assert_ok, traits::GenesisBuild, weights::PostDispatchInfo, PalletId};
+use frame_support::{weights::PostDispatchInfo, PalletId};
 use frame_system::mocking::*;
 use sp_runtime::{
 	testing::Header,
@@ -35,7 +35,7 @@ use sp_runtime::{
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 type Balance = u64;
-pub type AccountId<T> = <T as frame_system::Config>::AccountId;
+type AccountId<T> = <T as frame_system::Config>::AccountId;
 
 darwinia_support::impl_test_account_data! {}
 
@@ -159,4 +159,21 @@ frame_support::construct_runtime! {
 		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Backing: s2s_backing::{Pallet, Call, Storage, Event<T>},
 	}
+}
+
+pub fn new_test_ext() -> sp_io::TestExternalities {
+	let t = frame_system::GenesisConfig::default()
+		.build_storage::<Test>()
+		.unwrap();
+	t.into()
+}
+
+#[test]
+fn test_dvm_account_id() {
+	new_test_ext().execute_with(|| {
+		assert_eq!(
+			Backing::dvm_account_id(),
+			EthereumAddress::from_str("0x00000000000000000000000064612f7332736261").unwrap()
+		);
+	});
 }

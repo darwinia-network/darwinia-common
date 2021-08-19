@@ -264,6 +264,13 @@ pub mod pallet {
 		pub fn pallet_account_id() -> T::AccountId {
 			T::PalletId::get().into_account()
 		}
+
+		pub fn dvm_account_id() -> EthereumAddress {
+			let pallet_id = T::PalletId::get();
+			let mut bytes = vec![0u8; 12];
+			bytes.append(&mut pallet_id.0.to_vec());
+			EthereumAddress::from_slice(&bytes)
+		}
 	}
 }
 

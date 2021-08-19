@@ -32,6 +32,7 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 [dev-dependencies]
 darwinia-balances = { path = "../../../balances" }
 pallet-timestamp  = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-io             = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [features]
 default = ["std"]
