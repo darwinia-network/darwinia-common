@@ -18,7 +18,7 @@ frame_support::parameter_types! {
 // Still use `DefaultInstance` here instead `Instance1`
 impl Config for Runtime {
 	type PalletId = TreasuryPalletId;
-	type Currency = Balances;
+	type Currency = Ring;
 	type ApproveOrigin = ApproveOrigin;
 	type RejectOrigin = EnsureRootOrMoreThanHalfCouncil;
 	type Event = Event;
