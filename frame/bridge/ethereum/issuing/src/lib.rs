@@ -56,6 +56,7 @@ use dp_contract::{
 		MappingTokenFactory as mtf, TokenBurnInfo, TokenRegisterInfo, BURN_ACTION, REGISTER_ACTION,
 	},
 };
+use dvm_ethereum::InternalTransactHandler;
 use ethereum_primitives::{
 	log_entry::LogEntry, receipt::EthereumTransactionIndex, EthereumAddress, U256,
 };
@@ -65,12 +66,11 @@ const REGISTER_TYPE: u8 = 0;
 const BURN_TYPE: u8 = 1;
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
+pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 pub type EthereumReceiptProofThing<T> = <<T as Config>::EthereumRelay as EthereumReceipt<
 	AccountId<T>,
 	RingBalance<T>,
 >>::EthereumReceiptProofThing;
-pub type RingBalance<T> =
-	<<T as dvm_ethereum::Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -79,13 +79,15 @@ pub mod pallet {
 
 	#[pallet::config]
 	#[pallet::disable_frame_system_supertrait_check]
-	pub trait Config: dvm_ethereum::Config {
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+	pub trait Config: frame_system::Config + darwinia_evm::Config {
 		#[pallet::constant]
-		type IssuingPalletId: Get<PalletId>;
+		type PalletId: Get<PalletId>;
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 		type EthereumRelay: EthereumReceipt<Self::AccountId, RingBalance<Self>>;
 		type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber, Signer = EthereumAddress>;
 		type WeightInfo: WeightInfo;
+		type DvmHandler: InternalTransactHandler;
 	}
 
 	#[pallet::error]
@@ -345,7 +347,7 @@ pub mod pallet {
 impl<T: Config> Pallet<T> {
 	pub fn digest() -> PalletDigest {
 		let mut digest: PalletDigest = Default::default();
-		let pallet_digest = sha3::Keccak256::digest(T::IssuingPalletId::get().encode().as_slice());
+		let pallet_digest = sha3::Keccak256::digest(T::PalletId::get().encode().as_slice());
 		digest.copy_from_slice(&pallet_digest[..4]);
 		digest
 	}
@@ -357,7 +359,8 @@ impl<T: Config> Pallet<T> {
 		let factory_address = MappingFactoryAddress::<T>::get();
 		let bytes = mtf::encode_mapping_token(backing, source)
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
-		let mapped_address = dvm_ethereum::Pallet::<T>::read_only_call(factory_address, bytes)?;
+		// let mapped_address = dvm_ethereum::Pallet::<T>::read_only_call(factory_address, bytes)?;
+		let mapped_address = T::DvmHandler::read_only_call(factory_address, bytes)?;
 		if mapped_address.len() != 32 {
 			return Err(Error::<T>::InvalidAddressLen.into());
 		}
@@ -418,12 +421,12 @@ impl<T: Config> Pallet<T> {
 
 	pub fn transact_mapping_factory(input: Vec<u8>) -> DispatchResult {
 		let contract = MappingFactoryAddress::<T>::get();
-		let result = dvm_ethereum::Pallet::<T>::internal_transact(contract, input).map_err(
-			|e| -> &'static str {
+		// let result = dvm_ethereum::Pallet::<T>::internal_transact(contract, input).map_err(
+		let result =
+			T::DvmHandler::internal_transact(contract, input).map_err(|e| -> &'static str {
 				log::debug!("call mapping factory contract error {:?}", &e);
 				e.into()
-			},
-		)?;
+			})?;
 		Ok(())
 	}
 }
