@@ -54,6 +54,7 @@ use dp_asset::{
 	RecipientAccount,
 };
 use dp_contract::mapping_token_factory::{MappingTokenFactory as mtf, TokenBurnInfo, BURN_ACTION};
+use dvm_ethereum::InternalTransactHandler;
 
 pub use pallet::*;
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
@@ -66,9 +67,9 @@ pub mod pallet {
 
 	#[pallet::config]
 	#[pallet::disable_frame_system_supertrait_check]
-	pub trait Config: dvm_ethereum::Config {
+	pub trait Config: frame_system::Config + darwinia_evm::Config {
 		#[pallet::constant]
-		type IssuingPalletId: Get<PalletId>;
+		type PalletId: Get<PalletId>;
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type WeightInfo: WeightInfo;
 		type RingCurrency: Currency<AccountId<Self>>;
@@ -81,6 +82,7 @@ pub mod pallet {
 		type CallEncoder: EncodeCall<Self::AccountId, Self::OutboundPayload>;
 		type FeeAccount: Get<Option<Self::AccountId>>;
 		type MessageSender: RelayMessageCaller<Self::OutboundPayload, RingBalance<Self>>;
+		type DvmHandler: InternalTransactHandler;
 	}
 
 	#[pallet::pallet]
@@ -337,7 +339,7 @@ pub mod pallet {
 impl<T: Config> Pallet<T> {
 	pub fn digest() -> PalletDigest {
 		let mut digest: PalletDigest = Default::default();
-		let pallet_digest = sha3::Keccak256::digest(T::IssuingPalletId::get().encode().as_slice());
+		let pallet_digest = sha3::Keccak256::digest(T::PalletId::get().encode().as_slice());
 		digest.copy_from_slice(&pallet_digest[..4]);
 		digest
 	}
@@ -346,7 +348,7 @@ impl<T: Config> Pallet<T> {
 		let factory_address = <MappingFactoryAddress<T>>::get();
 		let bytes = mtf::encode_mapping_token(backing, source)
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
-		let mapped_address = dvm_ethereum::Pallet::<T>::read_only_call(factory_address, bytes)?;
+		let mapped_address = T::DvmHandler::read_only_call(factory_address, bytes)?;
 		if mapped_address.len() != 32 {
 			return Err(Error::<T>::InvalidAddressLen.into());
 		}
@@ -358,7 +360,7 @@ impl<T: Config> Pallet<T> {
 	/// Note: this a internal transaction
 	pub fn transact_mapping_factory(input: Vec<u8>) -> DispatchResultWithPostInfo {
 		let contract = MappingFactoryAddress::<T>::get();
-		dvm_ethereum::Pallet::<T>::internal_transact(contract, input)
+		T::DvmHandler::internal_transact(contract, input)
 	}
 
 	/// Do decimals between DVM balance and RING balance

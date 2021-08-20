@@ -219,7 +219,7 @@ impl ToEthAddress<AccountId32> for TruncateToEthAddress {
 
 impl Config for Test {
 	type Event = ();
-	type IssuingPalletId = S2sRelayPalletId;
+	type PalletId = S2sRelayPalletId;
 	type WeightInfo = ();
 	type ReceiverAccountId = AccountId32;
 
@@ -231,6 +231,7 @@ impl Config for Test {
 	type CallEncoder = MillauCallEncoder;
 	type FeeAccount = RootAccountForPayments;
 	type MessageSender = ToMillauMessageRelayCaller;
+	type DvmHandler = Ethereum;
 }
 
 frame_support::construct_runtime! {
@@ -243,6 +244,7 @@ frame_support::construct_runtime! {
 		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		S2sIssuing: s2s_issuing::{Pallet, Call, Storage, Config, Event<T>},
+		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config},
 	}
 }
 
