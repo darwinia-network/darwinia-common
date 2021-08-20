@@ -359,7 +359,6 @@ impl<T: Config> Pallet<T> {
 		let factory_address = MappingFactoryAddress::<T>::get();
 		let bytes = mtf::encode_mapping_token(backing, source)
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
-		// let mapped_address = dvm_ethereum::Pallet::<T>::read_only_call(factory_address, bytes)?;
 		let mapped_address = T::InternalTransactHandler::read_only_call(factory_address, bytes)?;
 		if mapped_address.len() != 32 {
 			return Err(Error::<T>::InvalidAddressLen.into());
@@ -421,7 +420,6 @@ impl<T: Config> Pallet<T> {
 
 	pub fn transact_mapping_factory(input: Vec<u8>) -> DispatchResult {
 		let contract = MappingFactoryAddress::<T>::get();
-		// let result = dvm_ethereum::Pallet::<T>::internal_transact(contract, input).map_err(
 		let result = T::InternalTransactHandler::internal_transact(contract, input).map_err(
 			|e| -> &'static str {
 				log::debug!("call mapping factory contract error {:?}", &e);
