@@ -94,5 +94,5 @@ impl Config for Runtime {
 	type OutboundPayload = ToMillauMessagePayload;
 	type CallEncoder = MillauCallEncoder;
 	type MessageSender = ToMillauMessageRelayCaller;
-	type DvmHandler = Ethereum;
+	type InternalTransactHandler = Ethereum;
 }

@@ -15,5 +15,5 @@ impl Config for Runtime {
 	type EthereumRelay = EthereumRelay;
 	type EcdsaAuthorities = EthereumRelayAuthorities;
 	type WeightInfo = ();
-	type DvmHandler = Ethereum;
+	type InternalTransactHandler = Ethereum;
 }

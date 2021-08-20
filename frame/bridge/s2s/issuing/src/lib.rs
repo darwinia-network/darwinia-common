@@ -82,7 +82,7 @@ pub mod pallet {
 		type CallEncoder: EncodeCall<Self::AccountId, Self::OutboundPayload>;
 		type FeeAccount: Get<Option<Self::AccountId>>;
 		type MessageSender: RelayMessageCaller<Self::OutboundPayload, RingBalance<Self>>;
-		type DvmHandler: InternalTransactHandler;
+		type InternalTransactHandler: InternalTransactHandler;
 	}
 
 	#[pallet::pallet]
@@ -348,7 +348,7 @@ impl<T: Config> Pallet<T> {
 		let factory_address = <MappingFactoryAddress<T>>::get();
 		let bytes = mtf::encode_mapping_token(backing, source)
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
-		let mapped_address = T::DvmHandler::read_only_call(factory_address, bytes)?;
+		let mapped_address = T::InternalTransactHandler::read_only_call(factory_address, bytes)?;
 		if mapped_address.len() != 32 {
 			return Err(Error::<T>::InvalidAddressLen.into());
 		}
@@ -360,7 +360,7 @@ impl<T: Config> Pallet<T> {
 	/// Note: this a internal transaction
 	pub fn transact_mapping_factory(input: Vec<u8>) -> DispatchResultWithPostInfo {
 		let contract = MappingFactoryAddress::<T>::get();
-		T::DvmHandler::internal_transact(contract, input)
+		T::InternalTransactHandler::internal_transact(contract, input)
 	}
 
 	/// Do decimals between DVM balance and RING balance

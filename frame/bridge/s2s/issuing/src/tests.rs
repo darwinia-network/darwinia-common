@@ -231,7 +231,7 @@ impl Config for Test {
 	type CallEncoder = MillauCallEncoder;
 	type FeeAccount = RootAccountForPayments;
 	type MessageSender = ToMillauMessageRelayCaller;
-	type DvmHandler = Ethereum;
+	type InternalTransactHandler = Ethereum;
 }
 
 frame_support::construct_runtime! {
