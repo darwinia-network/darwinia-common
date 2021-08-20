@@ -57,8 +57,7 @@ use dp_contract::{
 	},
 };
 use ethereum_primitives::{
-	receipt::{EthereumTransactionIndex, LogEntry},
-	EthereumAddress, U256,
+	log_entry::LogEntry, receipt::EthereumTransactionIndex, EthereumAddress, U256,
 };
 pub use pallet::*;
 

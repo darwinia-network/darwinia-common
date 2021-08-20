@@ -72,8 +72,7 @@ pub mod pallet {
 	};
 	use ethabi::{Event as EthEvent, EventParam as EthEventParam, ParamType, RawLog};
 	use ethereum_primitives::{
-		receipt::{EthereumTransactionIndex, LogEntry},
-		EthereumAddress, U256,
+		log_entry::LogEntry, receipt::EthereumTransactionIndex, EthereumAddress, U256,
 	};
 
 	// TODO
@@ -680,6 +679,7 @@ pub mod pallet {
 					anonymous: false,
 				};
 				let log_entry = verified_receipt
+					.to_legacy_receipt()
 					.logs
 					.into_iter()
 					.find(|x| {
@@ -793,7 +793,7 @@ pub mod pallet {
 		}
 		// event BurnAndRedeem(uint256 indexed _depositID,  address _depositor, uint48 _months, uint48 _startAt, uint64 _unitInterest, uint128 _value, bytes _data);
 		// Redeem Deposit https://ropsten.etherscan.io/tx/0x5a7004126466ce763501c89bcbb98d14f3c328c4b310b1976a38be1183d91919
-		fn parse_deposit_redeem_proof(
+		pub(super) fn parse_deposit_redeem_proof(
 			proof_record: &EthereumReceiptProofThing<T>,
 		) -> Result<
 			(
@@ -851,9 +851,10 @@ pub mod pallet {
 					anonymous: false,
 				};
 				let log_entry = verified_receipt
+					.to_legacy_receipt()
 					.logs
-					.iter()
-					.find(|&x| {
+					.into_iter()
+					.find(|x| {
 						x.address == <DepositRedeemAddress<T>>::get()
 							&& x.topics[0] == eth_event.signature()
 					})
@@ -956,6 +957,7 @@ pub mod pallet {
 					anonymous: false,
 				};
 				let LogEntry { topics, data, .. } = verified_receipt
+					.to_legacy_receipt()
 					.logs
 					.into_iter()
 					.find(|x| {

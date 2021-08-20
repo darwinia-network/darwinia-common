@@ -16,40 +16,36 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg_attr(not(feature = "std"), no_std)]
-
-#[cfg(not(feature = "std"))]
-extern crate alloc;
-
-pub mod error;
-pub mod ethashproof;
-pub mod header;
-pub mod log_entry;
-pub mod pow;
-pub mod receipt;
-pub mod transaction_id;
-
-pub use crate::{BlockNumber as EthereumBlockNumber, Network as EthereumNetwork};
-pub use ethereum_types::{Address as EthereumAddress, *};
-
-// --- alloc ---
-#[cfg(not(feature = "std"))]
-use alloc::vec::Vec;
 // --- crates.io ---
 #[cfg(any(feature = "full-codec", test))]
 use codec::{Decode, Encode};
-
-pub type Bytes = Vec<u8>;
-pub type BlockNumber = u64;
+use ethbloom::Input;
+#[cfg(any(feature = "full-rlp", test))]
+use rlp_derive::{RlpDecodable, RlpEncodable};
+use sp_debug_derive::RuntimeDebug;
+// --- darwinia-network ---
+use crate::*;
 
 #[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
-#[derive(Clone, PartialEq)]
-pub enum Network {
-	Mainnet,
-	Ropsten,
+#[cfg_attr(any(feature = "full-rlp", test), derive(RlpEncodable, RlpDecodable))]
+#[derive(Clone, PartialEq, Eq, RuntimeDebug)]
+pub struct LogEntry {
+	/// The address of the contract executing at the point of the `LOG` operation.
+	pub address: Address,
+	/// The topics associated with the `LOG` operation.
+	pub topics: Vec<H256>,
+	/// The data associated with the `LOG` operation.
+	pub data: Bytes,
 }
-impl Default for Network {
-	fn default() -> Network {
-		Network::Mainnet
+impl LogEntry {
+	/// Calculates the bloom of this log entry.
+	pub fn bloom(&self) -> Bloom {
+		self.topics.iter().fold(
+			Bloom::from(Input::Raw(self.address.as_bytes())),
+			|mut b, t| {
+				b.accrue(Input::Raw(t.as_bytes()));
+				b
+			},
+		)
 	}
 }

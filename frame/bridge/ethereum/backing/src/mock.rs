@@ -240,7 +240,7 @@ impl SortedMembers<AccountId> for UnusedTechnicalMembership {
 }
 frame_support::parameter_types! {
 	pub const EthereumRelayPalletId: PalletId = PalletId(*b"da/ethrl");
-	pub const EthereumRelayBridgeNetwork: EthereumNetwork = EthereumNetwork::Ropsten;
+	pub static EthereumRelayBridgeNetwork: EthereumNetwork = EthereumNetwork::Ropsten;
 }
 impl darwinia_ethereum_relay::Config for Test {
 	type PalletId = EthereumRelayPalletId;
@@ -324,39 +324,79 @@ frame_support::construct_runtime! {
 	}
 }
 
-pub struct ExtBuilder;
+pub struct ExtBuilder {
+	pub network: EthereumNetwork,
+}
 impl Default for ExtBuilder {
 	fn default() -> Self {
-		Self
+		Self {
+			network: EthereumNetwork::Ropsten,
+		}
 	}
 }
 impl ExtBuilder {
+	pub fn mainnet(mut self) -> Self {
+		self.network = EthereumNetwork::Mainnet;
+
+		self
+	}
+
+	pub fn set_associated_constants(&self) {
+		ETHEREUM_RELAY_BRIDGE_NETWORK.with(|v| v.replace(self.network.clone()));
+	}
+
 	pub fn build(self) -> sp_io::TestExternalities {
+		self.set_associated_constants();
+
 		let mut t = frame_system::GenesisConfig::default()
 			.build_storage::<Test>()
 			.unwrap();
 
-		darwinia_ethereum_backing::GenesisConfig::<Test> {
-			token_redeem_address: array_bytes::hex_into_unchecked(
-				"0x49262B932E439271d05634c32978294C7Ea15d0C",
-			),
-			deposit_redeem_address: array_bytes::hex_into_unchecked(
-				"0x6EF538314829EfA8386Fc43386cB13B4e0A67D1e",
-			),
-			set_authorities_address: array_bytes::hex_into_unchecked(
-				"0xE4A2892599Ad9527D76Ce6E26F93620FA7396D85",
-			),
-			ring_token_address: array_bytes::hex_into_unchecked(
-				"0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0",
-			),
-			kton_token_address: array_bytes::hex_into_unchecked(
-				"0x1994100c58753793D52c6f457f189aa3ce9cEe94",
-			),
-			backed_ring: 20000000000000,
-			backed_kton: 5000000000000,
+		if self.network == EthereumNetwork::Ropsten {
+			darwinia_ethereum_backing::GenesisConfig::<Test> {
+				token_redeem_address: array_bytes::hex_into_unchecked(
+					"0x49262B932E439271d05634c32978294C7Ea15d0C",
+				),
+				deposit_redeem_address: array_bytes::hex_into_unchecked(
+					"0x6EF538314829EfA8386Fc43386cB13B4e0A67D1e",
+				),
+				set_authorities_address: array_bytes::hex_into_unchecked(
+					"0xE4A2892599Ad9527D76Ce6E26F93620FA7396D85",
+				),
+				ring_token_address: array_bytes::hex_into_unchecked(
+					"0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0",
+				),
+				kton_token_address: array_bytes::hex_into_unchecked(
+					"0x1994100c58753793D52c6f457f189aa3ce9cEe94",
+				),
+				backed_ring: 20000000000000,
+				backed_kton: 5000000000000,
+			}
+			.assimilate_storage(&mut t)
+			.unwrap();
+		} else {
+			darwinia_ethereum_backing::GenesisConfig::<Test> {
+				token_redeem_address: array_bytes::hex_into_unchecked(
+					"0xea7938985898af7fd945b03b7bc2e405e744e913",
+				),
+				deposit_redeem_address: array_bytes::hex_into_unchecked(
+					"0x649fdf6ee483a96e020b889571e93700fbd82d88",
+				),
+				set_authorities_address: array_bytes::hex_into_unchecked(
+					"0xE4A2892599Ad9527D76Ce6E26F93620FA7396D85",
+				),
+				ring_token_address: array_bytes::hex_into_unchecked(
+					"0x9469d013805bffb7d3debe5e7839237e535ec483",
+				),
+				kton_token_address: array_bytes::hex_into_unchecked(
+					"0x9f284e1337a815fe77d2ff4ae46544645b20c5ff",
+				),
+				backed_ring: 20000000000000,
+				backed_kton: 5000000000000,
+			}
+			.assimilate_storage(&mut t)
+			.unwrap();
 		}
-		.assimilate_storage(&mut t)
-		.unwrap();
 
 		t.into()
 	}
