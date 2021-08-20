@@ -9,10 +9,11 @@ frame_support::parameter_types! {
 }
 
 impl Config for Runtime {
-	// FIXME: Remove tight couple with dvm_ethereum and change it to PalletId
-	type IssuingPalletId = EthereumIssuingPalletId;
+	type PalletId = EthereumIssuingPalletId;
 	type Event = Event;
+	type RingCurrency = Ring;
 	type EthereumRelay = EthereumRelay;
 	type EcdsaAuthorities = EthereumRelayAuthorities;
 	type WeightInfo = ();
+	type DvmHandler = Ethereum;
 }
