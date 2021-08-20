@@ -314,33 +314,6 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-	/// Execute transaction from pallet(internal transaction)
-	/// NOTE: The difference between the rpc transaction and the internal transaction is that
-	/// The internal transactions will catch and throw evm error comes from runner to caller.
-	pub fn internal_transact(target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo {
-		ensure!(
-			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
-			Error::<T>::PreLogExists,
-		);
-
-		let source = T::PalletId::get().into_dvm_address();
-		let nonce = <T as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce;
-		let transaction = DVMTransaction::new_internal_transaction(source, nonce, target, input);
-		Self::raw_transact(transaction).map(|(reason, used_gas)| match reason {
-			// Only when exit_reason is successful, return Ok(...)
-			ExitReason::Succeed(_) => Ok(PostDispatchInfo {
-				actual_weight: Some(T::GasWeightMapping::gas_to_weight(
-					used_gas.unique_saturated_into(),
-				)),
-				pays_fee: Pays::No,
-			}),
-			_ => {
-				log::error!("Executing internal transaction error happened");
-				Err(Error::<T>::FailedInternalTx.into())
-			}
-		})?
-	}
-
 	/// Execute transaction from EthApi(network transaction)
 	/// NOTE: For the rpc transaction, the execution will return ok(..) even when encounters error
 	/// from evm runner
@@ -433,33 +406,6 @@ impl<T: Config> Pallet<T> {
 			reason.clone(),
 		));
 		Ok((reason, used_gas))
-	}
-
-	/// Pure read-only call to contract, the sender is pallet dvm account.
-	/// NOTE: You should never use raw call for any non-read-only operation, be carefully.
-	pub fn read_only_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
-		sp_io::storage::start_transaction();
-		let (_, _, info) = Self::execute(
-			T::PalletId::get().into_dvm_address(),
-			input,
-			U256::zero(),
-			U256::from(INTERNAL_TX_GAS_LIMIT),
-			None,
-			None,
-			TransactionAction::Call(contract),
-			None,
-		)?;
-		sp_io::storage::rollback_transaction();
-		match info {
-			CallOrCreateInfo::Call(info) => match info.exit_reason {
-				ExitReason::Succeed(_) => Ok(info.value),
-				_ => {
-					log::error!("Executing internal transaction error happened");
-					Err(Error::<T>::FailedInternalTx.into())
-				}
-			},
-			_ => Err(Error::<T>::InvalidCall.into()),
-		}
 	}
 
 	/// Get the transaction status with given index.
@@ -595,6 +541,69 @@ impl<T: Config> Pallet<T> {
 			for topic in log.topics {
 				bloom.accrue(BloomInput::Raw(&topic[..]));
 			}
+		}
+	}
+}
+
+pub trait InternalTransactHandler {
+	/// Internal transaction
+	fn internal_transact(target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo;
+	/// Read-only call to contract,
+	fn read_only_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError>;
+}
+
+impl<T: Config> InternalTransactHandler for Pallet<T> {
+	/// Execute transaction from pallet(internal transaction)
+	/// NOTE: The difference between the rpc transaction and the internal transaction is that
+	/// The internal transactions will catch and throw evm error comes from runner to caller.
+	fn internal_transact(target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo {
+		ensure!(
+			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
+			Error::<T>::PreLogExists,
+		);
+
+		let source = T::PalletId::get().into_dvm_address();
+		let nonce = <T as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce;
+		let transaction = DVMTransaction::new_internal_transaction(source, nonce, target, input);
+		Self::raw_transact(transaction).map(|(reason, used_gas)| match reason {
+			// Only when exit_reason is successful, return Ok(...)
+			ExitReason::Succeed(_) => Ok(PostDispatchInfo {
+				actual_weight: Some(T::GasWeightMapping::gas_to_weight(
+					used_gas.unique_saturated_into(),
+				)),
+				pays_fee: Pays::No,
+			}),
+			_ => {
+				log::error!("Executing internal transaction error happened");
+				Err(Error::<T>::FailedInternalTx.into())
+			}
+		})?
+	}
+
+	/// Pure read-only call to contract, the sender is pallet dvm account.
+	/// NOTE: You should never use raw call for any non-read-only operation, be carefully.
+	fn read_only_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
+		sp_io::storage::start_transaction();
+		let (_, _, info) = Self::execute(
+			T::PalletId::get().into_dvm_address(),
+			input,
+			U256::zero(),
+			U256::from(INTERNAL_TX_GAS_LIMIT),
+			None,
+			None,
+			TransactionAction::Call(contract),
+			None,
+		)?;
+		sp_io::storage::rollback_transaction();
+		match info {
+			CallOrCreateInfo::Call(info) => match info.exit_reason {
+				ExitReason::Succeed(_) => Ok(info.value),
+				_ => {
+					log::error!("Executing internal transaction error happened");
+					Err(Error::<T>::FailedInternalTx.into())
+				}
+			},
+			_ => Err(Error::<T>::InvalidCall.into()),
 		}
 	}
 }
