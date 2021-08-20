@@ -46,12 +46,9 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 // --- darwinia ---
-use darwinia_support::{
-	balance::*,
-	s2s::{
-		ensure_source_root, to_bytes32, RelayMessageCaller, BACK_ERC20_RING, RING_DECIMAL,
-		RING_NAME, RING_SYMBOL,
-	},
+use darwinia_support::s2s::{
+	ensure_source_root, to_bytes32, RelayMessageCaller, BACK_ERC20_RING, RING_DECIMAL, RING_NAME,
+	RING_SYMBOL,
 };
 use dp_asset::{
 	token::{Token, TokenInfo, TokenOption},
@@ -76,7 +73,7 @@ pub mod pallet {
 		type PalletId: Get<PalletId>;
 		#[pallet::constant]
 		type RingLockMaxLimit: Get<RingBalance<Self>>;
-		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+		type RingCurrency: Currency<AccountId<Self>>;
 
 		type BridgedAccountIdConverter: Convert<H256, Self::AccountId>;
 		type BridgedChainId: Get<ChainId>;
