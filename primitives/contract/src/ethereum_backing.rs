@@ -140,10 +140,11 @@ impl EthereumBacking {
 		backing_address: &EthereumAddress,
 	) -> AbiResult<Log> {
 		let log_entry = receipt
-			.clone()
+			.as_legacy_receipt()
 			.logs
-			.into_iter()
+			.iter()
 			.find(|x| &x.address == backing_address && x.topics[0] == log_event.signature())
+			.cloned()
 			.ok_or(Error::InvalidData)?;
 		let log = RawLog {
 			topics: log_entry.topics.into_iter().collect(),
