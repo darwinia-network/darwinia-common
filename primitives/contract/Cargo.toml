@@ -16,7 +16,7 @@ ethereum-types = { default-features = false, version = "0.11.0" }
 ethabi              = { default-features = false, git = "https://github.com/darwinia-network/ethabi.git", tag = "v13.0.0-no-std" }
 ethereum-primitives = { default-features = false, path = "../ethereum" }
 # paritytech
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.3" }
 
 [features]
 default = ["std"]

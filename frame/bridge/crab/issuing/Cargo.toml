@@ -19,16 +19,16 @@ serde_json = { version = "1.0.66", optional = true }
 # darwinia-network
 darwinia-support = { optional = true, path = "../../../support" }
 # paritytech
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.3" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.3" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.3" }
 
 [dev-dependencies]
 # darwinia-network
 darwinia-balances = { path = "../../../balances" }
 darwinia-support  = { path = "../../../support" }
 # paritytech
-sp-io = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-io = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.3" }
 
 [features]
 default = ["std"]
