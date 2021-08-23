@@ -28,7 +28,7 @@ pub mod balance {
 	pub use crate::structs::{
 		BalanceLock, FrozenBalance, LockFor, LockReasons, StakingLock, Unbonding,
 	};
-	pub use crate::traits::{BalanceInfo, DustCollector, LockableCurrency, OnUnbalancedKton};
+	pub use crate::traits::{BalanceInfo, DustCollector, LockableCurrency};
 }
 
 // TODO: Should we move this to `s2s-primitives`?

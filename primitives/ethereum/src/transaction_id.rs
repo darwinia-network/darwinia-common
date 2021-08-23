@@ -16,30 +16,23 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-#[cfg(not(feature = "std"))]
-extern crate alloc;
+// --- paritytech ---
+use sp_debug_derive::RuntimeDebug;
 
-#[cfg(not(feature = "std"))]
-use alloc::string::String;
-
-use core::fmt;
-use rlp::DecoderError;
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum TrieError {
-	DB(String),
-	Decoder(DecoderError),
-	InvalidData,
-	InvalidStateRoot,
-	InvalidProof,
+#[derive(Clone, PartialEq, Eq, RuntimeDebug)]
+#[repr(u8)]
+pub enum TypedTxId {
+	EIP1559Transaction = 0x02,
+	AccessList = 0x01,
+	Legacy = 0x00,
 }
-impl fmt::Display for TrieError {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		fmt::Debug::fmt(&self, f)
-	}
-}
-impl From<DecoderError> for TrieError {
-	fn from(e: DecoderError) -> Self {
-		TrieError::Decoder(e)
+impl TypedTxId {
+	pub fn try_from_wire_byte(n: u8) -> Result<Self, ()> {
+		match n {
+			x if x == TypedTxId::EIP1559Transaction as u8 => Ok(TypedTxId::EIP1559Transaction),
+			x if x == TypedTxId::AccessList as u8 => Ok(TypedTxId::AccessList),
+			x if (x & 0x80) != 0x00 => Ok(TypedTxId::Legacy),
+			_ => Err(()),
+		}
 	}
 }

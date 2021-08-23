@@ -294,7 +294,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_version: 2600,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 1,
+	transaction_version: 2,
 };
 
 /// The BABE epoch configuration at genesis.
@@ -349,7 +349,10 @@ frame_support::construct_runtime! {
 		TechnicalCommittee: pallet_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Config<T>, Event<T>} = 19,
 		PhragmenElection: darwinia_elections_phragmen::{Pallet, Call, Storage, Config<T>, Event<T>} = 20,
 		TechnicalMembership: pallet_membership::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>} = 21,
-		Treasury: darwinia_treasury::{Pallet, Call, Storage, Event<T>} = 22,
+		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 22,
+		KtonTreasury: pallet_treasury::<Instance2>::{Pallet, Call, Storage, Config, Event<T>} = 50,
+		Tips: pallet_tips::{Pallet, Call, Storage, Event<T>} = 51,
+		Bounties: pallet_bounties::{Pallet, Call, Storage, Event<T>} = 52,
 
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 23,
 
@@ -899,28 +902,131 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 	}
 }
 
+fn migrate_treasury() {
+	// --- paritytech ---
+	use frame_support::{migration, StorageHasher, Twox64Concat};
+
+	type ProposalIndex = u32;
+
+	const OLD_PREFIX: &[u8] = b"DarwiniaTreasury";
+	const NEW_PREFIX: &[u8] = b"Treasury";
+	const KTON_TREASURY_PREFIX: &[u8] = b"Instance2Treasury";
+
+	migration::remove_storage_prefix(OLD_PREFIX, b"ProposalCount", &[]);
+	log::info!("`ProposalCount` Removed");
+	let approvals =
+		migration::take_storage_value::<Vec<ProposalIndex>>(OLD_PREFIX, b"Approvals", &[])
+			.unwrap_or_default();
+	migration::remove_storage_prefix(OLD_PREFIX, b"Approvals", &[]);
+	log::info!("`Approvals` Removed");
+
+	#[derive(Encode, Decode)]
+	struct OldProposal {
+		proposer: AccountId,
+		beneficiary: AccountId,
+		ring_value: Balance,
+		kton_value: Balance,
+		ring_bond: Balance,
+		kton_bond: Balance,
+	}
+	#[derive(Encode, Decode)]
+	struct Proposal {
+		proposer: AccountId,
+		value: Balance,
+		beneficiary: AccountId,
+		bond: Balance,
+	}
+	let mut ring_proposals_count = 0 as ProposalIndex;
+	let mut kton_proposals_count = 0 as ProposalIndex;
+	let mut ring_approvals = vec![];
+	let mut kton_approvals = vec![];
+	for (index, old_proposal) in migration::storage_key_iter::<
+		ProposalIndex,
+		OldProposal,
+		Twox64Concat,
+	>(OLD_PREFIX, b"Proposals")
+	.drain()
+	{
+		let hash = Twox64Concat::hash(&index.encode());
+
+		if old_proposal.ring_value != 0 {
+			let new_proposal = Proposal {
+				proposer: old_proposal.proposer.clone(),
+				value: old_proposal.ring_value,
+				beneficiary: old_proposal.beneficiary.clone(),
+				bond: old_proposal.ring_bond,
+			};
+
+			ring_proposals_count += 1;
+
+			migration::put_storage_value(NEW_PREFIX, b"Proposals", &hash, new_proposal);
+
+			if approvals.contains(&index) {
+				ring_approvals.push(index);
+			}
+		}
+		if old_proposal.kton_value != 0 {
+			let new_proposal = Proposal {
+				proposer: old_proposal.proposer,
+				value: old_proposal.kton_value,
+				beneficiary: old_proposal.beneficiary,
+				bond: old_proposal.kton_bond,
+			};
+
+			kton_proposals_count += 1;
+
+			migration::put_storage_value(KTON_TREASURY_PREFIX, b"Proposals", &hash, new_proposal);
+
+			if approvals.contains(&index) {
+				kton_approvals.push(index);
+			}
+		}
+	}
+	if ring_proposals_count != 0 {
+		migration::put_storage_value(NEW_PREFIX, b"ProposalCount", &[], ring_proposals_count);
+	}
+	if kton_proposals_count != 0 {
+		migration::put_storage_value(
+			KTON_TREASURY_PREFIX,
+			b"ProposalCount",
+			&[],
+			kton_proposals_count,
+		);
+	}
+	migration::remove_storage_prefix(OLD_PREFIX, b"Proposals", &[]);
+	log::info!("`Proposals` Migrated");
+
+	if !ring_approvals.is_empty() {
+		migration::put_storage_value(NEW_PREFIX, b"Approvals", &[], ring_approvals);
+	}
+	if !kton_approvals.is_empty() {
+		migration::put_storage_value(KTON_TREASURY_PREFIX, b"Approvals", &[], kton_approvals);
+	}
+	log::info!("`Approvals` Migrated");
+
+	migration::move_storage_from_pallet(b"Tips", OLD_PREFIX, NEW_PREFIX);
+	log::info!("`Tips` Migrated");
+	migration::move_storage_from_pallet(b"BountyCount", OLD_PREFIX, NEW_PREFIX);
+	log::info!("`BountyCount` Migrated");
+	migration::move_storage_from_pallet(b"Bounties", OLD_PREFIX, NEW_PREFIX);
+	log::info!("`Bounties` Migrated");
+	migration::move_storage_from_pallet(b"BountyDescriptions", OLD_PREFIX, NEW_PREFIX);
+	log::info!("`BountyDescriptions` Migrated");
+	migration::move_storage_from_pallet(b"BountyApprovals", OLD_PREFIX, NEW_PREFIX);
+	log::info!("`BountyApprovals` Migrated");
+}
+
 pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
-		// <--- Hack for local test
-		use frame_support::traits::Currency;
-		let _ = Ring::deposit_creating(&BridgeMillauMessages::relayer_fund_account_id(), 1 << 50);
-		// --->
+		migrate_treasury();
 
 		Ok(())
 	}
 
 	fn on_runtime_upgrade() -> Weight {
-		// <--- Hack for local test
-		// use frame_support::traits::Currency;
-		// let _ = Ring::deposit_creating(&BridgeMillauMessages::relayer_fund_account_id(), 1 << 50);
-		// --->
-
-		// --- paritytech ---
-		use frame_support::migration;
-
-		migration::move_pallet(b"DarwiniaEthereumBacking", b"EthereumBacking");
+		migrate_treasury();
 
 		RuntimeBlockWeights::get().max_block
 	}

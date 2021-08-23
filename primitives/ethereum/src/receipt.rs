@@ -16,9 +16,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pub use Receipt as EthereumReceipt;
 pub use ReceiptProof as EthereumReceiptProof;
 pub use TransactionIndex as EthereumTransactionIndex;
+pub use TypedReceipt as EthereumReceipt;
 
 // --- alloc ---
 #[cfg(not(feature = "std"))]
@@ -26,16 +26,14 @@ use alloc::vec::Vec;
 // --- crates.io ---
 #[cfg(any(feature = "full-codec", test))]
 use codec::{Decode, Encode};
-use ethbloom::{Bloom, Input};
+use ethbloom::Bloom;
 #[cfg(any(feature = "full-rlp", test))]
-use rlp::{Decodable, DecoderError, Encodable, Rlp, RlpStream};
-#[cfg(any(feature = "full-rlp", test))]
-use rlp_derive::{RlpDecodable, RlpEncodable};
+use rlp::{DecoderError, Encodable, Rlp, RlpStream};
 use sp_debug_derive::RuntimeDebug;
 // --- darwinia-network ---
 #[cfg(any(feature = "full-rlp", test))]
-use crate::error::*;
-use crate::{H256, U256, *};
+use crate::{error::*, transaction_id::TypedTxId};
+use crate::{log_entry::LogEntry, H256, U256, *};
 #[cfg(any(feature = "full-rlp", test))]
 use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
 
@@ -43,42 +41,70 @@ pub type TransactionIndex = (H256, u64);
 
 #[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
 #[derive(Clone, PartialEq, Eq, RuntimeDebug)]
-pub enum TransactionOutcome {
-	/// Status and state root are unknown under EIP-98 rules.
-	Unknown,
-	/// State root is known. Pre EIP-98 and EIP-658 rules.
-	StateRoot(H256),
-	/// Status code is known. EIP-658 rules.
-	StatusCode(u8),
+pub enum TypedReceipt {
+	Legacy(LegacyReceipt),
+	AccessList(LegacyReceipt),
+	EIP1559Transaction(LegacyReceipt),
 }
+impl TypedReceipt {
+	pub fn as_legacy_receipt(&self) -> &LegacyReceipt {
+		match self {
+			Self::Legacy(receipt) => receipt,
+			Self::AccessList(receipt) => receipt,
+			Self::EIP1559Transaction(receipt) => receipt,
+		}
+	}
 
-#[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
-#[cfg_attr(any(feature = "full-rlp", test), derive(RlpEncodable, RlpDecodable))]
-#[derive(Clone, PartialEq, Eq, RuntimeDebug)]
-pub struct LogEntry {
-	/// The address of the contract executing at the point of the `LOG` operation.
-	pub address: Address,
-	/// The topics associated with the `LOG` operation.
-	pub topics: Vec<H256>,
-	/// The data associated with the `LOG` operation.
-	pub data: Bytes,
-}
-impl LogEntry {
-	/// Calculates the bloom of this log entry.
-	pub fn bloom(&self) -> Bloom {
-		self.topics.iter().fold(
-			Bloom::from(Input::Raw(self.address.as_bytes())),
-			|mut b, t| {
-				b.accrue(Input::Raw(t.as_bytes()));
-				b
-			},
-		)
+	pub fn to_legacy_receipt(self) -> LegacyReceipt {
+		match self {
+			Self::Legacy(receipt) => receipt,
+			Self::AccessList(receipt) => receipt,
+			Self::EIP1559Transaction(receipt) => receipt,
+		}
+	}
+
+	#[cfg(any(feature = "full-rlp", test))]
+	pub fn decode(tx: &[u8]) -> Result<Self, DecoderError> {
+		if tx.is_empty() {
+			// at least one byte needs to be present
+			return Err(DecoderError::RlpIncorrectListLen);
+		}
+		let id = TypedTxId::try_from_wire_byte(tx[0]);
+		if id.is_err() {
+			return Err(DecoderError::Custom("Unknown transaction"));
+		}
+		//other transaction types
+		match id.unwrap() {
+			TypedTxId::EIP1559Transaction => {
+				let rlp = Rlp::new(&tx[1..]);
+				Ok(Self::EIP1559Transaction(LegacyReceipt::decode(&rlp)?))
+			}
+			TypedTxId::AccessList => {
+				let rlp = Rlp::new(&tx[1..]);
+				Ok(Self::AccessList(LegacyReceipt::decode(&rlp)?))
+			}
+			TypedTxId::Legacy => Ok(Self::Legacy(LegacyReceipt::decode(&Rlp::new(tx))?)),
+		}
+	}
+
+	#[cfg(any(feature = "full-rlp", test))]
+	pub fn verify_proof_and_generate(
+		receipt_root: &H256,
+		proof_record: &ReceiptProof,
+	) -> Result<Self, Error> {
+		let proof = rlp::decode::<Proof>(&proof_record.proof).map_err(RlpError::from)?;
+		let key = rlp::encode(&proof_record.index);
+		let value = MerklePatriciaTrie::verify_proof(receipt_root.0.to_vec(), &key, proof)?
+			.ok_or(ProofError::TrieKeyNotExist)?;
+		let receipt = Self::decode(&value).map_err(RlpError::from)?;
+
+		Ok(receipt)
 	}
 }
 
 #[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
 #[derive(Clone, PartialEq, Eq, RuntimeDebug)]
-pub struct Receipt {
+pub struct LegacyReceipt {
 	/// The total gas used in the block following execution of the transaction.
 	pub gas_used: U256,
 	/// The OR-wide combination of all logs' blooms for this transaction.
@@ -88,7 +114,7 @@ pub struct Receipt {
 	/// Transaction outcome.
 	pub outcome: TransactionOutcome,
 }
-impl Receipt {
+impl LegacyReceipt {
 	/// Create a new receipt.
 	pub fn new(outcome: TransactionOutcome, gas_used: U256, logs: Vec<LogEntry>) -> Self {
 		Self {
@@ -103,21 +129,33 @@ impl Receipt {
 	}
 
 	#[cfg(any(feature = "full-rlp", test))]
-	pub fn verify_proof_and_generate(
-		receipt_root: &H256,
-		proof_record: &ReceiptProof,
-	) -> Result<Self, Error> {
-		let proof = rlp::decode::<Proof>(&proof_record.proof).map_err(RlpError::from)?;
-		let key = rlp::encode(&proof_record.index);
-		let value = MerklePatriciaTrie::verify_proof(receipt_root.0.to_vec(), &key, proof)?
-			.ok_or(ProofError::TrieKeyNotExist)?;
-		let receipt = rlp::decode(&value).map_err(RlpError::from)?;
-
-		Ok(receipt)
+	pub fn decode(rlp: &Rlp) -> Result<Self, DecoderError> {
+		match rlp.item_count()? {
+			3 => Ok(Self {
+				outcome: TransactionOutcome::Unknown,
+				gas_used: rlp.val_at(0)?,
+				log_bloom: rlp.val_at(1)?,
+				logs: rlp.list_at(2)?,
+			}),
+			4 => Ok(Self {
+				gas_used: rlp.val_at(1)?,
+				log_bloom: rlp.val_at(2)?,
+				logs: rlp.list_at(3)?,
+				outcome: {
+					let first = rlp.at(0)?;
+					if first.is_data() && first.data()?.len() <= 1 {
+						TransactionOutcome::StatusCode(first.as_val()?)
+					} else {
+						TransactionOutcome::StateRoot(first.as_val()?)
+					}
+				},
+			}),
+			_ => Err(DecoderError::RlpIncorrectListLen),
+		}
 	}
 }
 #[cfg(any(feature = "full-rlp", test))]
-impl Encodable for Receipt {
+impl Encodable for LegacyReceipt {
 	fn rlp_append(&self, s: &mut RlpStream) {
 		match self.outcome {
 			TransactionOutcome::Unknown => {
@@ -137,38 +175,26 @@ impl Encodable for Receipt {
 		s.append_list(&self.logs);
 	}
 }
-#[cfg(any(feature = "full-rlp", test))]
-impl Decodable for Receipt {
-	fn decode(rlp: &Rlp) -> Result<Self, DecoderError> {
-		if rlp.item_count()? == 3 {
-			Ok(Receipt {
-				outcome: TransactionOutcome::Unknown,
-				gas_used: rlp.val_at(0)?,
-				log_bloom: rlp.val_at(1)?,
-				logs: rlp.list_at(2)?,
-			})
-		} else {
-			Ok(Receipt {
-				gas_used: rlp.val_at(1)?,
-				log_bloom: rlp.val_at(2)?,
-				logs: rlp.list_at(3)?,
-				outcome: {
-					let first = rlp.at(0)?;
-					if first.is_data() && first.data()?.len() <= 1 {
-						TransactionOutcome::StatusCode(first.as_val()?)
-					} else {
-						TransactionOutcome::StateRoot(first.as_val()?)
-					}
-				},
-			})
-		}
-	}
+
+#[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
+#[derive(Clone, PartialEq, Eq, RuntimeDebug)]
+pub enum TransactionOutcome {
+	/// Status and state root are unknown under EIP-98 rules.
+	Unknown,
+	/// State root is known. Pre EIP-98 and EIP-658 rules.
+	StateRoot(H256),
+	/// Status code is known. EIP-658 rules.
+	StatusCode(u8),
 }
 
 #[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
 #[cfg_attr(any(feature = "full-serde", test), derive(serde::Deserialize))]
 #[derive(Clone, PartialEq, Eq, RuntimeDebug)]
 pub struct ReceiptProof {
+	#[cfg_attr(
+		any(feature = "full-serde", test),
+		serde(deserialize_with = "array_bytes::hexd2num")
+	)]
 	pub index: u64,
 	#[cfg_attr(
 		any(feature = "full-serde", test),
@@ -193,8 +219,8 @@ mod tests {
 		gas_used: U256,
 		status: Option<u8>,
 		log_entries: Vec<LogEntry>,
-	) -> Receipt {
-		Receipt::new(
+	) -> LegacyReceipt {
+		LegacyReceipt::new(
 			if root.is_some() {
 				TransactionOutcome::StateRoot(root.unwrap())
 			} else {
@@ -250,7 +276,7 @@ mod tests {
 			)],
 			data: array_bytes::hex2bytes_unchecked("0x0000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000363384a3868b9000000000000000000000000000000000000000000000000000000005d75f54f0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000e53504f5450582f4241542d455448000000000000000000000000000000000000"),
 		}];
-		let receipts = vec![Receipt::new(
+		let receipts = vec![LegacyReceipt::new(
 			TransactionOutcome::StatusCode(1),
 			73705.into(),
 			log_entries,

@@ -45,7 +45,6 @@ use sp_std::{str, vec::Vec};
 use bp_runtime::{ChainId, Size};
 use darwinia_evm::AddressMapping;
 use darwinia_support::{
-	balance::*,
 	evm::POW_9,
 	s2s::{ensure_source_root, RelayMessageCaller, ToEthAddress},
 	PalletDigest,
@@ -72,7 +71,7 @@ pub mod pallet {
 		type IssuingPalletId: Get<PalletId>;
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type WeightInfo: WeightInfo;
-		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+		type RingCurrency: Currency<AccountId<Self>>;
 
 		type ReceiverAccountId: From<[u8; 32]> + Into<Self::AccountId> + Clone;
 		type BridgedAccountIdConverter: Convert<H256, Self::AccountId>;

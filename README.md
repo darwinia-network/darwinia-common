@@ -44,8 +44,6 @@ The Darwinia Runtime Module Library (DRML) is a darwinia.network maintained coll
 	- Desc.
 - [darwinia-support](./frame/support)
 	- Desc.
-- [darwinia-treasury](./frame/treasury)
-	- Desc.
 - [darwinia-vesting](./frame/vesting)
 	- Desc.
 

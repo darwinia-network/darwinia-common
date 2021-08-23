@@ -156,6 +156,18 @@ pub mod pallet {
 
 			Self::rpc_transact(transaction)
 		}
+
+		// Internal transaction only for root
+		#[pallet::weight(10_000_000)]
+		pub fn root_transact(
+			origin: OriginFor<T>,
+			target: H160,
+			input: Vec<u8>,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+
+			Self::internal_transact(target, input)
+		}
 	}
 
 	#[pallet::event]

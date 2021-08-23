@@ -81,8 +81,7 @@ pub mod pallet {
 		type BackErc20RingId: Get<ContractId>;
 		#[pallet::constant]
 		type RingLockMaxLimit: Get<RingBalance<Self>>;
-
-		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+		type RingCurrency: Currency<AccountId<Self>>;
 
 		type BridgedAccountIdConverter: Convert<H256, Self::AccountId>;
 		type BridgedChainId: Get<ChainId>;

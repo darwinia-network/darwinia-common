@@ -44,6 +44,9 @@ impl InstanceFilter<Call> for ProxyType {
 							Call::PhragmenElection(..) |
 							Call::TechnicalMembership(..) |
 							Call::Treasury(..) |
+							Call::KtonTreasury(..) |
+							Call::Tips(..) |
+							Call::Bounties(..) |
 							Call::Sudo(..) |
 							// Specifically omitting Vesting `vested_transfer`, and `force_vested_transfer`
 							Call::Vesting(darwinia_vesting::Call::vest(..)) |
@@ -75,7 +78,8 @@ impl InstanceFilter<Call> for ProxyType {
 				Call::Democracy(..)
 					| Call::Council(..) | Call::TechnicalCommittee(..)
 					| Call::PhragmenElection(..)
-					| Call::Treasury(..)
+					| Call::Treasury(..) | Call::KtonTreasury(..)
+					| Call::Tips(..) | Call::Bounties(..)
 			),
 			ProxyType::Staking => matches!(c, Call::Staking(..)),
 			ProxyType::EthereumBridge => matches!(

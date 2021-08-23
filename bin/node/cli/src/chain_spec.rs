@@ -335,6 +335,8 @@ pub fn pangolin_build_spec_config() -> PangolinChainSpec {
 				phantom: PhantomData::<pangolin_runtime::TechnicalMembershipInstance>,
 				members: collective_members.clone(),
 			},
+			pallet_treasury: Default::default(),
+			pallet_treasury_Instance2: Default::default(),
 			darwinia_claims: Default::default(),
 			darwinia_vesting: Default::default(),
 			pallet_sudo: pangolin_runtime::SudoConfig { key: root.clone() },
@@ -549,6 +551,8 @@ pub fn pangolin_development_config() -> PangolinChainSpec {
 				phantom: PhantomData::<pangolin_runtime::TechnicalMembershipInstance>,
 				members: collective_members.clone(),
 			},
+			pallet_treasury: Default::default(),
+			pallet_treasury_Instance2: Default::default(),
 			darwinia_claims: pangolin_runtime::ClaimsConfig {
 				claims_list: ClaimsList::from_file(
 					"bin/res/claims-list.json",
@@ -770,6 +774,8 @@ pub fn pangolin_local_testnet_config() -> PangolinChainSpec {
 				phantom: PhantomData::<pangolin_runtime::TechnicalMembershipInstance>,
 				members: collective_members.clone(),
 			},
+			pallet_treasury: Default::default(),
+			pallet_treasury_Instance2: Default::default(),
 			darwinia_claims: pangolin_runtime::ClaimsConfig {
 				claims_list: ClaimsList::from_file(
 					"bin/res/claims-list.json",

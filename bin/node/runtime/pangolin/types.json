@@ -91,15 +91,6 @@
 		"reporters": "Vec<AccountId>",
 		"payout": "RKT"
 	},
-	"__[pallet.treasury]__": {},
-	"TreasuryProposal": {
-		"proposer": "AccountId",
-		"beneficiary": "AccountId",
-		"ring_value": "Balance",
-		"kton_value": "Balance",
-		"ring_bond": "Balance",
-		"kton_bond": "Balance"
-	},
 	"__[pallet.bridge.crab]__": {},
 	"MappedRing": "u128",
 	"__[pallet.bridge.eth]__": {},
@@ -132,6 +123,11 @@
 		"proof": "Vec<H128>"
 	},
 	"EthereumReceipt": {
+		"Legacy": "LegacyReceipt",
+		"AccessList": "LegacyReceipt",
+		"EIP1559Transaction": "LegacyReceipt"
+	},
+	"LegacyReceipt": {
 		"gas_used": "U256",
 		"log_bloom": "Bloom",
 		"logs": "Vec<LogEntry>",

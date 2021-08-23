@@ -44,7 +44,6 @@ darwinia-s2s-issuing                = { default-features = false, path = "../../
 darwinia-staking                    = { default-features = false, path = "../../../../frame/staking" }
 darwinia-staking-rpc-runtime-api    = { default-features = false, path = "../../../../frame/staking/rpc/runtime-api" }
 darwinia-support                    = { default-features = false, path = "../../../../frame/support" }
-darwinia-treasury                   = { default-features = false, path = "../../../../frame/treasury" }
 darwinia-tron-backing               = { default-features = false, path = "../../../../frame/bridge/tron/backing" }
 darwinia-vesting                    = { default-features = false, path = "../../../../frame/vesting" }
 dp-asset                            = { default-features = false, path = "../../../../primitives/asset" }
@@ -73,6 +72,7 @@ frame-try-runtime                          = { default-features = false, optiona
 pallet-authority-discovery                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-authorship                          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-babe                                = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+pallet-bounties                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-bridge-dispatch                     = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
 pallet-bridge-grandpa                      = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
 pallet-bridge-messages                     = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
@@ -92,8 +92,10 @@ pallet-session                             = { default-features = false, git = "
 pallet-society                             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-sudo                                = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-timestamp                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+pallet-tips                                = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-transaction-payment                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-transaction-payment-rpc-runtime-api = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+pallet-treasury                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-utility                             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-api                                     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-application-crypto                      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
@@ -150,7 +152,6 @@ std = [
 	"darwinia-staking/std",
 	"darwinia-staking-rpc-runtime-api/std",
 	"darwinia-support/std",
-	"darwinia-treasury/std",
 	"darwinia-tron-backing/std",
 	"darwinia-vesting/std",
 	"dp-asset/std",
@@ -179,6 +180,7 @@ std = [
 	"pallet-authority-discovery/std",
 	"pallet-authorship/std",
 	"pallet-babe/std",
+	"pallet-bounties/std",
 	"pallet-bridge-dispatch/std",
 	"pallet-bridge-grandpa/std",
 	"pallet-bridge-messages/std",
@@ -198,8 +200,10 @@ std = [
 	"pallet-society/std",
 	"pallet-sudo/std",
 	"pallet-timestamp/std",
+	"pallet-tips/std",
 	"pallet-transaction-payment/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
+	"pallet-treasury/std",
 	"pallet-utility/std",
 	"sp-api/std",
 	"sp-application-crypto/std",
