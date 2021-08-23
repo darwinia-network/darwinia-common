@@ -65,7 +65,7 @@ use sp_trie::PrefixedMemoryDB;
 use substrate_prometheus_endpoint::Registry;
 // --- darwinia ---
 use crate::cli::Cli;
-use crate::rpc::{
+use drml_rpc::{
 	self, BabeDeps, DenyUnsafe, FullDeps, GrandpaDeps, LightDeps, RpcExtension,
 	SubscriptionTaskExecutor,
 };
@@ -373,7 +373,7 @@ where
 				max_past_logs,
 			};
 
-			rpc::create_full(deps, subscription_task_executor.clone())
+			drml_rpc::create_full(deps, subscription_task_executor.clone())
 		}
 	};
 
@@ -814,7 +814,7 @@ where
 		client: client.clone(),
 		pool: transaction_pool.clone(),
 	};
-	let rpc_extension = rpc::create_light(light_deps);
+	let rpc_extension = drml_rpc::create_light(light_deps);
 	let rpc_handlers = sc_service::spawn_tasks(SpawnTasksParams {
 		on_demand: Some(on_demand),
 		remote_blockchain: Some(backend.remote_blockchain()),
