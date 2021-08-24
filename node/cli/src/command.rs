@@ -21,10 +21,10 @@ use std::{env, path::PathBuf};
 // --- substrate ---
 use sc_cli::{Role, RuntimeVersion, SubstrateCli};
 // --- darwinia ---
-use crate::{
+use crate::cli::{Cli, Subcommand};
+use drml_service::{
 	chain_spec,
-	cli::{Cli, Subcommand},
-	service,
+	service::pangolin::{self, pangolin_runtime, PangolinExecutor},
 };
 
 impl SubstrateCli for Cli {
@@ -57,7 +57,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn native_runtime_version(_spec: &Box<dyn sc_service::ChainSpec>) -> &'static RuntimeVersion {
-		&service::pangolin_runtime::VERSION
+		&pangolin_runtime::VERSION
 	}
 
 	fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
@@ -105,9 +105,9 @@ pub fn run() -> sc_cli::Result<()> {
 			runner.run_node_until_exit(|config| async move {
 				match config.role {
 					Role::Light => {
-						service::drml_new_light(config).map(|(task_manager, _)| task_manager)
+						pangolin::pangolin_new_light(config).map(|(task_manager, _)| task_manager)
 					}
-					_ => service::drml_new_full(
+					_ => pangolin::pangolin_new_full(
 						config,
 						authority_discovery_disabled,
 						max_past_logs,
@@ -128,10 +128,11 @@ pub fn run() -> sc_cli::Result<()> {
 
 			runner.async_run(|mut config| {
 				let (client, _, import_queue, task_manager) =
-					service::new_chain_ops::<
-						service::pangolin_runtime::RuntimeApi,
-						service::PangolinExecutor,
-					>(&mut config, max_past_logs, target_gas_price)?;
+					pangolin::new_chain_ops::<pangolin_runtime::RuntimeApi, PangolinExecutor>(
+						&mut config,
+						max_past_logs,
+						target_gas_price,
+					)?;
 
 				Ok((cmd.run(client, import_queue), task_manager))
 			})
@@ -140,9 +141,9 @@ pub fn run() -> sc_cli::Result<()> {
 			let runner = cli.create_runner(cmd)?;
 
 			runner.async_run(|mut config| {
-				let (client, _, _, task_manager) = service::new_chain_ops::<
-					service::pangolin_runtime::RuntimeApi,
-					service::PangolinExecutor,
+				let (client, _, _, task_manager) = pangolin::new_chain_ops::<
+					pangolin_runtime::RuntimeApi,
+					PangolinExecutor,
 				>(&mut config, max_past_logs, target_gas_price)?;
 
 				Ok((cmd.run(client, config.database), task_manager))
@@ -152,9 +153,9 @@ pub fn run() -> sc_cli::Result<()> {
 			let runner = cli.create_runner(cmd)?;
 
 			runner.async_run(|mut config| {
-				let (client, _, _, task_manager) = service::new_chain_ops::<
-					service::pangolin_runtime::RuntimeApi,
-					service::PangolinExecutor,
+				let (client, _, _, task_manager) = pangolin::new_chain_ops::<
+					pangolin_runtime::RuntimeApi,
+					PangolinExecutor,
 				>(&mut config, max_past_logs, target_gas_price)?;
 
 				Ok((cmd.run(client, config.chain_spec), task_manager))
@@ -165,10 +166,11 @@ pub fn run() -> sc_cli::Result<()> {
 
 			runner.async_run(|mut config| {
 				let (client, _, import_queue, task_manager) =
-					service::new_chain_ops::<
-						service::pangolin_runtime::RuntimeApi,
-						service::PangolinExecutor,
-					>(&mut config, max_past_logs, target_gas_price)?;
+					pangolin::new_chain_ops::<pangolin_runtime::RuntimeApi, PangolinExecutor>(
+						&mut config,
+						max_past_logs,
+						target_gas_price,
+					)?;
 
 				Ok((cmd.run(client, import_queue), task_manager))
 			})
@@ -179,7 +181,7 @@ pub fn run() -> sc_cli::Result<()> {
 			runner.sync_run(|config| {
 				// Remove dvm offchain db
 				let dvm_database_config = sc_service::DatabaseConfig::RocksDb {
-					path: service::dvm_database_dir(&config),
+					path: pangolin::dvm_database_dir(&config),
 					cache_size: 0,
 				};
 				cmd.run(dvm_database_config)?;
@@ -192,10 +194,11 @@ pub fn run() -> sc_cli::Result<()> {
 
 			runner.async_run(|mut config| {
 				let (client, backend, _, task_manager) =
-					service::new_chain_ops::<
-						service::pangolin_runtime::RuntimeApi,
-						service::PangolinExecutor,
-					>(&mut config, max_past_logs, target_gas_price)?;
+					pangolin::new_chain_ops::<pangolin_runtime::RuntimeApi, PangolinExecutor>(
+						&mut config,
+						max_past_logs,
+						target_gas_price,
+					)?;
 
 				Ok((cmd.run(client, backend), task_manager))
 			})
@@ -217,7 +220,7 @@ pub fn run() -> sc_cli::Result<()> {
 						.map_err(|e| sc_cli::Error::Service(sc_service::Error::Prometheus(e)))?;
 
 				Ok((
-					cmd.run::<service::pangolin_runtime::Block, service::PangolinExecutor>(config),
+					cmd.run::<service::pangolin_runtime::Block, PangolinExecutor>(config),
 					task_manager,
 				))
 			})
@@ -227,7 +230,7 @@ pub fn run() -> sc_cli::Result<()> {
 			let runner = cli.create_runner(cmd)?;
 
 			runner.sync_run(|config| {
-				cmd.run::<service::pangolin_runtime::Block, service::PangolinExecutor>(config)
+				cmd.run::<service::pangolin_runtime::Block, PangolinExecutor>(config)
 			})
 		}
 	}

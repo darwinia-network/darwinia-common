@@ -151,7 +151,7 @@ fn get_authority_keys_from_seed(
 }
 
 pub fn pangolin_config() -> Result<PangolinChainSpec, String> {
-	PangolinChainSpec::from_json_bytes(&include_bytes!("../../../res/pangolin/pangolin.json")[..])
+	PangolinChainSpec::from_json_bytes(&include_bytes!("../../res/pangolin/pangolin.json")[..])
 }
 
 pub fn pangolin_build_spec_config() -> PangolinChainSpec {

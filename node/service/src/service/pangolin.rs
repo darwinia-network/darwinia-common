@@ -35,7 +35,6 @@ use futures::StreamExt;
 // --- substrate ---
 use sc_authority_discovery::WorkerConfig;
 use sc_basic_authorship::ProposerFactory;
-use sc_cli::SubstrateCli;
 use sc_client_api::{BlockchainEvents, ExecutorProvider, RemoteBackend, StateBackendFor};
 use sc_consensus::LongestChain;
 use sc_consensus_babe::{
@@ -64,16 +63,15 @@ use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 use sp_trie::PrefixedMemoryDB;
 use substrate_prometheus_endpoint::Registry;
 // --- darwinia ---
-use crate::cli::Cli;
-use drml_rpc::{
-	self, BabeDeps, DenyUnsafe, FullDeps, GrandpaDeps, LightDeps, RpcExtension,
-	SubscriptionTaskExecutor,
-};
 use dc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
 use dc_mapping_sync::MappingSyncWorker;
 use dc_rpc::EthTask;
 use dp_rpc::{FilterPool, PendingTransactions};
 use drml_primitives::{AccountId, Balance, Hash, Nonce, OpaqueBlock as Block, Power};
+use drml_rpc::{
+	self, BabeDeps, DenyUnsafe, FullDeps, GrandpaDeps, LightDeps, RpcExtension,
+	SubscriptionTaskExecutor,
+};
 
 type FullBackend = sc_service::TFullBackend<Block>;
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
@@ -182,14 +180,13 @@ pub fn dvm_database_dir(config: &Configuration) -> PathBuf {
 		.as_ref()
 		.map(|base_path| base_path.config_dir(config.chain_spec.id()))
 		.unwrap_or_else(|| {
-			BasePath::from_project("", "", &Cli::executable_name())
-				.config_dir(config.chain_spec.id())
+			BasePath::from_project("", "", "drml").config_dir(config.chain_spec.id())
 		});
 
 	config_dir.join("dvm").join("db")
 }
 
-pub fn open_dvm_backend(config: &Configuration) -> Result<Arc<Backend<Block>>, String> {
+fn open_dvm_backend(config: &Configuration) -> Result<Arc<Backend<Block>>, String> {
 	Ok(Arc::new(Backend::<Block>::new(&DatabaseSettings {
 		source: DatabaseSettingsSrc::RocksDb {
 			path: dvm_database_dir(&config),
@@ -473,8 +470,6 @@ where
 		.network
 		.extra_sets
 		.push(sc_finality_grandpa::grandpa_peers_set_config());
-
-	#[cfg(feature = "cli")]
 	config.network.request_response_protocols.push(
 		sc_finality_grandpa_warp_sync::request_response_config_for_chain(
 			&config,
@@ -869,9 +864,9 @@ where
 	Ok((client, backend, import_queue, task_manager))
 }
 
-/// Create a new DRML service for a full node.
+/// Create a new Pangolin service for a full node.
 #[cfg(feature = "full-node")]
-pub fn drml_new_full(
+pub fn pangolin_new_full(
 	config: Configuration,
 	authority_discovery_disabled: bool,
 	max_past_logs: u32,
@@ -895,7 +890,9 @@ pub fn drml_new_full(
 	Ok((components, client, rpc_handlers))
 }
 
-/// Create a new DRML service for a light client.
-pub fn drml_new_light(config: Configuration) -> Result<(TaskManager, RpcHandlers), ServiceError> {
+/// Create a new Pangolin service for a light client.
+pub fn pangolin_new_light(
+	config: Configuration,
+) -> Result<(TaskManager, RpcHandlers), ServiceError> {
 	new_light::<pangolin_runtime::RuntimeApi, PangolinExecutor>(config)
 }

@@ -21,7 +21,7 @@ use std::{env, fs, io::Read, path::Path};
 
 fn main() {
 	let mut dags_merkle_roots_file =
-		fs::File::open("../../../../bin/res/ethereum/dags-merkle-roots.json").unwrap();
+		fs::File::open("../../../../node/service/res/ethereum/dags-merkle-roots.json").unwrap();
 	let mut dags_merkle_roots_str = String::new();
 	dags_merkle_roots_file
 		.read_to_string(&mut dags_merkle_roots_str)
