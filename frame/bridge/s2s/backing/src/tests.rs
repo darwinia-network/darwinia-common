@@ -93,7 +93,7 @@ impl frame_system::Config for Test {
 frame_support::parameter_types! {
 	pub const MockChainId: [u8; 4] = [0; 4];
 	pub const MockId: PalletId = PalletId(*b"da/s2sba");
-	pub const BackErc20RingId: ContractId = ContractId(*b"da/backr");
+	pub const BackErc20RingId: PalletId = PalletId(*b"da/s2sbr");
 	pub const RingLockMaxLimit: Balance = 1_000_000_000;
 }
 

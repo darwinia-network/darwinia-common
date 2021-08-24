@@ -49,7 +49,7 @@ use sp_runtime::{
 use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_support::{
-	evm::{ContractId, IntoDvmAddress},
+	evm::IntoDvmAddress,
 	s2s::{
 		ensure_source_root, to_bytes32, RelayMessageCaller, RING_DECIMAL, RING_NAME, RING_SYMBOL,
 	},
@@ -77,7 +77,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 		#[pallet::constant]
-		type BackErc20RingId: Get<ContractId>;
+		type BackErc20RingId: Get<PalletId>;
 		#[pallet::constant]
 		type RingLockMaxLimit: Get<RingBalance<Self>>;
 		type RingCurrency: Currency<AccountId<Self>>;

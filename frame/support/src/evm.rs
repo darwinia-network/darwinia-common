@@ -24,7 +24,6 @@ use sha3::{Digest, Keccak256};
 // --- darwinia-network ---
 use ethereum_primitives::{H160, H256, U256};
 // --- paritytech ---
-use codec::{Decode, Encode};
 use frame_support::PalletId;
 use sp_std::vec;
 use sp_std::vec::Vec;
@@ -36,18 +35,6 @@ pub const TRANSFER_ADDR: &'static str = "0x0000000000000000000000000000000000000
 
 pub trait IntoDvmAddress {
 	fn into_dvm_address(&self) -> H160;
-}
-
-#[derive(Clone, Copy, Eq, PartialEq, Encode, Decode)]
-pub struct ContractId(pub [u8; 8]);
-
-/// Convert from contract id to dvm address
-impl IntoDvmAddress for ContractId {
-	fn into_dvm_address(&self) -> H160 {
-		let mut bytes = vec![0u8; 12];
-		bytes.append(&mut self.0.to_vec());
-		H160::from_slice(&bytes)
-	}
 }
 
 // Convert pallet id to dvm address
