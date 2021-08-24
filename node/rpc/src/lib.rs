@@ -37,8 +37,10 @@ pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
 // --- std ---
 use std::{collections::BTreeMap, sync::Arc};
 // --- darwinia ---
+use common_primitives::{
+	AccountId, Balance, BlockNumber, Hash, Nonce, OpaqueBlock as Block, Power,
+};
 use dp_rpc::{FilterPool, PendingTransactions};
-use drml_primitives::{AccountId, Balance, BlockNumber, Hash, Nonce, OpaqueBlock as Block, Power};
 use dvm_ethereum::EthereumStorageSchema;
 
 /// A type representing all RPC extensions.

@@ -3,7 +3,7 @@
 // --- substrate ---
 use sp_staking::SessionIndex;
 // --- darwinia ---
-use drml_primitives::*;
+use common_primitives::*;
 
 pub const NANO: Balance = 1;
 pub const MICRO: Balance = 1_000 * NANO;

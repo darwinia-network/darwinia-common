@@ -16,6 +16,7 @@ futures     = { version = "0.3.13" }
 rand        = { version = "0.8.3" }
 serde_json  = { version = "1.0.66" }
 # darwinia-network
+common-primitives                   = { path = "../primitives/common" }
 darwinia-balances-rpc-runtime-api   = { path = "../../frame/balances/rpc/runtime-api" }
 darwinia-claims                     = { path = "../../frame/claims" }
 darwinia-ethereum-relay             = { path = "../../frame/bridge/ethereum/relay" }
@@ -27,7 +28,6 @@ dc-db                               = { path = "../../client/dvm/db" }
 dc-mapping-sync                     = { path = "../../client/dvm/mapping-sync" }
 dc-rpc                              = { path = "../../client/dvm/rpc", features = ["rpc_binary_search_estimate"] }
 dp-rpc                              = { path = "../../primitives/rpc" }
-drml-primitives                     = { path = "../primitives" }
 drml-rpc                            = { path = "../rpc" }
 dvm-dynamic-fee                     = { path = "../../frame/dvm-dynamic-fee" }
 dvm-rpc-runtime-api                 = { path = "../../frame/dvm/rpc/runtime-api" }

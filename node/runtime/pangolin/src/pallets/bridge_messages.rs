@@ -17,8 +17,8 @@ use crate::{
 	},
 	*,
 };
+use bridge_primitives::AccountIdConverter;
 use darwinia_support::s2s::to_bytes32;
-use pangolin_bridge_primitives::AccountIdConverter;
 
 frame_support::parameter_types! {
 	pub const MaxMessagesToPruneAtOnce: MessageNonce = 8;

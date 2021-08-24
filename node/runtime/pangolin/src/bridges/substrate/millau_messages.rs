@@ -28,7 +28,7 @@ use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
 use sp_std::{convert::TryFrom, ops::RangeInclusive};
 // --- darwinia ---
 use crate::*;
-use pangolin_bridge_primitives::PANGOLIN_CHAIN_ID;
+use bridge_primitives::PANGOLIN_CHAIN_ID;
 
 /// Message payload for Pangolin -> Millau messages.
 pub type ToMillauMessagePayload = FromThisChainMessagePayload<WithMillauMessageBridge>;
@@ -114,17 +114,16 @@ impl messages::ThisChainWithMessages for Pangolin {
 
 	fn estimate_delivery_confirmation_transaction() -> MessageTransaction<Weight> {
 		let inbound_data_size = InboundLaneData::<AccountId>::encoded_size_hint(
-			pangolin_bridge_primitives::MAXIMAL_ENCODED_ACCOUNT_ID_SIZE,
+			bridge_primitives::MAXIMAL_ENCODED_ACCOUNT_ID_SIZE,
 			1,
 		)
 		.unwrap_or(u32::MAX);
 
 		MessageTransaction {
-			dispatch_weight:
-				pangolin_bridge_primitives::MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
+			dispatch_weight: bridge_primitives::MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
 			size: inbound_data_size
 				.saturating_add(millau_primitives::EXTRA_STORAGE_PROOF_SIZE)
-				.saturating_add(pangolin_bridge_primitives::TX_EXTRA_BYTES),
+				.saturating_add(bridge_primitives::TX_EXTRA_BYTES),
 		}
 	}
 
@@ -190,7 +189,7 @@ impl messages::BridgedChainWithMessages for Millau {
 				.saturating_add(millau_primitives::DEFAULT_MESSAGE_DELIVERY_TX_WEIGHT)
 				.saturating_add(message_dispatch_weight),
 			size: message_payload_len
-				.saturating_add(pangolin_bridge_primitives::EXTRA_STORAGE_PROOF_SIZE)
+				.saturating_add(bridge_primitives::EXTRA_STORAGE_PROOF_SIZE)
 				.saturating_add(millau_primitives::TX_EXTRA_BYTES),
 		}
 	}

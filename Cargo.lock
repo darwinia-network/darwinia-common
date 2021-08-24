@@ -711,6 +711,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "bridge-primitives"
+version = "2.6.0"
+dependencies = [
+ "bp-messages",
+ "bp-runtime",
+ "common-primitives",
+ "frame-support",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "bridge-runtime-common"
 version = "0.1.0"
 source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=main#c9fe23aa081e2fb8353e96a33ad2f4c158d066b1"
@@ -998,6 +1012,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ddfc5b9aa5d4507acaf872de71051dfd0e309860e88966e1051e462a077aac4f"
 dependencies = [
  "bitflags",
+]
+
+[[package]]
+name = "common-primitives"
+version = "2.6.0"
+dependencies = [
+ "sp-core",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -2289,24 +2311,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "drml-primitives"
-version = "2.6.0"
-dependencies = [
- "sp-core",
- "sp-runtime",
-]
-
-[[package]]
 name = "drml-rpc"
 version = "2.6.0"
 dependencies = [
+ "common-primitives",
  "darwinia-balances-rpc",
  "darwinia-header-mmr-rpc",
  "darwinia-staking-rpc",
  "dc-db",
  "dc-rpc",
  "dp-rpc",
- "drml-primitives",
  "dvm-ethereum",
  "dvm-rpc-runtime-api",
  "jsonrpc-core",
@@ -2338,6 +2352,7 @@ name = "drml-service"
 version = "2.6.0"
 dependencies = [
  "array-bytes",
+ "common-primitives",
  "darwinia-balances-rpc-runtime-api",
  "darwinia-claims",
  "darwinia-ethereum-relay",
@@ -2349,7 +2364,6 @@ dependencies = [
  "dc-mapping-sync",
  "dc-rpc",
  "dp-rpc",
- "drml-primitives",
  "drml-rpc",
  "dvm-dynamic-fee",
  "dvm-rpc-runtime-api",
@@ -5990,24 +6004,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "pangolin-bridge-primitives"
-version = "2.6.0"
-dependencies = [
- "bp-messages",
- "bp-runtime",
- "drml-primitives",
- "frame-support",
- "sp-api",
- "sp-core",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pangolin-constants"
 version = "2.6.0"
 dependencies = [
- "drml-primitives",
+ "common-primitives",
  "sp-staking",
 ]
 
@@ -6019,7 +6019,9 @@ dependencies = [
  "bp-message-dispatch",
  "bp-messages",
  "bp-runtime",
+ "bridge-primitives",
  "bridge-runtime-common",
+ "common-primitives",
  "darwinia-balances",
  "darwinia-balances-rpc-runtime-api",
  "darwinia-bridge-bsc",
@@ -6049,7 +6051,6 @@ dependencies = [
  "darwinia-vesting",
  "dp-asset",
  "dp-evm",
- "drml-primitives",
  "dvm-dynamic-fee",
  "dvm-ethereum",
  "dvm-rpc-runtime-api",
@@ -6092,7 +6093,6 @@ dependencies = [
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
  "pallet-utility",
- "pangolin-bridge-primitives",
  "pangolin-constants",
  "pangolin-runtime-system-params",
  "parity-scale-codec",

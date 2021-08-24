@@ -33,10 +33,10 @@ use sp_runtime::{
 	Perbill,
 };
 // --- darwinia ---
+use common_primitives::*;
 use darwinia_claims::ClaimsList;
 use darwinia_ethereum_relay::DagsMerkleRootsLoader as DagsMerkleRootsLoaderR;
 use darwinia_evm::GenesisAccount;
-use drml_primitives::*;
 
 pub type PangolinChainSpec = sc_service::GenericChainSpec<pangolin_runtime::GenesisConfig>;
 

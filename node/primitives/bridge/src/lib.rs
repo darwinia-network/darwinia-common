@@ -26,7 +26,7 @@ use sp_core::H256;
 use sp_runtime::{traits::Convert, RuntimeDebug};
 use sp_std::prelude::*;
 // --- darwinia ---
-use drml_primitives::*;
+use common_primitives::*;
 
 /// Bridge-with-Pangolin instance id.
 pub const PANGOLIN_CHAIN_ID: ChainId = *b"pagl";

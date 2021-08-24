@@ -7,7 +7,7 @@ use pallet_bridge_dispatch::Config;
 use sp_runtime::{MultiSignature, MultiSigner};
 // --- darwinia ---
 use crate::{millau_messages::FromMillauEncodedCall, *};
-use pangolin_bridge_primitives::AccountIdConverter;
+use bridge_primitives::AccountIdConverter;
 
 impl Config<WithMillauDispatch> for Runtime {
 	type Event = Event;

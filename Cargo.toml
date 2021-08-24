@@ -1,8 +1,8 @@
 [workspace]
 members = [
 	"node/cli",
-	"node/bridge-primitives/pangolin",
-	"node/primitives",
+	"node/primitives/common",
+	"node/primitives/bridge",
 	"node/rpc",
 	"node/runtime/pangolin",
 	"node/runtime/pangolin/src/constants",

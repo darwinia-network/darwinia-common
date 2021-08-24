@@ -4,14 +4,14 @@ description = "Pangolin node bridge primitives"
 edition     = "2018"
 homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"
-name        = "pangolin-bridge-primitives"
+name        = "bridge-primitives"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "2.6.0"
 
 [dependencies]
 # darwinia-network
-drml-primitives = { default-features = false, path = "../../primitives" }
+common-primitives = { default-features = false, path = "../common" }
 # paritytech
 bp-messages   = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
 bp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
@@ -26,7 +26,7 @@ default = ["std"]
 
 std = [
 	# darwinia-network
-	"drml-primitives/std",
+	"common-primitives/std",
 	# paritytech
 	"bp-messages/std",
 	"bp-runtime/std",
