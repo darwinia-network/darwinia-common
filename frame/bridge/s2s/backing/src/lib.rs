@@ -49,7 +49,6 @@ use sp_runtime::{
 use sp_std::prelude::*;
 // --- darwinia ---
 use darwinia_support::{
-	balance::*,
 	evm::{ContractId, IntoDvmAddress},
 	s2s::{
 		ensure_source_root, to_bytes32, RelayMessageCaller, RING_DECIMAL, RING_NAME, RING_SYMBOL,
