@@ -163,7 +163,7 @@ fn test_back_erc20_dvm_address() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(
 			<Test as s2s_backing::Config>::BackErc20RingId::get().into_dvm_address(),
-			EthereumAddress::from_str("0x00000000000000000000000064612f6261636b72").unwrap()
+			EthereumAddress::from_str("0x00000000000000000000000064612f7332736272").unwrap()
 		);
 	});
 }
