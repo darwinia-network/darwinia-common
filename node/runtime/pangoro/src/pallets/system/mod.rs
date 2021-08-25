@@ -8,12 +8,11 @@ use sp_version::RuntimeVersion;
 // --- darwinia ---
 use crate::*;
 
-frame_support::parameter_types! {
+parameter_types! {
 	pub const BlockHashCount: BlockNumber = 256;
 	pub const Version: RuntimeVersion = VERSION;
-	pub const SS58Prefix: u8 = 18;
+	pub const SS58Prefix: u8 = 42;
 }
-
 impl Config for Runtime {
 	type BaseCallFilter = ();
 	type BlockWeights = RuntimeBlockWeights;
@@ -24,7 +23,7 @@ impl Config for Runtime {
 	type Index = Nonce;
 	type BlockNumber = BlockNumber;
 	type Hash = Hash;
-	type Hashing = BlakeTwo256;
+	type Hashing = Hashing;
 	type AccountId = AccountId;
 	type Lookup = AccountIdLookup<AccountId, ()>;
 	type Header = Header;

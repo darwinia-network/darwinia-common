@@ -55,7 +55,7 @@ use bridge_runtime_common::messages::{
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::KeyOwnerProofSystem,
-	weights::{IdentityFee, PostDispatchInfo, RuntimeDbWeight, Weight},
+	weights::{IdentityFee, PostDispatchInfo, Weight},
 	PalletId,
 };
 use frame_system::RawOrigin;
@@ -69,9 +69,9 @@ use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{Block as BlockT, Dispatchable, IdentityLookup, NumberFor, OpaqueKeys},
+	traits::{Block as BlockT, Dispatchable, NumberFor, OpaqueKeys},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, DispatchErrorWithPostInfo, MultiSignature, MultiSigner,
+	ApplyExtrinsicResult, DispatchErrorWithPostInfo, MultiAddress, MultiSignature, MultiSigner,
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -84,11 +84,9 @@ use darwinia_s2s_backing::EncodeCall;
 use darwinia_support::s2s::{to_bytes32, RelayMessageCaller};
 use dp_asset::{token::Token, RecipientAccount};
 
-pub type Address = AccountId;
-pub type Header = generic::Header<BlockNumber, Hashing>;
+pub type Address = MultiAddress<AccountId, ()>;
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 pub type SignedBlock = generic::SignedBlock<Block>;
-pub type BlockId = generic::BlockId<Block>;
 pub type SignedExtra = (
 	frame_system::CheckSpecVersion<Runtime>,
 	frame_system::CheckTxVersion<Runtime>,
@@ -98,9 +96,7 @@ pub type SignedExtra = (
 	frame_system::CheckWeight<Runtime>,
 	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 );
-pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
-pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, Call, SignedExtra>;
 pub type Executive = frame_executive::Executive<
 	Runtime,
 	Block,
@@ -108,6 +104,7 @@ pub type Executive = frame_executive::Executive<
 	Runtime,
 	AllPallets,
 >;
+pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 
 pub type Ring = Balances;
 
@@ -127,41 +124,6 @@ pub fn native_version() -> NativeVersion {
 		runtime_version: VERSION,
 		can_author_with: Default::default(),
 	}
-}
-
-parameter_types! {
-	pub const BlockHashCount: BlockNumber = 250;
-	pub const Version: RuntimeVersion = VERSION;
-	pub const DbWeight: RuntimeDbWeight = RuntimeDbWeight {
-		read: 60_000_000,
-		write: 200_000_000,
-	};
-	pub const SS58Prefix: u8 = 42;
-}
-impl frame_system::Config for Runtime {
-	type BaseCallFilter = ();
-	type AccountId = AccountId;
-	type Call = Call;
-	type Lookup = IdentityLookup<AccountId>;
-	type Index = Nonce;
-	type BlockNumber = BlockNumber;
-	type Hash = Hash;
-	type Hashing = Hashing;
-	type Header = generic::Header<BlockNumber, Hashing>;
-	type Event = Event;
-	type Origin = Origin;
-	type BlockHashCount = BlockHashCount;
-	type Version = Version;
-	type PalletInfo = PalletInfo;
-	type OnNewAccount = ();
-	type OnKilledAccount = ();
-	type AccountData = AccountData<Balance>;
-	type SystemWeightInfo = ();
-	type BlockWeights = pangoro_runtime_system_params::RuntimeBlockWeights;
-	type BlockLength = pangoro_runtime_system_params::RuntimeBlockLength;
-	type DbWeight = DbWeight;
-	type SS58Prefix = SS58Prefix;
-	type OnSetCode = ();
 }
 
 impl pallet_aura::Config for Runtime {
