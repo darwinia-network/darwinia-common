@@ -1,3 +1,6 @@
+// --- paritytech ---
+use pallet_shift_session_manager::Config;
+// --- darwinia-network ---
 use crate::*;
 
-impl pallet_shift_session_manager::Config for Runtime {}
+impl Config for Runtime {}

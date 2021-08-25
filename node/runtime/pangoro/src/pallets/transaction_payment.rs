@@ -10,7 +10,7 @@ pub type SlowAdjustingFeeUpdate<R> =
 	TargetedFeeAdjustment<R, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
 
 frame_support::parameter_types! {
-	pub const TransactionByteFee: Balance = 10 * MICRO;
+	pub const TransactionByteFee: Balance = 10;
 	/// The portion of the `AvailableBlockRatio` that we adjust the fees with. Blocks filled less
 	/// than this will decrease the weight and more will increase.
 	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);

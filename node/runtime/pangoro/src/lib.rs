@@ -19,7 +19,7 @@ use pangolin_messages::{ToPangolinMessagePayload, WithPangolinMessageBridge};
 
 pub use common_primitives::{self as pangoro_primitives, self as pangolin_primitives};
 
-pub use pangolin_constants::*;
+pub use pangoro_constants::*;
 
 pub use darwinia_balances::Call as BalancesCall;
 pub use frame_system::Call as SystemCall;
@@ -36,7 +36,7 @@ use bridge_runtime_common::messages::{
 	MessageBridge,
 };
 use frame_support::{
-	construct_runtime, parameter_types,
+	parameter_types,
 	traits::KeyOwnerProofSystem,
 	weights::{PostDispatchInfo, Weight},
 	PalletId,
@@ -47,11 +47,10 @@ use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
 use pallet_transaction_payment::{FeeDetails, RuntimeDispatchInfo};
-use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160};
 use sp_runtime::{
-	create_runtime_str, generic,
+	generic,
 	traits::{Block as BlockT, Dispatchable, NumberFor, OpaqueKeys},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, DispatchErrorWithPostInfo, MultiAddress, MultiSignature, MultiSigner,
@@ -92,8 +91,8 @@ pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 pub type Ring = Balances;
 
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("pangoro-runtime"),
-	impl_name: create_runtime_str!("pangoro-runtime"),
+	spec_name: sp_runtime::create_runtime_str!("pangoro-runtime"),
+	impl_name: sp_runtime::create_runtime_str!("pangoro-runtime"),
 	authoring_version: 1,
 	spec_version: 1,
 	impl_version: 1,
@@ -109,7 +108,7 @@ pub fn native_version() -> NativeVersion {
 	}
 }
 
-construct_runtime!(
+frame_support::construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
 		NodeBlock = OpaqueBlock,
@@ -140,7 +139,7 @@ construct_runtime!(
 	}
 );
 
-impl_runtime_apis! {
+sp_api::impl_runtime_apis! {
 	impl sp_api::Core<Block> for Runtime {
 		fn version() -> RuntimeVersion {
 			VERSION

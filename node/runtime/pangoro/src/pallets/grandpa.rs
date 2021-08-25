@@ -1,6 +1,9 @@
+// --- paritytech ---
+use pallet_grandpa::Config;
+// --- darwinia-network ---
 use crate::*;
 
-impl pallet_grandpa::Config for Runtime {
+impl Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 	type KeyOwnerProofSystem = ();

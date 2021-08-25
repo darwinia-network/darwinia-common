@@ -1,14 +1,21 @@
-use crate::*;
+pub use pallet_bridge_dispatch::Instance1 as WithPangolinDispatch;
 
-pub type WithPangolinDispatch = pallet_bridge_dispatch::Instance1;
-impl pallet_bridge_dispatch::Config<WithPangolinDispatch> for Runtime {
+// --- paritytech ---
+use bp_messages::{LaneId, MessageNonce};
+use pallet_bridge_dispatch::Config;
+// --- darwinia-network ---
+use crate::*;
+use bridge_primitives::AccountIdConverter;
+use pangolin_messages::FromPangolinEncodedCall;
+
+impl Config<WithPangolinDispatch> for Runtime {
 	type Event = Event;
-	type MessageId = (bp_messages::LaneId, bp_messages::MessageNonce);
+	type MessageId = (LaneId, MessageNonce);
 	type Call = Call;
 	type CallFilter = ();
-	type EncodedCall = pangolin_messages::FromPangolinEncodedCall;
+	type EncodedCall = FromPangolinEncodedCall;
 	type SourceChainAccountId = pangolin_primitives::AccountId;
 	type TargetChainAccountPublic = MultiSigner;
 	type TargetChainSignature = MultiSignature;
-	type AccountIdConverter = bridge_primitives::AccountIdConverter;
+	type AccountIdConverter = AccountIdConverter;
 }

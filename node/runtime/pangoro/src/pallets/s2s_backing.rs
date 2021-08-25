@@ -1,4 +1,9 @@
+// --- paritytech ---
+use bp_message_dispatch::CallOrigin;
+// --- darwinia-network ---
 use crate::*;
+use bridge_primitives::AccountIdConverter;
+use darwinia_s2s_backing::Config;
 
 pub const PANGORO_PANGOLIN_LANE: [u8; 4] = *b"mtpl";
 
@@ -30,7 +35,7 @@ impl PangolinCallEncoder {
 		return FromThisChainMessagePayload::<WithPangolinMessageBridge> {
 			spec_version,
 			weight,
-			origin: bp_message_dispatch::CallOrigin::SourceRoot,
+			origin: CallOrigin::SourceRoot,
 			call,
 		};
 	}
@@ -88,14 +93,14 @@ parameter_types! {
 	pub const RingLockLimit: Balance = 10_000_000 * 1_000_000_000;
 }
 
-impl darwinia_s2s_backing::Config for Runtime {
+impl Config for Runtime {
 	type PalletId = S2sBackingPalletId;
 	type Event = Event;
 	type WeightInfo = ();
 	type RingLockMaxLimit = RingLockLimit;
 	type RingCurrency = Ring;
 
-	type BridgedAccountIdConverter = bridge_primitives::AccountIdConverter;
+	type BridgedAccountIdConverter = AccountIdConverter;
 	type BridgedChainId = PangolinChainId;
 
 	type OutboundPayload = ToPangolinMessagePayload;

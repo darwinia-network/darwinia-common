@@ -1,6 +1,9 @@
+// --- paritytech ---
+use pallet_sudo::Config;
+// --- darwinia-network ---
 use crate::*;
 
-impl pallet_sudo::Config for Runtime {
+impl Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 }

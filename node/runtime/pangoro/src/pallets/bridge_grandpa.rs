@@ -1,6 +1,12 @@
-use crate::*;
+pub use pallet_bridge_grandpa::Instance1 as WithPangolinGrandpa;
 
-parameter_types! {
+// --- paritytech ---
+use pallet_bridge_grandpa::{weights::RialtoWeight, Config};
+// --- darwinia-network ---
+use crate::*;
+use bridge_primitives::Pangolin;
+
+frame_support::parameter_types! {
 	// This is a pretty unscientific cap.
 	//
 	// Note that once this is hit the pallet will essentially throttle incoming requests down to one
@@ -10,13 +16,13 @@ parameter_types! {
 	//
 	// Assuming the worst case of every header being finalized, we will keep headers for at least a
 	// week.
-	pub const HeadersToKeep: u32 = 7 * pangoro_constants::DAYS as u32;
+	pub const HeadersToKeep: u32 = 7 * DAYS as u32;
 }
-pub type WithPangolinGrandpa = pallet_bridge_grandpa::Instance1;
-impl pallet_bridge_grandpa::Config<WithPangolinGrandpa> for Runtime {
-	type BridgedChain = bridge_primitives::Pangolin;
+
+impl Config<WithPangolinGrandpa> for Runtime {
+	type BridgedChain = Pangolin;
 	type MaxRequests = MaxRequests;
 	type HeadersToKeep = HeadersToKeep;
 	// FIXME
-	type WeightInfo = pallet_bridge_grandpa::weights::RialtoWeight<Runtime>;
+	type WeightInfo = RialtoWeight<Runtime>;
 }
