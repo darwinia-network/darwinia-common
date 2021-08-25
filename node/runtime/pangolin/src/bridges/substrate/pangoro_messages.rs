@@ -6,7 +6,7 @@ use bp_messages::{
 	target_chain::{ProvedMessages, SourceHeaderChain},
 	InboundLaneData, LaneId, Message, MessageNonce, Parameter as MessagesParameter,
 };
-use bp_runtime::{ChainId, PANGORO_CHAIN_ID};
+use bp_runtime::ChainId;
 use bridge_runtime_common::messages::{
 	self,
 	source::{
@@ -28,7 +28,7 @@ use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
 use sp_std::{convert::TryFrom, ops::RangeInclusive};
 // --- darwinia ---
 use crate::*;
-use bridge_primitives::PANGOLIN_CHAIN_ID;
+use bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 
 /// Message payload for Pangolin -> Pangoro messages.
 pub type ToPangoroMessagePayload = FromThisChainMessagePayload<WithPangoroMessageBridge>;
@@ -125,7 +125,7 @@ impl messages::ThisChainWithMessages for Pangolin {
 		MessageTransaction {
 			dispatch_weight: bridge_primitives::MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
 			size: inbound_data_size
-				.saturating_add(pangoro_primitives::EXTRA_STORAGE_PROOF_SIZE)
+				.saturating_add(bridge_primitives::EXTRA_STORAGE_PROOF_SIZE)
 				.saturating_add(bridge_primitives::TX_EXTRA_BYTES),
 		}
 	}
@@ -161,13 +161,13 @@ impl messages::ChainWithMessages for Pangoro {
 }
 impl messages::BridgedChainWithMessages for Pangoro {
 	fn maximal_extrinsic_size() -> u32 {
-		pangoro_primitives::max_extrinsic_size()
+		pangoro_runtime_system_params::max_extrinsic_size()
 	}
 
 	fn message_weight_limits(_message_payload: &[u8]) -> RangeInclusive<Weight> {
 		// we don't want to relay too large messages + keep reserve for future upgrades
 		let upper_limit = messages::target::maximal_incoming_message_dispatch_weight(
-			pangoro_primitives::max_extrinsic_weight(),
+			pangoro_runtime_system_params::max_extrinsic_weight(),
 		);
 
 		// we're charging for payload bytes in `WithPangoroMessageBridge::transaction_payment` function
@@ -188,19 +188,19 @@ impl messages::BridgedChainWithMessages for Pangoro {
 
 		MessageTransaction {
 			dispatch_weight: extra_bytes_in_payload
-				.saturating_mul(pangoro_primitives::ADDITIONAL_MESSAGE_BYTE_DELIVERY_WEIGHT)
-				.saturating_add(pangoro_primitives::DEFAULT_MESSAGE_DELIVERY_TX_WEIGHT)
+				.saturating_mul(bridge_primitives::ADDITIONAL_MESSAGE_BYTE_DELIVERY_WEIGHT)
+				.saturating_add(bridge_primitives::DEFAULT_MESSAGE_DELIVERY_TX_WEIGHT)
 				.saturating_add(message_dispatch_weight),
 			size: message_payload_len
 				.saturating_add(bridge_primitives::EXTRA_STORAGE_PROOF_SIZE)
-				.saturating_add(pangoro_primitives::TX_EXTRA_BYTES),
+				.saturating_add(bridge_primitives::TX_EXTRA_BYTES),
 		}
 	}
 
 	fn transaction_payment(transaction: MessageTransaction<Weight>) -> pangoro_primitives::Balance {
 		// in our testnets, both per-byte fee and weight-to-fee are 1:1
 		messages::transaction_payment(
-			pangoro_primitives::RuntimeBlockWeights::get()
+			pangoro_runtime_system_params::RuntimeBlockWeights::get()
 				.get(DispatchClass::Normal)
 				.base_extrinsic,
 			1,

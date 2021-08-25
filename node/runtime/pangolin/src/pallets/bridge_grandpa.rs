@@ -1,10 +1,11 @@
 pub use pallet_bridge_grandpa::Instance1 as WithPangoroGrandpa;
 
 // --- substrate ---
+use bridge_primitives::Pangoro;
 use pallet_bridge_grandpa::{weights::RialtoWeight, Config};
-use pangoro_primitives::{Pangoro, DAYS};
 // --- darwinia ---
 use crate::*;
+use pangoro_constants::DAYS;
 
 frame_support::parameter_types! {
 	// This is a pretty unscientific cap.

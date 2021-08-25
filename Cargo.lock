@@ -6121,6 +6121,8 @@ dependencies = [
  "pallet-utility",
  "pangolin-constants",
  "pangolin-runtime-system-params",
+ "pangoro-constants",
+ "pangoro-runtime-system-params",
  "parity-scale-codec",
  "serde",
  "smallvec 1.6.1",

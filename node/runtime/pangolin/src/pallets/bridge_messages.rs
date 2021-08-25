@@ -5,10 +5,6 @@ use bp_messages::MessageNonce;
 use pallet_bridge_messages::{
 	instant_payments::InstantCurrencyPayments, weights::RialtoWeight, Config,
 };
-use pangoro_primitives::{
-	MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT, MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE,
-	MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE,
-};
 // --- darwinia ---
 use crate::{
 	pangoro_messages::{
@@ -17,7 +13,10 @@ use crate::{
 	},
 	*,
 };
-use bridge_primitives::AccountIdConverter;
+use bridge_primitives::{
+	AccountIdConverter, MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
+	MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE, MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE,
+};
 use darwinia_support::s2s::to_bytes32;
 
 frame_support::parameter_types! {

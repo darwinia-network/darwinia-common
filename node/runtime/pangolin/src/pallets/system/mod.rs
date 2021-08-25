@@ -24,7 +24,7 @@ impl Config for Runtime {
 	type Index = Nonce;
 	type BlockNumber = BlockNumber;
 	type Hash = Hash;
-	type Hashing = BlakeTwo256;
+	type Hashing = Hashing;
 	type AccountId = AccountId;
 	type Lookup = AccountIdLookup<AccountId, ()>;
 	type Header = Header;

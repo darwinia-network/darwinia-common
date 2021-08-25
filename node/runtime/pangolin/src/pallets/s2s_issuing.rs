@@ -6,11 +6,10 @@ use pallet_bridge_messages::Instance1 as Pangoro;
 use sp_runtime::{AccountId32, DispatchErrorWithPostInfo};
 // --- darwinia ---
 use crate::*;
+use bridge_primitives::{AccountIdConverter, PANGORO_CHAIN_ID};
 use darwinia_s2s_issuing::{Config, EncodeCall};
 use darwinia_support::s2s::{RelayMessageCaller, ToEthAddress};
 use dp_asset::{token::Token, RecipientAccount};
-use bridge_primitives::PANGORO_CHAIN_ID;
-use pangoro_primitives::AccountIdConverter;
 
 // 0x6d74706c
 pub const PANGORO_PANGOLIN_LANE: [u8; 4] = *b"mtpl";

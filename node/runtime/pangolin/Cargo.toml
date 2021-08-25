@@ -56,6 +56,8 @@ dvm-rpc-runtime-api                 = { default-features = false, path = "../../
 ethereum-primitives                 = { default-features = false, path = "../../../primitives/ethereum" }
 pangolin-constants                  = { default-features = false, path = "src/constants" }
 pangolin-runtime-system-params      = { default-features = false, path = "src/pallets/system/params" }
+pangoro-constants                   = { default-features = false, path = "../pangoro/src/constants" }
+pangoro-runtime-system-params       = { default-features = false, path = "../pangoro/src/pallets/system/params" }
 # paritytech
 bp-message-dispatch                        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
 bp-messages                                = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
@@ -163,6 +165,8 @@ std = [
 	"bridge-primitives/std",
 	"pangolin-constants/std",
 	"pangolin-runtime-system-params/std",
+	"pangoro-constants/std",
+	"pangoro-runtime-system-params/std",
 	# paritytech
 	"bp-message-dispatch/std",
 	"bp-messages/std",
