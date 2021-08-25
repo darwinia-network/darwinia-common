@@ -1381,7 +1381,7 @@ fn test_pallet_id_to_dvm_address() {
 	ext.execute_with(|| {
 		assert_eq!(
 			<Test as self::Config>::PalletId::get().into_dvm_address(),
-			H160::from_str("0x0000000000000000000000006461722f64766d70").unwrap()
+			H160::from_str("0x6d6f646c6461722f64766d700000000000000000").unwrap()
 		)
 	})
 }
