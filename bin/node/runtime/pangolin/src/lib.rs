@@ -945,8 +945,6 @@ fn migrate_treasury() {
 	>(OLD_PREFIX, b"Proposals")
 	.drain()
 	{
-		let hash = Twox64Concat::hash(&index.encode());
-
 		if old_proposal.ring_value != 0 {
 			let new_proposal = Proposal {
 				proposer: old_proposal.proposer.clone(),
@@ -954,8 +952,8 @@ fn migrate_treasury() {
 				beneficiary: old_proposal.beneficiary.clone(),
 				bond: old_proposal.ring_bond,
 			};
-
-			ring_proposals_count += 1;
+			// All on-chain proposal have ring value
+			let hash = Twox64Concat::hash(&index.encode());
 
 			migration::put_storage_value(NEW_PREFIX, b"Proposals", &hash, new_proposal);
 
@@ -970,8 +968,8 @@ fn migrate_treasury() {
 				beneficiary: old_proposal.beneficiary,
 				bond: old_proposal.kton_bond,
 			};
-
-			kton_proposals_count += 1;
+			// Only one on-chain proposal have kton value, so set index to 0
+			let hash = Twox64Concat::hash(&(0 as ProposalIndex).encode());
 
 			migration::put_storage_value(KTON_TREASURY_PREFIX, b"Proposals", &hash, new_proposal);
 
