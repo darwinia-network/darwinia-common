@@ -15,3 +15,6 @@ pub use transaction_payment::*;
 
 pub mod session;
 pub use session::*;
+
+pub mod grandpa;
+pub use grandpa::*;
