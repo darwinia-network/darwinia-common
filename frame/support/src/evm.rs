@@ -25,7 +25,7 @@ use sha3::{Digest, Keccak256};
 use ethereum_primitives::{H160, H256, U256};
 // --- paritytech ---
 use frame_support::PalletId;
-use sp_std::vec;
+use sp_runtime::{traits::AccountIdConversion, AccountId32};
 use sp_std::vec::Vec;
 
 pub const POW_9: u32 = 1_000_000_000;
@@ -40,9 +40,9 @@ pub trait IntoDvmAddress {
 // Convert pallet id to dvm address
 impl IntoDvmAddress for PalletId {
 	fn into_dvm_address(&self) -> H160 {
-		let mut bytes = vec![0u8; 12];
-		bytes.append(&mut self.0.to_vec());
-		H160::from_slice(&bytes)
+		let account_id: AccountId32 = self.into_account();
+		let bytes: &[u8] = account_id.as_ref();
+		H160::from_slice(&bytes[0..20])
 	}
 }
 
