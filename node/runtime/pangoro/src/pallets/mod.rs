@@ -18,3 +18,6 @@ pub use session::*;
 
 pub mod grandpa;
 pub use grandpa::*;
+
+pub mod sudo;
+pub use sudo::*;

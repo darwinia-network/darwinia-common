@@ -109,11 +109,6 @@ pub fn native_version() -> NativeVersion {
 	}
 }
 
-impl pallet_sudo::Config for Runtime {
-	type Event = Event;
-	type Call = Call;
-}
-
 // <--- pangolin
 parameter_types! {
 	pub const MaxMessagesToPruneAtOnce: bp_messages::MessageNonce = 8;
