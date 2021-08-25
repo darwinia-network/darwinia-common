@@ -2,7 +2,7 @@
 use sp_runtime::Percent;
 // --- darwinia ---
 use crate::*;
-use pallet_tips::{weights::SubstrateWeight, Config};
+use pallet_tips::Config;
 
 frame_support::parameter_types! {
 	pub const DataDepositPerByte: Balance = 1 * MILLI;
@@ -20,5 +20,5 @@ impl Config for Runtime {
 	type TipCountdown = TipCountdown;
 	type TipFindersFee = TipFindersFee;
 	type TipReportDepositBase = TipReportDepositBase;
-	type WeightInfo = SubstrateWeight<Runtime>;
+	type WeightInfo = ();
 }

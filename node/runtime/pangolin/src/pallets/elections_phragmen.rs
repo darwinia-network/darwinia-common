@@ -2,7 +2,7 @@
 use frame_support::traits::{LockIdentifier, U128CurrencyToVote};
 // --- darwinia ---
 use crate::*;
-use darwinia_elections_phragmen::{weights::SubstrateWeight, Config};
+use darwinia_elections_phragmen::Config;
 
 frame_support::parameter_types! {
 	pub const PhragmenElectionPalletId: LockIdentifier = *b"da/phrel";
@@ -34,5 +34,5 @@ impl Config for Runtime {
 	type DesiredMembers = DesiredMembers;
 	type DesiredRunnersUp = DesiredRunnersUp;
 	type TermDuration = TermDuration;
-	type WeightInfo = SubstrateWeight<Runtime>;
+	type WeightInfo = ();
 }

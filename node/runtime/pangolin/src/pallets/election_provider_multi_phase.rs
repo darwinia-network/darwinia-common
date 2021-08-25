@@ -1,6 +1,6 @@
 // --- substrate ---
 use frame_support::weights::{constants::BlockExecutionWeight, DispatchClass, Weight};
-use pallet_election_provider_multi_phase::{weights::SubstrateWeight, Config};
+use pallet_election_provider_multi_phase::Config;
 use sp_runtime::{transaction_validity::TransactionPriority, PerU16};
 // --- darwinia ---
 use crate::*;
@@ -56,6 +56,6 @@ impl Config for Runtime {
 	type OnChainAccuracy = Perbill;
 	type CompactSolution = NposCompactSolution16;
 	type Fallback = Fallback;
-	type WeightInfo = SubstrateWeight<Runtime>;
+	type WeightInfo = ();
 	type BenchmarkingConfig = ();
 }

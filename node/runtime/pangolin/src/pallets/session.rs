@@ -1,5 +1,5 @@
 // --- substrate ---
-use pallet_session::{historical::NoteHistoricalRoot, weights::SubstrateWeight, Config};
+use pallet_session::{historical::NoteHistoricalRoot, Config};
 use sp_runtime::{traits::OpaqueKeys, Perbill};
 use sp_std::prelude::*;
 // --- darwinia ---
@@ -29,5 +29,5 @@ impl Config for Runtime {
 	type SessionHandler = <SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = SessionKeys;
 	type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
-	type WeightInfo = SubstrateWeight<Runtime>;
+	type WeightInfo = ();
 }

@@ -1,5 +1,5 @@
 // --- substrate ---
-use pallet_timestamp::{weights::SubstrateWeight, Config};
+use pallet_timestamp::Config;
 // --- darwinia ---
 use crate::*;
 
@@ -11,5 +11,5 @@ impl Config for Runtime {
 	type Moment = Moment;
 	type OnTimestampSet = Aura;
 	type MinimumPeriod = MinimumPeriod;
-	type WeightInfo = SubstrateWeight<Runtime>;
+	type WeightInfo = ();
 }

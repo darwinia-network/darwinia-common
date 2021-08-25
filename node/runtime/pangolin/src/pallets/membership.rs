@@ -2,7 +2,7 @@ pub use pallet_membership::Instance1 as TechnicalMembershipInstance;
 
 // --- substrate ---
 use frame_support::traits::ChangeMembers;
-use pallet_membership::{weights::SubstrateWeight, Config};
+use pallet_membership::Config;
 // --- darwinia ---
 use crate::*;
 
@@ -28,5 +28,5 @@ impl Config<TechnicalMembershipInstance> for Runtime {
 	type MembershipInitialized = TechnicalCommittee;
 	type MembershipChanged = MembershipChangedGroup;
 	type MaxMembers = TechnicalMaxMembers;
-	type WeightInfo = SubstrateWeight<Runtime>;
+	type WeightInfo = ();
 }

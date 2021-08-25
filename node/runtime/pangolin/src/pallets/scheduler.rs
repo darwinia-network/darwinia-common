@@ -1,7 +1,7 @@
 // --- substrate ---
 use frame_support::weights::Weight;
 use frame_system::EnsureRoot;
-use pallet_scheduler::{weights::SubstrateWeight, Config};
+use pallet_scheduler::Config;
 use sp_runtime::Perbill;
 // --- darwinia ---
 use crate::*;
@@ -20,5 +20,5 @@ impl Config for Runtime {
 	type MaximumWeight = MaximumSchedulerWeight;
 	type ScheduleOrigin = EnsureRoot<AccountId>;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
-	type WeightInfo = SubstrateWeight<Runtime>;
+	type WeightInfo = ();
 }

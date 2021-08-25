@@ -4,7 +4,7 @@ use pallet_collective::{EnsureMember, EnsureProportionAtLeast};
 use sp_core::u32_trait::{_1, _2, _3};
 // --- darwinia ---
 use crate::*;
-use darwinia_democracy::{weights::SubstrateWeight, Config};
+use darwinia_democracy::Config;
 
 frame_support::parameter_types! {
 	pub const LaunchPeriod: BlockNumber = 3 * MINUTES;
@@ -61,5 +61,5 @@ impl Config for Runtime {
 	type MaxVotes = MaxVotes;
 	type OperationalPreimageOrigin = EnsureMember<AccountId, CouncilCollective>;
 	type MaxProposals = MaxProposals;
-	type WeightInfo = SubstrateWeight<Runtime>;
+	type WeightInfo = ();
 }

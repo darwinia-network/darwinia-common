@@ -3,7 +3,7 @@ use frame_support::PalletId;
 use sp_runtime::Permill;
 // --- darwinia ---
 use crate::*;
-use pallet_treasury::{weights::SubstrateWeight, Config, Instance2 as KtonTreasuryInstance};
+use pallet_treasury::{Config, Instance2 as KtonTreasuryInstance};
 
 frame_support::parameter_types! {
 	pub const TreasuryPalletId: PalletId = PalletId(*b"da/trsry");
@@ -28,7 +28,7 @@ impl Config for Runtime {
 	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
 	type BurnDestination = Society;
-	type WeightInfo = SubstrateWeight<Runtime>;
+	type WeightInfo = ();
 	type SpendFunds = Bounties;
 	type MaxApprovals = MaxApprovals;
 }
@@ -44,7 +44,7 @@ impl Config<KtonTreasuryInstance> for Runtime {
 	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
 	type BurnDestination = ();
-	type WeightInfo = SubstrateWeight<Runtime>;
+	type WeightInfo = ();
 	type SpendFunds = ();
 	type MaxApprovals = MaxApprovals;
 }

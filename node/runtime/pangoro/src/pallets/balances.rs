@@ -6,7 +6,7 @@ use frame_support::traits::Currency;
 use frame_system::Config as SystemConfig;
 // --- darwinia ---
 use crate::*;
-use darwinia_balances::{weights::SubstrateWeight, Config, Pallet};
+use darwinia_balances::{Config, Pallet};
 
 pub type RingNegativeImbalance = <Pallet<Runtime, RingInstance> as Currency<
 	<Runtime as SystemConfig>::AccountId,
@@ -26,7 +26,7 @@ impl Config<RingInstance> for Runtime {
 	type AccountStore = System;
 	type MaxLocks = MaxLocks;
 	type OtherCurrencies = (Kton,);
-	type WeightInfo = SubstrateWeight<Runtime>;
+	type WeightInfo = ();
 }
 impl Config<KtonInstance> for Runtime {
 	type Balance = Balance;
@@ -37,5 +37,5 @@ impl Config<KtonInstance> for Runtime {
 	type AccountStore = System;
 	type MaxLocks = MaxLocks;
 	type OtherCurrencies = (Ring,);
-	type WeightInfo = SubstrateWeight<Runtime>;
+	type WeightInfo = ();
 }

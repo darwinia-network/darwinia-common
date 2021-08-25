@@ -1,5 +1,5 @@
 // --- substrate ---
-use pallet_im_online::{sr25519::AuthorityId, weights::SubstrateWeight, Config};
+use pallet_im_online::{sr25519::AuthorityId, Config};
 use sp_runtime::transaction_validity::TransactionPriority;
 // --- darwinia ---
 use crate::*;
@@ -15,5 +15,5 @@ impl Config for Runtime {
 	type ValidatorSet = Historical;
 	type ReportUnresponsiveness = Offences;
 	type UnsignedPriority = ImOnlineUnsignedPriority;
-	type WeightInfo = SubstrateWeight<Runtime>;
+	type WeightInfo = ();
 }

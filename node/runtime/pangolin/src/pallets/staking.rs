@@ -4,7 +4,7 @@ use sp_npos_elections::CompactSolution;
 use sp_staking::SessionIndex;
 // --- darwinia ---
 use crate::*;
-use darwinia_staking::{weights::SubstrateWeight, Config, EraIndex};
+use darwinia_staking::{Config, EraIndex};
 
 pub const MAX_NOMINATIONS: u32 = <NposCompactSolution16 as CompactSolution>::LIMIT as u32;
 
@@ -47,5 +47,5 @@ impl Config for Runtime {
 	type KtonReward = ();
 	type Cap = Cap;
 	type TotalPower = TotalPower;
-	type WeightInfo = SubstrateWeight<Runtime>;
+	type WeightInfo = ();
 }

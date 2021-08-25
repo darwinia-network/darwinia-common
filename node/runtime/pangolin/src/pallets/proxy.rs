@@ -2,7 +2,7 @@
 use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::traits::InstanceFilter;
-use pallet_proxy::{weights::SubstrateWeight, Config};
+use pallet_proxy::Config;
 use sp_runtime::{traits::BlakeTwo256, RuntimeDebug};
 // --- darwinia ---
 use crate::*;
@@ -124,5 +124,5 @@ impl Config for Runtime {
 	type CallHasher = BlakeTwo256;
 	type AnnouncementDepositBase = AnnouncementDepositBase;
 	type AnnouncementDepositFactor = AnnouncementDepositFactor;
-	type WeightInfo = SubstrateWeight<Runtime>;
+	type WeightInfo = ();
 }

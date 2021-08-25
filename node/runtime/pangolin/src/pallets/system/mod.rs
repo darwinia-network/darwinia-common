@@ -2,7 +2,7 @@ pub use pangolin_runtime_system_params::*;
 
 // --- substrate ---
 use frame_support::weights::constants::RocksDbWeight;
-use frame_system::{weights::SubstrateWeight, Config};
+use frame_system::Config;
 use sp_runtime::traits::AccountIdLookup;
 use sp_version::RuntimeVersion;
 // --- darwinia ---
@@ -35,7 +35,7 @@ impl Config for Runtime {
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
-	type SystemWeightInfo = SubstrateWeight<Runtime>;
+	type SystemWeightInfo = ();
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
 }

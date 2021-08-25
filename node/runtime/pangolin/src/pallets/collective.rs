@@ -4,8 +4,7 @@ pub use pallet_collective::{Instance1 as CouncilCollective, Instance2 as Technic
 // --- substrate ---
 use frame_system::{EnsureOneOf, EnsureRoot};
 use pallet_collective::{
-	weights::SubstrateWeight, Config, EnsureProportionAtLeast, EnsureProportionMoreThan,
-	PrimeDefaultVote,
+	Config, EnsureProportionAtLeast, EnsureProportionMoreThan, PrimeDefaultVote,
 };
 use sp_core::u32_trait::{_1, _2, _3, _5};
 // --- darwinia ---
@@ -53,7 +52,7 @@ impl Config<CouncilCollective> for Runtime {
 	type MaxProposals = CouncilMaxProposals;
 	type MaxMembers = CouncilMaxMembers;
 	type DefaultVote = PrimeDefaultVote;
-	type WeightInfo = SubstrateWeight<Runtime>;
+	type WeightInfo = ();
 }
 impl Config<TechnicalCollective> for Runtime {
 	type Origin = Origin;
@@ -63,5 +62,5 @@ impl Config<TechnicalCollective> for Runtime {
 	type MaxProposals = TechnicalMaxProposals;
 	type MaxMembers = TechnicalMaxMembers;
 	type DefaultVote = PrimeDefaultVote;
-	type WeightInfo = SubstrateWeight<Runtime>;
+	type WeightInfo = ();
 }

@@ -2,7 +2,7 @@
 use sp_runtime::Permill;
 // --- darwinia ---
 use crate::*;
-use pallet_bounties::{weights::SubstrateWeight, Config};
+use pallet_bounties::Config;
 
 frame_support::parameter_types! {
 	pub const BountyDepositBase: Balance = 1 * COIN;
@@ -21,5 +21,5 @@ impl Config for Runtime {
 	type BountyValueMinimum = BountyValueMinimum;
 	type DataDepositPerByte = DataDepositPerByte;
 	type MaximumReasonLength = MaximumReasonLength;
-	type WeightInfo = SubstrateWeight<Runtime>;
+	type WeightInfo = ();
 }
