@@ -9,26 +9,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 pub mod pallets;
 pub use pallets::*;
 
-pub mod impls {
-	pub use darwinia_balances::{Instance1 as RingInstance, Instance2 as KtonInstance};
-
-	// --- substrate ---
-	use sp_runtime::RuntimeDebug;
-	// --- darwinia ---
-	use crate::*;
-
-	darwinia_support::impl_account_data! {
-		struct AccountData<Balance>
-		for
-			RingInstance,
-			KtonInstance
-		where
-			Balance = Balance
-		{
-			// other data
-		}
-	}
-}
+pub mod impls;
 pub use impls::*;
 
 // <--- pangolin
@@ -57,7 +38,7 @@ use bridge_runtime_common::messages::{
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::KeyOwnerProofSystem,
-	weights::{IdentityFee, PostDispatchInfo, Weight},
+	weights::{PostDispatchInfo, Weight},
 	PalletId,
 };
 use frame_system::RawOrigin;
@@ -126,17 +107,6 @@ pub fn native_version() -> NativeVersion {
 		runtime_version: VERSION,
 		can_author_with: Default::default(),
 	}
-}
-
-parameter_types! {
-	pub const TransactionBaseFee: Balance = 0;
-	pub const TransactionByteFee: Balance = 1;
-}
-impl pallet_transaction_payment::Config for Runtime {
-	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
-	type TransactionByteFee = TransactionByteFee;
-	type WeightToFee = IdentityFee<Balance>;
-	type FeeMultiplierUpdate = ();
 }
 
 impl_opaque_keys! {
