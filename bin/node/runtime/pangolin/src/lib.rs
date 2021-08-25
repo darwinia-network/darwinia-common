@@ -936,8 +936,6 @@ fn migrate_treasury() {
 		beneficiary: AccountId,
 		bond: Balance,
 	}
-	let mut ring_proposals_count = 0 as ProposalIndex;
-	let mut kton_proposals_count = 0 as ProposalIndex;
 	let mut ring_approvals = vec![];
 	let mut kton_approvals = vec![];
 	for (index, old_proposal) in migration::storage_key_iter::<
@@ -982,17 +980,14 @@ fn migrate_treasury() {
 			}
 		}
 	}
-	if ring_proposals_count != 0 {
-		migration::put_storage_value(NEW_PREFIX, b"ProposalCount", &[], ring_proposals_count);
-	}
-	if kton_proposals_count != 0 {
-		migration::put_storage_value(
-			KTON_TREASURY_PREFIX,
-			b"ProposalCount",
-			&[],
-			kton_proposals_count,
-		);
-	}
+	migration::put_storage_value(NEW_PREFIX, b"ProposalCount", &[], 2 as ProposalIndex);
+	migration::put_storage_value(
+		KTON_TREASURY_PREFIX,
+		b"ProposalCount",
+		&[],
+		1 as ProposalIndex,
+	);
+
 	migration::remove_storage_prefix(OLD_PREFIX, b"Proposals", &[]);
 	log::info!("`Proposals` Migrated");
 
@@ -1006,6 +1001,8 @@ fn migrate_treasury() {
 
 	migration::move_storage_from_pallet(b"Tips", OLD_PREFIX, NEW_PREFIX);
 	log::info!("`Tips` Migrated");
+	migration::move_storage_from_pallet(b"Reasons", OLD_PREFIX, NEW_PREFIX);
+	log::info!("`Reasons` Migrated");
 	migration::move_storage_from_pallet(b"BountyCount", OLD_PREFIX, NEW_PREFIX);
 	log::info!("`BountyCount` Migrated");
 	migration::move_storage_from_pallet(b"Bounties", OLD_PREFIX, NEW_PREFIX);
