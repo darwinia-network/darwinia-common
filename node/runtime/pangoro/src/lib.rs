@@ -129,33 +129,6 @@ pub fn native_version() -> NativeVersion {
 }
 
 parameter_types! {
-	pub const ExistentialDeposit: Balance = 500;
-	pub const MaxLocks: u32 = 50;
-}
-impl darwinia_balances::Config<RingInstance> for Runtime {
-	type Balance = Balance;
-	type DustRemoval = ();
-	type Event = Event;
-	type ExistentialDeposit = ExistentialDeposit;
-	type BalanceInfo = AccountData<Balance>;
-	type AccountStore = System;
-	type MaxLocks = MaxLocks;
-	type OtherCurrencies = (Kton,);
-	type WeightInfo = ();
-}
-impl darwinia_balances::Config<KtonInstance> for Runtime {
-	type Balance = Balance;
-	type DustRemoval = ();
-	type Event = Event;
-	type ExistentialDeposit = ExistentialDeposit;
-	type BalanceInfo = AccountData<Balance>;
-	type AccountStore = System;
-	type MaxLocks = MaxLocks;
-	type OtherCurrencies = (Ring,);
-	type WeightInfo = ();
-}
-
-parameter_types! {
 	pub const TransactionBaseFee: Balance = 0;
 	pub const TransactionByteFee: Balance = 1;
 }

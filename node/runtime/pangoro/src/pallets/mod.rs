@@ -6,3 +6,6 @@ pub use aura::*;
 
 pub mod timestamp;
 pub use timestamp::*;
+
+pub mod balances;
+pub use balances::*;
