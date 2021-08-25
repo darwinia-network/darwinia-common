@@ -5528,22 +5528,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-aura"
-version = "3.0.0"
-source = "git+https://github.com/darwinia-network/substrate?branch=main#c94e0cdfe5556680dca1996004751eeb114755d7"
-dependencies = [
- "frame-support",
- "frame-system",
- "pallet-session",
- "pallet-timestamp",
- "parity-scale-codec",
- "sp-application-crypto",
- "sp-consensus-aura",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-authority-discovery"
 version = "3.0.0"
 source = "git+https://github.com/darwinia-network/substrate?branch=main#c94e0cdfe5556680dca1996004751eeb114755d7"
@@ -5888,19 +5872,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-shift-session-manager"
-version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=main#c9fe23aa081e2fb8353e96a33ad2f4c158d066b1"
-dependencies = [
- "frame-support",
- "frame-system",
- "pallet-session",
- "parity-scale-codec",
- "sp-staking",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-society"
 version = "3.0.0"
 source = "git+https://github.com/darwinia-network/substrate?branch=main#c94e0cdfe5556680dca1996004751eeb114755d7"
@@ -6161,6 +6132,7 @@ name = "pangoro-constants"
 version = "2.6.0"
 dependencies = [
  "common-primitives",
+ "sp-staking",
 ]
 
 [[package]]
@@ -6177,20 +6149,26 @@ dependencies = [
  "common-primitives",
  "darwinia-balances",
  "darwinia-s2s-backing",
+ "darwinia-staking",
  "darwinia-support",
  "dp-asset",
  "frame-executive",
  "frame-support",
  "frame-system",
  "frame-system-rpc-runtime-api",
- "pallet-aura",
+ "log",
+ "pallet-authority-discovery",
+ "pallet-authorship",
+ "pallet-babe",
  "pallet-bridge-dispatch",
  "pallet-bridge-grandpa",
  "pallet-bridge-messages",
+ "pallet-election-provider-multi-phase",
  "pallet-grandpa",
+ "pallet-im-online",
+ "pallet-offences",
  "pallet-randomness-collective-flip",
  "pallet-session",
- "pallet-shift-session-manager",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
@@ -6204,13 +6182,15 @@ dependencies = [
  "smallvec 1.6.1",
  "sp-api",
  "sp-block-builder",
- "sp-consensus-aura",
+ "sp-consensus-babe",
  "sp-core",
  "sp-finality-grandpa",
  "sp-inherents",
+ "sp-npos-elections",
  "sp-offchain",
  "sp-runtime",
  "sp-session",
+ "sp-staking",
  "sp-std",
  "sp-transaction-pool",
  "sp-trie",
@@ -8985,23 +8965,6 @@ dependencies = [
  "substrate-prometheus-endpoint",
  "thiserror",
  "wasm-timer",
-]
-
-[[package]]
-name = "sp-consensus-aura"
-version = "0.9.0"
-source = "git+https://github.com/darwinia-network/substrate?branch=main#c94e0cdfe5556680dca1996004751eeb114755d7"
-dependencies = [
- "async-trait",
- "parity-scale-codec",
- "sp-api",
- "sp-application-crypto",
- "sp-consensus",
- "sp-consensus-slots",
- "sp-inherents",
- "sp-runtime",
- "sp-std",
- "sp-timestamp",
 ]
 
 [[package]]
