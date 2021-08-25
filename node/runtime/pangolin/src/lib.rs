@@ -99,7 +99,6 @@ use pallet_grandpa::{
 };
 use pallet_transaction_payment::FeeDetails;
 use pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo as TransactionPaymentRuntimeDispatchInfo;
-use sp_api::impl_runtime_apis;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::{AllowedSlots, BabeEpochConfiguration};
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
@@ -336,7 +335,7 @@ where
 	type OverarchingCall = Call;
 }
 
-impl_runtime_apis! {
+sp_api::impl_runtime_apis! {
 	impl sp_api::Core<Block> for Runtime {
 		fn version() -> RuntimeVersion {
 			VERSION

@@ -1,5 +1,6 @@
 // --- paritytech ---
 use pallet_session::{Config, PeriodicSessions};
+use sp_runtime::traits::OpaqueKeys;
 // --- darwinia-network ---
 use crate::*;
 

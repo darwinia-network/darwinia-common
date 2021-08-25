@@ -8,7 +8,7 @@ use sp_version::RuntimeVersion;
 // --- darwinia ---
 use crate::*;
 
-parameter_types! {
+frame_support::parameter_types! {
 	pub const BlockHashCount: BlockNumber = 256;
 	pub const Version: RuntimeVersion = VERSION;
 	pub const SS58Prefix: u8 = 42;

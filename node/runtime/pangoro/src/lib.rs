@@ -12,6 +12,47 @@ pub use pallets::*;
 pub mod impls;
 pub use impls::*;
 
+pub mod wasm {
+	//! Make the WASM binary available.
+
+	#[cfg(all(
+		feature = "std",
+		any(target_arch = "x86_64", target_arch = "x86", target_vendor = "apple")
+	))]
+	include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
+
+	#[cfg(all(
+		feature = "std",
+		not(any(target_arch = "x86_64", target_arch = "x86", target_vendor = "apple"))
+	))]
+	pub const WASM_BINARY: &[u8] = include_bytes!("../../../../wasm/pangoro_runtime.compact.wasm");
+	#[cfg(all(
+		feature = "std",
+		not(any(target_arch = "x86_64", target_arch = "x86", target_vendor = "apple"))
+	))]
+	pub const WASM_BINARY_BLOATY: &[u8] = include_bytes!("../../../../wasm/pangoro_runtime.wasm");
+
+	/// Wasm binary unwrapped. If built with `BUILD_DUMMY_WASM_BINARY`, the function panics.
+	#[cfg(feature = "std")]
+	pub fn wasm_binary_unwrap() -> &'static [u8] {
+		#[cfg(all(
+			feature = "std",
+			any(target_arch = "x86_64", target_arch = "x86", target_vendor = "apple")
+		))]
+		return WASM_BINARY.expect(
+			"Development wasm binary is not available. This means the client is \
+			built with `SKIP_WASM_BUILD` flag and it is only usable for \
+			production chains. Please rebuild with the flag disabled.",
+		);
+		#[cfg(all(
+			feature = "std",
+			not(any(target_arch = "x86_64", target_arch = "x86", target_vendor = "apple"))
+		))]
+		return WASM_BINARY;
+	}
+}
+pub use wasm::*;
+
 pub mod pangolin_messages;
 use pangolin_messages::{ToPangolinMessagePayload, WithPangolinMessageBridge};
 
@@ -28,30 +69,21 @@ pub use pallet_sudo::Call as SudoCall;
 // --- crates.io ---
 use codec::{Decode, Encode};
 // --- substrate ---
-use bp_runtime::ChainId;
 use bridge_runtime_common::messages::{
-	source::{estimate_message_dispatch_and_delivery_fee, FromThisChainMessagePayload},
-	MessageBridge,
+	source::estimate_message_dispatch_and_delivery_fee, MessageBridge,
 };
-use frame_support::{
-	parameter_types,
-	traits::KeyOwnerProofSystem,
-	weights::{PostDispatchInfo, Weight},
-	PalletId,
-};
-use frame_system::RawOrigin;
-use pallet_bridge_messages::Instance1 as Pangolin;
+use frame_support::{traits::KeyOwnerProofSystem, weights::Weight};
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
 use pallet_transaction_payment::{FeeDetails, RuntimeDispatchInfo};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160};
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	generic,
-	traits::{Block as BlockT, Dispatchable, NumberFor, OpaqueKeys},
+	traits::{Block as BlockT, Dispatchable, NumberFor},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, DispatchErrorWithPostInfo, MultiAddress, MultiSignature, MultiSigner,
+	ApplyExtrinsicResult, MultiAddress,
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -60,9 +92,6 @@ use sp_version::RuntimeVersion;
 // --- darwinia ---
 use bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use common_primitives::*;
-use darwinia_s2s_backing::EncodeCall;
-use darwinia_support::s2s::{to_bytes32, RelayMessageCaller};
-use dp_asset::{token::Token, RecipientAccount};
 
 pub type Address = MultiAddress<AccountId, ()>;
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;

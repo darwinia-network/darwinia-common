@@ -1,9 +1,19 @@
+pub use pallet_bridge_messages::Instance1 as Pangolin;
+
 // --- paritytech ---
 use bp_message_dispatch::CallOrigin;
+use bp_runtime::ChainId;
+use bridge_runtime_common::messages::source::FromThisChainMessagePayload;
+use frame_support::{weights::PostDispatchInfo, PalletId};
+use frame_system::RawOrigin;
+use sp_core::H160;
+use sp_runtime::DispatchErrorWithPostInfo;
 // --- darwinia-network ---
 use crate::*;
 use bridge_primitives::AccountIdConverter;
-use darwinia_s2s_backing::Config;
+use darwinia_s2s_backing::{Config, EncodeCall};
+use darwinia_support::s2s::RelayMessageCaller;
+use dp_asset::{token::Token, RecipientAccount};
 
 pub const PANGORO_PANGOLIN_LANE: [u8; 4] = *b"mtpl";
 
@@ -87,7 +97,7 @@ impl RelayMessageCaller<ToPangolinMessagePayload, Balance> for ToPangolinMessage
 	}
 }
 
-parameter_types! {
+frame_support::parameter_types! {
 	pub const PangolinChainId: ChainId = PANGOLIN_CHAIN_ID;
 	pub const S2sBackingPalletId: PalletId = PalletId(*b"da/s2sba");
 	pub const RingLockLimit: Balance = 10_000_000 * 1_000_000_000;
