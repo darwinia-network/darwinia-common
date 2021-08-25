@@ -18,9 +18,6 @@
 
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
-// --- substrate ---
-pub use sc_executor::NativeExecutor;
-// --- darwinia ---
 pub use pangolin_runtime;
 
 // --- std ---
@@ -40,18 +37,16 @@ use sc_consensus::LongestChain;
 use sc_consensus_babe::{
 	BabeBlockImport, BabeLink, BabeParams, Config as BabeConfig, SlotProportion,
 };
-use sc_executor::{native_executor_instance, NativeExecutionDispatch};
+use sc_executor::NativeExecutionDispatch;
 use sc_finality_grandpa::{
 	Config as GrandpaConfig, FinalityProofProvider as GrandpaFinalityProofProvider, GrandpaParams,
 	LinkHalf, SharedVoterState as GrandpaSharedVoterState,
 	VotingRulesBuilder as GrandpaVotingRulesBuilder,
 };
-use sc_keystore::LocalKeystore;
 use sc_network::NetworkService;
 use sc_service::{
-	config::{KeystoreConfig, PrometheusConfig},
-	BasePath, BuildNetworkParams, Configuration, Error as ServiceError, NoopRpcExtensionBuilder,
-	PartialComponents, RpcHandlers, SpawnTasksParams, TaskManager,
+	config::KeystoreConfig, BasePath, BuildNetworkParams, Configuration, Error as ServiceError,
+	NoopRpcExtensionBuilder, PartialComponents, RpcHandlers, SpawnTasksParams, TaskManager,
 };
 use sc_telemetry::{Telemetry, TelemetryWorker};
 use sc_transaction_pool::{BasicPool, FullPool};
@@ -61,8 +56,14 @@ use sp_consensus::{
 };
 use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 use sp_trie::PrefixedMemoryDB;
-use substrate_prometheus_endpoint::Registry;
 // --- darwinia ---
+use crate::{
+	client::PangolinClient,
+	service::{
+		self, FullBackend, FullClient, FullGrandpaBlockImport, FullSelectChain, LightBackend,
+		LightClient,
+	},
+};
 use common_primitives::{AccountId, Balance, Hash, Nonce, OpaqueBlock as Block, Power};
 use dc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
 use dc_mapping_sync::MappingSyncWorker;
@@ -73,106 +74,15 @@ use drml_rpc::{
 	SubscriptionTaskExecutor,
 };
 
-type FullBackend = sc_service::TFullBackend<Block>;
-type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
-type FullClient<RuntimeApi, Executor> = sc_service::TFullClient<Block, RuntimeApi, Executor>;
-type FullGrandpaBlockImport<RuntimeApi, Executor> = sc_finality_grandpa::GrandpaBlockImport<
-	FullBackend,
-	Block,
-	FullClient<RuntimeApi, Executor>,
-	FullSelectChain,
->;
-type LightBackend = sc_service::TLightBackendWithHash<Block, BlakeTwo256>;
-type LightClient<RuntimeApi, Executor> =
-	sc_service::TLightClientWithBackend<Block, RuntimeApi, Executor, LightBackend>;
-
-native_executor_instance!(
+sc_executor::native_executor_instance!(
 	pub PangolinExecutor,
 	pangolin_runtime::api::dispatch,
 	pangolin_runtime::native_version,
 	frame_benchmarking::benchmarking::HostFunctions,
 );
 
-/// A set of APIs that darwinia-like runtimes must implement.
-pub trait RuntimeApiCollection:
-	sp_api::ApiExt<Block>
-	+ sp_api::Metadata<Block>
-	+ sp_authority_discovery::AuthorityDiscoveryApi<Block>
-	+ sp_block_builder::BlockBuilder<Block>
-	+ sp_consensus_babe::BabeApi<Block>
-	+ sp_finality_grandpa::GrandpaApi<Block>
-	+ sp_offchain::OffchainWorkerApi<Block>
-	+ sp_session::SessionKeys<Block>
-	+ sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
-	+ frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce>
-	+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
-	+ darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance>
-	+ darwinia_header_mmr_rpc_runtime_api::HeaderMMRApi<Block, Hash>
-	+ darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>
-	+ dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>
-where
-	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
-{
-}
-impl<Api> RuntimeApiCollection for Api
-where
-	Api: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
-		+ sp_api::ApiExt<Block>
-		+ sp_api::Metadata<Block>
-		+ sp_authority_discovery::AuthorityDiscoveryApi<Block>
-		+ sp_block_builder::BlockBuilder<Block>
-		+ sp_consensus_babe::BabeApi<Block>
-		+ sp_finality_grandpa::GrandpaApi<Block>
-		+ sp_offchain::OffchainWorkerApi<Block>
-		+ sp_session::SessionKeys<Block>
-		+ frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce>
-		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
-		+ darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance>
-		+ darwinia_header_mmr_rpc_runtime_api::HeaderMMRApi<Block, Hash>
-		+ darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>
-		+ dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
-	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
-{
-}
-
-/// DRML client abstraction, this super trait only pulls in functionality required for
-/// DRML internal crates like DRML-collator.
-pub trait DRMLClient<Block, Backend, Runtime>:
-	Sized
-	+ Send
-	+ Sync
-	+ sc_client_api::BlockchainEvents<Block>
-	+ sp_api::CallApiAt<Block>
-	+ sp_api::ProvideRuntimeApi<Block, Api = Runtime::RuntimeApi>
-	+ sp_blockchain::HeaderBackend<Block>
-where
-	Backend: sc_client_api::Backend<Block>,
-	Block: sp_runtime::traits::Block,
-	Runtime: sp_api::ConstructRuntimeApi<Block, Self>,
-{
-}
-impl<Block, Backend, Runtime, Client> DRMLClient<Block, Backend, Runtime> for Client
-where
-	Backend: sc_client_api::Backend<Block>,
-	Block: sp_runtime::traits::Block,
-	Client: Sized
-		+ Send
-		+ Sync
-		+ sp_api::CallApiAt<Block>
-		+ sp_api::ProvideRuntimeApi<Block, Api = Runtime::RuntimeApi>
-		+ sp_blockchain::HeaderBackend<Block>
-		+ sc_client_api::BlockchainEvents<Block>,
-	Runtime: sp_api::ConstructRuntimeApi<Block, Self>,
-{
-}
-
-fn set_prometheus_registry(config: &mut Configuration) -> Result<(), ServiceError> {
-	if let Some(PrometheusConfig { registry, .. }) = config.prometheus_config.as_mut() {
-		*registry = Registry::new_custom(Some("DRML".into()), None)?;
-	}
-
-	Ok(())
-}
+// A set of APIs that drml-like runtimes must implement.
+impl_runtime_apis!(dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>);
 
 pub fn dvm_database_dir(config: &Configuration) -> PathBuf {
 	let config_dir = config
@@ -245,7 +155,7 @@ where
 		)));
 	}
 
-	set_prometheus_registry(config)?;
+	service::set_prometheus_registry(config)?;
 
 	let telemetry = config
 		.telemetry_endpoints
@@ -394,13 +304,6 @@ where
 	})
 }
 
-fn remote_keystore(_url: &String) -> Result<Arc<LocalKeystore>, &'static str> {
-	// FIXME: here would the concrete keystore be built,
-	//        must return a concrete type (NOT `LocalKeystore`) that
-	//        implements `CryptoStore` and `SyncCryptoStore`
-	Err("Remote Keystore not supported.")
-}
-
 #[cfg(feature = "full-node")]
 fn new_full<RuntimeApi, Executor>(
 	mut config: Configuration,
@@ -451,7 +354,7 @@ where
 	} = new_partial::<RuntimeApi, Executor>(&mut config, max_past_logs, target_gas_price)?;
 
 	if let Some(url) = &config.keystore_remote {
-		match remote_keystore(url) {
+		match service::remote_keystore(url) {
 			Ok(k) => keystore_container.set_remote_keystore(k),
 			Err(e) => {
 				return Err(ServiceError::Other(format!(
@@ -704,7 +607,7 @@ where
 	<RuntimeApi as ConstructRuntimeApi<Block, LightClient<RuntimeApi, Executor>>>::RuntimeApi:
 		RuntimeApiCollection<StateBackend = StateBackendFor<LightBackend, Block>>,
 {
-	set_prometheus_registry(&mut config)?;
+	service::set_prometheus_registry(&mut config)?;
 
 	let telemetry = config
 		.telemetry_endpoints
@@ -874,7 +777,7 @@ pub fn pangolin_new_full(
 ) -> Result<
 	(
 		TaskManager,
-		Arc<impl DRMLClient<Block, FullBackend, pangolin_runtime::RuntimeApi>>,
+		Arc<impl PangolinClient<Block, FullBackend, pangolin_runtime::RuntimeApi>>,
 		RpcHandlers,
 	),
 	ServiceError,

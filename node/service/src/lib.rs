@@ -1,3 +1,5 @@
+pub mod client;
+
 pub mod chain_spec;
 pub use chain_spec::pangolin::PangolinChainSpec;
 
