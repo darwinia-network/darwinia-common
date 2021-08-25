@@ -352,7 +352,7 @@ pub enum PangolinRuntime {
 /// Something important to note:
 /// The index below represent the call order in the pangolin issuing pallet call.
 /// For example, `index = 1` point to the `register_from_remote` (second)call in pangolin runtime.
-/// You must update the index here if you change the call order in Panglin runtime.
+/// You must update the index here if you change the call order in Pangolin runtime.
 #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
 #[allow(non_camel_case_types)]
 pub enum PangolinSub2SubIssuingCall {
