@@ -136,7 +136,7 @@ parameter_types! {
 		read: 60_000_000,
 		write: 200_000_000,
 	};
-	pub const SS58Prefix: u8 = 60;
+	pub const SS58Prefix: u8 = 42;
 }
 impl frame_system::Config for Runtime {
 	type BaseCallFilter = ();
