@@ -27,8 +27,10 @@ use core::{
 #[cfg(feature = "std")]
 use std::collections::BTreeMap;
 // --- alloc ---
+#[cfg(all(not(feature = "std"), any(feature = "full-rlp", test)))]
+use alloc::borrow::ToOwned;
 #[cfg(not(feature = "std"))]
-use alloc::{borrow::ToOwned, collections::BTreeMap};
+use alloc::collections::BTreeMap;
 // --- crates.io ---
 #[cfg(any(feature = "full-codec", test))]
 use codec::{Decode, Encode};
