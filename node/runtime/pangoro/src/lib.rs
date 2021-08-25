@@ -12,10 +12,8 @@ pub use pallets::*;
 pub mod impls;
 pub use impls::*;
 
-// <--- pangolin
 pub mod pangolin_messages;
 use pangolin_messages::{ToPangolinMessagePayload, WithPangolinMessageBridge};
-// pangolin --->
 
 pub use common_primitives::{self as pangoro_primitives, self as pangolin_primitives};
 
@@ -128,11 +126,9 @@ frame_support::construct_runtime!(
 
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 9,
 
-		// <--- pangolin
 		BridgePangolinMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 10,
 		BridgePangolinDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 11,
 		BridgePangolinGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 12,
-		// pangolin --->
 		ShiftSessionManager: pallet_shift_session_manager::{Pallet} = 13,
 
 		Substrate2SubstrateBacking: darwinia_s2s_backing::{Pallet, Call, Storage, Event<T>} = 14,
@@ -267,7 +263,6 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	// <--- pangolin
 	impl bridge_primitives::PangolinFinalityApi<Block> for Runtime {
 		fn best_finalized() -> (pangolin_primitives::BlockNumber, pangolin_primitives::Hash) {
 			let header = BridgePangolinGrandpa::best_finalized();
@@ -327,10 +322,8 @@ sp_api::impl_runtime_apis! {
 			BridgePangolinMessages::inbound_unrewarded_relayers_state(lane)
 		}
 	}
-	// pangolin --->
 }
 
-// <--- pangolin
 /// Pangolin account ownership digest from Pangoro.
 ///
 /// The byte vector returned by this function should be signed with a Pangolin account private key.
@@ -354,4 +347,3 @@ where
 		PANGOLIN_CHAIN_ID,
 	)
 }
-// pangolin --->
