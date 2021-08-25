@@ -43,7 +43,7 @@ use sc_finality_grandpa::{
 	LinkHalf, SharedVoterState as GrandpaSharedVoterState,
 	VotingRulesBuilder as GrandpaVotingRulesBuilder,
 };
-use sc_network::NetworkService;
+use sc_network::{Event, NetworkService};
 use sc_service::{
 	config::KeystoreConfig, BasePath, BuildNetworkParams, Configuration, Error as ServiceError,
 	NoopRpcExtensionBuilder, PartialComponents, RpcHandlers, SpawnTasksParams, TaskManager,
@@ -185,7 +185,6 @@ where
 		task_manager.spawn_handle(),
 		client.clone(),
 	);
-	let dvm_backend = open_dvm_backend(config)?;
 	let grandpa_hard_forks = vec![];
 	let (grandpa_block_import, grandpa_link) =
 		sc_finality_grandpa::block_import_with_authority_set_hard_forks(
@@ -240,6 +239,7 @@ where
 	let rpc_setup = shared_voter_state.clone();
 	let babe_config = babe_link.config().clone();
 	let shared_epoch_changes = babe_link.epoch_changes().clone();
+	let dvm_backend = open_dvm_backend(config)?;
 	let subscription_task_executor = SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 	let pending_transactions: PendingTransactions = Some(Arc::new(Mutex::new(HashMap::new())));
 	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
@@ -437,8 +437,6 @@ where
 
 	if role.is_authority() {
 		let can_author_with = CanAuthorWithNativeVersion::new(client.executor().clone());
-		let client_clone = client.clone();
-		let slot_duration = babe_link.config().slot_duration();
 		let proposer = ProposerFactory::new(
 			task_manager.spawn_handle(),
 			client.clone(),
@@ -446,6 +444,8 @@ where
 			prometheus_registry.as_ref(),
 			telemetry.as_ref().map(|x| x.handle()),
 		);
+		let client_clone = client.clone();
+		let slot_duration = babe_link.config().slot_duration();
 		let babe_config = BabeParams {
 			keystore: keystore_container.sync_keystore(),
 			client: client.clone(),
@@ -523,8 +523,6 @@ where
 	}
 
 	if role.is_authority() && !authority_discovery_disabled {
-		use sc_network::Event;
-
 		let authority_discovery_role =
 			sc_authority_discovery::Role::PublishAndDiscover(keystore_container.keystore());
 		let dht_event_stream =
@@ -661,8 +659,8 @@ where
 		grandpa_block_import,
 		client.clone(),
 	)?;
-	let slot_duration = babe_link.config().slot_duration();
 	// FIXME: pruning task isn't started since light client doesn't do `AuthoritySetup`.
+	let slot_duration = babe_link.config().slot_duration();
 	let import_queue = sc_consensus_babe::import_queue(
 		babe_link,
 		babe_block_import,
