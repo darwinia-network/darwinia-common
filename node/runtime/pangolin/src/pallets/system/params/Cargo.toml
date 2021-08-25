@@ -2,7 +2,7 @@
 authors    = ["Darwinia Network <hello@darwinia.network>"]
 edition    = "2018"
 homepage   = "https://darwinia.network/"
-license    = "Unlicense"
+license    = "GPL-3.0"
 name       = "pangolin-runtime-system-params"
 readme     = "README.md"
 repository = "https://github.com/darwinia-network/darwinia-common/"
