@@ -291,7 +291,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangolin"),
 	impl_name: sp_runtime::create_runtime_str!("Pangolin"),
 	authoring_version: 1,
-	spec_version: 2600,
+	spec_version: 2610,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 2,
@@ -936,8 +936,6 @@ fn migrate_treasury() {
 		beneficiary: AccountId,
 		bond: Balance,
 	}
-	let mut ring_proposals_count = 0 as ProposalIndex;
-	let mut kton_proposals_count = 0 as ProposalIndex;
 	let mut ring_approvals = vec![];
 	let mut kton_approvals = vec![];
 	for (index, old_proposal) in migration::storage_key_iter::<
@@ -947,8 +945,6 @@ fn migrate_treasury() {
 	>(OLD_PREFIX, b"Proposals")
 	.drain()
 	{
-		let hash = Twox64Concat::hash(&index.encode());
-
 		if old_proposal.ring_value != 0 {
 			let new_proposal = Proposal {
 				proposer: old_proposal.proposer.clone(),
@@ -956,8 +952,8 @@ fn migrate_treasury() {
 				beneficiary: old_proposal.beneficiary.clone(),
 				bond: old_proposal.ring_bond,
 			};
-
-			ring_proposals_count += 1;
+			// All on-chain proposal have ring value
+			let hash = Twox64Concat::hash(&index.encode());
 
 			migration::put_storage_value(NEW_PREFIX, b"Proposals", &hash, new_proposal);
 
@@ -972,8 +968,8 @@ fn migrate_treasury() {
 				beneficiary: old_proposal.beneficiary,
 				bond: old_proposal.kton_bond,
 			};
-
-			kton_proposals_count += 1;
+			// Only one on-chain proposal have kton value, so set index to 0
+			let hash = Twox64Concat::hash(&(0 as ProposalIndex).encode());
 
 			migration::put_storage_value(KTON_TREASURY_PREFIX, b"Proposals", &hash, new_proposal);
 
@@ -982,17 +978,14 @@ fn migrate_treasury() {
 			}
 		}
 	}
-	if ring_proposals_count != 0 {
-		migration::put_storage_value(NEW_PREFIX, b"ProposalCount", &[], ring_proposals_count);
-	}
-	if kton_proposals_count != 0 {
-		migration::put_storage_value(
-			KTON_TREASURY_PREFIX,
-			b"ProposalCount",
-			&[],
-			kton_proposals_count,
-		);
-	}
+	migration::put_storage_value(NEW_PREFIX, b"ProposalCount", &[], 2 as ProposalIndex);
+	migration::put_storage_value(
+		KTON_TREASURY_PREFIX,
+		b"ProposalCount",
+		&[],
+		1 as ProposalIndex,
+	);
+
 	migration::remove_storage_prefix(OLD_PREFIX, b"Proposals", &[]);
 	log::info!("`Proposals` Migrated");
 
@@ -1006,6 +999,8 @@ fn migrate_treasury() {
 
 	migration::move_storage_from_pallet(b"Tips", OLD_PREFIX, NEW_PREFIX);
 	log::info!("`Tips` Migrated");
+	migration::move_storage_from_pallet(b"Reasons", OLD_PREFIX, NEW_PREFIX);
+	log::info!("`Reasons` Migrated");
 	migration::move_storage_from_pallet(b"BountyCount", OLD_PREFIX, NEW_PREFIX);
 	log::info!("`BountyCount` Migrated");
 	migration::move_storage_from_pallet(b"Bounties", OLD_PREFIX, NEW_PREFIX);
