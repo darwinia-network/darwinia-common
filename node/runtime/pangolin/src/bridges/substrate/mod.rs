@@ -1,1 +1,1 @@
-pub mod millau_messages;
+pub mod pangoro_messages;

@@ -151,7 +151,7 @@ impl darwinia_evm::Config for Test {
 
 frame_support::parameter_types! {
 	pub const S2sRelayPalletId: PalletId = PalletId(*b"da/s2sre");
-	pub const MillauChainId: bp_runtime::ChainId = *b"mcid";
+	pub const PangoroChainId: bp_runtime::ChainId = *b"mcid";
 	pub RootAccountForPayments: Option<AccountId32> = Some([1;32].into());
 }
 
@@ -175,8 +175,8 @@ impl Size for MockMessagePayload {
 	}
 }
 
-pub struct MillauCallEncoder;
-impl EncodeCall<AccountId32, MockMessagePayload> for MillauCallEncoder {
+pub struct PangoroCallEncoder;
+impl EncodeCall<AccountId32, MockMessagePayload> for PangoroCallEncoder {
 	fn encode_remote_unlock(
 		spec_version: u32,
 		weight: u64,
@@ -191,8 +191,8 @@ impl EncodeCall<AccountId32, MockMessagePayload> for MillauCallEncoder {
 	}
 }
 
-pub struct ToMillauMessageRelayCaller;
-impl RelayMessageCaller<MockMessagePayload, Balance> for ToMillauMessageRelayCaller {
+pub struct ToPangoroMessageRelayCaller;
+impl RelayMessageCaller<MockMessagePayload, Balance> for ToPangoroMessageRelayCaller {
 	fn send_message(
 		_payload: MockMessagePayload,
 		_fee: Balance,
@@ -220,12 +220,12 @@ impl Config for Test {
 
 	type RingCurrency = Ring;
 	type BridgedAccountIdConverter = AccountIdConverter;
-	type BridgedChainId = MillauChainId;
+	type BridgedChainId = PangoroChainId;
 	type ToEthAddressT = TruncateToEthAddress;
 	type OutboundPayload = MockMessagePayload;
-	type CallEncoder = MillauCallEncoder;
+	type CallEncoder = PangoroCallEncoder;
 	type FeeAccount = RootAccountForPayments;
-	type MessageSender = ToMillauMessageRelayCaller;
+	type MessageSender = ToPangoroMessageRelayCaller;
 }
 
 frame_support::construct_runtime! {

@@ -213,7 +213,7 @@ pub use pallet_sudo::Call as SudoCall;
 // --- crates.io ---
 use codec::{Decode, Encode};
 // --- substrate ---
-use bp_runtime::MILLAU_CHAIN_ID;
+use bp_runtime::PANGORO_CHAIN_ID;
 use bridge_runtime_common::messages::{
 	source::estimate_message_dispatch_and_delivery_fee, MessageBridge,
 };
@@ -242,7 +242,7 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia ---
 use bridge_primitives::PANGOLIN_CHAIN_ID;
-use bridges::substrate::millau_messages::{ToMillauMessagePayload, WithMillauMessageBridge};
+use bridges::substrate::pangoro_messages::{ToPangoroMessagePayload, WithPangoroMessageBridge};
 use common_primitives::*;
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
 use darwinia_evm::{Account as EVMAccount, Runner};
@@ -398,9 +398,9 @@ frame_support::construct_runtime! {
 		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 41,
 		DynamicFee: dvm_dynamic_fee::{Pallet, Call, Storage, Inherent} = 47,
 
-		BridgeMillauMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 43,
-		BridgeMillauDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 44,
-		BridgeMillauGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 45,
+		BridgePangoroMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 43,
+		BridgePangoroDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 44,
+		BridgePangoroGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 45,
 		Substrate2SubstrateIssuing: darwinia_s2s_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
 
 		BSC: darwinia_bridge_bsc::{Pallet, Call, Storage, Config} = 46,
@@ -787,25 +787,25 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl millau_primitives::MillauFinalityApi<Block> for Runtime {
-		fn best_finalized() -> (millau_primitives::BlockNumber, millau_primitives::Hash) {
-			let header = BridgeMillauGrandpa::best_finalized();
+	impl pangoro_primitives::PangoroFinalityApi<Block> for Runtime {
+		fn best_finalized() -> (pangoro_primitives::BlockNumber, pangoro_primitives::Hash) {
+			let header = BridgePangoroGrandpa::best_finalized();
 			(header.number, header.hash())
 		}
 
-		fn is_known_header(hash: millau_primitives::Hash) -> bool {
-			BridgeMillauGrandpa::is_known_header(hash)
+		fn is_known_header(hash: pangoro_primitives::Hash) -> bool {
+			BridgePangoroGrandpa::is_known_header(hash)
 		}
 	}
 
-	impl millau_primitives::ToMillauOutboundLaneApi<Block, Balance, ToMillauMessagePayload> for Runtime {
+	impl pangoro_primitives::ToPangoroOutboundLaneApi<Block, Balance, ToPangoroMessagePayload> for Runtime {
 		fn estimate_message_delivery_and_dispatch_fee(
 			_lane_id: bp_messages::LaneId,
-			payload: ToMillauMessagePayload,
+			payload: ToPangoroMessagePayload,
 		) -> Option<Balance> {
-			estimate_message_dispatch_and_delivery_fee::<WithMillauMessageBridge>(
+			estimate_message_dispatch_and_delivery_fee::<WithPangoroMessageBridge>(
 				&payload,
-				WithMillauMessageBridge::RELAYER_FEE_PERCENT,
+				WithPangoroMessageBridge::RELAYER_FEE_PERCENT,
 			).ok()
 		}
 
@@ -815,8 +815,8 @@ impl_runtime_apis! {
 			end: bp_messages::MessageNonce,
 		) -> Vec<(bp_messages::MessageNonce, Weight, u32)> {
 			(begin..=end).filter_map(|nonce| {
-				let encoded_payload = BridgeMillauMessages::outbound_message_payload(lane, nonce)?;
-				let decoded_payload = ToMillauMessagePayload::decode(
+				let encoded_payload = BridgePangoroMessages::outbound_message_payload(lane, nonce)?;
+				let decoded_payload = ToPangoroMessagePayload::decode(
 					&mut &encoded_payload[..]
 				).ok()?;
 				Some((nonce, decoded_payload.weight, encoded_payload.len() as _))
@@ -825,25 +825,25 @@ impl_runtime_apis! {
 		}
 
 		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
-			BridgeMillauMessages::outbound_latest_received_nonce(lane)
+			BridgePangoroMessages::outbound_latest_received_nonce(lane)
 		}
 
 		fn latest_generated_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
-			BridgeMillauMessages::outbound_latest_generated_nonce(lane)
+			BridgePangoroMessages::outbound_latest_generated_nonce(lane)
 		}
 	}
 
-	impl millau_primitives::FromMillauInboundLaneApi<Block> for Runtime {
+	impl pangoro_primitives::FromPangoroInboundLaneApi<Block> for Runtime {
 		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
-			BridgeMillauMessages::inbound_latest_received_nonce(lane)
+			BridgePangoroMessages::inbound_latest_received_nonce(lane)
 		}
 
 		fn latest_confirmed_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
-			BridgeMillauMessages::inbound_latest_confirmed_nonce(lane)
+			BridgePangoroMessages::inbound_latest_confirmed_nonce(lane)
 		}
 
 		fn unrewarded_relayers_state(lane: bp_messages::LaneId) -> bp_messages::UnrewardedRelayersState {
-			BridgeMillauMessages::inbound_unrewarded_relayers_state(lane)
+			BridgePangoroMessages::inbound_unrewarded_relayers_state(lane)
 		}
 	}
 
@@ -1032,10 +1032,10 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	}
 }
 
-pub fn pangolin_to_millau_account_ownership_digest<Call, AccountId, SpecVersion>(
-	millau_call: &Call,
+pub fn pangolin_to_pangoro_account_ownership_digest<Call, AccountId, SpecVersion>(
+	pangoro_call: &Call,
 	pangolin_account_id: AccountId,
-	millau_spec_version: SpecVersion,
+	pangoro_spec_version: SpecVersion,
 ) -> Vec<u8>
 where
 	Call: Encode,
@@ -1043,10 +1043,10 @@ where
 	SpecVersion: Encode,
 {
 	pallet_bridge_dispatch::account_ownership_digest(
-		millau_call,
+		pangoro_call,
 		pangolin_account_id,
-		millau_spec_version,
+		pangoro_spec_version,
 		PANGOLIN_CHAIN_ID,
-		MILLAU_CHAIN_ID,
+		PANGORO_CHAIN_ID,
 	)
 }

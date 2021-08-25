@@ -6,7 +6,7 @@ use bp_messages::{
 	target_chain::{ProvedMessages, SourceHeaderChain},
 	InboundLaneData, LaneId, Message, MessageNonce, Parameter as MessagesParameter,
 };
-use bp_runtime::{ChainId, MILLAU_CHAIN_ID};
+use bp_runtime::{ChainId, PANGORO_CHAIN_ID};
 use bridge_runtime_common::messages::{
 	self,
 	source::{
@@ -30,59 +30,62 @@ use sp_std::{convert::TryFrom, ops::RangeInclusive};
 use crate::*;
 use bridge_primitives::PANGOLIN_CHAIN_ID;
 
-/// Message payload for Pangolin -> Millau messages.
-pub type ToMillauMessagePayload = FromThisChainMessagePayload<WithMillauMessageBridge>;
-/// Message verifier for Pangolin -> Millau messages.
-pub type ToMillauMessageVerifier = FromThisChainMessageVerifier<WithMillauMessageBridge>;
-/// Message payload for Millau -> Pangolin messages.
-pub type FromMillauMessagePayload = FromBridgedChainMessagePayload<WithMillauMessageBridge>;
-/// Encoded Pangolin Call as it comes from Millau.
-pub type FromMillauEncodedCall = FromBridgedChainEncodedMessageCall<WithMillauMessageBridge>;
-/// Messages proof for Millau -> Pangolin messages.
-type FromMillauMessagesProof = FromBridgedChainMessagesProof<millau_primitives::Hash>;
-/// Messages delivery proof for Pangolin -> Millau messages.
-type ToMillauMessagesDeliveryProof = FromBridgedChainMessagesDeliveryProof<millau_primitives::Hash>;
-/// Call-dispatch based message dispatch for Millau -> Pangolin messages.
-pub type FromMillauMessageDispatch =
-	FromBridgedChainMessageDispatch<WithMillauMessageBridge, Runtime, WithMillauDispatch>;
+/// Message payload for Pangolin -> Pangoro messages.
+pub type ToPangoroMessagePayload = FromThisChainMessagePayload<WithPangoroMessageBridge>;
+/// Message verifier for Pangolin -> Pangoro messages.
+pub type ToPangoroMessageVerifier = FromThisChainMessageVerifier<WithPangoroMessageBridge>;
+/// Message payload for Pangoro -> Pangolin messages.
+pub type FromPangoroMessagePayload = FromBridgedChainMessagePayload<WithPangoroMessageBridge>;
+/// Encoded Pangolin Call as it comes from Pangoro.
+pub type FromPangoroEncodedCall = FromBridgedChainEncodedMessageCall<WithPangoroMessageBridge>;
+/// Messages proof for Pangoro -> Pangolin messages.
+type FromPangoroMessagesProof = FromBridgedChainMessagesProof<pangoro_primitives::Hash>;
+/// Messages delivery proof for Pangolin -> Pangoro messages.
+type ToPangoroMessagesDeliveryProof =
+	FromBridgedChainMessagesDeliveryProof<pangoro_primitives::Hash>;
+/// Call-dispatch based message dispatch for Pangoro -> Pangolin messages.
+pub type FromPangoroMessageDispatch =
+	FromBridgedChainMessageDispatch<WithPangoroMessageBridge, Runtime, WithPangoroDispatch>;
 
-/// Initial value of `MillauToPangolinConversionRate` parameter.
-pub const INITIAL_MILLAU_TO_PANGOLIN_CONVERSION_RATE: FixedU128 =
+/// Initial value of `PangoroToPangolinConversionRate` parameter.
+pub const INITIAL_PANGORO_TO_PANGOLIN_CONVERSION_RATE: FixedU128 =
 	FixedU128::from_inner(FixedU128::DIV);
 
 frame_support::parameter_types! {
-	/// Millau to Rialto conversion rate. Initially we treat both tokens as equal.
-	pub storage MillauToPangolinConversionRate: FixedU128 = INITIAL_MILLAU_TO_PANGOLIN_CONVERSION_RATE;
+	/// Pangoro to Rialto conversion rate. Initially we treat both tokens as equal.
+	pub storage PangoroToPangolinConversionRate: FixedU128 = INITIAL_PANGORO_TO_PANGOLIN_CONVERSION_RATE;
 }
 
-/// Pangolin -> Millau message lane pallet parameters.
+/// Pangolin -> Pangoro message lane pallet parameters.
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
-pub enum PangolinToMillauMessagesParameter {
-	/// The conversion formula we use is: `PangolinTokens = MillauTokens * conversion_rate`.
-	MillauToPangolinConversionRate(FixedU128),
+pub enum PangolinToPangoroMessagesParameter {
+	/// The conversion formula we use is: `PangolinTokens = PangoroTokens * conversion_rate`.
+	PangoroToPangolinConversionRate(FixedU128),
 }
-impl MessagesParameter for PangolinToMillauMessagesParameter {
+impl MessagesParameter for PangolinToPangoroMessagesParameter {
 	fn save(&self) {
 		match *self {
-			PangolinToMillauMessagesParameter::MillauToPangolinConversionRate(
+			PangolinToPangoroMessagesParameter::PangoroToPangolinConversionRate(
 				ref conversion_rate,
-			) => MillauToPangolinConversionRate::set(conversion_rate),
+			) => PangoroToPangolinConversionRate::set(conversion_rate),
 		}
 	}
 }
 
-/// Millau <-> Pangolin message bridge.
+/// Pangoro <-> Pangolin message bridge.
 #[derive(Clone, Copy, RuntimeDebug)]
-pub struct WithMillauMessageBridge;
-impl MessageBridge for WithMillauMessageBridge {
+pub struct WithPangoroMessageBridge;
+impl MessageBridge for WithPangoroMessageBridge {
 	const RELAYER_FEE_PERCENT: u32 = 10;
 
 	type ThisChain = Pangolin;
-	type BridgedChain = Millau;
+	type BridgedChain = Pangoro;
 
-	fn bridged_balance_to_this_balance(bridged_balance: millau_primitives::Balance) -> Balance {
-		Balance::try_from(MillauToPangolinConversionRate::get().saturating_mul_int(bridged_balance))
-			.unwrap_or(Balance::MAX)
+	fn bridged_balance_to_this_balance(bridged_balance: pangoro_primitives::Balance) -> Balance {
+		Balance::try_from(
+			PangoroToPangolinConversionRate::get().saturating_mul_int(bridged_balance),
+		)
+		.unwrap_or(Balance::MAX)
 	}
 }
 
@@ -99,13 +102,13 @@ impl messages::ChainWithMessages for Pangolin {
 	type Weight = Weight;
 	type Balance = Balance;
 
-	type MessagesInstance = WithMillauMessages;
+	type MessagesInstance = WithPangoroMessages;
 }
 impl messages::ThisChainWithMessages for Pangolin {
 	type Call = Call;
 
 	fn is_outbound_lane_enabled(lane: &LaneId) -> bool {
-		*lane == [0, 0, 0, 0] || *lane == [0, 0, 0, 1] || *lane == MILLAU_PANGOLIN_LANE
+		*lane == [0, 0, 0, 0] || *lane == [0, 0, 0, 1] || *lane == PANGORO_PANGOLIN_LANE
 	}
 
 	fn maximal_pending_messages_at_outbound_lane() -> MessageNonce {
@@ -122,7 +125,7 @@ impl messages::ThisChainWithMessages for Pangolin {
 		MessageTransaction {
 			dispatch_weight: bridge_primitives::MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
 			size: inbound_data_size
-				.saturating_add(millau_primitives::EXTRA_STORAGE_PROOF_SIZE)
+				.saturating_add(pangoro_primitives::EXTRA_STORAGE_PROOF_SIZE)
 				.saturating_add(bridge_primitives::TX_EXTRA_BYTES),
 		}
 	}
@@ -141,33 +144,33 @@ impl messages::ThisChainWithMessages for Pangolin {
 	}
 }
 
-/// Millau chain from message lane point of view.
+/// Pangoro chain from message lane point of view.
 #[derive(Clone, Copy, RuntimeDebug)]
-pub struct Millau;
-impl messages::ChainWithMessages for Millau {
-	const ID: ChainId = MILLAU_CHAIN_ID;
+pub struct Pangoro;
+impl messages::ChainWithMessages for Pangoro {
+	const ID: ChainId = PANGORO_CHAIN_ID;
 
-	type Hash = millau_primitives::Hash;
-	type AccountId = millau_primitives::AccountId;
-	type Signer = millau_primitives::AccountPublic;
-	type Signature = millau_primitives::Signature;
+	type Hash = pangoro_primitives::Hash;
+	type AccountId = pangoro_primitives::AccountId;
+	type Signer = pangoro_primitives::AccountPublic;
+	type Signature = pangoro_primitives::Signature;
 	type Weight = Weight;
-	type Balance = millau_primitives::Balance;
+	type Balance = pangoro_primitives::Balance;
 
-	type MessagesInstance = WithMillauMessages;
+	type MessagesInstance = WithPangoroMessages;
 }
-impl messages::BridgedChainWithMessages for Millau {
+impl messages::BridgedChainWithMessages for Pangoro {
 	fn maximal_extrinsic_size() -> u32 {
-		millau_primitives::max_extrinsic_size()
+		pangoro_primitives::max_extrinsic_size()
 	}
 
 	fn message_weight_limits(_message_payload: &[u8]) -> RangeInclusive<Weight> {
 		// we don't want to relay too large messages + keep reserve for future upgrades
 		let upper_limit = messages::target::maximal_incoming_message_dispatch_weight(
-			millau_primitives::max_extrinsic_weight(),
+			pangoro_primitives::max_extrinsic_weight(),
 		);
 
-		// we're charging for payload bytes in `WithMillauMessageBridge::transaction_payment` function
+		// we're charging for payload bytes in `WithPangoroMessageBridge::transaction_payment` function
 		//
 		// this bridge may be used to deliver all kind of messages, so we're not making any assumptions about
 		// minimal dispatch weight here
@@ -185,19 +188,19 @@ impl messages::BridgedChainWithMessages for Millau {
 
 		MessageTransaction {
 			dispatch_weight: extra_bytes_in_payload
-				.saturating_mul(millau_primitives::ADDITIONAL_MESSAGE_BYTE_DELIVERY_WEIGHT)
-				.saturating_add(millau_primitives::DEFAULT_MESSAGE_DELIVERY_TX_WEIGHT)
+				.saturating_mul(pangoro_primitives::ADDITIONAL_MESSAGE_BYTE_DELIVERY_WEIGHT)
+				.saturating_add(pangoro_primitives::DEFAULT_MESSAGE_DELIVERY_TX_WEIGHT)
 				.saturating_add(message_dispatch_weight),
 			size: message_payload_len
 				.saturating_add(bridge_primitives::EXTRA_STORAGE_PROOF_SIZE)
-				.saturating_add(millau_primitives::TX_EXTRA_BYTES),
+				.saturating_add(pangoro_primitives::TX_EXTRA_BYTES),
 		}
 	}
 
-	fn transaction_payment(transaction: MessageTransaction<Weight>) -> millau_primitives::Balance {
+	fn transaction_payment(transaction: MessageTransaction<Weight>) -> pangoro_primitives::Balance {
 		// in our testnets, both per-byte fee and weight-to-fee are 1:1
 		messages::transaction_payment(
-			millau_primitives::RuntimeBlockWeights::get()
+			pangoro_primitives::RuntimeBlockWeights::get()
 				.get(DispatchClass::Normal)
 				.base_extrinsic,
 			1,
@@ -207,40 +210,42 @@ impl messages::BridgedChainWithMessages for Millau {
 		)
 	}
 }
-impl TargetHeaderChain<ToMillauMessagePayload, millau_primitives::AccountId> for Millau {
+impl TargetHeaderChain<ToPangoroMessagePayload, pangoro_primitives::AccountId> for Pangoro {
 	type Error = &'static str;
 	// The proof is:
 	// - hash of the header this proof has been created with;
 	// - the storage proof or one or several keys;
 	// - id of the lane we prove state of.
-	type MessagesDeliveryProof = ToMillauMessagesDeliveryProof;
+	type MessagesDeliveryProof = ToPangoroMessagesDeliveryProof;
 
-	fn verify_message(payload: &ToMillauMessagePayload) -> Result<(), Self::Error> {
-		source::verify_chain_message::<WithMillauMessageBridge>(payload)
+	fn verify_message(payload: &ToPangoroMessagePayload) -> Result<(), Self::Error> {
+		source::verify_chain_message::<WithPangoroMessageBridge>(payload)
 	}
 
 	fn verify_messages_delivery_proof(
 		proof: Self::MessagesDeliveryProof,
 	) -> Result<(LaneId, InboundLaneData<AccountId>), Self::Error> {
-		source::verify_messages_delivery_proof::<WithMillauMessageBridge, Runtime, WithMillauGrandpa>(
-			proof,
-		)
+		source::verify_messages_delivery_proof::<
+			WithPangoroMessageBridge,
+			Runtime,
+			WithPangoroGrandpa,
+		>(proof)
 	}
 }
-impl SourceHeaderChain<millau_primitives::Balance> for Millau {
+impl SourceHeaderChain<pangoro_primitives::Balance> for Pangoro {
 	type Error = &'static str;
 	// The proof is:
 	// - hash of the header this proof has been created with;
 	// - the storage proof or one or several keys;
 	// - id of the lane we prove messages for;
 	// - inclusive range of messages nonces that are proved.
-	type MessagesProof = FromMillauMessagesProof;
+	type MessagesProof = FromPangoroMessagesProof;
 
 	fn verify_messages_proof(
 		proof: Self::MessagesProof,
 		messages_count: u32,
-	) -> Result<ProvedMessages<Message<millau_primitives::Balance>>, Self::Error> {
-		target::verify_messages_proof::<WithMillauMessageBridge, Runtime, WithMillauGrandpa>(
+	) -> Result<ProvedMessages<Message<pangoro_primitives::Balance>>, Self::Error> {
+		target::verify_messages_proof::<WithPangoroMessageBridge, Runtime, WithPangoroGrandpa>(
 			proof,
 			messages_count,
 		)

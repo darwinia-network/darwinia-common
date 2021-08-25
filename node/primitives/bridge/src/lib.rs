@@ -20,7 +20,7 @@
 
 // --- substrate ---
 use bp_messages::{LaneId, MessageNonce, UnrewardedRelayersState};
-use bp_runtime::{ChainId, SourceAccount, MILLAU_CHAIN_ID};
+use bp_runtime::{ChainId, SourceAccount};
 use frame_support::{weights::Weight, Parameter};
 use sp_core::H256;
 use sp_runtime::{traits::Convert, RuntimeDebug};
@@ -30,6 +30,8 @@ use common_primitives::*;
 
 /// Bridge-with-Pangolin instance id.
 pub const PANGOLIN_CHAIN_ID: ChainId = *b"pagl";
+/// Bridge-with-Pangoro instance id.
+pub const PANGORO_CHAIN_ID: ChainId = *b"pagr";
 
 /// Maximal size (in bytes) of encoded (using `Encode::encode()`) account id.
 pub const MAXIMAL_ENCODED_ACCOUNT_ID_SIZE: u32 = 32;
@@ -117,16 +119,16 @@ pub fn derive_account_from_pangolin_id(id: SourceAccount<AccountId>) -> AccountI
 	AccountIdConverter::convert(encoded_id)
 }
 
-/// We use this to get the account on Millau (target) which is derived from Pangolin's (source)
-/// account. We do this so we can fund the derived account on Millau at Genesis to it can pay
+/// We use this to get the account on Pangoro (target) which is derived from Pangolin's (source)
+/// account. We do this so we can fund the derived account on Pangoro at Genesis to it can pay
 /// transaction fees.
 ///
 /// The reason we can use the same `AccountId` type for both chains is because they share the same
 /// development seed phrase.
 ///
 /// Note that this should only be used for testing.
-pub fn derive_account_from_millau_id(id: SourceAccount<AccountId>) -> AccountId {
-	let encoded_id = bp_runtime::derive_account_id(MILLAU_CHAIN_ID, id);
+pub fn derive_account_from_pangoro_id(id: SourceAccount<AccountId>) -> AccountId {
+	let encoded_id = bp_runtime::derive_account_id(PANGORO_CHAIN_ID, id);
 	AccountIdConverter::convert(encoded_id)
 }
 
@@ -134,7 +136,7 @@ sp_api::decl_runtime_apis! {
 	/// API for querying information about the finalized Pangolin headers.
 	///
 	/// This API is implemented by runtimes that are bridging with the Pangolin chain, not the
-	/// Millau runtime itself.
+	/// Pangoro runtime itself.
 	pub trait PangolinFinalityApi {
 		/// Returns number and hash of the best finalized header known to the bridge module.
 		fn best_finalized() -> (BlockNumber, Hash);

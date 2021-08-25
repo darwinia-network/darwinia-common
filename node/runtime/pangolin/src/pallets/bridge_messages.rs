@@ -1,19 +1,19 @@
-pub use pallet_bridge_messages::Instance1 as WithMillauMessages;
+pub use pallet_bridge_messages::Instance1 as WithPangoroMessages;
 
 // --- substrate ---
 use bp_messages::MessageNonce;
-use millau_primitives::{
-	MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT, MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE,
-	MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE,
-};
 use pallet_bridge_messages::{
 	instant_payments::InstantCurrencyPayments, weights::RialtoWeight, Config,
 };
+use pangoro_primitives::{
+	MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT, MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE,
+	MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE,
+};
 // --- darwinia ---
 use crate::{
-	millau_messages::{
-		FromMillauMessageDispatch, FromMillauMessagePayload, Millau,
-		PangolinToMillauMessagesParameter, ToMillauMessagePayload, ToMillauMessageVerifier,
+	pangoro_messages::{
+		FromPangoroMessageDispatch, FromPangoroMessagePayload, PangolinToPangoroMessagesParameter,
+		Pangoro, ToPangoroMessagePayload, ToPangoroMessageVerifier,
 	},
 	*,
 };
@@ -26,32 +26,32 @@ frame_support::parameter_types! {
 		MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE;
 	pub const MaxUnconfirmedMessagesAtInboundLane: MessageNonce =
 		MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE;
-	// `IdentityFee` is used by Millau => we may use weight directly
+	// `IdentityFee` is used by Pangoro => we may use weight directly
 	pub const GetDeliveryConfirmationTransactionFee: Balance =
 		MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT as _;
 	pub RootAccountForPayments: Option<AccountId> = Some(to_bytes32(b"root").into());
 }
 
-impl Config<WithMillauMessages> for Runtime {
+impl Config<WithPangoroMessages> for Runtime {
 	type Event = Event;
 	// FIXME
 	type WeightInfo = RialtoWeight<Runtime>;
-	type Parameter = PangolinToMillauMessagesParameter;
+	type Parameter = PangolinToPangoroMessagesParameter;
 	type MaxMessagesToPruneAtOnce = MaxMessagesToPruneAtOnce;
 	type MaxUnrewardedRelayerEntriesAtInboundLane = MaxUnrewardedRelayerEntriesAtInboundLane;
 	type MaxUnconfirmedMessagesAtInboundLane = MaxUnconfirmedMessagesAtInboundLane;
 
-	type OutboundPayload = ToMillauMessagePayload;
+	type OutboundPayload = ToPangoroMessagePayload;
 	type OutboundMessageFee = Balance;
 
-	type InboundPayload = FromMillauMessagePayload;
-	type InboundMessageFee = millau_primitives::Balance;
-	type InboundRelayer = millau_primitives::AccountId;
+	type InboundPayload = FromPangoroMessagePayload;
+	type InboundMessageFee = pangoro_primitives::Balance;
+	type InboundRelayer = pangoro_primitives::AccountId;
 
 	type AccountIdConverter = AccountIdConverter;
 
-	type TargetHeaderChain = Millau;
-	type LaneMessageVerifier = ToMillauMessageVerifier;
+	type TargetHeaderChain = Pangoro;
+	type LaneMessageVerifier = ToPangoroMessageVerifier;
 	type MessageDeliveryAndDispatchPayment = InstantCurrencyPayments<
 		Runtime,
 		darwinia_balances::Pallet<Runtime, RingInstance>,
@@ -59,6 +59,6 @@ impl Config<WithMillauMessages> for Runtime {
 		RootAccountForPayments,
 	>;
 
-	type SourceHeaderChain = Millau;
-	type MessageDispatch = FromMillauMessageDispatch;
+	type SourceHeaderChain = Pangoro;
+	type MessageDispatch = FromPangoroMessageDispatch;
 }

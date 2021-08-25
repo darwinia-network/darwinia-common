@@ -1,0 +1,27 @@
+[package]
+authors    = ["Darwinia Network <hello@darwinia.network>"]
+edition    = "2018"
+homepage   = "https://darwinia.network/"
+license    = "GPL-3.0"
+name       = "pangoro-runtime-system-params"
+readme     = "README.md"
+repository = "https://github.com/darwinia-network/darwinia-common/"
+version    = "2.6.0"
+
+[dependencies]
+# crates.io
+static_assertions = { version = "1.1.0" }
+# paritytech
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+
+[features]
+default = ["std"]
+
+std = [
+	# paritytech
+	"frame-support/std",
+	"frame-system/std",
+	"sp-runtime/std",
+]

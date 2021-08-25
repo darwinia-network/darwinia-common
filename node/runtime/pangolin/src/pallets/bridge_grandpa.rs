@@ -1,8 +1,8 @@
-pub use pallet_bridge_grandpa::Instance1 as WithMillauGrandpa;
+pub use pallet_bridge_grandpa::Instance1 as WithPangoroGrandpa;
 
 // --- substrate ---
-use millau_primitives::{Millau, DAYS};
 use pallet_bridge_grandpa::{weights::RialtoWeight, Config};
+use pangoro_primitives::{Pangoro, DAYS};
 // --- darwinia ---
 use crate::*;
 
@@ -19,8 +19,8 @@ frame_support::parameter_types! {
 	pub const HeadersToKeep: u32 = 7 * DAYS as u32;
 }
 
-impl Config<WithMillauGrandpa> for Runtime {
-	type BridgedChain = Millau;
+impl Config<WithPangoroGrandpa> for Runtime {
+	type BridgedChain = Pangoro;
 	type MaxRequests = MaxRequests;
 	type HeadersToKeep = HeadersToKeep;
 	// FIXME
