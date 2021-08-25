@@ -77,7 +77,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 		#[pallet::constant]
-		type BackErc20RingId: Get<PalletId>;
+		type Erc20RingId: Get<PalletId>;
 		#[pallet::constant]
 		type RingLockMaxLimit: Get<RingBalance<Self>>;
 		type RingCurrency: Currency<AccountId<Self>>;
@@ -146,7 +146,7 @@ pub mod pallet {
 				T::RingCurrency::transfer(&user, &fee_account, fee, KeepAlive)?;
 			}
 			let token = Token::Native(TokenInfo {
-				address: T::BackErc20RingId::get().into_dvm_address(),
+				address: T::Erc20RingId::get().into_dvm_address(),
 				value: None,
 				option: Some(TokenOption {
 					name: to_bytes32(RING_NAME),
@@ -199,7 +199,7 @@ pub mod pallet {
 			let amount: U256 = value.saturated_into::<u128>().into();
 			let token = Token::Native(TokenInfo {
 				// The native mapped RING token as a special ERC20 address
-				address: T::BackErc20RingId::get().into_dvm_address(),
+				address: T::Erc20RingId::get().into_dvm_address(),
 				value: Some(amount),
 				option: None,
 			});

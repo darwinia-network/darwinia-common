@@ -93,7 +93,7 @@ impl frame_system::Config for Test {
 frame_support::parameter_types! {
 	pub const MockChainId: [u8; 4] = [0; 4];
 	pub const MockId: PalletId = PalletId(*b"da/s2sba");
-	pub const BackErc20RingId: PalletId = PalletId(*b"da/s2sbr");
+	pub const Erc20RingId: PalletId = PalletId(*b"da/s2sbr");
 	pub const RingLockMaxLimit: Balance = 1_000_000_000;
 }
 
@@ -128,7 +128,7 @@ impl Config for Test {
 	type Event = ();
 	type WeightInfo = ();
 	type PalletId = MockId;
-	type BackErc20RingId = BackErc20RingId;
+	type Erc20RingId = Erc20RingId;
 	type RingLockMaxLimit = RingLockMaxLimit;
 	type RingCurrency = Ring;
 	type BridgedAccountIdConverter = ();
@@ -162,7 +162,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 fn test_back_erc20_dvm_address() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(
-			<Test as s2s_backing::Config>::BackErc20RingId::get().into_dvm_address(),
+			<Test as s2s_backing::Config>::Erc20RingId::get().into_dvm_address(),
 			EthereumAddress::from_str("0x00000000000000000000000064612f7332736272").unwrap()
 		);
 	});
