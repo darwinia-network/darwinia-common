@@ -23,6 +23,8 @@
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
+#[cfg(test)]
+mod tests;
 
 pub mod weight;
 pub use weight::WeightInfo;
@@ -46,9 +48,11 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 // --- darwinia ---
-use darwinia_support::s2s::{
-	ensure_source_root, to_bytes32, RelayMessageCaller, BACK_ERC20_RING, RING_DECIMAL, RING_NAME,
-	RING_SYMBOL,
+use darwinia_support::{
+	evm::IntoDvmAddress,
+	s2s::{
+		ensure_source_root, to_bytes32, RelayMessageCaller, RING_DECIMAL, RING_NAME, RING_SYMBOL,
+	},
 };
 use dp_asset::{
 	token::{Token, TokenInfo, TokenOption},
@@ -69,8 +73,11 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type WeightInfo: WeightInfo;
+
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
+		#[pallet::constant]
+		type RingPalletId: Get<PalletId>;
 		#[pallet::constant]
 		type RingLockMaxLimit: Get<RingBalance<Self>>;
 		type RingCurrency: Currency<AccountId<Self>>;
@@ -139,7 +146,7 @@ pub mod pallet {
 				T::RingCurrency::transfer(&user, &fee_account, fee, KeepAlive)?;
 			}
 			let token = Token::Native(TokenInfo {
-				address: array_bytes::hex2array_unchecked(BACK_ERC20_RING).into(),
+				address: T::RingPalletId::get().into_dvm_address(),
 				value: None,
 				option: Some(TokenOption {
 					name: to_bytes32(RING_NAME),
@@ -192,7 +199,7 @@ pub mod pallet {
 			let amount: U256 = value.saturated_into::<u128>().into();
 			let token = Token::Native(TokenInfo {
 				// The native mapped RING token as a special ERC20 address
-				address: array_bytes::hex2array_unchecked(BACK_ERC20_RING).into(),
+				address: T::RingPalletId::get().into_dvm_address(),
 				value: Some(amount),
 				option: None,
 			});
