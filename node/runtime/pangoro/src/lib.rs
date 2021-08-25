@@ -126,10 +126,6 @@ pub fn native_version() -> NativeVersion {
 	}
 }
 
-impl pallet_aura::Config for Runtime {
-	type AuthorityId = AuraId;
-}
-
 parameter_types! {
 	pub const MinimumPeriod: u64 = pangoro_constants::SLOT_DURATION / 2;
 }
