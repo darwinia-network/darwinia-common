@@ -38,6 +38,8 @@ use pangolin_messages::{ToPangolinMessagePayload, WithPangolinMessageBridge};
 
 pub use common_primitives::{self as pangoro_primitives, self as pangolin_primitives};
 
+pub use pangolin_constants::*;
+
 pub use darwinia_balances::Call as BalancesCall;
 pub use frame_system::Call as SystemCall;
 pub use pallet_bridge_grandpa::Call as BridgeGrandpaCall;
@@ -124,16 +126,6 @@ pub fn native_version() -> NativeVersion {
 		runtime_version: VERSION,
 		can_author_with: Default::default(),
 	}
-}
-
-parameter_types! {
-	pub const MinimumPeriod: u64 = pangoro_constants::SLOT_DURATION / 2;
-}
-impl pallet_timestamp::Config for Runtime {
-	type Moment = u64;
-	type OnTimestampSet = Aura;
-	type MinimumPeriod = MinimumPeriod;
-	type WeightInfo = ();
 }
 
 parameter_types! {
