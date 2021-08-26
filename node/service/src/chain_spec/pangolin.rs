@@ -18,21 +18,19 @@
 
 // --- std ---
 use std::{collections::BTreeMap, marker::PhantomData, str::FromStr};
-// --- crates ---
+// --- crates.io ---
 use rand::{seq::SliceRandom, Rng};
-// --- substrate ---
+// --- paritytech ---
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_service::{ChainType, Properties};
 use sc_telemetry::TelemetryEndpoints;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::AuthorityId as BabeId;
-use sp_core::{crypto::UncheckedInto, sr25519, Pair, Public};
+use sp_core::{crypto::UncheckedInto, sr25519};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
-use sp_runtime::{
-	traits::{IdentifyAccount, Verify},
-	Perbill,
-};
-// --- darwinia ---
+use sp_runtime::Perbill;
+// --- darwinia-network ---
+use super::{DEFAULT_PROTOCOL_ID, TEAM_MEMBERS};
 use common_primitives::*;
 use darwinia_claims::ClaimsList;
 use darwinia_ethereum_relay::DagsMerkleRootsLoader as DagsMerkleRootsLoaderR;
@@ -40,34 +38,8 @@ use darwinia_evm::GenesisAccount;
 
 pub type PangolinChainSpec = sc_service::GenericChainSpec<pangolin_runtime::GenesisConfig>;
 
-type AccountPublic = <Signature as Verify>::Signer;
-
 const PANGOLIN_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
-const TEAM_MEMBERS: &[&str] = &[
-	// Cheng
-	"0x922b6854052ba1084c74dd323ee70047d58ae4eb068f20bc251831f1ec109030",
-	// Jane
-	"0xb26268877f72c4dcd9c2459a99dde0d2caf5a816c6b4cd3bd1721252b26f4909",
-	// Cai
-	"0xf41d3260d736f5b3db8a6351766e97619ea35972546a5f850bbf0b27764abe03",
-	// Tiny
-	"0xf29638cb649d469c317a4c64381e179d5f64ef4d30207b4c52f2725c9d2ec533",
-	// Eve
-	"0x1a7008a33fa595398b509ef56841db3340931c28a42881e36c9f34b1f15f9271",
-	// Yuqi
-	"0x500e3197e075610c1925ddcd86d66836bf93ae0a476c64f56f611afc7d64d16f",
-	// Aki
-	"0x129f002b1c0787ea72c31b2dc986e66911fe1b4d6dc16f83a1127f33e5a74c7d",
-	// Alex
-	"0x26fe37ba5d35ac650ba37c5cc84525ed135e772063941ae221a1caca192fff49",
-	// Shell
-	"0x187c272f576b1999d6cf3dd529b59b832db12125b43e57fb088677eb0c570a6b",
-	// Xavier
-	"0xb4f7f03bebc56ebe96bc52ea5ed3159d45a0ce3a8d7f082983c33ef133274747",
-	// Xuelei
-	"0x88d388115bd0df43e805b029207cfa4925cecfb29026e345979d9b0004466c49",
-];
 const EVM_ACCOUNTS: &[&str] = &[
 	"0x68898db1012808808c903f390909c52d9f706749",
 	"0x6be02d1d3665660d22ff9624b7be0551ee1ac91b",
@@ -93,7 +65,7 @@ const ETHEREUM_RELAY_AUTHORITY_SIGNER: &str = "0x68898db1012808808c903f390909c52
 const MAPPING_FACTORY_ADDRESS: &str = "0xE1586e744b99bF8e4C981DfE4dD4369d6f8Ed88A";
 const ETHEREUM_BACKING_ADDRESS: &str = "0xb2Bea2358d817dAE01B0FD0DC3aECB25910E65AA";
 
-fn session_keys(
+fn pangolin_session_keys(
 	babe: BabeId,
 	grandpa: GrandpaId,
 	im_online: ImOnlineId,
@@ -107,47 +79,14 @@ fn session_keys(
 	}
 }
 
-fn properties() -> Properties {
-	let mut properties = Properties::new();
+fn pangolin_properties() -> Properties {
+	let mut pangolin_properties = Properties::new();
 
-	properties.insert("ss58Format".into(), 18.into());
-	properties.insert("tokenDecimals".into(), vec![9, 9].into());
-	properties.insert("tokenSymbol".into(), vec!["PRING", "PKTON"].into());
+	pangolin_properties.insert("ss58Format".into(), 18.into());
+	pangolin_properties.insert("tokenDecimals".into(), vec![9, 9].into());
+	pangolin_properties.insert("tokenSymbol".into(), vec!["PRING", "PKTON"].into());
 
-	properties
-}
-
-fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
-	TPublic::Pair::from_string(&format!("//{}", seed), None)
-		.expect("static values are valid; qed")
-		.public()
-}
-
-fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
-where
-	AccountPublic: From<<TPublic::Pair as Pair>::Public>,
-{
-	AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
-}
-
-fn get_authority_keys_from_seed(
-	s: &str,
-) -> (
-	AccountId,
-	AccountId,
-	BabeId,
-	GrandpaId,
-	ImOnlineId,
-	AuthorityDiscoveryId,
-) {
-	(
-		get_account_id_from_seed::<sr25519::Public>(&format!("{}//stash", s)),
-		get_account_id_from_seed::<sr25519::Public>(s),
-		get_from_seed::<BabeId>(s),
-		get_from_seed::<GrandpaId>(s),
-		get_from_seed::<ImOnlineId>(s),
-		get_from_seed::<AuthorityDiscoveryId>(s),
-	)
+	pangolin_properties
 }
 
 pub fn pangolin_config() -> Result<PangolinChainSpec, String> {
@@ -167,7 +106,7 @@ pub fn pangolin_build_spec_config() -> PangolinChainSpec {
 
 				Self {
 					stash: sr25519.into(),
-					session: session_keys(
+					session: pangolin_session_keys(
 						sr25519.unchecked_into(),
 						ed25519.unchecked_into(),
 						sr25519.unchecked_into(),
@@ -208,7 +147,7 @@ pub fn pangolin_build_spec_config() -> PangolinChainSpec {
 			),
 		];
 		let initial_nominators = <Vec<AccountId>>::new();
-		let collective_members = vec![get_account_id_from_seed::<sr25519::Public>("Alice")];
+		let collective_members = vec![super::get_account_id_from_seed::<sr25519::Public>("Alice")];
 		let evm_accounts = {
 			let mut map = BTreeMap::new();
 
@@ -239,7 +178,7 @@ pub fn pangolin_build_spec_config() -> PangolinChainSpec {
 			darwinia_balances_Instance1: pangolin_runtime::BalancesConfig {
 				balances: vec![
 					(root.clone(), BUNCH_OF_COINS),
-					(get_account_id_from_seed::<sr25519::Public>("Alice"), A_FEW_COINS),
+					(super::get_account_id_from_seed::<sr25519::Public>("Alice"), A_FEW_COINS),
 				]
 				.into_iter()
 				.chain(
@@ -390,7 +329,7 @@ pub fn pangolin_build_spec_config() -> PangolinChainSpec {
 			},
 			darwinia_relay_authorities_Instance1: pangolin_runtime::EthereumRelayAuthoritiesConfig {
 				authorities: vec![(
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					super::get_account_id_from_seed::<sr25519::Public>("Alice"),
 					array_bytes::hex_into_unchecked(ETHEREUM_RELAY_AUTHORITY_SIGNER),
 					1
 				)]
@@ -446,22 +385,22 @@ pub fn pangolin_build_spec_config() -> PangolinChainSpec {
 			TelemetryEndpoints::new(vec![(PANGOLIN_TELEMETRY_URL.to_string(), 0)])
 				.expect("Pangolin telemetry url is valid; qed"),
 		),
-		None,
-		Some(properties()),
+		Some(DEFAULT_PROTOCOL_ID),
+		Some(pangolin_properties()),
 		None,
 	)
 }
 
 pub fn pangolin_development_config() -> PangolinChainSpec {
 	fn pangolin_development_genesis() -> pangolin_runtime::GenesisConfig {
-		let root = get_account_id_from_seed::<sr25519::Public>("Alice");
+		let root = super::get_account_id_from_seed::<sr25519::Public>("Alice");
 		let s2s_relayer = array_bytes::hex_into_unchecked(S2S_RELAYER);
-		let initial_authorities = vec![get_authority_keys_from_seed("Alice")];
+		let initial_authorities = vec![super::get_authority_keys_from_seed("Alice")];
 		let endowed_accounts = vec![
 			root.clone(),
-			get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-			get_account_id_from_seed::<sr25519::Public>("Bob"),
-			get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+			super::get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+			super::get_account_id_from_seed::<sr25519::Public>("Bob"),
+			super::get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
 			s2s_relayer,
 		]
 		.into_iter()
@@ -471,7 +410,7 @@ pub fn pangolin_development_config() -> PangolinChainSpec {
 				.map(|m| array_bytes::hex_into_unchecked(m)),
 		)
 		.collect::<Vec<_>>();
-		let collective_members = vec![get_account_id_from_seed::<sr25519::Public>("Alice")];
+		let collective_members = vec![super::get_account_id_from_seed::<sr25519::Public>("Alice")];
 		let evm_accounts = {
 			let mut map = BTreeMap::new();
 
@@ -531,7 +470,7 @@ pub fn pangolin_development_config() -> PangolinChainSpec {
 				keys: initial_authorities
 					.iter()
 					.cloned()
-					.map(|x| (x.0.clone(), x.0, session_keys(x.2, x.3, x.4, x.5)))
+					.map(|x| (x.0.clone(), x.0, pangolin_session_keys(x.2, x.3, x.4, x.5)))
 					.collect(),
 			},
 			pallet_grandpa: Default::default(),
@@ -611,7 +550,7 @@ pub fn pangolin_development_config() -> PangolinChainSpec {
 			},
 			darwinia_relay_authorities_Instance1: pangolin_runtime::EthereumRelayAuthoritiesConfig {
 				authorities: vec![(
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					super::get_account_id_from_seed::<sr25519::Public>("Alice"),
 					array_bytes::hex_into_unchecked(ETHEREUM_RELAY_AUTHORITY_SIGNER),
 					1
 				)]
@@ -654,37 +593,37 @@ pub fn pangolin_development_config() -> PangolinChainSpec {
 		pangolin_development_genesis,
 		vec![],
 		None,
-		None,
-		Some(properties()),
+		Some(DEFAULT_PROTOCOL_ID),
+		Some(pangolin_properties()),
 		None,
 	)
 }
 
 pub fn pangolin_local_testnet_config() -> PangolinChainSpec {
 	fn pangolin_local_testnet_genesis() -> pangolin_runtime::GenesisConfig {
-		let root = get_account_id_from_seed::<sr25519::Public>("Alice");
+		let root = super::get_account_id_from_seed::<sr25519::Public>("Alice");
 		let s2s_relayer = array_bytes::hex_into_unchecked(S2S_RELAYER);
 		let initial_authorities = vec![
-			get_authority_keys_from_seed("Alice"),
-			get_authority_keys_from_seed("Bob"),
-			get_authority_keys_from_seed("Charlie"),
-			get_authority_keys_from_seed("Dave"),
-			get_authority_keys_from_seed("Eve"),
-			get_authority_keys_from_seed("Ferdie"),
+			super::get_authority_keys_from_seed("Alice"),
+			super::get_authority_keys_from_seed("Bob"),
+			super::get_authority_keys_from_seed("Charlie"),
+			super::get_authority_keys_from_seed("Dave"),
+			super::get_authority_keys_from_seed("Eve"),
+			super::get_authority_keys_from_seed("Ferdie"),
 		];
 		let endowed_accounts = vec![
-			get_account_id_from_seed::<sr25519::Public>("Alice"),
-			get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-			get_account_id_from_seed::<sr25519::Public>("Bob"),
-			get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-			get_account_id_from_seed::<sr25519::Public>("Charlie"),
-			get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-			get_account_id_from_seed::<sr25519::Public>("Dave"),
-			get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-			get_account_id_from_seed::<sr25519::Public>("Eve"),
-			get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-			get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-			get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+			super::get_account_id_from_seed::<sr25519::Public>("Alice"),
+			super::get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+			super::get_account_id_from_seed::<sr25519::Public>("Bob"),
+			super::get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+			super::get_account_id_from_seed::<sr25519::Public>("Charlie"),
+			super::get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+			super::get_account_id_from_seed::<sr25519::Public>("Dave"),
+			super::get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+			super::get_account_id_from_seed::<sr25519::Public>("Eve"),
+			super::get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+			super::get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+			super::get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 			s2s_relayer,
 		]
 		.into_iter()
@@ -694,7 +633,7 @@ pub fn pangolin_local_testnet_config() -> PangolinChainSpec {
 				.map(|m| array_bytes::hex_into_unchecked(m)),
 		)
 		.collect::<Vec<_>>();
-		let collective_members = vec![get_account_id_from_seed::<sr25519::Public>("Alice")];
+		let collective_members = vec![super::get_account_id_from_seed::<sr25519::Public>("Alice")];
 		let evm_accounts = {
 			let mut map = BTreeMap::new();
 
@@ -754,7 +693,7 @@ pub fn pangolin_local_testnet_config() -> PangolinChainSpec {
 				keys: initial_authorities
 					.iter()
 					.cloned()
-					.map(|x| (x.0.clone(), x.0, session_keys(x.2, x.3, x.4, x.5)))
+					.map(|x| (x.0.clone(), x.0, pangolin_session_keys(x.2, x.3, x.4, x.5)))
 					.collect(),
 			},
 			pallet_grandpa: Default::default(),
@@ -834,7 +773,7 @@ pub fn pangolin_local_testnet_config() -> PangolinChainSpec {
 			},
 			darwinia_relay_authorities_Instance1: pangolin_runtime::EthereumRelayAuthoritiesConfig {
 				authorities: vec![(
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					super::get_account_id_from_seed::<sr25519::Public>("Alice"),
 					array_bytes::hex_into_unchecked(ETHEREUM_RELAY_AUTHORITY_SIGNER),
 					1
 				)]
@@ -896,8 +835,8 @@ pub fn pangolin_local_testnet_config() -> PangolinChainSpec {
 				.unwrap(),
 		],
 		None,
-		None,
-		Some(properties()),
+		Some(DEFAULT_PROTOCOL_ID),
+		Some(pangolin_properties()),
 		None,
 	)
 }
