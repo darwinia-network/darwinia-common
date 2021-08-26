@@ -167,5 +167,6 @@
 		}
 	},
 	"RingBalance": "Balance",
-	"KtonBalance": "Balance"
+	"KtonBalance": "Balance",
+	"Power": "u32"
 }
