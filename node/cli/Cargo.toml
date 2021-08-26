@@ -26,6 +26,7 @@ drml-service   = { path = "../service" }
 frame-benchmarking-cli = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sc-cli                 = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sc-service             = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-core                = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-trie                = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 try-runtime-cli        = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 

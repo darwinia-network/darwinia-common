@@ -44,6 +44,10 @@ pub struct RunCmd {
 	#[structopt(flatten)]
 	pub base: sc_cli::RunCmd,
 
+	/// Force using Pangoro native runtime.
+	#[structopt(long = "force-pangoro")]
+	pub force_pangoro: bool,
+
 	/// Disable the authority discovery module on validator or sentry nodes.
 	///
 	/// Enabled by default on validator and sentry nodes. Always disabled on non

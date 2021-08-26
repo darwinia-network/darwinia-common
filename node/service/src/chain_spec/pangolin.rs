@@ -35,8 +35,9 @@ use common_primitives::*;
 use darwinia_claims::ClaimsList;
 use darwinia_ethereum_relay::DagsMerkleRootsLoader as DagsMerkleRootsLoaderR;
 use darwinia_evm::GenesisAccount;
+use pangolin_runtime::*;
 
-pub type PangolinChainSpec = sc_service::GenericChainSpec<pangolin_runtime::GenesisConfig>;
+pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
 
 const PANGOLIN_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
@@ -65,13 +66,13 @@ const ETHEREUM_RELAY_AUTHORITY_SIGNER: &str = "0x68898db1012808808c903f390909c52
 const MAPPING_FACTORY_ADDRESS: &str = "0xE1586e744b99bF8e4C981DfE4dD4369d6f8Ed88A";
 const ETHEREUM_BACKING_ADDRESS: &str = "0xb2Bea2358d817dAE01B0FD0DC3aECB25910E65AA";
 
-fn pangolin_session_keys(
+fn session_keys(
 	babe: BabeId,
 	grandpa: GrandpaId,
 	im_online: ImOnlineId,
 	authority_discovery: AuthorityDiscoveryId,
-) -> pangolin_runtime::SessionKeys {
-	pangolin_runtime::SessionKeys {
+) -> SessionKeys {
+	SessionKeys {
 		babe,
 		grandpa,
 		im_online,
@@ -79,25 +80,25 @@ fn pangolin_session_keys(
 	}
 }
 
-fn pangolin_properties() -> Properties {
-	let mut pangolin_properties = Properties::new();
+fn properties() -> Properties {
+	let mut properties = Properties::new();
 
-	pangolin_properties.insert("ss58Format".into(), 18.into());
-	pangolin_properties.insert("tokenDecimals".into(), vec![9, 9].into());
-	pangolin_properties.insert("tokenSymbol".into(), vec!["PRING", "PKTON"].into());
+	properties.insert("ss58Format".into(), 18.into());
+	properties.insert("tokenDecimals".into(), vec![9, 9].into());
+	properties.insert("tokenSymbol".into(), vec!["PRING", "PKTON"].into());
 
-	pangolin_properties
+	properties
 }
 
-pub fn pangolin_config() -> Result<PangolinChainSpec, String> {
-	PangolinChainSpec::from_json_bytes(&include_bytes!("../../res/pangolin/pangolin.json")[..])
+pub fn config() -> Result<ChainSpec, String> {
+	ChainSpec::from_json_bytes(&include_bytes!("../../res/pangolin/pangolin.json")[..])
 }
 
-pub fn pangolin_build_spec_config() -> PangolinChainSpec {
-	fn pangolin_build_spec_genesis() -> pangolin_runtime::GenesisConfig {
+pub fn build_spec_config() -> ChainSpec {
+	fn build_spec_genesis() -> GenesisConfig {
 		struct Keys {
 			stash: AccountId,
-			session: pangolin_runtime::SessionKeys,
+			session: SessionKeys,
 		}
 		impl Keys {
 			fn new(sr25519: &str, ed25519: &str) -> Self {
@@ -106,7 +107,7 @@ pub fn pangolin_build_spec_config() -> PangolinChainSpec {
 
 				Self {
 					stash: sr25519.into(),
-					session: pangolin_session_keys(
+					session: session_keys(
 						sr25519.unchecked_into(),
 						ed25519.unchecked_into(),
 						sr25519.unchecked_into(),
@@ -166,16 +167,16 @@ pub fn pangolin_build_spec_config() -> PangolinChainSpec {
 			map
 		};
 
-		pangolin_runtime::GenesisConfig {
-			frame_system: pangolin_runtime::SystemConfig {
-				code: pangolin_runtime::wasm_binary_unwrap().to_vec(),
+		GenesisConfig {
+			frame_system: SystemConfig {
+				code: wasm_binary_unwrap().to_vec(),
 				changes_trie_config: Default::default(),
 			},
-			pallet_babe: pangolin_runtime::BabeConfig {
+			pallet_babe: BabeConfig {
 				authorities: vec![],
-				epoch_config: Some(pangolin_runtime::BABE_GENESIS_EPOCH_CONFIG)
+				epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG)
 			},
-			darwinia_balances_Instance1: pangolin_runtime::BalancesConfig {
+			darwinia_balances_Instance1: BalancesConfig {
 				balances: vec![
 					(root.clone(), BUNCH_OF_COINS),
 					(super::get_account_id_from_seed::<sr25519::Public>("Alice"), A_FEW_COINS),
@@ -198,7 +199,7 @@ pub fn pangolin_build_spec_config() -> PangolinChainSpec {
 				)
 				.collect()
 			},
-			darwinia_balances_Instance2: pangolin_runtime::KtonConfig {
+			darwinia_balances_Instance2: KtonConfig {
 				balances: vec![(root.clone(), BUNCH_OF_COINS), (s2s_relayer, BUNCH_OF_COINS)]
 					.into_iter()
 					.chain(
@@ -218,7 +219,7 @@ pub fn pangolin_build_spec_config() -> PangolinChainSpec {
 					)
 					.collect()
 			},
-			darwinia_staking: pangolin_runtime::StakingConfig {
+			darwinia_staking: StakingConfig {
 				minimum_validator_count: 6,
 				validator_count: 6,
 				stakers: initial_authorities
@@ -227,11 +228,11 @@ pub fn pangolin_build_spec_config() -> PangolinChainSpec {
 						stash.to_owned(),
 						stash.to_owned(),
 						A_FEW_COINS,
-						pangolin_runtime::StakerStatus::Validator
+						StakerStatus::Validator
 					))
 					.chain(initial_nominators.iter().map(|n| {
 						let mut rng = rand::thread_rng();
-						let limit = (pangolin_runtime::MAX_NOMINATIONS as usize).min(initial_authorities.len());
+						let limit = (MAX_NOMINATIONS as usize).min(initial_authorities.len());
 						let count = rng.gen::<usize>() % limit;
 						let nominations = initial_authorities
 							.as_slice()
@@ -240,14 +241,14 @@ pub fn pangolin_build_spec_config() -> PangolinChainSpec {
 							.map(|c| c.stash.clone())
 							.collect::<Vec<_>>();
 
-						(n.clone(), n.clone(), A_FEW_COINS, pangolin_runtime::StakerStatus::Nominator(nominations))
+						(n.clone(), n.clone(), A_FEW_COINS, StakerStatus::Nominator(nominations))
 					}))
 					.collect(),
 				slash_reward_fraction: Perbill::from_percent(10),
 				payout_fraction: Perbill::from_percent(50),
 				..Default::default()
 			},
-			pallet_session: pangolin_runtime::SessionConfig {
+			pallet_session: SessionConfig {
 				keys: initial_authorities
 					.iter()
 					.map(|Keys { stash, session }| (
@@ -263,25 +264,25 @@ pub fn pangolin_build_spec_config() -> PangolinChainSpec {
 			darwinia_democracy: Default::default(),
 			pallet_collective_Instance1: Default::default(),
 			pallet_collective_Instance2: Default::default(),
-			darwinia_elections_phragmen: pangolin_runtime::PhragmenElectionConfig {
+			darwinia_elections_phragmen: PhragmenElectionConfig {
 				members: collective_members
 					.iter()
 					.cloned()
 					.map(|a| (a, A_FEW_COINS))
 					.collect(),
 			},
-			pallet_membership_Instance1: pangolin_runtime::TechnicalMembershipConfig {
-				phantom: PhantomData::<pangolin_runtime::TechnicalMembershipInstance>,
+			pallet_membership_Instance1: TechnicalMembershipConfig {
+				phantom: PhantomData::<TechnicalMembershipInstance>,
 				members: collective_members.clone(),
 			},
 			pallet_treasury: Default::default(),
 			pallet_treasury_Instance2: Default::default(),
 			darwinia_claims: Default::default(),
 			darwinia_vesting: Default::default(),
-			pallet_sudo: pangolin_runtime::SudoConfig { key: root.clone() },
-			darwinia_crab_issuing: pangolin_runtime::CrabIssuingConfig { total_mapped_ring: BUNCH_OF_COINS },
-			darwinia_crab_backing: pangolin_runtime::CrabBackingConfig { backed_ring: BUNCH_OF_COINS },
-			darwinia_ethereum_relay: pangolin_runtime::EthereumRelayConfig {
+			pallet_sudo: SudoConfig { key: root.clone() },
+			darwinia_crab_issuing: CrabIssuingConfig { total_mapped_ring: BUNCH_OF_COINS },
+			darwinia_crab_backing: CrabBackingConfig { backed_ring: BUNCH_OF_COINS },
+			darwinia_ethereum_relay: EthereumRelayConfig {
 				genesis_header_parcel: r#"{
 					"header": {
 						"baseFeePerGas": "0xeb",
@@ -314,7 +315,7 @@ pub fn pangolin_build_spec_config() -> PangolinChainSpec {
 				),
 				..Default::default()
 			},
-			darwinia_ethereum_backing: pangolin_runtime::EthereumBackingConfig {
+			darwinia_ethereum_backing: EthereumBackingConfig {
 				token_redeem_address: array_bytes::hex_into_unchecked(TOKEN_REDEEM_ADDRESS),
 				deposit_redeem_address: array_bytes::hex_into_unchecked(DEPOSIT_REDEEM_ADDRESS),
 				set_authorities_address: array_bytes::hex_into_unchecked(SET_AUTHORITIES_ADDRESS),
@@ -323,27 +324,27 @@ pub fn pangolin_build_spec_config() -> PangolinChainSpec {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
 			},
-			darwinia_ethereum_issuing: pangolin_runtime::EthereumIssuingConfig {
+			darwinia_ethereum_issuing: EthereumIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 				ethereum_backing_address: array_bytes::hex_into_unchecked(ETHEREUM_BACKING_ADDRESS),
 			},
-			darwinia_relay_authorities_Instance1: pangolin_runtime::EthereumRelayAuthoritiesConfig {
+			darwinia_relay_authorities_Instance1: EthereumRelayAuthoritiesConfig {
 				authorities: vec![(
 					super::get_account_id_from_seed::<sr25519::Public>("Alice"),
 					array_bytes::hex_into_unchecked(ETHEREUM_RELAY_AUTHORITY_SIGNER),
 					1
 				)]
 			},
-			darwinia_tron_backing: pangolin_runtime::TronBackingConfig {
+			darwinia_tron_backing: TronBackingConfig {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
 			},
-			darwinia_evm: pangolin_runtime::EVMConfig { accounts: evm_accounts },
+			darwinia_evm: EVMConfig { accounts: evm_accounts },
 			dvm_ethereum: Default::default(),
-			darwinia_s2s_issuing: pangolin_runtime::Substrate2SubstrateIssuingConfig {
+			darwinia_s2s_issuing: Substrate2SubstrateIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 			},
-			darwinia_bridge_bsc: pangolin_runtime::BSCConfig {
+			darwinia_bridge_bsc: BSCConfig {
 				genesis_header: serde_json::from_str(r#"{
 					"difficulty": "0x2",
 					"extraData": "0xd883010100846765746888676f312e31352e35856c696e7578000000fc3ca6b72465176c461afb316ebc773c61faee85a6515daa295e26495cef6f69dfa69911d9d8e4f3bbadb89b29a97c6effb8a411dabc6adeefaa84f5067c8bbe2d4c407bbe49438ed859fe965b140dcf1aab71a93f349bbafec1551819b8be1efea2fc46ca749aa14430b3230294d12c6ab2aac5c2cd68e80b16b581685b1ded8013785d6623cc18d214320b6bb6475970f657164e5b75689b64b7fd1fa275f334f28e1872b61c6014342d914470ec7ac2975be345796c2b7ae2f5b9e386cd1b50a4550696d957cb4900f03a8b6c8fd93d6f4cea42bbb345dbc6f0dfdb5bec739bb832254baf4e8b4cc26bd2b52b31389b56e98b9f8ccdafcc39f3c7d6ebf637c9151673cbc36b88a6f79b60359f141df90a0c745125b131caaffd12b8f7166496996a7da21cf1f1b04d9b3e26a3d077be807dddb074639cd9fa61b47676c064fc50d62cce2fd7544e0b2cc94692d4a704debef7bcb61328e2d3a739effcd3a99387d015e260eefac72ebea1e9ae3261a475a27bb1028f140bc2a7c843318afdea0a6e3c511bbd10f4519ece37dc24887e11b55dee226379db83cffc681495730c11fdde79ba4c0c0670403d7dfc4c816a313885fe04b850f96f27b2e9fd88b147c882ad7caf9b964abfe6543625fcca73b56fe29d3046831574b0681d52bf5383d6f2187b6276c100",
@@ -365,11 +366,11 @@ pub fn pangolin_build_spec_config() -> PangolinChainSpec {
 		}
 	}
 
-	PangolinChainSpec::from_genesis(
+	ChainSpec::from_genesis(
 		"Pangolin",
 		"pangolin",
 		ChainType::Live,
-		pangolin_build_spec_genesis,
+		build_spec_genesis,
 		[
 			"/dns4/t1.pangolin-p2p.darwinia.network/tcp/30333/p2p/12D3KooWLc6ZD4PGjnRz8CuVioW1dEr8rVBVEAFb1vpxFHXU4g2Y",
 			"/dns4/t2.pangolin-p2p.darwinia.network/tcp/30333/p2p/12D3KooWHf1v45q3u1qPrkwSUq7ybzNfXf5ELPcpoBTJ4k49axfk",
@@ -386,13 +387,13 @@ pub fn pangolin_build_spec_config() -> PangolinChainSpec {
 				.expect("Pangolin telemetry url is valid; qed"),
 		),
 		Some(DEFAULT_PROTOCOL_ID),
-		Some(pangolin_properties()),
+		Some(properties()),
 		None,
 	)
 }
 
-pub fn pangolin_development_config() -> PangolinChainSpec {
-	fn pangolin_development_genesis() -> pangolin_runtime::GenesisConfig {
+pub fn development_config() -> ChainSpec {
+	fn development_genesis() -> GenesisConfig {
 		let root = super::get_account_id_from_seed::<sr25519::Public>("Alice");
 		let s2s_relayer = array_bytes::hex_into_unchecked(S2S_RELAYER);
 		let initial_authorities = vec![super::get_authority_keys_from_seed("Alice")];
@@ -429,36 +430,36 @@ pub fn pangolin_development_config() -> PangolinChainSpec {
 			map
 		};
 
-		pangolin_runtime::GenesisConfig {
-			frame_system: pangolin_runtime::SystemConfig {
-				code: pangolin_runtime::wasm_binary_unwrap().to_vec(),
+		GenesisConfig {
+			frame_system: SystemConfig {
+				code: wasm_binary_unwrap().to_vec(),
 				changes_trie_config: Default::default(),
 			},
-			pallet_babe: pangolin_runtime::BabeConfig {
+			pallet_babe: BabeConfig {
 				authorities: vec![],
-				epoch_config: Some(pangolin_runtime::BABE_GENESIS_EPOCH_CONFIG)
+				epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG)
 			},
-			darwinia_balances_Instance1: pangolin_runtime::BalancesConfig {
+			darwinia_balances_Instance1: BalancesConfig {
 				balances: endowed_accounts
 					.clone()
 					.into_iter()
 					.map(|a| (a, MANY_COINS))
 					.collect()
 			},
-			darwinia_balances_Instance2: pangolin_runtime::KtonConfig {
+			darwinia_balances_Instance2: KtonConfig {
 				balances: endowed_accounts
 					.clone()
 					.into_iter()
 					.map(|a| (a, A_FEW_COINS))
 					.collect()
 			},
-			darwinia_staking: pangolin_runtime::StakingConfig {
+			darwinia_staking: StakingConfig {
 				minimum_validator_count: 1,
 				validator_count: 2,
 				stakers: initial_authorities
 					.iter()
 					.cloned()
-					.map(|x| (x.0, x.1, A_FEW_COINS, pangolin_runtime::StakerStatus::Validator))
+					.map(|x| (x.0, x.1, A_FEW_COINS, StakerStatus::Validator))
 					.collect(),
 				invulnerables: initial_authorities.iter().cloned().map(|x| x.0).collect(),
 				force_era: darwinia_staking::Forcing::ForceAlways,
@@ -466,11 +467,11 @@ pub fn pangolin_development_config() -> PangolinChainSpec {
 				payout_fraction: Perbill::from_percent(50),
 				..Default::default()
 			},
-			pallet_session: pangolin_runtime::SessionConfig {
+			pallet_session: SessionConfig {
 				keys: initial_authorities
 					.iter()
 					.cloned()
-					.map(|x| (x.0.clone(), x.0, pangolin_session_keys(x.2, x.3, x.4, x.5)))
+					.map(|x| (x.0.clone(), x.0, session_keys(x.2, x.3, x.4, x.5)))
 					.collect(),
 			},
 			pallet_grandpa: Default::default(),
@@ -479,30 +480,30 @@ pub fn pangolin_development_config() -> PangolinChainSpec {
 			darwinia_democracy: Default::default(),
 			pallet_collective_Instance1: Default::default(),
 			pallet_collective_Instance2: Default::default(),
-			darwinia_elections_phragmen: pangolin_runtime::PhragmenElectionConfig {
+			darwinia_elections_phragmen: PhragmenElectionConfig {
 				members: collective_members
 					.iter()
 					.cloned()
 					.map(|a| (a, A_FEW_COINS))
 					.collect(),
 			},
-			pallet_membership_Instance1: pangolin_runtime::TechnicalMembershipConfig {
-				phantom: PhantomData::<pangolin_runtime::TechnicalMembershipInstance>,
+			pallet_membership_Instance1: TechnicalMembershipConfig {
+				phantom: PhantomData::<TechnicalMembershipInstance>,
 				members: collective_members.clone(),
 			},
 			pallet_treasury: Default::default(),
 			pallet_treasury_Instance2: Default::default(),
-			darwinia_claims: pangolin_runtime::ClaimsConfig {
+			darwinia_claims: ClaimsConfig {
 				claims_list: ClaimsList::from_file(
 					"bin/res/claims-list.json",
 					"CLAIMS_LIST_PATH",
 				),
 			},
 			darwinia_vesting: Default::default(),
-			pallet_sudo: pangolin_runtime::SudoConfig { key: root.clone() },
-			darwinia_crab_issuing: pangolin_runtime::CrabIssuingConfig { total_mapped_ring: BUNCH_OF_COINS },
-			darwinia_crab_backing: pangolin_runtime::CrabBackingConfig { backed_ring: BUNCH_OF_COINS },
-			darwinia_ethereum_relay: pangolin_runtime::EthereumRelayConfig {
+			pallet_sudo: SudoConfig { key: root.clone() },
+			darwinia_crab_issuing: CrabIssuingConfig { total_mapped_ring: BUNCH_OF_COINS },
+			darwinia_crab_backing: CrabBackingConfig { backed_ring: BUNCH_OF_COINS },
+			darwinia_ethereum_relay: EthereumRelayConfig {
 				genesis_header_parcel: r#"{
 					"header": {
 						"baseFeePerGas": "0xeb",
@@ -535,7 +536,7 @@ pub fn pangolin_development_config() -> PangolinChainSpec {
 				),
 				..Default::default()
 			},
-			darwinia_ethereum_backing: pangolin_runtime::EthereumBackingConfig {
+			darwinia_ethereum_backing: EthereumBackingConfig {
 				token_redeem_address: array_bytes::hex_into_unchecked(TOKEN_REDEEM_ADDRESS),
 				deposit_redeem_address: array_bytes::hex_into_unchecked(DEPOSIT_REDEEM_ADDRESS),
 				set_authorities_address: array_bytes::hex_into_unchecked(SET_AUTHORITIES_ADDRESS),
@@ -544,27 +545,27 @@ pub fn pangolin_development_config() -> PangolinChainSpec {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
 			},
-			darwinia_ethereum_issuing: pangolin_runtime::EthereumIssuingConfig {
+			darwinia_ethereum_issuing: EthereumIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 				ethereum_backing_address: array_bytes::hex_into_unchecked(ETHEREUM_BACKING_ADDRESS),
 			},
-			darwinia_relay_authorities_Instance1: pangolin_runtime::EthereumRelayAuthoritiesConfig {
+			darwinia_relay_authorities_Instance1: EthereumRelayAuthoritiesConfig {
 				authorities: vec![(
 					super::get_account_id_from_seed::<sr25519::Public>("Alice"),
 					array_bytes::hex_into_unchecked(ETHEREUM_RELAY_AUTHORITY_SIGNER),
 					1
 				)]
 			},
-			darwinia_tron_backing: pangolin_runtime::TronBackingConfig {
+			darwinia_tron_backing: TronBackingConfig {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
 			},
-			darwinia_evm: pangolin_runtime::EVMConfig { accounts: evm_accounts },
+			darwinia_evm: EVMConfig { accounts: evm_accounts },
 			dvm_ethereum: Default::default(),
-			darwinia_s2s_issuing: pangolin_runtime::Substrate2SubstrateIssuingConfig {
+			darwinia_s2s_issuing: Substrate2SubstrateIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 			},
-			darwinia_bridge_bsc: pangolin_runtime::BSCConfig {
+			darwinia_bridge_bsc: BSCConfig {
 				genesis_header: serde_json::from_str(r#"{
 					"difficulty": "0x2",
 					"extraData": "0xd883010100846765746888676f312e31352e35856c696e7578000000fc3ca6b72465176c461afb316ebc773c61faee85a6515daa295e26495cef6f69dfa69911d9d8e4f3bbadb89b29a97c6effb8a411dabc6adeefaa84f5067c8bbe2d4c407bbe49438ed859fe965b140dcf1aab71a93f349bbafec1551819b8be1efea2fc46ca749aa14430b3230294d12c6ab2aac5c2cd68e80b16b581685b1ded8013785d6623cc18d214320b6bb6475970f657164e5b75689b64b7fd1fa275f334f28e1872b61c6014342d914470ec7ac2975be345796c2b7ae2f5b9e386cd1b50a4550696d957cb4900f03a8b6c8fd93d6f4cea42bbb345dbc6f0dfdb5bec739bb832254baf4e8b4cc26bd2b52b31389b56e98b9f8ccdafcc39f3c7d6ebf637c9151673cbc36b88a6f79b60359f141df90a0c745125b131caaffd12b8f7166496996a7da21cf1f1b04d9b3e26a3d077be807dddb074639cd9fa61b47676c064fc50d62cce2fd7544e0b2cc94692d4a704debef7bcb61328e2d3a739effcd3a99387d015e260eefac72ebea1e9ae3261a475a27bb1028f140bc2a7c843318afdea0a6e3c511bbd10f4519ece37dc24887e11b55dee226379db83cffc681495730c11fdde79ba4c0c0670403d7dfc4c816a313885fe04b850f96f27b2e9fd88b147c882ad7caf9b964abfe6543625fcca73b56fe29d3046831574b0681d52bf5383d6f2187b6276c100",
@@ -586,21 +587,21 @@ pub fn pangolin_development_config() -> PangolinChainSpec {
 		}
 	}
 
-	PangolinChainSpec::from_genesis(
+	ChainSpec::from_genesis(
 		"Pangolin",
 		"pangolin",
 		ChainType::Development,
-		pangolin_development_genesis,
+		development_genesis,
 		vec![],
 		None,
 		Some(DEFAULT_PROTOCOL_ID),
-		Some(pangolin_properties()),
+		Some(properties()),
 		None,
 	)
 }
 
-pub fn pangolin_local_testnet_config() -> PangolinChainSpec {
-	fn pangolin_local_testnet_genesis() -> pangolin_runtime::GenesisConfig {
+pub fn local_testnet_config() -> ChainSpec {
+	fn local_testnet_genesis() -> GenesisConfig {
 		let root = super::get_account_id_from_seed::<sr25519::Public>("Alice");
 		let s2s_relayer = array_bytes::hex_into_unchecked(S2S_RELAYER);
 		let initial_authorities = vec![
@@ -652,36 +653,36 @@ pub fn pangolin_local_testnet_config() -> PangolinChainSpec {
 			map
 		};
 
-		pangolin_runtime::GenesisConfig {
-			frame_system: pangolin_runtime::SystemConfig {
-				code: pangolin_runtime::wasm_binary_unwrap().to_vec(),
+		GenesisConfig {
+			frame_system: SystemConfig {
+				code: wasm_binary_unwrap().to_vec(),
 				changes_trie_config: Default::default(),
 			},
-			pallet_babe: pangolin_runtime::BabeConfig {
+			pallet_babe: BabeConfig {
 				authorities: vec![],
-				epoch_config: Some(pangolin_runtime::BABE_GENESIS_EPOCH_CONFIG)
+				epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG)
 			},
-			darwinia_balances_Instance1: pangolin_runtime::BalancesConfig {
+			darwinia_balances_Instance1: BalancesConfig {
 				balances: endowed_accounts
 					.clone()
 					.into_iter()
 					.map(|a| (a, MANY_COINS))
 					.collect()
 			},
-			darwinia_balances_Instance2: pangolin_runtime::KtonConfig {
+			darwinia_balances_Instance2: KtonConfig {
 				balances: endowed_accounts
 					.clone()
 					.into_iter()
 					.map(|a| (a, A_FEW_COINS))
 					.collect()
 			},
-			darwinia_staking: pangolin_runtime::StakingConfig {
+			darwinia_staking: StakingConfig {
 				minimum_validator_count: 6,
 				validator_count: 6,
 				stakers: initial_authorities
 					.iter()
 					.cloned()
-					.map(|x| (x.0, x.1, A_FEW_COINS, pangolin_runtime::StakerStatus::Validator))
+					.map(|x| (x.0, x.1, A_FEW_COINS, StakerStatus::Validator))
 					.collect(),
 				invulnerables: initial_authorities.iter().cloned().map(|x| x.0).collect(),
 				force_era: darwinia_staking::Forcing::ForceAlways,
@@ -689,11 +690,11 @@ pub fn pangolin_local_testnet_config() -> PangolinChainSpec {
 				payout_fraction: Perbill::from_percent(50),
 				..Default::default()
 			},
-			pallet_session: pangolin_runtime::SessionConfig {
+			pallet_session: SessionConfig {
 				keys: initial_authorities
 					.iter()
 					.cloned()
-					.map(|x| (x.0.clone(), x.0, pangolin_session_keys(x.2, x.3, x.4, x.5)))
+					.map(|x| (x.0.clone(), x.0, session_keys(x.2, x.3, x.4, x.5)))
 					.collect(),
 			},
 			pallet_grandpa: Default::default(),
@@ -702,30 +703,30 @@ pub fn pangolin_local_testnet_config() -> PangolinChainSpec {
 			darwinia_democracy: Default::default(),
 			pallet_collective_Instance1: Default::default(),
 			pallet_collective_Instance2: Default::default(),
-			darwinia_elections_phragmen: pangolin_runtime::PhragmenElectionConfig {
+			darwinia_elections_phragmen: PhragmenElectionConfig {
 				members: collective_members
 					.iter()
 					.cloned()
 					.map(|a| (a, A_FEW_COINS))
 					.collect(),
 			},
-			pallet_membership_Instance1: pangolin_runtime::TechnicalMembershipConfig {
-				phantom: PhantomData::<pangolin_runtime::TechnicalMembershipInstance>,
+			pallet_membership_Instance1: TechnicalMembershipConfig {
+				phantom: PhantomData::<TechnicalMembershipInstance>,
 				members: collective_members.clone(),
 			},
 			pallet_treasury: Default::default(),
 			pallet_treasury_Instance2: Default::default(),
-			darwinia_claims: pangolin_runtime::ClaimsConfig {
+			darwinia_claims: ClaimsConfig {
 				claims_list: ClaimsList::from_file(
 					"bin/res/claims-list.json",
 					"CLAIMS_LIST_PATH",
 				),
 			},
 			darwinia_vesting: Default::default(),
-			pallet_sudo: pangolin_runtime::SudoConfig { key: root.clone() },
-			darwinia_crab_issuing: pangolin_runtime::CrabIssuingConfig { total_mapped_ring: BUNCH_OF_COINS },
-			darwinia_crab_backing: pangolin_runtime::CrabBackingConfig { backed_ring: BUNCH_OF_COINS },
-			darwinia_ethereum_relay: pangolin_runtime::EthereumRelayConfig {
+			pallet_sudo: SudoConfig { key: root.clone() },
+			darwinia_crab_issuing: CrabIssuingConfig { total_mapped_ring: BUNCH_OF_COINS },
+			darwinia_crab_backing: CrabBackingConfig { backed_ring: BUNCH_OF_COINS },
+			darwinia_ethereum_relay: EthereumRelayConfig {
 				genesis_header_parcel: r#"{
 					"header": {
 						"baseFeePerGas": "0xeb",
@@ -758,7 +759,7 @@ pub fn pangolin_local_testnet_config() -> PangolinChainSpec {
 				),
 				..Default::default()
 			},
-			darwinia_ethereum_backing: pangolin_runtime::EthereumBackingConfig {
+			darwinia_ethereum_backing: EthereumBackingConfig {
 				token_redeem_address: array_bytes::hex_into_unchecked(TOKEN_REDEEM_ADDRESS),
 				deposit_redeem_address: array_bytes::hex_into_unchecked(DEPOSIT_REDEEM_ADDRESS),
 				set_authorities_address: array_bytes::hex_into_unchecked(SET_AUTHORITIES_ADDRESS),
@@ -767,27 +768,27 @@ pub fn pangolin_local_testnet_config() -> PangolinChainSpec {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
 			},
-			darwinia_ethereum_issuing: pangolin_runtime::EthereumIssuingConfig {
+			darwinia_ethereum_issuing: EthereumIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 				ethereum_backing_address: array_bytes::hex_into_unchecked(ETHEREUM_BACKING_ADDRESS),
 			},
-			darwinia_relay_authorities_Instance1: pangolin_runtime::EthereumRelayAuthoritiesConfig {
+			darwinia_relay_authorities_Instance1: EthereumRelayAuthoritiesConfig {
 				authorities: vec![(
 					super::get_account_id_from_seed::<sr25519::Public>("Alice"),
 					array_bytes::hex_into_unchecked(ETHEREUM_RELAY_AUTHORITY_SIGNER),
 					1
 				)]
 			},
-			darwinia_tron_backing: pangolin_runtime::TronBackingConfig {
+			darwinia_tron_backing: TronBackingConfig {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
 			},
-			darwinia_evm: pangolin_runtime::EVMConfig { accounts: evm_accounts },
+			darwinia_evm: EVMConfig { accounts: evm_accounts },
 			dvm_ethereum: Default::default(),
-			darwinia_s2s_issuing: pangolin_runtime::Substrate2SubstrateIssuingConfig {
+			darwinia_s2s_issuing: Substrate2SubstrateIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 			},
-			darwinia_bridge_bsc: pangolin_runtime::BSCConfig {
+			darwinia_bridge_bsc: BSCConfig {
 				genesis_header: serde_json::from_str(r#"{
 					"difficulty": "0x2",
 					"extraData": "0xd883010100846765746888676f312e31352e35856c696e7578000000fc3ca6b72465176c461afb316ebc773c61faee85a6515daa295e26495cef6f69dfa69911d9d8e4f3bbadb89b29a97c6effb8a411dabc6adeefaa84f5067c8bbe2d4c407bbe49438ed859fe965b140dcf1aab71a93f349bbafec1551819b8be1efea2fc46ca749aa14430b3230294d12c6ab2aac5c2cd68e80b16b581685b1ded8013785d6623cc18d214320b6bb6475970f657164e5b75689b64b7fd1fa275f334f28e1872b61c6014342d914470ec7ac2975be345796c2b7ae2f5b9e386cd1b50a4550696d957cb4900f03a8b6c8fd93d6f4cea42bbb345dbc6f0dfdb5bec739bb832254baf4e8b4cc26bd2b52b31389b56e98b9f8ccdafcc39f3c7d6ebf637c9151673cbc36b88a6f79b60359f141df90a0c745125b131caaffd12b8f7166496996a7da21cf1f1b04d9b3e26a3d077be807dddb074639cd9fa61b47676c064fc50d62cce2fd7544e0b2cc94692d4a704debef7bcb61328e2d3a739effcd3a99387d015e260eefac72ebea1e9ae3261a475a27bb1028f140bc2a7c843318afdea0a6e3c511bbd10f4519ece37dc24887e11b55dee226379db83cffc681495730c11fdde79ba4c0c0670403d7dfc4c816a313885fe04b850f96f27b2e9fd88b147c882ad7caf9b964abfe6543625fcca73b56fe29d3046831574b0681d52bf5383d6f2187b6276c100",
@@ -809,11 +810,11 @@ pub fn pangolin_local_testnet_config() -> PangolinChainSpec {
 		}
 	}
 
-	PangolinChainSpec::from_genesis(
+	ChainSpec::from_genesis(
 		"Pangolin",
 		"pangolin",
 		ChainType::Development,
-		pangolin_local_testnet_genesis,
+		local_testnet_genesis,
 		vec![
 			"/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp"
 				.parse()
@@ -836,7 +837,7 @@ pub fn pangolin_local_testnet_config() -> PangolinChainSpec {
 		],
 		None,
 		Some(DEFAULT_PROTOCOL_ID),
-		Some(pangolin_properties()),
+		Some(properties()),
 		None,
 	)
 }

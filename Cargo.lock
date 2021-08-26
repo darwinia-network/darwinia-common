@@ -2317,6 +2317,7 @@ dependencies = [
  "log",
  "sc-cli",
  "sc-service",
+ "sp-core",
  "sp-trie",
  "structopt",
  "substrate-build-script-utils",

@@ -39,7 +39,12 @@ macro_rules! impl_runtime_apis {
 }
 
 pub mod pangolin;
+pub use pangolin::PangolinExecutor;
+pub use pangolin_runtime;
+
 pub mod pangoro;
+pub use pangoro::PangoroExecutor;
+pub use pangoro_runtime;
 
 // --- std ---
 use std::sync::Arc;

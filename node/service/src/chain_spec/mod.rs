@@ -17,13 +17,10 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 pub mod pangolin;
-pub use pangolin::{
-	pangolin_build_spec_config, pangolin_config, pangolin_development_config,
-	pangolin_local_testnet_config, PangolinChainSpec,
-};
+pub use pangolin::ChainSpec as PangolinChainSpec;
 
 pub mod pangoro;
-// pub use pangoro::PangoroChainSpec;
+pub use pangoro::ChainSpec as PangoroChainSpec;
 
 // --- paritytech ---
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
