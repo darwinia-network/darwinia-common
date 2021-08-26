@@ -70,8 +70,8 @@ use dc_mapping_sync::MappingSyncWorker;
 use dc_rpc::EthTask;
 use dp_rpc::{FilterPool, PendingTransactions};
 use drml_rpc::{
-	self, BabeDeps, DenyUnsafe, FullDeps, GrandpaDeps, LightDeps, RpcExtension,
-	SubscriptionTaskExecutor,
+	pangolin::{FullDeps, LightDeps},
+	BabeDeps, DenyUnsafe, GrandpaDeps, RpcExtension, SubscriptionTaskExecutor,
 };
 
 sc_executor::native_executor_instance!(
@@ -280,7 +280,7 @@ where
 				max_past_logs,
 			};
 
-			drml_rpc::create_full(deps, subscription_task_executor.clone())
+			drml_rpc::pangolin::create_full(deps, subscription_task_executor.clone())
 		}
 	};
 
@@ -710,7 +710,7 @@ where
 		client: client.clone(),
 		pool: transaction_pool.clone(),
 	};
-	let rpc_extension = drml_rpc::create_light(light_deps);
+	let rpc_extension = drml_rpc::pangolin::create_light(light_deps);
 	let rpc_handlers = sc_service::spawn_tasks(SpawnTasksParams {
 		on_demand: Some(on_demand),
 		remote_blockchain: Some(backend.remote_blockchain()),
