@@ -1,0 +1,69 @@
+[package]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+build       = "build.rs"
+description = "Darwinia Runtime Module Library Node"
+edition     = "2018"
+homepage    = "https://darwinia.network/"
+license     = "GPL-3.0"
+name        = "drml"
+readme      = "README.md"
+repository  = "https://github.com/darwinia-network/darwinia-common/"
+version     = "2.6.1"
+
+# TODO: Consider rename this repo to darwinia-runtime-module-library
+[[bin]]
+name = "drml"
+
+[dependencies]
+# crates.io
+log       = { version = "0.4.14" }
+structopt = { version = "0.3.21", optional = true }
+# darwinia-network
+bsc-primitives = { path = "../../primitives/chain-bsc" }
+dp-consensus   = { path = "../../primitives/consensus" }
+drml-service   = { path = "../service" }
+# paritytech
+frame-benchmarking-cli = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sc-cli                 = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sc-service             = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-core                = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-trie                = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+try-runtime-cli        = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+
+[build-dependencies]
+# paritytech
+substrate-build-script-utils = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
+try-runtime-cli              = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+
+[features]
+default = [
+	"cli",
+	"db",
+	"full-node",
+	"trie-memory-tracker",
+	"wasmtime",
+]
+
+cli = [
+	"structopt",
+	"sc-cli",
+	"sc-service",
+]
+
+db = ["drml-service/db"]
+
+full-node = ["drml-service/full-node"]
+
+trie-memory-tracker = ["sp-trie/memory-tracker"]
+
+wasmtime = ["sc-cli/wasmtime"]
+
+runtime-benchmarks = [
+	"drml-service/runtime-benchmarks",
+	"frame-benchmarking-cli",
+]
+
+try-runtime = [
+	"drml-service/try-runtime",
+	"try-runtime-cli",
+]

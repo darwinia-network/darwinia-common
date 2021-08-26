@@ -16,8 +16,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg_attr(not(feature = "std"), no_std)]
-
 // --- crates.io ---
 use ethereum::TransactionMessage;
 use sha3::{Digest, Keccak256};

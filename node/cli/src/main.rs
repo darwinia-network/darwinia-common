@@ -16,23 +16,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-// --- std ---
-use std::{env, fs, io::Read, path::Path};
+//! Darwinia Node Template CLI library.
+#![warn(missing_docs)]
 
-fn main() {
-	let mut dags_merkle_roots_file =
-		fs::File::open("../../../../node/service/res/ethereum/dags-merkle-roots.json").unwrap();
-	let mut dags_merkle_roots_str = String::new();
-	dags_merkle_roots_file
-		.read_to_string(&mut dags_merkle_roots_str)
-		.unwrap();
+mod cli;
+mod command;
 
-	fs::write(
-		&Path::new(&env::var_os("OUT_DIR").unwrap()).join("dags_merkle_roots.rs"),
-		&format!(
-			"pub const DAGS_MERKLE_ROOTS_STR: &'static str = r#\"{}\"#;",
-			dags_merkle_roots_str,
-		),
-	)
-	.unwrap();
+fn main() -> sc_cli::Result<()> {
+	command::run()
 }

@@ -1,0 +1,25 @@
+[package]
+authors    = ["Darwinia Network <hello@darwinia.network>"]
+edition    = "2018"
+homepage   = "https://darwinia.network/"
+license    = "GPL-3.0"
+name       = "pangolin-constants"
+readme     = "README.md"
+repository = "https://github.com/darwinia-network/darwinia-common/"
+version    = "2.6.1"
+
+[dependencies]
+# darwinia-network
+common-primitives = { default-features = false, path = "../../../../primitives/common" }
+# paritytech
+sp-staking = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+
+[features]
+default = ["std"]
+
+std = [
+	# darwinia-network
+	"common-primitives/std",
+	# paritytech
+	"sp-staking/std",
+]

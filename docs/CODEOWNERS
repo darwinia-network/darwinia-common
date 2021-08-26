@@ -19,10 +19,13 @@
 #   an email.
 # - The latest matching rule, if multiple, takes precedence.
 
-/bin/node/bridge-primitives/pangolin/ @AurevoirXavier
-/bin/node/cli/ @AurevoirXavier
-/bin/node/primitive/ @AurevoirXavier
-/bin/node/runtime/pangolin/ @AsceticBear @AurevoirXavier
+/node/cli/ @AurevoirXavier
+/node/primitives/bridge/ @AurevoirXavier
+/node/primitives/common/ @AurevoirXavier
+/node/rpc/ @AurevoirXavier
+/node/runtime/pangolin/ @AsceticBear @AurevoirXavier
+/node/runtime/pangoro/ @AurevoirXavier
+/node/service/ @AurevoirXavier
 
 /client/dvm/ @AsceticBear
 
@@ -51,7 +54,6 @@
 /frame/staking/rpc/ @AurevoirXavier
 /frame/staking/rpc/runtime-api/ @AurevoirXavier
 /frame/support/ @AurevoirXavier @HackFisher
-/frame/treasury/ @AurevoirXavier @HackFisher
 /frame/vesting/ @AurevoirXavier
 
 /primitives/consensus/ @AsceticBear
