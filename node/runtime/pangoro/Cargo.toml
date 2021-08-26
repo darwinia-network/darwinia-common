@@ -52,6 +52,7 @@ pallet-timestamp                           = { default-features = false, git = "
 pallet-transaction-payment                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-transaction-payment-rpc-runtime-api = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-api                                     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-authority-discovery                     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-block-builder                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-consensus-babe                          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-core                                    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
@@ -115,6 +116,7 @@ std = [
 	"pallet-transaction-payment/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"sp-api/std",
+	"sp-authority-discovery/std",
 	"sp-block-builder/std",
 	"sp-consensus-babe/std",
 	"sp-core/std",

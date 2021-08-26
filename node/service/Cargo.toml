@@ -33,6 +33,7 @@ drml-rpc                            = { path = "../rpc" }
 dvm-dynamic-fee                     = { path = "../../frame/dvm-dynamic-fee" }
 dvm-rpc-runtime-api                 = { path = "../../frame/dvm/rpc/runtime-api" }
 pangolin-runtime                    = { path = "../runtime/pangolin" }
+pangoro-runtime                     = { path = "../runtime/pangoro" }
 # paritytech
 frame-benchmarking                         = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-system-rpc-runtime-api               = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
