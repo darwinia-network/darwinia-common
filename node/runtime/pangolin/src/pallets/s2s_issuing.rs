@@ -19,7 +19,7 @@ pub const PANGORO_PANGOLIN_LANE: [u8; 4] = *b"rtll";
 pub enum PangoroRuntime {
 	/// s2s bridge backing pallet.
 	/// this index must be the same as the backing pallet in pangoro runtime
-	#[codec(index = 14)]
+	#[codec(index = 20)]
 	Sub2SubBacking(PangoroSub2SubBackingCall),
 }
 
