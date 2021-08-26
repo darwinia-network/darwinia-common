@@ -196,7 +196,7 @@ sp_api::decl_runtime_apis! {
 		fn unrewarded_relayers_state(lane: LaneId) -> UnrewardedRelayersState;
 	}
 
-		/// API for querying information about the finalized Pangoro headers.
+	/// API for querying information about the finalized Pangoro headers.
 	///
 	/// This API is implemented by runtimes that are bridging with the Pangoro chain, not the
 	/// Pangoro runtime itself.
