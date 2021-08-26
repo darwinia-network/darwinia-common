@@ -12,7 +12,7 @@ use darwinia_support::s2s::{RelayMessageCaller, ToEthAddress};
 use dp_asset::{token::Token, RecipientAccount};
 
 // 0x6d74706c
-pub const PANGORO_PANGOLIN_LANE: [u8; 4] = *b"mtpl";
+pub const PANGORO_PANGOLIN_LANE: [u8; 4] = *b"rtll";
 
 // remote chain pangoro's dispatch info
 #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]

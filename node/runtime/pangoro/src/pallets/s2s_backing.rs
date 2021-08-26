@@ -15,7 +15,7 @@ use darwinia_s2s_backing::{Config, EncodeCall};
 use darwinia_support::s2s::RelayMessageCaller;
 use dp_asset::{token::Token, RecipientAccount};
 
-pub const PANGORO_PANGOLIN_LANE: [u8; 4] = *b"mtpl";
+pub const PANGORO_PANGOLIN_LANE: [u8; 4] = *b"rtll";
 
 /// Bridged chain pangolin call info
 #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
