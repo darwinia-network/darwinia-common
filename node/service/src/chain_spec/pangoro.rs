@@ -258,7 +258,7 @@ pub fn build_spec_config() -> ChainSpec {
 }
 
 pub fn development_config() -> ChainSpec {
-	fn pangolin_development_genesis() -> GenesisConfig {
+	fn development_genesis() -> GenesisConfig {
 		let root = super::get_account_id_from_seed::<sr25519::Public>("Alice");
 		let initial_authorities = vec![super::get_authority_keys_from_seed("Alice")];
 		let endowed_accounts = vec![
@@ -330,7 +330,7 @@ pub fn development_config() -> ChainSpec {
 		"Pangoro",
 		"pangoro",
 		ChainType::Development,
-		pangolin_development_genesis,
+		development_genesis,
 		vec![],
 		None,
 		Some(DEFAULT_PROTOCOL_ID),
