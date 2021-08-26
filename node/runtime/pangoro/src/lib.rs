@@ -119,8 +119,8 @@ pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 pub type Ring = Balances;
 
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: sp_runtime::create_runtime_str!("pangoro-runtime"),
-	impl_name: sp_runtime::create_runtime_str!("pangoro-runtime"),
+	spec_name: sp_runtime::create_runtime_str!("Pangoro"),
+	impl_name: sp_runtime::create_runtime_str!("Pangoro"),
 	authoring_version: 1,
 	spec_version: 1,
 	impl_version: 1,
