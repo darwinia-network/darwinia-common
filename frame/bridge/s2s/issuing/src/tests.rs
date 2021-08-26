@@ -156,7 +156,7 @@ impl darwinia_evm::Config for Test {
 
 frame_support::parameter_types! {
 	pub const S2sRelayPalletId: PalletId = PalletId(*b"da/s2sre");
-	pub const PangoroChainId: bp_runtime::ChainId = *b"mcid";
+	pub const PangoroChainId: bp_runtime::ChainId = *b"pcid";
 	pub RootAccountForPayments: Option<AccountId32> = Some([1;32].into());
 }
 
@@ -230,7 +230,7 @@ impl Config for Test {
 	type OutboundPayload = MockMessagePayload;
 	type CallEncoder = PangoroCallEncoder;
 	type FeeAccount = RootAccountForPayments;
-	type MessageSender = ToPangolinMessageRelayCaller;
+	type MessageSender = ToPangoroMessageRelayCaller;
 	type InternalTransactHandler = Ethereum;
 }
 
