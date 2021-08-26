@@ -28,7 +28,7 @@ use std::sync::Arc;
 use sp_api::ProvideRuntimeApi;
 // --- darwinia-network ---
 use crate::*;
-use common_primitives::{AccountId, Balance, Nonce, Power};
+use common_primitives::{AccountId, Balance, Nonce};
 
 /// Full client dependencies
 pub struct FullDeps<C, P, SC, B> {
@@ -74,9 +74,6 @@ where
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: sc_consensus_babe::BabeApi<Block>,
 	C::Api: sp_block_builder::BlockBuilder<Block>,
-	C::Api: darwinia_balances_rpc::BalancesRuntimeApi<Block, AccountId, Balance>,
-	C::Api: darwinia_header_mmr_rpc::HeaderMMRRuntimeApi<Block, Hash>,
-	C::Api: darwinia_staking_rpc::StakingRuntimeApi<Block, AccountId, Power>,
 	P: 'static + sp_transaction_pool::TransactionPool,
 	SC: 'static + sp_consensus::SelectChain<Block>,
 	B: 'static + Send + Sync + sc_client_api::Backend<Block>,
@@ -88,10 +85,6 @@ where
 	use sc_finality_grandpa_rpc::{GrandpaApi, GrandpaRpcHandler};
 	use sc_sync_state_rpc::{SyncStateRpcApi, SyncStateRpcHandler};
 	use substrate_frame_rpc_system::{FullSystem, SystemApi};
-	// --- darwinia-network ---
-	use darwinia_balances_rpc::{Balances, BalancesApi};
-	use darwinia_header_mmr_rpc::{HeaderMMR, HeaderMMRApi};
-	use darwinia_staking_rpc::{Staking, StakingApi};
 
 	let FullDeps {
 		client,
@@ -146,9 +139,6 @@ where
 		shared_epoch_changes,
 		deny_unsafe,
 	)));
-	io.extend_with(BalancesApi::to_delegate(Balances::new(client.clone())));
-	io.extend_with(HeaderMMRApi::to_delegate(HeaderMMR::new(client.clone())));
-	io.extend_with(StakingApi::to_delegate(Staking::new(client)));
 
 	io
 }
