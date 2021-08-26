@@ -1920,6 +1920,7 @@ version = "2.6.1"
 dependencies = [
  "array-bytes",
  "bp-runtime",
+ "darwinia-balances",
  "darwinia-support",
  "dp-asset",
  "dp-contract",
@@ -1928,9 +1929,11 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
+ "pallet-timestamp",
  "parity-scale-codec",
  "serde",
  "serde_json",
+ "sp-io",
  "sp-runtime",
  "sp-std",
 ]

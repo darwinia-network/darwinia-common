@@ -99,12 +99,14 @@ impl RelayMessageCaller<ToPangolinMessagePayload, Balance> for ToPangolinMessage
 
 frame_support::parameter_types! {
 	pub const PangolinChainId: ChainId = PANGOLIN_CHAIN_ID;
+	pub const RingPalletId: PalletId = PalletId(*b"da/bring");
 	pub const S2sBackingPalletId: PalletId = PalletId(*b"da/s2sba");
 	pub const RingLockLimit: Balance = 10_000_000 * 1_000_000_000;
 }
 
 impl Config for Runtime {
 	type PalletId = S2sBackingPalletId;
+	type RingPalletId = RingPalletId;
 	type Event = Event;
 	type WeightInfo = ();
 	type RingLockMaxLimit = RingLockLimit;

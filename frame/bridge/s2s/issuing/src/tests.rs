@@ -106,8 +106,13 @@ impl frame_system::Config for Test {
 	type OnSetCode = ();
 }
 
+frame_support::parameter_types! {
+	pub const DvmPalletId: PalletId = PalletId(*b"dar/dvmp");
+}
+
 impl dvm_ethereum::Config for Test {
 	type Event = ();
+	type PalletId = DvmPalletId;
 	type StateRoot = IntermediateStateRoot;
 	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
@@ -225,7 +230,8 @@ impl Config for Test {
 	type OutboundPayload = MockMessagePayload;
 	type CallEncoder = PangoroCallEncoder;
 	type FeeAccount = RootAccountForPayments;
-	type MessageSender = ToPangoroMessageRelayCaller;
+	type MessageSender = ToPangolinMessageRelayCaller;
+	type InternalTransactHandler = Ethereum;
 }
 
 frame_support::construct_runtime! {
@@ -238,6 +244,7 @@ frame_support::construct_runtime! {
 		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		S2sIssuing: s2s_issuing::{Pallet, Call, Storage, Config, Event<T>},
+		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config},
 	}
 }
 

@@ -98,4 +98,5 @@ impl Config for Runtime {
 	type OutboundPayload = ToPangoroMessagePayload;
 	type CallEncoder = PangoroCallEncoder;
 	type MessageSender = ToPangoroMessageRelayCaller;
+	type InternalTransactHandler = Ethereum;
 }
