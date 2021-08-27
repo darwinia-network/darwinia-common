@@ -1,4 +1,5 @@
 // --- substrate ---
+use bp_runtime::messages::DispatchFeePayment;
 use bp_runtime::ChainId;
 use frame_support::{dispatch::Dispatchable, weights::PostDispatchInfo, PalletId};
 use frame_system::RawOrigin;
@@ -65,6 +66,7 @@ impl EncodeCall<AccountId, ToPangoroMessagePayload> for PangoroCallEncoder {
 					weight,
 					origin: bp_message_dispatch::CallOrigin::SourceRoot,
 					call,
+					dispatch_fee_payment: DispatchFeePayment::AtSourceChain,
 				});
 			}
 			_ => Err(()),

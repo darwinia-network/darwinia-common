@@ -72,7 +72,7 @@ use codec::{Decode, Encode};
 use bridge_runtime_common::messages::{
 	source::estimate_message_dispatch_and_delivery_fee, MessageBridge,
 };
-use frame_support::{traits::KeyOwnerProofSystem, weights::Weight};
+use frame_support::traits::KeyOwnerProofSystem;
 use frame_system::{
 	offchain::{AppCrypto, CreateSignedTransaction, SendTransactionTypes, SigningTypes},
 	ChainContext, CheckEra, CheckGenesis, CheckNonce, CheckSpecVersion, CheckTxVersion,
@@ -429,19 +429,16 @@ sp_api::impl_runtime_apis! {
 			).ok()
 		}
 
-		fn messages_dispatch_weight(
+		fn message_details(
 			lane: bp_messages::LaneId,
 			begin: bp_messages::MessageNonce,
 			end: bp_messages::MessageNonce,
-		) -> Vec<(bp_messages::MessageNonce, Weight, u32)> {
-			(begin..=end).filter_map(|nonce| {
-				let encoded_payload = BridgePangolinMessages::outbound_message_payload(lane, nonce)?;
-				let decoded_payload = pangolin_messages::ToPangolinMessagePayload::decode(
-					&mut &encoded_payload[..]
-				).ok()?;
-				Some((nonce, decoded_payload.weight, encoded_payload.len() as _))
-			})
-			.collect()
+		) -> Vec<bp_messages::MessageDetails<Balance>> {
+			bridge_runtime_common::messages_api::outbound_message_details::<
+				Runtime,
+				pallet_bridge_messages::Instance1,
+				WithPangolinMessageBridge,
+			>(lane, begin, end)
 		}
 
 		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
