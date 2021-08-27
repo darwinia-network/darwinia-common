@@ -2,8 +2,7 @@ pub use pallet_bridge_messages::Instance1 as Pangolin;
 
 // --- paritytech ---
 use bp_message_dispatch::CallOrigin;
-use bp_runtime::messages::DispatchFeePayment;
-use bp_runtime::ChainId;
+use bp_runtime::{messages::DispatchFeePayment, ChainId};
 use bridge_runtime_common::messages::source::FromThisChainMessagePayload;
 use frame_support::{weights::PostDispatchInfo, PalletId};
 use frame_system::RawOrigin;

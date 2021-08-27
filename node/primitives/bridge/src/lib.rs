@@ -63,6 +63,7 @@ pub const DEFAULT_MESSAGE_DELIVERY_TX_WEIGHT: Weight = 1_000_000_000;
 /// for the case when single message is confirmed. The result then must be rounded up to account possible future
 /// runtime upgrades.
 pub const MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT: Weight = 2_000_000_000;
+pub const PAY_INBOUND_DISPATCH_FEE_WEIGHT: Weight = 600_000_000;
 
 /// Maximal number of unrewarded relayer entries at inbound lane.
 pub const MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE: MessageNonce = 128;
@@ -78,8 +79,6 @@ pub const FROM_PANGOLIN_LATEST_CONFIRMED_NONCE_METHOD: &str =
 /// Name of the `FromPangolinInboundLaneApi::unrewarded_relayers_state` runtime method.
 pub const FROM_PANGOLIN_UNREWARDED_RELAYERS_STATE: &str =
 	"FromPangolinInboundLaneApi_unrewarded_relayers_state";
-
-pub const PAY_INBOUND_DISPATCH_FEE_WEIGHT: Weight = 600_000_000;
 
 /// Name of the `ToPangolinOutboundLaneApi::estimate_message_delivery_and_dispatch_fee` runtime method.
 pub const TO_PANGOLIN_ESTIMATE_MESSAGE_FEE_METHOD: &str =

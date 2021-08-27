@@ -83,10 +83,10 @@ impl MessageBridge for WithPangoroMessageBridge {
 	const RELAYER_FEE_PERCENT: u32 = 10;
 	const THIS_CHAIN_ID: ChainId = PANGOLIN_CHAIN_ID;
 	const BRIDGED_CHAIN_ID: ChainId = PANGORO_CHAIN_ID;
-	type BridgedMessagesInstance = crate::WithPangoroMessages;
 
 	type ThisChain = Pangolin;
 	type BridgedChain = Pangoro;
+	type BridgedMessagesInstance = WithPangoroMessages;
 
 	fn bridged_balance_to_this_balance(bridged_balance: pangoro_primitives::Balance) -> Balance {
 		Balance::try_from(

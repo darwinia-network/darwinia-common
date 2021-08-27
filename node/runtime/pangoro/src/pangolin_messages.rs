@@ -29,7 +29,7 @@ use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
 use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
 use sp_std::{convert::TryFrom, ops::RangeInclusive};
 // --- darwinia ---
-use crate::{pangolin_primitives, pangoro_primitives, Runtime, PANGORO_PANGOLIN_LANE};
+use crate::*;
 use bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 pub use darwinia_balances::{Instance1 as RingInstance, Instance2 as KtonInstance};
 
@@ -40,7 +40,7 @@ pub type ToPangolinMessageVerifier = FromThisChainMessageVerifier<WithPangolinMe
 /// Message payload for Pangolin -> Pangoro messages.
 pub type FromPangolinMessagePayload = FromBridgedChainMessagePayload<WithPangolinMessageBridge>;
 /// Encoded Pangoro Call as it comes from Pangolin.
-pub type FromPangolinEncodedCall = FromBridgedChainEncodedMessageCall<crate::Call>;
+pub type FromPangolinEncodedCall = FromBridgedChainEncodedMessageCall<Call>;
 /// Messages proof for Pangolin -> Pangoro messages.
 type FromPangolinMessagesProof = FromBridgedChainMessagesProof<pangolin_primitives::Hash>;
 /// Messages delivery proof for Pangoro -> Pangolin messages.
@@ -51,7 +51,7 @@ pub type FromPangolinMessageDispatch = FromBridgedChainMessageDispatch<
 	WithPangolinMessageBridge,
 	Runtime,
 	darwinia_balances::Pallet<Runtime, RingInstance>,
-	crate::WithPangolinDispatch,
+	WithPangolinDispatch,
 >;
 
 /// Initial value of `PangolinToPangoroConversionRate` parameter.
@@ -86,7 +86,7 @@ impl MessageBridge for WithPangolinMessageBridge {
 	const RELAYER_FEE_PERCENT: u32 = 10;
 	const THIS_CHAIN_ID: ChainId = PANGORO_CHAIN_ID;
 	const BRIDGED_CHAIN_ID: ChainId = PANGOLIN_CHAIN_ID;
-	type BridgedMessagesInstance = crate::WithPangolinMessages;
+	type BridgedMessagesInstance = WithPangolinMessages;
 
 	type ThisChain = Pangoro;
 	type BridgedChain = Pangolin;
@@ -113,7 +113,7 @@ impl messages::ChainWithMessages for Pangoro {
 	type Balance = pangoro_primitives::Balance;
 }
 impl messages::ThisChainWithMessages for Pangoro {
-	type Call = crate::Call;
+	type Call = Call;
 
 	fn is_outbound_lane_enabled(lane: &LaneId) -> bool {
 		*lane == [0, 0, 0, 0] || *lane == [0, 0, 0, 1] || *lane == PANGORO_PANGOLIN_LANE
@@ -242,7 +242,7 @@ impl TargetHeaderChain<ToPangolinMessagePayload, pangolin_primitives::AccountId>
 		source::verify_messages_delivery_proof::<
 			WithPangolinMessageBridge,
 			Runtime,
-			crate::WithPangolinGrandpa,
+			WithPangolinGrandpa,
 		>(proof)
 	}
 }
@@ -259,10 +259,9 @@ impl SourceHeaderChain<pangolin_primitives::Balance> for Pangolin {
 		proof: Self::MessagesProof,
 		messages_count: u32,
 	) -> Result<ProvedMessages<Message<pangolin_primitives::Balance>>, Self::Error> {
-		target::verify_messages_proof::<
-			WithPangolinMessageBridge,
-			Runtime,
-			crate::WithPangolinGrandpa,
-		>(proof, messages_count)
+		target::verify_messages_proof::<WithPangolinMessageBridge, Runtime, WithPangolinGrandpa>(
+			proof,
+			messages_count,
+		)
 	}
 }
