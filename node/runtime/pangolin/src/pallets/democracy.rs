@@ -1,8 +1,8 @@
-// --- substrate ---
+// --- paritytech ---
 use frame_system::{EnsureOneOf, EnsureRoot};
 use pallet_collective::{EnsureMember, EnsureProportionAtLeast};
 use sp_core::u32_trait::{_1, _2, _3};
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::*;
 use darwinia_democracy::Config;
 

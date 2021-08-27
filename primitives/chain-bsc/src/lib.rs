@@ -28,7 +28,7 @@ use primitive_types::U256;
 use rlp::RlpStream;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-// --- substrate ---
+// --- paritytech ---
 use sp_io::hashing;
 use sp_runtime::RuntimeDebug;
 use sp_std::prelude::*;

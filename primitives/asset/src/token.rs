@@ -20,7 +20,7 @@
 
 // --- crates.io ---
 use codec::{Decode, Encode};
-// --- darwinia ---
+// --- darwinia-network ---
 // TODO: Use ethereum-types? In https://github.com/darwinia-network/darwinia-common/pull/708
 use ethereum_primitives::{EthereumAddress, U256};
 

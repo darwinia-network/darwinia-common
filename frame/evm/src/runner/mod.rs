@@ -18,10 +18,10 @@
 
 pub mod stack;
 
-// --- substrate ---
+// --- paritytech ---
 use sp_core::{H160, H256, U256};
 use sp_std::prelude::*;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::Config;
 use dp_evm::{CallInfo, CreateInfo};
 

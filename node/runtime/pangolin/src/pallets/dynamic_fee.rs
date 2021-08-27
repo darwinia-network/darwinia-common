@@ -1,6 +1,6 @@
-// --- substrate ---
+// --- paritytech ---
 use sp_core::U256;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::*;
 use dvm_dynamic_fee::Config;
 

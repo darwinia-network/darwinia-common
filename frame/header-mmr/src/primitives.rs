@@ -9,7 +9,7 @@ use sp_core::offchain::StorageKind;
 use sp_io::{offchain, offchain_index};
 use sp_runtime::traits::Hash;
 use sp_std::{marker::PhantomData, prelude::*};
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::*;
 
 pub struct Hasher<T>(PhantomData<T>);

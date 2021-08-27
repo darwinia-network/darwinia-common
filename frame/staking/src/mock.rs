@@ -22,7 +22,7 @@
 
 // --- std ---
 use std::{cell::RefCell, collections::HashSet};
-// --- substrate ---
+// --- paritytech ---
 use frame_election_provider_support::onchain;
 use frame_support::{
 	assert_ok, parameter_types,
@@ -44,7 +44,7 @@ use sp_staking::{
 	offence::{OffenceDetails, OnOffenceHandler},
 	SessionIndex,
 };
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::{self as darwinia_staking, *};
 
 pub(crate) type AccountId = u64;

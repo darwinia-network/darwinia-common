@@ -20,7 +20,7 @@
 
 // --- crates.io ---
 use codec::{Decode, Encode};
-// --- substrate ---
+// --- paritytech ---
 use frame_election_provider_support::onchain;
 use frame_support::traits::SortedMembers;
 use frame_support::{traits::GenesisBuild, PalletId};
@@ -31,7 +31,7 @@ use sp_runtime::{
 	traits::{IdentifyAccount, IdentityLookup, OpaqueKeys, Verify},
 	DispatchError, DispatchResult, RuntimeDebug, {KeyTypeId, MultiSignature, Perbill},
 };
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::{self as darwinia_ethereum_backing, pallet::*};
 use darwinia_ethereum_relay::{EthereumRelayHeaderParcel, EthereumRelayProofs, MMRProof};
 use darwinia_relay_primitives::*;

@@ -1,8 +1,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-// --- substrate ---
+// --- paritytech ---
 use sp_staking::SessionIndex;
-// --- darwinia ---
+// --- darwinia-network ---
 use common_primitives::*;
 
 pub const NANO: Balance = 1;

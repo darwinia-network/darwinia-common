@@ -20,10 +20,10 @@
 
 // --- core ---
 use core::marker::PhantomData;
-// --- crates ---
+// --- crates.io ---
 use codec::Encode;
 use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
-// --- darwinia ---
+// --- darwinia-network ---
 use darwinia_support::evm::SELECTOR;
 use dp_evm::Precompile;
 // --- paritytech ---

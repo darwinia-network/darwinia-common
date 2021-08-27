@@ -36,12 +36,12 @@ mod mock;
 #[cfg(all(feature = "std", test))]
 mod tests;
 
-// --- crates ---
+// --- crates.io ---
 use codec::{Decode, Encode};
 use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
 use evm::ExitReason;
 use sha3::{Digest, Keccak256};
-// --- substrate ---
+// --- paritytech ---
 #[cfg(feature = "std")]
 use frame_support::storage::unhashed;
 use frame_support::{
@@ -62,7 +62,7 @@ use sp_runtime::{
 };
 use sp_std::marker::PhantomData;
 use sp_std::prelude::*;
-// --- darwinia ---
+// --- darwinia-network ---
 use darwinia_evm::{AccountBasic, BlockHashMapping, FeeCalculator, GasWeightMapping, Runner};
 use darwinia_support::evm::{
 	recover_signer, DVMTransaction, IntoDvmAddress, INTERNAL_TX_GAS_LIMIT,

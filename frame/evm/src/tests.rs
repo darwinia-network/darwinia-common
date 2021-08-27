@@ -18,7 +18,7 @@
 
 // --- std ---
 use std::{collections::BTreeMap, str::FromStr};
-// --- substrate ---
+// --- paritytech ---
 use frame_support::{assert_ok, traits::GenesisBuild, ConsensusEngineId};
 use frame_system::mocking::*;
 use sp_core::H256;
@@ -27,7 +27,7 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	AccountId32, RuntimeDebug,
 };
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::{self as darwinia_evm, runner::stack::Runner, *};
 
 type Block = MockBlock<Test>;

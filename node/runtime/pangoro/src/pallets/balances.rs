@@ -1,10 +1,10 @@
-// --- darwinia ---
+// --- darwinia-network ---
 pub use darwinia_balances::{Instance1 as RingInstance, Instance2 as KtonInstance};
 
-// --- substrate ---
+// --- paritytech ---
 use frame_support::traits::Currency;
 use frame_system::Config as SystemConfig;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::*;
 use darwinia_balances::{Config, Pallet};
 

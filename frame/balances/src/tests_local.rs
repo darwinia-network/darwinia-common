@@ -18,9 +18,9 @@
 
 //! Test utilities
 
-// --- crates ---
+// --- crates.io ---
 use codec::{Decode, Encode};
-// --- substrate ---
+// --- paritytech ---
 use frame_support::{
 	assert_err, assert_noop, assert_ok, assert_storage_noop, parameter_types,
 	traits::{
@@ -38,7 +38,7 @@ use sp_runtime::{
 	traits::{BadOrigin, BlakeTwo256, IdentityLookup, SignedExtension, Zero},
 	ArithmeticError, FixedPointNumber, RuntimeDebug,
 };
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::{self as darwinia_balances, pallet::*};
 use darwinia_support::balance::*;
 

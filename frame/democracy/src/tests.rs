@@ -1,8 +1,8 @@
 //! The crate's tests.
 
-// --- crates ---
+// --- crates.io ---
 use codec::Encode;
-// --- substrate ---
+// --- paritytech ---
 use frame_support::{
 	assert_noop, assert_ok, ord_parameter_types,
 	traits::{Filter, GenesisBuild, OnInitialize, SortedMembers},
@@ -15,7 +15,7 @@ use sp_runtime::{
 	traits::{BadOrigin, BlakeTwo256, IdentityLookup},
 	Perbill,
 };
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::{self as darwinia_democracy, *};
 use darwinia_balances::Error as BalancesError;
 

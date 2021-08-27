@@ -1,7 +1,7 @@
-// --- substrate ---
+// --- paritytech ---
 use frame_support::PalletId;
 use sp_runtime::Perbill;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::*;
 use darwinia_ethereum_relay::Config;
 use ethereum_primitives::EthereumNetwork;

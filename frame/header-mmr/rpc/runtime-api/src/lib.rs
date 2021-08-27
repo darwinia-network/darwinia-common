@@ -26,13 +26,13 @@
 
 // -- core ---
 use core::fmt::{self, Debug, Display};
-// --- crates ---
+// --- crates.io ---
 use codec::{Codec, Decode, Encode};
 // --- paritytech ---
 use sp_api::decl_runtime_apis;
 use sp_runtime::traits::{MaybeDisplay, MaybeFromStr};
 use sp_std::prelude::*;
-// --- darwinia ---
+// --- darwinia-network ---
 use darwinia_support::impl_runtime_dispatch_info;
 
 impl_runtime_dispatch_info! {

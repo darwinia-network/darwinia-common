@@ -16,9 +16,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-// --- substrate ---
+// --- paritytech ---
 use frame_support::{assert_err, assert_ok};
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::{
 	self as darwinia_ethereum_relay,
 	mock::{Call, *},

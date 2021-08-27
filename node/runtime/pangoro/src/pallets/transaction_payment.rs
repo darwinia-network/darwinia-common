@@ -1,7 +1,7 @@
-// --- substrate ---
+// --- paritytech ---
 use frame_support::weights::IdentityFee;
 use pallet_transaction_payment::{Config, CurrencyAdapter};
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::*;
 
 frame_support::parameter_types! {

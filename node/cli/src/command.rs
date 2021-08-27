@@ -18,13 +18,13 @@
 
 // --- std ---
 use std::{env, path::PathBuf};
-// --- substrate ---
+// --- paritytech ---
 use sc_cli::{Role, RuntimeVersion, SubstrateCli};
 use sc_service::ChainSpec;
 #[cfg(feature = "try-runtime")]
 use sc_service::TaskManager;
 use sp_core::crypto::Ss58AddressFormat;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::cli::{Cli, Subcommand};
 use drml_service::{
 	chain_spec::{

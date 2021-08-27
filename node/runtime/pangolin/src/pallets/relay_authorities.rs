@@ -1,10 +1,10 @@
-// --- darwinia ---
+// --- darwinia-network ---
 pub use darwinia_relay_authorities::Instance1 as EthereumRelayAuthoritiesInstance;
 
-// --- substrate ---
+// --- paritytech ---
 use frame_support::traits::LockIdentifier;
 use sp_runtime::Perbill;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::*;
 use darwinia_relay_authorities::Config;
 use darwinia_relay_primitives::relay_authorities::OpCode;

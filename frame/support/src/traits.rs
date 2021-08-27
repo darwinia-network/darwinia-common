@@ -18,14 +18,14 @@
 
 // --- core ---
 use core::fmt::Debug;
-// --- crates ---
+// --- crates.io ---
 use codec::FullCodec;
 use impl_trait_for_tuples::impl_for_tuples;
-// --- substrate ---
+// --- paritytech ---
 use frame_support::traits::{Currency, Get, LockIdentifier, WithdrawReasons};
 use sp_runtime::{DispatchError, DispatchResult};
 use sp_std::prelude::*;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::structs::{FrozenBalance, LockFor, LockReasons};
 use ethereum_primitives::receipt::EthereumTransactionIndex;
 

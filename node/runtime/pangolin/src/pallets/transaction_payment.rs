@@ -1,7 +1,7 @@
-// --- substrate ---
+// --- paritytech ---
 use pallet_transaction_payment::{Config, CurrencyAdapter, Multiplier, TargetedFeeAdjustment};
 use sp_runtime::{FixedPointNumber, Perquintill};
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::*;
 
 /// Parameterized slow adjusting fee updated based on

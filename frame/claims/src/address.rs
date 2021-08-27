@@ -16,9 +16,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-// --- crates ---
+// --- crates.io ---
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::AddressT;
 
 macro_rules! impl_address {

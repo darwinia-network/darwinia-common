@@ -28,10 +28,10 @@ mod tests;
 pub mod weight;
 pub use weight::WeightInfo;
 
-// --- crates ---
+// --- crates.io ---
 use ethereum_types::{H160, H256, U256};
 use sha3::Digest;
-// --- substrate ---
+// --- paritytech ---
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
@@ -41,7 +41,7 @@ use frame_support::{
 use frame_system::ensure_signed;
 use sp_runtime::{traits::Convert, DispatchError, SaturatedConversion};
 use sp_std::{str, vec::Vec};
-// --- darwinia ---
+// --- darwinia-network ---
 use bp_runtime::{ChainId, Size};
 use darwinia_evm::AddressMapping;
 use darwinia_support::{

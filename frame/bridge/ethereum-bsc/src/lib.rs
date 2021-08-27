@@ -80,7 +80,7 @@ mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
-	// --- substrate ---
+	// --- paritytech ---
 	use frame_support::{pallet_prelude::*, traits::UnixTime};
 	use frame_system::pallet_prelude::*;
 	use sp_core::U256;
@@ -89,7 +89,7 @@ pub mod pallet {
 	#[cfg(not(feature = "std"))]
 	use sp_std::borrow::ToOwned;
 	use sp_std::{collections::btree_set::BTreeSet, prelude::*};
-	// --- darwinia ---
+	// --- darwinia-network ---
 	use bsc_primitives::*;
 
 	#[pallet::config]

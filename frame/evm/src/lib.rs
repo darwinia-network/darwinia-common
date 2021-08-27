@@ -54,10 +54,10 @@ static ISTANBUL_CONFIG: EvmConfig = EvmConfig::istanbul();
 
 #[frame_support::pallet]
 pub mod pallet {
-	// --- substrate ---
+	// --- paritytech ---
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
-	// --- darwinia ---
+	// --- darwinia-network ---
 	use crate::*;
 
 	#[pallet::config]

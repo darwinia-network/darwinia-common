@@ -20,9 +20,9 @@
 
 // --- core ---
 use core::fmt::Debug;
-// --- crates ---
+// --- crates.io ---
 use codec::{Decode, Encode, FullCodec};
-// --- substrate ---
+// --- paritytech ---
 use sp_runtime::{traits::Zero, DispatchError, DispatchResult, RuntimeDebug};
 use sp_std::prelude::*;
 

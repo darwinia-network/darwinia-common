@@ -30,9 +30,9 @@ mod mock_header;
 pub mod weight;
 pub use weight::WeightInfo;
 
-// --- crates ---
+// --- crates.io ---
 use sha3::Digest;
-// --- substrate ---
+// --- paritytech ---
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
@@ -46,7 +46,7 @@ use sp_runtime::{
 	AccountId32, DispatchError, DispatchResult, SaturatedConversion,
 };
 use sp_std::{str, vec::Vec};
-// --- darwinia ---
+// --- darwinia-network ---
 use darwinia_evm::{AddressMapping, GasWeightMapping};
 use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::{balance::*, traits::EthereumReceipt, PalletDigest};

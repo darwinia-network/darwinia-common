@@ -16,9 +16,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-// --- substrate ---
+// --- paritytech ---
 use sp_runtime::assert_eq_error_rate;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::{
 	inflation::*,
 	mock::{Balance, *},

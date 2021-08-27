@@ -1,7 +1,7 @@
-// --- substrate ---
+// --- paritytech ---
 use frame_support::{assert_noop, assert_ok};
 use sp_runtime::DispatchError;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::mock::*;
 use bsc_primitives::BSCHeader;
 

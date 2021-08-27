@@ -1,6 +1,6 @@
 // --- crates.io ---
 use codec::{Decode, Encode};
-// --- substrate ---
+// --- paritytech ---
 use bp_messages::{
 	source_chain::TargetHeaderChain,
 	target_chain::{ProvedMessages, SourceHeaderChain},
@@ -26,7 +26,7 @@ use frame_support::{
 use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
 use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
 use sp_std::{convert::TryFrom, ops::RangeInclusive};
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::*;
 use bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 

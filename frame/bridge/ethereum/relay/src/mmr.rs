@@ -20,14 +20,14 @@
 //! No mater the hash function of chain,
 //! the Merge of Ethereum MMR used in shadow service is blake2b
 
-// --- crates ---
+// --- crates.io ---
 pub use ckb_merkle_mountain_range::{
 	leaf_index_to_mmr_size, leaf_index_to_pos, Merge, MerkleProof,
 };
 
 // ---crates ---
 use blake2_rfc::blake2b::blake2b;
-// --- substrate ---
+// --- paritytech ---
 use sp_std::vec;
 
 /// BlakeTwo256 hash function

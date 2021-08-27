@@ -25,7 +25,7 @@ pub mod migration {
 }
 
 pub mod weights;
-// --- darwinia ---
+// --- darwinia-network ---
 pub use weights::WeightInfo;
 
 #[cfg(test)]
@@ -34,7 +34,7 @@ mod mock;
 mod tests;
 
 mod types {
-	// --- darwinia ---
+	// --- darwinia-network ---
 	use crate::*;
 
 	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
@@ -59,7 +59,7 @@ mod types {
 	type RelayableChainT<T, I> = <T as Config<I>>::RelayableChain;
 }
 
-// --- substrate ---
+// --- paritytech ---
 use frame_support::{
 	decl_error, decl_module, decl_storage, ensure,
 	traits::{Currency, Get, LockIdentifier, OnUnbalanced, WithdrawReasons},
@@ -72,7 +72,7 @@ use sp_runtime::{
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
 use sp_std::{collections::btree_map::BTreeMap, prelude::*};
-// --- darwinia ---
+// --- darwinia-network ---
 use darwinia_relay_primitives::relayer_game::*;
 use darwinia_support::balance::*;
 use types::*;

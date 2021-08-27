@@ -1,10 +1,10 @@
-// --- substrate ---
+// --- paritytech ---
 use bp_runtime::ChainId;
 use frame_support::{dispatch::Dispatchable, weights::PostDispatchInfo, PalletId};
 use frame_system::RawOrigin;
 use pallet_bridge_messages::Instance1 as Pangoro;
 use sp_runtime::{AccountId32, DispatchErrorWithPostInfo};
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::*;
 use bridge_primitives::{AccountIdConverter, PANGORO_CHAIN_ID};
 use darwinia_s2s_issuing::{Config, EncodeCall};

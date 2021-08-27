@@ -208,9 +208,9 @@ pub struct ReceiptProof {
 mod tests {
 	// --- std ---
 	use std::str::FromStr;
-	// --- crates ---
+	// --- crates.io ---
 	use keccak_hasher::KeccakHasher;
-	// --- darwinia ---
+	// --- darwinia-network ---
 	use super::*;
 
 	#[inline]

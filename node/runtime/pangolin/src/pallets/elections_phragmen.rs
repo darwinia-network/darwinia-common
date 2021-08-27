@@ -1,6 +1,6 @@
-// --- substrate ---
+// --- paritytech ---
 use frame_support::traits::{LockIdentifier, U128CurrencyToVote};
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::*;
 use darwinia_elections_phragmen::Config;
 

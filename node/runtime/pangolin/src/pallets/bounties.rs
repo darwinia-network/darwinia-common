@@ -1,6 +1,6 @@
-// --- substrate ---
+// --- paritytech ---
 use sp_runtime::Permill;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::*;
 use pallet_bounties::Config;
 

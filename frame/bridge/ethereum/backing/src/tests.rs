@@ -18,10 +18,10 @@
 
 //! Tests for ethereum-backing.
 
-// --- substrate ---
+// --- paritytech ---
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Currency};
 use sp_runtime::{traits::Dispatchable, AccountId32};
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::{
 	mock::{Call, *},
 	pallet::*,

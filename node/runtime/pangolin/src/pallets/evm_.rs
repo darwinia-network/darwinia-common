@@ -5,7 +5,7 @@ pub use darwinia_evm_precompile_transfer::Transfer;
 
 // --- crates.io ---
 use evm::{executor::PrecompileOutput, Context, ExitError};
-// --- substrate ---
+// --- paritytech ---
 use codec::{Decode, Encode};
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
@@ -14,7 +14,7 @@ use frame_support::{
 };
 use sp_core::{crypto::Public, H160, U256};
 use sp_std::marker::PhantomData;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::*;
 use darwinia_evm::{runner::stack::Runner, ConcatAddressMapping, Config, EnsureAddressTruncated};
 use dp_evm::{Precompile, PrecompileSet};

@@ -1,6 +1,6 @@
-// --- substrate ---
+// --- paritytech ---
 use sp_runtime::traits::ConvertInto;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::*;
 use darwinia_vesting::Config;
 

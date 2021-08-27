@@ -1,8 +1,8 @@
 //! Some configurable implementations as associated type for the substrate runtime.
 
-// --- substrate ---
+// --- paritytech ---
 use sp_runtime::RuntimeDebug;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::*;
 
 darwinia_support::impl_account_data! {
