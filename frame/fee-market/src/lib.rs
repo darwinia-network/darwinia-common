@@ -30,7 +30,7 @@ use crate::weights::WeightInfo;
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
-	traits::{Currency, Get},
+	traits::{Currency, ExistenceRequirement::KeepAlive, Get},
 	transactional, PalletId,
 };
 use sp_runtime::traits::AccountIdConversion;
@@ -38,6 +38,7 @@ use sp_runtime::traits::AccountIdConversion;
 use frame_system::{ensure_signed, pallet_prelude::*};
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type Balance = u128;
+pub type Price = u64;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 
 pub use pallet::*;
@@ -52,6 +53,8 @@ pub mod pallet {
 		type PalletId: Get<PalletId>;
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type WeightInfo: WeightInfo;
+		#[pallet::constant]
+		type MinimumLock: Get<RingBalance<Self>>;
 		type RingCurrency: Currency<AccountId<Self>>;
 	}
 
@@ -61,7 +64,11 @@ pub mod pallet {
 	pub enum Event<T: Config> {}
 
 	#[pallet::error]
-	pub enum Error<T> {}
+	pub enum Error<T> {
+		/// Insufficient balance
+		InsufficientBalance,
+		TheLockBalanceTooLow,
+	}
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_locked_ring)]
@@ -69,16 +76,22 @@ pub mod pallet {
 		StorageMap<_, Blake2_128Concat, T::AccountId, RingBalance<T>, ValueQuery>;
 
 	#[pallet::storage]
+	pub type Relayers<T: Config> = StorageValue<_, Vec<T::AccountId>, ValueQuery>;
+
+	#[pallet::storage]
 	#[pallet::getter(fn get_expected_price)]
 	pub type SubmitedPrice<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::AccountId, u64, ValueQuery>;
+		StorageMap<_, Blake2_128Concat, T::AccountId, Price, ValueQuery>;
 
 	#[pallet::storage]
-	pub type TargetRelayPrice<T: Config> = StorageValue<_, u64>;
+	pub type TargetRelayPrice<T: Config> = StorageValue<_, Price>;
 
-	/// p1, p2, p3, TODO: A better comments
+	/// p1 < p2 < p3, TODO: A better comments
 	#[pallet::storage]
-	pub type LowestPrices<T: Config> = StorageValue<_, (u64, u64, u64)>;
+	pub type LowestPrices<T: Config> = StorageValue<_, (Price, Price, Price)>;
+
+	#[pallet::storage]
+	pub type PricesList<T: Config> = StorageValue<_, Vec<Price>>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {}
@@ -104,19 +117,36 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Before the relayer transfer msgs, they need lock asset.
+		// TODO: do we need to add lock time
+		// TODO: how to deal with the case, when relayer wants to inc/dec lock asset
 		#[pallet::weight(10000)]
 		#[transactional]
 		pub fn register_and_lock_asset(
 			origin: OriginFor<T>,
-			// TODO: do we need to add lock time
 			lock_amount: RingBalance<T>,
 		) -> DispatchResultWithPostInfo {
-			let user = ensure_signed(origin)?;
+			let who = ensure_signed(origin)?;
+			// Ensure the relayer lock amount is larger than min lock amount.
+			ensure!(
+				lock_amount >= T::MinimumLock::get(),
+				<Error<T>>::TheLockBalanceTooLow
+			);
+			// Ensure the lock amount is available
+			ensure!(
+				T::RingCurrency::free_balance(&who) >= lock_amount,
+				<Error<T>>::InsufficientBalance
+			);
+			// Ensure the this is the first time for the relayer to register
+			ensure!(
+				!<Relayers<T>>::get().contains(&who),
+				<Error<T>>::InsufficientBalance
+			);
 
-			// lock user lock amount
+			T::RingCurrency::transfer(&who, &Self::pallet_account_id(), lock_amount, KeepAlive)?;
+			RegisterLocked::<T>::insert(who.clone(), lock_amount);
+			Relayers::<T>::append(who);
 			Ok(().into())
 		}
-		// TODO: how to deal with the case, when relayer wants to inc/dec lock asset
 
 		/// Provide a way to cancel the registation and unlock asset
 		#[pallet::weight(10000)]
@@ -134,7 +164,7 @@ pub mod pallet {
 		/// The relayers can submit a expect fee price
 		#[pallet::weight(10000)]
 		#[transactional]
-		pub fn submit_expected_price(origin: OriginFor<T>, fee: u64) -> DispatchResultWithPostInfo {
+		pub fn submit_expected_price(origin: OriginFor<T>, p: Price) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
 
 			// update fee list and do sort work
@@ -145,7 +175,7 @@ pub mod pallet {
 		/// Allow relayers to update price while relaying
 		#[pallet::weight(10000)]
 		#[transactional]
-		pub fn update_expected_price(origin: OriginFor<T>, fee: u64) -> DispatchResultWithPostInfo {
+		pub fn update_expected_price(origin: OriginFor<T>, p: Price) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
 
 			// update fee list and do sort work
