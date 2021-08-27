@@ -19,38 +19,60 @@
 //! # Fee Market Module
 
 #![cfg_attr(not(feature = "std"), no_std)]
-
-pub mod weights;
-use crate::weights::WeightInfo;
+#![recursion_limit = "128"]
 
 #[cfg(test)]
 mod tests;
 
+pub mod weights;
+use crate::weights::WeightInfo;
+
 use frame_support::{
+	ensure,
 	pallet_prelude::*,
 	traits::{Currency, Get},
-	PalletId,
+	transactional, PalletId,
 };
-use frame_system::pallet_prelude::*;
-pub use pallet::*;
-
+use frame_system::{ensure_signed, pallet_prelude::*};
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-pub type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
-type RingCurrency<T> = <T as Config>::RingCurrency;
+pub type Balance = u128;
+pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
+
+pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use crate::*;
+	use super::*;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		// --- substrate ---
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type WeightInfo: WeightInfo;
-		// --- darwinia ---
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 		type RingCurrency: Currency<AccountId<Self>>;
 	}
+
+	#[pallet::event]
+	#[pallet::generate_deposit(fn deposit_event)]
+	#[pallet::metadata(T::AccountId = "AccountId")]
+	pub enum Event<T: Config> {}
+
+	#[pallet::error]
+	pub enum Error<T> {}
+
+	#[pallet::storage]
+	#[pallet::getter(fn get_locked_ring)]
+	pub type RegisterLocked<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AccountId, RingBalance<T>, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn get_expected_price)]
+	pub type SubmitedPrice<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AccountId, u64, ValueQuery>;
+
+	#[pallet::storage]
+	pub type TargetRelayPrice<T: Config> = StorageValue<_, u64>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {}
@@ -64,10 +86,68 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {}
 	}
+
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
 	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_finalize(_: T::BlockNumber) {
+			// update the latest target price
+		}
+	}
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		/// Before the relayer transfer msgs, they need lock asset.
+		#[pallet::weight(10000)]
+		#[transactional]
+		pub fn register_and_lock_asset(
+			origin: OriginFor<T>,
+			// TODO: do we need to add lock time
+			lock_amount: RingBalance<T>,
+		) -> DispatchResultWithPostInfo {
+			let user = ensure_signed(origin)?;
+
+			// lock user lock amount
+			Ok(().into())
+		}
+		// TODO: how to deal with the case, when relayer wants to inc/dec lock asset
+
+		/// Provide a way to cancel the registation and unlock asset
+		#[pallet::weight(10000)]
+		#[transactional]
+		pub fn cancel_register_and_unlock(
+			origin: OriginFor<T>,
+			lock_amount: RingBalance<T>,
+		) -> DispatchResultWithPostInfo {
+			let user = ensure_signed(origin)?;
+
+			// lock user lock amount
+			Ok(().into())
+		}
+
+		/// The relayers can submit a expect fee price
+		#[pallet::weight(10000)]
+		#[transactional]
+		pub fn submit_expected_price(origin: OriginFor<T>, fee: u64) -> DispatchResultWithPostInfo {
+			let user = ensure_signed(origin)?;
+
+			// update fee list and do sort work
+
+			Ok(().into())
+		}
+
+		/// Allow relayers to update price while relaying
+		#[pallet::weight(10000)]
+		#[transactional]
+		pub fn update_expected_price(origin: OriginFor<T>, fee: u64) -> DispatchResultWithPostInfo {
+			let user = ensure_signed(origin)?;
+
+			// update fee list and do sort work
+
+			Ok(().into())
+		}
+	}
 }
+
+// TODO:
+// 1. expose rpc to a estimate price
