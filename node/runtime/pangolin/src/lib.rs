@@ -683,19 +683,16 @@ sp_api::impl_runtime_apis! {
 			).ok()
 		}
 
-		fn messages_dispatch_weight(
+		fn message_details(
 			lane: bp_messages::LaneId,
 			begin: bp_messages::MessageNonce,
 			end: bp_messages::MessageNonce,
-		) -> Vec<(bp_messages::MessageNonce, Weight, u32)> {
-			(begin..=end).filter_map(|nonce| {
-				let encoded_payload = BridgePangoroMessages::outbound_message_payload(lane, nonce)?;
-				let decoded_payload = ToPangoroMessagePayload::decode(
-					&mut &encoded_payload[..]
-				).ok()?;
-				Some((nonce, decoded_payload.weight, encoded_payload.len() as _))
-			})
-			.collect()
+		) -> Vec<bp_messages::MessageDetails<Balance>> {
+			bridge_runtime_common::messages_api::outbound_message_details::<
+				Runtime,
+				pallet_bridge_messages::Instance1,
+				WithPangoroMessageBridge,
+			>(lane, begin, end)
 		}
 
 		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
