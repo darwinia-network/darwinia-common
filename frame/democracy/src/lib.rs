@@ -136,12 +136,12 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod weights;
-// --- darwinia ---
+// --- darwinia-network ---
 pub use weights::WeightInfo;
 
-// --- crates ---
+// --- crates.io ---
 use codec::{Decode, Encode, Input};
-// --- substrate ---
+// --- paritytech ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage,
 	dispatch::DispatchResultWithPostInfo,
@@ -160,7 +160,7 @@ use sp_runtime::{
 	ArithmeticError, DispatchError, DispatchResult, RuntimeDebug,
 };
 use sp_std::prelude::*;
-// --- darwinia ---
+// --- darwinia-network ---
 use darwinia_support::balance::*;
 
 mod conviction;

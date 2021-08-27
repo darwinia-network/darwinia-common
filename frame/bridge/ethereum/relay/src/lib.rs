@@ -25,7 +25,7 @@ pub mod migration {
 }
 
 pub mod weights;
-// --- darwinia ---
+// --- darwinia-network ---
 pub use weights::WeightInfo;
 
 mod mmr;
@@ -38,7 +38,7 @@ mod test_data;
 mod tests;
 
 mod types {
-	// --- darwinia ---
+	// --- darwinia-network ---
 	use crate::*;
 
 	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
@@ -48,11 +48,11 @@ mod types {
 
 // --- core ---
 use core::fmt::{Debug, Formatter, Result as FmtResult};
-// --- crates ---
+// --- crates.io ---
 use codec::{Decode, Encode};
 // --- github ---
 use ethereum_types::H128;
-// --- substrate ---
+// --- paritytech ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
 	pallet_prelude::*,
@@ -73,7 +73,7 @@ use sp_runtime::{
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
 use sp_std::{convert::From, marker::PhantomData, prelude::*};
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::mmr::{leaf_index_to_mmr_size, leaf_index_to_pos, MMRMerge, MerkleProof};
 use darwinia_relay_primitives::relayer_game::*;
 use darwinia_support::{balance::*, traits::EthereumReceipt as EthereumReceiptT};

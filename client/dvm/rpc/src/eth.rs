@@ -18,7 +18,7 @@ use crate::overrides::OverrideHandle;
 use crate::{
 	error_on_execution_failure, frontier_backend_client, internal_err, public_key, EthSigner,
 };
-// --- darwinia ---
+// --- darwinia-network ---
 use dp_rpc::{
 	Block, BlockNumber, BlockTransactions, Bytes, CallRequest, Filter, FilterChanges, FilterPool,
 	FilterPoolItem, FilterType, FilteredParams, Index, Log, PeerCount, PendingTransaction,
@@ -30,7 +30,7 @@ use dvm_rpc_core::{
 };
 pub use dvm_rpc_core::{EthApiServer, EthFilterApiServer, NetApiServer, Web3ApiServer};
 use dvm_rpc_runtime_api::{ConvertTransaction, EthereumRuntimeRPCApi, TransactionStatus};
-// --- substrate ---
+// --- paritytech ---
 use sc_client_api::{
 	backend::{AuxStore, Backend, StateBackend, StorageProvider},
 	client::BlockchainEvents,

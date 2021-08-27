@@ -1,9 +1,9 @@
 pub use pallet_bridge_grandpa::Instance1 as WithPangoroGrandpa;
 
-// --- substrate ---
+// --- paritytech ---
 use bridge_primitives::Pangoro;
 use pallet_bridge_grandpa::{weights::RialtoWeight, Config};
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::*;
 use pangoro_constants::DAYS;
 

@@ -18,25 +18,25 @@
 
 //! Node-specific RPC methods for interaction with staking.
 
-// --- darwinia ---
+// --- darwinia-network ---
 pub use darwinia_staking_rpc_runtime_api::StakingApi as StakingRuntimeApi;
 
 // --- core ---
 use core::fmt::Debug;
 // --- std ---
 use std::sync::Arc;
-// --- crates ---
+// --- crates.io ---
 use codec::Codec;
 use jsonrpc_core::{Error, ErrorCode, Result};
 use jsonrpc_derive::rpc;
-// --- substrate ---
+// --- paritytech ---
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{
 	generic::BlockId,
 	traits::{Block as BlockT, MaybeDisplay, MaybeFromStr},
 };
-// --- darwinia ---
+// --- darwinia-network ---
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo;
 
 const RUNTIME_ERROR: i64 = -1;

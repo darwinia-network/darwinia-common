@@ -29,10 +29,10 @@ mod tests;
 pub mod weight;
 pub use weight::WeightInfo;
 
-// --- crates ---
+// --- crates.io ---
 use ethereum_primitives::EthereumAddress;
 use ethereum_types::{H256, U256};
-// --- substrate ---
+// --- paritytech ---
 use bp_runtime::{ChainId, Size};
 use frame_support::{
 	ensure,
@@ -47,7 +47,7 @@ use sp_runtime::{
 	SaturatedConversion,
 };
 use sp_std::prelude::*;
-// --- darwinia ---
+// --- darwinia-network ---
 use darwinia_support::{
 	evm::IntoDvmAddress,
 	s2s::{

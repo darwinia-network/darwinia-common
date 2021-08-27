@@ -277,14 +277,14 @@ mod mock;
 mod substrate_tests;
 
 pub mod weights;
-// --- darwinia ---
+// --- darwinia-network ---
 pub use weights::WeightInfo;
 
 pub mod inflation;
 pub mod slashing;
 
 mod types {
-	// --- darwinia ---
+	// --- darwinia-network ---
 	use crate::*;
 
 	/// Counter for the number of eras that have passed.
@@ -327,12 +327,12 @@ mod types {
 	type KtonCurrency<T> = <T as Config>::KtonCurrency;
 }
 
-// --- darwinia ---
+// --- darwinia-network ---
 pub use types::EraIndex;
 
-// --- crates ---
+// --- crates.io ---
 use codec::{Decode, Encode, HasCompact};
-// --- substrate ---
+// --- paritytech ---
 use frame_election_provider_support::{
 	data_provider, ElectionDataProvider, ElectionProvider, Supports, VoteWeight,
 };
@@ -369,7 +369,7 @@ use sp_staking::{
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
 use sp_std::{collections::btree_map::BTreeMap, convert::TryInto, marker::PhantomData, prelude::*};
-// --- darwinia ---
+// --- darwinia-network ---
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo;
 use darwinia_support::{balance::*, impl_rpc, traits::OnDepositRedeem};
 use types::*;

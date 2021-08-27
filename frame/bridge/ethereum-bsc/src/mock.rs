@@ -18,12 +18,12 @@
 
 // --- std ---
 use std::time::{SystemTime, UNIX_EPOCH};
-// --- substrate ---
+// --- paritytech ---
 use frame_support::traits::GenesisBuild;
 use frame_system::mocking::*;
 use sp_core::U256;
 use sp_io::TestExternalities;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::{self as darwinia_bridge_bsc, *};
 use bsc_primitives::BSCHeader;
 

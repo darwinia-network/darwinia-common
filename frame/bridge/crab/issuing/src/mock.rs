@@ -18,9 +18,9 @@
 
 #![allow(dead_code)]
 
-// --- crates ---
+// --- crates.io ---
 use codec::{Decode, Encode};
-// --- substrate ---
+// --- paritytech ---
 use frame_support::{traits::GenesisBuild, PalletId};
 use frame_system::mocking::*;
 use sp_io::TestExternalities;
@@ -29,7 +29,7 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	RuntimeDebug,
 };
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::{self as darwinia_crab_issuing, *};
 
 // Global primitives

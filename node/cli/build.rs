@@ -16,7 +16,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-// --- crates ---
+// --- crates.io ---
 use substrate_build_script_utils::{generate_cargo_keys, rerun_if_git_head_changed};
 
 fn main() {

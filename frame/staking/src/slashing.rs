@@ -50,9 +50,9 @@
 //!
 //! Based on research at <https://w3f-research.readthedocs.io/en/latest/polkadot/slashing/npos.html>
 
-// --- crates ---
+// --- crates.io ---
 use codec::{Decode, Encode};
-// --- substrate ---
+// --- paritytech ---
 use frame_support::{
 	ensure,
 	traits::{Currency, Imbalance, OnUnbalanced},
@@ -66,7 +66,7 @@ use sp_std::{
 	ops::{Add, AddAssign, Sub},
 	prelude::*,
 };
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::*;
 
 /// The proportion of the slashing reward to be paid out on the first slashing detection.

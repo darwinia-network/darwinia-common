@@ -1,11 +1,11 @@
 pub use pallet_bridge_messages::Instance1 as WithPangoroMessages;
 
-// --- substrate ---
+// --- paritytech ---
 use bp_messages::MessageNonce;
 use pallet_bridge_messages::{
 	instant_payments::InstantCurrencyPayments, weights::RialtoWeight, Config,
 };
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::{
 	pangoro_messages::{
 		FromPangoroMessageDispatch, FromPangoroMessagePayload, PangolinToPangoroMessagesParameter,

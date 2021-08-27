@@ -18,14 +18,14 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-// --- substrate ---
+// --- paritytech ---
 use bp_messages::{LaneId, MessageDetails, MessageNonce, UnrewardedRelayersState};
 use bp_runtime::{Chain, ChainId, SourceAccount};
 use frame_support::{weights::Weight, Parameter};
 use sp_core::H256;
 use sp_runtime::{traits::Convert, RuntimeDebug};
 use sp_std::prelude::*;
-// --- darwinia ---
+// --- darwinia-network ---
 use common_primitives::*;
 
 /// Bridge-with-Pangolin instance id.

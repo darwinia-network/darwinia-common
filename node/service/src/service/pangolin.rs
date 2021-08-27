@@ -29,7 +29,7 @@ use std::{
 };
 // --- crates.io ---
 use futures::StreamExt;
-// --- substrate ---
+// --- paritytech ---
 use sc_authority_discovery::WorkerConfig;
 use sc_basic_authorship::ProposerFactory;
 use sc_client_api::{BlockchainEvents, ExecutorProvider, RemoteBackend, StateBackendFor};
@@ -56,7 +56,7 @@ use sp_consensus::{
 };
 use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 use sp_trie::PrefixedMemoryDB;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::{
 	client::PangolinClient,
 	service::{

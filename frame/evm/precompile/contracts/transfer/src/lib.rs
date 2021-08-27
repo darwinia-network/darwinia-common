@@ -40,15 +40,15 @@ pub mod kton;
 pub mod ring;
 pub mod util;
 
-// --- substrate ---
+// --- paritytech ---
 use sp_std::marker::PhantomData;
-// --- darwinia ---
+// --- darwinia-network ---
 use darwinia_evm::Config;
 use darwinia_support::evm::SELECTOR;
 use dp_evm::Precompile;
 use kton::Kton;
 use ring::RingBack;
-// --- crate ---
+// --- crates.io ---
 use evm::{executor::PrecompileOutput, Context, ExitError};
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;

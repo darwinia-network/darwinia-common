@@ -20,10 +20,10 @@ mod worker;
 
 pub use worker::MappingSyncWorker;
 
-// --- darwinia ---
+// --- darwinia-network ---
 use dp_consensus::FindLogError;
 use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
-// --- substrate ---
+// --- paritytech ---
 use sc_client_api::BlockOf;
 use sp_api::{ApiExt, ProvideRuntimeApi};
 use sp_blockchain::HeaderBackend;

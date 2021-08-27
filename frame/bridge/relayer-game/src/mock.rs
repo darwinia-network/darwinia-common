@@ -24,11 +24,11 @@ pub mod mock_relay {
 
 	pub use types::*;
 
-	// --- crates ---
+	// --- crates.io ---
 	use serde::{Deserialize, Serialize};
-	// --- substrate ---
+	// --- paritytech ---
 	use sp_runtime::DispatchResult;
-	// --- darwinia ---
+	// --- darwinia-network ---
 	use crate::{mock::*, *};
 
 	decl_storage! {
@@ -238,13 +238,13 @@ pub mod mock_relay {
 
 // --- std ---
 use std::time::Instant;
-// --- crates ---
+// --- crates.io ---
 use codec::{Decode, Encode};
-// --- substrate ---
+// --- paritytech ---
 use frame_support::traits::{GenesisBuild, OnFinalize};
 use frame_system::mocking::*;
 use sp_runtime::RuntimeDebug;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::{self as darwinia_relayer_game, *};
 use darwinia_relay_primitives::relayer_game::*;
 use mock_relay::{MockRelayBlockNumber, MockRelayHeader};

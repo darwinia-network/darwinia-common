@@ -86,7 +86,7 @@ pub use pallet_sudo::Call as SudoCall;
 
 // --- crates.io ---
 use codec::{Decode, Encode};
-// --- substrate ---
+// --- paritytech ---
 use bridge_runtime_common::messages::{
 	source::estimate_message_dispatch_and_delivery_fee, MessageBridge,
 };
@@ -117,7 +117,7 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-// --- darwinia ---
+// --- darwinia-network ---
 use bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use bridges::substrate::pangoro_messages::{ToPangoroMessagePayload, WithPangoroMessageBridge};
 use common_primitives::*;

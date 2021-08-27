@@ -18,9 +18,9 @@
 
 //! # Mock file for relay authorities
 
-// --- crates ---
+// --- crates.io ---
 use codec::{Decode, Encode};
-// --- substrate ---
+// --- paritytech ---
 use frame_support::traits::{GenesisBuild, OnFinalize, OnInitialize};
 use frame_system::{mocking::*, EnsureRoot};
 use sp_core::H256;
@@ -30,7 +30,7 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	RuntimeDebug,
 };
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::{self as darwinia_relay_authorities, *};
 use darwinia_relay_primitives::relay_authorities::Sign as SignT;
 

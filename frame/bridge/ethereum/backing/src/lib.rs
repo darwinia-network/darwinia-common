@@ -32,7 +32,7 @@ mod tests;
 #[frame_support::pallet]
 pub mod pallet {
 	pub mod types {
-		// --- darwinia ---
+		// --- darwinia-network ---
 		use crate::pallet::*;
 
 		// Simple type
@@ -51,7 +51,7 @@ pub mod pallet {
 	}
 	pub use types::*;
 
-	// --- substrate ---
+	// --- paritytech ---
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{Currency, ExistenceRequirement},
@@ -63,7 +63,7 @@ pub mod pallet {
 	#[cfg(not(feature = "std"))]
 	use sp_std::borrow::ToOwned;
 	use sp_std::{convert::TryFrom, prelude::*};
-	// --- darwinia ---
+	// --- darwinia-network ---
 	use crate::weights::WeightInfo;
 	use darwinia_relay_primitives::relay_authorities::*;
 	use darwinia_support::{
@@ -94,10 +94,10 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		// --- substrate ---
+		// --- paritytech ---
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type WeightInfo: WeightInfo;
-		// --- darwinia ---
+		// --- darwinia-network ---
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 		#[pallet::constant]

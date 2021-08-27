@@ -16,9 +16,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-// --- substrate ---
+// --- paritytech ---
 use frame_support::{assert_err, assert_noop, assert_ok};
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::{
 	mock::{AccountId, BlockNumber, Event, SubmitDuration, *},
 	*,
@@ -324,7 +324,7 @@ fn authority_term_should_work() {
 #[test]
 #[ignore]
 fn encode_message_should_work() {
-	// --- substrate ---
+	// --- paritytech ---
 	use sp_runtime::RuntimeString;
 
 	// The message is composed of:

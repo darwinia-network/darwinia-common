@@ -1,8 +1,8 @@
-// --- substrate ---
+// --- paritytech ---
 use frame_support::PalletId;
 use sp_npos_elections::CompactSolution;
 use sp_staking::SessionIndex;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::*;
 use darwinia_staking::{Config, EraIndex};
 

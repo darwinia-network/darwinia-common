@@ -18,14 +18,14 @@
 
 //! Node-specific RPC methods for interaction with header-mmr.
 
-// --- darwinia ---
+// --- darwinia-network ---
 pub use darwinia_header_mmr_rpc_runtime_api::HeaderMMRApi as HeaderMMRRuntimeApi;
 
 // --- core ---
 use core::fmt::Debug;
 // --- std ---
 use std::sync::Arc;
-// --- crates ---
+// --- crates.io ---
 use codec::Codec;
 use jsonrpc_core::{Error, ErrorCode, Result};
 use jsonrpc_derive::rpc;
@@ -36,7 +36,7 @@ use sp_runtime::{
 	generic::BlockId,
 	traits::{Block as BlockT, MaybeDisplay, MaybeFromStr},
 };
-// --- darwinia ---
+// --- darwinia-network ---
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo;
 
 const RUNTIME_ERROR: i64 = -1;

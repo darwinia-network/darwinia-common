@@ -1,7 +1,7 @@
 //! Some configurable implementations as associated type for the substrate runtime.
 
 pub mod relay {
-	// --- darwinia ---
+	// --- darwinia-network ---
 	use crate::*;
 	use darwinia_relay_primitives::relayer_game::*;
 	use ethereum_primitives::EthereumBlockNumber;
@@ -50,9 +50,9 @@ pub mod relay {
 	}
 }
 
-// --- crates ---
+// --- crates.io ---
 use smallvec::smallvec;
-// --- substrate ---
+// --- paritytech ---
 use frame_support::{
 	traits::{Currency, Imbalance, OnUnbalanced},
 	weights::{
@@ -61,7 +61,7 @@ use frame_support::{
 	},
 };
 use sp_runtime::{Perbill, RuntimeDebug};
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::*;
 
 darwinia_support::impl_account_data! {

@@ -1,6 +1,6 @@
-// --- substrate ---
+// --- paritytech ---
 use sp_runtime::Percent;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::*;
 use pallet_tips::Config;
 

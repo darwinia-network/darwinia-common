@@ -1,7 +1,7 @@
-// --- substrate ---
+// --- paritytech ---
 use frame_support::PalletId;
 use sp_runtime::Permill;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::*;
 use pallet_treasury::{Config, Instance2 as KtonTreasuryInstance};
 

@@ -1,13 +1,13 @@
 use crate::{frontier_backend_client, overrides::OverrideHandle};
 pub use dvm_rpc_core::EthPubSubApiServer;
-// --- darwinia ---
+// --- darwinia-network ---
 use dp_rpc::{
 	pubsub::{Kind, Params, PubSubSyncStatus, Result as PubSubResult},
 	Bytes, FilteredParams, Header, Log, Rich,
 };
 use dvm_rpc_core::EthPubSubApi::{self as EthPubSubApiT};
 use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
-// --- substrate ---
+// --- paritytech ---
 use sc_client_api::{
 	backend::{Backend, StateBackend, StorageProvider},
 	client::BlockchainEvents,

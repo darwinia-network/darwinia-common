@@ -26,7 +26,7 @@ pub use weights::WeightInfo;
 #[frame_support::pallet]
 pub mod pallet {
 	pub mod types {
-		// --- darwinia ---
+		// --- darwinia-network ---
 		#[cfg(feature = "std")]
 		use crate::pallet::*;
 
@@ -43,7 +43,7 @@ pub mod pallet {
 	}
 	pub use types::*;
 
-	// --- substrate ---
+	// --- paritytech ---
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{Currency, Get},
@@ -51,14 +51,14 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 	use sp_runtime::traits::AccountIdConversion;
-	// --- darwinia ---
+	// --- darwinia-network ---
 	use crate::weights::WeightInfo;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		// --- substrate ---
+		// --- paritytech ---
 		type WeightInfo: WeightInfo;
-		// --- darwinia ---
+		// --- darwinia-network ---
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 		type RingCurrency: Currency<AccountId<Self>>;
