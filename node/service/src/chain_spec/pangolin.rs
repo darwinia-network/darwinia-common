@@ -94,8 +94,8 @@ pub fn config() -> Result<ChainSpec, String> {
 	ChainSpec::from_json_bytes(&include_bytes!("../../res/pangolin/pangolin.json")[..])
 }
 
-pub fn build_spec_config() -> ChainSpec {
-	fn build_spec_genesis() -> GenesisConfig {
+pub fn genesis_config() -> ChainSpec {
+	fn genesis() -> GenesisConfig {
 		struct Keys {
 			stash: AccountId,
 			session: SessionKeys,
@@ -370,7 +370,7 @@ pub fn build_spec_config() -> ChainSpec {
 		"Pangolin",
 		"pangolin",
 		ChainType::Live,
-		build_spec_genesis,
+		genesis,
 		[
 			"/dns4/t1.pangolin-p2p.darwinia.network/tcp/30333/p2p/12D3KooWLc6ZD4PGjnRz8CuVioW1dEr8rVBVEAFb1vpxFHXU4g2Y",
 			"/dns4/t2.pangolin-p2p.darwinia.network/tcp/30333/p2p/12D3KooWHf1v45q3u1qPrkwSUq7ybzNfXf5ELPcpoBTJ4k49axfk",
@@ -393,7 +393,7 @@ pub fn build_spec_config() -> ChainSpec {
 }
 
 pub fn development_config() -> ChainSpec {
-	fn development_genesis() -> GenesisConfig {
+	fn genesis() -> GenesisConfig {
 		let root = super::get_account_id_from_seed::<sr25519::Public>("Alice");
 		let s2s_relayer = array_bytes::hex_into_unchecked(S2S_RELAYER);
 		let initial_authorities = vec![super::get_authority_keys_from_seed("Alice")];
@@ -591,7 +591,7 @@ pub fn development_config() -> ChainSpec {
 		"Pangolin",
 		"pangolin",
 		ChainType::Development,
-		development_genesis,
+		genesis,
 		vec![],
 		None,
 		Some(DEFAULT_PROTOCOL_ID),
@@ -601,7 +601,7 @@ pub fn development_config() -> ChainSpec {
 }
 
 pub fn local_testnet_config() -> ChainSpec {
-	fn local_testnet_genesis() -> GenesisConfig {
+	fn genesis() -> GenesisConfig {
 		let root = super::get_account_id_from_seed::<sr25519::Public>("Alice");
 		let s2s_relayer = array_bytes::hex_into_unchecked(S2S_RELAYER);
 		let initial_authorities = vec![
@@ -814,7 +814,7 @@ pub fn local_testnet_config() -> ChainSpec {
 		"Pangolin",
 		"pangolin",
 		ChainType::Development,
-		local_testnet_genesis,
+		genesis,
 		vec![
 			"/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp"
 				.parse()

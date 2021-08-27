@@ -89,11 +89,11 @@ impl SubstrateCli for Cli {
 
 		Ok(match id.to_lowercase().as_ref() {
 			"pangolin" => Box::new(pangolin_chain_spec::config()?),
-			"pangolin-genesis" => Box::new(pangolin_chain_spec::build_spec_config()),
+			"pangolin-genesis" => Box::new(pangolin_chain_spec::genesis_config()),
 			"pangolin-dev" | "dev" => Box::new(pangolin_chain_spec::development_config()),
 			"pangolin-local" | "local" => Box::new(pangolin_chain_spec::local_testnet_config()),
 			"pangoro" => Box::new(pangoro_chain_spec::config()?),
-			"pangoro-genesis" => Box::new(pangoro_chain_spec::build_spec_config()),
+			"pangoro-genesis" => Box::new(pangoro_chain_spec::genesis_config()),
 			"pangoro-dev" => Box::new(pangoro_chain_spec::development_config()),
 			path => {
 				let path = PathBuf::from(path);
