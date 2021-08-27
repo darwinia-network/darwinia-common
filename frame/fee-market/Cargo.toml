@@ -17,8 +17,14 @@ codec       = { package = "parity-scale-codec", version = "2.1.1", default-featu
 # paritytech
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+
+[dev-dependencies]
+darwinia-support = { features = ["easy-testing"], path = "../support" }
+darwinia-balances = { default-features = false, path = "../balances" }
 
 [features]
 default = ["std"]
@@ -27,9 +33,11 @@ std = [
 	# crates.io
 	"codec/std",
 	# darwinia-network
+	"darwinia-balances/std",
 	# paritytech
 	"frame-support/std",
 	"frame-system/std",
 	"sp-core/std",
+	"sp-io/std",
 	"sp-runtime/std",
 ]

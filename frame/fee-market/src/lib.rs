@@ -21,8 +21,11 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod weights;
-
 use crate::weights::WeightInfo;
+
+#[cfg(test)]
+mod tests;
+
 use frame_support::{
 	pallet_prelude::*,
 	traits::{Currency, Get},

@@ -5,11 +5,11 @@ use crate::*;
 use darwinia_fee_market::Config;
 
 frame_support::parameter_types! {
-	pub const CrabBackingPalletId: PalletId = PalletId(*b"da/crabk");
+	pub const FeeMarketPalletId: PalletId = PalletId(*b"da/feemk");
 }
 
 impl Config for Runtime {
-	type PalletId = CrabBackingPalletId;
+	type PalletId = FeeMarketPalletId;
 	type RingCurrency = Ring;
 	type WeightInfo = ();
 }
