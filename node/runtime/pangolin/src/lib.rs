@@ -281,6 +281,8 @@ frame_support::construct_runtime! {
 		Substrate2SubstrateIssuing: darwinia_s2s_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
 
 		BSC: darwinia_bridge_bsc::{Pallet, Call, Storage, Config} = 46,
+
+		FeeMarket: darwinia_fee_market::{Pallet, Call, Storage, Config} = 53
 	}
 }
 

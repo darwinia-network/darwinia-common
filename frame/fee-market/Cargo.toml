@@ -1,0 +1,35 @@
+[package]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+description = "Relayers Fee Market"
+edition     = "2018"
+homepage    = "https://darwinia.network/"
+license     = "GPL-3.0"
+name        = "darwinia-fee-market"
+readme      = "README.md"
+repository  = "https://github.com/darwinia-network/darwinia-common/"
+version     = "2.6.1"
+
+
+[dependencies]
+# crates.io
+codec       = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
+# darwinia-network
+# paritytech
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+
+[features]
+default = ["std"]
+
+std = [
+	# crates.io
+	"codec/std",
+	# darwinia-network
+	# paritytech
+	"frame-support/std",
+	"frame-system/std",
+	"sp-core/std",
+	"sp-runtime/std",
+]
