@@ -2,6 +2,7 @@ pub use pallet_bridge_messages::Instance1 as WithPangolinMessages;
 
 // --- paritytech ---
 use bp_messages::MessageNonce;
+use bp_runtime::ChainId;
 use pallet_bridge_messages::{
 	instant_payments::InstantCurrencyPayments, weights::RialtoWeight, Config,
 };
@@ -10,6 +11,7 @@ use crate::*;
 use bridge_primitives::{
 	AccountIdConverter, MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
 	MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE, MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE,
+	PANGOLIN_CHAIN_ID,
 };
 use darwinia_support::s2s;
 use pangolin_messages::{
@@ -27,6 +29,7 @@ frame_support::parameter_types! {
 	pub const GetDeliveryConfirmationTransactionFee: Balance =
 		MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT as _;
 	pub RootAccountForPayments: Option<AccountId> = Some(s2s::to_bytes32(b"root").into());
+	pub const BridgedChainId: ChainId = PANGOLIN_CHAIN_ID;
 }
 
 impl Config<WithPangolinMessages> for Runtime {
@@ -56,6 +59,9 @@ impl Config<WithPangolinMessages> for Runtime {
 		RootAccountForPayments,
 	>;
 
+	type OnDeliveryConfirmed = ();
+
 	type SourceHeaderChain = Pangolin;
 	type MessageDispatch = FromPangolinMessageDispatch;
+	type BridgedChainId = BridgedChainId;
 }

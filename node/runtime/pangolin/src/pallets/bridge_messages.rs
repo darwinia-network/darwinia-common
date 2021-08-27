@@ -16,6 +16,7 @@ use crate::{
 use bridge_primitives::{
 	AccountIdConverter, MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
 	MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE, MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE,
+	PANGORO_CHAIN_ID,
 };
 use darwinia_support::s2s::to_bytes32;
 
@@ -29,6 +30,7 @@ frame_support::parameter_types! {
 	pub const GetDeliveryConfirmationTransactionFee: Balance =
 		MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT as _;
 	pub RootAccountForPayments: Option<AccountId> = Some(to_bytes32(b"root").into());
+	pub const BridgedChainId: bp_runtime::ChainId = PANGORO_CHAIN_ID;
 }
 
 impl Config<WithPangoroMessages> for Runtime {
@@ -58,6 +60,9 @@ impl Config<WithPangoroMessages> for Runtime {
 		RootAccountForPayments,
 	>;
 
+	type OnDeliveryConfirmed = ();
+
 	type SourceHeaderChain = Pangoro;
 	type MessageDispatch = FromPangoroMessageDispatch;
+	type BridgedChainId = BridgedChainId;
 }
