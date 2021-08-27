@@ -33,6 +33,8 @@ use frame_support::{
 	traits::{Currency, Get},
 	transactional, PalletId,
 };
+use sp_runtime::traits::AccountIdConversion;
+
 use frame_system::{ensure_signed, pallet_prelude::*};
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type Balance = u128;
@@ -46,10 +48,10 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		type WeightInfo: WeightInfo;
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type WeightInfo: WeightInfo;
 		type RingCurrency: Currency<AccountId<Self>>;
 	}
 
@@ -73,6 +75,10 @@ pub mod pallet {
 
 	#[pallet::storage]
 	pub type TargetRelayPrice<T: Config> = StorageValue<_, u64>;
+
+	/// p1, p2, p3, TODO: A better comments
+	#[pallet::storage]
+	pub type LowestPrices<T: Config> = StorageValue<_, (u64, u64, u64)>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {}
@@ -149,5 +155,16 @@ pub mod pallet {
 	}
 }
 
+impl<T: Config> Pallet<T> {
+	pub fn pallet_account_id() -> T::AccountId {
+		T::PalletId::get().into_account()
+	}
+
+	pub fn slash_relayer() {
+		todo!()
+	}
+}
+
 // TODO:
 // 1. expose rpc to a estimate price
+// 2. S(t) function
