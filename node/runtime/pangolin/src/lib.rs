@@ -773,7 +773,12 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 	}
 }
 
-fn migrate() {}
+fn migrate() {
+	// --- paritytech ---
+	use frame_support::migration;
+
+	migration::move_pallet(b"BridgeMillauGrandpa", b"BridgePangoroGrandpa");
+}
 
 pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
