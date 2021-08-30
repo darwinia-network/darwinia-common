@@ -276,7 +276,7 @@ frame_support::construct_runtime! {
 		DynamicFee: dvm_dynamic_fee::{Pallet, Call, Storage, Inherent} = 47,
 
 		BridgePangoroMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 43,
-		BridgePangoroDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 44,
+		BridgeDispatch: pallet_bridge_dispatch::{Pallet, Event<T>} = 44,
 		BridgePangoroGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 45,
 		Substrate2SubstrateIssuing: darwinia_s2s_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
 
@@ -778,6 +778,7 @@ fn migrate() {
 	use frame_support::migration;
 
 	migration::move_pallet(b"BridgeMillauGrandpa", b"BridgePangoroGrandpa");
+	migration::move_pallet(b"BridgePangoroDispatch", b"BridgeDispatch");
 }
 
 pub struct CustomOnRuntimeUpgrade;

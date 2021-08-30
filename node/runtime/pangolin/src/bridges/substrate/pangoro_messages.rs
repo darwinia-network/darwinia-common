@@ -48,7 +48,7 @@ pub type FromPangoroMessageDispatch = FromBridgedChainMessageDispatch<
 	WithPangoroMessageBridge,
 	Runtime,
 	darwinia_balances::Pallet<Runtime, RingInstance>,
-	WithPangoroDispatch,
+	(),
 >;
 
 /// Initial value of `PangoroToPangolinConversionRate` parameter.
