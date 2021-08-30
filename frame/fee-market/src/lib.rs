@@ -27,15 +27,16 @@ mod tests;
 pub mod weights;
 use crate::weights::WeightInfo;
 
+use darwinia_support::balance::{LockFor, LockableCurrency};
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
-	traits::{Currency, ExistenceRequirement::KeepAlive, Get},
+	traits::{Currency, Get, LockIdentifier, WithdrawReasons},
 	transactional, PalletId,
 };
+use frame_system::{ensure_signed, pallet_prelude::*};
 use sp_runtime::traits::AccountIdConversion;
 
-use frame_system::{ensure_signed, pallet_prelude::*};
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type Balance = u128;
 pub type Price = u64;
@@ -52,30 +53,49 @@ pub mod pallet {
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		type WeightInfo: WeightInfo;
+
 		#[pallet::constant]
-		type MinimumLock: Get<RingBalance<Self>>;
-		type RingCurrency: Currency<AccountId<Self>>;
+		type MiniumLockValue: Get<RingBalance<Self>>;
+		#[pallet::constant]
+		type MinimumPrice: Get<RingBalance<Self>>;
+
+		type LockId: Get<LockIdentifier>;
+		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(fn deposit_event)]
 	#[pallet::metadata(T::AccountId = "AccountId")]
-	pub enum Event<T: Config> {}
+	pub enum Event<T: Config> {
+		/// Lock some RING and register to be relayer
+		RegisterAndLockRing(T::AccountId, RingBalance<T>),
+		/// Update lock value
+		UpdateLockedRing(T::AccountId, RingBalance<T>),
+	}
 
 	#[pallet::error]
 	pub enum Error<T> {
 		/// Insufficient balance
 		InsufficientBalance,
-		TheLockBalanceTooLow,
+		/// The lock value is lower than MiniumLockLimit
+		TooLowLockValue,
+		/// The relayer has been registered
+		AlreadyRegistered,
+		/// Register before update lock value
+		RegisterBeforeUpdateLock,
+		/// Invalid new lock value
+		InvalidNewLockValue,
 	}
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_locked_ring)]
-	pub type RegisterLocked<T: Config> =
+	pub type LockedRing<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, RingBalance<T>, ValueQuery>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn relayers)]
 	pub type Relayers<T: Config> = StorageValue<_, Vec<T::AccountId>, ValueQuery>;
 
 	#[pallet::storage]
@@ -116,48 +136,78 @@ pub mod pallet {
 	}
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Before the relayer transfer msgs, they need lock asset.
-		// TODO: do we need to add lock time
-		// TODO: how to deal with the case, when relayer wants to inc/dec lock asset
+		/// Before the relayer transfer msgs, they need lock some rings.
 		#[pallet::weight(10000)]
 		#[transactional]
-		pub fn register_and_lock_asset(
+		pub fn register_and_lock_ring(
 			origin: OriginFor<T>,
-			lock_amount: RingBalance<T>,
+			lock_value: RingBalance<T>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			// Ensure the relayer lock amount is larger than min lock amount.
 			ensure!(
-				lock_amount >= T::MinimumLock::get(),
-				<Error<T>>::TheLockBalanceTooLow
+				lock_value >= T::MiniumLockValue::get(),
+				<Error<T>>::TooLowLockValue
 			);
-			// Ensure the lock amount is available
 			ensure!(
-				T::RingCurrency::free_balance(&who) >= lock_amount,
+				T::RingCurrency::free_balance(&who) >= lock_value,
 				<Error<T>>::InsufficientBalance
 			);
-			// Ensure the this is the first time for the relayer to register
 			ensure!(
 				!<Relayers<T>>::get().contains(&who),
-				<Error<T>>::InsufficientBalance
+				<Error<T>>::AlreadyRegistered
 			);
 
-			T::RingCurrency::transfer(&who, &Self::pallet_account_id(), lock_amount, KeepAlive)?;
-			RegisterLocked::<T>::insert(who.clone(), lock_amount);
-			Relayers::<T>::append(who);
+			T::RingCurrency::set_lock(
+				T::LockId::get(),
+				&who,
+				LockFor::Common { amount: lock_value },
+				WithdrawReasons::all(),
+			);
+			<LockedRing<T>>::insert(&who, lock_value);
+			<Relayers<T>>::append(&who);
+			Self::deposit_event(Event::<T>::RegisterAndLockRing(who, lock_value));
+			Ok(().into())
+		}
+
+		#[pallet::weight(10000)]
+		#[transactional]
+		pub fn update_locked_ring(
+			origin: OriginFor<T>,
+			new_lock: RingBalance<T>,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			ensure!(
+				<Relayers<T>>::get().contains(&who),
+				<Error<T>>::RegisterBeforeUpdateLock
+			);
+			ensure!(
+				T::RingCurrency::free_balance(&who) >= new_lock,
+				<Error<T>>::InsufficientBalance
+			);
+			ensure!(
+				new_lock > Self::get_locked_ring(&who),
+				<Error<T>>::InvalidNewLockValue
+			);
+
+			T::RingCurrency::extend_lock(T::LockId::get(), &who, new_lock, WithdrawReasons::all())?;
+			LockedRing::<T>::insert(who.clone(), new_lock);
+			Self::deposit_event(Event::<T>::UpdateLockedRing(who, new_lock));
 			Ok(().into())
 		}
 
 		/// Provide a way to cancel the registation and unlock asset
 		#[pallet::weight(10000)]
 		#[transactional]
-		pub fn cancel_register_and_unlock(
-			origin: OriginFor<T>,
-			lock_amount: RingBalance<T>,
-		) -> DispatchResultWithPostInfo {
-			let user = ensure_signed(origin)?;
+		pub fn cancel_register(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			ensure!(
+				<Relayers<T>>::get().contains(&who),
+				<Error<T>>::RegisterBeforeUpdateLock
+			);
 
-			// lock user lock amount
+			T::RingCurrency::remove_lock(T::LockId::get(), &who);
+			LockedRing::<T>::remove(who.clone());
+			Relayers::<T>::mutate(|relayers| relayers.retain(|x| *x != who));
 			Ok(().into())
 		}
 

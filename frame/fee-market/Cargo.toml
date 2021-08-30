@@ -14,6 +14,7 @@ version     = "2.6.1"
 # crates.io
 codec       = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
 # darwinia-network
+darwinia-support = { features = ["easy-testing"], path = "../support" }
 # paritytech
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
@@ -23,7 +24,6 @@ sp-runtime    = { default-features = false, git = "https://github.com/darwinia-n
 sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [dev-dependencies]
-darwinia-support = { features = ["easy-testing"], path = "../support" }
 darwinia-balances = { default-features = false, path = "../balances" }
 
 [features]
