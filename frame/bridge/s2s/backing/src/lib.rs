@@ -42,7 +42,7 @@ use frame_support::{
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use sp_runtime::{
-	traits::{AccountIdConversion, Convert, Saturating, UniqueSaturatedInto, Zero},
+	traits::{AccountIdConversion, Convert, UniqueSaturatedInto, Zero},
 	SaturatedConversion,
 };
 use sp_std::prelude::*;
@@ -58,7 +58,7 @@ use dp_asset::{
 	RecipientAccount,
 };
 
-const SECONDS_PER_DAY: u128 = 86_400;
+const BLOCKS_PER_DAY: u128 = 14_400;
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type Balance = u128;
@@ -82,7 +82,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type RingLockMaxLimit: Get<RingBalance<Self>>;
 		#[pallet::constant]
-		type DailyMaxTransferLimit: Get<RingBalance<Self>>;
+		type DailyMaxTransferLimit: Get<U256>;
 		type RingCurrency: Currency<AccountId<Self>>;
 
 		type BridgedAccountIdConverter: Convert<H256, Self::AccountId>;
@@ -119,8 +119,8 @@ pub mod pallet {
 		InsufficientBalance,
 		/// Ring Lock LIMITED
 		RingLockLimited,
-		/// Ring Daily Limited
-		RingDailyLimited,
+		/// Redeem Daily Limited
+		RedeemDailyLimited,
 		/// invalid source origin
 		InvalidOrigin,
 		/// encode dispatch call failed
@@ -130,24 +130,20 @@ pub mod pallet {
 	}
 
 	#[pallet::storage]
-	#[pallet::getter(fn daily_transfered)]
-	pub type DailyTransfered<T: Config> = StorageValue<_, (u128, RingBalance<T>)>;
+	#[pallet::getter(fn daily_unlocked)]
+	pub type DailyUnlocked<T: Config> =
+		StorageMap<_, Blake2_128Concat, EthereumAddress, Option<(u128, U256)>, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn daily_limited)]
+	pub type DailyLimited<T: Config> =
+		StorageMap<_, Blake2_128Concat, EthereumAddress, U256, ValueQuery>;
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_initialize(_: BlockNumberFor<T>) -> Weight {
-			let now: u128 = <pallet_timestamp::Pallet<T>>::get().unique_saturated_into();
-			let latest_timestamp = DailyTransfered::<T>::get().map_or_else(|| now, |v| v.0);
-			if latest_timestamp < now - now % SECONDS_PER_DAY {
-				<DailyTransfered<T>>::kill();
-			}
-
-			T::DbWeight::get().writes(1)
-		}
-	}
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -203,12 +199,6 @@ pub mod pallet {
 				value < T::RingLockMaxLimit::get() && !value.is_zero(),
 				<Error<T>>::RingLockLimited
 			);
-			// Make sure xxx
-			let transfered = Self::get_daily_transfered();
-			ensure!(
-				T::DailyMaxTransferLimit::get().saturating_sub(transfered) >= value,
-				<Error<T>>::RingDailyLimited
-			);
 			// Make sure the user's balance is enough to lock
 			ensure!(
 				T::RingCurrency::free_balance(&user) > value + fee,
@@ -235,7 +225,6 @@ pub mod pallet {
 					.map_err(|_| Error::<T>::EncodeInvalid)?;
 			T::MessageSender::send_message(payload, fee)
 				.map_err(|_| Error::<T>::SendMessageFailed)?;
-			Self::update_daily_transfered(value.saturating_add(transfered));
 			Self::deposit_event(Event::TokenLocked(token, user, recipient, amount));
 			Ok(().into())
 		}
@@ -270,6 +259,14 @@ pub mod pallet {
 			};
 			let amount = token_info.value.ok_or(<Error<T>>::InvalidTokenAmount)?;
 
+			// Make sure the total transfered is less than daily limited
+			let unlocked = Self::get_daily_unlocked(token_info.address);
+			let daily_limited = <DailyLimited<T>>::get(token_info.address);
+			ensure!(
+				daily_limited.is_zero() || daily_limited.saturating_sub(unlocked) >= amount,
+				<Error<T>>::RedeemDailyLimited
+			);
+
 			// Make sure the user's balance is enough to lock
 			ensure!(
 				T::RingCurrency::free_balance(&Self::pallet_account_id())
@@ -283,7 +280,21 @@ pub mod pallet {
 				KeepAlive,
 			)?;
 
+			Self::update_daily_unlocked(token_info.address, amount.saturating_add(unlocked));
 			Self::deposit_event(Event::TokenUnlocked(token.clone(), recipient, amount));
+			Ok(().into())
+		}
+
+		#[pallet::weight(92_000_000)]
+		pub fn update_daily_limited(
+			origin: OriginFor<T>,
+			token: EthereumAddress,
+			limited: U256,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+			DailyLimited::<T>::mutate(token, |old| {
+				*old = limited;
+			});
 			Ok(().into())
 		}
 	}
@@ -295,13 +306,29 @@ pub mod pallet {
 
 		// if this is the first time to transfer, then the daily_transfer storage is none, other
 		// wise, it is <timestamp, transfered>, where timestamp is 00:00:00, the start of the day
-		fn get_daily_transfered() -> RingBalance<T> {
-			DailyTransfered::<T>::get().map_or_else(|| Zero::zero(), |v| v.1)
+		fn get_daily_unlocked(token: EthereumAddress) -> U256 {
+			let now = UniqueSaturatedInto::<u128>::unique_saturated_into(
+				frame_system::Pallet::<T>::block_number(),
+			);
+			DailyUnlocked::<T>::get(token).map_or_else(
+				|| U256::zero(),
+				|v| {
+					if now - now % BLOCKS_PER_DAY > v.0 {
+						U256::zero()
+					} else {
+						v.1
+					}
+				},
+			)
 		}
 
-		fn update_daily_transfered(balance: RingBalance<T>) {
-			let now: u128 = <pallet_timestamp::Pallet<T>>::get().unique_saturated_into();
-			DailyTransfered::<T>::put((now - now % SECONDS_PER_DAY, balance));
+		fn update_daily_unlocked(token: EthereumAddress, balance: U256) {
+			let now = UniqueSaturatedInto::<u128>::unique_saturated_into(
+				frame_system::Pallet::<T>::block_number(),
+			);
+			DailyUnlocked::<T>::mutate(token, |v| {
+				*v = Some((now - now % BLOCKS_PER_DAY, balance));
+			});
 		}
 	}
 }
