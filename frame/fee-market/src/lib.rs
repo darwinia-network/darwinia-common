@@ -27,15 +27,17 @@ mod tests;
 pub mod weights;
 use crate::weights::WeightInfo;
 
+use codec::{Decode, Encode};
 use darwinia_support::balance::{LockFor, LockableCurrency};
 use frame_support::{
+	dispatch::DispatchError,
 	ensure,
 	pallet_prelude::*,
 	traits::{Currency, Get, LockIdentifier, WithdrawReasons},
 	transactional, PalletId,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
-use sp_runtime::traits::AccountIdConversion;
+use sp_std::cmp::{Ord, Ordering};
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type Balance = u128;
@@ -106,7 +108,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn relayers)]
-	pub type Relayers<T: Config> = StorageValue<_, Vec<T::AccountId>, ValueQuery>;
+	pub type Relayers<T: Config> = StorageValue<_, Vec<Relayer<T>>, ValueQuery>;
 
 	// Price Storage
 	#[pallet::storage]
@@ -123,11 +125,6 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn get_candidate_prices)]
 	pub type CandidatePrices<T: Config> = StorageValue<_, Vec<(T::AccountId, Price)>, ValueQuery>;
-
-	/// The prices list
-	#[pallet::storage]
-	#[pallet::getter(fn get_prices)]
-	pub type Prices<T: Config> = StorageValue<_, Vec<Price>, ValueQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {}
@@ -166,7 +163,7 @@ pub mod pallet {
 				<Error<T>>::InsufficientBalance
 			);
 			ensure!(
-				!<Relayers<T>>::get().contains(&who),
+				<Relayers<T>>::get().iter().find(|r| r.id == who).is_none(),
 				<Error<T>>::AlreadyRegistered
 			);
 
@@ -177,7 +174,7 @@ pub mod pallet {
 				WithdrawReasons::all(),
 			);
 			<LockedRing<T>>::insert(&who, lock_value);
-			<Relayers<T>>::append(&who);
+			<Relayers<T>>::append(Relayer::new(who.clone(), 0));
 			Self::deposit_event(Event::<T>::RegisterAndLockRing(who, lock_value));
 			Ok(().into())
 		}
@@ -190,7 +187,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			ensure!(
-				<Relayers<T>>::get().contains(&who),
+				<Relayers<T>>::get().iter().find(|r| r.id == who).is_some(),
 				<Error<T>>::RegisterBeforeUpdateLock
 			);
 			ensure!(
@@ -214,13 +211,13 @@ pub mod pallet {
 		pub fn cancel_register(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			ensure!(
-				<Relayers<T>>::get().contains(&who),
+				<Relayers<T>>::get().iter().find(|r| r.id == who).is_some(),
 				<Error<T>>::RegisterBeforeUpdateLock
 			);
 
 			T::RingCurrency::remove_lock(T::LockId::get(), &who);
 			LockedRing::<T>::remove(who.clone());
-			Relayers::<T>::mutate(|relayers| relayers.retain(|x| *x != who));
+			Relayers::<T>::mutate(|relayers| relayers.retain(|x| x.id != who));
 			Self::deposit_event(Event::<T>::CancelRelayerRegister(who));
 			Ok(().into())
 		}
@@ -231,12 +228,12 @@ pub mod pallet {
 		pub fn submit_price(origin: OriginFor<T>, p: Price) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			ensure!(
-				<Relayers<T>>::get().contains(&who),
+				<Relayers<T>>::get().iter().find(|r| r.id == who).is_some(),
 				<Error<T>>::InvalidSubmitPriceOrigin
 			);
 			ensure!(p >= T::MinimumPrice::get(), <Error<T>>::TooLowPrice);
 
-			Self::handle_price(&who, p);
+			Self::handle_price(who.clone(), p)?;
 			Self::deposit_event(Event::<T>::SubmitRelayerPrice(who, p));
 			Ok(().into())
 		}
@@ -244,55 +241,65 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-	pub fn handle_price(who: &T::AccountId, p: Price) {
+	pub fn handle_price(who: T::AccountId, p: Price) -> Result<(), DispatchError> {
 		<RelayerPrices<T>>::insert(&who, p);
-		<Prices<T>>::append(&p);
+		<Relayers<T>>::mutate(|relayers| {
+			relayers
+				.into_iter()
+				.find(|relayer| relayer.id == who)
+				.map(|r| r.price = p)
+				.ok_or_else(|| <Error<T>>::InvalidSubmitPriceOrigin)
+		})?;
 
-		// let mut candidate_relayers = Vec::with_capacity(T::CandidatePriceNumber::get() as usize);
-		let mut prices = Self::get_prices();
-		prices.sort();
-		if prices.len() >= T::CandidatePriceNumber::get() as usize {
-			<TargetPrice<T>>::put(prices[T::CandidatePriceNumber::get() as usize - 1]);
-			// something need to check again and again
-			for (id, p) in <RelayerPrices<T>>::iter() {
-				for i in 0..T::CandidatePriceNumber::get() as usize {}
-				// if p == prices[0] {
-				// 	res.insert(0, (key, item));
-				// } else if item == prices[1] {
-				// 	res.insert(1, (key, item));
-				// } else if item == prices[2] {
-				// 	res.insert(2, (key, item));
-				// }
+		let mut relayers = Self::relayers();
+		relayers.sort();
+		if relayers.len() >= T::CandidatePriceNumber::get() as usize {
+			for i in 0..T::CandidatePriceNumber::get() as usize {
+				let r = &relayers[i];
+				<CandidatePrices<T>>::append((r.id.clone(), r.price));
 			}
+			<TargetPrice<T>>::put(relayers[(T::CandidatePriceNumber::get() - 1) as usize].price);
+		} else {
+			for i in 0..relayers.len() {
+				let r = &relayers[i];
+				<CandidatePrices<T>>::append((r.id.clone(), r.price));
+			}
+			<TargetPrice<T>>::put(relayers[relayers.len() - 1].price);
 		}
-
-		// <CandidatePrices<T>>::append(res.get(0).unwrap());
-		// <CandidatePrices<T>>::append(res.get(1).unwrap());
-		// <CandidatePrices<T>>::append(res.get(2).unwrap());
+		Ok(())
 	}
 
 	pub fn slash_relayer() {
 		// slash relayers
-
 		// if the lock ring lower than limit, remove it auto
 		todo!()
 	}
 }
-
-use sp_std::cmp::Ordering;
-
-pub struct RelayerPrice<T: Config> {
+#[derive(Encode, Decode, Clone, Eq, Debug)]
+pub struct Relayer<T: Config> {
 	id: T::AccountId,
 	price: Price,
 }
 
-impl<T: Config> PartialOrd for RelayerPrice<T> {
+impl<T: Config> Relayer<T> {
+	pub fn new(id: T::AccountId, price: Price) -> Relayer<T> {
+		Relayer { id, price }
+	}
+}
+
+impl<T: Config> PartialOrd for Relayer<T> {
 	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
 		self.price.partial_cmp(&other.price)
 	}
 }
 
-impl<T: Config> PartialEq for RelayerPrice<T> {
+impl<T: Config> Ord for Relayer<T> {
+	fn cmp(&self, other: &Self) -> Ordering {
+		self.price.cmp(&other.price)
+	}
+}
+
+impl<T: Config> PartialEq for Relayer<T> {
 	fn eq(&self, other: &Self) -> bool {
 		self.price == other.price
 	}
