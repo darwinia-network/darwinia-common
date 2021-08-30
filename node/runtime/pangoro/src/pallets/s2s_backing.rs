@@ -103,7 +103,6 @@ frame_support::parameter_types! {
 	pub const RingPalletId: PalletId = PalletId(*b"da/bring");
 	pub const S2sBackingPalletId: PalletId = PalletId(*b"da/s2sba");
 	pub const RingLockLimit: Balance = 1000_000 * 1_000_000_000;
-	pub const RingDailyLimit: Balance = 10_000_000 * 1_000_000_000;
 }
 
 impl Config for Runtime {
@@ -112,7 +111,6 @@ impl Config for Runtime {
 	type Event = Event;
 	type WeightInfo = ();
 	type RingLockMaxLimit = RingLockLimit;
-	type DailyMaxTransferLimit = RingDailyLimit;
 	type RingCurrency = Ring;
 
 	type BridgedAccountIdConverter = AccountIdConverter;

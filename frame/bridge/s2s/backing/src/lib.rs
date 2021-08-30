@@ -81,8 +81,6 @@ pub mod pallet {
 		type RingPalletId: Get<PalletId>;
 		#[pallet::constant]
 		type RingLockMaxLimit: Get<RingBalance<Self>>;
-		#[pallet::constant]
-		type DailyMaxTransferLimit: Get<U256>;
 		type RingCurrency: Currency<AccountId<Self>>;
 
 		type BridgedAccountIdConverter: Convert<H256, Self::AccountId>;
