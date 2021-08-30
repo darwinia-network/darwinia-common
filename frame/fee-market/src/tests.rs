@@ -261,5 +261,15 @@ fn test_locked_ring_list_works() {
 		assert_eq!(FeeMarket::get_locked_ring(2), 11);
 		assert_eq!(FeeMarket::get_locked_ring(3), 16);
 		assert_eq!(FeeMarket::get_locked_ring(4), 21);
+
+		assert_ok!(FeeMarket::cancel_register(Origin::signed(1)));
+		assert_ok!(FeeMarket::cancel_register(Origin::signed(2)));
+		assert_ok!(FeeMarket::cancel_register(Origin::signed(3)));
+		assert_ok!(FeeMarket::cancel_register(Origin::signed(4)));
+
+		assert_eq!(FeeMarket::get_locked_ring(1), 0);
+		assert_eq!(FeeMarket::get_locked_ring(2), 0);
+		assert_eq!(FeeMarket::get_locked_ring(3), 0);
+		assert_eq!(FeeMarket::get_locked_ring(4), 0);
 	});
 }
