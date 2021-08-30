@@ -1517,33 +1517,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-crab-backing"
-version = "2.5.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "sp-runtime",
-]
-
-[[package]]
-name = "darwinia-crab-issuing"
-version = "2.6.2"
-dependencies = [
- "darwinia-balances",
- "darwinia-support",
- "frame-support",
- "frame-system",
- "log",
- "parity-scale-codec",
- "paste",
- "serde",
- "serde_json",
- "sp-io",
- "sp-runtime",
-]
-
-[[package]]
 name = "darwinia-democracy"
 version = "2.6.2"
 dependencies = [
@@ -6035,8 +6008,6 @@ dependencies = [
  "darwinia-balances-rpc-runtime-api",
  "darwinia-bridge-bsc",
  "darwinia-claims",
- "darwinia-crab-backing",
- "darwinia-crab-issuing",
  "darwinia-democracy",
  "darwinia-elections-phragmen",
  "darwinia-ethereum-backing",

@@ -280,8 +280,6 @@ pub fn genesis_config() -> ChainSpec {
 			darwinia_claims: Default::default(),
 			darwinia_vesting: Default::default(),
 			pallet_sudo: SudoConfig { key: root.clone() },
-			darwinia_crab_issuing: CrabIssuingConfig { total_mapped_ring: BUNCH_OF_COINS },
-			darwinia_crab_backing: CrabBackingConfig { backed_ring: BUNCH_OF_COINS },
 			darwinia_ethereum_relay: EthereumRelayConfig {
 				genesis_header_parcel: r#"{
 					"header": {
@@ -501,8 +499,6 @@ pub fn development_config() -> ChainSpec {
 			},
 			darwinia_vesting: Default::default(),
 			pallet_sudo: SudoConfig { key: root.clone() },
-			darwinia_crab_issuing: CrabIssuingConfig { total_mapped_ring: BUNCH_OF_COINS },
-			darwinia_crab_backing: CrabBackingConfig { backed_ring: BUNCH_OF_COINS },
 			darwinia_ethereum_relay: EthereumRelayConfig {
 				genesis_header_parcel: r#"{
 					"header": {
@@ -724,8 +720,6 @@ pub fn local_testnet_config() -> ChainSpec {
 			},
 			darwinia_vesting: Default::default(),
 			pallet_sudo: SudoConfig { key: root.clone() },
-			darwinia_crab_issuing: CrabIssuingConfig { total_mapped_ring: BUNCH_OF_COINS },
-			darwinia_crab_backing: CrabBackingConfig { backed_ring: BUNCH_OF_COINS },
 			darwinia_ethereum_relay: EthereumRelayConfig {
 				genesis_header_parcel: r#"{
 					"header": {

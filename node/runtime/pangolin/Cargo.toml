@@ -25,8 +25,6 @@ darwinia-balances                   = { default-features = false, path = "../../
 darwinia-balances-rpc-runtime-api   = { default-features = false, path = "../../../frame/balances/rpc/runtime-api" }
 darwinia-bridge-bsc                 = { default-features = false, path = "../../../frame/bridge/ethereum-bsc" }
 darwinia-claims                     = { default-features = false, path = "../../../frame/claims" }
-darwinia-crab-backing               = { default-features = false, path = "../../../frame/bridge/crab/backing" }
-darwinia-crab-issuing               = { default-features = false, path = "../../../frame/bridge/crab/issuing" }
 darwinia-democracy                  = { default-features = false, path = "../../../frame/democracy" }
 darwinia-elections-phragmen         = { default-features = false, path = "../../../frame/elections-phragmen" }
 darwinia-ethereum-backing           = { default-features = false, path = "../../../frame/bridge/ethereum/backing" }
@@ -132,8 +130,6 @@ std = [
 	"darwinia-balances-rpc-runtime-api/std",
 	"darwinia-bridge-bsc/std",
 	"darwinia-claims/std",
-	"darwinia-crab-backing/std",
-	"darwinia-crab-issuing/std",
 	"darwinia-democracy/std",
 	"darwinia-elections-phragmen/std",
 	"darwinia-ethereum-backing/std",
@@ -243,7 +239,6 @@ try-runtime = [
 	"frame-executive/try-runtime",
 	"frame-try-runtime",
 	"darwinia-balances/try-runtime",
-	"darwinia-crab-issuing/try-runtime",
 	"darwinia-elections-phragmen/try-runtime",
 	"darwinia-ethereum-backing/try-runtime",
 	"darwinia-header-mmr/try-runtime",

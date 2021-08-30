@@ -94,12 +94,6 @@ pub use proxy::*;
 pub mod multisig;
 pub use multisig::*;
 
-pub mod crab_issuing;
-pub use crab_issuing::*;
-
-pub mod crab_backing;
-pub use crab_backing::*;
-
 pub mod ethereum_relay;
 pub use ethereum_relay::*;
 
