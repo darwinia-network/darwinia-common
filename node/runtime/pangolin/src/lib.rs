@@ -773,126 +773,19 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 	}
 }
 
-fn migrate_treasury() {
-	// --- paritytech ---
-	use frame_support::{migration, StorageHasher, Twox64Concat};
-
-	type ProposalIndex = u32;
-
-	const OLD_PREFIX: &[u8] = b"DarwiniaTreasury";
-	const NEW_PREFIX: &[u8] = b"Treasury";
-	const KTON_TREASURY_PREFIX: &[u8] = b"Instance2Treasury";
-
-	migration::remove_storage_prefix(OLD_PREFIX, b"ProposalCount", &[]);
-	log::info!("`ProposalCount` Removed");
-	let approvals =
-		migration::take_storage_value::<Vec<ProposalIndex>>(OLD_PREFIX, b"Approvals", &[])
-			.unwrap_or_default();
-	migration::remove_storage_prefix(OLD_PREFIX, b"Approvals", &[]);
-	log::info!("`Approvals` Removed");
-
-	#[derive(Encode, Decode)]
-	struct OldProposal {
-		proposer: AccountId,
-		beneficiary: AccountId,
-		ring_value: Balance,
-		kton_value: Balance,
-		ring_bond: Balance,
-		kton_bond: Balance,
-	}
-	#[derive(Encode, Decode)]
-	struct Proposal {
-		proposer: AccountId,
-		value: Balance,
-		beneficiary: AccountId,
-		bond: Balance,
-	}
-	let mut ring_approvals = vec![];
-	let mut kton_approvals = vec![];
-	for (index, old_proposal) in migration::storage_key_iter::<
-		ProposalIndex,
-		OldProposal,
-		Twox64Concat,
-	>(OLD_PREFIX, b"Proposals")
-	.drain()
-	{
-		if old_proposal.ring_value != 0 {
-			let new_proposal = Proposal {
-				proposer: old_proposal.proposer.clone(),
-				value: old_proposal.ring_value,
-				beneficiary: old_proposal.beneficiary.clone(),
-				bond: old_proposal.ring_bond,
-			};
-			// All on-chain proposal have ring value
-			let hash = Twox64Concat::hash(&index.encode());
-
-			migration::put_storage_value(NEW_PREFIX, b"Proposals", &hash, new_proposal);
-
-			if approvals.contains(&index) {
-				ring_approvals.push(index);
-			}
-		}
-		if old_proposal.kton_value != 0 {
-			let new_proposal = Proposal {
-				proposer: old_proposal.proposer,
-				value: old_proposal.kton_value,
-				beneficiary: old_proposal.beneficiary,
-				bond: old_proposal.kton_bond,
-			};
-			// Only one on-chain proposal have kton value, so set index to 0
-			let hash = Twox64Concat::hash(&(0 as ProposalIndex).encode());
-
-			migration::put_storage_value(KTON_TREASURY_PREFIX, b"Proposals", &hash, new_proposal);
-
-			if approvals.contains(&index) {
-				kton_approvals.push(index);
-			}
-		}
-	}
-	migration::put_storage_value(NEW_PREFIX, b"ProposalCount", &[], 2 as ProposalIndex);
-	migration::put_storage_value(
-		KTON_TREASURY_PREFIX,
-		b"ProposalCount",
-		&[],
-		1 as ProposalIndex,
-	);
-
-	migration::remove_storage_prefix(OLD_PREFIX, b"Proposals", &[]);
-	log::info!("`Proposals` Migrated");
-
-	if !ring_approvals.is_empty() {
-		migration::put_storage_value(NEW_PREFIX, b"Approvals", &[], ring_approvals);
-	}
-	if !kton_approvals.is_empty() {
-		migration::put_storage_value(KTON_TREASURY_PREFIX, b"Approvals", &[], kton_approvals);
-	}
-	log::info!("`Approvals` Migrated");
-
-	migration::move_storage_from_pallet(b"Tips", OLD_PREFIX, NEW_PREFIX);
-	log::info!("`Tips` Migrated");
-	migration::move_storage_from_pallet(b"Reasons", OLD_PREFIX, NEW_PREFIX);
-	log::info!("`Reasons` Migrated");
-	migration::move_storage_from_pallet(b"BountyCount", OLD_PREFIX, NEW_PREFIX);
-	log::info!("`BountyCount` Migrated");
-	migration::move_storage_from_pallet(b"Bounties", OLD_PREFIX, NEW_PREFIX);
-	log::info!("`Bounties` Migrated");
-	migration::move_storage_from_pallet(b"BountyDescriptions", OLD_PREFIX, NEW_PREFIX);
-	log::info!("`BountyDescriptions` Migrated");
-	migration::move_storage_from_pallet(b"BountyApprovals", OLD_PREFIX, NEW_PREFIX);
-	log::info!("`BountyApprovals` Migrated");
-}
+fn migrate() {}
 
 pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
-		migrate_treasury();
+		migrate();
 
 		Ok(())
 	}
 
 	fn on_runtime_upgrade() -> Weight {
-		migrate_treasury();
+		migrate();
 
 		RuntimeBlockWeights::get().max_block
 	}
