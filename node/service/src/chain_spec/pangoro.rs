@@ -62,7 +62,7 @@ fn properties() -> Properties {
 
 	properties.insert("ss58Format".into(), 42.into());
 	properties.insert("tokenDecimals".into(), vec![9, 9].into());
-	properties.insert("tokenSymbol".into(), vec!["PGRRING", "PGRKTON"].into());
+	properties.insert("tokenSymbol".into(), vec!["ORING", "OKTON"].into());
 
 	properties
 }
