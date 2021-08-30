@@ -22,6 +22,7 @@ pallet-timestamp = { default-features = false, git = "https://github.com/darwini
 sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-std         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [dev-dependencies]
 darwinia-balances = { default-features = false, path = "../balances" }
@@ -39,5 +40,6 @@ std = [
 	"frame-system/std",
 	"sp-core/std",
 	"sp-io/std",
+	"sp-std/std",
 	"sp-runtime/std",
 ]

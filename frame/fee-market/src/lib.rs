@@ -57,7 +57,8 @@ pub mod pallet {
 		#[pallet::constant]
 		type MiniumLockValue: Get<RingBalance<Self>>;
 		#[pallet::constant]
-		type MinimumPrice: Get<RingBalance<Self>>;
+		type MinimumPrice: Get<Price>;
+		type CandidatePriceNumber: Get<u64>;
 
 		type LockId: Get<LockIdentifier>;
 		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
@@ -73,6 +74,10 @@ pub mod pallet {
 		RegisterAndLockRing(T::AccountId, RingBalance<T>),
 		/// Update lock value
 		UpdateLockedRing(T::AccountId, RingBalance<T>),
+		/// Cancel relayer register
+		CancelRelayerRegister(T::AccountId),
+		/// Update relayer price
+		SubmitRelayerPrice(T::AccountId, Price),
 	}
 
 	#[pallet::error]
@@ -87,8 +92,13 @@ pub mod pallet {
 		RegisterBeforeUpdateLock,
 		/// Invalid new lock value
 		InvalidNewLockValue,
+		/// Only Relayer can submit price
+		InvalidSubmitPriceOrigin,
+		/// The price is lower than MinimumPrice
+		TooLowPrice,
 	}
 
+	// Relayer Storage
 	#[pallet::storage]
 	#[pallet::getter(fn get_locked_ring)]
 	pub type LockedRing<T: Config> =
@@ -98,20 +108,26 @@ pub mod pallet {
 	#[pallet::getter(fn relayers)]
 	pub type Relayers<T: Config> = StorageValue<_, Vec<T::AccountId>, ValueQuery>;
 
+	// Price Storage
 	#[pallet::storage]
-	#[pallet::getter(fn get_expected_price)]
-	pub type SubmitedPrice<T: Config> =
+	#[pallet::getter(fn get_relayer_prices)]
+	pub type RelayerPrices<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, Price, ValueQuery>;
 
+	/// The Target price given to relayer
 	#[pallet::storage]
-	pub type TargetRelayPrice<T: Config> = StorageValue<_, Price>;
+	#[pallet::getter(fn get_target_price)]
+	pub type TargetPrice<T: Config> = StorageValue<_, Price, ValueQuery>;
 
-	/// p1 < p2 < p3, TODO: A better comments
+	/// The lowest three prices, p.0 < p.1 < p.2
 	#[pallet::storage]
-	pub type LowestPrices<T: Config> = StorageValue<_, (Price, Price, Price)>;
+	#[pallet::getter(fn get_candidate_prices)]
+	pub type CandidatePrices<T: Config> = StorageValue<_, Vec<(T::AccountId, Price)>, ValueQuery>;
 
+	/// The prices list
 	#[pallet::storage]
-	pub type PricesList<T: Config> = StorageValue<_, Vec<Price>>;
+	#[pallet::getter(fn get_prices)]
+	pub type Prices<T: Config> = StorageValue<_, Vec<Price>, ValueQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {}
@@ -129,11 +145,8 @@ pub mod pallet {
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
 	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_finalize(_: T::BlockNumber) {
-			// update the latest target price
-		}
-	}
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
+
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Before the relayer transfer msgs, they need lock some rings.
@@ -208,43 +221,79 @@ pub mod pallet {
 			T::RingCurrency::remove_lock(T::LockId::get(), &who);
 			LockedRing::<T>::remove(who.clone());
 			Relayers::<T>::mutate(|relayers| relayers.retain(|x| *x != who));
+			Self::deposit_event(Event::<T>::CancelRelayerRegister(who));
 			Ok(().into())
 		}
 
-		/// The relayers can submit a expect fee price
+		/// The relayer submit price
 		#[pallet::weight(10000)]
 		#[transactional]
-		pub fn submit_expected_price(origin: OriginFor<T>, p: Price) -> DispatchResultWithPostInfo {
-			let user = ensure_signed(origin)?;
+		pub fn submit_price(origin: OriginFor<T>, p: Price) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			ensure!(
+				<Relayers<T>>::get().contains(&who),
+				<Error<T>>::InvalidSubmitPriceOrigin
+			);
+			ensure!(p >= T::MinimumPrice::get(), <Error<T>>::TooLowPrice);
 
-			// update fee list and do sort work
-
-			Ok(().into())
-		}
-
-		/// Allow relayers to update price while relaying
-		#[pallet::weight(10000)]
-		#[transactional]
-		pub fn update_expected_price(origin: OriginFor<T>, p: Price) -> DispatchResultWithPostInfo {
-			let user = ensure_signed(origin)?;
-
-			// update fee list and do sort work
-
+			Self::handle_price(&who, p);
+			Self::deposit_event(Event::<T>::SubmitRelayerPrice(who, p));
 			Ok(().into())
 		}
 	}
 }
 
 impl<T: Config> Pallet<T> {
-	pub fn pallet_account_id() -> T::AccountId {
-		T::PalletId::get().into_account()
+	pub fn handle_price(who: &T::AccountId, p: Price) {
+		<RelayerPrices<T>>::insert(&who, p);
+		<Prices<T>>::append(&p);
+
+		// let mut candidate_relayers = Vec::with_capacity(T::CandidatePriceNumber::get() as usize);
+		let mut prices = Self::get_prices();
+		prices.sort();
+		if prices.len() >= T::CandidatePriceNumber::get() as usize {
+			<TargetPrice<T>>::put(prices[T::CandidatePriceNumber::get() as usize - 1]);
+			// something need to check again and again
+			for (id, p) in <RelayerPrices<T>>::iter() {
+				for i in 0..T::CandidatePriceNumber::get() as usize {}
+				// if p == prices[0] {
+				// 	res.insert(0, (key, item));
+				// } else if item == prices[1] {
+				// 	res.insert(1, (key, item));
+				// } else if item == prices[2] {
+				// 	res.insert(2, (key, item));
+				// }
+			}
+		}
+
+		// <CandidatePrices<T>>::append(res.get(0).unwrap());
+		// <CandidatePrices<T>>::append(res.get(1).unwrap());
+		// <CandidatePrices<T>>::append(res.get(2).unwrap());
 	}
 
 	pub fn slash_relayer() {
+		// slash relayers
+
+		// if the lock ring lower than limit, remove it auto
 		todo!()
 	}
 }
 
-// TODO:
-// 1. expose rpc to a estimate price
-// 2. S(t) function
+use sp_std::cmp::Ordering;
+
+pub struct RelayerPrice<T: Config> {
+	id: T::AccountId,
+	price: Price,
+}
+
+impl<T: Config> PartialOrd for RelayerPrice<T> {
+	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+		self.price.partial_cmp(&other.price)
+	}
+}
+
+impl<T: Config> PartialEq for RelayerPrice<T> {
+	fn eq(&self, other: &Self) -> bool {
+		self.price == other.price
+	}
+}

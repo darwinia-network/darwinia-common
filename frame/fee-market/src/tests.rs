@@ -94,7 +94,8 @@ frame_support::parameter_types! {
 	pub const FeeMarketPalletId: PalletId = PalletId(*b"da/feemk");
 	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
 	pub const MiniumLockValue: Balance = 2;
-	pub const MinimumPrice: Balance = 0;
+	pub const MinimumPrice: Balance = 2;
+	pub const CandidatePriceNumber: u64 = 3;
 }
 
 impl Config for Test {
@@ -102,6 +103,7 @@ impl Config for Test {
 	type Event = Event;
 	type MiniumLockValue = MiniumLockValue;
 	type MinimumPrice = MinimumPrice;
+	type CandidatePriceNumber = CandidatePriceNumber;
 	type LockId = FeeMarketLockId;
 	type RingCurrency = Ring;
 	type WeightInfo = ();
@@ -271,5 +273,20 @@ fn test_locked_ring_list_works() {
 		assert_eq!(FeeMarket::get_locked_ring(2), 0);
 		assert_eq!(FeeMarket::get_locked_ring(3), 0);
 		assert_eq!(FeeMarket::get_locked_ring(4), 0);
+	});
+}
+
+#[test]
+fn test_submit_price_works() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(FeeMarket::register_and_lock_ring(Origin::signed(1), 5));
+		assert_err!(
+			FeeMarket::submit_price(Origin::signed(1), 1),
+			<Error<Test>>::TooLowPrice
+		);
+
+		assert_ok!(FeeMarket::submit_price(Origin::signed(1), 2));
+		assert_eq!(FeeMarket::get_prices(), vec![2]);
+		assert_eq!(FeeMarket::get_relayer_prices(&1), 2);
 	});
 }
