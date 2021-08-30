@@ -42,8 +42,7 @@ use frame_support::{
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use sp_runtime::{
-	traits::UniqueSaturatedInto,
-	traits::{AccountIdConversion, Convert, Zero},
+	traits::{AccountIdConversion, Convert, Saturating, UniqueSaturatedInto, Zero},
 	SaturatedConversion,
 };
 use sp_std::prelude::*;
@@ -59,6 +58,8 @@ use dp_asset::{
 	RecipientAccount,
 };
 
+const SECONDS_PER_DAY: u128 = 86_400;
+
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type Balance = u128;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
@@ -70,7 +71,7 @@ pub mod pallet {
 	use super::*;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + pallet_timestamp::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type WeightInfo: WeightInfo;
 
@@ -80,6 +81,8 @@ pub mod pallet {
 		type RingPalletId: Get<PalletId>;
 		#[pallet::constant]
 		type RingLockMaxLimit: Get<RingBalance<Self>>;
+		#[pallet::constant]
+		type DailyMaxTransferLimit: Get<RingBalance<Self>>;
 		type RingCurrency: Currency<AccountId<Self>>;
 
 		type BridgedAccountIdConverter: Convert<H256, Self::AccountId>;
@@ -116,6 +119,8 @@ pub mod pallet {
 		InsufficientBalance,
 		/// Ring Lock LIMITED
 		RingLockLimited,
+		/// Ring Daily Limited
+		RingDailyLimited,
 		/// invalid source origin
 		InvalidOrigin,
 		/// encode dispatch call failed
@@ -124,11 +129,25 @@ pub mod pallet {
 		SendMessageFailed,
 	}
 
+	#[pallet::storage]
+	#[pallet::getter(fn daily_transfered)]
+	pub type DailyTransfered<T: Config> = StorageValue<_, (u128, RingBalance<T>)>;
+
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_initialize(_: BlockNumberFor<T>) -> Weight {
+			let now: u128 = <pallet_timestamp::Pallet<T>>::get().unique_saturated_into();
+			let latest_timestamp = DailyTransfered::<T>::get().map_or_else(|| now, |v| v.0);
+			if latest_timestamp < now - now % SECONDS_PER_DAY {
+				<DailyTransfered<T>>::kill();
+			}
+
+			T::DbWeight::get().writes(1)
+		}
+	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -184,6 +203,12 @@ pub mod pallet {
 				value < T::RingLockMaxLimit::get() && !value.is_zero(),
 				<Error<T>>::RingLockLimited
 			);
+			// Make sure xxx
+			let transfered = Self::get_daily_transfered();
+			ensure!(
+				T::DailyMaxTransferLimit::get().saturating_sub(transfered) >= value,
+				<Error<T>>::RingDailyLimited
+			);
 			// Make sure the user's balance is enough to lock
 			ensure!(
 				T::RingCurrency::free_balance(&user) > value + fee,
@@ -210,6 +235,7 @@ pub mod pallet {
 					.map_err(|_| Error::<T>::EncodeInvalid)?;
 			T::MessageSender::send_message(payload, fee)
 				.map_err(|_| Error::<T>::SendMessageFailed)?;
+			Self::update_daily_transfered(value.saturating_add(transfered));
 			Self::deposit_event(Event::TokenLocked(token, user, recipient, amount));
 			Ok(().into())
 		}
@@ -265,6 +291,17 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		pub fn pallet_account_id() -> T::AccountId {
 			T::PalletId::get().into_account()
+		}
+
+		// if this is the first time to transfer, then the daily_transfer storage is none, other
+		// wise, it is <timestamp, transfered>, where timestamp is 00:00:00, the start of the day
+		fn get_daily_transfered() -> RingBalance<T> {
+			DailyTransfered::<T>::get().map_or_else(|| Zero::zero(), |v| v.1)
+		}
+
+		fn update_daily_transfered(balance: RingBalance<T>) {
+			let now: u128 = <pallet_timestamp::Pallet<T>>::get().unique_saturated_into();
+			DailyTransfered::<T>::put((now - now % SECONDS_PER_DAY, balance));
 		}
 	}
 }
