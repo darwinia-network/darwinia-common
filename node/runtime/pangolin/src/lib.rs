@@ -773,12 +773,13 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 	}
 }
 
-fn migrate() {
+fn migrate() -> Weight {
 	// --- paritytech ---
+	#[allow(unused)]
 	use frame_support::migration;
 
-	migration::move_pallet(b"BridgeMillauGrandpa", b"BridgePangoroGrandpa");
-	migration::move_pallet(b"BridgePangoroDispatch", b"BridgeDispatch");
+	0
+	// RuntimeBlockWeights::get().max_block
 }
 
 pub struct CustomOnRuntimeUpgrade;
@@ -791,9 +792,7 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	}
 
 	fn on_runtime_upgrade() -> Weight {
-		migrate();
-
-		RuntimeBlockWeights::get().max_block
+		migrate()
 	}
 }
 
