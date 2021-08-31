@@ -84,9 +84,8 @@ pub const FROM_PANGOLIN_UNREWARDED_RELAYERS_STATE: &str =
 /// Name of the `ToPangolinOutboundLaneApi::estimate_message_delivery_and_dispatch_fee` runtime method.
 pub const TO_PANGOLIN_ESTIMATE_MESSAGE_FEE_METHOD: &str =
 	"ToPangolinOutboundLaneApi_estimate_message_delivery_and_dispatch_fee";
-/// Name of the `ToPangolinOutboundLaneApi::messages_dispatch_weight` runtime method.
-pub const TO_PANGOLIN_MESSAGES_DISPATCH_WEIGHT_METHOD: &str =
-	"ToPangolinOutboundLaneApi_messages_dispatch_weight";
+/// Name of the `ToPangolinOutboundLaneApi::message_details` runtime method.
+pub const TO_PANGOLIN_MESSAGE_DETAILS_METHOD: &str = "ToPangolinOutboundLaneApi_message_details";
 /// Name of the `ToPangolinOutboundLaneApi::latest_generated_nonce` runtime method.
 pub const TO_PANGOLIN_LATEST_GENERATED_NONCE_METHOD: &str =
 	"ToPangolinOutboundLaneApi_latest_generated_nonce";
@@ -112,9 +111,8 @@ pub const FROM_PANGORO_UNREWARDED_RELAYERS_STATE: &str =
 /// Name of the `ToPangoroOutboundLaneApi::estimate_message_delivery_and_dispatch_fee` runtime method.
 pub const TO_PANGORO_ESTIMATE_MESSAGE_FEE_METHOD: &str =
 	"ToPangoroOutboundLaneApi_estimate_message_delivery_and_dispatch_fee";
-/// Name of the `ToPangoroOutboundLaneApi::messages_dispatch_weight` runtime method.
-pub const TO_PANGORO_MESSAGES_DISPATCH_WEIGHT_METHOD: &str =
-	"ToPangoroOutboundLaneApi_messages_dispatch_weight";
+/// Name of the `ToPangolinOutboundLaneApi::message_details` runtime method.
+pub const TO_PANGORO_MESSAGE_DETAILS_METHOD: &str = "ToPangoroOutboundLaneApi_message_details";
 /// Name of the `ToPangoroOutboundLaneApi::latest_generated_nonce` runtime method.
 pub const TO_PANGORO_LATEST_GENERATED_NONCE_METHOD: &str =
 	"ToPangoroOutboundLaneApi_latest_generated_nonce";
