@@ -11,9 +11,9 @@ use sp_runtime::DispatchErrorWithPostInfo;
 // --- darwinia-network ---
 use crate::*;
 use bridge_primitives::AccountIdConverter;
-use darwinia_s2s_backing::{Config, EncodeCall};
 use darwinia_support::s2s::RelayMessageCaller;
 use dp_asset::{token::Token, RecipientAccount};
+use to_substrate_backing::{Config, EncodeCall};
 
 pub const PANGORO_PANGOLIN_LANE: [u8; 4] = *b"rtll";
 

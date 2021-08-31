@@ -1861,30 +1861,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-s2s-backing"
-version = "2.6.2"
-dependencies = [
- "array-bytes",
- "bp-runtime",
- "darwinia-balances",
- "darwinia-support",
- "dp-asset",
- "dp-contract",
- "ethereum-primitives",
- "ethereum-types",
- "frame-support",
- "frame-system",
- "log",
- "pallet-timestamp",
- "parity-scale-codec",
- "serde",
- "serde_json",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "darwinia-s2s-issuing"
 version = "2.6.2"
 dependencies = [
@@ -6100,7 +6076,6 @@ dependencies = [
  "bridge-runtime-common",
  "common-primitives",
  "darwinia-balances",
- "darwinia-s2s-backing",
  "darwinia-staking",
  "darwinia-support",
  "dp-asset",
@@ -6148,6 +6123,7 @@ dependencies = [
  "sp-trie",
  "sp-version",
  "substrate-wasm-builder 3.0.0",
+ "to-substrate-backing",
 ]
 
 [[package]]
@@ -9902,6 +9878,30 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-staking",
+ "sp-std",
+]
+
+[[package]]
+name = "to-substrate-backing"
+version = "2.6.2"
+dependencies = [
+ "array-bytes",
+ "bp-runtime",
+ "darwinia-balances",
+ "darwinia-support",
+ "dp-asset",
+ "dp-contract",
+ "ethereum-primitives",
+ "ethereum-types",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "serde",
+ "serde_json",
+ "sp-io",
+ "sp-runtime",
  "sp-std",
 ]
 
