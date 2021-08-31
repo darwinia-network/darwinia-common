@@ -29,10 +29,10 @@ decl_runtime_apis! {
 		AccountId: Codec
 	{
 		/// Whether the relayer has registered
-		fn is_relayer(who: &AccountId) -> bool;
+		fn is_registered(who: &AccountId) -> bool;
 		/// Get the final choose relayer
-		fn target_price() -> u64;
-		/// Get the candidate relayers info
-		fn candidate_prices() -> Vec<(AccountId, u64)>;
+		fn top_relayer() -> u64;
+		/// Get the prior relayers info
+		fn prior_relayers() -> Vec<(AccountId, u64)>;
 	}
 }

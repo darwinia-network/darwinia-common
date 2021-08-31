@@ -64,7 +64,7 @@ pub mod pallet {
 		type MiniumLockValue: Get<RingBalance<Self>>;
 		#[pallet::constant]
 		type MinimumPrice: Get<Price>;
-		type CandidatePriceNumber: Get<u64>;
+		type PriorRelayersNumber: Get<u64>;
 
 		type LockId: Get<LockIdentifier>;
 		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
@@ -117,13 +117,12 @@ pub mod pallet {
 	// Price Storage
 	/// The lowest n prices, p.0 < p.1 < p.2 ... < p.n
 	#[pallet::storage]
-	#[pallet::getter(fn get_candidate_prices)]
-	pub type CandidatePrices<T: Config> = StorageValue<_, Vec<(T::AccountId, Price)>, ValueQuery>;
+	#[pallet::getter(fn prior_relayers)]
+	pub type PriorRelayers<T: Config> = StorageValue<_, Vec<(T::AccountId, Price)>, ValueQuery>;
 
-	/// The Target price given to relayer
 	#[pallet::storage]
-	#[pallet::getter(fn get_target_price)]
-	pub type TargetPrice<T: Config> = StorageValue<_, Price, ValueQuery>;
+	#[pallet::getter(fn top_relayer)]
+	pub type TopRelayer<T: Config> = StorageValue<_, Price, ValueQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {}
@@ -162,7 +161,7 @@ pub mod pallet {
 				T::RingCurrency::free_balance(&who) >= lock_value,
 				<Error<T>>::InsufficientBalance
 			);
-			ensure!(!Self::is_relayer(&who), <Error<T>>::AlreadyRegistered);
+			ensure!(!Self::is_registered(&who), <Error<T>>::AlreadyRegistered);
 			if let Some(p) = price {
 				ensure!(p >= T::MinimumPrice::get(), <Error<T>>::TooLowPrice);
 			}
@@ -190,7 +189,10 @@ pub mod pallet {
 			new_lock: RingBalance<T>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			ensure!(Self::is_relayer(&who), <Error<T>>::RegisterBeforeUpdateLock);
+			ensure!(
+				Self::is_registered(&who),
+				<Error<T>>::RegisterBeforeUpdateLock
+			);
 			ensure!(
 				T::RingCurrency::free_balance(&who) >= new_lock,
 				<Error<T>>::InsufficientBalance
@@ -213,7 +215,10 @@ pub mod pallet {
 		#[transactional]
 		pub fn cancel_register(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			ensure!(Self::is_relayer(&who), <Error<T>>::RegisterBeforeUpdateLock);
+			ensure!(
+				Self::is_registered(&who),
+				<Error<T>>::RegisterBeforeUpdateLock
+			);
 
 			T::RingCurrency::remove_lock(T::LockId::get(), &who);
 			RelayersMap::<T>::remove(who.clone());
@@ -229,7 +234,10 @@ pub mod pallet {
 		#[transactional]
 		pub fn update_price(origin: OriginFor<T>, p: Price) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			ensure!(Self::is_relayer(&who), <Error<T>>::InvalidSubmitPriceOrigin);
+			ensure!(
+				Self::is_registered(&who),
+				<Error<T>>::InvalidSubmitPriceOrigin
+			);
 			ensure!(p >= T::MinimumPrice::get(), <Error<T>>::TooLowPrice);
 
 			<RelayersMap<T>>::mutate(who.clone(), |relayer| {
@@ -246,7 +254,7 @@ pub mod pallet {
 impl<T: Config> Pallet<T> {
 	pub fn update_relayer_prices() -> Result<(), DispatchError> {
 		// Update candidate price list when relayers submit new price
-		<CandidatePrices<T>>::kill();
+		<PriorRelayers<T>>::kill();
 
 		let mut relayers: Vec<Relayer<T>> = <Relayers<T>>::get()
 			.iter()
@@ -254,22 +262,22 @@ impl<T: Config> Pallet<T> {
 			.collect();
 		relayers.sort();
 
-		// If the submit price relayer number is larger than the CandidatePriceNumber,
-		// append the lowest candidate number to CandidatePrices and choose the last one as TargetPrice.
-		if relayers.len() >= T::CandidatePriceNumber::get() as usize {
-			for i in 0..T::CandidatePriceNumber::get() as usize {
+		// If the registered relayers number >= the PriorRelayersNumber,
+		// append the lowest PriorRelayersNumber relayers to PriorRelayers and choose the last one as TopRelayer.
+		if relayers.len() >= T::PriorRelayersNumber::get() as usize {
+			for i in 0..T::PriorRelayersNumber::get() as usize {
 				let r = &relayers[i];
-				<CandidatePrices<T>>::append((r.id.clone(), r.price));
+				<PriorRelayers<T>>::append((r.id.clone(), r.price));
 			}
 		} else {
-			// If the submit price relayer number lower than the CandidatePriceNumber,
-			// append all submit price to CandidatePrices and choose the last one as TargetPrice
+			// If the registered relayers number < the PriorRelayersNumber,
+			// append all submit price to PriorRelayers and choose the last one as TopRelayer
 			for r in relayers.iter() {
-				<CandidatePrices<T>>::append((r.id.clone(), r.price));
+				<PriorRelayers<T>>::append((r.id.clone(), r.price));
 			}
 		}
-		<TargetPrice<T>>::put(
-			<CandidatePrices<T>>::get()
+		<TopRelayer<T>>::put(
+			<PriorRelayers<T>>::get()
 				.iter()
 				.last()
 				.map(|(_, p)| *p)
@@ -279,7 +287,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Whether the account is a registered relayer
-	pub fn is_relayer(who: &T::AccountId) -> bool {
+	pub fn is_registered(who: &T::AccountId) -> bool {
 		<Relayers<T>>::get().iter().any(|r| *r == *who)
 	}
 

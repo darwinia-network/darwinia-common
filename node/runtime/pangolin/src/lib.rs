@@ -724,16 +724,16 @@ sp_api::impl_runtime_apis! {
 	}
 
 	impl darwinia_fee_market_runtime_api::FeeMarketApi<Block, AccountId> for RuntimeApi {
-		fn is_relayer(who: &AccountId) -> bool {
-			FeeMarket::is_relayer(who)
+		fn is_registered(who: &AccountId) -> bool {
+			FeeMarket::is_registered(who)
 		}
 
-		fn target_price() -> u64 {
-			FeeMarket::get_target_price()
+		fn top_relayer() -> u64 {
+			FeeMarket::top_relayer()
 		}
 
-		fn candidate_prices() -> Vec<(AccountId, u64)> {
-			FeeMarket::get_candidate_prices()
+		fn prior_relayers() -> Vec<(AccountId, u64)> {
+			FeeMarket::prior_relayers()
 		}
 	}
 

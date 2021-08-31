@@ -9,7 +9,7 @@ frame_support::parameter_types! {
 	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
 	pub const MiniumLockValue: Balance = 2;
 	pub const MinimumPrice: u64 = 2;
-	pub const CandidatePriceNumber: u64 = 3;
+	pub const PriorRelayersNumber: u64 = 3;
 }
 
 impl Config for Runtime {
@@ -17,7 +17,7 @@ impl Config for Runtime {
 	type Event = Event;
 	type MiniumLockValue = MiniumLockValue;
 	type MinimumPrice = MinimumPrice;
-	type CandidatePriceNumber = CandidatePriceNumber;
+	type PriorRelayersNumber = PriorRelayersNumber;
 	type LockId = FeeMarketLockId;
 	type RingCurrency = Ring;
 	type WeightInfo = ();
