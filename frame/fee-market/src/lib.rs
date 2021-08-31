@@ -149,9 +149,10 @@ pub mod pallet {
 		/// Before the relayer transfer msgs, they need lock some rings.
 		#[pallet::weight(10000)]
 		#[transactional]
-		pub fn register_and_lock_ring(
+		pub fn register(
 			origin: OriginFor<T>,
 			lock_value: RingBalance<T>,
+			price: Option<Price>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			ensure!(
@@ -166,7 +167,11 @@ pub mod pallet {
 				<Relayers<T>>::get().iter().find(|r| r.id == who).is_none(),
 				<Error<T>>::AlreadyRegistered
 			);
+			if let Some(p) = price {
+				ensure!(p >= T::MinimumPrice::get(), <Error<T>>::TooLowPrice);
+			}
 
+			let price = price.unwrap_or(T::MinimumPrice::get());
 			T::RingCurrency::set_lock(
 				T::LockId::get(),
 				&who,
@@ -174,14 +179,15 @@ pub mod pallet {
 				WithdrawReasons::all(),
 			);
 			<LockedRing<T>>::insert(&who, lock_value);
-			<Relayers<T>>::append(Relayer::new(who.clone(), 0));
+			<Relayers<T>>::append(Relayer::new(who.clone(), price));
+			Self::update_relayer_prices(who.clone(), price)?;
 			Self::deposit_event(Event::<T>::RegisterAndLockRing(who, lock_value));
 			Ok(().into())
 		}
 
 		#[pallet::weight(10000)]
 		#[transactional]
-		pub fn update_locked_ring(
+		pub fn update_locked_balance(
 			origin: OriginFor<T>,
 			new_lock: RingBalance<T>,
 		) -> DispatchResultWithPostInfo {
@@ -233,7 +239,7 @@ pub mod pallet {
 			);
 			ensure!(p >= T::MinimumPrice::get(), <Error<T>>::TooLowPrice);
 
-			Self::handle_price(who.clone(), p)?;
+			Self::update_relayer_prices(who.clone(), p)?;
 			Self::deposit_event(Event::<T>::SubmitRelayerPrice(who, p));
 			Ok(().into())
 		}
@@ -241,7 +247,7 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-	pub fn handle_price(who: T::AccountId, p: Price) -> Result<(), DispatchError> {
+	pub fn update_relayer_prices(who: T::AccountId, p: Price) -> Result<(), DispatchError> {
 		<RelayerPrices<T>>::insert(&who, p);
 		<Relayers<T>>::mutate(|relayers| {
 			relayers
@@ -250,9 +256,14 @@ impl<T: Config> Pallet<T> {
 				.map(|r| r.price = p)
 				.ok_or_else(|| <Error<T>>::InvalidSubmitPriceOrigin)
 		})?;
+		// Update candidate price list when relayers submit new price
+		<CandidatePrices<T>>::kill();
 
 		let mut relayers = Self::relayers();
 		relayers.sort();
+		println!("bear: relayers = {:?}", relayers.len());
+		// If the submit price relayer number is larger than the CandidatePriceNumber,
+		// append the lowest candidate number to CandidatePrices and choose the last one as TargetPrice.
 		if relayers.len() >= T::CandidatePriceNumber::get() as usize {
 			for i in 0..T::CandidatePriceNumber::get() as usize {
 				let r = &relayers[i];
@@ -260,6 +271,8 @@ impl<T: Config> Pallet<T> {
 			}
 			<TargetPrice<T>>::put(relayers[(T::CandidatePriceNumber::get() - 1) as usize].price);
 		} else {
+			// If the submit price relayer number lower than the CandidatePriceNumber,
+			// append all submit price to CandidatePrices and choose the last one as TargetPrice
 			for i in 0..relayers.len() {
 				let r = &relayers[i];
 				<CandidatePrices<T>>::append((r.id.clone(), r.price));
@@ -267,6 +280,11 @@ impl<T: Config> Pallet<T> {
 			<TargetPrice<T>>::put(relayers[relayers.len() - 1].price);
 		}
 		Ok(())
+	}
+
+	/// Whether the account is a registered relayer
+	pub fn is_relayer(who: T::AccountId) -> bool {
+		<Relayers<T>>::get().iter().find(|r| r.id == who).is_some()
 	}
 
 	pub fn slash_relayer() {
