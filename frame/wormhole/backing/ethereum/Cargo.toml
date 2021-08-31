@@ -32,10 +32,10 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 # crates.io
 rlp = { version = "0.5.0" }
 # darwinia-network
-darwinia-balances         = { path = "../../../../frame/balances" }
-darwinia-ethereum-relay   = { path = "../relay" }
+darwinia-balances         = { path = "../../../balances" }
+darwinia-ethereum-relay   = { path = "../../../bridge/ethereum" }
 darwinia-relay-primitives = { path = "../../../../primitives/relay" }
-darwinia-relayer-game     = { path = "../../relayer-game" }
+darwinia-relayer-game     = { path = "../../../bridge/relayer-game" }
 darwinia-staking          = { path = "../../../../frame/staking" }
 ethereum-primitives       = { features = ["full-serde"], path = "../../../../primitives/ethereum" }
 # paritytech

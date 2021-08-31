@@ -4,23 +4,13 @@ The Darwinia Runtime Module Library (DRML) is a darwinia.network maintained coll
 ## Runtime Modules Overview
 - [darwinia-balances](./frame/balances)
 	- Desc.
-- [darwinia-ethereum-backing](./frame/bridge/ethereum/backing)
-	- Desc.
-- [darwinia-ethereum-issuing](./frame/bridge/ethereum/issuing)
-	- Desc.
 - [darwinia-ethereum-relay](./frame/bridge/ethereum/relay)
 	- Desc.
-- [darwinia-bridge-bsc](./frame/bridge/ethereum-bsc)
+- [darwinia-bridge-bsc](./frame/bridge/bsc)
 	- Desc.
 - [darwinia-relay-authorities](./frame/bridge/relay-authorities)
 	- Desc.
 - [darwinia-relayer-game](./frame/bridge/relayer-game)
-	- Desc.
-- [darwinia-s2s-backing](./frame/bridge/s2s/backing)
-	- Desc.
-- [darwinia-s2s-issuing](./frame/bridge/s2s/issuing)
-	- Desc.
-- [darwinia-tron-backing](./frame/bridge/tron/backing)
 	- Desc.
 - [darwinia-claims](./frame/claims)
 	- Desc.
@@ -41,6 +31,16 @@ The Darwinia Runtime Module Library (DRML) is a darwinia.network maintained coll
 - [darwinia-support](./frame/support)
 	- Desc.
 - [darwinia-vesting](./frame/vesting)
+	- Desc.
+- [darwinia-ethereum-backing](./frame/wormhole/backing/ethereum)
+	- Desc.
+- [darwinia-ethereum-issuing](./frame/wormhole/issuing/ethereum)
+	- Desc.
+- [darwinia-s2s-backing](./frame/wormhole/backing/s2s)
+	- Desc.
+- [darwinia-s2s-issuing](./frame/wormhole/issuing/s2s)
+	- Desc.
+- [darwinia-tron-backing](./frame/wormhole/backing/tron)
 	- Desc.
 
 ## Development

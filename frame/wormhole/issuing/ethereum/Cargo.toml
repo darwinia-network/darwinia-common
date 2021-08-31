@@ -16,7 +16,7 @@ codec       = { package = "parity-scale-codec", version = "2.1.1", default-featu
 log         = { version = "0.4.14" }
 sha3        = { version = "0.9.1", default-features = false }
 # darwinia-network
-darwinia-ethereum-relay   = { default-features = false, path = "../relay" }
+darwinia-ethereum-relay   = { default-features = false, path = "../../../bridge/ethereum" }
 darwinia-evm              = { default-features = false, path = "../../../evm" }
 darwinia-relay-primitives = { default-features = false, path = "../../../../primitives/relay" }
 darwinia-support          = { default-features = false, path = "../../../support" }

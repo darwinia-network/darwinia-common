@@ -17,7 +17,7 @@ serde       = { version = "1.0.126", features = ["derive"], optional = true }
 bridge-primitives              = { default-features = false, path = "../../primitives/bridge" }
 common-primitives              = { default-features = false, path = "../../primitives/common" }
 darwinia-balances              = { default-features = false, path = "../../../frame/balances" }
-darwinia-s2s-backing           = { default-features = false, path = "../../../frame/bridge/s2s/backing" }
+darwinia-s2s-backing           = { default-features = false, path = "../../../frame/wormhole/backing/s2s" }
 darwinia-staking               = { default-features = false, path = "../../../frame/staking" }
 darwinia-support               = { default-features = false, path = "../../../frame/support" }
 dp-asset                       = { default-features = false, path = "../../../primitives/asset" }

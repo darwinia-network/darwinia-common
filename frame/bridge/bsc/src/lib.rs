@@ -18,7 +18,7 @@
 
 //! # Ethereum BSC(Binance Smart Chain) Pallet
 //!
-//! The ethereum-bsc pallet provides functionality for verifying headers which submitted by relayer and finalized
+//! The darwinia-bridge-bsc pallet provides functionality for verifying headers which submitted by relayer and finalized
 //! authority set
 //!
 //! - [`Config`]
@@ -27,7 +27,7 @@
 //!
 //! ## Overview
 //!
-//! The ethereum-bsc pallet provides functions for:
+//! The darwinia-bridge-bsc pallet provides functions for:
 //!
 //! - Verify bsc headers and finalize authority set
 //! - Verify a single bsc header
