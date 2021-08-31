@@ -169,7 +169,7 @@ pub mod pallet {
 				ensure!(p >= T::MinimumPrice::get(), <Error<T>>::TooLowPrice);
 			}
 
-			let price = price.unwrap_or(T::MinimumPrice::get());
+			let price = price.unwrap_or_else(T::MinimumPrice::get);
 			T::RingCurrency::set_lock(
 				T::LockId::get(),
 				&who,
@@ -261,7 +261,7 @@ impl<T: Config> Pallet<T> {
 
 		let mut relayers: Vec<Relayer<T>> = <Relayers<T>>::get()
 			.iter()
-			.map(|r| RelayersMap::<T>::get(r))
+			.map(RelayersMap::<T>::get)
 			.collect();
 		relayers.sort();
 
@@ -275,8 +275,7 @@ impl<T: Config> Pallet<T> {
 		} else {
 			// If the submit price relayer number lower than the CandidatePriceNumber,
 			// append all submit price to CandidatePrices and choose the last one as TargetPrice
-			for i in 0..relayers.len() {
-				let r = &relayers[i];
+			for r in relayers.iter() {
 				<CandidatePrices<T>>::append((r.id.clone(), r.price));
 			}
 		}

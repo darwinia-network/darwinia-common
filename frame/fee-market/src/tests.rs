@@ -137,10 +137,9 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 }
 
 #[test]
-fn test_register_and_lock_ring_workflow_works() {
+fn test_register_workflow_works() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(Ring::free_balance(1), 10);
-
 		assert_err!(
 			FeeMarket::register(Origin::signed(1), 1, None),
 			<Error<Test>>::TooLowLockValue
@@ -151,9 +150,11 @@ fn test_register_and_lock_ring_workflow_works() {
 		);
 
 		assert_ok!(FeeMarket::register(Origin::signed(1), 5, None));
+		assert!(FeeMarket::is_relayer(1));
+		assert_eq!(FeeMarket::relayers().len(), 1);
 		assert_eq!(Ring::usable_balance(&1), 5);
 		assert_eq!(FeeMarket::relayer_locked_balance(1), 5);
-		assert!(FeeMarket::is_relayer(1));
+		assert_eq!(FeeMarket::get_target_price(), 2);
 
 		assert_err!(
 			FeeMarket::register(Origin::signed(1), 5, None),
@@ -163,9 +164,22 @@ fn test_register_and_lock_ring_workflow_works() {
 }
 
 #[test]
-fn test_update_locked_ring_success() {
+fn test_relayer_register_update_price() {
 	new_test_ext().execute_with(|| {
-		assert_eq!(Ring::free_balance(1), 10);
+		assert_ok!(FeeMarket::register(Origin::signed(1), 5, Some(10)));
+		assert_ok!(FeeMarket::register(Origin::signed(2), 5, Some(11)));
+		assert_ok!(FeeMarket::register(Origin::signed(3), 5, Some(12)));
+		assert_ok!(FeeMarket::register(Origin::signed(4), 5, Some(13)));
+
+		assert_eq!(FeeMarket::relayers(), vec![1, 2, 3, 4]);
+		assert_eq!(FeeMarket::get_candidate_prices().len(), 3);
+		assert_eq!(FeeMarket::get_target_price(), 12);
+	});
+}
+
+#[test]
+fn test_update_locked_balance_success() {
+	new_test_ext().execute_with(|| {
 		assert_err!(
 			FeeMarket::update_locked_balance(Origin::signed(1), 5),
 			<Error::<Test>>::RegisterBeforeUpdateLock
@@ -173,28 +187,27 @@ fn test_update_locked_ring_success() {
 		assert_ok!(FeeMarket::register(Origin::signed(1), 5, None));
 		assert!(FeeMarket::is_relayer(1));
 
-		// update lock value from 5 to 8
+		// update lock balance from 5 to 8
 		assert_ok!(FeeMarket::update_locked_balance(Origin::signed(1), 8));
 		assert_eq!(Ring::usable_balance(&1), 2);
 		assert_eq!(FeeMarket::relayer_locked_balance(1), 8);
+		assert_eq!(FeeMarket::get_target_price(), 2);
 	});
 }
 
 #[test]
-fn test_update_locked_ring_failed() {
+fn test_update_locked_balance_failed() {
 	new_test_ext().execute_with(|| {
-		assert_eq!(Ring::free_balance(1), 10);
 		assert_ok!(FeeMarket::register(Origin::signed(1), 5, None));
-		assert!(FeeMarket::is_relayer(1));
 
-		// update lock value from 5 to 8
+		// update lock balance from 5 to 8
 		assert_ok!(FeeMarket::update_locked_balance(Origin::signed(1), 8));
-		// update lock value from 8 to 8
+		// update lock balance from 8 to 8
 		assert_err!(
 			FeeMarket::update_locked_balance(Origin::signed(1), 3),
 			<Error<Test>>::InvalidNewLockValue
 		);
-		// update lock value from 8 to 3
+		// update lock balance from 8 to 3
 		assert_err!(
 			FeeMarket::update_locked_balance(Origin::signed(1), 3),
 			<Error<Test>>::InvalidNewLockValue
@@ -207,8 +220,6 @@ fn test_update_locked_ring_failed() {
 #[test]
 fn test_cancel_register() {
 	new_test_ext().execute_with(|| {
-		assert_eq!(Ring::free_balance(1), 10);
-
 		assert_err!(
 			FeeMarket::cancel_register(Origin::signed(1)),
 			<Error<Test>>::RegisterBeforeUpdateLock
@@ -226,16 +237,28 @@ fn test_cancel_register() {
 }
 
 #[test]
-fn test_relayer_list_works() {
+fn test_cancel_register_and_update_price() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(FeeMarket::register(Origin::signed(1), 5, None));
-		assert_ok!(FeeMarket::register(Origin::signed(2), 10, None));
-		assert_ok!(FeeMarket::register(Origin::signed(3), 15, None));
-		assert_ok!(FeeMarket::register(Origin::signed(4), 20, None));
+		assert_ok!(FeeMarket::register(Origin::signed(2), 5, None));
+		assert_ok!(FeeMarket::register(Origin::signed(3), 5, None));
+		assert_ok!(FeeMarket::register(Origin::signed(4), 5, None));
+		assert_ok!(FeeMarket::register(Origin::signed(5), 5, None));
+		assert_eq!(FeeMarket::relayers(), vec![1, 2, 3, 4, 5]);
+		assert_eq!(FeeMarket::get_candidate_prices()[0], (1, 2));
+		assert_eq!(FeeMarket::get_candidate_prices()[1], (2, 2));
+		assert_eq!(FeeMarket::get_candidate_prices()[2], (3, 2));
+		assert_eq!(FeeMarket::get_target_price(), 2);
 
-		assert_eq!(FeeMarket::relayers(), vec![1, 2, 3, 4]);
-		assert_ok!(FeeMarket::cancel_register(Origin::signed(4)));
-		assert_eq!(FeeMarket::relayers(), vec![1, 2, 3]);
+		assert_ok!(FeeMarket::cancel_register(Origin::signed(1)));
+		assert_ok!(FeeMarket::cancel_register(Origin::signed(5)));
+		assert!(!FeeMarket::is_relayer(1));
+		assert!(!FeeMarket::is_relayer(5));
+		assert_eq!(FeeMarket::relayers(), vec![2, 3, 4]);
+		assert_eq!(FeeMarket::get_candidate_prices()[0], (2, 2));
+		assert_eq!(FeeMarket::get_candidate_prices()[1], (3, 2));
+		assert_eq!(FeeMarket::get_candidate_prices()[2], (4, 2));
+		assert_eq!(FeeMarket::get_target_price(), 2);
 	});
 }
 
@@ -275,7 +298,7 @@ fn test_locked_ring_list_works() {
 }
 
 #[test]
-fn test_submit_price_basic_storage_works() {
+fn test_update_price_basic_storage_works() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(FeeMarket::register(Origin::signed(1), 5, None));
 		assert_err!(
@@ -290,7 +313,7 @@ fn test_submit_price_basic_storage_works() {
 }
 
 #[test]
-fn test_few_relayer_duplicate_submit_one_price() {
+fn test_few_relayer_duplicate_update_one_price() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(FeeMarket::register(Origin::signed(1), 5, None));
 		assert_ok!(FeeMarket::update_price(Origin::signed(1), 2));
@@ -304,7 +327,7 @@ fn test_few_relayer_duplicate_submit_one_price() {
 }
 
 #[test]
-fn test_few_relayer_submit_one_price() {
+fn test_few_relayer_update_one_price() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(FeeMarket::register(Origin::signed(1), 5, None));
 		assert_ok!(FeeMarket::register(Origin::signed(2), 5, None));
@@ -319,7 +342,7 @@ fn test_few_relayer_submit_one_price() {
 }
 
 #[test]
-fn test_few_relayer_submit_more_price() {
+fn test_few_relayer_update_more_price() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(FeeMarket::register(Origin::signed(1), 5, None));
 		assert_ok!(FeeMarket::register(Origin::signed(2), 5, None));
@@ -335,7 +358,7 @@ fn test_few_relayer_submit_more_price() {
 }
 
 #[test]
-fn test_mul_relayer_submit_one_price() {
+fn test_mul_relayer_update_one_price() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(FeeMarket::register(Origin::signed(1), 5, None));
 		assert_ok!(FeeMarket::register(Origin::signed(2), 5, None));
@@ -356,7 +379,7 @@ fn test_mul_relayer_submit_one_price() {
 }
 
 #[test]
-fn test_mul_relayer_submit_diff_price() {
+fn test_mul_relayer_update_diff_price() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(FeeMarket::register(Origin::signed(1), 5, None));
 		assert_ok!(FeeMarket::register(Origin::signed(2), 5, None));
@@ -373,19 +396,5 @@ fn test_mul_relayer_submit_diff_price() {
 		assert_eq!(FeeMarket::get_candidate_prices()[1], (2, 20));
 		assert_eq!(FeeMarket::get_candidate_prices()[2], (3, 30));
 		assert_eq!(FeeMarket::get_target_price(), 30);
-	});
-}
-
-#[test]
-fn test_relayer_register_not_submit_price() {
-	new_test_ext().execute_with(|| {
-		assert_ok!(FeeMarket::register(Origin::signed(1), 5, None));
-		assert_ok!(FeeMarket::register(Origin::signed(2), 5, None));
-		assert_ok!(FeeMarket::register(Origin::signed(3), 5, None));
-		assert_ok!(FeeMarket::register(Origin::signed(4), 5, None));
-
-		assert_eq!(FeeMarket::relayers(), vec![1, 2, 3, 4]);
-		assert_eq!(FeeMarket::get_candidate_prices().len(), 3);
-		assert_eq!(FeeMarket::get_target_price(), 2);
 	});
 }
