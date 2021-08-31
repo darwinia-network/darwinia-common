@@ -109,8 +109,8 @@ pub use relayer_game::*;
 pub mod relay_authorities;
 pub use relay_authorities::*;
 
-pub mod tron_backing;
-pub use tron_backing::*;
+pub mod to_tron_backing_;
+pub use to_tron_backing_::*;
 
 pub mod evm_;
 pub use evm_::*;

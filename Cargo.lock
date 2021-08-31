@@ -1967,16 +1967,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-tron-backing"
-version = "2.6.2"
-dependencies = [
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "sp-runtime",
-]
-
-[[package]]
 name = "darwinia-vesting"
 version = "2.6.2"
 dependencies = [
@@ -5972,7 +5962,6 @@ dependencies = [
  "darwinia-staking",
  "darwinia-staking-rpc-runtime-api",
  "darwinia-support",
- "darwinia-tron-backing",
  "darwinia-vesting",
  "dp-asset",
  "dp-evm",
@@ -6043,6 +6032,7 @@ dependencies = [
  "static_assertions",
  "substrate-wasm-builder 4.0.0",
  "to-ethereum-backing",
+ "to-tron-backing",
 ]
 
 [[package]]
@@ -9903,6 +9893,16 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "to-tron-backing"
+version = "2.6.2"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "sp-runtime",
 ]
 
 [[package]]

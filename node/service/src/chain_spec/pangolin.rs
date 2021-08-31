@@ -333,7 +333,7 @@ pub fn genesis_config() -> ChainSpec {
 					1
 				)]
 			},
-			darwinia_tron_backing: TronBackingConfig {
+			to_tron_backing: TronBackingConfig {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
 			},
@@ -552,7 +552,7 @@ pub fn development_config() -> ChainSpec {
 					1
 				)]
 			},
-			darwinia_tron_backing: TronBackingConfig {
+			to_tron_backing: TronBackingConfig {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
 			},
@@ -773,7 +773,7 @@ pub fn local_testnet_config() -> ChainSpec {
 					1
 				)]
 			},
-			darwinia_tron_backing: TronBackingConfig {
+			to_tron_backing: TronBackingConfig {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
 			},
