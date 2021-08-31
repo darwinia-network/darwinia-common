@@ -3,49 +3,49 @@ The Darwinia Runtime Module Library (DRML) is a darwinia.network maintained coll
 
 ## Runtime Modules Overview
 - [darwinia-balances](./frame/balances)
-	- Desc.
+	- Provides functionality of handling accounts and their balances.
 - [darwinia-crab-backing](./frame/bridge/crab/backing)
-	- Desc.
+	- Module of backing assets on the Crab network.
 - [darwinia-crab-issuing](./frame/bridge/crab/issuing)
-	- Desc.
+	- Module of issuing assets on the Crab network.
 - [darwinia-ethereum-backing](./frame/bridge/ethereum/backing)
-	- Desc.
+	- Module of backing assets on the Ethereum network.
 - [darwinia-ethereum-issuing](./frame/bridge/ethereum/issuing)
-	- Desc.
+	- Module of issuing assets on the Ethereum network.
 - [darwinia-ethereum-relay](./frame/bridge/ethereum/relay)
-	- Desc.
+	- Module of the Ethereum>Darwinia relayer.
 - [darwinia-bridge-bsc](./frame/bridge/ethereum-bsc)
-	- Desc.
+	- Module that verifies bsc(Binance Smart Chain) headers and authority set finality.
 - [darwinia-relay-authorities](./frame/bridge/relay-authorities)
-	- Desc.
+	- Module that manages the relayer authorities.
 - [darwinia-relayer-game](./frame/bridge/relayer-game)
-	- Desc.
+	- Implementation of the Darwinia Relayer Game Protocol.
 - [darwinia-s2s-backing](./frame/bridge/s2s/backing)
-	- Desc.
+	- Module that manages assets backing in Substrate-to-Substrate bridges.
 - [darwinia-s2s-issuing](./frame/bridge/s2s/issuing)
-	- Desc.
+	- Module that manages assets issuing in Substrate-to-Substrate bridges.
 - [darwinia-tron-backing](./frame/bridge/tron/backing)
-	- Desc.
+	- Module of backing assets on the Tron network.
 - [darwinia-claims](./frame/claims)
-	- Desc.
+	- Module to process claims from Ethereum addresses.
 - [darwinia-democracy](./frame/democracy)
-	- Desc.
+	- Module that handles the administration of general stakeholder voting..
 - [darwinia-dvm](./frame/dvm)
-	- Desc.
-- [darwinia-dvm-dynamic-fee](./frame/dvm-dynamic-fee)
-	- Desc.
-- [darwinia-elections-phragmen](./frame/elections-phragmen)
-	- Desc.
+	- Ethereum block handling module of the EVM-compatible DVM sytem.
 - [darwinia-evm](./frame/evm)
-	- Desc.
+	- EVM execution handling module of the EVM-compatible DVM sytem.
+- [darwinia-dvm-dynamic-fee](./frame/dvm-dynamic-fee)
+	- Extending fee handling module of the EVM-compatible DVM sytem.
+- [darwinia-elections-phragmen](./frame/elections-phragmen)
+	- An election module based on sequential phragmen.
 - [darwinia-header-mmr](./frame/header-mmr)
-	- Desc.
+	- Module that maintains the MMR(Merkle Mountain Range) data structure of the source chain headers.
 - [darwinia-staking](./frame/staking)
-	- Desc.
+	- Module that provides the staking-related features, nominating, validating etc.
 - [darwinia-support](./frame/support)
-	- Desc.
+	- Basic utility module.
 - [darwinia-vesting](./frame/vesting)
-	- Desc.
+	- Module that provides vesting protection of the blocked balance on an account.
 
 ## Development
 
