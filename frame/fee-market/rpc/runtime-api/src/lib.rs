@@ -21,12 +21,18 @@
 // --- paritytech ---
 use codec::Codec;
 use sp_api::decl_runtime_apis;
+use sp_std::vec::Vec;
 
 decl_runtime_apis! {
 	pub trait FeeMarketApi<AccountId>
 	where
 		AccountId: Codec
 	{
+		/// Whether the relayer has registered
 		fn is_relayer(who: &AccountId) -> bool;
+		/// Get the final choose relayer
+		fn target_price() -> u64;
+		/// Get the candidate relayers info
+		fn candidate_prices() -> Vec<(AccountId, u64)>;
 	}
 }

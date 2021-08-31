@@ -727,6 +727,14 @@ sp_api::impl_runtime_apis! {
 		fn is_relayer(who: &AccountId) -> bool {
 			FeeMarket::is_relayer(who)
 		}
+
+		fn target_price() -> u64 {
+			FeeMarket::get_target_price()
+		}
+
+		fn candidate_prices() -> Vec<(AccountId, u64)> {
+			FeeMarket::get_candidate_prices()
+		}
 	}
 
 	#[cfg(feature = "try-runtime")]
