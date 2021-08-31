@@ -97,8 +97,8 @@ pub use multisig::*;
 pub mod bridge_ethereum;
 pub use bridge_ethereum::*;
 
-pub mod ethereum_backing;
-pub use ethereum_backing::*;
+pub mod to_ethereum_backing_;
+pub use to_ethereum_backing_::*;
 
 pub mod ethereum_issuing;
 pub use ethereum_issuing::*;

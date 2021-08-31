@@ -32,7 +32,7 @@ use sp_runtime::{
 	DispatchError, DispatchResult, RuntimeDebug, {KeyTypeId, MultiSignature, Perbill},
 };
 // --- darwinia-network ---
-use crate::{self as darwinia_ethereum_backing, pallet::*};
+use crate::{self as to_ethereum_backing, pallet::*};
 use darwinia_bridge_ethereum::{EthereumRelayHeaderParcel, EthereumRelayProofs, MMRProof};
 use darwinia_relay_primitives::*;
 use darwinia_staking::{Exposure, ExposureOf};
@@ -319,7 +319,7 @@ frame_support::construct_runtime! {
 		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage},
 		Staking: darwinia_staking::{Pallet, Call, Storage},
 		Session: pallet_session::{Pallet, Call, Storage},
-		EthereumBacking: darwinia_ethereum_backing::{Pallet, Call, Storage, Config<T>},
+		EthereumBacking: to_ethereum_backing::{Pallet, Call, Storage, Config<T>},
 		EthereumRelay: darwinia_bridge_ethereum::{Pallet, Call, Storage},
 	}
 }
@@ -353,7 +353,7 @@ impl ExtBuilder {
 			.unwrap();
 
 		if self.network == EthereumNetwork::Ropsten {
-			darwinia_ethereum_backing::GenesisConfig::<Test> {
+			to_ethereum_backing::GenesisConfig::<Test> {
 				token_redeem_address: array_bytes::hex_into_unchecked(
 					"0x49262B932E439271d05634c32978294C7Ea15d0C",
 				),
@@ -375,7 +375,7 @@ impl ExtBuilder {
 			.assimilate_storage(&mut t)
 			.unwrap();
 		} else {
-			darwinia_ethereum_backing::GenesisConfig::<Test> {
+			to_ethereum_backing::GenesisConfig::<Test> {
 				token_redeem_address: array_bytes::hex_into_unchecked(
 					"0xea7938985898af7fd945b03b7bc2e405e744e913",
 				),

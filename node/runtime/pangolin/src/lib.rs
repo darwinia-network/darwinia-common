@@ -264,7 +264,7 @@ frame_support::construct_runtime! {
 		// CrabBacking: darwinia_crab_backing::{Pallet, Storage, Config<T>} = 34,
 
 		EthereumRelay: darwinia_bridge_ethereum::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
-		EthereumBacking: darwinia_ethereum_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 36,
+		EthereumBacking: to_ethereum_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 36,
 		EthereumIssuing: darwinia_ethereum_issuing::{Pallet, Call, Storage, Config, Event<T>} = 42,
 		EthereumRelayerGame: darwinia_relayer_game::<Instance1>::{Pallet, Storage} = 37,
 		EthereumRelayAuthorities: darwinia_relay_authorities::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>} = 38,

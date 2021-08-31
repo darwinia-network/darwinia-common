@@ -1581,36 +1581,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-ethereum-backing"
-version = "2.6.2"
-dependencies = [
- "array-bytes",
- "darwinia-balances",
- "darwinia-bridge-ethereum",
- "darwinia-relay-primitives",
- "darwinia-relayer-game",
- "darwinia-staking",
- "darwinia-support",
- "ethabi",
- "ethereum-primitives",
- "frame-election-provider-support",
- "frame-support",
- "frame-system",
- "log",
- "pallet-session",
- "pallet-timestamp",
- "parity-scale-codec",
- "rlp",
- "serde",
- "serde_json",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-staking",
- "sp-std",
-]
-
-[[package]]
 name = "darwinia-ethereum-issuing"
 version = "2.6.2"
 dependencies = [
@@ -6011,7 +5981,6 @@ dependencies = [
  "darwinia-claims",
  "darwinia-democracy",
  "darwinia-elections-phragmen",
- "darwinia-ethereum-backing",
  "darwinia-ethereum-issuing",
  "darwinia-evm",
  "darwinia-evm-precompile-dispatch",
@@ -6097,6 +6066,7 @@ dependencies = [
  "sp-version",
  "static_assertions",
  "substrate-wasm-builder 4.0.0",
+ "to-ethereum-backing",
 ]
 
 [[package]]
@@ -9904,6 +9874,36 @@ name = "tinyvec_macros"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
+
+[[package]]
+name = "to-ethereum-backing"
+version = "2.6.2"
+dependencies = [
+ "array-bytes",
+ "darwinia-balances",
+ "darwinia-bridge-ethereum",
+ "darwinia-relay-primitives",
+ "darwinia-relayer-game",
+ "darwinia-staking",
+ "darwinia-support",
+ "ethabi",
+ "ethereum-primitives",
+ "frame-election-provider-support",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-session",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "rlp",
+ "serde",
+ "serde_json",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
+]
 
 [[package]]
 name = "tokio"

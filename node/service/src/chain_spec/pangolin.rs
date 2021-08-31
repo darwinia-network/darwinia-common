@@ -32,8 +32,8 @@ use sp_runtime::Perbill;
 // --- darwinia-network ---
 use super::{DEFAULT_PROTOCOL_ID, TEAM_MEMBERS};
 use common_primitives::*;
-use darwinia_claims::ClaimsList;
 use darwinia_bridge_ethereum::DagsMerkleRootsLoader as DagsMerkleRootsLoaderR;
+use darwinia_claims::ClaimsList;
 use darwinia_evm::GenesisAccount;
 use pangolin_runtime::*;
 
@@ -313,7 +313,7 @@ pub fn genesis_config() -> ChainSpec {
 				),
 				..Default::default()
 			},
-			darwinia_ethereum_backing: EthereumBackingConfig {
+			to_ethereum_backing: EthereumBackingConfig {
 				token_redeem_address: array_bytes::hex_into_unchecked(TOKEN_REDEEM_ADDRESS),
 				deposit_redeem_address: array_bytes::hex_into_unchecked(DEPOSIT_REDEEM_ADDRESS),
 				set_authorities_address: array_bytes::hex_into_unchecked(SET_AUTHORITIES_ADDRESS),
@@ -532,7 +532,7 @@ pub fn development_config() -> ChainSpec {
 				),
 				..Default::default()
 			},
-			darwinia_ethereum_backing: EthereumBackingConfig {
+			to_ethereum_backing: EthereumBackingConfig {
 				token_redeem_address: array_bytes::hex_into_unchecked(TOKEN_REDEEM_ADDRESS),
 				deposit_redeem_address: array_bytes::hex_into_unchecked(DEPOSIT_REDEEM_ADDRESS),
 				set_authorities_address: array_bytes::hex_into_unchecked(SET_AUTHORITIES_ADDRESS),
@@ -753,7 +753,7 @@ pub fn local_testnet_config() -> ChainSpec {
 				),
 				..Default::default()
 			},
-			darwinia_ethereum_backing: EthereumBackingConfig {
+			to_ethereum_backing: EthereumBackingConfig {
 				token_redeem_address: array_bytes::hex_into_unchecked(TOKEN_REDEEM_ADDRESS),
 				deposit_redeem_address: array_bytes::hex_into_unchecked(DEPOSIT_REDEEM_ADDRESS),
 				set_authorities_address: array_bytes::hex_into_unchecked(SET_AUTHORITIES_ADDRESS),
