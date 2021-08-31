@@ -282,7 +282,7 @@ frame_support::construct_runtime! {
 
 		BSC: darwinia_bridge_bsc::{Pallet, Call, Storage, Config} = 46,
 
-		FeeMarket: darwinia_fee_market::{Pallet, Call, Storage, Config} = 53
+		FeeMarket: darwinia_fee_market::{Pallet, Call, Storage, Config, Event<T>} = 53
 	}
 }
 
@@ -723,9 +723,9 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, AccountId> for RuntimeApi {
+	impl darwinia_fee_market_runtime_api::FeeMarketApi<Block, AccountId> for RuntimeApi {
 		fn is_relayer(who: &AccountId) -> bool {
-			<Runtime as darwinia_fee_market::Config>::is_relayer(who)
+			FeeMarket::is_relayer(who)
 		}
 	}
 

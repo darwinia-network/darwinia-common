@@ -40,6 +40,7 @@ use frame_system::{ensure_signed, pallet_prelude::*};
 use sp_std::{
 	cmp::{Ord, Ordering},
 	default::Default,
+	vec::Vec,
 };
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
