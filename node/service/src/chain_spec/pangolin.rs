@@ -339,7 +339,7 @@ pub fn genesis_config() -> ChainSpec {
 			},
 			darwinia_evm: EVMConfig { accounts: evm_accounts },
 			dvm_ethereum: Default::default(),
-			darwinia_s2s_issuing: Substrate2SubstrateIssuingConfig {
+			from_substrate_issuing: Substrate2SubstrateIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 			},
 			darwinia_bridge_bsc: BSCConfig {
@@ -558,7 +558,7 @@ pub fn development_config() -> ChainSpec {
 			},
 			darwinia_evm: EVMConfig { accounts: evm_accounts },
 			dvm_ethereum: Default::default(),
-			darwinia_s2s_issuing: Substrate2SubstrateIssuingConfig {
+			from_substrate_issuing: Substrate2SubstrateIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 			},
 			darwinia_bridge_bsc: BSCConfig {
@@ -779,7 +779,7 @@ pub fn local_testnet_config() -> ChainSpec {
 			},
 			darwinia_evm: EVMConfig { accounts: evm_accounts },
 			dvm_ethereum: Default::default(),
-			darwinia_s2s_issuing: Substrate2SubstrateIssuingConfig {
+			from_substrate_issuing: Substrate2SubstrateIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 			},
 			darwinia_bridge_bsc: BSCConfig {

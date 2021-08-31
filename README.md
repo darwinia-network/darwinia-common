@@ -38,7 +38,7 @@ The Darwinia Runtime Module Library (DRML) is a darwinia.network maintained coll
 	- Desc.
 - [to-substrate-backing](./frame/wormhole/backing/s2s)
 	- Desc.
-- [darwinia-s2s-issuing](./frame/wormhole/issuing/s2s)
+- [from-substrate-issuing](./frame/wormhole/issuing/s2s)
 	- Desc.
 - [to-tron-backing](./frame/wormhole/backing/tron)
 	- Desc.
