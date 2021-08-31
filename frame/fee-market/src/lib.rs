@@ -114,7 +114,7 @@ pub mod pallet {
 	pub type Relayers<T: Config> = StorageValue<_, Vec<T::AccountId>, ValueQuery>;
 
 	// Price Storage
-	/// The lowest three prices, p.0 < p.1 < p.2
+	/// The lowest n prices, p.0 < p.1 < p.2 ... < p.n
 	#[pallet::storage]
 	#[pallet::getter(fn get_candidate_prices)]
 	pub type CandidatePrices<T: Config> = StorageValue<_, Vec<(T::AccountId, Price)>, ValueQuery>;
@@ -144,7 +144,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Before the relayer transfer msgs, they need lock some rings.
+		/// Register to be a relayer
 		#[pallet::weight(10000)]
 		#[transactional]
 		pub fn register(
@@ -235,7 +235,7 @@ pub mod pallet {
 		/// The relayer submit price
 		#[pallet::weight(10000)]
 		#[transactional]
-		pub fn submit_price(origin: OriginFor<T>, p: Price) -> DispatchResultWithPostInfo {
+		pub fn update_price(origin: OriginFor<T>, p: Price) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			ensure!(
 				Self::is_relayer(who.clone()),
