@@ -28,7 +28,6 @@ darwinia-bridge-ethereum            = { default-features = false, path = "../../
 darwinia-claims                     = { default-features = false, path = "../../../frame/claims" }
 darwinia-democracy                  = { default-features = false, path = "../../../frame/democracy" }
 darwinia-elections-phragmen         = { default-features = false, path = "../../../frame/elections-phragmen" }
-darwinia-ethereum-issuing           = { default-features = false, path = "../../../frame/wormhole/issuing/ethereum" }
 darwinia-evm                        = { default-features = false, path = "../../../frame/evm" }
 darwinia-evm-precompile-dispatch    = { default-features = false, path = "../../../frame/evm/precompile/contracts/dispatch" }
 darwinia-evm-precompile-encoder     = { default-features = false, path = "../../../frame/evm/precompile/contracts/encoder" }
@@ -50,6 +49,7 @@ dvm-dynamic-fee                     = { default-features = false, path = "../../
 dvm-ethereum                        = { default-features = false, path = "../../../frame/dvm" }
 dvm-rpc-runtime-api                 = { default-features = false, path = "../../../frame/dvm/rpc/runtime-api" }
 ethereum-primitives                 = { default-features = false, path = "../../../primitives/ethereum" }
+from-ethereum-issuing               = { default-features = false, path = "../../../frame/wormhole/issuing/ethereum" }
 pangolin-constants                  = { default-features = false, path = "src/constants" }
 pangolin-runtime-system-params      = { default-features = false, path = "src/pallets/system/params" }
 pangoro-constants                   = { default-features = false, path = "../pangoro/src/constants" }
@@ -133,7 +133,7 @@ std = [
 	"darwinia-democracy/std",
 	"darwinia-elections-phragmen/std",
 	"to-ethereum-backing/std",
-	"darwinia-ethereum-issuing/std",
+	"from-ethereum-issuing/std",
 	"darwinia-bridge-ethereum/std",
 	"darwinia-evm/std",
 	"darwinia-evm-precompile-dispatch/std",
@@ -230,7 +230,7 @@ runtime-benchmarks = [
 	"frame-support/runtime-benchmarks",
 	"pallet-collective/runtime-benchmarks",
 	"pallet-society/runtime-benchmarks",
-	"darwinia-ethereum-issuing/runtime-benchmarks",
+	"from-ethereum-issuing/runtime-benchmarks",
 	"darwinia-evm/runtime-benchmarks",
 	"darwinia-s2s-issuing/runtime-benchmarks",
 ]

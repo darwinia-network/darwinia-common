@@ -265,7 +265,7 @@ frame_support::construct_runtime! {
 
 		EthereumRelay: darwinia_bridge_ethereum::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
 		EthereumBacking: to_ethereum_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 36,
-		EthereumIssuing: darwinia_ethereum_issuing::{Pallet, Call, Storage, Config, Event<T>} = 42,
+		EthereumIssuing: from_ethereum_issuing::{Pallet, Call, Storage, Config, Event<T>} = 42,
 		EthereumRelayerGame: darwinia_relayer_game::<Instance1>::{Pallet, Storage} = 37,
 		EthereumRelayAuthorities: darwinia_relay_authorities::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>} = 38,
 
@@ -746,7 +746,7 @@ sp_api::impl_runtime_apis! {
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
 			add_benchmark!(params, batches, darwinia_evm, EVM);
 			add_benchmark!(params, batches, darwinia_s2s_issuing, Substrate2SubstrateIssuing);
-			add_benchmark!(params, batches, darwinia_ethereum_issuing, EthereumIssuing);
+			add_benchmark!(params, batches, from_ethereum_issuing, EthereumIssuing);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

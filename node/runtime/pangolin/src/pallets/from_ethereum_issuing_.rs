@@ -2,7 +2,7 @@
 use frame_support::PalletId;
 // --- darwinia-network ---
 use crate::*;
-use darwinia_ethereum_issuing::Config;
+use from_ethereum_issuing::Config;
 
 frame_support::parameter_types! {
 	pub const EthereumIssuingPalletId: PalletId = PalletId(*b"da/ethis");

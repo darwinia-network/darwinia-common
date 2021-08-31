@@ -322,7 +322,7 @@ pub fn genesis_config() -> ChainSpec {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
 			},
-			darwinia_ethereum_issuing: EthereumIssuingConfig {
+			from_ethereum_issuing: EthereumIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 				ethereum_backing_address: array_bytes::hex_into_unchecked(ETHEREUM_BACKING_ADDRESS),
 			},
@@ -541,7 +541,7 @@ pub fn development_config() -> ChainSpec {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
 			},
-			darwinia_ethereum_issuing: EthereumIssuingConfig {
+			from_ethereum_issuing: EthereumIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 				ethereum_backing_address: array_bytes::hex_into_unchecked(ETHEREUM_BACKING_ADDRESS),
 			},
@@ -762,7 +762,7 @@ pub fn local_testnet_config() -> ChainSpec {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
 			},
-			darwinia_ethereum_issuing: EthereumIssuingConfig {
+			from_ethereum_issuing: EthereumIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 				ethereum_backing_address: array_bytes::hex_into_unchecked(ETHEREUM_BACKING_ADDRESS),
 			},

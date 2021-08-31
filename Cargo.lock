@@ -1581,29 +1581,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-ethereum-issuing"
-version = "2.6.2"
-dependencies = [
- "array-bytes",
- "darwinia-bridge-ethereum",
- "darwinia-evm",
- "darwinia-relay-primitives",
- "darwinia-support",
- "dp-contract",
- "dp-evm",
- "dvm-ethereum",
- "ethereum-primitives",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "log",
- "parity-scale-codec",
- "sha3 0.9.1",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "darwinia-evm"
 version = "2.6.2"
 dependencies = [
@@ -1690,7 +1667,6 @@ dependencies = [
 name = "darwinia-evm-precompile-encoder"
 version = "2.6.2"
 dependencies = [
- "darwinia-ethereum-issuing",
  "darwinia-evm",
  "darwinia-s2s-issuing",
  "darwinia-support",
@@ -1698,6 +1674,7 @@ dependencies = [
  "dp-evm",
  "evm 0.27.0",
  "frame-support",
+ "from-ethereum-issuing",
  "log",
  "parity-scale-codec",
  "sha3 0.9.1",
@@ -3108,6 +3085,29 @@ dependencies = [
  "frame-support",
  "parity-scale-codec",
  "sp-api",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "from-ethereum-issuing"
+version = "2.6.2"
+dependencies = [
+ "array-bytes",
+ "darwinia-bridge-ethereum",
+ "darwinia-evm",
+ "darwinia-relay-primitives",
+ "darwinia-support",
+ "dp-contract",
+ "dp-evm",
+ "dvm-ethereum",
+ "ethereum-primitives",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "sha3 0.9.1",
  "sp-runtime",
  "sp-std",
 ]
@@ -5947,7 +5947,6 @@ dependencies = [
  "darwinia-claims",
  "darwinia-democracy",
  "darwinia-elections-phragmen",
- "darwinia-ethereum-issuing",
  "darwinia-evm",
  "darwinia-evm-precompile-dispatch",
  "darwinia-evm-precompile-encoder",
@@ -5977,6 +5976,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
+ "from-ethereum-issuing",
  "log",
  "pallet-authority-discovery",
  "pallet-authorship",
