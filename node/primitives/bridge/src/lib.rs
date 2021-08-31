@@ -70,6 +70,7 @@ pub const MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE: MessageNonce = 128;
 /// Maximal number of unconfirmed messages at inbound lane.
 pub const MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE: MessageNonce = 128;
 
+// === pangoro const define
 /// Name of the `FromPangolinInboundLaneApi::latest_received_nonce` runtime method.
 pub const FROM_PANGOLIN_LATEST_RECEIVED_NONCE_METHOD: &str =
 	"FromPangolinInboundLaneApi_latest_received_nonce";
@@ -95,6 +96,35 @@ pub const TO_PANGOLIN_LATEST_RECEIVED_NONCE_METHOD: &str =
 
 /// Name of the `PangolinFinalityApi::best_finalized` runtime method.
 pub const BEST_FINALIZED_PANGOLIN_HEADER_METHOD: &str = "PangolinFinalityApi_best_finalized";
+// === end
+
+// === pangoro const define
+/// Name of the `FromPangoroInboundLaneApi::latest_received_nonce` runtime method.
+pub const FROM_PANGORO_LATEST_RECEIVED_NONCE_METHOD: &str =
+	"FromPangoroInboundLaneApi_latest_received_nonce";
+/// Name of the `FromPangoroInboundLaneApi::latest_onfirmed_nonce` runtime method.
+pub const FROM_PANGORO_LATEST_CONFIRMED_NONCE_METHOD: &str =
+	"FromPangoroInboundLaneApi_latest_confirmed_nonce";
+/// Name of the `FromPangoroInboundLaneApi::unrewarded_relayers_state` runtime method.
+pub const FROM_PANGORO_UNREWARDED_RELAYERS_STATE: &str =
+	"FromPangoroInboundLaneApi_unrewarded_relayers_state";
+
+/// Name of the `ToPangoroOutboundLaneApi::estimate_message_delivery_and_dispatch_fee` runtime method.
+pub const TO_PANGORO_ESTIMATE_MESSAGE_FEE_METHOD: &str =
+	"ToPangoroOutboundLaneApi_estimate_message_delivery_and_dispatch_fee";
+/// Name of the `ToPangoroOutboundLaneApi::messages_dispatch_weight` runtime method.
+pub const TO_PANGORO_MESSAGES_DISPATCH_WEIGHT_METHOD: &str =
+	"ToPangoroOutboundLaneApi_messages_dispatch_weight";
+/// Name of the `ToPangoroOutboundLaneApi::latest_generated_nonce` runtime method.
+pub const TO_PANGORO_LATEST_GENERATED_NONCE_METHOD: &str =
+	"ToPangoroOutboundLaneApi_latest_generated_nonce";
+/// Name of the `ToPangoroOutboundLaneApi::latest_received_nonce` runtime method.
+pub const TO_PANGORO_LATEST_RECEIVED_NONCE_METHOD: &str =
+	"ToPangoroOutboundLaneApi_latest_received_nonce";
+
+/// Name of the `PangoroFinalityApi::best_finalized` runtime method.
+pub const BEST_FINALIZED_PANGORO_HEADER_METHOD: &str = "PangoroFinalityApi_best_finalized";
+// === end
 
 /// Convert a 256-bit hash into an AccountId.
 pub struct AccountIdConverter;
