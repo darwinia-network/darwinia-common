@@ -70,7 +70,7 @@ pub const MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE: MessageNonce = 128;
 /// Maximal number of unconfirmed messages at inbound lane.
 pub const MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE: MessageNonce = 128;
 
-// === pangoro const define
+// === pangolin const define
 /// Name of the `FromPangolinInboundLaneApi::latest_received_nonce` runtime method.
 pub const FROM_PANGOLIN_LATEST_RECEIVED_NONCE_METHOD: &str =
 	"FromPangolinInboundLaneApi_latest_received_nonce";
