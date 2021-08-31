@@ -13,7 +13,7 @@ version     = "2.6.2"
 # crates.io
 codec = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
 # darwinia-network
-bsc-primitives = { default-features = false, path = "../../../primitives/chain-bsc" }
+bsc-primitives = { default-features = false, path = "../../../primitives/bsc" }
 # paritytech
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
