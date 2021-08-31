@@ -1,5 +1,7 @@
 pub use pallet_bridge_messages::Instance1 as WithPangolinMessages;
 
+// --- substrate ---
+use sp_std::marker::PhantomData;
 // --- paritytech ---
 use bp_messages::MessageNonce;
 use bp_runtime::ChainId;
@@ -13,7 +15,7 @@ use bridge_primitives::{
 	MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE, MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE,
 	PANGOLIN_CHAIN_ID,
 };
-use darwinia_support::s2s;
+use darwinia_support::s2s::{self, MessageConfirmer};
 use pangolin_messages::{
 	FromPangolinMessageDispatch, FromPangolinMessagePayload, Pangolin,
 	PangoroToPangolinMessagesParameter, ToPangolinMessagePayload, ToPangolinMessageVerifier,
@@ -59,9 +61,31 @@ impl Config<WithPangolinMessages> for Runtime {
 		RootAccountForPayments,
 	>;
 
-	type OnDeliveryConfirmed = ();
+	type OnDeliveryConfirmed = PangoroDeliveryConfirmer<Substrate2SubstrateBacking>;
 
 	type SourceHeaderChain = Pangolin;
 	type MessageDispatch = FromPangolinMessageDispatch;
 	type BridgedChainId = BridgedChainId;
+}
+
+use bp_messages::source_chain::OnDeliveryConfirmed;
+use bp_messages::DeliveredMessages;
+use bp_messages::LaneId;
+use frame_support::pallet_prelude::Weight;
+
+pub struct PangoroDeliveryConfirmer<T: MessageConfirmer>(PhantomData<T>);
+
+impl<T: MessageConfirmer> OnDeliveryConfirmed for PangoroDeliveryConfirmer<T> {
+	fn on_messages_delivered(lane: &LaneId, messages: &DeliveredMessages) -> Weight {
+		if *lane != PANGORO_PANGOLIN_LANE {
+			return 0;
+		}
+		let mut total_weight: Weight = 0;
+		for nonce in messages.begin..messages.end + 1 {
+			let result = messages.message_dispatch_result(nonce);
+			total_weight =
+				total_weight.saturating_add(T::on_messages_confirmed(nonce as u64, result));
+		}
+		total_weight
+	}
 }

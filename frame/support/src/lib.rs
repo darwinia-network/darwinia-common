@@ -40,7 +40,7 @@ pub mod s2s {
 	use ethereum_primitives::{H160, H256};
 	// --- paritytech ---
 	use bp_runtime::{derive_account_id, ChainId, SourceAccount};
-	use frame_support::{ensure, weights::PostDispatchInfo};
+	use frame_support::{ensure, pallet_prelude::Weight, weights::PostDispatchInfo};
 	use sp_runtime::{
 		traits::{BadOrigin, Convert},
 		DispatchError, DispatchErrorWithPostInfo,
@@ -61,6 +61,12 @@ pub mod s2s {
 			payload: P,
 			fee: F,
 		) -> Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>;
+
+		fn latest_generated_nonce() -> u64;
+	}
+
+	pub trait MessageConfirmer {
+		fn on_messages_confirmed(nonce: u64, result: bool) -> Weight;
 	}
 
 	pub fn ensure_source_root<AccountId, Converter>(

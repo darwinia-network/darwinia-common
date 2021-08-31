@@ -51,7 +51,8 @@ use sp_std::prelude::*;
 use darwinia_support::{
 	evm::IntoDvmAddress,
 	s2s::{
-		ensure_source_root, to_bytes32, RelayMessageCaller, RING_DECIMAL, RING_NAME, RING_SYMBOL,
+		ensure_source_root, to_bytes32, MessageConfirmer, RelayMessageCaller, RING_DECIMAL,
+		RING_NAME, RING_SYMBOL,
 	},
 };
 use dp_asset::{
@@ -102,6 +103,8 @@ pub mod pallet {
 		TokenLocked(Token, AccountId<T>, EthereumAddress, U256),
 		/// Token unlocked [token, recipient, value]
 		TokenUnlocked(Token, AccountId<T>, U256),
+		/// Token locked confirmed from remote [token, user, result]
+		TokenLockedConfirmed(Token, AccountId<T>, bool),
 	}
 
 	#[pallet::error]
@@ -122,7 +125,14 @@ pub mod pallet {
 		EncodeInvalid,
 		/// send relay message failed
 		SendMessageFailed,
+		/// message nonce dumplicated
+		NonceDumplicated,
 	}
+
+	#[pallet::storage]
+	#[pallet::getter(fn locked_queue)]
+	pub type LockedQueue<T: Config> =
+		StorageMap<_, Blake2_128Concat, u64, (AccountId<T>, Token), ValueQuery>;
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -210,6 +220,12 @@ pub mod pallet {
 					.map_err(|_| Error::<T>::EncodeInvalid)?;
 			T::MessageSender::send_message(payload, fee)
 				.map_err(|_| Error::<T>::SendMessageFailed)?;
+			let nonce = T::MessageSender::latest_generated_nonce();
+			ensure!(
+				!<LockedQueue<T>>::contains_key(nonce),
+				Error::<T>::NonceDumplicated
+			);
+			<LockedQueue<T>>::insert(nonce, (user.clone(), token.clone()));
 			Self::deposit_event(Event::TokenLocked(token, user, recipient, amount));
 			Ok(().into())
 		}
@@ -265,6 +281,38 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		pub fn pallet_account_id() -> T::AccountId {
 			T::PalletId::get().into_account()
+		}
+	}
+
+	impl<T: Config> MessageConfirmer for Pallet<T> {
+		fn on_messages_confirmed(nonce: u64, result: bool) -> Weight {
+			let (user, token) = <LockedQueue<T>>::take(nonce);
+			if !result {
+				let token_info = match &token {
+					Token::Native(info) => {
+						log::debug!("cross receive native token {:?}", info);
+						info
+					}
+					Token::Erc20(info) => {
+						log::debug!("cross receive erc20 token {:?}", info);
+						return 1;
+					}
+					_ => {
+						log::debug!("unrecognized token type");
+						return 1;
+					}
+				};
+				if let Some(value) = token_info.value {
+					let _ = T::RingCurrency::transfer(
+						&Self::pallet_account_id(),
+						&user,
+						value.low_u128().unique_saturated_into(),
+						AllowDeath,
+					);
+				}
+			}
+			Self::deposit_event(Event::TokenLockedConfirmed(token, user, result));
+			return 1;
 		}
 	}
 }

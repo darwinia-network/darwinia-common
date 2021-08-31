@@ -96,6 +96,10 @@ impl RelayMessageCaller<ToPangolinMessagePayload, Balance> for ToPangolinMessage
 		.into();
 		call.dispatch(RawOrigin::Root.into())
 	}
+
+	fn latest_generated_nonce() -> u64 {
+		BridgePangolinMessages::outbound_latest_generated_nonce(PANGORO_PANGOLIN_LANE).into()
+	}
 }
 
 frame_support::parameter_types! {

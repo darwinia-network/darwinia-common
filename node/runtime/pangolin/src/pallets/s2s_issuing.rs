@@ -44,6 +44,10 @@ impl RelayMessageCaller<ToPangoroMessagePayload, Balance> for ToPangoroMessageRe
 		.into();
 		call.dispatch(RawOrigin::Root.into())
 	}
+
+	fn latest_generated_nonce() -> u64 {
+		BridgePangoroMessages::outbound_latest_generated_nonce(PANGORO_PANGOLIN_LANE).into()
+	}
 }
 
 pub struct PangoroCallEncoder;

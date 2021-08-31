@@ -70,6 +70,13 @@ impl Token {
 		}
 	}
 }
+
+impl Default for Token {
+	fn default() -> Self {
+		Token::InvalidToken
+	}
+}
+
 impl From<(u32, TokenInfo)> for Token {
 	fn from(t: (u32, TokenInfo)) -> Self {
 		match t.0 {
