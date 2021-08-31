@@ -20,7 +20,7 @@
 use frame_support::{assert_err, assert_ok};
 // --- darwinia-network ---
 use crate::{
-	self as darwinia_ethereum_relay,
+	self as darwinia_bridge_ethereum,
 	mock::{Call, *},
 	test_data::*,
 	*,
@@ -236,7 +236,7 @@ fn pre_verify_should_work() {
 			<CheckEthereumRelayHeaderParcel<Test> as SignedExtension>::pre_dispatch(
 				CheckEthereumRelayHeaderParcel(Default::default()),
 				&Default::default(),
-				&Call::EthereumRelay(darwinia_ethereum_relay::Call::affirm(
+				&Call::EthereumRelay(darwinia_bridge_ethereum::Call::affirm(
 					EthereumRelayHeaderParcel {
 						header: EthereumHeader {
 							parent_hash: Default::default(),

@@ -33,7 +33,7 @@ use sp_runtime::Perbill;
 use super::{DEFAULT_PROTOCOL_ID, TEAM_MEMBERS};
 use common_primitives::*;
 use darwinia_claims::ClaimsList;
-use darwinia_ethereum_relay::DagsMerkleRootsLoader as DagsMerkleRootsLoaderR;
+use darwinia_bridge_ethereum::DagsMerkleRootsLoader as DagsMerkleRootsLoaderR;
 use darwinia_evm::GenesisAccount;
 use pangolin_runtime::*;
 
@@ -280,7 +280,7 @@ pub fn genesis_config() -> ChainSpec {
 			darwinia_claims: Default::default(),
 			darwinia_vesting: Default::default(),
 			pallet_sudo: SudoConfig { key: root.clone() },
-			darwinia_ethereum_relay: EthereumRelayConfig {
+			darwinia_bridge_ethereum: EthereumRelayConfig {
 				genesis_header_parcel: r#"{
 					"header": {
 						"baseFeePerGas": "0xeb",
@@ -499,7 +499,7 @@ pub fn development_config() -> ChainSpec {
 			},
 			darwinia_vesting: Default::default(),
 			pallet_sudo: SudoConfig { key: root.clone() },
-			darwinia_ethereum_relay: EthereumRelayConfig {
+			darwinia_bridge_ethereum: EthereumRelayConfig {
 				genesis_header_parcel: r#"{
 					"header": {
 						"baseFeePerGas": "0xeb",
@@ -720,7 +720,7 @@ pub fn local_testnet_config() -> ChainSpec {
 			},
 			darwinia_vesting: Default::default(),
 			pallet_sudo: SudoConfig { key: root.clone() },
-			darwinia_ethereum_relay: EthereumRelayConfig {
+			darwinia_bridge_ethereum: EthereumRelayConfig {
 				genesis_header_parcel: r#"{
 					"header": {
 						"baseFeePerGas": "0xeb",

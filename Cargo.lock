@@ -1497,6 +1497,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-bridge-ethereum"
+version = "2.6.2"
+dependencies = [
+ "array-bytes",
+ "blake2-rfc",
+ "ckb-merkle-mountain-range",
+ "darwinia-balances",
+ "darwinia-relay-primitives",
+ "darwinia-relayer-game",
+ "darwinia-support",
+ "ethereum-primitives",
+ "ethereum-types",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "rlp",
+ "serde",
+ "serde_json",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "darwinia-claims"
 version = "2.6.2"
 dependencies = [
@@ -1561,7 +1586,7 @@ version = "2.6.2"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
- "darwinia-ethereum-relay",
+ "darwinia-bridge-ethereum",
  "darwinia-relay-primitives",
  "darwinia-relayer-game",
  "darwinia-staking",
@@ -1590,7 +1615,7 @@ name = "darwinia-ethereum-issuing"
 version = "2.6.2"
 dependencies = [
  "array-bytes",
- "darwinia-ethereum-relay",
+ "darwinia-bridge-ethereum",
  "darwinia-evm",
  "darwinia-relay-primitives",
  "darwinia-support",
@@ -1604,31 +1629,6 @@ dependencies = [
  "log",
  "parity-scale-codec",
  "sha3 0.9.1",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "darwinia-ethereum-relay"
-version = "2.6.2"
-dependencies = [
- "array-bytes",
- "blake2-rfc",
- "ckb-merkle-mountain-range",
- "darwinia-balances",
- "darwinia-relay-primitives",
- "darwinia-relayer-game",
- "darwinia-support",
- "ethereum-primitives",
- "ethereum-types",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "rlp",
- "serde",
- "serde_json",
- "sp-core",
- "sp-io",
  "sp-runtime",
  "sp-std",
 ]
@@ -2347,8 +2347,8 @@ dependencies = [
  "array-bytes",
  "common-primitives",
  "darwinia-balances-rpc-runtime-api",
+ "darwinia-bridge-ethereum",
  "darwinia-claims",
- "darwinia-ethereum-relay",
  "darwinia-evm",
  "darwinia-header-mmr-rpc-runtime-api",
  "darwinia-staking",
@@ -6007,12 +6007,12 @@ dependencies = [
  "darwinia-balances",
  "darwinia-balances-rpc-runtime-api",
  "darwinia-bridge-bsc",
+ "darwinia-bridge-ethereum",
  "darwinia-claims",
  "darwinia-democracy",
  "darwinia-elections-phragmen",
  "darwinia-ethereum-backing",
  "darwinia-ethereum-issuing",
- "darwinia-ethereum-relay",
  "darwinia-evm",
  "darwinia-evm-precompile-dispatch",
  "darwinia-evm-precompile-encoder",

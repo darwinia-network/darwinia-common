@@ -33,7 +33,7 @@ use sp_runtime::{
 };
 // --- darwinia-network ---
 use crate::{self as darwinia_ethereum_backing, pallet::*};
-use darwinia_ethereum_relay::{EthereumRelayHeaderParcel, EthereumRelayProofs, MMRProof};
+use darwinia_bridge_ethereum::{EthereumRelayHeaderParcel, EthereumRelayProofs, MMRProof};
 use darwinia_relay_primitives::*;
 use darwinia_staking::{Exposure, ExposureOf};
 use ethereum_primitives::{
@@ -53,7 +53,7 @@ type Signature = MultiSignature;
 type Balance = u128;
 type BlockNumber = u64;
 
-pub type EthereumRelayError = darwinia_ethereum_relay::Error<Test>;
+pub type EthereumRelayError = darwinia_bridge_ethereum::Error<Test>;
 
 darwinia_support::impl_test_account_data! {}
 
@@ -242,7 +242,7 @@ frame_support::parameter_types! {
 	pub const EthereumRelayPalletId: PalletId = PalletId(*b"da/ethrl");
 	pub static EthereumRelayBridgeNetwork: EthereumNetwork = EthereumNetwork::Ropsten;
 }
-impl darwinia_ethereum_relay::Config for Test {
+impl darwinia_bridge_ethereum::Config for Test {
 	type PalletId = EthereumRelayPalletId;
 	type Event = ();
 	type BridgedNetwork = EthereumRelayBridgeNetwork;
@@ -320,7 +320,7 @@ frame_support::construct_runtime! {
 		Staking: darwinia_staking::{Pallet, Call, Storage},
 		Session: pallet_session::{Pallet, Call, Storage},
 		EthereumBacking: darwinia_ethereum_backing::{Pallet, Call, Storage, Config<T>},
-		EthereumRelay: darwinia_ethereum_relay::{Pallet, Call, Storage},
+		EthereumRelay: darwinia_bridge_ethereum::{Pallet, Call, Storage},
 	}
 }
 

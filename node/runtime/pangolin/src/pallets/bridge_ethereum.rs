@@ -3,7 +3,7 @@ use frame_support::PalletId;
 use sp_runtime::Perbill;
 // --- darwinia-network ---
 use crate::*;
-use darwinia_ethereum_relay::Config;
+use darwinia_bridge_ethereum::Config;
 use ethereum_primitives::EthereumNetwork;
 
 frame_support::parameter_types! {

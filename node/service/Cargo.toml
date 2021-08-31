@@ -19,8 +19,8 @@ serde_json  = { version = "1.0.66" }
 # darwinia-network
 common-primitives                   = { path = "../primitives/common" }
 darwinia-balances-rpc-runtime-api   = { path = "../../frame/balances/rpc/runtime-api" }
+darwinia-bridge-ethereum            = { path = "../../frame/bridge/ethereum" }
 darwinia-claims                     = { path = "../../frame/claims" }
-darwinia-ethereum-relay             = { path = "../../frame/bridge/ethereum" }
 darwinia-evm                        = { path = "../../frame/evm" }
 darwinia-header-mmr-rpc-runtime-api = { path = "../../frame/header-mmr/rpc/runtime-api" }
 darwinia-staking                    = { path = "../../frame/staking" }

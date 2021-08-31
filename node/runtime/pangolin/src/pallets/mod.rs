@@ -94,8 +94,8 @@ pub use proxy::*;
 pub mod multisig;
 pub use multisig::*;
 
-pub mod ethereum_relay;
-pub use ethereum_relay::*;
+pub mod bridge_ethereum;
+pub use bridge_ethereum::*;
 
 pub mod ethereum_backing;
 pub use ethereum_backing::*;

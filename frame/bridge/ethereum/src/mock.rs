@@ -24,7 +24,7 @@ use frame_system::{mocking::*, EnsureRoot};
 use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, RuntimeDebug};
 // --- darwinia-network ---
-use crate::{self as darwinia_ethereum_relay, *};
+use crate::{self as darwinia_bridge_ethereum, *};
 
 pub type Block = MockBlock<Test>;
 pub type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
@@ -110,7 +110,7 @@ frame_support::construct_runtime! {
 	{
 		System: frame_system::{Pallet, Call, Storage, Config},
 		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage},
-		EthereumRelay: darwinia_ethereum_relay::{Pallet, Call, Storage, Config<T>},
+		EthereumRelay: darwinia_bridge_ethereum::{Pallet, Call, Storage, Config<T>},
 	}
 }
 
@@ -146,7 +146,7 @@ impl ExtBuilder {
 			.build_storage::<Test>()
 			.unwrap();
 
-		darwinia_ethereum_relay::GenesisConfig::<Test> {
+		darwinia_bridge_ethereum::GenesisConfig::<Test> {
 			genesis_header_parcel: r#"{
 				"header": {
 					"difficulty": "0x400000000",

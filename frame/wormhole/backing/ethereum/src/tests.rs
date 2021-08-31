@@ -26,7 +26,7 @@ use crate::{
 	mock::{Call, *},
 	pallet::*,
 };
-use darwinia_ethereum_relay::EthereumRelayHeaderParcel;
+use darwinia_bridge_ethereum::EthereumRelayHeaderParcel;
 use darwinia_relay_primitives::Sign;
 use darwinia_staking::{RewardDestination, StakingBalance, StakingLedger, TimeDepositItem};
 use darwinia_support::balance::*;

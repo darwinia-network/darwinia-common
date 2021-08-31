@@ -122,7 +122,7 @@ use bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use bridges::substrate::pangoro_messages::{ToPangoroMessagePayload, WithPangoroMessageBridge};
 use common_primitives::*;
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
-use darwinia_ethereum_relay::CheckEthereumRelayHeaderParcel;
+use darwinia_bridge_ethereum::CheckEthereumRelayHeaderParcel;
 use darwinia_evm::{Account as EVMAccount, Runner};
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
@@ -263,7 +263,7 @@ frame_support::construct_runtime! {
 		// CrabIssuing: darwinia_crab_issuing::{Pallet, Call, Storage, Config} = 33,
 		// CrabBacking: darwinia_crab_backing::{Pallet, Storage, Config<T>} = 34,
 
-		EthereumRelay: darwinia_ethereum_relay::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
+		EthereumRelay: darwinia_bridge_ethereum::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
 		EthereumBacking: darwinia_ethereum_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 36,
 		EthereumIssuing: darwinia_ethereum_issuing::{Pallet, Call, Storage, Config, Event<T>} = 42,
 		EthereumRelayerGame: darwinia_relayer_game::<Instance1>::{Pallet, Storage} = 37,

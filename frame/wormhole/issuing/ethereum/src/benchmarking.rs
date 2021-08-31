@@ -29,7 +29,7 @@ use sp_std::vec;
 use ethereum_primitives::{header::EthereumHeader, receipt::ReceiptProof, H160, H256};
 use sp_std::str::FromStr;
 
-use darwinia_ethereum_relay::MMRProof;
+use darwinia_bridge_ethereum::MMRProof;
 use darwinia_support::traits::EthereumReceipt as EthereumReceiptT;
 
 use codec::{Decode, Encode};

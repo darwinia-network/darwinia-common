@@ -4,7 +4,7 @@ The Darwinia Runtime Module Library (DRML) is a darwinia.network maintained coll
 ## Runtime Modules Overview
 - [darwinia-balances](./frame/balances)
 	- Desc.
-- [darwinia-ethereum-relay](./frame/bridge/ethereum/relay)
+- [darwinia-bridge-ethereum](./frame/bridge/ethereum/relay)
 	- Desc.
 - [darwinia-bridge-bsc](./frame/bridge/bsc)
 	- Desc.
