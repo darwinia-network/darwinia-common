@@ -728,7 +728,7 @@ sp_api::impl_runtime_apis! {
 			FeeMarket::is_registered(who)
 		}
 
-		fn top_relayer() -> u64 {
+		fn top_relayer() -> (AccountId, u64) {
 			FeeMarket::top_relayer()
 		}
 

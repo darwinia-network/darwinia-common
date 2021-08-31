@@ -31,7 +31,7 @@ decl_runtime_apis! {
 		/// Whether the relayer has registered
 		fn is_registered(who: &AccountId) -> bool;
 		/// Get the final choose relayer
-		fn top_relayer() -> u64;
+		fn top_relayer() -> (AccountId, u64);
 		/// Get the prior relayers info
 		fn prior_relayers() -> Vec<(AccountId, u64)>;
 	}

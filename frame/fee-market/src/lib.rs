@@ -122,7 +122,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn top_relayer)]
-	pub type TopRelayer<T: Config> = StorageValue<_, Price, ValueQuery>;
+	pub type TopRelayer<T: Config> = StorageValue<_, (T::AccountId, Price), ValueQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {}
@@ -280,7 +280,7 @@ impl<T: Config> Pallet<T> {
 			<PriorRelayers<T>>::get()
 				.iter()
 				.last()
-				.map(|(_, p)| *p)
+				.map(|(r, p)| ((*r).clone(), *p))
 				.unwrap_or_default(),
 		);
 		Ok(())
