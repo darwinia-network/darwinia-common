@@ -161,10 +161,7 @@ pub mod pallet {
 				T::RingCurrency::free_balance(&who) >= lock_value,
 				<Error<T>>::InsufficientBalance
 			);
-			ensure!(
-				!Self::is_relayer(who.clone()),
-				<Error<T>>::AlreadyRegistered
-			);
+			ensure!(!Self::is_relayer(&who), <Error<T>>::AlreadyRegistered);
 			if let Some(p) = price {
 				ensure!(p >= T::MinimumPrice::get(), <Error<T>>::TooLowPrice);
 			}
@@ -192,10 +189,7 @@ pub mod pallet {
 			new_lock: RingBalance<T>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			ensure!(
-				Self::is_relayer(who.clone()),
-				<Error<T>>::RegisterBeforeUpdateLock
-			);
+			ensure!(Self::is_relayer(&who), <Error<T>>::RegisterBeforeUpdateLock);
 			ensure!(
 				T::RingCurrency::free_balance(&who) >= new_lock,
 				<Error<T>>::InsufficientBalance
@@ -218,10 +212,7 @@ pub mod pallet {
 		#[transactional]
 		pub fn cancel_register(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			ensure!(
-				Self::is_relayer(who.clone()),
-				<Error<T>>::RegisterBeforeUpdateLock
-			);
+			ensure!(Self::is_relayer(&who), <Error<T>>::RegisterBeforeUpdateLock);
 
 			T::RingCurrency::remove_lock(T::LockId::get(), &who);
 			RelayersMap::<T>::remove(who.clone());
@@ -237,10 +228,7 @@ pub mod pallet {
 		#[transactional]
 		pub fn update_price(origin: OriginFor<T>, p: Price) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			ensure!(
-				Self::is_relayer(who.clone()),
-				<Error<T>>::InvalidSubmitPriceOrigin
-			);
+			ensure!(Self::is_relayer(&who), <Error<T>>::InvalidSubmitPriceOrigin);
 			ensure!(p >= T::MinimumPrice::get(), <Error<T>>::TooLowPrice);
 
 			<RelayersMap<T>>::mutate(who.clone(), |relayer| {
@@ -290,18 +278,18 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Whether the account is a registered relayer
-	pub fn is_relayer(who: T::AccountId) -> bool {
-		<Relayers<T>>::get().iter().find(|r| *r == &who).is_some()
+	pub fn is_relayer(who: &T::AccountId) -> bool {
+		<Relayers<T>>::get().iter().any(|r| *r == *who)
 	}
 
 	// Get relayer price
-	pub fn relayer_price(who: T::AccountId) -> Price {
-		Self::get_relayer(&who).price
+	pub fn relayer_price(who: &T::AccountId) -> Price {
+		Self::get_relayer(who).price
 	}
 
 	// Get relayer locked balance
-	pub fn relayer_locked_balance(who: T::AccountId) -> RingBalance<T> {
-		Self::get_relayer(&who).lock_balance
+	pub fn relayer_locked_balance(who: &T::AccountId) -> RingBalance<T> {
+		Self::get_relayer(who).lock_balance
 	}
 
 	pub fn slash_relayer() {
