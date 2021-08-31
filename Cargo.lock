@@ -1834,6 +1834,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-fee-market-runtime-api"
+version = "2.6.1"
+dependencies = [
+ "darwinia-support",
+ "parity-scale-codec",
+ "serde",
+ "sp-api",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "darwinia-header-mmr"
 version = "2.6.1"
 dependencies = [
@@ -6059,6 +6071,7 @@ dependencies = [
  "darwinia-evm-precompile-simple",
  "darwinia-evm-precompile-transfer",
  "darwinia-fee-market",
+ "darwinia-fee-market-runtime-api",
  "darwinia-header-mmr",
  "darwinia-header-mmr-rpc-runtime-api",
  "darwinia-relay-authorities",

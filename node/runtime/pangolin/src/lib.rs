@@ -723,6 +723,12 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
+	impl darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, AccountId> for RuntimeApi {
+		fn is_relayer(who: &AccountId) -> bool {
+			<Runtime as darwinia_fee_market::Config>::is_relayer(who)
+		}
+	}
+
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
 		fn on_runtime_upgrade() -> Result<

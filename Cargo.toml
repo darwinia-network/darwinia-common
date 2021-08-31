@@ -46,6 +46,7 @@ members = [
 	"frame/evm/precompile/contracts/transfer",
 	"frame/evm/precompile/contracts/sha3fips",
 	"frame/fee-market",
+	"frame/fee-market/rpc/runtime-api",
 	"frame/header-mmr",
 	"frame/header-mmr/rpc",
 	"frame/header-mmr/rpc/runtime-api",
