@@ -19,7 +19,7 @@ name = "drml"
 log       = { version = "0.4.14" }
 structopt = { version = "0.3.21", optional = true }
 # darwinia-network
-bsc-primitives = { path = "../../primitives/chain-bsc" }
+bsc-primitives = { path = "../../primitives/bsc" }
 dp-consensus   = { path = "../../primitives/consensus" }
 drml-service   = { path = "../service" }
 # paritytech

@@ -32,8 +32,8 @@ use sp_runtime::Perbill;
 // --- darwinia-network ---
 use super::{DEFAULT_PROTOCOL_ID, TEAM_MEMBERS};
 use common_primitives::*;
+use darwinia_bridge_ethereum::DagsMerkleRootsLoader as DagsMerkleRootsLoaderR;
 use darwinia_claims::ClaimsList;
-use darwinia_ethereum_relay::DagsMerkleRootsLoader as DagsMerkleRootsLoaderR;
 use darwinia_evm::GenesisAccount;
 use pangolin_runtime::*;
 
@@ -280,9 +280,7 @@ pub fn genesis_config() -> ChainSpec {
 			darwinia_claims: Default::default(),
 			darwinia_vesting: Default::default(),
 			pallet_sudo: SudoConfig { key: root.clone() },
-			darwinia_crab_issuing: CrabIssuingConfig { total_mapped_ring: BUNCH_OF_COINS },
-			darwinia_crab_backing: CrabBackingConfig { backed_ring: BUNCH_OF_COINS },
-			darwinia_ethereum_relay: EthereumRelayConfig {
+			darwinia_bridge_ethereum: EthereumRelayConfig {
 				genesis_header_parcel: r#"{
 					"header": {
 						"baseFeePerGas": "0xeb",
@@ -315,7 +313,7 @@ pub fn genesis_config() -> ChainSpec {
 				),
 				..Default::default()
 			},
-			darwinia_ethereum_backing: EthereumBackingConfig {
+			to_ethereum_backing: EthereumBackingConfig {
 				token_redeem_address: array_bytes::hex_into_unchecked(TOKEN_REDEEM_ADDRESS),
 				deposit_redeem_address: array_bytes::hex_into_unchecked(DEPOSIT_REDEEM_ADDRESS),
 				set_authorities_address: array_bytes::hex_into_unchecked(SET_AUTHORITIES_ADDRESS),
@@ -324,7 +322,7 @@ pub fn genesis_config() -> ChainSpec {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
 			},
-			darwinia_ethereum_issuing: EthereumIssuingConfig {
+			from_ethereum_issuing: EthereumIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 				ethereum_backing_address: array_bytes::hex_into_unchecked(ETHEREUM_BACKING_ADDRESS),
 			},
@@ -335,13 +333,13 @@ pub fn genesis_config() -> ChainSpec {
 					1
 				)]
 			},
-			darwinia_tron_backing: TronBackingConfig {
+			to_tron_backing: TronBackingConfig {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
 			},
 			darwinia_evm: EVMConfig { accounts: evm_accounts },
 			dvm_ethereum: Default::default(),
-			darwinia_s2s_issuing: Substrate2SubstrateIssuingConfig {
+			from_substrate_issuing: Substrate2SubstrateIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 			},
 			darwinia_bridge_bsc: BSCConfig {
@@ -501,9 +499,7 @@ pub fn development_config() -> ChainSpec {
 			},
 			darwinia_vesting: Default::default(),
 			pallet_sudo: SudoConfig { key: root.clone() },
-			darwinia_crab_issuing: CrabIssuingConfig { total_mapped_ring: BUNCH_OF_COINS },
-			darwinia_crab_backing: CrabBackingConfig { backed_ring: BUNCH_OF_COINS },
-			darwinia_ethereum_relay: EthereumRelayConfig {
+			darwinia_bridge_ethereum: EthereumRelayConfig {
 				genesis_header_parcel: r#"{
 					"header": {
 						"baseFeePerGas": "0xeb",
@@ -536,7 +532,7 @@ pub fn development_config() -> ChainSpec {
 				),
 				..Default::default()
 			},
-			darwinia_ethereum_backing: EthereumBackingConfig {
+			to_ethereum_backing: EthereumBackingConfig {
 				token_redeem_address: array_bytes::hex_into_unchecked(TOKEN_REDEEM_ADDRESS),
 				deposit_redeem_address: array_bytes::hex_into_unchecked(DEPOSIT_REDEEM_ADDRESS),
 				set_authorities_address: array_bytes::hex_into_unchecked(SET_AUTHORITIES_ADDRESS),
@@ -545,7 +541,7 @@ pub fn development_config() -> ChainSpec {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
 			},
-			darwinia_ethereum_issuing: EthereumIssuingConfig {
+			from_ethereum_issuing: EthereumIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 				ethereum_backing_address: array_bytes::hex_into_unchecked(ETHEREUM_BACKING_ADDRESS),
 			},
@@ -556,13 +552,13 @@ pub fn development_config() -> ChainSpec {
 					1
 				)]
 			},
-			darwinia_tron_backing: TronBackingConfig {
+			to_tron_backing: TronBackingConfig {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
 			},
 			darwinia_evm: EVMConfig { accounts: evm_accounts },
 			dvm_ethereum: Default::default(),
-			darwinia_s2s_issuing: Substrate2SubstrateIssuingConfig {
+			from_substrate_issuing: Substrate2SubstrateIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 			},
 			darwinia_bridge_bsc: BSCConfig {
@@ -724,9 +720,7 @@ pub fn local_testnet_config() -> ChainSpec {
 			},
 			darwinia_vesting: Default::default(),
 			pallet_sudo: SudoConfig { key: root.clone() },
-			darwinia_crab_issuing: CrabIssuingConfig { total_mapped_ring: BUNCH_OF_COINS },
-			darwinia_crab_backing: CrabBackingConfig { backed_ring: BUNCH_OF_COINS },
-			darwinia_ethereum_relay: EthereumRelayConfig {
+			darwinia_bridge_ethereum: EthereumRelayConfig {
 				genesis_header_parcel: r#"{
 					"header": {
 						"baseFeePerGas": "0xeb",
@@ -759,7 +753,7 @@ pub fn local_testnet_config() -> ChainSpec {
 				),
 				..Default::default()
 			},
-			darwinia_ethereum_backing: EthereumBackingConfig {
+			to_ethereum_backing: EthereumBackingConfig {
 				token_redeem_address: array_bytes::hex_into_unchecked(TOKEN_REDEEM_ADDRESS),
 				deposit_redeem_address: array_bytes::hex_into_unchecked(DEPOSIT_REDEEM_ADDRESS),
 				set_authorities_address: array_bytes::hex_into_unchecked(SET_AUTHORITIES_ADDRESS),
@@ -768,7 +762,7 @@ pub fn local_testnet_config() -> ChainSpec {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
 			},
-			darwinia_ethereum_issuing: EthereumIssuingConfig {
+			from_ethereum_issuing: EthereumIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 				ethereum_backing_address: array_bytes::hex_into_unchecked(ETHEREUM_BACKING_ADDRESS),
 			},
@@ -779,13 +773,13 @@ pub fn local_testnet_config() -> ChainSpec {
 					1
 				)]
 			},
-			darwinia_tron_backing: TronBackingConfig {
+			to_tron_backing: TronBackingConfig {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
 			},
 			darwinia_evm: EVMConfig { accounts: evm_accounts },
 			dvm_ethereum: Default::default(),
-			darwinia_s2s_issuing: Substrate2SubstrateIssuingConfig {
+			from_substrate_issuing: Substrate2SubstrateIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 			},
 			darwinia_bridge_bsc: BSCConfig {
