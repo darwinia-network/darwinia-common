@@ -56,7 +56,7 @@ pub const INITIAL_PANGORO_TO_PANGOLIN_CONVERSION_RATE: FixedU128 =
 	FixedU128::from_inner(FixedU128::DIV);
 
 frame_support::parameter_types! {
-	/// Pangoro to Rialto conversion rate. Initially we treat both tokens as equal.
+	/// Pangoro to Pangolin conversion rate. Initially we treat both tokens as equal.
 	pub storage PangoroToPangolinConversionRate: FixedU128 = INITIAL_PANGORO_TO_PANGOLIN_CONVERSION_RATE;
 }
 
