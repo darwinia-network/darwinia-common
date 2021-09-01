@@ -207,6 +207,9 @@ impl RelayMessageCaller<MockMessagePayload, Balance> for ToPangoroMessageRelayCa
 			pays_fee: Pays::No,
 		})
 	}
+	fn latest_generated_nonce() -> u64 {
+		0
+	}
 }
 
 pub struct TruncateToEthAddress;
