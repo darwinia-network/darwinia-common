@@ -45,7 +45,6 @@ use sp_std::{
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type Balance = u128;
-pub type Price = u64;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 
 pub use pallet::*;
@@ -63,12 +62,13 @@ pub mod pallet {
 		#[pallet::constant]
 		type MiniumLockValue: Get<RingBalance<Self>>;
 		#[pallet::constant]
-		type MinimumPrice: Get<Price>;
+		type MinimumFee: Get<RingBalance<Self>>;
+		#[pallet::constant]
 		type PriorRelayersNumber: Get<u64>;
-
+		#[pallet::constant]
 		type LockId: Get<LockIdentifier>;
-		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
+		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 		type WeightInfo: WeightInfo;
 	}
 
@@ -76,14 +76,14 @@ pub mod pallet {
 	#[pallet::generate_deposit(fn deposit_event)]
 	#[pallet::metadata(T::AccountId = "AccountId")]
 	pub enum Event<T: Config> {
-		/// Lock some RING and register to be relayer
-		RegisterAndLockRing(T::AccountId, RingBalance<T>),
-		/// Update lock value
-		UpdateLockedRing(T::AccountId, RingBalance<T>),
+		/// Relayer register
+		Register(T::AccountId, RingBalance<T>, RingBalance<T>),
+		/// Update relayer lock balance
+		UpdateLockedBalance(T::AccountId, RingBalance<T>),
+		/// Update relayer fee
+		UpdateFee(T::AccountId, RingBalance<T>),
 		/// Cancel relayer register
 		CancelRelayerRegister(T::AccountId),
-		/// Update relayer price
-		SubmitRelayerPrice(T::AccountId, Price),
 	}
 
 	#[pallet::error]
@@ -98,13 +98,12 @@ pub mod pallet {
 		RegisterBeforeUpdateLock,
 		/// Invalid new lock value
 		InvalidNewLockValue,
-		/// Only Relayer can submit price
+		/// Only Relayer can submit fee
 		InvalidSubmitPriceOrigin,
-		/// The price is lower than MinimumPrice
-		TooLowPrice,
+		/// The fee is lower than MinimumFee
+		TooLowFee,
 	}
 
-	// Relayer Storage
 	#[pallet::storage]
 	#[pallet::getter(fn get_relayer)]
 	pub type RelayersMap<T: Config> =
@@ -114,15 +113,15 @@ pub mod pallet {
 	#[pallet::getter(fn relayers)]
 	pub type Relayers<T: Config> = StorageValue<_, Vec<T::AccountId>, ValueQuery>;
 
-	// Price Storage
-	/// The lowest n prices, p.0 < p.1 < p.2 ... < p.n
+	/// The lowest n fees, p.0 < p.1 < p.2 ... < p.n
 	#[pallet::storage]
 	#[pallet::getter(fn prior_relayers)]
-	pub type PriorRelayers<T: Config> = StorageValue<_, Vec<(T::AccountId, Price)>, ValueQuery>;
+	pub type PriorRelayers<T: Config> =
+		StorageValue<_, Vec<(T::AccountId, RingBalance<T>)>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn top_relayer)]
-	pub type TopRelayer<T: Config> = StorageValue<_, (T::AccountId, Price), ValueQuery>;
+	pub type TopRelayer<T: Config> = StorageValue<_, (T::AccountId, RingBalance<T>), ValueQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {}
@@ -150,7 +149,7 @@ pub mod pallet {
 		pub fn register(
 			origin: OriginFor<T>,
 			lock_value: RingBalance<T>,
-			price: Option<Price>,
+			fee: Option<RingBalance<T>>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			ensure!(
@@ -162,11 +161,11 @@ pub mod pallet {
 				<Error<T>>::InsufficientBalance
 			);
 			ensure!(!Self::is_registered(&who), <Error<T>>::AlreadyRegistered);
-			if let Some(p) = price {
-				ensure!(p >= T::MinimumPrice::get(), <Error<T>>::TooLowPrice);
+			if let Some(p) = fee {
+				ensure!(p >= T::MinimumFee::get(), <Error<T>>::TooLowFee);
 			}
 
-			let price = price.unwrap_or_else(T::MinimumPrice::get);
+			let fee = fee.unwrap_or_else(T::MinimumFee::get);
 			T::RingCurrency::set_lock(
 				T::LockId::get(),
 				&who,
@@ -174,11 +173,11 @@ pub mod pallet {
 				WithdrawReasons::all(),
 			);
 
-			<RelayersMap<T>>::insert(&who, Relayer::new(who.clone(), lock_value, price));
+			<RelayersMap<T>>::insert(&who, Relayer::new(who.clone(), lock_value, fee));
 			<Relayers<T>>::append(who.clone());
 
-			Self::update_relayer_prices()?;
-			Self::deposit_event(Event::<T>::RegisterAndLockRing(who, lock_value));
+			Self::update_relayer_fees()?;
+			Self::deposit_event(Event::<T>::Register(who, lock_value, fee));
 			Ok(().into())
 		}
 
@@ -206,7 +205,7 @@ pub mod pallet {
 			<RelayersMap<T>>::mutate(who.clone(), |relayer| {
 				relayer.lock_balance = new_lock;
 			});
-			Self::deposit_event(Event::<T>::UpdateLockedRing(who, new_lock));
+			Self::deposit_event(Event::<T>::UpdateLockedBalance(who, new_lock));
 			Ok(().into())
 		}
 
@@ -224,36 +223,39 @@ pub mod pallet {
 			RelayersMap::<T>::remove(who.clone());
 			Relayers::<T>::mutate(|relayers| relayers.retain(|x| x != &who));
 
-			Self::update_relayer_prices()?;
+			Self::update_relayer_fees()?;
 			Self::deposit_event(Event::<T>::CancelRelayerRegister(who));
 			Ok(().into())
 		}
 
-		/// The relayer submit price
+		/// The relayer submit fee
 		#[pallet::weight(10000)]
 		#[transactional]
-		pub fn update_price(origin: OriginFor<T>, p: Price) -> DispatchResultWithPostInfo {
+		pub fn update_fee(origin: OriginFor<T>, p: RingBalance<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			ensure!(
 				Self::is_registered(&who),
 				<Error<T>>::InvalidSubmitPriceOrigin
 			);
-			ensure!(p >= T::MinimumPrice::get(), <Error<T>>::TooLowPrice);
+			ensure!(p >= T::MinimumFee::get(), <Error<T>>::TooLowFee);
 
 			<RelayersMap<T>>::mutate(who.clone(), |relayer| {
-				relayer.price = p;
+				relayer.fee = p;
 			});
 
-			Self::update_relayer_prices()?;
-			Self::deposit_event(Event::<T>::SubmitRelayerPrice(who, p));
+			Self::update_relayer_fees()?;
+			Self::deposit_event(Event::<T>::UpdateFee(who, p));
 			Ok(().into())
 		}
 	}
 }
 
 impl<T: Config> Pallet<T> {
-	pub fn update_relayer_prices() -> Result<(), DispatchError> {
-		// Update candidate price list when relayers submit new price
+	/// Update fees in the following cases:
+	/// 1. New relayer register
+	/// 2. Already registered relayer update fee
+	/// 3. Cancel registered relayer
+	pub fn update_relayer_fees() -> Result<(), DispatchError> {
 		<PriorRelayers<T>>::kill();
 
 		let mut relayers: Vec<Relayer<T>> = <Relayers<T>>::get()
@@ -267,13 +269,13 @@ impl<T: Config> Pallet<T> {
 		if relayers.len() >= T::PriorRelayersNumber::get() as usize {
 			for i in 0..T::PriorRelayersNumber::get() as usize {
 				let r = &relayers[i];
-				<PriorRelayers<T>>::append((r.id.clone(), r.price));
+				<PriorRelayers<T>>::append((r.id.clone(), r.fee));
 			}
 		} else {
 			// If the registered relayers number < the PriorRelayersNumber,
-			// append all submit price to PriorRelayers and choose the last one as TopRelayer
+			// append all submit fee to PriorRelayers and choose the last one as TopRelayer
 			for r in relayers.iter() {
-				<PriorRelayers<T>>::append((r.id.clone(), r.price));
+				<PriorRelayers<T>>::append((r.id.clone(), r.fee));
 			}
 		}
 		<TopRelayer<T>>::put(
@@ -286,14 +288,14 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	/// Whether the account is a registered relayer
+	/// Whether the relayer has registered
 	pub fn is_registered(who: &T::AccountId) -> bool {
 		<Relayers<T>>::get().iter().any(|r| *r == *who)
 	}
 
-	// Get relayer price
-	pub fn relayer_price(who: &T::AccountId) -> Price {
-		Self::get_relayer(who).price
+	// Get relayer fee
+	pub fn relayer_price(who: &T::AccountId) -> RingBalance<T> {
+		Self::get_relayer(who).fee
 	}
 
 	// Get relayer locked balance
@@ -311,34 +313,34 @@ impl<T: Config> Pallet<T> {
 pub struct Relayer<T: Config> {
 	id: T::AccountId,
 	lock_balance: RingBalance<T>,
-	price: Price,
+	fee: RingBalance<T>,
 }
 
 impl<T: Config> Relayer<T> {
-	pub fn new(id: T::AccountId, lock_balance: RingBalance<T>, price: Price) -> Relayer<T> {
+	pub fn new(id: T::AccountId, lock_balance: RingBalance<T>, fee: RingBalance<T>) -> Relayer<T> {
 		Relayer {
 			id,
 			lock_balance,
-			price,
+			fee,
 		}
 	}
 }
 
 impl<T: Config> PartialOrd for Relayer<T> {
 	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-		self.price.partial_cmp(&other.price)
+		self.fee.partial_cmp(&other.fee)
 	}
 }
 
 impl<T: Config> Ord for Relayer<T> {
 	fn cmp(&self, other: &Self) -> Ordering {
-		self.price.cmp(&other.price)
+		self.fee.cmp(&other.fee)
 	}
 }
 
 impl<T: Config> PartialEq for Relayer<T> {
 	fn eq(&self, other: &Self) -> bool {
-		self.price == other.price && self.id == other.id && self.lock_balance == other.lock_balance
+		self.fee == other.fee && self.id == other.id && self.lock_balance == other.lock_balance
 	}
 }
 
@@ -347,7 +349,7 @@ impl<T: Config> Default for Relayer<T> {
 		Relayer {
 			id: T::AccountId::default(),
 			lock_balance: RingBalance::<T>::default(),
-			price: 0,
+			fee: RingBalance::<T>::default(),
 		}
 	}
 }

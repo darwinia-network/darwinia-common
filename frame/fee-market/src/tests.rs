@@ -94,7 +94,7 @@ frame_support::parameter_types! {
 	pub const FeeMarketPalletId: PalletId = PalletId(*b"da/feemk");
 	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
 	pub const MiniumLockValue: Balance = 2;
-	pub const MinimumPrice: Balance = 2;
+	pub const MinimumFee: Balance = 2;
 	pub const PriorRelayersNumber: u64 = 3;
 }
 
@@ -102,7 +102,7 @@ impl Config for Test {
 	type PalletId = FeeMarketPalletId;
 	type Event = Event;
 	type MiniumLockValue = MiniumLockValue;
-	type MinimumPrice = MinimumPrice;
+	type MinimumFee = MinimumFee;
 	type PriorRelayersNumber = PriorRelayersNumber;
 	type LockId = FeeMarketLockId;
 	type RingCurrency = Ring;
@@ -302,11 +302,11 @@ fn test_update_price_basic_storage_works() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(FeeMarket::register(Origin::signed(1), 5, None));
 		assert_err!(
-			FeeMarket::update_price(Origin::signed(1), 1),
-			<Error<Test>>::TooLowPrice
+			FeeMarket::update_fee(Origin::signed(1), 1),
+			<Error<Test>>::TooLowFee
 		);
 
-		assert_ok!(FeeMarket::update_price(Origin::signed(1), 2));
+		assert_ok!(FeeMarket::update_fee(Origin::signed(1), 2));
 		assert_eq!(FeeMarket::relayer_price(&1), 2);
 		assert_eq!(FeeMarket::relayers(), vec![1]);
 	});
@@ -316,8 +316,8 @@ fn test_update_price_basic_storage_works() {
 fn test_few_relayer_duplicate_update_one_price() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(FeeMarket::register(Origin::signed(1), 5, None));
-		assert_ok!(FeeMarket::update_price(Origin::signed(1), 2));
-		assert_ok!(FeeMarket::update_price(Origin::signed(1), 2));
+		assert_ok!(FeeMarket::update_fee(Origin::signed(1), 2));
+		assert_ok!(FeeMarket::update_fee(Origin::signed(1), 2));
 
 		assert_eq!(FeeMarket::relayers(), vec![1]);
 		assert_eq!(FeeMarket::prior_relayers()[0], (1, 2));
@@ -331,8 +331,8 @@ fn test_few_relayer_update_one_price() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(FeeMarket::register(Origin::signed(1), 5, None));
 		assert_ok!(FeeMarket::register(Origin::signed(2), 5, None));
-		assert_ok!(FeeMarket::update_price(Origin::signed(1), 4));
-		assert_ok!(FeeMarket::update_price(Origin::signed(2), 4));
+		assert_ok!(FeeMarket::update_fee(Origin::signed(1), 4));
+		assert_ok!(FeeMarket::update_fee(Origin::signed(2), 4));
 
 		assert_eq!(FeeMarket::prior_relayers()[0], (1, 4));
 		assert_eq!(FeeMarket::prior_relayers()[1], (2, 4));
@@ -346,8 +346,8 @@ fn test_few_relayer_update_more_price() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(FeeMarket::register(Origin::signed(1), 5, None));
 		assert_ok!(FeeMarket::register(Origin::signed(2), 5, None));
-		assert_ok!(FeeMarket::update_price(Origin::signed(1), 2));
-		assert_ok!(FeeMarket::update_price(Origin::signed(2), 3));
+		assert_ok!(FeeMarket::update_fee(Origin::signed(1), 2));
+		assert_ok!(FeeMarket::update_fee(Origin::signed(2), 3));
 
 		assert_eq!(FeeMarket::relayers(), vec![1, 2]);
 		assert_eq!(FeeMarket::prior_relayers()[0], (1, 2));
@@ -364,10 +364,10 @@ fn test_mul_relayer_update_one_price() {
 		assert_ok!(FeeMarket::register(Origin::signed(2), 5, None));
 		assert_ok!(FeeMarket::register(Origin::signed(3), 5, None));
 		assert_ok!(FeeMarket::register(Origin::signed(4), 5, None));
-		assert_ok!(FeeMarket::update_price(Origin::signed(1), 10));
-		assert_ok!(FeeMarket::update_price(Origin::signed(2), 10));
-		assert_ok!(FeeMarket::update_price(Origin::signed(3), 10));
-		assert_ok!(FeeMarket::update_price(Origin::signed(4), 10));
+		assert_ok!(FeeMarket::update_fee(Origin::signed(1), 10));
+		assert_ok!(FeeMarket::update_fee(Origin::signed(2), 10));
+		assert_ok!(FeeMarket::update_fee(Origin::signed(3), 10));
+		assert_ok!(FeeMarket::update_fee(Origin::signed(4), 10));
 
 		assert_eq!(FeeMarket::relayers(), vec![1, 2, 3, 4]);
 		assert_eq!(FeeMarket::prior_relayers().len(), 3);
@@ -385,10 +385,10 @@ fn test_mul_relayer_update_diff_price() {
 		assert_ok!(FeeMarket::register(Origin::signed(2), 5, None));
 		assert_ok!(FeeMarket::register(Origin::signed(3), 5, None));
 		assert_ok!(FeeMarket::register(Origin::signed(4), 5, None));
-		assert_ok!(FeeMarket::update_price(Origin::signed(1), 10));
-		assert_ok!(FeeMarket::update_price(Origin::signed(2), 20));
-		assert_ok!(FeeMarket::update_price(Origin::signed(3), 30));
-		assert_ok!(FeeMarket::update_price(Origin::signed(4), 40));
+		assert_ok!(FeeMarket::update_fee(Origin::signed(1), 10));
+		assert_ok!(FeeMarket::update_fee(Origin::signed(2), 20));
+		assert_ok!(FeeMarket::update_fee(Origin::signed(3), 30));
+		assert_ok!(FeeMarket::update_fee(Origin::signed(4), 40));
 
 		assert_eq!(FeeMarket::relayers(), vec![1, 2, 3, 4]);
 		assert_eq!(FeeMarket::prior_relayers().len(), 3);
