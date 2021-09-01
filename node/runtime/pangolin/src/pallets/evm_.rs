@@ -40,11 +40,11 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 pub struct PangolinPrecompiles<R>(PhantomData<R>);
 impl<R> PrecompileSet for PangolinPrecompiles<R>
 where
-	R: darwinia_s2s_issuing::Config + darwinia_ethereum_issuing::Config,
+	R: from_substrate_issuing::Config + from_ethereum_issuing::Config,
 	R: darwinia_evm::Config,
 	R::Call: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Encode + Decode,
 	<R::Call as Dispatchable>::Origin: From<Option<R::AccountId>>,
-	R::Call: From<darwinia_ethereum_issuing::Call<R>> + From<darwinia_s2s_issuing::Call<R>>,
+	R::Call: From<from_ethereum_issuing::Call<R>> + From<from_substrate_issuing::Call<R>>,
 {
 	fn execute(
 		address: H160,

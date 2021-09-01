@@ -35,12 +35,12 @@ pub struct DispatchCallEncoder<T> {
 }
 impl<T> Precompile for DispatchCallEncoder<T>
 where
-	T: darwinia_ethereum_issuing::Config,
-	T: darwinia_s2s_issuing::Config,
+	T: from_ethereum_issuing::Config,
+	T: from_substrate_issuing::Config,
 	T::Call: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Encode,
 	<T::Call as Dispatchable>::Origin: From<Option<T::AccountId>>,
-	T::Call: From<darwinia_s2s_issuing::Call<T>>,
-	T::Call: From<darwinia_ethereum_issuing::Call<T>>,
+	T::Call: From<from_substrate_issuing::Call<T>>,
+	T::Call: From<from_ethereum_issuing::Call<T>>,
 {
 	fn execute(
 		input: &[u8],
@@ -52,11 +52,11 @@ where
 		}
 		let selector = &input[0..SELECTOR];
 		let call: T::Call = match selector {
-			_ if selector == <darwinia_s2s_issuing::Pallet<T>>::digest() => {
-				darwinia_s2s_issuing::Call::<T>::asset_burn_event_handle(input.to_vec()).into()
+			_ if selector == <from_substrate_issuing::Pallet<T>>::digest() => {
+				from_substrate_issuing::Call::<T>::asset_burn_event_handle(input.to_vec()).into()
 			}
-			_ if selector == <darwinia_ethereum_issuing::Pallet<T>>::digest() => {
-				darwinia_ethereum_issuing::Call::<T>::mapping_factory_event_handle(input.to_vec())
+			_ if selector == <from_ethereum_issuing::Pallet<T>>::digest() => {
+				from_ethereum_issuing::Call::<T>::mapping_factory_event_handle(input.to_vec())
 					.into()
 			}
 			_ => {
