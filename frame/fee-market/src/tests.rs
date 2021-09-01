@@ -154,7 +154,7 @@ fn test_register_workflow_works() {
 		assert_eq!(FeeMarket::relayers().len(), 1);
 		assert_eq!(Ring::usable_balance(&1), 5);
 		assert_eq!(FeeMarket::relayer_locked_balance(&1), 5);
-		assert_eq!(FeeMarket::top_relayer(), (1, 2));
+		assert_eq!(FeeMarket::best_relayer(), (1, 2));
 
 		assert_err!(
 			FeeMarket::register(Origin::signed(1), 5, None),
@@ -173,7 +173,7 @@ fn test_relayer_register_update_price() {
 
 		assert_eq!(FeeMarket::relayers(), vec![1, 2, 3, 4]);
 		assert_eq!(FeeMarket::prior_relayers().len(), 3);
-		assert_eq!(FeeMarket::top_relayer(), (3, 12));
+		assert_eq!(FeeMarket::best_relayer(), (3, 12));
 	});
 }
 
@@ -191,7 +191,7 @@ fn test_update_locked_balance_success() {
 		assert_ok!(FeeMarket::update_locked_balance(Origin::signed(1), 8));
 		assert_eq!(Ring::usable_balance(&1), 2);
 		assert_eq!(FeeMarket::relayer_locked_balance(&1), 8);
-		assert_eq!(FeeMarket::top_relayer(), (1, 2));
+		assert_eq!(FeeMarket::best_relayer(), (1, 2));
 	});
 }
 
@@ -248,7 +248,7 @@ fn test_cancel_register_and_update_price() {
 		assert_eq!(FeeMarket::prior_relayers()[0], (1, 2));
 		assert_eq!(FeeMarket::prior_relayers()[1], (2, 2));
 		assert_eq!(FeeMarket::prior_relayers()[2], (3, 2));
-		assert_eq!(FeeMarket::top_relayer(), (3, 2));
+		assert_eq!(FeeMarket::best_relayer(), (3, 2));
 
 		assert_ok!(FeeMarket::cancel_register(Origin::signed(1)));
 		assert_ok!(FeeMarket::cancel_register(Origin::signed(5)));
@@ -258,7 +258,7 @@ fn test_cancel_register_and_update_price() {
 		assert_eq!(FeeMarket::prior_relayers()[0], (2, 2));
 		assert_eq!(FeeMarket::prior_relayers()[1], (3, 2));
 		assert_eq!(FeeMarket::prior_relayers()[2], (4, 2));
-		assert_eq!(FeeMarket::top_relayer(), (4, 2));
+		assert_eq!(FeeMarket::best_relayer(), (4, 2));
 	});
 }
 
@@ -322,7 +322,7 @@ fn test_few_relayer_duplicate_update_one_price() {
 		assert_eq!(FeeMarket::relayers(), vec![1]);
 		assert_eq!(FeeMarket::prior_relayers()[0], (1, 2));
 		assert_eq!(FeeMarket::prior_relayers().len(), 1);
-		assert_eq!(FeeMarket::top_relayer(), (1, 2));
+		assert_eq!(FeeMarket::best_relayer(), (1, 2));
 	});
 }
 
@@ -337,7 +337,7 @@ fn test_few_relayer_update_one_price() {
 		assert_eq!(FeeMarket::prior_relayers()[0], (1, 4));
 		assert_eq!(FeeMarket::prior_relayers()[1], (2, 4));
 		assert_eq!(FeeMarket::prior_relayers().len(), 2);
-		assert_eq!(FeeMarket::top_relayer(), (2, 4));
+		assert_eq!(FeeMarket::best_relayer(), (2, 4));
 	});
 }
 
@@ -353,7 +353,7 @@ fn test_few_relayer_update_more_price() {
 		assert_eq!(FeeMarket::prior_relayers()[0], (1, 2));
 		assert_eq!(FeeMarket::prior_relayers()[1], (2, 3));
 		assert_eq!(FeeMarket::prior_relayers().len(), 2);
-		assert_eq!(FeeMarket::top_relayer(), (2, 3));
+		assert_eq!(FeeMarket::best_relayer(), (2, 3));
 	});
 }
 
@@ -374,7 +374,7 @@ fn test_mul_relayer_update_one_price() {
 		assert_eq!(FeeMarket::prior_relayers()[0], (1, 10));
 		assert_eq!(FeeMarket::prior_relayers()[1], (2, 10));
 		assert_eq!(FeeMarket::prior_relayers()[2], (3, 10));
-		assert_eq!(FeeMarket::top_relayer(), (3, 10));
+		assert_eq!(FeeMarket::best_relayer(), (3, 10));
 	});
 }
 
@@ -395,6 +395,6 @@ fn test_mul_relayer_update_diff_price() {
 		assert_eq!(FeeMarket::prior_relayers()[0], (1, 10));
 		assert_eq!(FeeMarket::prior_relayers()[1], (2, 20));
 		assert_eq!(FeeMarket::prior_relayers()[2], (3, 30));
-		assert_eq!(FeeMarket::top_relayer(), (3, 30));
+		assert_eq!(FeeMarket::best_relayer(), (3, 30));
 	});
 }

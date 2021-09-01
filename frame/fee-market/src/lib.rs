@@ -44,8 +44,8 @@ use sp_std::{
 };
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-pub type Balance = u128;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
+pub type Fee<T> = RingBalance<T>;
 
 pub use pallet::*;
 
@@ -62,7 +62,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type MiniumLockValue: Get<RingBalance<Self>>;
 		#[pallet::constant]
-		type MinimumFee: Get<RingBalance<Self>>;
+		type MinimumFee: Get<Fee<Self>>;
 		#[pallet::constant]
 		type PriorRelayersNumber: Get<u64>;
 		#[pallet::constant]
@@ -77,11 +77,11 @@ pub mod pallet {
 	#[pallet::metadata(T::AccountId = "AccountId")]
 	pub enum Event<T: Config> {
 		/// Relayer register
-		Register(T::AccountId, RingBalance<T>, RingBalance<T>),
+		Register(T::AccountId, RingBalance<T>, Fee<T>),
 		/// Update relayer lock balance
 		UpdateLockedBalance(T::AccountId, RingBalance<T>),
 		/// Update relayer fee
-		UpdateFee(T::AccountId, RingBalance<T>),
+		UpdateFee(T::AccountId, Fee<T>),
 		/// Cancel relayer register
 		CancelRelayerRegister(T::AccountId),
 	}
@@ -116,12 +116,11 @@ pub mod pallet {
 	/// The lowest n fees, p.0 < p.1 < p.2 ... < p.n
 	#[pallet::storage]
 	#[pallet::getter(fn prior_relayers)]
-	pub type PriorRelayers<T: Config> =
-		StorageValue<_, Vec<(T::AccountId, RingBalance<T>)>, ValueQuery>;
+	pub type PriorRelayers<T: Config> = StorageValue<_, Vec<(T::AccountId, Fee<T>)>, ValueQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn top_relayer)]
-	pub type TopRelayer<T: Config> = StorageValue<_, (T::AccountId, RingBalance<T>), ValueQuery>;
+	#[pallet::getter(fn best_relayer)]
+	pub type TopRelayer<T: Config> = StorageValue<_, (T::AccountId, Fee<T>), ValueQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {}
@@ -149,7 +148,7 @@ pub mod pallet {
 		pub fn register(
 			origin: OriginFor<T>,
 			lock_value: RingBalance<T>,
-			fee: Option<RingBalance<T>>,
+			fee: Option<Fee<T>>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			ensure!(
@@ -181,6 +180,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		/// Relayer update locked balance
 		#[pallet::weight(10000)]
 		#[transactional]
 		pub fn update_locked_balance(
@@ -209,7 +209,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Provide a way to cancel the registation and unlock asset
+		/// Relayer cancel register
 		#[pallet::weight(10000)]
 		#[transactional]
 		pub fn cancel_register(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
@@ -228,10 +228,10 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// The relayer submit fee
+		/// Relayer update fee
 		#[pallet::weight(10000)]
 		#[transactional]
-		pub fn update_fee(origin: OriginFor<T>, p: RingBalance<T>) -> DispatchResultWithPostInfo {
+		pub fn update_fee(origin: OriginFor<T>, p: Fee<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			ensure!(
 				Self::is_registered(&who),
@@ -294,7 +294,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	// Get relayer fee
-	pub fn relayer_price(who: &T::AccountId) -> RingBalance<T> {
+	pub fn relayer_price(who: &T::AccountId) -> Fee<T> {
 		Self::get_relayer(who).fee
 	}
 
@@ -313,11 +313,11 @@ impl<T: Config> Pallet<T> {
 pub struct Relayer<T: Config> {
 	id: T::AccountId,
 	lock_balance: RingBalance<T>,
-	fee: RingBalance<T>,
+	fee: Fee<T>,
 }
 
 impl<T: Config> Relayer<T> {
-	pub fn new(id: T::AccountId, lock_balance: RingBalance<T>, fee: RingBalance<T>) -> Relayer<T> {
+	pub fn new(id: T::AccountId, lock_balance: RingBalance<T>, fee: Fee<T>) -> Relayer<T> {
 		Relayer {
 			id,
 			lock_balance,
@@ -349,7 +349,7 @@ impl<T: Config> Default for Relayer<T> {
 		Relayer {
 			id: T::AccountId::default(),
 			lock_balance: RingBalance::<T>::default(),
-			fee: RingBalance::<T>::default(),
+			fee: Fee::<T>::default(),
 		}
 	}
 }

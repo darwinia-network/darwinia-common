@@ -24,15 +24,16 @@ use sp_api::decl_runtime_apis;
 use sp_std::vec::Vec;
 
 decl_runtime_apis! {
-	pub trait FeeMarketApi<AccountId>
+	pub trait FeeMarketApi<AccountId, Fee>
 	where
-		AccountId: Codec
+		AccountId: Codec,
+		Fee: Codec
 	{
 		/// Whether the relayer has registered
 		fn is_registered(who: &AccountId) -> bool;
 		/// Get the final choose relayer
-		fn top_relayer() -> (AccountId, u64);
+		fn best_relayer() -> (AccountId, Fee);
 		/// Get the prior relayers info
-		fn prior_relayers() -> Vec<(AccountId, u64)>;
+		fn prior_relayers() -> Vec<(AccountId, Fee)>;
 	}
 }
