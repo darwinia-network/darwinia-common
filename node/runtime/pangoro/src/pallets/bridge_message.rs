@@ -2,8 +2,15 @@ pub use pallet_bridge_messages::Instance1 as WithPangolinMessages;
 
 // --- substrate ---
 use sp_std::marker::PhantomData;
+use frame_support::pallet_prelude::Weight;
 // --- paritytech ---
-use bp_messages::MessageNonce;
+use bp_messages::{
+    source_chain::OnDeliveryConfirmed,
+    DeliveredMessages,
+    LaneId,
+    MessageNonce,
+};
+
 use bp_runtime::ChainId;
 use pallet_bridge_messages::{
 	instant_payments::InstantCurrencyPayments, weights::RialtoWeight, Config,
@@ -67,11 +74,6 @@ impl Config<WithPangolinMessages> for Runtime {
 	type MessageDispatch = FromPangolinMessageDispatch;
 	type BridgedChainId = BridgedChainId;
 }
-
-use bp_messages::source_chain::OnDeliveryConfirmed;
-use bp_messages::DeliveredMessages;
-use bp_messages::LaneId;
-use frame_support::pallet_prelude::Weight;
 
 pub struct PangoroDeliveryConfirmer<T: MessageConfirmer>(PhantomData<T>);
 
