@@ -105,6 +105,9 @@ impl RelayMessageCaller<(), Balance> for MockRelayCaller {
 	) -> Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>> {
 		Ok(().into())
 	}
+	fn latest_generated_nonce() -> u64 {
+		0
+	}
 }
 
 pub struct MockCallEncoder;
