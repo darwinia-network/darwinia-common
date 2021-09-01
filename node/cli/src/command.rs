@@ -26,16 +26,10 @@ use sc_service::TaskManager;
 use sp_core::crypto::Ss58AddressFormat;
 // --- darwinia-network ---
 use crate::cli::{Cli, Subcommand};
-use drml_service::{
-	chain_spec::{
-		pangolin::{self as pangolin_chain_spec},
-		pangoro::{self as pangoro_chain_spec},
-		PangolinChainSpec, PangoroChainSpec,
-	},
-	service::{
-		pangolin as pangolin_service, pangolin_runtime, pangoro as pangoro_service,
-		pangoro_runtime, IdentifyVariant, PangolinExecutor, PangoroExecutor,
-	},
+use service::{
+	pangolin_chain_spec, pangolin_runtime, pangolin_service, pangoro_chain_spec, pangoro_runtime,
+	pangoro_service, IdentifyVariant, PangolinChainSpec, PangolinExecutor, PangoroChainSpec,
+	PangoroExecutor,
 };
 
 impl SubstrateCli for Cli {

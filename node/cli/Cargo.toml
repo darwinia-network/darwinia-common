@@ -21,7 +21,7 @@ structopt = { version = "0.3.21", optional = true }
 # darwinia-network
 bsc-primitives = { path = "../../primitives/bsc" }
 dp-consensus   = { path = "../../primitives/consensus" }
-drml-service   = { path = "../service" }
+service        = { package = "drml-service", default-features = false, path = "../service" }
 # paritytech
 frame-benchmarking-cli = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sc-cli                 = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "main" }
@@ -45,25 +45,31 @@ default = [
 ]
 
 cli = [
+	# crates.io
 	"structopt",
+	# paritytech
 	"sc-cli",
 	"sc-service",
 ]
 
-db = ["drml-service/db"]
+db = ["service/db"]
 
-full-node = ["drml-service/full-node"]
+full-node = ["service/full-node"]
 
 trie-memory-tracker = ["sp-trie/memory-tracker"]
 
 wasmtime = ["sc-cli/wasmtime"]
 
 runtime-benchmarks = [
-	"drml-service/runtime-benchmarks",
+	# darwinia-network
+	"service/runtime-benchmarks",
+	# paritytech
 	"frame-benchmarking-cli",
 ]
 
 try-runtime = [
-	"drml-service/try-runtime",
+	# darwinia-network
+	"service/try-runtime",
+	# paritytech
 	"try-runtime-cli",
 ]
