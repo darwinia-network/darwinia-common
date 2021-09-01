@@ -94,20 +94,14 @@ pub use proxy::*;
 pub mod multisig;
 pub use multisig::*;
 
-pub mod crab_issuing;
-pub use crab_issuing::*;
+pub mod bridge_ethereum;
+pub use bridge_ethereum::*;
 
-pub mod crab_backing;
-pub use crab_backing::*;
+pub mod to_ethereum_backing_;
+pub use to_ethereum_backing_::*;
 
-pub mod ethereum_relay;
-pub use ethereum_relay::*;
-
-pub mod ethereum_backing;
-pub use ethereum_backing::*;
-
-pub mod ethereum_issuing;
-pub use ethereum_issuing::*;
+pub mod from_ethereum_issuing_;
+pub use from_ethereum_issuing_::*;
 
 pub mod relayer_game;
 pub use relayer_game::*;
@@ -115,10 +109,9 @@ pub use relayer_game::*;
 pub mod relay_authorities;
 pub use relay_authorities::*;
 
-pub mod tron_backing;
-pub use tron_backing::*;
+pub mod to_tron_backing_;
+pub use to_tron_backing_::*;
 
-// DVM
 pub mod evm_;
 pub use evm_::*;
 
@@ -128,7 +121,6 @@ pub use dvm::*;
 pub mod dynamic_fee;
 pub use dynamic_fee::*;
 
-// S2S bridges
 pub mod bridge_messages;
 pub use bridge_messages::*;
 
@@ -138,8 +130,8 @@ pub use bridge_dispatch::*;
 pub mod bridge_grandpa;
 pub use bridge_grandpa::*;
 
-pub mod s2s_issuing;
-pub use s2s_issuing::*;
+pub mod from_substrate_issuing_;
+pub use from_substrate_issuing_::*;
 
 pub mod bridge_bsc;
 pub use bridge_bsc::*;

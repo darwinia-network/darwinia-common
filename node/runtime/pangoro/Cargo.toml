@@ -17,7 +17,6 @@ serde       = { version = "1.0.126", features = ["derive"], optional = true }
 bridge-primitives              = { default-features = false, path = "../../primitives/bridge" }
 common-primitives              = { default-features = false, path = "../../primitives/common" }
 darwinia-balances              = { default-features = false, path = "../../../frame/balances" }
-darwinia-s2s-backing           = { default-features = false, path = "../../../frame/bridge/s2s/backing" }
 darwinia-staking               = { default-features = false, path = "../../../frame/staking" }
 darwinia-support               = { default-features = false, path = "../../../frame/support" }
 dp-asset                       = { default-features = false, path = "../../../primitives/asset" }
@@ -25,6 +24,7 @@ pangolin-constants             = { default-features = false, path = "../pangolin
 pangolin-runtime-system-params = { default-features = false, path = "../pangolin/src/pallets/system/params" }
 pangoro-constants              = { default-features = false, path = "src/constants" }
 pangoro-runtime-system-params  = { default-features = false, path = "src/pallets/system/params" }
+to-substrate-backing           = { default-features = false, path = "../../../frame/wormhole/backing/s2s" }
 # paritytech
 bp-header-chain                            = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
 bp-message-dispatch                        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
@@ -81,7 +81,7 @@ std = [
 	"bridge-primitives/std",
 	"common-primitives/std",
 	"darwinia-balances/std",
-	"darwinia-s2s-backing/std",
+	"to-substrate-backing/std",
 	"darwinia-staking/std",
 	"darwinia-support/std",
 	"dp-asset/std",

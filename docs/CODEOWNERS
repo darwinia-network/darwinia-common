@@ -32,8 +32,6 @@
 /frame/balances/ @AurevoirXavier @HackFisher
 /frame/balances/rpc/ @AurevoirXavier
 /frame/balances/rpc/runtime-api/ @AurevoirXavier
-/frame/bridge/crab/backing/ @AurevoirXavier @HackFisher
-/frame/bridge/crab/issuing/ @AurevoirXavier @HackFisher
 /frame/bridge/ethereum/backing/ @AurevoirXavier @HackFisher
 /frame/bridge/ethereum/issuing/ @xiaoch05
 /frame/bridge/ethereum/relay/ @AurevoirXavier @HackFisher
