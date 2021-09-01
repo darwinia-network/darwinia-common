@@ -33,7 +33,6 @@ sp-std           = { default-features = false, git = "https://github.com/darwini
 
 [dev-dependencies]
 darwinia-balances = { path = "../../../balances" }
-pallet-timestamp  = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-io             = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [features]
@@ -53,6 +52,7 @@ std = [
 	# paritytech
 	"frame-support/std",
 	"frame-system/std",
+	"pallet-timestamp/std",
 	"sp-runtime/std",
 	"sp-std/std",
 	"bp-runtime/std",
