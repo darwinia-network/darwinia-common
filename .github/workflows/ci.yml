@@ -56,12 +56,12 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --release
+          args: --release --locked
       - name: Test
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --release --all
+          args: --release --all --locked
         env:
           CARGO_INCREMENTAL: 0
       - name: Compress node
@@ -104,6 +104,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: check
+          args: --locked
 
   check_storage_prefix:
     name: Check storage prefix
