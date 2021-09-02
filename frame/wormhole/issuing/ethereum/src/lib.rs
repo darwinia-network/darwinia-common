@@ -52,9 +52,7 @@ use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::{balance::*, traits::EthereumReceipt, PalletDigest};
 use dp_contract::{
 	ethereum_backing::{EthereumBacking, EthereumLockEvent, EthereumRegisterEvent},
-	mapping_token_factory::{
-		MappingTokenFactory as mtf, TokenBurnInfo, TokenRegisterInfo, BURN_ACTION, REGISTER_ACTION,
-	},
+	mapping_token_factory::{MappingTokenFactory as mtf, TokenBurnInfo, TokenRegisterInfo},
 };
 use dvm_ethereum::InternalTransactHandler;
 use ethereum_primitives::{

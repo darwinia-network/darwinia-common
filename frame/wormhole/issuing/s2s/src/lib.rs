@@ -53,7 +53,7 @@ use dp_asset::{
 	token::{Token, TokenInfo},
 	RecipientAccount,
 };
-use dp_contract::mapping_token_factory::{MappingTokenFactory as mtf, TokenBurnInfo, BURN_ACTION};
+use dp_contract::mapping_token_factory::{MappingTokenFactory as mtf, TokenBurnInfo};
 use dvm_ethereum::InternalTransactHandler;
 
 pub use pallet::*;
@@ -117,28 +117,23 @@ pub mod pallet {
 			let factory_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(factory);
 			ensure!(caller == factory_id, <Error<T>>::NotFactoryContract);
 
-			let burn_action = &sha3::Keccak256::digest(&BURN_ACTION)[0..4];
-			if &input[4..8] == burn_action {
-				let burn_info =
-					TokenBurnInfo::decode(&input[8..]).map_err(|_| Error::<T>::InvalidDecoding)?;
-				// Ensure the recipient is valid
-				ensure!(
-					burn_info.recipient.len() == 32,
-					<Error<T>>::InvalidAddressLen
-				);
+			let burn_info =
+				TokenBurnInfo::decode(&input[8..]).map_err(|_| Error::<T>::InvalidDecoding)?;
+			// Ensure the recipient is valid
+			ensure!(
+				burn_info.recipient.len() == 32,
+				<Error<T>>::InvalidAddressLen
+			);
 
-				let fee = Self::transform_dvm_balance(burn_info.fee);
-				if let Some(fee_account) = T::FeeAccount::get() {
-					// Since fee account will represent use to make a cross chain call, give fee to fee account here.
-					// the fee transfer path
-					// user -> mapping_token_factory(caller) -> fee_account -> fee_fund -> relayers
-					<T as Config>::RingCurrency::transfer(&caller, &fee_account, fee, KeepAlive)?;
-				}
-
-				Self::burn_and_remote_unlock(fee, burn_info)?;
-			} else {
-				log::trace!("No action match this input selector");
+			let fee = Self::transform_dvm_balance(burn_info.fee);
+			if let Some(fee_account) = T::FeeAccount::get() {
+				// Since fee account will represent use to make a cross chain call, give fee to fee account here.
+				// the fee transfer path
+				// user -> mapping_token_factory(caller) -> fee_account -> fee_fund -> relayers
+				<T as Config>::RingCurrency::transfer(&caller, &fee_account, fee, KeepAlive)?;
 			}
+
+			Self::burn_and_remote_unlock(fee, burn_info)?;
 			Ok(().into())
 		}
 
