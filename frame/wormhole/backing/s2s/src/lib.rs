@@ -132,7 +132,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn locked_queue)]
 	pub type LockedQueue<T: Config> =
-		StorageMap<_, Blake2_128Concat, u64, (AccountId<T>, Token), ValueQuery>;
+		StorageMap<_, Blake2_128Concat, [u8; 16], (AccountId<T>, Token), ValueQuery>;
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -220,12 +220,12 @@ pub mod pallet {
 					.map_err(|_| Error::<T>::EncodeInvalid)?;
 			T::MessageSender::send_message(payload, fee)
 				.map_err(|_| Error::<T>::SendMessageFailed)?;
-			let nonce = T::MessageSender::latest_generated_nonce();
+			let message_id = T::MessageSender::latest_message_id();
 			ensure!(
-				!<LockedQueue<T>>::contains_key(nonce),
+				!<LockedQueue<T>>::contains_key(message_id),
 				Error::<T>::NonceDumplicated
 			);
-			<LockedQueue<T>>::insert(nonce, (user.clone(), token.clone()));
+			<LockedQueue<T>>::insert(message_id, (user.clone(), token.clone()));
 			Self::deposit_event(Event::TokenLocked(token, user, recipient, amount));
 			Ok(().into())
 		}
@@ -285,8 +285,8 @@ pub mod pallet {
 	}
 
 	impl<T: Config> MessageConfirmer for Pallet<T> {
-		fn on_messages_confirmed(nonce: u64, result: bool) -> Weight {
-			let (user, token) = <LockedQueue<T>>::take(nonce);
+		fn on_messages_confirmed(message_id: [u8; 16], result: bool) -> Weight {
+			let (user, token) = <LockedQueue<T>>::take(message_id);
 			if !result {
 				let token_info = match &token {
 					Token::Native(info) => {

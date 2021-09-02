@@ -281,9 +281,11 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(<T as Config>::WeightInfo::mapping_factory_event_handle())]
+		// when the token register complete, the contract will call this method to deliver the
+		// response information to this issuing pallet
+		#[pallet::weight(<T as Config>::WeightInfo::register_response_from_contract())]
 		#[transactional]
-		pub fn mapping_factory_event_handle(
+		pub fn register_response_from_contract(
 			origin: OriginFor<T>,
 			input: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
@@ -292,29 +294,39 @@ pub mod pallet {
 			let factory = MappingFactoryAddress::<T>::get();
 			let factory_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(factory);
 			ensure!(factory_id == caller, <Error<T>>::NoAuthority);
-			let burn_action = &sha3::Keccak256::digest(&BURN_ACTION)[0..4];
-			let register_action = &sha3::Keccak256::digest(&REGISTER_ACTION)[0..4];
-			if &input[4..8] == burn_action {
-				let burn_info =
-					TokenBurnInfo::decode(&input[8..]).map_err(|_| Error::<T>::InvalidInputData)?;
-				ensure!(
-					burn_info.recipient.len() == 20,
-					<Error<T>>::InvalidAddressLen
-				);
-				Self::deposit_burn_token_event(
-					burn_info.backing,
-					burn_info.sender,
-					burn_info.source,
-					EthereumAddress::from_slice(burn_info.recipient.as_slice()),
-					burn_info.amount,
-				)?;
-			} else if &input[4..8] == register_action {
-				let register_info = TokenRegisterInfo::decode(&input[8..])
-					.map_err(|_| Error::<T>::InvalidInputData)?;
-				Self::finish_token_registered(register_info.0, register_info.1, register_info.2);
-			} else {
-				return Err(Error::<T>::UnsupportedAction.into());
-			}
+			let register_info =
+				TokenRegisterInfo::decode(&input[8..]).map_err(|_| Error::<T>::InvalidInputData)?;
+			Self::finish_token_registered(register_info.0, register_info.1, register_info.2);
+			Ok(().into())
+		}
+
+		// when user burn their mapped tokens to unlock remote origin token, contract will deliver
+		// the burn information by this method
+		#[pallet::weight(<T as Config>::WeightInfo::burn_and_remote_unlock())]
+		#[transactional]
+		pub fn burn_and_remote_unlock(
+			origin: OriginFor<T>,
+			input: Vec<u8>,
+		) -> DispatchResultWithPostInfo {
+			let caller = ensure_signed(origin)?;
+			ensure!(input.len() >= 8, <Error<T>>::InvalidInput);
+			let factory = MappingFactoryAddress::<T>::get();
+			let factory_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(factory);
+			ensure!(factory_id == caller, <Error<T>>::NoAuthority);
+			let burn_info =
+				TokenBurnInfo::decode(&input[8..]).map_err(|_| Error::<T>::InvalidInputData)?;
+			ensure!(
+				burn_info.recipient.len() == 20,
+				<Error<T>>::InvalidAddressLen
+			);
+			Self::deposit_burn_token_event(
+				burn_info.backing,
+				burn_info.sender,
+				burn_info.source,
+				EthereumAddress::from_slice(burn_info.recipient.as_slice()),
+				burn_info.amount,
+			)?;
+
 			Ok(().into())
 		}
 

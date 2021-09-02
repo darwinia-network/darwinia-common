@@ -18,17 +18,28 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate alloc;
+use alloc::vec::Vec;
+
 // --- core ---
 use core::marker::PhantomData;
 // --- crates.io ---
 use codec::Encode;
 use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
 // --- darwinia-network ---
-use darwinia_support::evm::SELECTOR;
+use darwinia_support::s2s::RelayMessageCaller;
 use dp_evm::Precompile;
 // --- paritytech ---
 use frame_support::dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo};
 
+const PALLET_DIG_LEN: usize = 4;
+const METHOD_DIG_LEN: usize = 4;
+const ACTION_LEN: usize = PALLET_DIG_LEN + METHOD_DIG_LEN;
+const BURN_AND_REMOTE_UNLOCK_METHOD: &[u8] = b"burn_and_remote_unlock()";
+const TOKEN_REGISTER_RESPONSE_METHOD: &[u8] = b"token_register_response()";
+const READ_LATEST_MESSAGE_ID_METHOD: &[u8] = b"read_latest_message_id()";
+
+// TODO rename this precompile contract
 /// The contract address: 0000000000000000000000000000000000000018
 pub struct DispatchCallEncoder<T> {
 	_marker: PhantomData<T>,
@@ -47,29 +58,64 @@ where
 		_target_gas: Option<u64>,
 		_context: &Context,
 	) -> core::result::Result<PrecompileOutput, ExitError> {
-		if input.len() < SELECTOR {
+		if input.len() < ACTION_LEN {
 			return Err(ExitError::Other("input length less than 4 bytes".into()));
 		}
-		let selector = &input[0..SELECTOR];
-		let call: T::Call = match selector {
-			_ if selector == <from_substrate_issuing::Pallet<T>>::digest() => {
-				from_substrate_issuing::Call::<T>::asset_burn_event_handle(input.to_vec()).into()
+		let pallet_digest = &input[0..PALLET_DIG_LEN];
+		let method_digest = &input[PALLET_DIG_LEN - 1..ACTION_LEN];
+		let output = match pallet_digest {
+			_ if pallet_digest == <from_substrate_issuing::Pallet<T>>::digest() => {
+				match method_digest {
+					_ if method_digest == BURN_AND_REMOTE_UNLOCK_METHOD => {
+						let call: T::Call =
+							from_substrate_issuing::Call::<T>::asset_burn_event_handle(
+								input.to_vec(),
+							)
+							.into();
+						call.encode()
+					}
+					// this method comes from mapping-token-factory, we ignore it by a empty method
+					_ if method_digest == TOKEN_REGISTER_RESPONSE_METHOD => Vec::new(),
+					_ if method_digest == READ_LATEST_MESSAGE_ID_METHOD => {
+						<T as from_substrate_issuing::Config>::MessageSender::latest_message_id()
+							.to_vec()
+					}
+					_ => {
+						return Err(ExitError::Other(
+							"No such method in pallet substrate issuing".into(),
+						));
+					}
+				}
 			}
-			_ if selector == <from_ethereum_issuing::Pallet<T>>::digest() => {
-				from_ethereum_issuing::Call::<T>::mapping_factory_event_handle(input.to_vec())
-					.into()
+			_ if pallet_digest == <from_ethereum_issuing::Pallet<T>>::digest() => {
+				let call: T::Call = match method_digest {
+					_ if method_digest == TOKEN_REGISTER_RESPONSE_METHOD => {
+						from_ethereum_issuing::Call::<T>::register_response_from_contract(
+							input.to_vec(),
+						)
+						.into()
+					}
+					_ if method_digest == BURN_AND_REMOTE_UNLOCK_METHOD => {
+						from_ethereum_issuing::Call::<T>::burn_and_remote_unlock(input.to_vec())
+							.into()
+					}
+					_ => {
+						return Err(ExitError::Other(
+							"No such method in pallet ethereum issuing".into(),
+						));
+					}
+				};
+				call.encode()
 			}
 			_ => {
-				return Err(ExitError::Other(
-					"No wrapper method at selector given selector".into(),
-				));
+				return Err(ExitError::Other("No valid pallet digest found".into()));
 			}
 		};
 		// TODO: The cost should not be zero
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Stopped,
 			cost: 0,
-			output: call.encode(),
+			output,
 			logs: Default::default(),
 		})
 	}

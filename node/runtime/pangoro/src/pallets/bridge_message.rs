@@ -22,7 +22,11 @@ use bridge_primitives::{
 	MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE, MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE,
 	PANGOLIN_CHAIN_ID,
 };
-use darwinia_support::s2s::{self, MessageConfirmer};
+use darwinia_support::s2s::{
+    self,
+    MessageConfirmer,
+    nonce_to_message_id,
+};
 use pangolin_messages::{
 	FromPangolinMessageDispatch, FromPangolinMessagePayload, Pangolin,
 	PangoroToPangolinMessagesParameter, ToPangolinMessagePayload, ToPangolinMessageVerifier,
@@ -85,8 +89,9 @@ impl<T: MessageConfirmer> OnDeliveryConfirmed for PangoroDeliveryConfirmer<T> {
 		let mut total_weight: Weight = 0;
 		for nonce in messages.begin..messages.end + 1 {
 			let result = messages.message_dispatch_result(nonce);
+            let message_id = nonce_to_message_id(lane, nonce);
 			total_weight =
-				total_weight.saturating_add(T::on_messages_confirmed(nonce as u64, result));
+				total_weight.saturating_add(T::on_messages_confirmed(message_id, result));
 		}
 		total_weight
 	}

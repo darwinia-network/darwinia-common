@@ -33,6 +33,7 @@ pub mod balance {
 
 // TODO: Should we move this to `s2s-primitives`?
 pub mod s2s {
+	pub use crate::BridgeMessageId;
 	// --- crates.io ---
 	use codec::Encode;
 	use ethabi::{encode, Token};
@@ -62,11 +63,11 @@ pub mod s2s {
 			fee: F,
 		) -> Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>;
 
-		fn latest_generated_nonce() -> u64;
+		fn latest_message_id() -> BridgeMessageId;
 	}
 
 	pub trait MessageConfirmer {
-		fn on_messages_confirmed(nonce: u64, result: bool) -> Weight;
+		fn on_messages_confirmed(message_id: BridgeMessageId, result: bool) -> Weight;
 	}
 
 	pub fn ensure_source_root<AccountId, Converter>(
@@ -89,9 +90,21 @@ pub mod s2s {
 		result.copy_from_slice(&encoded);
 		result
 	}
+
+	// 128 bit or 16 bytes
+	// [0..4]  bytes ---- reserved
+	// [4..8]  bytes ---- laneID
+	// [8..16] bytes ---- message nonce
+	pub fn nonce_to_message_id(lane_id: &[u8], nonce: u64) -> BridgeMessageId {
+		let mut message_id: BridgeMessageId = Default::default();
+		message_id[4..].copy_from_slice(&lane_id[..4]);
+		message_id[8..].copy_from_slice(&nonce.to_be_bytes());
+		message_id
+	}
 }
 
 pub type PalletDigest = [u8; 4];
+pub type BridgeMessageId = [u8; 16];
 
 #[cfg(test)]
 mod test {
