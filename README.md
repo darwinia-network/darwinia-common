@@ -17,11 +17,11 @@ The Darwinia Runtime Module Library (DRML) is a darwinia.network maintained coll
 - [darwinia-democracy](./frame/democracy)
 	- Module that handles the administration of general stakeholder voting..
 - [darwinia-dvm](./frame/dvm)
-	- Ethereum block handling module of the EVM-compatible DVM sytem.
+	- Ethereum block handling module of the EVM-compatible DVM system.
 - [darwinia-evm](./frame/evm)
-	- EVM execution handling module of the EVM-compatible DVM sytem.
+	- EVM execution handling module of the EVM-compatible DVM system.
 - [darwinia-dvm-dynamic-fee](./frame/dvm-dynamic-fee)
-	- Extending fee handling module of the EVM-compatible DVM sytem.
+	- Extending fee handling module of the EVM-compatible DVM system.
 - [darwinia-elections-phragmen](./frame/elections-phragmen)
 	- An election module based on sequential phragmen.
 - [darwinia-header-mmr](./frame/header-mmr)
