@@ -32,14 +32,14 @@ The Darwinia Runtime Module Library (DRML) is a darwinia.network maintained coll
 	- Basic utility module.
 - [darwinia-vesting](./frame/vesting)
 	- Module that provides vesting protection of the blocked balance on an account.
-- [to-ethereum-backing](./frame/wormhole/backing/ethereum)
-	- Module of backing assets on the Ethereum network.
 - [from-ethereum-issuing](./frame/wormhole/issuing/ethereum)
 	- Module that manages assets issuing in Substrate-to-Substrate bridges.
-- [to-substrate-backing](./frame/wormhole/backing/s2s)
-	- Module that manages assets backing in Substrate-to-Substrate bridges.
 - [from-substrate-issuing](./frame/wormhole/issuing/s2s)
 	- Module of issuing assets on the Crab network.
+- [to-ethereum-backing](./frame/wormhole/backing/ethereum)
+	- Module of backing assets on the Ethereum network.
+- [to-substrate-backing](./frame/wormhole/backing/s2s)
+	- Module that manages assets backing in Substrate-to-Substrate bridges.
 - [to-tron-backing](./frame/wormhole/backing/tron)
 	- Module of backing assets on the Tron network.
 
