@@ -51,5 +51,5 @@ pub use bridge_dispatch::*;
 pub mod bridge_grandpa;
 pub use bridge_grandpa::*;
 
-pub mod s2s_backing;
-pub use s2s_backing::*;
+pub mod to_substrate_backing_;
+pub use to_substrate_backing_::*;

@@ -122,7 +122,7 @@ use bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use bridges::substrate::pangoro_messages::{ToPangoroMessagePayload, WithPangoroMessageBridge};
 use common_primitives::*;
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
-use darwinia_ethereum_relay::CheckEthereumRelayHeaderParcel;
+use darwinia_bridge_ethereum::CheckEthereumRelayHeaderParcel;
 use darwinia_evm::{Account as EVMAccount, Runner};
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
@@ -171,7 +171,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_version: 2620,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 2,
+	transaction_version: 3,
 };
 
 /// The BABE epoch configuration at genesis.
@@ -260,16 +260,16 @@ frame_support::construct_runtime! {
 		// Multisig module. Late addition.
 		Multisig: pallet_multisig::{Pallet, Call, Storage, Event<T>} = 32,
 
-		CrabIssuing: darwinia_crab_issuing::{Pallet, Call, Storage, Config} = 33,
-		CrabBacking: darwinia_crab_backing::{Pallet, Storage, Config<T>} = 34,
+		// CrabIssuing: darwinia_crab_issuing::{Pallet, Call, Storage, Config} = 33,
+		// CrabBacking: darwinia_crab_backing::{Pallet, Storage, Config<T>} = 34,
 
-		EthereumRelay: darwinia_ethereum_relay::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
-		EthereumBacking: darwinia_ethereum_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 36,
-		EthereumIssuing: darwinia_ethereum_issuing::{Pallet, Call, Storage, Config, Event<T>} = 42,
+		EthereumRelay: darwinia_bridge_ethereum::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
+		EthereumBacking: to_ethereum_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 36,
+		EthereumIssuing: from_ethereum_issuing::{Pallet, Call, Storage, Config, Event<T>} = 42,
 		EthereumRelayerGame: darwinia_relayer_game::<Instance1>::{Pallet, Storage} = 37,
 		EthereumRelayAuthorities: darwinia_relay_authorities::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>} = 38,
 
-		TronBacking: darwinia_tron_backing::{Pallet, Config<T>} = 39,
+		TronBacking: to_tron_backing::{Pallet, Config<T>} = 39,
 
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 40,
 		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 41,
@@ -278,7 +278,7 @@ frame_support::construct_runtime! {
 		BridgePangoroMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 43,
 		BridgeDispatch: pallet_bridge_dispatch::{Pallet, Event<T>} = 44,
 		BridgePangoroGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 45,
-		Substrate2SubstrateIssuing: darwinia_s2s_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
+		Substrate2SubstrateIssuing: from_substrate_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
 
 		BSC: darwinia_bridge_bsc::{Pallet, Call, Storage, Config} = 46,
 	}
@@ -745,8 +745,8 @@ sp_api::impl_runtime_apis! {
 
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
 			add_benchmark!(params, batches, darwinia_evm, EVM);
-			add_benchmark!(params, batches, darwinia_s2s_issuing, Substrate2SubstrateIssuing);
-			add_benchmark!(params, batches, darwinia_ethereum_issuing, EthereumIssuing);
+			add_benchmark!(params, batches, from_substrate_issuing, Substrate2SubstrateIssuing);
+			add_benchmark!(params, batches, from_ethereum_issuing, EthereumIssuing);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
@@ -773,12 +773,19 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 	}
 }
 
-fn migrate() {
+fn migrate() -> Weight {
 	// --- paritytech ---
+	#[allow(unused)]
 	use frame_support::migration;
 
-	migration::move_pallet(b"BridgeMillauGrandpa", b"BridgePangoroGrandpa");
-	migration::move_pallet(b"BridgePangoroDispatch", b"BridgeDispatch");
+	migration::remove_storage_prefix(b"CrabIssuing", b"TotalMappedRing", &[]);
+
+	// TODO: Move to S2S
+	// const CrabBackingPalletId: PalletId = PalletId(*b"da/crabk");
+	// const CrabIssuingPalletId: PalletId = PalletId(*b"da/crais");
+
+	// 0
+	RuntimeBlockWeights::get().max_block
 }
 
 pub struct CustomOnRuntimeUpgrade;
@@ -791,9 +798,7 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	}
 
 	fn on_runtime_upgrade() -> Weight {
-		migrate();
-
-		RuntimeBlockWeights::get().max_block
+		migrate()
 	}
 }
 

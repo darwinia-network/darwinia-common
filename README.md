@@ -4,28 +4,14 @@ The Darwinia Runtime Module Library (DRML) is a darwinia.network maintained coll
 ## Runtime Modules Overview
 - [darwinia-balances](./frame/balances)
 	- Provides functionality of handling accounts and their balances.
-- [darwinia-crab-backing](./frame/bridge/crab/backing)
-	- Module of backing assets on the Crab network.
-- [darwinia-crab-issuing](./frame/bridge/crab/issuing)
-	- Module of issuing assets on the Crab network.
-- [darwinia-ethereum-backing](./frame/bridge/ethereum/backing)
-	- Module of backing assets on the Ethereum network.
-- [darwinia-ethereum-issuing](./frame/bridge/ethereum/issuing)
-	- Module of issuing assets on the Ethereum network.
-- [darwinia-ethereum-relay](./frame/bridge/ethereum/relay)
+- [darwinia-bridge-ethereum](./frame/bridge/ethereum/relay)
 	- Module of the Ethereum>Darwinia relayer.
-- [darwinia-bridge-bsc](./frame/bridge/ethereum-bsc)
+- [darwinia-bridge-bsc](./frame/bridge/bsc)
 	- Module that verifies bsc(Binance Smart Chain) headers and authority set finality.
 - [darwinia-relay-authorities](./frame/bridge/relay-authorities)
 	- Module that manages the relayer authorities.
 - [darwinia-relayer-game](./frame/bridge/relayer-game)
 	- Implementation of the Darwinia Relayer Game Protocol.
-- [darwinia-s2s-backing](./frame/bridge/s2s/backing)
-	- Module that manages assets backing in Substrate-to-Substrate bridges.
-- [darwinia-s2s-issuing](./frame/bridge/s2s/issuing)
-	- Module that manages assets issuing in Substrate-to-Substrate bridges.
-- [darwinia-tron-backing](./frame/bridge/tron/backing)
-	- Module of backing assets on the Tron network.
 - [darwinia-claims](./frame/claims)
 	- Module to process claims from Ethereum addresses.
 - [darwinia-democracy](./frame/democracy)
@@ -46,6 +32,16 @@ The Darwinia Runtime Module Library (DRML) is a darwinia.network maintained coll
 	- Basic utility module.
 - [darwinia-vesting](./frame/vesting)
 	- Module that provides vesting protection of the blocked balance on an account.
+- [to-ethereum-backing](./frame/wormhole/backing/ethereum)
+	- Module of backing assets on the Ethereum network.
+- [from-ethereum-issuing](./frame/wormhole/issuing/ethereum)
+	- Module that manages assets issuing in Substrate-to-Substrate bridges.
+- [to-substrate-backing](./frame/wormhole/backing/s2s)
+	- Module that manages assets backing in Substrate-to-Substrate bridges.
+- [from-substrate-issuing](./frame/wormhole/issuing/s2s)
+	- Module of issuing assets on the Crab network.
+- [to-tron-backing](./frame/wormhole/backing/tron)
+	- Module of backing assets on the Tron network.
 
 ## Development
 
