@@ -46,8 +46,8 @@ do
     --base-path $DATA_DIR/$validator \
     --$validator \
     --chain $CHAIN-local \
-    --port $((303 + index)) \
-    --ws-port $((994 + index)) \
+    --port $((30333 + index)) \
+    --ws-port $((9944 + index)) \
     --node-key 0000000000000000000000000000000000000000000000000000000000000$((1 + index)) \
     --unsafe-ws-external \
     --rpc-cors all &> $LOG_DIR/$validator.log &
