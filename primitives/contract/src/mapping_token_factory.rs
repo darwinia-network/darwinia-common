@@ -101,6 +101,26 @@ impl MappingTokenFactory {
 		}
 	}
 
+	fn confirm_burn_and_remote_unlock() -> Function {
+		let inputs = vec![
+			Param {
+				name: "mseeageId".into(),
+				kind: ParamType::Bytes,
+			},
+			Param {
+				name: "result".into(),
+				kind: ParamType::Bool,
+			},
+		];
+
+		Function {
+			name: "confirmBurnAndRemoteUnlock".into(),
+			inputs,
+			outputs: vec![],
+			constant: false,
+		}
+	}
+
 	/// encode mint function for erc20
 	pub fn encode_cross_receive(
 		token: EthereumAddress,
@@ -141,6 +161,15 @@ impl MappingTokenFactory {
 			]
 			.as_slice(),
 		)
+	}
+
+	/// encode confirm burn and remote unlock deliver message function
+	pub fn encode_confirm_burn_and_remote_unlock(
+		message_id: Vec<u8>,
+		result: bool,
+	) -> AbiResult<Bytes> {
+		let confirm = Self::confirm_burn_and_remote_unlock();
+		confirm.encode_input(vec![Token::Bytes(message_id), Token::Bool(result)].as_slice())
 	}
 
 	/// get mapped token from source
