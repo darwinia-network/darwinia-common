@@ -44,15 +44,13 @@ The Darwinia Runtime Module Library (DRML) is a darwinia.network maintained coll
 	- Desc.
 
 ## Development
-
 The darwinia-common has some test chains. you can start use [deploy.sh](tests/local-testnet/deploy.sh)
 
-**Pangolin**
-
+### Pangolin Testnet
+#### With Script
 ```sh
 ./tests/local-testnet/deploy.sh pangolin
 ```
-
 
 | validator | rpc-port | ws-port | node-key                                                      |
 | --------- | -------- | ------- | ------------------------------------------------------------- |
@@ -63,8 +61,18 @@ The darwinia-common has some test chains. you can start use [deploy.sh](tests/lo
 | eve       | 30437    | 10048   | 0000000000000000000000000000000000000000000000000000000000105 |
 | ferdie    | 30438    | 10049   | 0000000000000000000000000000000000000000000000000000000000106 |
 
-**Pangoro**
+#### Manually
+```sh
+cargo build --release
 
+target/release/drml \
+	--chain pangolin-dev \
+	--alice \
+	--base-path tests/local-testnet/alice
+```
+
+### Pangoro Testnet
+#### With Script
 ```sh
 ./tests/local-testnet/deploy.sh pangoro
 ```
@@ -78,37 +86,12 @@ The darwinia-common has some test chains. you can start use [deploy.sh](tests/lo
 | eve       | 30537    | 10148   | 0000000000000000000000000000000000000000000000000000000000205 |
 | ferdie    | 30538    | 10149   | 0000000000000000000000000000000000000000000000000000000000206 |
 
-
-Or you can do it manually
-
-**Build**
-
-Build darwinia-common first
-
-```bash
+#### Manually
+```sh
 cargo build --release
+
+target/release/drml \
+	--chain pangoro-dev \
+	--alice \
+	--base-path tests/local-testnet/alice
 ```
-
-**Pangolin**
-
-```bash
-./target/release/drml \
-  --chain pangolin-local \
-  --base-path /path/to/data/pangolin \
-  --port 9955
-  --ws-port 9956 \
-  --alice
-```
-
-**Pangoro**
-
-```bash
-./target/release/drml \
-  --chain pangoro-local \
-  --base-path /path/to/data/pangoro \
-  --port 9965
-  --ws-port 9966 \
-  --alice
-```
-
-
