@@ -3,45 +3,45 @@ The Darwinia Runtime Module Library (DRML) is a darwinia.network maintained coll
 
 ## Runtime Modules Overview
 - [darwinia-balances](./frame/balances)
-	- Desc.
+	- Provides functionality of handling balances.
 - [darwinia-bridge-ethereum](./frame/bridge/ethereum/relay)
-	- Desc.
+	- Pallet of the Ethereum > Darwinia relay.
 - [darwinia-bridge-bsc](./frame/bridge/bsc)
-	- Desc.
+	- Pallet that verifies BSC(Binance Smart Chain) headers and authority set finality.
 - [darwinia-relay-authorities](./frame/bridge/relay-authorities)
-	- Desc.
+	- Pallet that manages the relayer authorities.
 - [darwinia-relayer-game](./frame/bridge/relayer-game)
-	- Desc.
+	- Implementation of the Darwinia-Relayer-Game protocol.
 - [darwinia-claims](./frame/claims)
-	- Desc.
+	- Pallet for airdrop.
 - [darwinia-democracy](./frame/democracy)
-	- Desc.
+	- Pallet for democracy.
 - [darwinia-dvm](./frame/dvm)
-	- Desc.
-- [darwinia-dvm-dynamic-fee](./frame/dvm-dynamic-fee)
-	- Desc.
-- [darwinia-elections-phragmen](./frame/elections-phragmen)
-	- Desc.
+	- Ethereum block handling pallet of the EVM-compatible DVM system.
 - [darwinia-evm](./frame/evm)
-	- Desc.
+	- EVM execution handling pallet of the EVM-compatible DVM system.
+- [darwinia-dvm-dynamic-fee](./frame/dvm-dynamic-fee)
+	- Extending fee handling pallet of the EVM-compatible DVM system.
+- [darwinia-elections-phragmen](./frame/elections-phragmen)
+	- An election module based on sequential phragmen.
 - [darwinia-header-mmr](./frame/header-mmr)
-	- Desc.
+	- Pallet that maintains the MMR(Merkle Mountain Range) data structure of the source chain headers.
 - [darwinia-staking](./frame/staking)
-	- Desc.
+	- Pallet that provides the staking-related features, nominating, validating etc.
 - [darwinia-support](./frame/support)
-	- Desc.
+	- Basic utility module.
 - [darwinia-vesting](./frame/vesting)
-	- Desc.
-- [to-ethereum-backing](./frame/wormhole/backing/ethereum)
-	- Desc.
+	- Pallet that provides vesting protection of the blocked balance on an account.
 - [from-ethereum-issuing](./frame/wormhole/issuing/ethereum)
-	- Desc.
-- [to-substrate-backing](./frame/wormhole/backing/s2s)
-	- Desc.
+	- Pallet of issuing assets on the Ethereum network.
 - [from-substrate-issuing](./frame/wormhole/issuing/s2s)
-	- Desc.
+	- Pallet of issuing assets on the Substrate base network.
+- [to-ethereum-backing](./frame/wormhole/backing/ethereum)
+	- Pallet of backing assets on the Ethereum network.
+- [to-substrate-backing](./frame/wormhole/backing/s2s)
+	- Pallet of backing assets on the Substrate base network.
 - [to-tron-backing](./frame/wormhole/backing/tron)
-	- Desc.
+	- Pallet of backing assets on the Tron network.
 
 ## Development
 
