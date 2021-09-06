@@ -50,8 +50,8 @@
 		}
 	},
 	"--3": "Common types",
-	"Address": "AccountId",
-	"LookupSource": "AccountId",
+	"Address": "MultiAddress",
+	"LookupSource": "Address",
 	"AccountSigner": "MultiSigner",
 	"SpecVersion": "u32",
 	"RelayerId": "AccountId",
