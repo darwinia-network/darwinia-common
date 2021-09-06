@@ -16,7 +16,7 @@ sha3  = { version = "0.9.1", default-features = false }
 # darwinia-network
 ethereum-primitives = { default-features = false, path = "../ethereum" }
 # paritytech
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
 
 [features]
 default = ["std"]

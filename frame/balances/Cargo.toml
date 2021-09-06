@@ -18,16 +18,16 @@ paste = { version = "1.0.5", optional = true }
 darwinia-balances-rpc-runtime-api = { default-features = false, path = "./rpc/runtime-api" }
 darwinia-support                  = { default-features = false, path = "../support" }
 # paritytech
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
 
 [dev-dependencies]
 # paritytech
-pallet-transaction-payment = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-core                    = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-io                      = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
+pallet-transaction-payment = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+sp-core                    = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+sp-io                      = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
 
 [features]
 default = ["std"]

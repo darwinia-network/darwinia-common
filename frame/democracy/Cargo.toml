@@ -16,11 +16,11 @@ serde = { version = "1.0.127", optional = true, features = ["derive"] }
 # darwinia-network
 darwinia-support = { default-features = false, path = "../support" }
 # paritytech
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
 
 [dev-dependencies]
 # crates.io
@@ -29,10 +29,10 @@ hex-literal = "0.3.1"
 darwinia-balances = { path = "../balances" }
 darwinia-support  = { features = ["easy-testing"], path = "../support" }
 # paritytech
-pallet-scheduler     = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-core              = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-storage           = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
-substrate-test-utils = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
+pallet-scheduler     = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+sp-core              = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+sp-storage           = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+substrate-test-utils = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
 
 [features]
 default = ["std"]
