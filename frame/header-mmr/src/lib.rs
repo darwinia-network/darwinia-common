@@ -129,8 +129,6 @@ pub mod pallet {
 			}
 		}
 	}
-	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
 	impl<T: Config> Pallet<T> {
 		pub fn offchain_key(position: NodeIndex) -> Vec<u8> {
 			(T::INDEXING_PREFIX, position).encode()
