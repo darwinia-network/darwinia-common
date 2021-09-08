@@ -16,6 +16,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+//! # Dynamic Fee pallet
+//!
+//! The Dynamic Fee pallet use to adjust the gas price dynamically on chain.
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[frame_support::pallet]
@@ -32,25 +36,26 @@ pub mod pallet {
 	// --- darwinia-network ---
 	use darwinia_evm::FeeCalculator;
 
-	pub type InherentType = U256;
+	pub(super) type InherentType = U256;
 
-	pub const INHERENT_IDENTIFIER: InherentIdentifier = *b"dynfee0_";
+	pub(super) const INHERENT_IDENTIFIER: InherentIdentifier = *b"dynfee0_";
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
+		/// Min Gas Price adjust divisor
 		type MinGasPriceBoundDivisor: Get<U256>;
 	}
 
 	#[pallet::storage]
 	#[pallet::getter(fn min_gas_price)]
-	pub type MinGasPrice<T> = StorageValue<_, U256, ValueQuery, DefaultForMinGasPrice>;
+	pub(super) type MinGasPrice<T> = StorageValue<_, U256, ValueQuery, DefaultForMinGasPrice>;
 	#[pallet::type_value]
-	pub fn DefaultForMinGasPrice() -> U256 {
+	pub(super) fn DefaultForMinGasPrice() -> U256 {
 		1_000_000_000_u128.into()
 	}
 
 	#[pallet::storage]
-	pub type TargetMinGasPrice<T> = StorageValue<_, U256, OptionQuery>;
+	pub(super) type TargetMinGasPrice<T> = StorageValue<_, U256, OptionQuery>;
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -75,6 +80,7 @@ pub mod pallet {
 	}
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// Set the Target gas price
 		#[pallet::weight(T::DbWeight::get().writes(1))]
 		fn note_min_gas_price_target(
 			origin: OriginFor<T>,
@@ -114,6 +120,7 @@ pub mod pallet {
 		}
 	}
 
+	/// Errors that can occur while checking the price inherent
 	#[derive(Encode, Decode, RuntimeDebug)]
 	pub enum InherentError {}
 	impl IsFatalError for InherentError {
@@ -122,6 +129,7 @@ pub mod pallet {
 		}
 	}
 
+	/// Provide price inherent
 	#[cfg(feature = "std")]
 	pub struct InherentDataProvider(pub InherentType);
 	#[cfg(feature = "std")]
