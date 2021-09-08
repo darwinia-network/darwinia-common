@@ -509,10 +509,6 @@ fn migrate() -> Weight {
 	migration::move_pallet(b"Instance1BridgeMessages", b"BridgePangolinMessages");
 	migration::move_pallet(b"BridgePangolinDispatch", b"BridgeDispatch");
 
-	// TODO: Move to S2S
-	// const CrabBackingPalletId: PalletId = PalletId(*b"da/crabk");
-	// const CrabIssuingPalletId: PalletId = PalletId(*b"da/crais");
-
 	// 0
 	RuntimeBlockWeights::get().max_block
 }
