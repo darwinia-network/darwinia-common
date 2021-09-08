@@ -16,6 +16,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+//! The module that manages the basic account info display in dvm.
+
 // --- crates.io ---
 use evm::ExitError;
 // --- paritytech ---

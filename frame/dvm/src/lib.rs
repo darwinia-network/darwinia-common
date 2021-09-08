@@ -80,7 +80,6 @@ pub type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
 pub type KtonBalance<T> = <KtonCurrency<T> as Currency<AccountId<T>>>::Balance;
 
 pub use pallet::*;
-
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
@@ -666,6 +665,7 @@ impl Get<H256> for IntermediateStateRoot {
 	}
 }
 
+#[doc(hidden)]
 pub mod migration {
 	#[cfg(feature = "try-runtime")]
 	pub mod try_runtime {
