@@ -29,6 +29,7 @@ mod benchmarking;
 mod tests;
 
 pub use crate::runner::Runner;
+#[doc(no_inline)]
 pub use dp_evm::{
 	Account, CallInfo, CreateInfo, ExecutionInfo, LinearCostPrecompile, Log, Precompile,
 	PrecompileSet, Vicinity,
@@ -83,8 +84,9 @@ pub mod pallet {
 		/// Find author for the current block.
 		type FindAuthor: FindAuthor<H160>;
 
-		/// Account basic
+		/// RING account basic
 		type RingAccountBasic: AccountBasic<Self>;
+		/// KTON account basic
 		type KtonAccountBasic: AccountBasic<Self>;
 
 		/// Precompiles associated with this EVM engine.
@@ -132,11 +134,12 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn account_codes)]
-	pub type AccountCodes<T: Config> = StorageMap<_, Blake2_128Concat, H160, Vec<u8>, ValueQuery>;
+	pub(super) type AccountCodes<T: Config> =
+		StorageMap<_, Blake2_128Concat, H160, Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn account_storages)]
-	pub type AccountStorages<T: Config> =
+	pub(super) type AccountStorages<T: Config> =
 		StorageDoubleMap<_, Blake2_128Concat, H160, Blake2_128Concat, H256, H256, ValueQuery>;
 
 	#[pallet::genesis_config]
@@ -384,6 +387,7 @@ pub mod pallet {
 }
 pub use pallet::*;
 
+/// A trait to perform origin check
 pub trait EnsureAddressOrigin<OuterOrigin> {
 	/// Success return type.
 	type Success;
@@ -403,11 +407,12 @@ pub trait EnsureAddressOrigin<OuterOrigin> {
 	) -> Result<Self::Success, OuterOrigin>;
 }
 
+/// A trait for converting from H160 to AccountId
 pub trait AddressMapping<AccountId> {
 	fn into_account_id(address: H160) -> AccountId;
 }
 
-/// Account basic info operations
+/// A trait for operating account basic info
 pub trait AccountBasic<T: frame_system::Config> {
 	/// Get the account basic in EVM format.
 	fn account_basic(address: &H160) -> Account;
@@ -421,7 +426,7 @@ pub trait AccountBasic<T: frame_system::Config> {
 	fn mutate_account_balance(account_id: &T::AccountId, balance: U256);
 }
 
-/// Config that outputs the current transaction gas price.
+/// A trait for output the current transaction gas price.
 pub trait FeeCalculator {
 	/// Return the minimal required gas price.
 	fn min_gas_price() -> U256;
@@ -478,6 +483,7 @@ where
 	}
 }
 
+/// Darwinia network address mapping
 pub struct ConcatAddressMapping<AccountId>(PhantomData<AccountId>);
 /// The ConcatAddressMapping used for transfer from evm 20-length to substrate 32-length address
 /// The concat rule inclued three parts:
@@ -506,7 +512,7 @@ where
 
 #[cfg(feature = "std")]
 #[derive(Clone, Eq, PartialEq, Encode, Decode, Debug, Serialize, Deserialize)]
-/// Account definition used for genesis block construction.
+/// Account used for genesis block construction.
 pub struct GenesisAccount {
 	/// Account nonce.
 	pub nonce: U256,

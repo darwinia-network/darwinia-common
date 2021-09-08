@@ -16,6 +16,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+//! EVM runner to execute transaction raw bytes
+
 pub mod stack;
 
 // --- paritytech ---
@@ -25,6 +27,7 @@ use sp_std::prelude::*;
 use crate::Config;
 use dp_evm::{CallInfo, CreateInfo};
 
+/// A trait defines the fundamental interfaces for evm execution
 pub trait Runner<T: Config> {
 	type Error: Into<sp_runtime::DispatchError>;
 
