@@ -112,8 +112,14 @@ pub type SignedExtra = (
 	ChargeTransactionPayment<Runtime>,
 );
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
-pub type Executive =
-	frame_executive::Executive<Runtime, Block, ChainContext<Runtime>, Runtime, AllPallets>;
+pub type Executive = frame_executive::Executive<
+	Runtime,
+	Block,
+	ChainContext<Runtime>,
+	Runtime,
+	AllPallets,
+	CustomOnRuntimeUpgrade,
+>;
 pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 
 pub type Ring = Balances;
@@ -171,7 +177,7 @@ frame_support::construct_runtime!(
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 16,
 
 		BridgePangolinMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 17,
-		BridgePangolinDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 18,
+		BridgeDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 18,
 		BridgePangolinGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 19,
 
 		Substrate2SubstrateBacking: to_substrate_backing::{Pallet, Call, Event<T>} = 20,
@@ -492,6 +498,36 @@ sp_api::impl_runtime_apis! {
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
 		}
+	}
+}
+
+fn migrate() -> Weight {
+	// --- paritytech ---
+	#[allow(unused)]
+	use frame_support::migration;
+
+	migration::move_pallet(b"Instance1BridgeMessages", b"BridgePangolinMessages");
+	migration::move_pallet(b"BridgePangolinDispatch", b"BridgeDispatch");
+
+	// TODO: Move to S2S
+	// const CrabBackingPalletId: PalletId = PalletId(*b"da/crabk");
+	// const CrabIssuingPalletId: PalletId = PalletId(*b"da/crais");
+
+	// 0
+	RuntimeBlockWeights::get().max_block
+}
+
+pub struct CustomOnRuntimeUpgrade;
+impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
+	#[cfg(feature = "try-runtime")]
+	fn pre_upgrade() -> Result<(), &'static str> {
+		migrate();
+
+		Ok(())
+	}
+
+	fn on_runtime_upgrade() -> Weight {
+		migrate()
 	}
 }
 
