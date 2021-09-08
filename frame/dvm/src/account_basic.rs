@@ -16,7 +16,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-//! The module that manages the basic account info display in dvm.
+//! The module that manages the basic account info in dvm.
 
 // --- crates.io ---
 use evm::ExitError;
@@ -32,6 +32,7 @@ use crate::{Config, KtonBalance, RemainingKtonBalance, RemainingRingBalance, Rin
 use darwinia_evm::{Account as EVMAccount, AccountBasic, AddressMapping};
 use darwinia_support::evm::POW_9;
 
+/// The operations for the remaining balance
 pub trait RemainBalanceOp<T: Config, B> {
 	/// Get the remaining balance
 	fn remaining_balance(account_id: &T::AccountId) -> B;
@@ -45,6 +46,7 @@ pub trait RemainBalanceOp<T: Config, B> {
 	fn dec_remaining_balance(account_id: &T::AccountId, value: B);
 }
 
+/// The Remaining RING balance
 pub struct RingRemainBalance;
 impl<T: Config> RemainBalanceOp<T, RingBalance<T>> for RingRemainBalance {
 	/// Get the remaining balance
@@ -75,6 +77,7 @@ impl<T: Config> RemainBalanceOp<T, RingBalance<T>> for RingRemainBalance {
 	}
 }
 
+/// The Remaining KTON balance
 pub struct KtonRemainBalance;
 impl<T: Config> RemainBalanceOp<T, KtonBalance<T>> for KtonRemainBalance {
 	/// Get the remaining balance
@@ -105,6 +108,7 @@ impl<T: Config> RemainBalanceOp<T, KtonBalance<T>> for KtonRemainBalance {
 	}
 }
 
+/// The basic management of RING and KTON balance for dvm account
 pub struct DvmAccountBasic<T, C, RB>(sp_std::marker::PhantomData<(T, C, RB)>);
 impl<T: Config, C, RB> AccountBasic<T> for DvmAccountBasic<T, C, RB>
 where
