@@ -72,7 +72,10 @@ use codec::{Decode, Encode};
 use bridge_runtime_common::messages::{
 	source::estimate_message_dispatch_and_delivery_fee, MessageBridge,
 };
-use frame_support::traits::KeyOwnerProofSystem;
+use frame_support::{
+	traits::{KeyOwnerProofSystem, OnRuntimeUpgrade},
+	weights::Weight,
+};
 use frame_system::{
 	offchain::{AppCrypto, CreateSignedTransaction, SendTransactionTypes, SigningTypes},
 	ChainContext, CheckEra, CheckGenesis, CheckNonce, CheckSpecVersion, CheckTxVersion,
