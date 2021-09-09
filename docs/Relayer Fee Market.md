@@ -50,18 +50,18 @@ Then the system requires the three relayers with respect to **_P1_**, **_P2_**, 
         1. During **_0 ~ T1_**, only **_P1_**'s relayer can participate. If **_P1_**'s relayer succeed delivery
         2. During **_T1 ~ T2_**,  only **_P1_** and **_P2_**.   If **_P1_** or **_P2_** 's relayer succeed delivery, pay relayer's ask price, will not slash **_P1_**'s relayer, if the delivery relayer is **_P2_**'s.
         3. During **_T2 ~ T3_**, only **_P1, P2, P3_**, will not slash **_P1_** and **_P2_**'s relayer, if the delivery relayer is **_P3_**'s, other cases are similar.
-        4. **_T3 ~_** , any relayer.
+        4. **_T3~_** , any relayer.
     2. Solution 2 (Any relayer can also do the same thing as Solution 1):
         1. **_0 ~ T, P1, P2, P3_** are all legible to participate，pay relayer's ask price(or P3).
     3. Solution 3 (P2 takes P1's Header Relay):
         1. **_0 ~ T, P1, P2, P3_** are all legible to participate in the ***reply*** process. Suppose ***S*** is the source_account of the one who completes the message delivery on the target chain and the source_account is none of **_P1_**, **_P2_**, or **_P3_**, then any one of **_P1_**, **_P2_**, or **_P3_** can claim the gain with the proof of delivery. If the source_account is one of **_P1_**, **_P2_**, or **_P3_**, only they can claim the gain.
-        2. **_T ~_**, Only relayer delivers and anyone can reply (The gain is distributed between the relayer and the replier)
+        2. **_T~_**, Only relayer delivers and anyone can reply (The gain is distributed between the relayer and the replier)
 
     4. Solution 4 (Selected):
         1. **_0 ~ T1, P1,_**  Suppose ***S*** is the source_account of the one who completes the message delivery on the target chain and the source_account is not P1, then P1 can claim the gain with the proof of delivery. pay relayer's ask price，If the source_account is P1, only they can claim the gain.  
         2. **_T1 ~ T2, P2,_**  Suppose ***S*** is the source_account of the one who completes the message delivery on the target chain and the source_account is not P2, then P1 can claim the gain with the proof of delivery. pay relayer's ask price，If the source_account is P2, only they can claim the gain.  
         3. **_T2 ~ T3, P3,_** Suppose ***S*** is the source_account of the one who completes the message delivery on the target chain and the source_account is not P3, then P1 can claim the gain with the proof of delivery. pay relayer's ask price，If the source_account is P3, only they can claim the gain. 
-        4. **_T3 ~_**, Only relayer delivers and anyone can reply (The gain is distributed between the relayer and the replier)
+        4. **_T3~_**, Only relayer delivers and anyone can reply (The gain is distributed between the relayer and the replier)
     5. Solution 5
 
         Solution 4 + Header Relay  Provides proof of delivery and storage query. The relayer of Header Relay is also included in the message delivered.
