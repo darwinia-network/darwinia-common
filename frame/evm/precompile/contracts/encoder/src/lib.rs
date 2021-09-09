@@ -63,11 +63,14 @@ where
 			return Err(ExitError::Other("input length less than 4 bytes".into()));
 		}
 		let pallet_digest = &input[0..PALLET_DIG_LEN];
-		let method_digest = &input[PALLET_DIG_LEN - 1..ACTION_LEN];
+		let method_digest = &input[PALLET_DIG_LEN..ACTION_LEN];
 		let output = match pallet_digest {
 			_ if pallet_digest == <from_substrate_issuing::Pallet<T>>::digest() => {
 				match method_digest {
-					_ if method_digest == &sha3::Keccak256::digest(BURN_AND_REMOTE_UNLOCK_METHOD)[..METHOD_DIG_LEN] => {
+					_ if method_digest
+						== &sha3::Keccak256::digest(BURN_AND_REMOTE_UNLOCK_METHOD)
+							[..METHOD_DIG_LEN] =>
+					{
 						let call: T::Call =
 							from_substrate_issuing::Call::<T>::asset_burn_event_handle(
 								input.to_vec(),
@@ -76,7 +79,12 @@ where
 						call.encode()
 					}
 					// this method comes from mapping-token-factory, we ignore it by a empty method
-					_ if method_digest == &sha3::Keccak256::digest(TOKEN_REGISTER_RESPONSE_METHOD)[..METHOD_DIG_LEN] => Vec::new(),
+					_ if method_digest
+						== &sha3::Keccak256::digest(TOKEN_REGISTER_RESPONSE_METHOD)
+							[..METHOD_DIG_LEN] =>
+					{
+						Vec::new()
+					}
 					_ if method_digest == READ_LATEST_MESSAGE_ID_METHOD => {
 						<T as from_substrate_issuing::Config>::MessageSender::latest_message_id()
 							.to_vec()
@@ -89,24 +97,37 @@ where
 				}
 			}
 			_ if pallet_digest == <from_ethereum_issuing::Pallet<T>>::digest() => {
-				let call: T::Call = match method_digest {
-					_ if method_digest == &sha3::Keccak256::digest(TOKEN_REGISTER_RESPONSE_METHOD)[..METHOD_DIG_LEN] => {
-						from_ethereum_issuing::Call::<T>::register_response_from_contract(
-							input.to_vec(),
-						)
-						.into()
+				match method_digest {
+					_ if method_digest
+						== &sha3::Keccak256::digest(TOKEN_REGISTER_RESPONSE_METHOD)
+							[..METHOD_DIG_LEN] =>
+					{
+						let call: T::Call =
+							from_ethereum_issuing::Call::<T>::register_response_from_contract(
+								input.to_vec(),
+							)
+							.into();
+						call.encode()
 					}
-					_ if method_digest == &sha3::Keccak256::digest(BURN_AND_REMOTE_UNLOCK_METHOD)[..METHOD_DIG_LEN] => {
-						from_ethereum_issuing::Call::<T>::burn_and_remote_unlock(input.to_vec())
-							.into()
+					_ if method_digest
+						== &sha3::Keccak256::digest(BURN_AND_REMOTE_UNLOCK_METHOD)
+							[..METHOD_DIG_LEN] =>
+					{
+						let call: T::Call =
+							from_ethereum_issuing::Call::<T>::burn_and_remote_unlock(
+								input.to_vec(),
+							)
+							.into();
+						call.encode()
 					}
+					// todo, when ethereum support message confirm, we need give this message id
+					_ if method_digest == READ_LATEST_MESSAGE_ID_METHOD => Vec::new(),
 					_ => {
 						return Err(ExitError::Other(
 							"No such method in pallet ethereum issuing".into(),
 						));
 					}
-				};
-				call.encode()
+				}
 			}
 			_ => {
 				return Err(ExitError::Other("No valid pallet digest found".into()));
