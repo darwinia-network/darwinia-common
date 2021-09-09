@@ -16,9 +16,9 @@ This approach is suitable for scenarios with lower gas fee on the source chain a
 
 First, the relayer posts their quotes based on the reference price and the expected profit on the blockchain at any time. An off-chain pricing system maintains the reference price. Each relayer should lock a sufficient default margin on the chain to guarantee the faithful execution of the deal.
 
-In this way, a series of ***Ask*** prices come into being in the ascending order on the blockchain. When the user initiates a request on the source chain, the three lowest offers $P1<P2<P3$ are filtered out and $P3$  is used as the billing price.  The user can request a cross-chain message delivery after paying  $P3$.
+In this way, a series of ***Ask*** prices come into being in the ascending order on the blockchain. When the user initiates a request on the source chain, the three lowest offers **_P1<P2<P3_** are filtered out and $P3$  is used as the billing price.  The user can request a cross-chain message delivery after paying **_P3_**.
 
-Then the system requires the three relayers with respect to $P1,P2$, and $P3$ to execute the delivery during three consecutive time slots: $0$~$T1$,  $T1$~$T2$, and $T2$~$T3$ respectively, where $T1$, $T2$, and $T3$ can be configured suitable for the scenario. If the relayer fails to deliver in their allotted time slot, the task goes to the next relayer. The penalty fee $S(t)$ from the previous relayer also adds up to the gain of the current relayer as a bonus, where $S(t)$ is a function of the delay $t$.
+Then the system requires the three relayers with respect to **_P1_**, **_P2_**, and **_P3_** to execute the delivery during three consecutive time slots: **_0~T1_**,  **_T1~T2_**, and **_T2~T3_** respectively, where **_T1_**, **_T2_**, and **_T3_** can be configured suitable for the scenario. If the relayer fails to deliver in their allotted time slot, the task goes to the next relayer. The penalty fee **_S(t)_** from the previous relayer also adds up to the gain of the current relayer as a bonus, where **_S(t)_** is a function of the delay **_t_**.
 
 ### Detailed Steps in Implementation
 
@@ -26,16 +26,16 @@ Then the system requires the three relayers with respect to $P1,P2$, and $P3$ to
     1. enroll_and_lock_collateral dispatch call; relayer enrollment mapping <id, collateral_amount>
     2. cancel_enrollment() dispatch call (and return collateral, require checkin existing orders)
 2. ***Ask***, asks(price) dispatch call,  updates ask list storage (sorted) 
-    1. Internal call for querying current price(return P1, P2, P3 and related relayers)
+    1. Internal call for querying current price(return **_P1_**, **_P2_**, **_P3_** and related relayers)
     2. RPC
     3. Update, Cancel
-3. Internal call for bid and execution, some user pay P3 for sending a cross-chain message.
+3. Internal call for bid and execution, some user pay **_P3_** for sending a cross-chain message.
     1. Create a new order(with current time), in the order lifecycle, relayer cannot cancel enrollment and take back collateral.
-    2. P3 is locked in the Order(contract). 
+    2. **_P3_** is locked in the Order(contract). 
     3. Managing orders storage
 4. Internal call for finishing an order or slash an order after message delivery.
-    1. Finish order if this message is delivered by required relayers in the order, and pay P3.
-    2. Slash order if the message is delivered by other relayers, pay P3 + S(t) to relayer who delivered message, and slash S(t) from required relayers(of P1, P2, P3) collateral.
+    1. Finish order if this message is delivered by required relayers in the order, and pay **_P3_**.
+    2. Slash order if the message is delivered by other relayers, pay **_P3 + S(t)_** to relayer who delivered message, and slash S(t) from required relayers(of **_P1, P2, P3_**) collateral.
     3. How to prove this message is delivered by specific relayer?
         1. When some relayer deliver message, it will attach an extra data describing the source account of relayer.
         2. The source account will be included in the MessageDelivery event in target chain.
@@ -43,7 +43,7 @@ Then the system requires the three relayers with respect to $P1,P2$, and $P3$ to
     4. Can other relayer help claim with the message delivery proof? And will the protocol incentive this behavior?
 5. If the collateral of any relayer is lower than required collateral threshold (e.g. slashed in order), the enrolment of this relayer will become inactive(will be removed from the ***ask*** list, and not able to put new ***ask***).
 6. Distribution of system revenue
-    1. In future, the protocol need to capture some income from the fees, so we might need to set a ratio R (similar to tax) from the fees. (P3 + S(t)) * (1-R) will go to relayer, others will go to treasury for now. (To be determined: Who pays for it? How much?
+    1. In future, the protocol need to capture some income from the fees, so we might need to set a ratio **_R_** (similar to tax) from the fees. **_(P3 + S(t)) * (1-R)_** will go to relayer, others will go to treasury for now. (To be determined: Who pays for it? How much?
     2. Payment to the relayer can be broken down further (header relay, message relay, message delivery proof) *To be implemented in the future*
 7. Time Line:
     1. Solution 1(One problematic case is that P2's relayer may forestall P1's relayer to complete the delivery):
@@ -55,13 +55,13 @@ Then the system requires the three relayers with respect to $P1,P2$, and $P3$ to
         1. 0 ~ T, P1, P2, P3 are all legible to participate，pay relayer's ask price(or P3).
     3. Solution 3 (P2 takes P1's Header Relay):
         1. 0 ~ T, P1, P2, P3 are all legible to participate in the ***reply*** process. Suppose ***S*** is the source_account of the one who completes the message delivery on the target chain and the source_account is none of P1, P2 or P3, then any one of P1, P2 or P3 can claim the gain with the proof of delivery. If the source_account is one of P1, P2 or P3, only they can claim the gain.
-        2. T ~, Only relayer delivers and anyone can reply (The gain is distributed between the relayer and the replier)
+        2. **T ~**, Only relayer delivers and anyone can reply (The gain is distributed between the relayer and the replier)
 
     4. Solution 4 (Selected):
-        1. 0 ~ T1, P1,  Suppose ***S*** is the source_account of the one who completes the message delivery on the target chain and the source_account is not P1, then P1 can claim the gain with the proof of delivery. pay relayer's ask price，If the source_account is P1, only they can claim the gain.  
-        2. T1 ~ T2, P2,  Suppose ***S*** is the source_account of the one who completes the message delivery on the target chain and the source_account is not P2, then P1 can claim the gain with the proof of delivery. pay relayer's ask price，If the source_account is P2, only they can claim the gain.  
-        3. T2 ~ T3, P3, Suppose ***S*** is the source_account of the one who completes the message delivery on the target chain and the source_account is not P3, then P1 can claim the gain with the proof of delivery. pay relayer's ask price，If the source_account is P3, only they can claim the gain. 
-        4. T3 ~, Only relayer delivers and anyone can reply (The gain is distributed between the relayer and the replier)
+        1. **_0 ~ T1, P1,_**  Suppose ***S*** is the source_account of the one who completes the message delivery on the target chain and the source_account is not P1, then P1 can claim the gain with the proof of delivery. pay relayer's ask price，If the source_account is P1, only they can claim the gain.  
+        2. **_T1 ~ T2, P2,_**  Suppose ***S*** is the source_account of the one who completes the message delivery on the target chain and the source_account is not P2, then P1 can claim the gain with the proof of delivery. pay relayer's ask price，If the source_account is P2, only they can claim the gain.  
+        3. **_T2 ~ T3, P3,_** Suppose ***S*** is the source_account of the one who completes the message delivery on the target chain and the source_account is not P3, then P1 can claim the gain with the proof of delivery. pay relayer's ask price，If the source_account is P3, only they can claim the gain. 
+        4. **_T3 ~_**, Only relayer delivers and anyone can reply (The gain is distributed between the relayer and the replier)
     5. Solution 5
 
         Solution 4 + Header Relay  Provides proof of delivery and storage query. The relayer of Header Relay is also included in the message delivered.
