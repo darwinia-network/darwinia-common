@@ -171,7 +171,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_version: 2620,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 3,
+	transaction_version: 4,
 };
 
 /// The BABE epoch configuration at genesis.
@@ -778,7 +778,7 @@ fn migrate() -> Weight {
 	#[allow(unused)]
 	use frame_support::migration;
 
-	migration::remove_storage_prefix(b"CrabIssuing", b"TotalMappedRing", &[]);
+	migration::move_pallet(b"Instance1BridgeMessages", b"BridgePangoroMessages");
 
 	// TODO: Move to S2S
 	// const CrabBackingPalletId: PalletId = PalletId(*b"da/crabk");

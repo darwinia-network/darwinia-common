@@ -1,5 +1,4 @@
-// --- paritytech ---
-use frame_support::weights::IdentityFee;
+	// --- paritytech ---
 use pallet_transaction_payment::{Config, CurrencyAdapter};
 // --- darwinia-network ---
 use crate::*;
@@ -11,6 +10,6 @@ frame_support::parameter_types! {
 impl Config for Runtime {
 	type OnChargeTransaction = CurrencyAdapter<Ring, ()>;
 	type TransactionByteFee = TransactionByteFee;
-	type WeightToFee = IdentityFee<Balance>;
+	type WeightToFee = WeightToFee;
 	type FeeMultiplierUpdate = ();
 }
