@@ -46,16 +46,16 @@ Then the system requires the three relayers with respect to **_P1_**, **_P2_**, 
     1. In future, the protocol need to capture some income from the fees, so we might need to set a ratio **_R_** (similar to tax) from the fees. **_(P3 + S(t)) * (1-R)_** will go to relayer, others will go to treasury for now. (To be determined: Who pays for it? How much?
     2. Payment to the relayer can be broken down further (header relay, message relay, message delivery proof) *To be implemented in the future*
 7. Time Line:
-    1. Solution 1(One problematic case is that P2's relayer may forestall P1's relayer to complete the delivery):
-        1. During 0 ~ T1, only P1's relayer can participate. If P1's relayer succeed delivery
-        2. During T1 ~ T2,  only P1&P2.   If P1 or P2 's relayer succeed delivery, pay relayer's ask price, will not slash P1's relayer, if the delivery relayer is P2's.
-        3. During T2 ~ T3, only P1, P2, P3, will not slash P1 and P2's relayer, if the delivery relayer is P3's, other cases are similar.
-        4. T3 ~ , any relayer.
+    1. Solution 1(One problematic case is that **_P2_**'s relayer may forestall P1's relayer to complete the delivery):
+        1. During **_0 ~ T1_**, only **_P1_**'s relayer can participate. If **_P1_**'s relayer succeed delivery
+        2. During **_T1 ~ T2_**,  only **_P1_** and **_P2_**.   If **_P1_** or **_P2_** 's relayer succeed delivery, pay relayer's ask price, will not slash **_P1_**'s relayer, if the delivery relayer is **_P2_**'s.
+        3. During **_T2 ~ T3_**, only **_P1, P2, P3_**, will not slash **_P1_** and **_P2_**'s relayer, if the delivery relayer is **_P3_**'s, other cases are similar.
+        4. **_T3 ~_** , any relayer.
     2. Solution 2 (Any relayer can also do the same thing as Solution 1):
-        1. 0 ~ T, P1, P2, P3 are all legible to participate，pay relayer's ask price(or P3).
+        1. **_0 ~ T, P1, P2, P3_** are all legible to participate，pay relayer's ask price(or P3).
     3. Solution 3 (P2 takes P1's Header Relay):
-        1. 0 ~ T, P1, P2, P3 are all legible to participate in the ***reply*** process. Suppose ***S*** is the source_account of the one who completes the message delivery on the target chain and the source_account is none of P1, P2 or P3, then any one of P1, P2 or P3 can claim the gain with the proof of delivery. If the source_account is one of P1, P2 or P3, only they can claim the gain.
-        2. **T ~**, Only relayer delivers and anyone can reply (The gain is distributed between the relayer and the replier)
+        1. **_0 ~ T, P1, P2, P3_** are all legible to participate in the ***reply*** process. Suppose ***S*** is the source_account of the one who completes the message delivery on the target chain and the source_account is none of **_P1_**, **_P2_**, or **_P3_**, then any one of **_P1_**, **_P2_**, or **_P3_** can claim the gain with the proof of delivery. If the source_account is one of **_P1_**, **_P2_**, or **_P3_**, only they can claim the gain.
+        2. **_T ~_**, Only relayer delivers and anyone can reply (The gain is distributed between the relayer and the replier)
 
     4. Solution 4 (Selected):
         1. **_0 ~ T1, P1,_**  Suppose ***S*** is the source_account of the one who completes the message delivery on the target chain and the source_account is not P1, then P1 can claim the gain with the proof of delivery. pay relayer's ask price，If the source_account is P1, only they can claim the gain.  
