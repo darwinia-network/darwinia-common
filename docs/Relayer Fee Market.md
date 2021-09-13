@@ -1,4 +1,4 @@
-# [A MVP Design of a Relayer Fee Market]
+# A MVP Design of a Relayer Fee Market
 
 ## Requirements
 
@@ -16,14 +16,10 @@ This approach is suitable for scenarios with lower gas fee on the source chain a
 
 First, the relayer posts their quotes based on the reference price and the expected profit on the blockchain at any time. An off-chain pricing system maintains the reference price. Each relayer should lock a sufficient default margin on the chain to guarantee the faithful execution of the deal.
 
-In this way, a series of ***Ask*** prices come into being in the ascending order on the blockchain. When the user initiates a request on the source chain, the three lowest offers **_P1<P2<P3_** are filtered out and **P3**  is used as the billing price.  The user can request a cross-chain message delivery after paying **_P3_**. The reason that we select 3 relayers in the executed order is that we want to have redundancy for executing the message delivery.
+In this way, a series of ***Ask*** prices come into being in the ascending order on the blockchain. When the user initiates a request on the source chain, the three lowest offers **_P1<P2<P3_** are filtered out and **P3**  is used as the billing price.  The user can request a cross-chain message delivery after paying **_P3_**. The reason that we select 3 relayers in the executed order is that we want to have redundancy for executing the message delivery. P1's relayer is R1, P2's relayer is R2, P3's relayer is R3.
 
-P1's relayer is R1, P2's relayer is R2, P3's relayer is R3.
-
-The protocol requires R1, R2, R3 to deliver the message and confirm using delivery proof in specific time T. To give them different priority for delivery according to their prices, we will split the T into three consecutive time slots: **_0~T1 for P1_**,  **_T1~T2 for P2_**, and **_T2~T3 for P3_** respectively. The relayer who is assigned with her own time slot will be rewarded with more percentage, and this reward is for the asked price and the commitment(delivery in time or slash). Relayer with lower price are assigned with earlier time slot.
-
-If the relayer fails to deliver in their allotted time slot, the task goes to the next relayer. The penalty fee **_S(t)_** from the previous relayer also adds up to the gain of the current relayer as a bonus, where **_S(t)_** is a function of the delay **_t_**.
-
+In any time, the message relayer and confirm relayer can be anyone, do not have be the assigned relayer. But in priority time slots, assigned relayer will be rewarded with much more regardless wo relay the message and do the confirmation.
+To give them different priority for **R1, R2, R3**, we will split the T into three consecutive time slots: **_0~T1 for P1_**,  **_T1~T2 for P2_**, and **_T2~T3 for P3_** respectively. The relayer who is assigned with her own time slot will be rewarded with more percentage, and this reward is for the asked price and the commitment(delivery in time or slash). Relayer with lower price are assigned with earlier time slot.
 ### Detailed Steps in Implementation
 
 1. A relayer first registers and deposits some funds (tokens) as the collateral if they are willing to participate.
@@ -31,8 +27,8 @@ If the relayer fails to deliver in their allotted time slot, the task goes to th
     2. cancel_enrollment() dispatch call (and return collateral, require checkin existing orders)
 2. ***Ask***, asks(price) dispatch call,  updates ask list storage (sorted)
     1. Internal call for querying current price(return **_P1_**, **_P2_**, **_P3_** and related relayers)
-    2. RPC
-    3. Update, Cancel
+    2. Update, Cancel price
+    3. If the collateral of any registered relayer is lower than required collateral threshold (e.g. slashed in order), the enrolment of this relayer will become inactive(will be removed from the ***ask*** list, and not able to put new ***ask***).
 3. Internal call for bid and execution, some user pay **_P3_** for sending a cross-chain message.
     1. Create a new order(with current time), in the order lifecycle, relayer cannot cancel enrollment and take back collateral.
     2. **_P3_** is locked in the Order(contract).
@@ -45,17 +41,15 @@ If the relayer fails to deliver in their allotted time slot, the task goes to th
         2. The source account will be included in the MessageDelivery event in target chain.
         3. Thus source account will be included in the Message Delivery Proof.
     4. Can other relayer help claim with the message delivery proof? And will the protocol incentive this behavior?
-5. If the collateral of any relayer is lower than required collateral threshold (e.g. slashed in order), the enrolment of this relayer will become inactive(will be removed from the ***ask*** list, and not able to put new ***ask***).
-6. Reward Strategy,
-   In any time, the message relayer and confirm relayer can be anyone, do not have be the assigned relayer. But in priority time slots, assigned relayer will be rewarded with much more regardless wo relay the message and do the confirmation.
+5. Reward and Slash Strategy.
     1. **_0 ~ T1, assigned relayer: R1,_** R1 can claim 60% from the reward P1, and message relayer can claim 80% * (1 - 60%) from P1， confirm relayer can claim 20% * (1 - 60%) from P1, (P3 - P1) will go to treasury.
-    2. **_T1 ~ T2, assigned relayer: R2,_**  R2 can claim 60% from the reward P1, and message relayer can claim 80% * (1 - 60%) from P1， confirm relayer can claim 20% * (1 - 60%) from P1, (P3 - P1) will go to treasury.
+    2. **_T1 ~ T2, assigned relayer: R2,_** R2 can claim 60% from the reward P1, and message relayer can claim 80% * (1 - 60%) from P1， confirm relayer can claim 20% * (1 - 60%) from P1, (P3 - P1) will go to treasury.
     3. **_T2 ~ T3, assigned relayer: R3,_** R3 can claim 60% from the reward P1, and message relayer can claim 80% * (1 - 60%) from P1， confirm relayer can claim 20% * (1 - 60%) from P1, (P3 - P1) will go to treasury.
     4. **_T3~_**, The reward will be S(t) where S(t) > P3, the part S(t) - P3 comes from funds slashed from R1, R2, R3's collateral. Message relayer can claim 80% from S(t)， confirm relayer can claim 20% from S(t).
 
    Note: The ratio parameters in the strategy can be defined in runtime, and there might be update to them for refinement after more benchmark and statistics.
 
-8. Example:
+Example:
 
 lock_and_remote_issue
 
