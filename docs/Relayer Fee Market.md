@@ -18,7 +18,9 @@ First, the relayer posts their quotes based on the reference price and the expec
 
 In this way, a series of ***Ask*** prices come into being in the ascending order on the blockchain. When the user initiates a request on the source chain, the three lowest offers **_P1<P2<P3_** are filtered out and $P3$  is used as the billing price.  The user can request a cross-chain message delivery after paying **_P3_**. The reason that we select 3 relayers in the executed order is that we want to have redundancy for executing the message delivery.
 
-The protocol requires P1, P2, P3 to deliver the message and finish the reward claim in specific time T. To give them different priority for delivery according to their prices, we will split the T into three consecutive time slots: **_0~T1 for P1_**,  **_T1~T2 for P2_**, and **_T2~T3 for P3_** respectively. The relayer who is assigned with her own time slot will be rewarded with more percentage, and this reward is for the asked price and the commitment(delivery in time or slash). Relayer with lower price are assigned with earlier time slot.
+P1's relayer is R1, P2's relayer is R2, P3's relayer is R3.
+
+The protocol requires R1, R2, R3 to deliver the message and confirm using delivery proof in specific time T. To give them different priority for delivery according to their prices, we will split the T into three consecutive time slots: **_0~T1 for P1_**,  **_T1~T2 for P2_**, and **_T2~T3 for P3_** respectively. The relayer who is assigned with her own time slot will be rewarded with more percentage, and this reward is for the asked price and the commitment(delivery in time or slash). Relayer with lower price are assigned with earlier time slot.
 
 If the relayer fails to deliver in their allotted time slot, the task goes to the next relayer. The penalty fee **_S(t)_** from the previous relayer also adds up to the gain of the current relayer as a bonus, where **_S(t)_** is a function of the delay **_t_**.
 
@@ -47,11 +49,14 @@ If the relayer fails to deliver in their allotted time slot, the task goes to th
 6. Distribution of system revenue
     1. In future, the protocol need to capture some income from the fees, so we might need to set a ratio **_R_** (similar to tax) from the fees. **_(P3 + S(t)) * (1-R)_** will go to relayer, others will go to treasury for now. (To be determined: Who pays for it? How much?
     2. Payment to the relayer can be broken down further (header relay, message relay, message delivery proof) *To be implemented in the future*
-7. Reard Strategy:
-    1. **_0 ~ T1, P1,_**  Suppose ***S*** is the source_account of the one who completes the message delivery on the target chain and the source_account is not P1, then P1 can claim the gain with the proof of delivery. pay relayer's ask price，If the source_account is P1, only they can claim the gain.
-    2. **_T1 ~ T2, P2,_**  Suppose ***S*** is the source_account of the one who completes the message delivery on the target chain and the source_account is not P2, then P1 can claim the gain with the proof of delivery. pay relayer's ask price，If the source_account is P2, only they can claim the gain.
-    3. **_T2 ~ T3, P3,_** Suppose ***S*** is the source_account of the one who completes the message delivery on the target chain and the source_account is not P3, then P1 can claim the gain with the proof of delivery. pay relayer's ask price，If the source_account is P3, only they can claim the gain.
-    4. **_T3~_**, Only relayer delivers and anyone can reply (The gain is distributed between the relayer and the replier)
+7. Reward Strategy,
+   In any time, the message relayer and confirm relayer can be anyone, do not have be the assigned relayer. But in priority time slots, assigned relayer will be rewarded with much more regardless wo relay the message and do the confirmation.
+    1. **_0 ~ T1, assigned relayer: R1,_** R1 can claim 60% from the reward P1, and message relayer can claim 80% * (1 - 60%) from P1， confirm relayer can claim 20% * (1 - 60%) from P1, (P3 - P1) will go to treasury.
+    2. **_T1 ~ T2, assigned relayer: R2,_**  R2 can claim 60% from the reward P1, and message relayer can claim 80% * (1 - 60%) from P1， confirm relayer can claim 20% * (1 - 60%) from P1, (P3 - P1) will go to treasury.
+    3. **_T2 ~ T3, assigned relayer: R3,_** R3 can claim 60% from the reward P1, and message relayer can claim 80% * (1 - 60%) from P1， confirm relayer can claim 20% * (1 - 60%) from P1, (P3 - P1) will go to treasury.
+    4. **_T3~_**, The reward will be S(t) where S(t) > P3, the part S(t) - P3 comes from funds slashed from R1, R2, R3's collateral. Message relayer can claim 80% from S(t)， confirm relayer can claim 20% from S(t).
+    
+   Note: The ratio parameters in the strategy can be defined in runtime, and there might be update to them for refinement after more benchmark and statistics.
 
 8. Example:
 
