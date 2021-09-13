@@ -49,7 +49,6 @@ pub mod pallet {
 		traits::{Currency, Get},
 		PalletId,
 	};
-	use frame_system::pallet_prelude::*;
 	use sp_runtime::traits::AccountIdConversion;
 	// --- darwinia-network ---
 	use crate::weights::WeightInfo;
