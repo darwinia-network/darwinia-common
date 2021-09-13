@@ -500,14 +500,8 @@ pub fn development_config() -> ChainSpec {
 			},
 			darwinia_vesting: Default::default(),
 			pallet_sudo: SudoConfig { key: root.clone() },
-<<<<<<< HEAD
-			darwinia_crab_issuing: CrabIssuingConfig { total_mapped_ring: BUNCH_OF_COINS },
-			darwinia_crab_backing: CrabBackingConfig { backed_ring: BUNCH_OF_COINS },
 			darwinia_fee_market: Default::default(),
-			darwinia_ethereum_relay: EthereumRelayConfig {
-=======
 			darwinia_bridge_ethereum: EthereumRelayConfig {
->>>>>>> master
 				genesis_header_parcel: r#"{
 					"header": {
 						"baseFeePerGas": "0xeb",
