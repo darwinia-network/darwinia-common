@@ -23,12 +23,12 @@ To give them different priority for **R1, R2, R3**, we will split the T into thr
 ### Detailed Steps in Implementation
 
 1. Enroll and lock collateral
-    1. enroll_and_lock_collateral dispatch call
-    2. cancel_enrollment() dispatch call, remember to check if the relayer is in priority time slots.
+    1. `enroll_and_lock_collateral` dispatch call
+    2. `cancel_enrollment()` dispatch call, remember to check if the relayer is in priority time slots.
 2. Ask price
-    1. Query current price(return **_P1_**, **_P2_**, **_P3_** and **_R1_**, **_R2_**, **_R3_**)
+    1. Query **_P1_**, **_P2_**, **_P3_** and **_R1_**, **_R2_**, **_R3_**
     2. Update, Cancel prices storage
-    3. If the collateral of any registered relayer is lower than required collateral threshold (e.g. slashed), the enrolment of this relayer will become inactive(will be removed from the ***ask*** list, and not able to put new ***ask***).
+    3. If the collateral of any registered relayer is lower than required collateral threshold (e.g. slashed), the enrolment of this relayer will become inactive(will be removed from the ask list, and not able to put new ask).
 3. Send message, user pay **_P3_** for sending a cross-chain message.
     1. Create a new order(with current block number), in the order lifecycle, relayer cannot cancel enrollment and take back collateral.
     2. **_P3_** is locked in the module relayer fund account.
@@ -40,22 +40,6 @@ To give them different priority for **R1, R2, R3**, we will split the T into thr
     4. **_T3~_**, The reward will be S(t) where S(t) > P3, the part S(t) - P3 comes from funds slashed from R1, R2, R3's collateral. Message relayer can claim 80% from S(t)， confirm relayer can claim 20% from S(t).
 
    Note: The ratio parameters in the strategy can be defined in runtime, and there might be update to them for refinement after more benchmark and statistics.
-
-Example:
-
-lock_and_remote_issue
-
-1. user lock, ***locked_asset***
-2. send issue_from_remote cross-chain message
-3. Bid and create delivery order
-4. relayer delivery
-    1. relayer sync header
-    2. sync message
-        1. message delivered in target chain
-        2. message call execute on remote chain (success/failure), e.g. issuing a mapping token.
-        3. Deposit MessageDeilvery(,...... message_execute_result) event
-5.  if message_execute_result is success, move ***locked_asset*** to backing vault. else, return the ***locked_asset*** back to user.
-
 ## Proposal B-Oracle + On-chain Automatic Pricing
 
 High gas fees in some networks, such as Ethereum, may prevent the relayer from quoting frequently, and the execution cost of message delivery on the target chain is predictable, such as (***Ethereum>Darwinia***). In this scenario, a second-best solution is to query the execution cost by the interface on the target chain, plus the estimated delivery cost. The disadvantage is that it is not adaptable, and it is possible that no relayer is willing to take the order, causing message delivery congestion and stability problems.
