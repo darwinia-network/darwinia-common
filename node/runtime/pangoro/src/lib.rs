@@ -179,6 +179,8 @@ frame_support::construct_runtime!(
 
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 16,
 
+		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 21,
+
 		BridgePangolinMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 17,
 		BridgeDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 18,
 		BridgePangolinGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 19,

@@ -6069,6 +6069,7 @@ dependencies = [
  "pallet-im-online",
  "pallet-offences",
  "pallet-randomness-collective-flip",
+ "pallet-scheduler",
  "pallet-session",
  "pallet-sudo",
  "pallet-timestamp",
