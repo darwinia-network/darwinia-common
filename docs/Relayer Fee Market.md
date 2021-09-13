@@ -16,9 +16,11 @@ This approach is suitable for scenarios with lower gas fee on the source chain a
 
 First, the relayer posts their quotes based on the reference price and the expected profit on the blockchain at any time. An off-chain pricing system maintains the reference price. Each relayer should lock a sufficient default margin on the chain to guarantee the faithful execution of the deal.
 
-In this way, a series of ***Ask*** prices come into being in the ascending order on the blockchain. When the user initiates a request on the source chain, the three lowest offers **_P1<P2<P3_** are filtered out and $P3$  is used as the billing price.  The user can request a cross-chain message delivery after paying **_P3_**.
+In this way, a series of ***Ask*** prices come into being in the ascending order on the blockchain. When the user initiates a request on the source chain, the three lowest offers **_P1<P2<P3_** are filtered out and $P3$  is used as the billing price.  The user can request a cross-chain message delivery after paying **_P3_**. The reason that we select 3 relayers in the executed order is that we want to have redundancy for executing the message delivery.
 
-Then the system requires the three relayers with respect to **_P1_**, **_P2_**, and **_P3_** to execute the delivery during three consecutive time slots: **_0~T1_**,  **_T1~T2_**, and **_T2~T3_** respectively, where **_T1_**, **_T2_**, and **_T3_** can be configured suitable for the scenario. If the relayer fails to deliver in their allotted time slot, the task goes to the next relayer. The penalty fee **_S(t)_** from the previous relayer also adds up to the gain of the current relayer as a bonus, where **_S(t)_** is a function of the delay **_t_**.
+The protocol requires P1, P2, P3 to deliver the message and finish the reward claim in specific time T. To give them different priority for delivery according to their prices, we will split the T into three consecutive time slots: **_0~T1 for P1_**,  **_T1~T2 for P2_**, and **_T2~T3 for P3_** respectively. The relayer who is assigned with her own time slot will be rewarded with more percentage, and this reward is for the asked price and the commitment(delivery in time or slash). Relayer with lower price are assigned with earlier time slot.
+
+If the relayer fails to deliver in their allotted time slot, the task goes to the next relayer. The penalty fee **_S(t)_** from the previous relayer also adds up to the gain of the current relayer as a bonus, where **_S(t)_** is a function of the delay **_t_**.
 
 ### Detailed Steps in Implementation
 
@@ -45,41 +47,26 @@ Then the system requires the three relayers with respect to **_P1_**, **_P2_**, 
 6. Distribution of system revenue
     1. In future, the protocol need to capture some income from the fees, so we might need to set a ratio **_R_** (similar to tax) from the fees. **_(P3 + S(t)) * (1-R)_** will go to relayer, others will go to treasury for now. (To be determined: Who pays for it? How much?
     2. Payment to the relayer can be broken down further (header relay, message relay, message delivery proof) *To be implemented in the future*
-7. Time Line:
-    1. Solution 1(One problematic case is that **_P2_**'s relayer may forestall P1's relayer to complete the delivery):
-        1. During **_0 ~ T1_**, only **_P1_**'s relayer can participate. If **_P1_**'s relayer succeed delivery
-        2. During **_T1 ~ T2_**,  only **_P1_** and **_P2_**.   If **_P1_** or **_P2_** 's relayer succeed delivery, pay relayer's ask price, will not slash **_P1_**'s relayer, if the delivery relayer is **_P2_**'s.
-        3. During **_T2 ~ T3_**, only **_P1, P2, P3_**, will not slash **_P1_** and **_P2_**'s relayer, if the delivery relayer is **_P3_**'s, other cases are similar.
-        4. **_T3~_** , any relayer.
-    2. Solution 2 (Any relayer can also do the same thing as Solution 1):
-        1. **_0 ~ T, P1, P2, P3_** are all legible to participate，pay relayer's ask price(or P3).
-    3. Solution 3 (P2 takes P1's Header Relay):
-        1. **_0 ~ T, P1, P2, P3_** are all legible to participate in the ***reply*** process. Suppose ***S*** is the source_account of the one who completes the message delivery on the target chain and the source_account is none of **_P1_**, **_P2_**, or **_P3_**, then any one of **_P1_**, **_P2_**, or **_P3_** can claim the gain with the proof of delivery. If the source_account is one of **_P1_**, **_P2_**, or **_P3_**, only they can claim the gain.
-        2. **_T~_**, Only relayer delivers and anyone can reply (The gain is distributed between the relayer and the replier)
+7. Reard Strategy:
+    1. **_0 ~ T1, P1,_**  Suppose ***S*** is the source_account of the one who completes the message delivery on the target chain and the source_account is not P1, then P1 can claim the gain with the proof of delivery. pay relayer's ask price，If the source_account is P1, only they can claim the gain.
+    2. **_T1 ~ T2, P2,_**  Suppose ***S*** is the source_account of the one who completes the message delivery on the target chain and the source_account is not P2, then P1 can claim the gain with the proof of delivery. pay relayer's ask price，If the source_account is P2, only they can claim the gain.
+    3. **_T2 ~ T3, P3,_** Suppose ***S*** is the source_account of the one who completes the message delivery on the target chain and the source_account is not P3, then P1 can claim the gain with the proof of delivery. pay relayer's ask price，If the source_account is P3, only they can claim the gain.
+    4. **_T3~_**, Only relayer delivers and anyone can reply (The gain is distributed between the relayer and the replier)
 
-    4. Solution 4 (Selected):
-        1. **_0 ~ T1, P1,_**  Suppose ***S*** is the source_account of the one who completes the message delivery on the target chain and the source_account is not P1, then P1 can claim the gain with the proof of delivery. pay relayer's ask price，If the source_account is P1, only they can claim the gain.  
-        2. **_T1 ~ T2, P2,_**  Suppose ***S*** is the source_account of the one who completes the message delivery on the target chain and the source_account is not P2, then P1 can claim the gain with the proof of delivery. pay relayer's ask price，If the source_account is P2, only they can claim the gain.  
-        3. **_T2 ~ T3, P3,_** Suppose ***S*** is the source_account of the one who completes the message delivery on the target chain and the source_account is not P3, then P1 can claim the gain with the proof of delivery. pay relayer's ask price，If the source_account is P3, only they can claim the gain. 
-        4. **_T3~_**, Only relayer delivers and anyone can reply (The gain is distributed between the relayer and the replier)
-    5. Solution 5
+8. Example:
 
-        Solution 4 + Header Relay  Provides proof of delivery and storage query. The relayer of Header Relay is also included in the message delivered.
+lock_and_remote_issue
 
-    Example:
-
-    lock_and_remote_issue
-
-    1. user lock, ***locked_asset***
-    2. send issue_from_remote cross-chain message
-    3. Bid and create delivery order
-    4. relayer delivery
-        1. relayer sync header
-        2. sync message
-            1. message delivered in target chain
-            2. message call execute on remote chain (success/failure), e.g. issuing a mapping token.
-            3. Deposit MessageDeilvery(,...... message_execute_result) event
-    5.  if message_execute_result is success, move ***locked_asset*** to backing vault. else, return the ***locked_asset*** back to user.
+1. user lock, ***locked_asset***
+2. send issue_from_remote cross-chain message
+3. Bid and create delivery order
+4. relayer delivery
+    1. relayer sync header
+    2. sync message
+        1. message delivered in target chain
+        2. message call execute on remote chain (success/failure), e.g. issuing a mapping token.
+        3. Deposit MessageDeilvery(,...... message_execute_result) event
+5.  if message_execute_result is success, move ***locked_asset*** to backing vault. else, return the ***locked_asset*** back to user.
 
 ## Proposal B—Oracle+On-chain Automatic Pricing
 
