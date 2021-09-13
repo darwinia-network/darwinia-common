@@ -16,7 +16,7 @@ This approach is suitable for scenarios with lower gas fee on the source chain a
 
 First, the relayer posts their quotes based on the reference price and the expected profit on the blockchain at any time. An off-chain pricing system maintains the reference price. Each relayer should lock a sufficient default margin on the chain to guarantee the faithful execution of the deal.
 
-In this way, a series of ***Ask*** prices come into being in the ascending order on the blockchain. When the user initiates a request on the source chain, the three lowest offers **_P1<P2<P3_** are filtered out and $P3$  is used as the billing price.  The user can request a cross-chain message delivery after paying **_P3_**. The reason that we select 3 relayers in the executed order is that we want to have redundancy for executing the message delivery.
+In this way, a series of ***Ask*** prices come into being in the ascending order on the blockchain. When the user initiates a request on the source chain, the three lowest offers **_P1<P2<P3_** are filtered out and **P3**  is used as the billing price.  The user can request a cross-chain message delivery after paying **_P3_**. The reason that we select 3 relayers in the executed order is that we want to have redundancy for executing the message delivery.
 
 P1's relayer is R1, P2's relayer is R2, P3's relayer is R3.
 
@@ -29,13 +29,13 @@ If the relayer fails to deliver in their allotted time slot, the task goes to th
 1. A relayer first registers and deposits some funds (tokens) as the collateral if they are willing to participate.
     1. enroll_and_lock_collateral dispatch call; relayer enrollment mapping <id, collateral_amount>
     2. cancel_enrollment() dispatch call (and return collateral, require checkin existing orders)
-2. ***Ask***, asks(price) dispatch call,  updates ask list storage (sorted) 
+2. ***Ask***, asks(price) dispatch call,  updates ask list storage (sorted)
     1. Internal call for querying current price(return **_P1_**, **_P2_**, **_P3_** and related relayers)
     2. RPC
     3. Update, Cancel
 3. Internal call for bid and execution, some user pay **_P3_** for sending a cross-chain message.
     1. Create a new order(with current time), in the order lifecycle, relayer cannot cancel enrollment and take back collateral.
-    2. **_P3_** is locked in the Order(contract). 
+    2. **_P3_** is locked in the Order(contract).
     3. Managing orders storage
 4. Internal call for finishing an order or slash an order after message delivery.
     1. Finish order if this message is delivered by required relayers in the order, and pay **_P3_**.
@@ -46,16 +46,13 @@ If the relayer fails to deliver in their allotted time slot, the task goes to th
         3. Thus source account will be included in the Message Delivery Proof.
     4. Can other relayer help claim with the message delivery proof? And will the protocol incentive this behavior?
 5. If the collateral of any relayer is lower than required collateral threshold (e.g. slashed in order), the enrolment of this relayer will become inactive(will be removed from the ***ask*** list, and not able to put new ***ask***).
-6. Distribution of system revenue
-    1. In future, the protocol need to capture some income from the fees, so we might need to set a ratio **_R_** (similar to tax) from the fees. **_(P3 + S(t)) * (1-R)_** will go to relayer, others will go to treasury for now. (To be determined: Who pays for it? How much?
-    2. Payment to the relayer can be broken down further (header relay, message relay, message delivery proof) *To be implemented in the future*
-7. Reward Strategy,
+6. Reward Strategy,
    In any time, the message relayer and confirm relayer can be anyone, do not have be the assigned relayer. But in priority time slots, assigned relayer will be rewarded with much more regardless wo relay the message and do the confirmation.
     1. **_0 ~ T1, assigned relayer: R1,_** R1 can claim 60% from the reward P1, and message relayer can claim 80% * (1 - 60%) from P1， confirm relayer can claim 20% * (1 - 60%) from P1, (P3 - P1) will go to treasury.
     2. **_T1 ~ T2, assigned relayer: R2,_**  R2 can claim 60% from the reward P1, and message relayer can claim 80% * (1 - 60%) from P1， confirm relayer can claim 20% * (1 - 60%) from P1, (P3 - P1) will go to treasury.
     3. **_T2 ~ T3, assigned relayer: R3,_** R3 can claim 60% from the reward P1, and message relayer can claim 80% * (1 - 60%) from P1， confirm relayer can claim 20% * (1 - 60%) from P1, (P3 - P1) will go to treasury.
     4. **_T3~_**, The reward will be S(t) where S(t) > P3, the part S(t) - P3 comes from funds slashed from R1, R2, R3's collateral. Message relayer can claim 80% from S(t)， confirm relayer can claim 20% from S(t).
-    
+
    Note: The ratio parameters in the strategy can be defined in runtime, and there might be update to them for refinement after more benchmark and statistics.
 
 8. Example:
@@ -75,7 +72,7 @@ lock_and_remote_issue
 
 ## Proposal B—Oracle+On-chain Automatic Pricing
 
-High gas fees in some networks, such as Ethereum, may prevent the relayer from quoting frequently, and the execution cost of message delivery on the target chain is predictable, for example (***Ethereum>Darwinia***). In this scenario, a second-best solution is to query the execution cost by the interface on the target chain, plus the estimated delivery cost. The disadvantage is that it is not adaptable, and it is possible that no relayer is willing to take the order, causing message delivery congestion and stability problems. 
+High gas fees in some networks, such as Ethereum, may prevent the relayer from quoting frequently, and the execution cost of message delivery on the target chain is predictable, for example (***Ethereum>Darwinia***). In this scenario, a second-best solution is to query the execution cost by the interface on the target chain, plus the estimated delivery cost. The disadvantage is that it is not adaptable, and it is possible that no relayer is willing to take the order, causing message delivery congestion and stability problems.
 
 ## Update to Darwinia > Ethereum Bridge: Grandpa Beefy Light Client + Three-tiered Quotation
 
