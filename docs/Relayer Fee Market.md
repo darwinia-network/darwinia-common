@@ -10,7 +10,7 @@
     2. Time delay between quoting and claiming;
     3. Loss of staking funds due to software or network failures
 
-## Proposal A—Three-tiered Quotation
+## Proposal A-Three-tiered Quotation
 
 This approach is suitable for scenarios with lower gas fee on the source chain and shorter finality time. It has better versatility, reliability, and robustness. Such networks include Heco, BSC, Polygon and Darwinia.
 
@@ -22,25 +22,17 @@ In any time, the message relayer and confirm relayer can be anyone, do not have 
 To give them different priority for **R1, R2, R3**, we will split the T into three consecutive time slots: **_0~T1 for P1_**,  **_T1~T2 for P2_**, and **_T2~T3 for P3_** respectively. The relayer who is assigned with her own time slot will be rewarded with more percentage, and this reward is for the asked price and the commitment(delivery in time or slash). Relayer with lower price are assigned with earlier time slot.
 ### Detailed Steps in Implementation
 
-1. A relayer first registers and deposits some funds (tokens) as the collateral if they are willing to participate.
-    1. enroll_and_lock_collateral dispatch call; relayer enrollment mapping <id, collateral_amount>
-    2. cancel_enrollment() dispatch call (and return collateral, require checkin existing orders)
-2. ***Ask***, asks(price) dispatch call,  updates ask list storage (sorted)
-    1. Internal call for querying current price(return **_P1_**, **_P2_**, **_P3_** and related relayers)
-    2. Update, Cancel price
-    3. If the collateral of any registered relayer is lower than required collateral threshold (e.g. slashed in order), the enrolment of this relayer will become inactive(will be removed from the ***ask*** list, and not able to put new ***ask***).
-3. Internal call for bid and execution, some user pay **_P3_** for sending a cross-chain message.
-    1. Create a new order(with current time), in the order lifecycle, relayer cannot cancel enrollment and take back collateral.
-    2. **_P3_** is locked in the Order(contract).
-    3. Managing orders storage
-4. Internal call for finishing an order or slash an order after message delivery.
-    1. Finish order if this message is delivered by required relayers in the order, and pay **_P3_**.
-    2. Slash order if the message is delivered by other relayers, pay **_P3 + S(t)_** to relayer who delivered message, and slash S(t) from required relayers(of **_P1, P2, P3_**) collateral.
-    3. How to prove this message is delivered by specific relayer?
-        1. When some relayer deliver message, it will attach an extra data describing the source account of relayer.
-        2. The source account will be included in the MessageDelivery event in target chain.
-        3. Thus source account will be included in the Message Delivery Proof.
-    4. Can other relayer help claim with the message delivery proof? And will the protocol incentive this behavior?
+1. Enroll and lock collateral
+    1. enroll_and_lock_collateral dispatch call
+    2. cancel_enrollment() dispatch call, remember to check if the relayer is in priority time slots.
+2. Ask price
+    1. Query current price(return **_P1_**, **_P2_**, **_P3_** and **_R1_**, **_R2_**, **_R3_**)
+    2. Update, Cancel prices storage
+    3. If the collateral of any registered relayer is lower than required collateral threshold (e.g. slashed), the enrolment of this relayer will become inactive(will be removed from the ***ask*** list, and not able to put new ***ask***).
+3. Send message, user pay **_P3_** for sending a cross-chain message.
+    1. Create a new order(with current block number), in the order lifecycle, relayer cannot cancel enrollment and take back collateral.
+    2. **_P3_** is locked in the module relayer fund account.
+4. Message delivery and confirmed by bridger.
 5. Reward and Slash Strategy.
     1. **_0 ~ T1, assigned relayer: R1,_** R1 can claim 60% from the reward P1, and message relayer can claim 80% * (1 - 60%) from P1， confirm relayer can claim 20% * (1 - 60%) from P1, (P3 - P1) will go to treasury.
     2. **_T1 ~ T2, assigned relayer: R2,_** R2 can claim 60% from the reward P1, and message relayer can claim 80% * (1 - 60%) from P1， confirm relayer can claim 20% * (1 - 60%) from P1, (P3 - P1) will go to treasury.
@@ -64,9 +56,9 @@ lock_and_remote_issue
         3. Deposit MessageDeilvery(,...... message_execute_result) event
 5.  if message_execute_result is success, move ***locked_asset*** to backing vault. else, return the ***locked_asset*** back to user.
 
-## Proposal B—Oracle+On-chain Automatic Pricing
+## Proposal B-Oracle + On-chain Automatic Pricing
 
-High gas fees in some networks, such as Ethereum, may prevent the relayer from quoting frequently, and the execution cost of message delivery on the target chain is predictable, for example (***Ethereum>Darwinia***). In this scenario, a second-best solution is to query the execution cost by the interface on the target chain, plus the estimated delivery cost. The disadvantage is that it is not adaptable, and it is possible that no relayer is willing to take the order, causing message delivery congestion and stability problems.
+High gas fees in some networks, such as Ethereum, may prevent the relayer from quoting frequently, and the execution cost of message delivery on the target chain is predictable, such as (***Ethereum>Darwinia***). In this scenario, a second-best solution is to query the execution cost by the interface on the target chain, plus the estimated delivery cost. The disadvantage is that it is not adaptable, and it is possible that no relayer is willing to take the order, causing message delivery congestion and stability problems.
 
 ## Update to Darwinia > Ethereum Bridge: Grandpa Beefy Light Client + Three-tiered Quotation
 
