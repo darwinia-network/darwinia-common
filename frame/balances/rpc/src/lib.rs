@@ -18,25 +18,25 @@
 
 //! Node-specific RPC methods for interaction with balances.
 
-// --- darwinia ---
+// --- darwinia-network ---
 pub use darwinia_balances_rpc_runtime_api::BalancesApi as BalancesRuntimeApi;
 
 // --- core ---
 use core::fmt::Debug;
 // --- std ---
 use std::sync::Arc;
-// --- crates ---
+// --- crates.io ---
 use codec::Codec;
 use jsonrpc_core::{Error, ErrorCode, Result};
 use jsonrpc_derive::rpc;
-// --- substrate ---
+// --- paritytech ---
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{
 	generic::BlockId,
 	traits::{Block as BlockT, MaybeDisplay, MaybeFromStr},
 };
-// --- darwinia ---
+// --- darwinia-network ---
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo;
 
 const RUNTIME_ERROR: i64 = -1;

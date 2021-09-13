@@ -1,8 +1,8 @@
-// --- substrate ---
+// --- paritytech ---
 use frame_support::weights::{constants::BlockExecutionWeight, DispatchClass, Weight};
 use pallet_election_provider_multi_phase::Config;
 use sp_runtime::{transaction_validity::TransactionPriority, PerU16, Perbill};
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::*;
 
 sp_npos_elections::generate_solution_type!(

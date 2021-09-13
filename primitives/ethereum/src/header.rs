@@ -41,7 +41,7 @@ use serde::{
 	Deserialize, Deserializer,
 };
 use sp_debug_derive::RuntimeDebug;
-// --- darwinia ---
+// --- darwinia-network ---
 #[cfg(any(feature = "full-serde", test))]
 use crate::H64;
 use crate::{Address, BlockNumber, Bytes, H256, U256};
@@ -564,7 +564,7 @@ mod tests {
 	mod dag {
 		// --- github ---
 		use ethash::{EthereumPatch, LightDAG};
-		// --- darwinia ---
+		// --- darwinia-network ---
 		use crate::{header::Header, pow::Seal};
 
 		type DAG = LightDAG<EthereumPatch>;

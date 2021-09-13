@@ -1,9 +1,9 @@
 pub use pallet_membership::Instance1 as TechnicalMembershipInstance;
 
-// --- substrate ---
+// --- paritytech ---
 use frame_support::traits::ChangeMembers;
 use pallet_membership::Config;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::*;
 
 pub struct MembershipChangedGroup;

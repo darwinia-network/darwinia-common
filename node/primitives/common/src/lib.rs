@@ -21,7 +21,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(missing_docs)]
 
-// --- substrate ---
+// --- paritytech ---
 #[cfg(feature = "std")]
 use sp_core::sr25519::Pair;
 use sp_core::H256;

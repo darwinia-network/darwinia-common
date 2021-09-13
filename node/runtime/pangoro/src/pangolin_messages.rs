@@ -2,7 +2,7 @@
 
 // --- crates.io ---
 use codec::{Decode, Encode};
-// --- substrate ---
+// --- paritytech ---
 use bp_messages::{
 	source_chain::TargetHeaderChain,
 	target_chain::{ProvedMessages, SourceHeaderChain},
@@ -28,9 +28,10 @@ use frame_support::{
 use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
 use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
 use sp_std::{convert::TryFrom, ops::RangeInclusive};
-// --- darwinia ---
-use crate::{pangolin_primitives, pangoro_primitives, Runtime, PANGORO_PANGOLIN_LANE};
-use bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
+// --- darwinia-network ---
+use crate::*;
+use bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID, WITH_PANGORO_MESSAGES_PALLET_NAME};
+pub use darwinia_balances::{Instance1 as RingInstance, Instance2 as KtonInstance};
 
 /// Message payload for Pangoro -> Pangolin messages.
 pub type ToPangolinMessagePayload = FromThisChainMessagePayload<WithPangolinMessageBridge>;
@@ -39,7 +40,7 @@ pub type ToPangolinMessageVerifier = FromThisChainMessageVerifier<WithPangolinMe
 /// Message payload for Pangolin -> Pangoro messages.
 pub type FromPangolinMessagePayload = FromBridgedChainMessagePayload<WithPangolinMessageBridge>;
 /// Encoded Pangoro Call as it comes from Pangolin.
-pub type FromPangolinEncodedCall = FromBridgedChainEncodedMessageCall<WithPangolinMessageBridge>;
+pub type FromPangolinEncodedCall = FromBridgedChainEncodedMessageCall<Call>;
 /// Messages proof for Pangolin -> Pangoro messages.
 type FromPangolinMessagesProof = FromBridgedChainMessagesProof<pangolin_primitives::Hash>;
 /// Messages delivery proof for Pangoro -> Pangolin messages.
@@ -49,7 +50,8 @@ type ToPangolinMessagesDeliveryProof =
 pub type FromPangolinMessageDispatch = FromBridgedChainMessageDispatch<
 	WithPangolinMessageBridge,
 	Runtime,
-	crate::WithPangolinDispatch,
+	darwinia_balances::Pallet<Runtime, RingInstance>,
+	WithPangolinDispatch,
 >;
 
 /// Initial value of `PangolinToPangoroConversionRate` parameter.
@@ -82,6 +84,9 @@ impl MessagesParameter for PangoroToPangolinMessagesParameter {
 pub struct WithPangolinMessageBridge;
 impl MessageBridge for WithPangolinMessageBridge {
 	const RELAYER_FEE_PERCENT: u32 = 10;
+	const THIS_CHAIN_ID: ChainId = PANGORO_CHAIN_ID;
+	const BRIDGED_CHAIN_ID: ChainId = PANGOLIN_CHAIN_ID;
+	const BRIDGED_MESSAGES_PALLET_NAME: &'static str = WITH_PANGORO_MESSAGES_PALLET_NAME;
 
 	type ThisChain = Pangoro;
 	type BridgedChain = Pangolin;
@@ -100,19 +105,15 @@ impl MessageBridge for WithPangolinMessageBridge {
 #[derive(Clone, Copy, RuntimeDebug)]
 pub struct Pangoro;
 impl messages::ChainWithMessages for Pangoro {
-	const ID: ChainId = PANGORO_CHAIN_ID;
-
 	type Hash = pangoro_primitives::Hash;
 	type AccountId = pangoro_primitives::AccountId;
 	type Signer = pangoro_primitives::AccountPublic;
 	type Signature = pangoro_primitives::Signature;
 	type Weight = Weight;
 	type Balance = pangoro_primitives::Balance;
-
-	type MessagesInstance = crate::WithPangolinMessages;
 }
 impl messages::ThisChainWithMessages for Pangoro {
-	type Call = crate::Call;
+	type Call = Call;
 
 	fn is_outbound_lane_enabled(lane: &LaneId) -> bool {
 		*lane == [0, 0, 0, 0] || *lane == [0, 0, 0, 1] || *lane == PANGORO_PANGOLIN_LANE
@@ -126,6 +127,7 @@ impl messages::ThisChainWithMessages for Pangoro {
 		let inbound_data_size =
 			InboundLaneData::<pangoro_primitives::AccountId>::encoded_size_hint(
 				bridge_primitives::MAXIMAL_ENCODED_ACCOUNT_ID_SIZE,
+				1,
 				1,
 			)
 			.unwrap_or(u32::MAX);
@@ -156,16 +158,12 @@ impl messages::ThisChainWithMessages for Pangoro {
 #[derive(Clone, Copy, RuntimeDebug)]
 pub struct Pangolin;
 impl messages::ChainWithMessages for Pangolin {
-	const ID: ChainId = PANGOLIN_CHAIN_ID;
-
 	type Hash = pangolin_primitives::Hash;
 	type AccountId = pangolin_primitives::AccountId;
 	type Signer = pangolin_primitives::AccountPublic;
 	type Signature = pangolin_primitives::Signature;
 	type Weight = Weight;
 	type Balance = pangolin_primitives::Balance;
-
-	type MessagesInstance = crate::WithPangolinMessages;
 }
 impl messages::BridgedChainWithMessages for Pangolin {
 	fn maximal_extrinsic_size() -> u32 {
@@ -188,6 +186,7 @@ impl messages::BridgedChainWithMessages for Pangolin {
 
 	fn estimate_delivery_transaction(
 		message_payload: &[u8],
+		include_pay_dispatch_fee_cost: bool,
 		message_dispatch_weight: Weight,
 	) -> MessageTransaction<Weight> {
 		let message_payload_len = u32::try_from(message_payload.len()).unwrap_or(u32::MAX);
@@ -198,7 +197,12 @@ impl messages::BridgedChainWithMessages for Pangolin {
 			dispatch_weight: extra_bytes_in_payload
 				.saturating_mul(bridge_primitives::ADDITIONAL_MESSAGE_BYTE_DELIVERY_WEIGHT)
 				.saturating_add(bridge_primitives::DEFAULT_MESSAGE_DELIVERY_TX_WEIGHT)
-				.saturating_add(message_dispatch_weight),
+				.saturating_add(message_dispatch_weight)
+				.saturating_sub(if include_pay_dispatch_fee_cost {
+					0
+				} else {
+					bridge_primitives::PAY_INBOUND_DISPATCH_FEE_WEIGHT
+				}),
 			size: message_payload_len
 				.saturating_add(bridge_primitives::EXTRA_STORAGE_PROOF_SIZE)
 				.saturating_add(bridge_primitives::TX_EXTRA_BYTES),
@@ -238,7 +242,7 @@ impl TargetHeaderChain<ToPangolinMessagePayload, pangolin_primitives::AccountId>
 		source::verify_messages_delivery_proof::<
 			WithPangolinMessageBridge,
 			Runtime,
-			crate::WithPangolinGrandpa,
+			WithPangolinGrandpa,
 		>(proof)
 	}
 }
@@ -255,10 +259,9 @@ impl SourceHeaderChain<pangolin_primitives::Balance> for Pangolin {
 		proof: Self::MessagesProof,
 		messages_count: u32,
 	) -> Result<ProvedMessages<Message<pangolin_primitives::Balance>>, Self::Error> {
-		target::verify_messages_proof::<
-			WithPangolinMessageBridge,
-			Runtime,
-			crate::WithPangolinGrandpa,
-		>(proof, messages_count)
+		target::verify_messages_proof::<WithPangolinMessageBridge, Runtime, WithPangolinGrandpa>(
+			proof,
+			messages_count,
+		)
 	}
 }

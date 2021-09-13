@@ -18,20 +18,15 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-// --- substrate ---
-use bp_messages::{LaneId, MessageNonce, UnrewardedRelayersState};
+// --- paritytech ---
+use bp_messages::{LaneId, MessageDetails, MessageNonce, UnrewardedRelayersState};
 use bp_runtime::{Chain, ChainId, SourceAccount};
 use frame_support::{weights::Weight, Parameter};
 use sp_core::H256;
 use sp_runtime::{traits::Convert, RuntimeDebug};
 use sp_std::prelude::*;
-// --- darwinia ---
+// --- darwinia-network ---
 use common_primitives::*;
-
-/// Bridge-with-Pangolin instance id.
-pub const PANGOLIN_CHAIN_ID: ChainId = *b"pagl";
-/// Bridge-with-Pangoro instance id.
-pub const PANGORO_CHAIN_ID: ChainId = *b"pagr";
 
 /// Maximal size (in bytes) of encoded (using `Encode::encode()`) account id.
 pub const MAXIMAL_ENCODED_ACCOUNT_ID_SIZE: u32 = 32;
@@ -63,11 +58,19 @@ pub const DEFAULT_MESSAGE_DELIVERY_TX_WEIGHT: Weight = 1_000_000_000;
 /// for the case when single message is confirmed. The result then must be rounded up to account possible future
 /// runtime upgrades.
 pub const MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT: Weight = 2_000_000_000;
+pub const PAY_INBOUND_DISPATCH_FEE_WEIGHT: Weight = 600_000_000;
 
 /// Maximal number of unrewarded relayer entries at inbound lane.
 pub const MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE: MessageNonce = 128;
 /// Maximal number of unconfirmed messages at inbound lane.
 pub const MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE: MessageNonce = 128;
+
+// === Pangolin const define
+/// Bridge-with-Pangolin instance id.
+pub const PANGOLIN_CHAIN_ID: ChainId = *b"pagl";
+
+/// Name of the With-Pangoro messages pallet instance in the Pangolin runtime.
+pub const WITH_PANGORO_MESSAGES_PALLET_NAME: &str = "BridgePangoroMessages";
 
 /// Name of the `FromPangolinInboundLaneApi::latest_received_nonce` runtime method.
 pub const FROM_PANGOLIN_LATEST_RECEIVED_NONCE_METHOD: &str =
@@ -82,9 +85,8 @@ pub const FROM_PANGOLIN_UNREWARDED_RELAYERS_STATE: &str =
 /// Name of the `ToPangolinOutboundLaneApi::estimate_message_delivery_and_dispatch_fee` runtime method.
 pub const TO_PANGOLIN_ESTIMATE_MESSAGE_FEE_METHOD: &str =
 	"ToPangolinOutboundLaneApi_estimate_message_delivery_and_dispatch_fee";
-/// Name of the `ToPangolinOutboundLaneApi::messages_dispatch_weight` runtime method.
-pub const TO_PANGOLIN_MESSAGES_DISPATCH_WEIGHT_METHOD: &str =
-	"ToPangolinOutboundLaneApi_messages_dispatch_weight";
+/// Name of the `ToPangolinOutboundLaneApi::message_details` runtime method.
+pub const TO_PANGOLIN_MESSAGE_DETAILS_METHOD: &str = "ToPangolinOutboundLaneApi_message_details";
 /// Name of the `ToPangolinOutboundLaneApi::latest_generated_nonce` runtime method.
 pub const TO_PANGOLIN_LATEST_GENERATED_NONCE_METHOD: &str =
 	"ToPangolinOutboundLaneApi_latest_generated_nonce";
@@ -94,6 +96,40 @@ pub const TO_PANGOLIN_LATEST_RECEIVED_NONCE_METHOD: &str =
 
 /// Name of the `PangolinFinalityApi::best_finalized` runtime method.
 pub const BEST_FINALIZED_PANGOLIN_HEADER_METHOD: &str = "PangolinFinalityApi_best_finalized";
+// === end
+
+// === Pangoro const define
+/// Bridge-with-Pangoro instance id.
+pub const PANGORO_CHAIN_ID: ChainId = *b"pagr";
+
+/// Name of the With-Pangolin messages pallet instance in the Pangoro runtime.
+pub const WITH_PANGOLIN_MESSAGES_PALLET_NAME: &str = "BridgePangolinMessages";
+
+/// Name of the `FromPangoroInboundLaneApi::latest_received_nonce` runtime method.
+pub const FROM_PANGORO_LATEST_RECEIVED_NONCE_METHOD: &str =
+	"FromPangoroInboundLaneApi_latest_received_nonce";
+/// Name of the `FromPangoroInboundLaneApi::latest_onfirmed_nonce` runtime method.
+pub const FROM_PANGORO_LATEST_CONFIRMED_NONCE_METHOD: &str =
+	"FromPangoroInboundLaneApi_latest_confirmed_nonce";
+/// Name of the `FromPangoroInboundLaneApi::unrewarded_relayers_state` runtime method.
+pub const FROM_PANGORO_UNREWARDED_RELAYERS_STATE: &str =
+	"FromPangoroInboundLaneApi_unrewarded_relayers_state";
+
+/// Name of the `ToPangoroOutboundLaneApi::estimate_message_delivery_and_dispatch_fee` runtime method.
+pub const TO_PANGORO_ESTIMATE_MESSAGE_FEE_METHOD: &str =
+	"ToPangoroOutboundLaneApi_estimate_message_delivery_and_dispatch_fee";
+/// Name of the `ToPangolinOutboundLaneApi::message_details` runtime method.
+pub const TO_PANGORO_MESSAGE_DETAILS_METHOD: &str = "ToPangoroOutboundLaneApi_message_details";
+/// Name of the `ToPangoroOutboundLaneApi::latest_generated_nonce` runtime method.
+pub const TO_PANGORO_LATEST_GENERATED_NONCE_METHOD: &str =
+	"ToPangoroOutboundLaneApi_latest_generated_nonce";
+/// Name of the `ToPangoroOutboundLaneApi::latest_received_nonce` runtime method.
+pub const TO_PANGORO_LATEST_RECEIVED_NONCE_METHOD: &str =
+	"ToPangoroOutboundLaneApi_latest_received_nonce";
+
+/// Name of the `PangoroFinalityApi::best_finalized` runtime method.
+pub const BEST_FINALIZED_PANGORO_HEADER_METHOD: &str = "PangoroFinalityApi_best_finalized";
+// === end
 
 /// Convert a 256-bit hash into an AccountId.
 pub struct AccountIdConverter;
@@ -169,15 +205,16 @@ sp_api::decl_runtime_apis! {
 			lane_id: LaneId,
 			payload: OutboundPayload,
 		) -> Option<OutboundMessageFee>;
-		/// Returns total dispatch weight and encoded payload size of all messages in given inclusive range.
+		/// Returns dispatch weight, encoded payload size and delivery+dispatch fee of all
+		/// messages in given inclusive range.
 		///
 		/// If some (or all) messages are missing from the storage, they'll also will
 		/// be missing from the resulting vector. The vector is ordered by the nonce.
-		fn messages_dispatch_weight(
+		fn message_details(
 			lane: LaneId,
 			begin: MessageNonce,
 			end: MessageNonce,
-		) -> Vec<(MessageNonce, Weight, u32)>;
+		) -> Vec<MessageDetails<OutboundMessageFee>>;
 		/// Returns nonce of the latest message, received by bridged chain.
 		fn latest_received_nonce(lane: LaneId) -> MessageNonce;
 		/// Returns nonce of the latest message, generated by given lane.
@@ -224,15 +261,16 @@ sp_api::decl_runtime_apis! {
 			lane_id: LaneId,
 			payload: OutboundPayload,
 		) -> Option<OutboundMessageFee>;
-		/// Returns total dispatch weight and encoded payload size of all messages in given inclusive range.
+		/// Returns dispatch weight, encoded payload size and delivery+dispatch fee of all
+		/// messages in given inclusive range.
 		///
 		/// If some (or all) messages are missing from the storage, they'll also will
 		/// be missing from the resulting vector. The vector is ordered by the nonce.
-		fn messages_dispatch_weight(
+		fn message_details(
 			lane: LaneId,
 			begin: MessageNonce,
 			end: MessageNonce,
-		) -> Vec<(MessageNonce, Weight, u32)>;
+		) -> Vec<MessageDetails<OutboundMessageFee>>;
 		/// Returns nonce of the latest message, received by bridged chain.
 		fn latest_received_nonce(lane: LaneId) -> MessageNonce;
 		/// Returns nonce of the latest message, generated by given lane.

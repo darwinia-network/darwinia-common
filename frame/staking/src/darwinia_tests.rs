@@ -18,10 +18,10 @@
 
 //! Tests for the module.
 
-// --- substrate ---
+// --- paritytech ---
 use frame_support::{assert_err, assert_ok};
 use substrate_test_utils::assert_eq_uvec;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::{mock::*, *};
 
 /// gen_paired_account!(a(1), b(2), m(12));

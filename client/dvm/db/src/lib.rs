@@ -18,9 +18,9 @@
 
 mod utils;
 
-// --- substrate ---
+// --- paritytech ---
 pub use sp_database::Database;
-// --- darwinia ---
+// --- darwinia-network ---
 use codec::{Decode, Encode};
 use parking_lot::Mutex;
 use sp_core::H256;

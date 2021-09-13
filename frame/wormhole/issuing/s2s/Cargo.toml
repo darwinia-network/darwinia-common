@@ -1,0 +1,74 @@
+[package]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+description = "FRAME pallet to s2s issuing"
+edition     = "2018"
+homepage    = "https://darwinia.network/"
+license     = "GPL-3.0"
+name        = "from-substrate-issuing"
+readme      = "README.md"
+repository  = "https://github.com/darwinia-network/darwinia-common/"
+version     = "2.6.3"
+
+[dependencies]
+# crates.io
+array-bytes    = { version = "1.3.3" }
+codec          = { package = "parity-scale-codec", version = "2.1.1", default-features = false, features = ["derive"] }
+ethereum-types = { default-features = false, version = "0.11.0" }
+log            = { version = "0.4.14" }
+serde          = { version = "1.0.127", optional = true }
+serde_json     = { version = "1.0.66", optional = true }
+sha3           = { version = "0.9.1", default-features = false }
+# darwinia-network
+darwinia-evm        = { default-features = false, path = "../../../evm" }
+darwinia-support    = { default-features = false, path = "../../../support" }
+dp-asset            = { default-features = false, path = "../../../../primitives/asset" }
+dp-contract         = { default-features = false, path = "../../../../primitives/contract" }
+dp-evm              = { default-features = false, path = "../../../../primitives/evm" }
+dvm-ethereum        = { default-features = false, path = "../../../dvm" }
+ethereum-primitives = { default-features = false, path = "../../../../primitives/ethereum" }
+# paritytech
+bp-runtime         = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
+frame-benchmarking = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-support      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-system       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-io              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-runtime         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-std             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+
+[dev-dependencies]
+# crates.io
+evm          = { version = "0.25.0", default-features = false, features = ["with-codec"] }
+libsecp256k1 = { version = "0.3.5", default-features = false }
+# darwinia-network
+darwinia-balances = { path = "../../../balances" }
+pallet-timestamp  = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
+
+[features]
+default = ["std"]
+
+std = [
+	# crates.io
+	"codec/std",
+	"ethereum-types/std",
+	"serde",
+	"serde_json",
+	"sha3/std",
+	# darwinia-network
+	"dp-asset/std",
+	"darwinia-evm/std",
+	"dp-contract/std",
+	"ethereum-primitives/std",
+	"dp-evm/std",
+	"dvm-ethereum/std",
+	"darwinia-support/std",
+	# paritytech
+	"bp-runtime/std",
+	"frame-benchmarking/std",
+	"frame-support/std",
+	"frame-system/std",
+	"sp-runtime/std",
+	"sp-std/std",
+	"sp-io/std",
+]
+
+runtime-benchmarks = ["frame-benchmarking"]

@@ -16,14 +16,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-// --- crates ---
+// --- crates.io ---
 use array_bytes::{bytes2hex, hex2bytes_unchecked};
 use codec::Decode;
 use ethabi::{Function, Param, ParamType, Token};
 use ethereum::TransactionSignature;
 use evm::ExitSucceed;
 use std::str::FromStr;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::{
 	account_basic::{RemainBalanceOp, RingRemainBalance},
 	Call, *,
@@ -31,7 +31,7 @@ use crate::{
 use darwinia_evm::AddressMapping;
 use darwinia_support::evm::{IntoDvmAddress, TRANSFER_ADDR};
 use mock::*;
-// --- substrate ---
+// --- paritytech ---
 use frame_support::{assert_err, assert_noop, assert_ok, unsigned::ValidateUnsigned};
 use sp_runtime::transaction_validity::{InvalidTransaction, TransactionSource};
 

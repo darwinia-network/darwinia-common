@@ -62,7 +62,7 @@ fn properties() -> Properties {
 
 	properties.insert("ss58Format".into(), 42.into());
 	properties.insert("tokenDecimals".into(), vec![9, 9].into());
-	properties.insert("tokenSymbol".into(), vec!["PGRRING", "PGRKTON"].into());
+	properties.insert("tokenSymbol".into(), vec!["ORING", "OKTON"].into());
 
 	properties
 }
@@ -71,8 +71,8 @@ pub fn config() -> Result<ChainSpec, String> {
 	ChainSpec::from_json_bytes(&include_bytes!("../../res/pangoro/pangoro.json")[..])
 }
 
-pub fn build_spec_config() -> ChainSpec {
-	fn build_spec_genesis() -> GenesisConfig {
+pub fn genesis_config() -> ChainSpec {
+	fn genesis() -> GenesisConfig {
 		struct Keys {
 			stash: AccountId,
 			session: SessionKeys,
@@ -235,7 +235,7 @@ pub fn build_spec_config() -> ChainSpec {
 		"Pangoro",
 		"pangoro",
 		ChainType::Live,
-		build_spec_genesis,
+		genesis,
 		[
 			"/dns4/t1.pangoro-p2p.darwinia.network/tcp/40333/p2p/12D3KooWLc6ZD4PGjnRz8CuVioW1dEr8rVBVEAFb1vpxFHXU4g2Y",
 			"/dns4/t2.pangoro-p2p.darwinia.network/tcp/40333/p2p/12D3KooWHf1v45q3u1qPrkwSUq7ybzNfXf5ELPcpoBTJ4k49axfk",
@@ -258,7 +258,7 @@ pub fn build_spec_config() -> ChainSpec {
 }
 
 pub fn development_config() -> ChainSpec {
-	fn development_genesis() -> GenesisConfig {
+	fn genesis() -> GenesisConfig {
 		let root = super::get_account_id_from_seed::<sr25519::Public>("Alice");
 		let initial_authorities = vec![super::get_authority_keys_from_seed("Alice")];
 		let endowed_accounts = vec![
@@ -330,7 +330,7 @@ pub fn development_config() -> ChainSpec {
 		"Pangoro",
 		"pangoro",
 		ChainType::Development,
-		development_genesis,
+		genesis,
 		vec![],
 		None,
 		Some(DEFAULT_PROTOCOL_ID),

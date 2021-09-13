@@ -1,9 +1,9 @@
-// --- darwinia ---
+// --- darwinia-network ---
 pub use darwinia_relayer_game::Instance1 as EthereumRelayerGameInstance;
 
-// --- substrate ---
+// --- paritytech ---
 use frame_support::traits::LockIdentifier;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::*;
 use darwinia_relayer_game::Config;
 

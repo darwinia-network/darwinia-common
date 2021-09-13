@@ -18,7 +18,7 @@
 
 //! Test utilities
 
-// --- crates ---
+// --- crates.io ---
 use codec::Encode;
 // --- github.com ---
 use mmr::MMRStore;
@@ -35,7 +35,7 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	DigestItem,
 };
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::{self as darwinia_header_mmr, primitives::*, *};
 
 pub type BlockNumber = u64;

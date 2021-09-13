@@ -26,7 +26,7 @@ mod address;
 pub use address::*;
 
 mod types {
-	// --- darwinia ---
+	// --- darwinia-network ---
 	use crate::*;
 
 	pub type AddressT = [u8; 20];
@@ -37,9 +37,9 @@ mod types {
 	type RingCurrency<T> = <T as Config>::RingCurrency;
 }
 
-// --- crates ---
+// --- crates.io ---
 use codec::{Decode, Encode};
-// --- substrate ---
+// --- paritytech ---
 #[cfg(feature = "std")]
 use frame_support::traits::WithdrawReasons;
 use frame_support::{
@@ -61,7 +61,7 @@ use sp_runtime::{
 	RuntimeDebug,
 };
 use sp_std::prelude::*;
-// --- darwinia ---
+// --- darwinia-network ---
 use darwinia_support::balance::*;
 use types::*;
 
@@ -528,7 +528,7 @@ fn to_ascii_hex(data: &[u8]) -> Vec<u8> {
 
 #[cfg(any(test, feature = "runtime-benchmarks"))]
 mod secp_utils {
-	// --- crates ---
+	// --- crates.io ---
 	use sp_io::hashing::keccak_256;
 	// --- custom ---
 	use crate::*;
@@ -578,9 +578,9 @@ mod secp_utils {
 
 #[cfg(test)]
 mod tests {
-	// --- crates ---
+	// --- crates.io ---
 	use codec::Encode;
-	// --- substrate ---
+	// --- paritytech ---
 	use frame_support::{
 		assert_err, assert_noop, assert_ok, dispatch::DispatchError::BadOrigin,
 		ord_parameter_types, parameter_types, traits::GenesisBuild,
@@ -591,7 +591,7 @@ mod tests {
 		testing::Header,
 		traits::{BlakeTwo256, IdentityLookup},
 	};
-	// --- darwinia ---
+	// --- darwinia-network ---
 	use crate::{self as darwinia_claims, secp_utils::*, *};
 
 	type Block = MockBlock<Test>;
@@ -1010,7 +1010,7 @@ mod tests {
 
 	#[test]
 	fn validate_unsigned_works() {
-		// --- substrate ---
+		// --- paritytech ---
 		use sp_runtime::traits::ValidateUnsigned;
 
 		let source = sp_runtime::transaction_validity::TransactionSource::External;

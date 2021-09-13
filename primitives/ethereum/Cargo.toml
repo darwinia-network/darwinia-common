@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "ethereum-primitives"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.6.1"
+version     = "2.6.3"
 
 [dependencies]
 # crates.io
@@ -36,8 +36,7 @@ rlp            = { version = "0.5.0" }
 rlp-derive     = { version = "0.1.0" }
 serde          = { version = "1.0.127", features = ["derive"] }
 serde_json     = { version = "1.0.66" }
-# github
-triehash = { version = "0.8.4" }
+triehash       = { version = "0.8.4" }
 
 [features]
 default = ["std"]

@@ -20,9 +20,9 @@
 
 // --- crates.io ---
 use codec::Encode;
-// --- substrate ---
+// --- paritytech ---
 use sp_runtime::testing::Digest;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::{mock::*, primitives::*};
 
 #[test]

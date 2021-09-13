@@ -1,6 +1,6 @@
-// --- substrate ---
+// --- paritytech ---
 use pallet_identity::Config;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::*;
 
 frame_support::parameter_types! {

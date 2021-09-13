@@ -40,7 +40,7 @@ mod mock;
 mod test;
 
 mod types {
-	// --- darwinia ---
+	// --- darwinia-network ---
 	use crate::*;
 
 	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
@@ -68,9 +68,9 @@ mod types {
 	>;
 }
 
-// --- crates ---
+// --- crates.io ---
 use codec::Encode;
-// --- substrate ---
+// --- paritytech ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
 	traits::{Currency, EnsureOrigin, Get, LockIdentifier, WithdrawReasons},
@@ -85,7 +85,7 @@ use sp_runtime::{
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
 use sp_std::prelude::*;
-// --- darwinia ---
+// --- darwinia-network ---
 use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::balance::*;
 use types::*;

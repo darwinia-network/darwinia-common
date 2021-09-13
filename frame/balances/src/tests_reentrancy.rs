@@ -18,9 +18,9 @@
 
 //! Test setup for potential reentracy and lost updates of nested mutations.
 
-// --- crates ---
+// --- crates.io ---
 use codec::{Decode, Encode};
-// --- substrate ---
+// --- paritytech ---
 use frame_support::{
 	assert_ok,
 	traits::{
@@ -32,7 +32,7 @@ use frame_system::{mocking::*, RawOrigin};
 use pallet_transaction_payment::CurrencyAdapter;
 use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, RuntimeDebug};
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::{self as darwinia_balances, pallet::*};
 
 type Block = MockBlock<Test>;

@@ -165,11 +165,11 @@ pub use weights::WeightInfo;
 #[frame_support::pallet]
 pub mod pallet {
 	pub mod fungible {
-		// --- substrate ---
+		// --- paritytech ---
 		use frame_support::traits::tokens::fungible::{
 			Inspect, InspectHold, Mutate, MutateHold, Transfer, Unbalanced,
 		};
-		// --- darwinia ---
+		// --- darwinia-network ---
 		use crate::pallet::*;
 
 		impl<T: Config<I>, I: 'static> Inspect<T::AccountId> for Pallet<T, I> {
@@ -352,9 +352,9 @@ pub mod pallet {
 	// wrapping these imbalances in a private module is necessary to ensure absolute privacy
 	// of the inner member.
 	pub mod imbalances {
-		// --- substrate ---
+		// --- paritytech ---
 		use frame_support::traits::SameOrOther;
-		// --- darwinia ---
+		// --- darwinia-network ---
 		use crate::pallet::*;
 
 		/// Opaque, move-only struct with private fields that serves as a token denoting that
@@ -517,9 +517,9 @@ pub mod pallet {
 	}
 	pub use imbalances::{NegativeImbalance, PositiveImbalance};
 
-	// --- crates ---
+	// --- crates.io ---
 	use codec::{Codec, EncodeLike};
-	// --- substrate ---
+	// --- paritytech ---
 	use frame_support::{
 		ensure,
 		pallet_prelude::*,
@@ -530,7 +530,7 @@ pub mod pallet {
 		},
 	};
 	use frame_system::pallet_prelude::*;
-	// --- substrate ---
+	// --- paritytech ---
 	use sp_runtime::{
 		traits::{
 			AtLeast32BitUnsigned, Bounded, CheckedAdd, CheckedSub, MaybeSerializeDeserialize,
@@ -539,7 +539,7 @@ pub mod pallet {
 		ArithmeticError, DispatchError, DispatchResult, RuntimeDebug,
 	};
 	use sp_std::{borrow::Borrow, cmp, fmt::Debug, mem, prelude::*};
-	// --- darwinia ---
+	// --- darwinia-network ---
 	use crate::weights::WeightInfo;
 	use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo;
 	use darwinia_support::{balance::*, impl_rpc, traits::BalanceInfo};
@@ -720,8 +720,6 @@ pub mod pallet {
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T, I = ()>(PhantomData<(T, I)>);
-	#[pallet::hooks]
-	impl<T: Config<I>, I: 'static> Hooks<BlockNumberFor<T>> for Pallet<T, I> {}
 	#[pallet::call]
 	impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		/// Transfer some liquid free balance to another account.

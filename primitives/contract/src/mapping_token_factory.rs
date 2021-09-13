@@ -25,7 +25,7 @@ pub const REGISTER_ACTION: &[u8] = b"registered(bytes4,uint32,string,string,uint
 
 // --- crates.io ---
 use ethereum_types::{Address as EthereumAddress, H160, U256};
-// --- darwinia ---
+// --- darwinia-network ---
 use ethabi::{
 	param_type::ParamType, token::Token, Bytes, Error, Function, Param, Result as AbiResult,
 };

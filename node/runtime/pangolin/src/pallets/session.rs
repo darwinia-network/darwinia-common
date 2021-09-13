@@ -1,8 +1,8 @@
-// --- substrate ---
+// --- paritytech ---
 use pallet_session::{historical::NoteHistoricalRoot, Config};
 use sp_runtime::{traits::OpaqueKeys, Perbill};
 use sp_std::prelude::*;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::*;
 use darwinia_staking::StashOf;
 

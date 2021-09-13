@@ -16,10 +16,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-// --- crates ---
+// --- crates.io ---
 use codec::{Decode, Encode};
 use num_traits::Zero;
-// --- substrate ---
+// --- paritytech ---
 use frame_support::traits::{LockIdentifier, WithdrawReasons};
 use sp_runtime::{traits::AtLeast32BitUnsigned, RuntimeDebug};
 use sp_std::{ops::BitOr, prelude::*};

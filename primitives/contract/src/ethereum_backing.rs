@@ -22,7 +22,7 @@ pub use ethabi::{Event, Log};
 
 // --- crates.io ---
 use ethereum_types::{Address as EthereumAddress, U256};
-// --- darwinia ---
+// --- darwinia-network ---
 use ethabi::{param_type::ParamType, Error, EventParam, RawLog, Result as AbiResult};
 use ethereum_primitives::receipt::EthereumReceipt;
 // --- paritytech ---

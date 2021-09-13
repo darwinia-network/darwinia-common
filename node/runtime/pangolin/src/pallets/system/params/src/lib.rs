@@ -1,6 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-// --- substrate ---
+// --- paritytech ---
 use frame_support::weights::{
 	constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
 	DispatchClass, Weight,

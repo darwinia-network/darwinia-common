@@ -36,12 +36,12 @@ mod mock;
 #[cfg(all(feature = "std", test))]
 mod tests;
 
-// --- crates ---
+// --- crates.io ---
 use codec::{Decode, Encode};
 use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
 use evm::ExitReason;
 use sha3::{Digest, Keccak256};
-// --- substrate ---
+// --- paritytech ---
 #[cfg(feature = "std")]
 use frame_support::storage::unhashed;
 use frame_support::{
@@ -62,7 +62,7 @@ use sp_runtime::{
 };
 use sp_std::marker::PhantomData;
 use sp_std::prelude::*;
-// --- darwinia ---
+// --- darwinia-network ---
 use darwinia_evm::{AccountBasic, BlockHashMapping, FeeCalculator, GasWeightMapping, Runner};
 use darwinia_support::evm::{
 	recover_signer, DVMTransaction, IntoDvmAddress, INTERNAL_TX_GAS_LIMIT,
@@ -197,6 +197,27 @@ pub mod pallet {
 
 		fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
 			if let Call::transact(transaction) = call {
+				// We must ensure a transaction can pay the cost of its data bytes.
+				// If it can't it should not be included in a block.
+				let mut gasometer = evm::gasometer::Gasometer::new(
+					transaction.gas_limit.low_u64(),
+					<T as darwinia_evm::Config>::config(),
+				);
+				let transaction_cost = match transaction.action {
+					TransactionAction::Call(_) => {
+						evm::gasometer::call_transaction_cost(&transaction.input)
+					}
+					TransactionAction::Create => {
+						evm::gasometer::create_transaction_cost(&transaction.input)
+					}
+				};
+				if gasometer.record_transaction(transaction_cost).is_err() {
+					return InvalidTransaction::Custom(
+						TransactionValidationError::InvalidGasLimit as u8,
+					)
+					.into();
+				}
+
 				// Check chain id correctly
 				if let Some(chain_id) = transaction.signature.chain_id() {
 					if chain_id != T::ChainId::get() {

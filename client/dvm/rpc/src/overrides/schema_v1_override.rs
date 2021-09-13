@@ -15,9 +15,9 @@
 // along with Substrate.  If not, see <http://www.gnu.org/licenses/>.
 
 use super::{blake2_128_extend, storage_prefix_build, StorageOverride};
-// --- darwinia ---
+// --- darwinia-network ---
 use dvm_rpc_runtime_api::TransactionStatus;
-// --- substrate ---
+// --- paritytech ---
 use sc_client_api::backend::{AuxStore, Backend, StateBackend, StorageProvider};
 use sp_api::BlockId;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};

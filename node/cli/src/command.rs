@@ -18,24 +18,18 @@
 
 // --- std ---
 use std::{env, path::PathBuf};
-// --- substrate ---
+// --- paritytech ---
 use sc_cli::{Role, RuntimeVersion, SubstrateCli};
 use sc_service::ChainSpec;
 #[cfg(feature = "try-runtime")]
 use sc_service::TaskManager;
 use sp_core::crypto::Ss58AddressFormat;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::cli::{Cli, Subcommand};
-use drml_service::{
-	chain_spec::{
-		pangolin::{self as pangolin_chain_spec},
-		pangoro::{self as pangoro_chain_spec},
-		PangolinChainSpec, PangoroChainSpec,
-	},
-	service::{
-		pangolin as pangolin_service, pangolin_runtime, pangoro as pangoro_service,
-		pangoro_runtime, IdentifyVariant, PangolinExecutor, PangoroExecutor,
-	},
+use service::{
+	pangolin_chain_spec, pangolin_runtime, pangolin_service, pangoro_chain_spec, pangoro_runtime,
+	pangoro_service, IdentifyVariant, PangolinChainSpec, PangolinExecutor, PangoroChainSpec,
+	PangoroExecutor,
 };
 
 impl SubstrateCli for Cli {
@@ -89,11 +83,11 @@ impl SubstrateCli for Cli {
 
 		Ok(match id.to_lowercase().as_ref() {
 			"pangolin" => Box::new(pangolin_chain_spec::config()?),
-			"pangolin-genesis" => Box::new(pangolin_chain_spec::build_spec_config()),
+			"pangolin-genesis" => Box::new(pangolin_chain_spec::genesis_config()),
 			"pangolin-dev" | "dev" => Box::new(pangolin_chain_spec::development_config()),
 			"pangolin-local" | "local" => Box::new(pangolin_chain_spec::local_testnet_config()),
 			"pangoro" => Box::new(pangoro_chain_spec::config()?),
-			"pangoro-genesis" => Box::new(pangoro_chain_spec::build_spec_config()),
+			"pangoro-genesis" => Box::new(pangoro_chain_spec::genesis_config()),
 			"pangoro-dev" => Box::new(pangoro_chain_spec::development_config()),
 			path => {
 				let path = PathBuf::from(path);
@@ -347,11 +341,8 @@ pub fn run() -> sc_cli::Result<()> {
 					// we don't need any of the components of new_partial, just a runtime, or a task
 					// manager to do `async_run`.
 					let registry = config.prometheus_config.as_ref().map(|cfg| &cfg.registry);
-					let task_manager =
-						sc_service::TaskManager::new(config.task_executor.clone(), registry)
-							.map_err(|e| {
-								sc_cli::Error::Service(sc_service::Error::Prometheus(e))
-							})?;
+					let task_manager = TaskManager::new(config.task_executor.clone(), registry)
+						.map_err(|e| sc_cli::Error::Service(sc_service::Error::Prometheus(e)))?;
 
 					Ok((
 						cmd.run::<pangoro_runtime::Block, PangoroExecutor>(config),
@@ -363,11 +354,8 @@ pub fn run() -> sc_cli::Result<()> {
 					// we don't need any of the components of new_partial, just a runtime, or a task
 					// manager to do `async_run`.
 					let registry = config.prometheus_config.as_ref().map(|cfg| &cfg.registry);
-					let task_manager =
-						sc_service::TaskManager::new(config.task_executor.clone(), registry)
-							.map_err(|e| {
-								sc_cli::Error::Service(sc_service::Error::Prometheus(e))
-							})?;
+					let task_manager = TaskManager::new(config.task_executor.clone(), registry)
+						.map_err(|e| sc_cli::Error::Service(sc_service::Error::Prometheus(e)))?;
 
 					Ok((
 						cmd.run::<pangolin_runtime::Block, PangolinExecutor>(config),

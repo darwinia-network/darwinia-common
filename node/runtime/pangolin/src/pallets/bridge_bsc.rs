@@ -1,6 +1,6 @@
-// --- substrate ---
+// --- paritytech ---
 use sp_core::U256;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::*;
 use darwinia_bridge_bsc::{BSCConfiguration, Config};
 

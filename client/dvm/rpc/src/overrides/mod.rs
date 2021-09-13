@@ -24,12 +24,12 @@
 mod schema_v1_override;
 
 pub use schema_v1_override::SchemaV1Override;
-// --- darwinia ---
+// --- darwinia-network ---
 use dvm_ethereum::EthereumStorageSchema;
 pub use dvm_rpc_core::{EthApiServer, NetApiServer};
 use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
 use dvm_rpc_runtime_api::TransactionStatus;
-// --- substrate ---
+// --- paritytech ---
 use sp_api::{BlockId, ProvideRuntimeApi};
 use sp_io::hashing::{blake2_128, twox_128};
 use sp_runtime::traits::Block as BlockT;

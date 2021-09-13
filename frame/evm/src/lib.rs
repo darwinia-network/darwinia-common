@@ -54,10 +54,10 @@ static ISTANBUL_CONFIG: EvmConfig = EvmConfig::istanbul();
 
 #[frame_support::pallet]
 pub mod pallet {
-	// --- substrate ---
+	// --- paritytech ---
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
-	// --- darwinia ---
+	// --- darwinia-network ---
 	use crate::*;
 
 	#[pallet::config]
@@ -171,8 +171,6 @@ pub mod pallet {
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(PhantomData<T>);
-	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Issue an EVM call operation. This is similar to a message call transaction in Ethereum.

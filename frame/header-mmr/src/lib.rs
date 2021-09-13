@@ -78,7 +78,7 @@ pub mod pallet {
 	#[cfg(any(test, feature = "easy-testing"))]
 	use sp_runtime::{generic::OpaqueDigestItemId, traits::Header};
 	use sp_std::prelude::*;
-	// --- darwinia ---
+	// --- darwinia-network ---
 	use crate::{primitives::*, weights::WeightInfo};
 	use darwinia_header_mmr_rpc_runtime_api::{Proof, RuntimeDispatchInfo};
 	use darwinia_relay_primitives::MMR as MMRT;
@@ -129,8 +129,6 @@ pub mod pallet {
 			}
 		}
 	}
-	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
 	impl<T: Config> Pallet<T> {
 		pub fn offchain_key(position: NodeIndex) -> Vec<u8> {
 			(T::INDEXING_PREFIX, position).encode()

@@ -16,14 +16,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-// --- substrate ---
+// --- paritytech ---
 use frame_support::ensure;
 use sp_std::{marker::PhantomData, prelude::*};
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::AccountId;
 use darwinia_evm::{AccountBasic, Config};
 use darwinia_support::evm::TRANSFER_ADDR;
-// --- crates ---
+// --- crates.io ---
 use codec::Decode;
 use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
 

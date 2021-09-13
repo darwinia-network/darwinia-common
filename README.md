@@ -3,53 +3,95 @@ The Darwinia Runtime Module Library (DRML) is a darwinia.network maintained coll
 
 ## Runtime Modules Overview
 - [darwinia-balances](./frame/balances)
-	- Desc.
-- [darwinia-crab-backing](./frame/bridge/crab/backing)
-	- Desc.
-- [darwinia-crab-issuing](./frame/bridge/crab/issuing)
-	- Desc.
-- [darwinia-ethereum-backing](./frame/bridge/ethereum/backing)
-	- Desc.
-- [darwinia-ethereum-issuing](./frame/bridge/ethereum/issuing)
-	- Desc.
-- [darwinia-ethereum-relay](./frame/bridge/ethereum/relay)
-	- Desc.
-- [darwinia-bridge-bsc](./frame/bridge/ethereum-bsc)
-	- Desc.
+	- Provides functionality of handling balances.
+- [darwinia-bridge-ethereum](./frame/bridge/ethereum/relay)
+	- Pallet of the Ethereum > Darwinia relay.
+- [darwinia-bridge-bsc](./frame/bridge/bsc)
+	- Pallet that verifies BSC(Binance Smart Chain) headers and authority set finality.
 - [darwinia-relay-authorities](./frame/bridge/relay-authorities)
-	- Desc.
+	- Pallet that manages the relayer authorities.
 - [darwinia-relayer-game](./frame/bridge/relayer-game)
-	- Desc.
-- [darwinia-s2s-backing](./frame/bridge/s2s/backing)
-	- Desc.
-- [darwinia-s2s-issuing](./frame/bridge/s2s/issuing)
-	- Desc.
-- [darwinia-tron-backing](./frame/bridge/tron/backing)
-	- Desc.
+	- Implementation of the Darwinia-Relayer-Game protocol.
 - [darwinia-claims](./frame/claims)
-	- Desc.
+	- Pallet for airdrop.
 - [darwinia-democracy](./frame/democracy)
-	- Desc.
+	- Pallet for democracy.
 - [darwinia-dvm](./frame/dvm)
-	- Desc.
-- [darwinia-dvm-dynamic-fee](./frame/dvm-dynamic-fee)
-	- Desc.
-- [darwinia-elections-phragmen](./frame/elections-phragmen)
-	- Desc.
+	- Ethereum block handling pallet of the EVM-compatible DVM system.
 - [darwinia-evm](./frame/evm)
-	- Desc.
+	- EVM execution handling pallet of the EVM-compatible DVM system.
+- [darwinia-dvm-dynamic-fee](./frame/dvm-dynamic-fee)
+	- Extending fee handling pallet of the EVM-compatible DVM system.
+- [darwinia-elections-phragmen](./frame/elections-phragmen)
+	- An election module based on sequential phragmen.
 - [darwinia-header-mmr](./frame/header-mmr)
-	- Desc.
+	- Pallet that maintains the MMR(Merkle Mountain Range) data structure of the source chain headers.
 - [darwinia-staking](./frame/staking)
-	- Desc.
+	- Pallet that provides the staking-related features, nominating, validating etc.
 - [darwinia-support](./frame/support)
-	- Desc.
+	- Basic utility module.
 - [darwinia-vesting](./frame/vesting)
-	- Desc.
+	- Pallet that provides vesting protection of the blocked balance on an account.
+- [from-ethereum-issuing](./frame/wormhole/issuing/ethereum)
+	- Pallet of issuing assets on the Ethereum network.
+- [from-substrate-issuing](./frame/wormhole/issuing/s2s)
+	- Pallet of issuing assets on the Substrate base network.
+- [to-ethereum-backing](./frame/wormhole/backing/ethereum)
+	- Pallet of backing assets on the Ethereum network.
+- [to-substrate-backing](./frame/wormhole/backing/s2s)
+	- Pallet of backing assets on the Substrate base network.
+- [to-tron-backing](./frame/wormhole/backing/tron)
+	- Pallet of backing assets on the Tron network.
 
 ## Development
+The darwinia-common has some test chains. you can start use [deploy.sh](tests/local-testnet/deploy.sh)
 
-### Deploy A Pangolin Local Testnet
+### Pangolin Testnet
+#### With Script
 ```sh
-tests/pangolin-local-testnet/deploy.sh
+./tests/local-testnet/deploy.sh pangolin
+```
+
+| validator | rpc-port | ws-port | node-key                                                      |
+| --------- | -------- | ------- | ------------------------------------------------------------- |
+| alice     | 30433    | 10044   | 0000000000000000000000000000000000000000000000000000000000101 |
+| bob       | 30434    | 10045   | 0000000000000000000000000000000000000000000000000000000000102 |
+| charlie   | 30435    | 10046   | 0000000000000000000000000000000000000000000000000000000000103 |
+| dave      | 30436    | 10047   | 0000000000000000000000000000000000000000000000000000000000104 |
+| eve       | 30437    | 10048   | 0000000000000000000000000000000000000000000000000000000000105 |
+| ferdie    | 30438    | 10049   | 0000000000000000000000000000000000000000000000000000000000106 |
+
+#### Manually
+```sh
+cargo build --release
+
+target/release/drml \
+	--chain pangolin-dev \
+	--alice \
+	--base-path tests/local-testnet/alice
+```
+
+### Pangoro Testnet
+#### With Script
+```sh
+./tests/local-testnet/deploy.sh pangoro
+```
+
+| validator | rpc-port | ws-port | node-key                                                      |
+| --------- | -------- | ------- | ------------------------------------------------------------- |
+| alice     | 30533    | 10144   | 0000000000000000000000000000000000000000000000000000000000201 |
+| bob       | 30534    | 10145   | 0000000000000000000000000000000000000000000000000000000000202 |
+| charlie   | 30535    | 10146   | 0000000000000000000000000000000000000000000000000000000000203 |
+| dave      | 30536    | 10147   | 0000000000000000000000000000000000000000000000000000000000204 |
+| eve       | 30537    | 10148   | 0000000000000000000000000000000000000000000000000000000000205 |
+| ferdie    | 30538    | 10149   | 0000000000000000000000000000000000000000000000000000000000206 |
+
+#### Manually
+```sh
+cargo build --release
+
+target/release/drml \
+	--chain pangoro-dev \
+	--alice \
+	--base-path tests/local-testnet/alice
 ```

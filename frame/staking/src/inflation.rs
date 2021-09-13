@@ -21,11 +21,11 @@ use substrate_fixed::{
 	transcendental::{pow, sqrt},
 	types::I64F64,
 };
-// --- substrate ---
+// --- paritytech ---
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
 use sp_core::U256;
 use sp_runtime::Perbill;
-// --- darwinia ---
+// --- darwinia-network ---
 use crate::*;
 
 // Milliseconds per year for the Julian year (365.25 days).

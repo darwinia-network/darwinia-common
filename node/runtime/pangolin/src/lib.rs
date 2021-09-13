@@ -86,7 +86,7 @@ pub use pallet_sudo::Call as SudoCall;
 
 // --- crates.io ---
 use codec::{Decode, Encode};
-// --- substrate ---
+// --- paritytech ---
 use bridge_runtime_common::messages::{
 	source::estimate_message_dispatch_and_delivery_fee, MessageBridge,
 };
@@ -117,12 +117,12 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-// --- darwinia ---
+// --- darwinia-network ---
 use bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use bridges::substrate::pangoro_messages::{ToPangoroMessagePayload, WithPangoroMessageBridge};
 use common_primitives::*;
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
-use darwinia_ethereum_relay::CheckEthereumRelayHeaderParcel;
+use darwinia_bridge_ethereum::CheckEthereumRelayHeaderParcel;
 use darwinia_evm::{Account as EVMAccount, Runner};
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
@@ -168,10 +168,10 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangolin"),
 	impl_name: sp_runtime::create_runtime_str!("Pangolin"),
 	authoring_version: 1,
-	spec_version: 2610,
+	spec_version: 2630,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 2,
+	transaction_version: 4,
 };
 
 /// The BABE epoch configuration at genesis.
@@ -260,25 +260,25 @@ frame_support::construct_runtime! {
 		// Multisig module. Late addition.
 		Multisig: pallet_multisig::{Pallet, Call, Storage, Event<T>} = 32,
 
-		CrabIssuing: darwinia_crab_issuing::{Pallet, Call, Storage, Config} = 33,
-		CrabBacking: darwinia_crab_backing::{Pallet, Storage, Config<T>} = 34,
+		// CrabIssuing: darwinia_crab_issuing::{Pallet, Call, Storage, Config} = 33,
+		// CrabBacking: darwinia_crab_backing::{Pallet, Storage, Config<T>} = 34,
 
-		EthereumRelay: darwinia_ethereum_relay::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
-		EthereumBacking: darwinia_ethereum_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 36,
-		EthereumIssuing: darwinia_ethereum_issuing::{Pallet, Call, Storage, Config, Event<T>} = 42,
+		EthereumRelay: darwinia_bridge_ethereum::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
+		EthereumBacking: to_ethereum_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 36,
+		EthereumIssuing: from_ethereum_issuing::{Pallet, Call, Storage, Config, Event<T>} = 42,
 		EthereumRelayerGame: darwinia_relayer_game::<Instance1>::{Pallet, Storage} = 37,
 		EthereumRelayAuthorities: darwinia_relay_authorities::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>} = 38,
 
-		TronBacking: darwinia_tron_backing::{Pallet, Config<T>} = 39,
+		TronBacking: to_tron_backing::{Pallet, Config<T>} = 39,
 
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 40,
 		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 41,
 		DynamicFee: dvm_dynamic_fee::{Pallet, Call, Storage, Inherent} = 47,
 
 		BridgePangoroMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 43,
-		BridgePangoroDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 44,
+		BridgeDispatch: pallet_bridge_dispatch::{Pallet, Event<T>} = 44,
 		BridgePangoroGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 45,
-		Substrate2SubstrateIssuing: darwinia_s2s_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
+		Substrate2SubstrateIssuing: from_substrate_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
 
 		BSC: darwinia_bridge_bsc::{Pallet, Call, Storage, Config} = 46,
 
@@ -685,19 +685,16 @@ sp_api::impl_runtime_apis! {
 			).ok()
 		}
 
-		fn messages_dispatch_weight(
+		fn message_details(
 			lane: bp_messages::LaneId,
 			begin: bp_messages::MessageNonce,
 			end: bp_messages::MessageNonce,
-		) -> Vec<(bp_messages::MessageNonce, Weight, u32)> {
-			(begin..=end).filter_map(|nonce| {
-				let encoded_payload = BridgePangoroMessages::outbound_message_payload(lane, nonce)?;
-				let decoded_payload = ToPangoroMessagePayload::decode(
-					&mut &encoded_payload[..]
-				).ok()?;
-				Some((nonce, decoded_payload.weight, encoded_payload.len() as _))
-			})
-			.collect()
+		) -> Vec<bp_messages::MessageDetails<Balance>> {
+			bridge_runtime_common::messages_api::outbound_message_details::<
+				Runtime,
+				pallet_bridge_messages::Instance1,
+				WithPangoroMessageBridge,
+			>(lane, begin, end)
 		}
 
 		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
@@ -764,8 +761,8 @@ sp_api::impl_runtime_apis! {
 
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
 			add_benchmark!(params, batches, darwinia_evm, EVM);
-			add_benchmark!(params, batches, darwinia_s2s_issuing, Substrate2SubstrateIssuing);
-			add_benchmark!(params, batches, darwinia_ethereum_issuing, EthereumIssuing);
+			add_benchmark!(params, batches, from_substrate_issuing, Substrate2SubstrateIssuing);
+			add_benchmark!(params, batches, from_ethereum_issuing, EthereumIssuing);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
@@ -792,128 +789,32 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 	}
 }
 
-fn migrate_treasury() {
+fn migrate() -> Weight {
 	// --- paritytech ---
-	use frame_support::{migration, StorageHasher, Twox64Concat};
+	#[allow(unused)]
+	use frame_support::migration;
 
-	type ProposalIndex = u32;
+	migration::move_pallet(b"Instance1BridgeMessages", b"BridgePangoroMessages");
 
-	const OLD_PREFIX: &[u8] = b"DarwiniaTreasury";
-	const NEW_PREFIX: &[u8] = b"Treasury";
-	const KTON_TREASURY_PREFIX: &[u8] = b"Instance2Treasury";
+	// TODO: Move to S2S
+	// const CrabBackingPalletId: PalletId = PalletId(*b"da/crabk");
+	// const CrabIssuingPalletId: PalletId = PalletId(*b"da/crais");
 
-	migration::remove_storage_prefix(OLD_PREFIX, b"ProposalCount", &[]);
-	log::info!("`ProposalCount` Removed");
-	let approvals =
-		migration::take_storage_value::<Vec<ProposalIndex>>(OLD_PREFIX, b"Approvals", &[])
-			.unwrap_or_default();
-	migration::remove_storage_prefix(OLD_PREFIX, b"Approvals", &[]);
-	log::info!("`Approvals` Removed");
-
-	#[derive(Encode, Decode)]
-	struct OldProposal {
-		proposer: AccountId,
-		beneficiary: AccountId,
-		ring_value: Balance,
-		kton_value: Balance,
-		ring_bond: Balance,
-		kton_bond: Balance,
-	}
-	#[derive(Encode, Decode)]
-	struct Proposal {
-		proposer: AccountId,
-		value: Balance,
-		beneficiary: AccountId,
-		bond: Balance,
-	}
-	let mut ring_approvals = vec![];
-	let mut kton_approvals = vec![];
-	for (index, old_proposal) in migration::storage_key_iter::<
-		ProposalIndex,
-		OldProposal,
-		Twox64Concat,
-	>(OLD_PREFIX, b"Proposals")
-	.drain()
-	{
-		if old_proposal.ring_value != 0 {
-			let new_proposal = Proposal {
-				proposer: old_proposal.proposer.clone(),
-				value: old_proposal.ring_value,
-				beneficiary: old_proposal.beneficiary.clone(),
-				bond: old_proposal.ring_bond,
-			};
-			// All on-chain proposal have ring value
-			let hash = Twox64Concat::hash(&index.encode());
-
-			migration::put_storage_value(NEW_PREFIX, b"Proposals", &hash, new_proposal);
-
-			if approvals.contains(&index) {
-				ring_approvals.push(index);
-			}
-		}
-		if old_proposal.kton_value != 0 {
-			let new_proposal = Proposal {
-				proposer: old_proposal.proposer,
-				value: old_proposal.kton_value,
-				beneficiary: old_proposal.beneficiary,
-				bond: old_proposal.kton_bond,
-			};
-			// Only one on-chain proposal have kton value, so set index to 0
-			let hash = Twox64Concat::hash(&(0 as ProposalIndex).encode());
-
-			migration::put_storage_value(KTON_TREASURY_PREFIX, b"Proposals", &hash, new_proposal);
-
-			if approvals.contains(&index) {
-				kton_approvals.push(index);
-			}
-		}
-	}
-	migration::put_storage_value(NEW_PREFIX, b"ProposalCount", &[], 2 as ProposalIndex);
-	migration::put_storage_value(
-		KTON_TREASURY_PREFIX,
-		b"ProposalCount",
-		&[],
-		1 as ProposalIndex,
-	);
-
-	migration::remove_storage_prefix(OLD_PREFIX, b"Proposals", &[]);
-	log::info!("`Proposals` Migrated");
-
-	if !ring_approvals.is_empty() {
-		migration::put_storage_value(NEW_PREFIX, b"Approvals", &[], ring_approvals);
-	}
-	if !kton_approvals.is_empty() {
-		migration::put_storage_value(KTON_TREASURY_PREFIX, b"Approvals", &[], kton_approvals);
-	}
-	log::info!("`Approvals` Migrated");
-
-	migration::move_storage_from_pallet(b"Tips", OLD_PREFIX, NEW_PREFIX);
-	log::info!("`Tips` Migrated");
-	migration::move_storage_from_pallet(b"Reasons", OLD_PREFIX, NEW_PREFIX);
-	log::info!("`Reasons` Migrated");
-	migration::move_storage_from_pallet(b"BountyCount", OLD_PREFIX, NEW_PREFIX);
-	log::info!("`BountyCount` Migrated");
-	migration::move_storage_from_pallet(b"Bounties", OLD_PREFIX, NEW_PREFIX);
-	log::info!("`Bounties` Migrated");
-	migration::move_storage_from_pallet(b"BountyDescriptions", OLD_PREFIX, NEW_PREFIX);
-	log::info!("`BountyDescriptions` Migrated");
-	migration::move_storage_from_pallet(b"BountyApprovals", OLD_PREFIX, NEW_PREFIX);
-	log::info!("`BountyApprovals` Migrated");
+	// 0
+	RuntimeBlockWeights::get().max_block
 }
 
 pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
-		migrate_treasury();
+		migrate();
 
 		Ok(())
 	}
 
 	fn on_runtime_upgrade() -> Weight {
-		migrate_treasury();
-
-		RuntimeBlockWeights::get().max_block
+		migrate()
 	}
 }
 
