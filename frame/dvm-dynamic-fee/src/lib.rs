@@ -42,7 +42,7 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		/// Min Gas Price adjust divisor
+		/// Min Gas Price adjust divisor.
 		type MinGasPriceBoundDivisor: Get<U256>;
 	}
 
@@ -80,7 +80,7 @@ pub mod pallet {
 	}
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Set the Target gas price
+		/// Set the target gas price.
 		#[pallet::weight(T::DbWeight::get().writes(1))]
 		fn note_min_gas_price_target(
 			origin: OriginFor<T>,
@@ -120,7 +120,7 @@ pub mod pallet {
 		}
 	}
 
-	/// Errors that can occur while checking the price inherent
+	/// Errors that can occur while checking the price inherent.
 	#[derive(Encode, Decode, RuntimeDebug)]
 	pub enum InherentError {}
 	impl IsFatalError for InherentError {
@@ -129,7 +129,7 @@ pub mod pallet {
 		}
 	}
 
-	/// Provide price inherent
+	/// Provide price inherent.
 	#[cfg(feature = "std")]
 	pub struct InherentDataProvider(pub InherentType);
 	#[cfg(feature = "std")]

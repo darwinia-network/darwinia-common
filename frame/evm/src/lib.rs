@@ -84,9 +84,9 @@ pub mod pallet {
 		/// Find author for the current block.
 		type FindAuthor: FindAuthor<H160>;
 
-		/// RING account basic
+		/// *RING* account basic
 		type RingAccountBasic: AccountBasic<Self>;
-		/// KTON account basic
+		/// *KTON* account basic
 		type KtonAccountBasic: AccountBasic<Self>;
 
 		/// Precompiles associated with this EVM engine.
@@ -387,7 +387,7 @@ pub mod pallet {
 }
 pub use pallet::*;
 
-/// A trait to perform origin check
+/// A trait to perform origin check.
 pub trait EnsureAddressOrigin<OuterOrigin> {
 	/// Success return type.
 	type Success;
@@ -407,22 +407,22 @@ pub trait EnsureAddressOrigin<OuterOrigin> {
 	) -> Result<Self::Success, OuterOrigin>;
 }
 
-/// A trait for converting from H160 to AccountId
+/// A trait for converting from H160 to `AccountId`.
 pub trait AddressMapping<AccountId> {
 	fn into_account_id(address: H160) -> AccountId;
 }
 
-/// A trait for operating account basic info
+/// A trait for operating account basic info.
 pub trait AccountBasic<T: frame_system::Config> {
 	/// Get the account basic in EVM format.
 	fn account_basic(address: &H160) -> Account;
-	/// Mutate the basic account
+	/// Mutate the basic account.
 	fn mutate_account_basic_balance(address: &H160, new_balance: U256);
-	/// Transfer value
+	/// Transfer value.
 	fn transfer(source: &H160, target: &H160, value: U256) -> Result<(), ExitError>;
-	/// Get account balance
+	/// Get account balance.
 	fn account_balance(account_id: &T::AccountId) -> U256;
-	/// Mutate account balance
+	/// Mutate account balance.
 	fn mutate_account_balance(account_id: &T::AccountId, balance: U256);
 }
 
@@ -437,12 +437,12 @@ impl FeeCalculator for () {
 	}
 }
 
-/// A mapping function that converts Ethereum gas to Substrate weight
+/// A mapping function that converts Ethereum gas to Substrate weight.
 pub trait GasWeightMapping {
 	fn gas_to_weight(gas: u64) -> Weight;
 	fn weight_to_gas(weight: Weight) -> u64;
 }
-// The radio of gas to weight comes from benchmark test
+// The radio of gas to weight comes from benchmark test.
 impl GasWeightMapping for () {
 	fn gas_to_weight(gas: u64) -> Weight {
 		gas * 16_000 as Weight
@@ -483,7 +483,7 @@ where
 	}
 }
 
-/// Darwinia network address mapping
+/// Darwinia network address mapping.
 pub struct ConcatAddressMapping<AccountId>(PhantomData<AccountId>);
 /// The ConcatAddressMapping used for transfer from evm 20-length to substrate 32-length address
 /// The concat rule inclued three parts:
