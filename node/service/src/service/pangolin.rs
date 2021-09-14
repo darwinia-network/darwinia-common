@@ -66,7 +66,7 @@ use crate::{
 };
 use common_primitives::{AccountId, Balance, Hash, Nonce, OpaqueBlock as Block, Power};
 use dc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
-use dc_mapping_sync::MappingSyncWorker;
+use dc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use dc_rpc::EthTask;
 use dp_rpc::{FilterPool, PendingTransactions};
 use drml_rpc::{
@@ -580,6 +580,7 @@ where
 				client.clone(),
 				backend.clone(),
 				dvm_backend.clone(),
+				SyncStrategy::Normal,
 			)
 			.for_each(|()| futures::future::ready(())),
 		);
