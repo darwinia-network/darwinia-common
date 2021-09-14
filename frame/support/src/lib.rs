@@ -97,7 +97,7 @@ pub mod s2s {
 	// [8..16] bytes ---- message nonce
 	pub fn nonce_to_message_id(lane_id: &[u8], nonce: u64) -> BridgeMessageId {
 		let mut message_id: BridgeMessageId = Default::default();
-		message_id[4..].copy_from_slice(&lane_id[..4]);
+		message_id[4..8].copy_from_slice(&lane_id[..4]);
 		message_id[8..].copy_from_slice(&nonce.to_be_bytes());
 		message_id
 	}

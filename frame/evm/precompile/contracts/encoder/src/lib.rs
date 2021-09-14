@@ -85,7 +85,10 @@ where
 					{
 						Vec::new()
 					}
-					_ if method_digest == READ_LATEST_MESSAGE_ID_METHOD => {
+					_ if method_digest
+						== &sha3::Keccak256::digest(READ_LATEST_MESSAGE_ID_METHOD)
+							[..METHOD_DIG_LEN] =>
+					{
 						<T as from_substrate_issuing::Config>::MessageSender::latest_message_id()
 							.to_vec()
 					}
@@ -121,7 +124,12 @@ where
 						call.encode()
 					}
 					// todo, when ethereum support message confirm, we need give this message id
-					_ if method_digest == READ_LATEST_MESSAGE_ID_METHOD => Vec::new(),
+					_ if method_digest
+						== &sha3::Keccak256::digest(READ_LATEST_MESSAGE_ID_METHOD)
+							[..METHOD_DIG_LEN] =>
+					{
+						Vec::new()
+					}
 					_ => {
 						return Err(ExitError::Other(
 							"No such method in pallet ethereum issuing".into(),

@@ -104,7 +104,7 @@ impl MappingTokenFactory {
 	fn confirm_burn_and_remote_unlock() -> Function {
 		let inputs = vec![
 			Param {
-				name: "mseeageId".into(),
+				name: "messageId".into(),
 				kind: ParamType::Bytes,
 			},
 			Param {
