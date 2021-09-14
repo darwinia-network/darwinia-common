@@ -1944,6 +1944,8 @@ dependencies = [
 name = "dc-db"
 version = "2.6.3"
 dependencies = [
+ "dp-storage",
+ "dvm-ethereum",
  "kvdb",
  "kvdb-rocksdb",
  "parity-scale-codec",

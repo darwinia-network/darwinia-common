@@ -19,13 +19,15 @@
 mod utils;
 
 // --- paritytech ---
+use sp_core::H256;
 pub use sp_database::Database;
+use sp_runtime::traits::Block as BlockT;
 // --- darwinia-network ---
 use codec::{Decode, Encode};
-use parking_lot::Mutex;
-use sp_core::H256;
-use sp_runtime::traits::Block as BlockT;
+use dp_storage::PALLET_ETHEREUM_SCHEMA_CACHE;
+use dvm_ethereum::EthereumStorageSchema;
 // --- std ---
+use parking_lot::Mutex;
 use std::{
 	marker::PhantomData,
 	path::{Path, PathBuf},
@@ -132,6 +134,37 @@ impl<Block: BlockT> MetaDb<Block> {
 			crate::columns::META,
 			crate::static_keys::CURRENT_SYNCING_TIPS,
 			&tips.encode(),
+		);
+
+		self.db
+			.commit(transaction)
+			.map_err(|e| format!("{:?}", e))?;
+
+		Ok(())
+	}
+
+	pub fn ethereum_schema(&self) -> Result<Option<Vec<(EthereumStorageSchema, H256)>>, String> {
+		match self
+			.db
+			.get(crate::columns::META, &PALLET_ETHEREUM_SCHEMA_CACHE.encode())
+		{
+			Some(raw) => Ok(Some(
+				Decode::decode(&mut &raw[..]).map_err(|e| format!("{:?}", e))?,
+			)),
+			None => Ok(None),
+		}
+	}
+
+	pub fn write_ethereum_schema(
+		&self,
+		new_cache: Vec<(EthereumStorageSchema, H256)>,
+	) -> Result<(), String> {
+		let mut transaction = sp_database::Transaction::new();
+
+		transaction.set(
+			crate::columns::META,
+			&PALLET_ETHEREUM_SCHEMA_CACHE.encode(),
+			&new_cache.encode(),
 		);
 
 		self.db
