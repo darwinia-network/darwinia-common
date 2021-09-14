@@ -2280,9 +2280,11 @@ dependencies = [
  "darwinia-evm",
  "frame-support",
  "frame-system",
+ "pallet-timestamp",
  "parity-scale-codec",
  "sp-core",
  "sp-inherents",
+ "sp-io",
  "sp-runtime",
 ]
 
