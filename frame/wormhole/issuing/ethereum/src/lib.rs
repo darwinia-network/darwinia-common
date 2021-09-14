@@ -117,7 +117,6 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	#[pallet::metadata(T::AccountId = "AccountId")]
 	pub enum Event<T: Config> {
 		/// register new erc20 token
 		TokenRegisterSubmitted(EthereumAddress, EthereumTransactionIndex),

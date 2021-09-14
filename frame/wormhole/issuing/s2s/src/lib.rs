@@ -256,7 +256,7 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	#[pallet::metadata(T::AccountId = "AccountId")]
+	#[pallet::metadata(AccountId<T> = "AccountId")]
 	pub enum Event<T: Config> {
 		/// Create new token
 		/// [user, backing, source_address, mapping_address]
