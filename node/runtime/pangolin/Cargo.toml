@@ -68,6 +68,7 @@ frame-system                               = { default-features = false, git = "
 frame-system-benchmarking                  = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 frame-system-rpc-runtime-api               = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 frame-try-runtime                          = { default-features = false, optional = true, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+max-encoded-len                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 pallet-authority-discovery                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 pallet-authorship                          = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 pallet-babe                                = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
@@ -175,6 +176,7 @@ std = [
 	"frame-system-benchmarking/std",
 	"frame-system-rpc-runtime-api/std",
 	"frame-try-runtime/std",
+	"max-encoded-len/std",
 	"pallet-authority-discovery/std",
 	"pallet-authorship/std",
 	"pallet-babe/std",
