@@ -51,8 +51,8 @@ use sp_std::prelude::*;
 use darwinia_support::{
 	evm::IntoDvmAddress,
 	s2s::{
-		ensure_source_root, to_bytes32, MessageConfirmer, RelayMessageCaller, RING_DECIMAL,
-		RING_NAME, RING_SYMBOL,
+		ensure_source_root, to_bytes32, BridgeMessageId, MessageConfirmer, RelayMessageCaller,
+		RING_DECIMAL, RING_NAME, RING_SYMBOL,
 	},
 };
 use dp_asset::{
@@ -132,7 +132,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn locked_queue)]
 	pub type LockedQueue<T: Config> =
-		StorageMap<_, Blake2_128Concat, [u8; 16], (AccountId<T>, Token), ValueQuery>;
+		StorageMap<_, Identity, BridgeMessageId, (AccountId<T>, Token), ValueQuery>;
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -285,7 +285,7 @@ pub mod pallet {
 	}
 
 	impl<T: Config> MessageConfirmer for Pallet<T> {
-		fn on_messages_confirmed(message_id: [u8; 16], result: bool) -> Weight {
+		fn on_messages_confirmed(message_id: BridgeMessageId, result: bool) -> Weight {
 			let (user, token) = <LockedQueue<T>>::take(message_id);
 			if !result {
 				let token_info = match &token {
@@ -303,6 +303,11 @@ pub mod pallet {
 					}
 				};
 				if let Some(value) = token_info.value {
+					// if remote issue mapped token failed, this fund need to transfer token back
+					// to the user. The balance always comes from the user's locked currency while
+					// calling the dispatch call `lock_and_remote_issue`.
+					// This transfer will always successful except some extreme scene, since the
+					// user must lock some currency first, then this transfer can be triggered.
 					let _ = T::RingCurrency::transfer(
 						&Self::pallet_account_id(),
 						&user,

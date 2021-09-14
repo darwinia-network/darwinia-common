@@ -46,7 +46,9 @@ use bp_runtime::{ChainId, Size};
 use darwinia_evm::AddressMapping;
 use darwinia_support::{
 	evm::POW_9,
-	s2s::{ensure_source_root, MessageConfirmer, RelayMessageCaller, ToEthAddress},
+	s2s::{
+		ensure_source_root, BridgeMessageId, MessageConfirmer, RelayMessageCaller, ToEthAddress,
+	},
 	PalletDigest,
 };
 use dp_asset::{
@@ -331,7 +333,7 @@ pub mod pallet {
 	}
 
 	impl<T: Config> MessageConfirmer for Pallet<T> {
-		fn on_messages_confirmed(message_id: [u8; 16], result: bool) -> Weight {
+		fn on_messages_confirmed(message_id: BridgeMessageId, result: bool) -> Weight {
 			if let Ok(input) =
 				mtf::encode_confirm_burn_and_remote_unlock(message_id.to_vec(), result)
 			{

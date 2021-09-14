@@ -297,11 +297,13 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		// when user burn their mapped tokens to unlock remote origin token, contract will deliver
-		// the burn information by this method
-		#[pallet::weight(<T as Config>::WeightInfo::burn_and_remote_unlock())]
+		// When user burn their mapped tokens to unlock remote origin token, mapping token factory
+		// will use precompile to call this, this call will deposit the burn token event and
+		// trigger schedule_mmr_root to request authorities to sign mmr root, and then relay this
+		// event to ethereum chain.
+		#[pallet::weight(<T as Config>::WeightInfo::deposit_burn_token_event_from_precompile())]
 		#[transactional]
-		pub fn burn_and_remote_unlock(
+		pub fn deposit_burn_token_event_from_precompile(
 			origin: OriginFor<T>,
 			input: Vec<u8>,
 		) -> DispatchResultWithPostInfo {

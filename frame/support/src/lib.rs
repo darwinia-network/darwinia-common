@@ -91,10 +91,6 @@ pub mod s2s {
 		result
 	}
 
-	// 128 bit or 16 bytes
-	// [0..4]  bytes ---- reserved
-	// [4..8]  bytes ---- laneID
-	// [8..16] bytes ---- message nonce
 	pub fn nonce_to_message_id(lane_id: &[u8], nonce: u64) -> BridgeMessageId {
 		let mut message_id: BridgeMessageId = Default::default();
 		message_id[4..8].copy_from_slice(&lane_id[..4]);
@@ -104,6 +100,10 @@ pub mod s2s {
 }
 
 pub type PalletDigest = [u8; 4];
+/// 128 bit or 16 bytes to identify an unique s2s message
+/// [0..4]  bytes ---- reserved
+/// [4..8]  bytes ---- laneID
+/// [8..16] bytes ---- message nonce
 pub type BridgeMessageId = [u8; 16];
 
 #[cfg(test)]

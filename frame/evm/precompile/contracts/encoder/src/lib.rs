@@ -115,7 +115,7 @@ where
 							[..METHOD_DIG_LEN] =>
 					{
 						let call: T::Call =
-							from_ethereum_issuing::Call::<T>::burn_and_remote_unlock(
+							from_ethereum_issuing::Call::<T>::deposit_burn_token_event_from_precompile(
 								input.to_vec(),
 							)
 							.into();

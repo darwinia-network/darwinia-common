@@ -56,7 +56,7 @@ pub trait WeightInfo {
 	fn register_erc20() -> Weight;
 	fn redeem_erc20() -> Weight;
 	fn register_response_from_contract() -> Weight;
-	fn burn_and_remote_unlock() -> Weight;
+	fn deposit_burn_token_event_from_precompile() -> Weight;
 	fn set_mapping_factory_address() -> Weight;
 	fn set_ethereum_backing_address() -> Weight;
 }
@@ -77,7 +77,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	fn register_response_from_contract() -> Weight {
 		(30_000_000 as Weight).saturating_add(T::DbWeight::get().reads(1 as Weight))
 	}
-	fn burn_and_remote_unlock() -> Weight {
+	fn deposit_burn_token_event_from_precompile() -> Weight {
 		(30_000_000 as Weight).saturating_add(T::DbWeight::get().reads(1 as Weight))
 	}
 	fn set_mapping_factory_address() -> Weight {
@@ -107,7 +107,7 @@ impl WeightInfo for () {
 	fn register_response_from_contract() -> Weight {
 		(30_000_000 as Weight).saturating_add(RocksDbWeight::get().reads(1 as Weight))
 	}
-	fn burn_and_remote_unlock() -> Weight {
+	fn deposit_burn_token_event_from_precompile() -> Weight {
 		(30_000_000 as Weight).saturating_add(RocksDbWeight::get().reads(1 as Weight))
 	}
 	fn set_mapping_factory_address() -> Weight {
