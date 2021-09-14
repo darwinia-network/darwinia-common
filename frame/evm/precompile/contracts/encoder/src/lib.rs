@@ -65,10 +65,7 @@ where
 		let output = match pallet_digest {
 			_ if pallet_digest == <from_substrate_issuing::Pallet<T>>::digest() => {
 				match method_digest {
-					_ if method_digest
-						== &sha3::Keccak256::digest(BURN_AND_REMOTE_UNLOCK_METHOD)
-							[..METHOD_DIG_LEN] =>
-					{
+					_ if Self::match_digest(method_digest, BURN_AND_REMOTE_UNLOCK_METHOD) => {
 						let call: T::Call =
 							from_substrate_issuing::Call::<T>::asset_burn_event_handle(
 								input.to_vec(),
@@ -77,16 +74,10 @@ where
 						call.encode()
 					}
 					// this method comes from mapping-token-factory, we ignore it by a empty method
-					_ if method_digest
-						== &sha3::Keccak256::digest(TOKEN_REGISTER_RESPONSE_METHOD)
-							[..METHOD_DIG_LEN] =>
-					{
+					_ if Self::match_digest(method_digest, TOKEN_REGISTER_RESPONSE_METHOD) => {
 						Vec::new()
 					}
-					_ if method_digest
-						== &sha3::Keccak256::digest(READ_LATEST_MESSAGE_ID_METHOD)
-							[..METHOD_DIG_LEN] =>
-					{
+					_ if Self::match_digest(method_digest, READ_LATEST_MESSAGE_ID_METHOD) => {
 						<T as from_substrate_issuing::Config>::MessageSender::latest_message_id()
 							.to_vec()
 					}
@@ -99,10 +90,7 @@ where
 			}
 			_ if pallet_digest == <from_ethereum_issuing::Pallet<T>>::digest() => {
 				match method_digest {
-					_ if method_digest
-						== &sha3::Keccak256::digest(TOKEN_REGISTER_RESPONSE_METHOD)
-							[..METHOD_DIG_LEN] =>
-					{
+					_ if Self::match_digest(method_digest, TOKEN_REGISTER_RESPONSE_METHOD) => {
 						let call: T::Call =
 							from_ethereum_issuing::Call::<T>::register_response_from_contract(
 								input.to_vec(),
@@ -110,10 +98,7 @@ where
 							.into();
 						call.encode()
 					}
-					_ if method_digest
-						== &sha3::Keccak256::digest(BURN_AND_REMOTE_UNLOCK_METHOD)
-							[..METHOD_DIG_LEN] =>
-					{
+					_ if Self::match_digest(method_digest, BURN_AND_REMOTE_UNLOCK_METHOD) => {
 						let call: T::Call =
 							from_ethereum_issuing::Call::<T>::deposit_burn_token_event_from_precompile(
 								input.to_vec(),
@@ -122,10 +107,7 @@ where
 						call.encode()
 					}
 					// todo, when ethereum support message confirm, we need give this message id
-					_ if method_digest
-						== &sha3::Keccak256::digest(READ_LATEST_MESSAGE_ID_METHOD)
-							[..METHOD_DIG_LEN] =>
-					{
+					_ if Self::match_digest(method_digest, READ_LATEST_MESSAGE_ID_METHOD) => {
 						Vec::new()
 					}
 					_ => {
@@ -139,12 +121,18 @@ where
 				return Err(ExitError::Other("No valid pallet digest found".into()));
 			}
 		};
-		// TODO: The cost should not be zero
+		// estimate a cost for this encoder process
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Stopped,
-			cost: 0,
+			cost: 20000,
 			output,
 			logs: Default::default(),
 		})
+	}
+}
+
+impl<T> DispatchCallEncoder<T> {
+	fn match_digest(input: &[u8], expected: &[u8]) -> bool {
+		&sha3::Keccak256::digest(input)[..METHOD_DIG_LEN] == expected
 	}
 }
