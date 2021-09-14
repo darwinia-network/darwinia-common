@@ -132,7 +132,7 @@ where
 }
 
 impl<T> DispatchCallEncoder<T> {
-	fn match_digest(input: &[u8], expected: &[u8]) -> bool {
-		&sha3::Keccak256::digest(input)[..METHOD_DIG_LEN] == expected
+	fn match_digest(digest: &[u8], expected_method: &[u8]) -> bool {
+		&sha3::Keccak256::digest(expected_method)[..METHOD_DIG_LEN] == digest
 	}
 }
