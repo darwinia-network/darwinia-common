@@ -107,8 +107,6 @@ pub mod pallet {
 		InvalidInputData,
 		/// decode ethereum event failed
 		DecodeEventFailed,
-		/// invalid input length
-		InvalidInput,
 		/// caller has no authority
 		NoAuthority,
 		/// the action is not supported
@@ -287,12 +285,11 @@ pub mod pallet {
 			input: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
-			ensure!(input.len() >= 8, <Error<T>>::InvalidInput);
 			let factory = MappingFactoryAddress::<T>::get();
 			let factory_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(factory);
 			ensure!(factory_id == caller, <Error<T>>::NoAuthority);
 			let register_info =
-				TokenRegisterInfo::decode(&input[8..]).map_err(|_| Error::<T>::InvalidInputData)?;
+				TokenRegisterInfo::decode(&input).map_err(|_| Error::<T>::InvalidInputData)?;
 			Self::finish_token_registered(register_info.0, register_info.1, register_info.2);
 			Ok(().into())
 		}
@@ -308,12 +305,11 @@ pub mod pallet {
 			input: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
-			ensure!(input.len() >= 8, <Error<T>>::InvalidInput);
 			let factory = MappingFactoryAddress::<T>::get();
 			let factory_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(factory);
 			ensure!(factory_id == caller, <Error<T>>::NoAuthority);
 			let burn_info =
-				TokenBurnInfo::decode(&input[8..]).map_err(|_| Error::<T>::InvalidInputData)?;
+				TokenBurnInfo::decode(&input).map_err(|_| Error::<T>::InvalidInputData)?;
 			ensure!(
 				burn_info.recipient.len() == 20,
 				<Error<T>>::InvalidAddressLen

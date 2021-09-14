@@ -68,7 +68,7 @@ where
 					_ if Self::match_digest(method_digest, BURN_AND_REMOTE_UNLOCK_METHOD) => {
 						let call: T::Call =
 							from_substrate_issuing::Call::<T>::asset_burn_event_handle(
-								input.to_vec(),
+								input[ACTION_LEN..].to_vec(),
 							)
 							.into();
 						call.encode()
@@ -93,7 +93,7 @@ where
 					_ if Self::match_digest(method_digest, TOKEN_REGISTER_RESPONSE_METHOD) => {
 						let call: T::Call =
 							from_ethereum_issuing::Call::<T>::register_response_from_contract(
-								input.to_vec(),
+								input[ACTION_LEN..].to_vec(),
 							)
 							.into();
 						call.encode()
@@ -101,7 +101,7 @@ where
 					_ if Self::match_digest(method_digest, BURN_AND_REMOTE_UNLOCK_METHOD) => {
 						let call: T::Call =
 							from_ethereum_issuing::Call::<T>::deposit_burn_token_event_from_precompile(
-								input.to_vec(),
+								input[ACTION_LEN..].to_vec(),
 							)
 							.into();
 						call.encode()

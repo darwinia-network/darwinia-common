@@ -112,15 +112,13 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
 
-			// Ensure the input data is long enough
-			ensure!(input.len() >= 8, <Error<T>>::InvalidInput);
 			// Ensure that the user is mapping token factory contract
 			let factory = MappingFactoryAddress::<T>::get();
 			let factory_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(factory);
 			ensure!(caller == factory_id, <Error<T>>::NotFactoryContract);
 
 			let burn_info =
-				TokenBurnInfo::decode(&input[8..]).map_err(|_| Error::<T>::InvalidDecoding)?;
+				TokenBurnInfo::decode(&input).map_err(|_| Error::<T>::InvalidDecoding)?;
 			// Ensure the recipient is valid
 			ensure!(
 				burn_info.recipient.len() == 32,
@@ -277,8 +275,6 @@ pub mod pallet {
 	#[pallet::error]
 	/// Issuing pallet errors.
 	pub enum Error<T> {
-		/// The input data is not long enough
-		InvalidInput,
 		/// The address is not from mapping factory contract address
 		NotFactoryContract,
 		/// Invalid Issuing System Account
