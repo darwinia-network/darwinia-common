@@ -21,7 +21,7 @@ In this way, a series of ***Ask*** prices(price meanings fee per message) come i
 In any time, the message relayer and confirm relayer can be anyone, do not have be the assigned relayer. But in priority time slots, assigned relayer will be rewarded with much more regardless wo relay the message and do the confirmation.
 To give them different priority for **R1, R2, R3**, we will split the T into three consecutive time slots: **_0~T1 for P1_**,  **_T1~T2 for P2_**, and **_T2~T3 for P3_** respectively. The relayer who is assigned with her own time slot will be rewarded with more percentage, and this reward is for the asked price and the commitment(delivery in time or slash). Relayer with lower price are assigned with earlier time slot.
 
-For simplicity, if the relayer amount in current market are less than 3 when some user is sending bridge message, it means the relayer fee market fails to provide a price for user sending bridge message, and this dispatch call on source chain will simply fail and exit.
+For simplicity, if count of relayers in current market are less than 3 when some user is sending bridge message, it means the relayer fee market fails to provide a price for user sending bridge message, and this dispatch call on source chain will simply fail and exit.
 
 ### Detailed Steps in Implementation
 
