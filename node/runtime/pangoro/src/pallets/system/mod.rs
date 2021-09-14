@@ -11,7 +11,7 @@ use crate::*;
 frame_support::parameter_types! {
 	pub const BlockHashCount: BlockNumber = 256;
 	pub const Version: RuntimeVersion = VERSION;
-	pub const SS58Prefix: u8 = 42;
+	pub const SS58Prefix: u16 = 42;
 }
 
 impl Config for Runtime {
