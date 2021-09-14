@@ -27,6 +27,7 @@ from-ethereum-issuing = { default-features = false, path = "../../../../wormhole
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [features]
 default = ["std"]
@@ -47,4 +48,5 @@ std = [
 	"frame-support/std",
 	"sp-core/std",
 	"sp-io/std",
+	"sp-std/std",
 ]

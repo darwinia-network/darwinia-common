@@ -1680,6 +1680,7 @@ dependencies = [
  "sha3 0.9.1",
  "sp-core",
  "sp-io",
+ "sp-std",
 ]
 
 [[package]]

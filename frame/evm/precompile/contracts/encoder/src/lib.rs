@@ -18,9 +18,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-extern crate alloc;
-use alloc::vec::Vec;
-
 // --- core ---
 use core::marker::PhantomData;
 // --- crates.io ---
@@ -32,6 +29,7 @@ use darwinia_support::s2s::RelayMessageCaller;
 use dp_evm::Precompile;
 // --- paritytech ---
 use frame_support::dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo};
+use sp_std::prelude::Vec;
 
 const PALLET_DIG_LEN: usize = 4;
 const METHOD_DIG_LEN: usize = 4;
