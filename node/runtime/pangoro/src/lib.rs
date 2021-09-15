@@ -512,6 +512,7 @@ fn migrate() -> Weight {
 	use frame_support::migration;
 
 	0
+	// RuntimeBlockWeights::get().max_block
 }
 
 pub struct CustomOnRuntimeUpgrade;

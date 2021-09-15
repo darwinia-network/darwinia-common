@@ -783,6 +783,7 @@ fn migrate() -> Weight {
 	// const CrabIssuingPalletId: PalletId = PalletId(*b"da/crais");
 
 	0
+	// RuntimeBlockWeights::get().max_block
 }
 
 pub struct CustomOnRuntimeUpgrade;
