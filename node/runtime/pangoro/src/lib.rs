@@ -131,7 +131,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangoro"),
 	impl_name: sp_runtime::create_runtime_str!("Pangoro"),
 	authoring_version: 1,
-	spec_version: 2630,
+	spec_version: 2640,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 3,
@@ -511,11 +511,8 @@ fn migrate() -> Weight {
 	#[allow(unused)]
 	use frame_support::migration;
 
-	migration::move_pallet(b"Instance1BridgeMessages", b"BridgePangolinMessages");
-	migration::move_pallet(b"BridgePangolinDispatch", b"BridgeDispatch");
-
-	// 0
-	RuntimeBlockWeights::get().max_block
+	0
+	// RuntimeBlockWeights::get().max_block
 }
 
 pub struct CustomOnRuntimeUpgrade;
