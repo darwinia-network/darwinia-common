@@ -576,6 +576,8 @@ pub mod pallet {
 		/// Not strictly enforced, but used for weight estimation.
 		type MaxLocks: Get<u32>;
 
+		/// A handler to access the balance of an account.
+		/// Different balances instance might have its own implementation, which you can configure in runtime.
 		type BalanceInfo: BalanceInfo<Self::Balance, I>
 			+ Into<<Self as frame_system::Config>::AccountData>
 			+ Member
@@ -584,7 +586,7 @@ pub mod pallet {
 			+ Default
 			+ EncodeLike;
 
-		// A handle to check if other curencies drop below existential deposit
+		// A handle to check if other currencies drop below existential deposit.
 		type OtherCurrencies: DustCollector<Self::AccountId>;
 	}
 
@@ -615,21 +617,21 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T, I = ()> {
-		/// Vesting balance too high to send value
+		/// Vesting balance too high to send value.
 		VestingBalance,
-		/// Account liquidity restrictions prevent withdrawal
+		/// Account liquidity restrictions prevent withdrawal.
 		LiquidityRestrictions,
-		/// Balance too low to send value
+		/// Balance too low to send value.
 		InsufficientBalance,
-		/// Value too low to create account due to existential deposit
+		/// Value too low to create account due to existential deposit.
 		ExistentialDeposit,
-		/// Transfer/payment would kill account
+		/// Transfer/payment would kill account.
 		KeepAlive,
-		/// A vesting schedule already exists for this account
+		/// A vesting schedule already exists for this account.
 		ExistingVestingSchedule,
-		/// Beneficiary account must pre-exist
+		/// Beneficiary account must pre-exist.
 		DeadAccount,
-		/// Lock - POISONED
+		/// Lock - POISONED.
 		LockP,
 	}
 
