@@ -25,6 +25,7 @@ use dp_rpc::{
 	PendingTransactions, Receipt, Rich, RichBlock, SyncInfo, SyncStatus, Transaction,
 	TransactionRequest, Work,
 };
+use dp_storage::PALLET_ETHEREUM_SCHEMA;
 use dvm_ethereum::EthereumStorageSchema;
 use dvm_rpc_core::{
 	EthApi as EthApiT, EthFilterApi as EthFilterApiT, NetApi as NetApiT, Web3Api as Web3ApiT,
@@ -42,6 +43,7 @@ use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_runtime::traits::BlakeTwo256;
 use sp_runtime::traits::{Block as BlockT, NumberFor, One, Saturating, UniqueSaturatedInto, Zero};
 use sp_runtime::transaction_validity::TransactionSource;
+use sp_storage::{StorageData, StorageKey};
 use sp_transaction_pool::{InPoolTransaction, TransactionPool};
 // --- std ---
 use codec::{self, Decode, Encode};
@@ -52,6 +54,7 @@ use jsonrpc_core::{
 	futures::future::{self, Future},
 	BoxFuture, ErrorCode, Result,
 };
+use log::warn;
 use sha3::{Digest, Keccak256};
 use std::collections::{BTreeMap, HashMap};
 use std::{
@@ -1779,10 +1782,6 @@ where
 {
 	/// Task that caches at which best hash a new EthereumStorageSchema was inserted in the Runtime Storage.
 	pub async fn ethereum_schema_cache_task(client: Arc<C>, backend: Arc<dc_db::Backend<B>>) {
-		use dp_storage::PALLET_ETHEREUM_SCHEMA;
-		use log::warn;
-		use sp_storage::{StorageData, StorageKey};
-
 		if let Ok(None) = frontier_backend_client::load_cached_schema::<B>(backend.as_ref()) {
 			let mut cache: Vec<(EthereumStorageSchema, H256)> = Vec::new();
 			if let Ok(Some(header)) = client.header(BlockId::Number(Zero::zero())) {
@@ -1796,7 +1795,7 @@ where
 			}
 		}
 
-		// Subscribe to changes for the pallet-ethereum Schema.
+		// Subscribe to changes for the dvm-ethereum Schema.
 		if let Ok(mut stream) = client.storage_changes_notification_stream(
 			Some(&[StorageKey(PALLET_ETHEREUM_SCHEMA.to_vec())]),
 			None,
