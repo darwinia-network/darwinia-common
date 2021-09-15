@@ -46,6 +46,7 @@ pallet-grandpa                             = { default-features = false, git = "
 pallet-im-online                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-offences                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-randomness-collective-flip          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+pallet-scheduler                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-session                             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-sudo                                = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-timestamp                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
@@ -110,6 +111,7 @@ std = [
 	"pallet-im-online/std",
 	"pallet-offences/std",
 	"pallet-randomness-collective-flip/std",
+	"pallet-scheduler/std",
 	"pallet-session/std",
 	"pallet-sudo/std",
 	"pallet-timestamp/std",

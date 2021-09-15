@@ -51,7 +51,8 @@ use sp_std::prelude::*;
 use darwinia_support::{
 	evm::IntoDvmAddress,
 	s2s::{
-		ensure_source_root, to_bytes32, RelayMessageCaller, RING_DECIMAL, RING_NAME, RING_SYMBOL,
+		ensure_source_root, to_bytes32, BridgeMessageId, MessageConfirmer, RelayMessageCaller,
+		RING_DECIMAL, RING_NAME, RING_SYMBOL,
 	},
 };
 use dp_asset::{
@@ -94,7 +95,7 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(fn deposit_event)]
-	#[pallet::metadata(T::AccountId = "AccountId")]
+	#[pallet::metadata(AccountId<T> = "AccountId")]
 	pub enum Event<T: Config> {
 		/// Token registered [token address, sender]
 		TokenRegistered(Token, AccountId<T>),
@@ -102,6 +103,8 @@ pub mod pallet {
 		TokenLocked(Token, AccountId<T>, EthereumAddress, U256),
 		/// Token unlocked [token, recipient, value]
 		TokenUnlocked(Token, AccountId<T>, U256),
+		/// Token locked confirmed from remote [token, user, result]
+		TokenLockedConfirmed(Token, AccountId<T>, bool),
 	}
 
 	#[pallet::error]
@@ -122,7 +125,14 @@ pub mod pallet {
 		EncodeInvalid,
 		/// send relay message failed
 		SendMessageFailed,
+		/// message nonce dumplicated
+		NonceDumplicated,
 	}
+
+	#[pallet::storage]
+	#[pallet::getter(fn locked_queue)]
+	pub type LockedQueue<T: Config> =
+		StorageMap<_, Identity, BridgeMessageId, (AccountId<T>, Token), ValueQuery>;
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -207,6 +217,12 @@ pub mod pallet {
 					.map_err(|_| Error::<T>::EncodeInvalid)?;
 			T::MessageSender::send_message(payload, fee)
 				.map_err(|_| Error::<T>::SendMessageFailed)?;
+			let message_id = T::MessageSender::latest_message_id();
+			ensure!(
+				!<LockedQueue<T>>::contains_key(message_id),
+				Error::<T>::NonceDumplicated
+			);
+			<LockedQueue<T>>::insert(message_id, (user.clone(), token.clone()));
 			Self::deposit_event(Event::TokenLocked(token, user, recipient, amount));
 			Ok(().into())
 		}
@@ -262,6 +278,43 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		pub fn pallet_account_id() -> T::AccountId {
 			T::PalletId::get().into_account()
+		}
+	}
+
+	impl<T: Config> MessageConfirmer for Pallet<T> {
+		fn on_messages_confirmed(message_id: BridgeMessageId, result: bool) -> Weight {
+			let (user, token) = <LockedQueue<T>>::take(message_id);
+			if !result {
+				let token_info = match &token {
+					Token::Native(info) => {
+						log::debug!("cross receive native token {:?}", info);
+						info
+					}
+					Token::Erc20(info) => {
+						log::debug!("cross receive erc20 token {:?}", info);
+						return 1;
+					}
+					_ => {
+						log::debug!("unrecognized token type");
+						return 1;
+					}
+				};
+				if let Some(value) = token_info.value {
+					// if remote issue mapped token failed, this fund need to transfer token back
+					// to the user. The balance always comes from the user's locked currency while
+					// calling the dispatch call `lock_and_remote_issue`.
+					// This transfer will always successful except some extreme scene, since the
+					// user must lock some currency first, then this transfer can be triggered.
+					let _ = T::RingCurrency::transfer(
+						&Self::pallet_account_id(),
+						&user,
+						value.low_u128().unique_saturated_into(),
+						AllowDeath,
+					);
+				}
+			}
+			Self::deposit_event(Event::TokenLockedConfirmed(token, user, result));
+			return 1;
 		}
 	}
 }

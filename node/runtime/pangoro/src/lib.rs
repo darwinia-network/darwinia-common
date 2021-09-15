@@ -131,10 +131,10 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangoro"),
 	impl_name: sp_runtime::create_runtime_str!("Pangoro"),
 	authoring_version: 1,
-	spec_version: 2630,
+	spec_version: 2640,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 2,
+	transaction_version: 3,
 };
 
 /// The BABE epoch configuration at genesis.
@@ -178,6 +178,8 @@ frame_support::construct_runtime!(
 		AuthorityDiscovery: pallet_authority_discovery::{Pallet, Call, Config} = 15,
 
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 16,
+
+		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 21,
 
 		BridgePangolinMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 17,
 		BridgeDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 18,
@@ -509,11 +511,8 @@ fn migrate() -> Weight {
 	#[allow(unused)]
 	use frame_support::migration;
 
-	migration::move_pallet(b"Instance1BridgeMessages", b"BridgePangolinMessages");
-	migration::move_pallet(b"BridgePangolinDispatch", b"BridgeDispatch");
-
-	// 0
-	RuntimeBlockWeights::get().max_block
+	0
+	// RuntimeBlockWeights::get().max_block
 }
 
 pub struct CustomOnRuntimeUpgrade;
