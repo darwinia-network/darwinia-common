@@ -11,7 +11,7 @@ use sp_runtime::DispatchErrorWithPostInfo;
 // --- darwinia-network ---
 use crate::*;
 use bridge_primitives::AccountIdConverter;
-use darwinia_support::s2s::RelayMessageCaller;
+use darwinia_support::s2s::{nonce_to_message_id, BridgeMessageId, RelayMessageCaller};
 use dp_asset::{token::Token, RecipientAccount};
 use to_substrate_backing::{Config, EncodeCall};
 
@@ -95,6 +95,12 @@ impl RelayMessageCaller<ToPangolinMessagePayload, Balance> for ToPangolinMessage
 		)
 		.into();
 		call.dispatch(RawOrigin::Root.into())
+	}
+
+	fn latest_message_id() -> BridgeMessageId {
+		let nonce: u64 =
+			BridgePangolinMessages::outbound_latest_generated_nonce(PANGORO_PANGOLIN_LANE).into();
+		nonce_to_message_id(&PANGORO_PANGOLIN_LANE, nonce)
 	}
 }
 
