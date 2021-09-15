@@ -511,11 +511,7 @@ fn migrate() -> Weight {
 	#[allow(unused)]
 	use frame_support::migration;
 
-	migration::move_pallet(b"Instance1BridgeMessages", b"BridgePangolinMessages");
-	migration::move_pallet(b"BridgePangolinDispatch", b"BridgeDispatch");
-
-	// 0
-	RuntimeBlockWeights::get().max_block
+	0
 }
 
 pub struct CustomOnRuntimeUpgrade;

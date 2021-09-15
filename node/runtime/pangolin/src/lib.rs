@@ -778,14 +778,11 @@ fn migrate() -> Weight {
 	#[allow(unused)]
 	use frame_support::migration;
 
-	migration::move_pallet(b"Instance1BridgeMessages", b"BridgePangoroMessages");
-
 	// TODO: Move to S2S
 	// const CrabBackingPalletId: PalletId = PalletId(*b"da/crabk");
 	// const CrabIssuingPalletId: PalletId = PalletId(*b"da/crais");
 
-	// 0
-	RuntimeBlockWeights::get().max_block
+	0
 }
 
 pub struct CustomOnRuntimeUpgrade;
