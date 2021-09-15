@@ -1730,10 +1730,13 @@ dependencies = [
 name = "darwinia-fee-market"
 version = "2.6.1"
 dependencies = [
+ "bp-messages",
  "darwinia-balances",
  "darwinia-support",
  "frame-support",
  "frame-system",
+ "log",
+ "num-traits",
  "pallet-timestamp",
  "parity-scale-codec",
  "sp-core",

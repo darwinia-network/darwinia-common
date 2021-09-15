@@ -27,6 +27,8 @@ mod tests;
 pub mod weights;
 use crate::weights::WeightInfo;
 
+mod payment;
+
 use codec::{Decode, Encode};
 use darwinia_support::balance::{LockFor, LockableCurrency};
 use frame_support::{
