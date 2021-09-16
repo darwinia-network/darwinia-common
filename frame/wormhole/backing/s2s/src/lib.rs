@@ -99,12 +99,12 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		/// Token registered [token address, sender]
 		TokenRegistered(Token, AccountId<T>),
-		/// Token locked [token address, sender, recipient, amount]
-		TokenLocked(Token, AccountId<T>, EthereumAddress, U256),
+		/// Token locked [message_id, token address, sender, recipient, amount]
+		TokenLocked(BridgeMessageId, Token, AccountId<T>, EthereumAddress, U256),
 		/// Token unlocked [token, recipient, value]
 		TokenUnlocked(Token, AccountId<T>, U256),
-		/// Token locked confirmed from remote [token, user, result]
-		TokenLockedConfirmed(Token, AccountId<T>, bool),
+		/// Token locked confirmed from remote [message_id, token, user, result]
+		TokenLockedConfirmed(BridgeMessageId, Token, AccountId<T>, bool),
 	}
 
 	#[pallet::error]
@@ -223,7 +223,7 @@ pub mod pallet {
 				Error::<T>::NonceDumplicated
 			);
 			<LockedQueue<T>>::insert(message_id, (user.clone(), token.clone()));
-			Self::deposit_event(Event::TokenLocked(token, user, recipient, amount));
+			Self::deposit_event(Event::TokenLocked(message_id, token, user, recipient, amount));
 			Ok(().into())
 		}
 
@@ -313,7 +313,7 @@ pub mod pallet {
 					);
 				}
 			}
-			Self::deposit_event(Event::TokenLockedConfirmed(token, user, result));
+			Self::deposit_event(Event::TokenLockedConfirmed(message_id, token, user, result));
 			return 1;
 		}
 	}
