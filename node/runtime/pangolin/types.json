@@ -165,7 +165,7 @@
 		"mmr_proof": "Vec<H256>"
 	},
 	"TokenOption": {
-		"name": "[u8;32]",
+		"name": "[u8; 32]",
 		"symbol": "[u8; 32]",
 		"decimal": "u8"
 	},
@@ -181,6 +181,7 @@
 			"Erc20": "TokenInfo"
 		}
 	},
+	"BridgeMessageId": "[u8; 16]",
 	"__[TODO.Generalize]__": "",
 	"RelayAuthoritySigner": "EthereumAddress",
 	"RelayAuthorityMessage": "EcdsaMessage",
