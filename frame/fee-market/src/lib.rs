@@ -40,6 +40,7 @@ use frame_support::{
 	transactional, PalletId,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
+use sp_core::H256;
 use sp_io::hashing::blake2_256;
 use sp_std::{
 	cmp::{Ord, Ordering},
@@ -47,15 +48,19 @@ use sp_std::{
 	ops::Range,
 	vec::Vec,
 };
-use sp_core::H256;
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 pub type Fee<T> = RingBalance<T>;
+pub type OrderRelayers<AccountId, BlockNumber> = (
+	PriorRelayer<AccountId, BlockNumber>,
+	PriorRelayer<AccountId, BlockNumber>,
+	PriorRelayer<AccountId, BlockNumber>,
+);
 
 pub use pallet::*;
 
-const PriorRelayersNumber: u64 = 3;
+const MIN_REGISTERED_RELAYERS_NUMBER: usize = 3;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -65,8 +70,6 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-
 		#[pallet::constant]
 		type MiniumLockValue: Get<RingBalance<Self>>;
 		#[pallet::constant]
@@ -74,10 +77,10 @@ pub mod pallet {
 		#[pallet::constant]
 		type LockId: Get<LockIdentifier>;
 		#[pallet::constant]
-		// todo: maybe this can change to tuple?
-		type T: Get<(Self::BlockNumber, Self::BlockNumber, Self::BlockNumber)>;
+		type SlotTimes: Get<(Self::BlockNumber, Self::BlockNumber, Self::BlockNumber)>;
 
 		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type WeightInfo: WeightInfo;
 	}
 
@@ -111,8 +114,11 @@ pub mod pallet {
 		InvalidSubmitPriceOrigin,
 		/// The fee is lower than MinimumFee
 		TooLowFee,
+		/// The registered relayer less than MIN_REGISTERED_RELAYERS_NUMBER
+		TooLowRelayers,
 	}
 
+	// Registered relayers storage
 	#[pallet::storage]
 	#[pallet::getter(fn get_relayer)]
 	pub type RelayersMap<T: Config> =
@@ -122,18 +128,20 @@ pub mod pallet {
 	#[pallet::getter(fn relayers)]
 	pub type Relayers<T: Config> = StorageValue<_, Vec<T::AccountId>, ValueQuery>;
 
-	/// The lowest n fees, p.0 < p.1 < p.2 ... < p.n
+	// Priority relayers storage
 	#[pallet::storage]
 	#[pallet::getter(fn prior_relayers)]
-	pub type PriorRelayers<T: Config> = StorageValue<_, Vec<(T::AccountId, Fee<T>)>, ValueQuery>;
+	pub type SortedRelayers<T: Config> =
+		StorageValue<_, (Relayer<T>, Relayer<T>, Relayer<T>), ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn best_relayer)]
-	pub type TopRelayer<T: Config> = StorageValue<_, (T::AccountId, Fee<T>), ValueQuery>;
+	pub type BestRelayer<T: Config> = StorageValue<_, (T::AccountId, Fee<T>), ValueQuery>;
 
+	// Order storage
 	#[pallet::storage]
 	pub type Orders<T: Config> =
-		StorageMap<_, Blake2_128Concat, H256, Order<T::AccountId, T::BlockNumber>, ValueQuery>;
+		StorageMap<_, Blake2_128Concat, H256, Order<T::AccountId, T::BlockNumber>>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {}
@@ -188,7 +196,7 @@ pub mod pallet {
 			<RelayersMap<T>>::insert(&who, Relayer::new(who.clone(), lock_value, fee));
 			<Relayers<T>>::append(who.clone());
 
-			Self::update_relayer_fees()?;
+			Self::update_market_fee()?;
 			Self::deposit_event(Event::<T>::Register(who, lock_value, fee));
 			Ok(().into())
 		}
@@ -231,12 +239,16 @@ pub mod pallet {
 				Self::is_registered(&who),
 				<Error<T>>::RegisterBeforeUpdateLock
 			);
+			ensure!(
+				<Relayers<T>>::get().len() - 1 >= MIN_REGISTERED_RELAYERS_NUMBER,
+				<Error<T>>::TooLowRelayers
+			);
 
 			T::RingCurrency::remove_lock(T::LockId::get(), &who);
 			RelayersMap::<T>::remove(who.clone());
 			Relayers::<T>::mutate(|relayers| relayers.retain(|x| x != &who));
 
-			Self::update_relayer_fees()?;
+			Self::update_market_fee()?;
 			Self::deposit_event(Event::<T>::CancelRelayerRegister(who));
 			Ok(().into())
 		}
@@ -256,7 +268,7 @@ pub mod pallet {
 				relayer.fee = p;
 			});
 
-			Self::update_relayer_fees()?;
+			Self::update_market_fee()?;
 			Self::deposit_event(Event::<T>::UpdateFee(who, p));
 			Ok(().into())
 		}
@@ -268,30 +280,22 @@ impl<T: Config> Pallet<T> {
 	/// 1. New relayer register
 	/// 2. Already registered relayer update fee
 	/// 3. Cancel registered relayer
-	pub fn update_relayer_fees() -> Result<(), DispatchError> {
-		<PriorRelayers<T>>::kill();
-
+	pub fn update_market_fee() -> Result<(), DispatchError> {
 		let mut relayers: Vec<Relayer<T>> = <Relayers<T>>::get()
 			.iter()
 			.map(RelayersMap::<T>::get)
 			.collect();
 		relayers.sort();
-
-		// If the registered relayers number >= the PriorRelayersNumber,
-		// append the lowest PriorRelayersNumber relayers to PriorRelayers and choose the last one as TopRelayer.
-		if relayers.len() >= PriorRelayersNumber as usize {
-			for i in 0..PriorRelayersNumber as usize {
-				let r = &relayers[i];
-				// <PriorRelayers<T>>::append((r.id.clone(), r.fee));
-			}
+		if relayers.len() >= MIN_REGISTERED_RELAYERS_NUMBER {
+			<SortedRelayers<T>>::kill();
+			let prior_relayers = (
+				relayers[0].clone(),
+				relayers[1].clone(),
+				relayers[2].clone(),
+			);
+			<SortedRelayers<T>>::put(prior_relayers);
+			<BestRelayer<T>>::put((relayers[2].id.clone(), relayers.clone()[2].fee));
 		}
-		<TopRelayer<T>>::put(
-			<PriorRelayers<T>>::get()
-				.iter()
-				.last()
-				.map(|(r, p)| ((*r).clone(), *p))
-				.unwrap_or_default(),
-		);
 		Ok(())
 	}
 
@@ -310,13 +314,12 @@ impl<T: Config> Pallet<T> {
 		Self::get_relayer(who).lock_balance
 	}
 
-	pub fn slash_relayer() {
-		// slash relayers
-		// if the lock ring lower than limit, remove it auto
-		todo!()
+	// Get market best fee(P3)
+	pub fn market_fee() -> Fee<T> {
+		Self::best_relayer().1
 	}
 }
-#[derive(Encode, Decode, Clone, Eq, Debug)]
+#[derive(Encode, Decode, Clone, Eq, Debug, Copy)]
 pub struct Relayer<T: Config> {
 	id: T::AccountId,
 	lock_balance: RingBalance<T>,
@@ -360,20 +363,13 @@ impl<T: Config> Default for Relayer<T> {
 		}
 	}
 }
-
-type PriorRelayers<AccountId, BlockNumber> = (
-	Option<PriorRelayer<AccountId, BlockNumber>>,
-	Option<PriorRelayer<AccountId, BlockNumber>>,
-	Option<PriorRelayer<AccountId, BlockNumber>>,
-);
-
 #[derive(Clone, RuntimeDebug, Encode, Decode, Default)]
 pub struct Order<AccountId, BlockNumber> {
 	lane: LaneId,
 	message: MessageNonce,
 	sent_time: BlockNumber,
 	confirm_time: Option<BlockNumber>,
-	prior_relayers: PriorRelayers<AccountId, BlockNumber>,
+	order_relayers: Option<OrderRelayers<AccountId, BlockNumber>>,
 }
 
 impl<AccountId, BlockNumber> Order<AccountId, BlockNumber> {
@@ -383,20 +379,24 @@ impl<AccountId, BlockNumber> Order<AccountId, BlockNumber> {
 			message,
 			sent_time,
 			confirm_time: None,
-			prior_relayers: (None, None, None),
+			order_relayers: None,
 		}
 	}
 
-	pub fn set_prior_relayers(&mut self, prior_relayers: PriorRelayers<AccountId, BlockNumber>) {
-		self.prior_relayers = prior_relayers;
+	pub fn set_prior_relayers(&mut self, order_relayers: OrderRelayers<AccountId, BlockNumber>) {
+		self.order_relayers = Some(order_relayers);
 	}
 
 	pub fn set_confirm_time(&mut self, confirm_time: Option<BlockNumber>) {
 		self.confirm_time = confirm_time;
 	}
 
-	pub fn prior_relayers(&self) -> PriorRelayers<AccountId, BlockNumber> {
-		self.prior_relayers
+	pub fn key(&self) -> H256 {
+		(self.lane, self.message).using_encoded(blake2_256).into()
+	}
+
+	pub fn order_relayers(&self) -> Option<&OrderRelayers<AccountId, BlockNumber>> {
+		self.order_relayers.as_ref()
 	}
 }
 
@@ -407,16 +407,21 @@ pub struct PriorRelayer<AccountId, BlockNumber> {
 	valid_range: Range<BlockNumber>,
 }
 
-impl<AccountId, BlockNumber> PriorRelayer<AccountId, BlockNumber>
+impl<AccountId, BlockNumber: Clone> PriorRelayer<AccountId, BlockNumber>
 where
 	BlockNumber: std::ops::Add<Output = BlockNumber>,
 {
-	pub fn new(id: AccountId, start_time: BlockNumber, last_time: BlockNumber) -> Self {
+	pub fn new(
+		id: AccountId,
+		priority: Priority,
+		start_time: BlockNumber,
+		last_time: BlockNumber,
+	) -> Self {
 		Self {
 			id,
-			priority: Priority::NoPriority,
+			priority,
 			valid_range: Range {
-				start: start_time,
+				start: start_time.clone(),
 				end: start_time + last_time,
 			},
 		}
@@ -449,19 +454,24 @@ impl<T: Config> OnMessageAccepted for MessageAcceptedHandler<T> {
 	// Called when the message is accepted by message pallet
 	fn on_messages_accepted(lane: &LaneId, message: &MessageNonce) -> Weight {
 		// create an order
-		let current_block_number = frame_system::Pallet::<T>::block_number();
-		let mut order: Order<T::AccountId, T::BlockNumber> =
-			Order::new(*lane, *message, current_block_number);
-		// TODO: get prior relayers from market
-		let prior_relayers = (None, None, None);
-		order.set_prior_relayers(prior_relayers);
+		let now = frame_system::Pallet::<T>::block_number();
+		let (t1, t2, t3) = T::SlotTimes::get();
+		let mut order: Order<T::AccountId, T::BlockNumber> = Order::new(*lane, *message, now);
+		let (r1, r2, r3) = Pallet::<T>::prior_relayers();
+		let order_relayers = (
+			PriorRelayer::new(r1.id, Priority::P1, now, t1),
+			PriorRelayer::new(r2.id, Priority::P2, now + t1, now + t1 + t2),
+			PriorRelayer::new(r3.id, Priority::P3, now + t1 + t2, now + t1 + t2 + t3),
+		);
+		order.set_prior_relayers(order_relayers);
 
 		// store the create order
-		let message_hash: H256 = (lane, message).using_encoded(blake2_256).into();
-		<Orders<T>>::insert(message_hash, order);
+		<Orders<T>>::insert(order.key(), order);
 		10000 // todo: update the weight
 	}
 }
+
+pub fn tranfer_relayer_info() {}
 
 /// Handler for messages delivery confirmation.
 pub trait OnDeliveryConfirmed {
