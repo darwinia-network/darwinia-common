@@ -97,36 +97,36 @@ pub mod pallet {
 	#[pallet::generate_deposit(fn deposit_event)]
 	#[pallet::metadata(AccountId<T> = "AccountId")]
 	pub enum Event<T: Config> {
-		/// Token registered [token address, sender]
+		/// Token registered \[token address, sender\]
 		TokenRegistered(Token, AccountId<T>),
-		/// Token locked [message_id, token address, sender, recipient, amount]
+		/// Token locked \[message_id, token address, sender, recipient, amount\]
 		TokenLocked(BridgeMessageId, Token, AccountId<T>, EthereumAddress, U256),
-		/// Token unlocked [token, recipient, value]
+		/// Token unlocked \[token, recipient, value\]
 		TokenUnlocked(Token, AccountId<T>, U256),
-		/// Token locked confirmed from remote [message_id, token, user, result]
+		/// Token locked confirmed from remote \[message_id, token, user, result\]
 		TokenLockedConfirmed(BridgeMessageId, Token, AccountId<T>, bool),
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// Currently we only support native token transfer comes from s2s bridge
+		/// Currently we only support native token transfer comes from s2s bridge.
 		Erc20NotSupported,
-		/// Invalid token type
+		/// Invalid token type.
 		InvalidTokenType,
-		/// Invalid token value
+		/// Invalid token value.
 		InvalidTokenAmount,
-		/// Insufficient balance
+		/// Insufficient balance.
 		InsufficientBalance,
-		/// Ring Lock LIMITED
+		/// Ring Lock LIMITED.
 		RingLockLimited,
-		/// invalid source origin
+		/// Invalid source origin.
 		InvalidOrigin,
-		/// encode dispatch call failed
+		/// Encode dispatch call failed.
 		EncodeInvalid,
-		/// send relay message failed
+		/// Send relay message failed.
 		SendMessageFailed,
-		/// message nonce dumplicated
-		NonceDumplicated,
+		/// Message nonce duplicated.
+		NonceDuplicated,
 	}
 
 	#[pallet::storage]
@@ -220,7 +220,7 @@ pub mod pallet {
 			let message_id = T::MessageSender::latest_message_id();
 			ensure!(
 				!<LockedQueue<T>>::contains_key(message_id),
-				Error::<T>::NonceDumplicated
+				Error::<T>::NonceDuplicated
 			);
 			<LockedQueue<T>>::insert(message_id, (user.clone(), token.clone()));
 			Self::deposit_event(Event::TokenLocked(message_id, token, user, recipient, amount));
