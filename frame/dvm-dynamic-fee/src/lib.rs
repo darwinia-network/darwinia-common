@@ -87,6 +87,7 @@ pub mod pallet {
 			target: U256,
 		) -> DispatchResultWithPostInfo {
 			ensure_none(origin)?;
+			// When a block author create a fake block with multiple noting, then other validators will reject that block because of failed import block verification.
 			assert!(
 				<TargetMinGasPrice<T>>::get().is_none(),
 				"TargetMinGasPrice must be updated only once in the block"
