@@ -221,8 +221,6 @@ std = [
 	"sp-version/std",
 ]
 
-with-tracing = ["frame-executive/with-tracing"]
-
 runtime-benchmarks = [
 	"frame-benchmarking",
 	"frame-system-benchmarking",

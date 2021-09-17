@@ -70,7 +70,8 @@ sp-trie                                    = { default-features = false, git = "
 sp-version                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [build-dependencies]
-substrate-wasm-builder = { version = "3.0.0" }
+# paritytech
+substrate-wasm-builder = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [features]
 default = ["std"]
