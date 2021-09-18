@@ -24,8 +24,8 @@ sp-inherents  = { default-features = false, git = "https://github.com/darwinia-n
 sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [dev-dependencies]
-pallet-timestamp   = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-io              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-io            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [features]
 default = ["std"]
