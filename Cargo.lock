@@ -1932,6 +1932,8 @@ dependencies = [
 name = "dc-db"
 version = "2.6.4"
 dependencies = [
+ "dp-storage",
+ "dvm-ethereum",
  "kvdb",
  "kvdb-rocksdb",
  "parity-scale-codec",
@@ -2266,9 +2268,11 @@ dependencies = [
  "darwinia-evm",
  "frame-support",
  "frame-system",
+ "pallet-timestamp",
  "parity-scale-codec",
  "sp-core",
  "sp-inherents",
+ "sp-io",
  "sp-runtime",
 ]
 

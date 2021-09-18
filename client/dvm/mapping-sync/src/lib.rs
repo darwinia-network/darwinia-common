@@ -18,7 +18,7 @@
 
 mod worker;
 
-pub use worker::MappingSyncWorker;
+pub use worker::{MappingSyncWorker, SyncStrategy};
 
 // --- darwinia-network ---
 use dp_consensus::FindLogError;
@@ -99,6 +99,7 @@ pub fn sync_one_block<Block: BlockT, C, B>(
 	client: &C,
 	substrate_backend: &B,
 	frontier_backend: &dc_db::Backend<Block>,
+	strategy: SyncStrategy,
 ) -> Result<bool, String>
 where
 	C: ProvideRuntimeApi<Block> + Send + Sync + HeaderBackend<Block> + BlockOf,
@@ -152,6 +153,11 @@ where
 			.write_current_syncing_tips(current_syncing_tips)?;
 		Ok(true)
 	} else {
+		if SyncStrategy::Parachain == strategy
+			&& operating_header.number() > &client.info().best_number
+		{
+			return Ok(false);
+		}
 		sync_block(frontier_backend, &operating_header)?;
 
 		current_syncing_tips.push(*operating_header.parent_hash());
@@ -167,6 +173,7 @@ pub fn sync_blocks<Block: BlockT, C, B>(
 	substrate_backend: &B,
 	frontier_backend: &dc_db::Backend<Block>,
 	limit: usize,
+	strategy: SyncStrategy,
 ) -> Result<bool, String>
 where
 	C: ProvideRuntimeApi<Block> + Send + Sync + HeaderBackend<Block> + BlockOf,
@@ -176,7 +183,8 @@ where
 	let mut synced_any = false;
 
 	for _ in 0..limit {
-		synced_any = synced_any || sync_one_block(client, substrate_backend, frontier_backend)?;
+		synced_any =
+			synced_any || sync_one_block(client, substrate_backend, frontier_backend, strategy)?;
 	}
 
 	Ok(synced_any)
