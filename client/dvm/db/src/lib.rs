@@ -18,21 +18,23 @@
 
 mod utils;
 
-// --- paritytech ---
-use sp_core::H256;
 pub use sp_database::Database;
-use sp_runtime::traits::Block as BlockT;
-// --- darwinia-network ---
-use codec::{Decode, Encode};
-use dp_storage::PALLET_ETHEREUM_SCHEMA_CACHE;
-use dvm_ethereum::EthereumStorageSchema;
+
 // --- std ---
-use parking_lot::Mutex;
 use std::{
 	marker::PhantomData,
 	path::{Path, PathBuf},
 	sync::Arc,
 };
+// --- crates.io ---
+use codec::{Decode, Encode};
+use parking_lot::Mutex;
+// --- paritytech ---
+use sp_core::H256;
+use sp_runtime::traits::Block as BlockT;
+// --- darwinia-network ---
+use dp_storage::PALLET_ETHEREUM_SCHEMA_CACHE;
+use dvm_ethereum::EthereumStorageSchema;
 
 const DB_HASH_LEN: usize = 32;
 /// Hash type that this backend uses for the database.
