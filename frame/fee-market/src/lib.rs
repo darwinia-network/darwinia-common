@@ -42,6 +42,7 @@ use frame_support::{
 use frame_system::{ensure_signed, pallet_prelude::*};
 use sp_core::H256;
 use sp_io::hashing::blake2_256;
+use sp_runtime::Permill;
 use sp_std::{
 	cmp::{Ord, Ordering},
 	default::Default,
@@ -52,10 +53,10 @@ use sp_std::{
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 pub type Fee<T> = RingBalance<T>;
-pub type OrderRelayers<AccountId, BlockNumber> = (
-	PriorRelayer<AccountId, BlockNumber>,
-	PriorRelayer<AccountId, BlockNumber>,
-	PriorRelayer<AccountId, BlockNumber>,
+pub type OrderRelayers<AccountId, BlockNumber, Balance> = (
+	PriorRelayer<AccountId, BlockNumber, Balance>,
+	PriorRelayer<AccountId, BlockNumber, Balance>,
+	PriorRelayer<AccountId, BlockNumber, Balance>,
 );
 
 pub use pallet::*;
@@ -79,7 +80,19 @@ pub mod pallet {
 		#[pallet::constant]
 		type SlotTimes: Get<(Self::BlockNumber, Self::BlockNumber, Self::BlockNumber)>;
 
-		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+		// Reward parameters
+		#[pallet::constant]
+		type ForAssignedRelayer: Get<Permill>; // default 60%
+		#[pallet::constant]
+		type ForMessageRelayer: Get<Permill>; // default 80%
+		#[pallet::constant]
+		type ForConfirmRelayer: Get<Permill>; // default 20%
+		#[pallet::constant]
+		type SlashAssignRelayer: Get<RingBalance<Self>>;
+
+		type TreasuryPalletAccount: Get<Self::AccountId>;
+		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
+			+ Currency<Self::AccountId>;
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type WeightInfo: WeightInfo;
 	}
@@ -140,8 +153,15 @@ pub mod pallet {
 
 	// Order storage
 	#[pallet::storage]
-	pub type Orders<T: Config> =
-		StorageMap<_, Blake2_128Concat, H256, Order<T::AccountId, T::BlockNumber>>;
+	pub type Orders<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		H256,
+		Order<T::AccountId, T::BlockNumber, Fee<T>>,
+		ValueQuery,
+	>;
+	#[pallet::storage]
+	pub type ConfirmedMessagesThisBlock<T: Config> = StorageValue<_, Vec<H256>, ValueQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {}
@@ -159,7 +179,12 @@ pub mod pallet {
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
 	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_initialize(_: BlockNumberFor<T>) -> Weight {
+			<ConfirmedMessagesThisBlock<T>>::kill();
+			T::DbWeight::get().writes(1)
+		}
+	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -364,15 +389,15 @@ impl<T: Config> Default for Relayer<T> {
 	}
 }
 #[derive(Clone, RuntimeDebug, Encode, Decode, Default)]
-pub struct Order<AccountId, BlockNumber> {
+pub struct Order<AccountId, BlockNumber, Balance> {
 	lane: LaneId,
 	message: MessageNonce,
 	sent_time: BlockNumber,
 	confirm_time: Option<BlockNumber>,
-	order_relayers: Option<OrderRelayers<AccountId, BlockNumber>>,
+	order_relayers: Option<OrderRelayers<AccountId, BlockNumber, Balance>>,
 }
 
-impl<AccountId, BlockNumber> Order<AccountId, BlockNumber> {
+impl<AccountId, BlockNumber, Balance> Order<AccountId, BlockNumber, Balance> {
 	pub fn new(lane: LaneId, message: MessageNonce, sent_time: BlockNumber) -> Self {
 		Self {
 			lane,
@@ -383,7 +408,10 @@ impl<AccountId, BlockNumber> Order<AccountId, BlockNumber> {
 		}
 	}
 
-	pub fn set_prior_relayers(&mut self, order_relayers: OrderRelayers<AccountId, BlockNumber>) {
+	pub fn set_prior_relayers(
+		&mut self,
+		order_relayers: OrderRelayers<AccountId, BlockNumber, Balance>,
+	) {
 		self.order_relayers = Some(order_relayers);
 	}
 
@@ -395,31 +423,34 @@ impl<AccountId, BlockNumber> Order<AccountId, BlockNumber> {
 		(self.lane, self.message).using_encoded(blake2_256).into()
 	}
 
-	pub fn order_relayers(&self) -> Option<&OrderRelayers<AccountId, BlockNumber>> {
+	pub fn order_relayers(&self) -> Option<&OrderRelayers<AccountId, BlockNumber, Balance>> {
 		self.order_relayers.as_ref()
 	}
 }
 
 #[derive(Clone, RuntimeDebug, Encode, Decode, Default)]
-pub struct PriorRelayer<AccountId, BlockNumber> {
+pub struct PriorRelayer<AccountId, BlockNumber, Balance> {
 	id: AccountId,
 	priority: Priority,
+	fee: Balance,
 	valid_range: Range<BlockNumber>,
 }
 
-impl<AccountId, BlockNumber: Clone> PriorRelayer<AccountId, BlockNumber>
+impl<AccountId, BlockNumber, Balance> PriorRelayer<AccountId, BlockNumber, Balance>
 where
-	BlockNumber: std::ops::Add<Output = BlockNumber>,
+	BlockNumber: sp_std::ops::Add<Output = BlockNumber> + Clone,
 {
 	pub fn new(
 		id: AccountId,
 		priority: Priority,
+		fee: Balance,
 		start_time: BlockNumber,
 		last_time: BlockNumber,
 	) -> Self {
 		Self {
 			id,
 			priority,
+			fee,
 			valid_range: Range {
 				start: start_time.clone(),
 				end: start_time + last_time,
@@ -456,32 +487,47 @@ impl<T: Config> OnMessageAccepted for MessageAcceptedHandler<T> {
 		// create an order
 		let now = frame_system::Pallet::<T>::block_number();
 		let (t1, t2, t3) = T::SlotTimes::get();
-		let mut order: Order<T::AccountId, T::BlockNumber> = Order::new(*lane, *message, now);
+		let mut order: Order<T::AccountId, T::BlockNumber, Fee<T>> =
+			Order::new(*lane, *message, now);
 		let (r1, r2, r3) = Pallet::<T>::prior_relayers();
 		let order_relayers = (
-			PriorRelayer::new(r1.id, Priority::P1, now, t1),
-			PriorRelayer::new(r2.id, Priority::P2, now + t1, now + t1 + t2),
-			PriorRelayer::new(r3.id, Priority::P3, now + t1 + t2, now + t1 + t2 + t3),
+			PriorRelayer::new(r1.id, Priority::P1, r1.fee, now, t1),
+			PriorRelayer::new(r2.id, Priority::P2, r2.fee, now + t1, now + t1 + t2),
+			PriorRelayer::new(
+				r3.id,
+				Priority::P3,
+				r3.fee,
+				now + t1 + t2,
+				now + t1 + t2 + t3,
+			),
 		);
 		order.set_prior_relayers(order_relayers);
 
 		// store the create order
-		<Orders<T>>::insert(order.key(), order);
+		let order_hash: H256 = (order.lane, order.message).using_encoded(blake2_256).into();
+		<Orders<T>>::insert(order_hash, order);
 		10000 // todo: update the weight
 	}
 }
-
-pub fn tranfer_relayer_info() {}
 
 /// Handler for messages delivery confirmation.
 pub trait OnDeliveryConfirmed {
 	fn on_messages_delivered(_lane: &LaneId, _messages: &DeliveredMessages) -> Weight;
 }
 
-pub struct MessageConfirmedHandler;
+pub struct MessageConfirmedHandler<T>(PhantomData<T>);
 
-impl OnDeliveryConfirmed for MessageConfirmedHandler {
-	fn on_messages_delivered(_lane: &LaneId, _messages: &DeliveredMessages) -> Weight {
-		todo!()
+impl<T: Config> OnDeliveryConfirmed for MessageConfirmedHandler<T> {
+	fn on_messages_delivered(lane: &LaneId, delivered_messages: &DeliveredMessages) -> Weight {
+		let now = frame_system::Pallet::<T>::block_number();
+		for message_nonce in delivered_messages.begin..=delivered_messages.end {
+			let order_hash: H256 = (lane, message_nonce).using_encoded(blake2_256).into();
+			<Orders<T>>::mutate(order_hash, |order| {
+				order.set_confirm_time(Some(now));
+			});
+			<ConfirmedMessagesThisBlock<T>>::append(order_hash);
+		}
+
+		10000 // todo: update the weight
 	}
 }

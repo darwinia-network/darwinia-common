@@ -21,30 +21,34 @@ use bp_messages::{
 	MessageNonce,
 };
 
+use crate::*;
+use crate::{Config, ConfirmedMessagesThisBlock, Orders};
 use codec::Encode;
 use frame_support::traits::{Currency as CurrencyT, ExistenceRequirement, Get};
 use num_traits::Zero;
 use sp_runtime::traits::Saturating;
+use sp_runtime::Permill;
+use sp_std::collections::btree_map::BTreeMap;
 use sp_std::fmt::Debug;
-pub struct FeeMarketPayment<T, Currency, GetConfirmationFee, RootAccount> {
-	_phantom: sp_std::marker::PhantomData<(T, Currency, GetConfirmationFee, RootAccount)>,
+use sp_std::ops::Range;
+
+pub struct FeeMarketPayment<T, GetConfirmationFee, RootAccount> {
+	_phantom: sp_std::marker::PhantomData<(T, GetConfirmationFee, RootAccount)>,
 }
 
-impl<T, Currency, GetConfirmationFee, RootAccount>
-	MessageDeliveryAndDispatchPayment<T::AccountId, Currency::Balance>
-	for FeeMarketPayment<T, Currency, GetConfirmationFee, RootAccount>
+impl<T, GetConfirmationFee, RootAccount>
+	MessageDeliveryAndDispatchPayment<T::AccountId, RingBalance<T>>
+	for FeeMarketPayment<T, GetConfirmationFee, RootAccount>
 where
-	T: frame_system::Config,
-	Currency: CurrencyT<T::AccountId>,
-	Currency::Balance: From<MessageNonce>,
-	GetConfirmationFee: Get<Currency::Balance>,
+	T: Config,
+	GetConfirmationFee: Get<RingBalance<T>>,
 	RootAccount: Get<Option<T::AccountId>>,
 {
 	type Error = &'static str;
 
 	fn pay_delivery_and_dispatch_fee(
 		submitter: &Sender<T::AccountId>,
-		fee: &Currency::Balance,
+		fee: &RingBalance<T>, // P3
 		relayer_fund_account: &T::AccountId,
 	) -> Result<(), Self::Error> {
 		if !frame_system::Pallet::<T>::account_exists(relayer_fund_account) {
@@ -59,7 +63,7 @@ where
 				.ok_or("Sending messages using Root or None origin is disallowed.")?,
 		};
 
-		Currency::transfer(
+		<T as Config>::RingCurrency::transfer(
 			account,
 			relayer_fund_account,
 			*fee,
@@ -71,79 +75,100 @@ where
 
 	fn pay_relayers_rewards(
 		confirmation_relayer: &T::AccountId,
-		relayers_rewards: RelayersRewards<T::AccountId, Currency::Balance>,
+		relayers_rewards: RelayersRewards<T::AccountId, RingBalance<T>>,
 		relayer_fund_account: &T::AccountId,
 	) {
-		pay_relayers_rewards::<Currency, _>(
-			confirmation_relayer,
-			relayers_rewards,
-			relayer_fund_account,
-			GetConfirmationFee::get(),
-		);
-	}
-}
+		let mut confirm_total_reward = RingBalance::<T>::zero();
+		let mut assigned_total_reward = BTreeMap::<T::AccountId, RingBalance<T>>::new();
+		let mut treasury_total_reward = RingBalance::<T>::zero();
+		for order_hash in ConfirmedMessagesThisBlock::<T>::get() {
+			// Get order info
+			let order = <Orders<T>>::get(&order_hash);
+			let order_confirm_time = order
+				.confirm_time
+				.expect("The message confirm_time already set in OnDeliveryConfirmed");
+			let (p1, p2, p3) = order.order_relayers.clone().unwrap();
 
-/// Pay rewards to given relayers, optionally rewarding confirmation relayer.
-fn pay_relayers_rewards<Currency, AccountId>(
-	confirmation_relayer: &AccountId,
-	relayers_rewards: RelayersRewards<AccountId, Currency::Balance>,
-	relayer_fund_account: &AccountId,
-	confirmation_fee: Currency::Balance,
-) where
-	AccountId: Debug + Default + Encode + PartialEq,
-	Currency: CurrencyT<AccountId>,
-	Currency::Balance: From<u64>,
-{
-	// reward every relayer except `confirmation_relayer`
-	let mut confirmation_relayer_reward = Currency::Balance::zero();
-	for (relayer, reward) in relayers_rewards {
-		let mut relayer_reward = reward.reward;
+			// Calculate reward
+			let mut message_reward = RingBalance::<T>::zero();
+			let mut confirm_reward = RingBalance::<T>::zero();
+			if p1.valid_range.contains(&order_confirm_time)
+				|| p2.valid_range.contains(&order_confirm_time)
+				|| p3.valid_range.contains(&order_confirm_time)
+			{
+				let total_reward = p3.fee;
+				let treasury_reward = total_reward.saturating_sub(p1.fee);
+				let assign_reward = T::ForAssignedRelayer::get() * p1.fee;
+				let bridger_relayer_reward = p1.fee.saturating_sub(assign_reward);
 
-		if relayer != *confirmation_relayer {
-			// If delivery confirmation is submitted by other relayer, let's deduct confirmation fee
-			// from relayer reward.
-			//
-			// If confirmation fee has been increased (or if it was the only component of message fee),
-			// then messages relayer may receive zero reward.
-			let mut confirmation_reward = confirmation_fee.saturating_mul(reward.messages.into());
-			if confirmation_reward > relayer_reward {
-				confirmation_reward = relayer_reward;
+				message_reward = T::ForMessageRelayer::get() * bridger_relayer_reward;
+				confirm_reward = T::ForConfirmRelayer::get() * bridger_relayer_reward;
+
+				treasury_total_reward = treasury_total_reward.saturating_add(treasury_reward);
+
+				if p1.valid_range.contains(&order_confirm_time) {
+					assigned_total_reward
+						.entry(p1.id)
+						.or_insert(RingBalance::<T>::zero())
+						.saturating_add(assign_reward);
+				} else if p2.valid_range.contains(&order_confirm_time) {
+					assigned_total_reward
+						.entry(p2.id)
+						.or_insert(RingBalance::<T>::zero())
+						.saturating_add(assign_reward);
+				} else if p3.valid_range.contains(&order_confirm_time) {
+					assigned_total_reward
+						.entry(p3.id)
+						.or_insert(RingBalance::<T>::zero())
+						.saturating_add(assign_reward);
+				}
+			} else {
+				let slash_reward = slash_assign_relayers::<T>(
+					p3.valid_range.end,
+					order_confirm_time,
+					order.order_relayers.unwrap(),
+					relayer_fund_account,
+				);
+				message_reward = T::ForMessageRelayer::get() * slash_reward;
+				confirm_reward = T::ForConfirmRelayer::get() * slash_reward;
 			}
-			relayer_reward = relayer_reward.saturating_sub(confirmation_reward);
-			confirmation_relayer_reward =
-				confirmation_relayer_reward.saturating_add(confirmation_reward);
-		} else {
-			// If delivery confirmation is submitted by this relayer, let's add confirmation fee
-			// from other relayers to this relayer reward.
-			confirmation_relayer_reward = confirmation_relayer_reward.saturating_add(reward.reward);
-			continue;
+
+			confirm_total_reward = confirm_total_reward.saturating_add(confirm_reward);
+
+			// TODO:
+			// Pay message relayer reward
+			// pay_reward::<T>(relayer_fund_account, &relayer, message_reward);
 		}
-
-		pay_relayer_reward::<Currency, _>(relayer_fund_account, &relayer, relayer_reward);
+		// Pay confirmation relayer reward
+		pay_reward::<T>(
+			relayer_fund_account,
+			confirmation_relayer,
+			confirm_total_reward,
+		);
+		// Pay treasury reward
+		pay_reward::<T>(
+			relayer_fund_account,
+			&T::TreasuryPalletAccount::get(),
+			treasury_total_reward,
+		);
+		// Pay assign relayer reward
+		for (relayer, reward) in assigned_total_reward {
+			pay_reward::<T>(relayer_fund_account, &relayer, reward);
+		}
 	}
-
-	// finally - pay reward to confirmation relayer
-	pay_relayer_reward::<Currency, _>(
-		relayer_fund_account,
-		confirmation_relayer,
-		confirmation_relayer_reward,
-	);
 }
 
 /// Transfer funds from relayers fund account to given relayer.
-fn pay_relayer_reward<Currency, AccountId>(
-	relayer_fund_account: &AccountId,
-	relayer_account: &AccountId,
-	reward: Currency::Balance,
-) where
-	AccountId: Debug,
-	Currency: CurrencyT<AccountId>,
-{
+fn pay_reward<T: Config>(
+	relayer_fund_account: &T::AccountId,
+	relayer_account: &T::AccountId,
+	reward: RingBalance<T>,
+) {
 	if reward.is_zero() {
 		return;
 	}
 
-	let pay_result = Currency::transfer(
+	let pay_result = <T as Config>::RingCurrency::transfer(
 		relayer_fund_account,
 		relayer_account,
 		reward,
@@ -166,4 +191,39 @@ fn pay_relayer_reward<Currency, AccountId>(
 			error,
 		),
 	}
+}
+
+pub fn slash_assign_relayers<T: Config>(
+	_p3_end_time: T::BlockNumber,
+	_confirm_time: T::BlockNumber,
+	assign_relayers: OrderRelayers<T::AccountId, T::BlockNumber, RingBalance<T>>,
+	relayer_fund_account: &T::AccountId,
+) -> RingBalance<T> {
+	let (p1, p2, p3) = assign_relayers;
+	let total_slash = p3.fee.saturating_add(T::SlashAssignRelayer::get());
+
+	// Slash assign relayers and transfer the value to refund_fund_account
+	// TODO:  Slash relayers from deposit balance or tranferable value
+	let _ = <T as Config>::RingCurrency::transfer(
+		&p1.id,
+		relayer_fund_account,
+		total_slash,
+		ExistenceRequirement::KeepAlive,
+	);
+	let _ = <T as Config>::RingCurrency::transfer(
+		&p2.id,
+		relayer_fund_account,
+		total_slash,
+		ExistenceRequirement::KeepAlive,
+	);
+	let _ = <T as Config>::RingCurrency::transfer(
+		&p3.id,
+		relayer_fund_account,
+		total_slash,
+		ExistenceRequirement::KeepAlive,
+	);
+
+	total_slash
+		.saturating_add(total_slash)
+		.saturating_sub(total_slash)
 }
