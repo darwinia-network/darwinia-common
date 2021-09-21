@@ -15,7 +15,7 @@ use crate::*;
 use bridge_primitives::{
 	AccountIdConverter, MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
 	MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE, MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE,
-	PANGOLIN_CHAIN_ID,
+	PANGOLIN_CHAIN_ID, PANGORO_PANGOLIN_LANE,
 };
 use darwinia_support::s2s::{self, nonce_to_message_id, MessageConfirmer};
 use pangolin_messages::{
