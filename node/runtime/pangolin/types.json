@@ -244,7 +244,7 @@
 		"signatures": "Vec<(EthereumAddress, EcdsaSignature)>"
 	},
 	"MMRRoot": "Hash",
-	"__[primitives.bsc]___": null,
+	"__[primitives.bsc]__": null,
 	"BSCHeader": {
 		"parent_hash": "H256",
 		"uncle_hash": "H256",
@@ -280,7 +280,7 @@
 	"StakingRuntimeDispatchInfo": {
 		"power": "Power"
 	},
-	"__[might be removed later]___": null,
+	"__[might be removed later]__": null,
 	"MessageId": "(LaneId, MessageNonce)",
 	"SpecVersion": "u32"
 }
