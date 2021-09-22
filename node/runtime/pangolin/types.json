@@ -279,5 +279,8 @@
 	},
 	"StakingRuntimeDispatchInfo": {
 		"power": "Power"
-	}
+	},
+	"__[might be removed later]___": null,
+	"MessageId": "(LaneId, MessageNonce)",
+	"SpecVersion": "u32"
 }
