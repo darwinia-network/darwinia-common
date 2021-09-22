@@ -1,5 +1,5 @@
 {
-	"__[pallet.balances]__": {},
+	"__[pallet.balances]__": null,
 	"BalanceInfo": null,
 	"BalanceLock": {
 		"id": "LockIdentifier",
@@ -36,7 +36,7 @@
 		"free_kton": "Balance",
 		"reserved_kton": "Balance"
 	},
-	"__[pallet.staking]__": {},
+	"__[pallet.staking]__": null,
 	"RingBalance": "Balance",
 	"KtonBalance": "Balance",
 	"TsInMs": "u64",
@@ -91,9 +91,9 @@
 		"reporters": "Vec<AccountId>",
 		"payout": "RKT"
 	},
-	"__[pallet.bridge.crab]__": {},
+	"__[pallet.bridge.crab]__": null,
 	"MappedRing": "u128",
-	"__[pallet.bridge.eth]__": {},
+	"__[pallet.bridge.eth]__": null,
 	"EthereumTransactionIndex": "(H256, u64)",
 	"EthereumBlockNumber": "u64",
 	"EthereumHeader": {
@@ -186,7 +186,7 @@
 	"RelayAuthoritySigner": "EthereumAddress",
 	"RelayAuthorityMessage": "EcdsaMessage",
 	"RelayAuthoritySignature": "EcdsaSignature",
-	"__[pallet.claims]__": {},
+	"__[pallet.claims]__": null,
 	"OtherSignature": {
 		"_enum": {
 			"Eth": "EcdsaSignature",
@@ -201,13 +201,13 @@
 		}
 	},
 	"AddressT": "[u8; 20; AddressT]",
-	"__[pallet.header-mmr]__": {},
+	"__[pallet.header-mmr]__": null,
 	"NodeIndex": "u64",
 	"MerkleMountainRangeRootLog": {
 		"prefix": "[u8; 4; Prefix]",
 		"parent_mmr_root": "Hash"
 	},
-	"__[primitives.relay]__": {},
+	"__[primitives.relay]__": null,
 	"OpCode": "[u8; 4; OpCode]",
 	"Term": "u32",
 	"RelayHeaderId": "EthereumBlockNumber",
@@ -244,7 +244,7 @@
 		"signatures": "Vec<(EthereumAddress, EcdsaSignature)>"
 	},
 	"MMRRoot": "Hash",
-	"__[primitives.bsc]___": {},
+	"__[primitives.bsc]__": null,
 	"BSCHeader": {
 		"parent_hash": "H256",
 		"uncle_hash": "H256",
@@ -273,11 +273,14 @@
 			}
 		}
 	},
-	"__[node.rpc]__": {},
+	"__[node.rpc]__": null,
 	"BalancesRuntimeDispatchInfo": {
 		"usable_balance": "Balance"
 	},
 	"StakingRuntimeDispatchInfo": {
 		"power": "Power"
-	}
+	},
+	"__[might be removed later]__": null,
+	"MessageId": "(LaneId, MessageNonce)",
+	"SpecVersion": "u32"
 }
