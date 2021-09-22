@@ -20,7 +20,7 @@ use crate::{
 use bridge_primitives::{
 	AccountIdConverter, MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
 	MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE, MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE,
-	PANGORO_CHAIN_ID,
+	PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE,
 };
 use darwinia_support::s2s::{nonce_to_message_id, to_bytes32, MessageConfirmer};
 
