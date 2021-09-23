@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "dvm-dynamic-fee"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.6.4"
+version     = "2.6.5"
 
 
 [dependencies]
@@ -22,6 +22,10 @@ frame-system  = { default-features = false, git = "https://github.com/darwinia-n
 sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-inherents  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+
+[dev-dependencies]
+pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-io            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 
 [features]
 default = ["std"]

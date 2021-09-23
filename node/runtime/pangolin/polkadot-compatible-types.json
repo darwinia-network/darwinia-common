@@ -54,16 +54,13 @@
 	},
 	"StakingLedgerT": {
 		"stash": "AccountId",
-		"active_ring": "Compact<Balance>",
+		"active": "Compact<Balance>",
 		"active_deposit_ring": "Compact<Balance>",
 		"active_kton": "Compact<Balance>",
 		"deposit_items": "Vec<TimeDepositItem>",
 		"ring_staking_lock": "StakingLock",
 		"kton_staking_lock": "StakingLock",
-		"claimed_rewards": "Vec<EraIndex>",
-		"total": "Compact<Balance>",
-		"active": "Compact<Balance>",
-		"unlocking": "Vec<UnlockChunk>"
+		"claimed_rewards": "Vec<EraIndex>"
 	},
 	"TimeDepositItem": {
 		"value": "Compact<Balance>",
@@ -172,6 +169,24 @@
 		"ethash_proof": "Vec<EthashProof>",
 		"mmr_proof": "Vec<H256>"
 	},
+	"TokenOption": {
+		"name": "[u8; 32]",
+		"symbol": "[u8; 32]",
+		"decimal": "u8"
+	},
+	"TokenInfo": {
+		"address": "H160",
+		"value": "Option<U256>",
+		"option": "Option<TokenOption>"
+	},
+	"Token": {
+		"_enum": {
+			"InvalidToken": "u8",
+			"Native": "TokenInfo",
+			"Erc20": "TokenInfo"
+		}
+	},
+	"BridgeMessageId": "[u8; 16; BridgeMessageId]",
 	"__[TODO.Generalize]__": "",
 	"RelayAuthoritySigner": "EthereumAddress",
 	"RelayAuthorityMessage": "EcdsaMessage",

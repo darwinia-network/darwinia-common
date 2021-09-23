@@ -66,7 +66,7 @@ use crate::{
 };
 use common_primitives::{AccountId, Balance, Hash, Nonce, OpaqueBlock as Block, Power};
 use dc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
-use dc_mapping_sync::MappingSyncWorker;
+use dc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use dc_rpc::EthTask;
 use dp_rpc::{FilterPool, PendingTransactions};
 use drml_rpc::{
@@ -570,6 +570,10 @@ where
 			),
 		);
 	}
+	task_manager.spawn_essential_handle().spawn(
+		"frontier-schema-cache-task",
+		EthTask::ethereum_schema_cache_task(Arc::clone(&client), Arc::clone(&dvm_backend)),
+	);
 
 	if is_archive {
 		task_manager.spawn_essential_handle().spawn(
@@ -580,6 +584,7 @@ where
 				client.clone(),
 				backend.clone(),
 				dvm_backend.clone(),
+				SyncStrategy::Normal,
 			)
 			.for_each(|()| futures::future::ready(())),
 		);

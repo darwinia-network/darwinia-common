@@ -28,7 +28,9 @@ use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
 use sp_std::{convert::TryFrom, ops::RangeInclusive};
 // --- darwinia-network ---
 use crate::*;
-use bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID, WITH_PANGOLIN_MESSAGES_PALLET_NAME};
+use bridge_primitives::{
+	PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE, WITH_PANGOLIN_MESSAGES_PALLET_NAME,
+};
 
 /// Message payload for Pangolin -> Pangoro messages.
 pub type ToPangoroMessagePayload = FromThisChainMessagePayload<WithPangoroMessageBridge>;

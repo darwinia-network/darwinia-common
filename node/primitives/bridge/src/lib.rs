@@ -65,6 +65,9 @@ pub const MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE: MessageNonce = 128;
 /// Maximal number of unconfirmed messages at inbound lane.
 pub const MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE: MessageNonce = 128;
 
+// 726f6c69
+pub const PANGORO_PANGOLIN_LANE: [u8; 4] = *b"roli";
+
 // === Pangolin const define
 /// Bridge-with-Pangolin instance id.
 pub const PANGOLIN_CHAIN_ID: ChainId = *b"pagl";
