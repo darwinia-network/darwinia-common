@@ -223,7 +223,9 @@ pub mod pallet {
 				Error::<T>::NonceDuplicated
 			);
 			<LockedQueue<T>>::insert(message_id, (user.clone(), token.clone()));
-			Self::deposit_event(Event::TokenLocked(message_id, token, user, recipient, amount));
+			Self::deposit_event(Event::TokenLocked(
+				message_id, token, user, recipient, amount,
+			));
 			Ok(().into())
 		}
 
