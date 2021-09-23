@@ -3,27 +3,35 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   build-release:
-    name: Release
+    name: Rustdoc
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Build rust docs
-        run: cargo doc --all --no-deps --release
-      - uses: actions/setup-node@v2
+      - name: Fetch latest code
+        uses: actions/checkout@v2
+      - name: Install Rust nightly-2021-09-01 toolchain
+        uses: actions-rs/toolchain@v1
         with:
-          node-version: '16'
+          toolchain: nightly-2021-09-01
+          default: true
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: doc
+          args: --all --no-deps --release --locked
+      - name: Install Node 16
+        uses: actions/setup-node@v2
+        with:
+          node-version: "16"
       - name: Install vercel
         run: npm i -g vercel
-      - name: Deploy rust docs
+      - name: Deploy Rustdoc
         run: |
           mv vercel.json target/doc
           mv target/doc target/${GITHUB_REPOSITORY#*/}
           cd target/${GITHUB_REPOSITORY#*/}
           vercel --token ${{ secrets.VERCEL_TOKEN }} --scope itering link --confirm
           vercel --token ${{ secrets.VERCEL_TOKEN }} --scope itering deploy --prod
-
