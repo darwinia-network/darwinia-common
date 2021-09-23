@@ -8,7 +8,7 @@ use sp_runtime::{AccountId32, DispatchErrorWithPostInfo};
 use crate::*;
 use bridge_primitives::{AccountIdConverter, PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE};
 use darwinia_support::s2s::{
-	nonce_to_message_id, BridgeMessageId, RelayMessageCaller, ToEthAddress,
+	nonce_to_message_id, BridgeMessageUid, RelayMessageCaller, ToEthAddress,
 };
 use dp_asset::{token::Token, RecipientAccount};
 use from_substrate_issuing::{Config, EncodeCall};
@@ -44,7 +44,7 @@ impl RelayMessageCaller<ToPangoroMessagePayload, Balance> for ToPangoroMessageRe
 		call.dispatch(RawOrigin::Root.into())
 	}
 
-	fn latest_message_id() -> BridgeMessageId {
+	fn latest_message_id() -> BridgeMessageUid {
 		let nonce: u64 =
 			BridgePangoroMessages::outbound_latest_generated_nonce(PANGORO_PANGOLIN_LANE).into();
 		nonce_to_message_id(&PANGORO_PANGOLIN_LANE, nonce)
