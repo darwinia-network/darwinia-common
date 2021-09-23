@@ -51,7 +51,7 @@ use sp_std::prelude::*;
 use darwinia_support::{
 	evm::IntoDvmAddress,
 	s2s::{
-		ensure_source_root, to_bytes32, BridgeMessageUid, MessageConfirmer, RelayMessageCaller,
+		ensure_source_root, to_bytes32, TokenMessageId, MessageConfirmer, RelayMessageCaller,
 		RING_DECIMAL, RING_NAME, RING_SYMBOL,
 	},
 };
@@ -100,11 +100,11 @@ pub mod pallet {
 		/// Token registered \[token address, sender\]
 		TokenRegistered(Token, AccountId<T>),
 		/// Token locked \[message_id, token address, sender, recipient, amount\]
-		TokenLocked(BridgeMessageUid, Token, AccountId<T>, EthereumAddress, U256),
+		TokenLocked(TokenMessageId, Token, AccountId<T>, EthereumAddress, U256),
 		/// Token unlocked \[token, recipient, value\]
 		TokenUnlocked(Token, AccountId<T>, U256),
 		/// Token locked confirmed from remote \[message_id, token, user, result\]
-		TokenLockedConfirmed(BridgeMessageUid, Token, AccountId<T>, bool),
+		TokenLockedConfirmed(TokenMessageId, Token, AccountId<T>, bool),
 	}
 
 	#[pallet::error]
@@ -132,7 +132,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn locked_queue)]
 	pub type LockedQueue<T: Config> =
-		StorageMap<_, Identity, BridgeMessageUid, (AccountId<T>, Token), ValueQuery>;
+		StorageMap<_, Identity, TokenMessageId, (AccountId<T>, Token), ValueQuery>;
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -217,7 +217,7 @@ pub mod pallet {
 					.map_err(|_| Error::<T>::EncodeInvalid)?;
 			T::MessageSender::send_message(payload, fee)
 				.map_err(|_| Error::<T>::SendMessageFailed)?;
-			let message_id = T::MessageSender::latest_message_id();
+			let message_id = T::MessageSender::latest_token_message_id();
 			ensure!(
 				!<LockedQueue<T>>::contains_key(message_id),
 				Error::<T>::NonceDuplicated
@@ -282,7 +282,7 @@ pub mod pallet {
 	}
 
 	impl<T: Config> MessageConfirmer for Pallet<T> {
-		fn on_messages_confirmed(message_id: BridgeMessageUid, result: bool) -> Weight {
+		fn on_messages_confirmed(message_id: TokenMessageId, result: bool) -> Weight {
 			let (user, token) = <LockedQueue<T>>::take(message_id);
 			if !result {
 				let token_info = match &token {

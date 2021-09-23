@@ -78,7 +78,7 @@ where
 						Vec::new()
 					}
 					_ if Self::match_digest(method_digest, READ_LATEST_MESSAGE_ID_METHOD) => {
-						<T as from_substrate_issuing::Config>::MessageSender::latest_message_id()
+						<T as from_substrate_issuing::Config>::MessageSender::latest_token_message_id()
 							.to_vec()
 					}
 					_ => {

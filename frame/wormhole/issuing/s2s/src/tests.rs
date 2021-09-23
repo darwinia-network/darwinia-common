@@ -25,7 +25,7 @@ use crate::{self as s2s_issuing};
 use darwinia_evm::{
 	AddressMapping, EnsureAddressTruncated, FeeCalculator, SubstrateBlockHashMapping,
 };
-use darwinia_support::s2s::{BridgeMessageUid, RelayMessageCaller};
+use darwinia_support::s2s::{TokenMessageId, RelayMessageCaller};
 use dvm_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
 	IntermediateStateRoot,
@@ -208,7 +208,7 @@ impl RelayMessageCaller<MockMessagePayload, Balance> for ToPangoroMessageRelayCa
 			pays_fee: Pays::No,
 		})
 	}
-	fn latest_message_id() -> BridgeMessageUid {
+	fn latest_token_message_id() -> TokenMessageId {
 		[0u8; 16]
 	}
 }
