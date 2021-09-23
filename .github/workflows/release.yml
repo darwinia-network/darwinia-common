@@ -12,10 +12,10 @@ jobs:
     steps:
       - name: Fetch latest code
         uses: actions/checkout@v2
-      - name: Install Rust nightly toolchain
+      - name: Install Rust nightly-2021-02-25 toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: nightly-2021-02-25
           target: wasm32-unknown-unknown
           default: true
       - name: Build
