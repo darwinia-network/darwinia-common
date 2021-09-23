@@ -16,6 +16,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly-2021-09-01
+          target: wasm32-unknown-unknown
           default: true
       - name: Build
         uses: actions-rs/cargo@v1
