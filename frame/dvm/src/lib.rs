@@ -189,7 +189,7 @@ pub mod pallet {
 		InternalTransactionRevertError,
 		InternalTransactionFatalError,
 		/// The internal call failed.
-		InvalidCall,
+		ReadyOnlyCall,
 	}
 
 	#[pallet::validate_unsigned]
@@ -625,7 +625,7 @@ impl<T: Config> InternalTransactHandler for Pallet<T> {
 				ExitReason::Revert(_) => Err(<Error<T>>::InternalTransactionRevertError.into()),
 				ExitReason::Fatal(_) => Err(<Error<T>>::InternalTransactionFatalError.into()),
 			},
-			_ => Err(<Error<T>>::InvalidCall.into()),
+			_ => Err(<Error<T>>::ReadyOnlyCall.into()),
 		}
 	}
 }
