@@ -22,7 +22,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: doc
-          args: --all --no-deps --release --locked
+          args: --all --no-deps --locked
       - name: Install Node 16
         uses: actions/setup-node@v2
         with:
