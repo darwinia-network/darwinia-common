@@ -23,7 +23,7 @@ dp-asset            = { default-features = false, path = "../../../../primitives
 dp-contract         = { default-features = false, path = "../../../../primitives/contract" }
 ethereum-primitives = { default-features = false, path = "../../../../primitives/ethereum" }
 # paritytech
-bp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
+bp-runtime    = { default-features = false, path = "../../../../../parity-bridges-common/primitives/runtime" }
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }

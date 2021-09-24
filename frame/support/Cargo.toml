@@ -21,7 +21,7 @@ sha3                  = { version = "0.9.1", default-features = false }
 ethabi              = { default-features = false, git = "https://github.com/darwinia-network/ethabi", tag = "v13.0.0-no-std" }
 ethereum-primitives = { default-features = false, path = "../../primitives/ethereum" }
 # paritytech
-bp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
+bp-runtime    = { default-features = false, path = "../../../parity-bridges-common/primitives/runtime" }
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }

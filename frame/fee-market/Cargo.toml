@@ -26,7 +26,7 @@ sp-runtime    = { default-features = false, git = "https://github.com/darwinia-n
 sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-std         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 # parity-bridges-common
-bp-messages   = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
+bp-messages   = { default-features = false, path = "../../../parity-bridges-common/primitives/messages" }
 
 [dev-dependencies]
 darwinia-balances = { default-features = false, path = "../balances" }
