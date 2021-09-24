@@ -313,7 +313,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(92_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::update_ring_daily_limited())]
 		pub fn update_ring_daily_limited(
 			origin: OriginFor<T>,
 			limited: RingBalance<T>,
