@@ -1,6 +1,7 @@
 //! Some configurable implementations as associated type for the substrate runtime.
 
 // --- paritytech ---
+use frame_support::weights::IdentityFee;
 use sp_runtime::RuntimeDebug;
 // --- darwinia-network ---
 use crate::*;
@@ -16,3 +17,5 @@ darwinia_support::impl_account_data! {
 		// other data
 	}
 }
+
+pub type WeightToFee = IdentityFee<Balance>;

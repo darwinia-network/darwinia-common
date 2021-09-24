@@ -28,11 +28,6 @@ use sp_std::prelude::*;
 // --- darwinia-network ---
 use common_primitives::*;
 
-/// Bridge-with-Pangolin instance id.
-pub const PANGOLIN_CHAIN_ID: ChainId = *b"pagl";
-/// Bridge-with-Pangoro instance id.
-pub const PANGORO_CHAIN_ID: ChainId = *b"pagr";
-
 /// Maximal size (in bytes) of encoded (using `Encode::encode()`) account id.
 pub const MAXIMAL_ENCODED_ACCOUNT_ID_SIZE: u32 = 32;
 
@@ -70,7 +65,16 @@ pub const MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE: MessageNonce = 128;
 /// Maximal number of unconfirmed messages at inbound lane.
 pub const MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE: MessageNonce = 128;
 
-// === pangolin const define
+// 726f6c69
+pub const PANGORO_PANGOLIN_LANE: [u8; 4] = *b"roli";
+
+// === Pangolin const define
+/// Bridge-with-Pangolin instance id.
+pub const PANGOLIN_CHAIN_ID: ChainId = *b"pagl";
+
+/// Name of the With-Pangoro messages pallet instance in the Pangolin runtime.
+pub const WITH_PANGORO_MESSAGES_PALLET_NAME: &str = "BridgePangoroMessages";
+
 /// Name of the `FromPangolinInboundLaneApi::latest_received_nonce` runtime method.
 pub const FROM_PANGOLIN_LATEST_RECEIVED_NONCE_METHOD: &str =
 	"FromPangolinInboundLaneApi_latest_received_nonce";
@@ -97,7 +101,13 @@ pub const TO_PANGOLIN_LATEST_RECEIVED_NONCE_METHOD: &str =
 pub const BEST_FINALIZED_PANGOLIN_HEADER_METHOD: &str = "PangolinFinalityApi_best_finalized";
 // === end
 
-// === pangoro const define
+// === Pangoro const define
+/// Bridge-with-Pangoro instance id.
+pub const PANGORO_CHAIN_ID: ChainId = *b"pagr";
+
+/// Name of the With-Pangolin messages pallet instance in the Pangoro runtime.
+pub const WITH_PANGOLIN_MESSAGES_PALLET_NAME: &str = "BridgePangolinMessages";
+
 /// Name of the `FromPangoroInboundLaneApi::latest_received_nonce` runtime method.
 pub const FROM_PANGORO_LATEST_RECEIVED_NONCE_METHOD: &str =
 	"FromPangoroInboundLaneApi_latest_received_nonce";

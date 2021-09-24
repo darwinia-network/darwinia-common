@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "dc-db"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.6.2"
+version     = "2.6.5"
 
 [dependencies]
 # crates.io
@@ -19,3 +19,6 @@ parking_lot  = { version = "0.11.1" }
 sp-core     = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-database = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-runtime  = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
+# darwinia-network
+dp-storage   = { path = "../../../primitives/storage/" }
+dvm-ethereum = { path = "../../../frame/dvm" }

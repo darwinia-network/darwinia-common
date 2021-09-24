@@ -39,8 +39,12 @@ pub use im_online::*;
 
 pub mod authority_discovery;
 pub use authority_discovery::*;
+
 pub mod sudo;
 pub use sudo::*;
+
+pub mod scheduler;
+pub use scheduler::*;
 
 pub mod bridge_message;
 pub use bridge_message::*;

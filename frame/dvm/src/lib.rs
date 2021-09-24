@@ -27,6 +27,7 @@
 pub mod account_basic;
 
 use dvm_rpc_runtime_api::TransactionStatus;
+#[doc(no_inline)]
 pub use ethereum::{
 	Block, Log, Receipt, Transaction, TransactionAction, TransactionMessage, TransactionSignature,
 };
@@ -74,12 +75,10 @@ use dp_storage::PALLET_ETHEREUM_SCHEMA;
 
 /// A type alias for the balance type from this pallet's point of view.
 type AccountId<T> = <T as frame_system::Config>::AccountId;
-pub type RingCurrency<T> = <T as Config>::RingCurrency;
-pub type KtonCurrency<T> = <T as Config>::KtonCurrency;
-pub type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
-pub type KtonBalance<T> = <KtonCurrency<T> as Currency<AccountId<T>>>::Balance;
-
-pub use pallet::*;
+type RingCurrency<T> = <T as Config>::RingCurrency;
+type KtonCurrency<T> = <T as Config>::KtonCurrency;
+type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
+type KtonBalance<T> = <KtonCurrency<T> as Currency<AccountId<T>>>::Balance;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -97,9 +96,9 @@ pub mod pallet {
 		type Event: From<Event> + IsType<<Self as frame_system::Config>::Event>;
 		/// How Ethereum state root is calculated.
 		type StateRoot: Get<H256>;
-		// RING Balance module
+		/// *RING* balances module.
 		type RingCurrency: Currency<Self::AccountId>;
-		// KTON Balance module
+		/// *KTON* balances module.
 		type KtonCurrency: Currency<Self::AccountId>;
 	}
 
@@ -157,7 +156,7 @@ pub mod pallet {
 			Self::rpc_transact(transaction)
 		}
 
-		// Internal transaction only for root
+		/// Internal transaction only for root.
 		#[pallet::weight(10_000_000)]
 		pub fn root_transact(
 			origin: OriginFor<T>,
@@ -185,10 +184,12 @@ pub mod pallet {
 		InvalidSignature,
 		/// Pre-log is present, therefore transact is not allowed.
 		PreLogExists,
-		/// The internal transaction failed
-		FailedInternalTx,
-		// The internal call failed
-		InvalidCall,
+		/// The internal transaction failed.
+		InternalTransactionExitError,
+		InternalTransactionRevertError,
+		InternalTransactionFatalError,
+		/// The internal call failed.
+		ReadyOnlyCall,
 	}
 
 	#[pallet::validate_unsigned]
@@ -197,6 +198,27 @@ pub mod pallet {
 
 		fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
 			if let Call::transact(transaction) = call {
+				// We must ensure a transaction can pay the cost of its data bytes.
+				// If it can't it should not be included in a block.
+				let mut gasometer = evm::gasometer::Gasometer::new(
+					transaction.gas_limit.low_u64(),
+					<T as darwinia_evm::Config>::config(),
+				);
+				let transaction_cost = match transaction.action {
+					TransactionAction::Call(_) => {
+						evm::gasometer::call_transaction_cost(&transaction.input)
+					}
+					TransactionAction::Create => {
+						evm::gasometer::create_transaction_cost(&transaction.input)
+					}
+				};
+				if gasometer.record_transaction(transaction_cost).is_err() {
+					return InvalidTransaction::Custom(
+						TransactionValidationError::InvalidGasLimit as u8,
+					)
+					.into();
+				}
+
 				// Check chain id correctly
 				if let Some(chain_id) = transaction.signature.chain_id() {
 					if chain_id != T::ChainId::get() {
@@ -254,7 +276,7 @@ pub mod pallet {
 
 	/// Current building block's transactions and receipts.
 	#[pallet::storage]
-	pub type Pending<T: Config> = StorageValue<
+	pub(super) type Pending<T: Config> = StorageValue<
 		_,
 		Vec<(ethereum::Transaction, TransactionStatus, ethereum::Receipt)>,
 		ValueQuery,
@@ -262,29 +284,29 @@ pub mod pallet {
 
 	/// The current Ethereum block.
 	#[pallet::storage]
-	pub type CurrentBlock<T: Config> = StorageValue<_, ethereum::Block>;
+	pub(super) type CurrentBlock<T: Config> = StorageValue<_, ethereum::Block>;
 
 	/// The current Ethereum receipts.
 	#[pallet::storage]
-	pub type CurrentReceipts<T: Config> = StorageValue<_, Vec<ethereum::Receipt>>;
+	pub(super) type CurrentReceipts<T: Config> = StorageValue<_, Vec<ethereum::Receipt>>;
 
 	/// The current transaction statuses.
 	#[pallet::storage]
-	pub type CurrentTransactionStatuses<T: Config> = StorageValue<_, Vec<TransactionStatus>>;
+	pub(super) type CurrentTransactionStatuses<T: Config> = StorageValue<_, Vec<TransactionStatus>>;
 
-	/// Remaining ring balance for account
+	/// Remaining ring balance for dvm account.
 	#[pallet::storage]
 	#[pallet::getter(fn get_ring_remaining_balances)]
-	pub type RemainingRingBalance<T: Config> =
+	pub(super) type RemainingRingBalance<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, RingBalance<T>, ValueQuery>;
 
-	/// Remaining kton balance for account
+	/// Remaining kton balance for dvm account.
 	#[pallet::storage]
 	#[pallet::getter(fn get_kton_remaining_balances)]
 	pub(super) type RemainingKtonBalance<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, KtonBalance<T>, ValueQuery>;
 
-	// Mapping for block number and hashes.
+	/// Mapping for block number and hashes.
 	#[pallet::storage]
 	pub(super) type BlockHash<T: Config> = StorageMap<_, Twox64Concat, U256, H256, ValueQuery>;
 
@@ -312,6 +334,7 @@ pub mod pallet {
 		}
 	}
 }
+pub use pallet::*;
 
 impl<T: Config> Pallet<T> {
 	/// Execute transaction from EthApi(network transaction)
@@ -497,13 +520,13 @@ impl<T: Config> Pallet<T> {
 		}
 
 		let ommers = Vec::<ethereum::Header>::new();
+		let receipts_root =
+			ethereum::util::ordered_trie_root(receipts.iter().map(|r| rlp::encode(r)));
 		let partial_header = ethereum::PartialHeader {
 			parent_hash: Self::current_block_hash().unwrap_or_default(),
 			beneficiary: darwinia_evm::Pallet::<T>::find_author(),
 			state_root: T::StateRoot::get(),
-			receipts_root: H256::from_slice(
-				Keccak256::digest(&rlp::encode_list(&receipts)[..]).as_slice(),
-			), // TODO: check receipts hash.
+			receipts_root,
 			logs_bloom,
 			difficulty: U256::zero(),
 			number: block_number,
@@ -545,10 +568,11 @@ impl<T: Config> Pallet<T> {
 	}
 }
 
+/// The handler for interacting with The internal transaction.
 pub trait InternalTransactHandler {
-	/// Internal transaction
+	/// Internal transaction call.
 	fn internal_transact(target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo;
-	/// Read-only call to contract,
+	/// Read-only call to deployed evm contracts.
 	fn read_only_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError>;
 }
 
@@ -573,10 +597,9 @@ impl<T: Config> InternalTransactHandler for Pallet<T> {
 				)),
 				pays_fee: Pays::No,
 			}),
-			_ => {
-				log::error!("Executing internal transaction error happened");
-				Err(Error::<T>::FailedInternalTx.into())
-			}
+			ExitReason::Error(_) => Err(<Error<T>>::InternalTransactionExitError.into()),
+			ExitReason::Revert(_) => Err(<Error<T>>::InternalTransactionRevertError.into()),
+			ExitReason::Fatal(_) => Err(<Error<T>>::InternalTransactionFatalError.into()),
 		})?
 	}
 
@@ -598,12 +621,11 @@ impl<T: Config> InternalTransactHandler for Pallet<T> {
 		match info {
 			CallOrCreateInfo::Call(info) => match info.exit_reason {
 				ExitReason::Succeed(_) => Ok(info.value),
-				_ => {
-					log::error!("Executing internal transaction error happened");
-					Err(Error::<T>::FailedInternalTx.into())
-				}
+				ExitReason::Error(_) => Err(<Error<T>>::InternalTransactionExitError.into()),
+				ExitReason::Revert(_) => Err(<Error<T>>::InternalTransactionRevertError.into()),
+				ExitReason::Fatal(_) => Err(<Error<T>>::InternalTransactionFatalError.into()),
 			},
-			_ => Err(Error::<T>::InvalidCall.into()),
+			_ => Err(<Error<T>>::ReadyOnlyCall.into()),
 		}
 	}
 }
@@ -617,7 +639,7 @@ impl<T: Config> BlockHashMapping for EthereumBlockHashMapping<T> {
 }
 
 /// The schema version for Pallet Ethereum's storage
-#[derive(Clone, Debug, Encode, Decode, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, Encode, Decode, PartialEq, Eq, PartialOrd, Ord)]
 pub enum EthereumStorageSchema {
 	Undefined,
 	V1,
@@ -637,6 +659,7 @@ enum TransactionValidationError {
 	InvalidGasLimit,
 }
 
+/// Returned the Ethereum block state root.
 pub struct IntermediateStateRoot;
 impl Get<H256> for IntermediateStateRoot {
 	fn get() -> H256 {
@@ -645,6 +668,7 @@ impl Get<H256> for IntermediateStateRoot {
 	}
 }
 
+#[doc(hidden)]
 pub mod migration {
 	#[cfg(feature = "try-runtime")]
 	pub mod try_runtime {

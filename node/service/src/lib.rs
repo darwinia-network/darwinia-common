@@ -19,7 +19,13 @@
 pub mod client;
 
 pub mod chain_spec;
-pub use chain_spec::{PangolinChainSpec, PangoroChainSpec};
+pub use chain_spec::{
+	pangolin as pangolin_chain_spec, pangoro as pangoro_chain_spec, PangolinChainSpec,
+	PangoroChainSpec,
+};
 
 pub mod service;
-pub use service::pangolin;
+pub use service::{
+	pangolin as pangolin_service, pangolin_runtime, pangoro as pangoro_service, pangoro_runtime,
+	IdentifyVariant, PangolinExecutor, PangoroExecutor,
+};

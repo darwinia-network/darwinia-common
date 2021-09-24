@@ -46,14 +46,16 @@ use bp_runtime::{ChainId, Size};
 use darwinia_evm::AddressMapping;
 use darwinia_support::{
 	evm::POW_9,
-	s2s::{ensure_source_root, RelayMessageCaller, ToEthAddress},
+	s2s::{
+		ensure_source_root, BridgeMessageId, MessageConfirmer, RelayMessageCaller, ToEthAddress,
+	},
 	PalletDigest,
 };
 use dp_asset::{
 	token::{Token, TokenInfo},
 	RecipientAccount,
 };
-use dp_contract::mapping_token_factory::{MappingTokenFactory as mtf, TokenBurnInfo, BURN_ACTION};
+use dp_contract::mapping_token_factory::{MappingTokenFactory as mtf, TokenBurnInfo};
 use dvm_ethereum::InternalTransactHandler;
 
 pub use pallet::*;
@@ -89,9 +91,6 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(PhantomData<T>);
 
-	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
-
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Handle dispatch call from dispatch precompile contract
@@ -110,35 +109,28 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
 
-			// Ensure the input data is long enough
-			ensure!(input.len() >= 8, <Error<T>>::InvalidInput);
 			// Ensure that the user is mapping token factory contract
 			let factory = MappingFactoryAddress::<T>::get();
 			let factory_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(factory);
 			ensure!(caller == factory_id, <Error<T>>::NotFactoryContract);
 
-			let burn_action = &sha3::Keccak256::digest(&BURN_ACTION)[0..4];
-			if &input[4..8] == burn_action {
-				let burn_info =
-					TokenBurnInfo::decode(&input[8..]).map_err(|_| Error::<T>::InvalidDecoding)?;
-				// Ensure the recipient is valid
-				ensure!(
-					burn_info.recipient.len() == 32,
-					<Error<T>>::InvalidAddressLen
-				);
+			let burn_info =
+				TokenBurnInfo::decode(&input).map_err(|_| Error::<T>::InvalidDecoding)?;
+			// Ensure the recipient is valid
+			ensure!(
+				burn_info.recipient.len() == 32,
+				<Error<T>>::InvalidAddressLen
+			);
 
-				let fee = Self::transform_dvm_balance(burn_info.fee);
-				if let Some(fee_account) = T::FeeAccount::get() {
-					// Since fee account will represent use to make a cross chain call, give fee to fee account here.
-					// the fee transfer path
-					// user -> mapping_token_factory(caller) -> fee_account -> fee_fund -> relayers
-					<T as Config>::RingCurrency::transfer(&caller, &fee_account, fee, KeepAlive)?;
-				}
-
-				Self::burn_and_remote_unlock(fee, burn_info)?;
-			} else {
-				log::trace!("No action match this input selector");
+			let fee = Self::transform_dvm_balance(burn_info.fee);
+			if let Some(fee_account) = T::FeeAccount::get() {
+				// Since fee account will represent use to make a cross chain call, give fee to fee account here.
+				// the fee transfer path
+				// user -> mapping_token_factory(caller) -> fee_account -> fee_fund -> relayers
+				<T as Config>::RingCurrency::transfer(&caller, &fee_account, fee, KeepAlive)?;
 			}
+
+			Self::burn_and_remote_unlock(fee, burn_info)?;
 			Ok(().into())
 		}
 
@@ -261,7 +253,7 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	#[pallet::metadata(T::AccountId = "AccountId")]
+	#[pallet::metadata(AccountId<T> = "AccountId")]
 	pub enum Event<T: Config> {
 		/// Create new token
 		/// [user, backing, source_address, mapping_address]
@@ -280,8 +272,6 @@ pub mod pallet {
 	#[pallet::error]
 	/// Issuing pallet errors.
 	pub enum Error<T> {
-		/// The input data is not long enough
-		InvalidInput,
 		/// The address is not from mapping factory contract address
 		NotFactoryContract,
 		/// Invalid Issuing System Account
@@ -332,6 +322,17 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
 			<MappingFactoryAddress<T>>::put(&self.mapping_factory_address);
+		}
+	}
+
+	impl<T: Config> MessageConfirmer for Pallet<T> {
+		fn on_messages_confirmed(message_id: BridgeMessageId, result: bool) -> Weight {
+			if let Ok(input) =
+				mtf::encode_confirm_burn_and_remote_unlock(message_id.to_vec(), result)
+			{
+				let _ = Self::transact_mapping_factory(input);
+			}
+			return 1;
 		}
 	}
 }

@@ -22,7 +22,7 @@ use std::str::FromStr;
 // darwinia
 use crate::*;
 use crate::{self as s2s_backing};
-use darwinia_support::s2s::RelayMessageCaller;
+use darwinia_support::s2s::{BridgeMessageId, RelayMessageCaller};
 // substrate
 use frame_support::{weights::PostDispatchInfo, PalletId};
 use frame_system::mocking::*;
@@ -104,6 +104,9 @@ impl RelayMessageCaller<(), Balance> for MockRelayCaller {
 		_fee: Balance,
 	) -> Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>> {
 		Ok(().into())
+	}
+	fn latest_message_id() -> BridgeMessageId {
+		[0u8; 16]
 	}
 }
 

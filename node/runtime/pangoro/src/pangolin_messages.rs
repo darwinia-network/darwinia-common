@@ -30,7 +30,9 @@ use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
 use sp_std::{convert::TryFrom, ops::RangeInclusive};
 // --- darwinia-network ---
 use crate::*;
-use bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
+use bridge_primitives::{
+	PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE, WITH_PANGORO_MESSAGES_PALLET_NAME,
+};
 pub use darwinia_balances::{Instance1 as RingInstance, Instance2 as KtonInstance};
 
 /// Message payload for Pangoro -> Pangolin messages.
@@ -86,7 +88,7 @@ impl MessageBridge for WithPangolinMessageBridge {
 	const RELAYER_FEE_PERCENT: u32 = 10;
 	const THIS_CHAIN_ID: ChainId = PANGORO_CHAIN_ID;
 	const BRIDGED_CHAIN_ID: ChainId = PANGOLIN_CHAIN_ID;
-	type BridgedMessagesInstance = WithPangolinMessages;
+	const BRIDGED_MESSAGES_PALLET_NAME: &'static str = WITH_PANGORO_MESSAGES_PALLET_NAME;
 
 	type ThisChain = Pangoro;
 	type BridgedChain = Pangolin;

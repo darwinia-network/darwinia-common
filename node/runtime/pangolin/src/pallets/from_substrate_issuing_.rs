@@ -6,13 +6,12 @@ use pallet_bridge_messages::Instance1 as Pangoro;
 use sp_runtime::{AccountId32, DispatchErrorWithPostInfo};
 // --- darwinia-network ---
 use crate::*;
-use bridge_primitives::{AccountIdConverter, PANGORO_CHAIN_ID};
-use darwinia_support::s2s::{RelayMessageCaller, ToEthAddress};
+use bridge_primitives::{AccountIdConverter, PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE};
+use darwinia_support::s2s::{
+	nonce_to_message_id, BridgeMessageId, RelayMessageCaller, ToEthAddress,
+};
 use dp_asset::{token::Token, RecipientAccount};
 use from_substrate_issuing::{Config, EncodeCall};
-
-// 0x72746c6c
-pub const PANGORO_PANGOLIN_LANE: [u8; 4] = *b"rtll";
 
 // remote chain pangoro's dispatch info
 #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
@@ -43,6 +42,12 @@ impl RelayMessageCaller<ToPangoroMessagePayload, Balance> for ToPangoroMessageRe
 		)
 		.into();
 		call.dispatch(RawOrigin::Root.into())
+	}
+
+	fn latest_message_id() -> BridgeMessageId {
+		let nonce: u64 =
+			BridgePangoroMessages::outbound_latest_generated_nonce(PANGORO_PANGOLIN_LANE).into();
+		nonce_to_message_id(&PANGORO_PANGOLIN_LANE, nonce)
 	}
 }
 

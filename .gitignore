@@ -13,5 +13,5 @@ node_modules
 
 # Test Data
 ## Pangolin Local Testnet
-tests/pangolin-local-testnet/data
-tests/pangolin-local-testnet/log
+tests/local-testnet/data
+tests/local-testnet/log
