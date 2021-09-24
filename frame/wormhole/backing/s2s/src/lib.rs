@@ -140,7 +140,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn daily_limited)]
 	pub type DailyLimited<T: Config> = StorageValue<_, RingBalance<T>, ValueQuery>;
-    
+
 	#[pallet::storage]
 	#[pallet::getter(fn locked_queue)]
 	pub type LockedQueue<T: Config> =
@@ -153,7 +153,9 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(now: BlockNumberFor<T>) -> Weight {
 			let latest_daily_record = DailyUnlocked::<T>::get().0;
-			if latest_daily_record > Zero::zero() && latest_daily_record < now - now % T::BlocksPerDay::get() {
+			if latest_daily_record > Zero::zero()
+				&& latest_daily_record < now - now % T::BlocksPerDay::get()
+			{
 				<DailyUnlocked<T>>::kill();
 			}
 

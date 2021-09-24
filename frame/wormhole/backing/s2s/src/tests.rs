@@ -95,6 +95,7 @@ frame_support::parameter_types! {
 	pub const MockId: PalletId = PalletId(*b"da/s2sba");
 	pub const RingPalletId: PalletId = PalletId(*b"da/bring");
 	pub const RingLockMaxLimit: Balance = 1_000_000_000;
+	pub const BlocksPerDay: u64 = 14_400;
 }
 
 pub struct MockRelayCaller;
@@ -140,6 +141,7 @@ impl Config for Test {
 	type CallEncoder = MockCallEncoder;
 	type FeeAccount = ();
 	type MessageSender = MockRelayCaller;
+	type BlocksPerDay = BlocksPerDay;
 }
 
 frame_support::construct_runtime! {
