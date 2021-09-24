@@ -135,7 +135,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn daily_unlocked)]
 	pub type DailyUnlocked<T: Config> =
-		StorageValue<_, Option<(BlockNumberFor<T>, RingBalance<T>)>, ValueQuery>;
+		StorageValue<_, (BlockNumberFor<T>, RingBalance<T>), ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn daily_limited)]
@@ -152,8 +152,8 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(now: BlockNumberFor<T>) -> Weight {
-			let latest_daily_record = DailyUnlocked::<T>::get().map_or_else(|| now, |v| v.0);
-			if latest_daily_record < now - now % T::BlocksPerDay::get() {
+			let latest_daily_record = DailyUnlocked::<T>::get().0;
+			if latest_daily_record > Zero::zero() && latest_daily_record < now - now % T::BlocksPerDay::get() {
 				<DailyUnlocked<T>>::kill();
 			}
 
@@ -327,15 +327,13 @@ pub mod pallet {
 			T::PalletId::get().into_account()
 		}
 
-		// if this is the first time to transfer, then the daily_transfer storage is none, other
-		// wise, it is <timestamp, transfered>, where timestamp is 00:00:00, the start of the day
 		fn get_daily_unlocked() -> RingBalance<T> {
-			DailyUnlocked::<T>::get().map_or_else(|| Zero::zero(), |v| v.1)
+			DailyUnlocked::<T>::get().1
 		}
 
 		fn update_daily_unlocked(balance: RingBalance<T>) {
 			let now = frame_system::Pallet::<T>::block_number();
-			<DailyUnlocked<T>>::put(Some((now - now % T::BlocksPerDay::get(), balance)));
+			<DailyUnlocked<T>>::put((now - now % T::BlocksPerDay::get(), balance));
 		}
 	}
 
