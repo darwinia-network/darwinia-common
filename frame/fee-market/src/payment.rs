@@ -26,6 +26,7 @@ use crate::{Config, ConfirmedMessagesThisBlock, Orders};
 use codec::Encode;
 use frame_support::traits::{Currency as CurrencyT, ExistenceRequirement, Get};
 use num_traits::Zero;
+use sp_runtime::traits::AccountIdConversion;
 use sp_runtime::traits::Saturating;
 use sp_runtime::Permill;
 use sp_std::collections::btree_map::BTreeMap;
@@ -148,7 +149,7 @@ where
 		// Pay treasury reward
 		pay_reward::<T>(
 			relayer_fund_account,
-			&T::TreasuryPalletAccount::get(),
+			&T::TreasuryPalletId::get().into_account(),
 			treasury_total_reward,
 		);
 		// Pay assign relayer reward

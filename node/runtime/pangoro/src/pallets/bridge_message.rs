@@ -63,6 +63,7 @@ impl Config<WithPangolinMessages> for Runtime {
 		RootAccountForPayments,
 	>;
 
+	type OnMessageAccepted = ();
 	type OnDeliveryConfirmed = PangoroDeliveryConfirmer<Substrate2SubstrateBacking>;
 
 	type SourceHeaderChain = Pangolin;

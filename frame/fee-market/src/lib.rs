@@ -72,6 +72,8 @@ pub mod pallet {
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 		#[pallet::constant]
+		type TreasuryPalletId: Get<PalletId>;
+		#[pallet::constant]
 		type MiniumLockValue: Get<RingBalance<Self>>;
 		#[pallet::constant]
 		type MinimumFee: Get<Fee<Self>>;
@@ -90,7 +92,6 @@ pub mod pallet {
 		#[pallet::constant]
 		type SlashAssignRelayer: Get<RingBalance<Self>>;
 
-		type TreasuryPalletAccount: Get<Self::AccountId>;
 		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
 			+ Currency<Self::AccountId>;
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
