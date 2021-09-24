@@ -141,6 +141,7 @@ pub mod pallet {
 	#[pallet::getter(fn daily_limited)]
 	pub type DailyLimited<T: Config> = StorageValue<_, RingBalance<T>, ValueQuery>;
     
+	#[pallet::storage]
 	#[pallet::getter(fn locked_queue)]
 	pub type LockedQueue<T: Config> =
 		StorageMap<_, Identity, BridgeMessageId, (AccountId<T>, Token), ValueQuery>;
